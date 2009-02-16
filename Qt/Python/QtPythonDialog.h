@@ -1,0 +1,89 @@
+/*=========================================================================
+
+   Program: ParaView
+   Module:    $RCSfile: QtPythonDialog.h,v $
+
+   Copyright (c) 2005-2008 Sandia Corporation, Kitware Inc.
+   All rights reserved.
+
+   ParaView is a free software; you can redistribute it and/or modify it
+   under the terms of the ParaView license version 1.2. 
+
+   See License_v1.2.txt for the full ParaView license.
+   A copy of this license can be obtained by contacting
+   Kitware Inc.
+   28 Corporate Drive
+   Clifton Park, NY 12065
+   USA
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+=========================================================================*/
+
+#ifndef _QtPythonDialog_h
+#define _QtPythonDialog_h
+
+#include "QtPythonExport.h"
+#include "ui_QtPythonDialog.h"
+#include <QDialog>
+
+/**
+  Qt dialog that embeds an instance of QtPythonShell, providing the user
+  with an interactive Python console where they can enter Python commands
+  manually and see the corresponding output.
+  
+  \sa QtPythonShell, pqConsoleWidget
+*/
+
+class QTPYTHON_EXPORT QtPythonDialog :
+  public QDialog
+{
+  Q_OBJECT
+  friend class pqPythonDialog;
+
+public:
+  QtPythonDialog(QWidget* Parent, const char *c);
+  virtual ~QtPythonDialog();
+
+public slots:
+  /// Execute a commond in the python shell.
+  virtual void runString(const QString& script);
+
+  /// Calling this slot will destroy the current python interpretor and start a
+  /// new one without closing the dialog.
+  virtual void initializeInterpretor();
+
+  /// Simply prints some text onto the shell. Note that this does not treat it
+  /// as a python script and hence doesn't execute it.
+  virtual void print(const QString& msg);
+signals:
+  virtual void interpreterInitialized();
+
+protected:
+  struct QtImplementation { Ui::QtPythonDialog Ui;};
+  QtImplementation* const Implementation;
+
+private slots:
+  virtual void runScript();
+  virtual void runScript(const QStringList&);
+  virtual void clearConsole();
+ 
+private:
+  QtPythonDialog(const QtPythonDialog&);
+  QtPythonDialog& operator=(const QtPythonDialog&);
+  
+  char *argv0;
+};
+
+#endif // !_QtPythonDialog_h
+

@@ -1,0 +1,29 @@
+#IF(vxl_SOURCE_DIR)
+#  SET(VXL_MUL_INCLUDE_DIR ${MUL_INCLUDE_DIR})
+#ENDIF(vxl_SOURCE_DIR)
+
+#INCLUDE_DIRECTORIES( ${VXL_MUL_INCLUDE_DIR} )
+#INCLUDE_DIRECTORIES( ${VXL_RPL_INCLUDE_DIR} )
+
+SET( fregl_sources
+  fregl_reg_record.h          fregl_reg_record.cxx
+  fregl_pairwise_register.h   fregl_pairwise_register.cxx
+  fregl_joint_register.h      fregl_joint_register.cxx
+  fregl_space_transformer.h   fregl_space_transformer.cxx
+  #fregl_result_record.h       fregl_result_record.cxx
+  fregl_util.h                fregl_util.cxx
+)
+
+AUX_SOURCE_DIRECTORY( Templates fregl_sources )
+
+ADD_LIBRARY( fregl ${fregl_sources} )
+
+TARGET_LINK_LIBRARIES( fregl fscommon FTKImage rgrl vil3d vnl vbl ITKCommon
+ITKNumerics ITKIO TinyXML)
+
+#IF(BUILD_TESTING)
+#  SUBDIRS(tests)
+#ENDIF(BUILD_TESTING)
+
+INSTALL( TARGETS fregl DESTINATION . )
+

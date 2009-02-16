@@ -1,0 +1,84 @@
+<ui version="4.0" >
+ <class>IViewForm</class>
+ <widget class="QMainWindow" name="IViewForm" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>625</width>
+    <height>623</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>Image Viewer</string>
+  </property>
+  <widget class="QWidget" name="centralwidget" >
+   <property name="sizePolicy" >
+    <sizepolicy vsizetype="Maximum" hsizetype="Maximum" >
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <layout class="QGridLayout" >
+    <item row="0" column="1" >
+     <widget class="QGraphicsView" name="ImageView" >
+      <property name="mouseTracking" >
+       <bool>true</bool>
+      </property>
+      <property name="acceptDrops" >
+       <bool>false</bool>
+      </property>
+      <property name="dragMode" >
+       <enum>QGraphicsView::ScrollHandDrag</enum>
+      </property>
+      <property name="optimizationFlags" >
+       <enum>QGraphicsView::DontAdjustForAntialiasing</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="2" >
+     <widget class="QSlider" name="VSlider" >
+      <property name="orientation" >
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1" >
+     <widget class="QTextBrowser" name="ITextBrowser" >
+      <property name="enabled" >
+       <bool>true</bool>
+      </property>
+      <property name="acceptDrops" >
+       <bool>false</bool>
+      </property>
+      <property name="frameShape" >
+       <enum>QFrame::WinPanel</enum>
+      </property>
+      <property name="frameShadow" >
+       <enum>QFrame::Plain</enum>
+      </property>
+      <property name="lineWidth" >
+       <number>1</number>
+      </property>
+      <property name="openLinks" >
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="1" >
+     <widget class="Line" name="line" >
+      <property name="lineWidth" >
+       <number>2</number>
+      </property>
+      <property name="orientation" >
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusbar" />
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

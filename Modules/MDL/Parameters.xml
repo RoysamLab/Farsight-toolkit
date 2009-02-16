@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+<parameters>
+  <parameter
+  name="Input image"
+  description=
+"3D volume dataset with dimension indicated by the filename (x*y*z),
+with no header"
+  type="file"
+  default="Input.raw"
+  >
+  </parameter>
+  <parameter
+    name="Intensity threshold"
+    description=
+"Determine the background regions we are not interested in and set all the
+voxels below it to zero.  Use higher values for high background intensities."
+    type="number"
+    min="2"
+    max="7"
+    default="2"
+  >
+  </parameter>
+  <parameter
+    name="Connected components size"
+    description=
+"Used to remove objects smaller than this volume size.  Use higher values for
+larger noisy objects."
+    type="number"
+    min="10"
+    max="100"
+    default="100"
+  >
+  </parameter>
+  <parameter
+    name="Anisotropic Diff k"
+    description=
+"Anisotropic diffusion conduction coefficient (According to smoothing strength)"
+    type="number"
+    min="10"
+    max="800"
+    default="800"
+  >
+  </parameter>
+  <parameter
+    name="Anisotropic Diff t"
+    description=
+"Anisotropic diffusion iterations (Higher for more iterations)"
+    type="number"
+    min="2"
+    max="10"
+    default="2"
+  >
+  </parameter>
+  <parameter
+    name="Critical pts vector magnitude"
+    description=
+"When an interpolated vector in the sub-voxel position has magnitude below
+this value, we take it as a critical point.  Use higher values for more
+critical points."
+    type="number"
+    min="0.04"
+    max="0.15"
+    default="0.04"
+  >
+  </parameter>
+  <parameter
+    name="High curvature threshold"
+    description=
+"If the curvature at a position has value above the threshold parameter,
+and it is also a local maximum of curvature values, we take it as the
+high curvature seed point.  Higher values yield fewer seed points."
+    type="number"
+    min="0"
+    max="10"
+    default="0.2"
+  >
+  </parameter>
+  <parameter
+    name="IW-MST edge range"
+    description=
+"If the distance between 2 points is above this distance, we assume there
+is no edge between them in the graph structure before generating the IW-MST.
+Use higher values for a more connected graph."
+    type="number"
+    min="5"
+    max="15"
+    default="10"
+  >
+  </parameter>
+  <parameter
+    name="Graph prune size"
+    description=
+"Prune the tree structure when the trivial branches are shorter than this
+length.  Use higher values for pruning longer branches."
+    type="number"
+    min="2"
+    max="10"
+    default="10"
+  >
+  </parameter>
+  <parameter
+    name="Graph morph strength"
+    description=
+"In graph morphological method with iteration of graph erosion and dilation
+steps, we set the morphology strength as the number of iterations for graph
+erosion and dilation.  Use higher values to remove longer branches."
+    type="number"
+    min="30"
+    max="70"
+    default="50"
+  >
+  </parameter>
+  <parameter
+    name="MDL weight factor"
+    description=
+"Used to emphasize the function of either model description or the data
+description (tradeoff between coverage and conciseness).  Use higher values
+for more complex models."
+    type="number"
+    min="0.5"
+    max="0.95"
+    default="0.95"
+  >
+  </parameter>
+</parameters>

@@ -1,0 +1,190 @@
+//: Executable program to mosaic an image pair with given transformations
+//
+//  The input is an xml file containing the registration result. The
+//  images can be gray, rgb color or rgba color. The input images are
+//  assumed TIF images. The output montage is a color image with
+//  images montaged to different color channels. The usage is
+//  
+//  mosaic_images xml_file from_image to_image
+//
+//  where
+//    xml_file      Name of the xml_file containing the xforms
+//    from_image    Name of the from_image
+//    to_image      Name of the to_image
+//
+//  Optional arguments"
+//    -path         The path of the image files.
+//    -old_str      The old substr in the image names to be replaced
+//    -new_str      The replacement of the old substr
+//    -output       The output image name.
+//    -channel      Needed if the input image is rgb or rgba
+
+#include <vul/vul_arg.h>
+#include <vul/vul_file.h>
+#include <Common/fsc_channel_accessor.h>
+#include <fregl/fregl_joint_register.h>
+#include <fregl/fregl_space_transformer.h>
+#include <fregl/fregl_util.h>
+
+#include "itkTIFFImageIO.h"
+#include "itkImageFileReader.h"
+#include "itkRGBAPixel.h"
+#include "itkRGBPixel.h"
+#include "itkImageFileWriter.h"
+
+typedef unsigned char                    InputPixelType;
+typedef itk::Image< InputPixelType, 3 >  ImageType;
+typedef itk::RGBPixel< unsigned char >   OutputPixelType;
+typedef itk::Image< OutputPixelType, 3 > ColorImageType;
+typedef itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
+typedef itk::ImageRegionIterator< ColorImageType > RegionIterator;
+
+/*
+ImageType::Pointer
+read_image( std::string const & file_name, int channel )
+{
+  std::cout<<"Reading the image "<<file_name<<std::endl;
+
+  ImageType::Pointer image;
+
+  // Get pixel information
+  itk::TIFFImageIO::Pointer io = itk::TIFFImageIO::New();
+  io->SetFileName(file_name);
+  io->ReadImageInformation();
+  int pixel_type = (int)io->GetPixelType();
+  std::cout<<"Pixel Type = "<<pixel_type<<std::endl; //1 - grayscale, 2-RGB, 3-RGBA, etc.,
+
+  if (pixel_type == 3) { //RGBA pixel type
+    typedef fsc_channel_accessor<itk::RGBAPixel<unsigned char>,3 > ChannelAccType;
+    ChannelAccType channel_accessor(file_name);
+    image = channel_accessor.get_channel(ChannelAccType::channel_type(channel));
+  }
+  else if (pixel_type == 2) { //RGA pixel type
+    typedef fsc_channel_accessor<itk::RGBPixel<unsigned char>,3 > ChannelAccType;
+    ChannelAccType channel_accessor(file_name);
+    image = channel_accessor.get_channel(ChannelAccType::channel_type(channel));
+  }
+  else {// Gray image
+    typedef itk::ImageFileReader< ImageType > ReaderType;
+    ReaderType::Pointer reader = ReaderType::New();
+    reader->SetFileName( file_name );
+    try {
+      reader->Update();
+    }
+    catch(itk::ExceptionObject& e) {
+      vcl_cout << e << vcl_endl;
+    }
+    image =  reader->GetOutput();
+  }
+  return image;
+}
+*/
+
+int
+main(  int argc, char* argv[] )
+{
+  vul_arg< vcl_string > arg_xml_file  ( 0, "xml file for transforms" );
+  vul_arg< vcl_string > arg_file_from ( 0, "From_image name" );
+  vul_arg< vcl_string > arg_file_to   ( 0, "To_image name" );
+  vul_arg< int >        arg_channel   ("-channel", "The color channel (0-red, 1-green, 2-blue), or the image channel if the original image is lsm image.",0); 
+  vul_arg< vcl_string > arg_img_path  ("-path","The path of the image files.",".");
+  vul_arg< vcl_string > arg_old_str   ("-old_str","The old substr in the image names to be replaced");
+  vul_arg< vcl_string > arg_new_str   ("-new_str","The new substr in the image names");
+  vul_arg< vcl_string > arg_outfile   ("-output","The name of the otuput image", "fused_image.tif");
+
+  vul_arg< bool > arg_in_anchor       ("-in_anchor","The output image is the size of the anchor image", false);
+
+  vul_arg_parse( argc, argv );
+  
+
+  // Cosntruct the graph of joint registration
+  fregl_joint_register::Pointer joint_register = new fregl_joint_register( arg_xml_file() );
+  if (arg_old_str.set() && arg_new_str.set()) {
+    std::cout<<"Replace the name substr"<<std::endl;
+    joint_register->replace_image_name_substr(arg_old_str(), arg_new_str());
+  }
+
+ 
+  std::string from_image_name = arg_img_path()+std::string("/")+arg_file_from();
+  std::string to_image_name = arg_img_path()+std::string("/")+arg_file_to();
+  ImageType::Pointer from_image, to_image;
+  from_image = fregl_util_read_image( from_image_name, arg_channel.set(), arg_channel() );
+  to_image = fregl_util_read_image( to_image_name, arg_channel.set(), arg_channel() );
+
+  // Set the space transformer
+  //
+  fregl_space_transformer space_transformer(joint_register);
+  
+  bool overlap_only = true;
+  std::cout<<"Transform "<<arg_file_from()<<" to "<<arg_file_to()<<std::endl;
+  space_transformer.set_anchor( arg_file_to(), arg_in_anchor(), overlap_only );
+
+  // Locate the image indices of from_image and to_image
+  //
+  std::vector<std::string> image_names = space_transformer.image_names();
+  int to_index = -1;
+  int from_index = -1;
+  for (unsigned i = 0; i<image_names.size(); i++){
+    if (arg_file_from() == image_names[i]) 
+      from_index = i;
+    if (arg_file_to() == image_names[i]) 
+      to_index = i;
+  }
+  if (to_index<0) {
+    std::cerr<<"To_image is not found!!!"<<std::endl; 
+    return 0;
+  }
+  if (from_index<0) {
+    std::cerr<<"From_image is not found!!!"<<std::endl; 
+    return 0;
+  }
+  
+  // Transform the images
+  //
+  ImageType::Pointer xformed_from, xformed_to;
+  xformed_from = space_transformer.transform_image(from_image, from_index);
+  from_image = 0;
+  xformed_to = space_transformer.transform_image(to_image, to_index);
+  to_image = 0;
+
+  /*
+  typedef itk::ImageFileWriter< ImageType >  WriterType3D;
+
+  WriterType3D::Pointer writer3D = WriterType3D::New();
+  writer3D->SetFileName( arg_outfile() );
+  writer3D->SetInput( xformed_from );
+  writer3D->Update();
+  */
+  
+  // Fuse the images
+  ColorImageType::Pointer out_image = ColorImageType::New();
+  out_image->SetRegions( xformed_to->GetRequestedRegion() );
+  out_image->Allocate();
+  out_image->FillBuffer(itk::RGBPixel<unsigned char>(itk::NumericTraits<unsigned char>::Zero));
+  
+  RegionConstIterator inputIt1( xformed_from, xformed_from->GetRequestedRegion() );
+  RegionConstIterator inputIt2( xformed_to, xformed_to->GetRequestedRegion() );
+  RegionIterator outputIt( out_image, out_image->GetRequestedRegion() );
+
+  for ( inputIt1.GoToBegin(), inputIt2.GoToBegin(), outputIt.GoToBegin(); 
+        !inputIt1.IsAtEnd();  ++inputIt1, ++inputIt2, ++outputIt) {
+    OutputPixelType pix = outputIt.Get();
+    pix.SetRed( inputIt1.Get() );
+    pix.SetGreen( inputIt2.Get() );
+    outputIt.Set( pix );
+  }
+
+  // dump out the montage
+  typedef itk::ImageFileWriter< ColorImageType >  WriterType3D;
+  WriterType3D::Pointer writer3D = WriterType3D::New();
+  writer3D->SetFileName( arg_outfile() );
+  writer3D->SetInput( out_image );
+  writer3D->Update();
+
+  // dump the output to xml
+  std::string name_no_ext = vul_file::strip_extension( arg_outfile() );
+  std::string xml_name = name_no_ext+std::string(".xml");
+  space_transformer.write_xml( xml_name, arg_outfile(), std::string(""), true, arg_in_anchor(), arg_channel());
+
+  return 0;
+}

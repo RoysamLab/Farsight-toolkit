@@ -1,0 +1,21 @@
+SET( NUCLEARSEGMENTATION_SRCS
+  ftkNuclearSegmentation.cpp
+)
+
+SET( NUCLEARSEGMENTATION_HDRS
+  ftkNuclearSegmentation.h
+)
+
+
+ADD_LIBRARY( NuclearSegmentation
+            ${NUCLEARSEGMENTATION_SRCS}
+            ${NUCLEARSEGMENTATION_HDRS} 
+)
+
+SUBDIRS( yousef_core  Nuclear_Association)
+
+TARGET_LINK_LIBRARIES( NuclearSegmentation SegmentationCommon FTKImage Yousef_Nucleus_Seg Nuclear_Association )
+#INSTALL( TARGETS NuclearSegmentation DESTINATION . )
+
+
+SUBDIRS( exe )

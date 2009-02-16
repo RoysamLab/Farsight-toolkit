@@ -1,0 +1,1105 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<Trace Filename="spine2s.xml">
+<TraceLine ID="1" Type="1" Parent="-1">
+<TraceBit ID="1" X="69.39"  Y="14.31" Z="7.23"/>
+</TraceLine> <!--Dendrite ID=1-->
+<TraceLine ID="2" Type="5" Parent="1">
+<TraceBit ID="1" X="64.00"  Y="9.00" Z="5.78"/>
+<TraceBit ID="2" X="63.80"  Y="8.99" Z="5.80"/>
+<TraceBit ID="3" X="63.60"  Y="8.98" Z="5.81"/>
+<TraceBit ID="4" X="63.40"  Y="8.97" Z="5.83"/>
+<TraceBit ID="5" X="63.20"  Y="8.97" Z="5.84"/>
+<TraceBit ID="6" X="63.00"  Y="8.98" Z="5.85"/>
+<TraceBit ID="7" X="62.80"  Y="8.98" Z="5.85"/>
+<TraceBit ID="8" X="62.60"  Y="9.00" Z="5.86"/>
+<TraceBit ID="9" X="62.40"  Y="9.05" Z="5.89"/>
+<TraceBit ID="10" X="62.60"  Y="9.11" Z="5.89"/>
+<TraceBit ID="11" X="62.40"  Y="9.07" Z="5.88"/>
+<TraceBit ID="12" X="62.40"  Y="9.07" Z="5.88"/>
+</TraceLine> <!--Ending Spine ID=2-->
+<TraceLine ID="3" Type="1" Parent="1">
+<TraceBit ID="1" X="68.29"  Y="17.75" Z="7.12"/>
+<TraceBit ID="2" X="67.18"  Y="21.19" Z="7.02"/>
+<TraceBit ID="3" X="65.68"  Y="24.95" Z="7.05"/>
+<TraceBit ID="4" X="64.17"  Y="28.71" Z="7.09"/>
+</TraceLine> <!--Dendrite ID=3-->
+<TraceLine ID="4" Type="5" Parent="3">
+<TraceBit ID="1" X="53.00"  Y="37.00" Z="10.67"/>
+<TraceBit ID="2" X="51.56"  Y="37.34" Z="10.11"/>
+<TraceBit ID="3" X="51.39"  Y="37.26" Z="10.17"/>
+<TraceBit ID="4" X="51.35"  Y="37.25" Z="10.17"/>
+<TraceBit ID="5" X="51.59"  Y="37.37" Z="10.08"/>
+<TraceBit ID="6" X="51.51"  Y="37.33" Z="10.11"/>
+<TraceBit ID="7" X="51.53"  Y="37.34" Z="10.11"/>
+<TraceBit ID="8" X="51.58"  Y="37.36" Z="10.09"/>
+<TraceBit ID="9" X="51.45"  Y="37.26" Z="10.17"/>
+<TraceBit ID="10" X="51.38"  Y="37.26" Z="10.17"/>
+<TraceBit ID="11" X="51.37"  Y="37.26" Z="10.17"/>
+</TraceLine> <!--Ending Spine ID=4-->
+<TraceLine ID="5" Type="1" Parent="3">
+<TraceBit ID="1" X="63.61"  Y="33.06" Z="7.09"/>
+<TraceBit ID="2" X="63.06"  Y="37.41" Z="7.10"/>
+<TraceBit ID="3" X="63.39"  Y="39.63" Z="7.03"/>
+</TraceLine> <!--Dendrite ID=5-->
+<TraceLine ID="6" Type="5" Parent="5">
+<TraceBit ID="1" X="76.00"  Y="43.00" Z="5.33"/>
+<TraceBit ID="2" X="77.00"  Y="43.58" Z="5.55"/>
+<TraceBit ID="3" X="77.89"  Y="44.50" Z="5.85"/>
+<TraceBit ID="4" X="78.50"  Y="45.13" Z="6.30"/>
+<TraceBit ID="5" X="78.59"  Y="45.40" Z="6.74"/>
+<TraceBit ID="6" X="78.55"  Y="45.43" Z="7.18"/>
+<TraceBit ID="7" X="78.46"  Y="45.37" Z="7.63"/>
+<TraceBit ID="8" X="77.96"  Y="45.22" Z="8.07"/>
+<TraceBit ID="9" X="77.39"  Y="45.10" Z="8.52"/>
+<TraceBit ID="10" X="76.55"  Y="44.93" Z="8.84"/>
+<TraceBit ID="11" X="75.99"  Y="44.73" Z="9.02"/>
+</TraceLine> <!--Ending Spine ID=6-->
+<TraceLine ID="7" Type="1" Parent="5">
+<TraceBit ID="1" X="63.71"  Y="41.86" Z="6.96"/>
+<TraceBit ID="2" X="64.04"  Y="44.08" Z="6.89"/>
+<TraceBit ID="3" X="64.37"  Y="46.30" Z="6.82"/>
+</TraceLine> <!--Dendrite ID=7-->
+<TraceLine ID="8" Type="5" Parent="7">
+<TraceBit ID="1" X="57.00"  Y="48.00" Z="4.44"/>
+<TraceBit ID="2" X="56.70"  Y="48.21" Z="4.27"/>
+<TraceBit ID="3" X="56.55"  Y="48.61" Z="4.12"/>
+<TraceBit ID="4" X="56.49"  Y="49.01" Z="4.02"/>
+<TraceBit ID="5" X="56.44"  Y="49.41" Z="3.91"/>
+<TraceBit ID="6" X="56.35"  Y="49.81" Z="3.76"/>
+<TraceBit ID="7" X="56.36"  Y="49.81" Z="3.79"/>
+<TraceBit ID="8" X="56.40"  Y="49.88" Z="3.79"/>
+<TraceBit ID="9" X="56.42"  Y="49.88" Z="3.79"/>
+<TraceBit ID="10" X="56.44"  Y="49.88" Z="3.79"/>
+<TraceBit ID="11" X="56.45"  Y="49.88" Z="3.79"/>
+<TraceBit ID="12" X="56.45"  Y="49.88" Z="3.78"/>
+<TraceBit ID="13" X="56.25"  Y="49.91" Z="3.70"/>
+</TraceLine> <!--Ending Spine ID=8-->
+<TraceLine ID="9" Type="1" Parent="7">
+<TraceBit ID="1" X="64.19"  Y="50.75" Z="6.80"/>
+</TraceLine> <!--Dendrite ID=9-->
+<TraceLine ID="10" Type="5" Parent="9">
+<TraceBit ID="1" X="56.00"  Y="52.00" Z="9.78"/>
+<TraceBit ID="2" X="55.31"  Y="51.34" Z="10.08"/>
+<TraceBit ID="3" X="55.07"  Y="50.54" Z="10.17"/>
+<TraceBit ID="4" X="54.94"  Y="49.74" Z="10.19"/>
+<TraceBit ID="5" X="54.61"  Y="48.94" Z="10.19"/>
+<TraceBit ID="6" X="54.44"  Y="48.14" Z="10.15"/>
+<TraceBit ID="7" X="54.44"  Y="47.34" Z="10.08"/>
+<TraceBit ID="8" X="54.50"  Y="47.00" Z="10.01"/>
+<TraceBit ID="9" X="54.52"  Y="47.00" Z="10.02"/>
+<TraceBit ID="10" X="54.52"  Y="46.98" Z="10.02"/>
+<TraceBit ID="11" X="54.32"  Y="46.97" Z="10.03"/>
+</TraceLine> <!--Ending Spine ID=10-->
+<TraceLine ID="11" Type="1" Parent="9">
+<TraceBit ID="1" X="64.00"  Y="55.19" Z="6.79"/>
+<TraceBit ID="2" X="63.41"  Y="61.70" Z="6.85"/>
+<TraceBit ID="3" X="64.26"  Y="68.20" Z="6.65"/>
+<TraceBit ID="4" X="65.85"  Y="72.99" Z="6.71"/>
+<TraceBit ID="5" X="67.58"  Y="77.46" Z="6.77"/>
+<TraceBit ID="6" X="69.24"  Y="81.78" Z="6.82"/>
+<TraceBit ID="7" X="70.82"  Y="86.03" Z="6.85"/>
+<TraceBit ID="8" X="72.15"  Y="90.27" Z="6.87"/>
+<TraceBit ID="9" X="73.15"  Y="94.66" Z="6.91"/>
+<TraceBit ID="10" X="73.79"  Y="99.26" Z="6.97"/>
+<TraceBit ID="11" X="74.13"  Y="104.37" Z="7.14"/>
+<TraceBit ID="12" X="74.77"  Y="110.36" Z="7.43"/>
+<TraceBit ID="13" X="75.41"  Y="113.77" Z="7.67"/>
+<TraceBit ID="14" X="76.05"  Y="117.18" Z="7.91"/>
+<TraceBit ID="15" X="77.09"  Y="121.00" Z="8.20"/>
+</TraceLine> <!--Dendrite ID=11-->
+<TraceLine ID="12" Type="5" Parent="11">
+<TraceBit ID="1" X="72.00"  Y="126.00" Z="10.67"/>
+<TraceBit ID="2" X="70.41"  Y="126.24" Z="10.31"/>
+<TraceBit ID="3" X="70.38"  Y="126.08" Z="10.25"/>
+<TraceBit ID="4" X="70.27"  Y="126.14" Z="10.28"/>
+<TraceBit ID="5" X="70.56"  Y="126.08" Z="10.24"/>
+<TraceBit ID="6" X="70.53"  Y="126.25" Z="10.31"/>
+<TraceBit ID="7" X="70.36"  Y="126.24" Z="10.31"/>
+<TraceBit ID="8" X="70.27"  Y="126.15" Z="10.28"/>
+<TraceBit ID="9" X="70.36"  Y="126.08" Z="10.25"/>
+<TraceBit ID="10" X="70.46"  Y="126.12" Z="10.26"/>
+<TraceBit ID="11" X="70.59"  Y="126.05" Z="10.23"/>
+</TraceLine> <!--Ending Spine ID=12-->
+<TraceLine ID="13" Type="1" Parent="11">
+<TraceBit ID="1" X="78.12"  Y="124.82" Z="8.48"/>
+</TraceLine> <!--Dendrite ID=13-->
+<TraceLine ID="14" Type="5" Parent="13">
+<TraceBit ID="1" X="83.00"  Y="119.00" Z="10.22"/>
+</TraceLine> <!--Ending Spine ID=14-->
+<TraceLine ID="15" Type="1" Parent="13">
+<TraceBit ID="1" X="78.95"  Y="128.74" Z="8.63"/>
+<TraceBit ID="2" X="79.78"  Y="132.66" Z="8.77"/>
+</TraceLine> <!--Dendrite ID=15-->
+<TraceLine ID="16" Type="5" Parent="15">
+<TraceBit ID="1" X="74.00"  Y="143.00" Z="8.44"/>
+<TraceBit ID="2" X="74.22"  Y="144.00" Z="8.54"/>
+<TraceBit ID="3" X="74.41"  Y="145.00" Z="8.64"/>
+<TraceBit ID="4" X="74.44"  Y="146.00" Z="8.73"/>
+<TraceBit ID="5" X="74.49"  Y="147.00" Z="8.79"/>
+<TraceBit ID="6" X="74.78"  Y="148.00" Z="8.79"/>
+<TraceBit ID="7" X="75.30"  Y="149.00" Z="8.70"/>
+<TraceBit ID="8" X="75.74"  Y="150.00" Z="8.54"/>
+<TraceBit ID="9" X="76.40"  Y="151.00" Z="8.28"/>
+<TraceBit ID="10" X="76.81"  Y="151.70" Z="7.85"/>
+<TraceBit ID="11" X="77.00"  Y="151.84" Z="7.81"/>
+</TraceLine> <!--Ending Spine ID=16-->
+<TraceLine ID="17" Type="1" Parent="15">
+<TraceBit ID="1" X="80.73"  Y="136.30" Z="8.81"/>
+<TraceBit ID="2" X="81.68"  Y="139.94" Z="8.85"/>
+<TraceBit ID="3" X="83.27"  Y="143.25" Z="8.90"/>
+<TraceBit ID="4" X="84.86"  Y="146.57" Z="8.95"/>
+<TraceBit ID="5" X="87.43"  Y="152.60" Z="9.13"/>
+<TraceBit ID="6" X="89.23"  Y="158.60" Z="9.26"/>
+<TraceBit ID="7" X="91.07"  Y="164.72" Z="9.31"/>
+</TraceLine> <!--Dendrite ID=17-->
+<TraceLine ID="18" Type="5" Parent="17">
+<TraceBit ID="1" X="91.00"  Y="176.00" Z="10.22"/>
+<TraceBit ID="2" X="90.40"  Y="176.57" Z="10.19"/>
+<TraceBit ID="3" X="89.80"  Y="177.08" Z="10.09"/>
+<TraceBit ID="4" X="89.20"  Y="177.41" Z="9.88"/>
+<TraceBit ID="5" X="88.72"  Y="177.42" Z="9.61"/>
+<TraceBit ID="6" X="88.47"  Y="177.35" Z="9.35"/>
+<TraceBit ID="7" X="88.34"  Y="177.30" Z="9.08"/>
+<TraceBit ID="8" X="88.25"  Y="177.27" Z="8.81"/>
+<TraceBit ID="9" X="88.20"  Y="177.44" Z="8.55"/>
+<TraceBit ID="10" X="88.23"  Y="177.31" Z="8.64"/>
+<TraceBit ID="11" X="88.17"  Y="177.48" Z="8.56"/>
+<TraceBit ID="12" X="88.22"  Y="177.28" Z="8.58"/>
+</TraceLine> <!--Ending Spine ID=18-->
+<TraceLine ID="19" Type="1" Parent="17">
+<TraceBit ID="1" X="93.72"  Y="170.64" Z="9.28"/>
+<TraceBit ID="2" X="97.74"  Y="175.36" Z="9.38"/>
+<TraceBit ID="3" X="101.41"  Y="178.88" Z="9.48"/>
+<TraceBit ID="4" X="104.96"  Y="181.93" Z="9.53"/>
+<TraceBit ID="5" X="108.35"  Y="185.01" Z="9.57"/>
+<TraceBit ID="6" X="111.82"  Y="188.25" Z="9.58"/>
+<TraceBit ID="7" X="115.66"  Y="191.94" Z="9.52"/>
+</TraceLine> <!--Dendrite ID=19-->
+<TraceLine ID="20" Type="5" Parent="19">
+<TraceBit ID="1" X="119.00"  Y="183.00" Z="10.22"/>
+<TraceBit ID="2" X="120.00"  Y="183.03" Z="10.21"/>
+<TraceBit ID="3" X="121.00"  Y="183.20" Z="10.14"/>
+<TraceBit ID="4" X="122.00"  Y="183.46" Z="10.01"/>
+<TraceBit ID="5" X="123.00"  Y="183.67" Z="9.78"/>
+<TraceBit ID="6" X="124.00"  Y="183.69" Z="9.47"/>
+<TraceBit ID="7" X="125.00"  Y="183.56" Z="9.07"/>
+<TraceBit ID="8" X="125.87"  Y="183.43" Z="8.63"/>
+<TraceBit ID="9" X="126.47"  Y="183.34" Z="8.18"/>
+<TraceBit ID="10" X="126.77"  Y="183.29" Z="7.74"/>
+<TraceBit ID="11" X="126.84"  Y="183.27" Z="7.65"/>
+</TraceLine> <!--Ending Spine ID=20-->
+<TraceLine ID="21" Type="1" Parent="19">
+<TraceBit ID="1" X="119.30"  Y="196.92" Z="9.53"/>
+</TraceLine> <!--Dendrite ID=21-->
+<TraceLine ID="22" Type="5" Parent="21">
+<TraceBit ID="1" X="112.00"  Y="204.00" Z="9.78"/>
+<TraceBit ID="2" X="110.64"  Y="205.30" Z="10.23"/>
+<TraceBit ID="3" X="109.24"  Y="206.15" Z="10.41"/>
+<TraceBit ID="4" X="107.84"  Y="206.80" Z="10.49"/>
+<TraceBit ID="5" X="106.44"  Y="207.31" Z="10.52"/>
+<TraceBit ID="6" X="105.04"  Y="207.69" Z="10.54"/>
+<TraceBit ID="7" X="103.64"  Y="208.08" Z="10.58"/>
+<TraceBit ID="8" X="102.24"  Y="208.62" Z="10.64"/>
+<TraceBit ID="9" X="100.84"  Y="209.32" Z="10.75"/>
+<TraceBit ID="10" X="99.44"  Y="209.80" Z="10.91"/>
+<TraceBit ID="11" X="98.04"  Y="210.07" Z="11.03"/>
+</TraceLine> <!--Ending Spine ID=22-->
+<TraceLine ID="23" Type="1" Parent="21">
+<TraceBit ID="1" X="123.17"  Y="202.31" Z="9.42"/>
+</TraceLine> <!--Dendrite ID=23-->
+<TraceLine ID="24" Type="5" Parent="23">
+<TraceBit ID="1" X="130.00"  Y="202.00" Z="11.11"/>
+<TraceBit ID="2" X="130.11"  Y="201.80" Z="11.13"/>
+<TraceBit ID="3" X="130.21"  Y="201.60" Z="11.16"/>
+<TraceBit ID="4" X="130.30"  Y="201.40" Z="11.20"/>
+<TraceBit ID="5" X="130.37"  Y="201.20" Z="11.24"/>
+<TraceBit ID="6" X="130.41"  Y="201.00" Z="11.27"/>
+<TraceBit ID="7" X="130.39"  Y="200.80" Z="11.29"/>
+<TraceBit ID="8" X="130.43"  Y="200.60" Z="11.30"/>
+<TraceBit ID="9" X="130.45"  Y="200.80" Z="11.25"/>
+<TraceBit ID="10" X="130.36"  Y="200.60" Z="11.32"/>
+<TraceBit ID="11" X="130.56"  Y="200.65" Z="11.28"/>
+<TraceBit ID="12" X="130.36"  Y="200.70" Z="11.28"/>
+<TraceBit ID="13" X="130.56"  Y="200.55" Z="11.32"/>
+<TraceBit ID="14" X="130.36"  Y="200.70" Z="11.28"/>
+<TraceBit ID="15" X="130.56"  Y="200.54" Z="11.32"/>
+<TraceBit ID="16" X="130.36"  Y="200.71" Z="11.28"/>
+<TraceBit ID="17" X="130.56"  Y="200.53" Z="11.32"/>
+<TraceBit ID="18" X="130.56"  Y="200.53" Z="11.32"/>
+</TraceLine> <!--Ending Spine ID=24-->
+<TraceLine ID="25" Type="1" Parent="23">
+<TraceBit ID="1" X="126.81"  Y="207.97" Z="9.40"/>
+<TraceBit ID="2" X="129.06"  Y="213.18" Z="9.16"/>
+<TraceBit ID="3" X="130.38"  Y="218.07" Z="8.90"/>
+<TraceBit ID="4" X="131.09"  Y="222.80" Z="8.67"/>
+<TraceBit ID="5" X="131.58"  Y="227.44" Z="8.47"/>
+<TraceBit ID="6" X="131.57"  Y="232.19" Z="8.36"/>
+<TraceBit ID="7" X="131.24"  Y="237.02" Z="8.36"/>
+<TraceBit ID="8" X="130.31"  Y="242.27" Z="8.44"/>
+</TraceLine> <!--Dendrite ID=25-->
+<TraceLine ID="26" Type="5" Parent="25">
+<TraceBit ID="1" X="124.00"  Y="244.00" Z="8.89"/>
+<TraceBit ID="2" X="123.82"  Y="243.80" Z="8.80"/>
+<TraceBit ID="3" X="123.64"  Y="243.64" Z="8.71"/>
+<TraceBit ID="4" X="123.46"  Y="243.52" Z="8.62"/>
+<TraceBit ID="5" X="123.29"  Y="243.42" Z="8.53"/>
+<TraceBit ID="6" X="123.11"  Y="243.34" Z="8.45"/>
+<TraceBit ID="7" X="122.94"  Y="243.29" Z="8.36"/>
+<TraceBit ID="8" X="122.74"  Y="243.24" Z="8.27"/>
+<TraceBit ID="9" X="122.54"  Y="243.19" Z="8.19"/>
+<TraceBit ID="10" X="122.36"  Y="243.17" Z="8.10"/>
+<TraceBit ID="11" X="122.56"  Y="243.21" Z="8.17"/>
+<TraceBit ID="12" X="122.36"  Y="243.16" Z="8.13"/>
+<TraceBit ID="13" X="122.56"  Y="243.21" Z="8.16"/>
+<TraceBit ID="14" X="122.36"  Y="243.16" Z="8.13"/>
+<TraceBit ID="15" X="122.56"  Y="243.21" Z="8.16"/>
+<TraceBit ID="16" X="122.36"  Y="243.17" Z="8.14"/>
+<TraceBit ID="17" X="122.36"  Y="243.17" Z="8.14"/>
+</TraceLine> <!--Ending Spine ID=26-->
+<TraceLine ID="27" Type="1" Parent="25">
+<TraceBit ID="1" X="129.05"  Y="247.81" Z="8.51"/>
+<TraceBit ID="2" X="128.21"  Y="253.92" Z="8.46"/>
+</TraceLine> <!--Dendrite ID=27-->
+<TraceLine ID="28" Type="5" Parent="27">
+<TraceBit ID="1" X="136.00"  Y="247.00" Z="8.00"/>
+<TraceBit ID="2" X="136.80"  Y="247.58" Z="7.94"/>
+<TraceBit ID="3" X="137.60"  Y="248.24" Z="7.96"/>
+<TraceBit ID="4" X="138.36"  Y="249.04" Z="8.00"/>
+<TraceBit ID="5" X="139.13"  Y="249.84" Z="7.97"/>
+<TraceBit ID="6" X="139.90"  Y="250.64" Z="7.87"/>
+<TraceBit ID="7" X="140.65"  Y="251.44" Z="7.68"/>
+<TraceBit ID="8" X="141.39"  Y="252.24" Z="7.44"/>
+<TraceBit ID="9" X="142.13"  Y="253.04" Z="7.18"/>
+<TraceBit ID="10" X="142.68"  Y="253.68" Z="6.84"/>
+<TraceBit ID="11" X="142.86"  Y="254.00" Z="6.49"/>
+<TraceBit ID="12" X="142.89"  Y="254.40" Z="6.40"/>
+</TraceLine> <!--Ending Spine ID=28-->
+<TraceLine ID="29" Type="5" Parent="27">
+<TraceBit ID="1" X="134.00"  Y="259.00" Z="8.89"/>
+<TraceBit ID="2" X="134.40"  Y="259.03" Z="8.85"/>
+<TraceBit ID="3" X="134.80"  Y="259.06" Z="8.81"/>
+<TraceBit ID="4" X="135.20"  Y="259.08" Z="8.77"/>
+<TraceBit ID="5" X="135.60"  Y="259.12" Z="8.71"/>
+<TraceBit ID="6" X="136.00"  Y="259.18" Z="8.61"/>
+<TraceBit ID="7" X="136.37"  Y="259.26" Z="8.46"/>
+<TraceBit ID="8" X="136.48"  Y="259.34" Z="8.28"/>
+<TraceBit ID="9" X="136.47"  Y="259.39" Z="8.11"/>
+<TraceBit ID="10" X="136.34"  Y="259.42" Z="8.12"/>
+<TraceBit ID="11" X="136.34"  Y="259.37" Z="8.18"/>
+<TraceBit ID="12" X="136.34"  Y="259.39" Z="8.16"/>
+<TraceBit ID="13" X="136.34"  Y="259.38" Z="8.16"/>
+</TraceLine> <!--Ending Spine ID=29-->
+<TraceLine ID="30" Type="1" Parent="27">
+<TraceBit ID="1" X="127.68"  Y="260.27" Z="8.19"/>
+</TraceLine> <!--Dendrite ID=30-->
+<TraceLine ID="31" Type="5" Parent="30">
+<TraceBit ID="1" X="134.00"  Y="271.00" Z="6.67"/>
+<TraceBit ID="2" X="134.40"  Y="271.07" Z="6.67"/>
+<TraceBit ID="3" X="134.80"  Y="271.13" Z="6.68"/>
+<TraceBit ID="4" X="135.20"  Y="271.18" Z="6.69"/>
+<TraceBit ID="5" X="135.60"  Y="271.23" Z="6.70"/>
+<TraceBit ID="6" X="136.00"  Y="271.27" Z="6.71"/>
+<TraceBit ID="7" X="136.40"  Y="271.31" Z="6.73"/>
+<TraceBit ID="8" X="136.80"  Y="271.37" Z="6.76"/>
+<TraceBit ID="9" X="137.20"  Y="271.43" Z="6.80"/>
+<TraceBit ID="10" X="137.60"  Y="271.59" Z="6.92"/>
+<TraceBit ID="11" X="137.62"  Y="271.72" Z="7.10"/>
+<TraceBit ID="12" X="137.77"  Y="271.78" Z="7.24"/>
+<TraceBit ID="13" X="137.77"  Y="271.76" Z="7.20"/>
+</TraceLine> <!--Ending Spine ID=31-->
+<TraceLine ID="32" Type="1" Parent="30">
+<TraceBit ID="1" X="127.77"  Y="266.56" Z="7.90"/>
+</TraceLine> <!--Dendrite ID=32-->
+<TraceLine ID="33" Type="5" Parent="32">
+<TraceBit ID="1" X="123.00"  Y="277.00" Z="9.78"/>
+<TraceBit ID="2" X="122.40"  Y="276.90" Z="9.82"/>
+<TraceBit ID="3" X="121.80"  Y="276.79" Z="9.88"/>
+<TraceBit ID="4" X="121.20"  Y="276.88" Z="9.80"/>
+<TraceBit ID="5" X="120.62"  Y="277.21" Z="9.56"/>
+<TraceBit ID="6" X="120.04"  Y="277.47" Z="9.30"/>
+<TraceBit ID="7" X="119.58"  Y="277.67" Z="9.03"/>
+<TraceBit ID="8" X="119.09"  Y="277.83" Z="8.77"/>
+<TraceBit ID="9" X="118.55"  Y="277.94" Z="8.50"/>
+<TraceBit ID="10" X="117.96"  Y="278.01" Z="8.27"/>
+<TraceBit ID="11" X="117.36"  Y="278.08" Z="8.15"/>
+<TraceBit ID="12" X="117.49"  Y="278.11" Z="8.23"/>
+</TraceLine> <!--Ending Spine ID=33-->
+<TraceLine ID="34" Type="1" Parent="32">
+<TraceBit ID="1" X="127.90"  Y="272.99" Z="7.70"/>
+<TraceBit ID="2" X="127.96"  Y="279.73" Z="7.68"/>
+<TraceBit ID="3" X="128.73"  Y="286.20" Z="7.55"/>
+<TraceBit ID="4" X="131.31"  Y="291.70" Z="7.19"/>
+<TraceBit ID="5" X="133.26"  Y="297.51" Z="6.97"/>
+<TraceBit ID="6" X="133.45"  Y="304.22" Z="6.84"/>
+<TraceBit ID="7" X="133.03"  Y="308.61" Z="6.93"/>
+<TraceBit ID="8" X="132.60"  Y="313.01" Z="7.02"/>
+<TraceBit ID="9" X="132.49"  Y="315.53" Z="7.09"/>
+<TraceBit ID="10" X="132.37"  Y="318.05" Z="7.16"/>
+<TraceBit ID="11" X="132.25"  Y="320.58" Z="7.23"/>
+<TraceBit ID="12" X="132.13"  Y="323.10" Z="7.30"/>
+</TraceLine> <!--Dendrite ID=34-->
+<TraceLine ID="35" Type="5" Parent="34">
+<TraceBit ID="1" X="124.00"  Y="323.00" Z="9.78"/>
+<TraceBit ID="2" X="121.80"  Y="323.01" Z="10.01"/>
+<TraceBit ID="3" X="119.82"  Y="324.80" Z="9.49"/>
+<TraceBit ID="4" X="117.76"  Y="326.52" Z="8.80"/>
+<TraceBit ID="5" X="115.56"  Y="327.16" Z="8.42"/>
+<TraceBit ID="6" X="113.36"  Y="328.21" Z="8.11"/>
+<TraceBit ID="7" X="111.16"  Y="329.55" Z="7.77"/>
+<TraceBit ID="8" X="108.96"  Y="330.90" Z="7.46"/>
+<TraceBit ID="9" X="106.76"  Y="331.65" Z="7.24"/>
+<TraceBit ID="10" X="104.56"  Y="332.01" Z="6.99"/>
+<TraceBit ID="11" X="102.36"  Y="332.24" Z="6.83"/>
+</TraceLine> <!--Ending Spine ID=35-->
+<TraceLine ID="36" Type="1" Parent="34">
+<TraceBit ID="1" X="133.35"  Y="325.46" Z="7.28"/>
+<TraceBit ID="2" X="134.57"  Y="327.82" Z="7.27"/>
+<TraceBit ID="3" X="135.78"  Y="330.18" Z="7.26"/>
+<TraceBit ID="4" X="137.00"  Y="332.54" Z="7.24"/>
+<TraceBit ID="5" X="137.84"  Y="334.78" Z="7.22"/>
+</TraceLine> <!--Dendrite ID=36-->
+<TraceLine ID="37" Type="5" Parent="36">
+<TraceBit ID="1" X="153.00"  Y="339.00" Z="7.56"/>
+<TraceBit ID="2" X="152.97"  Y="338.20" Z="7.63"/>
+<TraceBit ID="3" X="152.81"  Y="337.40" Z="7.79"/>
+<TraceBit ID="4" X="152.51"  Y="336.60" Z="7.84"/>
+<TraceBit ID="5" X="152.49"  Y="335.80" Z="7.88"/>
+<TraceBit ID="6" X="152.37"  Y="335.00" Z="7.91"/>
+<TraceBit ID="7" X="152.03"  Y="334.20" Z="7.92"/>
+<TraceBit ID="8" X="151.45"  Y="333.40" Z="7.93"/>
+<TraceBit ID="9" X="151.19"  Y="332.60" Z="7.93"/>
+<TraceBit ID="10" X="150.56"  Y="331.80" Z="7.93"/>
+<TraceBit ID="11" X="149.77"  Y="331.26" Z="7.95"/>
+<TraceBit ID="12" X="149.43"  Y="331.13" Z="7.98"/>
+</TraceLine> <!--Ending Spine ID=37-->
+<TraceLine ID="38" Type="1" Parent="36">
+<TraceBit ID="1" X="138.68"  Y="337.01" Z="7.19"/>
+<TraceBit ID="2" X="139.52"  Y="339.25" Z="7.17"/>
+<TraceBit ID="3" X="140.36"  Y="341.49" Z="7.14"/>
+<TraceBit ID="4" X="139.61"  Y="345.28" Z="7.08"/>
+</TraceLine> <!--Dendrite ID=38-->
+<TraceLine ID="39" Type="5" Parent="38">
+<TraceBit ID="1" X="146.00"  Y="358.00" Z="7.11"/>
+</TraceLine> <!--Ending Spine ID=39-->
+<TraceLine ID="40" Type="1" Parent="38">
+<TraceBit ID="1" X="138.85"  Y="349.08" Z="7.03"/>
+<TraceBit ID="2" X="137.90"  Y="355.50" Z="6.80"/>
+</TraceLine> <!--Dendrite ID=40-->
+<TraceLine ID="41" Type="5" Parent="40">
+<TraceBit ID="1" X="142.00"  Y="364.00" Z="6.67"/>
+<TraceBit ID="2" X="142.40"  Y="363.92" Z="6.68"/>
+<TraceBit ID="3" X="142.80"  Y="363.85" Z="6.70"/>
+<TraceBit ID="4" X="143.20"  Y="363.78" Z="6.72"/>
+<TraceBit ID="5" X="143.60"  Y="363.72" Z="6.74"/>
+<TraceBit ID="6" X="144.00"  Y="363.65" Z="6.76"/>
+<TraceBit ID="7" X="144.40"  Y="363.57" Z="6.78"/>
+<TraceBit ID="8" X="144.80"  Y="363.42" Z="6.84"/>
+<TraceBit ID="9" X="145.20"  Y="363.35" Z="6.84"/>
+<TraceBit ID="10" X="145.07"  Y="363.31" Z="6.80"/>
+<TraceBit ID="11" X="145.04"  Y="363.32" Z="6.80"/>
+</TraceLine> <!--Ending Spine ID=41-->
+<TraceLine ID="42" Type="5" Parent="40">
+<TraceBit ID="1" X="132.00"  Y="359.00" Z="7.56"/>
+<TraceBit ID="2" X="132.01"  Y="359.00" Z="7.73"/>
+<TraceBit ID="3" X="132.03"  Y="359.00" Z="7.91"/>
+<TraceBit ID="4" X="132.07"  Y="359.00" Z="8.09"/>
+<TraceBit ID="5" X="132.11"  Y="359.01" Z="8.27"/>
+<TraceBit ID="6" X="132.17"  Y="359.03" Z="8.44"/>
+<TraceBit ID="7" X="132.26"  Y="359.06" Z="8.62"/>
+<TraceBit ID="8" X="132.41"  Y="359.07" Z="8.80"/>
+<TraceBit ID="9" X="132.49"  Y="359.02" Z="8.98"/>
+<TraceBit ID="10" X="132.55"  Y="359.02" Z="8.94"/>
+<TraceBit ID="11" X="132.55"  Y="359.02" Z="8.96"/>
+</TraceLine> <!--Ending Spine ID=42-->
+<TraceLine ID="43" Type="1" Parent="40">
+<TraceBit ID="1" X="137.26"  Y="360.65" Z="6.60"/>
+<TraceBit ID="2" X="136.54"  Y="365.57" Z="6.45"/>
+<TraceBit ID="3" X="136.01"  Y="370.47" Z="6.36"/>
+<TraceBit ID="4" X="135.51"  Y="375.45" Z="6.20"/>
+<TraceBit ID="5" X="135.57"  Y="380.39" Z="6.05"/>
+<TraceBit ID="6" X="136.42"  Y="385.54" Z="5.87"/>
+<TraceBit ID="7" X="137.62"  Y="390.71" Z="5.60"/>
+</TraceLine> <!--Dendrite ID=43-->
+<TraceLine ID="44" Type="5" Parent="43">
+<TraceBit ID="1" X="130.00"  Y="383.00" Z="3.56"/>
+<TraceBit ID="2" X="129.77"  Y="383.40" Z="3.55"/>
+<TraceBit ID="3" X="129.69"  Y="383.80" Z="3.52"/>
+<TraceBit ID="4" X="129.68"  Y="384.20" Z="3.49"/>
+<TraceBit ID="5" X="129.66"  Y="384.60" Z="3.45"/>
+<TraceBit ID="6" X="129.62"  Y="385.00" Z="3.41"/>
+<TraceBit ID="7" X="129.56"  Y="385.40" Z="3.35"/>
+<TraceBit ID="8" X="129.47"  Y="385.80" Z="3.29"/>
+<TraceBit ID="9" X="129.43"  Y="386.20" Z="3.24"/>
+<TraceBit ID="10" X="129.43"  Y="386.20" Z="3.24"/>
+<TraceBit ID="11" X="129.41"  Y="386.20" Z="3.24"/>
+<TraceBit ID="12" X="129.37"  Y="386.21" Z="3.24"/>
+<TraceBit ID="13" X="129.37"  Y="386.22" Z="3.24"/>
+<TraceBit ID="14" X="129.57"  Y="386.28" Z="3.25"/>
+</TraceLine> <!--Ending Spine ID=44-->
+<TraceLine ID="45" Type="1" Parent="43">
+<TraceBit ID="1" X="138.40"  Y="396.26" Z="5.30"/>
+<TraceBit ID="2" X="138.77"  Y="403.03" Z="5.14"/>
+</TraceLine> <!--Dendrite ID=45-->
+<TraceLine ID="46" Type="5" Parent="45">
+<TraceBit ID="1" X="131.00"  Y="413.00" Z="3.11"/>
+<TraceBit ID="2" X="131.44"  Y="413.60" Z="2.94"/>
+<TraceBit ID="3" X="131.55"  Y="414.20" Z="2.83"/>
+<TraceBit ID="4" X="131.55"  Y="414.80" Z="2.76"/>
+<TraceBit ID="5" X="131.53"  Y="415.40" Z="2.69"/>
+<TraceBit ID="6" X="131.49"  Y="416.00" Z="2.61"/>
+<TraceBit ID="7" X="131.46"  Y="416.60" Z="2.53"/>
+<TraceBit ID="8" X="131.44"  Y="417.20" Z="2.46"/>
+<TraceBit ID="9" X="131.45"  Y="417.80" Z="2.37"/>
+<TraceBit ID="10" X="131.61"  Y="417.91" Z="2.33"/>
+<TraceBit ID="11" X="131.41"  Y="417.84" Z="2.36"/>
+</TraceLine> <!--Ending Spine ID=46-->
+<TraceLine ID="47" Type="1" Parent="45">
+<TraceBit ID="1" X="138.70"  Y="407.11" Z="5.03"/>
+</TraceLine> <!--Dendrite ID=47-->
+<TraceLine ID="48" Type="5" Parent="47">
+<TraceBit ID="1" X="131.00"  Y="415.00" Z="6.67"/>
+<TraceBit ID="2" X="130.77"  Y="414.99" Z="6.84"/>
+<TraceBit ID="3" X="130.62"  Y="414.99" Z="7.02"/>
+<TraceBit ID="4" X="130.50"  Y="414.99" Z="7.20"/>
+<TraceBit ID="5" X="130.42"  Y="414.98" Z="7.38"/>
+<TraceBit ID="6" X="130.63"  Y="415.01" Z="7.42"/>
+<TraceBit ID="7" X="130.63"  Y="414.96" Z="7.45"/>
+<TraceBit ID="8" X="130.63"  Y="415.03" Z="7.42"/>
+<TraceBit ID="9" X="130.63"  Y="414.92" Z="7.46"/>
+<TraceBit ID="10" X="130.63"  Y="415.10" Z="7.40"/>
+<TraceBit ID="11" X="130.57"  Y="414.84" Z="7.48"/>
+<TraceBit ID="12" X="130.57"  Y="415.00" Z="7.44"/>
+</TraceLine> <!--Ending Spine ID=48-->
+<TraceLine ID="49" Type="1" Parent="47">
+<TraceBit ID="1" X="138.64"  Y="411.20" Z="4.93"/>
+<TraceBit ID="2" X="138.51"  Y="415.47" Z="4.98"/>
+<TraceBit ID="3" X="138.39"  Y="419.73" Z="5.03"/>
+</TraceLine> <!--Dendrite ID=49-->
+<TraceLine ID="50" Type="5" Parent="49">
+<TraceBit ID="1" X="131.00"  Y="429.00" Z="4.89"/>
+<TraceBit ID="2" X="129.80"  Y="429.57" Z="4.99"/>
+<TraceBit ID="3" X="128.60"  Y="429.64" Z="4.99"/>
+<TraceBit ID="4" X="127.40"  Y="429.39" Z="4.95"/>
+<TraceBit ID="5" X="126.20"  Y="428.91" Z="4.88"/>
+<TraceBit ID="6" X="125.00"  Y="428.29" Z="4.77"/>
+<TraceBit ID="7" X="123.80"  Y="427.59" Z="4.67"/>
+<TraceBit ID="8" X="122.60"  Y="426.72" Z="4.60"/>
+<TraceBit ID="9" X="122.26"  Y="426.35" Z="4.57"/>
+<TraceBit ID="10" X="122.27"  Y="426.36" Z="4.55"/>
+<TraceBit ID="11" X="122.31"  Y="426.49" Z="4.64"/>
+</TraceLine> <!--Ending Spine ID=50-->
+<TraceLine ID="51" Type="1" Parent="49">
+<TraceBit ID="1" X="139.33"  Y="423.91" Z="5.06"/>
+<TraceBit ID="2" X="140.26"  Y="428.09" Z="5.08"/>
+<TraceBit ID="3" X="141.70"  Y="433.71" Z="5.11"/>
+<TraceBit ID="4" X="142.70"  Y="438.49" Z="5.22"/>
+<TraceBit ID="5" X="143.38"  Y="443.26" Z="5.26"/>
+</TraceLine> <!--Dendrite ID=51-->
+<TraceLine ID="52" Type="5" Parent="51">
+<TraceBit ID="1" X="149.00"  Y="450.00" Z="3.11"/>
+<TraceBit ID="2" X="150.40"  Y="451.21" Z="3.06"/>
+<TraceBit ID="3" X="151.80"  Y="452.23" Z="3.43"/>
+<TraceBit ID="4" X="153.20"  Y="453.13" Z="3.80"/>
+<TraceBit ID="5" X="154.60"  Y="453.76" Z="3.91"/>
+<TraceBit ID="6" X="156.00"  Y="454.10" Z="3.85"/>
+<TraceBit ID="7" X="157.40"  Y="454.27" Z="3.75"/>
+<TraceBit ID="8" X="157.60"  Y="454.29" Z="3.75"/>
+<TraceBit ID="9" X="157.70"  Y="454.38" Z="3.69"/>
+<TraceBit ID="10" X="157.67"  Y="454.38" Z="3.78"/>
+</TraceLine> <!--Ending Spine ID=52-->
+<TraceLine ID="53" Type="1" Parent="51">
+<TraceBit ID="1" X="143.15"  Y="448.30" Z="5.30"/>
+<TraceBit ID="2" X="141.36"  Y="453.71" Z="5.21"/>
+<TraceBit ID="3" X="138.36"  Y="459.84" Z="5.12"/>
+<TraceBit ID="4" X="137.18"  Y="463.25" Z="5.09"/>
+<TraceBit ID="5" X="135.99"  Y="466.67" Z="5.07"/>
+</TraceLine> <!--Dendrite ID=53-->
+<TraceLine ID="54" Type="5" Parent="53">
+<TraceBit ID="1" X="130.00"  Y="461.00" Z="7.11"/>
+<TraceBit ID="2" X="128.80"  Y="461.69" Z="7.11"/>
+<TraceBit ID="3" X="127.87"  Y="462.86" Z="7.03"/>
+<TraceBit ID="4" X="127.29"  Y="464.06" Z="6.91"/>
+<TraceBit ID="5" X="126.87"  Y="465.26" Z="6.75"/>
+<TraceBit ID="6" X="126.30"  Y="466.46" Z="6.54"/>
+<TraceBit ID="7" X="125.97"  Y="467.66" Z="6.25"/>
+<TraceBit ID="8" X="125.46"  Y="468.86" Z="5.86"/>
+<TraceBit ID="9" X="124.50"  Y="469.70" Z="5.33"/>
+<TraceBit ID="10" X="123.35"  Y="469.94" Z="4.80"/>
+</TraceLine> <!--Ending Spine ID=54-->
+<TraceLine ID="55" Type="1" Parent="53">
+<TraceBit ID="1" X="136.07"  Y="470.43" Z="5.05"/>
+</TraceLine> <!--Dendrite ID=55-->
+<TraceLine ID="56" Type="5" Parent="55">
+<TraceBit ID="1" X="130.00"  Y="482.00" Z="4.44"/>
+<TraceBit ID="2" X="129.40"  Y="482.16" Z="4.60"/>
+<TraceBit ID="3" X="128.80"  Y="482.07" Z="4.73"/>
+<TraceBit ID="4" X="128.20"  Y="481.80" Z="4.85"/>
+<TraceBit ID="5" X="127.60"  Y="481.47" Z="4.96"/>
+<TraceBit ID="6" X="127.41"  Y="481.36" Z="5.02"/>
+<TraceBit ID="7" X="127.23"  Y="481.33" Z="5.09"/>
+<TraceBit ID="8" X="127.43"  Y="481.38" Z="5.03"/>
+<TraceBit ID="9" X="127.23"  Y="481.25" Z="5.06"/>
+<TraceBit ID="10" X="127.42"  Y="481.42" Z="5.05"/>
+<TraceBit ID="11" X="127.28"  Y="481.22" Z="5.04"/>
+<TraceBit ID="12" X="127.40"  Y="481.42" Z="5.05"/>
+<TraceBit ID="13" X="127.30"  Y="481.22" Z="5.04"/>
+</TraceLine> <!--Ending Spine ID=56-->
+<TraceLine ID="57" Type="1" Parent="55">
+<TraceBit ID="1" X="136.14"  Y="474.19" Z="5.04"/>
+<TraceBit ID="2" X="137.78"  Y="480.93" Z="4.86"/>
+</TraceLine> <!--Dendrite ID=57-->
+<TraceLine ID="58" Type="5" Parent="57">
+<TraceBit ID="1" X="133.00"  Y="490.00" Z="4.89"/>
+<TraceBit ID="2" X="132.93"  Y="490.20" Z="4.85"/>
+<TraceBit ID="3" X="132.83"  Y="490.40" Z="4.80"/>
+<TraceBit ID="4" X="132.70"  Y="490.60" Z="4.72"/>
+<TraceBit ID="5" X="132.55"  Y="490.78" Z="4.63"/>
+<TraceBit ID="6" X="132.40"  Y="490.90" Z="4.55"/>
+<TraceBit ID="7" X="132.24"  Y="490.99" Z="4.46"/>
+<TraceBit ID="8" X="132.08"  Y="491.07" Z="4.37"/>
+<TraceBit ID="9" X="131.88"  Y="491.13" Z="4.28"/>
+<TraceBit ID="10" X="131.68"  Y="491.19" Z="4.21"/>
+<TraceBit ID="11" X="131.48"  Y="491.26" Z="4.12"/>
+<TraceBit ID="12" X="131.56"  Y="491.36" Z="4.04"/>
+<TraceBit ID="13" X="131.42"  Y="491.22" Z="4.12"/>
+<TraceBit ID="14" X="131.62"  Y="491.36" Z="4.08"/>
+<TraceBit ID="15" X="131.42"  Y="491.24" Z="4.10"/>
+<TraceBit ID="16" X="131.62"  Y="491.33" Z="4.10"/>
+<TraceBit ID="17" X="131.42"  Y="491.25" Z="4.10"/>
+<TraceBit ID="18" X="131.62"  Y="491.32" Z="4.10"/>
+<TraceBit ID="19" X="131.62"  Y="491.31" Z="4.10"/>
+</TraceLine> <!--Ending Spine ID=58-->
+<TraceLine ID="59" Type="1" Parent="57">
+<TraceBit ID="1" X="139.15"  Y="486.51" Z="4.71"/>
+<TraceBit ID="2" X="140.88"  Y="491.90" Z="4.47"/>
+<TraceBit ID="3" X="143.18"  Y="497.17" Z="4.19"/>
+<TraceBit ID="4" X="145.84"  Y="502.47" Z="3.92"/>
+<TraceBit ID="5" X="147.94"  Y="505.40" Z="3.73"/>
+<TraceBit ID="6" X="150.05"  Y="508.33" Z="3.55"/>
+</TraceLine> <!--Dendrite ID=59-->
+<TraceLine ID="60" Type="5" Parent="59">
+<TraceBit ID="1" X="159.00"  Y="510.00" Z="3.56"/>
+<TraceBit ID="2" X="160.40"  Y="510.13" Z="3.57"/>
+<TraceBit ID="3" X="161.80"  Y="510.91" Z="3.68"/>
+<TraceBit ID="4" X="163.20"  Y="511.80" Z="3.78"/>
+<TraceBit ID="5" X="164.60"  Y="512.65" Z="3.87"/>
+<TraceBit ID="6" X="166.00"  Y="513.42" Z="3.94"/>
+<TraceBit ID="7" X="167.40"  Y="514.02" Z="4.03"/>
+<TraceBit ID="8" X="168.80"  Y="514.75" Z="4.13"/>
+<TraceBit ID="9" X="170.20"  Y="515.75" Z="4.29"/>
+<TraceBit ID="10" X="171.60"  Y="516.96" Z="4.52"/>
+<TraceBit ID="11" X="173.00"  Y="518.01" Z="4.77"/>
+</TraceLine> <!--Ending Spine ID=60-->
+<TraceLine ID="61" Type="1" Parent="59">
+<TraceBit ID="1" X="146.59"  Y="513.92" Z="3.03"/>
+<TraceBit ID="2" X="144.80"  Y="519.49" Z="2.75"/>
+<TraceBit ID="3" X="143.38"  Y="523.59" Z="2.57"/>
+<TraceBit ID="4" X="142.02"  Y="527.48" Z="2.45"/>
+<TraceBit ID="5" X="140.65"  Y="531.33" Z="2.40"/>
+<TraceBit ID="6" X="139.45"  Y="535.37" Z="2.37"/>
+<TraceBit ID="7" X="138.43"  Y="539.76" Z="2.40"/>
+<TraceBit ID="8" X="137.60"  Y="544.60" Z="2.50"/>
+<TraceBit ID="9" X="137.11"  Y="549.82" Z="2.63"/>
+<TraceBit ID="10" X="137.21"  Y="555.49" Z="2.82"/>
+</TraceLine> <!--Dendrite ID=61-->
+<TraceLine ID="62" Type="5" Parent="61">
+<TraceBit ID="1" X="147.00"  Y="565.00" Z="0.89"/>
+<TraceBit ID="2" X="147.64"  Y="565.83" Z="0.98"/>
+<TraceBit ID="3" X="147.91"  Y="566.83" Z="1.13"/>
+<TraceBit ID="4" X="148.27"  Y="567.83" Z="1.17"/>
+<TraceBit ID="5" X="147.71"  Y="568.79" Z="1.17"/>
+<TraceBit ID="6" X="146.71"  Y="569.56" Z="1.18"/>
+<TraceBit ID="7" X="145.71"  Y="570.20" Z="1.07"/>
+<TraceBit ID="8" X="144.71"  Y="570.53" Z="0.83"/>
+<TraceBit ID="9" X="143.71"  Y="570.79" Z="0.59"/>
+<TraceBit ID="10" X="143.11"  Y="570.96" Z="0.48"/>
+<TraceBit ID="11" X="142.91"  Y="571.06" Z="0.48"/>
+<TraceBit ID="12" X="142.91"  Y="571.00" Z="0.50"/>
+</TraceLine> <!--Ending Spine ID=62-->
+<TraceLine ID="63" Type="1" Parent="61">
+<TraceBit ID="1" X="136.85"  Y="561.67" Z="2.97"/>
+</TraceLine> <!--Dendrite ID=63-->
+<TraceLine ID="64" Type="5" Parent="63">
+<TraceBit ID="1" X="143.00"  Y="576.00" Z="3.11"/>
+</TraceLine> <!--Ending Spine ID=64-->
+<TraceLine ID="65" Type="5" Parent="63">
+<TraceBit ID="1" X="129.00"  Y="565.00" Z="4.89"/>
+<TraceBit ID="2" X="128.40"  Y="564.18" Z="5.00"/>
+<TraceBit ID="3" X="128.52"  Y="564.15" Z="5.00"/>
+<TraceBit ID="4" X="128.48"  Y="564.14" Z="5.01"/>
+<TraceBit ID="5" X="128.51"  Y="564.11" Z="5.09"/>
+<TraceBit ID="6" X="128.36"  Y="564.14" Z="5.09"/>
+<TraceBit ID="7" X="128.33"  Y="564.20" Z="5.00"/>
+<TraceBit ID="8" X="128.49"  Y="564.14" Z="5.02"/>
+<TraceBit ID="9" X="128.53"  Y="564.11" Z="5.08"/>
+<TraceBit ID="10" X="128.51"  Y="564.11" Z="5.09"/>
+<TraceBit ID="11" X="128.36"  Y="564.15" Z="5.06"/>
+</TraceLine> <!--Ending Spine ID=65-->
+<TraceLine ID="66" Type="1" Parent="63">
+<TraceBit ID="1" X="135.54"  Y="568.14" Z="3.15"/>
+</TraceLine> <!--Dendrite ID=66-->
+<TraceLine ID="67" Type="5" Parent="66">
+<TraceBit ID="1" X="139.00"  Y="579.00" Z="4.44"/>
+</TraceLine> <!--Ending Spine ID=67-->
+<TraceLine ID="68" Type="1" Parent="66">
+<TraceBit ID="1" X="132.73"  Y="574.26" Z="3.48"/>
+<TraceBit ID="2" X="130.52"  Y="580.29" Z="3.84"/>
+<TraceBit ID="3" X="129.01"  Y="585.43" Z="4.28"/>
+<TraceBit ID="4" X="128.17"  Y="590.54" Z="4.65"/>
+<TraceBit ID="5" X="127.93"  Y="595.72" Z="5.05"/>
+</TraceLine> <!--Dendrite ID=68-->
+<TraceLine ID="69" Type="5" Parent="68">
+<TraceBit ID="1" X="124.00"  Y="591.00" Z="8.00"/>
+<TraceBit ID="2" X="122.60"  Y="591.30" Z="8.31"/>
+<TraceBit ID="3" X="121.60"  Y="592.65" Z="8.22"/>
+<TraceBit ID="4" X="121.13"  Y="594.05" Z="8.05"/>
+<TraceBit ID="5" X="120.76"  Y="595.45" Z="7.78"/>
+<TraceBit ID="6" X="120.38"  Y="596.85" Z="7.52"/>
+<TraceBit ID="7" X="120.14"  Y="598.25" Z="7.26"/>
+<TraceBit ID="8" X="120.04"  Y="599.65" Z="6.93"/>
+<TraceBit ID="9" X="119.87"  Y="601.05" Z="6.36"/>
+<TraceBit ID="10" X="120.07"  Y="601.75" Z="5.74"/>
+<TraceBit ID="11" X="120.22"  Y="601.98" Z="5.61"/>
+</TraceLine> <!--Ending Spine ID=69-->
+<TraceLine ID="70" Type="1" Parent="68">
+<TraceBit ID="1" X="128.28"  Y="601.25" Z="5.38"/>
+<TraceBit ID="2" X="129.25"  Y="607.24" Z="5.54"/>
+<TraceBit ID="3" X="131.97"  Y="613.57" Z="5.65"/>
+</TraceLine> <!--Dendrite ID=70-->
+<TraceLine ID="71" Type="5" Parent="70">
+<TraceBit ID="1" X="142.00"  Y="619.00" Z="4.44"/>
+<TraceBit ID="2" X="142.80"  Y="618.70" Z="4.41"/>
+<TraceBit ID="3" X="143.60"  Y="618.50" Z="4.38"/>
+<TraceBit ID="4" X="144.40"  Y="618.22" Z="4.30"/>
+<TraceBit ID="5" X="145.20"  Y="617.84" Z="4.18"/>
+<TraceBit ID="6" X="146.00"  Y="617.28" Z="3.99"/>
+<TraceBit ID="7" X="146.79"  Y="616.52" Z="3.74"/>
+<TraceBit ID="8" X="147.44"  Y="615.72" Z="3.48"/>
+<TraceBit ID="9" X="147.80"  Y="614.92" Z="3.21"/>
+<TraceBit ID="10" X="147.99"  Y="614.12" Z="2.96"/>
+<TraceBit ID="11" X="148.23"  Y="613.32" Z="2.79"/>
+<TraceBit ID="12" X="148.34"  Y="612.97" Z="2.71"/>
+</TraceLine> <!--Ending Spine ID=71-->
+<TraceLine ID="72" Type="5" Parent="70">
+<TraceBit ID="1" X="128.00"  Y="621.00" Z="6.22"/>
+<TraceBit ID="2" X="127.60"  Y="621.21" Z="6.19"/>
+<TraceBit ID="3" X="127.20"  Y="621.34" Z="6.15"/>
+<TraceBit ID="4" X="126.80"  Y="621.39" Z="6.10"/>
+<TraceBit ID="5" X="126.40"  Y="621.38" Z="6.04"/>
+<TraceBit ID="6" X="126.00"  Y="621.33" Z="5.98"/>
+<TraceBit ID="7" X="125.60"  Y="621.27" Z="5.94"/>
+<TraceBit ID="8" X="125.20"  Y="621.24" Z="5.91"/>
+<TraceBit ID="9" X="124.80"  Y="621.23" Z="5.89"/>
+<TraceBit ID="10" X="124.40"  Y="621.27" Z="5.87"/>
+<TraceBit ID="11" X="124.60"  Y="621.37" Z="5.88"/>
+</TraceLine> <!--Ending Spine ID=72-->
+<TraceLine ID="73" Type="5" Parent="70">
+<TraceBit ID="1" X="139.00"  Y="614.00" Z="8.00"/>
+<TraceBit ID="2" X="139.20"  Y="614.03" Z="8.09"/>
+<TraceBit ID="3" X="139.34"  Y="614.07" Z="8.18"/>
+<TraceBit ID="4" X="139.46"  Y="614.11" Z="8.27"/>
+<TraceBit ID="5" X="139.56"  Y="614.17" Z="8.35"/>
+<TraceBit ID="6" X="139.64"  Y="614.23" Z="8.44"/>
+<TraceBit ID="7" X="139.72"  Y="614.30" Z="8.53"/>
+<TraceBit ID="8" X="139.77"  Y="614.38" Z="8.62"/>
+<TraceBit ID="9" X="139.77"  Y="614.48" Z="8.71"/>
+<TraceBit ID="10" X="139.70"  Y="614.59" Z="8.80"/>
+<TraceBit ID="11" X="139.59"  Y="614.69" Z="8.89"/>
+<TraceBit ID="12" X="139.47"  Y="614.76" Z="8.98"/>
+<TraceBit ID="13" X="139.43"  Y="614.82" Z="9.07"/>
+<TraceBit ID="14" X="139.57"  Y="615.02" Z="9.09"/>
+<TraceBit ID="15" X="139.37"  Y="614.99" Z="9.04"/>
+<TraceBit ID="16" X="139.57"  Y="614.81" Z="9.10"/>
+<TraceBit ID="17" X="139.57"  Y="614.80" Z="9.10"/>
+</TraceLine> <!--Ending Spine ID=73-->
+<TraceLine ID="74" Type="1" Parent="70">
+<TraceBit ID="1" X="133.36"  Y="616.88" Z="5.66"/>
+<TraceBit ID="2" X="134.75"  Y="620.19" Z="5.66"/>
+</TraceLine> <!--Dendrite ID=74-->
+<TraceLine ID="75" Type="5" Parent="74">
+<TraceBit ID="1" X="132.00"  Y="626.00" Z="8.00"/>
+<TraceBit ID="2" X="131.75"  Y="626.40" Z="8.18"/>
+<TraceBit ID="3" X="131.63"  Y="626.80" Z="8.35"/>
+<TraceBit ID="4" X="131.64"  Y="627.20" Z="8.51"/>
+<TraceBit ID="5" X="131.75"  Y="627.60" Z="8.64"/>
+<TraceBit ID="6" X="131.96"  Y="628.00" Z="8.73"/>
+<TraceBit ID="7" X="132.33"  Y="628.40" Z="8.79"/>
+<TraceBit ID="8" X="132.73"  Y="628.71" Z="8.82"/>
+<TraceBit ID="9" X="133.13"  Y="628.91" Z="8.77"/>
+<TraceBit ID="10" X="133.38"  Y="629.25" Z="8.79"/>
+<TraceBit ID="11" X="133.44"  Y="629.15" Z="8.81"/>
+<TraceBit ID="12" X="133.44"  Y="629.15" Z="8.80"/>
+<TraceBit ID="13" X="133.46"  Y="629.15" Z="8.79"/>
+<TraceBit ID="14" X="133.26"  Y="629.31" Z="8.86"/>
+</TraceLine> <!--Ending Spine ID=75-->
+<TraceLine ID="76" Type="1" Parent="74">
+<TraceBit ID="1" X="137.05"  Y="626.72" Z="5.63"/>
+<TraceBit ID="2" X="137.76"  Y="632.47" Z="5.44"/>
+<TraceBit ID="3" X="138.19"  Y="637.72" Z="5.35"/>
+<TraceBit ID="4" X="138.37"  Y="642.83" Z="5.39"/>
+<TraceBit ID="5" X="138.14"  Y="647.97" Z="5.51"/>
+<TraceBit ID="6" X="137.83"  Y="653.40" Z="5.69"/>
+</TraceLine> <!--Dendrite ID=76-->
+<TraceLine ID="77" Type="5" Parent="76">
+<TraceBit ID="1" X="143.00"  Y="642.00" Z="2.22"/>
+<TraceBit ID="2" X="144.00"  Y="642.13" Z="2.22"/>
+<TraceBit ID="3" X="145.00"  Y="642.44" Z="2.22"/>
+<TraceBit ID="4" X="146.00"  Y="642.98" Z="2.36"/>
+<TraceBit ID="5" X="147.00"  Y="643.76" Z="2.62"/>
+<TraceBit ID="6" X="147.82"  Y="644.66" Z="2.96"/>
+<TraceBit ID="7" X="148.24"  Y="645.29" Z="3.41"/>
+<TraceBit ID="8" X="148.58"  Y="645.66" Z="3.85"/>
+<TraceBit ID="9" X="148.57"  Y="645.88" Z="4.30"/>
+<TraceBit ID="10" X="148.53"  Y="646.01" Z="4.74"/>
+<TraceBit ID="11" X="148.50"  Y="646.08" Z="5.19"/>
+</TraceLine> <!--Ending Spine ID=77-->
+<TraceLine ID="78" Type="5" Parent="76">
+<TraceBit ID="1" X="131.00"  Y="664.00" Z="8.44"/>
+<TraceBit ID="2" X="129.80"  Y="663.66" Z="8.26"/>
+<TraceBit ID="3" X="128.60"  Y="663.24" Z="7.93"/>
+<TraceBit ID="4" X="127.40"  Y="663.03" Z="7.68"/>
+<TraceBit ID="5" X="126.20"  Y="662.98" Z="7.50"/>
+<TraceBit ID="6" X="125.00"  Y="663.04" Z="7.38"/>
+<TraceBit ID="7" X="123.80"  Y="663.23" Z="7.28"/>
+<TraceBit ID="8" X="122.60"  Y="663.53" Z="7.14"/>
+<TraceBit ID="9" X="121.40"  Y="663.82" Z="6.95"/>
+<TraceBit ID="10" X="120.57"  Y="664.21" Z="6.86"/>
+</TraceLine> <!--Ending Spine ID=78-->
+<TraceLine ID="79" Type="1" Parent="76">
+<TraceBit ID="1" X="136.67"  Y="659.01" Z="6.13"/>
+</TraceLine> <!--Dendrite ID=79-->
+<TraceLine ID="80" Type="5" Parent="79">
+<TraceBit ID="1" X="131.00"  Y="671.00" Z="8.89"/>
+<TraceBit ID="2" X="130.45"  Y="672.98" Z="9.37"/>
+<TraceBit ID="3" X="130.47"  Y="674.98" Z="9.51"/>
+<TraceBit ID="4" X="130.52"  Y="676.98" Z="9.52"/>
+<TraceBit ID="5" X="130.70"  Y="678.98" Z="9.41"/>
+<TraceBit ID="6" X="131.33"  Y="680.98" Z="9.39"/>
+<TraceBit ID="7" X="131.33"  Y="682.98" Z="9.50"/>
+<TraceBit ID="8" X="131.33"  Y="684.98" Z="9.54"/>
+<TraceBit ID="9" X="131.29"  Y="686.98" Z="9.56"/>
+<TraceBit ID="10" X="131.29"  Y="688.98" Z="9.64"/>
+<TraceBit ID="11" X="131.57"  Y="690.98" Z="9.71"/>
+</TraceLine> <!--Ending Spine ID=80-->
+<TraceLine ID="81" Type="1" Parent="79">
+<TraceBit ID="1" X="135.88"  Y="664.62" Z="6.34"/>
+<TraceBit ID="2" X="135.75"  Y="670.56" Z="6.32"/>
+<TraceBit ID="3" X="135.87"  Y="676.59" Z="6.34"/>
+<TraceBit ID="4" X="136.33"  Y="682.55" Z="6.39"/>
+<TraceBit ID="5" X="136.77"  Y="688.29" Z="6.57"/>
+<TraceBit ID="6" X="137.39"  Y="693.93" Z="6.84"/>
+</TraceLine> <!--Dendrite ID=81-->
+<TraceLine ID="82" Type="5" Parent="81">
+<TraceBit ID="1" X="134.00"  Y="707.00" Z="8.44"/>
+<TraceBit ID="2" X="133.40"  Y="707.03" Z="8.43"/>
+<TraceBit ID="3" X="132.80"  Y="707.13" Z="8.39"/>
+<TraceBit ID="4" X="132.20"  Y="707.25" Z="8.33"/>
+<TraceBit ID="5" X="131.60"  Y="707.36" Z="8.27"/>
+<TraceBit ID="6" X="131.00"  Y="707.50" Z="8.15"/>
+<TraceBit ID="7" X="130.40"  Y="707.65" Z="7.96"/>
+<TraceBit ID="8" X="129.83"  Y="707.73" Z="7.70"/>
+<TraceBit ID="9" X="129.38"  Y="707.74" Z="7.43"/>
+<TraceBit ID="10" X="128.94"  Y="707.74" Z="7.16"/>
+<TraceBit ID="11" X="128.56"  Y="707.76" Z="6.90"/>
+<TraceBit ID="12" X="128.55"  Y="707.80" Z="6.81"/>
+<TraceBit ID="13" X="128.57"  Y="707.79" Z="6.74"/>
+</TraceLine> <!--Ending Spine ID=82-->
+<TraceLine ID="83" Type="1" Parent="81">
+<TraceBit ID="1" X="137.89"  Y="699.66" Z="7.12"/>
+<TraceBit ID="2" X="138.13"  Y="705.18" Z="7.45"/>
+<TraceBit ID="3" X="138.26"  Y="710.82" Z="7.64"/>
+<TraceBit ID="4" X="138.28"  Y="716.68" Z="7.72"/>
+<TraceBit ID="5" X="137.66"  Y="722.82" Z="7.70"/>
+</TraceLine> <!--Dendrite ID=83-->
+<TraceLine ID="84" Type="5" Parent="83">
+<TraceBit ID="1" X="142.00"  Y="727.00" Z="4.44"/>
+<TraceBit ID="2" X="142.60"  Y="727.37" Z="4.32"/>
+<TraceBit ID="3" X="143.20"  Y="727.75" Z="4.25"/>
+<TraceBit ID="4" X="143.80"  Y="728.26" Z="4.29"/>
+<TraceBit ID="5" X="144.37"  Y="728.69" Z="4.49"/>
+<TraceBit ID="6" X="144.39"  Y="729.16" Z="4.62"/>
+<TraceBit ID="7" X="144.59"  Y="729.04" Z="4.67"/>
+<TraceBit ID="8" X="144.39"  Y="729.05" Z="4.66"/>
+<TraceBit ID="9" X="144.59"  Y="729.05" Z="4.66"/>
+<TraceBit ID="10" X="144.39"  Y="729.05" Z="4.67"/>
+<TraceBit ID="11" X="144.39"  Y="729.05" Z="4.68"/>
+</TraceLine> <!--Ending Spine ID=84-->
+<TraceLine ID="85" Type="1" Parent="83">
+<TraceBit ID="1" X="136.32"  Y="729.48" Z="7.64"/>
+<TraceBit ID="2" X="135.79"  Y="733.10" Z="7.71"/>
+</TraceLine> <!--Dendrite ID=85-->
+<TraceLine ID="86" Type="5" Parent="85">
+<TraceBit ID="1" X="127.00"  Y="741.00" Z="9.78"/>
+<TraceBit ID="2" X="126.48"  Y="739.21" Z="10.48"/>
+<TraceBit ID="3" X="126.42"  Y="737.01" Z="10.49"/>
+<TraceBit ID="4" X="126.78"  Y="734.81" Z="10.53"/>
+<TraceBit ID="5" X="127.17"  Y="732.61" Z="10.67"/>
+<TraceBit ID="6" X="126.83"  Y="730.41" Z="10.86"/>
+<TraceBit ID="7" X="126.32"  Y="728.21" Z="11.14"/>
+<TraceBit ID="8" X="125.92"  Y="726.01" Z="11.48"/>
+<TraceBit ID="9" X="125.57"  Y="723.81" Z="11.82"/>
+<TraceBit ID="10" X="125.41"  Y="721.61" Z="12.03"/>
+<TraceBit ID="11" X="125.34"  Y="720.22" Z="12.16"/>
+</TraceLine> <!--Ending Spine ID=86-->
+<TraceLine ID="87" Type="1" Parent="85">
+<TraceBit ID="1" X="135.25"  Y="736.71" Z="7.77"/>
+<TraceBit ID="2" X="135.22"  Y="740.59" Z="7.88"/>
+<TraceBit ID="3" X="135.18"  Y="744.48" Z="7.99"/>
+<TraceBit ID="4" X="135.82"  Y="748.03" Z="7.99"/>
+</TraceLine> <!--Dendrite ID=87-->
+<TraceLine ID="88" Type="5" Parent="87">
+<TraceBit ID="1" X="143.00"  Y="751.00" Z="7.11"/>
+</TraceLine> <!--Ending Spine ID=88-->
+<TraceLine ID="89" Type="5" Parent="87">
+<TraceBit ID="1" X="130.00"  Y="758.00" Z="8.00"/>
+<TraceBit ID="2" X="128.82"  Y="759.17" Z="7.91"/>
+<TraceBit ID="3" X="127.62"  Y="760.23" Z="7.70"/>
+<TraceBit ID="4" X="126.42"  Y="760.66" Z="7.45"/>
+<TraceBit ID="5" X="125.22"  Y="760.71" Z="7.29"/>
+<TraceBit ID="6" X="124.02"  Y="760.72" Z="7.15"/>
+<TraceBit ID="7" X="122.82"  Y="760.90" Z="6.96"/>
+<TraceBit ID="8" X="121.62"  Y="761.18" Z="6.60"/>
+<TraceBit ID="9" X="121.36"  Y="761.31" Z="6.43"/>
+<TraceBit ID="10" X="121.38"  Y="761.41" Z="6.42"/>
+<TraceBit ID="11" X="121.27"  Y="761.27" Z="6.37"/>
+</TraceLine> <!--Ending Spine ID=89-->
+<TraceLine ID="90" Type="1" Parent="87">
+<TraceBit ID="1" X="136.47"  Y="751.58" Z="8.00"/>
+<TraceBit ID="2" X="138.15"  Y="757.70" Z="7.92"/>
+<TraceBit ID="3" X="140.01"  Y="763.07" Z="7.86"/>
+</TraceLine> <!--Dendrite ID=90-->
+<TraceLine ID="91" Type="5" Parent="90">
+<TraceBit ID="1" X="147.00"  Y="769.00" Z="6.67"/>
+<TraceBit ID="2" X="148.94"  Y="768.27" Z="7.11"/>
+<TraceBit ID="3" X="149.10"  Y="767.53" Z="8.09"/>
+<TraceBit ID="4" X="149.11"  Y="767.33" Z="8.09"/>
+<TraceBit ID="5" X="149.32"  Y="767.62" Z="8.13"/>
+<TraceBit ID="6" X="149.13"  Y="767.44" Z="8.10"/>
+<TraceBit ID="7" X="149.28"  Y="767.50" Z="8.11"/>
+<TraceBit ID="8" X="149.08"  Y="767.48" Z="8.10"/>
+<TraceBit ID="9" X="149.30"  Y="767.49" Z="8.11"/>
+<TraceBit ID="10" X="149.12"  Y="767.49" Z="8.11"/>
+<TraceBit ID="11" X="149.24"  Y="767.48" Z="8.11"/>
+</TraceLine> <!--Ending Spine ID=91-->
+<TraceLine ID="92" Type="1" Parent="90">
+<TraceBit ID="1" X="141.56"  Y="767.86" Z="7.93"/>
+<TraceBit ID="2" X="143.04"  Y="772.31" Z="8.04"/>
+<TraceBit ID="3" X="144.74"  Y="776.82" Z="8.28"/>
+<TraceBit ID="4" X="146.57"  Y="781.61" Z="8.60"/>
+</TraceLine> <!--Dendrite ID=92-->
+<TraceLine ID="93" Type="5" Parent="92">
+<TraceBit ID="1" X="152.00"  Y="775.00" Z="8.00"/>
+<TraceBit ID="2" X="152.40"  Y="774.79" Z="7.96"/>
+<TraceBit ID="3" X="152.80"  Y="774.57" Z="7.92"/>
+<TraceBit ID="4" X="153.20"  Y="774.39" Z="7.88"/>
+<TraceBit ID="5" X="153.60"  Y="774.24" Z="7.82"/>
+<TraceBit ID="6" X="154.00"  Y="774.12" Z="7.75"/>
+<TraceBit ID="7" X="154.40"  Y="774.03" Z="7.67"/>
+<TraceBit ID="8" X="154.80"  Y="773.96" Z="7.57"/>
+<TraceBit ID="9" X="155.20"  Y="773.89" Z="7.45"/>
+<TraceBit ID="10" X="155.55"  Y="773.77" Z="7.28"/>
+<TraceBit ID="11" X="155.75"  Y="773.65" Z="7.10"/>
+<TraceBit ID="12" X="155.89"  Y="773.52" Z="6.92"/>
+<TraceBit ID="13" X="156.02"  Y="773.50" Z="6.92"/>
+<TraceBit ID="14" X="155.99"  Y="773.50" Z="6.92"/>
+</TraceLine> <!--Ending Spine ID=93-->
+<TraceLine ID="94" Type="1" Parent="92">
+<TraceBit ID="1" X="149.66"  Y="786.95" Z="8.72"/>
+<TraceBit ID="2" X="150.44"  Y="790.91" Z="8.66"/>
+</TraceLine> <!--Dendrite ID=94-->
+<TraceLine ID="95" Type="5" Parent="94">
+<TraceBit ID="1" X="144.00"  Y="792.00" Z="11.11"/>
+<TraceBit ID="2" X="143.90"  Y="793.96" Z="11.88"/>
+<TraceBit ID="3" X="144.55"  Y="796.16" Z="12.13"/>
+<TraceBit ID="4" X="144.68"  Y="798.36" Z="12.17"/>
+<TraceBit ID="5" X="144.72"  Y="800.56" Z="12.17"/>
+<TraceBit ID="6" X="144.72"  Y="802.76" Z="12.12"/>
+<TraceBit ID="7" X="145.46"  Y="804.96" Z="12.08"/>
+<TraceBit ID="8" X="146.04"  Y="807.16" Z="12.18"/>
+<TraceBit ID="9" X="146.42"  Y="809.36" Z="12.07"/>
+<TraceBit ID="10" X="146.57"  Y="811.56" Z="12.11"/>
+<TraceBit ID="11" X="147.30"  Y="813.68" Z="11.87"/>
+</TraceLine> <!--Ending Spine ID=95-->
+<TraceLine ID="96" Type="1" Parent="94">
+<TraceBit ID="1" X="151.22"  Y="794.87" Z="8.61"/>
+</TraceLine> <!--Dendrite ID=96-->
+<TraceLine ID="97" Type="5" Parent="96">
+<TraceBit ID="1" X="158.00"  Y="785.00" Z="7.11"/>
+<TraceBit ID="2" X="158.60"  Y="785.03" Z="7.12"/>
+<TraceBit ID="3" X="159.20"  Y="785.13" Z="7.14"/>
+<TraceBit ID="4" X="159.80"  Y="785.26" Z="7.16"/>
+<TraceBit ID="5" X="160.40"  Y="785.39" Z="7.21"/>
+<TraceBit ID="6" X="161.00"  Y="785.62" Z="7.35"/>
+<TraceBit ID="7" X="161.60"  Y="785.92" Z="7.57"/>
+<TraceBit ID="8" X="162.12"  Y="786.29" Z="7.84"/>
+<TraceBit ID="9" X="162.49"  Y="786.68" Z="8.11"/>
+<TraceBit ID="10" X="162.77"  Y="787.12" Z="8.37"/>
+<TraceBit ID="11" X="162.93"  Y="787.51" Z="8.64"/>
+<TraceBit ID="12" X="162.98"  Y="787.57" Z="8.73"/>
+<TraceBit ID="13" X="163.00"  Y="787.69" Z="8.79"/>
+</TraceLine> <!--Ending Spine ID=97-->
+<TraceLine ID="98" Type="1" Parent="96">
+<TraceBit ID="1" X="151.68"  Y="799.12" Z="8.53"/>
+<TraceBit ID="2" X="152.14"  Y="803.37" Z="8.46"/>
+<TraceBit ID="3" X="153.21"  Y="807.61" Z="8.32"/>
+<TraceBit ID="4" X="154.27"  Y="811.84" Z="8.17"/>
+<TraceBit ID="5" X="155.25"  Y="813.86" Z="8.06"/>
+<TraceBit ID="6" X="156.23"  Y="815.89" Z="7.95"/>
+<TraceBit ID="7" X="157.21"  Y="817.91" Z="7.83"/>
+<TraceBit ID="8" X="158.19"  Y="819.94" Z="7.72"/>
+<TraceBit ID="9" X="160.47"  Y="823.33" Z="7.52"/>
+</TraceLine> <!--Dendrite ID=98-->
+<TraceLine ID="99" Type="5" Parent="98">
+<TraceBit ID="1" X="148.00"  Y="820.00" Z="6.22"/>
+<TraceBit ID="2" X="147.90"  Y="820.20" Z="6.31"/>
+<TraceBit ID="3" X="147.82"  Y="820.39" Z="6.40"/>
+<TraceBit ID="4" X="147.74"  Y="820.57" Z="6.49"/>
+<TraceBit ID="5" X="147.66"  Y="820.72" Z="6.58"/>
+<TraceBit ID="6" X="147.59"  Y="820.85" Z="6.67"/>
+<TraceBit ID="7" X="147.52"  Y="820.95" Z="6.76"/>
+<TraceBit ID="8" X="147.46"  Y="821.05" Z="6.84"/>
+<TraceBit ID="9" X="147.42"  Y="821.14" Z="6.93"/>
+<TraceBit ID="10" X="147.39"  Y="821.20" Z="7.02"/>
+<TraceBit ID="11" X="147.36"  Y="821.24" Z="7.11"/>
+<TraceBit ID="12" X="147.34"  Y="821.27" Z="7.20"/>
+<TraceBit ID="13" X="147.28"  Y="821.31" Z="7.29"/>
+<TraceBit ID="14" X="147.18"  Y="821.34" Z="7.38"/>
+<TraceBit ID="15" X="147.03"  Y="821.36" Z="7.47"/>
+<TraceBit ID="16" X="146.83"  Y="821.36" Z="7.55"/>
+<TraceBit ID="17" X="146.63"  Y="821.35" Z="7.61"/>
+<TraceBit ID="18" X="146.63"  Y="821.36" Z="7.61"/>
+</TraceLine> <!--Ending Spine ID=99-->
+<TraceLine ID="100" Type="5" Parent="98">
+<TraceBit ID="1" X="165.00"  Y="815.00" Z="8.44"/>
+<TraceBit ID="2" X="165.49"  Y="811.99" Z="8.99"/>
+<TraceBit ID="3" X="165.52"  Y="811.69" Z="9.00"/>
+<TraceBit ID="4" X="165.46"  Y="811.86" Z="9.01"/>
+<TraceBit ID="5" X="165.43"  Y="811.63" Z="9.00"/>
+<TraceBit ID="6" X="165.49"  Y="811.86" Z="9.01"/>
+<TraceBit ID="7" X="165.38"  Y="811.84" Z="9.01"/>
+<TraceBit ID="8" X="165.56"  Y="811.64" Z="9.00"/>
+<TraceBit ID="9" X="165.44"  Y="811.83" Z="9.01"/>
+<TraceBit ID="10" X="165.51"  Y="811.63" Z="9.00"/>
+<TraceBit ID="11" X="165.49"  Y="811.83" Z="9.01"/>
+</TraceLine> <!--Ending Spine ID=100-->
+<TraceLine ID="101" Type="1" Parent="98">
+<TraceBit ID="1" X="162.75"  Y="826.72" Z="7.32"/>
+<TraceBit ID="2" X="164.85"  Y="829.89" Z="7.18"/>
+<TraceBit ID="3" X="166.96"  Y="833.06" Z="7.05"/>
+<TraceBit ID="4" X="168.45"  Y="836.38" Z="7.00"/>
+<TraceBit ID="5" X="169.95"  Y="839.71" Z="6.96"/>
+<TraceBit ID="6" X="170.80"  Y="845.99" Z="7.16"/>
+<TraceBit ID="7" X="170.47"  Y="851.65" Z="7.46"/>
+<TraceBit ID="8" X="169.83"  Y="856.76" Z="7.74"/>
+<TraceBit ID="9" X="169.17"  Y="861.79" Z="7.93"/>
+<TraceBit ID="10" X="168.87"  Y="867.26" Z="7.92"/>
+<TraceBit ID="11" X="169.04"  Y="873.17" Z="7.68"/>
+<TraceBit ID="12" X="169.38"  Y="879.40" Z="7.45"/>
+<TraceBit ID="13" X="169.74"  Y="885.86" Z="7.33"/>
+<TraceBit ID="14" X="170.14"  Y="892.19" Z="7.32"/>
+</TraceLine> <!--Dendrite ID=101-->
+<TraceLine ID="102" Type="5" Parent="101">
+<TraceBit ID="1" X="165.00"  Y="897.00" Z="8.89"/>
+<TraceBit ID="2" X="163.80"  Y="897.37" Z="8.78"/>
+<TraceBit ID="3" X="162.94"  Y="898.17" Z="8.28"/>
+<TraceBit ID="4" X="162.56"  Y="899.04" Z="7.75"/>
+<TraceBit ID="5" X="162.37"  Y="899.94" Z="7.22"/>
+<TraceBit ID="6" X="162.29"  Y="900.89" Z="6.68"/>
+<TraceBit ID="7" X="162.26"  Y="901.98" Z="6.15"/>
+<TraceBit ID="8" X="162.25"  Y="903.18" Z="5.68"/>
+<TraceBit ID="9" X="162.23"  Y="904.38" Z="5.32"/>
+<TraceBit ID="10" X="162.22"  Y="905.58" Z="4.99"/>
+<TraceBit ID="11" X="162.20"  Y="906.66" Z="4.55"/>
+<TraceBit ID="12" X="162.21"  Y="907.35" Z="4.18"/>
+</TraceLine> <!--Ending Spine ID=102-->
+<TraceLine ID="103" Type="1" Parent="101">
+<TraceBit ID="1" X="170.43"  Y="898.42" Z="7.28"/>
+<TraceBit ID="2" X="170.68"  Y="904.67" Z="7.25"/>
+<TraceBit ID="3" X="170.97"  Y="911.09" Z="7.25"/>
+</TraceLine> <!--Dendrite ID=103-->
+<TraceLine ID="104" Type="5" Parent="103">
+<TraceBit ID="1" X="164.00"  Y="922.00" Z="7.56"/>
+</TraceLine> <!--Ending Spine ID=104-->
+<TraceLine ID="105" Type="1" Parent="103">
+<TraceBit ID="1" X="171.17"  Y="917.81" Z="7.24"/>
+</TraceLine> <!--Dendrite ID=105-->
+<TraceLine ID="106" Type="5" Parent="105">
+<TraceBit ID="1" X="165.00"  Y="918.00" Z="5.33"/>
+<TraceBit ID="2" X="164.40"  Y="917.94" Z="5.37"/>
+<TraceBit ID="3" X="163.80"  Y="917.74" Z="5.52"/>
+<TraceBit ID="4" X="163.20"  Y="917.58" Z="5.68"/>
+<TraceBit ID="5" X="162.60"  Y="917.38" Z="5.81"/>
+<TraceBit ID="6" X="162.00"  Y="917.08" Z="5.89"/>
+<TraceBit ID="7" X="161.40"  Y="916.70" Z="5.93"/>
+<TraceBit ID="8" X="160.80"  Y="916.22" Z="5.92"/>
+<TraceBit ID="9" X="160.37"  Y="915.62" Z="5.89"/>
+<TraceBit ID="10" X="160.20"  Y="915.36" Z="5.87"/>
+<TraceBit ID="11" X="160.12"  Y="915.56" Z="5.93"/>
+</TraceLine> <!--Ending Spine ID=106-->
+<TraceLine ID="107" Type="1" Parent="105">
+<TraceBit ID="1" X="171.48"  Y="921.39" Z="7.27"/>
+<TraceBit ID="2" X="171.79"  Y="924.97" Z="7.29"/>
+<TraceBit ID="3" X="172.42"  Y="928.64" Z="7.33"/>
+<TraceBit ID="4" X="173.05"  Y="932.31" Z="7.37"/>
+<TraceBit ID="5" X="174.06"  Y="935.94" Z="7.43"/>
+<TraceBit ID="6" X="175.07"  Y="939.57" Z="7.48"/>
+<TraceBit ID="7" X="176.06"  Y="943.53" Z="7.46"/>
+<TraceBit ID="8" X="177.05"  Y="947.50" Z="7.45"/>
+</TraceLine> <!--Dendrite ID=107-->
+<TraceLine ID="108" Type="5" Parent="107">
+<TraceBit ID="1" X="186.00"  Y="952.00" Z="6.22"/>
+<TraceBit ID="2" X="187.00"  Y="951.93" Z="6.20"/>
+<TraceBit ID="3" X="188.00"  Y="951.76" Z="6.14"/>
+<TraceBit ID="4" X="188.97"  Y="951.91" Z="6.32"/>
+<TraceBit ID="5" X="189.69"  Y="952.50" Z="6.76"/>
+<TraceBit ID="6" X="189.89"  Y="953.31" Z="7.21"/>
+<TraceBit ID="7" X="189.99"  Y="954.30" Z="7.63"/>
+<TraceBit ID="8" X="190.40"  Y="955.30" Z="7.87"/>
+<TraceBit ID="9" X="190.43"  Y="956.30" Z="8.00"/>
+<TraceBit ID="10" X="190.20"  Y="957.30" Z="8.05"/>
+<TraceBit ID="11" X="189.59"  Y="958.20" Z="7.98"/>
+<TraceBit ID="12" X="189.66"  Y="958.05" Z="8.00"/>
+</TraceLine> <!--Ending Spine ID=108-->
+<TraceLine ID="109" Type="1" Parent="107">
+<TraceBit ID="1" X="177.26"  Y="949.81" Z="7.41"/>
+</TraceLine> <!--Dendrite ID=109-->
+<TraceLine ID="110" Type="5" Parent="109">
+<TraceBit ID="1" X="168.00"  Y="946.00" Z="9.33"/>
+<TraceBit ID="2" X="167.63"  Y="947.00" Z="9.52"/>
+<TraceBit ID="3" X="167.56"  Y="948.00" Z="9.59"/>
+<TraceBit ID="4" X="167.58"  Y="949.00" Z="9.60"/>
+<TraceBit ID="5" X="167.62"  Y="950.00" Z="9.58"/>
+<TraceBit ID="6" X="167.73"  Y="951.00" Z="9.53"/>
+<TraceBit ID="7" X="167.79"  Y="952.00" Z="9.43"/>
+<TraceBit ID="8" X="167.74"  Y="953.00" Z="9.29"/>
+<TraceBit ID="9" X="167.84"  Y="954.00" Z="9.15"/>
+<TraceBit ID="10" X="167.61"  Y="955.00" Z="9.03"/>
+<TraceBit ID="11" X="167.51"  Y="954.99" Z="9.06"/>
+</TraceLine> <!--Ending Spine ID=110-->
+<TraceLine ID="111" Type="1" Parent="109">
+<TraceBit ID="1" X="177.48"  Y="952.12" Z="7.36"/>
+<TraceBit ID="2" X="177.70"  Y="954.43" Z="7.31"/>
+</TraceLine> <!--Dendrite ID=111-->
+<TraceLine ID="112" Type="5" Parent="111">
+<TraceBit ID="1" X="187.00"  Y="959.00" Z="7.11"/>
+</TraceLine> <!--Ending Spine ID=112-->
+<TraceLine ID="113" Type="1" Parent="111">
+<TraceBit ID="1" X="177.91"  Y="956.74" Z="7.27"/>
+<TraceBit ID="2" X="177.17"  Y="958.97" Z="7.31"/>
+<TraceBit ID="3" X="176.42"  Y="961.20" Z="7.35"/>
+</TraceLine> <!--Dendrite ID=113-->
+<TraceLine ID="114" Type="5" Parent="113">
+<TraceBit ID="1" X="183.00"  Y="967.00" Z="6.67"/>
+</TraceLine> <!--Ending Spine ID=114-->
+<TraceLine ID="115" Type="1" Parent="113">
+<TraceBit ID="1" X="175.67"  Y="963.44" Z="7.40"/>
+<TraceBit ID="2" X="174.93"  Y="965.67" Z="7.44"/>
+</TraceLine> <!--Dendrite ID=115-->
+<TraceLine ID="116" Type="5" Parent="115">
+<TraceBit ID="1" X="172.00"  Y="983.00" Z="5.78"/>
+</TraceLine> <!--Ending Spine ID=116-->
+<TraceLine ID="117" Type="1" Parent="115">
+<TraceBit ID="1" X="172.32"  Y="972.00" Z="7.70"/>
+<TraceBit ID="2" X="169.94"  Y="977.16" Z="7.99"/>
+</TraceLine> <!--Dendrite ID=117-->
+</Trace>

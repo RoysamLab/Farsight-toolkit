@@ -1,0 +1,588 @@
+/*=========================================================================
+
+  Program:   Farsight Biological Image Segmentation and Visualization Toolkit
+  Language:  C++
+  Date:      $Date:  $
+  Version:   $Revision: 0.00 $
+
+=========================================================================*/
+#include "ftkNuclearSegmentation.h"
+#include <ctime>
+
+namespace ftk 
+{
+
+//Constructor
+NuclearSegmentation::NuclearSegmentation(string projpath, string projname):SegmentationResult(projpath, projname)
+{
+	programName = "Yousef_Nucleus_Seg";
+
+	initConstants();
+
+	dataImage = NULL;
+	labelImage = NULL;
+	NucleusSeg = NULL;
+	editsNotSaved = false;
+}
+
+//This function will take the data and result filenames, and create the SegmentationResult structure
+// file should be filename only.  Path should come from path set for project
+bool NuclearSegmentation::LoadFromResult(const char* dfile, const char* rfile)
+{
+	//See if data file exists:
+	if( !FileExists(dfile) )
+	{
+		errorMessage = "Could not find data file";
+		return 0;
+	}
+	//See if result file exists
+	if( !FileExists(rfile) )
+	{
+		errorMessage = "Could not find result file";
+		return 0;
+	}
+	//Save the filenames
+	dataFilenames.push_back(dfile);
+	resultFilenames.push_back(rfile);
+
+	editsNotSaved = false;
+
+	return LabelsToObjects();
+}
+
+//Calculate the object information from the data/result images:
+bool NuclearSegmentation::LabelsToObjects(void)
+{
+	/*
+	if(!dataImage)
+	{
+		dataImage = new ftk::Image();
+		dataImage->LoadFile(PrependProjectPath(dataFilenames[0]));	//Assume there is just one data file and one result file
+	}
+	if(!labelImage)
+	{
+		labelImage = new ftk::Image();
+		labelImage->LoadFile(PrependProjectPath(resultFilenames[0]));
+	}
+
+	//ftk::LabelImageToFeatures *labFilter = NULL;
+	//Calculation
+	if(!labelImage || !dataImage)
+	{
+		errorMessage = "label image or data image doesn't exist";
+		return false;
+	}
+	*/
+
+	IntensityReaderType::Pointer intensityReader = IntensityReaderType::New();
+	intensityReader->SetFileName( PrependProjectPath(dataFilenames[0]) );
+	intensityReader->Update();
+
+	LabelReaderType::Pointer labelReader = LabelReaderType::New();
+	labelReader->SetFileName( PrependProjectPath(resultFilenames[0]) );
+	labelReader->Update();
+
+	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
+	labFilter->SetImageInputs( intensityReader->GetOutput(), labelReader->GetOutput() );
+	labFilter->SetLevel(3);
+	labFilter->ComputeHistogramOn();
+	//labFilter->ComputeAdvancedOn();
+	labFilter->Update();
+
+	//Set Feature Names
+	featureNames.resize(0);
+	featureNames.push_back("volume");
+	featureNames.push_back("mean");
+	featureNames.push_back("sigma");
+	featureNames.push_back("variance");
+	featureNames.push_back("eccentricity");
+	featureNames.push_back("radius_var");
+	featureNames.push_back("elongation");
+	featureNames.push_back("orientation");
+	featureNames.push_back("surf_grad");
+	featureNames.push_back("int_grad");
+	featureNames.push_back("surf_int");
+	featureNames.push_back("inter_int");
+	featureNames.push_back("intens_ratio");
+	featureNames.push_back("boundshare");
+	featureNames.push_back("solidity");
+	featureNames.push_back("skew");
+	featureNames.push_back("energy");
+	featureNames.push_back("entropy");
+	featureNames.push_back("surface");
+	featureNames.push_back("shape");
+
+	//Now populate the objects
+	myObjects.clear();
+	std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
+	for (int i=0; i<(int)labels.size(); ++i)
+	{
+		FeatureCalcType::LabelPixelType id = labels.at(i);
+		if(id == 0) continue;
+
+		if(id > maxID) maxID = id;
+
+		myObjects.push_back( GetNewObject(id, labFilter ) );
+	}
+
+	return true;
+}
+
+bool NuclearSegmentation::LoadData()
+{
+	if(dataImage)
+	{
+		errorMessage = "Data already loaded";
+		return 0;
+	}
+	if( dataFilenames.size() <= 0 )
+	{
+		errorMessage = "No Data Image specified in XML";
+		return 0;
+	}
+
+	dataImage = new ftk::Image();
+	if(!dataImage->LoadFile(PrependProjectPath(dataFilenames[0])))
+	{
+		delete dataImage;
+		errorMessage = "Data Image failed to load";
+		return 0;
+	}
+	return true;
+}
+
+bool NuclearSegmentation::LoadLabel()
+{
+	if(labelImage)
+	{
+		errorMessage = "Label already loaded";
+		return 0;
+	}
+	if( resultFilenames.size() <= 0 )
+	{
+		errorMessage = "No Label Image specified in XML";
+		return 0;
+	}
+
+
+	labelImage = new ftk::Image();
+	if(!labelImage->LoadFile(PrependProjectPath(resultFilenames[0])))
+	{
+		delete labelImage;
+		errorMessage = "Label Image failed to load";
+		return 0;
+	}
+	return true;
+}
+
+bool NuclearSegmentation::SaveLabel()
+{
+	if(!labelImage)
+	{
+		errorMessage = "No Label Image to Save";
+		return false;
+	}
+
+	//First check and make sure resultFilename is there
+	if(resultFilenames.size() == 0)
+	{
+		string labelFilename = projectName;
+		labelFilename.append("_label.tif");
+		resultFilenames.push_back(labelFilename);
+	}
+	//Write the labelImage to file
+	size_t pos = resultFilenames[0].find(".");
+	string base = resultFilenames[0].substr(0,pos);
+	//labelImage->save(PrependProjectPath(base),"tif");
+
+	//Added by Yousef on 1/18/2009: save results into a format readable by the IDL farsight
+	if(NucleusSeg)
+		NucleusSeg->saveIntoIDLFormat(PrependProjectPath(projectName));
+
+	return true;
+}
+
+bool NuclearSegmentation::SaveAll()
+{
+	SaveLabel();
+	WriteToXML();
+	WriteToMETA();
+	editsNotSaved = false;
+	return true;
+}
+
+ftk::Object::Box NuclearSegmentation::ExtremaBox(vector<int> ids)
+{
+	ftk::Object::Box extreme = myObjects.at( GetObjectIndex(ids.at(0),"nucleus") ).GetBounds().at(0);
+	for(int i=1; i<ids.size(); ++i)
+	{
+		ftk::Object::Box test = myObjects.at( GetObjectIndex(ids.at(i),"nucleus") ).GetBounds().at(0);;
+
+		extreme.min.x = min(extreme.min.x, test.min.x);
+		extreme.min.y = min(extreme.min.y, test.min.y);
+		extreme.min.z = min(extreme.min.z, test.min.z);
+		extreme.min.t = min(extreme.min.t, test.min.t);
+		extreme.max.x = max(extreme.max.x, test.max.x);
+		extreme.max.y = max(extreme.max.y, test.max.y);
+		extreme.max.z = max(extreme.max.z, test.max.z);
+		extreme.max.t = max(extreme.max.t, test.max.t);
+	}
+
+	return extreme;
+}
+
+int NuclearSegmentation::Merge(vector<int> ids)
+{
+	if(!labelImage)
+		return 0;
+
+	//Merge is difficult because we are going to invalidate all merged objects,
+	// create a new label and assign the old object labels to it,
+	// calculate the features for this new label
+	// then the model should also be updated to display properly
+	// Return the new ID
+
+	int newID = ++maxID;
+	for(int i=0; i<ids.size(); ++i)
+	{
+		int index = GetObjectIndex(ids.at(i),"nucleus");
+		if(index < 0 ) return 0;
+
+		myObjects.at(index).SetValidity(false);
+		ftk::Object::EditRecord record;
+		record.date = TimeStamp();
+		std::string msg = "MERGED TO BECOME ";
+		msg.append(NumToString(newID));
+		record.description = msg;
+		myObjects.at(index).AddEditRecord(record);
+	}
+	ftk::Object::Box region = ExtremaBox(ids);
+	ReassignLabels(ids, newID, region);		//Assign all old labels to this new label
+
+	//Now get new object information:
+	//ftk::LabelImageToFeatures *labFilter = NULL;
+	//Calculation
+	if(!labelImage || !dataImage)
+	{
+		errorMessage = "label image or data image doesn't exist";
+		return 0;
+	}
+
+	//Calculate features using feature filter
+	//labFilter = new ftk::LabelImageToFeatures();
+	/*
+	labFilter->setLabelInput(labelImage);
+	labFilter->setIntensityInput(dataImage,0);
+	labFilter->setRegion(region.min.x, region.max.x, region.min.y,region.max.y, region.min.z, region.max.z);
+	labFilter->Update();
+
+	myObjects.push_back( GetNewObject(newID, labFilter ) );
+	*/
+	ftk::Object::EditRecord record;
+	record.date = TimeStamp();
+	std::string msg = "MERGED TO FROM: ";
+	msg.append(NumToString(ids.at(0)));
+	for(int i=1; i<ids.size(); ++i)
+	{
+		msg.append(", ");
+		msg.append(NumToString(ids.at(i)));
+	}
+	record.description = msg;
+	myObjects.back().AddEditRecord(record);
+	IdToIndexMap[newID] = (int)myObjects.size() - 1;
+	//delete labFilter;
+
+	editsNotSaved = true;
+	return newID;
+}
+
+bool NuclearSegmentation::Delete(vector<int> ids)
+{
+	if(!labelImage)
+		return false;
+
+	for(int i=0; i<ids.size(); ++i)
+	{
+		//Find the object with the ID
+		int index = GetObjectIndex(ids.at(i),"nucleus");
+		if (index < 0) return false;
+
+		// 1. Invalidate
+		myObjects.at( index ).SetValidity(false);
+		// 2. Add to Edit Record
+		ftk::Object::EditRecord record;
+		record.date = TimeStamp();
+		record.description = "DELETED";
+		myObjects.at( index ).AddEditRecord(record);
+		ReassignLabel(ids.at(i),0);
+	}
+
+	editsNotSaved = true;
+	return true;
+}
+
+ftk::Object NuclearSegmentation::GetNewObject(int id, FeatureCalcType *labFilter )
+{
+	Object object("nucleus");
+	object.SetId(id);
+	object.SetValidity(1);
+	object.SetDuplicated(0);
+	object.SetClass(-1);
+
+	ftk::LabelImageFeatures features = labFilter->GetFeatures( id );
+
+	Object::Point c;
+	c.x = (int)features.centroid[0];
+	c.y = (int)features.centroid[1];
+	c.z = (int)features.centroid[2];
+	c.t = 0;
+	object.AddCenter(c);
+
+	Object::Box b;
+	b.min.x = (int)features.boundingbox[0];
+	b.max.x = (int)features.boundingbox[1];
+	b.min.y = (int)features.boundingbox[2];
+	b.max.y = (int)features.boundingbox[3];
+	b.min.z = (int)features.boundingbox[4];
+	b.max.z = (int)features.boundingbox[5];
+	b.min.t = 0;
+	b.max.t = 0;
+	object.AddBound(b);
+
+	vector< double > f(0);
+	f.push_back( features.volume );
+	f.push_back( features.mean );
+	f.push_back( features.sigma );
+	f.push_back( features.variance );
+	f.push_back( features.eccentricity );
+	f.push_back( features.radiusvariation );
+	f.push_back( features.elongation );
+	f.push_back( features.orientation );
+	f.push_back( features.surfacegradient );
+	f.push_back( features.interiorgradient );
+	f.push_back( features.surfaceintensity );
+	f.push_back( features.interiorintensity );
+	f.push_back( features.intensityratio );
+	f.push_back( features.percentsharedboundary );
+	f.push_back( features.solidity );
+	f.push_back( features.skew );
+	f.push_back( features.energy );
+	f.push_back( features.entropy );
+	f.push_back( features.surfacearea );
+	f.push_back( features.shape );
+	object.SetFeatures(f);
+
+	return object;
+}
+
+
+//This function finds the bounding box of the object with id "fromId",
+// and uses that area to change the pixels to "toId"
+void NuclearSegmentation::ReassignLabel(int fromId, int toId)
+{
+	int C = 0;//labelImage->NumColumns();
+	int R = 0;//labelImage->NumRows();
+	int Z = 0;//labelImage->NumZSlices();
+
+	ftk::Object::Box region = myObjects.at( GetObjectIndex(fromId,"nucleus") ).GetBounds().at(0);
+
+	if(region.min.x < 0) region.min.x = 0;
+	if(region.min.y < 0) region.min.y = 0;
+	if(region.min.z < 0) region.min.z = 0;
+	if(region.max.x >= C) region.max.x = C-1;
+	if(region.max.y >= R) region.max.y = R-1;
+	if(region.max.z >= Z) region.max.z = Z-1;
+
+	for(int z = region.min.z; z <= region.max.z; ++z)
+	{
+		for(int r=region.min.y; r <= region.max.y; ++r)
+		{
+			for(int c=region.min.x; c <= region.max.x; ++c)
+			{
+				int pix = 1;//labelImage->GetPixel(0,0,z,r,c);
+				if( pix == fromId );
+					//labelImage->SetPixel(0,0,z,r,c,toId);
+			}
+		}
+	}
+}
+
+//This function finds the bounding box of the objects with ids "fromIds",
+// and uses that area to change the pixels to "toId" in 1 pass through the whole region
+void NuclearSegmentation::ReassignLabels(vector<int> fromIds, int toId, ftk::Object::Box region)
+{
+	int C = 1;//labelImage->NumColumns();
+	int R = 1;//labelImage->NumRows();
+	int Z = 1;//labelImage->NumZSlices();
+
+	if(region.min.x < 0) region.min.x = 0;
+	if(region.min.y < 0) region.min.y = 0;
+	if(region.min.z < 0) region.min.z = 0;
+	if(region.max.x >= C) region.max.x = C-1;
+	if(region.max.y >= R) region.max.y = R-1;
+	if(region.max.z >= Z) region.max.z = Z-1;
+
+	for(int z = region.min.z; z <= region.max.z; ++z)
+	{
+		for(int r=region.min.y; r <= region.max.y; ++r)
+		{
+			for(int c=region.min.x; c <= region.max.x; ++c)
+			{
+				int pix = 0;//labelImage->GetPixel(0,0,z,r,c);
+				for(int i = 0; i < fromIds.size(); ++i)
+				{
+					if( pix == fromIds.at(i) );
+						//labelImage->SetPixel(0,0,z,r,c,toId);
+				}
+			}
+		}
+	}
+}
+
+string NuclearSegmentation::TimeStamp()
+{
+	time_t rawtime;
+	struct tm *timeinfo;
+	time ( &rawtime );
+	timeinfo = localtime ( &rawtime );
+	string dt = asctime(timeinfo);
+	size_t end = dt.find('\n');
+	dt.erase(end);
+	return dt;
+}
+
+int NuclearSegmentation::GetObjectIndex(int objectID, string type)
+{
+	//Find the object with the ID
+	for( int i=0; i<myObjects.size(); ++i )
+	{
+		ftk::Object obj = myObjects[i];
+		if (obj.GetId() == objectID && obj.GetType() == type)
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+
+
+//Check to see if the file will filename fname exists in 
+// the project path.
+bool NuclearSegmentation::FileExists(const char* fname)
+{
+	FILE * pFile = fopen (PrependProjectPath(fname).c_str(),"r");
+	if (pFile==NULL)
+	{
+		return false;
+	}
+	fclose (pFile);
+	return true;
+}
+
+//********************************************************************************************
+//********************************************************************************************
+//********************************************************************************************
+//LEGACY FUNCTIONS TO INTERACT WITH MODULE WIDGET:
+void NuclearSegmentation::initConstants()
+{
+	//Initialize package and module names and values
+	moduleNames.resize(0);
+	moduleNames.push_back("Read From .dat file");
+	moduleNames.push_back("Binarization");
+	moduleNames.push_back("Initial Segmentation");
+	moduleNames.push_back("Alpha Expansion");
+}
+//***************************************************************************
+// Call this function first to setup the module with appropiate data
+//***************************************************************************
+void NuclearSegmentation::setup(string imagefilename, string paramfilename)
+{
+	if(dataImage)
+	{
+		delete dataImage;
+		dataImage = NULL;
+		dataFilenames.clear();
+	}
+	if(NucleusSeg)
+	{
+		delete NucleusSeg;
+		NucleusSeg = NULL;
+	}
+
+	dataImage = new ftk::Image();
+	string fname = PrependProjectPath(imagefilename);
+	//dataImage->load(fname);
+	dataFilenames.push_back(imagefilename);
+
+	int numStacks = 1;//dataImage->NumZSlices();
+	int numRows = 1;//dataImage->NumRows();				//y-direction
+	int numColumns = 1;//dataImage->NumColumns(); 		//x-direction
+
+	unsigned char *dataImagePtr;// = dataImage->GetStack(0,0);	//Expects grayscale image
+	char *f = (char*)imagefilename.c_str();
+
+	NucleusSeg = new yousef_nucleus_seg();
+	NucleusSeg->readParametersFromFile(PrependProjectPath(paramfilename).c_str());
+	NucleusSeg->setDataImage( dataImagePtr, numColumns, numRows, numStacks, f ); 
+}
+
+//***************************************************************************
+// Execute the specified module
+// Assumes all parameters and source data have been supplied
+//***************************************************************************
+void NuclearSegmentation::executeModule(int moduleNum)
+{
+	//Check to make sure segmentation has been initialized
+	if(!NucleusSeg)
+		return;
+
+	vector<int> size = NucleusSeg->getImageSize();
+
+	switch(moduleNum)
+	{
+	case 0:
+		NucleusSeg->readFromIDLFormat(PrependProjectPath(dataFilenames[0]));
+		createFTKLabelImg( NucleusSeg->getSegImage(), size[2],size[1],size[0] );
+		break;
+	case 1:
+		NucleusSeg->runBinarization();
+		createFTKLabelImg( NucleusSeg->getBinImage(), size[2], size[1], size[0] );
+		break;
+	case 2:
+		NucleusSeg->runSeedDetection();
+		NucleusSeg->runClustering();
+		createFTKLabelImg( NucleusSeg->getClustImage(), size[2], size[1], size[0] );
+		break;
+	case 3:
+		NucleusSeg->runAlphaExpansion3D();
+		createFTKLabelImg( NucleusSeg->getSegImage(), size[2], size[1], size[0] );
+		break;
+	}
+}
+
+//*******************************************************************************
+// INTERNAL FUNCTIONS
+
+//creates the ftkImage labelImage that pointer in base class requires
+void NuclearSegmentation::createFTKLabelImg(int* data, int numColumns, int numRows, int numStacks)
+{
+	if(!data)
+		return;
+
+	if(!labelImage)
+		labelImage = new ftk::Image();
+	else
+	{
+		delete labelImage;
+		labelImage = new ftk::Image();
+	}
+	//labelImage->ImageFromData3D((void*)data,sizeof(int), numColumns, numRows, numStacks);
+}
+
+//********************************************************************************************
+//********************************************************************************************
+//********************************************************************************************
+
+} //end namespace ftk
+

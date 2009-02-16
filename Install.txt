@@ -1,0 +1,67 @@
+FARSIGHT INSTALL GUIDE
+
+written by Isaac Abbott 
+updated 7/3/08
+
+1. Make sure you have CMake installed
+
+2. Make sure you have a compiler installed.  I use Microsoft Visual C++ (2005)
+    You may need to make changes to your environment variables
+
+3. Install required packages:
+
+   Overview:
+
+     To install VXL,ITK,and VTK, and Farsight first unzip source into folder like C:/VXL/src
+     Run CMAKE making sure indicated parameters are correct
+     Open the .sln file in Visual Studio
+     Change to Release mode, and Build ALL, or Debug Mode if you want to use Debugging 
+
+
+     To install libxml2, and QT use command line scripts described below
+ 
+
+	1. VXL (latest)
+		CMAKE w/ BRL,VIDL2,CONVERSIONS,EXAMPLES,EXPAT,VXL_DASH,GEL,OUL,OXL,PRIP,SHARED,
+		TARGETJR,TBL,TESTING,UNMAINT,VGUI set to OFF
+
+	
+	2. ITK (latest)
+		CMAKE w/ Shared,Testing,Examples,Doxygen set to OFF
+		Set ITK_USE_SYSTEM_VXL to ON
+    		See PYTHON.txt if you'd like to enable Python wrapping for ITK
+	
+	
+	3. VTK (latest)
+		CMAKE w/ Doc,Examples,Shared,Testing set to OFF
+    		The embedded python shell needs VTK_USE_GUISUPPORT + VTK_USE_QVTK set to ON
+    		See PYTHON.txt if you'd like to enable Python wrapping for VTK
+
+
+	4. QT (latest)
+		configure -platform win32-msvc2005
+		nmake
+	
+	5. Farsight
+		Examples,Testing,Shared set to OFF
+		SET GUI TO ON IF DESIRED
+		SET DESIRED MODULES TO ON, WILL TELL YOU IF MISSING LIBRARIES
+
+		THE PACKAGE project does not build automatically, but can be selected and build.
+		It requires some type of platform specific program for creating intall packages.
+		Build PACKAGE to create an install file of Farsight.
+
+
+4.  Running GUI:
+
+
+	1. Try running Farsight.exe (in gui/release folder), may need to add to PATH environment variable.
+    		Path should include binary directories of VTK,ITK,VXL,libxml2,QT,and VS2005
+    		eg. for QT have C:/Qt/bin in PATH (DLLs are in here)
+
+	2. Sometimes you may need to move some DLL to the directory where farsight.exe is, especially if you build in
+		both debug and release modes
+
+
+
+	

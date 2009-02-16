@@ -1,0 +1,52 @@
+Enabling Python wrapping in VTK and ITK
+
+== VTK ==
+
+If you're developing on Windows you can use these pre-compiled, python-wrapped binaries:
+http://visualisation.tudelft.nl/~cpbotha/files/vtk_itk/vtk-5.2/VTK-5.2-Py25-VS8sp1-cpbotha.net.zip
+
+Otherwise, to build VTK w/ Python support from source
+
+0.  Make sure you have a relatively recent version of CMake installed
+      http://www.cmake.org/cmake/resources/software.html
+
+1.  Download the source for the latest stable release of VTK
+      http://www.vtk.org/get-software.php
+
+2.  In CMake, turn ON the following options:
+      BUILD_SHARED_LIBS
+      VTK_WRAP_PYTHON
+
+    When doing VTK development, it's also recommended to turn on VTK_DEBUG_LEAKS
+    (an advanced option)
+
+    Also, turn off VTK_USE_TK (unless you plan on generating Tk bindings)
+    
+3.  Generate the build files and compile VTK
+
+== ITK ==
+
+0.  Build the latest stable release of VXL separate from ITK (see Install.txt)
+    If you're doing this on Windows, VXL will fail to link unless you build it
+    with static libraries.
+
+1.  Obtain a CVS checkout of ITK:
+      cvs -d:pserver:anonymous@public.kitware.com:/cvsroot/Insight login
+      (respond with password "insight")
+      cvs -d:pserver:anonymous@public.kitware.com:/cvsroot/Insight co Insight
+
+    You may want to check the ITK dashboard first to make sure the current state
+    of the codebase will build properly for your platform & compiler:
+      http://www.cdash.org/CDash/index.php?project=Insight
+
+2.  Checkout CableSwig in the Utilities directory of the ITK source tree
+      cd Insight/Utilities
+      cvs -d:pserver:anonymous@public.kitware.com:/cvsroot/CableSwig co CableSwig
+
+3.  Run CMake for ITK and set the following options:
+      BUILD_SHARED_LIBS ON
+      ITK_CSWIG_PYTHON ON
+      ITK_USE_SYSTEM_VXL ON
+
+4.  Generate the build files and compile ITK (this will take a long time)
+
