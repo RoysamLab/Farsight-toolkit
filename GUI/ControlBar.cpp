@@ -731,6 +731,7 @@ bool ControlBar::ConfirmClosePython()
 //******************************************************************************
 void ControlBar::OpenPythonWindow()
 {
+/* this code is still in progress...
 	if(this->settings->contains("farsight/installpath") == false)
 	  {
 		this->settings->setValue("farsight/installpath","");
@@ -760,9 +761,7 @@ void ControlBar::OpenPythonWindow()
   this->PythonDialog->show();
   this->PythonDialog->raise();
   this->PythonDialog->activateWindow();
-
-/* old code follows.  Eventually we'll make it an option so the user can use an
- * external python shell if they so choose
+*/
 	if(this->settings->contains("python/window") == false)
     {
 		if(this->BrowseForPythonExecutable() == false)
@@ -805,9 +804,9 @@ void ControlBar::OpenPythonWindow()
 	cmd.append(arg);
   
 	this->pythonProcess->startDetached(cmd);
-*/
 }
 
+/*
 //-----------------------------------------------------------------------------
 void ControlBar::initPythonInterpretor()
 {
@@ -824,6 +823,7 @@ void ControlBar::initPythonInterpretor()
   this->PythonDialog->runString(initStr);
   this->PythonDialog->setAttribute(Qt::WA_QuitOnClose, false);
 }
+*/
 
 //******************************************************************************
 // Create a new Plot window and give it the provided model and selection model

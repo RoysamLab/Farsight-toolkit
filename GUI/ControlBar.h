@@ -35,7 +35,7 @@
 //OTHER LOCAL INCLUDES
 #include "SegmentationCommon/ftkSegmentationResult.h"
 #include "FTKImage/ftkImage.h"
-#include "Qt/Python/QtPythonDialog.h"
+//#include "Qt/Python/QtPythonDialog.h"
 
 //*******************************************
 // ADD NEW MODULES HERE
@@ -74,7 +74,7 @@ private slots:
   bool BrowseForPythonExecutable();
 	void OpenPythonWindow();
 	SegmentationWindow* CreateNewSegmentationWindow();
-  void initPythonInterpretor();
+//  void initPythonInterpretor();
 
 //*******************************************
 // ADD NEW MODULES HERE
@@ -139,7 +139,7 @@ private:
   QPushButton *browseForPythonButton;
   QPushButton *submitPreferencesButton;
   QPushButton *cancelPreferencesButton;
-  QtPythonDialog *PythonDialog;
+//  QtPythonDialog *PythonDialog;
   char *argv0;
   QString pythonFiles;
   QString exeFiles;

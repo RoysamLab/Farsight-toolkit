@@ -130,8 +130,8 @@ IF(BUILD_GUI)
   SUBDIRS( GUI ) 
   SET(CPACK_PACKAGE_EXECUTABLES ${CPACK_PACKAGE_EXECUTABLES}
     "Farsight" "Farsight")
-  SUBDIRS( Qt/Widgets )
-  SUBDIRS( Qt/Python )
+#  SUBDIRS( Qt/Widgets )
+#  SUBDIRS( Qt/Python )
 ENDIF(BUILD_GUI)
 
 
