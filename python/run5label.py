@@ -8,15 +8,18 @@ import sys
 import os
 
 ###############################################################################
-inputimage = 'Montage5Funmixed02_Nuclei.tiff'
-segimage = 'Montage5Funmixed02_Nuclei_label.tiff'
+inputimage = 'w2less.tif'
+segimage = 'w2less_label.tif'
 parameters = 'Seg_Params.ini'
 path = os.getcwd()
+
+assocXML = 'w2less_assoc.xml'
+numRules = '2'
 
 #SEGMENT
 subprocess.call(['segment_nuclei.exe', inputimage, segimage, parameters])
 #FEATURES
 subprocess.call(['compute_nuclei_features', path, inputimage, segimage])
 #ASSOCIATIVE MEASUREMENTS
-#subprocess.call(['compute_associative_measures',....]);
+subprocess.call(['compute_associative_measures',segimage, assocXML, numRules])
 
