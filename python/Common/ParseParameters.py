@@ -9,7 +9,15 @@ import xml.parsers.expat
 parameters = []
 values = {}
 
-def StartElementHandler(name, attributes):
+#XML handler for reading parameter description files
+def StartParameterDescriptionHandler(name, attributes):
+  if name != "parameter":
+    return
+  parameterName = attributes["name"]
+  parameters.append(attributes)
+
+#XML handler for reading parameter value files
+def StartParameterValueHandler(name, attributes):
   if name != "parameter":
     return
   parameterName = attributes["name"]
@@ -22,23 +30,29 @@ def CharacterDataHandler(data):
   pass
 
 #this function parses information about parameters from a specified XML file
-def ParseParametersFromXML():
-  filename = "Parameters.xml"
+#if descriptions are true it reads from the parameter description file
+#otherwise it parses a parameter values file.
+def ParseXMLParameterFile(moduleName, descriptions=True):
+  parser = xml.parsers.expat.ParserCreate()
+  if descriptions:
+    filename = "XML/%sParameterDescriptions.xml" % moduleName
+    parser.StartElementHandler = StartParameterDescriptionHandler
+  else:
+    filename= "XML/%sParameterValues.xml" % moduleName
+    parser.StartElementHandler = StartParameterValueHandler
   try:
     f = file(filename, "r")
   except IOError:
-    sys.stderr.write("Error opening Parameters.xml for reading\n")
+    sys.stderr.write("Error opening %s for reading\n" % filename)
     sys.exit(1)
-  parser = xml.parsers.expat.ParserCreate()
-  parser.StartElementHandler = StartElementHandler
   parser.EndElementHandler = EndElementHandler
   parser.CharacterDataHandler = CharacterDataHandler
   parser.ParseFile(f)
 
 #this function asks the user for parameter values based on information parsed
 #from the XML file
-def AskForValues():
-  if os.path.exists("ParameterValues.pck"):
+def AskForValues(moduleName):
+  if os.path.exists("XML/%sParameterValues.xml"):
     print "Parameter values have been previously defined."
     print "Would you like to enter new parameter values?"
     answer = sys.stdin.readline()
@@ -78,9 +92,11 @@ def AskForValues():
       if goodValueSupplied:
         values[parameter["name"]] = answer
         printInstructions = True
-  f = file("ParameterValues.pck", "w")
-  pickle.dump(values, f)
+  f = file("XML/%sParameterValues.xml" % moduleName, "w")
+  f.write('<?xml version="1.0"?>\n')
+  for name,value in values.iteritems():
+    f.write('<parameter name="%s" value="%s"></parameter>\n' % (name,value))
 
-def SpecifyParameterValues():
-  ParseParametersFromXML()
-  AskForValues()
+def SpecifyParameterValues(moduleName):
+  ParseXMLParameterFile(moduleName, True)
+  AskForValues(moduleName)

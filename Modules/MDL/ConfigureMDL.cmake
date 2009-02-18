@@ -1,3 +1,3 @@
 CONFIGURE_FILE(
   ${PROJECT_SOURCE_DIR}/RunMDL.py.in
-  ${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/RunMDL.py)
+  ${Farsight_SOURCE_DIR}/python/RunMDL.py)
