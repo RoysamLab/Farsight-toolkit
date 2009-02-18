@@ -26,8 +26,8 @@ MARK_AS_ADVANCED(WRAP_PYTHON)
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR} )
 
-CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/Common/ParseParameters.py
-               ${PROJECT_BINARY_DIR}/Common/ParseParameters.py)
+#CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/Common/ParseParameters.py
+#               ${PROJECT_BINARY_DIR}/Common/ParseParameters.py)
 
 ################################################################################
 ################################################################################
