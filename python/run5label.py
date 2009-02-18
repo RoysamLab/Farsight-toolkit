@@ -14,7 +14,7 @@ parameters = 'Seg_Params.ini'
 path = os.getcwd()
 
 assocXML = 'w2less_assoc.xml'
-numRules = '2'
+numRules = '1'
 
 #SEGMENT
 subprocess.call(['segment_nuclei.exe', inputimage, segimage, parameters])

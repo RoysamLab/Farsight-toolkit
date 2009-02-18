@@ -173,13 +173,13 @@ float NuclearAssociationRules::ComputeOneAssocMeasurement(itk::SmartPointer<Targ
 	{
 		int V = iterator3.Get();
 		//if it is outside with distance less than outDistance away
-		if(V>0 && V<=assocRulesList[objID].GetOutDistance())
+		if(V>0 && V<=assocRulesList[ruleID].GetOutDistance())
 			trgInt.push_back(iterator4.Get());
 		//if it is inside and the whole cell is used
-		else if(V<=0 && assocRulesList[objID].IsUseWholeObject())
+		else if(V<=0 && assocRulesList[ruleID].IsUseWholeObject())
 			trgInt.push_back(iterator4.Get());
 		//if it is inside with distance less than in Distance
-		else if(V<=0 && abs(V)<=assocRulesList[objID].GetInDistance())
+		else if(V<=0 && abs(V)<=assocRulesList[ruleID].GetInDistance())
 			trgInt.push_back(iterator4.Get());
 
 		++iterator3;
