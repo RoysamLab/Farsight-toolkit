@@ -19,7 +19,8 @@ from ParseParameters import ParseXMLParameterFile, SpecifyParameterValues
 
 SpecifyParameterValues("MDL")
 f = file("XML/MDLParameterValues.xml")
-ParseXMLParameterFile("MDL", False)
+
+parameterValues = ParseXMLParameterFile("MDL", False)
 
 fullPathToInput = parameterValues["Input image"]
 dataDir = os.path.dirname(fullPathToInput)
