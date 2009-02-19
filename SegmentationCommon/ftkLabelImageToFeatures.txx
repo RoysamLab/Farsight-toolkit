@@ -311,9 +311,7 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	//This function should use TIPixel (the type of pixels in the intensity image)
 	// to set the histogram bins
 	// FOR NOW ASSUME UNSIGNED VALUES OF UCHAR, USHORT
-	*numBins = 256;
 	*lowerBound = 0;
-	*upperBound = 255;
 	
 	if( typeid(TIPixel) == typeid(unsigned char) )
 	{
@@ -325,9 +323,9 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	}
 	else
 	{
-		*numBins = 0;
-		*upperBound = 0;
+		*upperBound = 1;
 	}
+	*numBins = *upperBound - *lowerBound - 1;
 }
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
@@ -787,7 +785,11 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 			t_entropy = t_entropy + (prob*log);						//for entropy
 		}	
 
-		allFeatures[currentLabel].skew =  float( t_skew / ( sigma * sigma * sigma ) );
+		if(sigma == 0)
+			allFeatures[currentLabel].skew =  float(0);
+		else
+			allFeatures[currentLabel].skew =  float( t_skew / ( sigma * sigma * sigma ) );
+			
 		allFeatures[currentLabel].energy = float( t_energy );
 		allFeatures[currentLabel].entropy = float( -1 * t_entropy );
 	}

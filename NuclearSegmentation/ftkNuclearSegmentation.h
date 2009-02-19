@@ -65,7 +65,7 @@ public:
 	bool editsNotSaved;
 
 private:
-	typedef unsigned char IntensityPixelType;
+	typedef unsigned short IntensityPixelType;
 	typedef unsigned short LabelPixelType;
 	typedef itk::Image< IntensityPixelType, 3 > IntensityImageType;
 	typedef itk::Image< LabelPixelType, 3 > LabelImageType;

@@ -209,7 +209,8 @@ void ControlBar::loadImage()
 	QString filename  = QFileDialog::getOpenFileName(this,"Choose an image",lastPath, 
 			tr("TIF Files (*.tif *.tiff)\n" 
 			   "PIC Files (*.pic)\n" 
-			   "LSM Files (*.lsm)\n"));
+			   "LSM Files (*.lsm)\n"
+			   "All Files (*.*)"));
 
     if(filename != "")
     {  

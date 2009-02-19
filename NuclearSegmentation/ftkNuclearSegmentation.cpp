@@ -92,7 +92,11 @@ bool NuclearSegmentation::LabelsToObjects(void)
 	//Set Feature Names
 	featureNames.resize(0);
 	featureNames.push_back("volume");
+	featureNames.push_back("sum");
 	featureNames.push_back("mean");
+	featureNames.push_back("median");
+	featureNames.push_back("min");
+	featureNames.push_back("max");
 	featureNames.push_back("sigma");
 	featureNames.push_back("variance");
 	featureNames.push_back("eccentricity");
@@ -351,7 +355,11 @@ ftk::Object NuclearSegmentation::GetNewObject(int id, FeatureCalcType *labFilter
 
 	vector< double > f(0);
 	f.push_back( features.volume );
+	f.push_back( features.sum);
 	f.push_back( features.mean );
+	f.push_back( features.median );
+	f.push_back( features.minimum );
+	f.push_back( features.maximum );
 	f.push_back( features.sigma );
 	f.push_back( features.variance );
 	f.push_back( features.eccentricity );
