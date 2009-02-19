@@ -18,7 +18,7 @@ updated 7/3/08
      Change to Release mode, and Build ALL, or Debug Mode if you want to use Debugging 
 
 
-     To install libxml2, and QT use command line scripts described below
+     To install QT use command line scripts described below
  
 
 	1. VXL (latest)
@@ -41,8 +41,15 @@ updated 7/3/08
 	4. QT (latest)
 		configure -platform win32-msvc2005
 		nmake
+
+	5. OpenGL
+		To compile vessel segmentation you will need openGL, glext.h, and GLUT.
+		Your platform probably comes with OpenGL.
+		You can download glext from here: http://www.opengl.org/registry/.
+			Put the header file in .../GL/ (where gl.h is).
+		You will need to get GLUT from here: http://www.opengl.org/resources/libraries/glut/
 	
-	5. Farsight
+	6. Farsight
 		Examples,Testing,Shared set to OFF
 		SET GUI TO ON IF DESIRED
 		SET DESIRED MODULES TO ON, WILL TELL YOU IF MISSING LIBRARIES

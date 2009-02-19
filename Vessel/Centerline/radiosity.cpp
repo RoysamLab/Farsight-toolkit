@@ -1,8 +1,7 @@
 #include "radiosity.h"
 #include "mesh.h"
 #include "face.h"
-#include <GL/gl.h>
-#include <GL/glut.h>
+#include <glut.h>
 #include "glCanvas.h"
 #include "draw_sphere.h"
 #include "array.h"
@@ -12,7 +11,10 @@
 #include "matrix.h"
 using namespace std;
 #define BUFSIZE 1000000
-//#define M_PI (2*acos(double(0)))
+
+#ifndef M_PI
+#define M_PI (2*acos(double(0)))
+#endif
 
 int GLCanvas::curr_type; 
 GLfloat GLCanvas::xtrans,GLCanvas::ytrans,GLCanvas::ztrans;

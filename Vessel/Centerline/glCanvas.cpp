@@ -2,9 +2,9 @@
 
 //#include "marchtetra.cpp"
 // Included files for OpenGL Rendering
-#include <GL/gl.h>
-#include <GL/glut.h>
+#include <glut.h>
 #include <GL/glext.h>
+
 #include "radiosity.h"
 #include "mesh.h"
 #include "draw_sphere.h"

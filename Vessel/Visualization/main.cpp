@@ -5,7 +5,8 @@
 #include <stdlib.h>
 #include "radiosity.h"
 #include <limits.h>
-#include <GL/gl.h>
+#include <math.h>
+#include <glut.h>
 
 #pragma warning(disable : 4996)
 #pragma warning(disable : 4244)

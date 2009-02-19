@@ -1,3 +1,4 @@
+
 ADD_EXECUTABLE(centerline
   argparser.h
   array.h
@@ -26,7 +27,8 @@ ADD_EXECUTABLE(centerline
   vectors.h
   vertex.h
   vertex_parent.h)
-TARGET_LINK_LIBRARIES(centerline ${GLUT_glut_LIBRARY} ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY})
+
+TARGET_LINK_LIBRARIES(centerline ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
 
 ADD_EXECUTABLE(votestotiff votestotiff.cpp)
 TARGET_LINK_LIBRARIES(votestotiff ITKCommon ITKIO)
