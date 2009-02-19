@@ -7,7 +7,7 @@
 
 #ifndef _GL_CANVAS_H_
 #define _GL_CANVAS_H_
-#include <glut.h>
+#include <GL/glut.h>
 #include <GL/glext.h>
 #include <stdlib.h>
 

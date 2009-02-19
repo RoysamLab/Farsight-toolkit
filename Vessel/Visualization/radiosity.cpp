@@ -1,7 +1,7 @@
 #include "radiosity.h"
 #include "mesh.h"
 #include "face.h"
-#include <glut.h>
+#include <GL/glut.h>
 #include "glCanvas.h"
 #include "draw_sphere.h"
 #include "array.h"

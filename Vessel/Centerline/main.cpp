@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include "radiosity.h"
 #include <limits.h>
-#include <glut.h>
+#include <GL/glut.h>
 
 #pragma warning(disable : 4996)
 #pragma warning(disable : 4244)
@@ -47,7 +47,7 @@ using namespace std;
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
 //typedef hash_map<int ,Vertex *> type;
-hash_map<int ,Vertex * > vert;
+hash_map< int ,Vertex * > vert;
 
 
 hash_map<long,double > hashcurv;

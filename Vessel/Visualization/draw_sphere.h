@@ -1,5 +1,4 @@
-#include <GL/gl.h>
-#include <GL/glu.h>
+#include <GL/glut.h>
 //#include <GL/glx.h>
 #include <stdio.h>
 #include <sys/types.h>

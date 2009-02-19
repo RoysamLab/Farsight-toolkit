@@ -1,6 +1,6 @@
 #ifndef MESH_H
 #define MESH_H
-#include <glut.h>
+#include <GL/glut.h>
 #include "vectors.h"
 #include "array.h"
 #include "bag.h"

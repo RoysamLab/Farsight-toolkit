@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
-#include <glut.h>
+#include <GL/glut.h>
 #include "mesh.h"
 #include "edge.h"
 #include "vertex.h"
