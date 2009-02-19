@@ -17,7 +17,6 @@
 #include "glCanvas.h"
 #include "boundingbox.h"
 #include <stdio.h>
-#include <hash_map>
 #include <time.h>
 
 #include "face.h"
@@ -40,7 +39,12 @@
 //#include "mesh.h"
 
 using namespace std;
+#ifdef WIN32
 using namespace stdext;
+#include <hash_map>
+#else
+#include <hash_map.h>
+#endif
 
 
 #define SKIP 2

@@ -18,7 +18,6 @@
 #include "glCanvas.h"
 #include "boundingbox.h"
 #include <stdio.h>
-#include <hash_map>
 #include <time.h>
 
 #include "face.h"
@@ -41,8 +40,13 @@
 //#include "mesh.h"
 
 using namespace std;
-using namespace stdext;
 
+#ifdef WIN32
+using namespace stdext;
+#include <hash_map>
+#else
+#include <hash_map.h>
+#endif
 
 #define SKIP 2
 #define MIN(a,b) (((a)>(b))?(b):(a))
