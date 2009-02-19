@@ -26,7 +26,7 @@
  * 
  */
 
-/* A very good linear time implementation of finding median that I adopted*/
+/* A very good linear time implementation of finding median that I borrowed*/
 /* - Arun */
 
 #define max(a,b) (((a)>(b))?(a):(b))

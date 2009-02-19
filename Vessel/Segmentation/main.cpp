@@ -14,6 +14,8 @@
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
+#include <itkDanielssonDistanceMapImageFilter.h>
+
 
 using namespace std;
 
@@ -123,8 +125,8 @@ int main(int argc, char**argv)
 	// pic file name
 
 	printf("%d\n",argc);
-	if(argc >2)
-		ParseArguments(argc,argv);
+	//if(argc >2)
+	//	ParseArguments(argc,argv);
 	char picfile[1024];// dont segfault me plz!
 	//printf("%s\n",argv[1]);
 	char filenamebuff[1024];//="vessel.pic";
@@ -579,21 +581,45 @@ int main(int argc, char**argv)
 			
 			typedef itk::ImageFileWriter<ImageType> FileWriterType;
 			FileWriterType::Pointer writer = FileWriterType::New();
-			writer->SetFileName(output_tif_file);
+			writer->SetFileName(argv[2]);
 			writer->SetInput(imout);
 			writer->Update();
 
-					free(matrix);
-					free(lmatrix);
-					free(checked);
-					free(l1matrix);
-					free(l2matrix);
-					//	}
-					//	}
+			char distance_map_file[1024];
+			strcpy(distance_map_file,argv[2]);
+			strcpy(&distance_map_file[strlen(distance_map_file)-4],"_distance_map.tif");
+			char vector_map[1024];
+			strcpy(vector_map,argv[2]);
+			strcpy(&vector_map[strlen(vector_map)-4],"_vector_map.mhd");
 
+			typedef itk::Image<short int,3> DistanceImageType;
+			typedef itk::DanielssonDistanceMapImageFilter<ImageType,DistanceImageType> DistanceMapFilterType;
+			typedef DistanceMapFilterType::VectorImageType OffsetImageType;
 
-					free(raster);
-					fclose(fp);
-					printf("%d seconds \n",time(NULL)-t1);
-					return 0;
+			DistanceMapFilterType::Pointer distfilter = DistanceMapFilterType::New();
+			distfilter->SetInput(imout);
+			distfilter->InputIsBinaryOn();
+			distfilter->Update();
+
+			typedef itk::ImageFileWriter<DistanceImageType> DistFileWriter;
+			DistFileWriter::Pointer dwrite = DistFileWriter::New();
+			dwrite->SetFileName(distance_map_file);
+			dwrite->SetInput(distfilter->GetOutput());
+			dwrite->Update();
+			
+			typedef itk::ImageFileWriter<OffsetImageType> OffsetFileWriter;
+			OffsetFileWriter::Pointer offwriter = OffsetFileWriter::New();
+			offwriter->SetFileName(vector_map);
+			offwriter->SetInput(distfilter->GetVectorDistanceMap());
+			offwriter->Update();
+
+			free(matrix);
+			free(lmatrix);
+			free(checked);
+			free(l1matrix);
+			free(l2matrix);
+			free(raster);
+			fclose(fp);
+			printf("%d seconds \n",time(NULL)-t1);
+			return 0;
 }
