@@ -15,8 +15,8 @@
 #include <queue>
 #include <string>
 #include <cmath>
+//#include "tiffio.h"
 #include "itk_tiff.h"
-
 #include "CONSTANTS.h"
 #include "Mytypes.h"
 #include "Config.h"
@@ -63,7 +63,7 @@ CImage::CImage(const char* fName) : data(0)
 		exit(0);
 	}
 
-	AllocateSpace();
+	//AllocateSpace();
 	// call 'ReadImage()' to do the work
 	Read(fName);
 }
@@ -116,6 +116,8 @@ unsigned char* CImage::AllocateSpace()
 }
 
 
+
+
 // read an image from a series of files
 int CImage::Read(const string& fName)
 {
@@ -128,6 +130,7 @@ int CImage::Read(const string& fName)
 	}
 
 	ProcessHeader(inFile);
+	AllocateSpace();
 
 	/////////////////////////////////////////
 	// read the file into the corresponding slice
@@ -552,6 +555,7 @@ int CImage::WriteTIFF(const string& fName)
 
 	// close the output file 
 	(void) TIFFClose(out); 
+
 	return 0;
 }
 

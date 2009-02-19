@@ -2,7 +2,7 @@
 #ifndef Connected_h
 #define Connected_h
 
-#define MaxNumOfSomas 50
+#define MaxNumOfSomas 1000
 #define MaxNumOfSegments 100
 #define MaxNumOfColors 512
 
@@ -39,9 +39,9 @@ public:
 	
 	void AddConnectedSomaID(int id);
 	
-	void Print(FILE *);
+	void Print(ostream& outFile, int SomaID);
 	
-	void PrintTrees(FILE *);
+	void PrintTrees(ostream& outFile);
 
 	// Draw the trees hanging from all somas in the projection
 	// images 

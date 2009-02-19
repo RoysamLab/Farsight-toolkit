@@ -1,10 +1,8 @@
 #ifndef extern_h
 #define extern_h
 
-
-#include "Branches.h"
-
 //	extern void Draw_XYCenterline(CVessel *current);
+#include "Branches.h"
 
 extern list<deque<CPoint> > Seeds;
 extern bool*** TracedImage;
@@ -120,7 +118,6 @@ extern C3DImage* SomaLabelsImage;
 //Use this object to detect branch points
 extern CBranches* BranchPoints;
 
-
 // an empty 3D image that is used to register the tracked vessels and seed points.
 // this image is needed to avoid tracking a vessel more than one time.
 extern C3DImage* Empty3DImage;
@@ -215,6 +212,7 @@ extern void GetCenterDirection(CPoint& center_point, const CPoint& HR,
 // perform matrix multiplication
 void MatrixMultiply(double [][4], double [][4], double [][4], int, int);
 
+
 //Yousef
 extern void Construct3DStructElem(int Radius, CPoint* aSphrPoints, int &iNumOfPoints);
 extern void Detect3DSomas(C3DImage* InImage, C3DImage* OutImage, CPoint* sSphrPoints, int iNumOfPoints, int StructElemSize);
@@ -256,8 +254,6 @@ extern int giReturnFlag ;
 extern float gfContrast;
 
 extern int giHitSomaFlag;
-
-extern int giDetectSoma;
 
 extern int giSomaVolume;
 extern CPoint* gaSomaPoints;

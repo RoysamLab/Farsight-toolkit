@@ -6,6 +6,8 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
+class TiXmlElement;
+
 typedef struct _ConfigEntry
 {
 	char m_achName[128];
@@ -17,6 +19,7 @@ class CConfig
 public:
 
 	CConfig();
+
 	~CConfig()
 	{
 		if (m_aData)
@@ -39,6 +42,10 @@ public:
 	// the number of elements
 	int m_iNumOfElements;
 	void ProcessCommandLine (int argc, char *argv[]);
+  const char* GetXMLAttribute(TiXmlElement *element, const char *attributeName);
+	//By Yousef 10-25-2007/////////////////////
+	void XmlReadSettings(std::string filename);
+	///////////////////////////////////////////
 
 	// Get configuration items
 	int GetGridSpacing () { return m_Tracing.m_iGridSpacing; }
@@ -65,6 +72,9 @@ public:
 	bool GetDisableVesselMerging() { return m_bDisableVesselMerging; }
 
 	bool GetWriteOutputFiles() { return m_bWriteOutputFiles; }
+
+	//Yousef
+	bool GetDetectBranches() { return m_bDetectBranches; }
 
 	bool GetQA() { return m_QA.m_bComputeQA; }
 
@@ -153,6 +163,9 @@ private:
 	bool	m_bImagewideSeedResponse;
 	bool	m_bReadSeedCandidatesFile;
 	bool	m_bReadVerifiedSeedsFile;
+
+	//Try this..Yousef
+	bool	m_bDetectBranches;
 	
 	std::string m_SeedCandidatesFN;
 	std::string m_VerifiedSeedsFN;

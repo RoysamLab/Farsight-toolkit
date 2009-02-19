@@ -41,6 +41,9 @@ int giHRViolationsCounter = 0;
 int giVLViolationsCounter = 0;
 int giVRViolationsCounter = 0;
 
+//By Yousef (07-23-2207)
+int giAnotherVesselViolation = 0;
+
 // arrays to hold the location of template responses
 CPoint gaHLeft[MaxShiftDistance][MaxTemplateLength];
 CPoint gaHRight[MaxShiftDistance][MaxTemplateLength];
@@ -126,10 +129,19 @@ bool EndVessel(CPoint& aPoint, int, CPoint& HLPoint,
 			   CPoint& HRPoint, CPoint& VLPoint, CPoint& VRPoint, CVessel&)
 {
 	// 1. any of the boundary points or the centerpoints is within another traced vessel
+	//By Yousef: (07-23-2007)
 	if (WithinTracedVessel(aPoint))
 	{
+		giAnotherVesselViolation++;
+		//return true;
+	}
+	//count the number of concecutive errors
+	if(giAnotherVesselViolation >1)
+	{
+		giAnotherVesselViolation = 0;
 		return true;
 	}
+	///////////////////////////////
 
 	int boundary_jumping = 0;
 	if (The3DImage->WithinImagePadding(HRPoint, giMARGIN))
@@ -206,13 +218,13 @@ bool EndVessel(CPoint& aPoint, int, CPoint& HLPoint,
 		return true;
 	}
 
-	// valid edges must have left and right boundaries
-	// allow only one template with low resonse
-	if (HLResp + HRResp + VLResp + VRResp < ContrastThresholdMultiplier * Threshold)
-	{
-		//	cout <<"\nEndPoint::SumLessThanThreshold" << endl;
-		return true;
-	}
+	//// valid edges must have left and right boundaries
+	//// allow only one template with low resonse
+	//if (HLResp + HRResp + VLResp + VRResp < Threshold * 4)
+	//{
+	//	//	cout <<"\nEndPoint::SumLessThanThreshold" << endl;
+	//	return true;
+	//}
 
 	return false;
 }
@@ -466,16 +478,6 @@ int GetParallelResponse(const CPoint& aPoint, CPoint& HR, CPoint& HL,
 	// reset the best template responses at the current point
 	int iBestResponse = 0;	
 
-	// amri: experimental
-	//	int min_width = Round(minimum(aPoint.m_fHWidth, aPoint.m_fVWidth));
-	//	giFromLength = min_width * 2;
-	//	giToLength = min_width * 4;
-	//	if(giFromLength >= MaxTemplateLength)
-	//		giFromLength = MaxTemplateLength - 1;
-	//	if(giToLength >= MaxTemplateLength)
-	//		giToLength = MaxTemplateLength - 1;
-	// experimental end
-
 	// for each of the specified directions calculate the Hleft, HRight, Vleft
 	// and Vright template responses.
 	int iBestResponseAtThisDirection;
@@ -554,8 +556,6 @@ bool TraceAPoint(CPoint& center, CVessel& TheVessel,
 	CPoint original_center = center;
 	int iBestResponse;
 
-	//	Draw_XYCenterline(&TheVessel);
-
 	if (cfg_trace_nonparallel)
 	{
 		if ((iBestResponse = GetNonParallelResponse(center, HR, HL, VR, VL)) == 0)
@@ -572,8 +572,6 @@ bool TraceAPoint(CPoint& center, CVessel& TheVessel,
 	if( !The3DImage->WithinImagePadding(center, giMARGIN)
 		|| !The3DImage->WithinImagePadding(HR, giMARGIN)
 		|| !The3DImage->WithinImagePadding(HL, giMARGIN))
-		//|| !The3DImage->WithinImagePadding(VR, giMARGIN)
-		//|| !The3DImage->WithinImagePadding(VL, giMARGIN) )
 		return false;
 
 	int iStepSize = (int) (iBestTemplateLength / 4.0 + 0.5) ;
@@ -584,19 +582,23 @@ bool TraceAPoint(CPoint& center, CVessel& TheVessel,
 	if (iStepSize > iMaxStepSize)
 		iStepSize = iMaxStepSize;
 
-	//
+
 	// 3.1 Update the location and direction of the current center point.
 	//     - The center point is located at midpoint between the left and right
 	//  	 boundary points.
 	//     - The center point follows the direction of the stronger edge.
 	GetCenterLocation(center, HR, HL, VR, VL);
 
+	//Yousef
+	if(center.m_fHWidth > 7)
+		return false;
+
 	if (! The3DImage->WithinImagePadding(center, giMARGIN))
 		return false;
 
 	// Test if we reached the end of a vessel
 	if (EndVessel(center, iBestResponse, HL, HR, VL, VR, TheVessel))
-		return false;
+		return false;	
 
 	GetCenterDirection(center, HR, HL, VR, VL);
 
@@ -610,18 +612,19 @@ bool TraceAPoint(CPoint& center, CVessel& TheVessel,
 	float h_width = static_cast<float>(HL.FindDistance(&HR));
 	float v_width = static_cast<float>(VL.FindDistance(&VR));
 	
-	if (h_width < 0.5 || v_width < 0.5)
+	int MinAllowableWidth = gConfig.GetMinimumShiftDistance();
+	int MaxAllowableWidth = Round(static_cast<double>(gConfig.GetMaximumShiftDistance()) * 2.0 * sqrt(2.0));
+	if(h_width < MinAllowableWidth || h_width > MaxAllowableWidth
+		|| v_width < MinAllowableWidth || v_width > MaxAllowableWidth)
 		return false;
+
 	TheVessel.m_iNumOfPoints++;
 
 	if (!TheVessel.ExtendVessel(&center, & HL, & HR, & VL, & VR, dirFlag))
-	{
 		return false;
-	}
 
 	// Estimate the location of the next center point.
-	CPoint pPoint = gVectorsArray[center.m_iHDir][center.m_iVDir]->
-		m_pIndices[iStepSize];
+	CPoint pPoint = gVectorsArray[center.m_iHDir][center.m_iVDir]->m_pIndices[iStepSize];
 
 	// From Here 7-26-99
 	center.m_iX += pPoint.m_iX;
@@ -746,7 +749,7 @@ void TraceA3DImage(C3DImage& anImage)
 		if(to_continue)
 			continue;
 
-		seed = ((*j)[0]);
+		seed = ((*j)[0]);		
 
 		// amri 6-16-05 BUGFIX: ignore seeds with zero width
 		if( Round( seed.m_fHWidth ) == 0 || Round( seed.m_fVWidth ) == 0 )
@@ -769,6 +772,9 @@ void TraceA3DImage(C3DImage& anImage)
 
 		// trace the vessel in forward direction
 		while (TraceAPoint(forward_point, * aVessel, OnTop));
+		//By Yousef (07-23-2007)
+		giAnotherVesselViolation = 0;
+		///////////////////////////////
 
 		// get the tail of the traced vessel if it exists
 		if (aVessel->m_Center.tail && aVessel->m_Center.tail->data)
@@ -789,6 +795,9 @@ void TraceA3DImage(C3DImage& anImage)
 				{
 					if (!WithinTracedVessel(reverse_point))
 						while (TraceAPoint(reverse_point, * aVessel, OnEnd));
+					//By Yousef (07-23-2007)
+					giAnotherVesselViolation = 0;
+					///////////////////////////////
 				}
 			}
 		}

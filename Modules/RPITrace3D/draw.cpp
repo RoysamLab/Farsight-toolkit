@@ -95,7 +95,6 @@ void Draw_CenterlineOnProjections()
 	CImage* XZ = NULL;
 	CImage* YZ = NULL;
 
-	//if (giDetectSoma)
 	if (gConfig.GetDetectSoma() && giNumOfSomas != 0)
 	{
 		extern CSomas* gTheSomas;
@@ -133,7 +132,7 @@ void Draw_CenterlineOnProjections()
 
 	gTheVessels.DrawVessels(*XY, CenterlineColor);
 	gTheVessels.DrawVesselsXZ(*XZ, CenterlineColor);
-	gTheVessels.DrawVesselsYZ(*YZ, CenterlineColor);
+	gTheVessels.DrawVesselsYZ(*YZ, CenterlineColor);	
 
 	// display the intersection points
 	for (i = 0; i < gIntersectionPoints.m_iNumOfElements; i++)
@@ -156,7 +155,7 @@ void Draw_CenterlineOnProjections()
 	}*/
 
 	cout << endl;
-	if (giDetectSoma)
+	if (gConfig.GetDetectSoma())
 	{
 		cout << "Soma and centerline images: " << endl;
 	}

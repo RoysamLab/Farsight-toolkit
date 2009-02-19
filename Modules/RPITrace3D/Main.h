@@ -56,13 +56,11 @@ extern double compute_Q(C3DImage * VesselnessImage, double alpha);
 void LocateSomas();
 void LocateSomas2();
 void LocateSomas3();
-
 //By Yousef: Try this ////////////
 void LocateSomas3_v2();
 void LocateSomas3_v3();
 void LocateSomas3_v4();
 //////////////////////////////////
-
 extern void FreeResources();
 extern void ProcessCommandLine(int argc, char *argv[]);
 extern C3DImage * Close(C3DImage * source, StrEle *sDilate, StrEle *sErode=NULL);
@@ -112,6 +110,7 @@ extern void Draw_PointsOnProjections(list<CPoint> center, list<CPoint> left,
 extern void Draw_PointsOnProjections(list<CPoint> points, char *name = NULL);
 extern void Draw_SeedPointDirections();
 extern void Draw_3DVessels();
+extern void Draw_Binary3DImage();
 extern void Draw_Centerline3D();
 extern void Draw_Residual3DImage();
 
@@ -132,8 +131,6 @@ extern int giSeedPointsHistogram[256];
 int giHitSomaFlag = 0;
 
 ofstream gLogFile;
-
-int giDetectSoma = 0;
 
 // the following two lines were added for CANCER images
 float gfHWidth = 0.0;

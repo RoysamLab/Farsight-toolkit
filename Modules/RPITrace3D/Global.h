@@ -2,8 +2,7 @@
 #define global_h
 
 #include <deque>
-
-#include"Branches.h"
+#include "Branches.h"
 
 list<deque<CPoint> > Seeds;
 
@@ -103,10 +102,6 @@ CImage* TrackImageYZ;
 // a 3D image that will hold the stack of images to be tracked. The tracking results
 // will also be displayed on this image.
 C3DImage* The3DImage;
-// an empty 3D image that is used to register the tracked vessels and seed points.
-// this image is needed to avoid tracking a vessel more than one time.
-C3DImage* Empty3DImage;
-
 //By Yousef
 //This image will hold the 3D soma image. The image will be initialized to zeros, and will be filled with oned
 //at the locations of soma
@@ -117,6 +112,10 @@ C3DImage* SomaLabelsImage;
 //By Yousef
 //Use this object to detect branch points
 CBranches* BranchPoints;
+
+// an empty 3D image that is used to register the tracked vessels and seed points.
+// this image is needed to avoid tracking a vessel more than one time.
+C3DImage* Empty3DImage;
 
 // file name of the input image, its type, and the path to it
 //	char gachBasicFileName[256];

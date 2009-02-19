@@ -235,7 +235,7 @@ void CTreeNode::Init()
 // Print the contents of the tree
 // for some reason the stream manipulation operators setw, etc does not work
 // when displaying results in notepad. so use space padding instead
-void CTreeNode::Print(FILE* outFile)
+void CTreeNode::Print(ostream& outFile)
 {
 	if (m_Type != ROOT)
 	{
@@ -247,32 +247,18 @@ void CTreeNode::Print(FILE* outFile)
 
 			if (*aPoint1 == m_Point)
 			{
-				fprintf(outFile,
-					"\t\t%3i\t\t\t(%3i, %3i, %3i)-(%3i, %3i, %3i)",
-					m_iSegmentID,
-					aPoint1->m_iX,
-					aPoint1->m_iY,
-					aPoint1->m_iZ,
-					aPoint2->m_iX,
-					aPoint2->m_iY,
-					aPoint2->m_iZ);
+				outFile << "\t\t" << m_iSegmentID << "\t\t\t(" 
+					<< aPoint1->m_iX << ", " << aPoint1->m_iY << ", " << aPoint1->m_iZ << ")-(" 
+					<< aPoint2->m_iX << ", " << aPoint2->m_iY << ", " << aPoint2->m_iZ << ")";
 			}
 			else
 			{
-				fprintf(outFile,
-					"\t\t%3i\t\t\t(%3i, %3i, %3i)-(%3i, %3i, %3i)",
-					m_iSegmentID,
-					aPoint1->m_iX,
-					aPoint1->m_iY,
-					aPoint1->m_iZ,
-					aPoint2->m_iX,
-					aPoint2->m_iY,
-					aPoint2->m_iZ);
+				outFile << "\t\t" << m_iSegmentID << "\t\t\t(" 
+					<< aPoint1->m_iX << ", " << aPoint1->m_iY << ", " << aPoint1->m_iZ << ")-(" 
+					<< aPoint2->m_iX << ", " << aPoint2->m_iY << ", " << aPoint2->m_iZ << ")";
 			}
-			fprintf(outFile,
-				"\t\t%3i\t\t\t%3i\n",
-				gTheVessels.GetVesselLength(m_iSegmentID),
-				m_iSumOfAllBranches);
+			outFile << "\t\t" << gTheVessels.GetVesselLength(m_iSegmentID) << "\t\t\t"
+				<< m_iSumOfAllBranches << "\n";
 		}
 	}
 
@@ -460,40 +446,30 @@ int CTree::FindLongestPath()
 // Method: Print
 //
 // Print the contents of the tree
-void CTree::Print(FILE* outFile)
+void CTree::Print(ostream& outFile)
 {
 	// 
-	fprintf(outFile,
-		" (%3i, %3i, %3i)\n",
-		root->m_Point.m_iX,
-		root->m_Point.m_iY,
-		root->m_Point.m_iZ);
+	outFile << " (" << root->m_Point.m_iX << ", " << root->m_Point.m_iY << ", "
+		<< root->m_Point.m_iZ << ")\n";
 
-	fprintf(outFile, "\t===================\n");
-	fprintf(outFile, "\tSum Of Branches Lengths: %3i\n", m_iSumOfAllBranches);
-	fprintf(outFile, "\tLongest Path:");
+	outFile << "\t===================\n";
+	outFile << "\tSum Of Branches Lengths: " << m_iSumOfAllBranches << "\n";
+	outFile << "\tLongest Path:";
 	CLNode<int>* temp = m_LongestPath.head;
 	while (temp)
 	{
-		fprintf(outFile, "%3i, ", * (temp->data));
+		outFile << * (temp->data) << ", ";
 		temp = temp->after;
 	}
 
-	fprintf(outFile,
-		"\n\tLength Of Longest Path: %3i\n",
-		m_iLengthOfLongestPath);
-	fprintf(outFile,
-		"\tLength Of Longest Path Branches: %3i\n\n",
-		(m_iSumOfAllBranches - m_iLengthOfLongestPath));
-
-	fprintf(outFile,
-		"    Segment ID              From-To            Length    Branches Sum\n");
-	fprintf(outFile,
-		"    =================================================================\n");
+	outFile << "\n\tLength Of Longest Path: " << m_iLengthOfLongestPath << "\n";
+	outFile << "\tLength Of Longest Path Branches: " << m_iSumOfAllBranches - m_iLengthOfLongestPath << "\n\n";
+	outFile << "    Segment ID              From-To            Length    Branches Sum\n";
+	outFile << "    =================================================================\n";
 
 	root->Print(outFile);
 
-	fprintf(outFile, "\n\n");
+	outFile << "\n\n";
 }
 
 ///////////////////////////////////////////////////////////

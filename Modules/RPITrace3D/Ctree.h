@@ -25,7 +25,7 @@ public:
 	~CTreeNode();
 
 	// print
-	void Print(FILE *outFile);
+	void Print(ostream& outFile);
 
 	// draw the parent segment and the subtree in the
 	// projection images and using the given color
@@ -85,7 +85,7 @@ public:
 	int FindLongestPath();
 
 	// print
-	void Print(FILE *);
+	void Print(ostream&);
 
 	// draw the segments of the tree in the
 	// projection images using the given color

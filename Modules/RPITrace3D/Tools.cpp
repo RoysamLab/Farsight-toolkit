@@ -960,7 +960,9 @@ void GrayScaleClose(CImage* InImage, CImage* OutImage, CPoint* aDiskPoints,
 //    perform gray scale opening with a disk structuring elements
 void DetectSomas(unsigned char** inImageData, unsigned char** outImageData)
 {
-	StrucElemSize = (int) (gfWidthSum / (float) giNumOfWidthSumMembers + 0.5);	
+	StrucElemSize = (int) (gfWidthSum / (float) giNumOfWidthSumMembers + 0.5);
+	//StrucElemSize = StrucElemSize / 2.0;
+
 	GrayScaleClose(inImageData, outImageData);
 }
 
@@ -1099,7 +1101,11 @@ void ConstructStructElem(int Radius, CPoint* aDiskPoints, int& iNumOfPoints)
 		}
 	}
 	iNumOfPoints = index;
-}/////////////////////////////////////////////////////////////////
+}
+
+
+
+/////////////////////////////////////////////////////////////////
 // BY Yousef: The following functions are used for soma detection
 //            From the 3D image directly
 //1- Constructing a Structure Element
@@ -1228,124 +1234,6 @@ void Detect3DSomas(C3DImage* InImage, C3DImage* OutImage, CPoint* aSphrPoints,
 	GrayScaleClose3D(InImage, OutImage, aSphrPoints, iNumOfPoints, StructElemSize);	
 	GrayScaleOpen3D(InImage, OutImage, aSphrPoints, iNumOfPoints, StructElemSize);	
 }
-
-
-//void Construct3DStructElem(int Radius, CPoint* aSphrPoints, int& iNumOfPoints)
-//{	
-//	register int i, j, k;
-//	register int index = 0;
-//	int RadiusSquare = Radius * Radius;
-//
-//	for (i = -1 * Radius; i <= Radius; i++)
-//	{
-//		for (j = -1 * Radius; j <= Radius; j++)
-//		{
-//			for (k = -1 * Radius; k <= Radius; k++)
-//			{
-//				if ((i * i + j * j + k * k) <= RadiusSquare)
-//				{
-//					aSphrPoints[index].m_iX = i;
-//					aSphrPoints[index].m_iY = j;
-//					aSphrPoints[index].m_iZ = k;
-//					index++;
-//				}
-//			}			
-//		}
-//	}
-//	iNumOfPoints = index;
-//}
-//
-////2- Detect the soma
-//// Dilation Function
-//void GrayScaleDilation3D(C3DImage* InImage, C3DImage* OutImage, CPoint* aSphrPoints,
-//	int iNumOfPoints, int StructElemSize)
-//{
-//	int iCols = InImage->m_iCols;
-//	int iRows = InImage->m_iRows;
-//	int iSlcs = InImage->m_iSlices; 
-//	int iMargin = StructElemSize;
-//	register int i, j, l, k;
-//	register int min, value;
-//	
-//
-//	// perform erosion on the rows of the image and produce temp image
-//	for (i = iMargin; i < iRows - iMargin; i++)
-//	{
-//		for (j = iMargin; j < iCols - iMargin; j++)
-//		{
-//			for (l = iMargin; l < iSlcs - iMargin; l++)
-//			{
-//				min = 300;
-//				for (k = 0; k < iNumOfPoints; k++)
-//				{
-//					value = InImage->data[l+aSphrPoints[k].m_iZ][i + aSphrPoints[k].m_iY][j + aSphrPoints[k].m_iX];
-//					if (value < min)
-//						min = value;
-//				}
-//				OutImage->data[l][i][j] = static_cast<unsigned char>(min);
-//			}									
-//		}
-//	}
-//}
-//
-//// Erosion Function
-//void GrayScaleErosion3D(C3DImage* InImage, C3DImage* OutImage, CPoint* aSphrPoints,
-//	int iNumOfPoints, int StructElemSize)
-//{
-//	int iCols = InImage->m_iCols;
-//	int iRows = InImage->m_iRows;
-//	int iSlcs = InImage->m_iSlices; 
-//	int iMargin = StructElemSize;	
-//	register int i, j, l, k;
-//	register int max, value;
-//
-//
-//	// perform erosion on the rows of the image and produce temp image
-//	for (i = iMargin; i < iRows - iMargin; i++)
-//	{
-//		for (j = iMargin; j < iCols - iMargin; j++)
-//		{
-//			for (l = iMargin; l < iSlcs - iMargin; l++)
-//			{
-//				max = 0;
-//				for (k = 0; k < iNumOfPoints; k++)
-//				{
-//					value = InImage->data[l+aSphrPoints[k].m_iZ][i + aSphrPoints[k].m_iY][j + aSphrPoints[k].m_iX];
-//					if (value > max)
-//						max = value;
-//				}
-//				OutImage->data[l][i][j] = static_cast<unsigned char>(max);
-//			}
-//		}
-//	}	
-//}
-//// Opening function 
-//void GrayScaleOpen3D(C3DImage* InImage, C3DImage* outImage, CPoint* aSphrPoints,
-//	int iNumOfPoints, int StructElemSize)
-//{
-//	C3DImage* tempImage = new C3DImage(InImage->m_iSlices, InImage->m_iRows, InImage->m_iCols);	
-//	tempImage->NegateImage();
-//	GrayScaleErosion3D(InImage, tempImage, aSphrPoints, iNumOfPoints, StructElemSize);
-//	GrayScaleDilation3D(tempImage, outImage, aSphrPoints, iNumOfPoints, StructElemSize);
-//	delete tempImage;
-//}
-////Closing function
-//void GrayScaleClose3D(C3DImage* InImage, C3DImage* OutImage, CPoint* aSphrPoints,
-//	int iNumOfElem, int StructElemSize)
-//{
-//	C3DImage* tempImage = new C3DImage(InImage->m_iSlices, InImage->m_iRows, InImage->m_iCols);	
-//	GrayScaleDilation3D(InImage, tempImage, aSphrPoints, iNumOfElem, StructElemSize);	
-//	GrayScaleErosion3D(tempImage, OutImage, aSphrPoints, iNumOfElem, StructElemSize);	
-//	delete tempImage;
-//}
-////Calling function
-//void Detect3DSomas(C3DImage* InImage, C3DImage* OutImage, CPoint* aSphrPoints,
-//	int iNumOfPoints, int StructElemSize)
-//{
-//	//GrayScaleClose3D(InImage, OutImage, aSphrPoints, iNumOfPoints, StructElemSize);	
-//	GrayScaleOpen3D(InImage, OutImage, aSphrPoints, iNumOfPoints, StructElemSize);	
-//}
-
 
 /////////////////////////////////////////////////
 // Function: DrawBall
@@ -1526,28 +1414,6 @@ void strlower(char* pchString)
 void SetConfigParameters()
 {
 	char* pchValue = NULL;
-
-	/////////////////////////////////
-	// Soma Parameters
-	//if ((pchValue = gConfig.GetStringValue("Param.Soma.Detect")) != NULL)
-	//{
-	//	if (strcmp(pchValue, "YES") == 0)
-	//		giDetectSoma = 1;
-	//	else if (strcmp(pchValue, "NO") == 0)
-	//		giDetectSoma = 0;
-	//	else
-	//	{
-	//		cout << "ConfigError::Param.Soma.Detect is set to invalid value\n"
-	//			<< "Variable giDetectSoma is set to 1" << endl;
-	//		giDetectSoma = 1;
-	//	}
-	//}
-	//else
-	//{
-	//	cout << "ConfigError::Param.Soma.Detect not found.\n"
-	//		<< "Variable giDetectSoma is set to 0" << endl;
-	//	giDetectSoma = 0;
-	//}
 
 	///////////////////////////////////
 	//// Output configurations

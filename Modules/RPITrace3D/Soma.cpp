@@ -24,6 +24,7 @@
 #include "Soma.h"
 #include "Letters.h"
 #include "Extern.h"
+#include "StrEle.h"
 
 extern int iRows;
 extern int iCols;
@@ -255,16 +256,12 @@ void CSoma::ConstructTrees()
 // Method: Print
 //
 // Print the soma information
-void CSoma::Print(FILE* outFile)
-{
-	fprintf(outFile, "\n Soma %s:\n", m_achID);
-	fprintf(outFile, "============\n");
-	fprintf(outFile,
-		"\tCenter: %3i, %3i, %3i\n",
-		m_Center.m_iX,
-		m_Center.m_iY,
-		m_Center.m_iZ);
-	fprintf(outFile, "\tVolume:   %3i\n", m_iVolume);
+void CSoma::Print(ostream& outFile, int id)
+{	
+	outFile << "\n Soma " << id+1 << ":\n";
+	outFile << "============\n";
+	outFile << "\tCenter: " << gTheSomas->m_aData[id].m_Center.m_iX << ", " << gTheSomas->m_aData[id].m_Center.m_iY << ", " << gTheSomas->m_aData[id].m_Center.m_iZ << "\n";
+	outFile << "\tVolume:   " << gTheSomas->m_aData[id].m_iVolume << "\n";
 
 	/*if (m_iNumOfSomas)
 	{
@@ -305,17 +302,13 @@ void CSoma::Print(FILE* outFile)
 // Method: Print
 //
 // Similar to the previous one, but print tree information as well
-void CSoma::PrintTrees(FILE* outFile)
+void CSoma::PrintTrees(ostream& outFile)
 {
-	fprintf(outFile, "\n Soma %3i: \n", m_achID);
-	fprintf(outFile,
-		"\t center: %3i, %3i, %3i\n",
-		m_Center.m_iX,
-		m_Center.m_iY,
-		m_Center.m_iZ);
-	fprintf(outFile, "\t Volume: %3i\n", m_iVolume);
+	outFile << "\n Soma " << m_achID << ": \n";
+	outFile << "\t center: " << m_Center.m_iX << ", " << m_Center.m_iY << ", " << m_Center.m_iZ << "\n";
+	outFile << "\t Volume: " << m_iVolume << "\n";
 
-	fprintf(outFile, "The Trees: \n");
+	outFile << "The Trees: \n";
 	for (register int i = 0; i < m_iNumOfIntersectionPoints; i++)
 	{
 		m_aTrees[i].Print(outFile);
@@ -450,6 +443,7 @@ void CSomas::WriteIDs(CImage& anImage, unsigned char color)
 
 void CSomas::WriteIDsXZ(CImage& anImage, unsigned char color)
 {
+	m_iNumOfSomas = giNumOfSomas;
 	for (register int i = 0; i < m_iNumOfSomas; i++)
 	{
 		if (i < 16)
@@ -460,6 +454,7 @@ void CSomas::WriteIDsXZ(CImage& anImage, unsigned char color)
 }
 void CSomas::WriteIDsYZ(CImage& anImage, unsigned char color)
 {
+	m_iNumOfSomas = giNumOfSomas;
 	for (register int i = 0; i < m_iNumOfSomas; i++)
 	{
 		if (i < 16)
@@ -499,17 +494,17 @@ void CSomas::Print(char* fName)
 	std::string image_name = gConfig.GetImageName();
 	if (fName)
 	{
-		FILE* outFile = fopen(fName, "w+");
+		ofstream outFile(fName);
 
 		if (m_iNumOfSomas == 0)
-			fprintf(outFile, "\n There is no somas in the image %s\n", image_name);
+			outFile << "\n There is no somas in the image " << image_name.c_str() << std::endl;
 		else if (m_iNumOfSomas == 1)
-			fprintf(outFile, "\n There is one soma int the image %s\n", image_name);
+			outFile << "\n There is one soma in the image " << image_name.c_str() << std::endl;
 		else
-			fprintf(outFile, "\n There are a total of %3i, in the image %s\n", m_iNumOfSomas, image_name);
+			outFile << "\n \n There are a total of " << m_iNumOfSomas << ", in the image " << image_name.c_str() << std::endl;
 
 		for (register int i = 0; i < m_iNumOfSomas; i++)
-			m_aData[i].Print(outFile);
+			m_aData[i].Print(outFile, i);
 
 		/*
 						fprintf(outFile,"\n==============> For Ali <===============\n");
@@ -521,7 +516,7 @@ void CSomas::Print(char* fName)
 						fprintf(outFile, "-1 -1 -1\n");
 						*/
 
-		fclose(outFile);
+		outFile.close();
 	}
 }
 
@@ -533,10 +528,10 @@ void CSomas::PrintTrees(char* fName)
 {
 	if (fName)
 	{
-		FILE* outFile = fopen(fName, "w");
+		ofstream outFile(fName);
 		for (register int i = 0; i < m_iNumOfSomas; i++)
 			m_aData[i].PrintTrees(outFile);
-		fclose(outFile);
+		outFile.close();
 	}
 }
 
@@ -935,53 +930,7 @@ void LocateSomas3()
 	int maxZ = - 1;
 
 	int* aiPlaneSum = new int[iSlices];
-	/*	
-	// and array of plane intensity sum over the region of the soma
-	for(k = 0; k < iSlices; k++){
-	aiPlaneSum[k] = 0;
-	iCounter = 0;
-	for(i = 0; i < iRows; i++) {
-	for(j = 0; j < iCols; j++) {
-				if(tempImage.data[i][j]) {
-				aiPlaneSum[k] += The3DImage->data[k][i][j];
-				iCounter++;
-				}
-				}
-				}
-				if(aiPlaneSum[k] > iMaxPlaneSum) {
-				iMaxPlaneSum = aiPlaneSum[k];
-				iPlaneIndex = k;
-				iBestAvge = iMaxPlaneSum / iCounter;
-				}
-				}
-				
-				  // find the first and last plane where the sum decreeses to 80% of the max
-				  int iSumThreshold = (int) (0.7 * (float)(iMaxPlaneSum)); // it was 0.7
-				  int iFirstPlaneIndex = 0;
-				  int iLastPlaneIndex = 0;
-				  
-					for(k = iPlaneIndex; k > 0; k--) {
-					if(aiPlaneSum[k] < iSumThreshold) {
-					iFirstPlaneIndex = k;
-					break;
-					}
-					}
-					for(k = iPlaneIndex; k < iSlices; k++) {
-					if(aiPlaneSum[k] < iSumThreshold) {
-					iLastPlaneIndex = k;
-					break;
-					}
-					}
-					
-					  
-						int newStructElemSize = iLastPlaneIndex - iFirstPlaneIndex;
-						if(newStructElemSize > 1.0*StructElemSize)
-						newStructElemSize = 1.0*StructElemSize;
-						
-						  cout << "\niFirstPlaneIndex: " << iFirstPlaneIndex 
-						  << "\niLastPlaneIndex: " << iLastPlaneIndex << endl;
-						  
-	*/
+	
 	int iDenom = iRows;
 	if (iCols < iRows)
 		iDenom = iCols;
@@ -1020,19 +969,8 @@ void LocateSomas3()
 	delete [] aDiskPoints;
 	delete [] aiPlaneSum;
 
-	/*
-	Threshold = 0.95 * iBestAvge;	// it was 0.95
-	  tempImageXY.ThresholdImage(Threshold, 0);
-	  tempImageXZ.ThresholdImage(Threshold, 0);
-	  tempImageYZ.ThresholdImage(Threshold, 0);
-	  /*
-	  tempImageXY.Write("ThresholdXY.pgm");
-	  tempImageXZ.Write("ThresholdXZ.pgm");
-	  tempImageYZ.Write("ThresholdYZ.pgm");
-	*/
+	
 	// count the number of pixels in the soma
-
-
 	giSomaVolume = 0;
 	for (k = 0; k < iSlices; k++)
 	{
@@ -1114,10 +1052,15 @@ void LocateSomas3()
 	gTheSomas->m_aData[0].m_Center = centerPoint;
 }
 
+
+
 //By Yousef
 //Try this
 void LocateSomas3_v2()
-{		
+{
+	cout << "\tDetecting Somas ... ";	
+
+
 	int iSlices = The3DImage->m_iSlices;
 	int iRows = The3DImage->m_iRows;
 	int iCols = The3DImage->m_iCols;
@@ -1237,35 +1180,6 @@ void LocateSomas3_v2()
 		}
 	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	/*cout << "\tDetecting Somas ... ";
-	register int i,j,k;
-	int iSlices = The3DImage->m_iSlices;
-	int iRows = The3DImage->m_iRows;
-	int iCols = The3DImage->m_iCols;
-	int SomaVolume = 0;
-	giSomaVolume = 0;
-	for (k = 0; k < iSlices; k++)
-	{
-		for (i = 0; i < iRows; i++)
-		{
-			for (j = 0; j < iCols; j++)
-			{
-				if (Soma3DImage->data[k][i][j])
-				{										
-					giSomaVolume++;					
-				}
-			}
-		}
-	}*/
 
 	gaSomaPoints = new CPoint[giSomaVolume];
 
@@ -1294,12 +1208,7 @@ void LocateSomas3_v2()
 			}
 		}
 	}
-
-
-	//Yousef: Try this
-	//TrackImageXY->Write("trXY.pgm");
-	//TrackImageXZ->Write("trXZ.pgm");
-	//TrackImageYZ->Write("trYZ.pgm");
+	
 	if(SomaVolume == 0)
 	{
 		int minX = iCols + 1, minY = iRows + 1, minZ = iSlices + 1;
@@ -1429,7 +1338,9 @@ void LocateSomas3_v2()
 //By Yousef
 //Yet another version...
 void LocateSomas3_v3()
-{		
+{
+	cout << "\tDetecting Somas ... ";	
+
 	int iSlices = The3DImage->m_iSlices;
 	int iRows = The3DImage->m_iRows;
 	int iCols = The3DImage->m_iCols;
@@ -1437,13 +1348,15 @@ void LocateSomas3_v3()
 	int iWidth = (int) (gfWidthSum / giNumOfWidthSumMembers + 0.5);
 	Soma3DImage = new C3DImage(iSlices,iRows,iCols);
 	
-	int StructElemSize = 5;//iWidth; // it was + 2 11-5-99
+	int StructElemSize = iWidth; // it was + 2 11-5-99
 
 	CPoint* aSphrPoints = new CPoint[(2*StructElemSize+1)* (2*StructElemSize+1) * (2*StructElemSize+1)];
 	int iNumOfPoints = 0;
 
 	Construct3DStructElem(StructElemSize, aSphrPoints, iNumOfPoints);
 	Detect3DSomas(The3DImage, Soma3DImage, aSphrPoints, iNumOfPoints, StructElemSize);	
+
+	Soma3DImage->Write("Somas.pic");
 	
 	
 	// estimate the threshold from the brightest region in the image
@@ -1529,10 +1442,6 @@ void LocateSomas3_v3()
 	}
 
 
-	//Yousef: Try this
-	//TrackImageXY->Write("trXY.pgm");
-	//TrackImageXZ->Write("trXZ.pgm");
-	//TrackImageYZ->Write("trYZ.pgm");
 	if(SomaVolume == 0)
 	{
 		int minX = iCols + 1, minY = iRows + 1, minZ = iSlices + 1;
@@ -1655,6 +1564,7 @@ void LocateSomas3_v3()
 	
 	cout<<giNumOfSomas<<" somas detected"<<endl;
 }
+
 
 //By Yousef
 //Last version... The soma image is provided

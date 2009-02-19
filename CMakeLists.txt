@@ -153,7 +153,7 @@ IF(BUILD_REGISTRATION)
 ENDIF(BUILD_REGISTRATION)
 
 IF(BUILD_TRACING)
-  SUBDIRS(yousef_tracing)
+  SUBDIRS(Modules/RPITrace3D)
 ENDIF(BUILD_TRACING)
 
 IF(WRAP_PYTHON)
@@ -196,7 +196,7 @@ ENDIF(WIN32)
 INSTALL(FILES ${QT_QTCORE_LIBRARY_RELEASE} ${QT_QTGUI_LIBRARY_RELEASE} DESTINATION bin)
 INSTALL(DIRECTORY python/ DESTINATION python PATTERN "*.svn" EXCLUDE)
 INSTALL(DIRECTORY images/ DESTINATION images PATTERN "*.svn" EXCLUDE)
-SET(CPACK_NSIS_MENU_LINKS "http://www.ecse.rpi.edu/~roysam/" "Farsight Online Help")
+SET(CPACK_NSIS_MENU_LINKS "http://www.farsight-toolkit.org" "Farsight Online Help")
 INCLUDE(CPack)
 
 ################################################################################

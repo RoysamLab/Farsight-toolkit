@@ -1174,4 +1174,3 @@ void C3DImage::CreateHistogram()
 		}
 	}
 }
-

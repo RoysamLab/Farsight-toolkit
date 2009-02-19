@@ -20,8 +20,7 @@ def StartParameterDescriptionHandler(name, attributes):
 def StartParameterValueHandler(name, attributes):
   if name != "parameter":
     return
-  parameterName = attributes["name"]
-  parameters.append(attributes)
+  values[attributes["name"]] = attributes["value"]
 
 def EndElementHandler(name):
   pass
@@ -48,11 +47,13 @@ def ParseXMLParameterFile(moduleName, descriptions=True):
   parser.EndElementHandler = EndElementHandler
   parser.CharacterDataHandler = CharacterDataHandler
   parser.ParseFile(f)
+  if not descriptions:
+    return values
 
 #this function asks the user for parameter values based on information parsed
 #from the XML file
 def AskForValues(moduleName):
-  if os.path.exists("XML/%sParameterValues.xml"):
+  if os.path.exists("XML/%sParameterValues.xml" % moduleName):
     print "Parameter values have been previously defined."
     print "Would you like to enter new parameter values?"
     answer = sys.stdin.readline()
@@ -94,8 +95,10 @@ def AskForValues(moduleName):
         printInstructions = True
   f = file("XML/%sParameterValues.xml" % moduleName, "w")
   f.write('<?xml version="1.0"?>\n')
+  f.write('<parameters>\n')
   for name,value in values.iteritems():
     f.write('<parameter name="%s" value="%s"></parameter>\n' % (name,value))
+  f.write('</parameters>\n')
 
 def SpecifyParameterValues(moduleName):
   ParseXMLParameterFile(moduleName, True)

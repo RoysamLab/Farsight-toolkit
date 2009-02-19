@@ -1596,9 +1596,9 @@ int CVessel::FindSomaDistance3(TopEndMiddleNeither dirFlag,
 			{
 				minDistance = distance;
 				FoundPoint = gaSomaPoints[i];
-				//FoundSomaID = 1;				// For now this function assumes
+				FoundSomaID = 1;				// For now this function assumes
 				//Yousef: This has been changed
-				FoundSomaID=  SomaLabelsImage->data[gaSomaPoints[i].m_iZ][gaSomaPoints[i].m_iY][gaSomaPoints[i].m_iX];
+				//FoundSomaID=  SomaLabelsImage->data[gaSomaPoints[i].m_iZ][gaSomaPoints[i].m_iY][gaSomaPoints[i].m_iX];
 			}
 		}
 	}
@@ -4196,10 +4196,19 @@ void CVessels::DrawVessels(CImage& anImage, unsigned char color)
 			//			if (m_apData[i]->m_iNumOfIntersectionPoints > 0 ||
 			//				m_apData[i]->m_iLength > giParam_Trace_MinSegmentLength)
 			//			{
+
+			///////////////////////////////////////////////////
+			//By Yousef, 11/09/2006
+			//Remove the vessels shorter than 20 
+			int l = m_apData[i]->GetLength();
+			if(l<12)
+				continue;
+			///////////////////////////////////////////////////
+
 			m_apData[i]->DrawCenterline(anImage, color);
 			//m_apData[i]->DrawBoundaries(anImage, color);
-			if (m_apData[i]->m_iID < 100)
-				m_apData[i]->WriteIDXY(anImage, IDColor);
+			//if (m_apData[i]->m_iID < 100)
+				//m_apData[i]->WriteIDXY(anImage, IDColor);
 			//	}
 		}
 	}
@@ -4328,8 +4337,12 @@ void CVessels::MergeVessels()
 
 	// for each intersection point, if it ivolves two vessels only connected
 	// at their tips, merge them	
+	cout << "Number of points: %d" << gIntersectionPoints.m_iNumOfElements;
 	for (i = 0; i < gIntersectionPoints.m_iNumOfElements; i++)
 	{
+		if(i==66)
+			continue;
+		cout << "%d" << i;
 		pIntPoint = gIntersectionPoints.m_apData[i];
 
 		pos1 = pIntPoint->m_aPosition[0];
