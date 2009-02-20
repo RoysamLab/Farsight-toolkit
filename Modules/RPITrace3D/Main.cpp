@@ -340,7 +340,7 @@ int main(int argc, char* argv[])
     TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "", "");
     doc.LinkEndChild(decl);
 
-    TiXmlElement *tracingOutput = new TiXmlElement("Tracing_Output");
+    TiXmlElement *tracingOutput = new TiXmlElement("Trace");
     doc.LinkEndChild(tracingOutput);
     tracingOutput->SetAttribute("program", "RPITrace3D");
     tracingOutput->SetAttribute("version", "1.0");
@@ -353,7 +353,7 @@ int main(int argc, char* argv[])
       {
       if (gTheVessels.m_apData[i])
         {
-        traceLine = new TiXmlElement("Traceline");
+        traceLine = new TiXmlElement("TraceLine");
         tracingOutput->LinkEndChild(traceLine);
         traceLine->SetAttribute("ID", i+1);
         traceLine->SetAttribute("length", gTheVessels.m_apData[i]->GetLength());
