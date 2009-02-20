@@ -3,8 +3,14 @@
 #include <vector>
 #include <list>
 #include <iostream>
-#include <hash_map>
 #include <queue>
+
+#ifdef WIN32
+using namespace stdext;
+#include <hash_map>
+#else
+#include <hash_map.h>
+#endif
 
 #include "vtkSmartPointer.h"
 #include "vtkPolyLine.h"
@@ -15,10 +21,11 @@
 #include "vtkFloatArray.h"
 #include "vtkAppendPolyData.h"
 
+#include "tinyxml/tinyxml.h"
 
-#include <libxml/xmlreader.h>
-#include <libxml/parser.h>
-#include <libxml/tree.h>
+//#include <libxml/xmlreader.h>
+//#include <libxml/parser.h>
+//#include <libxml/tree.h>
 
 
 #define MY_ENCODING "ISO-8859-1"
@@ -106,8 +113,8 @@ public:
 	}
 	std::vector<TraceBit> CollectTraceBits();
 	std::vector<TraceLine*>* GetTraceLinesPointer(){ return &trace_lines;}
-	stdext::hash_map<unsigned int, unsigned long long int> hashp;
-	stdext::hash_map<unsigned int, unsigned long long int> hashc;
+	hash_map<unsigned int, unsigned long long int> hashp;
+	hash_map<unsigned int, unsigned long long int> hashc;
 private:
 	std::vector<TraceLine*> trace_lines;	
 };

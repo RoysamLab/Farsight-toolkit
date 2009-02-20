@@ -52,7 +52,7 @@
 #include "vtkOpenGLVolumeTextureMapper2D.h"
 #include "vtkSliderWidget.h"
 #include "vtkSliderRepresentation2D.h"
-#include "trace.h"
+#include "Trace.h"
 #include "vtkPlaybackWidget.h"
 #include "vtkPlaybackRepresentation.h"
 

@@ -33,13 +33,13 @@ ENDIF(VTK_FOUND)
 #  ENDIF(QT4_FOUND)
   
 
-FIND_PACKAGE(LIBXML2)
-IF(LIBXML2_FOUND)
-      INCLUDE_DIRECTORIES(${LIBXML2_INCLUDE_DIR})
-ELSE(LIBXML2_FOUND)
-     MESSAGE(FATAL_ERROR
-      "&*&*&*& Cannot build without LIBXML2.  Please set LIBXML2_DIR.")
-ENDIF(LIBXML2_FOUND)
+#FIND_PACKAGE(LIBXML2)
+#IF(LIBXML2_FOUND)
+#      INCLUDE_DIRECTORIES(${LIBXML2_INCLUDE_DIR})
+#ELSE(LIBXML2_FOUND)
+#     MESSAGE(FATAL_ERROR
+#      "&*&*&*& Cannot build without LIBXML2.  Please set LIBXML2_DIR.")
+#ENDIF(LIBXML2_FOUND)
 
 SET( Sources
      View3D.h View3D.cxx
@@ -62,12 +62,12 @@ SET( Libraries
     vtksys
     vtkFiltering
     vtkVolumeRendering
+    TinyXML
  #   QVTK
  #   QVTKWidgetPlugin
 )
 
 
 ADD_EXECUTABLE( vtkTraceViewer  ${Sources})
-
-TARGET_LINK_LIBRARIES( vtkTraceViewer ${LIBXML2_LIBRARIES} ${Libraries})
+TARGET_LINK_LIBRARIES( vtkTraceViewer ${Libraries})
 
