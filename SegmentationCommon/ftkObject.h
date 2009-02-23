@@ -12,6 +12,8 @@
 #include <vector>
 #include <string>
 
+#include "ftkFeatures.h"
+
 using namespace std;
 
 namespace ftk
@@ -40,7 +42,7 @@ public:
 	void ClearCenters(){ myCenters.clear(); };
 	void AddBound( Box b ) { myBounds.push_back(b); };
 	void ClearBounds(){ myBounds.clear(); };
-	void SetFeatures( vector<double> f ){ myFeatures = f; };
+	void SetFeatures( vector<float> f ){ myFeatures = f; };
 	void AddEditRecord( EditRecord record ) { myHistory.push_back(record); };
 
 	string GetType() { return myType; };
@@ -50,7 +52,7 @@ public:
 	char GetClass() { return myClass; };
 	vector<Point> GetCenters() { return myCenters; };
 	vector<Box> GetBounds() { return myBounds; };
-	vector<double> GetFeatures() { return myFeatures; };
+	vector<float> GetFeatures() { return myFeatures; };
 	vector<EditRecord> getHistory() { return myHistory; };
 
 private:
@@ -61,7 +63,7 @@ private:
 	char myClass;					//May have class identifier
 	vector<Point> myCenters;		//Should have atleast one center (splines have many)
 	vector<Box> myBounds;			//Could have several boxes that determine bounds
-	vector<double> myFeatures;		//May have a variable list of features
+	vector<float> myFeatures;		//May have a variable list of features
 	vector<EditRecord> myHistory;   //May have a list of edits/other modifications
 	
 }; // end Object

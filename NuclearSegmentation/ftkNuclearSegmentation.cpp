@@ -82,39 +82,20 @@ bool NuclearSegmentation::LabelsToObjects(void)
 	labelReader->SetFileName( PrependProjectPath(resultFilenames[0]) );
 	labelReader->Update();
 
+	LabelImageType::Pointer labImg = labelReader->GetOutput();
+	IntensityImageType::Pointer intImg = intensityReader->GetOutput();
+
+	LabelImageType::SpacingType spacing = labImg->GetSpacing();
+
 	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
-	labFilter->SetImageInputs( intensityReader->GetOutput(), labelReader->GetOutput() );
+	labFilter->SetImageInputs( intImg, labImg );
 	labFilter->SetLevel(3);
 	labFilter->ComputeHistogramOn();
 	//labFilter->ComputeAdvancedOn();
 	labFilter->Update();
 
 	//Set Feature Names
-	featureNames.resize(0);
-	featureNames.push_back("volume");
-	featureNames.push_back("sum");
-	featureNames.push_back("mean");
-	featureNames.push_back("median");
-	featureNames.push_back("min");
-	featureNames.push_back("max");
-	featureNames.push_back("sigma");
-	featureNames.push_back("variance");
-	featureNames.push_back("eccentricity");
-	featureNames.push_back("radius_var");
-	featureNames.push_back("elongation");
-	featureNames.push_back("orientation");
-	featureNames.push_back("surf_grad");
-	featureNames.push_back("int_grad");
-	featureNames.push_back("surf_int");
-	featureNames.push_back("inter_int");
-	featureNames.push_back("intens_ratio");
-	featureNames.push_back("boundshare");
-	featureNames.push_back("solidity");
-	featureNames.push_back("skew");
-	featureNames.push_back("energy");
-	featureNames.push_back("entropy");
-	featureNames.push_back("surface");
-	featureNames.push_back("shape");
+	featureNames = labFilter->GetAvailableFeatureNames();
 
 	//Now populate the objects
 	myObjects.clear();
@@ -146,7 +127,7 @@ bool NuclearSegmentation::LoadData()
 	}
 
 	dataImage = new ftk::Image();
-	if(!dataImage->LoadFile(PrependProjectPath(dataFilenames[0])))
+	if(!dataImage->LoadFile(PrependProjectPath(dataFilenames[0]), true))	//Load for display
 	{
 		delete dataImage;
 		errorMessage = "Data Image failed to load";
@@ -333,51 +314,39 @@ ftk::Object NuclearSegmentation::GetNewObject(int id, FeatureCalcType *labFilter
 	object.SetDuplicated(0);
 	object.SetClass(-1);
 
-	ftk::LabelImageFeatures features = labFilter->GetFeatures( id );
+	LabelImageFeatureValueMapType features = labFilter->GetFeatures( id );
+	LabelImageFeatureInfoMapType fInfo = labFilter->GetFeatureInfo();
 
+	std::vector<float> centroid = labFilter->GetCentroid( id );
 	Object::Point c;
-	c.x = (int)features.centroid[0];
-	c.y = (int)features.centroid[1];
-	c.z = (int)features.centroid[2];
+	c.x = (int)centroid[0];
+	c.y = (int)centroid[1];
+	c.z = (int)centroid[2];
 	c.t = 0;
 	object.AddCenter(c);
 
+	std::vector<int> boundingbox = labFilter->GetBoundingBox( id );
 	Object::Box b;
-	b.min.x = (int)features.boundingbox[0];
-	b.max.x = (int)features.boundingbox[1];
-	b.min.y = (int)features.boundingbox[2];
-	b.max.y = (int)features.boundingbox[3];
-	b.min.z = (int)features.boundingbox[4];
-	b.max.z = (int)features.boundingbox[5];
+	b.min.x = (int)boundingbox.at(0);
+	b.max.x = (int)boundingbox.at(1);
+	b.min.y = (int)boundingbox.at(2);
+	b.max.y = (int)boundingbox.at(3);
+	b.min.z = (int)boundingbox.at(4);
+	b.max.z = (int)boundingbox.at(5);
 	b.min.t = 0;
 	b.max.t = 0;
 	object.AddBound(b);
 
-	vector< double > f(0);
-	f.push_back( features.volume );
-	f.push_back( features.sum);
-	f.push_back( features.mean );
-	f.push_back( features.median );
-	f.push_back( features.minimum );
-	f.push_back( features.maximum );
-	f.push_back( features.sigma );
-	f.push_back( features.variance );
-	f.push_back( features.eccentricity );
-	f.push_back( features.radiusvariation );
-	f.push_back( features.elongation );
-	f.push_back( features.orientation );
-	f.push_back( features.surfacegradient );
-	f.push_back( features.interiorgradient );
-	f.push_back( features.surfaceintensity );
-	f.push_back( features.interiorintensity );
-	f.push_back( features.intensityratio );
-	f.push_back( features.percentsharedboundary );
-	f.push_back( features.solidity );
-	f.push_back( features.skew );
-	f.push_back( features.energy );
-	f.push_back( features.entropy );
-	f.push_back( features.surfacearea );
-	f.push_back( features.shape );
+	vector< float > f(0);
+	for (int i=0; i< featureNames.size(); ++i)
+	{
+		std::string fName = featureNames.at(i);
+		if( fInfo[ fName ].isInteger )
+			f.push_back( float( features[ fName ].i) );
+		else
+			f.push_back( float( features[ fName ].f) );
+	}
+
 	object.SetFeatures(f);
 
 	return object;

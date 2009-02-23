@@ -298,7 +298,8 @@ ftk::Image * ControlBar::NewFTKImage(std::vector<std::string> filenames)
 ftk::Image * ControlBar::NewFTKImage(std::string filename)
 {
 	ftk::Image *img = new ftk::Image();
-	if( img->LoadFile(filename) )
+	bool forDisplay = true;
+	if( img->LoadFile(filename, forDisplay) )
 		return img;
 	else
 	{

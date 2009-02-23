@@ -8,6 +8,7 @@ SET( SEGMENTATIONCOMMON_HDRS
   ftkSegmentationResult.h
   ftkLabelImageToFeatures.h
   ftkLabelImageToFeatures.txx
+  ftkFeatures.h
   ftkObject.h
   ftkObjectAssociation.h
   itkLabelGeometryImageFilter.h

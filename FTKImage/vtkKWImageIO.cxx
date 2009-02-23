@@ -260,13 +260,11 @@ void vtkKWImageIO::ReadImage()
   if ( pixelType == itk::ImageIOBase::SCALAR )
   {
    this->ImagePixelType = pixelType;
-   //switch( pixelType )
    switch( componentType )
     {
     case itk::ImageIOBase::UCHAR:
       {
       this->ImageThatHasBeenRead = ReadMacro( unsigned char ); 
-      //this->ImagePixelType = UNSIGNED_CHAR;
 	  this->ImageComponentType = componentType;
       break;
       }
@@ -341,7 +339,6 @@ void vtkKWImageIO::ReadImage()
     case itk::ImageIOBase::UCHAR:
       {
       this->ImageThatHasBeenRead = ReadMacro( itk::RGBPixel<unsigned char> ); 
-      //this->ImagePixelType = UNSIGNED_CHAR;
 	  this->ImageComponentType = componentType;
       break;
       }
@@ -408,17 +405,26 @@ void vtkKWImageIO::ReadImage()
       }
     }
   }
+  else
+  {
+      itk::ExceptionObject excp;
+      excp.SetDescription("The file uses a pixel type"
+            "that is not supported in this application");
+      throw excp;
+  }
 }
 
-/*
+
 // Read Image 
 void vtkKWImageIO::ReadImageSeries()
 {
   //Extract the series UID of the selected dicom image
-  typedef itk::ImageIOBase::IOComponentType  PixelType;
+  // CHANGED 1-30-2009 BY ISAAC ABBOTT:
+  //typedef itk::ImageIOBase::IOComponentType  PixelType;
+  typedef itk::ImageIOBase::IOComponentType  ComponentType;
+  typedef itk::ImageIOBase::IOPixelType  PixelType;
 
-  itk::GDCMImageIO::Pointer imageIO = 
-                                   itk::GDCMImageIO::New();
+  itk::GDCMImageIO::Pointer imageIO = itk::GDCMImageIO::New();
 
   if( !imageIO )
     {
@@ -454,69 +460,84 @@ void vtkKWImageIO::ReadImageSeries()
   fileNames = nameGenerator->GetFileNames( seriesIdentifier );
   this->SetSeriesFileNames( fileNames );
 
-  PixelType pixelType = imageIO->GetComponentType();
+  //Modified by ISAAC ABBOTT 1-30-2009
+  //REMOVED:
+  //	PixelType pixelType = imageIO->GetComponentType();
+  //ADDED:
+  PixelType pixelType = imageIO->GetPixelType();
+  ComponentType componentType = imageIO->GetComponentType();
+
+  if( pixelType != itk::ImageIOBase::SCALAR )
+  {
+      itk::ExceptionObject excp;
+      excp.SetDescription("The file uses a pixel type"
+            "that is not supported in this application");
+      throw excp;
+  }
+  
+  this->ImagePixelType = itk::ImageIOBase::SCALAR;
 
   // Use the pixel type to instantiate the appropriate reader
-  switch( pixelType )
+  switch( componentType )
     {
     case itk::ImageIOBase::UCHAR:
       {
       this->ImageThatHasBeenRead = SeriesReaderCreator( unsigned char ); 
-      this->ImagePixelType = UNSIGNED_CHAR;
+      this->ImageComponentType = componentType;
       break;
       }
     case itk::ImageIOBase::CHAR:
       {
       this->ImageThatHasBeenRead = SeriesReaderCreator( char );
-      this->ImagePixelType = CHAR;
+      this->ImageComponentType = componentType;
       break;
       }
     case itk::ImageIOBase::USHORT:
       {
       this->ImageThatHasBeenRead = SeriesReaderCreator( unsigned short );
-      this->ImagePixelType = UNSIGNED_SHORT;
+      this->ImageComponentType = componentType;
       break;
       }
     case itk::ImageIOBase::SHORT:
       {
       this->ImageThatHasBeenRead = SeriesReaderCreator( short );
-      this->ImagePixelType = SHORT;
+      this->ImageComponentType = componentType;
       break;
       }
     case itk::ImageIOBase::UINT:
       {
       this->ImageThatHasBeenRead = SeriesReaderCreator( unsigned int );
-      this->ImagePixelType = UNSIGNED_INT;
+      this->ImageComponentType = componentType;
       break;
       }
     case itk::ImageIOBase::INT:
       {
       this->ImageThatHasBeenRead = SeriesReaderCreator( int );
-      this->ImagePixelType = INT;
+      this->ImageComponentType = componentType;
       break;
       }
     case itk::ImageIOBase::ULONG:
       {
       this->ImageThatHasBeenRead = SeriesReaderCreator( unsigned long );
-      this->ImagePixelType = UNSIGNED_LONG;
+      this->ImageComponentType = componentType;
       break;
       }
     case itk::ImageIOBase::LONG:
       {
       this->ImageThatHasBeenRead = SeriesReaderCreator( long );
-      this->ImagePixelType = LONG;
+      this->ImageComponentType = componentType;
       break;
       }
     case itk::ImageIOBase::FLOAT:
       {
       this->ImageThatHasBeenRead = SeriesReaderCreator( float );
-      this->ImagePixelType = FLOAT;
+      this->ImageComponentType = componentType;
       break;
       }
     case itk::ImageIOBase::DOUBLE:
       {
       this->ImageThatHasBeenRead = SeriesReaderCreator( double );
-      this->ImagePixelType = DOUBLE;
+      this->ImageComponentType = componentType;
       break;
       }
     default:
@@ -528,13 +549,15 @@ void vtkKWImageIO::ReadImageSeries()
       }
     }
 }
-*/
-/*
+
 // Read and cast Image to unsigned char 
 void vtkKWImageIO::ReadAndCastImage()
 {
   // Find out the pixel type of the image in file
-  typedef itk::ImageIOBase::IOComponentType  PixelType;
+  // CHANGED 1-30-2009 BY ISAAC ABBOTT:
+  //typedef itk::ImageIOBase::IOComponentType  PixelType;
+  typedef itk::ImageIOBase::IOComponentType  ComponentType;
+  typedef itk::ImageIOBase::IOPixelType  PixelType;
 
   itk::ImageIOBase::Pointer imageIO = 
     itk::ImageIOFactory::CreateImageIO( this->FileName.c_str(), 
@@ -551,69 +574,79 @@ void vtkKWImageIO::ReadAndCastImage()
   imageIO->SetFileName( this->FileName.c_str() );
   imageIO->ReadImageInformation();
 
-  PixelType pixelType = imageIO->GetComponentType();
+  //Modified by ISAAC ABBOTT 1-30-2009
+  //REMOVED:
+  //	PixelType pixelType = imageIO->GetComponentType();
+  //ADDED:
+  PixelType pixelType = imageIO->GetPixelType();
+  ComponentType componentType = imageIO->GetComponentType();
 
   // Use the pixel type to instantiate the appropriate reader
-  switch( pixelType )
+  // Use the componentType and pixelType to instantiate the appropriate reader
+  if ( pixelType == itk::ImageIOBase::SCALAR )
+  {
+   this->ImagePixelType = pixelType;
+   switch( componentType )
     {
     case itk::ImageIOBase::UCHAR:
       {
-      this->ImageThatHasBeenRead = ReadAndCastMacro( unsigned char ); 
-      this->ImagePixelType = UNSIGNED_CHAR;
+      //this->ImageThatHasBeenRead = ReadAndCastMacro( unsigned char );
+      this->ImageThatHasBeenRead = ReadMacro( unsigned char );
+	  this->ImageComponentType = itk::ImageIOBase::UCHAR;
       break;
       }
     case itk::ImageIOBase::CHAR:
       {
       this->ImageThatHasBeenRead = ReadAndCastMacro( char );
-      this->ImagePixelType = CHAR;
+      this->ImageComponentType = itk::ImageIOBase::UCHAR;
       break;
       }
     case itk::ImageIOBase::USHORT:
       {
       this->ImageThatHasBeenRead = ReadAndCastMacro( unsigned short );
-      this->ImagePixelType = UNSIGNED_SHORT;
+      this->ImageComponentType = itk::ImageIOBase::UCHAR;
       break;
       }
     case itk::ImageIOBase::SHORT:
       {
       this->ImageThatHasBeenRead = ReadAndCastMacro( short );
-      this->ImagePixelType = SHORT;
+      this->ImageComponentType = itk::ImageIOBase::UCHAR;
       break;
       }
     case itk::ImageIOBase::UINT:
       {
       this->ImageThatHasBeenRead = ReadAndCastMacro( unsigned int );
-      this->ImagePixelType = UNSIGNED_INT;
+      this->ImageComponentType = itk::ImageIOBase::UCHAR;
       break;
       }
     case itk::ImageIOBase::INT:
       {
       this->ImageThatHasBeenRead = ReadAndCastMacro( int );
-      this->ImagePixelType = INT;
+      this->ImageComponentType = itk::ImageIOBase::UCHAR;
       break;
       }
     case itk::ImageIOBase::ULONG:
       {
       this->ImageThatHasBeenRead = ReadAndCastMacro( unsigned long );
-      this->ImagePixelType = UNSIGNED_LONG;
+      this->ImageComponentType = itk::ImageIOBase::UCHAR;
       break;
       }
     case itk::ImageIOBase::LONG:
       {
       this->ImageThatHasBeenRead = ReadAndCastMacro( long );
-      this->ImagePixelType = LONG;
+      this->ImageComponentType = itk::ImageIOBase::UCHAR;
       break;
       }
     case itk::ImageIOBase::FLOAT:
       {
       this->ImageThatHasBeenRead = ReadAndCastMacro( float );
-      this->ImagePixelType = FLOAT;
+      this->ImageComponentType = itk::ImageIOBase::UCHAR;
       break;
       }
     case itk::ImageIOBase::DOUBLE:
       {
       this->ImageThatHasBeenRead = ReadAndCastMacro( double );
-      this->ImagePixelType = DOUBLE;
+      this->ImageComponentType = itk::ImageIOBase::UCHAR;
       break;
       }
     default:
@@ -624,8 +657,22 @@ void vtkKWImageIO::ReadAndCastImage()
       throw excp;
       }
     }
+  }
+  else if ( pixelType == itk::ImageIOBase::RGB && componentType == itk::ImageIOBase::UCHAR )
+  {
+      this->ImageThatHasBeenRead = ReadMacro( itk::RGBPixel<unsigned char> ); 
+	  this->ImageComponentType = componentType;
+	  this->ImagePixelType = pixelType;
+  }
+  else
+  {
+      itk::ExceptionObject excp;
+      excp.SetDescription("The file uses a pixel type"
+            "that is not supported in this application");
+      throw excp;
+  }
 }
-*/
+
 // return pixel type
 itk::ImageIOBase::IOPixelType vtkKWImageIO::GetImagePixelType()
 {
@@ -637,20 +684,26 @@ itk::ImageIOBase::IOComponentType vtkKWImageIO::GetImageComponentType()
   return this->ImageComponentType;
 }
 
-/*
+
 // Write Image 
 void vtkKWImageIO::WriteImage()
 {
-  typedef itk::ImageIOBase::IOComponentType  PixelType;
+  // CHANGED 1-30-2009 BY ISAAC ABBOTT:
+  //typedef itk::ImageIOBase::IOComponentType  PixelType;
+  typedef itk::ImageIOBase::IOComponentType  ComponentType;
+  typedef itk::ImageIOBase::IOPixelType  PixelType;
 
-  PixelType pixelType = this->ImageToBeWritten->GetITKScalarPixelType();
+  PixelType pixelType = this->ImageToBeWritten->GetITKPixelType();
+  ComponentType componentType = this->ImageToBeWritten->GetITKComponentType();
 
-  // Use the pixel type to instantiate the appropriate reader
-  switch( pixelType )
+  if ( pixelType == itk::ImageIOBase::SCALAR )
+  {
+   this->ImagePixelType = pixelType;
+   switch( componentType )
     {
     case itk::ImageIOBase::UCHAR:
       {
-      WriteMacro( unsigned char );
+      WriteMacro( unsigned char ); 
       break;
       }
     case itk::ImageIOBase::CHAR:
@@ -706,8 +759,80 @@ void vtkKWImageIO::WriteImage()
       throw excp;
       }
     }
+  }
+  else if( pixelType == itk::ImageIOBase::RGB )
+  {
+	this->ImagePixelType = pixelType;
+    switch( componentType )
+    {
+    case itk::ImageIOBase::UCHAR:
+      {
+      WriteMacro( itk::RGBPixel<unsigned char> ); 
+      break;
+      }
+    case itk::ImageIOBase::CHAR:
+      {
+      WriteMacro( itk::RGBPixel<char> );
+      break;
+      }
+    case itk::ImageIOBase::USHORT:
+      {
+      WriteMacro( itk::RGBPixel<unsigned short> );
+      break;
+      }
+    case itk::ImageIOBase::SHORT:
+      {
+      WriteMacro( itk::RGBPixel<short> );
+      break;
+      }
+    case itk::ImageIOBase::UINT:
+      {
+      WriteMacro( itk::RGBPixel<unsigned int> );
+      break;
+      }
+    case itk::ImageIOBase::INT:
+      {
+      WriteMacro( itk::RGBPixel<int> );
+      break;
+      }
+    case itk::ImageIOBase::ULONG:
+      {
+      WriteMacro( itk::RGBPixel<unsigned long> );
+      break;
+      }
+    case itk::ImageIOBase::LONG:
+      {
+      WriteMacro( itk::RGBPixel<long> );
+      break;
+      }
+    case itk::ImageIOBase::FLOAT:
+      {
+      WriteMacro( itk::RGBPixel<float> );
+      break;
+      }
+    case itk::ImageIOBase::DOUBLE:
+      {
+      WriteMacro( itk::RGBPixel<double> );
+      break;
+      }
+    default:
+      {
+      itk::ExceptionObject excp;
+      excp.SetDescription("The file uses a pixel type"
+            "that is not supported in this application");
+      throw excp;
+      }
+    }
+  }
+  else
+  {
+      itk::ExceptionObject excp;
+      excp.SetDescription("The file uses a pixel type"
+            "that is not supported in this application");
+      throw excp;
+  }
 }
-*/
+
 //-----------------------------------------------------------------------------
 vtkKWImage * vtkKWImageIO::HarvestReadImage()
 {

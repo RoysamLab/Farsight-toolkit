@@ -35,7 +35,7 @@ void Image::LoadFiles( std::vector< std::string > fNames )
 	}
 }
 
-bool Image::LoadFile( std::string fName )
+bool Image::LoadFile( std::string fName, bool forDisplay )
 {
 	if( GetFileExtension(fName) == "lsm" )
 	{
@@ -43,11 +43,11 @@ bool Image::LoadFile( std::string fName )
 	}
 	else
 	{
-		return this->LoadStandardImage( fName );
+		return this->LoadStandardImage( fName, forDisplay );
 	}
 }
 
-bool Image::LoadStandardImage( std::string fileName )
+bool Image::LoadStandardImage( std::string fileName, bool forDisplay )
 {
 	//Create a new reader to automatically read the image file.
 	//It can be extended to read a list of image files as time points.
@@ -55,7 +55,10 @@ bool Image::LoadStandardImage( std::string fileName )
 	reader->SetFileName(fileName);
 	try
 	{
-		reader->ReadImage();
+		if(forDisplay)
+			reader->ReadAndCastImage();
+		else
+			reader->ReadImage();
 	}
 	catch( itk::ExceptionObject & excp )
 	{

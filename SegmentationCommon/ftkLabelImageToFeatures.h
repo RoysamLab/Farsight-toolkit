@@ -16,65 +16,20 @@
 #include <itkLabelStatisticsImageFilter.h>
 #include <itkGradientMagnitudeImageFilter.h>
 
+#include "ftkFeatures.h"
+
+#include <iostream>
+#include <map>
+
 namespace ftk
 {
 
-typedef struct
-{
-	//Dirk's itkLabelGeometryImageFilter Features: (stored, others used in other calculations (level 1)
-	unsigned int volume;
-	unsigned int integratedintensity;
-	std::vector<float> centroid;
-	std::vector<float> weightedcentroid;
-	std::vector<float> axislengths;
-	float eccentricity; 
-	float elongation;
-	float orientation;
-	std::vector<int> boundingbox;		// [min(X), max(X), min(Y), max(Y), ... ]
-	float bbVolume;
-
-	//itkLabelStatisticsImageFilter Features: (level 2)
-	float sum;
-	float mean;
-	float median;	//advanced
-	float minimum;
-	float maximum;
-	float sigma;
-	float variance;
-
-	//Others:	(level 3)
-	float solidity;
-	float texture;
-	float radiusvariation;
-	float skew;
-	float energy;
-	float entropy;
-	float surfacegradient;
-	float interiorgradient;
-	float interiorintensity;
-	float surfaceintensity;
-	float intensityratio;
-	float percentsharedboundary;
-	float surfacearea;
-	float shape;
-	float averagedistance;
-	float distancevariation;
-
-	//User set
-	int num;
-	int time;
-	int tag;
-
-	void Print()
-	{
-		printf("Volume %u\n",volume);
-	}
-} LabelImageFeatures;
-
+//********************************************************************************************************
+//THIS IS THE CLASS THAT DOES THE CALCULATIONS (THE ENGINE)
+//********************************************************************************************************
 template< typename TIPixel = unsigned char, typename TLPixel = unsigned short, unsigned int VImageDimension = 2> 
 class LabelImageToFeatures : public itk::LightObject
 {
-
 public:
 
 	typedef LabelImageToFeatures Self;
@@ -101,8 +56,14 @@ public:
 	LabelPixelType GetMaxLabel();
 	float GetPercentSharedBoundary(TLPixel focusLabel, TLPixel neighborLabel);
 	std::vector<TLPixel> GetContactNeighbors(TLPixel label);
-	LabelImageFeatures GetFeatures( LabelPixelType label );
+	std::vector<float> GetCentroid(TLPixel label);
+	std::vector<float> GetWeightedCentroid(TLPixel label);
+	std::vector<float> GetAxisLengths(TLPixel label);
+	std::vector<int> GetBoundingBox(TLPixel label);
+	LabelImageFeatureValueMapType GetFeatures( LabelPixelType label );
 	std::vector< LabelPixelType > GetLabels() { return this->labels; };
+	std::vector< std::string > GetAvailableFeatureNames(void);
+	LabelImageFeatureInfoMapType GetFeatureInfo(void) { return this->featureInfo; };
 
 	void ComputeHistogramOn();
 	void ComputeHistogramOff(){ computeHistogram = false; };
@@ -124,8 +85,6 @@ private:
 	bool RunLabelGeometryFilter();
 	bool RunLabelStatisticsFilter();
 	void LabelImageScan();
-	void InitFeatureMap();
-	LabelImageFeatures GetEmptyFeatures();
 	void ReadLabelGeometryFeatures();
 	void ReadLabelStatisticsFeatures();
 	void CalculateScanFeatures();
@@ -137,8 +96,7 @@ private:
 	typedef typename LabelGeometryType::Pointer LabelGeometryPointer;
 	typedef itk::LabelStatisticsImageFilter< IntensityImageType , LabelImageType > LabelStatisticsType;
 	typedef typename LabelStatisticsType::Pointer LabelStatisticsPointer;
-
-	typedef std::map<TLPixel, LabelImageFeatures> FeatureMapType;
+	
 
 	//Internal Variables:
 	IntensityImagePointer intensityImage;	//Input intensity image;
@@ -154,8 +112,11 @@ private:
 																		//Values stored once with greater label first (outer array)
 																		//example: sharePix[5][3] is correct, sharePix[3][5] does not exist
 
+	typedef std::map<TLPixel, LabelImageFeatureValueMapType> FeatureMapType;
 	std::vector< LabelPixelType > labels;		//Holds all of the Labels that have been found (including 0)
-	FeatureMapType allFeatures;					//Holds all Features that have been calculated (including 0)
+	FeatureMapType featureVals;					//Holds all Features that have been calculated (including 0)
+	LabelImageFeatureInfoMapType featureInfo;	//Holds the Feature Info for features calculated here!!
+
 
 	//OPTIONS
 	short int computationLevel;					//We have 3 levels of computation

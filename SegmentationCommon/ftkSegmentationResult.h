@@ -86,7 +86,7 @@ private:
 	Object parseObject(TiXmlElement *object);
 	Object::Point parseCenter(TiXmlElement *centerElement);
 	Object::Box parseBound(TiXmlElement *boundElement);
-	vector<double> parseFeatures(TiXmlElement *featureElement);
+	vector<float> parseFeatures(TiXmlElement *featureElement);
 	TiXmlElement *GetObjectElement(Object object);
 
 }; // end SegmentationResult

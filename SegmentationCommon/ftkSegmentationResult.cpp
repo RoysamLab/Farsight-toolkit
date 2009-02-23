@@ -253,9 +253,9 @@ Object::Box SegmentationResult::parseBound(TiXmlElement *boundElement)
 	return bound;
 }
 
-vector< double > SegmentationResult::parseFeatures(TiXmlElement *featureElement)
+vector< float > SegmentationResult::parseFeatures(TiXmlElement *featureElement)
 {
-	vector< double > tempFeatures(0);
+	vector< float > tempFeatures(0);
 	vector< string > tempNames(0); 
 
 	//Extract all of the features for this object
@@ -263,7 +263,7 @@ vector< double > SegmentationResult::parseFeatures(TiXmlElement *featureElement)
 	while(feature)
 	{
 		tempNames.push_back( feature->Value() );
-		tempFeatures.push_back( atof( feature->GetText() ) );
+		tempFeatures.push_back( float( atof( feature->GetText() ) ) );
 		
 		feature = feature->NextSiblingElement();
 	}
@@ -279,10 +279,10 @@ vector< double > SegmentationResult::parseFeatures(TiXmlElement *featureElement)
 	if( featureNames.size() != tempNames.size() )
 	{
 		errorMessage = "Features do not match";
-		return vector< double >(0);
+		return vector< float >(0);
 	}
 		
-	vector<double> retFeatures( tempFeatures.size() );
+	vector<float> retFeatures( tempFeatures.size() );
 	unsigned int numMatches = 0;
 	for (unsigned int i=0; i<tempFeatures.size(); ++i)
 	{
@@ -300,7 +300,7 @@ vector< double > SegmentationResult::parseFeatures(TiXmlElement *featureElement)
 	if ( numMatches != tempFeatures.size() )
 	{
 		errorMessage = "Features do not match";
-		return vector< double >(0);
+		return vector< float >(0);
 	}
 
 	return retFeatures;
@@ -436,7 +436,7 @@ TiXmlElement* SegmentationResult::GetObjectElement(Object object)
 	if(featureNames.size() > 0)
 	{
 		TiXmlElement *fsElement = new TiXmlElement("features");
-		vector<double> features = object.GetFeatures();
+		vector<float> features = object.GetFeatures();
 		for(unsigned int f=0; f<features.size(); ++f)
 		{
 			TiXmlElement *fElement = new TiXmlElement( featureNames[f].c_str() );
@@ -480,7 +480,7 @@ bool SegmentationResult::WriteToMETA()
 		if( myObjects.at(obj).GetValidity() == false )
 			continue;
 
-		vector<double> feats = myObjects.at(obj).GetFeatures();
+		vector<float> feats = myObjects.at(obj).GetFeatures();
 		for(unsigned int f = 0; f < feats.size(); ++f)
 		{
 			outFile << feats.at(f) << "\t";

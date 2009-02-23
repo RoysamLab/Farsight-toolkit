@@ -57,7 +57,7 @@ public:
 	Image();
 	~Image();
 
-	bool LoadFile( std::string fName );
+	bool LoadFile( std::string fName, bool forDisplay = false );
 	void LoadFiles( std::vector< std::string > fNames );
 
 	std::vector< unsigned short > Size(void);
@@ -98,7 +98,7 @@ private:
 	std::string GetPath(std::string);
 	std::string itoa(const int x);
 
-	bool LoadStandardImage( std::string filename );
+	bool LoadStandardImage( std::string filename, bool forDisplay = false );
 	bool LoadLSMImage( std::string fileName );
 
 };

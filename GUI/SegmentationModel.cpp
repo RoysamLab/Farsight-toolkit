@@ -62,7 +62,7 @@ void SegmentationModel::SyncModel()
 		int id = objects->at(obj).GetId();
 		model->setData(model->index(currentRow, columnForID, QModelIndex()), id);
 
-		vector<double> features = objects->at(obj).GetFeatures();
+		vector<float> features = objects->at(obj).GetFeatures();
 		for(int f=0; f<numFeatures; ++f)
 		{
 			model->setData(model->index(currentRow, f+1, QModelIndex()), features[f]);
@@ -326,7 +326,7 @@ void SegmentationModel::mergeTrigger()
 			int currentRow = model->rowCount();
 			model->insertRow(currentRow);
 			model->setData(model->index(currentRow, columnForID, QModelIndex()), newID);
-			vector<double> features = segResult->GetObjectPtr(newID)->GetFeatures();
+			vector<float> features = segResult->GetObjectPtr(newID)->GetFeatures();
 			for(int f=0; f<numFeatures; ++f)
 			{
 				model->setData(model->index(currentRow, f+1, QModelIndex()), features[f]);
