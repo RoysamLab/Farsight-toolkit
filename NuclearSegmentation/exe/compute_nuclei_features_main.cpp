@@ -4,7 +4,7 @@
 
 using namespace std;
 
-int main(unsigned int argc, char* argv[])
+int main(int argc, char* argv[])
 {
 	if(argc < 3)
 	{

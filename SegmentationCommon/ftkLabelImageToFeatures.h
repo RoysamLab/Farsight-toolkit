@@ -33,7 +33,7 @@ class LabelImageToFeatures : public itk::LightObject
 public:
 
 	typedef LabelImageToFeatures Self;
-	typedef LightObject Superclass;
+	typedef itk::LightObject Superclass;
 	typedef itk::SmartPointer< Self > Pointer;
 	typedef itk::SmartPointer< const Self > ConstPointer;
 

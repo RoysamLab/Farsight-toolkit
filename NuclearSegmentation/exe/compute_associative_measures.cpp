@@ -5,7 +5,7 @@
 
 using namespace std;
 
-int main(unsigned int argc, char* argv[])
+int main(int argc, char* argv[])
 {
 	string segFName;
 	string xmlFname;

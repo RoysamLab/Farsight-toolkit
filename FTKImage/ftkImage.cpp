@@ -249,6 +249,37 @@ void * Image::GetDataPtr(int T, int CH)
 	return imageDataPtrs[T][CH];
 }
 
+//*********************************************************************
+//Will create a 3D grayscale image from the data (TODO: Make this STATIC)
+//*********************************************************************
+bool Image::ImageFromData3D(void *dptr, int dataType, int bpPix, int cs, int rs, int zs)
+{
+	imageInfo.path = "";
+	imageInfo.filename = "";
+	imageInfo.numColumns = cs;		//Number of Columns in Image (x)
+	imageInfo.numRows  = rs;			//Number of Rows in Image (y)
+	imageInfo.numZSlices  = zs;		//Number of Z Slices in Image (z)
+	imageInfo.numTSlices = 1;							//Number of Time Slices in Image (t)
+	imageInfo.bytesPerPix = bpPix;	//Number of bytes per pixel (UCHAR - 1 or USHORT - 2)
+	imageInfo.dataType = dataType;		//See ENUM ImageDataType
+	imageInfo.numChannels = 1;			//Number of Channels in this Image (ch)
+
+	std::vector<unsigned char> gray(3,255);
+	imageInfo.channelColors.clear();
+	imageInfo.channelNames.clear();
+	imageInfo.channelColors.push_back(gray);
+	imageInfo.channelNames.push_back("gray");
+
+	unsigned char *imgdata = new unsigned char[zs*cs*rs*bpPix];
+	if(!imgdata) return false;
+	memcpy(imgdata,dptr,zs*cs*rs*bpPix);
+	imageDataPtrs.clear();
+	imageDataPtrs.resize(1);
+	imageDataPtrs[0].push_back( imgdata );
+
+	return true;
+}
+
 //************************************************************************************
 //Private Utilities:
 std::string Image::GetFileExtension(std::string f)

@@ -489,14 +489,15 @@ void NuclearSegmentation::setup(string imagefilename, string paramfilename)
 
 	dataImage = new ftk::Image();
 	string fname = PrependProjectPath(imagefilename);
-	//dataImage->load(fname);
+	dataImage->LoadFile(fname, true);		//Scale input to 8 bits.
 	dataFilenames.push_back(imagefilename);
 
-	int numStacks = 1;//dataImage->NumZSlices();
-	int numRows = 1;//dataImage->NumRows();				//y-direction
-	int numColumns = 1;//dataImage->NumColumns(); 		//x-direction
+	Image::Info *info = dataImage->GetImageInfo();
+	int numStacks = info->numZSlices;
+	int numRows = info->numRows;				//y-direction
+	int numColumns = info->numColumns; 			//x-direction
 
-	unsigned char *dataImagePtr;// = dataImage->GetStack(0,0);	//Expects grayscale image
+	unsigned char *dataImagePtr = dataImage->GetSlicePtr(0,0,0);	//Expects grayscale image
 	char *f = (char*)imagefilename.c_str();
 
 	NucleusSeg = new yousef_nucleus_seg();
@@ -554,7 +555,7 @@ void NuclearSegmentation::createFTKLabelImg(int* data, int numColumns, int numRo
 		delete labelImage;
 		labelImage = new ftk::Image();
 	}
-	//labelImage->ImageFromData3D((void*)data,sizeof(int), numColumns, numRows, numStacks);
+	labelImage->ImageFromData3D((void*)data, INT, sizeof(int), numColumns, numRows, numStacks);
 }
 
 //********************************************************************************************

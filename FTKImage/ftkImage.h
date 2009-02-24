@@ -57,8 +57,10 @@ public:
 	Image();
 	~Image();
 
-	bool LoadFile( std::string fName, bool forDisplay = false );
+	bool LoadFile( std::string fName, bool scale = false );
 	void LoadFiles( std::vector< std::string > fNames );
+
+	bool ImageFromData3D(void *dptr, int dataType, int bpPix, int cs, int rs, int zs);
 
 	std::vector< unsigned short > Size(void);
 
