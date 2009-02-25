@@ -16,7 +16,8 @@
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageRegionIteratorWithIndex.h"
-#include "itkApproximateSignedDistanceMapImageFilter.h"
+//#include "itkApproximateSignedDistanceMapImageFilter.h"
+#include <itkSignedDanielssonDistanceMapImageFilter.h> 
 
 namespace ftk
 { 
@@ -40,10 +41,12 @@ private:
 	/* Private member variables */
 	typedef itk::Image< unsigned short, 3 > LabImageType;
 	typedef itk::Image< unsigned short, 3 > TargImageType;
-	typedef itk::Image< float, 3 > DistImageType;
+	typedef itk::Image< double, 3 > DistImageType;
 	typedef itk::ImageFileReader< LabImageType > ReaderType;
 	typedef itk::LabelGeometryImageFilter< LabImageType, LabImageType > LabelGeometryType;
-	typedef itk::ApproximateSignedDistanceMapImageFilter<DistImageType, DistImageType > DTFilter ;
+	//typedef itk::ApproximateSignedDistanceMapImageFilter<DistImageType, DistImageType > DTFilter ;
+	typedef itk::SignedDanielssonDistanceMapImageFilter<DistImageType, DistImageType > DTFilter ;
+
 	LabImageType::Pointer labImage;
 	LabelGeometryType::Pointer labGeometryFilter;	
 	int x_Size;

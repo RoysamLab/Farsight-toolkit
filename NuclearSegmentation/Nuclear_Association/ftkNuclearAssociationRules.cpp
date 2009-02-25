@@ -14,6 +14,8 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+//just for testing
+#include "itkImageFileWriter.h"
 
 namespace ftk 
 {	
@@ -60,18 +62,14 @@ void NuclearAssociationRules::Compute()
 		assocMeasurementsList[i] = new float[numOfLabels];
 		//read the ith target image (the image from which we need to compute the ith assoc. rule
 		ReaderType::Pointer reader2 = ReaderType::New();
-		reader2->SetFileName (assocRulesList[i].GetTargetFileNmae());
+		reader2->SetFileName(assocRulesList[i].GetTargetFileNmae());
 		reader2->Update();		
 		//cout<<"Computing Features For Association Rule "<<i+1<<": ";
 		for(unsigned int j=0; j<numOfLabels; j++)
 		{
 			//cout<<j+1;
 			cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<j+1<<"/"<<numOfLabels;
-			assocMeasurementsList[i][j] = ComputeOneAssocMeasurement(reader2->GetOutput(), i, j+1);
-			/*std::ostringstream o;
-			o<<j+1;
-			for(int k=0; k<o.str().size(); k++)
-				cout<<"\b";*/
+			assocMeasurementsList[i][j] = ComputeOneAssocMeasurement(reader2->GetOutput(), i, j+1);			
 		}		
 		cout<<"\tdone"<<endl;
 	}						
@@ -143,35 +141,74 @@ float NuclearAssociationRules::ComputeOneAssocMeasurement(itk::SmartPointer<Targ
 	IteratorType2 iterator2(subSegImg, subSegImg->GetRequestedRegion());
 
 	//in the sub-segmentation image, we need to mask out any pixel from another object	
+	int counter = 0;
 	while ( ! iterator1.IsAtEnd())
-	{
+	{		
 		int V = iterator1.Get();
 		if(V == objID)
+		{
 			iterator2.Set(255.0);
+			counter++; //just for debuging purposes,, will be removed
+		}
 		else
 			iterator2.Set(0.0);
 		++iterator1;
 		++iterator2;		
 	}	
+	//Let's try this (for debugging): save the binary mask
+	/*	typedef itk::Image< unsigned short, 3 > OutputImageType;
+		typedef itk::CastImageFilter< DistImageType, OutputImageType > CastType; 
+		CastType::Pointer cast = CastType::New(); 
+		cast->SetInput( subSegImg ); 
+		cast->Update(); 
+
+		typedef itk::ImageFileWriter< OutputImageType > WriterType; 
+		WriterType::Pointer writer = WriterType::New( ); 
+		writer->SetInput( cast->GetOutput() ); 
+		writer->SetFileName( "c:/bin_mask.tif" ); 
+		writer->Update(); */
+
 	//Compute the distance transform in the sub-segmentation image region	
 	DTFilter::Pointer dt_obj= DTFilter::New() ;
 	dt_obj->SetInput(subSegImg) ;
-	dt_obj->SetInsideValue(255.0);
-	dt_obj->SetOutsideValue(0.0);	
+	//dt_obj->SetInsideValue(255.0);
+	//dt_obj->SetOutsideValue(0.0);	
 	try{
 		dt_obj->Update() ;
 	}
 	catch( itk::ExceptionObject & err ){		
 		return 0;
 	}
+
+	//Let's try this (for debugging): save the distance map
+		////typedef itk::Image< unsigned short, 3 > OutputImageType;
+		////typedef itk::CastImageFilter< DistImageType, OutputImageType > CastType; 
+		////CastType::Pointer cast = CastType::New(); 
+		//cast->SetInput( dt_obj->GetOutput() ); 
+		//cast->Update(); 
+
+		////typedef itk::ImageFileWriter< OutputImageType > WriterType; 
+		////WriterType::Pointer writer = WriterType::New( ); 
+		//writer->SetInput( cast->GetOutput() ); 
+		//writer->SetFileName( "c:/dist_map.tif" ); 
+		//writer->Update(); 
 	
 	//now, mask out all the pixels (in the sub-seg image) that are not in the region of interest as defined by the association rule and get the intensities of the needed pixels from the target image. The intensities are saved into an std vector
 	IteratorType2 iterator3(dt_obj->GetOutput(), dt_obj->GetOutput()->GetRequestedRegion());
 	IteratorType iterator4(trgIm, trgIm->GetRequestedRegion());
 	vector<int> trgInt;
+	int counter_in = 0;
+	int counter_at = 0;
+	int counter_ot = 0;
 	while ( ! iterator3.IsAtEnd())
 	{
 		int V = iterator3.Get();
+		if(V<0)
+			counter_in++;
+		if(V==0)
+			counter_at++;
+		if(V>0)
+			counter_ot++;
 		//if it is outside with distance less than outDistance away
 		if(V>0 && V<=assocRulesList[ruleID].GetOutDistance())
 			trgInt.push_back(iterator4.Get());
