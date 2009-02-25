@@ -1,5 +1,6 @@
 SET( SEGMENTATIONCOMMON_SRCS
   ftkSegmentationResult.cpp
+  ftkFeatures.cpp
   ftkObject.cpp 
   ftkObjectAssociation.cpp
 )

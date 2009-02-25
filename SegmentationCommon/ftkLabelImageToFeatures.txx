@@ -239,7 +239,7 @@ std::vector<float> LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 }
 	
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension >
-std::vector<int> LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
+std::vector<int> LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 ::GetBoundingBox(TLPixel label)
 {
 	std::vector<int> ret;
@@ -252,26 +252,7 @@ std::vector<int> LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 }
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
-std::vector< std::string > LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
-::GetAvailableFeatureNames(void)
-{
-	std::vector< std::string > fNames;
-	fNames.clear();
-	
-	if(labels.size() > 0)
-	{
-		LabelImageFeatureValueMapType::iterator it;
-		for(it = featureVals[ labels.at(0) ].begin(); it != featureVals[ labels.at(0) ].end(); it++ )
-		{
-			fNames.push_back( (*it).first );
-		}
-	}
-	
-	return fNames;
-}
-
-template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
-LabelImageFeatureValueMapType LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
+IntrinsicFeatures * LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 ::GetFeatures( TLPixel label )
 {
 	typename FeatureMapType::iterator it;
@@ -279,19 +260,17 @@ LabelImageFeatureValueMapType LabelImageToFeatures< TIPixel, TLPixel, VImageDime
 	if ( it == featureVals.end() )
     {
 		// label does not exist, return a NULL value
-		LabelImageFeatureValueMapType f;
-		f.clear();
-		return f;
+		return NULL;
     }
 	else
     {
-		return featureVals[ label ];
+		return &featureVals[ label ];
     }
 }
 
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
-bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
+bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 ::RunLabelGeometryFilter()
 {
 	if(!intensityImage || !labelImage) return false;
@@ -516,45 +495,26 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 {
 	if(!labelGeometryFilter) return;
 	
-	bool doInfo = true;
-	Info f = {false, "", ""};
-	Info t = {true, "", ""};
-	
 	//Now populate the features information
 	for (int i = 0; i < (int)labels.size(); ++i)
 	{
 		TLPixel label = labels.at(i);
 		
-		featureVals[label]["volume"].i = (int)labelGeometryFilter->GetVolume( label );
-		featureVals[label]["integratedintensity"].i = (int)labelGeometryFilter->GetIntegratedIntensity( label );
-		featureVals[label]["eccentricity"].f = float( labelGeometryFilter->GetEccentricity( label ) );
-		featureVals[label]["elongation"].f = float( labelGeometryFilter->GetElongation( label ) );
-		featureVals[label]["orientation"].f = float( labelGeometryFilter->GetOrientation( label ) );
-		featureVals[label]["bbVolume"].f = float( labelGeometryFilter->GetBoundingBoxVolume( label ) );
+		featureVals[label].ScalarFeatures[IntrinsicFeatures::VOLUME] = (float)labelGeometryFilter->GetVolume( label );
+		featureVals[label].ScalarFeatures[IntrinsicFeatures::INTEGRATED_INTENSITY] = (float)labelGeometryFilter->GetIntegratedIntensity( label );
+		featureVals[label].ScalarFeatures[IntrinsicFeatures::ECCENTRICITY] = float( labelGeometryFilter->GetEccentricity( label ) );
+		featureVals[label].ScalarFeatures[IntrinsicFeatures::ELONGATION] = float( labelGeometryFilter->GetElongation( label ) );
+		featureVals[label].ScalarFeatures[IntrinsicFeatures::ORIENTATION] = float( labelGeometryFilter->GetOrientation( label ) );
+		featureVals[label].ScalarFeatures[IntrinsicFeatures::BBOX_VOLUME] = float( labelGeometryFilter->GetBoundingBoxVolume( label ) );
 		
-		if(doInfo)
-		{
-			featureInfo["volume"]= t;
-			featureInfo["integratedintensity"] = t;
-			featureInfo["eccentricity"] = f;
-			featureInfo["elongation"] = f;
-			featureInfo["orientation"] = f;
-			featureInfo["bbVolume"] = f;
-		}
-		
+		string n = IntrinsicFeatures::Info[IntrinsicFeatures::VOLUME].name;
+
 		if(computeAdvanced)
 		{
 			double objVol = double( labelGeometryFilter->GetVolume( label ) );
 			double boxVol = double( labelGeometryFilter->GetOrientedBoundingBoxVolume( label ) );
-			featureVals[label]["solidity"].f = float( objVol / boxVol );
-			
-			if(doInfo)
-			{
-				featureInfo["solidity"] = f;
-			}
+			featureVals[label].ScalarFeatures[IntrinsicFeatures::SOLIDITY] = float( objVol / boxVol );
 		}
-		
-		doInfo = false;
 	}
 }
 
@@ -564,34 +524,18 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 {
 	if(!labelStatisticsFilter) return;
 	
-	bool doInfo = true;
-	Info f = {false, "", ""};
-	
 	//Now populate the features information
 	for (int i = 0; i < (int)labels.size(); ++i)
 	{
 		TLPixel label = labels.at(i);
 		
-		featureVals[label]["sum"].f = (float)labelStatisticsFilter->GetSum( label );
-		featureVals[label]["mean"].f = (float)labelStatisticsFilter->GetMean( label );
-		featureVals[label]["median"].f = (float)labelStatisticsFilter->GetMedian( label );
-		featureVals[label]["minimum"].f = (float)labelStatisticsFilter->GetMinimum( label );
-		featureVals[label]["maximum"].f = (float)labelStatisticsFilter->GetMaximum( label );
-		featureVals[label]["sigma"].f = (float)labelStatisticsFilter->GetSigma( label );
-		featureVals[label]["variance"].f = (float)labelStatisticsFilter->GetVariance( label );
-		
-		if(doInfo)
-		{
-			featureInfo["sum"]= f;
-			featureInfo["mean"] = f;
-			featureInfo["median"] = f;
-			featureInfo["minimum"] = f;
-			featureInfo["maximum"] = f;
-			featureInfo["sigma"] = f;
-			featureInfo["variance"] = f;
-		}
-		
-		doInfo = false;
+		featureVals[label].ScalarFeatures[IntrinsicFeatures::SUM] = (float)labelStatisticsFilter->GetSum( label );
+		featureVals[label].ScalarFeatures[IntrinsicFeatures::MEAN] = (float)labelStatisticsFilter->GetMean( label );
+		featureVals[label].ScalarFeatures[IntrinsicFeatures::MEDIAN] = (float)labelStatisticsFilter->GetMedian( label );
+		featureVals[label].ScalarFeatures[IntrinsicFeatures::MINIMUM] = (float)labelStatisticsFilter->GetMinimum( label );
+		featureVals[label].ScalarFeatures[IntrinsicFeatures::MAXIMUM] = (float)labelStatisticsFilter->GetMaximum( label );
+		featureVals[label].ScalarFeatures[IntrinsicFeatures::SIGMA] = (float)labelStatisticsFilter->GetSigma( label );
+		featureVals[label].ScalarFeatures[IntrinsicFeatures::VARIANCE] = (float)labelStatisticsFilter->GetVariance( label );
 	}
 }
 
@@ -630,9 +574,6 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	std::vector<float> centroid;
 	typename LabelImageType::IndexType point;
 	TLPixel currentLabel;
-	
-	bool doInfo = true;
-	Info f = {false, "", ""};
 	
 	for (int lab=0; lab<(int)labels.size(); ++lab)
 	{
@@ -688,13 +629,15 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		}
 
 		//Compute Gradient information for this label
-		featureVals[currentLabel]["surfacegradient"].f = float( sum_surface_grad / boundaryPix[currentLabel].size() );
-		featureVals[currentLabel]["interiorgradient"].f = float( sum_interior_grad / interiorPix[currentLabel].size() );
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SURFACE_GRADIENT] = float( sum_surface_grad / boundaryPix[currentLabel].size() );
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INTERIOR_GRADIENT] = float( sum_interior_grad / interiorPix[currentLabel].size() );
 
 		//Compute Intensities
-		featureVals[currentLabel]["surfaceintensity"].f = float( sum_surface_intensity / boundaryPix[currentLabel].size() );
-		featureVals[currentLabel]["interiorintensity"].f = float( sum_interior_intensity / interiorPix[currentLabel].size() );
-		featureVals[currentLabel]["intensityratio"].f = featureVals[currentLabel]["surfaceintensity"].f / featureVals[currentLabel]["interiorintensity"].f;
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SURFACE_INTENSITY] = float( sum_surface_intensity / boundaryPix[currentLabel].size() );
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INTERIOR_INTENSITY] = float( sum_interior_intensity / interiorPix[currentLabel].size() );
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INTENSITY_RATIO] \
+			= featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SURFACE_INTENSITY] \
+			/ featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INTERIOR_INTENSITY];
 
 		/*
 		//Now use min/max to calculate the eccentricity
@@ -727,7 +670,7 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 			double sq = diff*diff;
 			surface_sq_sum += sq;
 		}
-		featureVals[currentLabel]["radiusvariation"].f = float( sqrt( surface_sq_sum / bounddistances.size() ) );
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::RADIUS_VARIATION] = float( sqrt( surface_sq_sum / bounddistances.size() ) );
 		
 		double interior_sq_sum = 0;
 		for (int i=0; i<(int)interiordistances.size(); ++i)
@@ -740,13 +683,13 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		//allFeatures[currentLabel].distancevariation = (allFeatures[currentLabel].radiusvariation + interiorvariation) / 2;
 		
 		//surface area:
-		featureVals[currentLabel]["surfacearea"].i = int( boundaryPix[currentLabel].size() );
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SURFACE_AREA] = float( boundaryPix[currentLabel].size() );
 		
 		//shape:
 		double sa = 0;//allFeatures[currentLabel].surfacearea;
 		double pi = 3.1415;
 		double v = 0;//allFeatures[currentLabel].volume;
-		featureVals[currentLabel]["shape"].f = float( sa*sa*sa / ( 36*pi*v*v) );
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SHAPE] = float( sa*sa*sa / ( 36*pi*v*v) );
 		
 		//percent shared boundary:
 		int zeroBound = sharePix[currentLabel][0];
@@ -759,21 +702,7 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		{
 			nonzeroBound = nonzeroBound + sharePix[i][currentLabel];
 		}
-		featureVals[currentLabel]["percentsharedboundary"].f = float(nonzeroBound) / float(nonzeroBound+zeroBound);
-		
-		if(doInfo)
-		{
-			featureInfo["surfacegradient"]= f;
-			featureInfo["interiorgradient"] = f;
-			featureInfo["surfaceintensity"] = f;
-			featureInfo["interiorintensity"] = f;
-			featureInfo["intensityratio"] = f;
-			featureInfo["radiusvariation"] = f;
-			featureInfo["surfacearea"] = f;
-			featureInfo["shape"] = f;
-			featureInfo["percentsharedboundary"] = f;
-		}
-		doInfo = false;
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SHARED_BOUNDARY] = float(nonzeroBound) / float(nonzeroBound+zeroBound);
 	}
 }
 
@@ -796,18 +725,15 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	double vol, mean, sigma, t_skew, t_energy, t_entropy;
 	double log, diff, cube, prob;
 	
-	bool doInfo = true;
-	Info f = {false, "", ""};
-	
 	for (int lab=0; lab<(int)labels.size(); ++lab)
 	{
 		currentLabel = labels[lab];
 		if (currentLabel <= 0) continue;
 
 		histo = labelStatisticsFilter->GetHistogram( currentLabel );
-		vol = featureVals[currentLabel]["volume"].f;
-		mean = featureVals[currentLabel]["mean"].f;
-		sigma = featureVals[currentLabel]["sigma"].f;
+		vol = 1;//featureVals[currentLabel]["volume"].f;
+		mean = 1;//featureVals[currentLabel]["mean"].f;
+		sigma = 1;//featureVals[currentLabel]["sigma"].f;
 
 		t_skew = 0;
 		t_energy = 0;
@@ -828,20 +754,12 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		}	
 
 		if(sigma == 0)
-			featureVals[currentLabel]["skew"].f =  float(0);
+			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SKEW] =  float(0);
 		else
-			featureVals[currentLabel]["skew"].f =  float( t_skew / ( sigma * sigma * sigma ) );
+			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SKEW] =  float( t_skew / ( sigma * sigma * sigma ) );
 			
-		featureVals[currentLabel]["energy"].f = float( t_energy );
-		featureVals[currentLabel]["entropy"].f = float( -1 * t_entropy );
-		
-		if(doInfo)
-		{
-			featureInfo["skew"]= f;
-			featureInfo["energy"] = f;
-			featureInfo["entropy"] = f;
-		}
-		doInfo = false;
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::ENERGY] = float( t_energy );
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::ENTROPY] = float( -1 * t_entropy );
 	}
 }
 

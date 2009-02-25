@@ -60,10 +60,8 @@ public:
 	std::vector<float> GetWeightedCentroid(TLPixel label);
 	std::vector<float> GetAxisLengths(TLPixel label);
 	std::vector<int> GetBoundingBox(TLPixel label);
-	LabelImageFeatureValueMapType GetFeatures( LabelPixelType label );
+	IntrinsicFeatures * GetFeatures( LabelPixelType label );
 	std::vector< LabelPixelType > GetLabels() { return this->labels; };
-	std::vector< std::string > GetAvailableFeatureNames(void);
-	LabelImageFeatureInfoMapType GetFeatureInfo(void) { return this->featureInfo; };
 
 	void ComputeHistogramOn();
 	void ComputeHistogramOff(){ computeHistogram = false; };
@@ -112,10 +110,9 @@ private:
 																		//Values stored once with greater label first (outer array)
 																		//example: sharePix[5][3] is correct, sharePix[3][5] does not exist
 
-	typedef std::map<TLPixel, LabelImageFeatureValueMapType> FeatureMapType;
+	typedef std::map<TLPixel, IntrinsicFeatures> FeatureMapType;
 	std::vector< LabelPixelType > labels;		//Holds all of the Labels that have been found (including 0)
 	FeatureMapType featureVals;					//Holds all Features that have been calculated (including 0)
-	LabelImageFeatureInfoMapType featureInfo;	//Holds the Feature Info for features calculated here!!
 
 
 	//OPTIONS

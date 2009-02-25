@@ -95,7 +95,11 @@ bool NuclearSegmentation::LabelsToObjects(void)
 	labFilter->Update();
 
 	//Set Feature Names
-	featureNames = labFilter->GetAvailableFeatureNames();
+	featureNames.clear();
+	for (int i=0; i < IntrinsicFeatures::N; ++i)
+	{
+		featureNames.push_back( IntrinsicFeatures::Info[i].name );
+	}
 
 	//Now populate the objects
 	myObjects.clear();
@@ -314,9 +318,6 @@ ftk::Object NuclearSegmentation::GetNewObject(int id, FeatureCalcType *labFilter
 	object.SetDuplicated(0);
 	object.SetClass(-1);
 
-	LabelImageFeatureValueMapType features = labFilter->GetFeatures( id );
-	LabelImageFeatureInfoMapType fInfo = labFilter->GetFeatureInfo();
-
 	std::vector<float> centroid = labFilter->GetCentroid( id );
 	Object::Point c;
 	c.x = (int)centroid[0];
@@ -337,17 +338,15 @@ ftk::Object NuclearSegmentation::GetNewObject(int id, FeatureCalcType *labFilter
 	b.max.t = 0;
 	object.AddBound(b);
 
+	IntrinsicFeatures * features = labFilter->GetFeatures( id );
+
 	vector< float > f(0);
-	for (int i=0; i< featureNames.size(); ++i)
+	for (int i=0; i< IntrinsicFeatures::N; ++i)
 	{
-		std::string fName = featureNames.at(i);
-		if( fInfo[ fName ].isInteger )
-			f.push_back( float( features[ fName ].i) );
-		else
-			f.push_back( float( features[ fName ].f) );
+		f.push_back( features->ScalarFeatures[i] );
 	}
 
-	object.SetFeatures(f);
+	object.SetFeatures( f );
 
 	return object;
 }
