@@ -6,8 +6,8 @@
   Version:   $Revision: 0.00 $
 
 =========================================================================*/
-#ifndef __ftkFeatures_h
-#define __ftkFeatures_h
+#ifndef __ftkIntrinsicFeatures_h
+#define __ftkIntrinsicFeatures_h
 
 #include <string>
 #include <vector>
@@ -25,27 +25,35 @@ class IntrinsicFeatures
 {
 public:
 
-	static const enum
+	static const enum ScalerTypes
 	{
 		VOLUME, INTEGRATED_INTENSITY, ECCENTRICITY, ELONGATION, ORIENTATION, BBOX_VOLUME, \
 		SUM, MEAN, MEDIAN, MINIMUM, MAXIMUM, SIGMA, VARIANCE, \
 		SURFACE_GRADIENT, INTERIOR_GRADIENT, SURFACE_INTENSITY, INTERIOR_INTENSITY, \
 		INTENSITY_RATIO, RADIUS_VARIATION, SURFACE_AREA, SHAPE, SHARED_BOUNDARY, \
-		SOLIDITY, SKEW, ENERGY, ENTROPY 
+		SOLIDITY, SKEW, ENERGY, ENTROPY,
+		T_ENERGY, T_ENTROPY, INVERSE_DIFFERENCE_MOMENT, INERTIA, CLUSTER_SHADE, CLUSTER_PROMINENCE
 	};	//FEATURES WILL GET ASSIGNED INT 0,1,...N-1
 
-	static const int N = ENTROPY + 1;	//This is the number of scalar intrinsic features
+	static const int N = CLUSTER_PROMINENCE + 1;	//This is the number of scalar intrinsic features
 
 	int Dimensions;
 
 	float ScalarFeatures[N];
 
-	std::vector<float> Centroid;
-	std::vector<float> WeightedCentroid;
-	std::vector<float> AxisLength;
-	std::vector<float> BoundingBox;
+	float Centroid[3];
+	float WeightedCentroid[3];
+	float AxisLength[3];
+	float BoundingBox[6];		//min(X), max(X), min(Y), max(Y), min(Z), max(Z),...]
 
 	static FeatureInfoType Info[N];
+
+	void Print();
+
+	//Tracking Stuff:
+	int num;
+	int time;
+	int tag;
 };
 
 

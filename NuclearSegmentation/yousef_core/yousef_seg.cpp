@@ -897,7 +897,7 @@ void yousef_nucleus_seg::clearMyConnComp(void)
 
 int yousef_nucleus_seg::saveIntoIDLFormat(std::string imageName)
 {
-  if(!segImagePtr && !clustImagePtr)
+  if(!segImagePtr && !clustImagePtr && !binImagePtr)
     return -1;
 
   std::string idl_name = imageName.substr(0,imageName.find_last_of("."))+"_seg_final.dat";
@@ -917,8 +917,10 @@ int yousef_nucleus_seg::saveIntoIDLFormat(std::string imageName)
       for(int z=0; z<numStacks; z++) {				
         if (segImagePtr)
           memblock[ind] = (unsigned short) segImagePtr[(z*numRows*numColumns)+(y*numColumns)+x];
-		else 
+		else if (clustImagePtr)
           memblock[ind] = (unsigned short) clustImagePtr[(z*numRows*numColumns)+(y*numColumns)+x];
+		else
+		  memblock[ind] = (unsigned short) binImagePtr[(z*numRows*numColumns)+(y*numColumns)+x];
         ind++;
       }
     }

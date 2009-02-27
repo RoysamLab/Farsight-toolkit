@@ -12,7 +12,7 @@
 #include <vector>
 #include <string>
 
-#include "ftkFeatures.h"
+#include "ftkIntrinsicFeatures.h"
 
 using namespace std;
 

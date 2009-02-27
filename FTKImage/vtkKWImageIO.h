@@ -55,13 +55,13 @@ public:
   void ReadImage();
 
   // Read DICOM series
-  void ReadImageSeries();	//REMOVED 1-30-2009 ISAAC ABBOTT
+  void ReadImageSeries();	
 
   // Read and cast image
-  void ReadAndCastImage();	//REMOVED 1-30-2009 ISAAC ABBOTT
+  void ReadAndCastImage();	
 
   // WriteImage
-  void WriteImage();		//REMOVED 1-30-2009 ISAAC ABBOTT
+  void WriteImage();		
 
   // Return the vtkKWImage that was previously read.  This image object is
   // returned and disconnected from the reader. Once you receive the image

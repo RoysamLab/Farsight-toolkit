@@ -598,7 +598,7 @@ void SegmentationView::drawImage(QPainter *painter)
 			QImage gray((*info).numColumns, (*info).numRows, QImage::Format_ARGB32_Premultiplied);
 			std::vector<unsigned char> color = (*info).channelColors[i];
 			gray.fill(qRgb(color[0],color[1],color[2]));
-			unsigned char * p = channelImg->GetSlicePtr( currentT, i, currentZ );
+			unsigned char * p = channelImg->GetSlicePtr<unsigned char>( currentT, i, currentZ );
 			if(p)
 				gray.setAlphaChannel(QImage(p, (*info).numColumns, (*info).numRows, (*info).numColumns, QImage::Format_Indexed8)); 
 			painter->drawImage(0,0,gray);

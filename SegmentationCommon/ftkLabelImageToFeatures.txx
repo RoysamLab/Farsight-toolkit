@@ -4,6 +4,8 @@
 
 #include <itkConstNeighborhoodIterator.h>
 #include <itkConstantBoundaryCondition.h>
+#include <itkRescaleIntensityImageFilter.h>
+#include <itkExtractImageFilter.h>
 
 //#include <math.h>
 
@@ -91,15 +93,44 @@ template< typename TIPixel, typename TLPixel, unsigned int VImageDimension >
 bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 ::SetImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn )
 {
-	typename LabelImageType::RegionType lblRegion = lblImgIn->GetLargestPossibleRegion();
-	typename IntensityImageType::RegionType intRegion = intImgIn->GetLargestPossibleRegion();
+	typename LabelImageType::RegionType lblRegion = lblImgIn->GetRequestedRegion();
+	typename IntensityImageType::RegionType intRegion = intImgIn->GetRequestedRegion();
 
 	//Need to check size
 	if( lblRegion != intRegion )
 		return false;
+		
+	//Need to check regions:
+	if( intRegion != intImgIn->GetBufferedRegion() )
+	{
+		//Crop Image to Requested Region
+		typedef itk::ExtractImageFilter< IntensityImageType, IntensityImageType > CropFilterType;
+		typename CropFilterType::Pointer cropFilter = CropFilterType::New();
+		cropFilter->SetInput(intImgIn);
+		cropFilter->SetExtractionRegion(intRegion);
+		cropFilter->Update();
+		intensityImage = cropFilter->GetOutput();
+	}
+	else
+	{
+		intensityImage = intImgIn;		//Use Full Image
+	} 
 	
-	intensityImage = intImgIn;
-	labelImage = lblImgIn;
+	if( lblRegion != lblImgIn->GetBufferedRegion() )
+	{
+		//Crop Image to Requestedd Region
+		typedef itk::ExtractImageFilter< LabelImageType, LabelImageType > CropFilterType;
+		typename CropFilterType::Pointer cropFilter = CropFilterType::New();
+		cropFilter->SetInput(lblImgIn);
+		cropFilter->SetExtractionRegion(lblRegion);
+		cropFilter->Update();
+		labelImage = cropFilter->GetOutput();
+	}
+	else
+	{
+		labelImage = lblImgIn;
+	}
+
 	return true;
 }
 
@@ -153,7 +184,6 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	if(computationLevel >= 1)
 	{
 		RunLabelGeometryFilter();
-		//InitFeatureMap();
 		ReadLabelGeometryFeatures();
 	}
 	
@@ -176,13 +206,10 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	if(computeHistogram)
 		CalculateHistogramFeatures();
 	
-	/*
 	if(computeAdvanced)
 	{
 		RunTextureFilter();
-		ReadTextureFeatures();
 	}
-	*/
 }
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
@@ -197,58 +224,6 @@ TLPixel LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 			max = labels.at(i);
 	}
 	return max;
-}
-
-template< typename TIPixel, typename TLPixel, unsigned int VImageDimension >
-std::vector<float> LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
-::GetCentroid(TLPixel label)
-{
-	std::vector<float> ret;
-	typename LabelGeometryType::LabelPointType c = labelGeometryFilter->GetCentroid( label );
-	for (unsigned int i = 0; i < VImageDimension; ++i)
-	{
-		ret.push_back( float(c[i]) );
-	}
-	return ret;
-}
-
-template< typename TIPixel, typename TLPixel, unsigned int VImageDimension >
-std::vector<float> LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
-::GetWeightedCentroid(TLPixel label)
-{
-	std::vector<float> ret;
-	typename LabelGeometryType::LabelPointType c = labelGeometryFilter->GetWeightedCentroid( label );
-	for (unsigned int i = 0; i < VImageDimension; ++i)
-	{
-		ret.push_back( float(c[i]) );
-	}
-	return ret;
-}
-	
-template< typename TIPixel, typename TLPixel, unsigned int VImageDimension >
-std::vector<float> LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
-::GetAxisLengths(TLPixel label)
-{
-	std::vector<float> ret;
-	typename LabelGeometryType::AxesLengthType aL = labelGeometryFilter->GetAxesLength( label );
-	for (unsigned int i = 0; i < VImageDimension; ++i)
-	{
-		ret.push_back( float(aL[i]) );
-	}
-	return ret;
-}
-	
-template< typename TIPixel, typename TLPixel, unsigned int VImageDimension >
-std::vector<int> LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
-::GetBoundingBox(TLPixel label)
-{
-	std::vector<int> ret;
-	typename LabelGeometryType::BoundingBoxType bbox = labelGeometryFilter->GetBoundingBox( label );
-	for (unsigned int i = 0; i < VImageDimension*2; ++i)
-	{
-		ret.push_back( int(bbox[i]) );
-	}
-	return ret;
 }
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
@@ -515,7 +490,13 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 			double boxVol = double( labelGeometryFilter->GetOrientedBoundingBoxVolume( label ) );
 			featureVals[label].ScalarFeatures[IntrinsicFeatures::SOLIDITY] = float( objVol / boxVol );
 		}
+		
+		this->GetCentroid( label );
+		this->GetWeightedCentroid( label );
+		this->GetAxisLength( label );
+		this->GetBoundingBox( label );
 	}
+	
 }
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension >
@@ -571,7 +552,7 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	std::vector< double > bounddistances(0);				//from centroid to boundary
 	std::vector< double > interiordistances(0);				//from centroid to interior
 
-	std::vector<float> centroid;
+	float * centroid;
 	typename LabelImageType::IndexType point;
 	TLPixel currentLabel;
 	
@@ -580,7 +561,7 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		currentLabel = labels.at(lab);
 		if ((int)currentLabel <= 0) continue;
 
-		centroid = this->GetCentroid( currentLabel );
+		centroid = featureVals[currentLabel].Centroid;
 
 		max_bound_dist = 0.0;
 		min_bound_dist = 100.0;
@@ -731,9 +712,9 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		if (currentLabel <= 0) continue;
 
 		histo = labelStatisticsFilter->GetHistogram( currentLabel );
-		vol = 1;//featureVals[currentLabel]["volume"].f;
-		mean = 1;//featureVals[currentLabel]["mean"].f;
-		sigma = 1;//featureVals[currentLabel]["sigma"].f;
+		vol = featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::VOLUME];
+		mean = featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::MEAN];
+		sigma = featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SIGMA];
 
 		t_skew = 0;
 		t_energy = 0;
@@ -742,7 +723,7 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		for (int i=0; i<(int)histo->Size(); ++i)
 		{
 			
-			double v = histo->GetMeasurement(i,0);						//if not 1 bin for each value
+			double v = histo->GetMeasurement(i,0);					//if not 1 bin for each value
 			diff = v-mean;											//for skew
 			cube = diff*diff*diff;									//for skew
 			prob = histo->GetFrequency(i) / vol;					//for skew,energy,entropy
@@ -761,6 +742,79 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::ENERGY] = float( t_energy );
 		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::ENTROPY] = float( -1 * t_entropy );
 	}
+}
+
+//**************************************************************************
+// RUN THE ITK TEXTURE FILTER
+//**************************************************************************
+template< typename TIPixel, typename TLPixel, unsigned int VImageDimension >
+bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
+::RunTextureFilter()
+{
+	if(!intensityImage || !labelImage) return false;
+	if(!labels.size()) return false;
+	
+	LabelImagePointer tempIntensityImage;
+
+	typedef itk::RescaleIntensityImageFilter< IntensityImageType, LabelImageType > RescaleFilterType;
+	typedef typename RescaleFilterType::Pointer RescaleFilterPointer;
+	RescaleFilterPointer rescaleFilter = RescaleFilterType::New();
+	rescaleFilter->SetOutputMinimum(0);
+	rescaleFilter->SetOutputMaximum(255);
+	rescaleFilter->SetInput(intensityImage);
+	rescaleFilter->Update();
+	tempIntensityImage = rescaleFilter->GetOutput();
+	
+	typedef itk::Statistics::ScalarImageTextureCalculator< LabelImageType > TextureCalcType;
+	typedef typename TextureCalcType::Pointer TextureCalcPointer;
+	TextureCalcPointer textureCalculator = TextureCalcType::New();
+	textureCalculator->SetInput(tempIntensityImage);
+	textureCalculator->SetImageMask(labelImage);
+	textureCalculator->SetPixelValueMinMax(0,255);
+	textureCalculator->SetFastCalculations(true);
+	
+	TLPixel currentLabel;
+	for (int lab=0; lab<(int)labels.size(); ++lab)
+	{
+		currentLabel = labels.at(lab);
+		if ((int)currentLabel <= 0) continue;
+		
+		LabelImageType::RegionType region;
+		LabelImageType::SizeType size;
+		LabelImageType::IndexType index;
+
+		int loc = 0;
+		for (int dim=0; dim<VImageDimension; dim++)
+		{
+			index[dim] = featureVals[currentLabel].BoundingBox[loc];	//bbox min
+			size[dim] = featureVals[currentLabel].BoundingBox[loc+1]- index[dim] + 1;	//bbox max - min + 1
+			loc += 2;
+		}
+
+        region.SetSize(size);
+        region.SetIndex(index);
+        labelImage->SetRequestedRegion(region);
+        tempIntensityImage->SetRequestedRegion(region);
+		textureCalculator->SetInsidePixelValue( currentLabel );
+		textureCalculator->Compute();
+		
+		/*
+		FeatureValueVector * 	GetFeatureMeans ()
+		FeatureValueVector * 	GetFeatureStandardDeviations ()
+		const FeatureNameVector * 	GetRequestedFeatures ()
+		SetRequestedFeatures (const FeatureNameVector *_arg)
+		*/
+		
+		TextureCalcType::FeatureValueVector *tex = textureCalculator->GetFeatureMeans();
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::T_ENERGY] = float( tex->ElementAt(0) );
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::T_ENTROPY] = float( tex->ElementAt(1) );
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INVERSE_DIFFERENCE_MOMENT] = float( tex->ElementAt(2) );
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INERTIA] = float( tex->ElementAt(3) );
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::CLUSTER_SHADE] = float( tex->ElementAt(4) );
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::CLUSTER_PROMINENCE] = float( tex->ElementAt(5) );
+	}
+	
+	tempIntensityImage = 0;
 }
 
 //**************************************************************************
@@ -819,6 +873,51 @@ std::vector<TLPixel> LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	}
 	return nbs;
 }
+
+template< typename TIPixel, typename TLPixel, unsigned int VImageDimension >
+void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
+::GetCentroid(TLPixel label)
+{
+	typename LabelGeometryType::LabelPointType c = labelGeometryFilter->GetCentroid( label );
+	for (unsigned int i = 0; i < VImageDimension; ++i)
+	{
+		featureVals[label].Centroid[i] = float( c[i] );
+	}
+}
+
+template< typename TIPixel, typename TLPixel, unsigned int VImageDimension >
+void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
+::GetWeightedCentroid(TLPixel label)
+{
+	typename LabelGeometryType::LabelPointType c = labelGeometryFilter->GetWeightedCentroid( label );
+	for (unsigned int i = 0; i < VImageDimension; ++i)
+	{
+		featureVals[label].WeightedCentroid[i] = float( c[i] );
+	}
+}
+	
+template< typename TIPixel, typename TLPixel, unsigned int VImageDimension >
+void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
+::GetAxisLength(TLPixel label)
+{
+	typename LabelGeometryType::AxesLengthType aL = labelGeometryFilter->GetAxesLength( label );
+	for (unsigned int i = 0; i < VImageDimension; ++i)
+	{
+		featureVals[label].AxisLength[i] = float( aL[i] );
+	}
+}
+	
+template< typename TIPixel, typename TLPixel, unsigned int VImageDimension >
+void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
+::GetBoundingBox(TLPixel label)
+{
+	typename LabelGeometryType::BoundingBoxType bbox = labelGeometryFilter->GetBoundingBox( label );
+	for (unsigned int i = 0; i < VImageDimension*2; ++i)
+	{
+		featureVals[label].BoundingBox[i] = float( bbox[i] );
+	}
+}
+
 
 } //end namespace ftk
 #endif

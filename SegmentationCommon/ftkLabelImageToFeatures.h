@@ -14,9 +14,10 @@
 
 #include "itkLabelGeometryImageFilter.h"
 #include <itkLabelStatisticsImageFilter.h>
+#include <itkScalarImageTextureCalculator.h>
 #include <itkGradientMagnitudeImageFilter.h>
 
-#include "ftkFeatures.h"
+#include "ftkIntrinsicFeatures.h"
 
 #include <iostream>
 #include <map>
@@ -56,10 +57,6 @@ public:
 	LabelPixelType GetMaxLabel();
 	float GetPercentSharedBoundary(TLPixel focusLabel, TLPixel neighborLabel);
 	std::vector<TLPixel> GetContactNeighbors(TLPixel label);
-	std::vector<float> GetCentroid(TLPixel label);
-	std::vector<float> GetWeightedCentroid(TLPixel label);
-	std::vector<float> GetAxisLengths(TLPixel label);
-	std::vector<int> GetBoundingBox(TLPixel label);
 	IntrinsicFeatures * GetFeatures( LabelPixelType label );
 	std::vector< LabelPixelType > GetLabels() { return this->labels; };
 
@@ -82,6 +79,7 @@ private:
 	bool CreateGradientMagnitudeImage();
 	bool RunLabelGeometryFilter();
 	bool RunLabelStatisticsFilter();
+	bool RunTextureFilter();
 	void LabelImageScan();
 	void ReadLabelGeometryFeatures();
 	void ReadLabelStatisticsFeatures();
@@ -89,12 +87,16 @@ private:
 	void CalculateHistogramFeatures();
 	void SetHistogramParameters(int* numBins, int* lowerBound, int* upperBound);
 
+	void GetCentroid(TLPixel label);
+	void GetWeightedCentroid(TLPixel label);
+	void GetAxisLength(TLPixel label);
+	void GetBoundingBox(TLPixel label);
+
 	//Internal types:
 	typedef itk::LabelGeometryImageFilter< LabelImageType, IntensityImageType > LabelGeometryType;
 	typedef typename LabelGeometryType::Pointer LabelGeometryPointer;
 	typedef itk::LabelStatisticsImageFilter< IntensityImageType , LabelImageType > LabelStatisticsType;
 	typedef typename LabelStatisticsType::Pointer LabelStatisticsPointer;
-	
 
 	//Internal Variables:
 	IntensityImagePointer intensityImage;	//Input intensity image;

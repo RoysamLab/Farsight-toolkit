@@ -1,4 +1,4 @@
-#include "ftkFeatures.h"
+#include "ftkIntrinsicFeatures.h"
 
 namespace ftk
 {
@@ -29,7 +29,18 @@ FeatureInfoType IntrinsicFeatures::Info[N] = {
 	{ "solidity", "units", "description" },
 	{ "skew", "units", "description" },
 	{ "energy", "units", "description" },
-	{ "entropy", "units", "description" }
+	{ "entropy", "units", "description" },
+	{ "t_energy", "units", "description" },
+	{ "t_entropy", "units", "description" },
+	{ "inverse_diff_moment", "units", "description" },
+	{ "inertia", "units", "description" },
+	{ "cluster_shade", "units", "description" },
+	{ "cluster_prominence", "units", "description" }
 };
 
-} //end namespace ftk
+void IntrinsicFeatures::Print()
+{
+
+}
+
+} //end namespace ftk 

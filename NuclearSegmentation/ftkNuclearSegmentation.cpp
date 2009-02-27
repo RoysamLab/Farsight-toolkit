@@ -53,7 +53,6 @@ bool NuclearSegmentation::LoadFromResult(const char* dfile, const char* rfile)
 //Calculate the object information from the data/result images:
 bool NuclearSegmentation::LabelsToObjects(void)
 {
-	/*
 	if(!dataImage)
 	{
 		dataImage = new ftk::Image();
@@ -65,33 +64,24 @@ bool NuclearSegmentation::LabelsToObjects(void)
 		labelImage->LoadFile(PrependProjectPath(resultFilenames[0]));
 	}
 
-	//ftk::LabelImageToFeatures *labFilter = NULL;
 	//Calculation
 	if(!labelImage || !dataImage)
 	{
 		errorMessage = "label image or data image doesn't exist";
 		return false;
 	}
-	*/
 
-	IntensityReaderType::Pointer intensityReader = IntensityReaderType::New();
-	intensityReader->SetFileName( PrependProjectPath(dataFilenames[0]) );
-	intensityReader->Update();
+	typedef unsigned char IPixelT;
+	dataImage->Cast<IPixelT>();
+	typedef unsigned short LPixelT;
+	labelImage->Cast<LPixelT>();
 
-	LabelReaderType::Pointer labelReader = LabelReaderType::New();
-	labelReader->SetFileName( PrependProjectPath(resultFilenames[0]) );
-	labelReader->Update();
-
-	LabelImageType::Pointer labImg = labelReader->GetOutput();
-	IntensityImageType::Pointer intImg = intensityReader->GetOutput();
-
-	LabelImageType::SpacingType spacing = labImg->GetSpacing();
-
+	typedef ftk::LabelImageToFeatures< IPixelT, LPixelT, 3 > FeatureCalcType;
 	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
-	labFilter->SetImageInputs( intImg, labImg );
+	labFilter->SetImageInputs( dataImage->GetItkPtr<IPixelT>(0,0), labelImage->GetItkPtr<LPixelT>(0,0) );
 	labFilter->SetLevel(3);
 	labFilter->ComputeHistogramOn();
-	//labFilter->ComputeAdvancedOn();
+	labFilter->ComputeAdvancedOn();
 	labFilter->Update();
 
 	//Set Feature Names
@@ -111,7 +101,7 @@ bool NuclearSegmentation::LabelsToObjects(void)
 
 		if(id > maxID) maxID = id;
 
-		myObjects.push_back( GetNewObject(id, labFilter ) );
+		myObjects.push_back( GetNewObject(id, labFilter->GetFeatures(id) ) );
 	}
 
 	return true;
@@ -179,10 +169,14 @@ bool NuclearSegmentation::SaveLabel()
 		labelFilename.append("_label.tif");
 		resultFilenames.push_back(labelFilename);
 	}
+
 	//Write the labelImage to file
 	size_t pos = resultFilenames[0].find(".");
 	string base = resultFilenames[0].substr(0,pos);
-	//labelImage->save(PrependProjectPath(base),"tif");
+
+	labelImage->Cast<unsigned short>();		//Cannot Save as int type to tiff
+	if(!labelImage->SaveAs(projectPath, base, "tif"))
+		std::cerr << "FAILED TO SAVE LABEL IMAGE" << std::endl;
 
 	//Added by Yousef on 1/18/2009: save results into a format readable by the IDL farsight
 	if(NucleusSeg)
@@ -248,9 +242,6 @@ int NuclearSegmentation::Merge(vector<int> ids)
 	ftk::Object::Box region = ExtremaBox(ids);
 	ReassignLabels(ids, newID, region);		//Assign all old labels to this new label
 
-	//Now get new object information:
-	//ftk::LabelImageToFeatures *labFilter = NULL;
-	//Calculation
 	if(!labelImage || !dataImage)
 	{
 		errorMessage = "label image or data image doesn't exist";
@@ -258,15 +249,56 @@ int NuclearSegmentation::Merge(vector<int> ids)
 	}
 
 	//Calculate features using feature filter
-	//labFilter = new ftk::LabelImageToFeatures();
-	/*
-	labFilter->setLabelInput(labelImage);
-	labFilter->setIntensityInput(dataImage,0);
-	labFilter->setRegion(region.min.x, region.max.x, region.min.y,region.max.y, region.min.z, region.max.z);
+	typedef unsigned char IPixelT;
+	typedef unsigned short LPixelT;
+	typedef itk::Image< IPixelT, 3 > IImageT;
+	typedef itk::Image< LPixelT, 3 > LImageT;
+
+	dataImage->Cast<IPixelT>();
+	labelImage->Cast<LPixelT>();
+
+	IImageT::Pointer itkIntImg = dataImage->GetItkPtr<IPixelT>(0,0);
+	LImageT::Pointer itkLabImg = labelImage->GetItkPtr<LPixelT>(0,0);
+
+	IImageT::RegionType intRegion;
+	IImageT::SizeType intSize;
+	IImageT::IndexType intIndex;
+	LImageT::RegionType labRegion;
+	LImageT::SizeType labSize;
+	LImageT::IndexType labIndex;
+
+	intIndex[0] = region.min.x;
+	intIndex[1] = region.min.y;
+	intIndex[2] = region.min.z;
+	intSize[0] = region.max.x - region.min.x + 1;
+	intSize[1] = region.max.y - region.min.y + 1;
+	intSize[2] = region.max.z - region.min.z + 1;
+
+	labIndex[0] = region.min.x;
+	labIndex[1] = region.min.y;
+	labIndex[2] = region.min.z;
+	labSize[0] = region.max.x - region.min.x + 1;
+	labSize[1] = region.max.y - region.min.y + 1;
+	labSize[2] = region.max.z - region.min.z + 1;
+
+	intRegion.SetSize(intSize);
+    intRegion.SetIndex(intIndex);
+    itkIntImg->SetRequestedRegion(intRegion);
+
+    labRegion.SetSize(labSize);
+    labRegion.SetIndex(labIndex);
+    itkLabImg->SetRequestedRegion(labRegion);
+
+	typedef ftk::LabelImageToFeatures< IPixelT, LPixelT, 3 > FeatureCalcType;
+	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
+	labFilter->SetImageInputs( itkIntImg, itkLabImg );
+	labFilter->SetLevel(3);
+	labFilter->ComputeHistogramOn();
+	labFilter->ComputeAdvancedOn();
 	labFilter->Update();
 
-	myObjects.push_back( GetNewObject(newID, labFilter ) );
-	*/
+	myObjects.push_back( GetNewObject(newID, labFilter->GetFeatures(newID) ) );
+	
 	ftk::Object::EditRecord record;
 	record.date = TimeStamp();
 	std::string msg = "MERGED TO FROM: ";
@@ -279,7 +311,6 @@ int NuclearSegmentation::Merge(vector<int> ids)
 	record.description = msg;
 	myObjects.back().AddEditRecord(record);
 	IdToIndexMap[newID] = (int)myObjects.size() - 1;
-	//delete labFilter;
 
 	editsNotSaved = true;
 	return newID;
@@ -310,7 +341,7 @@ bool NuclearSegmentation::Delete(vector<int> ids)
 	return true;
 }
 
-ftk::Object NuclearSegmentation::GetNewObject(int id, FeatureCalcType *labFilter )
+ftk::Object NuclearSegmentation::GetNewObject(int id, IntrinsicFeatures *features )
 {
 	Object object("nucleus");
 	object.SetId(id);
@@ -318,27 +349,23 @@ ftk::Object NuclearSegmentation::GetNewObject(int id, FeatureCalcType *labFilter
 	object.SetDuplicated(0);
 	object.SetClass(-1);
 
-	std::vector<float> centroid = labFilter->GetCentroid( id );
 	Object::Point c;
-	c.x = (int)centroid[0];
-	c.y = (int)centroid[1];
-	c.z = (int)centroid[2];
+	c.x = (int)features->Centroid[0];
+	c.y = (int)features->Centroid[1];
+	c.z = (int)features->Centroid[2];
 	c.t = 0;
 	object.AddCenter(c);
 
-	std::vector<int> boundingbox = labFilter->GetBoundingBox( id );
 	Object::Box b;
-	b.min.x = (int)boundingbox.at(0);
-	b.max.x = (int)boundingbox.at(1);
-	b.min.y = (int)boundingbox.at(2);
-	b.max.y = (int)boundingbox.at(3);
-	b.min.z = (int)boundingbox.at(4);
-	b.max.z = (int)boundingbox.at(5);
+	b.min.x = (int)features->BoundingBox[0];
+	b.max.x = (int)features->BoundingBox[1];
+	b.min.y = (int)features->BoundingBox[2];
+	b.max.y = (int)features->BoundingBox[3];
+	b.min.z = (int)features->BoundingBox[4];
+	b.max.z = (int)features->BoundingBox[5];
 	b.min.t = 0;
 	b.max.t = 0;
 	object.AddBound(b);
-
-	IntrinsicFeatures * features = labFilter->GetFeatures( id );
 
 	vector< float > f(0);
 	for (int i=0; i< IntrinsicFeatures::N; ++i)
@@ -356,9 +383,9 @@ ftk::Object NuclearSegmentation::GetNewObject(int id, FeatureCalcType *labFilter
 // and uses that area to change the pixels to "toId"
 void NuclearSegmentation::ReassignLabel(int fromId, int toId)
 {
-	int C = 0;//labelImage->NumColumns();
-	int R = 0;//labelImage->NumRows();
-	int Z = 0;//labelImage->NumZSlices();
+	int C = labelImage->Size()[3];
+	int R = labelImage->Size()[2];
+	int Z = labelImage->Size()[1];
 
 	ftk::Object::Box region = myObjects.at( GetObjectIndex(fromId,"nucleus") ).GetBounds().at(0);
 
@@ -375,9 +402,9 @@ void NuclearSegmentation::ReassignLabel(int fromId, int toId)
 		{
 			for(int c=region.min.x; c <= region.max.x; ++c)
 			{
-				int pix = 1;//labelImage->GetPixel(0,0,z,r,c);
-				if( pix == fromId );
-					//labelImage->SetPixel(0,0,z,r,c,toId);
+				int pix = labelImage->GetPixel<int>(0,0,z,r,c);
+				if( pix == fromId )
+					labelImage->SetPixel<int>(0,0,z,r,c,toId);
 			}
 		}
 	}
@@ -387,9 +414,9 @@ void NuclearSegmentation::ReassignLabel(int fromId, int toId)
 // and uses that area to change the pixels to "toId" in 1 pass through the whole region
 void NuclearSegmentation::ReassignLabels(vector<int> fromIds, int toId, ftk::Object::Box region)
 {
-	int C = 1;//labelImage->NumColumns();
-	int R = 1;//labelImage->NumRows();
-	int Z = 1;//labelImage->NumZSlices();
+	int C = labelImage->Size()[3];
+	int R = labelImage->Size()[2];
+	int Z = labelImage->Size()[1];
 
 	if(region.min.x < 0) region.min.x = 0;
 	if(region.min.y < 0) region.min.y = 0;
@@ -404,11 +431,11 @@ void NuclearSegmentation::ReassignLabels(vector<int> fromIds, int toId, ftk::Obj
 		{
 			for(int c=region.min.x; c <= region.max.x; ++c)
 			{
-				int pix = 0;//labelImage->GetPixel(0,0,z,r,c);
+				int pix = labelImage->GetPixel<int>(0,0,z,r,c);
 				for(int i = 0; i < fromIds.size(); ++i)
 				{
-					if( pix == fromIds.at(i) );
-						//labelImage->SetPixel(0,0,z,r,c,toId);
+					if( pix == fromIds.at(i) )
+						labelImage->SetPixel<int>(0,0,z,r,c,toId);
 				}
 			}
 		}
@@ -496,7 +523,7 @@ void NuclearSegmentation::setup(string imagefilename, string paramfilename)
 	int numRows = info->numRows;				//y-direction
 	int numColumns = info->numColumns; 			//x-direction
 
-	unsigned char *dataImagePtr = dataImage->GetSlicePtr(0,0,0);	//Expects grayscale image
+	unsigned char *dataImagePtr = dataImage->GetSlicePtr<unsigned char>(0,0,0);	//Expects grayscale image
 	char *f = (char*)imagefilename.c_str();
 
 	NucleusSeg = new yousef_nucleus_seg();
@@ -548,7 +575,9 @@ void NuclearSegmentation::createFTKLabelImg(int* data, int numColumns, int numRo
 		return;
 
 	if(!labelImage)
+	{
 		labelImage = new ftk::Image();
+	}
 	else
 	{
 		delete labelImage;
@@ -557,9 +586,4 @@ void NuclearSegmentation::createFTKLabelImg(int* data, int numColumns, int numRo
 	labelImage->ImageFromData3D((void*)data, INT, sizeof(int), numColumns, numRows, numStacks);
 }
 
-//********************************************************************************************
-//********************************************************************************************
-//********************************************************************************************
-
 } //end namespace ftk
-

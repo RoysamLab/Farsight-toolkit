@@ -65,20 +65,13 @@ public:
 	bool editsNotSaved;
 
 private:
-	typedef unsigned short IntensityPixelType;
-	typedef unsigned short LabelPixelType;
-	typedef itk::Image< IntensityPixelType, 3 > IntensityImageType;
-	typedef itk::Image< LabelPixelType, 3 > LabelImageType;
-	typedef itk::ImageFileReader<IntensityImageType> IntensityReaderType;
-	typedef itk::ImageFileReader<LabelImageType> LabelReaderType;
-	typedef ftk::LabelImageToFeatures< IntensityPixelType, LabelPixelType, 3 > FeatureCalcType;
 
 	bool FileExists(const char* fname);
 	int GetObjectIndex(int objectID, string type);
 	string TimeStamp();
 	void ReassignLabels(vector<int> fromIds, int toId, ftk::Object::Box region);
 	void ReassignLabel(int fromId, int toId);
-	Object GetNewObject(int id, FeatureCalcType *labFilter );
+	Object GetNewObject(int id, IntrinsicFeatures *features );
 	ftk::Object::Box ExtremaBox(vector<int> ids);
 
 	//Load up the data and result information into memory, Base class does not do this, it just gets the filename

@@ -1,5 +1,5 @@
 #include "ftkImage.h"
-
+#include <itkImageFileWriter.h>
 //****************************************************************************************
 // FTKImage is a class the handles the storage of multi-dimensional images.
 // 
@@ -20,11 +20,27 @@ namespace ftk
 //Constructor
 Image::Image()
 {
+	imageInfo.spacing.assign(3,1);
+	imageDataPtrs.clear();
 }
 
 //Destructor
 Image::~Image()
 {
+	for(int i=0; i<(int)imageDataPtrs.size(); ++i)
+	{
+		for(int j=0; j<(int)imageDataPtrs[i].size(); ++j)
+		{
+			delete[] imageDataPtrs[i][j];
+		}
+	}
+}
+
+void Image::SetSpacing(int x, int y, int z)
+{
+	imageInfo.spacing.at(0) = x;
+	imageInfo.spacing.at(1) = y;
+	imageInfo.spacing.at(2) = z;
 }
 
 void Image::LoadFiles( std::vector< std::string > fNames )
@@ -35,7 +51,7 @@ void Image::LoadFiles( std::vector< std::string > fNames )
 	}
 }
 
-bool Image::LoadFile( std::string fName, bool forDisplay )
+bool Image::LoadFile( std::string fName, bool castToUchar )
 {
 	if( GetFileExtension(fName) == "lsm" )
 	{
@@ -43,11 +59,11 @@ bool Image::LoadFile( std::string fName, bool forDisplay )
 	}
 	else
 	{
-		return this->LoadStandardImage( fName, forDisplay );
+		return this->LoadStandardImage( fName, castToUchar );
 	}
 }
 
-bool Image::LoadStandardImage( std::string fileName, bool forDisplay )
+bool Image::LoadStandardImage( std::string fileName, bool castToUchar )
 {
 	//Create a new reader to automatically read the image file.
 	//It can be extended to read a list of image files as time points.
@@ -55,7 +71,7 @@ bool Image::LoadStandardImage( std::string fileName, bool forDisplay )
 	reader->SetFileName(fileName);
 	try
 	{
-		if(forDisplay)
+		if(castToUchar)
 			reader->ReadAndCastImage();
 		else
 			reader->ReadImage();
@@ -82,7 +98,7 @@ bool Image::LoadStandardImage( std::string fileName, bool forDisplay )
 	imageInfo.numZSlices  = extent[5]-extent[4]+1;		//Number of Z Slices in Image (z)
 	imageInfo.numTSlices = 1;							//Number of Time Slices in Image (t)
 	imageInfo.bytesPerPix = vtkImage->GetScalarSize();	//Number of bytes per pixel (UCHAR - 1 or USHORT - 2)
-	imageInfo.dataType = vtkImage->GetScalarType();		//See ENUM ImageDataType
+	imageInfo.dataType = (ImageDataType)vtkImage->GetScalarType();		//See ENUM ImageDataType
 	imageInfo.channelColors.clear();
 	imageInfo.channelNames.clear();
 	imageDataPtrs.clear();
@@ -161,18 +177,23 @@ bool Image::LoadLSMImage( std::string fileName )
 	lsmR->SetFileName(fileName.c_str());
 	lsmR->OpenFile();
 	lsmR->Update();
+
+	double *sp = lsmR->GetDataSpacing();
+	imageInfo.spacing.at(0) = sp[0];
+	imageInfo.spacing.at(1) = sp[1];
+	imageInfo.spacing.at(2) = sp[2];
   
-	this->imageInfo.numChannels = lsmR->GetNumberOfChannels();
-	this->imageInfo.numTSlices = lsmR->GetNumberOfTimePoints();
-	this->imageInfo.channelColors.clear();
-	this->imageInfo.channelNames.clear();
+	imageInfo.numChannels = lsmR->GetNumberOfChannels();
+	imageInfo.numTSlices = lsmR->GetNumberOfTimePoints();
+	imageInfo.channelColors.clear();
+	imageInfo.channelNames.clear();
 
 	vtkImageData* vimdata;
 	int extent[6];
 	int numBytes = 0;
 
-	this->imageDataPtrs.resize( this->imageInfo.numTSlices );		//First level is Time
-	for (int t=0; t < this->imageInfo.numTSlices; ++t)
+	imageDataPtrs.resize( imageInfo.numTSlices );		//First level is Time
+	for (int t=0; t < imageInfo.numTSlices; ++t)
 	{
 		for (int ch=0; ch < this->imageInfo.numChannels; ch++)
 		{
@@ -191,7 +212,7 @@ bool Image::LoadLSMImage( std::string fileName )
 					imageInfo.numRows = extent[3]-extent[2]+1;
 					imageInfo.numColumns = extent[1]-extent[0]+1;
 					imageInfo.bytesPerPix = vimdata->GetScalarSize();	//number of Bytes per pixel
-					imageInfo.dataType = vimdata->GetScalarType();
+					imageInfo.dataType = (ImageDataType)vimdata->GetScalarType();
 					numBytes = (imageInfo.numZSlices)*(imageInfo.numRows)*(imageInfo.numColumns)*(imageInfo.bytesPerPix);
 				}
 				//Assign RGB values for channel
@@ -230,17 +251,6 @@ std::vector< unsigned short > Image::Size(void)
 	return rVal;
 }
 
-unsigned char* Image::GetSlicePtr(int T, int CH, int Z)
-{
-	if( T > imageInfo.numTSlices || CH > imageInfo.numChannels || Z > imageInfo.numZSlices )
-		return NULL;
-	if(imageInfo.dataType != UCHAR)
-		return NULL;
-
-	unsigned char* stack = static_cast<unsigned char *>(imageDataPtrs[T][CH]);
-	return ( stack + Z*(imageInfo.numColumns)*(imageInfo.numRows)*(imageInfo.bytesPerPix) );
-}
-
 void * Image::GetDataPtr(int T, int CH)
 {
 	if( T > imageInfo.numTSlices || CH > imageInfo.numChannels )
@@ -252,7 +262,7 @@ void * Image::GetDataPtr(int T, int CH)
 //*********************************************************************
 //Will create a 3D grayscale image from the data (TODO: Make this STATIC)
 //*********************************************************************
-bool Image::ImageFromData3D(void *dptr, int dataType, int bpPix, int cs, int rs, int zs)
+bool Image::ImageFromData3D(void *dptr, ImageDataType dataType, int bpPix, int cs, int rs, int zs)
 {
 	imageInfo.path = "";
 	imageInfo.filename = "";
@@ -278,6 +288,52 @@ bool Image::ImageFromData3D(void *dptr, int dataType, int bpPix, int cs, int rs,
 	imageDataPtrs[0].push_back( imgdata );
 
 	return true;
+}
+
+bool Image::SaveAs(std::string path, std::string fName, std::string ext)
+{
+	if( imageInfo.numChannels > 1 ) return false;
+	if( imageInfo.numTSlices > 1 ) return false;
+	if( imageDataPtrs.size() == 0 ) return false;
+
+	imageInfo.path = path;
+	imageInfo.filename = fName + "." + ext;
+
+	bool retVal = false;
+	switch(imageInfo.dataType)
+	{
+		case CHAR:
+			if( this->WriteAll<char>(path, fName, ext) ) retVal = true;
+		break;
+		case UCHAR:
+			if( this->WriteAll<unsigned char>(path, fName, ext) ) retVal = true;
+		break;
+		case SHORT:
+			if( this->WriteAll<short>(path, fName, ext) ) retVal = true;
+		break;
+		case USHORT:
+			if( this->WriteAll<unsigned short>(path, fName, ext) ) retVal = true;
+		break;
+		case INT:
+			if( this->WriteAll<int>(path, fName, ext) ) retVal = true;
+		break;
+		case UINT:
+			if( this->WriteAll<unsigned int>(path, fName, ext) ) retVal = true;
+		break;
+		case LONG:
+			if( this->WriteAll<long>(path, fName, ext) ) retVal = true;
+		break;
+		case ULONG:
+			if( this->WriteAll<unsigned long>(path, fName, ext) ) retVal = true;
+		break;
+		case FLOAT:
+			if( this->WriteAll<float>(path, fName, ext) ) retVal = true;
+		break;
+		case DOUBLE:
+			if( this->WriteAll<double>(path, fName, ext) ) retVal = true;
+		break;
+	}
+	return retVal;
 }
 
 //************************************************************************************

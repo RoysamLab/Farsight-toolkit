@@ -1,6 +1,6 @@
 SET( SEGMENTATIONCOMMON_SRCS
   ftkSegmentationResult.cpp
-  ftkFeatures.cpp
+  ftkIntrinsicFeatures.cpp
   ftkObject.cpp 
   ftkObjectAssociation.cpp
 )
@@ -9,7 +9,7 @@ SET( SEGMENTATIONCOMMON_HDRS
   ftkSegmentationResult.h
   ftkLabelImageToFeatures.h
   ftkLabelImageToFeatures.txx
-  ftkFeatures.h
+  ftkIntrinsicFeatures.h
   ftkObject.h
   ftkObjectAssociation.h
   itkLabelGeometryImageFilter.h
