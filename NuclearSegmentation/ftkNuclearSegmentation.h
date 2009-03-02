@@ -72,6 +72,8 @@ private:
 	void ReassignLabels(vector<int> fromIds, int toId, ftk::Object::Box region);
 	void ReassignLabel(int fromId, int toId);
 	Object GetNewObject(int id, IntrinsicFeatures *features );
+	void LoadAssociationsFromFile(std::string fName);
+	void LoadClassInfoFromFile( std::string fName );
 	ftk::Object::Box ExtremaBox(vector<int> ids);
 
 	//Load up the data and result information into memory, Base class does not do this, it just gets the filename

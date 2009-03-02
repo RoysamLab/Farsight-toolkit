@@ -483,7 +483,7 @@ bool SegmentationResult::WriteToMETA()
 		vector<float> feats = myObjects.at(obj).GetFeatures();
 		for(unsigned int f = 0; f < feats.size(); ++f)
 		{
-			outFile << feats.at(f) << "\t";
+			outFile << NumToString(feats.at(f)) << "\t";
 		}
 		outFile << (int)myObjects.at(obj).GetClass() << "\t";
 		outFile << myObjects.at(obj).GetId() << endl;

@@ -93,6 +93,7 @@ bool NuclearSegmentation::LabelsToObjects(void)
 
 	//Now populate the objects
 	myObjects.clear();
+	IdToIndexMap.clear();
 	std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
 	for (int i=0; i<(int)labels.size(); ++i)
 	{
@@ -102,9 +103,118 @@ bool NuclearSegmentation::LabelsToObjects(void)
 		if(id > maxID) maxID = id;
 
 		myObjects.push_back( GetNewObject(id, labFilter->GetFeatures(id) ) );
+		IdToIndexMap[id] = (int)myObjects.size() - 1;
 	}
 
+	LoadAssociationsFromFile(projectName + "_Associations.txt");
+	LoadClassInfoFromFile(projectName + "_class.txt");
+
 	return true;
+}
+
+//The function will read the given file and load the association measures into the object info;
+void NuclearSegmentation::LoadAssociationsFromFile(std::string fName)
+{
+	if(myObjects.size() == 0)
+		return;
+
+	if(!FileExists(fName.c_str()))
+		return;
+
+	ifstream inFile; 
+	inFile.open( PrependProjectPath(fName).c_str() );
+	if ( !inFile.is_open() )
+	{
+		std::cerr << "Failed to Load Document: " << fName << std::endl;
+		return;
+	}
+
+	const int MAXLINESIZE = 512;	//Numbers could be in scientific notation in this file
+	char line[MAXLINESIZE];
+
+	std::vector< std::vector< float > > vals(0); 
+	inFile.getline(line, MAXLINESIZE);
+	while ( !inFile.eof() ) //Get all values
+	{
+		std::vector< float > lvector(0);
+		char * pch = strtok (line," \t");
+		while (pch != NULL)
+		{
+			lvector.push_back( atof(pch) );
+			pch = strtok (NULL, " \t");
+		}
+
+		vals.push_back( lvector );
+		inFile.getline(line, MAXLINESIZE);
+	}
+	inFile.close();
+
+	std::vector< std::string > possibleNames;
+	possibleNames.push_back( "Nissl_sig" );
+	possibleNames.push_back( "Iba1_sig" );
+	possibleNames.push_back( "GFAP_sig" );
+	possibleNames.push_back( "EBA_sig" );
+
+	for (int i=0; i<vals.at(0).size(); ++i)
+	{
+		featureNames.push_back( possibleNames.at(i) );
+	}
+
+	//Now add these features to the objects that we have:
+	int n = vals.size() > myObjects.size() ? myObjects.size() : vals.size();
+
+	for (int i=0; i<n; ++i)
+	{
+		std::vector<float> feats = myObjects.at(i).GetFeatures();
+		for (int j=0; j<vals.at(i).size(); ++j)
+		{
+			feats.push_back(vals.at(i).at(j));
+		}
+		myObjects.at(i).SetFeatures(feats);
+	}
+}
+
+void NuclearSegmentation::LoadClassInfoFromFile( std::string fName )
+{
+	if(myObjects.size() == 0)
+		return;
+
+	if(!FileExists(fName.c_str()))
+		return;
+
+	ifstream inFile; 
+	inFile.open( PrependProjectPath(fName).c_str() );
+	if ( !inFile.is_open() )
+	{
+		std::cerr << "Failed to Load Document: " << fName << std::endl;
+		return;
+	}
+
+	const int MAXLINESIZE = 512;	//Numbers could be in scientific notation in this file
+	char line[MAXLINESIZE];
+
+	std::map< int, int > classNumber; 
+	inFile.getline(line, MAXLINESIZE);
+	while ( !inFile.eof() ) //Get all rows
+	{
+		char * pch = strtok (line," \t\n");
+		int id = (int)atof(pch);
+		pch = strtok (NULL, " \t\n");
+		int clss = (int)atof(pch);
+
+		classNumber[id] = clss;
+	
+		inFile.getline(line, MAXLINESIZE);
+	}
+	inFile.close();
+
+	std::map< int, int >::iterator it;
+	for ( it=classNumber.begin() ; it != classNumber.end(); it++ )
+
+	{
+		ftk::Object * obj = GetObjectPtr( (*it).first );
+		obj->SetClass( (*it).second );
+	}
 }
 
 bool NuclearSegmentation::LoadData()
@@ -166,7 +276,7 @@ bool NuclearSegmentation::SaveLabel()
 	if(resultFilenames.size() == 0)
 	{
 		string labelFilename = projectName;
-		labelFilename.append("_label.tif");
+		labelFilename.append("_label.tiff");
 		resultFilenames.push_back(labelFilename);
 	}
 
@@ -175,7 +285,7 @@ bool NuclearSegmentation::SaveLabel()
 	string base = resultFilenames[0].substr(0,pos);
 
 	labelImage->Cast<unsigned short>();		//Cannot Save as int type to tiff
-	if(!labelImage->SaveAs(projectPath, base, "tif"))
+	if(!labelImage->SaveAs(projectPath, base, "tiff"))
 		std::cerr << "FAILED TO SAVE LABEL IMAGE" << std::endl;
 
 	//Added by Yousef on 1/18/2009: save results into a format readable by the IDL farsight
@@ -348,6 +458,9 @@ ftk::Object NuclearSegmentation::GetNewObject(int id, IntrinsicFeatures *feature
 	object.SetValidity(1);
 	object.SetDuplicated(0);
 	object.SetClass(-1);
+
+	if(features == NULL)
+		return object;
 
 	Object::Point c;
 	c.x = (int)features->Centroid[0];
