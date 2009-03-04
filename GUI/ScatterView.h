@@ -120,7 +120,7 @@ class PlotSettings
 {
 public:
 	PlotSettings();
-	void setRange(int x1, int x2, int y1, int y2);
+	void setRange(double x1, double x2, double y1, double y2);
 	void adjust();
 
 	double spanX() const { return maxX - minX; }

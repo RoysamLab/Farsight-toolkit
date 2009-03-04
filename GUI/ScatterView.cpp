@@ -232,43 +232,43 @@ void ScatterView::setModel(QStandardItemModel *model)
 //*********************************************************************************************************
 void ScatterView::updateAxis(void)
 {
-	int x1 = 0;
-	int x2 = 0;
-	int y1 = 0;
-	int y2 = 0;
-	int v = 0;
+	double x1 = 0;
+	double x2 = 0;
+	double y1 = 0;
+	double y2 = 0;
+	double v = 0;
 	QModelIndex index;
 	int rows = model()->rowCount(rootIndex());
 
 	if (rows > 0)
 	{	//initialize values
 		index = model()->index(0, columnNumForX, rootIndex());
-		x1 = model()->data(index).toInt();
+		x1 = model()->data(index).toDouble();
 		x2 = x1;
 		index = model()->index(0, columnNumForY, rootIndex());
-		y1 = model()->data(index).toInt();
+		y1 = model()->data(index).toDouble();
 		y2 = y1;
 	}
 	for (int row = 1; row < rows; ++row) 
 	{
 		//find min/max of each axis
 		index = model()->index(row, columnNumForX, rootIndex());
-		v = model()->data(index).toInt();
+		v = model()->data(index).toDouble();
 		if (v < x1) x1 = v;
 		else if (v > x2) x2 = v;
 		index = model()->index(row, columnNumForY, rootIndex());
-		v = model()->data(index).toInt();
+		v = model()->data(index).toDouble();
 		if (v < y1) y1 = v;
 		else if (v > y2) y2 = v;
     }
 	
 	//now extend axis slightly so all data points will be visible
-	int xrange = x2-x1;
-	int yrange = y2-y1;
+	double xrange = x2-x1;
+	double yrange = y2-y1;
 	double xp = .03*double(xrange);
 	double yp = .03*double(yrange);
 
-	mySettings->setRange(x1-int(ceil(xp)),x2+int(ceil(xp)),y1-int(ceil(yp)),y2+int(ceil(yp)));
+	mySettings->setRange(x1-xp,x2+xp,y1-yp,y2+yp);
 	mySettings->adjust();
 }
 
@@ -875,7 +875,7 @@ PlotSettings::PlotSettings()
 //***************************************************************************************************
 // Allows for the adjustment of minX, maxX, minY, maxY
 //***************************************************************************************************
-void PlotSettings::setRange(int x1, int x2, int y1, int y2)
+void PlotSettings::setRange(double x1, double x2, double y1, double y2)
 {
 	minX = x1;
 	maxX = x2;

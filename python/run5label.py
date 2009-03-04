@@ -8,25 +8,24 @@ import os
 from farsightutils import *
 
 ###############################################################################
-parameters = 'Seg_Params.ini'
-path = os.getcwd()
-
-assocXML = 'w2less_assoc.xml'
-numRules = '1'
-
-#GET THE FILENAME OF THE LSM IMAGE
-image = GetFilename()
 
 #SET WOKRING DIRECTORY WHERE FILES WILL BE SAVED
-SetWorkiingDirectory()
+SetWorkingDirectory()
+
+image = 'Montage5Funmixed02.lsm'
+input_nuc_image = 'Montage5Funmixed02_Nuclei.tiff'
+nuc_label_image = 'Montage5Funmixed02_Nuclei_label.tiff'
+parameters = 'Seg_Params.ini'
+assocXML = 'Montage5Funmixed02_assoc_def.xml'
+path = os.getcwd()
 
 #SPLIT THE LSM CHANNELS
 subprocess.call(['lsm_to_tiff.exe', image])
 
 #SEGMENT
-#subprocess.call(['segment_nuclei.exe', inputimage, segimage, parameters])
-#FEATURES
-#subprocess.call(['compute_nuclei_features', path, inputimage, segimage])
+subprocess.call(['segment_nuclei.exe', input_nuc_image, nuc_label_image, parameters])
 #ASSOCIATIVE MEASUREMENTS
-#subprocess.call(['compute_associative_measures',segimage, assocXML, numRules])
+subprocess.call(['compute_associative_measures', assocXML])
+#FEATURES
+subprocess.call(['compute_nuclei_features', path, input_nuc_image, nuc_label_image])
 

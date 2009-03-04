@@ -489,6 +489,28 @@ bool SegmentationResult::WriteToMETA()
 		outFile << myObjects.at(obj).GetId() << endl;
 	}
 	outFile.close();
+
+	//Now print header file:
+	fname.clear();
+	fname = projectName;
+	fname.append("_META_Header.txt");
+	outFile.open(PrependProjectPath(fname).c_str(), std::ios::out | std::ios::trunc );
+	if ( !outFile.is_open() )
+	{
+		std::cerr << "Failed to Load Document: " << outFile << std::endl;
+		return false;
+	}
+
+	for(int i=0; i<featureNames.size(); ++i)
+	{
+		outFile << featureNames.at(i) << "\n";
+	}
+
+	outFile << "ID" << "\n";
+	outFile << "CLASS" << std::endl;
+
+	outFile.close();
+
 	return true;
 }
 

@@ -667,9 +667,9 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SURFACE_AREA] = float( boundaryPix[currentLabel].size() );
 		
 		//shape:
-		double sa = 0;//allFeatures[currentLabel].surfacearea;
+		double sa = featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SURFACE_AREA];
 		double pi = 3.1415;
-		double v = 0;//allFeatures[currentLabel].volume;
+		double v = featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::VOLUME];
 		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SHAPE] = float( sa*sa*sa / ( 36*pi*v*v) );
 		
 		//percent shared boundary:
