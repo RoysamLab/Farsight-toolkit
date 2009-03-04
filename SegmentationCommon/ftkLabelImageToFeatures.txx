@@ -610,15 +610,33 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		}
 
 		//Compute Gradient information for this label
-		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SURFACE_GRADIENT] = float( sum_surface_grad / boundaryPix[currentLabel].size() );
-		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INTERIOR_GRADIENT] = float( sum_interior_grad / interiorPix[currentLabel].size() );
+		if( boundaryPix[currentLabel].size() == 0)
+			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SURFACE_GRADIENT] = float( 0 );
+		else
+			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SURFACE_GRADIENT] = float( sum_surface_grad / boundaryPix[currentLabel].size() );
+			
+		if( interiorPix[currentLabel].size() == 0 )
+			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INTERIOR_GRADIENT] = float( 0 );
+		else
+			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INTERIOR_GRADIENT] = float( sum_interior_grad / interiorPix[currentLabel].size() );
 
 		//Compute Intensities
+		if( boundaryPix[currentLabel].size() == 0 )
+			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SURFACE_INTENSITY]	= float( 0 );
+		else
 		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SURFACE_INTENSITY] = float( sum_surface_intensity / boundaryPix[currentLabel].size() );
-		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INTERIOR_INTENSITY] = float( sum_interior_intensity / interiorPix[currentLabel].size() );
-		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INTENSITY_RATIO] \
-			= featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SURFACE_INTENSITY] \
-			/ featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INTERIOR_INTENSITY];
+		
+		if( interiorPix[currentLabel].size() == 0 )
+			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INTERIOR_INTENSITY] = float( 0 );
+		else
+			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INTERIOR_INTENSITY] = float( sum_interior_intensity / interiorPix[currentLabel].size() );
+		
+		if (featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INTERIOR_INTENSITY] == 0)
+			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INTENSITY_RATIO] = 0;
+		else
+			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INTENSITY_RATIO] \
+				= featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SURFACE_INTENSITY] \
+				/ featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INTERIOR_INTENSITY];
 
 		/*
 		//Now use min/max to calculate the eccentricity
@@ -639,8 +657,17 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		{
 			interior_sum += interiordistances[i];
 		}
-		double surface_mean = surface_sum / bounddistances.size();
-		double interior_mean = interior_sum / interiordistances.size();
+		double surface_mean;
+		if(bounddistances.size() == 0)
+			surface_mean = 0;
+		else
+			surface_mean = surface_sum / bounddistances.size();
+		
+		double interior_mean;
+		if(interiordistances.size())
+			interior_mean = 0;
+		else
+			interior_mean = interior_sum / interiordistances.size();
 		
 		//allFeatures[currentLabel].averagedistance = (surface_mean + interior_mean) / 2;
 		
@@ -651,16 +678,19 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 			double sq = diff*diff;
 			surface_sq_sum += sq;
 		}
-		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::RADIUS_VARIATION] = float( sqrt( surface_sq_sum / bounddistances.size() ) );
+		if(bounddistances.size() == 0)
+			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::RADIUS_VARIATION] = 0;
+		else
+			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::RADIUS_VARIATION] = float( sqrt( surface_sq_sum / bounddistances.size() ) );
 		
-		double interior_sq_sum = 0;
-		for (int i=0; i<(int)interiordistances.size(); ++i)
-		{
-			double diff = interiordistances[i] - interior_mean;
-			double sq = diff*diff;
-			interior_sq_sum += sq;
-		}
-		float interiorvariation = float( sqrt( interior_sq_sum / interiordistances.size() ) );
+		//double interior_sq_sum = 0;
+		//for (int i=0; i<(int)interiordistances.size(); ++i)
+		//{
+		//	double diff = interiordistances[i] - interior_mean;
+		//	double sq = diff*diff;
+		//	interior_sq_sum += sq;
+		//}
+		//float interiorvariation = float( sqrt( interior_sq_sum / interiordistances.size() ) );
 		//allFeatures[currentLabel].distancevariation = (allFeatures[currentLabel].radiusvariation + interiorvariation) / 2;
 		
 		//surface area:
@@ -670,7 +700,10 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		double sa = featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SURFACE_AREA];
 		double pi = 3.1415;
 		double v = featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::VOLUME];
-		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SHAPE] = float( sa*sa*sa / ( 36*pi*v*v) );
+		if(v == 0)
+			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SHAPE] = float( 0 );
+		else
+			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SHAPE] = float( sa*sa*sa / ( 36*pi*v*v) );
 		
 		//percent shared boundary:
 		int zeroBound = sharePix[currentLabel][0];
@@ -683,7 +716,10 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		{
 			nonzeroBound = nonzeroBound + sharePix[i][currentLabel];
 		}
-		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SHARED_BOUNDARY] = float(nonzeroBound) / float(nonzeroBound+zeroBound);
+		if(zeroBound == 0)
+			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SHARED_BOUNDARY] = 0;
+		else
+			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SHARED_BOUNDARY] = float(nonzeroBound) / float(nonzeroBound+zeroBound);
 	}
 }
 
