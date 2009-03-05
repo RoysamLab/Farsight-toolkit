@@ -15,7 +15,8 @@
 #include <itkSmartPointer.h>
 #include <itkImageRegionConstIterator.h>
 #include <itkImportImageContainer.h>
-#include "itkImageFileReader.h"
+#include <itkImageFileReader.h>
+#include <itkImageFileWriter.h>
 
 //VTK includes:
 #include "vtkImageData.h"

@@ -25,7 +25,7 @@ class IntrinsicFeatures
 {
 public:
 
-	static const enum ScalerTypes
+	enum ScalarTypes
 	{
 		VOLUME, INTEGRATED_INTENSITY, ECCENTRICITY, ELONGATION, ORIENTATION, BBOX_VOLUME, \
 		SUM, MEAN, MEDIAN, MINIMUM, MAXIMUM, SIGMA, VARIANCE, \

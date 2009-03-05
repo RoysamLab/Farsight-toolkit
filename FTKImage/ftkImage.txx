@@ -27,7 +27,7 @@ template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::
 		return NULL;
 
 	typedef itk::ImportImageContainer<unsigned long, pixelType> ImageContainerType;
-	ImageContainerType::Pointer container = ImageContainerType::New();
+	typename ImageContainerType::Pointer container = ImageContainerType::New();
 	
 	int numPixels = imageInfo.numColumns * imageInfo.numRows * imageInfo.numZSlices;
 	
@@ -36,26 +36,26 @@ template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::
 	container->SetImportPointer( static_cast<pixelType *>(imageDataPtrs[T][CH]), numPixels, false );
 	
 	typedef itk::Image< pixelType, 3 > OutputImageType;
-	OutputImageType::Pointer image = OutputImageType::New();
+	typename OutputImageType::Pointer image = OutputImageType::New();
 	
-	OutputImageType::PointType origin;
+	typename OutputImageType::PointType origin;
    	origin[0] = 0; 
     origin[1] = 0;    
 	origin[2] = 0;    
     image->SetOrigin( origin );
-    OutputImageType::IndexType start;
+    typename OutputImageType::IndexType start;
     start[0] = 0;  // first index on X
     start[1] = 0;  // first index on Y    
 	start[2] = 0;  // first index on Z    
-    OutputImageType::SizeType  size;
+    typename OutputImageType::SizeType  size;
 	size[0] = imageInfo.numColumns;  // size along X
     size[1] = imageInfo.numRows;  // size along Y
 	size[2] = imageInfo.numZSlices;  // size along Z
-    OutputImageType::RegionType region;
+    typename OutputImageType::RegionType region;
     region.SetSize( size );
     region.SetIndex( start );
     image->SetRegions( region );
-    OutputImageType::SpacingType spacing;
+    typename OutputImageType::SpacingType spacing;
     spacing[0] = imageInfo.spacing.at(0);
     spacing[1] = imageInfo.spacing.at(1);
     spacing[2] = imageInfo.spacing.at(2);

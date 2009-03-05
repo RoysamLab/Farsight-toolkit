@@ -481,8 +481,6 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		featureVals[label].ScalarFeatures[IntrinsicFeatures::ELONGATION] = float( labelGeometryFilter->GetElongation( label ) );
 		featureVals[label].ScalarFeatures[IntrinsicFeatures::ORIENTATION] = float( labelGeometryFilter->GetOrientation( label ) );
 		featureVals[label].ScalarFeatures[IntrinsicFeatures::BBOX_VOLUME] = float( labelGeometryFilter->GetBoundingBoxVolume( label ) );
-		
-		string n = IntrinsicFeatures::Info[IntrinsicFeatures::VOLUME].name;
 
 		if(computeAdvanced)
 		{
