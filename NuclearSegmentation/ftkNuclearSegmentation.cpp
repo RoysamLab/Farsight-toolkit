@@ -81,7 +81,7 @@ bool NuclearSegmentation::LabelsToObjects(void)
 	labFilter->SetImageInputs( dataImage->GetItkPtr<IPixelT>(0,0), labelImage->GetItkPtr<LPixelT>(0,0) );
 	labFilter->SetLevel(3);
 	labFilter->ComputeHistogramOn();
-	labFilter->ComputeAdvancedOn();
+	labFilter->ComputeTexturesOn();
 	labFilter->Update();
 
 	//Set Feature Names
@@ -404,7 +404,7 @@ int NuclearSegmentation::Merge(vector<int> ids)
 	labFilter->SetImageInputs( itkIntImg, itkLabImg );
 	labFilter->SetLevel(3);
 	labFilter->ComputeHistogramOn();
-	labFilter->ComputeAdvancedOn();
+	labFilter->ComputeTexturesOn();
 	labFilter->Update();
 
 	myObjects.push_back( GetNewObject(newID, labFilter->GetFeatures(newID) ) );

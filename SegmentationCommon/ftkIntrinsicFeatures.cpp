@@ -26,7 +26,6 @@ FeatureInfoType IntrinsicFeatures::Info[N] = {
 	{ "surface_area", "units", "description" },
 	{ "shape", "units", "description" },
 	{ "shared_boundary", "units", "description" },
-	{ "solidity", "units", "description" },
 	{ "skew", "units", "description" },
 	{ "energy", "units", "description" },
 	{ "entropy", "units", "description" },

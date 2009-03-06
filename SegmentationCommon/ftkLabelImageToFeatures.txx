@@ -49,10 +49,10 @@
 //  intensity ratio, average distance, radius variation, distance variation, 
 //  surface area, shape, percent shared boundary.
 //
-// ComputeHistogramOn(): (forces level 2)
+// ComputeHistogramOn(): (forces level >=2)
 //  median, skew, energy, entropy
-// ComputeAdvancedOn():	 (forces level 3)
-//  solidity, texture(s)
+// ComputeTexturesOn():	 (forces level >=1)
+//  texture(s)
 //
 // LEVEL 3 allows for boundary sharing features to be calculated, but this
 // information is not stored in the feature structure and should be retrieved
@@ -85,7 +85,7 @@ LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	//Defaults:
 	computationLevel = 2;
 	computeHistogram = false;					
-	computeAdvanced = false;
+	computeTextures = false;
 						
 }
 
@@ -145,10 +145,9 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
 void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
-::ComputeAdvancedOn()
+::ComputeTexturesOn()
 {
-	this->SetLevel(3);
-	computeAdvanced = true;
+	computeTextures = true;
 }
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
@@ -206,10 +205,8 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	if(computeHistogram)
 		CalculateHistogramFeatures();
 	
-	if(computeAdvanced)
-	{
+	if(computeTextures)
 		RunTextureFilter();
-	}
 }
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
@@ -257,15 +254,8 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 	labelGeometryFilter->SetIntensityInput( intensityImage );
 	
 	//SET ADVANCED (OPTIONAL) ITEMS FOR THIS FILTER:
-	if(computeAdvanced)
-	{
-		labelGeometryFilter->CalculateOrientedBoundingBoxOn();
-	}
-	else
-	{
-		labelGeometryFilter->CalculatePixelIndicesOff();
-		labelGeometryFilter->CalculateOrientedBoundingBoxOff();
-	}
+	labelGeometryFilter->CalculatePixelIndicesOff();
+	labelGeometryFilter->CalculateOrientedBoundingBoxOff();
 	labelGeometryFilter->CalculateOrientedLabelRegionsOff();
 	labelGeometryFilter->CalculateOrientedIntensityRegionsOff();
 	
@@ -481,13 +471,6 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		featureVals[label].ScalarFeatures[IntrinsicFeatures::ELONGATION] = float( labelGeometryFilter->GetElongation( label ) );
 		featureVals[label].ScalarFeatures[IntrinsicFeatures::ORIENTATION] = float( labelGeometryFilter->GetOrientation( label ) );
 		featureVals[label].ScalarFeatures[IntrinsicFeatures::BBOX_VOLUME] = float( labelGeometryFilter->GetBoundingBoxVolume( label ) );
-
-		if(computeAdvanced)
-		{
-			double objVol = double( labelGeometryFilter->GetVolume( label ) );
-			double boxVol = double( labelGeometryFilter->GetOrientedBoundingBoxVolume( label ) );
-			featureVals[label].ScalarFeatures[IntrinsicFeatures::SOLIDITY] = float( objVol / boxVol );
-		}
 		
 		this->GetCentroid( label );
 		this->GetWeightedCentroid( label );

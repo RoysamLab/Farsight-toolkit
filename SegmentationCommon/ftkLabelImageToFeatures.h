@@ -62,8 +62,8 @@ public:
 
 	void ComputeHistogramOn();
 	void ComputeHistogramOff(){ computeHistogram = false; };
-	void ComputeAdvancedOn();
-	void ComputeAdvancedOff(){ computeAdvanced = false; };
+	void ComputeTexturesOn();
+	void ComputeTexturesOff(){ computeTextures = false; };
 	void SetLevel(short int newLevel);
 	short int GetLevel(){ return computationLevel; };
 
@@ -120,7 +120,7 @@ private:
 	//OPTIONS
 	short int computationLevel;					//We have 3 levels of computation
 	bool computeHistogram;						//Requires Level 2
-	bool computeAdvanced;						//Requires Level 3
+	bool computeTextures;						//Requires Level 3
 
 };
 
