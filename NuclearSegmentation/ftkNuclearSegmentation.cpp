@@ -161,7 +161,7 @@ void NuclearSegmentation::LoadAssociationsFromFile(std::string fName)
 	}
 
 	//Now add these features to the objects that we have:
-	int n = vals.size() > myObjects.size() ? myObjects.size() : vals.size();
+	int n = vals.size() > myObjects.size() ? (int)myObjects.size() : (int)vals.size();
 
 	for (int i=0; i<n; ++i)
 	{

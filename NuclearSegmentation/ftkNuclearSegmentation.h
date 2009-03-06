@@ -9,6 +9,10 @@
 #ifndef __ftkNuclearSegmentation_h
 #define __ftkNuclearSegmentation_h
 
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include <SegmentationCommon/ftkSegmentationResult.h>
 #include <FTKImage/ftkImage.h>
 #include <SegmentationCommon/ftkLabelImageToFeatures.h>

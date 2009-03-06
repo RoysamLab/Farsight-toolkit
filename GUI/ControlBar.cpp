@@ -591,7 +591,7 @@ void ControlBar::loadOutliers()
 	inFile.close();
 
 	//Now keep 1/10 of them
-	int n = outliers.size();
+	int n = (int)outliers.size();
 	outliers.resize(n/10);
 
 	currentModel->SetOutliers( outliers );

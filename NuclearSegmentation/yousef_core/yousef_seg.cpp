@@ -237,7 +237,7 @@ void yousef_nucleus_seg::outputSeeds(void)
 	if(mySeeds.size() <= 0)
 		return;
 
-	int len = dataFilename.length();
+	int len = (int)dataFilename.length();
     len = len-4;
 	std::string outFName = dataFilename.substr(0,len);
 	outFName = outFName + "_seedPoints.txt";

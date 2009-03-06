@@ -1,6 +1,10 @@
 #ifndef CONTROLBAR_H
 #define CONTROLBAR_H
 
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include "FarsightConfig.h"
 
 //QT INCLUDES

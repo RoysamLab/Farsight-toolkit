@@ -179,9 +179,9 @@ bool Image::LoadLSMImage( std::string fileName )
 	lsmR->Update();
 
 	double *sp = lsmR->GetDataSpacing();
-	imageInfo.spacing.at(0) = sp[0];
-	imageInfo.spacing.at(1) = sp[1];
-	imageInfo.spacing.at(2) = sp[2];
+	imageInfo.spacing.at(0) = (int)sp[0];
+	imageInfo.spacing.at(1) = (int)sp[1];
+	imageInfo.spacing.at(2) = (int)sp[2];
   
 	imageInfo.numChannels = lsmR->GetNumberOfChannels();
 	imageInfo.numTSlices = lsmR->GetNumberOfTimePoints();

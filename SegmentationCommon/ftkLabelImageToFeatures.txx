@@ -832,6 +832,7 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 	}
 	
 	tempIntensityImage = 0;
+	return true;
 }
 
 //**************************************************************************

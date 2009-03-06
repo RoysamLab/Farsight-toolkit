@@ -27,6 +27,10 @@
 
 
 =========================================================================*/
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include "vtkLSMReader.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageData.h"
@@ -37,7 +41,6 @@
 #include "vtkInformationVector.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
 #include <time.h>
-
 
 #define PRT_EXT(ext) ext[0],ext[1],ext[2],ext[3],ext[4],ext[5]
 #define PRT_EXT2(ext) ext[0]<<","<<ext[1]<<","<<ext[2]<<","<<ext[3]<<","<<ext[4]<<","<<ext[5]
@@ -315,7 +318,7 @@ int vtkLSMReader::SetChannelName(const char *chName, int chNum)
     this->AllocateChannelNames(this->GetNumberOfChannels());
     }
   
-  length = strlen(chName);
+  length = (int)strlen(chName);
   vtkDebugMacro(<<"length="<<length);    
   name = new char[length+1];
   if(!name)

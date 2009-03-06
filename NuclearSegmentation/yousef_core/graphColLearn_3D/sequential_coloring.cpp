@@ -84,7 +84,7 @@ void GVC::sequential_coloring(int nobjects, int ncolors, int* ColorOut, vector< 
 /*----------------------------------------------------------------------------*/
 bool GVC::solve(vector< vector<int> > &map, int v, int ncolors)
 {
-    int nobjects = map.size();
+    int nobjects = (int)map.size();
     
     
     

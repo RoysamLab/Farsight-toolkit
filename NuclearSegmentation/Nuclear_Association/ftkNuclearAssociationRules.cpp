@@ -57,7 +57,7 @@ void NuclearAssociationRules::Compute()
 	//allocate memory for the features list
 	assocMeasurementsList = new float*[GetNumofAssocRules()];
 	//3. then, for each type of the associations get the requested reigion based on the type and the value of the inside and outside distances.
-	for(unsigned int i=0; i<GetNumofAssocRules(); i++)
+	for(int i=0; i<GetNumofAssocRules(); i++)
 	{
 		assocMeasurementsList[i] = new float[numOfLabels];
 		//read the ith target image (the image from which we need to compute the ith assoc. rule
@@ -65,7 +65,7 @@ void NuclearAssociationRules::Compute()
 		reader2->SetFileName(assocRulesList[i].GetTargetFileNmae());
 		reader2->Update();		
 		//cout<<"Computing Features For Association Rule "<<i+1<<": ";
-		for(unsigned int j=0; j<numOfLabels; j++)
+		for(int j=0; j<numOfLabels; j++)
 		{
 			//cout<<j+1;
 			cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<j+1<<"/"<<numOfLabels;
@@ -85,7 +85,7 @@ float NuclearAssociationRules::ComputeOneAssocMeasurement(itk::SmartPointer<Targ
 	std::vector< int > retBbox(0);
 	int dist, val;
 	dist = assocRulesList[ruleID].GetOutDistance();
-	for(unsigned int dim=0; dim < imDim*2; ++dim)
+	for(int dim=0; dim < imDim*2; ++dim)
 	{  
 		if(dim%2 == 0) //even
 		{			
