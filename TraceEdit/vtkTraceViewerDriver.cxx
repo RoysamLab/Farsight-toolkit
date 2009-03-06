@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-
+//#include "TraceXMLReader.h"
 #include "View3D.h"
 #include "Trace.h"
 //#include "vtkPolyLine.h"
@@ -60,7 +60,7 @@ int main (int argc, char* argv[])	{
 	vtkActor *act = View.LineAct(tobject.GetVTKPolyData());
 	std::vector<TraceBit> vec = tobject.CollectTraceBits();
 	printf("vec.size() = %d\n",vec.size());
-	View.AddPointsAsPoints(vec);
+	View.AddPointsAsPoints(vec);	
 	View.tobj=&tobject;
 	act->SetPickable(1);
 	View.addAct(act);

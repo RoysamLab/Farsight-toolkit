@@ -3,14 +3,8 @@
 #include <vector>
 #include <list>
 #include <iostream>
-#include <queue>
-
-#ifdef WIN32
-using namespace stdext;
 #include <hash_map>
-#else
-#include <hash_map.h>
-#endif
+#include <queue>
 
 #include "vtkSmartPointer.h"
 #include "vtkPolyLine.h"
@@ -21,11 +15,10 @@ using namespace stdext;
 #include "vtkFloatArray.h"
 #include "vtkAppendPolyData.h"
 
-#include "tinyxml/tinyxml.h"
 
-//#include <libxml/xmlreader.h>
-//#include <libxml/parser.h>
-//#include <libxml/tree.h>
+#include <libxml/xmlreader.h>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
 
 
 #define MY_ENCODING "ISO-8859-1"
@@ -65,7 +58,16 @@ public:
 	TraceBitsType::iterator GetTraceBitIteratorEnd(){ return m_trace_bits.end();}
 	TraceBitsType * GetTraceBitsPointer(){ return &m_trace_bits;}
 	void SetId(int lid){ m_id = lid;}
-	int GetId(){ return m_id;};
+	int GetId()
+	{ 
+		return m_id;
+	};
+	int GetSize()
+	{
+		return m_trace_bits.size();
+	};
+	void Getstats();
+	
 	void Print(std::ostream &c)
 	{
 		c<<"\tTraceLine: "<<std::endl;
@@ -113,8 +115,8 @@ public:
 	}
 	std::vector<TraceBit> CollectTraceBits();
 	std::vector<TraceLine*>* GetTraceLinesPointer(){ return &trace_lines;}
-	hash_map<unsigned int, unsigned long long int> hashp;
-	hash_map<unsigned int, unsigned long long int> hashc;
+	stdext::hash_map<unsigned int, unsigned long long int> hashp;
+	stdext::hash_map<unsigned int, unsigned long long int> hashc;
 private:
 	std::vector<TraceLine*> trace_lines;	
 };

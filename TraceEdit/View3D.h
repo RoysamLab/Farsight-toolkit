@@ -52,7 +52,7 @@
 #include "vtkOpenGLVolumeTextureMapper2D.h"
 #include "vtkSliderWidget.h"
 #include "vtkSliderRepresentation2D.h"
-#include "Trace.h"
+#include "trace.h"
 #include "vtkPlaybackWidget.h"
 #include "vtkPlaybackRepresentation.h"
 
@@ -70,8 +70,7 @@ public:
 	vtkSmartPointer<vtkCamera> cam;
 	void RenderWin();
 
-	void addAct(vtkActor *Actor);
-	void AddPointsAsCubes (std::vector<TraceBit> vec);
+	void addAct(vtkActor *Actor);	
 	void AddPointsAsPoints (std::vector<TraceBit> vec);
 	void AddVolumeSliders();
 	void AddContourThresholdSliders();
@@ -82,13 +81,15 @@ public:
 
 //interactor variables and point picking
 	void interact();
-	static void PickPoint(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
 	static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
+	static void SetMode(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
 
 	vtkCallbackCommand* isPicked;
-	vtkPointPicker *point_picker;
+	vtkCallbackCommand* keyPress;
+	//vtkPointPicker *point_picker;
 	vtkCellPicker *cell_picker;
-
+	std::vector<int> IDList;
+	void deleteTrace(View3d* view,int id);
 	vtkSphereSource *sphere;
 	vtkPolyDataMapper *sphereMap;
 	vtkActor *sphereAct;
@@ -103,7 +104,7 @@ public:
 	void rayCast(char* raySource);
 	vtkSmartPointer<vtkPolyData> poly_line_data;
 private:
-	
+
 
 	
 	//idk 

@@ -13,17 +13,24 @@
 
 void View3d::RenderWin(){
 	/*	create the standard render window	*/
-
-
-	ren = vtkSmartPointer<vtkRenderer>::New();
+ren = vtkRenderer::New();
 	ren->SetBackground(0,0,0);
-	renWin = vtkSmartPointer<vtkRenderWindow>::New();
+	renWin = vtkRenderWindow::New();
 		renWin->AddRenderer(ren);
 		renWin->SetSize(640, 480);					//window sixe can be dragged to fit, good start
-	iren = vtkSmartPointer<vtkRenderWindowInteractor>::New();
+	iren = vtkRenderWindowInteractor::New();
 	renWin->SetInteractor(iren);
-	vtkSmartPointer<vtkInteractorStyleTrackballCamera> style = vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
+	vtkInteractorStyleTrackballCamera* style = vtkInteractorStyleTrackballCamera::New();
 	iren->SetInteractorStyle( style );				//trackball control
+//	ren = vtkSmartPointer<vtkRenderer>::New();
+//	renWin = vtkSmartPointer<vtkRenderWindow>::New();
+//iren = vtkSmartPointer<vtkRenderWindowInteractor>::New();	
+//vtkSmartPointer<vtkInteractorStyleTrackballCamera> style = vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
+//	ren->SetBackground(0,0,0);
+//	iren->SetInteractorStyle( style );	//trackball control
+//		renWin->AddRenderer(ren);
+//		renWin->SetSize(640, 480);					//window size can be dragged to fit, good start
+//		renWin->SetInteractor(iren);			
 }
 //the render window created
 
@@ -38,36 +45,15 @@ vtkActor* View3d::LineAct(vtkPolyData *traces)
 	}
 	lineMap->SetInput(traces);
 	lineAct->SetMapper(lineMap);
-	lineAct->GetProperty()->SetColor(1,1,1);
+	lineAct->GetProperty()->SetColor(0,1,0);
 	printf("Point size %f\n",lineAct->GetProperty()->GetPointSize());
-	lineAct->GetProperty()->SetPointSize(8);
+	lineAct->GetProperty()->SetPointSize(1);
 	printf("later: Point size %f\n",lineAct->GetProperty()->GetPointSize());
 	lineAct->GetProperty()->SetLineWidth(1);
 	return lineAct;
 }
 
-void View3d::AddPointsAsCubes(std::vector<TraceBit> vec)
-{
-	vtkSmartPointer<vtkAppendPolyData> append = vtkSmartPointer<vtkAppendPolyData>::New();
-	for(int counter=0; counter< vec.size(); counter++)
-	{
-		vtkSmartPointer<vtkCubeSource> cube = vtkSmartPointer<vtkCubeSource>::New();
-		cube->SetXLength(0.1);
-		cube->SetYLength(0.1);
-		cube->SetZLength(0.1);
-		cube->SetCenter(vec[counter].x,vec[counter].y,vec[counter].z);
-		append->AddInput(cube->GetOutput());
-	}
 
-	vtkSmartPointer<vtkPolyDataMapper> cubemap = vtkSmartPointer<vtkPolyDataMapper>::New();
-	cubemap->SetInput(append->GetOutput());
-	cubemap->GlobalImmediateModeRenderingOn();
-	vtkSmartPointer<vtkActor> cubeact = vtkSmartPointer<vtkActor>::New();
-	cubeact->SetMapper(cubemap);
-	cubeact->SetPickable(0);
-	ren->AddActor(cubeact);
-	
-}
 
 void View3d::AddPointsAsPoints(std::vector<TraceBit> vec)
 {
@@ -90,7 +76,8 @@ void View3d::AddPointsAsPoints(std::vector<TraceBit> vec)
 	vtkSmartPointer<vtkActor> cubeact = vtkSmartPointer<vtkActor>::New();
 	cubeact->SetMapper(cubemap);
 	cubeact->SetPickable(0);
-	cubeact->GetProperty()->SetPointSize(1.5);
+	cubeact->GetProperty()->SetPointSize(1);
+	cubeact->GetProperty()->SetOpacity(.25);
 	ren->AddActor(cubeact);
 
 }
@@ -118,30 +105,68 @@ void View3d::interact()
 	ren->AddActor(sphereAct);						//sphere is used to mark the picks
 
 
-	//point_picker = vtkPointPicker::New();
-	//point_picker->SetTolerance(0.003);
-	//iren->SetPicker(picker);						//picker will select points along traces
+	
 	cell_picker = vtkCellPicker::New();
-	cell_picker->SetTolerance(0.003);
+	//double tolerance = (.003*renWin->GetScreenSize())/ renWin->GetSize();
+	//cell_picker->SetTolerance(tolerance);
+	cell_picker->SetTolerance(0.004);
 	iren->SetPicker(cell_picker);
 
 	isPicked = vtkCallbackCommand::New();
 	//isPicked->SetCallback(PickPoint);
 	isPicked->SetCallback(PickCell);
 	isPicked->SetClientData(this);					//isPicked caller alows observer to intepret click 
-													//access pick point function
+	
+	keyPress = vtkCallbackCommand::New();
+	keyPress->SetCallback(SetMode);
+	keyPress->SetClientData(this);
+
 	renWin->Render();
-	iren->AddObserver(vtkCommand::RightButtonReleaseEvent,isPicked);
+	iren->AddObserver(vtkCommand::RightButtonPressEvent,isPicked);
+	iren->AddObserver(vtkCommand::KeyPressEvent,keyPress);
 	iren->Start();
 	
 }
+void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata)
+{
+	View3d* view = (View3d*)clientdata;
+	char key = view->iren->GetKeyCode();
+	switch (key)
+	{
+		case 'l':
+		{
+			std::cout<<"These lines";
+			for (int i = 0; i < view->IDList.size(); i++)
+			{
+				std::cout<<  "\t"<<view->IDList[i];		
+			}	
+			std::cout<< " \t are selected" <<std::endl;
+		}
+		break;
+		case 'd':
+		{
+			std::cout<<"selected lines";
+			for (int i = 0; i < view->IDList.size(); i++)
+			{
+				std::cout<<  "\t"<<view->IDList[i];
+				view->deleteTrace(view, view->IDList[i]);
 
+			}	
+			std::cout<< " \t deleted" <<std::endl;
+			view->IDList.clear();	
+			view->sphereAct->VisibilityOff();
+		}
+		break;
+	}
+	view->poly_line_data->Modified();
+	view->renWin->Render();
+}
 
 void View3d::PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata)
 {	/*	PickPoint allows fot the point id and coordinates to be returned 
 	as well as adding a marker on the last picked point
 	R_click to select point on line	 */
-	printf("Entered pickCell\n");
+	//printf("Entered pickCell\n");
 	View3d* view = (View3d*)clientdata;				//acess to view3d class so view-> is used to call functions
 
 	int *pos = view->iren->GetEventPosition();
@@ -153,151 +178,72 @@ void View3d::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
 	}
 	else if(cell_picker->GetViewProp()!=NULL) 
 	{
-		double selPt[3];
+		//double selPt[3];
 		double pickPos[3];
 		view->cell_picker->GetPickPosition(pickPos);		//this is the coordinates of the pick
-		view->cell_picker->GetSelectionPoint(selPt);		//not so usefull but kept
-		cout<< "CellId: " 
-			<< cell_picker->GetCellId()
-			<<"\t X: "
-			<<pickPos[0]
-			<<"\t Y: "
-			<<pickPos[1]
-			<<"\t Z: "
-			<<pickPos[2]
-			<< "\n";								//prints the id and pick coordinates to the command prompt
+		//view->cell_picker->GetSelectionPoint(selPt);		//not so usefull but kept
+		unsigned int cell_id = cell_picker->GetCellId();	
+		view->IDList.push_back(cell_id);
+		TraceLine *tline = reinterpret_cast<TraceLine*>(view->tobj->hashc[cell_id]);
+
+		tline->Getstats();							//prints the id and end coordinates to the command prompt	
 		view->sphereAct->SetPosition(pickPos);		//sets the selector to new point
-		view->sphereAct->VisibilityOn();			//well it doesnt turn off again yet
-		TraceLine *tline = reinterpret_cast<TraceLine*>(view->tobj->hashc[cell_picker->GetCellId()]);
-		unsigned int cell_id = cell_picker->GetCellId();
-		//view->poly_line_data->DeleteCell(cell_id);
-		std::vector<unsigned int> * vtk_cell_ids = tline->GetMarkers();
-		vtkIdType ncells; vtkIdType *pts;
-		for(int counter=0; counter<vtk_cell_ids->size(); counter++)
+		view->sphereAct->VisibilityOn();			//well it doesnt turn off again yet	
+		view->poly_line_data->Modified();
+	}
+	view->renWin->Render();							//update the render window
+}
+void View3d::deleteTrace(View3d* view,int id)
+{
+	
+	TraceLine *tline = reinterpret_cast<TraceLine*>(view->tobj->hashc[id]);
+	std::vector<unsigned int> * vtk_cell_ids = tline->GetMarkers();
+	int ncells; vtkIdType *pts;
+	for(int counter=0; counter<vtk_cell_ids->size(); counter++)
+	{
+		view->poly_line_data->GetCellPoints((*vtk_cell_ids)[counter],ncells,pts);
+		pts[1]=pts[0];
+	}
+	std::vector<TraceLine*> *children = tline->GetBranchPointer();
+	if(children->size()!=0)
+	{
+		
+		for(int counter=0; counter<children->size(); counter++)
 		{
-			view->poly_line_data->GetCellPoints((vtkIdType)(*vtk_cell_ids)[counter],
-                                          ncells,
-                                          pts);
+			view->poly_line_data->GetCellPoints((*(*children)[counter]->GetMarkers())[0],ncells,pts);
 			pts[1]=pts[0];
+			view->tobj->GetTraceLinesPointer()->push_back((*children)[counter]);	
+			(*children)[counter]->SetParent(NULL);
 		}
-		std::vector<TraceLine*> *children = tline->GetBranchPointer();
-		if(children->size()!=0)
-		{
-			
-			for(int counter=0; counter<children->size(); counter++)
-			{
-				view->poly_line_data->GetCellPoints((*(*children)[counter]->GetMarkers())[0],ncells,pts);
-				pts[1]=pts[0];
-				view->tobj->GetTraceLinesPointer()->push_back((*children)[counter]);	
-				(*children)[counter]->SetParent(NULL);
-			}
-			// remove the children now
-			children->clear();
-		}
-		// remove from parent
-		std::vector<TraceLine*>* siblings;
-		if(tline->GetParent()!=NULL)
-		{
-			siblings=tline->GetParent()->GetBranchPointer();
-
-		}
-		else
-		{
-			siblings = view->tobj->GetTraceLinesPointer();
-		}
-		std::vector<TraceLine*>::iterator iter = siblings->begin();
-		std::vector<TraceLine*>::iterator iterend = siblings->end();
-		while(iter != iterend)
-		{
-			if(*iter== tline)
-			{
-				siblings->erase(iter);
-				break;
-			}
-			++iter;
-		}
-
-		
-		
-
-
-		view->poly_line_data->Modified();	
-		//view->poly_line_data->RemoveCellReference(cell_id);
-		//view->poly_line_data->RemoveDeletedCells();
-		//view->lineMap->SetInput(view->poly_line_data);
-		//poly_line_data->Modified();
-		//vtkDataArray *arr = view->lineAct->GetMapper()->GetInput()->GetPointData()->GetScalars();
-		////	= view->lineAct->GetMapper()->GetInput()->GetCellData();
-		//TraceLine::TraceBitsType::iterator iter = tline->GetTraceBitIteratorBegin();
-		//int pc = 0;
-		//while(iter!=tline->GetTraceBitIteratorEnd())
-		//{
-		//	arr->SetTuple1(iter->vtk_point_id,0);
-		//	++iter;
-		//	pc++;
-		//}
-		////view->ren->RemoveActor(view->lineAct);
-		//tline->SetId(1);
-		////view->addAct(view->LineAct(view->tobj->GetVTKPolyData()));
-		//printf(" I had %d points in it\n",pc);
-		//view->lineAct->GetMapper()->GetInput()->GetPointData()->SetScalars(arr);
-		//view->lineAct->GetMapper()->GetInput()->GetPointData()->Modified();
-		//printf("I got the tline id %d\n",tline->GetId());
-	}
-	view->renWin->Render();							//update the render window
-}
-void View3d::PickPoint(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata)
-{	/*	PickPoint allows fot the point id and coordinates to be returned 
-	as well as adding a marker on the last picked point
-	R_click to select point on line	 */
-	View3d* view = (View3d*)clientdata;				//acess to view3d class so view-> is used to call functions
-
-	int *pos = view->iren->GetEventPosition();
-	view->iren->GetPicker()->Pick(pos[0],pos[1],0.0,view->iren->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
-	vtkPointPicker *picker = (vtkPointPicker *)view->iren->GetPicker();
-	if (picker->GetPointId() == NULL) 
+		// remove the children now
+		children->clear();
+	}					//finds and removes children
+	// remove from parent
+	std::vector<TraceLine*>* siblings;
+	if(tline->GetParent()!=NULL)
 	{
-		view->sphereAct->VisibilityOff();			//not working quite yet but sphere will move
+		siblings=tline->GetParent()->GetBranchPointer();
+
 	}
-	else if(picker->GetViewProp()!=NULL) 
+	else
 	{
-		double selPt[3];
-		double pickPos[3];
-		view->point_picker->GetPickPosition(pickPos);		//this is the coordinates of the pick
-		view->point_picker->GetSelectionPoint(selPt);		//not so usefull but kept
-		cout<< "PointId: " 
-			<< picker->GetPointId()
-			<<"\t X: "
-			<<pickPos[0]
-			<<"\t Y: "
-			<<pickPos[1]
-			<<"\t Z: "
-			<<pickPos[2]
-			<< "\n";								//prints the id and pick coordinates to the command prompt
-		view->sphereAct->SetPosition(pickPos);		//sets the selector to new point
-		view->sphereAct->VisibilityOn();			//well it doesnt turn off again yet
-		TraceLine *tline = reinterpret_cast<TraceLine*>(view->tobj->hashp[picker->GetPointId()]);
-		vtkDataArray *arr = view->lineAct->GetMapper()->GetInput()->GetPointData()->GetScalars();
-		//	= view->lineAct->GetMapper()->GetInput()->GetCellData();
-		TraceLine::TraceBitsType::iterator iter = tline->GetTraceBitIteratorBegin();
-		int pc = 0;
-		while(iter!=tline->GetTraceBitIteratorEnd())
-		{
-			arr->SetTuple1(iter->marker,0);
-			++iter;
-			pc++;
-		}
-		//view->ren->RemoveActor(view->lineAct);
-		tline->SetId(1);
-		//view->addAct(view->LineAct(view->tobj->GetVTKPolyData()));
-		printf(" I had %d points in it\n",pc);
-		view->lineAct->GetMapper()->GetInput()->GetPointData()->SetScalars(arr);
-		view->lineAct->GetMapper()->GetInput()->GetPointData()->Modified();
-		printf("I got the tline id %d\n",tline->GetId());
+		siblings = view->tobj->GetTraceLinesPointer();
 	}
-	view->renWin->Render();							//update the render window
+	std::vector<TraceLine*>::iterator iter = siblings->begin();
+	std::vector<TraceLine*>::iterator iterend = siblings->end();
+	while(iter != iterend)
+	{
+		if(*iter== tline)
+		{
+			siblings->erase(iter);
+			break;
+		}
+		++iter;
+	}
+
+	
 }
-// callback functions for the sliders.
+
 class vtkSlider2DCallbackBrightness : public vtkCommand
 {
 public:
@@ -333,10 +279,12 @@ public:
         reinterpret_cast<vtkSliderWidget*>(caller);
       double value = static_cast<vtkSliderRepresentation *>(sliderWidget->GetRepresentation())->GetValue();
 
-	  	vtkSmartPointer<vtkPiecewiseFunction> colorTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
-		colorTransferFunction->AddPoint(2,0.0);
-		colorTransferFunction->AddPoint(255*(1-value),1,1,1);
-
+	  	/*vtkSmartPointer<vtkPiecewiseFunction> colorTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
+		colorTransferFunction->AddPoint(1.0,0.0f,0.0f,0.0f);
+		colorTransferFunction->AddPoint(255*(1-value),0.5f,0.5f,0.0f);*/
+		vtkColorTransferFunction *colorTransferFunction = vtkColorTransferFunction::New();
+		colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
+		colorTransferFunction->AddRGBPoint(255*(1-value),0.5,0.5,0);
      this->volume->GetProperty()->SetColor(colorTransferFunction);
     }
   vtkSlider2DCallbackContrast() {
@@ -363,7 +311,7 @@ public:
 		if(fabs(curr_value-value*255)>10)
 		{
 		cfilter->SetValue(0,255*value);
-		//Sleep(1000);
+		Sleep(1000);
 		}
 
     }
@@ -446,7 +394,7 @@ public:
 		cout << "jump to end\n";
 	}
 	int slice_counter;
-	std::vector<vtkSmartPointer<vtkImageData> > im_pointer;
+	std::vector<vtkSmartPointer<vtkImageData>> im_pointer;
 	vtkSmartPointer<vtkVolumeMapper> vmapper;
 };
 void View3d::AddPlaybackWidget(char *filename)
@@ -476,7 +424,7 @@ void View3d::AddPlaybackWidget(char *filename)
 	
 	ImageType::SizeType size = imreader->GetOutput()->GetLargestPossibleRegion().GetSize();
 
-	std::vector<vtkSmartPointer<vtkImageData> > &vtkimarray = playbackrep->im_pointer;
+	std::vector<vtkSmartPointer<vtkImageData>> &vtkimarray = playbackrep->im_pointer;
 	vtkimarray.reserve(size[2]-1);
 	printf("About to create vtkimarray contents in a loop\n");
 	for(int counter=0; counter<size[2]-1; counter++)
@@ -632,7 +580,7 @@ void View3d::readImg(char* sourceFile)
 	volAct->GetProperty()->SetRepresentationToWireframe();
 	volAct->GetProperty()->SetColor(0.5,0.5,0.5);
 	volAct->SetPickable(0);
-	volAct->SetScale(1/2.776,1/2.776,1);
+	//volAct->SetScale(1/2.776,1/2.776,1);
 	
 	ren->AddActor(volAct);
 	renWin->Render();
@@ -675,34 +623,18 @@ void View3d::rayCast(char *raySource)
 	vtkim->AllocateScalars();
 
 	memcpy(vtkim->GetScalarPointer(),i2spReader->GetOutput()->GetBufferPointer(),size[0]*size[1]*size[2]*sizeof(unsigned char));
-	vtkim->SetSpacing(1/2.807,1/2.797,2);
 
-
-	
-
-	/*vtkStructuredPointsReader *spReader = vtkStructuredPointsReader::New();
-	spReader->SetFileName(raySource);*/
 // Create transfer mapping scalar value to opacity
 	vtkPiecewiseFunction *opacityTransferFunction = vtkPiecewiseFunction::New();
- /*   opacityTransferFunction->AddPoint(40, 0.0);
-	opacityTransferFunction->AddPoint(64, 0.01);
-	opacityTransferFunction->AddPoint(128, 0.02);
-	opacityTransferFunction->AddPoint(192, 0.05);
-    opacityTransferFunction->AddPoint(255, 0.15);*/
+
 	opacityTransferFunction->AddPoint(2,0.0);
 	opacityTransferFunction->AddPoint(20,0.1);
 	opacityTransferFunction->AddPoint(40,0.1);
-
 	// Create transfer mapping scalar value to color
 	// Play around with the values in the following lines to better vizualize data
 	vtkColorTransferFunction *colorTransferFunction = vtkColorTransferFunction::New();
     colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
-	colorTransferFunction->AddRGBPoint(50.0,1.0,1.0,1.0);
-    //colorTransferFunction->AddRGBPoint(15.0, 0.5, 0.0, 0.0);
-    //colorTransferFunction->AddRGBPoint(60.0, 0.0, 0.0, 0.5);
-    //colorTransferFunction->AddRGBPoint(152.0, 0.0, 0.5, 0.0);
-    //colorTransferFunction->AddRGBPoint(255.0, 0.0, 0.2, 0.0);
-
+	colorTransferFunction->AddRGBPoint(50.0,0.5,0.5,0);
 
 	// The property describes how the data will look
 	vtkVolumeProperty *volumeProperty = vtkVolumeProperty::New();
@@ -710,13 +642,6 @@ void View3d::rayCast(char *raySource)
     volumeProperty->SetScalarOpacity(opacityTransferFunction);
   //  volumeProperty->ShadeOn();
     volumeProperty->SetInterpolationTypeToLinear();
-
-	// The mapper / ray cast function know how to render the data
-	/*vtkVolumeRayCastCompositeFunction *compositeFunction = vtkVolumeRayCastCompositeFunction::New();
-	vtkVolumeRayCastMapper *volumeMapper = vtkVolumeRayCastMapper::New();
-    volumeMapper->SetVolumeRayCastFunction(compositeFunction);
-	volumeMapper->SetInputConnection(i2sp->GetOutputPort());
-*/
 
 	vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper = vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
 	volumeMapper->SetSampleDistance(0.75);
