@@ -1031,15 +1031,15 @@ read_xml(std::string const & filename, std::string& montage_directory,
     if ( strcmp(value, "origin") == 0 ) {
       TiXmlElement* sub_node = cur_node->FirstChildElement();
       for (; sub_node; sub_node = sub_node->NextSiblingElement()) {
-        if ( strcmp("x", sub_node->Value()) ) {
+        if ( strcmp("x", sub_node->Value()) == 0 ) {
           origin_[0] = atoi( sub_node->GetText() );
           continue;
         }
-        if ( strcmp("y", sub_node->Value()) ) {
+        if ( strcmp("y", sub_node->Value()) == 0 ) {
           origin_[1] = atoi( sub_node->GetText() );
           continue;
         }
-        if ( strcmp("z", sub_node->Value()) ) {
+        if ( strcmp("z", sub_node->Value()) == 0 ) {
           origin_[2] = atoi( sub_node->GetText() );
           continue;
         }
@@ -1051,16 +1051,17 @@ read_xml(std::string const & filename, std::string& montage_directory,
     if ( strcmp(value, "size") == 0 ) {
       TiXmlElement* sub_node = cur_node->FirstChildElement();
       for (; sub_node; sub_node = sub_node->NextSiblingElement()) {
-        if ( strcmp("x", sub_node->Value()) ) {
+        if ( strcmp("x", sub_node->Value()) == 0 ) {
           image_size_[0] = atoi( sub_node->GetText() );
           continue;
         }
-        if ( strcmp("y", sub_node->Value()) ) {
+        if ( strcmp("y", sub_node->Value()) == 0 ) {
           image_size_[1] = atoi( sub_node->GetText() );
           continue;
         }
-        if ( strcmp("z", sub_node->Value()) ) {
+        if ( strcmp("z", sub_node->Value()) == 0 ) {
           image_size_[2] = atoi( sub_node->GetText() );
+          std::cout<<"image_size_[2] = "<<image_size_[2]<<std::endl;
           continue;
         }
       }

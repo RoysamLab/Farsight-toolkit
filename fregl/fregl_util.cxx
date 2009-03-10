@@ -22,7 +22,6 @@ typedef itk::ImageRegionIterator< ImageType > RegionIterator;
 ImageType::Pointer
 fregl_util_fuse_images(ImageType::Pointer image1, ImageType::Pointer image2)
 {
-  std::cout<<"Fusing the images"<<std::endl;
   ImageType::Pointer image_out = ImageType::New();
   image_out->SetRegions(image1->GetRequestedRegion());
   image_out->Allocate();
@@ -55,8 +54,8 @@ fregl_util_read_image( std::string const & file_name, bool channel_set, int chan
     return 0;
   }
 
-  std::cout<<"channel_set = "<<channel_set<<std::endl;
-  std::cout<<"channel = "<<channel<<std::endl;
+  //std::cout<<"channel_set = "<<channel_set<<std::endl;
+  //std::cout<<"channel = "<<channel<<std::endl;
 
   // get the extension
   std::string ext;
@@ -67,8 +66,8 @@ fregl_util_read_image( std::string const & file_name, bool channel_set, int chan
     lsmR->Update();
     int numChannels = lsmR->GetNumberOfChannels();
     int numTimes = lsmR->GetNumberOfTimePoints();
-    std::cout<<"numChannels = "<<numChannels<<std::endl;
-    std::cout<<"numTimes = "<<numTimes<<std::endl;
+    std::cout<<"Number of channels = "<<numChannels<<std::endl;
+    //std::cout<<"numTimes = "<<numTimes<<std::endl;
     
     if ( numTimes > 1 ) {
       std::cerr <<"Cannot register images of time sequence"<<std::endl;
@@ -84,7 +83,8 @@ fregl_util_read_image( std::string const & file_name, bool channel_set, int chan
       if (channel_set) {
         if (counter!=channel) continue;
       }
-      
+
+      std::cout<<"Channel "<<counter<<" = "<<lsmR->GetChannelName(counter)<<std::endl;
       int time_stamp = 0;
       vimdata = lsmR->GetTimePointOutput(time_stamp,counter);
       lsmR->Update();

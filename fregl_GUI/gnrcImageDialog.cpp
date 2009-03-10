@@ -115,7 +115,9 @@ void GNRCImageDialog::saveROIAs( const QString& in_fileName, const QString &out_
   start[0] = scene.lastBox->rect().left()/scene.zooms[ind]; // first index on X
   start[1] = scene.lastBox->rect().top()/scene.zooms[ind]; // first index on Y
   start[2] = 0; // first index on Z
-
+  
+  //size[0] = 430;
+  //size[1] = 430;
   size[0] = scene.lastBox->rect().right()/scene.zooms[ind]-start[0]+1 ; // size along X
   size[1] = scene.lastBox->rect().bottom()/scene.zooms[ind]-start[1]+1; // size along Y
   size[2] = space_transformer_.montage_size()[2];
@@ -331,7 +333,7 @@ void GNRCImageDialog::doLastDrag()
   qreal y1 = scene.lastMousePressEvent.y()/scaling;
   qreal x2 = scene.lastMouseReleaseEvent.x()/scaling;  //x-coordinate
   qreal y2 = scene.lastMouseReleaseEvent.y()/scaling;  //y-coordinate
-  
+    
   QString str;
   str = "Mouse drag from ";
   str += "x = ";

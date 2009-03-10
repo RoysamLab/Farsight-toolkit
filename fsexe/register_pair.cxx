@@ -145,7 +145,7 @@ main(  int argc, char* argv[] )
   if (!from_image || !to_image) {
     vcl_cerr <<"Failed to read image(s)"<< vcl_endl;
   }
-  
+  /*
   typedef itk::ImageFileWriter< ImageType >  WriterType3D;
   WriterType3D::Pointer writer3D = WriterType3D::New();
   writer3D->SetFileName( "from.tiff" );
@@ -154,7 +154,7 @@ main(  int argc, char* argv[] )
   writer3D->SetFileName( "to.tiff" );
   writer3D->SetInput( to_image );
   writer3D->Update();
-  
+  */
   
   // Apply Gaussian smoothing if demanded
   //
