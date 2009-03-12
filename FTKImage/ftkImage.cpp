@@ -36,7 +36,7 @@ Image::~Image()
 	}
 }
 
-void Image::SetSpacing(int x, int y, int z)
+void Image::SetSpacing(float x, float y, float z)
 {
 	imageInfo.spacing.at(0) = x;
 	imageInfo.spacing.at(1) = y;
@@ -179,9 +179,9 @@ bool Image::LoadLSMImage( std::string fileName )
 	lsmR->Update();
 
 	double *sp = lsmR->GetDataSpacing();
-	imageInfo.spacing.at(0) = (int)sp[0];
-	imageInfo.spacing.at(1) = (int)sp[1];
-	imageInfo.spacing.at(2) = (int)sp[2];
+	imageInfo.spacing.at(0) = (float)sp[0];
+	imageInfo.spacing.at(1) = (float)sp[1];
+	imageInfo.spacing.at(2) = (float)sp[2];
   
 	imageInfo.numChannels = lsmR->GetNumberOfChannels();
 	imageInfo.numTSlices = lsmR->GetNumberOfTimePoints();
@@ -257,6 +257,29 @@ void * Image::GetDataPtr(int T, int CH)
 		return NULL;
 
 	return imageDataPtrs[T][CH];
+}
+
+VtkImagePtr Image::GetVtkPtr(int T, int CH)
+{
+	if( !IsMatch<unsigned char>(imageInfo.dataType) )
+		return NULL;
+
+	if( T >= imageInfo.numTSlices || CH >= imageInfo.numChannels )
+		return NULL;
+
+	int numPixels = imageInfo.numColumns * imageInfo.numRows * imageInfo.numZSlices;
+
+	vtkSmartPointer<vtkUnsignedCharArray> d_array = vtkSmartPointer<vtkUnsignedCharArray>::New();
+	d_array->SetArray( static_cast<unsigned char*>(imageDataPtrs[T][CH]), numPixels, 1 );
+
+	VtkImagePtr imageData = VtkImagePtr::New();
+	imageData->GetPointData()->SetScalars(d_array);
+	imageData->SetDimensions(imageInfo.numColumns, imageInfo.numRows, imageInfo.numZSlices);
+	imageData->SetScalarTypeToUnsignedChar();
+	imageData->SetSpacing(imageInfo.spacing.at(0), imageInfo.spacing.at(1), imageInfo.spacing.at(2));
+	imageData->SetOrigin(0.0, 0.0, 0.0);
+
+	return imageData;
 }
 
 //*********************************************************************

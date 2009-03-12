@@ -20,6 +20,9 @@
 
 //VTK includes:
 #include "vtkImageData.h"
+#include "vtkPointData.h"
+#include "vtkSmartPointer.h"
+#include "vtkUnsignedCharArray.h"
 
 //Local includes:
 #include "vtkKWImage.h"
@@ -45,6 +48,8 @@ typedef itk::ImageBase< 3 > ImageBaseType;
 typedef ImageBaseType::ConstPointer ImageBaseConstPtr;
 typedef ImageBaseType::Pointer ImageBasePtr;
 
+typedef vtkSmartPointer<vtkImageData> VtkImagePtr;
+
 typedef  enum {IVOID,BIT,CHAR,UCHAR,SHORT,USHORT,INT,UINT,LONG,ULONG,FLOAT,DOUBLE} ImageDataType;
 
 //**************************************************************************************************************
@@ -63,11 +68,12 @@ public:
 	bool SaveAs( std::string path, std::string fName, std::string ext );
 
 	bool ImageFromData3D(void *dptr, ImageDataType dataType, int bpPix, int cs, int rs, int zs);
-	void SetSpacing(int x, int y, int z);
+	void SetSpacing(float x, float y, float z);
 
 	std::vector< unsigned short > Size(void);
 
 	void * GetDataPtr(int T, int CH);
+	VtkImagePtr GetVtkPtr(int T, int CH);		//Returns vtkSmartPointer of vtkImageData (if pixelType is unsigned char) at this T and CH.
 
 	//Also have templated functions
 	template <typename rType> rType GetPixel(int T, int CH, int Z, int R, int C);		// Casts the value to rType and returns it
@@ -91,7 +97,7 @@ public:
 		std::vector< std::vector <unsigned char> > channelColors;	//Holds the color components of each channel
 		std::vector< std::string > channelNames;					//Holds the name of each channel
 
-		std::vector<int> spacing;		//Holds the spacing of the image (defaults to 1,1,1 (x,y,z) )
+		std::vector<float> spacing;		//Holds the spacing of the image (defaults to 1,1,1 (x,y,z) )
 
 	} Info;
 
