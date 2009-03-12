@@ -263,6 +263,12 @@ struct hashulli
     {
     return __x;
     }
+  size_t operator()(const unsigned long long int __x, const unsigned long long int __y)
+  {
+	  return __x == __y;
+  }
+  const static size_t bucket_size = 4;
+  const static size_t min_buckets = 8;
 };
 
 bool TraceObject::WriteToSWCFile(char *filename)
@@ -415,6 +421,7 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
       }
     lineElement = lineElement->NextSiblingElement();
     }
+  return true;
 }
 
 
