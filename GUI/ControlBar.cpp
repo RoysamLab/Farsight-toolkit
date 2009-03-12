@@ -96,6 +96,11 @@ void ControlBar::createMenus()
 	connect(xmlAction,SIGNAL(triggered()), this, SLOT(loadResult()));
 	fileMenu->addAction(xmlAction);
 
+	metaAction = new QAction(tr("Load From Images and META Files..."), this);
+	metaAction->setStatusTip(tr("Open a result from 2 images and 2 text files (in META format)"));
+	connect(metaAction, SIGNAL(triggered()), this, SLOT(loadMetaResult()));
+	fileMenu->addAction(metaAction);
+
 	loadOutliersAction = new QAction(tr("Load Outliers"), this);
 	loadOutliersAction->setStatusTip(tr("Load Outliers in outliers.txt"));
 	connect(loadOutliersAction, SIGNAL(triggered()), this, SLOT(loadOutliers()));
@@ -206,6 +211,8 @@ void ControlBar::createStatusBar()
 //******************************************************************************
 void ControlBar::loadImage()
 {
+
+
 	QString filename  = QFileDialog::getOpenFileName(this,"Choose an image",lastPath, 
 			tr("TIF Files (*.tif *.tiff)\n" 
 			   "PIC Files (*.pic)\n" 
@@ -218,7 +225,10 @@ void ControlBar::loadImage()
 		//If we already have a model then we can use it.  Otherwise we need a new one.
 
 		lastPath = QFileInfo(filename).absolutePath();
-
+		/*
+		VolumeWindow *vWin = new VolumeWindow(filename);
+		vWin->show();
+		*/
 		//vector<string> oneImage(0);
 		//oneImage.push_back(filename.toStdString());
 		ftk::Image *newImg = NewFTKImage(filename.toStdString());
@@ -314,10 +324,10 @@ ftk::Image * ControlBar::NewFTKImage(std::string filename)
 //******************************************************************************
 int ControlBar::isLoaded(std::string filename)
 {
-	for (int i = 0; i<loadedImages.size(); ++i)
+	for (int i = 0; i<(int)loadedImages.size(); ++i)
 	{
 		vector<string> filenames;// = loadedImages.at(i)->GetFilenames();
-		for (int f = 0; f < filenames.size(); f++)
+		for (int f = 0; f < (int)filenames.size(); f++)
 		{
 			if(filenames[f] == filename)
 			{
@@ -462,10 +472,10 @@ void ControlBar::startModule(void)
 
 	//Create a list of loaded images(by filename)
 	vector<string> filenames(0);
-	for (int i = 0; i<loadedImages.size(); ++i)
+	for (int i = 0; i<(int)loadedImages.size(); ++i)
 	{
 		vector<string> myNames;// = loadedImages.at(i)->GetFilenames();
-		for (int f = 0; f < myNames.size(); f++)
+		for (int f = 0; f < (int)myNames.size(); f++)
 		{
 			filenames.push_back(myNames[f]);
 		}
@@ -479,6 +489,40 @@ void ControlBar::startModule(void)
 	
 	connect(module, SIGNAL(closing(QWidget*)),this, SLOT(closeWidget(QWidget*)));
 	module->show();
+}
+
+void ControlBar::loadMetaResult(void)
+{
+	QString data_file  = QFileDialog::getOpenFileName(this,"Choose a DATA IMAGE File",lastPath, tr("All Files (*.*)\n"));
+	if(data_file == "") return;
+
+	QString path = QFileInfo(data_file).absolutePath();
+	QString name = QFileInfo(data_file).baseName();
+	lastPath = path;
+
+	QString label_file  = QFileDialog::getOpenFileName(this,"Choose a LABEL IMAGE File",lastPath, tr("All Files (*.*)\n"));
+	if(label_file == "") return;
+	QString header_file  = QFileDialog::getOpenFileName(this,"Choose a HEADER File",lastPath, tr("TXT Files (*.txt)\n"));
+	if(header_file == "") return;
+	QString META_file  = QFileDialog::getOpenFileName(this,"Choose META File",lastPath, tr("TXT Files (*.txt)\n"));
+	if(META_file == "") return;
+
+
+	if(segResult) delete segResult;
+	segResult = new ftk::NuclearSegmentation( path.toStdString(), name.toStdString() );
+	
+	if ( !segResult->LoadFromMETA(META_file.toStdString(), header_file.toStdString(), data_file.toStdString(), label_file.toStdString()) )
+		std::cerr << segResult->GetErrorMessage() << std::endl;
+
+	//Now I have objects stored in memory - put the features into the model
+	newModel();
+	CreateNewTableWindow();
+	CreateNewPlotWindow();
+	SegmentationWindow *segwin = CreateNewSegmentationWindow();
+
+	segwin->SetChannelImage(segResult->getDataImage());
+	segwin->SetLabelImage(segResult->getLabelImage());
+	segwin->show();
 }
 
 //******************************************************************************
@@ -798,7 +842,7 @@ void ControlBar::OpenPythonWindow()
 	QString exeFiles = installPath + QString("/bin");
 
 	QString path1Cmd = QString("import sys;sys.path.append('") + pythonFiles + QString("');");
-	QString path2Cmd = QString("import os;os.environ['PATH'] = '") + exeFiles + QString("';");
+	QString path2Cmd = QString("import os;os.environ['PATH'] = os.environ['PATH'] + ';") + exeFiles + QString("';");
 	//QString path2Cmd = QString("sys.path.append('") + exeFiles + QString("');");
 	QString importCmds = QString("from farsightutils import *;");
 	QString printCmd = QString("print 'FARSIGHT ENVIRONMENT';");

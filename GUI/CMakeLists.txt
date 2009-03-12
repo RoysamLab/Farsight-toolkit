@@ -14,6 +14,9 @@ SET( GUI_SRCS
     ModuleWidget.cpp
     #ResultLoadWidget.cpp
     SegmentationModel.cpp
+    
+    #ObjectSelection.cpp
+    #VolumeWindow.cpp
 )
 
 SET( GUI_HDRS
@@ -26,6 +29,9 @@ SET( GUI_HDRS
     ModuleWidget.h
     #ResultLoadWidget.h
     SegmentationModel.h
+    
+    #ObjectSelection.h
+    #VolumeWindow.h
 )
 
 SET( GUI_UIS
@@ -54,7 +60,7 @@ ADD_LIBRARY( GUI STATIC
              ${GUI_RC_SRCS}
 )
 
-TARGET_LINK_LIBRARIES( GUI ${QT_LIBRARIES} FTKImage TinyXML)
+TARGET_LINK_LIBRARIES( GUI ${QT_LIBRARIES} QVTK FTKImage TinyXML)
 #TARGET_LINK_LIBRARIES( GUI ${QT_LIBRARIES} FTKImage TinyXML QtPython)
 
 #########################################

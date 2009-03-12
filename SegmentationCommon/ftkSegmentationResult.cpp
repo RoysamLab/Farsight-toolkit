@@ -501,7 +501,7 @@ bool SegmentationResult::WriteToMETA()
 		return false;
 	}
 
-	for(int i=0; i<featureNames.size(); ++i)
+	for(int i=0; i<(int)featureNames.size(); ++i)
 	{
 		outFile << featureNames.at(i) << "\n";
 	}

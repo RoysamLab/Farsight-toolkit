@@ -35,6 +35,7 @@
 #include "SegmentationWindow.h"
 #include "TableWindow.h"
 #include "PlotWindow.h"
+//#include "VolumeWindow.h"
 
 //OTHER LOCAL INCLUDES
 #include "SegmentationCommon/ftkSegmentationResult.h"
@@ -63,6 +64,7 @@ private slots:
 	void loadImage(void);
 	void loadImageSeries(void);
 	void loadResult(void);
+	void loadMetaResult(void);
 	void loadOutliers(void);
 	void saveResult(void);
 	void showOutliers();
@@ -116,6 +118,7 @@ private:
 	QAction *loadOutliersAction;
 	QAction *saveAction;
 	QAction *xmlAction;
+	QAction *metaAction;
 	QAction *testAction;
   QAction *exitAction;
 

@@ -262,7 +262,7 @@ bool NuclearSegmentation::LoadFromMETA(std::string META_file, std::string header
 	int idColumn = -1;
 	for (int i=0; i<(int)header.size(); ++i)
 	{
-		if ( !header.at(i).compare("CLASS") || !header.at(i).compare("RESPONSE") )
+		if ( !header.at(i).compare("CLASS") || !header.at(i).compare("class")|| !header.at(i).compare("RESPONSE") )
 			classColumn = i;
 		else if ( !header.at(i).compare("ID") )
 			idColumn = i;
@@ -318,19 +318,14 @@ bool NuclearSegmentation::LoadFromMETA(std::string META_file, std::string header
 	myObjects.clear();
 	IdToIndexMap.clear();
 	std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
-	int row = 0;
-	while ( row < (int)labels.size() && row < (int)meta.size() )
+	for(int row=0; row < (int)labels.size(); row++)
 	{
 		FeatureCalcType::LabelPixelType id = labels.at(row);
-		if(id == 0)
-		{
-			row++;
-			continue;
-		}
+		if(id == 0) continue;
 
 		if(id > maxID) maxID = id;
 
-		int metaRow;
+		int metaRow = -1;
 		if(idColumn != -1)
 		{
 			//Search meta for the current id
@@ -342,14 +337,14 @@ bool NuclearSegmentation::LoadFromMETA(std::string META_file, std::string header
 		}
 		else
 		{
-			metaRow = row-1 < 0 ? 0 : row -1;
+			metaRow = row-1;
 		}
 
 		Object object("nucleus");
 		object.SetId(id);
 		object.SetValidity(1);
 		object.SetDuplicated(0);
-		if(classColumn != -1)
+		if( classColumn != -1 && metaRow != -1 )
 			object.SetClass( meta.at(metaRow).at(classColumn) );
 		else
 			object.SetClass(-1);
@@ -378,13 +373,14 @@ bool NuclearSegmentation::LoadFromMETA(std::string META_file, std::string header
 		for (int i=0; i<(int)header.size(); ++i)
 		{
 			if (i == classColumn || i == idColumn) continue;
-			f.push_back( (float)meta.at(metaRow).at(i) );
+			if(metaRow == -1)
+				f.push_back(0.0);
+			else
+				f.push_back( (float)meta.at(metaRow).at(i) );
 		}
 		object.SetFeatures( f );
 		myObjects.push_back( object );
 		IdToIndexMap[id] = (int)myObjects.size() - 1;
-
-		row++;
 	}
 
 	return 1;
