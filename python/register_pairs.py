@@ -53,12 +53,26 @@ def register(argv):
     # Perform joint registration write the xform list to a
     # temporary file and remove it after joint registration
     f_xforms.close()
+    f_o.close()
+    print("\nSTART register_joint.exe...")
     os.system('register_joint.exe xxx_123.txt')
-    os.system('rm xxx_123.txt')
+    print("DONE")
+    #os.system('rm xxx_123.txt')    #not cross platform!!
 
     # perform montaging using the first image as the anchor
-    os.system('mosaic_images.exe joint_transforms.xml '+names[0]+ " -path " + argv[0]);
+    print("\nSTART...")
+    if(argv[0]==''):
+        cmd = "mosaic_images.exe joint_transforms.xml " + names[0]
+    else:
+        cmd = "mosaic_images.exe joint_transforms.xml " + names[0] + " -path " + argv[0]
+    os.system(cmd)
+    print("DONE")
 
+    # TEMP FILE CLEANUP:
+    print("\nCLEANING TEMP FILES...")
+    os.remove(argv[1]+'.out')
+    os.remove('xxx_123.txt')
+    print("DONE")
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
