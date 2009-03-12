@@ -46,6 +46,7 @@ public:
 	bool RunSegmentation(){return 0;};
 	//Now for loading the segmentation results into Objects
 	bool LoadFromResult(const char* dfile, const char* rfile);
+	bool LoadFromMETA(std::string META_file, std::string header_file, std::string data_file, std::string label_file);
 	bool LabelsToObjects(void);
 	//bool CalculateFeatures(){return 0;};
 

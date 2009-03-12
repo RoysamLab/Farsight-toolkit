@@ -155,7 +155,7 @@ void NuclearSegmentation::LoadAssociationsFromFile(std::string fName)
 	possibleNames.push_back( "GFAP_sig" );
 	possibleNames.push_back( "EBA_sig" );
 
-	for (int i=0; i<vals.at(0).size(); ++i)
+	for (int i=0; i<(int)vals.at(0).size(); ++i)
 	{
 		featureNames.push_back( possibleNames.at(i) );
 	}
@@ -166,7 +166,7 @@ void NuclearSegmentation::LoadAssociationsFromFile(std::string fName)
 	for (int i=0; i<n; ++i)
 	{
 		std::vector<float> feats = myObjects.at(i).GetFeatures();
-		for (int j=0; j<vals.at(i).size(); ++j)
+		for (int j=0; j<(int)vals.at(i).size(); ++j)
 		{
 			feats.push_back(vals.at(i).at(j));
 		}
@@ -215,6 +215,179 @@ void NuclearSegmentation::LoadClassInfoFromFile( std::string fName )
 		ftk::Object * obj = GetObjectPtr( (*it).first );
 		obj->SetClass( (*it).second );
 	}
+}
+
+bool NuclearSegmentation::LoadFromMETA(std::string META_file, std::string header_file, std::string data_file, std::string label_file)
+{
+	const int MAXLINESIZE = 512;	//Numbers could be in scientific notation in this file
+	char line[MAXLINESIZE];
+
+	//Save the filenames & Load the Images
+	dataFilenames.push_back(data_file);
+	resultFilenames.push_back(label_file);
+	if(dataImage) delete dataImage;
+	dataImage = new ftk::Image();
+	dataImage->LoadFile(data_file, true);	//Assume there is just one data file and one result file
+	if(labelImage) delete labelImage;
+	labelImage = new ftk::Image();
+	labelImage->LoadFile(label_file, false);
+
+	//NOW LOAD THE HEADER INFO:
+	ifstream headerFile; 
+	headerFile.open( header_file.c_str() );
+	if ( !headerFile.is_open() )
+	{
+		std::cerr << "Failed to Load Document: " << headerFile << std::endl;
+		return 0;
+	}
+	std::vector< std::string > header; 
+	headerFile.getline(line, MAXLINESIZE);
+	while ( !headerFile.eof() ) //Get all values
+	{
+		std::string h;
+		char * pch = strtok (line," \t");
+		while (pch != NULL)
+		{
+			h = pch;
+			pch = strtok (NULL, " \t");
+		}
+		header.push_back( h );
+		headerFile.getline(line, MAXLINESIZE);
+	}
+	headerFile.close();
+
+	//SEARCH FOR CLASS/RESPONSE AND ID COLUMNS
+	//IF I DO NOT FIND ID I ASSUME ORDERED BY MAGNITUDE, AND GET IDS FROM LABEL IMAGE
+	int classColumn = -1;
+	int idColumn = -1;
+	for (int i=0; i<(int)header.size(); ++i)
+	{
+		if ( !header.at(i).compare("CLASS") || !header.at(i).compare("RESPONSE") )
+			classColumn = i;
+		else if ( !header.at(i).compare("ID") )
+			idColumn = i;
+	}
+
+	//NOW LOAD ALL OF THE FEATURES INFO:
+	ifstream metaFile; 
+	metaFile.open( META_file.c_str() );
+	if ( !metaFile.is_open() )
+	{
+		std::cerr << "Failed to Load Document: " << metaFile << std::endl;
+		return 0;
+	}
+	std::vector< std::vector<double> > meta; 
+	metaFile.getline(line, MAXLINESIZE);
+	while ( !metaFile.eof() ) //Get all values
+	{
+		std::vector<double> row;
+		char * pch = strtok (line," \t");
+		while (pch != NULL)
+		{
+			row.push_back( atof(pch) );
+			pch = strtok (NULL, " \t");
+		}
+		meta.push_back( row );
+		metaFile.getline(line, MAXLINESIZE);
+	}
+	metaFile.close();
+
+	//NOW RUN THE FEATURES FILTER TO GET BOUNDING BOXES:
+	typedef unsigned char IPixelT;
+	dataImage->Cast<IPixelT>();
+	typedef unsigned short LPixelT;
+	labelImage->Cast<LPixelT>();
+
+	typedef ftk::LabelImageToFeatures< IPixelT, LPixelT, 3 > FeatureCalcType;
+	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
+	labFilter->SetImageInputs( dataImage->GetItkPtr<IPixelT>(0,0), labelImage->GetItkPtr<LPixelT>(0,0) );
+	labFilter->SetLevel(1);
+	labFilter->ComputeHistogramOff();
+	labFilter->ComputeTexturesOff();
+	labFilter->Update();
+
+	//Set Feature Names
+	featureNames.clear();
+	for (int i=0; i<(int)header.size(); ++i)
+	{
+		if (i == classColumn || i == idColumn) continue;
+		featureNames.push_back( header.at(i) );
+	}
+
+	//Now populate the objects
+	myObjects.clear();
+	IdToIndexMap.clear();
+	std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
+	int row = 0;
+	while ( row < (int)labels.size() && row < (int)meta.size() )
+	{
+		FeatureCalcType::LabelPixelType id = labels.at(row);
+		if(id == 0)
+		{
+			row++;
+			continue;
+		}
+
+		if(id > maxID) maxID = id;
+
+		int metaRow;
+		if(idColumn != -1)
+		{
+			//Search meta for the current id
+			for(int i=0; i<(int)meta.size(); ++i)
+			{
+				if(meta.at(i).at(idColumn) == id)
+					metaRow = i;
+			}
+		}
+		else
+		{
+			metaRow = row-1 < 0 ? 0 : row -1;
+		}
+
+		Object object("nucleus");
+		object.SetId(id);
+		object.SetValidity(1);
+		object.SetDuplicated(0);
+		if(classColumn != -1)
+			object.SetClass( meta.at(metaRow).at(classColumn) );
+		else
+			object.SetClass(-1);
+
+		ftk::IntrinsicFeatures *features = labFilter->GetFeatures(id);
+
+		Object::Point c;
+		c.x = (int)features->Centroid[0];
+		c.y = (int)features->Centroid[1];
+		c.z = (int)features->Centroid[2];
+		c.t = 0;
+		object.AddCenter(c);
+
+		Object::Box b;
+		b.min.x = (int)features->BoundingBox[0];
+		b.max.x = (int)features->BoundingBox[1];
+		b.min.y = (int)features->BoundingBox[2];
+		b.max.y = (int)features->BoundingBox[3];
+		b.min.z = (int)features->BoundingBox[4];
+		b.max.z = (int)features->BoundingBox[5];
+		b.min.t = 0;
+		b.max.t = 0;
+		object.AddBound(b);
+
+		vector< float > f(0);
+		for (int i=0; i<(int)header.size(); ++i)
+		{
+			if (i == classColumn || i == idColumn) continue;
+			f.push_back( (float)meta.at(metaRow).at(i) );
+		}
+		object.SetFeatures( f );
+		myObjects.push_back( object );
+		IdToIndexMap[id] = (int)myObjects.size() - 1;
+
+		row++;
+	}
+
+	return 1;
 }
 
 bool NuclearSegmentation::LoadData()
@@ -307,7 +480,7 @@ bool NuclearSegmentation::SaveAll()
 ftk::Object::Box NuclearSegmentation::ExtremaBox(vector<int> ids)
 {
 	ftk::Object::Box extreme = myObjects.at( GetObjectIndex(ids.at(0),"nucleus") ).GetBounds().at(0);
-	for(int i=1; i<ids.size(); ++i)
+	for(int i=1; i<(int)ids.size(); ++i)
 	{
 		ftk::Object::Box test = myObjects.at( GetObjectIndex(ids.at(i),"nucleus") ).GetBounds().at(0);;
 
@@ -336,7 +509,7 @@ int NuclearSegmentation::Merge(vector<int> ids)
 	// Return the new ID
 
 	int newID = ++maxID;
-	for(int i=0; i<ids.size(); ++i)
+	for(int i=0; i<(int)ids.size(); ++i)
 	{
 		int index = GetObjectIndex(ids.at(i),"nucleus");
 		if(index < 0 ) return 0;
@@ -413,7 +586,7 @@ int NuclearSegmentation::Merge(vector<int> ids)
 	record.date = TimeStamp();
 	std::string msg = "MERGED TO FROM: ";
 	msg.append(NumToString(ids.at(0)));
-	for(int i=1; i<ids.size(); ++i)
+	for(int i=1; i<(int)ids.size(); ++i)
 	{
 		msg.append(", ");
 		msg.append(NumToString(ids.at(i)));
@@ -431,7 +604,7 @@ bool NuclearSegmentation::Delete(vector<int> ids)
 	if(!labelImage)
 		return false;
 
-	for(int i=0; i<ids.size(); ++i)
+	for(int i=0; i<(int)ids.size(); ++i)
 	{
 		//Find the object with the ID
 		int index = GetObjectIndex(ids.at(i),"nucleus");
@@ -545,7 +718,7 @@ void NuclearSegmentation::ReassignLabels(vector<int> fromIds, int toId, ftk::Obj
 			for(int c=region.min.x; c <= region.max.x; ++c)
 			{
 				int pix = labelImage->GetPixel<int>(0,0,z,r,c);
-				for(int i = 0; i < fromIds.size(); ++i)
+				for(int i = 0; i < (int)fromIds.size(); ++i)
 				{
 					if( pix == fromIds.at(i) )
 						labelImage->SetPixel<int>(0,0,z,r,c,toId);
@@ -570,7 +743,7 @@ string NuclearSegmentation::TimeStamp()
 int NuclearSegmentation::GetObjectIndex(int objectID, string type)
 {
 	//Find the object with the ID
-	for( int i=0; i<myObjects.size(); ++i )
+	for( int i=0; i<(int)myObjects.size(); ++i )
 	{
 		ftk::Object obj = myObjects[i];
 		if (obj.GetId() == objectID && obj.GetType() == type)
