@@ -4785,17 +4785,20 @@ int main(int argc, char* argv[])
 	//m->set_pic_name(picfilename);
 
 	//load_points_without_normal("deconvolved-good.npts");
-	if(argc < 3)
+/*	if(argc < 3)
 	{
 		printf("Usage centerline inputfile outputfile\n");
 		return 1;
-	}
+	}*/
 	
 	load_points_without_normal(argv[1]);
 
-//	m->set_pic_name("D:\\MSA paper\\vessel.pic");
+	strcpy(picfilename,argv[1]);
+	strcpy(&picfilename[strlen(picfilename)-4],"pic\0");
+	m->set_pic_name(picfilename);
+	printf("Setting pic filename \"%s\". Use <SPACE> to enable rendering of raw data.\n",picfilename);
 	//	read_from_file("../ascii.txt");
-	printf("done reading from file\n");
+//	printf("done reading from file\n");
 	//	make_hypothesis_model();
 
 
@@ -4837,7 +4840,7 @@ int main(int argc, char* argv[])
 		printf("Initial smoothing %d time(s)\n", counter+1);
 	}
 
-	//find_min_median_max();	
+	find_min_median_max();	
 	dec = 8000;
 	printf("Num vertices (before decimating) %d\n",m->numVertices());
 	printf("Num Faces (before decimating) %d\n",m->numFaces());
@@ -4852,7 +4855,7 @@ int main(int argc, char* argv[])
 		Decimate(dec);
 	}
 	check_consistent();
-
+	printf("Decimated to 25% of the original size\n");
 
 	//CENTERLINE EXTRACTION -uncomment load_votes_from_file() to load from a saved file.
 	//get_centerlines_voxels();
@@ -4872,9 +4875,9 @@ int main(int argc, char* argv[])
 
 //	return 0;
 
-	printf("Num vertices %d\n",m->numVertices());
-	printf("Num Faces %d\n",m->numFaces());
-	printf("returned_count %d, non_returned_count %d\n",returned_count,non_returned_count);
+//	printf("Num vertices %d\n",m->numVertices());
+//	printf("Num Faces %d\n",m->numFaces());
+//	printf("returned_count %d, non_returned_count %d\n",returned_count,non_returned_count);
 	// facebag->EndIteration(iter);
 	ArgParser *ap = new ArgParser();
 	//scanf("%*d");

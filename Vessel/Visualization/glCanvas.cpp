@@ -228,10 +228,10 @@ void GLCanvas::keyboard(unsigned char key, int x, int y) {
     args->wireframe = !args->wireframe;
     Render();
     break;
-  case 'b':  case 'B':
-    args->interpolate = !args->interpolate;
-    Render();
-    break;
+//  case 'b':  case 'B':
+//    args->interpolate = !args->interpolate;
+//    Render();
+//    break;
   //case 't':  case 'T':
   //  args->tone_map = !args->tone_map;
   //  Render();
@@ -258,18 +258,18 @@ void GLCanvas::keyboard(unsigned char key, int x, int y) {
   //  radiosity->Reset();
   //  Render();
   //  break;
-  case 'o':case 'O':
-	  printf("I came here\n");
-	  args->votes = !args->votes;
-	  Render();
-		break;
-  case '[': 
-		args->vote_number++;
-		Render();
-			break;
-  case ']': 
-	  args->vote_number--;
-	  Render();
+//  case 'o':case 'O':
+//	  printf("I came here\n");
+//	  args->votes = !args->votes;
+//	  Render();
+//		break;
+//  case '[': 
+//		args->vote_number++;
+//		Render();
+//			break;
+//  case ']': 
+//	  args->vote_number--;
+//	  Render();
 			break;
   case 'p': case 'P':
 		args->points = !args->points;
