@@ -796,9 +796,9 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 		currentLabel = labels.at(lab);
 		if ((int)currentLabel <= 0) continue;
 		
-		LabelImageType::RegionType region;
-		LabelImageType::SizeType size;
-		LabelImageType::IndexType index;
+		typename LabelImageType::RegionType region;
+		typename LabelImageType::SizeType size;
+		typename LabelImageType::IndexType index;
 
 		int loc = 0;
 		for (int dim=0; dim<VImageDimension; dim++)
@@ -822,7 +822,7 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 		SetRequestedFeatures (const FeatureNameVector *_arg)
 		*/
 		
-		TextureCalcType::FeatureValueVector *tex = textureCalculator->GetFeatureMeans();
+		typename TextureCalcType::FeatureValueVector *tex = textureCalculator->GetFeatureMeans();
 		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::T_ENERGY] = float( tex->ElementAt(0) );
 		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::T_ENTROPY] = float( tex->ElementAt(1) );
 		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INVERSE_DIFFERENCE_MOMENT] = float( tex->ElementAt(2) );

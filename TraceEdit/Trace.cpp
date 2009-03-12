@@ -1,4 +1,4 @@
-#include "trace.h"
+#include "Trace.h"
 #pragma warning(disable:4996)
 
 bool TraceObject::ReadFromFeatureTracksFileForKymograph(char *filename,int type_offset=0)
@@ -79,7 +79,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 		return false;
 	}
 	char buff[1024];
-	stdext::hash_map<unsigned int, unsigned long long int> hash_load;
+	hash_map<unsigned int, unsigned long long int> hash_load;
 	int tc = 0;
 	unsigned char child_count[1000000];
 			int id, type,parent;
@@ -249,10 +249,26 @@ std::vector<TraceBit> TraceObject::CollectTraceBits()
 	return vec;
 }
 
+struct equlli
+{
+  bool operator()(const unsigned long long int l1, const unsigned long long int l2) const
+    {
+    return l1 == l2;
+    }
+};
+//needed because gcc doesn't have a built-in method to hash unsigned long long ints
+struct hashulli
+{
+  size_t operator()(const unsigned long long int __x) const
+    {
+    return __x;
+    }
+};
+
 bool TraceObject::WriteToSWCFile(char *filename)
 {
-	FILE * fp = fopen(filename,"w");
-	stdext::hash_map<unsigned long long int,int> hash_dump;
+  FILE * fp = fopen(filename,"w");
+  hash_map<const unsigned long long int, int, hashulli> hash_dump;
 	if(fp == NULL)
 	{
 		printf("Couldn't open %s for writing\n",filename);
@@ -319,110 +335,86 @@ vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
 	return poly_traces;
 }
 
-// Handy functions to read Props from the xml
-// Hope this is the right way to read and delete memory
-int xmlReadInt(xmlNodePtr p,char *s,int def)
-{
-	xmlChar * charp = xmlGetProp(p, BAD_CAST s);
-	int num;
-	if(charp!=NULL)
-	{
-		num = atof((char*)charp);
-		delete [] charp;
-	}
-	else
-	{
-		num = def; //	THIS SHOULD NEVER HAPPEN 
-	}
-	return num;
-}
-
-float xmlReadFloat(xmlNodePtr p,char *s,float def)
-{
-	xmlChar * charp = xmlGetProp(p, BAD_CAST s);
-	float num;
-	if(charp!=NULL)
-	{
-		num = atof((char*)charp);
-		delete [] charp;
-	}
-	else
-	{
-		num = def; //	THIS SHOULD NEVER HAPPEN 
-	}
-	return num;
-}
-
 bool TraceObject::ReadFromRPIXMLFile(char * filename)
 {
-	printf("Started reading from %s ...",filename);
-
-	stdext::hash_map<unsigned int, unsigned long long int> hash_load;
-	/* reads the XML file  */
-	int count = 0;
-	/* test if libxml works and if xml is parsed*/
-	LIBXML_TEST_VERSION;
-	xmlDocPtr doc;
-	doc = xmlReadFile(filename, NULL, 0);
-	if (doc == NULL)
-	{
-		fprintf(stderr, "Failed to parse %s\n", filename);
-		return false;
-	}
-//finds the root of the xml tree
-	xmlNodePtr root_node = NULL, trace_node = NULL, line_node = NULL, bit_node = NULL;
-	root_node = xmlDocGetRootElement(doc);
-	//std::cout << "Root node: " << root_node->name <<std::endl;
-	
-	line_node =  root_node->children;
-	//reading lines
-	for ( ; line_node; line_node = line_node->next)
-	{		
-		if (line_node->type == XML_ELEMENT_NODE && !xmlStrcmp(line_node->name, BAD_CAST "TraceLine"))		
-		{		
-			float lid = xmlReadFloat(line_node,"ID",1);// default should never come for this case
-			int type = xmlReadInt(line_node,"Type",1);
-			int parent = xmlReadInt(line_node,"Parent",-1);
-
-			TraceLine * tline = new TraceLine();
-			tline->SetId(lid);
-			tline->SetType(type);
-			hash_load[lid]=reinterpret_cast<unsigned long long int>(tline);
-			if(parent!=-1)
-			{
-				TraceLine * tparent = reinterpret_cast<TraceLine*>(hash_load[parent]);
-				tline->SetParent(tparent);
-				tparent->GetBranchPointer()->push_back(tline);
-			}
-			else
-			{
-				trace_lines.push_back(tline);
-			}
-			//std::cout << "Line node: " << line_node->name << " " <<lid << std::endl;
-			int counter= 0, pid =0; double x, y, z;
-			bit_node = line_node->children;
-			
-			//reading points
-			for ( ;bit_node; bit_node = bit_node->next)
-			{
-				TraceBit tbit;
-				if ( !xmlStrcmp(bit_node->name, BAD_CAST "TraceBit") )	
-				{
-					pid = xmlReadInt(bit_node,"ID",0);
-					x = xmlReadFloat(bit_node,"X",0);
-					y = xmlReadFloat(bit_node,"Y",0);
-					z = xmlReadFloat(bit_node,"Z",0);
-					//printf("pid %d\n",pid);
-					tbit.x = x; tbit.y = y; tbit.z = z; tbit.id = pid;
-					tline->AddTraceBit(tbit);
-					counter++;			
-				}				
-			}
-			
-		}
-	}	
-	printf("Done\n");
-	return true;
+  cout << "Started reading from " << filename << endl;
+  TiXmlDocument doc(filename);
+  doc.LoadFile();
+  TiXmlHandle docHandle( &doc );
+  TiXmlElement* lineElement =
+    docHandle.FirstChild("Trace").FirstChild("TraceLine").Element();
+  TiXmlElement* bitElement;
+  float lineID;
+  int lineType, lineParent, bitID;
+  double bitX, bitY, bitZ;
+  TraceLine * tline;
+  hash_map<unsigned int, unsigned long long int> hash_load;
+  while(lineElement)
+    {
+    if(lineElement->QueryFloatAttribute("ID", &lineID) != TIXML_SUCCESS)
+      {
+      cerr << "ERROR: TraceLine has no ID" << endl;
+      return false;
+      }
+    if(lineElement->QueryIntAttribute("Type", &lineType) != TIXML_SUCCESS)
+      {
+      lineType = 1;
+      }
+    if(lineElement->QueryIntAttribute("Parent", &lineParent) != TIXML_SUCCESS)
+      {
+      lineParent = -1;
+      }
+    tline = new TraceLine();
+    tline->SetId(lineID);
+    tline->SetType(lineType);
+    hash_load[lineID] = reinterpret_cast<unsigned long long int>(tline);
+    if(lineParent != -1)
+      {
+      TraceLine * tparent = reinterpret_cast<TraceLine*>(hash_load[lineParent]);
+      tline->SetParent(tparent);
+      tparent->GetBranchPointer()->push_back(tline);
+      }
+    else
+      {
+      trace_lines.push_back(tline);
+      }
+    bitElement = lineElement->FirstChildElement("TraceBit");
+    if(!bitElement)
+      {
+      cerr << "Failed to initialize bitElement" << endl;
+      }
+    while(bitElement)
+      {
+      if(bitElement->QueryIntAttribute("ID", &bitID) != TIXML_SUCCESS)
+        {
+        cerr << "ERROR: TraceBit missing ID" << endl;
+        return false;
+        }
+      if(bitElement->QueryDoubleAttribute("X", &bitX) != TIXML_SUCCESS)
+        {
+        cerr << "ERROR: TraceBit missing X value" << endl;
+        return false;
+        }
+      if(bitElement->QueryDoubleAttribute("Y", &bitY) != TIXML_SUCCESS)
+        {
+        cerr << "ERROR: TraceBit missing Y value" << endl;
+        return false;
+        }
+      if(bitElement->QueryDoubleAttribute("Z", &bitZ) != TIXML_SUCCESS)
+        {
+        cerr << "ERROR: TraceBit missing Z value" << endl;
+        return false;
+        }
+      TraceBit tbit;
+      tbit.x = bitX;
+      tbit.y = bitY;
+      tbit.z = bitZ;
+      tbit.id = bitID;
+      tline->AddTraceBit(tbit);
+      bitElement = bitElement->NextSiblingElement();
+      }
+    lineElement = lineElement->NextSiblingElement();
+    }
 }
 
 
