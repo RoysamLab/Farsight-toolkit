@@ -506,8 +506,8 @@ bool SegmentationResult::WriteToMETA()
 		outFile << featureNames.at(i) << "\n";
 	}
 
-	outFile << "ID" << "\n";
-	outFile << "CLASS" << std::endl;
+	outFile << "CLASS" << "\n";
+	outFile << "ID" << std::endl;
 
 	outFile.close();
 
