@@ -155,11 +155,12 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
       std::cout<< " \t deleted" <<std::endl;
       view->IDList.clear(); 
       view->sphereAct->VisibilityOff();
+	  view->poly_line_data->Modified();
+	  view->renWin->Render();
     }
     break;
   }
-  view->poly_line_data->Modified();
-  view->renWin->Render();
+
 }
 
 void View3d::PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata)
@@ -185,13 +186,26 @@ void View3d::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
     unsigned int cell_id = cell_picker->GetCellId();  
     view->IDList.push_back(cell_id);
     TraceLine *tline = reinterpret_cast<TraceLine*>(view->tobj->hashc[cell_id]);
-
+	view->HighlightSelected(tline);
     tline->Getstats();              //prints the id and end coordinates to the command prompt 
     view->sphereAct->SetPosition(pickPos);    //sets the selector to new point
     view->sphereAct->VisibilityOn();      //well it doesnt turn off again yet 
     view->poly_line_data->Modified();
   }
   view->renWin->Render();             //update the render window
+}
+void View3d::HighlightSelected(TraceLine* tline)
+{
+	TraceLine::TraceBitsType::iterator iter = tline->GetTraceBitIteratorBegin();
+	TraceLine::TraceBitsType::iterator iterend = tline->GetTraceBitIteratorEnd();
+
+  while(iter!=iterend)
+  {
+	  poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,1);
+	  ++iter;
+  }
+	
+
 }
 void View3d::deleteTrace(View3d* view,int id)
 {
