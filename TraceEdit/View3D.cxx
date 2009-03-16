@@ -135,28 +135,42 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
   {
     case 'l':
     {
-      std::cout<<"These lines";
-      for (int i = 0; i < view->IDList.size(); i++)
-      {
-        std::cout<<  "\t"<<view->IDList[i];   
-      } 
-      std::cout<< " \t are selected" <<std::endl;
+		if (view->IDList.size()<= 0)
+		{
+			std::cout<<  "Nothing Selected \n";
+		}
+		else
+		{
+		  std::cout<<"These lines";
+		  for (int i = 0; i < view->IDList.size(); i++)
+		  {
+			std::cout<<  "\t"<<view->IDList[i];   
+		  } 
+		  std::cout<< " \t are selected \n" ;
+		}
     }
     break;
     case 'd':
     {
-      std::cout<<"selected lines";
-      for (int i = 0; i < view->IDList.size(); i++)
-      {
-        std::cout<<  "\t"<<view->IDList[i];
-        view->deleteTrace(view, view->IDList[i]);
+		if(view->IDList.size()>=1)
+		{
+		  std::cout<<"selected lines \n";
+		  for (int i = 0; i < view->IDList.size(); i++)
+		  {
+			std::cout<<  "\t"<<view->IDList[i];
+			view->deleteTrace(view, reinterpret_cast<TraceLine*>(view->tobj->hashc[view->IDList[i]]));
 
-      } 
-      std::cout<< " \t deleted" <<std::endl;
-      view->IDList.clear(); 
-      view->sphereAct->VisibilityOff();
-	  view->poly_line_data->Modified();
-	  view->renWin->Render();
+		  } 
+		  std::cout<< " \t deleted" <<std::endl;
+		  view->IDList.clear(); 
+		  view->sphereAct->VisibilityOff();
+		  view->poly_line_data->Modified();
+		  view->renWin->Render();
+		}
+		else
+		{
+			std::cout<<  "Nothing to Delete \n";
+		}
     }
     break;
   }
@@ -207,10 +221,10 @@ void View3d::HighlightSelected(TraceLine* tline)
 	
 
 }
-void View3d::deleteTrace(View3d* view,int id)
+void View3d::deleteTrace(View3d* view,TraceLine *tline/*int id*/)
 {
   
-  TraceLine *tline = reinterpret_cast<TraceLine*>(view->tobj->hashc[id]);
+  /*TraceLine *tline = ;*/
   std::vector<unsigned int> * vtk_cell_ids = tline->GetMarkers();
 
   vtkIdType ncells; vtkIdType *pts;

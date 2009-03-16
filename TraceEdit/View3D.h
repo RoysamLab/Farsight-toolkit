@@ -89,7 +89,7 @@ public:
 	//vtkPointPicker *point_picker;
 	vtkCellPicker *cell_picker;
 	std::vector<int> IDList;
-	void deleteTrace(View3d* view,int id);
+	void deleteTrace(View3d* view,TraceLine *tline);
 	vtkSphereSource *sphere;
 	vtkPolyDataMapper *sphereMap;
 	vtkActor *sphereAct;

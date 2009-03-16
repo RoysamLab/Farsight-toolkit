@@ -65,19 +65,10 @@ int main (int argc, char* argv[])	{
 	act->SetPickable(1);
 	View.addAct(act);
 
-	/*if(argc >= 3)
-	{
-		std::cout<<"\t source image set for contour filter \n";
-		View.readImg(argv[2]);
-	}
-	if(argc >= 3)
-	{
-		std::cout<<"\t source image set for raycaster \n";
-		View.rayCast(argv[2]);
-	}*/
+
 	View.interact();
 	printf("returned from View.interact\n");
-	//return app.exec();
+	
 	//tobject.WriteToSWCFile("../myswc.swc");
 	
 }
