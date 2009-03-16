@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #############################################################################
 # A SCRIPT TO RUN THROUGH THE 5 LABEL TEST IMAGE FROM BEGINNING TO END:
+# THESE IMAGES CAN BE FOUND ON THE CENSSIS SERVER AT: /data/SHARE/Yousef/NN_Images
 ################################################################################
 import subprocess
 import sys
@@ -54,7 +55,8 @@ def main_menu():
   print ('\nOPTIONS:')
   print ('  1. RUN SEGMENTATION MODULE')
   print ('  2. VIEW PREVIOUSLY GENERATED RESULTS')
-  print ('  3. QUIT')
+  print ('  3. REGISTRATION/MONTAGING')
+  print ('  4. QUIT')
   choice = raw_input('Please enter selection: ')
   return choice
 ###############################################################################
@@ -269,6 +271,14 @@ def main():
     elif choice == '2':
       view_results()
     elif choice == '3':
+      from register_pairs import register
+      print("\nSTARTING REGISTRATION OF PAIRS")
+      register([os.getcwd()+os.sep,'NM_RegistrationPairs.txt'])
+      print("\n...DONE")
+      print("\nOPENING MONTAGE VIEWER")
+      subprocess.call(["MontageNavigator.exe"])
+      print("\nMONTAGE VIEWER CLOSED")
+    elif choice == '4':
       print("\nGOODBYE")
       return
 
