@@ -3679,7 +3679,10 @@ void SmoothWidths(vector<float> &widths)
 	vector<float> result;
 	for(i = 0; i < widths.size(); i++) {
 		if( i == 0) {
-			result.push_back((widths[i] + widths[i+1])/2);
+			if(widths.size() <= 1)
+				result.push_back(widths[i]);
+			else
+				result.push_back((widths[i] + widths[i+1])/2);
 		}
 		else {
 			if(i != widths.size() - 1) {

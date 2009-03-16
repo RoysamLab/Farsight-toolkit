@@ -48,16 +48,17 @@ int Cell_Binarization_3D(unsigned char *imgIn, int* imgOut, int R, int C, int Z,
 	//Added by Yousef on 11-18-2008: To save memory, divide the image into Blocks and 
 	//apply GC on each independently	
 	int *subImgBlock = new int[6];//[x1,y1,z1,x2,y2,z1]
+	int block_divisor = 3;
 	subImgBlock[4] = 0;
 	subImgBlock[5] = Z;
-	for(int i=0; i<R; i+=R/2)
+	for(int i=0; i<R; i+=R/block_divisor)
 	{
-		for(int j=0; j<C; j+=C/2)
+		for(int j=0; j<C; j+=C/block_divisor)
 		{
 			subImgBlock[0] = j;
-			subImgBlock[1] = (int)j+C/2;
+			subImgBlock[1] = (int)j+C/block_divisor;
 			subImgBlock[2] = i;
-			subImgBlock[3] = (int)i+R/2;
+			subImgBlock[3] = (int)i+R/block_divisor;
 			if(subImgBlock[1] > C)
 				subImgBlock[1] = C;
 			if(subImgBlock[3] > R)

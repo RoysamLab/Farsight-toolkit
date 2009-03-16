@@ -34,7 +34,7 @@ int main (int argc, char* argv[])	{
 			//tobject.ReadFromFeatureTracksFileForKymograph(argv[counter],num_loaded);
 			tobject.ReadFromFeatureTracksFile(argv[counter],num_loaded);
 		}
-		else if( strcmp(argv[counter]+len-3,"tif")==0)
+		else if( strcmp(argv[counter]+len-3,"tif")==0 || strcmp(argv[counter]+len-3, "pic")==0)
 		{
 			printf("I detected a tif file\n");
 			//scanf("%*c");

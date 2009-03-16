@@ -27,3 +27,4 @@ SET( Libraries
 ADD_EXECUTABLE( vtkTraceViewer  ${Sources})
 TARGET_LINK_LIBRARIES( vtkTraceViewer ${Libraries})
 
+INSTALL(TARGETS vtkTraceViewer DESTINATION bin)

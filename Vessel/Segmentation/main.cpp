@@ -136,8 +136,19 @@ int main(int argc, char**argv)
 
 	FileReaderType::Pointer reader = FileReaderType::New();
 	reader->SetFileName(argv[1]);
-	reader->Update();
+	try
+	{
+		reader->Update();
+	}
+	catch (itk::ExceptionObject &e)
+	{
+		std::cout << e << std::endl;
+		return 1;
+	}
+
 	ImageType::Pointer im = reader->GetOutput();
+
+	std::cout << "Image Loaded";
 
 	rwidth = im->GetLargestPossibleRegion().GetSize()[0];
 	rlength = im->GetLargestPossibleRegion().GetSize()[1];
@@ -583,7 +594,15 @@ int main(int argc, char**argv)
 			FileWriterType::Pointer writer = FileWriterType::New();
 			writer->SetFileName(argv[2]);
 			writer->SetInput(imout);
-			writer->Update();
+			try
+			{
+				writer->Update();
+			}
+			catch (itk::ExceptionObject &e)
+			{
+				std::cout << e << std::endl;
+				return 1;
+			}
 
 			char distance_map_file[1024];
 			strcpy(distance_map_file,argv[2]);
@@ -599,19 +618,43 @@ int main(int argc, char**argv)
 			DistanceMapFilterType::Pointer distfilter = DistanceMapFilterType::New();
 			distfilter->SetInput(imout);
 			distfilter->InputIsBinaryOn();
-			distfilter->Update();
+			try
+			{
+				distfilter->Update();
+			}
+			catch (itk::ExceptionObject &e)
+			{
+				std::cout << e << std::endl;
+				return 1;
+			}
 
 			typedef itk::ImageFileWriter<DistanceImageType> DistFileWriter;
 			DistFileWriter::Pointer dwrite = DistFileWriter::New();
 			dwrite->SetFileName(distance_map_file);
 			dwrite->SetInput(distfilter->GetOutput());
-			dwrite->Update();
+			try
+			{
+				dwrite->Update();
+			}
+			catch (itk::ExceptionObject &e)
+			{
+				std::cout << e << std::endl;
+				return 1;
+			}
 			
 			typedef itk::ImageFileWriter<OffsetImageType> OffsetFileWriter;
 			OffsetFileWriter::Pointer offwriter = OffsetFileWriter::New();
 			offwriter->SetFileName(vector_map);
 			offwriter->SetInput(distfilter->GetVectorDistanceMap());
-			offwriter->Update();
+			try
+			{
+				offwriter->Update();
+			}
+			catch (itk::ExceptionObject &e)
+			{
+				std::cout << e << std::endl;
+				return 1;
+			}
 
 			free(matrix);
 			free(lmatrix);
