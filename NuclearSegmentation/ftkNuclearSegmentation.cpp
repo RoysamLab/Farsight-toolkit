@@ -106,8 +106,10 @@ bool NuclearSegmentation::LabelsToObjects(void)
 		IdToIndexMap[id] = (int)myObjects.size() - 1;
 	}
 
-	LoadAssociationsFromFile(projectName + "_Associations.txt");
-	LoadClassInfoFromFile(projectName + "_class.txt");
+	if(associationFile.size())
+		LoadAssociationsFromFile(associationFile);
+	if(classFile.size())
+		LoadClassInfoFromFile(classFile);
 
 	return true;
 }
@@ -121,57 +123,67 @@ void NuclearSegmentation::LoadAssociationsFromFile(std::string fName)
 	if(!FileExists(fName.c_str()))
 		return;
 
-	ifstream inFile; 
-	inFile.open( PrependProjectPath(fName).c_str() );
-	if ( !inFile.is_open() )
+
+	TiXmlDocument doc;
+	if ( !doc.LoadFile( fName.c_str() ) )
 	{
-		std::cerr << "Failed to Load Document: " << fName << std::endl;
+		errorMessage = "Unable to load XML File";
 		return;
 	}
 
-	const int MAXLINESIZE = 512;	//Numbers could be in scientific notation in this file
-	char line[MAXLINESIZE];
-
-	std::vector< std::vector< float > > vals(0); 
-	inFile.getline(line, MAXLINESIZE);
-	while ( !inFile.eof() ) //Get all values
+	TiXmlElement* rootElement = doc.FirstChildElement();
+	const char* docname = rootElement->Value();
+	if ( strcmp( docname, "ObjectAssociationRules" ) != 0 )
 	{
-		std::vector< float > lvector(0);
-		char * pch = strtok (line," \t");
-		while (pch != NULL)
+		errorMessage = "Incorrect XML root Element: ";
+		errorMessage.append(rootElement->Value());
+		return;
+	}
+
+	std::string source = rootElement->Attribute("SegmentationSource");
+	int numMeasures = atoi( rootElement->Attribute("NumberOfAssociativeMeasures") );
+	int numObjects = atoi( rootElement->Attribute("NumberOfObjects") );
+
+	if( numObjects != myObjects.size() )
+		return;
+	
+	bool firstRun = true;
+	//Parents we know of: Object
+	TiXmlElement* parentElement = rootElement->FirstChildElement();
+	while (parentElement)
+	{
+		const char * parent = parentElement->Value();
+
+		if ( strcmp( parent, "Object" ) == 0 )
 		{
-			lvector.push_back( atof(pch) );
-			pch = strtok (NULL, " \t");
+			int id = atoi( parentElement->Attribute("ID") );
+			std::vector<float> feats = myObjects.at( IdToIndexMap[id] ).GetFeatures();
+
+			TiXmlElement *association = parentElement->FirstChildElement();
+			while (association)
+			{
+				std::string name = association->Attribute("Name");
+				float value = atof( association->Attribute("Value") );
+
+				if(firstRun)
+				{
+					featureNames.push_back( name );
+				}
+				feats.push_back(value);
+
+				association = association->NextSiblingElement();
+			}
+			firstRun = false;
+			myObjects.at( IdToIndexMap[id] ).SetFeatures(feats);
 		}
-
-		vals.push_back( lvector );
-		inFile.getline(line, MAXLINESIZE);
-	}
-	inFile.close();
-
-	std::vector< std::string > possibleNames;
-	possibleNames.push_back( "Nissl_sig" );
-	possibleNames.push_back( "Iba1_sig" );
-	possibleNames.push_back( "GFAP_sig" );
-	possibleNames.push_back( "EBA_sig" );
-
-	for (int i=0; i<(int)vals.at(0).size(); ++i)
-	{
-		featureNames.push_back( possibleNames.at(i) );
-	}
-
-	//Now add these features to the objects that we have:
-	int n = vals.size() > myObjects.size() ? (int)myObjects.size() : (int)vals.size();
-
-	for (int i=0; i<n; ++i)
-	{
-		std::vector<float> feats = myObjects.at(i).GetFeatures();
-		for (int j=0; j<(int)vals.at(i).size(); ++j)
+		else
 		{
-			feats.push_back(vals.at(i).at(j));
+			errorMessage = "Unrecognized parent element: ";
+			errorMessage.append(parent);
+			return;
 		}
-		myObjects.at(i).SetFeatures(feats);
-	}
+		parentElement = parentElement->NextSiblingElement();
+	} // end while(parentElement)
 }
 
 void NuclearSegmentation::LoadClassInfoFromFile( std::string fName )

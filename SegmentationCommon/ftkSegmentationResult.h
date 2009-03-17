@@ -51,6 +51,8 @@ public:
 	void SetProgramName(string name){ programName = name; };
 	void SetProjectPath(string path){ projectPath = path; };
 	void SetProjectName(string name){ projectName = name; };
+	void SetAssociationFile(string f){ associationFile = f; };
+	void SetClassFile(string f){ classFile = f; };
 	void AddDataFile(string fname){ dataFilenames.push_back(fname); };
 	void ClearDataFilenames(){ dataFilenames.clear(); };
 	void AddResultFile(string fname){ resultFilenames.push_back(fname); };
@@ -67,6 +69,8 @@ protected:
 	string projectName;  //A string that is common to all filenames for this project (xml file is projectName.xml)
 	vector<string> dataFilenames;	//the filenames of the data images  (no path, includes extension)
 	vector<string> resultFilenames;	//the filenames of the result (no path, includes extension) -label image for nuclei, xml tree for ...
+	string associationFile;
+	string classFile;
 
 	vector<Parameter> myParameters;
 	vector<Object> myObjects;

@@ -37,6 +37,8 @@ trace_params_id = '_TracingParameterValues'
 #output file ids:
 label_id = '_label'
 surf_id = '_surface'
+ass_feat_id = '_AssocFeatures'
+
 ###############################################################################
 def find_file(fname):
   found = False;
@@ -103,6 +105,7 @@ def run_wizard():
     trace_astro_xml = orig_base_name + iba1_id + trace_params_id + '.xml'
     trace_micro_xml = orig_base_name + gfap_id + trace_params_id + '.xml'
     ass_defs = orig_base_name + ass_def_id + '.xml'
+    ass_feats = orig_base_name + ass_def_id + ass_feat_id + '.XML'
   elif image_num=='2' or image_num=='3':
     print("GREAT CHOICE")
     crop_num = str(int(image_num)-1)
@@ -113,6 +116,7 @@ def run_wizard():
     trace_astro_xml = crop_base_name + crop_id + crop_num + iba1_id + trace_params_id + '.xml'
     trace_micro_xml = crop_base_name + crop_id + crop_num + gfap_id + trace_params_id + '.xml'
     ass_defs = crop_base_name + crop_id + crop_num + ass_def_id + '.xml'
+    ass_feats = crop_base_name + crop_id + crop_num + ass_def_id + ass_feat_id + '.XML'
   else:
     print("I DON'T KNOW THAT NUMBER, ABORTING")
     return
@@ -159,7 +163,10 @@ def run_wizard():
 
       print("\nCOMPUTING INTRINSIC FEATURES AND CREATING XML RESULT FILE...")  
       if find_file(nuc_image) and find_file(nuc_result):
-        subprocess.call(['compute_nuclei_features.exe', os.getcwd(), nuc_image, nuc_result])
+        if find_file(ass_feats):
+          subprocess.call(['compute_nuclei_features.exe', os.getcwd(), nuc_image, nuc_result, ass_feats])
+        else:
+          subprocess.call(['compute_nuclei_features.exe', os.getcwd(), nuc_image, nuc_result])
         print("\n...DONE\n  YOU MAY OPEN THE RESULT FROM THE FARSIGHT TOOLBAR")
       else:
         print("COULD NOT FIND INPUT FILES")
@@ -207,7 +214,10 @@ def run_wizard():
     elif choice == '6':
       print("\nCOMPUTING INTRINSIC FEATURES AND CREATING XML RESULT FILE...")  
       if find_file(nuc_image) and find_file(nuc_result):
-        subprocess.call(['compute_nuclei_features.exe', os.getcwd(), nuc_image, nuc_result])
+        if find_file(ass_feats):
+          subprocess.call(['compute_nuclei_features.exe', os.getcwd(), nuc_image, nuc_result, ass_feats])
+        else:
+          subprocess.call(['compute_nuclei_features.exe', os.getcwd(), nuc_image, nuc_result])
         print("\n...DONE\n  YOU MAY OPEN THE RESULT FROM THE FARSIGHT TOOLBAR")
       else:
         print("COULD NOT FIND INPUT FILES")

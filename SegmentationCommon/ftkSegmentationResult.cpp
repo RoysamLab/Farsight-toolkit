@@ -22,7 +22,9 @@ SegmentationResult::SegmentationResult(string projpath, string projname)
 
 	programName.clear();
 	dataFilenames.clear();		
-	resultFilenames.clear(); 
+	resultFilenames.clear();
+	associationFile.clear();
+	classFile.clear();
 	myParameters.clear();
 	myObjects.clear();
 	featureNames.clear();

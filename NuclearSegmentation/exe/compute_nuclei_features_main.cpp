@@ -6,17 +6,27 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-	if(argc < 3)
+	if(argc < 4)
 	{
 		std::cout<<"Usage: compute_nuclei_features <ProjectPath> <InputImageFileName> <SegmentationResultsFileName>\n";
 		return 0;
-	}	
+	}
     
 	std::string projectPath = argv[1];
 	std::string imageName = argv[2];
 	std::string resultsName = argv[3];
 	std::string projectName = imageName.substr(0,imageName.find_first_of("."));
 	ftk::NuclearSegmentation *segmentation = new ftk::NuclearSegmentation(projectPath,projectName);	
+
+	if(argc == 5)
+	{
+		segmentation->SetAssociationFile(argv[4]);
+	}
+	if(argc == 6)
+	{
+		segmentation->SetClassFile(argv[5]);
+	}
+
 	segmentation->LoadFromResult(imageName.c_str(), resultsName.c_str());	
 	segmentation->SaveAll();	
 	
