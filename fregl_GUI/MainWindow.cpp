@@ -33,7 +33,7 @@ MainWindow::MainWindow()
                    "PNG Files (*.png)\n"
                    "PIC Files (*.pic)\n");
   
-  setWindowTitle(tr("CHARLENE'S BEAUTIFUL IMAGE VIEWER"));
+  setWindowTitle(tr("FARSIGHT MONTAGE NAVIGATOR"));
 
   inDlg = 0;
 }
