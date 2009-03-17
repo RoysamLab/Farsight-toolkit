@@ -53,9 +53,9 @@ def find_file(fname):
 ###############################################################################
 def main_menu():
   print ('\nOPTIONS:')
-  print ('  1. RUN SEGMENTATION MODULE')
-  print ('  2. VIEW PREVIOUSLY GENERATED RESULTS')
-  print ('  3. REGISTRATION/MONTAGING')
+  print ('  1. RUN IMAGE PROCESSING MODULE')
+  print ('  2. VIEW RESULTS')
+  print ('  3. REGISTRATION DEMO')
   print ('  4. QUIT')
   choice = raw_input('Please enter selection: ')
   return choice
@@ -78,7 +78,7 @@ def result_menu():
   print("\nRESULT VIEWERS:")
   print("  1. VESSELS")
   print("  2. TRACES")
-  print("  4. EXIT MENU")
+  print("  3. EXIT MENU")
   choice = raw_input("Please enter selection: ")
   return choice      
 ###############################################################################
@@ -86,9 +86,9 @@ def run_wizard():
   print('\nLETS BEGIN IMAGE PROCESSING!!!\n')
 
   print('Which image would you like to work with:')
-  print('  1. ' + orig_base_name + orig_ext) 
-  print('  2. ' + crop_base_name + crop_id + '1' + crop_ext)
-  print('  3. ' + crop_base_name + crop_id + '2' + crop_ext)
+  print('  1. ' + orig_base_name) 
+  print('  2. ' + crop_base_name + crop_id + '1')
+  print('  3. ' + crop_base_name + crop_id + '2')
   image_num = raw_input("Which image would you like to work with? ")
 
   if image_num=='1':
@@ -97,7 +97,7 @@ def run_wizard():
     if yn=='n' or yn=='N':
       return
     nuc_image = orig_base_name + nuc_id + split_ext
-    nuc_result = orig_base_name + nuc_id + label_id + split_ext
+    nuc_result = orig_base_name + nuc_id + label_id + ".tiff"
     eba_image = orig_base_name + eba_id + split_ext
     eba_result = orig_base_name + eba_id + surf_id + split_ext
     trace_astro_xml = orig_base_name + iba1_id + trace_params_id + '.xml'
@@ -107,7 +107,7 @@ def run_wizard():
     print("GREAT CHOICE")
     crop_num = str(int(image_num)-1)
     nuc_image = crop_base_name + crop_id + crop_num + nuc_id + crop_ext
-    nuc_result = crop_base_name + crop_id + crop_num + nuc_id + label_id + crop_ext
+    nuc_result = crop_base_name + crop_id + crop_num + nuc_id + label_id + ".tiff"
     eba_image = crop_base_name + crop_id + crop_num + eba_id + crop_ext
     eba_result = crop_base_name + crop_id + crop_num + eba_id + surf_id + crop_ext
     trace_astro_xml = crop_base_name + crop_id + crop_num + iba1_id + trace_params_id + '.xml'
@@ -275,9 +275,9 @@ def main():
       print("\nSTARTING REGISTRATION OF PAIRS")
       register([os.getcwd()+os.sep,'NM_RegistrationPairs.txt'])
       print("\n...DONE")
-      print("\nOPENING MONTAGE VIEWER")
+      print("\nOPENING MONTAGE BROWSER")
       subprocess.call(["MontageNavigator.exe"])
-      print("\nMONTAGE VIEWER CLOSED")
+      print("\nMONTAGE BROWSER CLOSED")
     elif choice == '4':
       print("\nGOODBYE")
       return

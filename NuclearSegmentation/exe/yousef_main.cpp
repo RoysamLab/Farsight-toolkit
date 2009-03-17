@@ -160,8 +160,9 @@ int main(int argc, char* argv[])
 		typedef itk::ImageRegionIteratorWithIndex< SegmentedImageType > IteratorType;
 		IteratorType iterator1(image,image->GetRequestedRegion());
 		for(int i=0; i<(size1*size2*size3); i++)
-		{		
-			iterator1.Set(output_img[i]);			
+		{	
+			unsigned short val = unsigned short( output_img[i] );
+			iterator1.Set(val);			
 			++iterator1;	
 		}
 		
