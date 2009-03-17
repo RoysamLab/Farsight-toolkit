@@ -40,13 +40,10 @@ public:
 
 	typedef TIPixel IntensityPixelType;
 	typedef TLPixel LabelPixelType;
-	typedef float FloatPixelType;
 	typedef itk::Image< IntensityPixelType, VImageDimension > IntensityImageType;
 	typedef itk::Image< LabelPixelType, VImageDimension > LabelImageType;
-	typedef itk::Image< FloatPixelType, VImageDimension > FloatImageType;
 	typedef typename IntensityImageType::Pointer IntensityImagePointer;
 	typedef typename LabelImageType::Pointer LabelImagePointer;
-	typedef typename FloatImageType::Pointer FloatImagePointer;
 
 	itkNewMacro( Self );
 	
@@ -76,47 +73,27 @@ private:
 	void operator=(const Self&);		//purposely not implemented
 
 	//Internal Functions:
-	bool CreateGradientMagnitudeImage();
 	bool RunLabelGeometryFilter();
 	bool RunLabelStatisticsFilter();
 	bool RunTextureFilter();
 	void LabelImageScan();
-	void ReadLabelGeometryFeatures();
-	void ReadLabelStatisticsFeatures();
 	void CalculateScanFeatures();
-	void CalculateHistogramFeatures();
 	void SetHistogramParameters(int* numBins, int* lowerBound, int* upperBound);
-
-	void GetCentroid(TLPixel label);
-	void GetWeightedCentroid(TLPixel label);
-	void GetAxisLength(TLPixel label);
-	void GetBoundingBox(TLPixel label);
-
-	//Internal types:
-	typedef itk::LabelGeometryImageFilter< LabelImageType, IntensityImageType > LabelGeometryType;
-	typedef typename LabelGeometryType::Pointer LabelGeometryPointer;
-	typedef itk::LabelStatisticsImageFilter< IntensityImageType , LabelImageType > LabelStatisticsType;
-	typedef typename LabelStatisticsType::Pointer LabelStatisticsPointer;
 
 	//Internal Variables:
 	IntensityImagePointer intensityImage;	//Input intensity image;
 	LabelImagePointer labelImage;			//Input label image;
-	FloatImagePointer gmImage;				//Calculated gradient magnitude image;
-
-	LabelGeometryPointer labelGeometryFilter;		//Dirk's Filter;
-	LabelStatisticsPointer labelStatisticsFilter;	//ITK label statistics filter
 
 	std::vector< std::vector< typename LabelImageType::IndexType > > boundaryPix;	//boundary pixels for each label
 	std::vector< std::vector< typename LabelImageType::IndexType > > interiorPix;	//interior pixels for each label
-	std::vector< std::vector< LabelPixelType > > sharePix;				//number of edges shared between boundary pairs
-																		//Values stored once with greater label first (outer array)
-																		//example: sharePix[5][3] is correct, sharePix[3][5] does not exist
+	std::vector< std::map<TLPixel, int> > sharePix;				//number of edges shared between boundary pairs
+																//the map will connect neighbors to number of edges shared.
 
 	typedef std::map<TLPixel, IntrinsicFeatures> FeatureMapType;
-	std::vector< LabelPixelType > labels;		//Holds all of the Labels that have been found (including 0)
 	FeatureMapType featureVals;					//Holds all Features that have been calculated (including 0)
-
-
+	std::map<TLPixel, int> LtoIMap;				//Map the label to the index in vectors that it is stored
+	std::vector< LabelPixelType > labels;		//Holds all of the Labels that have been found (including 0)
+	
 	//OPTIONS
 	short int computationLevel;					//We have 3 levels of computation
 	bool computeHistogram;						//Requires Level 2
