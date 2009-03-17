@@ -10,7 +10,7 @@ def register(argv):
         sys.exit(1)
 
     f=open(argv[1],'r');
-    f_o = open(argv[1]+'.out','w')
+    f_o = open(argv[1]+'.failed_pairs','w')
     f_xforms = open('xxx_123.txt','w')
     names=[]
     xforms=[]
@@ -70,7 +70,6 @@ def register(argv):
 
     # TEMP FILE CLEANUP:
     print("\nCLEANING TEMP FILES...")
-    os.remove(argv[1]+'.out')
     os.remove('xxx_123.txt')
     print("DONE")
 

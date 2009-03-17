@@ -129,17 +129,26 @@ def register(pair_list, image_dir):
             f_xforms.write(from_image[:from_dot]+"_to_"+to_image[:to_dot]+"_transform.xml\n")
         else:
             f_o.write("From "+from_image+" to "+to_image+" failed\n")
-            #print "From "+from_image+" to "+to_image+" failed"
+            print "From "+from_image+" to "+to_image+" failed"
             
     # Perform joint registration write the xform list to a
     # temporary file and remove it after joint registration
     f_xforms.close()
+    f_o.close();
+    print("\nSTART register_joint.exe...")
     os.system('register_joint.exe xxx_123.txt')
-    os.system('rm xxx_123.txt')
+    print("DONE")
+    #os.system('rm xxx_123.txt')
 
     # perform montaging using the first image as the anchor
+    print("\nSTART...")
     os.system('mosaic_images.exe joint_transforms.xml '+names[0]+ " -path " + image_dir);
-
+    print("DONE")
+    
+    # TEMP FILE CLEANUP:
+    print("\nCLEANING TEMP FILES...")
+    os.remove('xxx_123.txt')
+    print("DONE")
 
 if __name__ == '__main__':
     if len(sys.argv) < 4:

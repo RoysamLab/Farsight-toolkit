@@ -117,12 +117,14 @@ fregl_util_read_image( std::string const & file_name, bool channel_set, int chan
 
       // Fuse the image
       if (first_channel) {
+        // Initialize the final image
         first_channel = false;
-        final_image = image;
+        final_image = ImageType::New();
+        final_image->SetRegions( region );
+        final_image->Allocate();
+        final_image->FillBuffer(0);
       }
-      else {
-        final_image = fregl_util_fuse_images(final_image, image);
-      }
+      final_image = fregl_util_fuse_images(final_image, image);
     }
   }
   else { // Assume the image format as 3D TIFF
@@ -167,7 +169,7 @@ fregl_util_read_image( std::string const & file_name, bool channel_set, int chan
 
   // Smooth the image if needed
   if (denoise) fregl_util_reduce_noise( final_image );
-  
+
   return final_image;
 }
    
