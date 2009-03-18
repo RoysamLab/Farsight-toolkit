@@ -103,6 +103,8 @@ public:
 	bool ReadFromFeatureTracksFile(char *filename, int type_offset);
 	bool ReadFromFeatureTracksFileForKymograph(char *filename,int type_offset);
 	bool WriteToSWCFile(char * filename);
+  int getNewLineId();
+  void splitTrace(int selectedCellId);
 	void CreatePolyDataRecursive(TraceLine* , vtkSmartPointer<vtkFloatArray> , vtkSmartPointer<vtkPoints> ,vtkSmartPointer<vtkCellArray>);
 	vtkSmartPointer<vtkPolyData> GetVTKPolyData();
 	void Print(std::ostream &c)
