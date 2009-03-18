@@ -1,6 +1,7 @@
+PROJECT(TraceEdit)
 SET( Sources
      View3D.h View3D.cxx
-    vtkTraceViewerDriver.cxx Trace.h Trace.cpp 
+    vtkTraceViewerDriver.cxx
 
 )
 
@@ -24,7 +25,8 @@ SET( Libraries
     TinyXML
 )
 
-ADD_EXECUTABLE( vtkTraceViewer  ${Sources})
-TARGET_LINK_LIBRARIES( vtkTraceViewer ${Libraries})
+ADD_LIBRARY(Trace Trace.h Trace.cpp)
+ADD_EXECUTABLE(trace_editor  ${Sources})
+TARGET_LINK_LIBRARIES( trace_editor ${Libraries} Trace)
 
-INSTALL(TARGETS vtkTraceViewer DESTINATION bin)
+INSTALL(TARGETS trace_editor DESTINATION bin)
