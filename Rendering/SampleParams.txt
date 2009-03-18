@@ -1,0 +1,5 @@
+1 1 3.5
+NM_crop2_EBA_surface.pic 0 1 1
+NM_crop2_GFAPTracedPoints.xml 1 1 0
+NM_crop2_Iba1TracedPoints.xml 1 0 0
+NM_crop2_Nuc_label.tiff 0 1 0

@@ -6,6 +6,7 @@
 #include <vtkImageImport.h>
 #include <vtkRenderLargeImage.h>
 #include <itkImage.h>
+#include <itkImageRegionIterator.h>
 
 
 #include <vtkSphereSource.h>
@@ -44,6 +45,8 @@
 #include <vtkPolyDataSource.h>
 #include <vtkDecimatePro.h>
 #include <vtkDiscreteMarchingCubes.h>
+
+#include "TraceEdit/Trace.h"
 //using namespace std;
 
 #pragma warning(disable:4996)
@@ -55,6 +58,7 @@
 
 
 typedef itk::Image<unsigned char, 3> InputImageType;
+typedef itk::ImageRegionIterator<InputImageType> IteratorType;
 typedef itk::VTKImageExport<InputImageType> ExportFilterType;
 
 
@@ -180,7 +184,30 @@ vtkSmartPointer<vtkPolyData> GetLines(char*filename_microgliatrace)
 	return poly;
 }
 
+void WriteTraceToPLY(char *filename_trace, char*filename_write)
+{
+	TraceObject *tobj = new TraceObject();
+	tobj->ReadFromRPIXMLFile(filename_trace);
+	//tobj->Print(std::cout);
+	vtkSmartPointer<vtkPolyData> poly = tobj->GetVTKPolyData();
+	poly->GetPointData()->SetScalars(NULL);
+	vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
+	writer->SetFileName(filename_write);
+	writer->SetFileTypeToBinary();
+	writer->SetInput(poly);
+	writer->Write();
+	delete tobj;
+	
 
+}
+void Binarize(InputImageType::Pointer im)
+{
+	IteratorType iter(im,im->GetLargestPossibleRegion());
+	for(iter.GoToBegin(); !iter.IsAtEnd(); ++iter)
+	{
+		iter.Set((iter.Get()!=0)?255:0);
+	}
+}
 void WriteLines(char*filename_microgliatrace, char *filename_write)
 {
 
@@ -347,6 +374,113 @@ void generate_stl(char *filenames_format_string, int min_n, int max_n,int step_n
 	//im->Delete();
 }
 
+
+void render_stl_file_new(char filename[][256], int n, double colors[500][3], bool mask[],float scale[])
+{
+	vtkRenderer* ren1 = vtkRenderer::New();
+	double val[6] ;
+	for(int counter=0; counter< n; counter++)
+	{
+		if(mask[counter]==0)
+			continue;
+		{
+		vtkSmartPointer<vtkPolyDataReader> reader=vtkSmartPointer<vtkPolyDataReader>::New();
+	//	printf("strlen = %d\n",strlen(filename[counter]));
+/*
+		if(filename[counter][strlen(filename[counter])-1]=='l')//lame way of detecting stl files
+			reader = vtkSmartPointer<vtkSTLReader>::New();
+		else
+			reader = vtkSmartPointer<vtkPLYReader>::New();
+			*/
+	//	printf("Loading %s\n",filename[counter]);
+		reader->SetFileName(filename[counter]);
+		/*vtkDecimatePro* decimater = vtkDecimatePro::New();
+		decimater->SetInput(reader->GetOutput());
+		decimater->PreserveTopologyOn();
+		decimater->SetTargetReduction(0.7);*/
+		vtkSmartPointer<vtkPolyDataMapper> mapper=vtkSmartPointer<vtkPolyDataMapper>::New();
+		mapper->SetInput(reader->GetOutput());
+	//	mapper->ImmediateModeRenderingOn();
+		mapper->Update();
+		vtkSmartPointer<vtkActor> actor=vtkSmartPointer<vtkActor>::New();
+		actor->SetMapper(mapper);
+		//actor->SetColor(0,1,0);
+		
+		actor->GetProperty()->SetColor(colors[counter][0],colors[counter][1],colors[counter][2]);
+		printf("Using color %lf %lf %lf\n",colors[counter][0],colors[counter][1],colors[counter][2]);
+	//	actor->RotateZ(90);
+		actor->SetScale(scale[0],scale[1],scale[2]);
+	//	actor->Print(cout);
+		actor->GetBounds(val);
+		printf("bounds are %lf %lf %lf %lf %lf %lf\n",val[0],val[1],val[2],val[3],val[4],val[5]);
+		vtkSmartPointer<vtkOutlineFilter> outlinef = vtkSmartPointer<vtkOutlineFilter>::New();
+		outlinef->SetInput(reader->GetOutput());
+		vtkSmartPointer<vtkPolyDataMapper> outlinemap = vtkSmartPointer<vtkPolyDataMapper>::New();
+		outlinemap->SetInput(outlinef->GetOutput());
+		vtkSmartPointer<vtkActor> outlineact = vtkSmartPointer<vtkActor>::New();
+		outlineact->SetMapper(outlinemap);
+		outlineact->GetProperty()->SetColor(1,1,1);
+		//outlineact->RotateZ(90);
+		actor->GetProperty()->SetLineWidth(1);
+		ren1->AddActor(actor);
+	//	ren1->AddActor(outlineact);
+	//	reader->Delete();
+		}
+		
+	}
+	ren1->SetBackground(0,0,0);
+	
+
+	vtkRenderWindow* rwin = vtkRenderWindow::New();
+	rwin->AddRenderer(ren1);
+	rwin->SetSize(1024,1024);
+	
+	ren1->ResetCamera();
+	/*vtkActorCollection* actcol = ren1->GetActors();
+	actcol->Print(cout);
+	vtkActor * a=actcol->GetLastActor();
+	if(a==NULL)
+		printf("a is null\n");
+	do
+	{
+		a->AddPosition(0,0,5000);
+		a->GetBounds(val);
+		printf("bounds are %lf %lf %lf %lf %lf %lf\n",val[0],val[1],val[2],val[3],val[4],val[5]);
+	}while(a!=actcol->GetLastActor());*/
+	
+	//val[3]=0;
+	//val[5]=0;
+	//ren1->ResetCamera(val);
+	/*ren1->GetActiveCamera()->SetFocalPoint(0,0,-5000);
+	ren1->GetActiveCamera()->SetPosition(val[0]/2,val[3]/2,5000);
+	ren1->GetActiveCamera()->ComputeViewPlaneNormal();
+	ren1->GetActiveCamera()->SetViewUp(0,1,0);
+	ren1->GetActiveCamera()->SetClippingRange(1,10000);
+	*/
+	ren1->GetActiveCamera()->Zoom(1.3);
+	printf("Distance to focal point %lf\n",ren1->GetActiveCamera()->GetDistance());
+	double *pos = ren1->GetActiveCamera()->GetPosition();
+	printf("Camera position %lf %lf %lf\n",pos[0],pos[1],pos[2]);
+	
+	//pos[2]=2355;
+	//ren1->GetActiveCamera()->SetPosition(pos);
+	//pos = ren1->GetActiveCamera()->GetPosition();
+	//printf("Camera position %lf %lf %lf\n",pos[0],pos[1],pos[2]);
+	//printf("Distance to focal point %lf\n",ren1->GetActiveCamera()->GetDistance());
+
+	vtkRenderWindowInteractor* iren = vtkRenderWindowInteractor::New();
+	iren->SetRenderWindow(rwin);
+
+	rwin->Render();
+	vtkRenderLargeImage *renderLarge=vtkRenderLargeImage::New();
+	renderLarge->SetInput(ren1);
+	renderLarge->SetMagnification(1);
+	vtkTIFFWriter *writer = vtkTIFFWriter::New();
+	writer->SetInput(renderLarge->GetOutput());
+	writer->SetFileName("astrocyte_traces.tif");
+	//writer->Write();
+	iren->Start();
+}
 void render_stl_file(char filename[][256], int n, double colors[500][3],bool mask[])
 {
 
@@ -508,7 +642,7 @@ void render_single_stl_file(char filename[],double colors[][3])
 	int counter = 0;
 	{
 		{
-		vtkPLYReader* reader=vtkPLYReader::New();
+		vtkPolyDataReader* reader=vtkPolyDataReader::New();
 	//	printf("strlen = %d\n",strlen(filename[counter]));
 /*
 		if(filename[counter][strlen(filename[counter])-1]=='l')//lame way of detecting stl files
@@ -610,7 +744,9 @@ void generate_stl_from_tif(char *filename_tif,char *stl_filename)
 {
 	vtkSmartPointer<vtkImageData> im;	
 	ExportFilterType::Pointer itkexporter = ExportFilterType::New();
-	itkexporter->SetInput(readImage<InputImageType>(filename_tif));
+	InputImageType::Pointer itkim = readImage<InputImageType>(filename_tif);
+	Binarize(itkim);
+	itkexporter->SetInput(itkim);
 	vtkSmartPointer<vtkImageImport> vtkimporter = vtkSmartPointer<vtkImageImport>::New();
 	ConnectPipelines(itkexporter,(vtkImageImport *)vtkimporter);
 	vtkimporter->Update();
@@ -637,7 +773,7 @@ void generate_stl_from_tif(char *filename_tif,char *stl_filename)
 	mapper->SetInput(smoothf->GetOutput());
 	printf("Begin updating mapper\n");
 	mapper->Update();
-	vtkSmartPointer<vtkPLYWriter> stlwriter = vtkSmartPointer<vtkPLYWriter>::New();
+	vtkSmartPointer<vtkPolyDataWriter> stlwriter = vtkSmartPointer<vtkPolyDataWriter>::New();
 	stlwriter->SetInput(smoothf->GetOutput());
 	stlwriter->SetFileName(stl_filename);
 	stlwriter->SetFileTypeToBinary();
@@ -654,36 +790,46 @@ int main(int argc, char**argv)
 		return 1;
 	}
 	FILE * fp = fopen(argv[1],"r");
+	if(fp==NULL)
+	{
+		printf("Couldn't load the parameters file\n");
+		return 1;
+	}
 	char buff[1024];
 	char input_filenames[500][256];
 	char stl_filenames[500][256];
 	double colors[500][3];
 	bool mask[500];
 	int counter=0;
+	float scale[3];
+	fscanf(fp,"%f %f %f\n",scale, scale+1,scale+2);
 	while(fgets(buff,1000,fp)!=NULL)
 	{
 		char filename[1024];
 
 		sscanf(buff,"%s %lf %lf %lf",filename,colors[counter],colors[counter]+1,colors[counter]+2);
-		if(strcmp(&filename[strlen(filename)-4],".txt")==0)
+		printf(" I read filename = |%s| colors[] = |%lf| |%lf| |%lf|\n",filename, colors[counter][0],colors[counter][1], colors[counter][2]);
+		if(strcmp(&filename[strlen(filename)-4],".xml")==0)
 		{
 			//trace
 			strcpy(input_filenames[counter],filename);
 			sprintf(stl_filenames[counter],"cache/cache_%s.ply",filename);
-			WriteLines(input_filenames[counter-1],stl_filenames[counter]);
+			WriteTraceToPLY(input_filenames[counter],stl_filenames[counter]);
 		}
 		else
 		{
 			//image
 			strcpy(input_filenames[counter],filename);
 			sprintf(stl_filenames[counter],"cache/cache_%s.ply",filename);
-			generate_stl_from_tif(input_filenames[counter-1],stl_filenames[counter]);
+			generate_stl_from_tif(input_filenames[counter],stl_filenames[counter]);
 		}
 		mask[counter] = 1;
 		counter++;
+		//fscanf(fp,"%*c");
 	}
 	fclose(fp);
-	render_stl_file(&stl_filenames[0],counter,colors,mask);
+	render_stl_file_new(&stl_filenames[0],counter,colors,mask,scale);
+	//render_single_stl_file(stl_filenames[0],&colors[0]);
 	return 0;
 
 }
