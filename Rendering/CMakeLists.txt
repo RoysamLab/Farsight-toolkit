@@ -19,5 +19,6 @@ ENDIF(ITK_FOUND)
 
 
 ADD_EXECUTABLE(render main.cpp)
-TARGET_LINK_LIBRARIES(main vtkRendering vtkCommon vtkIO vtksys vtkFiltering vtkHybrid)
-TARGET_LINK_LIBRARIES(main ITKBasicFilters ITKCommon ITKIO)
+TARGET_LINK_LIBRARIES(render vtkRendering vtkCommon vtkIO vtksys vtkFiltering vtkHybrid)
+TARGET_LINK_LIBRARIES(render ITKBasicFilters ITKCommon ITKIO)
+INSTALL(TARGETS render DESTINATION bin)
