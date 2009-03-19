@@ -18,7 +18,8 @@
 #include "itkImage.h"
 #include "itklaplacianrecursivegaussianimagefilternew.h"
 #include "itkImageRegionIteratorWithIndex.h"
-#include "itkApproximateSignedDistanceMapImageFilter.h"
+//#include "itkApproximateSignedDistanceMapImageFilter.h"
+#include <itkDanielssonDistanceMapImageFilter.h> 
 
 
 using namespace std;
@@ -72,20 +73,45 @@ int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int
 
 	///////////////////////
 	float* dImg = NULL;
+	float* minSImg = NULL;
 	if(UseDistMap == 1)
 	{
 		for(int i=0; i<r*c*z; i++)
 		{				
 			if(bImg[i]>0)
-				iterator1.Set(255.0);//IM[i]);
+				iterator1.Set(0.0);//IM[i]);
 			else
-				iterator1.Set(0.0);
+				iterator1.Set(255.0);
 			++iterator1;
 		
 		}
 		dImg = (float *) malloc(r*c*z*sizeof(float));
 		distMap(im, r, c, z,dImg);
 		iterator1.GoToBegin();
+		//get the smallest acceptable scale at each point
+		//Also, change the value in dImg into the largest acceptable scale
+		minSImg = (float *) malloc(r*c*z*sizeof(float));
+		for(int i=0; i<r*c*z; i++)
+		{
+			if(bImg[i] > 0)
+				int hhh = 1;
+			
+			int DD = (int) dImg[i];
+			int DD2 = 2*DD;
+			if(DD<=sigma_min)
+				minSImg[i] = sigma_min;
+			else if(DD>=sigma_max)
+				minSImg[i] = sigma_max;
+			else
+				minSImg[i] = DD;
+			if(DD2<=sigma_min)
+				dImg[i] = sigma_min;
+			else if(DD2>=sigma_max)
+				dImg[i] = sigma_max;
+			else
+				dImg[i] = DD2;			
+		}
+
 	}
 	//////////////////////////
 
@@ -119,7 +145,8 @@ int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int
 		{
 			for(int i=0; i<r*c*z; i++)
 			{			
-				if(sigma<=dImg[i]*2)
+				//if(sigma<=dImg[i]*2)
+				if(sigma>=minSImg[i] && sigma<=dImg[i])
 					IM_out[i] = (IM_out[i]>=IMG_tmp[i])? IM_out[i] : IMG_tmp[i];				
 				if(IM_out[i]<minIMout)
 					minIMout = IM_out[i];
@@ -282,11 +309,13 @@ int distMap(itk::SmartPointer<InputImageType> im, int r, int c, int z, float* IM
 
   //  The filter type is now instantiated using both the input image and the
   //  output image types.
-  typedef itk::ApproximateSignedDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;
+  //typedef itk::ApproximateSignedDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;  
+  typedef itk::DanielssonDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;
   DTFilter::Pointer dt_obj= DTFilter::New() ;
+  dt_obj->UseImageSpacingOn();
   dt_obj->SetInput(im) ;
-  dt_obj->SetInsideValue(0.0);
-  dt_obj->SetOutsideValue(255.0);
+  //dt_obj->SetInsideValue(0.0);
+  //dt_obj->SetOutsideValue(255.0);
   try{
 	 dt_obj->Update() ;
   }
@@ -299,9 +328,12 @@ int distMap(itk::SmartPointer<InputImageType> im, int r, int c, int z, float* IM
   long int i = 0;
   typedef itk::ImageRegionIteratorWithIndex< InputImageType > IteratorType;
   IteratorType iterate(dt_obj->GetOutput(),dt_obj->GetOutput()->GetRequestedRegion());
+  float mx = 0.0;
   while ( i<r*c*z)
   {
-	  IMG[i] = fabs(iterate.Get());	  
+	  IMG[i] = fabs(iterate.Get());	 
+	  if(IMG[i]>mx)
+		  mx = IMG[i];
       ++i;
  	  ++iterate;
   }
