@@ -27,6 +27,6 @@ SET( Libraries
 
 ADD_LIBRARY(Trace Trace.h Trace.cpp)
 ADD_EXECUTABLE(trace_editor  ${Sources})
-TARGET_LINK_LIBRARIES( trace_editor ${Libraries} Trace)
+TARGET_LINK_LIBRARIES( trace_editor ${Libraries} Trace TinyXML)
 
 INSTALL(TARGETS trace_editor DESTINATION bin)

@@ -267,7 +267,7 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 	for (int i = 0; i < (int)ls.size(); ++i)
 	{
 		TLPixel l = ls.at(i);
-		labels.push_back( unsigned short(l) );
+		labels.push_back( (unsigned short)l );
 		LtoIMap[ l ] = 	i;
 	}
 	
@@ -486,7 +486,7 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 			{
 				allSame = false;
 				int index = LtoIMap[v];
-				std::map<TLPixel,int>::iterator loc = sharePix.at( index ).find(p);
+				typename std::map<TLPixel,int>::iterator loc = sharePix.at( index ).find(p);
 				if( loc == sharePix.at( index ).end() )
 					sharePix.at( index )[p] = 1;
 				else
@@ -710,7 +710,7 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		int index = LtoIMap[currentLabel];
 		int zeroBound = sharePix.at( index )[0];
 		int nonzeroBound = 0;
-		std::map<TLPixel, int>::iterator it;
+		typename std::map<TLPixel, int>::iterator it;
 		for (it=sharePix.at( index ).begin(); it!=sharePix.at( index ).end(); ++it)
 		{
 			if( (*it).first != 0 )
@@ -822,7 +822,7 @@ float LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	int totalBound = 0;
 	int sharedBound = 0;
 	int index = LtoIMap[focusLabel];
-	std::map<TLPixel, int>::iterator it;
+	typename std::map<TLPixel, int>::iterator it;
 	for (it=sharePix.at(index).begin(); it!=sharePix.at(index).end(); ++it)
 	{
 		totalBound += (*it).second;
@@ -854,7 +854,7 @@ std::vector<TLPixel> LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	}
 	
 	int index = LtoIMap[label];
-	std::map<TLPixel, int>::iterator it;
+	typename std::map<TLPixel, int>::iterator it;
 	for (it=sharePix.at(index).begin(); it!=sharePix.at(index).end(); ++it)
 	{
 		nbs.push_back( (*it).first );

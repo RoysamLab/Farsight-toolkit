@@ -161,7 +161,7 @@ int main(int argc, char* argv[])
 		IteratorType iterator1(image,image->GetRequestedRegion());
 		for(int i=0; i<(size1*size2*size3); i++)
 		{	
-			unsigned short val = unsigned short( output_img[i] );
+			unsigned short val = (unsigned short)output_img[i];
 			iterator1.Set(val);			
 			++iterator1;	
 		}
