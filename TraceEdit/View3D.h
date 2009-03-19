@@ -56,7 +56,12 @@
 #include "vtkPlaybackWidget.h"
 #include "vtkPlaybackRepresentation.h"
 
-
+struct compTrace{
+TraceLine *Trace1;
+TraceLine *Trace2;
+int endPT1, endPT2;
+double dist; 
+};
 
 class View3d
 {
@@ -93,6 +98,7 @@ public:
 	vtkCellPicker *cell_picker;
 	std::vector<int> IDList;
 	void deleteTrace(View3d* view,TraceLine *tline);
+	void MinEndPoints(View3d* view);
 	vtkSphereSource *sphere;
 	vtkPolyDataMapper *sphereMap;
 	vtkActor *sphereAct;

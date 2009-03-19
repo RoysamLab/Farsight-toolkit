@@ -192,8 +192,7 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 		  for (int i = 0; i < view->IDList.size(); i++)
 		  {
 			std::cout<<  "\t"<<view->IDList[i];
-			view->deleteTrace(view, reinterpret_cast<TraceLine*>(view->tobj->hashc[view->IDList[i]]));
-
+			view->deleteTrace(view, reinterpret_cast<TraceLine*>(view->tobj->hashc[view->IDList[i]])); 
 		  } 
 		  std::cout<< " \t deleted" <<std::endl;
 		  view->IDList.clear(); 
@@ -204,6 +203,30 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 		else
 		{
 			std::cout<<  "Nothing to Delete \n";
+		}
+    }
+    break;
+	case 'm':
+    {
+		if(view->IDList.size()>=1)
+		{
+		  std::cout<<"selected lines \n";
+		  for (int i = 0; i < view->IDList.size(); i++)
+		  {
+			std::cout<<  "\t"<<view->IDList[i];
+			
+
+		  } 
+		  view->MinEndPoints(view);
+		  //std::cout<< " \t deleted" <<std::endl;
+		  view->IDList.clear(); 
+		  view->sphereAct->VisibilityOff();
+		  view->poly_line_data->Modified();
+		  view->renWin->Render();
+		}
+		else
+		{
+			std::cout<<  "Nothing to merge \n";
 		}
     }
     break;
@@ -256,10 +279,26 @@ void View3d::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
 	view->HighlightSelected(tline);
     tline->Getstats();              //prints the id and end coordinates to the command prompt 
     view->sphereAct->SetPosition(pickPos);    //sets the selector to new point
-    view->sphereAct->VisibilityOn();      //well it doesnt turn off again yet 
+    view->sphereAct->VisibilityOn();      //deleteTrace can turn it off 
     view->poly_line_data->Modified();
+	
   }
   view->renWin->Render();             //update the render window
+}
+void View3d::MinEndPoints(View3d* view)
+{
+	int numTrace = view->IDList.size();		int i;
+	std::list<TraceLine*> traceList;
+	std::cout<< "elements passed \t" << numTrace << std::endl;
+	for (i = 0;i<numTrace; i++)
+	{
+		traceList.push_back( reinterpret_cast<TraceLine*>(view->tobj->hashc[view->IDList[i]]));
+	}
+	traceList.unique();		//duplicates removed
+	if (numTrace != traceList.size())
+	{
+		std::cout<< "Removed\t" << numTrace - traceList.size()<< "\t duplicate elements from list\n";
+	}
 }
 void View3d::HighlightSelected(TraceLine* tline)
 {

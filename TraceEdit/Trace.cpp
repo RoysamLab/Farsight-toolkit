@@ -521,4 +521,4 @@ void TraceLine::Getstats()
   printf("First bit x: %4.2f y: %4.2f z: %4.2f \t", XF, YF, ZF); 
   printf("Endt bit x: %4.2f y: %4.2f z: %4.2f \n", XB, YB, ZB); 
 
-};
+}
