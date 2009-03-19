@@ -495,6 +495,14 @@ void TraceObject::splitTrace(int selectedCellId)
     *selectedLine->GetTraceBitsPointer(),
     bitItr,
     selectedLine->GetTraceBitIteratorEnd());
+  
+  //if the selected line had any branches, we have to reassign them to
+  //the new line
+  if(selectedLine->GetBranchPointer()->size() != 0)
+    {
+    *(newLine->GetBranchPointer()) = *(selectedLine->GetBranchPointer());
+    selectedLine->GetBranchPointer()->clear();
+    }
 
   this->trace_lines.push_back(newLine);
 }

@@ -61,9 +61,12 @@
 class View3d
 {
 public:
-//general render window variables
 
+  View3d();
+  ~View3d();
+  void Initialize(int argc, char **argv);
 
+  //general render window variables
 	vtkSmartPointer<vtkRenderer> ren;
 	vtkSmartPointer<vtkRenderWindow> renWin;
 	vtkSmartPointer<vtkRenderWindowInteractor> iren;
@@ -77,7 +80,7 @@ public:
 	void AddPlaybackWidget(char*);
 	vtkActor *lineAct;
 	vtkPolyDataMapper *lineMap;
-	vtkActor* LineAct(vtkPolyData *traces);
+	vtkActor* LineAct();
 
 //interactor variables and point picking
 	void interact();

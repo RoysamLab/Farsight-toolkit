@@ -11,49 +11,83 @@
 */
 #include "View3D.h"
 
-void View3d::RenderWin(){
-  /*  create the standard render window */
-ren = vtkRenderer::New();
-  ren->SetBackground(0,0,0);
-  renWin = vtkRenderWindow::New();
-    renWin->AddRenderer(ren);
-    renWin->SetSize(640, 480);          //window sixe can be dragged to fit, good start
-  iren = vtkRenderWindowInteractor::New();
-  renWin->SetInteractor(iren);
-  vtkInteractorStyleTrackballCamera* style = vtkInteractorStyleTrackballCamera::New();
-  iren->SetInteractorStyle( style );        //trackball control
-//  ren = vtkSmartPointer<vtkRenderer>::New();
-//  renWin = vtkSmartPointer<vtkRenderWindow>::New();
-//iren = vtkSmartPointer<vtkRenderWindowInteractor>::New(); 
-//vtkSmartPointer<vtkInteractorStyleTrackballCamera> style = vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
-//  ren->SetBackground(0,0,0);
-//  iren->SetInteractorStyle( style );  //trackball control
-//    renWin->AddRenderer(ren);
-//    renWin->SetSize(640, 480);          //window size can be dragged to fit, good start
-//    renWin->SetInteractor(iren);      
+View3d::View3d()
+{
+  this->lineAct = vtkActor::New();
+  this->lineMap = vtkPolyDataMapper::New();
+  this->ren = vtkRenderer::New();
+  this->renWin = vtkRenderWindow::New();
+  this->iren = vtkRenderWindowInteractor::New();
+  this->tobj = new TraceObject;
 }
-//the render window created
 
-vtkActor* View3d::LineAct(vtkPolyData *traces)
-{ /*  will take trace data and return a vtkactor  */
-  //traces->Print(std::cout);
-  poly_line_data = traces;
-  /*if(lineAct==NULL)*/
-  {
-    lineAct = vtkActor::New();
-    lineMap = vtkPolyDataMapper::New();
-  }
-  lineMap->SetInput(traces);
-  lineAct->SetMapper(lineMap);
-  lineAct->GetProperty()->SetColor(0,1,0);
+View3d::~View3d()
+{
+  this->lineAct->Delete();
+  this->lineMap->Delete();
+  this->ren->Delete();
+  this->renWin->Delete();
+  this->iren->Delete();
+  delete this->tobj;
+}
+
+void View3d::Initialize(int argc, char **argv)
+{
+	int num_loaded = 0;
+  // load as many files as possible. Provide offset for differentiating types
+	for(int counter=1; counter<argc; counter++)
+	{
+		int len = strlen(argv[counter]);
+		if(strcmp(argv[counter]+len-3,"swc")==0)
+		{
+			printf("I detected swc\n");
+			this->tobj->ReadFromSWCFile(argv[counter]);
+		}
+		else if (strcmp(argv[counter]+len-3,"xml")==0)
+		{
+			printf("I detected xml\n");
+			this->tobj->ReadFromRPIXMLFile(argv[counter]);
+		}
+		else if( strcmp(argv[counter]+len-3,"tks")==0)
+		{
+			printf("I detected tks\n");
+			this->tobj->ReadFromFeatureTracksFile(argv[counter],num_loaded);
+		}
+		else if( strcmp(argv[counter]+len-3,"tif")==0 ||
+             strcmp(argv[counter]+len-3, "pic")==0)
+		{
+			printf("I detected a tif file\n");
+			this->rayCast(argv[counter]);
+			this->AddVolumeSliders();
+		}
+		num_loaded++;
+	}
+}
+
+/*  set up the standard render window */
+void View3d::RenderWin()
+{
+  this->ren->SetBackground(0,0,0);
+  this->renWin->AddRenderer(ren);
+  this->renWin->SetSize(640, 480);          //window sixe can be dragged to fit, good start
+  this->renWin->SetInteractor(iren);
+  vtkInteractorStyleTrackballCamera* style = vtkInteractorStyleTrackballCamera::New();
+  this->iren->SetInteractorStyle( style );        //trackball control
+}
+
+/*  update trace data and return a vtkactor  */
+vtkActor* View3d::LineAct()
+{
+  this->poly_line_data = this->tobj->GetVTKPolyData();
+  this->lineMap->SetInput(this->poly_line_data);
+  this->lineAct->SetMapper(lineMap);
+  this->lineAct->GetProperty()->SetColor(0,1,0);
   printf("Point size %f\n",lineAct->GetProperty()->GetPointSize());
-  lineAct->GetProperty()->SetPointSize(1);
+  this->lineAct->GetProperty()->SetPointSize(1);
   printf("later: Point size %f\n",lineAct->GetProperty()->GetPointSize());
-  lineAct->GetProperty()->SetLineWidth(1);
+  this->lineAct->GetProperty()->SetLineWidth(1);
   return lineAct;
 }
-
-
 
 void View3d::AddPointsAsPoints(std::vector<TraceBit> vec)
 {
@@ -164,7 +198,7 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 		  std::cout<< " \t deleted" <<std::endl;
 		  view->IDList.clear(); 
 		  view->sphereAct->VisibilityOff();
-		  view->poly_line_data->Modified();
+      view->LineAct();
 		  view->renWin->Render();
 		}
 		else
@@ -184,7 +218,7 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
           std::cout << "Number of root traces after: " << view->tobj->GetTraceLinesPointer()->size() << endl;
           view->IDList.clear(); 
 		      view->sphereAct->VisibilityOff();
-          view->poly_line_data->Modified();
+          view->LineAct();
           view->renWin->Render();
         }
       else
