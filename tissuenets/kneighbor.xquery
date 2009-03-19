@@ -67,21 +67,26 @@ for $currObject in doc($nodes1)/objects/Nuclear_Features
 }
 };
 
-if (($nodes1 !='') and ($nodes2 != '')) then 
-let $sortedDistances := local:computeDistances($nodes1, $nodes2)
-return
-element distances {
-	attribute sources {data(doc($nodes1)/objects/@class)},
-	attribute targets {data(doc($nodes2)/objects/@class)},
+if ($n <= 0) then 
+   <distances> The number of neighbors cannot be 0 or negative</distances>
+else
+    if (($nodes1 !='') and ($nodes2 != '')) then 
+       let $sortedDistances := local:computeDistances($nodes1, $nodes2)
+       let $numOfCells := count(doc($nodes2)/objects/Nuclear_Features)
+       return
+          if ($n <= $numOfCells) then 
+          element distances {
+	          attribute sources {data(doc($nodes1)/objects/@class)},
+	          attribute targets {data(doc($nodes2)/objects/@class)},
 
-  for $currObject in 
-	distinct-values($sortedDistances/descendant-or-self::distances/edge/ID1)
-	let $i := $sortedDistances/descendant-or-self::distances/edge[ID1 = $currObject]
-	order by ($currObject cast as xs:integer)
-	return 
-		for $j in (1 to $n)
-		return
-			element edge {
+                  for $currObject in 
+	            distinct-values($sortedDistances/descendant-or-self::distances/edge/ID1)
+	            let $i := $sortedDistances/descendant-or-self::distances/edge[ID1 = $currObject]
+	            order by ($currObject cast as xs:integer)
+	            return 
+		       for $j in (1 to $n)
+		       return
+                           element edge {
 		        	element ID1 {data($i[$j]/ID1)},
 		        	element ID2 {data($i[$j]/ID2)},
                                 (: Convert Voxels to um's :)
@@ -90,9 +95,11 @@ element distances {
 		        	element Z {round(1.5 * data($i[$j]/Z))},
 				(: We now can compute the real distance with sqrt :)
                         	element dist {math:sqrt(data($i[$j]/dist))}
-		}
-(:			subsequence($i,$j,1) :)
+		            }
+                            (:	subsequence($i,$j,1) :)
 
-}
-else
-<distances> Node data is missing</distances>
+           }
+           else 
+                <distances> The number of neighbors cannot be more than the number of cells ({$numOfCells}) in the second file  </distances>
+   else
+        <distances> Node data is missing</distances>
