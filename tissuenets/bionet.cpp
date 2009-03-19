@@ -16,7 +16,7 @@
 #include "vtkVertexListIterator.h"
 #include "vtkSphereSource.h"
 // include tinyxml
-#include "tinyxml/tinyxml.h"
+#include "tinyxml.h"
 #include <stdio.h>
 #include <map>
 #include <vector>
@@ -219,7 +219,7 @@ bool readXML(char* graphFileName, float distance, vtkMutableUndirectedGraph* g)
   doc.LoadFile();
   TiXmlHandle docHandle( &doc );
   TiXmlElement* levelOneElement =
-    docHandle.FirstChild("Trace").FirstChild().Element();
+    docHandle.FirstChild("graph").Element();
   TiXmlElement *levelTwoElement, *levelThreeElement;
 
   char* cnodeValue, *csource, *ctarget, *cweight;
@@ -327,7 +327,7 @@ bool readXML(char* graphFileName, float distance, vtkMutableUndirectedGraph* g)
             cerr << "ERROR: encountered an edge with no target" << endl;
             return false;
             }
-          if(levelTwoElement->QueryIntAttribute("weight", (int *)&iweight) != TIXML_SUCCESS)
+          if(levelTwoElement->QueryDoubleAttribute("weight", (double *)&iweight) != TIXML_SUCCESS)
             {
             cerr << "ERROR: encountered an edge with no weight" << endl;
             return false;
@@ -366,6 +366,9 @@ bool readXML(char* graphFileName, float distance, vtkMutableUndirectedGraph* g)
           cerr << "Unrecognized Node Element! " << nodeName << endl;
           return false;
           }
+
+		levelTwoElement = levelTwoElement->NextSiblingElement();
+
         }
       }
     else
@@ -373,6 +376,8 @@ bool readXML(char* graphFileName, float distance, vtkMutableUndirectedGraph* g)
       cerr << "Incorrect Graph File Format! " << nodeName << endl;
       return false;
       }
+
+	  levelOneElement=levelOneElement->NextSiblingElement();
     }
 
   //Ad vertex ids
