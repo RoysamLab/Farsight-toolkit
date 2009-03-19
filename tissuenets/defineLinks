@@ -1,0 +1,39 @@
+import os
+import sys
+
+def usagemessage():
+   print ""
+   print "   ================================================================="
+   print "   = Error: Not enough parameters!                                 ="
+   print "   = Usage: python defineLinks output nodes1 nodes2 numofneighbors ="
+   print "   ================================================================="
+   print""
+   
+def message():
+   print""
+   print""
+   print "   ================================================================="
+   print "   = This program creates links from a biological object file.     ="
+   print "   = Example usage: python defineLinks links.xml neurons.xml 6     ="
+   print "   = The output is links.xml which defines links created from      ="
+   print "   = neurons with 6-nearest neighbors                              ="
+   print "   ================================================================="
+   print""
+   print""
+   
+if __name__ == "__main__":
+
+   message()
+    
+   startingDir = os.getcwd() # save our current directory
+   if len(sys.argv) < 5:
+	usagemessage()
+   else:
+   	print "Creating Links ..."
+   	#java -Xmx512m net.sf.saxon.Query -o:links.xml kneighbor.xquery nodes1=n.xml nodes2=m.xml n=6
+   	#os.system("java -Xmx1024m net.sf.saxon.Query -o:links.xml kneighbor.xquery xmlinput=n.xml n=6")
+   	os.system("java -Xmx1024m net.sf.saxon.Query -o:"+sys.argv[1]+" kneighbor.xquery nodes1=" + sys.argv[2]+ " nodes2="+sys.argv[3]+" n=" + sys.argv[4])
+   	print " "
+   	print "Links are created. Output is written to: "+sys.argv[1]
+   	os.chdir(startingDir) # change back to where we started
+   
