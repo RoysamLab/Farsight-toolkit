@@ -1264,6 +1264,7 @@ BioNetAndSelectionLink::BioNetAndSelectionLink() {
 };
 
 
+/*
 void BioNet::Kruskalmst() {
 
 	VTK_CREATE(vtkBoostKruskalMinimumSpanningTree,mst);
@@ -1281,11 +1282,13 @@ void BioNet::Kruskalmst() {
 	extract the MST from the graph. The output of vtkExtractSelectedGraph 
 	can be sent to the graph view.
 	*/
+/*
 	mstGraph=vtkExtractSelectedGraph::New();
-	//VTK_CREATE(vtkExtractSelectedGraph, mstGraph);
 	mstGraph->SetInput(0,this->g);
 	mstGraph->SetInput(1,mst->GetOutput());
-};
+	
+//};
+*/
 
 int main(int argc, char *argv[])
 {
@@ -1323,8 +1326,9 @@ int main(int argc, char *argv[])
 		network->Averages();
 		network->Display(network->GetRenderView(), degree,0, 0, "ChannelColors", 0, 5,"EdgeColors");
 	} else if (stdMst == 1) {
-			network->Kruskalmst();
-			network->Display(network->GetRenderView(), network->mstGraph,0, 0, "ChannelColors", 0, 5,"EdgeColors");			
+		// We remove parts that require classes from the nightly release version of VTK
+			//network->Kruskalmst();
+			//network->Display(network->GetRenderView(), network->mstGraph,0, 0, "ChannelColors", 0, 5,"EdgeColors");			
 	}
 	else { 
 		//Display the constructed network

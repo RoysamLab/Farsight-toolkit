@@ -69,8 +69,8 @@
 #include <vector>
 
 //Required for Graph operations
-#include <vtkBoostKruskalMinimumSpanningTree.h>
-#include <vtkBoostPrimMinimumSpanningTree.h>
+//#include <vtkBoostKruskalMinimumSpanningTree.h>
+//#include <vtkBoostPrimMinimumSpanningTree.h>
 #include <vtkTree.h>
 #include "vtkExtractSelectedGraph.h"
 
@@ -152,8 +152,8 @@ public:
 	vtkRenderWindow* win;
 	vtkMutableUndirectedGraph* g;
 
-	vtkBoostKruskalMinimumSpanningTree* mst;
-	vtkExtractSelectedGraph* mstGraph;
+	//vtkBoostKruskalMinimumSpanningTree* mst;
+	//vtkExtractSelectedGraph* mstGraph;
 
 	SelectedVerticesAndEdges* sve; // Temporary location for vertex and edge selections
 	SelectedVerticesAndEdges* finalSelections; //Selected edges and vertices will be stored here
@@ -199,7 +199,7 @@ public:
 	SelectedVerticesAndEdges* GetSelections(vtkSelectionLink* p);
 	void InsertIntoMap(set<double>* vertices, double d);
 	void UpdateView();
-	void Kruskalmst();
+	//void Kruskalmst();
 
 private:
 	//vtkMutableUndirectedGraph* g;
