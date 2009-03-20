@@ -3,7 +3,7 @@
 #TARGET_LINK_LIBRARIES( nucleus_seg maciejseg fscommon ITKCommon ITKIO)
 
 ADD_EXECUTABLE( fuse_image_stacks fuse_image_stacks.cxx)
-TARGET_LINK_LIBRARIES( fuse_image_stacks ITKCommon ITKIO)
+TARGET_LINK_LIBRARIES( fuse_image_stacks ITKCommon ITKIO fregl)
 
 #ADD_EXECUTABLE( convert_seg_result_from_idl convert_seg_result_from_idl.cxx)
 #TARGET_LINK_LIBRARIES( convert_seg_result_from_idl maciejseg vul
