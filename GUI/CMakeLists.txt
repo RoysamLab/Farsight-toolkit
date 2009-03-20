@@ -16,6 +16,7 @@ SET( GUI_SRCS
     SegmentationModel.cpp
     
     #ObjectSelection.cpp
+    #SliceView5D.cpp
     #VolumeWindow.cpp
 )
 
@@ -31,6 +32,7 @@ SET( GUI_HDRS
     SegmentationModel.h
     
     #ObjectSelection.h
+    #SliceView5D.h
     #VolumeWindow.h
 )
 

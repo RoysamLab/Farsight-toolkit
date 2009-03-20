@@ -225,12 +225,13 @@ void ControlBar::loadImage()
 		//If we already have a model then we can use it.  Otherwise we need a new one.
 
 		lastPath = QFileInfo(filename).absolutePath();
+
 		/*
-		VolumeWindow *vWin = new VolumeWindow(filename);
-		vWin->show();
+		SliceView5D *sliceWin = new SliceView5D(filename);
+		sliceWin->show();
 		*/
-		//vector<string> oneImage(0);
-		//oneImage.push_back(filename.toStdString());
+
+		
 		ftk::Image *newImg = NewFTKImage(filename.toStdString());
 		if (newImg)
 		{
@@ -243,6 +244,7 @@ void ControlBar::loadImage()
 		{
 			std::cerr << "Couldn't load Image" << std::endl;
 		}
+		
     }
 }
 
@@ -840,13 +842,15 @@ void ControlBar::OpenPythonWindow()
 
 	QString pythonFiles = installPath + QString("/python");
 	QString exeFiles = installPath + QString("/bin");
+	QString saxonFile = installPath + QString("/bin/saxon9.jar");
 
 	QString path1Cmd = QString("import sys;sys.path.append('") + pythonFiles + QString("');");
 	QString path2Cmd = QString("import os;os.environ['PATH'] = os.environ['PATH'] + ';") + exeFiles + QString("';");
-	//QString path2Cmd = QString("sys.path.append('") + exeFiles + QString("');");
+	QString path3Cmd = QString("os.environ['PATH'] = os.environ['PATH'] + ';") + pythonFiles + QString("';");
+	QString path4Cmd = QString("os.environ['CLASSPATH'] = ';") + saxonFile + QString("';");
 	QString importCmds = QString("from farsightutils import *;");
 	QString printCmd = QString("print 'FARSIGHT ENVIRONMENT';");
-	QString arg = QString(" -i -c ") + quote + path1Cmd + path2Cmd + importCmds + printCmd + quote;
+	QString arg = QString(" -i -c ") + quote + path1Cmd + path2Cmd + path3Cmd + path4Cmd + importCmds + printCmd + quote;
 	cmd.append(arg);
   
 	this->pythonProcess->startDetached(cmd);

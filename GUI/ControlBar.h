@@ -35,6 +35,7 @@
 #include "SegmentationWindow.h"
 #include "TableWindow.h"
 #include "PlotWindow.h"
+//#include "SliceView5D.h"
 //#include "VolumeWindow.h"
 
 //OTHER LOCAL INCLUDES

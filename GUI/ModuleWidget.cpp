@@ -245,7 +245,9 @@ void ModuleWidget::featToXML(void)
 		cerr << segmentation->GetErrorMessage() << endl;
 	if ( !segmentation->WriteToXML() )
 		cerr << segmentation->GetErrorMessage() << endl;
-	if ( !segmentation->WriteToMETA() )
+	//if ( !segmentation->WriteToMETA() )
+	//	cerr << segmentation->GetErrorMessage() << endl;
+	if ( !segmentation->WriteToLibSVM() )
 		cerr << segmentation->GetErrorMessage() << endl;
 }
 
