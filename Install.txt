@@ -35,6 +35,7 @@ updated 7/3/08
 	3. VTK (latest)
 		CMAKE w/ Doc,Examples,Shared,Testing set to OFF
     		The embedded python shell needs VTK_USE_GUISUPPORT + VTK_USE_QVTK set to ON
+		Tissue Nets needs VTK_USE_BOOST set to ON
     		See PYTHON.txt if you'd like to enable Python wrapping for VTK
 
 
