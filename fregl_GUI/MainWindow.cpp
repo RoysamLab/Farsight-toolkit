@@ -72,7 +72,7 @@ void MainWindow::createActions()
   //connect(saveAsAction, SIGNAL(triggered()), this, SLOT(saveImageAs()));
   
   saveAsAction = new QAction(tr("Save &ROI..."), this);
-  saveAsAction->setStatusTip(tr("Save the seledted region of interest as a new 3D image"));
+  saveAsAction->setStatusTip(tr("Save the selected region of interest as a new 3D image"));
   connect(saveAsAction, SIGNAL(triggered()), this, SLOT(saveROIAs()));
   
   exitAction = new QAction(tr("E&xit"), this);
@@ -85,6 +85,10 @@ void MainWindow::createActions()
   deleteAction->setStatusTip(tr("Delete the selected ROI"));
   connect(deleteAction, SIGNAL(triggered()), this, SLOT(deleteROI()));
 
+  defineAction = new QAction(tr("Define &ROI..."), this);
+  defineAction->setStatusTip(tr("Define new ROI"));
+  connect(defineAction, SIGNAL(triggered()), this, SLOT(defineROI()));
+  
   windowActionGroup = new QActionGroup(this);
 }
 
@@ -105,6 +109,7 @@ void MainWindow::createMenus()
   fileMenu->addAction(openAction);
   fileMenu->addAction(saveAsAction);
   fileMenu->addAction(deleteAction);
+  //fileMenu->addAction(defineAction);
   fileMenu->addSeparator();
   fileMenu->addAction(exitAction);
 }
@@ -155,6 +160,13 @@ void MainWindow::deleteROI()
   inDlg->deleteROI();
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
+void MainWindow::defineROI()
+{
+  // A function to be implemented. A pope-up window should allow input
+  // of the position of the top-left corner and the size of the box. 
+}
 ////////////////////////////////////////////////////////////////////////////////
 void MainWindow::closeEvent(QCloseEvent *event)
 {

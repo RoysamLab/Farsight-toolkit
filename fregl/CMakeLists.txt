@@ -18,7 +18,7 @@ AUX_SOURCE_DIRECTORY( Templates fregl_sources )
 
 ADD_LIBRARY( fregl ${fregl_sources} )
 
-TARGET_LINK_LIBRARIES( fregl fscommon FTKImage rgrl vil3d vnl vbl ITKCommon
+TARGET_LINK_LIBRARIES( fregl FTKImage rgrl vil3d vnl vbl ITKCommon
 ITKNumerics ITKIO TinyXML)
 
 #IF(BUILD_TESTING)

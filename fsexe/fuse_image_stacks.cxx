@@ -12,12 +12,14 @@
 
 #include "vnl/vnl_math.h"
 
-#include <Common/fsc_channel_accessor.h>
+//#include <Common/fsc_channel_accessor.h>
+#include <fregl/fregl_util.h>
 
 typedef itk::Image< unsigned char, 3 > ImageType;
 typedef itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
 typedef itk::ImageRegionIterator< ImageType > RegionIterator;
 
+/*
 ImageType::Pointer
 read_image( std::string const & file_name, int channel )
 {
@@ -56,7 +58,7 @@ read_image( std::string const & file_name, int channel )
   }
   return image;
 }
-
+*/
 
 int main(int argc, char* argv[])
 {
@@ -73,8 +75,8 @@ int main(int argc, char* argv[])
   if (argc == 5) channel = atoi(argv[4]);
 
   ImageType::Pointer image1, image2, image_out;
-  image1 = read_image( filename1, channel );
-  image2 = read_image( filename2, channel );
+  image1 = fregl_util_read_image( filename1, true, channel, false );
+  image2 = fregl_util_read_image( filename2, true, channel, false );
 
   // Perform the fusing here
   //

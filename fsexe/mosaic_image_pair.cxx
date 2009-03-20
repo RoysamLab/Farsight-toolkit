@@ -21,7 +21,6 @@
 
 #include <vul/vul_arg.h>
 #include <vul/vul_file.h>
-#include <Common/fsc_channel_accessor.h>
 #include <fregl/fregl_joint_register.h>
 #include <fregl/fregl_space_transformer.h>
 #include <fregl/fregl_util.h>
@@ -31,6 +30,8 @@
 #include "itkRGBAPixel.h"
 #include "itkRGBPixel.h"
 #include "itkImageFileWriter.h"
+#include "itkImageRegionConstIterator.h"
+#include "itkImageRegionIterator.h"
 
 typedef unsigned char                    InputPixelType;
 typedef itk::Image< InputPixelType, 3 >  ImageType;
@@ -38,47 +39,6 @@ typedef itk::RGBPixel< unsigned char >   OutputPixelType;
 typedef itk::Image< OutputPixelType, 3 > ColorImageType;
 typedef itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
 typedef itk::ImageRegionIterator< ColorImageType > RegionIterator;
-
-/*
-ImageType::Pointer
-read_image( std::string const & file_name, int channel )
-{
-  std::cout<<"Reading the image "<<file_name<<std::endl;
-
-  ImageType::Pointer image;
-
-  // Get pixel information
-  itk::TIFFImageIO::Pointer io = itk::TIFFImageIO::New();
-  io->SetFileName(file_name);
-  io->ReadImageInformation();
-  int pixel_type = (int)io->GetPixelType();
-  std::cout<<"Pixel Type = "<<pixel_type<<std::endl; //1 - grayscale, 2-RGB, 3-RGBA, etc.,
-
-  if (pixel_type == 3) { //RGBA pixel type
-    typedef fsc_channel_accessor<itk::RGBAPixel<unsigned char>,3 > ChannelAccType;
-    ChannelAccType channel_accessor(file_name);
-    image = channel_accessor.get_channel(ChannelAccType::channel_type(channel));
-  }
-  else if (pixel_type == 2) { //RGA pixel type
-    typedef fsc_channel_accessor<itk::RGBPixel<unsigned char>,3 > ChannelAccType;
-    ChannelAccType channel_accessor(file_name);
-    image = channel_accessor.get_channel(ChannelAccType::channel_type(channel));
-  }
-  else {// Gray image
-    typedef itk::ImageFileReader< ImageType > ReaderType;
-    ReaderType::Pointer reader = ReaderType::New();
-    reader->SetFileName( file_name );
-    try {
-      reader->Update();
-    }
-    catch(itk::ExceptionObject& e) {
-      vcl_cout << e << vcl_endl;
-    }
-    image =  reader->GetOutput();
-  }
-  return image;
-}
-*/
 
 int
 main(  int argc, char* argv[] )

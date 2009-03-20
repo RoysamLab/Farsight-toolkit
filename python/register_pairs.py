@@ -75,6 +75,6 @@ def register(argv):
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
-        print 'Usage: '+sys.argv[0]+' image_dir pair_list'
+        print 'Usage: '+sys.argv[0]+' image_dir pair_list_file'
         sys.exit(1)
     register(sys.argv[1:])

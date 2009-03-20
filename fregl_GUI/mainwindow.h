@@ -28,6 +28,7 @@ private slots:
   void    saveImageAs();
   void    saveROIAs();
   void    deleteROI();
+  void    defineROI();
 
 private:
   void    createActions();
@@ -38,6 +39,7 @@ private:
   QAction *openAction;
   QAction *saveAsAction;
   QAction *deleteAction;
+  QAction *defineAction;
   QAction *exitAction;
   
   QAction *aboutAction;

@@ -1,7 +1,6 @@
 //: Executable program to blend 2 3D images and generate 1 2D-projected output
 //
 #include <vul/vul_arg.h>
-#include <Common/fsc_channel_accessor.h>
 #include <fregl/fregl_joint_register.h>
 #include <fregl/fregl_space_transformer.h>
 #include <fregl/fregl_util.h>
@@ -36,6 +35,7 @@ typedef itk::RescaleIntensityImageFilter< FloatImageType2D, ImageType2D> Rescale
 typedef itk::CastImageFilter< FloatImageType, ImageType > CastFilterType;
 typedef itk::CastImageFilter< ImageType, FloatImageType > CastFilterType2;
 
+/*
 ImageType::Pointer
 read_image( std::string const & file_name, int channel )
 {
@@ -76,6 +76,7 @@ read_image( std::string const & file_name, int channel )
 
   return image ;
 }
+*/
 
 int
 main(  int argc, char* argv[] )
@@ -104,8 +105,8 @@ main(  int argc, char* argv[] )
   std::string from_image_name = arg_img_path()+std::string("/")+arg_file_from();
   std::string to_image_name = arg_img_path()+std::string("/")+arg_file_to();
   ImageType::Pointer from_image, to_image;
-  from_image = read_image( from_image_name, arg_channel() );
-  to_image = read_image( to_image_name, arg_channel() );
+  from_image = fregl_util_read_image( from_image_name, arg_channel.set(), arg_channel() );
+  to_image = fregl_util_read_image( to_image_name, arg_channel.set(), arg_channel() );
 
   // Set the space transformer
   //

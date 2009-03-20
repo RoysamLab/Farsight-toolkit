@@ -1,5 +1,5 @@
 #include <fregl/fregl_util.h>
-#include <Common/fsc_channel_accessor.h>
+//#include <Common/fsc_channel_accessor.h>
 #include "itkImageSliceIteratorWithIndex.h"
 #include "itkImageLinearIteratorWithIndex.h"
 #include "itkRescaleIntensityImageFilter.h"
@@ -12,9 +12,11 @@
 #include "itkRGBAPixel.h"
 #include "itkRGBPixel.h"
 #include "itkImageFileReader.h"
+#include "itkImageFileWriter.h"
 
 #include <vtkImageData.h>
 #include <FTKImage/vtkLSMReader.h>
+#include <FTKImage/ftkImage.h>
 
 typedef itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
 typedef itk::ImageRegionIterator< ImageType > RegionIterator;
@@ -43,130 +45,47 @@ fregl_util_fuse_images(ImageType::Pointer image1, ImageType::Pointer image2)
 ImageType::Pointer
 fregl_util_read_image( std::string const & file_name, bool channel_set, int channel, bool denoise )
 {
-  std::cout<<"Reading the image "<<file_name<<std::endl;
-  ImageType::Pointer final_image;
+  // Read in the image using ftkImage, which serves as a reader. It is
+  // capable of reading images of different format and dealing with
+  // multiple channels, whether data or color channels.
+
+  ftk::Image imageReader;
+  imageReader.LoadFile( file_name );
+  ImageType::Pointer final_image = ImageType::New();
   
-  // First, try out the lsm format
-  vtkLSMReader * lsmR = vtkLSMReader::New();
-  lsmR->SetFileName(file_name.c_str());
-  if (!lsmR->OpenFile()) {
-    std::cerr<<"Cannot access "<<file_name<<std::endl;
-    return 0;
-  }
-
-  //std::cout<<"channel_set = "<<channel_set<<std::endl;
-  //std::cout<<"channel = "<<channel<<std::endl;
-
   // get the extension
   std::string ext;
   const std::string dot = ".";
   std::string::size_type po = file_name.find_last_of(dot);
   ext = file_name.substr(po+1,file_name.length()-1);
-  if (ext=="lsm" || ext=="LSM"){ // LSM image
-    lsmR->Update();
-    int numChannels = lsmR->GetNumberOfChannels();
-    int numTimes = lsmR->GetNumberOfTimePoints();
-    std::cout<<"Number of channels = "<<numChannels<<std::endl;
-    //std::cout<<"numTimes = "<<numTimes<<std::endl;
-    
-    if ( numTimes > 1 ) {
-      std::cerr <<"Cannot register images of time sequence"<<std::endl;
-      return 0;
-    }
-    vtkImageData * vimdata;
-    int imsize, size_x, size_y, size_z;
-    int extent[6]; //recording dimensions of the images. extent[0,2,4]
-                   //is the min location, and extent[1,3,5] is the max
-                   //location in 3D
-    bool first_channel = true;
+  ftk::Image::Info* info = imageReader.GetImageInfo();
+  int numChannels = info->numChannels;
+  
+  // Have to give special care to lsm images, since channels are
+  // extracted and fused for registration if channel_set is false
+  if ( !channel_set && (ext=="lsm" || ext=="LSM") ) {  
+    ImageType::Pointer image = imageReader.GetItkPtr<unsigned char>(0, 0);
+    final_image->SetRegions( image->GetBufferedRegion() );
+    final_image->Allocate();
+    final_image->FillBuffer(0);
     for (int counter=0; counter < numChannels; counter++) {
-      if (channel_set) {
-        if (counter!=channel) continue;
-      }
-
-      std::cout<<"Channel "<<counter<<" = "<<lsmR->GetChannelName(counter)<<std::endl;
-      int time_stamp = 0;
-      vimdata = lsmR->GetTimePointOutput(time_stamp,counter);
-      lsmR->Update();
-      vimdata->GetExtent(extent);
-      size_x = extent[1]-extent[0]+1;
-      size_y = extent[3]-extent[2]+1;
-      size_z = extent[5]-extent[4]+1;
-      imsize = (size_z)*(size_y)*(size_x);
-      
-      unsigned char *channel_data = (unsigned char*) vimdata->GetScalarPointer();
-      ImageType::Pointer image = ImageType::New();
-      ImageType::IndexType start;
-      start[0] = 0; // first index on X
-      start[1] = 0; // first index on Y
-      start[2] = 0; // first index on Z
-      
-      ImageType::SizeType size;
-      size[0] = size_x; // size along X
-      size[1] = size_y; // size along Y
-      size[2] = size_z; // size along Z
-      
-      ImageType::RegionType region;
-      region.SetSize( size );
-      region.SetIndex( start );
-      
-      image->SetRegions( region );
-      image->Allocate();
-      
-      image->GetPixelContainer()->SetImportPointer( channel_data, sizeof(unsigned char), false );
-
-      // Fuse the image
-      if (first_channel) {
-        // Initialize the final image
-        first_channel = false;
-        final_image = ImageType::New();
-        final_image->SetRegions( region );
-        final_image->Allocate();
-        final_image->FillBuffer(0);
-      }
-      final_image = fregl_util_fuse_images(final_image, image);
+       image = imageReader.GetItkPtr<unsigned char>(0, counter);
+       final_image = fregl_util_fuse_images(final_image, image);
     }
   }
-  else { // Assume the image format as 3D TIFF
-    // Get pixel information
-    itk::TIFFImageIO::Pointer io = itk::TIFFImageIO::New();
-    io->SetFileName(file_name);
-    io->ReadImageInformation();
-    int pixel_type = (int)io->GetPixelType();
-    std::cout<<"Pixel Type = "<<pixel_type<<std::endl; //1 - grayscale, 2-RGB, 3-RGBA, etc.,
-    
-    if (pixel_type == 3) { //RGBA pixel type
-      if (!channel_set) {
-        std::cerr <<"The channel not selected."<<std::endl;
-        return 0;
-      }
-      typedef fsc_channel_accessor<itk::RGBAPixel<unsigned char>,3 > ChannelAccType;
-      ChannelAccType channel_accessor(file_name);
-      final_image = channel_accessor.get_channel(ChannelAccType::channel_type(channel));
-    }
-    else if (pixel_type == 2) { //RGA pixel type
-      if (!channel_set) {
-        std::cerr <<"The channel not selected."<<std::endl;
-        return 0;
-      }
-      typedef fsc_channel_accessor<itk::RGBPixel<unsigned char>,3 > ChannelAccType;
-      ChannelAccType channel_accessor(file_name);
-      final_image = channel_accessor.get_channel(ChannelAccType::channel_type(channel));
-    }
-    else {// Gray image
-      typedef itk::ImageFileReader< ImageType > ReaderType;
-      ReaderType::Pointer reader = ReaderType::New();
-      reader->SetFileName( file_name );
-      try {
-        reader->Update();
-      }
-      catch(itk::ExceptionObject& e) {
-        vcl_cout << e << vcl_endl;
-      }
-      final_image =  reader->GetOutput();
-    }  
+  else { // return one single channel
+    std::cout<<"Number of channels = "<<numChannels<<std::endl;
+    std::cout<<"Channel "<<channel<<" extracted"<<std::endl;
+    std::cout<<"bytePerPix = "<<int(info->bytesPerPix)<<std::endl;
+    ImageType::Pointer image = imageReader.GetItkPtr<unsigned char>(0, channel);
+    final_image->SetRegions( image->GetBufferedRegion() );
+    final_image->Allocate();
+    final_image->FillBuffer(0);
+    // What it does here is simply to copy the content of image to
+    // final_image
+    final_image = fregl_util_fuse_images(final_image, image);
   }
-
+  
   // Smooth the image if needed
   if (denoise) fregl_util_reduce_noise( final_image );
 

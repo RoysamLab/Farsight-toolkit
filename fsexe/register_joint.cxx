@@ -27,8 +27,7 @@
 int
 main(  int argc, char* argv[] )
 {
-  vul_arg< vcl_string > arg_in_file     ( 0, "pairwise xform xml list" 
-);
+  vul_arg< vcl_string > arg_in_file     ( 0, "A file containing filenames of xml files, each containing a pairwise transformation." );
   vul_arg< vcl_string > arg_xml_file    ( "-output", "Output xml filename","joint_transforms.xml" );
 
   vul_arg< double > arg_multiplier    ( "-multiplier", "The multiplier for the error scale. 4 is a good value.",0);

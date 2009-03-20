@@ -32,53 +32,11 @@
 #include <fregl/fregl_pairwise_register.h>
 #include <fregl/fregl_reg_record.h>
 #include <fregl/fregl_util.h>
-#include <Common/fsc_channel_accessor.h>
 
 typedef unsigned char                   InputPixelType;
 typedef itk::Image< InputPixelType, 3 > ImageType3D;
 typedef float                           InternalPixelType;
 typedef itk::Image<InternalPixelType, 3 > InternalImageType;
-
-/*
-ImageType3D::Pointer
-read_image( std::string const & file_name, int channel )
-{
-  std::cout<<"Reading the image "<<file_name<<std::endl;
-
-  ImageType3D::Pointer image;
-
-  // Get pixel information
-  itk::TIFFImageIO::Pointer io = itk::TIFFImageIO::New();
-  io->SetFileName(file_name);
-  io->ReadImageInformation();
-  int pixel_type = (int)io->GetPixelType();
-  std::cout<<"Pixel Type = "<<pixel_type<<std::endl; //1 - grayscale, 2-RGB, 3-RGBA, etc.,
-
-  if (pixel_type == 3) { //RGBA pixel type
-    typedef fsc_channel_accessor<itk::RGBAPixel<unsigned char>,3 > ChannelAccType;
-    ChannelAccType channel_accessor(file_name);
-    image = channel_accessor.get_channel(ChannelAccType::channel_type(channel));
-  }
-  else if (pixel_type == 2) { //RGA pixel type
-    typedef fsc_channel_accessor<itk::RGBPixel<unsigned char>,3 > ChannelAccType;
-    ChannelAccType channel_accessor(file_name);
-    image = channel_accessor.get_channel(ChannelAccType::channel_type(channel));
-  }
-  else {// Gray image
-    typedef itk::ImageFileReader< ImageType3D > ReaderType;
-    ReaderType::Pointer reader = ReaderType::New();
-    reader->SetFileName( file_name );
-    try {
-      reader->Update();
-    }
-    catch(itk::ExceptionObject& e) {
-      vcl_cout << e << vcl_endl;
-    }
-    image =  reader->GetOutput();
-  }
-  return image;
-}
-*/
 
 ImageType3D::Pointer  
 smooth_image(ImageType3D::Pointer image, int num_sub_images )
@@ -122,7 +80,7 @@ main(  int argc, char* argv[] )
   vul_arg< vcl_string > arg_file_from  ( 0, "From image file" );
   vul_arg< vcl_string > arg_file_to    ( 0, "To image file" );
   //vul_arg< bool >      alpha           ("-alpha", "Input are color images with alpha channel. This is ignored if -color not set", false);
-  vul_arg< int >       channel         ("-channel", "The color channel (0-red, 1-green, 2-blue).",0);
+  vul_arg< int >       channel         ("-channel", "The color channel (0-red, 1-green, 2-blue), or the image channel if the original image is a lsm image.",0);
   vul_arg< float >     background      ("-bg", "threshold value for the background", 30);
   vul_arg< double >      smooth        ("-smooth", "If smoothing is performed", 0.5);
   //vul_arg< int >       streaming       ("-streaming","Apply streaming with the number of sub-images when smooth is set", 1);
@@ -145,7 +103,6 @@ main(  int argc, char* argv[] )
   if (!from_image || !to_image) {
     vcl_cerr <<"Failed to read image(s)"<< vcl_endl;
   }
-
   /*
   typedef itk::ImageFileWriter< ImageType >  WriterType3D;
   WriterType3D::Pointer writer3D = WriterType3D::New();

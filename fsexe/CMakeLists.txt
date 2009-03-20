@@ -3,7 +3,7 @@
 #TARGET_LINK_LIBRARIES( nucleus_seg maciejseg fscommon ITKCommon ITKIO)
 
 ADD_EXECUTABLE( fuse_image_stacks fuse_image_stacks.cxx)
-TARGET_LINK_LIBRARIES( fuse_image_stacks fscommon ITKCommon ITKIO)
+TARGET_LINK_LIBRARIES( fuse_image_stacks ITKCommon ITKIO)
 
 #ADD_EXECUTABLE( convert_seg_result_from_idl convert_seg_result_from_idl.cxx)
 #TARGET_LINK_LIBRARIES( convert_seg_result_from_idl maciejseg vul
@@ -37,28 +37,28 @@ ADD_EXECUTABLE( multi_channels_2D multi_channels_2D.cxx)
 TARGET_LINK_LIBRARIES( multi_channels_2D vnl ITKCommon ITKIO )
 
 ADD_EXECUTABLE( montage_blending montage_blending.cxx)
-TARGET_LINK_LIBRARIES( montage_blending fscommon fregl vnl ITKCommon ITKIO )
+TARGET_LINK_LIBRARIES( montage_blending fregl vnl ITKCommon ITKIO )
 
 ADD_EXECUTABLE( extract_stack_interfaces extract_stack_interfaces.cxx)
-TARGET_LINK_LIBRARIES( extract_stack_interfaces fscommon fregl vul ITKCommon ITKIO )
+TARGET_LINK_LIBRARIES( extract_stack_interfaces fregl vul ITKCommon ITKIO )
 
 #ADD_EXECUTABLE( update_features update_features.cxx)
 #TARGET_LINK_LIBRARIES( update_features maciejseg vul ITKCommon ITKIO )
 
 #IF (BUILD_FREGL)
    ADD_EXECUTABLE( register_pair register_pair.cxx)
-   TARGET_LINK_LIBRARIES( register_pair fregl fscommon ITKCommon ITKIO )
+   TARGET_LINK_LIBRARIES( register_pair fregl ITKCommon ITKIO )
 
    ADD_EXECUTABLE( register_joint register_joint.cxx)
-   TARGET_LINK_LIBRARIES( register_joint fregl fscommon ITKCommon
+   TARGET_LINK_LIBRARIES( register_joint fregl ITKCommon
    ITKIO )
 
    ADD_EXECUTABLE( mosaic_image_pair mosaic_image_pair.cxx)
-   TARGET_LINK_LIBRARIES( mosaic_image_pair fregl fscommon ITKCommon
+   TARGET_LINK_LIBRARIES( mosaic_image_pair fregl ITKCommon
    ITKIO )
 
    ADD_EXECUTABLE( mosaic_images mosaic_images.cxx)
-   TARGET_LINK_LIBRARIES( mosaic_images fregl fscommon ITKCommon
+   TARGET_LINK_LIBRARIES( mosaic_images fregl ITKCommon
    ITKIO )
 
    #ADD_EXECUTABLE( update_result_sets update_result_sets.cxx)

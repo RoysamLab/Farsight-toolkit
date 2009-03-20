@@ -47,13 +47,13 @@ typedef itk::ImageSliceConstIteratorWithIndex< ImageType > SliceConstIteratorTyp
 int
 main(  int argc, char* argv[] )
 {
-  vul_arg< vcl_string > arg_xml_file  ( 0, "xml file for transforms" );
+  vul_arg< vcl_string > arg_xml_file  ( 0, "A xml file containing transformations" );
   vul_arg< vcl_string > arg_anchor    ( 0, "Anchor image name" );
-  vul_arg< int >        arg_channel   ("-channel", "The color channel (0-red, 1-green, 2-blue), or the image channel if the original image is lsm image.",0); 
+  vul_arg< int >        arg_channel   ("-channel", "The color channel (0-red, 1-green, 2-blue), or the image channel if the original image is a lsm image.",0); 
   vul_arg< vcl_string > arg_img_path  ("-path","The path of the image files.",".");
   vul_arg< vcl_string > arg_old_str   ("-old_str","The old substr in the image names to be replaced");
   vul_arg< vcl_string > arg_new_str   ("-new_str","The new substr in the image names");
-  vul_arg< vcl_string > arg_outfile   ("-output","The name of the otuput");
+  vul_arg< vcl_string > arg_outfile   ("-output","The name of the output");
   vul_arg< bool >       arg_in_anchor ("-in_anchor","The final space is set to the anchor image", false);
   vul_arg< bool >       arg_overlap   ("-overlap_only","Only consider images that overlap the anchor image", false);
   vul_arg< bool > arg_nn("-nn","Use Nearest-Neighbor interpolation", false);
