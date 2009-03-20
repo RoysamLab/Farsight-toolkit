@@ -1,3 +1,1 @@
-set CLASSPATH=%CLASSPATH%;.;C:saxon9.jar
-ren java.ex java.exe
-ren python.ex python.exe
+set CLASSPATH=C:\Program Files (x86)\Farsight 0.1.1\bin\saxon9.jar;C:\Program Files (x86)\Farsight 0.1.1\bin\xercesImpl.jar;C:\Program Files (x86)\Farsight 0.1.1\bin\xml-apis.jar
