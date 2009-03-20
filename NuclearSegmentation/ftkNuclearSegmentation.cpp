@@ -480,7 +480,8 @@ bool NuclearSegmentation::SaveAll()
 {
 	SaveLabel();
 	WriteToXML();
-	WriteToMETA();
+	//WriteToMETA();
+	WriteToLibSVM();
 	editsNotSaved = false;
 	return true;
 }

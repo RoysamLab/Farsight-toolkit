@@ -33,6 +33,7 @@ public:
 	bool RestoreFromXML();
 	bool WriteToXML();
 	bool WriteToMETA();
+	bool WriteToLibSVM();
 
 	string GetErrorMessage() { return errorMessage; };
 

@@ -516,6 +516,38 @@ bool SegmentationResult::WriteToMETA()
 	return true;
 }
 
+bool SegmentationResult::WriteToLibSVM()
+{
+	//This function writes the features to a text file that can be read be MetaNeural program
+	string fname = projectName;
+	fname.append("_libSVM.txt");
+
+	ofstream outFile; 
+	outFile.open(PrependProjectPath(fname).c_str(), ios::out | ios::trunc );
+	if ( !outFile.is_open() )
+	{
+		std::cerr << "Failed to Load Document: " << outFile << std::endl;
+		return false;
+	}
+	//Now write out the features
+	for(unsigned int obj = 0; obj < myObjects.size(); ++obj)
+	{
+		if( myObjects.at(obj).GetValidity() == false )
+			continue;
+
+		outFile << myObjects.at(obj).GetId() << " ";			//This should be the class
+
+		vector<float> feats = myObjects.at(obj).GetFeatures();
+		for(unsigned int f = 0; f < feats.size(); ++f)
+		{
+			outFile << f+1 << ":" << NumToString(feats.at(f)) << " ";	//FeatureNumber:FeatureValue
+		}
+		outFile << std::endl;
+	}
+	outFile.close();
+	return true;
+}
+
 string SegmentationResult::XmlFilename(bool full = false)
 {
 	string f = "";
