@@ -177,6 +177,8 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkF
   unsigned int old_id;
 
   std::vector<unsigned int>* cell_id_array=tline->GetMarkers();
+  cell_id_array->clear();
+
   point[0] = iter->x;point[1]=iter->y;point[2]=iter->z;
   return_id = line_points->InsertNextPoint(point);
   hashp[return_id]=(unsigned long long int)tline;
@@ -319,6 +321,7 @@ bool TraceObject::WriteToSWCFile(char *filename)
 vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
 {
   hashp.clear();
+  hashc.clear();
   printf("Started creating vtkPolyData for rendering purposes ... ");
   vtkSmartPointer<vtkPolyData> poly_traces=vtkSmartPointer<vtkPolyData>::New();
   vtkSmartPointer<vtkFloatArray> point_scalars=vtkSmartPointer<vtkFloatArray>::New();
@@ -480,7 +483,7 @@ void TraceObject::splitTrace(int selectedCellId)
     selectedLine->GetTraceBitIteratorBegin();
   std::vector<unsigned int>::iterator markerItr =
     selectedLine->GetMarkers()->begin(); 
-  for(; markerItr != selectedLine->GetMarkers()->end(); markerItr++)
+  for(; markerItr != selectedLine->GetMarkers()->end() && bitItr != selectedLine->GetTraceBitIteratorEnd(); markerItr++)
     {
     if(*markerItr == selectedCellId)
       {
