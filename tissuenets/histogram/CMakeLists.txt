@@ -4,7 +4,7 @@ IF(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
 ENDIF(COMMAND CMAKE_POLICY)
 
-PROJECT( histogram )
+#PROJECT( histogram )
 
 find_package( Boost 1.37 COMPONENTS regex graph )
 
@@ -14,3 +14,5 @@ include_directories( ${Boost_INCLUDE_DIRS})
 
 ADD_EXECUTABLE(histogram histogram.cpp)
 TARGET_LINK_LIBRARIES( histogram vtkCommon vtkIO vtkInfovis vtkViews vtkRendering TinyXML)
+
+INSTALL( TARGETS histogram DESTINATION bin )
