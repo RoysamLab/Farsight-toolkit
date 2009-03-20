@@ -30,14 +30,16 @@ iba1_id = '_Iba1'
 eba_id = '_EBA'
 
 #Parameter Filenames:
-seg_params = 'NucleiSegmentationParams.ini'
+seg_params_id = '_SegParams'
 ass_def_id = '_AssociationDefs'
 trace_params_id = '_TracingParameterValues'
+rend_params_id = '_RenderParameters'
 
 #output file ids:
 label_id = '_label'
 surf_id = '_surface'
 ass_feat_id = '_AssocFeatures'
+traced_id = 'TracedPoints'
 
 ###############################################################################
 def find_file(fname):
@@ -56,9 +58,10 @@ def find_file(fname):
 def main_menu():
   print ('\nOPTIONS:')
   print ('  1. RUN IMAGE PROCESSING MODULE')
-  print ('  2. VIEW RESULTS')
+  print ('  2. RESULT EDITORS')
   print ('  3. REGISTRATION DEMO')
-  print ('  4. QUIT')
+  print ('  4. TISSUE NETS DEMO')
+  print ('  5. QUIT')
   choice = raw_input('Please enter selection: ')
   return choice
 ###############################################################################
@@ -72,7 +75,8 @@ def module_menu():
   print("  5. COMPUTE ASSOCIATIVE FEATURES")
   print("  6. COMPUTE INTRINSIC NUCLEAR FEATURES")
   print("  7. CLASSIFICATION OF NUCLEI")
-  print("  8. EXIT MENU")
+  print("  8. VIEW RESULT RENDERING")
+  print("  9. EXIT MENU")
   choice = raw_input('Please enter selection: ')
   return choice
 ###############################################################################
@@ -100,23 +104,31 @@ def run_wizard():
       return
     nuc_image = orig_base_name + nuc_id + split_ext
     nuc_result = orig_base_name + nuc_id + label_id + ".tiff"
+    seg_params = orig_base_name + nuc_id + seg_params_id + ".ini"
     eba_image = orig_base_name + eba_id + split_ext
     eba_result = orig_base_name + eba_id + surf_id + split_ext
     trace_astro_xml = orig_base_name + iba1_id + trace_params_id + '.xml'
     trace_micro_xml = orig_base_name + gfap_id + trace_params_id + '.xml'
+    trace_astro_out = orig_base_name + iba1_id + traced_id + '.xml'
+    trace_micro_out = orig_base_name + gfap_id + traced_id + '.xml'
     ass_defs = orig_base_name + ass_def_id + '.xml'
     ass_feats = orig_base_name + ass_def_id + ass_feat_id + '.XML'
+    rend_params = orig_base_name + rend_params_id + '.txt'
   elif image_num=='2' or image_num=='3':
     print("GREAT CHOICE")
     crop_num = str(int(image_num)-1)
     nuc_image = crop_base_name + crop_id + crop_num + nuc_id + crop_ext
     nuc_result = crop_base_name + crop_id + crop_num + nuc_id + label_id + ".tiff"
+    seg_params = crop_base_name + crop_id + crop_num + nuc_id + seg_params_id + ".ini"
     eba_image = crop_base_name + crop_id + crop_num + eba_id + crop_ext
     eba_result = crop_base_name + crop_id + crop_num + eba_id + surf_id + crop_ext
     trace_astro_xml = crop_base_name + crop_id + crop_num + iba1_id + trace_params_id + '.xml'
     trace_micro_xml = crop_base_name + crop_id + crop_num + gfap_id + trace_params_id + '.xml'
+    trace_astro_out = crop_base_name + crop_id + crop_num + iba1_id + traced_id + '.xml'
+    trace_micro_out = crop_base_name + crop_id + crop_num + gfap_id + traced_id + '.xml'
     ass_defs = crop_base_name + crop_id + crop_num + ass_def_id + '.xml'
     ass_feats = crop_base_name + crop_id + crop_num + ass_def_id + ass_feat_id + '.XML'
+    rend_params = crop_base_name + crop_id + crop_num + rend_params_id + '.txt'
   else:
     print("I DON'T KNOW THAT NUMBER, ABORTING")
     return
@@ -224,8 +236,16 @@ def run_wizard():
         
     elif choice == '7':
       print("\nTHIS FUNCTION NOT YET IMPLEMENTED")
-      
+
     elif choice == '8':
+      if find_file(nuc_result) and find_file(eba_result) and find_file(trace_astro_out) and find_file(trace_micro_out) and find_file(rend_params):
+        print("\nSTARTING VISUALIZATION...")
+        subprocess.call(['render.exe', rend_params])
+        print("\n...DONE")
+      else:
+        print("COULD NOT FIND INPUT FILES")
+        
+    elif choice == '9':
       return
     else:
       print("\nUNRECOGNIZED OPTION")
@@ -234,6 +254,7 @@ def view_results():
   from farsightutils import GetFilename
   while (1):
     choice = result_menu()
+      
     if choice == '1':
       fname = GetFilename('NPTS','.npts')
       if(fname != ''):
@@ -262,7 +283,7 @@ def view_results():
           subprocess.call(['vtkTraceViewer.exe', fname])
 
         print("\n...DONE")
-        
+
     elif choice == '3':
       return
     else:
@@ -289,6 +310,10 @@ def main():
       subprocess.call(["MontageNavigator.exe"])
       print("\nMONTAGE BROWSER CLOSED")
     elif choice == '4':
+      print("\nIMPORTING tissuenets_demo.py")
+      #os.environ['CLASSPATH'] = "C:\\Program Files (x86)\\Farsight 0.1.1\\bin\\saxon9.jar"
+      import tissuenets_demo
+    elif choice == '5':
       print("\nGOODBYE")
       return
 
