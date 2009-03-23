@@ -81,6 +81,7 @@ public:
 
 	void addAct(vtkActor *Actor);	
 	void AddPointsAsPoints (std::vector<TraceBit> vec);
+	void AddBranchIllustrators();
 	void AddVolumeSliders();
 	void AddContourThresholdSliders();
 	void AddPlaybackWidget(char*);

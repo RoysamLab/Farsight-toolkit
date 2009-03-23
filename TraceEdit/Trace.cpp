@@ -510,7 +510,212 @@ void TraceObject::splitTrace(int selectedCellId)
   this->trace_lines.push_back(newLine);
 }
 
+/* This function assumes that the TraceLine does not have either parent or children. One end must be open */
+void TraceObject::ReverseSegment(TraceLine *tline)
+{
+	if(tline->GetParent()==NULL)
+	{
+		if(tline->GetBranchPointer()->size()==0)
+		{
+			tline->GetTraceBitsPointer()->reverse();
+			reverse(tline->GetMarkers()->begin(),tline->GetMarkers()->end());
+			return;
+		}
+		else
+		{
+			tline->GetTraceBitsPointer()->reverse();
+			reverse(tline->GetMarkers()->begin(),tline->GetMarkers()->end());
+			// choose branch1 as parent arbitrarily
+			TraceLine* temp1 =  tline->GetBranch1();
+			TraceLine* temp2 = tline->GetBranch2();
+			temp1->SetParent(NULL);
+			ReverseSegment(temp1);
+			tline->GetBranchPointer()->clear();
+			tline->SetParent(temp1);
+			temp2->SetParent(temp1);
+			temp1->AddBranch(tline);
+			temp1->AddBranch(tline);
+		}
+	}
+	else if(tline->GetBranchPointer()->size()==0)
+	{
+		TraceLine * temp1 = tline->GetParent();
+		TraceLine * temp2 = tline->GetParent()->GetBranch1();
+		if(temp2 == tline)
+		{
+			temp2 = tline->GetParent()->GetBranch2();
+		}
+		tline->GetTraceBitsPointer()->reverse();
+		reverse(tline->GetMarkers()->begin(),tline->GetMarkers()->end());
+		temp1->GetBranchPointer()->clear();
+		ReverseSegment(temp1);
+		temp2->SetParent(tline);
+		tline->SetParent(NULL);
+		temp1->SetParent(tline);
+		tline->AddBranch(temp1);
+		tline->AddBranch(temp2);
+	}
+	else
+	{
+		//error!!
+		printf("Error! the segment has to be open at one end before it can be reversed\n");
+		return;
+	}
+}
+/*
+t1, t2 -> two lines to be merged
+pMarker - point of merging.
 
+
+
+*/
+void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long int sMarker)// point marker where we need to make the connection
+{
+	TraceLine * tmarker = reinterpret_cast<TraceLine*>(hashp[eMarker]);
+	TraceLine * tother = reinterpret_cast<TraceLine*>(hashp[sMarker]);
+	char elocation = -1;
+	if(eMarker == tmarker->GetTraceBitsPointer()->front().marker)
+	{
+		elocation = 0;
+	}
+	else if(eMarker == tmarker->GetTraceBitsPointer()->back().marker)
+	{
+		elocation = 1;
+	}
+	
+	char slocation = -1;
+	if(sMarker == tother->GetTraceBitsPointer()->front().marker)
+	{
+		slocation = 0;
+	}
+	else if(sMarker == tother->GetTraceBitsPointer()->back().marker)
+	{
+		slocation = 1;
+	}
+	
+	if(slocation ==0 && elocation ==1)
+	{
+		tmarker->GetTraceBitsPointer()->splice(tmarker->GetTraceBitIteratorEnd(),*(tother->GetTraceBitsPointer()));
+		*(tmarker->GetBranchPointer())=*(tother->GetBranchPointer());
+	}
+	else if (slocation ==1 && elocation == 0)
+	{
+		tother->GetTraceBitsPointer()->splice(tother->GetTraceBitIteratorEnd(),*(tmarker->GetTraceBitsPointer()));
+		*(tother->GetBranchPointer())=*(tmarker->GetBranchPointer());
+	}
+	else if (slocation == 0 && elocation ==0)
+	{
+		ReverseSegment(tother);
+		tother->GetTraceBitsPointer()->splice(tother->GetTraceBitIteratorEnd(),*(tmarker->GetTraceBitsPointer()));
+		*(tother->GetBranchPointer())=*(tmarker->GetBranchPointer());
+	}
+	else if (slocation == 1 && elocation ==1)
+	{
+		ReverseSegment(tother);
+		tmarker->GetTraceBitsPointer()->splice(tmarker->GetTraceBitIteratorEnd(),*(tother->GetTraceBitsPointer()));
+		*(tmarker->GetBranchPointer())=*(tother->GetBranchPointer());
+	}
+	else if (slocation == -1 && elocation !=-1)
+	{
+		
+	}
+	else if (slocation != -1 && elocation == -1)
+	{
+
+	}
+	else
+	{
+
+	}
+	
+	
+	//if(tother->GetParent()!=NULL)
+	//{
+	//	assert(tother->GetBranchPointer()->size()==0);//atleast one end must be open
+	//	switch(plocation)
+	//	{
+	//	case 0:
+	//		//Connect tother's back to tmarker's front
+
+	//		break;
+	//	case 1:
+	//		//Connect tother's back to tmarker's back
+	//		break;
+	//	default:
+	//		//Connect tother's back to tmarker's mid
+	//		break;
+	//	}
+	//}
+	//else if(tother->GetBranchPointer()->size()!=0)
+	//{
+	//	
+	//	switch(plocation)
+	//	{
+	//	case 0:
+	//		break;
+	//	case 1:
+	//		break;
+	//	default:
+	//		break;
+	//	}
+	//}
+	//else
+	//{
+	//	TraceBit f = tother->GetTraceBitsPointer()->front();
+	//	TraceBit b = tother->GetTraceBitsPointer()->back();
+	//	TraceLine::TraceBitsType::iterator bit_iter = tmarker->GetTraceBitIteratorBegin();
+	//	TraceLine::TraceBitsType::iterator bit_end = tmarker->GetTraceBitIteratorEnd();
+	//	while(bit_iter!=bit_end)
+	//	{
+	//		if(bit_iter->marker==pMarker)
+	//		{
+	//			break;
+	//		}
+	//		++bit_iter;
+	//	}
+	//	double dist1 = sqrt((f.x-bit_iter->x)*(f.x-bit_iter->x)+(f.y-bit_iter->y)*(f.y-bit_iter->y)+(f.z-bit_iter->z)*(f.z-bit_iter->z));
+	//	double dist2 = sqrt((b.x-bit_iter->x)*(b.x-bit_iter->x)+(b.y-bit_iter->y)*(b.y-bit_iter->y)+(b.z-bit_iter->z)*(b.z-bit_iter->z));
+
+
+	//	if(dist1 > dist2
+	//}
+}
+void CollectBranchPointsRecursive(vtkSmartPointer<vtkPoints> p, vtkSmartPointer<vtkCellArray> cells,TraceLine *tline)
+{
+	if(tline->GetBranchPointer()->size()>1)
+	{
+		double loc[3];
+		loc[0] = tline->GetTraceBitsPointer()->back().x;
+		loc[1] = tline->GetTraceBitsPointer()->back().y;
+		loc[2] = tline->GetTraceBitsPointer()->back().z;
+		vtkIdType id = p->InsertNextPoint(loc);
+		cells->InsertNextCell(1);
+		cells->InsertCellPoint(id);
+		CollectBranchPointsRecursive(p,cells,tline->GetBranch1());
+		CollectBranchPointsRecursive(p,cells,tline->GetBranch2());
+	}
+	return;
+}
+vtkSmartPointer<vtkPolyData> TraceObject::generateBranchIllustrator()
+{
+	vtkSmartPointer<vtkSphereSource> s_src = vtkSmartPointer<vtkSphereSource>::New();
+	s_src->SetRadius(1.0);
+	VTK_CREATE(vtkGlyph3D, glyphs);
+	VTK_CREATE(vtkPoints, p);
+	//VTK_CREATE(vtkDataArray, da);
+	VTK_CREATE(vtkCellArray, cells);
+	for(int counter=0; counter< trace_lines.size(); counter++)
+	{
+		CollectBranchPointsRecursive(p,cells,trace_lines[counter]);
+	}
+	VTK_CREATE(vtkPolyData, poly);
+	poly->SetPoints(p);
+	poly->SetVerts(cells);
+	glyphs->SetInput(poly);
+	glyphs->SetSource(s_src->GetOutput());
+	glyphs->Update();
+	return glyphs->GetOutput();
+}
 void TraceLine::Getstats()
 {
   double XF, XB, YF, YB, ZF, ZB;

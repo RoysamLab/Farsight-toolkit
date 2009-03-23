@@ -88,7 +88,17 @@ vtkActor* View3d::LineAct()
   this->lineAct->GetProperty()->SetLineWidth(1);
   return lineAct;
 }
+void View3d::AddBranchIllustrators()
+{
+	vtkSmartPointer<vtkPolyData> poly = tobj->generateBranchIllustrator();
+	vtkSmartPointer<vtkPolyDataMapper> polymap = vtkSmartPointer<vtkPolyDataMapper>::New();
+	polymap->SetInput(poly);
+	vtkSmartPointer<vtkActor> bactor = vtkSmartPointer<vtkActor>::New();
+	bactor->SetMapper(polymap);
+	ren->AddActor(bactor);
+	bactor->Print(std::cout);
 
+}
 void View3d::AddPointsAsPoints(std::vector<TraceBit> vec)
 {
   vtkSmartPointer<vtkPolyData> point_poly = vtkSmartPointer<vtkPolyData>::New();

@@ -20,7 +20,13 @@ using namespace stdext;
 #include "vtkPolyData.h"
 #include "vtkCellArray.h"
 #include "vtkFloatArray.h"
+#include "vtkDataArray.h"
 #include "vtkAppendPolyData.h"
+#include "vtkSphereSource.h"
+#include "vtkGlyph3D.h"
+
+#define VTK_CREATE(type, var) \
+  vtkSmartPointer<type> var = vtkSmartPointer<type>::New()
 
 #include "tinyxml/tinyxml.h"
 
@@ -108,8 +114,11 @@ public:
 	bool WriteToSWCFile(char * filename);
   int getNewLineId();
   void splitTrace(int selectedCellId);
+  void ReverseSegment(TraceLine*);
+  void mergeTraces(unsigned long long int eMarker, unsigned long long int sMarker);
 	void CreatePolyDataRecursive(TraceLine* , vtkSmartPointer<vtkFloatArray> , vtkSmartPointer<vtkPoints> ,vtkSmartPointer<vtkCellArray>);
 	vtkSmartPointer<vtkPolyData> GetVTKPolyData();
+	vtkSmartPointer<vtkPolyData> generateBranchIllustrator();
 	void Print(std::ostream &c)
 	{
 		c<<"TraceObject:"<<std::endl;
