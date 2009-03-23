@@ -60,6 +60,7 @@ struct compTrace{
 TraceLine *Trace1;
 TraceLine *Trace2;
 int endPT1, endPT2;
+
 double dist; 
 };
 

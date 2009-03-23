@@ -525,3 +525,55 @@ void TraceLine::Getstats()
   printf("Endt bit x: %4.2f y: %4.2f z: %4.2f \n", XB, YB, ZB); 
 
 }
+void TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist)	
+{
+	//compute eucliedan distance 
+	double XF, XB, YF, YB, ZF, ZB, XF2,XB2, YF2, YB2, ZF2, ZB2, distances[4], min ;
+
+	XF = m_trace_bits.front().x;	YF= m_trace_bits.front().y;		ZF= m_trace_bits.front().z;
+	XB = m_trace_bits.back().x;		YB= m_trace_bits.back().y;		ZB= m_trace_bits.back().z;
+	XF2=Trace2->m_trace_bits.front().x;		YF2=Trace2->m_trace_bits.front().y;		ZF2=Trace2->m_trace_bits.front().z;
+	XB2=Trace2->m_trace_bits.back().x;		YB2=Trace2->m_trace_bits.back().y;		ZB2=Trace2->m_trace_bits.back().z;
+//compute the endpt distances
+	distances[0]=sqrt(pow((XF-XF2),2)+pow((YF-YF2),2)+pow((ZF-ZF2),2));//0 F-F
+	distances[1]=sqrt(pow((XF-XB2),2)+pow((YF-YB2),2)+pow((ZF-ZB2),2));//1 F-B
+	
+	distances[2]=sqrt(pow((XB-XF2),2)+pow((YB-YF2),2)+pow((ZB-ZF2),2));//2 B-F
+	distances[3]=sqrt(pow((XB-XB2),2)+pow((YB-YB2),2)+pow((ZB-ZB2),2));//3 B-B
+//determine minimum spacing
+	min = distances[1];
+	int i, mark=0;
+	for (i = 2; i<4; i++)
+	{
+		if (min > distances[i])
+		{
+			min= distances[i];
+			mark=i;
+		}
+	}
+// from min determine orientation and return distance
+	if (mark ==0)
+	{
+		dist = distances[0];
+		dir1= m_trace_bits.front().id;
+		dir2= Trace2->m_trace_bits.front().id;
+	}
+	else if (mark ==1)
+	{
+		dist = distances[1];
+		dir1= m_trace_bits.front().id;
+		dir2= Trace2->m_trace_bits.back().id;
+	}
+	else if (mark ==2)
+	{
+		dist = distances[2];
+		dir1= m_trace_bits.back().id;
+		dir2= Trace2->m_trace_bits.front().id;
+	}
+	else
+	{
+		dist = distances[3];
+		dir1= m_trace_bits.back().id;
+		dir2= Trace2->m_trace_bits.back().id;
+	}
+}

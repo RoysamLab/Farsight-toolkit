@@ -287,17 +287,31 @@ void View3d::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
 }
 void View3d::MinEndPoints(View3d* view)
 {
-	int numTrace = view->IDList.size();		int i;
-	std::list<TraceLine*> traceList;
+	int numTrace = view->IDList.size();		int i,j;
+	std::vector<TraceLine*> traceList;
+	std::vector<compTrace> compList;
 	std::cout<< "elements passed \t" << numTrace << std::endl;
 	for (i = 0;i<numTrace; i++)
 	{
+		std::cout<< "added new trace" <<std::endl;
 		traceList.push_back( reinterpret_cast<TraceLine*>(view->tobj->hashc[view->IDList[i]]));
 	}
-	traceList.unique();		//duplicates removed
-	if (numTrace != traceList.size())
+	
+	for (i=0;i<traceList.size()-1; i++)
 	{
-		std::cout<< "Removed\t" << numTrace - traceList.size()<< "\t duplicate elements from list\n";
+		for (j=i+1; j<traceList.size(); j++)
+		{
+			compTrace newComp;
+			newComp.Trace1= traceList[i];
+			newComp.Trace2= traceList[j];
+			newComp.Trace1->EndPtDist(newComp.Trace2,newComp.endPT1, newComp.endPT2, newComp.dist);
+			compList.push_back(newComp);
+		}
+	}
+	std::cout<< "Number of computed distances\t" << compList.size()<<std::endl;
+	for (i=0;i<compList.size(); i++)
+	{
+		std::cout<<"Trace\t"<<compList[i].Trace1->GetId()<< "\t compaired to trace\t"<<compList[i].Trace2->GetId() <<" is lenght:\t"<<compList[i].dist<< std::endl;
 	}
 }
 void View3d::HighlightSelected(TraceLine* tline)

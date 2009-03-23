@@ -3,6 +3,8 @@
 #include <vector>
 #include <list>
 #include <iostream>
+#include <math.h>
+
 #ifdef WIN32
 using namespace stdext;
 #include <hash_map>
@@ -68,7 +70,8 @@ public:
 		return m_trace_bits.size();
 	};
 	void Getstats();
-	
+	void EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist);
+		
 	void Print(std::ostream &c)
 	{
 		c<<"\tTraceLine: "<<std::endl;
