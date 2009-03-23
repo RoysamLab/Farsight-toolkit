@@ -47,6 +47,7 @@ public:
 	//Now for loading the segmentation results into Objects
 	bool LoadFromResult(const char* dfile, const char* rfile);
 	bool LoadFromMETA(std::string META_file, std::string header_file, std::string data_file, std::string label_file);
+	void LoadClassInfoFromFile( std::string fName );
 	bool LabelsToObjects(void);
 	//bool CalculateFeatures(){return 0;};
 
@@ -78,7 +79,6 @@ private:
 	void ReassignLabel(int fromId, int toId);
 	Object GetNewObject(int id, IntrinsicFeatures *features );
 	void LoadAssociationsFromFile(std::string fName);
-	void LoadClassInfoFromFile( std::string fName );
 	ftk::Object::Box ExtremaBox(vector<int> ids);
 
 	//Load up the data and result information into memory, Base class does not do this, it just gets the filename

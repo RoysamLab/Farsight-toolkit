@@ -10,6 +10,9 @@ import os
 from farsightutils import *
 
 data_dir = 'C:' + os.sep + 'BADRI_TEST'
+full_image_dir = data_dir + os.sep + 'ORIGINAL'
+crop_image_dir = data_dir + os.sep + 'CropDemo'
+tissuenets_dir = data_dir + os.sep + 'TissueNetsDemo'
 
 #parts of the original image filenames:
 orig_base_name = '100upoint5%25hippo25x1unmixed'
@@ -56,12 +59,13 @@ def find_file(fname):
     return False;
 ###############################################################################
 def main_menu():
-  print ('\nOPTIONS:')
-  print ('  1. RUN IMAGE PROCESSING MODULE')
-  print ('  2. RESULT EDITORS')
-  print ('  3. REGISTRATION DEMO')
-  print ('  4. TISSUE NETS DEMO')
-  print ('  5. QUIT')
+  print ('\nDEMO OPTIONS:')
+  print ('  1. COMPLETE IMAGE VISUALIZATION')
+  print ('  2. 5-LABEL IMAGE PROCESSING')
+  print ('  3. TRACE EDITOR')
+  print ('  4. REGISTRATION DEMO')
+  print ('  5. TISSUE NETS DEMO')
+  print ('  6. QUIT')
   choice = raw_input('Please enter selection: ')
   return choice
 ###############################################################################
@@ -78,45 +82,67 @@ def module_menu():
   print("  8. VIEW RESULT RENDERING")
   print("  9. EXIT MENU")
   choice = raw_input('Please enter selection: ')
-  return choice
+  return choice          
 ###############################################################################
-def result_menu():
-  print("\nRESULT VIEWERS:")
-  print("  1. VESSELS")
-  print("  2. TRACES")
-  print("  3. EXIT MENU")
-  choice = raw_input("Please enter selection: ")
-  return choice      
+def classify(test_data):
+  print("\nSCALING TRAINING SET...")
+  training_set = "NM_Training_Set.txt"
+  training_scale = "NM_Training_Set_Scaled.txt"
+  training_range = "NM_Training_Set_Ranges.txt"
+  cout = file(training_scale,'w')
+  arg = "svmscale -s " + training_range + " " + training_set
+  subprocess.Popen(arg,stdout=cout).wait()
+  cout.close()
+  print("...DONE")
+
+  print("\nSCALING TESTING SET...")
+  if not find_file(test_data):
+    print("COULD NOT FIND INPUT")
+    return
+
+  base = os.path.basename(test_data)
+  loc = base.find('.')
+  dname = base[0:loc]
+  testing_scale = dname + "_Scaled.txt"
+  cout = file(testing_scale,'w')
+  arg = "svmscale -r " + training_range + " " + test_data
+  subprocess.Popen(arg,stdout=cout).wait()
+  cout.close()
+  print("...DONE")
+
+  print("\nTRAINING BASED ON SCALED TRAINING SET...")
+  cout = file('train.log','w')
+  arg = "svmtrain -t 2 " + training_scale
+  subprocess.Popen(arg,stdout=cout).wait()
+  cout.close()
+  print("...DONE")
+
+  print("\nCLASSIFYING TEST DATA...")
+  testing_predict = dname + "_Classes.txt"
+  arg = "svmpredict " + testing_scale + " " + training_scale + ".model" + " " + testing_predict
+  subprocess.Popen(arg).wait()
+  print("...DONE")
+
+  print("\nIMPORTING CLASS INFO INTO XML...")
+  loc = dname.find('_libSVM')
+  xname = dname[0:loc] + '.xml'
+  arg = "classify_nuclei " + os.getcwd() + " " + xname + " " + testing_predict
+  subprocess.Popen(arg).wait();
+  print("...DONE")
+
 ###############################################################################
 def run_wizard():
   print('\nLETS BEGIN IMAGE PROCESSING!!!\n')
 
-  print('Which image would you like to work with:')
-  print('  1. ' + orig_base_name) 
-  print('  2. ' + crop_base_name + crop_id + '1')
-  print('  3. ' + crop_base_name + crop_id + '2')
+  print('Which image would you like to work with:') 
+  print('  1. ' + crop_base_name + crop_id + '1')
+  print('  2. ' + crop_base_name + crop_id + '2')
   image_num = raw_input("Which image would you like to work with? ")
 
-  if image_num=='1':
-    print("\nThis is a very large image and requires a powerful PC")
-    yn = raw_input("Do you want to continue (y/n)? ")
-    if yn=='n' or yn=='N':
-      return
-    nuc_image = orig_base_name + nuc_id + split_ext
-    nuc_result = orig_base_name + nuc_id + label_id + ".tiff"
-    seg_params = orig_base_name + nuc_id + seg_params_id + ".ini"
-    eba_image = orig_base_name + eba_id + split_ext
-    eba_result = orig_base_name + eba_id + surf_id + split_ext
-    trace_astro_xml = orig_base_name + iba1_id + trace_params_id + '.xml'
-    trace_micro_xml = orig_base_name + gfap_id + trace_params_id + '.xml'
-    trace_astro_out = orig_base_name + iba1_id + traced_id + '.xml'
-    trace_micro_out = orig_base_name + gfap_id + traced_id + '.xml'
-    ass_defs = orig_base_name + ass_def_id + '.xml'
-    ass_feats = orig_base_name + ass_def_id + ass_feat_id + '.XML'
-    rend_params = orig_base_name + rend_params_id + '.txt'
-  elif image_num=='2' or image_num=='3':
+  if image_num=='1' or image_num=='2':
     print("GREAT CHOICE")
-    crop_num = str(int(image_num)-1)
+    #crop_num = str(int(image_num)-1)
+    crop_num = image_num
     nuc_image = crop_base_name + crop_id + crop_num + nuc_id + crop_ext
     nuc_result = crop_base_name + crop_id + crop_num + nuc_id + label_id + ".tiff"
     seg_params = crop_base_name + crop_id + crop_num + nuc_id + seg_params_id + ".ini"
@@ -129,6 +155,7 @@ def run_wizard():
     ass_defs = crop_base_name + crop_id + crop_num + ass_def_id + '.xml'
     ass_feats = crop_base_name + crop_id + crop_num + ass_def_id + ass_feat_id + '.XML'
     rend_params = crop_base_name + crop_id + crop_num + rend_params_id + '.txt'
+    svm_file = crop_base_name + crop_id + crop_num + nuc_id + "_libSVM.txt"
   else:
     print("I DON'T KNOW THAT NUMBER, ABORTING")
     return
@@ -180,6 +207,16 @@ def run_wizard():
         else:
           subprocess.call(['compute_nuclei_features.exe', os.getcwd(), nuc_image, nuc_result])
         print("\n...DONE\n  YOU MAY OPEN THE RESULT FROM THE FARSIGHT TOOLBAR")
+      else:
+        print("COULD NOT FIND INPUT FILES")
+
+      #DO CLASSIFICATION:
+      classify(svm_file)
+
+      print("\nSTARTING VISUALIZATION...")
+      if find_file(nuc_result) and find_file(eba_result) and find_file(trace_astro_out) and find_file(trace_micro_out) and find_file(rend_params):
+        subprocess.call(['render.exe', rend_params])
+        print("\n...DONE")
       else:
         print("COULD NOT FIND INPUT FILES")
         
@@ -235,7 +272,7 @@ def run_wizard():
         print("COULD NOT FIND INPUT FILES")
         
     elif choice == '7':
-      print("\nTHIS FUNCTION NOT YET IMPLEMENTED")
+      classify(svm_file)
 
     elif choice == '8':
       if find_file(nuc_result) and find_file(eba_result) and find_file(trace_astro_out) and find_file(trace_micro_out) and find_file(rend_params):
@@ -249,20 +286,41 @@ def run_wizard():
       return
     else:
       print("\nUNRECOGNIZED OPTION")
-###############################################################################
-def view_results():
-  from farsightutils import GetFilename
+###############################################################################  
+def main():
+  
+  print ('\nYou have started the FARSIGHT DEMO')
+  print ('\nAssuming Test Data is in ' + data_dir)
+  os.chdir(data_dir)
+
   while (1):
-    choice = result_menu()
-      
+    choice = main_menu()
     if choice == '1':
-      fname = GetFilename('NPTS','.npts')
-      if(fname != ''):
+      
+      os.chdir(full_image_dir)
+      
+      nuc_result = orig_base_name + nuc_id + label_id + ".tiff"
+      eba_result = orig_base_name + eba_id + surf_id + split_ext
+      trace_astro_out = orig_base_name + iba1_id + traced_id + '.xml'
+      trace_micro_out = orig_base_name + gfap_id + traced_id + '.xml'
+      rend_params = orig_base_name + rend_params_id + '.txt'
+      
+      if find_file(nuc_result) and find_file(eba_result) and find_file(trace_astro_out) and find_file(trace_micro_out) and find_file(rend_params):
         print("\nSTARTING VISUALIZATION...")
-        subprocess.call(['visualize.exe', fname, 'blank'])
+        subprocess.call(['render.exe', rend_params])
         print("\n...DONE")
-        
+      else:
+        print("COULD NOT FIND INPUT FILES")
+
+      os.chdir(data_dir)
+      
     elif choice == '2':
+      os.chdir(crop_image_dir)
+      run_wizard()
+      os.chdir(data_dir)
+      
+    elif choice == '3':
+      os.chdir(crop_image_dir)
       fname = GetFilename('XML','.xml')
       if(fname != ''):
         base = os.path.basename(fname)
@@ -278,30 +336,14 @@ def view_results():
             break;
         
         if found:
-          subprocess.call(['vtkTraceViewer.exe', fname, dname])
+          subprocess.call(['trace_editor.exe', fname, dname])
         else:
-          subprocess.call(['vtkTraceViewer.exe', fname])
-
+          subprocess.call(['trace_editor.exe', fname])
         print("\n...DONE")
-
-    elif choice == '3':
-      return
-    else:
-      print("\nUNRECOGNIZED OPTION")
-###############################################################################  
-def main():
-  
-  print ('\nYou have started the FARSIGHT 5-Label Image Processing DEMO')
-  print ('\nAssuming Test Data is in ' + data_dir)
-  os.chdir(data_dir)
-
-  while (1):
-    choice = main_menu()
-    if choice == '1':
-      run_wizard()
-    elif choice == '2':
-      view_results()
-    elif choice == '3':
+        os.chdir(data_dir)
+        
+    elif choice == '4':
+      os.chdir(crop_image_dir)
       from register_pairs import register
       print("\nSTARTING REGISTRATION OF PAIRS")
       register([os.getcwd()+os.sep,'NM_RegistrationPairs.txt'])
@@ -309,11 +351,16 @@ def main():
       print("\nOPENING MONTAGE BROWSER")
       subprocess.call(["MontageNavigator.exe"])
       print("\nMONTAGE BROWSER CLOSED")
-    elif choice == '4':
+      os.chdir(data_dir)
+      
+    elif choice == '5':
+      os.chdir(tissuenets_dir)
       print("\nIMPORTING tissuenets_demo.py")
       #os.environ['CLASSPATH'] = "C:\\Program Files (x86)\\Farsight 0.1.1\\bin\\saxon9.jar"
       import tissuenets_demo
-    elif choice == '5':
+      os.chdir(data_dir)
+      
+    elif choice == '6':
       print("\nGOODBYE")
       return
 

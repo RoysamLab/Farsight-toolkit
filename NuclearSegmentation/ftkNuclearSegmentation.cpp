@@ -194,6 +194,8 @@ void NuclearSegmentation::LoadClassInfoFromFile( std::string fName )
 	if(!FileExists(fName.c_str()))
 		return;
 
+	classFile = fName;
+
 	ifstream inFile; 
 	inFile.open( PrependProjectPath(fName).c_str() );
 	if ( !inFile.is_open() )
@@ -205,27 +207,41 @@ void NuclearSegmentation::LoadClassInfoFromFile( std::string fName )
 	const int MAXLINESIZE = 512;	//Numbers could be in scientific notation in this file
 	char line[MAXLINESIZE];
 
-	std::map< int, int > classNumber; 
+	//std::map< int, int > classNumber; 
+	std::vector<int> classNumber;
 	inFile.getline(line, MAXLINESIZE);
+	int id;
 	while ( !inFile.eof() ) //Get all rows
 	{
 		char * pch = strtok (line," \t\n");
-		int id = (int)atof(pch);
-		pch = strtok (NULL, " \t\n");
+		//int id = (int)atof(pch);
+		//pch = strtok (NULL, " \t\n");
 		int clss = (int)atof(pch);
 
-		classNumber[id] = clss;
+		//classNumber[id] = clss;
+		classNumber.push_back(clss);
 	
 		inFile.getline(line, MAXLINESIZE);
 	}
 	inFile.close();
 
+	/*
 	std::map< int, int >::iterator it;
 	for ( it=classNumber.begin() ; it != classNumber.end(); it++ )
 
 	{
 		ftk::Object * obj = GetObjectPtr( (*it).first );
 		obj->SetClass( (*it).second );
+	}
+	*/
+
+	std::vector<Object> *objects = GetObjectsPtr();
+	if(classNumber.size() != objects->size())
+		return;
+
+	for(int i=0; i<objects->size(); ++i)
+	{
+		objects->at(i).SetClass(classNumber.at(i));
 	}
 }
 

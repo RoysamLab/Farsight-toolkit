@@ -35,8 +35,18 @@ void NuclearAssociationRules::Compute()
 
 	//1. read the label image	
 	ReaderType::Pointer reader = ReaderType::New();
-	reader->SetFileName (GetSegImgName());
-	reader->Update();	
+	std::string fname = GetSegImgName();
+	reader->SetFileName(fname);
+	try
+	{
+		reader->Update();
+	}
+	catch( itk::ExceptionObject & err )
+	{
+		std::cerr << err << std::endl;
+		return;
+	}
+
 	labImage = LabImageType::New();
 	labImage = reader->GetOutput();
 	x_Size=labImage->GetLargestPossibleRegion().GetSize()[0];
