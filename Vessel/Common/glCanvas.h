@@ -7,8 +7,13 @@
 
 #ifndef _GL_CANVAS_H_
 #define _GL_CANVAS_H_
-#include <GL/glut.h>
-#include <GL/glext.h>
+#ifdef __APPLE__
+  #include <GLUT/glut.h>
+  #include <OpenGL/glext.h>
+#else
+  #include <GL/glut.h>
+  #include <GL/glext.h>
+#endif 
 #include <stdlib.h>
 
 #include "argparser.h"

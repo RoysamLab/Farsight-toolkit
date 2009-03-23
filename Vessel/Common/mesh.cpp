@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <assert.h>
-#include <GL/glut.h>
+#ifdef __APPLE__
+  #include <GLUT/glut.h>
+#else
+  #include <GL/glut.h>
+#endif 
 #include "mesh.h"
 #include "edge.h"
 #include "vertex.h"

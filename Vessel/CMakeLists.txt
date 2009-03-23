@@ -14,6 +14,8 @@ ELSE()
   MESSAGE(FATAL_ERROR "Cannot build the Vessel Segmentation module without GLUT.")
 ENDIF()
 
+INCLUDE_DIRECTORIES(Common)
+
 SUBDIRS(Segmentation)
 SUBDIRS(Visualization)
 SUBDIRS(Centerline)

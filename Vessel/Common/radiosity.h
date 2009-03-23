@@ -1,7 +1,11 @@
 #ifndef _RADIOSITY_H_
 #define _RADIOSITY_H_
 
-#include <GL/glut.h>
+#ifdef __APPLE__
+  #include <GLUT/glut.h>
+#else
+  #include <GL/glut.h>
+#endif 
 #include "array.h"
 #include "vectors.h"
 #include "argparser.h"

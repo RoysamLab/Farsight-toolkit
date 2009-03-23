@@ -1,32 +1,32 @@
 ADD_EXECUTABLE(
   visualize
-  argparser.h
-  array.h
-  bag.h
-  boundingbox.cpp
-  boundingbox.h
-  camera.cpp
-  camera.h
-  draw_sphere.h
-  draw_sphere.cpp
-  edge.cpp
-  edge.h
-  face.cpp
-  face.h
-  gl_picking.cpp
-  glCanvas.cpp
-  glCanvas.h
+  ../Common/argparser.h
+  ../Common/array.h
+  ../Common/bag.h
+  ../Common/boundingbox.cpp
+  ../Common/boundingbox.h
+  ../Common/camera.cpp
+  ../Common/camera.h
+  ../Common/draw_sphere.h
+  ../Common/draw_sphere.cpp
+  ../Common/edge.cpp
+  ../Common/edge.h
+  ../Common/face.cpp
+  ../Common/face.h
+  ../Common/gl_picking.cpp
+  ../Common/glCanvas.cpp
+  ../Common/glCanvas.h
   main.cpp
-  matrix.cpp
-  matrix.h
-  mesh.cpp
-  mesh.h
-  radiosity.cpp
-  radiosity.h
-  utils.h
-  vectors.h
-  vertex.h
-  vertex_parent.h
+  ../Common/matrix.cpp
+  ../Common/matrix.h
+  ../Common/mesh.cpp
+  ../Common/mesh.h
+  ../Common/radiosity.cpp
+  ../Common/radiosity.h
+  ../Common/utils.h
+  ../Common/vectors.h
+  ../Common/vertex.h
+  ../Common/vertex_parent.h
 )
 TARGET_LINK_LIBRARIES(visualize ${OPENGL_LIBRARIES} ${GLUT_glut_LIBRARY})
 
