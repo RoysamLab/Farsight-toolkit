@@ -96,11 +96,13 @@ void View3d::AddBranchIllustrators()
 	vtkSmartPointer<vtkActor> bactor = vtkSmartPointer<vtkActor>::New();
 	bactor->SetMapper(polymap);
 	ren->AddActor(bactor);
-	bactor->Print(std::cout);
+	//bactor->Print(std::cout);
 
 }
 void View3d::AddPointsAsPoints(std::vector<TraceBit> vec)
 {
+	vtkSmartPointer<vtkCubeSource> cube_src = vtkSmartPointer<vtkCubeSource>::New();
+	cube_src->SetBounds(-0.2,0.2,-0.2,0.2,-0.2,0.2);
   vtkSmartPointer<vtkPolyData> point_poly = vtkSmartPointer<vtkPolyData>::New();
   vtkSmartPointer<vtkPoints> points=vtkSmartPointer<vtkPoints>::New();
   vtkSmartPointer<vtkCellArray> cells=vtkSmartPointer<vtkCellArray>::New();
@@ -113,15 +115,17 @@ void View3d::AddPointsAsPoints(std::vector<TraceBit> vec)
   printf("About to create poly\n");
   point_poly->SetPoints(points);
   point_poly->SetVerts(cells);
-
+  vtkSmartPointer<vtkGlyph3D> glyphs = vtkSmartPointer<vtkGlyph3D>::New();
+  glyphs->SetSource(cube_src->GetOutput());
+  glyphs->SetInput(point_poly);
   vtkSmartPointer<vtkPolyDataMapper> cubemap = vtkSmartPointer<vtkPolyDataMapper>::New();
-  cubemap->SetInput(point_poly);
+  cubemap->SetInput(glyphs->GetOutput());
   cubemap->GlobalImmediateModeRenderingOn();
   vtkSmartPointer<vtkActor> cubeact = vtkSmartPointer<vtkActor>::New();
   cubeact->SetMapper(cubemap);
   cubeact->SetPickable(0);
-  cubeact->GetProperty()->SetPointSize(1);
-  cubeact->GetProperty()->SetOpacity(.25);
+  cubeact->GetProperty()->SetPointSize(5);
+  cubeact->GetProperty()->SetOpacity(.5);
   ren->AddActor(cubeact);
 
 }

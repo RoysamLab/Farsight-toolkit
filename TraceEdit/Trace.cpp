@@ -511,6 +511,11 @@ void TraceObject::splitTrace(int selectedCellId)
   if(selectedLine->GetBranchPointer()->size() != 0)
     {
     *(newLine->GetBranchPointer()) = *(selectedLine->GetBranchPointer());
+	std::vector<TraceLine*> * bp = newLine->GetBranchPointer();
+	for(int counter=0; counter< bp->size(); counter++)
+	{
+		(*bp)[counter]->SetParent(newLine);
+	}
     selectedLine->GetBranchPointer()->clear();
     newLine->GetBranch1()->SetParent(newLine);
     newLine->GetBranch2()->SetParent(newLine);
@@ -689,19 +694,37 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 	//	if(dist1 > dist2
 	//}
 }
-void CollectBranchPointsRecursive(vtkSmartPointer<vtkPoints> p, vtkSmartPointer<vtkCellArray> cells,TraceLine *tline)
+void CollectBranchPointsRecursive(vtkSmartPointer<vtkPoints> p, vtkSmartPointer<vtkCellArray> cells, vtkSmartPointer<vtkFloatArray> da, TraceLine *tline)
 {
-	if(tline->GetBranchPointer()->size()>1)
+	if(tline->GetBranchPointer()->size()>0)
 	{
 		double loc[3];
 		loc[0] = tline->GetTraceBitsPointer()->back().x;
 		loc[1] = tline->GetTraceBitsPointer()->back().y;
 		loc[2] = tline->GetTraceBitsPointer()->back().z;
+		float dir[3];
+		dir[0] = tline->GetTraceBitsPointer()->front().x-loc[0];
+		dir[1] = tline->GetTraceBitsPointer()->front().y-loc[1];
+		dir[2] = tline->GetTraceBitsPointer()->front().z-loc[2];
 		vtkIdType id = p->InsertNextPoint(loc);
 		cells->InsertNextCell(1);
 		cells->InsertCellPoint(id);
-		CollectBranchPointsRecursive(p,cells,tline->GetBranch1());
-		CollectBranchPointsRecursive(p,cells,tline->GetBranch2());
+		if(dir[0]*dir[0]+dir[1]*dir[1]+dir[2]*dir[2]<1e-6)
+		{
+			printf("Error! Error! Error!\n");
+			if(tline->GetParent()!=NULL)
+			{
+				dir[0] = -tline->GetTraceBitsPointer()->front().x+tline->GetParent()->GetTraceBitsPointer()->back().x;
+				dir[1] = -tline->GetTraceBitsPointer()->front().y+tline->GetParent()->GetTraceBitsPointer()->back().y;
+				dir[2] = -tline->GetTraceBitsPointer()->front().z+tline->GetParent()->GetTraceBitsPointer()->back().z;
+			}
+		}
+		da->InsertNextTuple3(dir[0],dir[1],dir[2]);
+
+		for(int counter=0; counter< tline->GetBranchPointer()->size(); counter++)
+		{
+			CollectBranchPointsRecursive(p,cells,da,(*tline->GetBranchPointer())[counter]);
+		}
 	}
 	return;
 }
@@ -709,21 +732,35 @@ vtkSmartPointer<vtkPolyData> TraceObject::generateBranchIllustrator()
 {
 	vtkSmartPointer<vtkSphereSource> s_src = vtkSmartPointer<vtkSphereSource>::New();
 	s_src->SetRadius(1.0);
-	VTK_CREATE(vtkGlyph3D, glyphs);
+
+	VTK_CREATE(vtkArrowSource, arrow_src);
+
+	VTK_CREATE(vtkGlyph3D, glyphs1);
+	VTK_CREATE(vtkGlyph3D, glyphs2);
 	VTK_CREATE(vtkPoints, p);
-	//VTK_CREATE(vtkDataArray, da);
+	VTK_CREATE(vtkFloatArray, da);
 	VTK_CREATE(vtkCellArray, cells);
+	da->SetNumberOfComponents(3);
+
+	printf("TraceLines size = %d\n",trace_lines.size());
 	for(int counter=0; counter< trace_lines.size(); counter++)
 	{
-		CollectBranchPointsRecursive(p,cells,trace_lines[counter]);
+		CollectBranchPointsRecursive(p,cells,da,trace_lines[counter]);
 	}
 	VTK_CREATE(vtkPolyData, poly);
 	poly->SetPoints(p);
 	poly->SetVerts(cells);
-	glyphs->SetInput(poly);
-	glyphs->SetSource(s_src->GetOutput());
-	glyphs->Update();
-	return glyphs->GetOutput();
+	poly->GetPointData()->SetVectors(da);
+
+	glyphs2->SetInput(poly);
+	glyphs2->SetSource(arrow_src->GetOutput());
+	glyphs2->SetVectorModeToUseVector();
+	glyphs2->SetScaleFactor(5);
+	glyphs1->SetInput(poly);
+	glyphs1->SetSource(s_src->GetOutput());
+	glyphs1->Update();
+	glyphs2->Update();
+	return glyphs2->GetOutput();
 }
 void TraceLine::Getstats()
 {

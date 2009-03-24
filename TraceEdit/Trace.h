@@ -24,6 +24,7 @@ using namespace stdext;
 #include "vtkAppendPolyData.h"
 #include "vtkSphereSource.h"
 #include "vtkGlyph3D.h"
+#include "vtkArrowSource.h"
 
 #define VTK_CREATE(type, var) \
   vtkSmartPointer<type> var = vtkSmartPointer<type>::New()
