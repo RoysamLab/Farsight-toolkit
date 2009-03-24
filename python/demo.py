@@ -314,7 +314,7 @@ def main():
       
       if find_file(nuc_result) and find_file(eba_result) and find_file(trace_astro_out) and find_file(trace_micro_out) and find_file(rend_params):
         print("\nSTARTING VISUALIZATION...")
-        #subprocess.call(['render.exe', rend_params])
+        subprocess.call(['render.exe', rend_params])
         print("\n...DONE")
       else:
         print("COULD NOT FIND INPUT FILES")
@@ -356,7 +356,8 @@ def main():
       register([os.getcwd()+os.sep,'NM_RegistrationPairs.txt'])
       print("\n...DONE")
       print("\nOPENING MONTAGE BROWSER")
-      subprocess.call(["MontageNavigator.exe"])
+      #subprocess.call(["MontageNavigator.exe"])
+      subprocess.call(['trace_editor.exe', "montage_NM_crop1_Nuc/slice.tif"])
       print("\nMONTAGE BROWSER CLOSED")
       os.chdir(data_dir)
       

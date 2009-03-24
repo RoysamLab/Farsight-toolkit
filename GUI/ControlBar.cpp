@@ -81,13 +81,13 @@ void ControlBar::createMenus()
 
 	openAction = new QAction(tr("&Open Image..."), this);
     openAction->setShortcut(tr("Ctrl+O"));
-    openAction->setStatusTip(tr("Open an existing image file"));
+	openAction->setStatusTip(tr("Open an existing image file or files"));
     connect(openAction, SIGNAL(triggered()), this, SLOT(loadImage()));
 	fileMenu->addAction(openAction);
 
-	openSeriesAction = new QAction(tr("Open Time Series..."), this);
+	openSeriesAction = new QAction(tr("Open Image Time Series..."), this);
 	openSeriesAction->setShortcut(tr("Ctrl+T"));
-	openSeriesAction->setStatusTip(tr("Open multi-dimensional images as a time series"));
+	openSeriesAction->setStatusTip(tr("Open 2D/3D images as a Time Series"));
 	connect(openSeriesAction, SIGNAL(triggered()), this, SLOT(loadImageSeries()));
 	fileMenu->addAction(openSeriesAction);
 
@@ -211,39 +211,43 @@ void ControlBar::createStatusBar()
 //******************************************************************************
 void ControlBar::loadImage()
 {
+	QStringList fileNames = QFileDialog::getOpenFileNames(
+                             this, "Select file or files to open as 3D Image", lastPath,
+                             tr("Images (*.tif *.tiff *.pic *.png *.jpg *.lsm)"));
 
-
-	QString filename  = QFileDialog::getOpenFileName(this,"Choose an image",lastPath, 
-			tr("TIF Files (*.tif *.tiff)\n" 
-			   "PIC Files (*.pic)\n" 
-			   "LSM Files (*.lsm)\n"
-			   "All Files (*.*)"));
-
-    if(filename != "")
+    if(fileNames.size() > 0 )
     {  
-		//The segmentationWindow requires a model of some type to be created.
-		//If we already have a model then we can use it.  Otherwise we need a new one.
+		lastPath = QFileInfo(fileNames[0]).absolutePath();
 
-		lastPath = QFileInfo(filename).absolutePath();
+		vector<string> images(0);
+		for(QStringList::Iterator it = fileNames.begin(); it!=fileNames.end(); ++it) 
+		{
+			images.push_back( (*it).toStdString() );
+		}
+		std::sort(images.begin(), images.end());
 
-		/*
-		SliceView5D *sliceWin = new SliceView5D(filename);
-		sliceWin->show();
-		*/
-
-		
-		ftk::Image *newImg = NewFTKImage(filename.toStdString());
+		ftk::Image *newImg = NewFTKImage(images);
 		if (newImg)
 		{
+			//Show the Image
 			SegmentationWindow *segWin = new SegmentationWindow();
 			connect(segWin, SIGNAL(closing(QWidget*)), this, SLOT(closeWidget(QWidget*)));
 			segWin->SetChannelImage(newImg);
 			segWin->show();
+			//Save the Image as 3D tiff:
+			//std::string baseName = QFileInfo(fileNames[0]).fileName().toStdString();
+			//baseName = baseName.substr(0,baseName.find_last_of("_"));
+			//newImg->SaveAs(lastPath.toStdString(),baseName,"tif");
 		}
 		else
 		{
 			std::cerr << "Couldn't load Image" << std::endl;
 		}
+
+		/*
+		SliceView5D *sliceWin = new SliceView5D(filename);
+		sliceWin->show();
+		*/
 		
     }
 }
@@ -257,30 +261,34 @@ void ControlBar::loadImage()
 void ControlBar::loadImageSeries(void)
 {
 	QStringList fileNames = QFileDialog::getOpenFileNames(
-                             this, "Select files to open as time series", lastPath,
-                             tr("Images (*.tif *.tiff *.pic)"));
+                             this, "Select files to open as Time Series Images", lastPath,
+                             tr("Images (*.tif *.tiff *.pic *.png *.jpg)"));
 	
-	if (fileNames.size() > 0 )
+	if (/*fileNames.size() > 0*/ 0)
 	{
 		lastPath = QFileInfo(fileNames[0]).absolutePath();
 
 		vector<string> images(0);
-
-		QStringList list = fileNames;
-		QStringList::Iterator it = list.begin();
-		while(it != list.end()) 
+		for(QStringList::Iterator it = fileNames.begin(); it!=fileNames.end(); ++it) 
 		{
 			images.push_back( (*it).toStdString() );
-			++it;
 		}
+
+		std::sort(images.begin(), images.end());
+
+		std::string baseName = QFileInfo(fileNames[0]).fileName().toStdString();
+		baseName = baseName.substr(0,baseName.find_last_of("_"));
 
 		ftk::Image *newImg = NewFTKImage(images);
 		if (newImg)
 		{
+			//Show the Image
 			SegmentationWindow *segWin = new SegmentationWindow();
 			connect(segWin, SIGNAL(closing(QWidget*)), this, SLOT(closeWidget(QWidget*)));
 			segWin->SetChannelImage(newImg);
 			segWin->show();
+			//Save the Image as 3D tiff:
+			newImg->SaveAs(lastPath.toStdString(),baseName,"tif");
 		}
 		else
 		{
@@ -294,17 +302,16 @@ void ControlBar::loadImageSeries(void)
 ftk::Image * ControlBar::NewFTKImage(std::vector<std::string> filenames)
 {
 	ftk::Image *img = new ftk::Image();
-
-	if ( /*img->load(filenames)*/0 )
+	bool forDisplay = true;
+	if ( img->LoadFiles(filenames, forDisplay) )
 	{
-		loadedImages.push_back(img);
+		return img;
 	}
 	else
 	{
 		delete img;
 		img = NULL;
 	}
-	return img;
 }
 
 ftk::Image * ControlBar::NewFTKImage(std::string filename)

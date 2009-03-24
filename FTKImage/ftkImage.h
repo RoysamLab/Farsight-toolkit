@@ -64,7 +64,7 @@ public:
 	~Image();
 
 	bool LoadFile( std::string fName, bool castToUchar = false );
-	void LoadFiles( std::vector< std::string > fNames );
+	bool LoadFiles( std::vector< std::string > fNames, bool castToUchar = false );
 	bool SaveAs( std::string path, std::string fName, std::string ext );
 
 	bool ImageFromData3D(void *dptr, ImageDataType dataType, int bpPix, int cs, int rs, int zs);
@@ -114,7 +114,7 @@ private:
 	std::string GetPath(std::string);
 	std::string itoa(const int x);
 
-	bool LoadStandardImage( std::string filename, bool forDisplay = false );
+	bool LoadStandardImage( std::vector<std::string> filenames, bool forDisplay = false );
 	bool LoadLSMImage( std::string fileName );
 
 	template<typename pType, typename rType> rType GetPixelValue(void * p);

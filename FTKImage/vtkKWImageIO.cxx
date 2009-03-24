@@ -427,6 +427,9 @@ void vtkKWImageIO::ReadImageSeries()
   typedef itk::ImageIOBase::IOComponentType  ComponentType;
   typedef itk::ImageIOBase::IOPixelType  PixelType;
 
+  /***************************************************************************
+  // REMOVE DICOM/GDCM BECAUSE I WANT TO OPEN ANY SERIES OF IMAGES:
+  // BY ISAAC ABBOTT3/24/2009
   itk::GDCMImageIO::Pointer imageIO = itk::GDCMImageIO::New();
 
   if( !imageIO )
@@ -462,6 +465,18 @@ void vtkKWImageIO::ReadImageSeries()
   FileNamesContainerType fileNames;
   fileNames = nameGenerator->GetFileNames( seriesIdentifier );
   this->SetSeriesFileNames( fileNames );
+  ****************************************************************************/
+
+  itk::ImageIOBase::Pointer imageIO = 
+    itk::ImageIOFactory::CreateImageIO( this->SeriesFileNames.at(0).c_str(), 
+                                   itk::ImageIOFactory::ReadMode );
+
+  if( !imageIO )
+  {
+	  std::cerr << "NO IMAGEIO WAS FOUND" << std::endl;
+	  return;
+  }
+
 
   //Modified by ISAAC ABBOTT 1-30-2009
   //REMOVED:

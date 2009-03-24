@@ -43,11 +43,18 @@ void Image::SetSpacing(float x, float y, float z)
 	imageInfo.spacing.at(2) = z;
 }
 
-void Image::LoadFiles( std::vector< std::string > fNames )
+bool Image::LoadFiles( std::vector< std::string > fNames, bool castToUchar )
 {
-	for (int i = 0; i < (int)fNames.size(); ++i)
+	if(fNames.size() <= 0)
+		return false;
+
+	if( GetFileExtension(fNames.at(0)) == "lsm" )
 	{
-		this->LoadFile( fNames.at(i) );
+		return this->LoadLSMImage( fNames.at(0) );
+	}
+	else
+	{
+		return this->LoadStandardImage( fNames, castToUchar );
 	}
 }
 
@@ -59,22 +66,44 @@ bool Image::LoadFile( std::string fName, bool castToUchar )
 	}
 	else
 	{
-		return this->LoadStandardImage( fName, castToUchar );
+		std::vector<std::string> nTemp;
+		nTemp.push_back(fName);
+		return this->LoadStandardImage( nTemp, castToUchar );
 	}
 }
 
-bool Image::LoadStandardImage( std::string fileName, bool castToUchar )
+bool Image::LoadStandardImage( std::vector<std::string> fileNames, bool castToUchar )
 {
 	//Create a new reader to automatically read the image file.
 	//It can be extended to read a list of image files as time points.
 	vtkKWImageIO *reader = vtkKWImageIO::New();
-	reader->SetFileName(fileName);
+
+	if(fileNames.size() < 1)
+	{
+		return false;
+	}
+	else if (fileNames.size() == 1)
+	{
+		reader->SetFileName( fileNames.at(0) );
+	}
+	else
+	{
+		reader->SetSeriesFileNames(fileNames);
+	}
+
 	try
 	{
-		if(castToUchar)
-			reader->ReadAndCastImage();
+		if(fileNames.size() == 1)
+		{
+			if(castToUchar)
+				reader->ReadAndCastImage();
+			else
+				reader->ReadImage();
+		}
 		else
-			reader->ReadImage();
+		{
+			reader->ReadImageSeries();
+		}
 	}
 	catch( itk::ExceptionObject & excp )
 	{
@@ -91,8 +120,8 @@ bool Image::LoadStandardImage( std::string fileName, bool castToUchar )
 	//Fill in Common Image Info:
 	int extent[6];
 	vtkImage->GetExtent(extent);
-	imageInfo.path = this->GetPath( fileName );
-	imageInfo.filename = this->GetFilename( fileName );
+	imageInfo.path = this->GetPath( fileNames.at(0) );
+	imageInfo.filename = this->GetFilename( fileNames.at(0) );
 	imageInfo.numColumns = extent[1]-extent[0]+1;		//Number of Columns in Image (x)
 	imageInfo.numRows  = extent[3]-extent[2]+1;			//Number of Rows in Image (y)
 	imageInfo.numZSlices  = extent[5]-extent[4]+1;		//Number of Z Slices in Image (z)
