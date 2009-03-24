@@ -427,35 +427,62 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
   return true;
 }
 
+void CollectIdsRecursive(std::vector<int> ids, TraceLine* tline)
+{
+	ids.push_back(tline->GetId());
+	for(int counter = 0; counter < tline->GetBranchPointer()->size(); counter++)
+	{
+		CollectIdsRecursive(ids,(*tline->GetBranchPointer())[counter]);
+	}
+}
 int TraceObject::getNewLineId()
 {
+  std::vector<int> ids;
+  for(int counter=0; counter< trace_lines.size(); counter++)
+  {
+	  CollectIdsRecursive(ids, trace_lines[counter]);
+  }
   int newId = this->trace_lines.size();
-  bool uniqueId = false;
-  std::vector<TraceLine*>::iterator itr;
-  while(!uniqueId)
-    {
-    newId++;
-    uniqueId = true;
-    for(itr = this->trace_lines.begin(); itr != this->trace_lines.end(); itr++)
-      {
-      if((*itr)->GetId() == newId)
-        {
-        uniqueId = false;
-        break;
-        }
-      //this assumes that a TraceLine will only have either 0 or 2 children
-      if((*itr)->GetBranchPointer()->size() != 0)
-        {
-        if((*itr)->GetBranch1()->GetId() == newId ||
-           (*itr)->GetBranch2()->GetId() == newId)
-          {
-          uniqueId = false;
-          break;
-          }
-        }
-      }
-    }
+  std::sort(ids.begin(),ids.end());
+  for(int counter=0; counter < ids.size(); counter++)
+  {
+	  if(newId == ids[counter])
+	  {
+		  newId++; // guarantees uniqueness because of sorted array.
+	  }
+  }
   return newId;
+
+  //bool uniqueId = false;
+  //std::vector<TraceLine*>::iterator itr;
+  //while(!uniqueId)
+  //  {
+  //  newId++;
+  //  uniqueId = true;
+  //  for(itr = this->trace_lines.begin(); itr != this->trace_lines.end(); itr++)
+  //    {
+  //    if((*itr)->GetId() == newId)
+  //      {
+  //      uniqueId = false;
+  //      break;
+  //      }
+  //    //this assumes that a TraceLine will only have either 0 or 2 children
+  //    if((*itr)->GetBranchPointer()->size() != 0)
+  //      {
+		//	for(int counter=0; counter < (*itr)->GetBranchPointer()->size(); counter++)
+		//	{
+		//		if( (*(*itr)->GetBranchPointer())[counter]->GetId() == newId)
+		//		{
+		//			uniqueId = false;
+		//			break;
+		//		}
+		//	}
+		//	if(uniqueId == false)
+		//		break;
+  //      }
+  //    }
+  //  }
+  //return newId;
 } 
 
 /** For now splitTrace makes the following assumptions:
@@ -511,14 +538,15 @@ void TraceObject::splitTrace(int selectedCellId)
   if(selectedLine->GetBranchPointer()->size() != 0)
     {
     *(newLine->GetBranchPointer()) = *(selectedLine->GetBranchPointer());
+	
 	std::vector<TraceLine*> * bp = newLine->GetBranchPointer();
 	for(int counter=0; counter< bp->size(); counter++)
 	{
 		(*bp)[counter]->SetParent(newLine);
 	}
     selectedLine->GetBranchPointer()->clear();
-    newLine->GetBranch1()->SetParent(newLine);
-    newLine->GetBranch2()->SetParent(newLine);
+   // newLine->GetBranch1()->SetParent(newLine);
+   // newLine->GetBranch2()->SetParent(newLine);
     }
 
   this->trace_lines.push_back(newLine);
