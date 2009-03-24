@@ -7,6 +7,7 @@
 
 =========================================================================*/
 #include "ftkNuclearSegmentation.h"
+#include <itkImageRegionConstIteratorWithIndex.h>
 #include <ctime>
 
 namespace ftk 
@@ -239,10 +240,25 @@ void NuclearSegmentation::LoadClassInfoFromFile( std::string fName )
 	if(classNumber.size() != objects->size())
 		return;
 
+	std::set<int> classList;
+	std::set<int>::iterator it;
 	for(int i=0; i<objects->size(); ++i)
 	{
-		objects->at(i).SetClass(classNumber.at(i));
+		int c = classNumber.at(i);
+
+		it=classList.find(c);
+		if(it==classList.end())
+			classList.insert(c);
+
+		objects->at(i).SetClass(c);
 	}
+
+	classes.clear();
+	for(it=classList.begin(); it!=classList.end(); ++it)
+	{
+		classes.push_back(*it);
+	}
+
 }
 
 bool NuclearSegmentation::LoadFromMETA(std::string META_file, std::string header_file, std::string data_file, std::string label_file)
@@ -459,6 +475,99 @@ bool NuclearSegmentation::LoadLabel()
 		return 0;
 	}
 	return true;
+}
+
+bool NuclearSegmentation::SaveLabelByClass()
+{
+	if(!labelImage)
+	{
+		errorMessage = "Label Image has not be loaded";
+		return false;
+	}
+
+	//Cast the label Image & Get ITK Pointer
+	typedef unsigned short PixelType;
+	typedef itk::Image<PixelType, 3> ImageType;
+	labelImage->Cast<PixelType>();
+	ImageType::Pointer img = labelImage->GetItkPtr<PixelType>(0,0);
+
+	//Create an image for each class:
+	int numClasses = (int)classes.size();
+	std::vector<ImageType::Pointer> outImgs;
+	for(int i=0; i<numClasses; ++i)
+	{
+		ImageType::Pointer tmp = ImageType::New();   
+		tmp->SetOrigin( img->GetOrigin() );
+		tmp->SetRegions( img->GetLargestPossibleRegion() );
+		tmp->SetSpacing( img->GetSpacing() );
+		tmp->Allocate();
+		tmp->FillBuffer(0);
+		tmp->Update();
+
+		outImgs.push_back(tmp);
+	}
+
+	//create lists of object ids in each class:
+	std::vector< std::set<int> > objClass(numClasses);
+	for(int i=0; i<(int)myObjects.size(); ++i)
+	{
+		int c = (int)myObjects.at(i).GetClass();
+		int id = (int)myObjects.at(i).GetId();
+		int p = 0;
+		for(int j=0; j<numClasses; ++j)
+		{
+			if(c == classes.at(j))
+				break;
+			++p;
+		}
+		if(p < numClasses)
+			objClass.at(p).insert(id);
+	}
+
+	//Iterate through Image & populate all of the other images
+	typedef itk::ImageRegionConstIteratorWithIndex< ImageType > IteratorType;
+	IteratorType it(img,img->GetRequestedRegion());
+	for(it.GoToBegin(); !it.IsAtEnd(); ++it)
+	{
+		int id = it.Get();
+		for(int j=0; j<numClasses; ++j)
+		{
+			if( objClass.at(j).find(id) != objClass.at(j).end() )
+			{
+				outImgs.at(j)->SetPixel(it.GetIndex(), 1); 
+			}
+		}	
+	}
+
+	//Now Write All of the Images to File
+	typedef itk::ImageFileWriter<ImageType> WriterType;
+	for(int i=0; i<numClasses; ++i)
+	{
+		WriterType::Pointer writer = WriterType::New();
+		std::string fname = projectPath + "/" + projectName;
+		fname.append("_class");
+		fname.append(NumToString(classes.at(i)));
+		fname.append(".tiff");
+		writer->SetFileName( fname );
+		writer->SetInput( outImgs.at(i) );
+    
+		try
+		{
+			writer->Update();
+		}
+		catch( itk::ExceptionObject & excp )
+		{
+			std::cerr << excp << std::endl;
+			writer = 0;
+			errorMessage = "Problem saving file to disk";
+			return false;
+		}
+		
+		writer = 0;
+	}
+
+	return true;
+	
 }
 
 bool NuclearSegmentation::SaveLabel()

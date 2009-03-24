@@ -25,6 +25,10 @@ int main(int argc, char* argv[])
 	segmentation->RestoreFromXML();
 	segmentation->LoadClassInfoFromFile(classFile);
 	segmentation->WriteToXML();
+
+	//Now load up the label image and split it into a separate image for each class
+	segmentation->LoadLabel();
+	segmentation->SaveLabelByClass();
 	
 	delete segmentation;
 

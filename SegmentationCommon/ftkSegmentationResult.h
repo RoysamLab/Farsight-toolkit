@@ -12,6 +12,7 @@
 #include <tinyxml/tinyxml.h>
 #include <ftkObject.h>
 #include <map>
+#include <set>
 
 namespace ftk
 { 
@@ -76,6 +77,7 @@ protected:
 	vector<Parameter> myParameters;
 	vector<Object> myObjects;
 	vector<string> featureNames;
+	vector<int> classes;
 
 	std::map<int,int> IdToIndexMap;
 	int maxID;

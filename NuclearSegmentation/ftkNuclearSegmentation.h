@@ -61,6 +61,7 @@ public:
 	bool LoadData();				//Will load the data image into memory
 	bool LoadLabel();				//Will load the label image into memory
 	bool SaveLabel();				//Save the changes made to the label image
+	bool SaveLabelByClass();		//Will save a different label image for each class
 	bool SaveAll();					//Save all results to files (Label,XML,Seeds,META,etc);
 
 	//Editing Functions  

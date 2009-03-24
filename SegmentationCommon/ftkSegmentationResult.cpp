@@ -30,6 +30,7 @@ SegmentationResult::SegmentationResult(string projpath, string projname)
 	featureNames.clear();
 	maxID = 0;
 	errorMessage.clear();
+	classes.clear();
 }
 
 Object* SegmentationResult::GetObjectPtr(int id)

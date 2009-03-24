@@ -84,6 +84,9 @@ def module_menu():
   choice = raw_input('Please enter selection: ')
   return choice          
 ###############################################################################
+
+  
+###############################################################################
 def classify(test_data):
   print("\nSCALING TRAINING SET...")
   training_set = "NM_Training_Set.txt"
@@ -148,10 +151,10 @@ def run_wizard():
     seg_params = crop_base_name + crop_id + crop_num + nuc_id + seg_params_id + ".ini"
     eba_image = crop_base_name + crop_id + crop_num + eba_id + crop_ext
     eba_result = crop_base_name + crop_id + crop_num + eba_id + surf_id + crop_ext
-    trace_astro_xml = crop_base_name + crop_id + crop_num + iba1_id + trace_params_id + '.xml'
-    trace_micro_xml = crop_base_name + crop_id + crop_num + gfap_id + trace_params_id + '.xml'
-    trace_astro_out = crop_base_name + crop_id + crop_num + iba1_id + traced_id + '.xml'
-    trace_micro_out = crop_base_name + crop_id + crop_num + gfap_id + traced_id + '.xml'
+    trace_astro_xml = crop_base_name + crop_id + crop_num + gfap_id + trace_params_id + '.xml'
+    trace_micro_xml = crop_base_name + crop_id + crop_num + iba1_id + trace_params_id + '.xml'
+    trace_astro_out = crop_base_name + crop_id + crop_num + gfap_id + traced_id + '.xml'
+    trace_micro_out = crop_base_name + crop_id + crop_num + iba1_id + traced_id + '.xml'
     ass_defs = crop_base_name + crop_id + crop_num + ass_def_id + '.xml'
     ass_feats = crop_base_name + crop_id + crop_num + ass_def_id + ass_feat_id + '.XML'
     rend_params = crop_base_name + crop_id + crop_num + rend_params_id + '.txt'
@@ -298,6 +301,10 @@ def main():
     if choice == '1':
       
       os.chdir(full_image_dir)
+
+      #DO A RENDERING OF THE ORIGINAL NUCLEI DATA:
+      nuc_image = orig_base_name + nuc_id + crop_ext
+      #subprocess.call(['trace_editor.exe', nuc_image])
       
       nuc_result = orig_base_name + nuc_id + label_id + ".tiff"
       eba_result = orig_base_name + eba_id + surf_id + split_ext
@@ -307,7 +314,7 @@ def main():
       
       if find_file(nuc_result) and find_file(eba_result) and find_file(trace_astro_out) and find_file(trace_micro_out) and find_file(rend_params):
         print("\nSTARTING VISUALIZATION...")
-        subprocess.call(['render.exe', rend_params])
+        #subprocess.call(['render.exe', rend_params])
         print("\n...DONE")
       else:
         print("COULD NOT FIND INPUT FILES")
