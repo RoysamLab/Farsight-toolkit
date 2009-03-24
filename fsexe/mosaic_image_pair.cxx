@@ -32,11 +32,14 @@
 #include "itkImageFileWriter.h"
 #include "itkImageRegionConstIterator.h"
 #include "itkImageRegionIterator.h"
+#include "itkImageSeriesWriter.h"
+#include "itkNumericSeriesFileNames.h"
 
 typedef unsigned char                    InputPixelType;
 typedef itk::Image< InputPixelType, 3 >  ImageType;
 typedef itk::RGBPixel< unsigned char >   OutputPixelType;
 typedef itk::Image< OutputPixelType, 3 > ColorImageType;
+typedef itk::Image< OutputPixelType, 2 > ColorImageType2D;
 typedef itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
 typedef itk::ImageRegionIterator< ColorImageType > RegionIterator;
 
@@ -134,17 +137,58 @@ main(  int argc, char* argv[] )
     outputIt.Set( pix );
   }
 
-  // dump out the montage
+  // dump the 3d images as 2d slices in a directory
+  std::string name_prefix = std::string("pairwise_montage_")+vul_file::strip_extension( arg_file_to() );
+  if ( arg_outfile.set() ) {
+    name_prefix = arg_outfile();
+  }
+
+  std::string command = std::string("mkdir ")+name_prefix;
+  vcl_system(command.c_str());
+  
+  typedef itk::NumericSeriesFileNames NameGeneratorType;
+  typedef itk::ImageSeriesWriter< ColorImageType, ColorImageType2D > SeriesWriterType;
+  
+  NameGeneratorType::Pointer nameGenerator = NameGeneratorType::New();
+  SeriesWriterType::Pointer seriesWriter = SeriesWriterType::New();
+  seriesWriter->SetInput( out_image );
+
+  int last=out_image->GetLargestPossibleRegion().GetSize()[2] - 1;
+  nameGenerator->SetStartIndex( 0 );
+  nameGenerator->SetEndIndex( last );
+  nameGenerator->SetIncrementIndex( 1 );
+  
+#if defined(VCL_WIN32) && !defined(__CYGWIN__)
+  std::string name_pattern = name_prefix+std::string("\\slice")+std::string("_%03d.png");
+#else
+   std::string name_pattern = name_prefix+std::string("/slice")+std::string("_%03d.png");
+#endif
+  nameGenerator->SetSeriesFormat( name_pattern );
+  seriesWriter->SetFileNames( nameGenerator->GetFileNames() );
+  seriesWriter->Update();
+
+  // doing the 2d maximum projection and dump it out
+  ColorImageType2D::Pointer image_2d = fregl_util_max_projection_color(out_image);
+  typedef itk::ImageFileWriter< ColorImageType2D >  WriterType2D;
+  WriterType2D::Pointer writer2D = WriterType2D::New();
+  std::string name_2d = name_prefix + std::string("_2d_proj.png");
+  writer2D->SetFileName( name_2d );
+  writer2D->SetInput( image_2d );
+  writer2D->Update();
+  
+  // dump out 3D the montage
   typedef itk::ImageFileWriter< ColorImageType >  WriterType3D;
   WriterType3D::Pointer writer3D = WriterType3D::New();
-  writer3D->SetFileName( arg_outfile() );
+  writer3D->SetFileName( name_prefix+".tiff" );
   writer3D->SetInput( out_image );
   writer3D->Update();
 
+  
   // dump the output to xml
-  std::string name_no_ext = vul_file::strip_extension( arg_outfile() );
-  std::string xml_name = name_no_ext+std::string(".xml");
-  space_transformer.write_xml( xml_name, arg_outfile(), std::string(""), true, arg_in_anchor(), arg_channel());
-
+  //std::string name_no_ext = vul_file::strip_extension( arg_outfile() );
+  //std::string xml_name = name_no_ext+std::string(".xml");
+  //space_transformer.write_xml( xml_name, arg_outfile(), std::string(""), true, arg_in_anchor(), arg_channel());
+  std::string xml_name = name_prefix+std::string(".xml");
+  space_transformer.write_xml( xml_name, name_prefix, name_2d, true, arg_in_anchor(), arg_channel());
   return 0;
 }

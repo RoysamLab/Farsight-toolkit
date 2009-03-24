@@ -173,6 +173,97 @@ fregl_util_max_projection(ImageType::Pointer image, float sigma)
   return caster->GetOutput();
 }
 
+ColorImageType2D::Pointer
+fregl_util_max_projection_color(ColorImageType::Pointer image)
+{
+  typedef itk::ImageLinearIteratorWithIndex< ColorImageType2D > LinearIteratorType;
+  typedef itk::ImageSliceIteratorWithIndex< ColorImageType > SliceIteratorType;
+  //typedef itk::DiscreteGaussianImageFilter< ColorImageType2D,FloatImageType2D > SmoothingFilterType;
+  // typedef itk::CastImageFilter< FloatImageType2D, ImageType2D > CastFilterType;
+
+  ColorImageType2D::RegionType region;
+  ColorImageType2D::RegionType::SizeType size;
+  ColorImageType2D::RegionType::IndexType index;
+  ColorImageType::RegionType requestedRegion = image->GetRequestedRegion();
+  index[ 0 ] = 0;
+  index[ 1 ] = 0;
+  size[ 0 ] = requestedRegion.GetSize()[ 0 ];
+  size[ 1 ] = requestedRegion.GetSize()[ 1 ];
+  region.SetSize( size );
+  region.SetIndex( index );
+  ColorImageType2D::Pointer image2D = ColorImageType2D::New();
+  image2D->SetRegions( region );
+  image2D->Allocate();
+  image2D->FillBuffer(itk::RGBPixel<unsigned char>(itk::NumericTraits<unsigned char>::Zero));
+  
+  //Set the iterator
+  SliceIteratorType output3DIt( image, image->GetRequestedRegion() );
+  LinearIteratorType output2DIt( image2D, image2D->GetRequestedRegion() );
+
+  unsigned int direction[2];
+  direction[0] = 0;
+  direction[1] = 1;
+  
+  output3DIt.SetFirstDirection( direction[1] );
+  output3DIt.SetSecondDirection( direction[0] );
+  output2DIt.SetDirection( 1 - direction[0] );
+  /*
+  // Initialized the 2D image
+  output2DIt.GoToBegin();
+  while ( ! output2DIt.IsAtEnd() ) {
+    while ( ! output2DIt.IsAtEndOfLine() ) {
+      output2DIt.Set( itk::NumericTraits<unsigned short>::NonpositiveMin() );
+      ++output2DIt;
+    }
+    output2DIt.NextLine();
+  }
+  */
+  
+  // Now do the max projection, 
+  output3DIt.GoToBegin();
+  output2DIt.GoToBegin();
+
+  while( !output3DIt.IsAtEnd() ) {
+    while ( !output3DIt.IsAtEndOfSlice() ) {
+      while ( !output3DIt.IsAtEndOfLine() ) {
+        //output2DIt.Set( vnl_math_max( output3DIt.Get(), output2DIt.Get() ));
+        ColorPixelType pix = output2DIt.Get();
+        pix.SetRed(vnl_math_max( output3DIt.Get().GetRed(), output2DIt.Get().GetRed()));
+        pix.SetGreen(vnl_math_max( output3DIt.Get().GetGreen(), output2DIt.Get().GetGreen()));
+        pix.SetBlue(vnl_math_max( output3DIt.Get().GetBlue(), output2DIt.Get().GetBlue()));
+        output2DIt.Set( pix );
+        ++output3DIt;
+        ++output2DIt;
+      }
+      output2DIt.NextLine();
+      output3DIt.NextLine();
+    }
+    output2DIt.GoToBegin();
+    output3DIt.NextSlice();
+  }
+  return image2D;
+  
+  /*
+  if (sigma <= 0) return image2D;
+  
+  // Perform Gaussian smoothing if the 
+  SmoothingFilterType::Pointer smoother = SmoothingFilterType::New();
+  CastFilterType::Pointer caster = CastFilterType::New();
+  smoother->SetInput( image2D );
+  smoother->SetVariance(sigma);
+  smoother->SetMaximumKernelWidth(15);
+  caster->SetInput( smoother->GetOutput() );
+  try {
+    caster->Update();
+  }
+  catch(itk::ExceptionObject& e) {
+    vcl_cout << e << vcl_endl;
+  }
+
+  return caster->GetOutput();
+  */
+}
+
 void
 fregl_util_reduce_noise(ImageType::Pointer image)
 {

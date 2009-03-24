@@ -9,11 +9,15 @@
 
 #include "itkImage.h"
 #include <vil3d/vil3d_image_view.h>
+#include "itkRGBPixel.h"
 
 typedef unsigned char                    InputPixelType;
 typedef itk::Image< InputPixelType, 3 >  ImageType;
 typedef itk::Image< InputPixelType, 2 >  ImageType2D;
 typedef itk::Image< float, 2 >           FloatImageType2D;
+typedef itk::RGBPixel< unsigned char >   ColorPixelType;
+typedef itk::Image< ColorPixelType, 3 > ColorImageType;
+typedef itk::Image< ColorPixelType, 2 > ColorImageType2D;
 
 // Maximum is taken between the two images
 ImageType::Pointer fregl_util_fuse_images(ImageType::Pointer image1, ImageType::Pointer image2);
@@ -21,6 +25,8 @@ ImageType::Pointer fregl_util_fuse_images(ImageType::Pointer image1, ImageType::
 ImageType::Pointer fregl_util_read_image( std::string const & file_name, bool channel_set = false, int channel = 0, bool denoise = false);
 
 ImageType2D::Pointer fregl_util_max_projection(ImageType::Pointer image, float sigma = 0);
+
+ColorImageType2D::Pointer fregl_util_max_projection_color(ColorImageType::Pointer image);
 
 //: High frequency image (LoG) is removed from the original image
 void fregl_util_reduce_noise(ImageType::Pointer image);
