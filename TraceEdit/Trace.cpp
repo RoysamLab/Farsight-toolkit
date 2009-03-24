@@ -472,6 +472,13 @@ void TraceObject::splitTrace(int selectedCellId)
   TraceLine *selectedLine = 
     reinterpret_cast<TraceLine*>(this->hashc[selectedCellId]);
 
+  if(selectedLine->GetSize() < 2)
+    {
+    cerr << "Cannot split a TraceLine that consists of fewer than two points, ";
+    cerr << "Call (d)elete instead." << endl;
+    return;
+    }
+
   //initialize the new line that is being created by this split operation
   TraceLine *newLine = new TraceLine();
   newLine->SetType(selectedLine->GetType());
@@ -485,11 +492,11 @@ void TraceObject::splitTrace(int selectedCellId)
     selectedLine->GetMarkers()->begin(); 
   for(; markerItr != selectedLine->GetMarkers()->end() && bitItr != selectedLine->GetTraceBitIteratorEnd(); markerItr++)
     {
+    bitItr++;
     if(*markerItr == selectedCellId)
       {
       break;
       }
-    bitItr++;
     }
 
   //move the TraceBits from selectedCellId on to the new TraceLine
@@ -505,6 +512,8 @@ void TraceObject::splitTrace(int selectedCellId)
     {
     *(newLine->GetBranchPointer()) = *(selectedLine->GetBranchPointer());
     selectedLine->GetBranchPointer()->clear();
+    newLine->GetBranch1()->SetParent(newLine);
+    newLine->GetBranch2()->SetParent(newLine);
     }
 
   this->trace_lines.push_back(newLine);
@@ -782,3 +791,4 @@ void TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist)
 		dir2= Trace2->m_trace_bits.back().id;
 	}
 }
+
