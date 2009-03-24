@@ -189,7 +189,7 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 		}
 		else
 		{
-		  std::cout<<"These lines";
+		  std::cout<<"These lines\t";
 		  for (int i = 0; i < view->IDList.size(); i++)
 		  {
 			std::cout<<  "\t"<<view->IDList[i];   
@@ -198,6 +198,23 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 		}
     }
     break;
+	case 'c':
+		{
+			if (view->IDList.size()<= 0)
+			{
+				std::cout<<  "Nothing Selected \n";
+			}
+			else
+			{
+				view->IDList.clear();
+				std::cout<< "cleared list\n";
+				view->IDList.clear(); 
+				view->sphereAct->VisibilityOff();
+				view->LineAct();
+				view->renWin->Render();
+			}
+		}
+		break;
     case 'd':
     {
 		if(view->IDList.size()>=1)
@@ -211,7 +228,7 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 		  std::cout<< " \t deleted" <<std::endl;
 		  view->IDList.clear(); 
 		  view->sphereAct->VisibilityOff();
-      view->LineAct();
+		  view->LineAct();
 		  view->renWin->Render();
 		}
 		else
@@ -224,13 +241,11 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
     {
 		if(view->IDList.size()>=1)
 		{
-		  std::cout<<"selected lines \n";
+		  /*std::cout<<"selected lines \n";
 		  for (int i = 0; i < view->IDList.size(); i++)
 		  {
-			std::cout<<  "\t"<<view->IDList[i];
-			
-
-		  } 
+			std::cout<<  "\t"<<view->IDList[i];			
+		  } */
 		  view->MinEndPoints(view);
 		  //std::cout<< " \t deleted" <<std::endl;
 		  view->IDList.clear(); 
@@ -254,7 +269,7 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
             } 
           std::cout << "Number of root traces after: " << view->tobj->GetTraceLinesPointer()->size() << endl;
           view->IDList.clear(); 
-		      view->sphereAct->VisibilityOff();
+		  view->sphereAct->VisibilityOff();
           view->LineAct();
           view->renWin->Render();
         }
@@ -307,10 +322,26 @@ void View3d::MinEndPoints(View3d* view)
 	std::cout<< "elements passed \t" << numTrace << std::endl;
 	for (i = 0;i<numTrace; i++)
 	{
-		std::cout<< "added new trace" <<std::endl;
+		//std::cout<< "added new trace" <<std::endl;
 		traceList.push_back( reinterpret_cast<TraceLine*>(view->tobj->hashc[view->IDList[i]]));
-	}
-	
+		int s=traceList.size()-1, exist =0;
+		//std::cout<<"trace size "<<  traceList.size() << std::endl;
+		if (traceList.size()>0)
+		{
+			j = 0;
+			while ( (j < s)&&(exist==0))
+			{	
+				std::cout<<"check trace "<<  traceList.size() <<" to " <<j << std::endl;						
+				if (traceList[s]->GetId()== traceList[j]->GetId())
+				{
+					traceList.pop_back();	
+					std::cout<<"duplicate trace not added\n";	
+					exist=1;
+				}
+				j++;			
+			}
+		}
+	}	
 	for (i=0;i<traceList.size()-1; i++)
 	{
 		for (j=i+1; j<traceList.size(); j++)
@@ -322,7 +353,7 @@ void View3d::MinEndPoints(View3d* view)
 			compList.push_back(newComp);
 		}
 	}
-	std::cout<< "Number of computed distances\t" << compList.size()<<std::endl;
+	std::cout<<"trace size "<<  traceList.size() << "\tNumber of computed distances\t" << compList.size()<<std::endl;
 	for (i=0;i<compList.size(); i++)
 	{
 		std::cout<<"Trace\t"<<compList[i].Trace1->GetId()<< "\t compaired to trace\t"<<compList[i].Trace2->GetId() <<" is lenght:\t"<<compList[i].dist<< std::endl;
