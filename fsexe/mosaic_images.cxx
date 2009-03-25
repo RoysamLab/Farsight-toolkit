@@ -53,6 +53,7 @@ main(  int argc, char* argv[] )
   vul_arg< vcl_string > arg_img_path  ("-path","The path of the image files.",".");
   vul_arg< vcl_string > arg_old_str   ("-old_str","The old substr in the image names to be replaced");
   vul_arg< vcl_string > arg_new_str   ("-new_str","The new substr in the image names");
+  vul_arg< bool >       arg_3d        ("-3d", "Generate a 3D image as well",false);
   vul_arg< vcl_string > arg_outfile   ("-output","The name of the output");
   vul_arg< bool >       arg_in_anchor ("-in_anchor","The final space is set to the anchor image", false);
   vul_arg< bool >       arg_overlap   ("-overlap_only","Only consider images that overlap the anchor image", false);
@@ -254,13 +255,14 @@ main(  int argc, char* argv[] )
   seriesWriter->SetFileNames( nameGenerator->GetFileNames() );
   seriesWriter->Update();
 
-  /*
-  typedef itk::ImageFileWriter< ImageType >  WriterType;
-  WriterType::Pointer writer = WriterType::New();
-  writer->SetFileName( arg_outfile() );
-  writer->SetInput( final_image );
-  writer->Update();
-  */
+  if (arg_3d()) {
+    std::string name_3d = name_prefix + std::string(".tiff");
+    typedef itk::ImageFileWriter< ImageType >  WriterType;
+    WriterType::Pointer writer = WriterType::New();
+    writer->SetFileName( name_3d );
+    writer->SetInput( final_image );
+    writer->Update();
+  }
 
   // doing the 2d maximum projection and dump it out
   ImageType2D::Pointer image_2d = fregl_util_max_projection(final_image);
