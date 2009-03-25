@@ -373,13 +373,30 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
       {
       lineParent = -1;
       }
-    tline = new TraceLine();
+	if(hash_load.count(lineID)>0)
+	  {
+	  tline = reinterpret_cast<TraceLine*>(hash_load[lineID]);
+	  }
+	else
+	  {
+	  tline = new TraceLine();
+	  hash_load[lineID] = reinterpret_cast<unsigned long long int>(tline);
+	  }
     tline->SetId(lineID);
     tline->SetType(lineType);
-    hash_load[lineID] = reinterpret_cast<unsigned long long int>(tline);
+    
     if(lineParent != -1)
       {
-      TraceLine * tparent = reinterpret_cast<TraceLine*>(hash_load[lineParent]);
+	  TraceLine *tparent;
+	  if(hash_load.count(lineParent)==0)
+	    {
+	    tparent = new TraceLine();
+		hash_load[lineID] = reinterpret_cast<unsigned long long int>(tparent);
+	    }
+	  else
+	    {
+        tparent = reinterpret_cast<TraceLine*>(hash_load[lineParent]);
+	    }
       tline->SetParent(tparent);
       tparent->GetBranchPointer()->push_back(tline);
       }
