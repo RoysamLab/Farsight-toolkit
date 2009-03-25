@@ -832,15 +832,19 @@ void TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist)
 	XB2=Trace2->m_trace_bits.back().x;		YB2=Trace2->m_trace_bits.back().y;		ZB2=Trace2->m_trace_bits.back().z;
 //compute the endpt distances
 	distances[0]=sqrt(pow((XF-XF2),2)+pow((YF-YF2),2)+pow((ZF-ZF2),2));//0 F-F
+//std::cout<<distances[0]<<std::endl;
 	distances[1]=sqrt(pow((XF-XB2),2)+pow((YF-YB2),2)+pow((ZF-ZB2),2));//1 F-B
-	
+//std::cout<<distances[1]<<std::endl;
 	distances[2]=sqrt(pow((XB-XF2),2)+pow((YB-YF2),2)+pow((ZB-ZF2),2));//2 B-F
+//std::cout<<distances[2]<<std::endl;
 	distances[3]=sqrt(pow((XB-XB2),2)+pow((YB-YB2),2)+pow((ZB-ZB2),2));//3 B-B
+//std::cout<<distances[3]<<std::endl;
 //determine minimum spacing
-	min = distances[1];
+	min = distances[0];
 	int i, mark=0;
-	for (i = 2; i<4; i++)
+	for (i = 1; i<4; i++)
 	{
+		//printf("dist of %d = %d \n", i, distances[i]);
 		if (min > distances[i])
 		{
 			min= distances[i];

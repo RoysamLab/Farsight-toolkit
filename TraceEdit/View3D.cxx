@@ -350,7 +350,18 @@ void View3d::MinEndPoints(View3d* view)
 			newComp.Trace1= traceList[i];
 			newComp.Trace2= traceList[j];
 			newComp.Trace1->EndPtDist(newComp.Trace2,newComp.endPT1, newComp.endPT2, newComp.dist);
-			compList.push_back(newComp);
+			if ((newComp.dist>newComp.Trace1->GetSize())||(newComp.dist>newComp.Trace2->GetSize()))
+			{
+				std::cout<<"distance"
+				<< newComp.Trace1->GetId()
+				<< " and " << newComp.Trace2->GetId()
+				<<" is too large \n";
+			}
+			else
+			{
+				std::cout<<"added comparison\n";
+				compList.push_back(newComp);
+			}			
 		}
 	}
 	std::cout<<"trace size "<<  traceList.size() << "\tNumber of computed distances\t" << compList.size()<<std::endl;
