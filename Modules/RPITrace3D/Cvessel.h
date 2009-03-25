@@ -43,7 +43,7 @@ public:
 	CVessel(int id = 0) : m_iID(id), m_iLength(0), m_iSomaConnected(0),
 		m_iNumOfIntersectionPoints(0), m_iHitsImageBoundary(0),
 		m_iDrawFlag(0), m_iMergedFlag(0), m_fHWidth(0.0), m_fVWidth(0.0),
-		m_iNumOfPoints(0)
+		m_iNumOfPoints(0), m_iParentID(-1)
 	{
 		m_aiMyIntersectionPoints = new int[BlockSize];
 		memset(m_aiMyIntersectionPoints, 0, sizeof(int) * BlockSize);
@@ -275,6 +275,13 @@ public:
 
 	void RemoveIntersectionPoint(int iID);
 
+	//added by YOusef on 3-24-2009
+	//set/get the parent ID
+	void SetParentID(int ID) { m_iParentID = ID; }
+	int GetParentID()
+	{
+		return m_iParentID;
+	}
 	/////////////////
 	// data members//
 	/////////////////
@@ -319,6 +326,9 @@ public:
 	float m_fHWidth;
 	float m_fVWidth;
 	int m_iNumOfPoints;
+
+	//added by Yousef (3-24-2009): the vessel (segment) parent ID
+	int m_iParentID;
 
 private:
 

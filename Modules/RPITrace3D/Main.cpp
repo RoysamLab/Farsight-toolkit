@@ -350,13 +350,14 @@ int main(int argc, char* argv[])
     TiXmlElement *traceBit;
    
     for (i = 0; i < gTheVessels.m_iNumOfElements; i++)
-      {
+      {		 
       if (gTheVessels.m_apData[i])
         {
         traceLine = new TiXmlElement("TraceLine");
         tracingOutput->LinkEndChild(traceLine);
         traceLine->SetAttribute("ID", i+1);
         traceLine->SetAttribute("length", gTheVessels.m_apData[i]->GetLength());
+		traceLine->SetAttribute("Parent", gTheVessels.m_apData[i]->GetParentID());
         CLNode<CPoint>* temp = gTheVessels.m_apData[i]->m_Center.head;
         int IID = 0;
         while (temp)
@@ -393,7 +394,7 @@ int main(int argc, char* argv[])
       for (i = 0; i < gIntersectionPoints.m_iNumOfElements; i++)
       {
         CPoint* pPoint =& gIntersectionPoints.m_apData[i]->m_Point;
-        Br_points << pPoint->m_iX << " " << pPoint->m_iY << " " << pPoint->m_iZ <<endl;
+        Br_points << pPoint->m_iX << " " << pPoint->m_iY << " " << pPoint->m_iZ <<endl;		
       }
 
     }
