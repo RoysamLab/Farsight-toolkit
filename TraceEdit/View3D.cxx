@@ -259,25 +259,23 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 		}
     }
     break;
-    case 's':
-      if(view->IDList.size()>=1)
-        {
-          std::cout << "Number of root traces before: " << view->tobj->GetTraceLinesPointer()->size() << endl;
-          for (int i = 0; i < view->IDList.size(); i++)
-            {
-            view->tobj->splitTrace(view->IDList[i]);
-            } 
-          std::cout << "Number of root traces after: " << view->tobj->GetTraceLinesPointer()->size() << endl;
-          view->IDList.clear(); 
-		  view->sphereAct->VisibilityOff();
-          view->LineAct();
-          view->renWin->Render();
-        }
-      else
+  case 's':
+    if(view->IDList.size()>=1)
       {
-        std::cout<<  "Nothing to split\n";
+      for (int i = 0; i < view->IDList.size(); i++)
+        {
+        view->tobj->splitTrace(view->IDList[i]);
+        } 
+      view->IDList.clear(); 
+      view->sphereAct->VisibilityOff();
+      view->LineAct();
+      view->renWin->Render();
       }
-      break;
+    else
+      {
+      std::cout<<  "Nothing to split\n";
+      }
+    break;
   }
 
 }

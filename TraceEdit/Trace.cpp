@@ -536,11 +536,30 @@ void TraceObject::splitTrace(int selectedCellId)
     selectedLine->GetMarkers()->begin(); 
   for(; markerItr != selectedLine->GetMarkers()->end() && bitItr != selectedLine->GetTraceBitIteratorEnd(); markerItr++)
     {
-    bitItr++;
     if(*markerItr == selectedCellId)
       {
       break;
       }
+    bitItr++;
+    }
+
+  //some TraceLines have an equal number of cells and markers, whereas
+  //other lines have one extra cell.  We have to treat these cases separately
+  //to achieve consistent results.
+  if(selectedLine->GetSize() > selectedLine->GetMarkers()->size())
+    {
+    bitItr++;
+    }
+
+  //special case: when splitting on the first node of a child line,
+  //we need to remove selectedLine from the parent's vector of children.
+  bool deleteSelectedLine = false;
+  if( bitItr == selectedLine->GetTraceBitIteratorBegin() &&
+      selectedLine->GetParent() != NULL )
+    {
+    //we want to do the actual removal after the splice, but we need to detect
+    //this case before selectedLine->GetTraceBitIteratorBegin() changes
+    deleteSelectedLine = true;
     }
 
   //move the TraceBits from selectedCellId on to the new TraceLine
@@ -550,23 +569,30 @@ void TraceObject::splitTrace(int selectedCellId)
     bitItr,
     selectedLine->GetTraceBitIteratorEnd());
   
-  //if the selected line had any branches, we have to reassign them to
+  //if the selected line had any branches we have to reassign them to
   //the new line
   if(selectedLine->GetBranchPointer()->size() != 0)
     {
     *(newLine->GetBranchPointer()) = *(selectedLine->GetBranchPointer());
-	
-	std::vector<TraceLine*> * bp = newLine->GetBranchPointer();
-	for(int counter=0; counter< bp->size(); counter++)
-	{
-		(*bp)[counter]->SetParent(newLine);
-	}
+    std::vector<TraceLine*> * bp = newLine->GetBranchPointer();
+    for(int counter=0; counter< bp->size(); counter++)
+      {
+      (*bp)[counter]->SetParent(newLine);
+      }
     selectedLine->GetBranchPointer()->clear();
-   // newLine->GetBranch1()->SetParent(newLine);
-   // newLine->GetBranch2()->SetParent(newLine);
     }
 
   this->trace_lines.push_back(newLine);
+
+  if(deleteSelectedLine)
+    {
+    std::vector<TraceLine*>::iterator tlitr = 
+      find(selectedLine->GetParent()->GetBranchPointer()->begin(),
+           selectedLine->GetParent()->GetBranchPointer()->end(),
+           selectedLine);
+    selectedLine->GetParent()->GetBranchPointer()->erase(tlitr);
+    delete selectedLine;
+    }
 }
 
 /* This function assumes that the TraceLine does not have either parent or children. One end must be open */
