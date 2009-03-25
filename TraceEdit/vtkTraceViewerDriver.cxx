@@ -13,7 +13,7 @@ int main (int argc, char* argv[])	{
 	vtkActor *act = View.LineAct();
 	std::vector<TraceBit> vec = View.tobj->CollectTraceBits();
 	printf("vec.size() = %d\n",vec.size());
-	View.AddPointsAsPoints(vec);
+//	View.AddPointsAsPoints(vec);
 	View.AddBranchIllustrators();
 	act->SetPickable(1);
 	View.addAct(act);

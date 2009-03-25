@@ -197,21 +197,19 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 		  std::cout<< " \t are selected \n" ;
 		}
     }
+	return;
     break;
 	case 'c':
 		{
 			if (view->IDList.size()<= 0)
 			{
 				std::cout<<  "Nothing Selected \n";
+				return;
 			}
 			else
 			{
 				view->IDList.clear();
 				std::cout<< "cleared list\n";
-				view->IDList.clear(); 
-				view->sphereAct->VisibilityOff();
-				view->LineAct();
-				view->renWin->Render();
 			}
 		}
 		break;
@@ -226,14 +224,11 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 			view->deleteTrace(view, reinterpret_cast<TraceLine*>(view->tobj->hashc[view->IDList[i]])); 
 		  } 
 		  std::cout<< " \t deleted" <<std::endl;
-		  view->IDList.clear(); 
-		  view->sphereAct->VisibilityOff();
-		  view->LineAct();
-		  view->renWin->Render();
 		}
 		else
 		{
 			std::cout<<  "Nothing to Delete \n";
+			return;
 		}
     }
     break;
@@ -248,14 +243,11 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 		  } */
 		  view->MinEndPoints(view);
 		  //std::cout<< " \t deleted" <<std::endl;
-		  view->IDList.clear(); 
-		  view->sphereAct->VisibilityOff();
-		  view->poly_line_data->Modified();
-		  view->renWin->Render();
 		}
 		else
 		{
 			std::cout<<  "Nothing to merge \n";
+			return;
 		}
     }
     break;
@@ -274,9 +266,18 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
     else
       {
       std::cout<<  "Nothing to split\n";
+		return;
       }
     break;
   }
+  view->sphereAct->VisibilityOff();
+  view->IDList.clear();
+//  view->ren->RemoveAllViewProps();
+  //view->ren->AddActor(view->LineAct());
+  view->LineAct();
+//  view->AddPointsAsPoints(view->tobj->CollectTraceBits());
+  view->renWin->Render();
+  view->AddBranchIllustrators();
 
 }
 
@@ -339,7 +340,7 @@ void View3d::MinEndPoints(View3d* view)
 				j++;			
 			}
 		}
-	}	
+	}
 	for (i=0;i<traceList.size()-1; i++)
 	{
 		for (j=i+1; j<traceList.size(); j++)
@@ -361,6 +362,10 @@ void View3d::MinEndPoints(View3d* view)
 				compList.push_back(newComp);
 			}			
 		}
+	}
+	for(int counter=0; counter < compList.size(); counter++)
+	{
+		tobj->mergeTraces(compList[counter].endPT1,compList[counter].endPT2);
 	}
 	std::cout<<"trace size "<<  traceList.size() << "\tNumber of computed distances\t" << compList.size()<<std::endl;
 	for (i=0;i<compList.size(); i++)

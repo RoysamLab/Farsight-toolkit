@@ -116,6 +116,7 @@ public:
   int getNewLineId();
   void splitTrace(int selectedCellId);
   void ReverseSegment(TraceLine*);
+  void RemoveTraceLine(TraceLine*);
   void mergeTraces(unsigned long long int eMarker, unsigned long long int sMarker);
 	void CreatePolyDataRecursive(TraceLine* , vtkSmartPointer<vtkFloatArray> , vtkSmartPointer<vtkPoints> ,vtkSmartPointer<vtkCellArray>);
 	vtkSmartPointer<vtkPolyData> GetVTKPolyData();
