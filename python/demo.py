@@ -12,6 +12,7 @@ from farsightutils import *
 data_dir = 'C:' + os.sep + 'BADRI_TEST'
 full_image_dir = data_dir + os.sep + 'ORIGINAL'
 crop_image_dir = data_dir + os.sep + 'CropDemo'
+trace_demo_dir = data_dir + os.sep + 'TraceDemo'
 tissuenets_dir = data_dir + os.sep + 'TissueNetsDemo'
 
 #parts of the original image filenames:
@@ -57,35 +58,6 @@ def find_file(fname):
     return True;
   else:
     return False;
-###############################################################################
-def main_menu():
-  print ('\nDEMO OPTIONS:')
-  print ('  1. COMPLETE IMAGE VISUALIZATION')
-  print ('  2. 5-LABEL IMAGE PROCESSING')
-  print ('  3. TRACE EDITOR')
-  print ('  4. REGISTRATION DEMO')
-  print ('  5. TISSUE NETS DEMO')
-  print ('  6. QUIT')
-  choice = raw_input('Please enter selection: ')
-  return choice
-###############################################################################
-def module_menu():
-  print("\nMODULES:")
-  print("  0. EXECUTE ALL:")
-  print("  1. NUCLEAR SEGMENTATION")
-  print("  2. VESSEL SEGMENTATION")
-  print("  3. TRACING OF ASTROCYTES")
-  print("  4. TRACING OF MICROGLIA")
-  print("  5. COMPUTE ASSOCIATIVE FEATURES")
-  print("  6. COMPUTE INTRINSIC NUCLEAR FEATURES")
-  print("  7. CLASSIFICATION OF NUCLEI")
-  print("  8. VIEW RESULT RENDERING")
-  print("  9. EXIT MENU")
-  choice = raw_input('Please enter selection: ')
-  return choice          
-###############################################################################
-
-  
 ###############################################################################
 def classify(test_data):
   print("\nSCALING TRAINING SET...")
@@ -133,6 +105,21 @@ def classify(test_data):
   subprocess.Popen(arg).wait();
   print("...DONE")
 
+###############################################################################
+def module_menu():
+  print("\nMODULES:")
+  print("  0. EXECUTE ALL:")
+  print("  1. NUCLEAR SEGMENTATION")
+  print("  2. VESSEL SEGMENTATION")
+  print("  3. TRACING OF ASTROCYTES")
+  print("  4. TRACING OF MICROGLIA")
+  print("  5. COMPUTE ASSOCIATIVE FEATURES")
+  print("  6. COMPUTE INTRINSIC NUCLEAR FEATURES")
+  print("  7. CLASSIFICATION OF NUCLEI")
+  print("  8. VIEW RESULT RENDERING")
+  print("  9. EXIT MENU")
+  choice = raw_input('Please enter selection: ')
+  return choice          
 ###############################################################################
 def run_wizard():
   print('\nLETS BEGIN IMAGE PROCESSING!!!\n')
@@ -218,6 +205,9 @@ def run_wizard():
 
       print("\nSTARTING VISUALIZATION...")
       if find_file(nuc_result) and find_file(eba_result) and find_file(trace_astro_out) and find_file(trace_micro_out) and find_file(rend_params):
+        #now make sure a cache folder exists
+        if not os.path.exists('cache'):
+          os.mkdir('cache')
         subprocess.call(['render.exe', rend_params])
         print("\n...DONE")
       else:
@@ -280,6 +270,9 @@ def run_wizard():
     elif choice == '8':
       if find_file(nuc_result) and find_file(eba_result) and find_file(trace_astro_out) and find_file(trace_micro_out) and find_file(rend_params):
         print("\nSTARTING VISUALIZATION...")
+        #now make sure a cache folder exists
+        if not os.path.exists('cache'):
+          os.mkdir('cache')
         subprocess.call(['render.exe', rend_params])
         print("\n...DONE")
       else:
@@ -289,7 +282,24 @@ def run_wizard():
       return
     else:
       print("\nUNRECOGNIZED OPTION")
-###############################################################################  
+      
+###############################################################################
+def main_menu():
+  print ('\nDEMO OPTIONS:')
+  print ('  1. RENDER 5-LABEL IMAGE PROCESSING RESULTS')
+  print ('  2. 5-LABEL IMAGE PROCESSING DEMO')
+  print ('  3. 3D TRACING DEMO') 
+  print ('  4. 3D NUCLEAR SEGMENTATION DEMO')
+  print ('  5. 3D VESSEL SEGMENTATION DEMO')
+  print ('  6. REGISTRATION DEMO')
+  print ('  7. TISSUE NETS DEMO')
+  print ('  8. RENDER GRAYSCALE IMAGE')
+  print ('  9. RENDER SEGMENTATION RESULT FILE')
+  print (' 10. OPEN TRACE EDITOR')
+  print (' 11. QUIT')
+  choice = raw_input('Please enter selection: ')
+  return choice
+###############################################################################
 def main():
   
   print ('\nYou have started the FARSIGHT DEMO')
@@ -298,41 +308,157 @@ def main():
 
   while (1):
     choice = main_menu()
+
+    #DO 3D RENDERING OF ALL 4 CHANNELS, AND COLOR NUCLEI BY CLASS:
     if choice == '1':
-      
       os.chdir(full_image_dir)
-
-      #DO A RENDERING OF THE ORIGINAL NUCLEI DATA:
-      nuc_image = orig_base_name + nuc_id + crop_ext
-      #subprocess.call(['trace_editor.exe', nuc_image])
-      
-      nuc_result = orig_base_name + nuc_id + label_id + ".tiff"
-      eba_result = orig_base_name + eba_id + surf_id + split_ext
-      trace_astro_out = orig_base_name + iba1_id + traced_id + '.xml'
-      trace_micro_out = orig_base_name + gfap_id + traced_id + '.xml'
-      rend_params = orig_base_name + rend_params_id + '.txt'
-      
-      if find_file(nuc_result) and find_file(eba_result) and find_file(trace_astro_out) and find_file(trace_micro_out) and find_file(rend_params):
-        print("\nSTARTING VISUALIZATION...")
-        subprocess.call(['render.exe', rend_params])
-        print("\n...DONE")
-      else:
-        print("COULD NOT FIND INPUT FILES")
-
+      #now make sure a cache folder exists
+      if not os.path.exists('cache'):
+        os.mkdir('cache')
+      args = "render.exe 100upoint5%25hippo25x1unmixed_RenderParameters.txt";
+      cout = file("cout.log",'w')
+      print("\nSTARTING VISUALIZATION (IN NEW THREAD - PLEASE BE PATIENT)...")
+      subprocess.Popen(args,stdout=cout);
       os.chdir(data_dir)
-      
+
+    #RUN THE PROCESSING DEMO THAT ALLOWS FOR EACH STEP IN PROCESSING TO BE PERFORMED ON TWO IMAGES
     elif choice == '2':
       os.chdir(crop_image_dir)
       run_wizard()
       os.chdir(data_dir)
-      
+
+    #TRACING DEMO OF SINGLE NEURON.  TRACE, then OPEN Trace Editor
     elif choice == '3':
+      os.chdir(trace_demo_dir)
+      print("\nTRACING...")
+      cout = file("trace.log",'w')
+      args = "RPITrace3D.exe ETR052Z1_TracingParameterValues.xml"
+      subprocess.Popen(args,stdout=cout).wait()
+      cout.close()
+      print("...DONE")
+      print("OPENING TRACE EDITOR...")
+      args = "trace_editor.exe ETR052Z1TracedPoints.xml ETR052Z1.pic"
+      subprocess.Popen(args,stdout=subprocess.PIPE)
+      os.chdir(data_dir)
+
+    #SHOW 3D RENDING OF ORIGINAL DATA OF SMALL IMAGE WITH NUCLEI.
+    #SEGMENT THE NUCLEI, THEN SHOW A 3D RENDERING OF THE RESULT
+    elif choice == '4':
       os.chdir(crop_image_dir)
-      fname = GetFilename('XML','.xml')
+      crop_num = '1'
+      nuc_image = crop_base_name + crop_id + crop_num + nuc_id + crop_ext
+      nuc_result = crop_base_name + crop_id + crop_num + nuc_id + label_id + ".tiff"
+      seg_params = crop_base_name + crop_id + crop_num + nuc_id + seg_params_id + ".ini"
+      
+      if find_file(nuc_image) and find_file(seg_params):
+        print("\nRENDERING NUCLEI CHANNEL...")
+        args = "trace_editor.exe " + nuc_image
+        subprocess.Popen(args,stdout=subprocess.PIPE)
+        print("STARTING NUCLEAR SEGMENTATION...")
+        args = 'segment_nuclei.exe ' + nuc_image + " " + nuc_result + " " + seg_params
+        cout = file("seg_nuclei.log",'w')
+        subprocess.Popen(args,stdout=cout).wait()
+        cout.close()
+        print("\n...DONE")
+        print("RENDING SEGMENTATION RESULT...")
+        #now make sure a cache folder exists
+        if not os.path.exists('cache'):
+          os.mkdir('cache')
+        args = "render.exe NM_crop1_Nuc_RenderParameters.txt"
+        subprocess.Popen(args,stdout=subprocess.PIPE)
+        
+      os.chdir(data_dir)
+
+    #SHOW 3D RENDING OF VESSEL DATA, SEGMENT THE VESSELS, THEN SHOW 3D RENDING OF RESULT
+    elif choice == '5':
+      os.chdir(crop_image_dir)
+      crop_num = '1'
+      eba_image = crop_base_name + crop_id + crop_num + eba_id + crop_ext
+      eba_result = crop_base_name + crop_id + crop_num + eba_id + surf_id + crop_ext
+
+      if find_file(eba_image):
+        print("\nRENDERING VESSEL CHANNEL...")
+        args = "trace_editor.exe " + eba_image
+        subprocess.Popen(args,stdout=subprocess.PIPE)
+        print("STARTING VESSEL SEGMENTATION...")
+        args = 'vessel_segmentation.exe ' + eba_image + " " + eba_result
+        cout=file("seg_vessels.log",'w')
+        subprocess.Popen(args,stdout=cout).wait()
+        cout.close()
+        print("...DONE")
+        print("RENDERING SEGMENTATION RESULT...")
+        #now make sure a cache folder exists
+        if not os.path.exists('cache'):
+          os.mkdir('cache')
+        args = "render.exe NM_crop1_EBA_RenderParameters.txt"
+        subprocess.Popen(args,stdout=subprocess.PIPE)
+        
+      os.chdir(data_dir)
+
+    #RUN THE REGISTRATION DEMO - CREATES MONTAGE OF 2 CROPPED REGIONS  
+    elif choice == '6':
+      os.chdir(crop_image_dir)
+      from register_pairs import register
+      print("\nSTARTING REGISTRATION OF PAIRS")
+      register([os.getcwd()+os.sep,'NM_RegistrationPairs.txt'])
+      print("\n...MONTAGE CREATED")
+      print("LOAD THE MONTAGE IMAGE (CropDemo/pairwise_montage_NM_crop2_Nuc.tiff)")
+      print("IN FARSIGHT TO VIEW RESULTS")
+      #print("\nOPENING MONTAGE BROWSER")
+      #subprocess.call(["MontageNavigator.exe"])
+      #subprocess.call(['trace_editor.exe', "montage_NM_crop2_Nuc.tiff"])
+      #print("\nMONTAGE BROWSER CLOSED")
+      os.chdir(data_dir)
+
+    #RUN THE TISSUENETS DEMO  
+    elif choice == '7':
+      os.chdir(tissuenets_dir)
+      print("\nIMPORTING tissuenets_demo.py")
+      import tissuenets_demo
+      os.chdir(data_dir)
+
+    #ALLOW USER TO BROWSE FOR A DATA FILE, THEN RENDER IT USING trace_edit program
+    #FILE MUST BE A GRAYSCALE IMAGE
+    elif choice == '8':
+      ftypes = [('PIC', '.pic'),('TIFF', '.tiff .tif'),('all files', '.*')]
+      fname = GetFilename(ftypes)
       if(fname != ''):
-        base = os.path.basename(fname)
-        loc = base.find('TracedPoints.xml')
-        dname = base[0:loc-1]
+        args = 'trace_editor.exe ' + fname
+        subprocess.Popen(args,stdout=subprocess.PIPE)
+
+    #ALLOW USER TO BROWSE FOR A RESULT FILE, THEN RENDER THE OBJECTS using render program
+    #FILE MY BE label image, binary image, or ..TracedPoints.xml.
+    elif choice == '9':
+      os.chdir(data_dir)
+      ftypes = [('XML','.xml'),('PIC', '.pic'),('TIFF', '.tiff .tif'),('all files', '.*')]
+      fname = GetFilename(ftypes)
+      if(fname != ''):
+        fdir = os.path.abspath( os.path.dirname(fname) ) #absolute directory of the file
+        fnam = os.path.basename(fname)			                #name of file
+        os.chdir(fdir)
+        rfile = file('r.tmp','w')
+        rfile.write("1 1 1\n")
+        rfile.write(fnam + " 0 1 1")
+        rfile.close()
+        #now make sure a cache folder exists
+        if not os.path.exists('cache'):
+          os.mkdir('cache')
+        args = 'render.exe r.tmp'
+        subprocess.Popen(args,stdout=subprocess.PIPE)
+        os.chdir(data_dir)
+
+
+    #ALLOW USER TO BROWSE FOR A FILE AND THEN OPEN THE TRACE EDITOR FOR THIS FILE:
+    elif choice == '10':
+      os.chdir(data_dir)
+      ftypes = [('XML','.xml'),('all files', '.*')]
+      fname = GetFilename(ftypes)
+      if(fname != ''):
+        fdir = os.path.abspath( os.path.dirname(fname) ) #absolute directory of the file
+        os.chdir(fdir)
+        fnam = os.path.basename(fname)			                #name of file
+        loc = fnam.find('TracedPoints.xml')
+        dname = fnam[0:loc-1]
         print("SEARCHING FOR DATA FILE(" + dname + ")...")
         found = False;
         files = os.listdir(os.getcwd())
@@ -343,32 +469,15 @@ def main():
             break;
         
         if found:
-          subprocess.call(['trace_editor.exe', fname, dname])
+          args = 'trace_editor.exe ' + fname + ' ' + dname
         else:
-          subprocess.call(['trace_editor.exe', fname])
-        print("\n...DONE")
+          args = 'trace_editor.exe ' + fname
+          
+        subprocess.Popen(args,stdout=subprocess.PIPE)
         os.chdir(data_dir)
-        
-    elif choice == '4':
-      os.chdir(crop_image_dir)
-      from register_pairs import register
-      print("\nSTARTING REGISTRATION OF PAIRS")
-      register([os.getcwd()+os.sep,'NM_RegistrationPairs.txt'])
-      print("\n...DONE")
-      print("\nOPENING MONTAGE BROWSER")
-      #subprocess.call(["MontageNavigator.exe"])
-      subprocess.call(['trace_editor.exe', "montage_NM_crop1_Nuc/slice.tif"])
-      print("\nMONTAGE BROWSER CLOSED")
-      os.chdir(data_dir)
       
-    elif choice == '5':
-      os.chdir(tissuenets_dir)
-      print("\nIMPORTING tissuenets_demo.py")
-      #os.environ['CLASSPATH'] = "C:\\Program Files (x86)\\Farsight 0.1.1\\bin\\saxon9.jar"
-      import tissuenets_demo
-      os.chdir(data_dir)
-      
-    elif choice == '6':
+    #EXIT  
+    elif choice == '11':
       print("\nGOODBYE")
       return
 

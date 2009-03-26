@@ -8,7 +8,7 @@
 ##############
 ## A FUNCTION TO BROWSE FOR A FILENAME
 ##############
-def GetFilename(ftype,ext):
+def GetFilename(ftypes):
 
     import os
     import Tkinter,Tkconstants,tkFileDialog
@@ -20,7 +20,7 @@ def GetFilename(ftype,ext):
   
     options = {}
     options['defaultextension'] = '' # couldn't figure out how this works
-    options['filetypes'] = [(ftype, ext),('all files', '.*')]
+    options['filetypes'] = ftypes
     options['initialdir'] = '/'
     options['initialfile'] = ''
     options['parent'] = root
