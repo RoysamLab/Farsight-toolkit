@@ -16,7 +16,9 @@ def register(argv):
     xforms=[]
 
     #pairwise registration
+    numPairs = 0;
     for line in f:
+        numPairs = numPairs+1;
         s_line = line.rstrip().rstrip('\n')
         pos = s_line.find(' ')
         from_image = s_line[:pos]
@@ -61,10 +63,14 @@ def register(argv):
 
     # perform montaging using the first image as the anchor
     print("\nSTART...")
-    if(argv[0]==''):
-        cmd = "mosaic_images.exe joint_transforms.xml " + names[0]
-    else:
-        cmd = "mosaic_images.exe joint_transforms.xml " + names[0] + " -path " + argv[0]
+    if (numPairs > 1):
+        if(argv[0]==''):
+            cmd = "mosaic_images.exe joint_transforms.xml -3d " + names[0]
+        else:
+            cmd = "mosaic_images.exe joint_transforms.xml -3d " + names[0] + " -path " + argv[0]
+    else : # just for one image pair, so call mosaic_image_pair.exe
+        cmd = "mosaic_image_pair.exe joint_transforms.xml " + names[0] +" "+ names[1] + " -path " + argv[0]
+        
     os.system(cmd)
     print("DONE")
 

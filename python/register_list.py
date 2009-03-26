@@ -142,7 +142,7 @@ def register(pair_list, image_dir):
 
     # perform montaging using the first image as the anchor
     print("\nSTART...")
-    os.system('mosaic_images.exe joint_transforms.xml '+names[0]+ " -path " + image_dir);
+    os.system('mosaic_images.exe joint_transforms.xml '+names[0]+ " -3d -path " + image_dir);
     print("DONE")
     
     # TEMP FILE CLEANUP:
