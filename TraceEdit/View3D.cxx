@@ -349,7 +349,7 @@ void View3d::MinEndPoints(View3d* view)
 			newComp.Trace1= traceList[i];
 			newComp.Trace2= traceList[j];
 			newComp.Trace1->EndPtDist(newComp.Trace2,newComp.endPT1, newComp.endPT2, newComp.dist);
-			if ((newComp.dist>newComp.Trace1->GetSize())||(newComp.dist>newComp.Trace2->GetSize()))
+			if ((newComp.dist>newComp.Trace1->GetSize()/2)||(newComp.dist>newComp.Trace2->GetSize()/2))
 			{
 				std::cout<<"distance"
 				<< newComp.Trace1->GetId()
@@ -363,14 +363,14 @@ void View3d::MinEndPoints(View3d* view)
 			}			
 		}
 	}
-	for(int counter=0; counter < compList.size(); counter++)
-	{
-		tobj->mergeTraces(compList[counter].endPT1,compList[counter].endPT2);
-	}
 	std::cout<<"trace size "<<  traceList.size() << "\tNumber of computed distances\t" << compList.size()<<std::endl;
 	for (i=0;i<compList.size(); i++)
 	{
 		std::cout<<"Trace\t"<<compList[i].Trace1->GetId()<< "\t compaired to trace\t"<<compList[i].Trace2->GetId() <<" is lenght:\t"<<compList[i].dist<< std::endl;
+	}
+	for(int counter=0; counter < compList.size(); counter++)
+	{
+		tobj->mergeTraces(compList[counter].endPT1,compList[counter].endPT2);
 	}
 }
 void View3d::HighlightSelected(TraceLine* tline)
