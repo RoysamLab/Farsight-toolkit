@@ -30,13 +30,10 @@ def create_pairs(argv):
         names.append(s_line);
 
         #Get the indices of rows and columns
-        print 'using iterator'
         iterator = re.finditer(argv[1],s_line)
         for match in iterator:
-            print match.group(1)
             rows.append(match.group(1))
             try:
-                print match.group(2)
                 cols.append(match.group(2))
             except: cols.append('1')
             
@@ -142,7 +139,11 @@ def register(pair_list, image_dir):
 
     # perform montaging using the first image as the anchor
     print("\nSTART...")
-    os.system('mosaic_images.exe joint_transforms.xml '+names[0]+ " -3d -path " + image_dir);
+    if (len(pair_list) > 1):
+        os.system('mosaic_images.exe joint_transforms.xml '+names[0]+ " -3d -path " + image_dir);
+    else:
+        os.system('mosaic_image_pair.exe joint_transforms.xml '+names[0]+" "+names[1]+ " -path " + image_dir);
+        
     print("DONE")
     
     # TEMP FILE CLEANUP:
