@@ -209,7 +209,7 @@ IF(WRAP_PYTHON)
 ENDIF(WRAP_PYTHON)
 
 IF(USE_LIBSVM)
-  SUBDIRS(libSVM)
+  SUBDIRS( libsvm )
 ENDIF(USE_LIBSVM)
 
 #These install rules are for use when linking against ITK/VTK build trees

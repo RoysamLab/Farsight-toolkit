@@ -65,7 +65,7 @@ def classify(test_data):
   training_scale = "NM_Training_Set_Scaled.txt"
   training_range = "NM_Training_Set_Ranges.txt"
   cout = file(training_scale,'w')
-  arg = "svmscale -s " + training_range + " " + training_set
+  arg = "svm-scale -s " + training_range + " " + training_set
   subprocess.Popen(arg,stdout=cout).wait()
   cout.close()
   print("...DONE")
@@ -80,21 +80,21 @@ def classify(test_data):
   dname = base[0:loc]
   testing_scale = dname + "_Scaled.txt"
   cout = file(testing_scale,'w')
-  arg = "svmscale -r " + training_range + " " + test_data
+  arg = "svm-scale -r " + training_range + " " + test_data
   subprocess.Popen(arg,stdout=cout).wait()
   cout.close()
   print("...DONE")
 
   print("\nTRAINING BASED ON SCALED TRAINING SET...")
   cout = file('train.log','w')
-  arg = "svmtrain -t 2 " + training_scale
+  arg = "svm-train -t 2 " + training_scale
   subprocess.Popen(arg,stdout=cout).wait()
   cout.close()
   print("...DONE")
 
   print("\nCLASSIFYING TEST DATA...")
   testing_predict = dname + "_Classes.txt"
-  arg = "svmpredict " + testing_scale + " " + training_scale + ".model" + " " + testing_predict
+  arg = "svm-predict " + testing_scale + " " + training_scale + ".model" + " " + testing_predict
   subprocess.Popen(arg).wait()
   print("...DONE")
 
