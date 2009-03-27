@@ -315,6 +315,7 @@ void View3d::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
 }
 void View3d::MinEndPoints(View3d* view)
 {
+	int s=0, exist =0;
 	int numTrace = view->IDList.size();		int i,j;
 	std::vector<TraceLine*> traceList;
 	std::vector<compTrace> compList;
@@ -323,18 +324,19 @@ void View3d::MinEndPoints(View3d* view)
 	{
 		//std::cout<< "added new trace" <<std::endl;
 		traceList.push_back( reinterpret_cast<TraceLine*>(view->tobj->hashc[view->IDList[i]]));
-		int s=traceList.size()-1, exist =0;
+		s=traceList.size()-1;
+		exist =0;
 		//std::cout<<"trace size "<<  traceList.size() << std::endl;
 		if (traceList.size()>0)
 		{
 			j = 0;
 			while ( (j < s)&&(exist==0))
 			{	
-				std::cout<<"check trace "<<  traceList.size() <<" to " <<j << std::endl;						
+				//std::cout<<"check trace "<<  s <<" to " <<j << std::endl;						
 				if (traceList[s]->GetId()== traceList[j]->GetId())
 				{
 					traceList.pop_back();	
-					std::cout<<"duplicate trace not added\n";	
+					//std::cout<<"duplicate trace not added\n";	
 					exist=1;
 				}
 				j++;			
@@ -349,28 +351,76 @@ void View3d::MinEndPoints(View3d* view)
 			newComp.Trace1= traceList[i];
 			newComp.Trace2= traceList[j];
 			newComp.Trace1->EndPtDist(newComp.Trace2,newComp.endPT1, newComp.endPT2, newComp.dist);
-			if ((newComp.dist>newComp.Trace1->GetSize()/2)||(newComp.dist>newComp.Trace2->GetSize()/2))
-			{
-				std::cout<<"distance"
-				<< newComp.Trace1->GetId()
-				<< " and " << newComp.Trace2->GetId()
-				<<" is too large \n";
-			}
-			else
+			if (!(newComp.dist>newComp.Trace1->GetSize()/2)&&!(newComp.dist>newComp.Trace2->GetSize()/2))
 			{
 				std::cout<<"added comparison\n";
 				compList.push_back(newComp);
-			}			
+				
+			}
+			/*else
+			{
+				std::cout<<"distance "
+				<< newComp.Trace1->GetId()
+				<< " and " << newComp.Trace2->GetId()
+				<<" is too large \n";
+			}*/			
+		}
+	}
+	for (i=0;i<compList.size()-1; i++)
+	{
+		exist = 0;	j=i+1;
+		while ((exist == 0)&&(j<compList.size()))
+		{
+			
+			if (compList[i].Trace1->GetId()==compList[j].Trace1->GetId())
+			{
+				if (compList[i].endPT1==compList[j].endPT1)
+				{
+					std::cout<<"Conflict "<<compList[i].Trace1->GetId()<<" to "<<compList[i].Trace2->GetId()
+						<<" and "<<compList[j].Trace1->GetId()<<" to "<<compList[j].Trace2->GetId()<<std::endl;
+					exist=1;}
+			}
+			else if(compList[i].Trace1->GetId()==compList[j].Trace2->GetId())
+			{
+				if (compList[i].endPT1==compList[j].endPT2)
+				{
+					std::cout<<"Conflict "<<compList[i].Trace1->GetId()<<" to "<<compList[i].Trace2->GetId()
+						<<" and "<<compList[j].Trace1->GetId()<<" to "<<compList[j].Trace2->GetId()<<std::endl;
+					exist=1;}
+			}
+			else if (compList[i].Trace2->GetId()==compList[j].Trace1->GetId())
+			{
+				if (compList[i].endPT2==compList[j].endPT1)
+				{
+					std::cout<<"Conflict "<<compList[i].Trace1->GetId()<<" to "<<compList[i].Trace2->GetId()
+						<<" and "<<compList[j].Trace1->GetId()<<" to "<<compList[j].Trace2->GetId()<<std::endl;
+					exist=1;}
+			}
+			else if(compList[i].Trace2->GetId()==compList[j].Trace2->GetId())
+			{
+				if (compList[i].endPT2==compList[j].endPT2)
+				{
+					std::cout<<"Conflict "<<compList[i].Trace1->GetId()<<" to "<<compList[i].Trace2->GetId()
+						<<" and "<<compList[j].Trace1->GetId()<<" to "<<compList[j].Trace2->GetId()<<std::endl;
+					exist=1;}
+			}
+			j++;
+		}
+		if (exist==1)
+		{
+			if (compList[i].dist<compList[j].dist)
+			{compList.erase(compList.begin()+i);}
+			else
+			{compList.erase(compList.begin()+j);}
+			std::cout<<"Conflict resolved"<< std::endl;
 		}
 	}
 	std::cout<<"trace size "<<  traceList.size() << "\tNumber of computed distances\t" << compList.size()<<std::endl;
 	for (i=0;i<compList.size(); i++)
 	{
-		std::cout<<"Trace\t"<<compList[i].Trace1->GetId()<< "\t compaired to trace\t"<<compList[i].Trace2->GetId() <<" is lenght:\t"<<compList[i].dist<< std::endl;
-	}
-	for(int counter=0; counter < compList.size(); counter++)
-	{
-		tobj->mergeTraces(compList[counter].endPT1,compList[counter].endPT2);
+		std::cout<<"Trace\t"<<compList[i].Trace1->GetId()<< "\t compaired to trace\t"<<compList[i].Trace2->GetId() 
+			<<" gap size of:\t"<<compList[i].dist<< " endpts "<< compList[i].endPT1<< " and "<< compList[i].endPT2<<std::endl;
+		tobj->mergeTraces(compList[i].endPT1,compList[i].endPT2);
 	}
 }
 void View3d::HighlightSelected(TraceLine* tline)
