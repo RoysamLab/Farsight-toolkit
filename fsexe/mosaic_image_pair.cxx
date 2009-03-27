@@ -53,7 +53,7 @@ main(  int argc, char* argv[] )
   vul_arg< vcl_string > arg_img_path  ("-path","The path of the image files.",".");
   vul_arg< vcl_string > arg_old_str   ("-old_str","The old substr in the image names to be replaced");
   vul_arg< vcl_string > arg_new_str   ("-new_str","The new substr in the image names");
-  vul_arg< vcl_string > arg_outfile   ("-output","The name of the otuput image", "fused_image.tif");
+  vul_arg< vcl_string > arg_outfile   ("-output","The name of the otuput image");
 
   vul_arg< bool > arg_in_anchor       ("-in_anchor","The output image is the size of the anchor image", false);
 
