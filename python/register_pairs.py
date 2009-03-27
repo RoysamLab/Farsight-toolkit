@@ -63,17 +63,31 @@ def register(argv):
 
     # perform montaging using the first image as the anchor
     print("\nSTART...")
+    cmd_executed = False;
     if (numPairs > 1):
-        if(argv[0]==''):
-            cmd = "mosaic_images.exe joint_transforms.xml -3d " + names[0]
-        else:
+        if (argv[2] !=''): #multiple channels
+            fc = open(argv[2],'r');
+            fc_o = open(argv[2]+'_123.txt','w')
+            channel_count = 0;
+            for line in fc:
+                dot_pos = names[0].find('.');
+                name_no_ext = names[0][:dot_pos]
+                os.system('mosaic_images.exe joint_transforms.xml '+names[0]+ ' -3d -path ' + argv[0]+' -channel '+str(channel_count)+' -output montage_'+name_no_ext+'_Ch'+str(channel_count));
+                fc_o.write('montage_'+name_no_ext+'_Ch'+str(channel_count)+'_2d_proj.png '+ line)
+                channel_count += 1
+            fc_o.close()
+            os.system('multi_channels_2D.exe '+argv[2]+'_123.txt '+'montage_'+name_no_ext+'_color_2d_proj.png')
+            os.remove(argv[2]+'_123.txt')
+            cmd_executed = True;
+        else :
             cmd = "mosaic_images.exe joint_transforms.xml -3d " + names[0] + " -path " + argv[0]
     else : # just for one image pair, so call mosaic_image_pair.exe
         cmd = "mosaic_image_pair.exe joint_transforms.xml " + names[0] +" "+ names[1] + " -path " + argv[0]
+    if ( not cmd_executed):
+        os.system(cmd)
         
-    os.system(cmd)
     print("DONE")
-
+    
     # TEMP FILE CLEANUP:
     print("\nCLEANING TEMP FILES...")
     os.remove('xxx_123.txt')
@@ -81,6 +95,6 @@ def register(argv):
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
-        print 'Usage: '+sys.argv[0]+' image_dir pair_list_file'
+        print 'Usage: '+sys.argv[0]+' image_dir pair_list_file [channel_color_file]\n'
         sys.exit(1)
     register(sys.argv[1:])
