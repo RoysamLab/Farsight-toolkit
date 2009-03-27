@@ -79,37 +79,60 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 		return false;
 	}
 	char buff[1024];
-	hash_map<unsigned int, unsigned long long int> hash_load;
+	
 	int tc = 0;
-	unsigned char child_count[1000000];
+	const int MAXPOINTSINSWC= 10000;
+	unsigned char child_count[MAXPOINTSINSWC];//MAX POINTS in the swc file Fix: TODO : probably make it a hash_map which is slower
+	std::set<int> criticals; // store all points who have parent = -1 or child_count[parent] > 1
+
+	hash_map<unsigned int,int> hash_type; // smaller hash functions only for the critical points.. saves us memory and time
+	hash_map<unsigned int,int> hash_parent;
+	hash_map<unsigned int,unsigned long long int> hash_load;
+
+	//memset(child_count,0,sizeof(unsigned char)*100000);
+	
+	for(int counter=0; counter < 10000; counter++)
+		child_count[counter]=0;
 	int id, type,parent;
 	double x,y,z,r;
+	int max_id = -1;
 	while(!feof(fp))
 	{
-		fgets(buff,1024,fp);
+		if(fgets(buff,1024,fp)==NULL)
+			break;
 		int pc = 0;
 		while(buff[pc]==' '&&(pc<1023))
 			pc++;
 		if(buff[pc]=='#') // ignoring comment lines for now. We have to read scale from it! TODO
 			continue;
 
-		//sscanf(buff,"%d %d %lf %lf %lf %lf %d",&id,&type,&x,&y,&z,&r,&parent);
-		sscanf(buff,"%d %*lf %*lf %*lf %*lf %*lf %d",&id,&parent);
+		sscanf(buff,"%d %d %*lf %*lf %*lf %*lf %d",&id,&type,&parent);
 		tc++;
-		child_count[id]=0;
-		if(parent!=-1)
-			child_count[parent]++;
-	}
-	//printf("I read %d lines\n",tc);
+		printf("%d\n",id);
+		if(id>max_id)//find max id
+		{
+			max_id=id;
+		}
 
+		if(parent != -1)
+		{
+			child_count[parent]++;
+		}
+	}
 	fclose(fp);
+	//printf("I read %d lines\n",tc);
+	unsigned int child_id[10000];
+	//memset(child_id,0,sizeof(unsigned int)*(max_id));
+	std::vector<TraceBit> data(max_id+1);
+
 	fp = fopen(filename,"r");
 	int tcc =0;
 	while(!feof(fp))
 	{
 		tcc++;
 		//printf("Done %d\n",tcc);
-		fgets(buff,1024,fp);
+		if(fgets(buff,1024,fp)==NULL)
+			break;
 		int pc = 0;
 		while(buff[pc]==' '&&(pc<1023))
 			pc++;
@@ -118,50 +141,80 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 		sscanf(buff,"%d %d %lf %lf %lf %lf %d",&id,&type,&x,&y,&z,&r,&parent);
 		TraceBit tbit;
 		tbit.x=x;tbit.y=y;tbit.z=z;tbit.id=id;tbit.r =r;
-		if(parent==-1)
+		data[id] = tbit;
+		if(parent!=-1)
 		{
-			TraceLine *line = new TraceLine();  
-			line->SetType(type);
-			line->SetId(type);
-			line->AddTraceBit(tbit);
-			hash_load[id]=(unsigned long long int)line;
-			trace_lines.push_back(line);
+			child_id[parent] = id;
 		}
-		else if (child_count[parent]==1)
+		if(parent == -1)
 		{
-
-			TraceLine* line = reinterpret_cast<TraceLine*>(hash_load[parent]);
-			hash_load[id] = (unsigned long long int)line;
-			TraceLine::TraceBitsType::iterator iter = line->GetTraceBitIteratorEnd();
-			iter--;
-			TraceLine::TraceBitsType::iterator iterbegin = line->GetTraceBitIteratorBegin();
-			do
+			criticals.insert(id);
+			hash_type[id] = type;
+			hash_parent[id] = -1;
+			printf("hash_parent[%d] = %d\n",id,hash_parent[id]);
+		}
+		else
+		{
+			if(child_count[parent]>1)
 			{
-				if(iter->id==parent)
-				{
-					++iter;
-					line->GetTraceBitsPointer()->insert(iter,tbit);
-					//  printf("Successfully inserted\n");
-					break;
-				}
-				--iter;
-			}while(iter!=iterbegin);
-		}
-		else 
-		{
-			TraceLine * line = new TraceLine();
-			line->SetType(type);
-			line->SetId(type);
-			line->AddTraceBit(tbit);
-			hash_load[id]=(unsigned long long int)line;
-			TraceLine * old_line = reinterpret_cast<TraceLine*>(hash_load[parent]);
-			old_line->AddBranch(line);
-			line->SetParent(old_line);
+				criticals.insert(id);
+				hash_type[id] = type;
+				hash_parent[id] = parent;
+				printf("hash_parent[%d] = %d\n", id, hash_parent[id]);
+			}
 		}
 	}
+	
+	std::set<int>::iterator iter = criticals.begin();
+	int global_id_number = 1;
+	while(iter != criticals.end())
+	{
+		TraceLine * ttemp = new TraceLine();
+		ttemp->SetId(global_id_number++);
+		ttemp->SetType(hash_type[*iter]);
+		ttemp->AddTraceBit(data[*iter]);
+		int id_counter = *iter;
+		while(child_count[id_counter]==1)
+		{
+			id_counter = child_id[id_counter];
+			ttemp->AddTraceBit(data[id_counter]);
+		}
+		hash_load[id_counter] = reinterpret_cast<unsigned long long int>(ttemp); 
+		// Important: We're storing TraceLine* for points in the end of segments only.
+		trace_lines.push_back(ttemp);
+		iter++;
+	}
+	printf("Trace_lines size = %d\n",trace_lines.size());
+	
+	iter = criticals.begin();
+	int pc = 0;
+	while(iter!= criticals.end())
+	{
+		//printf("trace_lines[%d] = %p\n",pc,trace_lines[pc]);
+		if(hash_parent[*iter]>0)
+		{
+			printf("hash_parent %d *iter %d hash_load %p\n",hash_parent[*iter],*iter,reinterpret_cast<void*>(hash_load[hash_parent[*iter]]));
+			TraceLine * t = reinterpret_cast<TraceLine*>(hash_load[hash_parent[*iter]]);
+			trace_lines[pc]->SetParent(t);
+			//t->AddBranch(trace_lines[pc]);
+			t->GetBranchPointer()->push_back(trace_lines[pc]);
+			//if(t->GetBranchPointer()->size()>2)
+			//{
+			//	printf("here is the error\n");
+			//}
+		}
+		else
+		{
+			trace_lines[pc]->SetParent(NULL);
+		}
+		pc++;
+		++iter;
+	}
+	
 	printf("Finished loading\n");
 	//Print(std::cout);
 	fclose(fp);
+//	delete [] child_id;
 	return true;
 }
 
@@ -320,6 +373,7 @@ bool TraceObject::WriteToSWCFile(char *filename)
 }
 vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
 {
+	
 	hashp.clear();
 	hashc.clear();
 	printf("Started creating vtkPolyData for rendering purposes ... ");
@@ -790,75 +844,109 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 	//}
 	
 }
-void CollectBranchPointsRecursive(vtkSmartPointer<vtkPoints> p, vtkSmartPointer<vtkCellArray> cells, vtkSmartPointer<vtkFloatArray> da, TraceLine *tline)
+void CollectBranchPointsRecursive(vtkSmartPointer<vtkPoints> p, vtkSmartPointer<vtkCellArray> cells,TraceLine *tline)
 {
 	if(tline->GetBranchPointer()->size()>0)
 	{
 		double loc[3];
+		vtkIdType id;
+		
 		loc[0] = tline->GetTraceBitsPointer()->back().x;
 		loc[1] = tline->GetTraceBitsPointer()->back().y;
 		loc[2] = tline->GetTraceBitsPointer()->back().z;
+		id = p->InsertNextPoint(loc);
+		cells->InsertNextCell(1);
+		cells->InsertCellPoint(id);
+		for(int counter=0; counter< tline->GetBranchPointer()->size(); counter++)
+		{
+			CollectBranchPointsRecursive(p,cells,(*tline->GetBranchPointer())[counter]);
+		}
+	}
+	
+	return;
+}
+void CollectSegmentMidPointsRecursive(vtkSmartPointer<vtkPoints>p, vtkSmartPointer<vtkCellArray> cells, vtkSmartPointer<vtkFloatArray> da,TraceLine* tline)
+{
+		double loc[3];
 		float dir[3];
+		loc[0] = (tline->GetTraceBitsPointer()->back().x+tline->GetTraceBitsPointer()->front().x)/2.0;
+		loc[1] = (tline->GetTraceBitsPointer()->back().y+tline->GetTraceBitsPointer()->front().y)/2.0;
+		loc[2] = (tline->GetTraceBitsPointer()->back().z+tline->GetTraceBitsPointer()->front().z)/2.0;
 		dir[0] = tline->GetTraceBitsPointer()->front().x-loc[0];
 		dir[1] = tline->GetTraceBitsPointer()->front().y-loc[1];
 		dir[2] = tline->GetTraceBitsPointer()->front().z-loc[2];
+
+		if(tline->GetTraceBitsPointer()->size()==1)
+		{
+			if(tline->GetParent()!=NULL)
+			{
+				loc[0] = (tline->GetTraceBitsPointer()->back().x + tline->GetParent()->GetTraceBitsPointer()->back().x)/2.0;
+				loc[1] = (tline->GetTraceBitsPointer()->back().y + tline->GetParent()->GetTraceBitsPointer()->back().y)/2.0;
+				loc[2] = (tline->GetTraceBitsPointer()->back().z + tline->GetParent()->GetTraceBitsPointer()->back().z)/2.0;
+				dir[0] = tline->GetParent()->GetTraceBitsPointer()->back().x-loc[0];
+				dir[1] = tline->GetParent()->GetTraceBitsPointer()->back().y-loc[1];
+				dir[2] = tline->GetParent()->GetTraceBitsPointer()->back().z-loc[2];
+			}
+		}
 		vtkIdType id = p->InsertNextPoint(loc);
 		cells->InsertNextCell(1);
 		cells->InsertCellPoint(id);
-		if(dir[0]*dir[0]+dir[1]*dir[1]+dir[2]*dir[2]<1e-6)
-		{
-			printf("Error! Error! Error!\n");
-			if(tline->GetParent()!=NULL)
-			{
-				dir[0] = -tline->GetTraceBitsPointer()->front().x+tline->GetParent()->GetTraceBitsPointer()->back().x;
-				dir[1] = -tline->GetTraceBitsPointer()->front().y+tline->GetParent()->GetTraceBitsPointer()->back().y;
-				dir[2] = -tline->GetTraceBitsPointer()->front().z+tline->GetParent()->GetTraceBitsPointer()->back().z;
-			}
-		}
 		da->InsertNextTuple3(dir[0],dir[1],dir[2]);
-
 		for(int counter=0; counter< tline->GetBranchPointer()->size(); counter++)
 		{
-			CollectBranchPointsRecursive(p,cells,da,(*tline->GetBranchPointer())[counter]);
+			CollectSegmentMidPointsRecursive(p,cells,da,(*tline->GetBranchPointer())[counter]);
 		}
-	}
-	return;
+	
 }
 vtkSmartPointer<vtkPolyData> TraceObject::generateBranchIllustrator()
 {
 	vtkSmartPointer<vtkSphereSource> s_src = vtkSmartPointer<vtkSphereSource>::New();
-	s_src->SetRadius(1.0);
+	s_src->SetRadius(1);
 
 	VTK_CREATE(vtkArrowSource, arrow_src);
 
 	VTK_CREATE(vtkGlyph3D, glyphs1);
 	VTK_CREATE(vtkGlyph3D, glyphs2);
 	VTK_CREATE(vtkPoints, p);
-	VTK_CREATE(vtkFloatArray, da);
 	VTK_CREATE(vtkCellArray, cells);
-	da->SetNumberOfComponents(3);
+	
 
 	printf("TraceLines size = %d\n",trace_lines.size());
 	for(int counter=0; counter< trace_lines.size(); counter++)
 	{
-		CollectBranchPointsRecursive(p,cells,da,trace_lines[counter]);
+		CollectBranchPointsRecursive(p,cells,trace_lines[counter]);
 	}
+	VTK_CREATE(vtkPoints, p1);
+	VTK_CREATE(vtkFloatArray, da);
+	da->SetNumberOfComponents(3);
+	VTK_CREATE(vtkCellArray, cells1);
+	for(int counter=0; counter< trace_lines.size(); counter++)
+	{
+		CollectSegmentMidPointsRecursive(p1,cells1,da,trace_lines[counter]);
+	}
+
 	VTK_CREATE(vtkPolyData, poly);
 	poly->SetPoints(p);
 	poly->SetVerts(cells);
-	poly->GetPointData()->SetVectors(da);
 
-	glyphs2->SetInput(poly);
+	VTK_CREATE(vtkPolyData, poly1);
+	poly1->SetPoints(p1);
+	poly1->SetVerts(cells1);
+	poly1->GetPointData()->SetVectors(da);
+
+	glyphs2->SetInput(poly1);
 	glyphs2->SetSource(arrow_src->GetOutput());
 	glyphs2->SetVectorModeToUseVector();
 	glyphs2->SetScaleFactor(5);
+
 	glyphs1->SetInput(poly);
 	glyphs1->SetSource(s_src->GetOutput());
 	glyphs1->Update();
 	glyphs2->Update();
+
 	VTK_CREATE(vtkAppendPolyData, app_poly);
 	app_poly->AddInput(glyphs1->GetOutput());
-	app_poly->AddInput(glyphs2->GetOutput());
+	//app_poly->AddInput(glyphs2->GetOutput());
 	app_poly->Update();
 	return app_poly->GetOutput();
 }

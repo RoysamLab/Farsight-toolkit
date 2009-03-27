@@ -134,7 +134,7 @@ void View3d::addAct(vtkActor *Actor)
 { /*  add the actor to render ren */
   ren->AddActor(Actor);
   std::cout << "Added actors "<< std::endl;
-  renWin->Render();
+ // renWin->Render();
 }
 
 void View3d::interact()
@@ -276,8 +276,8 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
   //view->ren->AddActor(view->LineAct());
   view->LineAct();
 //  view->AddPointsAsPoints(view->tobj->CollectTraceBits());
-  view->renWin->Render();
   view->AddBranchIllustrators();
+  view->renWin->Render();
 
 }
 

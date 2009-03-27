@@ -4,6 +4,7 @@
 #include <list>
 #include <iostream>
 #include <math.h>
+#include <set>
 
 #ifdef WIN32
 using namespace stdext;
@@ -48,7 +49,7 @@ struct TraceBit{
 /* A TraceLine has a sequence of TraceBits and pointers to two other TraceLines */
 class TraceLine{
 public:
-	TraceLine(){ m_parent = NULL; m_id = -(1<<30);}
+	TraceLine(){ m_parent = NULL; m_id = -(1<<30);m_branches.clear();}
 	TraceLine *GetParent(){ return m_parent;}
 	void SetParent(TraceLine* p){ m_parent = p;}
 	void AddBranch(TraceLine* b)
