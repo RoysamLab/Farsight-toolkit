@@ -85,7 +85,7 @@ def create_pairs(argv):
 
 # The function to perform pairwise registration, joint registration,
 # and montaging by taking the first image
-def register(pair_list, image_dir):
+def register(pair_list, image_dir, color_list):
 
     #f=open(sys.argv[1],'r');
     f_o = open(sys.argv[2]+'.failed_pairs','w')
@@ -140,7 +140,21 @@ def register(pair_list, image_dir):
     # perform montaging using the first image as the anchor
     print("\nSTART...")
     if (len(pair_list) > 1):
-        os.system('mosaic_images.exe joint_transforms.xml '+names[0]+ " -3d -path " + image_dir);
+        if (color_list !=''):
+            fc = open(color_list,'r');
+            fc_o = open(color_list+'_123.txt','w')
+            channel_count = 0;
+            for line in fc:
+                dot_pos = names[0].find('.');
+                name_no_ext = names[0][:dot_pos]
+                os.system('mosaic_images.exe joint_transforms.xml '+names[0]+ ' -3d -path ' + image_dir+' -channel '+str(channel_count)+' -output montage_'+name_no_ext+'_Ch'+str(channel_count));
+                fc_o.write('montage_'+name_no_ext+'_Ch'+str(channel_count)+'_2d_proj.png '+ line)
+                channel_count += 1
+            fc_o.close()
+            os.system('multi_channels_2D.exe '+color_list+'_123.txt '+'montage_'+name_no_ext+'_color_2d_proj.png')
+            os.remove(color_list+'_123.txt')
+        else:
+            os.system('mosaic_images.exe joint_transforms.xml '+names[0]+ " -3d -path " + image_dir);
     else:
         os.system('mosaic_image_pair.exe joint_transforms.xml '+names[0]+" "+names[1]+ " -path " + image_dir);
         
@@ -153,12 +167,12 @@ def register(pair_list, image_dir):
 
 if __name__ == '__main__':
     if len(sys.argv) < 4:
-        print '\nUsage: '+sys.argv[0]+' image_dir image_list_file filename_pattern\n'
+        print '\nUsage: '+sys.argv[0]+' image_dir image_list_file filename_pattern\n [channel_color_file]'
         print 'Example1: for a 1D image series containing mcnor_5-8-06_arc_bk2_26_ca3_2_7.lsm and mcnor_5-8-06_arc_bk2_26_ca3_2_10.lsm, the filename_pattern is "mcnor_5-8-06_arc_bk2_26_ca3_2_([0-9]*).lsm"\n'
         print 'Example2: for a 2D image series containing Slide61Lbox003F_ChS1-T2.tiff and Slide61Lbox001A_ChS1-T2.tiff, the filename_pattern is "Slide61Lbox00([0-9])([A-Z])_ChS1-T2.tiff"\n'
         sys.exit(1)
     pairs = create_pairs(sys.argv[2:])
-    register(pairs,sys.argv[1])
+    register(pairs,sys.argv[1],sys.argv[4])
 
 # Example1: for a 1D image series containing mcnor_5-8-06_arc_bk2_26_ca3_2_7.lsm and mcnor_5-8-06_arc_bk2_26_ca3_2_10.lsm, the filename_pattern is "mcnor_5-8-06_arc_bk2_26_ca3_2_([0-9]*).lsm"
 

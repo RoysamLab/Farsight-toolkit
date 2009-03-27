@@ -18,7 +18,7 @@ def register(argv):
     #pairwise registration
     numPairs = 0;
     for line in f:
-        numPairs = numPairs+1;
+        numPairs += 1;
         s_line = line.rstrip().rstrip('\n')
         pos = s_line.find(' ')
         from_image = s_line[:pos]
