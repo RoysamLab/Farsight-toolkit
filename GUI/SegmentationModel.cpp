@@ -94,7 +94,7 @@ void SegmentationModel::ShowOutliers(bool show)
 	}
 }
 
-void SegmentationModel::SetOutliers( vector<int> o )
+void SegmentationModel::SetOutliers( vector<int> outs )
 {
 	if(columnForOutliers == -1)
 	{
@@ -103,15 +103,24 @@ void SegmentationModel::SetOutliers( vector<int> o )
 		model->setHeaderData( columnForOutliers, Qt::Horizontal, tr("outlier?") );
 	}
 
+	int z = 0;
+	int o = 1;
 	for(int row = 0; row < model->rowCount(); ++row)  //Set all values to 0
 	{
-		model->setData(model->index(row, columnForOutliers, QModelIndex()), 0);
+		model->setData(model->index(row, columnForOutliers), z);
+		//QStandardItem *item = new QStandardItem( QString("%0").arg(0) );
+        //model->setItem(row, columnForOutliers, item);         
 	}
-	for(int i = 0; i < o.size(); ++i)				  //Set outliers to 1
+
+	for(int i = 0; i < outs.size(); ++i)				  //Set outliers to 1
 	{
-		int row = RowForID( o.at(i) );
-		model->setData(model->index(row, columnForOutliers, QModelIndex()), 1);
+		int row = RowForID( outs.at(i) );
+		model->setData(model->index(row, columnForOutliers), o);
+		//QStandardItem *item = model->item(row,columnForOutliers);
+		//item->setText( QString("%0").arg(1) );
 	}
+
+	emit modelChanged();
 }
 
 bool SegmentationModel::HasOutliers(void)

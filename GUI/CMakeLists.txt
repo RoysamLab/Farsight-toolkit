@@ -16,7 +16,7 @@ SET( GUI_SRCS
     SegmentationModel.cpp
     
     #ObjectSelection.cpp
-    #SliceView5D.cpp
+    SliceView5D.cpp
     #VolumeWindow.cpp
 )
 
@@ -32,7 +32,7 @@ SET( GUI_HDRS
     SegmentationModel.h
     
     #ObjectSelection.h
-    #SliceView5D.h
+    SliceView5D.h
     #VolumeWindow.h
 )
 
@@ -62,7 +62,7 @@ ADD_LIBRARY( GUI STATIC
              ${GUI_RC_SRCS}
 )
 
-TARGET_LINK_LIBRARIES( GUI ${QT_LIBRARIES} QVTK FTKImage TinyXML)
+TARGET_LINK_LIBRARIES( GUI ${QT_LIBRARIES} QVTK FTKImage TinyXML libSVM)
 #TARGET_LINK_LIBRARIES( GUI ${QT_LIBRARIES} FTKImage TinyXML QtPython)
 
 #########################################

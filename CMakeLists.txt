@@ -26,8 +26,6 @@ OPTION( BUILD_VESSEL_SEGMENTATION "Build vessel surface segmentation" ON)
 OPTION( BUILD_RENDERING "Build rendering module" ON)
 OPTION( BUILD_TRACE_EDITOR "Build trace editor" ON)
 OPTION( BUILD_BIONET "Build bionet" OFF)
-OPTION( USE_LIBSVM "Install LibSVM executables" OFF)
-MARK_AS_ADVANCED(USE_LIBSVM)
 MARK_AS_ADVANCED(WRAP_PYTHON)
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR} )
@@ -99,6 +97,8 @@ INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/SegmentationCommon )
 SUBDIRS( SegmentationCommon )
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/tinyxml )
 SUBDIRS( tinyxml )
+#INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/libsvm )
+SUBDIRS( libsvm )
 
 #INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/utils )
 #SUBDIRS( utils )
@@ -209,10 +209,6 @@ IF(WRAP_PYTHON)
   INCLUDE(${CableSwig_DIR}/CableSwigConfig.cmake OPTIONAL)
   SUBDIRS(PythonWrapping/CableSwig)
 ENDIF(WRAP_PYTHON)
-
-IF(USE_LIBSVM)
-  SUBDIRS( libsvm )
-ENDIF(USE_LIBSVM)
 
 #These install rules are for use when linking against ITK/VTK build trees
 #They won't work without modification if linked against ITK/VTK installs

@@ -35,7 +35,7 @@
 #include "SegmentationWindow.h"
 #include "TableWindow.h"
 #include "PlotWindow.h"
-//#include "SliceView5D.h"
+#include "SliceView5D.h"
 //#include "VolumeWindow.h"
 
 //OTHER LOCAL INCLUDES
@@ -63,6 +63,7 @@ protected:
 
 private slots:
 	void loadImage(void);
+	void loadImageVTK(void);
 	void loadImageSeries(void);
 	void loadResult(void);
 	void loadMetaResult(void);
@@ -115,6 +116,7 @@ private:
 
   QMenu *fileMenu;
 	QAction *openAction;
+	QAction *openActionBeta;
 	QAction *openSeriesAction;
 	QAction *loadOutliersAction;
 	QAction *saveAction;

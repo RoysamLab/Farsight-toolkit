@@ -85,6 +85,10 @@ void ControlBar::createMenus()
     connect(openAction, SIGNAL(triggered()), this, SLOT(loadImage()));
 	fileMenu->addAction(openAction);
 
+	openActionBeta = new QAction(tr("Open Image (beta)..."),this);
+	connect(openActionBeta, SIGNAL(triggered()), this, SLOT(loadImageVTK()));
+	fileMenu->addAction(openActionBeta);
+
 	openSeriesAction = new QAction(tr("Open Image Time Series..."), this);
 	openSeriesAction->setShortcut(tr("Ctrl+T"));
 	openSeriesAction->setStatusTip(tr("Open 2D/3D images as a Time Series"));
@@ -243,13 +247,21 @@ void ControlBar::loadImage()
 		{
 			std::cerr << "Couldn't load Image" << std::endl;
 		}
-
-		/*
-		SliceView5D *sliceWin = new SliceView5D(filename);
-		sliceWin->show();
-		*/
-		
     }
+}
+
+void ControlBar::loadImageVTK(void)
+{
+	QString fileName = QFileDialog::getOpenFileName(
+                             this, "Select file to open", lastPath,
+                             tr("Images (*.tif *.tiff *.pic *.png *.jpg *.lsm)"));
+
+    if(fileName != "")
+	{
+		lastPath = QFileInfo(fileName).absolutePath();
+		SliceView5D *sliceWin = new SliceView5D(fileName);
+		sliceWin->show();
+	}
 }
 
 //******************************************************************************
@@ -310,7 +322,7 @@ ftk::Image * ControlBar::NewFTKImage(std::vector<std::string> filenames)
 	else
 	{
 		delete img;
-		img = NULL;
+		return NULL;
 	}
 }
 

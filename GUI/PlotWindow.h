@@ -36,6 +36,7 @@ private slots:
 	void comboXChange(int c);
 	void comboYChange(int c);
 	void updateColumnForColor();
+	void findOutliers();
     
 private:
 	ScatterView *scatter;
@@ -48,6 +49,7 @@ private:
 	QLabel *colorlabel;
 	QPushButton *selectButton;
 	QPushButton *clearButton;
+	QPushButton *outlierButton;
 	QComboBox *comboX;
 	QComboBox *comboY;
 	QComboBox *comboSelMode;
