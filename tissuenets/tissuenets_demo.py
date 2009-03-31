@@ -17,6 +17,22 @@ fileName2 = ""
 fileName3 = ""
 fileName4 = ""
 flag = 0 #
+sample="clear"
+
+###########################################
+# Define and initialize DEMO Parameters
+dNodeInFileName=""
+dNodeInFileName2=""
+dNodeOutFileName=""
+dNodeOutFileName2=""
+dNetOutFileName =""
+dCell="Neurons"
+dCell2=""
+dLinkOutFileName=""
+dNumOfNeigbors=""
+dStdNet="stdNet"
+dcutOff=""
+###########################################
 
 class dlgCreateNode(Toplevel):
    def __init__(self, master):
@@ -86,11 +102,11 @@ class dlgCreateNode(Toplevel):
 
       #DEMO
       self.txtNodeInFileName.delete(0,END)  
-      self.txtNodeInFileName.insert(0,"SupplementD.xml")
-
       self.txtNodeOutFileName.delete(0,END)  
-      self.txtNodeOutFileName.insert(0,"Neurons.xml")
-      dlgNodeFrame.txtObjectType.set("Neurons")
+
+      self.txtNodeInFileName.insert(0,dNodeInFileName)
+      self.txtNodeOutFileName.insert(0,dNodeOutFileName)
+      dlgNodeFrame.txtObjectType.set(dCell)
       #DEMO
       
 
@@ -210,44 +226,41 @@ class dlgCreateLinks(Toplevel):
 
       #Add 1 empty row starting from row 4
       emptyRows(1,4,dlgNodeFrame)
+
+      # Ask for Object type
+      k = -1 
+      Label(dlgNodeFrame,
+            text = " Input3:Number of nearest Neighbors for k-Nearest Neighbors :"
+            ).grid(row=5, column=0, sticky =W)
+      self.NumofNeighbors=dlgNodeFrame.NumofNeighbors = Entry(dlgNodeFrame)
+      dlgNodeFrame.NumofNeighbors.grid(row=5, column= 3, columnspan=1,sticky = W)
+
+      #Add 1 empty row starting from row 6
+      emptyRows(1,6,dlgNodeFrame)
       
       Label(dlgNodeFrame,
-            text = "Output: Enter the Links File name to be created :"
-            ).grid(row=5, column=0,columnspan = 2, sticky =W)
+            text = " Output: Enter the Links File name to be created :"
+            ).grid(row=7, column=0,columnspan = 2, sticky =W)
       self.txtNodeOutFileName=dlgNodeFrame.txtNodeOutFileName = Entry(dlgNodeFrame)
-      dlgNodeFrame.txtNodeOutFileName.grid(row=5, column= 3, sticky = W)
+      dlgNodeFrame.txtNodeOutFileName.grid(row=7, column= 3, sticky = W)
 
       Button(dlgNodeFrame,
              text= "Browse...",
              command = self.cmdBrowse1
              ).grid(row=5,column=4,sticky=W)
       
-      #Add 1 empty row starting from row 6
-      emptyRows(1,6,dlgNodeFrame)
-      
-      #Label(dlgNodeFrame,text = "").grid(row=4, column=0,columnspan = 2, sticky =W)
-      
-      # Ask for Object type
-      k = -1 
-      Label(dlgNodeFrame,
-            text = " Input3:Number of nearest Neighbors for k-Nearest Neighbors :"
-            ).grid(row=7, column=0, sticky =W)
-      self.NumofNeighbors=dlgNodeFrame.NumofNeighbors = Entry(dlgNodeFrame)
-      dlgNodeFrame.NumofNeighbors.grid(row=7, column= 3, columnspan=1,sticky = W)
-
       #DEMO
-      self.txtNodeInFileName.delete(0,END)  
-      self.txtNodeInFileName.insert(0,"Neurons.xml")
-
+      #Delete old values
+      self.txtNodeInFileName.delete(0,END)
       self.txtNodeInFileName2.delete(0,END)  
-      self.txtNodeInFileName2.insert(0,"Microglia.xml")
-
-      self.txtNodeOutFileName.delete(0,END)  
-      self.txtNodeOutFileName.insert(0,"links-Neurons-Microglia-5NN.xml")
-
+      self.txtNodeOutFileName.delete(0,END)
       self.NumofNeighbors.delete(0,END);
-      self.NumofNeighbors.insert(0,"5")
-      
+
+      #Insert new ones
+      self.txtNodeInFileName.insert(0,dNodeOutFileName)
+      self.txtNodeInFileName2.insert(0,dNodeOutFileName2)
+      self.txtNodeOutFileName.insert(0,dLinkOutFileName)
+      self.NumofNeighbors.insert(0,dNumOfNeigbors)
       #DEMO
 
       #Add 4 empty rows starting from row 5
@@ -396,18 +409,17 @@ class dlgCreateNetwork(Toplevel):
              ).grid(row=7,column=4,sticky=W)
 
       #DEMO
-      self.txtNodeInFileName.delete(0,END)  
-      self.txtNodeInFileName.insert(0,"Neurons.xml")
-
+      #Delete old values
+      self.txtNodeInFileName.delete(0,END)
       self.txtNodeInFileName2.delete(0,END)  
-      self.txtNodeInFileName2.insert(0,"Microglia.xml")
-
+      self.txtNodeOutFileName.delete(0,END)
       self.txtNodeInFileName3.delete(0,END)  
-      self.txtNodeInFileName3.insert(0,"links-Neurons-Microglia-5NN.xml")
 
-      self.txtNodeOutFileName.delete(0,END)  
-      self.txtNodeOutFileName.insert(0,"network-Neurons-Microglia-5NN.xml")
-      
+      #Insert new ones
+      self.txtNodeInFileName.insert(0,dNodeOutFileName)
+      self.txtNodeInFileName2.insert(0,dNodeOutFileName2)
+      self.txtNodeInFileName3.insert(0,dLinkOutFileName)
+      self.txtNodeOutFileName.insert(0,dNetOutFileName)      
       #DEMO
 
       #Add 4 empty rows starting from row 5
@@ -586,13 +598,14 @@ class dlgDisplayNetwork(Toplevel):
                                   ).grid(row=6,column=0,sticky=W)
 
       #DEMO
+      #Delete old values
       self.txtNetworkInFileName.delete(0,END)  
-      self.txtNetworkInFileName.insert(0,"network-Neurons-Microglia-5NN.xml")
-
-      self.stdNetParam.set("pyramidialNet")
-
       self.cutOff.delete(0,END)  
-      self.cutOff.insert(0,"50")
+
+      #Insert new ones
+      self.txtNetworkInFileName.insert(0,dNetOutFileName)
+      self.stdNetParam.set(dStdNet)
+      self.cutOff.insert(0,dcutOff)
       #DEMO
 
       self.buttonCreate= Button(dlgNodeFrame,
@@ -929,16 +942,157 @@ class MainMenu:
      #flag =1    
      crtNodeObj=dlgCreateNode(root)
      crtNodeObj=dlgCreateLinks(root)
-     crtNodeObj=dlgCreateNetwork(root)     
-     
+     crtNodeObj=dlgCreateNetwork(root)
+
+   #########################################################################
+   # DEMO PARAMETERS   DEMO PARAMETERS   DEMO PARAMETERS   DEMO PARAMETERS #
+   #########################################################################
+   # All electrode with All Astrocytes (207 astrocytes and 207NN will be computed)
+   def sampleElectrodesAll(self):
+      
+      global dNodeInFileName
+      dNodeInFileName="Electrodes_And_Astrocytes.xml"
+      
+      global dNodeOutFileName
+      dNodeOutFileName="Electrodes.xml"
+
+      global dNodeOutFileName2
+      dNodeOutFileName2 = "Astrocytes.xml"
+
+      global dCell
+      dCell="Electrode"
+
+      global dCell2      
+      dCell2="Astrocytes"
+
+      global dLinkOutFileName
+      dLinkOutFileName="links-Electrodes-Astrocytes-207NN.xml"
+
+      global dNumOfNeigbors
+      dNumOfNeigbors = 207
+
+      global dNetOutFileName
+      dNetOutFileName = "network-Electrodes-Astrocytes-207NN.xml"
+
+      global dStdNet
+      dStdNet = "stdNet"
+
+      global dcutOff
+      dcutOff=""
+
+
+   # A single electrode (ID=213) with All Astrocytes
+   def sampleElectrode213(self):
+      
+      global dNodeInFileName
+      dNodeInFileName="Electrode_213__And_All_Astrocytes.xml"
+      
+      global dNodeOutFileName
+      dNodeOutFileName="Electrode213.xml"
+
+      global dNodeOutFileName2
+      dNodeOutFileName2 = "Astrocytes.xml"
+
+      global dCell
+      dCell="Electrode"
+
+      global dCell2      
+      dCell2="Astrocytes"
+
+      global dLinkOutFileName
+      dLinkOutFileName="links-Electrode213-Astrocytes-207NN.xml"
+
+      global dNumOfNeigbors
+      dNumOfNeigbors = 207
+
+      global dNetOutFileName
+      dNetOutFileName = "network-Electrode213-Astrocytes-207NN.xml"
+
+      global dStdNet
+      dStdNet = "stdNet"
+
+      global dcutOff
+      dcutOff=""    
+
+   # 5 nearest Microglia neigbor of Neurons will be computed
+   def sampleSupplement(self):
+      
+      global dNodeInFileName
+      dNodeInFileName="SupplementD.xml"
+      
+      global dNodeOutFileName
+      dNodeOutFileName="Neurons.xml"
+
+      global dNodeOutFileName2
+      dNodeOutFileName2 = "Microglia.xml"
+
+      global dCell
+      dCell="Neurons"
+
+      global dCell2      
+      dCell2="Microglia"
+
+      global dLinkOutFileName
+      dLinkOutFileName="links-Neurons-Microglia-5NN.xml"
+
+      global dNumOfNeigbors
+      dNumOfNeigbors = 5
+
+      global dNetOutFileName
+      dNetOutFileName = "network-Neurons-Microglia-5NN.xml"
+
+      global dStdNet
+      dStdNet = "pyramidialNet"
+
+      global dcutOff
+      dcutOff="50"
+
+   # Clear all fields   
+   def sampleClear(self):
+
+      global dNodeInFileName
+      dNodeInFileName=""
+      
+      global dNodeOutFileName
+      dNodeOutFileName=""
+
+      global dNodeOutFileName2
+      dNodeOutFileName2 = ""
+
+      global dCell
+      dCell="Neurons"
+
+      global dCell2      
+      dCell2=""
+
+      global dLinkOutFileName
+      dLinkOutFileName=""
+
+      global dNumOfNeigbors
+      dNumOfNeigbors = ""
+
+      global dNetOutFileName
+      dNetOutFileName = ""
+
+      global dStdNet
+      dStdNet = "stdNet"
+
+      global dcutOff
+      dcutOff=""
+
+
+   #########################################################################
+   # DEMO ENDS   DEMO ENDS   DEMO ENDS   DEMO ENDS   DEMO ENDS   DEMO ENDS #  
+   #########################################################################
+   
    def __init__(self,win):
       top = Menu(win)
       win.config(menu=top)
     
       menuCreateNetwork = Menu(top,tearoff=0)
-      menuCreateNetwork.add_command(label='Define Node ...', command=self.defineNode, underline=0)
-      menuCreateNetwork.add_command(label='Define Links ...', command=self.defineLinks, underline=0)
-      menuCreateNetwork.add_command(label='Create Network ...', command=self.defineNetwork, underline=0)
+      menuCreateNetwork.add_command(label='Step 1: Define the Nodes ...', command=self.defineNode, underline=0)
+      menuCreateNetwork.add_command(label='Step 2: Define the Links ...', command=self.defineLinks, underline=0)
+      menuCreateNetwork.add_command(label='Step 3: Form the Network ...', command=self.defineNetwork, underline=0)
       #menuCreateNetwork.add_command(label='Display Network ...', command=self.displayNetwork, underline=0)
       #menuCreateNetwork.add_command(label='Create Everything ...', command=self.defineAll, underline=0)
 
@@ -959,10 +1113,16 @@ class MainMenu:
       menuQueries.add_command(label='Built-in Query-1 ...(NOT WORKING YET!)', command=self.notdone, underline=0)
       menuQueries.add_command(label='Built-in Query-1 ...(NOT WORKING YET!)', command=self.notdone, underline=0)
 
+      menuDemo = Menu(top, tearoff=0)
+      menuDemo.add_command(label='Clear Fields', command=self.sampleClear, underline=0)
+      menuDemo.add_command(label='Neurons to Microglia - 5NN from Supplement File', command=self.sampleSupplement, underline=0)
+      menuDemo.add_command(label='All Electrodes with 207 Astrocytes', command=self.sampleElectrodesAll, underline=0)
+      menuDemo.add_command(label='Only Electrode-213 with all 207 Astrocytes', command=self.sampleElectrode213, underline=0)
+      
       top.add_cascade(label='Create Network', menu=menuCreateNetwork, underline=0)
       top.add_cascade(label='Display Network', menu=menuDisplayNetwork, underline=0)
       top.add_cascade(label='Queries and Histograms', menu=menuQueries, underline=0)
-      
+      top.add_cascade(label='Set Demo Samples', menu=menuDemo, underline=0)      
       
 root =Tk()
 root.title('F A R S I G H T')
