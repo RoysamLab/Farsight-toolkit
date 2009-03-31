@@ -85,8 +85,8 @@ def create_pairs(argv):
 
 # The function to perform pairwise registration, joint registration,
 # and montaging by taking the first image
-def register(pair_list, image_dir, color_list):
-
+def register(pair_list, argv):
+    image_dir = argv[0]
     #f=open(sys.argv[1],'r');
     f_o = open(sys.argv[2]+'.failed_pairs','w')
     f_xforms = open('xxx_123.txt','w')
@@ -140,7 +140,8 @@ def register(pair_list, image_dir, color_list):
     # perform montaging using the first image as the anchor
     print("\nSTART...")
     if (len(pair_list) > 1):
-        if (color_list !=''):
+        if (len(argv) > 3):
+            color_list = argv[3]
             fc = open(color_list,'r');
             fc_o = open(color_list+'_123.txt','w')
             channel_count = 0;
@@ -172,7 +173,7 @@ if __name__ == '__main__':
         print 'Example2: for a 2D image series containing Slide61Lbox003F_ChS1-T2.tiff and Slide61Lbox001A_ChS1-T2.tiff, the filename_pattern is "Slide61Lbox00([0-9])([A-Z])_ChS1-T2.tiff"\n'
         sys.exit(1)
     pairs = create_pairs(sys.argv[2:])
-    register(pairs,sys.argv[1],sys.argv[4])
+    register(pairs,sys.argv[1:])
 
 # Example1: for a 1D image series containing mcnor_5-8-06_arc_bk2_26_ca3_2_7.lsm and mcnor_5-8-06_arc_bk2_26_ca3_2_10.lsm, the filename_pattern is "mcnor_5-8-06_arc_bk2_26_ca3_2_([0-9]*).lsm"
 

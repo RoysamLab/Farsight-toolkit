@@ -65,7 +65,7 @@ initialize(std::vector<fregl_reg_record::Pointer> const & reg_records)
   overlap_.resize(image_ids_.size(), image_ids_.size());
   overlap_.fill( 0 );
   obj_.resize(image_ids_.size(), image_ids_.size());
-  obj_.fill( -1 );
+  obj_.fill( 0 );
   
   // If scale_multiplier_ is set, run muse scale estimator to compute
   // the error scale. Set the error_bound_ to be
