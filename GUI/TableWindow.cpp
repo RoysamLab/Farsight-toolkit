@@ -22,8 +22,8 @@ TableWindow::TableWindow(SegmentationModel *mod, QWidget *parent)
 	table->setSelectionModel( mod->GetSelectionModel() );
 	connect(mod, SIGNAL(modelChanged()), this, SLOT(update()));
 	visibleRows = mod->NumFeatures()+2;
-	for(int i = visibleRows; i < table->model()->rowCount(); ++i)
-		table->setColumnHidden(i,true);
+	//for(int i = visibleRows; i < table->model()->rowCount(); ++i)
+	//	table->setColumnHidden(i,true);
 }
 
 void TableWindow::update()
@@ -36,10 +36,10 @@ void TableWindow::update()
 	{
 		table->verticalHeader()->resizeSection(i,18);
 	}
-	for(int i = visibleRows; i < table->model()->rowCount(); ++i)
-	{
-		table->setColumnHidden(i,true);
-	}
+	//for(int i = visibleRows; i < table->model()->rowCount(); ++i)
+	//{
+	//	table->setColumnHidden(i,true);
+	//}
 }
 
 void TableWindow::setup()

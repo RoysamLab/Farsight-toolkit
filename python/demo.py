@@ -104,7 +104,68 @@ def classify(test_data):
   arg = "classify_nuclei " + os.getcwd() + " " + xname + " " + testing_predict
   subprocess.Popen(arg).wait();
   print("...DONE")
+###############################################################################
+def bioformats_menu():
+  print("\nBIO-FORMATS Command Line Tools: ")
+  print("  1. showinf - print image info and display image")
+  print("  2. bfview - launch bio-format image viewer")
+  print("  3. ijview - dispay image in ImageJ using plugin")
+  print("  4. bfconvert - convert image from one format to another")
+  print("  5. EXIT MENU")
+  choice = raw_input('Please enter selection: ')
+  return choice
+###############################################################################
+def run_bioformats():
+  print("\nBio-Formats is a standalone Java library for reading \
+and writing life sciences image file formats. It is capable of \
+parsing both pixels and metadata for a large number of formats, \
+as well as writing to several formats")
 
+  while (1):
+    choice = bioformats_menu()
+
+    #showinf - allow user to browse for file
+    if choice == '1':
+      ftypes = [('all files', '.*')]
+      fname = GetFilename(ftypes)
+      if(fname != ''):
+        args = "showinf.bat " + fname
+        subprocess.Popen(args).wait()
+
+    #open bfview    
+    elif choice == '2':
+      subprocess.Popen("bfview.bat").wait()
+
+    #open ijview
+    elif choice == '3':
+      ftypes = [('all files', '.*')]
+      fname = GetFilename(ftypes)
+      if(fname != ''):
+        args = "ijview.bat " + fname
+        subprocess.Popen(args).wait()
+
+    #bfconvert - all selects file to convert, then types in new name    
+    elif choice == '4':
+      ftypes = [('all files', '.*')]
+      fname = GetFilename(ftypes)
+      if(fname != ''):
+        print("Base File: " + fname)
+        fdir1 = os.path.abspath( os.path.dirname(fname) ) #absolute directory of the file
+        fnam1 = os.path.basename(fname)			                #name of file
+        os.chdir(fdir1)
+        new_name = raw_input('Enter New Name: ')
+        fdir2 = os.path.abspath( os.path.dirname(new_name) ) #absolute directory of the file
+        fnam2 = os.path.basename(new_name)			                #name of file
+        
+        args = "bfconvert.bat " + fnam1 + " " + fnam2
+        subprocess.Popen(args).wait()
+        os.chdir(data_dir)
+        
+    elif choice == '5':
+      return
+    
+    else:
+      print("\nUNRECOGNIZED OPTION")  
 ###############################################################################
 def module_menu():
   print("\nMODULES:")
@@ -296,7 +357,8 @@ def main_menu():
   print ('  8. RENDER GRAYSCALE IMAGE')
   print ('  9. RENDER SEGMENTATION RESULT FILE')
   print (' 10. OPEN TRACE EDITOR')
-  print (' 11. QUIT')
+  print (' 11. BIO-FORMATS COMMAND-LINE TOOLS')
+  print (' 12. QUIT')
   choice = raw_input('Please enter selection: ')
   return choice
 ###############################################################################
@@ -475,9 +537,13 @@ def main():
           
         subprocess.Popen(args,stdout=subprocess.PIPE)
         os.chdir(data_dir)
+
+    elif choice == '11':
+      run_bioformats()
+      os.chdir(data_dir)
       
     #EXIT  
-    elif choice == '11':
+    elif choice == '12':
       print("\nGOODBYE")
       return
 

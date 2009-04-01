@@ -193,7 +193,8 @@ void ControlBar::about()
 {
 	    QMessageBox::about(this, tr("About FARSIGHT"),
             tr("<h2>FARSIGHT</h2>"
-               "Renssalear Polytechnic Institute"
+			   "<h3>Renssalear Polytechnic Institute</h3>"
+			   "<a><u>http://www.farsight-toolkit.org</a></u>"
                ));
 }
 

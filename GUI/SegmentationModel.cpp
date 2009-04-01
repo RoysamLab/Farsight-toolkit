@@ -336,7 +336,7 @@ void SegmentationModel::mergeTrigger()
 			model->insertRow(currentRow);
 			model->setData(model->index(currentRow, columnForID, QModelIndex()), newID);
 			vector<float> features = segResult->GetObjectPtr(newID)->GetFeatures();
-			for(int f=0; f<numFeatures; ++f)
+			for(int f=0; f<(int)features.size(); ++f)
 			{
 				model->setData(model->index(currentRow, f+1, QModelIndex()), features[f]);
 			}
@@ -345,6 +345,7 @@ void SegmentationModel::mergeTrigger()
 			updateMapping();
 		}
 	}
+	UpdateColors();
 	emit modelChanged();
 #endif
 
