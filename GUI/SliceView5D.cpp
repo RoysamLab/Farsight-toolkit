@@ -22,21 +22,6 @@ SliceView5D::SliceView5D(QString filename)
 	bool forDisplay = true;
 	if( !img->LoadFile(filename.toStdString(), forDisplay) )	return;
 
-	/***************************************************************
-	// TEST FOR CHARLENE
-	typedef itk::Image<unsigned char, 3> ImageType;
-	ImageType::Pointer i = img->GetItkPtr<unsigned char>(0,0);
-
-	//Try iterating through image
-	typedef itk::ImageRegionConstIterator<ImageType> IteratorType;
-	IteratorType inputIt(i, i->GetLargestPossibleRegion() );
-
-	for(inputIt.GoToBegin(); !inputIt.IsAtEnd(); ++inputIt)
-	{
-		unsigned char val = inputIt.Get();
-	}
-	*******************************************************************/
-
 	//Create the renderer and add the image to it.
 	m_vtkrenderer = RendererPointerType::New();
 
@@ -72,8 +57,8 @@ SliceView5D::SliceView5D(QString filename)
 	m_vtkrenderer->SetBackground(0.0,0.0,0.0);
 	
 	//Create a new Interactor Style to use for the image:
-	vtkInteractorStyleImage *style = vtkInteractorStyleImage::New();
-	m_imageview->GetRenderWindow()->GetInteractor()->SetInteractorStyle(style);
+	//vtkInteractorStyleImage *style = vtkInteractorStyleImage::New();
+	//m_imageview->GetRenderWindow()->GetInteractor()->SetInteractorStyle(style);
 
 	//Set the renderer & render
 	m_imageview->GetRenderWindow()->AddRenderer(m_vtkrenderer);

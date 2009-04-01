@@ -62,7 +62,7 @@ ADD_LIBRARY( GUI STATIC
              ${GUI_RC_SRCS}
 )
 
-TARGET_LINK_LIBRARIES( GUI ${QT_LIBRARIES} QVTK FTKImage TinyXML libSVM)
+TARGET_LINK_LIBRARIES( GUI ${QT_LIBRARIES} QVTK FTKImage TinyXML libSVM vtkVolumeRendering)
 #TARGET_LINK_LIBRARIES( GUI ${QT_LIBRARIES} FTKImage TinyXML QtPython)
 
 #########################################
