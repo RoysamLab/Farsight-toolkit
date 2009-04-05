@@ -28,13 +28,13 @@ public:
 	// CTOR with the default direction and pixel value
 	CPoint(int a, int b, int c, unsigned char Hd = 0, unsigned char Vd = 0, int v = 0) : m_iX(a),
 		m_iY(b), m_iZ(c), m_iHDir(Hd), m_iVDir(Vd), m_iValue(v),
-		m_lUserFlag(0), m_iVerifiable(0), m_fVWidth(0), m_fHWidth(0)
+		m_lUserFlag(0), m_iVerifiable(0), m_fVWidth(0), m_fHWidth(0), m_iID(0), m_iParID(0)
 	{
 	}
 
 	// default CTOR
 	CPoint() : m_iX(0), m_iY(0), m_iZ(0), m_iHDir(0), m_iVDir(0), m_iValue(0),
-		m_lUserFlag(0), m_iVerifiable(0), m_fVWidth(0), m_fHWidth(0)
+		m_lUserFlag(0), m_iVerifiable(0), m_fVWidth(0), m_fHWidth(0), m_iID(0), m_iParID(0)
 	{
 	}
 
@@ -44,7 +44,7 @@ public:
 		m_iValue(aPoint.m_iValue), m_lUserFlag(aPoint.m_lUserFlag),
 		m_iVerifiable(aPoint.m_iVerifiable),
 		m_iPixelValue(aPoint.m_iPixelValue), m_fVWidth(aPoint.m_fVWidth),
-		m_fHWidth(aPoint.m_fHWidth)
+		m_fHWidth(aPoint.m_fHWidth), m_iID(aPoint.m_iID), m_iParID(aPoint.m_iParID)
 	{
 	}
 
@@ -67,6 +67,8 @@ public:
 
 		m_lUserFlag = rhs.m_lUserFlag;
 		m_iVerifiable = rhs.m_iVerifiable;
+		m_iID = rhs.m_iID;
+		m_iParID = rhs.m_iParID;
 
 		return *this;
 	}
@@ -134,12 +136,21 @@ public:
 		return out;
 	}
 
+	//added by yousef on 3-25-2009
+	void SetPointID(int ID) { m_iID = ID; }
+    void SetParentID(int PID) { m_iParID = PID; }
+	int GetPointID() { return m_iID; }
+	int GetParentID() { return m_iParID; }
+
 	// data
 	int m_iX;
 	int m_iY;
 	int m_iZ;
 	unsigned char m_iHDir;  // the direction number (0-NumOfDirections)};
 	unsigned char m_iVDir;
+	//added by Yousef on 3-25-2009
+	int m_iID;
+	int m_iParID;
 
 	// we keep the width of the point here
 	float m_fHWidth;

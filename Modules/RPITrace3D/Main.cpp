@@ -295,7 +295,96 @@ int main(int argc, char* argv[])
   //  Draw_3DVessels();
   //}
 
+
+  //Added by Yousef on 3-25-2009: Assign center points IDs and parent IDs. 
+  //However, set the parent ID at the first point of each segment to -1 regardless of branching points
+  //Also, if there is a branching point at the end of the vessel, reverse the IDs of its points
   
+  //First, create a temporary image to hold the trace points
+  int*** tmp_image = new int**[The3DImage->m_iSlices];
+	for(i=0;i<The3DImage->m_iSlices;i++)
+		tmp_image[i] = new int*[The3DImage->m_iRows];
+	for(i=0;i<The3DImage->m_iSlices;i++)
+	{
+		for(int j=0;j<The3DImage->m_iRows;j++)
+		{
+			tmp_image[i][j] = new int[The3DImage->m_iCols];
+			for(int k=0; k<The3DImage->m_iCols; k++)
+				tmp_image[i][j][k] = 0;
+		}
+	}
+
+  int Pnt_IDs = 0;
+  for (i = 0; i < gTheVessels.m_iNumOfElements; i++)
+  {
+	  if (gTheVessels.m_apData[i])
+      {     
+		  if(gTheVessels.m_apData[i]->GetParentID()>0 && gTheVessels.m_apData[i]->GetParentLocation() !=0)
+		  {
+			  Pnt_IDs++;
+			  CLNode<CPoint>* temp1 = gTheVessels.m_apData[i]->m_Center.tail; 
+			  temp1->data->SetPointID(Pnt_IDs);			  
+			  temp1->data->SetParentID(-1);
+			  tmp_image[temp1->data->m_iZ][temp1->data->m_iY][temp1->data->m_iX] = Pnt_IDs;
+			  temp1 = temp1->before;
+			  while(temp1)
+			  {
+				  Pnt_IDs++;
+				  temp1->data->SetPointID(Pnt_IDs);
+				  temp1->data->SetParentID(Pnt_IDs-1);
+				  tmp_image[temp1->data->m_iZ][temp1->data->m_iY][temp1->data->m_iX] = Pnt_IDs;
+				  temp1 = temp1->before;
+			  }
+		  }
+		  else
+		  {
+			  Pnt_IDs++;
+			  CLNode<CPoint>* temp1 = gTheVessels.m_apData[i]->m_Center.head; 
+			  temp1->data->SetPointID(Pnt_IDs);
+			  tmp_image[temp1->data->m_iZ][temp1->data->m_iY][temp1->data->m_iX] = Pnt_IDs;
+			  temp1->data->SetParentID(-1);
+			  temp1 = temp1->after;
+			  while(temp1)
+			  {
+				  Pnt_IDs++;
+				  temp1->data->SetPointID(Pnt_IDs);
+				  temp1->data->SetParentID(Pnt_IDs-1);
+				  tmp_image[temp1->data->m_iZ][temp1->data->m_iY][temp1->data->m_iX] = Pnt_IDs;
+				  temp1 = temp1->after;
+			  }
+		  }		  
+	  }
+  
+  }
+  //Added by Yousef on 3-25-2009: now, take care of the parent IDs at branch points
+  for (i = 0; i < gTheVessels.m_iNumOfElements; i++)
+  {
+	  if (gTheVessels.m_apData[i] && gTheVessels.m_apData[i]->GetParentID()>0)
+	  {
+		  int PRID = tmp_image[gTheVessels.m_apData[i]->ParentBranchPoint->m_iZ][gTheVessels.m_apData[i]->ParentBranchPoint->m_iY][gTheVessels.m_apData[i]->ParentBranchPoint->m_iX];
+			  
+		  if(gTheVessels.m_apData[i]->GetParentLocation() ==0)
+		  {
+			  CLNode<CPoint>* temp1 = gTheVessels.m_apData[i]->m_Center.head; 			  
+			  temp1->data->SetParentID(PRID);
+		  }
+		  else 
+		  {
+			  CLNode<CPoint>* temp1 = gTheVessels.m_apData[i]->m_Center.tail; 			  
+			  temp1->data->SetParentID(PRID);
+		  }		  
+	  }
+  }
+  for(i=0;i<The3DImage->m_iSlices;i++)
+	{
+		for(int j=0;j<The3DImage->m_iRows;j++)
+		{
+			delete tmp_image[i][j];			
+		}
+		delete tmp_image[i];			
+	}
+    delete tmp_image;			
+
 
   if ( gConfig.GetWriteOutputFiles() ) 
   {
@@ -336,7 +425,7 @@ int main(int argc, char* argv[])
 
     //new tinyxml stuff:
 
-    TiXmlDocument doc;
+    /*TiXmlDocument doc;
     TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "", "");
     doc.LinkEndChild(decl);
 
@@ -376,7 +465,42 @@ int main(int argc, char* argv[])
         }
       }
     string filename = OutputPath + ImageName + "TracedPoints.xml";
-    doc.SaveFile(filename.c_str());
+    doc.SaveFile(filename.c_str());*/
+
+
+	//Added by Yousef on 3-25-2009: write an swc file format
+	fName = OutputPath + ImageName + "TracedPoints.swc";  
+    ofstream points(fName.c_str());
+
+    //spit out traced points
+    for (i = 0; i < gTheVessels.m_iNumOfElements; i++)
+    {
+		if (gTheVessels.m_apData[i])
+        {
+			if(gTheVessels.m_apData[i]->GetParentLocation() == 0)
+			{
+				CLNode<CPoint>* temp = gTheVessels.m_apData[i]->m_Center.head;
+				while (temp)
+				{
+					points << temp->data->GetPointID() << " " << 1 << " "
+						   << temp->data->m_iX << " " << temp->data->m_iY << " " << temp->data->m_iZ << " " << 1 << " "
+						   << temp->data->GetParentID() << " " <<endl;						   
+					temp = temp->after;
+				}   
+			}
+			else
+			{
+				CLNode<CPoint>* temp = gTheVessels.m_apData[i]->m_Center.tail;
+				while (temp)
+				{
+					points << temp->data->GetPointID() << " " << 1 << " "
+						   << temp->data->m_iX << " " << temp->data->m_iY << " " << temp->data->m_iZ << " " << 1 << " "
+						   << temp->data->GetParentID() << " " <<endl;	
+					temp = temp->after;
+				}   
+			}
+		}
+	}
 
     if ( gConfig.GetDetectSoma() )
     {

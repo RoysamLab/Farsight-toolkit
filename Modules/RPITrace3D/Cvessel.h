@@ -43,7 +43,7 @@ public:
 	CVessel(int id = 0) : m_iID(id), m_iLength(0), m_iSomaConnected(0),
 		m_iNumOfIntersectionPoints(0), m_iHitsImageBoundary(0),
 		m_iDrawFlag(0), m_iMergedFlag(0), m_fHWidth(0.0), m_fVWidth(0.0),
-		m_iNumOfPoints(0), m_iParentID(-1)
+		m_iNumOfPoints(0), m_iParentID(-1), m_iParentLocation(0)
 	{
 		m_aiMyIntersectionPoints = new int[BlockSize];
 		memset(m_aiMyIntersectionPoints, 0, sizeof(int) * BlockSize);
@@ -282,6 +282,11 @@ public:
 	{
 		return m_iParentID;
 	}
+	void SetParentLocation(int Loc) { m_iParentLocation = Loc; }
+	int GetParentLocation()
+	{
+		return m_iParentLocation;
+	}
 	/////////////////
 	// data members//
 	/////////////////
@@ -329,6 +334,9 @@ public:
 
 	//added by Yousef (3-24-2009): the vessel (segment) parent ID
 	int m_iParentID;
+	int m_iParentLocation; //default is 0 and means begining (if any), else it is at the end
+	//added by Yousef on 3-25-2009
+	CPoint* ParentBranchPoint;
 
 private:
 

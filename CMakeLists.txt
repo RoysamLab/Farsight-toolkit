@@ -18,6 +18,7 @@ ENDIF ("${Farsight_BINARY_DIR}" MATCHES "^${Farsight_SOURCE_DIR}$")
 
 OPTION( BUILD_GUI "Build Farsight GUI" ON )
 OPTION( BUILD_NUCLEI "Build Nuclear Segmentation" ON )
+OPTION( BUILD_FUZZY_CLUSTERING "Build Nuclear Classification" ON )
 OPTION( BUILD_REGISTRATION "Build Charlene's Executables and FREGL" OFF )
 OPTION( BUILD_MDL "Build Xiasong's MDL Module" OFF )
 OPTION( BUILD_TRACING "Build Yousef's Tracing Module" OFF )
@@ -106,8 +107,17 @@ SUBDIRS( libsvm )
 
 IF(BUILD_NUCLEI)
   INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/NuclearSegmentation )
-  SUBDIRS( NuclearSegmentation )
+  SUBDIRS( NuclearSegmentation )  
 ENDIF(BUILD_NUCLEI)
+IF(BUILD_FUZZY_CLUSTERING)
+  IF(BUILD_NUCLEI)
+    INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/fuzzyClustering )
+    SUBDIRS( fuzzyClustering)
+  ELSE(BUILD_NUCLEI)
+    MESSAGE(FATAL_ERROR "Cannot build fuzzy clustering without BUILD_NUCLEI set to ON ")
+  ENDIF(BUILD_NUCLEI)
+ENDIF(BUILD_FUZZY_CLUSTERING)
+
 
 IF(BUILD_VESSEL_SEGMENTATION)
 

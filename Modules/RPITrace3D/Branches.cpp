@@ -532,7 +532,15 @@ bool CBranches::DetectBranch(int lng, int threshold, int SegID, TopEndMiddleNeit
 		gTheVessels.m_apData[SegID-1]->ExtendVesselCenter(tmpPoints[i],Flag);
 		int tID = traces_image[BrPnt->m_iZ][BrPnt->m_iY][BrPnt->m_iX];
 		gTheVessels.m_apData[SegID-1]->SetParentID(tID);
-	}
+		if(Flag == OnTop)
+			gTheVessels.m_apData[SegID-1]->SetParentLocation(0);
+		else
+			gTheVessels.m_apData[SegID-1]->SetParentLocation(1);
+		gTheVessels.m_apData[SegID-1]->ParentBranchPoint = new CPoint();
+		gTheVessels.m_apData[SegID-1]->ParentBranchPoint->m_iX = BrPnt->m_iX;
+		gTheVessels.m_apData[SegID-1]->ParentBranchPoint->m_iY = BrPnt->m_iY;
+		gTheVessels.m_apData[SegID-1]->ParentBranchPoint->m_iZ = BrPnt->m_iZ;
+	}	
 	//tmpPoints[i] = new CPoint(BrPnt->m_iX,BrPnt->m_iY,BrPnt->m_iZ,TipPoint->m_iHDir,TipPoint->m_iVDir,TipPoint->m_iValue);
 	//gTheVessels.m_apData[SegID-1]->ExtendVesselCenter(tmpPoints[i],Flag);
 	return true;

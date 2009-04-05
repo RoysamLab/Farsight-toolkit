@@ -31,6 +31,6 @@ private:
 	int VOL2[3][9261]; //The coordinates of the volume resulting from rotating VOL1
 	int tmp1[21][21][21];
 	int tmp2[21][21][21];
-	int*** traces_image;	
+	int*** traces_image;		
 };
 #endif

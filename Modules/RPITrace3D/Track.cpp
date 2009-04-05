@@ -820,6 +820,7 @@ void TraceA3DImage(C3DImage& anImage)
 			{
 				gTheVessels.AddVessel(aVessel);
 				vesselID++;
+				
 
 				// to prevent re-tracking the same vessel again, we mark it in
 				// another image using spheres at each center point. 
