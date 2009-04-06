@@ -776,7 +776,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 		{
 			(*tmarker->GetBranchPointer())[counter]->SetParent(tmarker);
 		}
-		RemoveTraceLine(tmarker);
+		RemoveTraceLine(tother);
 	}
 	else if (slocation == -1 && elocation !=-1)
 	{
@@ -1027,6 +1027,7 @@ void TraceObject::RemoveTraceLine(TraceLine *tline)
 
 	while(iter!=trace_lines.end())
 	{
+		printf("TraceLine* = %p\n",*iter);
 		if(tline == *iter)
 		{
 			trace_lines.erase(iter);
@@ -1034,4 +1035,5 @@ void TraceObject::RemoveTraceLine(TraceLine *tline)
 		}
 		++iter;
 	}
+printf("Quitting RemoveTraceLine\n");
 }
