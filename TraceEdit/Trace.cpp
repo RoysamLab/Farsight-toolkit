@@ -196,6 +196,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 			printf("hash_parent %d *iter %d hash_load %p\n",hash_parent[*iter],*iter,reinterpret_cast<void*>(hash_load[hash_parent[*iter]]));
 			TraceLine * t = reinterpret_cast<TraceLine*>(hash_load[hash_parent[*iter]]);
 			trace_lines[pc]->SetParent(t);
+			
 			//t->AddBranch(trace_lines[pc]);
 			t->GetBranchPointer()->push_back(trace_lines[pc]);
 			//if(t->GetBranchPointer()->size()>2)
@@ -210,7 +211,13 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 		pc++;
 		++iter;
 	}
-	
+	std::vector<TraceLine*>::iterator cleaniter = trace_lines.end();
+	cleaniter--;
+	for(;cleaniter!=trace_lines.begin(); cleaniter--)
+	{
+		if((*cleaniter)->GetParent()!=NULL)
+			cleaniter=trace_lines.erase(cleaniter);
+	}
 	printf("Finished loading\n");
 	//Print(std::cout);
 	fclose(fp);
@@ -708,6 +715,17 @@ void TraceObject::ReverseSegment(TraceLine *tline)
 
 
 */
+
+void TraceObject::FixPointMarkers(TraceLine* tline)
+{
+	TraceLine::TraceBitsType::iterator iter1 = tline->GetTraceBitIteratorBegin();
+	TraceLine::TraceBitsType::iterator iter2 = tline->GetTraceBitIteratorEnd();
+	while(iter1!=iter2)
+	{
+		hashp[iter1->marker]=reinterpret_cast<unsigned long long int>(tline);
+		++iter1;
+	}
+}
 void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long int sMarker)// point marker where we need to make the connection
 {
 	TraceLine * tmarker = reinterpret_cast<TraceLine*>(hashp[eMarker]);
@@ -734,7 +752,9 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 
 	if(slocation ==0 && elocation ==1)
 	{
+		TraceLine::TraceBitsType::iterator iter = tother->GetTraceBitIteratorBegin();
 		tmarker->GetTraceBitsPointer()->splice(tmarker->GetTraceBitIteratorEnd(),*(tother->GetTraceBitsPointer()));
+		FixPointMarkers(tmarker);
 		*(tmarker->GetBranchPointer())=*(tother->GetBranchPointer());
 		tother->GetBranchPointer()->clear();
 		for(int counter=0; counter< tmarker->GetBranchPointer()->size(); counter++)
@@ -746,6 +766,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 	else if (slocation ==1 && elocation == 0)
 	{
 		tother->GetTraceBitsPointer()->splice(tother->GetTraceBitIteratorEnd(),*(tmarker->GetTraceBitsPointer()));
+		FixPointMarkers(tother);
 		*(tother->GetBranchPointer())=*(tmarker->GetBranchPointer());
 		tmarker->GetBranchPointer()->clear();
 		for(int counter=0; counter< tother->GetBranchPointer()->size(); counter++)
@@ -758,6 +779,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 	{
 		ReverseSegment(tother);
 		tother->GetTraceBitsPointer()->splice(tother->GetTraceBitIteratorEnd(),*(tmarker->GetTraceBitsPointer()));
+		FixPointMarkers(tother);
 		*(tother->GetBranchPointer())=*(tmarker->GetBranchPointer());
 		tmarker->GetBranchPointer()->clear();
 		for(int counter=0; counter< tother->GetBranchPointer()->size(); counter++)
@@ -770,6 +792,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 	{
 		ReverseSegment(tother);
 		tmarker->GetTraceBitsPointer()->splice(tmarker->GetTraceBitIteratorEnd(),*(tother->GetTraceBitsPointer()));
+		FixPointMarkers(tmarker);
 		*(tmarker->GetBranchPointer())=*(tother->GetBranchPointer());
 		tother->GetBranchPointer()->clear();
 		for(int counter=0; counter< tmarker->GetBranchPointer()->size(); counter++)
@@ -946,8 +969,9 @@ vtkSmartPointer<vtkPolyData> TraceObject::generateBranchIllustrator()
 
 	VTK_CREATE(vtkAppendPolyData, app_poly);
 	app_poly->AddInput(glyphs1->GetOutput());
-	//app_poly->AddInput(glyphs2->GetOutput());
+	app_poly->AddInput(glyphs2->GetOutput());
 	app_poly->Update();
+	
 	return app_poly->GetOutput();
 }
 void TraceLine::Getstats()

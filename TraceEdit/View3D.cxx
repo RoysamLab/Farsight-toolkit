@@ -79,6 +79,7 @@ void View3d::RenderWin()
 vtkActor* View3d::LineAct()
 {
   this->poly_line_data = this->tobj->GetVTKPolyData();
+ // this->poly_line_data = this->tobj->GetVTKPolyData();
   this->lineMap->SetInput(this->poly_line_data);
   this->lineAct->SetMapper(lineMap);
   this->lineAct->GetProperty()->SetColor(0,1,0);
@@ -95,6 +96,7 @@ void View3d::AddBranchIllustrators()
 	polymap->SetInput(poly);
 	vtkSmartPointer<vtkActor> bactor = vtkSmartPointer<vtkActor>::New();
 	bactor->SetMapper(polymap);
+	bactor->SetPickable(0);
 	ren->AddActor(bactor);
 	//bactor->Print(std::cout);
 
@@ -269,12 +271,21 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 		return;
       }
     break;
+  case 'f':
+	  if(view->IDList.size()>=1)
+	  {
+		  for(int i=0; i< view->IDList.size(); i++)
+		  {
+			  view->tobj->ReverseSegment(reinterpret_cast<TraceLine*>(view->tobj->hashc[view->IDList[i]]));
+		  }
+	  }
+	  break;
   }
   view->sphereAct->VisibilityOff();
   view->IDList.clear();
-//  view->ren->RemoveAllViewProps();
+  view->ren->RemoveAllViewProps();
   //view->ren->AddActor(view->LineAct());
-  view->LineAct();
+  view->addAct(view->LineAct());
 //  view->AddPointsAsPoints(view->tobj->CollectTraceBits());
   view->AddBranchIllustrators();
   view->renWin->Render();
@@ -467,7 +478,27 @@ void View3d::deleteTrace(View3d* view,TraceLine *tline/*int id*/)
   if(tline->GetParent()!=NULL)
   {
     siblings=tline->GetParent()->GetBranchPointer();
-
+	if(siblings->size()==2)
+	{
+		// its not a branch point anymore
+		TraceLine *tother1;
+		if(tline==(*siblings)[0])
+			tother1 = (*siblings)[1];
+		else
+			tother1 = (*siblings)[0];
+		tother1->SetParent(NULL);
+		siblings->clear();
+		TraceLine::TraceBitsType::iterator iter1,iter2;
+		iter1= tline->GetParent()->GetTraceBitIteratorEnd();
+		iter2 = tother1->GetTraceBitIteratorBegin();
+		iter1--;
+		
+		view->tobj->mergeTraces((*iter1).marker,(*iter2).marker);
+		tline->SetParent(NULL);
+		//view->tobj->RemoveTraceLine(tline);// FIXME: No idea why I'm doing this, but only this makes it work.
+		delete tline;
+		return;
+	}
   }
   else
   {
@@ -484,6 +515,7 @@ void View3d::deleteTrace(View3d* view,TraceLine *tline/*int id*/)
     }
     ++iter;
   }
+  tline->SetParent(NULL);
 
   
 }

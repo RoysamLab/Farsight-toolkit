@@ -11,7 +11,7 @@ int main (int argc, char* argv[])	{
 	View.RenderWin();
   View.Initialize(argc, argv);
 	vtkActor *act = View.LineAct();
-    act = View.LineAct();
+  //  act = View.LineAct();
 //	std::vector<TraceBit> vec = View.tobj->CollectTraceBits();
 //	printf("vec.size() = %d\n",vec.size());
 //	View.AddPointsAsPoints(vec);
