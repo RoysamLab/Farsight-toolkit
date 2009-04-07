@@ -803,15 +803,15 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 	}
 	else if (slocation == -1 && elocation !=-1)
 	{
-
+std::cout<<" -1 !-1 "<<std::endl;
 	}
 	else if (slocation != -1 && elocation == -1)
 	{
-
+std::cout<<"!-1 -1"<<std::endl;
 	}
 	else
 	{
-
+		std::cout<<"else"<<std::endl;
 	}
 
 

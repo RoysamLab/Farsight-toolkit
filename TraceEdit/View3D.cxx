@@ -237,12 +237,9 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 	case 'm':
     {
 		if(view->IDList.size()>=1)
-		{
-		  /*std::cout<<"selected lines \n";
-		  for (int i = 0; i < view->IDList.size(); i++)
-		  {
-			std::cout<<  "\t"<<view->IDList[i];			
-		  } */
+		{		  
+			std::sort(view->IDList.begin(), view->IDList.end());
+			std::reverse(view->IDList.begin(), view->IDList.end());
 		  view->MinEndPoints(view);
 		  //std::cout<< " \t deleted" <<std::endl;
 		}
@@ -377,61 +374,64 @@ void View3d::MinEndPoints(View3d* view)
 			}*/			
 		}
 	}
-	for (i=0;i<compList.size()-1; i++)
+	if (compList.size()>=1)
 	{
-		exist = 0;	j=i+1;
-		while ((exist == 0)&&(j<compList.size()))
+		for (i=0;i<compList.size()-1; i++)
 		{
-			
-			if (compList[i].Trace1->GetId()==compList[j].Trace1->GetId())
+			exist = 0;	j=i+1;
+			while ((exist == 0)&&(j<compList.size()))
 			{
-				if (compList[i].endPT1==compList[j].endPT1)
+				
+				if (compList[i].Trace1->GetId()==compList[j].Trace1->GetId())
 				{
-					std::cout<<"Conflict "<<compList[i].Trace1->GetId()<<" to "<<compList[i].Trace2->GetId()
-						<<" and "<<compList[j].Trace1->GetId()<<" to "<<compList[j].Trace2->GetId()<<std::endl;
-					exist=1;}
+					if (compList[i].endPT1==compList[j].endPT1)
+					{
+						std::cout<<"Conflict "<<compList[i].Trace1->GetId()<<" to "<<compList[i].Trace2->GetId()
+							<<" and "<<compList[j].Trace1->GetId()<<" to "<<compList[j].Trace2->GetId()<<std::endl;
+						exist=1;}
+				}
+				else if(compList[i].Trace1->GetId()==compList[j].Trace2->GetId())
+				{
+					if (compList[i].endPT1==compList[j].endPT2)
+					{
+						std::cout<<"Conflict "<<compList[i].Trace1->GetId()<<" to "<<compList[i].Trace2->GetId()
+							<<" and "<<compList[j].Trace1->GetId()<<" to "<<compList[j].Trace2->GetId()<<std::endl;
+						exist=1;}
+				}
+				else if (compList[i].Trace2->GetId()==compList[j].Trace1->GetId())
+				{
+					if (compList[i].endPT2==compList[j].endPT1)
+					{
+						std::cout<<"Conflict "<<compList[i].Trace1->GetId()<<" to "<<compList[i].Trace2->GetId()
+							<<" and "<<compList[j].Trace1->GetId()<<" to "<<compList[j].Trace2->GetId()<<std::endl;
+						exist=1;}
+				}
+				else if(compList[i].Trace2->GetId()==compList[j].Trace2->GetId())
+				{
+					if (compList[i].endPT2==compList[j].endPT2)
+					{
+						std::cout<<"Conflict "<<compList[i].Trace1->GetId()<<" to "<<compList[i].Trace2->GetId()
+							<<" and "<<compList[j].Trace1->GetId()<<" to "<<compList[j].Trace2->GetId()<<std::endl;
+						exist=1;}
+				}
+				j++;
 			}
-			else if(compList[i].Trace1->GetId()==compList[j].Trace2->GetId())
+			if (exist==1)
 			{
-				if (compList[i].endPT1==compList[j].endPT2)
-				{
-					std::cout<<"Conflict "<<compList[i].Trace1->GetId()<<" to "<<compList[i].Trace2->GetId()
-						<<" and "<<compList[j].Trace1->GetId()<<" to "<<compList[j].Trace2->GetId()<<std::endl;
-					exist=1;}
+				if (compList[i].dist<compList[j].dist)
+				{compList.erase(compList.begin()+i);}
+				else
+				{compList.erase(compList.begin()+j);}
+				std::cout<<"Conflict resolved"<< std::endl;
 			}
-			else if (compList[i].Trace2->GetId()==compList[j].Trace1->GetId())
-			{
-				if (compList[i].endPT2==compList[j].endPT1)
-				{
-					std::cout<<"Conflict "<<compList[i].Trace1->GetId()<<" to "<<compList[i].Trace2->GetId()
-						<<" and "<<compList[j].Trace1->GetId()<<" to "<<compList[j].Trace2->GetId()<<std::endl;
-					exist=1;}
-			}
-			else if(compList[i].Trace2->GetId()==compList[j].Trace2->GetId())
-			{
-				if (compList[i].endPT2==compList[j].endPT2)
-				{
-					std::cout<<"Conflict "<<compList[i].Trace1->GetId()<<" to "<<compList[i].Trace2->GetId()
-						<<" and "<<compList[j].Trace1->GetId()<<" to "<<compList[j].Trace2->GetId()<<std::endl;
-					exist=1;}
-			}
-			j++;
 		}
-		if (exist==1)
+		std::cout<<"trace size "<<  traceList.size() << "\tNumber of computed distances\t" << compList.size()<<std::endl;
+		for (i=0;i<compList.size(); i++)
 		{
-			if (compList[i].dist<compList[j].dist)
-			{compList.erase(compList.begin()+i);}
-			else
-			{compList.erase(compList.begin()+j);}
-			std::cout<<"Conflict resolved"<< std::endl;
+			std::cout<<"Trace\t"<<compList[i].Trace1->GetId()<< "\t compaired to trace\t"<<compList[i].Trace2->GetId() 
+				<<" gap size of:\t"<<compList[i].dist<< " endpts "<< compList[i].endPT1<< " and "<< compList[i].endPT2<<std::endl;
+			tobj->mergeTraces(compList[i].endPT1,compList[i].endPT2);
 		}
-	}
-	std::cout<<"trace size "<<  traceList.size() << "\tNumber of computed distances\t" << compList.size()<<std::endl;
-	for (i=0;i<compList.size(); i++)
-	{
-		std::cout<<"Trace\t"<<compList[i].Trace1->GetId()<< "\t compaired to trace\t"<<compList[i].Trace2->GetId() 
-			<<" gap size of:\t"<<compList[i].dist<< " endpts "<< compList[i].endPT1<< " and "<< compList[i].endPT2<<std::endl;
-		tobj->mergeTraces(compList[i].endPT1,compList[i].endPT2);
 	}
 }
 void View3d::HighlightSelected(TraceLine* tline)
