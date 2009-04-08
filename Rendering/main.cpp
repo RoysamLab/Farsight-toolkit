@@ -7,6 +7,9 @@
 #include <vtkRenderLargeImage.h>
 #include <itkImage.h>
 #include <itkImageRegionIterator.h>
+#include <itkImageRegionConstIteratorWithIndex.h>
+#include <itkImageSliceConstIteratorWithIndex.h>
+#include <itkImageLinearIteratorWithIndex.h>
 
 
 #include <vtkSphereSource.h>
@@ -43,8 +46,14 @@
 #include <vtkPLYReader.h>
 #include <vtkPolyDataReader.h>
 #include <vtkPolyDataSource.h>
+#include <vtkPolyDataNormals.h>
 #include <vtkDecimatePro.h>
 #include <vtkDiscreteMarchingCubes.h>
+#include <vtkQuadricDecimation.h>
+#include <vtkQuadricClustering.h>
+#include <vtkTransform.h>
+#include <vtkTransformPolyDataFilter.h>
+#include <vtkInteractorStyleTrackballCamera.h>
 
 #include "TraceEdit/Trace.h"
 //using namespace std;
@@ -56,9 +65,43 @@
 #define REFLECT 1450
 #define SKIP 20
 
+#define MAX(a,b) (((a)>(b))?(a):(b))
+#define MIN(a,b) (((a)<(b))?(a):(b))
+typedef unsigned char InputPixelType;
+typedef unsigned char OutputPixelType;
 
-typedef itk::Image<unsigned char, 3> InputImageType;
+typedef itk::Vector<unsigned char, 3> VectorPixelType;
+typedef itk::Image<VectorPixelType, 3> ColorImageType;
+typedef itk::Image<VectorPixelType, 2> Color2DImageType;
+
+typedef itk::Image<InputPixelType,3> InputImageType;
+typedef itk::Image<OutputPixelType,3> OutputImageType;
+typedef itk::Image<short int,3> LabelImageType;
+typedef itk::Image<int,3> IntImageType;
+
+typedef itk::Image<InputPixelType,2> Input2DImageType;
+typedef itk::Image<InputPixelType,2> Output2DImageType;
+
+typedef itk::ImageRegionConstIterator<InputImageType> ConstIteratorType;
 typedef itk::ImageRegionIterator<InputImageType> IteratorType;
+
+typedef itk::ImageRegionConstIterator<LabelImageType> ConstLabelIteratorType;
+typedef itk::ImageRegionIterator<LabelImageType> LabelIteratorType;
+
+
+typedef itk::ImageRegionConstIterator<Input2DImageType> Const2DIteratorType;
+typedef itk::ImageRegionIterator<Input2DImageType> twoDIteratorType;
+
+typedef itk::ImageRegionConstIterator<ColorImageType> ConstColorIteratorType;
+typedef itk::ImageRegionIterator<ColorImageType> ColorIteratorType;
+
+typedef itk::ImageLinearIteratorWithIndex< Input2DImageType > LinearIteratorType;
+typedef itk::ImageSliceConstIteratorWithIndex< InputImageType > SliceIteratorType;
+
+typedef itk::ImageLinearIteratorWithIndex< Color2DImageType > LinearColorIteratorType;
+typedef itk::ImageSliceConstIteratorWithIndex< ColorImageType > SliceColorIteratorType;
+
+
 typedef itk::VTKImageExport<InputImageType> ExportFilterType;
 
 
@@ -79,6 +122,25 @@ void ConnectPipelines(ITK_Exporter exporter, VTK_Importer* importer)
 	importer->SetCallbackUserData(exporter->GetCallbackUserData());
 }
 
+struct cubecoord{
+	unsigned short sx,sy,sz;
+	unsigned short ex,ey,ez;
+};
+
+InputImageType::Pointer getEmpty(int s1,int s2, int s3)
+{
+	InputImageType::Pointer p = InputImageType::New();
+	InputImageType::SizeType size;
+	InputImageType::IndexType index;
+	InputImageType::RegionType region;
+	size[0] = s1; size[1] = s2; size[2] = s3;
+	index.Fill(0);
+	region.SetSize(size);
+	region.SetIndex(index);
+	p->SetRegions(region);
+	p->Allocate();
+	return p;
+}
 	template <typename T>
 typename T::Pointer readImage(const char *filename)
 {
@@ -394,13 +456,17 @@ void render_stl_file_new(char filename[][256], int n, double colors[500][3], boo
 			*/
 	//	printf("Loading %s\n",filename[counter]);
 		reader->SetFileName(filename[counter]);
+		vtkSmartPointer<vtkPolyDataNormals> polynorm = vtkSmartPointer<vtkPolyDataNormals>::New();
+		polynorm->SetInput(reader->GetOutput());
+		
 		/*vtkDecimatePro* decimater = vtkDecimatePro::New();
 		decimater->SetInput(reader->GetOutput());
 		decimater->PreserveTopologyOn();
 		decimater->SetTargetReduction(0.7);*/
 		vtkSmartPointer<vtkPolyDataMapper> mapper=vtkSmartPointer<vtkPolyDataMapper>::New();
-		mapper->SetInput(reader->GetOutput());
-	//	mapper->ImmediateModeRenderingOn();
+		mapper->SetInput(polynorm->GetOutput());
+		mapper->ImmediateModeRenderingOff();
+
 		mapper->Update();
 		vtkSmartPointer<vtkActor> actor=vtkSmartPointer<vtkActor>::New();
 		actor->SetMapper(mapper);
@@ -410,6 +476,7 @@ void render_stl_file_new(char filename[][256], int n, double colors[500][3], boo
 		printf("Using color %lf %lf %lf\n",colors[counter][0],colors[counter][1],colors[counter][2]);
 	//	actor->RotateZ(90);
 		actor->SetScale(scale[0],scale[1],scale[2]);
+	
 	//	actor->Print(cout);
 		actor->GetBounds(val);
 		printf("bounds are %lf %lf %lf %lf %lf %lf\n",val[0],val[1],val[2],val[3],val[4],val[5]);
@@ -422,6 +489,7 @@ void render_stl_file_new(char filename[][256], int n, double colors[500][3], boo
 		outlineact->GetProperty()->SetColor(1,1,1);
 		//outlineact->RotateZ(90);
 		actor->GetProperty()->SetLineWidth(1);
+		actor->GetProperty()->SetInterpolationToFlat();
 		ren1->AddActor(actor);
 	//	ren1->AddActor(outlineact);
 	//	reader->Delete();
@@ -470,6 +538,8 @@ void render_stl_file_new(char filename[][256], int n, double colors[500][3], boo
 
 	vtkRenderWindowInteractor* iren = vtkRenderWindowInteractor::New();
 	iren->SetRenderWindow(rwin);
+	vtkInteractorStyleTrackballCamera* style = vtkInteractorStyleTrackballCamera::New();
+  iren->SetInteractorStyle( style );
 
 	rwin->Render();
 	vtkRenderLargeImage *renderLarge=vtkRenderLargeImage::New();
@@ -740,47 +810,241 @@ void render_single_stl_file(char filename[],double colors[][3])
 	
 }
 
+vtkSmartPointer<vtkPolyData> getVTKPolyDataPrecise(LabelImageType::Pointer label)
+{
+	LabelIteratorType liter = LabelIteratorType(label,label->GetLargestPossibleRegion());
+	liter.GoToBegin();
+
+	//find the maximum number of cells
+	unsigned short max1 = 0;
+	for(liter.GoToBegin();!liter.IsAtEnd();++liter)
+		max1 = MAX(max1,liter.Get());
+
+	//find all the cubes in which cells lie
+	cubecoord* carray = new cubecoord[max1+1];
+	for(int counter=0; counter<=max1; counter++)
+	{
+		carray[counter].sx=6000;carray[counter].sy=6000;carray[counter].sz=6000;
+		carray[counter].ex=0;carray[counter].ey=0;carray[counter].ez=0;
+	}
+
+	typedef itk::ImageRegionConstIteratorWithIndex<LabelImageType> ConstLabelIteratorWithIndex;
+	ConstLabelIteratorWithIndex cliter = ConstLabelIteratorWithIndex(label,label->GetLargestPossibleRegion());
+	InputImageType::IndexType index;
+	for(cliter.GoToBegin();!cliter.IsAtEnd();++cliter)
+	{
+		int cur = cliter.Get();
+		if(cur!=0)
+		{
+			index = cliter.GetIndex();
+			carray[cur].sx= MIN(index[0],carray[cur].sx);
+			carray[cur].sy= MIN(index[1],carray[cur].sy);
+			carray[cur].sz= MIN(index[2],carray[cur].sz);
+			carray[cur].ex= MAX(index[0],carray[cur].ex);
+			carray[cur].ey= MAX(index[1],carray[cur].ey);
+			carray[cur].ez= MAX(index[2],carray[cur].ez);
+		}
+	}
+
+	//find the largest image size we need
+	unsigned short wx=0,wy=0,wz=0;
+	for(int counter=1; counter<=max1; counter++)
+	{
+		wx = MAX(carray[counter].ex-carray[counter].sx+1,wx);
+		wy = MAX(carray[counter].ey-carray[counter].sy+1,wy);
+		wz = MAX(carray[counter].ez-carray[counter].sz+1,wz);
+	}
+	// accommodate padding
+	wx = wx+2;wy = wy +2; wz = wz+2;
+	printf("wx wy wz %u %u %u\n",wx,wy,wz);
+	// create a tiny image of maximum size
+
+
+	//appendfilter->UserManagedInputsOn();
+	//appendfilter->SetNumberOfInputs(max1);
+	vtkSmartPointer<vtkAppendPolyData> appendfilter = vtkSmartPointer<vtkAppendPolyData>::New();
+
+/**************/
+			ExportFilterType::Pointer itkexporter = ExportFilterType::New();
+			
+			vtkSmartPointer<vtkImageImport> vtkimporter = vtkSmartPointer<vtkImageImport>::New();
+			ConnectPipelines(itkexporter,(vtkImageImport *)vtkimporter);
+			vtkSmartPointer<vtkMarchingCubes> contourf = vtkSmartPointer<vtkMarchingCubes>::New();
+			contourf->SetInput(vtkimporter->GetOutput());
+			contourf->SetValue(0,127);
+			contourf->ComputeNormalsOff();
+			contourf->ComputeScalarsOff();
+			contourf->ComputeGradientsOff();
+			vtkSmartPointer<vtkSmoothPolyDataFilter> smoothf = vtkSmartPointer<vtkSmoothPolyDataFilter>::New();
+			smoothf->SetInput(contourf->GetOutput());
+			smoothf->SetRelaxationFactor(0.3);
+			smoothf->SetNumberOfIterations(20);
+
+			vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
+			transform->PostMultiply();
+	
+			transform->Identity();
+			vtkSmartPointer<vtkTransformPolyDataFilter> tf = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+			tf->SetTransform(transform);
+			tf->SetInput(smoothf->GetOutput());
+		
+/******************/
+
+
+
+InputImageType::Pointer t = getEmpty(wx,wy,wz);
+	for(int counter=1; counter<=max1; counter++)
+	{
+
+		
+			
+		//	printf("Maximum tiny image size I need is [%d %d %d]\n",wx,wy,wz);
+
+			InputImageType::SizeType size;
+			InputImageType::RegionType region;
+			index.Fill(1);
+
+			region.SetIndex(index);
+			region.SetSize(size);
+
+
+			LabelImageType::SizeType lsize;
+			LabelImageType::IndexType lindex;
+			LabelImageType::RegionType lregion;
+
+			itkexporter->SetInput(t);
+
+			
+			
+		
+
+			t->FillBuffer(0);
+			lsize[0] = carray[counter].ex-carray[counter].sx+1;
+			lsize[1] = carray[counter].ey-carray[counter].sy+1;
+			lsize[2] = carray[counter].ez-carray[counter].sz+1;
+
+			lindex[0] = carray[counter].sx;
+			lindex[1] = carray[counter].sy;
+			lindex[2] = carray[counter].sz;
+
+			lregion.SetIndex(lindex);
+			lregion.SetSize(lsize);
+			LabelIteratorType localiter = LabelIteratorType(label,lregion);
+
+			size = lsize;
+			region.SetSize(size);
+			IteratorType iter = IteratorType(t,region);
+			for(localiter.GoToBegin(),iter.GoToBegin();!localiter.IsAtEnd();++localiter,++iter)
+			{
+				if(localiter.Get()==counter)
+				{
+					iter.Set(255);
+				}
+			}
+			t->Modified();
+			vtkimporter->Modified();
+
+			transform->Identity();	
+			transform->Translate(carray[counter].sx-1,carray[counter].sy-1,carray[counter].sz-1);
+			tf->SetTransform(transform);
+			tf->Update();
+		vtkSmartPointer<vtkPolyData> pol=vtkSmartPointer<vtkPolyData>::New();
+		pol->DeepCopy(tf->GetOutput());
+	//	tf->GetOutput()->Print(std::cout);
+		
+		appendfilter->AddInput(pol);
+		//appendfilter->Update();
+	
+		//appendfilter->SetInputByNumber(counter-1,tf->GetOutput());
+	//	appendfilter->Update();
+	//	appendfilter->GetOutput()->Print(std::cout);
+		//if(counter>500)
+		//	break;
+		printf("Completed %d/%d\r",counter,max1);
+	//	scanf("%*d");
+	}
+
+	appendfilter->Update();
+	vtkSmartPointer<vtkDecimatePro> decimate = vtkSmartPointer<vtkDecimatePro>::New();
+	decimate->SetInput(appendfilter->GetOutput());
+	decimate->SetTargetReduction(0.75);
+	//decimate->SetNumberOfDivisions(32,32,32);
+	printf("Decimating the contours...");
+	decimate->Update();
+	printf("Done\n");
+	printf("Smoothing the contours after decimation...");
+	vtkSmartPointer<vtkSmoothPolyDataFilter> smoothfinal = vtkSmartPointer<vtkSmoothPolyDataFilter>::New();
+	smoothfinal->SetRelaxationFactor(0.2);
+	smoothfinal->SetInput(decimate->GetOutput());
+	smoothfinal->SetNumberOfIterations(0);
+	smoothfinal->Update();
+	printf("Done\n");
+	delete [] carray;
+	vtkSmartPointer<vtkPolyData> out = smoothfinal->GetOutput();
+	return out;
+}
 void generate_stl_from_tif(char *filename_tif,char *stl_filename)
 {
 	vtkSmartPointer<vtkImageData> im;	
 	ExportFilterType::Pointer itkexporter = ExportFilterType::New();
-	InputImageType::Pointer itkim = readImage<InputImageType>(filename_tif);
-	Binarize(itkim);
-	itkexporter->SetInput(itkim);
-	vtkSmartPointer<vtkImageImport> vtkimporter = vtkSmartPointer<vtkImageImport>::New();
-	ConnectPipelines(itkexporter,(vtkImageImport *)vtkimporter);
-	vtkimporter->Update();
-	im = vtkimporter->GetOutput();
+	LabelImageType::Pointer itkim = readImage<LabelImageType>(filename_tif);
+	//Binarize(itkim);
+	vtkSmartPointer<vtkPolyData> poly = getVTKPolyDataPrecise(itkim);
+	//itkexporter->SetInput(itkim);
+	//vtkSmartPointer<vtkImageImport> vtkimporter = vtkSmartPointer<vtkImageImport>::New();
+	//ConnectPipelines(itkexporter,(vtkImageImport *)vtkimporter);
+	//vtkimporter->Update();
+	//im = vtkimporter->GetOutput();
+
 	vtkSmartPointer<vtkPolyDataMapper> mapper;
-	vtkSmartPointer<vtkLODActor> actor;
-	vtkSmartPointer<vtkMarchingCubes> contourf = vtkSmartPointer<vtkMarchingCubes>::New();
-	contourf->SetInput(im);
-	contourf->SetValue(0,127);
-	contourf->ComputeNormalsOff();
-	contourf->ComputeScalarsOff();
-	contourf->ComputeGradientsOff();
-//	contourf->SetInputMemoryLimit(500000);
-	printf("About to update contourf");
-	contourf->Update();
-	printf("Contour Generated");
-	vtkSmartPointer<vtkSmoothPolyDataFilter> smoothf = vtkSmartPointer<vtkSmoothPolyDataFilter>::New();
-	smoothf->SetInput(contourf->GetOutput());
-	smoothf->SetRelaxationFactor(0.2);
-	smoothf->SetNumberOfIterations(20);
-	smoothf->Update();
-	printf("Contour smoothed\n");
+//	vtkSmartPointer<vtkLODActor> actor;
+//	vtkSmartPointer<vtkMarchingCubes> contourf = vtkSmartPointer<vtkMarchingCubes>::New();
+//	contourf->SetInput(im);
+//	contourf->SetValue(0,127);
+//	contourf->ComputeNormalsOff();
+//	contourf->ComputeScalarsOff();
+//	contourf->ComputeGradientsOff();
+////	contourf->SetInputMemoryLimit(500000);
+//	printf("About to update contourf\n");
+//	contourf->Update();
+//	printf("Contour generated\n");
+//	vtkSmartPointer<vtkSmoothPolyDataFilter> smoothf = vtkSmartPointer<vtkSmoothPolyDataFilter>::New();
+//	smoothf->SetInput(contourf->GetOutput());
+//	smoothf->SetRelaxationFactor(0.2);
+//	smoothf->SetNumberOfIterations(10);
+//	smoothf->Update();
+//	printf("Contour smoothed\n");
+//	vtkSmartPointer<vtkDecimatePro> decimate = vtkSmartPointer<vtkDecimatePro>::New();
+//	decimate->SetInput(smoothf->GetOutput());
+//	decimate->SetTargetReduction(0.9);
+//	decimate->Update();
+//	printf("Contour decimated\n");
     mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	mapper->SetInput(smoothf->GetOutput());
+	mapper->SetInput(poly);
 	printf("Begin updating mapper\n");
 	mapper->Update();
 	vtkSmartPointer<vtkPolyDataWriter> stlwriter = vtkSmartPointer<vtkPolyDataWriter>::New();
-	stlwriter->SetInput(smoothf->GetOutput());
+	stlwriter->SetInput(poly);
 	stlwriter->SetFileName(stl_filename);
 	stlwriter->SetFileTypeToBinary();
 	printf("Begin Writing stl file %s\n", stl_filename);
 	stlwriter->Write();
 	printf("Done writing to stl file");
 	return;	
+}
+
+bool file_exists(char *filename)
+{
+	FILE * fp = fopen(filename,"r");
+	if(fp==NULL)
+	{
+		return false;
+	}
+	else
+	{
+		fclose(fp);
+		return true;
+	}
 }
 int main(int argc, char**argv)
 {
@@ -814,14 +1078,16 @@ int main(int argc, char**argv)
 			//trace
 			strcpy(input_filenames[counter],filename);
 			sprintf(stl_filenames[counter],"cache/cache_%s.ply",filename);
-			WriteTraceToPLY(input_filenames[counter],stl_filenames[counter]);
+			if(!file_exists(stl_filenames[counter]))
+				WriteTraceToPLY(input_filenames[counter],stl_filenames[counter]);
 		}
 		else
 		{
 			//image
 			strcpy(input_filenames[counter],filename);
 			sprintf(stl_filenames[counter],"cache/cache_%s.ply",filename);
-			generate_stl_from_tif(input_filenames[counter],stl_filenames[counter]);
+			if(!file_exists(stl_filenames[counter]))
+				generate_stl_from_tif(input_filenames[counter],stl_filenames[counter]);
 		}
 		mask[counter] = 1;
 		counter++;
