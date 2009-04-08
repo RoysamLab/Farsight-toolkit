@@ -251,24 +251,28 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
     }
     break;
   case 's':
-    if(view->IDList.size()>=1)
-      {
-      for (int i = 0; i < view->IDList.size(); i++)
-        {
-        view->tobj->splitTrace(view->IDList[i]);
-        } 
-      view->IDList.clear(); 
-      view->sphereAct->VisibilityOff();
-      view->LineAct();
-      view->renWin->Render();
-      }
-    else
-      {
-      std::cout<<  "Nothing to split\n";
-		return;
-      }
+	  {
+		  if(view->IDList.size()>=1)
+		  {
+		  std::unique( view->IDList.begin(), view->IDList.end());
+		  for (int i = 0; i < view->IDList.size(); i++)
+			{
+			view->tobj->splitTrace(view->IDList[i]);
+			} 
+		  view->IDList.clear(); 
+		  view->sphereAct->VisibilityOff();
+		  view->LineAct();
+		  view->renWin->Render();
+		  }
+		  else
+		  {
+			std::cout<<  "Nothing to split\n";
+			return;
+		  }
+	  }
     break;
   case 'f':
+	  {
 	  if(view->IDList.size()>=1)
 	  {
 		  for(int i=0; i< view->IDList.size(); i++)
@@ -276,8 +280,18 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 			  view->tobj->ReverseSegment(reinterpret_cast<TraceLine*>(view->tobj->hashc[view->IDList[i]]));
 		  }
 	  }
+	  }
+	  break;
+	  case 'w':
+		{
+			std::string fileName;
+			std::cout<<"new filename: \n";
+			std::cin>>fileName;
+			view->tobj->WriteToSWCFile((char *)fileName.c_str());	
+		}
 	  break;
   }
+  
   view->sphereAct->VisibilityOff();
   view->IDList.clear();
   view->ren->RemoveAllViewProps();
