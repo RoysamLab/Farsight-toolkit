@@ -1,7 +1,5 @@
 #ifndef __TRACE_H
 #define __TRACE_H
-
-
 #include <vector>
 #include <list>
 #include <iostream>
@@ -9,7 +7,7 @@
 #include <set>
 
 #ifdef WIN32
-using namespace std;//ext;
+using namespace stdext;
 #include <hash_map>
 #else
 #include <hash_map.h>
