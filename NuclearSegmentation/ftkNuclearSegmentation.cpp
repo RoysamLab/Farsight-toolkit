@@ -10,6 +10,8 @@
 #include <itkImageRegionConstIteratorWithIndex.h>
 #include <ctime>
 
+#include "yousef_core/graphColLearn_3D/sequential_coloring.cpp"
+
 namespace ftk 
 {
 
@@ -62,7 +64,7 @@ bool NuclearSegmentation::LabelsToObjects(void)
 	if(!labelImage)
 	{
 		labelImage = new ftk::Image();
-		labelImage->LoadFile(PrependProjectPath(resultFilenames[0]));
+		labelImage->LoadFile(PrependProjectPath(resultFilenames[0]));		
 	}
 
 	//Calculation
@@ -1006,5 +1008,232 @@ void NuclearSegmentation::createFTKLabelImg(int* data, int numColumns, int numRo
 	labelImage->ImageFromData3D((void*)data, INT, sizeof(int), numColumns, numRows, numStacks);
 }
 
+//This function runs graph coloring
+int NuclearSegmentation::RunGraphColoring(const char* filename)
+{
+	//get the label image (if not already done)
+	if(!labelImage)
+	{
+		std::cout<<"Loading Label Image ... ";
+		labelImage = new ftk::Image();
+		labelImage->LoadFile(PrependProjectPath(resultFilenames[0]));
+		std::cout<<"done!"<<endl;
+	}
+    int*** labs_im;
+    int max_lab,ncolors;
+    int** RAG;    
+    int* ColorOut;        
+	int L, L1, L2, L3, L4, L5, L6, L7;
+	
+	int c = labelImage->Size()[3];
+	int r = labelImage->Size()[2];
+	int z = labelImage->Size()[1];	
+	unsigned short* labs_vals = static_cast<unsigned short*> (labelImage->GetDataPtr(0,0));
+
+	//get the maximum label
+	for(int i=0; i<r-1; i++)
+    {        		
+        for(int j=0; j<c-1; j++)
+        {						
+			for(int k=0; k<z-1; k++)
+			{	
+				if((int)labs_vals[(k*r*c)+(j*r)+i]>max_lab)
+					max_lab = (int)labs_vals[(k*r*c)+(j*r)+i];
+			}
+		}
+	}
+	  
+        
+    //Build the region adjacency graph    
+	std::cout<<"Building Region Adjacency Graph...";
+	RAG = (int **) malloc(max_lab*sizeof(int*));
+    for(int i=0; i<max_lab; i++)
+    {        
+		RAG[i] = (int *) malloc(max_lab*sizeof(int));
+        for(int j=0; j<max_lab; j++)
+            RAG[i][j] = 0;
+    }
+    
+	
+    for(int i=0; i<r-1; i++)
+    {        
+        for(int j=0; j<c-1; j++)
+        {	
+			for(int k=0; k<z-1; k++)
+			{
+				L = labs_vals[(k*r*c)+(j*r)+i];
+				if( L == 0)
+					continue;
+				else
+				{			
+					L1 = labs_vals[(k*r*c)+(j*r)+(i+1)]; 
+					L2 = labs_vals[(k*r*c)+((j+1)*r)+i];
+					L3 = labs_vals[(k*r*c)+((j+1)*r)+(i+1)];
+					L4 = labs_vals[((k+1)*r*c)+(j*r)+i];
+					L5 = labs_vals[((k+1)*r*c)+((j+1)*r)+i];
+					L6 = labs_vals[((k+1)*r*c)+(j*r)+(i+1)];
+					L7 = labs_vals[((k+1)*r*c)+((j+1)*r)+(i+1)];
+
+					if(L!=L1 && L1!=0)
+						RAG[L-1][L1-1] = RAG[L1-1][L-1] = 1;
+					if(L!=L2 && L2!=0)
+						RAG[L-1][L2-1] = RAG[L2-1][L-1] = 1;
+					if(L!=L3 && L3!=0)
+						RAG[L-1][L3-1] = RAG[L3-1][L-1] = 1;
+					if(L!=L4 && L4!=0)
+						RAG[L-1][L4-1] = RAG[L4-1][L-1] = 1;
+					if(L!=L5 && L5!=0)
+						RAG[L-1][L5-1] = RAG[L5-1][L-1] = 1;
+					if(L!=L6 && L6!=0)
+						RAG[L-1][L6-1] = RAG[L6-1][L-1] = 1;
+					if(L!=L7 && L7!=0)
+						RAG[L-1][L7-1] = RAG[L7-1][L-1] = 1;
+				}
+            }                		
+        }		
+    }    
+	std::cout<<"done!"<<endl;
+
+    //copy the RAG into an std vector of vectors
+	std::vector<std::vector<int> > MAP;
+	MAP.resize(max_lab);
+    std::vector<std::vector<int> > MAP2;
+	MAP2.resize(max_lab);
+	
+	ColorOut = (int *) malloc(max_lab*sizeof(int));
+	for(int i=0; i<max_lab; i++)
+	{	
+		ColorOut[i] = 0;
+		int isIsolated = 1;
+		for(int j=0; j<max_lab; j++)
+		{
+			if(RAG[i][j]==1)
+            {
+				MAP[i].push_back(j+1);   
+				isIsolated = 0;
+            }
+		} 
+		if(isIsolated==1)
+			ColorOut[i] = 1;
+		free(RAG[i]);
+	}    
+	free(RAG);
+    
+	       
+    //start the graph coloring using Sumit's sequential coloring code
+    GVC* Gcol = new GVC(); 			
+ 	Gcol->sequential_coloring(max_lab,  max_lab, ColorOut, MAP );
+	int numColors = 0;
+	for(int i=0; i<max_lab; i++)
+	{
+		int c = ColorOut[i]+1;
+		if(c>numColors)
+			numColors=c;
+	}
+    std::cout<<"Graph Coloring Done"<<endl;
+	//write the resulting colors into a file
+	FILE *fp = fopen(filename,"w");
+	
+	if(fp == NULL)
+	{
+		fprintf(stderr,"can't open %s for writing\n",filename);
+		exit(1);
+	}
+	for(i=0; i<max_lab; i++)
+	{
+		fprintf(fp,"%d\n",ColorOut[i]+1);
+		
+	}
+	fclose(fp);
+	//Try this: save the colors into the classes list
+	classes.clear();
+	for(i=0; i<numColors; i++)
+		classes.push_back(i+1);
+
+			
+
+	//Cast the label Image & Get ITK Pointer
+	typedef unsigned short PixelType;
+	typedef itk::Image<PixelType, 3> ImageType;
+	labelImage->Cast<PixelType>();
+	ImageType::Pointer img = labelImage->GetItkPtr<PixelType>(0,0);
+
+	//Create an image for each class:	
+	std::cout<<"Creating an image for each class...";
+	std::vector<ImageType::Pointer> outImgs;
+	for(int i=0; i<numColors; ++i)
+	{
+		ImageType::Pointer tmp = ImageType::New();   
+		tmp->SetOrigin( img->GetOrigin() );
+		tmp->SetRegions( img->GetLargestPossibleRegion() );
+		tmp->SetSpacing( img->GetSpacing() );
+		tmp->Allocate();
+		tmp->FillBuffer(0);
+		tmp->Update();
+
+		outImgs.push_back(tmp);
+	}
+
+	//create lists of object ids in each class:
+	std::vector< std::set<int> > objClass(numColors);
+	for(int i=0; i<max_lab; ++i)
+	{
+		int c = ColorOut[i]+1;
+		int id = i+1;
+		int p = 0;
+		for(int j=0; j<numColors; ++j)
+		{
+			if(c == classes.at(j))
+				break;
+			++p;
+		}
+		if(p < numColors)
+			objClass.at(p).insert(id);
+	}
+
+	//Iterate through Image & populate all of the other images
+	typedef itk::ImageRegionConstIteratorWithIndex< ImageType > IteratorType;
+	IteratorType it(img,img->GetRequestedRegion());
+	for(it.GoToBegin(); !it.IsAtEnd(); ++it)
+	{
+		int id = it.Get();
+		for(int j=0; j<numColors; ++j)
+		{
+			if( objClass.at(j).find(id) != objClass.at(j).end() )
+			{
+				outImgs.at(j)->SetPixel(it.GetIndex(), 1); 
+			}
+		}	
+	}
+
+	//Now Write All of the Images to File
+	typedef itk::ImageFileWriter<ImageType> WriterType;
+	for(int i=0; i<numColors; ++i)
+	{
+		WriterType::Pointer writer = WriterType::New();
+		std::string fname = projectPath + "/" + projectName;
+		fname.append("_class");
+		fname.append(NumToString(classes.at(i)));
+		fname.append(".tiff");
+		writer->SetFileName( fname );
+		writer->SetInput( outImgs.at(i) );
+    
+		try
+		{
+			writer->Update();
+		}
+		catch( itk::ExceptionObject & excp )
+		{
+			std::cerr << excp << std::endl;
+			writer = 0;
+			errorMessage = "Problem saving file to disk";
+			return false;
+		}
+		
+		writer = 0;
+	}
+	std::cout<<"done!"<<std::endl;
+	return 1;
+}
 } //end namespace ftk
 

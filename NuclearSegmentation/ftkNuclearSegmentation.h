@@ -71,6 +71,10 @@ public:
 	bool Add( Object::Point p ){return 0;};
 	bool editsNotSaved;
 
+	//Added by Yousef on 04-08-2009
+	//This function will run graph coloring and will assign different colors for touching objects
+	//For now, it will just write the list of labels into a text file, but this should be relaxed later
+	int RunGraphColoring(const char* fname);
 private:
 
 	bool FileExists(const char* fname);

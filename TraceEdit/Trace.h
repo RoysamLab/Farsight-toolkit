@@ -1,5 +1,7 @@
 #ifndef __TRACE_H
 #define __TRACE_H
+
+
 #include <vector>
 #include <list>
 #include <iostream>
@@ -7,7 +9,7 @@
 #include <set>
 
 #ifdef WIN32
-using namespace stdext;
+using namespace std;//ext;
 #include <hash_map>
 #else
 #include <hash_map.h>
@@ -134,8 +136,8 @@ public:
 	}
 	std::vector<TraceBit> CollectTraceBits();
 	std::vector<TraceLine*>* GetTraceLinesPointer(){ return &trace_lines;}
-	hash_map<unsigned int, unsigned long long int> hashp;
-	hash_map<unsigned int, unsigned long long int> hashc;
+	hash_map< unsigned int, unsigned long long int > hashp;
+	hash_map< unsigned int, unsigned long long int > hashc;
 private:
 	std::vector<TraceLine*> trace_lines;	
 };
