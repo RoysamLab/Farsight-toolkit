@@ -1139,7 +1139,7 @@ int NuclearSegmentation::RunGraphColoring(const char* filename)
 		fprintf(stderr,"can't open %s for writing\n",filename);
 		exit(1);
 	}
-	for(i=0; i<max_lab; i++)
+	for(int i=0; i<max_lab; i++)
 	{
 		fprintf(fp,"%d\n",ColorOut[i]+1);
 		
@@ -1147,7 +1147,7 @@ int NuclearSegmentation::RunGraphColoring(const char* filename)
 	fclose(fp);
 	//Try this: save the colors into the classes list
 	classes.clear();
-	for(i=0; i<numColors; i++)
+	for(int i=0; i<numColors; i++)
 		classes.push_back(i+1);
 
 			
