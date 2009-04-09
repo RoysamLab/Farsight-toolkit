@@ -383,14 +383,14 @@ vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
 	
 	hashp.clear();
 	hashc.clear();
-	printf("Started creating vtkPolyData for rendering purposes ... ");
+	//printf("Started creating vtkPolyData for rendering purposes ... ");
 	vtkSmartPointer<vtkPolyData> poly_traces=vtkSmartPointer<vtkPolyData>::New();
 	vtkSmartPointer<vtkFloatArray> point_scalars=vtkSmartPointer<vtkFloatArray>::New();
 	point_scalars->SetNumberOfComponents(1);
 	vtkSmartPointer<vtkPoints> line_points=vtkSmartPointer<vtkPoints>::New();
 	line_points->SetDataTypeToDouble();
 	vtkSmartPointer<vtkCellArray> line_cells=vtkSmartPointer<vtkCellArray>::New();
-	printf("Starting CreatePolyDataRecursive\n");
+	//printf("Starting CreatePolyDataRecursive\n");
 	for(int counter=0; counter<trace_lines.size(); counter++)
 	{
 		/*printf("Calling CreatePolyDataRecursive %dth time\n",counter+1);*/
@@ -401,7 +401,7 @@ vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
 	poly_traces->SetLines(line_cells);
 
 	poly_traces->GetPointData()->SetScalars(point_scalars);
-	printf("Done\n");
+	//printf("Done\n");
 	return poly_traces;
 }
 
@@ -1051,7 +1051,7 @@ void TraceObject::RemoveTraceLine(TraceLine *tline)
 
 	while(iter!=trace_lines.end())
 	{
-		printf("TraceLine* = %p\n",*iter);
+		//printf("TraceLine* = %p\n",*iter);
 		if(tline == *iter)
 		{
 			trace_lines.erase(iter);
@@ -1059,5 +1059,5 @@ void TraceObject::RemoveTraceLine(TraceLine *tline)
 		}
 		++iter;
 	}
-printf("Quitting RemoveTraceLine\n");
+//printf("Quitting RemoveTraceLine\n");
 }

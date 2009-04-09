@@ -93,7 +93,7 @@ public:
 	void interact();
 	static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
 	static void SetMode(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
-    void HighlightSelected(TraceLine* tline);
+    void HighlightSelected(TraceLine* tline, int t);
 	vtkCallbackCommand* isPicked;
 	vtkCallbackCommand* keyPress;
 	//vtkPointPicker *point_picker;

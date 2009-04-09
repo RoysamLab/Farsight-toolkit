@@ -326,7 +326,8 @@ void View3d::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
     unsigned int cell_id = cell_picker->GetCellId();  
     view->IDList.push_back(cell_id);
     TraceLine *tline = reinterpret_cast<TraceLine*>(view->tobj->hashc[cell_id]);
-	view->HighlightSelected(tline);
+	int t =1;
+	view->HighlightSelected(tline, t);
     tline->Getstats();              //prints the id and end coordinates to the command prompt 
     view->sphereAct->SetPosition(pickPos);    //sets the selector to new point
     view->sphereAct->VisibilityOn();      //deleteTrace can turn it off 
@@ -448,14 +449,14 @@ void View3d::MinEndPoints(View3d* view)
 		}
 	}
 }
-void View3d::HighlightSelected(TraceLine* tline)
+void View3d::HighlightSelected(TraceLine* tline, int t)
 {
 	TraceLine::TraceBitsType::iterator iter = tline->GetTraceBitIteratorBegin();
 	TraceLine::TraceBitsType::iterator iterend = tline->GetTraceBitIteratorEnd();
 
   while(iter!=iterend)
   {
-	  poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,1);
+	  poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,1/t);
 	  ++iter;
   }
 	
