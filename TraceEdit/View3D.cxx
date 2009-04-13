@@ -213,6 +213,7 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 				view->IDList.clear();
 				std::cout<< "cleared list\n";
 			}
+			view->tobj->changeList.clear();
 		}
 		break;
     case 'd':
@@ -240,7 +241,34 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 		{		  
 			std::sort(view->IDList.begin(), view->IDList.end());
 			std::reverse(view->IDList.begin(), view->IDList.end());
-		  view->MinEndPoints(view);
+			int numTrace = view->IDList.size();		
+			int i,j, s=0, exist =0;
+			std::vector<TraceLine*> traceList;
+			std::cout<< "elements passed \t" << numTrace << std::endl;
+			for (i = 0;i<numTrace; i++)
+			{
+				//std::cout<< "added new trace" <<std::endl;
+				traceList.push_back( reinterpret_cast<TraceLine*>(view->tobj->hashc[view->IDList[i]]));
+				s=traceList.size()-1;
+				exist =0;
+				//std::cout<<"trace size "<<  traceList.size() << std::endl;
+				if (traceList.size()>0)
+				{
+					j = 0;
+					while ( (j < s)&&(exist==0))
+					{	
+						//std::cout<<"check trace "<<  s <<" to " <<j << std::endl;						
+						if (traceList[s]->GetId()== traceList[j]->GetId())
+						{
+							traceList.pop_back();	
+							//std::cout<<"duplicate trace not added\n";	
+							exist=1;
+						}
+						j++;			
+					}
+				}
+			}
+		  view->MinEndPoints(view,traceList);
 		  //std::cout<< " \t deleted" <<std::endl;
 		}
 		else
@@ -292,13 +320,25 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 	  break;
   }
   
+
   view->sphereAct->VisibilityOff();
   view->IDList.clear();
   view->ren->RemoveAllViewProps();
-  //view->ren->AddActor(view->LineAct());
+  //view->ren->RemoveActor(view->AddBranchIllustrators())	//would require rewrtie branch illistrators as a vtk actor
+  //view->ren->RemoveActor(view->LineAct());
+  if (view->tobj->changeList.size()>=1)
+  {
+	  
+	  for (int i = 0; i<view->tobj->changeList.size();i++)
+	  {
+		  std::cout<<"change line\n";
+		  view->HighlightSelected(view->tobj->changeList[i],2);
+	  }
+  }  
   view->addAct(view->LineAct());
 //  view->AddPointsAsPoints(view->tobj->CollectTraceBits());
   view->AddBranchIllustrators();
+
   view->renWin->Render();
 
 }
@@ -336,36 +376,13 @@ void View3d::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
   }
   view->renWin->Render();             //update the render window
 }
-void View3d::MinEndPoints(View3d* view)
+void View3d::MinEndPoints(View3d* view,std::vector<TraceLine*> traceList)
 {
-	int s=0, exist =0;
-	int numTrace = view->IDList.size();		int i,j;
-	std::vector<TraceLine*> traceList;
+	int i,j, s=0, exist =0;
+
 	std::vector<compTrace> compList;
-	std::cout<< "elements passed \t" << numTrace << std::endl;
-	for (i = 0;i<numTrace; i++)
-	{
-		//std::cout<< "added new trace" <<std::endl;
-		traceList.push_back( reinterpret_cast<TraceLine*>(view->tobj->hashc[view->IDList[i]]));
-		s=traceList.size()-1;
-		exist =0;
-		//std::cout<<"trace size "<<  traceList.size() << std::endl;
-		if (traceList.size()>0)
-		{
-			j = 0;
-			while ( (j < s)&&(exist==0))
-			{	
-				//std::cout<<"check trace "<<  s <<" to " <<j << std::endl;						
-				if (traceList[s]->GetId()== traceList[j]->GetId())
-				{
-					traceList.pop_back();	
-					//std::cout<<"duplicate trace not added\n";	
-					exist=1;
-				}
-				j++;			
-			}
-		}
-	}
+
+	
 	for (i=0;i<traceList.size()-1; i++)
 	{
 		for (j=i+1; j<traceList.size(); j++)

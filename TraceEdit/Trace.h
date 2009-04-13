@@ -134,6 +134,7 @@ public:
 	}
 	std::vector<TraceBit> CollectTraceBits();
 	std::vector<TraceLine*>* GetTraceLinesPointer(){ return &trace_lines;}
+	std::vector<TraceLine*> changeList;
 	hash_map< unsigned int, unsigned long long int > hashp;
 	hash_map< unsigned int, unsigned long long int > hashc;
 private:

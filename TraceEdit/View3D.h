@@ -96,11 +96,12 @@ public:
     void HighlightSelected(TraceLine* tline, int t);
 	vtkCallbackCommand* isPicked;
 	vtkCallbackCommand* keyPress;
-	//vtkPointPicker *point_picker;
+	
 	vtkCellPicker *cell_picker;
 	std::vector<int> IDList;
+	
 	void deleteTrace(View3d* view,TraceLine *tline);
-	void MinEndPoints(View3d* view);
+	void MinEndPoints(View3d* view,std::vector<TraceLine*> traceList);
 	vtkSphereSource *sphere;
 	vtkPolyDataMapper *sphereMap;
 	vtkActor *sphereAct;
