@@ -762,7 +762,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 			(*tmarker->GetBranchPointer())[counter]->SetParent(tmarker);
 		}
 		RemoveTraceLine(tother);
-		changeList.push_back(tmarker);
+		//changeList.push_back(tmarker);
 	}
 	else if (slocation ==1 && elocation == 0)
 	{
@@ -775,7 +775,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 			(*tother->GetBranchPointer())[counter]->SetParent(tother);
 		}
 		RemoveTraceLine(tmarker);
-		changeList.push_back(tother);
+		//changeList.push_back(tother);
 	}
 	else if (slocation == 0 && elocation ==0)
 	{
@@ -789,7 +789,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 			(*tother->GetBranchPointer())[counter]->SetParent(tother);
 		}
 		RemoveTraceLine(tmarker);
-		changeList.push_back(tother);
+		//changeList.push_back(tother);
 	}
 	else if (slocation == 1 && elocation ==1)
 	{
@@ -803,7 +803,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 			(*tmarker->GetBranchPointer())[counter]->SetParent(tmarker);
 		}
 		RemoveTraceLine(tother);
-		changeList.push_back(tmarker);
+		//changeList.push_back(tmarker);
 	}
 	else if (slocation == -1 && elocation !=-1)
 	{

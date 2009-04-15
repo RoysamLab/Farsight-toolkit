@@ -179,6 +179,7 @@ void View3d::interact()
 }
 void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata)
 {
+	bool changes=false;
   View3d* view = (View3d*)clientdata;
   char key = view->iren->GetKeyCode();
   switch (key)
@@ -213,7 +214,7 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 				view->IDList.clear();
 				std::cout<< "cleared list\n";
 			}
-			view->tobj->changeList.clear();
+			//view->tobj->changeList.clear();
 		}
 		break;
     case 'd':
@@ -227,6 +228,7 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 			view->deleteTrace(view, reinterpret_cast<TraceLine*>(view->tobj->hashc[view->IDList[i]])); 
 		  } 
 		  std::cout<< " \t deleted" <<std::endl;
+		  changes = true;
 		}
 		else
 		{
@@ -269,7 +271,7 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 				}
 			}
 		  view->MinEndPoints(view,traceList);
-		  //std::cout<< " \t deleted" <<std::endl;
+		  changes = true;
 		}
 		else
 		{
@@ -287,10 +289,11 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 			{
 			view->tobj->splitTrace(view->IDList[i]);
 			} 
-		  view->IDList.clear(); 
+		  changes = true;
+		  /*view->IDList.clear(); 
 		  view->sphereAct->VisibilityOff();
 		  view->LineAct();
-		  view->renWin->Render();
+		  view->renWin->Render();*/
 		  }
 		  else
 		  {
@@ -307,6 +310,7 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 		  {
 			  view->tobj->ReverseSegment(reinterpret_cast<TraceLine*>(view->tobj->hashc[view->IDList[i]]));
 		  }
+		  changes = true;
 	  }
 	  }
 	  break;
@@ -319,28 +323,19 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 		}
 	  break;
   }
-  
-
-  view->sphereAct->VisibilityOff();
-  view->IDList.clear();
-  view->ren->RemoveAllViewProps();
-  //view->ren->RemoveActor(view->AddBranchIllustrators())	//would require rewrtie branch illistrators as a vtk actor
-  //view->ren->RemoveActor(view->LineAct());
-  if (view->tobj->changeList.size()>=1)
+  if (changes == true)
   {
-	  
-	  for (int i = 0; i<view->tobj->changeList.size();i++)
-	  {
-		  std::cout<<"change line\n";
-		  view->HighlightSelected(view->tobj->changeList[i],2);
-	  }
-  }  
-  view->addAct(view->LineAct());
-//  view->AddPointsAsPoints(view->tobj->CollectTraceBits());
-  view->AddBranchIllustrators();
-
-  view->renWin->Render();
-
+	  view->sphereAct->VisibilityOff();
+	  view->IDList.clear();
+	  //view->ren->RemoveAllViewProps();
+	 /*view->ren->RemoveActor(view->AddBranchIllustrators())	//would require rewrtie branch illistrators as a vtk actor
+	  view->ren->RemoveActor(view->LineAct());*/
+	  view->LineAct();
+	  //view->addAct(view->LineAct());
+	  //view->AddBranchIllustrators();
+	  view->renWin->Render();
+	  changes = false;
+  }
 }
 
 void View3d::PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata)
