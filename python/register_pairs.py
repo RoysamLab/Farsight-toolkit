@@ -49,7 +49,7 @@ def register(argv):
             to_dot = to_image.find('.');
             f_xforms.write(from_image[:from_dot]+"_to_"+to_image[:to_dot]+"_transform.xml\n")
         else:
-            f_o.write("From "+from_image+" to "+to_image+" failed")
+            f_o.write("From "+from_image+" to "+to_image+" failed\n")
             print "From "+from_image+" to "+to_image+" failed"
             
     # Perform joint registration write the xform list to a
