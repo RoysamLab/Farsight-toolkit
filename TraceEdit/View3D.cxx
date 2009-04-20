@@ -213,8 +213,9 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 			{
 				view->IDList.clear();
 				std::cout<< "cleared list\n";
+				changes = true;
 			}
-			//view->tobj->changeList.clear();
+			
 		}
 		break;
     case 'd':
@@ -403,12 +404,13 @@ void View3d::MinEndPoints(View3d* view,std::vector<TraceLine*> traceList)
 	}
 	if (compList.size()>=1)
 	{
-		for (i=0;i<compList.size()-1; i++)
+		i=0, j = 0;
+		while (i<compList.size()-1 )
 		{
-			exist = 0;	j=i+1;
-			while ((exist == 0)&&(j<compList.size()))
+			exist = 0;
+			while ((exist == 0)&&(j<compList.size()-1))
 			{
-				
+				j++;
 				if (compList[i].Trace1->GetId()==compList[j].Trace1->GetId())
 				{
 					if (compList[i].endPT1==compList[j].endPT1)
@@ -441,15 +443,21 @@ void View3d::MinEndPoints(View3d* view,std::vector<TraceLine*> traceList)
 							<<" and "<<compList[j].Trace1->GetId()<<" to "<<compList[j].Trace2->GetId()<<std::endl;
 						exist=1;}
 				}
-				j++;
+				
 			}
 			if (exist==1)
 			{
 				if (compList[i].dist<compList[j].dist)
-				{compList.erase(compList.begin()+i);}
-				else
 				{compList.erase(compList.begin()+j);}
+				else
+				{compList.erase(compList.begin()+i);}
 				std::cout<<"Conflict resolved"<< std::endl;
+				j=i;
+			}
+			else
+			{
+				i++;
+				j=i;
 			}
 		}
 		std::cout<<"trace size "<<  traceList.size() << "\tNumber of computed distances\t" << compList.size()<<std::endl;
