@@ -35,8 +35,7 @@
 #include "SegmentationWindow.h"
 #include "TableWindow.h"
 #include "PlotWindow.h"
-#include "SliceView5D.h"
-//#include "VolumeWindow.h"
+#include "ImageBrowser5D.h"
 
 //OTHER LOCAL INCLUDES
 #include "SegmentationCommon/ftkSegmentationResult.h"

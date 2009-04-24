@@ -12,12 +12,10 @@ SET( GUI_SRCS
     SegmentationView.cpp
     SegmentationWindow.cpp
     ModuleWidget.cpp
-    #ResultLoadWidget.cpp
     SegmentationModel.cpp
     
     #ObjectSelection.cpp
-    SliceView5D.cpp
-    #VolumeWindow.cpp
+    ImageBrowser5D.cpp
 )
 
 SET( GUI_HDRS
@@ -28,12 +26,10 @@ SET( GUI_HDRS
     SegmentationView.h
     SegmentationWindow.h
     ModuleWidget.h
-    #ResultLoadWidget.h
     SegmentationModel.h
     
     #ObjectSelection.h
-    SliceView5D.h
-    #VolumeWindow.h
+    ImageBrowser5D.h
 )
 
 SET( GUI_UIS
@@ -62,7 +58,7 @@ ADD_LIBRARY( GUI STATIC
              ${GUI_RC_SRCS}
 )
 
-TARGET_LINK_LIBRARIES( GUI ${QT_LIBRARIES} QVTK FTKImage TinyXML libSVM vtkVolumeRendering)
+TARGET_LINK_LIBRARIES( GUI ${QT_LIBRARIES} QVTK FTKImage FTKImageTest TinyXML libSVM vtkVolumeRendering)
 #TARGET_LINK_LIBRARIES( GUI ${QT_LIBRARIES} FTKImage TinyXML QtPython)
 
 #########################################

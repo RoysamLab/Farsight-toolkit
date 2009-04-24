@@ -260,8 +260,11 @@ void ControlBar::loadImageVTK(void)
     if(fileName != "")
 	{
 		lastPath = QFileInfo(fileName).absolutePath();
-		SliceView5D *sliceWin = new SliceView5D(fileName);
-		sliceWin->show();
+		//SliceView5D *sliceWin = new SliceView5D(fileName);
+		//sliceWin->show();
+
+		ImageBrowser5D *browse = new ImageBrowser5D(fileName);
+		browse->show();
 
 		//VolumeWindow *volWin = new VolumeWindow(fileName);
 		//volWin->show();
