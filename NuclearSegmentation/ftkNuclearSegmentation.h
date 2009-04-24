@@ -35,8 +35,8 @@ public:
 	//LEGACY FUNCTIONS TO INTERACT WITH MODULE WIDGET:
 	string getPackageName(){ return string("nuclei"); };
 	vector<string> getModuleNames() { return moduleNames; };
-	ftk::Image* getDataImage(void){ return dataImage; };
-	ftk::Image* getLabelImage(void){ return labelImage; };
+	ftk::Image::Pointer getDataImage(void){ return dataImage; };
+	ftk::Image::Pointer getLabelImage(void){ return labelImage; };
 
 	void setup(string imagefilename, string paramfilename);
 	void executeModule(int);
@@ -97,8 +97,8 @@ private:
 
 	//LEGACY VARIABLES:
 	vector<string> moduleNames;
-	ftk::Image *dataImage;
-	ftk::Image *labelImage;
+	ftk::Image::Pointer dataImage;
+	ftk::Image::Pointer labelImage;
 	yousef_nucleus_seg *NucleusSeg;
 //********************************************************************************************
 //********************************************************************************************

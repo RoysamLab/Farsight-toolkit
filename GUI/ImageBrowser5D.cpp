@@ -16,7 +16,7 @@ ImageBrowser5D::~ImageBrowser5D()
 //Constructors
 ImageBrowser5D::ImageBrowser5D(QString filename, RenderMode mode)
 {
-	img = ftkTest::Image::New();
+	img = ftk::Image::New();
 	if( !img->LoadFile( filename.toStdString() ) )	return;
 	m_mode = mode;
 	//if( !img->LoadFileSeries("C:/TestImages/Ying_image - 5D - tiff/021805m5bwt_t%02d.tif",1,10,1) ) return;
@@ -24,7 +24,7 @@ ImageBrowser5D::ImageBrowser5D(QString filename, RenderMode mode)
 	this->Setup();
 }
 
-ImageBrowser5D::ImageBrowser5D(ftkTest::Image::Pointer img, RenderMode mode)
+ImageBrowser5D::ImageBrowser5D(ftk::Image::Pointer img, RenderMode mode)
 {
 	this->img = img;
 	m_mode = mode;

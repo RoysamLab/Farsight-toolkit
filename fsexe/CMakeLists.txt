@@ -13,7 +13,7 @@ TARGET_LINK_LIBRARIES( fuse_image_stacks ITKCommon ITKIO fregl)
 #TARGET_LINK_LIBRARIES( separate_nuclei_by_class maciejseg vul vnl)
 
 ADD_EXECUTABLE( lsm_to_tiff lsm_to_tiff.cxx)
-TARGET_LINK_LIBRARIES( lsm_to_tiff FTKImage ITKCommon ITKIO)
+TARGET_LINK_LIBRARIES( lsm_to_tiff ftkImage ITKCommon ITKIO)
 
 #ADD_EXECUTABLE( vessel_segmentation vessel_segmentation.cpp)
 

@@ -109,8 +109,8 @@ private:
 	vector<TableWindow *> tblWin;
 	vector<SegmentationWindow *> segWin;
 
-	ftk::Image* NewFTKImage(std::vector<std::string> filenames);
-	ftk::Image* NewFTKImage(std::string filename);
+	ftk::Image::Pointer NewFTKImage(std::vector<std::string> filenames);
+	ftk::Image::Pointer NewFTKImage(std::string filename);
 	int isLoaded(std::string filename);
 
   QMenu *fileMenu;
@@ -170,7 +170,7 @@ private:
 	ftk::NuclearSegmentation *segResult;
 	SegmentationModel *currentModel;
 
-	std::vector< ftk::Image* > loadedImages;
+	std::vector< ftk::Image::Pointer > loadedImages;
 	QString lastPath;
  };
 

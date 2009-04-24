@@ -30,7 +30,7 @@
 //std includes:
 
 //ftk includes:
-#include <ftkTest/ftkImage.h>
+#include <ftkImage/ftkImage.h>
 
 
 class ImageBrowser5D: public QWidget
@@ -40,7 +40,7 @@ class ImageBrowser5D: public QWidget
 public:
 	typedef enum { SLICE, VOLUME } RenderMode; 
 	ImageBrowser5D(QString filename, RenderMode mode = SLICE);
-	ImageBrowser5D(ftkTest::Image::Pointer img, RenderMode mode = SLICE);
+	ImageBrowser5D(ftk::Image::Pointer img, RenderMode mode = SLICE);
 	~ImageBrowser5D();
 
 	void ToggleMode();
@@ -72,7 +72,7 @@ private:
 	std::vector<double> RGBtoHSV(std::vector<unsigned char> rgb);
 	static void keyPress(vtkObject * object, unsigned long eid, void *clientdata, void * callerdata);
 
-	ftkTest::Image::Pointer img;		//smart pointer cleans itself
+	ftk::Image::Pointer img;		//smart pointer cleans itself
 
 	QVTKWidget * m_imageview;			//delete this on close
 	QSlider * vSlider;					//all children, delete themselves:

@@ -4,6 +4,7 @@
   Language:  C++
   Date:      $Date:  $
   Version:   $Revision: 0.00 $
+  USAGE:	 SEE BOTTOM OF FILE
 
 =========================================================================*/
 #ifndef __ftkImage_h
@@ -11,119 +12,138 @@
 
 //ITK includes:
 #include <itkImage.h>
-#include <itkRGBPixel.h>
+#include <itkImageIOBase.h>
+#include <itkLightObject.h>
+#include <itkObjectFactory.h>
 #include <itkSmartPointer.h>
-#include <itkImageRegionConstIterator.h>
-#include <itkImportImageContainer.h>
-#include <itkImageFileReader.h>
-#include <itkImageFileWriter.h>
 
 //VTK includes:
 #include "vtkImageData.h"
-#include "vtkPointData.h"
 #include "vtkSmartPointer.h"
-#include "vtkUnsignedCharArray.h"
-
-//Local includes:
-#include "vtkKWImage.h"
-#include "vtkKWImageIO.h"
-#include "vtkLSMReader.h"
+#include "vtkDataArray.h"
 
 //Std includes:
 #include <string>
 
-
 namespace ftk
 {
-
-//THESE ARE THE 4 TYPES OF ITK IMAGES THAT FTK KNOWS ABOUT GLOBALY (WHEN INCLUDING FTK IMAGE)
-//YOU, OF COURSE, MAY USE OTHERS IN YOUR CODE
-typedef itk::Image< unsigned char, 3 > UcharImage3DType;
-typedef itk::Image< unsigned short, 3 > UshortImage3DType;
-
-typedef itk::Image< unsigned char, 2 > UcharImage2DType;
-typedef itk::Image< unsigned short, 2 > UshortImage2DType;
-
-typedef itk::ImageBase< 3 > ImageBaseType;
-typedef ImageBaseType::ConstPointer ImageBaseConstPtr;
-typedef ImageBaseType::Pointer ImageBasePtr;
-
-typedef vtkSmartPointer<vtkImageData> VtkImagePtr;
-
-typedef  enum {IVOID,BIT,CHAR,UCHAR,SHORT,USHORT,INT,UINT,LONG,ULONG,FLOAT,DOUBLE} ImageDataType;
 
 //**************************************************************************************************************
 //This Image class can load a single image file as an image or multiple image files that should be associated 
 //as a single image in memory.
 //**************************************************************************************************************
-class Image
+class Image : public itk::LightObject
 {
 public:
 
-	Image();
-	~Image();
+	/** Smart pointer typedef support. */
+	typedef Image Self;
+	typedef itk::SmartPointer<Self> Pointer;
+	typedef itk::SmartPointer<const Self> ConstPointer;
 
-	bool LoadFile( std::string fName, bool castToUchar = false );
-	bool LoadFiles( std::vector< std::string > fNames, bool castToUchar = false );
-	bool SaveAs( std::string path, std::string fName, std::string ext );
+	/** Methods for creation through the object factory. */
+	itkNewMacro(Self);								
+	itkTypeMacro(Image,itk::LightObject);										
 
-	bool ImageFromData3D(void *dptr, ImageDataType dataType, int bpPix, int cs, int rs, int zs);
+	typedef vtkSmartPointer<vtkImageData> VtkImagePtr;
+	typedef itk::ImageIOBase::IOComponentType DataType;
+	typedef itk::ImageIOBase::IOPixelType itkPixelType;
+	typedef enum { FTK, VTK, ITK, OTHER } WhoManageMemory;
+	typedef enum { DEFAULT, RELEASE_CONTROL, DEEP_COPY } PtrMode;
+
+	//Each of these LoadFile commands will clear any previous image data
+	bool LoadFile( std::string fName ); //Load 1 file (multi-page assumed to be z-direction)
+	bool LoadFileAsTimeSeries( std::string fName ); //Load 1 file (multi-page assumed to be time series)
+	bool LoadFileSeries( std::string arg, int start, int end, int step ); //Always assume each file contains a new T
+
+	bool SaveChannelAs( int channel, std::string baseName, std::string ext );
+
+	bool AppendChannelFromData3D(void *dptr, DataType dataType, int bpPix, int cs, int rs, int zs, std::string name, std::vector<unsigned char> color, bool copy);
+	bool AppendImage(ftk::Image::Pointer img, PtrMode mode);	//Will add the image data as a new time slice or slices if all other sizes match.
+
 	void SetSpacing(float x, float y, float z);
 
 	std::vector< unsigned short > Size(void);
 
-	void * GetDataPtr(int T, int CH);
-	VtkImagePtr GetVtkPtr(int T, int CH);		//Returns vtkSmartPointer of vtkImageData (if pixelType is unsigned char) at this T and CH.
+	void * GetDataPtr(int T, int CH, PtrMode mode = DEFAULT);			//Returns void * to this 3D stack using 1 of 3 modes, PtrMode defaults to DEFAULT
+	VtkImagePtr GetVtkPtr(int T, int CH, PtrMode mode = DEFAULT);		//Returns vtkSmartPointer of vtkImageData at this T and CH, PtrMode defaults to DEFAULT
+	void SetPixel(int T, int Ch, int Z, int R, int C, double newValue); // Casts from double to image pixel type and sets pixel
+	double GetPixel(int T, int CH, int Z, int R, int C);				// Casts the value to double and returns it
 
 	//Also have templated functions
-	template <typename rType> rType GetPixel(int T, int CH, int Z, int R, int C);		// Casts the value to rType and returns it
-	template <typename pixelType> void SetPixel(int T, int Ch, int Z, int R, int C, pixelType newValue);// Casts from pixelType to image pixel type and sets pixel
-	template <typename pixelType> pixelType * GetSlicePtr(int T, int CH, int Z);		// IF pixelType agrees with image pixel type
-	template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer GetItkPtr(int T, int CH); //IF pixelType agrees with image pixel type
 	template <typename newType> void Cast();	//Cast the Image to newType (does not scale)
+	template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer GetItkPtr(int T, int CH, PtrMode mode);	//IF pixelType agrees with image pixel type, PtrMode defaults to DEFAULT
+	template <typename pixelType> pixelType * GetSlicePtr(int T, int CH, int Z,PtrMode mode);	// IF pixelType agrees with image pixel type (NOTE MEMORY MANAGER DOES NOT CHANGE)
 
 	typedef struct 
 	{
-		std::string path;				//Path to this image file
-		std::string filename;			//Filename of this image
 		unsigned short numColumns;		//Number of Columns in Image (x)
 		unsigned short numRows;			//Number of Rows in Image (y)
 		unsigned short numZSlices;		//Number of Z Slices in Image (z)
 		unsigned short numTSlices;		//Number of Time Slices in Image (t)
 		unsigned short numChannels;		//Number of Channels in this Image (ch)
 		unsigned char bytesPerPix;		//Number of bytes per pixel (UCHAR - 1 or USHORT - 2)		
-		ImageDataType dataType;			//From enum ImgDataType;
+		DataType dataType;				//From enum ftk::Image::DataType;
 
 		std::vector< std::vector <unsigned char> > channelColors;	//Holds the color components of each channel
 		std::vector< std::string > channelNames;					//Holds the name of each channel
 
 		std::vector<float> spacing;		//Holds the spacing of the image (defaults to 1,1,1 (x,y,z) )
 
+		int BytesPerChunk(void)
+		{
+			return numZSlices*numRows*numColumns*bytesPerPix;
+		};
+
 	} Info;
 
-	Info * GetImageInfo(void) { return &(this->imageInfo); };
+	const Info * GetImageInfo(void) { return &(this->m_Info); };	//Returns a pointer to constant data (these values cannot be changed from outside
+
+protected:
+	Image();
+	~Image();
 
 private:
+	Image(const Self&);				//purposely not implemented
+	void operator=(const Self&);	//purposely not implemented
+
+	typedef struct
+	{
+		void * mem;						//A Memory Block Ptr
+		WhoManageMemory manager;		//Who Manages this memory block?
+	} ImageMemoryBlock;
+
 	//Private Variables:
-	Info imageInfo;											//Hold Image info of the 'image file' that make up this 'image'
-	std::vector< std::vector< void * > > imageDataPtrs;
+	Info m_Info;									//Hold Image info of the 'image file' that make up this 'image'
+	std::string path;								//Path to this image file
+	std::vector< std::string > filenames;			//Filenames of this image
+	std::vector< std::vector< ImageMemoryBlock > > imageDataPtrs;		//Pointers to all of the data
 
 	//Private Functions:
+	void DeleteData();
 	std::string GetFileExtension(std::string);
 	std::string GetFilename(std::string);
 	std::string GetPath(std::string);
 	std::string itoa(const int x);
 
-	bool LoadStandardImage( std::vector<std::string> filenames, bool forDisplay = false );
+	bool LoadStandardImage( std::string fileName, bool stacksAreForTime);
+	void SetDefaultColors(void);
 	bool LoadLSMImage( std::string fileName );
 
-	template<typename pType, typename rType> rType GetPixelValue(void * p);
-	template <typename inType, typename outType> outType CastValue(inType inVal);
-	template<typename pixelType1> bool IsMatch(ImageDataType pixelType2);
-	template<typename pixelType> ImageDataType GetDataType();
-	template<typename TPixel> bool Write(std::string fullFilename, int T, int CH);
-	template<typename TPixel> bool WriteAll(std::string path, std::string baseName, std::string ext);
+	vtkSmartPointer<vtkDataArray> GetVtkDataArray(int T, int CH, bool makeCopy, bool vtkManageMemory); //Returns vtkSmartPointer at this T and CH
+	int GetDataTypeVTK(DataType itk);
+	DataType GetDataTypeITK(int vtk_type);
 
+	template<typename pType, typename rType> rType GetPixelValue(void * p);
+	template<typename pixelType1> bool IsMatch(DataType pixelType2);
+	template<typename pixelType> DataType GetDataType();
+
+	template<typename TPixel> bool WriteImageITK(int channel, std::string baseName, std::string ext);
+	template<typename TPixel> bool WriteImageITK(std::string fullFilename, int T, int CH);
+
+	template<typename TComp> void LoadImageITK(std::string fileName, itkPixelType pixType, bool stacksAreForTime);
+	template<typename TComp> void LoadImageITK(std::string filename, unsigned int numChannels, bool stacksAreForTime);
+	template<typename TComp, unsigned int channels> void LoadImageITK(std::string fileName, bool stacksAreForTime);
 };
 
 }  // end namespace ftk
@@ -132,3 +152,86 @@ private:
 
 #endif	//end __ftkImage_h
 
+/**********************************************************************************************************************
+HOW TO USE FTK::IMAGE
+
+-Intro
+
+This class has been created to handle five dimensional image loading/creation/manipulation/writing.
+The dimensions included are 3 spatial, 1 time, and 1 channel.  All images are stored in memory using
+void* to a 3D image block, this means that each time and channel component of the image may have its
+own memory location and are stored separately.  This is done because it is most common for segmentation
+algorithms to be executed on one channel at a time - therefore it would be required that the channels be
+split at some point anyway.
+
+-Loading From File(s)
+
+Three methods for loading and image from file have been created.
+LoadFile() will load one file and assume that multiple pages make up a 3D spatial dimension.
+LoadFileAsTimeSeries() will load one file and assume that multiple pages make up the time dimension.
+LoadFileSeries() will create an image from multiple files following the filename pattern provided.
+This method assumes each file contains all spatial dimensions and separate files make up the time dimension
+
+These three methods for loading from file use one of two imageIO techniques.  The first is a special class for 
+loading Ziess images (.lsm), the second is the standard ITK file reader.  ftk::Image should be able to handle all
+image types the itk can load.
+
+-Dynamically Creating Images
+
+Images may also be created from existing data buffers using AppendChannelFromData3D().  This method will allow
+you to create a 4D ftk image (no time dimension) by combining 3D channels.  To make 5D image you must create
+a 4D ftk image for each t and then use AppendImage() to combine them.  This method will add the image data 
+as a new time slice or slices if all other sizes match.
+
+-Saving To File
+
+Currently one method exists to save images to file: SaveChannelAs().  You must specify the time and channel you would
+like to save.
+
+-Accessing Image Data
+
+One of the main strengths of ftk image is the ease at which the data can be accessed and manipulated.
+It is important to remember that this flexibility also places a greater responsibility on you to make 
+sure that you are using the correct memory modes (see below).
+
+Pointers to the 3D images can be requested in ITK, VTK, or raw pointer form. When requesting the pointer
+you may decide how the memory buffer for that image should be managed - no change, new pointer manages, or
+a copy is made (see below).
+
+Note that the request for an ITK image is templated, and will return a NULL pointer if the wrong pixel type
+is requested.  One way to be assured that you will get the desired pixel type is to cast the ftk image to
+that type by using Cast().  Note that this function could result in a loss of data.
+
+FUTURE IMPROVEMENT: if an itk pointer is requested using DEEP_COPY the new image will be cast to the template
+type and be returned appropriately.
+
+Convenience functions GetPixel() and SetPixel() have been provided to allow for pixel access.
+For speed, it is recommended that one uses itk iterators for changing the data by:
+1. GetItkPtr() in DEFAULT memory mode
+2. Use itk iterators to manipulate the data through the itk pointer
+
+GetSlicePtr() is also provided to get a pointer to the beginning of a 2D slice. This method only works in DEFAULT memory
+management mode.
+
+-Memory Management
+
+ftk::Image takes advantage of ITK's smart pointers for automatic cleanup.  When no references to the image are left,
+the image will automatically delete itself and free the memory of the image data.  This is great, unless you have 
+requested a pointer to one of the 3D chunks of data and are still using that data.  To solve this problem, 3 pointer
+modes have been created:
+
+1. DEFAULT
+2. RELEASE_CONTROL
+3. DEEP_COPY
+
+The DEFAULT mode will pass a pointer to the data, but ftk image continues to manage the memory (i.e. cleanup the memory).
+RELEASE_CONTROL will pass a pointer to the data, and allow this new pointer to clean up the data when it is deleted.
+DEEP_COPY will create a new copy of the data, and both ftk image and the new pointer will have control of their own memory.
+
+Once ftk image releases control of a memory location it cannot get it back and it cannot release it again.  This means
+that if you have a created an itk image using RELEASE_CONTROL that itk image now controls the memory.  If you want another
+ITK image you should use the pointer you have already created, or you can still get a DEEP_COPY.  This same principle
+applies to VTK image data.
+
+
+*/

@@ -28,10 +28,10 @@ class SegmentationView : public QAbstractItemView
 
 public:
 	SegmentationView(QWidget *parent = 0);
-	void setChannelImage(ftk::Image *img);
-	ftk::Image * getChannelImage(){return channelImg;};
-	void setLabelImage(ftk::Image *img);
-	ftk::Image * getLabelImage(){return labelImg;}; 
+	void setChannelImage(ftk::Image::Pointer img);
+	ftk::Image::Pointer getChannelImage(){return channelImg;};
+	void setLabelImage(ftk::Image::Pointer img);
+	ftk::Image::Pointer getLabelImage(){return labelImg;}; 
 	void setModels(SegmentationModel *sModel);
     QRect visualRect(const QModelIndex &index) const;
     void scrollTo(const QModelIndex &index, ScrollHint hint = EnsureVisible);
@@ -90,8 +90,8 @@ private:
 
 	QImage displayImage;	//Everything that is being displayed in the viewport (includes selections)
 	SegmentationModel *resultModel;
-	ftk::Image *labelImg;
-	ftk::Image *channelImg;
+	ftk::Image::Pointer labelImg;
+	ftk::Image::Pointer channelImg;
 	std::vector<bool> channelFlags;
 	int currentZ;
 	int currentT;

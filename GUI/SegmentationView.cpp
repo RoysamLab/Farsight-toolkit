@@ -102,7 +102,7 @@ QModelIndex SegmentationView::indexAt(const QPoint &point) const
 		if (labelImg)
 		{
 			//Now find out what Label ID this point has (by checking on label image)
-			int labelval = labelImg->GetPixel<int>(currentT,0,currentZ,wy,wx);
+			int labelval = (int)labelImg->GetPixel(currentT,0,currentZ,wy,wx);
 			//return index of first item in model at this row
 			if(labelval > 0)
 				retval = model()->index(resultModel->RowForID(labelval),0,rootIndex());
@@ -589,7 +589,7 @@ void SegmentationView::drawImage(QPainter *painter)
 	if(!channelImg)
 		return;
 
-	ftk::Image::Info *info = channelImg->GetImageInfo();
+	const ftk::Image::Info *info = channelImg->GetImageInfo();
 
 	for (int i=0; i < (*info).numChannels; i++)
 	{
@@ -614,7 +614,7 @@ void SegmentationView::drawBoundaries(QPainter *painter)
 	if(!labelImg)
 		return;
 
-	ftk::Image::Info *info = labelImg->GetImageInfo();
+	const ftk::Image::Info *info = labelImg->GetImageInfo();
 
 	int h = (*info).numRows;
 	int w = (*info).numColumns;
@@ -626,13 +626,13 @@ void SegmentationView::drawBoundaries(QPainter *painter)
 	{
 		for(int j=1; j < w-1; j++)
 		{
-			v = labelImg->GetPixel<int>(0, 0, currentZ, i, j);
+			v = (int)labelImg->GetPixel(0, 0, currentZ, i, j);
 			if (v != 0)
 			{
-				v1 = labelImg->GetPixel<int>(0, 0, currentZ, i, j+1);
-				v2 = labelImg->GetPixel<int>(0, 0, currentZ, i+1, j);
-				v3 = labelImg->GetPixel<int>(0, 0, currentZ, i, j-1);
-				v4 = labelImg->GetPixel<int>(0, 0, currentZ, i-1, j);
+				v1 = (int)labelImg->GetPixel(0, 0, currentZ, i, j+1);
+				v2 = (int)labelImg->GetPixel(0, 0, currentZ, i+1, j);
+				v3 = (int)labelImg->GetPixel(0, 0, currentZ, i, j-1);
+				v4 = (int)labelImg->GetPixel(0, 0, currentZ, i-1, j);
 				if(v!=v1 || v!=v2 || v!=v3 || v!=v4)
 				{
 					QColor myColor;
@@ -749,12 +749,12 @@ bool SegmentationView::itemInRowIsSelected(int row)
 //***************************************************************************************
 // This is the original image that the segmentation came from
 //***************************************************************************************
-void SegmentationView::setChannelImage(ftk::Image *img)
+void SegmentationView::setChannelImage(ftk::Image::Pointer img)
 {	
 	if(!img)
 		return;
 
-	ftk::Image::Info *info = img->GetImageInfo();
+	const ftk::Image::Info *info = img->GetImageInfo();
 
 	channelImg = img;
 	totalWidth = (*info).numColumns;
@@ -777,12 +777,12 @@ void SegmentationView::setChannelImage(ftk::Image *img)
 //***************************************************************************************
 // This is the label image from the segmentation result
 //***************************************************************************************
-void SegmentationView::setLabelImage(ftk::Image *img)
+void SegmentationView::setLabelImage(ftk::Image::Pointer img)
 {
 	if(!img)
 		return;
 
-	ftk::Image::Info *info = img->GetImageInfo();
+	const ftk::Image::Info *info = img->GetImageInfo();
 
 	labelImg = img;
 	totalWidth = (*info).numColumns;

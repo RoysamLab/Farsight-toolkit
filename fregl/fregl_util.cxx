@@ -15,7 +15,6 @@
 #include "itkImageFileWriter.h"
 
 #include <vtkImageData.h>
-#include <FTKImage/vtkLSMReader.h>
 #include <FTKImage/ftkImage.h>
 
 typedef itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
@@ -49,8 +48,8 @@ fregl_util_read_image( std::string const & file_name, bool channel_set, int chan
   // capable of reading images of different format and dealing with
   // multiple channels, whether data or color channels.
 
-  ftk::Image imageReader;
-  imageReader.LoadFile( file_name );
+  ftk::Image::Pointer imageReader = ftk::Image::New();
+  imageReader->LoadFile( file_name );
   ImageType::Pointer final_image = ImageType::New();
   
   // get the extension
@@ -58,18 +57,18 @@ fregl_util_read_image( std::string const & file_name, bool channel_set, int chan
   const std::string dot = ".";
   std::string::size_type po = file_name.find_last_of(dot);
   ext = file_name.substr(po+1,file_name.length()-1);
-  ftk::Image::Info* info = imageReader.GetImageInfo();
+  const ftk::Image::Info* info = imageReader->GetImageInfo();
   int numChannels = info->numChannels;
   
   // Have to give special care to lsm images, since channels are
   // extracted and fused for registration if channel_set is false
   if ( !channel_set && (ext=="lsm" || ext=="LSM") ) {  
-    ImageType::Pointer image = imageReader.GetItkPtr<unsigned char>(0, 0);
+    ImageType::Pointer image = imageReader->GetItkPtr<unsigned char>(0, 0);
     final_image->SetRegions( image->GetBufferedRegion() );
     final_image->Allocate();
     final_image->FillBuffer(0);
     for (int counter=0; counter < numChannels; counter++) {
-       image = imageReader.GetItkPtr<unsigned char>(0, counter);
+		image = imageReader->GetItkPtr<unsigned char>(0, counter, ftk::Image::RELEASE_CONTROL);
        final_image = fregl_util_fuse_images(final_image, image);
     }
   }
@@ -77,7 +76,7 @@ fregl_util_read_image( std::string const & file_name, bool channel_set, int chan
     std::cout<<"Number of channels = "<<numChannels<<std::endl;
     std::cout<<"Channel "<<channel<<" extracted"<<std::endl;
     std::cout<<"bytePerPix = "<<int(info->bytesPerPix)<<std::endl;
-    ImageType::Pointer image = imageReader.GetItkPtr<unsigned char>(0, channel);
+	ImageType::Pointer image = imageReader->GetItkPtr<unsigned char>(0, channel,ftk::Image::RELEASE_CONTROL);
     final_image->SetRegions( image->GetBufferedRegion() );
     final_image->Allocate();
     final_image->FillBuffer(0);

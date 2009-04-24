@@ -231,7 +231,7 @@ void ControlBar::loadImage()
 		}
 		std::sort(images.begin(), images.end());
 
-		ftk::Image *newImg = NewFTKImage(images);
+		ftk::Image::Pointer newImg = NewFTKImage(images);
 		if (newImg)
 		{
 			//Show the Image
@@ -284,7 +284,7 @@ void ControlBar::loadImageSeries(void)
                              tr("Images (*.tif *.tiff *.pic *.png *.jpg)"));
 	
 	if (/*fileNames.size() > 0*/ 0)
-	{
+	{/*
 		lastPath = QFileInfo(fileNames[0]).absolutePath();
 
 		vector<string> images(0);
@@ -298,7 +298,7 @@ void ControlBar::loadImageSeries(void)
 		std::string baseName = QFileInfo(fileNames[0]).fileName().toStdString();
 		baseName = baseName.substr(0,baseName.find_last_of("_"));
 
-		ftk::Image *newImg = NewFTKImage(images);
+		ftk::Image::Pointer newImg = NewFTKImage(images);
 		if (newImg)
 		{
 			//Show the Image
@@ -307,43 +307,29 @@ void ControlBar::loadImageSeries(void)
 			segWin->SetChannelImage(newImg);
 			segWin->show();
 			//Save the Image as 3D tiff:
-			newImg->SaveAs(lastPath.toStdString(),baseName,"tif");
+			newImg->SaveChannelAs(0,lastPath.toStdString(),baseName,"tif");
 		}
 		else
 		{
 			std::cerr << "Couldn't load Image" << std::endl;
-		}
+		}*/
 	}
 }
 //******************************************************************************
 // Creates a new FTKImage and returns a pointer to it
 //******************************************************************************
-ftk::Image * ControlBar::NewFTKImage(std::vector<std::string> filenames)
+ftk::Image::Pointer ControlBar::NewFTKImage(std::vector<std::string> filenames)
 {
-	ftk::Image *img = new ftk::Image();
-	bool forDisplay = true;
-	if ( img->LoadFiles(filenames, forDisplay) )
-	{
-		return img;
-	}
-	else
-	{
-		delete img;
-		return NULL;
-	}
+	//ftk::Image::Pointer img = ftk::Image::New();
+	//return img->LoadFileSeries(filenames);
+	return NULL;
 }
 
-ftk::Image * ControlBar::NewFTKImage(std::string filename)
+ftk::Image::Pointer ControlBar::NewFTKImage(std::string filename)
 {
-	ftk::Image *img = new ftk::Image();
-	bool forDisplay = true;
-	if( img->LoadFile(filename, forDisplay) )
-		return img;
-	else
-	{
-		delete img;
-		return NULL;
-	}
+	ftk::Image::Pointer img = ftk::Image::New();
+	img->LoadFile(filename);
+	return img;
 }
 
 //******************************************************************************

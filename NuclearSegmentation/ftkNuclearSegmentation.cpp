@@ -58,12 +58,12 @@ bool NuclearSegmentation::LabelsToObjects(void)
 {
 	if(!dataImage)
 	{
-		dataImage = new ftk::Image();
+		dataImage = ftk::Image::New();
 		dataImage->LoadFile(PrependProjectPath(dataFilenames[0]));	//Assume there is just one data file and one result file
 	}
 	if(!labelImage)
 	{
-		labelImage = new ftk::Image();
+		labelImage = ftk::Image::New();
 		labelImage->LoadFile(PrependProjectPath(resultFilenames[0]));		
 	}
 
@@ -271,12 +271,10 @@ bool NuclearSegmentation::LoadFromMETA(std::string META_file, std::string header
 	//Save the filenames & Load the Images
 	dataFilenames.push_back(data_file);
 	resultFilenames.push_back(label_file);
-	if(dataImage) delete dataImage;
-	dataImage = new ftk::Image();
-	dataImage->LoadFile(data_file, true);	//Assume there is just one data file and one result file
-	if(labelImage) delete labelImage;
-	labelImage = new ftk::Image();
-	labelImage->LoadFile(label_file, false);
+	dataImage = ftk::Image::New();
+	dataImage->LoadFile(data_file);	//Assume there is just one data file and one result file
+	labelImage = ftk::Image::New();
+	labelImage->LoadFile(label_file);
 
 	//NOW LOAD THE HEADER INFO:
 	ifstream headerFile; 
@@ -445,10 +443,9 @@ bool NuclearSegmentation::LoadData()
 		return 0;
 	}
 
-	dataImage = new ftk::Image();
-	if(!dataImage->LoadFile(PrependProjectPath(dataFilenames[0]), true))	//Load for display
+	dataImage = ftk::Image::New();
+	if(!dataImage->LoadFile(PrependProjectPath(dataFilenames[0])))	//Load for display
 	{
-		delete dataImage;
 		errorMessage = "Data Image failed to load";
 		return 0;
 	}
@@ -469,10 +466,9 @@ bool NuclearSegmentation::LoadLabel()
 	}
 
 
-	labelImage = new ftk::Image();
+	labelImage = ftk::Image::New();
 	if(!labelImage->LoadFile(PrependProjectPath(resultFilenames[0])))
 	{
-		delete labelImage;
 		errorMessage = "Label Image failed to load";
 		return 0;
 	}
@@ -593,7 +589,7 @@ bool NuclearSegmentation::SaveLabel()
 	string base = resultFilenames[0].substr(0,pos);
 
 	labelImage->Cast<unsigned short>();		//Cannot Save as int type to tiff
-	if(!labelImage->SaveAs(projectPath, base, "tiff"))
+	if(!labelImage->SaveChannelAs(0, PrependProjectPath(base), "tiff"))
 		std::cerr << "FAILED TO SAVE LABEL IMAGE" << std::endl;
 
 	//Added by Yousef on 1/18/2009: save results into a format readable by the IDL farsight
@@ -824,9 +820,9 @@ void NuclearSegmentation::ReassignLabel(int fromId, int toId)
 		{
 			for(int c=region.min.x; c <= region.max.x; ++c)
 			{
-				int pix = labelImage->GetPixel<int>(0,0,z,r,c);
+				int pix = (int)labelImage->GetPixel(0,0,z,r,c);
 				if( pix == fromId )
-					labelImage->SetPixel<int>(0,0,z,r,c,toId);
+					labelImage->SetPixel(0,0,z,r,c,toId);
 			}
 		}
 	}
@@ -853,11 +849,11 @@ void NuclearSegmentation::ReassignLabels(vector<int> fromIds, int toId, ftk::Obj
 		{
 			for(int c=region.min.x; c <= region.max.x; ++c)
 			{
-				int pix = labelImage->GetPixel<int>(0,0,z,r,c);
+				int pix = (int)labelImage->GetPixel(0,0,z,r,c);
 				for(int i = 0; i < (int)fromIds.size(); ++i)
 				{
 					if( pix == fromIds.at(i) )
-						labelImage->SetPixel<int>(0,0,z,r,c,toId);
+						labelImage->SetPixel(0,0,z,r,c,toId);
 				}
 			}
 		}
@@ -925,22 +921,20 @@ void NuclearSegmentation::setup(string imagefilename, string paramfilename)
 {
 	if(dataImage)
 	{
-		delete dataImage;
 		dataImage = NULL;
 		dataFilenames.clear();
 	}
 	if(NucleusSeg)
 	{
-		delete NucleusSeg;
 		NucleusSeg = NULL;
 	}
 
-	dataImage = new ftk::Image();
+	dataImage = ftk::Image::New();
 	string fname = PrependProjectPath(imagefilename);
-	dataImage->LoadFile(fname, true);		//Scale input to 8 bits.
+	dataImage->LoadFile(fname);		//Scale input to 8 bits.
 	dataFilenames.push_back(imagefilename);
 
-	Image::Info *info = dataImage->GetImageInfo();
+	const Image::Info *info = dataImage->GetImageInfo();
 	int numStacks = info->numZSlices;
 	int numRows = info->numRows;				//y-direction
 	int numColumns = info->numColumns; 			//x-direction
@@ -996,16 +990,8 @@ void NuclearSegmentation::createFTKLabelImg(int* data, int numColumns, int numRo
 	if(!data)
 		return;
 
-	if(!labelImage)
-	{
-		labelImage = new ftk::Image();
-	}
-	else
-	{
-		delete labelImage;
-		labelImage = new ftk::Image();
-	}
-	labelImage->ImageFromData3D((void*)data, INT, sizeof(int), numColumns, numRows, numStacks);
+	labelImage = ftk::Image::New();
+	//labelImage->ImageFromData3D((void*)data, INT, sizeof(int), numColumns, numRows, numStacks);
 }
 
 //This function runs graph coloring
@@ -1015,7 +1001,7 @@ int NuclearSegmentation::RunGraphColoring(const char* filename)
 	if(!labelImage)
 	{
 		std::cout<<"Loading Label Image ... ";
-		labelImage = new ftk::Image();
+		labelImage = ftk::Image::New();
 		labelImage->LoadFile(PrependProjectPath(resultFilenames[0]));
 		std::cout<<"done!"<<endl;
 	}

@@ -26,8 +26,8 @@ class SegmentationWindow : public QWidget
 public:
 	SegmentationWindow(QWidget *parent = 0);
 	void SetModels(SegmentationModel *sModel);
-	void SetChannelImage(ftk::Image *image);
-	void SetLabelImage(ftk::Image *image);
+	void SetChannelImage(ftk::Image::Pointer image);
+	void SetLabelImage(ftk::Image::Pointer image);
 	//void loadImage( QString &fileName );
 	//void AddChannelImage( QString &fileName );
 	//void AddLabelImage( QString &fileName );
@@ -47,7 +47,7 @@ private:
 	//QVector<QImage>* loadImage( QString &fileName );
 	void updateVSlider(void);
 	void updateHSlider(void);
-	void createChannelWindow(ftk::Image *image);
+	void createChannelWindow(ftk::Image::Pointer image);
 	void closeChannelWindow(void);
 	void updateChannels(void);
 

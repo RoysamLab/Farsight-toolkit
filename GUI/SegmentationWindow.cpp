@@ -120,7 +120,7 @@ void SegmentationWindow::moveEvent ( QMoveEvent * event )
 // This creates the channel window (widget) that allows for channels to be turn on 
 // and off
 //***********************************************************************************
-void SegmentationWindow::createChannelWindow(ftk::Image *image)
+void SegmentationWindow::createChannelWindow(ftk::Image::Pointer image)
 {
 	closeChannelWindow();
 
@@ -128,7 +128,7 @@ void SegmentationWindow::createChannelWindow(ftk::Image *image)
 	channelWidget->setWindowTitle(tr("Channels"));
 	QVBoxLayout *chLayout = new QVBoxLayout;
 
-	ftk::Image::Info *info = image->GetImageInfo();
+	const ftk::Image::Info *info = image->GetImageInfo();
 
 	chBoxes = new QCheckBox * [numChannels];
 	for (int ch=0; ch < numChannels; ++ch)
@@ -170,12 +170,12 @@ void SegmentationWindow::SetModels(SegmentationModel *sModel)
 // ChannelImage is the data image (ftkImage) that is was segmented
 //***********************************************************************************
 //void SegmentationWindow::AddChannelImage( QString &fileName )
-void SegmentationWindow::SetChannelImage(ftk::Image *image)
+void SegmentationWindow::SetChannelImage(ftk::Image::Pointer image)
 {
 	if (!image)
 		return;
 
-	ftk::Image::Info *info = image->GetImageInfo();
+	const ftk::Image::Info *info = image->GetImageInfo();
 
 	if( numZSlices != (*info).numZSlices )
 	{
@@ -214,12 +214,12 @@ void SegmentationWindow::SetChannelImage(ftk::Image *image)
 // The label image is the segmentation result
 //***********************************************************************************
 //void SegmentationWindow::AddLabelImage( QString &fileName )
-void SegmentationWindow::SetLabelImage( ftk::Image *image)
+void SegmentationWindow::SetLabelImage( ftk::Image::Pointer image)
 {
 	if(!image)
 		return;
 
-	ftk::Image::Info *info = image->GetImageInfo();
+	const ftk::Image::Info *info = image->GetImageInfo();
 
 	if(!(segview->getChannelImage()))
 	{
