@@ -89,15 +89,16 @@ vtkActor* View3d::LineAct()
   this->lineAct->GetProperty()->SetLineWidth(1);
   return lineAct;
 }
-void View3d::AddBranchIllustrators()
+vtkActor* View3d::AddBranchIllustrators()
 {
-	vtkSmartPointer<vtkPolyData> poly = tobj->generateBranchIllustrator();
-	vtkSmartPointer<vtkPolyDataMapper> polymap = vtkSmartPointer<vtkPolyDataMapper>::New();
-	polymap->SetInput(poly);
-	vtkSmartPointer<vtkActor> bactor = vtkSmartPointer<vtkActor>::New();
-	bactor->SetMapper(polymap);
-	bactor->SetPickable(0);
-	ren->AddActor(bactor);
+	this->poly = tobj->generateBranchIllustrator();
+	this->polymap = vtkSmartPointer<vtkPolyDataMapper>::New();
+	polymap->SetInput(this->poly);
+	this->bactor = vtkSmartPointer<vtkActor>::New();
+	this->bactor->SetMapper(this->polymap);
+	this->bactor->SetPickable(0);
+	return bactor;
+	//ren->AddActor(bactor);
 	//bactor->Print(std::cout);
 
 }
@@ -329,10 +330,10 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 	  view->sphereAct->VisibilityOff();
 	  view->IDList.clear();
 	  //view->ren->RemoveAllViewProps();
-	 /*view->ren->RemoveActor(view->AddBranchIllustrators())	//would require rewrtie branch illistrators as a vtk actor
-	  view->ren->RemoveActor(view->LineAct());*/
+	  //view->ren->RemoveViewProp()
+	  view->ren->RemoveActor(view->AddBranchIllustrators());	//branch illistrators as a vtk actor
 	  view->LineAct();
-	  //view->addAct(view->LineAct());
+	  view->addAct(view->AddBranchIllustrators());
 	  //view->AddBranchIllustrators();
 	  view->renWin->Render();
 	  changes = false;

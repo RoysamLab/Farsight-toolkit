@@ -15,9 +15,12 @@ int main (int argc, char* argv[])	{
 //	std::vector<TraceBit> vec = View.tobj->CollectTraceBits();
 //	printf("vec.size() = %d\n",vec.size());
 //	View.AddPointsAsPoints(vec);
-	View.AddBranchIllustrators();
+	vtkActor *branch = View.AddBranchIllustrators();
+	//View.AddBranchIllustrators();
+	
 	act->SetPickable(1);
 	View.addAct(act);
+	View.addAct(branch);
 	View.interact();
 	printf("returned from View.interact\n");
 	

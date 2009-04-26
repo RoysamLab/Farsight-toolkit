@@ -81,7 +81,7 @@ public:
 
 	void addAct(vtkActor *Actor);	
 	void AddPointsAsPoints (std::vector<TraceBit> vec);
-	void AddBranchIllustrators();
+	vtkActor* AddBranchIllustrators();
 	void AddVolumeSliders();
 	void AddContourThresholdSliders();
 	void AddPlaybackWidget(char*);
@@ -115,6 +115,9 @@ public:
 //raycast
 	void rayCast(char* raySource);
 	vtkSmartPointer<vtkPolyData> poly_line_data;
+	vtkSmartPointer<vtkPolyData> poly;
+	vtkSmartPointer<vtkPolyDataMapper> polymap;
+	vtkSmartPointer<vtkActor> bactor;
 private:
 
 
