@@ -84,9 +84,9 @@ vtkActor* View3d::LineAct()
   this->lineAct->SetMapper(lineMap);
   this->lineAct->GetProperty()->SetColor(0,1,0);
   printf("Point size %f\n",lineAct->GetProperty()->GetPointSize());
-  this->lineAct->GetProperty()->SetPointSize(1);
+  this->lineAct->GetProperty()->SetPointSize(2);
   printf("later: Point size %f\n",lineAct->GetProperty()->GetPointSize());
-  this->lineAct->GetProperty()->SetLineWidth(1);
+  this->lineAct->GetProperty()->SetLineWidth(2);
   return lineAct;
 }
 vtkActor* View3d::AddBranchIllustrators()
@@ -331,7 +331,8 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 	  view->IDList.clear();
 	  //view->ren->RemoveAllViewProps();
 	  //view->ren->RemoveViewProp()
-	  view->ren->RemoveActor(view->AddBranchIllustrators());	//branch illistrators as a vtk actor
+	  view->ren->RemoveActor(view->bactor);
+	  //view->ren->RemoveActor(view->AddBranchIllustrators());	//branch illistrators as a vtk actor
 	  view->LineAct();
 	  view->addAct(view->AddBranchIllustrators());
 	  //view->AddBranchIllustrators();
