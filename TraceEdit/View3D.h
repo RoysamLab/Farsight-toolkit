@@ -119,10 +119,10 @@ public:
 	vtkSmartPointer<vtkPolyDataMapper> polymap;
 	vtkSmartPointer<vtkActor> bactor;
 private:
-
-
-	
-	//idk 
+	int gapTol;
+	int gapMax;
+	float smallLine;
+	//stuff for tol and selection
 
 };
 #endif

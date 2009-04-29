@@ -19,6 +19,9 @@ View3d::View3d()
   this->renWin = vtkRenderWindow::New();
   this->iren = vtkRenderWindowInteractor::New();
   this->tobj = new TraceObject;
+	gapTol = 2;
+	gapMax = 30;
+	smallLine = 5;
 }
 
 View3d::~View3d()
@@ -389,7 +392,7 @@ void View3d::MinEndPoints(View3d* view,std::vector<TraceLine*> traceList)
 			newComp.Trace1= traceList[i];
 			newComp.Trace2= traceList[j];
 			newComp.Trace1->EndPtDist(newComp.Trace2,newComp.endPT1, newComp.endPT2, newComp.dist);
-			if (!(newComp.dist>newComp.Trace1->GetSize()/2)&&!(newComp.dist>newComp.Trace2->GetSize()/2))
+			if (!(newComp.dist>newComp.Trace1->GetSize()/gapTol)&&!(newComp.dist>newComp.Trace2->GetSize()/gapTol))		//&&(newComp.dist<gapMax)
 			{
 				std::cout<<"added comparison\n";
 				compList.push_back(newComp);
@@ -467,8 +470,21 @@ void View3d::MinEndPoints(View3d* view,std::vector<TraceLine*> traceList)
 		{
 			std::cout<<"Trace\t"<<compList[i].Trace1->GetId()<< "\t compaired to trace\t"<<compList[i].Trace2->GetId() 
 				<<" gap size of:\t"<<compList[i].dist<< " endpts "<< compList[i].endPT1<< " and "<< compList[i].endPT2<<std::endl;
-			tobj->mergeTraces(compList[i].endPT1,compList[i].endPT2);
-		}
+			if (compList[i].dist<= gapMax/gapTol)
+			{
+				tobj->mergeTraces(compList[i].endPT1,compList[i].endPT2);
+			}
+			else if(compList[i].dist<= gapMax)
+			{
+				char ans;
+				std::cout<<"Distance of: "<< compList[i].dist <<" is greater than: " << gapMax/gapTol<< " Merge y\\n\?";
+				std::cin>>ans;
+				if (ans=='y')
+				{
+					tobj->mergeTraces(compList[i].endPT1,compList[i].endPT2);
+				}
+			}
+		}//send to merge
 	}
 }
 void View3d::HighlightSelected(TraceLine* tline, int t)
