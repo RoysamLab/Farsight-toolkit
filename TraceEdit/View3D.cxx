@@ -22,6 +22,8 @@ View3d::View3d()
 	gapTol = 2;
 	gapMax = 30;
 	smallLine = 5;
+	SelectColor =.5;
+	lineWidth= 2;
 }
 
 View3d::~View3d()
@@ -34,6 +36,93 @@ View3d::~View3d()
   delete this->tobj;
 }
 
+bool View3d::setTol()
+{
+	bool change = false;
+	char select=0;
+	std::cout<<"Settings Configuration:\n gap (t)ollerance:\t" <<gapTol
+		<<"\ngap (m)ax:\t"<<gapMax
+		<<"\n(s)mall line:\t"<< smallLine
+		<<"\nselection (c)olor:\t"<<SelectColor
+		<<"\nline (w)idth:\t"<<lineWidth
+		<<"\n(e)nd edit settings\n";
+	while (select !='e')
+	{
+		std::cout<< "select option:\t"; 
+		std::cin>>select;
+		switch(select)
+		{
+		case 'm':
+			{
+				int newMax;
+				std::cout<< "maximum gap length\n";
+				std::cin>>newMax;
+				if (newMax!=gapMax)
+				{
+					gapMax=newMax;
+					change= true;
+				}
+				break;
+			}//end of 'm'
+		case 't':
+			{
+				int newTol;
+				std::cout<< "gap length tollerance\n";
+				std::cin>>newTol;
+				if (newTol!=gapTol)
+				{
+					gapTol=newTol;
+					change= true;
+				}
+				break;
+			}//end of 't'
+		case 's':
+			{
+				float newSmall;
+				std::cout<< "small line length\n";
+				std::cin>>newSmall;
+				if (newSmall!=smallLine)
+				{
+					smallLine=newSmall;
+					change= true;
+				}
+				break;
+			}// end of 's'
+		case 'c':
+			{
+				double newColor;
+				std::cout<< "color value RGB scalar 0 to 1\n";
+				std::cin>>newColor;
+				if (newColor!=SelectColor)
+				{
+					SelectColor=newColor;
+					change= true;
+				}
+				break;
+			}//end of 'c'
+		case 'w':
+			{
+				float newWidth;
+				std::cout<<"line Width\n";
+				std::cin>>newWidth;
+				if (newWidth!=lineWidth)
+				{
+					lineWidth=newWidth;
+					change= true;
+				}
+				break;
+			}
+		}//end of switch
+	}// end of while
+	if (change== true)
+	{std::cout<<"Settings Configuration are now:\n gap tollerance:\t" <<gapTol
+		<<"\ngap max:\t"<<gapMax
+		<<"\nsmall line:\t"<< smallLine
+		<<"\nselection color:\t"<<SelectColor
+		<<"\nline width:\t"<<lineWidth;
+	}
+	return change;
+}
 void View3d::Initialize(int argc, char **argv)
 {
 	int num_loaded = 0;
@@ -86,10 +175,10 @@ vtkActor* View3d::LineAct()
   this->lineMap->SetInput(this->poly_line_data);
   this->lineAct->SetMapper(lineMap);
   this->lineAct->GetProperty()->SetColor(0,1,0);
-  printf("Point size %f\n",lineAct->GetProperty()->GetPointSize());
+  //printf("Point size %f\n",lineAct->GetProperty()->GetPointSize());
   this->lineAct->GetProperty()->SetPointSize(2);
-  printf("later: Point size %f\n",lineAct->GetProperty()->GetPointSize());
-  this->lineAct->GetProperty()->SetLineWidth(2);
+  //printf("later: Point size %f\n",lineAct->GetProperty()->GetPointSize());
+  this->lineAct->GetProperty()->SetLineWidth(lineWidth);
   return lineAct;
 }
 vtkActor* View3d::AddBranchIllustrators()
@@ -327,6 +416,11 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 			view->tobj->WriteToSWCFile((char *)fileName.c_str());	
 		}
 	  break;
+	  case 't':
+		  {
+			  view->setTol();
+			  break;
+		  }
   }
   if (changes == true)
   {
@@ -367,8 +461,8 @@ void View3d::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
     unsigned int cell_id = cell_picker->GetCellId();  
     view->IDList.push_back(cell_id);
     TraceLine *tline = reinterpret_cast<TraceLine*>(view->tobj->hashc[cell_id]);
-	int t =1;
-	view->HighlightSelected(tline, t);
+	
+	view->HighlightSelected(tline, view->SelectColor);
     tline->Getstats();              //prints the id and end coordinates to the command prompt 
     view->sphereAct->SetPosition(pickPos);    //sets the selector to new point
     view->sphereAct->VisibilityOn();      //deleteTrace can turn it off 
@@ -487,14 +581,15 @@ void View3d::MinEndPoints(View3d* view,std::vector<TraceLine*> traceList)
 		}//send to merge
 	}
 }
-void View3d::HighlightSelected(TraceLine* tline, int t)
+void View3d::HighlightSelected(TraceLine* tline, double color)
 {
 	TraceLine::TraceBitsType::iterator iter = tline->GetTraceBitIteratorBegin();
 	TraceLine::TraceBitsType::iterator iterend = tline->GetTraceBitIteratorEnd();
 
   while(iter!=iterend)
   {
-	  poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,1/t);
+	  //poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,1/t);
+	  poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,color);
 	  ++iter;
   }
 	

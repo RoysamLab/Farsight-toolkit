@@ -71,6 +71,7 @@ public:
   View3d();
   ~View3d();
   void Initialize(int argc, char **argv);
+  bool setTol();
 
   //general render window variables
 	vtkSmartPointer<vtkRenderer> ren;
@@ -93,7 +94,7 @@ public:
 	void interact();
 	static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
 	static void SetMode(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
-    void HighlightSelected(TraceLine* tline, int t);
+    void HighlightSelected(TraceLine* tline, double SelectColor);
 	vtkCallbackCommand* isPicked;
 	vtkCallbackCommand* keyPress;
 	
@@ -122,6 +123,8 @@ private:
 	int gapTol;
 	int gapMax;
 	float smallLine;
+	float lineWidth;
+	double SelectColor;
 	//stuff for tol and selection
 
 };
