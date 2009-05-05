@@ -22,7 +22,7 @@ View3d::View3d()
 	gapTol = 2;
 	gapMax = 30;
 	smallLine = 5;
-	SelectColor =.5;
+	SelectColor =.3;
 	lineWidth= 2;
 }
 
@@ -292,7 +292,7 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 		  } 
 		  std::cout<< " \t are selected \n" ;
 		}
-    }
+    }//list
 	return;
     break;
 	case 'c':
@@ -309,7 +309,7 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 				changes = true;
 			}
 			
-		}
+		}//clear
 		break;
     case 'd':
     {
@@ -329,7 +329,7 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 			std::cout<<  "Nothing to Delete \n";
 			return;
 		}
-    }
+    }//delete
     break;
 	case 'm':
     {
@@ -372,7 +372,7 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 			std::cout<<  "Nothing to merge \n";
 			return;
 		}
-    }
+    }//merge
     break;
   case 's':
 	  {
@@ -394,7 +394,7 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 			std::cout<<  "Nothing to split\n";
 			return;
 		  }
-	  }
+	  }//split
     break;
   case 'f':
 	  {
@@ -406,7 +406,7 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 		  }
 		  changes = true;
 	  }
-	  }
+	  }//flip
 	  break;
 	  case 'w':
 		{
@@ -414,11 +414,26 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 			std::cout<<"new filename: \n";
 			std::cin>>fileName;
 			view->tobj->WriteToSWCFile((char *)fileName.c_str());	
-		}
+		}//write to file
 	  break;
 	  case 't':
+		  {	  view->setTol();	break;}//settings
+	  case 'a':
 		  {
-			  view->setTol();
+			  break;
+		  }//selections
+	  case 'p':
+		  {
+			  if(view->IDList.size()>=1)
+			  {
+				  view->IDList.pop_back();
+				  for (int i = 0; i < view->IDList.size(); i++)
+					{
+						std::cout<<  "\t"<<view->IDList[i];   
+					} 
+					std::cout<< " \t are selected \n" ;
+					view->renWin->Render();
+			  }
 			  break;
 		  }
   }

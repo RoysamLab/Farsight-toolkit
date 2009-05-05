@@ -243,7 +243,7 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkF
 	return_id = line_points->InsertNextPoint(point);
 	hashp[return_id]=(unsigned long long int)tline;
 	iter->marker = return_id;
-	point_scalars->InsertNextTuple1(1-1.0/tline->GetType());
+	point_scalars->InsertNextTuple1(.5-1.0/tline->GetType());
 
 	/* To add a line between parent line's last point and the first point in the current line */
 	if(tline->GetParent() != NULL)
@@ -270,7 +270,7 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkF
 		hashp[return_id]=(unsigned long long int)tline;
 		iter->marker = return_id;
 
-		point_scalars->InsertNextTuple1(1-1.0/tline->GetType());
+		point_scalars->InsertNextTuple1(1.0/tline->GetType()-.25);
 		cell_id = line_cells->InsertNextCell(2);
 		cell_id_array->push_back(cell_id);
 		hashc[cell_id]=reinterpret_cast<unsigned long long int>(tline);
