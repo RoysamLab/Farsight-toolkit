@@ -320,9 +320,15 @@ void ControlBar::loadImageSeries(void)
 //******************************************************************************
 ftk::Image::Pointer ControlBar::NewFTKImage(std::vector<std::string> filenames)
 {
-	//ftk::Image::Pointer img = ftk::Image::New();
-	//return img->LoadFileSeries(filenames);
-	return NULL;
+  if(filenames.size() == 1)
+    {
+    return this->NewFTKImage(filenames[0]);
+    }
+  else
+    {
+    cerr << "multi-open functionality not implemented yet." << endl;
+    return NULL;
+    }
 }
 
 ftk::Image::Pointer ControlBar::NewFTKImage(std::string filename)
