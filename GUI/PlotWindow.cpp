@@ -7,6 +7,8 @@
 
 #include "libsvm/svm.h"
 
+//for DBL_MAX...
+#include <float.h>
 //Constructor
 PlotWindow::PlotWindow(QWidget *parent)
   : QWidget(parent)

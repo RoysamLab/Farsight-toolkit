@@ -6,6 +6,7 @@
 #include <itkFixedArray.h>
 #include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
+#include <itkImageRegionIterator.h>
 #include <itkImportImageContainer.h>
 
 namespace ftk
@@ -268,6 +269,9 @@ template <typename pixelType1> bool Image::IsMatch(DataType pixelType2)
 		case itk::ImageIOBase::DOUBLE:
 			if( typeid(double) == typeid(pixelType1) ) retVal = true;
 		break;
+    //just silencing a warning for now...
+    case itk::ImageIOBase::UNKNOWNCOMPONENTTYPE:
+    break;
 	}
 	
 	return retVal;	
@@ -381,9 +385,9 @@ template< typename TComp, unsigned int channels > void Image::LoadImageITK(std::
 	ImagePointer img = reader->GetOutput();
 
 	//Set up the size info of the image:
-	ImageType::RegionType region = img->GetBufferedRegion();
-	ImageType::RegionType::IndexType start = region.GetIndex();
-	ImageType::RegionType::SizeType size = region.GetSize();
+	typename ImageType::RegionType region = img->GetBufferedRegion();
+	typename ImageType::RegionType::IndexType start = region.GetIndex();
+	typename ImageType::RegionType::SizeType size = region.GetSize();
 	Info nInfo;
 	nInfo.numColumns = size[0] - start[0];
 	nInfo.numRows = size[1] - start[1];
@@ -445,7 +449,7 @@ template< typename TComp, unsigned int channels > void Image::LoadImageITK(std::
 	for ( it.GoToBegin(); !it.IsAtEnd(); ++it) 
 	{
 		//create a pixel object & Get each channel value
-		ImageType::PixelType pixelValue = it.Get();
+		typename ImageType::PixelType pixelValue = it.Get();
 		for(int c=0; c<m_Info.numChannels; ++c)
 		{
 			TComp *toLoc = ((TComp*)(imageDataPtrs[t][c].mem));

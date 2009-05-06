@@ -493,6 +493,9 @@ bool Image::SaveChannelAs( int channel, std::string baseName, std::string ext )
 		case itk::ImageIOBase::DOUBLE:
 			if( this->WriteImageITK<double>(channel, baseName, ext) ) retVal = true;
 		break;
+    //just silencing a warning for now...
+    case itk::ImageIOBase::UNKNOWNCOMPONENTTYPE:
+    break;
 	}
 	return retVal;
 }

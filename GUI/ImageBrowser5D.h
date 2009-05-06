@@ -30,7 +30,7 @@
 //std includes:
 
 //ftk includes:
-#include <ftkImage/ftkImage.h>
+#include <FTKImage/ftkImage.h>
 
 
 class ImageBrowser5D: public QWidget
