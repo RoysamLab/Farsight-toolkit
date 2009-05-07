@@ -20,7 +20,7 @@ class AbstractModel : public QObject
 	Q_OBJECT;
 
 public:
-	AbstractModel(QObject * parent = 0) : QObject(parent){m_selection = NULL};
+	AbstractModel(QObject * parent = 0) : QObject(parent){m_selection = new ObjectSelection(0);};
 	~AbstractModel(){ if(m_selection) delete m_selection; };
 
 	virtual int NumberOfColumns() = 0;						//Number of Features
@@ -40,7 +40,7 @@ public:
 
 	virtual void SetValue(int t, int row, int col, vtkVariant value) = 0;
 	virtual void SetValue(int t, int row, std::string colName, vtkVariant value) = 0;
-	virtual void AddColumn(std::string colName) = 0;
+	virtual void AddColumn(std::string colName, bool editable) = 0;
 
 	virtual void RemoveColumn(int col) = 0;
 	virtual void RemoveColumn(std::string colName) = 0;

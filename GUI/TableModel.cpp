@@ -1,9 +1,10 @@
 #include "TableModel.h"
+#include <vtkStringArray.h>
 #include <fstream>
 
 //Constructor
-TableModel::TableModel(QObject * parent)
-: QObject(parent)
+TableModel::TableModel(QObject * parent) 
+: AbstractModel(parent)
 {
 	m_Tables.clear();
 	int m_numColumns = 0;
@@ -31,7 +32,7 @@ std::string TableModel::ColumnName(int col)
 					
 const vtkTable * TableModel::GetTable(int t)
 {
-	if(m_Tables.size() > t)
+	if((int)m_Tables.size() > t)
 		return m_Tables.at(t);
 	else
 		return NULL;
@@ -39,15 +40,15 @@ const vtkTable * TableModel::GetTable(int t)
 
 const vtkVariantArray * TableModel::GetRow(int t, int row)
 {
-	if(m_Tables.size() > t && m_NumRows > row)
-		return m_Tables.at(i)->GetRow(row);
+	if((int)m_Tables.size() > t && m_NumRows > row)
+		return m_Tables.at(t)->GetRow(row);
 	else
 		return NULL;
 }
 
 const vtkAbstractArray * TableModel::GetColumn(int t, int col)
 {
-	if(m_Tables.size() > t && m_NumColumns > col)
+	if((int)m_Tables.size() > t && m_NumColumns > col)
 		return m_Tables.at(t)->GetColumn(col);
 	else
 		return NULL;
@@ -55,7 +56,7 @@ const vtkAbstractArray * TableModel::GetColumn(int t, int col)
 
 const vtkAbstractArray * TableModel::GetColumn(int t, std::string colName)
 {
-	if(m_Tables.size() > t)
+	if((int)m_Tables.size() > t)
 		return m_Tables.at(t)->GetColumnByName(colName.c_str());
 	else
 		return NULL;
@@ -63,7 +64,7 @@ const vtkAbstractArray * TableModel::GetColumn(int t, std::string colName)
 
 vtkVariant TableModel::GetValue(int t, int row, int col)
 {
-	if(m_Tables.size() > t && m_NumRows > row && m_NumColumns > col)
+	if((int)m_Tables.size() > t && m_NumRows > row && m_NumColumns > col)
 		return m_Tables.at(t)->GetValue(row,col);
 	else
 		return vtkVariant(0);
@@ -71,15 +72,15 @@ vtkVariant TableModel::GetValue(int t, int row, int col)
 
 vtkVariant TableModel::GetValue(int t, int row, std::string colName)
 {
-	if(m_Tables.size() > t && m_NumRows > row)
-		return m_Tables.at(t)->GetValue(row,colName.c_str());
+	if((int)m_Tables.size() > t && m_NumRows > row)
+		return m_Tables.at(t)->GetValueByName(row,colName.c_str());
 	else
 		return vtkVariant(0);
 }
 
 void TableModel::SetValue(int t, int row, int col, vtkVariant value)
 {
-	if(m_Tables.size() > t && m_NumRows > row && m_NumColumns > col)
+	if((int)m_Tables.size() > t && m_NumRows > row && m_NumColumns > col)
 		if( IsColumnEditable(col) )
 		{
 			m_Tables.at(t)->SetValue(row, col, value);
@@ -89,7 +90,7 @@ void TableModel::SetValue(int t, int row, int col, vtkVariant value)
 
 void TableModel::SetValue(int t, int row, std::string colName, vtkVariant value)
 {
-	if(m_Tables.size() > t && m_NumRows > row)
+	if((int)m_Tables.size() > t && m_NumRows > row)
 		if( IsColumnEditable(colName) )
 		{
 			m_Tables.at(t)->SetValueByName(row, colName.c_str(), value);
@@ -101,7 +102,7 @@ void TableModel::SetValue(int t, int row, std::string colName, vtkVariant value)
 //File format is simple white space delimited.
 //first row should be feature names.
 //Assumed that all features are text
-void LoadTable(std::string filename)
+void TableModel::LoadTable(std::string filename)
 {
 	const int MAXLINESIZE = 1024;
 	char line[MAXLINESIZE];
@@ -153,12 +154,14 @@ void LoadTable(std::string filename)
 			m_NumRows == table->GetNumberOfRows() )
 		{
 			m_Tables.push_back(table);
+			m_selection->IncrementTMax();
 			emit Changed(m_Tables.size()-1, -1 );
 		}
 	}
 	else
 	{
 		m_Tables.push_back(table);
+		m_selection->IncrementTMax();
 		m_NumColumns = table->GetNumberOfColumns();
 		m_NumRows = table->GetNumberOfRows();
 		emit Changed(m_Tables.size()-1, -1 );

@@ -7,6 +7,12 @@
 
 #include "FarsightConfig.h"
 
+//VTK INCLUDES:
+//#include <vtkQtTableView.h>
+//#include <vtkQtBarChartView.h>
+//#include <vtkSelectionLink.h>
+//#include <vtkDataRepresentation.h>
+
 //QT INCLUDES
 #include <QtCore/QThread>
 #include <QtCore/QByteArray>
@@ -36,6 +42,8 @@
 #include "TableWindow.h"
 #include "PlotWindow.h"
 #include "ImageBrowser5D.h"
+//#include "TableModel.h"
+//#include "TableView.h"
 
 //OTHER LOCAL INCLUDES
 #include "SegmentationCommon/ftkSegmentationResult.h"
@@ -78,7 +86,7 @@ private slots:
 	void InitializePreferencesDialog();
 	void CreateNewPlotWindow();
 	void CreateNewTableWindow();
-  bool BrowseForPythonExecutable();
+    bool BrowseForPythonExecutable();
 	void OpenPythonWindow();
 	SegmentationWindow* CreateNewSegmentationWindow();
 //  void initPythonInterpretor();

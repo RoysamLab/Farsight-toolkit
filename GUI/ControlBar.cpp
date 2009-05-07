@@ -387,7 +387,36 @@ void ControlBar::test(void)
 			displayHelp(helpData);
 	}
 	*/
+	/*
 	displayHelp();
+	*/
+
+	/*
+	//Test the TableModel:
+	TableModel *model = new TableModel(this);
+	model->LoadTable("C:/BADRI_TEST/testData.txt");
+
+	vtkSelectionLink *link = vtkSelectionLink::New();
+	
+	vtkQtTableView *view = vtkQtTableView::New();
+	view->AddRepresentationFromInput( const_cast<vtkTable *>( model->GetTable(0) ) );
+	view->GetRepresentation()->SetSelectionLink(link);
+	view->Update();
+	view->GetWidget()->show();
+	*/
+	/*
+	TableView *tview = new TableView(model,0);
+	tview->show();
+	*/
+	/*
+	vtkQtBarChartView *chartView = vtkQtBarChartView::New();
+    chartView->SetupDefaultInteractor();
+	chartView->SetTitle("My Bar Chart");
+	chartView->AddRepresentationFromInput(const_cast<vtkTable*>(model->GetTable(0)));
+	chartView->GetRepresentation()->SetSelectionLink(link);
+	chartView->Update();
+	chartView->Show();
+	*/
 }
 
 //******************************************************************************

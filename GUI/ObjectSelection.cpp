@@ -14,6 +14,11 @@ void ObjectSelection::clear(void)
 	m_selected.clear();
 }
 
+void ObjectSelection::IncrementTMax(void)
+{
+	t_max++;
+}
+
 //If there are no t, or want to know if all time points do not set t
 bool ObjectSelection::isSelected(int id, int t)
 {

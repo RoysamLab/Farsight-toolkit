@@ -15,6 +15,8 @@ SET( GUI_SRCS
     SegmentationModel.cpp
     
     #ObjectSelection.cpp
+    #TableModel.cpp
+    #TableView.cpp
     ImageBrowser5D.cpp
 )
 
@@ -29,6 +31,9 @@ SET( GUI_HDRS
     SegmentationModel.h
     
     #ObjectSelection.h
+    #TableModel.h
+    #AbstractModel.h
+    #TableView.h
     ImageBrowser5D.h
 )
 

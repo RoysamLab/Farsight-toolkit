@@ -17,7 +17,8 @@ class ObjectSelection: public QObject
 
 public:
 	ObjectSelection(int time_max);
-
+	
+	void IncrementTMax(void);
 	bool isSelected(int id, int t=-1);		
 	bool add(int id, int t=-1);
 	bool remove(int id, int t=-1);
@@ -30,7 +31,6 @@ public:
 
 signals:
 	void changed(int id, int t);
-	void changed();
 	
 private:
 	
