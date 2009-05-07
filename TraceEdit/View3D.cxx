@@ -422,21 +422,23 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 		  {
 			  break;
 		  }//selections
-	  case 'p':
+	  case '-':
 		  {
 			  if(view->IDList.size()>=1)
 			  {
+				  TraceLine* tline=reinterpret_cast<TraceLine*>(view->tobj->hashc[view->IDList[view->IDList.size()-1]]);
+				  view->HighlightSelected(tline, tline->getTraceColor()-.25);
 				  view->IDList.pop_back();
+				  std::cout<< " These lines: ";
 				  for (int i = 0; i < view->IDList.size(); i++)
 					{
 						std::cout<<  "\t"<<view->IDList[i];   
 					} 
-					std::cout<< " \t are selected \n" ;
-					view->renWin->Render();
-			  }
+					std::cout<< " \t are selected \n" ;					
+			  }view->renWin->Render();
 			  break;
-		  }
-  }
+		  }// pop last selection
+  }//end switch
   if (changes == true)
   {
 	  view->sphereAct->VisibilityOff();
@@ -450,7 +452,7 @@ void View3d::SetMode(vtkObject* caller, unsigned long event, void* clientdata, v
 	  //view->AddBranchIllustrators();
 	  view->renWin->Render();
 	  changes = false;
-  }
+  }//end changes
 }
 
 void View3d::PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata)

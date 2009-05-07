@@ -87,8 +87,16 @@ public:
 	}
 	std::vector<unsigned int> * GetMarkers() { return &m_markers;}
 	std::vector<TraceLine*> * GetBranchPointer(){ return &m_branches;}
-
+	void setTraceColor(double newColor)
+	{
+		traceColor=newColor;
+	};
+	double getTraceColor()
+	{
+		return traceColor;
+	};
 private:
+	double traceColor;
 	int m_id;
 	std::vector<unsigned int> m_markers;
 	unsigned char m_type;

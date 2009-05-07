@@ -172,6 +172,8 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 		TraceLine * ttemp = new TraceLine();
 		ttemp->SetId(global_id_number++);
 		ttemp->SetType(hash_type[*iter]);
+		ttemp->setTraceColor(1.0/ttemp->GetType());
+		//tline->setTraceColor(1.0/tline->GetType());
 		ttemp->AddTraceBit(data[*iter]);
 		int id_counter = *iter;
 		while(child_count[id_counter]==1)
@@ -243,7 +245,7 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkF
 	return_id = line_points->InsertNextPoint(point);
 	hashp[return_id]=(unsigned long long int)tline;
 	iter->marker = return_id;
-	point_scalars->InsertNextTuple1(.5-1.0/tline->GetType());
+	point_scalars->InsertNextTuple1(.5-tline->getTraceColor());
 
 	/* To add a line between parent line's last point and the first point in the current line */
 	if(tline->GetParent() != NULL)
@@ -270,7 +272,7 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkF
 		hashp[return_id]=(unsigned long long int)tline;
 		iter->marker = return_id;
 
-		point_scalars->InsertNextTuple1(1.0/tline->GetType()-.25);
+		point_scalars->InsertNextTuple1(tline->getTraceColor()-.25);
 		cell_id = line_cells->InsertNextCell(2);
 		cell_id_array->push_back(cell_id);
 		hashc[cell_id]=reinterpret_cast<unsigned long long int>(tline);
@@ -445,7 +447,7 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
 		}
 		tline->SetId(lineID);
 		tline->SetType(lineType);
-
+		tline->setTraceColor(1.0/tline->GetType());
 		if(lineParent != -1)
 		{
 			TraceLine *tparent;
@@ -762,7 +764,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 			(*tmarker->GetBranchPointer())[counter]->SetParent(tmarker);
 		}
 		RemoveTraceLine(tother);
-		//changeList.push_back(tmarker);
+		tmarker->setTraceColor(.7/tmarker->GetType()); //tline->setTraceColor(1.0/tline->GetType());
 	}
 	else if (slocation ==1 && elocation == 0)
 	{
@@ -775,7 +777,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 			(*tother->GetBranchPointer())[counter]->SetParent(tother);
 		}
 		RemoveTraceLine(tmarker);
-		//changeList.push_back(tother);
+		tother->setTraceColor(.7/tother->GetType());
 	}
 	else if (slocation == 0 && elocation ==0)
 	{
@@ -789,7 +791,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 			(*tother->GetBranchPointer())[counter]->SetParent(tother);
 		}
 		RemoveTraceLine(tmarker);
-		//changeList.push_back(tother);
+		tother->setTraceColor(.7/tother->GetType());
 	}
 	else if (slocation == 1 && elocation ==1)
 	{
@@ -803,7 +805,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 			(*tmarker->GetBranchPointer())[counter]->SetParent(tmarker);
 		}
 		RemoveTraceLine(tother);
-		//changeList.push_back(tmarker);
+		tmarker->setTraceColor(.7/tmarker->GetType());
 	}
 	else if (slocation == -1 && elocation !=-1)
 	{
