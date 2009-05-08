@@ -27,8 +27,8 @@ ADD_LIBRARY(Trace Trace.h Trace.cpp)
 ADD_EXECUTABLE( trace_editor  vtkTraceViewerDriver.cxx ${Sources} )
 TARGET_LINK_LIBRARIES( trace_editor ${Libraries} Trace)
 
-#ADD_EXECUTABLE( seed_editor vtkSeedViewerDriver.cxx ${Sources} )
-#TARGET_LINK_LIBRARIES( seed_editor ${Libraries})
+ADD_EXECUTABLE( seed_editor vtkSeedViewerDriver.cxx ${Sources} )
+TARGET_LINK_LIBRARIES( seed_editor ${Libraries} Trace)
 
 INSTALL(TARGETS trace_editor DESTINATION bin)
-#INSTALL(TARGETS seed_editor DESTINATION bin)
+INSTALL(TARGETS seed_editor DESTINATION bin)

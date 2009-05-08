@@ -108,7 +108,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 
 		sscanf(buff,"%d %d %*lf %*lf %*lf %*lf %d",&id,&type,&parent);
 		tc++;
-		printf("%d\n",id);
+		//printf("%d\n",id);
 		if(id>max_id)//find max id
 		{
 			max_id=id;
@@ -151,7 +151,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 			criticals.insert(id);
 			hash_type[id] = type;
 			hash_parent[id] = -1;
-			printf("hash_parent[%d] = %d\n",id,hash_parent[id]);
+			//printf("hash_parent[%d] = %d\n",id,hash_parent[id]);
 		}
 		else
 		{
@@ -160,7 +160,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 				criticals.insert(id);
 				hash_type[id] = type;
 				hash_parent[id] = parent;
-				printf("hash_parent[%d] = %d\n", id, hash_parent[id]);
+				//printf("hash_parent[%d] = %d\n", id, hash_parent[id]);
 			}
 		}
 	}
@@ -186,7 +186,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 		trace_lines.push_back(ttemp);
 		iter++;
 	}
-	printf("Trace_lines size = %d\n",trace_lines.size());
+	//printf("Trace_lines size = %d\n",trace_lines.size());
 	
 	iter = criticals.begin();
 	int pc = 0;
@@ -195,7 +195,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 		//printf("trace_lines[%d] = %p\n",pc,trace_lines[pc]);
 		if(hash_parent[*iter]>0)
 		{
-			printf("hash_parent %d *iter %d hash_load %p\n",hash_parent[*iter],*iter,reinterpret_cast<void*>(hash_load[hash_parent[*iter]]));
+			//printf("hash_parent %d *iter %d hash_load %p\n",hash_parent[*iter],*iter,reinterpret_cast<void*>(hash_load[hash_parent[*iter]]));
 			TraceLine * t = reinterpret_cast<TraceLine*>(hash_load[hash_parent[*iter]]);
 			trace_lines[pc]->SetParent(t);
 			
