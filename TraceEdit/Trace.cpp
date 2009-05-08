@@ -262,7 +262,6 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkF
 	}
 	/* Rest of the lines for the current tline */
 	iter++;
-	int pc = 0;
 	while(iter!=tline->GetTraceBitIteratorEnd())
 	{
 		//printf("in loop %d\n",++pc);
@@ -281,7 +280,7 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkF
 		++iter;
 	}
 	/* Recursive calls to the branches if they exist */
-	for(int counter=0; counter< tline->GetBranchPointer()->size(); counter++)
+	for(unsigned int counter=0; counter<tline->GetBranchPointer()->size(); counter++)
 	{
 		//printf("I should be having children too! what am I doing here?\n");
 		CreatePolyDataRecursive((*tline->GetBranchPointer())[counter],point_scalars,line_points,line_cells);
@@ -299,7 +298,7 @@ void CollectTraceBitsRecursive(std::vector<TraceBit> &vec,TraceLine *l)
 		iter++;
 	}
 	std::vector<TraceLine*>* bp = l->GetBranchPointer();
-	for(int counter=0; counter< bp->size(); counter++)
+	for(unsigned int counter=0; counter< bp->size(); counter++)
 	{
 		CollectTraceBitsRecursive(vec,(*bp)[counter]);
 	}
@@ -308,7 +307,7 @@ void CollectTraceBitsRecursive(std::vector<TraceBit> &vec,TraceLine *l)
 std::vector<TraceBit> TraceObject::CollectTraceBits()
 {
 	std::vector<TraceBit> vec;
-	for(int counter=0; counter<trace_lines.size(); counter++)
+	for(unsigned int counter=0; counter<trace_lines.size(); counter++)
 		CollectTraceBitsRecursive(vec,trace_lines[counter]);
 	return vec;
 }
@@ -335,7 +334,7 @@ struct hashulli
 	const static size_t min_buckets = 8;
 };
 
-bool TraceObject::WriteToSWCFile(char *filename)
+bool TraceObject::WriteToSWCFile(const char *filename)
 {
 	FILE * fp = fopen(filename,"w");
 	hash_map<const unsigned long long int, int, hashulli> hash_dump;
@@ -346,7 +345,7 @@ bool TraceObject::WriteToSWCFile(char *filename)
 	}
 	int cur_id = 1;
 	std::queue<TraceLine*> q;
-	for(int counter=0; counter<trace_lines.size(); counter++)
+	for(unsigned int counter=0; counter<trace_lines.size(); counter++)
 	{
 		q.push(trace_lines[counter]);
 	}
@@ -372,7 +371,7 @@ bool TraceObject::WriteToSWCFile(char *filename)
 			cur_id++;
 			iter++;
 		}
-		for(int counter=0; counter<t->GetBranchPointer()->size(); counter++)
+		for(unsigned int counter=0; counter<t->GetBranchPointer()->size(); counter++)
 		{
 			q.push((*t->GetBranchPointer())[counter]);
 		}
@@ -393,7 +392,7 @@ vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
 	line_points->SetDataTypeToDouble();
 	vtkSmartPointer<vtkCellArray> line_cells=vtkSmartPointer<vtkCellArray>::New();
 	//printf("Starting CreatePolyDataRecursive\n");
-	for(int counter=0; counter<trace_lines.size(); counter++)
+	for(unsigned int counter=0; counter<trace_lines.size(); counter++)
 	{
 		/*printf("Calling CreatePolyDataRecursive %dth time\n",counter+1);*/
 		CreatePolyDataRecursive(trace_lines[counter],point_scalars,line_points,line_cells);
@@ -510,7 +509,7 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
 void CollectIdsRecursive(std::vector<int> ids, TraceLine* tline)
 {
 	ids.push_back(tline->GetId());
-	for(int counter = 0; counter < tline->GetBranchPointer()->size(); counter++)
+	for(unsigned int counter = 0; counter < tline->GetBranchPointer()->size(); counter++)
 	{
 		CollectIdsRecursive(ids,(*tline->GetBranchPointer())[counter]);
 	}
@@ -518,13 +517,13 @@ void CollectIdsRecursive(std::vector<int> ids, TraceLine* tline)
 int TraceObject::getNewLineId()
 {
 	std::vector<int> ids;
-	for(int counter=0; counter< trace_lines.size(); counter++)
+	for(unsigned int counter=0; counter< trace_lines.size(); counter++)
 	{
 		CollectIdsRecursive(ids, trace_lines[counter]);
 	}
 	int newId = this->trace_lines.size();
 	std::sort(ids.begin(),ids.end());
-	for(int counter=0; counter < ids.size(); counter++)
+	for(unsigned int counter=0; counter < ids.size(); counter++)
 	{
 		if(newId == ids[counter])
 		{
@@ -638,7 +637,7 @@ void TraceObject::splitTrace(int selectedCellId)
     {
     *(newLine->GetBranchPointer()) = *(selectedLine->GetBranchPointer());
     std::vector<TraceLine*> * bp = newLine->GetBranchPointer();
-    for(int counter=0; counter< bp->size(); counter++)
+    for(unsigned int counter=0; counter< bp->size(); counter++)
       {
       (*bp)[counter]->SetParent(newLine);
       }
@@ -759,7 +758,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 		FixPointMarkers(tmarker);
 		*(tmarker->GetBranchPointer())=*(tother->GetBranchPointer());
 		tother->GetBranchPointer()->clear();
-		for(int counter=0; counter< tmarker->GetBranchPointer()->size(); counter++)
+		for(unsigned int counter=0; counter< tmarker->GetBranchPointer()->size(); counter++)
 		{
 			(*tmarker->GetBranchPointer())[counter]->SetParent(tmarker);
 		}
@@ -772,7 +771,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 		FixPointMarkers(tother);
 		*(tother->GetBranchPointer())=*(tmarker->GetBranchPointer());
 		tmarker->GetBranchPointer()->clear();
-		for(int counter=0; counter< tother->GetBranchPointer()->size(); counter++)
+		for(unsigned int counter=0; counter< tother->GetBranchPointer()->size(); counter++)
 		{
 			(*tother->GetBranchPointer())[counter]->SetParent(tother);
 		}
@@ -786,7 +785,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 		FixPointMarkers(tother);
 		*(tother->GetBranchPointer())=*(tmarker->GetBranchPointer());
 		tmarker->GetBranchPointer()->clear();
-		for(int counter=0; counter< tother->GetBranchPointer()->size(); counter++)
+		for(unsigned int counter=0; counter< tother->GetBranchPointer()->size(); counter++)
 		{
 			(*tother->GetBranchPointer())[counter]->SetParent(tother);
 		}
@@ -800,7 +799,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 		FixPointMarkers(tmarker);
 		*(tmarker->GetBranchPointer())=*(tother->GetBranchPointer());
 		tother->GetBranchPointer()->clear();
-		for(int counter=0; counter< tmarker->GetBranchPointer()->size(); counter++)
+		for(unsigned int counter=0; counter< tmarker->GetBranchPointer()->size(); counter++)
 		{
 			(*tmarker->GetBranchPointer())[counter]->SetParent(tmarker);
 		}
@@ -886,7 +885,7 @@ void CollectBranchPointsRecursive(vtkSmartPointer<vtkPoints> p, vtkSmartPointer<
 		id = p->InsertNextPoint(loc);
 		cells->InsertNextCell(1);
 		cells->InsertCellPoint(id);
-		for(int counter=0; counter< tline->GetBranchPointer()->size(); counter++)
+		for(unsigned int counter=0; counter< tline->GetBranchPointer()->size(); counter++)
 		{
 			CollectBranchPointsRecursive(p,cells,(*tline->GetBranchPointer())[counter]);
 		}
@@ -921,7 +920,7 @@ void CollectSegmentMidPointsRecursive(vtkSmartPointer<vtkPoints>p, vtkSmartPoint
 		cells->InsertNextCell(1);
 		cells->InsertCellPoint(id);
 		da->InsertNextTuple3(dir[0],dir[1],dir[2]);
-		for(int counter=0; counter< tline->GetBranchPointer()->size(); counter++)
+		for(unsigned int counter=0; counter< tline->GetBranchPointer()->size(); counter++)
 		{
 			CollectSegmentMidPointsRecursive(p,cells,da,(*tline->GetBranchPointer())[counter]);
 		}
@@ -941,7 +940,7 @@ vtkSmartPointer<vtkPolyData> TraceObject::generateBranchIllustrator()
 	
 
 	printf("TraceLines size = %d\n",trace_lines.size());
-	for(int counter=0; counter< trace_lines.size(); counter++)
+	for(unsigned int counter=0; counter< trace_lines.size(); counter++)
 	{
 		CollectBranchPointsRecursive(p,cells,trace_lines[counter]);
 	}
@@ -949,7 +948,7 @@ vtkSmartPointer<vtkPolyData> TraceObject::generateBranchIllustrator()
 	VTK_CREATE(vtkFloatArray, da);
 	da->SetNumberOfComponents(3);
 	VTK_CREATE(vtkCellArray, cells1);
-	for(int counter=0; counter< trace_lines.size(); counter++)
+	for(unsigned int counter=0; counter< trace_lines.size(); counter++)
 	{
 		CollectSegmentMidPointsRecursive(p1,cells1,da,trace_lines[counter]);
 	}
@@ -1067,3 +1066,4 @@ void TraceObject::RemoveTraceLine(TraceLine *tline)
 	}
 //printf("Quitting RemoveTraceLine\n");
 }
+

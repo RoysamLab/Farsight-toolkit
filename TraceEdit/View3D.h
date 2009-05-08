@@ -56,6 +56,10 @@
 #include "vtkPlaybackWidget.h"
 #include "vtkPlaybackRepresentation.h"
 
+#include <QObject>
+#include <QtGui>
+#include <QVTKWidget.h>
+
 struct compTrace{
 TraceLine *Trace1;
 TraceLine *Trace2;
@@ -64,68 +68,107 @@ int endPT1, endPT2;
 double dist; 
 };
 
-class View3d
+class View3D : public QWidget 
 {
+Q_OBJECT;
 public:
-
-  View3d();
-  ~View3d();
-  void Initialize(int argc, char **argv);
+  View3D(int argc, char **argv);
+  ~View3D();
+  void Initialize();
+  void CreateGUIObjects();
+  void CreateLayout();
+  void CreateInteractorStyle();
+  void CreateActors();
+  void UpdateLineActor();
+	void UpdateBranchActor();
+  void CreateSphereActor();
   bool setTol();
-
-  //general render window variables
-	vtkSmartPointer<vtkRenderer> ren;
-	vtkSmartPointer<vtkRenderWindow> renWin;
-	vtkSmartPointer<vtkRenderWindowInteractor> iren;
-	vtkSmartPointer<vtkCamera> cam;
-	void RenderWin();
-
-	void addAct(vtkActor *Actor);	
 	void AddPointsAsPoints (std::vector<TraceBit> vec);
-	vtkActor* AddBranchIllustrators();
 	void AddVolumeSliders();
 	void AddContourThresholdSliders();
 	void AddPlaybackWidget(char*);
-	vtkActor *lineAct;
-	vtkPolyDataMapper *lineMap;
-	vtkActor* LineAct();
-
-//interactor variables and point picking
-	void interact();
 	static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
-	static void SetMode(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
-    void HighlightSelected(TraceLine* tline, double SelectColor);
-	vtkCallbackCommand* isPicked;
-	vtkCallbackCommand* keyPress;
-	
-	vtkCellPicker *cell_picker;
-	std::vector<int> IDList;
-	
-	void deleteTrace(View3d* view,TraceLine *tline);
-	void MinEndPoints(View3d* view,std::vector<TraceLine*> traceList);
-	vtkSphereSource *sphere;
-	vtkPolyDataMapper *sphereMap;
-	vtkActor *sphereAct;
-//  img reading	and contour->3d
+	static void HandleKeyPress(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
+  void HighlightSelected(TraceLine* tline, double SelectColor);
+	void DeleteTrace(TraceLine *tline);
+	void MinEndPoints(std::vector<TraceLine*> traceList);
 	void readImg(char* sourceFile);
-	vtkSmartPointer<vtkPolyDataMapper> volMap;
-	vtkSmartPointer<vtkActor> volAct;
-	TraceObject* tobj;
-	vtkVolume * vol;
-	vtkSmartPointer<vtkContourFilter> cfilt;
-//raycast
 	void rayCast(char* raySource);
-	vtkSmartPointer<vtkPolyData> poly_line_data;
-	vtkSmartPointer<vtkPolyData> poly;
-	vtkSmartPointer<vtkPolyDataMapper> polymap;
-	vtkSmartPointer<vtkActor> bactor;
+
+  //todo: make these private with accessors
+	vtkSmartPointer<vtkRenderer> Renderer;
+	vtkSmartPointer<vtkActor> BranchActor;
+
+public slots:
+  void ListSelections();
+  void ClearSelection();
+  void DeleteTraces();
+  void MergeTraces();
+  void SplitTraces();
+  void FlipTraces();
+  void WriteToSWCFile();
+  void ShowSettingsWindow();
+  void HideSettingsWindow();
+  void ApplyNewSettings();
+
+protected:
+  void closeEvent(QCloseEvent *event);
+  void Rerender();
+
 private:
 	int gapTol;
 	int gapMax;
 	float smallLine;
 	float lineWidth;
 	double SelectColor;
-	//stuff for tol and selection
 
+  //VTK render window embedded in a Qt widget
+  QVTKWidget *QVTK;
+
+  //Qt widgets on the main window
+  QPushButton *ListButton;
+  QPushButton *ClearButton;
+  QPushButton *DeleteButton;
+  QPushButton *MergeButton;
+  QPushButton *SplitButton;
+  QPushButton *FlipButton;
+  QPushButton *WriteButton;
+  QPushButton *SettingsButton;
+
+  //Qt widgets for the settings window
+  QWidget *SettingsWidget;
+  QLineEdit *MaxGapField;
+  QLineEdit *GapToleranceField;
+  QLineEdit *LineLengthField;
+  QLineEdit *ColorValueField;
+  QLineEdit *LineWidthField;
+  QPushButton *ApplySettingsButton;
+  QPushButton *CancelSettingsButton;
+
+	//stuff for tol and selection
+  //general render window variables
+	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;
+	vtkSmartPointer<vtkActor> LineActor;
+	vtkSmartPointer<vtkPolyDataMapper> LineMapper;
+
+  //interactor variables and point picking
+	vtkSmartPointer<vtkCallbackCommand> isPicked;
+	vtkSmartPointer<vtkCallbackCommand> keyPress;
+	
+	vtkSmartPointer<vtkCellPicker> CellPicker;
+	std::vector<int> IDList;
+	vtkSmartPointer<vtkSphereSource> Sphere;
+	vtkSmartPointer<vtkPolyDataMapper> SphereMapper;
+	vtkSmartPointer<vtkActor> SphereActor;
+  //  img reading	and contour->3d
+	vtkSmartPointer<vtkPolyDataMapper> VolumeMapper;
+	vtkSmartPointer<vtkActor> VolumeActor;
+	TraceObject* tobj;
+	vtkSmartPointer<vtkVolume> Volume;
+	vtkSmartPointer<vtkContourFilter> ContourFilter;
+  //raycast
+	vtkSmartPointer<vtkPolyData> poly_line_data;
+	vtkSmartPointer<vtkPolyData> poly;
+	vtkSmartPointer<vtkPolyDataMapper> polymap;
 };
 #endif

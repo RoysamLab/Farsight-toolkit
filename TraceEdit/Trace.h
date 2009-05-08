@@ -114,14 +114,14 @@ public:
 	TraceObject(){}
 	~TraceObject()
 	{
-		for(int counter=0; counter<trace_lines.size(); counter++)
+		for(unsigned int counter=0; counter<trace_lines.size(); counter++)
 			delete trace_lines[counter];
 	}
 	bool ReadFromSWCFile(char * filename);
 	bool ReadFromRPIXMLFile(char * filename);
 	bool ReadFromFeatureTracksFile(char *filename, int type_offset);
 	bool ReadFromFeatureTracksFileForKymograph(char *filename,int type_offset);
-	bool WriteToSWCFile(char * filename);
+	bool WriteToSWCFile(const char * filename);
   int getNewLineId();
   void splitTrace(int selectedCellId);
   void ReverseSegment(TraceLine*);
@@ -135,7 +135,7 @@ public:
 	{
 		c<<"TraceObject:"<<std::endl;
 		c<<"Size:"<<trace_lines.size()<<std::endl;
-		for(int counter=0; counter<trace_lines.size(); counter++)
+		for(unsigned int counter=0; counter<trace_lines.size(); counter++)
 		{
 			trace_lines[counter]->Print(c);
 		}
