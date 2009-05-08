@@ -141,6 +141,10 @@ void ControlBar::createMenus()
 	connect(newScatterAction,SIGNAL(triggered()),this,SLOT(CreateNewPlotWindow()));
 	viewMenu->addAction(newScatterAction);
 
+	histoAction = new QAction(tr("Show Histogram"),this);
+	connect(histoAction, SIGNAL(triggered()), this, SLOT(showHistogram()));
+	viewMenu->addAction(histoAction);
+
 	viewMenu->addSeparator();
 
 	outlierAction = new QAction(tr("Show Outliers"), this);
@@ -417,6 +421,21 @@ void ControlBar::test(void)
 	chartView->Update();
 	chartView->Show();
 	*/
+}
+
+void ControlBar::showHistogram(void)
+{
+	QString fileName = QFileDialog::getOpenFileName(
+                             this, "Select Histogram file to open", lastPath,
+                             tr("XML (*.xml)"));
+
+    if(fileName != "")
+	{
+		lastPath = QFileInfo(fileName).absolutePath();
+
+		Histogram *histo = new Histogram(fileName.toStdString(), 5);	
+		histo->show();
+	}
 }
 
 //******************************************************************************

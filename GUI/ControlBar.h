@@ -42,6 +42,7 @@
 #include "TableWindow.h"
 #include "PlotWindow.h"
 #include "ImageBrowser5D.h"
+#include "Histogram.h"
 //#include "TableModel.h"
 //#include "TableView.h"
 
@@ -76,6 +77,7 @@ private slots:
 	void loadMetaResult(void);
 	void loadOutliers(void);
 	void saveResult(void);
+	void showHistogram(void);
 	void showOutliers();
 	void refreshViews();
 	void test(void);
@@ -130,6 +132,7 @@ private:
 	QAction *xmlAction;
 	QAction *metaAction;
 	QAction *testAction;
+	QAction *histoAction;
   QAction *exitAction;
 
 	QMenu *editMenu;

@@ -17,6 +17,7 @@ SET( GUI_SRCS
     #ObjectSelection.cpp
     #TableModel.cpp
     #TableView.cpp
+    Histogram.cpp
     ImageBrowser5D.cpp
 )
 
@@ -34,6 +35,7 @@ SET( GUI_HDRS
     #TableModel.h
     #AbstractModel.h
     #TableView.h
+    Histogram.h
     ImageBrowser5D.h
 )
 
