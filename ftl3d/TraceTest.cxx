@@ -15,7 +15,7 @@
 #include "itkImageFileWriter.h"
 #include "itkImageRegionIterator.h"
 #include "itkStatisticsImageFilter.h"
-#include "vnl\vnl_vector_fixed.h"
+#include <vnl/vnl_vector_fixed.h>
 
 #include "TraceContainer3D.h"
 #include "NodeContainer3D.h"
@@ -67,7 +67,7 @@ int main (int argc, char *argv[])
 		seg->ID = segID;	
 
 		SegInit *fitter = new SegInit();
-		bool ret = fitter->fitSE(image3D, *seg, 100, 1.35);
+		//bool ret = fitter->fitSE(image3D, *seg, 100, 1.35);
 		delete fitter;
 
 		NodeContainer3D::Pointer NodeList = NodeContainer3D::New();

@@ -2,33 +2,9 @@
 # Author: Amit Mukherjee
 cmake_minimum_required( VERSION 2.4)
 
-
-PROJECT ( Trace3D )
-
-FIND_PACKAGE(ITK)
-IF(ITK_FOUND)
-             INCLUDE(${ITK_USE_FILE})
-ELSE(ITK_FOUND)
-             MESSAGE(FATAL_ERROR
-             "Cannot build SETracing without ITK.  Please set ITK_DIR.")
-ENDIF(ITK_FOUND)
-
-FIND_PACKAGE(VTK)
-IF(VTK_FOUND)
-             INCLUDE(${VTK_USE_FILE})
-ELSE(VTK_FOUND)
-             MESSAGE(FATAL_ERROR "Cannot build without VTK.  Please set VTK_DIR.")
-ENDIF(VTK_FOUND)
-
-SET (XML_sources
-	tinystr.cpp
-	tinyxml.cpp
-	tinyxmlerror.cpp
-	tinyxmlparser.cpp
-	tinystr.h
-	tinyxml.h
-)	
-
+IF(COMMAND cmake_policy)
+  cmake_policy(SET CMP0003 NEW)
+ENDIF(COMMAND cmake_policy)
 
 
 SET ( Trace3D_sources
@@ -39,11 +15,9 @@ SET ( Trace3D_sources
       SeedPoint3D.cxx
       SeedContainer3D.cxx	      
       Trace.cxx
-      SegInit.cxx
       Seed2Seg.cxx
       NodeContainer3D.cxx
       TraceContainer3D.cxx
-    
 )
 
 SET ( Trace3D_headers 
@@ -60,19 +34,33 @@ SET ( Trace3D_headers
       ColorConsole.h
 )      
 
+SET ( Trace3D_libraries
+      ITKCommon
+      ITKIO
+      ITKNumerics
+      TinyXML   
+)
 
+ADD_EXECUTABLE ( TestTrace3D ${Trace3D_sources} ${Trace3D_headers} TraceTest.cxx )
+TARGET_LINK_LIBRARIES( TestTrace3D ${Trace3D_libraries})
 
-ADD_EXECUTABLE ( TestTrace3D ${Trace3D_sources} ${Trace3D_headers} ${XML_sources} TraceTest.cxx )
-TARGET_LINK_LIBRARIES( TestTrace3D ITKCommon ITKIO ITKNumerics)
-
-ADD_EXECUTABLE ( Trace3D ${Trace3D_sources} ${Trace3D_headers} ${XML_sources} TraceMain.cxx )
-TARGET_LINK_LIBRARIES( Trace3D ITKCommon ITKIO ITKNumerics)
+ADD_EXECUTABLE ( Trace3D ${Trace3D_sources} ${Trace3D_headers} TraceMain.cxx )
+TARGET_LINK_LIBRARIES( Trace3D ${Trace3D_libraries})
 
 ADD_EXECUTABLE ( RenderTraces Render.cxx TraceNode.h ${XML_sources})
-TARGET_LINK_LIBRARIES( RenderTraces ITKCommon ITKBasicFilters ITKIO ITKNumerics vtkRendering vtkIO 
-vtkCommon  vtksys vtkFiltering  vtkVolumeRendering )
+TARGET_LINK_LIBRARIES( RenderTraces
+                       ${Trace3D_libraries}
+                       ITKBasicFilters
+                       vtkRendering
+                       vtkIO 
+                       vtkCommon
+                       vtksys
+                       vtkFiltering
+                       vtkVolumeRendering
+)
 
-ADD_EXECUTABLE ( ConvertToSWC ConvertToSWC.cxx TraceNode.h ${XML_sources})
+ADD_EXECUTABLE ( ConvertToSWC ConvertToSWC.cxx TraceNode.h)
+TARGET_LINK_LIBRARIES( ConvertToSWC TinyXML )
 
 INSTALL( TARGETS TestTrace3D DESTINATION bin/ftl3d )
 INSTALL( TARGETS Trace3D DESTINATION bin/ftl3d )

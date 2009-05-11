@@ -26,8 +26,7 @@
 #include <vector>
 #include <algorithm>
 #include <cstdlib>
-#include "vnl\vnl_vector_fixed.h"
-
+#include <vnl/vnl_vector_fixed.h>
 
 #include "TVessel.h"
 #include "SegInit.h"

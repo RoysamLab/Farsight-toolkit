@@ -9,7 +9,7 @@
 #ifndef SEEDPOINT3D_H
 #define SEEDPOINT3D_H
 #include "itkImage.h"
-#include "vnl\vnl_vector_fixed.h"
+#include <vnl/vnl_vector_fixed.h>
 
 typedef vnl_vector_fixed<double,3> Vect3;
 typedef itk::Image<float, 3> ImageType3D;

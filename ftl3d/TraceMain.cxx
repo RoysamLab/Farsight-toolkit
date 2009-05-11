@@ -16,7 +16,7 @@
 #include "itkImageFileWriter.h"
 #include "itkImageRegionIterator.h"
 #include "itkStatisticsImageFilter.h"
-#include "vnl\vnl_vector_fixed.h"
+#include <vnl/vnl_vector_fixed.h>
 
 #include "TraceConfig.h"
 #include "SeedContainer3D.h"

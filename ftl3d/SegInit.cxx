@@ -397,7 +397,7 @@ bool SegInit::interp3DefBG(ImageType3D::Pointer  im, double * pF, TFacet * pFace
 	InterpolatorType::Pointer interp = InterpolatorType::New();
 	interp->SetInputImage(im);
 
-	int SUCCESS = 0;
+	//int SUCCESS = 0;
 	int i1,i2,i3;
 	double tx,ty,tz;
 	unsigned int inCount = 0, outCount = 0;
@@ -1620,3 +1620,4 @@ double SegInit::getMean(std::vector<double> arr)	{
 	}
 	return (mean/r);
 }
+

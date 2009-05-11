@@ -1,5 +1,5 @@
 #include "NodeContainer3D.h"
-#include "ColorConsole.h"
+//#include "ColorConsole.h"
 #include "myDebug.h"
 
 #define SHOWTRACEDIG 0
@@ -221,7 +221,8 @@ bool NodeContainer3D::IsInList(NodeContainerType& tlist,  long id)	{
 
 
 void NodeContainer3D::PrintSelf()	{
-	std::cout << std::endl << yellow << "Number of Nodes " << NodeList.size() << std::endl;
+	//std::cout << std::endl << yellow << "Number of Nodes " << NodeList.size() << std::endl;
+	std::cout << std::endl << "Number of Nodes " << NodeList.size() << std::endl;
 		NodeContainerType::iterator it;
 		for (it = NodeList.begin(); it != NodeList.end(); ++it)	{
 			std::cout << "ID:"<< (*it)->ID << " @ [" << (*it)->mu[0] <<"," << (*it)->mu[1] << "," << (*it)->mu[2] << "]   Nbrs: " ;
@@ -230,7 +231,8 @@ void NodeContainer3D::PrintSelf()	{
 			}
 			std::cout << std::endl;
 		}
-		std::cout << white << std::endl;
+		//std::cout << white << std::endl;
+		std::cout << std::endl;
 }
 
 
@@ -577,7 +579,7 @@ void NodeContainer3D::WriteSegmentsToXMLFile(std::string& fname) {
 		element->SetDoubleAttribute("Lhood", (*it)->L);
 		element->SetDoubleAttribute("MAD", (*it)->MAD);
 
-		for (int i=0; i<(*it)->numNbrs; i++) {
+		for (unsigned int i=0; i<(*it)->numNbrs; i++) {
 			TiXmlElement * nbr = new TiXmlElement( "Neighbors" );
 			nbr->SetAttribute("ID", (*it)->NbrID[i]);
 			element->LinkEndChild(nbr);

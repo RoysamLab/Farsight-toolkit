@@ -2,7 +2,8 @@
 #include "SegInit.h"
 
 #include "myDebug.h"
-#include "ColorConsole.h"
+//#include "ColorConsole.h"
+
 
 Trace::Trace() {
 	numNodes = 0;
@@ -41,12 +42,14 @@ Trace::~Trace() {
 }
 
 void Trace::PrintSelf()	{
-	std::cout << std::endl << red <<"TraceID: " << this->TraceID << " (" << this->numNodes << " elements)" <<std::endl;
+	//std::cout << std::endl << red <<"TraceID: " << this->TraceID << " (" << this->numNodes << " elements)" <<std::endl;
+	std::cout << std::endl << "TraceID: " << this->TraceID << " (" << this->numNodes << " elements)" <<std::endl;
 	std::cout << "Terminal Node IDs: [" << this->NodeAID << " , " << this->NodeBID << "]" <<std::endl;
 	std::cout << "dirA:[" << this->dirA[0] << ", " << this->dirA[1] << ", " <<this->dirA[2] << "] " \
 	          << "dirB:[" << this->dirB[0] << ", " << this->dirB[1] << ", " <<this->dirB[2] << "]" <<std::endl;
 	std::cout << "Likelihood: " << this->L/this->numNodes <<std::endl;
-	std::cout << white << std::endl;
+	//std::cout << white << std::endl;
+	std::cout << std::endl;
 }
 
 

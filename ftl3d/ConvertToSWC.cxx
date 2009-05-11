@@ -56,7 +56,7 @@ void WriteSWCFile(const std::string& SWCFilename, const std::vector<TraceNode*>&
 		std::vector<TraceNode*>::const_iterator fit = NodeContainer.begin();
 		for(fit = NodeContainer.begin(); fit < NodeContainer.end(); fit++)	{
 			if (reg[(*fit)->ID] == 0)	{
-				for (int i = 0; i < (*fit)->nbrID.size(); i++)	{
+				for (unsigned int i = 0; i < (*fit)->nbrID.size(); i++)	{
 					if (reg[(*fit)->nbrID[i]] != 0)	{
 						ID++;
 						swc << ID << " 10 " << (*fit)->loc[0] << " " << (*fit)->loc[1] << " " <<
@@ -77,7 +77,7 @@ void WriteSWCFile(const std::string& SWCFilename, const std::vector<TraceNode*>&
 		std::vector<TraceNode*>::const_reverse_iterator rit;
 		for(rit = NodeContainer.rbegin(); rit < NodeContainer.rend(); rit++)	{
 			if (reg[(*rit)->ID] == 0)	{
-				for (int i = 0; i < (*rit)->nbrID.size(); i++)	{
+				for (unsigned int i = 0; i < (*rit)->nbrID.size(); i++)	{
 					if (reg[(*rit)->nbrID[i]] != 0)	{
 						ID++;
 						swc << ID << " 10 " << (*rit)->loc[0] << " " << (*rit)->loc[1] << " " <<
