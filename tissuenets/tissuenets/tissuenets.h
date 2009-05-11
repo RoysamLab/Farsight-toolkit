@@ -50,7 +50,7 @@
 
 //Silinecek
 #include "vtkActor.h"
-#include "vtkGlyph3D.h"
+#include "vtkGlyph3D_.h"
 #include "vtkGlyphSource2D.h"
 #include "vtkGraph.h"
 #include "vtkGraphToPolyData.h"
@@ -109,7 +109,8 @@
 #include "vtkCallBackCommand.h"
 #include "vtkDataRepresentation.h"
 #include "vtkSelectionLink.h"
-#include "vtkSurfaceRepresentation.h"
+// Use our version of vtkSurfaceRepresentation
+#include "vtkSurfaceRepresentation_.h"
 #include "vtkVariant.h"
 
 #include <sstream>
@@ -162,8 +163,7 @@ public:
 
 	int numOfPasses; //Required for proper event handling
 	float cutoff;
-
-	void Haha() {cout<<"Hahaha"<<endl;};
+	
 	void RenderWin();
 	void Interact();
 	BioNet();
@@ -199,6 +199,9 @@ public:
 	SelectedVerticesAndEdges* GetSelections(vtkSelectionLink* p);
 	void InsertIntoMap(set<double>* vertices, double d);
 	void UpdateView();
+	void ListDistances1N();
+	void ListDistances2N();
+	void ListDegrees();
 	//void Kruskalmst();
 
 private:

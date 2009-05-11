@@ -33,7 +33,7 @@ bool BioNet::CycleDetected(set<int>* vertices, vtkIdType v) {
 // A helper-function that is used for computing averages for pyramidial region         /
 // The result is the average length of edges outgoing from each node in the graph      /
 // For undirected graphs (u,v) and (v,u) are the same edges. But in VTK they are not   /
-// Note also that this function can be used to produce averages too for pyramidials        /
+// Note also that this function can be used to produce averages too for pyramidials    /
 /**************************************************************************************/
 void BioNet::Averages() {
 
@@ -106,6 +106,146 @@ void BioNet::Averages() {
 
 }
 
+//
+// Computes distances(link lengths) from one cell to each of its neighbors 
+// and writes results into distances1N.txt
+void BioNet::ListDistances1N() {	
+	map<pair<int,int>, vtkEdgeType>::iterator it;
+	pair<int,int> key;
+	ofstream myfile ("distances1N.txt");
+	VTK_CREATE(vtkVertexListIterator, vertices);
+	VTK_CREATE(vtkOutEdgeIterator, outEdges);
+	g->GetVertices(vertices);
+	vtkOutEdgeType e;
+	if (myfile.is_open()) {
+		while (vertices->HasNext()) {
+			vtkIdType v = vertices->Next();			
+			g->GetOutEdges(v, outEdges);
+			set<int>* targetvertices=new set<int>(); //will be used for taking care of cycles. 
+													//Edge weights will be the same in a cycle
+			while (outEdges->HasNext()) {
+				e = outEdges->Next();
+				if (!CycleDetected(targetvertices, e.Target)) {
+					key= pair<int,int>(v,e.Target);
+					//edgeSourgeTargetToID[key]=edgeID;
+					it = edgeSourgeTargetToID.find(key);
+					if (it == edgeSourgeTargetToID.end()) {
+						// DO NOTHING
+						// (u,v) is not in the map, therefore we assume that it is not part of the graph
+						// We *assume* because in some cases there can be (u,v) and (v,u) together. But we have 
+						// actually only one edge since vtk will show these edges as a single edge	
+					} else myfile<< g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id) <<endl;						
+						
+				}
+			}
+		}
+		myfile.close();
+		cout<<"Distances from one cell to its neighbors has been written to distances1N.txt"<<endl<<endl;
+	} else cout << "Unable to open file to write distances";
+}
+
+//
+// Computes distances(link lengths) from one cell to each of its neighbors 
+// and writes results into distances1N.txt
+void BioNet::ListDistances2N() {
+/*	
+	map<pair<int,int>, vtkEdgeType>::iterator it;
+	pair<int,int> key;
+	ofstream myfile ("distances1N.txt");
+	VTK_CREATE(vtkVertexListIterator, vertices);
+	VTK_CREATE(vtkOutEdgeIterator, outEdges);
+	VTK_CREATE(vtkAdjacentVertexIterator, adjacentv);
+	VTK_CREATE(vtkAdjacentVertexIterator, adjacentw);
+	float distance;
+
+	g->GetVertices(vertices);
+	vtkOutEdgeType e;
+	if (myfile.is_open()) {
+		while (vertices->HasNext()) {
+			vtkIdType v = vertices->Next();
+			g->GetAdjacentVertices(v, adjacentv);
+			while (adjacentv->HasNext()){
+				vtkIdType w = adjacent->Next();
+				g->GetAdjacentVertices(w, adjacentw);
+				while (adjacentw->HasNext()){
+					vtkIdType z = adjacent->Next();
+					distance = (v,w) + (w,z);
+
+					subtotal+=g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id);
+
+
+
+
+
+
+
+
+
+
+			g->GetOutEdges(v, outEdges);
+			set<int>* targetvertices=new set<int>(); //will be used for taking care of cycles. 
+													//Edge weights will be the same in a cycle
+			while (outEdges->HasNext()) {
+				e = outEdges->Next();
+				if (!CycleDetected(targetvertices, e.Target)) {
+					key= pair<int,int>(v,e.Target);
+					//edgeSourgeTargetToID[key]=edgeID;
+					it = edgeSourgeTargetToID.find(key);
+					if (it == edgeSourgeTargetToID.end()) {
+						// DO NOTHING
+						// (u,v) is not in the map, therefore we assume that it is not part of the graph
+						// We *assume* because in some cases there can be (u,v) and (v,u) together. But we have 
+						// actually only one edge since vtk will show these edges as a single edge
+						//myfile<< g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id) <<endl;
+	
+					} else {
+						myfile<< g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id) <<endl;						
+						//cout<<"burda2 Iste "<<g->GetVertexData()->GetArray("Label")->GetTuple1(v);
+						//cout<<" "<<g->GetVertexData()->GetArray("Label")->GetTuple1(e.Target)<<endl;
+						//myfile<< g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id) <<endl;
+						//edgeSourgeTargetToID.erase(it);
+					}
+				}
+			}
+		}
+		myfile.close();
+		cout<<"Distances from one cell to its neighbors has been written to distances1N.txt"<<endl<<endl;
+	} else cout << "Unable to open file to write distances";
+
+	*/
+}
+
+
+//
+// Computes distances(link lengths) from one cell to each of its neighbors 
+// and writes results into distances1N.txt
+void BioNet::ListDegrees() {
+	int numEdges = 0;	
+
+	ofstream myfile ("degrees.txt");
+
+	VTK_CREATE(vtkVertexListIterator, vertices);
+	VTK_CREATE(vtkOutEdgeIterator, outEdges);
+	g->GetVertices(vertices);
+	vtkOutEdgeType e;
+	if (myfile.is_open()) {
+		while (vertices->HasNext()) {
+			vtkIdType v = vertices->Next();
+			g->GetOutEdges(v, outEdges);
+			myfile << g->GetVertexData()->GetArray("Label")->GetTuple1(v) <<" ";
+			
+			while (outEdges->HasNext()) {
+				e = outEdges->Next();
+				numEdges++;
+			}
+			myfile<< numEdges<<endl;
+			numEdges = 0;
+		}
+		myfile.close();
+		cout<<"Degrees of each cell has been written to degrees.txt"<<endl;
+	} else cout << "Unable to open file to write distances";
+}
+
 // Description:
 // Constructs a graph from a given XGMML file
 bool BioNet::ReadXGMML(char* graphFileName, float n) {
@@ -140,6 +280,7 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 //		xmlChar *source=(xmlChar*)"source";
 //		xmlChar *target=(xmlChar*)"target";	
 	vtkIdType iID,iX,iY,iZ; // used for graph coordinates
+	float fX,fY,fZ;
 	vtkIdType isource, itarget; //used for defining graph edges
 	double iweight; 
 	int e=0;    
@@ -186,6 +327,24 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 	int mic=0;
 	channelColors = SetColorCode();
 	//doc = xmlParseFile(graphFileName);
+	g->GetVertexData()->AddArray(labels);
+	g->GetVertexData()->AddArray(vertexIDs);
+	g->GetVertexData()->SetPedigreeIds(vertexIDs2);
+	g->GetVertexData()->AddArray(colorCodeArr);
+	//Add edge weights
+	g->GetEdgeData()->AddArray(edgeWeightsArr);
+	//Add Edge colors
+	g->GetEdgeData()->AddArray(edgeColors);
+
+	// Edge Ids are required for displaying and updating networks
+	g->GetEdgeData()->AddArray(edgeIDs);
+	//g->GetVertexData()->AddArray(vertexIDs);
+
+	//g->GetVertexData()->SetPedigreeIds(vertexIDs2);
+	g->GetEdgeData()->SetPedigreeIds(edgeIDs2);
+
+	ofstream myfile ("xyz.txt");
+
    while(levelOneElement) {
 	   nodeName = levelOneElement->Value();	   
 
@@ -207,7 +366,7 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
         if (strcmp(nodeName,"node") == 0)			
           {
           if(levelTwoElement->QueryIntAttribute("id", (int *)&iID) != TIXML_SUCCESS)
-            {
+            {				
             cerr << "ERROR: encountered a node with no ID" << endl;
             return false;
             }
@@ -216,21 +375,24 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
             {
             cerr << "ERROR: encountered a node with no child element" << endl;
             }
-          if(levelThreeElement->QueryIntAttribute("x", (int *)&iX) != TIXML_SUCCESS)
+		  if(levelThreeElement->QueryFloatAttribute("x", (float *)&fX) != TIXML_SUCCESS)
             {
             cerr << "ERROR: graphics element with no X value" << endl;
             return false;
             }
-          if(levelThreeElement->QueryIntAttribute("y", (int *)&iY) != TIXML_SUCCESS)
+          if(levelThreeElement->QueryFloatAttribute("y", (float *)&fY) != TIXML_SUCCESS)
             {
             cerr << "ERROR: graphics element with no Y value" << endl;
             return false;
             }
-          if(levelThreeElement->QueryIntAttribute("z", (int *)&iZ) != TIXML_SUCCESS)
+          if(levelThreeElement->QueryFloatAttribute("z", (float *)&fZ) != TIXML_SUCCESS)
             {
             cerr << "ERROR: graphics element with no Z value" << endl;
             return false;
             }
+
+		    myfile<<fX<<" "<<fY<<" "<<fZ<<endl;
+
 
 
 //		if (strcmp(nodeName,"graph") == 0) {
@@ -269,7 +431,8 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 					//Set the colors of vertices
 					colorCodeArr->InsertValue(i,channelColors[label[0]]);
 					i++;
-					pts->InsertPoint(vertexID,iX,iY,iZ);
+					pts->InsertPoint(vertexID,fX,fY,fZ);
+					//pts->InsertPoint(vertexID,iX,iY,iZ);
 				} else if (strcmp(nodeName,"edge")== 0) {
 					if (e == 0) g->SetPoints(pts);
 					if(levelTwoElement->QueryIntAttribute("source", (int *)&isource) != TIXML_SUCCESS) 
@@ -297,9 +460,19 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 					//iweight = atof(cweight);
 
 					// Use the following if edge lengths are required for histograms
-					// cout<<iweight<<endl;
+					
+					key= pair<int,int>(vertexNodeLabelToID[itarget], vertexNodeLabelToID[isource]);
+						//edgeSourgeTargetToID[key]=edgeID;
+					if (edgeSourgeTargetToID.find(key) == edgeSourgeTargetToID.end()) {
+						
 
 					if (n == -1) {
+
+						//g->GetEdgeData()->GetArray("EdgeIDs")->GetT; 
+						//edgeSourgeTargetToID[key]=edgeID;
+						
+
+
 						//Add this edge to the graph	
 						edgeID=g->AddEdge(vertexNodeLabelToID[isource],vertexNodeLabelToID[itarget]);
 						//Edge ids have to be string since we later use vtkSurfaceRepresentation for spheres.
@@ -319,7 +492,7 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 						edgeColors->InsertValue(e,0);
 						avg = avg + iweight;  // average of edge weights is needed for pyramidial region
 						e++;
-					} else if (iweight < n) { // n is distance which is the first parameter to the program
+					} else if (iweight <= n) { // n is distance which is the first parameter to the program
 						
 						edgeID=g->AddEdge(vertexNodeLabelToID[isource],vertexNodeLabelToID[itarget]);
 						//Edge ids have to be string since we later use vtkSurfaceRepresentation for spheres.
@@ -338,8 +511,13 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 						edgeSourgeTargetToID[key]=edgeID;
 						edgeColors->InsertValue(e,0);
 						avg = avg + iweight;  // average of edge weights is needed for pyramidial region
-						e++;}
+						e++;
+					
+						cout<<"Source ID , Target ID , Distance "<<endl;
+						cout<<isource<<","<<itarget<<","<<iweight<<endl;
 
+					}
+					}
 
 
 
@@ -367,20 +545,20 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 	//xmlSaveFile("xmlfile_copy.xml", doc);
 	//xmlFreeDoc(doc);
 	//Ad vertex ids
-	g->GetVertexData()->AddArray(labels);
+//	g->GetVertexData()->AddArray(labels);
 	//Add object colors
-	g->GetVertexData()->AddArray(colorCodeArr);
+	//g->GetVertexData()->AddArray(colorCodeArr);
 	//Ad edge weights
-	g->GetEdgeData()->AddArray(edgeWeightsArr);
+	//g->GetEdgeData()->AddArray(edgeWeightsArr);
 	//Add Edge colors
-	g->GetEdgeData()->AddArray(edgeColors);
+	//g->GetEdgeData()->AddArray(edgeColors);
 
 	// Edge Ids are required for displaying and updating networks
-	g->GetEdgeData()->AddArray(edgeIDs);
-	g->GetVertexData()->AddArray(vertexIDs);
+	//g->GetEdgeData()->AddArray(edgeIDs);
+	//g->GetVertexData()->AddArray(vertexIDs);
 
-	g->GetVertexData()->SetPedigreeIds(vertexIDs2);
-	g->GetEdgeData()->SetPedigreeIds(edgeIDs2);
+	//g->GetVertexData()->SetPedigreeIds(vertexIDs2);
+	//g->GetEdgeData()->SetPedigreeIds(edgeIDs2);
 	//edgeIDs->SetName("EdgeIDs");
 	return true;
 	
@@ -441,7 +619,9 @@ void BioNet::Display(vtkRenderView* ren, vtkAlgorithm* alg,
   VTK_CREATE(vtkSphereSource, sphere);
   sphere->SetThetaResolution(8); sphere->SetPhiResolution(8);
   sphere->SetRadius(4);
+  
   vertexGlyph->SetInputConnection(1, sphere->GetOutputPort());
+  //vertexGlyph->S
   //
 
 
@@ -1323,7 +1503,13 @@ int main(int argc, char *argv[])
 
 	if (stdMst == 2) {
 		network->cutoff=cutoff;
+		//Compute pyramidal region and average edge lengths
 		network->Averages();
+		//Compute edge lengths for from one cell to only 1Neighbor
+		network->ListDistances1N();
+		//Compute degrees of eacg node
+		network->ListDegrees();
+
 		network->Display(network->GetRenderView(), degree,0, 0, "ChannelColors", 0, 5,"EdgeColors");
 	} else if (stdMst == 1) {
 		// We remove parts that require classes from the nightly release version of VTK
