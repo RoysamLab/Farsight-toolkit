@@ -177,9 +177,9 @@ public:
 	///////////////////////////////
 	// Data.
 
+	int m_iSlices;
 	int m_iRows;				// number of rows in an image
 	int m_iCols;				// number of cols in an image
-	int m_iSlices;
 	int m_iPadding;
 	unsigned char*** data;	// image data array 
 	PgmPic type;

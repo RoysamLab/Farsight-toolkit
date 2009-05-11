@@ -84,7 +84,7 @@ main(  int argc, char* argv[] )
   //
   fregl_space_transformer space_transformer(joint_register);
   
-  bool in_anchor = false;
+  //bool in_anchor = false;
   space_transformer.set_anchor( arg_anchor(), arg_in_anchor(), arg_overlap() );
   ImageType::Pointer final_image = ImageType::New();
 

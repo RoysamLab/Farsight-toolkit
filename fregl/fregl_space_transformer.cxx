@@ -673,7 +673,7 @@ set_individual_weight_map(int index, ImageType::Pointer image, float alpha)
   typedef itk::ImageRegionIterator< ImageType2D > RegionIterator2D;
   typedef itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
 
-  float sigma = 1.0;
+  //float sigma = 1.0;
   ImageType2D::Pointer max_image = max_projection( image );
   std::vector<TransformType::Pointer> xforms = xforms_from_neighbors( index );
   ImageType2D::Pointer weight_image = ImageType2D::New();
@@ -1009,7 +1009,7 @@ read_xml(std::string const & filename, std::string& montage_directory,
   montage_2d_name = root_element->Attribute("montage_2D_proj_image");
   std::string anchor_image_name = root_element->Attribute("anchor");
   std::string in_anchor_str = root_element->Attribute("in_anchor_space");
-  int channel = atoi(root_element->Attribute("channel")); // not used for now
+  //int channel = atoi(root_element->Attribute("channel")); // not used for now
     
   bool in_anchor;
   if ( in_anchor_str == "yes") in_anchor = true;

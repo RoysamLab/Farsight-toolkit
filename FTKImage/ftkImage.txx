@@ -152,7 +152,7 @@ template <typename newType> void Image::Cast()
 		for (int ch=0; ch<m_Info.numChannels; ++ch)
 		{
 			//Cast existing data to a char for access
-			char *p = static_cast<char *>(imageDataPtrs[t][ch].mem);	//any 8-bit type works here
+			//char *p = static_cast<char *>(imageDataPtrs[t][ch].mem);	//any 8-bit type works here
 			
 			//Create a new array of the new type to put data into
 			newType *newArray = new newType[numBytes];

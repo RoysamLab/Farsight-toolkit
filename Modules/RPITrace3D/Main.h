@@ -1,4 +1,4 @@
-#pragma warning(disable:4786)
+//#pragma warning(disable:4786)
 
 #ifndef main_h
 #define main_h

@@ -76,3 +76,4 @@ return 0;
 	ObjAssoc->WriteAssociativeFeaturesToXML(outXMLFname.c_str());
 	return 1;
 }
+

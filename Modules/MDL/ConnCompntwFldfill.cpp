@@ -1,9 +1,9 @@
 /*  Compute Connected Component with Flood filling method
-/*  DepthFirstSearch may cause stack overflow for large
-/*  datasets
-/*  Windows version, taken in from Linux version
-/*   Author: Xiaosong Yuan, RPI
-/*  Modified on Oct. 2, 2005                 */
+ *  DepthFirstSearch may cause stack overflow for large
+ *  datasets
+ *  Windows version, taken in from Linux version
+ *   Author: Xiaosong Yuan, RPI
+ *  Modified on Oct. 2, 2005                 */
 
 
 #include <stdlib.h>
@@ -65,16 +65,12 @@ int main(int argc, char *argv[])
 	FILE *outfile;
 	char *infilename = new char[80];
 	char *outfilename = new char[80];
-	int i,j,k, t;
-	int ii, jj, kk;
-	int NearObjFlag;
+	int i,j,k;
+	//int ii, jj, kk;
+	//int NearObjFlag;
 	DATATYPEOUT *volout;
-	long idx, iidx;
+	long idx;
 	float ThresCompVoxels;
-	int kmod8, kdiv8;
-	int FlagIsolated;
-	int NumConnectComp;
-	DATATYPEOUT blockMax;
 	int vertHistComp[100000];
 
 	infilename = argv[1];
@@ -217,7 +213,7 @@ void spread(Position pos, int startx, int endx, int direction)
 	Position pos1; // in a new row
 	int newy, newz;
 	int startx0, endx0;
-	int startx1, endx1;
+	int startx1;
 	int laststartx;
 
 	switch (direction)

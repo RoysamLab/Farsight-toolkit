@@ -78,11 +78,11 @@ double compute_Q(C3DImage * VesselnessImage, double alpha)
 	// now get the coverage term
 	double term1 = 0.0;
 	double p_x_given_m = 0.0;
-	double const_term = 1 / sqrt(2*3.142*1.0);
+	//double const_term = 1 / sqrt(2*3.142*1.0);
 	double sample_value = 0.0;
-	double asymptotic_dl = 0.0;
-	double min_prob = 1.0 - (254.0/255.0);
-	double max_prob = 254.0 / 255.0;
+	//double asymptotic_dl = 0.0;
+	//double min_prob = 1.0 - (254.0/255.0);
+	//double max_prob = 254.0 / 255.0;
 
 	int iPadding = gConfig.GetImagePadding();
 

@@ -144,8 +144,8 @@ void NuclearSegmentation::LoadAssociationsFromFile(std::string fName)
 	}
 
 	std::string source = rootElement->Attribute("SegmentationSource");
-	int numMeasures = atoi( rootElement->Attribute("NumberOfAssociativeMeasures") );
-	int numObjects = atoi( rootElement->Attribute("NumberOfObjects") );
+	//int numMeasures = atoi( rootElement->Attribute("NumberOfAssociativeMeasures") );
+	unsigned int numObjects = atoi( rootElement->Attribute("NumberOfObjects") );
 
 	if( numObjects != myObjects.size() )
 		return;
@@ -213,7 +213,6 @@ void NuclearSegmentation::LoadClassInfoFromFile( std::string fName )
 	//std::map< int, int > classNumber; 
 	std::vector<int> classNumber;
 	inFile.getline(line, MAXLINESIZE);
-	int id;
 	while ( !inFile.eof() ) //Get all rows
 	{
 		char * pch = strtok (line," \t\n");
@@ -244,7 +243,7 @@ void NuclearSegmentation::LoadClassInfoFromFile( std::string fName )
 
 	std::set<int> classList;
 	std::set<int>::iterator it;
-	for(int i=0; i<objects->size(); ++i)
+	for(unsigned int i=0; i<objects->size(); ++i)
 	{
 		int c = classNumber.at(i);
 
@@ -1005,8 +1004,9 @@ int NuclearSegmentation::RunGraphColoring(const char* filename)
 		labelImage->LoadFile(PrependProjectPath(resultFilenames[0]));
 		std::cout<<"done!"<<endl;
 	}
-    int*** labs_im;
-    int max_lab,ncolors;
+    //int*** labs_im;
+    int max_lab;
+    //int ncolors;
     int** RAG;    
     int* ColorOut;        
 	int L, L1, L2, L3, L4, L5, L6, L7;

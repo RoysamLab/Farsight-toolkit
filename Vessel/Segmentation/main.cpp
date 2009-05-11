@@ -73,7 +73,7 @@ void ParseArguments(int argc, char **argv)
 	for (int counter=2; counter<argc; counter++)
 	{
 		istringstream s(argv[counter]);
-		char name[100];
+		//char name[100];
 		char ch;
 		int d;
 		sscanf(argv[counter],"%c=%d",&ch,&d);
@@ -117,17 +117,17 @@ void set_limits(int &zl, int &zu, int &yl, int &yu, int &xl, int&xu,int argc, ch
 }
 int main(int argc, char**argv)
 {
-	time_t t1,t2;
+	time_t t1;
 	t1 = time(NULL);
 	unsigned char * raster;
-	unsigned char *maxintensity;
+	//unsigned char *maxintensity;
 	unsigned int rwidth,rlength,rdepth;
 	// pic file name
 
 	printf("%d\n",argc);
 	//if(argc >2)
 	//	ParseArguments(argc,argv);
-	char picfile[1024];// dont segfault me plz!
+	//char picfile[1024];// dont segfault me plz!
 	//printf("%s\n",argv[1]);
 	char filenamebuff[1024];//="vessel.pic";
 //	sprintf(filenamebuff,"%s.pic",argv[1]);
@@ -211,32 +211,32 @@ int main(int argc, char**argv)
 	vector <data> queuep;
 	queuep.reserve(200000);
 	int neighbors[26][3] = {
-		-1,    -1,    -1,
-			-1,     0,    -1,
-			-1,     1,    -1,
-			0,    -1,    -1,
-			0,     0,    -1,
-			0,     1,    -1,
-			1,    -1,    -1,
-			1,     0,    -1,
-			1,     1,    -1,
-			-1,    -1,     0,
-			-1,     0,     0,
-			-1,     1,     0,
-			0,    -1,     0,
-			0,     1,     0,
-			1,    -1,     0,
-			1,     0,     0,
-			1,     1,     0,
-			-1,    -1,     1,
-			-1,     0,     1,
-			-1,     1,     1,
-			0,    -1,     1,
-			0,     0,     1,
-			0,     1,     1,
-			1,    -1,     1,
-			1,     0,     1,
-			1,     1,     1
+		{-1,    -1,    -1},
+		{	-1,     0,    -1},
+		{	-1,     1,    -1},
+		{	0,    -1,    -1},
+		{	0,     0,    -1},
+		{	0,     1,    -1},
+		{	1,    -1,    -1},
+		{	1,     0,    -1},
+		{	1,     1,    -1},
+		{	-1,    -1,     0},
+		{	-1,     0,     0},
+		{	-1,     1,     0},
+		{	0,    -1,     0},
+		{	0,     1,     0},
+		{	1,    -1,     0},
+		{	1,     0,     0},
+		{	1,     1,     0},
+		{	-1,    -1,     1},
+		{	-1,     0,     1},
+		{	-1,     1,     1},
+		{	0,    -1,     1},
+		{	0,     0,     1},
+		{	0,     1,     1},
+		{	1,    -1,     1},
+		{	1,     0,     1},
+		{	1,     1,     1}
 	};
 
 	int zl = 0,zu=rdepth-1,yl=gridy*(rlength/gridsize_y),yu=(gridy+1)*(rlength/gridsize_y)-1,xl=gridx*(rwidth/gridsize_x),xu=(gridx+1)*(rwidth/gridsize_x)-1;
@@ -319,31 +319,33 @@ int main(int argc, char**argv)
 			printf("Did I come till epsilon?\n");
 			// continue adding more variables
 			//						double alpha1 = 0.3;
-			double epsilon = 1e-2;
+			//double epsilon = 1e-2;
 
-			double scaling_matrix[] = {window1, window, window};
+			//double scaling_matrix[] = {window1, window, window};
 
-			double planes_21[21][3]= { 1, 0, -1,
-				1, 0, 1,
-				1, -1, 0,
-				1, 1, 0,
-				0, 1, 1,
-				0, -1, 1,
-				1, 0, 0,
-				0, 1, 0,
-				0, 0, 1,
-				0.5, 0.5, 1,
-				0.5, -0.5, 1,
-				-0.5, -0.5, 1,
-				-0.5, 0.5, 1,
-				1, 0.5, 0.5,
-				1, 0.5, -0.5,
-				1, -0.5, 0.5,
-				1, -0.5, -0.5,
-				0.5, 1, 0.5,
-				-0.5, 1, 0.5,
-				0.5, 1, -0.5,
-				-0.5, 1, -0.5};
+			double planes_21[21][3]= {
+        {1, 0, -1},
+				{1, 0, 1},
+				{1, -1, 0},
+				{1, 1, 0},
+				{0, 1, 1},
+				{0, -1, 1},
+				{1, 0, 0},
+				{0, 1, 0},
+				{0, 0, 1},
+				{0.5, 0.5, 1},
+				{0.5, -0.5, 1},
+				{-0.5, -0.5, 1},
+				{-0.5, 0.5, 1},
+				{1, 0.5, 0.5},
+				{1, 0.5, -0.5},
+				{1, -0.5, 0.5},
+				{1, -0.5, -0.5},
+				{0.5, 1, 0.5},
+				{-0.5, 1, 0.5},
+				{0.5, 1, -0.5},
+				{-0.5, 1, -0.5}
+        };
 
 			// Reflect and store in a new array
 			for(int counter = 0; counter < 21; counter++)
@@ -384,7 +386,7 @@ int main(int argc, char**argv)
 						double L1 = -5000000;
 						double L;
 						double amax,bmax,cmax;
-						int pcount =0;
+						//int pcount =0;
 						int pccn =0;
 
 						for(int wz=-window1;wz<=window1;wz++)
@@ -507,7 +509,7 @@ int main(int argc, char**argv)
 							}
 							L(coz,coy,cox)=L1;
 							//compute L2 for the point
-							double L2 = 0;
+							//double L2 = 0;
 
 						}
 						else
@@ -518,7 +520,7 @@ int main(int argc, char**argv)
 						}
 					}
 					printf("%s: %d coz\n",filenamebuff,coz);
-					printf("%s: %d seconds have elapsed since starting\n",filenamebuff, time(NULL)-t1);
+					printf("%s: %ld seconds have elapsed since starting\n",filenamebuff, time(NULL)-t1);
 					fflush(stdout);
 			}
 			// now start with seeds and expand at all places again
@@ -530,13 +532,13 @@ int main(int argc, char**argv)
 			while(1)
 			{
 				pc++;
-				if(pc == queuep.size())
+				if((unsigned int)pc == queuep.size())
 					break;
 				data seedp = queuep[pc];
 				assert(M(seedp.z,seedp.y,seedp.x)>0);
 				int l1 = M(seedp.z,seedp.y,seedp.x);
 
-				double l2 = L(seedp.z,seedp.y,seedp.x);
+				//double l2 = L(seedp.z,seedp.y,seedp.x);
 
 				for (int co = 0; co<26; co++) // 3x3x3 neighbors
 				{
@@ -569,8 +571,8 @@ int main(int argc, char**argv)
 					{
 						if(C(coz,coy,cox)==1)
 						{
-							int minimum_x=MAX(1,cox-window),minimum_y=MAX(1,coy-window),minimum_z=MAX(1,coz-window1);
-							int maximum_x=MIN(rwidth/gridsize_x,cox+1-window),maximum_y=MIN(rlength/gridsize_y,coy+1-window),maximum_z=MIN(rdepth,coz+1-window1);
+							//int minimum_x=MAX(1,cox-window),minimum_y=MAX(1,coy-window),minimum_z=MAX(1,coz-window1);
+							//int maximum_x=MIN(rwidth/gridsize_x,cox+1-window),maximum_y=MIN(rlength/gridsize_y,coy+1-window),maximum_z=MIN(rdepth,coz+1-window1);
 
 							for(int cx = cox+1-window;cx<=cox+1-window;cx++)
 								for(int cy = coy+1-window;cy<=coy+1-window;cy++)
@@ -663,6 +665,6 @@ int main(int argc, char**argv)
 			free(l2matrix);
 			free(raster);
 			fclose(fp);
-			printf("%d seconds \n",time(NULL)-t1);
+			printf("%ld seconds \n",time(NULL)-t1);
 			return 0;
 }

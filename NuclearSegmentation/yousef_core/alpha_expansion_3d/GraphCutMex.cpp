@@ -173,7 +173,7 @@ void GraphCutMex(GCoptimization *MyGraph, char mode, int* seg_im, int iter)
  
     switch (mode) {
         case 'c': /* close */
-            delete MyGraph; /* ->~GCoptimization(); /* explicitly call the destructor */
+            delete MyGraph; /* ->~GCoptimization(); explicitly call the destructor */
             MyGraph = NULL;
             break;
         case 's': /* set labels */

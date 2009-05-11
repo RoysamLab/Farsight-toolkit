@@ -39,7 +39,7 @@ GCoptimization * GraphCut3dConstr(float* ContrastIn, float* DataCostIn, float* S
     Graph::captype *DataCost;
     Graph::captype *SmoothnessCost;
     Graph::captype *Contrast = NULL;
-    GCoptimization::LabelType *Labels;
+    //GCoptimization::LabelType *Labels;
     GCoptimization::PixelType R, C, Z; 
     
     GCoptimization *MyGraph = NULL;
@@ -53,8 +53,8 @@ GCoptimization * GraphCut3dConstr(float* ContrastIn, float* DataCostIn, float* S
 	SmoothnessCost = (Graph::captype*)SmoothnessCostIn;
 
 	Contrast = (Graph::captype*)ContrastIn;
-	int uu1 = sizeof(ContrastIn[1]);
-	int uu2 = sizeof(Contrast[1]);
+	//int uu1 = sizeof(ContrastIn[1]);
+	//int uu2 = sizeof(Contrast[1]);
 
     
     MyGraph = new GCoptimization(R*C*Z, num_labels, SET_ALL_AT_ONCE, SET_ALL_AT_ONCE);

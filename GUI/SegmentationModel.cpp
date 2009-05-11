@@ -112,7 +112,7 @@ void SegmentationModel::SetOutliers( vector<int> outs )
         //model->setItem(row, columnForOutliers, item);         
 	}
 
-	for(int i = 0; i < outs.size(); ++i)				  //Set outliers to 1
+	for(unsigned int i = 0; i < outs.size(); ++i)				  //Set outliers to 1
 	{
 		int row = RowForID( outs.at(i) );
 		model->setData(model->index(row, columnForOutliers), o);
@@ -150,7 +150,7 @@ void SegmentationModel::UpdateColors(void)
 	{
 		int clss = model->data(model->index(r,columnForColor)).toInt();
 		bool found = false;
-		for(int c=0; c<classId.size(); ++c)
+		for(unsigned int c=0; c<classId.size(); ++c)
 		{
 			if(classId[c] == clss)
 			{
@@ -169,7 +169,7 @@ void SegmentationModel::UpdateColors(void)
 	//Now assign colors to the classes
 	QColor color[5]  = {Qt::cyan, Qt::magenta, Qt::red, Qt::blue, Qt::green};
 	colorMap.clear();
-	for(int c=0; c<classId.size(); ++c)
+	for(unsigned int c=0; c<classId.size(); ++c)
 	{
 		colorMap.insert(classId[c],color[c]);
 	}
@@ -236,7 +236,7 @@ void SegmentationModel::deleteTrigger()
 	if( nucseg->Delete(ids) )
 	{
 		//Remove from table
-		for (int id=0; id<ids.size(); ++id)
+		for (unsigned int id=0; id<ids.size(); ++id)
 		{
 			int row = RowForID( ids.at(id) );
 			QList<QStandardItem *> items = model->takeRow(row);
@@ -267,9 +267,9 @@ void SegmentationModel::mergeTrigger()
 
 		//Go through previous ids and look for neighbors, not 100% working, but works in most cases (may leave orphans that should be merged)
 		bool found = false;
-		for( int group = 0; group < ids.size(); group++)
+		for( unsigned int group = 0; group < ids.size(); group++)
 		{
-			for (int m = 0; m < ids.at(group).size(); m++)
+			for (unsigned int m = 0; m < ids.at(group).size(); m++)
 			{
 				ftk::Object *o1 = segResult->GetObjectPtr( ids.at(group).at(m) );
 				ftk::Object *o2 = segResult->GetObjectPtr( id );
@@ -312,7 +312,7 @@ void SegmentationModel::mergeTrigger()
 #ifdef BUILD_NUCLEI
 	ftk::NuclearSegmentation *nucseg = (ftk::NuclearSegmentation*)segResult;
 	//Attempt Merge:
-	for(int group = 0; group < ids.size(); ++group)
+	for(unsigned int group = 0; group < ids.size(); ++group)
 	{
 		if(ids.at(group).size() <= 1)
 			return;
@@ -321,7 +321,7 @@ void SegmentationModel::mergeTrigger()
 		if( newID )
 		{
 			//Remove from table merged IDs
-			for (int id=0; id < ids.at(group).size(); ++id)
+			for (unsigned int id=0; id < ids.at(group).size(); ++id)
 			{
 				int row = RowForID( ids.at(group).at(id) );
 				QList<QStandardItem *> items = model->takeRow(row);

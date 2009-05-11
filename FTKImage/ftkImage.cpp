@@ -355,8 +355,6 @@ Image::VtkImagePtr Image::GetVtkPtr(int T, int CH, PtrMode mode)
 	imageData->SetSpacing(m_Info.spacing.at(0), m_Info.spacing.at(1), m_Info.spacing.at(2));
 	imageData->SetOrigin(0.0, 0.0, 0.0);
 
-	int type = imageData->GetScalarType();
-
 	return imageData;
 }
 

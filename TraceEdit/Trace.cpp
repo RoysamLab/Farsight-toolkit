@@ -1,5 +1,5 @@
 #include "Trace.h"
-#pragma warning(disable:4996)
+//#pragma warning(disable:4996)
 
 bool TraceObject::ReadFromFeatureTracksFileForKymograph(char *filename,int type_offset=0)
 {
@@ -106,7 +106,8 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 		if(buff[pc]=='#') // ignoring comment lines for now. We have to read scale from it! TODO
 			continue;
 
-		sscanf(buff,"%d %d %*lf %*lf %*lf %*lf %d",&id,&type,&parent);
+		sscanf(buff,"%d %d %*f %*f %*f %*f %d",&id,&type,&parent);
+		//sscanf(buff,"%d %d %*lf %*lf %*lf %*lf %d",&id,&type,&parent);
 		tc++;
 		//printf("%d\n",id);
 		if(id>max_id)//find max id
@@ -598,7 +599,7 @@ void TraceObject::splitTrace(int selectedCellId)
     selectedLine->GetMarkers()->begin(); 
   for(; markerItr != selectedLine->GetMarkers()->end() && bitItr != selectedLine->GetTraceBitIteratorEnd(); markerItr++)
     {
-    if(*markerItr == selectedCellId)
+    if(*markerItr == (unsigned int)selectedCellId)
       {
       break;
       }
@@ -608,7 +609,7 @@ void TraceObject::splitTrace(int selectedCellId)
   //some TraceLines have an equal number of cells and markers, whereas
   //other lines have one extra cell.  We have to treat these cases separately
   //to achieve consistent results.
-  if(selectedLine->GetSize() > selectedLine->GetMarkers()->size())
+  if((unsigned int)selectedLine->GetSize() > selectedLine->GetMarkers()->size())
     {
     bitItr++;
     }
@@ -939,7 +940,7 @@ vtkSmartPointer<vtkPolyData> TraceObject::generateBranchIllustrator()
 	VTK_CREATE(vtkCellArray, cells);
 	
 
-	printf("TraceLines size = %d\n",trace_lines.size());
+	printf("TraceLines size = %d\n",(int)trace_lines.size());
 	for(unsigned int counter=0; counter< trace_lines.size(); counter++)
 	{
 		CollectBranchPointsRecursive(p,cells,trace_lines[counter]);
@@ -988,7 +989,7 @@ void TraceLine::Getstats()
 	YB= m_trace_bits.back().y;
 	ZF= m_trace_bits.front().z;
 	ZB= m_trace_bits.back().z;
-	printf("Trace # %d \t Trace Size: \t %d ", m_id, m_trace_bits.size());
+	printf("Trace # %d \t Trace Size: \t %d ", m_id, (int)m_trace_bits.size());
 	printf("First bit x: %4.2f y: %4.2f z: %4.2f \t", XF, YF, ZF); 
 	printf("Endt bit x: %4.2f y: %4.2f z: %4.2f \n", XB, YB, ZB); 
 

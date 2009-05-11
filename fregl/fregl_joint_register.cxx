@@ -178,6 +178,7 @@ build_graph(int anchor, bool mutual_consistency)
     breadth_first_connect( anchor );
     return true;
   }
+  return false;
 }
 
 fregl_joint_register::TransformType::Pointer 
@@ -280,7 +281,7 @@ breadth_first_connect( int anchor )
   // check if all transforms are set for this reference image
   bool all_explored = true;
   for (unsigned int i = 0; i<transforms_.rows(); i++) {
-    if (i != anchor && !transforms_(i, anchor)) 
+    if (i != (unsigned int)anchor && !transforms_(i, anchor)) 
       all_explored  = false;
   }
   if (all_explored) return;
@@ -294,7 +295,7 @@ breadth_first_connect( int anchor )
   while (!all_explored) {
     //check for new connections which are not yet explored
     for (unsigned int i = 0; i<transforms_.rows(); i++) {
-      if (anchor != i && transforms_(i,anchor) && !explored[i]) {
+      if ((unsigned int)anchor != i && transforms_(i,anchor) && !explored[i]) {
         connected.push_back(i);
       }
     }
@@ -309,7 +310,7 @@ breadth_first_connect( int anchor )
       int from_index = connected.back();
       connected.pop_back();
       for (unsigned int i = 0; i<transforms_.rows(); i++) {
-        if ( i == anchor || i == from_index ) continue;
+        if ( i == (unsigned int)anchor || i == (unsigned int)from_index ) continue;
 
         if (transforms_(i,from_index) && !transforms_(i,anchor)) {
           transforms_(i,anchor) = TransformType::New();
@@ -338,12 +339,12 @@ estimate(int anchor)
   //
   int X_D_dim = 0, X_I_dim = 0;
   for (unsigned int i = 0; i<image_ids_.size(); i++) {
-    if (i == anchor) continue;
+    if (i == (unsigned int)anchor) continue;
 
     if (pairwise_constraints_[i][anchor].size() > 0)
       X_D_dim += pairwise_constraints_[i][anchor].size();
     for (unsigned int j = i+1; j<image_ids_.size(); j++) {
-      if (j == anchor) continue;
+      if (j == (unsigned int)anchor) continue;
       if (pairwise_constraints_[i][j].size() > 0)
 	X_I_dim += pairwise_constraints_[i][j].size();
     }
@@ -521,7 +522,7 @@ estimate(int anchor)
   // 4. Estimate the transformation
   //
   vnl_svd<double> svd(sum_prod,1e-6);
-  if ( svd.rank() < dim ) {
+  if ( svd.rank() < (unsigned int)dim ) {
     std::cerr<< "fregl_joint_register::estimate --- ERROR \n"
              << "    sum_prod not full rank"<<std::endl;
     return false;
@@ -590,9 +591,9 @@ generate_correspondences()
         size_from = image_sizes_[from];
         int z_space = vnl_math_min(10, int(size_from[2]/3));
         size_to = image_sizes_[to];
-        for (int ix = 0; ix<size_from[0]; ix += space )
-          for (int iy = 0; iy<size_from[1]; iy += space )
-            for (int iz = 0; iz<size_from[2]; iz += z_space ) {
+        for (unsigned int ix = 0; ix<size_from[0]; ix += space )
+          for (unsigned int iy = 0; iy<size_from[1]; iy += space )
+            for (unsigned int iz = 0; iz<size_from[2]; iz += z_space ) {
               point[0] = ix;
               point[1] = iy;
               point[2] = iz;
@@ -659,7 +660,7 @@ write_xml(std::string const& filename, float multiplier, bool mutual_consistency
   root_node->SetAttribute("error_scale_multiplier",str.c_str() );
   doc.LinkEndChild( root_node );
   
-  for (int j = 0; j<transforms_.cols(); j++) {
+  for (unsigned int j = 0; j<transforms_.cols(); j++) {
     for (unsigned int i = 0; i<transforms_.rows(); i++) {
       if (i == j) continue;
 

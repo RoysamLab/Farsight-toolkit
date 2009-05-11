@@ -93,8 +93,8 @@ int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int
 		minSImg = (float *) malloc(r*c*z*sizeof(float));
 		for(int i=0; i<r*c*z; i++)
 		{
-			if(bImg[i] > 0)
-				int hhh = 1;
+			//if(bImg[i] > 0)
+				///int hhh = 1;
 			
 			int DD = (int) dImg[i];
 			int DD2 = 2*DD;

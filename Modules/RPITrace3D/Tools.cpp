@@ -3,10 +3,10 @@
 // 
 // This file contains some usefull tools available for use of other functions
 //
-#pragma warning(disable:4786)  // disable STL-related warnings
-#pragma warning(disable:4710)  // compiler didn't inline function that got selected for inline expansion
-#pragma warning(disable:4514)  // The optimizer removed an inline function that is not called
-#pragma warning(disable:4702)  // unreachable STLport code
+//#pragma warning(disable:4786)  // disable STL-related warnings
+//#pragma warning(disable:4710)  // compiler didn't inline function that got selected for inline expansion
+//#pragma warning(disable:4514)  // The optimizer removed an inline function that is not called
+//#pragma warning(disable:4702)  // unreachable STLport code
 
 #include <iostream>
 #include <fstream>
@@ -340,7 +340,7 @@ void DrawThickLine(CPoint* a, CPoint* b, CImage& image, unsigned char color)
 void DrawThickLine(CPoint* a, CPoint* b, C3DImage& image, unsigned char sliceNumber,
 	unsigned char color)
 {
-	int iSlices = The3DImage->m_iSlices;
+	//int iSlices = The3DImage->m_iSlices;
 	int iRows = The3DImage->m_iRows;
 	int iCols = The3DImage->m_iCols;
 
@@ -605,7 +605,7 @@ void GrayScaleErosion(CImage* InImage, CImage* OutImage, CPoint* aDiskPoints,
 void GrayScaleErosion(unsigned char** inImageData,
 	unsigned char** outImageData)
 {
-	int iSlices = The3DImage->m_iSlices;
+	//int iSlices = The3DImage->m_iSlices;
 	int iRows = The3DImage->m_iRows;
 	int iCols = The3DImage->m_iCols;
 
@@ -791,7 +791,7 @@ void GrayScaleDilation(CImage* InImage, CImage* OutImage, CPoint* aDiskPoints,
 void GrayScaleDilation(unsigned char** inImageData,
 	unsigned char** outImageData)
 {
-	int iSlices = The3DImage->m_iSlices;
+	//int iSlices = The3DImage->m_iSlices;
 	int iRows = The3DImage->m_iRows;
 	int iCols = The3DImage->m_iCols;
 	CImage tempImage(iRows, iCols); // to hold temp results
@@ -864,7 +864,7 @@ void GrayScaleDilation(unsigned char** inImageData,
 //  => a 5.8 folds decrease in execution time.
 void GrayScaleOpen(CImage* inImage, CImage* outImage)
 {
-	int iSlices = The3DImage->m_iSlices;
+	//int iSlices = The3DImage->m_iSlices;
 	int iRows = The3DImage->m_iRows;
 	int iCols = The3DImage->m_iCols;
 	CImage* tempImage = new CImage(iRows, iCols);
@@ -880,7 +880,7 @@ void GrayScaleOpen(CImage* inImage, CImage* outImage)
 void GrayScaleOpen(CImage* inImage, CImage* outImage, CPoint* aDiskPoints,
 	int iNumOfPoints)
 {
-	int iSlices = The3DImage->m_iSlices;
+	//int iSlices = The3DImage->m_iSlices;
 	int iRows = The3DImage->m_iRows;
 	int iCols = The3DImage->m_iCols;
 	CImage* tempImage = new CImage(iRows, iCols);
@@ -896,7 +896,7 @@ void GrayScaleOpen(CImage* inImage, CImage* outImage, CPoint* aDiskPoints,
 
 void GrayScaleOpen(unsigned char** inImageData, unsigned char** outImageData)
 {
-	int iSlices = The3DImage->m_iSlices;
+	//int iSlices = The3DImage->m_iSlices;
 	int iRows = The3DImage->m_iRows;
 	int iCols = The3DImage->m_iCols;
 	CImage* tempImage = new CImage(iRows, iCols);
@@ -912,7 +912,7 @@ void GrayScaleOpen(unsigned char** inImageData, unsigned char** outImageData)
 
 void GrayScaleClose(unsigned char** inImageData, unsigned char** outImageData)
 {
-	int iSlices = The3DImage->m_iSlices;
+	//int iSlices = The3DImage->m_iSlices;
 	int iRows = The3DImage->m_iRows;
 	int iCols = The3DImage->m_iCols;
 	CImage* tempImage = new CImage(iRows, iCols);
@@ -1413,7 +1413,7 @@ void strlower(char* pchString)
 
 void SetConfigParameters()
 {
-	char* pchValue = NULL;
+	//char* pchValue = NULL;
 
 	///////////////////////////////////
 	//// Output configurations
@@ -1966,3 +1966,4 @@ short median__(short a, short b, short c)
 {
 	return median_(a,b,c);
 }
+

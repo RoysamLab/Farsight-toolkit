@@ -6,10 +6,10 @@
 // signal not only over all valid directions and shift values (as before) but also 
 // over all valid slices.
 //
-#pragma warning(disable:4786)  // disable STL-related warnings
-#pragma warning(disable:4710)  // compiler didn't inline function that got selected for inline expansion
-#pragma warning(disable:4514)  // The optimizer removed an inline function that is not called
-#pragma warning(disable:4702)  // unreachable STLport code
+//#pragma warning(disable:4786)  // disable STL-related warnings
+//#pragma warning(disable:4710)  // compiler didn't inline function that got selected for inline expansion
+//#pragma warning(disable:4514)  // The optimizer removed an inline function that is not called
+//#pragma warning(disable:4702)  // unreachable STLport code
 
 #include "Main.h"    // global variables for main only
 //By Yousef: 10-25-2007
@@ -217,7 +217,7 @@ int main(int argc, char* argv[])
   // by 3*gfStdDev then we arrive at the following threshold for stopping
   // criteria.
   //  giSmallestResponseAccepted = (3.0*gfStdDev+0.5)*3*2*giUsedTemplateLength;
-  int iMinimumTemplateLength = gConfig.GetMinimumTemplateLength();
+  //int iMinimumTemplateLength = gConfig.GetMinimumTemplateLength();
   //giSmallestResponseAccepted = 3 * 2 * iMinimumTemplateLength;
 
   giContrastThreshold = (int) (3 * gfStdDev + 0.5);

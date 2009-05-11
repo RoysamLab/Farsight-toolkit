@@ -58,9 +58,9 @@
 #include "TraceEdit/Trace.h"
 //using namespace std;
 
-#pragma warning(disable:4996)
-#pragma warning(disable:4101)
-#pragma warning(disable:4018)
+//#pragma warning(disable:4996)
+//#pragma warning(disable:4101)
+//#pragma warning(disable:4018)
 
 #define REFLECT 1450
 #define SKIP 20
@@ -175,10 +175,10 @@ struct Vec3f{
 void getSmoothed(std::vector<Vec3f> &line)
 {
 	int pc = 0;
-	Vec3f temp;
+	//Vec3f temp;
 	while(pc <2)
 	{
-		for(int counter=1; counter<line.size()-1; counter++)
+		for(unsigned int counter=1; counter<line.size()-1; counter++)
 		{	
 			line[counter].x=(line[counter-1].x+line[counter+1].x)/2.0;
 			line[counter].y=(line[counter-1].y+line[counter+1].y)/2.0;
@@ -215,7 +215,7 @@ vtkSmartPointer<vtkPolyData> GetLines(char*filename_microgliatrace)
 
 			//	printf("Starting to add trace\n");
 				
-				for(int counter=0; counter< line.size(); counter++)
+				for(unsigned int counter=0; counter< line.size(); counter++)
 				{
 					int ret = points->InsertNextPoint(line[counter].x,line[counter].y,line[counter].z);
 					if(counter<line.size()-1)
@@ -297,7 +297,7 @@ void WriteLines(char*filename_microgliatrace, char *filename_write)
 
 			//	printf("Starting to add trace\n");
 				
-				for(int counter=0; counter< line.size(); counter++)
+				for(unsigned int counter=0; counter< line.size(); counter++)
 				{
 					int ret = points->InsertNextPoint(line[counter].x,line[counter].y,line[counter].z);
 					if(counter<line.size()-1)
@@ -362,9 +362,10 @@ void loadImageFromFile(char*filename,vtkSmartPointer<vtkImageData> imdata, int d
 		return;
 	}
 
-	double x,y,z,l1,l2;
-	int slicesize=dimensions[0]*dimensions[1];
-	int linesize=dimensions[1];
+	double x,y,z;
+	//double l1,l2;
+	//int slicesize=dimensions[0]*dimensions[1];
+	//int linesize=dimensions[1];
 	unsigned char *p = (unsigned char*)imdata->GetScalarPointer();
 	if(p==NULL)
 		printf("got null!\n");
@@ -373,7 +374,8 @@ void loadImageFromFile(char*filename,vtkSmartPointer<vtkImageData> imdata, int d
 	int n=0;
 	while(1)
 	{
-		fscanf(fp,"%lf %lf %lf %*lf %*lf",&z,&y,&x);
+		fscanf(fp,"%lf %lf %lf %*f %*f",&z,&y,&x);
+		//fscanf(fp,"%lf %lf %lf %*lf %*lf",&z,&y,&x);
 		n++;
 		if(n%10000==0)
 			printf("%d\r",n);
@@ -390,7 +392,7 @@ void loadImageFromFile(char*filename,vtkSmartPointer<vtkImageData> imdata, int d
 	//imdata->Print(cout);
 	//scanf("%*d");
 }
-void generate_stl(char *filenames_format_string, int min_n, int max_n,int step_n, int dimensions[], char * stl_filename)
+void generate_stl(const char *filenames_format_string, int min_n, int max_n,int step_n, int dimensions[], const char * stl_filename)
 {
 	vtkSmartPointer<vtkImageData> im=allocateImage(dimensions);
 
@@ -564,7 +566,7 @@ void render_stl_file(char filename[][256], int n, double colors[500][3],bool mas
 		if(counter>4)
 		{
 		vtkPolyDataReader* reader=vtkPolyDataReader::New();
-		printf("strlen = %d\n",strlen(filename[counter]));
+		printf("strlen = %d\n",(int)strlen(filename[counter]));
 /*
 		if(filename[counter][strlen(filename[counter])-1]=='l')//lame way of detecting stl files
 			reader = vtkSmartPointer<vtkSTLReader>::New();
@@ -607,7 +609,7 @@ void render_stl_file(char filename[][256], int n, double colors[500][3],bool mas
 		else
 		{
 		vtkPLYReader* reader=vtkPLYReader::New();
-		printf("strlen = %d\n",strlen(filename[counter]));
+		printf("strlen = %d\n",(int)strlen(filename[counter]));
 /*
 		if(filename[counter][strlen(filename[counter])-1]=='l')//lame way of detecting stl files
 			reader = vtkSmartPointer<vtkSTLReader>::New();
@@ -802,7 +804,7 @@ void render_single_stl_file(char filename[],double colors[][3])
 	vtkRenderLargeImage *renderLarge=vtkRenderLargeImage::New();
 	renderLarge->SetInput(ren1);
 	renderLarge->SetMagnification(12);
-	vtkTIFFWriter *writer = vtkTIFFWriter::New();
+	//vtkTIFFWriter *writer = vtkTIFFWriter::New();
 //	writer->SetInput(renderLarge->GetOutput());
 //	writer->SetFileName("SiteVisit123_30000X9000.tif");
 	//writer->Write();
@@ -1106,60 +1108,60 @@ int main_old(int argc, char**argv)
 	sphere->SetThetaResolution(18);
 	sphere->SetPhiResolution(18);
 
-	char *filenames[]={"w44.obj","w43.obj","w42.obj","w41.obj",
+	/*const char *filenames[]={"w44.obj","w43.obj","w42.obj","w41.obj",
 		"w34.obj","w33.obj","w32.obj","w31.obj",
 		"w24.obj","w23.obj","w22.obj","w21.obj",
 		"w14.obj","w13.obj","w12.obj","w11.obj",
-		"vessel1.obj","vessel2.obj","vessel3.obj","vessel4.obj"};
+		"vessel1.obj","vessel2.obj","vessel3.obj","vessel4.obj"};*/
 
-	char *filename_tracefiles[]={"transformed_100um2percent25x1unmixed02TracedPoints.txt",
+	/*const char *filename_tracefiles[]={"transformed_100um2percent25x1unmixed02TracedPoints.txt",
 		"transformed_100um2percent25x1unmixed03TracedPoints.txt",
 		"transformed_100um2percent25x2unmixed02TracedPoints.txt",
 		"transformed_100um2percent25x2unmixed03TracedPoints.txt",
 		"transformed_100um2percent25x3unmixed02TracedPoints.txt",
 		"transformed_100um2percent25x3unmixed03TracedPoints.txt",
 		"transformed_100um2percent25x4unmixed02TracedPoints.txt",
-		"transformed_100um2percent25x4unmixed03TracedPoints.txt"};
+		"transformed_100um2percent25x4unmixed03TracedPoints.txt"};*/
 
-	double colors[][3]={1,0,0,1,0,1,1,1,0,0,1,0,
-		1,0,0,1,0,1,1,1,0,0,1,0,
-		1,0,0,1,0,1,1,1,0,0,1,0,
-		1,0,0,1,0,1,1,1,0,0,1,0,
-		0,1,1,0,1,1,0,1,1,0,1,1};
+	/*double colors[][3]={ {1,0,0},{1,0,1},{1,1,0},{0,1,0},
+		{1,0,0},{1,0,1},{1,1,0},{0,1,0},
+		{1,0,0},{1,0,1},{1,1,0},{0,1,0},
+		{1,0,0},{1,0,1},{1,1,0},{0,1,0},
+		{0,1,1},{0,1,1},{0,1,1},{0,1,1} };*/
 
-	double trace_colors[][3]={1,0,0,1,1,0};
+	/*double trace_colors[][3]={ {1,0,0},{1,1,0} };*/
 	vtkSmartPointer<vtkOBJReader> reader;
 	vtkSmartPointer<vtkPolyDataMapper> mapper;
 	vtkSmartPointer<vtkLODActor> actor;
-	vtkStripper *stripper;
-	vtkRenderer* ren1 = vtkRenderer::New();
-	vtkAssembly * assembly = vtkAssembly::New();
+	//vtkStripper *stripper;
+	//vtkRenderer* ren1 = vtkRenderer::New();
+	//vtkAssembly * assembly = vtkAssembly::New();
 	vtkSmartPointer<vtkPolyData> polydata;
 	
 	int dimensions[3]={400,1400,70};
 	
-	char *stl_filenames[]={"transformed_to_Montage8Hunmixed_fused.tiff/class1.ply","transformed_to_Montage8Hunmixed_fused.tiff/class2.ply","transformed_to_Montage8Hunmixed_fused.tiff/class3.ply","transformed_to_Montage8Hunmixed_fused.tiff/class4.ply","transformed_to_Montage8Hunmixed_fused.tiff/vessel_montage.ply","test_write_lines.ply","vessel.stl","nuclei_class1.stl","nuclei_class2.stl","nuclei_class3.stl","nuclei_class4.stl"};
+	//const char *stl_filenames[]={"transformed_to_Montage8Hunmixed_fused.tiff/class1.ply","transformed_to_Montage8Hunmixed_fused.tiff/class2.ply","transformed_to_Montage8Hunmixed_fused.tiff/class3.ply","transformed_to_Montage8Hunmixed_fused.tiff/class4.ply","transformed_to_Montage8Hunmixed_fused.tiff/vessel_montage.ply","test_write_lines.ply","vessel.stl","nuclei_class1.stl","nuclei_class2.stl","nuclei_class3.stl","nuclei_class4.stl"};
 	//generate_stl("transformed_100um2percent25x%dunmixed04.npts",1,4,1,dimensions,"vessel.stl");
  //   generate_stl("Nuclei_%d.xml_class1.txt",1,4,1,dimensions,"nuclei_class1.stl");
 //	generate_stl("Nuclei_%d.xml_class2.txt",1,4,1,dimensions,"nuclei_class2.stl");
 //	generate_stl("Nuclei_%d.xml_class3.txt",1,4,1,dimensions,"nuclei_class3.stl");
 //	generate_stl("Nuclei_%d.xml_class4.txt",1,4,1,dimensions,"nuclei_class4.stl");
 	//render_stl_file("auto_generate_vessel.stl");
-	double col[][3]={0,1,0,
-		1,1,0,
-		1,0,1,
-		1,0,0,
-		0,1,1
-	};
+	/*double col[][3]={
+    {0,1,0},
+		{1,1,0},
+		{1,0,1},
+		{1,0,0},
+		{0,1,1}
+	};*/
 
-
-	char *filename_traces_format_input  = "transformed_to_Montage8Hunmixed_fused.tiff/transformed_Montage%d%cunmixed0%dTracedPoints.txt";
-	char *filename_traces_format_output = "transformed_to_Montage8Hunmixed_fused.tiff/transformed_Montage%d%cunmixed0%dTracedPoints.ply";
-	char *filename_vessel_input = "transformed_to_Montage8Hunmixed_fused.tiff/transformed_Montage%d%cunmixed01.npts";
-	char *filename_cells_input[4]={"transformed_to_Montage8Hunmixed_fused.tiff/Montage%d%cunmixed02.xml_class1.txt",
+	//const char *filename_traces_format_input  = "transformed_to_Montage8Hunmixed_fused.tiff/transformed_Montage%d%cunmixed0%dTracedPoints.txt";
+	const char *filename_traces_format_output = "transformed_to_Montage8Hunmixed_fused.tiff/transformed_Montage%d%cunmixed0%dTracedPoints.ply";
+	const char *filename_vessel_input = "transformed_to_Montage8Hunmixed_fused.tiff/transformed_Montage%d%cunmixed01.npts";
+	/*const char *filename_cells_input[4]={"transformed_to_Montage8Hunmixed_fused.tiff/Montage%d%cunmixed02.xml_class1.txt",
 								   "transformed_to_Montage8Hunmixed_fused.tiff/Montage%d%cunmixed02.xml_class2.txt",
 								   "transformed_to_Montage8Hunmixed_fused.tiff/Montage%d%cunmixed02.xml_class3.txt",
-								   "transformed_to_Montage8Hunmixed_fused.tiff/Montage%d%cunmixed02.xml_class4.txt"};
+								   "transformed_to_Montage8Hunmixed_fused.tiff/Montage%d%cunmixed02.xml_class4.txt"};*/
 
 	generate_stl(filename_vessel_input,1,15,1,dimensions,"transformed_to_Montage8Hunmixed_fused.tiff/vessel_montage.ply");
 	
@@ -1173,8 +1175,8 @@ int main_old(int argc, char**argv)
 
 	
 	//return 0;
-	char buff_in[1024];
-	char buff_out[1024];
+	//char buff_in[1024];
+	//char buff_out[1024];
 	
 
 

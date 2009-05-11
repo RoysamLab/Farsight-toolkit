@@ -28,9 +28,9 @@ class GVC
        ~GVC(){}
                       
         //Sequential algorithm
-//         void  sequential_coloring( unsigned char *bufferOut,\
-//                                    unsigned char *img,\
-//                                    int rows, int cols, int ncolors,\
+//         void  sequential_coloring( unsigned char *bufferOut,
+//                                    unsigned char *img,
+//                                    int rows, int cols, int ncolors,
 //                                    vector< vector<int> > &vec,
 //                                    vector< vector<int> > &map );
           void sequential_coloring(int nobjects, int ncolors, int* ColorOut, vector< vector<int> > &map );

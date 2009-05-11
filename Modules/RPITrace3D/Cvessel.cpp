@@ -22,10 +22,10 @@
 // - The length of the vessel is the lenfth of its center line, and its response at
 //   any centerline point is the sum of the corresponding left and right points.
 //
-#pragma warning(disable:4786)  // disable STL-related warnings
-#pragma warning(disable:4710)  // compiler didn't inline function that got selected for inline expansion
-#pragma warning(disable:4514)  // The optimizer removed an inline function that is not called
-#pragma warning(disable:4702)  // unreachable STLport code
+//#pragma warning(disable:4786)  // disable STL-related warnings
+//#pragma warning(disable:4710)  // compiler didn't inline function that got selected for inline expansion
+//#pragma warning(disable:4514)  // The optimizer removed an inline function that is not called
+//#pragma warning(disable:4702)  // unreachable STLport code
 
 #include <iostream>
 #include <iomanip>
@@ -79,7 +79,7 @@ int inline ABS(int x)
 // which will require merging later.
 int FindClosestIntersectionPoint(CPoint& point, int& MinDistance)
 {
-	int iSlices = The3DImage->m_iSlices;
+	//int iSlices = The3DImage->m_iSlices;
 	int iRows = The3DImage->m_iRows;
 	int iCols = The3DImage->m_iCols;
 	int pixelValue = 0;
@@ -655,7 +655,7 @@ vector<bool> CVessel::Connect()
 		end_intensity = true;
 
 	// check the width of end points
-	float iTopDistToVesselThreshold = max(this->m_Center.head->data->m_fHWidth * 1.33f, m_pTopClosestNode->data->m_fHWidth * 1.33f);
+	//float iTopDistToVesselThreshold = max(this->m_Center.head->data->m_fHWidth * 1.33f, m_pTopClosestNode->data->m_fHWidth * 1.33f);
 	// check the directions of the two closest point
 
 	// if end-to-end
@@ -689,7 +689,7 @@ vector<bool> CVessel::Connect()
 
 	pTempNode1 = NULL;
 	pTempNode2 = NULL;
-	float iEndDistToVesselThreshold = max(this->m_Center.tail->data->m_fHWidth * 1.33f, m_pEndClosestNode->data->m_fHWidth * 1.33f);
+	//float iEndDistToVesselThreshold = max(this->m_Center.tail->data->m_fHWidth * 1.33f, m_pEndClosestNode->data->m_fHWidth * 1.33f);
 	// check the directions of the two closest points
 	bool bEndEndToEnd = (m_pEndClosestNode->data == m_pEndClosestVessel->m_Center.head->data 
 		|| m_pEndClosestNode->data == m_pEndClosestVessel->m_Center.tail->data);
@@ -962,7 +962,7 @@ void CVessel::ConnectWithOtherVessel(TopEndMiddleNeither DirFlag, int ,
 	CIntersectionPoint* pIntPoint)
 {
 
-	int iSlices = The3DImage->m_iSlices;
+	//int iSlices = The3DImage->m_iSlices;
 	int iRows = The3DImage->m_iRows;
 	int iCols = The3DImage->m_iCols;
 	int iFromLength = gConfig.GetMinimumTemplateLength();
@@ -1033,7 +1033,7 @@ void CVessel::ConnectWithOtherVessel(TopEndMiddleNeither DirFlag, int ,
 
 void CVessel::ConnectWithOtherVessels2(TopEndMiddleNeither DirFlag)
 {
-	int iSlices = The3DImage->m_iSlices;
+	//int iSlices = The3DImage->m_iSlices;
 	int iRows = The3DImage->m_iRows;
 	int iCols = The3DImage->m_iCols;
 	int iFromLength = gConfig.GetMinimumTemplateLength();
@@ -1478,7 +1478,7 @@ int CVessel::FindSomaDistance(TopEndMiddleNeither dirFlag, CPoint& FoundPoint)
 // find the cost to the nearst soma and the best way to connect with it
 int CVessel::FindSomaDistance2(TopEndMiddleNeither dirFlag, CPoint& FoundPoint)
 {
-	int iSlices = The3DImage->m_iSlices;
+	//int iSlices = The3DImage->m_iSlices;
 	int iRows = The3DImage->m_iRows;
 	int iCols = The3DImage->m_iCols;
 	CPoint* FromPoint = NULL;
@@ -1521,7 +1521,7 @@ int CVessel::FindSomaDistance2(TopEndMiddleNeither dirFlag, CPoint& FoundPoint)
 int CVessel::FindSomaDistance2(TopEndMiddleNeither dirFlag,
 	CPoint& FoundPoint, int& FoundSomaID)
 {
-	int iSlices = The3DImage->m_iSlices;
+	//int iSlices = The3DImage->m_iSlices;
 	int iRows = The3DImage->m_iRows;
 	int iCols = The3DImage->m_iCols;
 	CPoint* FromPoint = NULL;
@@ -1566,7 +1566,7 @@ int CVessel::FindSomaDistance2(TopEndMiddleNeither dirFlag,
 int CVessel::FindSomaDistance3(TopEndMiddleNeither dirFlag,
 	CPoint& FoundPoint, int& FoundSomaID)
 {
-	int iSlices = The3DImage->m_iSlices;
+	//int iSlices = The3DImage->m_iSlices;
 	int iRows = The3DImage->m_iRows;
 	int iCols = The3DImage->m_iCols;
 	CPoint* FromPoint = NULL;
@@ -1615,8 +1615,8 @@ int CVessel::FindSomaDistance3(TopEndMiddleNeither dirFlag,
 int CVessel::Extendable(TopEndMiddleNeither DirFlag)
 {
 	int iSlices = The3DImage->m_iSlices;
-	int iRows = The3DImage->m_iRows;
-	int iCols = The3DImage->m_iCols;
+	//int iRows = The3DImage->m_iRows;
+	//int iCols = The3DImage->m_iCols;
 	int result = 1;
 	CPoint* aPoint = NULL;
 	int i;
@@ -2613,7 +2613,7 @@ void CVessel::WriteIDYZ(CImage& anImage, unsigned char color)
 //
 void CVessel::WriteID(CImage& anImage, CPoint& aPoint, unsigned char color)
 {
-	int iSlices = The3DImage->m_iSlices;
+	//int iSlices = The3DImage->m_iSlices;
 	int iRows = The3DImage->m_iRows;
 	int iCols = The3DImage->m_iCols;
 	int HFrom = 0 - DigitWidth / 2;  // 0 - 9/2 = -4
@@ -2677,7 +2677,7 @@ void CVessel::WriteID(CImage& anImage, CPoint& aPoint, unsigned char color)
 //
 int CVessel::FindLocationToWriteIDXY(CPoint& atPoint)
 {
-	int iSlices = The3DImage->m_iSlices;
+	//int iSlices = The3DImage->m_iSlices;
 	int iRows = The3DImage->m_iRows;
 	int iCols = The3DImage->m_iCols;
 	int HFrom = 0 - (DigitWidth / 2 + 1);  // 0 - 9/2 = -4 - 1 = -5
@@ -2781,7 +2781,7 @@ int CVessel::FindLocationToWriteIDXY(CPoint& atPoint)
 int CVessel::FindLocationToWriteIDXZ(CPoint& atPoint)
 {
 	int iSlices = The3DImage->m_iSlices;
-	int iRows = The3DImage->m_iRows;
+	//int iRows = The3DImage->m_iRows;
 	int iCols = The3DImage->m_iCols;
 	int HFrom = 0 - (DigitWidth / 2 + 1);  // 0 - 9/2 = -4 - 1 = -5
 	int HTo = DigitWidth / 2 + 1;      // 4 + 1;
@@ -2885,7 +2885,7 @@ int CVessel::FindLocationToWriteIDYZ(CPoint& atPoint)
 {
 	int iSlices = The3DImage->m_iSlices;
 	int iRows = The3DImage->m_iRows;
-	int iCols = The3DImage->m_iCols;
+	//int iCols = The3DImage->m_iCols;
 	int HFrom = 0 - (DigitWidth / 2 + 1);  // 0 - 9/2 = -4 - 1 = -5
 	int HTo = DigitWidth / 2 + 1;      // 4 + 1;
 	int VFrom = 0 - (DigitHight / 2 + 1);  // -4 -1
@@ -2992,7 +2992,6 @@ int CVessel::FindLocationToWriteIDYZ(CPoint& atPoint)
 /*
 void CVessel::RemoveIntersectionPoint(int pointID)
 {
-	/*
 	int index = -1;
 	for(register int i = 0; i < m_iNumOfIntersectionPoints; i++)
 	{
@@ -4431,7 +4430,6 @@ void CVessels::MergeTwoVessels(int , int , int , int , int )
 int CVessels::AddIntersectionPoint(IntersectionPoint *aIntPoint)
 {
 	int result = 0;
-	/*
 	if(aIntPoint)
 	{
 		aIntPoint->PointID = m_iNumOfIntersectionPoints;

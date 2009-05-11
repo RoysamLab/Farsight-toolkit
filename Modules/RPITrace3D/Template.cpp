@@ -7,7 +7,7 @@
 // NOTE:
 //   In all vector and template rotations, we first rotate around the y-axis
 // then around the z-axix.
-#pragma warning(disable:4786)
+//#pragma warning(disable:4786)
 
 #include <iostream>
 #include <cmath>
@@ -178,7 +178,7 @@ int CTemplate::Apply(CPoint* aPoint, int usedWidth)
 
 
 	// get a pointer to the orthogonal shift vector
-	CVector* orthogonalVector = GetShiftFromCenterVector();
+	//CVector* orthogonalVector = GetShiftFromCenterVector();
 
 	// position my base at the given point
 	Position(aPoint->m_iX, aPoint->m_iY, aPoint->m_iZ);
@@ -191,7 +191,7 @@ int CTemplate::Apply(CPoint* aPoint, int usedWidth)
 	register int i , pixelValue1, pixelValue2, pixelValue3, pixelValue4;
 
 	long diff;
-	long pixelSum = 0;
+	//long pixelSum = 0;
 	for (i = 0; i < usedWidth; i++)
 	{
 		if ((diff = (m_puchBase - gpuchThe3DImageData + m_piMinus1[i])) < 0 ||
@@ -282,8 +282,8 @@ int CTemplate::CalculateMaxResponse(CPoint* aPoint, CPoint* atPoint,
 	register int plus1resp = 0;
 	register int plus2resp = 0;
 	register int i , j, pixelValue1, pixelValue2, pixelValue3, pixelValue4;
-	register int oldCount = 0;
-	register int newCount = 0;
+	//register int oldCount = 0;
+	//register int newCount = 0;
 	long diff;
 	long pixelSum = 0;
 	int HDir = (int) (m_fHdir / DirectionStep);
@@ -530,18 +530,18 @@ int CTemplate::CalculateResponses(CPoint* aPoint, CVessel* aVessel,
 	register int plus1resp = 0;
 	register int plus2resp = 0;
 	register int i , j, pixelValue1, pixelValue2, pixelValue3, pixelValue4;
-	register int oldCount = 0;
-	register int newCount = 0;
+	//register int oldCount = 0;
+	//register int newCount = 0;
 	long diff;
 	long pixelSum = 0;
 	int HDir = (int) (m_fHdir / DirectionStep);
 	int VDir = (int) (m_fVdir / DirectionStep);
 	int response = 0, maxResponse = 0;
 	int maxResponseAtThisShift = 0;
-	int iGoodResponseThreshold = 3.0 * gfContrast* giFromLength;
+	//int iGoodResponseThreshold = 3.0 * gfContrast* giFromLength;
 
-	int giUsedTemplateLength = gConfig.GetMinimumTemplateLength();
-	int SmallestAcceptedResponse = gfContrast*3.0 * giUsedTemplateLength;
+	//int giUsedTemplateLength = gConfig.GetMinimumTemplateLength();
+	//int SmallestAcceptedResponse = gfContrast*3.0 * giUsedTemplateLength;
 
 	for (i = 0; i <= giToLength; i++)
 	{
@@ -611,7 +611,7 @@ int CTemplate::CalculateResponses(CPoint* aPoint, CVessel* aVessel,
 	pixelSum = (plus1resp + plus2resp) / 2;
 
 	int giShiftDistance = gConfig.GetMaximumShiftDistance();
-	int index = 0;
+	//int index = 0;
 	i = 0;
 	// shift and apply
 	for (j = 1; j < giShiftDistance; j++)
@@ -989,7 +989,7 @@ int CHLeftTemplate::GetOrthogonalShiftDir()
 // will shift this template a way from a dendrite's centerline
 CVector* CHLeftTemplate::GetShiftFromCenterVector()
 {
-	int x = (int) (m_fVdir* NumOfDirections / 360 + 0.5);
+	//int x = (int) (m_fVdir* NumOfDirections / 360 + 0.5);
 	int index = GetInPlaneShiftDir();
 	return gVectorsArray[index][0];
 }
@@ -1001,7 +1001,7 @@ CVector* CHLeftTemplate::GetShiftFromCenterVector()
 // will shift this template towards a dendrite's centerline
 CVector* CHLeftTemplate::GetShiftToCenterVector()
 {
-	int x = (int) (m_fVdir* NumOfDirections / 360 + 0.5);
+	//int x = (int) (m_fVdir* NumOfDirections / 360 + 0.5);
 	int index = GetInPlaneShiftDir();
 	index += (NumOfDirections / 2); // make index point to the opposite direction
 	index = (index % NumOfDirections);
@@ -1048,7 +1048,7 @@ int CHRightTemplate::GetOrthogonalShiftDir()
 // will shift this template a way from a dendrite's centerline
 CVector* CHRightTemplate::GetShiftFromCenterVector()
 {
-	int x = (int) (m_fVdir* NumOfDirections / 360 + 0.5);
+	//int x = (int) (m_fVdir* NumOfDirections / 360 + 0.5);
 	int index = GetInPlaneShiftDir();
 	return gVectorsArray[index][0];
 }
@@ -1060,7 +1060,7 @@ CVector* CHRightTemplate::GetShiftFromCenterVector()
 // will shift this template towards a dendrite's centerline
 CVector* CHRightTemplate::GetShiftToCenterVector()
 {
-	int x = (int) (m_fVdir* NumOfDirections / 360 + 0.5);
+	//int x = (int) (m_fVdir* NumOfDirections / 360 + 0.5);
 	int index = GetInPlaneShiftDir();
 	index += (NumOfDirections / 2); // make index point to the opposite direction
 	index = (index % NumOfDirections);
@@ -1182,3 +1182,4 @@ CVector* CVRightTemplate::GetShiftToCenterVector()
 
 	return gVectorsArray[x][index];
 }
+

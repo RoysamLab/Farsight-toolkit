@@ -359,7 +359,7 @@ private:
 		NONE,
 	} representationType;
 
-    int class_sig; /* bagon: signiture value to verify class is ok */
+    unsigned int class_sig; /* bagon: signiture value to verify class is ok */
     
 	int m_num_labels;
 	int m_width;

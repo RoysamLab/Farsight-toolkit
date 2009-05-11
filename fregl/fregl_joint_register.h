@@ -132,9 +132,9 @@ private:
   vbl_array_2d<double> obj_;
   std::vector<std::string> image_ids_;
   std::vector< SizeType > image_sizes_;
+  bool corresp_generated_;
   double scale_multiplier_;
   double error_bound_;
-  bool corresp_generated_;
   vbl_array_2d< CorrespondenceList > pairwise_constraints_;
 };
 

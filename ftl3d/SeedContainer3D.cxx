@@ -33,15 +33,15 @@ void SeedContainer3D::Detect(ImageType3D::Pointer im3D, ImageType2D::Pointer im2
 void SeedContainer3D::Detect3Dseeds(ImageType3D::Pointer image) {
 	ImageType3D::IndexType glndx = {{0 , 0 , 0}};
 	ImageType3D::SizeType sz = image->GetBufferedRegion().GetSize();
-	for (glndx[2] = 0; glndx[2] < sz[2]-GridSpacing; glndx[2] += GridSpacing) {
-		for (glndx[1] = 0; glndx[1] < sz[1]-GridSpacing; glndx[1] += GridSpacing) {
-			for (glndx[0] = 0; glndx[0] < sz[0]-GridSpacing; glndx[0] += GridSpacing) {
+	for (glndx[2] = 0; glndx[2] < (unsigned int)sz[2]-GridSpacing; glndx[2] += GridSpacing) {
+		for (glndx[1] = 0; glndx[1] < (unsigned int)sz[1]-GridSpacing; glndx[1] += GridSpacing) {
+			for (glndx[0] = 0; glndx[0] < (unsigned int)sz[0]-GridSpacing; glndx[0] += GridSpacing) {
 
 				ImageType3D::IndexType ndx = glndx;
 				ImageType3D::IndexType endx;
-				endx[0] = glndx[0] + GridSpacing;	endx[0] = (endx[0]>sz[0]) ? sz[0] : endx[0];
-				endx[1] = glndx[1] + GridSpacing;	endx[1] = (endx[1]>sz[1]) ? sz[1] : endx[1];
-				endx[2] = glndx[2] + GridSpacing;	endx[2] = (endx[2]>sz[2]) ? sz[2] : endx[2];
+				endx[0] = glndx[0] + GridSpacing;	endx[0] = (endx[0]>(unsigned int)sz[0]) ? sz[0] : endx[0];
+				endx[1] = glndx[1] + GridSpacing;	endx[1] = (endx[1]>(unsigned int)sz[1]) ? sz[1] : endx[1];
+				endx[2] = glndx[2] + GridSpacing;	endx[2] = (endx[2]>(unsigned int)sz[2]) ? sz[2] : endx[2];
 
 				ImageType3D::PixelType minVal = 255;
 				ImageType3D::IndexType minNdx;
@@ -72,8 +72,8 @@ void SeedContainer3D::Detect2Dseeds(ImageType2D::Pointer image) {
 
 	std::cout << "Detecting Seeds ...";
 
-	for ( p[0] = 0; p[0] <size[0] ; p[0]+=GridSpacing)	{
-		for ( p[1] = 0; p[1] <size[1] ; p[1]++)	{
+	for ( p[0] = 0; p[0] <(unsigned int)size[0] ; p[0]+=GridSpacing)	{
+		for ( p[1] = 0; p[1] <(unsigned int)size[1] ; p[1]++)	{
 
 			val = image->GetPixel(p);
 			if(val < m)	{
@@ -88,8 +88,8 @@ void SeedContainer3D::Detect2Dseeds(ImageType2D::Pointer image) {
 		}
 	}
 
-	for ( p[1] = 0; p[1] <size[1] ; p[1]+=GridSpacing)	{
-			for ( p[0] = 0; p[0] <size[0] ; p[0]++)	{
+	for ( p[1] = 0; p[1] <(unsigned int)size[1] ; p[1]+=GridSpacing)	{
+			for ( p[0] = 0; p[0] <(unsigned int)size[0] ; p[0]++)	{
 
 			val = image->GetPixel(p);
 			if(val < m)	{

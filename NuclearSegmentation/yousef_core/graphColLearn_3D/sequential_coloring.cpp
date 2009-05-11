@@ -19,8 +19,8 @@
 /*----------------------------------------------------------------------------*/
 #include "gvc.h"
 
-//void GVC::sequential_coloring( unsigned char *bufferOut, unsigned char *img,\
-//                               int rows, int cols, int ncolors,\
+//void GVC::sequential_coloring( unsigned char *bufferOut, unsigned char *img,
+//                               int rows, int cols, int ncolors,
 //                               vector< vector<int> > &vec,
 //                               vector< vector<int> > &map )
 void GVC::sequential_coloring(int nobjects, int ncolors, int* ColorOut, vector< vector<int> > &map )                                                                                             
@@ -110,7 +110,7 @@ bool GVC::solve(vector< vector<int> > &map, int v, int ncolors)
 
 bool GVC::valid(vector< vector<int> > &map, int v, int c)
 {
-    for (int i = 0; i < map[v].size(); i++)
+    for (unsigned int i = 0; i < map[v].size(); i++)
     {
         int u = map[v][i]-1;
         if (u != v && u < v && ColorClass[u] == c) return false;

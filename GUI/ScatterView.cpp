@@ -725,7 +725,7 @@ void ScatterView::drawGrid(QPainter *painter)
 //***************************************************************************************************
 void ScatterView::drawCurves(QPainter *painter)
 {
-	QItemSelectionModel *selections = selectionModel();
+	//QItemSelectionModel *selections = selectionModel();
 
 	PlotSettings settings = *mySettings;
 	QRect rect(Margin, Margin, viewport()->width() - 2*Margin, viewport()->height() - 2*Margin);
@@ -793,7 +793,7 @@ QMap<int, QColor> ScatterView::GetDefaultColors()
 	{
 		int clss = model()->data(model()->index(r,columnNumForColoring)).toInt();
 		bool found = false;
-		for(int c=0; c<classId.size(); ++c)
+		for(unsigned int c=0; c<classId.size(); ++c)
 		{
 			if(classId[c] == clss)
 			{
@@ -811,7 +811,7 @@ QMap<int, QColor> ScatterView::GetDefaultColors()
 	
 	//Now assign colors to the classes
 	classColors.clear();
-	for(int c=0; c<classId.size(); ++c)
+	for(unsigned int c=0; c<classId.size(); ++c)
 	{
 		classColors.insert(classId[c],defaultColor[c]);
 	}

@@ -97,7 +97,7 @@ void label2border2(int* img,int* bordImg, int c, int r, int z)
 
 void label2border3(int* img,int* segImg, int c, int r, int z)
 {
-	int v, v1, v2, v3;
+	//int v, v1, v2, v3;
 	for(int i=0; i<r-1; i++)
 	{
 		for(int j=0; j<c-1; j++)

@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
   }
   
   const char *filename_list = argv[1];
-  const char *outfilename   = argv[2];
+  //const char *outfilename   = argv[2];
 
   std::ifstream in_file_str( filename_list);
   if ( !in_file_str ){

@@ -3,10 +3,10 @@
 //
 // This file contains all tracking functions
 //
-#pragma warning(disable:4786)  // disable STL-related warnings
-#pragma warning(disable:4710)  // compiler didn't inline function that got selected for inline expansion
-#pragma warning(disable:4514)  // The optimizer removed an inline function that is not called
-#pragma warning(disable:4702)  // unreachable STLport code
+//#pragma warning(disable:4786)  // disable STL-related warnings
+//#pragma warning(disable:4710)  // compiler didn't inline function that got selected for inline expansion
+//#pragma warning(disable:4514)  // The optimizer removed an inline function that is not called
+//#pragma warning(disable:4702)  // unreachable STLport code
 
 #include <iostream>
 #include <fstream>
@@ -399,7 +399,7 @@ bool IndividualMedianResponse(int prev_shift, CPoint& point,
 	register float fMaxRespDensity = 0;
 	register float fMaxRespDensityAtThisLength = 0;
 	register float fMaxDensity = 0;
-	static int diff = 0;
+	//static int diff = 0;
 
 	register short sum[MaxShiftDistance];
 	memset(sum, 0, sizeof(short) * MaxShiftDistance);

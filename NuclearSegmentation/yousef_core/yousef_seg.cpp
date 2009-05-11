@@ -15,9 +15,9 @@ yousef_nucleus_seg::yousef_nucleus_seg()
 	myConnComp = NULL;
 	m_pData = NULL;
 
-	int numStacks = 0;
-	int numRows = 0;
-	int numColumns = 0;		
+	//int numStacks = 0;
+	//int numRows = 0;
+	//int numColumns = 0;		
 }
 
 //Destructor
@@ -243,7 +243,7 @@ void yousef_nucleus_seg::outputSeeds(void)
 	outFName = outFName + "_seedPoints.txt";
 	FILE* fid = fopen(outFName.c_str(),"w");
 
-	for (int i=0; i<mySeeds.size(); ++i)
+	for (unsigned int i=0; i<mySeeds.size(); ++i)
 	{
 		fprintf( fid,"%d %d %d\n",mySeeds[i].x(),mySeeds[i].y(),mySeeds[i].z() );
 	}
@@ -365,8 +365,8 @@ void yousef_nucleus_seg::getConnCompInfo3D()
 				{
 					curNode = (k*numRows*numColumns)+(j*numColumns)+i;
 					val = binImagePtr[curNode];
-					if(val == 14)
-						int uudf=1;
+					//if(val == 14)
+					//	int uudf=1;
 					if(val>0)
 					{
 						val = val-1;
@@ -408,7 +408,8 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 	}
 
 	//Now, we apply the next steps into the connected components one by one
-	int ind, x_len, y_len, z_len, val, min_lbl, max_lbl;
+	int ind, x_len, y_len, z_len, val;
+	//int min_lbl, max_lbl;
 	segImagePtr = new int[numStacks*numRows*numColumns];
 	//memcpy(segImagePtr/*destination*/, clustImagePtr/*source*/, numStacks*numRows*numColumns*sizeof(int)/*num bytes to move*/);
 	memset(segImagePtr/*destination*/,0/*value*/,numStacks*numRows*numColumns*sizeof(int)/*num bytes to move*/);
@@ -446,7 +447,7 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 						//Do the same for the LoG image
 						sublogImg[ind] = logImagePtr[(k*numRows*numColumns)+(j*numColumns)+i];
 						int found = 0;
-						for(int l=0; l<labelsList.size(); l++)
+						for(unsigned int l=0; l<labelsList.size(); l++)
 						{
 							if(labelsList[l] == subclustImg[ind])
 								found = 1;
@@ -474,9 +475,9 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 		//If you reach here, it means that the current connected component contains two or more cells
 		//First, sort the labels list
 		std::cerr<<"    "<<"sorting labels"<<std::endl;
-		for(int l1=0; l1<labelsList.size(); l1++)
+		for(unsigned int l1=0; l1<labelsList.size(); l1++)
 		{
-			for(int l2=l1+1; l2<labelsList.size(); l2++)
+			for(unsigned int l2=l1+1; l2<labelsList.size(); l2++)
 			{
 				if(labelsList[l2]<labelsList[l1])
 				{
@@ -509,7 +510,7 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 					}
 					else
 					{												
-						for(int l=0; l<labelsList.size(); l++)
+						for(unsigned int l=0; l<labelsList.size(); l++)
 						{
 							if(labelsList[l] == subclustImg[ind])
 							{

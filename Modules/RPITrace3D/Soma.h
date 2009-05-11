@@ -118,11 +118,12 @@ public:
 
 	// data members
 
+	// the number of somas in my collection
+	int    m_iNumOfSomas;
+
 	// an array of somas
 	CSoma *m_aData;
 
-	// the number of somas in my collection
-	int    m_iNumOfSomas;
 };
 
 #endif

@@ -690,11 +690,11 @@ void ControlBar::loadOutliers()
 	while ( !inFile.eof() ) //Get all outliers
 	{
 		char * pch = strtok (line," ");
-		int num = (int)atof(pch);
+		//int num = (int)atof(pch);
 		pch = strtok (NULL, " ");
 		int id = (int)atof(pch);
 		pch = strtok (NULL, " ");
-		float val = atof(pch);
+		//float val = atof(pch);
 
 		outliers.push_back( id );
 	

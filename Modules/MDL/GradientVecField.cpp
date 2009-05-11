@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
   sls = sizeX*sizeY;		// slice size
   sz = sls*sizeZ;
 
-  if ( fread(volin, sizeof(DATATYPEIN), sz, filein) < sz)
+  if ( fread(volin, sizeof(DATATYPEIN), sz, filein) < (unsigned long)sz)
   {
     printf("File size is not the same as volume size\n");
     exit(1);

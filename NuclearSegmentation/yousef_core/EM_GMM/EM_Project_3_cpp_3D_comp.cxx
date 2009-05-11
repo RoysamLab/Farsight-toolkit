@@ -148,7 +148,7 @@ void Post_Expect(double **Gamma, std::vector<std::vector<double> > *X,double *PI
         for(int j=0; j<num_components; j++)
         {
 			//Here.. we have to see if the point is too far from closest seeds, then set the prob A[j] to epsilon
-			double D = sqrt(pow(X->at(i).at(0)-U[j][0],2) + pow(X->at(i).at(1)-U[j][1],2) + pow(X->at(i).at(2)-U[j][2],2));
+			//double D = sqrt(pow(X->at(i).at(0)-U[j][0],2) + pow(X->at(i).at(1)-U[j][1],2) + pow(X->at(i).at(2)-U[j][2],2));
 			//if(D>MAX_SZ)
 			//	A[j] = numeric_limits<long double>::epsilon();
 			//else
@@ -223,7 +223,7 @@ void Param_Maximization(std::vector<std::vector<double> > *X,double **Gamma,doub
 
 void Compute_Probabilities(std::vector<std::vector<double> > *X, int num_points, double** U,double*** Segma,double* PI)
 {
-    long int index = 0;
+    //long int index = 0;
     for(int i=0; i<num_points; i++)
 	{		
 		X->at(i).at(4) = PI[0]*Multivar_Norm3D(X->at(i).at(0),X->at(i).at(1),X->at(i).at(2),U[0][0],U[0][1],U[0][2],Segma[0][0][0],Segma[0][1][0], Segma[0][1][1],Segma[0][0][2],Segma[0][1][2],Segma[0][2][2]);	
@@ -240,14 +240,14 @@ void EM_Gmm(std::vector<std::vector<double> > *X,int** SEEDS,int num_points, int
     double*** Segma_old;
     double*  PI;
     double*  PI_old;
-    double*  out1;
-    double*  out2;
-    double*  out3;
-    double*  out4;    
+    //double*  out1;
+    //double*  out2;
+    //double*  out3;
+    //double*  out4;    
     double Du, Ds;
     double** Gamma;
-    double* im_vals;
-    int r, c, z;
+    //double* im_vals;
+    //int r, c, z;
     
       
        

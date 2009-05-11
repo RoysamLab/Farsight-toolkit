@@ -5,9 +5,9 @@
 //  Contains files necessary to initialize the global templates and 
 //  shift vectors.
 ///////////////////////////////////////////////////////////////////
-#pragma warning(disable:4786)  // disable STL-related warnings
-#pragma warning(disable:4710)  // compiler didn't inline function that got selected for inline expansion
-#pragma warning(disable:4514)  // The optimizer removed an inline function that is not called
+//#pragma warning(disable:4786)  // disable STL-related warnings
+//#pragma warning(disable:4710)  // compiler didn't inline function that got selected for inline expansion
+//#pragma warning(disable:4514)  // The optimizer removed an inline function that is not called
 
 #include <fstream>
 #include <iostream>
@@ -38,8 +38,8 @@ int FourtyFiveDegreeVectorsRight[4][4];
 
 void InitData()
 {
-	int iSlices = The3DImage->m_iSlices;
-	int iRows = The3DImage->m_iRows;
+	//int iSlices = The3DImage->m_iSlices;
+  //int iRows = The3DImage->m_iRows;
 	int iCols = The3DImage->m_iCols;
 
 	// the first dimension stands for 45, 135, 225, and 315

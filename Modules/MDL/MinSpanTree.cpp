@@ -94,9 +94,8 @@ int main(int argc, char *argv[])
 
 
   ifstream fin;
-  FILE *volfile, *vesselfile, *somafile, *distOutfile;
+  FILE *volfile, *vesselfile;
   FILE *fout, *fout_txt;
-  FILE *fout_MDL;
   DATATYPEIN *volin, *volvessel, *somaDist;
   char *filedir;
   char *infilename;
@@ -108,7 +107,6 @@ int main(int argc, char *argv[])
   int p;
   int edgeRange;
   int line_count;
-  int prunetimes;
   int branchChosen;
   int indVert, indVert_last;
 
@@ -129,7 +127,7 @@ int main(int argc, char *argv[])
   int *degree_nodes_initialMST;
   int times_erosion;
   int times_dilation;
-  float densityFactor, distTransFactor;
+  float densityFactor;
   double meanDensityBranch[MAXNumBranch];   // Suppose at most MAXNumBranch branches at the 2nd level branch from BB
   double meanVesselBranch[MAXNumBranch];
   float length_leaf[MAXNumBranch];
@@ -139,7 +137,6 @@ int main(int argc, char *argv[])
   float length_2leaf[MAXNumBranch];  // length of two level branches
 
   float length_edge, leaf_length;
-  double x1, x2, x3;
   int *edge_eroded;
   int num_edge_eroded;
   int edge_source, edge_target;
@@ -260,21 +257,21 @@ int main(int argc, char *argv[])
   edge_w = new float[MAX_NUM_EDGE];
   //edge_array = (E*)malloc(MAX_NUM_EDGE*sizeof(E));
 
-  if ( fread(volin, sizeof(DATATYPEIN), sz, volfile) < sz)  // read in vol file
+  if ( fread(volin, sizeof(DATATYPEIN), sz, volfile) < (unsigned long)sz)  // read in vol file
   {
     printf("File size is not the same as volume size\n");
     exit(1);
   }
 
 
-  if ( fread(volvessel, sizeof(DATATYPEIN), sz, vesselfile) < sz)  // read in vessel file
+  if ( fread(volvessel, sizeof(DATATYPEIN), sz, vesselfile) < (unsigned long)sz)  // read in vessel file
   {
     printf("File size is not the same as vessel size\n");
     exit(1);
   }
 
 #if OUTPUT_DISTTRANS
-  if ( fread(somaDist, sizeof(DATATYPEIN), sz, somafile) < sz)  // read in vessel file
+  if ( fread(somaDist, sizeof(DATATYPEIN), sz, somafile) < (unsigned long)sz)  // read in vessel file
   {
     printf("File size is not the same as soma size\n");
     exit(1);
@@ -573,7 +570,6 @@ int main(int argc, char *argv[])
 		  //num_edge_MST++;
 	  }
   }
-  int num_vertex_MST = num_vertices(msTreeBB); 
   //int num_edge_MST = num_edges(msTreeBB); //not work
 
   //msTreeBB_buffer = msTreeBB; // copy to buffer for next process
@@ -592,7 +588,6 @@ int main(int argc, char *argv[])
   for (i=0; i<MAXNumBranch; i++)  vertsCurBr_Index2[i]=0;  // Initialize to zeros
 
   // CONSIDER ALL branches on the BackBone
-  Vertex curVert;
   num_leaves = 0;
   //prunetimes = 1; //5;
 
@@ -631,7 +626,7 @@ int main(int argc, char *argv[])
 				//curVert = vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], msTree);
 				for (boost::tie(outei2, outedge_end2) = out_edges(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], msTree), msTree);
 																						outei2 != outedge_end2; ++outei2) {
-					if (target(*outei2, msTree) == vertsCurBranch2[0][vertsCurBr_Index2[0]-1])
+					if (target(*outei2, msTree) == (unsigned int)vertsCurBranch2[0][vertsCurBr_Index2[0]-1])
 						continue;
 					vertsCurBranch2[0][vertsCurBr_Index2[0]+1] = target(*outei2, msTree);
 				}
@@ -711,7 +706,7 @@ int main(int argc, char *argv[])
 			// For each 2nd level branch starting from the end of 1st level branch
 			for (boost::tie(outei2, outedge_end2) = out_edges(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], msTree), msTree);
 																					outei2 != outedge_end2; ++outei2) {
-				if (target(*outei2, msTree) == vertsCurBranch2[0][vertsCurBr_Index2[0]-1])
+				if (target(*outei2, msTree) == (unsigned int)vertsCurBranch2[0][vertsCurBr_Index2[0]-1])
 					continue;  // continue if the out edge belongs to the old branch
 				ind2Brch++;
 				vertsCurBranch2[ind2Brch][0] = vertsCurBranch2[0][vertsCurBr_Index2[0]];
@@ -724,7 +719,7 @@ int main(int argc, char *argv[])
 				//curVert = vertex(vertsCurBranch[vertsCurBr_Index], msTree);
 					for (boost::tie(outei3, outedge_end3) = out_edges(vertex(vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]], msTree), msTree);
 																							outei3 != outedge_end3; ++outei3) {
-						if (target(*outei3, msTree) == vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]-1])
+						if (target(*outei3, msTree) == (unsigned int)vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]-1])
 							continue;
 						vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]+1] = target(*outei3, msTree);
 					}
@@ -996,7 +991,7 @@ int main(int argc, char *argv[])
 	  numOfVertBranch[component[i]]++;
 	  idx = vertexPos[i+1].z *slsz + vertexPos[i+1].y *sizeX + vertexPos[i+1].x;
 	  //meanDensityBranch[component[i]] += volin[idx];
-	  meanDensityBranch[component[i]] += volvessel[idx]; //*volin[idx];
+	  meanDensityBranch[component[i]] += volvessel[idx]; //volin[idx];
   }
 
   // Judge if branch is dendrite, based on mean density of branch

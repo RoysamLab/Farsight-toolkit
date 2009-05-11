@@ -3,10 +3,10 @@
 // 
 // This file contains some drawing tools available for use of other functions
 //
-#pragma warning(disable:4786)  // disable STL-related warnings
-#pragma warning(disable:4710)  // compiler didn't inline function that got selected for inline expansion
-#pragma warning(disable:4514)  // The optimizer removed an inline function that is not called
-#pragma warning(disable:4702)  // unreachable STLport code
+//#pragma warning(disable:4786)  // disable STL-related warnings
+//#pragma warning(disable:4710)  // compiler didn't inline function that got selected for inline expansion
+//#pragma warning(disable:4514)  // The optimizer removed an inline function that is not called
+//#pragma warning(disable:4702)  // unreachable STLport code
 
 #include <iostream>
 #include <fstream>
@@ -103,7 +103,7 @@ void Draw_CenterlineOnProjections()
 		{
 			gTheSomas->ConstructTrees();
 			// remove all pixels interfering with tree coloring
-			int iNumOfTrees = gTheSomas->m_aData[0].m_iNumOfIntersectionPoints;
+			//int iNumOfTrees = gTheSomas->m_aData[0].m_iNumOfIntersectionPoints;
 			//TrackImageXY->RemovePixels(iNumOfTrees + 5 + 2);
 			//TrackImageXZ->RemovePixels(iNumOfTrees + 5 + 2);
 			//TrackImageYZ->RemovePixels(iNumOfTrees + 5 + 2);
@@ -361,17 +361,20 @@ void Draw_BorderlineOnProjections(char* plane)
 
 void Draw_SeedPointsOnProjections(char* gridlines = NULL)
 {
-	int iSlices = The3DImage->m_iSlices;
+	//int iSlices = The3DImage->m_iSlices;
 	int iRows = The3DImage->m_iRows;
 	int iCols = The3DImage->m_iCols;
 	string output_path = gConfig.GetOutputPath();
 	string image_name = gConfig.GetImageName();
 	int iGridSpacing = gConfig.GetGridSpacing();
+
+  /* come up with a better way to do this...
 	// assign default values
 	if (gridlines == NULL)
 	{
 		gridlines = "no";
 	}
+  */
 
 	string file_name;
 	CImage* XY = NULL;
@@ -454,7 +457,7 @@ void Draw_SeedCandidates (std::vector<CPoint> & seed_candidates)
 	CImage* XY = NULL;
 
 	CPoint* pPoint = NULL;
-	int giMARGIN2 = 3;
+	//int giMARGIN2 = 3;
 
 	XY = new CImage(*CanvasXY);
 
@@ -503,8 +506,11 @@ void Draw_SeedCandidates (std::vector<CPoint> & seed_candidates)
 void Draw_PointsOnProjections(list<CPoint> center, list<CPoint> left,
 	list<CPoint> right, char* name = NULL)
 {
+  /* come up with a better way to handle this case that doesn't violate
+     char* = const char*
 	if (name == NULL)
 		name = "";
+  */
 
 	string output_path = gConfig.GetOutputPath();
 	string image_name = gConfig.GetImageName();
@@ -576,11 +582,14 @@ void Draw_PointsOnProjections(list<CPoint> center, list<CPoint> left,
 
 void Draw_PointsOnProjections(list<CPoint> points, char* name = NULL)
 {
-	int iSlices = The3DImage->m_iSlices;
-	int iRows = The3DImage->m_iRows;
+	//int iSlices = The3DImage->m_iSlices;
+	//int iRows = The3DImage->m_iRows;
 	int iCols = The3DImage->m_iCols;
+  /* come up with a better way to handle this case that doesn't violate
+     char* = const char*
 	if (name == NULL)
 		name = "";
+  */
 
 	string output_path = gConfig.GetOutputPath();
 	string image_name = gConfig.GetImageName();

@@ -104,8 +104,8 @@ bool Histogram::ReadHistogramData(const char* fileName)
 void Histogram::Normalize() 
 {
 	multiset<double> dataTmp;
-	double minNumber= *min_element(data.begin(), data.end());
-	double maxNumber= *max_element(data.begin(), data.end());
+	//double minNumber= *min_element(data.begin(), data.end());
+	//double maxNumber= *max_element(data.begin(), data.end());
 	//double diff = maxNumber - minNumber;
 
 	double sum=0;

@@ -2,10 +2,10 @@
 // Author: Muhammad-Amri Abdul-Karim (abdulm@rpi.edu)
 //
 //////////////////////////////////////////////////////////////////////
-#pragma warning(disable:4786)  // disable STL-related warnings
-#pragma warning(disable:4710)  // compiler didn't inline function that got selected for inline expansion
-#pragma warning(disable:4514)  // The optimizer removed an inline function that is not called
-#pragma warning(disable:4702)  // unreachable STLport code
+//#pragma warning(disable:4786)  // disable STL-related warnings
+//#pragma warning(disable:4710)  // compiler didn't inline function that got selected for inline expansion
+//#pragma warning(disable:4514)  // The optimizer removed an inline function that is not called
+//#pragma warning(disable:4702)  // unreachable STLport code
 
 #include <iostream>
 #include <fstream>
@@ -170,7 +170,7 @@ void StrEle::CreateCube()
 }
 
 // constructor with 
-StrEle::StrEle(C3DImage* data3D, char* ele_shape, int diameter_xy,
+StrEle::StrEle(C3DImage* data3D, const char* ele_shape, int diameter_xy,
 	int diameter_z)
 {
 	data = data3D;
@@ -1055,8 +1055,8 @@ C3DImage* Profile1D(C3DImage* source, int slice, int row, int column,
 	std::string output_path = gConfig.GetOutputPath();
 	std::string image_name = gConfig.GetImageName();
 
-	sprintf(fName, "%s%s1DProfile_S%d_R%d_C%d_%c.txt", output_path,
-		image_name, slice, row, column, direction);
+	sprintf(fName, "%s%s1DProfile_S%d_R%d_C%d_%c.txt", output_path.c_str(),
+		image_name.c_str(), slice, row, column, direction);
 
 	ofstream out(fName);
 

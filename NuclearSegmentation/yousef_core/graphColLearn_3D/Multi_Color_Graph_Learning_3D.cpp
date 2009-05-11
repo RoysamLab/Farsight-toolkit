@@ -52,7 +52,7 @@ float* multiColGraphLearning(float* X_vals, int* labs_vals, int* color_im,int r,
     double** U;
     double*** Segma;
     double* P_I;
-    double** Z;
+    //double** Z;
     int* Z_sum;    
 	int L, L1, L2, L3, L4, L5, L6, L7;
     
@@ -213,11 +213,11 @@ float* multiColGraphLearning(float* X_vals, int* labs_vals, int* color_im,int r,
     int NG1, NG2;
     for(int i=0; i<max_lab; i++)
 	{	        
-		for(int j=0; j<MAP2[i].size() ; j++)
+		for(unsigned int j=0; j<MAP2[i].size() ; j++)
 		{
             NG1 = MAP2[i][j];
 			//for each jth neighbor of the ith cell
-            for(int k=0; k<MAP2[NG1-1].size() ; k++)
+            for(unsigned int k=0; k<MAP2[NG1-1].size() ; k++)
             {
                 //add each kth neighbor of the jth cell to the ith cell
                 NG2 = MAP2[NG1-1][k];
@@ -361,7 +361,7 @@ float* multiColGraphLearning(float* X_vals, int* labs_vals, int* color_im,int r,
 	double *Pr = (double *) malloc((ncolors+1)*sizeof(double));
     int C, cl, V;
     double P;
-    int intst;
+    //int intst;
     for(int i=0; i<r; i++)
     {        
         for(int j=0; j<c; j++)
@@ -394,7 +394,7 @@ float* multiColGraphLearning(float* X_vals, int* labs_vals, int* color_im,int r,
 					//Added By Yousef on 10-27-2008
 					//Relable the initially segmented image using the colors
 					color_im[(h*r*c)+(i*c)+j] = C+1;
-					for (int k = 0; k < MAP[(int)val].size(); k++)
+					for (unsigned int k = 0; k < MAP[(int)val].size(); k++)
 					{
 						V = MAP[(int)val][k]-1;
 						C = ColorOut[V];

@@ -211,7 +211,7 @@ void CConfig::SetValuesFromConfigurationFile()
 //
 // Get the value of the given string. Return NULL if not found
 // The algorithm uses binary search
-char* CConfig::GetStringValue(char* achString)
+char* CConfig::GetStringValue(const char* achString)
 {
   int iHi = m_iNumOfElements - 1;
   int iLow = 0;

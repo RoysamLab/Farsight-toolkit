@@ -448,11 +448,11 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 
 	// The offsets for the neighboring pixels for 4-connectivity
 	std::vector< typename NeighborhoodIteratorType::OffsetType > offsets(2*VImageDimension);
-	for (int i=0; i<(2*VImageDimension); ++i)
+	for (unsigned int i=0; i<(2*VImageDimension); ++i)
 	{
 		offsets[i].Fill(0);
 	}
-	int p = 0, o = 0;
+	unsigned int p = 0, o = 0;
 	while ( p < VImageDimension )
 	{
 		offsets[o++][p] = -1;
@@ -480,7 +480,7 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		if ( v <= 0 ) continue;
 
 		bool allSame = true;
-		for (int i=0; i<2*VImageDimension; ++i)
+		for (unsigned int i=0; i<2*VImageDimension; ++i)
 		{
 			TLPixel p = it.GetPixel( offsets[i] );
 			
@@ -769,7 +769,7 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 		typename LabelImageType::IndexType index;
 
 		int loc = 0;
-		for (int dim=0; dim<VImageDimension; dim++)
+		for (unsigned int dim=0; dim<VImageDimension; dim++)
 		{
 			index[dim] = this->featureVals[currentLabel].BoundingBox[loc];	//bbox min
 			size[dim] = this->featureVals[currentLabel].BoundingBox[loc+1]- index[dim] + 1;	//bbox max - min + 1

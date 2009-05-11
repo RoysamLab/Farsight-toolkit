@@ -1,7 +1,7 @@
-#pragma warning(disable:4786)  // disable STL-related warnings
-#pragma warning(disable:4710)  // compiler didn't inline function that got selected for inline expansion
-#pragma warning(disable:4514)  // The optimizer removed an inline function that is not called
-#pragma warning(disable:4702)  // unreachable STLport code
+//#pragma warning(disable:4786)  // disable STL-related warnings
+//#pragma warning(disable:4710)  // compiler didn't inline function that got selected for inline expansion
+//#pragma warning(disable:4514)  // The optimizer removed an inline function that is not called
+//#pragma warning(disable:4702)  // unreachable STLport code
 
 #include <iostream>
 #include <fstream>
@@ -240,7 +240,7 @@ bool CBranches::ProcessTip(CVessel* CurrentVessel, TopEnd Flag, int VessID)
 	//By Yousef Nov. 23 2006
 	//Try this
 	int diff = 0;
-	bool br = false;
+	//bool br = false;
 	for(i=0;i<21;i++)
 	{
 		if(i%2 == 0)
@@ -374,8 +374,8 @@ bool CBranches::DetectBranch(int lng, int threshold, int SegID, TopEndMiddleNeit
 	int i,j,k,h,hit,Gr_Mean,d1, d2, d3, d4, index;
 	//threshold = 0;
 	int pnt[3];
-	int spnt[3];
-	double test = tan(theta1);
+	//int spnt[3];
+	//double test = tan(theta1);
 	d1 = (int) (lng*tan(theta1));
 	d2 = (int) (lng*tan(theta2));
 	d3 = (int) (d1/sqrt(2.0));

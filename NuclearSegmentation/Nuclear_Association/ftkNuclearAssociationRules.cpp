@@ -253,6 +253,8 @@ float NuclearAssociationRules::ComputeOneAssocMeasurement(itk::SmartPointer<Targ
 		default:
 			return ComputeAverage(trgInt);
 	}	
+  //we will never go here, just silencing a compiler warning
+  return 0.0;
 }
 
 /* the next functions will compute the measurements for the different cases */
@@ -260,7 +262,7 @@ float NuclearAssociationRules::ComputeOneAssocMeasurement(itk::SmartPointer<Targ
 float NuclearAssociationRules::FindMax(vector<int> LST)
 {
 	float mx = LST[0];
-	for(int i=1; i<LST.size(); i++)
+	for(unsigned int i=1; i<LST.size(); i++)
 	{
 		if(mx<LST[i])
 			mx = LST[i];
@@ -272,7 +274,7 @@ float NuclearAssociationRules::FindMax(vector<int> LST)
 float NuclearAssociationRules::FindMin(vector<int> LST)
 {
 	float mn = LST[0];
-	for(int i=1; i<LST.size(); i++)
+	for(unsigned int i=1; i<LST.size(); i++)
 	{
 		if(mn>LST[i])
 			mn = LST[i];
@@ -284,7 +286,7 @@ float NuclearAssociationRules::FindMin(vector<int> LST)
 float NuclearAssociationRules::ComputeTotal(vector<int> LST)
 {
 	float tl = LST[0];
-	for(int i=1; i<LST.size(); i++)
+	for(unsigned int i=1; i<LST.size(); i++)
 	{		
 		tl += LST[i];
 	}
@@ -295,7 +297,7 @@ float NuclearAssociationRules::ComputeTotal(vector<int> LST)
 float NuclearAssociationRules::ComputeAverage(vector<int> LST)
 {
 	float av = LST[0];
-	for(int i=1; i<LST.size(); i++)
+	for(unsigned int i=1; i<LST.size(); i++)
 	{		
 		av += LST[i];
 	}

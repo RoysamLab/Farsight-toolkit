@@ -34,7 +34,7 @@ void distTransform(unsigned char *f, int L, int M, int N)
 {
   
   int i,j,k,n;
-  float *buff , df, db, d, w, thresh;
+  float *buff , df, db, d, w;
   long *fDist;
   long idx, slsz, sz;
 

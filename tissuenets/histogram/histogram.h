@@ -97,6 +97,7 @@ public:
 	void RenderWin();
 	void RecordImage (char* imgFileName);
 	double SetDiffToUpperBound(double n);
-	void Histogram::Normalize();
+	void Normalize();
 
 };
+

@@ -80,7 +80,7 @@ void local_max_clust_3D(float* im_vals, int* local_max_vals, int* bImg, int* out
 					//find maximum value in the LoG withing the search region (min_r->max_r,min_c->max_c,min_z->max_z).
 					//R,C,Z will contain the coordinates of this local maximum value. 
 					//r,c,z are the image dimensions.
-					float mx = get_maximum(im_vals, min_r, max_r, min_c, max_c, min_z, max_z, &R, &C, &Z, r, c, z);                                              
+					//float mx = get_maximum(im_vals, min_r, max_r, min_c, max_c, min_z, max_z, &R, &C, &Z, r, c, z);                                              
                                                                                  
 					/*double ind;
             

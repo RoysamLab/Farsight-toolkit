@@ -56,11 +56,13 @@ int main(int argc, char *argv[])
     Vector *gradVec;
 	DATATYPEOUT *volout;
 
-	int i,j,k, t;
+	int i,j,k;
+	//int t;
 	int ii, jj, kk;
 	int d1, d2;
 	int sls, sz;
-	long idx, iidx, iidx1, iidx2;
+	long idx, iidx1, iidx2;
+	//long iidx;
 	int timesDiffuse;
 	int border;
 	float kernelWeight[3][3];
@@ -107,7 +109,7 @@ int main(int argc, char *argv[])
 			}
 	fread(volin2,sizeX*sizeY*sizeZ,sizeof(unsigned char), infile2);
 */
-	if (fread(volin, sizeof(DATATYPEIN), sizeX*sizeY*sizeZ, infile) < sizeX*sizeY*sizeZ)
+	if (fread(volin, sizeof(DATATYPEIN), sizeX*sizeY*sizeZ, infile) < (unsigned int)(sizeX*sizeY*sizeZ) )
 	{
 		printf("File size is not the same as volume size\n");
 		exit(1);
@@ -223,7 +225,7 @@ int main(int argc, char *argv[])
 			}
 		}
 
-#endif;
+#endif
 
 
 

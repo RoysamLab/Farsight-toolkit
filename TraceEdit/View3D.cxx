@@ -342,7 +342,7 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
         view->HighlightSelected(tline, tline->getTraceColor()-.25);
         view->IDList.pop_back();
         cout<< " These lines: ";
-        for (int i = 0; i < view->IDList.size(); i++)
+        for (unsigned int i = 0; i < view->IDList.size(); i++)
           {
           cout<<  "\t"<<view->IDList[i];   
           } 

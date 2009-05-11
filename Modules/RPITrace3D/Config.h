@@ -31,7 +31,7 @@ public:
 	void ReadConfigurationFile(const char* achFName);
 
 	// get the value associated with the given string
-	char* GetStringValue(char* pchStringName);
+	char* GetStringValue(const char* pchStringName);
 
 	/////////////////
 	// Data

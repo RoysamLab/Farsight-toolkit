@@ -376,7 +376,7 @@ LabelBorderImageFilter< TInputImage, TOutputImage>
       //-------------
       long ss1 = nStart - offset;
       // long ss2 = nStart + offset;
-      long ee1 = nLast - offset;
+      //long ee1 = nLast - offset;
       long ee2 = nLast + offset;
       bool eq = false;
       long oStart = 0;

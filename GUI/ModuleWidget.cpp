@@ -54,7 +54,7 @@ void ModuleWidget::SetupUi(void)
 	QLabel *dataLabel = new QLabel(tr("Image File: "));
 	gLayout->addWidget(dataLabel,layoutRow,0,1,1);
 	imageFileCombo = new QComboBox();
-	for (int i=0; i<possibleFilenames.size(); ++i)
+	for (unsigned int i=0; i<possibleFilenames.size(); ++i)
 	{
 		imageFileCombo->addItem(QString::fromStdString(possibleFilenames.at(i)));
 	}

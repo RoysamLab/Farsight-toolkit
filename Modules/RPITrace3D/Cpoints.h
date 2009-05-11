@@ -148,22 +148,24 @@ public:
 	int m_iZ;
 	unsigned char m_iHDir;  // the direction number (0-NumOfDirections)};
 	unsigned char m_iVDir;
-	//added by Yousef on 3-25-2009
-	int m_iID;
-	int m_iParID;
-
-	// we keep the width of the point here
-	float m_fHWidth;
-	float m_fVWidth;
 
 	int m_iValue; // this can represent the pixel value or the template's
 	// response at this location
 
-	int m_iVerifiable;
 	// general purpose user flag
 	long m_lUserFlag;
-
+	int m_iVerifiable;
+	
 	int m_iPixelValue;
+
+  // we keep the width of the point here
+	float m_fVWidth;
+	float m_fHWidth;
+
+	//added by Yousef on 3-25-2009
+	int m_iID;
+	int m_iParID;
+
 };
 
 

@@ -4,10 +4,10 @@
 // This file contains the implementation of a simple image class to read
 // and write PGM images. It is done in a hurry so be warned
 //
-#pragma warning(disable:4786)  // disable STL-related warnings
-#pragma warning(disable:4710)  // compiler didn't inline function that got selected for inline expansion
-#pragma warning(disable:4514)  // The optimizer removed an inline function that is not called
-#pragma warning(disable:4702)  // unreachable STLport code
+//#pragma warning(disable:4786)  // disable STL-related warnings
+//#pragma warning(disable:4710)  // compiler didn't inline function that got selected for inline expansion
+//#pragma warning(disable:4514)  // The optimizer removed an inline function that is not called
+//#pragma warning(disable:4702)  // unreachable STLport code
 
 #include <iostream>
 #include <fstream>
@@ -35,15 +35,15 @@
 using namespace std;
 
 // default CTOR
-C3DImage::C3DImage() : m_iRows(0), m_iCols(0), m_iSlices(0), m_iPadding(0), data(0),
+C3DImage::C3DImage() : m_iSlices(0), m_iRows(0), m_iCols(0), m_iPadding(0), data(0),
 	type(pgm)
 {
 	memset(m_aiHistogram, 0, sizeof(int) * 256);
 }
 
 // copy CTOR
-C3DImage::C3DImage(const C3DImage& image) : m_iRows(image.m_iRows),
-	m_iCols(image.m_iCols), m_iSlices(image.m_iSlices), m_iPadding(image.m_iPadding), data(0),
+C3DImage::C3DImage(const C3DImage& image) : m_iSlices(image.m_iSlices),
+  m_iRows(image.m_iRows), m_iCols(image.m_iCols), m_iPadding(image.m_iPadding), data(0),
 	type(image.type)
 {
 	if (m_iRows != 0 && m_iCols != 0 && m_iSlices != 0)

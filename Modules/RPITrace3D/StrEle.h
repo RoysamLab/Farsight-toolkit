@@ -16,7 +16,7 @@ class StrEle
 public:
 	
 	StrEle();
-	StrEle(C3DImage * data3D, char * ele_shape, int diameter_xy, int diameter_z);
+	StrEle(C3DImage * data3D, const char * ele_shape, int diameter_xy, int diameter_z);
 	virtual ~StrEle();
 
 	void NormalizeGaussianWeight();
@@ -34,9 +34,9 @@ public:
 	unsigned char Convolve();
 	void AddGaussianWeight(float sigma_x, float sigma_y=0.0, float sigma_z=0.0);
 	void SetCenter(int s, int r, int c);
-	void SetXYWidth(int new_width) { *this = StrEle(data, shape, new_width, d_z); }
-	void SetZWidth(int new_width) {	*this = StrEle(data, shape, d_xy, new_width); }
-	void Set_XY_And_Z_Width(int xy, int z) { *this = StrEle(data, shape, xy, z); }
+	void SetXYWidth(int new_width) { *this = StrEle(data, shape.c_str(), new_width, d_z); }
+	void SetZWidth(int new_width) {	*this = StrEle(data, shape.c_str(), d_xy, new_width); }
+	void Set_XY_And_Z_Width(int xy, int z) { *this = StrEle(data, shape.c_str(), xy, z); }
 	int ** GetOffsets() { return offsets2; }
 	float * GetWeights() { return weights; }
 	int GetSize() { return size; }
@@ -52,7 +52,7 @@ private:
 	C3DImage * data;
 	int d_xy;
 	int d_z;
-	char * shape;
+	std::string shape;
 	int center_s;	// center slice position
 	int center_r;	// center row position
 	int center_c;	// center column position

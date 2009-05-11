@@ -293,9 +293,6 @@ public:
 	// data members//
 	/////////////////
 
-	// vessel's length equals that of the centerline length. 
-	int m_iLength;
-
 	// a vessel is described by 5 linked lists of points
 	// the center, horizontal left and right, and vertical left and right
 	CDLList<CPoint> m_Center;
@@ -306,17 +303,21 @@ public:
 
 	// the vessel's id
 	int m_iID;
+	
+  // vessel's length equals that of the centerline length. 
+	int m_iLength;
 
 	// an array of intersection point IDs
 	int* m_aiMyIntersectionPoints;
-	// index indicating where to store the next intersection point
-	int m_iNumOfIntersectionPoints;
 	// the size of the allocated array
 	int m_iSizeOfIntersectionPointsArray;
 
-	int m_iHitsImageBoundary;
-
 	int m_iSomaConnected;
+
+	// index indicating where to store the next intersection point
+	int m_iNumOfIntersectionPoints;
+
+	int m_iHitsImageBoundary;
 	int m_iDrawFlag;
 	int m_iMergedFlag;
 
@@ -478,11 +479,11 @@ public:
 
 
 
+	int m_iNumOfElements;
+	int m_iSize;
 	//private:
 	// an array of vessel pointers.
 	CVessel** m_apData;
-	int m_iNumOfElements;
-	int m_iSize;
 
 	int** m_apDistanceArray;
 

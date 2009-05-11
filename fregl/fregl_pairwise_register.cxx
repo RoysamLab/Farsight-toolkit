@@ -70,7 +70,7 @@ set_stack_size(int size)
   // from_image_ and to_image_
   InputImageType::SizeType size_from = from_image_->GetLargestPossibleRegion().GetSize();
   InputImageType::SizeType size_to = to_image_->GetLargestPossibleRegion().GetSize();
-  if (size_from[2] <= size && size_to[2] <= size) {
+  if (size_from[2] <= (unsigned int)size && size_to[2] <= (unsigned int)size) {
     std::cout<<"Warning: The given size not effective"<<std::endl;
     stack_size_set_ = false;
   }
