@@ -174,7 +174,7 @@ int main(const int argc, char** argv)	{
 		
 		// create the cells
 		for(itr = NodeContainer.begin(); itr != NodeContainer.end(); ++itr)	{
-			for (int i = 0; i < (*itr)->nbrID.size() ; i++) {
+			for (unsigned int i = 0; i < (*itr)->nbrID.size() ; i++) {
 				if ((*itr)->nbrID[i] < (*itr)->ID)	{
 					cells->InsertNextCell(2);
 					cells->InsertCellPoint(IDmap[(*itr)->ID]);
