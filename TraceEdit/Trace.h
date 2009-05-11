@@ -8,10 +8,8 @@
 
 #ifdef WIN32
 using namespace stdext;
-#include <hash_map>
-#else
-#include <hash_map.h>
 #endif
+#include <vtksys/hash_map.hxx> /* Platform independent hashmap */
 #include <queue>
 
 #include "vtkSmartPointer.h"
@@ -143,8 +141,8 @@ public:
 	std::vector<TraceBit> CollectTraceBits();
 	std::vector<TraceLine*>* GetTraceLinesPointer(){ return &trace_lines;}
 	std::vector<TraceLine*> changeList;
-	hash_map< unsigned int, unsigned long long int > hashp;
-	hash_map< unsigned int, unsigned long long int > hashc;
+  vtksys::hash_map< unsigned int, unsigned long long int > hashp;
+  vtksys::hash_map< unsigned int, unsigned long long int > hashc;
 private:
 	std::vector<TraceLine*> trace_lines;	
 };

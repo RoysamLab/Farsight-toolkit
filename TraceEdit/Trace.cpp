@@ -85,9 +85,9 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 	unsigned char child_count[MAXPOINTSINSWC];//MAX POINTS in the swc file Fix: TODO : probably make it a hash_map which is slower
 	std::set<int> criticals; // store all points who have parent = -1 or child_count[parent] > 1
 
-	hash_map<unsigned int,int> hash_type; // smaller hash functions only for the critical points.. saves us memory and time
-	hash_map<unsigned int,int> hash_parent;
-	hash_map<unsigned int,unsigned long long int> hash_load;
+  vtksys::hash_map<unsigned int,int> hash_type; // smaller hash functions only for the critical points.. saves us memory and time
+  vtksys::hash_map<unsigned int,int> hash_parent;
+	vtksys::hash_map<unsigned int,unsigned long long int> hash_load;
 
 	//memset(child_count,0,sizeof(unsigned char)*100000);
 	
@@ -337,7 +337,7 @@ struct hashulli
 bool TraceObject::WriteToSWCFile(const char *filename)
 {
 	FILE * fp = fopen(filename,"w");
-	hash_map<const unsigned long long int, int, hashulli> hash_dump;
+	vtksys::hash_map<const unsigned long long int, int, hashulli> hash_dump;
 	if(fp == NULL)
 	{
 		printf("Couldn't open %s for writing\n",filename);
@@ -419,7 +419,7 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
 	int lineType, lineParent, bitID;
 	double bitX, bitY, bitZ;
 	TraceLine * tline;
-	hash_map<unsigned int, unsigned long long int> hash_load;
+	vtksys::hash_map<unsigned int, unsigned long long int> hash_load;
 	while(lineElement)
 	{
 		if(lineElement->QueryFloatAttribute("ID", &lineID) != TIXML_SUCCESS)

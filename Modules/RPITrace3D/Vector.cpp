@@ -14,6 +14,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <stdlib.h> /* exit() */
 
 #include "CONSTANTS.h"
 #include "Mytypes.h"

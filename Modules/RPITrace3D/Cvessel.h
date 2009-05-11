@@ -28,6 +28,8 @@
 #ifndef CVessel_h
 #define CVessel_h
 
+#include <stdlib.h> /* exit */
+
 using namespace std;
 
 #define BlockSize 50

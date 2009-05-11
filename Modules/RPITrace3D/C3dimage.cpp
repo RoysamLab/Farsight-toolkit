@@ -16,6 +16,8 @@
 #include <list>
 #include <queue>
 #include <sstream>
+#include <stdlib.h> /* exit */
+#include <string.h> /* memset() */
 
 #include "CONSTANTS.h"
 #include "Mytypes.h"

@@ -1,5 +1,6 @@
 #include "fuzzy_clustering.h"
 #include <math.h>
+#include <stdlib.h> /* exit */
 
 // CTOR1
 FuzzyClustering::FuzzyClustering(int numC)

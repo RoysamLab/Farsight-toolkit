@@ -58,9 +58,9 @@ public:
 	std::vector< LabelPixelType > GetLabels() { return this->labels; };
 
 	void ComputeHistogramOn();
-	void ComputeHistogramOff(){ computeHistogram = false; };
+	void ComputeHistogramOff(){ this->computeHistogram = false; };
 	void ComputeTexturesOn();
-	void ComputeTexturesOff(){ computeTextures = false; };
+	void ComputeTexturesOff(){ this->computeTextures = false; };
 	void SetLevel(short int newLevel);
 	short int GetLevel(){ return computationLevel; };
 

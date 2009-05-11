@@ -1,4 +1,5 @@
 #include "EM_Project_3_cpp_3D_comp.h"
+#include <stdlib.h> /* malloc, free */
 
 //This function is used to initialized some parameter.. It is called from the main function
 void Initialize_Parameters(std::vector<std::vector<double> > *X,int** SEEDS,double** U,double*** Segma,double* PI,double** Z,int num_points,int num_components)

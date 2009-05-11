@@ -76,12 +76,12 @@ LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	interiorPix.clear();
 	sharePix.clear();
 	labels.clear();
-	featureVals.clear();
+	this->featureVals.clear();
 	
 	//Defaults:
-	computationLevel = 2;
-	computeHistogram = false;					
-	computeTextures = false;
+	this->computationLevel = 2;
+	this->computeHistogram = false;					
+	this->computeTextures = false;
 						
 }
 
@@ -136,14 +136,14 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 {
 	if(computationLevel <= 1)
 		this->SetLevel(2);
-	computeHistogram = true;
+	this->computeHistogram = true;
 }
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
 void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 ::ComputeTexturesOn()
 {
-	computeTextures = true;
+	this->computeTextures = true;
 }
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
@@ -195,8 +195,10 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	}
 	
 	//TEXTURE CALCULATOR:
-	if(computeTextures)
-		RunTextureFilter();
+	if (this->computeTextures)
+    {
+		this->RunTextureFilter();
+    }
 }
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
@@ -218,8 +220,8 @@ IntrinsicFeatures * LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 ::GetFeatures( TLPixel label )
 {
 	typename FeatureMapType::iterator it;
-	it = featureVals.find( label );
-	if ( it == featureVals.end() )
+	it = this->featureVals.find( label );
+	if ( it == this->featureVals.end() )
     {
 		// label does not exist, return a NULL value
 		return NULL;
@@ -371,9 +373,9 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 			double log, diff, cube, prob;
 
 			histo = labelStatisticsFilter->GetHistogram( label );
-			vol = featureVals[label].ScalarFeatures[IntrinsicFeatures::VOLUME];
-			mean = featureVals[label].ScalarFeatures[IntrinsicFeatures::MEAN];
-			sigma = featureVals[label].ScalarFeatures[IntrinsicFeatures::SIGMA];
+			vol = this->featureVals[label].ScalarFeatures[IntrinsicFeatures::VOLUME];
+			mean = this->featureVals[label].ScalarFeatures[IntrinsicFeatures::MEAN];
+			sigma = this->featureVals[label].ScalarFeatures[IntrinsicFeatures::SIGMA];
 
 			t_skew = 0; t_energy = 0; t_entropy = 0;
 			
@@ -570,7 +572,7 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		currentLabel = labels.at(lab);
 		if ((int)currentLabel <= 0) continue;
 
-		centroid = featureVals[currentLabel].Centroid;
+		centroid = this->featureVals[currentLabel].Centroid;
 
 		max_bound_dist = 0.0;
 		min_bound_dist = 100.0;
@@ -644,8 +646,8 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INTENSITY_RATIO] = 0;
 		else
 			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INTENSITY_RATIO] \
-				= featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SURFACE_INTENSITY] \
-				/ featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INTERIOR_INTENSITY];
+				= this->featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SURFACE_INTENSITY] \
+				/ this->featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INTERIOR_INTENSITY];
 
 		//Find mean and std-dev of distances
 		double interior_sum = 0;
@@ -698,9 +700,9 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SURFACE_AREA] = float( boundaryPix[ LtoIMap[currentLabel] ].size() );
 		
 		//shape:
-		double sa = featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SURFACE_AREA];
+		double sa = this->featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SURFACE_AREA];
 		double pi = 3.1415;
-		double v = featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::VOLUME];
+		double v = this->featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::VOLUME];
 		if(v == 0)
 			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::SHAPE] = float( 0 );
 		else
@@ -769,8 +771,8 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 		int loc = 0;
 		for (int dim=0; dim<VImageDimension; dim++)
 		{
-			index[dim] = featureVals[currentLabel].BoundingBox[loc];	//bbox min
-			size[dim] = featureVals[currentLabel].BoundingBox[loc+1]- index[dim] + 1;	//bbox max - min + 1
+			index[dim] = this->featureVals[currentLabel].BoundingBox[loc];	//bbox min
+			size[dim] = this->featureVals[currentLabel].BoundingBox[loc+1]- index[dim] + 1;	//bbox max - min + 1
 			loc += 2;
 		}
 

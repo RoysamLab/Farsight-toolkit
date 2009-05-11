@@ -1,4 +1,5 @@
 #include "fuzzy_clustering.h"
+#include <stdlib.h> /* atoi */
 
 int main(int argc, char* argv[])
 {

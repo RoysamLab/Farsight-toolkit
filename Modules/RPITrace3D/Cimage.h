@@ -14,6 +14,8 @@
 #ifndef CImage_h
 #define CImage_h
 
+#include <string.h> /* memset() */
+
 using namespace std;
 
 // forward declration

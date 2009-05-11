@@ -15,6 +15,7 @@
 #include <queue>
 #include <string>
 #include <cmath>
+#include <stdlib.h> /* exit */
 //#include "tiffio.h"
 #include "itk_tiff.h"
 #include "CONSTANTS.h"
