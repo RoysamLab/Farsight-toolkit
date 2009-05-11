@@ -111,11 +111,11 @@ void Histogram::Normalize()
 	double sum=0;
 	//Find the sum first
 	multiset<double>::iterator pos;
-	for(pos=data.begin(); pos!=data.end(); pos++)
+	for(pos=data.begin(); pos!=data.end(); ++pos)
 		sum +=*pos;
 
 	//Now normalize the data.
-	for(pos=data.begin(); pos!=data.end(); pos++)
+	for(pos=data.begin(); pos!=data.end(); ++pos)
 		*pos = *pos/sum;
 
 	//Set the signal
