@@ -106,7 +106,7 @@ void Histogram::Normalize()
 	multiset<double> dataTmp;
 	double minNumber= *min_element(data.begin(), data.end());
 	double maxNumber= *max_element(data.begin(), data.end());
-	double diff = maxNumber - minNumber;
+	//double diff = maxNumber - minNumber;
 
 	double sum=0;
 	//Find the sum first
@@ -296,7 +296,7 @@ void Histogram::ConstructBarChart()
 			frequencies->SetTuple1(i,result_fq[i]);
 		*/
 
-		double col1[5]={ 1, 2, 3, 4, 5 };
+		//double col1[5]={ 1, 2, 3, 4, 5 };
 		//double col2[5]={ 1, 1.5, 3, 2.3, 0.2 };
 		for (unsigned int i=0; i<(unsigned int)numofbins; ++i) 
 		{

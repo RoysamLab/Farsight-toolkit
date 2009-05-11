@@ -32,7 +32,7 @@
 #include <string>
 
 #include "vtkQtBarChartView.h"
-#include "vtkQtChartTableRepresentation.h"
+#include "vtkQtChartRepresentation.h"
 
 #include "vtkTable.h"
 #include "vtkDoubleArray.h"
