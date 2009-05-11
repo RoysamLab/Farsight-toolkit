@@ -116,7 +116,13 @@ void Histogram::Normalize()
 
 	//Now normalize the data.
 	for(pos=data.begin(); pos!=data.end(); ++pos)
-		*pos = *pos/sum;
+    {
+		//inefficient hack to workaround the fact that multiset iterators are
+    //immutable on gcc
+    dataTmp.insert(*pos/sum);
+    //*pos = *pos/sum;
+    }
+  data = dataTmp;
 
 	//Set the signal
 	normalized = true;
