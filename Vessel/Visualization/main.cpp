@@ -8,12 +8,12 @@
 #include <math.h>
 #include <GL/glut.h>
 
-#pragma warning(disable : 4996)
-#pragma warning(disable : 4244)
-#pragma warning(disable : 4715)
-#pragma warning(disable : 4018)
-#pragma warning(disable : 4311)
-#pragma warning(disable : 4715)
+//#pragma warning(disable : 4996)
+//#pragma warning(disable : 4244)
+//#pragma warning(disable : 4715)
+//#pragma warning(disable : 4018)
+//#pragma warning(disable : 4311)
+//#pragma warning(disable : 4715)
 
 #include "glCanvas.h"
 #include "boundingbox.h"
@@ -74,29 +74,31 @@ bool debug_BFS= false;
 double mincu, mediancu;
 int numcu,totalcu;
 Vec3f current_scaling;
-double points[][3] = { 0, 0, 0,
-
-1, 0, 0,
-0, 1 ,0,
-0, 0, 1,
-0, 1, 1,
-1, 0, 1,
-1, 1, 0,
-1, 1 ,1};
+double points[][3] = {
+  {0, 0, 0},
+  {1, 0, 0},
+  {0, 1 ,0},
+  {0, 0, 1},
+  {0, 1, 1},
+  {1, 0, 1},
+  {1, 1, 0},
+  {1, 1 ,1}
+};
 
 double total_min = 34324342,total_median = 0;
 Face * total_min_face = NULL;
 
-int tetra [][4]={ 3,0,1,2,
-3,5,7,1,
-3,4,7,2,
-3,7,2,1,
-7,1,2,6,
-0,5,1,6,
-0,4,2,6,
-0,4,6,5,
-0,4,3,5,
-7,4,6,5
+int tetra [][4]={
+  {3,0,1,2},
+  {3,5,7,1},
+  {3,4,7,2},
+  {3,7,2,1},
+  {7,1,2,6},
+  {0,5,1,6},
+  {0,4,2,6},
+  {0,4,6,5},
+  {0,4,3,5},
+  {7,4,6,5}
 };     
 
 struct twop{
@@ -223,12 +225,12 @@ void BFS (Face *f, int depth, Array<Face*> *array)
 		}
 		Edge *e = temp->getEdge();
 
-		Edge * temp1 = NULL;
+		//Edge * temp1 = NULL;
 		for (int counter =0; counter < 3; counter ++)
 		{
 
 
-			Edge *e1 = e->getOpposite();
+			//Edge *e1 = e->getOpposite();
 			if(e->getOpposite()!= NULL)
 			{
 
@@ -280,12 +282,12 @@ void BFS_edge(Face *f, int depth, Array<Face*> *arrans,bool color)
 		}
 		Edge *e = temp->getEdge();
 
-		Edge * temp1 = NULL;
+		//Edge * temp1 = NULL;
 		for (int counter =0; counter < 3; counter ++)
 		{
 
 
-			Edge *e1 = e->getOpposite();
+			//Edge *e1 = e->getOpposite();
 			if(e->getOpposite()!= NULL)
 			{
 
@@ -350,7 +352,7 @@ void BFS1 (Face *f, Face *f1, int depth1, int depth2, Array<Face*> *array,bool c
 		Edge *e = temp->getEdge();
 		//printf("hi\n");
 		//	   printf("%d\n",e);
-		Edge * temp1 = NULL;
+		//Edge * temp1 = NULL;
 
 		double dist = -10;
 		Face * ftemp=NULL;
@@ -358,7 +360,7 @@ void BFS1 (Face *f, Face *f1, int depth1, int depth2, Array<Face*> *array,bool c
 		{
 
 			//  printf("hi2\n");
-			Edge *e1 = e->getOpposite();
+			//Edge *e1 = e->getOpposite();
 			// printf("hi-inter\n");
 			if(e->getOpposite()!= NULL)
 			{
@@ -436,7 +438,7 @@ int BFS2(Face *f, Face *f1, int depth1, Array<Face*> *array)
 		Edge *e = temp->getEdge();
 		//printf("hi\n");
 		//	   printf("%d\n",e);
-		Edge * temp1 = NULL;
+		//Edge * temp1 = NULL;
 
 		double dist = 1111110;
 		Face * ftemp=NULL;
@@ -444,7 +446,7 @@ int BFS2(Face *f, Face *f1, int depth1, Array<Face*> *array)
 		{
 
 			//  printf("hi2\n");
-			Edge *e1 = e->getOpposite();
+			//Edge *e1 = e->getOpposite();
 			// printf("hi-inter\n");
 			if(e->getOpposite()!= NULL)
 			{
@@ -531,7 +533,7 @@ bool BFS3(Face *f, Face *f1, int depth1, Array<Face*> *array)
 		Edge *e = temp->getEdge();
 		//printf("hi\n");
 		//	   printf("%d\n",e);
-		Edge * temp1 = NULL;
+		//Edge * temp1 = NULL;
 
 		double dist = 2321312;
 		Face * ftemp=NULL;
@@ -639,7 +641,7 @@ bool BFS4(Face *f, Face *f1, int depth1, Array<Face*> *array,Array<Face*>*oldarr
 		Edge *e = temp->getEdge();
 		//printf("hi\n");
 		//	   printf("%d\n",e);
-		Edge * temp1 = NULL;
+		//Edge * temp1 = NULL;
 
 		double dist = 2321312;
 		Face * ftemp=NULL;
@@ -717,8 +719,8 @@ int inline calc(Vec3f v);
 void load_points( char * fname)
 {
 
-	minx = miny = minz = 1e10;
-	maxx = maxy = maxz = -1e10;
+	minx = miny = minz = INT_MAX;
+	maxx = maxy = maxz = INT_MIN;
 
 	FILE *fp = fopen (fname,"r");
 	int x,y,z;
@@ -729,7 +731,7 @@ void load_points( char * fname)
 
 	while (!feof(fp))
 	{
-		fscanf(fp,"%lf %lf %lf %*lf %*lf %*lf",&z1,&y1,&x1);
+		fscanf(fp,"%lf %lf %lf %*f %*f %*f",&z1,&y1,&x1);
 		//		if(!(x1 <300 &&  y1 <600 && y1>400 ))
 		//				continue;
 
@@ -748,15 +750,15 @@ void load_points( char * fname)
 		maxy = MAX(maxy,(y-1)/SKIP+2);
 		maxz = MAX(maxz,z-1+2);
 	}
-	printf("Read %d points. maxx = %lf, maxy =%lf,maxz = %lf\n",count,maxx, maxy,maxz);
+	printf("Read %d points. maxx = %d, maxy =%d,maxz = %d\n",count,maxx, maxy,maxz);
 	fclose(fp);
 }
 
 void load_points_without_normal( char * fname)
 {
 
-	minx = miny = minz = 1e10;
-	maxx = maxy = maxz = -1e5;
+	minx = miny = minz = INT_MAX;
+	maxx = maxy = maxz = INT_MIN;
 
 	FILE *fp = fopen (fname,"r");
 	int x,y,z;
@@ -846,13 +848,13 @@ void load_points_without_normal( char * fname)
 void load_points_other( char * fname)
 {
 
-	minx = miny = minz = 1e10;
-	maxx = maxy = maxz = -1e10;
+	minx = miny = minz = INT_MAX;
+	maxx = maxy = maxz = INT_MIN;
 
 	FILE *fp = fopen (fname,"r");
 
 
-	int count = 0;
+	//int count = 0;
 	if(fp==NULL)
 	{
 		printf("wo no! fp is null\n");
@@ -862,9 +864,9 @@ void load_points_other( char * fname)
 	int linteger;
 
 
-	int ran =0;
-	char a=0;
-	bool flag = false;
+	//int ran =0;
+	//char a=0;
+	//bool flag = false;
 	//	unsigned char c[2];
 
 
@@ -983,7 +985,7 @@ void marchtetra(void)
 			{
 				//	 		sleep(0.05);
 				//if(x>0)
-				DEBUG_P("%d %d %d\n",x,y,z);
+				//DEBUG_P("%d %d %d\n",x,y,z);
 
 				//for loop over 5 tetra hedras
 				//add it to a list of faces with edges and vertices.
@@ -1013,7 +1015,7 @@ void marchtetra(void)
 					case 4:
 						break;
 					case 3:
-						DEBUG_P("case 3\n");
+						//DEBUG_P("case 3\n");
 						if(pmatrix[(int)a.x()][(int)a.y()][(int)a.z()]==0)
 						{
 							p=a*(1-mratio)+b*mratio;
@@ -1090,10 +1092,10 @@ void marchtetra(void)
 						break;
 
 					case 1:
-						DEBUG_P("case 1\n");
+						//DEBUG_P("case 1\n");
 						if(pmatrix[(int)a.x()][(int)a.y()][(int)a.z()]!=0)
 						{
-							DEBUG_P("TT-a");
+							//DEBUG_P("TT-a");
 							p=a*(mratio)+b*(1-mratio);
 							q=a*(mratio)+c*(1-mratio);
 							r=a*(mratio)+d*(1-mratio);
@@ -1102,7 +1104,7 @@ void marchtetra(void)
 						}
 						else if (pmatrix[(int)b.x()][(int)b.y()][(int)b.z()]!=0)
 						{
-							DEBUG_P("TT-b");
+							//DEBUG_P("TT-b");
 							p=a*(1-mratio)+b*(mratio);
 							q=b*(mratio)+c*(1-mratio);
 							r=b*(mratio)+d*(1-mratio);
@@ -1110,7 +1112,7 @@ void marchtetra(void)
 						}
 						else if (pmatrix[(int)c.x()][(int)c.y()][(int)c.z()]!=0)
 						{
-							DEBUG_P("TT-c");
+							//DEBUG_P("TT-c");
 							p=a*(1-mratio)+c*(mratio);
 							q=b*(1-mratio)+c*(mratio);
 							r=c*(mratio)+d*(1-mratio);
@@ -1118,7 +1120,7 @@ void marchtetra(void)
 						}
 						else
 						{
-							DEBUG_P("TT-d");
+							//DEBUG_P("TT-d");
 							p=a*(1-mratio)+d*(mratio);
 							q=b*(1-mratio)+d*(mratio);
 							r=c*(1-mratio)+d*(mratio);
@@ -1130,7 +1132,7 @@ void marchtetra(void)
 						Vec3f::Mult(res1,res,(p+q+r)-3*mid);
 						if(res1.x()+res1.y()+res1.z()<0)
 						{
-							DEBUG_P("I did come here\n");
+							//DEBUG_P("I did come here\n");
 							Vec3f swap = p;
 							p = q;
 							q = swap;
@@ -1161,7 +1163,7 @@ void marchtetra(void)
 						//Vertex *v3;
 						if(i !=vert.end())
 						{
-							DEBUG_P("its because I came here \n");
+							//DEBUG_P("its because I came here \n");
 							v3 = i->second;  
 						}
 						else
@@ -1185,7 +1187,7 @@ void marchtetra(void)
 						m->addFace(v1,v2,v3,Vec3f(1,1,1),color2);
 						break;
 					case 2:
-						DEBUG_P("case 2");
+						//DEBUG_P("case 2");
 						arr.clear();
 
 						if(pmatrix[(int)a.x()][(int)a.y()][(int)a.z()]!=0 && pmatrix[(int)b.x()][(int)b.y()][(int)b.z()]!=0)
@@ -1437,7 +1439,7 @@ void SmoothSurface(bool selective=false)
 			Vec3f sum = Vec3f(0,0,0);
 			int sum_counter = 0;
 			Vec3f Vnormal = Vec3f(0.0,0.0,0.0);
-			double Det_sum = 0;
+			//double Det_sum = 0;
 			for( int counter =0; counter < arr.Count(); counter ++)
 			{
 				Vec3f center= getCenter(arr[counter]);
@@ -1489,8 +1491,8 @@ void SmoothSurface_volume_preserve()
 	Array<Face*> arr(50);
 
 	int rand_count=0;
-	int solved_count = 0;
-	int didnt_solve_count =0;
+	//int solved_count = 0;
+	//int didnt_solve_count =0;
 	while(1)
 	{
 
@@ -1646,12 +1648,12 @@ void SmoothSurface_complex( float w) // two point smoothing
 		Vec3f res;
 
 		//find A1,A2
-		for(int counter = 0; counter < v1.size(); counter ++)
+		for(unsigned int counter = 0; counter < v1.size(); counter ++)
 		{
 			Vec3f::Cross3(res,v1[counter]-x1,v1[(counter+1)%v1.size()]-x1);
 			A1 = A1 + res;
 		}
-		for(int counter = 0; counter < v2.size(); counter ++)
+		for(unsigned int counter = 0; counter < v2.size(); counter ++)
 		{
 			Vec3f::Cross3(res,v2[counter]-x2,v2[(counter+1)%v2.size()]-x2);
 			A2 = A2 + res;
@@ -1668,15 +1670,15 @@ void SmoothSurface_complex( float w) // two point smoothing
 		Vec3f x1s = Vec3f(0,0,0);
 		Vec3f x2s = Vec3f(0,0,0);
 
-		for(int counter =1; counter < v1.size(); counter++)
+		for(unsigned int counter =1; counter < v1.size(); counter++)
 			x1s += v1[counter];
 		x1s = x1s * v2.size();
-		for(int counter = 1; counter < v2.size(); counter++)
+		for(unsigned int counter = 1; counter < v2.size(); counter++)
 			x1s += v2[counter];
 
 		x1s /= float(v1.size()*v2.size()-1);
 
-		for(int counter = 1; counter < v2.size(); counter++)
+		for(unsigned int counter = 1; counter < v2.size(); counter++)
 			x2s += v2[counter];
 		x2s = (x1s + x2s)/v2.size();
 
@@ -1935,7 +1937,7 @@ void FillCurvatures_rough(int num1,int num2,int num3)
 
 void rank70Filter()
 {
-	printf("Started 70% rank filter\n");
+	printf("Started 70%% rank filter\n");
 	int mat[27][3];
 	int matcount=0;
 	vector <int> a;
@@ -1971,7 +1973,7 @@ void rank70Filter()
 							pmatrix[counterx][countery][counterz]=0;
 					}
 
-					printf("Finished 70% rank filter\n");
+					printf("Finished 70%% rank filter\n");
 }
 
 void removeInnerSurface()
@@ -1987,7 +1989,7 @@ void removeInnerSurface()
 	Array <Face *> array(500);
 	queue<Face*> q;
 
-	printf("Total_min = %lf\ntotal_median=%lftotal_min_face=%d\n",total_min,total_median,(long)total_min_face);
+	printf("Total_min = %lf\ntotal_median=%lftotal_min_face=%ld\n",total_min,total_median,(long)total_min_face);
 
 	Face *temp;
 	Face * t;
@@ -2013,12 +2015,12 @@ void removeInnerSurface()
 		Edge *e = temp->getEdge();
 		//printf("hi\n");
 		//	   printf("%d\n",e);
-		Edge * temp1 = NULL;
+		//Edge * temp1 = NULL;
 		for (int counter =0; counter < 3; counter ++)
 		{
 
 			//  printf("hi2\n");
-			Edge *e1 = e->getOpposite();
+			//Edge *e1 = e->getOpposite();
 			// printf("hi-inter\n");
 			if(e->getOpposite()!= NULL)
 			{
@@ -2289,7 +2291,7 @@ bool collapse_old(Edge * e,int n)
 	Vec3f mid  = (vnext->get()+vbase->get())/2.0;
 	Vec3f pos = vnext->get();
 	int pick = 116992;
-	float temparea = f1->getArea();
+	//float temparea = f1->getArea();
 	Edge * store;
 	while(1)
 	{
@@ -2392,12 +2394,12 @@ bool collapse_old(Edge * e,int n)
 	}
 
 
-	for(int counter =0; counter < vedge.size()-1; counter ++)
+	for(unsigned int counter =0; counter < vedge.size()-1; counter ++)
 	{
 		if(n==pick)
 		{
 			//continue;
-			printf("%d %d %d\n",vedge[counter],vedge[counter+1],vnext);
+			printf("%ld %ld %ld\n",(long int)vedge[counter],(long int)vedge[counter+1],(long int)vnext);
 			vedge[counter]->get().Write();
 			vedge[counter+1]->get().Write();
 			vnext->get().Write();
@@ -2458,7 +2460,7 @@ bool collapse(Edge * e,int n)
 	Vec3f mid  = (vnext->get()+vbase->get())/2.0;
 	Vec3f pos = vnext->get();
 	int pick = 116000992;
-	float temparea = f1->getArea();
+	//float temparea = f1->getArea();
 	Edge * store;
 	Vec3f nor=Vec3f(0,0,0);
 	Vec3f t;
@@ -2575,7 +2577,7 @@ bool collapse(Edge * e,int n)
 	vector<Vertex*>::iterator new_end = unique(vedge1.begin(),vedge1.end());
 	if(new_end!= end1)
 	{
-		int d = end1-new_end;
+		//int d = end1-new_end;
 		//		printf("Difference was %d \n",d);
 		returned_count ++;
 		return false;
@@ -2621,7 +2623,7 @@ bool collapse(Edge * e,int n)
 	}
 
 
-	for(int counter =0; counter < vedge.size()-1; counter ++)
+	for(unsigned int counter =0; counter < vedge.size()-1; counter ++)
 	{
 		if(n==pick)
 		{
@@ -2661,7 +2663,7 @@ void Decimate(int num)
 	// printf("Came here\n");
 	int continue_count  =0;
 	Iterator<Edge *> *iter = be->StartIteration();
-	int new_count=0;
+	//int new_count=0;
 	double lenlimit = 0.1;
 	int confidence_continue_count = 0;
 	double confidence_limit = 5;
@@ -2942,14 +2944,14 @@ void writePLY( char * filename )
 	fprintf(fp,"ply\n");
 	fprintf(fp,"format ascii 1.0\n");
 	fprintf(fp,"comment test comment by author\n");
-	fprintf(fp,"element vertex %d\n",vv.size());
+	fprintf(fp,"element vertex %d\n",(int)vv.size());
 	fprintf(fp,"property float32 x\n");
 	fprintf(fp,"property float32 y\n");
 	fprintf(fp,"property float32 z\n");
 	fprintf(fp,"element face %d\n",bf->Count());
 	fprintf(fp,"property list uint8 float32 vertex_index\n");
 	fprintf(fp,"end_header\n");
-	for(int counter =0; counter < vv.size(); counter++)
+	for(unsigned int counter =0; counter < vv.size(); counter++)
 	{
 		fprintf(fp,"%lf %lf %lf\n",vv[counter]->x(),vv[counter]->y(),vv[counter]->z());
 	}
@@ -2973,7 +2975,7 @@ void writePLY( char * filename )
 	printf("Finished writing to %s\n",filename);
 }
 
-void writeOBJ(char * filename )
+void writeOBJ(const char * filename )
 {
 	Array<Vertex*>* av = m->getVertices();
 	vector <Vertex*> vv;
@@ -2989,7 +2991,7 @@ void writeOBJ(char * filename )
 		printf("Couldn't open %s for writing\n",filename);
 		return;
 	}
-	for(int counter =0; counter < vv.size(); counter++)
+	for(unsigned int counter =0; counter < vv.size(); counter++)
 	{
 		fprintf(fp,"v %lf %lf %lf\n",vv[counter]->x(),vv[counter]->y(),vv[counter]->z());
 	}
@@ -3325,7 +3327,7 @@ void delete_small_components(int num_to_delete = 40)
 		if(arr.Count() < smallest)
 			smallest=arr.Count();
 		if(num_faces%100)
-			printf("%0.2lf%%%\r",num_faces*1.0/m->numFaces()*100.0);
+			printf("%0.2lf%%\r",num_faces*1.0/m->numFaces()*100.0);
 		if(arr.Count()<num_to_delete)
 		{
 			printf("I am going to delete %d faces\n",arr.Count());
@@ -3836,7 +3838,7 @@ int compare_npts_files(char *filename1, char*filename2)
 Vec3f fit_circle(Array<Face*> *arr,float &fit,int max_iterations=10,double delta = 1.0)
 {
 	fit = INT_MAX/2;
-	DEBUGP("Entered fit_circle\n");
+	//DEBUGP("Entered fit_circle\n");
 	if(arr->Count()==0)
 	{
 		return Vec3f(0,0,0);
@@ -3852,8 +3854,8 @@ Vec3f fit_circle(Array<Face*> *arr,float &fit,int max_iterations=10,double delta
 	Vec3f c_est = mean;// begin with the mean as a good estimate;
 	double sum_x,sum_y;
 
-	DEBUGP("Began simple gradient descent\n");
-	DEBUGP("Array->Count() = %d\n",arr->Count());
+	//DEBUGP("Began simple gradient descent\n");
+	//DEBUGP("Array->Count() = %d\n",arr->Count());
 	// simple gradient descent 
 	for (int iter =0;iter<max_iterations; iter++)
 	{
@@ -3867,7 +3869,7 @@ Vec3f fit_circle(Array<Face*> *arr,float &fit,int max_iterations=10,double delta
 		sum_y=0;
 		double di,weight;
 		Vec3f new_est = Vec3f(0,0,0);
-		DEBUGP("Done finding r_est\n");
+		//DEBUGP("Done finding r_est\n");
 		for(int counter=0; counter<arr->Count(); counter++)
 		{
 			di = ((*arr)[counter]->getCenter()-c_est).Length();
@@ -3902,7 +3904,7 @@ Vec3f fit_circle(Array<Face*> *arr,float &fit,int max_iterations=10,double delta
 		return Vec3f(-1,-1,-1);
 	fit = J;
 	//printf("J=%lf\n",J);
-	DEBUGP("Returning from fit_circle\n");
+	//DEBUGP("Returning from fit_circle\n");
 	return c_est;
 }
 
@@ -3959,7 +3961,7 @@ void getSmoothed(vector<Vec3f> &line)
 	Vec3f temp;
 	while(pc <2)
 	{
-		for(int counter=1; counter<line.size()-1; counter++)
+		for(unsigned int counter=1; counter<line.size()-1; counter++)
 		{	
 			line[counter].Set((line[counter-1].x()+line[counter+1].x())/2.0,(line[counter-1].y()+line[counter+1].y())/2.0,(line[counter-1].z()+line[counter+1].z())/2.0);
 		}
@@ -3995,7 +3997,7 @@ glLineWidth(5);
 			glDisable(GL_LIGHTING);
 				glBegin(GL_LINE_STRIP);
 				glColor3f(1,0,0);
-				for(int counter=0; counter< line.size(); counter++)
+				for(unsigned int counter=0; counter< line.size(); counter++)
 				{
 					glVertex3f(line[counter].x(),line[counter].y(),line[counter].z());
 				}
@@ -4025,7 +4027,7 @@ void Mesh::PaintVotes(int number)
 	Vec3f col;
 
 	printf("Came here\n");
-	for(int counter=0; counter<debug_vector.size(); counter++)
+	for(unsigned int counter=0; counter<debug_vector.size(); counter++)
 	{
 		printf("Did I have anything in debug_vector[]?\n");
 		glBegin(GL_LINES);
@@ -4035,7 +4037,7 @@ void Mesh::PaintVotes(int number)
 		glEnd();
 	}
 
-	for(int counter=0; counter<debug_vector1.size(); counter++)
+	for(unsigned int counter=0; counter<debug_vector1.size(); counter++)
 	{
 
 		glBegin(GL_LINES);
@@ -4045,7 +4047,7 @@ void Mesh::PaintVotes(int number)
 		glEnd();
 	}
 
-	for(int counter=0; counter<debug_vector2.size(); counter++)
+	for(unsigned int counter=0; counter<debug_vector2.size(); counter++)
 	{
 
 		glBegin(GL_LINES);
@@ -4113,9 +4115,9 @@ double cast_single_ray(Vec3f voxel, Vec3f direction, double max_distance,double 
 	//Array<Face *> temparray(50);
 	//	set<Face*,lface> s1,s2,s3;
 	//	vector <Face*> v1,v2,v3;
-	int number = 0;
-	double distance_opp =0;
-	int number123=3;
+	//int number = 0;
+	//double distance_opp =0;
+	//int number123=3;
 
 	//	scanf("%d",&number123);
 	//number123 = 111111111;
@@ -4215,7 +4217,7 @@ double cast_single_ray(Vec3f voxel, Vec3f direction, double max_distance,double 
 			else
 			{
 
-				int counter;
+				//int counter;
 				//for(counter=0; counter<temparray.Count(); counter++)
 				//{
 				//	if(temparray[counter]==fminpos)
@@ -4281,10 +4283,10 @@ double cast_rays(const Vec3f svoxel,const int n,const double max_distance,const 
 	double theta_step=2*M_PI/theta_n;
 	double phi_step = M_PI/phi_n;
 
-	int num_success = 0;
+	//int num_success = 0;
 	double theta, phi;
 	Vec3f direction;
-	int num_total = 0;
+	//int num_total = 0;
 	double return_total=0;
 	for(int theta_c=0; theta_c<theta_n; theta_c++)
 	{
@@ -4309,7 +4311,7 @@ double cast_rays(const Vec3f svoxel,const int n,const double max_distance,const 
 }
 void scale_vector(double a, double b, double c)
 {
-	for(int counter=0; counter<debug_vector.size(); counter++)
+	for(unsigned int counter=0; counter<debug_vector.size(); counter++)
 	{
 		twop temp = debug_vector[counter];
 		temp.start.Set(temp.start[0]*a,temp.start[1]*b,temp.start[2]*c);
@@ -4414,7 +4416,7 @@ void get_centerlines_voxels()
 	const int skipx=3;
 	const int skipy=3;
 	const int skipz=1;
-	int count_done = 0;
+	//int count_done = 0;
 	printf("maxx maxy maxz %d %d %d\n",maxx,maxy,maxz);
 	const int maxstepst = 35;
 
@@ -4482,7 +4484,7 @@ void get_centerlines_cast_rays()
 		{
 			arr.Clear();
 			BFS_edge(f,2,&arr,true);
-			DEBUGP("Done BFS_edge\n");
+			//DEBUGP("Done BFS_edge\n");
 			for(int counter=0; counter<arr.Count();counter++)
 			{
 				arr_new.Clear();
@@ -4494,7 +4496,7 @@ void get_centerlines_cast_rays()
 					arr_new[counter1]->unMark();
 					arr_new[counter1]->setColor(Vec3f(0,1,0));
 				}
-				DEBUGP("Done BFS4\n");
+				//DEBUGP("Done BFS4\n");
 				Vec3f center = fit_circle(&arr_new,fit_value,20,2);
 				//printf("fit = %f\n",fit_value);
 				//center.Write();
@@ -4559,7 +4561,7 @@ void get_centerlines_normals()
 		{
 			arr.Clear();
 			BFS(f,1,&arr);
-			DEBUGP("Done BFS_edge\n");
+			//DEBUGP("Done BFS_edge\n");
 			int size = arr.Count();
 			Vec3f avgnormal = Vec3f(0,0,0);
 			int avgn = 0;
@@ -4651,7 +4653,7 @@ void get_centerlines_sphere()
 		{
 			arr.Clear();
 			BFS(f,8,&arr);
-			DEBUGP("Done BFS\n");
+			//DEBUGP("Done BFS\n");
 			for(int counter=0; counter<arr.Count();counter++)
 				arr[counter]->setColor(Vec3f(1,0,0));
 			arr_new.Clear();
@@ -4722,7 +4724,7 @@ void load_votes_from_file(char *filename)
 {
 	FILE *fp = fopen(filename,"r");
 	int a[4];
-	float b;
+	//float b;
 
 	if(maxx == 0 || maxy ==0 || maxz==0)
 	{
@@ -4774,9 +4776,9 @@ int main(int argc, char* argv[])
 				pmatrix[x][y][z]=0; 
 
 
-	char filename[1024] ;
+	//char filename[1024] ;
 	// "E:\\Arun\\My matlab codes\\deconvolved-lower3-higher8-window2";
-	char filename_data[1024];
+	//char filename_data[1024];
 	char picfilename [1024];
 	//strcpy(filename_data,"E:\\Arun\\My matlab codes\\phantom-binary\\gaussian_noise\\stdeviation_0");
 	//strcat(filename_data,".npts");
@@ -4855,7 +4857,7 @@ int main(int argc, char* argv[])
 		Decimate(dec);
 	}
 	check_consistent();
-	printf("Decimated to 25% of the original size\n");
+	printf("Decimated to 25%% of the original size\n");
 
 	//CENTERLINE EXTRACTION -uncomment load_votes_from_file() to load from a saved file.
 	//get_centerlines_voxels();
@@ -4888,7 +4890,7 @@ int main(int argc, char* argv[])
 	//scanf("%*d");
 	//    glBegin(GL_LINES);
 	GLCanvas *g;
-	BoundingBox *b = m->getBoundingBox();
+	//BoundingBox *b = m->getBoundingBox();
 	//      m->PaintWireframe();
 	g->initialize(ap,r);
 

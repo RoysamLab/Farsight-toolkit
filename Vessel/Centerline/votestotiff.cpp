@@ -11,9 +11,9 @@ typedef itk::ImageFileWriter<ImageType> FileWriterType;
 
 int main()
 {
-	char *votesfilename = "../../half_vessel_votes2.txt";
-	char *outputfilename = "half_vessel_votes2.tif";
-	FILE * fp = fopen(votesfilename, "r");
+	std::string votesfilename = "../../half_vessel_votes2.txt";
+	std::string outputfilename = "half_vessel_votes2.tif";
+	FILE * fp = fopen(votesfilename.c_str(), "r");
 
 
 	int x,y,z,v;
@@ -29,7 +29,7 @@ int main()
 	fclose(fp);
 
 
-	fp = fopen(votesfilename, "r");
+	fp = fopen(votesfilename.c_str(), "r");
 
 
 	ImageType::Pointer im = ImageType::New();
@@ -62,7 +62,7 @@ int main()
 	fclose(fp);
 
 	FileWriterType::Pointer writer = FileWriterType::New();
-	writer->SetFileName(outputfilename);
+	writer->SetFileName(outputfilename.c_str());
 	writer->SetInput(im);
 	writer->Update();
 

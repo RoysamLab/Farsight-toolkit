@@ -37,7 +37,7 @@ int main (int argc, char *argv[])
   float *curv;
   int *f;
   long idx, iidx, slsz, sz;
-  int i, j, k, c;
+  int i, j, k;//, c;
   int ii, jj, kk;
   int x,y,z;
   int cc;
@@ -137,7 +137,7 @@ int main (int argc, char *argv[])
   PartialDerivative1(Iv, Ivw, 3, L, M, N);
 
 
-  double maxCurvature = 0;
+  //double maxCurvature = 0;
   int DisAway = 2;
   for (k = DisAway; k < N-DisAway; k++)
      for (j = DisAway; j < M-DisAway; j++)

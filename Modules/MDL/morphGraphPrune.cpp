@@ -46,8 +46,8 @@ Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexP
 {
 	//struct VoxelPosition *vertexPos;
 	Graph msTree_buffer(num_nodes+1);
-	int num_edge_MST = 0;
-	int num_vertex_MST = num_vertices(msTree); 
+	//int num_edge_MST = 0;
+	//int num_vertex_MST = num_vertices(msTree); 
 	//int num_edge_MST = num_edges(msTree); //not work
 
 	msTree_buffer = msTree; // copy to buffer for next process
@@ -65,7 +65,7 @@ Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexP
 
 
 	// Consider all leaves
-	Vertex curVert;
+	//Vertex curVert;
 	num_leaves = 0;
 	int prunetimes = 1; 
 	  
@@ -82,7 +82,7 @@ Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexP
 					//curVert = vertex(curBranchVerts[curBrVerts_Index], msTree);
 					for (boost::tie(outei, outedge_end) = out_edges(vertex(curBranchVerts[curBrVerts_Index], msTree), msTree);
 																							outei != outedge_end; ++outei) {
-						if (target(*outei, msTree) == curBranchVerts[curBrVerts_Index-1])
+						if (target(*outei, msTree) == (unsigned int)curBranchVerts[curBrVerts_Index-1])
 							continue;
 						curBranchVerts[curBrVerts_Index+1] = target(*outei, msTree);
 					}

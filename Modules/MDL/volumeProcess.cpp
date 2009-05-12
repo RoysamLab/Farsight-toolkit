@@ -1,12 +1,12 @@
 /*  Volume dataset processing
-/*  accept a sequence of volumes
-/*  Windows version, taken in from Linux version
-/*   Author: Xiaosong Yuan, RPI
-/*  Modified on Sep. 29, 2005  
+ *  accept a sequence of volumes
+ *  Windows version, taken in from Linux version
+ *   Author: Xiaosong Yuan, RPI
+ *  Modified on Sep. 29, 2005  
 
-/*  Input parameters
-/*          1. sizeExpand   
-/*          2. preproess          */
+ *  Input parameters
+ *          1. sizeExpand   
+ *          2. preproess          */
 
 //#include "stdafx.h"
 #include <stdlib.h>
@@ -69,13 +69,13 @@ int main(int argc, char *argv[])
 	char *outfilename = new char[80];
 	int i,j,k, t;
 	int ii, jj, kk;
-	int NearObjFlag;
+	//int NearObjFlag;
 	DATATYPEOUT *volout;
-	long idx, iidx;
+	long idx;//, iidx;
 	float threshold;
-	int kmod8, kdiv8;
-	int FlagIsolated;
-	int NumConnectComp;
+	//int kmod8, kdiv8;
+	//int FlagIsolated;
+	//int NumConnectComp;
 	int sizeExpand = 0;  //10;
 	DATATYPEOUT blockMax;
 	int timesDilate;
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 
 	for (t=0; t<sizeTime; t++) {
 		
-		if (fread(volin, sizeof(DATATYPEIN), sizeX*sizeY*sizeZ, infile) < sizeX*sizeY*sizeZ)
+		if (fread(volin, sizeof(DATATYPEIN), sizeX*sizeY*sizeZ, infile) < (unsigned int)(sizeX*sizeY*sizeZ))
 		{
 			printf("File size is not the same as volume size\n");
 		    exit(1);
@@ -196,7 +196,7 @@ int main(int argc, char *argv[])
 					// Keep the peak of the original intensity
 					if (blockMax == volin[k *sizeX*sizeY + j *sizeX + i] && blockMax != 0)  {
 						blockMax = blockMax + 1;
-						if (blockMax > 255)   blockMax = 255;
+						//if (blockMax > 255)   blockMax = 255;
 					}
 					volout[k *sizeX*sizeY + j *sizeX + i] = blockMax;
 				}
@@ -388,7 +388,7 @@ void spread(Position pos, int startx, int endx, int direction)
 	Position pos1; // in a new row
 	int newy, newz;
 	int startx0, endx0;
-	int startx1, endx1;
+	int startx1;//, endx1;
 	int laststartx;
 
 	switch (direction)

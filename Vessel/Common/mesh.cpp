@@ -69,9 +69,9 @@ void Mesh::texture_list_init()
 	//twopow--;
 	rdepth1 = 1<<twopow;
 	int npixels = rwidth*rlength;
-	int mulwd = rwidth*rdepth1;
-	int mulld = rlength*rdepth1;
-	int w = rwidth;
+	//int mulwd = rwidth*rdepth1;
+	//int mulld = rlength*rdepth1;
+	//int w = rwidth;
 	
 	unsigned char *rasterxy;// = (unsigned char*)malloc(npixels*(rdepth1)*sizeof(unsigned char));
 	//unsigned char **rasteryz;// = (unsigned char*)malloc(npixels*(rdepth1)*sizeof(unsigned char));	
@@ -110,14 +110,14 @@ void Mesh::texture_list_init()
 	printf("I'm going to read the memory block now rdepth = %d rheight = %d rwidth = %d\n", rdepth, rlength, rwidth);
 //	for(int counter=0; counter<rdepth;counter++)
 //		fread(rasterxy[counter],sizeof(unsigned char),npixels,fpi);
-	printf("I read %d\n",fread(rasterxy,sizeof(unsigned char),npixels*rdepth,fpi));
+	printf("I read %d\n",(int)fread(rasterxy,sizeof(unsigned char),npixels*rdepth,fpi));
 	//rdepth+=1;//CHANGED
-	printf("done reading %d %d %d %d %d\n",rwidth, rlength,rdepth,(1<<twopow),sizeof(unsigned char));
+	printf("done reading %d %d %d %d %lu\n",rwidth, rlength,rdepth,(1<<twopow),sizeof(unsigned char));
 	printf("I'm encoding the data now\n");
-	double max1=-1,min1=23423423,mean1=0;
-	int num1;
-	int pc = 0;
-	unsigned char test;
+	//double max1=-1,min1=23423423,mean1=0;
+	//int num1;
+	//int pc = 0;
+	//unsigned char test;
 	//rdepth = rdepth1;
 	printf("%d rdepth\n",rdepth);
 	/*
@@ -221,7 +221,7 @@ void Mesh::texture_list_init()
 	 free(rasterxy);
 	 //free(rasterxz);
 	 //free(rasteryz);
-	double si = 10;
+	//double si = 10;
 
 }
 // =======================================================================

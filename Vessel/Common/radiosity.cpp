@@ -61,7 +61,7 @@ void BFS_debug (Face *f, int depth, Array<Face*> *array)
 		Edge *e = temp->getEdge();
 		if(e==NULL)
 			printf("e is null.. :((\n");
-		Edge * temp1 = NULL;
+		//Edge * temp1 = NULL;
 		for (int counter =0; counter < 3; counter ++)
 		{
 			Edge *e1 = e->getOpposite();
@@ -344,7 +344,7 @@ void Radiosity::PaintSelection(ArgParser *args)
 void render_stroke_string(void* font, const char* string)
 {
 	char* p;
-	float width = 0;
+	//float width = 0;
 
 	// Center Our Text On The Screen
     //glPushMatrix();
@@ -767,7 +767,7 @@ void GLCanvas::show_editing(void)
 	Array<Face*> arr1(1000);
 	Array<Face*> arr2(1000);
 	//printf("Entering show_editing\n");
-	int n = picked_faces;
+	//int n = picked_faces;
 	if(picked_faces == 2)
 	{
 		/*printf("Picked_faces==2");
@@ -1002,14 +1002,14 @@ void GLCanvas::redo_editing()
 void GLCanvas::get_annotation(void)
 {
 	printf("\nEnter the annotation for the current edit :");
-	gets(curr_annotation);
+	fgets(curr_annotation, sizeof(curr_annotation), stdin);
 }
 void GLCanvas::load_edits(void)
 {
 	printf("\n Enter the filename to load the edits from: ");
 	char filename[512];
-	gets(filename);
-	char ch;
+	fgets(filename, sizeof(filename), stdin);
+	//char ch;
 	//while((ch=getc(stdin))!=EOF);
 	FILE * fp = fopen(filename,"r");
 	if(fp==NULL)
@@ -1114,11 +1114,11 @@ void GLCanvas::save_edits(void)
 	//ask for the filename
 	printf("\nEnter the filename to save the edits: ");
 	char filename[512];
-	gets(filename);
+	fgets(filename, sizeof(filename), stdin);
 	printf("Writing to file %s\n",filename);
 	FILE * fp = fopen(filename,"w");
 	vector<trio> stk = radiosity->getMesh()->undo_operations;
-	int si = stk.size();
+	//int si = stk.size();
 	while(!stk.empty())
 	{
 		trio temp = stk.back();
@@ -1137,7 +1137,7 @@ void GLCanvas::PickPaint(int x, int y) {
   //assert_stackdump(HandleGLError());
   //meshes->args->render_vis_mode = 1;  
   //glui->sync_live();
-  Mesh *mesh = radiosity->getMesh();
+  //Mesh *mesh = radiosity->getMesh();
   // select triangle with mouse click!
 	GLint viewport[4];
   glSelectBuffer(BUFSIZE,selectBuf);
@@ -1149,7 +1149,7 @@ void GLCanvas::PickPaint(int x, int y) {
   //camera->glPlaceCamera();
   glGetIntegerv(GL_VIEWPORT,viewport);
   gluPickMatrix(x,viewport[3]-y-1,5,5,viewport);
-  double ratio = 1; 
+  //double ratio = 1; 
   int w = args->width;
   int h = args->height;
  // printf("w = %d h = %d\n",w,h);
@@ -1277,7 +1277,8 @@ HandleGLError();
 
 
 int processHits (GLint hits, GLuint buffer[]) {
-  unsigned int i, j;
+  int i;
+  unsigned int j;
   GLuint names, *ptr, minZ,*ptrNames, numberOfNames;
   
   if (hits <= 0) return -1;
