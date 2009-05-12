@@ -41,11 +41,9 @@
 using namespace std;
 #ifdef WIN32
 using namespace stdext;
-#include <hash_map>
-#else
-#include <hash_map.h>
 #endif
 
+#include <vtksys/hash_map.hxx>
 
 #define SKIP 2
 #define MIN(a,b) (((a)>(b))?(b):(a))
