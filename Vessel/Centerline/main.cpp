@@ -50,14 +50,14 @@ using namespace stdext;
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
 //typedef hash_map<int ,Vertex *> type;
-hash_map< int ,Vertex * > vert;
+vtksys::hash_map< int ,Vertex * > vert;
 
 
-hash_map<long,double > hashcurv;
-hash_map<long,double > hashcurvnew;
-hash_map<long,bool > hash_decimate;
+vtksys::hash_map<long,double > hashcurv;
+vtksys::hash_map<long,double > hashcurvnew;
+vtksys::hash_map<long,bool > hash_decimate;
 
-typedef hash_multimap < int,Face *> map_type;
+typedef vtksys::hash_multimap < int,Face *> map_type;
 map_type hash_for_centerline;
 
 Vec3f color1(0,0,0.5), color2(0,0,0.5), color3(0,0,0.5);
@@ -962,7 +962,7 @@ void load_points_other( char * fname)
 
 void marchtetra(void)
 {
-	hash_map<int ,Vertex *>::iterator i;
+	vtksys::hash_map<int ,Vertex *>::iterator i;
 	Vec3f a,b,c,d;
 	Vec3f p,q,r;
 	vector <Vec3f> arr;
@@ -3134,7 +3134,7 @@ int generate_hash(Face *f, int xbins = 0, int ybins = 0, int zbins = 0, double x
 	int total = num1+num2*xb+num3*xb*yb;
 	return total;
 }
-double find_closest(Face *f, hash_multimap<int,Face*> &hash,int xbins = 0, int ybins =0, int zbins =0)
+double find_closest(Face *f, vtksys::hash_multimap<int,Face*> &hash,int xbins = 0, int ybins =0, int zbins =0)
 {
 	static int xb,yb,zb;
 	if(xbins!=0)
@@ -3168,9 +3168,9 @@ double find_closest(Face *f, hash_multimap<int,Face*> &hash,int xbins = 0, int y
 					if(abs(cox)==depth || abs(coy)==depth || abs(coz)==depth)
 					{
 						number = (n[0]+cox)+(n[1]+coy)*xb+(n[2]+coz)*xb*yb;
-						pair<hash_multimap<int,Face*>::const_iterator,hash_multimap<int,Face*>::const_iterator> pa = hash.equal_range(number);
+						pair<vtksys::hash_multimap<int,Face*>::const_iterator,vtksys::hash_multimap<int,Face*>::const_iterator> pa = hash.equal_range(number);
 
-						for(hash_multimap<int,Face*>::const_iterator i = pa.first; i!=pa.second; ++i)
+						for(vtksys::hash_multimap<int,Face*>::const_iterator i = pa.first; i!=pa.second; ++i)
 						{
 							Face *f1 = (*i).second;
 							dist = ((f1->getCenter())-(f->getCenter())).Length();
@@ -3236,12 +3236,12 @@ double find_distance_between_two_3D_files(char *fname1, char*fname2)
 
 	// create a hashface for the two meshes
 
-	hash_multimap<int, Face*> hashface1,hashface2; // bow down to stl
+	vtksys::hash_multimap<int, Face*> hashface1,hashface2; // bow down to stl
 	Bag<Face*>* bf = m1->getFaces();
 	Iterator<Face*>*iter = bf->StartIteration();
 	while(Face *f = iter->GetNext())
 	{
-		hashface1.insert(hash_multimap<int,Face*>::value_type(generate_hash(f),f));
+		hashface1.insert(vtksys::hash_multimap<int,Face*>::value_type(generate_hash(f),f));
 	}
 	bf->EndIteration(iter);
 	printf("Finished creating the hash for mesh 1\n");
@@ -3253,7 +3253,7 @@ double find_distance_between_two_3D_files(char *fname1, char*fname2)
 	printf("Starting the main loop:\n");
 	while(Face *f = iter->GetNext())
 	{
-		//hashface2.insert(hash_multimap<int,Face*>::value_type(generate_hash(f),f));
+		//hashface2.insert(vtksys::hash_multimap<int,Face*>::value_type(generate_hash(f),f));
 		distance_sum +=find_closest(f,hashface1);
 		printf("%d %0.2lf\r",(int)distance_sum,count*1.0/m2->numFaces()*100.0);
 		count++;
@@ -3624,12 +3624,12 @@ int compare_decimations(char *filename1)
 
 			// create a hashface for the two meshes
 
-			hash_multimap<int, Face*> hashface1,hashface2; // bow down to stl
+			vtksys::hash_multimap<int, Face*> hashface1,hashface2; // bow down to stl
 			Bag<Face*>* bf = m1->getFaces();
 			Iterator<Face*>*iter = bf->StartIteration();
 			while(Face *f = iter->GetNext())
 			{
-				hashface1.insert(hash_multimap<int,Face*>::value_type(generate_hash(f),f));
+				hashface1.insert(vtksys::hash_multimap<int,Face*>::value_type(generate_hash(f),f));
 			}
 			bf->EndIteration(iter);
 			printf("Finished creating the hash for mesh 1\n");
@@ -3641,7 +3641,7 @@ int compare_decimations(char *filename1)
 			printf("Starting the main loop:\n");
 			while(Face *f = iter->GetNext())
 			{
-				//hashface2.insert(hash_multimap<int,Face*>::value_type(generate_hash(f),f));
+				//hashface2.insert(vtksys::hash_multimap<int,Face*>::value_type(generate_hash(f),f));
 				distance_sum +=find_closest(f,hashface1);
 				if(((int)distance_sum)%100000==0 )
 					printf("%0.2lf %0.2lf\n",distance_sum/count,count*1.0/m2->numFaces()*100.0);
@@ -3664,12 +3664,12 @@ int compare_decimations(char *filename1)
 
 		// create a hashface for the two meshes
 		{
-			hash_multimap<int, Face*> hashface1,hashface2; // bow down to stl
+			vtksys::hash_multimap<int, Face*> hashface1,hashface2; // bow down to stl
 			Bag<Face*>* bf = m1->getFaces();
 			Iterator<Face*>*iter = bf->StartIteration();
 			while(Face *f = iter->GetNext())
 			{
-				hashface1.insert(hash_multimap<int,Face*>::value_type(generate_hash(f),f));
+				hashface1.insert(vtksys::hash_multimap<int,Face*>::value_type(generate_hash(f),f));
 			}
 			bf->EndIteration(iter);
 			printf("Finished creating the hash for mesh 1\n");
@@ -3681,7 +3681,7 @@ int compare_decimations(char *filename1)
 			printf("Starting the main loop:\n");
 			while(Face *f = iter->GetNext())
 			{
-				//hashface2.insert(hash_multimap<int,Face*>::value_type(generate_hash(f),f));
+				//hashface2.insert(vtksys::hash_multimap<int,Face*>::value_type(generate_hash(f),f));
 				distance_sum +=find_closest(f,hashface1);
 				if(((int)distance_sum)%100000==0 )
 					printf("%0.2lf %0.2lf\n",distance_sum/count,count*1.0/m2->numFaces()*100.0);
@@ -3797,12 +3797,12 @@ int compare_npts_files(char *filename1, char*filename2)
 
 	// create a hashface for the two meshes
 
-	hash_multimap<int, Face*> hashface1,hashface2; // bow down to stl
+	vtksys::hash_multimap<int, Face*> hashface1,hashface2; // bow down to stl
 	Bag<Face*>* bf = m1->getFaces();
 	Iterator<Face*>*iter = bf->StartIteration();
 	while(Face *f = iter->GetNext())
 	{
-		hashface1.insert(hash_multimap<int,Face*>::value_type(generate_hash(f),f));
+		hashface1.insert(vtksys::hash_multimap<int,Face*>::value_type(generate_hash(f),f));
 	}
 	bf->EndIteration(iter);
 	printf("Finished creating the hash for mesh 1\n");
@@ -3814,7 +3814,7 @@ int compare_npts_files(char *filename1, char*filename2)
 	printf("Starting the main loop:\n");
 	while(Face *f = iter->GetNext())
 	{
-		//hashface2.insert(hash_multimap<int,Face*>::value_type(generate_hash(f),f));
+		//hashface2.insert(vtksys::hash_multimap<int,Face*>::value_type(generate_hash(f),f));
 		distance_sum +=find_closest(f,hashface1);
 		if(((int)distance_sum)%2000==0 )
 			printf("%0.2lf %0.2lf\n",distance_sum/count,count*1.0/m2->numFaces()*100.0);
