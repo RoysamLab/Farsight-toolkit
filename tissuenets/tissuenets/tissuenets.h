@@ -188,8 +188,8 @@ public:
 				   void* callerdata); 
 	vtkMutableUndirectedGraph* GetNetwork();
 	vtkRenderView* GetRenderView();
-	vector<double> GetSelectedVertices(){};
-	vector<double> GetSelectedEdges(){};
+	//vector<double> GetSelectedVertices(){};
+	//vector<double> GetSelectedEdges(){};
 	void AddLabels();
 	vtkGraphToPolyData* ToPoly();
 	void setNetworkStatusOn(){emptyNetwork=false;};	//Do this if the network has nodes and edges

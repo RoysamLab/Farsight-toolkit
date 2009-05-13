@@ -279,7 +279,7 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 	//Attributes for Edge elements
 //		xmlChar *source=(xmlChar*)"source";
 //		xmlChar *target=(xmlChar*)"target";	
-	vtkIdType iID,iX,iY,iZ; // used for graph coordinates
+	vtkIdType iID; //,iX,iY,iZ; // used for graph coordinates
 	float fX,fY,fZ;
 	vtkIdType isource, itarget; //used for defining graph edges
 	double iweight; 
@@ -324,7 +324,7 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 	vector<char> firstLetterOfLabels;
 	pair<int,int> key;
 	//double avg=0;
-	int mic=0;
+	//int mic=0;
 	channelColors = SetColorCode();
 	//doc = xmlParseFile(graphFileName);
 	g->GetVertexData()->AddArray(labels);
@@ -1307,20 +1307,20 @@ SelectedVerticesAndEdges* BioNet::GetSelections(vtkSelectionLink* sel) {
 	SelectedVerticesAndEdges* sve = new SelectedVerticesAndEdges();
 	vtkSelection *p = sel->GetSelection();
 	
-	for(int counter=0; counter < p->GetNumberOfNodes(); counter++)
+	for(unsigned int counter=0; counter < p->GetNumberOfNodes(); counter++)
 	{
 		vtkSelectionNode *n = p->GetNode(counter);
 		vtkAbstractArray* arra = n->GetSelectionList();
 		 for (int i=0;i<n->GetSelectionList()->GetNumberOfTuples();i++) {
 			 vtkVariant aaa=arra->GetVariantValue(i);
 			// Decide if this is a vertex or an edge
-			 if (aaa.GetTypeAsString() == "double" ) //VERTEX ids have type of double 
+			 if (strcmp(aaa.GetTypeAsString(), "double") == 0 ) //VERTEX ids have type of double 
 				 //vtkIdType id = (vtkIdType) aaa.ToInt();
 				 //vtkIdType id = (vtkIdType) this->GetNetwork()->GetVertexData()->GetPedigreeIds()->GetVariantValue(aaa).ToDouble()
 				 //this->InsertIntoMap(&sve->vertices, this->GetNetwork()->GetVertexData()->GetPedigreeIds()->GetVariantValue(id).ToDouble());				
 		 
 				 this->InsertIntoMap(&sve->vertices, (aaa.ToDouble()));
-			 else if (aaa.GetTypeAsString() == "string" ) //edge ids have type of string
+			 else if (strcmp(aaa.GetTypeAsString(), "string") == 0 ) //edge ids have type of string
 				  sve->edges.insert(aaa.ToString());
 		 }
 		 cout<<endl<<endl;
@@ -1455,7 +1455,7 @@ void BioNet::Kruskalmst() {
 	mst->SetInput(this->g);
 	mst->SetEdgeWeightArrayName("EdgeWeights");
 	mst->Update();
-
+  */
 	/*
 	Kruskal's MST outputs a vtkSelection, which selects the edges that 
 	are in the MST. This selection itself cannot be displayed in a graph 
