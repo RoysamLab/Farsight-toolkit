@@ -972,14 +972,16 @@ void BioNet::ProcessEvents(vtkObject* caller,
 				//set<string> tempStrMap(bnsl->bioObj->sve->edges);
 				//Store the old vertex selections
 				//cout<<"11111"<<endl;
-				copy(bnsl->bioObj->sve->edges.begin(),bnsl->bioObj->sve->edges.end(), tempStrSet.begin());
+        std::copy(bnsl->bioObj->sve->edges.begin(),bnsl->bioObj->sve->edges.end(), 
+             std::insert_iterator< std::set< string > >(tempStrSet, tempStrSet.begin()));
 				//Get the new selections - new vertices
 				bnsl->bioObj->GetSelections(bnsl->edgeLink);
 				//copy(bnsl->bioObj->sve->edges.begin(),bnsl->bioObj->sve->edges.end(), ostream_iterator<string>(cout, " "));
 				//cout<<endl;
 				//copy(bnsl->bioObj->sve->vertices.begin(),bnsl->bioObj->sve->vertices.end(), ostream_iterator<double>(cout, " "));
 				cout<<endl;
-				copy(tempStrSet.begin(),tempStrSet.end(), bnsl->bioObj->sve->edges.begin());
+        std::copy(tempStrSet.begin(),tempStrSet.end(), 
+             std::insert_iterator< std::set< string > >(bnsl->bioObj->sve->edges, bnsl->bioObj->sve->edges.begin()));
 				bnsl->bioObj->numOfPasses++; //The second pass is now completed
 				//cout<<"numOfPasses1 = "<<bnsl->bioObj->numOfPasses<<endl;
 		}
@@ -989,7 +991,8 @@ void BioNet::ProcessEvents(vtkObject* caller,
 		if (bnsl->bioObj->sve->edges.size() == 0) {
 				set<double> tempDblSet(bnsl->bioObj->sve->vertices);
 
-				copy(bnsl->bioObj->sve->vertices.begin(),bnsl->bioObj->sve->vertices.end(), tempDblSet.begin());	
+        std::copy(bnsl->bioObj->sve->vertices.begin(),bnsl->bioObj->sve->vertices.end(), 
+                  std::insert_iterator< std::set< double > >(tempDblSet, tempDblSet.begin()));	
 			
 //				copy(bnsl->bioObj->sve->vertices.begin(),bnsl->bioObj->sve->vertices.end(), ostream_iterator<double>(cout, " "));
 
