@@ -1,0 +1,18 @@
+SET(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 1000000)
+SET(CTEST_CUSTOM_MAXIMUM_NUMBER_OF_WARNINGS 1000)
+SET(CTEST_CUSTOM_MAXIMUM_NUMBER_OF_ERRORS 50)
+
+# Farsight Developers: Add bogus warnings here as exceptions from being 
+# reported on the dashboard
+SET(CTEST_CUSTOM_WARNING_EXCEPTION
+  ${CTEST_CUSTOM_WARNING_EXCEPTION}
+  "warning LNK4221.*no public symbols found"
+  "WARNING non-zero return value in ctest"
+  )
+
+IF(APPLE)
+  SET(CTEST_CUSTOM_WARNING_EXCEPTION
+    ${CTEST_CUSTOM_WARNING_EXCEPTION}
+    "warning -.: directory name .* does not exist"
+    )
+ENDIF(APPLE)
