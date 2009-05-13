@@ -905,7 +905,7 @@ void ClearSelections(set<T>* s1) {
 //
 template<class T2> 
 void CopySets(set<T2> s1, set<T2>* s2) {
-	set<T2>::iterator i1;
+	typename set<T2>::iterator i1;
 	for(i1 = s1.begin(); i1 != s1.end(); i1++) {
 		s2->insert(*i1);
 	}
