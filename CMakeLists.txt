@@ -267,3 +267,17 @@ CONFIGURE_FILE (
   ${PROJECT_SOURCE_DIR}/FarsightConfig.h.in
   ${PROJECT_BINARY_DIR}/FarsightConfig.h
 )
+
+##########################################################################
+# Testing stuff
+ENABLE_TESTING()
+IF(BUILD_TESTING)
+  CONFIGURE_FILE(${Farsight_SOURCE_DIR}/CMake/CTestCustom.ctest.in
+    ${Farsight_BINARY_DIR}/CMake/CTestCustom.ctest @ONLY)
+  FILE(WRITE ${Farsight_BINARY_DIR}/CTestCustom.cmake
+    "INCLUDE(\"${Farsight_BINARY_DIR}/CMake/CTestCustom.ctest\")\n")
+  SET(BUILDNAME "${BUILDNAME}" CACHE STRING "Name of build on the dashboard")
+  MARK_AS_ADVANCED(BUILDNAME)
+ENDIF(BUILD_TESTING)
+
+
