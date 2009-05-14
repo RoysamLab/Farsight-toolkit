@@ -1,8 +1,9 @@
+//
 #include "local_max_clust_3D.h"
 
 using namespace std;
 
-float get_maximum(float* A, int r1, int r2, int c1, int c2, int z1, int z2, int* rx, int* cx, int* zx, int R, int C, int Z)
+get_maximum(float* A, int r1, int r2, int c1, int c2, int z1, int z2, int* rx, int* cx, int* zx, int R, int C, int Z)
 {
 	float mx = A[(z1*R*C)+(r1*C)+c1];//A[r1][c1][z1];
     rx[0] = r1;
@@ -24,7 +25,6 @@ float get_maximum(float* A, int r1, int r2, int c1, int c2, int z1, int z2, int*
             }
         }
     }
-    return mx;
 }
 
 
@@ -80,7 +80,9 @@ void local_max_clust_3D(float* im_vals, int* local_max_vals, int* bImg, int* out
 					//find maximum value in the LoG withing the search region (min_r->max_r,min_c->max_c,min_z->max_z).
 					//R,C,Z will contain the coordinates of this local maximum value. 
 					//r,c,z are the image dimensions.
-					//float mx = get_maximum(im_vals, min_r, max_r, min_c, max_c, min_z, max_z, &R, &C, &Z, r, c, z);                                              
+
+					//Do not comment this line again please... I resoved the warning issue
+					get_maximum(im_vals, min_r, max_r, min_c, max_c, min_z, max_z, &R, &C, &Z, r, c, z);                                              
                                                                                  
 					/*double ind;
             
