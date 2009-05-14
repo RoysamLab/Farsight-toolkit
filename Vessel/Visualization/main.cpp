@@ -41,10 +41,6 @@
 
 using namespace std;
 
-#ifdef WIN32
-using namespace stdext;
-#endif
-
 #include <vtksys/hash_map.hxx>
 
 #define SKIP 2

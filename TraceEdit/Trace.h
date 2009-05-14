@@ -6,9 +6,6 @@
 #include <math.h>
 #include <set>
 
-#ifdef WIN32
-using namespace stdext;
-#endif
 #include <vtksys/hash_map.hxx> /* Platform independent hashmap */
 #include <queue>
 

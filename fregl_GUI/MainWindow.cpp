@@ -2,7 +2,7 @@
 #include <QChar>
 #include "mainwindow.h"
 
-#define DEBUG_P(...)
+//#define DEBUG_P(...)
 
 ////////////////////////////////////////////////////////////////////////////////
 GNRCImageDialog *MainWindow::createGNRCImage( )
