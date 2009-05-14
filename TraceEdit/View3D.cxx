@@ -319,21 +319,6 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
       //???
 	    break;
 
-	  case 'p':
-      //this should be replaced with a separation between "move mode"
-      //and "selection mode"
-      if(view->IDList.size() >= 1)
-        {
-        view->IDList.pop_back();
-        for (unsigned int i = 0; i < view->IDList.size(); i++)
-          {
-          cout << "\t"<<view->IDList[i];   
-          } 
-        cout << " \t are selected \n";
-        view->QVTK->GetRenderWindow()->Render();
-		    }
-      break;
-
     case '-':
       if(view->IDList.size()>=1)
         {
@@ -348,7 +333,6 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
           } 
         cout<< " \t are selected \n" ;   
         }
-      view->Rerender();
       break;
 
     default:

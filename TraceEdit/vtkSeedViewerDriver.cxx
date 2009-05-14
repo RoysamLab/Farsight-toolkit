@@ -34,14 +34,16 @@ bool readPts(char*filename)
 		seeds.push_back(newSeed);
 	}
 	fclose(fp);
+	printf("size of list= %i", seeds.size());
 	return true;
 };
 int main (int argc, char* argv[])	{
 	View3d view; //initalizes the 3d viewer
 	view.RenderWin();
+	//view.readImg(argv[1]);
 	view.rayCast(argv[1]);
 	view.AddVolumeSliders();
-	readPts(argv[1]);
+	readPts(argv[2]);
 	//view.AddPointsAsPoints(seeds);
 	view.renWin->Render();
 	view.iren->Start();
