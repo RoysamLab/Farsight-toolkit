@@ -3,7 +3,7 @@
 
 using namespace std;
 
-get_maximum(float* A, int r1, int r2, int c1, int c2, int z1, int z2, int* rx, int* cx, int* zx, int R, int C, int Z)
+void get_maximum(float* A, int r1, int r2, int c1, int c2, int z1, int z2, int* rx, int* cx, int* zx, int R, int C, int Z)
 {
 	float mx = A[(z1*R*C)+(r1*C)+c1];//A[r1][c1][z1];
     rx[0] = r1;
