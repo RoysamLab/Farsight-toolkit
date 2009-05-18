@@ -1,0 +1,2 @@
+SUBDIRS( fuzzyClustering )
+SUBDIRS( libsvm )

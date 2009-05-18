@@ -94,33 +94,34 @@ ENDMACRO(MACRO_INCLUDE_QT4)
 # These libraries are used in nearly all modules
 ################################################################################
 MACRO_INCLUDE_COMMON_LIBS()
+
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/FTKImage )
 SUBDIRS( FTKImage )
+
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/SegmentationCommon )
 SUBDIRS( SegmentationCommon )
+
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/tinyxml )
 SUBDIRS( tinyxml )
+
+SUBDIRS( PatternAnalysis )
+
 #INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/libsvm )
-SUBDIRS( libsvm )
-
-#INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/utils )
-#SUBDIRS( utils )
-
-#INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkTest )
-#SUBDIRS( ftkTest )
+#SUBDIRS( libsvm )
 
 IF(BUILD_NUCLEI)
   INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/NuclearSegmentation )
   SUBDIRS( NuclearSegmentation )  
 ENDIF(BUILD_NUCLEI)
-IF(BUILD_FUZZY_CLUSTERING)
-  IF(BUILD_NUCLEI)
-    INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/fuzzyClustering )
-    SUBDIRS( fuzzyClustering)
-  ELSE(BUILD_NUCLEI)
-    MESSAGE(FATAL_ERROR "Cannot build fuzzy clustering without BUILD_NUCLEI set to ON ")
-  ENDIF(BUILD_NUCLEI)
-ENDIF(BUILD_FUZZY_CLUSTERING)
+
+#IF(BUILD_FUZZY_CLUSTERING)
+#  IF(BUILD_NUCLEI)
+#    INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/fuzzyClustering )
+#    SUBDIRS( fuzzyClustering)
+#  ELSE(BUILD_NUCLEI)
+#    MESSAGE(FATAL_ERROR "Cannot build fuzzy clustering without BUILD_NUCLEI set to ON ")
+#  ENDIF(BUILD_NUCLEI)
+#ENDIF(BUILD_FUZZY_CLUSTERING)
 
 
 IF(BUILD_VESSEL_SEGMENTATION)
