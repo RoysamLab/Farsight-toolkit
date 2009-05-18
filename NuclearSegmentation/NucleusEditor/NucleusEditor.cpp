@@ -220,21 +220,18 @@ void NucleusEditor::loadResult(void)
 	segResult = new ftk::NuclearSegmentation();
 	
 	if ( !segResult->RestoreFromXML(filename.toStdString()) )
+	{
 		std::cerr << segResult->GetErrorMessage() << std::endl;
+		return;
+	}
 
 	//Now I have objects stored in memory - put the features into the model
 	newModel();
 	CreateNewTableWindow();
 	CreateNewPlotWindow();
 	segWin = CreateNewSegmentationWindow();
-	if (segResult->LoadData())
-	{
-		segWin->SetChannelImage(segResult->getDataImage());
-	}
-	if(segResult->LoadLabel())
-	{
-		segWin->SetLabelImage(segResult->getLabelImage());
-	}
+	segWin->SetChannelImage(segResult->getDataImage());
+	segWin->SetLabelImage(segResult->getLabelImage());
 	this->setCentralWidget(segWin);
 	this->show();
 	//segwin->show();

@@ -1293,6 +1293,9 @@ bool NuclearSegmentation::RestoreFromXML(std::string filename)
 	myObjects.clear();
 	featureNames.clear();
 
+	size_t pos = filename.find_last_of("/\\");
+	std::string path = filename.substr(0,pos);
+
 	TiXmlDocument doc;
 	if ( !doc.LoadFile( filename.c_str() ) )
 	{
@@ -1302,7 +1305,7 @@ bool NuclearSegmentation::RestoreFromXML(std::string filename)
 
 	TiXmlElement* rootElement = doc.FirstChildElement();
 	const char* docname = rootElement->Value();
-	if ( strcmp( docname, "NuclearSegmentation" ) != 0 )
+	if ( strcmp( docname, "NuclearSegmentation" ) != 0 && strcmp( docname, "SegmentationResult" ) != 0 )
 	{
 		errorMessage = "Incorrect XML root Element: ";
 		errorMessage.append(rootElement->Value());
@@ -1317,11 +1320,13 @@ bool NuclearSegmentation::RestoreFromXML(std::string filename)
 
 		if ( strcmp( parent, "datafile" ) == 0 )
 		{
-			dataFilename = parentElement->GetText();
+			std::string dname = parentElement->GetText();
+			dataFilename = path + "/" + dname;
 		}
 		else if ( strcmp( parent, "resultfile" ) == 0 )
 		{
-			labelFilename = parentElement->GetText();
+			std::string rname = parentElement->GetText();
+			labelFilename = path + "/" + rname;
 		}
 		else if ( strcmp( parent, "parameter" ) == 0 )
 		{
