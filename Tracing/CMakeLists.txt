@@ -1,1 +1,29 @@
-SUBDIRS( ftl3d MDL RPITrace3D TraceEdit Rendering)
+OPTION( BUILD_MDL "Build MDL Tracing" ON )
+IF( BUILD_MDL )
+    SUBDIRS( MDL )
+ENDIF()
+
+OPTION( BUILD_ftl2d "Build FTL2D Tracing" OFF )
+IF( BUILD_ftl2d )
+  SUBDIRS( ftl2d )
+ENDIF()
+
+OPTION( BUILD_ftl3d "Build FTL3D Tracing" ON )
+IF( BUILD_ftl3d )
+    SUBDIRS( ftl3d )
+ENDIF()
+
+OPTION( BUILD_RPITrace3D "Build RPI Trace3D" ON )
+IF( BUILD_RPITrace3D )
+  SUBDIRS( RPITrace3D )
+ENDIF()
+
+OPTION( BUILD_TraceEdit "Build Trace Editor" ON )
+IF( BUILD_TraceEdit )
+  SUBDIRS( TraceEdit )
+ENDIF()
+
+OPTION( BUILD_Rendering "Build 5-Label Result Renderer" ON )
+IF( BUILD_Rendering )
+  SUBDIRS( Rendering )
+ENDIF()

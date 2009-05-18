@@ -3,15 +3,7 @@
 //CMAKE will convert the file into a .h file and put it in 
 // the binary directory.
 
-#cmakedefine BUILD_GUI
-#cmakedefine BUILD_NUCLEI
-#cmakedefine BUILD_CHARLENE
-#cmakedefine USE_LIBSVM
-
-//#define INSTALL_DIR "${CPACK_PACKAGE_INSTALL_DIRECTORY}"
-//#define INSTALL_PREFIX "${CPACK_INSTALL_PREFIX}"
-//#define INSTALL_VERSION "${CPACK_PACKAGE_VERSION}"
-
-//#cmakedefine BUILD_MODULE1
-//#cmakedefine BUILD_MODULE2
-//#cmakedefine BUILD_MoDULE3
+//#cmakedefine BUILD_GUI
+//#cmakedefine BUILD_NUCLEI
+//#cmakedefine BUILD_CHARLENE
+//#cmakedefine USE_LIBSVM
