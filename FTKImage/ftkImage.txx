@@ -13,7 +13,7 @@ namespace ftk
 {
 
 //I NEVER RELEASE MEMORY FOR SLICES!!!
-template <typename pixelType> pixelType * Image::GetSlicePtr(int T, int CH, int Z, PtrMode mode = DEFAULT)
+template <typename pixelType> pixelType * Image::GetSlicePtr(int T, int CH, int Z, PtrMode mode)
 {
 	if( T >= m_Info.numTSlices || CH >= m_Info.numChannels || Z >= m_Info.numZSlices )
 		return NULL;

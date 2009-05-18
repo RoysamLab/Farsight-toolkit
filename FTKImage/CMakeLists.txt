@@ -19,5 +19,5 @@ ADD_LIBRARY( ftkImage
 
 TARGET_LINK_LIBRARIES( ftkImage vtksys vtkCommon vtkFiltering ITKCommon ITKBasicFilters ITKIO vtkIO vtkImaging )
 
-#INSTALL( TARGETS FTKImage DESTINATION . )
+#INSTALL( TARGETS ftkImage DESTINATION . )
                            

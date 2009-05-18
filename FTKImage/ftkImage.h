@@ -73,7 +73,7 @@ public:
 	//Also have templated functions
 	template <typename newType> void Cast();	//Cast the Image to newType (does not scale)
 	template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer GetItkPtr(int T, int CH, PtrMode mode);	//IF pixelType agrees with image pixel type, PtrMode defaults to DEFAULT
-	template <typename pixelType> pixelType * GetSlicePtr(int T, int CH, int Z,PtrMode mode);	// IF pixelType agrees with image pixel type (NOTE MEMORY MANAGER DOES NOT CHANGE)
+	template <typename pixelType> pixelType * GetSlicePtr(int T, int CH, int Z,PtrMode mode = DEFAULT);	// IF pixelType agrees with image pixel type (NOTE MEMORY MANAGER DOES NOT CHANGE)
 
 	typedef struct 
 	{
