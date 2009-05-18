@@ -1,5 +1,5 @@
 SET(CTEST_SOURCE_NAME farsight)
-SET(CTEST_BINARY_NAME farsight-dbg-shared-nightly)
+SET(CTEST_BINARY_NAME farsight-rel-shared-nightly)
 SET(CTEST_DASHBOARD_ROOT "c:/projects")
 SET(CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 SET(CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
@@ -16,9 +16,9 @@ SET(CTEST_CMAKE_COMMAND
 
 SET(CTEST_INITIAL_CACHE "
 SITE:STRING=charon.kitware
-BUILDNAME:STRING=vs71-32-dbg-shared
+BUILDNAME:STRING=vs71-32-rel-shared
 CMAKE_GENERATOR:INTERNAL=Visual Studio 7 .NET 2003
-MAKECOMMAND:STRING=\"c:/Program Files/Microsoft Visual Studio .NET 2003/Common7/IDE/devenv.com\" Farsight.sln /build Debug /project ALL_BUILD
+MAKECOMMAND:STRING=\"c:/Program Files/Microsoft Visual Studio .NET 2003/Common7/IDE/devenv.com\" Farsight.sln /build Release /project ALL_BUILD
 BUILD_SHARED_LIBS:BOOL=ON
 ITK_DIR:PATH=c:/projects/ITK-3.12.0-shared
 VTK_DIR:PATH=c:/projects/VTK-CVS-shared
