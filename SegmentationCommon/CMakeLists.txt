@@ -1,12 +1,12 @@
 SET( SEGMENTATIONCOMMON_SRCS
-  ftkSegmentationResult.cpp
+  #ftkSegmentationResult.cpp
   ftkIntrinsicFeatures.cpp
   ftkObject.cpp 
   ftkObjectAssociation.cpp
 )
 
 SET( SEGMENTATIONCOMMON_HDRS
-  ftkSegmentationResult.h
+  #ftkSegmentationResult.h
   ftkLabelImageToFeatures.h
   ftkLabelImageToFeatures.txx
   ftkIntrinsicFeatures.h
