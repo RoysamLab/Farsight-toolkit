@@ -27,3 +27,6 @@ ITKNumerics ITKIO TinyXML)
 
 INSTALL( TARGETS fregl DESTINATION bin )
 
+SUBDIRS( GUI )
+SUBDIRS( exe )
+

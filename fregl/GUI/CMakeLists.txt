@@ -1,4 +1,4 @@
-INCLUDE_DIRECTORIES( ${Farsight_BINARY_DIR}/fregl_GUI )
+INCLUDE_DIRECTORIES( ${Farsight_BINARY_DIR}/fregl/GUI )
 
 SET( MY_GUI_SRCS
     gnrcImageDialog.cpp
