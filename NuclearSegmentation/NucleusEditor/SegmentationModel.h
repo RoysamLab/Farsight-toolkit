@@ -10,10 +10,9 @@
 #include <QtGui/QColor>
 
 //OUTSIDE INCLUDES
-#include <SegmentationCommon/ftkSegmentationResult.h>
-#ifdef BUILD_NUCLEI
-  #include <NuclearSegmentation/ftkNuclearSegmentation.h>
-#endif
+//#include <SegmentationCommon/ftkSegmentationResult.h>
+#include <NuclearSegmentation/ftkNuclearSegmentation.h>
+
 
 //**************************************************************************
 // This class constructs the selectionModel, and model used 
@@ -26,7 +25,7 @@ class SegmentationModel : public QObject
 
 public:
 	
-	SegmentationModel(ftk::SegmentationResult *segresult);
+	SegmentationModel(ftk::NuclearSegmentation *segresult);
 	~SegmentationModel();
 
 	void SetOutliers( vector<int> o );
@@ -42,7 +41,7 @@ public:
 	int NumObjects(){ return numObjects; };
 	int ColumnForColor(){ return columnForColor; };
 	QMap<int, QColor> ColorMap(){ return colorMap; };
-	ftk::SegmentationResult *SegResult(void){ return segResult; };
+	ftk::NuclearSegmentation *SegResult(void){ return segResult; };
 
 signals:
 	void modelChanged(void);
@@ -61,7 +60,7 @@ private:
 	QMap<int,QColor> colorMap;
 	QMap<int, int> LabelToRowMap;		//A label to a row in the model
 
-	ftk::SegmentationResult *segResult;
+	ftk::NuclearSegmentation *segResult;
 
 	//I control these to make sure they line up with the information in segmentation Result.
 	QStandardItemModel *model;

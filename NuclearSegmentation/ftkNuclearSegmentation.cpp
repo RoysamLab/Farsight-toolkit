@@ -9,6 +9,9 @@
 #include "ftkNuclearSegmentation.h"
 #include <itkImageRegionConstIteratorWithIndex.h>
 #include <ctime>
+#include <iostream>
+#include <fstream>
+#include <iomanip>
 
 #include "yousef_core/graphColLearn_3D/sequential_coloring.cpp"
 
@@ -16,41 +19,233 @@ namespace ftk
 {
 
 //Constructor
-NuclearSegmentation::NuclearSegmentation(string projpath, string projname):SegmentationResult(projpath, projname)
+NuclearSegmentation::NuclearSegmentation()
 {
-	programName = "Yousef_Nucleus_Seg";
+	dataFilename.clear();		
+	labelFilename.clear();
+	paramFilename.clear();
 
-	initConstants();
+	myParameters.clear();
+	myObjects.clear();
+	featureNames.clear();
+	maxID = 0;
+	errorMessage.clear();
+	classes.clear();
 
 	dataImage = NULL;
 	labelImage = NULL;
 	NucleusSeg = NULL;
+	lastRunStep = 0;
 	editsNotSaved = false;
 }
 
-//This function will take the data and result filenames, and create the SegmentationResult structure
-// file should be filename only.  Path should come from path set for project
-bool NuclearSegmentation::LoadFromResult(const char* dfile, const char* rfile)
+//*************************************************************************************************************
+// This function will initialize the pipeline for a new nuclear segmentation.
+// It should be called first.  If this class already contains data and the datafilenames do not match, we delete
+// all data and prepare for a new segmentation.
+//*************************************************************************************************************
+bool NuclearSegmentation::SetInputs(std::string datafile, std::string paramfile)
 {
-	//See if data file exists:
-	if( !FileExists(dfile) )
+	if( this->dataFilename.compare(datafile) != 0 )	//The names do not match so clear things and start over:
 	{
-		errorMessage = "Could not find data file";
-		return 0;
+		dataImage = 0;
+		if(NucleusSeg)
+		{
+			delete NucleusSeg;
+			lastRunStep = 0;
+			NucleusSeg = 0;
+		}
 	}
-	//See if result file exists
-	if( !FileExists(rfile) )
+
+	this->dataFilename = datafile;
+	this->paramFilename = paramfile;
+	return true;
+}
+
+//***********************************************************************************************************
+// Will load the data image into memory (using ftk::Image)
+//***********************************************************************************************************
+bool NuclearSegmentation::LoadData()
+{
+	if(dataImage)
 	{
-		errorMessage = "Could not find result file";
-		return 0;
+		errorMessage = "Data already loaded";
+		return false;
 	}
-	//Save the filenames
-	dataFilenames.push_back(dfile);
-	resultFilenames.push_back(rfile);
 
-	editsNotSaved = false;
+	dataImage = ftk::Image::New();
+	if(!dataImage->LoadFile(dataFilename))	//Load for display
+	{
+		errorMessage = "Data Image failed to load";
+		dataImage = 0;
+		return false;
+	}
+	return true;
+}
 
-	return LabelsToObjects();
+//***********************************************************************************************************
+// Will load the label image into memory (using ftk::Image)
+//***********************************************************************************************************
+bool NuclearSegmentation::LoadLabel()
+{
+	if(labelImage)
+	{
+		errorMessage = "Label already loaded";
+		return false;
+	}
+
+	labelImage = ftk::Image::New();
+	if(!labelImage->LoadFile(labelFilename))	//Load for display
+	{
+		errorMessage = "Label Image failed to load";
+		labelImage = 0;
+		return false;
+	}
+	return true;
+}
+
+bool NuclearSegmentation::Binarize()
+{
+	if(!dataImage)
+	{
+		errorMessage = "No data loaded";
+		return false;
+	}
+
+	const Image::Info *info = dataImage->GetImageInfo();
+	int numStacks = info->numZSlices;
+	int numRows = info->numRows;				//y-direction
+	int numColumns = info->numColumns; 			//x-direction
+
+	//We assume that the image is unsigned char, but just in case it isn't we make it so:
+	dataImage->Cast<unsigned char>();
+	unsigned char *dptr = dataImage->GetSlicePtr<unsigned char>(0,0,0);	//Expects grayscale image
+
+	if(NucleusSeg)
+		delete NucleusSeg;
+	NucleusSeg = new yousef_nucleus_seg();
+	NucleusSeg->readParametersFromFile(paramFilename.c_str());
+	NucleusSeg->setDataImage( dptr, numColumns, numRows, numStacks, dataFilename.c_str() );
+	NucleusSeg->runBinarization();
+	lastRunStep = 1;
+	return true;
+}
+
+bool NuclearSegmentation::DetectSeeds()
+{
+	if(!NucleusSeg)
+	{
+		errorMessage = "No Binarization";
+		return false;
+	}
+	NucleusSeg->runSeedDetection();
+	lastRunStep = 2;
+	return true;
+}
+
+bool NuclearSegmentation::RunClustering()
+{
+	if(!NucleusSeg || lastRunStep < 2)
+	{
+		errorMessage = "No Seeds";
+		return false;
+	}
+	NucleusSeg->runClustering();
+	lastRunStep = 3;
+	return true;
+}
+
+bool NuclearSegmentation::Finalize()
+{
+	if(!NucleusSeg || lastRunStep < 3)
+	{
+		errorMessage = "No Initial Clustering";
+		return false;
+	}
+	NucleusSeg->runAlphaExpansion3D();
+	lastRunStep = 4;
+	return true;
+}
+
+bool NuclearSegmentation::SaveOutput()
+{
+	if(!NucleusSeg)
+	{
+		errorMessage = "Nothing To Save";
+		return false;
+	}
+
+	vector<int> size = NucleusSeg->getImageSize();
+	int *dptr = NULL;
+	std::string tag;
+
+	switch(lastRunStep)
+	{
+	case 0:
+		errorMessage = "Nothing To Save";
+		return false;
+		break;
+	case 1:
+		dptr = NucleusSeg->getBinImage();
+		tag = "_bin";
+		break;
+	case 2:	//Seeds:
+		dptr = NucleusSeg->getSeedImage();
+		tag = "_seed";
+		break;
+	case 3:
+		dptr = NucleusSeg->getClustImage();
+		tag = "_label";
+		break;
+	case 4:
+		dptr = NucleusSeg->getSegImage();
+		tag = "_label";
+		break;
+	}
+
+	if(dptr)
+	{
+		std::vector<unsigned char> color;
+		color.assign(3,255);
+		ftk::Image::Pointer rImage = ftk::Image::New();
+		rImage->AppendChannelFromData3D(dptr, itk::ImageIOBase::INT, sizeof(int), size[2], size[1], size[0], "gray", color, true);
+		size_t pos = dataFilename.find_last_of(".");
+		std::string base = dataFilename.substr(0,pos);
+		std::string ext = dataFilename.substr(pos);
+		rImage->SaveChannelAs(0, base + tag, ext );
+		rImage=0;
+	}
+	return true;
+}
+
+bool NuclearSegmentation::HarvestLabelImage()
+{
+	if(!NucleusSeg)
+	{
+		errorMessage = "No Segmentation";
+		return false;
+	}
+
+	vector<int> size = NucleusSeg->getImageSize();
+	int *dptr = NULL;
+	if(lastRunStep = 3)
+		dptr = NucleusSeg->getClustImage();
+	else if(lastRunStep = 4)
+		dptr = NucleusSeg->getSegImage();
+
+	std::vector<unsigned char> color;
+	color.assign(3,255);
+		
+	if(labelImage)
+		labelImage = 0;
+	labelImage = ftk::Image::New();
+	labelImage->AppendChannelFromData3D(dptr, itk::ImageIOBase::INT, sizeof(int), size[2], size[1], size[0], "gray", color, true);
+	labelImage->Cast<unsigned short>();
+
+	delete NucleusSeg;
+	NucleusSeg = 0;
+	lastRunStep = 0;
+	return true;
 }
 
 //Calculate the object information from the data/result images:
@@ -58,30 +253,18 @@ bool NuclearSegmentation::LabelsToObjects(void)
 {
 	if(!dataImage)
 	{
-		dataImage = ftk::Image::New();
-		dataImage->LoadFile(PrependProjectPath(dataFilenames[0]));	//Assume there is just one data file and one result file
+		errorMessage = "No Data Image";
+		return false;
 	}
 	if(!labelImage)
 	{
-		labelImage = ftk::Image::New();
-		labelImage->LoadFile(PrependProjectPath(resultFilenames[0]));		
+		errorMessage = "No Label Image";
+		return false;		
 	}
 
-	//Calculation
-	if(!labelImage || !dataImage)
-	{
-		errorMessage = "label image or data image doesn't exist";
-		return false;
-	}
-
-	typedef unsigned char IPixelT;
-	dataImage->Cast<IPixelT>();
-	typedef unsigned short LPixelT;
-	labelImage->Cast<LPixelT>();
-
-	typedef ftk::LabelImageToFeatures< IPixelT, LPixelT, 3 > FeatureCalcType;
+	typedef ftk::LabelImageToFeatures< unsigned char, unsigned short, 3 > FeatureCalcType;
 	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
-	labFilter->SetImageInputs( dataImage->GetItkPtr<IPixelT>(0,0), labelImage->GetItkPtr<LPixelT>(0,0) );
+	labFilter->SetImageInputs( dataImage->GetItkPtr<unsigned char>(0,0), labelImage->GetItkPtr<unsigned short>(0,0) );
 	labFilter->SetLevel(3);
 	labFilter->ComputeHistogramOn();
 	labFilter->ComputeTexturesOn();
@@ -109,29 +292,68 @@ bool NuclearSegmentation::LabelsToObjects(void)
 		IdToIndexMap[id] = (int)myObjects.size() - 1;
 	}
 
+	/*
 	if(associationFile.size())
 		LoadAssociationsFromFile(associationFile);
 	if(classFile.size())
 		LoadClassInfoFromFile(classFile);
+	*/
 
 	return true;
 }
 
+
+//This function will take the data and result filenames, and create the NuclearSegmentation structure
+// file should be filename only.  Path should come from path set for project
+bool NuclearSegmentation::LoadFromImages(std::string dfile, std::string rfile)
+{
+	//See if data file exists:
+	if( !FileExists(dfile) )
+	{
+		errorMessage = "Could not find data file";
+		return 0;
+	}
+	//See if result file exists
+	if( !FileExists(rfile) )
+	{
+		errorMessage = "Could not find result file";
+		return 0;
+	}
+	//Save the filenames
+	dataFilename = dfile;
+	labelFilename = rfile;
+
+	LoadData();
+	LoadLabel();
+
+
+	editsNotSaved = false;
+
+	return LabelsToObjects();
+}
+
+
+
 //The function will read the given file and load the association measures into the object info;
-void NuclearSegmentation::LoadAssociationsFromFile(std::string fName)
+bool NuclearSegmentation::LoadAssociationsFromFile(std::string fName)
 {
 	if(myObjects.size() == 0)
-		return;
-
+	{
+		errorMessage = "No Objects";
+		return false;
+	}
 	if(!FileExists(fName.c_str()))
-		return;
+	{
+		errorMessage = "File does not exist";
+		return false;
+	}
 
 
 	TiXmlDocument doc;
 	if ( !doc.LoadFile( fName.c_str() ) )
 	{
 		errorMessage = "Unable to load XML File";
-		return;
+		return false;
 	}
 
 	TiXmlElement* rootElement = doc.FirstChildElement();
@@ -140,7 +362,7 @@ void NuclearSegmentation::LoadAssociationsFromFile(std::string fName)
 	{
 		errorMessage = "Incorrect XML root Element: ";
 		errorMessage.append(rootElement->Value());
-		return;
+		return false;
 	}
 
 	std::string source = rootElement->Attribute("SegmentationSource");
@@ -148,8 +370,11 @@ void NuclearSegmentation::LoadAssociationsFromFile(std::string fName)
 	unsigned int numObjects = atoi( rootElement->Attribute("NumberOfObjects") );
 
 	if( numObjects != myObjects.size() )
-		return;
-	
+	{
+		errorMessage = "Number of Objects does not match";
+		return false;
+	}
+
 	bool firstRun = true;
 	//Parents we know of: Object
 	TiXmlElement* parentElement = rootElement->FirstChildElement();
@@ -183,28 +408,33 @@ void NuclearSegmentation::LoadAssociationsFromFile(std::string fName)
 		{
 			errorMessage = "Unrecognized parent element: ";
 			errorMessage.append(parent);
-			return;
+			return false;
 		}
 		parentElement = parentElement->NextSiblingElement();
 	} // end while(parentElement)
+	return true;
 }
 
-void NuclearSegmentation::LoadClassInfoFromFile( std::string fName )
+bool NuclearSegmentation::LoadClassInfoFromFile( std::string fName )
 {
 	if(myObjects.size() == 0)
-		return;
+	{
+		errorMessage = "No Objects";
+		return false;
+	}
 
 	if(!FileExists(fName.c_str()))
-		return;
-
-	classFile = fName;
+	{
+		errorMessage = "No Class File";
+		return false;
+	}
 
 	ifstream inFile; 
-	inFile.open( PrependProjectPath(fName).c_str() );
+	inFile.open( fName.c_str() );
 	if ( !inFile.is_open() )
 	{
-		std::cerr << "Failed to Load Document: " << fName << std::endl;
-		return;
+		errorMessage = "Failed to Load Document";
+		return false;
 	}
 
 	const int MAXLINESIZE = 512;	//Numbers could be in scientific notation in this file
@@ -239,7 +469,10 @@ void NuclearSegmentation::LoadClassInfoFromFile( std::string fName )
 
 	std::vector<Object> *objects = GetObjectsPtr();
 	if(classNumber.size() != objects->size())
-		return;
+	{
+		errorMessage = "File sizes do not match";
+		return false;
+	}
 
 	std::set<int> classList;
 	std::set<int>::iterator it;
@@ -259,7 +492,7 @@ void NuclearSegmentation::LoadClassInfoFromFile( std::string fName )
 	{
 		classes.push_back(*it);
 	}
-
+	return true;
 }
 
 bool NuclearSegmentation::LoadFromMETA(std::string META_file, std::string header_file, std::string data_file, std::string label_file)
@@ -268,8 +501,8 @@ bool NuclearSegmentation::LoadFromMETA(std::string META_file, std::string header
 	char line[MAXLINESIZE];
 
 	//Save the filenames & Load the Images
-	dataFilenames.push_back(data_file);
-	resultFilenames.push_back(label_file);
+	dataFilename=data_file;
+	labelFilename=label_file;
 	dataImage = ftk::Image::New();
 	dataImage->LoadFile(data_file);	//Assume there is just one data file and one result file
 	labelImage = ftk::Image::New();
@@ -429,51 +662,6 @@ bool NuclearSegmentation::LoadFromMETA(std::string META_file, std::string header
 	return 1;
 }
 
-bool NuclearSegmentation::LoadData()
-{
-	if(dataImage)
-	{
-		errorMessage = "Data already loaded";
-		return 0;
-	}
-	if( dataFilenames.size() <= 0 )
-	{
-		errorMessage = "No Data Image specified in XML";
-		return 0;
-	}
-
-	dataImage = ftk::Image::New();
-	if(!dataImage->LoadFile(PrependProjectPath(dataFilenames[0])))	//Load for display
-	{
-		errorMessage = "Data Image failed to load";
-		return 0;
-	}
-	return true;
-}
-
-bool NuclearSegmentation::LoadLabel()
-{
-	if(labelImage)
-	{
-		errorMessage = "Label already loaded";
-		return 0;
-	}
-	if( resultFilenames.size() <= 0 )
-	{
-		errorMessage = "No Label Image specified in XML";
-		return 0;
-	}
-
-
-	labelImage = ftk::Image::New();
-	if(!labelImage->LoadFile(PrependProjectPath(resultFilenames[0])))
-	{
-		errorMessage = "Label Image failed to load";
-		return 0;
-	}
-	return true;
-}
-
 bool NuclearSegmentation::SaveLabelByClass()
 {
 	if(!labelImage)
@@ -541,11 +729,10 @@ bool NuclearSegmentation::SaveLabelByClass()
 	for(int i=0; i<numClasses; ++i)
 	{
 		WriterType::Pointer writer = WriterType::New();
-		std::string fname = projectPath + "/" + projectName;
-		fname.append("_class");
-		fname.append(NumToString(classes.at(i)));
-		fname.append(".tiff");
-		writer->SetFileName( fname );
+		size_t pos = dataFilename.find_last_of(".");
+		std::string base = dataFilename.substr(0,pos);
+		std::string ext = dataFilename.substr(pos);
+		writer->SetFileName( base + "_class" + NumToString(classes.at(i)) + ext );
 		writer->SetInput( outImgs.at(i) );
     
 		try
@@ -575,38 +762,23 @@ bool NuclearSegmentation::SaveLabel()
 		return false;
 	}
 
-	//First check and make sure resultFilename is there
-	if(resultFilenames.size() == 0)
-	{
-		string labelFilename = projectName;
-		labelFilename.append("_label.tiff");
-		resultFilenames.push_back(labelFilename);
-	}
-
-	//Write the labelImage to file
-	size_t pos = resultFilenames[0].find(".");
-	string base = resultFilenames[0].substr(0,pos);
+	labelFilename.clear();
+	size_t pos = dataFilename.find_last_of(".");
+	std::string base = dataFilename.substr(0,pos);
+	std::string ext = dataFilename.substr(pos);
+	labelFilename = base + "_label" + ext;
 
 	labelImage->Cast<unsigned short>();		//Cannot Save as int type to tiff
-	if(!labelImage->SaveChannelAs(0, PrependProjectPath(base), "tiff"))
+	if(!labelImage->SaveChannelAs(0, base + "_label", ext))
 		std::cerr << "FAILED TO SAVE LABEL IMAGE" << std::endl;
 
 	//Added by Yousef on 1/18/2009: save results into a format readable by the IDL farsight
 	if(NucleusSeg)
-		NucleusSeg->saveIntoIDLFormat(PrependProjectPath(projectName));
+		NucleusSeg->saveIntoIDLFormat(base);
 
 	return true;
 }
 
-bool NuclearSegmentation::SaveAll()
-{
-	SaveLabel();
-	WriteToXML();
-	//WriteToMETA();
-	WriteToLibSVM();
-	editsNotSaved = false;
-	return true;
-}
 
 ftk::Object::Box NuclearSegmentation::ExtremaBox(vector<int> ids)
 {
@@ -887,123 +1059,15 @@ int NuclearSegmentation::GetObjectIndex(int objectID, string type)
 
 
 
-//Check to see if the file will filename fname exists in 
-// the project path.
-bool NuclearSegmentation::FileExists(const char* fname)
-{
-	FILE * pFile = fopen (PrependProjectPath(fname).c_str(),"r");
-	if (pFile==NULL)
-	{
-		return false;
-	}
-	fclose (pFile);
-	return true;
-}
-
-//********************************************************************************************
-//********************************************************************************************
-//********************************************************************************************
-//LEGACY FUNCTIONS TO INTERACT WITH MODULE WIDGET:
-void NuclearSegmentation::initConstants()
-{
-	//Initialize package and module names and values
-	moduleNames.resize(0);
-	moduleNames.push_back("Read From .dat file");
-	moduleNames.push_back("Binarization");
-	moduleNames.push_back("Initial Segmentation");
-	moduleNames.push_back("Alpha Expansion");
-}
-//***************************************************************************
-// Call this function first to setup the module with appropiate data
-//***************************************************************************
-void NuclearSegmentation::setup(string imagefilename, string paramfilename)
-{
-	if(dataImage)
-	{
-		dataImage = NULL;
-		dataFilenames.clear();
-	}
-	if(NucleusSeg)
-	{
-		NucleusSeg = NULL;
-	}
-
-	dataImage = ftk::Image::New();
-	string fname = PrependProjectPath(imagefilename);
-	dataImage->LoadFile(fname);		//Scale input to 8 bits.
-	dataFilenames.push_back(imagefilename);
-
-	const Image::Info *info = dataImage->GetImageInfo();
-	int numStacks = info->numZSlices;
-	int numRows = info->numRows;				//y-direction
-	int numColumns = info->numColumns; 			//x-direction
-
-	unsigned char *dataImagePtr = dataImage->GetSlicePtr<unsigned char>(0,0,0);	//Expects grayscale image
-	char *f = (char*)imagefilename.c_str();
-
-	NucleusSeg = new yousef_nucleus_seg();
-	NucleusSeg->readParametersFromFile(PrependProjectPath(paramfilename).c_str());
-	NucleusSeg->setDataImage( dataImagePtr, numColumns, numRows, numStacks, f ); 
-}
-
-//***************************************************************************
-// Execute the specified module
-// Assumes all parameters and source data have been supplied
-//***************************************************************************
-void NuclearSegmentation::executeModule(int moduleNum)
-{
-	//Check to make sure segmentation has been initialized
-	if(!NucleusSeg)
-		return;
-
-	vector<int> size = NucleusSeg->getImageSize();
-
-	switch(moduleNum)
-	{
-	case 0:
-		NucleusSeg->readFromIDLFormat(PrependProjectPath(dataFilenames[0]));
-		createFTKLabelImg( NucleusSeg->getSegImage(), size[2],size[1],size[0] );
-		break;
-	case 1:
-		NucleusSeg->runBinarization();
-		createFTKLabelImg( NucleusSeg->getBinImage(), size[2], size[1], size[0] );
-		break;
-	case 2:
-		NucleusSeg->runSeedDetection();
-		NucleusSeg->runClustering();
-		createFTKLabelImg( NucleusSeg->getClustImage(), size[2], size[1], size[0] );
-		break;
-	case 3:
-		NucleusSeg->runAlphaExpansion3D();
-		createFTKLabelImg( NucleusSeg->getSegImage(), size[2], size[1], size[0] );
-		break;
-	}
-}
-
-//*******************************************************************************
-// INTERNAL FUNCTIONS
-
-//creates the ftkImage labelImage that pointer in base class requires
-void NuclearSegmentation::createFTKLabelImg(int* data, int numColumns, int numRows, int numStacks)
-{
-	if(!data)
-		return;
-
-	labelImage = ftk::Image::New();
-	//labelImage->ImageFromData3D((void*)data, INT, sizeof(int), numColumns, numRows, numStacks);
-}
-
 //This function runs graph coloring
-int NuclearSegmentation::RunGraphColoring(const char* filename)
+bool NuclearSegmentation::RunGraphColoring(std::string labelname, std::string filename)
 {
 	//get the label image (if not already done)
-	if(!labelImage)
-	{
-		std::cout<<"Loading Label Image ... ";
-		labelImage = ftk::Image::New();
-		labelImage->LoadFile(PrependProjectPath(resultFilenames[0]));
-		std::cout<<"done!"<<endl;
-	}
+	std::cout<<"Loading Label Image ... ";
+	labelImage = ftk::Image::New();
+	labelImage->LoadFile(labelname);
+	std::cout<<"done!"<<endl;
+
     //int*** labs_im;
     int max_lab;
     //int ncolors;
@@ -1118,7 +1182,7 @@ int NuclearSegmentation::RunGraphColoring(const char* filename)
 	}
     std::cout<<"Graph Coloring Done"<<endl;
 	//write the resulting colors into a file
-	FILE *fp = fopen(filename,"w");
+	FILE *fp = fopen(filename.c_str(),"w");
 	
 	if(fp == NULL)
 	{
@@ -1197,11 +1261,10 @@ int NuclearSegmentation::RunGraphColoring(const char* filename)
 	for(int i=0; i<numColors; ++i)
 	{
 		WriterType::Pointer writer = WriterType::New();
-		std::string fname = projectPath + "/" + projectName;
-		fname.append("_class");
-		fname.append(NumToString(classes.at(i)));
-		fname.append(".tiff");
-		writer->SetFileName( fname );
+		size_t pos = dataFilename.find_last_of(".");
+		std::string base = dataFilename.substr(0,pos);
+		std::string ext = dataFilename.substr(pos);
+		writer->SetFileName( base + "_class" + NumToString(classes.at(i)) + ext );
 		writer->SetInput( outImgs.at(i) );
     
 		try
@@ -1221,5 +1284,546 @@ int NuclearSegmentation::RunGraphColoring(const char* filename)
 	std::cout<<"done!"<<std::endl;
 	return 1;
 }
+
+bool NuclearSegmentation::RestoreFromXML(std::string filename)
+{
+	dataFilename.clear();		
+	labelFilename.clear(); 
+	myParameters.clear();
+	myObjects.clear();
+	featureNames.clear();
+
+	TiXmlDocument doc;
+	if ( !doc.LoadFile( filename.c_str() ) )
+	{
+		errorMessage = "Unable to load XML File";
+		return 0;
+	}
+
+	TiXmlElement* rootElement = doc.FirstChildElement();
+	const char* docname = rootElement->Value();
+	if ( strcmp( docname, "NuclearSegmentation" ) != 0 )
+	{
+		errorMessage = "Incorrect XML root Element: ";
+		errorMessage.append(rootElement->Value());
+		return 0;
+	}
+
+	//Parents we know of: datafilename,resultfilename,object,parameter
+	TiXmlElement* parentElement = rootElement->FirstChildElement();
+	while (parentElement)
+	{
+		const char * parent = parentElement->Value();
+
+		if ( strcmp( parent, "datafile" ) == 0 )
+		{
+			dataFilename = parentElement->GetText();
+		}
+		else if ( strcmp( parent, "resultfile" ) == 0 )
+		{
+			labelFilename = parentElement->GetText();
+		}
+		else if ( strcmp( parent, "parameter" ) == 0 )
+		{
+			Parameter p;
+			p.name = parentElement->Attribute("name");
+			p.value = atoi( parentElement->GetText() );
+			myParameters.push_back( p );
+		}
+		else if ( strcmp( parent, "object" ) == 0 )
+		{
+			Object o = parseObject(parentElement);
+			if ( o.GetType() != "null" )
+			{
+				myObjects.push_back( o );
+				int id = o.GetId();
+				IdToIndexMap[id] = (int)myObjects.size() - 1;
+				if(id > maxID) maxID = id;
+			}
+		}
+		else
+		{
+			errorMessage = "Unrecognized parent element: ";
+			errorMessage.append(parent);
+			return 0;
+		}
+		parentElement = parentElement->NextSiblingElement();
+	} // end while(parentElement)
+
+	//doc.close();
+
+	if(!LoadData())
+		return false;
+	if(!LoadLabel())
+		return false;
+
+	return true;
+}
+
+Object NuclearSegmentation::parseObject(TiXmlElement *objectElement)
+{
+	if ( strcmp( objectElement->Value(), "object" ) != 0 )
+	{
+		errorMessage = "This is not an object: ";
+		errorMessage.append(objectElement->Value());
+		return Object("null");
+	}
+
+	Object object( objectElement->Attribute("type") );
+
+	TiXmlElement *member = objectElement->FirstChildElement();
+	while(member)
+	{
+		const char* memberName = member->Value();
+		if ( strcmp( memberName, "id" ) == 0 )
+		{
+			object.SetId( atoi( member->GetText() ) );
+		}
+		else if ( strcmp( memberName, "validity" ) == 0 )
+		{
+			object.SetValidity( atoi( member->GetText() ) );
+		}
+		else if ( strcmp( memberName, "duplicated" ) == 0 )
+		{
+			object.SetDuplicated( atoi( member->GetText() ) );
+		}
+		else if ( strcmp( memberName, "class" ) == 0 )
+		{
+			object.SetClass( atoi( member->GetText() ) );
+		}
+		else if ( strcmp( memberName, "center") == 0 )
+		{
+			object.AddCenter( parseCenter(member) );
+		}
+		else if ( strcmp( memberName, "bound") == 0 )
+		{
+			object.AddBound( parseBound(member) );
+		}
+		else if ( strcmp( memberName, "features") == 0 )
+		{
+			object.SetFeatures( parseFeatures(member) );
+		}
+		else if ( strcmp( memberName, "EditHistory") == 0 )
+		{
+			TiXmlElement *record = member->FirstChildElement();
+			while(record)
+			{
+				if ( strcmp( record->Value(), "record" ) == 0 )
+				{
+					Object::EditRecord r;
+					r.date = record->Attribute("date");
+					r.description = record->GetText();
+					object.AddEditRecord( r );
+				}
+				record = record->NextSiblingElement();
+			}
+		}
+		else
+		{
+			errorMessage = "Unrecognized object member: ";
+			errorMessage.append(memberName);
+			return Object("null");
+		}
+		member = member->NextSiblingElement();
+	}
+
+	return object;
+}
+
+Object::Point NuclearSegmentation::parseCenter(TiXmlElement *centerElement)
+{
+	Object::Point center;
+
+	TiXmlElement *coord = centerElement->FirstChildElement();
+	while(coord)
+	{
+		const char* coordName = coord->Value();
+		if ( strcmp( coordName, "x" ) == 0 )
+		{
+			center.x = atoi( coord->GetText() );
+		}
+		else if ( strcmp( coordName, "y" ) == 0 )
+		{
+			center.y = atoi( coord->GetText() );
+		}
+		else if ( strcmp( coordName, "z" ) == 0 )
+		{
+			center.z = atoi( coord->GetText() );
+		}
+		else if ( strcmp( coordName, "t" ) == 0 )
+		{
+			center.t = atoi( coord->GetText() );
+		}
+		coord = coord->NextSiblingElement();
+	}
+	return center;
+}
+
+Object::Box NuclearSegmentation::parseBound(TiXmlElement *boundElement)
+{
+	Object::Box bound;
+
+	TiXmlElement *coord = boundElement->FirstChildElement();
+	while(coord)
+	{
+		const char* coordName = coord->Value();
+		if ( strcmp( coordName, "xmin" ) == 0 )
+		{
+			bound.min.x = atoi( coord->GetText() );
+		}
+		else if ( strcmp( coordName, "ymin" ) == 0 )
+		{
+			bound.min.y = atoi( coord->GetText() );
+		}
+		else if ( strcmp( coordName, "zmin" ) == 0 )
+		{
+			bound.min.z = atoi( coord->GetText() );
+		}
+		else if ( strcmp( coordName, "tmin" ) == 0 )
+		{
+			bound.min.t = atoi( coord->GetText() );
+		}
+		else if ( strcmp( coordName, "xmax" ) == 0 )
+		{
+			bound.max.x = atoi( coord->GetText() );
+		}
+		else if ( strcmp( coordName, "ymax" ) == 0 )
+		{
+			bound.max.y = atoi( coord->GetText() );
+		}
+		else if ( strcmp( coordName, "zmax" ) == 0 )
+		{
+			bound.max.z = atoi( coord->GetText() );
+		}
+		else if ( strcmp( coordName, "tmax" ) == 0 )
+		{
+			bound.max.t = atoi( coord->GetText() );
+		}
+		coord = coord->NextSiblingElement();
+	}
+	return bound;
+}
+
+vector< float > NuclearSegmentation::parseFeatures(TiXmlElement *featureElement)
+{
+	vector< float > tempFeatures(0);
+	vector< string > tempNames(0); 
+
+	//Extract all of the features for this object
+	TiXmlElement *feature = featureElement->FirstChildElement();
+	while(feature)
+	{
+		tempNames.push_back( feature->Value() );
+		tempFeatures.push_back( float( atof( feature->GetText() ) ) );
+		
+		feature = feature->NextSiblingElement();
+	}
+
+	//Now test for existing featureNames
+	if (featureNames.size() == 0) //Meaning hasn't been set yet
+	{
+		featureNames = tempNames; //Set my feature names to these names
+		return tempFeatures;
+	}
+
+	//Have already set the names, so need to make sure we return the features in the correct order
+	if( featureNames.size() != tempNames.size() )
+	{
+		errorMessage = "Features do not match";
+		return vector< float >(0);
+	}
+		
+	vector<float> retFeatures( tempFeatures.size() );
+	unsigned int numMatches = 0;
+	for (unsigned int i=0; i<tempFeatures.size(); ++i)
+	{
+		string featName = tempNames[i];
+		for (unsigned int j=0; j<featureNames.size(); ++j)
+		{
+			if( featName == featureNames[j] )
+			{
+				retFeatures[j] = tempFeatures[i];
+				++numMatches;
+			}
+		}
+	}
+
+	if ( numMatches != tempFeatures.size() )
+	{
+		errorMessage = "Features do not match";
+		return vector< float >(0);
+	}
+
+	return retFeatures;
+}
+
+//*******************************************************************************************
+// This functions writes the objects to an XML file using a particular XML Format!!
+//*******************************************************************************************
+bool NuclearSegmentation::WriteToXML(std::string filename)
+{
+	TiXmlDocument doc;   
+ 
+	TiXmlElement * root = new TiXmlElement( "NuclearSegmentation" );  
+	doc.LinkEndChild( root );  
+	root->SetAttribute("program", "Yousef_Nucleus_Seg");
+
+	TiXmlComment * comment = new TiXmlComment();
+	comment->SetValue(" Segmentation Results/Parameters/Features/Edits " );  
+	root->LinkEndChild( comment );  
+ 
+	TiXmlElement * dfile = new TiXmlElement("datafile");
+	dfile->LinkEndChild( new TiXmlText( dataFilename.c_str() ) );
+	root->LinkEndChild(dfile);
+
+	TiXmlElement *rfile = new TiXmlElement("resultfile");
+	rfile->LinkEndChild( new TiXmlText( labelFilename.c_str() ) );
+	root->LinkEndChild(rfile);
+
+	//Attach parameters
+	for (unsigned int pnum = 0; pnum < myParameters.size(); ++pnum)
+	{
+		TiXmlElement *element = new TiXmlElement("parameter");
+		element->SetAttribute( "name", myParameters[pnum].name );
+		element->LinkEndChild( new TiXmlText( NumToString(myParameters[pnum].value) ) );
+		root->LinkEndChild(element);
+
+	}
+
+	//Attach Objects
+	for (unsigned int onum=0; onum<myObjects.size(); ++onum)
+	{
+		root->LinkEndChild( GetObjectElement(myObjects[onum]) );
+	}
+
+	doc.SaveFile( filename.c_str() );
+
+	return true;
+}
+
+TiXmlElement* NuclearSegmentation::GetObjectElement(Object object)
+{
+	TiXmlElement *objectElement = new TiXmlElement("object");
+	objectElement->SetAttribute("type", object.GetType());
+
+	if ( object.GetId() != -1 )
+	{
+		TiXmlElement *idElement = new TiXmlElement("id");
+		idElement->LinkEndChild( new TiXmlText( NumToString(object.GetId()) ) );
+		objectElement->LinkEndChild(idElement);
+	}
+	if ( object.GetValidity() != -1 )
+	{
+		TiXmlElement *vElement = new TiXmlElement("validity");
+		vElement->LinkEndChild( new TiXmlText( NumToString(object.GetValidity()) ) );
+		objectElement->LinkEndChild(vElement);
+	}
+	if ( object.GetDuplicated() != -1 )
+	{
+		TiXmlElement *dElement = new TiXmlElement("duplicated");
+		dElement->LinkEndChild( new TiXmlText( NumToString(object.GetDuplicated()) ) );
+		objectElement->LinkEndChild(dElement);
+	}
+	if ( object.GetClass() != -1 )
+	{
+		TiXmlElement *cElement = new TiXmlElement("class");
+		cElement->LinkEndChild( new TiXmlText( NumToString(object.GetClass()) ) );
+		objectElement->LinkEndChild(cElement);
+	}
+	vector<Object::Point> centers = object.GetCenters();
+	for (unsigned int c=0; c<centers.size(); ++c)
+	{
+		TiXmlElement *oElement = new TiXmlElement("center");
+		TiXmlElement *xElement = new TiXmlElement("x");
+		xElement->LinkEndChild( new TiXmlText( NumToString(centers[c].x) ) );
+		oElement->LinkEndChild(xElement);
+		TiXmlElement *yElement = new TiXmlElement("y");
+		yElement->LinkEndChild( new TiXmlText( NumToString(centers[c].y) ) );
+		oElement->LinkEndChild(yElement);
+		TiXmlElement *zElement = new TiXmlElement("z");
+		zElement->LinkEndChild( new TiXmlText( NumToString(centers[c].z) ) );
+		oElement->LinkEndChild(zElement);
+		TiXmlElement *tElement = new TiXmlElement("t");
+		tElement->LinkEndChild( new TiXmlText( NumToString(centers[c].t) ) );
+		oElement->LinkEndChild(tElement);
+		objectElement->LinkEndChild(oElement);
+	}
+	vector<Object::Box> bounds = object.GetBounds();
+	for (unsigned int b=0; b<bounds.size(); ++b)
+	{
+		TiXmlElement *bElement = new TiXmlElement("bound");
+		TiXmlElement *xminElement = new TiXmlElement("xmin");
+		xminElement->LinkEndChild( new TiXmlText( NumToString(bounds[b].min.x) ) );
+		bElement->LinkEndChild(xminElement);
+		TiXmlElement *yminElement = new TiXmlElement("ymin");
+		yminElement->LinkEndChild( new TiXmlText( NumToString(bounds[b].min.y) ) );
+		bElement->LinkEndChild(yminElement);
+		TiXmlElement *zminElement = new TiXmlElement("zmin");
+		zminElement->LinkEndChild( new TiXmlText( NumToString(bounds[b].min.z) ) );
+		bElement->LinkEndChild(zminElement);
+		TiXmlElement *tminElement = new TiXmlElement("tmin");
+		tminElement->LinkEndChild( new TiXmlText( NumToString(bounds[b].min.t) ) );
+		bElement->LinkEndChild(tminElement);
+		TiXmlElement *xmaxElement = new TiXmlElement("xmax");
+		xmaxElement->LinkEndChild( new TiXmlText( NumToString(bounds[b].max.x) ) );
+		bElement->LinkEndChild(xmaxElement);
+		TiXmlElement *ymaxElement = new TiXmlElement("ymax");
+		ymaxElement->LinkEndChild( new TiXmlText( NumToString(bounds[b].max.y) ) );
+		bElement->LinkEndChild(ymaxElement);
+		TiXmlElement *zmaxElement = new TiXmlElement("zmax");
+		zmaxElement->LinkEndChild( new TiXmlText( NumToString(bounds[b].max.z) ) );
+		bElement->LinkEndChild(zmaxElement);
+		TiXmlElement *tmaxElement = new TiXmlElement("tmax");
+		tmaxElement->LinkEndChild( new TiXmlText( NumToString(bounds[b].max.t) ) );
+		bElement->LinkEndChild(tmaxElement);
+		objectElement->LinkEndChild(bElement);
+	}
+	if(featureNames.size() > 0)
+	{
+		TiXmlElement *fsElement = new TiXmlElement("features");
+		vector<float> features = object.GetFeatures();
+		for(unsigned int f=0; f<features.size(); ++f)
+		{
+			TiXmlElement *fElement = new TiXmlElement( featureNames[f].c_str() );
+			fElement->LinkEndChild( new TiXmlText( NumToString(features[f]) ) );
+			fsElement->LinkEndChild(fElement);
+		}
+		objectElement->LinkEndChild(fsElement);
+	}
+	vector<Object::EditRecord> records = object.getHistory();
+	if(records.size() > 0)
+	{
+		TiXmlElement *histElement = new TiXmlElement("EditHistory");
+		for (unsigned int r=0; r<records.size(); ++r)
+		{
+			TiXmlElement *recElement = new TiXmlElement("record");
+			recElement->SetAttribute("date",records[r].date);
+			recElement->LinkEndChild( new TiXmlText( records[r].description ) );
+			histElement->LinkEndChild(recElement);
+		}
+		objectElement->LinkEndChild(histElement);
+	}
+	return objectElement;
+}
+
+bool NuclearSegmentation::WriteToMETA(std::string filename)
+{
+	//This function writes the features to a text file that can be read be MetaNeural program
+	ofstream outFile; 
+	outFile.open(filename.c_str(), ios::out | ios::trunc );
+	if ( !outFile.is_open() )
+	{
+		std::cerr << "Failed to Load Document: " << outFile << std::endl;
+		return false;
+	}
+	//Now write out the features
+	for(unsigned int obj = 0; obj < myObjects.size(); ++obj)
+	{
+		if( myObjects.at(obj).GetValidity() == false )
+			continue;
+
+		vector<float> feats = myObjects.at(obj).GetFeatures();
+		for(unsigned int f = 0; f < feats.size(); ++f)
+		{
+			outFile << NumToString(feats.at(f)) << "\t";
+		}
+		outFile << (int)myObjects.at(obj).GetClass() << "\t";
+		outFile << myObjects.at(obj).GetId() << endl;
+	}
+	outFile.close();
+
+	//Now print header file:
+	filename.append(".header");
+	outFile.open(filename.c_str(), std::ios::out | std::ios::trunc );
+	if ( !outFile.is_open() )
+	{
+		std::cerr << "Failed to Load Document: " << outFile << std::endl;
+		return false;
+	}
+
+	for(int i=0; i<(int)featureNames.size(); ++i)
+	{
+		outFile << featureNames.at(i) << "\n";
+	}
+
+	outFile << "CLASS" << "\n";
+	outFile << "ID" << std::endl;
+
+	outFile.close();
+
+	return true;
+}
+
+bool NuclearSegmentation::WriteToLibSVM(std::string filename)
+{
+	//This function writes the features to a text file that can be read by libsvm program
+
+	ofstream outFile; 
+	outFile.open(filename.c_str(), ios::out | ios::trunc );
+	if ( !outFile.is_open() )
+	{
+		std::cerr << "Failed to Load Document: " << outFile << std::endl;
+		return false;
+	}
+	//Now write out the features
+	for(unsigned int obj = 0; obj < myObjects.size(); ++obj)
+	{
+		if( myObjects.at(obj).GetValidity() == false )
+			continue;
+
+		outFile << myObjects.at(obj).GetId() << " ";			//This should be the class
+
+		vector<float> feats = myObjects.at(obj).GetFeatures();
+		for(unsigned int f = 0; f < feats.size(); ++f)
+		{
+			outFile << f+1 << ":" << NumToString(feats.at(f)) << " ";	//FeatureNumber:FeatureValue
+		}
+		outFile << std::endl;
+	}
+	outFile.close();
+	return true;
+}
+
+
+Object* NuclearSegmentation::GetObjectPtr(int id)
+{
+	int index = IdToIndexMap[id];
+	return &myObjects.at(index);
+}
+
+//Check to see if the file will filename fname exists in 
+// the project path.
+bool NuclearSegmentation::FileExists(std::string filename)
+{
+	FILE * pFile = fopen (filename.c_str(),"r");
+	if (pFile==NULL)
+	{
+		return false;
+	}
+	fclose (pFile);
+	return true;
+}
+
+string NuclearSegmentation::NumToString(double d)
+{
+	stringstream out;
+	out << setprecision(2) << fixed << d;	//Default is to use 2 decimal places
+	return out.str();
+}
+
+string NuclearSegmentation::NumToString(int i)
+{
+	stringstream out;
+	out << i ;	 
+	return out.str();
+}
+
+string NuclearSegmentation::NumToString(double d, int p)
+{
+	stringstream out;
+	out << setprecision(p) << fixed << d;	
+	return out.str();
+}
+
 } //end namespace ftk
 

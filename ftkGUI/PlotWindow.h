@@ -21,8 +21,9 @@ class PlotWindow : public QWidget
     Q_OBJECT;
 
 public:
-	PlotWindow(QWidget *parent = 0);
-	PlotWindow(SegmentationModel *rModel, QWidget *parent = 0);
+	//PlotWindow(QWidget *parent = 0);
+	//PlotWindow(SegmentationModel *rModel, QWidget *parent = 0);
+	PlotWindow(QItemSelectionModel *mod, QWidget *parent = 0);
 	void updateCombos(void); 
 
 signals:
@@ -30,34 +31,23 @@ signals:
 
 protected:
 	void closeEvent(QCloseEvent *event);
-	void keyPressEvent(QKeyEvent *event);
+	//void keyPressEvent(QKeyEvent *event);
 
 private slots:
 	void comboXChange(int c);
 	void comboYChange(int c);
 	void updateColumnForColor();
-	void findOutliers();
     
 private:
 	ScatterView *scatter;
 
 	QHBoxLayout *hlayout;
 	QVBoxLayout *vlayout;
-	QHBoxLayout *hlayoutT;
 	QLabel *xlabel;
 	QLabel *ylabel;
-	QLabel *colorlabel;
-	QPushButton *selectButton;
-	QPushButton *clearButton;
-	QPushButton *outlierButton;
 	QComboBox *comboX;
 	QComboBox *comboY;
-	QComboBox *comboSelMode;
 
-	SegmentationModel *resultModel;
-
-	//void updateCombos(FTKItemModel *model);
-	void setupSelectionModes(void);
 	void setupUI(void);	//for initial setup
 
  };

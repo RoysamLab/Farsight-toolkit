@@ -16,17 +16,16 @@
 
 #include <iostream>
 
-#include "SegmentationModel.h"
+//#include "SegmentationModel.h"
 
 class TableWindow : public QWidget
 {
     Q_OBJECT;
 
 public:
-	TableWindow(QWidget *parent = 0);
-	TableWindow(SegmentationModel *mod, QWidget *parent = 0);
+	TableWindow(QItemSelectionModel *mod, QWidget *parent = 0);
 
-	void SetModels(QItemSelectionModel *selectionModel);
+	//void SetModels(QItemSelectionModel *selectionModel);
 	void ResizeToOptimalSize(void);
 
 signals:
@@ -44,7 +43,7 @@ private:
 
 	int visibleRows;
 
-	void setup(void);
+	//void setup(void);
 };
 
 #endif

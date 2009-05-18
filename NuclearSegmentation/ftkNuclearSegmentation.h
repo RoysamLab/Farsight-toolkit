@@ -13,10 +13,13 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include <SegmentationCommon/ftkSegmentationResult.h>
 #include <FTKImage/ftkImage.h>
 #include <SegmentationCommon/ftkLabelImageToFeatures.h>
 #include <yousef_core/yousef_seg.h>
+#include <tinyxml/tinyxml.h>
+#include <ftkObject.h>
+#include <map>
+#include <set>
 
 namespace ftk
 { 
@@ -26,80 +29,104 @@ namespace ftk
  *  Handles the execution, result, and editing of a nuclear segmentation
  *  
  */
-class NuclearSegmentation : public SegmentationResult
+class NuclearSegmentation
 {
 public:
-	NuclearSegmentation(string projpath, string projname);	
+	NuclearSegmentation();
 
-	//********************************************************************************************
-	//LEGACY FUNCTIONS TO INTERACT WITH MODULE WIDGET:
-	string getPackageName(){ return string("nuclei"); };
-	vector<string> getModuleNames() { return moduleNames; };
-	ftk::Image::Pointer getDataImage(void){ return dataImage; };
-	ftk::Image::Pointer getLabelImage(void){ return labelImage; };
+	//This is for beginning a completely new segmenation:
+	bool SetInputs(std::string datafile, std::string paramfile);		
+	bool LoadData();											//Will load the data image into memory
+	bool Binarize();											//Will binarize the data image
+	bool DetectSeeds();											//If binarization has been done it will detect seeds
+	bool RunClustering();										//Will use binary image and seeds to do initial clustering
+	bool Finalize();											//Will finilize the output using alpha expansion
+	bool SaveOutput();											//Save the output of the last step executed (image format)
+	bool HarvestLabelImage();									//This will get the label Image and delete the segmenation module
+	//Segmentation is basically done at this point (hopefully), now move on to calculating the features and classification:
+	bool LabelsToObjects(void);									//Will compute Intrinsic Features and create objects from the data and results images
+	bool LoadAssociationsFromFile(std::string fName);			//Add the Associative Features to the objects
+	bool LoadClassInfoFromFile( std::string fName );			//Add the Class info to the objects
+	//Save in various formats:
+	bool WriteToXML(std::string filename);
+	bool WriteToMETA(std::string filename);
+	bool WriteToLibSVM(std::string filename);
+	bool SaveLabel();														//Save the changes made to the label image
+	bool SaveLabelByClass();												//Will save a different label image for each class
 
-	void setup(string imagefilename, string paramfilename);
-	void executeModule(int);
-	//*********************************************************************************************
-
-	//For starting a new segmentation  -can set the parameters, then they will be in the xml for later 
-	bool RunSegmentation(){return 0;};
-	//Now for loading the segmentation results into Objects
-	bool LoadFromResult(const char* dfile, const char* rfile);
+	//We may also want to restore from previously found results:
+	bool RestoreFromXML(std::string filename);					//Complete Restore from XML file
+	bool LoadLabel();											//Load just the label image if the filename is already known
+	bool LoadFromImages(std::string dfile, std::string rfile);	//Load from images -> then convert to objects
+	bool LoadFromDAT(std::string dfile, std::string rfile);		//Load from .dat -> then convert to objects
 	bool LoadFromMETA(std::string META_file, std::string header_file, std::string data_file, std::string label_file);
-	void LoadClassInfoFromFile( std::string fName );
-	bool LabelsToObjects(void);
-	//bool CalculateFeatures(){return 0;};
-
-	//Inherited, for loading a previously saved result:
-	//bool RestoreFromXML();
-	//Inherited, Writes segmentation info to XML
-	//bool WriteToXML():
-	//Inherited: Set/Get/Add for segmentation variables
-
-	//Load up the data and result information into memory, Base class does not do this, it just gets the filename
-	bool LoadData();				//Will load the data image into memory
-	bool LoadLabel();				//Will load the label image into memory
-	bool SaveLabel();				//Save the changes made to the label image
-	bool SaveLabelByClass();		//Will save a different label image for each class
-	bool SaveAll();					//Save all results to files (Label,XML,Seeds,META,etc);
 
 	//Editing Functions  
 	bool Split(int id){return 0;};
 	int Merge(vector<int> ids);
 	bool Delete(vector<int> ids);
 	bool Add( Object::Point p ){return 0;};
-	bool editsNotSaved;
+	bool editsNotSaved;				//Will be true if edits have been made and not saved to file.
+
+	std::string GetErrorMessage() { return errorMessage; };
+
+	std::vector<Object>* GetObjectsPtr(){ return &myObjects; };	//Use pointer
+	Object* GetObjectPtr(int id);
+	std::vector<std::string> GetFeatureNames(){ return featureNames; };
+
+	ftk::Image::Pointer getDataImage(void){ return dataImage; };
+	ftk::Image::Pointer getLabelImage(void){ return labelImage; };
+	//*********************************************************************************************
 
 	//Added by Yousef on 04-08-2009
 	//This function will run graph coloring and will assign different colors for touching objects
 	//For now, it will just write the list of labels into a text file, but this should be relaxed later
-	int RunGraphColoring(const char* fname);
+	bool RunGraphColoring(std::string labelname, std::string filename);	//Run Graph coloring on label image and save adjacency file as filename
+
 private:
+	std::string dataFilename;	//the filename of the data image		(full path)
+	std::string labelFilename;	//the filename of the label image		(full path)
+	std::string paramFilename;	//the filename of the parameter file	(full path)
 
-	bool FileExists(const char* fname);
-	int GetObjectIndex(int objectID, string type);
-	string TimeStamp();
-	void ReassignLabels(vector<int> fromIds, int toId, ftk::Object::Box region);
-	void ReassignLabel(int fromId, int toId);
-	Object GetNewObject(int id, IntrinsicFeatures *features );
-	void LoadAssociationsFromFile(std::string fName);
-	ftk::Object::Box ExtremaBox(vector<int> ids);
+	std::string errorMessage;
 
-	//Load up the data and result information into memory, Base class does not do this, it just gets the filename
-	bool UnloadData(){return 0;};	//Release the data image from memory
-	bool UnloadLabel(){return 0;}; //Release the label image from memory
-//********************************************************************************************
-//********************************************************************************************
-	//LEGACY FUNCTIONS TO INTERACT WITH MODULE WIDGET:
-	void initConstants(void);
-	void createFTKLabelImg(int* data,int numColumns, int numRows, int numStacks);
-
-	//LEGACY VARIABLES:
-	vector<string> moduleNames;
 	ftk::Image::Pointer dataImage;
 	ftk::Image::Pointer labelImage;
 	yousef_nucleus_seg *NucleusSeg;
+	int lastRunStep;
+
+	typedef struct { string name; int value; } Parameter;
+	std::vector<Parameter> myParameters;
+	std::vector<Object> myObjects;
+	std::vector<std::string> featureNames;
+	std::vector<int> classes;
+
+	//To help keep track of objects and their IDs:
+	int GetObjectIndex(int objectID, std::string type);
+	std::map<int,int> IdToIndexMap;
+	int maxID;
+
+	//Utilities for parsing XML:
+	Object parseObject(TiXmlElement *object);
+	Object::Point parseCenter(TiXmlElement *centerElement);
+	Object::Box parseBound(TiXmlElement *boundElement);
+	std::vector<float> parseFeatures(TiXmlElement *featureElement);
+
+	//Utilities for writing XML:
+	TiXmlElement *GetObjectElement(Object object);
+	std::string NumToString(int i);
+	std::string NumToString(double d);
+	std::string NumToString(double d, int p);
+
+	//General Utilites:
+	bool FileExists(std::string filename);
+	
+	std::string TimeStamp();
+	void ReassignLabels(std::vector<int> fromIds, int toId, ftk::Object::Box region);
+	void ReassignLabel(int fromId, int toId);
+	Object GetNewObject(int id, IntrinsicFeatures *features );
+	ftk::Object::Box ExtremaBox(std::vector<int> ids);
+
 //********************************************************************************************
 //********************************************************************************************
 

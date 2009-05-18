@@ -11,6 +11,7 @@
 #include <QtGui/QFont>
 #include <QtGui/QItemSelection>
 #include <QtGui/QItemSelectionModel>
+#include <QtGui/QStandardItemModel>
 #include <QtGui/QWidget>
 #include <QtGui/QBitmap>
 #include <QtGui/QPixmap>
@@ -28,7 +29,7 @@
 
 #include <iostream>
 
-#include "SegmentationModel.h"
+//#include "SegmentationModel.h"
 
 class QRubberBand;
 class PlotSettings;
@@ -40,7 +41,7 @@ class ScatterView : public QAbstractItemView
 public:
 	ScatterView(QWidget *parent = 0);
 
-	void setModel(QStandardItemModel *model);
+	void setModel(QAbstractItemModel *model);
 	
     QRect visualRect(const QModelIndex &index) const;
     void scrollTo(const QModelIndex &index, ScrollHint hint = EnsureVisible);
@@ -77,6 +78,7 @@ protected:
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
+	void keyPressEvent(QKeyEvent * event );
 
     void paintEvent(QPaintEvent *event);
     void resizeEvent(QResizeEvent *event);
@@ -96,12 +98,11 @@ private:
 	void drawSelection(QPainter *painter);
 	bool itemInRowIsSelected(int row);
 	void updateAxis();
-	enum { Margin = 30 };
+	enum {LMargin = 60, BMargin = 35, RMargin = 20, TMargin = 20};
 
 	int columnNumForX;
 	int columnNumForY;
 	int columnNumForColoring;
-
 	QMap<int, QColor> colorMap;
 
 	int selMode;
@@ -114,6 +115,9 @@ private:
 	QVector<QPoint> selectionRegion;			//current region
 	//Removed don't need to repaint all the time
 	//QVector<QVector<QPoint>> selectionRegions; //past regions
+
+	int x;
+	int y;
 };
 
 class PlotSettings

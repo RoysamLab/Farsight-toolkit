@@ -5,31 +5,19 @@
 //****************************************************************************************
 #include "PlotWindow.h"
 
-#include "libsvm/svm.h"
-
 //for DBL_MAX...
 #include <float.h>
 //Constructor
-PlotWindow::PlotWindow(QWidget *parent)
-  : QWidget(parent)
-{
-	this->setupUI();
-	resultModel = NULL;
-}
-
-PlotWindow::PlotWindow(SegmentationModel *rModel,QWidget *parent)
-  : QWidget(parent)
+PlotWindow::PlotWindow(QItemSelectionModel *mod, QWidget *parent)
+: QWidget(parent)
 {
 	this->setupUI();
 
-	resultModel = rModel;
-	connect(resultModel, SIGNAL(modelChanged()), scatter, SLOT(dataChanged()));
-	connect(resultModel, SIGNAL(modelChanged()), this, SLOT(updateColumnForColor()));
+	this->scatter->setModel( (QAbstractItemModel*)mod->model() );
+	this->scatter->setSelectionModel(mod);
 
-	scatter->setModel( resultModel->GetModel() );
-	scatter->setSelectionModel( resultModel->GetSelectionModel() );
-	scatter->SetColForColor(resultModel->ColumnForColor(), resultModel->ColorMap());
-	updateCombos();
+	//this->scatter->SetColForColor(resultModel->ColumnForColor(), resultModel->ColorMap());
+	this->updateCombos();
 }
 
 void PlotWindow::setupUI(void)
@@ -38,19 +26,12 @@ void PlotWindow::setupUI(void)
 
 	comboX = new QComboBox();
 	comboY = new QComboBox();
-	comboSelMode = new QComboBox();
     scatter = new ScatterView();
 	vlayout = new QVBoxLayout();
 	hlayout = new QHBoxLayout();
-	hlayoutT = new QHBoxLayout();
-
-	selectButton = new QPushButton("Select", this);
-	clearButton = new QPushButton("Clear",this);
-	outlierButton = new QPushButton("Find Outliers",this);
 
 	ylabel = new QLabel("y: ");
 	xlabel = new QLabel("x: ");
-	colorlabel = new QLabel("Color by: ");
 
 	hlayout->addStretch(10);
 	hlayout->addWidget(ylabel);
@@ -60,14 +41,6 @@ void PlotWindow::setupUI(void)
 	hlayout->addWidget(comboX);
 	hlayout->addStretch(50);
 
-	hlayoutT->addWidget(outlierButton);
-	hlayoutT->addStretch(80);
-	hlayoutT->addWidget(comboSelMode);
-	hlayoutT->addStretch(20);
-	hlayoutT->addWidget(selectButton);
-	hlayoutT->addWidget(clearButton);
-
-	vlayout->addLayout(hlayoutT);
 	vlayout->addWidget(scatter);
 	vlayout->addLayout(hlayout);
 	setLayout(vlayout);
@@ -78,12 +51,6 @@ void PlotWindow::setupUI(void)
 	connect(comboY, SIGNAL(currentIndexChanged(int)),this,SLOT(comboYChange(int)));
 	comboX->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 	comboY->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-	
-	setupSelectionModes();
-	connect(comboSelMode, SIGNAL(currentIndexChanged(int)), scatter, SLOT(selModeChanged(int)));
-	connect(selectButton, SIGNAL(clicked()), scatter, SLOT(selectClicked()));
-	connect(clearButton, SIGNAL(clicked()), scatter, SLOT(clearClicked()));
-	connect(outlierButton, SIGNAL(clicked()), this, SLOT(findOutliers()));
 
 	setWindowTitle(tr("Scatter Plot"));
 	setAttribute ( Qt::WA_DeleteOnClose );
@@ -95,20 +62,9 @@ void PlotWindow::closeEvent(QCloseEvent *event)
 	event->accept();
 }
 
-void PlotWindow::keyPressEvent(QKeyEvent *event)
- {
-     switch (event->key()) {
-	 case Qt::Key_D:	//For delete
-		 resultModel->deleteTrigger();
-		 break;
-     default:
-         QWidget::keyPressEvent(event);
-     }
- }
-
 void PlotWindow::updateColumnForColor()
 {
-	scatter->SetColForColor(resultModel->ColumnForColor(), resultModel->ColorMap());
+	//scatter->SetColForColor(resultModel->ColumnForColor(), resultModel->ColorMap());
 }
 
 void PlotWindow::comboXChange(int c)
@@ -123,12 +79,14 @@ void PlotWindow::comboYChange(int c)
 
 void PlotWindow::updateCombos()
 {
-	QStandardItemModel *model = resultModel->GetModel();
+	//QStandardItemModel *model = resultModel->GetModel();
+	QAbstractItemModel *model = scatter->model();
 
 	//Setup x/y combos
 	comboX->clear();
 	comboY->clear();
-	for (int c = 1; c <= resultModel->NumFeatures(); ++c )
+	//for (int c = 1; c <= resultModel->NumFeatures(); ++c )
+	for (int c=1; c<=model->columnCount()-1; ++c)
 	{
 		comboX->addItem(model->headerData(c,Qt::Horizontal).toString());
 		comboY->addItem(model->headerData(c,Qt::Horizontal).toString());
@@ -139,14 +97,8 @@ void PlotWindow::updateCombos()
 	comboY->setCurrentIndex(1);
 }
 
-void PlotWindow::setupSelectionModes(void)
-{
-	comboSelMode->clear();
-	comboSelMode->addItem("SingleSelectionMode");
-	comboSelMode->addItem("RegionSelectionMode");
-	comboSelMode->setCurrentIndex(0);
-}
 
+/*
 void PlotWindow::findOutliers()
 {
 	//First create two vectors with the features:
@@ -273,5 +225,20 @@ void PlotWindow::findOutliers()
 
 	//Now set the outliers:
 	resultModel->SetOutliers(outliers);
-
 }
+*/
+
+/*
+void PlotWindow::keyPressEvent(QKeyEvent *event)
+ {	
+     //switch (event->key()) {
+	 //case Qt::Key_D:	//For delete
+	//	 resultModel->deleteTrigger();
+	//	 break;
+     //default:
+     //    QWidget::keyPressEvent(event);
+     //}
+	 
+	 QWidget::keyPressEvent(event);
+ }
+*/

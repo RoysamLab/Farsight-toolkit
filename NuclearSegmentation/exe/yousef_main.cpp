@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
 {
 	if(argc <4)
 	{
-		std::cout<<"Usage: segment_nuclei <InputImageFileName> <OututImageFileName> <ParametersFileName>\n";
+		std::cout<<"Usage: segment_nuclei <InputImageFileName> <OutputImageFileName> <ParametersFileName>\n";
 		return 0;
 	}
 	clock_t startTimer = clock();

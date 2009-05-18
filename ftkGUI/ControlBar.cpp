@@ -34,7 +34,7 @@ ControlBar::ControlBar(const char *c)
 	segResult = NULL;
 	currentModel = NULL;
 
-	module = NULL;
+	//module = NULL;
 
 	loadedImages.clear();
 	lastPath = ".";
@@ -452,8 +452,8 @@ void ControlBar::closeEvent(QCloseEvent *event)
 			QMessageBox::StandardButton button = QMessageBox::information ( 0, tr("Exit"), \
 				msg, QMessageBox::Yes | QMessageBox::No , QMessageBox::NoButton );
 
-			if(button == QMessageBox::Yes)
-				segResult->SaveAll();
+			if(button == QMessageBox::Yes);
+				//segResult->SaveAll();
 		}
 	}
 
@@ -479,7 +479,7 @@ void ControlBar::saveResult()
 	{
 		if(segResult->editsNotSaved)
 		{
-			segResult->SaveAll();
+			//segResult->SaveAll();
 		}
 	}
 }
@@ -489,11 +489,13 @@ void ControlBar::saveResult()
 //*************************************************************************
 void ControlBar::closeWidget(QWidget* widget)
 {
+	/*
 	if(widget == module)
 	{
 		//delete module;
 		module = NULL;
 	}
+	*/
 }
 
 //***************************************************************************
@@ -502,6 +504,7 @@ void ControlBar::closeWidget(QWidget* widget)
 //***************************************************************************
 void ControlBar::clearModel(void)
 {
+	/*
 	if(module)
 	{	//This should close all open windows for existing module
 		module->close();
@@ -509,7 +512,7 @@ void ControlBar::clearModel(void)
 		module = NULL;
 		closeWidget(module);
 	}
-
+	*/
 	if(currentModel)
 	{
 		delete currentModel;
@@ -549,7 +552,7 @@ void ControlBar::startModule(void)
 		}
 		
 	}
-
+	/*
 	if(module)
 		delete module;
 
@@ -557,10 +560,11 @@ void ControlBar::startModule(void)
 	
 	connect(module, SIGNAL(closing(QWidget*)),this, SLOT(closeWidget(QWidget*)));
 	module->show();
+	*/
 }
 
 void ControlBar::loadMetaResult(void)
-{
+{/*
 	QString data_file  = QFileDialog::getOpenFileName(this,"Choose a DATA IMAGE File",lastPath, tr("All Files (*.*)\n"));
 	if(data_file == "") return;
 
@@ -590,7 +594,7 @@ void ControlBar::loadMetaResult(void)
 
 	segwin->SetChannelImage(segResult->getDataImage());
 	segwin->SetLabelImage(segResult->getLabelImage());
-	segwin->show();
+	segwin->show();*/
 }
 
 //******************************************************************************
@@ -600,18 +604,21 @@ void ControlBar::loadMetaResult(void)
 //   As well as what type of segmentation has been performed
 //******************************************************************************
 void ControlBar::loadResult(void)
-{
+{/*
 	QString filename  = QFileDialog::getOpenFileName(this,"Choose a Result",lastPath, 
 			tr("XML Files (*.xml)\n"));
 
     if(filename == "")
 		return;
 
+	/*
 	if(module)
 	{
 		delete module;
 		module = NULL;
 	}
+	*/
+/*
 	QString path = QFileInfo(filename).absolutePath();
 	QString name = QFileInfo(filename).baseName();
 
@@ -638,7 +645,7 @@ void ControlBar::loadResult(void)
 	{
 		segwin->SetLabelImage(segResult->getLabelImage());
 	}
-	segwin->show();
+	segwin->show();*/
 }
 
 void ControlBar::refreshViews()
@@ -653,7 +660,7 @@ void ControlBar::refreshViews()
 }
 
 void ControlBar::loadOutliers()
-{
+{/*
 	if( !currentModel )
 		return;
 
@@ -709,7 +716,7 @@ void ControlBar::loadOutliers()
 	currentModel->SetOutliers( outliers );
 	outlierAction->setChecked(true);
 	currentModel->ShowOutliers(true);
-
+*/
 }
 
 void ControlBar::showOutliers()
@@ -949,7 +956,7 @@ void ControlBar::CreateNewPlotWindow(void)
 	if(!currentModel)
 		return;
 
-	pltWin.push_back(new PlotWindow(currentModel));
+	pltWin.push_back(new PlotWindow(currentModel->GetSelectionModel()));
 	connect(pltWin.back(), SIGNAL(closing(QWidget*)), this, SLOT(closeWidget(QWidget*)));
 	pltWin.back()->show();
 }
@@ -962,7 +969,7 @@ void ControlBar::CreateNewTableWindow(void)
 	if(!currentModel)
 		return;
 
-	tblWin.push_back(new TableWindow(currentModel));
+	tblWin.push_back(new TableWindow(currentModel->GetSelectionModel()));
 	connect(tblWin.back(), SIGNAL(closing(QWidget*)), this, SLOT(closeWidget(QWidget*)));
 	tblWin.back()->ResizeToOptimalSize();
 	tblWin.back()->show();

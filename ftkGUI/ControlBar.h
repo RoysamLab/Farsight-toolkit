@@ -36,7 +36,7 @@
 #include <QtGui/QFileDialog>
 
 //GUI INCLUDES
-#include "ModuleWidget.h"
+//#include "ModuleWidget.h"
 #include "SegmentationModel.h"
 #include "SegmentationWindow.h"
 #include "TableWindow.h"
@@ -47,7 +47,7 @@
 //#include "TableView.h"
 
 //OTHER LOCAL INCLUDES
-#include "SegmentationCommon/ftkSegmentationResult.h"
+//#include "SegmentationCommon/ftkSegmentationResult.h"
 #include "FTKImage/ftkImage.h"
 //#include "Qt/Python/QtPythonDialog.h"
 
@@ -175,7 +175,7 @@ private:
 
 	QLabel *statusLabel;
 
-	ModuleWidget *module;
+	//ModuleWidget *module;
 
 	//ftk::SegmentationResult *segResult;
 	ftk::NuclearSegmentation *segResult;

@@ -6,28 +6,25 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-	if(argc != 4)
+	if(argc != 3)
 	{
-		std::cout<<"Usage: classify_nuclei <ProjectPath> <xmlResultFile> <ClassFile>\n";
+		std::cout<<"Usage: classify_nuclei <xmlResultFile> <ClassFile>\n";
 		return 0;
 	}
-    
-	std::string projPath = argv[1];
 
-	std::string xmlFullName = argv[2];
+	std::string xmlFullName = argv[1];
 
 	size_t found = xmlFullName.find_last_of(".");
 	std::string xmlBaseName = xmlFullName.substr(0,found);
 
-	std::string classFile = argv[3];
+	std::string classFile = argv[2];
 
-	ftk::NuclearSegmentation *segmentation = new ftk::NuclearSegmentation(projPath,xmlBaseName);
-	segmentation->RestoreFromXML();
+	ftk::NuclearSegmentation *segmentation = new ftk::NuclearSegmentation();
+	segmentation->RestoreFromXML(xmlFullName);
 	segmentation->LoadClassInfoFromFile(classFile);
-	segmentation->WriteToXML();
+	segmentation->WriteToXML(xmlFullName);
 
 	//Now load up the label image and split it into a separate image for each class
-	segmentation->LoadLabel();
 	segmentation->SaveLabelByClass();
 	
 	delete segmentation;

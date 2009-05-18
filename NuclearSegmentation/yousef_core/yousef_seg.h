@@ -56,7 +56,7 @@ public:
 	//: destructor
 	~yousef_nucleus_seg();
 
-	void setDataImage(unsigned char* imgPtr, int x, int y, int z, char* filename);	//The image is loaded elsewhere and passed here.  I do not delete the data.
+	void setDataImage(unsigned char* imgPtr, int x, int y, int z, const char* filename);	//The image is loaded elsewhere and passed here.  I do not delete the data.
 	void setParams(int *params);													//All parameters passed as integers, set the parameters accordingly
   
 	unsigned char* getDataImagePtr(){ return dataImagePtr; };								

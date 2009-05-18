@@ -50,7 +50,7 @@ void yousef_nucleus_seg::setParams(int *params)
 	minObjSize	= *params;
 }
 
-void yousef_nucleus_seg::setDataImage( unsigned char *imgPtr,  int x, int y, int z, char *filename )
+void yousef_nucleus_seg::setDataImage( unsigned char *imgPtr,  int x, int y, int z, const char *filename )
 {
 	numStacks = z;
 	numRows = y;//y();			//y-direction

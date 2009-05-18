@@ -438,17 +438,27 @@ void SegmentationView::scrollTo(const QModelIndex &index, ScrollHint)
 
     int rows = model()->rowCount(rootIndex());
 
-    QModelIndexList indexes;
+	QItemSelection selection;
+	selection.clear();
+    //QModelIndexList indexes;
 	for (int row = 0; row < rows; ++row) 
 	{
 		//get the region of the item
-		QModelIndex index = model()->index(row, 0, rootIndex());
-        QRegion region = itemRegion(index);
+		QModelIndex index1 = model()->index(row, 0, rootIndex());
+		QModelIndex index2 = model()->index(row,(model()->columnCount())-1, rootIndex());
+
+        QRegion region = itemRegion(index1);
 		//if it intersects with the selection region, save the index
 		if (!region.intersect(contentsRect).isEmpty())
-			indexes.append(index);
+		{
+			//indexes.append(index);
+			//Add each item's region to the selection
+			selection.merge(QItemSelection(index1,index2),command);
+		}
     }
+	selectionModel()->select(selection, command);
 
+	/*
 	if (indexes.size() > 0) 
 	{	
 		QItemSelection selection;
@@ -466,6 +476,7 @@ void SegmentationView::scrollTo(const QModelIndex &index, ScrollHint)
         QItemSelection selection(noIndex, noIndex);
         selectionModel()->select(selection, command);
     }
+	*/
     viewport()->update(); 
  }
 

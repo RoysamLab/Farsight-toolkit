@@ -7,19 +7,17 @@
 #include <QtGui/QApplication>
 #include <QtCore/QObject>
 
-#include "ControlBar.h"
+#include "NucleusEditor.h"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-	//Q_INIT_RESOURCE(farsight);
 
-	ControlBar cbar(argv[0]);
-	cbar.show();
+	NucleusEditor nucEdit(0,0);
+	nucEdit.show();
 
     return app.exec();
 }
-
 
 //This function is used to create a GUI application that does not show the console.
 // See SET_TARGET_PROPERTIES(Farsight PROPERTIES WIN32_EXECUTABLE 0)

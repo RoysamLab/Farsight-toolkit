@@ -2,7 +2,7 @@
 #include <QtGui/QMessageBox>
 #include <algorithm>
 
-SegmentationModel::SegmentationModel(ftk::SegmentationResult *segresult)
+SegmentationModel::SegmentationModel(ftk::NuclearSegmentation *segresult)
 {
 	segResult = segresult;
 
