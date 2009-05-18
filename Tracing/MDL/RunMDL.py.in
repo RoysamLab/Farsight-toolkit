@@ -1,0 +1,79 @@
+#!/usr/bin/env python
+
+import os.path
+import re
+import pickle
+import subprocess
+import sys
+
+parameterValues = {}
+
+#since we're going to be making use of relative paths we need to be sure
+#that we're running from the directory that contains this script
+scriptPath = os.path.dirname(sys.argv[0])
+if scriptPath != "":
+  os.chdir(scriptPath)
+
+sys.path.append("Common")
+from ParseParameters import ParseXMLParameterFile, SpecifyParameterValues
+
+SpecifyParameterValues("MDL")
+f = file("XML/MDLParameterValues.xml")
+
+parameterValues = ParseXMLParameterFile("MDL", False)
+
+fullPathToInput = parameterValues["Input image"]
+dataDir = os.path.dirname(fullPathToInput)
+filename = os.path.basename(fullPathToInput)
+
+match = re.compile(r".*?\.(\d+)x(\d+)x(\d+)\.").search(filename)
+sizeX = match.group(1)
+sizeY = match.group(2)
+sizeZ = match.group(3)
+intensityThreshold = parameterValues["Intensity threshold"]
+connectedComponentsSize = parameterValues["Connected components size"]
+anisotropicDiffK = parameterValues["Anisotropic Diff k"]
+anisotropicDiffT = parameterValues["Anisotropic Diff t"]
+criticalPtsVectorMagnitude = parameterValues["Critical pts vector magnitude"]
+highCurvatureThreshold = parameterValues["High curvature threshold"]
+edgeRange = parameterValues["IW-MST edge range"]
+graphPruneSize = parameterValues["Graph prune size"]
+graphMorphStrength = parameterValues["Graph morph strength"]
+weightOffset = parameterValues["MDL weight factor"]
+
+#change to the binary directory before we start calling executables
+os.chdir("../bin/MDL")
+
+subprocess.call(["./volumeProcess${CMAKE_EXECUTABLE_SUFFIX}",\
+                  fullPathToInput, sizeX, sizeY, sizeZ,\
+                  dataDir+"/volume_Processed.raw", intensityThreshold])
+
+subprocess.call(["./ConnCompntwFldfill${CMAKE_EXECUTABLE_SUFFIX}",\
+                  dataDir+"/volume_Processed.raw", sizeX, sizeY, sizeZ,\
+                  dataDir+"/components_Connected.raw",\
+                  connectedComponentsSize])
+
+subprocess.call(["./AnisoDiffuse${CMAKE_EXECUTABLE_SUFFIX}",\
+                  dataDir+"/components_Connected.raw", sizeX, sizeY, sizeZ,\
+                  dataDir+"/Aniso_Diffused.raw", anisotropicDiffK,\
+                  anisotropicDiffT])
+
+subprocess.call(["./GradientVecField${CMAKE_EXECUTABLE_SUFFIX}",\
+                  dataDir+"/Aniso_Diffused.raw", sizeX, sizeY, sizeZ,\
+                  dataDir+"/out.vec"])
+
+subprocess.call(["./skel_Extrvalley3D${CMAKE_EXECUTABLE_SUFFIX}",\
+                  dataDir+"/out.vec", sizeX, sizeY, sizeZ,\
+                  highCurvatureThreshold, dataDir+"/out.seed"])
+
+subprocess.call(["./skel_streamline${CMAKE_EXECUTABLE_SUFFIX}",\
+                  dataDir+"/out.vec", sizeX, sizeY, sizeZ,\
+                  criticalPtsVectorMagnitude, dataDir+"/out.seed",\
+                  dataDir+"/out.skel"])
+
+subprocess.call(["./MinSpanTree${CMAKE_EXECUTABLE_SUFFIX}",\
+                  dataDir+"/", "out.skel", "components_Connected.raw", sizeX,\
+                  sizeY, sizeZ, edgeRange, graphPruneSize, graphMorphStrength,\
+                  weightOffset, dataDir+"/out.vtk", "out.txt",\
+                  dataDir+"/Aniso_Diffused.raw"])
+
