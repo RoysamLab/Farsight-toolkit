@@ -10,25 +10,17 @@ PROJECT( Farsight )
 IF ("${Farsight_BINARY_DIR}" MATCHES "^${Farsight_SOURCE_DIR}$")
   MESSAGE(FATAL_ERROR "Farsight must be built with separate source and binary directories.")
 ENDIF ("${Farsight_BINARY_DIR}" MATCHES "^${Farsight_SOURCE_DIR}$")
-
+#######################################################################################
 #########################################
 # ADD NEW MODULES HERE
-# FOLLOW BUILD_YOUSEF EXAMPLE
 #########################################
-
-OPTION( BUILD_GUI "Build Farsight GUI" ON )
+OPTION( BUILD_TRACING "Build Tracing Tools" ON )
 OPTION( BUILD_NUCLEI "Build Nuclear Segmentation" ON )
-OPTION( BUILD_FUZZY_CLUSTERING "Build Nuclear Classification" ON )
-OPTION( BUILD_REGISTRATION "Build Charlene's Executables and FREGL" ON )
-OPTION( BUILD_MDL "Build Xiasong's MDL Module" ON )
-OPTION( BUILD_TRACING "Build Yousef's Tracing Module" ON )
-OPTION( WRAP_PYTHON "Wrap Farsight in Python" OFF)
-OPTION( BUILD_VESSEL_SEGMENTATION "Build vessel surface segmentation" ON)
-OPTION( BUILD_RENDERING "Build rendering module" ON)
-OPTION( BUILD_TRACE_EDITOR "Build trace editor" ON)
-OPTION( BUILD_TRACK_EDITOR "Build tracking editor" OFF)
-OPTION( BUILD_BIONET "Build bionet" ON)
-OPTION( BUILD_TRACE3D "Build Trace3D module" ON)
+OPTION( BUILD_VESSEL "Build Vessel Surface Segmentation" ON )
+OPTION( BUILD_REGISTRATION "Build Image Registration (fregl)" ON )
+OPTION( BUILD_BIONET "Build Bionet" ON )
+
+OPTION( WRAP_PYTHON "Wrap Farsight in Python" OFF )
 MARK_AS_ADVANCED(WRAP_PYTHON)
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR} )
@@ -36,67 +28,45 @@ INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR} )
 #CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/Common/ParseParameters.py
 #               ${PROJECT_BINARY_DIR}/Common/ParseParameters.py)
 
+CONFIGURE_FILE (
+  ${PROJECT_SOURCE_DIR}/FarsightConfig.h.in
+  ${PROJECT_BINARY_DIR}/FarsightConfig.h
+)
 ################################################################################
 ################################################################################
+# FARSIGHT DEPENDS UPON A NUMBER OF OUTSIDE LIBRARIES
+# THESE ARE ITK, VTK, VXL, and QT :::: WE MAKE SURE THEY ARE PRESENT HERE:
 ################################################################################
-################################################################################
-# MACROS (functions)
-################################################################################
-MACRO(MACRO_INCLUDE_COMMON_LIBS)
-
-  FIND_PACKAGE(ITK)
-  IF(ITK_FOUND)
+FIND_PACKAGE(ITK)
+IF(ITK_FOUND)
     INCLUDE( ${ITK_USE_FILE} )
-  ELSE(ITK_FOUND)
+ELSE(ITK_FOUND)
     MESSAGE(FATAL_ERROR "Cannot build without ITK.  Please set ITK_DIR.")
-  ENDIF(ITK_FOUND)
-  
-  FIND_PACKAGE(VTK)
-  FIND_PACKAGE(VXL)
-  IF(VTK_FOUND AND VXL_FOUND)
+ENDIF(ITK_FOUND)
+
+FIND_PACKAGE(VTK)
+FIND_PACKAGE(VXL)
+IF(VTK_FOUND AND VXL_FOUND)
     INCLUDE( ${VTK_USE_FILE} )
     SET(VXL_PROVIDE_STANDARD_OPTIONS 1)
     INCLUDE(${VXL_CMAKE_DIR}/UseVXL.cmake)
-    #INCLUDE_DIRECTORIES( ${VXL_RPL_INCLUDE_DIR} )
-    #INCLUDE_DIRECTORIES( ${VXL_MUL_INCLUDE_DIR} )
-  ELSEIF(VTK_FOUND AND VXL_FOUND)
+ELSEIF(VTK_FOUND AND VXL_FOUND)
     MESSAGE(FATAL_ERROR "Cannot build without VTK & VXL.")
-  ENDIF(VTK_FOUND AND VXL_FOUND)
-  
-ENDMACRO(MACRO_INCLUDE_COMMON_LIBS)
-################################################################################
-MACRO(MACRO_INCLUDE_QT4)
-  FIND_PACKAGE(Qt4)
-  IF(QT4_FOUND)
+ENDIF(VTK_FOUND AND VXL_FOUND)
+
+FIND_PACKAGE(Qt4)
+IF(QT4_FOUND)
     INCLUDE( ${QT_USE_FILE} )
-    IF (QT_QTXML_FOUND)
-      INCLUDE_DIRECTORIES(${QT_QTXML_INCLUDE_DIR})
-    ELSE(QT_QTXML_FOUND)
-      MESSAGE(FATAL ERROR "Qt XML libraries missing.")
-    ENDIF(QT_QTXML_FOUND)
-    #IF (QT_QTHELP_FOUND)
-    #  INCLUDE_DIRECTORIES(${QT_QTHELP_INCLUDE_DIR})
-    #ELSE(QT_QTHELP_FOUND)
-    #  MESSAGE(FATAL ERROR "Qt HELP libraries missing.")
-    #ENDIF(QT_QTHELP_FOUND)
-  ELSE(QT4_FOUND)
+ELSE(QT4_FOUND)
     MESSAGE(FATAL_ERROR "Cannot build without Qt4")
-  ENDIF(QT4_FOUND)
-ENDMACRO(MACRO_INCLUDE_QT4)
-################################################################################
-
+ENDIF(QT4_FOUND)
 ################################################################################
 ################################################################################
+# FARSIGHT ALSO HAS A NUMBER OF COMMON LIBRARIES THAT ARE INTERNAL TO
+# THE PROJECT: 
 ################################################################################
-################################################################################
-# BUILD THE PACKAGES THAT ARE SET TO BE BUILD
-################################################################################
-# These libraries are used in nearly all modules
-################################################################################
-MACRO_INCLUDE_COMMON_LIBS()
-
-INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/FTKImage )
-SUBDIRS( FTKImage )
+INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkImage )
+SUBDIRS( ftkImage )
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/SegmentationCommon )
 SUBDIRS( SegmentationCommon )
@@ -104,120 +74,41 @@ SUBDIRS( SegmentationCommon )
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/tinyxml )
 SUBDIRS( tinyxml )
 
+INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/PatternAnalysis )
 SUBDIRS( PatternAnalysis )
 
-#INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/libsvm )
-#SUBDIRS( libsvm )
+INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkGUI )
+SUBDIRS( ftkGUI )
+
+####################################################################################
+####################################################################################
+# NOW WE CAN INCLUDE THE MODULES ACCORDING TO THE OPTIONS SELECTED ABOVE:
+####################################################################################
+IF(BUILD_TRACING)
+  INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Tracing )
+  SUBDIRS(Tracing)
+ENDIF(BUILD_TRACING)
 
 IF(BUILD_NUCLEI)
   INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/NuclearSegmentation )
   SUBDIRS( NuclearSegmentation )  
 ENDIF(BUILD_NUCLEI)
 
-#IF(BUILD_FUZZY_CLUSTERING)
-#  IF(BUILD_NUCLEI)
-#    INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/fuzzyClustering )
-#    SUBDIRS( fuzzyClustering)
-#  ELSE(BUILD_NUCLEI)
-#    MESSAGE(FATAL_ERROR "Cannot build fuzzy clustering without BUILD_NUCLEI set to ON ")
-#  ENDIF(BUILD_NUCLEI)
-#ENDIF(BUILD_FUZZY_CLUSTERING)
-
-
-IF(BUILD_VESSEL_SEGMENTATION)
-
-  FIND_PACKAGE(OpenGL)
-  IF(OPENGL_FOUND)
-	 INCLUDE_DIRECTORIES( ${OPENGL_INCLUDE_DIR} )
-  ELSE(OPENGL_FOUND)
-	MESSAGE(FATAL_ERROR "Cannot build without OpenGL")
-  ENDIF(OPENGL_FOUND)
-
-  FIND_PACKAGE(GLUT)
-  IF(GLUT_FOUND)
-	 INCLUDE_DIRECTORIES( ${GLUT_INCLUDE_DIR} )
-  ELSE(GLUT_FOUND)
-	MESSAGE(FATAL_ERROR "Cannot build without GLUT")
-  ENDIF(GLUT_FOUND)
-
+IF(BUILD_VESSEL)
   INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Vessel )
   SUBDIRS( Vessel )
-  
-ENDIF(BUILD_VESSEL_SEGMENTATION)
-
-#IF(BUILD_RENDERING)
-#SUBDIRS(Rendering)
-#ENDIF(BUILD_RENDERING)
-
-IF(BUILD_MDL)
-  FIND_PACKAGE( Boost REQUIRED )
-#  INCLUDE_DIRECTORIES ( ${PROJECT_SOURCE_DIR}/Modules/MDL )
-#  SUBDIRS ( Modules/MDL )
-ENDIF(BUILD_MDL) 
-
-############################################################################
-# ADD NEW MODULES ABOVE
-############################################################################
-#IF (BUILD_MODULE1)
-#  INCLUDES: (Be smart so that previously included modules aren't included again)
-#  SUBDIRS( Module1_Dir )
-#ENDIF
-#############################################################################
-# ALSO NEED TO CHANGE FarsightConfig.h.in accordingly.
-# ADD ifdef BUILD_MODULE1 statements to GUI source for automatically including
-# your new module.
-# AND will need to add TARGET_LINK_LIBRARIES( fsgui YOUR_MODULE ) in gui cmakelists.txt
-#############################################################################
-
-
-IF(BUILD_GUI)
-  MACRO_INCLUDE_QT4()
-  SUBDIRS( ftkGUI ) 
-  #IF (BUILD_REGISTRATION)
-  #   SUBDIRS( fregl_GUI )
-  #ENDIF(BUILD_REGISTRATION)
-  SET(CPACK_PACKAGE_EXECUTABLES ${CPACK_PACKAGE_EXECUTABLES}
-    "Farsight" "Farsight")
-#  SUBDIRS( Qt/Widgets )
-#  SUBDIRS( Qt/Python )
-ENDIF(BUILD_GUI)
-
+ENDIF(BUILD_VESSEL)
 
 IF(BUILD_REGISTRATION)
-  IF( NOT ITK_USE_SYSTEM_VXL)
-    MESSAGE(FATAL_ERROR "ITK must be built with ITK_USE_SYSTEM_VXL set ON.")
-  ENDIF(NOT ITK_USE_SYSTEM_VXL)
-  
-  INCLUDE_DIRECTORIES( ${VXL_RPL_INCLUDE_DIR} )
-  INCLUDE_DIRECTORIES( ${VXL_MUL_INCLUDE_DIR} )
-  #SUBDIRS( Wrappers )
-  #SUBDIRS( maciej_seg )
-  #SUBDIRS( Common )
-  #SUBDIRS( fsexe ) 
+  INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/fregl )
   SUBDIRS( fregl )
 ENDIF(BUILD_REGISTRATION)
 
-IF(BUILD_TRACING)
-  INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Tracing )
-  SUBDIRS(Tracing)
-ENDIF(BUILD_TRACING)
-
-#IF(BUILD_TRACE_EDITOR)
-# SUBDIRS(TraceEdit)
-#ENDIF(BUILD_TRACE_EDITOR)
-
-#IF(BUILD_TRACK_EDITOR)
-#  MACRO_INCLUDE_QT4()
-#  SUBDIRS(TrackEdit)
-#ENDIF(BUILD_TRACK_EDITOR)
 IF(BUILD_BIONET)
+  INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/tissuenets )
   SUBDIRS(tissuenets)
 ENDIF(BUILD_BIONET)
-
-#IF(BUILD_TRACE3D)
-#  SUBDIRS(ftl3d)
-#ENDIF(BUILD_TRACE3D)
-
+#####################################################################################
 IF(WRAP_PYTHON)
   IF(NOT BUILD_SHARED_LIBS)
     MESSAGE(FATAL_ERROR "Wrapping requires a shared build, change BUILD_SHARED_LIBS to ON")
@@ -236,6 +127,10 @@ IF(WRAP_PYTHON)
   SUBDIRS(PythonWrapping/CableSwig)
 ENDIF(WRAP_PYTHON)
 
+#####################################################################################
+#####################################################################################
+# SOME INSTALL RULES
+######################################################################################
 #These install rules are for use when linking against ITK/VTK build trees
 #They won't work without modification if linked against ITK/VTK installs
 SET(ITKBASE_SRC "")
@@ -260,19 +155,10 @@ INSTALL(DIRECTORY python/ DESTINATION python PATTERN "*.svn" EXCLUDE)
 SET(CPACK_NSIS_MENU_LINKS "http://www.farsight-toolkit.org" "Farsight Online Help")
 INCLUDE(CPack)
 
-################################################################################
-# FarsightConfig.h.in is modified and saved as FarsightConfig.h
-# based on the configuration settings.
-# This allows us to control what code is compiled based on the settings from
-# the CMake GUI
-################################################################################
-CONFIGURE_FILE (
-  ${PROJECT_SOURCE_DIR}/FarsightConfig.h.in
-  ${PROJECT_BINARY_DIR}/FarsightConfig.h
-)
-
+###########################################################################
 ##########################################################################
 # Testing stuff
+###########################################################################
 ENABLE_TESTING()
 IF(BUILD_TESTING)
   CONFIGURE_FILE(${Farsight_SOURCE_DIR}/CMake/CTestCustom.ctest.in
