@@ -107,7 +107,7 @@ IF (WIN32)
     ${PROJECT_SOURCE_DIR}/fregl/exe/gdbicp_win.exe
     ${PROJECT_BINARY_DIR}/fregl/exe/gdbicp.exe
     COPYONLY)
-  INSTALL( PROGRAMS ${PROJECT_BINARY_DIR}/fsexe/gdbicp.exe DESTINATION bin )
+  INSTALL( PROGRAMS ${PROJECT_BINARY_DIR}/fregl/exe/gdbicp.exe DESTINATION bin )
 ELSE (WIN32)
   CONFIGURE_FILE(
     ${PROJECT_SOURCE_DIR}/fregl/exe/gdbicp_unix
