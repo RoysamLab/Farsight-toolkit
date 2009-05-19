@@ -17,7 +17,7 @@
 #include <QtCore/QPoint>
 #include <QtCore/QMap>
 
-#include <FTKImage/ftkImage.h>
+#include <ftkImage/ftkImage.h>
 #include "SegmentationModel.h"
 
 #include <iostream>

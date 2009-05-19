@@ -15,7 +15,7 @@
 #include "itkImageFileWriter.h"
 
 #include <vtkImageData.h>
-#include <FTKImage/ftkImage.h>
+#include <ftkImage/ftkImage.h>
 
 typedef itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
 typedef itk::ImageRegionIterator< ImageType > RegionIterator;

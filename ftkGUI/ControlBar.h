@@ -48,7 +48,7 @@
 
 //OTHER LOCAL INCLUDES
 //#include "SegmentationCommon/ftkSegmentationResult.h"
-#include "FTKImage/ftkImage.h"
+#include "ftkImage/ftkImage.h"
 //#include "Qt/Python/QtPythonDialog.h"
 
 //*******************************************

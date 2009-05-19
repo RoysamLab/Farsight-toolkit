@@ -13,7 +13,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include <FTKImage/ftkImage.h>
+#include <ftkImage/ftkImage.h>
 #include <SegmentationCommon/ftkLabelImageToFeatures.h>
 #include <yousef_core/yousef_seg.h>
 #include <tinyxml/tinyxml.h>

@@ -8,7 +8,7 @@
 //  lsm_to_tiff lsm_image_file output_tiff_path
 //
 
-#include <FTKImage/vtkLSMReader.h>
+#include <ftkImage/vtkLSMReader.h>
 #include <string>
 #include <vector>
 #include <vtkImageData.h>

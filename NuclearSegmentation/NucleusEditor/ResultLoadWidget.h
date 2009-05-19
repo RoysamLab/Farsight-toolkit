@@ -17,7 +17,7 @@
 #include "SegmentationWindow.h"
 
 //OTHER LOCAL INCLUDES
-#include "FTKImage/ftkImage.h"
+#include "ftkImage/ftkImage.h"
 #include "tinyxml/tinyxml.h"
 
 

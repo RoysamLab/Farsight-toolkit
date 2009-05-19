@@ -17,7 +17,7 @@
 //Farsight Includes:
 //#include "SegmentationCommon/ftkSegmentationResult.h"
 #include "NuclearSegmentation/ftkNuclearSegmentation.h"
-#include "FTKImage/ftkImage.h"
+#include "ftkImage/ftkImage.h"
 #include "SegmentationModel.h"
 #include "SegmentationWindow.h"
 #include "ftkGUI/TableWindow.h"

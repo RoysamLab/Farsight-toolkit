@@ -23,7 +23,7 @@
 #include "SegmentationModel.h"
 
 //OTHER LOCAL INCLUDES
-#include "FTKImage/ftkImage.h"
+#include "ftkImage/ftkImage.h"
 #include "NuclearSegmentation/ftkNuclearSegmentation.h"
 
 #include <sstream>
