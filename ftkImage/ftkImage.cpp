@@ -422,6 +422,7 @@ bool Image::AppendChannelFromData3D(void *dptr, DataType dataType, int bpPix, in
 		m_Info.bytesPerPix = bpPix;	//Number of bytes per pixel (UCHAR - 1 or USHORT - 2)
 		m_Info.dataType = dataType;		//See ENUM DataType
 		m_Info.numTSlices = 1;		//1 time point assumed
+		m_Info.numChannels = 0;		//Start at 0, will be incremented later
 		imageDataPtrs.resize(1);
 	}
 	else	//Check to be sure sizes match!
