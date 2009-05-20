@@ -17,6 +17,7 @@ View3D::View3D(int argc, char **argv)
 {
   this->tobj = new TraceObject;
   int num_loaded = 0;
+  this->Volume=0;
   // load as many files as possible. Provide offset for differentiating types
 	for(int counter=1; counter<argc; counter++)
 	  {
@@ -41,7 +42,7 @@ View3D::View3D(int argc, char **argv)
 		  {
 			printf("I detected a tif file\n");
 			this->rayCast(argv[counter]);
-			this->AddVolumeSliders();
+			//this->AddVolumeSliders();
 		  }
 		num_loaded++;
 	  }
@@ -202,6 +203,11 @@ void View3D::CreateActors()
   this->UpdateBranchActor();
   this->Renderer->AddActor(this->BranchActor);
  
+  if(this->Volume!=NULL)
+  {
+	  this->Renderer->AddVolume(this->Volume);
+	  this->AddVolumeSliders();
+  }
   //sphere is used to mark the picks
   this->CreateSphereActor();
   Renderer->AddActor(this->SphereActor);
@@ -952,7 +958,7 @@ void View3D::AddPlaybackWidget(char *filename)
 void View3D::AddVolumeSliders()
 {
   vtkSliderRepresentation2D *sliderRep = vtkSliderRepresentation2D::New();
-  sliderRep->SetValue(0.8);
+  sliderRep->SetValue(0.1);
   sliderRep->SetTitleText("Opacity");
   sliderRep->GetPoint1Coordinate()->SetCoordinateSystemToNormalizedDisplay();
   sliderRep->GetPoint1Coordinate()->SetValue(0.2,0.1);
@@ -1107,8 +1113,8 @@ void View3D::rayCast(char *raySource)
   vtkPiecewiseFunction *opacityTransferFunction = vtkPiecewiseFunction::New();
 
   opacityTransferFunction->AddPoint(2,0.0);
-  opacityTransferFunction->AddPoint(20,0.1);
-  opacityTransferFunction->AddPoint(40,0.1);
+  opacityTransferFunction->AddPoint(50,0.1);
+ // opacityTransferFunction->AddPoint(40,0.1);
   // Create transfer mapping scalar value to color
   // Play around with the values in the following lines to better vizualize data
   vtkColorTransferFunction *colorTransferFunction = vtkColorTransferFunction::New();
@@ -1132,10 +1138,10 @@ void View3D::rayCast(char *raySource)
     volume->SetMapper(volumeMapper);
     volume->SetProperty(volumeProperty);
   volume->SetPickable(0);
-  Renderer->AddVolume(volume);
+//  Renderer->AddVolume(volume);
   this->Volume = volume;
-  this->QVTK->GetRenderWindow()->Render();
-  std::cout << "RayCast rendered \n";
+ // this->QVTK->GetRenderWindow()->Render();
+  std::cout << "RayCast generated \n";
 }
 
 void View3D::closeEvent(QCloseEvent *event)
