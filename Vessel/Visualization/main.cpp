@@ -6,7 +6,11 @@
 #include "radiosity.h"
 #include <limits.h>
 #include <math.h>
-#include <GL/glut.h>
+#ifdef __APPLE__
+  #include <GLUT/glut.h>
+#else
+  #include <GL/glut.h>
+#endif
 
 //#pragma warning(disable : 4996)
 //#pragma warning(disable : 4244)
