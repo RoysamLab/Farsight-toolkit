@@ -771,8 +771,8 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 		int loc = 0;
 		for (unsigned int dim=0; dim<VImageDimension; dim++)
 		{
-			index[dim] = this->featureVals[currentLabel].BoundingBox[loc];	//bbox min
-			size[dim] = this->featureVals[currentLabel].BoundingBox[loc+1]- index[dim] + 1;	//bbox max - min + 1
+			index[dim] = (long int)this->featureVals[currentLabel].BoundingBox[loc];	//bbox min
+			size[dim] = (long unsigned int)this->featureVals[currentLabel].BoundingBox[loc+1]- index[dim] + 1;	//bbox max - min + 1
 			loc += 2;
 		}
 

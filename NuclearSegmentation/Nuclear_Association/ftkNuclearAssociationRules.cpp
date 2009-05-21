@@ -186,8 +186,9 @@ float NuclearAssociationRules::ComputeOneAssocMeasurement(itk::SmartPointer<Targ
 	try{
 		dt_obj->Update() ;
 	}
-	catch( itk::ExceptionObject & err ){		
-		return 0;
+	catch( itk::ExceptionObject & err ){
+		std::cout << "Error in Distance Transform: " << err << std::endl; 
+		return 0;	
 	}
 
 	//Let's try this (for debugging): save the distance map

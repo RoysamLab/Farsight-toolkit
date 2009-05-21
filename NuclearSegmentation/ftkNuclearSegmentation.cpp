@@ -494,7 +494,7 @@ bool NuclearSegmentation::LoadClassInfoFromFile( std::string fName )
 		if(it==classList.end())
 			classList.insert(c);
 
-		objects->at(i).SetClass(c);
+		objects->at(i).SetClass( char(c) );
 	}
 
 	classes.clear();
@@ -631,7 +631,7 @@ bool NuclearSegmentation::LoadFromMETA(std::string META_file, std::string header
 		object.SetValidity(1);
 		object.SetDuplicated(0);
 		if( classColumn != -1 && metaRow != -1 )
-			object.SetClass( meta.at(metaRow).at(classColumn) );
+			object.SetClass( char(meta.at(metaRow).at(classColumn)) );
 		else
 			object.SetClass(-1);
 

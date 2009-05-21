@@ -102,7 +102,7 @@ QModelIndex SegmentationView::indexAt(const QPoint &point) const
 		if (labelImg)
 		{
 			//Now find out what Label ID this point has (by checking on label image)
-			int labelval = (int)labelImg->GetPixel(currentT,0,currentZ,wy,wx);
+			int labelval = (int)labelImg->GetPixel(currentT,0,currentZ,int(wy),int(wx));
 			//return index of first item in model at this row
 			if(labelval > 0)
 				retval = model()->index(resultModel->RowForID(labelval),0,rootIndex());
