@@ -9,7 +9,10 @@ NuclearSegmentationWizard::NuclearSegmentationWizard(QWidget *parent)
 	this->setPage(Page_Seeds, new SeedsPage);
 	this->setPage(Page_Cluster, new ClusterPage);
 	this->setPage(Page_Finalize, new FinalizePage);
-	this->setPage(Page_Exit, new ExitPage);
+
+	SavePage *sp = new SavePage;
+	connect(sp, SIGNAL(readyToSave(bool)), this, SLOT(updateExeButton(bool)));
+	this->setPage(Page_Save, sp);
 
 	this->setStartId(Page_Input);
 	//this->setModal(true);
@@ -18,6 +21,7 @@ NuclearSegmentationWizard::NuclearSegmentationWizard(QWidget *parent)
 	this->setButtonText(QWizard::CustomButton1,"Execute");
 	connect(this, SIGNAL(customButtonClicked(int)), this, SLOT(executeNextStep(int)));
 
+	this->setOption(QWizard::NoBackButtonOnStartPage,true);
 	//setOption(HaveHelpButton, true);
 	//setPixmap(QWizard::LogoPixmap, QPixmap(":/images/logo.png"));
 	//connect(this, SIGNAL(helpRequested()), this, SLOT(showHelp()));
@@ -53,7 +57,7 @@ void NuclearSegmentationWizard::initializePage(int id)
 	case Page_Finalize:
 		button(QWizard::CustomButton1)->setVisible(true);
 		break;
-	case Page_Exit:
+	case Page_Save:
 		button(QWizard::CustomButton1)->setVisible(false);
 		break;
 	}
@@ -67,18 +71,23 @@ void NuclearSegmentationWizard::cleanupPage(int id)
 	case Page_Input:
 	case Page_Parameters:
 	case Page_Binarize:
-	case Page_Exit:
 		button(QWizard::CustomButton1)->setVisible(false);
 		break;
 	case Page_Seeds:
 	case Page_Cluster:
 	case Page_Finalize:
+	case Page_Save:
 		if( seg )
 			button(QWizard::CustomButton1)->setVisible(true);
 		else
 			button(QWizard::CustomButton1)->setVisible(false);
 		break;
 	}
+}
+
+void NuclearSegmentationWizard::updateExeButton(bool val)
+{
+	button(QWizard::CustomButton1)->setVisible(val);
 }
 
 bool NuclearSegmentationWizard::initSegmentation(void)
@@ -128,22 +137,34 @@ void NuclearSegmentationWizard::executeNextStep(int whichButton)
 			((SeedsPage*)page(Page_Seeds))->ShowImages( NULL, NULL );
 			((ClusterPage*)page(Page_Cluster))->ShowImages( NULL, NULL );
 			((FinalizePage*)page(Page_Finalize))->ShowImages( NULL, NULL );
+			((SavePage*)page(Page_Save))->ImagesSaved(false);
 			break;
 		case Page_Seeds:
 			seg->DetectSeeds();
 			((SeedsPage*)page(Page_Seeds))->ShowImages( seg->getDataImage(), seg->getLabelImage() );
 			((ClusterPage*)page(Page_Cluster))->ShowImages( NULL, NULL );
 			((FinalizePage*)page(Page_Finalize))->ShowImages( NULL, NULL );
+			((SavePage*)page(Page_Save))->ImagesSaved(false);
 			break;
 		case Page_Cluster:
 			seg->RunClustering();
 			((ClusterPage*)page(Page_Cluster))->ShowImages( seg->getDataImage(), seg->getLabelImage() );
 			((FinalizePage*)page(Page_Finalize))->ShowImages( NULL, NULL );
+			((SavePage*)page(Page_Save))->ImagesSaved(false);
 			break;
 		case Page_Finalize:
 			seg->Finalize();
 			((FinalizePage*)page(Page_Finalize))->ShowImages( seg->getDataImage(), seg->getLabelImage() );
+			((SavePage*)page(Page_Save))->ImagesSaved(false);
 			break;
+		case Page_Save:
+			seg->SaveLabel();
+			if(field("save.xmlRadio").toBool())
+			{
+				seg->LabelsToObjects();
+				seg->WriteToXML( field("save.xmlFile").toString().toStdString() );
+			}
+			((SavePage*)page(Page_Save))->ImagesSaved(true);
 		}
 	}
 }
@@ -159,18 +180,27 @@ int NuclearSegmentationWizard::nextId() const
 		return Page_Binarize;
 		break;
 	case Page_Binarize:
-		return Page_Seeds;
+		if(field("binarize.jump").toBool())
+			return Page_Save;
+		else
+			return Page_Seeds;
 		break;
 	case Page_Seeds:
-		return Page_Cluster;
+		if(field("seeds.jump").toBool())
+			return Page_Save;
+		else
+			return Page_Cluster;
 		break;
 	case Page_Cluster:
-		return Page_Finalize;
+		if(field("cluster.jump").toBool())
+			return Page_Save;
+		else
+			return Page_Finalize;
 		break;
 	case Page_Finalize:
-		return Page_Exit;
+		return Page_Save;
 		break;
-	case Page_Exit:
+	case Page_Save:
 		return -1;
 		break;
 	}
@@ -325,6 +355,9 @@ BinarizePage::BinarizePage(QWidget *parent)
 	QVBoxLayout *layout = new QVBoxLayout;
 	sWin = new SegmentationWindow();
 	layout->addWidget(sWin);
+	jumpBox = new QCheckBox("Skip to Calculating Features and Saving Result");
+	registerField("binarize.jump",jumpBox);
+	layout->addWidget(jumpBox);
 	setLayout(layout);
 	hasImage = false;
 }
@@ -356,6 +389,9 @@ SeedsPage::SeedsPage(QWidget *parent)
 	QVBoxLayout *layout = new QVBoxLayout;
 	sWin = new SegmentationWindow();
 	layout->addWidget(sWin);
+	jumpBox = new QCheckBox("Skip to Calculating Features and Saving Result");
+	registerField("seeds.jump",jumpBox);
+	layout->addWidget(jumpBox);
 	setLayout(layout);
 	hasImage = false;
 }
@@ -395,6 +431,9 @@ ClusterPage::ClusterPage(QWidget *parent)
 	QVBoxLayout *layout = new QVBoxLayout;
 	sWin = new SegmentationWindow();
 	layout->addWidget(sWin);
+	jumpBox = new QCheckBox("Skip to Calculating Features and Saving Result");
+	registerField("cluster.jump",jumpBox);
+	layout->addWidget(jumpBox);
 	setLayout(layout);
 	hasImage = false;
 }
@@ -440,4 +479,95 @@ void FinalizePage::ShowImages(ftk::Image::Pointer data, ftk::Image::Pointer labe
 	else
 		hasImage = true;
 	emit completeChanged();
+}
+
+SavePage::SavePage(QWidget *parent)
+	: QWizardPage(parent)
+{
+	setTitle(tr("Save Results"));
+	QVBoxLayout *layout = new QVBoxLayout;
+
+	topLabel = new QLabel(tr("The Result will now be saved. Please choose desired option:"));
+	layout->addWidget(topLabel);
+
+	imageOnlyRadio = new QRadioButton(tr("Save Label Image Only"));
+	layout->addWidget(imageOnlyRadio);
+
+	xmlRadio = new QRadioButton(tr("Compute Features and save XML File and Label Image"));
+	registerField("save.xmlRadio",xmlRadio);
+	connect(xmlRadio,SIGNAL(toggled(bool)),this, SLOT(radioChanged(bool)));
+	layout->addWidget(xmlRadio);
+
+	saveLabel = new QLabel(tr("Please choose XML Filename to save results as:"));
+	layout->addWidget(saveLabel);
+
+	xmlFileCombo = new QComboBox();
+	xmlFileCombo->addItem(tr(""));
+	xmlFileCombo->addItem(tr("Browse..."));
+	registerField("save.xmlFile",xmlFileCombo,"currentText", SIGNAL(currentIndexChanged(QString)));
+	connect(xmlFileCombo, SIGNAL(currentIndexChanged(QString)),this,SLOT(SaveAsBrowse(QString)));
+	layout->addWidget(xmlFileCombo);
+
+	setLayout(layout);
+
+	xmlRadio->setChecked(true);
+	saved = false;
+}
+
+void SavePage::radioChanged(bool val)
+{
+	if(val == true)
+	{
+		xmlFileCombo->setEnabled(true);
+		if( xmlFileCombo->currentText() != "" )
+			//wizard()->button(QWizard::CustomButton1)->setVisible(true);
+			emit readyToSave(true);
+		else
+			emit readyToSave(false);
+			//wizard()->button(QWizard::CustomButton1)->setVisible(false);
+	}
+	else
+	{
+		xmlFileCombo->setEnabled(false);
+		emit readyToSave(true);
+		//wizard()->button(QWizard::CustomButton1)->setVisible(true);
+	}
+}
+
+bool SavePage::isComplete() const
+{
+	if(saved)
+		return true;
+	else
+		return false;
+}
+
+void SavePage::ImagesSaved(bool s)
+{
+	saved = s;
+	emit completeChanged();
+}
+
+void SavePage::SaveAsBrowse(QString comboSelection)
+{
+	//First check to see if we have selected browse
+	if (comboSelection != tr("Browse..."))
+		return;
+
+	QString newfilename  = QFileDialog::getSaveFileName(this,"Choose an XML File",lastPath, 
+			tr("XML Files (*.xml)\n"));
+
+	if (newfilename == "")
+	{
+		xmlFileCombo->setCurrentIndex(0);
+		return;
+	}
+
+	if( newfilename == xmlFileCombo->currentText() )
+		return;
+
+	lastPath = QFileInfo(newfilename).absolutePath();
+	xmlFileCombo->setItemText(0,newfilename);
+	xmlFileCombo->setCurrentIndex(0);
+	emit readyToSave(true);
 }

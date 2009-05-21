@@ -4,7 +4,8 @@
 //QT INCLUDES
 #include <QtGui/QWizard>
 #include <QtGui/QLabel>
-//#include <QtGui/QCheckBox>
+#include <QtGui/QCheckBox>
+#include <QtGui/QRadioButton>
 #include <QtGui/QVBoxLayout>
 #include <QtGui/QComboBox>
 #include <QtGui/QFileDialog>
@@ -25,7 +26,7 @@ class NuclearSegmentationWizard : public QWizard
     Q_OBJECT;
 
 public:
-	enum { Page_Input, Page_Parameters, Page_Binarize, Page_Seeds, Page_Cluster, Page_Finalize, Page_Exit };
+	enum { Page_Input, Page_Parameters, Page_Binarize, Page_Seeds, Page_Cluster, Page_Finalize, Page_Save };
 
     NuclearSegmentationWizard(QWidget *parent = 0); 
 
@@ -39,6 +40,7 @@ protected:
 	
 private slots:
 	void executeNextStep(int whichButton);
+	void updateExeButton(bool val);
 
 private:
 	ftk::NuclearSegmentation *seg;
@@ -90,6 +92,7 @@ public slots:
 private:
 	SegmentationWindow *sWin;
 	bool hasImage;
+	QCheckBox *jumpBox;
 
 };
 
@@ -104,6 +107,7 @@ public slots:
 private:
 	SegmentationWindow *sWin;
 	bool hasImage;
+	QCheckBox *jumpBox;
 };
 
 class ClusterPage : public QWizardPage
@@ -117,6 +121,7 @@ public slots:
 private:
 	SegmentationWindow *sWin;
 	bool hasImage;
+	QCheckBox *jumpBox;
 };
 
 class FinalizePage : public QWizardPage
@@ -132,14 +137,26 @@ private:
 	bool hasImage;
 };
 
-class ExitPage : public QWizardPage
+class SavePage : public QWizardPage
 {
 	Q_OBJECT;
 public:
-	ExitPage(QWidget *parent = 0){};
-	//bool isComplete() const;
+	SavePage(QWidget *parent = 0);
+	bool isComplete() const;
 public slots:
+	void ImagesSaved(bool s);
+	void SaveAsBrowse(QString);
+	void radioChanged(bool);
+signals:
+	void readyToSave(bool val);
 private:
+	QLabel *topLabel;
+	QRadioButton *imageOnlyRadio;
+	QRadioButton *xmlRadio;
+	QLabel *saveLabel;
+	QComboBox *xmlFileCombo;
+	bool saved;
+	QString lastPath;
 };
 
 #endif
