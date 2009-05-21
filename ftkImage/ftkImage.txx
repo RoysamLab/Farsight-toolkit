@@ -24,13 +24,17 @@ template <typename pixelType> pixelType * Image::GetSlicePtr(int T, int CH, int 
 	if( mode == RELEASE_CONTROL)
 		return NULL;
 
+	int numPix = (m_Info.numColumns)*(m_Info.numRows);
 	pixelType * stack = static_cast<pixelType *>(imageDataPtrs[T][CH].mem);
-	pixelType * slice = stack + Z*(m_Info.numColumns)*(m_Info.numRows);
+	pixelType * slice = stack + Z*numPix;
 	pixelType * mem;
 	if( mode == DEEP_COPY)
 	{
-		mem = new pixelType[m_Info.numColumns*m_Info.numRows];
-		memcpy(mem, slice, m_Info.numColumns*m_Info.numRows);
+		//mem = new pixelType[m_Info.numColumns*m_Info.numRows];
+		mem = (pixelType*)malloc(numPix * m_Info.bytesPerPix);
+		if(mem == NULL)
+			return (pixelType *)NULL;
+		memcpy(mem, slice, numPix * m_Info.bytesPerPix);
 	}
 	else
 	{
@@ -73,7 +77,10 @@ template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::
 	void * mem = NULL;	//This will point to the data I want to create the array from;
 	if(makeCopy)		//Make a copy of the data	
 	{
-		mem = (void *)new unsigned char[numBytes];
+		//mem = (void *)new unsigned char[numBytes];
+		mem = malloc(numBytes);
+		if(mem == NULL)
+			return NULL;
 		memcpy(mem,imageDataPtrs[T][CH].mem,numBytes);
 	}
 	else
@@ -155,7 +162,10 @@ template <typename newType> void Image::Cast()
 			//char *p = static_cast<char *>(imageDataPtrs[t][ch].mem);	//any 8-bit type works here
 			
 			//Create a new array of the new type to put data into
-			newType *newArray = new newType[numBytes];
+			//newType *newArray = new newType[numBytes];
+			newType *newArray = (newType *)malloc(numBytes);
+			if(newArray == NULL)
+				return;
 			
 			for(int k=0; k<z; ++k)
 			{
@@ -168,7 +178,8 @@ template <typename newType> void Image::Cast()
 					}
 				}
 			}
-			delete[] imageDataPtrs[t][ch].mem;
+			//delete[] imageDataPtrs[t][ch].mem;
+			free( imageDataPtrs[t][ch].mem );
 			imageDataPtrs[t][ch].mem = (void *)newArray;
 			
 		}	//end channels loop
@@ -436,7 +447,11 @@ template< typename TComp, unsigned int channels > void Image::LoadImageITK(std::
 	{
 		for(int c=0; c<m_Info.numChannels; ++c)
 		{
-			block.mem = (void *)(new TComp[numBytesPerChunk]);
+			//block.mem = (void *)(new TComp[numBytesPerChunk]);
+			void * mem = malloc(numBytesPerChunk);
+			if(mem == NULL)
+				return;
+			block.mem = mem;
 			imageDataPtrs[t].push_back(block);
 		}
 	}

@@ -56,8 +56,9 @@ void Image::DeleteData()
 		{
 			if(imageDataPtrs[i][j].manager == FTK)
 			{
-				void *mem = imageDataPtrs[i][j].mem;
-				delete[] mem;
+				//void *mem = imageDataPtrs[i][j].mem;
+				//delete[] mem;
+				free( imageDataPtrs[i][j].mem );
 			}
 		}
 	}
@@ -261,7 +262,10 @@ bool Image::LoadLSMImage( std::string fileName )
 
 			//Get a scalar pointer to the image data and copy it
 			void * p = vimdata->GetScalarPointer();
-			void * mem = new unsigned char [numBytes];
+			//void * mem = new unsigned char [numBytes];
+			void * mem = malloc(numBytes);
+			if(mem == NULL)
+				return false;
 			memcpy(mem, p,numBytes);
 			ImageMemoryBlock block;
 			block.manager = FTK;
@@ -310,8 +314,11 @@ void * Image::GetDataPtr(int T, int CH, PtrMode mode)
 	}
 	else if(mode == DEEP_COPY)
 	{
-		int numBytes = m_Info.numColumns * m_Info.numRows * m_Info.numZSlices * m_Info.bytesPerPix;
-		mem = (void *)new unsigned char[numBytes];
+		int numBytes = m_Info.BytesPerChunk();
+		//mem = (void *)new unsigned char[numBytes];
+		mem = malloc( numBytes );
+		if(mem == NULL)
+			return (void *)NULL;
 		memcpy(mem,imageDataPtrs[T][CH].mem,numBytes);
 	}
 	return mem;
@@ -441,7 +448,8 @@ bool Image::AppendChannelFromData3D(void *dptr, DataType dataType, int bpPix, in
 	block.manager = FTK;
 	if(copy)
 	{
-		unsigned char *imgdata = new unsigned char[zs*cs*rs*bpPix];
+		//unsigned char *imgdata = new unsigned char[zs*cs*rs*bpPix];
+		void *imgdata = malloc(zs*cs*rs*bpPix);
 		if(!imgdata) return false;
 		memcpy(imgdata,dptr,zs*cs*rs*bpPix);
 		block.mem = imgdata;
@@ -595,7 +603,10 @@ vtkSmartPointer<vtkDataArray> Image::GetVtkDataArray(int T, int CH, bool makeCop
 	void * mem = NULL;	//This will point to the data I want to create the array from;
 	if(makeCopy)		//Make a copy of the data	
 	{
-		mem = (void *)new unsigned char[numBytes];
+		//mem = (void *)new unsigned char[numBytes];
+		mem = malloc(numBytes);
+		if(mem == NULL)
+			return NULL;
 		memcpy(mem,imageDataPtrs[T][CH].mem,numBytes);
 		vtkManageMemory = true;
 	}
