@@ -118,7 +118,7 @@ protected:
 private:
 	int gapTol;
 	int gapMax;
-	float smallLine;
+	int smallLine;
 	float lineWidth;
 	double SelectColor;
 

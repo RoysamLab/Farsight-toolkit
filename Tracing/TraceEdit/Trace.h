@@ -124,6 +124,7 @@ public:
   void FixPointMarkers(TraceLine* tline);
   void mergeTraces(unsigned long long int eMarker, unsigned long long int sMarker);
 	void CreatePolyDataRecursive(TraceLine* , vtkSmartPointer<vtkFloatArray> , vtkSmartPointer<vtkPoints> ,vtkSmartPointer<vtkCellArray>);
+	void FindMinLines(int smallSize);
 	vtkSmartPointer<vtkPolyData> GetVTKPolyData();
 	vtkSmartPointer<vtkPolyData> generateBranchIllustrator();
 	void Print(std::ostream &c)
@@ -137,7 +138,7 @@ public:
 	}
 	std::vector<TraceBit> CollectTraceBits();
 	std::vector<TraceLine*>* GetTraceLinesPointer(){ return &trace_lines;}
-	std::vector<TraceLine*> changeList;
+	std::vector<TraceLine*> SmallLines;
   vtksys::hash_map< unsigned int, unsigned long long int > hashp;
   vtksys::hash_map< unsigned int, unsigned long long int > hashc;
 private:

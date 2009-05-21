@@ -322,7 +322,9 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
       break;
 
 	  case 'a':
-      //???
+		  std::cout<<"select small lines\n";
+		  view->tobj->FindMinLines(view->smallLine);
+		  view->Rerender();
 	    break;
 
     case '-':
@@ -675,7 +677,7 @@ bool View3D::setTol()
 	}
 	return change;
 }
-void   View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata)
+void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata)
 { /*  PickPoint allows fot the point id and coordinates to be returned 
   as well as adding a marker on the last picked point
   R_click to select point on line  */
@@ -713,7 +715,9 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 {
 	unsigned int i,j, exist = 0;
 	std::vector<compTrace> compList;
-
+	QLabel *MergeInfo = new QLabel();
+	QString text;
+	text+="Number of traces:\t";	text+=QString::number(traceList.size());
 	for (i=0;i<traceList.size()-1; i++)
 	  {
 		for (j=i+1; j<traceList.size(); j++)
@@ -726,7 +730,7 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 			if(!(newComp.dist>newComp.Trace1->GetSize()/gapTol) &&
          !(newComp.dist>newComp.Trace2->GetSize()/gapTol))
 			  {
-				std::cout<<"added comparison\n";
+				//text+="added comparison\n";
 				compList.push_back(newComp);
 			  }
 			/*else
@@ -737,7 +741,9 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 				<<" is too large \n";
 			}*/			
 		  }
-  	}
+	}
+	text+="\tNumber of comparisons:\t";
+	text+=QString::number(compList.size());	text+="\n";
 	if (compList.size() >= 1)
 	  {
 		i = 0, j = 0;
@@ -751,10 +757,10 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 				  {
 					if (compList[i].endPT1==compList[j].endPT1)
 					  {
-						cout << "Conflict " << compList[i].Trace1->GetId() << " to " 
-                 << compList[i].Trace2->GetId() << " and "
-                 << compList[j].Trace1->GetId() << " to "
-                 << compList[j].Trace2->GetId() << endl;
+						text+="Conflict:\t";	text+=QString::number(compList[i].Trace1->GetId());
+						text+="\tto\t";			text+=QString::number(compList[i].Trace2->GetId());
+						text+="\tand\t";		text+=QString::number(compList[j].Trace1->GetId());
+						text+="\tto\t";			text+=QString::number(compList[j].Trace2->GetId());	
 						exist = 1;
             }
 			  	}
@@ -762,10 +768,10 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 				  {
 					if (compList[i].endPT1==compList[j].endPT2)
 					  {
-						cout << "Conflict " << compList[i].Trace1->GetId() << " to "
-                 << compList[i].Trace2->GetId() << " and "
-                 << compList[j].Trace1->GetId() << " to "
-                 << compList[j].Trace2->GetId() << endl;
+						text+="Conflict:\t";	text+=QString::number(compList[i].Trace1->GetId());
+						text+="\tto\t";			text+=QString::number(compList[i].Trace2->GetId());
+						text+="\tand\t";		text+=QString::number(compList[j].Trace1->GetId());
+						text+="\tto\t";			text+=QString::number(compList[j].Trace2->GetId());	
 						exist = 1;
             }
 				  }
@@ -773,10 +779,10 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
   				{
 					if (compList[i].endPT2==compList[j].endPT1)
 					  {
-						cout <<  "Conflict " << compList[i].Trace1->GetId() << " to "
-                 << compList[i].Trace2->GetId() << " and "
-                 << compList[j].Trace1->GetId() << " to "
-                 << compList[j].Trace2->GetId() << endl;
+						text+="Conflict:\t";	text+=QString::number(compList[i].Trace1->GetId());
+						text+="\tto\t";			text+=QString::number(compList[i].Trace2->GetId());
+						text+="\tand\t";		text+=QString::number(compList[j].Trace1->GetId());
+						text+="\tto\t";			text+=QString::number(compList[j].Trace2->GetId());						
 						exist = 1;
             }
 				  }
@@ -784,10 +790,10 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 				  {
 					if (compList[i].endPT2==compList[j].endPT2)
 				  	{
-						cout <<  "Conflict " << compList[i].Trace1->GetId() << " to "
-                 << compList[i].Trace2->GetId() << " and "
-                 << compList[j].Trace1->GetId() << " to "
-                 << compList[j].Trace2->GetId() << endl;
+						text+="Conflict:\t";	text+=QString::number(compList[i].Trace1->GetId());
+						text+="\tto\t";			text+=QString::number(compList[i].Trace2->GetId());
+						text+="\tand\t";		text+=QString::number(compList[j].Trace1->GetId());
+						text+="\tto\t";			text+=QString::number(compList[j].Trace2->GetId());
 						exist = 1;
             }
 				  }
@@ -796,13 +802,13 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 			  {
 				if (compList[i].dist<compList[j].dist)
 				  {
-          compList.erase(compList.begin()+j);
-          }
+				  compList.erase(compList.begin()+j);
+				  }
 				else
 				  {
-          compList.erase(compList.begin()+i);
-          }
-				std::cout<<"Conflict resolved"<< std::endl;
+				  compList.erase(compList.begin()+i);
+				  }
+				text+="\nConflict resolved.\n";
 				j=i;
 			  }
 			else
@@ -811,32 +817,44 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 				j=i;
 		  	}
 	  	}
-		cout << "trace size " << traceList.size()
-         << "\tNumber of computed distances\t" << compList.size() << endl;
+		
+		text+= "\nTrace size:\t";  
+		text+=QString::number(traceList.size());
+		text+="\tNumber of computed distances:\t";
+		text+=QString::number(compList.size());
 		for (i=0;i<compList.size(); i++)
-  		{
-			cout << "Trace\t" << compList[i].Trace1->GetId()
-           << "\t compared to trace\t" << compList[i].Trace2->GetId() 
-				   << " gap size of:\t" << compList[i].dist << " endpts "
-           << compList[i].endPT1 << " and " << compList[i].endPT2 << endl;
+		{			
 			if (compList[i].dist<= gapMax/gapTol)
 		  	{
+				text+= "\nTrace\t" ;
+				text+=QString::number(compList[i].Trace1->GetId());
+				text+= "\t compared to trace\t";
+				text+=QString::number(compList[i].Trace2->GetId() );
+				text+="\tgap size of:\t";
+				text+=QString::number(compList[i].dist); 
+				text+="\tendpts\t";
+				text+=QString::number(compList[i].endPT1); 
+				text+="\tand\t"; 
+				text+= QString::number(compList[i].endPT2);
 				tobj->mergeTraces(compList[i].endPT1,compList[i].endPT2);
 		  	}
 			else if(compList[i].dist<= gapMax)
 		  	{
 				char ans;
 				cout << "Distance of: " << compList[i].dist << " is greater than: "
-             << gapMax/gapTol << " Merge y\\n\?";
+					 << gapMax/gapTol   << " Merge y\\n\?";
 				cin >> ans;
 				if (ans=='y')
 			  	{
 					tobj->mergeTraces(compList[i].endPT1,compList[i].endPT2);
-				  }
-			  }
+				}
+			 }
 		  }//send to merge
+		MergeInfo->setText(text);
+		MergeInfo->show();
 	  }
 }
+
 
 void View3D::HighlightSelected(TraceLine* tline, double color)
 {

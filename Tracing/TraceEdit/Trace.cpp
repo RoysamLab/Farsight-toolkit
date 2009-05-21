@@ -1068,3 +1068,19 @@ void TraceObject::RemoveTraceLine(TraceLine *tline)
 //printf("Quitting RemoveTraceLine\n");
 }
 
+void TraceObject::FindMinLines(int smallSize)
+{
+	std::cout<< "finding small lines\n";
+	TraceLine *tline;
+	std::vector<TraceLine*>::iterator iter = trace_lines.begin();
+	while(iter!=trace_lines.end())
+	{
+		tline=*iter;
+		if(smallSize == tline->GetSize())
+		{
+			tline->setTraceColor(.3);
+			SmallLines.push_back(tline);
+		}
+		++iter;
+	}
+}
