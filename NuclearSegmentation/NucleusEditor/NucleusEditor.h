@@ -20,6 +20,7 @@
 #include "ftkImage/ftkImage.h"
 #include "SegmentationModel.h"
 #include "SegmentationWindow.h"
+#include "NuclearSegmentationWizard.h"
 #include "ftkGUI/TableWindow.h"
 #include "ftkGUI/PlotWindow.h"
 
@@ -36,6 +37,7 @@ protected:
 private slots:
 	void loadResult(void);
 	void saveResult(void);
+	void segmentImage(void);
 	void about(void);
 
 	//void closeWidget(QWidget *);
@@ -61,6 +63,7 @@ private:
 	QMenu *fileMenu;
 	QAction *saveAction;
 	QAction *xmlAction;
+	QAction *segmentAction;
 	QAction *exitAction;
 
 	QMenu *viewMenu;

@@ -18,7 +18,7 @@ OPTION( BUILD_TRACING "Build Tracing Tools" ON )
 OPTION( BUILD_NUCLEI "Build Nuclear Segmentation" ON )
 OPTION( BUILD_VESSEL "Build Vessel Surface Segmentation" ON )
 OPTION( BUILD_REGISTRATION "Build Image Registration (fregl)" ON )
-OPTION( BUILD_BIONET "Build Bionet" ON )
+OPTION( BUILD_BIONET "Build Bionet" OFF )
 
 OPTION( WRAP_PYTHON "Wrap Farsight in Python" OFF )
 MARK_AS_ADVANCED(WRAP_PYTHON)

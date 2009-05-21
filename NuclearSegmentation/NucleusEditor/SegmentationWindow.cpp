@@ -172,27 +172,34 @@ void SegmentationWindow::SetModels(SegmentationModel *sModel)
 //void SegmentationWindow::AddChannelImage( QString &fileName )
 void SegmentationWindow::SetChannelImage(ftk::Image::Pointer image)
 {
-	if (!image)
-		return;
-
-	const ftk::Image::Info *info = image->GetImageInfo();
-
-	if( numZSlices != (*info).numZSlices )
+	ftk::Image::Info info;
+	if(!image)
 	{
-		this->resize((*info).numColumns+60,(*info).numRows+85); 
-		numZSlices = (*info).numZSlices;
+		info.numZSlices = 0;
+		info.numTSlices = 0;
+		info.numChannels = 0;
+	}
+	else
+	{
+		info = *(image->GetImageInfo());
+	}
+
+	if( numZSlices != info.numZSlices )
+	{
+		//this->resize((*info).numColumns+60,(*info).numRows+85); 
+		numZSlices = info.numZSlices;
 		updateVSlider();
 	}
 	
-	if( numTSlices != (*info).numTSlices )
+	if( numTSlices != info.numTSlices )
 	{
-		numTSlices = (*info).numTSlices;
+		numTSlices = info.numTSlices;
 		updateHSlider();
 	}
 
-	if (numChannels != (*info).numChannels )
+	if (numChannels != info.numChannels )
 	{
-		numChannels = (*info).numChannels;
+		numChannels = info.numChannels;
 		if (numChannels > 1)
 		{
 			createChannelWindow(image);
@@ -216,23 +223,30 @@ void SegmentationWindow::SetChannelImage(ftk::Image::Pointer image)
 //void SegmentationWindow::AddLabelImage( QString &fileName )
 void SegmentationWindow::SetLabelImage( ftk::Image::Pointer image)
 {
+	ftk::Image::Info info;
 	if(!image)
-		return;
-
-	const ftk::Image::Info *info = image->GetImageInfo();
+	{
+		info.numZSlices = 0;
+		info.numTSlices = 0;
+		info.numChannels = 0;
+	}
+	else
+	{
+		info = *(image->GetImageInfo());
+	}
 
 	if(!(segview->getChannelImage()))
 	{
-		this->resize( (*info).numColumns+60, (*info).numRows+85);
+		//this->resize( (*info).numColumns+60, (*info).numRows+85);
 		
-		if ( numZSlices != (*info).numZSlices )
+		if ( numZSlices != info.numZSlices )
 		{
-			numZSlices = (*info).numZSlices;
+			numZSlices = info.numZSlices;
 			updateVSlider();
 		}
-		if (numTSlices != (*info).numTSlices )
+		if (numTSlices != info.numTSlices )
 		{
-			numTSlices = (*info).numTSlices;
+			numTSlices = info.numTSlices;
 			updateHSlider();
 		}
 	}

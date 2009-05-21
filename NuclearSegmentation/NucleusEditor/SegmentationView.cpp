@@ -569,7 +569,10 @@ void SegmentationView::paintEvent(QPaintEvent *event)
 void SegmentationView::refreshDisplayImage()
 {
 	if (totalWidth == 0 || totalHeight == 0)
+	{
+		displayImage.fill(0);
 		return;
+	}
 
 	//displayImage = QImage(channelImg->NumColumns(),channelImg->NumRows(),QImage::Format_ARGB32);
 	displayImage = QImage(totalWidth,totalHeight,QImage::Format_ARGB32);
@@ -638,7 +641,7 @@ void SegmentationView::drawBoundaries(QPainter *painter)
 		for(int j=1; j < w-1; j++)
 		{
 			v = (int)labelImg->GetPixel(0, 0, currentZ, i, j);
-			if (v != 0)
+			if (v > 0)
 			{
 				v1 = (int)labelImg->GetPixel(0, 0, currentZ, i, j+1);
 				v2 = (int)labelImg->GetPixel(0, 0, currentZ, i+1, j);
@@ -763,7 +766,17 @@ bool SegmentationView::itemInRowIsSelected(int row)
 void SegmentationView::setChannelImage(ftk::Image::Pointer img)
 {	
 	if(!img)
+	{
+		channelImg = NULL;
+		if(!labelImg)
+		{
+			totalWidth = 0;
+			totalHeight = 0;
+		}
+		update();
+		refreshDisplayImage();
 		return;
+	}
 
 	const ftk::Image::Info *info = img->GetImageInfo();
 
@@ -791,7 +804,17 @@ void SegmentationView::setChannelImage(ftk::Image::Pointer img)
 void SegmentationView::setLabelImage(ftk::Image::Pointer img)
 {
 	if(!img)
+	{
+		labelImg = NULL;
+		if(!channelImg)
+		{
+			totalWidth = 0;
+			totalHeight = 0;
+		}
+		update();
+		refreshDisplayImage();
 		return;
+	}
 
 	const ftk::Image::Info *info = img->GetImageInfo();
 

@@ -74,6 +74,11 @@ void NucleusEditor::createMenus()
 	connect(xmlAction,SIGNAL(triggered()), this, SLOT(loadResult()));
 	fileMenu->addAction(xmlAction);
 
+	segmentAction = new QAction(tr("Segment Image..."), this);
+	segmentAction->setStatusTip(tr("Starts the Nuclear Segmenation Wizard"));
+	connect(segmentAction,SIGNAL(triggered()),this,SLOT(segmentImage()));
+	fileMenu->addAction(segmentAction);
+
 	saveAction = new QAction(tr("Save Result"), this);
 	saveAction->setStatusTip(tr("Save Changes (Edits, etc)"));
 	saveAction->setShortcut(tr("Ctrl+S"));
@@ -235,6 +240,12 @@ void NucleusEditor::loadResult(void)
 	this->setCentralWidget(segWin);
 	this->show();
 	//segwin->show();
+}
+
+void NucleusEditor::segmentImage()
+{
+	NuclearSegmentationWizard *wizard = new NuclearSegmentationWizard(this);
+	wizard->show();
 }
 
 //******************************************************************************

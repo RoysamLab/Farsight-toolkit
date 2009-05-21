@@ -41,8 +41,8 @@ public:
 	bool DetectSeeds();											//If binarization has been done it will detect seeds
 	bool RunClustering();										//Will use binary image and seeds to do initial clustering
 	bool Finalize();											//Will finilize the output using alpha expansion
+	bool GetResultImage();										//Gets the result of last module and puts it in labelImage
 	bool SaveOutput();											//Save the output of the last step executed (image format)
-	bool HarvestLabelImage();									//This will get the label Image and delete the segmenation module
 	//Segmentation is basically done at this point (hopefully), now move on to calculating the features and classification:
 	bool LabelsToObjects(void);									//Will compute Intrinsic Features and create objects from the data and results images
 	bool LoadAssociationsFromFile(std::string fName);			//Add the Associative Features to the objects
@@ -69,6 +69,8 @@ public:
 	bool editsNotSaved;				//Will be true if edits have been made and not saved to file.
 
 	std::string GetErrorMessage() { return errorMessage; };
+	std::string GetDataFilename() { return dataFilename; };
+	std::string GetParamFilename() { return paramFilename; };
 
 	std::vector<Object>* GetObjectsPtr(){ return &myObjects; };	//Use pointer
 	Object* GetObjectPtr(int id);

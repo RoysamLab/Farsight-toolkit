@@ -2,16 +2,16 @@ SET( NucluesEditor_SRCS
 	NucleusEditor.cpp
     	SegmentationView.cpp
     	SegmentationWindow.cpp
-   	 #ModuleWidget.cpp
     	SegmentationModel.cpp
+   	NuclearSegmentationWizard.cpp
 )
 
 SET( NucluesEditor_HDRS
 	NucleusEditor.h
     	SegmentationView.h
     	SegmentationWindow.h
-    	#ModuleWidget.h
     	SegmentationModel.h
+    	NuclearSegmentationWizard.h
 )
 
 SET( NucluesEditor_UIS

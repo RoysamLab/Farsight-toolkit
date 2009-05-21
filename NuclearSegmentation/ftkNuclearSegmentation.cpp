@@ -46,8 +46,11 @@ NuclearSegmentation::NuclearSegmentation()
 //*************************************************************************************************************
 bool NuclearSegmentation::SetInputs(std::string datafile, std::string paramfile)
 {
-	if( this->dataFilename.compare(datafile) != 0 )	//The names do not match so clear things and start over:
+	if( this->dataFilename.compare(datafile) != 0 ||
+		this->paramFilename.compare(paramfile) != 0 )	//The names do not match so clear things and start over:
 	{
+		this->dataFilename.clear();
+		this->paramFilename.clear();
 		dataImage = 0;
 		if(NucleusSeg)
 		{
@@ -128,6 +131,9 @@ bool NuclearSegmentation::Binarize()
 	NucleusSeg->setDataImage( dptr, numColumns, numRows, numStacks, dataFilename.c_str() );
 	NucleusSeg->runBinarization();
 	lastRunStep = 1;
+
+	//Get the output
+	GetResultImage();
 	return true;
 }
 
@@ -140,6 +146,7 @@ bool NuclearSegmentation::DetectSeeds()
 	}
 	NucleusSeg->runSeedDetection();
 	lastRunStep = 2;
+	GetResultImage();
 	return true;
 }
 
@@ -152,6 +159,7 @@ bool NuclearSegmentation::RunClustering()
 	}
 	NucleusSeg->runClustering();
 	lastRunStep = 3;
+	GetResultImage();
 	return true;
 }
 
@@ -164,42 +172,38 @@ bool NuclearSegmentation::Finalize()
 	}
 	NucleusSeg->runAlphaExpansion3D();
 	lastRunStep = 4;
+	GetResultImage();
 	return true;
 }
 
-bool NuclearSegmentation::SaveOutput()
+bool NuclearSegmentation::GetResultImage()
 {
 	if(!NucleusSeg)
 	{
-		errorMessage = "Nothing To Save";
+		errorMessage = "Nothing To Get";
 		return false;
 	}
 
 	vector<int> size = NucleusSeg->getImageSize();
 	int *dptr = NULL;
-	std::string tag;
 
 	switch(lastRunStep)
 	{
 	case 0:
-		errorMessage = "Nothing To Save";
+		errorMessage = "Nothing To Get";
 		return false;
 		break;
 	case 1:
 		dptr = NucleusSeg->getBinImage();
-		tag = "_bin";
 		break;
 	case 2:	//Seeds:
 		dptr = NucleusSeg->getSeedImage();
-		tag = "_seed";
 		break;
 	case 3:
 		dptr = NucleusSeg->getClustImage();
-		tag = "_label";
 		break;
 	case 4:
 		dptr = NucleusSeg->getSegImage();
-		tag = "_label";
 		break;
 	}
 
@@ -207,44 +211,50 @@ bool NuclearSegmentation::SaveOutput()
 	{
 		std::vector<unsigned char> color;
 		color.assign(3,255);
-		ftk::Image::Pointer rImage = ftk::Image::New();
-		rImage->AppendChannelFromData3D(dptr, itk::ImageIOBase::INT, sizeof(int), size[2], size[1], size[0], "gray", color, true);
-		size_t pos = dataFilename.find_last_of(".");
-		std::string base = dataFilename.substr(0,pos);
-		std::string ext = dataFilename.substr(pos);
-		rImage->SaveChannelAs(0, base + tag, ext );
-		rImage=0;
+		if(labelImage)
+			labelImage = 0;
+		labelImage = ftk::Image::New();
+		labelImage->AppendChannelFromData3D(dptr, itk::ImageIOBase::INT, sizeof(int), size[2], size[1], size[0], "gray", color, true);
+		labelImage->Cast<unsigned short>();
 	}
 	return true;
 }
 
-bool NuclearSegmentation::HarvestLabelImage()
+bool NuclearSegmentation::SaveOutput()
 {
-	if(!NucleusSeg)
+	if(!NucleusSeg || !labelImage)
 	{
-		errorMessage = "No Segmentation";
+		errorMessage = "Nothing To Save";
 		return false;
 	}
 
-	vector<int> size = NucleusSeg->getImageSize();
-	int *dptr = NULL;
-	if(lastRunStep = 3)
-		dptr = NucleusSeg->getClustImage();
-	else if(lastRunStep = 4)
-		dptr = NucleusSeg->getSegImage();
+	std::string tag;
 
-	std::vector<unsigned char> color;
-	color.assign(3,255);
-		
-	if(labelImage)
-		labelImage = 0;
-	labelImage = ftk::Image::New();
-	labelImage->AppendChannelFromData3D(dptr, itk::ImageIOBase::INT, sizeof(int), size[2], size[1], size[0], "gray", color, true);
-	labelImage->Cast<unsigned short>();
+	switch(lastRunStep)
+	{
+	case 1:
+		tag = "_bin";
+		break;
+	case 2:	//Seeds:
+		tag = "_seed";
+		break;
+	case 3:
+		tag = "_label";
+		break;
+	case 4:
+		tag = "_label";
+		break;
+	default:
+		errorMessage = "Nothing To Save";
+		return false;
+		break;
+	}
 
-	delete NucleusSeg;
-	NucleusSeg = 0;
-	lastRunStep = 0;
+	size_t pos = dataFilename.find_last_of(".");
+	std::string base = dataFilename.substr(0,pos);
+	std::string ext = dataFilename.substr(pos);
+	labelImage->SaveChannelAs(0, base + tag, ext );
+
 	return true;
 }
 
