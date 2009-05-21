@@ -322,9 +322,10 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
       break;
 
 	  case 'a':
-		  std::cout<<"select small lines\n";
+		  view->SLine();
+		  /*std::cout<<"select small lines\n";
 		  view->tobj->FindMinLines(view->smallLine);
-		  view->Rerender();
+		  view->Rerender();*/
 	    break;
 
     case '-':
@@ -347,7 +348,34 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
       break;
     }
 }
-
+void View3D::SLine()
+{
+	int numLines, i;
+	QLabel *SmallLines = new QLabel();
+	QString text;
+	text +="Select small lines.\n";
+	this->tobj->FindMinLines(this->smallLine);
+	numLines= this->tobj->SmallLines.size();
+	text += "Number of selected small lines:\t" + QString::number(numLines) + "\n";
+	this->Rerender();
+	SmallLines->setText(text);
+	SmallLines->show();
+	//Temporary delete call
+	char ans;
+	std::cout << "Delete Small Lines y\\n\?";
+	std::cin >> ans;
+	if (ans=='y')
+  	{
+		for (i=0;i<numLines-1;i++)
+		{	
+			//std::cout << "Deleted line:" << i<< std::endl;					
+			//this->tobj->SmallLines[i]->Getstats();
+			this->tobj->RemoveTraceLine(this->tobj->SmallLines[i]);
+		}
+		this->tobj->SmallLines.clear();
+	}
+	this->Rerender();
+}
 void View3D::Rerender()
 {
   this->SphereActor->VisibilityOff();
@@ -742,10 +770,11 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 			}*/			
 		  }
 	}
-	text+="\tNumber of comparisons:\t";
-	text+=QString::number(compList.size());	text+="\n";
+	
 	if (compList.size() >= 1)
 	  {
+		text+="\tNumber of comparisons:\t";
+		text+=QString::number(compList.size());	text+="\n";
 		i = 0, j = 0;
 		while (i < compList.size() -1)
 		  {
@@ -850,9 +879,14 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 				}
 			 }
 		  }//send to merge
-		MergeInfo->setText(text);
-		MergeInfo->show();
+
 	  }
+	else
+	{
+		text+= "\nNo merges possible, set higher tolerances\n"; 
+	}
+	MergeInfo->setText(text);
+	MergeInfo->show();
 }
 
 

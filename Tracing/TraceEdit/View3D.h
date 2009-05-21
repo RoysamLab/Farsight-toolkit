@@ -92,6 +92,7 @@ public:
   void HighlightSelected(TraceLine* tline, double SelectColor);
 	void DeleteTrace(TraceLine *tline);
 	void MinEndPoints(std::vector<TraceLine*> traceList);
+	void SLine();
 	void readImg(char* sourceFile);
 	void rayCast(char* raySource);
 
