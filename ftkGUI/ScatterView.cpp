@@ -821,15 +821,18 @@ void ScatterView::drawCurves(QPainter *painter)
 		rectangles[row] = QRect(x-2,y-2,5,5);
 
 		QColor myColor;
-		if (colorMap.size() == 0)
+		int numColors = colorMap.size();
+		if (numColors == 0)
 			myColor = Qt::cyan;
 		else
 			myColor = colorMap.value(c);
 
 		if ( itemInRowIsSelected(row) )
 		{
-			painter->setPen(myColor);
-			painter->setBrush(QBrush(Qt::black,Qt::SolidPattern));
+			painter->setBrush(QBrush(Qt::yellow,Qt::SolidPattern));
+			//painter->setPen(Qt::black);
+			//painter->setPen(myColor);
+			painter->setPen(Qt::yellow);
 		}
 		else
 		{
@@ -845,7 +848,7 @@ void ScatterView::drawCurves(QPainter *painter)
 //**************************************************************************************
 QMap<int, QColor> ScatterView::GetDefaultColors()
 {
-	QColor defaultColor[6]  = {Qt::yellow, Qt::magenta, Qt::red, Qt::cyan, Qt::blue, Qt::green};
+	QColor defaultColor[5]  = {Qt::magenta, Qt::red, Qt::cyan, Qt::blue, Qt::green}; //Yellow is reserved for selections!!!!
 
 	QMap<int, QColor> classColors;
 
@@ -874,8 +877,8 @@ QMap<int, QColor> ScatterView::GetDefaultColors()
 		if(!found)
 		{
 			classId.push_back(clss);
-			if(classId.size() >= 6)
-				break;
+			//if(classId.size() >= 6)
+				//break;
 		}
 	}
 	
@@ -883,7 +886,8 @@ QMap<int, QColor> ScatterView::GetDefaultColors()
 	classColors.clear();
 	for(unsigned int c=0; c<classId.size(); ++c)
 	{
-		classColors.insert(classId[c],defaultColor[c]);
+		int v = 4 - c%5;
+		classColors.insert(classId[c],defaultColor[v]);
 	}
 
 	return classColors;

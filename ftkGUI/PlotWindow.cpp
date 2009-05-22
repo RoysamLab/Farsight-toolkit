@@ -81,6 +81,10 @@ void PlotWindow::updateOptionMenus()
 	yMenu->clear();
 	colorMenu->clear();
 
+	QActionGroup *xGroup = new QActionGroup(this);
+	QActionGroup *yGroup = new QActionGroup(this);
+	QActionGroup *cGroup = new QActionGroup(this);
+
 	for (int c=0; c<model->columnCount(); ++c)
 	{
 		QString name = model->headerData(c,Qt::Horizontal).toString();
@@ -95,8 +99,11 @@ void PlotWindow::updateOptionMenus()
 		cAct->setCheckable(true);
 
 		xMenu->addAction(xAct);
+		xGroup->addAction(xAct);
 		yMenu->addAction(yAct);
+		yGroup->addAction(yAct);
 		colorMenu->addAction(cAct);
+		cGroup->addAction(cAct);
 
 		if(c==0)
 			xChange(xAct);

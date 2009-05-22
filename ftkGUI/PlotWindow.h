@@ -15,6 +15,7 @@
 #include <QtGui/QCloseEvent>
 #include <QtGui/QMenuBar>
 #include <QtGui/QMenu>
+#include <QtGui/QActionGroup>
 
 #include "ScatterView.h"
 
