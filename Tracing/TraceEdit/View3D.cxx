@@ -48,7 +48,7 @@ View3D::View3D(int argc, char **argv)
 	  }
   this->QVTK = 0;
 	this->gapTol = 2;
-	this->gapMax = 30;
+	this->gapMax = 15;
 	this->smallLine = 5;
 	this->SelectColor =.3;
 	this->lineWidth= 2;
@@ -476,7 +476,9 @@ void View3D::MergeTraces()
     }
   else
     {
-    std::cout<<  "Nothing to merge \n";
+    //std::cout<<  "Nothing to merge \n";
+		this->MinEndPoints(this->tobj->GetTraceLines());
+		this->Rerender();
     }
 }
 
@@ -853,7 +855,7 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 		text+=QString::number(compList.size());
 		for (i=0;i<compList.size(); i++)
 		{			
-			if (compList[i].dist<= gapMax/gapTol)
+			if (compList[i].dist<= gapMax )
 		  	{
 				text+= "\nTrace\t" ;
 				text+=QString::number(compList[i].Trace1->GetId());
@@ -867,7 +869,7 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 				text+= QString::number(compList[i].endPT2);
 				tobj->mergeTraces(compList[i].endPT1,compList[i].endPT2);
 		  	}
-			else if(compList[i].dist<= gapMax)
+			/*else if(compList[i].dist<= gapMax + gapMax/gapTol)
 		  	{
 				char ans;
 				cout << "Distance of: " << compList[i].dist << " is greater than: "
@@ -877,7 +879,7 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 			  	{
 					tobj->mergeTraces(compList[i].endPT1,compList[i].endPT2);
 				}
-			 }
+			 }*/
 		  }//send to merge
 
 	  }

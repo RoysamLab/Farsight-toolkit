@@ -72,31 +72,34 @@ class View3D : public QWidget
 {
 Q_OBJECT;
 public:
-  View3D(int argc, char **argv);
-  ~View3D();
-  void Initialize();
-  void CreateGUIObjects();
-  void CreateLayout();
-  void CreateInteractorStyle();
-  void CreateActors();
-  void UpdateLineActor();
+View3D(int argc, char **argv);
+~View3D();
+	void Initialize();
+	void CreateGUIObjects();
+	void CreateLayout();
+	void CreateInteractorStyle();
+	void CreateActors();
+	void UpdateLineActor();
 	void UpdateBranchActor();
-  void CreateSphereActor();
-  bool setTol();
+	void CreateSphereActor();
+	
 	void AddPointsAsPoints (std::vector<TraceBit> vec);
 	void AddVolumeSliders();
 	void AddContourThresholdSliders();
 	void AddPlaybackWidget(char*);
-	static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
-	static void HandleKeyPress(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
-  void HighlightSelected(TraceLine* tline, double SelectColor);
-	void DeleteTrace(TraceLine *tline);
-	void MinEndPoints(std::vector<TraceLine*> traceList);
-	void SLine();
 	void readImg(char* sourceFile);
 	void rayCast(char* raySource);
 
-  //todo: make these private with accessors
+	static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
+	static void HandleKeyPress(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
+
+	void HighlightSelected(TraceLine* tline, double SelectColor);
+	void DeleteTrace(TraceLine *tline);
+	void MinEndPoints(std::vector<TraceLine*> traceList);
+	void SLine();
+
+	bool setTol();
+	//todo: make these private with accessors
 	vtkSmartPointer<vtkRenderer> Renderer;
 	vtkSmartPointer<vtkActor> BranchActor;
 

@@ -138,6 +138,7 @@ public:
 	}
 	std::vector<TraceBit> CollectTraceBits();
 	std::vector<TraceLine*>* GetTraceLinesPointer(){ return &trace_lines;}
+	std::vector<TraceLine*> GetTraceLines(){ return trace_lines;}
 	std::vector<TraceLine*> SmallLines;
   vtksys::hash_map< unsigned int, unsigned long long int > hashp;
   vtksys::hash_map< unsigned int, unsigned long long int > hashc;
