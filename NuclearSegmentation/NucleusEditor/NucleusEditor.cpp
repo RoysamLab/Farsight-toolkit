@@ -14,7 +14,8 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 
 	setWindowTitle(tr("Nucleus Editor"));
 
-	segResult = NULL;
+	segResult = new ftk::NuclearSegmentation();
+	segWin = new SegmentationWindow();
 	currentModel = NULL;
 
 	lastPath = ".";
@@ -69,27 +70,37 @@ void NucleusEditor::createMenus()
 	//FIRST HANDLE FILE MENU
 	fileMenu = menuBar()->addMenu(tr("&File"));
 
+	loadAction = new QAction(tr("Load Image..."), this);
+	loadAction->setStatusTip(tr("Load an image into the 5D image browser"));
+	connect(loadAction, SIGNAL(triggered()), this, SLOT(loadImage()));
+	fileMenu->addAction(loadAction);
+
+	fileMenu->addSeparator();
+
+	segmentAction = new QAction(tr("Start Segmentation Wizard..."), this);
+	segmentAction->setStatusTip(tr("Starts the Nuclear Segmenation Wizard"));
+	connect(segmentAction,SIGNAL(triggered()),this,SLOT(segmentImage()));
+	fileMenu->addAction(segmentAction);
+
+	fileMenu->addSeparator();
+
 	xmlAction = new QAction(tr("Load Result..."), this);
 	xmlAction->setStatusTip(tr("Open an XML result file"));
 	connect(xmlAction,SIGNAL(triggered()), this, SLOT(loadResult()));
 	fileMenu->addAction(xmlAction);
 
-	segmentAction = new QAction(tr("Segment Image..."), this);
-	segmentAction->setStatusTip(tr("Starts the Nuclear Segmenation Wizard"));
-	connect(segmentAction,SIGNAL(triggered()),this,SLOT(segmentImage()));
-	fileMenu->addAction(segmentAction);
-
-	saveAction = new QAction(tr("Save Result"), this);
+	saveAction = new QAction(tr("Save Result As..."), this);
 	saveAction->setStatusTip(tr("Save Changes (Edits, etc)"));
 	saveAction->setShortcut(tr("Ctrl+S"));
 	connect(saveAction, SIGNAL(triggered()), this, SLOT(saveResult()));
 	fileMenu->addAction(saveAction);
 
+	fileMenu->addSeparator();
+
     exitAction = new QAction(tr("Exit"), this);
     exitAction->setShortcut(tr("Ctrl+Q"));
     exitAction->setStatusTip(tr("Exit the application"));
     connect(exitAction, SIGNAL(triggered()), this, SLOT(close()));
-	fileMenu->addSeparator();
     fileMenu->addAction(exitAction);
 
 	//VIEW MENU
@@ -143,7 +154,11 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 
 			if(button == QMessageBox::Yes)
 			{
-				this->saveResult();
+				if(	!this->saveResult()	)
+				{
+					event->ignore();
+					return;
+				}
 			}
 		}
 	}
@@ -164,16 +179,27 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 	event->accept();
 } 
 
-void NucleusEditor::saveResult()
+bool NucleusEditor::saveResult()
 {
 	if(segResult)
 	{
+		QString name = QFileDialog::getSaveFileName(this, tr("Save File As"), lastPath, tr("XML (*.xml)") );
+		if(name == "")
+		{
+			return false;
+		}
+		else
+		{
+			segResult->WriteToXML( name.toStdString() );
+		}
+
 		if(segResult->editsNotSaved)
 		{
-			segResult->WriteToXML( QFileDialog::getSaveFileName(this, tr("Save File As"), lastPath, tr("XML (*.xml)") ).toStdString() );
 			segResult->SaveLabel();
 		}
+		
 	}
+	return true;
 }
 
 //***************************************************************************
@@ -182,6 +208,14 @@ void NucleusEditor::saveResult()
 //***************************************************************************
 void NucleusEditor::clearModel(void)
 {
+	for(unsigned int p=0; p<pltWin.size(); ++p)
+		(pltWin.at(p))->close();
+	for(unsigned int p=0; p<tblWin.size(); ++p)
+		(tblWin.at(p))->close();
+
+	pltWin.clear();
+	tblWin.clear();
+
 	if(currentModel)
 	{
 		delete currentModel;
@@ -219,10 +253,6 @@ void NucleusEditor::loadResult(void)
 	QString name = QFileInfo(filename).baseName();
 
 	lastPath = path;
-
-	//Load up a generic segmentationResult and display it!
-	//segResult = new ftk::SegmentationResult( path.toStdString(), name.toStdString() );
-	segResult = new ftk::NuclearSegmentation();
 	
 	if ( !segResult->RestoreFromXML(filename.toStdString()) )
 	{
@@ -234,18 +264,44 @@ void NucleusEditor::loadResult(void)
 	newModel();
 	CreateNewTableWindow();
 	CreateNewPlotWindow();
-	segWin = CreateNewSegmentationWindow();
+	segWin->SetModels(currentModel);
 	segWin->SetChannelImage(segResult->getDataImage());
 	segWin->SetLabelImage(segResult->getLabelImage());
-	this->setCentralWidget(segWin);
-	this->show();
-	//segwin->show();
+	if( this->centralWidget() != this->segWin )
+		this->setCentralWidget(segWin);
+
+	this->update();
 }
 
 void NucleusEditor::segmentImage()
 {
-	NuclearSegmentationWizard *wizard = new NuclearSegmentationWizard(this);
-	wizard->show();
+	if(currentModel)
+		clearModel();
+
+	NuclearSegmentationWizard *wizard = new NuclearSegmentationWizard();
+	wizard->setParent(NULL);
+	this->setCentralWidget(wizard);
+	//wizard->show();
+}
+
+void NucleusEditor::loadImage()
+{
+	QString fileName = QFileDialog::getOpenFileName(
+                             this, "Select file to open", lastPath,
+                             tr("Images (*.tif *.tiff *.pic *.png *.jpg *.lsm)\n"
+							    "All Files (*.*)"));
+
+    if(fileName == "")
+		return;
+
+	if(currentModel)
+		clearModel();
+
+	lastPath = QFileInfo(fileName).absolutePath();
+
+	ImageBrowser5D *browse = new ImageBrowser5D(fileName);
+	this->setCentralWidget(browse);
+	//browse->show();
 }
 
 //******************************************************************************
@@ -271,18 +327,4 @@ void NucleusEditor::CreateNewTableWindow(void)
 	tblWin.push_back(new TableWindow(currentModel->GetSelectionModel()));
 	tblWin.back()->ResizeToOptimalSize();
 	tblWin.back()->show();
-}
-
-//******************************************************************************
-// Create a new segmentation window.  Shows Images and Segmentation results.
-//******************************************************************************
-SegmentationWindow* NucleusEditor::CreateNewSegmentationWindow(void)
-{
-	SegmentationWindow *sWin = new SegmentationWindow();
-	sWin->setWindowTitle(tr("Segmentation Results Viewer"));
-	
-	if(currentModel)
-		sWin->SetModels(currentModel);
-
-	return sWin;
 }

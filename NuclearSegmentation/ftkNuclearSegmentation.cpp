@@ -71,11 +71,11 @@ bool NuclearSegmentation::SetInputs(std::string datafile, std::string paramfile)
 //***********************************************************************************************************
 bool NuclearSegmentation::LoadData()
 {
-	if(dataImage)
-	{
-		errorMessage = "Data already loaded";
-		return false;
-	}
+	//if(dataImage)
+	//{
+	//	errorMessage = "Data already loaded";
+	//	return false;
+	//}
 
 	dataImage = ftk::Image::New();
 	if(!dataImage->LoadFile(dataFilename))	//Load for display
@@ -92,11 +92,11 @@ bool NuclearSegmentation::LoadData()
 //***********************************************************************************************************
 bool NuclearSegmentation::LoadLabel()
 {
-	if(labelImage)
-	{
-		errorMessage = "Label already loaded";
-		return false;
-	}
+	//if(labelImage)
+	//{
+	//	errorMessage = "Label already loaded";
+	//	return false;
+	//}
 
 	labelImage = ftk::Image::New();
 	if(!labelImage->LoadFile(labelFilename))	//Load for display
@@ -105,6 +105,7 @@ bool NuclearSegmentation::LoadLabel()
 		labelImage = 0;
 		return false;
 	}
+	editsNotSaved = false;
 	return true;
 }
 
@@ -255,6 +256,7 @@ bool NuclearSegmentation::SaveOutput()
 	std::string base = dataFilename.substr(0,pos);
 	std::string ext = dataFilename.substr(pos);
 	labelImage->SaveChannelAs(0, base + tag, ext );
+	editsNotSaved = false;
 
 	return true;
 }
@@ -761,6 +763,7 @@ bool NuclearSegmentation::SaveLabelByClass()
 		writer = 0;
 	}
 
+	editsNotSaved = false;
 	return true;
 	
 }
@@ -787,6 +790,7 @@ bool NuclearSegmentation::SaveLabel()
 	if(NucleusSeg)
 		NucleusSeg->saveIntoIDLFormat(base);
 
+	editsNotSaved = false;
 	return true;
 }
 
@@ -1303,6 +1307,7 @@ bool NuclearSegmentation::RestoreFromXML(std::string filename)
 	myParameters.clear();
 	myObjects.clear();
 	featureNames.clear();
+	IdToIndexMap.clear();
 
 	size_t pos = filename.find_last_of("/\\");
 	std::string path = filename.substr(0,pos);
@@ -1373,6 +1378,7 @@ bool NuclearSegmentation::RestoreFromXML(std::string filename)
 	if(!LoadLabel())
 		return false;
 
+	editsNotSaved = false;
 	return true;
 }
 
@@ -1589,11 +1595,15 @@ bool NuclearSegmentation::WriteToXML(std::string filename)
 	root->LinkEndChild( comment );  
  
 	TiXmlElement * dfile = new TiXmlElement("datafile");
-	dfile->LinkEndChild( new TiXmlText( dataFilename.c_str() ) );
+	size_t pos1 = dataFilename.find_last_of("/\\");
+	std::string dName = dataFilename.substr(pos1+1);
+	dfile->LinkEndChild( new TiXmlText( dName.c_str() ) );
 	root->LinkEndChild(dfile);
 
 	TiXmlElement *rfile = new TiXmlElement("resultfile");
-	rfile->LinkEndChild( new TiXmlText( labelFilename.c_str() ) );
+	size_t pos2 = labelFilename.find_last_of("/\\");
+	std::string lName = labelFilename.substr(pos2+1);
+	rfile->LinkEndChild( new TiXmlText( lName.c_str() ) );
 	root->LinkEndChild(rfile);
 
 	//Attach parameters

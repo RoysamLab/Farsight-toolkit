@@ -207,7 +207,7 @@ int SegmentationModel::RowForID(int id)
 void SegmentationModel::deleteTrigger()
 {
 	//Extract a list of IDs
-	QModelIndexList selIndices = selectionModel->selectedIndexes();
+	QModelIndexList selIndices = selectionModel->selectedRows();
 	vector<int> ids(0);
 	QString idlist;
 	for (int selIndex = 0; selIndex < selIndices.size(); ++selIndex) 
@@ -230,7 +230,6 @@ void SegmentationModel::deleteTrigger()
 	if(button != QMessageBox::Yes)
 		return;
 
-#ifdef BUILD_NUCLEI
 	ftk::NuclearSegmentation *nucseg = (ftk::NuclearSegmentation*)segResult;
 	//Attempt Delete:
 	if( nucseg->Delete(ids) )
@@ -248,7 +247,6 @@ void SegmentationModel::deleteTrigger()
 		}
 	}
 	emit modelChanged();
-#endif
 
 }
 
@@ -256,7 +254,7 @@ void SegmentationModel::deleteTrigger()
 void SegmentationModel::mergeTrigger()
 {
 	//Extract a list of IDs
-	QModelIndexList selIndices = selectionModel->selectedIndexes();
+	QModelIndexList selIndices = selectionModel->selectedRows();
 	vector< vector<int> > ids(0);
 	QString idlist(0);
 	for (int selIndex = 0; selIndex < selIndices.size(); ++selIndex) 
@@ -309,7 +307,6 @@ void SegmentationModel::mergeTrigger()
 	if(button != QMessageBox::Yes)
 		return;
 
-#ifdef BUILD_NUCLEI
 	ftk::NuclearSegmentation *nucseg = (ftk::NuclearSegmentation*)segResult;
 	//Attempt Merge:
 	for(unsigned int group = 0; group < ids.size(); ++group)
@@ -347,7 +344,6 @@ void SegmentationModel::mergeTrigger()
 	}
 	UpdateColors();
 	emit modelChanged();
-#endif
 
 }
 

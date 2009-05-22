@@ -20,8 +20,10 @@ ScatterView::ScatterView(QWidget *parent) : QAbstractItemView(parent)
 	//setSelectionMode(QAbstractItemView::SingleSelection);
 
 	//Set Defaults
-	columnNumForX = 1;
-	columnNumForY = 2;
+	columnNumForX = -1;
+	columnNameForX = "x";
+	columnNumForY = -1;
+	columnNameForY = "y";
 	columnNumForColoring = -1;
 
 	mySettings = new PlotSettings();
@@ -36,11 +38,12 @@ ScatterView::ScatterView(QWidget *parent) : QAbstractItemView(parent)
 //********************************************************************************************
 // SLOT
 //********************************************************************************************
-void ScatterView::SetColForX(int x)
+void ScatterView::SetColForX(int x, std::string name)
 { 
-	if (x > 0 && x < model()->columnCount())
+	if (x >= 0 && x < model()->columnCount())
 	{
-		columnNumForX = x; 
+		columnNumForX = x;
+		columnNameForX = name;
 		updateAxis();
 		viewport()->update();
 	}
@@ -48,11 +51,12 @@ void ScatterView::SetColForX(int x)
 //********************************************************************************************
 // SLOT
 //********************************************************************************************
-void ScatterView::SetColForY(int y)
+void ScatterView::SetColForY(int y, std::string name)
 { 
-	if (y > 0 && y < model()->columnCount())
+	if (y >= 0 && y < model()->columnCount())
 	{
-		columnNumForY = y; 
+		columnNumForY = y;
+		columnNameForY = name;
 		updateAxis();
 		viewport()->update();
 	}
@@ -62,7 +66,7 @@ void ScatterView::SetColForY(int y)
 //********************************************************************************************
 void ScatterView::SetColForColor(int c, QMap<int, QColor>  newMap)
 { 
-	if (c > 0 && c < model()->columnCount())
+	if (c >= 0 && c < model()->columnCount())
 	{
 		columnNumForColoring = c;
 		colorMap = newMap;
@@ -71,7 +75,7 @@ void ScatterView::SetColForColor(int c, QMap<int, QColor>  newMap)
 }
 void ScatterView::SetColForColor(int c)
 {
-	if (c > 0 && c < model()->columnCount())
+	if (c >= 0 && c < model()->columnCount())
 	{
 		columnNumForColoring = c;
 		colorMap = GetDefaultColors();
@@ -237,10 +241,19 @@ void ScatterView::dataChanged()
 void ScatterView::setModel(QAbstractItemModel *model)
 {
 	QAbstractItemView::setModel(model);
+	initColumns();
 	updateAxis();
 	viewport()->update();
 }
 
+void ScatterView::initColumns()
+{
+	columnNumForX = 0;
+	columnNameForX = (model()->headerData(0,Qt::Horizontal).toString()).toStdString();
+	columnNumForY = 1;
+	columnNameForY = (model()->headerData(1, Qt::Horizontal).toString()).toStdString();
+	columnNumForColoring = -1;
+}
 //*********************************************************************************************************
 // Find the maximum and minimum values of the data points and update the axis to show all data
 //*********************************************************************************************************
@@ -764,10 +777,12 @@ void ScatterView::drawGrid(QPainter *painter)
 	painter->drawRect(rect.adjusted(0, 0, -1, -1));
 	
 	//Now draw the labels for the x and y axis:
-	painter->drawText(rect.left(),rect.bottom() + 20, rect.width(), 20, Qt::AlignHCenter, QString("XXXXXXXXXXXXX"));
+	//painter->drawText(rect.left(),rect.bottom() + 20, rect.width(), 20, Qt::AlignHCenter, QString("XXXXXXXXXXXXX"));
+	painter->drawText(rect.left(),rect.bottom() + 20, rect.width(), 20, Qt::AlignHCenter, QString::fromStdString(columnNameForX));
 	painter->save();
 	painter->rotate(-90);
-	painter->drawText(-1*rect.bottom(), rect.top() - TMargin, rect.height(), 20, Qt::AlignHCenter, QString("YYYYYYYYYYYYYYYYYYY"));
+	//painter->drawText(-1*rect.bottom(), rect.top() - TMargin, rect.height(), 20, Qt::AlignHCenter, QString("YYYYYYYYYYYYYYYYYYY"));
+	painter->drawText(-1*rect.bottom(), rect.top() - TMargin, rect.height(), 20, Qt::AlignHCenter, QString::fromStdString(columnNameForY));
 	painter->restore();
 }
 

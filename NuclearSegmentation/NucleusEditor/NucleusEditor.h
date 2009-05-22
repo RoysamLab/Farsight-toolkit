@@ -23,6 +23,7 @@
 #include "NuclearSegmentationWizard.h"
 #include "ftkGUI/TableWindow.h"
 #include "ftkGUI/PlotWindow.h"
+#include "ftkGUI/ImageBrowser5D.h"
 
 class NucleusEditor : public QMainWindow
 {
@@ -35,15 +36,15 @@ protected:
 	void closeEvent(QCloseEvent *event);
 
 private slots:
+	void loadImage(void);
 	void loadResult(void);
-	void saveResult(void);
+	bool saveResult(void);
 	void segmentImage(void);
 	void about(void);
 
 	//void closeWidget(QWidget *);
 	void CreateNewPlotWindow();
 	void CreateNewTableWindow();
-	SegmentationWindow* CreateNewSegmentationWindow(void);
 
 signals:
     
@@ -53,14 +54,15 @@ private:
 	void clearModel();
 	void newModel();
 
-	vector<PlotWindow *> pltWin;
-	vector<TableWindow *> tblWin;
+	std::vector<PlotWindow *> pltWin;
+	std::vector<TableWindow *> tblWin;
 	SegmentationWindow *segWin;
 
 	ftk::Image::Pointer NewFTKImage(std::vector<std::string> filenames);
 	ftk::Image::Pointer NewFTKImage(std::string filename);
 
 	QMenu *fileMenu;
+	QAction *loadAction;
 	QAction *saveAction;
 	QAction *xmlAction;
 	QAction *segmentAction;

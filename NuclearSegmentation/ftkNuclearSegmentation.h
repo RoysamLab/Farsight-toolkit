@@ -58,7 +58,7 @@ public:
 	bool RestoreFromXML(std::string filename);					//Complete Restore from XML file
 	bool LoadLabel();											//Load just the label image if the filename is already known
 	bool LoadFromImages(std::string dfile, std::string rfile);	//Load from images -> then convert to objects
-	bool LoadFromDAT(std::string dfile, std::string rfile);		//Load from .dat -> then convert to objects
+	//bool LoadFromDAT(std::string dfile, std::string rfile);		//Load from .dat -> then convert to objects
 	bool LoadFromMETA(std::string META_file, std::string header_file, std::string data_file, std::string label_file);
 
 	//Editing Functions  

@@ -48,8 +48,8 @@ public:
     QModelIndex indexAt(const QPoint &point) const;
 
 public slots:
-	void SetColForX(int x);
-	void SetColForY(int y);
+	void SetColForX(int x, std::string name);
+	void SetColForY(int y, std::string name);
 	void SetColForColor(int c);
 	void SetColForColor(int c, QMap<int, QColor>  newMap);
 	void SetColorMap(QMap<int, QColor> map){ colorMap = map; };
@@ -97,11 +97,14 @@ private:
 	QMap<int, QColor> GetDefaultColors();
 	void drawSelection(QPainter *painter);
 	bool itemInRowIsSelected(int row);
+	void initColumns();
 	void updateAxis();
 	enum {LMargin = 60, BMargin = 35, RMargin = 20, TMargin = 20};
 
 	int columnNumForX;
+	std::string columnNameForX;
 	int columnNumForY;
+	std::string columnNameForY;
 	int columnNumForColoring;
 	QMap<int, QColor> colorMap;
 

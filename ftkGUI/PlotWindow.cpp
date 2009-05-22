@@ -9,7 +9,7 @@
 #include <float.h>
 //Constructor
 PlotWindow::PlotWindow(QItemSelectionModel *mod, QWidget *parent)
-: QWidget(parent)
+: QMainWindow(parent)
 {
 	this->setupUI();
 
@@ -17,40 +17,31 @@ PlotWindow::PlotWindow(QItemSelectionModel *mod, QWidget *parent)
 	this->scatter->setSelectionModel(mod);
 
 	//this->scatter->SetColForColor(resultModel->ColumnForColor(), resultModel->ColorMap());
-	this->updateCombos();
+	this->updateOptionMenus();
 }
 
 void PlotWindow::setupUI(void)
 {
 	resize(500, 500);
 
-	comboX = new QComboBox();
-	comboY = new QComboBox();
-    scatter = new ScatterView();
-	vlayout = new QVBoxLayout();
-	hlayout = new QHBoxLayout();
+	//Setup menu:
+	optionsMenu = menuBar()->addMenu(tr("&Options"));
+	xMenu = new QMenu(tr("Set X Axis"));
+	connect(xMenu, SIGNAL(triggered(QAction *)), this, SLOT(xChange(QAction *)));
+	optionsMenu->addMenu(xMenu);
+	yMenu = new QMenu(tr("Set Y Axis"));
+	connect(yMenu, SIGNAL(triggered(QAction *)), this, SLOT(yChange(QAction *)));
+	optionsMenu->addMenu(yMenu);
+	colorMenu = new QMenu(tr("Set Color Column"));
+	connect(colorMenu, SIGNAL(triggered(QAction *)), this, SLOT(colorChange(QAction *)));
+	optionsMenu->addMenu(colorMenu);
 
-	ylabel = new QLabel("y: ");
-	xlabel = new QLabel("x: ");
-
-	hlayout->addStretch(10);
-	hlayout->addWidget(ylabel);
-	hlayout->addWidget(comboY);
-	hlayout->addStretch(50);
-	hlayout->addWidget(xlabel);
-	hlayout->addWidget(comboX);
-	hlayout->addStretch(50);
-
+	QWidget *centralWidget = new QWidget();
+	QVBoxLayout *vlayout = new QVBoxLayout();
+	scatter = new ScatterView();
 	vlayout->addWidget(scatter);
-	vlayout->addLayout(hlayout);
-	setLayout(vlayout);
-
-	comboX->setCurrentIndex(1);
-	comboY->setCurrentIndex(2);
-	connect(comboX, SIGNAL(currentIndexChanged(int)),this,SLOT(comboXChange(int)));
-	connect(comboY, SIGNAL(currentIndexChanged(int)),this,SLOT(comboYChange(int)));
-	comboX->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-	comboY->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+	centralWidget->setLayout(vlayout);
+	this->setCentralWidget(centralWidget);
 
 	setWindowTitle(tr("Scatter Plot"));
 	setAttribute ( Qt::WA_DeleteOnClose );
@@ -62,39 +53,58 @@ void PlotWindow::closeEvent(QCloseEvent *event)
 	event->accept();
 }
 
-void PlotWindow::updateColumnForColor()
+void PlotWindow::xChange(QAction *action)
 {
-	//scatter->SetColForColor(resultModel->ColumnForColor(), resultModel->ColorMap());
+	scatter->SetColForX(action->toolTip().toInt(), action->text().toStdString());
+	action->setChecked(true);
 }
 
-void PlotWindow::comboXChange(int c)
+void PlotWindow::yChange(QAction *action)
 {
-	scatter->SetColForX(c+1);
+	scatter->SetColForY(action->toolTip().toInt(), action->text().toStdString());
+	action->setChecked(true);
 }
 
-void PlotWindow::comboYChange(int c)
+void PlotWindow::colorChange(QAction *action)
 {
-	scatter->SetColForY(c+1);
+	scatter->SetColForColor( action->toolTip().toInt() );
+	action->setChecked(true);
 }
 
-void PlotWindow::updateCombos()
+void PlotWindow::updateOptionMenus()
 {
 	//QStandardItemModel *model = resultModel->GetModel();
 	QAbstractItemModel *model = scatter->model();
 
-	//Setup x/y combos
-	comboX->clear();
-	comboY->clear();
-	//for (int c = 1; c <= resultModel->NumFeatures(); ++c )
-	for (int c=1; c<=model->columnCount()-1; ++c)
+	//Add a new Action for each column for each menu item:
+	xMenu->clear();
+	yMenu->clear();
+	colorMenu->clear();
+
+	for (int c=0; c<model->columnCount(); ++c)
 	{
-		comboX->addItem(model->headerData(c,Qt::Horizontal).toString());
-		comboY->addItem(model->headerData(c,Qt::Horizontal).toString());
+		QString name = model->headerData(c,Qt::Horizontal).toString();
+		QAction *xAct = new QAction( name, this );
+		xAct->setToolTip( QString::number(c) );
+		xAct->setCheckable(true);
+		QAction *yAct = new QAction( name, this );
+		yAct->setToolTip( QString::number(c) );
+		yAct->setCheckable(true);
+		QAction *cAct = new QAction( name, this );
+		cAct->setToolTip( QString::number(c) );
+		cAct->setCheckable(true);
+
+		xMenu->addAction(xAct);
+		yMenu->addAction(yAct);
+		colorMenu->addAction(cAct);
+
+		if(c==0)
+			xChange(xAct);
+		if(c==1)
+			yChange(yAct);
+		if(name == "class")
+			colorChange(cAct);
 	}
-	scatter->SetColForX(1);
-	scatter->SetColForY(2);
-	comboX->setCurrentIndex(0);
-	comboY->setCurrentIndex(1);
 }
 
 

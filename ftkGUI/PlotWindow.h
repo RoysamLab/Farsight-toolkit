@@ -13,18 +13,20 @@
 #include <QtGui/QLabel>
 #include <QtGui/QPushButton>
 #include <QtGui/QCloseEvent>
+#include <QtGui/QMenuBar>
+#include <QtGui/QMenu>
 
 #include "ScatterView.h"
 
-class PlotWindow : public QWidget
+//class PlotWindow : public QWidget
+class PlotWindow : public QMainWindow
 {
     Q_OBJECT;
 
 public:
 	//PlotWindow(QWidget *parent = 0);
 	//PlotWindow(SegmentationModel *rModel, QWidget *parent = 0);
-	PlotWindow(QItemSelectionModel *mod, QWidget *parent = 0);
-	void updateCombos(void); 
+	PlotWindow(QItemSelectionModel *mod, QWidget *parent = 0); 
 
 signals:
 	void closing(QWidget *widget);
@@ -34,22 +36,20 @@ protected:
 	//void keyPressEvent(QKeyEvent *event);
 
 private slots:
-	void comboXChange(int c);
-	void comboYChange(int c);
-	void updateColumnForColor();
+	void xChange(QAction *action);
+	void yChange(QAction *action);
+	void colorChange(QAction *action);
     
 private:
+	QMenu *optionsMenu;
+	QMenu *xMenu;
+	QMenu *yMenu;
+	QMenu *colorMenu;
+
 	ScatterView *scatter;
 
-	QHBoxLayout *hlayout;
-	QVBoxLayout *vlayout;
-	QLabel *xlabel;
-	QLabel *ylabel;
-	QComboBox *comboX;
-	QComboBox *comboY;
-
 	void setupUI(void);	//for initial setup
-
+	void updateOptionMenus(void);
  };
 
 #endif
