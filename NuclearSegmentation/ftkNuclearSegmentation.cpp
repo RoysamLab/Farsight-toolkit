@@ -12,6 +12,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <stdio.h>
 
 #include "yousef_core/graphColLearn_3D/sequential_coloring.cpp"
 
@@ -1196,7 +1197,7 @@ bool NuclearSegmentation::RunGraphColoring(std::string labelname, std::string fi
 	
 	if(fp == NULL)
 	{
-		fprintf(stderr,"can't open %s for writing\n",filename);
+		fprintf(stderr,"can't open %s for writing\n",filename.c_str());
 		exit(1);
 	}
 	for(int i=0; i<max_lab; i++)

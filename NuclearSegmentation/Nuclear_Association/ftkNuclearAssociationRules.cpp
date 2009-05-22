@@ -213,7 +213,7 @@ float NuclearAssociationRules::ComputeOneAssocMeasurement(itk::SmartPointer<Targ
 	int counter_ot = 0;
 	while ( ! iterator3.IsAtEnd())
 	{
-		int V = iterator3.Get();
+		int V = (int)iterator3.Get();
 		if(V<0)
 			counter_in++;
 		if(V==0)

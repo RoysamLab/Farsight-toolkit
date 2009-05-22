@@ -825,7 +825,7 @@ double Image::GetPixel(int T, int CH, int Z, int R, int C)
 {
 	if( T >= m_Info.numTSlices || CH >= m_Info.numChannels || Z >= m_Info.numZSlices \
 		|| R >= m_Info.numRows || C >= m_Info.numColumns )
-		return NULL;
+		return 0.0;
 
 	unsigned int x = m_Info.numColumns;
 	unsigned int y = m_Info.numRows;
