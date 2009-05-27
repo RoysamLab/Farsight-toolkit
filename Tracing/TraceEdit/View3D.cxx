@@ -351,28 +351,33 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
 void View3D::SLine()
 {
 	int numLines, i;
-	QLabel *SmallLines = new QLabel();
-	QString text;
-	text +="Select small lines.\n";
 	this->tobj->FindMinLines(this->smallLine);
 	numLines= this->tobj->SmallLines.size();
-	text += "Number of selected small lines:\t" + QString::number(numLines) + "\n";
 	this->Rerender();
-	SmallLines->setText(text);
-	SmallLines->show();
-	//Temporary delete call
-	char ans;
-	std::cout << "Delete Small Lines y\\n\?";
-	std::cin >> ans;
-	if (ans=='y')
-  	{
+	QMessageBox Myquestion;
+	Myquestion.setText("Number of selected small lines:  " 
+		+ QString::number(numLines));
+	Myquestion.setInformativeText("Delete these small lines?" );
+	Myquestion.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
+	Myquestion.setDefaultButton(QMessageBox::Yes);
+	int ret = Myquestion.exec();
+	switch (ret) 
+	{	
+	case QMessageBox::Yes:
+	{
 		for (i=0;i<numLines-1;i++)
-		{	
-			//std::cout << "Deleted line:" << i<< std::endl;					
+		{	//std::cout << "Deleted line:" << i<< std::endl;					
 			//this->tobj->SmallLines[i]->Getstats();
 			this->tobj->RemoveTraceLine(this->tobj->SmallLines[i]);
 		}
 		this->tobj->SmallLines.clear();
+	}
+	break;
+	case QMessageBox::No:
+	 {
+		 this->tobj->SmallLines.clear();
+	 }
+	 break;
 	}
 	this->Rerender();
 }
@@ -390,21 +395,21 @@ void View3D::Rerender()
 void View3D::ListSelections()
 {
   QLabel *selectionInfo = new QLabel();
-  QString text;
+  QString listText;
 
   if (this->IDList.size()<= 0)
     {
-    text = tr("No traces selected");
+    listText = tr("No traces selected");
     }
   else
     {
-    text += tr("These lines are selected:\n");
+    listText += QString::number(this->IDList.size()) + " lines are selected:\n";
     for (unsigned int i = 0; i < this->IDList.size(); i++)
       {
-      text += QString::number(this->IDList[i]) + "\n";   
+      listText += QString::number(this->IDList[i]) + "\n";   
       } 
     }
-  selectionInfo->setText(text);
+  selectionInfo->setText(listText);
   selectionInfo->show();
 }
 
@@ -450,7 +455,7 @@ void View3D::MergeTraces()
     int numTrace = this->IDList.size();		
     int i,j, s=0, exist =0;
     std::vector<TraceLine*> traceList;
-    std::cout<< "elements passed \t" << numTrace << std::endl;
+    //std::cout<< "elements passed \t" << numTrace << std::endl;
     for (i = 0;i<numTrace; i++)
       {
       traceList.push_back( reinterpret_cast<TraceLine*>(
@@ -540,7 +545,7 @@ void View3D::ApplyNewSettings()
   this->smallLine = this->LineLengthField->text().toFloat();
   this->SelectColor = this->ColorValueField->text().toDouble();
   this->lineWidth = this->LineWidthField->text().toFloat();
-  this->Rerender();
+  //this->Rerender();
   this->SettingsWidget->hide();
 }
 
@@ -743,11 +748,14 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
 
 void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 {
-	unsigned int i,j, exist = 0;
+	unsigned int i,j, exist = 0, conflict = 0;
 	std::vector<compTrace> compList;
-	QLabel *MergeInfo = new QLabel();
-	QString text;
-	text+="Number of traces:\t";	text+=QString::number(traceList.size());
+	//QLabel *MergeInfo = new QLabel();
+	QMessageBox *MergeInfo = new QMessageBox;
+	MergeInfo->setText("Merge Function");
+
+	QString myText;	QString dtext;
+	myText+="Number of traces:\t" + QString::number(traceList.size());
 	for (i=0;i<traceList.size()-1; i++)
 	  {
 		for (j=i+1; j<traceList.size(); j++)
@@ -760,7 +768,7 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 			if(!(newComp.dist>newComp.Trace1->GetSize()/gapTol) &&
          !(newComp.dist>newComp.Trace2->GetSize()/gapTol))
 			  {
-				//text+="added comparison\n";
+				//myText+="added comparison\n";
 				compList.push_back(newComp);
 			  }
 			/*else
@@ -775,8 +783,8 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 	
 	if (compList.size() >= 1)
 	  {
-		text+="\tNumber of comparisons:\t";
-		text+=QString::number(compList.size());	text+="\n";
+		myText+="\tNumber of comparisons:\t";
+		myText+=QString::number(compList.size());	myText+="\n";
 		i = 0, j = 0;
 		while (i < compList.size() -1)
 		  {
@@ -787,50 +795,51 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 				if (compList[i].Trace1->GetId()==compList[j].Trace1->GetId())
 				  {
 					if (compList[i].endPT1==compList[j].endPT1)
-					  {
-						text+="Conflict:\t";	text+=QString::number(compList[i].Trace1->GetId());
-						text+="\tto\t";			text+=QString::number(compList[i].Trace2->GetId());
-						text+="\tand\t";		text+=QString::number(compList[j].Trace1->GetId());
-						text+="\tto\t";			text+=QString::number(compList[j].Trace2->GetId());	
+					  {/*
+						myText+="Conflict:\t";	myText+=QString::number(compList[i].Trace1->GetId());
+						myText+="\tto\t";			myText+=QString::number(compList[i].Trace2->GetId());
+						myText+="\tand\t";		myText+=QString::number(compList[j].Trace1->GetId());
+						myText+="\tto\t";			myText+=QString::number(compList[j].Trace2->GetId());	*/
 						exist = 1;
             }
 			  	}
 				else if(compList[i].Trace1->GetId()==compList[j].Trace2->GetId())
 				  {
 					if (compList[i].endPT1==compList[j].endPT2)
-					  {
-						text+="Conflict:\t";	text+=QString::number(compList[i].Trace1->GetId());
-						text+="\tto\t";			text+=QString::number(compList[i].Trace2->GetId());
-						text+="\tand\t";		text+=QString::number(compList[j].Trace1->GetId());
-						text+="\tto\t";			text+=QString::number(compList[j].Trace2->GetId());	
+					  {/*
+						myText+="Conflict:\t";	myText+=QString::number(compList[i].Trace1->GetId());
+						myText+="\tto\t";			myText+=QString::number(compList[i].Trace2->GetId());
+						myText+="\tand\t";		myText+=QString::number(compList[j].Trace1->GetId());
+						myText+="\tto\t";			myText+=QString::number(compList[j].Trace2->GetId());	*/
 						exist = 1;
             }
 				  }
 				else if (compList[i].Trace2->GetId() == compList[j].Trace1->GetId())
   				{
 					if (compList[i].endPT2==compList[j].endPT1)
-					  {
-						text+="Conflict:\t";	text+=QString::number(compList[i].Trace1->GetId());
-						text+="\tto\t";			text+=QString::number(compList[i].Trace2->GetId());
-						text+="\tand\t";		text+=QString::number(compList[j].Trace1->GetId());
-						text+="\tto\t";			text+=QString::number(compList[j].Trace2->GetId());						
+					  {/*
+						myText+="Conflict:\t";	myText+=QString::number(compList[i].Trace1->GetId());
+						myText+="\tto\t";			myText+=QString::number(compList[i].Trace2->GetId());
+						myText+="\tand\t";		myText+=QString::number(compList[j].Trace1->GetId());
+						myText+="\tto\t";			myText+=QString::number(compList[j].Trace2->GetId());	*/					
 						exist = 1;
             }
 				  }
 				else if(compList[i].Trace2->GetId() == compList[j].Trace2->GetId())
 				  {
 					if (compList[i].endPT2==compList[j].endPT2)
-				  	{
-						text+="Conflict:\t";	text+=QString::number(compList[i].Trace1->GetId());
-						text+="\tto\t";			text+=QString::number(compList[i].Trace2->GetId());
-						text+="\tand\t";		text+=QString::number(compList[j].Trace1->GetId());
-						text+="\tto\t";			text+=QString::number(compList[j].Trace2->GetId());
+				  	{/*
+						myText+="Conflict:\t";	myText+=QString::number(compList[i].Trace1->GetId());
+						myText+="\tto\t";			myText+=QString::number(compList[i].Trace2->GetId());
+						myText+="\tand\t";		myText+=QString::number(compList[j].Trace1->GetId());
+						myText+="\tto\t";			myText+=QString::number(compList[j].Trace2->GetId());*/
 						exist = 1;
             }
 				  }
 			  }
 			if (exist == 1)
 			  {
+				++conflict;
 				if (compList[i].dist<compList[j].dist)
 				  {
 				  compList.erase(compList.begin()+j);
@@ -839,7 +848,7 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 				  {
 				  compList.erase(compList.begin()+i);
 				  }
-				text+="\nConflict resolved.\n";
+				//myText+="\nConflict resolved.\n";
 				j=i;
 			  }
 			else
@@ -848,25 +857,20 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 				j=i;
 		  	}
 	  	}
-		
-		text+= "\nTrace size:\t";  
-		text+=QString::number(traceList.size());
-		text+="\tNumber of computed distances:\t";
-		text+=QString::number(compList.size());
+		myText+="\nConflicts resolved:"+QString::number(conflict)+"\n";
+		myText+= "\nTrace size:\t";  
+		myText+=QString::number(traceList.size());
+		myText+="\tNumber of computed distances:\t";
+		myText+=QString::number(compList.size());
 		for (i=0;i<compList.size(); i++)
 		{			
 			if (compList[i].dist<= gapMax )
 		  	{
-				text+= "\nTrace\t" ;
-				text+=QString::number(compList[i].Trace1->GetId());
-				text+= "\t compared to trace\t";
-				text+=QString::number(compList[i].Trace2->GetId() );
-				text+="\tgap size of:\t";
-				text+=QString::number(compList[i].dist); 
-				text+="\tendpts\t";
-				text+=QString::number(compList[i].endPT1); 
-				text+="\tand\t"; 
-				text+= QString::number(compList[i].endPT2);
+				dtext+= "\nTrace " + QString::number(compList[i].Trace1->GetId());
+				dtext+= " compared to trace "+ QString::number(compList[i].Trace2->GetId() );
+				dtext+=" gap size of: " + QString::number(compList[i].dist); 
+				dtext+=" endpts " + QString::number(compList[i].endPT1); 
+				dtext+=" and " + QString::number(compList[i].endPT2);
 				tobj->mergeTraces(compList[i].endPT1,compList[i].endPT2);
 		  	}
 			/*else if(compList[i].dist<= gapMax + gapMax/gapTol)
@@ -885,9 +889,10 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 	  }
 	else
 	{
-		text+= "\nNo merges possible, set higher tolerances\n"; 
+		myText+= "\nNo merges possible, set higher tolerances\n"; 
 	}
-	MergeInfo->setText(text);
+	MergeInfo->setText(myText);
+	MergeInfo->setDetailedText(dtext);
 	MergeInfo->show();
 }
 
