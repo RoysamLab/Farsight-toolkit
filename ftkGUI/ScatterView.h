@@ -47,6 +47,10 @@ public:
     void scrollTo(const QModelIndex &index, ScrollHint hint = EnsureVisible);
     QModelIndex indexAt(const QPoint &point) const;
 
+	int ColForX(){ return columnNumForX; };
+	int ColForY(){ return columnNumForY; };
+	int ColForColor(){ return columnNumForColoring; };
+
 public slots:
 	void SetColForX(int x, std::string name);
 	void SetColForY(int y, std::string name);

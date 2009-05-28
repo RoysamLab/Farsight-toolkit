@@ -36,6 +36,7 @@ protected:
 
 public slots:
 	void update();
+	void modelChange(const QModelIndex &topLeft, const QModelIndex &bottomRight);
     
 private:
 	QVBoxLayout *layout;

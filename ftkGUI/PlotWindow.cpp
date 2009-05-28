@@ -16,8 +16,10 @@ PlotWindow::PlotWindow(QItemSelectionModel *mod, QWidget *parent)
 	this->scatter->setModel( (QAbstractItemModel*)mod->model() );
 	this->scatter->setSelectionModel(mod);
 
-	//this->scatter->SetColForColor(resultModel->ColumnForColor(), resultModel->ColorMap());
-	this->updateOptionMenus();
+	this->updateOptionMenus(true);
+
+	connect(mod->model(), SIGNAL(dataChanged(const QModelIndex &, const QModelIndex &)), this, SLOT(modelChange(const QModelIndex &, const QModelIndex &)));
+	svmWidget = NULL;
 }
 
 void PlotWindow::setupUI(void)
@@ -35,6 +37,11 @@ void PlotWindow::setupUI(void)
 	colorMenu = new QMenu(tr("Set Color Column"));
 	connect(colorMenu, SIGNAL(triggered(QAction *)), this, SLOT(colorChange(QAction *)));
 	optionsMenu->addMenu(colorMenu);
+
+	toolsMenu = menuBar()->addMenu(tr("&Tools"));
+	svmAction = new QAction(tr("SVM"), this);
+	connect(svmAction, SIGNAL(triggered()), this, SLOT(startSVM()));
+	toolsMenu->addAction(svmAction);
 
 	QWidget *centralWidget = new QWidget();
 	QVBoxLayout *vlayout = new QVBoxLayout();
@@ -71,10 +78,19 @@ void PlotWindow::colorChange(QAction *action)
 	action->setChecked(true);
 }
 
-void PlotWindow::updateOptionMenus()
+void PlotWindow::updateOptionMenus(bool first = false)
 {
-	//QStandardItemModel *model = resultModel->GetModel();
 	QAbstractItemModel *model = scatter->model();
+
+	int xc = 0;
+	int yc = 1;
+	int cc = 0;
+	if(!first)
+	{
+		xc = scatter->ColForX();
+		yc = scatter->ColForY();
+		cc = scatter->ColForColor();
+	}
 
 	//Add a new Action for each column for each menu item:
 	xMenu->clear();
@@ -105,145 +121,32 @@ void PlotWindow::updateOptionMenus()
 		colorMenu->addAction(cAct);
 		cGroup->addAction(cAct);
 
-		if(c==0)
+		if(first)
+		{
+			if(name == "class")
+				cc = c;
+		}
+		if(c==xc)
 			xChange(xAct);
-		if(c==1)
+		if(c==yc)
 			yChange(yAct);
-		if(name == "class")
+		if(c==cc)
 			colorChange(cAct);
 	}
 }
 
-
-/*
-void PlotWindow::findOutliers()
+void PlotWindow::modelChange(const QModelIndex &topLeft, const QModelIndex &bottomRight)
 {
-	//First create two vectors with the features:
-	int c1 = comboX->currentIndex()+1;
-	int c2 = comboY->currentIndex()+1;
-	int cID = resultModel->ColumnForID();	//and one with ids
-
-	std::vector<int> ids;
-	std::vector<double> f1;
-	std::vector<double> f2;
-	
-	//Init these to the extreme opposite ends of double
-	double f1_max = -DBL_MAX;
-	double f1_min = DBL_MAX;
-	double f2_max = -DBL_MAX;
-	double f2_min = DBL_MAX;
-
-	QModelIndex index;
-	for(int i=0; i<(int)resultModel->NumObjects(); ++i)
-	{
-		index = resultModel->GetModel()->index(i, cID);
-		double id = resultModel->GetModel()->data(index).toDouble();
-		index = resultModel->GetModel()->index(i, c1);
-		double f_1 = resultModel->GetModel()->data(index).toDouble();
-		index = resultModel->GetModel()->index(i, c2);
-		double f_2 = resultModel->GetModel()->data(index).toDouble();
-
-		ids.push_back( id );
-		f1.push_back( f_1 );
-		f2.push_back( f_2 );
-
-		//Also gather min/max
-		f1_max = (f_1) > (f1_max) ? f_1 : f1_max;
-		f2_max = (f_2) > (f2_max) ? f_2 : f2_max;
-		f1_min = (f_1) < (f1_min) ? f_1 : f1_min;
-		f2_min = (f_2) < (f2_min) ? f_2 : f2_min;
-	}
-
-	//Normalize/Scale the Features Data:
-	double upper = 1;
-	double lower = -1;
-	double desired_range = upper-lower;
-	double f1_act_range = f1_max - f1_min;
-	double f2_act_range = f2_max - f2_min;
-
-	for(int i=0; i<(int)ids.size(); ++i)
-	{
-		f1.at(i) = lower + desired_range * (f1.at(i) - f1_min) / f1_act_range;
-		f2.at(i) = lower + desired_range * (f2.at(i) - f2_min) / f2_act_range;
-	}
-
-
-	//Set the Parameters
-	struct svm_parameter param;
-	param.svm_type = ONE_CLASS;
-	param.kernel_type = RBF;
-	param.degree = 3;
-	param.gamma = 1.0/double(ids.size());	// 1/k
-	//param.gamma = 1;
-	param.coef0 = 0;
-	param.nu = 0.1;
-	param.cache_size = 100;
-	param.C = 1;
-	param.eps = .001;
-	param.p = 0.1;
-	param.shrinking = 1;
-	param.probability = 0;
-	param.nr_weight = 0;
-	param.weight_label = NULL;
-	param.weight = NULL;
-
-	#define Malloc(type,n) (type *)malloc((n)*sizeof(type))
-
-	//Create the problem:
-	struct svm_problem prob;
-
-	prob.l = resultModel->NumObjects();				//Number of objects
-	prob.y = Malloc(double,prob.l);					//Array Containing target values (unknowns)
-	prob.x = Malloc(struct svm_node *,prob.l);		//Array of Pointers to Nodes
-
-	for(int i=0; i<prob.l; i++)
-	{
-		prob.y[i] = ids.at(i);				//This is the label (target) and it is unknown
-
-		struct svm_node *x_space = Malloc(struct svm_node,3);			//Individual node
-		x_space[0].index = 1;
-		x_space[0].value = f1.at(i);
-		x_space[1].index = 2;
-		x_space[1].value = f2.at(i);
-		x_space[2].index = -1;
-
-		prob.x[i] = &x_space[0];	//Point to this new set of nodes.
-	}
-
-	//Now train
-	struct svm_model *model;
-	model = svm_train(&prob,&param);
-
-	svm_destroy_param(&param);
-	free(prob.y);
-	free(prob.x);
-
-	//Predict:
-	vector<int> outliers;
-
-	for(int i=0; i<prob.l; i++)
-	{
-		struct svm_node *x = Malloc(struct svm_node,3);			//Individual node
-		x[0].index = 1;
-		x[0].value = f1.at(i);
-		x[1].index = 2;
-		x[1].value = f2.at(i);
-		x[2].index = -1;
-
-		double v = svm_predict(model,x);
-		free(x);
-
-		if( v == -1 )
-		{
-			outliers.push_back( ids.at(i) );
-		}
-	}
-	svm_destroy_model(model);
-
-	//Now set the outliers:
-	resultModel->SetOutliers(outliers);
+	updateOptionMenus();
 }
-*/
+
+void PlotWindow::startSVM()
+{
+	if(!svmWidget)
+		svmWidget = new LibSVMWidget( scatter->model() );
+
+	svmWidget->show();
+}
 
 /*
 void PlotWindow::keyPressEvent(QKeyEvent *event)

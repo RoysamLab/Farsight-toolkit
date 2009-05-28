@@ -4,8 +4,9 @@ SET( GUI_SRCS
     	ScatterView.cpp
     	TableWindow.cpp		
    	#TableView.cpp
-   	Histogram.cpp
+   	#Histogram.cpp
     	ImageBrowser5D.cpp
+    	LibSVMWidget.cpp
 )
 
 SET( GUI_HDRS
@@ -13,9 +14,10 @@ SET( GUI_HDRS
     	PlotWindow.h
     	ScatterView.h
     	TableWindow.h
-   	#TableView.h
-    	Histogram.h
+   		#TableView.h
+    	#Histogram.h
     	ImageBrowser5D.h
+    	LibSVMWidget.h
 )
 
 SET( GUI_UIS

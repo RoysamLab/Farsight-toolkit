@@ -21,7 +21,7 @@ TableWindow::TableWindow(QItemSelectionModel *selectionModel, QWidget *parent)
 	
 	this->table->setSelectionBehavior( QAbstractItemView::SelectRows );
 
-	//QWidget::connect(mod, SIGNAL(modelChanged()), this, SLOT(update()));
+	connect(selectionModel->model(), SIGNAL(dataChanged(const QModelIndex &, const QModelIndex &)), this, SLOT(modelChange(const QModelIndex &, const QModelIndex &)));
 }
 
 /*
@@ -62,6 +62,11 @@ TableWindow::TableWindow(SegmentationModel *mod, QWidget *parent)
 	//	table->setColumnHidden(i,true);
 }
 */
+
+void TableWindow::modelChange(const QModelIndex &topLeft, const QModelIndex &bottomRight)
+{
+	this->update();
+}
 
 void TableWindow::update()
 {
