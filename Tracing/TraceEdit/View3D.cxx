@@ -750,11 +750,12 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 {
 	unsigned int i,j, exist = 0, conflict = 0;
 	std::vector<compTrace> compList;
-	//QLabel *MergeInfo = new QLabel();
+	std::vector<compTrace> grayList;
 	QMessageBox *MergeInfo = new QMessageBox;
 	MergeInfo->setText("Merge Function");
-
-	QString myText;	QString dtext;
+	QPushButton *mergeAll;
+	QPushButton *mergeNone;
+	QString myText;	QString dtext;	QString grayText;
 	myText+="Number of traces:\t" + QString::number(traceList.size());
 	for (i=0;i<traceList.size()-1; i++)
 	  {
@@ -766,7 +767,7 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 			newComp.Trace1->EndPtDist(
         newComp.Trace2,newComp.endPT1, newComp.endPT2, newComp.dist);
 			if(!(newComp.dist>newComp.Trace1->GetSize()/gapTol) &&
-         !(newComp.dist>newComp.Trace2->GetSize()/gapTol))
+         !(newComp.dist>newComp.Trace2->GetSize()/gapTol)&&!(newComp.dist>gapMax + gapMax/gapTol))
 			  {
 				//myText+="added comparison\n";
 				compList.push_back(newComp);
@@ -783,9 +784,8 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 	
 	if (compList.size() >= 1)
 	  {
-		myText+="\tNumber of comparisons:\t";
-		myText+=QString::number(compList.size());	myText+="\n";
-		i = 0, j = 0;
+		myText+="\tNumber of comparisons:\t" + QString::number(compList.size());
+		i = 0, j = 0; int mergeCount = 0;
 		while (i < compList.size() -1)
 		  {
 			exist = 0;
@@ -857,11 +857,9 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 				j=i;
 		  	}
 	  	}
-		myText+="\nConflicts resolved:"+QString::number(conflict)+"\n";
-		myText+= "\nTrace size:\t";  
-		myText+=QString::number(traceList.size());
-		myText+="\tNumber of computed distances:\t";
-		myText+=QString::number(compList.size());
+		myText+="\tConflicts resolved:" + QString::number(conflict);
+		myText+= "\nTrace List size:\t" + QString::number(traceList.size());
+		myText+="\tNumber of computed distances:\t" + QString::number(compList.size());
 		for (i=0;i<compList.size(); i++)
 		{			
 			if (compList[i].dist<= gapMax )
@@ -872,28 +870,53 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 				dtext+=" endpts " + QString::number(compList[i].endPT1); 
 				dtext+=" and " + QString::number(compList[i].endPT2);
 				tobj->mergeTraces(compList[i].endPT1,compList[i].endPT2);
-		  	}
-			/*else if(compList[i].dist<= gapMax + gapMax/gapTol)
+				++mergeCount;
+		  	}	//end of if
+			else
 		  	{
-				char ans;
+				grayList.push_back( compList[i]);
+				/*char ans;
 				cout << "Distance of: " << compList[i].dist << " is greater than: "
 					 << gapMax/gapTol   << " Merge y\\n\?";
 				cin >> ans;
 				if (ans=='y')
 			  	{
 					tobj->mergeTraces(compList[i].endPT1,compList[i].endPT2);
-				}
-			 }*/
-		  }//send to merge
-
+				}*/
+			 } //end of else
+		}//end of for merge
+		myText+="\nNumber of merged lines:\t" + QString::number(mergeCount);
+		if (grayList.size()>=1)
+		{
+			myText+="\nNumber of further possible lines:\t" + QString::number(grayList.size());
+			mergeAll = MergeInfo->addButton("Merge All", QMessageBox::YesRole);
+			mergeNone = MergeInfo->addButton("Merge None", QMessageBox::NoRole);
+			
+		}		//end if graylist size
+		else
+		{
+			MergeInfo->setDetailedText(dtext);
+		}		//end else
 	  }
+
 	else
 	{
 		myText+= "\nNo merges possible, set higher tolerances\n"; 
 	}
-	MergeInfo->setText(myText);
-	MergeInfo->setDetailedText(dtext);
+	MergeInfo->setText(myText);	
 	MergeInfo->show();
+	MergeInfo->exec();
+	if(MergeInfo->clickedButton()==mergeAll)
+	{
+		for (j=0; j<grayList.size();j++)
+		{
+			tobj->mergeTraces(grayList[j].endPT1,grayList[j].endPT2);
+		}
+	}
+	else if(MergeInfo->clickedButton()==mergeNone)
+	{
+		grayList.clear();
+	}
 }
 
 
