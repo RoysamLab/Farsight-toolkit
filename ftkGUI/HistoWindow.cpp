@@ -7,6 +7,7 @@ HistoWindow::HistoWindow(QItemSelectionModel *mod, QWidget *parent)
 	model = (QAbstractItemModel *)mod->model();
 
 	columnNum=0;
+	columnName = "Feature";
 	numofbins=5;
 	status=true; //we assume there will be more than 2 bins (false when less then 2 bins!!)
 	distanceToUpperBound = 0.0001; //Change this for more precision
@@ -27,8 +28,19 @@ HistoWindow::HistoWindow(QItemSelectionModel *mod, QWidget *parent)
 	chartView->SetupDefaultInteractor();
 	chartView->SetTitle("HI EVERYONE");
 	chartView->SetAxisTitle(0,"Frequency");
-	chartView->SetAxisTitle(1,"Feature");
-	setCentralWidget( chartView->GetWidget() );
+	chartView->SetAxisTitle(1, columnName.c_str() );
+
+	if(VTK_NIGHTLY)
+	{
+		setCentralWidget( chartView->GetWidget() );
+	}
+	else
+	{
+		QLabel *label = new QLabel(tr("SOMEDAY, AS VTK GETS BETTER, CHART WILL APPEAR HERE, BUT FOR NOW IT IS IN ITS OWN WINDOW!!"));
+		label->setWordWrap(true);
+		label->setAlignment(Qt::AlignCenter);
+		setCentralWidget( label );
+	}
 	setWindowTitle(tr("Histogram"));
 	this->resize(700,500);
 
@@ -38,6 +50,8 @@ HistoWindow::HistoWindow(QItemSelectionModel *mod, QWidget *parent)
 	this->findFrequencies();		
 	this->setBucketNames();	
 	this->ConstructBarChart();
+
+	connect(model, SIGNAL(dataChanged(const QModelIndex &, const QModelIndex &)), this, SLOT(modelChange(const QModelIndex &, const QModelIndex &)));
 }
 
 void HistoWindow::updateOptionMenus()
@@ -82,6 +96,8 @@ void HistoWindow::updateOptionMenus()
 void HistoWindow::columnChange(QAction *action)
 {
 	columnNum = action->toolTip().toInt();
+	columnName = action->text().toStdString();
+	chartView->SetAxisTitle(1, columnName.c_str() );
 	this->SyncModel();
 	this->Normalize();
 	this->SetNumofBins(numofbins);
@@ -94,6 +110,17 @@ void HistoWindow::columnChange(QAction *action)
 void HistoWindow::binsChange(QAction *action)
 {
 	numofbins = action->text().toInt();
+	this->SetNumofBins(numofbins);
+	this->findFrequencies();		
+	this->setBucketNames();	
+	this->ConstructBarChart();
+}
+
+void HistoWindow::modelChange(const QModelIndex &topLeft, const QModelIndex &bottomRight)
+{
+	this->updateOptionMenus();
+	this->SyncModel();
+	this->Normalize();
 	this->SetNumofBins(numofbins);
 	this->findFrequencies();		
 	this->setBucketNames();	
@@ -113,6 +140,78 @@ void HistoWindow::SyncModel()
 		data.insert(val);
 	}
 }
+
+/*
+bool HistoWindow::ReadHistogramData(const char* fileName)
+{  
+  TiXmlDocument doc(fileName);
+  doc.LoadFile();
+  TiXmlHandle docHandle( &doc );
+  TiXmlElement* levelOneElement =
+  docHandle.FirstChild("histogram_data").Element();
+  //docHandle.FirstChild("Trace").FirstChild().Element();
+  TiXmlElement *levelTwoElement;
+  const char *nodeName;
+  double num;
+
+  data.clear();
+ 
+  while(levelOneElement)
+    {
+    nodeName = levelOneElement->Value();
+
+	//Check if this is a histogram_data file
+    if (strcmp(nodeName,"histogram_data") == 0)
+      {
+
+	  //Construct the bar title from the attribute values
+	  //strcat(barTitle,levelOneElement->Attribute("Class_Membership"));
+	  //strcat(barTitle," -  Frequency (Y-axis)  vs  ");
+	  //strcat(feature,levelOneElement->Attribute("feature"));
+	  //strcat(barTitle,levelOneElement->Attribute("feature"));
+	  //strcat(barTitle," (X-axis)     Cell Type: ");
+	  //strcat(barTitle,levelOneElement->Attribute("Class_Membership"));
+
+      levelTwoElement = levelOneElement->FirstChildElement();
+      while(levelTwoElement)
+        {
+        nodeName = (char*)levelTwoElement->Value();
+
+        //Check if there is tag <d> first then get the data located between <d> and </d>
+		if (strcmp(nodeName,"d") == 0){
+			// Data coming from the XML file is char*. Convert it to a numeric value 
+			num=atof(levelTwoElement->GetText());
+			data.insert(num);			
+		}     
+        else if (strcmp(nodeName,"text") == 0) 
+          {
+          //Do Nothing
+          }
+        else
+          {
+          cerr << "XML File contains a tag that cannot be identified! " << nodeName << endl;
+          return false;
+          }
+		levelTwoElement = levelTwoElement->NextSiblingElement("d");
+		//cout<<"level two "<<levelTwoElement<<endl;
+	  }
+      }
+    else
+      {
+      cerr << "Incorrect Histogram Data format! " << nodeName << endl;
+      return false;
+      }
+	levelOneElement=levelOneElement->NextSiblingElement();
+  }
+
+  // Check if we read any data from the XML file.
+  // If not, we cannot construct a histogram
+  if (data.size() == 0) {status=false;
+						 return false;}	
+
+  return true;
+}
+*/
 
 void HistoWindow::Normalize() 
 {
@@ -327,6 +426,11 @@ void HistoWindow::ConstructBarChart()
 		chartView->RemoveAllRepresentations();
 		chartView->AddRepresentationFromInput(table);
 		chartView->Update();
+
+		if(!VTK_NIGHTLY)
+		{
+			chartView->Show();
+		}
 	}
 }
 

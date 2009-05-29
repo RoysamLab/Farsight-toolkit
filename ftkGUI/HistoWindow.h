@@ -1,6 +1,8 @@
 #ifndef HISTOWINDOW_H
 #define HISTOWINDOW_H
 
+#define VTK_NIGHTLY 0
+
 #include <QtGui/QAction>
 #include <QtGui/QMainWindow>
 #include <QtGui/QWidget>
@@ -40,9 +42,11 @@ public:
 private slots:
 	void columnChange(QAction *action);
 	void binsChange(QAction *action);
+	void modelChange(const QModelIndex &topLeft, const QModelIndex &bottomRight);
 
 private:
 	void SyncModel();
+	bool ReadHistogramData(const char* fileName);
 	void Normalize();
 	void SetNumofBins(int n);
 	bool findFrequencies();
@@ -50,6 +54,7 @@ private:
 	void ConstructBarChart();
 
 	int columnNum;
+	std::string columnName;
 	int numofbins;				//
 	bool status;				//will be false if num of bins is less than 2 or larger than 10	
 	bool normalized;			//false if not normalized
