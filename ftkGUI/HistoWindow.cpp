@@ -30,17 +30,15 @@ HistoWindow::HistoWindow(QItemSelectionModel *mod, QWidget *parent)
 	chartView->SetAxisTitle(0,"Frequency");
 	chartView->SetAxisTitle(1, columnName.c_str() );
 
-	if(VTK_NIGHTLY)
-	{
+#if(VTK_NIGHTLY)
 		setCentralWidget( chartView->GetWidget() );
-	}
-	else
-	{
+#else
 		QLabel *label = new QLabel(tr("SOMEDAY, AS VTK GETS BETTER, CHART WILL APPEAR HERE, BUT FOR NOW IT IS IN ITS OWN WINDOW!!"));
 		label->setWordWrap(true);
 		label->setAlignment(Qt::AlignCenter);
 		setCentralWidget( label );
-	}
+#endif
+
 	setWindowTitle(tr("Histogram"));
 	this->resize(700,500);
 
@@ -427,10 +425,10 @@ void HistoWindow::ConstructBarChart()
 		chartView->AddRepresentationFromInput(table);
 		chartView->Update();
 
-		if(!VTK_NIGHTLY)
-		{
-			chartView->Show();
-		}
+#if(!VTK_NIGHTLY)
+		chartView->Show();
+#endif
+
 	}
 }
 
