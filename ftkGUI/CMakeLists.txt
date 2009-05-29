@@ -5,6 +5,7 @@ SET( GUI_SRCS
     	TableWindow.cpp		
    	#TableView.cpp
    	#Histogram.cpp
+   		HistoWindow.cpp
     	ImageBrowser5D.cpp
     	LibSVMWidget.cpp
 )
@@ -16,6 +17,7 @@ SET( GUI_HDRS
     	TableWindow.h
    		#TableView.h
     	#Histogram.h
+    	HistoWindow.h
     	ImageBrowser5D.h
     	LibSVMWidget.h
 )

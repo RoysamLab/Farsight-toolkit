@@ -264,6 +264,10 @@ void NucleusEditor::loadResult(void)
 	newModel();
 	CreateNewTableWindow();
 	CreateNewPlotWindow();
+	
+	hisWin = new HistoWindow(currentModel->GetSelectionModel());
+	hisWin->show();
+
 	segWin->SetModels(currentModel);
 	segWin->SetChannelImage(segResult->getDataImage());
 	segWin->SetLabelImage(segResult->getLabelImage());

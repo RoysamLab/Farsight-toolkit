@@ -24,6 +24,7 @@
 #include "ftkGUI/TableWindow.h"
 #include "ftkGUI/PlotWindow.h"
 #include "ftkGUI/ImageBrowser5D.h"
+#include "ftkGUI/HistoWindow.h"
 
 class NucleusEditor : public QMainWindow
 {
@@ -56,6 +57,7 @@ private:
 
 	std::vector<PlotWindow *> pltWin;
 	std::vector<TableWindow *> tblWin;
+	HistoWindow * hisWin;
 	SegmentationWindow *segWin;
 
 	ftk::Image::Pointer NewFTKImage(std::vector<std::string> filenames);
