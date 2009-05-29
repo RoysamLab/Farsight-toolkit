@@ -397,7 +397,7 @@ QRect ScatterView::itemRect(const QModelIndex &index) const
 	double x = viewportRect.left() + (dx * (viewportRect.width() - 1) / settings.spanX());
 	double y = viewportRect.bottom() - (dy * (viewportRect.height() - 1) / settings.spanY());
 
-	return QRect(x-3,y-3,7,7);
+	return QRect(int(x-3),int(y-3),7,7);
 }
 
 
@@ -818,7 +818,7 @@ void ScatterView::drawCurves(QPainter *painter)
 		double dy = valueY - settings.minY;
 		double x = rect.left() + (dx * (rect.width() - 1) / settings.spanX());
 		double y = rect.bottom() - (dy * (rect.height() - 1) / settings.spanY());
-		rectangles[row] = QRect(x-2,y-2,5,5);
+		rectangles[row] = QRect(int(x-2),int(y-2),5,5);
 
 		QColor myColor;
 		int numColors = colorMap.size();
