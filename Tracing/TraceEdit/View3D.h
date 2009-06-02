@@ -96,7 +96,7 @@ View3D(int argc, char **argv);
 	void HighlightSelected(TraceLine* tline, double SelectColor);
 	void DeleteTrace(TraceLine *tline);
 	void MinEndPoints(std::vector<TraceLine*> traceList);
-	void SLine();
+
 
 	bool setTol();
 	//todo: make these private with accessors
@@ -114,6 +114,7 @@ public slots:
   void ShowSettingsWindow();
   void HideSettingsWindow();
   void ApplyNewSettings();
+  void SLine();
 
 protected:
   void closeEvent(QCloseEvent *event);
@@ -129,25 +130,29 @@ private:
   //VTK render window embedded in a Qt widget
   QVTKWidget *QVTK;
 
-  //Qt widgets on the main window
-  QPushButton *ListButton;
-  QPushButton *ClearButton;
-  QPushButton *DeleteButton;
-  QPushButton *MergeButton;
-  QPushButton *SplitButton;
-  QPushButton *FlipButton;
-  QPushButton *WriteButton;
-  QPushButton *SettingsButton;
+	QMenu *fileMenu;
+	QAction *loadAction;
 
-  //Qt widgets for the settings window
-  QWidget *SettingsWidget;
-  QLineEdit *MaxGapField;
-  QLineEdit *GapToleranceField;
-  QLineEdit *LineLengthField;
-  QLineEdit *ColorValueField;
-  QLineEdit *LineWidthField;
-  QPushButton *ApplySettingsButton;
-  QPushButton *CancelSettingsButton;
+	//Qt widgets on the main window
+	QPushButton *ListButton;
+	QPushButton *ClearButton;
+	QPushButton *DeleteButton;
+	QPushButton *MergeButton;
+	QPushButton *SplitButton;
+	QPushButton *FlipButton;
+	QPushButton *WriteButton;
+	QPushButton *SettingsButton;
+	QPushButton *AutomateButton;
+
+	//Qt widgets for the settings window
+	QWidget *SettingsWidget;
+	QLineEdit *MaxGapField;
+	QLineEdit *GapToleranceField;
+	QLineEdit *LineLengthField;
+	QLineEdit *ColorValueField;
+	QLineEdit *LineWidthField;
+	QPushButton *ApplySettingsButton;
+	QPushButton *CancelSettingsButton;
 
 	//stuff for tol and selection
   //general render window variables

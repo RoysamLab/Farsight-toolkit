@@ -46,13 +46,13 @@ View3D::View3D(int argc, char **argv)
 		  }
 		num_loaded++;
 	  }
-  this->QVTK = 0;
-	this->gapTol = 2;
-	this->gapMax = 15;
-	this->smallLine = 5;
-	this->SelectColor =.3;
-	this->lineWidth= 2;
-  this->Initialize();
+this->QVTK = 0;
+this->gapTol = 2;
+this->gapMax = 15;
+this->smallLine = 5;
+this->SelectColor =.3;
+this->lineWidth= 2;
+this->Initialize();
 }
 
 View3D::~View3D()
@@ -92,6 +92,7 @@ void View3D::CreateGUIObjects()
   this->FlipButton = new QPushButton("&flip trace direction", this);
   this->WriteButton = new QPushButton("&write to .swc file", this);
   this->SettingsButton = new QPushButton("&edit settings", this);
+  this->AutomateButton = new QPushButton("&Automatic Selection", this);
 
   //Setup the tolerance settings editing window
   this->SettingsWidget = new QWidget();
@@ -119,6 +120,7 @@ void View3D::CreateGUIObjects()
   connect(this->SplitButton, SIGNAL(clicked()), this, SLOT(SplitTraces()));
   connect(this->FlipButton, SIGNAL(clicked()), this, SLOT(FlipTraces()));
   connect(this->WriteButton, SIGNAL(clicked()), this, SLOT(WriteToSWCFile()));
+ connect(this->AutomateButton, SIGNAL(clicked()), this, SLOT(SLine()));
   connect(this->SettingsButton, SIGNAL(clicked()), this,
     SLOT(ShowSettingsWindow()));
   connect(this->ApplySettingsButton, SIGNAL(clicked()), this,
@@ -130,18 +132,21 @@ void View3D::CreateGUIObjects()
 void View3D::CreateLayout()
 {
   //layout for the main window
-  QGridLayout *buttonLayout = new QGridLayout();
-  buttonLayout->addWidget(this->ListButton, 0, 0);
-  buttonLayout->addWidget(this->ClearButton, 0, 1);
-  buttonLayout->addWidget(this->DeleteButton, 0, 2);
-  buttonLayout->addWidget(this->MergeButton, 0, 3);
-  buttonLayout->addWidget(this->SplitButton, 1, 0);
-  buttonLayout->addWidget(this->FlipButton, 1, 1);
-  buttonLayout->addWidget(this->WriteButton, 1, 2);
-  buttonLayout->addWidget(this->SettingsButton, 1, 3);
-  QGridLayout *viewerLayout = new QGridLayout(this);
-  viewerLayout->addWidget(this->QVTK, 0, 0);
-  viewerLayout->addLayout(buttonLayout, 1, 0);
+	QGridLayout *buttonLayout = new QGridLayout();
+	buttonLayout->addWidget(this->AutomateButton, 1, 0);
+	buttonLayout->addWidget(this->ListButton, 2, 0);
+	buttonLayout->addWidget(this->ClearButton, 3, 0);
+	buttonLayout->addWidget(this->DeleteButton, 4, 0);
+	buttonLayout->addWidget(this->MergeButton, 5, 0);
+	buttonLayout->addWidget(this->SplitButton, 6, 0);
+	buttonLayout->addWidget(this->FlipButton, 7, 0);
+
+	buttonLayout->addWidget(this->SettingsButton, 9, 0);
+	buttonLayout->addWidget(this->WriteButton, 10, 0);
+	buttonLayout->setSpacing(10);
+	QGridLayout *viewerLayout = new QGridLayout(this);
+	viewerLayout->addWidget(this->QVTK, 0, 1);
+	viewerLayout->addLayout(buttonLayout, 0, 0);
 
   //layout for the settings window
   QGridLayout *settingsLayout = new QGridLayout(this->SettingsWidget);
@@ -476,6 +481,7 @@ void View3D::MergeTraces()
           }
         }
       }
+	this->Rerender();
     this->MinEndPoints(traceList);
     this->Rerender();
     }
@@ -750,7 +756,7 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 {
 	unsigned int i,j, exist = 0, conflict = 0;
 	std::vector<compTrace> compList;
-	std::vector<compTrace> grayList;
+	std::vector<compTrace> grayList;	//grayList is a list of all further possible merges within tolerance
 	QMessageBox *MergeInfo = new QMessageBox;
 	MergeInfo->setText("Merge Function");
 	QPushButton *mergeAll;
@@ -875,23 +881,18 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 			else
 		  	{
 				grayList.push_back( compList[i]);
-				/*char ans;
-				cout << "Distance of: " << compList[i].dist << " is greater than: "
-					 << gapMax/gapTol   << " Merge y\\n\?";
-				cin >> ans;
-				if (ans=='y')
-			  	{
-					tobj->mergeTraces(compList[i].endPT1,compList[i].endPT2);
-				}*/
+				grayText+="Distance of: " + QString::number(compList[i].dist)+ "\n" ;
+				
 			 } //end of else
 		}//end of for merge
 		myText+="\nNumber of merged lines:\t" + QString::number(mergeCount);
+		this->Rerender();
 		if (grayList.size()>=1)
 		{
 			myText+="\nNumber of further possible lines:\t" + QString::number(grayList.size());
 			mergeAll = MergeInfo->addButton("Merge All", QMessageBox::YesRole);
 			mergeNone = MergeInfo->addButton("Merge None", QMessageBox::NoRole);
-			
+			MergeInfo->setDetailedText(grayText);
 		}		//end if graylist size
 		else
 		{
