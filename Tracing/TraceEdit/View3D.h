@@ -64,8 +64,9 @@ struct compTrace{
 TraceLine *Trace1;
 TraceLine *Trace2;
 int endPT1, endPT2;
-
+double angle;
 double dist; 
+double maxdist;
 };
 
 class View3D : public QWidget 

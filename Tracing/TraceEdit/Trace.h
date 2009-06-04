@@ -73,7 +73,7 @@ public:
 		return m_trace_bits.size();
 	};
 	void Getstats();
-	void EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist);
+	void EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist, double &maxdist, double &angle);
 		
 	void Print(std::ostream &c)
 	{

@@ -771,9 +771,10 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 			newComp.Trace1= traceList[i];
 			newComp.Trace2= traceList[j];
 			newComp.Trace1->EndPtDist(
-        newComp.Trace2,newComp.endPT1, newComp.endPT2, newComp.dist);
-			if(!(newComp.dist>newComp.Trace1->GetSize()/gapTol) &&
-         !(newComp.dist>newComp.Trace2->GetSize()/gapTol)&&!(newComp.dist>gapMax + gapMax/gapTol))
+        newComp.Trace2,newComp.endPT1, newComp.endPT2, newComp.dist, newComp.maxdist, newComp.angle);
+			if(!(newComp.dist >= newComp.Trace1->GetSize()/gapTol) 
+				&&	!(newComp.dist >= newComp.Trace2->GetSize()/gapTol) 
+				&&	!(newComp.dist >= gapMax + gapMax/gapTol))
 			  {
 				//myText+="added comparison\n";
 				compList.push_back(newComp);
@@ -868,20 +869,22 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 		myText+="\tNumber of computed distances:\t" + QString::number(compList.size());
 		for (i=0;i<compList.size(); i++)
 		{			
-			if (compList[i].dist<= gapMax )
+			if (compList[i].dist<= gapMax && !(fabs(compList[i].angle) >= .5))
 		  	{
 				dtext+= "\nTrace " + QString::number(compList[i].Trace1->GetId());
 				dtext+= " compared to trace "+ QString::number(compList[i].Trace2->GetId() );
 				dtext+=" gap size of: " + QString::number(compList[i].dist); 
 				dtext+=" endpts " + QString::number(compList[i].endPT1); 
 				dtext+=" and " + QString::number(compList[i].endPT2);
+				dtext+=" angle of " + QString::number(compList[i].angle);
 				tobj->mergeTraces(compList[i].endPT1,compList[i].endPT2);
 				++mergeCount;
 		  	}	//end of if
 			else
 		  	{
 				grayList.push_back( compList[i]);
-				grayText+="Distance of: " + QString::number(compList[i].dist)+ "\n" ;
+				grayText+="Angle of: " + QString::number(compList[i].angle);
+				grayText+="\nDistance of: " + QString::number(compList[i].dist)+ "\n" ;
 				
 			 } //end of else
 		}//end of for merge
