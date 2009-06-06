@@ -999,13 +999,13 @@ void TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
 	//compute eucliedan distance 
 	double XF, XB, YF, YB, ZF, ZB, XF2,XB2, YF2, YB2, ZF2, ZB2, distances[4];
 	double delX1, delX2, delY1, delY2, delZ1, delZ2, min, norm1, norm2;
-
+//trace 1
 	XF = m_trace_bits.front().x;	YF= m_trace_bits.front().y;		ZF= m_trace_bits.front().z;
 	XB = m_trace_bits.back().x;		YB= m_trace_bits.back().y;		ZB= m_trace_bits.back().z;
-
+//trace 2 
 	XF2=Trace2->m_trace_bits.front().x;		YF2=Trace2->m_trace_bits.front().y;		ZF2=Trace2->m_trace_bits.front().z;
 	XB2=Trace2->m_trace_bits.back().x;		YB2=Trace2->m_trace_bits.back().y;		ZB2=Trace2->m_trace_bits.back().z;
-
+//delta x,y,z 
 	delX1=XF-XB;	delX2=XF2-XB2;
 	delY1=YF-YB;	delY2=YF2-YB2;
 	delZ1=ZF-ZB;	delZ2=ZF2-ZB2;
@@ -1018,6 +1018,7 @@ void TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
 	distances[2]=sqrt(pow((XB-XF2),2)+pow((YB-YF2),2)+pow((ZB-ZF2),2));//2 B-F
 	//std::cout<<distances[2]<<std::endl;
 	distances[3]=sqrt(pow((XB-XB2),2)+pow((YB-YB2),2)+pow((ZB-ZB2),2));//3 B-B
+
 	norm1=sqrt(pow((delX1),2)+ pow((delY1),2)+ pow((delZ1),2));
 	norm2=sqrt(pow((delX2),2)+ pow((delY2),2)+ pow((delZ2),2));
 	angle = acos(((delX1 * delX2) + (delY1 *delY2) + (delZ1 * delZ2))/(norm2 * norm1));

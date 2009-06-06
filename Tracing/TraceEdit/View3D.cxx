@@ -481,7 +481,7 @@ void View3D::MergeTraces()
           }
         }
       }
-	this->Rerender();
+	//this->Rerender();
     this->MinEndPoints(traceList);
     this->Rerender();
     }
@@ -869,7 +869,7 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 		myText+="\tNumber of computed distances:\t" + QString::number(compList.size());
 		for (i=0;i<compList.size(); i++)
 		{			
-			if (compList[i].dist<= gapMax && !(fabs(compList[i].angle) >= .5))
+			if (compList[i].dist<= gapMax && ((fabs(compList[i].angle) < .9))||(fabs(compList[i].angle) >= 2.2))	//
 		  	{
 				dtext+= "\nTrace " + QString::number(compList[i].Trace1->GetId());
 				dtext+= " compared to trace "+ QString::number(compList[i].Trace2->GetId() );
@@ -882,9 +882,11 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 		  	}	//end of if
 			else
 		  	{
+				this->HighlightSelected(compList[i].Trace1, .125);
+				this->HighlightSelected(compList[i].Trace2, .125);
 				grayList.push_back( compList[i]);
-				grayText+="Angle of: " + QString::number(compList[i].angle);
-				grayText+="\nDistance of: " + QString::number(compList[i].dist)+ "\n" ;
+				grayText+="\nAngle of: " + QString::number(compList[i].angle);
+				grayText+="\tWith a distance of: " + QString::number(compList[i].dist);
 				
 			 } //end of else
 		}//end of for merge
