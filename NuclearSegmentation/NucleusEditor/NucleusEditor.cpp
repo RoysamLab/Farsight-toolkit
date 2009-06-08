@@ -89,6 +89,11 @@ void NucleusEditor::createMenus()
 	connect(xmlAction,SIGNAL(triggered()), this, SLOT(loadResult()));
 	fileMenu->addAction(xmlAction);
 
+	xmlAction = new QAction(tr("Load From a dat file..."), this);
+	xmlAction->setStatusTip(tr("Open a .dat file"));
+	connect(xmlAction,SIGNAL(triggered()), this, SLOT(loadDatFile()));
+	fileMenu->addAction(datAction);
+
 	saveAction = new QAction(tr("Save Result As..."), this);
 	saveAction->setStatusTip(tr("Save Changes (Edits, etc)"));
 	saveAction->setShortcut(tr("Ctrl+S"));
@@ -276,6 +281,30 @@ void NucleusEditor::loadResult(void)
 
 	this->update();
 }
+
+// Added by Aytekin Vargun 6/03/09
+//
+/*
+void NucleusEditor::loadDatFile(void)
+{
+	QString filename  = QFileDialog::getOpenFileName(this,"Choose a dat file",lastPath, 
+			tr("dat Files (*.dat)\n"));
+
+    if(fileName == "")
+		return;
+
+	if(currentModel)
+		clearModel();
+
+	lastPath = QFileInfo(fileName).absolutePath();
+
+	//ImageBrowser5D *browse = new ImageBrowser5D(fileName);
+	yousef_nucleus_seg *browse = new yousef_nucleus_seg();
+	browse->readFromIDLFormat(fileName);
+	this->setCentralWidget(browse);
+
+}
+*/
 
 void NucleusEditor::segmentImage()
 {

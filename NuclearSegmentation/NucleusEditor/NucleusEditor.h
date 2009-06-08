@@ -42,6 +42,7 @@ private slots:
 	bool saveResult(void);
 	void segmentImage(void);
 	void about(void);
+	//void loadDatFile(void);
 
 	//void closeWidget(QWidget *);
 	void CreateNewPlotWindow();
@@ -69,6 +70,7 @@ private:
 	QAction *xmlAction;
 	QAction *segmentAction;
 	QAction *exitAction;
+	QAction *datAction;
 
 	QMenu *viewMenu;
 	QAction *newScatterAction;
