@@ -122,7 +122,7 @@ protected:
   void Rerender();
 
 private:
-	int gapTol;
+	double gapTol;
 	int gapMax;
 	int smallLine;
 	float lineWidth;
