@@ -70,7 +70,7 @@ private:
 	QAction *xmlAction;
 	QAction *segmentAction;
 	QAction *exitAction;
-	QAction *datAction;
+	//QAction *datAction;
 
 	QMenu *viewMenu;
 	QAction *newScatterAction;

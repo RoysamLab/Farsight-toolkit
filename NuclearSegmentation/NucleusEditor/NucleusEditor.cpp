@@ -89,10 +89,12 @@ void NucleusEditor::createMenus()
 	connect(xmlAction,SIGNAL(triggered()), this, SLOT(loadResult()));
 	fileMenu->addAction(xmlAction);
 
+	/*
 	xmlAction = new QAction(tr("Load From a dat file..."), this);
 	xmlAction->setStatusTip(tr("Open a .dat file"));
 	connect(xmlAction,SIGNAL(triggered()), this, SLOT(loadDatFile()));
 	fileMenu->addAction(datAction);
+	*/
 
 	saveAction = new QAction(tr("Save Result As..."), this);
 	saveAction->setStatusTip(tr("Save Changes (Edits, etc)"));
