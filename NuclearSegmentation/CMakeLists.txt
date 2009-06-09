@@ -12,9 +12,9 @@ ADD_LIBRARY( NuclearSegmentation
             ${NUCLEARSEGMENTATION_HDRS} 
 )
 
-SUBDIRS( yousef_core  Nuclear_Association )
+SUBDIRS( yousef_core  Nuclear_Association SeedEditor )
 
-TARGET_LINK_LIBRARIES( NuclearSegmentation SegmentationCommon ftkImage Yousef_Nucleus_Seg Nuclear_Association )
+TARGET_LINK_LIBRARIES( NuclearSegmentation SegmentationCommon ftkImage Yousef_Nucleus_Seg Nuclear_Association)
 #INSTALL( TARGETS NuclearSegmentation DESTINATION . )
 
 
