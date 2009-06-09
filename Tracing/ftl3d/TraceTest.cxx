@@ -1,3 +1,18 @@
+/*=========================================================================
+Copyright 2009 Rensselaer Polytechnic Institute
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. 
+=========================================================================*/
+
 /**
  \brief This file contains the main function of the testing class. The user can input a 3D image and a seed point [x,y,z] coordinate location. The tracer will start from the specifiled location and travel in both directions to output a trace. 
  \note The image should have intensities between 0 and 255, with the foreground dark (closer to 0) and background white (closer to 1)
