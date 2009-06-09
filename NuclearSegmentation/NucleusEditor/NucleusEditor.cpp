@@ -23,6 +23,10 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	tblWin.clear();
 	pltWin.clear();
 
+	//DEMO
+	this->pythonProcess = new QProcess();
+	this->settings = new QSettings("RPI", "Farsight");
+
 	this->resize(500,500);
 	//Crashes when this is enabled!
 	//setAttribute ( Qt::WA_DeleteOnClose );
@@ -116,6 +120,12 @@ void NucleusEditor::createMenus()
 	newScatterAction->setStatusTip(tr("Open a new Scatterplot Window"));
 	connect(newScatterAction,SIGNAL(triggered()),this,SLOT(CreateNewPlotWindow()));
 	viewMenu->addAction(newScatterAction);
+
+	pythonAction = new QAction(tr("Open Python Window"), this);
+	pythonAction->setStatusTip(tr("Start your favorite python interpreter"));
+	pythonAction->setShortcut(tr("Ctrl+P"));
+	connect(pythonAction, SIGNAL(triggered()), this, SLOT(OpenPythonWindow()));
+	viewMenu->addAction(pythonAction);
 
 	//HELP MENU
 	helpMenu = menuBar()->addMenu(tr("Help"));
@@ -363,3 +373,130 @@ void NucleusEditor::CreateNewTableWindow(void)
 	tblWin.back()->ResizeToOptimalSize();
 	tblWin.back()->show();
 }
+
+//******************************************************************************
+// Open a python interpreter.  Ask the user where one is located if this
+// information hasn't been specified yet.
+//******************************************************************************
+void NucleusEditor::OpenPythonWindow()
+{
+/* this code is still in progress...
+	if(this->settings->contains("farsight/installpath") == false)
+	  {
+		this->settings->setValue("farsight/installpath","");
+	  }
+	QString installPath = this->settings->value("farsight/installpath").toString();
+	QString quote = QString("\"");
+	while(!QDir(installPath).exists() || !QDir(installPath + "/python").exists()
+        || !QDir(installPath+ "/bin").exists())
+	  {
+		//Need to browse for the farsight install folder
+		installPath = QFileDialog::getExistingDirectory(this, tr("Select Farsight installation directory"));
+		if(installPath == "")
+		  {
+			//user pressed cancel, bail out now.
+			return;
+		  }
+		this->settings->setValue("farsight/installpath",installPath);
+	  }
+
+	this->pythonFiles = installPath + QString("/python");
+	this->exeFiles = installPath + QString("/bin");
+
+  this->PythonDialog = new QtPythonDialog(this, this->argv0);
+  QObject::connect(this->PythonDialog, SIGNAL(interpreterInitialized()),
+                   this, SLOT(initPythonInterpretor()));
+  this->PythonDialog->initializeInterpretor();
+  this->PythonDialog->show();
+  this->PythonDialog->raise();
+  this->PythonDialog->activateWindow();
+*/
+	if(this->settings->contains("python/window") == false)
+    {
+		if(this->BrowseForPythonExecutable() == false)
+		{
+		//user cancelled operation, abort
+		return;
+		}
+    }
+
+	if(this->settings->contains("farsight/installpath") == false)
+	{
+		this->settings->setValue("farsight/installpath","");
+	}
+
+	QString cmd = this->settings->value("python/window").toString();
+	QString installPath = this->settings->value("farsight/installpath").toString();
+	QString quote = QString("\"");
+
+	while(!QDir(installPath).exists() || !QDir(installPath + "/python").exists() || !QDir(installPath+ "/bin").exists())
+	{
+		//Need to browse for the farsight install folder folder
+		installPath = QFileDialog::getExistingDirectory(this, tr("Select directory containing Farsight python scripts"));
+		if(installPath == "")
+		{
+			//user pressed cancel, bail out now.
+			return;
+		}
+		this->settings->setValue("farsight/installpath",installPath);
+	}
+
+	QString pythonFiles = installPath + QString("/python");
+	QString exeFiles = installPath + QString("/bin");
+	QString saxonFile = installPath + QString("/bin/saxon9.jar");
+
+	QString path1Cmd = QString("import sys;sys.path.append('") + pythonFiles + QString("');");
+	QString path2Cmd = QString("import os;os.environ['PATH'] = os.environ['PATH'] + ';") + exeFiles + QString("';");
+	QString path3Cmd = QString("os.environ['PATH'] = os.environ['PATH'] + ';") + pythonFiles + QString("';");
+	QString path4Cmd = QString("os.environ['CLASSPATH'] = ';") + saxonFile + QString("';");
+	QString importCmds = QString("from farsightutils import *;");
+	QString printCmd = QString("print 'FARSIGHT ENVIRONMENT';");
+	QString arg = QString(" -i -c ") + quote + path1Cmd + path2Cmd + path3Cmd + path4Cmd + importCmds + printCmd + quote;
+	cmd.append(arg);
+  
+	this->pythonProcess->startDetached(cmd);
+}
+
+//******************************************************************************
+// Ask the user to select a python interpreter to use with Farsight
+//******************************************************************************
+bool NucleusEditor::BrowseForPythonExecutable()
+  {
+  if(this->pythonProcess->state() != QProcess::NotRunning)
+    {
+    if(this->ConfirmClosePython() == false)
+      {
+      //we can't change farsight's associated python program command until the
+      //user is ready to shut it down...
+      return false;
+      }
+    this->pythonProcess->terminate();
+    }
+  QString pythonExecutable = QFileDialog::getOpenFileName(this, tr("Open Python"));
+  if(pythonExecutable == "")
+    {
+    //user pressed cancel, bail out now.
+    return false;
+    }
+  this->settings->setValue("python/window", pythonExecutable);
+  this->currentPythonLabel->setText(pythonExecutable);
+  return true;
+  }
+
+//******************************************************************************
+// Ask the user for permission to shut down their Python process.
+//******************************************************************************
+bool NucleusEditor::ConfirmClosePython()
+  {
+   QMessageBox msgBox;
+   msgBox.setText(tr("Python shutdown required to continue"));
+   msgBox.setInformativeText(tr("OK to shutdown Farsight's python process?"));
+   msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+   msgBox.setDefaultButton(QMessageBox::Cancel);
+   if(msgBox.exec() == QMessageBox::Cancel)
+     {
+     return false;
+     }
+   return true;
+  }
+

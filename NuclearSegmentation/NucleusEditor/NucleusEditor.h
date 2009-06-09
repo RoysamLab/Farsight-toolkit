@@ -43,10 +43,13 @@ private slots:
 	void segmentImage(void);
 	void about(void);
 	//void loadDatFile(void);
-
 	//void closeWidget(QWidget *);
 	void CreateNewPlotWindow();
 	void CreateNewTableWindow();
+
+	//DEMO - python is necessary for the demo
+	void OpenPythonWindow();
+	bool BrowseForPythonExecutable();
 
 signals:
     
@@ -76,6 +79,7 @@ private:
 	QAction *newScatterAction;
 	QMenu *helpMenu;
 	QAction *aboutAction;
+	QAction *pythonAction;
 
 	QLabel *statusLabel;
 
@@ -83,6 +87,15 @@ private:
 	SegmentationModel *currentModel;
 
 	QString lastPath;
+
+	//DEMO variable
+	bool ConfirmClosePython();
+	QSettings *settings;
+	QProcess *pythonProcess;
+	QLabel *pythonLabel;
+	QLabel *currentPythonLabel;
+	QPushButton *browseForPythonButton;
+
  };
 
 
