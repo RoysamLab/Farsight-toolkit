@@ -1,0 +1,26 @@
+# This project is designed to be built outside the Insight source tree.
+cmake_minimum_required(VERSION 2.6)
+
+PROJECT(SLFFeatureCal)
+
+# Find ITK.
+FIND_PACKAGE(ITK REQUIRED)
+IF(ITK_FOUND)
+  INCLUDE(${ITK_USE_FILE})
+ENDIF(ITK_FOUND)
+
+# Find VTK.
+FIND_PACKAGE(VTK REQUIRED)
+IF(VTK_FOUND)
+  INCLUDE(${VTK_USE_FILE})
+ENDIF(VTK_FOUND)
+
+INCLUDE_DIRECTORIES(${SLFFeatureCal_SOURCE_DIR})
+
+ADD_EXECUTABLE(SLFFeatureCal SLFFeatureCal.cxx itkBinarizeFilter.h
+              itkFindObjFilter.h itkObj2FeatureDNAFilter.h
+              itkObj2FeatureFilter.h itkSLF9FeatureCalFilter.h itkSLF11FeatureCalFilter.h itkEdgeFeaturesFilter.h
+              itkCoOccurrenceFilter.h itkCO2Feature3DFilter.h itkTextureFeaturesFilter.h)
+
+TARGET_LINK_LIBRARIES(SLFFeatureCal
+ITKBasicFilters ITKCommon ITKIO ITKStatistics)
