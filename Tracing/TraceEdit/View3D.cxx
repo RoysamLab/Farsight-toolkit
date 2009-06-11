@@ -24,6 +24,7 @@ limitations under the License.
     the interacter calls for "View3D::PickPoint"
   v3: include contourFilter and rayCast renderers
   v4: converted to Qt, member names changed to fit "VTK style" more closely.
+  v5: automated functions implemented structure in place for "PACE".
 */
 #include "View3D.h"
 #include "View3DHelperClasses.h"
@@ -65,9 +66,11 @@ this->QVTK = 0;
 this->gapTol = .5;
 this->gapMax = 10;
 this->smallLine = 5;
-this->SelectColor =.3;
+this->SelectColor =.1;
 this->lineWidth= 2;
 this->Initialize();
+this->tobj->setSmallLineColor(.25);
+this->tobj->setMergeLineColor(.4);
 }
 
 View3D::~View3D()
@@ -385,7 +388,7 @@ void View3D::SLine()
 	{	
 	case QMessageBox::Yes:
 	{
-		for (i=0;i<numLines-1;i++)
+		for (i=0;i<numLines;i++)
 		{	//std::cout << "Deleted line:" << i<< std::endl;					
 			//this->tobj->SmallLines[i]->Getstats();
 			this->tobj->RemoveTraceLine(this->tobj->SmallLines[i]);
@@ -414,37 +417,42 @@ void View3D::Rerender()
 
 void View3D::ListSelections()
 {
-  QLabel *selectionInfo = new QLabel();
+  QMessageBox *selectionInfo = new QMessageBox;
   QString listText;
-
+  QString selectedText;
   if (this->IDList.size()<= 0)
     {
     listText = tr("No traces selected");
     }
   else
     {
-    listText += QString::number(this->IDList.size()) + " lines are selected:\n";
+    listText += QString::number(this->IDList.size()) + " lines are selected\n";
     for (unsigned int i = 0; i < this->IDList.size(); i++)
       {
-      listText += QString::number(this->IDList[i]) + "\n";   
+      selectedText += QString::number(this->IDList[i]) + "\n";   
       } 
     }
   selectionInfo->setText(listText);
+  selectionInfo->setDetailedText(selectedText);
   selectionInfo->show();
 }
 
 void View3D::ClearSelection()
 {
-  if (this->IDList.size()<= 0)
+	QLabel *selectionInfo = new QLabel();
+	QString selectText;
+	if (this->IDList.size()<= 0)
     {
-    std::cout<<  "Nothing Selected \n";
+		selectText=tr("\t\tNothing Selected\t\t");
     }
-  else
+	else
     {
-    this->IDList.clear();
-    std::cout<< "cleared list\n";
-    this->Rerender();
+		this->IDList.clear();
+		selectText=tr("\t\tcleared list\t\t");
+		this->Rerender();
     }
+	selectionInfo->setText(selectText);
+	selectionInfo->show();
 }
 
 void View3D::DeleteTraces()
@@ -770,6 +778,7 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
 void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 {
 	unsigned int i,j, exist = 0, conflict = 0;
+	double currentAngle=0;
 	std::vector<compTrace> compList;
 	std::vector<compTrace> grayList;	//grayList is a list of all further possible merges within tolerance
 	QMessageBox *MergeInfo = new QMessageBox;
@@ -789,7 +798,7 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
         newComp.Trace2,newComp.endPT1, newComp.endPT2, newComp.dist, newComp.maxdist, newComp.angle);
 			if(!(newComp.dist >= newComp.Trace1->GetSize()*gapTol) 
 				&&	!(newComp.dist >= newComp.Trace2->GetSize()*gapTol) 
-				&&	!(newComp.dist >= gapMax))//*( 1+ gapTol)
+				&&	!(newComp.dist >= gapMax*( 1+ gapTol)))//
 			  {	//myText+="added comparison\n";
 				compList.push_back(newComp);
 			  }
@@ -803,7 +812,7 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 		  }
 	}
 	
-	if (compList.size() >= 1)
+	if (compList.size() > 1)
 	  {
 		myText+="\tNumber of comparisons:\t" + QString::number(compList.size());
 		i = 0, j = 0; int mergeCount = 0;
@@ -878,37 +887,43 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 				j=i;
 		  	}//end else exist
 	  	}
-		myText+="\tConflicts resolved:" + QString::number(conflict);
+		myText+="\nConflicts resolved:\t" + QString::number(conflict);
 		myText+= "\nTrace List size:\t" + QString::number(traceList.size());
 		myText+="\tNumber of computed distances:\t" + QString::number(compList.size());
 		for (i=0;i<compList.size(); i++)
-		{			
-			if 	(compList[i].dist<= gapMax*gapTol)
+		{
+			currentAngle=fabs(compList[i].angle); 
+			if (currentAngle>=PI/2) 
+			{
+				currentAngle= PI-currentAngle;
+			}
+			if 	((compList[i].dist<= gapMax*gapTol&& (currentAngle < 1.1))||
+				(compList[i].dist<= gapMax && (currentAngle < .6)))		//||((currentAngle >= 2.2)&&(currentAngle <= 2.6))
 		  	{
 				dtext+= "\nTrace " + QString::number(compList[i].Trace1->GetId());
-				dtext+= " compared to trace "+ QString::number(compList[i].Trace2->GetId() );
-				dtext+=" gap size of: " + QString::number(compList[i].dist); 
-				dtext+=" endpts " + QString::number(compList[i].endPT1); 
-				dtext+=" and " + QString::number(compList[i].endPT2);
-				dtext+=" angle of " + QString::number(compList[i].angle);
+				dtext+= " and "+ QString::number(compList[i].Trace2->GetId() );
+				dtext+="\tgap size of:" + QString::number(compList[i].dist); 
+				/*dtext+=" endpts\t" + QString::number(compList[i].endPT1); 
+				dtext+=" and\t" + QString::number(compList[i].endPT2);*/
+				dtext+="\tangle of" + QString::number(compList[i].angle*180/PI);
 				tobj->mergeTraces(compList[i].endPT1,compList[i].endPT2);
 				++mergeCount;
 		  	}	//end of if
-			else if(compList[i].dist<= gapMax && ((fabs(compList[i].angle) < .9))
-				||((fabs(compList[i].angle) >= 2.2)&&(fabs(compList[i].angle) <= 2.6)))
+			else if (compList[i].dist<= gapMax*(1+gapTol)&& (currentAngle < .3))
 		  	{
 				this->HighlightSelected(compList[i].Trace1, .125);
 				this->HighlightSelected(compList[i].Trace2, .125);
 				grayList.push_back( compList[i]);
-				grayText+="\nAngle of: " + QString::number(compList[i].angle);
-				grayText+="\tWith a distance of: " + QString::number(compList[i].dist);
+				grayText+="\nAngle of:\t" + QString::number(compList[i].angle*180/PI);
+				grayText+="\tWith a distance of:\t" + QString::number(compList[i].dist);
 				
 			 } //end of else
 		}//end of for merge
-		myText+="\nNumber of merged lines:\t" + QString::number(mergeCount);
-		this->Rerender();
+		myText+="\tNumber of merged lines:\t" + QString::number(mergeCount);
 		if (grayList.size()>=1)
 		{
+			this->poly_line_data->Modified();
+			this->QVTK->GetRenderWindow()->Render();
 			myText+="\nNumber of further possible lines:\t" + QString::number(grayList.size());
 			mergeAll = MergeInfo->addButton("Merge All", QMessageBox::YesRole);
 			mergeNone = MergeInfo->addButton("Merge None", QMessageBox::NoRole);
@@ -916,10 +931,16 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 		}		//end if graylist size
 		else
 		{
+			this->Rerender();
 			MergeInfo->setDetailedText(dtext);
-		}		//end else
-	  }
-
+		}		//end else graylist size
+	  }//end if complist size > 1
+	else if (compList.size() ==1)
+	{		
+		tobj->mergeTraces(compList[0].endPT1,compList[0].endPT2);
+		this->Rerender();
+		myText+="\nOne Trace merged";
+	}
 	else
 	{
 		myText+= "\nNo merges possible, set higher tolerances\n"; 
@@ -933,6 +954,7 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 		{
 			tobj->mergeTraces(grayList[j].endPT1,grayList[j].endPT2);
 		}
+		this->Rerender();
 	}
 	else if(MergeInfo->clickedButton()==mergeNone)
 	{

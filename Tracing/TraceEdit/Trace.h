@@ -43,6 +43,7 @@ limitations under the License.
 #include "tinyxml/tinyxml.h"
 
 #define MY_ENCODING "ISO-8859-1"
+#define PI 3.14159265
 
 /* A TraceBit has the x,y,z and id of a tracelet */
 struct TraceBit{
@@ -127,6 +128,15 @@ public:
 		for(unsigned int counter=0; counter<trace_lines.size(); counter++)
 			delete trace_lines[counter];
 	}
+	
+	void setSmallLineColor(double set)
+	{
+		smallLineColor=set;
+	}
+	void setMergeLineColor(double set)
+	{
+		mergeLineColor=set;
+	}
 	bool ReadFromSWCFile(char * filename);
 	bool ReadFromRPIXMLFile(char * filename);
 	bool ReadFromFeatureTracksFile(char *filename, int type_offset);
@@ -158,7 +168,8 @@ public:
   vtksys::hash_map< unsigned int, unsigned long long int > hashp;
   vtksys::hash_map< unsigned int, unsigned long long int > hashc;
 private:
-	std::vector<TraceLine*> trace_lines;	
+	std::vector<TraceLine*> trace_lines;
+	double smallLineColor, mergeLineColor;	
 };
 
 

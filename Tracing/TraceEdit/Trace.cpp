@@ -188,8 +188,22 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 		TraceLine * ttemp = new TraceLine();
 		ttemp->SetId(global_id_number++);
 		ttemp->SetType(hash_type[*iter]);
-		ttemp->setTraceColor(1.0/ttemp->GetType());
-		//tline->setTraceColor(1.0/tline->GetType());
+		//ttemp->setTraceColor(1.0/ttemp->GetType());
+		switch( ttemp->GetType() )
+		{
+		case 1:
+				ttemp->setTraceColor(.75);//cyan
+				break;
+		case 3:
+		case 4:
+		case 5:
+				ttemp->setTraceColor(.90);//blue
+				break;
+		case 7:
+		case 0:
+		default:
+				ttemp->setTraceColor(.25); //yellow
+		}
 		ttemp->AddTraceBit(data[*iter]);
 		int id_counter = *iter;
 		while(child_count[id_counter]==1)
@@ -287,7 +301,7 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkF
 		hashp[return_id]=(unsigned long long int)tline;
 		iter->marker = return_id;
 
-		point_scalars->InsertNextTuple1(tline->getTraceColor()-.25);
+		point_scalars->InsertNextTuple1(tline->getTraceColor());
 		cell_id = line_cells->InsertNextCell(2);
 		cell_id_array->push_back(cell_id);
 		hashc[cell_id]=reinterpret_cast<unsigned long long int>(tline);
@@ -462,7 +476,27 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
 		}
 		tline->SetId(lineID);
 		tline->SetType(lineType);
-		tline->setTraceColor(1.0/tline->GetType());
+		//tline->setTraceColor(1.0/tline->GetType());
+		//lauren added 11.6.2009
+		switch( tline->GetType() )
+		{
+		case 1:
+				tline->setTraceColor(.75);//cyan
+				break;
+		case 3:
+		case 4:
+		case 5:
+				tline->setTraceColor(.90);//blue
+				break;
+		case 7:
+		case 0:
+		default:
+				tline->setTraceColor(.25); //yellow
+		}
+		//end of added code
+		
+
+
 		if(lineParent != -1)
 		{
 			TraceLine *tparent;
@@ -779,7 +813,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 			(*tmarker->GetBranchPointer())[counter]->SetParent(tmarker);
 		}
 		RemoveTraceLine(tother);
-		tmarker->setTraceColor(.7/tmarker->GetType()); //tline->setTraceColor(1.0/tline->GetType());
+		tmarker->setTraceColor(this->mergeLineColor); //tline->setTraceColor(1.0/tline->GetType());
 	}
 	else if (slocation ==1 && elocation == 0)
 	{
@@ -792,7 +826,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 			(*tother->GetBranchPointer())[counter]->SetParent(tother);
 		}
 		RemoveTraceLine(tmarker);
-		tother->setTraceColor(.7/tother->GetType());
+		tother->setTraceColor(this->mergeLineColor);
 	}
 	else if (slocation == 0 && elocation ==0)
 	{
@@ -806,7 +840,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 			(*tother->GetBranchPointer())[counter]->SetParent(tother);
 		}
 		RemoveTraceLine(tmarker);
-		tother->setTraceColor(.7/tother->GetType());
+		tother->setTraceColor(this->mergeLineColor);//.7/tother->GetType()
 	}
 	else if (slocation == 1 && elocation ==1)
 	{
@@ -820,7 +854,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 			(*tmarker->GetBranchPointer())[counter]->SetParent(tmarker);
 		}
 		RemoveTraceLine(tother);
-		tmarker->setTraceColor(.7/tmarker->GetType());
+		tmarker->setTraceColor(this->mergeLineColor);
 	}
 	else if (slocation == -1 && elocation !=-1)
 	{
@@ -1011,12 +1045,13 @@ void TraceLine::Getstats()
 }
 void TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist, double &maxdist, double &angle)	
 {
-	//compute eucliedan distance 
+	int center1=this->GetSize()/2, center2=Trace2->GetSize()/2;
 	double XF, XB, YF, YB, ZF, ZB, XF2,XB2, YF2, YB2, ZF2, ZB2, distances[4];
 	double delX1, delX2, delY1, delY2, delZ1, delZ2, min, norm1, norm2;
 //trace 1
 	XF = m_trace_bits.front().x;	YF= m_trace_bits.front().y;		ZF= m_trace_bits.front().z;
 	XB = m_trace_bits.back().x;		YB= m_trace_bits.back().y;		ZB= m_trace_bits.back().z;
+
 //trace 2 
 	XF2=Trace2->m_trace_bits.front().x;		YF2=Trace2->m_trace_bits.front().y;		ZF2=Trace2->m_trace_bits.front().z;
 	XB2=Trace2->m_trace_bits.back().x;		YB2=Trace2->m_trace_bits.back().y;		ZB2=Trace2->m_trace_bits.back().z;
@@ -1027,26 +1062,16 @@ void TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
 
 	//compute the endpt distances
 	distances[0]=sqrt(pow((XF-XF2),2)+pow((YF-YF2),2)+pow((ZF-ZF2),2));//0 F-F
-	//std::cout<<distances[0]<<std::endl;
 	distances[1]=sqrt(pow((XF-XB2),2)+pow((YF-YB2),2)+pow((ZF-ZB2),2));//1 F-B
-	//std::cout<<distances[1]<<std::endl;
 	distances[2]=sqrt(pow((XB-XF2),2)+pow((YB-YF2),2)+pow((ZB-ZF2),2));//2 B-F
-	//std::cout<<distances[2]<<std::endl;
 	distances[3]=sqrt(pow((XB-XB2),2)+pow((YB-YB2),2)+pow((ZB-ZB2),2));//3 B-B
-
-	norm1=sqrt(pow((delX1),2)+ pow((delY1),2)+ pow((delZ1),2));
-	norm2=sqrt(pow((delX2),2)+ pow((delY2),2)+ pow((delZ2),2));
-	angle = acos(((delX1 * delX2) + (delY1 *delY2) + (delZ1 * delZ2))/(norm2 * norm1));
-	//std::cout<<distances[3]<<std::endl;
 	//determine minimum spacing
 	min = distances[0];
 	int i, mark=0;
 	for (i = 1; i<4; i++)
-	{
-		//printf("dist of %d = %d \n", i, distances[i]);
+	{	//printf("dist of %d = %d \n", i, distances[i]);
 		if (min > distances[i])
-		{
-			min= distances[i];
+		{	min= distances[i];
 			mark=i;
 		}
 	}
@@ -1079,6 +1104,9 @@ void TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
 		dir2= Trace2->m_trace_bits.back().marker;
 		maxdist= distances[0];
 	}
+	norm1=sqrt(pow((delX1),2)+ pow((delY1),2)+ pow((delZ1),2));
+	norm2=sqrt(pow((delX2),2)+ pow((delY2),2)+ pow((delZ2),2));
+	angle = acos(((delX1 * delX2) + (delY1 *delY2) + (delZ1 * delZ2))/(norm2 * norm1));
 }
 
 void TraceObject::RemoveTraceLine(TraceLine *tline)
@@ -1108,7 +1136,7 @@ void TraceObject::FindMinLines(int smallSize)
 		tline=*iter;
 		if(smallSize >= tline->GetSize())
 		{
-			tline->setTraceColor(.3);
+			tline->setTraceColor(this->smallLineColor);
 			SmallLines.push_back(tline);
 		}
 		++iter;
