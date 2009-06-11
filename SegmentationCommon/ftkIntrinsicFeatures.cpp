@@ -49,7 +49,16 @@ FeatureInfoType IntrinsicFeatures::Info[N] = {
 	{ "inverse_diff_moment", "units", "description" },
 	{ "inertia", "units", "description" },
 	{ "cluster_shade", "units", "description" },
-	{ "cluster_prominence", "units", "description" }
+	{ "cluster_prominence", "units", "description" },
+
+	//The following features are added by Aytekin Following
+	{ "Nissl_sig", "units", "description" },
+	{ "Iba1_sig", "units", "description" },
+	{ "GFAP_sig", "units", "description" },
+	{ "EBA_sig", "units", "description" },
+	{ "Dist_to_Bldv", "units", "description" }
+
+
 };
 
 void IntrinsicFeatures::Print()

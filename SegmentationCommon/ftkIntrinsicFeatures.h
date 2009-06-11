@@ -47,10 +47,14 @@ public:
 		SURFACE_GRADIENT, INTERIOR_GRADIENT, SURFACE_INTENSITY, INTERIOR_INTENSITY, \
 		INTENSITY_RATIO, RADIUS_VARIATION, SURFACE_AREA, SHAPE, SHARED_BOUNDARY, \
 		SKEW, ENERGY, ENTROPY,
-		T_ENERGY, T_ENTROPY, INVERSE_DIFFERENCE_MOMENT, INERTIA, CLUSTER_SHADE, CLUSTER_PROMINENCE
+		T_ENERGY, T_ENTROPY, INVERSE_DIFFERENCE_MOMENT, INERTIA, CLUSTER_SHADE, CLUSTER_PROMINENCE,
+		//Added by Aytekin Vargun
+		NISSL_SIG,IBA1_SIG,GFAP_SIG,EBA_SIG,DIST_TO_BLDV
 	};	//FEATURES WILL GET ASSIGNED INT 0,1,...N-1
 
-	static const int N = CLUSTER_PROMINENCE + 1;	//This is the number of scalar intrinsic features
+	//The following line was replaced by Aytekin Vargun
+	//static const int N = CLUSTER_PROMINENCE + 1;	//This is the number of scalar intrinsic features
+	static const int N = DIST_TO_BLDV + 1;
 
 	int Dimensions;
 
