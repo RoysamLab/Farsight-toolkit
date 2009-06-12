@@ -542,7 +542,7 @@ int vtkLSMReader::ReadLSMSpecificInfo(ifstream *f,unsigned long pos)
   this->VoxelSizes[0] = this->ReadDouble(f,&pos);
   this->VoxelSizes[1] = this->ReadDouble(f,&pos);
   this->VoxelSizes[2] = this->ReadDouble(f,&pos);
-  vtkDebugMacro("Voxel size="<<VoxelSizes[0]<<","<<VoxelSizes[1]<<","<<VoxelSizes[3]<<"\n");
+  vtkDebugMacro("Voxel size="<<VoxelSizes[0]<<","<<VoxelSizes[1]<<","<<VoxelSizes[2]<<"\n");
 
   // Skip over OriginX,OriginY,OriginZ which are not used
   pos += 3*8;
