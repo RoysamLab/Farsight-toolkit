@@ -46,4 +46,5 @@ typedef graph_traits < Graph >::vertex_iterator Vertex_iter;
 
 
 //void morphGraphPrune(int *degree_nodes, Graph msTree, int num_nodes, struct VoxelPosition *vertexPos);
-Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexPos, float length_leaf);
+//Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexPos, float length_leaf);
+Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexPos);

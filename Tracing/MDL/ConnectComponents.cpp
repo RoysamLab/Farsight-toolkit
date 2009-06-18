@@ -6,7 +6,6 @@
 // --- Date: 10/3/2005
 
 
-#include "stdafx.h"
 #include <stdlib.h>
 #include <stdio.h>
 //#include <fstream.h>
@@ -57,11 +56,10 @@ int main(int argc, char *argv[])
 	FILE *outfile;
 	char *infilename = new char[80];
 	char *outfilename = new char[80];
-	int i,j,k, t;
-	int ii, jj, kk;
+	int i,j,k;
 	DATATYPEOUT *volout;
 	int *volIndex;
-	long idx, iidx;
+	long idx;
 	float threshold;
 	int vertHistComp[100000];
 

@@ -7,7 +7,6 @@
 // ----  Output: ASCII file with vector 3 components for all object voxels
 // ----
 
-#include "stdafx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -108,21 +107,17 @@ int main(int argc, char *argv[])
   FILE *fileout;
   DATATYPEIN *volin;
   VoxelPosition *boundVoxs;
-  float *buff;
   Vector *force;
   Vector *vecLUTable;
 
   int sizeX,sizeY,sizeZ;         // Sizes in x,y,z dimensions
   int MidX, MidY, MidZ;
   int i,j,k,n,s,ss;
-  float ThresDiv;
   long idx, iidx, sls, sz;
   int measureTime = 0;
   int numBound = 0;
   int flagBound;
   Vector pointForce, totalForce;
-  Vector direc;
-  double componentin;
   int border;
 
   if (argc < 6)
@@ -155,7 +150,7 @@ int main(int argc, char *argv[])
   sls = sizeX*sizeY;		// slice size
   sz = sls*sizeZ;
 
-  if ( fread(volin, sizeof(DATATYPEIN), sz, filein) < sz)
+  if ( fread(volin, sizeof(DATATYPEIN), sz, filein) < (unsigned int)sz)
   {
     printf("File size is not the same as volume size\n");
     exit(1);

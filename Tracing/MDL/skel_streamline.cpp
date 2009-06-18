@@ -5,8 +5,6 @@
 // --- Author: Xiaosong Yuan
 // --- Modify Date: 7/28/2007
 
-#include "stdafx.h"
-#include <io.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -97,15 +95,11 @@ int main(int argc, char *argv[])
   
   long idx, iidx, slsz, sz;
   int measureTime = 0;
-  int numBound = 0;
-  int flagBound;
-  Vector pointForce, totalForce;
   VoxelPosition Startpos, Nextpos;
   //VoxelPosition seeds[80000];    // 90000 crash
   VoxelPosition *seeds;
   int idxSeeds;
   Vector vecin;
-  long iidx1, iidx2;
   int cc;
   int ii,jj,kk;
   int *FlagOnSkeleton;
@@ -114,7 +108,6 @@ int main(int argc, char *argv[])
   float Ngrid;
   Vector OutForce;
   int streamSteps=0;
-  int FlagCloseToSkeleton;
   int x, y, z;
   double totalVecLength;
   double div, divx, divy, divz;
@@ -874,7 +867,6 @@ void rk2(float x, float y, float z, int sizx, int sizy, int sizz, double steps, 
    {
 	long slsz;
 	Vector OutForce;
-	float x1, y1, z1;
 	slsz=sizy*sizx;
 
 	OutForce=interpolation(x,y,z,sizx,sizy,sizz,Force_ini);

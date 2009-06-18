@@ -5,7 +5,6 @@
 // Date: 12/22/2005
 // Status: under modification of MDL
 
-#include "stdafx.h"
 #include "morphGraphPrune.h"
 #include "distTransform.h"
 #include "MinSpanTree.h"
@@ -14,7 +13,6 @@
 #include <boost/graph/graphviz.hpp>
 #include <iostream>
 #include <fstream>
-#include <io.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -95,10 +93,9 @@ int main(int argc, char *argv[])
 
 
   ifstream fin;
-  FILE *volfile, *vesselfile, *somafile, *distOutfile, *neuronSegfile;
+  FILE *volfile, *vesselfile, *somafile, *distOutfile;
   FILE *fout, *fout_txt;
-  FILE *fout_MDL;
-  DATATYPEIN *volin, *volvessel, *somaDist, *neuronDist;
+  DATATYPEIN *volin, *volvessel, *somaDist;
   char *filedir;
   char *infilename;
   int sizeX,sizeY,sizeZ;         // Sizes in x,y,z dimensions
@@ -109,7 +106,6 @@ int main(int argc, char *argv[])
   int p;
   int edgeRange;
   int line_count;
-  int prunetimes;
   int branchChosen;
   int indVert, indVert_last;
 
@@ -140,7 +136,6 @@ int main(int argc, char *argv[])
   float length_2leaf[MAXNumBranch];  // length of two level branches
 
   float length_edge;
-  double x1, x2, x3;
   int *edge_eroded;
   int num_edge_eroded;
   int edge_source, edge_target;
@@ -191,7 +186,7 @@ int main(int argc, char *argv[])
   slsz = sizeX*sizeY;		// slice size
   sz = slsz*sizeZ;
 
-  printf("sz = %d\n", sz);
+  printf("sz = %ld\n", sz);
 
   if ((fout = fopen(argv[7], "w")) == NULL)
   {
@@ -277,21 +272,21 @@ int main(int argc, char *argv[])
   edge_w = new float[MAX_NUM_EDGE];
   //edge_array = (E*)malloc(MAX_NUM_EDGE*sizeof(E));
 
-  if ( fread(volin, sizeof(DATATYPEIN), sz, volfile) < sz)  // read in vol file
+  if ( fread(volin, sizeof(DATATYPEIN), sz, volfile) < (unsigned int)sz)  // read in vol file
   {
     printf("File size is not the same as volume size\n");
     exit(1);
   }
 
 
-  if ( fread(volvessel, sizeof(DATATYPEIN), sz, vesselfile) < sz)  // read in file
+  if ( fread(volvessel, sizeof(DATATYPEIN), sz, vesselfile) < (unsigned int)sz)  // read in file
   {
     printf("File size is not the same as vessel size\n");
     exit(1);
   }
 
 #if OUTPUT_DISTTRANS
-  if ( fread(somaDist, sizeof(DATATYPEIN), sz, somafile) < sz)  // read in file
+  if ( fread(somaDist, sizeof(DATATYPEIN), sz, somafile) < (unsigned int)sz)  // read in file
   {
     printf("File size is not the same as soma size\n");
     exit(1);
@@ -561,7 +556,6 @@ int main(int argc, char *argv[])
 		  //num_edge_MST++;
 	  }
   }
-  int num_vertex_MST = num_vertices(msTreeBB); 
   //int num_edge_MST = num_edges(msTreeBB); //not work
 
   //msTreeBB_buffer = msTreeBB; // copy to buffer for next process
@@ -574,13 +568,12 @@ int main(int argc, char *argv[])
   //int vertsCurBranch[2000];   // For the 1st level branch at BB
   //int vertsCurBr_Index = 0;
   //int vertsCurBranch2[2000];  // For the 2nd level branch at BB
-  int vertsCurBranch2[MAXNumBranch][2000];  // For the 2nd level branch at BB (at most MAXNumBranch 2nd level branches, at most 2000 vertices)
+  unsigned int vertsCurBranch2[MAXNumBranch][2000];  // For the 2nd level branch at BB (at most MAXNumBranch 2nd level branches, at most 2000 vertices)
   int vertsCurBr_Index2[MAXNumBranch];      // when array at [0], it is the 1st level branch at BB
 
   for (i=0; i<MAXNumBranch; i++)  vertsCurBr_Index2[i]=0;  // Initialize to zeros
 
   // CONSIDER ALL branches on the BackBone
-  Vertex curVert;
   num_leaves = 0;
   //prunetimes = 1; //5;
 
@@ -992,7 +985,7 @@ int main(int argc, char *argv[])
 	  numOfVertBranch[component[i]]++;
 	  idx = vertexPos[i+1].z *slsz + vertexPos[i+1].y *sizeX + vertexPos[i+1].x;
 	  //meanDensityBranch[component[i]] += volin[idx];
-	  meanDensityBranch[component[i]] += volvessel[idx]; //*volin[idx];
+	  meanDensityBranch[component[i]] += volvessel[idx]; // *volin[idx];
   }
 
   // Judge if branch is dendrite, based on mean density of branch
@@ -1054,7 +1047,7 @@ int main(int argc, char *argv[])
 
   for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei) {
 	   // output lines into vtk file
-       fprintf(fout, "2 %d %d\n", source(*ei, msTreeBB)-1, target(*ei, msTreeBB)-1);
+       fprintf(fout, "2 %lu %lu\n", source(*ei, msTreeBB)-1, target(*ei, msTreeBB)-1);
   }
 
 

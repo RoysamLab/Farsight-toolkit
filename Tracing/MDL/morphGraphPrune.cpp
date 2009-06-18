@@ -12,7 +12,6 @@
 #include <boost/graph/graphviz.hpp>
 #include <iostream>
 #include <fstream>
-#include <io.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -47,8 +46,6 @@ Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexP
 {
 	//struct VoxelPosition *vertexPos;
 	Graph msTree_buffer(num_nodes+1);
-	int num_edge_MST = 0;
-	int num_vertex_MST = num_vertices(msTree); 
 	//int num_edge_MST = num_edges(msTree); //not work
 
 	msTree_buffer = msTree; // copy to buffer for next process
@@ -56,7 +53,7 @@ Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexP
 	Edge_iter   ei, ei_end;
 	Vertex_iter vi, vend;
 	graph_traits<Graph>::out_edge_iterator  outei, outedge_end;
-	int curBranchVerts[2000];
+	unsigned int curBranchVerts[2000];
 	int curBrVerts_Index = 0;
 	float length_leaf, length_edge;
 	int indVert, indVert_last;
@@ -66,7 +63,6 @@ Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexP
 
 
 	// Consider all leaves
-	Vertex curVert;
 	num_leaves = 0;
 	int prunetimes = 1; 
 	  

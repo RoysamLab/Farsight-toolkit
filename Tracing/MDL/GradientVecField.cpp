@@ -7,7 +7,6 @@
 // ----  Output: ASCII file with vector 3 components for all object voxels
 // ----
 
-#include "stdafx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -95,7 +94,7 @@ int main(int argc, char *argv[])
   sls = sizeX*sizeY;		// slice size
   sz = sls*sizeZ;
 
-  if ( fread(volin, sizeof(DATATYPEIN), sz, filein) < sz)
+  if ( fread(volin, sizeof(DATATYPEIN), sz, filein) < (unsigned int)sz)
   {
     printf("File size is not the same as volume size\n");
     exit(1);
