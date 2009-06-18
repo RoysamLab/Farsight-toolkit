@@ -1,26 +1,12 @@
-/*=========================================================================
-Copyright 2009 Rensselaer Polytechnic Institute
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. 
-=========================================================================*/
-
 /*  Volume Density Iso- Anisotropic Diffusion
- *   Author: Xiaosong Yuan, RPI
- *  Created on Nov. 16, 2005  
+/*   Author: Xiaosong Yuan, RPI
+/*  Created on Nov. 16, 2005  
 
- *  Input parameters
- *            
- *                   */
+/*  Input parameters
+/*            
+/*                   */
 
+#include "stdafx.h"
 #include <stdlib.h>
 #include <stdio.h>
 //#include <fstream.h>
@@ -58,8 +44,8 @@ struct  Vector
 int main(int argc, char *argv[])
 {
 	
-	if(argc < 7) {
-	    printf("\nUsage: <input file> <sizeX> <sizeY> <sizeZ> <output file> <k_factor> <t_factor>.\n");
+	if(argc < 6) {
+	    printf("\nUsage: <input file> <sizeX> <sizeY> <sizeZ> <output file> <threshold>.\n");
 	    exit(1);
 	}
 
@@ -71,18 +57,17 @@ int main(int argc, char *argv[])
     Vector *gradVec;
 	DATATYPEOUT *volout;
 
-	int i,j,k;
-	//int t;
+	int i,j,k, t;
 	int ii, jj, kk;
 	int d1, d2;
 	int sls, sz;
-	long idx, iidx1, iidx2;
-	//long iidx;
+	long idx, iidx, iidx1, iidx2;
 	int timesDiffuse;
 	int border;
 	float kernelWeight[3][3];
 	double diverg;
 	double lamda;
+	float threshold;
 	double voxelUpdate;
 	float k_factor;
 	double Dxy1, Dxy2;
@@ -93,8 +78,7 @@ int main(int argc, char *argv[])
 	sizeY = atoi(argv[3]);
 	sizeZ = atoi(argv[4]);
 	outfilename = argv[5];
-  k_factor = atof(argv[6]);
-  timesDiffuse = atof(argv[7]);
+	threshold = atof(argv[6]);
 
 	sls = sizeX*sizeY;		// slice size
 	sz = sls*sizeZ;
@@ -124,7 +108,7 @@ int main(int argc, char *argv[])
 			}
 	fread(volin2,sizeX*sizeY*sizeZ,sizeof(unsigned char), infile2);
 */
-	if (fread(volin, sizeof(DATATYPEIN), sizeX*sizeY*sizeZ, infile) < (unsigned int)(sizeX*sizeY*sizeZ) )
+	if (fread(volin, sizeof(DATATYPEIN), sizeX*sizeY*sizeZ, infile) < sizeX*sizeY*sizeZ)
 	{
 		printf("File size is not the same as volume size\n");
 		exit(1);
@@ -138,6 +122,7 @@ int main(int argc, char *argv[])
 	kernelWeight[2][0] = 1; kernelWeight[2][1] = 2; kernelWeight[2][2] = 1;
 
 	
+    timesDiffuse = 2;
     while (timesDiffuse >0 ) {
 
 		printf("Volume Processing # %d...\n", timesDiffuse);
@@ -179,6 +164,7 @@ int main(int argc, char *argv[])
 #if Aniso   // Anisotropic diffusion
 		border = 2;
 		lamda = 0.02;  // 0.02
+		k_factor = 800;
 		for (k=border; k<sizeZ-border; k++) {
 			for (j=border; j<sizeY-border; j++) {
 				for (i=border; i<sizeX-border; i++)
@@ -240,7 +226,7 @@ int main(int argc, char *argv[])
 			}
 		}
 
-#endif
+#endif;
 
 
 
