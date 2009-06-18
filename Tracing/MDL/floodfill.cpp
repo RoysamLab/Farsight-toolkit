@@ -1,26 +1,12 @@
-/*=========================================================================
-Copyright 2009 Rensselaer Polytechnic Institute
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. 
-=========================================================================*/
-
 /*  Flood filling
- *  accept a sequence of volumes
- * Input data contains either 0 or values greater or equal to 3
- *  Windows version, taken in from Linux version
- *   Author: Xiaosong Yuan, RPI
- *  Modified on Oct. 2, 2005                 */
+/*  accept a sequence of volumes
+/* Input data contains either 0 or values greater or equal to 3
+/*  Windows version, taken in from Linux version
+/*   Author: Xiaosong Yuan, RPI
+/*  Modified on Oct. 2, 2005                 */
 
 
+#include "stdafx.h"
 #include <stdlib.h>
 #include <stdio.h>
 //#include <fstream.h>
@@ -80,15 +66,15 @@ int main(int argc, char *argv[])
 	char *infilename = new char[80];
 	char *outfilename = new char[80];
 	int i,j,k, t;
-	//int ii, jj, kk;
-	//int NearObjFlag;
+	int ii, jj, kk;
+	int NearObjFlag;
 	DATATYPEOUT *volout;
-	long idx;//, iidx;
+	long idx, iidx;
 	float threshold;
-	//int kmod8, kdiv8;
-	//int FlagIsolated;
-	//int NumConnectComp;
-	//DATATYPEOUT blockMax;
+	int kmod8, kdiv8;
+	int FlagIsolated;
+	int NumConnectComp;
+	DATATYPEOUT blockMax;
 
 	infilename = argv[1];
 	sizeX = atoi(argv[2]);
@@ -218,7 +204,7 @@ void spread(Position pos, int startx, int endx, int direction)
 	Position pos1; // in a new row
 	int newy, newz;
 	int startx0, endx0;
-	int startx1;//, endx1;
+	int startx1, endx1;
 	int laststartx;
 
 	switch (direction)

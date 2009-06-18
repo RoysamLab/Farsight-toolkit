@@ -1,29 +1,14 @@
-/*=========================================================================
-Copyright 2009 Rensselaer Polytechnic Institute
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. 
-=========================================================================*/
-
 /*  Volume dataset processing
- *  accept a sequence of volumes
- *  Windows version, taken in from Linux version
- *   Author: Xiaosong Yuan, RPI
- *  Modified on Sep. 29, 2005  
+/*  accept a sequence of volumes
+/*  Windows version, taken in from Linux version
+/*   Author: Xiaosong Yuan, RPI
+/*  Modified on Sep. 29, 2005  
 
- *  Input parameters
- *          1. sizeExpand   
- *          2. preproess          */
+/*  Input parameters
+/*          1. sizeExpand   
+/*          2. preproess          */
 
-//#include "stdafx.h"
+#include "stdafx.h"
 #include <stdlib.h>
 #include <stdio.h>
 //#include <fstream.h>
@@ -72,8 +57,8 @@ void lineSeed();
 int main(int argc, char *argv[])
 {
 	
-	if(argc < 6) {
-	    printf("\nUsage: <input file> <sizeX> <sizeY> <sizeZ> <output file> <threshold>.\n");
+	if(argc < 7) {
+	    printf("\nUsage: <input file> <sizeX> <sizeY> <sizeZ> <sizeTime> <output file> <threshold>.\n");
 	    exit(1);
 	}
 
@@ -84,26 +69,27 @@ int main(int argc, char *argv[])
 	char *outfilename = new char[80];
 	int i,j,k, t;
 	int ii, jj, kk;
-	//int NearObjFlag;
+	int NearObjFlag;
 	DATATYPEOUT *volout;
-	long idx;//, iidx;
+	long idx, iidx;
 	float threshold;
-	//int kmod8, kdiv8;
-	//int FlagIsolated;
-	//int NumConnectComp;
+	int kmod8, kdiv8;
+	int FlagIsolated;
+	int NumConnectComp;
 	int sizeExpand = 0;  //10;
 	DATATYPEOUT blockMax;
 	int timesDilate;
 	int border;
+	double intensitySum;
+	int kernelSize, kernelLen;
 
 	infilename = argv[1];
 	sizeX = atoi(argv[2]);
 	sizeY = atoi(argv[3]);
 	sizeZ = atoi(argv[4]);
-	//sizeTime = atoi(argv[5]);
-	sizeTime = 1;
-	outfilename = argv[5];
-	threshold = atof(argv[6]);
+	sizeTime = atoi(argv[5]);
+	outfilename = argv[6];
+	threshold = atof(argv[7]);
 
 	volin = (DATATYPEIN*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(DATATYPEIN));
 	volout = (DATATYPEOUT*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(DATATYPEOUT));
@@ -131,7 +117,7 @@ int main(int argc, char *argv[])
 
 	for (t=0; t<sizeTime; t++) {
 		
-		if (fread(volin, sizeof(DATATYPEIN), sizeX*sizeY*sizeZ, infile) < (unsigned int)(sizeX*sizeY*sizeZ))
+		if (fread(volin, sizeof(DATATYPEIN), sizeX*sizeY*sizeZ, infile) < sizeX*sizeY*sizeZ)
 		{
 			printf("File size is not the same as volume size\n");
 		    exit(1);
@@ -146,8 +132,13 @@ int main(int argc, char *argv[])
 		for (k=0; k<(sizeZ+sizeExpand*2); k++)
 			for (j=0; j<sizeY; j++)
 				for (i=0; i<sizeX; i++) {
+					if (k==4) 
+						volout[k *sizeX*sizeY + j *sizeX + i] = volin[0 *sizeX*sizeY + j *sizeX + i]; 
+					else
 					volout[k *sizeX*sizeY + j *sizeX + i] = 0; 
 				}  //initial to zeros
+
+/*
 		for (k=0; k<sizeZ; k++) {  // threshlod first
 			for (j=0; j<sizeY; j++) {
 				for (i=0; i<sizeX; i++)
@@ -161,7 +152,7 @@ int main(int argc, char *argv[])
 				}
 			}
 		}   
-/*
+
 		for (k=0; k<sizeZ; k++)
 			for (j=0; j<sizeY; j++)
 				for (i=0; i<sizeX; i++) {
@@ -173,8 +164,8 @@ int main(int argc, char *argv[])
 				for (i=0; i<sizeX; i++) {
 					volin[k *sizeX*sizeY + j*sizeX + i] = volout[k *sizeX*sizeY + j*sizeX + i];
 				}  // save back to volin
-
 */
+
 
 		// Method 1: Cutting a part of the object
 /*		for (k=0; k<sizeZ; k++) {
@@ -194,6 +185,7 @@ int main(int argc, char *argv[])
 */
 
 		// Method 2: Dilation of the object
+/*
 	   timesDilate = 1;
 	   border = 3;
 	   while (timesDilate >0 ) {
@@ -211,7 +203,7 @@ int main(int argc, char *argv[])
 					// Keep the peak of the original intensity
 					if (blockMax == volin[k *sizeX*sizeY + j *sizeX + i] && blockMax != 0)  {
 						blockMax = blockMax + 1;
-						//if (blockMax > 255)   blockMax = 255;
+						if (blockMax > 255)   blockMax = 255;
 					}
 					volout[k *sizeX*sizeY + j *sizeX + i] = blockMax;
 				}
@@ -226,7 +218,7 @@ int main(int argc, char *argv[])
 				}
         timesDilate--;
 	   }
-
+*/
 
 		// Method 3: Threshold the voxel intensity
 /*		for (k=0; k<sizeZ; k++) {
@@ -336,6 +328,37 @@ int main(int argc, char *argv[])
 			}
 		}
 */
+		// Method 9: Smoothing the image
+/*
+		border = 3;
+		kernelSize = 3;  // shoud have border >= kernelSize
+		for (k=border; k< sizeZ-border; k++) {
+			for (j=border; j< sizeY-border; j++) {
+				for (i=border; i< sizeX-border; i++)
+				{
+					intensitySum = 0;
+					for (kk=-kernelSize; kk<=kernelSize; kk++)
+						for (jj=-kernelSize; jj<=kernelSize; jj++)
+							for (ii=-kernelSize; ii<=kernelSize; ii++) {
+								intensitySum += volin[(k+kk)*sizeX*sizeY + (j+jj)*sizeX + (i+ii)];
+					}
+				    kernelLen = 2 * kernelSize + 1;
+					volout[k*sizeX*sizeY +j*sizeX +i]=(DATATYPEOUT)(intensitySum/(kernelLen*kernelLen*kernelLen));
+				}
+			}
+		}
+*/
+
+		// Post-Processing 
+/*		for (k=0; k<sizeZ; k++)
+			for (j=0; j<sizeY; j++)
+				for (i=0; i<sizeX; i++) {
+					if (volout[k *sizeX*sizeY + j *sizeX + i] > threshold) 
+						volout[k *sizeX*sizeY + j *sizeX + i] = OBJECT; 
+					else
+                        volout[k *sizeX*sizeY + j *sizeX + i] = 0; 
+				}   // threshold
+*/
 
 		fwrite(volout, sizeX*sizeY*sizeZ, sizeof(DATATYPEOUT), outfile);
 
@@ -403,7 +426,7 @@ void spread(Position pos, int startx, int endx, int direction)
 	Position pos1; // in a new row
 	int newy, newz;
 	int startx0, endx0;
-	int startx1;//, endx1;
+	int startx1, endx1;
 	int laststartx;
 
 	switch (direction)

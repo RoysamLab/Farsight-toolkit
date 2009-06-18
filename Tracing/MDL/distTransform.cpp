@@ -1,18 +1,3 @@
-/*=========================================================================
-Copyright 2009 Rensselaer Polytechnic Institute
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. 
-=========================================================================*/
-
 // ----
 // ----  Extract the thinness metric based skeleton. 
 // ----  Uses Toriwaki and Saito's DT algorithm. 
@@ -23,13 +8,14 @@ limitations under the License.
 // ----  Output: volume file with distance transform, 
 // ----          DT is zero for all object voxels; DT is scaled to 0-255.
 // ----
-// $Id: distTransform.cpp 598 2009-05-11 21:27:59Z galbreath $
+// $Id:  2008/05/02 $
 
 #include "MinSpanTree.h"
 #include "distTransform.h"
+#include "stdafx.h"
 #include <iostream>
 #include <fstream>
-//#include <io.h>
+#include <io.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -49,7 +35,7 @@ void distTransform(unsigned char *f, int L, int M, int N)
 {
   
   int i,j,k,n;
-  float *buff , df, db, d, w;
+  float *buff , df, db, d, w, thresh;
   long *fDist;
   long idx, slsz, sz;
 
@@ -174,7 +160,8 @@ void distTransform(unsigned char *f, int L, int M, int N)
 	  if (fDist[idx] > dMax)   dMax = fDist[idx];
   }
   for(idx=0; idx<sz; idx++)   {  // Scale the dist result to 255
-	  f[idx] = fDist[idx] * 255/ dMax;
+	  //f[idx] = fDist[idx] * 255/ dMax;
+	  f[idx] = fDist[idx];
   }
 
   return;

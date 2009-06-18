@@ -1,18 +1,3 @@
-/*=========================================================================
-Copyright 2009 Rensselaer Polytechnic Institute
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. 
-=========================================================================*/
-
 // Label the connected components of the input volume with zero background
 // Remove the connected components with small number of voxels
 // --- Input: original volume
@@ -20,6 +5,8 @@ limitations under the License.
 // --- Author: Xiaosong Yuan, RPI
 // --- Date: 10/3/2005
 
+
+#include "stdafx.h"
 #include <stdlib.h>
 #include <stdio.h>
 //#include <fstream.h>
@@ -70,10 +57,11 @@ int main(int argc, char *argv[])
 	FILE *outfile;
 	char *infilename = new char[80];
 	char *outfilename = new char[80];
-	int i,j,k;
+	int i,j,k, t;
+	int ii, jj, kk;
 	DATATYPEOUT *volout;
 	int *volIndex;
-	long idx;
+	long idx, iidx;
 	float threshold;
 	int vertHistComp[100000];
 

@@ -1,18 +1,3 @@
-/*=========================================================================
-Copyright 2009 Rensselaer Polytechnic Institute
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. 
-=========================================================================*/
-
 // ----
 // ----  Compute the vector field of any volume objects
 // ----
@@ -22,6 +7,7 @@ limitations under the License.
 // ----  Output: ASCII file with vector 3 components for all object voxels
 // ----
 
+#include "stdafx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -122,17 +108,21 @@ int main(int argc, char *argv[])
   FILE *fileout;
   DATATYPEIN *volin;
   VoxelPosition *boundVoxs;
+  float *buff;
   Vector *force;
   Vector *vecLUTable;
 
   int sizeX,sizeY,sizeZ;         // Sizes in x,y,z dimensions
   int MidX, MidY, MidZ;
   int i,j,k,n,s,ss;
+  float ThresDiv;
   long idx, iidx, sls, sz;
   int measureTime = 0;
   int numBound = 0;
   int flagBound;
   Vector pointForce, totalForce;
+  Vector direc;
+  double componentin;
   int border;
 
   if (argc < 6)
@@ -165,7 +155,7 @@ int main(int argc, char *argv[])
   sls = sizeX*sizeY;		// slice size
   sz = sls*sizeZ;
 
-  if ( fread(volin, sizeof(DATATYPEIN), sz, filein) < (unsigned long)sz)
+  if ( fread(volin, sizeof(DATATYPEIN), sz, filein) < sz)
   {
     printf("File size is not the same as volume size\n");
     exit(1);

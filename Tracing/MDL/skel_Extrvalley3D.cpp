@@ -1,24 +1,10 @@
-/*=========================================================================
-Copyright 2009 Rensselaer Polytechnic Institute
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. 
-=========================================================================*/
-
 // Extract the ridges and valleys feature in 3D vector field
 // --- Input: 3D vector field
 // --- Output: 3D image-scalar field
 // --- Author: Xiaosong Yuan, RPI
 // --- Modified Date: 10/6/2005
 
+#include "stdafx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <fstream>
@@ -52,7 +38,7 @@ int main (int argc, char *argv[])
   float *curv;
   int *f;
   long idx, iidx, slsz, sz;
-  int i, j, k;//, c;
+  int i, j, k, c;
   int ii, jj, kk;
   int x,y,z;
   int cc;
@@ -63,12 +49,11 @@ int main (int argc, char *argv[])
   float Hessian[3][3];
   float HessianPrime[3][3];
   float HessianPrime1[3][3];
-  float highCurvatureThreshold;
   int numSeeds;
 
-  if (argc < 7)
+  if (argc < 6)
   {
-    printf("Usage: %s <Input vectors> <xs> <ys> <zs> <threshold> <Output scalars>.\n", argv[0]);
+    printf("Usage: %s <Input vectors> <xs> <ys> <zs> <Output scalars>.\n", argv[0]);
     exit(1);
   }
 
@@ -87,9 +72,7 @@ int main (int argc, char *argv[])
   slsz = L*M;        // slice size
   sz = slsz*N;
 
-  highCurvatureThreshold = atof(argv[5]);
-
-  if ((fout = fopen(argv[6],"w")) == NULL)
+  if ((fout = fopen(argv[5],"w")) == NULL)
   {
     printf("Cannot open %s for writing\n",argv[5]);
     exit(1);
@@ -152,7 +135,7 @@ int main (int argc, char *argv[])
   PartialDerivative1(Iv, Ivw, 3, L, M, N);
 
 
-  //double maxCurvature = 0;
+  double maxCurvature = 0;
   int DisAway = 2;
   for (k = DisAway; k < N-DisAway; k++)
      for (j = DisAway; j < M-DisAway; j++)
@@ -188,8 +171,7 @@ int main (int argc, char *argv[])
 	     //case 1: get neg maximum
 	     if (curv[idx]>10000) curv[idx]=10000;
 
-	     if (curv[idx]< highCurvatureThreshold ) curv[idx]= 0; // first phase: threshold the curvature value (larger->fewer)
-	     //if (curv[idx]< 0.06 ) curv[idx]= 0; // first phase: threshold the curvature value (larger->fewer)
+	     if (curv[idx]< 5 ) curv[idx]= 0; // first phase: threshold the curvature value (larger->fewer)
 		            //< 2.0
 
 		   // thres =   3 -6712   seeds    for "Ecadherin2_T60DkR30.1392x1024x9.Aniso_k800d02t2.grdt.vec"
