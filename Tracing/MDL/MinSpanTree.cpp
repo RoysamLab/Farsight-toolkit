@@ -34,8 +34,8 @@
 // To output backbone only
 // Comment two lines: % add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeBB);%
 
-#define OUTPUT_DISTTRANS 1
-#define OUTPUT_BRANCHPts 1
+#define OUTPUT_DISTTRANS 0
+#define OUTPUT_BRANCHPts 0
 
 #define DATATYPEIN unsigned char
 #define MAX_NUM_EDGE 28885000  //2885000, 85000  //why 90000 causes crash?
@@ -194,13 +194,13 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  if ((fout_txt = fopen(argv[8], "w")) == NULL)  // open out.txt file for writing
+  if ((fout_txt = fopen("out.txt", "w")) == NULL)  // open out.txt file for writing
   {
     printf("Cannot open out.txt for writing\n");
     exit(1);
   }
 
-  if((vesselfile=fopen(argv[9], "rb"))==NULL)  // open vol file
+  if((vesselfile=fopen(argv[8], "rb"))==NULL)  // open vol file
 			{cerr << "couldn't open vessel file for input" << endl;
 			 exit(-1);
 			}
@@ -329,22 +329,12 @@ int main(int argc, char *argv[])
 	  voxelNodeIndex[idx]=0;
   }
 
-  // Create a vtk file header
-  fprintf(fout,"# vtk DataFile Version 3.0\n");
-  fprintf(fout,"MST of skel\n");
-  fprintf(fout,"ASCII\n");
-  fprintf(fout,"DATASET POLYDATA\n");
-  fprintf(fout,"POINTS 142189 float\n");
-
-  // 2184 pts - Trach6A_T10DkR1k.512x512x26.Aniso_k800d02t2.grdt_div-1crt.15.step4k_sd.cv10.D6.skel
-  // 2043 pts - Trach6A_T10DkR1k.512x512x26.Aniso_k800d02t2.grdt_div-1crt.15_.step4k_sd.cv50.D6.skel
-  // 9413 pts - jt72D1_T3DkFR1kDk.512x512x45.Aniso_k800d02t8.3-2-gradt_div-1crt.12.step4k_sd.cv1.skel
-  //23794 pts - jt72D1_T3DkFR1kDk.512x512x45.Aniso_k800d02t8.gradt_div-1crt.12.step4k_sd.cv3.D3.skel
-  //18301 pts - jt72D1_T3DkFR1kDk.512x512x45.Aniso_k800d02t8.gradt_div-1crt.12.step4k_sd.cv7.D6.skel
-  //  190 pts - phantomSpines.64x40x31.grdt_div1crt.2.step4k.skel
-  //28443 pts - tlapse330_T2DkR1k.512x512x35.Aniso_k800d02t4.grdt_div-1crt.12.step4k_sd.cv.0.skel
-  //45747 pts - tlapse330_T2DkR1k.512x512x35.Aniso_k800d02t4.grdt_div-1crt.12.step4k_sd.cv0.2.D3.skel
-
+  FILE *tmpFile = fopen("/tmp/tmpfile.txt", "w+");//tmpfile();
+  if(tmpFile == NULL)
+    {
+    cerr << "couldn't open a temporary file for writing" << endl;
+    exit(-1);
+    } 
   // read in skel points
   edgeRange = 5;  //10; // 5; 2; - consider nearby points. why 4 gives fewer MST branches? (out of edge array)
            // 2 is not good for tlapse330_T2DkR1k.512x512x35.Aniso_k800d02t4.grdt_div-1crt.12.step4k_sd.cv.0.skel
@@ -359,7 +349,7 @@ int main(int argc, char *argv[])
 			num_nodes++;
 			voxelNodeIndex[idx] = num_nodes;   // Save the index of node (vertex) at each voxel position
 			// output the node positions to vtk file
-			fprintf(fout,"%f %f %f\n", nodePosition.x, -nodePosition.y, nodePosition.z);  // Add negative sign to make output align to 3D data
+			fprintf(tmpFile,"%f %f %f\n", nodePosition.x, -nodePosition.y, nodePosition.z);  // Add negative sign to make output align to 3D data
 
 			// Find all neighbor nodes within edgeRange
 			for (kk = -edgeRange; kk <= edgeRange; kk++)
@@ -1043,11 +1033,11 @@ int main(int argc, char *argv[])
   for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei) {
 		line_count++; // count the number of lines output in vtk file
   }
-  fprintf(fout,"LINES %d %d\n", line_count, line_count*3);
+  fprintf(tmpFile,"LINES %d %d\n", line_count, line_count*3);
 
   for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei) {
 	   // output lines into vtk file
-       fprintf(fout, "2 %lu %lu\n", source(*ei, msTreeBB)-1, target(*ei, msTreeBB)-1);
+       fprintf(tmpFile, "2 %lu %lu\n", source(*ei, msTreeBB)-1, target(*ei, msTreeBB)-1);
   }
 
 
@@ -1075,6 +1065,23 @@ int main(int argc, char *argv[])
 
   printf("\n -- Number of nodes is : %d\n", num_nodes);                                                                                                                                                                            
   printf("-- Number of Lines is : %d\n", line_count);
+
+  // Create a vtk file header
+  fprintf(fout,"# vtk DataFile Version 3.0\n");
+  fprintf(fout,"MST of skel\n");
+  fprintf(fout,"ASCII\n");
+  fprintf(fout,"DATASET POLYDATA\n");
+  fprintf(fout,"POINTS %d float\n", num_nodes);
+
+  //now copy the data from the temporary file to the .vtk output file
+  rewind(tmpFile);
+  char buf;
+  while(fread(&buf, 1, 1, tmpFile) == 1)
+    {
+    fwrite(&buf, 1, 1, fout);
+    } 
+
+  fclose(tmpFile); 
   fclose(fout);
   fclose(fout_txt);
   #if OUT_CLASSIFIER_TRAINING

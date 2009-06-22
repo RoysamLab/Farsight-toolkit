@@ -34,15 +34,9 @@ intensityThreshold = parameterValues["Intensity threshold"]
 connectedComponentsSize = parameterValues["Connected components size"]
 anisotropicDiffK = parameterValues["Anisotropic Diff k"]
 anisotropicDiffT = parameterValues["Anisotropic Diff t"]
-criticalPtsVectorMagnitude = parameterValues["Critical pts vector magnitude"]
-highCurvatureThreshold = parameterValues["High curvature threshold"]
-edgeRange = parameterValues["IW-MST edge range"]
-graphPruneSize = parameterValues["Graph prune size"]
-graphMorphStrength = parameterValues["Graph morph strength"]
-weightOffset = parameterValues["MDL weight factor"]
 
 #change to the binary directory before we start calling executables
-os.chdir("../bin/MDL")
+os.chdir("${CMAKE_BINARY_DIR}")
 
 subprocess.call(["./volumeProcess${CMAKE_EXECUTABLE_SUFFIX}",\
                   fullPathToInput, sizeX, sizeY, sizeZ,\
@@ -63,17 +57,13 @@ subprocess.call(["./GradientVecField${CMAKE_EXECUTABLE_SUFFIX}",\
                   dataDir+"/out.vec"])
 
 subprocess.call(["./skel_Extrvalley3D${CMAKE_EXECUTABLE_SUFFIX}",\
-                  dataDir+"/out.vec", sizeX, sizeY, sizeZ,\
-                  highCurvatureThreshold, dataDir+"/out.seed"])
+                  dataDir+"/out.vec", sizeX, sizeY, sizeZ, dataDir+"/out.seed"])
 
 subprocess.call(["./skel_streamline${CMAKE_EXECUTABLE_SUFFIX}",\
                   dataDir+"/out.vec", sizeX, sizeY, sizeZ,\
-                  criticalPtsVectorMagnitude, dataDir+"/out.seed",\
-                  dataDir+"/out.skel"])
+                  dataDir+"/out.seed", dataDir+"/out.skel"])
 
 subprocess.call(["./MinSpanTree${CMAKE_EXECUTABLE_SUFFIX}",\
                   dataDir+"/", "out.skel", "components_Connected.raw", sizeX,\
-                  sizeY, sizeZ, edgeRange, graphPruneSize, graphMorphStrength,\
-                  weightOffset, dataDir+"/out.vtk", "out.txt",\
-                  dataDir+"/Aniso_Diffused.raw"])
+                  sizeY, sizeZ, dataDir+"/out.vtk", dataDir+"/Aniso_Diffused.raw"])
 
