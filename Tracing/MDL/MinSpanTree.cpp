@@ -329,7 +329,7 @@ int main(int argc, char *argv[])
 	  voxelNodeIndex[idx]=0;
   }
 
-  FILE *tmpFile = fopen("/tmp/tmpfile.txt", "w+");//tmpfile();
+  FILE *tmpFile = tmpfile();
   if(tmpFile == NULL)
     {
     cerr << "couldn't open a temporary file for writing" << endl;
