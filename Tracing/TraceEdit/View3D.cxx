@@ -54,9 +54,11 @@ View3D::View3D(int argc, char **argv)
 			this->tobj->ReadFromFeatureTracksFile(argv[counter],num_loaded);
 		  }
 		else if( strcmp(argv[counter]+len-3,"tif")==0 ||
-             strcmp(argv[counter]+len-3, "pic")==0)
+             strcmp(argv[counter]+len-4,"tiff")==0 ||
+			 strcmp(argv[counter]+len-3, "pic")==0||
+			 strcmp(argv[counter]+len-3, "PIC")==0)
 		  {
-			printf("I detected a tif file\n");
+			printf("I detected a 3d image file\n");
 			this->rayCast(argv[counter]);
 			//this->AddVolumeSliders();
 		  }
@@ -1066,7 +1068,7 @@ void View3D::AddPlaybackWidget(char *filename)
 
   vtkColorTransferFunction *colorTransferFunction = vtkColorTransferFunction::New();
   colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
-  colorTransferFunction->AddRGBPoint(20.0,1.0,1.0,1.0);
+  colorTransferFunction->AddRGBPoint(20.0,1,0,0);
 
   
   vtkVolumeProperty *volumeProperty = vtkVolumeProperty::New();
@@ -1255,7 +1257,7 @@ void View3D::rayCast(char *raySource)
   // Play around with the values in the following lines to better vizualize data
   vtkColorTransferFunction *colorTransferFunction = vtkColorTransferFunction::New();
     colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
-  colorTransferFunction->AddRGBPoint(50.0,0.5,0.5,0);
+  colorTransferFunction->AddRGBPoint(50.0,1,0,0);
 
   // The property describes how the data will look
   vtkVolumeProperty *volumeProperty = vtkVolumeProperty::New();

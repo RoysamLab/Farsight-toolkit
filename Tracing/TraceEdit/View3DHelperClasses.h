@@ -53,7 +53,7 @@ public:
     colorTransferFunction->AddPoint(255*(1-value),0.5f,0.5f,0.0f);*/
     vtkColorTransferFunction *colorTransferFunction = vtkColorTransferFunction::New();
     colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
-    colorTransferFunction->AddRGBPoint(255*(1-value),0.5,0.5,0);
+    colorTransferFunction->AddRGBPoint(255*(1-value),1,0,0);
      this->volume->GetProperty()->SetColor(colorTransferFunction);
     }
   vtkSlider2DCallbackContrast() {
