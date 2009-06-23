@@ -96,21 +96,25 @@ void View3D::Initialize()
 /*  set up the components of the interface */
 void View3D::CreateGUIObjects()
 {
+  //Setup the main window's central widget
+  this->CentralWidget = new QWidget(this);
+  this->setCentralWidget(this->CentralWidget);
+
   //Setup a QVTK Widget for embedding a VTK render window in Qt.
-  this->QVTK = new QVTKWidget(this);
+  this->QVTK = new QVTKWidget(this->CentralWidget);
   this->Renderer = vtkRenderer::New();
   this->QVTK->GetRenderWindow()->AddRenderer(this->Renderer);
 
   //Setup the buttons that the user will use to interact with this program. 
-  this->ListButton = new QPushButton("&list selections", this);
-  this->ClearButton = new QPushButton("&clear selection", this);
-  this->DeleteButton = new QPushButton("&delete trace", this);
-  this->MergeButton = new QPushButton("&merge traces", this);
-  this->SplitButton = new QPushButton("&split trace", this);
-  this->FlipButton = new QPushButton("&flip trace direction", this);
-  this->WriteButton = new QPushButton("&write to .swc file", this);
-  this->SettingsButton = new QPushButton("&edit settings", this);
-  this->AutomateButton = new QPushButton("&Automatic Selection", this);
+  this->ListButton = new QPushButton("&list selections", this->CentralWidget);
+  this->ClearButton = new QPushButton("&clear selection", this->CentralWidget);
+  this->DeleteButton = new QPushButton("&delete trace", this->CentralWidget);
+  this->MergeButton = new QPushButton("&merge traces", this->CentralWidget);
+  this->SplitButton = new QPushButton("&split trace", this->CentralWidget);
+  this->FlipButton = new QPushButton("&flip trace direction", this->CentralWidget);
+  this->WriteButton = new QPushButton("&write to .swc file", this->CentralWidget);
+  this->SettingsButton = new QPushButton("&edit settings", this->CentralWidget);
+  this->AutomateButton = new QPushButton("&Automatic Selection", this->CentralWidget);
 
   //Setup the tolerance settings editing window
   this->SettingsWidget = new QWidget();
@@ -162,9 +166,16 @@ void View3D::CreateLayout()
 	buttonLayout->addWidget(this->SettingsButton, 9, 0);
 	buttonLayout->addWidget(this->WriteButton, 10, 0);
 	buttonLayout->setSpacing(10);
-	QGridLayout *viewerLayout = new QGridLayout(this);
+	QGridLayout *viewerLayout = new QGridLayout(this->CentralWidget);
 	viewerLayout->addWidget(this->QVTK, 0, 1);
 	viewerLayout->addLayout(buttonLayout, 0, 0);
+
+  //set up the menu bar
+  QMenu *fileMenu = this->menuBar()->addMenu(tr("&File"));
+  QAction *exitAction = fileMenu->addAction(tr("E&xit"));
+  connect(exitAction, SIGNAL(triggered()), this, SLOT(close()));
+
+  this->menuBar()->addMenu(tr("Another example menu"));
 
   //layout for the settings window
   QGridLayout *settingsLayout = new QGridLayout(this->SettingsWidget);

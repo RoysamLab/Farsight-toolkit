@@ -19,7 +19,6 @@ SET( Libraries
     vtkFiltering
     vtkVolumeRendering
     QVTK
-    QVTKWidgetPlugin
     TinyXML
 )
 

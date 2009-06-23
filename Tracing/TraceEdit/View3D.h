@@ -72,6 +72,7 @@ limitations under the License.
 #include "vtkPlaybackRepresentation.h"
 
 #include <QObject>
+#include <QAction>
 #include <QtGui>
 #include <QVTKWidget.h>
 
@@ -84,7 +85,7 @@ double dist;
 double maxdist;
 };
 
-class View3D : public QWidget 
+class View3D : public QMainWindow 
 {
 Q_OBJECT;
 public:
@@ -150,6 +151,7 @@ private:
 	QAction *loadAction;
 
 	//Qt widgets on the main window
+  QWidget *CentralWidget;
 	QPushButton *ListButton;
 	QPushButton *ClearButton;
 	QPushButton *DeleteButton;
