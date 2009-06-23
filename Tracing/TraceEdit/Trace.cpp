@@ -95,9 +95,29 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 	}
 	char buff[1024];
 	
-	int tc = 0;
-	const int MAXPOINTSINSWC= 10000;
-	unsigned char child_count[MAXPOINTSINSWC];//MAX POINTS in the swc file Fix: TODO : probably make it a hash_map which is slower
+  //make an initial pass through the file to figure out how many points
+  //we're dealing with
+	int numPoints = 0;
+	while(!feof(fp))
+	  {
+		if(fgets(buff,1024,fp)==NULL)
+      {
+			break;
+      }
+		int pc = 0;
+		while(buff[pc]==' '&&(pc<1023))
+      {
+			pc++;
+      }
+		if(buff[pc]=='#') 
+      {
+			continue;
+      }
+		numPoints++;
+    }
+  rewind(fp);
+
+  unsigned char *child_count = (unsigned char *)malloc(numPoints * sizeof(char));
 	std::set<int> criticals; // store all points who have parent = -1 or child_count[parent] > 1
 
   vtksys::hash_map<unsigned int,int> hash_type; // smaller hash functions only for the critical points.. saves us memory and time
@@ -106,13 +126,15 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 
 	//memset(child_count,0,sizeof(unsigned char)*100000);
 	
-	for(int counter=0; counter < 10000; counter++)
+	for(int counter=0; counter < numPoints; counter++)
+    {
 		child_count[counter]=0;
+    }
 	int id, type,parent;
 	double x,y,z,r;
 	int max_id = -1;
 	while(!feof(fp))
-	{
+	  {
 		if(fgets(buff,1024,fp)==NULL)
 			break;
 		int pc = 0;
@@ -123,7 +145,6 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 
 		sscanf(buff,"%d %d %*f %*f %*f %*f %d",&id,&type,&parent);
 		//sscanf(buff,"%d %d %*lf %*lf %*lf %*lf %d",&id,&type,&parent);
-		tc++;
 		//printf("%d\n",id);
 		if(id>max_id)//find max id
 		{
@@ -137,7 +158,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 	}
 	fclose(fp);
 	//printf("I read %d lines\n",tc);
-	unsigned int child_id[10000];
+  unsigned int *child_id = (unsigned int *)malloc(numPoints * sizeof(int));
 	//memset(child_id,0,sizeof(unsigned int)*(max_id));
 	std::vector<TraceBit> data(max_id+1);
 
@@ -254,6 +275,8 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 	//Print(std::cout);
 	fclose(fp);
 //	delete [] child_id;
+  free(child_count);
+  free(child_id);
 	return true;
 }
 
