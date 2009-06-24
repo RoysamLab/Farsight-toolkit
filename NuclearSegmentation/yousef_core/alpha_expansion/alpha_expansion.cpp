@@ -60,15 +60,11 @@ void start_alpha_expansion(float* im, int* seg_im, float* Dterms, int R, int C, 
 //{
 //}
 
-//void graph_cut_close(GraphHandle* gh, char mode);
-//{
-//}
 int alpha_expansion_2d( float *im, float *sublogImg, int *subclustImg, int R, int C )
 {
 	float *hCue, *vCue;
 	int K;	
-	//FILE* fid = fopen("alpha_expansion_status.txt","w");
-	//fprintf(fid,"starting multicoloring learning...");
+	//starting graph-roloring based learning
 	K = 10000;
 	float* Dterms  = multiColGraphLearning(sublogImg, subclustImg, R, C, &K);
 	K = K+1;
@@ -91,10 +87,6 @@ void start_alpha_expansion(float* im, int* seg_im, float* Dterms, int R, int C, 
 			SC[(j*K)+i] = w*val;
 		}
 	}
-	//fprintf(fid,"done\n");
-
-	//fprintf(fid,"build the horizontal and vertical cues matrices...");
-	//int ind = 0;
 	float sig = 30.0;
 	hCue = new float[R*C];
 	vCue = new float[R*C];
@@ -121,24 +113,17 @@ void start_alpha_expansion(float* im, int* seg_im, float* Dterms, int R, int C, 
 	vCue[((C-1)*R)+(R-1)] = vCue[((R-1)*C)+(C-2)];
 	hCue[((C-1)*R)+(R-1)] = hCue[((R-1)*C)+(C-2)];
 
-	//fprintf(fid,"done\n");
 
 	//start by calling the function the builds the graph (OPEN)
-	//fprintf(fid,"Graph Open...");
 	GCoptimization *MyGraph = GraphCutConstr(Dterms, SC, hCue, vCue, R, C, K);
-	//fprintf(fid,"done\n");
-	//delete[] hCue;
-	//delete[] vCue;
 
-	//then, call the function the applys the alpha expansion (EXPAND)
-	//fprintf(fid,"Graph Expand...");
+	//then, call the function the applys the alpha expansion (EXPAND)	
 	int iter = 0; //if zero, then epand till convergence, else it gives the number of iterations
 	GraphCutMex(MyGraph, 'e', subclustImg, iter); //the name of this function will be changed to something without MEX
-	//fprintf(fid,"done\n");
-	//finally, call the function the destroys (deallocate) the graph (CLOSE)
-	//fprintf(fid,"Graph Clsoe...");
+	//finally, call the function the destroys (deallocate) the graph (CLOSE)	
 	GraphCutMex(MyGraph, 'c',subclustImg, iter); //the name of this function will be changed to something without MEX
-	//fprintf(fid,"done\n");
-	//fclose(fid);	
+	
+	delete[] hCue;
+	delete[] vCue;
 	return 1;
 }
