@@ -248,7 +248,7 @@ void FuzzyClustering::FindNewCenters()
 }
 //This function computes the error in between the new and the old cluster centers
 //This is done by computing the maximum error between the corresponding old and new centers
-double FuzzyClustering::ComputeCurrentError()
+/*double FuzzyClustering::ComputeCurrentError()
 {
 	double Err, S;
 	
@@ -268,7 +268,29 @@ double FuzzyClustering::ComputeCurrentError()
 			Err = (Err>S)? Err : S;		
 	}
 	return Err;
+}*/
+
+double FuzzyClustering::ComputeCurrentError()
+{
+  double Err = 0.0;
+
+  for(int i=0; i<num_Clusters; i++)
+    {
+    double S = 0.0;
+    for(int j=0; j<num_Features; j++)
+      {
+      double feature_distance = new_Centers[i][j]-Centers[i][j];
+      S += (feature_distance*feature_distance);		
+      //also copy new to old
+      Centers[i][j] = new_Centers[i][j];
+      }
+    S = sqrt(S);
+    if (S > Err)
+      Err = S;		
+    }
+  return Err;
 }
+
 
 //This function runs one step of the fuzzy c-means clustering
 void FuzzyClustering::RunOneStep()
