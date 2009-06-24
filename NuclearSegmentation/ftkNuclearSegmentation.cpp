@@ -360,6 +360,27 @@ bool NuclearSegmentation::LoadFromImages(std::string dfile, std::string rfile)
 	return LabelsToObjects();
 }
 
+void NuclearSegmentation::LoadFromDAT(std::string dfile, std::string rfile)
+{
+	dataFilename = dfile;
+	LoadData();
+	
+	if(NucleusSeg)
+		delete NucleusSeg;
+	NucleusSeg = new yousef_nucleus_seg();
+	const Image::Info *info = dataImage->GetImageInfo();
+	int numStacks = info->numZSlices;
+	int numRows = info->numRows;				//y-direction
+	int numColumns = info->numColumns; 			//x-direction
+
+	//We assume that the image is unsigned char, but just in case it isn't we make it so:
+	dataImage->Cast<unsigned char>();
+	unsigned char *dptr = dataImage->GetSlicePtr<unsigned char>(0,0,0);	//Expects grayscale image	
+	NucleusSeg->setDataImage( dptr, numColumns, numRows, numStacks, dataFilename.c_str() );
+	NucleusSeg->readFromIDLFormat(rfile);
+	lastRunStep = 4;
+	GetResultImage();
+}
 
 
 //The function will read the given file and load the association measures into the object info;
@@ -800,10 +821,11 @@ bool NuclearSegmentation::SaveLabel()
 	labelImage->Cast<unsigned short>();		//Cannot Save as int type to tiff
 	if(!labelImage->SaveChannelAs(0, base + "_label", ext))
 		std::cerr << "FAILED TO SAVE LABEL IMAGE" << std::endl;
+	std::cout<<" segmentation output saved into "<<base<<"_label"<<ext<<std::endl;
 
 	//Added by Yousef on 1/18/2009: save results into a format readable by the IDL farsight
-	if(NucleusSeg)
-		NucleusSeg->saveIntoIDLFormat(base);
+	//if(NucleusSeg)
+	//	NucleusSeg->saveIntoIDLFormat(base);
 
 	editsNotSaved = false;
 	return true;

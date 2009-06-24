@@ -1,22 +1,30 @@
-/*=========================================================================
-Copyright 2009 Rensselaer Polytechnic Institute
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+#ifndef SEEDSDETECTION_2D_H
+#define SEEDSDETECTION_2D_H
 
-http://www.apache.org/licenses/LICENSE-2.0
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+#include <algorithm>
+#include "itkImage.h"
+#include "itkSimpleFilterWatcher.h"
+#include "itkRescaleIntensityImageFilter.h"
+#include "itkImageRegionIteratorWithIndex.h"
+#include "itkLaplacianRecursiveGaussianImageFilter.h"
+#include "itkApproximateSignedDistanceMapImageFilter.h"
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. 
-=========================================================================*/
+typedef    float     InputPixelType;
+typedef itk::Image< InputPixelType,  2 >   InputImageType;
 
-#ifndef SEEDSDETECTION_H
-#define SEEDSDETECTION_H
+using namespace std;
 
-int detectSeeds2D( float* IM, float* IM_out, int* IM_bin, int r, int c, double sigma_min, double sigma_max, double scale);
+int detect_seeds(itk::SmartPointer<InputImageType>, int , int , const double, float*);
+
+double get_maximum(double** A, int r1, int r2, int c1, int c2);
+
+void Detect_Local_MaximaPoints(float* im_vals, int r, int c, double scale, int* im_bin);
+
+int distMap(itk::SmartPointer<InputImageType> im, int r, int c, float* IMG);
+
+int detectSeeds2D( float* IM, float* IM_out, int* IM_bin, int r, int c, double sigma_min, double sigma_max, double scale, int* bImg);
 
 #endif
-

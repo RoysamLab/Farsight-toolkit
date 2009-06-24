@@ -167,4 +167,35 @@ GCoptimization * GraphCut3dConstr(float* ContrastIn, float* DataCostIn, float* S
 	return MyGraph;
 }
     
+GCoptimization * GraphCutConstr(float* DataCostIn, float* SmoothnessCostIn, float* hCueIn, float* vCueIn, int RIn, int CIn, int num_labels)
+{
+    
+    GCoptimization::PixelType width, height;
+    //int num_labels;
+    Graph::captype *DataCost;
+    Graph::captype *SmoothnessCost;
+    Graph::captype *hCue = NULL;
+    Graph::captype *vCue = NULL;
+    //GCoptimization::LabelType *Labels;
+    GCoptimization *MyGraph = NULL;
+            
+	width = CIn;        
+	height = RIn;
+        
+    DataCost = (Graph::captype*)DataCostIn;   
+	SmoothnessCost = (Graph::captype*)SmoothnessCostIn;
+
+	vCue = (Graph::captype*)vCueIn;
+    hCue = (Graph::captype*)hCueIn;
+    
+    MyGraph = new GCoptimization(width, height, num_labels, SET_ALL_AT_ONCE, SET_ALL_AT_ONCE);
+    MyGraph->setData(DataCost);
+    if ( vCue != NULL && vCue != NULL ) 
+        MyGraph->setSmoothness(SmoothnessCost, hCue, vCue);
+    else
+        MyGraph->setSmoothness(SmoothnessCost);
+        
+	return MyGraph;
+}
+    
 

@@ -13,13 +13,16 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
 
-#ifndef ALPHA_EXPANSION_3D_H
-#define ALPHA_EXPANSION_3D_H
+#ifndef ALPHA_EXPANSION_H
+#define ALPHA_EXPANSION_H
 
 #include <iostream>
 #include "GraphCut.h"
 #include "GCoptimization.h"
+#include "Multi_Color_Graph_Learning_2D.h"
 
 void start_alpha_expansion(float* im, int* seg_im, float* Dterms, int R, int C, int Z, int K);
+int alpha_expansion_2d( float *im, float *sublogImg, int *subclustImg, int R, int C);
+
 #endif
 

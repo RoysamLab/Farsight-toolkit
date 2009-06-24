@@ -1,18 +1,3 @@
-/*=========================================================================
-Copyright 2009 Rensselaer Polytechnic Institute
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. 
-=========================================================================*/
-
 /* graph.cpp */
 /*
     Copyright 2001 Vladimir Kolmogorov (vnk@cs.cornell.edu), Yuri Boykov (yuri@csd.uwo.ca).
@@ -107,7 +92,8 @@ void Graph::add_edge(node_id from, node_id to, captype cap, captype rev_cap)
 		arc_for_block *next = arc_for_block_first;
 		char *ptr = new char[sizeof(arc_for_block)+1];
 		if (!ptr) 
-			std::cerr<<"GraphCut:Graph:add_edge->not enough memory"<<std::endl;            
+			std::cerr<<"GraphCut:Graph:add_edge->not enough memory"<<std::endl;
+            //mexErrMsgIdAndTxt("GraphCut:Graph:add_edge","not enough memory (for)"); // BAGON REPLACED { if (error_function) (*error_function)("Not enough memory!"); exit(1); }
 		if ((POINTER_CAST)ptr & 1) arc_for_block_first = (arc_for_block *) (ptr + 1);
 		else              arc_for_block_first = (arc_for_block *) ptr;
 		arc_for_block_first -> start = ptr;
@@ -122,7 +108,7 @@ void Graph::add_edge(node_id from, node_id to, captype cap, captype rev_cap)
 		if (!ptr) 
 			std::cerr<<"GraphCut:Graph:add_edge->not enough memory"<<std::endl;
             //mexErrMsgIdAndTxt("GraphCut:Graph:add_edge","not enough mem (rev)"); // BAGON REPLACED{ if (error_function) (*error_function)("Not enough memory!"); exit(1); }
-		if ((POINTER_CAST)ptr & 1) arc_rev_block_first = (arc_rev_block *)(ptr + 1);
+		if ((POINTER_CAST)ptr & 1) arc_rev_block_first = (arc_rev_block *) (ptr + 1);
 		else              arc_rev_block_first = (arc_rev_block *) ptr;
 		arc_rev_block_first -> start = ptr;
 		arc_rev_block_first -> current = & ( arc_rev_block_first -> arcs_rev[0] );

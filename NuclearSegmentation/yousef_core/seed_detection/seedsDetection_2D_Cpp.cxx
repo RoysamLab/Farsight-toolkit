@@ -1,18 +1,3 @@
-/*=========================================================================
-Copyright 2009 Rensselaer Polytechnic Institute
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. 
-=========================================================================*/
-
 //seedsDetection_2D.cxx
 
 #if defined(_MSC_VER)
@@ -23,40 +8,32 @@ limitations under the License.
 #define ITK_LEAN_AND_MEAN
 #endif
 
-
-#include <stdio.h>
-#include<stdlib.h>
-#include <iostream>
-#include <algorithm>
-#include "itkImage.h"
-//#include "itkImageFileWriter.h"
-#include "itkLaplacianRecursiveGaussianImageFilter.h"
-//#include "itkRescaleIntensityImageFilter.h"
-#include "itkImageRegionIteratorWithIndex.h"
-//#include "itkSimpleFilterWatcher.h"
-
-using namespace std;
+#include "seedsdetection.h"
 
 //,.,.
 
-typedef    float     InputPixelType;
-typedef itk::Image< InputPixelType,  2 >   InputImageType;
-
-int detect_seeds(itk::SmartPointer<InputImageType>, int , int , const double, float*);
-
-double get_maximum(double** A, int r1, int r2, int c1, int c2);
-void Detect_Local_MaximaPoints(float* im_vals, int r, int c, double scale, int* im_bin);
-////////////////////////////////////
-
-int detectSeeds2D( float* IM, float* IM_out, int* IM_bin, int r, int c, double sigma_min, double sigma_max, double scale)
+// detectSeeds2D( imgPtr, logImagePtr, seedImagePtr, numRows, numColumns, scaleMin, scaleMax, regionXY, binImagePtr );
+int detectSeeds2D( float* IM, float* IM_out, int* IM_bin, int r, int c, double sigma_min, double sigma_max, double scale, int* bImg)
 {
-    //Now, we are expecting the following inputs from IDL:
+    //Now, we are expecting the following inputs from the main function/IDL:
 	//1-The imput image that need to be processed {argv[0]}
 	//2-An empty image to hold the output of the multi-scale LoG {argv[1]}
 	//3-An empty image to hold the binary image of the local maxima {argv[2]}
 	//4-The image dimension r and c {argv[3] & {argv[4]}}
 	//5-The filter scales: sigma_min {argv[5]} & sigma_max {argv[6]}
-	  
+	//Let's get the inputs one by one    
+	//float* IM = (float *) argv[0];
+	//float* IM_out = (float *) argv[1];
+	//unsigned char* IM_bin = (unsigned char *) argv[2];
+	//int r = *(int*) argv[3];
+	//int c = *(int*) argv[4];
+	//double sigma_min = *(double*) argv[5];
+	//double sigma_max = *(double*) argv[6];
+	//double scale = *(double*) argv[7];
+	//added by yousef on 11-12-2008
+	//unsigned char * bImg = (unsigned char *) argv[8];
+	
+	
 	/*float* IM = (float *) argv[0];
 	float* IM_out = (float *) argv[1];
 	unsigned char* IM_bin = (unsigned char *) argv[2];
@@ -66,8 +43,7 @@ int detectSeeds2D( float* IM, float* IM_out, int* IM_bin, int r, int c, double s
 	double sigma_max = *(double*) argv[6];
 	double scale = *(double*) argv[7];*/
 	
-		
-	//Create an itk image
+	//Create an itk image from the input image
 	InputImageType::Pointer im;
 	im = InputImageType::New();
 	InputImageType::PointType origin;
@@ -90,22 +66,43 @@ int detectSeeds2D( float* IM, float* IM_out, int* IM_bin, int r, int c, double s
     im->Allocate();
     im->FillBuffer(0);
 	im->Update();
-	
-	//copy the input image into the ITK image
+	//fprintf(fid,"ITK image has been created\n");
 	typedef itk::ImageRegionIteratorWithIndex< InputImageType > IteratorType;
 	IteratorType iterator1(im,im->GetRequestedRegion());
+	//fprintf(fid,"%d %d\n",r,c);
 	for(int i=0; i<r*c; i++)
 	{		
-		iterator1.Set(IM[i]);
+
+		//fprintf(fid,"%d\n",i);
+		if(bImg[i]>0)
+			iterator1.Set(255.0);
+		else
+			iterator1.Set(0.0);
 		++iterator1;	
 	}
-    	
+	//fprintf(fid,"Preparing to compute Distance Map\n");
+	float* dImg = (float *) malloc(r*c*sizeof(float));
+	distMap(im, r, c, dImg);
+	iterator1.GoToBegin();
+	//fprintf(fid,"Distance Map Computed\n");
+
+	for(int i=0; i<r*c; i++)
+	{		
+
+		//fprintf(fid,"%d %f\n",i,IM[i]);
+		iterator1.Set(IM[i]);		
+		++iterator1;	
+	}
+    //fprintf(fid,"Input image has been copied into the ITK image\n");
+	
 	
 	//Start from sigma_min to sigma sigma_max	
 	double conv = 0;	
 	double sigma = sigma_min;
 	float *IMG_tmp = (float *) malloc(r*c*sizeof(float));	
+	//fprintf(fid,"Detecting seeds at scale %f ...",sigma);	
 	detect_seeds(im,r,c,sigma_min,IM_out);
+	//fprintf(fid,"done\n");	
 	while(!conv)
 	{		
 		sigma = sigma+1;		
@@ -114,44 +111,139 @@ int detectSeeds2D( float* IM, float* IM_out, int* IM_bin, int r, int c, double s
 			conv=1;
 			break;
 		}
+		//fprintf(fid,"Detecting seeds at scale %f ...",sigma);	
 		detect_seeds(im,r,c,sigma,IMG_tmp);
 
 		for(int i=0; i<r*c; i++)
 		{
-			IM_out[i] = (IM_out[i]>=IMG_tmp[i])? IM_out[i] : IMG_tmp[i];	
+			if(sigma<=dImg[i]*2)
+				IM_out[i] = (IM_out[i]>=IMG_tmp[i])? IM_out[i] : IMG_tmp[i];				
 		}
+		//fprintf(fid,"done\n");
 	}
+	//free(IMG_tmp);
+	//free(dImg);
 	
-    //Detect the seed points (which are also the local maxima points)
+    //The commented code was creating an ITK image of the LoG image
+	//And using some ITK functions to get the local maxima points
+	//However, that was relatively slow, and hence I am going to use my own function
 	Detect_Local_MaximaPoints(IM_out, r, c, scale, IM_bin);
-
-	
+		
+	//fclose(fid);
 	return 1;
 }
 
 int detect_seeds(itk::SmartPointer<InputImageType> im, int r, int c, const double sigma, float* IMG)
-{  
+{
+  
+  //  Software Guide : BeginLatex
+  //
+  //  Types should be selected on the desired input and output pixel types.
+  //
+  //  Software Guide : EndLatex 
+
+  // Software Guide : BeginCodeSnippet
   typedef    float     InputPixelType;
   typedef    float     OutputPixelType;
+  // Software Guide : EndCodeSnippet
+
+
+  //  Software Guide : BeginLatex
+  //
+  //  The input and output image types are instantiated using the pixel types.
+  //
+  //  Software Guide : EndLatex 
+
+  // Software Guide : BeginCodeSnippet
   typedef itk::Image< InputPixelType,  2 >   InputImageType;
   typedef itk::Image< OutputPixelType, 2 >   OutputImageType;
- 
+  // Software Guide : EndCodeSnippet
 
-  //Initialize the laplacian of gaussian filter
-  typedef itk::LaplacianRecursiveGaussianImageFilter<InputImageType, OutputImageType >  FilterType;
+
+  //typedef itk::ImageFileReader< InputImageType >  ReaderType;
+
+
+  //  Software Guide : BeginLatex
+  //
+  //  The filter type is now instantiated using both the input image and the
+  //  output image types.
+  //
+  //  \index{itk::RecursiveGaussianImageFilter!Instantiation}
+  //
+  //  Software Guide : EndLatex 
+
+  // Software Guide : BeginCodeSnippet
+  typedef itk::LaplacianRecursiveGaussianImageFilter<
+                        InputImageType, OutputImageType >  FilterType;
+  // Software Guide : EndCodeSnippet
+
+
+  //ReaderType::Pointer reader = ReaderType::New();
+  //reader->SetFileName( in_image_name );
+
+
+  
+  // Software Guide : BeginCodeSnippet
   FilterType::Pointer laplacian = FilterType::New();
-  
-  //  Set the option for normalizing across scale space to true.
+  // Software Guide : EndCodeSnippet
+
+
+
+  //  Software Guide : BeginLatex
+  //  
+  //  The option for normalizing across scale space can also be selected in this filter.
+  //
+  //  \index{LaplacianRecursiveGaussianImageFilter!SetNormalizeAcrossScale()}
+  //
+  //  Software Guide : EndLatex 
+
+  // Software Guide : BeginCodeSnippet
   laplacian->SetNormalizeAcrossScale( true );
-  
-  //set the input image
-  laplacian->SetInput( im);
-  
-  //set the current sigma (scale)
+  // Software Guide : EndCodeSnippet
+
+
+  //  Software Guide : BeginLatex
+  //
+  //  The input image can be obtained from the output of another
+  //  filter. Here, an image reader is used as the source. 
+  //
+  //  Software Guide : EndLatex 
+
+  // Software Guide : BeginCodeSnippet
+  laplacian->SetInput( im);//reader->GetOutput() );
+  // Software Guide : EndCodeSnippet
+
+
+  //  Software Guide : BeginLatex
+  //
+  //  It is now time to select the $\sigma$ of the Gaussian used to smooth the
+  //  data.  Note that $\sigma$ must be passed to both filters and that sigma
+  //  is considered to be in millimeters. That is, at the moment of applying
+  //  the smoothing process, the filter will take into account the spacing
+  //  values defined in the image.
+  //
+  //  \index{itk::LaplacianRecursiveGaussianImageFilter!SetSigma()}
+  //  \index{SetSigma()!itk::LaplacianRecursiveGaussianImageFilter}
+  //
+  //  Software Guide : EndLatex 
+
+  //const double sigma = atof( argv[3] );
+
+  // Software Guide : BeginCodeSnippet
   laplacian->SetSigma( sigma );
  
- 
-  //  Finally the pipeline is executed by invoking the Update() method.
+  // Software Guide : EndCodeSnippet
+
+
+  //  Software Guide : BeginLatex
+  //
+  //  Finally the pipeline is executed by invoking the \code{Update()} method.
+  //
+  //  \index{itk::LaplacianRecursiveGaussianImageFilter!Update()}
+  //
+  //  Software Guide : EndLatex 
+
+  // Software Guide : BeginCodeSnippet
   try
     {
     laplacian->Update();
@@ -162,21 +254,24 @@ int detect_seeds(itk::SmartPointer<InputImageType> im, int r, int c, const doubl
     std::cout << err << std::endl; 
     return EXIT_FAILURE;
     } 
+  // Software Guide : EndCodeSnippet
 
 
 
 
-  //Now, copy the resulting image into an array and return it  
+  //By Yousef: Now, instead of writing the output, let's copy the resulting image into an array and return it  
   long int i = 0;
   typedef itk::ImageRegionIteratorWithIndex< InputImageType > IteratorType;
   IteratorType iterate(laplacian->GetOutput(),laplacian->GetOutput()->GetRequestedRegion());
   while ( i<r*c)
   {
-    IMG[i] = iterate.Get();
+    IMG[i] = sigma*iterate.Get();
     ++i;
 	++iterate;
   }
-  return EXIT_SUCCESS;
+	
+
+    return EXIT_SUCCESS;
 
 }
 
@@ -236,3 +331,45 @@ void Detect_Local_MaximaPoints(float* im_vals, int r, int c, double scale, int* 
     	        
 }
 
+int distMap(itk::SmartPointer<InputImageType> im, int r, int c, float* IMG)
+{
+  
+  //  Types should be selected on the desired input and output pixel types.
+  typedef    float     InputPixelType;
+  typedef    float     OutputPixelType;
+
+
+  //  The input and output image types are instantiated using the pixel types.
+  typedef itk::Image< InputPixelType,  2 >   InputImageType;
+  typedef itk::Image< OutputPixelType, 2 >   OutputImageType;
+
+
+  //  The filter type is now instantiated using both the input image and the
+  //  output image types.
+  typedef itk::ApproximateSignedDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;
+  DTFilter::Pointer dt_obj= DTFilter::New() ;
+  dt_obj->SetInput(im) ;
+  dt_obj->SetInsideValue(0.0);
+  dt_obj->SetOutsideValue(255.0);
+  try{
+	 dt_obj->Update() ;
+  }
+  catch( itk::ExceptionObject & err ){
+	//std::cerr << "Error calculating distance transform: " << err << endl ;
+    return -1;
+  }
+ 
+  //   Copy the resulting image into the input array
+  long int i = 0;
+  typedef itk::ImageRegionIteratorWithIndex< InputImageType > IteratorType;
+  IteratorType iterate(dt_obj->GetOutput(),dt_obj->GetOutput()->GetRequestedRegion());
+  while ( i<r*c)
+  {
+	  IMG[i] = fabs(iterate.Get());	  
+      ++i;
+ 	  ++iterate;
+  }
+	
+ 
+  return EXIT_SUCCESS;
+}

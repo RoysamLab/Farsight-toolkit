@@ -1,19 +1,4 @@
-/*=========================================================================
-Copyright 2009 Rensselaer Polytechnic Institute
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. 
-=========================================================================*/
-
-#include "yousef_core/yousef_seg.h"
+#include "yousef_seg.h"
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageRegionConstIterator.h"
@@ -23,8 +8,7 @@ limitations under the License.
 
 #include <iostream>
 #include <time.h>
-
-using namespace std;
+#include <limits.h>
 
 int main(int argc, char* argv[])
 {
@@ -89,6 +73,7 @@ int main(int argc, char* argv[])
 	}
 	else
 		output_img=NucleusSeg->getClustImage();
+
 	
 	//Hard coded parameters, add cin for each if required..
 	/*int params[6];
@@ -174,13 +159,19 @@ int main(int argc, char* argv[])
 		//copy the output image into the ITK image
 		typedef itk::ImageRegionIteratorWithIndex< SegmentedImageType > IteratorType;
 		IteratorType iterator1(image,image->GetRequestedRegion());
+		int max_pix, min_pix; //Kedar Testing ****************
+		min_pix=USHRT_MAX; max_pix=0;
 		for(int i=0; i<(size1*size2*size3); i++)
 		{	
 			unsigned short val = (unsigned short)output_img[i];
+			if( min_pix > val ) min_pix = val;
+			if( max_pix < val ) max_pix = val;
 			iterator1.Set(val);			
 			++iterator1;	
 		}
-		
+
+		printf("Max pixel value: %i\nMin pixel value: %i\n",max_pix,min_pix);
+
 		typedef itk::ImageFileWriter< SegmentedImageType > WriterType;
 		WriterType::Pointer writer = WriterType::New();
 		writer->SetFileName(argv[2]);
@@ -190,7 +181,7 @@ int main(int argc, char* argv[])
 		writer = 0;
 
 		NucleusSeg->outputSeeds();
-        NucleusSeg-> saveIntoIDLFormat(argv[1]);
+        //NucleusSeg-> saveIntoIDLFormat(argv[1]);
         
 		delete NucleusSeg;
 		//delete output_img; //This is deleted when I delete NucleusSeg

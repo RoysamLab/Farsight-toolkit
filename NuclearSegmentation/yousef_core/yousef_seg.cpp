@@ -119,6 +119,8 @@ void yousef_nucleus_seg::runBinarization()
 	else if (numStacks == 1)
 	{
 		ok = Cell_Binarization_2D(dataImagePtr,binImagePtr, numRows, numColumns, shift);
+		numConnComp = getConnCompImage(binImagePtr, 26, minObjSize, numRows, numColumns, numStacks,1);
+		getConnCompInfo3D();
 	}
 	else
 	{
@@ -167,7 +169,7 @@ void yousef_nucleus_seg::runSeedDetection()
 	int ok = 0;
 	if (numStacks == 1)
 	{
-		ok = detectSeeds2D( imgPtr, logImagePtr, seedImagePtr, numRows, numColumns, scaleMin, scaleMax, regionXY );
+		ok = detectSeeds2D( imgPtr, logImagePtr, seedImagePtr, numRows, numColumns, scaleMin, scaleMax, regionXY, binImagePtr );
 	}
 	else
 	{
@@ -198,6 +200,20 @@ void yousef_nucleus_seg::runClustering()
 
 	if (numStacks == 1)
 	{
+		std::cout << "Starting Initial Clustering" << std::endl;
+		ExtractSeeds();
+		int *seed_xmclust, *seed_ymclust;
+		int numseedsmclust = mySeeds.size();
+		seed_xmclust = (int *) malloc(mySeeds.size()*sizeof(int));
+		seed_ymclust = (int *) malloc(mySeeds.size()*sizeof(int));
+		for (int i=0; i<((int)mySeeds.size()); ++i)
+		{
+			seed_ymclust[i] = mySeeds[i].y();
+			seed_xmclust[i] = mySeeds[i].x();
+		}
+		local_max_clust_2D(logImagePtr, numRows, numColumns, 5.0, clustImagePtr, seed_xmclust, seed_ymclust, numseedsmclust, binImagePtr);
+		free( seed_xmclust );
+		free( seed_ymclust );
 	}
 	else
 	{
@@ -360,15 +376,33 @@ void yousef_nucleus_seg::getConnCompInfo3D()
 {
 	int val, curNode;
 	myConnComp = new ConnComp[numConnComp];
-	for( int i=0; i<numConnComp; i++)
-	{
+	for( int i=0; i<numConnComp; i++){
 		myConnComp[i].x1 = 	numColumns+1;
 		myConnComp[i].y1 =  numRows+1;
-		myConnComp[i].z1 = numStacks+1;
-	    myConnComp[i].x2 =  myConnComp[i].y2 = myConnComp[i].z2 = -1;
+		myConnComp[i].x2 =  myConnComp[i].y2 = -1;
+		if (numStacks == 1){
+			myConnComp[i].z1 = 1;
+			myConnComp[i].z2 = 1;
+		}
+		else{
+			myConnComp[i].z1 = numStacks+1;
+			myConnComp[i].z2 = -1;
+		}
 	}
-	if (numStacks == 1)
-	{
+	if (numStacks == 1){
+		for ( int j=0; j<numRows; ++j ){
+			for ( int i=0; i<numColumns; ++i ){
+				curNode = (j*numColumns)+i;
+				val = binImagePtr[curNode];
+				if(val>0){
+					val = val-1;
+					myConnComp[val].y1 = (int) std::min((double)j,(double)myConnComp[val].y1);
+					myConnComp[val].y2 = (int) std::max((double)j,(double)myConnComp[val].y2);
+					myConnComp[val].x1 = (int) std::min((double)i,(double)myConnComp[val].x1);
+					myConnComp[val].x2 = (int) std::max((double)i,(double)myConnComp[val].x2);
+				}
+			}
+		}
 	}
 	else
 	{
@@ -390,7 +424,7 @@ void yousef_nucleus_seg::getConnCompInfo3D()
 						myConnComp[val].x1 = (int) std::min((double)i,(double)myConnComp[val].x1);
 						myConnComp[val].x2 = (int) std::max((double)i,(double)myConnComp[val].x2);
 						myConnComp[val].z1 = (int) std::min((double)k,(double)myConnComp[val].z1);
-						myConnComp[val].z2 = (int) std::max((double)k,(double)myConnComp[val].z2);						
+						myConnComp[val].z2 = (int) std::max((double)k,(double)myConnComp[val].z2);
 					}
 				}
 			}
@@ -400,6 +434,139 @@ void yousef_nucleus_seg::getConnCompInfo3D()
 
 //THIS IS THE FINAL STAGE TO SEGMENTATION
 // MAYBE SHOULD MOVE THIS FUNCTION TO THE ALPHA EXPANSION FOLDER
+void yousef_nucleus_seg::runAlphaExpansion(){
+	if (numStacks == 1){
+		runAlphaExpansion2D();
+	}
+	else{
+		runAlphaExpansion3D();
+	}
+}
+
+void yousef_nucleus_seg::runAlphaExpansion2D(){
+	//First check for necessary prerequisites
+	if( !dataImagePtr || !logImagePtr || !seedImagePtr || !binImagePtr || !myConnComp ){
+		return;
+	}
+
+	//Now clear all subsequent variables
+	clearSegImagePtr();
+
+	std::cerr<<"Finalizing Segmentation"<<std::endl;
+
+	//Now, we apply the next steps into the connected components one by one
+	int ind, x_len, y_len, val;
+
+	segImagePtr = new int[numRows*numColumns];
+	memset(segImagePtr/*destination*/,0/*value*/,numStacks*numRows*numColumns*sizeof(int)/*num bytes to move*/);
+
+	for( int n=0; n<numConnComp; n++ ){
+		std::cerr<<"Processing Connected Component #"<<n+1<<"...";
+		//Now, get the subimages (the bounding box) for the current connected component
+		ind = 0;
+		x_len = myConnComp[n].x2 - myConnComp[n].x1 + 1;
+		y_len = myConnComp[n].y2 - myConnComp[n].y1 + 1;
+		float* sublogImg = new float[x_len*y_len];
+		int* subclustImg = new int[x_len*y_len];	
+		std::vector<int> labelsList;
+		
+		for(int i=myConnComp[n].x1; i<=myConnComp[n].x2; i++){
+			for(int j=myConnComp[n].y1; j<=myConnComp[n].y2; j++){	
+				val = binImagePtr[(j*numColumns)+i];
+				//The bounding box could contain points from other neighbor connected components which need to be removed
+				if(val != (n+1)){
+					sublogImg[ind] = 0;
+					subclustImg[ind] = 0;
+				}
+				else{
+					//for now, write the value in the clustering image into the segmentation image
+					segImagePtr[(j*numColumns)+i] = clustImagePtr[(j*numColumns)+i];
+					subclustImg[ind] = clustImagePtr[(j*numColumns)+i];
+					//Do the same for the LoG image
+					sublogImg[ind] = logImagePtr[(j*numColumns)+i];
+					int found = 0;
+					for(unsigned int l=0; l<labelsList.size(); l++){
+						if(labelsList[l] == subclustImg[ind])
+							found = 1;
+					}
+					if(found == 0) //add the label of the cluster
+						labelsList.push_back(subclustImg[ind]);
+				}
+				++ind;
+			}
+		}
+		//Now, if this connected component has one cell (one label) only, 
+		//then take the clustering results of that connected as the final segmentation
+		if(labelsList.size() == 1){
+			std::cerr<<"Done with only one object"<<std::endl;
+			delete[] sublogImg;
+			delete[] subclustImg;
+			continue;
+		}
+		std::cerr<<std::endl<<"    "<<labelsList.size()<<" objects found"<<std::endl;
+		//If you reach here, it means that the current connected component contains two or more cells
+		//First, sort the labels list
+		std::cerr<<"    "<<"sorting labels"<<std::endl;
+		for(unsigned int l1=0; l1<labelsList.size(); l1++){
+			for(unsigned int l2=l1+1; l2<labelsList.size(); l2++){
+				if(labelsList[l2]<labelsList[l1]){
+					int tmp = labelsList[l1];
+					labelsList[l1] = labelsList[l2];
+					labelsList[l2] = tmp;
+				}
+			}
+		}
+		
+
+		//Relabel the clustering sub-image starting from 1
+		//also get the original sub-image (bounding box) that will be used as the contrast term		
+		ind = -1;		
+		float* subDataImg = new float[x_len*y_len];
+
+		for(int i=myConnComp[n].x1; i<=myConnComp[n].x2; i++){
+			for(int j=myConnComp[n].y1; j<=myConnComp[n].y2; j++){
+				ind++;
+				subDataImg[ind] = (float)dataImagePtr[(j*numColumns)+i];
+				val = binImagePtr[(j*numColumns)+i];
+				if(val != (n+1))
+					continue;
+				else{
+					for(unsigned int l=0; l<labelsList.size(); l++){
+						if(labelsList[l] == subclustImg[ind]){
+							subclustImg[ind] = l+1;
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		
+		int ok = alpha_expansion_2d( subDataImg, sublogImg, subclustImg, x_len, y_len );
+
+		//relable and copy the output of the alpha expansion which is stored in the subclustImg to the final segmented image
+		ind = 0;		
+		
+			for(int i=myConnComp[n].x1; i<=myConnComp[n].x2; i++){
+				for(int j=myConnComp[n].y1; j<=myConnComp[n].y2; j++){
+				val = subclustImg[ind];
+				if(val>0)
+					segImagePtr[(j*numColumns)+i] = val;
+				
+				++ind;
+			}
+		}
+		std::cerr<<"Done with "<<labelsList.size()<<" objects"<<std::endl;
+		delete [] sublogImg;
+		delete [] subclustImg;
+		//delete [] subDataImg;
+	}
+	//relabel the cells
+	int numOfObjs = /*getConnCompImage*/getRelabeledImage(segImagePtr, 26, 25, numRows, numColumns,numStacks, 1);	
+	std::cerr << "done with " << numOfObjs<<" found"<<std::endl;
+	std::cerr << "Creating Final Label Image" << std::endl;	
+}
+
 void yousef_nucleus_seg::runAlphaExpansion3D()
 {
 	//First check for necessary prerequisites
@@ -430,7 +597,7 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 	memset(segImagePtr/*destination*/,0/*value*/,numStacks*numRows*numColumns*sizeof(int)/*num bytes to move*/);
 
 	for(int n=0; n<numConnComp; n++)
-	{		
+	{
 		std::cerr<<"Processing Connected Component #"<<n+1<<"...";
 		//Now, get the subimages (the bounding box) for the current connected component
 		ind = 0;
@@ -449,7 +616,7 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 				{					
 					val = binImagePtr[(k*numRows*numColumns)+(j*numColumns)+i];
 					//The bounding box could contain points from other neighbor connected components which need to be removed
-					if(val != (n+1)) 
+					if(val != (n+1))
 					{
 						sublogImg[ind] = 0;
 						subclustImg[ind] = 0;
@@ -795,11 +962,11 @@ int yousef_nucleus_seg::getRelabeledImage(int *IM, int connectivity, int minSize
     size[0]  = c;  // size along X
     size[1]  = r;  // size along Y
 	size[2]  = z;  // size along Z
-  
+
     InputImageType::RegionType region;
     region.SetSize( size );
     region.SetIndex( start );
-    
+
     im->SetRegions( region );
     im->Allocate();
     im->FillBuffer(0);
@@ -809,7 +976,7 @@ int yousef_nucleus_seg::getRelabeledImage(int *IM, int connectivity, int minSize
 	typedef itk::ImageRegionIteratorWithIndex< InputImageType > IteratorType;
 	IteratorType iterator1(im,im->GetRequestedRegion());
 	for(int i=0; i<r*c*z; i++)
-	{		
+	{
 		iterator1.Set(IM[i]);
 		++iterator1;	
 	}

@@ -30,8 +30,9 @@ limitations under the License.
 #include "seed_detection/seedsdetection.h"
 #include "seed_detection_3D/seedsdetection_3D.h"
 #include "clustering_3D/local_max_clust_3D.h"
+#include "clustering_2D/Local_Max_Clust_2D.h"
 #include "graphColLearn_3D/Multi_Color_Graph_Learning_3D.h"
-#include "alpha_expansion_3d/alpha_expansion_3d.h"
+#include "alpha_expansion/alpha_expansion.h"
 
 //ITK INCLUDES
 #include "itkConnectedComponentImageFilter.h"
@@ -90,7 +91,9 @@ public:
 	void runBinarization();
 	void runSeedDetection();
 	void runClustering();
+	void runAlphaExpansion();
 	void runAlphaExpansion3D();
+	void runAlphaExpansion2D();
 
 	void readParametersFromFile(const char* pFName);					//This function reads the parameters based on Yousef's parameter format
 

@@ -7,14 +7,6 @@ SET( NSRCS
 #      Here we add all sub-directories that are involved with this program       #
 ################################################################################
 
-#SUBDIRS( cell_binarization )
-#SUBDIRS( seed_detection )
-#SUBDIRS( seed_detection_3D )
-#SUBDIRS( clustering_3D )
-#SUBDIRS( graphColLearn_3D )
-#SUBDIRS( alpha_expansion_3d )
-#SUBDIRS( cellLabelToBorders )
-#SUBDIRS( EM_GMM )
 
 SET( sd3d_SRCS
 	seed_detection_3D/seedsDetection_3D.cxx
@@ -44,6 +36,10 @@ SET( clust_SRCS
 	clustering_3D/local_max_clust_3D.h
 	clustering_3D/Local_Max_Clust_3D_CPP.cpp
 )
+SET( clust2d_SRCS
+	clustering_2D/Local_Max_Clust_2D.h
+	clustering_2D/Local_Max_Clust_2D.cpp
+)
 
 SET( border_SRCS
   cellLabelToBorders/label2border.h
@@ -60,21 +56,27 @@ SET( cbin_SRCS
 )
 
 SET( cb3_SRCS
-	alpha_expansion_3d/alpha_expansion_3d.h
-	alpha_expansion_3d/alpha_expansion_3d.cpp
-	alpha_expansion_3d/GCoptimization.h
-	alpha_expansion_3d/GCoptimization.cpp	
-	alpha_expansion_3d/LinkedBlockList.h
-	alpha_expansion_3d/LinkedBlockList.cpp
-	#alpha_expansion_3d/GraphCut3dConstr.cpp	
-	#alpha_expansion_3d/GraphCutMex.cpp
-	alpha_expansion_3d/graph.cpp
-	alpha_expansion_3d/maxflow.cpp
-	alpha_expansion_3d/block.h
-	alpha_expansion_3d/graph.h
-	alpha_expansion_3d/GraphCut.h
+	alpha_expansion/alpha_expansion.h
+	alpha_expansion/alpha_expansion.cpp
+	alpha_expansion/GCoptimization.h
+	alpha_expansion/GCoptimization.cpp	
+	alpha_expansion/LinkedBlockList.h
+	alpha_expansion/LinkedBlockList.cpp
+	#alpha_expansion/GraphCut3dConstr.cpp	
+	#alpha_expansion/GraphCutConstr.cpp	
+	#alpha_expansion/GraphCutMex.cpp
+	#alpha_expansion/GraphCut.cpp
+	alpha_expansion/graph.cpp
+	alpha_expansion/maxflow.cpp
+	alpha_expansion/block.h
+	alpha_expansion/graph.h
+	alpha_expansion/GraphCut.h
+	alpha_expansion/gvc.h
+	alpha_expansion/gvc.cpp
+	alpha_expansion/Multi_Color_Graph_Learning_2D.h
+	alpha_expansion/Multi_Color_Graph_Learning_2d.cpp
 )
 
-ADD_LIBRARY( Yousef_Nucleus_Seg ${NSRCS} ${sd3d_SRCS} ${sd2d_SRCS} ${mcgl3d_SRCS} ${emgmm_SRCS} ${clust_SRCS} ${border_SRCS} ${cbin_SRCS} ${cb3_SRCS})
+ADD_LIBRARY( Yousef_Nucleus_Seg ${NSRCS} ${sd3d_SRCS} ${sd2d_SRCS} ${mcgl3d_SRCS} ${emgmm_SRCS} ${clust_SRCS} ${clust2d_SRCS} ${border_SRCS} ${cbin_SRCS} ${cb3_SRCS})
 
 TARGET_LINK_LIBRARIES ( Yousef_Nucleus_Seg ITKBasicFilters ITKCommon ITKIO)
