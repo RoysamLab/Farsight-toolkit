@@ -36,37 +36,20 @@ bool BioNet::CycleDetected(set<int>* vertices, vtkIdType v) {
 // Note also that this function can be used to produce averages too for pyramidials    /
 /**************************************************************************************/
 void BioNet::Averages() {
-
-  //numEdges = 0;
-	int inNodes=0, outNodes=0;
+  int inNodes=0, outNodes=0;
   vtkIdType neighborCount =0;
   float subtotal=0, avg=0;
-
-  ofstream myfile ("pyramidal.txt");
-
-  /*
-  if (myfile.is_open())
-  {
-    myfile << "This is NOT a line.\n";
-    myfile << "This is another line.\n";
-    myfile.close();
-  }
-  else cout << "Unable to open file";
-*/
-
-
+  char* fileName = "CoordinatesAndAverageDistances.txt";
+  ofstream myfile (fileName);
   VTK_CREATE(vtkVertexListIterator, vertices);
   VTK_CREATE(vtkOutEdgeIterator, outEdges);
   g->GetVertices(vertices);
   vtkOutEdgeType e;
   ///////////////////////////////////////////////////
-
-  //pts->InsertPoint(vertexID,fX,fY,fZ);
   double coordinates[3];//for storing coordinates
 
   if (myfile.is_open())
   {
-  //cout<<"Average Edge Lengths for pyramidial Cell Layer:"<<endl;
   while (vertices->HasNext())
     {
     vtkIdType v = vertices->Next();
@@ -97,17 +80,103 @@ void BioNet::Averages() {
 		// Use the following line if the averages are required
 		g->GetPoint(v,coordinates);
 		myfile <<coordinates[0]<<" "<<coordinates[1]<<" "<<coordinates[2]<<" "<<avg<<endl;
-		//cout<<avg<<endl<<endl;
-
 	}
   }
   myfile.close();
-  cout<<"Averages for Pyramidal Cell Layer has been written to Pyramidal.txt"<<endl<<endl;
-  cout<<"Number of nodes in Pyramidal Cell Layer: "<<inNodes<<endl;  
-  cout<<"Number of nodes located out of Pyramidal Cell Layer: "<<outNodes<<endl;
-
+  cout<<"- Pyramidal Cell Layer Computation is done by using AVERAGES"<<endl;
+  cout<<"- Averages for Pyramidal Cell Layer has been "<<endl;
+  cout<<"  written to "<<fileName<<endl;
+  cout<<"- Number of nodes in Pyramidal Cell Layer: "<<inNodes<<endl;  
+  cout<<"- Number of nodes located out of Pyramidal Cell Layer: "<<outNodes<<endl;
   } else cout << "Unable to open file to write averages for Pyramidal Cell Layer";
+}
 
+/**************************************************************************************/
+// A helper-function that is used for computing averages for pyramidial region         /
+// The result is the average length of edges outgoing from each node in the graph      /
+// For undirected graphs (u,v) and (v,u) are the same edges. But in VTK they are not   /
+// Note also that this function can be used to produce averages too for pyramidials    /
+/**************************************************************************************/
+void BioNet::Medians() {
+  int inNodes=0, outNodes=0;
+  vtkIdType neighborCount =0;
+  float subtotal=0, med=0,med1=0, med2=0;
+  char* fileName = "CoordinatesAndMedianDistances.txt";
+  ofstream myfile (fileName);
+  VTK_CREATE(vtkVertexListIterator, vertices);
+  VTK_CREATE(vtkOutEdgeIterator, outEdges);
+  g->GetVertices(vertices);
+  vtkOutEdgeType e;
+  ///////////////////////////////////////////////////
+  double coordinates[3];//for storing coordinates
+
+  /*
+  set<int>::iterator pos;
+  pos=vertices->find(v);
+  if (pos==vertices->end()) {
+	vertices->insert(v);'
+  */
+
+
+  vector<float> medians;
+
+
+  if (myfile.is_open())
+  {
+  while (vertices->HasNext())
+    {
+    vtkIdType v = vertices->Next();
+    g->GetOutEdges(v, outEdges);
+    //vtkIdType index = 0;
+	neighborCount =0;
+	subtotal = 0;
+	//cout<<"source: "<<v<<endl;
+	set<int>* targetvertices=new set<int>(); //will be used for taking care of cycles. 
+							 //Edge weights will be the same in a cycle
+	///////////////////////////////////////////////////
+    while (outEdges->HasNext()) {
+		e = outEdges->Next();
+		if (!CycleDetected(targetvertices, e.Target)) {
+			//cout<<"\t Target: "<<e.Target<<endl;
+			//cout<<"Weight "<<g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id)<<endl;
+			medians.push_back(g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id));
+			neighborCount++;
+		}
+	}//////////////////////////////////////////////////
+
+	if (neighborCount > 0) {
+		sort(medians.begin(),medians.end());
+		//Check if the number of neighbors is even or odd
+		if ((neighborCount % 2) == 1) {
+			int midPosition=(neighborCount+1)/2;
+			med = medians[midPosition];
+		}
+		else {
+			int midPosition=neighborCount/2;
+			med1 = medians[midPosition];
+			med2 = medians[midPosition+1];
+			med  =  (med1 + med2)/2;
+		}
+		// Out pyramidial - 5 defines the color
+		if (med > cutoff) {g->GetVertexData()->GetArray("ChannelColors")->SetTuple1(v,5); 
+		outNodes++;}
+		else inNodes++;
+		// Use the following line if the averages are required
+		g->GetPoint(v,coordinates);
+		myfile <<coordinates[0]<<" "<<coordinates[1]<<" "<<coordinates[2]<<" "<<med<<endl;
+	}
+
+	// Prepare for the new medians
+	medians.clear();
+
+  }
+  myfile.close();
+  cout<<"- Pyramidal Cell Layer Computation is done by using MEDIANS"<<endl;
+  cout<<"- Medians for Pyramidal Cell Layer has been"<<endl;
+  cout<<"  written to "<<fileName<<endl;
+  cout<<"- Number of nodes in Pyramidal Cell Layer: "<<inNodes<<endl;  
+  cout<<"- Number of nodes located out of Pyramidal Cell Layer: "<<outNodes<<endl;
+  } else cout << "Unable to open file to write averages for Pyramidal Cell Layer";
 }
 
 //
@@ -144,7 +213,8 @@ void BioNet::ListDistances1N() {
 			}
 		}
 		myfile.close();
-		cout<<"Distances from one cell to its neighbors has been written to distances1N.txt"<<endl<<endl;
+		cout<<"- Distances from one cell to its neighbors has been"<<endl; 
+		cout<<"  written to distances1N.txt"<<endl;
 	} else cout << "Unable to open file to write distances";
 }
 
@@ -246,7 +316,7 @@ void BioNet::ListDegrees() {
 			numEdges = 0;
 		}
 		myfile.close();
-		cout<<"Degrees of each cell has been written to degrees.txt"<<endl;
+		cout<<"- Degrees of each cell has been written to degrees.txt"<<endl;
 	} else cout << "Unable to open file to write distances";
 }
 
@@ -262,7 +332,7 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
     TiXmlElement *levelTwoElement, *levelThreeElement;
 
     const char *nodeName, *label;
-	vtkIdType iID,iX,iY,iZ; // used for graph coordinates
+	vtkIdType iID;
 	float fX,fY,fZ;
 	vtkIdType isource, itarget; //used for defining graph edges
 	double iweight; 
@@ -326,7 +396,7 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 	//g->GetVertexData()->SetPedigreeIds(vertexIDs2);
 	g->GetEdgeData()->SetPedigreeIds(edgeIDs2);
 
-	ofstream myfile ("xyz.txt");
+	ofstream myfile ("CoordinatesOfAllNodes.txt");
 	int num=0; // used for finding number of neurons
 
    while(levelOneElement) {
@@ -412,12 +482,17 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 						cerr << "ERROR: encountered a node with no label" << endl;
 						return false;}
 
-					//Get the coordinates of only Neurons
-					if (label[0] == 'N') {
-						num++;
-						myfile<<fX<<" "<<fY<<" "<<fZ<<endl;
-					}
+					// Get the coordinates of only Neurons like this
+					// If there are at least two types of nodes
+					//if (label[0] == 'N') {
+					//	num++;
+					//	myfile<<fX<<" "<<fY<<" "<<fZ<<endl;
+					//}
 
+					//Get the coordinates of All Nodes
+					num++;
+					myfile<<fX<<" "<<fY<<" "<<fZ<<endl;
+					
 					//Set the colors of vertices
 					colorCodeArr->InsertValue(i,channelColors[label[0]]);
 					i++;
@@ -458,12 +533,6 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 						
 
 					if (n == -1) {
-
-						//g->GetEdgeData()->GetArray("EdgeIDs")->GetT; 
-						//edgeSourgeTargetToID[key]=edgeID;
-						
-
-
 						//Add this edge to the graph	
 						edgeID=g->AddEdge(vertexNodeLabelToID[isource],vertexNodeLabelToID[itarget]);
 						//Edge ids have to be string since we later use vtkSurfaceRepresentation for spheres.
@@ -484,7 +553,6 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 						avg = avg + iweight;  // average of edge weights is needed for pyramidial region
 						e++;
 					} else if (iweight <= n) { // n is distance which is the first parameter to the program
-						
 						edgeID=g->AddEdge(vertexNodeLabelToID[isource],vertexNodeLabelToID[itarget]);
 						//Edge ids have to be string since we later use vtkSurfaceRepresentation for spheres.
 						// During event handling this causes problems. We loose the types of selections.
@@ -504,8 +572,8 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 						avg = avg + iweight;  // average of edge weights is needed for pyramidial region
 						e++;
 					
-						cout<<"Source ID , Target ID , Distance "<<endl;
-						cout<<isource<<","<<itarget<<","<<iweight<<endl;
+						//cout<<"Source ID , Target ID , Distance "<<endl;
+						//cout<<isource<<","<<itarget<<","<<iweight<<endl;
 
 					}
 					}
@@ -551,7 +619,7 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 	//g->GetVertexData()->SetPedigreeIds(vertexIDs2);
 	//g->GetEdgeData()->SetPedigreeIds(edgeIDs2);
 	//edgeIDs->SetName("EdgeIDs");
-	cout<<"Number of Neurons are: "<<num<<endl;
+	cout<<"- Number of All Nodes are: "<<num<<endl;
 	return true;
 	
 };
@@ -1468,9 +1536,11 @@ int main(int argc, char *argv[])
 	VTK_CREATE(vtkVertexDegree, degree); //Required for displaying graphs
 
 	cout<<endl<<endl;
-	if (argc <4) {
+	if (argc <5) {
 			cout<<"Incorrect Usage! Check Parameters" <<endl;
-			cout<<"tissuenets <Network Name>  <distance (within)>  <2>  <cutoff for pyramidal> "<<endl; 
+			cout<<"tissuenets <Network Name>  <distance (within)>  <2>  <cutoff for pyramidal> <computation method>"<<endl;
+			cout<<"computation method can be either avg, or med (average and median). "<<endl;
+			cout<<"Enter a big cutoff if you are not interested in seeing pyramidal region"<<endl;
 			return 0;
 	};
 
@@ -1479,14 +1549,16 @@ int main(int argc, char *argv[])
 	// Python Arguments
 	//argv2= distance 
 	//argv3= an integer that shows either the graph is standard or a minimum spanning tree
+	//It has to be only 2 for now. Minimum spanning tree computation is disabled for now
 	//argv4= cutoff for pyramidial
 	float distance=atof(argv[2]);
 	int stdMst=atoi(argv[3]);
 	float cutoff=atof(argv[4]);
 		
 	//Create an empty network
-	BioNet* network=new BioNet();
+	BioNet* network=new BioNet();	
 	network->cutoff=cutoff;
+	network->compMethod = argv[5]; //Set the computation method to find average or median distance of node neighbors
 	
 	//Read the vertices and edges into the network
 	network->ReadXGMML(argv[1],distance);
@@ -1498,7 +1570,10 @@ int main(int argc, char *argv[])
 	if (stdMst == 2) {
 		network->cutoff=cutoff;
 		//Compute pyramidal region and average edge lengths
-		network->Averages();
+		if ((strcmp(network->compMethod, "avg")) == 0) 
+			network->Averages();
+		else if ((strcmp(network->compMethod, "med")) == 0) 
+			network->Medians();
 		//Compute edge lengths for from one cell to only 1Neighbor
 		network->ListDistances1N();
 		//Compute degrees of eacg node

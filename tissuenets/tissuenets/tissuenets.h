@@ -47,6 +47,7 @@
 
 #include <stdio.h>
 #include <map>
+#include <algorithm> //sort
 
 //Silinecek
 #include "vtkActor.h"
@@ -177,6 +178,9 @@ public:
 
 	int numOfPasses; //Required for proper event handling
 	float cutoff;
+	char* compMethod;	//can be either avg, or med
+						//find average length of neighbors of a node
+						//or do it to find median length
 	
 	void RenderWin();
 	void Interact();
@@ -184,7 +188,10 @@ public:
 	~BioNet(); //{g->Delete();} //Will be filled later
 	map<char,int> SetColorCode();
 	bool CycleDetected(set<int>* vertices, vtkIdType v);
-	void Averages(); //Use this If pyramidial Region Computation is required
+	void Averages(); // Use this If pyramidial Region Computation is required with AVERAGES
+	                 // Also prepares a file that has coordinates and average distances to the neighbors
+	void Medians();  // Use this If pyramidial Region Computation is required with MEDIANS
+	                 // Also prepares a file that has coordinates and median distances to the neighbors
 	bool ReadXGMML(char* graphFileName, float n); // Construct a vtkGraph from an XGMML file 	
 	void Display(vtkRenderView* ren, vtkAlgorithm* alg, 
 		double xoffset, double yoffset, 
