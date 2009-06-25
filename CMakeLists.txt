@@ -20,6 +20,7 @@ OPTION( BUILD_VESSEL "Build Vessel Surface Segmentation" ON )
 OPTION( BUILD_REGISTRATION "Build Image Registration (fregl)" ON )
 OPTION( BUILD_BIONET "Build Bionet" OFF )
 OPTION( BUILD_SAMPLE_EDITOR "Build Sample Editor" OFF )
+OPTION( BUILD_TISSUENETS "Build TissueNets" OFF )
 
 OPTION( WRAP_PYTHON "Wrap Farsight in Python" OFF )
 MARK_AS_ADVANCED(WRAP_PYTHON)
@@ -114,6 +115,12 @@ IF(BUILD_BIONET)
   INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/tissuenets )
   SUBDIRS(tissuenets)
 ENDIF(BUILD_BIONET)
+
+IF(BUILD_TISSUENETS)
+  INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/tissuenets/tissuenets )
+  SUBDIRS(tissuenets)
+ENDIF(BUILD_TISSUENETS)
+
 #####################################################################################
 IF(WRAP_PYTHON)
   IF(NOT BUILD_SHARED_LIBS)

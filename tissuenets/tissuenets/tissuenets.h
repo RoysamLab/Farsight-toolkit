@@ -1,18 +1,3 @@
-/*=========================================================================
-Copyright 2009 Rensselaer Polytechnic Institute
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. 
-=========================================================================*/
-
 #include "vtkGeometryFilter.h"
 #include "vtkGraph.h"
 #include "vtkMutableUndirectedGraph.h"
@@ -48,7 +33,7 @@ limitations under the License.
 #include "vtkVertexListIterator.h"
 #include "vtkTubeFilter.h"
 #include "vtkSphereSource.h"
-//#include "vtkTestingColors.h"
+#include "vtkTestingColors.h"
 #include "vtkGraphLayout.h"
 #include "vtkPassThroughLayoutStrategy.h"
 
@@ -121,7 +106,7 @@ limitations under the License.
 #include "vtkInteractorStyleTrackballCamera.h"
 //#include "vtkRenderInteractor.h"
 #include "vtkCellPicker.h"
-#include "vtkCallbackCommand.h"
+#include "vtkCallBackCommand.h"
 #include "vtkDataRepresentation.h"
 #include "vtkSelectionLink.h"
 // Use our version of vtkSurfaceRepresentation
@@ -147,6 +132,20 @@ public:
 	set<double> vertices;
 	set<string> edges;	
 	SelectedVerticesAndEdges(){};
+};
+
+// Description:
+// Will be used for storing coordinates of cell nuclei and the average distance to its neighbors
+class XYZ_and_Averages {
+public:
+	float ID,X,Y,Z,avg;
+};
+
+// Description:
+// Will be used for storing coordinates of cell nuclei
+class XYZ {
+public:
+	float ID,X,Y,Z;
 };
 
 // Description:
@@ -203,8 +202,8 @@ public:
 				   void* callerdata); 
 	vtkMutableUndirectedGraph* GetNetwork();
 	vtkRenderView* GetRenderView();
-	//vector<double> GetSelectedVertices(){};
-	//vector<double> GetSelectedEdges(){};
+	vector<double> GetSelectedVertices(){};
+	vector<double> GetSelectedEdges(){};
 	void AddLabels();
 	vtkGraphToPolyData* ToPoly();
 	void setNetworkStatusOn(){emptyNetwork=false;};	//Do this if the network has nodes and edges
@@ -234,8 +233,9 @@ private:
 	/**************************************************************************************/
 	map<pair<int,int>, vtkEdgeType> edgeSourgeTargetToID;
 	double avg; //average edge length
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~/
-
+	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~/	
+	vector<XYZ_and_Averages> xyz_and_averages;
+	vector<XYZ> xyz;
 };
 
 // Description:

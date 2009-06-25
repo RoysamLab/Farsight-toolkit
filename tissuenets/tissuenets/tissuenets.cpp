@@ -1,18 +1,3 @@
-/*=========================================================================
-Copyright 2009 Rensselaer Polytechnic Institute
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. 
-=========================================================================*/
-
 #include "tissuenets.h"
 
 // Description:
@@ -76,6 +61,9 @@ void BioNet::Averages() {
   vtkOutEdgeType e;
   ///////////////////////////////////////////////////
 
+  //pts->InsertPoint(vertexID,fX,fY,fZ);
+  double coordinates[3];//for storing coordinates
+
   if (myfile.is_open())
   {
   //cout<<"Average Edge Lengths for pyramidial Cell Layer:"<<endl;
@@ -107,7 +95,8 @@ void BioNet::Averages() {
 		outNodes++;}
 		else inNodes++;
 		// Use the following line if the averages are required
-		myfile <<avg<<endl;
+		g->GetPoint(v,coordinates);
+		myfile <<coordinates[0]<<" "<<coordinates[1]<<" "<<coordinates[2]<<" "<<avg<<endl;
 		//cout<<avg<<endl<<endl;
 
 	}
@@ -265,36 +254,15 @@ void BioNet::ListDegrees() {
 // Constructs a graph from a given XGMML file
 bool BioNet::ReadXGMML(char* graphFileName, float n) {
 	VTK_CREATE(vtkPoints,pts);
+    TiXmlDocument doc(graphFileName);
+    doc.LoadFile();
+    TiXmlHandle docHandle( &doc );
+    TiXmlElement* levelOneElement =
+    docHandle.FirstChild("graph").Element();
+    TiXmlElement *levelTwoElement, *levelThreeElement;
 
-   TiXmlDocument doc(graphFileName);
-   doc.LoadFile();
-   TiXmlHandle docHandle( &doc );
-   TiXmlElement* levelOneElement =
-   docHandle.FirstChild("graph").Element();
-   TiXmlElement *levelTwoElement, *levelThreeElement;
-
-   
-//	xmlDocPtr doc;
-//	xmlNodePtr nodeLevel1;
-//	xmlNodePtr nodeLevel2;
-//	xmlChar* attr=NULL;
-	const char *nodeName, *label;
-	//Node attributes
-//		xmlChar *id=(xmlChar*)"id";
-//		xmlChar* label=(xmlChar*)"label";
-//		xmlChar *weight=(xmlChar*)"weight";
-		//Attributes for graphics element
-//				xmlChar *type=(xmlChar*)"type"; //ex:circle
-//				//coordinates of nodes
-//				xmlChar* X=(xmlChar*)"x"; 
-//				xmlChar* Y=(xmlChar*)"y";
-//				xmlChar* Z=(xmlChar*)"z";
-
-
-	//Attributes for Edge elements
-//		xmlChar *source=(xmlChar*)"source";
-//		xmlChar *target=(xmlChar*)"target";	
-	vtkIdType iID; //,iX,iY,iZ; // used for graph coordinates
+    const char *nodeName, *label;
+	vtkIdType iID,iX,iY,iZ; // used for graph coordinates
 	float fX,fY,fZ;
 	vtkIdType isource, itarget; //used for defining graph edges
 	double iweight; 
@@ -339,7 +307,7 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 	vector<char> firstLetterOfLabels;
 	pair<int,int> key;
 	//double avg=0;
-	//int mic=0;
+	int mic=0;
 	channelColors = SetColorCode();
 	//doc = xmlParseFile(graphFileName);
 	g->GetVertexData()->AddArray(labels);
@@ -359,6 +327,7 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 	g->GetEdgeData()->SetPedigreeIds(edgeIDs2);
 
 	ofstream myfile ("xyz.txt");
+	int num=0; // used for finding number of neurons
 
    while(levelOneElement) {
 	   nodeName = levelOneElement->Value();	   
@@ -406,7 +375,8 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
             return false;
             }
 
-		    myfile<<fX<<" "<<fY<<" "<<fZ<<endl;
+			
+		    //myfile<<fX<<" "<<fY<<" "<<fZ<<endl;
 
 
 
@@ -442,6 +412,11 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 						cerr << "ERROR: encountered a node with no label" << endl;
 						return false;}
 
+					//Get the coordinates of only Neurons
+					if (label[0] == 'N') {
+						num++;
+						myfile<<fX<<" "<<fY<<" "<<fZ<<endl;
+					}
 
 					//Set the colors of vertices
 					colorCodeArr->InsertValue(i,channelColors[label[0]]);
@@ -475,7 +450,8 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 					//iweight = atof(cweight);
 
 					// Use the following if edge lengths are required for histograms
-					
+			
+
 					key= pair<int,int>(vertexNodeLabelToID[itarget], vertexNodeLabelToID[isource]);
 						//edgeSourgeTargetToID[key]=edgeID;
 					if (edgeSourgeTargetToID.find(key) == edgeSourgeTargetToID.end()) {
@@ -575,6 +551,7 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 	//g->GetVertexData()->SetPedigreeIds(vertexIDs2);
 	//g->GetEdgeData()->SetPedigreeIds(edgeIDs2);
 	//edgeIDs->SetName("EdgeIDs");
+	cout<<"Number of Neurons are: "<<num<<endl;
 	return true;
 	
 };
@@ -920,7 +897,7 @@ void ClearSelections(set<T>* s1) {
 //
 template<class T2> 
 void CopySets(set<T2> s1, set<T2>* s2) {
-	typename set<T2>::iterator i1;
+	set<T2>::iterator i1;
 	for(i1 = s1.begin(); i1 != s1.end(); i1++) {
 		s2->insert(*i1);
 	}
@@ -987,16 +964,14 @@ void BioNet::ProcessEvents(vtkObject* caller,
 				//set<string> tempStrMap(bnsl->bioObj->sve->edges);
 				//Store the old vertex selections
 				//cout<<"11111"<<endl;
-        std::copy(bnsl->bioObj->sve->edges.begin(),bnsl->bioObj->sve->edges.end(), 
-             std::insert_iterator< std::set< string > >(tempStrSet, tempStrSet.begin()));
+				copy(bnsl->bioObj->sve->edges.begin(),bnsl->bioObj->sve->edges.end(), tempStrSet.begin());
 				//Get the new selections - new vertices
 				bnsl->bioObj->GetSelections(bnsl->edgeLink);
 				//copy(bnsl->bioObj->sve->edges.begin(),bnsl->bioObj->sve->edges.end(), ostream_iterator<string>(cout, " "));
 				//cout<<endl;
 				//copy(bnsl->bioObj->sve->vertices.begin(),bnsl->bioObj->sve->vertices.end(), ostream_iterator<double>(cout, " "));
 				cout<<endl;
-        std::copy(tempStrSet.begin(),tempStrSet.end(), 
-             std::insert_iterator< std::set< string > >(bnsl->bioObj->sve->edges, bnsl->bioObj->sve->edges.begin()));
+				copy(tempStrSet.begin(),tempStrSet.end(), bnsl->bioObj->sve->edges.begin());
 				bnsl->bioObj->numOfPasses++; //The second pass is now completed
 				//cout<<"numOfPasses1 = "<<bnsl->bioObj->numOfPasses<<endl;
 		}
@@ -1006,8 +981,7 @@ void BioNet::ProcessEvents(vtkObject* caller,
 		if (bnsl->bioObj->sve->edges.size() == 0) {
 				set<double> tempDblSet(bnsl->bioObj->sve->vertices);
 
-        std::copy(bnsl->bioObj->sve->vertices.begin(),bnsl->bioObj->sve->vertices.end(), 
-                  std::insert_iterator< std::set< double > >(tempDblSet, tempDblSet.begin()));	
+				copy(bnsl->bioObj->sve->vertices.begin(),bnsl->bioObj->sve->vertices.end(), tempDblSet.begin());	
 			
 //				copy(bnsl->bioObj->sve->vertices.begin(),bnsl->bioObj->sve->vertices.end(), ostream_iterator<double>(cout, " "));
 
@@ -1322,20 +1296,20 @@ SelectedVerticesAndEdges* BioNet::GetSelections(vtkSelectionLink* sel) {
 	SelectedVerticesAndEdges* sve = new SelectedVerticesAndEdges();
 	vtkSelection *p = sel->GetSelection();
 	
-	for(unsigned int counter=0; counter < p->GetNumberOfNodes(); counter++)
+	for(int counter=0; counter < p->GetNumberOfNodes(); counter++)
 	{
 		vtkSelectionNode *n = p->GetNode(counter);
 		vtkAbstractArray* arra = n->GetSelectionList();
 		 for (int i=0;i<n->GetSelectionList()->GetNumberOfTuples();i++) {
 			 vtkVariant aaa=arra->GetVariantValue(i);
 			// Decide if this is a vertex or an edge
-			 if (strcmp(aaa.GetTypeAsString(), "double") == 0 ) //VERTEX ids have type of double 
+			 if (aaa.GetTypeAsString() == "double" ) //VERTEX ids have type of double 
 				 //vtkIdType id = (vtkIdType) aaa.ToInt();
 				 //vtkIdType id = (vtkIdType) this->GetNetwork()->GetVertexData()->GetPedigreeIds()->GetVariantValue(aaa).ToDouble()
 				 //this->InsertIntoMap(&sve->vertices, this->GetNetwork()->GetVertexData()->GetPedigreeIds()->GetVariantValue(id).ToDouble());				
 		 
 				 this->InsertIntoMap(&sve->vertices, (aaa.ToDouble()));
-			 else if (strcmp(aaa.GetTypeAsString(), "string") == 0 ) //edge ids have type of string
+			 else if (aaa.GetTypeAsString() == "string" ) //edge ids have type of string
 				  sve->edges.insert(aaa.ToString());
 		 }
 		 cout<<endl<<endl;
@@ -1470,7 +1444,7 @@ void BioNet::Kruskalmst() {
 	mst->SetInput(this->g);
 	mst->SetEdgeWeightArrayName("EdgeWeights");
 	mst->Update();
-  */
+
 	/*
 	Kruskal's MST outputs a vtkSelection, which selects the edges that 
 	are in the MST. This selection itself cannot be displayed in a graph 
@@ -1488,6 +1462,7 @@ void BioNet::Kruskalmst() {
 //};
 */
 
+
 int main(int argc, char *argv[])
 {
 	VTK_CREATE(vtkVertexDegree, degree); //Required for displaying graphs
@@ -1495,6 +1470,7 @@ int main(int argc, char *argv[])
 	cout<<endl<<endl;
 	if (argc <4) {
 			cout<<"Incorrect Usage! Check Parameters" <<endl;
+			cout<<"tissuenets <Network Name>  <distance (within)>  <2>  <cutoff for pyramidal> "<<endl; 
 			return 0;
 	};
 
@@ -1507,18 +1483,18 @@ int main(int argc, char *argv[])
 	float distance=atof(argv[2]);
 	int stdMst=atoi(argv[3]);
 	float cutoff=atof(argv[4]);
-	
+		
 	//Create an empty network
 	BioNet* network=new BioNet();
 	network->cutoff=cutoff;
-
+	
 	//Read the vertices and edges into the network
 	network->ReadXGMML(argv[1],distance);
 	// This is required to be done for the Display function
 	degree->SetInput(network->GetNetwork());
 	//Add Labels to vertices
 	network->AddLabels();
-
+	
 	if (stdMst == 2) {
 		network->cutoff=cutoff;
 		//Compute pyramidal region and average edge lengths
