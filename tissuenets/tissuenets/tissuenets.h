@@ -220,7 +220,7 @@ public:
 	SelectedVerticesAndEdges* GetSelections(vtkSelectionLink* p);
 	void InsertIntoMap(set<double>* vertices, double d);
 	void UpdateView();
-	void ListDistances1N();
+	multimap<int, int> ListDistances1N(int choice);
 	void ListDistances2N();
 	void ListDegrees();
 	//void Kruskalmst();

@@ -92,10 +92,11 @@ void BioNet::Averages() {
 }
 
 /**************************************************************************************/
-// A helper-function that is used for computing averages for pyramidial region         /
-// The result is the average length of edges outgoing from each node in the graph      /
+// A helper-function that is used for computing medians for pyramidial region          /
+// The result is the median  length of edges outgoing from each node in the graph      /
 // For undirected graphs (u,v) and (v,u) are the same edges. But in VTK they are not   /
-// Note also that this function can be used to produce averages too for pyramidials    /
+// Note also that this function can be used to produce medians for all nodes, not just /
+// the ones in the pyramidal region                                                    /
 /**************************************************************************************/
 void BioNet::Medians() {
   int inNodes=0, outNodes=0;
@@ -109,17 +110,7 @@ void BioNet::Medians() {
   vtkOutEdgeType e;
   ///////////////////////////////////////////////////
   double coordinates[3];//for storing coordinates
-
-  /*
-  set<int>::iterator pos;
-  pos=vertices->find(v);
-  if (pos==vertices->end()) {
-	vertices->insert(v);'
-  */
-
-
   vector<float> medians;
-
 
   if (myfile.is_open())
   {
@@ -127,10 +118,8 @@ void BioNet::Medians() {
     {
     vtkIdType v = vertices->Next();
     g->GetOutEdges(v, outEdges);
-    //vtkIdType index = 0;
 	neighborCount =0;
 	subtotal = 0;
-	//cout<<"source: "<<v<<endl;
 	set<int>* targetvertices=new set<int>(); //will be used for taking care of cycles. 
 							 //Edge weights will be the same in a cycle
 	///////////////////////////////////////////////////
@@ -157,7 +146,7 @@ void BioNet::Medians() {
 			med2 = medians[midPosition+1];
 			med  =  (med1 + med2)/2;
 		}
-		// Out pyramidial - 5 defines the color
+		// Out pyramidial: number-5 defines the color for this region
 		if (med > cutoff) {g->GetVertexData()->GetArray("ChannelColors")->SetTuple1(v,5); 
 		outNodes++;}
 		else inNodes++;
@@ -182,8 +171,10 @@ void BioNet::Medians() {
 //
 // Computes distances(link lengths) from one cell to each of its neighbors 
 // and writes results into distances1N.txt
-void BioNet::ListDistances1N() {	
+multimap<int, int>
+BioNet::ListDistances1N(int choice) {	
 	map<pair<int,int>, vtkEdgeType>::iterator it;
+	multimap<int, int> SourgeTargetMap;
 	pair<int,int> key;
 	ofstream myfile ("distances1N.txt");
 	VTK_CREATE(vtkVertexListIterator, vertices);
@@ -201,92 +192,52 @@ void BioNet::ListDistances1N() {
 				if (!CycleDetected(targetvertices, e.Target)) {
 					key= pair<int,int>(v,e.Target);
 					//edgeSourgeTargetToID[key]=edgeID;
+					// We have to check whether the edge is part of the graph read from the XGMML file or not
+					// Since vtk graph will treat (u,v) and (v,u) as two different edges
 					it = edgeSourgeTargetToID.find(key);
 					if (it == edgeSourgeTargetToID.end()) {
 						// DO NOTHING
 						// (u,v) is not in the map, therefore we assume that it is not part of the graph
 						// We *assume* because in some cases there can be (u,v) and (v,u) together. But we have 
 						// actually only one edge since vtk will show these edges as a single edge	
-					} else myfile<< g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id) <<endl;						
+					} else { 
+						if (choice == 1) 
+							myfile<< g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id) <<endl;
+						else 							
+							SourgeTargetMap.insert(pair<int,int>(v,e.Target));							
+					}					
 						
 				}
 			}
 		}
 		myfile.close();
+		if (choice == 1) {
 		cout<<"- Distances from one cell to its neighbors has been"<<endl; 
 		cout<<"  written to distances1N.txt"<<endl;
+		}
+		else return SourgeTargetMap;
 	} else cout << "Unable to open file to write distances";
 }
 
 //
-// Computes distances(link lengths) from one cell to each of its neighbors 
+// Computes average distances(link lengths) from one cell to each of its neighbors 
 // and writes results into distances1N.txt
 void BioNet::ListDistances2N() {
-/*	
-	map<pair<int,int>, vtkEdgeType>::iterator it;
-	pair<int,int> key;
-	ofstream myfile ("distances1N.txt");
-	VTK_CREATE(vtkVertexListIterator, vertices);
-	VTK_CREATE(vtkOutEdgeIterator, outEdges);
-	VTK_CREATE(vtkAdjacentVertexIterator, adjacentv);
-	VTK_CREATE(vtkAdjacentVertexIterator, adjacentw);
-	float distance;
 
-	g->GetVertices(vertices);
-	vtkOutEdgeType e;
-	if (myfile.is_open()) {
-		while (vertices->HasNext()) {
-			vtkIdType v = vertices->Next();
-			g->GetAdjacentVertices(v, adjacentv);
-			while (adjacentv->HasNext()){
-				vtkIdType w = adjacent->Next();
-				g->GetAdjacentVertices(w, adjacentw);
-				while (adjacentw->HasNext()){
-					vtkIdType z = adjacent->Next();
-					distance = (v,w) + (w,z);
+	multimap<int, int> SourceTargetMap;
+	multimap<int, int>::iterator it,it1;;
 
-					subtotal+=g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id);
+	SourceTargetMap=ListDistances1N(2);
+
+	for (it=SourceTargetMap.begin(); it!=SourceTargetMap.end();it++) {
+		u=(*it).first;
+		v=(*it).second;
+		it1 = SourceTargetMap.find(v);
+		if (it1 == SourceTargetMap.end()) { }
+		else 
 
 
 
-
-
-
-
-
-
-
-			g->GetOutEdges(v, outEdges);
-			set<int>* targetvertices=new set<int>(); //will be used for taking care of cycles. 
-													//Edge weights will be the same in a cycle
-			while (outEdges->HasNext()) {
-				e = outEdges->Next();
-				if (!CycleDetected(targetvertices, e.Target)) {
-					key= pair<int,int>(v,e.Target);
-					//edgeSourgeTargetToID[key]=edgeID;
-					it = edgeSourgeTargetToID.find(key);
-					if (it == edgeSourgeTargetToID.end()) {
-						// DO NOTHING
-						// (u,v) is not in the map, therefore we assume that it is not part of the graph
-						// We *assume* because in some cases there can be (u,v) and (v,u) together. But we have 
-						// actually only one edge since vtk will show these edges as a single edge
-						//myfile<< g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id) <<endl;
-	
-					} else {
-						myfile<< g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id) <<endl;						
-						//cout<<"burda2 Iste "<<g->GetVertexData()->GetArray("Label")->GetTuple1(v);
-						//cout<<" "<<g->GetVertexData()->GetArray("Label")->GetTuple1(e.Target)<<endl;
-						//myfile<< g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id) <<endl;
-						//edgeSourgeTargetToID.erase(it);
-					}
-				}
-			}
-		}
-		myfile.close();
-		cout<<"Distances from one cell to its neighbors has been written to distances1N.txt"<<endl<<endl;
-	} else cout << "Unable to open file to write distances";
-
-	*/
 }
 
 
@@ -1575,7 +1526,7 @@ int main(int argc, char *argv[])
 		else if ((strcmp(network->compMethod, "med")) == 0) 
 			network->Medians();
 		//Compute edge lengths for from one cell to only 1Neighbor
-		network->ListDistances1N();
+		network->ListDistances1N(1);
 		//Compute degrees of eacg node
 		network->ListDegrees();
 
