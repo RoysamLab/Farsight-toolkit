@@ -220,7 +220,8 @@ public:
 	SelectedVerticesAndEdges* GetSelections(vtkSelectionLink* p);
 	void InsertIntoMap(set<double>* vertices, double d);
 	void UpdateView();
-	multimap<int, int> ListDistances1N(int choice);
+	void ListDistances1N();
+	multimap<int, int> ListDistances1N_old(int choice);
 	void ListDistances2N();
 	void ListDegrees();
 	//void Kruskalmst();
@@ -229,9 +230,12 @@ private:
 	//vtkMutableUndirectedGraph* g;
 	bool emptyNetwork; //true if the network is empty
 	/**************************************************************************************/
-	//We need an associative sorted container to be able to relate vertex ids to           /
-	//node ids given in the xml file. vtk forces us to do it this way. We cannot use       /
-	//node ids as vertex ids in the graphs. Vertex ids have to start from 0                /
+	// We need an associative sorted container to be able to relate vertex ids to          /
+	// node ids given in the xml file. vtk forces us to do it this way. We cannot use      /
+	// node ids as vertex ids in the graphs. Vertex ids have to start from 0               /
+	// Note: vertexNodeLabelToID can be defined by using Boost bidirectional map           /
+	// Then it will be faster to search key and the value. Just using map causes slower    /
+	// search for values.                                                                  /
 	/**************************************************************************************/
 	map<int,int> vertexNodeLabelToID;	
 	/************************************************************************************/

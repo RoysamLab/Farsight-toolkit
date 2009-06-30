@@ -54,18 +54,14 @@ void BioNet::Averages() {
     {
     vtkIdType v = vertices->Next();
     g->GetOutEdges(v, outEdges);
-    //vtkIdType index = 0;
 	neighborCount =0;
 	subtotal = 0;
-	//cout<<"source: "<<v<<endl;
 	set<int>* targetvertices=new set<int>(); //will be used for taking care of cycles. 
 							 //Edge weights will be the same in a cycle
 	///////////////////////////////////////////////////
     while (outEdges->HasNext()) {
 		e = outEdges->Next();
 		if (!CycleDetected(targetvertices, e.Target)) {
-			//cout<<"\t Target: "<<e.Target<<endl;
-			//cout<<"Weight "<<g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id)<<endl;
 			subtotal+=g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id);
 			neighborCount++;
 		}
@@ -77,17 +73,17 @@ void BioNet::Averages() {
 		if (avg > cutoff) {g->GetVertexData()->GetArray("ChannelColors")->SetTuple1(v,5); 
 		outNodes++;}
 		else inNodes++;
-		// Use the following line if the averages are required
+		
 		g->GetPoint(v,coordinates);
 		myfile <<coordinates[0]<<" "<<coordinates[1]<<" "<<coordinates[2]<<" "<<avg<<endl;
 	}
   }
   myfile.close();
   cout<<"- Pyramidal Cell Layer Computation is done by using AVERAGES"<<endl;
-  cout<<"- Averages for Pyramidal Cell Layer has been "<<endl;
-  cout<<"  written to "<<fileName<<endl;
   cout<<"- Number of nodes in Pyramidal Cell Layer: "<<inNodes<<endl;  
   cout<<"- Number of nodes located out of Pyramidal Cell Layer: "<<outNodes<<endl;
+  cout<<"- Averages for ALL NODES has been "<<endl;
+  cout<<"  written to "<<fileName<<endl;
   } else cout << "Unable to open file to write averages for Pyramidal Cell Layer";
 }
 
@@ -126,8 +122,6 @@ void BioNet::Medians() {
     while (outEdges->HasNext()) {
 		e = outEdges->Next();
 		if (!CycleDetected(targetvertices, e.Target)) {
-			//cout<<"\t Target: "<<e.Target<<endl;
-			//cout<<"Weight "<<g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id)<<endl;
 			medians.push_back(g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id));
 			neighborCount++;
 		}
@@ -146,11 +140,11 @@ void BioNet::Medians() {
 			med2 = medians[midPosition+1];
 			med  =  (med1 + med2)/2;
 		}
-		// Out pyramidial: number-5 defines the color for this region
+		// Out pyramidal: number-5 defines the color for this region
 		if (med > cutoff) {g->GetVertexData()->GetArray("ChannelColors")->SetTuple1(v,5); 
 		outNodes++;}
 		else inNodes++;
-		// Use the following line if the averages are required
+
 		g->GetPoint(v,coordinates);
 		myfile <<coordinates[0]<<" "<<coordinates[1]<<" "<<coordinates[2]<<" "<<med<<endl;
 	}
@@ -160,21 +154,21 @@ void BioNet::Medians() {
 
   }
   myfile.close();
-  cout<<"- Pyramidal Cell Layer Computation is done by using MEDIANS"<<endl;
-  cout<<"- Medians for Pyramidal Cell Layer has been"<<endl;
-  cout<<"  written to "<<fileName<<endl;
+  cout<<"- Pyramidal Cell Layer Computation is done by using MEDIANS"<<endl;  
   cout<<"- Number of nodes in Pyramidal Cell Layer: "<<inNodes<<endl;  
   cout<<"- Number of nodes located out of Pyramidal Cell Layer: "<<outNodes<<endl;
+  cout<<"- Medians for ALL NODES has been"<<endl;
+  cout<<"  written to "<<fileName<<endl;
   } else cout << "Unable to open file to write averages for Pyramidal Cell Layer";
 }
 
 //
 // Computes distances(link lengths) from one cell to each of its neighbors 
 // and writes results into distances1N.txt
-multimap<int, int>
-BioNet::ListDistances1N(int choice) {	
+//multimap<int, int>
+void BioNet::ListDistances1N() {	
 	map<pair<int,int>, vtkEdgeType>::iterator it;
-	multimap<int, int> SourgeTargetMap;
+	multimap<int, int> SourceTargetMap;
 	pair<int,int> key;
 	ofstream myfile ("distances1N.txt");
 	VTK_CREATE(vtkVertexListIterator, vertices);
@@ -183,13 +177,50 @@ BioNet::ListDistances1N(int choice) {
 	vtkOutEdgeType e;
 	if (myfile.is_open()) {
 		while (vertices->HasNext()) {
-			vtkIdType v = vertices->Next();			
+			vtkIdType v = vertices->Next();
 			g->GetOutEdges(v, outEdges);
 			set<int>* targetvertices=new set<int>(); //will be used for taking care of cycles. 
 													//Edge weights will be the same in a cycle
 			while (outEdges->HasNext()) {
 				e = outEdges->Next();
 				if (!CycleDetected(targetvertices, e.Target)) {
+					myfile<<g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id) <<endl;
+					//if (choice == 1) 
+					//	//myfile<< g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id) <<endl;
+					//	myfile<<g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id) <<endl;
+					//	else 							
+					//		SourceTargetMap.insert(pair<int,int>(v,e.Target));	
+				}
+			}
+		}
+		myfile.close();		
+		cout<<"- Distances from one cell to its neighbors has been"<<endl; 
+		cout<<"  written to distances1N.txt"<<endl;		
+	} else cout << "Unable to open file to write distances";
+}
+
+//
+// Computes distances(link lengths) from one cell to each of its neighbors 
+// and writes results into distances1N.txt
+multimap<int, int>
+BioNet::ListDistances1N_old(int choice) {	
+	map<pair<int,int>, vtkEdgeType>::iterator it;
+	multimap<int, int> SourceTargetMap;
+	pair<int,int> key;
+	ofstream myfile ("distances1N.txt");
+	VTK_CREATE(vtkVertexListIterator, vertices);
+	VTK_CREATE(vtkOutEdgeIterator, outEdges);
+	g->GetVertices(vertices);
+	vtkOutEdgeType e;
+	if (myfile.is_open()) {
+		while (vertices->HasNext()) {
+			vtkIdType v = vertices->Next();
+			g->GetOutEdges(v, outEdges);
+			set<int>* targetvertices=new set<int>(); //will be used for taking care of cycles. 
+													//Edge weights will be the same in a cycle
+			while (outEdges->HasNext()) {
+				e = outEdges->Next();
+				if (!CycleDetected(targetvertices, e.Target)) {					
 					key= pair<int,int>(v,e.Target);
 					//edgeSourgeTargetToID[key]=edgeID;
 					// We have to check whether the edge is part of the graph read from the XGMML file or not
@@ -202,9 +233,10 @@ BioNet::ListDistances1N(int choice) {
 						// actually only one edge since vtk will show these edges as a single edge	
 					} else { 
 						if (choice == 1) 
-							myfile<< g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id) <<endl;
+							//myfile<< g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id) <<endl;
+							myfile<<"u: "<<v<<" v:"<<e.Target<<" "<< g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id) <<endl;
 						else 							
-							SourgeTargetMap.insert(pair<int,int>(v,e.Target));							
+							SourceTargetMap.insert(pair<int,int>(v,e.Target));							
 					}					
 						
 				}
@@ -215,31 +247,80 @@ BioNet::ListDistances1N(int choice) {
 		cout<<"- Distances from one cell to its neighbors has been"<<endl; 
 		cout<<"  written to distances1N.txt"<<endl;
 		}
-		else return SourgeTargetMap;
+		else return SourceTargetMap;
 	} else cout << "Unable to open file to write distances";
 }
 
 //
-// Computes average distances(link lengths) from one cell to each of its neighbors 
+// Computes distances(link lengths) from one cell to each of its neighbors 
 // and writes results into distances1N.txt
-void BioNet::ListDistances2N() {
-
+//multimap<int, int>
+void BioNet::ListDistances2N() {	
+	map<pair<int,int>, vtkEdgeType>::iterator it;
 	multimap<int, int> SourceTargetMap;
-	multimap<int, int>::iterator it,it1;;
+	pair<int,int> key;
+	ofstream myfile ("distances2N.txt");
+	VTK_CREATE(vtkVertexListIterator, vertices);	
+	VTK_CREATE(vtkOutEdgeIterator, outEdges);
+	VTK_CREATE(vtkOutEdgeIterator, outEdgesOfTheNeighbor);
+	g->GetVertices(vertices);
+	vtkIdType u,v,w;
+	vtkOutEdgeType e,e2;
+	float pathLengths=0;
+	float avg=0;
+	int pathCount=0;
+	double coordinates[3];//for storing coordinates
+	map<pair<int,int>,bool> links;
 
-	SourceTargetMap=ListDistances1N(2);
 
-	for (it=SourceTargetMap.begin(); it!=SourceTargetMap.end();it++) {
-		u=(*it).first;
-		v=(*it).second;
-		it1 = SourceTargetMap.find(v);
-		if (it1 == SourceTargetMap.end()) { }
-		else 
+	if (myfile.is_open()) {
+		while (vertices->HasNext()) {
+			u = vertices->Next();
+			g->GetOutEdges(u, outEdges);
+			pathLengths=0;
+			pathCount=0;
+			while (outEdges->HasNext()) {
+				e = outEdges->Next();
+				v=e.Target;
+				g->GetOutEdges(v, outEdgesOfTheNeighbor);
+				while (outEdgesOfTheNeighbor->HasNext()) {
+					e2 = outEdgesOfTheNeighbor->Next();
+					w=e2.Target;
+					if (u != w){  // (u,v) and (v,w) are not the same edge
+						
+						// If two edges (v,w) and (w,v) are added from the source XGMML, VTK assumes that outgoing edges for v
+						// includes (v,w) twice. This is causing a problem in this case. The same path is counted twice which is wrong
+						key= pair<int,int>(v, w);						
+					    if (links.find(key) == links.end()) {
+							// First add the length of (u,v)
+							cout<<"(u,v): ("<<u<<","<<v<<"): "<<g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id)<<endl;
+							cout<<"(v,w): ("<<v<<","<<w<<"): "<<g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e2.Id)<<endl;
+							pathLengths += g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id);
+							// Add the length of (v,w)
+							pathLengths += g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e2.Id);
+							pathCount++;
+							links[key]=true;
+							cout<<"pathCount inner: "<<pathCount<<endl;
+						}
+					}
+				}
+			}
 
-
-
+			g->GetPoint(u,coordinates);
+			if (pathCount == 0) 
+				myfile <<coordinates[0]<<" "<<coordinates[1]<<" "<<coordinates[2]<<" "<<0<<endl;
+			else {
+				avg = pathLengths / pathCount;
+				cout<<"avg: "<<avg<<endl<<endl;
+				cout<<"patchCount: "<<pathCount<<endl;
+				myfile <<coordinates[0]<<" "<<coordinates[1]<<" "<<coordinates[2]<<" "<<avg<<endl;
+			}
+		}	
+		myfile.close();
+		cout<<"- Average Distances from one cell to its 2-link neighbors has been"<<endl; 
+		cout<<"  written to distances2N.txt"<<endl;		
+	} else cout << "Unable to open file to write distances";
 }
-
 
 //
 // Computes distances(link lengths) from one cell to each of its neighbors 
@@ -422,6 +503,9 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 					
 					//Add one vertex for this point
 					vertexID=g->AddVertex();
+					// vertexNodeLabelToID can be defined by using Boost bidirectional map
+					// Then it will be faster to search key and the value. Just using map causes slower search 
+					// for values.
 					vertexNodeLabelToID[iID] = vertexID;
 					vertexIDs->InsertNextValue(i);
 					vertexIDs2->InsertNextValue(i);
@@ -480,7 +564,7 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 
 					key= pair<int,int>(vertexNodeLabelToID[itarget], vertexNodeLabelToID[isource]);
 						//edgeSourgeTargetToID[key]=edgeID;
-					if (edgeSourgeTargetToID.find(key) == edgeSourgeTargetToID.end()) {
+					//if (edgeSourgeTargetToID.find(key) == edgeSourgeTargetToID.end()) {
 						
 
 					if (n == -1) {
@@ -527,7 +611,7 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 						//cout<<isource<<","<<itarget<<","<<iweight<<endl;
 
 					}
-					}
+					//}
 
 
 
@@ -1487,9 +1571,9 @@ int main(int argc, char *argv[])
 	VTK_CREATE(vtkVertexDegree, degree); //Required for displaying graphs
 
 	cout<<endl<<endl;
-	if (argc <5) {
-			cout<<"Incorrect Usage! Check Parameters" <<endl;
-			cout<<"tissuenets <Network Name>  <distance (within)>  <2>  <cutoff for pyramidal> <computation method>"<<endl;
+	if (argc <5) {			
+			cout<<"Incorrect Usage! Check Parameters" <<endl<<endl;
+			cout<<"tissuenets <Network Name>  <distance (within)>  <2>  <cutoff for pyramidal> <computation method>"<<endl<<endl;
 			cout<<"computation method can be either avg, or med (average and median). "<<endl;
 			cout<<"Enter a big cutoff if you are not interested in seeing pyramidal region"<<endl;
 			return 0;
@@ -1526,7 +1610,8 @@ int main(int argc, char *argv[])
 		else if ((strcmp(network->compMethod, "med")) == 0) 
 			network->Medians();
 		//Compute edge lengths for from one cell to only 1Neighbor
-		network->ListDistances1N(1);
+		//network->ListDistances1N();
+		network->ListDistances2N();
 		//Compute degrees of eacg node
 		network->ListDegrees();
 
