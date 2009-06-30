@@ -143,15 +143,15 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 		if(buff[pc]=='#') // ignoring comment lines for now. We have to read scale from it! TODO
 			continue;
 
-		sscanf(buff,"%d %d %*f %*f %*f %*f %d",&id,&type,&parent);
-		//sscanf(buff,"%d %d %*lf %*lf %*lf %*lf %d",&id,&type,&parent);
+		//sscanf(buff,"%d %d %*f %*f %*f %*f %d",&id,&type,&parent);
+		sscanf(buff,"%d %d %*lf %*lf %*lf %*lf %d",&id,&type,&parent);
 		//printf("%d\n",id);
 		if(id>max_id)//find max id
 		{
 			max_id=id;
 		}
 
-		if(parent != -1)
+		if(parent >= 1)
 		{
 			child_count[parent]++;
 		}
@@ -1097,13 +1097,17 @@ void TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
 		{	min= distances[i];
 			mark=i;
 		}
-	}
+	}	
+	norm1=sqrt(pow((delX1),2)+ pow((delY1),2)+ pow((delZ1),2));
+	norm2=sqrt(pow((delX2),2)+ pow((delY2),2)+ pow((delZ2),2));
+	angle = acos(((delX1 * delX2) + (delY1 *delY2) + (delZ1 * delZ2))/(norm2 * norm1));
 	// from min determine orientation and return distance
 	if (mark ==0)
 	{
 		dist = distances[0];
 		dir1= m_trace_bits.front().marker;
 		dir2= Trace2->m_trace_bits.front().marker;
+		angle=PI-angle;
 		maxdist= distances[3];
 	}
 	else if (mark ==1)
@@ -1125,11 +1129,10 @@ void TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
 		dist = distances[3];
 		dir1= m_trace_bits.back().marker;
 		dir2= Trace2->m_trace_bits.back().marker;
+		angle=PI-angle;
 		maxdist= distances[0];
 	}
-	norm1=sqrt(pow((delX1),2)+ pow((delY1),2)+ pow((delZ1),2));
-	norm2=sqrt(pow((delX2),2)+ pow((delY2),2)+ pow((delZ2),2));
-	angle = acos(((delX1 * delX2) + (delY1 *delY2) + (delZ1 * delZ2))/(norm2 * norm1));
+
 }
 
 void TraceObject::RemoveTraceLine(TraceLine *tline)

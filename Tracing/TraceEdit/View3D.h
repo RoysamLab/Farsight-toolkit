@@ -84,6 +84,7 @@ int endPT1, endPT2;
 double angle;
 double dist; 
 double maxdist;
+double cost;
 };
 
 class View3D : public QMainWindow 
@@ -114,6 +115,7 @@ View3D(int argc, char **argv);
 	void HighlightSelected(TraceLine* tline, double SelectColor);
 	void DeleteTrace(TraceLine *tline);
 	void MinEndPoints(std::vector<TraceLine*> traceList);
+	void SelectedComp();
 
 
 	bool setTol();
@@ -200,6 +202,11 @@ private:
 	
 	vtkSmartPointer<vtkCellPicker> CellPicker;
 	std::vector<int> IDList;
+  //merge info
+	std::vector<compTrace> compList;
+	std::vector<compTrace> grayList;
+	QString myText;	QString dtext;	QString grayText;
+
 	vtkSmartPointer<vtkSphereSource> Sphere;
 	vtkSmartPointer<vtkPolyDataMapper> SphereMapper;
 	vtkSmartPointer<vtkActor> SphereActor;
