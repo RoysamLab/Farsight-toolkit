@@ -75,6 +75,7 @@ limitations under the License.
 #include <QAction>
 #include <QtGui>
 #include <QVTKWidget.h>
+#include <string>
 
 struct compTrace{
 TraceLine *Trace1;
@@ -104,7 +105,7 @@ View3D(int argc, char **argv);
 	void AddVolumeSliders();
 	void AddContourThresholdSliders();
 	void AddPlaybackWidget(char*);
-	void readImg(char* sourceFile);
+	void readImg(std::string sourceFile);
 	void rayCast(char* raySource);
 
 	static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
@@ -132,6 +133,11 @@ public slots:
   void HideSettingsWindow();
   void ApplyNewSettings();
   void SLine();
+  void ShowSomas();
+  void ShowSomaWindow();
+  void GetSomaPath();
+  void GetSomaFile();
+  void HideSomaWindow();
 
 protected:
   void closeEvent(QCloseEvent *event);
@@ -143,6 +149,8 @@ private:
 	int smallLine;
 	float lineWidth;
 	double SelectColor;
+	std::string SomaFile;
+	bool somastat;
 
   //VTK render window embedded in a Qt widget
   QVTKWidget *QVTK;
@@ -161,6 +169,7 @@ private:
 	QPushButton *WriteButton;
 	QPushButton *SettingsButton;
 	QPushButton *AutomateButton;
+	QPushButton *SomaButton;
 
 	//Qt widgets for the settings window
 	QWidget *SettingsWidget;
@@ -171,6 +180,13 @@ private:
 	QLineEdit *LineWidthField;
 	QPushButton *ApplySettingsButton;
 	QPushButton *CancelSettingsButton;
+
+	//Qt Widgets for the soma file reader window
+	QWidget *SomaWidget;
+	QLineEdit *SomaFileField;
+	QPushButton *OpenSomaButton;
+	QPushButton *CancelSomaButton;
+	QPushButton *BrowseSomaButton;
 
 	//stuff for tol and selection
   //general render window variables

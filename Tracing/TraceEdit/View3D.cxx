@@ -34,6 +34,8 @@ View3D::View3D(int argc, char **argv)
   this->tobj = new TraceObject;
   int num_loaded = 0;
   this->Volume=0;
+  this->somastat = 0;
+
   // load as many files as possible. Provide offset for differentiating types
 	for(int counter=1; counter<argc; counter++)
 	  {
@@ -64,6 +66,7 @@ View3D::View3D(int argc, char **argv)
 		  }
 		num_loaded++;
 	  }
+
 this->QVTK = 0;
 this->gapTol = .5;
 this->gapMax = 10;
@@ -95,6 +98,7 @@ void View3D::Initialize()
   this->QVTK->GetRenderWindow()->Render();
 }
 
+
 /*  set up the components of the interface */
 void View3D::CreateGUIObjects()
 {
@@ -117,6 +121,7 @@ void View3D::CreateGUIObjects()
   this->WriteButton = new QPushButton("&write to .swc file", this->CentralWidget);
   this->SettingsButton = new QPushButton("&edit settings", this->CentralWidget);
   this->AutomateButton = new QPushButton("&Automatic Selection", this->CentralWidget);
+  this->SomaButton = new QPushButton("&Show Somas", this->CentralWidget);
 
   //Setup the tolerance settings editing window
   this->SettingsWidget = new QWidget();
@@ -133,8 +138,16 @@ void View3D::CreateGUIObjects()
   this->ColorValueField->setValidator(doubleValidator);
   this->LineWidthField = new QLineEdit(this->SettingsWidget);
   this->LineWidthField->setValidator(doubleValidator);
-  this->ApplySettingsButton = new QPushButton("Apply", this->SettingsWidget);
-  this->CancelSettingsButton = new QPushButton("Cancel", this->SettingsWidget);
+  this->ApplySettingsButton = new QPushButton("&Apply", this->SettingsWidget);
+  this->CancelSettingsButton = new QPushButton("&Cancel", this->SettingsWidget);
+
+  //Soma window setup
+  this->SomaWidget = new QWidget();
+  this->SomaWidget->setWindowTitle(tr("Soma File Load"));
+  this->SomaFileField = new QLineEdit(this->SomaWidget);
+  this->OpenSomaButton = new QPushButton("&Open", this->SomaWidget);
+  this->CancelSomaButton = new QPushButton("&Cancel", this->SomaWidget);
+  this->BrowseSomaButton = new QPushButton("&Browse", this->SomaWidget);
 
   //Setup the connections
   connect(this->ListButton, SIGNAL(clicked()), this, SLOT(ListSelections()));
@@ -144,13 +157,20 @@ void View3D::CreateGUIObjects()
   connect(this->SplitButton, SIGNAL(clicked()), this, SLOT(SplitTraces()));
   connect(this->FlipButton, SIGNAL(clicked()), this, SLOT(FlipTraces()));
   connect(this->WriteButton, SIGNAL(clicked()), this, SLOT(WriteToSWCFile()));
- connect(this->AutomateButton, SIGNAL(clicked()), this, SLOT(SLine()));
+  connect(this->AutomateButton, SIGNAL(clicked()), this, SLOT(SLine()));
+  connect(this->SomaButton, SIGNAL(clicked()), this, SLOT(ShowSomas()));
+
   connect(this->SettingsButton, SIGNAL(clicked()), this,
     SLOT(ShowSettingsWindow()));
   connect(this->ApplySettingsButton, SIGNAL(clicked()), this,
     SLOT(ApplyNewSettings()));
   connect(this->CancelSettingsButton, SIGNAL(clicked()), this,
     SLOT(HideSettingsWindow()));
+
+  //Slots for the buttons on the soma window
+  connect(this->OpenSomaButton, SIGNAL(clicked()), this, SLOT(GetSomaFile()));
+  connect(this->CancelSomaButton, SIGNAL(clicked()), this, SLOT(HideSomaWindow()));
+  connect(this->BrowseSomaButton, SIGNAL(clicked()), this, SLOT(GetSomaPath()));
 }
 
 void View3D::CreateLayout()
@@ -167,6 +187,7 @@ void View3D::CreateLayout()
 
 	buttonLayout->addWidget(this->SettingsButton, 9, 0);
 	buttonLayout->addWidget(this->WriteButton, 10, 0);
+	buttonLayout->addWidget(this->SomaButton, 11, 0);
 	buttonLayout->setSpacing(10);
 	QGridLayout *viewerLayout = new QGridLayout(this->CentralWidget);
 	viewerLayout->addWidget(this->QVTK, 0, 1);
@@ -174,8 +195,11 @@ void View3D::CreateLayout()
 
   //set up the menu bar
   QMenu *fileMenu = this->menuBar()->addMenu(tr("&File"));
-  QAction *exitAction = fileMenu->addAction(tr("E&xit"));
+  QAction *openSoma = fileMenu->addAction(tr("&Open Soma Data"));
+  QAction *exitAction = fileMenu->addAction(tr("&Exit"));
+
   connect(exitAction, SIGNAL(triggered()), this, SLOT(close()));
+  connect(openSoma, SIGNAL(triggered()), this, SLOT(ShowSomaWindow()));
 
   this->menuBar()->addMenu(tr("Another example menu"));
 
@@ -197,7 +221,16 @@ void View3D::CreateLayout()
   settingsLayout->addWidget(lineWidthLabel, 4, 0);
   settingsLayout->addWidget(this->LineWidthField, 4, 1);
   settingsLayout->addWidget(this->ApplySettingsButton, 5, 0);
-  settingsLayout->addWidget(this->CancelSettingsButton, 5, 1);
+  settingsLayout->addWidget(this->CancelSettingsButton, 5, 1); 
+
+  //Layout for the Soma Window
+  QGridLayout *SomaLayout = new QGridLayout(this->SomaWidget);
+  QLabel *SomaFileLabel = new QLabel(tr("Soma Image File:"));
+  SomaLayout->addWidget(SomaFileLabel, 0, 0);
+  SomaLayout->addWidget(this->SomaFileField, 0, 1);
+  SomaLayout->addWidget(this->BrowseSomaButton, 0, 2);
+  SomaLayout->addWidget(this->OpenSomaButton, 1, 0);
+  SomaLayout->addWidget(this->CancelSomaButton, 1, 1);
 }
 
 void View3D::CreateInteractorStyle()
@@ -244,6 +277,9 @@ void View3D::CreateActors()
 	  this->Renderer->AddVolume(this->Volume);
 	  this->AddVolumeSliders();
   }
+
+  //this->Renderer->AddActor(this->VolumeActor);
+
   //sphere is used to mark the picks
   this->CreateSphereActor();
   Renderer->AddActor(this->SphereActor);
@@ -422,9 +458,11 @@ void View3D::Rerender()
   this->SphereActor->VisibilityOff();
   this->IDList.clear();
   this->Renderer->RemoveActor(this->BranchActor);
+  this->Renderer->RemoveActor(this->VolumeActor);
   this->UpdateLineActor();
   this->UpdateBranchActor();
   this->Renderer->AddActor(this->BranchActor);
+  this->Renderer->AddActor(this->VolumeActor);
   this->QVTK->GetRenderWindow()->Render();
 }
 
@@ -567,6 +605,81 @@ void View3D::WriteToSWCFile()
     "",
     tr("SWC Images (*.swc)"));
 	this->tobj->WriteToSWCFile(fileName.toStdString().c_str());	
+}
+
+void View3D::ShowSomaWindow()
+{
+	this->SomaWidget->show();
+}
+
+void View3D::GetSomaPath()
+{
+	//Open file browser to select a file, takes file path and inserts it into the file field text box
+	QString path;
+	path = QFileDialog::getOpenFileName(this->SomaWidget, "choose a file to load", QString::null, QString::null);
+	this->SomaFileField->setText(path);
+}
+void View3D::GetSomaFile()
+{
+	//Takes input from file field text box and casts it as an std string
+	std::string fileName;
+	std::string fileEx;
+	fileName = this->SomaFileField->text().toStdString();
+
+	//Searches for . to capture file extension
+	for(unsigned int i = fileName.size() - 1; i >= 0; i--)
+	{
+		if(fileName[i] == '.')
+		{
+			fileEx = fileName.substr(i+1, (fileName.size() - 1 - i));
+			break;
+		}
+	}
+
+	//Changes file extension characters to lowercase
+	for(unsigned int j = 0; j < fileEx.size(); j++)
+	{
+		fileEx[j] = tolower(fileEx[j]);
+	}
+
+	//Checks for proper file extension and accepts
+	if(fileEx == "tiff" || fileEx == "tif")
+	{
+		this->SomaFile = fileName;
+		this->SomaWidget->hide();
+	}
+	//Otherwise outputs an error to the terminal
+	else
+	{
+		std::cerr << "Invalid File Type: Please load correct soma image." << std::endl;
+	}
+}
+
+void View3D::HideSomaWindow()
+{
+	this->SomaWidget->hide();
+}
+
+void View3D::ShowSomas()
+{
+	//If the somas are already rendered, remove them
+	if(this->somastat == 1)
+	{
+		this->Renderer->RemoveActor(this->VolumeActor);
+		this->QVTK->GetRenderWindow()->Render();
+		this->somastat = 0;
+		std::cout << "Somas Removed" << std::endl;
+		return;
+	}
+	//If somas are not rendered, add them
+	if(this->somastat == 0)
+	{
+		this->readImg(this->SomaFile);
+		this->Rerender();
+		this->somastat = 1;
+		std::cout << "Somas Rendered" << std::endl;
+		return;
+	}
 }
 
 void View3D::ShowSettingsWindow()
@@ -1149,22 +1262,18 @@ void View3D::AddVolumeSliders()
   sliderWidget2->EnabledOn();
 
 }
-void View3D::readImg(char* sourceFile)
-{ /*vtkImageReader2 * readMe = vtkImageReader2::New();
-  readMe->SetDataOrigin(0.0,0.0,0.0);
-  readMe->SetDataExtent(0,255,0,255,0,255);
-  readMe->SetDataSpacing(1,1,1);
-  readMe->SetDataByteOrderToLittleEndian();
-  readMe->SetFileName(sourceFile);
-  std::cout<< sourceFile << '\n';
-  readMe->Update();*/
+void View3D::readImg(std::string sourceFile)
+{
   
+  //Set up the itk image reader
   const unsigned int Dimension = 3;
   typedef unsigned char  PixelType;
   typedef itk::Image< PixelType, Dimension >   ImageType;
   typedef itk::ImageFileReader< ImageType >    ReaderType;
   ReaderType::Pointer reader = ReaderType::New();
   reader->SetFileName( sourceFile );
+
+  //Test opening and reading the input file
   try
   {
     reader->Update();
@@ -1176,38 +1285,32 @@ void View3D::readImg(char* sourceFile)
     //return EXIT_FAILURE;
     }
   std::cout << "Image Read " << std::endl;
-//itk-vtk connector
+  //Itk image to vtkImageData connector
   typedef itk::ImageToVTKImageFilter<ImageType> ConnectorType;
   ConnectorType::Pointer connector= ConnectorType::New();
   connector->SetInput( reader->GetOutput() );
 
-  
-  this->ContourFilter = vtkSmartPointer<vtkContourFilter>::New();
+  //Route vtkImageData to the contour filter
+  this->ContourFilter = vtkContourFilter::New();
   this->ContourFilter->SetInput(connector->GetOutput());
   this->ContourFilter->SetValue(0,10);            // this affects render
-  //this->ContourFilter = vtkSmartPointer<vtkContourFilter>::New();
-  //this->ContourFilter = contour;
 
+  this->ContourFilter->Update();
 
-  
-  //vtkSmartPointer<vtkPolyDataNormals> normals = vtkSmartPointer<vtkPolyDataNormals>::New();
-  //normals->SetInput(this->ContourFilter->GetOutput());
-  //normals->SetFeatureAngle(15);
+  //Route contour filter output to the mapper
+  this->VolumeMapper = vtkPolyDataMapper::New();
+  this->VolumeMapper->SetInput(this->ContourFilter->GetOutput());
 
-  VolumeMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-  VolumeMapper->SetInput(this->ContourFilter->GetOutput());
-  
-  VolumeActor = vtkSmartPointer<vtkActor>::New();
-  VolumeActor->SetMapper(VolumeMapper);
-  //VolumeAct->GetProperty()->SetOpacity(.3);
-  VolumeActor->GetProperty()->SetRepresentationToWireframe();
-  VolumeActor->GetProperty()->SetColor(0.5,0.5,0.5);
-  VolumeActor->SetPickable(0);
-  //VolumeActor->SetScale(1/2.776,1/2.776,1);
-  
-  Renderer->AddActor(VolumeActor);
-  this->QVTK->GetRenderWindow()->Render();
-  std::cout << "contour rendered \n";
+  //Declare actor and set properties
+  this->VolumeActor = vtkActor::New();
+  this->VolumeActor->SetMapper(this->VolumeMapper);
+
+  //this->VolumeActor->GetProperty()->SetRepresentationToWireframe();
+  this->VolumeActor->GetProperty()->SetOpacity(.7);
+  this->VolumeActor->GetProperty()->SetColor(0.5,0.5,0.5);
+  this->VolumeActor->SetPickable(0);
+
+  std::cout << "Nuclei contour produced" << std::endl;
 }
 
 void View3D::rayCast(char *raySource)
