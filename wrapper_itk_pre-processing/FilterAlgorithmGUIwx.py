@@ -10,6 +10,8 @@
 # Last modified on 3 June, 2009
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
+import FilterObjectXML
+import ExecuteAlgorithm
 from FilterObjectGUIwx import *		# Super class
 import os
 
@@ -33,7 +35,10 @@ class FilterAlgorithmGUIwx(FilterObjectGUIwx):
 		self.dirname 			= ''
 
 	def CreateWidgets(self):
+		self.DisplayAlgorithmLabel()            # From base class
+		self.DisplayHelpURL()
 		self.DisplayAlgorithmName()				# From base class
+		self.DisplayAdvancedHelpURL()
 		self.DisplayAlgorithmKey()				# From base class
 		self.ParametersWidgets()				# From base class
 		self.OutputImagePixelTypeWidgets()		# From base class
@@ -43,9 +48,35 @@ class FilterAlgorithmGUIwx(FilterObjectGUIwx):
 		self.OutputFileNameWidgets()
 		self.SeriesIndices()
 		self.PressFilterButtonWidget()
+		self.DisplayQuitButtonWidget()		
+
+	def DisplayHelpURL(self):
+		wx.lib.agw.hyperlink.HyperLinkCtrl(
+            self.panel, -1, 
+            label = "Help", 
+            URL = self.algorithm.GetHelpURL(),
+            pos = (400,self.tempRow))	
+
+	def DisplayAdvancedHelpURL(self):
+		wx.lib.agw.hyperlink.HyperLinkCtrl(
+            self.panel, -1, 
+            label = "Advanced help", 
+            URL = self.algorithm.GetAdvancedHelpURL(),
+            pos = (400,self.tempRow))	
+
+	def DisplayQuitButtonWidget(self):
+		self.NextRow()
+		self.NextRow()
+		wx.StaticText(self.panel, -1, pos = (20, self.tempRow), label = "Press Quit to exit")
+		self.quitButton = wx.Button(self.panel, id = 1, label = "Quit", pos = (200, self.tempRow), size = (75, 40))
+		self.quitButton.Bind(wx.EVT_BUTTON, self.QuitNow)
+		self.quitButton.SetToolTip(wx.ToolTip("Click 'Quit' to quit."))
+
+	def QuitNow(self, event):
+		self.Destroy()
 
 	def InputOutputImageStack(self):
-		""" Widget for enabling input/output images to be stacks rather than a sinle image """
+		""" Widget for enabling input/output images to be stacks rather than a single image """
 		self.NextRow()
 		self.inputImageStackCheckBox = wx.CheckBox(self.panel, -1, "Input Stack Image", pos = (20, self.tempRow))
 		self.Bind(wx.EVT_CHECKBOX, self.updateInputImageStack, self.inputImageStackCheckBox)
@@ -154,7 +185,7 @@ class FilterAlgorithmGUIwx(FilterObjectGUIwx):
 
 		self.DisableFileIndexWidgets()
 	
-	def DisableFileIndexWidgets(self):
+	def DisableFileIndexWidgets(self):          # File indices only for input/output stack images.
 		self.startIndexEntry.Enable(False)
 		self.endIndexEntry.Enable(False)
 		self.incrementIndexEntry.Enable(False)
@@ -173,6 +204,7 @@ class FilterAlgorithmGUIwx(FilterObjectGUIwx):
 		self.incrementIndexLabel.Enable(True)
 
 	def StartFiltering(self, event):			# When Filter is pressed, get the algorithm details.
+                                                  
 		self.algorithm.SetInputFileName( self.inputFileNameEntry.GetValue() )
 		self.algorithm.SetOutputFileName( self.outputFileNameEntry.GetValue() )
 
@@ -183,5 +215,24 @@ class FilterAlgorithmGUIwx(FilterObjectGUIwx):
 			self.algorithm.SetStartIndex( eval( self.startIndexEntry.GetValue() ) )
 			self.algorithm.SetEndIndex( eval( self.endIndexEntry.GetValue() ) )
 			self.algorithm.SetIncrementIndex( eval( self.incrementIndexEntry.GetValue() ) )
-	
-		super(FilterAlgorithmGUIwx, self).StartFiltering(event)
+#		flag = False
+		for num in range(self.algorithm.numberParameters):
+			if not self.parameterEntries[num].GetValue():
+				print "Please enter all the parameters"
+				return
+			else:
+				 self.algorithm.AssignParameter(
+						 self.keys[num],
+						 self.parameterEntries[num].GetValue() )
+		self.algorithm.CheckParameterValidity()					
+																		
+        	self.filterButton.Enable(False)
+        	xmlObject = FilterObjectXML.FilterObjectXML()
+        	XMLFileName = "parameters.xml"		# XXX To be generalized
+        	xmlObject.UpdateDocument(self.algorithm, XMLFileName)
+        	ExecuteAlgorithm.defaultAlgorithmExecution(XMLFileName)
+
+        	self.filterButton.Enable(True)
+
+#		if not flag:
+#			self.Destroy()

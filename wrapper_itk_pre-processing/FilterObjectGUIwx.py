@@ -10,7 +10,7 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 import wx
-import wx.lib.agw.hyperlink as hyper	# Without explicitly loading, it gives and error.
+import wx.lib.agw.hyperlink as hyper	# Without explicitly loading, it gives an error.
 import ListOfURLs
 
 class FilterObjectApp(wx.App):
@@ -35,19 +35,27 @@ class FilterObjectGUIwx(wx.Frame):
 		self.Show(True)
 
 	def CreateWidgets(self):
+		self.DisplayAlgorithmLabel()
 		self.DisplayAlgorithmName()
 		self.DisplayAlgorithmKey()
 		self.ParametersWidgets()
 		self.OutputImagePixelTypeWidgets()
 		self.PressFilterButtonWidget()
 
+	def DisplayAlgorithmLabel(self):
+		""" Label of the algorithm """
+		self.NextRow()
+#		import pdb
+#		pdb.set_trace()
+		key = self.algorithm.GetKey()
+		wx.StaticText(self.panel, -1, pos = (20, self.tempRow), label = "Name of the algorithm")
+		wx.StaticText(self.panel, -1, pos = (200, self.tempRow), label = self.algorithm.GetLabel())
+
 	def DisplayAlgorithmName(self):
 		""" Name of the algorithm """
 		self.NextRow()
-		key = self.algorithm.GetKey()
-		wx.StaticText(self.panel, -1, pos = (20, self.tempRow), label = "Name of the algorithm")
+		wx.StaticText(self.panel, -1, pos = (20, self.tempRow), label = "ITK algorithm name")
 		wx.StaticText(self.panel, -1, pos = (200, self.tempRow), label = self.algorithm.GetName())
-		self.__link = wx.lib.agw.hyperlink.HyperLinkCtrl(self, -1, label = "Help on " + key + " Filter", URL = ListOfURLs.URLOfAlgorithmHelp().GetURLOfAlgorithm(key), pos = (400,self.tempRow))
 
 	def DisplayAlgorithmKey(self):
 		""" Key of the algorithm """
@@ -74,9 +82,9 @@ class FilterObjectGUIwx(wx.Frame):
 		""" Filter Button to continue """
 		self.NextRow()
 		wx.StaticText(self.panel, -1, pos = (20, self.tempRow), label = "Press 'Filter' to filter")
-		self.button = wx.Button(self.panel, id = 1, label = "Filter", pos = (200, self.tempRow), size = (75, 40))
-		self.button.Bind(wx.EVT_BUTTON, self.StartFiltering)
-		self.button.SetToolTip(wx.ToolTip("Click 'Filter' to filter"))
+		self.filterButton = wx.Button(self.panel, id = 1, label = "Filter", pos = (200, self.tempRow), size = (75, 40))
+		self.filterButton.Bind(wx.EVT_BUTTON, self.StartFiltering)
+		self.filterButton.SetToolTip(wx.ToolTip("Click 'Filter' to filter"))
 
 	def OutputImagePixelTypeWidgets(self):
 		""" Choose if output image is to be 8 or 16 bit, or real type """

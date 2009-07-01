@@ -12,7 +12,41 @@ import xml.dom.minidom as dom
 import pdb
 from basic import *
 
-class FilterObjectXML(object):
+
+class ObjectXML(object):
+    def __init__(self):
+        self.__doc = dom.Document()
+
+    def WriteDocument(self, filename):		# Write to a file
+        fileObject = open(filename, "w")
+        self.__doc.writexml(fileObject)
+        fileObject.close()
+
+    def ReadDocument(self, filename):		# Read from a file
+        fileObject = open(filename, "r")
+        self.__doc = dom.parse(fileObject)
+        fileObject.close()
+
+    def PrintToScreen(self):				# Print to screen
+        print(self.__doc.toprettyxml(indent='\t',newl='\n'))
+
+    def NewAttributeAndSet(self, nodeObject, attributeName, value):		# Create an attribute and add it to the element
+        nodeObject.setAttributeNode(self.__doc.createAttribute(attributeName))
+        nodeObject.setAttribute(attributeName, value)
+
+    def GetFirstChild(self):
+        return self.__doc.firstChild
+
+    def GetNewElement(self, namespace, name):
+        return self.__doc.createElementNS(namespace, name)
+
+    def GetNewAttribute(self, key):
+        return self.__doc.createAttribute(key)
+
+    def AppendChildToDoc(self, child):
+        self.__doc.appendChild(child)
+
+class FilterObjectXML(ObjectXML):
 	# We define a set of attributes of the FilterAlgorithm class. Note that we have 
 	# split them into two sets because some of the them are strings and the other are 
 	# int/float/bool type objects. When parsing the document, we would have to assign 
@@ -21,7 +55,10 @@ class FilterObjectXML(object):
 	listOfStringAttributes = ["inputFileName", 
 							  "outputFileName",
 							  "outputImagePixelType",
-							  "dimension"]
+							  "dimension",
+							  "helpURL",
+							  "advancedHelpURL"
+							  ]
 
 	listOfOtherAttributes = ["hasStructuringElement",
 							 "inputImageStack",
@@ -30,33 +67,34 @@ class FilterObjectXML(object):
 							 "endIndex",
 							 "incrementIndex",
 							 "outputType",
-							 "useCaster"]
+							 "useCaster"
+							 ]
 
 
 	listOfAttributes = listOfStringAttributes + listOfOtherAttributes
 
 	def __init__(self):								# Constructor
-		self.__doc = dom.Document()
+        	super(FilterObjectXML, self).__init__()
 
 	def UpdateDocument(self, algorithm, filename):	# Write the algorithm details to the XML file, the argument
 													# algorithm is a FilterAlgorithm object.  
 
 		# Add name
-		xmlalgorithm = self.__doc.createElementNS("Algorithm","xmlalgorithm")
-		self.__doc.appendChild(xmlalgorithm)
+		xmlalgorithm = self.GetNewElement("Algorithm","xmlalgorithm")
+		self.AppendChildToDoc(xmlalgorithm)	
 
 		# Assign attributes
 		self.AssignAllAttributes(FilterObjectXML.listOfAttributes, xmlalgorithm, algorithm)
 
 		# Create an element filter - and add its attributes
-		filter = self.__doc.createElementNS("Algorithm","filter")
+		filter = self.GetNewElement("Algorithm","filter")
 		xmlalgorithm.appendChild(filter)
-		self.AssignAllAttributes(["key","name"], filter, algorithm)
+		self.AssignAllAttributes(["key","name","label"], filter, algorithm)
 
 #		self.PrintToScreen()
 
 		# Create an element parameters - and add its attributes
-		parameters = filter.appendChild(self.__doc.createElementNS("Algorithm","parameters"))
+		parameters = filter.appendChild(self.GetNewElement("Algorithm","parameters"))
 		algorithmParameters = algorithm.GetParameters()
 		keys = algorithmParameters.keys()
 		for key in keys:
@@ -64,7 +102,7 @@ class FilterObjectXML(object):
 			# attribute "type". For example, a radius object will be an object of class itkSize2()
 			# for a 2-D image.
 			if algorithm.IsTupleParameter(key):
-				tempObject = self.__doc.createElementNS("Algorithm",key)
+				tempObject = self.GetNewElement("Algorithm",key)
 				parameters.appendChild(tempObject)
 				self.NewAttributeAndSet( tempObject, "type", algorithmParameters[key]["type"] )
 				self.NewAttributeAndSet( tempObject, key, str(algorithmParameters[key]["value"]) )
@@ -76,31 +114,13 @@ class FilterObjectXML(object):
 #		self.PrintToScreen()
 		self.WriteDocument(filename)
 
-	def WriteDocument(self, filename):		# Write to a file
-		fileObject = open(filename, "w")
-		self.__doc.writexml(fileObject)
-		fileObject.close()
-
-	def ReadDocument(self, filename):		# Read from a file
-		fileObject = open(filename, "r")
-		self.__doc = dom.parse(fileObject)
-		fileObject.close()
-
-	def PrintToScreen(self):				# Print to screen
-		print(self.__doc.toprettyxml(indent='\t',newl='\n'))
-
-	def NewAttributeAndSet(self, nodeObject, attributeName, value):		# Create an attribute and add it to the element
-		nodeObject.setAttributeNode(self.__doc.createAttribute(attributeName))
-		nodeObject.setAttribute(attributeName, value)
-
 
 	# Read the document and return the algorithm object.
 	def ParseDocument(self, algorithm, filename):
 
 		self.ReadDocument(filename)
 #		self.PrintToScreen()
-
-		xmlalgorithm = self.__doc.firstChild
+		xmlalgorithm = self.GetFirstChild()
 
 		# Get all the attributes of the algorithm.
 		self.GetAllStringAttributes(FilterObjectXML.listOfStringAttributes, xmlalgorithm, algorithm)
@@ -134,14 +154,13 @@ class FilterObjectXML(object):
 			self.NewAttributeAndSet(
 					xmlalgorithm,
 					name,
-					str( eval( "thisalgorithm.Get" + titleName + "()" ) )
-					)
+					str( eval( "thisalgorithm.Get" + titleName + "()" ) ) )
 
 	def CapitalizeFirstLettter(self, str):
 		newString = str[0].upper() + str[1:] 
 		return newString
 
-	# For each attribute in the list, invoke the corresponding Set() function.
+	# For each attribute in the list, invoke the corresponding Set() function - these are not related to ITK.
 	def GetAllStringAttributes(self, listOfAttributes, element, thisalgorithm):
 		for name in listOfAttributes:
 			titleName = self.CapitalizeFirstLettter(name)
@@ -153,50 +172,3 @@ class FilterObjectXML(object):
 			eval( "thisalgorithm.Set" + titleName + "( eval( element.getAttribute(\"" + name + "\") ) )" )
 	
 		
-#		self.NewAttributeAndSet( xmlalgorithm,"inputFileName", algorithm.GetInputFileName() )
-#		self.NewAttributeAndSet( xmlalgorithm,"outputFileName", algorithm.GetOutputFileName() )
-#		self.NewAttributeAndSet( xmlalgorithm, "hasStructuringElement", str(algorithm.HasStructuringElement()) )
-#		self.NewAttributeAndSet( xmlalgorithm, "outputImagePixelType", str(algorithm.GetOutputImagePixelType()))
-#
-#
-#		self.NewAttributeAndSet( xmlalgorithm, "inputImageStack", str(algorithm.GetInputImageStack()) )
-#		if algorithm.GetInputImageStack():
-#			self.NewAttributeAndSet( inputImageStack, "startIndex", str(algorithm.GetStartIndex()) )
-#			self.NewAttributeAndSet( inputImageStack, "endIndex", str(algorithm.GetEndIndex()) )
-#			self.NewAttributeAndSet( inputImageStack, "incrementIndex", str(algorithm.GetIncrementIndex()) )
-#
-#		self.NewAttributeAndSet( xmlalgorithm, "outputImageStack", str(algorithm.GetOutputImageStack()) )
-#		if algorithm.GetOutputImageStack():
-#			self.NewAttributeAndSet( outputImageStack, "startIndex", str(algorithm.GetStartIndex()) )
-#			self.NewAttributeAndSet( outputImageStack, "endIndex", str(algorithm.GetEndIndex()) )
-#			self.NewAttributeAndSet( outputImageStack, "incrementIndex", str(algorithm.GetIncrementIndex()) )
-#
-#		self.NewAttributeAndSet( xmlalgorithm, "dimension", algorithm.GetDimension() )
-#		self.NewAttributeAndSet( xmlalgorithm, "outputType", str(algorithm.GetOutputType()) )
-
-
-#		algorithm.SetInputFileName(xmlalgorithm.getAttribute("inputFileName"))
-#		algorithm.SetOutputFileName(xmlalgorithm.getAttribute("outputFileName"))
-#
-#		if eval( xmlalgorithm.getAttribute("hasStructuringElement") ):
-#			algorithm.SetHasStructuringElement(True)
-#
-#		if eval( xmlalgorithm.getAttribute("inputImageStack") ):
-#			algorithm.SetInputImageStack(True)
-#			algorithm.SetStartIndex(eval( xmlalgorithm.getAttribute("startIndex") ))
-#			algorithm.SetEndIndex(eval( xmlalgorithm.getAttribute("endIndex") ))
-#			algorithm.SetIncrementIndex(eval( xmlalgorithm.getAttribute("incrementIndex") ))
-#
-#
-#		if eval( xmlalgorithm.getAttribute("outputImageStack") ):
-#			algorithm.SetOutputImageStack(True)
-#			algorithm.SetStartIndex(eval( xmlalgorithm.getAttribute("startIndex") ))
-#			algorithm.SetEndIndex(eval( xmlalgorithm.getAttribute("endIndex") ))
-#			algorithm.SetIncrementIndex(eval( xmlalgorithm.getAttribute("incrementIndex") ))
-#
-#		algorithm.SetDimension(str(xmlalgorithm.getAttribute("dimension")))
-#		algorithm.SetOutputType(eval(xmlalgorithm.getAttribute("outputType")))
-#		algorithm.SetOutputImagePixelType(xmlalgorithm.getAttribute("outputImagePixelType"))
-#		for filter in filterList:
-#			algorithm.SetKey(filter.getAttribute("key"))
-#			algorithm.SetName(filter.getAttribute("name"))

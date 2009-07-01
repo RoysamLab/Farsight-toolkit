@@ -16,12 +16,15 @@ class FilterObject(object):
 		""" FilterObject Constructor """
 		self.__key = None
 		self.__name = None
+		self.__label = None						  
 		self.__parameters = {}
 		self.__tupleParameters = []
 
 	def __str__(self):	
 		returnValue = "\nAlgorithm            : " + str(self.GetName())
 		returnValue += "\nKey                  : " + str(self.GetKey())
+		returnValue += "\nLabel                : " + str(self.GetLabel())
+
 		returnValue += "\nNumber of parameters : " + str(self.numberParameters)
 		keys = self.GetParameters().keys()
 		for num in range(self.numberParameters):
@@ -38,6 +41,9 @@ class FilterObject(object):
 	def GetName(self):
 		return self.__name
 
+	def GetLabel(self):
+		return self.__label
+
 	def GetParameters(self):
 		return self.__parameters
 
@@ -50,6 +56,9 @@ class FilterObject(object):
 	
 	def SetName(self, nameOfName):
 		self.__name = nameOfName
+
+	def SetLabel(self, label):
+		self.__label = label
 
 	def SetParameters(self, listOfParameters):	# Actually a dictionary
 		self.__parameters = listOfParameters

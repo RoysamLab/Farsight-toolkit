@@ -15,3 +15,7 @@ def dprint(message):
 	if DEBUGMODE:
 		print message
  		
+# Checks if the file name passed has the desired extension.                     
+def CheckFileExtension(name, extension):			 
+	lengthOfName = len(name)
+	return (name[lengthOfName-4:] == extension)	 

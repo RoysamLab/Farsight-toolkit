@@ -1,5 +1,7 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# This class contains the definition of the class filter object that will contain all the member functions and variables required for a filter , algorithm 
+# This class contains the definition of the class filter object that will contain 
+# all the member functions and variables required for a filter, including the file
+# name of the input and the output file to be worked on.
 
 # Author 	: Adarsh K. Ramasubramonian
 # Date		: 21 May, 2009
@@ -8,6 +10,7 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 from FilterObject import *		# Base class
 import FilterAlgorithmGUIwx		# Contains all the widgets for the GUI.
+import basic
 
 class FilterAlgorithm(FilterObject):
 	""" Filter algorithm - derived from Filter object, has additional data structures """
@@ -28,6 +31,8 @@ class FilterAlgorithm(FilterObject):
 		self.__startIndex 					= 0
 		self.__endIndex 					= 0
 		self.__incrementIndex 				= 0
+		self.__helpURL 						= ""
+		self.__advancedHelpURL 				= ""
 
 
 	def __str__(self):
@@ -111,6 +116,16 @@ class FilterAlgorithm(FilterObject):
 	def GetUseCaster(self):
 		return self.__useCaster
 
+	def SetHelpURL(self, url):
+		self.__helpURL = url
+	def GetHelpURL(self):
+		return self.__helpURL
+
+	def SetAdvancedHelpURL(self, url):
+		self.__advancedHelpURL = url
+	def GetAdvancedHelpURL(self):
+		return self.__advancedHelpURL
+
 	# GUI input - used with Tkinter - not any more.
 #	def GUIInput(self):
 #		root = Tk()
@@ -120,24 +135,18 @@ class FilterAlgorithm(FilterObject):
 #		app.CreateWidgets()											
 #		root.mainloop()
 
-	def GUIInputwx(self):
-		root = FilterAlgorithmGUIwx.FilterAlgorithmApp(False, self)
-		root.MainLoop()
+	# Not used anymore			
+#	def GUIInputwx(self):
+#		root = FilterAlgorithmGUIwx.FilterAlgorithmApp(False, self)
+#		root.MainLoop()
 
-# interactiveInput needs to be activated. 					   
-#	def interactiveInput(self):
-#		print "Algorithm            : ", self.GetName()
-#		print "Key                  : ", self.GetKey()
-#		print "Number of parameters : ", self.numberParameters
-#		keys = self.GetParameters().keys()
-#		for num in range(self.numberParameters):
-#			flag = 0
-#			while flag == 0:
-#				value = raw_input("Enter " + keys[num] + " : ")
-#				if value:
-#					flag = 1
-#			self.AssignParameter(keys[num],value)
-#		print "This function needs to be updated. Do not use it !!!"
-#		import sys
-#		sys.exit
+	def CheckParameterValidity(self):
+		""" Check if all the parameters are valid. """
+		# This function is currently not very thorough in the checks.
+
+		# 1. Only some output formats support float data type - for example, .vtk
+		if self.__outputImagePixelType == "F":
+			return (basic.CheckFileExtension(name, ".vtk") or basic.CheckFileExtension(name, ".img"))
+		else:
+			return True
 
