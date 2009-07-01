@@ -91,10 +91,12 @@ void BioNet::Averages() {
 // A helper-function that is used for computing medians for pyramidial region          /
 // The result is the median  length of edges outgoing from each node in the graph      /
 // For undirected graphs (u,v) and (v,u) are the same edges. But in VTK they are not   /
-// Note also that this function can be used to produce medians for all nodes, not just /
+// (But it displays only one edge as expected                                          /
+//                                                                                     /
+// Note also that this function produces medians for all nodes, not just               /
 // the ones in the pyramidal region                                                    /
 /**************************************************************************************/
-void BioNet::Medians() {
+void BioNet::Medians() {	  
   int inNodes=0, outNodes=0;
   vtkIdType neighborCount =0;
   float subtotal=0, med=0,med1=0, med2=0;
@@ -107,6 +109,7 @@ void BioNet::Medians() {
   ///////////////////////////////////////////////////
   double coordinates[3];//for storing coordinates
   vector<float> medians;
+
 
   if (myfile.is_open())
   {
@@ -126,18 +129,19 @@ void BioNet::Medians() {
 			neighborCount++;
 		}
 	}//////////////////////////////////////////////////
-
 	if (neighborCount > 0) {
 		sort(medians.begin(),medians.end());
+		//cout<<"hahaha"<<endl;
 		//Check if the number of neighbors is even or odd
 		if ((neighborCount % 2) == 1) {
-			int midPosition=(neighborCount+1)/2;
+			//medians is a vector. The indices starts from 0. Therefore, we add -1 below
+			int midPosition=((neighborCount+1)/2)-1;
 			med = medians[midPosition];
 		}
 		else {
-			int midPosition=neighborCount/2;
-			med1 = medians[midPosition];
-			med2 = medians[midPosition+1];
+			int midPosition=neighborCount/2;			
+			med1 = medians[midPosition-1];
+			med2 = medians[midPosition];
 			med  =  (med1 + med2)/2;
 		}
 		// Out pyramidal: number-5 defines the color for this region
@@ -251,10 +255,10 @@ BioNet::ListDistances1N_old(int choice) {
 	} else cout << "Unable to open file to write distances";
 }
 
-//
-// Computes distances(link lengths) from one cell to each of its neighbors 
-// and writes results into distances1N.txt
-//multimap<int, int>
+/***************************************************************************************/
+// Computes distances(link lengths) from one cell to each of its neighbors of neighbors /
+// and writes results into distances1N.txt                                              / 
+
 void BioNet::ListDistances2N() {	
 	map<pair<int,int>, vtkEdgeType>::iterator it;
 	multimap<int, int> SourceTargetMap;
@@ -323,7 +327,7 @@ void BioNet::ListDistances2N() {
 }
 
 //
-// Computes distances(link lengths) from one cell to each of its neighbors 
+// Computes degrees of each cell 
 // and writes results into distances1N.txt
 void BioNet::ListDegrees() {
 	int numEdges = 0;	
@@ -1602,6 +1606,7 @@ int main(int argc, char *argv[])
 	//Add Labels to vertices
 	network->AddLabels();
 	
+	
 	if (stdMst == 2) {
 		network->cutoff=cutoff;
 		//Compute pyramidal region and average edge lengths
@@ -1609,9 +1614,10 @@ int main(int argc, char *argv[])
 			network->Averages();
 		else if ((strcmp(network->compMethod, "med")) == 0) 
 			network->Medians();
+		else if ((strcmp(network->compMethod, "distance2N")) == 0) 
 		//Compute edge lengths for from one cell to only 1Neighbor
 		//network->ListDistances1N();
-		network->ListDistances2N();
+			network->ListDistances2N();
 		//Compute degrees of eacg node
 		network->ListDegrees();
 
