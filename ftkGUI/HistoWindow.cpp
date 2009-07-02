@@ -48,7 +48,7 @@ HistoWindow::HistoWindow(QItemSelectionModel *mod, QWidget *parent)
 #if(VTK_NIGHTLY)
 		setCentralWidget( chartView->GetWidget() );
 #else
-		QLabel *label = new QLabel(tr("SOMEDAY, AS VTK GETS BETTER, CHART WILL APPEAR HERE, BUT FOR NOW IT IS IN ITS OWN WINDOW!!"));
+		QLabel *label = new QLabel(tr("Use this Window to Select Options for the Histogram"));
 		label->setWordWrap(true);
 		label->setAlignment(Qt::AlignCenter);
 		setCentralWidget( label );
