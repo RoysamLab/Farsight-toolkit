@@ -2,9 +2,9 @@
 
 import os.path
 import re
-import pickle
 import subprocess
 import sys
+import time
 
 parameterValues = {}
 
@@ -18,7 +18,7 @@ sys.path.append("Common")
 from ParseParameters import ParseXMLParameterFile, SpecifyParameterValues
 
 SpecifyParameterValues("MDL")
-f = file("XML/MDLParameterValues.xml")
+f = file("MDLParameterValues.xml")
 
 parameterValues = ParseXMLParameterFile("MDL", False)
 
@@ -38,32 +38,78 @@ anisotropicDiffT = parameterValues["Anisotropic Diff t"]
 #change to the binary directory before we start calling executables
 os.chdir("${CMAKE_BINARY_DIR}")
 
+cmd = "./volumeProcess${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s %s" % \
+  (fullPathToInput, sizeX, sizeY, sizeZ, dataDir+"/volume_Processed.raw",\
+   intensityThreshold)
+print "Step #1, executing the following command:\n%s" % cmd
+timeBefore = time.time()
 subprocess.call(["./volumeProcess${CMAKE_EXECUTABLE_SUFFIX}",\
                   fullPathToInput, sizeX, sizeY, sizeZ,\
                   dataDir+"/volume_Processed.raw", intensityThreshold])
+timeElapsed = time.time() - timeBefore
+print "Step #1 completed in %d seconds\n\n" % timeElapsed
 
+cmd = "./ConnCompntwFldfill${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s %s" % \
+  (dataDir+"/volume_Processed.raw", sizeX, sizeY, sizeZ,\
+   dataDir+"/components_Connected.raw", connectedComponentsSize)
+print "Step #2, executing the following command:\n%s" % cmd
+timeBefore = time.time()
 subprocess.call(["./ConnCompntwFldfill${CMAKE_EXECUTABLE_SUFFIX}",\
                   dataDir+"/volume_Processed.raw", sizeX, sizeY, sizeZ,\
                   dataDir+"/components_Connected.raw",\
                   connectedComponentsSize])
+timeElapsed = time.time() - timeBefore
+print "Step #2 completed in %d seconds\n\n" % timeElapsed
 
+cmd = "./AnisoDiffuse${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s %s %s" %\
+  (dataDir+"/components_Connected.raw", sizeX, sizeY, sizeZ,\
+   dataDir+"/Aniso_Diffused.raw", anisotropicDiffK, anisotropicDiffT)
+print "Step #3, executing the following command:\n%s" % cmd
+timeBefore = time.time()
 subprocess.call(["./AnisoDiffuse${CMAKE_EXECUTABLE_SUFFIX}",\
                   dataDir+"/components_Connected.raw", sizeX, sizeY, sizeZ,\
                   dataDir+"/Aniso_Diffused.raw", anisotropicDiffK,\
                   anisotropicDiffT])
+timeElapsed = time.time() - timeBefore
+print "Step #3 completed in %d seconds\n\n" % timeElapsed
 
+cmd = "./GradientVecField${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s" % \
+  (dataDir+"/Aniso_Diffused.raw", sizeX, sizeY, sizeZ, dataDir+"/out.vec")
+print "Step #4, executing the following command:\n%s" % cmd
+timeBefore = time.time()
 subprocess.call(["./GradientVecField${CMAKE_EXECUTABLE_SUFFIX}",\
                   dataDir+"/Aniso_Diffused.raw", sizeX, sizeY, sizeZ,\
                   dataDir+"/out.vec"])
+timeElapsed = time.time() - timeBefore
+print "Step #4 completed in %d seconds\n\n" % timeElapsed
 
+cmd = "./skel_Extrvalley3D${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s" % \
+  (dataDir+"/out.vec", sizeX, sizeY, sizeZ, dataDir+"/out.seed")
+print "Step #5, executing the following command:\n%s" % cmd
+timeBefore = time.time()
 subprocess.call(["./skel_Extrvalley3D${CMAKE_EXECUTABLE_SUFFIX}",\
                   dataDir+"/out.vec", sizeX, sizeY, sizeZ, dataDir+"/out.seed"])
+timeElapsed = time.time() - timeBefore
+print "Step #5 completed in %d seconds\n\n" % timeElapsed
 
+cmd = "./skel_streamline${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s %s" % \
+  (dataDir+"/out.vec", sizeX, sizeY, sizeZ, dataDir+"/out.seed",\
+   dataDir+"/out.skel")
+print "Step #6, executing the following command:\n%s" % cmd
+timeBefore = time.time()
 subprocess.call(["./skel_streamline${CMAKE_EXECUTABLE_SUFFIX}",\
                   dataDir+"/out.vec", sizeX, sizeY, sizeZ,\
                   dataDir+"/out.seed", dataDir+"/out.skel"])
+timeElapsed = time.time() - timeBefore
+print "Step #6 completed in %d seconds\n\n" % timeElapsed
 
+cmd = "./MinSpanTree${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s %s %s %s" % \
+  (dataDir+"/", "out.skel", "components_Connected.raw", sizeX, sizeY, sizeZ, \
+   dataDir+"/out.vtk", dataDir+"/Aniso_Diffused.raw")
+print "Step #7, executing the following command:\n%s" % cmd
+timeBefore = time.time()
 subprocess.call(["./MinSpanTree${CMAKE_EXECUTABLE_SUFFIX}",\
                   dataDir+"/", "out.skel", "components_Connected.raw", sizeX,\
                   sizeY, sizeZ, dataDir+"/out.vtk", dataDir+"/Aniso_Diffused.raw"])
-
+timeElapsed = time.time() - timeBefore
+print "Step #7 completed in %d seconds\n\n" % timeElapsed

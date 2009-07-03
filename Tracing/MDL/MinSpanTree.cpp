@@ -23,10 +23,8 @@
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/graph_traits.hpp>
 
-
 #define OUT_CLASSIFIER_TRAINING 0  //1: output to file all leaf branches for training
 #define DRAW_MDL_CURVE  0           // Output Lm(M) and L(M) values for MDL curve
-
 
 //#define DISP_BACKBONE_ONLY  0     // Output only backbone
 #define DISP_ALL_BB2Branch 0          //Output all two levels of branches on backbone
