@@ -1,4 +1,5 @@
 PROJECT(MDL)
+cmake_minimum_required(VERSION 2.6)
 FIND_PACKAGE( Boost REQUIRED )
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 ADD_EXECUTABLE(AnisoDiffuse AnisoDiffuse.cpp)
