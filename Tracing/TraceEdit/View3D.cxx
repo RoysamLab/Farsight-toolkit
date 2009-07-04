@@ -96,6 +96,10 @@ void View3D::Initialize()
   this->resize(640, 480);
   this->setWindowTitle(tr("Trace editor"));
   this->QVTK->GetRenderWindow()->Render();
+  this->model = NULL;
+  this->selModel = NULL;
+  this->plot = NULL;
+  this->table = new QTableView();
 }
 
 
@@ -421,6 +425,57 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
       break;
     }
 }
+void View3D::ShowMergeStats()
+{
+	int numRows = this->compList.size();
+	std::vector<QString> headers;
+	headers.push_back("Trace 1");
+	headers.push_back("Trace 2");
+	headers.push_back("Gap");
+	headers.push_back("Angle");
+	headers.push_back("D");
+	std::vector< std::vector< double > > data;
+	for ( int i = 0; i < numRows; i++)
+	{
+		std::vector<double> row;
+		row.push_back(this->compList[i].Trace1->GetId());
+		row.push_back(this->compList[i].Trace2->GetId());
+		row.push_back(this->compList[i].dist);
+		row.push_back(this->compList[i].angle);
+		row.push_back(this->compList[i].maxdist);
+		data.push_back(row);
+	}
+	this->model = new QStandardItemModel;
+	this->selModel = new QItemSelectionModel(model);
+
+	this->model->clear();
+	this->model->setColumnCount(headers.size());
+
+	for(int i=0; i<(int)headers.size(); ++i)
+	{
+		this->model->setHeaderData(i, Qt::Horizontal, headers.at(i));
+	}
+
+	for (int row=0; row<(int)numRows; ++row)
+	{
+		this->model->insertRow(row);
+		for(int col=0; col<(int)headers.size(); ++col)
+		{
+			this->model->setData(model->index(row, col), data.at(row).at(col));
+		}
+	}
+
+	this->table->setModel(this->model);
+	this->table->setSelectionModel(this->selModel); 
+	this->table->update();
+	//if(plot)
+	//{
+	//	plot->close();
+	//	delete plot;
+	//}
+	//plot = new PlotWindow(selModel);
+	//plot->show();
+}
 void View3D::SLine()
 {
 	int numLines, i;
@@ -574,7 +629,8 @@ void View3D::MergeTraces()
 			this->MinEndPoints(this->tobj->GetTraceLines());
 			//this->Rerender();
 		}
-	}
+	  this->ShowMergeStats();
+	}//end else size
 }
 
 void View3D::SplitTraces()

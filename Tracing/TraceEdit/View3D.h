@@ -76,6 +76,8 @@ limitations under the License.
 #include <QtGui>
 #include <QVTKWidget.h>
 #include <string>
+#include "ftkGUI/PlotWindow.h"
+#include "ftkGUI/HistoWindow.h"
 
 struct compTrace{
 TraceLine *Trace1;
@@ -116,7 +118,7 @@ View3D(int argc, char **argv);
 	void DeleteTrace(TraceLine *tline);
 	void MinEndPoints(std::vector<TraceLine*> traceList);
 	void SelectedComp();
-
+	void ShowMergeStats();
 
 	bool setTol();
 	//todo: make these private with accessors
@@ -172,6 +174,12 @@ private:
 	QPushButton *SettingsButton;
 	QPushButton *AutomateButton;
 	QPushButton *SomaButton;
+
+	QStandardItemModel *model;
+	QItemSelectionModel *selModel;
+	QTableView *table;
+	PlotWindow *plot;
+	HistoWindow *histo;
 
 	//Qt widgets for the settings window
 	QWidget *SettingsWidget;
