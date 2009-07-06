@@ -26,7 +26,7 @@ QT4_WRAP_CPP( GUI_MOC_SRCS View3D.h )
 
 ADD_LIBRARY(Trace Trace.h Trace.cpp)
 ADD_EXECUTABLE( trace_editor  vtkTraceViewerDriver.cxx ${Sources} ${GUI_MOC_SRCS} )
-TARGET_LINK_LIBRARIES( trace_editor ${Libraries} Trace TinyXML)
+TARGET_LINK_LIBRARIES( trace_editor ${Libraries} Trace TinyXML ftkGUI)
 #ADD_EXECUTABLE( seed_editor vtkSeedViewerDriver.cxx ${Sources} )
 #TARGET_LINK_LIBRARIES( seed_editor ${Libraries} Trace)
 

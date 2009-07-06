@@ -86,6 +86,8 @@ int endPT1, endPT2;
 double angle;
 double dist; 
 double maxdist;
+double length;
+double smoothness;
 double cost;
 };
 

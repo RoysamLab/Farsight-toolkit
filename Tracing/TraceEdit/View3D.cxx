@@ -461,6 +461,9 @@ void View3D::ShowMergeStats()
 	headers.push_back("Gap");
 	headers.push_back("Angle");
 	headers.push_back("D");
+	headers.push_back("Length");
+	headers.push_back("Smoothness");
+	headers.push_back("Cost");
 	std::vector< std::vector< double > > data;
 	for ( int i = 0; i < numRows; i++)
 	{
@@ -470,6 +473,9 @@ void View3D::ShowMergeStats()
 		row.push_back(this->compList[i].dist);
 		row.push_back(this->compList[i].angle);
 		row.push_back(this->compList[i].maxdist);
+		row.push_back(this->compList[i].length);
+		row.push_back(this->compList[i].smoothness);
+		row.push_back(this->compList[i].cost);
 		data.push_back(row);
 	}
 	this->model = new QStandardItemModel;
@@ -500,8 +506,8 @@ void View3D::ShowMergeStats()
 	//	plot->close();
 	//	delete plot;
 	//}
-	//plot = new PlotWindow(selModel);
-	//plot->show();
+	this->plot = new PlotWindow(this->selModel);
+	this->plot->show();
 }
 void View3D::SLine()
 {
@@ -573,7 +579,7 @@ void View3D::ListSelections()
 
 void View3D::ClearSelection()
 {
-	QLabel *selectionInfo = new QLabel();
+	QMessageBox *selectionInfo = new QMessageBox();
 	QString selectText;
 	if (this->IDList.size()<= 0)
     {
@@ -1019,10 +1025,14 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 		for (j=i+1; j<traceList.size(); j++)
 		  {
 			compTrace newComp;
-			newComp.Trace1= traceList[i];
-			newComp.Trace2= traceList[j];
+			newComp.Trace1 = traceList[i];
+			newComp.Trace2 = traceList[j];
 			newComp.Trace1->EndPtDist(
-        newComp.Trace2,newComp.endPT1, newComp.endPT2, newComp.dist, newComp.maxdist, newComp.angle);
+					newComp.Trace2,newComp.endPT1, newComp.endPT2, 
+					newComp.dist, newComp.maxdist, newComp.angle);
+			newComp.length = newComp.Trace1->GetSize() + newComp.Trace2->GetSize() + newComp.dist;
+			newComp.smoothness = newComp.length / newComp.maxdist;
+			newComp.cost = newComp.angle*(newComp.dist/gapMax)*newComp.smoothness;
 			if(!(newComp.dist >= newComp.Trace1->GetSize()*gapTol) 
 				&&	!(newComp.dist >= newComp.Trace2->GetSize()*gapTol) 
 				&&	!(newComp.dist >= gapMax*( 1+ gapTol)))//
