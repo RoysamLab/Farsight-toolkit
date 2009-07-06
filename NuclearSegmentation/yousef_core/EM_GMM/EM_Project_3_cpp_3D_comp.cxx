@@ -26,6 +26,7 @@ void Initialize_Parameters(std::vector<std::vector<double> > *X,int** SEEDS,doub
     int ind_min;
     double u1, u2,u3;
     double ZZ_SUM;
+	ind_min = 0;
     
     //Initialize vars and set the initial means to the seeds
     double* z_sum = (double *) malloc(num_components*sizeof(double));
