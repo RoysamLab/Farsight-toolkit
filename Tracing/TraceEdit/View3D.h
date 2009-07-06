@@ -93,8 +93,8 @@ class View3D : public QMainWindow
 {
 Q_OBJECT;
 public:
-View3D(int argc, char **argv);
-~View3D();
+	View3D(int argc, char **argv);
+	~View3D();
 	void Initialize();
 	void CreateGUIObjects();
 	void CreateLayout();
@@ -126,26 +126,29 @@ View3D(int argc, char **argv);
 	vtkSmartPointer<vtkActor> BranchActor;
 
 public slots:
-  void ListSelections();
-  void ClearSelection();
-  void DeleteTraces();
-  void MergeTraces();
-  void SplitTraces();
-  void FlipTraces();
-  void WriteToSWCFile();
-  void ShowSettingsWindow();
-  void HideSettingsWindow();
-  void ApplyNewSettings();
-  void SLine();
-  void ShowSomas();
-  void ShowSomaWindow();
-  void GetSomaPath();
-  void GetSomaFile();
-  void HideSomaWindow();
+	void ListSelections();
+	void ClearSelection();
+	void DeleteTraces();
+	void MergeTraces();
+	void SplitTraces();
+	void FlipTraces();
+	void WriteToSWCFile();
+	void ShowSettingsWindow();
+	void HideSettingsWindow();
+	void ApplyNewSettings();
+	void SLine();
+	void ToggleSomas();
+	void ShowLoadSomaWindow();
+	void GetSomaPath();
+	void GetSomaFile();
+	void HideLoadSomaWindow();
+	void ShowSomaSettingsWindow();
+	void HideSomaSettingsWindow();
+	void ApplySomaSettings();
 
 protected:
-  void closeEvent(QCloseEvent *event);
-  void Rerender();
+	void closeEvent(QCloseEvent *event);
+	void Rerender();
 
 private:
 	double gapTol;
@@ -154,16 +157,15 @@ private:
 	float lineWidth;
 	double SelectColor;
 	std::string SomaFile;
-	bool somastat;
+	double somaopacity;
 
-  //VTK render window embedded in a Qt widget
-  QVTKWidget *QVTK;
-
-	QMenu *fileMenu;
+    //VTK render window embedded in a Qt widget
+	QVTKWidget *QVTK;
 	QAction *loadAction;
 
 	//Qt widgets on the main window
-  QWidget *CentralWidget;
+    QWidget *CentralWidget;
+
 	QPushButton *ListButton;
 	QPushButton *ClearButton;
 	QPushButton *DeleteButton;
@@ -173,13 +175,21 @@ private:
 	QPushButton *WriteButton;
 	QPushButton *SettingsButton;
 	QPushButton *AutomateButton;
-	QPushButton *SomaButton;
 
 	QStandardItemModel *model;
 	QItemSelectionModel *selModel;
 	QTableView *table;
 	PlotWindow *plot;
 	HistoWindow *histo;
+
+	//QT widgets for the menu bar
+	QMenu *fileMenu;
+	QAction *exitAction;
+
+	QMenu *somaMenu;
+	QAction *loadSoma;
+	QAction *somaSettings;
+	QAction *viewSomas;
 
 	//Qt widgets for the settings window
 	QWidget *SettingsWidget;
@@ -192,25 +202,33 @@ private:
 	QPushButton *CancelSettingsButton;
 
 	//Qt Widgets for the soma file reader window
-	QWidget *SomaWidget;
+	QWidget *LoadSomaWidget;
 	QLineEdit *SomaFileField;
 	QPushButton *OpenSomaButton;
 	QPushButton *CancelSomaButton;
 	QPushButton *BrowseSomaButton;
 
+	//Qt Widgets for the soma settings window
+	QWidget *SomaSettingsWidget;
+	QLineEdit *SomaOpacityField;
+	QPushButton *ApplySomaSettingsButton;
+	QPushButton *CancelSomaSettingsButton;
+
+
 	//stuff for tol and selection
-  //general render window variables
+    //general render window variables
 	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;
 	vtkSmartPointer<vtkActor> LineActor;
 	vtkSmartPointer<vtkPolyDataMapper> LineMapper;
 
-  //interactor variables and point picking
+    //interactor variables and point picking
 	vtkSmartPointer<vtkCallbackCommand> isPicked;
 	vtkSmartPointer<vtkCallbackCommand> keyPress;
 	
 	vtkSmartPointer<vtkCellPicker> CellPicker;
 	std::vector<int> IDList;
-  //merge info
+
+    //merge info
 	std::vector<compTrace> compList;
 	std::vector<compTrace> grayList;
 	QString myText;	QString dtext;	QString grayText;
@@ -218,12 +236,14 @@ private:
 	vtkSmartPointer<vtkSphereSource> Sphere;
 	vtkSmartPointer<vtkPolyDataMapper> SphereMapper;
 	vtkSmartPointer<vtkActor> SphereActor;
-  //  img reading	and contour->3d
+
+    //  img reading	and contour->3d
 	vtkSmartPointer<vtkPolyDataMapper> VolumeMapper;
 	vtkSmartPointer<vtkActor> VolumeActor;
 	TraceObject* tobj;
 	vtkSmartPointer<vtkVolume> Volume;
 	vtkSmartPointer<vtkContourFilter> ContourFilter;
+
   //raycast
 	vtkSmartPointer<vtkPolyData> poly_line_data;
 	vtkSmartPointer<vtkPolyData> poly;
