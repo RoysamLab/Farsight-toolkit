@@ -1,0 +1,27 @@
+function OverLayTraceFromFiles(imagefile, nodefile, linkfile)
+
+Seg = ReadSegment(nodefile);
+numTrace = 0;
+for i=1:length(Seg)
+    renderPointOnMIPs(figNo, Seg(i).mu, d1,d2,d3);
+    numTrace = max(numTrace, Seg(i).TraceID);
+end
+
+col = hsv(numTrace);
+col = col(randperm(numTrace),:);
+
+fid = fopen(linkfile,'r');
+
+while(~feof(fid))
+    w = fgetl(fid);
+    c = str2num(w);
+    a = Seg(c(1));
+    tID = Seg(c(1)).TraceID;
+    for i=2:length(c)
+        b = Seg(c(i));
+        line([a.mu(1) b.mu(1)], [a.mu(2) b.mu(2)], 'color', col)
+        line([a.mu(3) b.mu(3)]+d2, [a.mu(2) b.mu(2)], 'color', col)
+        line([a.mu(1) b.mu(1)], [a.mu(3) b.mu(3)]+d1, 'color', col)
+    end
+end
+
