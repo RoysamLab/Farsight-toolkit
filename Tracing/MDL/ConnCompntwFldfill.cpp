@@ -231,6 +231,10 @@ void spread(Position pos, int startx, int endx, int direction)
 			newy = pos.y;
 			newz = pos.z -1;
 			break;
+    default: // No spread if direction is not 1, 2, 3, or 4.
+      newy = pos.y;
+      newz = pos.z;
+      break;
 	}
 
 	if (newy < sizeY && newy >= 0 && newz < sizeZ && newz >=0) // within boundary
