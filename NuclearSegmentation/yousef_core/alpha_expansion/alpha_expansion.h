@@ -22,7 +22,7 @@ limitations under the License.
 #include "Multi_Color_Graph_Learning_2D.h"
 
 void start_alpha_expansion(float* im, int* seg_im, float* Dterms, int R, int C, int Z, int K);
-int alpha_expansion_2d( float *im, float *sublogImg, int *subclustImg, int R, int C);
+void alpha_expansion_2d( float *im, float *sublogImg, int *subclustImg, int R, int C);
 
 #endif
 

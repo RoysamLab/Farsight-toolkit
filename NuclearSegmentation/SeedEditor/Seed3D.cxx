@@ -10,11 +10,11 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License. 
+limitations under the License.
 =========================================================================*/
 
 /*
-  Farsight ToolKit 3D Viewer: 
+  Farsight ToolKit 3D Viewer:
   v1: implements render window functionality
     render window creation in "Seed3D::RenderWin"
     line objects mapped and actors created in "Seed3D::LineAct"
@@ -31,7 +31,7 @@ limitations under the License.
 
 Seed3D::Seed3D(int argc, char **argv)
 {
- 
+
 this->Initialize();
 this->rayCast(argv[1],argv[2]);
 this->AddVolumeSliders();
@@ -115,7 +115,7 @@ void Seed3D::rayCast(char *raySource, char *pointSource)
   i2sp->SetInput(connector->GetOutput());
 
 
-  
+
   ImageType::SizeType size = i2spReader->GetOutput()->GetLargestPossibleRegion().GetSize();
   vtkSmartPointer<vtkImageData> vtkim = vtkSmartPointer<vtkImageData>::New();
   vtkim->SetScalarTypeToUnsignedChar();
@@ -154,9 +154,9 @@ void Seed3D::rayCast(char *raySource, char *pointSource)
     volume->SetMapper(volumeMapper);
     volume->SetProperty(volumeProperty);
     volume->SetPickable(0);
-    
-  
- // Read the co-ordinates from a file: 
+
+
+ // Read the co-ordinates from a file:
 
 point p;
 std::vector<point> spPoint;
@@ -180,7 +180,7 @@ spPoint.push_back(p);
 inputstream >> p.x >> p.y>>p.z;
 }
 
- 
+
 // Create a sphere only at these particular coordinates only.
 
   // Create a float array which represents the points.
@@ -194,10 +194,10 @@ inputstream >> p.x >> p.y>>p.z;
   // Assign each tuple. There are 5 specialized versions of SetTuple:
   // SetTuple1 SetTuple2 SetTuple3 SetTuple4 SetTuple9
   // These take 1, 2, 3, 4 and 9 components respectively.
-  
+
   for (int j=0; j<spPoint.size(); j++)
     {
-    float pts[3] = {spPoint[j].x, spPoint[j].y , spPoint[j].z };	
+    float pts[3] = {spPoint[j].x, spPoint[j].y , spPoint[j].z };
     pcoords->SetTuple(j, pts);
     }
 
@@ -209,6 +209,7 @@ inputstream >> p.x >> p.y>>p.z;
   // Assign points and cells
   polydata->SetPoints(points);
 
+
 cout << "CS2?" << endl;
 
 // create the spikes by glyphing the sphere with a cone.  Create the mapper
@@ -219,7 +220,7 @@ cout << "CS2?" << endl;
     glyph->SetSource(sphere->GetOutput());
     glyph->SetVectorModeToUseNormal();
     glyph->SetScaleModeToScaleByVector();
-    glyph->SetScaleFactor(4);
+    glyph->SetScaleFactor(10);
     vtkPolyDataMapper *sphereMapper = vtkPolyDataMapper::New();
     sphereMapper->SetInput(glyph->GetOutput());
     vtkLODActor *sphereActor = vtkLODActor::New();
@@ -228,7 +229,7 @@ cout << "CS2?" << endl;
     Renderer->AddActor(sphereActor);
 
     vtkCamera *cam1 = Renderer->GetActiveCamera();
-    Renderer->ResetCamera();	
+    Renderer->ResetCamera();
 
 
     this->Volume = volume;
@@ -263,7 +264,7 @@ void Seed3D::AddVolumeSliders()
   callback_brightness->volume = this->Volume;
   sliderWidget->AddObserver(vtkCommand::InteractionEvent,callback_brightness);
   sliderWidget->EnabledOn();
-  
+
 
 // slider 2
 

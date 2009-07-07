@@ -542,7 +542,7 @@ void yousef_nucleus_seg::runAlphaExpansion2D(){
 		}
 
 		
-		int ok = alpha_expansion_2d( subDataImg, sublogImg, subclustImg, x_len, y_len );
+		alpha_expansion_2d( subDataImg, sublogImg, subclustImg, x_len, y_len );
 
 		//relable and copy the output of the alpha expansion which is stored in the subclustImg to the final segmented image
 		ind = 0;		

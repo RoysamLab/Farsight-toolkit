@@ -60,7 +60,7 @@ void start_alpha_expansion(float* im, int* seg_im, float* Dterms, int R, int C, 
 //{
 //}
 
-int alpha_expansion_2d( float *im, float *sublogImg, int *subclustImg, int R, int C )
+void alpha_expansion_2d( float *im, float *sublogImg, int *subclustImg, int R, int C )
 {
 	float *hCue, *vCue;
 	int K;	
@@ -125,5 +125,4 @@ void start_alpha_expansion(float* im, int* seg_im, float* Dterms, int R, int C, 
 	
 	delete[] hCue;
 	delete[] vCue;
-	return 1;
 }
