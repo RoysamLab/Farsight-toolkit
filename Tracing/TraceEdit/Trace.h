@@ -90,7 +90,7 @@ public:
 	};
 	void Getstats();
 	void EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist, double &maxdist, double &angle);
-		
+	std::vector<double> stats();	
 	void Print(std::ostream &c)
 	{
 		c<<"\tTraceLine: "<<std::endl;

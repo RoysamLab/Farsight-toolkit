@@ -99,7 +99,9 @@ void View3D::Initialize()
   this->model = NULL;
   this->selModel = NULL;
   this->plot = NULL;
+  this->histo = NULL;
   this->table = new QTableView();
+  this->TreeTable =new QTableView();
 }
 
 
@@ -432,6 +434,9 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
 		  view->Rerender();*/
 	    break;
 
+	  case 'q':
+		  view->traceStatistics();
+		  break;
     case '-':
       if(view->IDList.size()>=1)
         {
@@ -501,11 +506,11 @@ void View3D::ShowMergeStats()
 	this->table->setModel(this->model);
 	this->table->setSelectionModel(this->selModel); 
 	this->table->update();
-	//if(plot)
-	//{
-	//	plot->close();
-	//	delete plot;
-	//}
+	if(this->plot)
+	{
+		this->plot->close();
+		delete this->plot;
+	}
 	this->plot = new PlotWindow(this->selModel);
 	this->plot->show();
 }
@@ -541,6 +546,64 @@ void View3D::SLine()
 	 break;
 	}
 	this->Rerender();
+}
+void View3D::traceStatistics()
+{
+	std::vector<TraceLine*> tree = this->tobj->GetTraceLines();
+	int numRows = tree.size();
+	std::vector<QString> TreeHeaders;
+	TreeHeaders.push_back("ID");
+	TreeHeaders.push_back("Type");
+	TreeHeaders.push_back("Size");
+	//TreeHeaders.push_back("Parent");
+	TreeHeaders.push_back("X_1");
+	TreeHeaders.push_back("Y_1");
+	TreeHeaders.push_back("Z_1");
+	TreeHeaders.push_back("X_2");
+	TreeHeaders.push_back("Y_2");
+	TreeHeaders.push_back("Z_2");
+	std::vector< std::vector< double > > TreeData;
+	for ( int i = 0; i < numRows; i++)
+	{
+		std::vector<double> newrow = tree[i]->stats(); 
+		TreeData.push_back(newrow);
+	}
+	this->treeModel = new QStandardItemModel;
+	this->TreeSelModel = new QItemSelectionModel(treeModel);
+
+	this->treeModel->clear();
+	this->treeModel->setColumnCount(TreeHeaders.size());
+	for(int i=0; i<(int)TreeHeaders.size(); ++i)
+	{
+		this->treeModel->setHeaderData(i, Qt::Horizontal, TreeHeaders.at(i));
+	}
+
+	for (int row=0; row<(int)numRows; ++row)
+	{
+		this->treeModel->insertRow(row);
+		for(int col=0; col<(int)TreeHeaders.size(); ++col)
+		{
+			this->treeModel->setData(treeModel->index(row, col), TreeData.at(row).at(col));
+		}
+	}
+
+	this->TreeTable->setModel(this->treeModel);
+	this->TreeTable->setSelectionModel(this->TreeSelModel); 
+	this->TreeTable->update();
+	if(this->plot)
+	{
+		this->plot->close();
+		delete this->plot;
+	}
+	this->plot = new PlotWindow(this->TreeSelModel);
+	this->plot->show();
+	if(this->histo)
+	{
+		this->histo->close();
+		delete this->histo;
+	}
+	this->histo = new HistoWindow(this->TreeSelModel);
+	this->histo->show();
 }
 void View3D::Rerender()
 {
@@ -618,6 +681,11 @@ void View3D::MergeTraces()
 {
 	if (this->compList.size() > 1)
 	{
+		if(plot)
+		{
+			plot->close();
+			delete plot;
+		}
 		this->SelectedComp();
 		//this->Rerender();
 		this->compList.clear();

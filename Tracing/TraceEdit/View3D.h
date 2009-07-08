@@ -121,6 +121,7 @@ public:
 	void MinEndPoints(std::vector<TraceLine*> traceList);
 	void SelectedComp();
 	void ShowMergeStats();
+	void traceStatistics();
 
 	bool setTol();
 	//todo: make these private with accessors
@@ -177,12 +178,17 @@ private:
 	QPushButton *WriteButton;
 	QPushButton *SettingsButton;
 	QPushButton *AutomateButton;
-
+//merge statistics
 	QStandardItemModel *model;
 	QItemSelectionModel *selModel;
 	QTableView *table;
+//plots	
 	PlotWindow *plot;
 	HistoWindow *histo;
+//tobj statistics	
+	QStandardItemModel *treeModel;
+	QItemSelectionModel *TreeSelModel;
+	QTableView *TreeTable;
 
 	//QT widgets for the menu bar
 	QMenu *fileMenu;

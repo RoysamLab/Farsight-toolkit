@@ -280,7 +280,8 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 	return true;
 }
 
-void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkFloatArray> point_scalars, vtkSmartPointer<vtkPoints> line_points,vtkSmartPointer<vtkCellArray> line_cells)
+void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkFloatArray> point_scalars, 
+										  vtkSmartPointer<vtkPoints> line_points,vtkSmartPointer<vtkCellArray> line_cells)
 {
 	//tline->Print(std::cout);
 	//scanf("%*c");
@@ -966,7 +967,8 @@ void CollectBranchPointsRecursive(vtkSmartPointer<vtkPoints> p, vtkSmartPointer<
 	
 	return;
 }
-void CollectSegmentMidPointsRecursive(vtkSmartPointer<vtkPoints>p, vtkSmartPointer<vtkCellArray> cells, vtkSmartPointer<vtkFloatArray> da,TraceLine* tline)
+void CollectSegmentMidPointsRecursive(vtkSmartPointer<vtkPoints>p, vtkSmartPointer<vtkCellArray> cells, 
+									  vtkSmartPointer<vtkFloatArray> da,TraceLine* tline)
 {
 		double loc[3];
 		float dir[3];
@@ -1167,4 +1169,19 @@ void TraceObject::FindMinLines(int smallSize)
 		}
 		++iter;
 	}
+}
+std::vector<double> TraceLine::stats()
+{
+	std::vector<double> thisStats;
+	thisStats.push_back(this->m_id);
+	thisStats.push_back(this->m_type);
+	thisStats.push_back(this->GetSize());
+	//thisStats.push_back(this->m_parent->GetId());
+	thisStats.push_back(m_trace_bits.front().x);
+	thisStats.push_back(m_trace_bits.front().y);
+	thisStats.push_back(m_trace_bits.front().z);
+	thisStats.push_back(m_trace_bits.back().x);
+	thisStats.push_back(m_trace_bits.back().y);
+	thisStats.push_back(m_trace_bits.back().z);
+	return thisStats;
 }
