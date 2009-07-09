@@ -730,8 +730,7 @@ void View3D::MergeTraces()
 		//std::cout<<  "Nothing to merge \n";
 			this->MinEndPoints(this->tobj->GetTraceLines());
 			//this->Rerender();
-		}
-	  this->ShowMergeStats();
+		}	 
 	}//end else size
 }
 
@@ -1199,7 +1198,7 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 			+"\nEdit selection or press merge again");	
 		MergeInfo->show();
 		//MergeInfo->exec();
-
+		this->ShowMergeStats();
 	  }//end if this->compList size > 1
 	else 
 	{
