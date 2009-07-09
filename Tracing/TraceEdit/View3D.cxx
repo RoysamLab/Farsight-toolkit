@@ -506,11 +506,11 @@ void View3D::ShowMergeStats()
 	this->table->setModel(this->model);
 	this->table->setSelectionModel(this->selModel); 
 	this->table->update();
-	if(this->plot)
-	{
-		this->plot->close();
-		delete this->plot;
-	}
+	//if(this->plot)
+	//{
+	//	this->plot->close();
+	//	delete this->plot;
+	//}
 	this->plot = new PlotWindow(this->selModel);
 	this->plot->show();
 }
@@ -590,11 +590,11 @@ void View3D::traceStatistics()
 	this->TreeTable->setModel(this->treeModel);
 	this->TreeTable->setSelectionModel(this->TreeSelModel); 
 	this->TreeTable->update();
-	if(this->plot)
-	{
-		this->plot->close();
-		delete this->plot;
-	}
+	//if(this->plot)
+	//{
+	//	this->plot->close();
+	//	//delete this->plot;
+	//}
 	this->plot = new PlotWindow(this->TreeSelModel);
 	this->plot->show();
 	if(this->histo)
@@ -681,11 +681,11 @@ void View3D::MergeTraces()
 {
 	if (this->compList.size() > 1)
 	{
-		if(plot)
-		{
-			plot->close();
-			delete plot;
-		}
+		//if(plot)
+		//{
+		//	plot->close();
+		//	//delete plot;
+		//}
 		this->SelectedComp();
 		//this->Rerender();
 		this->compList.clear();
@@ -1144,7 +1144,7 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 			if (exist == 1)
 			{
 				++conflict;
-				if (this->compList[i].dist<this->compList[j].dist)
+				if (this->compList[i].cost<this->compList[j].cost)
 				{
 					this->compList.erase(this->compList.begin()+j);
 				}
