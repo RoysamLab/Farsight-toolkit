@@ -105,6 +105,7 @@ public:
 	void UpdateLineActor();
 	void UpdateBranchActor();
 	void CreateSphereActor();
+	bool CheckFileExists(const char *filename);
 	
 	void AddPointsAsPoints (std::vector<TraceBit> vec);
 	void AddVolumeSliders();
@@ -215,6 +216,8 @@ private:
 	QPushButton *OpenSomaButton;
 	QPushButton *CancelSomaButton;
 	QPushButton *BrowseSomaButton;
+	QRegExp regex;
+
 
 	//Qt Widgets for the soma settings window
 	QWidget *SomaSettingsWidget;

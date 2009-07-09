@@ -160,7 +160,8 @@ void View3D::CreateGUIObjects()
   //Load soma window setup
   this->LoadSomaWidget = new QWidget();
   this->LoadSomaWidget->setWindowTitle(tr("Soma File Load"));
-
+  this->regex.setPattern(".+\\.([a-z]+)"); //Set up regular expression for soma file field
+  this->regex.setCaseSensitivity(Qt::CaseInsensitive);
   this->SomaFileField = new QLineEdit(this->LoadSomaWidget);
 
   this->OpenSomaButton = new QPushButton("&Open", this->LoadSomaWidget);
@@ -202,7 +203,7 @@ void View3D::CreateGUIObjects()
 
   //Setup connections for the Load Soma Data window
   connect(this->OpenSomaButton, SIGNAL(clicked()), this, SLOT(GetSomaFile()));
-  connect(this->CancelSomaButton, SIGNAL(clicked()), this, SLOT(HideSomaWindow()));
+  connect(this->CancelSomaButton, SIGNAL(clicked()), this, SLOT(HideLoadSomaWindow()));
   connect(this->BrowseSomaButton, SIGNAL(clicked()), this, SLOT(GetSomaPath()));
 
   //Set up connections for the Soma Settings window
@@ -259,7 +260,7 @@ void View3D::CreateLayout()
 
   //Layout for the Soma Settings Window
   QGridLayout *SomaSettingsLayout = new QGridLayout(this->SomaSettingsWidget);
-  QLabel *SomaOpacityLabel = new QLabel(tr("Soma Opacity:"));
+  QLabel *SomaOpacityLabel = new QLabel(tr("Soma Opacity (0 to 1):"));
   SomaSettingsLayout->addWidget(SomaOpacityLabel, 0, 0);
   SomaSettingsLayout->addWidget(this->SomaOpacityField, 0, 1);
   SomaSettingsLayout->addWidget(this->ApplySomaSettingsButton, 1, 0);
@@ -777,6 +778,7 @@ void View3D::WriteToSWCFile()
 void View3D::ShowLoadSomaWindow()
 {
 	this->LoadSomaWidget->show();
+	//this->OpenSomaButton->setDisabled(true);
 }
 
 void View3D::GetSomaPath()
@@ -785,41 +787,54 @@ void View3D::GetSomaPath()
 	QString path;
 	path = QFileDialog::getOpenFileName(this->LoadSomaWidget, "choose a file to load", QString::null, QString::null);
 	this->SomaFileField->setText(path);
+	//this->OpenSomaButton->setEnabled(true);
 }
 void View3D::GetSomaFile()
 {
-	//Takes input from file field text box and casts it as an std string
-	std::string fileName;
-	std::string fileEx;
-	fileName = this->SomaFileField->text().toStdString();
-
-	//Searches for . to capture file extension
-	for(unsigned int i = fileName.size() - 1; i >= 0; i--)
+	int pos = 0;
+	//std::cout << this->tiffValidator->validate(this->SomaFileField->text(), pos) << std::endl;
+	//if(this->tiffValidator->validate(this->SomaFileField->text(), pos) == 2)
+	//Checkes that file has the the correct format
+	if(regex.exactMatch(this->SomaFileField->text()))
 	{
-		if(fileName[i] == '.')
+		//Takes input from file field text box and casts it as an std string
+		std::string fileName;
+		std::string fileEx;
+		fileName = this->SomaFileField->text().toStdString();
+
+		//Takes captured file extension from the regex and stores it as an std string
+		fileEx = this->regex.cap(1).toStdString();
+		for(unsigned int i = 0; i < fileEx.size(); i++)
 		{
-			fileEx = fileName.substr(i+1, (fileName.size() - 1 - i));
-			break;
+			fileEx[i] = tolower(fileEx[i]);
+		}
+			
+		//Checks for proper file extension and accepts
+		if(fileEx == "tiff" || fileEx == "tif")
+		{
+			//Checks that file exists
+			if(this->CheckFileExists(fileName.c_str()) == 1)
+			{
+				this->SomaFile = fileName;
+				this->viewSomas->setEnabled(true);
+				this->LoadSomaWidget->hide();
+				return;
+			}
+			else
+			{
+				std::cerr << "TIFF file doesn't exist." << std::endl;
+				return;
+			}
+		}
+		else
+		{
+			std::cerr << "Invalid File Type: Please load correct soma TIFF image." << std::endl;
+			return;
 		}
 	}
-
-	//Changes file extension characters to lowercase
-	for(unsigned int j = 0; j < fileEx.size(); j++)
-	{
-		fileEx[j] = tolower(fileEx[j]);
-	}
-
-	//Checks for proper file extension and accepts
-	if(fileEx == "tiff" || fileEx == "tif")
-	{
-		this->SomaFile = fileName;
-		this->viewSomas->setEnabled(true);
-		this->LoadSomaWidget->hide();
-	}
-	//Otherwise outputs an error to the terminal
 	else
 	{
-		std::cerr << "Invalid File Type: Please load correct soma image." << std::endl;
+		std::cerr << "Invalid File Type: Please load correct soma TIFF image." << std::endl;
 	}
 }
 
@@ -859,10 +874,19 @@ void View3D::ToggleSomas()
 
 void View3D::ApplySomaSettings()
 {
-	this->somaopacity = this->SomaOpacityField->text().toDouble();
-    this->VolumeActor->GetProperty()->SetOpacity(this->somaopacity);
-	this->Rerender();
-	this->SomaSettingsWidget->hide();
+	if(this->SomaFile != "")
+	{
+		this->somaopacity = this->SomaOpacityField->text().toDouble();
+		this->VolumeActor->GetProperty()->SetOpacity(this->somaopacity);
+		this->Rerender();
+		this->SomaSettingsWidget->hide();
+		return;
+	}
+	else
+	{
+		this->somaopacity = this->SomaOpacityField->text().toDouble();
+		this->SomaSettingsWidget->hide();
+	}
 }
 void View3D::ShowSettingsWindow()
 {
@@ -1569,4 +1593,18 @@ void View3D::rayCast(char *raySource)
 void View3D::closeEvent(QCloseEvent *event)
 {
   event->accept();
+}
+
+bool View3D::CheckFileExists(const char *filename)
+{
+	FILE *fp = fopen(filename, "r");
+	if(fp == NULL)
+	{
+		return false;
+	}
+	else
+	{
+		fclose(fp);
+		return true;
+	}
 }
