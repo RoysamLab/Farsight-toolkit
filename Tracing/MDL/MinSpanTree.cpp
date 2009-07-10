@@ -91,9 +91,19 @@ int main(int argc, char *argv[])
 
 
   ifstream fin;
-  FILE *volfile, *vesselfile, *somafile, *distOutfile;
+  FILE *volfile, *vesselfile;
+
+#if OUTPUT_DISTTRANS 
+  // Debugging file pointers.
+  FILE *somafile, *distOutfile;
+#endif
+
   FILE *fout, *fout_txt;
-  DATATYPEIN *volin, *volvessel, *somaDist;
+  DATATYPEIN *volin, *volvessel;
+#if OUTPUT_DISTTRANS
+  // Debugging data pointer.
+  DATATYPEIN *somaDist;
+#endif
   char *filedir;
   char *infilename;
   int sizeX,sizeY,sizeZ;         // Sizes in x,y,z dimensions
@@ -124,7 +134,11 @@ int main(int argc, char *argv[])
   int *degree_nodes_initialMST;
   int times_erosion;
   int times_dilation;
-  float densityFactor, distTransFactor;
+  float densityFactor;
+#if OUTPUT_DISTTRANS
+  // Debugging variable.
+  float distTransFactor;
+#endif
   double meanDensityBranch[MAXNumBranch];   // Suppose at most MAXNumBranch branches at the 2nd level branch from BB
   double meanVesselBranch[MAXNumBranch];
   float length_leaf[MAXNumBranch];
@@ -610,15 +624,13 @@ int main(int argc, char *argv[])
 			// Evaluate with MDL if the branch is chosen
 			//if (i == prunetimes-1) num_leaves++;
 			length_leaf[0] = 0;
+      indVert_last = vertsCurBranch2[0][0];
 			for (j = 0; j <= vertsCurBr_Index2[0]; j++) {
 				indVert = vertsCurBranch2[0][j];
 				#if OUT_CLASSIFIER_TRAINING
 					fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
 				#endif
 
-				if (j==0) {
-					indVert_last = indVert;
-				}
 				length_edge = (vertexPos[indVert].x-vertexPos[indVert_last].x)*(vertexPos[indVert].x-vertexPos[indVert_last].x);
 				length_edge+= (vertexPos[indVert].y-vertexPos[indVert_last].y)*(vertexPos[indVert].y-vertexPos[indVert_last].y);
 				length_edge+= (vertexPos[indVert].z-vertexPos[indVert_last].z)*(vertexPos[indVert].z-vertexPos[indVert_last].z);
@@ -707,15 +719,13 @@ int main(int argc, char *argv[])
 				meanDensityBranch[ind2Brch] = 0;
 				meanVesselBranch[ind2Brch] = 0;
 				num_leaves++;  // for training purpose
+        indVert_last = vertsCurBranch2[ind2Brch][0];
 				for (j = 0; j <= vertsCurBr_Index2[ind2Brch]; j++) {
 					indVert = vertsCurBranch2[ind2Brch][j];
 					#if OUT_CLASSIFIER_TRAINING
 						fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
 					#endif
 
-					if (j==0) {
-						indVert_last = indVert;
-					}
 					length_edge = (vertexPos[indVert].x-vertexPos[indVert_last].x)*(vertexPos[indVert].x-vertexPos[indVert_last].x);
 					length_edge+= (vertexPos[indVert].y-vertexPos[indVert_last].y)*(vertexPos[indVert].y-vertexPos[indVert_last].y);
 					length_edge+= (vertexPos[indVert].z-vertexPos[indVert_last].z)*(vertexPos[indVert].z-vertexPos[indVert_last].z);
