@@ -76,6 +76,7 @@ this->lineWidth= 2;
 this->Initialize();
 this->tobj->setSmallLineColor(.25);
 this->tobj->setMergeLineColor(.4);
+this->Ascending = Qt::AscendingOrder;
 }
 
 View3D::~View3D()
@@ -541,7 +542,9 @@ void View3D::ShowMergeStats()
 
 	this->table->setModel(this->model);
 	this->table->setSelectionModel(this->selModel); 
+	this->table->sortByColumn(7,Ascending);
 	this->table->update();
+	this->table->show();
 	//if(this->plot)
 	//{
 	//	this->plot->close();
@@ -584,7 +587,7 @@ void View3D::SLine()
 	this->Rerender();
 }
 void View3D::traceStatistics()
-{
+{	
 	std::vector<TraceLine*> tree = this->tobj->GetTraceLines();
 	int numRows = tree.size();
 	std::vector<QString> TreeHeaders;
@@ -625,7 +628,9 @@ void View3D::traceStatistics()
 
 	this->TreeTable->setModel(this->treeModel);
 	this->TreeTable->setSelectionModel(this->TreeSelModel); 
+	this->TreeTable->sortByColumn(2,Ascending);
 	this->TreeTable->update();
+	this->TreeTable->show();
 	//if(this->plot)
 	//{
 	//	this->plot->close();

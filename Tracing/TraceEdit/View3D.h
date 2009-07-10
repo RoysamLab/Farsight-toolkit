@@ -204,6 +204,7 @@ private:
 	QStandardItemModel *model;
 	QItemSelectionModel *selModel;
 	QTableView *table;
+	Qt::SortOrder Ascending;
 //plots	
 	PlotWindow *plot;
 	HistoWindow *histo;
