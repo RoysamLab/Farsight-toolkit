@@ -152,7 +152,7 @@ void DepthFirstSearch_N6(int *volIndex, int i, int j, int k) {
      for (jj=-1; jj<=1; jj++)
         for (ii=-1; ii<=1; ii++) {
 	        //not consider the point itself && consider only neighbor-6
-	        if (ii==0 && jj==0 && kk==0 || (abs(ii)+abs(jj)+abs(kk))>1)  continue;
+	        if ((ii==0 && jj==0 && kk==0) || ((abs(ii)+abs(jj)+abs(kk)) > 1))  continue;
 	        if ((i+ii)>=0 && (i+ii)<sizeX && (j+jj)>=0 && (j+jj)<sizeY && (k+kk)>=0 && (k+kk)<sizeZ) {
 	            if (volIndex[(k+kk)*sizeX*sizeY +(j+jj)*sizeX +(i+ii)] == OBJ_BEFORE_CONNCOMP) {
 				    DepthFirstSearch_N6(volIndex, i+ii, j+jj, k+kk);
