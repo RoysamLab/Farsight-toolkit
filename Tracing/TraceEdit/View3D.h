@@ -24,6 +24,7 @@ limitations under the License.
 #include "itkImage.h"
 
 #include "vtkActor.h"
+#include "vtkLODActor.h"
 #include "vtkRenderer.h"
 #include "vtkRenderWindow.h"
 #include "vtkCamera.h"
@@ -79,6 +80,11 @@ limitations under the License.
 #include "ftkGUI/PlotWindow.h"
 #include "ftkGUI/HistoWindow.h"
 
+struct point
+{
+	float x, y, z;
+};
+
 struct compTrace{
 TraceLine *Trace1;
 TraceLine *Trace2;
@@ -105,13 +111,15 @@ public:
 	void UpdateLineActor();
 	void UpdateBranchActor();
 	void CreateSphereActor();
-	bool CheckFileExists(const char *filename);
 	
 	void AddPointsAsPoints (std::vector<TraceBit> vec);
 	void AddVolumeSliders();
 	void AddContourThresholdSliders();
 	void AddPlaybackWidget(char*);
 	void readImg(std::string sourceFile);
+	void generateSeeds();
+	std::vector<point> readSeeds(std::string seedSource);
+	void renderSeeds();
 	void rayCast(char* raySource);
 
 	static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
@@ -123,6 +131,9 @@ public:
 	void SelectedComp();
 	void ShowMergeStats();
 	void traceStatistics();
+
+	bool CheckFileExists(const char *filename);
+	void ShowSeeds();
 
 	bool setTol();
 	//todo: make these private with accessors
@@ -141,11 +152,19 @@ public slots:
 	void HideSettingsWindow();
 	void ApplyNewSettings();
 	void SLine();
-	void ToggleSomas();
+
 	void ShowLoadSomaWindow();
 	void GetSomaPath();
 	void GetSomaFile();
 	void HideLoadSomaWindow();
+	void ToggleSomas();
+
+	void ShowLoadSeedWindow();
+	void GetSeedPath();
+	void GetSeedFile();
+	void HideLoadSeedWindow();
+	void ToggleSeeds();
+
 	void ShowSomaSettingsWindow();
 	void HideSomaSettingsWindow();
 	void ApplySomaSettings();
@@ -161,7 +180,9 @@ private:
 	float lineWidth;
 	double SelectColor;
 	std::string SomaFile;
+	std::string SeedFile;
 	double somaopacity;
+	std::vector<point> sdPts;
 
     //VTK render window embedded in a Qt widget
 	QVTKWidget *QVTK;
@@ -197,8 +218,11 @@ private:
 
 	QMenu *somaMenu;
 	QAction *loadSoma;
+	QAction *loadSeed;
 	QAction *somaSettings;
 	QAction *viewSomas;
+	QAction *viewSeeds;
+
 
 	//Qt widgets for the settings window
 	QWidget *SettingsWidget;
@@ -216,8 +240,15 @@ private:
 	QPushButton *OpenSomaButton;
 	QPushButton *CancelSomaButton;
 	QPushButton *BrowseSomaButton;
-	QRegExp regex;
+	QRegExp somaRegex;
 
+	//Qt Widgets for the seed point file reader window
+	QWidget *LoadSeedWidget;
+	QLineEdit *SeedFileField;
+	QPushButton *OpenSeedButton;
+	QPushButton *CancelSeedButton;
+	QPushButton *BrowseSeedButton;
+	QRegExp seedRegex;
 
 	//Qt Widgets for the soma settings window
 	QWidget *SomaSettingsWidget;
@@ -259,5 +290,14 @@ private:
 	vtkSmartPointer<vtkPolyData> poly_line_data;
 	vtkSmartPointer<vtkPolyData> poly;
 	vtkSmartPointer<vtkPolyDataMapper> polymap;
+	
+	//Seed points
+	vtkSmartPointer<vtkFloatArray> pcoords;
+	vtkSmartPointer<vtkPoints> points;
+	vtkSmartPointer<vtkPolyData> seedPoly;
+	vtkSmartPointer<vtkGlyph3D> seedGlyph;
+	vtkSmartPointer<vtkLODActor> glyphActor;
+	vtkSmartPointer<vtkPolyDataMapper> glyphMapper;
+	vtkSmartPointer<vtkSphereSource> sphereSource;
 };
 #endif

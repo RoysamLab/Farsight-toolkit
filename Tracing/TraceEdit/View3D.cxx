@@ -123,10 +123,16 @@ void View3D::CreateGUIObjects()
 
   this->somaMenu = this->menuBar()->addMenu(tr("&Somas"));
   this->loadSoma = somaMenu->addAction(tr("&Load Soma Data"));
+  this->loadSeed = somaMenu->addAction(tr("&Load Seed Data"));
   this->somaSettings = somaMenu->addAction(tr("&Settings"));
+
   this->viewSomas = somaMenu->addAction(tr("&Show Somas"));
   this->viewSomas->setCheckable(true);
   this->viewSomas->setDisabled(true);
+
+  this->viewSeeds = somaMenu->addAction(tr("&Show Seeds"));
+  this->viewSeeds->setCheckable(true);
+  this->viewSeeds->setDisabled(true);
 
   //Set up the buttons that the user will use to interact with this program. 
   this->ListButton = new QPushButton("&list selections", this->CentralWidget);
@@ -160,13 +166,26 @@ void View3D::CreateGUIObjects()
   //Load soma window setup
   this->LoadSomaWidget = new QWidget();
   this->LoadSomaWidget->setWindowTitle(tr("Soma File Load"));
-  this->regex.setPattern(".+\\.([a-z]+)"); //Set up regular expression for soma file field
-  this->regex.setCaseSensitivity(Qt::CaseInsensitive);
+  //this->somaRegex->setPattern(".+\\.([a-z]+)"); //Set up regular expression for soma file field
+  //this->somaRegex->setCaseSensitivity(Qt::CaseInsensitive);
+  this->somaRegex.setPattern(".+\\.([a-z]+)"); 
+  this->somaRegex.setCaseSensitivity(Qt::CaseInsensitive);
   this->SomaFileField = new QLineEdit(this->LoadSomaWidget);
 
   this->OpenSomaButton = new QPushButton("&Open", this->LoadSomaWidget);
   this->CancelSomaButton = new QPushButton("&Cancel", this->LoadSomaWidget);
   this->BrowseSomaButton = new QPushButton("&Browse", this->LoadSomaWidget);
+
+  //Load seed window setup
+  this->LoadSeedWidget = new QWidget();
+  this->LoadSeedWidget->setWindowTitle(tr("Seed File Load"));
+  this->seedRegex.setPattern(".+\\.([a-z]+)");
+  this->seedRegex.setCaseSensitivity(Qt::CaseInsensitive);
+  this->SeedFileField = new QLineEdit(this->LoadSeedWidget);
+
+  this->OpenSeedButton = new QPushButton("&Open", this->LoadSeedWidget);
+  this->CancelSeedButton = new QPushButton("&Cancel", this->LoadSeedWidget);
+  this->BrowseSeedButton = new QPushButton("&Browse", this->LoadSeedWidget);
 
   //Soma settings window setup
   this->SomaSettingsWidget = new QWidget();
@@ -182,7 +201,9 @@ void View3D::CreateGUIObjects()
   //Setup connections for the menu bar
   connect(this->exitAction, SIGNAL(triggered()), this, SLOT(close()));
   connect(this->loadSoma, SIGNAL(triggered()), this, SLOT(ShowLoadSomaWindow()));
+  connect(this->loadSeed, SIGNAL(triggered()), this, SLOT(ShowLoadSeedWindow()));
   connect(this->viewSomas, SIGNAL(triggered()), this, SLOT(ToggleSomas()));
+  connect(this->viewSeeds, SIGNAL(triggered()), this, SLOT(ToggleSeeds()));
   connect(this->somaSettings, SIGNAL(triggered()), this, SLOT(ShowSomaSettingsWindow()));
 
   //Setup connections for the buttons
@@ -201,10 +222,15 @@ void View3D::CreateGUIObjects()
   connect(this->CancelSettingsButton, SIGNAL(clicked()), this,
     SLOT(HideSettingsWindow()));
 
-  //Setup connections for the Load Soma Data window
+  //Set up connections for the Load Soma Data window
   connect(this->OpenSomaButton, SIGNAL(clicked()), this, SLOT(GetSomaFile()));
   connect(this->CancelSomaButton, SIGNAL(clicked()), this, SLOT(HideLoadSomaWindow()));
   connect(this->BrowseSomaButton, SIGNAL(clicked()), this, SLOT(GetSomaPath()));
+
+  //Set up connections for the Load Seed Data window
+  connect(this->OpenSeedButton, SIGNAL(clicked()), this, SLOT(GetSeedFile()));
+  connect(this->CancelSeedButton, SIGNAL(clicked()), this, SLOT(HideLoadSeedWindow()));
+  connect(this->BrowseSeedButton, SIGNAL(clicked()), this, SLOT(GetSeedPath()));
 
   //Set up connections for the Soma Settings window
   connect(this->CancelSomaSettingsButton, SIGNAL(clicked()), this, SLOT(HideSomaSettingsWindow()));
@@ -257,6 +283,15 @@ void View3D::CreateLayout()
   LoadSomaLayout->addWidget(this->BrowseSomaButton, 0, 2);
   LoadSomaLayout->addWidget(this->OpenSomaButton, 1, 0);
   LoadSomaLayout->addWidget(this->CancelSomaButton, 1, 1);
+
+  //Layout for the Load Seed Window
+  QGridLayout *LoadSeedLayout = new QGridLayout(this->LoadSeedWidget);
+  QLabel *SeedFileLabel = new QLabel(tr("Seed Point File: (.txt)"));
+  LoadSeedLayout->addWidget(SeedFileLabel, 0, 0);
+  LoadSeedLayout->addWidget(this->SeedFileField, 0, 1);
+  LoadSeedLayout->addWidget(this->BrowseSeedButton, 0, 2);
+  LoadSeedLayout->addWidget(this->OpenSeedButton, 1, 0);
+  LoadSeedLayout->addWidget(this->CancelSeedButton, 1, 1);
 
   //Layout for the Soma Settings Window
   QGridLayout *SomaSettingsLayout = new QGridLayout(this->SomaSettingsWidget);
@@ -774,6 +809,7 @@ void View3D::WriteToSWCFile()
 	this->tobj->WriteToSWCFile(fileName.toStdString().c_str());	
 }
 
+
 void View3D::ShowLoadSomaWindow()
 {
 	this->LoadSomaWidget->show();
@@ -790,11 +826,9 @@ void View3D::GetSomaPath()
 }
 void View3D::GetSomaFile()
 {
-	int pos = 0;
-	//std::cout << this->tiffValidator->validate(this->SomaFileField->text(), pos) << std::endl;
-	//if(this->tiffValidator->validate(this->SomaFileField->text(), pos) == 2)
-	//Checkes that file has the the correct format
-	if(regex.exactMatch(this->SomaFileField->text()))
+
+	//Checks that file has the the correct format
+	if(this->somaRegex.exactMatch(this->SomaFileField->text()))
 	{
 		//Takes input from file field text box and casts it as an std string
 		std::string fileName;
@@ -802,7 +836,7 @@ void View3D::GetSomaFile()
 		fileName = this->SomaFileField->text().toStdString();
 
 		//Takes captured file extension from the regex and stores it as an std string
-		fileEx = this->regex.cap(1).toStdString();
+		fileEx = this->somaRegex.cap(1).toStdString();
 		for(unsigned int i = 0; i < fileEx.size(); i++)
 		{
 			fileEx[i] = tolower(fileEx[i]);
@@ -842,6 +876,69 @@ void View3D::HideLoadSomaWindow()
 	this->LoadSomaWidget->hide();
 }
 
+void View3D::ShowLoadSeedWindow()
+{
+	this->LoadSeedWidget->show();
+}
+
+void View3D::GetSeedPath()
+{
+	QString path;
+	path = QFileDialog::getOpenFileName(this->LoadSeedWidget, "choose a file to load", QString::null, QString::null);
+	this->SeedFileField->setText(path);
+}
+
+void View3D::GetSeedFile()
+{
+	//Checks that file has the the correct format
+	if(this->seedRegex.exactMatch(this->SeedFileField->text()))
+	{
+		//Takes input from file field text box and casts it as an std string
+		std::string fileName;
+		std::string fileEx;
+		fileName = this->SeedFileField->text().toStdString();
+
+		//Takes captured file extension from the regex and stores it as an std string
+		fileEx = this->seedRegex.cap(1).toStdString();
+		for(unsigned int i = 0; i < fileEx.size(); i++)
+		{
+			fileEx[i] = tolower(fileEx[i]);
+		}
+			
+		//Checks for proper file extension and accepts
+		if(fileEx == "txt")
+		{
+			//Checks that file exists
+			if(this->CheckFileExists(fileName.c_str()) == 1)
+			{
+				this->SeedFile = fileName;
+				this->viewSeeds->setEnabled(true);
+				this->LoadSeedWidget->hide();
+				return;
+			}
+			else
+			{
+				std::cerr << "TXT file doesn't exist." << std::endl;
+				return;
+			}
+		}
+		else
+		{
+			std::cerr << "Invalid File Type: Please load correct seed point TXT image." << std::endl;
+			return;
+		}
+	}
+	else
+	{
+		std::cerr << "Invalid File Type: Please load correct seed point TXT image." << std::endl;
+	}
+}
+
+void View3D::HideLoadSeedWindow()
+{
+	this->LoadSeedWidget->hide();
+}
+
 void View3D::ShowSomaSettingsWindow()
 {
 	this->SomaOpacityField->setText(QString::number(this->somaopacity));
@@ -867,6 +964,24 @@ void View3D::ToggleSomas()
 		this->Renderer->RemoveActor(this->VolumeActor);
 		this->QVTK->GetRenderWindow()->Render();
 		std::cout << "Somas Removed" << std::endl;
+		return;
+	}
+}
+
+void View3D::ToggleSeeds()
+{
+	if(this->viewSeeds->isChecked())
+	{
+		this->generateSeeds();
+		this->renderSeeds();
+		std::cout << "Seed Points Rendered" << std::endl;
+		return;
+	}
+	else
+	{
+		this->Renderer->RemoveActor(this->glyphActor);
+		this->QVTK->GetRenderWindow()->Render();
+		std::cout << "Seeds Removed" << std::endl;
 		return;
 	}
 }
@@ -1517,6 +1632,91 @@ void View3D::readImg(std::string sourceFile)
   std::cout << "Nuclei contour produced" << std::endl;
 }
 
+void View3D::generateSeeds()
+{
+	this->sdPts = readSeeds(this->SeedFile.c_str());
+	this->pcoords = vtkSmartPointer<vtkFloatArray>::New();
+	this->pcoords->SetNumberOfComponents(3);
+	this->pcoords->SetNumberOfTuples(this->sdPts.size());
+
+	for(unsigned int i = 0; i < this->sdPts.size(); i++)
+	{
+		float pts[3] = {this->sdPts[i].x, this->sdPts[i].y, this->sdPts[i].z};
+		this->pcoords->SetTuple(i, pts);
+	}
+
+	this->points = vtkSmartPointer<vtkPoints>::New();
+	this->points->SetData(this->pcoords);
+
+	this->seedPoly = vtkSmartPointer<vtkPolyData>::New();
+	this->seedPoly->SetPoints(this->points);
+
+	this->sphereSource = vtkSmartPointer<vtkSphereSource>::New();
+	
+	this->seedGlyph = vtkSmartPointer<vtkGlyph3D>::New();
+	this->seedGlyph->SetInput(this->seedPoly);
+	this->seedGlyph->SetSource(sphereSource->GetOutput());
+	this->seedGlyph->SetVectorModeToUseNormal();
+	this->seedGlyph->SetScaleModeToScaleByVector();
+	this->seedGlyph->SetScaleFactor(20);
+	this->seedGlyph->GeneratePointIdsOn();
+
+	std::cout << "Seed Points Processed" << std::endl;
+}
+
+std::vector<point> View3D::readSeeds(std::string seedSource)
+{
+	point p;
+	std::vector<point> pts;
+	pts.clear();
+	
+	std::cout << seedSource << " filename" <<  std::endl;
+	ifstream input(seedSource.c_str());
+
+	/*
+	if(!input)
+	{
+		std::cerr << "ERROR: Seed file can't be opened" << std::endl;
+	}
+	else
+	{
+		std::cout << "OK: Seed point file imported" << std::endl;
+	}
+	*/
+	/*
+	vtkFloatArray *pcoords = vtkFloatArray::New();
+
+	pcoords->SetNumberOfComponents(3);
+	pcoords->SetNumberOfTuples(pts.size());
+	*/
+
+	input >> p.x >> p.y >> p.z;
+	std::cout << p.x << p.y << p.z << " Point Data" << std::endl;
+	while(!input.eof())
+	{
+		pts.push_back(p);
+		input >> p.x >> p.y >> p.z;
+		std::cout << p.x << p.y << p.z << " Point Data" << std::endl;
+	}
+
+	std::cout << "Vector contents: ";
+	for(unsigned int i = 0; i < pts.size(); i++)
+	{
+		std::cout << pts[i].x << pts[i].y << pts[i].z << " ";
+	}
+	std::cout << std::endl;
+	return pts;
+}
+
+void View3D::renderSeeds()
+{
+	this->glyphMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	this->glyphMapper->SetInput(this->seedGlyph->GetOutput());
+	this->glyphActor = vtkSmartPointer<vtkLODActor>::New();
+	this->glyphActor->SetMapper(this->glyphMapper);
+	this->Renderer->AddActor(this->glyphActor);
+	this->QVTK->GetRenderWindow()->Render();
+}
 void View3D::rayCast(char *raySource)
 {
   const unsigned int Dimension = 3;
