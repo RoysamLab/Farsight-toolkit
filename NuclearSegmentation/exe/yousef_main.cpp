@@ -79,6 +79,7 @@ int main(int argc, char* argv[])
 	NucleusSeg->runBinarization();
 	//2-Seeds Detection
 	NucleusSeg->runSeedDetection();
+	
 	//3-Initial Segmentation (CLustering)
 	NucleusSeg->runClustering();
 	if(NucleusSeg->isSegmentationFinEnabled())
@@ -89,6 +90,7 @@ int main(int argc, char* argv[])
 	}
 	else
 		output_img=NucleusSeg->getClustImage();
+	
 	
 	//Hard coded parameters, add cin for each if required..
 	/*int params[6];

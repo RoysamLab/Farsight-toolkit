@@ -201,7 +201,7 @@ void yousef_nucleus_seg::runClustering()
 	if (numStacks == 1)
 	{
 		std::cout << "Starting Initial Clustering" << std::endl;
-		ExtractSeeds();
+		//ExtractSeeds();
 		int *seed_xmclust, *seed_ymclust;
 		int numseedsmclust = mySeeds.size();
 		seed_xmclust = (int *) malloc(mySeeds.size()*sizeof(int));
@@ -254,13 +254,14 @@ void yousef_nucleus_seg::ExtractSeeds()
 						//Keep the pixel, put it in mySeeds, and change value to id
 						mySeeds.push_back(Seed(i,j,k,id,binVal));
 						seedImagePtr[curNode] = id;
-						std::cerr << "seed " << id << " Added at x=" << i << " y=" << j << " z=" << k << " cc = " << binVal << std::endl;
+						//std::cerr << "seed " << id << " Added at x=" << i << " y=" << j << " z=" << k << " cc = " << binVal << std::endl;
 						++id;
 					}
 				}
 			}
 		}
 	}
+	std::cerr << id-1 << " seeds were detected"<<std::endl;
 }
 
 void yousef_nucleus_seg::outputSeeds(void)
@@ -547,8 +548,10 @@ void yousef_nucleus_seg::runAlphaExpansion2D(){
 		//relable and copy the output of the alpha expansion which is stored in the subclustImg to the final segmented image
 		ind = 0;		
 		
-			for(int i=myConnComp[n].x1; i<=myConnComp[n].x2; i++){
-				for(int j=myConnComp[n].y1; j<=myConnComp[n].y2; j++){
+		for(int i=myConnComp[n].x1; i<=myConnComp[n].x2; i++)
+		{
+			for(int j=myConnComp[n].y1; j<=myConnComp[n].y2; j++)
+			{
 				val = subclustImg[ind];
 				if(val>0)
 					segImagePtr[(j*numColumns)+i] = val;
