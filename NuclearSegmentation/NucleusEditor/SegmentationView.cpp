@@ -348,6 +348,8 @@ void SegmentationView::keyPressEvent(QKeyEvent *event)
 		 break;
 	 case Qt::Key_M:
 		 resultModel->mergeTrigger();
+	 case Qt::Key_S:
+		 resultModel->splitTrigger();
      default:
          QWidget::keyPressEvent(event);
      }

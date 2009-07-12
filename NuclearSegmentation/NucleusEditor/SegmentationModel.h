@@ -64,6 +64,7 @@ signals:
 public slots:
 	void deleteTrigger(void);
 	void mergeTrigger(void);
+	void splitTrigger(void);
 
 private:
 	int columnForID;

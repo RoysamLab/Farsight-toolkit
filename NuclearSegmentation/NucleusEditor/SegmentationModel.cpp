@@ -264,7 +264,78 @@ void SegmentationModel::deleteTrigger()
 	emit modelChanged();
 
 }
+void SegmentationModel::splitTrigger()
+{
+	//do nothing for now
+	int xx=1;
+	QModelIndexList selIndices = selectionModel->selectedRows();
+	vector< int > ids(0);
+	QString idlist(0);
 
+	for (int selIndex = 0; selIndex < selIndices.size(); ++selIndex) 
+	{
+		int row = selIndices.at(selIndex).row();
+		int id = model->data( model->index(row, columnForID) ).toInt();
+		idlist.append(QString::number(id));
+		idlist.append(" ");
+		ids.push_back(id);
+	}
+
+	if(ids.size() < 1)
+		return;
+
+	QString msg = tr("Do you want to split the objects with these IDs:\n");
+	msg.append(idlist);
+	msg.append("?");
+
+	//Verify operation:
+	QMessageBox::StandardButton button = QMessageBox::information ( 0, tr("Split"), \
+		msg, QMessageBox::Yes | QMessageBox::No , QMessageBox::NoButton );
+
+	if(button != QMessageBox::Yes)
+		return;
+
+	ftk::NuclearSegmentation *nucseg = (ftk::NuclearSegmentation*)segResult;
+	
+	//Attempt split:
+	for(unsigned int group = 0; group < ids.size(); ++group)
+	{
+		std::vector< int > newIDs = nucseg->Split( ids.at(group) );
+		//need to add code that updates the table
+		//1-Remove the old cell
+		//2-Add the two new cells
+	//	if( newID )
+	//	{
+	//		//Remove from table merged IDs
+	//		for (unsigned int id=0; id < ids.at(group).size(); ++id)
+	//		{
+	//			int row = RowForID( ids.at(group).at(id) );
+	//			QList<QStandardItem *> items = model->takeRow(row);
+	//			for(int i=0; i<items.size(); ++i)
+	//			{
+	//				delete items.at(i);
+	//			}
+	//			updateMapping();
+	//		}
+	//		//Add into table the new object
+	//		int currentRow = model->rowCount();
+	//		model->insertRow(currentRow);
+	//		model->setData(model->index(currentRow, columnForID, QModelIndex()), newID);
+	//		vector<float> features = segResult->GetObjectPtr(newID)->GetFeatures();
+	//		for(int f=0; f<(int)features.size(); ++f)
+	//		{
+	//			model->setData(model->index(currentRow, f+1, QModelIndex()), features[f]);
+	//		}
+	//		int clss = segResult->GetObjectPtr(newID)->GetClass();
+	//		model->setData(model->index(currentRow,columnForClass,QModelIndex()),clss);
+	//		updateMapping();
+	//	}
+	}
+
+	//The next two lines need to be checked
+	//UpdateColors();
+	//emit modelChanged();
+}
 //Call this slot when trying to merge objects
 void SegmentationModel::mergeTrigger()
 {

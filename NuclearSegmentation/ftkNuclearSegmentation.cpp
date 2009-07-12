@@ -852,6 +852,15 @@ ftk::Object::Box NuclearSegmentation::ExtremaBox(vector<int> ids)
 	return extreme;
 }
 
+std::vector< int > NuclearSegmentation::Split(int id)
+{
+	//do nothing for now
+	//implementation will be added soon
+	std::vector <int> ids;
+	ids.push_back(1);
+	ids.push_back(2);
+	return ids;
+}
 int NuclearSegmentation::Merge(vector<int> ids)
 {
 	if(!labelImage)

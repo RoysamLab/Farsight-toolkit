@@ -78,7 +78,7 @@ public:
 	bool LoadFromMETA(std::string META_file, std::string header_file, std::string data_file, std::string label_file);
 
 	//Editing Functions  
-	bool Split(int id){return 0;};
+	std::vector< int > Split(int id);
 	int Merge(vector<int> ids);
 	bool Delete(vector<int> ids);
 	bool Add( Object::Point p ){return 0;};
