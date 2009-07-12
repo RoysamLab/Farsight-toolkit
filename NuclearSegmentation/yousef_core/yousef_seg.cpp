@@ -547,11 +547,10 @@ void yousef_nucleus_seg::runAlphaExpansion2D(){
 
 		//relable and copy the output of the alpha expansion which is stored in the subclustImg to the final segmented image
 		ind = 0;		
-		
 		for(int i=myConnComp[n].x1; i<=myConnComp[n].x2; i++)
 		{
 			for(int j=myConnComp[n].y1; j<=myConnComp[n].y2; j++)
-			{
+			{		
 				val = subclustImg[ind];
 				if(val>0)
 					segImagePtr[(j*numColumns)+i] = val;
@@ -559,13 +558,15 @@ void yousef_nucleus_seg::runAlphaExpansion2D(){
 				++ind;
 			}
 		}
-		std::cerr<<"Done with "<<labelsList.size()<<" objects"<<std::endl;
+		//std::cerr<<"Done with "<<labelsList.size()<<" objects"<<std::endl;
+		std::cerr<<"Done"<<std::endl;
 		delete [] sublogImg;
 		delete [] subclustImg;
 		//delete [] subDataImg;
 	}
 	//relabel the cells
-	int numOfObjs = /*getConnCompImage*/getRelabeledImage(segImagePtr, 26, 25, numRows, numColumns,numStacks, 1);	
+	int numOfObjs = /*getConnCompImage*/getRelabeledImage(segImagePtr, 8, 25, numRows, numColumns,numStacks, 1);	
+    numOfObjs--;
 	std::cerr << "done with " << numOfObjs<<" found"<<std::endl;
 	std::cerr << "Creating Final Label Image" << std::endl;	
 }
@@ -1016,7 +1017,7 @@ int yousef_nucleus_seg::getRelabeledImage(int *IM, int connectivity, int minSize
 		std::cerr << "Relabel: exception caught !" << std::endl;
 		std::cerr << excep << std::endl;
     }
-
+	
 	//write the output of the labeling CC filter into our input image
 	IteratorType iterator2(relabel->GetOutput(),relabel->GetOutput()->GetRequestedRegion());
 	for(int i=0; i<r*c*z; i++)
