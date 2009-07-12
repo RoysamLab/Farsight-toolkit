@@ -224,6 +224,7 @@ public:
 	multimap<int, int> ListDistances1N_old(int choice);
 	void ListDistances2N();
 	void ListDegrees();
+	void GenerateClutoGraphFile();
 	//void Kruskalmst();
 
 private:

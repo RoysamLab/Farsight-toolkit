@@ -304,8 +304,39 @@ void SegmentationModel::splitTrigger()
 		//need to add code that updates the table
 		//1-Remove the old cell
 		//2-Add the two new cells
-	//	if( newID )
-	//	{
+		if( newIDs.size()==3 )
+		{
+			//Remove from table the old id (remove the splitted object)
+			// The old id is in newIDS[0]
+			int row = RowForID(0);
+			QList<QStandardItem *> items = model->takeRow(row);
+			for(int i=0; i<items.size(); ++i)
+			{
+				delete items.at(i);
+			}
+			updateMapping();
+
+			// Add the cell-ids of 2 new (result of splitting) cells
+			for (unsigned int i=1;i<3;i++) {
+				//Add into table the new object
+				int currentRow = model->rowCount();
+				model->insertRow(currentRow);
+				model->setData(model->index(currentRow, columnForID, QModelIndex()), newIDs[i]);
+				vector<float> features = segResult->GetObjectPtr(newIDs[i])->GetFeatures();
+				for(int f=0; f<(int)features.size(); ++f) {
+					model->setData(model->index(currentRow, f+1, QModelIndex()), features[f]);
+				}
+	
+				int clss = segResult->GetObjectPtr(newIDs[i])->GetClass();
+				model->setData(model->index(currentRow,columnForClass,QModelIndex()),clss);
+				updateMapping();
+			}
+
+
+
+
+
+
 	//		//Remove from table merged IDs
 	//		for (unsigned int id=0; id < ids.at(group).size(); ++id)
 	//		{
@@ -329,7 +360,7 @@ void SegmentationModel::splitTrigger()
 	//		int clss = segResult->GetObjectPtr(newID)->GetClass();
 	//		model->setData(model->index(currentRow,columnForClass,QModelIndex()),clss);
 	//		updateMapping();
-	//	}
+		}
 	}
 
 	//The next two lines need to be checked

@@ -41,14 +41,15 @@ HistoWindow::HistoWindow(QItemSelectionModel *mod, QWidget *parent)
 	//Setup ChartView:
 	chartView = vtkSmartPointer<vtkQtBarChartView>::New();
 	chartView->SetupDefaultInteractor();
-	chartView->SetTitle("HI EVERYONE");
+	//Set the title of the histogram
+	chartView->SetTitle("  ");
 	chartView->SetAxisTitle(0,"Frequency");
 	chartView->SetAxisTitle(1, columnName.c_str() );
 
 #if(VTK_NIGHTLY)
 		setCentralWidget( chartView->GetWidget() );
 #else
-		QLabel *label = new QLabel(tr("Use this Window to Select Options for the Histogram"));
+		QLabel *label = new QLabel(tr("Use this window to select options for the histogram"));
 		label->setWordWrap(true);
 		label->setAlignment(Qt::AlignCenter);
 		setCentralWidget( label );
@@ -226,31 +227,47 @@ bool HistoWindow::ReadHistogramData(const char* fileName)
 }
 */
 
-void HistoWindow::Normalize() 
-{
-	std::multiset<double> dataTmp;
-	//double minNumber= *min_element(data.begin(), data.end());
-	//double maxNumber= *max_element(data.begin(), data.end());
-	//double diff = maxNumber - minNumber;
+// Description:
+// Normalizes the data using this formula:
+// (Xi - Xmean)/StdDeviation
+// StdDeviation = sqrt(variance)
+// variance = (sum (sqr(Xi-Xmean)))/N
+// where N is the number of elements
 
-	double sum=0;
+void HistoWindow::Normalize() 
+{	
+	std::multiset<double> dataTmp;
+	double sum=0,mean=0,sumVariance=0,variance=0,stdDeviation=0;
 	//Find the sum first
 	std::multiset<double>::iterator pos;
 	for(pos=data.begin(); pos!=data.end(); ++pos)
 		sum +=*pos;
 
-	//Now normalize the data.
-	for(pos=data.begin(); pos!=data.end(); ++pos)
-    {
-		//inefficient hack to workaround the fact that multiset iterators are
-    //immutable on gcc
-    dataTmp.insert(*pos/sum);
-    //*pos = *pos/sum;
-    }
-  data = dataTmp;
-
-	//Set the signal
-	normalized = true;
+	if (data.size() > 0) {
+		//Compute the mean
+		mean = sum/data.size();
+		//Compute the variance
+		for(pos=data.begin(); pos!=data.end(); ++pos)
+			sumVariance+= ((*pos - mean) * (*pos - mean));
+		variance = sumVariance / data.size();
+		//Compute the standard Deviation
+		stdDeviation = sqrt(variance);
+		// We have everything to normalize the data
+		if (stdDeviation != 0) {
+			//Now normalize the data.
+			for(pos=data.begin(); pos!=data.end(); ++pos)
+				dataTmp.insert((*pos - mean)/stdDeviation);
+			data = dataTmp;
+			//Set the signal
+			normalized = true;
+		} else {
+			cerr<<"The standard deviation is 0. Cannot Normalize!"<<endl;
+			normalized = false;
+		}
+	} else {
+		cerr<<"No data...Cannot Normalize!"<<endl;
+		normalized = false;
+	}
 
 	// Here are the normalized numbers
 	/*
@@ -321,49 +338,13 @@ bool HistoWindow::findFrequencies()
 						if ((n >= n1)  && (n < n2))
 							result_fq[k]++;				
 			}
-
-
-
-/*
-			for (int k=0;k<numofbins;k++) {
-				//cout<<"ALLLm KKKK"<<k<<endl;
-				if (k == (numofbins - 1)) 
-					result_fq[k]++; 
-				else {
-
-					//n1 and n2 have to be double but vc++ cannot compare doubles and flips true and false
-					// for some reason. Check the first if statement below
-					float n1 = k*bucketSize;
-					float n2 = (k+1)*bucketSize;
-					double n=*pos;
-					if ((n >= n1)  && (n < n2)) {
-						//cout<<"result "<<k<<" : "<<result_fq[k]<<endl;
-						result_fq[k]++;
-					}
-				}
-			}
-			
-*/
-
-
-/*
-			loc = *pos / bucketSize;
-			if (loc == numofbins) result_fq[loc-1]++;   
-			else {
-				result_fq[loc]=result_fq[loc]+1;
-				cout<<"Number is "<<*pos<<" loc: "<<loc<<endl;
-			}
-*/
-			}
-
+		}
 
 		for (i=0;i<numofbins;i++ ) 
 			cout<<"i : "<<i<<" Frequency "<<result_fq[i]<<endl;
-
 		return true;
 	} else //num of bins is less than 2!
 		return false;
-
 }
 
 void HistoWindow::setBucketNames() 

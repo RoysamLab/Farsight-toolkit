@@ -88,10 +88,10 @@ void BioNet::Averages() {
 }
 
 /**************************************************************************************/
-// A helper-function that is used for computing medians for pyramidial region          /
+// A helper-function that is used for computing medians.                               /
 // The result is the median  length of edges outgoing from each node in the graph      /
 // For undirected graphs (u,v) and (v,u) are the same edges. But in VTK they are not   /
-// (But it displays only one edge as expected                                          /
+// (But it displays only one edge as expected)                                         /
 //                                                                                     /
 // Note also that this function produces medians for all nodes, not just               /
 // the ones in the pyramidal region                                                    /
@@ -354,6 +354,50 @@ void BioNet::ListDegrees() {
 		myfile.close();
 		cout<<"- Degrees of each cell has been written to degrees.txt"<<endl;
 	} else cout << "Unable to open file to write distances";
+}
+
+/**************************************************************************************/
+// Generates an adjacency matrix for Cluto graph partitioning.                         /
+// The result is a file that can be used by scluster program in Cluto                  /
+/**************************************************************************************/
+void BioNet::GenerateClutoGraphFile() {	  
+  char* fileName = "ClutoGraph.txt";
+  ofstream myfile (fileName);
+  VTK_CREATE(vtkVertexListIterator, vertices);
+  VTK_CREATE(vtkOutEdgeIterator, outEdges);
+  g->GetVertices(vertices);
+  vtkOutEdgeType e;
+  int n=0;
+  ///////////////////////////////////////////////////
+  //double coordinates[3];//for storing coordinates
+  
+  if (myfile.is_open())
+  {
+	  myfile<<" "<<g->GetNumberOfVertices()<<" "<<g->GetNumberOfEdges()<<endl;
+  while (vertices->HasNext())
+    {
+    vtkIdType v = vertices->Next();
+    g->GetOutEdges(v, outEdges);
+	set<int>* targetvertices=new set<int>(); //will be used for taking care of cycles. 
+							 //Edge weights will be the same in a cycle
+	///////////////////////////////////////////////////
+    while (outEdges->HasNext()) {
+		e = outEdges->Next();
+		if (!CycleDetected(targetvertices, e.Target)) {
+			n++;
+			//vertex ids start from 0 in VTK but Cluto will start it from 1
+			// e.Target+1 is the solution
+			myfile<<(e.Target + 1)<<" "<<g->GetEdgeData()->GetArray("EdgeWeights")->GetTuple1(e.Id)<<" ";
+		}
+	}//////////////////////////////////////////////////
+	myfile<<endl;
+
+  }
+  myfile.close();
+  cout<<endl;
+  cout<<"- Cluto Graph File has been generated."<<endl;
+  cout<<"The number of nonzero elements in the matrix is : "<<fileName<<endl;  
+  } else cout << "Unable to open file to write averages for Pyramidal Cell Layer";
 }
 
 // Description:
@@ -1620,6 +1664,7 @@ int main(int argc, char *argv[])
 			network->ListDistances2N();
 		//Compute degrees of eacg node
 		network->ListDegrees();
+		network->GenerateClutoGraphFile();
 
 		network->Display(network->GetRenderView(), degree,0, 0, "ChannelColors", 0, 5,"EdgeColors");
 	} else if (stdMst == 1) {
