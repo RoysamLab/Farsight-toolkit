@@ -651,11 +651,11 @@ void View3D::Rerender()
   this->SphereActor->VisibilityOff();
   this->IDList.clear();
   this->Renderer->RemoveActor(this->BranchActor);
-  this->Renderer->RemoveActor(this->VolumeActor);
+  //this->Renderer->RemoveActor(this->VolumeActor);
   this->UpdateLineActor();
   this->UpdateBranchActor();
   this->Renderer->AddActor(this->BranchActor);
-  this->Renderer->AddActor(this->VolumeActor);
+  //this->Renderer->AddActor(this->VolumeActor);
   this->QVTK->GetRenderWindow()->Render();
 }
 
@@ -827,7 +827,6 @@ void View3D::GetSomaPath()
 	QString path;
 	path = QFileDialog::getOpenFileName(this->LoadSomaWidget, "choose a file to load", QString::null, QString::null);
 	this->SomaFileField->setText(path);
-	//this->OpenSomaButton->setEnabled(true);
 }
 void View3D::GetSomaFile()
 {
@@ -856,6 +855,7 @@ void View3D::GetSomaFile()
 				this->SomaFile = fileName;
 				this->viewSomas->setEnabled(true);
 				this->LoadSomaWidget->hide();
+				this->readImg(this->SomaFile);
 				return;
 			}
 			else
@@ -888,6 +888,7 @@ void View3D::ShowLoadSeedWindow()
 
 void View3D::GetSeedPath()
 {
+	//Gets seed file path from the file browser
 	QString path;
 	path = QFileDialog::getOpenFileName(this->LoadSeedWidget, "choose a file to load", QString::null, QString::null);
 	this->SeedFileField->setText(path);
@@ -919,6 +920,7 @@ void View3D::GetSeedFile()
 				this->SeedFile = fileName;
 				this->viewSeeds->setEnabled(true);
 				this->LoadSeedWidget->hide();
+				this->generateSeeds();
 				return;
 			}
 			else
@@ -957,13 +959,15 @@ void View3D::HideSomaSettingsWindow()
 
 void View3D::ToggleSomas()
 {
+	//If view somas options is checked, render somas
 	if(this->viewSomas->isChecked())
 	{
-		this->readImg(this->SomaFile);
-		this->Rerender();
+		this->Renderer->AddActor(this->VolumeActor);
+		this->QVTK->GetRenderWindow()->Render();
 		std::cout << "Somas Rendered" << std::endl;
 		return;
 	}
+	//If unchecked, remove them
 	else
 	{
 		this->Renderer->RemoveActor(this->VolumeActor);
@@ -975,13 +979,15 @@ void View3D::ToggleSomas()
 
 void View3D::ToggleSeeds()
 {
+	//If view seeds option is checked, render seeds
 	if(this->viewSeeds->isChecked())
 	{
-		this->generateSeeds();
-		this->renderSeeds();
+		this->Renderer->AddActor(this->glyphActor);
+		this->QVTK->GetRenderWindow()->Render();
 		std::cout << "Seed Points Rendered" << std::endl;
 		return;
 	}
+	//If unchecked, remove them
 	else
 	{
 		this->Renderer->RemoveActor(this->glyphActor);
@@ -993,14 +999,17 @@ void View3D::ToggleSeeds()
 
 void View3D::ApplySomaSettings()
 {
-	if(this->SomaFile != "")
+	//If somas are currently on screen, change opacity and rerender
+	if(this->viewSomas->isChecked())
 	{
+		
 		this->somaopacity = this->SomaOpacityField->text().toDouble();
 		this->VolumeActor->GetProperty()->SetOpacity(this->somaopacity);
-		this->Rerender();
 		this->SomaSettingsWidget->hide();
+		this->QVTK->GetRenderWindow()->Render();
 		return;
 	}
+	//Else just change the soma opacity variable
 	else
 	{
 		this->somaopacity = this->SomaOpacityField->text().toDouble();
@@ -1637,27 +1646,34 @@ void View3D::readImg(std::string sourceFile)
   std::cout << "Nuclei contour produced" << std::endl;
 }
 
+//Function to generate the seed point glyphs
 void View3D::generateSeeds()
 {
+	//Call readSeeds function to process seedpoint file and return vector of points
 	this->sdPts = readSeeds(this->SeedFile.c_str());
+
+	//Set up float array
 	this->pcoords = vtkSmartPointer<vtkFloatArray>::New();
 	this->pcoords->SetNumberOfComponents(3);
 	this->pcoords->SetNumberOfTuples(this->sdPts.size());
 
+	//Read in vector of points into the float array
 	for(unsigned int i = 0; i < this->sdPts.size(); i++)
 	{
 		float pts[3] = {this->sdPts[i].x, this->sdPts[i].y, this->sdPts[i].z};
 		this->pcoords->SetTuple(i, pts);
 	}
 
+	//Set up vtkPoints from the float array
 	this->points = vtkSmartPointer<vtkPoints>::New();
 	this->points->SetData(this->pcoords);
 
+	//Set up vtkPolyData from vtkPoints
 	this->seedPoly = vtkSmartPointer<vtkPolyData>::New();
 	this->seedPoly->SetPoints(this->points);
 
+	//Create seed glyphs from sphere source, located at points in the polydata
 	this->sphereSource = vtkSmartPointer<vtkSphereSource>::New();
-	
 	this->seedGlyph = vtkSmartPointer<vtkGlyph3D>::New();
 	this->seedGlyph->SetInput(this->seedPoly);
 	this->seedGlyph->SetSource(sphereSource->GetOutput());
@@ -1666,62 +1682,52 @@ void View3D::generateSeeds()
 	this->seedGlyph->SetScaleFactor(20);
 	this->seedGlyph->GeneratePointIdsOn();
 
+	//Set up mapper and actor for the seeds
+	this->glyphMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	this->glyphMapper->SetInput(this->seedGlyph->GetOutput());
+	this->glyphActor = vtkSmartPointer<vtkLODActor>::New();
+	this->glyphActor->SetMapper(this->glyphMapper);
+
 	std::cout << "Seed Points Processed" << std::endl;
 }
 
+//Function to read in seed point coordinates from a .txt file
 std::vector<point> View3D::readSeeds(std::string seedSource)
 {
 	point p;
 	std::vector<point> pts;
 	pts.clear();
+	int numLines = 0;
 	
-	std::cout << seedSource << " filename" <<  std::endl;
+	//std::cout << seedSource << " filename" <<  std::endl;
 	ifstream input(seedSource.c_str());
 
-	/*
 	if(!input)
 	{
 		std::cerr << "ERROR: Seed file can't be opened" << std::endl;
 	}
-	else
-	{
-		std::cout << "OK: Seed point file imported" << std::endl;
-	}
-	*/
-	/*
-	vtkFloatArray *pcoords = vtkFloatArray::New();
 
-	pcoords->SetNumberOfComponents(3);
-	pcoords->SetNumberOfTuples(pts.size());
-	*/
-
-	input >> p.x >> p.y >> p.z;
-	std::cout << p.x << p.y << p.z << " Point Data" << std::endl;
-	while(!input.eof())
+	//Read in coordinates until the end of file, adding each set of point coordinates into the point vector
+	while(true)
 	{
-		pts.push_back(p);
-		input >> p.x >> p.y >> p.z;
-		std::cout << p.x << p.y << p.z << " Point Data" << std::endl;
+		if(input.eof())
+		{
+			break;
+		}	
+		if(!(input >> p.x >> p.y >> p.z))
+		{
+			//std::cerr << "Invalid data point" << std::endl;
+			input.clear();
+			input.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		}
+		else
+		{
+			pts.push_back(p);
+		}
 	}
-
-	std::cout << "Vector contents: ";
-	for(unsigned int i = 0; i < pts.size(); i++)
-	{
-		std::cout << pts[i].x << pts[i].y << pts[i].z << " ";
-	}
-	std::cout << std::endl;
 	return pts;
 }
 
-void View3D::renderSeeds()
-{
-	this->glyphMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	this->glyphMapper->SetInput(this->seedGlyph->GetOutput());
-	this->glyphActor = vtkSmartPointer<vtkLODActor>::New();
-	this->glyphActor->SetMapper(this->glyphMapper);
-	this->Renderer->AddActor(this->glyphActor);
-	this->QVTK->GetRenderWindow()->Render();
-}
 void View3D::rayCast(char *raySource)
 {
   const unsigned int Dimension = 3;

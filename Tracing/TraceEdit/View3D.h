@@ -119,7 +119,6 @@ public:
 	void readImg(std::string sourceFile);
 	void generateSeeds();
 	std::vector<point> readSeeds(std::string seedSource);
-	void renderSeeds();
 	void rayCast(char* raySource);
 
 	static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
