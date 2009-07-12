@@ -304,20 +304,20 @@ void SegmentationModel::splitTrigger()
 		//need to add code that updates the table
 		//1-Remove the old cell
 		//2-Add the two new cells
-		if( newIDs.size()==3 )
-		{
-			//Remove from table the old id (remove the splitted object)
-			// The old id is in newIDS[0]
-			int row = RowForID(0);
-			QList<QStandardItem *> items = model->takeRow(row);
-			for(int i=0; i<items.size(); ++i)
-			{
-				delete items.at(i);
-			}
-			updateMapping();
 
+		//Remove from table the old id (remove the splitted object)			
+		int row = RowForID(ids.at(group));
+		QList<QStandardItem *> items = model->takeRow(row);
+		for(int i=0; i<items.size(); ++i)
+		{
+			delete items.at(i);
+		}
+		updateMapping();
+
+		if( newIDs.size()==2 )
+		{
 			// Add the cell-ids of 2 new (result of splitting) cells
-			for (unsigned int i=1;i<3;i++) {
+			for (unsigned int i=0;i<2;i++) {
 				//Add into table the new object
 				int currentRow = model->rowCount();
 				model->insertRow(currentRow);
