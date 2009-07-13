@@ -562,7 +562,7 @@ void yousef_nucleus_seg::runAlphaExpansion2D(){
 		std::cerr<<"Done"<<std::endl;
 		delete [] sublogImg;
 		delete [] subclustImg;
-		//delete [] subDataImg;
+		delete [] subDataImg;
 	}
 	//relabel the cells
 	int numOfObjs = getRelabeledImage(segImagePtr, 8, 50, numRows, numColumns,numStacks, 1);		

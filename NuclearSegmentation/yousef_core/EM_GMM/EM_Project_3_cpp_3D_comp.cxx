@@ -256,17 +256,8 @@ void EM_Gmm(std::vector<std::vector<double> > *X,int** SEEDS,int num_points, int
     double*** Segma_old;
     double*  PI;
     double*  PI_old;
-    //double*  out1;
-    //double*  out2;
-    //double*  out3;
-    //double*  out4;    
     double Du, Ds;
-    double** Gamma;
-    //double* im_vals;
-    //int r, c, z;
-    
-      
-       
+    double** Gamma;                
     
     //Initialize
     U = (double **) malloc(num_components*sizeof(double*));   

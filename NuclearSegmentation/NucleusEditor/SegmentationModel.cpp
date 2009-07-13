@@ -300,7 +300,9 @@ void SegmentationModel::splitTrigger()
 	//Attempt split:
 	for(unsigned int group = 0; group < ids.size(); ++group)
 	{
-		std::vector< int > newIDs = nucseg->Split( ids.at(group) );
+		//this need to be changed
+		std::vector< int > newIDs; //=nucseg->Split( ids.at(group) );
+		newIDs.push_back(1);
 		//need to add code that updates the table
 		//1-Remove the old cell
 		//2-Add the two new cells
