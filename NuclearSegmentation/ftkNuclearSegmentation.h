@@ -44,6 +44,16 @@ namespace ftk
  *  Handles the execution, result, and editing of a nuclear segmentation
  *  
  */
+
+class ftkPoint
+{
+public:
+	ftkPoint(int x_in, int y_in, int z_in): x(x_in), y(y_in), z(z_in) {};
+private:
+	int x;
+	int y;
+	int z;
+};
 class NuclearSegmentation
 {
 public:
@@ -78,7 +88,7 @@ public:
 	bool LoadFromMETA(std::string META_file, std::string header_file, std::string data_file, std::string label_file);
 
 	//Editing Functions  
-	std::vector< int > Split(int id);
+	std::vector< int > Split(std::vector <ftkPoint>);
 	int Merge(vector<int> ids);
 	bool Delete(vector<int> ids);
 	bool Add( Object::Point p ){return 0;};
