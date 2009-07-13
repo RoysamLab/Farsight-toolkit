@@ -852,7 +852,7 @@ ftk::Object::Box NuclearSegmentation::ExtremaBox(vector<int> ids)
 	return extreme;
 }
 
-std::vector< int > NuclearSegmentation::Split(int id)
+std::vector< int > NuclearSegmentation::Split(std::vector <ftkPoint>)
 {
 	//do nothing for now
 	//implementation will be added soon
