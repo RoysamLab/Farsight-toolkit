@@ -33,7 +33,6 @@ limitations under the License.
 #include "itkImage.h"
 #include "itklaplacianrecursivegaussianimagefilternew.h"
 #include "itkImageRegionIteratorWithIndex.h"
-//#include "itkApproximateSignedDistanceMapImageFilter.h"
 #include <itkDanielssonDistanceMapImageFilter.h> 
 
 

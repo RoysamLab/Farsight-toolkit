@@ -68,7 +68,7 @@ void start_alpha_expansion(float* im, int* seg_im, float* Dterms, int R, int C, 
 	K = 10000;
 	float* Dterms  = multiColGraphLearning(sublogImg, subclustImg, R, C, &K);
 	K = K+1;
-	std::cerr<<"    Graph Coloring done with "<<K<<" colors"<<std::endl;
+	std::cerr<<"    Graph Coloring done with "<<K-1<<" colors"<<std::endl;
 	
 	std::cerr<<"    Starting alpha-expansion..";
 	float w = 10.0;

@@ -175,12 +175,12 @@ int main(int argc, char* argv[])
 
 		//copy the output image into the ITK image
 		typedef itk::ImageRegionIteratorWithIndex< SegmentedImageType > IteratorType;
-		IteratorType iterator1(image,image->GetRequestedRegion());
+		IteratorType iterator1(image,image->GetRequestedRegion());		
 		for(int i=0; i<(size1*size2*size3); i++)
-		{	
+		{				
 			unsigned short val = (unsigned short)output_img[i];
 			iterator1.Set(val);			
-			++iterator1;	
+			++iterator1;				
 		}
 		
 		typedef itk::ImageFileWriter< SegmentedImageType > WriterType;

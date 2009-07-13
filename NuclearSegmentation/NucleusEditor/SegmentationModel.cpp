@@ -332,11 +332,6 @@ void SegmentationModel::splitTrigger()
 				updateMapping();
 			}
 
-
-
-
-
-
 	//		//Remove from table merged IDs
 	//		for (unsigned int id=0; id < ids.at(group).size(); ++id)
 	//		{

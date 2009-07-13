@@ -4356,9 +4356,7 @@ void CVessels::MergeVessels()
 	// at their tips, merge them	
 	cout << "Number of points: %d" << gIntersectionPoints.m_iNumOfElements;
 	for (i = 0; i < gIntersectionPoints.m_iNumOfElements; i++)
-	{
-		if(i==66)
-			continue;
+	{		
 		cout << "%d" << i;
 		pIntPoint = gIntersectionPoints.m_apData[i];
 

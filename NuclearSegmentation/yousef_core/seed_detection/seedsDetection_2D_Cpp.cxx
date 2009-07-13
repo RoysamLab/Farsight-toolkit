@@ -15,34 +15,7 @@
 // detectSeeds2D( imgPtr, logImagePtr, seedImagePtr, numRows, numColumns, scaleMin, scaleMax, regionXY, binImagePtr );
 int detectSeeds2D( float* IM, float* IM_out, int* IM_bin, int r, int c, double sigma_min, double sigma_max, double scale, int* bImg)
 {
-    //Now, we are expecting the following inputs from the main function/IDL:
-	//1-The imput image that need to be processed {argv[0]}
-	//2-An empty image to hold the output of the multi-scale LoG {argv[1]}
-	//3-An empty image to hold the binary image of the local maxima {argv[2]}
-	//4-The image dimension r and c {argv[3] & {argv[4]}}
-	//5-The filter scales: sigma_min {argv[5]} & sigma_max {argv[6]}
-	//Let's get the inputs one by one    
-	//float* IM = (float *) argv[0];
-	//float* IM_out = (float *) argv[1];
-	//unsigned char* IM_bin = (unsigned char *) argv[2];
-	//int r = *(int*) argv[3];
-	//int c = *(int*) argv[4];
-	//double sigma_min = *(double*) argv[5];
-	//double sigma_max = *(double*) argv[6];
-	//double scale = *(double*) argv[7];
-	//added by yousef on 11-12-2008
-	//unsigned char * bImg = (unsigned char *) argv[8];
-	
-	
-	/*float* IM = (float *) argv[0];
-	float* IM_out = (float *) argv[1];
-	unsigned char* IM_bin = (unsigned char *) argv[2];
-	int r = *(int*) argv[3];
-	int c = *(int*) argv[4];
-	double sigma_min = *(double*) argv[5];
-	double sigma_max = *(double*) argv[6];
-	double scale = *(double*) argv[7];*/
-	
+    
 	//Create an itk image from the input image
 	InputImageType::Pointer im;
 	im = InputImageType::New();
@@ -66,43 +39,40 @@ int detectSeeds2D( float* IM, float* IM_out, int* IM_bin, int r, int c, double s
     im->Allocate();
     im->FillBuffer(0);
 	im->Update();
-	//fprintf(fid,"ITK image has been created\n");
+	
 	typedef itk::ImageRegionIteratorWithIndex< InputImageType > IteratorType;
 	IteratorType iterator1(im,im->GetRequestedRegion());
-	//fprintf(fid,"%d %d\n",r,c);
+	
 	for(int i=0; i<r*c; i++)
 	{		
-
-		//fprintf(fid,"%d\n",i);
 		if(bImg[i]>0)
 			iterator1.Set(255.0);
 		else
 			iterator1.Set(0.0);
 		++iterator1;	
 	}
-	//fprintf(fid,"Preparing to compute Distance Map\n");
+	//Compute Distance Map
 	float* dImg = (float *) malloc(r*c*sizeof(float));
 	distMap(im, r, c, dImg);
 	iterator1.GoToBegin();
-	//fprintf(fid,"Distance Map Computed\n");
-
+	
+	//Copy the input image into an ITK image
 	for(int i=0; i<r*c; i++)
-	{		
-
-		//fprintf(fid,"%d %f\n",i,IM[i]);
+	{				
 		iterator1.Set(IM[i]);		
 		++iterator1;	
 	}
-    //fprintf(fid,"Input image has been copied into the ITK image\n");
+    
 	
 	
 	//Start from sigma_min to sigma sigma_max	
 	double conv = 0;	
 	double sigma = sigma_min;
 	float *IMG_tmp = (float *) malloc(r*c*sizeof(float));	
-	//fprintf(fid,"Detecting seeds at scale %f ...",sigma);	
+
+	//Detecting seeds at min scale
 	detect_seeds(im,r,c,sigma_min,IM_out);
-	//fprintf(fid,"done\n");	
+	
 	while(!conv)
 	{		
 		sigma = sigma+1;		
@@ -111,25 +81,22 @@ int detectSeeds2D( float* IM, float* IM_out, int* IM_bin, int r, int c, double s
 			conv=1;
 			break;
 		}
-		//fprintf(fid,"Detecting seeds at scale %f ...",sigma);	
+
+		//Detecting seeds at next scale
 		detect_seeds(im,r,c,sigma,IMG_tmp);
 
 		for(int i=0; i<r*c; i++)
 		{
 			if(sigma<=dImg[i]*2)
 				IM_out[i] = (IM_out[i]>=IMG_tmp[i])? IM_out[i] : IMG_tmp[i];				
-		}
-		//fprintf(fid,"done\n");
+		}		
 	}
-	//free(IMG_tmp);
-	//free(dImg);
+	free(IMG_tmp);
+	free(dImg);
 	
-    //The commented code was creating an ITK image of the LoG image
-	//And using some ITK functions to get the local maxima points
-	//However, that was relatively slow, and hence I am going to use my own function
+    //get seed points (local maxima points in the LoG response image
 	Detect_Local_MaximaPoints(IM_out, r, c, scale, IM_bin);
-		
-	//fclose(fid);
+			
 	return 1;
 }
 
@@ -315,7 +282,7 @@ void Detect_Local_MaximaPoints(float* im_vals, int r, int c, double scale, int* 
     for(int i=0; i<r; i++)
     {
         for(int j=0; j<c; j++)
-        {				
+        {					
             min_r = (int) max(0.0,i-scale);
             min_c = (int) max(0.0,j-scale);
             max_r = (int)min((double)r-1,i+scale);
@@ -346,11 +313,13 @@ int distMap(itk::SmartPointer<InputImageType> im, int r, int c, float* IMG)
 
   //  The filter type is now instantiated using both the input image and the
   //  output image types.
-  typedef itk::ApproximateSignedDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;
+  //typedef itk::ApproximateSignedDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;
+  typedef itk::DanielssonDistanceMapImageFilter <InputImageType, OutputImageType > DTFilter ;
   DTFilter::Pointer dt_obj= DTFilter::New() ;
   dt_obj->SetInput(im) ;
-  dt_obj->SetInsideValue(0.0);
-  dt_obj->SetOutsideValue(255.0);
+  //dt_obj->SetInsideValue(0.0);
+  //dt_obj->SetOutsideValue(255.0);
+
   try{
 	 dt_obj->Update() ;
   }

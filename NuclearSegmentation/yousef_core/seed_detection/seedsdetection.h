@@ -10,7 +10,8 @@
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkLaplacianRecursiveGaussianImageFilter.h"
-#include "itkApproximateSignedDistanceMapImageFilter.h"
+//#include "itkApproximateSignedDistanceMapImageFilter.h"
+#include <itkDanielssonDistanceMapImageFilter.h>
 
 typedef    float     InputPixelType;
 typedef itk::Image< InputPixelType,  2 >   InputImageType;

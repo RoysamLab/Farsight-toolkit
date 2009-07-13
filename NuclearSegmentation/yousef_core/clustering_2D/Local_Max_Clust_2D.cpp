@@ -23,34 +23,12 @@ float get_maximum(float** A, int r1, int r2, int c1, int c2, int* rx, int* cx)
 }
 
 int local_max_clust_2D(float* im_vals, int r, int c, double scale, int* out1, int* seeds_x, int* seeds_y, int num_seeds, int* bin_image)
-{	
-	//float* im_vals;
-    //double* local_max_vals;
-    float** im;
-    //int r, c;
-    //double scale;
+{		
+    float** im;    
     float** local_max_im;
     float** max_nghbr_im;
     int min_r, min_c, max_r, max_c;
-    //int* out1;
-	//int *seeds_x, *seeds_y;
-	//int num_seeds;
-	//unsigned char* bin_image;
-
-
     
-	// convert the input parameters from IDL
-	//im_vals = (float *) argv[0];		    
-	//local_max_vals = (double *) argv[1];	    
-	//r = *(int*) argv[1];//2
-	//c = *(int*) argv[2];//3
-    //scale = *(double*) argv[3];//4
-	//out1 = (int *) argv[4];//5
-	//seeds_x = (int *) argv[5];
-	//seeds_y = (int *) argv[6];
-	//num_seeds = *(int *)argv[7];
-	//bin_image = (unsigned char *) argv[8];
-
     im = (float **) malloc(r* sizeof(float*)); 
     local_max_im = (float **) malloc(r* sizeof(float*)); 
     max_nghbr_im = (float **) malloc(r* sizeof(float*)); 
@@ -61,10 +39,9 @@ int local_max_clust_2D(float* im_vals, int r, int c, double scale, int* out1, in
         max_nghbr_im[i] = (float *) malloc(c* sizeof(float));
         for(int j=0; j<c; j++)
         {
-            im[i][j] = im_vals[(i*c)+j];
-			//double LMX = local_max_vals[(i*c)+j];	
-			max_nghbr_im[i][j] = 0.0;//LMX;			
-            local_max_im[i][j] = 0.0;//LMX;
+            im[i][j] = im_vals[(i*c)+j];			
+			max_nghbr_im[i][j] = 0.0;			
+            local_max_im[i][j] = 0.0;
             
         }
     }
@@ -90,8 +67,8 @@ int local_max_clust_2D(float* im_vals, int r, int c, double scale, int* out1, in
         for(int j=0; j<c; j++)
         {
 			//if(im[i][j] == 0)
-			//	continue;
-			
+			//	continue;			
+
             min_r = (int) max(0.0,i-scale);
             min_c = (int) max(0.0,j-scale);
             max_r = (int)min((double)r-1,i+scale);
@@ -142,15 +119,13 @@ int local_max_clust_2D(float* im_vals, int r, int c, double scale, int* out1, in
         {
             for(int j=0; j<c; j++)
             {
-				//if(im[i][j] == 0)
-				//	continue;
+				if(bin_image[(i*c)+j] == 0)
+					continue;
                 
                 LM = max_nghbr_im[i][j];
                 if(LM==0)
                     continue;
-
-                //int R = ((long)LM)%r;
-                //int C = (LM-R)/r;
+                
 				int C = ((long)LM)%c;
 				int R = (LM-C)/c;
 				
@@ -158,27 +133,20 @@ int local_max_clust_2D(float* im_vals, int r, int c, double scale, int* out1, in
                 if(local_max_im[i][j] !=0 || local_max_im[R][C]!=0) 
                     continue;
                 else
-                {
-					//if(count==10)
-					//{
-					//	fprintf(fid2,"i=%d j=%d max_nghbr_im[i][j]=%f R=%d C=%d max_nghbr_im[R][C]=%f\n",i,j,max_nghbr_im[i][j],R,C,max_nghbr_im[R][C]);
-					//}
+                {					
                     change=change+1;
                     max_nghbr_im[i][j]=max_nghbr_im[R][C];
                 }
             }
         }		
-	printf("Change = %d\n",change);
+		std::cerr<<"Change= " <<change<<std::endl;
     }
-	//fclose(fid);
-    
+	    
         
     for(int i=0; i<r; i++)
     {        
         for(int j=0; j<c; j++)
-        {			
-            //out1[(i*c)+j] = (int) max_nghbr_im[i][j];            
-			//fprintf(fid2,"%d ",out1[(i*c)+j]);
+        {			            
 			int LMX = (int) max_nghbr_im[i][j];
 			int C = ((long)LMX)%c;
 			int R = (LMX-C)/c;
@@ -189,6 +157,10 @@ int local_max_clust_2D(float* im_vals, int r, int c, double scale, int* out1, in
         }
     }
  
+	free(im);    
+    free(local_max_im);
+    free(max_nghbr_im);
+
 	return 1;
 }
                 

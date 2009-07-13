@@ -211,7 +211,7 @@ void yousef_nucleus_seg::runClustering()
 			seed_ymclust[i] = mySeeds[i].y();
 			seed_xmclust[i] = mySeeds[i].x();
 		}
-		local_max_clust_2D(logImagePtr, numRows, numColumns, 5.0, clustImagePtr, seed_xmclust, seed_ymclust, numseedsmclust, binImagePtr);
+		local_max_clust_2D(logImagePtr, numRows, numColumns, regionXY, clustImagePtr, seed_xmclust, seed_ymclust, numseedsmclust, binImagePtr);
 		free( seed_xmclust );
 		free( seed_ymclust );
 	}
@@ -565,7 +565,7 @@ void yousef_nucleus_seg::runAlphaExpansion2D(){
 		//delete [] subDataImg;
 	}
 	//relabel the cells
-	int numOfObjs = /*getConnCompImage*/getRelabeledImage(segImagePtr, 8, 25, numRows, numColumns,numStacks, 1);	
+	int numOfObjs = getRelabeledImage(segImagePtr, 8, 50, numRows, numColumns,numStacks, 1);		
     numOfObjs--;
 	std::cerr << "done with " << numOfObjs<<" found"<<std::endl;
 	std::cerr << "Creating Final Label Image" << std::endl;	
@@ -713,7 +713,7 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 		int NC = 1000;
 		int* subsegImg = new int[x_len*y_len*z_len];			
 		float* Dterms  = multiColGraphLearning(sublogImg, subclustImg, subsegImg, y_len, x_len, z_len, &NC,refineRange);
-		std::cerr<<"    Graph Coloring done with "<<NC<<" colors"<<std::endl;
+		std::cerr<<"    Graph Coloring done with "<<NC-1<<" colors"<<std::endl;
 
 		std::cerr<<"    Starting alpha-expansion..";
 		//Call the alpha expansion module		
@@ -954,13 +954,13 @@ int yousef_nucleus_seg::getRelabeledImage(int *IM, int connectivity, int minSize
 	im = InputImageType::New();
 	InputImageType::PointType origin;
     origin[0] = 0; 
-    origin[1] = 0;    
+    origin[1] = 0;    	
 	origin[2] = 0;    
     im->SetOrigin( origin );
 
     InputImageType::IndexType start;
     start[0] =   0;  // first index on X
-    start[1] =   0;  // first index on Y    
+    start[1] =   0;  // first index on Y    	
 	start[2] =   0;  // first index on Z    
     InputImageType::SizeType  size;
     size[0]  = c;  // size along X
@@ -1019,13 +1019,15 @@ int yousef_nucleus_seg::getRelabeledImage(int *IM, int connectivity, int minSize
     }
 	
 	//write the output of the labeling CC filter into our input image
-	IteratorType iterator2(relabel->GetOutput(),relabel->GetOutput()->GetRequestedRegion());
+	IteratorType iterator2(relabel->GetOutput(),relabel->GetOutput()->GetRequestedRegion());	
 	for(int i=0; i<r*c*z; i++)
 	{		
 		if(binImagePtr[i] == 0)
 			IM[i] = 0;
 		else
 			IM[i] = iterator2.Get()-1;		
+		if(IM[i] < 0)
+			IM[i]=0;
 		++iterator2;	
 	}
 
