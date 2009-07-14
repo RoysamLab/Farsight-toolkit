@@ -58,6 +58,7 @@ int main(int argc, char *argv[])
 	
 	if(argc < 7) {
 	    printf("\nUsage: <input file> <sizeX> <sizeY> <sizeZ> <sizeTime> <output file> <threshold>.\n");
+		// printf("\nUsage: <input file> <sizeX> <sizeY> <sizeZ>  <output file> <threshold>.\n"); // by xiao
 	    exit(1);
 	}
 
@@ -68,29 +69,57 @@ int main(int argc, char *argv[])
 	char *outfilename = new char[80];
 	int i,j,k, t;
 	DATATYPEOUT *volout;
-	float threshold;
+	//float threshold;
+	double threshold;
 	int sizeExpand = 0;  //10;
 
 	infilename = argv[1];
 	sizeX = atoi(argv[2]);
 	sizeY = atoi(argv[3]);
 	sizeZ = atoi(argv[4]);
-	sizeTime = atoi(argv[5]);
+	sizeTime = atoi(argv[5]); 
 	outfilename = argv[6];
 	threshold = atof(argv[7]);
+
+	//outfilename = argv[5];
+	//threshold = atof(argv[6]);
 
 	volin = (DATATYPEIN*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(DATATYPEIN));
 	volout = (DATATYPEOUT*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(DATATYPEOUT));
 
-	if((infile=fopen(infilename,"rb"))==NULL)
-			{printf("Input file open error!\n");
+	//if((infile=fopen(infilename,"rb"))==NULL)
+
+/*	infile=fopen(infilename,"rb"); 
+    if ( infile == NULL ) 
+    { 
+     printf("Input file open error!\n"); 
+     exit( -1 ); 
+    } 
+*/
+
+
+   errno_t err=fopen_s(&infile,infilename,"rb");
+   if(err)
+   {printf("Input file open error!\n");
 			 exit(-1);
 			}
 
-	if((outfile=fopen(outfilename,"wb"))==NULL)
+   /*
+    if((err=fopen_s(&infile,infilename,"rb"))!=NULL)
+			{printf("Input file open error!\n");
+			 exit(-1);
+			}
+   */
+
+   // errno_t err; 
+	//if((outfile=fopen(outfilename,"wb"))==NULL)
+
+
+	if((err=fopen_s(&outfile,outfilename,"wb"))!=NULL)
 			{printf("Output file open error!\n");
 			 exit(-1);
 			}
+
 
 /*	if 0 	// read another file if necessary
 	FILE *infile2;

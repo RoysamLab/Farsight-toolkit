@@ -5,6 +5,8 @@
 // Date: 12/22/2005
 // Status: under modification of MDL
 
+#pragma warning(disable : 4996)
+
 #include "morphGraphPrune.h"
 #include "distTransform.h"
 #include "MinSpanTree.h"
@@ -13,6 +15,7 @@
 #include <boost/graph/graphviz.hpp>
 #include <iostream>
 #include <fstream>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -134,20 +137,34 @@ int main(int argc, char *argv[])
   int *degree_nodes_initialMST;
   int times_erosion;
   int times_dilation;
-  float densityFactor;
+  double densityFactor;  // xiao liang
+
+  // float densityFactor;
+
+ 
+
 #if OUTPUT_DISTTRANS
   // Debugging variable.
   float distTransFactor;
 #endif
   double meanDensityBranch[MAXNumBranch];   // Suppose at most MAXNumBranch branches at the 2nd level branch from BB
   double meanVesselBranch[MAXNumBranch];
-  float length_leaf[MAXNumBranch];
+
+  double length_leaf[MAXNumBranch];
+ 
+  //float length_leaf[MAXNumBranch];
 
   double aveDensityBranch[MAXNumBranch];   // Suppose at most MAXNumBranch branches at the 2nd level branch from BB
   double aveVesselBranch[MAXNumBranch];
-  float length_2leaf[MAXNumBranch];  // length of two level branches
 
-  float length_edge;
+  double length_2leaf[MAXNumBranch];  // length of two level branches
+
+  // float length_2leaf[MAXNumBranch];  // length of two level branches
+
+  // float length_edge; 
+
+  double length_edge;
+
   int *edge_eroded;
   int num_edge_eroded;
   int edge_source, edge_target;
@@ -174,6 +191,9 @@ int main(int argc, char *argv[])
 
   filedir = new char[200];
   infilename = new char[300];
+
+
+
   filedir = argv[1];
   strcpy(infilename, filedir);
   strcat(infilename, argv[2]);
@@ -187,10 +207,21 @@ int main(int argc, char *argv[])
   strcat(filedir, argv[3]);
   //cout << "second file name" << filedir << endl;
 
+
   if((volfile=fopen(filedir,"rb"))==NULL)  // open vol file
 			{cerr << "couldn't open volfile " << filedir << " for input" << endl;
 			 exit(-1);
 			}
+			
+   errno_t err;
+/*
+   
+    if((err=fopen_s(&volfile,filedir,"rb"))!=NULL)
+			{printf("Input file open error!\n");
+			 exit(-1);
+			}
+*/
+
   
   sizeX = atoi(argv[4]);
   sizeY = atoi(argv[5]);
@@ -200,11 +231,15 @@ int main(int argc, char *argv[])
 
   printf("sz = %ld\n", sz);
 
+
+/*
   if ((fout = fopen(argv[7], "w")) == NULL)
   {
     printf("Cannot open %s for writing\n",argv[7]);
     exit(1);
   }
+
+  
 
   if ((fout_txt = fopen("out.txt", "w")) == NULL)  // open out.txt file for writing
   {
@@ -216,6 +251,24 @@ int main(int argc, char *argv[])
 			{cerr << "couldn't open vessel file for input" << endl;
 			 exit(-1);
 			}
+
+*/
+
+  if((err=fopen_s(&fout,argv[7],"w"))!=NULL)
+			{printf("Input file open error!\n");
+			 exit(1);
+			}
+
+   if((err=fopen_s(&fout_txt ,"out.txt","w"))!=NULL)
+			{printf("Input file open error!\n");
+			 exit(1);
+			}
+   if((err=fopen_s(&vesselfile ,argv[8],"rb"))!=NULL)
+			{printf("Input file open error!\n");
+			 exit(1);
+			}
+
+
 
 #if OUTPUT_DISTTRANS
   if((somafile=fopen(argv[10], "rb"))==NULL)  // open vol file
@@ -391,7 +444,10 @@ int main(int argc, char *argv[])
 							// associate each edge with a weight (associate with image density) 
 							edge_w[idx_edge] = float(kk*kk + jj*jj + ii*ii) /( (distTransFactor+0.1)  * (densityFactor*0.02+1));
 							#else
-							edge_w[idx_edge] = sqrt(float(kk*kk + jj*jj + ii*ii)) / (densityFactor*0.02+1);
+
+							// edge_w[idx_edge] = sqrt(float(kk*kk + jj*jj + ii*ii)) / (densityFactor*0.02+1);
+
+							edge_w[idx_edge] =(float)( sqrt(float(kk*kk + jj*jj + ii*ii)) / (densityFactor*0.02+1));
 							#endif
 
 
@@ -420,9 +476,14 @@ int main(int argc, char *argv[])
         for (i = 0; i < sizeX; i++) {
 			idx = k*slsz + j*sizeX + i; 
 			if (voxelNodeIndex[idx] != 0) {
+				/*
 				vertexPos[voxelNodeIndex[idx]].x = i;
 				vertexPos[voxelNodeIndex[idx]].y = j;
 				vertexPos[voxelNodeIndex[idx]].z = k;
+				*/
+                vertexPos[voxelNodeIndex[idx]].x = (float) i;
+				vertexPos[voxelNodeIndex[idx]].y = (float) j;
+				vertexPos[voxelNodeIndex[idx]].z = (float) k;
 			}
   }
 
@@ -638,7 +699,7 @@ int main(int argc, char *argv[])
 				length_leaf[0] += length_edge;
 				indVert_last = indVert;
 
-				idx = vertexPos[indVert].z *slsz + vertexPos[indVert].y *sizeX + vertexPos[indVert].x;
+				idx = (long)(vertexPos[indVert].z *slsz + vertexPos[indVert].y *sizeX + vertexPos[indVert].x);
 				meanDensityBranch[0] += volin[idx];
 				meanVesselBranch[0] += volvessel[idx];
 			}
@@ -733,7 +794,7 @@ int main(int argc, char *argv[])
 					length_leaf[ind2Brch] += length_edge;
 					indVert_last = indVert;
 
-					idx = vertexPos[indVert].z *slsz + vertexPos[indVert].y *sizeX + vertexPos[indVert].x;
+					idx = (long)(vertexPos[indVert].z *slsz + vertexPos[indVert].y *sizeX + vertexPos[indVert].x);
 					meanDensityBranch[ind2Brch] += volin[idx];
 					meanVesselBranch[ind2Brch] += volvessel[idx];
 				}

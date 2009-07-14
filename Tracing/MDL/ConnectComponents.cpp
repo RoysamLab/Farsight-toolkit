@@ -60,7 +60,8 @@ int main(int argc, char *argv[])
 	DATATYPEOUT *volout;
 	int *volIndex;
 	long idx;
-	float threshold;
+	//float threshold;
+	double threshold;
 	int vertHistComp[100000];
 
 	infilename = argv[1];
@@ -74,12 +75,25 @@ int main(int argc, char *argv[])
 	volout = (DATATYPEOUT*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEOUT));
 	volIndex = (int*)malloc(sizeX*sizeY*sizeZ*sizeof(int));
 
+	/* 
 	if((infile=fopen(infilename,"rb"))==NULL)
 			{printf("Input file open error!\n");
 			 exit(-1);
 			}
 
 	if((outfile=fopen(outfilename,"wb"))==NULL)
+			{printf("Output file open error!\n");
+			 exit(-1);
+			}
+    */
+
+	errno_t err; 
+    if((err=fopen_s(&infile,infilename,"rb"))!=NULL)
+			{printf("Input file open error!\n");
+			 exit(-1);
+			}
+  
+	if((err=fopen_s(&outfile,outfilename,"wb"))!=NULL)
 			{printf("Output file open error!\n");
 			 exit(-1);
 			}

@@ -66,7 +66,8 @@ int main(int argc, char *argv[])
 	int i,j,k, t;
 	DATATYPEOUT *volout;
 	long idx;
-	float threshold;
+	//float threshold;
+	double threshold;
 
 	infilename = argv[1];
 	sizeX = atoi(argv[2]);
@@ -79,7 +80,7 @@ int main(int argc, char *argv[])
 	volin = (DATATYPEIN*)malloc(sizeX*sizeY*(sizeZ)*sizeof(DATATYPEIN));
 	volout = (DATATYPEOUT*)malloc(sizeX*sizeY*(sizeZ)*sizeof(DATATYPEOUT));
 
-	if((infile=fopen(infilename,"rb"))==NULL)
+	/*if((infile=fopen(infilename,"rb"))==NULL)
 			{printf("Input file open error!\n");
 			 exit(-1);
 			}
@@ -88,6 +89,19 @@ int main(int argc, char *argv[])
 			{printf("Output file open error!\n");
 			 exit(-1);
 			}
+    */
+
+	  errno_t err; 
+    if((err=fopen_s(&infile,infilename,"rb"))!=NULL)
+			{printf("Input file open error!\n");
+			 exit(-1);
+			}
+
+	if((err=fopen_s(&outfile,outfilename,"wb"))!=NULL)
+			{printf("Input file open error!\n");
+			 exit(-1);
+			}
+
 
 /*	if 0 	// read another file if necessary
 	FILE *infile2;

@@ -61,8 +61,9 @@ int main(int argc, char *argv[])
   int flagBound;
   int numBound=0;
   int border;
-  float s;
-  float kernelWeight[3][3];
+  //float s;   by xiao liang  let double s in the local definition,see the following
+
+  double kernelWeight[3][3];  // by xiao  to reduce warning
 
   if (argc < 6)
   {
@@ -70,12 +71,23 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-
+/*
   if ((filein = fopen(argv[1],"rb")) == NULL)
   {
     printf("Cannot open %s\n",argv[1]);
     exit(1);
   }
+*/
+
+
+   errno_t err; 
+    if((err=fopen_s(&filein,argv[1],"rb"))!=NULL)
+			{printf("Input file open error!\n");
+			 exit(-1);
+			}
+
+
+	
 
   sizeX = atoi(argv[2]);
   sizeY = atoi(argv[3]);
@@ -100,11 +112,22 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
+
+  
+  /*
   if ((fileout = fopen(argv[5],"w")) == NULL)
   {
     printf("Cannot open %s for writing\n",argv[5]);
     exit(1);
   }
+
+*/
+
+
+ if((err=fopen_s(&fileout,argv[5],"w"))!=NULL)
+			{printf("Input file open error!\n");
+			 exit(-1);
+			}
 
 
   for (idx = 0; idx < sls*sizeZ; idx++)  {
@@ -189,7 +212,7 @@ int main(int argc, char *argv[])
 
 
 	//print force vectors
-    s = 0.002; //scale on outputs  0.002
+    double s = 0.002; //scale on outputs  0.002  
 	for (k = 0; k < sizeZ; k++)
 	  for (j = 0; j < sizeY; j++)
 		for (i = 0; i < sizeX; i++) {

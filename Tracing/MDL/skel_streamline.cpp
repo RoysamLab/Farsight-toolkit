@@ -69,16 +69,21 @@ Vector normalize(Vector r)
     mag = r.xd * r.xd + r.yd * r.yd + r.zd * r.zd;
     if (mag != 0.0) {
         mag = 1.0 / sqrt(mag);
-        r.xd *= mag;
-        r.yd *= mag;
-        r.zd *= mag;
+        r.xd *= (float) mag;
+        r.yd *= (float) mag;
+        r.zd *= (float )mag;
+
+// add (float ) to clean warning by xiao liang
+
         }
     return r;
 }
 
 
 Vector interpolation(float x, float y, float z, int sizx, int sizy, int sizz, Vector *forcevec);
-void rk2(float x, float y, float z, int sizx, int sizy, int sizz, double steps, Vector *Force_ini, VoxelPosition *nextPos);
+//void rk2(float x, float y, float z, int sizx, int sizy, int sizz, double steps, Vector *Force_ini, VoxelPosition *nextPos);
+
+void rk2(float x, float y, float z, int sizx, int sizy, int sizz, float steps, Vector *Force_ini, VoxelPosition *nextPos);
 
 
 
@@ -141,11 +146,19 @@ int main(int argc, char *argv[])
      return -1;
   }
 
+/*
   if ((fout = fopen(argv[6],"w")) == NULL)
   {
     printf("Cannot open %s for writing\n",argv[6]);
     exit(1);
   }
+*/
+
+   errno_t err; 
+ if((err=fopen_s(&fout,argv[6],"w"))!=NULL)
+			{printf("Input file open error!\n");
+			 exit(-1);
+	}
 
 
   if (argc > 7)
@@ -178,9 +191,12 @@ int main(int argc, char *argv[])
 	    // normalize the vectors
 	    vecLength = sqrt(vecin.xd * vecin.xd + vecin.yd * vecin.yd +vecin.zd * vecin.zd);
 	    if (vecLength ==0)  vecLength=0.000001;
-	    force[idx].xd = vecin.xd / pow(vecLength, 5.0/6);
-	    force[idx].yd = vecin.yd / pow(vecLength, 5.0/6);
-	    force[idx].zd = vecin.zd / pow(vecLength, 5.0/6);
+	    force[idx].xd =  vecin.xd /(float)pow(vecLength, 5.0/6);
+	    force[idx].yd = vecin.yd /(float)pow(vecLength, 5.0/6);
+	    force[idx].zd =  vecin.zd /(float)pow(vecLength, 5.0/6);
+
+		// add (float) to clean warning by xiaoliang
+
 	    //force[idx].xd = vecin.xd / vecLength;
 	    //force[idx].yd = vecin.yd / vecLength;
 	    //force[idx].zd = vecin.zd / vecLength;
@@ -789,7 +805,8 @@ int main(int argc, char *argv[])
 	FlagOnSkeleton[idx] = 1;
 
 	while(streamSteps < 4000)   {    // < 4000
-		rk2(Startpos.x, Startpos.y, Startpos.z, sizeX, sizeY, sizeZ, 0.8, force, &Nextpos);   //0.2, 0.8, 2
+		rk2(Startpos.x, Startpos.y, Startpos.z, sizeX, sizeY, sizeZ, (float)0.8, force, &Nextpos);   //0.2, 0.8, 2   // add (float)
+
 		streamSteps++;
 		Startpos.x = Nextpos.x;
 		Startpos.y = Nextpos.y;
@@ -863,7 +880,9 @@ Vector interpolation(float x, float y, float z, int sizx, int sizy, int sizz, Ve
     }
 
 
-void rk2(float x, float y, float z, int sizx, int sizy, int sizz, double steps, Vector *Force_ini, VoxelPosition *nextPos)
+//void rk2(float x, float y, float z, int sizx, int sizy, int sizz, double steps, Vector *Force_ini, VoxelPosition *nextPos)
+
+void rk2(float x, float y, float z, int sizx, int sizy, int sizz, float steps, Vector *Force_ini, VoxelPosition *nextPos)
    {
 	long slsz;
 	Vector OutForce;

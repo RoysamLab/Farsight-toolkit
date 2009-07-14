@@ -63,10 +63,12 @@ int main(int argc, char *argv[])
 	long idx, iidx1, iidx2;
 	int timesDiffuse;
 	int border;
-	float kernelWeight[3][3];
+	//float kernelWeight[3][3];
+	double kernelWeight[3][3];
 	double diverg;
 	double lamda;
-	float threshold;
+	//float threshold;
+	double threshold;
 	double voxelUpdate;
 	float k_factor;
 	double Dxy1, Dxy2;
@@ -86,13 +88,28 @@ int main(int argc, char *argv[])
 	volin = (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN));
 	volout = (DATATYPEOUT*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEOUT));
 	gradVec = (Vector *)malloc(sizeX*sizeY*sizeZ*sizeof(Vector));
+     
 
+
+	/*
 	if((infile=fopen(infilename,"rb"))==NULL)
 			{printf("Input file open error!\n");
 			 exit(-1);
 			}
 
 	if((outfile=fopen(outfilename,"wb"))==NULL)
+			{printf("Output file open error!\n");
+			 exit(-1);
+			}
+	*/
+
+	 errno_t err; 
+       if((err=fopen_s(&infile,infilename,"rb"))!=NULL)
+			{printf("Input file open error!\n");
+			 exit(-1);
+			}
+
+	if((err=fopen_s(&outfile,outfilename,"wb"))!=NULL)
 			{printf("Output file open error!\n");
 			 exit(-1);
 			}
@@ -145,15 +162,15 @@ int main(int argc, char *argv[])
 					for (d1 = -1; d1 <= 1; d1++)  {
 						iidx1 = (k+d2) *sls + (j+d1) *sizeX + i-1;
 						iidx2 = (k+d2) *sls + (j+d1) *sizeX + i+1;
-						gradVec[idx].xd = gradVec[idx].xd + kernelWeight[d2+1][d1+1]*(volin[iidx2] - volin[iidx1]);
+						gradVec[idx].xd =(float) (gradVec[idx].xd + kernelWeight[d2+1][d1+1]*(volin[iidx2] - volin[iidx1]));
 
 						iidx1 = (k+d2) *sls + (j-1) *sizeX + (i+d1);
 						iidx2 = (k+d2) *sls + (j+1) *sizeX + (i+d1);
-						gradVec[idx].yd = gradVec[idx].yd + kernelWeight[d2+1][d1+1]*(volin[iidx2] - volin[iidx1]);
+						gradVec[idx].yd = (float) (gradVec[idx].yd + kernelWeight[d2+1][d1+1]*(volin[iidx2] - volin[iidx1]));
 
 						iidx1 = (k-1) *sls + (j+d2) *sizeX + (i+d1);
 						iidx2 = (k+1) *sls + (j+d2) *sizeX + (i+d1);
-						gradVec[idx].zd = gradVec[idx].zd + kernelWeight[d2+1][d1+1]*(volin[iidx2] - volin[iidx1]);
+						gradVec[idx].zd = (float)  (gradVec[idx].zd + kernelWeight[d2+1][d1+1]*(volin[iidx2] - volin[iidx1]));
 
 				}
 		}
@@ -251,7 +268,7 @@ int main(int argc, char *argv[])
 						for (ii=-1; ii<=1; ii++) {
 							blockAve += volin[(k+kk)*sizeX*sizeY + (j+jj)*sizeX + (i+ii)];
 				}
-				volout[k *sizeX*sizeY + j *sizeX + i] = blockAve / 27;
+				volout[k *sizeX*sizeY + j *sizeX + i] = (unsigned char) (blockAve / 27);  // by xiao liang     blockAve/27
 	}
 
 

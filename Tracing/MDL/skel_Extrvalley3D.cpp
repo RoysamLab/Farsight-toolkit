@@ -58,6 +58,7 @@ int main (int argc, char *argv[])
 
   infilename = new char[80];
   infilename = argv[1];
+
   fin.open(infilename);
   if (!fin)  {
      cerr << "couldn't open " << infilename << " for input" << endl;
@@ -71,11 +72,18 @@ int main (int argc, char *argv[])
   slsz = L*M;        // slice size
   sz = slsz*N;
 
-  if ((fout = fopen(argv[5],"w")) == NULL)
+ /* if ((fout = fopen(argv[5],"w")) == NULL)
   {
     printf("Cannot open %s for writing\n",argv[5]);
     exit(1);
   }
+  */
+
+  errno_t err; 
+ if((err=fopen_s(&fout,argv[5],"w"))!=NULL)
+			{printf("Input file open error!\n");
+			 exit(-1);
+			}
 
   Iu = new float[L*M*N];
   Iv = new float[L*M*N];
@@ -156,10 +164,13 @@ int main (int argc, char *argv[])
 	     Transpose(RotMatrixTransp, RotMatrix);
 	     Matrix3Multiply(HessianPrime1, RotMatrixTransp, Hessian);
 	     Matrix3Multiply(HessianPrime, HessianPrime1, RotMatrix);
-	     k1 = 0.5*(HessianPrime[1][1]+HessianPrime[2][2])
-	         +0.5*sqrt(pow((Hessian[1][1]-Hessian[2][2]),2)+4*Hessian[1][2]*Hessian[2][1]);
-	     k2 = 0.5*(HessianPrime[1][1]+HessianPrime[2][2])
-	         -0.5*sqrt(pow((Hessian[1][1]-Hessian[2][2]),2)+4*Hessian[1][2]*Hessian[2][1]);
+	     k1 = (float)0.5*(HessianPrime[1][1]+HessianPrime[2][2])
+	         +(float)0.5*sqrt(pow((Hessian[1][1]-Hessian[2][2]),2)+4*Hessian[1][2]*Hessian[2][1]);
+	     k2 = (float)0.5*(HessianPrime[1][1]+HessianPrime[2][2])
+	         -(float)0.5*sqrt(pow((Hessian[1][1]-Hessian[2][2]),2)+4*Hessian[1][2]*Hessian[2][1]);
+
+		 ///  add (float) to remove warning 
+
 	     gLength = sqrt(gradient0.x*gradient0.x +gradient0.y*gradient0.y +gradient0.z*gradient0.z);
 	     //if (k2>k1) k1=k2;
 	     if(gLength !=0) curv[idx] = -(k1)/gLength;   else curv[idx]=9999;//set large to be included in skeleton
@@ -265,6 +276,8 @@ int main (int argc, char *argv[])
   printf("Num of seeds is %d\n", numSeeds);
 
   fclose(fout);
+
+  printf("done \n");
   return 0;
 
 }
