@@ -910,11 +910,15 @@ void View3D::MergeTraces()
 {
 	if (this->compList.size() > 1)
 	{
-		//if(plot)
-		//{
-		//	plot->close();
-		//	//delete plot;
-		//}
+		if(this->plot)
+		{
+			this->plot->close();
+			//delete plot;
+		}
+		if (this->table)
+		{
+			this->table->close();
+		}
 		this->SelectedComp();
 		//this->Rerender();
 		this->compList.clear();
@@ -1127,7 +1131,7 @@ void View3D::ShowMergeStats()
 	this->table->setModel(this->model);
 	this->table->setSelectionModel(this->selModel); 
 	this->table->setSelectionBehavior(QAbstractItemView::SelectRows);
-	this->table->sortByColumn(7,Ascending);
+	this->table->sortByColumn(8,Ascending);
 	this->table->update();
 	this->table->show();
 	this->plot = new PlotWindow(this->selModel);
