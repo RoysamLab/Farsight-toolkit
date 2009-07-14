@@ -106,6 +106,22 @@ public:
 	{
 		return traceColor;
 	};
+	TraceLine(const TraceLine &t)
+	{
+		this->traceColor = t.traceColor;
+		this->m_id = t.m_id;
+		this->m_markers = t.m_markers;
+		this->m_type = t.m_type;
+		this->m_parent = NULL;
+		for(int counter=0; counter< t.m_branches.size(); counter++)
+		{
+			TraceLine *temp = new TraceLine();
+			temp->SetParent(this);
+			this->AddBranch(temp);
+			*temp = *t.m_branches[counter];
+		}
+		this->m_trace_bits = t.m_trace_bits;
+	}
 private:
 	double traceColor;
 	int m_id;
@@ -123,19 +139,38 @@ struct TraceObject{
 
 public:
 	TraceObject(){}
+	TraceObject(const TraceObject &T)
+	{
+		for(int counter=0; counter<T.trace_lines.size(); counter++)
+		{
+			TraceLine* temp = new TraceLine();
+			*temp = *(T.trace_lines[counter]);
+			this->trace_lines.push_back(temp);
+		}
+		//this->SmallLines = T.SmallLines; FIXME: is  'SmallLines' storing some redundant information? we need to take care of it in the copy constructor.
+		this->smallLineColor = T.smallLineColor;
+		this->mergeLineColor = T.mergeLineColor;
+	}
 	~TraceObject()
 	{
 		for(unsigned int counter=0; counter<trace_lines.size(); counter++)
 			delete trace_lines[counter];
 	}
-	
+	double getSmallLineColor()
+	{
+		return this->smallLineColor;
+	}
+	double getMergeLineColor()
+	{
+		return this->mergeLineColor;
+	}
 	void setSmallLineColor(double set)
 	{
-		smallLineColor=set;
+		this->smallLineColor=set;
 	}
 	void setMergeLineColor(double set)
 	{
-		mergeLineColor=set;
+		this->mergeLineColor=set;
 	}
 	bool ReadFromSWCFile(char * filename);
 	bool ReadFromRPIXMLFile(char * filename);
