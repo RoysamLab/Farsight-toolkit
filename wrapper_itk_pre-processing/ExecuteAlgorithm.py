@@ -33,7 +33,7 @@ READER_PIXELTYPE = "F"					# Input Image pixeltype (UC, US, F)
                                         # We choose this by default, and use a resampler to change 
                                         # pixel type back to unsigned char or unsigned int.
 # READER_DIM							# Input Image dimension (2, 3)
-# Writer
+# Writer    
 WRITER = "itkImageFileWriter"			# Class Name
 # WRITER_TYPE							# Output Image type (UC, US, F)
 # WRITER_DIM							# Output Image dimension (2, 3)
@@ -120,6 +120,7 @@ def GetReader(thisalgorithm, dimension, pixelType):
 		else:
 			reader = eval( READER + pixelType + dimension + "_New()" )
 		readerNameGenerator = itkNumericSeriesFileNames_New()			# Name generator
+		readerNameGenerator.SetSeriesFormat( thisalgorithm.GetInputFileName() )														
 	# 	Set start, end, and increment index, and the format
 		SetSeriesAndIndices(readerNameGenerator, thisalgorithm)
 
@@ -141,7 +142,6 @@ def GetReader(thisalgorithm, dimension, pixelType):
 
 def GetWriter(thisalgorithm, dimension, pixelType):
 	""" Get Writer Object to write the output file """
-
 	# If input stack
 	if dimension == "3" and thisalgorithm.GetOutputImageStack():
 
@@ -150,6 +150,7 @@ def GetWriter(thisalgorithm, dimension, pixelType):
 
 		writer = eval( WRITER + pixelType + dimension + pixelType + "2" + "_New()" )	# ImageSeriesReader			
 		writerNameGenerator = itkNumericSeriesFileNames_New()							# Name generator
+		writerNameGenerator.SetSeriesFormat( thisalgorithm.GetOutputFileName() )
 	# 	Set start, end, and increment index, and the format
 		SetSeriesAndIndices(writerNameGenerator, thisalgorithm)
 
@@ -167,7 +168,7 @@ def GetWriter(thisalgorithm, dimension, pixelType):
 
 def GetFilter(thisalgorithm, dimension, pixelType):	
 	""" Get the filter object - the main algorithm """
-	if thisalgorithm.GetOutputType():
+	if thisalgorithm.GetOutputType():    
 		if thisalgorithm.GetUseCaster():
 			filter = eval ( thisalgorithm.GetName() + READER_PIXELTYPE + dimension + READER_PIXELTYPE + dimension + "_New()" )
 		else:
@@ -196,7 +197,6 @@ def AssignStructuringElement(filter, READER_PIXELTYPE, dimension, radius):
 	filter.SetKernel(element)
 
 def SetSeriesAndIndices(Generator, algorithm):
-	Generator.SetSeriesFormat( algorithm.GetInputFileName() )
 	Generator.SetStartIndex( algorithm.GetStartIndex() )
 	Generator.SetEndIndex( algorithm.GetEndIndex() )
 	Generator.SetIncrementIndex( algorithm.GetIncrementIndex() )
@@ -303,8 +303,6 @@ def ExecuteVesselnessAlgorithm(thisalgorithm):
 	vesselnessfilter = itkHessian3DToVesselnessMeasureImageFilterF_New()
 	eval ( "vesselnessfilter.SetAlpha1( " + str(parameters["Alpha1"]["value"]) + ")" )
 	eval ( "vesselnessfilter.SetAlpha2( " + str(parameters["Alpha2"]["value"]) + ")" )
-
-
 
 	PipelineInputOutput([reader, hessianfilter, vesselnessfilter, writer])
 

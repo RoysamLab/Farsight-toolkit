@@ -11,7 +11,6 @@
 
 import wx
 import wx.lib.agw.hyperlink as hyper	# Without explicitly loading, it gives an error.
-import ListOfURLs
 
 class FilterObjectApp(wx.App):
 	def __init__(self, state, algorithm):

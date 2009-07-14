@@ -224,15 +224,15 @@ class FilterAlgorithmGUIwx(FilterObjectGUIwx):
 				 self.algorithm.AssignParameter(
 						 self.keys[num],
 						 self.parameterEntries[num].GetValue() )
-		self.algorithm.CheckParameterValidity()					
-																		
-        	self.filterButton.Enable(False)
-        	xmlObject = FilterObjectXML.FilterObjectXML()
-        	XMLFileName = "parameters.xml"		# XXX To be generalized
-        	xmlObject.UpdateDocument(self.algorithm, XMLFileName)
-        	ExecuteAlgorithm.defaultAlgorithmExecution(XMLFileName)
+		self.algorithm.CheckParameterValidity()		# Not implemented currently			
+																				
+		self.filterButton.Enable(False)
+		xmlObject = FilterObjectXML.FilterObjectXML()
+		XMLFileName = "parameters.xml"		# XXX To be generalized
+		xmlObject.UpdateDocument(self.algorithm, XMLFileName)
+		ExecuteAlgorithm.defaultAlgorithmExecution(XMLFileName)
 
-        	self.filterButton.Enable(True)
+		self.filterButton.Enable(True)
 
 #		if not flag:
 #			self.Destroy()

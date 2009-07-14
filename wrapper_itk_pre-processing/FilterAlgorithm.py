@@ -142,11 +142,14 @@ class FilterAlgorithm(FilterObject):
 
 	def CheckParameterValidity(self):
 		""" Check if all the parameters are valid. """
+		# Not implemented currently.
 		# This function is currently not very thorough in the checks.
 
 		# 1. Only some output formats support float data type - for example, .vtk
-		if self.__outputImagePixelType == "F":
-			return (basic.CheckFileExtension(name, ".vtk") or basic.CheckFileExtension(name, ".img"))
-		else:
-			return True
+#		if self.__outputImagePixelType == "F":
+#			name = self.GetOutputFileName()
+#			return (basic.CheckFileExtension(name, ".vtk") or basic.CheckFileExtension(name, ".img"))
+#		else:
+#			return True
+		return True			
 

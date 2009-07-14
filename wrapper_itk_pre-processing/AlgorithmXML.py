@@ -128,7 +128,7 @@ class AlgorithmXML(ObjectXML):
         for name in listOfAttributes:
             titleName = self.CapitalizeFirstLettter(name)
             eval( "thisalgorithm.Set" + titleName + "( element.getAttribute(\"" + name + "\"))" )
-	
+		
     def GetAllOtherAttributes(self, listOfAttributes, element, thisalgorithm):
         for name in listOfAttributes:
             titleName = self.CapitalizeFirstLettter(name)

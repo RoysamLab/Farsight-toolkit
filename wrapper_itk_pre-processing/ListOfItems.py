@@ -10,7 +10,6 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 import wx				# Import wxPython library for GUI.	
-import ListOfURLs		# For URLs to the algorithm's wiki page.
 import AlgorithmXML
 
 [wxID_FRAMELISTBOX] = [wx.NewId() for _init_ctrls in range(1)]
