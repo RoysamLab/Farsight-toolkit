@@ -97,8 +97,11 @@ void View3D::Initialize()
   this->resize(640, 480);
   this->setWindowTitle(tr("Trace editor"));
   this->QVTK->GetRenderWindow()->Render();
-  this->model = NULL;
-  this->selModel = NULL;
+//model view
+  //this->model = NULL;
+  //this->selModel = NULL;
+  this->model = new QStandardItemModel;
+  this->selModel = new QItemSelectionModel(model);
   this->plot = NULL;
   this->histo = NULL;
   this->table = new QTableView();
@@ -370,7 +373,187 @@ void View3D::CreateSphereActor()
   this->SphereActor->SetPickable(0);            //dont want to pick the sphere itself
 }
 
-/* update trace data */
+/* update settings */
+void View3D::ShowSettingsWindow()
+{
+  //make sure the values in the input fields are up-to-date
+  this->MaxGapField->setText(QString::number(this->gapMax));
+  this->GapToleranceField->setText(QString::number(this->gapTol));
+  this->LineLengthField->setText(QString::number(this->smallLine));
+  this->ColorValueField->setText(QString::number(this->SelectColor));
+  this->LineWidthField->setText(QString::number(this->lineWidth));
+  this->SettingsWidget->show();
+}
+
+void View3D::ApplyNewSettings()
+{
+  this->gapMax = this->MaxGapField->text().toInt();
+  this->gapTol = this->GapToleranceField->text().toDouble();
+  this->smallLine = this->LineLengthField->text().toFloat();
+  this->SelectColor = this->ColorValueField->text().toDouble();
+  this->lineWidth = this->LineWidthField->text().toFloat();
+  //this->Rerender();
+  this->SettingsWidget->hide();
+}
+
+void View3D::HideSettingsWindow()
+{
+  this->SettingsWidget->hide();
+}
+bool View3D::setTol()
+{
+	bool change = false;
+	char select=0;
+	std::cout<<"Settings Configuration:\n gap (t)olerance:\t" <<gapTol
+		<<"\ngap (m)ax:\t"<<gapMax
+		<<"\n(s)mall line:\t"<< smallLine
+		<<"\nselection (c)olor:\t"<<SelectColor
+		<<"\nline (w)idth:\t"<<lineWidth
+		<<"\n(e)nd edit settings\n";
+	while (select !='e')
+	{
+		std::cout<< "select option:\t"; 
+		std::cin>>select;
+		switch(select)
+		{
+		case 'm':
+			{
+				int newMax;
+				std::cout<< "maximum gap length\n";
+				std::cin>>newMax;
+				if (newMax!=gapMax)
+				{
+					gapMax=newMax;
+					change= true;
+				}
+				break;
+			}//end of 'm'
+		case 't':
+			{
+				double newTol;
+				std::cout<< "gap length tolerance\n";
+				std::cin>>newTol;
+				if (newTol!=gapTol)
+				{
+					gapTol=newTol;
+					change= true;
+				}
+				break;
+			}//end of 't'
+		case 's':
+			{
+				float newSmall;
+				std::cout<< "small line length\n";
+				std::cin>>newSmall;
+				if (newSmall!=smallLine)
+				{
+					smallLine=newSmall;
+					change= true;
+				}
+				break;
+			}// end of 's'
+		case 'c':
+			{
+				double newColor;
+				std::cout<< "color value RGB scalar 0 to 1\n";
+				std::cin>>newColor;
+				if (newColor!=SelectColor)
+				{
+					SelectColor=newColor;
+					change= true;
+				}
+				break;
+			}//end of 'c'
+		case 'w':
+			{
+				float newWidth;
+				std::cout<<"line Width\n";
+				std::cin>>newWidth;
+				if (newWidth!=lineWidth)
+				{
+					lineWidth=newWidth;
+					change= true;
+				}
+				break;
+			}
+		}//end of switch
+	}// end of while
+	if (change== true)
+	{std::cout<<"Settings Configuration are now:\n gap tollerance:\t" <<gapTol
+		<<"\ngap max:\t"<<gapMax
+		<<"\nsmall line:\t"<< smallLine
+		<<"\nselection color:\t"<<SelectColor
+		<<"\nline width:\t"<<lineWidth;
+	}
+	return change;
+}
+/*	picking	*/
+void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata)
+{ /*  PickPoint allows fot the point id and coordinates to be returned 
+  as well as adding a marker on the last picked point
+  R_click to select point on line  */
+  //printf("Entered pickCell\n");
+  View3D* view = (View3D*)clientdata;       //acess to view3d class so view-> is used to call functions
+
+  int *pos = view->Interactor->GetEventPosition();
+  view->Interactor->GetPicker()->Pick(pos[0],pos[1],0.0,view->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
+  vtkCellPicker *cell_picker = (vtkCellPicker *)view->Interactor->GetPicker();
+  if (cell_picker->GetCellId() == -1) 
+  {
+    view->SphereActor->VisibilityOff();     //not working quite yet but sphere will move
+  }
+  else if(cell_picker->GetViewProp()!=NULL) 
+  {
+    //double selPt[3];
+    double pickPos[3];
+    view->CellPicker->GetPickPosition(pickPos);    //this is the coordinates of the pick
+    //view->cell_picker->GetSelectionPoint(selPt);    //not so usefull but kept
+    unsigned int cell_id = cell_picker->GetCellId();  
+    view->IDList.push_back(cell_id);
+    TraceLine *tline = reinterpret_cast<TraceLine*>(view->tobj->hashc[cell_id]);
+	
+	view->HighlightSelected(tline, view->SelectColor);
+    tline->Getstats();              //prints the id and end coordinates to the command prompt 
+    view->SphereActor->SetPosition(pickPos);    //sets the selector to new point
+    view->SphereActor->VisibilityOn();      //deleteTrace can turn it off 
+    view->poly_line_data->Modified();
+	
+  }
+  view->QVTK->GetRenderWindow()->Render();             //update the render window
+}
+
+
+void View3D::HighlightSelected(TraceLine* tline, double color)
+{
+	TraceLine::TraceBitsType::iterator iter = tline->GetTraceBitIteratorBegin();
+	TraceLine::TraceBitsType::iterator iterend = tline->GetTraceBitIteratorEnd();
+	if (color == -1)
+	{
+		color = tline->getTraceColor();
+	}
+  while(iter!=iterend)
+  {
+	  //poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,1/t);
+	  poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,color);
+	  ++iter;
+  }
+	
+
+}
+
+void View3D::Rerender()
+{
+  this->SphereActor->VisibilityOff();
+  this->IDList.clear();
+  this->Renderer->RemoveActor(this->BranchActor);
+  //this->Renderer->RemoveActor(this->VolumeActor);
+  this->UpdateLineActor();
+  this->UpdateBranchActor();
+  this->Renderer->AddActor(this->BranchActor);
+  //this->Renderer->AddActor(this->VolumeActor);
+  this->QVTK->GetRenderWindow()->Render();
+}
+
 void View3D::UpdateLineActor()
 {
   this->poly_line_data = this->tobj->GetVTKPolyData();
@@ -494,65 +677,7 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
       break;
     }
 }
-void View3D::ShowMergeStats()
-{
-	int numRows = this->compList.size();
-	std::vector<QString> headers;
-	headers.push_back("Trace 1");
-	headers.push_back("Trace 2");
-	headers.push_back("Gap");
-	headers.push_back("Angle");
-	headers.push_back("D");
-	headers.push_back("Length");
-	headers.push_back("Smoothness");
-	headers.push_back("Cost");
-	std::vector< std::vector< double > > data;
-	for ( int i = 0; i < numRows; i++)
-	{
-		std::vector<double> row;
-		row.push_back(this->compList[i].Trace1->GetId());
-		row.push_back(this->compList[i].Trace2->GetId());
-		row.push_back(this->compList[i].dist);
-		row.push_back(this->compList[i].angle);
-		row.push_back(this->compList[i].maxdist);
-		row.push_back(this->compList[i].length);
-		row.push_back(this->compList[i].smoothness);
-		row.push_back(this->compList[i].cost);
-		data.push_back(row);
-	}
-	this->model = new QStandardItemModel;
-	this->selModel = new QItemSelectionModel(model);
-
-	this->model->clear();
-	this->model->setColumnCount(headers.size());
-
-	for(int i=0; i<(int)headers.size(); ++i)
-	{
-		this->model->setHeaderData(i, Qt::Horizontal, headers.at(i));
-	}
-
-	for (int row=0; row<(int)numRows; ++row)
-	{
-		this->model->insertRow(row);
-		for(int col=0; col<(int)headers.size(); ++col)
-		{
-			this->model->setData(model->index(row, col), data.at(row).at(col));
-		}
-	}
-
-	this->table->setModel(this->model);
-	this->table->setSelectionModel(this->selModel); 
-	this->table->sortByColumn(7,Ascending);
-	this->table->update();
-	this->table->show();
-	//if(this->plot)
-	//{
-	//	this->plot->close();
-	//	delete this->plot;
-	//}
-	this->plot = new PlotWindow(this->selModel);
-	this->plot->show();
-}
+/*	Actions		*/
 void View3D::SLine()
 {
 	int numLines, i;
@@ -586,6 +711,7 @@ void View3D::SLine()
 	}
 	this->Rerender();
 }
+
 void View3D::traceStatistics()
 {	
 	std::vector<TraceLine*> tree = this->tobj->GetTraceLines();
@@ -628,6 +754,7 @@ void View3D::traceStatistics()
 
 	this->TreeTable->setModel(this->treeModel);
 	this->TreeTable->setSelectionModel(this->TreeSelModel); 
+	this->TreeTable->setSelectionBehavior(QAbstractItemView::SelectRows);
 	this->TreeTable->sortByColumn(2,Ascending);
 	this->TreeTable->update();
 	this->TreeTable->show();
@@ -645,18 +772,6 @@ void View3D::traceStatistics()
 	}
 	this->histo = new HistoWindow(this->TreeSelModel);
 	this->histo->show();
-}
-void View3D::Rerender()
-{
-  this->SphereActor->VisibilityOff();
-  this->IDList.clear();
-  this->Renderer->RemoveActor(this->BranchActor);
-  //this->Renderer->RemoveActor(this->VolumeActor);
-  this->UpdateLineActor();
-  this->UpdateBranchActor();
-  this->Renderer->AddActor(this->BranchActor);
-  //this->Renderer->AddActor(this->VolumeActor);
-  this->QVTK->GetRenderWindow()->Render();
 }
 
 void View3D::ListSelections()
@@ -699,6 +814,7 @@ void View3D::ClearSelection()
 	selectionInfo->show();
 }
 
+/*	delete traces functions	*/
 void View3D::DeleteTraces()
 {
   if(this->IDList.size()>=1)
@@ -718,6 +834,78 @@ void View3D::DeleteTraces()
     }
 }
 
+void View3D::DeleteTrace(TraceLine *tline)
+{
+  std::vector<unsigned int> * vtk_cell_ids = tline->GetMarkers();
+
+  vtkIdType ncells; vtkIdType *pts;
+  for(unsigned int counter=0; counter<vtk_cell_ids->size(); counter++)
+    {
+    this->poly_line_data->GetCellPoints((vtkIdType)(*vtk_cell_ids)[counter],ncells,pts);
+    pts[1]=pts[0];
+    }
+  std::vector<TraceLine*> *children = tline->GetBranchPointer();
+  if(children->size()!=0)
+    {
+    for(unsigned int counter=0; counter<children->size(); counter++)
+      {
+      this->poly_line_data->GetCellPoints((*(*children)[counter]->GetMarkers())[0],ncells,pts);
+      pts[1]=pts[0];
+      this->tobj->GetTraceLinesPointer()->push_back((*children)[counter]);  
+      (*children)[counter]->SetParent(NULL);
+      }
+    // remove the children now
+    children->clear();
+    }         //finds and removes children
+  // remove from parent
+  std::vector<TraceLine*>* siblings;
+  if(tline->GetParent()!=NULL)
+    {
+    siblings=tline->GetParent()->GetBranchPointer();
+	  if(siblings->size()==2)
+	    {
+      // its not a branch point anymore
+      TraceLine *tother1;
+      if(tline==(*siblings)[0])
+        { 
+        tother1 = (*siblings)[1];
+        }
+      else
+        {
+        tother1 = (*siblings)[0];
+        }
+      tother1->SetParent(NULL);
+      siblings->clear();
+      TraceLine::TraceBitsType::iterator iter1,iter2;
+      iter1= tline->GetParent()->GetTraceBitIteratorEnd();
+      iter2 = tother1->GetTraceBitIteratorBegin();
+      iter1--;
+		
+      this->tobj->mergeTraces((*iter1).marker,(*iter2).marker);
+      tline->SetParent(NULL);
+      delete tline;
+      return;
+	    }
+    }
+  else
+    {
+    siblings = this->tobj->GetTraceLinesPointer();
+    }
+  std::vector<TraceLine*>::iterator iter = siblings->begin();
+  std::vector<TraceLine*>::iterator iterend = siblings->end();
+  while(iter != iterend)
+    {
+    if(*iter== tline)
+      {
+      siblings->erase(iter);
+      break;
+      }
+    ++iter;
+    }
+  tline->SetParent(NULL);
+}
+
+/*	merging functions	*/
 void View3D::MergeTraces()
 {
 	if (this->compList.size() > 1)
@@ -774,6 +962,250 @@ void View3D::MergeTraces()
 	}//end else size
 }
 
+
+void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
+{
+	//QLabel *MergeInfo = new QLabel();
+	QMessageBox *MergeInfo = new QMessageBox;
+	unsigned int i,j, exist = 0, conflict = 0;	
+	for (i=0;i<traceList.size()-1; i++)
+	  {
+		for (j=i+1; j<traceList.size(); j++)
+		  {
+			compTrace newComp;
+			newComp.Trace1 = traceList[i];
+			newComp.Trace2 = traceList[j];
+			newComp.Trace1->EndPtDist(
+					newComp.Trace2,newComp.endPT1, newComp.endPT2, 
+					newComp.dist, newComp.maxdist, newComp.angle);
+			newComp.length = newComp.Trace1->GetSize() + newComp.Trace2->GetSize() + newComp.dist;
+			newComp.smoothness = newComp.length / newComp.maxdist;
+			newComp.cost = newComp.angle*(newComp.dist/gapMax)*newComp.smoothness;
+			if(!(newComp.dist >= newComp.Trace1->GetSize()*gapTol) 
+				&&	!(newComp.dist >= newComp.Trace2->GetSize()*gapTol) 
+				&&	!(newComp.dist >= gapMax*( 1+ gapTol)))//
+			  {	//myText+="added comparison\n";
+				this->compList.push_back(newComp);
+			  }	
+		  }
+	}
+	
+	if (this->compList.size() > 1)
+	  {
+		//myText+="\tNumber of comparisons:\t" + QString::number(this->compList.size());
+		i = 0, j = 0; int mergeCount = 0;
+		while (i < this->compList.size() -1)
+		{
+			exist = 0;
+		  while ((exist == 0)&&(j<this->compList.size()-1))
+		  {
+			j++;
+			if (this->compList[i].Trace1->GetId()==this->compList[j].Trace1->GetId())
+			{
+				if (this->compList[i].endPT1==this->compList[j].endPT1)
+				{	exist = 1;		}
+		  	}
+			else if(this->compList[i].Trace1->GetId()==this->compList[j].Trace2->GetId())
+			{
+				if (this->compList[i].endPT1==this->compList[j].endPT2)
+				{	exist = 1;	}
+			}
+			else if (this->compList[i].Trace2->GetId() == this->compList[j].Trace1->GetId())
+			{
+				if (this->compList[i].endPT2==this->compList[j].endPT1)
+				{	exist = 1;		}
+			}
+			else if(this->compList[i].Trace2->GetId() == this->compList[j].Trace2->GetId())
+			{
+				if (this->compList[i].endPT2==this->compList[j].endPT2)
+			  	{	exist = 1;	}
+			}
+		  }		//end while exist = 0
+			if (exist == 1)
+			{
+				++conflict;
+				if (this->compList[i].cost<this->compList[j].cost)
+				{
+					this->compList.erase(this->compList.begin()+j);
+				}
+				else
+				{
+					this->compList.erase(this->compList.begin()+i);
+				}
+				j=i;
+			}//end if exist
+			else
+		  	{
+				i++;
+				j=i;
+		  	}//end else exist
+	  	}// end of search for conflicts
+		for (i=0;i<this->compList.size(); i++)
+		{
+			this->compList[i].compID = i;
+			this->HighlightSelected(this->compList[i].Trace1, .25);
+			this->HighlightSelected(this->compList[i].Trace2, .25);
+		}
+		
+		this->myText+="\nNumber of traces:\t" + QString::number(traceList.size());
+		this->myText+="\nConflicts resolved:\t" + QString::number(conflict);
+		this->myText+= "\nTrace List size:\t" + QString::number(traceList.size());
+		this->myText+="\nNumber of computed distances:\t" + QString::number(this->compList.size());
+		MergeInfo->setText("\nNumber of computed distances:\t" 
+			+ QString::number(this->compList.size())
+			+"\nEdit selection or press merge again");	
+		MergeInfo->show();
+		//MergeInfo->exec();
+		this->ShowMergeStats();
+	  }//end if this->compList size > 1
+	else 
+	{
+		if (this->compList.size() ==1)
+		{		
+			tobj->mergeTraces(this->compList[0].endPT1,this->compList[0].endPT2);
+			this->Rerender();
+			MergeInfo->setText(this->myText + "\nOne Trace merged");
+		}
+		else
+		{
+			this->Rerender();
+			MergeInfo->setText("\nNo merges possible, set higher tolerances\n"); 
+		}
+		
+		MergeInfo->show();
+		//MergeInfo->exec();
+		this->myText.clear();
+	}		
+	this->poly_line_data->Modified();
+	this->QVTK->GetRenderWindow()->Render();
+}
+void View3D::ShowMergeStats()
+{
+	int numRows = this->compList.size();
+	std::vector<QString> headers;
+	headers.push_back("Merge Number");
+	headers.push_back("Trace 1");
+	headers.push_back("Trace 2");
+	headers.push_back("Gap");
+	headers.push_back("Angle");
+	headers.push_back("D");
+	headers.push_back("Length");
+	headers.push_back("Smoothness");
+	headers.push_back("Cost");
+	std::vector< std::vector< double > > data;
+	for ( int i = 0; i < numRows; i++)
+	{
+		std::vector<double> row;
+		row.push_back(this->compList[i].compID);
+		row.push_back(this->compList[i].Trace1->GetId());
+		row.push_back(this->compList[i].Trace2->GetId());
+		row.push_back(this->compList[i].dist);
+		row.push_back(this->compList[i].angle);
+		row.push_back(this->compList[i].maxdist);
+		row.push_back(this->compList[i].length);
+		row.push_back(this->compList[i].smoothness);
+		row.push_back(this->compList[i].cost);
+		data.push_back(row);
+	}
+	this->model->clear();
+	this->model->setColumnCount(headers.size());
+
+	for(int i=0; i<(int)headers.size(); ++i)
+	{
+		this->model->setHeaderData(i, Qt::Horizontal, headers.at(i));
+	}
+
+	for (int row=0; row<(int)numRows; ++row)
+	{
+		this->model->insertRow(row);
+		for(int col=0; col<(int)headers.size(); ++col)
+		{
+			this->model->setData(model->index(row, col), data.at(row).at(col));
+		}
+	}
+
+	this->table->setModel(this->model);
+	this->table->setSelectionModel(this->selModel); 
+	this->table->setSelectionBehavior(QAbstractItemView::SelectRows);
+	this->table->sortByColumn(7,Ascending);
+	this->table->update();
+	this->table->show();
+	this->plot = new PlotWindow(this->selModel);
+	this->plot->show();
+}
+
+void View3D::SelectedComp()
+{
+	QMessageBox *MergeInfo = new QMessageBox;
+	double currentAngle=0;
+	QPushButton *mergeAll;
+	QPushButton *mergeNone;
+	int i=0, j=0,mergeCount=0;
+	MergeInfo->setText("Merge Function");
+	for (i=0;i<this->compList.size(); i++)
+	{
+		currentAngle=fabs(this->compList[i].angle); 
+		//if (currentAngle>=PI/2) 
+		//{
+		//	currentAngle= PI-currentAngle;
+		//}
+		if 	((this->compList[i].dist<= gapMax*gapTol&& (currentAngle < 1.1))||
+			(this->compList[i].dist<= gapMax && (currentAngle < .6)))
+	  	{
+			this->dtext+= "\nTrace " + QString::number(this->compList[i].Trace1->GetId());
+			this->dtext+= " and "+ QString::number(this->compList[i].Trace2->GetId() );
+			this->dtext+="\tgap size of:" + QString::number(this->compList[i].dist); 				
+			this->dtext+="\tangle of" + QString::number(currentAngle*180/PI);	//this->compList[i].angle
+			tobj->mergeTraces(this->compList[i].endPT1,this->compList[i].endPT2);
+			++mergeCount;
+	  	}	//end of if
+		else if (this->compList[i].dist<= gapMax*(1+gapTol)&& (currentAngle < .3))
+	  	{
+			this->HighlightSelected(this->compList[i].Trace1, .125);
+			this->HighlightSelected(this->compList[i].Trace2, .125);
+			this->grayList.push_back( this->compList[i]);
+			this->grayText+="\nAngle of:\t" + QString::number(currentAngle*180/PI);	//this->compList[i].angle
+			this->grayText+="\tWith a distance of:\t" + QString::number(this->compList[i].dist);
+			
+		 } //end of else
+	}//end of for merge
+	myText+="\tNumber of merged lines:\t" + QString::number(mergeCount);
+	if (this->grayList.size()>=1)
+	{
+		this->poly_line_data->Modified();
+		this->QVTK->GetRenderWindow()->Render();
+		myText+="\nNumber of further possible lines:\t" + QString::number(this->grayList.size());
+		mergeAll = MergeInfo->addButton("Merge All", QMessageBox::YesRole);
+		mergeNone = MergeInfo->addButton("Merge None", QMessageBox::NoRole);
+		MergeInfo->setDetailedText(grayText);
+	}		//end if graylist size
+	else
+	{
+		this->Rerender();
+		MergeInfo->setDetailedText(dtext);
+	}		//end else graylist size
+	MergeInfo->setText(myText);	
+	MergeInfo->show();
+	MergeInfo->exec();
+	if(MergeInfo->clickedButton()==mergeAll)
+	{
+		for (j=0; j<this->grayList.size();j++)
+		{
+			tobj->mergeTraces(this->grayList[j].endPT1,this->grayList[j].endPT2);
+		}
+		this->Rerender();
+	}
+	else if(MergeInfo->clickedButton()==mergeNone)
+	{
+		this->grayList.clear();
+	}
+	this->Rerender();
+	this->compList.clear();
+	this->grayList.clear();
+	this->myText.clear();
+	this->dtext.clear();
+}
+/*	other trace modifiers	*/
 void View3D::SplitTraces()
 {
   if(this->IDList.size()>=1)
@@ -815,6 +1247,7 @@ void View3D::WriteToSWCFile()
 }
 
 
+/*	Soma display stuff	*/
 void View3D::ShowLoadSomaWindow()
 {
 	this->LoadSomaWidget->show();
@@ -1015,426 +1448,6 @@ void View3D::ApplySomaSettings()
 		this->somaopacity = this->SomaOpacityField->text().toDouble();
 		this->SomaSettingsWidget->hide();
 	}
-}
-void View3D::ShowSettingsWindow()
-{
-  //make sure the values in the input fields are up-to-date
-  this->MaxGapField->setText(QString::number(this->gapMax));
-  this->GapToleranceField->setText(QString::number(this->gapTol));
-  this->LineLengthField->setText(QString::number(this->smallLine));
-  this->ColorValueField->setText(QString::number(this->SelectColor));
-  this->LineWidthField->setText(QString::number(this->lineWidth));
-  this->SettingsWidget->show();
-}
-
-void View3D::ApplyNewSettings()
-{
-  this->gapMax = this->MaxGapField->text().toInt();
-  this->gapTol = this->GapToleranceField->text().toDouble();
-  this->smallLine = this->LineLengthField->text().toFloat();
-  this->SelectColor = this->ColorValueField->text().toDouble();
-  this->lineWidth = this->LineWidthField->text().toFloat();
-  //this->Rerender();
-  this->SettingsWidget->hide();
-}
-
-void View3D::HideSettingsWindow()
-{
-  this->SettingsWidget->hide();
-}
-
-void View3D::DeleteTrace(TraceLine *tline)
-{
-  std::vector<unsigned int> * vtk_cell_ids = tline->GetMarkers();
-
-  vtkIdType ncells; vtkIdType *pts;
-  for(unsigned int counter=0; counter<vtk_cell_ids->size(); counter++)
-    {
-    this->poly_line_data->GetCellPoints((vtkIdType)(*vtk_cell_ids)[counter],ncells,pts);
-    pts[1]=pts[0];
-    }
-  std::vector<TraceLine*> *children = tline->GetBranchPointer();
-  if(children->size()!=0)
-    {
-    for(unsigned int counter=0; counter<children->size(); counter++)
-      {
-      this->poly_line_data->GetCellPoints((*(*children)[counter]->GetMarkers())[0],ncells,pts);
-      pts[1]=pts[0];
-      this->tobj->GetTraceLinesPointer()->push_back((*children)[counter]);  
-      (*children)[counter]->SetParent(NULL);
-      }
-    // remove the children now
-    children->clear();
-    }         //finds and removes children
-  // remove from parent
-  std::vector<TraceLine*>* siblings;
-  if(tline->GetParent()!=NULL)
-    {
-    siblings=tline->GetParent()->GetBranchPointer();
-	  if(siblings->size()==2)
-	    {
-      // its not a branch point anymore
-      TraceLine *tother1;
-      if(tline==(*siblings)[0])
-        { 
-        tother1 = (*siblings)[1];
-        }
-      else
-        {
-        tother1 = (*siblings)[0];
-        }
-      tother1->SetParent(NULL);
-      siblings->clear();
-      TraceLine::TraceBitsType::iterator iter1,iter2;
-      iter1= tline->GetParent()->GetTraceBitIteratorEnd();
-      iter2 = tother1->GetTraceBitIteratorBegin();
-      iter1--;
-		
-      this->tobj->mergeTraces((*iter1).marker,(*iter2).marker);
-      tline->SetParent(NULL);
-      delete tline;
-      return;
-	    }
-    }
-  else
-    {
-    siblings = this->tobj->GetTraceLinesPointer();
-    }
-  std::vector<TraceLine*>::iterator iter = siblings->begin();
-  std::vector<TraceLine*>::iterator iterend = siblings->end();
-  while(iter != iterend)
-    {
-    if(*iter== tline)
-      {
-      siblings->erase(iter);
-      break;
-      }
-    ++iter;
-    }
-  tline->SetParent(NULL);
-}
-
-bool View3D::setTol()
-{
-	bool change = false;
-	char select=0;
-	std::cout<<"Settings Configuration:\n gap (t)olerance:\t" <<gapTol
-		<<"\ngap (m)ax:\t"<<gapMax
-		<<"\n(s)mall line:\t"<< smallLine
-		<<"\nselection (c)olor:\t"<<SelectColor
-		<<"\nline (w)idth:\t"<<lineWidth
-		<<"\n(e)nd edit settings\n";
-	while (select !='e')
-	{
-		std::cout<< "select option:\t"; 
-		std::cin>>select;
-		switch(select)
-		{
-		case 'm':
-			{
-				int newMax;
-				std::cout<< "maximum gap length\n";
-				std::cin>>newMax;
-				if (newMax!=gapMax)
-				{
-					gapMax=newMax;
-					change= true;
-				}
-				break;
-			}//end of 'm'
-		case 't':
-			{
-				double newTol;
-				std::cout<< "gap length tolerance\n";
-				std::cin>>newTol;
-				if (newTol!=gapTol)
-				{
-					gapTol=newTol;
-					change= true;
-				}
-				break;
-			}//end of 't'
-		case 's':
-			{
-				float newSmall;
-				std::cout<< "small line length\n";
-				std::cin>>newSmall;
-				if (newSmall!=smallLine)
-				{
-					smallLine=newSmall;
-					change= true;
-				}
-				break;
-			}// end of 's'
-		case 'c':
-			{
-				double newColor;
-				std::cout<< "color value RGB scalar 0 to 1\n";
-				std::cin>>newColor;
-				if (newColor!=SelectColor)
-				{
-					SelectColor=newColor;
-					change= true;
-				}
-				break;
-			}//end of 'c'
-		case 'w':
-			{
-				float newWidth;
-				std::cout<<"line Width\n";
-				std::cin>>newWidth;
-				if (newWidth!=lineWidth)
-				{
-					lineWidth=newWidth;
-					change= true;
-				}
-				break;
-			}
-		}//end of switch
-	}// end of while
-	if (change== true)
-	{std::cout<<"Settings Configuration are now:\n gap tollerance:\t" <<gapTol
-		<<"\ngap max:\t"<<gapMax
-		<<"\nsmall line:\t"<< smallLine
-		<<"\nselection color:\t"<<SelectColor
-		<<"\nline width:\t"<<lineWidth;
-	}
-	return change;
-}
-void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata)
-{ /*  PickPoint allows fot the point id and coordinates to be returned 
-  as well as adding a marker on the last picked point
-  R_click to select point on line  */
-  //printf("Entered pickCell\n");
-  View3D* view = (View3D*)clientdata;       //acess to view3d class so view-> is used to call functions
-
-  int *pos = view->Interactor->GetEventPosition();
-  view->Interactor->GetPicker()->Pick(pos[0],pos[1],0.0,view->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
-  vtkCellPicker *cell_picker = (vtkCellPicker *)view->Interactor->GetPicker();
-  if (cell_picker->GetCellId() == -1) 
-  {
-    view->SphereActor->VisibilityOff();     //not working quite yet but sphere will move
-  }
-  else if(cell_picker->GetViewProp()!=NULL) 
-  {
-    //double selPt[3];
-    double pickPos[3];
-    view->CellPicker->GetPickPosition(pickPos);    //this is the coordinates of the pick
-    //view->cell_picker->GetSelectionPoint(selPt);    //not so usefull but kept
-    unsigned int cell_id = cell_picker->GetCellId();  
-    view->IDList.push_back(cell_id);
-    TraceLine *tline = reinterpret_cast<TraceLine*>(view->tobj->hashc[cell_id]);
-	
-	view->HighlightSelected(tline, view->SelectColor);
-    tline->Getstats();              //prints the id and end coordinates to the command prompt 
-    view->SphereActor->SetPosition(pickPos);    //sets the selector to new point
-    view->SphereActor->VisibilityOn();      //deleteTrace can turn it off 
-    view->poly_line_data->Modified();
-	
-  }
-  view->QVTK->GetRenderWindow()->Render();             //update the render window
-}
-
-void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
-{
-	//QLabel *MergeInfo = new QLabel();
-	QMessageBox *MergeInfo = new QMessageBox;
-	unsigned int i,j, exist = 0, conflict = 0;	
-	for (i=0;i<traceList.size()-1; i++)
-	  {
-		for (j=i+1; j<traceList.size(); j++)
-		  {
-			compTrace newComp;
-			newComp.Trace1 = traceList[i];
-			newComp.Trace2 = traceList[j];
-			newComp.Trace1->EndPtDist(
-					newComp.Trace2,newComp.endPT1, newComp.endPT2, 
-					newComp.dist, newComp.maxdist, newComp.angle);
-			newComp.length = newComp.Trace1->GetSize() + newComp.Trace2->GetSize() + newComp.dist;
-			newComp.smoothness = newComp.length / newComp.maxdist;
-			newComp.cost = newComp.angle*(newComp.dist/gapMax)*newComp.smoothness;
-			if(!(newComp.dist >= newComp.Trace1->GetSize()*gapTol) 
-				&&	!(newComp.dist >= newComp.Trace2->GetSize()*gapTol) 
-				&&	!(newComp.dist >= gapMax*( 1+ gapTol)))//
-			  {	//myText+="added comparison\n";
-				this->compList.push_back(newComp);
-			  }	
-		  }
-	}
-	
-	if (this->compList.size() > 1)
-	  {
-		//myText+="\tNumber of comparisons:\t" + QString::number(this->compList.size());
-		i = 0, j = 0; int mergeCount = 0;
-		while (i < this->compList.size() -1)
-		{
-			exist = 0;
-		  while ((exist == 0)&&(j<this->compList.size()-1))
-		  {
-			j++;
-			if (this->compList[i].Trace1->GetId()==this->compList[j].Trace1->GetId())
-			{
-				if (this->compList[i].endPT1==this->compList[j].endPT1)
-				{	exist = 1;		}
-		  	}
-			else if(this->compList[i].Trace1->GetId()==this->compList[j].Trace2->GetId())
-			{
-				if (this->compList[i].endPT1==this->compList[j].endPT2)
-				{	exist = 1;	}
-			}
-			else if (this->compList[i].Trace2->GetId() == this->compList[j].Trace1->GetId())
-			{
-				if (this->compList[i].endPT2==this->compList[j].endPT1)
-				{	exist = 1;		}
-			}
-			else if(this->compList[i].Trace2->GetId() == this->compList[j].Trace2->GetId())
-			{
-				if (this->compList[i].endPT2==this->compList[j].endPT2)
-			  	{	exist = 1;	}
-			}
-		  }		//end while exist = 0
-			if (exist == 1)
-			{
-				++conflict;
-				if (this->compList[i].cost<this->compList[j].cost)
-				{
-					this->compList.erase(this->compList.begin()+j);
-				}
-				else
-				{
-					this->compList.erase(this->compList.begin()+i);
-				}
-				j=i;
-			}//end if exist
-			else
-		  	{
-				i++;
-				j=i;
-		  	}//end else exist
-	  	}// end of search for conflicts
-		for (i=0;i<this->compList.size(); i++)
-		{
-			this->HighlightSelected(this->compList[i].Trace1, .25);
-			this->HighlightSelected(this->compList[i].Trace2, .25);
-		}
-		
-		this->myText+="\nNumber of traces:\t" + QString::number(traceList.size());
-		this->myText+="\nConflicts resolved:\t" + QString::number(conflict);
-		this->myText+= "\nTrace List size:\t" + QString::number(traceList.size());
-		this->myText+="\nNumber of computed distances:\t" + QString::number(this->compList.size());
-		MergeInfo->setText("\nNumber of computed distances:\t" 
-			+ QString::number(this->compList.size())
-			+"\nEdit selection or press merge again");	
-		MergeInfo->show();
-		//MergeInfo->exec();
-		this->ShowMergeStats();
-	  }//end if this->compList size > 1
-	else 
-	{
-		if (this->compList.size() ==1)
-		{		
-			tobj->mergeTraces(this->compList[0].endPT1,this->compList[0].endPT2);
-			this->Rerender();
-			MergeInfo->setText(this->myText + "\nOne Trace merged");
-		}
-		else
-		{
-			this->Rerender();
-			MergeInfo->setText("\nNo merges possible, set higher tolerances\n"); 
-		}
-		
-		MergeInfo->show();
-		//MergeInfo->exec();
-		this->myText.clear();
-	}		
-	this->poly_line_data->Modified();
-	this->QVTK->GetRenderWindow()->Render();
-}
-void View3D::SelectedComp()
-{
-	QMessageBox *MergeInfo = new QMessageBox;
-	double currentAngle=0;
-	QPushButton *mergeAll;
-	QPushButton *mergeNone;
-	int i=0, j=0,mergeCount=0;
-	MergeInfo->setText("Merge Function");
-	for (i=0;i<this->compList.size(); i++)
-	{
-		currentAngle=fabs(this->compList[i].angle); 
-		//if (currentAngle>=PI/2) 
-		//{
-		//	currentAngle= PI-currentAngle;
-		//}
-		if 	((this->compList[i].dist<= gapMax*gapTol&& (currentAngle < 1.1))||
-			(this->compList[i].dist<= gapMax && (currentAngle < .6)))
-	  	{
-			this->dtext+= "\nTrace " + QString::number(this->compList[i].Trace1->GetId());
-			this->dtext+= " and "+ QString::number(this->compList[i].Trace2->GetId() );
-			this->dtext+="\tgap size of:" + QString::number(this->compList[i].dist); 				
-			this->dtext+="\tangle of" + QString::number(currentAngle*180/PI);	//this->compList[i].angle
-			tobj->mergeTraces(this->compList[i].endPT1,this->compList[i].endPT2);
-			++mergeCount;
-	  	}	//end of if
-		else if (this->compList[i].dist<= gapMax*(1+gapTol)&& (currentAngle < .3))
-	  	{
-			this->HighlightSelected(this->compList[i].Trace1, .125);
-			this->HighlightSelected(this->compList[i].Trace2, .125);
-			this->grayList.push_back( this->compList[i]);
-			this->grayText+="\nAngle of:\t" + QString::number(currentAngle*180/PI);	//this->compList[i].angle
-			this->grayText+="\tWith a distance of:\t" + QString::number(this->compList[i].dist);
-			
-		 } //end of else
-	}//end of for merge
-	myText+="\tNumber of merged lines:\t" + QString::number(mergeCount);
-	if (this->grayList.size()>=1)
-	{
-		this->poly_line_data->Modified();
-		this->QVTK->GetRenderWindow()->Render();
-		myText+="\nNumber of further possible lines:\t" + QString::number(this->grayList.size());
-		mergeAll = MergeInfo->addButton("Merge All", QMessageBox::YesRole);
-		mergeNone = MergeInfo->addButton("Merge None", QMessageBox::NoRole);
-		MergeInfo->setDetailedText(grayText);
-	}		//end if graylist size
-	else
-	{
-		this->Rerender();
-		MergeInfo->setDetailedText(dtext);
-	}		//end else graylist size
-	MergeInfo->setText(myText);	
-	MergeInfo->show();
-	MergeInfo->exec();
-	if(MergeInfo->clickedButton()==mergeAll)
-	{
-		for (j=0; j<this->grayList.size();j++)
-		{
-			tobj->mergeTraces(this->grayList[j].endPT1,this->grayList[j].endPT2);
-		}
-		this->Rerender();
-	}
-	else if(MergeInfo->clickedButton()==mergeNone)
-	{
-		this->grayList.clear();
-	}
-	this->Rerender();
-	this->compList.clear();
-	this->grayList.clear();
-	this->myText.clear();
-	this->dtext.clear();
-}
-
-void View3D::HighlightSelected(TraceLine* tline, double color)
-{
-	TraceLine::TraceBitsType::iterator iter = tline->GetTraceBitIteratorBegin();
-	TraceLine::TraceBitsType::iterator iterend = tline->GetTraceBitIteratorEnd();
-
-  while(iter!=iterend)
-  {
-	  //poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,1/t);
-	  poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,color);
-	  ++iter;
-  }
-	
-
 }
 
 void View3D::AddContourThresholdSliders()

@@ -86,15 +86,16 @@ struct point
 };
 
 struct compTrace{
-TraceLine *Trace1;
-TraceLine *Trace2;
-int endPT1, endPT2;
-double angle;
-double dist; 
-double maxdist;
-double length;
-double smoothness;
-double cost;
+	int compID;
+	TraceLine *Trace1;
+	TraceLine *Trace2;
+	int endPT1, endPT2;
+	double angle;
+	double dist; 
+	double maxdist;
+	double length;
+	double smoothness;
+	double cost;
 };
 
 class View3D : public QMainWindow 
