@@ -342,12 +342,9 @@ int distMap(itk::SmartPointer<InputImageType> im, int r, int c, int z, float* IM
   long int i = 0;
   typedef itk::ImageRegionIteratorWithIndex< InputImageType > IteratorType;
   IteratorType iterate(dt_obj->GetOutput(),dt_obj->GetOutput()->GetRequestedRegion());
-  float mx = 0.0;
   while ( i<r*c*z)
   {
-	  IMG[i] = fabs(iterate.Get());	 
-	  if(IMG[i]>mx)
-		  mx = IMG[i];
+	  IMG[i] = fabs(iterate.Get());	 	  
       ++i;
  	  ++iterate;
   }

@@ -300,9 +300,19 @@ void SegmentationModel::splitTrigger()
 	//Attempt split:
 	for(unsigned int group = 0; group < ids.size(); ++group)
 	{
-		//this need to be changed
-		std::vector< int > newIDs; //=nucseg->Split( ids.at(group) );
-		newIDs.push_back(1);
+		//try this for now
+		ftk::Object::Point P1;
+		P1.t = 0;
+		P1.x = 17;//5;
+		P1.y = 24;//3;
+		P1.z = 8;//8;
+		ftk::Object::Point P2;
+		P2.t = 0;
+		P2.x = 31;//5;
+		P2.y = 24;//19;
+		P2.z = 8;//11;
+		std::vector< int > newIDs = nucseg->Split( P1, P2 );
+		
 		//need to add code that updates the table
 		//1-Remove the old cell
 		//2-Add the two new cells
@@ -332,31 +342,7 @@ void SegmentationModel::splitTrigger()
 				int clss = segResult->GetObjectPtr(newIDs[i])->GetClass();
 				model->setData(model->index(currentRow,columnForClass,QModelIndex()),clss);
 				updateMapping();
-			}
-
-	//		//Remove from table merged IDs
-	//		for (unsigned int id=0; id < ids.at(group).size(); ++id)
-	//		{
-	//			int row = RowForID( ids.at(group).at(id) );
-	//			QList<QStandardItem *> items = model->takeRow(row);
-	//			for(int i=0; i<items.size(); ++i)
-	//			{
-	//				delete items.at(i);
-	//			}
-	//			updateMapping();
-	//		}
-	//		//Add into table the new object
-	//		int currentRow = model->rowCount();
-	//		model->insertRow(currentRow);
-	//		model->setData(model->index(currentRow, columnForID, QModelIndex()), newID);
-	//		vector<float> features = segResult->GetObjectPtr(newID)->GetFeatures();
-	//		for(int f=0; f<(int)features.size(); ++f)
-	//		{
-	//			model->setData(model->index(currentRow, f+1, QModelIndex()), features[f]);
-	//		}
-	//		int clss = segResult->GetObjectPtr(newID)->GetClass();
-	//		model->setData(model->index(currentRow,columnForClass,QModelIndex()),clss);
-	//		updateMapping();
+			}	
 		}
 	}
 

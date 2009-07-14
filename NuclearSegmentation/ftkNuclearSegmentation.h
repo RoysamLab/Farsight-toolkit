@@ -88,7 +88,7 @@ public:
 	bool LoadFromMETA(std::string META_file, std::string header_file, std::string data_file, std::string label_file);
 
 	//Editing Functions  
-	std::vector< int > Split(std::vector <ftkPoint>);
+	std::vector< int > Split(ftk::Object::Point P1, ftk::Object::Point P2);
 	int Merge(vector<int> ids);
 	bool Delete(vector<int> ids);
 	bool Add( Object::Point p ){return 0;};
