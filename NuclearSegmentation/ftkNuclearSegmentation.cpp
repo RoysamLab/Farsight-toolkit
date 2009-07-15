@@ -1392,8 +1392,9 @@ bool NuclearSegmentation::RunGraphColoring(std::string labelname, std::string fi
 	int r = labelImage->Size()[2];
 	int z = labelImage->Size()[1];	
 	unsigned short* labs_vals = static_cast<unsigned short*> (labelImage->GetDataPtr(0,0));
-
+	
 	//get the maximum label
+	max_lab = 0;
 	for(int i=0; i<r-1; i++)
     {        		
         for(int j=0; j<c-1; j++)
@@ -1574,9 +1575,9 @@ bool NuclearSegmentation::RunGraphColoring(std::string labelname, std::string fi
 	for(int i=0; i<numColors; ++i)
 	{
 		WriterType::Pointer writer = WriterType::New();
-		size_t pos = dataFilename.find_last_of(".");
-		std::string base = dataFilename.substr(0,pos);
-		std::string ext = dataFilename.substr(pos);
+		size_t pos = filename.find_last_of(".");
+		std::string base = filename.substr(0,pos);
+		std::string ext = filename.substr(pos);
 		writer->SetFileName( base + "_class" + NumToString(classes.at(i)) + ext );
 		writer->SetInput( outImgs.at(i) );
     
