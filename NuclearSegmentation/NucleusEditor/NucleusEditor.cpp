@@ -142,6 +142,28 @@ void NucleusEditor::createMenus()
 	connect(pythonAction, SIGNAL(triggered()), this, SLOT(OpenPythonWindow()));
 	viewMenu->addAction(pythonAction);
 
+	//EDITING MENU
+	fileMenu = menuBar()->addMenu(tr("&Editing"));
+
+	mergeAction = new QAction(tr("Merge Cells"), this);
+	mergeAction->setStatusTip(tr("Merge Cells"));
+	connect(mergeAction, SIGNAL(triggered()), this, SLOT(mergeCells()));
+	fileMenu->addAction(mergeAction);
+
+	fileMenu->addSeparator();
+
+	deleteAction = new QAction(tr("Delete Cells"), this);
+	deleteAction->setStatusTip(tr("Deletes the selected cells"));
+	connect(deleteAction,SIGNAL(triggered()),this,SLOT(deleteCells()));
+	fileMenu->addAction(deleteAction);
+
+	fileMenu->addSeparator();
+
+	splitAction = new QAction(tr("Split Cells"), this);
+	splitAction->setStatusTip(tr("Splits the selected cells"));
+	connect(splitAction,SIGNAL(triggered()),this,SLOT(splitCells()));
+	fileMenu->addAction(splitAction);
+
 	//HELP MENU
 	helpMenu = menuBar()->addMenu(tr("Help"));
 	aboutAction = new QAction(tr("About"),this);
@@ -307,6 +329,21 @@ void NucleusEditor::loadResult(void)
 		this->setCentralWidget(segWin);
 
 	this->update();
+}
+
+void NucleusEditor::mergeCells(void)
+{
+
+}
+
+void NucleusEditor::deleteCells(void)
+{
+
+}
+
+void NucleusEditor::splitCells(void)
+{
+
 }
 
 // Added by Aytekin Vargun 6/03/09

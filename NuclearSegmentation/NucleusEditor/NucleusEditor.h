@@ -66,6 +66,11 @@ private slots:
 	void OpenPythonWindow();
 	bool BrowseForPythonExecutable();
 
+	//For Editing Menu
+	void mergeCells(void);
+	void deleteCells(void);
+	void splitCells(void);
+
 signals:
     
 private:
@@ -95,6 +100,11 @@ private:
 	QMenu *helpMenu;
 	QAction *aboutAction;
 	QAction *pythonAction;
+
+	//For Editing Menu
+	QAction *mergeAction;
+	QAction *deleteAction;
+	QAction *splitAction;
 
 	QLabel *statusLabel;
 
