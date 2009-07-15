@@ -323,7 +323,7 @@ void SegmentationModel::splitTrigger()
 		for(int i=0; i<items.size(); ++i)
 		{
 			delete items.at(i);
-		}
+		} 
 		updateMapping();
 
 		if( newIDs.size()==2 )

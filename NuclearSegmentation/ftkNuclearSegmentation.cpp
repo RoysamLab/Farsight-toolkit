@@ -1104,6 +1104,8 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 	//add them to the features list
 	myObjects.push_back( GetNewObject(newID1, labFilter->GetFeatures(newID1) ) );
 	myObjects.push_back( GetNewObject(newID2, labFilter->GetFeatures(newID2) ) );
+	IdToIndexMap[newID1] = (int)myObjects.size() - 2;
+	IdToIndexMap[newID2] = (int)myObjects.size() - 1;
 
 	//return the ids of the two cells resulting from spliting
 	std::vector <int> ids_ok;
