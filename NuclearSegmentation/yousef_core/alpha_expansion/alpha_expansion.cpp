@@ -60,10 +60,10 @@ void start_alpha_expansion(float* im, int* seg_im, float* Dterms, int R, int C, 
 //{
 //}
 
-void alpha_expansion_2d( float *im, float *sublogImg, int *subclustImg, int R, int C )
+void alpha_expansion_2d( float *im, float *sublogImg, int *subclustImg, int R, int C )
 {
 	float *hCue, *vCue;
-	int K;	
+	int K;	
 	//starting graph-roloring based learning
 	K = 10000;
 	float* Dterms  = multiColGraphLearning(sublogImg, subclustImg, R, C, &K);

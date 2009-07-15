@@ -3,7 +3,7 @@
 int alpha_expansion_2d( int *im, float *sublogImg, int *subclustImg, int R, int C)
 {
 	float *hCue, *vCue;
-	int K;	
+	int K;	
 	//FILE* fid = fopen("alpha_expansion_status.txt","w");
 	//fprintf(fid,"starting multicoloring learning...");
 	K = 10000;

@@ -167,7 +167,7 @@ GCoptimization * GraphCut3dConstr(float* ContrastIn, float* DataCostIn, float* S
 	return MyGraph;
 }
     
-GCoptimization * GraphCutConstr(float* DataCostIn, float* SmoothnessCostIn, float* hCueIn, float* vCueIn, int RIn, int CIn, int num_labels)
+GCoptimization * GraphCutConstr(float* DataCostIn, float* SmoothnessCostIn, float* hCueIn, float* vCueIn, int RIn, int CIn, int num_labels)
 {
     
     GCoptimization::PixelType width, height;

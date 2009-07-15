@@ -269,6 +269,8 @@ private:
 	vtkSmartPointer<vtkCallbackCommand> keyPress;
 	
 	vtkSmartPointer<vtkCellPicker> CellPicker;
+
+  //ID numbers of the selected traces
 	std::vector<int> IDList;
 
     //merge info
