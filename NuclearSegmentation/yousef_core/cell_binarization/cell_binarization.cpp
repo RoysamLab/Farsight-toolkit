@@ -641,7 +641,7 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 		if(i<=alpha_B)
 			B_H[i] = P_I*compute_poisson_prob(int(alpha_B),alpha_B);
 		else
-        B_H[i] = P_I*compute_poisson_prob(i,alpha_B);
+			B_H[i] = P_I*compute_poisson_prob(i,alpha_B);
     }
 	std::cerr << "Poisson Probabilities Computed" << std::endl;
     
@@ -698,7 +698,7 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 
 	std::cout << "First Loop Complete" << std::endl;
 	
-	sig = 30.0;
+	sig = 50.0;
 	w=10.0;
 	IND = -1;
 	for(int k=imBlock[4]; k<imBlock[5]; k++)
