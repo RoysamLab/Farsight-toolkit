@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
 
-#ifndef __TRACE_H
-#define __TRACE_H
+#ifndef __TRACELINE_H
+#define __TRACELINE_H
 
 #define PI 3.14159265
 

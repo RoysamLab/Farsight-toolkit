@@ -26,8 +26,55 @@ limitations under the License.
   v4: converted to Qt, member names changed to fit "VTK style" more closely.
   v5: automated functions implemented structure in place for "PACE".
 */
-#include "View3D.h"
+
+#include "ftkGUI/PlotWindow.h"
+#include "ftkGUI/HistoWindow.h"
+
+#include "itkImageFileReader.h"
+#include "itkImageToVTKImageFilter.h"
+
+#include <QAction>
+#include <QtGui>
+#include <QVTKWidget.h>
+
+#include "vtkActor.h"
+#include "vtkCallbackCommand.h"
+#include "vtkCellArray.h"
+#include "vtkCellPicker.h"
+#include "vtkColorTransferFunction.h"
+#include "vtkCommand.h"
+#include "vtkContourFilter.h"
+#include "vtkCubeSource.h"
+#include "vtkFloatArray.h"
+#include "vtkGlyph3D.h"
+#include "vtkImageData.h"
+#include "vtkImageToStructuredPoints.h"
+#include "vtkInteractorStyleTrackballCamera.h"
+#include "vtkLODActor.h"
+#include "vtkOpenGLVolumeTextureMapper3D.h"
+#include "vtkPiecewiseFunction.h"
+#include "vtkPlaybackRepresentation.h"
+#include "vtkPlaybackWidget.h"
+#include "vtkPointData.h"
+#include "vtkPoints.h"
+#include "vtkPolyData.h"
+#include "vtkPolyDataMapper.h"
+#include "vtkProperty.h"
+#include "vtkRenderer.h"
+#include "vtkRendererCollection.h"
+#include "vtkRenderWindow.h"
+#include "vtkSliderRepresentation2D.h"
+#include "vtkSliderWidget.h"
+#include "vtkSphereSource.h"
+#include "vtkVolume.h"
+#include "vtkVolumeProperty.h"
+
+#include "TraceBit.h"
+#include "TraceGap.h"
+#include "TraceLine.h"
+#include "TraceObject.h"
 #include "View3DHelperClasses.h"
+#include "View3D.h"
 
 View3D::View3D(int argc, char **argv)
 {
@@ -624,7 +671,7 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
       break;
 
     case 'd':
-		view->compList.clear();
+		view->gapList.clear();
       view->DeleteTraces();
       break;
     
@@ -909,7 +956,7 @@ void View3D::DeleteTrace(TraceLine *tline)
 /*	merging functions	*/
 void View3D::MergeTraces()
 {
-	if (this->compList.size() > 1)
+	if (this->gapList.size() > 1)
 	{
 		if(this->plot)
 		{
@@ -922,7 +969,7 @@ void View3D::MergeTraces()
 		}
 		this->SelectedComp();
 		//this->Rerender();
-		this->compList.clear();
+		this->gapList.clear();
 	}
 	else
 	{
@@ -977,65 +1024,66 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 	  {
 		for (j=i+1; j<traceList.size(); j++)
 		  {
-			compTrace newComp;
-			newComp.Trace1 = traceList[i];
-			newComp.Trace2 = traceList[j];
-			newComp.Trace1->EndPtDist(
-					newComp.Trace2,newComp.endPT1, newComp.endPT2, 
-					newComp.dist, newComp.maxdist, newComp.angle);
-			newComp.length = newComp.Trace1->GetSize() + newComp.Trace2->GetSize() + newComp.dist;
-			newComp.smoothness = newComp.length / newComp.maxdist;
-			newComp.cost = newComp.angle*(newComp.dist/gapMax)*newComp.smoothness;
-			if(!(newComp.dist >= newComp.Trace1->GetSize()*gapTol) 
-				&&	!(newComp.dist >= newComp.Trace2->GetSize()*gapTol) 
-				&&	!(newComp.dist >= gapMax*( 1+ gapTol)))//
+			TraceGap newGap;
+			newGap.Trace1 = traceList[i];
+			newGap.Trace2 = traceList[j];
+			newGap.Trace1->EndPtDist(
+					newGap.Trace2,newGap.endPT1, newGap.endPT2, 
+					newGap.dist, newGap.maxdist, newGap.angle);
+			newGap.length = newGap.Trace1->GetSize() + newGap.Trace2->GetSize() + newGap.dist;
+			newGap.smoothness = newGap.length / newGap.maxdist;
+			newGap.cost = newGap.angle*(newGap.dist/gapMax)*newGap.smoothness;
+			if(!(newGap.dist >= newGap.Trace1->GetSize()*gapTol) 
+				&&	!(newGap.dist >= newGap.Trace2->GetSize()*gapTol) 
+				&&	!(newGap.dist >= gapMax*( 1+ gapTol)))//
 			  {	//myText+="added comparison\n";
-				this->compList.push_back(newComp);
+				this->gapList.push_back(newGap);
 			  }	
 		  }
 	}
 	
-	if (this->compList.size() > 1)
+	if (this->gapList.size() > 1)
 	  {
-		//myText+="\tNumber of comparisons:\t" + QString::number(this->compList.size());
-		i = 0, j = 0; int mergeCount = 0;
-		while (i < this->compList.size() -1)
+		//myText+="\tNumber of comparisons:\t" + QString::number(this->gapList.size());
+		i = 0, j = 0;
+    //int mergeCount = 0;
+		while (i < this->gapList.size() -1)
 		{
 			exist = 0;
-		  while ((exist == 0)&&(j<this->compList.size()-1))
+		  while ((exist == 0)&&(j<this->gapList.size()-1))
 		  {
 			j++;
-			if (this->compList[i].Trace1->GetId()==this->compList[j].Trace1->GetId())
+			if (this->gapList[i].Trace1->GetId()==this->gapList[j].Trace1->GetId())
 			{
-				if (this->compList[i].endPT1==this->compList[j].endPT1)
+				if (this->gapList[i].endPT1==this->gapList[j].endPT1)
 				{	exist = 1;		}
 		  	}
-			else if(this->compList[i].Trace1->GetId()==this->compList[j].Trace2->GetId())
+			else if(this->gapList[i].Trace1->GetId()==this->gapList[j].Trace2->GetId())
 			{
-				if (this->compList[i].endPT1==this->compList[j].endPT2)
+				if (this->gapList[i].endPT1==this->gapList[j].endPT2)
 				{	exist = 1;	}
 			}
-			else if (this->compList[i].Trace2->GetId() == this->compList[j].Trace1->GetId())
+			else if (this->gapList[i].Trace2->GetId() == this->gapList[j].Trace1->GetId())
 			{
-				if (this->compList[i].endPT2==this->compList[j].endPT1)
+				if (this->gapList[i].endPT2==this->gapList[j].endPT1)
 				{	exist = 1;		}
 			}
-			else if(this->compList[i].Trace2->GetId() == this->compList[j].Trace2->GetId())
+			else if(this->gapList[i].Trace2->GetId() == this->gapList[j].Trace2->GetId())
 			{
-				if (this->compList[i].endPT2==this->compList[j].endPT2)
+				if (this->gapList[i].endPT2==this->gapList[j].endPT2)
 			  	{	exist = 1;	}
 			}
 		  }		//end while exist = 0
 			if (exist == 1)
 			{
 				++conflict;
-				if (this->compList[i].cost<this->compList[j].cost)
+				if (this->gapList[i].cost<this->gapList[j].cost)
 				{
-					this->compList.erase(this->compList.begin()+j);
+					this->gapList.erase(this->gapList.begin()+j);
 				}
 				else
 				{
-					this->compList.erase(this->compList.begin()+i);
+					this->gapList.erase(this->gapList.begin()+i);
 				}
 				j=i;
 			}//end if exist
@@ -1045,29 +1093,29 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 				j=i;
 		  	}//end else exist
 	  	}// end of search for conflicts
-		for (i=0;i<this->compList.size(); i++)
+		for (i=0;i<this->gapList.size(); i++)
 		{
-			this->compList[i].compID = i;
-			this->HighlightSelected(this->compList[i].Trace1, .25);
-			this->HighlightSelected(this->compList[i].Trace2, .25);
+			this->gapList[i].compID = i;
+			this->HighlightSelected(this->gapList[i].Trace1, .25);
+			this->HighlightSelected(this->gapList[i].Trace2, .25);
 		}
 		
 		this->myText+="\nNumber of traces:\t" + QString::number(traceList.size());
 		this->myText+="\nConflicts resolved:\t" + QString::number(conflict);
 		this->myText+= "\nTrace List size:\t" + QString::number(traceList.size());
-		this->myText+="\nNumber of computed distances:\t" + QString::number(this->compList.size());
+		this->myText+="\nNumber of computed distances:\t" + QString::number(this->gapList.size());
 		MergeInfo->setText("\nNumber of computed distances:\t" 
-			+ QString::number(this->compList.size())
+			+ QString::number(this->gapList.size())
 			+"\nEdit selection or press merge again");	
 		MergeInfo->show();
 		//MergeInfo->exec();
 		this->ShowMergeStats();
-	  }//end if this->compList size > 1
+	  }//end if this->gapList size > 1
 	else 
 	{
-		if (this->compList.size() ==1)
+		if (this->gapList.size() ==1)
 		{		
-			tobj->mergeTraces(this->compList[0].endPT1,this->compList[0].endPT2);
+			tobj->mergeTraces(this->gapList[0].endPT1,this->gapList[0].endPT2);
 			this->Rerender();
 			MergeInfo->setText(this->myText + "\nOne Trace merged");
 		}
@@ -1086,7 +1134,7 @@ void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
 }
 void View3D::ShowMergeStats()
 {
-	int numRows = this->compList.size();
+	int numRows = this->gapList.size();
 	std::vector<QString> headers;
 	headers.push_back("Merge Number");
 	headers.push_back("Trace 1");
@@ -1101,15 +1149,15 @@ void View3D::ShowMergeStats()
 	for ( int i = 0; i < numRows; i++)
 	{
 		std::vector<double> row;
-		row.push_back(this->compList[i].compID);
-		row.push_back(this->compList[i].Trace1->GetId());
-		row.push_back(this->compList[i].Trace2->GetId());
-		row.push_back(this->compList[i].dist);
-		row.push_back(this->compList[i].angle);
-		row.push_back(this->compList[i].maxdist);
-		row.push_back(this->compList[i].length);
-		row.push_back(this->compList[i].smoothness);
-		row.push_back(this->compList[i].cost);
+		row.push_back(this->gapList[i].compID);
+		row.push_back(this->gapList[i].Trace1->GetId());
+		row.push_back(this->gapList[i].Trace2->GetId());
+		row.push_back(this->gapList[i].dist);
+		row.push_back(this->gapList[i].angle);
+		row.push_back(this->gapList[i].maxdist);
+		row.push_back(this->gapList[i].length);
+		row.push_back(this->gapList[i].smoothness);
+		row.push_back(this->gapList[i].cost);
 		data.push_back(row);
 	}
 	this->model->clear();
@@ -1145,41 +1193,41 @@ void View3D::SelectedComp()
 	double currentAngle=0;
 	QPushButton *mergeAll;
 	QPushButton *mergeNone;
-	int i=0, j=0,mergeCount=0;
+	unsigned int i=0, j=0,mergeCount=0;
 	MergeInfo->setText("Merge Function");
-	for (i=0;i<this->compList.size(); i++)
+	for (i=0;i<this->gapList.size(); i++)
 	{
-		currentAngle=fabs(this->compList[i].angle); 
+		currentAngle=fabs(this->gapList[i].angle); 
 		//if (currentAngle>=PI/2) 
 		//{
 		//	currentAngle= PI-currentAngle;
 		//}
-		if 	((this->compList[i].dist<= gapMax*gapTol&& (currentAngle < 1.1))||
-			(this->compList[i].dist<= gapMax && (currentAngle < .6)))
+		if 	((this->gapList[i].dist<= gapMax*gapTol&& (currentAngle < 1.1))||
+			(this->gapList[i].dist<= gapMax && (currentAngle < .6)))
 	  	{
-			this->dtext+= "\nTrace " + QString::number(this->compList[i].Trace1->GetId());
-			this->dtext+= " and "+ QString::number(this->compList[i].Trace2->GetId() );
-			this->dtext+="\tgap size of:" + QString::number(this->compList[i].dist); 				
-			this->dtext+="\tangle of" + QString::number(currentAngle*180/PI);	//this->compList[i].angle
-			tobj->mergeTraces(this->compList[i].endPT1,this->compList[i].endPT2);
+			this->dtext+= "\nTrace " + QString::number(this->gapList[i].Trace1->GetId());
+			this->dtext+= " and "+ QString::number(this->gapList[i].Trace2->GetId() );
+			this->dtext+="\tgap size of:" + QString::number(this->gapList[i].dist); 				
+			this->dtext+="\tangle of" + QString::number(currentAngle*180/PI);	//this->gapList[i].angle
+			tobj->mergeTraces(this->gapList[i].endPT1,this->gapList[i].endPT2);
 			++mergeCount;
 	  	}	//end of if
-		else if (this->compList[i].dist<= gapMax*(1+gapTol)&& (currentAngle < .3))
+		else if (this->gapList[i].dist<= gapMax*(1+gapTol)&& (currentAngle < .3))
 	  	{
-			this->HighlightSelected(this->compList[i].Trace1, .125);
-			this->HighlightSelected(this->compList[i].Trace2, .125);
-			this->grayList.push_back( this->compList[i]);
-			this->grayText+="\nAngle of:\t" + QString::number(currentAngle*180/PI);	//this->compList[i].angle
-			this->grayText+="\tWith a distance of:\t" + QString::number(this->compList[i].dist);
+			this->HighlightSelected(this->gapList[i].Trace1, .125);
+			this->HighlightSelected(this->gapList[i].Trace2, .125);
+			this->candidateGaps.push_back( this->gapList[i]);
+			this->grayText+="\nAngle of:\t" + QString::number(currentAngle*180/PI);	//this->gapList[i].angle
+			this->grayText+="\tWith a distance of:\t" + QString::number(this->gapList[i].dist);
 			
 		 } //end of else
 	}//end of for merge
 	myText+="\tNumber of merged lines:\t" + QString::number(mergeCount);
-	if (this->grayList.size()>=1)
+	if (this->candidateGaps.size()>=1)
 	{
 		this->poly_line_data->Modified();
 		this->QVTK->GetRenderWindow()->Render();
-		myText+="\nNumber of further possible lines:\t" + QString::number(this->grayList.size());
+		myText+="\nNumber of further possible lines:\t" + QString::number(this->candidateGaps.size());
 		mergeAll = MergeInfo->addButton("Merge All", QMessageBox::YesRole);
 		mergeNone = MergeInfo->addButton("Merge None", QMessageBox::NoRole);
 		MergeInfo->setDetailedText(grayText);
@@ -1194,19 +1242,19 @@ void View3D::SelectedComp()
 	MergeInfo->exec();
 	if(MergeInfo->clickedButton()==mergeAll)
 	{
-		for (j=0; j<this->grayList.size();j++)
+		for (j=0; j<this->candidateGaps.size();j++)
 		{
-			tobj->mergeTraces(this->grayList[j].endPT1,this->grayList[j].endPT2);
+			tobj->mergeTraces(this->candidateGaps[j].endPT1,this->candidateGaps[j].endPT2);
 		}
 		this->Rerender();
 	}
 	else if(MergeInfo->clickedButton()==mergeNone)
 	{
-		this->grayList.clear();
+		this->candidateGaps.clear();
 	}
 	this->Rerender();
-	this->compList.clear();
-	this->grayList.clear();
+	this->gapList.clear();
+	this->candidateGaps.clear();
 	this->myText.clear();
 	this->dtext.clear();
 }
@@ -1715,7 +1763,7 @@ std::vector<point> View3D::readSeeds(std::string seedSource)
 	point p;
 	std::vector<point> pts;
 	pts.clear();
-	int numLines = 0;
+	//int numLines = 0;
 	
 	//std::cout << seedSource << " filename" <<  std::endl;
 	ifstream input(seedSource.c_str());

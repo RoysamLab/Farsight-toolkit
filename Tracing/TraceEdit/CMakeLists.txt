@@ -24,9 +24,11 @@ SET( Libraries
 
 QT4_WRAP_CPP( GUI_MOC_SRCS View3D.h )
 
-ADD_LIBRARY(Trace TraceBit.h TraceBit.cxx
-                  TraceLine.h TraceLine.cxx
-                  TraceObject.h TraceObject.cxx)
+ADD_LIBRARY(Trace
+  TraceBit.h    TraceBit.cxx
+  TraceLine.h   TraceLine.cxx
+  TraceGap.h    TraceGap.cxx
+  TraceObject.h TraceObject.cxx)
 ADD_EXECUTABLE( trace_editor  vtkTraceViewerDriver.cxx ${Sources} ${GUI_MOC_SRCS} )
 TARGET_LINK_LIBRARIES( trace_editor ${Libraries} Trace TinyXML ftkGUI)
 #ADD_EXECUTABLE( seed_editor vtkSeedViewerDriver.cxx ${Sources} )

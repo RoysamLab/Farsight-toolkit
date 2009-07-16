@@ -15,94 +15,40 @@ limitations under the License.
 
 #ifndef VIEW3D_H_
 #define VIEW3D_H_
-#include "itkObjectFactory.h"
-#include "itkSmartPointer.h"
-#include "itkMacro.h"
-#include "itkLightObject.h"
-#include "itkImageFileReader.h"
-#include "itkImageToVTKImageFilter.h"
-#include "itkImage.h"
 
-#include "vtkActor.h"
-#include "vtkLODActor.h"
-#include "vtkRenderer.h"
-#include "vtkRenderWindow.h"
-#include "vtkCamera.h"
-#include "vtkProperty.h"
-
-#include "vtkRenderWindowInteractor.h"
-#include "vtkInteractorStyleTrackballCamera.h"
-#include "vtkPointPicker.h"
-#include "vtkCellPicker.h"
-#include "vtkCommand.h"
-#include "vtkRendererCollection.h"
-
-#include "vtkLineSource.h"
-#include "vtkTubeFilter.h"
-#include "vtkPolyDataMapper.h"
-#include "vtkFloatArray.h"
-#include "vtkPoints.h"
-#include "vtkPointData.h"
-#include "vtkPolyData.h"
-#include "vtkCellArray.h"
 #include "vtkSmartPointer.h"
-#include "vtkSphereSource.h"
-#include "vtkCubeSource.h"
-#include "vtkCallbackCommand.h"
 #include <stdio.h>
-
-#include "vtkImageReader2.h"
-#include "vtkContourFilter.h"
-#include "vtkPolyDataNormals.h"
-#include "vtkCleanPolyData.h"
-#include "vtkImageData.h"
-
-#include "vtkImageToStructuredPoints.h"
-#include "vtkStructuredPointsReader.h"
-#include "vtkStructuredPoints.h"
-#include "vtkPiecewiseFunction.h"
-#include "vtkColorTransferFunction.h"
-#include "vtkVolumeProperty.h"
-#include "vtkVolumeRayCastMapper.h"
-#include "vtkVolumeRayCastCompositeFunction.h"
-#include "vtkVolume.h"
-#include "vtkOpenGLVolumeTextureMapper3D.h"
-#include "vtkOpenGLVolumeTextureMapper2D.h"
-#include "vtkSliderWidget.h"
-#include "vtkSliderRepresentation2D.h"
-#include "vtkPlaybackWidget.h"
-#include "vtkPlaybackRepresentation.h"
-
-#include "TraceBit.h"
-#include "TraceLine.h"
-#include "TraceObject.h"
-
-#include "vtkGlyph3D.h"
-
-#include <QObject>
-#include <QAction>
-#include <QtGui>
-#include <QVTKWidget.h>
 #include <string>
-#include "ftkGUI/PlotWindow.h"
-#include "ftkGUI/HistoWindow.h"
+#include <QtGui>
+
+//forward declarations
+class HistoWindow;
+class PlotWindow;
+class QAction;
+class QVTKWidget;
+class TraceBit;
+class TraceGap;
+class TraceLine;
+class TraceObject;
+class vtkActor;
+class vtkCallbackCommand;
+class vtkContourFilter;
+class vtkCellPicker;
+class vtkFloatArray;
+class vtkGlyph3D;
+class vtkLODActor;
+class vtkObject;
+class vtkPoints;
+class vtkPolyData;
+class vtkPolyDataMapper;
+class vtkRenderer;
+class vtkRenderWindowInteractor;
+class vtkSphereSource;
+class vtkVolume;
 
 struct point
 {
 	float x, y, z;
-};
-
-struct compTrace{
-	int compID;
-	TraceLine *Trace1;
-	TraceLine *Trace2;
-	int endPT1, endPT2;
-	double angle;
-	double dist; 
-	double maxdist;
-	double length;
-	double smoothness;
-	double cost;
 };
 
 class View3D : public QMainWindow 
@@ -281,8 +227,8 @@ private:
 	std::vector<int> IDList;
 
     //merge info
-	std::vector<compTrace> compList;
-	std::vector<compTrace> grayList;
+	std::vector<TraceGap> gapList;
+	std::vector<TraceGap> candidateGaps;
 	QString myText;	QString dtext;	QString grayText;
 
 	vtkSmartPointer<vtkSphereSource> Sphere;
