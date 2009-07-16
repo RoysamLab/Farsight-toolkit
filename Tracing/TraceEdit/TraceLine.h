@@ -1,0 +1,75 @@
+/*=========================================================================
+Copyright 2009 Rensselaer Polytechnic Institute
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. 
+=========================================================================*/
+
+#ifndef __TRACE_H
+#define __TRACE_H
+
+#define PI 3.14159265
+
+#include <list>
+#include <vector>
+#include <set>
+#include "vtkSmartPointer.h"
+
+class TraceBit;
+
+/**
+ * A TraceLine is a sequence of TraceBits that has pointers to two other
+ * TraceLines
+ **/
+class TraceLine
+{
+public:
+  typedef std::list<TraceBit> TraceBitsType;
+	TraceLine();
+	TraceLine(const TraceLine &t);
+  ~TraceLine();
+	TraceLine *GetParent();
+	void SetParent(TraceLine* p);
+	void AddBranch(TraceLine* b);
+	TraceLine *GetBranch1();
+	void SetBranch1(TraceLine* b0);
+	TraceLine *GetBranch2();
+	void SetBranch2(TraceLine* b1);
+	unsigned char GetType();
+	void SetType(unsigned char t) ;
+	void AddTraceBit(TraceBit tbit);
+	TraceBitsType::iterator GetTraceBitIteratorBegin();
+	TraceBitsType::iterator GetTraceBitIteratorEnd();
+	TraceBitsType * GetTraceBitsPointer();
+	void SetId(int lid);
+	int GetId();
+	int GetSize();
+	void Print(std::ostream &c);
+	std::vector<unsigned int> * GetMarkers();
+	std::vector<TraceLine*> * GetBranchPointer();
+	void setTraceColor(double newColor);
+	double getTraceColor();
+	void Getstats();
+	void EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
+                 double &maxdist, double &angle);
+	std::vector<double> stats();	
+
+private:
+	double traceColor;
+	int m_id;
+	std::vector<unsigned int> m_markers;
+	unsigned char m_type;
+	TraceLine *m_parent;
+	std::vector<TraceLine* >m_branches;
+	TraceBitsType m_trace_bits;
+};
+
+#endif

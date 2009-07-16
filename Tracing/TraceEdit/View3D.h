@@ -40,7 +40,9 @@ limitations under the License.
 #include "vtkLineSource.h"
 #include "vtkTubeFilter.h"
 #include "vtkPolyDataMapper.h"
+#include "vtkFloatArray.h"
 #include "vtkPoints.h"
+#include "vtkPointData.h"
 #include "vtkPolyData.h"
 #include "vtkCellArray.h"
 #include "vtkSmartPointer.h"
@@ -68,9 +70,14 @@ limitations under the License.
 #include "vtkOpenGLVolumeTextureMapper2D.h"
 #include "vtkSliderWidget.h"
 #include "vtkSliderRepresentation2D.h"
-#include "Trace.h"
 #include "vtkPlaybackWidget.h"
 #include "vtkPlaybackRepresentation.h"
+
+#include "TraceBit.h"
+#include "TraceLine.h"
+#include "TraceObject.h"
+
+#include "vtkGlyph3D.h"
 
 #include <QObject>
 #include <QAction>

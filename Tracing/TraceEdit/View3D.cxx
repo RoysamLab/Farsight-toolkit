@@ -517,7 +517,8 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
     view->SphereActor->SetPosition(pickPos);    //sets the selector to new point
     view->SphereActor->VisibilityOn();      //deleteTrace can turn it off 
     view->poly_line_data->Modified();
-	
+
+    //update the head Qt view here too...
   }
   view->QVTK->GetRenderWindow()->Render();             //update the render window
 }

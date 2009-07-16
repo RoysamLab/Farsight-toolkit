@@ -12,9 +12,93 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
+#include <iostream>
+#include <math.h>
+#include <queue.h>
+#include <set>
+#include "vtkPoints.h"
+#include "vtkPointData.h"
+#include "vtkPolyData.h"
+#include "vtkCellArray.h"
+#include "vtkFloatArray.h"
+#include "vtkDataArray.h"
+#include "vtkAppendPolyData.h"
+#include "vtkSphereSource.h"
+#include "vtkGlyph3D.h"
+#include "vtkArrowSource.h"
+#include "TraceBit.h"
+#include "TraceLine.h"
+#include "TraceObject.h"
 
-#include "Trace.h"
-//#pragma warning(disable:4996)
+#define VTK_CREATE(type, var) \
+  vtkSmartPointer<type> var = vtkSmartPointer<type>::New()
+
+#include "tinyxml/tinyxml.h"
+
+#define MY_ENCODING "ISO-8859-1"
+
+TraceObject::TraceObject()
+{
+}
+
+TraceObject::TraceObject(const TraceObject &T)
+{
+  for(int counter=0; counter<T.trace_lines.size(); counter++)
+  {
+    TraceLine* temp = new TraceLine();
+    *temp = *(T.trace_lines[counter]);
+    this->trace_lines.push_back(temp);
+  }
+  //this->SmallLines = T.SmallLines; FIXME: is  'SmallLines' storing some redundant information? we need to take care of it in the copy constructor.
+  this->smallLineColor = T.smallLineColor;
+  this->mergeLineColor = T.mergeLineColor;
+}
+
+TraceObject::~TraceObject()
+{
+  for(unsigned int counter=0; counter<trace_lines.size(); counter++)
+    delete trace_lines[counter];
+}
+
+double TraceObject::getSmallLineColor()
+{
+  return this->smallLineColor;
+}
+
+double TraceObject::getMergeLineColor()
+{
+  return this->mergeLineColor;
+}
+
+void TraceObject::setSmallLineColor(double set)
+{
+  this->smallLineColor=set;
+}
+
+void TraceObject::setMergeLineColor(double set)
+{
+  this->mergeLineColor=set;
+}
+
+void TraceObject::Print(std::ostream &c)
+{
+  c<<"TraceObject:"<<std::endl;
+  c<<"Size:"<<trace_lines.size()<<std::endl;
+  for(unsigned int counter=0; counter<trace_lines.size(); counter++)
+  {
+    trace_lines[counter]->Print(c);
+  }
+}
+
+std::vector<TraceLine*>* TraceObject::GetTraceLinesPointer()
+{
+  return &trace_lines;
+}
+
+std::vector<TraceLine*> TraceObject::GetTraceLines()
+{
+  return trace_lines;
+}
 
 bool TraceObject::ReadFromFeatureTracksFileForKymograph(char *filename,int type_offset=0)
 {
@@ -301,7 +385,7 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkF
 	iter->marker = return_id;
 	point_scalars->InsertNextTuple1(.5-tline->getTraceColor());
 
-	/* To add a line between parent line's last point and the first point in the current line */
+	//To add a line between parent line's last point and the first point in the current line
 	if(tline->GetParent() != NULL)
 	{
 		//printf("I should not have a parent at all! why did I come here?\n");
@@ -314,7 +398,7 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkF
 			line_cells->InsertCellPoint(return_id);
 		}
 	}
-	/* Rest of the lines for the current tline */
+	// Rest of the lines for the current tline 
 	iter++;
 	while(iter!=tline->GetTraceBitIteratorEnd())
 	{
@@ -333,7 +417,7 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkF
 		line_cells->InsertCellPoint(return_id);
 		++iter;
 	}
-	/* Recursive calls to the branches if they exist */
+	// Recursive calls to the branches if they exist 
 	for(unsigned int counter=0; counter<tline->GetBranchPointer()->size(); counter++)
 	{
 		//printf("I should be having children too! what am I doing here?\n");
@@ -341,7 +425,7 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkF
 	}
 }
 
-void CollectTraceBitsRecursive(std::vector<TraceBit> &vec,TraceLine *l)
+void TraceObject::CollectTraceBitsRecursive(std::vector<TraceBit> &vec,TraceLine *l)
 {
 	TraceLine::TraceBitsType *p = l->GetTraceBitsPointer();
 	TraceLine::TraceBitsType::iterator iter = p->begin();
@@ -354,7 +438,7 @@ void CollectTraceBitsRecursive(std::vector<TraceBit> &vec,TraceLine *l)
 	std::vector<TraceLine*>* bp = l->GetBranchPointer();
 	for(unsigned int counter=0; counter< bp->size(); counter++)
 	{
-		CollectTraceBitsRecursive(vec,(*bp)[counter]);
+		this->CollectTraceBitsRecursive(vec,(*bp)[counter]);
 	}
 }
 
@@ -362,7 +446,7 @@ std::vector<TraceBit> TraceObject::CollectTraceBits()
 {
 	std::vector<TraceBit> vec;
 	for(unsigned int counter=0; counter<trace_lines.size(); counter++)
-		CollectTraceBitsRecursive(vec,trace_lines[counter]);
+		this->CollectTraceBitsRecursive(vec,trace_lines[counter]);
 	return vec;
 }
 
@@ -448,7 +532,7 @@ vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
 	//printf("Starting CreatePolyDataRecursive\n");
 	for(unsigned int counter=0; counter<trace_lines.size(); counter++)
 	{
-		/*printf("Calling CreatePolyDataRecursive %dth time\n",counter+1);*/
+		//printf("Calling CreatePolyDataRecursive %dth time\n",counter+1);
 		CreatePolyDataRecursive(trace_lines[counter],point_scalars,line_points,line_cells);
 	}
 	printf("Finished CreatePolyDataRecursive\n");
@@ -580,12 +664,12 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
 	return true;
 }
 
-void CollectIdsRecursive(std::vector<int> ids, TraceLine* tline)
+void TraceObject::CollectIdsRecursive(std::vector<int> ids, TraceLine* tline)
 {
 	ids.push_back(tline->GetId());
 	for(unsigned int counter = 0; counter < tline->GetBranchPointer()->size(); counter++)
 	{
-		CollectIdsRecursive(ids,(*tline->GetBranchPointer())[counter]);
+		this->CollectIdsRecursive(ids,(*tline->GetBranchPointer())[counter]);
 	}
 }
 int TraceObject::getNewLineId()
@@ -593,7 +677,7 @@ int TraceObject::getNewLineId()
 	std::vector<int> ids;
 	for(unsigned int counter=0; counter< trace_lines.size(); counter++)
 	{
-		CollectIdsRecursive(ids, trace_lines[counter]);
+		this->CollectIdsRecursive(ids, trace_lines[counter]);
 	}
 	int newId = this->trace_lines.size();
 	std::sort(ids.begin(),ids.end());
@@ -646,6 +730,7 @@ int TraceObject::getNewLineId()
  *  of trace lines that currently exist.  We test the uniqueness of the new ID
  *  before assignment.
  **/
+
 void TraceObject::splitTrace(int selectedCellId)
 {
 	//get the TraceLine that contains the selected point
@@ -731,7 +816,8 @@ void TraceObject::splitTrace(int selectedCellId)
     }
 }
 
-/* This function assumes that the TraceLine does not have either parent or children. One end must be open */
+//This function assumes that the TraceLine does not have either parent or
+//children. One end must be open 
 void TraceObject::ReverseSegment(TraceLine *tline)
 {
 	if(tline->GetParent()==NULL)
@@ -783,13 +869,8 @@ void TraceObject::ReverseSegment(TraceLine *tline)
 		return;
 	}
 }
-/*
-   t1, t2 -> two lines to be merged
-   pMarker - point of merging.
-
-
-
-*/
+//   t1, t2 -> two lines to be merged
+//   pMarker - point of merging.
 
 void TraceObject::FixPointMarkers(TraceLine* tline)
 {
@@ -946,7 +1027,7 @@ std::cout<<"!-1 -1"<<std::endl;
 	//}
 	
 }
-void CollectBranchPointsRecursive(vtkSmartPointer<vtkPoints> p, vtkSmartPointer<vtkCellArray> cells,TraceLine *tline)
+void TraceObject::CollectBranchPointsRecursive(vtkSmartPointer<vtkPoints> p, vtkSmartPointer<vtkCellArray> cells,TraceLine *tline)
 {
 	if(tline->GetBranchPointer()->size()>0)
 	{
@@ -961,13 +1042,13 @@ void CollectBranchPointsRecursive(vtkSmartPointer<vtkPoints> p, vtkSmartPointer<
 		cells->InsertCellPoint(id);
 		for(unsigned int counter=0; counter< tline->GetBranchPointer()->size(); counter++)
 		{
-			CollectBranchPointsRecursive(p,cells,(*tline->GetBranchPointer())[counter]);
+			this->CollectBranchPointsRecursive(p,cells,(*tline->GetBranchPointer())[counter]);
 		}
 	}
 	
 	return;
 }
-void CollectSegmentMidPointsRecursive(vtkSmartPointer<vtkPoints>p, vtkSmartPointer<vtkCellArray> cells, 
+void TraceObject::CollectSegmentMidPointsRecursive(vtkSmartPointer<vtkPoints>p, vtkSmartPointer<vtkCellArray> cells, 
 									  vtkSmartPointer<vtkFloatArray> da,TraceLine* tline)
 {
 		double loc[3];
@@ -997,7 +1078,7 @@ void CollectSegmentMidPointsRecursive(vtkSmartPointer<vtkPoints>p, vtkSmartPoint
 		da->InsertNextTuple3(dir[0],dir[1],dir[2]);
 		for(unsigned int counter=0; counter< tline->GetBranchPointer()->size(); counter++)
 		{
-			CollectSegmentMidPointsRecursive(p,cells,da,(*tline->GetBranchPointer())[counter]);
+			this->CollectSegmentMidPointsRecursive(p,cells,da,(*tline->GetBranchPointer())[counter]);
 		}
 	
 }
@@ -1017,7 +1098,7 @@ vtkSmartPointer<vtkPolyData> TraceObject::generateBranchIllustrator()
 	printf("TraceLines size = %d\n",(int)trace_lines.size());
 	for(unsigned int counter=0; counter< trace_lines.size(); counter++)
 	{
-		CollectBranchPointsRecursive(p,cells,trace_lines[counter]);
+		this->CollectBranchPointsRecursive(p,cells,trace_lines[counter]);
 	}
 	VTK_CREATE(vtkPoints, p1);
 	VTK_CREATE(vtkFloatArray, da);
@@ -1025,7 +1106,7 @@ vtkSmartPointer<vtkPolyData> TraceObject::generateBranchIllustrator()
 	VTK_CREATE(vtkCellArray, cells1);
 	for(unsigned int counter=0; counter< trace_lines.size(); counter++)
 	{
-		CollectSegmentMidPointsRecursive(p1,cells1,da,trace_lines[counter]);
+		this->CollectSegmentMidPointsRecursive(p1,cells1,da,trace_lines[counter]);
 	}
 
 	VTK_CREATE(vtkPolyData, poly);
@@ -1053,88 +1134,6 @@ vtkSmartPointer<vtkPolyData> TraceObject::generateBranchIllustrator()
 	app_poly->Update();
 	
 	return app_poly->GetOutput();
-}
-void TraceLine::Getstats()
-{
-	double XF, XB, YF, YB, ZF, ZB;
-	XF = m_trace_bits.front().x;
-	XB = m_trace_bits.back().x;
-	YF= m_trace_bits.front().y;
-	YB= m_trace_bits.back().y;
-	ZF= m_trace_bits.front().z;
-	ZB= m_trace_bits.back().z;
-	printf("Trace # %d \t Trace Size: \t %d ", m_id, (int)m_trace_bits.size());
-	printf("First bit x: %4.2f y: %4.2f z: %4.2f \t", XF, YF, ZF); 
-	printf("Endt bit x: %4.2f y: %4.2f z: %4.2f \n", XB, YB, ZB); 
-
-}
-void TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist, double &maxdist, double &angle)	
-{
-	int center1=this->GetSize()/2, center2=Trace2->GetSize()/2;
-	double XF, XB, YF, YB, ZF, ZB, XF2,XB2, YF2, YB2, ZF2, ZB2, distances[4];
-	double delX1, delX2, delY1, delY2, delZ1, delZ2, min, norm1, norm2;
-//trace 1
-	XF = m_trace_bits.front().x;	YF= m_trace_bits.front().y;		ZF= m_trace_bits.front().z;
-	XB = m_trace_bits.back().x;		YB= m_trace_bits.back().y;		ZB= m_trace_bits.back().z;
-
-//trace 2 
-	XF2=Trace2->m_trace_bits.front().x;		YF2=Trace2->m_trace_bits.front().y;		ZF2=Trace2->m_trace_bits.front().z;
-	XB2=Trace2->m_trace_bits.back().x;		YB2=Trace2->m_trace_bits.back().y;		ZB2=Trace2->m_trace_bits.back().z;
-//delta x,y,z 
-	delX1=XF-XB;	delX2=XF2-XB2;
-	delY1=YF-YB;	delY2=YF2-YB2;
-	delZ1=ZF-ZB;	delZ2=ZF2-ZB2;
-
-	//compute the endpt distances
-	distances[0]=sqrt(pow((XF-XF2),2)+pow((YF-YF2),2)+pow((ZF-ZF2),2));//0 F-F
-	distances[1]=sqrt(pow((XF-XB2),2)+pow((YF-YB2),2)+pow((ZF-ZB2),2));//1 F-B
-	distances[2]=sqrt(pow((XB-XF2),2)+pow((YB-YF2),2)+pow((ZB-ZF2),2));//2 B-F
-	distances[3]=sqrt(pow((XB-XB2),2)+pow((YB-YB2),2)+pow((ZB-ZB2),2));//3 B-B
-	//determine minimum spacing
-	min = distances[0];
-	int i, mark=0;
-	for (i = 1; i<4; i++)
-	{	//printf("dist of %d = %d \n", i, distances[i]);
-		if (min > distances[i])
-		{	min= distances[i];
-			mark=i;
-		}
-	}	
-	norm1=sqrt(pow((delX1),2)+ pow((delY1),2)+ pow((delZ1),2));
-	norm2=sqrt(pow((delX2),2)+ pow((delY2),2)+ pow((delZ2),2));
-	angle = acos(((delX1 * delX2) + (delY1 *delY2) + (delZ1 * delZ2))/(norm2 * norm1));
-	// from min determine orientation and return distance
-	if (mark ==0)
-	{
-		dist = distances[0];
-		dir1= m_trace_bits.front().marker;
-		dir2= Trace2->m_trace_bits.front().marker;
-		angle=PI-angle;
-		maxdist= distances[3];
-	}
-	else if (mark ==1)
-	{
-		dist = distances[1];
-		dir1= m_trace_bits.front().marker;
-		dir2= Trace2->m_trace_bits.back().marker;
-		maxdist= distances[2];
-	}
-	else if (mark ==2)
-	{
-		dist = distances[2];
-		dir1= m_trace_bits.back().marker;
-		dir2= Trace2->m_trace_bits.front().marker;
-		maxdist= distances[1];
-	}
-	else
-	{
-		dist = distances[3];
-		dir1= m_trace_bits.back().marker;
-		dir2= Trace2->m_trace_bits.back().marker;
-		angle=PI-angle;
-		maxdist= distances[0];
-	}
-
 }
 
 void TraceObject::RemoveTraceLine(TraceLine *tline)
@@ -1170,18 +1169,4 @@ void TraceObject::FindMinLines(int smallSize)
 		++iter;
 	}
 }
-std::vector<double> TraceLine::stats()
-{
-	std::vector<double> thisStats;
-	thisStats.push_back(this->m_id);
-	thisStats.push_back(this->m_type);
-	thisStats.push_back(this->GetSize());
-	//thisStats.push_back(this->m_parent->GetId());
-	thisStats.push_back(m_trace_bits.front().x);
-	thisStats.push_back(m_trace_bits.front().y);
-	thisStats.push_back(m_trace_bits.front().z);
-	thisStats.push_back(m_trace_bits.back().x);
-	thisStats.push_back(m_trace_bits.back().y);
-	thisStats.push_back(m_trace_bits.back().z);
-	return thisStats;
-}
+
