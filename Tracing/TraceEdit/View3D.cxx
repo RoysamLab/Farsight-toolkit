@@ -115,8 +115,8 @@ View3D::View3D(int argc, char **argv)
 	  }
 
 this->QVTK = 0;
-this->gapTol = .5;
-this->gapMax = 10;
+this->tobj->gapTol = .5;
+this->tobj->gapMax = 10;
 this->smallLine = 5;
 this->SelectColor =.1;
 this->lineWidth= 2;
@@ -424,8 +424,8 @@ void View3D::CreateSphereActor()
 void View3D::ShowSettingsWindow()
 {
   //make sure the values in the input fields are up-to-date
-  this->MaxGapField->setText(QString::number(this->gapMax));
-  this->GapToleranceField->setText(QString::number(this->gapTol));
+  this->MaxGapField->setText(QString::number(this->tobj->gapMax));
+  this->GapToleranceField->setText(QString::number(this->tobj->gapTol));
   this->LineLengthField->setText(QString::number(this->smallLine));
   this->ColorValueField->setText(QString::number(this->SelectColor));
   this->LineWidthField->setText(QString::number(this->lineWidth));
@@ -434,8 +434,8 @@ void View3D::ShowSettingsWindow()
 
 void View3D::ApplyNewSettings()
 {
-  this->gapMax = this->MaxGapField->text().toInt();
-  this->gapTol = this->GapToleranceField->text().toDouble();
+  this->tobj->gapMax = this->MaxGapField->text().toInt();
+  this->tobj->gapTol = this->GapToleranceField->text().toDouble();
   this->smallLine = this->LineLengthField->text().toFloat();
   this->SelectColor = this->ColorValueField->text().toDouble();
   this->lineWidth = this->LineWidthField->text().toFloat();
@@ -451,8 +451,8 @@ bool View3D::setTol()
 {
 	bool change = false;
 	char select=0;
-	std::cout<<"Settings Configuration:\n gap (t)olerance:\t" <<gapTol
-		<<"\ngap (m)ax:\t"<<gapMax
+	std::cout<<"Settings Configuration:\n gap (t)olerance:\t" <<this->tobj->gapTol
+		<<"\ngap (m)ax:\t"<<this->tobj->gapMax
 		<<"\n(s)mall line:\t"<< smallLine
 		<<"\nselection (c)olor:\t"<<SelectColor
 		<<"\nline (w)idth:\t"<<lineWidth
@@ -468,9 +468,9 @@ bool View3D::setTol()
 				int newMax;
 				std::cout<< "maximum gap length\n";
 				std::cin>>newMax;
-				if (newMax!=gapMax)
+				if (newMax!=this->tobj->gapMax)
 				{
-					gapMax=newMax;
+					this->tobj->gapMax=newMax;
 					change= true;
 				}
 				break;
@@ -480,9 +480,9 @@ bool View3D::setTol()
 				double newTol;
 				std::cout<< "gap length tolerance\n";
 				std::cin>>newTol;
-				if (newTol!=gapTol)
+				if (newTol!=this->tobj->gapTol)
 				{
-					gapTol=newTol;
+					this->tobj->gapTol=newTol;
 					change= true;
 				}
 				break;
@@ -526,8 +526,8 @@ bool View3D::setTol()
 		}//end of switch
 	}// end of while
 	if (change== true)
-	{std::cout<<"Settings Configuration are now:\n gap tollerance:\t" <<gapTol
-		<<"\ngap max:\t"<<gapMax
+	{std::cout<<"Settings Configuration are now:\n gap tollerance:\t" <<this->tobj->gapTol
+		<<"\ngap max:\t"<<this->tobj->gapMax
 		<<"\nsmall line:\t"<< smallLine
 		<<"\nselection color:\t"<<SelectColor
 		<<"\nline width:\t"<<lineWidth;
@@ -671,7 +671,7 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
       break;
 
     case 'd':
-		view->gapList.clear();
+		view->tobj->gapList.clear();
       view->DeleteTraces();
       break;
     
@@ -956,7 +956,7 @@ void View3D::DeleteTrace(TraceLine *tline)
 /*	merging functions	*/
 void View3D::MergeTraces()
 {
-	if (this->gapList.size() > 1)
+	if (this->tobj->gapList.size() > 1)
 	{
 		if(this->plot)
 		{
@@ -969,10 +969,11 @@ void View3D::MergeTraces()
 		}
 		this->SelectedComp();
 		//this->Rerender();
-		this->gapList.clear();
+		this->tobj->gapList.clear();
 	}
 	else
 	{
+		int conflict =0;
 	  if(this->IDList.size()>=1)
 		{		  
 		std::sort(this->IDList.begin(), this->IDList.end());
@@ -1001,140 +1002,52 @@ void View3D::MergeTraces()
 			  }
 			}
 		  }
-		//this->Rerender();
-		this->MinEndPoints(traceList);
-		//this->Rerender();
+		conflict = this->tobj->createGapLists(traceList);
 		}
 	  else
 		{
-		//std::cout<<  "Nothing to merge \n";
-			this->MinEndPoints(this->tobj->GetTraceLines());
-			//this->Rerender();
-		}	 
+			conflict = this->tobj->createGapLists(this->tobj->GetTraceLines());
+		}	
+	  unsigned int i; 
+	  QMessageBox *MergeInfo = new QMessageBox;
+		if (this->tobj->gapList.size() > 1)
+		{
+			for (i=0;i<this->tobj->gapList.size(); i++)
+			{
+				this->tobj->gapList[i].compID = i;
+				this->HighlightSelected(this->tobj->gapList[i].Trace1, .25);
+				this->HighlightSelected(this->tobj->gapList[i].Trace2, .25);
+			}
+			MergeInfo->setText("\nNumber of computed distances:\t" 
+				+ QString::number(this->tobj->gapList.size())
+				+"\nConflicts resolved:\t" + QString::number(conflict)
+				+"\nEdit selection or press merge again");
+			this->ShowMergeStats();
+		}//end if this->tobj->gapList size > 1
+		else 
+		{
+			if (this->tobj->gapList.size() ==1)
+			{		
+				tobj->mergeTraces(this->tobj->gapList[0].endPT1,this->tobj->gapList[0].endPT2);
+				this->Rerender();
+				MergeInfo->setText(this->myText + "\nOne Trace merged");
+			}
+			else
+			{
+				this->Rerender();
+				MergeInfo->setText("\nNo merges possible, set higher tolerances\n"); 
+			}	
+		}		
+		MergeInfo->show();
+		this->myText.clear();
+		this->poly_line_data->Modified();
+		this->QVTK->GetRenderWindow()->Render();
 	}//end else size
 }
 
-
-void View3D::MinEndPoints(std::vector<TraceLine*> traceList)
-{
-	//QLabel *MergeInfo = new QLabel();
-	QMessageBox *MergeInfo = new QMessageBox;
-	unsigned int i,j, exist = 0, conflict = 0;	
-	for (i=0;i<traceList.size()-1; i++)
-	  {
-		for (j=i+1; j<traceList.size(); j++)
-		  {
-			TraceGap newGap;
-			newGap.Trace1 = traceList[i];
-			newGap.Trace2 = traceList[j];
-			newGap.Trace1->EndPtDist(
-					newGap.Trace2,newGap.endPT1, newGap.endPT2, 
-					newGap.dist, newGap.maxdist, newGap.angle);
-			newGap.length = newGap.Trace1->GetSize() + newGap.Trace2->GetSize() + newGap.dist;
-			newGap.smoothness = newGap.length / newGap.maxdist;
-			newGap.cost = newGap.angle*(newGap.dist/gapMax)*newGap.smoothness;
-			if(!(newGap.dist >= newGap.Trace1->GetSize()*gapTol) 
-				&&	!(newGap.dist >= newGap.Trace2->GetSize()*gapTol) 
-				&&	!(newGap.dist >= gapMax*( 1+ gapTol)))//
-			  {	//myText+="added comparison\n";
-				this->gapList.push_back(newGap);
-			  }	
-		  }
-	}
-	
-	if (this->gapList.size() > 1)
-	  {
-		//myText+="\tNumber of comparisons:\t" + QString::number(this->gapList.size());
-		i = 0, j = 0;
-    //int mergeCount = 0;
-		while (i < this->gapList.size() -1)
-		{
-			exist = 0;
-		  while ((exist == 0)&&(j<this->gapList.size()-1))
-		  {
-			j++;
-			if (this->gapList[i].Trace1->GetId()==this->gapList[j].Trace1->GetId())
-			{
-				if (this->gapList[i].endPT1==this->gapList[j].endPT1)
-				{	exist = 1;		}
-		  	}
-			else if(this->gapList[i].Trace1->GetId()==this->gapList[j].Trace2->GetId())
-			{
-				if (this->gapList[i].endPT1==this->gapList[j].endPT2)
-				{	exist = 1;	}
-			}
-			else if (this->gapList[i].Trace2->GetId() == this->gapList[j].Trace1->GetId())
-			{
-				if (this->gapList[i].endPT2==this->gapList[j].endPT1)
-				{	exist = 1;		}
-			}
-			else if(this->gapList[i].Trace2->GetId() == this->gapList[j].Trace2->GetId())
-			{
-				if (this->gapList[i].endPT2==this->gapList[j].endPT2)
-			  	{	exist = 1;	}
-			}
-		  }		//end while exist = 0
-			if (exist == 1)
-			{
-				++conflict;
-				if (this->gapList[i].cost<this->gapList[j].cost)
-				{
-					this->gapList.erase(this->gapList.begin()+j);
-				}
-				else
-				{
-					this->gapList.erase(this->gapList.begin()+i);
-				}
-				j=i;
-			}//end if exist
-			else
-		  	{
-				i++;
-				j=i;
-		  	}//end else exist
-	  	}// end of search for conflicts
-		for (i=0;i<this->gapList.size(); i++)
-		{
-			this->gapList[i].compID = i;
-			this->HighlightSelected(this->gapList[i].Trace1, .25);
-			this->HighlightSelected(this->gapList[i].Trace2, .25);
-		}
-		
-		this->myText+="\nNumber of traces:\t" + QString::number(traceList.size());
-		this->myText+="\nConflicts resolved:\t" + QString::number(conflict);
-		this->myText+= "\nTrace List size:\t" + QString::number(traceList.size());
-		this->myText+="\nNumber of computed distances:\t" + QString::number(this->gapList.size());
-		MergeInfo->setText("\nNumber of computed distances:\t" 
-			+ QString::number(this->gapList.size())
-			+"\nEdit selection or press merge again");	
-		MergeInfo->show();
-		//MergeInfo->exec();
-		this->ShowMergeStats();
-	  }//end if this->gapList size > 1
-	else 
-	{
-		if (this->gapList.size() ==1)
-		{		
-			tobj->mergeTraces(this->gapList[0].endPT1,this->gapList[0].endPT2);
-			this->Rerender();
-			MergeInfo->setText(this->myText + "\nOne Trace merged");
-		}
-		else
-		{
-			this->Rerender();
-			MergeInfo->setText("\nNo merges possible, set higher tolerances\n"); 
-		}
-		
-		MergeInfo->show();
-		//MergeInfo->exec();
-		this->myText.clear();
-	}		
-	this->poly_line_data->Modified();
-	this->QVTK->GetRenderWindow()->Render();
-}
 void View3D::ShowMergeStats()
 {
-	int numRows = this->gapList.size();
+	int numRows = this->tobj->gapList.size();
 	std::vector<QString> headers;
 	headers.push_back("Merge Number");
 	headers.push_back("Trace 1");
@@ -1149,15 +1062,15 @@ void View3D::ShowMergeStats()
 	for ( int i = 0; i < numRows; i++)
 	{
 		std::vector<double> row;
-		row.push_back(this->gapList[i].compID);
-		row.push_back(this->gapList[i].Trace1->GetId());
-		row.push_back(this->gapList[i].Trace2->GetId());
-		row.push_back(this->gapList[i].dist);
-		row.push_back(this->gapList[i].angle);
-		row.push_back(this->gapList[i].maxdist);
-		row.push_back(this->gapList[i].length);
-		row.push_back(this->gapList[i].smoothness);
-		row.push_back(this->gapList[i].cost);
+		row.push_back(this->tobj->gapList[i].compID);
+		row.push_back(this->tobj->gapList[i].Trace1->GetId());
+		row.push_back(this->tobj->gapList[i].Trace2->GetId());
+		row.push_back(this->tobj->gapList[i].dist);
+		row.push_back(this->tobj->gapList[i].angle);
+		row.push_back(this->tobj->gapList[i].maxdist);
+		row.push_back(this->tobj->gapList[i].length);
+		row.push_back(this->tobj->gapList[i].smoothness);
+		row.push_back(this->tobj->gapList[i].cost);
 		data.push_back(row);
 	}
 	this->model->clear();
@@ -1195,30 +1108,30 @@ void View3D::SelectedComp()
 	QPushButton *mergeNone;
 	unsigned int i=0, j=0,mergeCount=0;
 	MergeInfo->setText("Merge Function");
-	for (i=0;i<this->gapList.size(); i++)
+	for (i=0;i<this->tobj->gapList.size(); i++)
 	{
-		currentAngle=fabs(this->gapList[i].angle); 
+		currentAngle=fabs(this->tobj->gapList[i].angle); 
 		//if (currentAngle>=PI/2) 
 		//{
 		//	currentAngle= PI-currentAngle;
 		//}
-		if 	((this->gapList[i].dist<= gapMax*gapTol&& (currentAngle < 1.1))||
-			(this->gapList[i].dist<= gapMax && (currentAngle < .6)))
+		if 	((this->tobj->gapList[i].dist<= this->tobj->gapMax*this->tobj->gapTol&& (currentAngle < 1.1))||
+			(this->tobj->gapList[i].dist<= this->tobj->gapMax && (currentAngle < .6)))
 	  	{
-			this->dtext+= "\nTrace " + QString::number(this->gapList[i].Trace1->GetId());
-			this->dtext+= " and "+ QString::number(this->gapList[i].Trace2->GetId() );
-			this->dtext+="\tgap size of:" + QString::number(this->gapList[i].dist); 				
-			this->dtext+="\tangle of" + QString::number(currentAngle*180/PI);	//this->gapList[i].angle
-			tobj->mergeTraces(this->gapList[i].endPT1,this->gapList[i].endPT2);
+			this->dtext+= "\nTrace " + QString::number(this->tobj->gapList[i].Trace1->GetId());
+			this->dtext+= " and "+ QString::number(this->tobj->gapList[i].Trace2->GetId() );
+			this->dtext+="\tgap size of:" + QString::number(this->tobj->gapList[i].dist); 				
+			this->dtext+="\tangle of" + QString::number(currentAngle*180/PI);	//this->tobj->gapList[i].angle
+			tobj->mergeTraces(this->tobj->gapList[i].endPT1,this->tobj->gapList[i].endPT2);
 			++mergeCount;
 	  	}	//end of if
-		else if (this->gapList[i].dist<= gapMax*(1+gapTol)&& (currentAngle < .3))
+		else if (this->tobj->gapList[i].dist<= this->tobj->gapMax*(1+this->tobj->gapTol)&& (currentAngle < .3))
 	  	{
-			this->HighlightSelected(this->gapList[i].Trace1, .125);
-			this->HighlightSelected(this->gapList[i].Trace2, .125);
-			this->candidateGaps.push_back( this->gapList[i]);
-			this->grayText+="\nAngle of:\t" + QString::number(currentAngle*180/PI);	//this->gapList[i].angle
-			this->grayText+="\tWith a distance of:\t" + QString::number(this->gapList[i].dist);
+			this->HighlightSelected(this->tobj->gapList[i].Trace1, .125);
+			this->HighlightSelected(this->tobj->gapList[i].Trace2, .125);
+			this->candidateGaps.push_back( this->tobj->gapList[i]);
+			this->grayText+="\nAngle of:\t" + QString::number(currentAngle*180/PI);	//this->tobj->gapList[i].angle
+			this->grayText+="\tWith a distance of:\t" + QString::number(this->tobj->gapList[i].dist);
 			
 		 } //end of else
 	}//end of for merge
@@ -1253,7 +1166,7 @@ void View3D::SelectedComp()
 		this->candidateGaps.clear();
 	}
 	this->Rerender();
-	this->gapList.clear();
+	this->tobj->gapList.clear();
 	this->candidateGaps.clear();
 	this->myText.clear();
 	this->dtext.clear();

@@ -29,6 +29,7 @@ limitations under the License.
 #include "TraceBit.h"
 #include "TraceLine.h"
 #include "TraceObject.h"
+#include "TraceGap.h"
 
 #define VTK_CREATE(type, var) \
   vtkSmartPointer<type> var = vtkSmartPointer<type>::New()
@@ -1170,3 +1171,79 @@ void TraceObject::FindMinLines(int smallSize)
 	}
 }
 
+int TraceObject::createGapLists(std::vector<TraceLine*> traceList)
+{	
+	unsigned int i,j, exist = 0, conflict = 0;	
+	for (i=0;i<traceList.size()-1; i++)
+	  {
+		for (j=i+1; j<traceList.size(); j++)
+		  {
+			TraceGap newGap;
+			newGap.Trace1 = traceList[i];
+			newGap.Trace2 = traceList[j];
+			newGap.Trace1->EndPtDist(
+					newGap.Trace2,newGap.endPT1, newGap.endPT2, 
+					newGap.dist, newGap.maxdist, newGap.angle);
+			newGap.length = newGap.Trace1->GetSize() + newGap.Trace2->GetSize() + newGap.dist;
+			newGap.smoothness = newGap.length / newGap.maxdist;
+			newGap.cost = newGap.angle*(newGap.dist/gapMax)*newGap.smoothness;
+			if(!(newGap.dist >= newGap.Trace1->GetSize()*gapTol) 
+				&&	!(newGap.dist >= newGap.Trace2->GetSize()*gapTol) 
+				&&	!(newGap.dist >= gapMax*( 1+ gapTol)))//
+			  {	//myText+="added comparison\n";
+				this->gapList.push_back(newGap);
+			  }	//end if
+		  }//end for j
+	}// end for i
+	if (this->gapList.size() > 1)
+	  {		
+		  i = 0, j = 0;
+		while (i < this->gapList.size() -1)
+		{	//search for conflicts
+		  exist = 0;
+		  while ((exist == 0)&&(j<this->gapList.size()-1))
+		  {
+			j++;
+			if (this->gapList[i].Trace1->GetId()==this->gapList[j].Trace1->GetId())
+			{
+				if (this->gapList[i].endPT1==this->gapList[j].endPT1)
+				{	exist = 1;		}
+		  	}
+			else if(this->gapList[i].Trace1->GetId()==this->gapList[j].Trace2->GetId())
+			{
+				if (this->gapList[i].endPT1==this->gapList[j].endPT2)
+				{	exist = 1;	}
+			}
+			else if (this->gapList[i].Trace2->GetId() == this->gapList[j].Trace1->GetId())
+			{
+				if (this->gapList[i].endPT2==this->gapList[j].endPT1)
+				{	exist = 1;		}
+			}
+			else if(this->gapList[i].Trace2->GetId() == this->gapList[j].Trace2->GetId())
+			{
+				if (this->gapList[i].endPT2==this->gapList[j].endPT2)
+			  	{	exist = 1;	}
+			}
+		  }		//end while exist = 0
+			if (exist == 1)
+			{
+				++conflict;
+				if (this->gapList[i].cost<this->gapList[j].cost)
+				{
+					this->gapList.erase(this->gapList.begin()+j);
+				}
+				else
+				{
+					this->gapList.erase(this->gapList.begin()+i);
+				}
+				j=i;
+			}//end if exist
+			else
+		  	{
+				i++;
+				j=i;
+		  	}//end else exist
+		}// end of search for conflicts
+		return conflict;
+	}
+}

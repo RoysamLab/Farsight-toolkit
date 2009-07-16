@@ -21,6 +21,7 @@ limitations under the License.
 
 class TraceBit;
 class TraceLine;
+class TraceGap;
 class vtkPoints;
 class vtkPolyData;
 class vtkCellArray;
@@ -37,28 +38,38 @@ public:
 	double getMergeLineColor();
 	void setSmallLineColor(double set);
 	void setMergeLineColor(double set);
+//	I/O functions
 	bool ReadFromSWCFile(char * filename);
 	bool ReadFromRPIXMLFile(char * filename);
 	bool ReadFromFeatureTracksFile(char *filename, int type_offset);
 	bool ReadFromFeatureTracksFileForKymograph(char *filename,int type_offset);
 	bool WriteToSWCFile(const char * filename);
-  int getNewLineId();
-  void splitTrace(int selectedCellId);
-  void ReverseSegment(TraceLine*);
-  void RemoveTraceLine(TraceLine*);
-  void FixPointMarkers(TraceLine* tline);
-  void mergeTraces(unsigned long long int eMarker, unsigned long long int sMarker);
+//	operators
+	int getNewLineId();
+	void splitTrace(int selectedCellId);
+	void ReverseSegment(TraceLine*);
+	void RemoveTraceLine(TraceLine*);
+	void FixPointMarkers(TraceLine* tline);
+	void mergeTraces(unsigned long long int eMarker, unsigned long long int sMarker);
 	void CreatePolyDataRecursive(TraceLine* , vtkSmartPointer<vtkFloatArray> , vtkSmartPointer<vtkPoints> ,vtkSmartPointer<vtkCellArray>);
 	void FindMinLines(int smallSize);
+	int createGapLists(std::vector<TraceLine*> traceList);
+//	public data
 	vtkSmartPointer<vtkPolyData> GetVTKPolyData();
 	vtkSmartPointer<vtkPolyData> generateBranchIllustrator();
 	void Print(std::ostream &c);
+
 	std::vector<TraceLine*>* GetTraceLinesPointer();
 	std::vector<TraceLine*> GetTraceLines();
 	std::vector<TraceBit> CollectTraceBits();
 	std::vector<TraceLine*> SmallLines;
-  vtksys::hash_map< unsigned int, unsigned long long int > hashp;
-  vtksys::hash_map< unsigned int, unsigned long long int > hashc;
+	std::vector<TraceGap> gapList;
+
+	double gapTol;
+	int gapMax;
+
+	vtksys::hash_map< unsigned int, unsigned long long int > hashp;
+	vtksys::hash_map< unsigned int, unsigned long long int > hashc;
 
 private:
 	std::vector<TraceLine*> trace_lines;

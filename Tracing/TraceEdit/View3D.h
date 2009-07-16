@@ -80,7 +80,6 @@ public:
 
 	void HighlightSelected(TraceLine* tline, double SelectColor);
 	void DeleteTrace(TraceLine *tline);
-	void MinEndPoints(std::vector<TraceLine*> traceList);
 	void SelectedComp();
 	void ShowMergeStats();
 	void traceStatistics();
@@ -127,8 +126,7 @@ protected:
 	void Rerender();
 
 private:
-	double gapTol;
-	int gapMax;
+
 	int smallLine;
 	float lineWidth;
 	double SelectColor;
@@ -227,7 +225,6 @@ private:
 	std::vector<int> IDList;
 
     //merge info
-	std::vector<TraceGap> gapList;
 	std::vector<TraceGap> candidateGaps;
 	QString myText;	QString dtext;	QString grayText;
 
