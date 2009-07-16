@@ -15,35 +15,30 @@ limitations under the License.
 #ifndef MERGEMODEL_H
 #define MERGEMODEL_H
 
+#include <vector>
+
 //QT INCLUDES
 #include <QtCore>
 #include <QtGui>
-#include "TraceObject.h"
 
-class mergeModel : public QObject
+class TraceGap;
+
+class MergeModel : public QStandardItemModel
 {
 	Q_OBJECT
 
 public:
-	mergeModel();
-	~mergeModel();
+	MergeModel();
+  MergeModel(std::vector<TraceGap*> gaps);
+	~MergeModel();
 
-	QStandardItemModel *GetModel(){ return model; };
+	QStandardItemModel *GetModel();
 	QItemSelectionModel *GetSelectionModel();
-
-	int ColumnForID()
-	{ 
-		return IDColumn; 
-	};
+	int ColumnForID();
 	int RowForID(int id);
-	int NumFeatures()
-	{ 
-		return numFeatures; 
-	};
-	int NumGaps()
-	{ 
-		return numGaps; 
-	};
+	int GetNumFeatures();
+	int GetNumGaps();
+
 signals:
 	void modelChanged(void);
 
@@ -53,13 +48,13 @@ public slots:
 
 private:
 	int IDColumn;
-	int numFeatures;
-	int numGaps;
-	
-	QMap<int, int> LabelToRowMap;	
-	QStandardItemModel *model;
-	QItemSelectionModel *selectionModel;
+	int NumFeatures;
+	int NumGaps;
+  std::vector<TraceGap *> TraceGaps;
+	QMap<int, int> IDToRowMap;	
+	QStandardItemModel *Model;
+	QItemSelectionModel *SelectionModel;
 	void SyncModel();
-	void updateMapping();
+	void UpdateMapping();
 };
 #endif

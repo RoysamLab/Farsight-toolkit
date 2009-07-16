@@ -22,7 +22,7 @@ SET( Libraries
     TinyXML
 )
 
-QT4_WRAP_CPP( GUI_MOC_SRCS View3D.h )
+QT4_WRAP_CPP( GUI_MOC_SRCS View3D.h MergeModel.h)
 
 ADD_LIBRARY(Trace
   TraceBit.h    TraceBit.cxx
