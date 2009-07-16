@@ -69,8 +69,10 @@ limitations under the License.
 #include <vtkTransform.h>
 #include <vtkTransformPolyDataFilter.h>
 #include <vtkInteractorStyleTrackballCamera.h>
+#include <vtkAppendPolyData.h>
+#include <vtkPointData.h>
 
-#include "TraceEdit/Trace.h"
+#include "TraceEdit/TraceObject.h"
 //using namespace std;
 
 //#pragma warning(disable:4996)
