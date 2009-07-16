@@ -14,7 +14,7 @@ limitations under the License.
 =========================================================================*/
 #include <iostream>
 #include <math.h>
-#include <queue.h>
+#include <queue>
 #include <set>
 #include "vtkPoints.h"
 #include "vtkPointData.h"

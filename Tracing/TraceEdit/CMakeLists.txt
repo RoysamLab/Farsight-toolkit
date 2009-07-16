@@ -1,6 +1,6 @@
 PROJECT(TraceEdit)
 SET( Sources
-     View3D.h View3D.cxx
+     View3D.h View3D.cxx MergeModel.h MergeModel.cxx
 )
 
 #Define (additional) ITK and VTK libraries that are needed for vtkTraceViewer to be built
