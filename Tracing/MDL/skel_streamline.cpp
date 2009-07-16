@@ -146,20 +146,19 @@ int main(int argc, char *argv[])
      return -1;
   }
 
-/*
-  if ((fout = fopen(argv[6],"w")) == NULL)
-  {
-    printf("Cannot open %s for writing\n",argv[6]);
-    exit(1);
-  }
-*/
-
+#ifdef _WIN32
    errno_t err; 
  if((err=fopen_s(&fout,argv[6],"w"))!=NULL)
 			{printf("Input file open error!\n");
 			 exit(-1);
 	}
-
+#else
+  if ((fout = fopen(argv[6],"w")) == NULL)
+    {
+    printf("Cannot open %s for writing\n",argv[6]);
+    exit(1);
+    }
+#endif
 
   if (argc > 7)
     measureTime = 1;

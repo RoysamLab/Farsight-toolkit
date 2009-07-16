@@ -72,18 +72,19 @@ int main (int argc, char *argv[])
   slsz = L*M;        // slice size
   sz = slsz*N;
 
- /* if ((fout = fopen(argv[5],"w")) == NULL)
-  {
-    printf("Cannot open %s for writing\n",argv[5]);
-    exit(1);
-  }
-  */
-
+#ifdef _WIN32
   errno_t err; 
  if((err=fopen_s(&fout,argv[5],"w"))!=NULL)
 			{printf("Input file open error!\n");
 			 exit(-1);
 			}
+#else
+  if ((fout = fopen(argv[5],"w")) == NULL)
+    {
+    printf("Cannot open %s for writing\n",argv[5]);
+    exit(1);
+    }
+#endif
 
   Iu = new float[L*M*N];
   Iv = new float[L*M*N];

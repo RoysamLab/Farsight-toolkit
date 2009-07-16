@@ -89,20 +89,21 @@ int main(int argc, char *argv[])
 
 	//if((infile=fopen(infilename,"rb"))==NULL)
 
-/*	infile=fopen(infilename,"rb"); 
-    if ( infile == NULL ) 
-    { 
-     printf("Input file open error!\n"); 
-     exit( -1 ); 
-    } 
-*/
 
-
+#ifdef _Win32
    errno_t err=fopen_s(&infile,infilename,"rb");
    if(err)
    {printf("Input file open error!\n");
 			 exit(-1);
 			}
+#else
+	infile=fopen(infilename,"rb"); 
+  if ( infile == NULL ) 
+    { 
+    printf("Input file open error!\n"); 
+    exit( -1 ); 
+    } 
+#endif
 
    /*
     if((err=fopen_s(&infile,infilename,"rb"))!=NULL)
@@ -114,12 +115,19 @@ int main(int argc, char *argv[])
    // errno_t err; 
 	//if((outfile=fopen(outfilename,"wb"))==NULL)
 
-
+#ifdef _WIN32
 	if((err=fopen_s(&outfile,outfilename,"wb"))!=NULL)
 			{printf("Output file open error!\n");
 			 exit(-1);
 			}
-
+#else
+	outfile=fopen(outfilename,"wb"); 
+  if ( outfile == NULL ) 
+    { 
+    printf("Output file open error!\n"); 
+    exit( -1 ); 
+    } 
+#endif
 
 /*	if 0 	// read another file if necessary
 	FILE *infile2;

@@ -81,30 +81,31 @@ int main(int argc, char *argv[])
 	volout = (DATATYPEOUT*)malloc(sizeX*sizeY*(sizeZ)*sizeof(DATATYPEOUT));
 	volIndex = (int*)malloc(sizeX*sizeY*sizeZ*sizeof(int));
 
-	/*
-	if((infile=fopen(infilename,"rb"))==NULL)
-			{printf("Input file open error!\n");
-			 exit(-1);
-			}
+#ifdef _WIN32
+  errno_t err; 
+  if( (err=fopen_s(&infile,infilename,"rb")) != NULL)
+    {
+    printf("Input file open error!\n");
+    exit(-1);
+    }
 
-	if((outfile=fopen(outfilename,"wb"))==NULL)
-			{printf("Output file open error!\n");
-			 exit(-1);
-			}
+  if( (err=fopen_s(&outfile,outfilename,"wb")) != NULL)
+    {printf("Output file open error!\n");
+    exit(-1);
+    }
+#else
+  if( (infile=fopen(infilename,"rb")) == NULL)
+    {
+    printf("Input file open error!\n");
+    exit(-1);
+    }
 
-	*/
-
-	errno_t err; 
-    if((err=fopen_s(&infile,infilename,"rb"))!=NULL)
-			{printf("Input file open error!\n");
-			 exit(-1);
-			}
-
-	if((err=fopen_s(&outfile,outfilename,"wb"))!=NULL)
-			{printf("Output file open error!\n");
-			 exit(-1);
-			}
-
+  if( (outfile=fopen(outfilename,"wb")) == NULL)
+    {
+    printf("Output file open error!\n");
+    exit(-1);
+    }
+#endif
 
 /*	if 0 	// read another file if necessary
 	FILE *infile2;
