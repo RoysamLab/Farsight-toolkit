@@ -32,12 +32,15 @@ public:
   MergeModel(std::vector<TraceGap*> gaps);
 	~MergeModel();
 
-	QStandardItemModel *GetModel();
-	QItemSelectionModel *GetSelectionModel();
+	//QStandardItemModel *GetModel();
+	//QItemSelectionModel *GetSelectionModel();
+  //get the column that contains the gap id for each row
 	int ColumnForID();
 	int RowForID(int id);
 	int GetNumFeatures();
 	int GetNumGaps();
+  void SetTraceGaps(std::vector<TraceGap *> gaps);
+  std::vector<TraceGap *>GetTraceGaps();
 
 signals:
 	void modelChanged(void);
@@ -47,13 +50,18 @@ public slots:
 	void mergeTrigger(void);
 
 private:
-	int IDColumn;
+  //the first column of each row is the gap ID, as per the definition
+  //of this data model's headers.
+	const static int IDColumn = 0;
 	int NumFeatures;
 	int NumGaps;
   std::vector<TraceGap *> TraceGaps;
 	QMap<int, int> IDToRowMap;	
-	QStandardItemModel *Model;
-	QItemSelectionModel *SelectionModel;
+
+	//QStandardItemModel *Model; //not needed since this class is *JUST* a model, right?
+	//QItemSelectionModel *SelectionModel; 
+    //not needed since this class inherits it from StandardItemModel....
+  void SetupHeaders();
 	void SyncModel();
 	void UpdateMapping();
 };

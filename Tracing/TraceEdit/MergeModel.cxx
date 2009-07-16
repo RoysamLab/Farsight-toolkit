@@ -22,20 +22,24 @@ limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////
 MergeModel::MergeModel(std::vector<TraceGap*> gaps)
 {
-  int numRows = gaps.size();
-  std::vector<QString> headers;
-  headers.push_back("ID");
-  headers.push_back("Trace 1");
-  headers.push_back("Trace 2");
-  headers.push_back("Gap");
-  headers.push_back("Angle");
-  headers.push_back("D");
-  headers.push_back("Length");
-  headers.push_back("Smoothness");
-  headers.push_back("Cost");
+  this->SetupHeaders();
+  this->SetTraceGaps(gaps);
+  this->SyncModel();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void MergeModel::SyncModel()
+{
+  if(this->GetTraceGaps().size() == 0)
+    {
+    return;
+    }
+
   std::vector< std::vector< double > > data;
-  std::vector<TraceGap*>::iterator gapItr = gaps.begin();
-  for(gapItr = gaps.begin(); gapItr != gaps.end(); ++gapItr)
+  std::vector<TraceGap*>::iterator gapItr = this->GetTraceGaps().begin();
+  for(gapItr = this->GetTraceGaps().begin();
+      gapItr != this->GetTraceGaps().end();
+      ++gapItr)
     {
     std::vector<double> row;
     row.push_back((*gapItr)->compID);
@@ -49,20 +53,18 @@ MergeModel::MergeModel(std::vector<TraceGap*> gaps)
     row.push_back((*gapItr)->cost);
     data.push_back(row);
     }
-  this->setColumnCount(headers.size());
 
-  for(int i=0; i<(int)headers.size(); ++i)
-    {
-    this->setHeaderData(i, Qt::Horizontal, headers.at(i));
-    }
 
-  for (int row=0; row<(int)numRows; ++row)
+  for (int row=0; row<(int)this->GetTraceGaps().size(); ++row)
     {
+    //create a new row
     this->insertRow(row);
-    for(int col=0; col<(int)headers.size(); ++col)
+    //insert the data for a gap in this row
+    for(int col=0; col < this->columnCount(); ++col)
       {
       this->setData(this->index(row, col), data.at(row).at(col));
       }
+    //map gap id to row number
     }
 }
 
@@ -72,9 +74,36 @@ MergeModel::~MergeModel()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-QStandardItemModel* MergeModel::GetModel()
+void MergeModel::SetupHeaders()
 {
-  return this->Model;
+  std::vector<QString> headers;
+  headers.push_back("ID");
+  headers.push_back("Trace 1");
+  headers.push_back("Trace 2");
+  headers.push_back("Gap");
+  headers.push_back("Angle");
+  headers.push_back("D");
+  headers.push_back("Length");
+  headers.push_back("Smoothness");
+  headers.push_back("Cost");
+  int numHeaders = headers.size();
+  for(int i=0; i<(int)headers.size(); ++i)
+    {
+    this->setHeaderData(i, Qt::Horizontal, headers.at(i));
+    }
+  this->setColumnCount(numHeaders);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void MergeModel::SetTraceGaps(std::vector<TraceGap *> gaps)
+{
+  this->TraceGaps = gaps;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+std::vector<TraceGap *> MergeModel::GetTraceGaps()
+{
+  return this->TraceGaps;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
