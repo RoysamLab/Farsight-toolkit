@@ -32,7 +32,7 @@ class MergeModel : public QObject
 
 public:
 	MergeModel();
-  MergeModel(std::vector<TraceGap> gaps);
+  MergeModel(std::vector<TraceGap*> gaps);
 	~MergeModel();
 
 	QStandardItemModel *GetModel();
@@ -41,8 +41,8 @@ public:
 	int RowForID(int id);
 	int GetNumFeatures();
 	int GetNumGaps();
-  void SetTraceGaps(std::vector<TraceGap> gaps);
-  std::vector<TraceGap>GetTraceGaps();
+  void SetTraceGaps(std::vector<TraceGap*> gaps);
+  std::vector<TraceGap*>GetTraceGaps();
   std::vector<int> GetSelectedGapIDs();
 
 signals:
@@ -59,7 +59,7 @@ private:
 	const static int IDColumn = 0;
 	int NumFeatures;
 	int NumGaps;
-  std::vector<TraceGap> TraceGaps;
+  std::vector<TraceGap*> TraceGaps;
 	QMap<int, int> IDToRowMap;	
 
 	QStandardItemModel *Model;
