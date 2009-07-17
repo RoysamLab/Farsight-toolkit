@@ -61,10 +61,9 @@ public:
 
 	std::vector<TraceLine*>* GetTraceLinesPointer();
 	std::vector<TraceLine*> GetTraceLines();
-  std::vector<TraceGap> GetTraceGaps();
 	std::vector<TraceBit> CollectTraceBits();
 	std::vector<TraceLine*> SmallLines;
-	std::vector<TraceGap> Gaps;
+	std::vector<TraceGap*> gapList;
 
 	double gapTol;
 	int gapMax;

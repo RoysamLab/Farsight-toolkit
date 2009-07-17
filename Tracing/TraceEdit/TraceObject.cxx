@@ -101,11 +101,6 @@ std::vector<TraceLine*> TraceObject::GetTraceLines()
   return trace_lines;
 }
 
-std::vector<TraceGap> TraceObject::GetTraceGaps()
-{
-  return this->Gaps;
-}
-
 bool TraceObject::ReadFromFeatureTracksFileForKymograph(char *filename,int type_offset=0)
 {
   FILE * fp = fopen(filename,"r");
@@ -1183,63 +1178,63 @@ int TraceObject::createGapLists(std::vector<TraceLine*> traceList)
     {
     for (j=i+1; j<traceList.size(); j++)
       {
-      TraceGap newGap;
-      newGap.Trace1 = traceList[i];
-      newGap.Trace2 = traceList[j];
-      newGap.Trace1->EndPtDist(
-          newGap.Trace2,newGap.endPT1, newGap.endPT2, 
-          newGap.dist, newGap.maxdist, newGap.angle);
-      newGap.length = newGap.Trace1->GetSize() + newGap.Trace2->GetSize() + newGap.dist;
-      newGap.smoothness = newGap.length / newGap.maxdist;
-      newGap.cost = newGap.angle*(newGap.dist/gapMax)*newGap.smoothness;
-      if(!(newGap.dist >= newGap.Trace1->GetSize()*gapTol) 
-        &&  !(newGap.dist >= newGap.Trace2->GetSize()*gapTol) 
-        &&  !(newGap.dist >= gapMax*( 1+ gapTol)))//
+      TraceGap *newGap = new TraceGap;
+      newGap->Trace1 = traceList[i];
+      newGap->Trace2 = traceList[j];
+      newGap->Trace1->EndPtDist(
+          newGap->Trace2,newGap->endPT1, newGap->endPT2, 
+          newGap->dist, newGap->maxdist, newGap->angle);
+      newGap->length = newGap->Trace1->GetSize() + newGap->Trace2->GetSize() + newGap->dist;
+      newGap->smoothness = newGap->length / newGap->maxdist;
+      newGap->cost = newGap->angle*(newGap->dist/gapMax)*newGap->smoothness;
+      if(!(newGap->dist >= newGap->Trace1->GetSize()*gapTol) 
+        &&  !(newGap->dist >= newGap->Trace2->GetSize()*gapTol) 
+        &&  !(newGap->dist >= gapMax*( 1+ gapTol)))//
         { //myText+="added comparison\n";
-        this->Gaps.push_back(newGap);
+        this->gapList.push_back(newGap);
         } //end if
       }//end for j
   }// end for i
-  if (this->Gaps.size() > 1)
+  if (this->gapList.size() > 1)
     {   
       i = 0, j = 0;
-    while (i < this->Gaps.size() -1)
+    while (i < this->gapList.size() -1)
     { //search for conflicts
       exist = 0;
-      while ((exist == 0)&&(j<this->Gaps.size()-1))
+      while ((exist == 0)&&(j<this->gapList.size()-1))
       {
       j++;
-      if (this->Gaps[i].Trace1->GetId()==this->Gaps[j].Trace1->GetId())
+      if (this->gapList[i]->Trace1->GetId()==this->gapList[j]->Trace1->GetId())
       {
-        if (this->Gaps[i].endPT1==this->Gaps[j].endPT1)
+        if (this->gapList[i]->endPT1==this->gapList[j]->endPT1)
         { exist = 1;    }
         }
-      else if(this->Gaps[i].Trace1->GetId()==this->Gaps[j].Trace2->GetId())
+      else if(this->gapList[i]->Trace1->GetId()==this->gapList[j]->Trace2->GetId())
       {
-        if (this->Gaps[i].endPT1==this->Gaps[j].endPT2)
+        if (this->gapList[i]->endPT1==this->gapList[j]->endPT2)
         { exist = 1;  }
       }
-      else if (this->Gaps[i].Trace2->GetId() == this->Gaps[j].Trace1->GetId())
+      else if (this->gapList[i]->Trace2->GetId() == this->gapList[j]->Trace1->GetId())
       {
-        if (this->Gaps[i].endPT2==this->Gaps[j].endPT1)
+        if (this->gapList[i]->endPT2==this->gapList[j]->endPT1)
         { exist = 1;    }
       }
-      else if(this->Gaps[i].Trace2->GetId() == this->Gaps[j].Trace2->GetId())
+      else if(this->gapList[i]->Trace2->GetId() == this->gapList[j]->Trace2->GetId())
       {
-        if (this->Gaps[i].endPT2==this->Gaps[j].endPT2)
+        if (this->gapList[i]->endPT2==this->gapList[j]->endPT2)
           { exist = 1;  }
       }
       }   //end while exist = 0
       if (exist == 1)
       {
         ++conflict;
-        if (this->Gaps[i].cost<this->Gaps[j].cost)
+        if (this->gapList[i]->cost<this->gapList[j]->cost)
         {
-          this->Gaps.erase(this->Gaps.begin()+j);
+          this->gapList.erase(this->gapList.begin()+j);
         }
         else
         {
-          this->Gaps.erase(this->Gaps.begin()+i);
+          this->gapList.erase(this->gapList.begin()+i);
         }
         j=i;
       }//end if exist

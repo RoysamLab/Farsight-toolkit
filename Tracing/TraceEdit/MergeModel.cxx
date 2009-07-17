@@ -23,15 +23,7 @@ limitations under the License.
 #include "MergeModel.h"
 
 ////////////////////////////////////////////////////////////////////////////////
-MergeModel::MergeModel()
-{
-  this->Model = new QStandardItemModel(0,0);
-  this->SelectionModel = new QItemSelectionModel(this->Model);
-  this->SetupHeaders();
-}
-
-////////////////////////////////////////////////////////////////////////////////
-MergeModel::MergeModel(std::vector<TraceGap> gaps)
+MergeModel::MergeModel(std::vector<TraceGap*> gaps)
 {
   this->Model = new QStandardItemModel(0,0);
   this->SelectionModel = new QItemSelectionModel(this->Model);
@@ -80,27 +72,22 @@ void MergeModel::SyncModel()
   //clear the model
   this->Model->setColumnCount(0);
   this->Model->setRowCount(0);
-
+  this->SetupHeaders();
   //and then repopulate it with data from the trace gaps
   std::vector< std::vector< double > > data;
-  /*
-  std::vector<TraceGap>::iterator gapItr = this->GetTraceGaps().begin();
-  for(gapItr = this->GetTraceGaps().begin();
-      gapItr != this->GetTraceGaps().end();
-      ++gapItr)
-     */
-  for(unsigned int gapNum = 0; gapNum < this->TraceGaps.size(); gapNum++)
+  std::vector<TraceGap*> Gaps = this->GetTraceGaps();
+  for(int i = 0;i < this->GetTraceGaps().size(); i++)
     {
     std::vector<double> row;
-    row.push_back(this->TraceGaps[gapNum].compID);
-    row.push_back(this->TraceGaps[gapNum].Trace1->GetId());
-    row.push_back(this->TraceGaps[gapNum].Trace2->GetId());
-    row.push_back(this->TraceGaps[gapNum].dist);
-    row.push_back(this->TraceGaps[gapNum].angle);
-    row.push_back(this->TraceGaps[gapNum].maxdist);
-    row.push_back(this->TraceGaps[gapNum].length);
-    row.push_back(this->TraceGaps[gapNum].smoothness);
-    row.push_back(this->TraceGaps[gapNum].cost);
+	row.push_back(Gaps[i]->compID);
+    row.push_back(Gaps[i]->Trace1->GetId());
+    row.push_back(Gaps[i]->Trace2->GetId());
+    row.push_back(Gaps[i]->dist);
+    row.push_back(Gaps[i]->angle);
+    row.push_back(Gaps[i]->maxdist);
+    row.push_back(Gaps[i]->length);
+    row.push_back(Gaps[i]->smoothness);
+    row.push_back(Gaps[i]->cost);
     data.push_back(row);
     }
 
@@ -140,14 +127,14 @@ void MergeModel::MapGapIDsToRows()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void MergeModel::SetTraceGaps(std::vector<TraceGap> gaps)
+void MergeModel::SetTraceGaps(std::vector<TraceGap *> gaps)
 {
   this->TraceGaps = gaps;
   this->SyncModel();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-std::vector<TraceGap> MergeModel::GetTraceGaps()
+std::vector<TraceGap *> MergeModel::GetTraceGaps()
 {
   return this->TraceGaps;
 }

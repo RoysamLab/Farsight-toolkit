@@ -45,6 +45,7 @@ class vtkRenderer;
 class vtkRenderWindowInteractor;
 class vtkSphereSource;
 class vtkVolume;
+class MergeModel; 
 
 class MergeModel;
 class QTableView;
@@ -86,6 +87,7 @@ public:
 	void HighlightSelected(TraceLine* tline, double SelectColor);
 	void DeleteTrace(TraceLine *tline);
 	void SelectedComp();
+	void setupLinkedSpace();
 	void ShowMergeStats();
 	void CalculateGaps();
 
@@ -236,8 +238,9 @@ private:
 	std::vector<int> IDList;
 
     //merge info
-	std::vector<TraceGap> candidateGaps;
+	std::vector<TraceGap*> candidateGaps;
 	QString myText;	QString dtext;	QString grayText;
+	MergeModel *MergeGaps;
 
 	vtkSmartPointer<vtkSphereSource> Sphere;
 	vtkSmartPointer<vtkPolyDataMapper> SphereMapper;
