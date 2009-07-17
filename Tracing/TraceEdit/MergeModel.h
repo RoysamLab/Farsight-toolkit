@@ -21,9 +21,12 @@ limitations under the License.
 #include <QtCore>
 #include <QtGui>
 
+class QStandardItemModel;
+class QItemSelectionModel;
+
 class TraceGap;
 
-class MergeModel : public QStandardItemModel
+class MergeModel : public QObject
 {
 	Q_OBJECT
 
@@ -32,18 +35,24 @@ public:
   MergeModel(std::vector<TraceGap*> gaps);
 	~MergeModel();
 
-	//QStandardItemModel *GetModel();
-	//QItemSelectionModel *GetSelectionModel();
-  //get the column that contains the gap id for each row
-	int ColumnForID();
+	QStandardItemModel *GetModel();
+	QItemSelectionModel *GetSelectionModel();
+
 	int RowForID(int id);
 	int GetNumFeatures();
 	int GetNumGaps();
   void SetTraceGaps(std::vector<TraceGap *> gaps);
   std::vector<TraceGap *>GetTraceGaps();
+  std::vector<int> GetSelectedGapIDs();
 
 signals:
-	void modelChanged(void);
+  //emit these signals to tell View3D to change the underlying data, and to
+  //update the vtkRenderWindow.
+	void deleteSelectedTraces(void);
+  void mergeSelectedTraces(void);
+
+  //emit this signal to tell the Qt views to update
+  void modelChanged(void);
 
 public slots:
 	void deleteTrigger(void);
@@ -58,11 +67,10 @@ private:
   std::vector<TraceGap *> TraceGaps;
 	QMap<int, int> IDToRowMap;	
 
-	//QStandardItemModel *Model; //not needed since this class is *JUST* a model, right?
-	//QItemSelectionModel *SelectionModel; 
-    //not needed since this class inherits it from StandardItemModel....
+	QStandardItemModel *Model;
+	QItemSelectionModel *SelectionModel; 
   void SetupHeaders();
 	void SyncModel();
-	void UpdateMapping();
+  void MapGapIDsToRows();
 };
 #endif

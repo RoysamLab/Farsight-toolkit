@@ -173,7 +173,7 @@ double TraceLine::getTraceColor()
   this->m_markers = t.m_markers;
   this->m_type = t.m_type;
   this->m_parent = NULL;
-  for(int counter=0; counter< t.m_branches.size(); counter++)
+  for(unsigned int counter=0; counter< t.m_branches.size(); counter++)
   {
     TraceLine *temp = new TraceLine();
     temp->SetParent(this);
@@ -203,7 +203,7 @@ void TraceLine::Getstats()
 void TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
                           double &maxdist, double &angle) 
 {
-  int center1=this->GetSize()/2, center2=Trace2->GetSize()/2;
+  //int center1=this->GetSize()/2, center2=Trace2->GetSize()/2;
   double XF, XB, YF, YB, ZF, ZB, XF2,XB2, YF2, YB2, ZF2, ZB2, distances[4];
   double delX1, delX2, delY1, delY2, delZ1, delZ2, min, norm1, norm2;
 

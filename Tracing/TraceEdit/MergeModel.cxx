@@ -13,8 +13,11 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
 
-//#include <QtGui>
-//#include "TraceObject.h"
+#include <vector>
+
+#include <QtGui/QStandardItemModel>
+#include <QtGui/QItemSelectionModel>
+
 #include "TraceGap.h"
 #include "TraceLine.h"
 #include "MergeModel.h"
@@ -22,9 +25,40 @@ limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////
 MergeModel::MergeModel(std::vector<TraceGap*> gaps)
 {
+  this->Model = new QStandardItemModel(0,0);
+  this->SelectionModel = new QItemSelectionModel(this->Model);
   this->SetupHeaders();
   this->SetTraceGaps(gaps);
-  this->SyncModel();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+MergeModel::~MergeModel()
+{
+  delete this->Model;
+  this->Model = NULL;
+  delete this->SelectionModel;
+  this->SelectionModel = NULL;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void MergeModel::SetupHeaders()
+{
+  std::vector<QString> headers;
+  headers.push_back("ID");
+  headers.push_back("Trace 1");
+  headers.push_back("Trace 2");
+  headers.push_back("Gap");
+  headers.push_back("Angle");
+  headers.push_back("D");
+  headers.push_back("Length");
+  headers.push_back("Smoothness");
+  headers.push_back("Cost");
+  int numHeaders = headers.size();
+  for(int i=0; i<(int)headers.size(); ++i)
+    {
+    this->Model->setHeaderData(i, Qt::Horizontal, headers.at(i));
+    }
+  this->Model->setColumnCount(numHeaders);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -54,50 +88,42 @@ void MergeModel::SyncModel()
     data.push_back(row);
     }
 
-
   for (int row=0; row<(int)this->GetTraceGaps().size(); ++row)
     {
     //create a new row
-    this->insertRow(row);
+    this->Model->insertRow(row);
     //insert the data for a gap in this row
-    for(int col=0; col < this->columnCount(); ++col)
+    for(int col=0; col < this->Model->columnCount(); ++col)
       {
-      this->setData(this->index(row, col), data.at(row).at(col));
+      this->Model->setData(this->Model->index(row, col), data.at(row).at(col));
       }
-    //map gap id to row number
     }
+  this->MapGapIDsToRows();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-MergeModel::~MergeModel()
+void MergeModel::MapGapIDsToRows()
 {
-}
-
-////////////////////////////////////////////////////////////////////////////////
-void MergeModel::SetupHeaders()
-{
-  std::vector<QString> headers;
-  headers.push_back("ID");
-  headers.push_back("Trace 1");
-  headers.push_back("Trace 2");
-  headers.push_back("Gap");
-  headers.push_back("Angle");
-  headers.push_back("D");
-  headers.push_back("Length");
-  headers.push_back("Smoothness");
-  headers.push_back("Cost");
-  int numHeaders = headers.size();
-  for(int i=0; i<(int)headers.size(); ++i)
+  if(this->GetTraceGaps().size() == 0)
     {
-    this->setHeaderData(i, Qt::Horizontal, headers.at(i));
+    return;
     }
-  this->setColumnCount(numHeaders);
+  QModelIndex index;
+  int ID;
+  this->IDToRowMap.clear();
+  for (int row = 0; row < this->Model->rowCount(); row++)
+    {
+    index = this->Model->index(row, MergeModel::IDColumn);
+    ID = this->Model->data(index).toInt();
+    this->IDToRowMap.insert(ID,row);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void MergeModel::SetTraceGaps(std::vector<TraceGap *> gaps)
 {
   this->TraceGaps = gaps;
+  this->SyncModel();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -107,23 +133,72 @@ std::vector<TraceGap *> MergeModel::GetTraceGaps()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-int MergeModel::GetNumFeatures()
-{ 
-  return this->NumFeatures; 
+QStandardItemModel* MergeModel::GetModel()
+{
+  return this->Model;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-int MergeModel::GetNumGaps()
-{ 
-  return this->NumGaps; 
+QItemSelectionModel* MergeModel::GetSelectionModel()
+{
+  return this->SelectionModel;
 }
 
+/**
+ * Call this slot when deleting gaps.
+ * Note that actual changes to the trace data are performed by the TraceObject
+ * class.
+ **/
 ////////////////////////////////////////////////////////////////////////////////
 void MergeModel::deleteTrigger(void)
 {
+  //Extract a list of IDs
+  QModelIndexList selectedIndices = this->SelectionModel->selectedRows();
+  std::vector<int> ids(0);
+  for (int selectedIndex = 0;
+       selectedIndex < selectedIndices.size();
+       ++selectedIndex)
+    {
+    int row = selectedIndices.at(selectedIndex).row();
+    QList<QStandardItem *> items = this->Model->takeRow(row);
+    for(int i = 0; i < items.size(); ++i)
+      {
+      delete items.at(i);
+      }
+    }
+  this->MapGapIDsToRows();
+  emit modelChanged();
 }
 
+/**
+ * Call this slot when merging gaps.
+ * Note that actual changes to the trace data are performed by the TraceObject
+ * class.
+ **/
+
+ //how is this different?  the gap still goes bye-bye.
+ //I guess it needs to emit a different signal so View3D knows what to do.
+ //View3D already knows what to do, it's the one driving the action.
+ //but it does need to know when the model's selection changes.
 ////////////////////////////////////////////////////////////////////////////////
 void MergeModel::mergeTrigger(void)
 {
 }
+
+////////////////////////////////////////////////////////////////////////////////
+std::vector<int> MergeModel::GetSelectedGapIDs()
+{
+  std::vector<int> selectedGapIDs;
+	QModelIndexList selectedIndices = this->SelectionModel->selectedRows();
+	for (int selectedIndex = 0;
+       selectedIndex < selectedIndices.size();
+       ++selectedIndex) 
+	  {
+		int row = selectedIndices.at(selectedIndex).row();
+		int id = this->Model->data(
+      this->Model->index(row, MergeModel::IDColumn) ).toInt();
+		selectedGapIDs.push_back(id);
+	  }
+  return selectedGapIDs;
+}
+
