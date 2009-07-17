@@ -46,6 +46,10 @@ class vtkRenderWindowInteractor;
 class vtkSphereSource;
 class vtkVolume;
 
+class MergeModel;
+class QTableView;
+class ScatterView;
+
 struct point
 {
 	float x, y, z;
@@ -60,6 +64,7 @@ public:
 	void Initialize();
 	void CreateGUIObjects();
 	void CreateLayout();
+  void CreateModelsAndViews();
 	void CreateInteractorStyle();
 	void CreateActors();
 	void UpdateLineActor();
@@ -82,7 +87,7 @@ public:
 	void DeleteTrace(TraceLine *tline);
 	void SelectedComp();
 	void ShowMergeStats();
-	void traceStatistics();
+	void CalculateGaps();
 
 	bool CheckFileExists(const char *filename);
 	void ShowSeeds();
@@ -151,6 +156,12 @@ private:
 	QPushButton *WriteButton;
 	QPushButton *SettingsButton;
 	QPushButton *AutomateButton;
+
+  //qt model view objects
+  MergeModel *GapModel;
+  QTableView *MergeTableView; 
+  ScatterView *MergeScatterView; 
+
 //merge statistics
 	QStandardItemModel *model;
 	QItemSelectionModel *selModel;

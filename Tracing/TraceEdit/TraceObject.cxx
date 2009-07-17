@@ -101,6 +101,11 @@ std::vector<TraceLine*> TraceObject::GetTraceLines()
   return trace_lines;
 }
 
+std::vector<TraceGap> TraceObject::GetTraceGaps()
+{
+  return this->Gaps;
+}
+
 bool TraceObject::ReadFromFeatureTracksFileForKymograph(char *filename,int type_offset=0)
 {
   FILE * fp = fopen(filename,"r");
@@ -1191,50 +1196,50 @@ int TraceObject::createGapLists(std::vector<TraceLine*> traceList)
         &&  !(newGap.dist >= newGap.Trace2->GetSize()*gapTol) 
         &&  !(newGap.dist >= gapMax*( 1+ gapTol)))//
         { //myText+="added comparison\n";
-        this->gapList.push_back(newGap);
+        this->Gaps.push_back(newGap);
         } //end if
       }//end for j
   }// end for i
-  if (this->gapList.size() > 1)
+  if (this->Gaps.size() > 1)
     {   
       i = 0, j = 0;
-    while (i < this->gapList.size() -1)
+    while (i < this->Gaps.size() -1)
     { //search for conflicts
       exist = 0;
-      while ((exist == 0)&&(j<this->gapList.size()-1))
+      while ((exist == 0)&&(j<this->Gaps.size()-1))
       {
       j++;
-      if (this->gapList[i].Trace1->GetId()==this->gapList[j].Trace1->GetId())
+      if (this->Gaps[i].Trace1->GetId()==this->Gaps[j].Trace1->GetId())
       {
-        if (this->gapList[i].endPT1==this->gapList[j].endPT1)
+        if (this->Gaps[i].endPT1==this->Gaps[j].endPT1)
         { exist = 1;    }
         }
-      else if(this->gapList[i].Trace1->GetId()==this->gapList[j].Trace2->GetId())
+      else if(this->Gaps[i].Trace1->GetId()==this->Gaps[j].Trace2->GetId())
       {
-        if (this->gapList[i].endPT1==this->gapList[j].endPT2)
+        if (this->Gaps[i].endPT1==this->Gaps[j].endPT2)
         { exist = 1;  }
       }
-      else if (this->gapList[i].Trace2->GetId() == this->gapList[j].Trace1->GetId())
+      else if (this->Gaps[i].Trace2->GetId() == this->Gaps[j].Trace1->GetId())
       {
-        if (this->gapList[i].endPT2==this->gapList[j].endPT1)
+        if (this->Gaps[i].endPT2==this->Gaps[j].endPT1)
         { exist = 1;    }
       }
-      else if(this->gapList[i].Trace2->GetId() == this->gapList[j].Trace2->GetId())
+      else if(this->Gaps[i].Trace2->GetId() == this->Gaps[j].Trace2->GetId())
       {
-        if (this->gapList[i].endPT2==this->gapList[j].endPT2)
+        if (this->Gaps[i].endPT2==this->Gaps[j].endPT2)
           { exist = 1;  }
       }
       }   //end while exist = 0
       if (exist == 1)
       {
         ++conflict;
-        if (this->gapList[i].cost<this->gapList[j].cost)
+        if (this->Gaps[i].cost<this->Gaps[j].cost)
         {
-          this->gapList.erase(this->gapList.begin()+j);
+          this->Gaps.erase(this->Gaps.begin()+j);
         }
         else
         {
-          this->gapList.erase(this->gapList.begin()+i);
+          this->Gaps.erase(this->Gaps.begin()+i);
         }
         j=i;
       }//end if exist

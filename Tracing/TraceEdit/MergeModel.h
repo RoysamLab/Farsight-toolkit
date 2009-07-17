@@ -32,7 +32,7 @@ class MergeModel : public QObject
 
 public:
 	MergeModel();
-  MergeModel(std::vector<TraceGap*> gaps);
+  MergeModel(std::vector<TraceGap> gaps);
 	~MergeModel();
 
 	QStandardItemModel *GetModel();
@@ -41,16 +41,11 @@ public:
 	int RowForID(int id);
 	int GetNumFeatures();
 	int GetNumGaps();
-  void SetTraceGaps(std::vector<TraceGap *> gaps);
-  std::vector<TraceGap *>GetTraceGaps();
+  void SetTraceGaps(std::vector<TraceGap> gaps);
+  std::vector<TraceGap>GetTraceGaps();
   std::vector<int> GetSelectedGapIDs();
 
 signals:
-  //emit these signals to tell View3D to change the underlying data, and to
-  //update the vtkRenderWindow.
-	void deleteSelectedTraces(void);
-  void mergeSelectedTraces(void);
-
   //emit this signal to tell the Qt views to update
   void modelChanged(void);
 
@@ -64,7 +59,7 @@ private:
 	const static int IDColumn = 0;
 	int NumFeatures;
 	int NumGaps;
-  std::vector<TraceGap *> TraceGaps;
+  std::vector<TraceGap> TraceGaps;
 	QMap<int, int> IDToRowMap;	
 
 	QStandardItemModel *Model;
