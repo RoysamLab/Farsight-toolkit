@@ -69,6 +69,11 @@ void MergeModel::SyncModel()
     return;
     }
 
+  //clear the model
+  this->Model->setColumnCount(0);
+  this->Model->setRowCount(0);
+
+  //and then repopulate it with data from the trace gaps
   std::vector< std::vector< double > > data;
   std::vector<TraceGap*>::iterator gapItr = this->GetTraceGaps().begin();
   for(gapItr = this->GetTraceGaps().begin();
@@ -98,6 +103,10 @@ void MergeModel::SyncModel()
       this->Model->setData(this->Model->index(row, col), data.at(row).at(col));
       }
     }
+  //let the views know that the model changed
+  emit modelChanged();
+
+  //and refresh the mapping between map ids and rows
   this->MapGapIDsToRows();
 }
 
