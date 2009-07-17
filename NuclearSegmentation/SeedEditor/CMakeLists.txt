@@ -14,24 +14,24 @@ set(qtproject_SRCS
 )
 
 
-#Define (additional) ITK and VTK libraries that are needed for vtkTraceViewer to be built
-SET( Libraries
-    ITKCommon
-    ITKNumerics
-    ITKStatistics
-    ITKIO
-    ITKBasicFilters
-    vtkRendering
-    vtkIO
-    vtkHybrid
-    vtkWidgets
-    vtkCommon
-    vtksys
-    vtkFiltering
-    vtkVolumeRendering
-    QVTK
-    QVTKWidgetPlugin
-   # TinyXML
+#Define (additional) ITK and VTK libraries that are needed for vtkTraceViewer to be built
+SET( Libraries
+    ITKCommon
+    ITKNumerics
+    ITKStatistics
+    ITKIO
+    ITKBasicFilters
+    vtkRendering
+    vtkIO
+    vtkHybrid
+    vtkWidgets
+    vtkCommon
+    vtksys
+    vtkFiltering
+    vtkVolumeRendering
+    QVTK
+    QVTKWidgetPlugin
+   # TinyXML/home/raghav/macecutter
 )
 
 #Check if ITK is found
@@ -57,7 +57,7 @@ ENDIF(VTK_FOUND)
 #qt4_automoc(${qtproject_SRCS})
 
 QT4_WRAP_CPP( GUI_MOC_SRCS Seed3D.h )
-#ADD_LIBRARY(Trace Trace.h Trace.cpp)
+#ADD_LIBRARY(Trace Trace.h Trace.cpp)
 ADD_EXECUTABLE( Seed_editor  vtkSeeds3D.cxx ${Sources} ${GUI_MOC_SRCS} )
 
 TARGET_LINK_LIBRARIES( Seed_editor ${Libraries})
