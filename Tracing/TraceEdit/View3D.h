@@ -86,7 +86,7 @@ public:
 
 	void HighlightSelected(TraceLine* tline, double SelectColor);
 	void DeleteTrace(TraceLine *tline);
-	void SelectedComp();
+	void MergeSelectedTraces();
 	void setupLinkedSpace();
 	void ShowMergeStats();
 	void CalculateGaps();
@@ -127,6 +127,9 @@ public slots:
 	void ShowSomaSettingsWindow();
 	void HideSomaSettingsWindow();
 	void ApplySomaSettings();
+	//void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
+protected slots:
+	void updateSelectionHighlights();
 
 protected:
 	void closeEvent(QCloseEvent *event);

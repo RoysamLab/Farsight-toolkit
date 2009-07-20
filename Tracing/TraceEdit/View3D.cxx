@@ -155,6 +155,7 @@ void View3D::setupLinkedSpace()
 	this->table = new QTableView();
 	this->TreeTable =new QTableView();
 	this->MergeGaps = new MergeModel(this->tobj->gapList);
+	connect(this->MergeGaps,SIGNAL(modelChanged()),this, SLOT(this->updateSelectionHighlights()));
 }
 
 /*Set up the components of the interface */
@@ -904,7 +905,7 @@ void View3D::MergeTraces()
 		{
 			this->table->close();
 		}
-		this->SelectedComp();
+		this->MergeSelectedTraces();
 		//this->Rerender();
 		this->tobj->gapList.clear();
 	}
@@ -994,8 +995,37 @@ void View3D::ShowMergeStats()
 	this->plot = new PlotWindow(this->MergeGaps->GetSelectionModel());
 	this->plot->show();
 }
-
-void View3D::SelectedComp()
+void View3D::updateSelectionHighlights()
+{
+	bool selected = false;
+	int curID;
+	std::vector<int> GapIDs = this->MergeGaps->GetSelectedGapIDs();
+	for (int i = 0; i < this->tobj->gapList.size(); i++)
+	{
+		curID = this->tobj->gapList[i]->compID;
+		selected = false;
+		for (int j =0; j < GapIDs.size(); j++)
+		{
+			if ( curID == GapIDs[j])
+			{
+				selected = true;
+			}
+		}//end gapids size j
+		if (selected == true)
+		{
+			this->HighlightSelected(this->tobj->gapList[i]->Trace1, .15);
+			this->HighlightSelected(this->tobj->gapList[i]->Trace2, .15);
+		}//end true
+		else
+		{
+			this->HighlightSelected(this->tobj->gapList[i]->Trace1, .25);
+			this->HighlightSelected(this->tobj->gapList[i]->Trace2, .25);
+		}//end else true
+	}//end for i
+	this->poly_line_data->Modified();
+	this->QVTK->GetRenderWindow()->Render();
+}
+void View3D::MergeSelectedTraces()
 {
 	QMessageBox *MergeInfo = new QMessageBox;
 	double currentAngle=0;
