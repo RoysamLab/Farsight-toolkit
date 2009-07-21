@@ -121,6 +121,7 @@ this->tobj->gapMax = 10;
 this->smallLine = 5;
 this->SelectColor =.1;
 this->lineWidth= 2;
+
 this->Initialize();
 this->tobj->setSmallLineColor(.25);
 this->tobj->setMergeLineColor(.4);
@@ -156,6 +157,7 @@ void View3D::setupLinkedSpace()
 	this->TreeTable =new QTableView();
 	this->MergeGaps = new MergeModel(this->tobj->gapList);
 	connect(MergeGaps,SIGNAL(modelChanged()),this, SLOT(updateSelectionHighlights()));
+  connect(this->MergeGaps->GetSelectionModel(), SIGNAL(selectionChanged(const QItemSelection & , const QItemSelection &)), this, SLOT(updateSelectionHighlights()));
 }
 
 /*Set up the components of the interface */
@@ -1004,10 +1006,11 @@ void View3D::updateSelectionHighlights()
 	bool selected = false;
 	int curID;
 	std::vector<int> GapIDs = this->MergeGaps->GetSelectedGapIDs();
-	for (int i = 0; i < this->tobj->gapList.size(); i++)
+	for (unsigned int i = 0; i < this->tobj->gapList.size(); i++)
 	{
 		curID = this->tobj->gapList[i]->compID;
-		selected = false;	int j =0;
+		selected = false;
+    unsigned int j =0;
 		while(!selected && j < GapIDs.size())
 		{
 			if ( curID == GapIDs[j])
@@ -1748,6 +1751,22 @@ void View3D::rayCast(char *raySource)
 
 void View3D::closeEvent(QCloseEvent *event)
 {
+	if(this->plot)
+    {
+    this->plot->close();
+    }
+	if(this->histo)
+    {
+    this->histo->close();
+    }
+	if(this->table)
+    {
+    this->table->close();
+    }
+	if(this->TreeTable)
+    {
+    this->TreeTable->close();
+    }
   event->accept();
 }
 
