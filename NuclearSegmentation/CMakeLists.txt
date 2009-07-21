@@ -18,4 +18,4 @@ TARGET_LINK_LIBRARIES( NuclearSegmentation SegmentationCommon ftkImage Yousef_Nu
 #INSTALL( TARGETS NuclearSegmentation DESTINATION . )
 
 
-SUBDIRS( exe NucleusEditor )
+SUBDIRS( exe NucleusEditor SegmentationViewer )
