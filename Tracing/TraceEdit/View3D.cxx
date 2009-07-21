@@ -155,7 +155,7 @@ void View3D::setupLinkedSpace()
 	this->table = new QTableView();
 	this->TreeTable =new QTableView();
 	this->MergeGaps = new MergeModel(this->tobj->gapList);
-	connect(this->MergeGaps,SIGNAL(modelChanged()),this, SLOT(this->updateSelectionHighlights()));
+	connect(MergeGaps,SIGNAL(modelChanged()),this, SLOT(updateSelectionHighlights()));
 }
 
 /*Set up the components of the interface */
@@ -704,6 +704,10 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
 		  view->Rerender();*/
 	    break;
 
+	  case 'q':
+		  view->updateSelectionHighlights();
+		  break;
+
     case '-':
       if(view->IDList.size()>=1)
         {
@@ -953,8 +957,8 @@ void View3D::MergeTraces()
 			for (i=0;i<this->tobj->gapList.size(); i++)
 			{
 				this->tobj->gapList[i]->compID = i;
-				this->HighlightSelected(this->tobj->gapList[i]->Trace1, .25);
-				this->HighlightSelected(this->tobj->gapList[i]->Trace2, .25);
+				//this->HighlightSelected(this->tobj->gapList[i]->Trace1, .25);
+				//this->HighlightSelected(this->tobj->gapList[i]->Trace2, .25);
 			}
 			MergeInfo->setText("\nNumber of computed distances:\t" 
 				+ QString::number(this->tobj->gapList.size())
@@ -1003,12 +1007,16 @@ void View3D::updateSelectionHighlights()
 	for (int i = 0; i < this->tobj->gapList.size(); i++)
 	{
 		curID = this->tobj->gapList[i]->compID;
-		selected = false;
-		for (int j =0; j < GapIDs.size(); j++)
+		selected = false;	int j =0;
+		while(!selected && j < GapIDs.size())
 		{
 			if ( curID == GapIDs[j])
 			{
 				selected = true;
+			}
+			else
+			{
+				j++;
 			}
 		}//end gapids size j
 		if (selected == true)
@@ -1027,68 +1035,102 @@ void View3D::updateSelectionHighlights()
 }
 void View3D::MergeSelectedTraces()
 {
+	this->updateSelectionHighlights(); //if it didnt
+	std::vector<int> GapIDs = this->MergeGaps->GetSelectedGapIDs();
+	bool selected = false;
+	int curID;
 	QMessageBox *MergeInfo = new QMessageBox;
 	double currentAngle=0;
 	QPushButton *mergeAll;
 	QPushButton *mergeNone;
 	unsigned int i=0, j=0,mergeCount=0;
 	MergeInfo->setText("Merge Function");
-	for (i=0;i<this->tobj->gapList.size(); i++)
+	if (GapIDs.size() > 1)
 	{
-		currentAngle=fabs(this->tobj->gapList[i]->angle); 
-		//if (currentAngle>=PI/2) 
-		//{
-		//	currentAngle= PI-currentAngle;
-		//}
-		if 	((this->tobj->gapList[i]->dist<= this->tobj->gapMax*this->tobj->gapTol&& (currentAngle < 1.1))||
-			(this->tobj->gapList[i]->dist<= this->tobj->gapMax && (currentAngle < .6)))
-	  	{
-			this->dtext+= "\nTrace " + QString::number(this->tobj->gapList[i]->Trace1->GetId());
-			this->dtext+= " and "+ QString::number(this->tobj->gapList[i]->Trace2->GetId() );
-			this->dtext+="\tgap size of:" + QString::number(this->tobj->gapList[i]->dist); 				
-			this->dtext+="\tangle of" + QString::number(currentAngle*180/PI);	//this->tobj->gapList[i]->angle
-			tobj->mergeTraces(this->tobj->gapList[i]->endPT1,this->tobj->gapList[i]->endPT2);
-			++mergeCount;
-	  	}	//end of if
-		else if (this->tobj->gapList[i]->dist<= this->tobj->gapMax*(1+this->tobj->gapTol)&& (currentAngle < .3))
-	  	{
-			this->HighlightSelected(this->tobj->gapList[i]->Trace1, .125);
-			this->HighlightSelected(this->tobj->gapList[i]->Trace2, .125);
-			this->candidateGaps.push_back( this->tobj->gapList[i]);
-			this->grayText+="\nAngle of:\t" + QString::number(currentAngle*180/PI);	//this->tobj->gapList[i]->angle
-			this->grayText+="\tWith a distance of:\t" + QString::number(this->tobj->gapList[i]->dist);
-			
-		 } //end of else
-	}//end of for merge
-	myText+="\tNumber of merged lines:\t" + QString::number(mergeCount);
-	if (this->candidateGaps.size()>=1)
-	{
-		this->poly_line_data->Modified();
-		this->QVTK->GetRenderWindow()->Render();
-		myText+="\nNumber of further possible lines:\t" + QString::number(this->candidateGaps.size());
-		mergeAll = MergeInfo->addButton("Merge All", QMessageBox::YesRole);
-		mergeNone = MergeInfo->addButton("Merge None", QMessageBox::NoRole);
-		MergeInfo->setDetailedText(grayText);
-	}		//end if graylist size
+		for (i = 0; i < this->tobj->gapList.size(); i++)
+		{
+			curID = this->tobj->gapList[i]->compID;
+			selected = false;	
+			j =0;
+			while(!selected && j < GapIDs.size())
+			{
+				if ( curID == GapIDs[j])
+				{
+					selected = true;
+				}
+				else
+				{
+					j++;
+				}
+			}//end gapids size j
+			if (selected == true)
+			{
+				this->tobj->mergeTraces(this->tobj->gapList[i]->endPT1,this->tobj->gapList[i]->endPT2);
+			}
+		}	
+		MergeInfo->setText("merged " + QString::number(GapIDs.size()) + " traces.");	
+		MergeInfo->show();
+		MergeInfo->exec();
+	}
 	else
 	{
-		this->Rerender();
-		MergeInfo->setDetailedText(dtext);
-	}		//end else graylist size
-	MergeInfo->setText(myText);	
-	MergeInfo->show();
-	MergeInfo->exec();
-	if(MergeInfo->clickedButton()==mergeAll)
-	{
-		for (j=0; j<this->candidateGaps.size();j++)
+		for (i=0;i<this->tobj->gapList.size(); i++)
 		{
-			tobj->mergeTraces(this->candidateGaps[j]->endPT1,this->candidateGaps[j]->endPT2);
+			currentAngle=fabs(this->tobj->gapList[i]->angle); 
+			//if (currentAngle>=PI/2) 
+			//{
+			//	currentAngle= PI-currentAngle;
+			//}
+			if 	((this->tobj->gapList[i]->dist<= this->tobj->gapMax*this->tobj->gapTol&& (currentAngle < 1.1))||
+				(this->tobj->gapList[i]->dist<= this->tobj->gapMax && (currentAngle < .6)))
+	  		{
+				this->dtext+= "\nTrace " + QString::number(this->tobj->gapList[i]->Trace1->GetId());
+				this->dtext+= " and "+ QString::number(this->tobj->gapList[i]->Trace2->GetId() );
+				this->dtext+="\tgap size of:" + QString::number(this->tobj->gapList[i]->dist); 				
+				this->dtext+="\tangle of" + QString::number(currentAngle*180/PI);	//this->tobj->gapList[i]->angle
+				tobj->mergeTraces(this->tobj->gapList[i]->endPT1,this->tobj->gapList[i]->endPT2);
+				++mergeCount;
+	  		}	//end of if
+			else if (this->tobj->gapList[i]->dist<= this->tobj->gapMax*(1+this->tobj->gapTol)&& (currentAngle < .3))
+	  		{
+				this->HighlightSelected(this->tobj->gapList[i]->Trace1, .125);
+				this->HighlightSelected(this->tobj->gapList[i]->Trace2, .125);
+				this->candidateGaps.push_back( this->tobj->gapList[i]);
+				this->grayText+="\nAngle of:\t" + QString::number(currentAngle*180/PI);	//this->tobj->gapList[i]->angle
+				this->grayText+="\tWith a distance of:\t" + QString::number(this->tobj->gapList[i]->dist);
+				
+			 } //end of else
+		}//end of for merge
+		myText+="\tNumber of merged lines:\t" + QString::number(mergeCount);
+		if (this->candidateGaps.size()>=1)
+		{
+			this->poly_line_data->Modified();
+			this->QVTK->GetRenderWindow()->Render();
+			myText+="\nNumber of further possible lines:\t" + QString::number(this->candidateGaps.size());
+			mergeAll = MergeInfo->addButton("Merge All", QMessageBox::YesRole);
+			mergeNone = MergeInfo->addButton("Merge None", QMessageBox::NoRole);
+			MergeInfo->setDetailedText(grayText);
+		}		//end if graylist size
+		else
+		{
+			this->Rerender();
+			MergeInfo->setDetailedText(dtext);
+		}		//end else graylist size
+		MergeInfo->setText(myText);	
+		MergeInfo->show();
+		MergeInfo->exec();
+		if(MergeInfo->clickedButton()==mergeAll)
+		{
+			for (j=0; j<this->candidateGaps.size();j++)
+			{
+				tobj->mergeTraces(this->candidateGaps[j]->endPT1,this->candidateGaps[j]->endPT2);
+			}
+			this->Rerender();
 		}
-		this->Rerender();
-	}
-	else if(MergeInfo->clickedButton()==mergeNone)
-	{
-		this->candidateGaps.clear();
+		else if(MergeInfo->clickedButton()==mergeNone)
+		{
+			this->candidateGaps.clear();
+		}
 	}
 	this->Rerender();
 	this->tobj->gapList.clear();
