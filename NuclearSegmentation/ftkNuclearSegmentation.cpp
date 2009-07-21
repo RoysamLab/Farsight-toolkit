@@ -1578,9 +1578,13 @@ bool NuclearSegmentation::RunGraphColoring(std::string labelname, std::string fi
 		size_t pos = filename.find_last_of(".");
 		std::string base = filename.substr(0,pos);
 		std::string ext = filename.substr(pos);
+		std::string colorImage;
 		writer->SetFileName( base + "_class" + NumToString(classes.at(i)) + ext );
 		writer->SetInput( outImgs.at(i) );
-    
+		colorImage = writer->GetFileName();
+		std::cout << colorImage << std::endl;
+		this->colorImages.push_back(colorImage);
+
 		try
 		{
 			writer->Update();

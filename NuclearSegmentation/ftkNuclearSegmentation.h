@@ -110,6 +110,8 @@ public:
 	//This function will run graph coloring and will assign different colors for touching objects
 	//For now, it will just write the list of labels into a text file, but this should be relaxed later
 	bool RunGraphColoring(std::string labelname, std::string filename);	//Run Graph coloring on label image and save adjacency file as filename
+	
+	std::vector<std::string> colorImages;
 
 private:
 	std::string dataFilename;	//the filename of the data image		(full path)
