@@ -27,7 +27,6 @@ MergeModel::MergeModel(std::vector<TraceGap*> gaps)
 {
   this->Model = new QStandardItemModel(0,0);
   this->SelectionModel = new QItemSelectionModel(this->Model);
-  this->SetupHeaders();
   this->SetTraceGaps(gaps);
 }
 
@@ -54,11 +53,11 @@ void MergeModel::SetupHeaders()
   headers.push_back("Smoothness");
   headers.push_back("Cost");
   int numHeaders = headers.size();
+  this->Model->setColumnCount(numHeaders);
   for(int i=0; i<(int)headers.size(); ++i)
     {
     this->Model->setHeaderData(i, Qt::Horizontal, headers.at(i));
     }
-  this->Model->setColumnCount(numHeaders);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -76,7 +75,7 @@ void MergeModel::SyncModel()
   //and then repopulate it with data from the trace gaps
   std::vector< std::vector< double > > data;
   std::vector<TraceGap*> Gaps = this->GetTraceGaps();
-  for(int i = 0;i < this->GetTraceGaps().size(); i++)
+  for(unsigned int i = 0;i < this->GetTraceGaps().size(); i++)
     {
     std::vector<double> row;
 	row.push_back(Gaps[i]->compID);

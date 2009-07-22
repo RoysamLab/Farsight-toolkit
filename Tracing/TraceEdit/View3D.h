@@ -128,6 +128,8 @@ public slots:
 	void HideSomaSettingsWindow();
 	void ApplySomaSettings();
 	//void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
+  void DereferenceGapsPlotView();
+
 protected slots:
 	void updateSelectionHighlights();
 
@@ -170,10 +172,10 @@ private:
 //merge statistics
 	QStandardItemModel *model;
 	QItemSelectionModel *selModel;
-	QTableView *table;
+	QTableView *GapsTableView;
 	Qt::SortOrder Ascending;
 //plots	
-	PlotWindow *plot;
+	PlotWindow *GapsPlotView;
 	HistoWindow *histo;
 //tobj statistics	
 	QStandardItemModel *treeModel;
@@ -238,7 +240,7 @@ private:
 	vtkSmartPointer<vtkCellPicker> CellPicker;
 
   //ID numbers of the selected traces
-	std::vector<int> IDList;
+	std::vector<int> SelectedTraceIDs;
 
     //merge info
 	std::vector<TraceGap*> candidateGaps;

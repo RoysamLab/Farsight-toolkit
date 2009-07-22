@@ -150,14 +150,14 @@ void View3D::Initialize()
 }
 void View3D::setupLinkedSpace()
 {  
-	this->tobj->gapList.clear();
-	this->plot = NULL;
+	this->tobj->Gaps.clear();
+	this->GapsPlotView = NULL;
 	this->histo = NULL;
-	this->table = new QTableView();
+	this->GapsTableView = new QTableView();
 	this->TreeTable =new QTableView();
-	this->MergeGaps = new MergeModel(this->tobj->gapList);
-	connect(MergeGaps,SIGNAL(modelChanged()),this, SLOT(updateSelectionHighlights()));
-  connect(this->MergeGaps->GetSelectionModel(), SIGNAL(selectionChanged(const QItemSelection & , const QItemSelection &)), this, SLOT(updateSelectionHighlights()));
+	this->MergeGaps = new MergeModel(this->tobj->Gaps);
+	this->connect(MergeGaps,SIGNAL(modelChanged()),this, SLOT(updateSelectionHighlights()));
+  this->connect(this->MergeGaps->GetSelectionModel(), SIGNAL(selectionChanged(const QItemSelection & , const QItemSelection &)), this, SLOT(updateSelectionHighlights()));
 }
 
 /*Set up the components of the interface */
@@ -560,7 +560,7 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
     view->CellPicker->GetPickPosition(pickPos);    //this is the coordinates of the pick
     //view->cell_picker->GetSelectionPoint(selPt);    //not so usefull but kept
     unsigned int cell_id = cell_picker->GetCellId();  
-    view->IDList.push_back(cell_id);
+    view->SelectedTraceIDs.push_back(cell_id);
     TraceLine *tline = reinterpret_cast<TraceLine*>(view->tobj->hashc[cell_id]);
 	
 	view->HighlightSelected(tline, view->SelectColor);
@@ -596,7 +596,7 @@ void View3D::HighlightSelected(TraceLine* tline, double color)
 void View3D::Rerender()
 {
   this->SphereActor->VisibilityOff();
-  this->IDList.clear();
+  this->SelectedTraceIDs.clear();
   this->Renderer->RemoveActor(this->BranchActor);
   //this->Renderer->RemoveActor(this->VolumeActor);
   this->UpdateLineActor();
@@ -675,7 +675,7 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
       break;
 
     case 'd':
-		view->tobj->gapList.clear();
+		view->tobj->Gaps.clear();
       view->DeleteTraces();
       break;
     
@@ -711,16 +711,16 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
 		  break;
 
     case '-':
-      if(view->IDList.size()>=1)
+      if(view->SelectedTraceIDs.size()>=1)
         {
         TraceLine* tline=reinterpret_cast<TraceLine*>(
-          view->tobj->hashc[view->IDList[view->IDList.size()-1]]);
+          view->tobj->hashc[view->SelectedTraceIDs[view->SelectedTraceIDs.size()-1]]);
         view->HighlightSelected(tline, tline->getTraceColor()-.25);
-        view->IDList.pop_back();
+        view->SelectedTraceIDs.pop_back();
         cout<< " These lines: ";
-        for (unsigned int i = 0; i < view->IDList.size(); i++)
+        for (unsigned int i = 0; i < view->SelectedTraceIDs.size(); i++)
           {
-          cout<<  "\t"<<view->IDList[i];   
+          cout<<  "\t"<<view->SelectedTraceIDs[i];   
           } 
         cout<< " \t are selected \n" ;   
         }
@@ -771,16 +771,16 @@ void View3D::ListSelections()
   QMessageBox *selectionInfo = new QMessageBox;
   QString listText;
   QString selectedText;
-  if (this->IDList.size()<= 0)
+  if (this->SelectedTraceIDs.size()<= 0)
     {
     listText = tr("No traces selected");
     }
   else
     {
-    listText += QString::number(this->IDList.size()) + " lines are selected\n";
-    for (unsigned int i = 0; i < this->IDList.size(); i++)
+    listText += QString::number(this->SelectedTraceIDs.size()) + " lines are selected\n";
+    for (unsigned int i = 0; i < this->SelectedTraceIDs.size(); i++)
       {
-      selectedText += QString::number(this->IDList[i]) + "\n";   
+      selectedText += QString::number(this->SelectedTraceIDs[i]) + "\n";   
       } 
     }
   selectionInfo->setText(listText);
@@ -792,13 +792,13 @@ void View3D::ClearSelection()
 {
 	QMessageBox *selectionInfo = new QMessageBox();
 	QString selectText;
-	if (this->IDList.size()<= 0)
+	if (this->SelectedTraceIDs.size()<= 0)
     {
 		selectText=tr("\t\tNothing Selected\t\t");
     }
 	else
     {
-		this->IDList.clear();
+		this->SelectedTraceIDs.clear();
 		selectText=tr("\t\tcleared list\t\t");
 		this->Rerender();
     }
@@ -809,13 +809,13 @@ void View3D::ClearSelection()
 /*	delete traces functions	*/
 void View3D::DeleteTraces()
 {
-  if(this->IDList.size()>=1)
+  if(this->SelectedTraceIDs.size()>=1)
     {
     std::cout<<"selected lines \n";
-    for (unsigned int i = 0; i < this->IDList.size(); i++)
+    for (unsigned int i = 0; i < this->SelectedTraceIDs.size(); i++)
       {
-      std::cout<<  "\t"<<this->IDList[i];
-      this->DeleteTrace(reinterpret_cast<TraceLine*>(this->tobj->hashc[this->IDList[i]])); 
+      std::cout<<  "\t"<<this->SelectedTraceIDs[i];
+      this->DeleteTrace(reinterpret_cast<TraceLine*>(this->tobj->hashc[this->SelectedTraceIDs[i]])); 
       } 
     std::cout<< " \t deleted" <<std::endl;
     this->Rerender();
@@ -900,36 +900,36 @@ void View3D::DeleteTrace(TraceLine *tline)
 /*	merging functions	*/
 void View3D::MergeTraces()
 {
-	if (this->tobj->gapList.size() > 1)
+	if (this->tobj->Gaps.size() > 1)
 	{
-		if(this->plot)
+		if(this->GapsPlotView)
 		{
-			this->plot->close();
-			//delete plot;
+			this->GapsPlotView->close();
+			//delete GapsPlotView;
 		}
-		if (this->table)
+		if (this->GapsTableView)
 		{
-			this->table->close();
+			this->GapsTableView->close();
 		}
 		this->MergeSelectedTraces();
 		//this->Rerender();
-		this->tobj->gapList.clear();
+		this->tobj->Gaps.clear();
 	}
 	else
 	{
 		int conflict =0;
-	  if(this->IDList.size()>=1)
+	  if(this->SelectedTraceIDs.size()>=1)
 		{		  
-		std::sort(this->IDList.begin(), this->IDList.end());
-		std::reverse(this->IDList.begin(), this->IDList.end());
-		int numTrace = this->IDList.size();		
+		std::sort(this->SelectedTraceIDs.begin(), this->SelectedTraceIDs.end());
+		std::reverse(this->SelectedTraceIDs.begin(), this->SelectedTraceIDs.end());
+		int numTrace = this->SelectedTraceIDs.size();		
 		int i,j, s=0, exist =0;
 		std::vector<TraceLine*> traceList;
 		//std::cout<< "elements passed \t" << numTrace << std::endl;
 		for (i = 0;i<numTrace; i++)
 		  {
 		  traceList.push_back( reinterpret_cast<TraceLine*>(
-			this->tobj->hashc[this->IDList[i]]));
+			this->tobj->hashc[this->SelectedTraceIDs[i]]));
 		  s=traceList.size()-1;
 		  exist = 0;
 		  if (traceList.size()>0)
@@ -954,25 +954,25 @@ void View3D::MergeTraces()
 		}	
 	  unsigned int i; 
 	  QMessageBox *MergeInfo = new QMessageBox;
-		if (this->tobj->gapList.size() > 1)
+		if (this->tobj->Gaps.size() > 1)
 		{
-			for (i=0;i<this->tobj->gapList.size(); i++)
+			for (i=0;i<this->tobj->Gaps.size(); i++)
 			{
-				this->tobj->gapList[i]->compID = i;
-				//this->HighlightSelected(this->tobj->gapList[i]->Trace1, .25);
-				//this->HighlightSelected(this->tobj->gapList[i]->Trace2, .25);
+				this->tobj->Gaps[i]->compID = i;
+				//this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .25);
+				//this->HighlightSelected(this->tobj->Gaps[i]->Trace2, .25);
 			}
 			MergeInfo->setText("\nNumber of computed distances:\t" 
-				+ QString::number(this->tobj->gapList.size())
+				+ QString::number(this->tobj->Gaps.size())
 				+"\nConflicts resolved:\t" + QString::number(conflict)
 				+"\nEdit selection or press merge again");
 			this->ShowMergeStats();
-		}//end if this->tobj->gapList size > 1
+		}//end if this->tobj->Gaps size > 1
 		else 
 		{
-			if (this->tobj->gapList.size() ==1)
+			if (this->tobj->Gaps.size() ==1)
 			{		
-				tobj->mergeTraces(this->tobj->gapList[0]->endPT1,this->tobj->gapList[0]->endPT2);
+				tobj->mergeTraces(this->tobj->Gaps[0]->endPT1,this->tobj->Gaps[0]->endPT2);
 				this->Rerender();
 				MergeInfo->setText(this->myText + "\nOne Trace merged");
 			}
@@ -991,24 +991,32 @@ void View3D::MergeTraces()
 
 void View3D::ShowMergeStats()
 {
-	this->MergeGaps->SetTraceGaps(this->tobj->gapList);
-	this->table->setModel(this->MergeGaps->GetModel());
-	this->table->setSelectionModel(this->MergeGaps->GetSelectionModel()); 
-	this->table->setSelectionBehavior(QAbstractItemView::SelectRows);
-	this->table->sortByColumn(8,Ascending);
-	this->table->update();
-	this->table->show();
-	this->plot = new PlotWindow(this->MergeGaps->GetSelectionModel());
-	this->plot->show();
+	this->MergeGaps->SetTraceGaps(this->tobj->Gaps);
+	this->GapsTableView->setModel(this->MergeGaps->GetModel());
+	this->GapsTableView->setSelectionModel(this->MergeGaps->GetSelectionModel()); 
+	this->GapsTableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+	this->GapsTableView->sortByColumn(8,Ascending);
+	this->GapsTableView->update();
+	this->GapsTableView->show();
+  this->GapsTableView->horizontalHeader()->show();
+	this->GapsPlotView = new PlotWindow(this->MergeGaps->GetSelectionModel());
+	this->connect(this->GapsPlotView,SIGNAL(destroyed()),this, SLOT(DereferenceGapsPlotView()));
+	this->GapsPlotView->show();
 }
+
+void View3D::DereferenceGapsPlotView()
+{
+  this->GapsPlotView = 0;
+}
+
 void View3D::updateSelectionHighlights()
 {
 	bool selected = false;
 	int curID;
 	std::vector<int> GapIDs = this->MergeGaps->GetSelectedGapIDs();
-	for (unsigned int i = 0; i < this->tobj->gapList.size(); i++)
+	for (unsigned int i = 0; i < this->tobj->Gaps.size(); i++)
 	{
-		curID = this->tobj->gapList[i]->compID;
+		curID = this->tobj->Gaps[i]->compID;
 		selected = false;
     unsigned int j =0;
 		while(!selected && j < GapIDs.size())
@@ -1024,13 +1032,13 @@ void View3D::updateSelectionHighlights()
 		}//end gapids size j
 		if (selected == true)
 		{
-			this->HighlightSelected(this->tobj->gapList[i]->Trace1, .15);
-			this->HighlightSelected(this->tobj->gapList[i]->Trace2, .15);
+			this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .15);
+			this->HighlightSelected(this->tobj->Gaps[i]->Trace2, .15);
 		}//end true
 		else
 		{
-			this->HighlightSelected(this->tobj->gapList[i]->Trace1, .25);
-			this->HighlightSelected(this->tobj->gapList[i]->Trace2, .25);
+			this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .25);
+			this->HighlightSelected(this->tobj->Gaps[i]->Trace2, .25);
 		}//end else true
 	}//end for i
 	this->poly_line_data->Modified();
@@ -1050,9 +1058,9 @@ void View3D::MergeSelectedTraces()
 	MergeInfo->setText("Merge Function");
 	if (GapIDs.size() > 1)
 	{
-		for (i = 0; i < this->tobj->gapList.size(); i++)
+		for (i = 0; i < this->tobj->Gaps.size(); i++)
 		{
-			curID = this->tobj->gapList[i]->compID;
+			curID = this->tobj->Gaps[i]->compID;
 			selected = false;	
 			j =0;
 			while(!selected && j < GapIDs.size())
@@ -1068,7 +1076,7 @@ void View3D::MergeSelectedTraces()
 			}//end gapids size j
 			if (selected == true)
 			{
-				this->tobj->mergeTraces(this->tobj->gapList[i]->endPT1,this->tobj->gapList[i]->endPT2);
+				this->tobj->mergeTraces(this->tobj->Gaps[i]->endPT1,this->tobj->Gaps[i]->endPT2);
 			}
 		}	
 		MergeInfo->setText("merged " + QString::number(GapIDs.size()) + " traces.");	
@@ -1077,30 +1085,30 @@ void View3D::MergeSelectedTraces()
 	}
 	else
 	{
-		for (i=0;i<this->tobj->gapList.size(); i++)
+		for (i=0;i<this->tobj->Gaps.size(); i++)
 		{
-			currentAngle=fabs(this->tobj->gapList[i]->angle); 
+			currentAngle=fabs(this->tobj->Gaps[i]->angle); 
 			//if (currentAngle>=PI/2) 
 			//{
 			//	currentAngle= PI-currentAngle;
 			//}
-			if 	((this->tobj->gapList[i]->dist<= this->tobj->gapMax*this->tobj->gapTol&& (currentAngle < 1.1))||
-				(this->tobj->gapList[i]->dist<= this->tobj->gapMax && (currentAngle < .6)))
+			if 	((this->tobj->Gaps[i]->dist<= this->tobj->gapMax*this->tobj->gapTol&& (currentAngle < 1.1))||
+				(this->tobj->Gaps[i]->dist<= this->tobj->gapMax && (currentAngle < .6)))
 	  		{
-				this->dtext+= "\nTrace " + QString::number(this->tobj->gapList[i]->Trace1->GetId());
-				this->dtext+= " and "+ QString::number(this->tobj->gapList[i]->Trace2->GetId() );
-				this->dtext+="\tgap size of:" + QString::number(this->tobj->gapList[i]->dist); 				
-				this->dtext+="\tangle of" + QString::number(currentAngle*180/PI);	//this->tobj->gapList[i]->angle
-				tobj->mergeTraces(this->tobj->gapList[i]->endPT1,this->tobj->gapList[i]->endPT2);
+				this->dtext+= "\nTrace " + QString::number(this->tobj->Gaps[i]->Trace1->GetId());
+				this->dtext+= " and "+ QString::number(this->tobj->Gaps[i]->Trace2->GetId() );
+				this->dtext+="\tgap size of:" + QString::number(this->tobj->Gaps[i]->dist); 				
+				this->dtext+="\tangle of" + QString::number(currentAngle*180/PI);	//this->tobj->Gaps[i]->angle
+				tobj->mergeTraces(this->tobj->Gaps[i]->endPT1,this->tobj->Gaps[i]->endPT2);
 				++mergeCount;
 	  		}	//end of if
-			else if (this->tobj->gapList[i]->dist<= this->tobj->gapMax*(1+this->tobj->gapTol)&& (currentAngle < .3))
+			else if (this->tobj->Gaps[i]->dist<= this->tobj->gapMax*(1+this->tobj->gapTol)&& (currentAngle < .3))
 	  		{
-				this->HighlightSelected(this->tobj->gapList[i]->Trace1, .125);
-				this->HighlightSelected(this->tobj->gapList[i]->Trace2, .125);
-				this->candidateGaps.push_back( this->tobj->gapList[i]);
-				this->grayText+="\nAngle of:\t" + QString::number(currentAngle*180/PI);	//this->tobj->gapList[i]->angle
-				this->grayText+="\tWith a distance of:\t" + QString::number(this->tobj->gapList[i]->dist);
+				this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .125);
+				this->HighlightSelected(this->tobj->Gaps[i]->Trace2, .125);
+				this->candidateGaps.push_back( this->tobj->Gaps[i]);
+				this->grayText+="\nAngle of:\t" + QString::number(currentAngle*180/PI);	//this->tobj->Gaps[i]->angle
+				this->grayText+="\tWith a distance of:\t" + QString::number(this->tobj->Gaps[i]->dist);
 				
 			 } //end of else
 		}//end of for merge
@@ -1136,7 +1144,7 @@ void View3D::MergeSelectedTraces()
 		}
 	}
 	this->Rerender();
-	this->tobj->gapList.clear();
+	this->tobj->Gaps.clear();
 	this->candidateGaps.clear();
 	this->myText.clear();
 	this->dtext.clear();
@@ -1144,12 +1152,12 @@ void View3D::MergeSelectedTraces()
 /*	other trace modifiers	*/
 void View3D::SplitTraces()
 {
-  if(this->IDList.size()>=1)
+  if(this->SelectedTraceIDs.size()>=1)
     {
-    std::unique(this->IDList.begin(), this->IDList.end());
-    for(unsigned int i = 0; i < this->IDList.size(); i++)
+    std::unique(this->SelectedTraceIDs.begin(), this->SelectedTraceIDs.end());
+    for(unsigned int i = 0; i < this->SelectedTraceIDs.size(); i++)
       {
-      this->tobj->splitTrace(this->IDList[i]);
+      this->tobj->splitTrace(this->SelectedTraceIDs[i]);
       } 
     this->Rerender();
     }
@@ -1161,12 +1169,12 @@ void View3D::SplitTraces()
 
 void View3D::FlipTraces()
 {
-  if(this->IDList.size()>=1)
+  if(this->SelectedTraceIDs.size()>=1)
     {
-    for(unsigned int i=0; i< this->IDList.size(); i++)
+    for(unsigned int i=0; i< this->SelectedTraceIDs.size(); i++)
       {
       this->tobj->ReverseSegment(reinterpret_cast<TraceLine*>(
-        this->tobj->hashc[this->IDList[i]]));
+        this->tobj->hashc[this->SelectedTraceIDs[i]]));
       }
     this->Rerender();
     }
@@ -1751,17 +1759,17 @@ void View3D::rayCast(char *raySource)
 
 void View3D::closeEvent(QCloseEvent *event)
 {
-	if(this->plot)
+	if(this->GapsPlotView)
     {
-    this->plot->close();
+    this->GapsPlotView->close();
     }
 	if(this->histo)
     {
     this->histo->close();
     }
-	if(this->table)
+	if(this->GapsTableView)
     {
-    this->table->close();
+    this->GapsTableView->close();
     }
 	if(this->TreeTable)
     {
