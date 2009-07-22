@@ -1582,7 +1582,6 @@ bool NuclearSegmentation::RunGraphColoring(std::string labelname, std::string fi
 		writer->SetFileName( base + "_class" + NumToString(classes.at(i)) + ext );
 		writer->SetInput( outImgs.at(i) );
 		colorImage = writer->GetFileName();
-		std::cout << colorImage << std::endl;
 		this->colorImages.push_back(colorImage);
 
 		try
