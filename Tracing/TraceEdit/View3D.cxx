@@ -85,35 +85,35 @@ View3D::View3D(int argc, char **argv)
   this->somaopacity = 1.0;
 
   // load as many files as possible. Provide offset for differentiating types
-	for(int counter=1; counter<argc; counter++)
-	  {
-		int len = strlen(argv[counter]);
-		if(strcmp(argv[counter]+len-3,"swc")==0)
-		  {
-			printf("I detected swc\n");
-			this->tobj->ReadFromSWCFile(argv[counter]);
-		   }
-		else if (strcmp(argv[counter]+len-3,"xml")==0)
-		  {
-			printf("I detected xml\n");
-			this->tobj->ReadFromRPIXMLFile(argv[counter]);
-		  }
-		else if( strcmp(argv[counter]+len-3,"tks")==0)
-		  {
-			printf("I detected tks\n");
-			this->tobj->ReadFromFeatureTracksFile(argv[counter],num_loaded);
-		  }
-		else if( strcmp(argv[counter]+len-3,"tif")==0 ||
+  for(int counter=1; counter<argc; counter++)
+    {
+    int len = strlen(argv[counter]);
+    if(strcmp(argv[counter]+len-3,"swc")==0)
+      {
+      printf("I detected swc\n");
+      this->tobj->ReadFromSWCFile(argv[counter]);
+       }
+    else if (strcmp(argv[counter]+len-3,"xml")==0)
+      {
+      printf("I detected xml\n");
+      this->tobj->ReadFromRPIXMLFile(argv[counter]);
+      }
+    else if( strcmp(argv[counter]+len-3,"tks")==0)
+      {
+      printf("I detected tks\n");
+      this->tobj->ReadFromFeatureTracksFile(argv[counter],num_loaded);
+      }
+    else if( strcmp(argv[counter]+len-3,"tif")==0 ||
              strcmp(argv[counter]+len-4,"tiff")==0 ||
-			 strcmp(argv[counter]+len-3, "pic")==0||
-			 strcmp(argv[counter]+len-3, "PIC")==0)
-		  {
-			printf("I detected a 3d image file\n");
-			this->rayCast(argv[counter]);
-			//this->AddVolumeSliders();
-		  }
-		num_loaded++;
-	  }
+       strcmp(argv[counter]+len-3, "pic")==0||
+       strcmp(argv[counter]+len-3, "PIC")==0)
+      {
+      printf("I detected a 3d image file\n");
+      this->rayCast(argv[counter]);
+      //this->AddVolumeSliders();
+      }
+    num_loaded++;
+    }
 
 this->QVTK = 0;
 this->tobj->gapTol = .5;
@@ -150,13 +150,13 @@ void View3D::Initialize()
 }
 void View3D::setupLinkedSpace()
 {  
-	this->tobj->Gaps.clear();
-	this->GapsPlotView = NULL;
-	this->histo = NULL;
-	this->GapsTableView = new QTableView();
-	this->TreeTable =new QTableView();
-	this->MergeGaps = new MergeModel(this->tobj->Gaps);
-	this->connect(MergeGaps,SIGNAL(modelChanged()),this, SLOT(updateSelectionHighlights()));
+  this->tobj->Gaps.clear();
+  this->GapsPlotView = NULL;
+  this->histo = NULL;
+  this->GapsTableView = new QTableView();
+  this->TreeTable =new QTableView();
+  this->MergeGaps = new MergeModel(this->tobj->Gaps);
+  this->connect(MergeGaps,SIGNAL(modelChanged()),this, SLOT(updateSelectionHighlights()));
   this->connect(this->MergeGaps->GetSelectionModel(), SIGNAL(selectionChanged(const QItemSelection & , const QItemSelection &)), this, SLOT(updateSelectionHighlights()));
 }
 
@@ -295,20 +295,20 @@ void View3D::CreateGUIObjects()
 void View3D::CreateLayout()
 {
   //layout for the main window
-	QGridLayout *buttonLayout = new QGridLayout();
-	buttonLayout->addWidget(this->AutomateButton, 1, 0);
-	buttonLayout->addWidget(this->ListButton, 2, 0);
-	buttonLayout->addWidget(this->ClearButton, 3, 0);
-	buttonLayout->addWidget(this->DeleteButton, 4, 0);
-	buttonLayout->addWidget(this->MergeButton, 5, 0);
-	buttonLayout->addWidget(this->SplitButton, 6, 0);
-	buttonLayout->addWidget(this->FlipButton, 7, 0);
-	buttonLayout->addWidget(this->SettingsButton, 9, 0);
-	buttonLayout->addWidget(this->WriteButton, 10, 0);
-	buttonLayout->setSpacing(10);
-	QGridLayout *viewerLayout = new QGridLayout(this->CentralWidget);
-	viewerLayout->addWidget(this->QVTK, 0, 1);
-	viewerLayout->addLayout(buttonLayout, 0, 0);
+  QGridLayout *buttonLayout = new QGridLayout();
+  buttonLayout->addWidget(this->AutomateButton, 1, 0);
+  buttonLayout->addWidget(this->ListButton, 2, 0);
+  buttonLayout->addWidget(this->ClearButton, 3, 0);
+  buttonLayout->addWidget(this->DeleteButton, 4, 0);
+  buttonLayout->addWidget(this->MergeButton, 5, 0);
+  buttonLayout->addWidget(this->SplitButton, 6, 0);
+  buttonLayout->addWidget(this->FlipButton, 7, 0);
+  buttonLayout->addWidget(this->SettingsButton, 9, 0);
+  buttonLayout->addWidget(this->WriteButton, 10, 0);
+  buttonLayout->setSpacing(10);
+  QGridLayout *viewerLayout = new QGridLayout(this->CentralWidget);
+  viewerLayout->addWidget(this->QVTK, 0, 1);
+  viewerLayout->addLayout(buttonLayout, 0, 0);
 
   //layout for the settings window
   QGridLayout *settingsLayout = new QGridLayout(this->SettingsWidget);
@@ -360,15 +360,15 @@ void View3D::CreateLayout()
 void View3D::CreateInteractorStyle()
 {
   this->Interactor = this->QVTK->GetRenderWindow()->GetInteractor();
-	//keep mouse command observers, but change the key ones
+  //keep mouse command observers, but change the key ones
   this->keyPress = vtkCallbackCommand::New();
   this->keyPress->SetCallback(HandleKeyPress);
   this->keyPress->SetClientData(this);
 
   this->Interactor->RemoveObservers(vtkCommand::KeyPressEvent);
-	this->Interactor->RemoveObservers(vtkCommand::KeyReleaseEvent);
-	this->Interactor->RemoveObservers(vtkCommand::CharEvent);
-	this->Interactor->AddObserver(vtkCommand::KeyPressEvent, this->keyPress);
+  this->Interactor->RemoveObservers(vtkCommand::KeyReleaseEvent);
+  this->Interactor->RemoveObservers(vtkCommand::CharEvent);
+  this->Interactor->AddObserver(vtkCommand::KeyPressEvent, this->keyPress);
 
   //use trackball control for mouse commands
   vtkSmartPointer<vtkInteractorStyleTrackballCamera> style =
@@ -398,8 +398,8 @@ void View3D::CreateActors()
  
   if(this->Volume!=NULL)
   {
-	  this->Renderer->AddVolume(this->Volume);
-	  this->AddVolumeSliders();
+    this->Renderer->AddVolume(this->Volume);
+    this->AddVolumeSliders();
   }
 
   //this->Renderer->AddActor(this->VolumeActor);
@@ -453,92 +453,92 @@ void View3D::HideSettingsWindow()
 }
 bool View3D::setTol()
 {
-	bool change = false;
-	char select=0;
-	std::cout<<"Settings Configuration:\n gap (t)olerance:\t" <<this->tobj->gapTol
-		<<"\ngap (m)ax:\t"<<this->tobj->gapMax
-		<<"\n(s)mall line:\t"<< smallLine
-		<<"\nselection (c)olor:\t"<<SelectColor
-		<<"\nline (w)idth:\t"<<lineWidth
-		<<"\n(e)nd edit settings\n";
-	while (select !='e')
-	{
-		std::cout<< "select option:\t"; 
-		std::cin>>select;
-		switch(select)
-		{
-		case 'm':
-			{
-				int newMax;
-				std::cout<< "maximum gap length\n";
-				std::cin>>newMax;
-				if (newMax!=this->tobj->gapMax)
-				{
-					this->tobj->gapMax=newMax;
-					change= true;
-				}
-				break;
-			}//end of 'm'
-		case 't':
-			{
-				double newTol;
-				std::cout<< "gap length tolerance\n";
-				std::cin>>newTol;
-				if (newTol!=this->tobj->gapTol)
-				{
-					this->tobj->gapTol=newTol;
-					change= true;
-				}
-				break;
-			}//end of 't'
-		case 's':
-			{
-				float newSmall;
-				std::cout<< "small line length\n";
-				std::cin>>newSmall;
-				if (newSmall!=smallLine)
-				{
-					smallLine=newSmall;
-					change= true;
-				}
-				break;
-			}// end of 's'
-		case 'c':
-			{
-				double newColor;
-				std::cout<< "color value RGB scalar 0 to 1\n";
-				std::cin>>newColor;
-				if (newColor!=SelectColor)
-				{
-					SelectColor=newColor;
-					change= true;
-				}
-				break;
-			}//end of 'c'
-		case 'w':
-			{
-				float newWidth;
-				std::cout<<"line Width\n";
-				std::cin>>newWidth;
-				if (newWidth!=lineWidth)
-				{
-					lineWidth=newWidth;
-					change= true;
-				}
-				break;
-			}
-		}//end of switch
-	}// end of while
-	if (change== true)
-	{std::cout<<"Settings Configuration are now:\n gap tollerance:\t" <<this->tobj->gapTol
-		<<"\ngap max:\t"<<this->tobj->gapMax
-		<<"\nsmall line:\t"<< smallLine
-		<<"\nselection color:\t"<<SelectColor
-		<<"\nline width:\t"<<lineWidth;
-	}
-	return change;
+  bool change = false;
+  char select=0;
+  std::cout<<"Settings Configuration:\n gap (t)olerance:\t" <<this->tobj->gapTol
+    <<"\ngap (m)ax:\t"<<this->tobj->gapMax
+    <<"\n(s)mall line:\t"<< smallLine
+    <<"\nselection (c)olor:\t"<<SelectColor
+    <<"\nline (w)idth:\t"<<lineWidth
+    <<"\n(e)nd edit settings\n";
+  while (select !='e')
+  {
+    std::cout<< "select option:\t"; 
+    std::cin>>select;
+    switch(select)
+    {
+    case 'm':
+      {
+        int newMax;
+        std::cout<< "maximum gap length\n";
+        std::cin>>newMax;
+        if (newMax!=this->tobj->gapMax)
+        {
+          this->tobj->gapMax=newMax;
+          change= true;
+        }
+        break;
+      }//end of 'm'
+    case 't':
+      {
+        double newTol;
+        std::cout<< "gap length tolerance\n";
+        std::cin>>newTol;
+        if (newTol!=this->tobj->gapTol)
+        {
+          this->tobj->gapTol=newTol;
+          change= true;
+        }
+        break;
+      }//end of 't'
+    case 's':
+      {
+        float newSmall;
+        std::cout<< "small line length\n";
+        std::cin>>newSmall;
+        if (newSmall!=smallLine)
+        {
+          smallLine=newSmall;
+          change= true;
+        }
+        break;
+      }// end of 's'
+    case 'c':
+      {
+        double newColor;
+        std::cout<< "color value RGB scalar 0 to 1\n";
+        std::cin>>newColor;
+        if (newColor!=SelectColor)
+        {
+          SelectColor=newColor;
+          change= true;
+        }
+        break;
+      }//end of 'c'
+    case 'w':
+      {
+        float newWidth;
+        std::cout<<"line Width\n";
+        std::cin>>newWidth;
+        if (newWidth!=lineWidth)
+        {
+          lineWidth=newWidth;
+          change= true;
+        }
+        break;
+      }
+    }//end of switch
+  }// end of while
+  if (change== true)
+  {std::cout<<"Settings Configuration are now:\n gap tollerance:\t" <<this->tobj->gapTol
+    <<"\ngap max:\t"<<this->tobj->gapMax
+    <<"\nsmall line:\t"<< smallLine
+    <<"\nselection color:\t"<<SelectColor
+    <<"\nline width:\t"<<lineWidth;
+  }
+  return change;
 }
-/*	picking	*/
+/*  picking */
 void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata)
 { /*  PickPoint allows fot the point id and coordinates to be returned 
   as well as adding a marker on the last picked point
@@ -562,8 +562,8 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
     unsigned int cell_id = cell_picker->GetCellId();  
     view->SelectedTraceIDs.push_back(cell_id);
     TraceLine *tline = reinterpret_cast<TraceLine*>(view->tobj->hashc[cell_id]);
-	
-	view->HighlightSelected(tline, view->SelectColor);
+  
+  view->HighlightSelected(tline, view->SelectColor);
     tline->Getstats();              //prints the id and end coordinates to the command prompt 
     view->SphereActor->SetPosition(pickPos);    //sets the selector to new point
     view->SphereActor->VisibilityOn();      //deleteTrace can turn it off 
@@ -577,19 +577,19 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
 
 void View3D::HighlightSelected(TraceLine* tline, double color)
 {
-	TraceLine::TraceBitsType::iterator iter = tline->GetTraceBitIteratorBegin();
-	TraceLine::TraceBitsType::iterator iterend = tline->GetTraceBitIteratorEnd();
-	if (color == -1)
-	{
-		color = tline->getTraceColor();
-	}
+  TraceLine::TraceBitsType::iterator iter = tline->GetTraceBitIteratorBegin();
+  TraceLine::TraceBitsType::iterator iterend = tline->GetTraceBitIteratorEnd();
+  if (color == -1)
+  {
+    color = tline->getTraceColor();
+  }
   while(iter!=iterend)
   {
-	  //poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,1/t);
-	  poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,color);
-	  ++iter;
+    //poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,1/t);
+    poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,color);
+    ++iter;
   }
-	
+  
 
 }
 
@@ -618,20 +618,20 @@ void View3D::UpdateLineActor()
 
 void View3D::UpdateBranchActor()
 {
-	this->poly = tobj->generateBranchIllustrator();
-	this->polymap = vtkSmartPointer<vtkPolyDataMapper>::New();
-	polymap->SetInput(this->poly);
-	this->BranchActor = vtkSmartPointer<vtkActor>::New();
-	this->BranchActor->SetMapper(this->polymap);
-	this->BranchActor->SetPickable(0);
-	//Renderer->AddActor(BranchActor);
-	//BranchActor->Print(std::cout);
+  this->poly = tobj->generateBranchIllustrator();
+  this->polymap = vtkSmartPointer<vtkPolyDataMapper>::New();
+  polymap->SetInput(this->poly);
+  this->BranchActor = vtkSmartPointer<vtkActor>::New();
+  this->BranchActor->SetMapper(this->polymap);
+  this->BranchActor->SetPickable(0);
+  //Renderer->AddActor(BranchActor);
+  //BranchActor->Print(std::cout);
 
 }
 void View3D::AddPointsAsPoints(std::vector<TraceBit> vec)
 {
-	vtkSmartPointer<vtkCubeSource> cube_src = vtkSmartPointer<vtkCubeSource>::New();
-	cube_src->SetBounds(-0.2,0.2,-0.2,0.2,-0.2,0.2);
+  vtkSmartPointer<vtkCubeSource> cube_src = vtkSmartPointer<vtkCubeSource>::New();
+  cube_src->SetBounds(-0.2,0.2,-0.2,0.2,-0.2,0.2);
   vtkSmartPointer<vtkPolyData> point_poly = vtkSmartPointer<vtkPolyData>::New();
   vtkSmartPointer<vtkPoints> points=vtkSmartPointer<vtkPoints>::New();
   vtkSmartPointer<vtkCellArray> cells=vtkSmartPointer<vtkCellArray>::New();
@@ -675,11 +675,11 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
       break;
 
     case 'd':
-		view->tobj->Gaps.clear();
+    view->tobj->Gaps.clear();
       view->DeleteTraces();
       break;
     
-	  case 'm':
+    case 'm':
       view->MergeTraces();
       break;
     
@@ -691,24 +691,24 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
       view->FlipTraces();
       break;
 
-	  case 'w':
+    case 'w':
       view->WriteToSWCFile();
-	  break;
+    break;
 
-	  case 't':
+    case 't':
       view->ShowSettingsWindow();
       break;
 
-	  case 'a':
-		  view->SLine();
-		  /*std::cout<<"select small lines\n";
-		  view->tobj->FindMinLines(view->smallLine);
-		  view->Rerender();*/
-	    break;
+    case 'a':
+      view->SLine();
+      /*std::cout<<"select small lines\n";
+      view->tobj->FindMinLines(view->smallLine);
+      view->Rerender();*/
+      break;
 
-	  case 'q':
-		  view->updateSelectionHighlights();
-		  break;
+    case 'q':
+      view->updateSelectionHighlights();
+      break;
 
     case '-':
       if(view->SelectedTraceIDs.size()>=1)
@@ -730,39 +730,39 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
       break;
     }
 }
-/*	Actions		*/
+/*  Actions   */
 void View3D::SLine()
 {
-	int numLines, i;
-	this->tobj->FindMinLines(this->smallLine);
-	numLines= this->tobj->SmallLines.size();
-	this->Rerender();
-	QMessageBox Myquestion;
-	Myquestion.setText("Number of selected small lines:  " 
-		+ QString::number(numLines));
-	Myquestion.setInformativeText("Delete these small lines?" );
-	Myquestion.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
-	Myquestion.setDefaultButton(QMessageBox::Yes);
-	int ret = Myquestion.exec();
-	switch (ret) 
-	{	
-	case QMessageBox::Yes:
-	{
-		for (i=0;i<numLines;i++)
-		{	//std::cout << "Deleted line:" << i<< std::endl;					
-			//this->tobj->SmallLines[i]->Getstats();
-			this->tobj->RemoveTraceLine(this->tobj->SmallLines[i]);
-		}
-		this->tobj->SmallLines.clear();
-	}
-	break;
-	case QMessageBox::No:
-	 {
-		 this->tobj->SmallLines.clear();
-	 }
-	 break;
-	}
-	this->Rerender();
+  int numLines, i;
+  this->tobj->FindMinLines(this->smallLine);
+  numLines= this->tobj->SmallLines.size();
+  this->Rerender();
+  QMessageBox Myquestion;
+  Myquestion.setText("Number of selected small lines:  " 
+    + QString::number(numLines));
+  Myquestion.setInformativeText("Delete these small lines?" );
+  Myquestion.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
+  Myquestion.setDefaultButton(QMessageBox::Yes);
+  int ret = Myquestion.exec();
+  switch (ret) 
+  { 
+  case QMessageBox::Yes:
+  {
+    for (i=0;i<numLines;i++)
+    { //std::cout << "Deleted line:" << i<< std::endl;          
+      //this->tobj->SmallLines[i]->Getstats();
+      this->tobj->RemoveTraceLine(this->tobj->SmallLines[i]);
+    }
+    this->tobj->SmallLines.clear();
+  }
+  break;
+  case QMessageBox::No:
+   {
+     this->tobj->SmallLines.clear();
+   }
+   break;
+  }
+  this->Rerender();
 }
 
 
@@ -790,23 +790,23 @@ void View3D::ListSelections()
 
 void View3D::ClearSelection()
 {
-	QMessageBox *selectionInfo = new QMessageBox();
-	QString selectText;
-	if (this->SelectedTraceIDs.size()<= 0)
+  QMessageBox *selectionInfo = new QMessageBox();
+  QString selectText;
+  if (this->SelectedTraceIDs.size()<= 0)
     {
-		selectText=tr("\t\tNothing Selected\t\t");
+    selectText=tr("\t\tNothing Selected\t\t");
     }
-	else
+  else
     {
-		this->SelectedTraceIDs.clear();
-		selectText=tr("\t\tcleared list\t\t");
-		this->Rerender();
+    this->SelectedTraceIDs.clear();
+    selectText=tr("\t\tcleared list\t\t");
+    this->Rerender();
     }
-	selectionInfo->setText(selectText);
-	selectionInfo->show();
+  selectionInfo->setText(selectText);
+  selectionInfo->show();
 }
 
-/*	delete traces functions	*/
+/*  delete traces functions */
 void View3D::DeleteTraces()
 {
   if(this->SelectedTraceIDs.size()>=1)
@@ -854,8 +854,8 @@ void View3D::DeleteTrace(TraceLine *tline)
   if(tline->GetParent()!=NULL)
     {
     siblings=tline->GetParent()->GetBranchPointer();
-	  if(siblings->size()==2)
-	    {
+    if(siblings->size()==2)
+      {
       // its not a branch point anymore
       TraceLine *tother1;
       if(tline==(*siblings)[0])
@@ -872,12 +872,12 @@ void View3D::DeleteTrace(TraceLine *tline)
       iter1= tline->GetParent()->GetTraceBitIteratorEnd();
       iter2 = tother1->GetTraceBitIteratorBegin();
       iter1--;
-		
+    
       this->tobj->mergeTraces((*iter1).marker,(*iter2).marker);
       tline->SetParent(NULL);
       delete tline;
       return;
-	    }
+      }
     }
   else
     {
@@ -897,111 +897,122 @@ void View3D::DeleteTrace(TraceLine *tline)
   tline->SetParent(NULL);
 }
 
-/*	merging functions	*/
+/*  merging functions */
 void View3D::MergeTraces()
 {
-	if (this->tobj->Gaps.size() > 1)
-	{
-		if(this->GapsPlotView)
-		{
-			this->GapsPlotView->close();
-			//delete GapsPlotView;
-		}
-		if (this->GapsTableView)
-		{
-			this->GapsTableView->close();
-		}
-		this->MergeSelectedTraces();
-		//this->Rerender();
-		this->tobj->Gaps.clear();
-	}
-	else
-	{
-		int conflict =0;
-	  if(this->SelectedTraceIDs.size()>=1)
-		{		  
-		std::sort(this->SelectedTraceIDs.begin(), this->SelectedTraceIDs.end());
-		std::reverse(this->SelectedTraceIDs.begin(), this->SelectedTraceIDs.end());
-		int numTrace = this->SelectedTraceIDs.size();		
-		int i,j, s=0, exist =0;
-		std::vector<TraceLine*> traceList;
-		//std::cout<< "elements passed \t" << numTrace << std::endl;
-		for (i = 0;i<numTrace; i++)
-		  {
-		  traceList.push_back( reinterpret_cast<TraceLine*>(
-			this->tobj->hashc[this->SelectedTraceIDs[i]]));
-		  s=traceList.size()-1;
-		  exist = 0;
-		  if (traceList.size()>0)
-			{
-			j = 0;
-			while ( (j < s)&&(exist==0))
-			  {	
-			  if (traceList[s]->GetId()== traceList[j]->GetId())
-				{
-				traceList.pop_back();	
-				exist = 1;
-				}
-			  j++;			
-			  }
-			}
-		  }
-		conflict = this->tobj->createGapLists(traceList);
-		}
-	  else
-		{
-			conflict = this->tobj->createGapLists(this->tobj->GetTraceLines());
-		}	
-	  unsigned int i; 
-	  QMessageBox *MergeInfo = new QMessageBox;
-		if (this->tobj->Gaps.size() > 1)
-		{
-			for (i=0;i<this->tobj->Gaps.size(); i++)
-			{
-				this->tobj->Gaps[i]->compID = i;
-				//this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .25);
-				//this->HighlightSelected(this->tobj->Gaps[i]->Trace2, .25);
-			}
-			MergeInfo->setText("\nNumber of computed distances:\t" 
-				+ QString::number(this->tobj->Gaps.size())
-				+"\nConflicts resolved:\t" + QString::number(conflict)
-				+"\nEdit selection or press merge again");
-			this->ShowMergeStats();
-		}//end if this->tobj->Gaps size > 1
-		else 
-		{
-			if (this->tobj->Gaps.size() ==1)
-			{		
-				tobj->mergeTraces(this->tobj->Gaps[0]->endPT1,this->tobj->Gaps[0]->endPT2);
-				this->Rerender();
-				MergeInfo->setText(this->myText + "\nOne Trace merged");
-			}
-			else
-			{
-				this->Rerender();
-				MergeInfo->setText("\nNo merges possible, set higher tolerances\n"); 
-			}	
-		}		
-		MergeInfo->show();
-		this->myText.clear();
-		this->poly_line_data->Modified();
-		this->QVTK->GetRenderWindow()->Render();
-	}//end else size
+  if (this->tobj->Gaps.size() > 1)
+    {
+    if(this->GapsPlotView)
+      {
+      this->GapsPlotView->close();
+      }
+    if (this->GapsTableView)
+      {
+      this->GapsTableView->close();
+      }
+    this->MergeSelectedTraces();
+    //this->Rerender();
+    this->tobj->Gaps.clear();
+    }
+  else
+    {
+    int conflict = 0;
+    if(this->SelectedTraceIDs.size() >= 1)
+      {     
+      std::sort(this->SelectedTraceIDs.begin(), this->SelectedTraceIDs.end());
+      std::reverse(this->SelectedTraceIDs.begin(), this->SelectedTraceIDs.end());
+      int numTrace = this->SelectedTraceIDs.size();   
+      int i,j, s=0, exist =0;
+      std::vector<TraceLine*> traceList;
+      //std::cout<< "elements passed \t" << numTrace << std::endl;
+      for (i = 0;i<numTrace; i++)
+        {
+        traceList.push_back( reinterpret_cast<TraceLine*>(
+        this->tobj->hashc[this->SelectedTraceIDs[i]]));
+        s=traceList.size()-1;
+        exist = 0;
+        if (traceList.size()>0)
+          {
+          j = 0;
+          while ( (j < s)&&(exist==0))
+            { 
+            if (traceList[s]->GetId()== traceList[j]->GetId())
+              {
+              traceList.pop_back(); 
+              exist = 1;
+              }
+            j++;      
+            }
+          }
+        }
+      conflict = this->tobj->createGapLists(traceList);
+      if(conflict == -1)
+        {
+        //user aborted
+        this->tobj->Gaps.clear();
+        return;
+        }
+      }
+    else
+      {
+      conflict = this->tobj->createGapLists(this->tobj->GetTraceLines());
+      if(conflict == -1)
+        {
+        //user aborted
+        this->tobj->Gaps.clear();
+        return;
+        }
+      } 
+    unsigned int i; 
+    QMessageBox *MergeInfo = new QMessageBox;
+    if (this->tobj->Gaps.size() > 1)
+    {
+      for (i=0;i<this->tobj->Gaps.size(); i++)
+      {
+        this->tobj->Gaps[i]->compID = i;
+        //this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .25);
+        //this->HighlightSelected(this->tobj->Gaps[i]->Trace2, .25);
+      }
+      MergeInfo->setText("\nNumber of computed distances:\t" 
+        + QString::number(this->tobj->Gaps.size())
+        +"\nConflicts resolved:\t" + QString::number(conflict)
+        +"\nEdit selection or press merge again");
+      this->ShowMergeStats();
+    }//end if this->tobj->Gaps size > 1
+    else 
+      {
+      if (this->tobj->Gaps.size() ==1)
+        {   
+        tobj->mergeTraces(this->tobj->Gaps[0]->endPT1,this->tobj->Gaps[0]->endPT2);
+        this->Rerender();
+        MergeInfo->setText(this->myText + "\nOne Trace merged");
+        }
+      else
+        {
+        this->Rerender();
+        MergeInfo->setText("\nNo merges possible, set higher tolerances\n"); 
+        } 
+      }   
+    MergeInfo->show();
+    this->myText.clear();
+    this->poly_line_data->Modified();
+    this->QVTK->GetRenderWindow()->Render();
+    }//end else size
 }
 
 void View3D::ShowMergeStats()
 {
-	this->MergeGaps->SetTraceGaps(this->tobj->Gaps);
-	this->GapsTableView->setModel(this->MergeGaps->GetModel());
-	this->GapsTableView->setSelectionModel(this->MergeGaps->GetSelectionModel()); 
-	this->GapsTableView->setSelectionBehavior(QAbstractItemView::SelectRows);
-	this->GapsTableView->sortByColumn(8,Ascending);
-	this->GapsTableView->update();
-	this->GapsTableView->show();
+  this->MergeGaps->SetTraceGaps(this->tobj->Gaps);
+  this->GapsTableView->setModel(this->MergeGaps->GetModel());
+  this->GapsTableView->setSelectionModel(this->MergeGaps->GetSelectionModel()); 
+  this->GapsTableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+  this->GapsTableView->sortByColumn(8,Ascending);
+  this->GapsTableView->update();
+  this->GapsTableView->show();
   this->GapsTableView->horizontalHeader()->show();
-	this->GapsPlotView = new PlotWindow(this->MergeGaps->GetSelectionModel());
-	this->connect(this->GapsPlotView,SIGNAL(destroyed()),this, SLOT(DereferenceGapsPlotView()));
-	this->GapsPlotView->show();
+  this->GapsPlotView = new PlotWindow(this->MergeGaps->GetSelectionModel());
+  this->connect(this->GapsPlotView,SIGNAL(destroyed()),this, SLOT(DereferenceGapsPlotView()));
+  this->GapsPlotView->show();
 }
 
 void View3D::DereferenceGapsPlotView()
@@ -1011,145 +1022,145 @@ void View3D::DereferenceGapsPlotView()
 
 void View3D::updateSelectionHighlights()
 {
-	bool selected = false;
-	int curID;
-	std::vector<int> GapIDs = this->MergeGaps->GetSelectedGapIDs();
-	for (unsigned int i = 0; i < this->tobj->Gaps.size(); i++)
-	{
-		curID = this->tobj->Gaps[i]->compID;
-		selected = false;
+  bool selected = false;
+  int curID;
+  std::vector<int> GapIDs = this->MergeGaps->GetSelectedGapIDs();
+  for (unsigned int i = 0; i < this->tobj->Gaps.size(); i++)
+  {
+    curID = this->tobj->Gaps[i]->compID;
+    selected = false;
     unsigned int j =0;
-		while(!selected && j < GapIDs.size())
-		{
-			if ( curID == GapIDs[j])
-			{
-				selected = true;
-			}
-			else
-			{
-				j++;
-			}
-		}//end gapids size j
-		if (selected == true)
-		{
-			this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .15);
-			this->HighlightSelected(this->tobj->Gaps[i]->Trace2, .15);
-		}//end true
-		else
-		{
-			this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .25);
-			this->HighlightSelected(this->tobj->Gaps[i]->Trace2, .25);
-		}//end else true
-	}//end for i
-	this->poly_line_data->Modified();
-	this->QVTK->GetRenderWindow()->Render();
+    while(!selected && j < GapIDs.size())
+    {
+      if ( curID == GapIDs[j])
+      {
+        selected = true;
+      }
+      else
+      {
+        j++;
+      }
+    }//end gapids size j
+    if (selected == true)
+    {
+      this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .15);
+      this->HighlightSelected(this->tobj->Gaps[i]->Trace2, .15);
+    }//end true
+    else
+    {
+      this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .25);
+      this->HighlightSelected(this->tobj->Gaps[i]->Trace2, .25);
+    }//end else true
+  }//end for i
+  this->poly_line_data->Modified();
+  this->QVTK->GetRenderWindow()->Render();
 }
 void View3D::MergeSelectedTraces()
 {
-	this->updateSelectionHighlights(); //if it didnt
-	std::vector<int> GapIDs = this->MergeGaps->GetSelectedGapIDs();
-	bool selected = false;
-	int curID;
-	QMessageBox *MergeInfo = new QMessageBox;
-	double currentAngle=0;
-	QPushButton *mergeAll;
-	QPushButton *mergeNone;
-	unsigned int i=0, j=0,mergeCount=0;
-	MergeInfo->setText("Merge Function");
-	if (GapIDs.size() > 1)
-	{
-		for (i = 0; i < this->tobj->Gaps.size(); i++)
-		{
-			curID = this->tobj->Gaps[i]->compID;
-			selected = false;	
-			j =0;
-			while(!selected && j < GapIDs.size())
-			{
-				if ( curID == GapIDs[j])
-				{
-					selected = true;
-				}
-				else
-				{
-					j++;
-				}
-			}//end gapids size j
-			if (selected == true)
-			{
-				this->tobj->mergeTraces(this->tobj->Gaps[i]->endPT1,this->tobj->Gaps[i]->endPT2);
-			}
-		}	
-		MergeInfo->setText("merged " + QString::number(GapIDs.size()) + " traces.");	
-		MergeInfo->show();
-		MergeInfo->exec();
-	}
-	else
-	{
-		for (i=0;i<this->tobj->Gaps.size(); i++)
-		{
-			currentAngle=fabs(this->tobj->Gaps[i]->angle); 
-			//if (currentAngle>=PI/2) 
-			//{
-			//	currentAngle= PI-currentAngle;
-			//}
-			if 	((this->tobj->Gaps[i]->dist<= this->tobj->gapMax*this->tobj->gapTol&& (currentAngle < 1.1))||
-				(this->tobj->Gaps[i]->dist<= this->tobj->gapMax && (currentAngle < .6)))
-	  		{
-				this->dtext+= "\nTrace " + QString::number(this->tobj->Gaps[i]->Trace1->GetId());
-				this->dtext+= " and "+ QString::number(this->tobj->Gaps[i]->Trace2->GetId() );
-				this->dtext+="\tgap size of:" + QString::number(this->tobj->Gaps[i]->dist); 				
-				this->dtext+="\tangle of" + QString::number(currentAngle*180/PI);	//this->tobj->Gaps[i]->angle
-				tobj->mergeTraces(this->tobj->Gaps[i]->endPT1,this->tobj->Gaps[i]->endPT2);
-				++mergeCount;
-	  		}	//end of if
-			else if (this->tobj->Gaps[i]->dist<= this->tobj->gapMax*(1+this->tobj->gapTol)&& (currentAngle < .3))
-	  		{
-				this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .125);
-				this->HighlightSelected(this->tobj->Gaps[i]->Trace2, .125);
-				this->candidateGaps.push_back( this->tobj->Gaps[i]);
-				this->grayText+="\nAngle of:\t" + QString::number(currentAngle*180/PI);	//this->tobj->Gaps[i]->angle
-				this->grayText+="\tWith a distance of:\t" + QString::number(this->tobj->Gaps[i]->dist);
-				
-			 } //end of else
-		}//end of for merge
-		myText+="\tNumber of merged lines:\t" + QString::number(mergeCount);
-		if (this->candidateGaps.size()>=1)
-		{
-			this->poly_line_data->Modified();
-			this->QVTK->GetRenderWindow()->Render();
-			myText+="\nNumber of further possible lines:\t" + QString::number(this->candidateGaps.size());
-			mergeAll = MergeInfo->addButton("Merge All", QMessageBox::YesRole);
-			mergeNone = MergeInfo->addButton("Merge None", QMessageBox::NoRole);
-			MergeInfo->setDetailedText(grayText);
-		}		//end if graylist size
-		else
-		{
-			this->Rerender();
-			MergeInfo->setDetailedText(dtext);
-		}		//end else graylist size
-		MergeInfo->setText(myText);	
-		MergeInfo->show();
-		MergeInfo->exec();
-		if(MergeInfo->clickedButton()==mergeAll)
-		{
-			for (j=0; j<this->candidateGaps.size();j++)
-			{
-				tobj->mergeTraces(this->candidateGaps[j]->endPT1,this->candidateGaps[j]->endPT2);
-			}
-			this->Rerender();
-		}
-		else if(MergeInfo->clickedButton()==mergeNone)
-		{
-			this->candidateGaps.clear();
-		}
-	}
-	this->Rerender();
-	this->tobj->Gaps.clear();
-	this->candidateGaps.clear();
-	this->myText.clear();
-	this->dtext.clear();
+  this->updateSelectionHighlights(); //if it didnt
+  std::vector<int> GapIDs = this->MergeGaps->GetSelectedGapIDs();
+  bool selected = false;
+  int curID;
+  QMessageBox *MergeInfo = new QMessageBox;
+  double currentAngle=0;
+  QPushButton *mergeAll;
+  QPushButton *mergeNone;
+  unsigned int i=0, j=0,mergeCount=0;
+  MergeInfo->setText("Merge Function");
+  if (GapIDs.size() > 1)
+  {
+    for (i = 0; i < this->tobj->Gaps.size(); i++)
+    {
+      curID = this->tobj->Gaps[i]->compID;
+      selected = false; 
+      j =0;
+      while(!selected && j < GapIDs.size())
+      {
+        if ( curID == GapIDs[j])
+        {
+          selected = true;
+        }
+        else
+        {
+          j++;
+        }
+      }//end gapids size j
+      if (selected == true)
+      {
+        this->tobj->mergeTraces(this->tobj->Gaps[i]->endPT1,this->tobj->Gaps[i]->endPT2);
+      }
+    } 
+    MergeInfo->setText("merged " + QString::number(GapIDs.size()) + " traces.");  
+    MergeInfo->show();
+    MergeInfo->exec();
+  }
+  else
+  {
+    for (i=0;i<this->tobj->Gaps.size(); i++)
+    {
+      currentAngle=fabs(this->tobj->Gaps[i]->angle); 
+      //if (currentAngle>=PI/2) 
+      //{
+      //  currentAngle= PI-currentAngle;
+      //}
+      if  ((this->tobj->Gaps[i]->dist<= this->tobj->gapMax*this->tobj->gapTol&& (currentAngle < 1.1))||
+        (this->tobj->Gaps[i]->dist<= this->tobj->gapMax && (currentAngle < .6)))
+        {
+        this->dtext+= "\nTrace " + QString::number(this->tobj->Gaps[i]->Trace1->GetId());
+        this->dtext+= " and "+ QString::number(this->tobj->Gaps[i]->Trace2->GetId() );
+        this->dtext+="\tgap size of:" + QString::number(this->tobj->Gaps[i]->dist);         
+        this->dtext+="\tangle of" + QString::number(currentAngle*180/PI); //this->tobj->Gaps[i]->angle
+        tobj->mergeTraces(this->tobj->Gaps[i]->endPT1,this->tobj->Gaps[i]->endPT2);
+        ++mergeCount;
+        } //end of if
+      else if (this->tobj->Gaps[i]->dist<= this->tobj->gapMax*(1+this->tobj->gapTol)&& (currentAngle < .3))
+        {
+        this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .125);
+        this->HighlightSelected(this->tobj->Gaps[i]->Trace2, .125);
+        this->candidateGaps.push_back( this->tobj->Gaps[i]);
+        this->grayText+="\nAngle of:\t" + QString::number(currentAngle*180/PI); //this->tobj->Gaps[i]->angle
+        this->grayText+="\tWith a distance of:\t" + QString::number(this->tobj->Gaps[i]->dist);
+        
+       } //end of else
+    }//end of for merge
+    myText+="\tNumber of merged lines:\t" + QString::number(mergeCount);
+    if (this->candidateGaps.size()>=1)
+    {
+      this->poly_line_data->Modified();
+      this->QVTK->GetRenderWindow()->Render();
+      myText+="\nNumber of further possible lines:\t" + QString::number(this->candidateGaps.size());
+      mergeAll = MergeInfo->addButton("Merge All", QMessageBox::YesRole);
+      mergeNone = MergeInfo->addButton("Merge None", QMessageBox::NoRole);
+      MergeInfo->setDetailedText(grayText);
+    }   //end if graylist size
+    else
+    {
+      this->Rerender();
+      MergeInfo->setDetailedText(dtext);
+    }   //end else graylist size
+    MergeInfo->setText(myText); 
+    MergeInfo->show();
+    MergeInfo->exec();
+    if(MergeInfo->clickedButton()==mergeAll)
+    {
+      for (j=0; j<this->candidateGaps.size();j++)
+      {
+        tobj->mergeTraces(this->candidateGaps[j]->endPT1,this->candidateGaps[j]->endPT2);
+      }
+      this->Rerender();
+    }
+    else if(MergeInfo->clickedButton()==mergeNone)
+    {
+      this->candidateGaps.clear();
+    }
+  }
+  this->Rerender();
+  this->tobj->Gaps.clear();
+  this->candidateGaps.clear();
+  this->myText.clear();
+  this->dtext.clear();
 }
-/*	other trace modifiers	*/
+/*  other trace modifiers */
 void View3D::SplitTraces()
 {
   if(this->SelectedTraceIDs.size()>=1)
@@ -1187,211 +1198,211 @@ void View3D::WriteToSWCFile()
     tr("Save File"),
     "",
     tr("SWC Images (*.swc)"));
-	this->tobj->WriteToSWCFile(fileName.toStdString().c_str());	
+  this->tobj->WriteToSWCFile(fileName.toStdString().c_str()); 
 }
 
 
-/*	Soma display stuff	*/
+/*  Soma display stuff  */
 void View3D::ShowLoadSomaWindow()
 {
-	this->LoadSomaWidget->show();
-	//this->OpenSomaButton->setDisabled(true);
+  this->LoadSomaWidget->show();
+  //this->OpenSomaButton->setDisabled(true);
 }
 
 void View3D::GetSomaPath()
 {
-	//Open file browser to select a file, takes file path and inserts it into the file field text box
-	QString path;
-	path = QFileDialog::getOpenFileName(this->LoadSomaWidget, "choose a file to load", QString::null, QString::null);
-	this->SomaFileField->setText(path);
+  //Open file browser to select a file, takes file path and inserts it into the file field text box
+  QString path;
+  path = QFileDialog::getOpenFileName(this->LoadSomaWidget, "choose a file to load", QString::null, QString::null);
+  this->SomaFileField->setText(path);
 }
 void View3D::GetSomaFile()
 {
 
-	//Checks that file has the the correct format
-	if(this->somaRegex.exactMatch(this->SomaFileField->text()))
-	{
-		//Takes input from file field text box and casts it as an std string
-		std::string fileName;
-		std::string fileEx;
-		fileName = this->SomaFileField->text().toStdString();
+  //Checks that file has the the correct format
+  if(this->somaRegex.exactMatch(this->SomaFileField->text()))
+  {
+    //Takes input from file field text box and casts it as an std string
+    std::string fileName;
+    std::string fileEx;
+    fileName = this->SomaFileField->text().toStdString();
 
-		//Takes captured file extension from the regex and stores it as an std string
-		fileEx = this->somaRegex.cap(1).toStdString();
-		for(unsigned int i = 0; i < fileEx.size(); i++)
-		{
-			fileEx[i] = tolower(fileEx[i]);
-		}
-			
-		//Checks for proper file extension and accepts
-		if(fileEx == "tiff" || fileEx == "tif")
-		{
-			//Checks that file exists
-			if(this->CheckFileExists(fileName.c_str()) == 1)
-			{
-				this->SomaFile = fileName;
-				this->viewSomas->setEnabled(true);
-				this->LoadSomaWidget->hide();
-				this->readImg(this->SomaFile);
-				return;
-			}
-			else
-			{
-				std::cerr << "TIFF file doesn't exist." << std::endl;
-				return;
-			}
-		}
-		else
-		{
-			std::cerr << "Invalid File Type: Please load correct soma TIFF image." << std::endl;
-			return;
-		}
-	}
-	else
-	{
-		std::cerr << "Invalid File Type: Please load correct soma TIFF image." << std::endl;
-	}
+    //Takes captured file extension from the regex and stores it as an std string
+    fileEx = this->somaRegex.cap(1).toStdString();
+    for(unsigned int i = 0; i < fileEx.size(); i++)
+    {
+      fileEx[i] = tolower(fileEx[i]);
+    }
+      
+    //Checks for proper file extension and accepts
+    if(fileEx == "tiff" || fileEx == "tif")
+    {
+      //Checks that file exists
+      if(this->CheckFileExists(fileName.c_str()) == 1)
+      {
+        this->SomaFile = fileName;
+        this->viewSomas->setEnabled(true);
+        this->LoadSomaWidget->hide();
+        this->readImg(this->SomaFile);
+        return;
+      }
+      else
+      {
+        std::cerr << "TIFF file doesn't exist." << std::endl;
+        return;
+      }
+    }
+    else
+    {
+      std::cerr << "Invalid File Type: Please load correct soma TIFF image." << std::endl;
+      return;
+    }
+  }
+  else
+  {
+    std::cerr << "Invalid File Type: Please load correct soma TIFF image." << std::endl;
+  }
 }
 
 void View3D::HideLoadSomaWindow()
 {
-	this->LoadSomaWidget->hide();
+  this->LoadSomaWidget->hide();
 }
 
 void View3D::ShowLoadSeedWindow()
 {
-	this->LoadSeedWidget->show();
+  this->LoadSeedWidget->show();
 }
 
 void View3D::GetSeedPath()
 {
-	//Gets seed file path from the file browser
-	QString path;
-	path = QFileDialog::getOpenFileName(this->LoadSeedWidget, "choose a file to load", QString::null, QString::null);
-	this->SeedFileField->setText(path);
+  //Gets seed file path from the file browser
+  QString path;
+  path = QFileDialog::getOpenFileName(this->LoadSeedWidget, "choose a file to load", QString::null, QString::null);
+  this->SeedFileField->setText(path);
 }
 
 void View3D::GetSeedFile()
 {
-	//Checks that file has the the correct format
-	if(this->seedRegex.exactMatch(this->SeedFileField->text()))
-	{
-		//Takes input from file field text box and casts it as an std string
-		std::string fileName;
-		std::string fileEx;
-		fileName = this->SeedFileField->text().toStdString();
+  //Checks that file has the the correct format
+  if(this->seedRegex.exactMatch(this->SeedFileField->text()))
+  {
+    //Takes input from file field text box and casts it as an std string
+    std::string fileName;
+    std::string fileEx;
+    fileName = this->SeedFileField->text().toStdString();
 
-		//Takes captured file extension from the regex and stores it as an std string
-		fileEx = this->seedRegex.cap(1).toStdString();
-		for(unsigned int i = 0; i < fileEx.size(); i++)
-		{
-			fileEx[i] = tolower(fileEx[i]);
-		}
-			
-		//Checks for proper file extension and accepts
-		if(fileEx == "txt")
-		{
-			//Checks that file exists
-			if(this->CheckFileExists(fileName.c_str()) == 1)
-			{
-				this->SeedFile = fileName;
-				this->viewSeeds->setEnabled(true);
-				this->LoadSeedWidget->hide();
-				this->generateSeeds();
-				return;
-			}
-			else
-			{
-				std::cerr << "TXT file doesn't exist." << std::endl;
-				return;
-			}
-		}
-		else
-		{
-			std::cerr << "Invalid File Type: Please load correct seed point TXT image." << std::endl;
-			return;
-		}
-	}
-	else
-	{
-		std::cerr << "Invalid File Type: Please load correct seed point TXT image." << std::endl;
-	}
+    //Takes captured file extension from the regex and stores it as an std string
+    fileEx = this->seedRegex.cap(1).toStdString();
+    for(unsigned int i = 0; i < fileEx.size(); i++)
+    {
+      fileEx[i] = tolower(fileEx[i]);
+    }
+      
+    //Checks for proper file extension and accepts
+    if(fileEx == "txt")
+    {
+      //Checks that file exists
+      if(this->CheckFileExists(fileName.c_str()) == 1)
+      {
+        this->SeedFile = fileName;
+        this->viewSeeds->setEnabled(true);
+        this->LoadSeedWidget->hide();
+        this->generateSeeds();
+        return;
+      }
+      else
+      {
+        std::cerr << "TXT file doesn't exist." << std::endl;
+        return;
+      }
+    }
+    else
+    {
+      std::cerr << "Invalid File Type: Please load correct seed point TXT image." << std::endl;
+      return;
+    }
+  }
+  else
+  {
+    std::cerr << "Invalid File Type: Please load correct seed point TXT image." << std::endl;
+  }
 }
 
 void View3D::HideLoadSeedWindow()
 {
-	this->LoadSeedWidget->hide();
+  this->LoadSeedWidget->hide();
 }
 
 void View3D::ShowSomaSettingsWindow()
 {
-	this->SomaOpacityField->setText(QString::number(this->somaopacity));
-	this->SomaSettingsWidget->show();
+  this->SomaOpacityField->setText(QString::number(this->somaopacity));
+  this->SomaSettingsWidget->show();
 }
 
 void View3D::HideSomaSettingsWindow()
 {
-	this->SomaSettingsWidget->hide();
+  this->SomaSettingsWidget->hide();
 }
 
 void View3D::ToggleSomas()
 {
-	//If view somas options is checked, render somas
-	if(this->viewSomas->isChecked())
-	{
-		this->Renderer->AddActor(this->VolumeActor);
-		this->QVTK->GetRenderWindow()->Render();
-		std::cout << "Somas Rendered" << std::endl;
-		return;
-	}
-	//If unchecked, remove them
-	else
-	{
-		this->Renderer->RemoveActor(this->VolumeActor);
-		this->QVTK->GetRenderWindow()->Render();
-		std::cout << "Somas Removed" << std::endl;
-		return;
-	}
+  //If view somas options is checked, render somas
+  if(this->viewSomas->isChecked())
+  {
+    this->Renderer->AddActor(this->VolumeActor);
+    this->QVTK->GetRenderWindow()->Render();
+    std::cout << "Somas Rendered" << std::endl;
+    return;
+  }
+  //If unchecked, remove them
+  else
+  {
+    this->Renderer->RemoveActor(this->VolumeActor);
+    this->QVTK->GetRenderWindow()->Render();
+    std::cout << "Somas Removed" << std::endl;
+    return;
+  }
 }
 
 void View3D::ToggleSeeds()
 {
-	//If view seeds option is checked, render seeds
-	if(this->viewSeeds->isChecked())
-	{
-		this->Renderer->AddActor(this->glyphActor);
-		this->QVTK->GetRenderWindow()->Render();
-		std::cout << "Seed Points Rendered" << std::endl;
-		return;
-	}
-	//If unchecked, remove them
-	else
-	{
-		this->Renderer->RemoveActor(this->glyphActor);
-		this->QVTK->GetRenderWindow()->Render();
-		std::cout << "Seeds Removed" << std::endl;
-		return;
-	}
+  //If view seeds option is checked, render seeds
+  if(this->viewSeeds->isChecked())
+  {
+    this->Renderer->AddActor(this->glyphActor);
+    this->QVTK->GetRenderWindow()->Render();
+    std::cout << "Seed Points Rendered" << std::endl;
+    return;
+  }
+  //If unchecked, remove them
+  else
+  {
+    this->Renderer->RemoveActor(this->glyphActor);
+    this->QVTK->GetRenderWindow()->Render();
+    std::cout << "Seeds Removed" << std::endl;
+    return;
+  }
 }
 
 void View3D::ApplySomaSettings()
 {
-	//If somas are currently on screen, change opacity and rerender
-	if(this->viewSomas->isChecked())
-	{
-		
-		this->somaopacity = this->SomaOpacityField->text().toDouble();
-		this->VolumeActor->GetProperty()->SetOpacity(this->somaopacity);
-		this->SomaSettingsWidget->hide();
-		this->QVTK->GetRenderWindow()->Render();
-		return;
-	}
-	//Else just change the soma opacity variable
-	else
-	{
-		this->somaopacity = this->SomaOpacityField->text().toDouble();
-		this->SomaSettingsWidget->hide();
-	}
+  //If somas are currently on screen, change opacity and rerender
+  if(this->viewSomas->isChecked())
+  {
+    
+    this->somaopacity = this->SomaOpacityField->text().toDouble();
+    this->VolumeActor->GetProperty()->SetOpacity(this->somaopacity);
+    this->SomaSettingsWidget->hide();
+    this->QVTK->GetRenderWindow()->Render();
+    return;
+  }
+  //Else just change the soma opacity variable
+  else
+  {
+    this->somaopacity = this->SomaOpacityField->text().toDouble();
+    this->SomaSettingsWidget->hide();
+  }
 }
 
 void View3D::AddContourThresholdSliders()
@@ -1606,83 +1617,83 @@ void View3D::readImg(std::string sourceFile)
 //Function to generate the seed point glyphs
 void View3D::generateSeeds()
 {
-	//Call readSeeds function to process seedpoint file and return vector of points
-	this->sdPts = readSeeds(this->SeedFile.c_str());
+  //Call readSeeds function to process seedpoint file and return vector of points
+  this->sdPts = readSeeds(this->SeedFile.c_str());
 
-	//Set up float array
-	this->pcoords = vtkSmartPointer<vtkFloatArray>::New();
-	this->pcoords->SetNumberOfComponents(3);
-	this->pcoords->SetNumberOfTuples(this->sdPts.size());
+  //Set up float array
+  this->pcoords = vtkSmartPointer<vtkFloatArray>::New();
+  this->pcoords->SetNumberOfComponents(3);
+  this->pcoords->SetNumberOfTuples(this->sdPts.size());
 
-	//Read in vector of points into the float array
-	for(unsigned int i = 0; i < this->sdPts.size(); i++)
-	{
-		float pts[3] = {this->sdPts[i].x, this->sdPts[i].y, this->sdPts[i].z};
-		this->pcoords->SetTuple(i, pts);
-	}
+  //Read in vector of points into the float array
+  for(unsigned int i = 0; i < this->sdPts.size(); i++)
+  {
+    float pts[3] = {this->sdPts[i].x, this->sdPts[i].y, this->sdPts[i].z};
+    this->pcoords->SetTuple(i, pts);
+  }
 
-	//Set up vtkPoints from the float array
-	this->points = vtkSmartPointer<vtkPoints>::New();
-	this->points->SetData(this->pcoords);
+  //Set up vtkPoints from the float array
+  this->points = vtkSmartPointer<vtkPoints>::New();
+  this->points->SetData(this->pcoords);
 
-	//Set up vtkPolyData from vtkPoints
-	this->seedPoly = vtkSmartPointer<vtkPolyData>::New();
-	this->seedPoly->SetPoints(this->points);
+  //Set up vtkPolyData from vtkPoints
+  this->seedPoly = vtkSmartPointer<vtkPolyData>::New();
+  this->seedPoly->SetPoints(this->points);
 
-	//Create seed glyphs from sphere source, located at points in the polydata
-	this->sphereSource = vtkSmartPointer<vtkSphereSource>::New();
-	this->seedGlyph = vtkSmartPointer<vtkGlyph3D>::New();
-	this->seedGlyph->SetInput(this->seedPoly);
-	this->seedGlyph->SetSource(sphereSource->GetOutput());
-	this->seedGlyph->SetVectorModeToUseNormal();
-	this->seedGlyph->SetScaleModeToScaleByVector();
-	this->seedGlyph->SetScaleFactor(20);
-	this->seedGlyph->GeneratePointIdsOn();
+  //Create seed glyphs from sphere source, located at points in the polydata
+  this->sphereSource = vtkSmartPointer<vtkSphereSource>::New();
+  this->seedGlyph = vtkSmartPointer<vtkGlyph3D>::New();
+  this->seedGlyph->SetInput(this->seedPoly);
+  this->seedGlyph->SetSource(sphereSource->GetOutput());
+  this->seedGlyph->SetVectorModeToUseNormal();
+  this->seedGlyph->SetScaleModeToScaleByVector();
+  this->seedGlyph->SetScaleFactor(20);
+  this->seedGlyph->GeneratePointIdsOn();
 
-	//Set up mapper and actor for the seeds
-	this->glyphMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	this->glyphMapper->SetInput(this->seedGlyph->GetOutput());
-	this->glyphActor = vtkSmartPointer<vtkLODActor>::New();
-	this->glyphActor->SetMapper(this->glyphMapper);
+  //Set up mapper and actor for the seeds
+  this->glyphMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+  this->glyphMapper->SetInput(this->seedGlyph->GetOutput());
+  this->glyphActor = vtkSmartPointer<vtkLODActor>::New();
+  this->glyphActor->SetMapper(this->glyphMapper);
 
-	std::cout << "Seed Points Processed" << std::endl;
+  std::cout << "Seed Points Processed" << std::endl;
 }
 
 //Function to read in seed point coordinates from a .txt file
 std::vector<point> View3D::readSeeds(std::string seedSource)
 {
-	point p;
-	std::vector<point> pts;
-	pts.clear();
-	//int numLines = 0;
-	
-	//std::cout << seedSource << " filename" <<  std::endl;
-	ifstream input(seedSource.c_str());
+  point p;
+  std::vector<point> pts;
+  pts.clear();
+  //int numLines = 0;
+  
+  //std::cout << seedSource << " filename" <<  std::endl;
+  ifstream input(seedSource.c_str());
 
-	if(!input)
-	{
-		std::cerr << "ERROR: Seed file can't be opened" << std::endl;
-	}
+  if(!input)
+  {
+    std::cerr << "ERROR: Seed file can't be opened" << std::endl;
+  }
 
-	//Read in coordinates until the end of file, adding each set of point coordinates into the point vector
-	while(true)
-	{
-		if(input.eof())
-		{
-			break;
-		}	
-		if(!(input >> p.x >> p.y >> p.z))
-		{
-			//std::cerr << "Invalid data point" << std::endl;
-			input.clear();
-			input.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-		}
-		else
-		{
-			pts.push_back(p);
-		}
-	}
-	return pts;
+  //Read in coordinates until the end of file, adding each set of point coordinates into the point vector
+  while(true)
+  {
+    if(input.eof())
+    {
+      break;
+    } 
+    if(!(input >> p.x >> p.y >> p.z))
+    {
+      //std::cerr << "Invalid data point" << std::endl;
+      input.clear();
+      input.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
+    else
+    {
+      pts.push_back(p);
+    }
+  }
+  return pts;
 }
 
 void View3D::rayCast(char *raySource)
@@ -1759,19 +1770,19 @@ void View3D::rayCast(char *raySource)
 
 void View3D::closeEvent(QCloseEvent *event)
 {
-	if(this->GapsPlotView)
+  if(this->GapsPlotView)
     {
     this->GapsPlotView->close();
     }
-	if(this->histo)
+  if(this->histo)
     {
     this->histo->close();
     }
-	if(this->GapsTableView)
+  if(this->GapsTableView)
     {
     this->GapsTableView->close();
     }
-	if(this->TreeTable)
+  if(this->TreeTable)
     {
     this->TreeTable->close();
     }
@@ -1780,14 +1791,14 @@ void View3D::closeEvent(QCloseEvent *event)
 
 bool View3D::CheckFileExists(const char *filename)
 {
-	FILE *fp = fopen(filename, "r");
-	if(fp == NULL)
-	{
-		return false;
-	}
-	else
-	{
-		fclose(fp);
-		return true;
-	}
+  FILE *fp = fopen(filename, "r");
+  if(fp == NULL)
+  {
+    return false;
+  }
+  else
+  {
+    fclose(fp);
+    return true;
+  }
 }

@@ -16,6 +16,7 @@ limitations under the License.
 #include <math.h>
 #include <queue>
 #include <set>
+#include <QProgressDialog.h>
 #include "vtkPoints.h"
 #include "vtkPointData.h"
 #include "vtkPolyData.h"
@@ -1174,8 +1175,16 @@ void TraceObject::FindMinLines(int smallSize)
 int TraceObject::createGapLists(std::vector<TraceLine*> traceList)
 { 
   unsigned int i,j, exist = 0, conflict = 0;  
+  QProgressDialog progress("Searching for traces to merge",
+                            "Cancel", 0, traceList.size() - 1);
+  progress.setWindowModality(Qt::WindowModal);
   for (i=0;i<traceList.size()-1; i++)
     {
+    progress.setValue(i);
+    if(progress.wasCanceled())
+      {
+      return -1;
+      }
     for (j=i+1; j<traceList.size(); j++)
       {
       TraceGap *newGap = new TraceGap;
@@ -1187,63 +1196,71 @@ int TraceObject::createGapLists(std::vector<TraceLine*> traceList)
       newGap->length = newGap->Trace1->GetSize() + newGap->Trace2->GetSize() + newGap->dist;
       newGap->smoothness = newGap->length / newGap->maxdist;
       newGap->cost = newGap->angle*(newGap->dist/gapMax)*newGap->smoothness;
-      if(!(newGap->dist >= newGap->Trace1->GetSize()*gapTol) 
-        &&  !(newGap->dist >= newGap->Trace2->GetSize()*gapTol) 
-        &&  !(newGap->dist >= gapMax*( 1+ gapTol)))//
+      if(!(newGap->dist >= newGap->Trace1->GetSize()*gapTol) &&
+         !(newGap->dist >= newGap->Trace2->GetSize()*gapTol) &&
+         !(newGap->dist >= gapMax*( 1+ gapTol)))
         { //myText+="added comparison\n";
         this->Gaps.push_back(newGap);
         } //end if
       }//end for j
-  }// end for i
+    }// end for i
   if (this->Gaps.size() > 1)
     {   
-      i = 0, j = 0;
+    i = 0, j = 0;
     while (i < this->Gaps.size() -1)
-    { //search for conflicts
+      { //search for conflicts
       exist = 0;
       while ((exist == 0)&&(j<this->Gaps.size()-1))
-      {
-      j++;
-      if (this->Gaps[i]->Trace1->GetId()==this->Gaps[j]->Trace1->GetId())
-      {
-        if (this->Gaps[i]->endPT1==this->Gaps[j]->endPT1)
-        { exist = 1;    }
-        }
-      else if(this->Gaps[i]->Trace1->GetId()==this->Gaps[j]->Trace2->GetId())
-      {
-        if (this->Gaps[i]->endPT1==this->Gaps[j]->endPT2)
-        { exist = 1;  }
-      }
-      else if (this->Gaps[i]->Trace2->GetId() == this->Gaps[j]->Trace1->GetId())
-      {
-        if (this->Gaps[i]->endPT2==this->Gaps[j]->endPT1)
-        { exist = 1;    }
-      }
-      else if(this->Gaps[i]->Trace2->GetId() == this->Gaps[j]->Trace2->GetId())
-      {
-        if (this->Gaps[i]->endPT2==this->Gaps[j]->endPT2)
-          { exist = 1;  }
-      }
-      }   //end while exist = 0
+        {
+        j++;
+        if (this->Gaps[i]->Trace1->GetId()==this->Gaps[j]->Trace1->GetId())
+          {
+          if (this->Gaps[i]->endPT1==this->Gaps[j]->endPT1)
+            {
+            exist = 1;
+            }
+          }
+        else if(this->Gaps[i]->Trace1->GetId()==this->Gaps[j]->Trace2->GetId())
+          {
+          if (this->Gaps[i]->endPT1==this->Gaps[j]->endPT2)
+            {
+            exist = 1;
+            }
+          }
+        else if (this->Gaps[i]->Trace2->GetId() == this->Gaps[j]->Trace1->GetId())
+          {
+          if (this->Gaps[i]->endPT2==this->Gaps[j]->endPT1)
+            {
+            exist = 1;
+            }
+          }
+        else if(this->Gaps[i]->Trace2->GetId() == this->Gaps[j]->Trace2->GetId())
+          {
+          if (this->Gaps[i]->endPT2==this->Gaps[j]->endPT2)
+            {
+            exist = 1;
+            }
+          }
+        }   //end while exist = 0
       if (exist == 1)
-      {
+        {
         ++conflict;
         if (this->Gaps[i]->cost<this->Gaps[j]->cost)
-        {
+          {
           this->Gaps.erase(this->Gaps.begin()+j);
-        }
+          }
         else
-        {
+          {
           this->Gaps.erase(this->Gaps.begin()+i);
-        }
-        j=i;
-      }//end if exist
+          }
+        j = i;
+        }//end if exist
       else
         {
         i++;
         j=i;
         }//end else exist
-    }// end of search for conflicts
-  }
+      }// end of search for conflicts
+    }
   return conflict;
 }
