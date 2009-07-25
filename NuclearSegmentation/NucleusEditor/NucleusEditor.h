@@ -40,6 +40,7 @@ limitations under the License.
 #include "ftkGUI/PlotWindow.h"
 #include "ftkGUI/ImageBrowser5D.h"
 #include "ftkGUI/HistoWindow.h"
+//#include "SegmentationView.h"
 
 class NucleusEditor : public QMainWindow
 {
@@ -102,6 +103,7 @@ private:
 	QAction *pythonAction;
 
 	//For Editing Menu
+	QMenu *editMenu;
 	QAction *mergeAction;
 	QAction *deleteAction;
 	QAction *splitAction;
@@ -121,6 +123,8 @@ private:
 	QLabel *currentPythonLabel;
 	QPushButton *browseForPythonButton;
 
+	bool editStatus; //false shows that we cannot apply editing to cells
+					 	
  };
 
 

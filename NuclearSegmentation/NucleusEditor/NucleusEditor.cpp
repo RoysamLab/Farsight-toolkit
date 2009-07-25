@@ -142,27 +142,33 @@ void NucleusEditor::createMenus()
 	connect(pythonAction, SIGNAL(triggered()), this, SLOT(OpenPythonWindow()));
 	viewMenu->addAction(pythonAction);
 
-	//EDITING MENU
-	fileMenu = menuBar()->addMenu(tr("&Editing"));
+	//EDITING MENU	
+	editMenu = menuBar()->addMenu(tr("&Editing"));
+	// There is nothing to edit initially. Disabled, merge,delete, and split
+	// Enable them after loading results!
+	//editMenu->setEnabled(false);
 
 	mergeAction = new QAction(tr("Merge Cells"), this);
 	mergeAction->setStatusTip(tr("Merge Cells"));
-	connect(mergeAction, SIGNAL(triggered()), this, SLOT(mergeCells()));
-	fileMenu->addAction(mergeAction);
+	mergeAction->setEnabled(false);
+	connect(mergeAction, SIGNAL(triggered()), this, SLOT(mergeCells()));	
+	editMenu->addAction(mergeAction);
 
-	fileMenu->addSeparator();
+	editMenu->addSeparator();
 
 	deleteAction = new QAction(tr("Delete Cells"), this);
 	deleteAction->setStatusTip(tr("Deletes the selected cells"));
-	connect(deleteAction,SIGNAL(triggered()),this,SLOT(deleteCells()));
-	fileMenu->addAction(deleteAction);
+	deleteAction->setEnabled(false);
+	connect(deleteAction,SIGNAL(triggered()),this,SLOT(deleteCells()));	
+	editMenu->addAction(deleteAction);
 
-	fileMenu->addSeparator();
+	editMenu->addSeparator();
 
 	splitAction = new QAction(tr("Split Cells"), this);
 	splitAction->setStatusTip(tr("Splits the selected cells"));
+	splitAction->setEnabled(false);
 	connect(splitAction,SIGNAL(triggered()),this,SLOT(splitCells()));
-	fileMenu->addAction(splitAction);
+	editMenu->addAction(splitAction);	
 
 	//HELP MENU
 	helpMenu = menuBar()->addMenu(tr("Help"));
@@ -197,6 +203,7 @@ ftk::Image::Pointer NucleusEditor::NewFTKImage(std::string filename)
 //******************************************************************************
 void NucleusEditor::closeEvent(QCloseEvent *event)
 {
+
 	//Save changes:
 	if(segResult)
 	{
@@ -220,6 +227,7 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 	//First clear the model and its associated windows
 	clearModel();
 
+	
 	//Then Close all other windows
 	foreach (QWidget *widget, qApp->topLevelWidgets()) 
 	{
@@ -229,8 +237,12 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 				widget->close();
 		}
     }
+
+
+
 	//Then close myself
 	event->accept();
+	
 } 
 
 bool NucleusEditor::saveResult()
@@ -261,20 +273,29 @@ bool NucleusEditor::saveResult()
 //  GROUPS ASSOCIATED WITH THEM, THEN DELETING THE MODEL AND SEGMENTATION
 //***************************************************************************
 void NucleusEditor::clearModel(void)
-{
+{	
 	for(unsigned int p=0; p<pltWin.size(); ++p)
-		(pltWin.at(p))->close();
-	for(unsigned int p=0; p<tblWin.size(); ++p)
-		(tblWin.at(p))->close();
+		if ((pltWin.at(p))->isVisible())
+			(pltWin.at(p))->close();
+	
+	
+	for(unsigned int p=0; p<tblWin.size(); ++p)	
+		if ((tblWin.at(p))->isVisible())
+			(tblWin.at(p))->close();
+
+	//Close the histogram
+	hisWin->close();
 
 	pltWin.clear();
 	tblWin.clear();
+	hisWin=NULL;
 
 	if(currentModel)
 	{
 		delete currentModel;
 		currentModel = NULL;
 	}
+
 }
 
 //*********************************************************************************
@@ -329,20 +350,31 @@ void NucleusEditor::loadResult(void)
 		this->setCentralWidget(segWin);
 
 	this->update();
+
+	// Enable the menu items for editing
+	mergeAction->setEnabled(true);
+	deleteAction->setEnabled(true);
+	splitAction->setEnabled(true);
+
+	//Set the status
+	editStatus=true;
+
 }
 
 void NucleusEditor::mergeCells(void)
 {
-
+	currentModel->mergeTrigger();
 }
 
 void NucleusEditor::deleteCells(void)
 {
+	currentModel->deleteTrigger();
 
 }
 
 void NucleusEditor::splitCells(void)
 {
+	currentModel->splitTrigger();
 
 }
 

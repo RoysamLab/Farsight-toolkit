@@ -29,7 +29,9 @@ TableWindow::TableWindow(QItemSelectionModel *selectionModel, QWidget *parent)
 	this->layout->setContentsMargins(2,2,2,2); 
 	this->setLayout(layout);
 	this->setWindowTitle(tr("Table"));
-	this->setAttribute ( Qt::WA_DeleteOnClose );
+	// The following causes the program to get crashed if we close
+	// the table first and the main window afterwards
+	//this->setAttribute ( Qt::WA_DeleteOnClose );
 
 	this->table->setModel( (QAbstractItemModel*)selectionModel->model() );
 	this->table->setSelectionModel(selectionModel);
