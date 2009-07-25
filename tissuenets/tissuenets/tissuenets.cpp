@@ -1,5 +1,16 @@
 #include "tissuenets.h"
 
+bool FileExists(std::string filename)
+{
+	FILE * pFile = fopen (filename.c_str(),"r");
+	if (pFile==NULL)
+	{
+		return false;
+	}
+	fclose (pFile);
+	return true;
+}
+
 // Description:
 // Sets color codes for biological objects. A color array for objects in a graph has   /
 // to be constructed and attached to the graph by using the color codes here           /

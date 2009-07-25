@@ -1674,9 +1674,10 @@ bool NuclearSegmentation::RestoreFromXML(std::string filename)
 	} // end while(parentElement)
 
 	//doc.close();
-
+/*
 	if(!LoadData())
 		return false;
+		*/
 	if(!LoadLabel())
 		return false;
 
