@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef HISTOWINDOW_H
 #define HISTOWINDOW_H
 
-#define VTK_NIGHTLY 0
+#define VTK_NIGHTLY 1
 
 #include <QtGui/QAction>
 #include <QtGui/QMainWindow>
@@ -81,6 +81,7 @@ private:
 	QAbstractItemModel *model;
 	vtkSmartPointer<vtkTable> table;
 	vtkSmartPointer<vtkQtBarChartView> chartView;
+
 	QVBoxLayout *layout;
 
 	QMenu *optionsMenu;

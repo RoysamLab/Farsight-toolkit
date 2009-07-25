@@ -285,6 +285,7 @@ void NucleusEditor::clearModel(void)
 
 	//Close the histogram
 	hisWin->close();
+	
 
 	pltWin.clear();
 	tblWin.clear();
@@ -431,6 +432,12 @@ void NucleusEditor::loadImage()
 	ImageBrowser5D *browse = new ImageBrowser5D(fileName);
 	this->setCentralWidget(browse);
 	//browse->show();
+
+	// Disable the menu items for editing
+	mergeAction->setEnabled(false);
+	deleteAction->setEnabled(false);
+	splitAction->setEnabled(false);
+
 }
 
 //******************************************************************************
