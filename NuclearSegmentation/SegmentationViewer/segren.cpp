@@ -1,6 +1,15 @@
+#ifdef _WIN32
+#include <direct.h>
+#define MKDIR(x) _mkdir(x)
+#else
+#include <sys/stat.h>
+#include <sys/types.h>
+#define MKDIR(x) mkdir(x, 0755);
+#endif
+
+
 #include "ftkNuclearSegmentation.h"
 
-#include <direct.h>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -454,8 +463,10 @@ int main(int argc, char *argv[])
 		//If tif, process
 		if(fileExt == "tif" || fileExt == "tiff")
 		{ 
-			//Make a cache directory if one isn't already there
-			_mkdir("cache");
+			//Make a cache directory if one isn't already there	
+			MKDIR("cache");
+			//_mkdir("cache");
+			//mkdir("cache", S_IRWXU);
 			//Append ouput string to original file name for colored images
 			outputFile.append("_out.tif");
 			
