@@ -37,6 +37,8 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 
 	tblWin.clear();
 	pltWin.clear();
+	hisWin=NULL;
+	
 
 	//DEMO
 	this->pythonProcess = new QProcess();
@@ -284,13 +286,16 @@ void NucleusEditor::clearModel(void)
 			(tblWin.at(p))->close();
 
 	//Close the histogram
-	hisWin->close();
-	
+	if (hisWin !=NULL) 
+	{
+		hisWin->close();
+		hisWin=NULL;
+	}
 
 	pltWin.clear();
 	tblWin.clear();
-	hisWin=NULL;
 
+	
 	if(currentModel)
 	{
 		delete currentModel;
@@ -405,6 +410,11 @@ void NucleusEditor::loadDatFile(void)
 
 void NucleusEditor::segmentImage()
 {
+	// Disable the menu items for editing
+	mergeAction->setEnabled(false);
+	deleteAction->setEnabled(false);
+	splitAction->setEnabled(false);
+
 	if(currentModel)
 		clearModel();
 
