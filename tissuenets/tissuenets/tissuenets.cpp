@@ -218,7 +218,8 @@ void BioNet::ListDistances1N() {
 // Computes distances(link lengths) from one cell to each of its neighbors 
 // and writes results into distances1N.txt
 multimap<int, int>
-BioNet::ListDistances1N_old(int choice) {	
+BioNet::ListDistances1N_old(int choice)
+{	
 	map<pair<int,int>, vtkEdgeType>::iterator it;
 	multimap<int, int> SourceTargetMap;
 	pair<int,int> key;
@@ -262,8 +263,8 @@ BioNet::ListDistances1N_old(int choice) {
 		cout<<"- Distances from one cell to its neighbors has been"<<endl; 
 		cout<<"  written to distances1N.txt"<<endl;
 		}
-		else return SourceTargetMap;
 	} else cout << "Unable to open file to write distances";
+	return SourceTargetMap;
 }
 
 /***************************************************************************************/
@@ -1057,14 +1058,15 @@ void ClearSelections(set<T>* s1) {
 
 // Description:
 //
-template<class T2> 
-void CopySets(set<T2> s1, set<T2>* s2) {
-	set<T2>::Iterator i1;
-	for(i1 = s1.begin(); i1 != s1.end(); i1++) {
+template<class T> 
+void CopySets(set<T> s1, set<T>* s2)
+{
+  typename set<T>::iterator i1;
+	for(i1 = s1.begin(); i1 != s1.end(); i1++)
+    {
 		s2->insert(*i1);
-	}
-
-};
+	  }
+}
 
 void BioNet::UpdateView(){
 	this->degree->SetInput(this->g);
@@ -1120,30 +1122,32 @@ void BioNet::ProcessEvents(vtkObject* caller,
 		};
 
 		if (bnsl->bioObj->sve->vertices.size() == 0) {
-				set<string> tempStrSet;
+				set<string> tempStrSet(bnsl->bioObj->sve->edges);
 				//(bnsl->bioObj->sve->edges);
-				CopySets(bnsl->bioObj->sve->edges, &tempStrSet);
+				//CopySets(bnsl->bioObj->sve->edges, &tempStrSet);
 				//set<string> tempStrMap(bnsl->bioObj->sve->edges);
 				//Store the old vertex selections
 				//cout<<"11111"<<endl;
-				copy(bnsl->bioObj->sve->edges.begin(),bnsl->bioObj->sve->edges.end(), tempStrSet.begin());
+				//copy(bnsl->bioObj->sve->edges.begin(),bnsl->bioObj->sve->edges.end(), tempStrSet.begin());
 				//Get the new selections - new vertices
 				bnsl->bioObj->GetSelections(bnsl->edgeLink);
 				//copy(bnsl->bioObj->sve->edges.begin(),bnsl->bioObj->sve->edges.end(), ostream_iterator<string>(cout, " "));
 				//cout<<endl;
 				//copy(bnsl->bioObj->sve->vertices.begin(),bnsl->bioObj->sve->vertices.end(), ostream_iterator<double>(cout, " "));
 				cout<<endl;
-				copy(tempStrSet.begin(),tempStrSet.end(), bnsl->bioObj->sve->edges.begin());
+				//copy(tempStrSet.begin(),tempStrSet.end(), bnsl->bioObj->sve->edges.begin());
 				bnsl->bioObj->numOfPasses++; //The second pass is now completed
 				//cout<<"numOfPasses1 = "<<bnsl->bioObj->numOfPasses<<endl;
 		}
 
 		//cout<<"bbbbbbbbbbbbb"<<endl;
 
-		if (bnsl->bioObj->sve->edges.size() == 0) {
+		if (bnsl->bioObj->sve->edges.size() == 0)
+      {
 				set<double> tempDblSet(bnsl->bioObj->sve->vertices);
 
-				copy(bnsl->bioObj->sve->vertices.begin(),bnsl->bioObj->sve->vertices.end(), tempDblSet.begin());	
+        //the copy constructor should make the following line unnecessary, no?
+				//copy(bnsl->bioObj->sve->vertices.begin(),bnsl->bioObj->sve->vertices.end(), tempDblSet.begin());	
 			
 //				copy(bnsl->bioObj->sve->vertices.begin(),bnsl->bioObj->sve->vertices.end(), ostream_iterator<double>(cout, " "));
 
