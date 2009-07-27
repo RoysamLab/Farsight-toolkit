@@ -468,7 +468,7 @@ bool BioNet::ReadXGMML(char* graphFileName, float n) {
 	vector<char> firstLetterOfLabels;
 	pair<int,int> key;
 	//double avg=0;
-	int mic=0;
+	//int mic=0;
 	channelColors = SetColorCode();
 	//doc = xmlParseFile(graphFileName);
 	g->GetVertexData()->AddArray(labels);
@@ -1059,7 +1059,7 @@ void ClearSelections(set<T>* s1) {
 //
 template<class T2> 
 void CopySets(set<T2> s1, set<T2>* s2) {
-	set<T2>::iterator i1;
+	set<T2>::Iterator i1;
 	for(i1 = s1.begin(); i1 != s1.end(); i1++) {
 		s2->insert(*i1);
 	}
@@ -1458,7 +1458,7 @@ SelectedVerticesAndEdges* BioNet::GetSelections(vtkSelectionLink* sel) {
 	SelectedVerticesAndEdges* sve = new SelectedVerticesAndEdges();
 	vtkSelection *p = sel->GetSelection();
 	
-	for(int counter=0; counter < p->GetNumberOfNodes(); counter++)
+	for(unsigned int counter=0; counter < p->GetNumberOfNodes(); counter++)
 	{
 		vtkSelectionNode *n = p->GetNode(counter);
 		vtkAbstractArray* arra = n->GetSelectionList();
@@ -1606,7 +1606,7 @@ void BioNet::Kruskalmst() {
 	mst->SetInput(this->g);
 	mst->SetEdgeWeightArrayName("EdgeWeights");
 	mst->Update();
-
+*/
 	/*
 	Kruskal's MST outputs a vtkSelection, which selects the edges that 
 	are in the MST. This selection itself cannot be displayed in a graph 

@@ -46,14 +46,10 @@ HistoWindow::HistoWindow(QItemSelectionModel *mod, QWidget *parent)
 	chartView->SetAxisTitle(0,"Frequency");
 	chartView->SetAxisTitle(1, columnName.c_str() );
 
-#if(VTK_NIGHTLY)
-		setCentralWidget( chartView->GetWidget() );
-#else
-		QLabel *label = new QLabel(tr("Use this window to select options for the histogram"));
-		label->setWordWrap(true);
-		label->setAlignment(Qt::AlignCenter);
-		setCentralWidget( label );
-#endif
+  QLabel *label = new QLabel(tr("Use this window to select options for the histogram"));
+  label->setWordWrap(true);
+  label->setAlignment(Qt::AlignCenter);
+  setCentralWidget( label );
 
 	setWindowTitle(tr("Histogram"));
 	this->resize(700,500);
@@ -420,11 +416,6 @@ void HistoWindow::ConstructBarChart()
 		chartView->RemoveAllRepresentations();
 		chartView->AddRepresentationFromInput(table);
 		chartView->Update();
-
-#if(!VTK_NIGHTLY)
-		chartView->Show();
-#endif
-
 	}
 }
 

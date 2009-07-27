@@ -16,7 +16,7 @@ limitations under the License.
 #include <math.h>
 #include <queue>
 #include <set>
-#include <QProgressDialog.h>
+#include <QProgressDialog>
 #include "vtkPoints.h"
 #include "vtkPointData.h"
 #include "vtkPolyData.h"

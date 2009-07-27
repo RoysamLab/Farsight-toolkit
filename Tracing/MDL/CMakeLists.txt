@@ -12,6 +12,8 @@ ADD_EXECUTABLE(MinSpanTree distTransform.cpp MinSpanTree.cpp morphGraphPrune.cpp
 ADD_EXECUTABLE(skel_Extrvalley3D skel_Extrvalley3D.cpp)
 ADD_EXECUTABLE(skel_streamline skel_streamline.cpp)
 ADD_EXECUTABLE(volumeProcess volumeProcess.cpp)
+ADD_EXECUTABLE(genSeg ShapeDetectionLevelSetFilter.cxx) 
+TARGET_LINK_LIBRARIES(genSeg ITKCommon ITKIO)
 #ADD_CUSTOM_COMMAND(
 #  TARGET MinSpanTree
 #  PRE_BUILD

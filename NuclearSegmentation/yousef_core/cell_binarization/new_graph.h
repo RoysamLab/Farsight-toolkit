@@ -384,8 +384,8 @@ template <typename captype, typename tcaptype, typename flowtype>
 
 	nodes = (node*) malloc(node_num_max*sizeof(node));
 	arcs = (arc*) malloc(2*edge_num_max*sizeof(arc));
-	int x1 = sizeof(node);
-	int x2 = sizeof(arc);
+	//int x1 = sizeof(node);
+	//int x2 = sizeof(arc);
 	
 	if (!nodes || !arcs) { printf("Error allocating memory\n"); scanf("%*d"); if (error_function) (*error_function)("Not enough memory!"); exit(1);}
 

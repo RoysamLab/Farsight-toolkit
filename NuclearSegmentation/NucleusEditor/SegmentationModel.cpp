@@ -267,7 +267,7 @@ void SegmentationModel::deleteTrigger()
 void SegmentationModel::splitTrigger()
 {
 	//do nothing for now
-	int xx=1;
+	//int xx=1;
 	QModelIndexList selIndices = selectionModel->selectedRows();
 	vector< int > ids(0);
 	QString idlist(0);

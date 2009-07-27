@@ -26,7 +26,7 @@ class Camera {
 public:
   // CONSTRUCTOR & DESTRUCTOR
   Camera(Vec3f c, Vec3f d, Vec3f u);
- ~Camera() {}
+ virtual ~Camera() {}
 
   // GL NAVIGATION
   virtual void glInit(int w, int h) = 0;
@@ -64,7 +64,7 @@ class PerspectiveCamera : public Camera {
 public:
   // CONSTRUCTOR & DESTRUCTOR
   PerspectiveCamera(Vec3f c, Vec3f d, Vec3f u, float a);
- ~PerspectiveCamera(void) { }
+  virtual ~PerspectiveCamera(void) { }
 
   // GL NAVIGATION
   void glInit(int w, int h);

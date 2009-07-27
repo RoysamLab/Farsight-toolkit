@@ -49,7 +49,7 @@ public:
 	// created on.
 	CTemplate(int row, int col, int slice, float Hdir, float Vdir, int length);
 	// DTOR
-	~CTemplate();
+	virtual ~CTemplate();
 
 	// construct the template rows
 	void ConstructTemplate();
@@ -175,7 +175,7 @@ public:
 	// created on.
 	CHLeftTemplate(int row, int col, int slice, float Hdir, float Vdir, int length);
 	// DTOR
-	~CHLeftTemplate();
+	virtual ~CHLeftTemplate();
 	
 	
 	int GetInPlaneShiftDir();
@@ -202,7 +202,7 @@ public:
 	// created on.
 	CHRightTemplate(int row, int col, int slice, float Hdir, float Vdir, int length);
 	// DTOR
-	~CHRightTemplate();
+	virtual ~CHRightTemplate();
 
 	int GetInPlaneShiftDir();
 	int GetOrthogonalShiftDir();
@@ -228,7 +228,7 @@ public:
 	// created on.
 	CVLeftTemplate(int row, int col, int slice, float Hdir, float Vdir, int length);
 	// DTOR
-	~CVLeftTemplate();
+	virtual ~CVLeftTemplate();
 
 	int GetInPlaneShiftDir();
 	int GetOrthogonalShiftDir();
@@ -254,7 +254,7 @@ public:
 	// created on.
 	CVRightTemplate(int row, int col, int slice, float Hdir, float Vdir, int length);
 	// DTOR
-	~CVRightTemplate();
+	virtual ~CVRightTemplate();
 
 	
 	int GetInPlaneShiftDir();

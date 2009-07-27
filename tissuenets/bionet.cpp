@@ -237,7 +237,7 @@ bool readXML(char* graphFileName, float distance, vtkMutableUndirectedGraph* g)
     docHandle.FirstChild("graph").Element();
   TiXmlElement *levelTwoElement, *levelThreeElement;
 
-  char* cnodeValue, *csource, *ctarget, *cweight;
+  //char* cnodeValue, *csource, *ctarget, *cweight;
   const char *nodeName, *label;
   vtkIdType iID,iX,iY,iZ; // used for graph coordinates
   vtkIdType isource, itarget; //used for defining graph edges
