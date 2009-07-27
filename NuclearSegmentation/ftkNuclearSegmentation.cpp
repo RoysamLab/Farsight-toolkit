@@ -1111,6 +1111,8 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 	std::vector <int> ids_ok;
 	ids_ok.push_back(newID1);
 	ids_ok.push_back(newID2);
+
+	editsNotSaved = true;
 	return ids_ok;
 }
 int NuclearSegmentation::Merge(vector<int> ids)
@@ -1674,10 +1676,10 @@ bool NuclearSegmentation::RestoreFromXML(std::string filename)
 	} // end while(parentElement)
 
 	//doc.close();
-/*
+
 	if(!LoadData())
 		return false;
-		*/
+
 	if(!LoadLabel())
 		return false;
 
