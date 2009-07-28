@@ -46,12 +46,11 @@ HistoWindow::HistoWindow(QItemSelectionModel *mod, QWidget *parent)
   chartView->SetTitle("  ");
   chartView->SetAxisTitle(0,"Frequency");
   chartView->SetAxisTitle(1, columnName.c_str() );
-
-  //determine which version of VTK we're using
-  if(strstr(VTK_VERSION, "5.4") != NULL)
-    {
+ 
+  //check if farsight is built with VTK 5.4
+  #if VTK_MINOR_VERSION==4
     #define VTK_5_4
-    }
+  #endif
 
   #ifdef VTK_5_4
     QLabel *label = new QLabel(tr("Use this window to select options for the histogram"));
