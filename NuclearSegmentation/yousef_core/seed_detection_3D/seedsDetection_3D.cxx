@@ -44,7 +44,7 @@ typedef itk::Image< InputPixelType,  3 >   InputImageType;
 
 int detect_seeds(itk::SmartPointer<InputImageType>, int , int , int, const double, float*, int);
 float get_maximum_3D(float* A, int r1, int r2, int c1, int c2, int z1, int z2, int R, int C);
-void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, int* out1);
+void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, int* out1, int* bImg);
 int distMap(itk::SmartPointer<InputImageType> im, int r, int c, int z, float* IMG);
 
 int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int z, double sigma_min, double sigma_max, double scale_xy, double scale_z, int sampl_ratio, int* bImg, int UseDistMap)
@@ -184,7 +184,7 @@ int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int
 	//Detect the seed points (which are also the local maxima points)
 	printf("Detecting Seeds\n");
 	
-	Detect_Local_MaximaPoints_3D(IM_out, r, c, z, scale_xy, scale_z, IM_bin);	
+	Detect_Local_MaximaPoints_3D(IM_out, r, c, z, scale_xy, scale_z, IM_bin, bImg);	
 	
 	return minIMout;
 }
@@ -273,7 +273,7 @@ float get_maximum_3D(float* A, int r1, int r2, int c1, int c2, int z1, int z2,in
 }
 
 
-void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, int* out1)
+void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, int* out1, int* bImg)
 {  
     int min_r, min_c, max_r, max_c, min_z, max_z;    
        
@@ -281,6 +281,7 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
     //if a point is a local maximam give it a local maximum ID
         
 	int IND = 0;
+	int II = 0;
     for(int i=0; i<r; i++)
     {
         for(int j=0; j<c; j++)
@@ -294,10 +295,14 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
 				max_c = (int)min((double)c-1,j+scale_xy);                         
 				max_z = (int)min((double)z-1,k+scale_z);                         
 				float mx = get_maximum_3D(im_vals, min_r, max_r, min_c, max_c, min_z, max_z,r,c);
-				if(im_vals[(k*r*c)+(i*c)+j] == mx)    
+				II = (k*r*c)+(i*c)+j;
+				if(im_vals[II] == mx)    
 				{
 					IND = IND+1;
-					out1[(k*r*c)+(i*c)+j]=255;                 
+					if(bImg[II] > 0)
+						out1[II]=255;                 
+					else
+						out1[II] = -1;
 				}
 				else
 					out1[(k*r*c)+(i*c)+j]=0;
