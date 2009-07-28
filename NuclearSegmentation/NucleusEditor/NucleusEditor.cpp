@@ -312,8 +312,11 @@ void NucleusEditor::newModel(void)
 	if(currentModel)
 		clearModel();
 
-	if(segResult)
+	if(segResult) {
+		//clearModel();
+		//segResult = new ftk::NuclearSegmentation();		
 		currentModel = new SegmentationModel(segResult);
+	}
 }
 
 //******************************************************************************
@@ -334,7 +337,8 @@ void NucleusEditor::loadResult(void)
 	QString name = QFileInfo(filename).baseName();
 
 	lastPath = path;
-	
+
+	//segResult = new ftk::NuclearSegmentation();
 	if ( !segResult->RestoreFromXML(filename.toStdString()) )
 	{
 		std::cerr << segResult->GetErrorMessage() << std::endl;
@@ -426,6 +430,7 @@ void NucleusEditor::segmentImage()
 
 void NucleusEditor::loadImage()
 {
+	segWin = new SegmentationWindow();
 	QString fileName = QFileDialog::getOpenFileName(
                              this, "Select file to open", lastPath,
                              tr("Images (*.tif *.tiff *.pic *.png *.jpg *.lsm)\n"

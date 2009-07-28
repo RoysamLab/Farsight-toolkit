@@ -70,6 +70,8 @@ void SegmentationView::dataChanged(const QModelIndex &topLeft, const QModelIndex
 //*****************************************************************************************
 void SegmentationView::setModels ( SegmentationModel * sModel ) 
 {
+	//delete resultModel;	
+	//resultModel = NULL;
 	resultModel = sModel;
 	QAbstractItemView::setModel( resultModel->GetModel() );
 	QAbstractItemView::setSelectionModel( resultModel->GetSelectionModel() );

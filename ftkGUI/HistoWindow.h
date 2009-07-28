@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef HISTOWINDOW_H
 #define HISTOWINDOW_H
 
-#define VTK_NIGHTLY 1
+#define VTK_NIGHTLY 0
 
 #include <QtGui/QAction>
 #include <QtGui/QMainWindow>
