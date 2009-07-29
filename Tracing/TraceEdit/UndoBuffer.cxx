@@ -1,6 +1,11 @@
 #include"UndoBuffer.h"
 
 //Flags arew defined in the UndoBuffer.h file
+//This function is to be called everytime undo is invoked. The undobuffer should be stored 
+//somewhere with direct access to the traceobject. This would be in view3D presumably Any access 
+//to the undobuff should change the traceoject that view3D uses when making the image. after the main 
+//trace object is replaced with the undo or redo traceobject I believe the function update line actor 
+//must be called. 
 template<typename S>
 S UndoOrRedoandGetState(UndoBuffer<S>* buff,int Flag){
     	int ValCheck = 0;
