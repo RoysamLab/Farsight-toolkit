@@ -1,8 +1,11 @@
 #include <stdio.h>
+
 template<class T>
 class UndoBuffer {
 
 public:
+	static const int UNDO = 0;
+	static const int REDO = 1;
 	UndoBuffer(int Size){
 		BufferSize = Size;
 		Buffer = new T[BufferSize];
