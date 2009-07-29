@@ -1,18 +1,28 @@
 #include"UndoBuffer.h"
+
+//Flags arew defined in the UndoBuffer.h file
 template<typename S>
-S UndoandGetState(UndoBuffer<S>* buff){
-    if(buff->Undo() == 1) return buff->GetUndoPosition();
-    else return NULL;
-}
-template<typename S>
-S RedoandGetState(UndoBuffer<S>* buff){
-    if(buff->Redo() == 1) return buff->GetRedoPosition();
-    else return NULL;
+S UndoOrRedoandGetState(UndoBuffer<S>* buff,int Flag){
+    	int ValCheck = 0;
+    	S State = NULL;
+    	if (Flag == buff->UNDO){
+   		if(ValCheck = (buff->Undo() == 1)) State = buff->GetUndoPosition();
+   		else if(ValCheck == -1) return NULL;
+	}
+    	else if (Flag == buff->REDO){
+		if(ValCheck = (buff->Redo() == 1)) State = buff->GetUndoPosition();
+   		else if(ValCheck == -1) return NULL;
+	}
+  	else return NULL;
+	
+   	S ImageState(State); 	//ImageState
+   	return State;
 }
 
-/*
-//This is test code
-int main(int argc, char *argv[]){ 
+
+
+//This is test code need to mark out the line ImageState if not working with objects. 
+/*int main(int argc, char *argv[]){ 
 	UndoBuffer<int>* buff = new UndoBuffer<int>(10);
 	printf("add 15 elements\n");
 	for(int i =0; i < 15; i++){
@@ -21,7 +31,7 @@ int main(int argc, char *argv[]){
 	}
 	printf("undo 8 times\n");
 	for(int i =0; i < 8; i++){		
-		int tempo = UndoandGetState(buff);
+		int tempo = UndoOrRedoandGetState(buff,buff->UNDO);
 		printf("%i\n",tempo);
 		buff->print();
 	}
@@ -32,13 +42,13 @@ int main(int argc, char *argv[]){
 	}
 	printf("now undo 6 times\n");
 	for(int i =0; i < 8; i++){
-		int tempo = UndoandGetState(buff);
+		int tempo = UndoOrRedoandGetState(buff,buff->UNDO);
 		printf("%i\n",tempo);
 		buff->print();
 	}
 	printf("now Redo 6 times\n");
 	for(int i =0; i < 9; i++){
-		int tempo = RedoandGetState(buff);
+		int tempo = UndoOrRedoandGetState(buff,buff->REDO);
 		printf("%i\n",tempo);
 		buff->print();
 	}
