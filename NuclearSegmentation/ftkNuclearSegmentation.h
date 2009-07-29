@@ -117,6 +117,7 @@ private:
 	std::string dataFilename;	//the filename of the data image		(full path)
 	std::string labelFilename;	//the filename of the label image		(full path)
 	std::string paramFilename;	//the filename of the parameter file	(full path)
+	std::list<int> negativeseeds;
 
 	std::string errorMessage;
 
@@ -154,6 +155,8 @@ private:
 	std::string TimeStamp();
 	void ReassignLabels(std::vector<int> fromIds, int toId, ftk::Object::Box region);
 	void ReassignLabel(int fromId, int toId);
+	void Cleandptr(int*x,vector<int> y );
+	void Restoredptr(int* );
 	Object GetNewObject(int id, IntrinsicFeatures *features );
 	ftk::Object::Box ExtremaBox(std::vector<int> ids);
 

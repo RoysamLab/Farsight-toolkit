@@ -229,9 +229,11 @@ bool NuclearSegmentation::GetResultImage()
 		std::vector<unsigned char> color;
 		color.assign(3,255);
 		if(labelImage)
-			labelImage = 0;
+		labelImage = 0;
+		Cleandptr(dptr,size); // Temporarily deletes the seeds in the bacground from dptr
 		labelImage = ftk::Image::New();
 		labelImage->AppendChannelFromData3D(dptr, itk::ImageIOBase::INT, sizeof(int), size[2], size[1], size[0], "gray", color, true);
+		Restoredptr(dptr); // Adds the seeds to dptr which were deleted in Cleandptr
 		labelImage->Cast<unsigned short>();
 	}
 	return true;
@@ -2156,5 +2158,53 @@ string NuclearSegmentation::NumToString(double d, int p)
 	return out.str();
 }
 
-} //end namespace ftk
+ //end namespace ftk
 
+
+void NuclearSegmentation::Cleandptr(int* p, vector<int> dim){
+	int ctr =0;
+	
+if(dim.size() ==3) {
+	for (int index1=0;index1<dim[2];index1++)
+		{
+			for(int index2=0;index2<dim[1];index2++)
+				{
+					for(int index3=0;index3<dim[0];index3++)
+						{
+						if(p[ctr]<0) 
+							{
+								p[ctr]=0;
+								this->negativeseeds.push_back(ctr);									
+							}
+					ctr++;
+						}
+				}
+		}
+	}
+else
+{
+for(int index1=0;index1<dim[1];index1++)
+	{
+	for(int index2=0;index2<dim[0];index2++)
+		{
+			if(p[ctr]<0) 
+				{
+				p[ctr]=0;
+				this->negativeseeds.push_back(ctr);									
+				}
+				ctr++;
+		}
+	}
+}
+
+}
+
+void NuclearSegmentation::Restoredptr(int* p)
+{
+ 	for(list<int>::iterator index =this->negativeseeds.begin();index!=this->negativeseeds.end();++index)
+		{
+	    		p[*index]=-1;
+		}
+}
+
+}
