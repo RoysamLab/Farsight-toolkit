@@ -276,7 +276,8 @@ void ImageBrowser5D::UpdateImageActors(void)
 		actor->SetDisplayExtent(0, img->GetImageInfo()->numColumns - 1, 0, img->GetImageInfo()->numRows - 1, 0, 0 );
 		actor->SetZSlice( this->vSlider->value() );
 		actor->SetVisibility( m_chflag.at(i) );
-
+		actor->RotateWXYZ(180,0,0,1);
+		actor->RotateWXYZ(180,0,1,0);
 		m_channelActors.push_back(actor);
 		m_vtkrenderer->AddActor(actor);
 	}
