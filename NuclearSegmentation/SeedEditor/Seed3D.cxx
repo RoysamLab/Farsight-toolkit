@@ -288,7 +288,7 @@ this->fileNameSeed = QFileDialog::getOpenFileName(
     this->delpcoords->SetNumberOfTuples(1);		
 
  	
-  for (int j=0; j<spPoint.size(); j++)
+  for (unsigned int j=0; j<spPoint.size(); j++)
     {
     float pts[3] = {spPoint[j].x,spPoint[j].y , spPoint[j].z };	
     this->pcoords->SetTuple(j, pts);
@@ -633,7 +633,7 @@ void   Seed3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata
 	
  int *pos = seed->Interactor->GetEventPosition();
  seed->Interactor->GetPicker()->Pick(pos[0],pos[1],0.0,seed->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
- vtkPointPicker *point_picker = (vtkPointPicker *)seed->Interactor->GetPicker();
+ //vtkPointPicker *point_picker = (vtkPointPicker *)seed->Interactor->GetPicker();
  double pickPos[3];
  seed->PointPicker->GetPickPosition(pickPos);    //this is the coordinates of the pick  
  
@@ -645,13 +645,14 @@ if((seed->mode == 2) && seed->flag == 1){
 vtkDataArray* pointIds = seed->Glyph->GetOutput()->GetPointData()->GetArray("InputPointIds"); 
 int pID = (int)pointIds->GetTuple1(seed->PointPicker->GetPointId()); 
 	
-if(pID<=seed->dup_points.size())    //The ids of non-seed points is much greater than the ids of the seed points 
+if((unsigned int)pID<=seed->dup_points.size())    
+//The ids of non-seed points is much greater than the ids of the seed points 
 {   				   //Use this to check if clicked on a seed or not		
     float dist =1000.00;
-    float dist1;
+    //float dist1;
     int index;
     float finpt[3];
-    for (int j=0; j<seed->dup_points.size(); j++)
+    for (unsigned int j=0; j<seed->dup_points.size(); j++)
     {
     	float p1[3] = {seed->dup_points[j].x, seed->dup_points[j].y ,seed->dup_points[j].z };	
     	float dist1= sqrt(pow((p1[0]-pickPos[0]),2) + pow((p1[1]-pickPos[1]),2) + pow((p1[2]-pickPos[2]),2));   
@@ -670,7 +671,7 @@ if(pID<=seed->dup_points.size())    //The ids of non-seed points is much greater
 
 	//Remove the glyph		
      vtkDataArray* points2del = seed->point1->GetData();    
-     vtkDataArray* points2delred;
+     //vtkDataArray* points2delred;
      points2del->RemoveTuple((vtkIdType)index);
      seed->point1->SetData(points2del);
      seed->Glyph->SetScaleFactor(seed->Glyph->GetScaleFactor()+0.0001);
@@ -718,14 +719,14 @@ if(seed->mode == 5){
     vtkDataArray* pointIds = seed->delglyph->GetOutput()->GetPointData()->GetArray("InputPointIds"); 
     int pID = (int)pointIds->GetTuple1(seed->PointPicker->GetPointId()); 
 
-if(pID<=seed->MarkedPoints.size())    //The ids of non-seed points is much greater than the ids of the seed points 
-
+if((unsigned int)pID<=seed->MarkedPoints.size())    
+//The ids of non-seed points is much greater than the ids of the seed points 
 {    
    float dist =1000.00;
-   float dist1;
+   //float dist1;
    int index;
    float finpt[3];
-   for (int j=0; j<seed->MarkedPoints.size(); j++)
+   for (unsigned int j=0; j<seed->MarkedPoints.size(); j++)
     {
     	float p1[3] = {seed->MarkedPoints[j].x, seed->MarkedPoints[j].y ,seed->MarkedPoints[j].z };	
     	float dist1= sqrt(pow((p1[0]-pickPos[0]),2) + pow((p1[1]-pickPos[1]),2) + pow((p1[2]-pickPos[2]),2));   
@@ -806,11 +807,12 @@ cout << "OK: File Imported" << endl;
 void Seed3D::PlaceSeed()
 {
 
-	if(this->mode==1){
-	    double* p1 = this->handle1->GetWorldPosition();
-        double* p2 = this->handle2->GetWorldPosition();       
-	    double* p3 = this->handle->GetWorldPosition();       
-		double* bounds = this->Volume->GetBounds();
+	if(this->mode==1)
+    {
+	  //double* p1 = this->handle1->GetWorldPosition();
+    //double* p2 = this->handle2->GetWorldPosition();       
+	  double* p3 = this->handle->GetWorldPosition();       
+		//double* bounds = this->Volume->GetBounds();
 		float placePoint[3] = {(float)(int)p3[0],(float)(int)p3[1],(float)(int)p3[2]};
         this->point3->InsertNextPoint(placePoint);
     	this->polydata3->SetPoints(this->point3);

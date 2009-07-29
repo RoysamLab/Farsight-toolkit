@@ -123,11 +123,11 @@ public:
         this->x = this->handle->GetWorldPosition();
     	this->bounds = this->vol->GetBounds();
        	//int x = 0;
-     	int y = 0;
+     	//int y = 0;
 
 
-   double* p1; 
-   double* p2; 
+   //double* p1; 
+   //double* p2; 
    double placePoint2[2] = {this->x[0]-(this->bounds[1]/2.0),this->x[1]-(this->bounds[3]/2.0)};
    double placePoint1[2] = {(this->bounds[3]/2.0)-this->x[1],this->x[2]-(this->bounds[5]/2.0)};
     
