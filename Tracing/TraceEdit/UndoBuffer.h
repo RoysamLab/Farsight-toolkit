@@ -29,6 +29,10 @@ public:
 		this.UndoPosition = Initializer.UndoPosition;
 		this.RedoPosition = Initializer.RedoPosition;
 	}*/
+//*******************************************************************************************************
+//This function should be called everytime a change is made to the trace object by the user 
+//*******************************************************************************************************
+template<typename S> S UndoOrRedoandGetState(UndoBuffer<S>* buff,int Flag);
 int	Add(T Object){
 		T* NewObject = new T(Object); 
 		Buffer[CurrentOpenPosition] = *NewObject;
