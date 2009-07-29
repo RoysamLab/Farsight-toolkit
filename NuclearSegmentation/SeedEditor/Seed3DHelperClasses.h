@@ -19,14 +19,14 @@ public:
      
       this->volume->GetProperty()->SetScalarOpacity(opacityTransferFunction);
     // this->imActor->GetProperty()->SetScalarOpacity(opacityTransferFunction);
-    // this->imActor1->GetProperty()->SetScalarOpacity(opacityTransferFunction);    
+    // this->imActor1->GetProperty()->SetScalarOpacity(opacityTransferFunction);		
     }
   vtkSlider2DCallbackBrightness() {
 
   }
 
   vtkSmartPointer<vtkVolume> volume;
- vtkSmartPointer<vtkVolume> imActor;  
+ vtkSmartPointer<vtkVolume> imActor;	
  vtkSmartPointer<vtkVolume> imActor1;
 };
 
@@ -57,7 +57,7 @@ public:
   }
 
   vtkSmartPointer<vtkVolume> volume;
-  vtkSmartPointer<vtkVolume> imActor; 
+  vtkSmartPointer<vtkVolume> imActor;	
  vtkSmartPointer<vtkVolume> imActor1;
 };
 
@@ -74,7 +74,7 @@ public:
       this->Glyph->SetScaleFactor(static_cast<vtkSliderRepresentation *>(sliderWidget->GetRepresentation())->GetValue());
       this->addglyph->SetScaleFactor(static_cast<vtkSliderRepresentation *>(sliderWidget->GetRepresentation())->GetValue());
       this->delglyph->SetScaleFactor(static_cast<vtkSliderRepresentation *>(sliderWidget->GetRepresentation())->GetValue());
-    //this->handleRep->SetHandleSize(static_cast<vtkSliderRepresentation *>(sliderWidget->GetRepresentation())->GetValue());
+	  //this->handleRep->SetHandleSize(static_cast<vtkSliderRepresentation *>(sliderWidget->GetRepresentation())->GetValue());
     }
   vtkSlider2DCallbackSeedSize():Glyph(0),addglyph(0),delglyph(0) {}
   vtkGlyph3D *Glyph;
@@ -83,7 +83,7 @@ public:
   //vtkSphereHandleRepresentation *handleRep;
 };
 
-
+/*
 class vtkSlider2DCallbackZSlice : public vtkCommand
 {
 public:
@@ -98,7 +98,7 @@ public:
       this->Reslice->SetResliceAxesOrigin(0,0,p);
       this->im_mapper->SetInput(this->Reslice->GetOutput());
       this->imActor->SetMapper(im_mapper);
-        
+      	
     }
   
   //vtkSlider2DCallbackZSlice():Reslice(0) {}
@@ -106,7 +106,7 @@ public:
   vtkSmartPointer<vtkDataSetMapper> im_mapper;
   vtkSmartPointer<vtkActor> imActor; 
 };
-
+*/
 
 
 
@@ -120,44 +120,43 @@ public:
   virtual void Execute(vtkObject*, unsigned long, void*)
     {
 
-    this->x = this->handle->GetWorldPosition();
-    //cout<<x[0]<<endl;
-    //cout<<x[1]<<endl;
-    //cout<<x[2]<<endl;
-    this->bounds = this->vol->GetBounds();
-    //int x = 0;
-    //int y = 0;
+        this->x = this->handle->GetWorldPosition();
+    	this->bounds = this->vol->GetBounds();
+       	//int x = 0;
+     	int y = 0;
 
 
-   //double* p1; 
-   //double* p2;
+   double* p1; 
+   double* p2; 
    double placePoint2[2] = {this->x[0]-(this->bounds[1]/2.0),this->x[1]-(this->bounds[3]/2.0)};
    double placePoint1[2] = {(this->bounds[3]/2.0)-this->x[1],this->x[2]-(this->bounds[5]/2.0)};
     
     if((x[0]>=bounds[0] && x[0]<=bounds[1]) && (x[1]>=bounds[2] && x[1]<=bounds[3]) && (x[2]>=bounds[4] && x[2]<=bounds[5]))
        {
         this->reslice->SetResliceAxesOrigin(x[0],(bounds[3]-bounds[2])/2.0,(bounds[5]-bounds[4])/2.0);
-
-        this->im_mapper = vtkDataSetMapper::New();
+        cout<<x[0]<<endl;
+		cout<<(bounds[3]-bounds[2])/2.0<<endl;
+		cout<<(bounds[5]-bounds[4])/2.0<<endl;
+		this->im_mapper = vtkDataSetMapper::New();
         this->im_mapper->SetInput(this->reslice->GetOutput());
-        
         this->reslice1->SetResliceAxesOrigin((bounds[1]-bounds[0])/2.0,(bounds[3]-bounds[2])/2.0,x[2]); 
         this->im_mapper1 = vtkDataSetMapper::New();
         this->im_mapper1->SetInput(this->reslice1->GetOutput());
-  this->imActor1->SetPosition(0.0,0.0,0.0);
-        this->handle1->SetWorldPosition(placePoint1); 
-  this->handle2->SetWorldPosition(placePoint2);
-  this->QVTK1->GetRenderWindow()->Render();
+		this->imActor->SetPosition(0.0,0.0,0.0);
+		this->imActor1->SetPosition(0.0,0.0,0.0);
+        this->handle1->SetWorldPosition(placePoint1);	
+		this->handle2->SetWorldPosition(placePoint2);
+ 		this->QVTK1->GetRenderWindow()->Render();
         this->QVTK2->GetRenderWindow()->Render();
        }
-  
+	
 }
   vtkSeedCallback() : handle(0) {} 
   double* x;
   vtkPointHandleRepresentation3D *handle;
-  QVTKWidget *QVTK1;    
+  QVTKWidget *QVTK1;		
   QVTKWidget *QVTK2;
-  vtkSmartPointer<vtkImageReslice> reslice;   
+  vtkSmartPointer<vtkImageReslice> reslice; 	
   vtkSmartPointer<vtkImageReslice> reslice1;
   vtkSmartPointer<vtkDataSetMapper> im_mapper;
   vtkSmartPointer<vtkDataSetMapper> im_mapper1;
@@ -182,21 +181,27 @@ public:
   virtual void Execute(vtkObject*, unsigned long, void*)
     {
        
-  this->handle1pos = this->handle1->GetWorldPosition();
-  this->handle2pos = this->handle2->GetWorldPosition();
-        this->bounds = this->vol->GetBounds();   
-        //cout<<this->handle2->GetClassName()<<endl;
-  this->bounds[0] = this->handle2pos[0];
-  this->bounds[1] = this->handle1pos[0]*-1.0;
-        this->handle2->SetWorldPosition(bounds);
-  this->bounds1 = this->vol->GetBounds();
-        //cout<<(bounds[1]/2.0)<<handle2pos[0]<<endl;
-  this->placePoint[0] = (this->bounds1[1]/2.0)+(this->handle2pos[0]);
-        this->placePoint[1] =(bounds1[3]/2.0)+this->handle2pos[1];
-        this->placePoint[2] = (bounds1[5]/2.0)+this->handle1pos[1];
-        this->handle->SetWorldPosition(this->placePoint);
-        this->QVTK2->GetRenderWindow()->Render();
-  this->QVTK->GetRenderWindow()->Render();
+	this->handle1pos = this->handle1->GetWorldPosition();
+	this->handle2pos = this->handle2->GetWorldPosition();
+	this->bounds = this->vol->GetBounds();
+	this->bounds[0] = this->handle2pos[0];
+	this->bounds[1] = this->handle1pos[0]*-1.0;
+    this->handle2->SetWorldPosition(this->bounds);
+	this->bounds1 = this->vol->GetBounds();
+    this->placePoint[0] = (this->bounds1[1]/2.0)+(this->handle2pos[0]);
+    this->placePoint[1] =(bounds1[3]/2.0)+this->handle2pos[1];
+    this->placePoint[2] = (bounds1[5]/2.0)+this->handle1pos[1];
+    this->handle->SetWorldPosition(this->placePoint);
+	
+	this->reslice1->SetResliceAxesOrigin((bounds1[1]-bounds1[0])/2.0,(bounds1[3]-bounds1[2])/2.0,this->placePoint[2]); 
+    this->im_mapper1 = vtkDataSetMapper::New();
+    this->im_mapper1->SetInput(this->reslice1->GetOutput());
+	//this->imActor1->SetPosition(0.0,0.0,0.0);
+	
+	this->QVTK2->GetRenderWindow()->Render();
+	this->QVTK1->GetRenderWindow()->Render();
+	this->QVTK->GetRenderWindow()->Render();
+//	cout<<"I am moved"<<endl;	
   }
 
   vtkSeedCallback1() : handle1(0),handle2(0){}
@@ -206,12 +211,19 @@ public:
   double* handle2pos;
   vtkPointHandleRepresentation2D *handle1;
   vtkPointHandleRepresentation2D *handle2;
-  vtkPointHandleRepresentation3D *handle; 
+  vtkPointHandleRepresentation3D *handle;	
   QVTKWidget *QVTK2;
   vtkSmartPointer<vtkVolume> vol;
   double placePoint[3];
-  QVTKWidget *QVTK;   
-};
+  QVTKWidget *QVTK;	
+  vtkSmartPointer<vtkDataSetMapper> im_mapper;
+  vtkSmartPointer<vtkDataSetMapper> im_mapper1;
+  vtkSmartPointer<vtkActor> imActor;
+  vtkSmartPointer<vtkActor> imActor1;
+  vtkSmartPointer<vtkImageReslice> reslice1;
+  QVTKWidget *QVTK1;
+
+  };
 
 
 
@@ -225,38 +237,49 @@ public:
   virtual void Execute(vtkObject*, unsigned long, void*)
     {
      
-  this->handle2pos = this->handle2->GetWorldPosition();
-  this->handle1pos = this->handle1->GetWorldPosition();
-        this->bounds = this->vol->GetBounds();
-  this->bounds[0] = this->handle2pos[1]*-1.0;
-  this->bounds[1] = this->handle1pos[1];
-        this->handle1->SetWorldPosition(bounds);
-        this->bounds1 = this->vol->GetBounds();
-        cout<<(bounds[5])<<endl;
-  this->placePoint[0] = (this->bounds1[1]/2.0)+(this->handle2pos[0]);
-        this->placePoint[1] =(bounds1[3]/2.0)+this->handle2pos[1];
-        this->placePoint[2] = (bounds1[5]/2.0)+this->handle1pos[1];
-        this->handle->SetWorldPosition(this->placePoint);
-        this->QVTK1->GetRenderWindow()->Render();
-  this->QVTK->GetRenderWindow()->Render();
+	this->handle2pos = this->handle2->GetWorldPosition();
+	this->handle1pos = this->handle1->GetWorldPosition();
+	this->bounds = this->vol->GetBounds();
+	this->bounds[0] = this->handle2pos[1]*-1.0;
+	this->bounds[1] = this->handle1pos[1];
+    this->handle1->SetWorldPosition(bounds);
+    this->bounds1 = this->vol->GetBounds();
+    this->placePoint[0] = (this->bounds1[1]/2.0)+(this->handle2pos[0]);
+    this->placePoint[1] =(bounds1[3]/2.0)+this->handle2pos[1];
+    this->placePoint[2] = (bounds1[5]/2.0)+this->handle1pos[1];
+    this->handle->SetWorldPosition(this->placePoint);
+    
+	this->reslice->SetResliceAxesOrigin(this->placePoint[0],(bounds1[3]-bounds1[2])/2.0,(bounds1[5]-bounds1[4])/2.0);
+	cout<<this->placePoint[0]<<endl;
+	cout<<(bounds1[3]-bounds1[2])/2.0<<endl;
+	cout<<(bounds1[5]-bounds1[4])/2.0<<endl;
+	
+	this->im_mapper = vtkDataSetMapper::New();
+    this->im_mapper->SetInput(this->reslice->GetOutput());
+	this->imActor->SetPosition(0.0,0.0,0.0);
+	
+	this->QVTK2->GetRenderWindow()->Render();
+	this->QVTK1->GetRenderWindow()->Render();
+	this->QVTK->GetRenderWindow()->Render();
+	
 }
-
-  
-
-
   vtkSeedCallback2() : handle1(0),handle2(0){}
   double* handle1pos;
   double* bounds;
   double* handle2pos;
   vtkPointHandleRepresentation2D *handle1;
-  vtkPointHandleRepresentation2D *handle2;  
+  vtkPointHandleRepresentation2D *handle2;	
+  vtkPointHandleRepresentation3D *handle;	
+  QVTKWidget *QVTK2;
   QVTKWidget *QVTK1;
-  vtkSmartPointer<vtkVolume> vol;
-  double placePoint[3];           
-  vtkPointHandleRepresentation3D *handle; 
   QVTKWidget *QVTK;
-  double* bounds1;  
+  vtkSmartPointer<vtkVolume> vol;
+  double placePoint[3];						
+  double* bounds1;	
 
-  };
+  vtkSmartPointer<vtkDataSetMapper> im_mapper;
+  vtkSmartPointer<vtkActor> imActor;
+  vtkSmartPointer<vtkImageReslice> reslice;
+  	};
 
 
