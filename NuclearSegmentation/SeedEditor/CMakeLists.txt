@@ -63,10 +63,7 @@ ADD_EXECUTABLE( Seededitor  vtkSeeds3D.cxx ${Sources} ${GUI_MOC_SRCS} )
 TARGET_LINK_LIBRARIES( Seededitor ${Libraries})
 
 
-# create an executable file named "qtproject" from the source files in the variable "qtproject_SRCS".
-#add_executable(qtproject ${qtproject_SRCS})
-
-# link the "qtproject" target against the Qt libraries. which libraries exactly, is defined by the "include(${QT_USE_FILE})" line above, which sets up this variable.
-#target_link_libraries(qtproject ${QT_LIBRARIES})
-
+#MAKE A GUI EXECUTABLE, NOT A CONSOLE APPLICATION
+SET_TARGET_PROPERTIES( Seededitor  PROPERTIES WIN32_EXECUTABLE 1)
+INSTALL( TARGETS Seededitor DESTINATION bin )
 
