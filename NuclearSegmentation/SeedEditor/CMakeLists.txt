@@ -57,7 +57,7 @@ ENDIF(VTK_FOUND)
 #qt4_automoc(${qtproject_SRCS})
 
 QT4_WRAP_CPP( GUI_MOC_SRCS Seed3D.h )
-#ADD_LIBRARY(Trace Trace.h Trace.cpp)
+
 ADD_EXECUTABLE( Seededitor  vtkSeeds3D.cxx ${Sources} ${GUI_MOC_SRCS} )
 
 TARGET_LINK_LIBRARIES( Seededitor ${Libraries})
