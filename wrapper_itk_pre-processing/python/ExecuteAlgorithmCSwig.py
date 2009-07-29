@@ -25,6 +25,7 @@ import cmath
 import pdb
 import FilterObjectXML
 import FilterAlgorithm
+import warnings
 
 ITK = "itk"
 # Reader
@@ -47,9 +48,10 @@ def defaultAlgorithmExecution(XMLFileName):
 
     if thisalgorithm.GetKey() == "resample":	# Special steps for Resampling
         ExecuteResampleAlgorithm(thisalgorithm)
-    elif thisalgorithm.GetKey() == "vesselness":
-        print "Vesselness algorithm not tested. Sorry !!!"
-        ExecuteVesselnessAlgorithm(thisalgorithm)
+    elif thisalgorithm.GetKey() == "anisotropicdiffusionvesselenhancement":
+        print "Anisotropic Diffusion Vessel Enhancement algorithm not available for CSwig. Sorry !!!"
+        sys.exit(1)
+#        ExecuteVesselnessAlgorithm(thisalgorithm)
     else:
         ExecuteCommands(thisalgorithm)			# Default algorithm execution
 
@@ -58,52 +60,54 @@ def defaultAlgorithmExecution(XMLFileName):
 # Default execution for all algorithms (until 6/3/09) except resampling filter.
 
 def ExecuteCommands(thisalgorithm):
-	""" Default execution of commands """	
+    """ Default execution of commands """   
 
-	dimension 	= thisalgorithm.GetDimension()
-	pixelType 	= thisalgorithm.GetOutputImagePixelType()
+    dimension   = thisalgorithm.GetDimension()
+    pixelType   = thisalgorithm.GetOutputImagePixelType()
 
-	reader = GetReader(thisalgorithm, dimension, pixelType)			# Reader Object
-	writer = GetWriter(thisalgorithm, dimension, pixelType)			# Writer Object
-	filter = GetFilter(thisalgorithm, dimension, pixelType)			# Filter Object
+    reader = GetReader(thisalgorithm, dimension, pixelType)         # Reader Object
+    writer = GetWriter(thisalgorithm, dimension, pixelType)         # Writer Object
+    filter = GetFilter(thisalgorithm, dimension, pixelType)         # Filter Object
 
-	parameters = thisalgorithm.GetParameters()
-	object = {}
-	keys = parameters.keys()[:]
-	if thisalgorithm.GetHasStructuringElement():
-		keys.remove("Radius")
-		radius = eval( str( parameters["Radius"]["value"] ) )
-		AssignStructuringElement(filter, READER_PIXELTYPE, dimension, radius)
+    parameters = thisalgorithm.GetParameters()
+    keys = parameters.keys()[:]
 
-	for key in keys:
-		if key == "Order":
-			orderVar = eval( parameters[key]["value"] )
-			AssignOrderOfFilter(filter, orderVar)
+    if thisalgorithm.GetHasStructuringElement():
+        keys.remove("Radius")
+        radius = eval( str( parameters["Radius"]["value"] ) )
+        AssignStructuringElement(filter, READER_PIXELTYPE, dimension, radius)
 
-		else:
+    for key in keys:
+        if key == "Order":
+            orderVar = eval( parameters[key]["value"] )
+            AssignOrderOfFilter(filter, orderVar)
+
+        else:
 # Added on 19 May, 2009
-			if thisalgorithm.IsTupleParameter(key):
-				value = parameters[key]["value"]
-				value = eval(str(value))	
-				# Create the object				
-				tempObject = eval(parameters[key]["type"] + dimension  + "()" )
-				for num in range(len(value)):
-					tempObject.SetElement(num,  value[num])	
-				eval( "filter.Set" + key + "( tempObject )" )
-			else:
-				eval( "filter.Set" + key + "( " + str(parameters[key]["value"]) + " )" )
+            if thisalgorithm.IsTupleParameter(key):
+                value = parameters[key]["value"]
+                value = eval(str(value))    
+                # Create the object             
+                tempObject = eval(parameters[key]["type"] + dimension  + "()" )
+                SetElementFromList(tempObject, value, len(value))
+#               for num in range(len(value)):
+#                   tempObject.SetElement(num,  value[num]) 
+                eval( "filter.Set" + key + "( tempObject )" )
+            else:
+                eval( "filter.Set" + key + "( " + str(parameters[key]["value"]) + " )" )
 
-	
-	if thisalgorithm.GetUseCaster():
-		caster = GetCaster( READER_PIXELTYPE, dimension, pixelType )
-		PipelineInputOutput([reader, filter, caster, writer])
-	else:
-		PipelineInputOutput([reader, filter, writer])
-		
-	writer.Update()
+    
+    if not thisalgorithm.GetUseRescaler():
+        if pixelType != "F":
+            warnings.warn("\nWARNING: The output may lose some details if not stored as float type !\n")
 
-	print thisalgorithm
-	print "Algorithm successfully implemented!\n"
+    rescaler = GetRescaler( READER_PIXELTYPE, dimension, pixelType )
+    PipelineInputOutput([reader, filter, rescaler, writer])
+        
+    writer.Update()
+
+    print thisalgorithm
+    print "Algorithm successfully executed!\n"
 
 def GetReader(thisalgorithm, dimension, pixelType):
 	""" Get Reader Object to read the input file """
@@ -115,7 +119,7 @@ def GetReader(thisalgorithm, dimension, pixelType):
 		READER_PIXELTYPE = "F"
 
 															#	ImageSeriesReader			
-		if thisalgorithm.GetUseCaster():
+		if thisalgorithm.GetUseRescaler():
 			reader = eval( READER + READER_PIXELTYPE + dimension + "_New()" )
 		else:
 			reader = eval( READER + pixelType + dimension + "_New()" )
@@ -131,7 +135,7 @@ def GetReader(thisalgorithm, dimension, pixelType):
 	# If single image
 		READER = "itkImageFileReader"
 		READER_PIXELTYPE = "F"
-		if thisalgorithm.GetUseCaster():
+		if thisalgorithm.GetUseRescaler():
 			reader = eval( READER + READER_PIXELTYPE + dimension + "_New()" ) 
 		else:
 			reader = eval( READER + pixelType + dimension + "_New()" )
@@ -169,7 +173,7 @@ def GetWriter(thisalgorithm, dimension, pixelType):
 def GetFilter(thisalgorithm, dimension, pixelType):	
 	""" Get the filter object - the main algorithm """
 	if thisalgorithm.GetOutputType():    
-		if thisalgorithm.GetUseCaster():
+		if thisalgorithm.GetUseRescaler():
 			filter = eval ( thisalgorithm.GetName() + READER_PIXELTYPE + dimension + READER_PIXELTYPE + dimension + "_New()" )
 		else:
 			filter = eval ( thisalgorithm.GetName() + pixelType + dimension + pixelType + dimension + "_New()" )
@@ -261,15 +265,15 @@ def ExecuteResampleAlgorithm(thisalgorithm):
 	SetElementFromList(size, [dx, dy, dz], 3)
 	filter.SetSize(size)
 
-	caster = GetCaster(READER_PIXELTYPE, dimension, pixelType)
+	caster = GetRescaler(READER_PIXELTYPE, dimension, pixelType)
 
 	PipelineInputOutput([reader, smootherX, smootherY, filter, caster, writer])
 
 	writer.Update()
 	print thisalgorithm
-	print "Algorithm successfully implemented!\n"
+	print "Algorithm successfully executed!\n"
 
-def GetCaster( inputPixelType, dimension, outputPixelType):
+def GetRescaler( inputPixelType, dimension, outputPixelType):
 
 	caster = eval ( "itkRescaleIntensityImageFilter" + inputPixelType + dimension + outputPixelType + dimension + "_New()" )
 	
@@ -284,32 +288,32 @@ def PipelineInputOutput(listOfObjects):
 	for i in range(len(listOfObjects)-1):
 		listOfObjects[i+1].SetInput( listOfObjects[i].GetOutput() )
 
-def ExecuteVesselnessAlgorithm(thisalgorithm):
-
-	pdb.set_trace()
-	dimension 	= thisalgorithm.GetDimension()
-	pixelType 	= thisalgorithm.GetOutputImagePixelType()
-
-	reader = GetReader(thisalgorithm, dimension, pixelType)
-	writer = GetWriter(thisalgorithm, dimension, pixelType)
-
-	parameters = thisalgorithm.GetParameters()
-	object = {}
-	keys = parameters.keys()[:]
-
-	hessianfilter = itkHessianRecursiveGaussianImageFilterF3_New()
-	eval ( "hessianfilter.SetSigma( " + str(parameters["Sigma"]["value"]) + ")" )
-
-	vesselnessfilter = itkHessian3DToVesselnessMeasureImageFilterF_New()
-	eval ( "vesselnessfilter.SetAlpha1( " + str(parameters["Alpha1"]["value"]) + ")" )
-	eval ( "vesselnessfilter.SetAlpha2( " + str(parameters["Alpha2"]["value"]) + ")" )
-
-	PipelineInputOutput([reader, hessianfilter, vesselnessfilter, writer])
-
-	writer.Update()
-
-	print thisalgorithm
-	print "Algorithm successfully implemented!\n"
+#def ExecuteVesselnessAlgorithm(thisalgorithm):
+#
+#	pdb.set_trace()
+#	dimension 	= thisalgorithm.GetDimension()
+#	pixelType 	= thisalgorithm.GetOutputImagePixelType()
+#
+#	reader = GetReader(thisalgorithm, dimension, pixelType)
+#	writer = GetWriter(thisalgorithm, dimension, pixelType)
+#
+#	parameters = thisalgorithm.GetParameters()
+#	object = {}
+#	keys = parameters.keys()[:]
+#
+#	hessianfilter = itkHessianRecursiveGaussianImageFilterF3_New()
+#	eval ( "hessianfilter.SetSigma( " + str(parameters["Sigma"]["value"]) + ")" )
+#
+#	vesselnessfilter = itkHessian3DToVesselnessMeasureImageFilterF_New()
+#	eval ( "vesselnessfilter.SetAlpha1( " + str(parameters["Alpha1"]["value"]) + ")" )
+#	eval ( "vesselnessfilter.SetAlpha2( " + str(parameters["Alpha2"]["value"]) + ")" )
+#
+#	PipelineInputOutput([reader, hessianfilter, vesselnessfilter, writer])
+#
+#	writer.Update()
+#
+#	print thisalgorithm
+#	print "Algorithm successfully executed!\n"
 
 def SetElementFromList(object, list, size):
 	for i in range(size):

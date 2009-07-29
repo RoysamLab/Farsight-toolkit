@@ -1,0 +1,26 @@
+PROJECT(AnisotropicDiffusionVesselEnhancement)
+
+FIND_PACKAGE(ITK REQUIRED)
+
+SET(Libraries
+		ITKCommon
+		ITKBasicFilters
+		ITKIO
+   )
+INCLUDE_DIRECTORIES(${ITK_INCLUDE_DIRS} ${AnisotropicDiffusionVesselEnhancement_SOURCE_DIR}/src)
+LINK_DIRECTORIES(${ITK_LIBRARY_DIRS})
+
+
+OPTION(INSTALL_DEVEL_FILES "Install C++ headers" OFF)
+IF(INSTALL_DEVEL_FILES)
+	FILE(GLOB develFiles *.h *.txx)
+	FOREACH(f ${develFiles})
+		INSTALL_FILES(/include/InsightToolkit/BasicFilters FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/${f})
+	ENDFOREACH(f)
+ENDIF(INSTALL_DEVEL_FILES) 
+
+OPTION(BUILD_WRAPPERS "Wrap library" ON)
+IF(BUILD_WRAPPERS)
+	SUBDIRS(Wrapping)
+ENDIF(BUILD_WRAPPERS)
+

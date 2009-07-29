@@ -1,0 +1,7 @@
+WRAP_CLASS("itk::AnisotropicDiffusionVesselEnhancementImageFilter" POINTER)
+  FOREACH(d "3")
+  FOREACH(t ${WRAP_ITK_REAL})
+    WRAP_TEMPLATE("${ITKM_I${t}${d}}${ITKM_I${t}${d}}" "${ITKT_I${t}${d}}, ${ITKT_I${t}${d}}")
+  ENDFOREACH(t)
+  ENDFOREACH(d)
+END_WRAP_CLASS()
