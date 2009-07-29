@@ -14,9 +14,9 @@ import sys
 class AlgorithmXML(FilterObjectXML.ObjectXML):
     def __init__(self):
         super(AlgorithmXML, self).__init__()
-        XMLFileName = "SmoothingAlgorithms.xml"
-        if os.path.exists(XMLFileName):
-            self.ReadDocument(XMLFileName)
+        self.XMLFileName = "SmoothingAlgorithms.xml"
+        if os.path.exists(self.XMLFileName):
+            self.ReadDocument(self.XMLFileName)
             self.AllAlgorithms = self.GetFirstChild()
 
         else:
@@ -68,7 +68,7 @@ class AlgorithmXML(FilterObjectXML.ObjectXML):
         self.NewAttributeAndSet(newAlgorithm, "advancedHelpURL", algorithm.GetAdvancedHelpURL())
         # XXX May need to replace child here.
         self.AllAlgorithms.appendChild(newAlgorithm)
-        self.WriteDocument(XMLFileName)
+        self.WriteDocument(self.XMLFileName)
         print "Completed !"
 
     def GetAlgorithm(self, key):
