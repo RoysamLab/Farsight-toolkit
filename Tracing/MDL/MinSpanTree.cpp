@@ -48,8 +48,6 @@
 
 #define MAXNumBranch 10    //Suppose at most MAXNumBranch branches at the 2nd level branch from BB
 
-//#define OUTPUT_SWC 1
-
 using namespace std;
 using namespace boost;
 
@@ -259,7 +257,7 @@ int main(int argc, char *argv[])
     }
   else if(strstr(argv[7], ".swc") != NULL)
     {
-    cout << "OK, writing output as .swc" << endl;
+    cout << "Writing output as .swc" << endl;
     outputAsSWC = true;
     }
   else
@@ -284,6 +282,33 @@ int main(int argc, char *argv[])
     {
     cerr << "couldn't open vessel file for input" << endl;
     exit(-1);
+    }
+  DATATYPEIN *neuronDist;
+  FILE *neuronSegfile;
+  if(outputAsSWC)
+    {
+    if(argc < 10)
+      {
+      cerr <<
+        "Usage: " << argv[0] << " <dir> <skel pt file> <vol file> <xs> <ys> " <<
+        "<zs> <.swc output> <vessel file> <neuron segmentation file>" << endl;
+      exit(-1);
+      }
+    neuronDist = (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN));
+    //Open neuron segmentation file for reading and distance transform computation
+    if( (neuronSegfile=fopen(argv[9], "rb")) == NULL)  // open vol file
+      {
+      cerr << "couldn't open seg file (" << argv[9] << ") for input" << endl;
+      exit(1);
+      }
+    if ( (int)fread(neuronDist, sizeof(DATATYPEIN), sz, neuronSegfile) < sz)
+      {
+      printf("File size is not the same as seg size\n");
+      exit(1);
+      }
+    // test of dist trans
+    distTransform(neuronDist, sizeX, sizeY, sizeZ);
+    fclose(neuronSegfile);
     }
 //#endif
 
@@ -315,32 +340,6 @@ int main(int argc, char *argv[])
   {
      printf("Cannot open MDL_Lc_data_cond_model.each.subtree.txt for writing\n");
    exit(1);
-  }
-  #endif
-
-  #if OUTPUT_SWC
-  DATATYPEIN *neuronDist = (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN));
-  //Open neuron segmentation file for reading and distance transform computation
-  FILE *neuronSegfile;
-  if((neuronSegfile=fopen("D:\\Xiaosong\\Codes\\ITK_codes\\ShpDetectLevelsImages\\Trach7A.512x512x14_ShapeDetect.spines.Idis1_sig0.5_alf-8_bata60_CurvS0.12_Itr30_withBackBone_Seg_neg.raw", "rb"))==NULL)  // open vol file
-      {cerr << "couldn't open seg file for input" << endl;
-       exit(-1);
-      }
-  if ( fread(neuronDist, sizeof(DATATYPEIN), sz, neuronSegfile) < (unsigned int)sz)  // read in seg file
-  {
-    printf("File size is not the same as seg size\n");
-    exit(1);
-  }
-  // test of dist trans
-  distTransform(neuronDist, sizeX, sizeY, sizeZ);
-  fclose(neuronSegfile);
-
-  //Open file swc for output
-  FILE *file_swc;
-  if ((file_swc = fopen("C:\\Xiaosong\\Data\\Trach7A\\out_vtk2swc.swc", "w")) == NULL)  
-  {
-    printf("Cannot open .swc for writing\n");
-    exit(1);
   }
   #endif
 
@@ -902,14 +901,11 @@ int main(int argc, char *argv[])
           //add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeBB);   // Comment out if only need backbone output
           if(outputAsSWC)
             {
-            //still need to figure out this neuronDist file issue...
-            #if OUTPUT_SWC
             idx = int(vertexPos[vertsCurBranch2[0][j]].z)*slsz + int(vertexPos[vertsCurBranch2[0][j]].y)*sizeX + int(vertexPos[vertsCurBranch2[0][j]].x);
             fprintf(fout, "%d 7 %f %f %f %f %d\n", 
                 vertsCurBranch2[0][j], vertexPos[vertsCurBranch2[0][j]].x, vertexPos[vertsCurBranch2[0][j]].y, vertexPos[vertsCurBranch2[0][j]].z, (float)neuronDist[idx], vertsCurBranch2[0][j-1]);
-            //fprintf(file_swc, "%4.0f  %4.0f  %4.0f\n",   // Output for levelset seeds
-              //vertexPos[vertsCurBranch2[0][j]].x, vertexPos[vertsCurBranch2[0][j]].y, vertexPos[vertsCurBranch2[0][j]].z);
-            #endif
+            fprintf(fout, "%4.0f  %4.0f  %4.0f\n",   // Output for levelset seeds
+              vertexPos[vertsCurBranch2[0][j]].x, vertexPos[vertsCurBranch2[0][j]].y, vertexPos[vertsCurBranch2[0][j]].z);
             }
         }
         if (MDL_minIndex >= 1)  {
@@ -956,17 +952,16 @@ int main(int argc, char *argv[])
 
   if(outputAsSWC)
     {
-            #if OUTPUT_SWC
     int parent_index, cur_index;
     int parent_index0, cur_index0;
     int targ;
     for(boost::tie(vi, vend) = vertices(msTree); vi != vend; ++vi)
       { // for all vertex in the graph
       index_vert = int(index[*vi]);   // Get index from the graph IndexMap
-      std::cout << "vertBackbone[index_vert]=" << vertBackbone[index_vert] << std::endl;
+      cout << "vertBackbone[index_vert]=" << vertBackbone[index_vert] << std::endl;
       if (vertBackbone[index_vert]==0) continue;  // if the vertex is not on Backbone, continue
-      std::cout << "degree_nodes[index_vert]=" << degree_nodes[index_vert] << std::endl;
-      std::cout << "out_degree of index_vert =" << out_degree(vertex(index_vert, msTree), msTree) << std::endl;
+      cout << "degree_nodes[index_vert]=" << degree_nodes[index_vert] << std::endl;
+      cout << "out_degree of index_vert =" << out_degree(vertex(index_vert, msTree), msTree) << std::endl;
       //if (degree_nodes[index_vert] != 1)  
       if (out_degree(vertex(index_vert, msTree), msTree) != 1)  continue;  // if it is not end of backbone
       //if (vertexPos[index_vert].x> 450 && vertexPos[index_vert].y<50 ) break;  // to pick up particular root vertex for swc file
@@ -1039,7 +1034,6 @@ int main(int argc, char *argv[])
           }//while end
         }//for end
       }//if end
-      #endif
     } //end if outpuAsSWC
 
   #if OUT_CLASSIFIER_TRAINING
