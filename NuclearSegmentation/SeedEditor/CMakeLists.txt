@@ -58,11 +58,9 @@ ENDIF(VTK_FOUND)
 
 QT4_WRAP_CPP( GUI_MOC_SRCS Seed3D.h )
 #ADD_LIBRARY(Trace Trace.h Trace.cpp)
-ADD_EXECUTABLE( Seed_editor  vtkSeeds3D.cxx ${Sources} ${GUI_MOC_SRCS} )
+ADD_EXECUTABLE( Seededitor  vtkSeeds3D.cxx ${Sources} ${GUI_MOC_SRCS} )
 
-TARGET_LINK_LIBRARIES( Seed_editor ${Libraries})
-
-#INSTALL(TARGETS trace_editor DESTINATION bin)	
+TARGET_LINK_LIBRARIES( Seededitor ${Libraries})
 
 
 # create an executable file named "qtproject" from the source files in the variable "qtproject_SRCS".
