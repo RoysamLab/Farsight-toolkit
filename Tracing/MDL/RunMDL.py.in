@@ -32,11 +32,16 @@ sizeY = match.group(2)
 sizeZ = match.group(3)
 intensityThreshold = parameterValues["Intensity threshold"]
 connectedComponentsSize = parameterValues["Connected components size"]
+vectorMagnitude = parameterValues["Vector magnitude"]
+edgeRange = parameterValues["IW-MST edge range"]
+pruneSize = parameterValues["Graph prune size"]
+morphStrength = parameterValues["Graph morph strength"]
+alpha = parameterValues["MDL weight factor alpha"]
 
 #change to the binary directory before we start calling executables
 os.chdir("${CMAKE_BINARY_DIR}")
 
-cmd = "./volumeProcess${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s 1 %s %s" % \
+cmd = "./volumeProcess${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s %s" % \
   (fullPathToInput, sizeX, sizeY, sizeZ, dataDir+"/volume_Processed.raw",\
    intensityThreshold)
 print "Step #1, executing the following command:\n%s" % cmd
@@ -89,9 +94,9 @@ subprocess.call(["./skel_Extrvalley3D${CMAKE_EXECUTABLE_SUFFIX}",\
 timeElapsed = time.time() - timeBefore
 print "Step #5 completed in %d seconds\n\n" % timeElapsed
 
-cmd = "./skel_streamline${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s 0.05 %s %s" % \
-  (dataDir+"/out.vec", sizeX, sizeY, sizeZ, dataDir+"/out.seed",\
-   dataDir+"/out.skel")
+cmd = "./skel_streamline${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s %s %s" % \
+  (dataDir+"/out.vec", sizeX, sizeY, sizeZ, vectorMagnitude,\
+   dataDir+"/out.seed", dataDir+"/out.skel")
 print "Step #6, executing the following command:\n%s" % cmd
 timeBefore = time.time()
 subprocess.call(["./skel_streamline${CMAKE_EXECUTABLE_SUFFIX}",\
@@ -100,14 +105,20 @@ subprocess.call(["./skel_streamline${CMAKE_EXECUTABLE_SUFFIX}",\
 timeElapsed = time.time() - timeBefore
 print "Step #6 completed in %d seconds\n\n" % timeElapsed
 
-cmd = "./MinSpanTree${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s %s 8 4 50 0.95 %s %s %s" % \
+edgeRange
+pruneSize
+morphStrength
+alpha
+cmd = "./MinSpanTree${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s %s %s %s %s %s %s %s %s" % \
   (dataDir+"/", "out.skel", "components_Connected.raw", sizeX, sizeY, sizeZ, \
-   dataDir+"/out.vtk", dataDir+"/out.txt", dataDir+"/Aniso_Diffused.raw")
+   edgeRange, pruneSize, morphStrength, alpha, dataDir+"/out.vtk",\
+   dataDir+"/out.txt", dataDir+"/Aniso_Diffused.raw")
 print "Step #7, executing the following command:\n%s" % cmd
 timeBefore = time.time()
 subprocess.call(["./MinSpanTree${CMAKE_EXECUTABLE_SUFFIX}",\
                   dataDir+"/", "out.skel", "components_Connected.raw", sizeX,\
-                  sizeY, sizeZ, "8", "4", "50", "0.95", dataDir+"/out.vtk",\
-                  dataDir+"/out.txt", dataDir+"/Aniso_Diffused.raw"])
+                  sizeY, sizeZ, edgeRange, pruneSize, morphStrength, alpha,\
+                  dataDir+"/out.vtk", dataDir+"/out.txt",
+                  dataDir+"/Aniso_Diffused.raw"])
 timeElapsed = time.time() - timeBefore
 print "Step #7 completed in %d seconds\n\n" % timeElapsed

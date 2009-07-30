@@ -41,7 +41,6 @@ limitations under the License.
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/graph_traits.hpp>
 
-
 #define OUT_CLASSIFIER_TRAINING 0  //1: output to file all leaf branches for training
 #define DRAW_MDL_CURVE  0           // Output Lm(M) and L(M) values for MDL curve
 

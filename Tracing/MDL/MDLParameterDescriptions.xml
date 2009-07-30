@@ -31,4 +31,65 @@ larger noisy objects."
     default="100"
   >
   </parameter>
+  <parameter
+    name="Vector magnitude"
+    description=
+"This is a threshold value used to choose critical points. When the image
+intensity gradient magnitude is higher than this threshold, a critical points
+is detected."
+  type="number"
+  min="0.04"
+  max="0.15"
+  default="0.04"
+  >
+  </parameter>
+  <parameter
+  name="IW-MST edge range"
+  description=
+"If the distance between 2 points is above this distance, we assume there is no
+edge between them in the graph structure before generating the IW-MST.
+Use higher values for a more connected graph."
+  type="number"
+  min="5"
+  max="15"
+  default="8"
+  >
+  </parameter>
+  <parameter
+  name="Graph prune size"
+  description=
+"Prune the tree structure when the trivial branches are  shorter than this length.
+Use higher values to prune longer branches."
+  type="number"
+  min="2"
+  max="10"
+  default="4"
+  >
+  </parameter>
+  <parameter
+  name="Graph morph strength"
+  description=
+"In graph morphological method with iteration of graph erosion and dilation
+steps, We set the morphology strength as the number of iterations for graph
+erosion and dilation.
+Use higher values to remove longer branches."
+  type="number"
+  min="30"
+  max="70"
+  default="50"
+  >
+  </parameter>
+  <parameter
+  name="MDL weight factor alpha"
+  description=
+"Used to emphasize the function of either model description or the data
+description (tradeoff between coverage and conciseness).
+Use higher values for more complex models."
+  type="number"
+  min="0.5"
+  max="0.95"
+  default="0.95"
+  >
+  </parameter>
 </parameters>
+
