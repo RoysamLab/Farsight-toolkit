@@ -187,7 +187,7 @@ bool NuclearSegmentation::Finalize()
 		errorMessage = "No Initial Clustering";
 		return false;
 	}
-	NucleusSeg->runAlphaExpansion3D();
+	NucleusSeg->runAlphaExpansion();
 	lastRunStep = 4;
 	GetResultImage();
 	return true;
