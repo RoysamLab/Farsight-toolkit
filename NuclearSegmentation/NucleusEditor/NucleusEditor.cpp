@@ -166,49 +166,27 @@ void NucleusEditor::createMenus()
 
 	editMenu->addSeparator();
 
-	/*
-	splitAction = new QAction(tr("Split Cells"), this);
-	splitAction->setStatusTip(tr("Splits the selected cells"));
-	splitAction->setEnabled(false);
-	connect(splitAction,SIGNAL(triggered()),this,SLOT(splitCells()));
-	editMenu->addAction(splitAction);	
-*/
-
 	// Splitting has two modes and therefore has two submenu items:
 	// Start Splitting
 	// End Splitting
 
 	//Main Splitting Menu
 	splitMenu= editMenu->addMenu(tr("&Splitting"));
+	splitMenu->setEnabled(false);
 
 	//submenu1:
 	splitStartAction = new QAction(tr("Start Splitting"), this);
 	splitStartAction->setStatusTip(tr("Start Splitting Mode"));
-	splitStartAction->setEnabled(true);
+	splitStartAction->setEnabled(false);
 	connect(splitStartAction,SIGNAL(triggered()),this,SLOT(startSplitting()));
 	splitMenu->addAction(splitStartAction);
 
 	//submenu2:
 	splitEndAction = new QAction(tr("End Splitting"), this);
 	splitEndAction->setStatusTip(tr("End Splitting Mode"));
-	splitEndAction->setEnabled(true);
+	splitEndAction->setEnabled(false);
 	connect(splitEndAction,SIGNAL(triggered()),this,SLOT(endSplitting()));
 	splitMenu->addAction(splitEndAction);
-
-	//editMenu->addMenu(splitMenu);	
-	//splitAction->
-		//menu()->addAction(splitStartAction);	
-
-
-
-	//add menu item forum nokia to menu item nokia
-	//forumNokiaMenu = nokiaMenu->addMenu(tr("Forum Nokia"));
-	//add action for Discussion Boards  sub-menu
-	//forumNokiaMenu->addAction(menu_DiBoAction);
-	//add action for Wiki  sub-menu
-	//forumNokiaMenu->addAction(menu_wikiAction);
-
-
 
 	//HELP MENU
 	helpMenu = menuBar()->addMenu(tr("Help"));
@@ -399,13 +377,10 @@ void NucleusEditor::loadResult(void)
 
 	// Enable the menu items for editing
 	mergeAction->setEnabled(true);
-	deleteAction->setEnabled(true);
-	//splitAction->setEnabled(true);
+	deleteAction->setEnabled(true);	
+	splitMenu->setEnabled(true);
 	splitStartAction->setEnabled(true);
 	splitEndAction->setEnabled(true);
-
-	//Set the status
-	//editStatus=true;
 
 }
 
@@ -467,7 +442,7 @@ void NucleusEditor::segmentImage()
 	// Disable the menu items for editing
 	mergeAction->setEnabled(false);
 	deleteAction->setEnabled(false);
-	//splitAction->setEnabled(false);
+	splitMenu->setEnabled(false);
 	splitStartAction->setEnabled(false);
 	splitEndAction->setEnabled(false);
 
@@ -503,7 +478,7 @@ void NucleusEditor::loadImage()
 	// Disable the menu items for editing
 	mergeAction->setEnabled(false);
 	deleteAction->setEnabled(false);
-	//splitAction->setEnabled(false);
+	splitMenu->setEnabled(false);
 	splitStartAction->setEnabled(false);
 	splitEndAction->setEnabled(false);
 
