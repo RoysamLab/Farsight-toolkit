@@ -210,7 +210,7 @@ bool NuclearSegmentation::GetResultImage()
 		errorMessage = "Nothing To Get";
 		return false;
 		break;
-	case 1:
+	case 1:		
 		dptr = NucleusSeg->getBinImage();
 		break;
 	case 2:	//Seeds:

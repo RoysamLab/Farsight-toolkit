@@ -106,6 +106,9 @@ public:
 	int saveIntoIDLFormat(std::string imageName);
 	//Read the output from the previous IDL format
 	int readFromIDLFormat(std::string fileName);
+	//return a list of seeds
+	vector<Seed> getSeedsList() { return mySeeds; }
+
   
 
 private:
