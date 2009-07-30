@@ -69,9 +69,7 @@ void SegmentationView::dataChanged(const QModelIndex &topLeft, const QModelIndex
 // Add to the setModel function so that the mapping is updated
 //*****************************************************************************************
 void SegmentationView::setModels ( SegmentationModel * sModel ) 
-{
-	//delete resultModel;	
-	//resultModel = NULL;
+{	
 	resultModel = sModel;
 	QAbstractItemView::setModel( resultModel->GetModel() );
 	QAbstractItemView::setSelectionModel( resultModel->GetSelectionModel() );
@@ -563,9 +561,10 @@ void SegmentationView::paintEvent(QPaintEvent *event)
 	QStylePainter painter(viewport());
 
 	//Want to move to center
-	int xshift = qMax(0, ( viewport()->width() - newSize.width() ) / 2 );
-	int yshift = qMax(0, ( viewport()->height() - newSize.height() ) / 2 );
+	//int xshift = qMax(0, ( viewport()->width() - newSize.width() ) / 2 );
+	//int yshift = qMax(0, ( viewport()->height() - newSize.height() ) / 2 );
 
+	int xshift=0;int yshift=0;
 	painter.drawImage(xshift - horizontalScrollBar()->value(), 
 		                yshift - verticalScrollBar()->value(),
 						tmpImg.scaled(newSize,Qt::KeepAspectRatio,Qt::FastTransformation));
@@ -595,6 +594,7 @@ void SegmentationView::refreshDisplayImage()
 
 	//displayImage = QImage(channelImg->NumColumns(),channelImg->NumRows(),QImage::Format_ARGB32);
 	displayImage = QImage(totalWidth,totalHeight,QImage::Format_ARGB32);
+	//displayImage = QImage(1000,1000,QImage::Format_ARGB32);
 	displayImage.fill(qRgb(0,0,0));
 	QPainter painter(&displayImage);
 	painter.setCompositionMode(QPainter::CompositionMode_Plus);
