@@ -1,3 +1,18 @@
+/*=========================================================================
+Copyright 2009 Rensselaer Polytechnic Institute
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. 
+=========================================================================*/
+
 // ----
 // ----  Extract the thinness metric based skeleton. 
 // ----  Uses Toriwaki and Saito's DT algorithm. 
@@ -8,12 +23,13 @@
 // ----  Output: volume file with distance transform, 
 // ----          DT is zero for all object voxels; DT is scaled to 0-255.
 // ----
-// $Id:  2008/05/02 $
+// $Id: distTransform.cpp 598 2009-05-11 21:27:59Z galbreath $
 
 #include "MinSpanTree.h"
 #include "distTransform.h"
 #include <iostream>
 #include <fstream>
+//#include <io.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -33,12 +49,8 @@ void distTransform(unsigned char *f, int L, int M, int N)
 {
   
   int i,j,k,n;
- //float *buff , df, db, d, w;
-  
-  //float  df, db; //d 
-  long df,db;
-  long *fDist,*buff;
-  // modify by xl
+  float *buff , df, db, d, w;
+  long *fDist;
   long idx, slsz, sz;
 
   slsz = L*M;		// slice size
@@ -53,10 +65,7 @@ void distTransform(unsigned char *f, int L, int M, int N)
 
   int maxdim = MAX(L,M);
   maxdim = MAX(maxdim,N);
-
-  //buff = new float[maxdim+10];
-  buff = new long[maxdim+10];
-
+  buff = new float[maxdim+10];
 
   // Using Algorithm 3 from Appendix 
 
@@ -65,7 +74,7 @@ void distTransform(unsigned char *f, int L, int M, int N)
   for (k = 0; k < N; k++)
     for (j = 0; j < M; j++)
     {
-       df =  L; // L,  by xiao  
+       df = L;
        for (i = 0; i < L; i++)
        {
          idx = k*slsz + j*L + i;
@@ -73,8 +82,7 @@ void distTransform(unsigned char *f, int L, int M, int N)
            df = df + 1;
          else
            df = 0;
-         // fDist[idx] = df*df;
-		  fDist[idx] = (long)(df*df);
+         fDist[idx] = df*df;
        }
      }
  
@@ -97,8 +105,6 @@ void distTransform(unsigned char *f, int L, int M, int N)
 
   // Step 2
 
-  long d,w;  // add by xiao liang
-
   for (k = 0; k < N; k++)
     for (i = 0; i < L; i++)
     {
@@ -111,8 +117,7 @@ void distTransform(unsigned char *f, int L, int M, int N)
         if (d != 0)
         {
           int rmax, rstart, rend;
-          //rmax = (int) floor(sqrt(d)) + 1;
-		  rmax = (int) floor(sqrt(double(d))) + 1;
+          rmax = (int) floor(sqrt(d)) + 1;
           rstart = MIN(rmax, (j-1));
           rend = MIN(rmax, (M-j));
           for (n = -rstart; n < rend; n++)
@@ -126,7 +131,6 @@ void distTransform(unsigned char *f, int L, int M, int N)
         }
         idx = k*slsz + j*L +i;
         fDist[idx] = d;
-		//fDist[idx] = (long) d;
       }
     }
 
@@ -143,8 +147,7 @@ void distTransform(unsigned char *f, int L, int M, int N)
         if (d != 0)
         {
           int rmax, rstart, rend;
-          // rmax = (int) floor(sqrt(d)) + 1;
-		   rmax = (int) floor(sqrt(double (d))) + 1;
+          rmax = (int) floor(sqrt(d)) + 1;
           rstart = MIN(rmax, (k-1));
           rend = MIN(rmax, (N-k));
           for (n = -rstart; n < rend; n++)
@@ -162,7 +165,7 @@ void distTransform(unsigned char *f, int L, int M, int N)
     }
 
   for (idx = 0; idx < slsz*N; idx++) {
-      fDist[idx] = (long) sqrt(float(fDist[idx]));
+      fDist[idx] = sqrt(float(fDist[idx]));
   }
 
 
@@ -171,8 +174,7 @@ void distTransform(unsigned char *f, int L, int M, int N)
 	  if (fDist[idx] > dMax)   dMax = fDist[idx];
   }
   for(idx=0; idx<sz; idx++)   {  // Scale the dist result to 255
-	  //f[idx] = fDist[idx] * 255/ dMax;
-	  f[idx] = (unsigned char) fDist[idx]; // by xiao (long)
+	  f[idx] = fDist[idx] * 255/ dMax;
   }
 
   return;

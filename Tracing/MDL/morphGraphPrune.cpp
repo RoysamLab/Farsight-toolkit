@@ -1,3 +1,18 @@
+/*=========================================================================
+Copyright 2009 Rensselaer Polytechnic Institute
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. 
+=========================================================================*/
+
 // morphGraphPrune.cpp : Morphological process on graph 
 // Function: Pruning on Minimum Spanning Tree for trivia branches
 //           Removing branches with length below certain threshold
@@ -6,12 +21,12 @@
 
 #include "MinSpanTree.h"
 #include "morphGraphPrune.h"
-//#include "stdafx.h"
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/kruskal_min_spanning_tree.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <iostream>
 #include <fstream>
+//#include <io.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -42,10 +57,12 @@ struct  VoxelPosition
 // Arguments of function: degree_nodes[], tree graph, vertexPos[]
 // Output to the same Graph: msTree (after remove_edge()).
 
-Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexPos) 
+Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexPos, float length_leaf) 
 {
 	//struct VoxelPosition *vertexPos;
 	Graph msTree_buffer(num_nodes+1);
+	//int num_edge_MST = 0;
+	//int num_vertex_MST = num_vertices(msTree); 
 	//int num_edge_MST = num_edges(msTree); //not work
 
 	msTree_buffer = msTree; // copy to buffer for next process
@@ -53,9 +70,9 @@ Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexP
 	Edge_iter   ei, ei_end;
 	Vertex_iter vi, vend;
 	graph_traits<Graph>::out_edge_iterator  outei, outedge_end;
-	unsigned int curBranchVerts[2000];
+	int curBranchVerts[2000];
 	int curBrVerts_Index = 0;
-	float length_leaf, length_edge;
+	float length_edge;
 	int indVert, indVert_last;
 	int num_leaves;
 	int i, j;
@@ -63,6 +80,7 @@ Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexP
 
 
 	// Consider all leaves
+	//Vertex curVert;
 	num_leaves = 0;
 	int prunetimes = 1; 
 	  
@@ -79,7 +97,7 @@ Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexP
 					//curVert = vertex(curBranchVerts[curBrVerts_Index], msTree);
 					for (boost::tie(outei, outedge_end) = out_edges(vertex(curBranchVerts[curBrVerts_Index], msTree), msTree);
 																							outei != outedge_end; ++outei) {
-						if (target(*outei, msTree) == curBranchVerts[curBrVerts_Index-1])
+						if (target(*outei, msTree) == (unsigned int)curBranchVerts[curBrVerts_Index-1])
 							continue;
 						curBranchVerts[curBrVerts_Index+1] = target(*outei, msTree);
 					}
@@ -88,7 +106,6 @@ Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexP
 				branchChosen = 1;
 				// Evaluate with MDL if the branch is chosen
 				if (i == prunetimes-1) num_leaves++;
-				length_leaf = 0;
 				for (j = 0; j <= curBrVerts_Index; j++) {
 					indVert = curBranchVerts[j];
 
@@ -116,7 +133,7 @@ Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexP
 				//if (meanDensityBranch < 150)     branchChosen = 0;
 				//if (length_leaf > 25)            branchChosen = 1;
 
-				if (length_leaf < 4)      branchChosen = 0;     // Parameter length_leaf to choose -> 2, 3, 5; 4
+				if (length_leaf < 4)      branchChosen = 0;     // Parameter length_leaf to choose -> 2, 3, 5
 
 				// Remove the branch based on MDL critierion
 				if (branchChosen == 0)  {

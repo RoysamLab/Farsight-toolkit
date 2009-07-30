@@ -1,9 +1,25 @@
+/*=========================================================================
+Copyright 2009 Rensselaer Polytechnic Institute
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. 
+=========================================================================*/
+
 /*  Compute Connected Component with Flood filling method
  *  DepthFirstSearch may cause stack overflow for large
  *  datasets
  *  Windows version, taken in from Linux version
  *   Author: Xiaosong Yuan, RPI
  *  Modified on Oct. 2, 2005                 */
+
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -65,9 +81,12 @@ int main(int argc, char *argv[])
 	char *infilename = new char[80];
 	char *outfilename = new char[80];
 	int i,j,k;
+	//int ii, jj, kk;
+	//int NearObjFlag;
 	DATATYPEOUT *volout;
 	long idx;
-	double ThresCompVoxels;// float, by xiao
+	//float ThresCompVoxels;
+	double ThresCompVoxels;
 	int vertHistComp[100000];
 
 	infilename = argv[1];
@@ -81,31 +100,31 @@ int main(int argc, char *argv[])
 	volout = (DATATYPEOUT*)malloc(sizeX*sizeY*(sizeZ)*sizeof(DATATYPEOUT));
 	volIndex = (int*)malloc(sizeX*sizeY*sizeZ*sizeof(int));
 
-#ifdef _WIN32
-  errno_t err; 
-  if( (err=fopen_s(&infile,infilename,"rb")) != NULL)
-    {
-    printf("Input file open error!\n");
-    exit(-1);
-    }
 
-  if( (err=fopen_s(&outfile,outfilename,"wb")) != NULL)
-    {printf("Output file open error!\n");
-    exit(-1);
-    }
-#else
-  if( (infile=fopen(infilename,"rb")) == NULL)
-    {
-    printf("Input file open error!\n");
-    exit(-1);
-    }
 
-  if( (outfile=fopen(outfilename,"wb")) == NULL)
-    {
-    printf("Output file open error!\n");
-    exit(-1);
-    }
-#endif
+  #ifdef WIN32
+	errno_t err; 
+    if((err=fopen_s(&infile,infilename,"rb"))!=NULL)
+			{printf("Input file open error!\n");
+			 exit(-1);
+			}
+  
+	if((err=fopen_s(&outfile,outfilename,"wb"))!=NULL)
+			{printf("Output file open error!\n");
+			 exit(-1);
+			}
+  #else
+	if((infile=fopen(infilename,"rb"))==NULL)
+			{printf("Input file open error!\n");
+			 exit(-1);
+			}
+
+	if((outfile=fopen(outfilename,"wb"))==NULL)
+			{printf("Output file open error!\n");
+			 exit(-1);
+			}
+  #endif
+
 
 /*	if 0 	// read another file if necessary
 	FILE *infile2;
@@ -172,6 +191,11 @@ int main(int argc, char *argv[])
 
 	fclose(infile);
 	fclose(outfile);
+	delete []infilename;
+	delete []outfilename;
+	delete []volin;// = (DATATYPEIN*)malloc(sizeX*sizeY*(sizeZ)*sizeof(DATATYPEIN));
+	delete []volout;// = (DATATYPEOUT*)malloc(sizeX*sizeY*(sizeZ)*sizeof(DATATYPEOUT));
+	delete []volIndex;// = (int*)malloc(sizeX*sizeY*sizeZ*sizeof(int));
 	printf("Done \n");
 	return 0;
 }
@@ -247,10 +271,6 @@ void spread(Position pos, int startx, int endx, int direction)
 			newy = pos.y;
 			newz = pos.z -1;
 			break;
-    default: // No spread if direction is not 1, 2, 3, or 4.
-      newy = pos.y;
-      newz = pos.z;
-      break;
 	}
 
 	if (newy < sizeY && newy >= 0 && newz < sizeZ && newz >=0) // within boundary

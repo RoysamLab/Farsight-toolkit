@@ -1,3 +1,18 @@
+/*=========================================================================
+Copyright 2009 Rensselaer Polytechnic Institute
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. 
+=========================================================================*/
+
 /*  Volume dataset processing
  *  accept a sequence of volumes
  *  Windows version, taken in from Linux version
@@ -7,12 +22,16 @@
  *  Input parameters
  *          1. sizeExpand   
  *          2. preproess          */
-
+#if defined(_MSC_VER)
+#pragma warning(disable : 4996)
+#endif
+//#include "stdafx.h"
 #include <stdlib.h>
 #include <stdio.h>
 //#include <fstream.h>
 //#include <iostream.h>
 #include <string.h>
+#include <math.h>
 #define FillColor 1  //111
 #define OBJECT 200
 #define COLORseed 0  //usually 0, can be selected as OBJECT
@@ -22,6 +41,7 @@
 #define DATATYPEIN unsigned char
 #define DATATYPEOUT unsigned char
 
+const unsigned char  m_NumberOfHistogramBins = 128;
 
 DATATYPEIN *volin;
 int sizeX, sizeY, sizeZ, sizeTime;
@@ -51,14 +71,15 @@ int findstartx(Position ps);
 int findendx(Position ps);
 void spread(Position pos, int startx, int endx, int direction);
 void lineSeed();
+double  OtsuThreshold (int sizeX,int sizeY,int sizeZ);
+
 
 
 int main(int argc, char *argv[])
 {
 	
-	if(argc < 7) {
-	    printf("\nUsage: <input file> <sizeX> <sizeY> <sizeZ> <sizeTime> <output file> <threshold>.\n");
-		// printf("\nUsage: <input file> <sizeX> <sizeY> <sizeZ>  <output file> <threshold>.\n"); // by xiao
+	if(argc < 6) {
+	    printf("\nUsage: <input file> <sizeX> <sizeY> <sizeZ> <output file> <threshold>.\n");
 	    exit(1);
 	}
 
@@ -68,66 +89,41 @@ int main(int argc, char *argv[])
 	char *infilename = new char[80];
 	char *outfilename = new char[80];
 	int i,j,k, t;
+	int ii, jj, kk;
+	//int NearObjFlag;
 	DATATYPEOUT *volout;
-	//float threshold;
+	long idx;//, iidx;
 	double threshold;
+	//float threshold;
+	//int kmod8, kdiv8;
+	//int FlagIsolated;
+	//int NumConnectComp;
 	int sizeExpand = 0;  //10;
+	DATATYPEOUT blockMax;
+	int timesDilate;
+	int border;
 
 	infilename = argv[1];
 	sizeX = atoi(argv[2]);
 	sizeY = atoi(argv[3]);
 	sizeZ = atoi(argv[4]);
-	sizeTime = atoi(argv[5]); 
-	outfilename = argv[6];
-	threshold = atof(argv[7]);
-
-	//outfilename = argv[5];
-	//threshold = atof(argv[6]);
+	//sizeTime = atoi(argv[5]);
+	sizeTime = 1;
+	outfilename = argv[5];
+	threshold = atof(argv[6]);
 
 	volin = (DATATYPEIN*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(DATATYPEIN));
 	volout = (DATATYPEOUT*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(DATATYPEOUT));
 
-	//if((infile=fopen(infilename,"rb"))==NULL)
-
-
-#ifdef _Win32
-   errno_t err=fopen_s(&infile,infilename,"rb");
-   if(err)
-   {printf("Input file open error!\n");
-			 exit(-1);
-			}
-#else
-	infile=fopen(infilename,"rb"); 
-  if ( infile == NULL ) 
-    { 
-    printf("Input file open error!\n"); 
-    exit( -1 ); 
-    } 
-#endif
-
-   /*
-    if((err=fopen_s(&infile,infilename,"rb"))!=NULL)
+	if((infile=fopen(infilename,"rb"))==NULL)
 			{printf("Input file open error!\n");
 			 exit(-1);
 			}
-   */
 
-   // errno_t err; 
-	//if((outfile=fopen(outfilename,"wb"))==NULL)
-
-#ifdef _WIN32
-	if((err=fopen_s(&outfile,outfilename,"wb"))!=NULL)
+	if((outfile=fopen(outfilename,"wb"))==NULL)
 			{printf("Output file open error!\n");
 			 exit(-1);
 			}
-#else
-	outfile=fopen(outfilename,"wb"); 
-  if ( outfile == NULL ) 
-    { 
-    printf("Output file open error!\n"); 
-    exit( -1 ); 
-    } 
-#endif
 
 /*	if 0 	// read another file if necessary
 	FILE *infile2;
@@ -142,7 +138,7 @@ int main(int argc, char *argv[])
 
 	for (t=0; t<sizeTime; t++) {
 		
-		if (fread(volin, sizeof(DATATYPEIN), sizeX*sizeY*sizeZ, infile) < (unsigned int) (sizeX*sizeY*sizeZ))
+		if (fread(volin, sizeof(DATATYPEIN), sizeX*sizeY*sizeZ, infile) < (unsigned int)(sizeX*sizeY*sizeZ))
 		{
 			printf("File size is not the same as volume size\n");
 		    exit(1);
@@ -154,30 +150,81 @@ int main(int argc, char *argv[])
 
 
 		// Pre-Processing 
-		for (k=0; k<(sizeZ+sizeExpand*2); k++)
+
+		// by xiao liang, using 3 sigma theory to estimate threshold;
+        double meanValue =0.0, VarianceValue =  0.0;
+
+		for (k=0; k<sizeZ; k++)
+		{  // threshlod first
+			for (j=0; j<sizeY; j++) 
+			{
+				for (i=0; i<sizeX; i++)
+				{
+					idx = k *sizeX*sizeY + j *sizeX + i;
+					meanValue += volin[idx];
+				}
+			}
+		}
+
+       meanValue = meanValue/(double)(sizeX*sizeY*sizeZ);
+ 
+	   for (k=0; k<sizeZ; k++)
+		{  // threshlod first
+			for (j=0; j<sizeY; j++) 
+			{
+				for (i=0; i<sizeX; i++)
+				{
+					idx = k *sizeX*sizeY + j *sizeX + i;
+					VarianceValue += (volin[idx]-meanValue)*(volin[idx]-meanValue);
+				}
+			}
+		}
+
+       VarianceValue =  VarianceValue/(double)(sizeX*sizeY*sizeZ);
+	   VarianceValue = sqrt(VarianceValue);
+
+	   double m_threshold=OtsuThreshold (sizeX,sizeY,sizeZ);
+	   if (m_threshold > 7||m_threshold<0)threshold =(meanValue-VarianceValue/30); 
+	   else
+		   threshold = m_threshold;
+
+	   printf ("OTSU optimal threshold %f", threshold);
+	
+	  // cout << meanValue << VarianceValue;
+     // printf("hello %f,hello %f, %f, optimalthreshold= %f ",meanValue,VarianceValue,threshold,m_threshold);
+	
+
+	   for (k=0; k<(sizeZ+sizeExpand*2); k++)
 			for (j=0; j<sizeY; j++)
 				for (i=0; i<sizeX; i++) {
-					if (k==4) 
-						volout[k *sizeX*sizeY + j *sizeX + i] = volin[0 *sizeX*sizeY + j *sizeX + i]; 
-					else
+
 					volout[k *sizeX*sizeY + j *sizeX + i] = 0; 
 				}  //initial to zeros
 
-/*
+
+
+
 		for (k=0; k<sizeZ; k++) {  // threshlod first
 			for (j=0; j<sizeY; j++) {
 				for (i=0; i<sizeX; i++)
 				{
 					idx = k *sizeX*sizeY + j *sizeX + i;
-					if (volin[idx] >= threshold) {
+
+					if (volin[idx] >= threshold) 
+					{}
+					/*if (volin[idx] >= meanValue-3*VarianceValue) 
+					{
 						//volin[idx] = volin[idx];
 					}
+					*/
+
+
 					else
 						volin[idx] = 0;
 				}
 			}
 		}   
-
+/*
 		for (k=0; k<sizeZ; k++)
 			for (j=0; j<sizeY; j++)
 				for (i=0; i<sizeX; i++) {
@@ -189,8 +236,8 @@ int main(int argc, char *argv[])
 				for (i=0; i<sizeX; i++) {
 					volin[k *sizeX*sizeY + j*sizeX + i] = volout[k *sizeX*sizeY + j*sizeX + i];
 				}  // save back to volin
-*/
 
+*/
 
 		// Method 1: Cutting a part of the object
 /*		for (k=0; k<sizeZ; k++) {
@@ -210,7 +257,6 @@ int main(int argc, char *argv[])
 */
 
 		// Method 2: Dilation of the object
-/*
 	   timesDilate = 1;
 	   border = 3;
 	   while (timesDilate >0 ) {
@@ -228,7 +274,7 @@ int main(int argc, char *argv[])
 					// Keep the peak of the original intensity
 					if (blockMax == volin[k *sizeX*sizeY + j *sizeX + i] && blockMax != 0)  {
 						blockMax = blockMax + 1;
-						if (blockMax > 255)   blockMax = 255;
+						//if (blockMax > 255)   blockMax = 255;
 					}
 					volout[k *sizeX*sizeY + j *sizeX + i] = blockMax;
 				}
@@ -243,7 +289,7 @@ int main(int argc, char *argv[])
 				}
         timesDilate--;
 	   }
-*/
+
 
 		// Method 3: Threshold the voxel intensity
 /*		for (k=0; k<sizeZ; k++) {
@@ -353,37 +399,6 @@ int main(int argc, char *argv[])
 			}
 		}
 */
-		// Method 9: Smoothing the image
-/*
-		border = 3;
-		kernelSize = 3;  // shoud have border >= kernelSize
-		for (k=border; k< sizeZ-border; k++) {
-			for (j=border; j< sizeY-border; j++) {
-				for (i=border; i< sizeX-border; i++)
-				{
-					intensitySum = 0;
-					for (kk=-kernelSize; kk<=kernelSize; kk++)
-						for (jj=-kernelSize; jj<=kernelSize; jj++)
-							for (ii=-kernelSize; ii<=kernelSize; ii++) {
-								intensitySum += volin[(k+kk)*sizeX*sizeY + (j+jj)*sizeX + (i+ii)];
-					}
-				    kernelLen = 2 * kernelSize + 1;
-					volout[k*sizeX*sizeY +j*sizeX +i]=(DATATYPEOUT)(intensitySum/(kernelLen*kernelLen*kernelLen));
-				}
-			}
-		}
-*/
-
-		// Post-Processing 
-/*		for (k=0; k<sizeZ; k++)
-			for (j=0; j<sizeY; j++)
-				for (i=0; i<sizeX; i++) {
-					if (volout[k *sizeX*sizeY + j *sizeX + i] > threshold) 
-						volout[k *sizeX*sizeY + j *sizeX + i] = OBJECT; 
-					else
-                        volout[k *sizeX*sizeY + j *sizeX + i] = 0; 
-				}   // threshold
-*/
 
 		fwrite(volout, sizeX*sizeY*sizeZ, sizeof(DATATYPEOUT), outfile);
 
@@ -392,12 +407,119 @@ int main(int argc, char *argv[])
 
 	fclose(infile);
 	fclose(outfile);
+
+	free(volin);  // by xiao
+	free(volout); // by xiao
+	volin=NULL;
+	volout=NULL;
+	delete []infilename;
+	delete []outfilename;
+
 	printf("Done \n");
     return 0;
 }
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*======================================================================*/
+/*   OTSU global thresholding routine                                                 */
+/*   takes a 2D unsigned char array pointer, number of rows, and        */
+/*   number of cols in the array. returns the value of the threshold       */
+/*======================================================================*/
+
+
+int otsu (unsigned char *image, int rows, int cols, int x0, int y0, int dx, int dy)
+{
+
+  unsigned char *np;      // image pointer
+  int thresholdValue=1;   // Threshold 
+  int ihist[256];         // histogram for image £¬256 points
+
+  int i, j, k;             // various counters
+  int n, n1, n2, gmin, gmax;
+  double m1, m2, sum, csum, fmax, sb;
+
+  // init zero
+  memset(ihist, 0, sizeof(ihist));
+
+  gmin=255; gmax=0;
+  // generate histogram
+  for (i = y0 + 1; i < y0 + dy - 1; i++) {
+    np = &image[i*cols+x0+1];
+    for (j = x0 + 1; j < x0 + dx - 1; j++) {
+      ihist[*np]++;
+      if(*np > gmax) gmax=*np;
+      if(*np < gmin) gmin=*np;
+      np++; // next pixel //
+    }
+  }
+
+  // set up everything
+  sum = csum = 0.0;
+  n = 0;
+
+  for (k = 0; k <= 255; k++) {
+    sum += (double) k * (double) ihist[k];    /* x*f(x) moment*/
+    n   += ihist[k];                                         /*  f(x)       */
+  }
+
+  if (!n) {
+    // if n has no value, there is problems...
+    fprintf (stderr, "NOT NORMAL thresholdValue = 160\n");
+    return (160);
+  }
+
+  // do the otsu global thresholding method
+  fmax = -1.0;
+  n1 = 0;
+  for (k = 0; k < 255; k++) {
+    n1 += ihist[k];
+    if (!n1) { continue; }
+    n2 = n - n1;
+    if (n2 == 0) { break; }
+    csum += (double) k *ihist[k];
+    m1 = csum / n1;
+    m2 = (sum - csum) / n2;
+    sb = (double) n1 *(double) n2 *(m1 - m2) * (m1 - m2);
+    /* bbg: note: can be optimized. */
+    if (sb > fmax) {
+      fmax = sb;
+      thresholdValue = k;
+    }
+  }
+
+  // at this point we have our thresholding value
+
+  // debug code to display thresholding values
+   /* if ( vvv & 1 )
+      fprintf(stderr,"# OTSU: thresholdValue = %d gmin=%d gmax=%d\n",
+      thresholdValue, gmin, gmax);
+   */
+
+  return(thresholdValue);
+
+}
+
+//  the end of ostu algorithm
 
 
 
@@ -451,7 +573,7 @@ void spread(Position pos, int startx, int endx, int direction)
 	Position pos1; // in a new row
 	int newy, newz;
 	int startx0, endx0;
-	int startx1;
+	int startx1;//, endx1;
 	int laststartx;
 
 	switch (direction)
@@ -530,6 +652,171 @@ void lineSeed()
 		}
 
 	}
-
 }
 
+
+
+
+
+
+
+// This function is designed to compute the opyimal threshold using OTSU method;
+double  OtsuThreshold (int sizeX,int sizeY,int sizeZ)
+
+{
+
+  int i,j,k;
+  double m_Threshold =0;
+  double totalPixels = (double)(sizeX*sizeY*sizeZ);
+ 
+
+  if ( totalPixels == 0 ) { return m_Threshold; }
+
+  unsigned char MinValue = volin[0], MaxValue =  volin[0];
+  double meanValue=0.0, varianceValue=0.0;
+  int idx; // just for the location0
+
+  for (k=0; k < sizeZ; k++)
+	{  // 
+	 for (j=0; j < sizeY; j++) 
+			{
+				for (i=0; i<sizeX; i++)
+				{
+					idx = k *sizeX*sizeY + j *sizeX + i;
+					meanValue += volin[idx];
+					if (volin[idx]> MaxValue) MaxValue = volin[idx];
+					if (volin[idx]< MinValue) MinValue = volin[idx];
+
+				}
+			}
+		}
+
+      printf("Max= %d,Minin= %d", MaxValue,MinValue);
+       meanValue = meanValue/totalPixels;
+ 
+	   for (k=0; k<sizeZ; k++)
+		{  //
+			for (j=0; j<sizeY; j++) 
+			{
+				for (i=0; i<sizeX; i++)
+				{
+					idx = k *sizeX*sizeY + j *sizeX + i;
+					varianceValue += (volin[idx]-meanValue)*(volin[idx]-meanValue);
+				}
+			}
+		} 
+
+
+    if ( MinValue >= MaxValue)
+    {
+	   m_Threshold=MinValue;
+       return m_Threshold;
+    
+    }
+   
+	m_Threshold = (meanValue-varianceValue/30); 
+	  // this step is only initialized a good experimental value for m_Threshold, because the 3D image
+	  // is sparse, there are lots of zero values; 
+
+  // create a histogram
+  double relativeFrequency[m_NumberOfHistogramBins];
+
+  for ( j = 0; j < m_NumberOfHistogramBins; j++ )
+    {
+       relativeFrequency[j] = 0.0;
+    }
+
+  double binMultiplier = (double) m_NumberOfHistogramBins /(double) ( MaxValue - MinValue);
+  printf("binmultiple %f \n", binMultiplier);
+ 
+  
+  double Voxelvalue; // temp variable
+  unsigned int binNumber;
+
+  for (k=0; k<sizeZ; k++) 
+	{  // 
+	for (j=0; j<sizeY; j++) 
+	 {
+	for (i=0; i<sizeX; i++)
+	 {
+		idx = k *sizeX*sizeY + j *sizeX + i;
+        Voxelvalue = volin[idx];
+
+        if ( Voxelvalue == MinValue ) 
+         {
+         binNumber = 0;
+         } // end if 
+
+        else
+          {
+             binNumber = (unsigned int)(((Voxelvalue - MinValue) * binMultiplier ) - 1);
+
+             if ( binNumber == m_NumberOfHistogramBins ) // in case of rounding errors
+              {
+                binNumber -= 1;
+              }// end if 
+           }// end else
+
+       //  printf("binNumber???? = %f  MaxValue=%f \n", binNumber+1,MaxValue);
+         relativeFrequency[binNumber] += 1.0;
+   
+	}//
+	}
+   }
+// test 
+
+//	for (i=0;i<m_NumberOfHistogramBins;i++)
+//		printf ( "%d bin = %f,  ",i, relativeFrequency[i]);
+ 
+  // normalize the frequencies
+  double totalMean = 0.0;
+  for ( j = 0; j < m_NumberOfHistogramBins; j++ )
+    {
+    relativeFrequency[j] /= totalPixels;
+    totalMean += (j+1) * relativeFrequency[j];
+    }
+
+
+  // compute Otsu's threshold by maximizing the between-class
+  // variance
+  double freqLeft = relativeFrequency[0];
+  double meanLeft = 1.0;
+  double meanRight = ( totalMean - freqLeft ) / ( 1.0 - freqLeft );
+
+  double maxVarBetween = freqLeft * ( 1.0 - freqLeft ) * sqrt( meanLeft - meanRight );
+  int maxBinNumber = 0;
+
+  double freqLeftOld = freqLeft;
+  double meanLeftOld = meanLeft;
+
+  for ( j = 1; j < m_NumberOfHistogramBins; j++ )
+    {
+    freqLeft += relativeFrequency[j];
+    meanLeft = ( meanLeftOld * freqLeftOld + 
+                 (j+1) * relativeFrequency[j] ) / freqLeft;
+    if (freqLeft == 1.0)
+      {
+      meanRight = 0.0;
+      }
+    else
+      {
+      meanRight = ( totalMean - meanLeft * freqLeft ) / ( 1.0 - freqLeft );
+      }
+    double varBetween = freqLeft * ( 1.0 - freqLeft ) * sqrt( meanLeft - meanRight );
+   
+    if ( varBetween > maxVarBetween )
+      {
+      maxVarBetween = varBetween;
+      maxBinNumber = j;
+      }
+
+    // cache old values
+    freqLeftOld = freqLeft;
+    meanLeftOld = meanLeft; 
+
+    } 
+
+    m_Threshold = double( MinValue + ( maxBinNumber + 1 ) / binMultiplier );
+	printf("m_threshold=%f ",m_Threshold );
+	return m_Threshold; 
+}

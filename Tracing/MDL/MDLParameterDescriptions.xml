@@ -31,24 +31,4 @@ larger noisy objects."
     default="100"
   >
   </parameter>
-  <parameter
-    name="Anisotropic Diff k"
-    description=
-"Anisotropic diffusion conduction coefficient (According to smoothing strength)"
-    type="number"
-    min="10"
-    max="800"
-    default="800"
-  >
-  </parameter>
-  <parameter
-    name="Anisotropic Diff t"
-    description=
-"Anisotropic diffusion iterations (Higher for more iterations)"
-    type="number"
-    min="2"
-    max="10"
-    default="2"
-  >
-  </parameter>
 </parameters>

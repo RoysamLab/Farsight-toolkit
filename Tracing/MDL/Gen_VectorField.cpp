@@ -1,3 +1,18 @@
+/*=========================================================================
+Copyright 2009 Rensselaer Polytechnic Institute
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. 
+=========================================================================*/
+
 // ----
 // ----  Compute the vector field of any volume objects
 // ----
@@ -6,7 +21,9 @@
 // ----  Input : Binary 3D volume with sizes.
 // ----  Output: ASCII file with vector 3 components for all object voxels
 // ----
-
+#if defined(_MSC_VER)
+#pragma warning(disable : 4996)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -96,7 +113,7 @@ double dotProduct(Vector v1, Vector v2) {
     dotProd += v1.yd * v2.yd;
     dotProd += v1.zd * v2.zd;
 //    return dotProd;
-    return (double) sign((float)dotProd);  // test
+    return sign(dotProd);  // test
 }
 
 
@@ -127,19 +144,11 @@ int main(int argc, char *argv[])
   }
 
 
-#ifdef _WIN32
-errno_t err;
-    if((err=fopen_s(&filein ,argv[1],"rb"))!=NULL)
-			{printf("Input file open error!\n");
-			 exit(1);
-			}
-#else
   if ((filein = fopen(argv[1],"rb")) == NULL)
   {
     printf("Cannot open %s\n",argv[1]);
     exit(1);
   }
-#endif
 
   sizeX = atoi(argv[2]);
   sizeY = atoi(argv[3]);
@@ -158,25 +167,17 @@ errno_t err;
   sls = sizeX*sizeY;		// slice size
   sz = sls*sizeZ;
 
-  if ( fread(volin, sizeof(DATATYPEIN), sz, filein) < (unsigned int)sz)
+  if ( fread(volin, sizeof(DATATYPEIN), sz, filein) < (unsigned long)sz)
   {
     printf("File size is not the same as volume size\n");
     exit(1);
   }
 
-#ifdef _WIN32
-   if((err=fopen_s(&fileout ,argv[5],"w"))!=NULL)
-			{printf("Cannot open %s for writing\n",argv[5]);
-			 exit(1);
-			}
-#else
   if ((fileout = fopen(argv[5],"w")) == NULL)
   {
     printf("Cannot open %s for writing\n",argv[5]);
     exit(1);
   }
-#endif
-
 
 
   for (idx = 0; idx < sls*sizeZ; idx++)  {

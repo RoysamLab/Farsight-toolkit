@@ -1,11 +1,27 @@
+/*=========================================================================
+Copyright 2009 Rensselaer Polytechnic Institute
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. 
+=========================================================================*/
+
 // Label the connected components of the input volume with zero background
 // Remove the connected components with small number of voxels
 // --- Input: original volume
 // --- Output: removed small objects
 // --- Author: Xiaosong Yuan, RPI
 // --- Date: 10/3/2005
-
-
+#if defined(_MSC_VER)
+#pragma warning(disable : 4996)
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 //#include <fstream.h>
@@ -60,7 +76,6 @@ int main(int argc, char *argv[])
 	DATATYPEOUT *volout;
 	int *volIndex;
 	long idx;
-	//float threshold;
 	double threshold;
 	int vertHistComp[100000];
 
@@ -75,33 +90,19 @@ int main(int argc, char *argv[])
 	volout = (DATATYPEOUT*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEOUT));
 	volIndex = (int*)malloc(sizeX*sizeY*sizeZ*sizeof(int));
 
-#ifdef _WIN32
-  errno_t err; 
-  if( (err=fopen_s(&infile,infilename,"rb")) != NULL)
-    {
-    printf("Input file open error!\n");
-    exit(-1);
-    }
+	if((infile=fopen(infilename,"rb"))==NULL)
+			{printf("Input file open error!\n");
+			 exit(-1);
+			}
 
-  if( (err=fopen_s(&outfile,outfilename,"wb")) != NULL)
-    {printf("Output file open error!\n");
-    exit(-1);
-    }
-#else
-  if( (infile=fopen(infilename,"rb")) == NULL)
-    {
-    printf("Input file open error!\n");
-    exit(-1);
-    }
-
-  if( (outfile=fopen(outfilename,"wb")) == NULL)
-    {
-    printf("Output file open error!\n");
-    exit(-1);
-    }
-#endif
+	if((outfile=fopen(outfilename,"wb"))==NULL)
+			{printf("Output file open error!\n");
+			 exit(-1);
+			}
 
 	fread(volin,sizeX*sizeY*sizeZ, sizeof(DATATYPEIN), infile);
+
+
 
 	printf("Label Connected Components ...\n");
 
@@ -153,6 +154,11 @@ int main(int argc, char *argv[])
 
 	fclose(infile);
 	fclose(outfile);
+    delete []infilename;
+	delete []outfilename;
+	delete []volin;// = (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN));
+	delete []volout;// = (DATATYPEOUT*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEOUT));
+	delete []volIndex;// = (int*)malloc(sizeX*sizeY*sizeZ*sizeof(int));
 	printf("Done \n");
 	return 0;
 }
@@ -167,7 +173,7 @@ void DepthFirstSearch_N6(int *volIndex, int i, int j, int k) {
      for (jj=-1; jj<=1; jj++)
         for (ii=-1; ii<=1; ii++) {
 	        //not consider the point itself && consider only neighbor-6
-	        if ((ii==0 && jj==0 && kk==0) || ((abs(ii)+abs(jj)+abs(kk)) > 1))  continue;
+	        if (ii==0 && jj==0 && kk==0 || (abs(ii)+abs(jj)+abs(kk))>1)  continue;
 	        if ((i+ii)>=0 && (i+ii)<sizeX && (j+jj)>=0 && (j+jj)<sizeY && (k+kk)>=0 && (k+kk)<sizeZ) {
 	            if (volIndex[(k+kk)*sizeX*sizeY +(j+jj)*sizeX +(i+ii)] == OBJ_BEFORE_CONNCOMP) {
 				    DepthFirstSearch_N6(volIndex, i+ii, j+jj, k+kk);

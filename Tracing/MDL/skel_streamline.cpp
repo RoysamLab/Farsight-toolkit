@@ -1,3 +1,18 @@
+/*=========================================================================
+Copyright 2009 Rensselaer Polytechnic Institute
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. 
+=========================================================================*/
+
 // Form streamlines from saddle points and seed points
 // --- Input: 1. 3D vector field
 //            2. Seed points
@@ -5,6 +20,10 @@
 // --- Author: Xiaosong Yuan
 // --- Modify Date: 7/28/2007
 
+//#include <io.h>
+#if defined(_MSC_VER)
+#pragma warning(disable : 4996)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -69,21 +88,16 @@ Vector normalize(Vector r)
     mag = r.xd * r.xd + r.yd * r.yd + r.zd * r.zd;
     if (mag != 0.0) {
         mag = 1.0 / sqrt(mag);
-        r.xd *= (float) mag;
-        r.yd *= (float) mag;
-        r.zd *= (float )mag;
-
-// add (float ) to clean warning by xiao liang
-
+        r.xd *= mag;
+        r.yd *= mag;
+        r.zd *= mag;
         }
     return r;
 }
 
 
 Vector interpolation(float x, float y, float z, int sizx, int sizy, int sizz, Vector *forcevec);
-//void rk2(float x, float y, float z, int sizx, int sizy, int sizz, double steps, Vector *Force_ini, VoxelPosition *nextPos);
-
-void rk2(float x, float y, float z, int sizx, int sizy, int sizz, float steps, Vector *Force_ini, VoxelPosition *nextPos);
+void rk2(float x, float y, float z, int sizx, int sizy, int sizz, double steps, Vector *Force_ini, VoxelPosition *nextPos);
 
 
 
@@ -100,11 +114,15 @@ int main(int argc, char *argv[])
   
   long idx, iidx, slsz, sz;
   int measureTime = 0;
+  //int numBound = 0;
+  //int flagBound;
+  //Vector pointForce, totalForce;
   VoxelPosition Startpos, Nextpos;
   //VoxelPosition seeds[80000];    // 90000 crash
   VoxelPosition *seeds;
   int idxSeeds;
   Vector vecin;
+  //long iidx1, iidx2;
   int cc;
   int ii,jj,kk;
   int *FlagOnSkeleton;
@@ -113,13 +131,15 @@ int main(int argc, char *argv[])
   float Ngrid;
   Vector OutForce;
   int streamSteps=0;
+  //int FlagCloseToSkeleton;
   int x, y, z;
   double totalVecLength;
   double div, divx, divy, divz;
+  float vectorMagnitude;
 
-  if (argc < 7)
+  if (argc < 8)
   {
-    printf("Usage: %s <vector file> <xs> <ys> <zs> <seeds file> <out skel> [measureTimeFlag].\n",argv[0]);
+    printf("Usage: %s <vector file> <xs> <ys> <zs> <vector mag> <seeds file> <out skel> [measureTimeFlag].\n",argv[0]);
     exit(1);
   }
 
@@ -134,39 +154,33 @@ int main(int argc, char *argv[])
   sizeX = atoi(argv[2]);
   sizeY = atoi(argv[3]);
   sizeZ = atoi(argv[4]);
+  vectorMagnitude = atof(argv[5]);
   MidX = (sizeX-1)/2;
   MidY = (sizeY-1)/2;
   MidZ = (sizeZ-1)/2;
 
   seedsfilename = new char[80];
-  seedsfilename = argv[5];
+  seedsfilename = argv[6];
   fseeds.open(seedsfilename);
   if (!fseeds)  {
      cerr << "couldn't open " << seedsfilename << " for input" << endl;
      return -1;
   }
 
-#ifdef _WIN32
-   errno_t err; 
- if((err=fopen_s(&fout,argv[6],"w"))!=NULL)
-			{printf("Input file open error!\n");
-			 exit(-1);
-	}
-#else
-  if ((fout = fopen(argv[6],"w")) == NULL)
-    {
+  if ((fout = fopen(argv[7],"w")) == NULL)
+  {
     printf("Cannot open %s for writing\n",argv[6]);
     exit(1);
-    }
-#endif
+  }
 
-  if (argc > 7)
+
+  if (argc > 8)
     measureTime = 1;
 
   fc = new int[sizeX*sizeY*sizeZ];
   force = new Vector[sizeX*sizeY*sizeZ];
-  
   FlagOnSkeleton = new int[sizeX*sizeY*sizeZ];
+
   slsz = sizeX*sizeY;		// slice size
   sz = slsz*sizeZ;
   seeds = new VoxelPosition[2000000];   //  VoxelPosition[200000]   
@@ -189,12 +203,18 @@ int main(int argc, char *argv[])
 	    idx = z*slsz + y*sizeX +x;
 	    // normalize the vectors
 	    vecLength = sqrt(vecin.xd * vecin.xd + vecin.yd * vecin.yd +vecin.zd * vecin.zd);
-	    if (vecLength ==0)  vecLength=0.000001;
-	    force[idx].xd =  vecin.xd /(float)pow(vecLength, 5.0/6);
-	    force[idx].yd = vecin.yd /(float)pow(vecLength, 5.0/6);
-	    force[idx].zd =  vecin.zd /(float)pow(vecLength, 5.0/6);
 
-		// add (float) to clean warning by xiaoliang
+		/* this implemention is time consuming, comments by xiao liang
+	    if (vecLength ==0)  vecLength=0.000001;
+	    force[idx].xd = vecin.xd / pow(vecLength, 5.0/6);
+	    force[idx].yd = vecin.yd / pow(vecLength, 5.0/6);
+	    force[idx].zd = vecin.zd / pow(vecLength, 5.0/6);
+        */
+
+		// by xiao liang
+	    force[idx].xd = vecin.xd / (vecLength+0.0001);
+	    force[idx].yd = vecin.yd / (vecLength+0.0001);
+	    force[idx].zd = vecin.zd / (vecLength+0.0001);
 
 	    //force[idx].xd = vecin.xd / vecLength;
 	    //force[idx].yd = vecin.yd / vecLength;
@@ -203,38 +223,42 @@ int main(int argc, char *argv[])
 	    fc[idx]=2;
 
 		fin >> x >> y >> z >> vecin.xd >> vecin.yd >> vecin.zd;
-	}
+	} //end while
 
   // make fc[]=2 of critical points
 
-
+  //int seedsNumber=0;
 
   // make surface point fc[]=1
   for (k = 1; k < sizeZ-1; k++)
      for (j = 1; j < sizeY-1; j++)
-        for (i = 1; i < sizeX-1; i++) {
+        for (i = 1; i < sizeX-1; i++) 
+		{
 			idx = k*slsz + j*sizeX +i;
-			if(fc[idx]==2) {
+			if(fc[idx]==2) 
+			{
 				cc = 0;
 				for (kk=-1; kk<=1; kk++)
 					for (jj=-1; jj<=1; jj++)
-						for (ii=-1; ii<=1; ii++) {
+						for (ii=-1; ii<=1; ii++) 
+						{
 							iidx = (k+kk)*slsz + (j+jj)*sizeX +(i+ii);
 							if (fc[iidx]==0) cc++;
-					}
-				if (cc>=1) fc[idx] = 1;
-			}
-	}
+					    }//end for
+				if (cc>=1) 
+				{fc[idx] = 1;
+				 //seedsNumber++;  // this is added by xiaoliang
+				}
+			}//end outer if 
+	}// end for
 
+   int numSeeds = 9058;
+   //int numSeeds =seedsNumber/48;  // 6x4x2;
+   //printf("Hello, Xiao liang,Seeds number is %d", numSeeds);
+  //int numSeeds = 6690;
+  //int numSeeds = 2521;
 
-
-
-  int numSeeds = 0;
-
-      // 874   for "EK102_T26DkR3.512x512x41.Aniso_k800d02t2.grdt.vec_curv5.seed"
-
-      // 580   for "5105c01_T38DkR3.512x512x11.Aniso_k800d02t2.grdt.vec_curv0.2.seed"
-
+      // 
       // 9688   for "ThyCell1_T20DkR2.643x596x50.Aniso_k800d02t2.grdt.vec_curv0.2.seed"
       //   52   for "Ecadherin2_T60DkR30.1392x1024x9.Aniso_k800d02t2.grdt.vec_curv60.seed"
       //  283   for "Ecadherin2_T60DkR30.1392x1024x9.Aniso_k800d02t2.grdt.vec_curv20.seed"
@@ -246,14 +270,10 @@ int main(int argc, char *argv[])
       // 7303   for "Cal100m_T2DkR100.416x256x35.Aniso_k800d02t2.grdt.vec_curv4.seed"
       // 1557   for "Ania3sp1_T7DkR100.800x600x71.Aniso_k800d02t2.grdt.vec_curv100.seed"
       // 3162   for "MBFsp6_T7DkR100.512x512x68.Aniso_k800d02t2.grdt.vec_curv1.seed"
-      //18337   for "MBFsp6_T7DkR100.512x512x68.Aniso_k800d02t2.grdt.vec_curv0.2.seed"
-      //19662   for "MBFsp6_T2DkR100.512x512x68.Aniso_k800d02t2.grdt.vec_curv0.2.seed"
+      //18337   for "MBFsp6_T7DkR100.512x512x68.Aniso_k800d02t2.grdt.vec_curv0.2.seed"]
       // 9506   for "MBFsp5_T2DkR100.308x512x49.Aniso_k800d02t2.grdt.vec_curv0.seed"
       // 5989   for "MBFsp5_T2DkR100.308x512x49.Aniso_k800d02t2.grdt.vec_curv0.2.seed"
-      // 1347   for "MBFsp1_T2DkR100.1032x628x28.Aniso_k800d02t2.grdt.vec_curv0.9.seed"
-      // 4207   for "MBFsp2_T7DkR10.232x989x12.Aniso_k800d02t2.grdt.vec_curv0.2.seed"
-      //14533   for "MBFsp4_T7DkR10.1024x408x78.Aniso_k800d02t2.grdt.vec_curv1.8.seed"
-      //  568   for "MBFsp4_T30DkR10.1024x408x78.Aniso_k800d02t2.grdt.vec_curv5.seed"
+      // 1347   for "MBFsp1_T2DkR100.1032x628x28.Aniso_k800d02t2.grdt.vec_curv0.9.seed"    
 
       // 783    for"Trach11D_T2DkR100.512x512x12.Aniso_k800d02t2.grdt.vec_curv0.2.seed"
       //  67    for"Trach11D_T10DkR1k.512x512x12.grdt.vec_curv10.seed" 
@@ -548,9 +568,8 @@ int main(int argc, char *argv[])
 		  for (jj = 0; jj<Ngrid; jj++)
 		    for (ii = 0; ii<Ngrid; ii++) {
 		        OutForce=interpolation(i+ii/Ngrid, j+jj/Ngrid, k+kk/Ngrid, sizeX, sizeY, sizeZ, force);
-			    if(veclength(OutForce) < 0.06) {   //<0.15
-
-					//5105c01_T15DkR3.512x512x11.Aniso_k800d02t2.grdt.vec       0.02 - 7661 crt pts 
+			    if(veclength(OutForce) < vectorMagnitude) {   //<0.15
+			    //if(veclength(OutForce) < 0.08) {   //<0.15
 
 					//Mont10EunCh5_T30DkR10.1024x1024x51.Aniso_k800d02t2.grdt.vec 0.1-750142 crt pts
 
@@ -577,17 +596,12 @@ int main(int argc, char *argv[])
 					// Ania3sp1_T7DkR100.800x600x71.Aniso_k800d02t2.grdt.vec 0.06 -170880 crt pts
 					//                                                       0.006-  828 crt pts
 					// MBFsp6_T2DkR100.512x512x68.Aniso_k800d02t2.grdt.vec   0.06 - 3083 crt pts
-					// MBFsp6_T2DkR10.512x512x68.Aniso_k800d02t2.grdt.vec    0.08 - 14633 crt pts
 					// MBFsp5_T2DkR100.308x512x49.Aniso_k800d02t2.grdt.vec   0.04 - 1565 crt pts
 					//                                                       0.05 - 2746 crt pts
 					//                                                       0.06 - 4271 crt pts
 					// MBFsp1_T2DkR100.1032x628x28.Aniso_k800d02t2.grdt.vec  0.06 -36604 crt pts
 					//                                                       0.04 -17446 crt pts
 					//                                                       0.02 - 5092 crt pts
-					// MBFsp2_T7DkR10.232x989x12.Aniso_k800d02t2.grdt.vec    0.03 -33535 crt pts
-					// MBFsp4_T7DkR10.1024x408x78.Aniso_k800d02t2.grdt.vec   0.05 -26871 crt pts
-
-
 
 					// Trach14A_T2DkR100.512x512x25.Aniso_k800d02t2.grdt.vec 0.14 -14479 crt pts 
 					//                                                       0.1  - 6725 crt pts
@@ -804,8 +818,7 @@ int main(int argc, char *argv[])
 	FlagOnSkeleton[idx] = 1;
 
 	while(streamSteps < 4000)   {    // < 4000
-		rk2(Startpos.x, Startpos.y, Startpos.z, sizeX, sizeY, sizeZ, (float)0.8, force, &Nextpos);   //0.2, 0.8, 2   // add (float)
-
+		rk2(Startpos.x, Startpos.y, Startpos.z, sizeX, sizeY, sizeZ, 0.8, force, &Nextpos);   //0.2, 0.8, 2
 		streamSteps++;
 		Startpos.x = Nextpos.x;
 		Startpos.y = Nextpos.y;
@@ -829,6 +842,12 @@ int main(int argc, char *argv[])
 
 
    fclose(fout);
+   // release memory by xiao liang
+   delete []fc;
+   delete []force;
+   delete []FlagOnSkeleton;
+   delete []seeds;
+
    printf("End \n");
    return 0;
 
@@ -879,12 +898,11 @@ Vector interpolation(float x, float y, float z, int sizx, int sizy, int sizz, Ve
     }
 
 
-//void rk2(float x, float y, float z, int sizx, int sizy, int sizz, double steps, Vector *Force_ini, VoxelPosition *nextPos)
-
-void rk2(float x, float y, float z, int sizx, int sizy, int sizz, float steps, Vector *Force_ini, VoxelPosition *nextPos)
+void rk2(float x, float y, float z, int sizx, int sizy, int sizz, double steps, Vector *Force_ini, VoxelPosition *nextPos)
    {
 	long slsz;
 	Vector OutForce;
+	//float x1, y1, z1;
 	slsz=sizy*sizx;
 
 	OutForce=interpolation(x,y,z,sizx,sizy,sizz,Force_ini);
