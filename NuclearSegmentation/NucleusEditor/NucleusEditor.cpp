@@ -400,7 +400,9 @@ void NucleusEditor::loadResult(void)
 	// Enable the menu items for editing
 	mergeAction->setEnabled(true);
 	deleteAction->setEnabled(true);
-	splitAction->setEnabled(true);
+	//splitAction->setEnabled(true);
+	splitStartAction->setEnabled(true);
+	splitEndAction->setEnabled(true);
 
 	//Set the status
 	//editStatus=true;
@@ -465,7 +467,9 @@ void NucleusEditor::segmentImage()
 	// Disable the menu items for editing
 	mergeAction->setEnabled(false);
 	deleteAction->setEnabled(false);
-	splitAction->setEnabled(false);
+	//splitAction->setEnabled(false);
+	splitStartAction->setEnabled(false);
+	splitEndAction->setEnabled(false);
 
 	if(currentModel)
 		clearModel();
@@ -499,7 +503,9 @@ void NucleusEditor::loadImage()
 	// Disable the menu items for editing
 	mergeAction->setEnabled(false);
 	deleteAction->setEnabled(false);
-	splitAction->setEnabled(false);
+	//splitAction->setEnabled(false);
+	splitStartAction->setEnabled(false);
+	splitEndAction->setEnabled(false);
 
 }
 

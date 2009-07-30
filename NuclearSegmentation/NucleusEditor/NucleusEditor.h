@@ -109,10 +109,11 @@ private:
 	QMenu *editMenu;
 	QAction *mergeAction;
 	QAction *deleteAction;
-	QAction *splitAction;
+	QMenu *splitMenu;
+	//QAction *splitAction;
 	QAction *splitStartAction;
 	QAction *splitEndAction;
-	QMenu *splitMenu;
+	
 
 	QLabel *statusLabel;
 
