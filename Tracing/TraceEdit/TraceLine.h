@@ -52,7 +52,7 @@ public:
 	void SetId(int lid);
 	int GetId();
 	int GetSize();
-	void Print(std::ostream &c);
+	void Print(std::ostream &c,int indent);
 	std::vector<unsigned int> * GetMarkers();
 	std::vector<TraceLine*> * GetBranchPointer();
 	void setTraceColor(double newColor);

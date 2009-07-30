@@ -70,7 +70,7 @@ public:
 
 	vtksys::hash_map< unsigned int, unsigned long long int > hashp;
 	vtksys::hash_map< unsigned int, unsigned long long int > hashc;
-
+	
 private:
 	std::vector<TraceLine*> trace_lines;
 	double smallLineColor, mergeLineColor;	

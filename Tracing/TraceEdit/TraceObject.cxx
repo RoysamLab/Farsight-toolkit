@@ -88,7 +88,7 @@ void TraceObject::Print(std::ostream &c)
   c<<"Size:"<<trace_lines.size()<<std::endl;
   for(unsigned int counter=0; counter<trace_lines.size(); counter++)
   {
-    trace_lines[counter]->Print(c);
+    trace_lines[counter]->Print(c,4);
   }
 }
 
@@ -183,7 +183,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
   
   //make an initial pass through the file to figure out how many points
   //we're dealing with
-  int numPoints = 0;
+  int numPoints = 1;
   while(!feof(fp))
     {
     if(fgets(buff,1024,fp)==NULL)
@@ -199,8 +199,11 @@ bool TraceObject::ReadFromSWCFile(char * filename)
       {
       continue;
       }
-    numPoints++;
+	int temp_id;
+	sscanf(buff,"%d %*d %*f %*f %*f %*f %*d",&temp_id);
+	numPoints = (numPoints>temp_id)?numPoints:temp_id;
     }
+  numPoints++; // set it to 1 + maximum id in the file
   rewind(fp);
 
   unsigned char *child_count = (unsigned char *)malloc(numPoints * sizeof(char));
@@ -241,10 +244,11 @@ bool TraceObject::ReadFromSWCFile(char * filename)
     {
       child_count[parent]++;
     }
+	hash_type[id] = type;
   }
   fclose(fp);
   //printf("I read %d lines\n",tc);
-  unsigned int *child_id = (unsigned int *)malloc(numPoints * sizeof(int));
+  unsigned int *child_id = (unsigned int *)malloc(numPoints * sizeof(unsigned int));
   //memset(child_id,0,sizeof(unsigned int)*(max_id));
   std::vector<TraceBit> data(max_id+1);
 
@@ -272,7 +276,6 @@ bool TraceObject::ReadFromSWCFile(char * filename)
     if(parent == -1)
     {
       criticals.insert(id);
-      hash_type[id] = type;
       hash_parent[id] = -1;
       //printf("hash_parent[%d] = %d\n",id,hash_parent[id]);
     }
@@ -281,13 +284,18 @@ bool TraceObject::ReadFromSWCFile(char * filename)
       if(child_count[parent]>1)
       {
         criticals.insert(id);
-        hash_type[id] = type;
         hash_parent[id] = parent;
         //printf("hash_parent[%d] = %d\n", id, hash_parent[id]);
       }
+	  else if(hash_type[id] != hash_type[parent])
+	  {
+		  criticals.insert(id);
+		  hash_parent[id] = parent;
+	  }
     }
   }
-  
+  fclose(fp);
+  printf("about to create the data structure.. %d\n",criticals.size());
   std::set<int>::iterator iter = criticals.begin();
   int global_id_number = 1;
   while(iter != criticals.end())
@@ -315,8 +323,14 @@ bool TraceObject::ReadFromSWCFile(char * filename)
     int id_counter = *iter;
     while(child_count[id_counter]==1)
     {
-      id_counter = child_id[id_counter];
-      ttemp->AddTraceBit(data[id_counter]);
+		if(hash_type[id_counter] == hash_type[child_id[id_counter]])
+		{
+			id_counter = child_id[id_counter];
+			ttemp->AddTraceBit(data[id_counter]);
+		}
+		else
+			break;
+
     }
     hash_load[id_counter] = reinterpret_cast<unsigned long long int>(ttemp); 
     // Important: We're storing TraceLine* for points in the end of segments only.
@@ -359,7 +373,6 @@ bool TraceObject::ReadFromSWCFile(char * filename)
   }
   printf("Finished loading\n");
   //Print(std::cout);
-  fclose(fp);
 //  delete [] child_id;
   free(child_count);
   free(child_id);

@@ -624,6 +624,7 @@ void View3D::UpdateBranchActor()
   this->BranchActor = vtkSmartPointer<vtkActor>::New();
   this->BranchActor->SetMapper(this->polymap);
   this->BranchActor->SetPickable(0);
+  //this->AddPointsAsPoints(this->tobj->CollectTraceBits());
   //Renderer->AddActor(BranchActor);
   //BranchActor->Print(std::cout);
 
