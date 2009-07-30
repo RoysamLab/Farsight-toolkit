@@ -166,11 +166,49 @@ void NucleusEditor::createMenus()
 
 	editMenu->addSeparator();
 
+	/*
 	splitAction = new QAction(tr("Split Cells"), this);
 	splitAction->setStatusTip(tr("Splits the selected cells"));
 	splitAction->setEnabled(false);
 	connect(splitAction,SIGNAL(triggered()),this,SLOT(splitCells()));
 	editMenu->addAction(splitAction);	
+*/
+
+	// Splitting has two modes and therefore has two submenu items:
+	// Start Splitting
+	// End Splitting
+
+	//Main Splitting Menu
+	splitMenu= editMenu->addMenu(tr("&Splitting"));
+
+	//submenu1:
+	splitStartAction = new QAction(tr("Start Splitting"), this);
+	splitStartAction->setStatusTip(tr("Start Splitting Mode"));
+	splitStartAction->setEnabled(true);
+	connect(splitStartAction,SIGNAL(triggered()),this,SLOT(startSplitting()));
+	splitMenu->addAction(splitStartAction);
+
+	//submenu2:
+	splitEndAction = new QAction(tr("End Splitting"), this);
+	splitEndAction->setStatusTip(tr("End Splitting Mode"));
+	splitEndAction->setEnabled(true);
+	connect(splitEndAction,SIGNAL(triggered()),this,SLOT(endSplitting()));
+	splitMenu->addAction(splitEndAction);
+
+	//editMenu->addMenu(splitMenu);	
+	//splitAction->
+		//menu()->addAction(splitStartAction);	
+
+
+
+	//add menu item forum nokia to menu item nokia
+	//forumNokiaMenu = nokiaMenu->addMenu(tr("Forum Nokia"));
+	//add action for Discussion Boards  sub-menu
+	//forumNokiaMenu->addAction(menu_DiBoAction);
+	//add action for Wiki  sub-menu
+	//forumNokiaMenu->addAction(menu_wikiAction);
+
+
 
 	//HELP MENU
 	helpMenu = menuBar()->addMenu(tr("Help"));
@@ -383,6 +421,18 @@ void NucleusEditor::deleteCells(void)
 void NucleusEditor::splitCells(void)
 {
 	currentModel->splitTrigger();
+
+}
+
+void NucleusEditor::StartSplitting(void)
+{
+
+
+}
+
+void NucleusEditor::EndSplitting(void)
+{
+
 
 }
 

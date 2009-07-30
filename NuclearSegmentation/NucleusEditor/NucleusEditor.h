@@ -72,6 +72,9 @@ private slots:
 	void deleteCells(void);
 	void splitCells(void);
 
+	void StartSplitting(void);
+	void EndSplitting(void);
+
 signals:
     
 private:
@@ -107,6 +110,9 @@ private:
 	QAction *mergeAction;
 	QAction *deleteAction;
 	QAction *splitAction;
+	QAction *splitStartAction;
+	QAction *splitEndAction;
+	QMenu *splitMenu;
 
 	QLabel *statusLabel;
 
