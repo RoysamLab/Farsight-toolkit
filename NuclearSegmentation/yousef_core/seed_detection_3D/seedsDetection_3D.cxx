@@ -34,7 +34,8 @@ limitations under the License.
 #include "itklaplacianrecursivegaussianimagefilternew.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include <itkDanielssonDistanceMapImageFilter.h> 
-
+#include "itkSignedMaurerDistanceMapImageFilter.h"
+#include "itkCastImageFilter.h"
 
 using namespace std;
 
@@ -46,6 +47,7 @@ int detect_seeds(itk::SmartPointer<InputImageType>, int , int , int, const doubl
 float get_maximum_3D(float* A, int r1, int r2, int c1, int c2, int z1, int z2, int R, int C);
 void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, int* out1, int* bImg);
 int distMap(itk::SmartPointer<InputImageType> im, int r, int c, int z, float* IMG);
+int distMap2(itk::SmartPointer<InputImageType> im, int r, int c, int z, float* IMG);
 
 int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int z, double sigma_min, double sigma_max, double scale_xy, double scale_z, int sampl_ratio, int* bImg, int UseDistMap)
 {	
@@ -87,7 +89,7 @@ int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int
 
 	///////////////////////
 	float* dImg = NULL;
-	float* minSImg = NULL;
+	unsigned short* minSImg = NULL;
 	if(UseDistMap == 1)
 	{
 		for(int i=0; i<r*c*z; i++)
@@ -99,25 +101,24 @@ int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int
 			++iterator1;
 		
 		}
+		std::cout<<"Computing distance transform...";
 		dImg = (float *) malloc(r*c*z*sizeof(float));
 		distMap(im, r, c, z,dImg);
+		std::cout<<"done"<<std::endl;
 		iterator1.GoToBegin();
 		//get the smallest acceptable scale at each point
 		//Also, change the value in dImg into the largest acceptable scale
-		minSImg = (float *) malloc(r*c*z*sizeof(float));
+		minSImg = (unsigned short *) malloc(r*c*z*sizeof(unsigned short));
 		for(int i=0; i<r*c*z; i++)
-		{
-			//if(bImg[i] > 0)
-				///int hhh = 1;
-			
+		{			
 			int DD = (int) dImg[i];
 			int DD2 = 2*DD;
 			if(DD<=sigma_min)
-				minSImg[i] = sigma_min;
+				minSImg[i] = (unsigned short) sigma_min;
 			else if(DD>=sigma_max)
-				minSImg[i] = sigma_max;
+				minSImg[i] = (unsigned short) sigma_max;
 			else
-				minSImg[i] = DD;
+				minSImg[i] = (unsigned short) DD;
 			if(DD2<=sigma_min)
 				dImg[i] = sigma_min;
 			else if(DD2>=sigma_max)
@@ -131,7 +132,7 @@ int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int
 
 	for(int i=0; i<r*c*z; i++)
 	{				
-	    iterator1.Set(IM[i]);	
+	    iterator1.Set((float)IM[i]);	
 		++iterator1;
 	}
 
@@ -140,9 +141,9 @@ int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int
 	double conv = 0;	
 	double sigma = sigma_min;
 	float *IMG_tmp = (float *) malloc(r*c*z*sizeof(float));
-	printf("Processing scale %f ... ",sigma);
+	std::cout<<"Processing scale "<<sigma<<"...";
 	detect_seeds(im,r,c,z,sigma_min,IM_out,sampl_ratio);
-	printf("done\n");
+	std::cout<<"done"<<std::endl;
 	while(!conv)
 	{
 		
@@ -153,13 +154,12 @@ int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int
 			conv=1;
 			break;
 		}
-		printf("Processing scale %f ... ",sigma);
+		std::cout<<"Processing scale "<<sigma<<"...";
 		detect_seeds(im,r,c,z,sigma,IMG_tmp,sampl_ratio);
 		if(UseDistMap == 1)
 		{
 			for(int i=0; i<r*c*z; i++)
-			{			
-				//if(sigma<=dImg[i]*2)
+			{							
 				if(sigma>=minSImg[i] && sigma<=dImg[i])
 					IM_out[i] = (IM_out[i]>=IMG_tmp[i])? IM_out[i] : IMG_tmp[i];				
 				if(IM_out[i]<minIMout)
@@ -175,15 +175,14 @@ int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int
 					minIMout = IM_out[i];
 			}
 		}
-		printf("done\n");
+		std::cout<<"done"<<std::endl;
 	}
 	free(IMG_tmp);
 	free(dImg);
    
 
-	//Detect the seed points (which are also the local maxima points)
-	printf("Detecting Seeds\n");
-	
+	//Detect the seed points (which are also the local maxima points)	
+	std::cout<<"Detecting Seeds"<<std::endl;
 	Detect_Local_MaximaPoints_3D(IM_out, r, c, z, scale_xy, scale_z, IM_bin, bImg);	
 	
 	return minIMout;
@@ -316,23 +315,33 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
 int distMap(itk::SmartPointer<InputImageType> im, int r, int c, int z, float* IMG)
 {
   
-  //  Types should be selected on the desired input and output pixel types.
-  typedef    float     InputPixelType;
-  typedef    float     OutputPixelType;
-
+  //  Types should be selected on the desired input and output pixel types.  
+  typedef int             InputPixelType2;
+  typedef double          OutputPixelType2;
 
   //  The input and output image types are instantiated using the pixel types.
-  typedef itk::Image< InputPixelType,  3 >   InputImageType;
-  typedef itk::Image< OutputPixelType, 3 >   OutputImageType;
+  typedef itk::Image< InputPixelType2,  3 >   InputImageType2;
+  typedef itk::Image< OutputPixelType2, 3 >   OutputImageType2;
 
 
   //  The filter type is now instantiated using both the input image and the
   //  output image types.
-  //typedef itk::ApproximateSignedDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;  
-  typedef itk::DanielssonDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;
+  //typedef itk::ApproximateSignedDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;    
+  //typedef itk::DanielssonDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;  
+  typedef itk::SignedMaurerDistanceMapImageFilter<InputImageType2, OutputImageType2>  DTFilter;
   DTFilter::Pointer dt_obj= DTFilter::New() ;
-  dt_obj->UseImageSpacingOn();
-  dt_obj->SetInput(im) ;
+  //dt_obj->UseImageSpacingOn();
+
+  typedef itk::CastImageFilter< InputImageType, InputImageType2> myCasterType;
+  myCasterType::Pointer potCaster = myCasterType::New();
+  potCaster->SetInput( im );
+  potCaster->Update();
+
+  dt_obj->SetInput(potCaster->GetOutput()) ;
+  dt_obj->SetSquaredDistance( false );
+  dt_obj->SetUseImageSpacing( true );
+  dt_obj->SetInsideIsPositive( true );
+
   //dt_obj->SetInsideValue(0.0);
   //dt_obj->SetOutsideValue(255.0);
   try{
@@ -345,7 +354,51 @@ int distMap(itk::SmartPointer<InputImageType> im, int r, int c, int z, float* IM
  
   //   Copy the resulting image into the input array
   long int i = 0;
-  typedef itk::ImageRegionIteratorWithIndex< InputImageType > IteratorType;
+  typedef itk::ImageRegionIteratorWithIndex< OutputImageType2 > IteratorType;
+  IteratorType iterate(dt_obj->GetOutput(),dt_obj->GetOutput()->GetRequestedRegion());
+  while ( i<r*c*z)
+  {
+	  IMG[i] = fabs(iterate.Get());	 	  
+      ++i;
+ 	  ++iterate;
+  }	
+ 
+  return EXIT_SUCCESS;
+}
+
+int distMap2(itk::SmartPointer<InputImageType> im, int r, int c, int z, float* IMG)
+{
+  
+  //  Types should be selected on the desired input and output pixel types.  
+  typedef float             InputPixelType;
+  typedef float          OutputPixelType;
+
+  //  The input and output image types are instantiated using the pixel types.
+  typedef itk::Image< InputPixelType,  3 >   InputImageType;
+  typedef itk::Image< OutputPixelType, 3 >   OutputImageType;
+
+
+  //  The filter type is now instantiated using both the input image and the
+  //  output image types.
+  //typedef itk::ApproximateSignedDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;    
+  typedef itk::DanielssonDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;  
+  DTFilter::Pointer dt_obj= DTFilter::New() ;
+  dt_obj->UseImageSpacingOn();  
+  dt_obj->SetInput(im) ;
+ 
+  //dt_obj->SetInsideValue(0.0);
+  //dt_obj->SetOutsideValue(255.0);
+  try{
+	 dt_obj->Update() ;
+  }
+  catch( itk::ExceptionObject & err ){
+	std::cerr << "Error calculating distance transform: " << err << endl ;
+    return -1;
+  }
+ 
+  //   Copy the resulting image into the input array
+  long int i = 0;
+  typedef itk::ImageRegionIteratorWithIndex< OutputImageType > IteratorType;
   IteratorType iterate(dt_obj->GetOutput(),dt_obj->GetOutput()->GetRequestedRegion());
   while ( i<r*c*z)
   {
@@ -353,7 +406,6 @@ int distMap(itk::SmartPointer<InputImageType> im, int r, int c, int z, float* IM
       ++i;
  	  ++iterate;
   }
-	
- 
+
   return EXIT_SUCCESS;
 }

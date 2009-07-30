@@ -230,10 +230,12 @@ bool NuclearSegmentation::GetResultImage()
 		color.assign(3,255);
 		if(labelImage)
 		labelImage = 0;
-		Cleandptr(dptr,size); // Temporarily deletes the seeds in the bacground from dptr
+		if(lastRunStep == 2)
+			Cleandptr(dptr,size); // Temporarily deletes the seeds in the bacground from dptr
 		labelImage = ftk::Image::New();
 		labelImage->AppendChannelFromData3D(dptr, itk::ImageIOBase::INT, sizeof(int), size[2], size[1], size[0], "gray", color, true);
-		Restoredptr(dptr); // Adds the seeds to dptr which were deleted in Cleandptr
+		if(lastRunStep == 2)
+			Restoredptr(dptr); // Adds the seeds to dptr which were deleted in Cleandptr
 		labelImage->Cast<unsigned short>();
 	}
 	return true;
@@ -2203,8 +2205,9 @@ void NuclearSegmentation::Restoredptr(int* p)
 {
  	for(list<int>::iterator index =this->negativeseeds.begin();index!=this->negativeseeds.end();++index)
 		{
-	    		p[*index]=-1;
+	    		p[*index]=-1;					
 		}
+	this->negativeseeds.clear();
 }
 
 }

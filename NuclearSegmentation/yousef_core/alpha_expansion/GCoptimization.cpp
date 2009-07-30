@@ -1406,8 +1406,7 @@ void GCoptimization::setNeighbors(PixelType pixel1, int pixel2)
 	temp2->to_node = pixel1;
 
 	m_neighbors[pixel1].addFront(temp1);
-	m_neighbors[pixel2].addFront(temp2);
-	
+	m_neighbors[pixel2].addFront(temp2);		
 }
 
 /**************************************************************************************/
@@ -1438,7 +1437,9 @@ GCoptimization::~GCoptimization()
 			delete [] m_smoothcost;
  		
 	if ( ! m_grid_graph )
+	{	
 		delete [] m_neighbors;			
+	}
 
 
 	delete [] m_labelTable;

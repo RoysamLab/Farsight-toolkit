@@ -79,6 +79,7 @@ LinkedBlockList::~LinkedBlockList()
 		tmp = m_head;
 		m_head = m_head->m_next;
 		delete tmp;
+		tmp = NULL;
 	}
 };
 

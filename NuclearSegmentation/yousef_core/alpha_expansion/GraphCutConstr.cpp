@@ -168,8 +168,7 @@ GCoptimization * GraphCut3dConstr(float* ContrastIn, float* DataCostIn, float* S
 }
     
 GCoptimization * GraphCutConstr(float* DataCostIn, float* SmoothnessCostIn, float* hCueIn, float* vCueIn, int RIn, int CIn, int num_labels)
-{
-    
+{    
     GCoptimization::PixelType width, height;
     //int num_labels;
     Graph::captype *DataCost;
@@ -197,5 +196,3 @@ GCoptimization * GraphCutConstr(float* DataCostIn, float* SmoothnessCostIn, floa
         
 	return MyGraph;
 }
-    
-
