@@ -313,8 +313,6 @@ void NucleusEditor::newModel(void)
 		clearModel();
 
 	if(segResult) {
-		//clearModel();
-		//segResult = new ftk::NuclearSegmentation();		
 		currentModel = new SegmentationModel(segResult);
 	}
 }
@@ -367,7 +365,7 @@ void NucleusEditor::loadResult(void)
 	splitAction->setEnabled(true);
 
 	//Set the status
-	editStatus=true;
+	//editStatus=true;
 
 }
 

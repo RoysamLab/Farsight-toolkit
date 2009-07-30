@@ -123,7 +123,7 @@ private:
 	QLabel *currentPythonLabel;
 	QPushButton *browseForPythonButton;
 
-	bool editStatus; //false shows that we cannot apply editing to cells
+	//bool editStatus; //false shows that we cannot apply editing to cells
 					 	
  };
 

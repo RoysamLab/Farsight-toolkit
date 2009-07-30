@@ -66,7 +66,9 @@ void PlotWindow::setupUI(void)
 	this->setCentralWidget(centralWidget);
 
 	setWindowTitle(tr("Scatter Plot"));
-	setAttribute ( Qt::WA_DeleteOnClose );
+	// If we do the following, the program crashes when we first close the scatterplot
+	// and then close the  image viewer. 
+	//setAttribute ( Qt::WA_DeleteOnClose );
 }
 
 void PlotWindow::closeEvent(QCloseEvent *event)
