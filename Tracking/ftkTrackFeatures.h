@@ -31,7 +31,7 @@ class TrackFeatures{
 			{
 			for(unsigned int counter=0; counter< ((intrinsic_features.size()<tfeatures.size())?(intrinsic_features.size()):(tfeatures.size())); counter++)
 			{
-				fprintf(fp1,"%d %d ",intrinsic_features[counter].num, intrinsic_features[counter].time);
+				fprintf(fp1,"%d %d %0.3f %0.3f %0.3f ",intrinsic_features[counter].num, intrinsic_features[counter].time,intrinsic_features[counter].Centroid[0],intrinsic_features[counter].Centroid[1],intrinsic_features[counter].Centroid[2]);
 				for(int counter1=0; counter1<= ftk::IntrinsicFeatures::CLUSTER_PROMINENCE; counter1++)
 				{
 					fprintf(fp1,"%0.3f ", intrinsic_features[counter].ScalarFeatures[counter1]);

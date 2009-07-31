@@ -127,7 +127,7 @@ if __name__ == '__main__':
         for t in time_points:
             temp_fname.append(os.path.join(cache_prefix, 'unmixed_' + filenames[(w,t)]))
         for t in time_points:
-            temp_fname.append(os.path.join(cache_prefix, 'labeled_' + filenames[(w,t)]))
+            temp_fname.append(os.path.join(cache_prefix, 'labeled_tracks_' + filenames[(w,t)]))
         temp_fname.append('DC') # type of channel
         for t in time_points:
             temp_fname.append(os.path.join(cache_prefix, 'labeled_' + filenames[(3,t)])) # add DC segmented files too
