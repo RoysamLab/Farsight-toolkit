@@ -331,9 +331,21 @@ void SegmentationModel::addPointToSplitList(int x, int y, int z)
 	P.x = x;
 	P.y = y;
 	P.z = z;
-	pointsForSplitting.push_back(P);
+	pointsForSplitting.push_back(P);		
 }
 
+int SegmentationModel::getSizeOfSplittingList()
+{
+	return (int) pointsForSplitting.size();
+}
+std::vector<int> SegmentationModel::getPointFromSplittingList(int id)
+{
+	ftk::Object::Point P = pointsForSplitting.at(id);
+	std::vector<int> ret;
+	ret.push_back(P.x);
+	ret.push_back(P.y);
+	return ret;
+}
 void SegmentationModel::splitTrigger()
 {	
 	QModelIndexList selIndices = selectionModel->selectedRows();

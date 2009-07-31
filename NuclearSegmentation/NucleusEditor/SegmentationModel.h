@@ -73,6 +73,8 @@ public slots:
 	void setSplitingModeToOn() { SplitingMode = true; }
 	void setSplitingModeToOff() { SplitingMode = false; }
 	void addPointToSplitList(int x, int y, int z);
+	int getSizeOfSplittingList();
+	std::vector<int> getPointFromSplittingList(int id);
 
 private:
 	int columnForID;

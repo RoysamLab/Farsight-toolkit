@@ -291,8 +291,13 @@ void SegmentationView::mousePressEvent(QMouseEvent *event)
 	{
 		int xx = origin.x();
 		int yy = origin.y();
+		/*QImage tmpImg(displayImage.width(),displayImage.height(),QImage::Format_ARGB32);
+		QPainter p(&tmpImg);
+		p.drawImage(0,0,displayImage);
+		p.setPen(Qt::red);
+		p.drawPoint(xx,yy);*/
 		xx = xx/currentScale;
-		yy = yy/currentScale;
+		yy = yy/currentScale;		
 		//as of now, I asume that the image starts at the top left corner (0,0) of the view window
 		if(xx<totalWidth && yy<totalHeight)
 		{
@@ -727,6 +732,7 @@ void SegmentationView::drawSelectionMarkers(QPainter *painter)
 		int id = model()->data(indexID).toInt();
 		vector<ftk::Object::Box> bs = resultModel->SegResult()->GetObjectPtr(id)->GetBounds();
 
+		
 		for(int i=0; i<(int)bs.size(); ++i)
 		{
 			ftk::Object::Box b = bs.at(i);
@@ -734,7 +740,20 @@ void SegmentationView::drawSelectionMarkers(QPainter *painter)
 			{
 				//currently in a slice that should show the box				
 				painter->setPen(colorForSelections);
-				painter->drawRect( b.min.x, b.min.y, (b.max.x-b.min.x+1), (b.max.y-b.min.y+1) );
+				painter->drawRect( b.min.x, b.min.y, (b.max.x-b.min.x+1), (b.max.y-b.min.y+1) );							
+				
+			}
+		}
+
+		//Added by Yousef 7-31-2009
+		//if we are selecting points for splitting, mark the points
+		if(resultModel->isSplitingMode())
+		{
+			for(int i=0; i<resultModel->getSizeOfSplittingList(); i++)		
+			{
+				std::vector<int> xx = resultModel->getPointFromSplittingList(i);
+				painter->setPen(Qt::red);
+				painter->drawPoint(xx.at(0), xx.at(1));
 			}
 		}
 	}
