@@ -1,0 +1,1867 @@
+#include "helpers.h"
+
+
+
+#pragma warning(disable: 4018)
+#pragma warning(disable: 4996)
+#pragma warning(disable: 4101)
+extern int rank, npes;
+
+namespace helpers{
+Color2DImageType::Pointer getColorFromGrayScale(Input2DImageType::Pointer im)
+{
+	Color2DImageType::Pointer out = Color2DImageType::New();
+	out->SetRegions(im->GetLargestPossibleRegion());
+	out->Allocate();
+	typedef itk::ImageRegionIterator<Color2DImageType> Color2DIteratorType;
+	Color2DIteratorType coloriter(out,out->GetLargestPossibleRegion());
+	twoDIteratorType grayiter(im,im->GetLargestPossibleRegion());
+
+	VectorPixelType pixel;
+	for(grayiter.GoToBegin(),coloriter.GoToBegin();!coloriter.IsAtEnd();++coloriter,++grayiter)
+	{
+		unsigned char val = grayiter.Get();
+		pixel[0] = val; pixel[1] = val; pixel[2] = val;
+		coloriter.Set(pixel);
+	}
+	return out;
+}
+
+Input2DImageType::Pointer getProjection(InputImageType::Pointer im)
+{
+	Input2DImageType::Pointer output = Input2DImageType::New();
+	Input2DImageType::RegionType region;
+	Input2DImageType::SizeType size;
+	Input2DImageType::IndexType index;
+	index[0]=0;
+	index[1]=0;
+	size[0] = im->GetLargestPossibleRegion().GetSize()[0];
+	size[1] = im->GetLargestPossibleRegion().GetSize()[1];
+	region.SetSize(size);
+	region.SetIndex(index);
+	output->SetRegions(region);
+	output->Allocate();
+
+	SliceIteratorType inputIt(im,im->GetLargestPossibleRegion());
+	LinearIteratorType outputIt(output,output->GetLargestPossibleRegion());
+
+	inputIt.SetFirstDirection(0);
+	inputIt.SetSecondDirection(1);
+	outputIt.SetDirection(0);
+
+
+	outputIt.GoToBegin();
+	while ( ! outputIt.IsAtEnd() )
+	{
+		while ( ! outputIt.IsAtEndOfLine() )
+		{
+			outputIt.Set( itk::NumericTraits<unsigned short>::NonpositiveMin() );
+			++outputIt;
+		}
+		outputIt.NextLine();
+	}
+
+	inputIt.GoToBegin();
+	outputIt.GoToBegin();
+
+	while( !inputIt.IsAtEnd() )
+	{
+		while ( !inputIt.IsAtEndOfSlice() )
+		{
+			while ( !inputIt.IsAtEndOfLine() )
+			{
+				outputIt.Set( MAX( outputIt.Get(), inputIt.Get() ));
+				++inputIt;
+				++outputIt;
+			}
+			outputIt.NextLine();
+			inputIt.NextLine();
+		}
+		outputIt.GoToBegin();
+		inputIt.NextSlice();
+
+	}
+	return output;
+}
+
+
+Color2DImageType::Pointer getColorProjection(ColorImageType::Pointer im)
+{
+	Color2DImageType::Pointer output = Color2DImageType::New();
+
+	Color2DImageType::RegionType region;
+	Color2DImageType::SizeType size;
+	Color2DImageType::IndexType index;
+	index[0]=0;
+	index[1]=0;
+	size[0] = im->GetLargestPossibleRegion().GetSize()[0];
+	size[1] = im->GetLargestPossibleRegion().GetSize()[1];
+	region.SetSize(size);
+	region.SetIndex(index);
+	output->SetRegions(region);
+	output->Allocate();
+
+	SliceColorIteratorType inputIt(im,im->GetLargestPossibleRegion());
+	LinearColorIteratorType outputIt(output,output->GetLargestPossibleRegion());
+
+	inputIt.SetFirstDirection(0);
+	inputIt.SetSecondDirection(1);
+	outputIt.SetDirection(0);
+
+	VectorPixelType nonpositivemin_vector;
+	nonpositivemin_vector[0]=0;
+	nonpositivemin_vector[1]=0;
+	nonpositivemin_vector[2]=0;
+
+	outputIt.GoToBegin();
+	while ( ! outputIt.IsAtEnd() )
+	{
+		while ( ! outputIt.IsAtEndOfLine() )
+		{
+			outputIt.Set( nonpositivemin_vector );
+			++outputIt;
+		}
+		outputIt.NextLine();
+	}
+
+	inputIt.GoToBegin();
+	outputIt.GoToBegin();
+
+
+	while( !inputIt.IsAtEnd() )
+	{
+		while ( !inputIt.IsAtEndOfSlice() )
+		{
+			while ( !inputIt.IsAtEndOfLine() )
+			{
+				if(outputIt.Get().GetNorm()==0)
+				{
+					if(inputIt.Get().GetNorm()!=0)
+					{
+						outputIt.Set(inputIt.Get());
+					}
+				}
+				++inputIt;
+				++outputIt;
+			}
+			outputIt.NextLine();
+			inputIt.NextLine();
+		}
+		outputIt.GoToBegin();
+		inputIt.NextSlice();
+
+	}
+	return output;
+}
+Input2DImageType::Pointer getCollage(InputImageType::Pointer im[4])
+{
+	InputImageType::SizeType size = im[0]->GetLargestPossibleRegion().GetSize();
+	Input2DImageType::Pointer imcollage = Input2DImageType::New();
+	Input2DImageType::SizeType size2d;
+	Input2DImageType::RegionType region;
+	Input2DImageType::IndexType index;
+	size2d[0] = size[0]*2;
+	size2d[1] = size[1]*2;
+	index[0]=0;
+	index[1]=0;
+
+	region.SetIndex(index);
+	region.SetSize(size2d);
+	imcollage->SetRegions(region);
+	imcollage->Allocate(); 
+
+	int startpoints[][2]={0,0,size[0],0,0,size[1],size[0],size[1]};
+	size2d[0]=size[0];
+	size2d[1]=size[1];
+	region.SetSize(size2d);
+	for(int co = 0; co<4; co++)
+	{
+		index[0]=startpoints[co][0];
+		index[1]=startpoints[co][1];
+		region.SetIndex(index);
+		Input2DImageType::Pointer proj = getProjection(im[co]);
+		Const2DIteratorType inputIt(proj,proj->GetLargestPossibleRegion());
+		twoDIteratorType outputIt(imcollage,region);
+		for(inputIt.GoToBegin(),outputIt.GoToBegin();!inputIt.IsAtEnd();++inputIt,++outputIt)
+		{
+			outputIt.Set(inputIt.Get());
+		}
+	}
+
+	return imcollage;
+
+}
+
+unsigned char getMedianValue(NeighborhoodIteratorType it,int size)
+{
+	static std::vector<unsigned char> data(size);
+	int pc = 0;
+	for(unsigned int i = 0; i < it.Size(); i++,pc++)
+		data[pc]=it.GetPixel(i);
+	std::sort(data.begin(),data.end());
+	return data[data.size()/2];
+}
+
+void unmix_median(InputImageType::Pointer im[4],InputImageType::Pointer om[4],InputImageType::Pointer assignment[4])
+{
+	printf("Performing unmixing ...\n");
+	InputImageType::SizeType size = im[0]->GetLargestPossibleRegion().GetSize();
+
+	MedianFilterType::Pointer filt[4];
+	IteratorType iterator[4];
+	IteratorType assigniter[4];
+
+	InputImageType::SizeType radius;
+	radius[0]=1;
+	radius[1]=1;
+	radius[2]=1;
+
+	InputImageType::SizeType imagesize = im[0]->GetLargestPossibleRegion().GetSize();
+	InputImageType::IndexType imageindex;
+	imageindex.Fill(0);
+	InputImageType::RegionType region;
+	region.SetSize(imagesize);
+	region.SetIndex(imageindex);
+
+
+	for(int counter=0; counter<4; counter++)
+	{
+		printf("\tPerforming median filtering on channel %d ...",counter+1);
+		filt[counter]=MedianFilterType::New();
+		filt[counter]->SetRadius(radius);
+		filt[counter]->SetInput(im[counter]);
+		filt[counter]->Update();
+		om[counter]=filt[counter]->GetOutput();
+		assignment[counter]=InputImageType::New();
+		assignment[counter]->SetRegions(region);
+		assignment[counter]->Allocate();
+		assigniter[counter]=IteratorType(assignment[counter],assignment[counter]->GetLargestPossibleRegion());
+		assigniter[counter].GoToBegin();
+		iterator[counter]=IteratorType(om[counter],om[counter]->GetLargestPossibleRegion());
+		iterator[counter].GoToBegin();
+		printf(" Done.\n",counter+1);
+	}
+
+	int total_voxels = size[0]*size[1]*size[2];
+	int num_processed = 0;
+	printf("\tComputing maximum among channels ... ");
+	for(;!iterator[0].IsAtEnd();)
+	{
+		num_processed++;
+		/*
+		   if(num_processed % 100 ==0)
+		   printf("Processed %0.2lf%% voxels\r",100.0/total_voxels*num_processed);
+		   */
+		//		if(100.0/total_voxels*num_processed> 100)
+		//			break;
+		double max = -1;
+		int maxpos = -1;
+		for(int co = 0; co < 4; co++)
+		{
+			unsigned char temp = iterator[co].Value();
+			if(max < temp)
+			{
+				max = temp;
+				maxpos = co;
+			}
+		}
+		for(int co = 0; co < 4; co++)
+		{
+			if(maxpos != co)
+			{
+				iterator[co].Set(0);
+				assigniter[co].Set(0);
+			}
+			else
+			{
+				assigniter[co].Set(255);
+			}
+		}
+		for(int co = 0; co<4; co++)
+		{
+			++iterator[co];
+			++assigniter[co];
+		}
+	}
+	printf(" Done.\n");
+}
+
+void unmix_neighborhood(InputImageType::Pointer im[4],InputImageType::Pointer om[4])
+{
+
+	printf("Beginning iterators\n");
+	IteratorType iterator[]={IteratorType(om[0],om[0]->GetLargestPossibleRegion()),
+		IteratorType(om[1],om[1]->GetLargestPossibleRegion()),
+		IteratorType(om[2],om[2]->GetLargestPossibleRegion()),
+		IteratorType(om[3],om[3]->GetLargestPossibleRegion()),
+	};
+
+	iterator[0].GoToBegin();
+	iterator[1].GoToBegin();
+	iterator[2].GoToBegin();
+	iterator[3].GoToBegin();
+
+
+
+	printf("Beginning Neighborhood iterators\n");
+	NeighborhoodIteratorType::RadiusType radius;
+	radius.Fill(1);
+	NeighborhoodIteratorType nit[]={NeighborhoodIteratorType(radius,im[0],im[0]->GetLargestPossibleRegion()),
+		NeighborhoodIteratorType(radius,im[1],im[1]->GetLargestPossibleRegion()),
+		NeighborhoodIteratorType(radius,im[2],im[2]->GetLargestPossibleRegion()),
+		NeighborhoodIteratorType(radius,im[3],im[3]->GetLargestPossibleRegion())
+	};
+
+	nit[0].GoToBegin();
+	nit[1].GoToBegin();
+	nit[2].GoToBegin();
+	nit[3].GoToBegin();
+	InputImageType::SizeType size = im[0]->GetLargestPossibleRegion().GetSize();
+	int total_voxels = size[0]*size[1]*size[2];
+	int num_processed = 0;
+
+	for(;!iterator[0].IsAtEnd();++iterator[0],++iterator[1],++iterator[2],++iterator[3],++nit[0],++nit[1],++nit[2],++nit[3])
+	{
+		num_processed++;
+		if(num_processed % 100 ==0)
+			printf("Processed %0.2lf%% voxels\r",100.0/total_voxels*num_processed);
+		//		if(100.0/total_voxels*num_processed> 100)
+		//			break;
+		double max = -1;
+		int maxpos = -1;
+		for(int co = 0; co < 4; co++)
+		{
+			unsigned char temp = getMedianValue(nit[co],27);
+			if(max < temp)
+			{
+				max = temp;
+				maxpos = co;
+			}
+		}
+		for(int co = 0; co < 4; co++)
+		{
+			if(maxpos != co)
+			{
+				iterator[co].Set(0);
+			}
+			else
+			{
+				iterator[co].Set((unsigned char)max);
+			}
+		}
+	}
+}
+OutputImageType::Pointer getThresholded(InputImageType::Pointer im,int n)
+{
+	printf("Performing binary thresholding ...");
+	ThresholdFilterType::Pointer tfilt = ThresholdFilterType::New();
+	tfilt->SetInput(im);
+	tfilt->SetInsideValue(255);
+	tfilt->SetOutsideValue(0);
+	tfilt->SetLowerThreshold(n);
+	tfilt->SetUpperThreshold(255);
+	tfilt->Update();
+	printf(" Done.\n");
+	return tfilt->GetOutput();
+}
+
+OutputImageType::Pointer getOtsuThresholded(InputImageType::Pointer im)
+{
+	printf("Performing binary thresholding ...");
+	OtsuThresholdFilterType::Pointer tfilt = OtsuThresholdFilterType::New();
+	tfilt->SetInput(im);
+	tfilt->SetInsideValue(0);
+	tfilt->SetOutsideValue(255);
+	tfilt->SetNumberOfHistogramBins(256);
+	tfilt->Update();
+	printf(" Done.\n");
+	return tfilt->GetOutput();
+}
+
+OutputImageType::Pointer getBinaryMedianFiltered(InputImageType::Pointer im, InputImageType::SizeType radius)
+{
+	printf("Performing binary median filtering  ...");
+	BinaryMedianFilterType::Pointer tfilt = BinaryMedianFilterType::New();
+	tfilt->SetInput(im);
+	tfilt->SetForegroundValue(255);
+	tfilt->SetBackgroundValue(0);
+	tfilt->SetRadius(radius);
+	tfilt->Update();
+	printf(" Done.\n");
+	return tfilt->GetOutput();
+}
+
+
+OutputImageType::Pointer getScaledFromBool(BoolImageType::Pointer im)
+{
+	typedef itk::ShiftScaleImageFilter<BoolImageType,OutputImageType> ScaleFilterType;
+
+	ScaleFilterType::Pointer scalef = ScaleFilterType::New();
+
+	scalef->SetInput(im);
+	scalef->SetScale(255);
+	scalef->Update();
+	return scalef->GetOutput();
+}
+
+InputImageType::Pointer getLargeComponents(InputImageType::Pointer im, int n)
+{
+	printf("Removing small connected components ...");
+	typedef itk::Image<short int,3> LabelImageType;
+	typedef itk::ConnectedComponentImageFilter<InputImageType,LabelImageType> ConnectedFilterType;
+	typedef itk::RelabelComponentImageFilter<LabelImageType,LabelImageType> RelabelFilterType;
+
+	ConnectedFilterType::Pointer cfilter = ConnectedFilterType::New();
+	cfilter->SetInput(im);
+	cfilter->Update();
+
+	RelabelFilterType::Pointer rfilter = RelabelFilterType::New();
+	rfilter->SetInput(cfilter->GetOutput());
+	rfilter->InPlaceOn();
+
+	rfilter->Update();
+	std::vector<long unsigned int> sizes = rfilter->GetSizeOfObjectsInPixels();
+	int threshsize = -1;
+	for(int counter=0; counter<sizes.size(); counter++)
+	{
+		if(sizes[counter] < n)
+		{
+			threshsize = counter;
+			break;
+		}
+	}
+
+	typedef itk::BinaryThresholdImageFilter<LabelImageType,InputImageType> BinFilterType;
+	BinFilterType::Pointer bfilter = BinFilterType::New();
+
+	bfilter->SetInput(rfilter->GetOutput());
+	bfilter->SetInsideValue(255);
+	bfilter->SetOutsideValue(0);
+	bfilter->SetLowerThreshold(1);
+	if(threshsize>1)
+		bfilter->SetUpperThreshold(threshsize-1);
+	else
+		bfilter->SetUpperThreshold(1);
+	bfilter->Update();
+	printf(" Done.\n");
+
+	return bfilter->GetOutput();
+
+}
+
+LabelImageType::Pointer getLargeLabels(LabelImageType::Pointer im, int n)
+{
+	printf("Removing small connected components ...\n");
+	typedef itk::Image<short int,3> LabelImageType;
+	typedef itk::RelabelComponentImageFilter<LabelImageType,LabelImageType> RelabelFilterType;
+	typedef itk::ScalarConnectedComponentImageFilter<LabelImageType,LabelImageType> ConnectedFilterType;
+
+	ConnectedFilterType::Pointer cfilter = ConnectedFilterType::New();
+	cfilter->SetInput(im);
+	cfilter->SetDistanceThreshold(0);
+	cfilter->Update();
+
+	LabelIteratorType it(cfilter->GetOutput(),cfilter->GetOutput()->GetLargestPossibleRegion());
+	for(it.GoToBegin();!it.IsAtEnd(); ++it)
+	{
+		if(it.Get()==1)
+			it.Set(0);
+	}
+//	cfilter->SetBackgroundValue(0);
+
+
+	RelabelFilterType::Pointer rfilter = RelabelFilterType::New();
+	rfilter->SetInput(cfilter->GetOutput());
+	rfilter->InPlaceOn();
+
+	rfilter->Update();
+	std::vector<long unsigned int> sizes = rfilter->GetSizeOfObjectsInPixels();
+	int threshsize = sizes.size()+1;// just to be safe
+	for(int counter=0; counter<sizes.size(); counter++)
+	{
+		if(sizes[counter] < n)
+		{
+			threshsize = counter;
+			break;
+		}
+	}
+
+	LabelIteratorType iter = LabelIteratorType(rfilter->GetOutput(),rfilter->GetOutput()->GetLargestPossibleRegion());
+	for(iter.GoToBegin();!iter.IsAtEnd();++iter)
+	{
+		if(iter.Get()>threshsize)
+			iter.Set(0);
+	}
+	
+	//printf("%d/%d: Done removing small connected components.\n",rank,npes);
+	return rfilter->GetOutput();
+
+
+}
+
+double features_box_overlap(FeaturesType &f1, FeaturesType &f2)
+{
+	float sx,sy,sz;
+	float ex,ey,ez;
+	sx = MAX(f1.BoundingBox[0],f2.BoundingBox[0]);
+	sy = MAX(f1.BoundingBox[2],f2.BoundingBox[2]);
+	sz = MAX(f1.BoundingBox[4],f2.BoundingBox[4]);
+	ex = MIN(f1.BoundingBox[1],f2.BoundingBox[1]);
+	ey = MIN(f1.BoundingBox[3],f2.BoundingBox[3]);
+	ez = MIN(f1.BoundingBox[5],f2.BoundingBox[5]);
+
+	double overlap=0;
+	if((sx<ex) && (sy<ey) && (sz<ez))
+	{
+		overlap = (ex-sx)*(ey-sy)*(ez-sz);
+	}
+
+	return overlap;
+}
+double features_diff(FeaturesType &f1, FeaturesType &f2,bool overlap)
+{
+	//parameters
+	double distance_threshold = 12;
+	double distance_variance = 100;
+	double intensity_variance = 100;
+	double volume_variance = 100000;
+
+	typedef ftk::IntrinsicFeatures FT;
+	float spacing[3] = {0.357,0.357,2.0};
+	float x1=f1.Centroid[0]*spacing[0];
+	float y1=f1.Centroid[1]*spacing[1];
+	float z1=f1.Centroid[2]*spacing[2];
+	float x2=f2.Centroid[0]*spacing[0]; 
+	float y2=f2.Centroid[1]*spacing[1]; 
+	float z2=f2.Centroid[2]*spacing[2];
+	double dist = sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2)+(z1-z2)*(z1-z2));
+	if(dist>distance_threshold)
+	{
+		//printf("I got distance of %lf and I rejected it %f %f %f %f %f %f\n",dist,f1.centroid[0],f1.centroid[1],f1.centroid[2],f2.centroid[0],f2.centroid[1],f2.centroid[2]);
+		return 1e10;
+	}
+
+	double overlap_measure = 0;
+	if(overlap)
+	{
+		float sx,sy,sz;
+		float ex,ey,ez;
+		sx = MAX(f1.BoundingBox[0],f2.BoundingBox[0]);
+		sy = MAX(f1.BoundingBox[2],f2.BoundingBox[2]);
+		sz = MAX(f1.BoundingBox[4],f2.BoundingBox[4]);
+		ex = MIN(f1.BoundingBox[1],f2.BoundingBox[1]);
+		ey = MIN(f1.BoundingBox[3],f2.BoundingBox[3]);
+		ez = MIN(f1.BoundingBox[5],f2.BoundingBox[5]);
+		if((sx<ex) && (sy<ey) && (sz<ez))
+			overlap_measure = (ex-sx)*(ey-sy)*(ez-sz)/(0.5*(f1.ScalarFeatures[FT::BBOX_VOLUME]+f2.ScalarFeatures[FT::BBOX_VOLUME]));
+	}
+	if(overlap_measure>1)
+	{
+		printf("I got >1 overlap_measure\n");
+	}
+	double cost = (1-overlap_measure)*(1-exp(-(dist*dist/2/distance_variance+(f1.ScalarFeatures[FT::MEAN]-f2.ScalarFeatures[FT::MEAN])*(f1.ScalarFeatures[FT::MEAN]-f2.ScalarFeatures[FT::MEAN])/2/intensity_variance+(f1.ScalarFeatures[FT::VOLUME]-f2.ScalarFeatures[FT::VOLUME])*(f1.ScalarFeatures[FT::VOLUME]-f2.ScalarFeatures[FT::VOLUME])/2/volume_variance)));
+	return cost;
+}
+
+void getFeatureVectorsFarsight(LabelImageType::Pointer im, InputImageType::Pointer in_image, std::vector<ftk::IntrinsicFeatures> & feature_vector, int time, int tag)
+{
+	printf("Started feature calculation\n");
+	if(im->GetLargestPossibleRegion().GetSize()[2]==1)
+	{
+		//convert it to a 2D Image
+		LabelImageType::SizeType linsize = im->GetLargestPossibleRegion().GetSize();
+		Label2DImageType::Pointer l2d = Label2DImageType::New();
+		Label2DImageType::SizeType l2dsize; l2dsize[0] = linsize[0]; l2dsize[1] = linsize[1];
+		Label2DImageType::IndexType l2dindex; l2dindex.Fill(0);
+		Label2DImageType::RegionType l2dregion; l2dregion.SetSize(l2dsize); l2dregion.SetIndex(l2dindex);
+		l2d->SetRegions(l2dregion);
+		l2d->Allocate();
+		memcpy(im->GetBufferPointer(),l2d->GetBufferPointer(),sizeof(LabelImageType::PixelType)*l2dsize[0]*l2dsize[1]);
+
+		Input2DImageType::Pointer i2d = Input2DImageType::New();
+		i2d->SetRegions(l2dregion);
+		i2d->Allocate();
+		memcpy(in_image->GetBufferPointer(),i2d->GetBufferPointer(),sizeof(InputImageType::PixelType)*l2dsize[0]*l2dsize[1]);
+	
+		typedef ftk::LabelImageToFeatures<Input2DImageType::PixelType, Label2DImageType::PixelType, 2> FeatureCalculator2DType;
+		FeatureCalculator2DType::Pointer fc2d = FeatureCalculator2DType::New();
+		fc2d->SetImageInputs(i2d,l2d);
+		fc2d->SetLevel(3);
+		fc2d->Update();
+		std::vector<Label2DImageType::PixelType> labels = fc2d->GetLabels();
+		for(unsigned int counter=0; counter<labels.size();counter++)
+		{
+			if(labels[counter]==0)
+				continue;
+			 feature_vector.push_back(*(fc2d->GetFeatures(labels[counter])));
+			 feature_vector.back().num=labels[counter];
+			 feature_vector.back().tag = tag;
+			 feature_vector.back().time = time;
+		}
+		
+	}
+	else
+	{
+		typedef ftk::LabelImageToFeatures<InputImageType::PixelType,LabelImageType::PixelType,3> FeatureCalculatorType;
+		FeatureCalculatorType::Pointer fc = FeatureCalculatorType::New();
+		fc->SetImageInputs(in_image,im);
+		fc->SetLevel(3);
+		fc->Update();
+		std::vector<LabelImageType::PixelType> labels = fc->GetLabels();
+		for(unsigned int counter=0; counter< labels.size(); counter++)
+		{
+			if(labels[counter]==0)
+				continue;
+			feature_vector.push_back(*(fc->GetFeatures(labels[counter])));
+			feature_vector.back().num = labels[counter];
+			feature_vector.back().tag = tag;
+			feature_vector.back().time = time;
+		}
+	}
+	printf("Ended feature calculation\n");
+}
+
+
+InputImageType::Pointer getDilated(InputImageType::Pointer im, int n)
+{
+	printf("Performing morphological dilation ...");
+	typedef itk::BinaryBallStructuringElement<InputPixelType,3> StructuringElementType;
+	typedef itk::Neighborhood<InputPixelType,3> NeighborhoodElementType;
+	typedef itk::BinaryDilateImageFilter<InputImageType,InputImageType,NeighborhoodElementType> DilateFilterType;
+
+
+	StructuringElementType selement;
+	NeighborhoodElementType::SizeType size;
+	size[0]=n;
+	size[1]=n;
+	size[2]=n/3;//FIXME
+	selement.SetRadius(size);
+	selement.CreateStructuringElement();
+	DilateFilterType::Pointer dfilter = DilateFilterType::New();
+	dfilter->SetKernel(selement);
+	dfilter->SetInput(im);
+	dfilter->Update();
+	printf(" Done.\n");
+	return dfilter->GetOutput();
+}
+
+InputImageType::Pointer getEroded(InputImageType::Pointer im, int n)
+{
+	printf("Performing morphological Erosion ...");
+
+	typedef itk::BinaryBallStructuringElement<InputPixelType,3> StructuringElementType;
+	typedef itk::Neighborhood<InputPixelType,3> NeighborhoodElementType;
+	typedef itk::BinaryErodeImageFilter<InputImageType,InputImageType,NeighborhoodElementType> ErodeFilterType;
+
+	StructuringElementType selement;
+	NeighborhoodElementType::SizeType size;
+	size[0]=n;
+	size[1]=n;
+	size[2]=n/5;
+	selement.SetRadius(size);
+	selement.CreateStructuringElement();
+	ErodeFilterType::Pointer efilter = ErodeFilterType::New();
+	efilter->SetInput(im);
+	efilter->SetKernel(selement);
+	efilter->Update();
+
+	printf(" Done.\n");
+	return efilter->GetOutput();
+}
+
+DistanceMapFilterType::Pointer getDistanceMap(InputImageType::Pointer im)
+{
+	printf("Computing Danielsson distance map ... ");
+	DistanceMapFilterType::Pointer distfilter = DistanceMapFilterType::New();
+	distfilter->SetInput(im);
+	distfilter->InputIsBinaryOn();
+	distfilter->Update();
+	printf("Done.\n");
+	return distfilter;
+}
+/* obselete */
+//InputImageType::Pointer getOldSegmented(InputImageType::Pointer im_input,int threshold, int min_component_size, int morph_opening_depth)
+//{
+//	InputImageType::Pointer threshVessel = getThresholded(im_input,threshold);
+//	threshVessel = getDilated(threshVessel,morph_opening_depth);
+//	threshVessel = getEroded(threshVessel,morph_opening_depth);
+//	threshVessel = getLargeComponents(threshVessel,min_component_size);
+//	return threshVessel;
+//}
+
+
+LabelImageType::Pointer getLabelled(InputImageType::Pointer im_input,int threshold, int min_component_size, int morph_opening_depth)
+{
+	InputImageType::Pointer threshVessel = getThresholded(im_input,threshold);
+	threshVessel = getDilated(threshVessel,morph_opening_depth);
+	threshVessel = getEroded(threshVessel,morph_opening_depth);
+	threshVessel = getLargeComponents(threshVessel,min_component_size);
+
+
+
+	ConnectedFilterType::Pointer cfilter = ConnectedFilterType::New();
+	cfilter->SetInput(threshVessel);
+	cfilter->Update();
+
+	RelabelFilterType::Pointer rfilter = RelabelFilterType::New();
+	rfilter->SetInput(cfilter->GetOutput());
+	rfilter->InPlaceOn();
+
+	rfilter->Update();
+	return rfilter->GetOutput();
+}
+
+InputImageType::Pointer getLabelToBinary(LabelImageType::Pointer l)
+{
+	InputImageType::Pointer im = InputImageType::New();
+	im->SetRegions(l->GetLargestPossibleRegion());
+	im->Allocate();
+	
+	IteratorType iter(im,im->GetLargestPossibleRegion());
+	ConstLabelIteratorType liter(l,l->GetLargestPossibleRegion());
+	for(iter.GoToBegin(),liter.GoToBegin();!liter.IsAtEnd();++liter,++iter)
+	{
+		if(liter.Get()>0)
+			iter.Set(255);
+	}
+	return im;
+
+}
+ColorImageType::Pointer getColorCompositeImage(InputImageType::Pointer im[4],VectorPixelType colors[4])
+{
+
+	ColorImageType::Pointer output = ColorImageType::New();
+	ColorImageType::SizeType size = im[0]->GetLargestPossibleRegion().GetSize();
+	ColorImageType::IndexType index;
+	index.Fill(0);
+	ColorImageType::RegionType region;
+	region.SetSize(size);
+	region.SetIndex(index);
+	output->SetRegions(region);
+	output->Allocate();
+
+	ColorIteratorType oiter(output,output->GetLargestPossibleRegion());
+	ConstIteratorType iiter[4];
+	for(int counter=0; counter <4; counter++)
+	{
+		iiter[counter] = ConstIteratorType(im[counter],im[counter]->GetLargestPossibleRegion());
+		iiter[counter].GoToBegin();
+	}
+
+	for(oiter.GoToBegin();!oiter.IsAtEnd(); ++oiter,++iiter[0],++iiter[1],++iiter[2],++iiter[3])
+	{
+		for(int counter=0; counter<4; counter++)
+		{
+			if(iiter[counter].Get()!=0)
+			{
+				oiter.Set(colors[counter]);
+				break;
+			}
+		}
+	}
+	return output;
+
+}
+
+ColorImageType::Pointer getColorComposite(InputImageType::Pointer im[],int n, VectorPixelType colors[])
+{
+
+	ColorImageType::Pointer output = ColorImageType::New();
+	ColorImageType::SizeType size = im[0]->GetLargestPossibleRegion().GetSize();
+	ColorImageType::IndexType index;
+	index.Fill(0);
+	ColorImageType::RegionType region;
+	region.SetSize(size);
+	region.SetIndex(index);
+	output->SetRegions(region);
+	output->Allocate();
+
+	ColorIteratorType oiter(output,output->GetLargestPossibleRegion());
+	ConstIteratorType iiter[4];
+	for(int counter=0; counter <n; counter++)
+	{
+		iiter[counter] = ConstIteratorType(im[counter],im[counter]->GetLargestPossibleRegion());
+		iiter[counter].GoToBegin();
+	}
+
+	printf("Starting Iteration\n");
+	for(oiter.GoToBegin();!oiter.IsAtEnd(); ++oiter)
+	{
+		for(int counter=0; counter<n; counter++)
+		{
+			if(iiter[counter].Get()!=0)
+			{
+				oiter.Set(colors[counter]);
+				break;
+			}
+		}
+		for(int c =0; c<n; c++)
+			++iiter[c];
+	}
+	return output;
+
+}
+
+
+InputImageType::Pointer getImageFromNPTS(char *filename_npts,int imagesize[])
+{
+	InputImageType::Pointer output = InputImageType::New();
+	InputImageType::RegionType region;
+	InputImageType::SizeType size;
+	InputImageType::IndexType index;
+	index.Fill(0);
+	size[0]=imagesize[0];
+	size[1]=imagesize[1];
+	size[2]=imagesize[2];
+	region.SetSize(size);
+	region.SetIndex(index);
+	output->SetRegions(region);
+	output->Allocate();
+
+	FILE *fp = fopen(filename_npts,"r");
+	int x,y,z;
+	while(fscanf(fp,"%d %d %d %*f %*f",&z,&y,&x)>0)
+	{
+		index[0]=x-1;
+		index[1]=y-1;
+		index[2]=z-1;
+		output->SetPixel(index,255);
+	}
+	fclose(fp);
+	return output;
+
+
+}
+
+void getClassified(DistanceImageType::Pointer dist, InputImageType::Pointer micro, InputImageType::Pointer &p1, InputImageType::Pointer &p2)
+{
+
+	typedef itk::Image<short int,3> LabelImageType;
+	typedef itk::ConnectedComponentImageFilter<InputImageType,LabelImageType> ConnectedFilterType;
+	typedef itk::RelabelComponentImageFilter<LabelImageType,LabelImageType> RelabelFilterType;
+
+	ConnectedFilterType::Pointer cfilter = ConnectedFilterType::New();
+	cfilter->SetInput(micro);
+	cfilter->Update();
+
+	RelabelFilterType::Pointer rfilter = RelabelFilterType::New();
+	rfilter->SetInput(cfilter->GetOutput());
+	rfilter->InPlaceOn();
+
+	rfilter->Update();
+
+	int num_objects = rfilter->GetNumberOfObjects();
+	typedef itk::ImageRegionIterator<LabelImageType> LabelIteratorType;
+	LabelIteratorType liter(rfilter->GetOutput(),rfilter->GetOutput()->GetLargestPossibleRegion());
+
+	typedef itk::ImageRegionIterator<DistanceImageType> DistanceIteratorType;
+
+	DistanceIteratorType diter(dist,dist->GetLargestPossibleRegion());
+
+
+	p1=InputImageType::New();
+	p2=InputImageType::New();
+	InputImageType::SizeType size=micro->GetLargestPossibleRegion().GetSize();
+	InputImageType::IndexType index1;
+	index1.Fill(0);
+	InputImageType::RegionType region;
+	region.SetSize(size);
+	region.SetIndex(index1);
+	p1->SetRegions(region);
+	p2->SetRegions(region);
+	p1->Allocate();
+	p2->Allocate();
+
+	IteratorType iter1(p1,p1->GetLargestPossibleRegion()),iter2(p2,p2->GetLargestPossibleRegion());
+
+	std::vector<short int> distance;
+	for(int counter=0; counter<num_objects; counter++)
+		distance.push_back(1000);
+	printf("About to compute distances\n");
+	for(liter.GoToBegin(),diter.GoToBegin(),iter1.GoToBegin(),iter2.GoToBegin();!liter.IsAtEnd(); ++liter,++diter)
+	{
+		if(liter.Get()>0)
+		{
+			if(distance[liter.Get()-1]>diter.Get())
+			{
+				if(diter.Get()<0)
+					printf("What the hell!\n");
+				distance[liter.Get()-1]=diter.Get();
+			}
+		}
+	}
+	for(int counter=0; counter<num_objects;counter++)
+	{
+		printf("%d \t",(int)distance[counter]);
+	}
+	for(liter.GoToBegin();!liter.IsAtEnd();++iter1,++iter2,++liter)
+	{
+		if(liter.Get()!=0)
+		{
+			if(distance[liter.Get()-1]<4)
+			{
+				iter1.Set(255);
+				iter2.Set(0);
+			}
+			else
+			{
+				iter2.Set(255);
+				iter1.Set(0);
+			}
+		}
+	}
+}
+
+void writeNPTS(InputImageType::Pointer im, char*filename)
+{
+//	printf("About to write npts file %s\n",filename);
+	FILE*fp = fopen(filename,"w");
+	InputImageType::SizeType size = im->GetLargestPossibleRegion().GetSize();
+	InputImageType::IndexType index;
+	for(int cx=0; cx<size[0];cx++)
+	{
+		index[0]=cx;
+		for(int cy=0; cy<size[1];cy++)
+		{
+			index[1]=cy;
+			for(int cz=0; cz<size[2];cz++)
+			{
+				index[2]=cz;
+				if(im->GetPixel(index)>0)
+				{
+					fprintf(fp,"%d %d %d 1 1\n",cz+1,cy+1,cx+1);
+				}
+			}
+		}
+	}
+	fclose(fp);
+}
+
+/*void MSA_classifymicroglia(char*filename_vesselnpts,char*filename_microglianpts)
+  {
+
+  int sizes[3]={1024,1024,77};
+  InputImageType::Pointer microglia = getImageFromNPTS(filename_microglianpts,sizes);
+  InputImageType::Pointer threshVessel = getImageFromNPTS(filename_vesselnpts,sizes);
+
+  DistanceMapFilterType::Pointer distfilt ;//= getDistanceMap(threshVessel);
+
+  DistanceImageType::Pointer distImage=readImage<DistanceImageType>("G:\\Arun\\MSA paper\\distance_map.tif");
+
+  InputImageType::Pointer mic1,mic2;
+  getClassified(distImage,microglia,mic1,mic2);
+  writeNPTS(mic1,"G:\\Arun\\MSA paper\\mic1.npts");
+  writeNPTS(mic2,"G:\\Arun\\MSA paper\\mic2.npts");
+
+//	writeImage<DistanceImageType>(distfilt->GetOutput(),"G:\\Arun\\MSA paper\\distance_map.tif");
+}
+*/
+InputImageType::Pointer getPreprocessed(InputImageType::Pointer im)
+{
+	MedianFilterType::Pointer filter = MedianFilterType::New();
+	filter->SetInput(im);
+	InputImageType::SizeType radius;
+	radius[0]=1;
+	radius[1]=1;
+	radius[2]=1;
+	filter->SetRadius(radius);
+	filter->Update();
+	return filter->GetOutput();
+}
+
+ColorImageType::Pointer getColorCompositeImageFromLabelled(LabelImageType::Pointer im,VectorPixelType color)
+{
+	ColorImageType::Pointer output = ColorImageType::New();
+	ColorImageType::SizeType size = im->GetLargestPossibleRegion().GetSize();
+	ColorImageType::IndexType index;
+	index.Fill(0);
+	ColorImageType::RegionType region;
+	region.SetSize(size);
+	region.SetIndex(index);
+	output->SetRegions(region);
+	output->Allocate();
+	VectorPixelType black;
+	black[0]=0;black[1]=0;black[2]=0;
+
+	ColorIteratorType oiter(output,output->GetLargestPossibleRegion());
+	ConstLabelIteratorType iiter;
+	iiter = ConstLabelIteratorType(im,im->GetLargestPossibleRegion());
+	iiter.GoToBegin();
+
+	for(oiter.GoToBegin();!oiter.IsAtEnd(); ++oiter,++iiter)
+	{
+		if(iiter.Get())
+			oiter.Set(color);
+		else
+			oiter.Set(black);
+	}
+	return output;
+}
+Color2DImageType::Pointer getColor2DImage(LabelImageType::Pointer labelled, int channel)
+{
+	unsigned char colorarray[][3]={255,0,0,
+		0,154,25,
+		207,141,0,
+		255,0,0};
+	VectorPixelType colorcodes[4];
+
+	for(int counter=0; counter<4; counter++)
+		colorcodes[counter]=colorarray[counter];
+	ColorImageType::Pointer output_segmentation = getColorCompositeImageFromLabelled(labelled,colorcodes[channel-1]);
+	return getColorProjection(output_segmentation);	
+}
+
+InputImageType::Pointer getEmpty(int s1,int s2, int s3)
+{
+	InputImageType::Pointer p = InputImageType::New();
+	InputImageType::SizeType size;
+	InputImageType::IndexType index;
+	InputImageType::RegionType region;
+	size[0] = s1; size[1] = s2; size[2] = s3;
+	index.Fill(0);
+	region.SetSize(size);
+	region.SetIndex(index);
+	p->SetRegions(region);
+	p->Allocate();
+	return p;
+}
+
+Input2DImageType::Pointer get2DEmpty(int s1, int s2)
+{
+	Input2DImageType::Pointer p = Input2DImageType::New();
+	Input2DImageType::SizeType size;
+	Input2DImageType::IndexType index;
+	Input2DImageType::RegionType region;
+	size[0] = s1;size[1] = s2;
+	index.Fill(0);
+	region.SetSize(size);
+	region.SetIndex(index);
+	p->SetRegions(region);
+	p->Allocate();
+	return p;
+
+}
+
+Input2DImageType::Pointer get2DBoundary(LabelImageType::Pointer label)
+{
+	LabelIteratorType liter = LabelIteratorType(label,label->GetLargestPossibleRegion());
+	liter.GoToBegin();
+
+	//find the maximum number of cells
+	unsigned short max1 = 0;
+	for(liter.GoToBegin();!liter.IsAtEnd();++liter)
+		max1 = MAX(max1,liter.Get());
+
+	//find all the cubes in which cells lie
+	std::vector<cubecoord> carray(max1+1);
+	for(int counter=0; counter<=max1; counter++)
+	{
+		carray[counter].sx=60000;carray[counter].sy=60000;carray[counter].sz=60000;
+		carray[counter].ex=0;carray[counter].ey=0;carray[counter].ez=0;
+	}
+
+	typedef itk::ImageRegionConstIteratorWithIndex<LabelImageType> ConstLabelIteratorWithIndex;
+	ConstLabelIteratorWithIndex cliter = ConstLabelIteratorWithIndex(label,label->GetLargestPossibleRegion());
+	InputImageType::IndexType index;
+	for(cliter.GoToBegin();!cliter.IsAtEnd();++cliter)
+	{
+		int cur = cliter.Get();
+		if(cur!=0)
+		{
+			index = cliter.GetIndex();
+			carray[cur].sx= MIN(index[0],carray[cur].sx);
+			carray[cur].sy= MIN(index[1],carray[cur].sy);
+			carray[cur].sz= MIN(index[2],carray[cur].sz);
+			carray[cur].ex= MAX(index[0],carray[cur].ex);
+			carray[cur].ey= MAX(index[1],carray[cur].ey);
+			carray[cur].ez= MAX(index[2],carray[cur].ez);
+		}
+	}
+
+	//find the largest image size we need
+	unsigned short wx=0,wy=0,wz=0;
+	for(int counter=1; counter<=max1; counter++)
+	{
+		wx = MAX(carray[counter].ex-carray[counter].sx+1,wx);
+		wy = MAX(carray[counter].ey-carray[counter].sy+1,wy);
+		wz = MAX(carray[counter].ez-carray[counter].sz+1,wz);
+	}
+	// accommodate padding
+	wx = wx+2;wy = wy +2; wz = wz+2;
+	// create a tiny image of maximum size
+
+	LabelImageType::SizeType globalsize = label->GetLargestPossibleRegion().GetSize();
+	Input2DImageType::Pointer t2d = get2DEmpty(wx,wy);
+	Input2DImageType::Pointer bound_im = get2DEmpty(globalsize[0],globalsize[1]);
+
+	bound_im->FillBuffer(0);
+	typedef itk::ImageRegionIteratorWithIndex<Input2DImageType> Iterator2DWithIndexType;
+
+	for(int counter=1; counter<=max1; counter++)
+	{
+
+		Input2DImageType::SizeType size;
+		Input2DImageType::IndexType index2d;
+		Input2DImageType::RegionType region;
+		index2d.Fill(1);
+
+		region.SetIndex(index2d);
+
+		LabelImageType::SizeType lsize;
+		LabelImageType::IndexType lindex;
+		LabelImageType::RegionType lregion;
+
+		t2d->FillBuffer(0);
+		lsize[0] = carray[counter].ex-carray[counter].sx+1;
+		lsize[1] = carray[counter].ey-carray[counter].sy+1;
+		lsize[2] = carray[counter].ez-carray[counter].sz+1;
+
+		lindex[0] = carray[counter].sx;
+		lindex[1] = carray[counter].sy;
+		lindex[2] = carray[counter].sz;
+
+		lregion.SetIndex(lindex);
+		lregion.SetSize(lsize);
+
+		ConstLabelIteratorWithIndex localiter = ConstLabelIteratorWithIndex(label,lregion);
+
+		size[0] = lsize[0];size[1] = lsize[1];
+		region.SetSize(size);
+		twoDIteratorType iter = twoDIteratorType(t2d,region);
+
+
+		t2d->FillBuffer(0);
+		for(localiter.GoToBegin(),iter.GoToBegin();!localiter.IsAtEnd();++localiter,++iter)
+		{
+			if(iter.IsAtEnd())
+				iter.GoToBegin();
+			if(iter.Get()==0)
+			{
+				iter.Set(255*(localiter.Get()!=0));
+			}
+		}
+
+		Iterator2DWithIndexType iter2d = Iterator2DWithIndexType(t2d,region);
+		Input2DImageType::IndexType idx;
+		idx[0] = lindex[0];idx[1] = lindex[1];
+		region.SetIndex(idx);
+		twoDIteratorType global2diter = twoDIteratorType(bound_im,region);
+		global2diter.GoToBegin();
+		for(iter2d.GoToBegin(); !iter2d.IsAtEnd();++iter2d,++global2diter)
+		{
+			unsigned char cur = iter2d.Get();
+			if(cur==0)
+				continue;
+			index2d = iter2d.GetIndex();
+			//check the four neighbors to see if this pixel is in boundary
+			index2d[0]--;
+
+			if(t2d->GetPixel(index2d)==0)
+			{
+				global2diter.Set(255);
+				continue;
+			}
+			index2d[0]++;
+			index2d[1]--;
+			if(t2d->GetPixel(index2d)==0)
+			{
+				global2diter.Set(255);
+				continue;
+			}
+			index2d[1]++;
+			index2d[1]++;
+			if(t2d->GetPixel(index2d)==0)
+			{
+				global2diter.Set(255);
+				continue;
+			}
+			index2d[1]--;
+			index2d[0]++;
+			if(t2d->GetPixel(index2d)==0)
+			{
+				global2diter.Set(255);
+				continue;
+			}
+			index2d[0]--;
+		}
+
+	}
+	return bound_im;
+
+}
+
+Color2DImageType::Pointer getColorBoundaryImage(LabelImageType::Pointer labelled, InputImageType::Pointer im, int channel)
+{
+	double multiplier;
+	if(channel==1)
+		multiplier = 6;
+	else
+		multiplier = 1.5;
+	unsigned char colorarray[][3]={255,0,0,
+		0,154,25,
+		207,141,0,
+		255,0,0};
+	VectorPixelType colorcodes[4];
+	VectorPixelType black;black[0]=0;black[1]=0;black[2]=0;
+
+	for(int counter=0; counter<4; counter++)
+		colorcodes[counter]=colorarray[counter];
+
+	Input2DImageType::Pointer boundary = get2DBoundary(labelled);
+	Color2DImageType::Pointer cimage = Color2DImageType::New();
+	cimage->SetRegions(boundary->GetLargestPossibleRegion());
+	cimage->Allocate();
+
+	Input2DImageType::Pointer im2d = getProjection(im);
+	VectorPixelType pix;
+	typedef itk::ImageRegionIterator<Color2DImageType> Color2DIteratorType;
+	Color2DIteratorType iter = Color2DIteratorType(cimage,cimage->GetLargestPossibleRegion());
+	twoDIteratorType biter = twoDIteratorType(boundary,boundary->GetLargestPossibleRegion());
+	twoDIteratorType inputiter = twoDIteratorType(im2d,im2d->GetLargestPossibleRegion());
+	//generate a mask image 
+	InputImageType::Pointer mask=InputImageType::New();
+	mask->SetRegions(labelled->GetLargestPossibleRegion());
+	mask->Allocate();
+	LabelIteratorType liter = LabelIteratorType(labelled,labelled->GetLargestPossibleRegion());
+	IteratorType maskiter = IteratorType(mask,mask->GetLargestPossibleRegion());
+	for(liter.GoToBegin(),maskiter.GoToBegin();!maskiter.IsAtEnd();++maskiter,++liter)
+	{
+		maskiter.Set(255*(liter.Get()!=0));
+	}
+	Input2DImageType::Pointer mask2d = getProjection(mask);
+	twoDIteratorType mask2diter = twoDIteratorType(mask2d,mask2d->GetLargestPossibleRegion());
+	//initialize all iterators
+	iter.GoToBegin();biter.GoToBegin();inputiter.GoToBegin();mask2diter.GoToBegin();
+	for(;!iter.IsAtEnd();++iter,++biter,++inputiter,++liter,++mask2diter)
+	{
+		if(biter.Get()!=0)
+		{
+			pix = colorcodes[channel-1];
+		}
+		else if(mask2diter.Get()!=0)
+		{
+			pix[0] = (unsigned char)MIN(inputiter.Get()*multiplier,255);
+			pix[1] = pix[0];
+			pix[2] = pix[0];
+		}
+		else
+		{
+			pix = black;
+		}
+		iter.Set(pix);
+	}
+
+	return cimage;
+}
+
+
+LabelImageType::Pointer getLabelsMapped(LabelImageType::Pointer label, std::vector<FeaturesType> &fvec, unsigned int * indices)
+{
+	//ideally .num should have the actual cell id which we want to map to track id, but its not so :-/
+	printf("Entering getLabelsMapped\n");
+
+	LabelIteratorType liter = LabelIteratorType(label,label->GetLargestPossibleRegion());
+	LabelImageType::Pointer lout = LabelImageType::New();
+	lout->SetRegions(label->GetLargestPossibleRegion());
+	lout->Allocate();
+	LabelIteratorType oiter = LabelIteratorType(lout,lout->GetLargestPossibleRegion());
+	liter.GoToBegin();
+	oiter.GoToBegin();
+	for(;!liter.IsAtEnd(); ++liter,++oiter)
+	{
+		if(liter.Get()>0)
+			oiter.Set(indices[liter.Get()-1]+1);
+		else
+			oiter.Set(0);
+	}
+	for(int counter=0; counter<fvec.size(); counter++)
+	{
+		fvec[counter].num = indices[fvec[counter].num-1]+1;
+	}
+	printf("Exiting getLabelsMapped\n");
+	return lout;
+}
+
+
+void CLAMP(InputImageType::IndexType &i,InputImageType::SizeType size)
+{
+	if(i[0]>size[0]-1)
+		i[0]=size[0]-1;
+	if(i[1]>size[1]-1)
+		i[1]=size[1]-1;
+	if(i[2]>size[2]-1)
+		i[2]=size[2]-1;
+}
+
+std::vector<float> traverseCenterline(itk::ImageRegionIteratorWithIndex<InputImageType> iter,InputImageType::Pointer im,char neighbors[26][3],int n)
+{
+	iter.Set(2);
+	InputImageType::IndexType tindex;
+	std::queue<PQdata> q;
+	PQdata temp;
+	temp.index = iter.GetIndex();
+	temp.depth = n;
+	q.push(temp);
+	std::vector<float> output;
+	std::vector<InputImageType::IndexType> coordinates;
+	PQdata newelement;
+	InputImageType::SizeType size = im->GetLargestPossibleRegion().GetSize();
+	while(!q.empty())
+	{
+		PQdata top = q.front();
+		q.pop();
+		coordinates.push_back(top.index);
+		if(top.depth==0)
+		{
+			output.push_back(top.index[0]);
+			output.push_back(top.index[1]);
+			output.push_back(top.index[2]);
+			continue;
+		}
+		bool done_once = false;
+		int pushed_count=0;
+		for(int counter=0; counter<26;counter++)
+		{
+			tindex[0]=top.index[0]+neighbors[counter][0];
+			tindex[1]=top.index[1]+neighbors[counter][1];
+			tindex[2]=top.index[2]+neighbors[counter][2];
+			if(tindex[0]>=0 && tindex[1] >= 0 && tindex[2] >=0 && tindex[0] <size[0] && tindex[1] < size[1] && tindex[2] < size[2])
+			{
+				if(im->GetPixel(tindex)==1)
+				{
+					done_once = true;
+					pushed_count++;
+					newelement.index = tindex;
+					newelement.depth = top.depth-1;
+					im->SetPixel(tindex,2);
+					q.push(newelement);
+				}
+			}
+		}
+		//printf("I pushed %d values top.depth = %d qsize = %d\n",pushed_count,top.depth,q.size());
+		if(!done_once)
+		{
+			output.push_back(top.index[0]);
+			output.push_back(top.index[1]);
+			output.push_back(top.index[2]);
+		}
+	}
+	if(output.size()==3)
+	{
+		output.push_back(temp.index[0]);
+		output.push_back(temp.index[1]);
+		output.push_back(temp.index[2]);
+	}
+	//printf("coordinates.size() = %d\n",coordinates.size());
+	for(int counter=0; counter<coordinates.size(); counter++)
+	{
+		im->SetPixel(coordinates[counter],1);
+	//	printf("Coordinates: %d %d %d\n",coordinates[counter][0],coordinates[counter][1],coordinates[counter][2]);
+	}
+/*
+	for(int counter=0; counter<output.size()/3; counter++)
+	{
+		printf("Output: %0.3f %0.3f %0.3f\n",output[3*counter],output[3*counter+1],output[3*counter+2]);
+	}*/
+	//scanf("%*d");
+	assert(output.size()>=6);
+	return output;
+}
+FloatImageType::IndexType searchNearestVesselDirection(FloatImageType::Pointer dir_image[3],FloatImageType::IndexType index,InputImageType::Pointer vesselim)
+{
+	const int sdepth = 5;
+	int cur_depth = 0;
+	InputImageType::IndexType tindex;
+	tindex[0] = -1;
+	tindex[1] = -1;
+	tindex[2] = -1;
+	int xind, yind,zind;
+	for(int cur_depth = 0; cur_depth<sdepth ; cur_depth++)
+	{
+		zind = index[2]+cur_depth;
+		tindex[2] = zind;
+		for(xind = index[0]-cur_depth; xind <= index[0]+cur_depth; xind++)
+		{
+			tindex[0] = xind;
+			for(yind = index[1]-cur_depth; yind <= index[1]+cur_depth; yind++)
+			{
+				tindex[1] = yind;
+				if(vesselim->GetPixel(tindex)!=0)
+				{
+					return tindex;
+				}
+			}
+		}
+		zind = index[2]-cur_depth;
+		tindex[2] = zind;
+		for(xind = index[0]-cur_depth; xind <= index[0]+cur_depth; xind++)
+		{
+			tindex[0] = xind;
+			for(yind = index[1]-cur_depth; yind <= index[1]+cur_depth; yind++)
+			{
+				tindex[1] = yind;
+				if(vesselim->GetPixel(tindex)!=0)
+				{
+					return tindex;
+				}
+			}
+		}
+		xind = index[0]+cur_depth;
+		tindex[0] = xind;
+		for(zind = index[2]-cur_depth; zind <= index[2]+cur_depth; zind++)
+		{
+			tindex[2] = zind;
+			for(yind = index[1]-cur_depth; yind <= index[1]+cur_depth; yind++)
+			{
+				tindex[1] = yind;
+				if(vesselim->GetPixel(tindex)!=0)
+				{
+					return tindex;
+				}
+			}
+		}
+		xind = index[0]-cur_depth;
+		tindex[0] = xind;
+		for(zind = index[2]-cur_depth; zind <= index[2]+cur_depth; zind++)
+		{
+			tindex[2] = zind;
+			for(yind = index[1]-cur_depth; yind <= index[1]+cur_depth; yind++)
+			{
+				tindex[1] = yind;
+				if(vesselim->GetPixel(tindex)!=0)
+				{
+					return tindex;
+				}
+			}
+		}
+		yind = index[1]+cur_depth;
+		tindex[1] = yind;
+		for(xind = index[0]-cur_depth; xind <= index[0]+cur_depth; xind++)
+		{
+			tindex[0] = xind;
+			for(zind = index[2]-cur_depth; yind <= index[2]+cur_depth; zind++)
+			{
+				tindex[2] = zind;
+				if(vesselim->GetPixel(tindex)!=0)
+				{
+					return tindex;
+				}
+			}
+		}
+		yind = index[1]-cur_depth;
+		tindex[1] = yind;
+		for(xind = index[0]-cur_depth; xind <= index[0]+cur_depth; xind++)
+		{
+			tindex[0] = xind;
+			for(zind = index[2]-cur_depth; yind <= index[2]+cur_depth; zind++)
+			{
+				tindex[2] = zind;
+				if(vesselim->GetPixel(tindex)!=0)
+				{
+					return tindex;
+				}
+			}
+		}
+	}
+	return tindex;
+}
+void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::TrackFeatures> &tfs)
+{
+	InputImageType::SizeType clinesize = cline->GetLargestPossibleRegion().GetSize();
+	DistanceMapFilterType::Pointer distfilt = getDistanceMap(cline);
+	distfilt->Update();
+	DistanceImageType::Pointer dmap = distfilt->GetOutput();
+	OffsetImageType::Pointer vectmap = distfilt->GetVectorDistanceMap();
+
+	FloatImageType::Pointer dir_image[3];
+
+	dir_image[0]=FloatImageType::New();
+	dir_image[0]->SetRegions(cline->GetLargestPossibleRegion());
+	dir_image[0]->Allocate();
+	dir_image[1]=FloatImageType::New();
+	dir_image[1]->SetRegions(cline->GetLargestPossibleRegion());
+	dir_image[1]->Allocate();
+	dir_image[2]=FloatImageType::New();
+	dir_image[2]->SetRegions(cline->GetLargestPossibleRegion());
+	dir_image[2]->Allocate();
+
+	typedef itk::ImageRegionIterator<FloatImageType> FloatIter;
+	FloatIter fiter1 = FloatIter(dir_image[0],dir_image[0]->GetLargestPossibleRegion());
+	FloatIter fiter2 = FloatIter(dir_image[1],dir_image[1]->GetLargestPossibleRegion());
+	FloatIter fiter3 = FloatIter(dir_image[2],dir_image[2]->GetLargestPossibleRegion());
+
+	typedef itk::ImageRegionIteratorWithIndex<InputImageType> IterWithIndexType;
+	IterWithIndexType iter = IterWithIndexType(cline,cline->GetLargestPossibleRegion());
+	float points[6];
+
+	char neighbors[26][3];
+	int pc = 0;
+	for(int x=-1;x<=1;x++)
+	{
+		for(int y=-1;y<=1;y++)
+		{
+			for(int z=-1;z<=1;z++)
+			{
+				if((x!=0)||(y!=0)||(z!=0))
+				{
+					neighbors[pc][0]=x;
+					neighbors[pc][1]=y;
+					neighbors[pc][2]=z;
+					pc++;
+				}
+			}
+		}
+	}
+	printf("Done loading neighbors\n");
+
+	InputImageType::Pointer debug_image = InputImageType::New();
+	debug_image->SetRegions(cline->GetLargestPossibleRegion());
+	debug_image->Allocate();
+
+	fiter1.GoToBegin();fiter2.GoToBegin();fiter3.GoToBegin();
+	float dx,dy,dz,dsum;
+	InputImageType::IndexType idx,idx2;
+	for(iter.GoToBegin();!iter.IsAtEnd();++iter,++fiter1,++fiter2,++fiter3)
+	{
+
+		if(iter.Get()!=0)
+		{
+			idx = iter.GetIndex();
+			std::vector<float> fpoints = traverseCenterline(iter,cline,neighbors,5);
+			//printf("I finished once fpoints.size() = %d\n",fpoints.size());
+			if(fpoints.size()>=6)
+			{
+
+				dx = fpoints[3]-fpoints[0];
+				dy = fpoints[4]-fpoints[1];
+				dz = fpoints[5]-fpoints[2];
+				dsum = sqrt(dx*dx+dy*dy+dz*dz);
+				if(dsum>0.0001)
+				{
+					dx/=dsum;dy/=dsum;dz/=dsum;
+				}
+				else
+				{
+					printf("Error in dx,dy,dz\n");
+				}
+				fiter1.Set(dx);fiter2.Set(dy);fiter3.Set(dz);
+			}
+			else
+			{
+
+				dx = idx[0]-fpoints[0];
+				dy = idx[1]-fpoints[1];
+				dz = idx[2]-fpoints[2];
+				dsum = sqrt(dx*dx+dy*dy+dz*dz);
+				if(dsum>0.0001)
+				{
+					dx/=dsum;dy/=dsum;dz/=dsum;
+				}
+				fiter1.Set(dx);fiter2.Set(dy);fiter3.Set(dz);
+				printf("I got fpoints.size() = %d\n",fpoints.size());
+				//debug_image->SetPixel(iter.GetIndex(),255);;
+			}
+			//	idx2[0] = idx[0]+dx*5;idx2[1] = idx[1]+dy*5; idx2[2]= idx[2]+dz*5;
+
+			//drawLine(debug_image,idx,idx2);
+			//printf("finished setting fiters %f\n", dsum);
+		}
+		else
+		{
+
+			fiter1.Set(1);fiter2.Set(0);fiter3.Set(0);
+		}
+	}
+
+	printf("No segfault\n");
+
+
+
+	OffsetImageType::IndexType offset;
+	InputImageType::IndexType cellindex;
+	InputImageType::IndexType vesselindex;
+	InputImageType::IndexType celldirindex;
+	for(int tcounter=0; tcounter < tfs.size(); tcounter++)
+	{
+		printf("Beginning to read track no: %d/%d\n",tcounter+1,tfs.size());
+		//std::vector<TrackPoint> track = total_tracks[tcounter];
+		if(tfs[tcounter].intrinsic_features.size()<3)
+		{
+			printf("Ignored a tiny track of size %d track.size()\n",tfs[tcounter].intrinsic_features.size());
+			continue;
+		}
+		printf("I'm working on a track of size %d\n",tfs[tcounter].intrinsic_features.size());
+		ftk::TrackFeatures t = tfs[tcounter];
+	std::vector<float> spacing(3);
+	spacing[0] = spacing[1] = 0.357;
+	spacing[2] = 2.0;
+		typedef ftk::TrackPointFeatures TPF;
+		typedef ftk::TrackFeatures TF;
+		for(int counter=0; counter< t.intrinsic_features.size(); counter++)
+		{
+			ftk::TrackPointFeatures tpf;
+			Vec3f dir;
+
+			if(counter>0)
+			{
+				dir.x=t.intrinsic_features[counter].Centroid[0]*spacing[0]-t.intrinsic_features[counter-1].Centroid[0]*spacing[0];
+				dir.y=t.intrinsic_features[counter].Centroid[1]*spacing[1]-t.intrinsic_features[counter-1].Centroid[1]*spacing[1];
+				dir.z=t.intrinsic_features[counter].Centroid[2]*spacing[2]-t.intrinsic_features[counter-1].Centroid[2]*spacing[2];
+				double dirdist = sqrt(dir.x*dir.x+dir.y*dir.y+dir.z*dir.z);
+				tpf.scalars[TPF::DISPLACEMENT_VEC_X]=dir.x;
+				tpf.scalars[TPF::DISPLACEMENT_VEC_Y]=dir.y;
+				tpf.scalars[TPF::DISPLACEMENT_VEC_Z]=dir.z;
+
+				dir.Normalize();
+				tpf.scalars[TPF::INST_SPEED] = dirdist/(t.intrinsic_features[counter].time-t.intrinsic_features[counter-1].time);
+				tpf.scalars[TPF::DISTANCE] = dirdist;
+			}
+			else
+			{
+				tpf.scalars[TPF::DISPLACEMENT_VEC_X]=0;
+				tpf.scalars[TPF::DISPLACEMENT_VEC_Y]=0;
+				tpf.scalars[TPF::DISPLACEMENT_VEC_Z]=0;
+				tpf.scalars[TPF::INST_SPEED] = 0.0;
+				tpf.scalars[TPF::DISTANCE] = 0.0;
+			}
+
+			cellindex[0] = static_cast<int>(t.intrinsic_features[counter].Centroid[0]+0.5);
+			cellindex[1] = static_cast<int>(t.intrinsic_features[counter].Centroid[1]+0.5);
+			cellindex[2] = static_cast<int>(t.intrinsic_features[counter].Centroid[2]+0.5);
+
+			CLAMP(cellindex,cline->GetLargestPossibleRegion().GetSize());
+//			printf("Next Cell Index = %d %d %d\n",cellindex[0],cellindex[1],cellindex[2]);
+			OffsetImageType::PixelType offpix = vectmap->GetPixel(cellindex);
+
+			tpf.scalars[TPF::DISTANCE_TO_1] = sqrt(offpix[0]*offpix[0]*spacing[0]*spacing[0]+offpix[1]*offpix[1]*spacing[0]*spacing[0]+offpix[2]*offpix[2]*spacing[1]*spacing[1]);
+
+			if(counter>0)
+			{
+				vesselindex[0] = offpix[0]+cellindex[0];
+				vesselindex[1] = offpix[1]+cellindex[1];
+				vesselindex[2] = offpix[2]+cellindex[2];
+
+				
+				Vec3f dir2;
+				if(cline->GetPixel(vesselindex)==0)
+				{
+					printf("I'm calling searchNearestVesselDirection\n");
+					vesselindex = searchNearestVesselDirection(dir_image,vesselindex,cline);
+				}
+				dir2.x = spacing[0]*dir_image[0]->GetPixel(vesselindex);
+				dir2.y = spacing[1]*dir_image[1]->GetPixel(vesselindex);
+				dir2.z = spacing[2]*dir_image[2]->GetPixel(vesselindex);
+				if((dir2.x*dir2.x+dir2.y*dir2.y+dir2.z*dir2.z)<1e-6)
+					printf("Error! vessel direction is zero\n");
+				dir2.Normalize();
+
+				tpf.scalars[TPF::ANGLE_REL_TO_1] = 90.0/acosf(0)*acosf(fabs(dir.x*dir2.x+dir.y*dir2.y+dir.z*dir2.z));
+			}
+			else
+			{
+				tpf.scalars[TPF::ANGLE_REL_TO_1] = 0.0;
+			}
+			printf("Just before\n");
+			if(counter>int(t.tfeatures.size())-1)
+			{
+				t.tfeatures.push_back(tpf);
+			}
+			else
+			{
+				t.tfeatures[counter] = tpf;
+			}
+			printf("Just After\n");
+		}
+		float avg_speed = 0;
+		float avg_distance_to_1 = 0;
+		float avg_angle_rel_to_1 = 0;
+		float contact_to_2 = 0;
+		float pathlength = 0;
+		float change_distance_to_1=0.0;
+		for(int counter =0; counter < t.tfeatures.size(); counter++)
+		{
+			if(counter>0)
+			{
+				t.tfeatures[counter].scalars[TPF::CHANGE_DISTANCE_TO_1] = t.tfeatures[counter].scalars[TPF::DISTANCE_TO_1] - t.tfeatures[counter-1].scalars[TPF::DISTANCE_TO_1];
+			}
+			else
+			{
+				t.tfeatures[counter].scalars[TPF::CHANGE_DISTANCE_TO_1] = t.tfeatures[counter].scalars[TPF::DISTANCE_TO_1];
+			}
+			avg_speed += t.tfeatures[counter].scalars[TPF::INST_SPEED];
+			avg_distance_to_1 += t.tfeatures[counter].scalars[TPF::DISTANCE_TO_1];
+			avg_angle_rel_to_1 += t.tfeatures[counter].scalars[TPF::ANGLE_REL_TO_1];
+			contact_to_2 += t.tfeatures[counter].scalars[TPF::HAS_CONTACT_TO_2];
+			pathlength += t.tfeatures[counter].scalars[TPF::DISTANCE];
+		}
+		int tnum = t.tfeatures.size();
+		t.scalars[TF::AVG_SPEED] = avg_speed/(tnum-1);
+		t.scalars[TF::AVG_DIST_TO_1] = avg_distance_to_1/tnum;
+		t.scalars[TF::AVG_ANGLE_REL_TO_1] = avg_angle_rel_to_1/(tnum-1);
+		t.scalars[TF::CONTACT_TO_2] = contact_to_2/tnum;
+		t.scalars[TF::PATHLENGTH] = pathlength;
+		t.scalars[TF::DISPLACEMENT_VEC_X] = t.intrinsic_features[tnum-1].Centroid[0]*spacing[0]-t.intrinsic_features[0].Centroid[0]*spacing[0];
+		t.scalars[TF::DISPLACEMENT_VEC_Y] = t.intrinsic_features[tnum-1].Centroid[1]*spacing[1]-t.intrinsic_features[0].Centroid[1]*spacing[1];
+		t.scalars[TF::DISPLACEMENT_VEC_Z] = t.intrinsic_features[tnum-1].Centroid[2]*spacing[2]-t.intrinsic_features[0].Centroid[2]*spacing[2];
+		float total_distance = sqrt(t.scalars[TF::DISPLACEMENT_VEC_X]*t.scalars[TF::DISPLACEMENT_VEC_X]+t.scalars[TF::DISPLACEMENT_VEC_Y]*t.scalars[TF::DISPLACEMENT_VEC_Y]+t.scalars[TF::DISPLACEMENT_VEC_Z]*t.scalars[TF::DISPLACEMENT_VEC_Z]);
+		t.scalars[TF::CONFINEMENT_RATIO] = pathlength/total_distance;
+		t.scalars[TF::CHANGE_DISTANCE_TO_1] = t.tfeatures[tnum-1].scalars[TPF::DISTANCE_TO_1] - t.tfeatures[0].scalars[TPF::DISTANCE_TO_1];
+
+		tfs[tcounter] = t;
+	}
+	
+}
+
+InputImageType::Pointer getMaxImage(InputImageType::Pointer im1, InputImageType::Pointer im2)
+{
+	InputImageType::Pointer im3 = InputImageType::New();
+	im3->SetRegions(im1->GetLargestPossibleRegion());
+	im3->Allocate();
+
+	IteratorType iter3(im3,im3->GetLargestPossibleRegion());
+	ConstIteratorType iter1(im1,im1->GetLargestPossibleRegion());
+	ConstIteratorType iter2(im2,im2->GetLargestPossibleRegion());
+
+	for(iter3.GoToBegin(),iter1.GoToBegin(),iter2.GoToBegin(); !iter3.IsAtEnd(); ++iter1,++iter2,++iter3)
+	{
+		iter3.Set(MAX(iter1.Get(),iter2.Get()));
+	}
+	return im3;
+}
+
+
+void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::TrackFeatures> &tfs, int c, int num_t)
+{
+	int min_voxels = 1000;
+	float perc = 5.0f;
+	float inc_factor = 1.25;
+	int wsize = 20;
+	float radius = -1;
+	float factor = 1;
+	float ratio_threshold = 1.7;
+	LabelImageType::SizeType bound = segmented[0][0]->GetLargestPossibleRegion().GetSize();
+
+			typedef ftk::TrackPointFeatures TPF;
+		typedef ftk::TrackFeatures TF;
+	std::vector<int> distances(10000);
+	std::vector<float> spacing(3);
+	spacing[0] = spacing[1] = 0.357;
+	spacing[2] = 2.0;
+	for(int tc=0; tc < tfs.size(); tc++)
+	{
+	//	printf("running for track :%d\n",tc);
+		// for this track = counter find dc contact feature
+		while(tfs[tc].tfeatures.size() < tfs[tc].intrinsic_features.size())
+		{
+			TPF temptpf;
+			tfs[tc].tfeatures.push_back(temptpf);
+		}
+		for(int tp = 0; tp < tfs[tc].intrinsic_features.size(); tp++)
+		{
+		//	printf("running for trackpoint : %d/%d\n",tc,tp);
+			int t = tfs[tc].intrinsic_features[tp].time;
+			
+			int x,y,z;
+			x = static_cast<int>(tfs[tc].intrinsic_features[tp].Centroid[0]*spacing[0]);
+			y = static_cast<int>(tfs[tc].intrinsic_features[tp].Centroid[1]*spacing[1]);
+			z = static_cast<int>(tfs[tc].intrinsic_features[tp].Centroid[2]*spacing[2]);
+
+			while(true)
+			{
+			//	printf("Staring while\n");
+				LabelImageType::SizeType lsize;
+				LabelImageType::IndexType lindex;
+				LabelImageType::IndexType lend;
+				LabelImageType::RegionType lregion;
+
+				lindex[0] = MAX(MIN(x-wsize*factor, bound[0]-1),0);
+				lindex[1] = MAX(MIN(y-wsize*factor, bound[1]-1),0);
+				lindex[2] = MAX(MIN(z-wsize*factor, bound[2]-1),0);
+
+				lend[0] = MAX(MIN(x+wsize*factor, bound[0]-1),0);
+				lend[1] = MAX(MIN(y+wsize*factor, bound[1]-1),0);
+				lend[2] = MAX(MIN(z+wsize*factor, bound[2]-1),0);
+
+
+				lsize[0] = lend[0] - lindex[0] + 1;
+				lsize[1] = lend[1] - lindex[1] + 1;
+				lsize[2] = lend[2] - lindex[2] + 1;
+
+				lregion.SetSize(lsize);
+				lregion.SetIndex(lindex);
+
+				//lregion.Print(std::cout);
+				typedef itk::ImageRegionIteratorWithIndex<LabelImageType> LIWI;
+				LIWI liter(segmented[t][c-1], lregion);
+				int count = 0;
+				for(liter.GoToBegin(); !liter.IsAtEnd();++liter)
+				{
+					if(liter.Get()>0)
+						count++;
+				}
+				if(count>1000)
+				{
+					distances.clear();
+					for(liter.GoToBegin(); !liter.IsAtEnd();++liter)
+					{
+						if(liter.Get()>0)
+						{
+							LabelImageType::IndexType tindex = liter.GetIndex();
+							distances.push_back(sqrt(float(x-tindex[0])*(x-tindex[0])*spacing[0]*spacing[0]+(y - tindex[1])*(y-tindex[1])*spacing[1]*spacing[1]+(z-tindex[2])*(z-tindex[2])*spacing[2]*spacing[2]));
+						}
+					}
+					sort(distances.begin(),distances.end());
+					float sum = 0;
+					int num_num = distances.size()*0.05;
+					for(int counter = 0; counter< num_num; counter++)
+					{
+						sum = sum + distances[counter];
+					}
+					sum /= num_num;
+					radius = pow(static_cast<float>(tfs[tc].intrinsic_features[tp].ScalarFeatures[FeaturesType::VOLUME]*3.0/8.0/acos(double(0))),1/3.0f);
+					printf("Sum = %0.2f radius = %0.2f ratio = %0.3f\n",sum,radius,sum/radius);
+					if(sum/radius<= ratio_threshold)
+					{
+						// it is making contact with a DC
+						printf("I set it to true\n");
+						tfs[tc].tfeatures[tp].scalars[TPF::HAS_CONTACT_TO_2]=1.0;
+					}
+					else
+					{
+					//	printf("I set it to false\n");
+						tfs[tc].tfeatures[tp].scalars[TPF::HAS_CONTACT_TO_2]=0.0;
+					}
+					break;
+				}
+				else
+				{
+					if(factor >100)
+					{
+					//	printf("Error: I still didnt find enough DC points\n");
+						tfs[tc].tfeatures[tp].scalars[TPF::HAS_CONTACT_TO_2]=0.0;
+						break;
+					}
+					factor = factor * inc_factor;
+					continue;
+				}
+			}
+		}
+		tfs[tc].scalars[TF::CONTACT_TO_2] = 0;
+		//printf("starting to add dc contact numbers\n");
+		for(int tp = 0; tp < tfs[tc].tfeatures.size(); tp++)
+		{
+			tfs[tc].scalars[TF::CONTACT_TO_2] += tfs[tc].tfeatures[tp].scalars[TPF::HAS_CONTACT_TO_2];
+		}
+		
+		
+	//	printf("Finished adding dc contact numbers\n");
+		tfs[tc].scalars[TF::CONTACT_TO_2] /=tfs[tc].intrinsic_features.size();
+	}
+	
+
+	printf("tfs.size()\n");
+
+
+}
+
+}
