@@ -1116,6 +1116,9 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 	ids_ok.push_back(newID1);
 	ids_ok.push_back(newID2);
 
+	//also, add the old ID to the end of the list
+	ids_ok.push_back(id1);
+
 	editsNotSaved = true;
 	return ids_ok;
 }

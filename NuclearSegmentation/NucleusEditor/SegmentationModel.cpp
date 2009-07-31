@@ -288,7 +288,37 @@ void SegmentationModel::endSplitTrigger()
 		for (int i = 0; i < pointsForSplitting.size(); i+=2) 
 		{
 			std::vector< int > newIDs = nucseg->Split(pointsForSplitting.at(i), pointsForSplitting.at(i+1));
-		}
+			if( newIDs.size()==3 )
+			{
+				//Remove from table the old id (remove the splitted object)			
+				int row = RowForID(newIDs.at(2));
+				QList<QStandardItem *> items = model->takeRow(row);
+				for(int i=0; i<items.size(); ++i)
+				{
+					delete items.at(i);
+				} 
+				updateMapping();
+
+			
+				// Add the cell-ids of 2 new (result of splitting) cells
+				for (unsigned int i=0;i<2;i++) 
+				{
+					//Add into table the new object
+					int currentRow = model->rowCount();
+					model->insertRow(currentRow);
+					model->setData(model->index(currentRow, columnForID, QModelIndex()), newIDs[i]);
+					vector<float> features = segResult->GetObjectPtr(newIDs[i])->GetFeatures();
+					for(int f=0; f<(int)features.size(); ++f) 
+					{
+						model->setData(model->index(currentRow, f+1, QModelIndex()), features[f]);
+					}
+	
+					int clss = segResult->GetObjectPtr(newIDs[i])->GetClass();
+					model->setData(model->index(currentRow,columnForClass,QModelIndex()),clss);
+					updateMapping();
+				}	
+			}
+		}		
 		
 	}
 	//finally, clear the list of points
