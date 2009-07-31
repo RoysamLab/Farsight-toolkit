@@ -284,6 +284,21 @@ void SegmentationView::mousePressEvent(QMouseEvent *event)
 {
     QAbstractItemView::mousePressEvent(event);
 	origin = event->pos();
+
+	//added by Yousef 7-30-2009
+	//if we are in spliting mode, then add the point to the splitting list
+	if(resultModel->isSplitingMode())
+	{
+		int xx = origin.x();
+		int yy = origin.y();
+		xx = xx/currentScale;
+		yy = yy/currentScale;
+		//as of now, I asume that the image starts at the top left corner (0,0) of the view window
+		if(xx<totalWidth && yy<totalHeight)
+		{
+			resultModel->addPointToSplitList(xx, yy, currentZ);
+		}
+	}
 }
 
 void SegmentationView::mouseMoveEvent(QMouseEvent *event)

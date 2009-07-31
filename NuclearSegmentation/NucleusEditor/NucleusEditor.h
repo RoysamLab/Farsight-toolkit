@@ -72,8 +72,8 @@ private slots:
 	void deleteCells(void);
 	void splitCells(void);
 
-	void StartSplitting(void);
-	void EndSplitting(void);
+	void startSplitting(void);
+	void endSplitting(void);
 
 signals:
     
@@ -130,8 +130,7 @@ private:
 	QLabel *currentPythonLabel;
 	QPushButton *browseForPythonButton;
 
-	//bool editStatus; //false shows that we cannot apply editing to cells
-					 	
+	//bool editStatus; //false shows that we cannot apply editing to cells						 	
  };
 
 

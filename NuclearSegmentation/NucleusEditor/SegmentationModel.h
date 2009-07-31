@@ -65,6 +65,14 @@ public slots:
 	void deleteTrigger(void);
 	void mergeTrigger(void);
 	void splitTrigger(void);
+	void startSplitTrigger(void);
+	void endSplitTrigger(void);
+
+	//added by Yousef 7-30-2009
+	bool isSplitingMode() { return SplitingMode; }
+	void setSplitingModeToOn() { SplitingMode = true; }
+	void setSplitingModeToOff() { SplitingMode = false; }
+	void addPointToSplitList(int x, int y, int z);
 
 private:
 	int columnForID;
@@ -87,6 +95,10 @@ private:
 	void UpdateColors();
 	void updateMapping();
 	bool neighbor(ftk::Object *obj1, ftk::Object *obj2);
+
+	//added by Yousef 7-30-2009
+	bool SplitingMode; //to be used to indicate that we are in splitting mode
+	std::vector<ftk::Object::Point> pointsForSplitting;
 };
 
 #endif

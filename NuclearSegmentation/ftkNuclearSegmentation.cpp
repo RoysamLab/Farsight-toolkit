@@ -820,7 +820,7 @@ bool NuclearSegmentation::SaveLabel()
 	size_t pos = dataFilename.find_last_of(".");
 	std::string base = dataFilename.substr(0,pos);
 	std::string ext = dataFilename.substr(pos+1);
-	labelFilename = base + "_label" + "." + ext;
+	labelFilename = base + "_label" + ".tif";//+"." + ext;
 
 	labelImage->Cast<unsigned short>();		//Cannot Save as int type to tiff
 	if(!labelImage->SaveChannelAs(0, base + "_label", ext))

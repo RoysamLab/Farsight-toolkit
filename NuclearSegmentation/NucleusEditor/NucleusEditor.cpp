@@ -46,7 +46,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 
 	this->resize(500,500);
 	//Crashes when this is enabled!
-	//setAttribute ( Qt::WA_DeleteOnClose );
+	//setAttribute ( Qt::WA_DeleteOnClose );	
 }
 
 //******************************************************************************
@@ -401,16 +401,14 @@ void NucleusEditor::splitCells(void)
 
 }
 
-void NucleusEditor::StartSplitting(void)
-{
-
-
+void NucleusEditor::startSplitting(void)
+{	
+	currentModel->startSplitTrigger();
 }
 
-void NucleusEditor::EndSplitting(void)
+void NucleusEditor::endSplitting(void)
 {
-
-
+	currentModel->endSplitTrigger();
 }
 
 // Added by Aytekin Vargun 6/03/09

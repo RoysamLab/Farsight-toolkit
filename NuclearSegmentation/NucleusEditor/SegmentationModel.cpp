@@ -32,6 +32,9 @@ SegmentationModel::SegmentationModel(ftk::NuclearSegmentation *segresult)
 	columnForColor = -1;
 
 	SyncModel();
+
+	//by Yousef: set the spliting mode flag to off
+	SplitingMode=false;
 }
 
 SegmentationModel::~SegmentationModel()
@@ -264,10 +267,45 @@ void SegmentationModel::deleteTrigger()
 	emit modelChanged();
 
 }
-void SegmentationModel::splitTrigger()
+
+void SegmentationModel::startSplitTrigger()
 {
-	//do nothing for now
-	//int xx=1;
+	if(!SplitingMode)
+	{
+		SplitingMode = true;
+		//also clear the list of points 
+		pointsForSplitting.clear();
+	}
+}
+
+void SegmentationModel::endSplitTrigger()
+{
+	if(SplitingMode)
+	{
+		SplitingMode = false;
+		//start by sending the points (pairs) to the cell plitter
+		ftk::NuclearSegmentation *nucseg = (ftk::NuclearSegmentation*)segResult;
+		for (int i = 0; i < pointsForSplitting.size(); i+=2) 
+		{
+			std::vector< int > newIDs = nucseg->Split(pointsForSplitting.at(i), pointsForSplitting.at(i+1));
+		}
+		
+	}
+	//finally, clear the list of points
+	pointsForSplitting.clear();
+}
+void SegmentationModel::addPointToSplitList(int x, int y, int z)
+{
+	ftk::Object::Point P;
+	P.t = 0;
+	P.x = x;
+	P.y = y;
+	P.z = z;
+	pointsForSplitting.push_back(P);
+}
+
+void SegmentationModel::splitTrigger()
+{	
 	QModelIndexList selIndices = selectionModel->selectedRows();
 	vector< int > ids(0);
 	QString idlist(0);
