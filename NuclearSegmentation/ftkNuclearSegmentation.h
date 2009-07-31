@@ -102,7 +102,7 @@ public:
 	Object* GetObjectPtr(int id);
 	std::vector<std::string> GetFeatureNames(){ return featureNames; };
 
-	ftk::Image::Pointer getDataImage(void){ return dataImage; };
+	ftk::Image::Pointer getDataImage(void){ return dataImage; };	
 	ftk::Image::Pointer getLabelImage(void){ return labelImage; };
 	//*********************************************************************************************
 
@@ -112,6 +112,8 @@ public:
 	bool RunGraphColoring(std::string labelname, std::string filename);	//Run Graph coloring on label image and save adjacency file as filename
 	
 	std::vector<std::string> colorImages;
+
+	vector<Seed> getSeeds();
 
 private:
 	std::string dataFilename;	//the filename of the data image		(full path)

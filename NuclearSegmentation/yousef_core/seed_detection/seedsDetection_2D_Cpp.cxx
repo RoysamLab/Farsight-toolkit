@@ -12,6 +12,18 @@
 
 //,.,.
 
+typedef    float     InputPixelType;
+typedef itk::Image< InputPixelType,  2 >   InputImageType;
+
+double get_maximum(double** A, int r1, int r2, int c1, int c2);
+
+void Detect_Local_MaximaPoints(float* im_vals, int r, int c, double scale, int* im_bin);
+
+int distMap(itk::SmartPointer<InputImageType> im, int r, int c, float* IMG);
+
+int detect_seeds(itk::SmartPointer<InputImageType>, int , int , const double, float*);
+
+
 // detectSeeds2D( imgPtr, logImagePtr, seedImagePtr, numRows, numColumns, scaleMin, scaleMax, regionXY, binImagePtr );
 int detectSeeds2D( float* IM, float* IM_out, int* IM_bin, int r, int c, double sigma_min, double sigma_max, double scale, int* bImg)
 {

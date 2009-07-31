@@ -13,18 +13,18 @@
 //#include "itkApproximateSignedDistanceMapImageFilter.h"
 #include <itkDanielssonDistanceMapImageFilter.h>
 
-typedef    float     InputPixelType;
-typedef itk::Image< InputPixelType,  2 >   InputImageType;
+//typedef    float     InputPixelType;
+//typedef itk::Image< InputPixelType,  2 >   InputImageType;
 
 using namespace std;
 
-int detect_seeds(itk::SmartPointer<InputImageType>, int , int , const double, float*);
+//int detect_seeds(itk::SmartPointer<InputImageType>, int , int , const double, float*);
 
-double get_maximum(double** A, int r1, int r2, int c1, int c2);
+//double get_maximum(double** A, int r1, int r2, int c1, int c2);
 
-void Detect_Local_MaximaPoints(float* im_vals, int r, int c, double scale, int* im_bin);
+//void Detect_Local_MaximaPoints(float* im_vals, int r, int c, double scale, int* im_bin);
 
-int distMap(itk::SmartPointer<InputImageType> im, int r, int c, float* IMG);
+//int distMap(itk::SmartPointer<InputImageType> im, int r, int c, float* IMG);
 
 int detectSeeds2D( float* IM, float* IM_out, int* IM_bin, int r, int c, double sigma_min, double sigma_max, double scale, int* bImg);
 

@@ -890,8 +890,8 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 	sz.push_back(region.max.y - region.min.y + 1);
 	sz.push_back(region.max.z - region.min.z + 1);
 	
-	int ind1 = ((P1.z- region.min.z)*sz[0]*sz[1]) + ((P1.y - region.min.y)*sz[2]) + (P1.x - region.min.x);
-	int ind2 = ((P2.z- region.min.z)*sz[0]*sz[1]) + ((P2.y - region.min.y)*sz[2]) + (P2.x - region.min.x);
+	int ind1 = ((P1.z- region.min.z)*sz[0]*sz[1]) + ((P1.y - region.min.y)*sz[0]) + (P1.x - region.min.x);
+	int ind2 = ((P2.z- region.min.z)*sz[0]*sz[1]) + ((P2.y - region.min.y)*sz[0]) + (P2.x - region.min.x);
 
 	//create two new itk images with the same size as the bounding box	 	 
 	typedef    float     InputPixelType;
@@ -2210,4 +2210,8 @@ void NuclearSegmentation::Restoredptr(int* p)
 	this->negativeseeds.clear();
 }
 
+vector<Seed> NuclearSegmentation::getSeeds()
+{
+	return NucleusSeg->getSeedsList();
+}
 }
