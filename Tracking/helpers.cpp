@@ -1465,6 +1465,85 @@ FloatImageType::IndexType searchNearestVesselDirection(FloatImageType::Pointer d
 	}
 	return tindex;
 }
+
+void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs)
+{
+	for(int tcounter=0; tcounter < tfs.size(); tcounter++)
+	{
+		printf("Beginning to read track no: %d/%d\n",tcounter+1,tfs.size());
+		//std::vector<TrackPoint> track = total_tracks[tcounter];
+		if(tfs[tcounter].intrinsic_features.size()<3)
+		{
+			printf("Ignored a tiny track of size %d track.size()\n",tfs[tcounter].intrinsic_features.size());
+			continue;
+		}
+		printf("I'm working on a track of size %d\n",tfs[tcounter].intrinsic_features.size());
+		ftk::TrackFeatures t = tfs[tcounter];
+		std::vector<float> spacing(3);
+		spacing[0] = spacing[1] = 0.357;
+		spacing[2] = 2.0;
+		typedef ftk::TrackPointFeatures TPF;
+		typedef ftk::TrackFeatures TF;
+
+		for(int counter=0; counter< t.intrinsic_features.size(); counter++)
+		{
+			ftk::TrackPointFeatures tpf;
+			Vec3f dir;
+
+			if(counter>0)
+			{
+				dir.x=t.intrinsic_features[counter].Centroid[0]*spacing[0]-t.intrinsic_features[counter-1].Centroid[0]*spacing[0];
+				dir.y=t.intrinsic_features[counter].Centroid[1]*spacing[1]-t.intrinsic_features[counter-1].Centroid[1]*spacing[1];
+				dir.z=t.intrinsic_features[counter].Centroid[2]*spacing[2]-t.intrinsic_features[counter-1].Centroid[2]*spacing[2];
+				double dirdist = sqrt(dir.x*dir.x+dir.y*dir.y+dir.z*dir.z);
+				tpf.scalars[TPF::DISPLACEMENT_VEC_X]=dir.x;
+				tpf.scalars[TPF::DISPLACEMENT_VEC_Y]=dir.y;
+				tpf.scalars[TPF::DISPLACEMENT_VEC_Z]=dir.z;
+
+				dir.Normalize();
+				tpf.scalars[TPF::INST_SPEED] = dirdist/(t.intrinsic_features[counter].time-t.intrinsic_features[counter-1].time);
+				tpf.scalars[TPF::DISTANCE] = dirdist;
+			}
+			else
+			{
+				tpf.scalars[TPF::DISPLACEMENT_VEC_X]=0;
+				tpf.scalars[TPF::DISPLACEMENT_VEC_Y]=0;
+				tpf.scalars[TPF::DISPLACEMENT_VEC_Z]=0;
+				tpf.scalars[TPF::INST_SPEED] = 0.0;
+				tpf.scalars[TPF::DISTANCE] = 0.0;
+			}
+
+
+			if(counter>int(t.tfeatures.size())-1)
+			{
+				t.tfeatures.push_back(tpf);
+			}
+			else
+			{
+				t.tfeatures[counter] = tpf;
+			}
+		}
+
+		float avg_speed = 0;
+		float pathlength = 0;
+		for(int counter =0; counter < t.tfeatures.size(); counter++)
+		{
+
+			avg_speed += t.tfeatures[counter].scalars[TPF::INST_SPEED];
+			pathlength += t.tfeatures[counter].scalars[TPF::DISTANCE];
+		}
+		int tnum = t.tfeatures.size();
+		t.scalars[TF::AVG_SPEED] = avg_speed/(tnum-1);
+		t.scalars[TF::PATHLENGTH] = pathlength;
+		t.scalars[TF::DISPLACEMENT_VEC_X] = t.intrinsic_features[tnum-1].Centroid[0]*spacing[0]-t.intrinsic_features[0].Centroid[0]*spacing[0];
+		t.scalars[TF::DISPLACEMENT_VEC_Y] = t.intrinsic_features[tnum-1].Centroid[1]*spacing[1]-t.intrinsic_features[0].Centroid[1]*spacing[1];
+		t.scalars[TF::DISPLACEMENT_VEC_Z] = t.intrinsic_features[tnum-1].Centroid[2]*spacing[2]-t.intrinsic_features[0].Centroid[2]*spacing[2];
+		float total_distance = sqrt(t.scalars[TF::DISPLACEMENT_VEC_X]*t.scalars[TF::DISPLACEMENT_VEC_X]+t.scalars[TF::DISPLACEMENT_VEC_Y]*t.scalars[TF::DISPLACEMENT_VEC_Y]+t.scalars[TF::DISPLACEMENT_VEC_Z]*t.scalars[TF::DISPLACEMENT_VEC_Z]);
+		t.scalars[TF::CONFINEMENT_RATIO] = pathlength/total_distance;
+		tfs[tcounter] = t;
+
+	}
+}
 void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::TrackFeatures> &tfs)
 {
 	InputImageType::SizeType clinesize = cline->GetLargestPossibleRegion().GetSize();
@@ -1604,25 +1683,11 @@ void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::Tr
 
 			if(counter>0)
 			{
-				dir.x=t.intrinsic_features[counter].Centroid[0]*spacing[0]-t.intrinsic_features[counter-1].Centroid[0]*spacing[0];
-				dir.y=t.intrinsic_features[counter].Centroid[1]*spacing[1]-t.intrinsic_features[counter-1].Centroid[1]*spacing[1];
-				dir.z=t.intrinsic_features[counter].Centroid[2]*spacing[2]-t.intrinsic_features[counter-1].Centroid[2]*spacing[2];
-				double dirdist = sqrt(dir.x*dir.x+dir.y*dir.y+dir.z*dir.z);
-				tpf.scalars[TPF::DISPLACEMENT_VEC_X]=dir.x;
-				tpf.scalars[TPF::DISPLACEMENT_VEC_Y]=dir.y;
-				tpf.scalars[TPF::DISPLACEMENT_VEC_Z]=dir.z;
 
-				dir.Normalize();
-				tpf.scalars[TPF::INST_SPEED] = dirdist/(t.intrinsic_features[counter].time-t.intrinsic_features[counter-1].time);
-				tpf.scalars[TPF::DISTANCE] = dirdist;
-			}
-			else
-			{
-				tpf.scalars[TPF::DISPLACEMENT_VEC_X]=0;
-				tpf.scalars[TPF::DISPLACEMENT_VEC_Y]=0;
-				tpf.scalars[TPF::DISPLACEMENT_VEC_Z]=0;
-				tpf.scalars[TPF::INST_SPEED] = 0.0;
-				tpf.scalars[TPF::DISTANCE] = 0.0;
+				dir.x = tpf.scalars[TPF::DISPLACEMENT_VEC_X];
+				dir.y = tpf.scalars[TPF::DISPLACEMENT_VEC_Y];
+				dir.z = tpf.scalars[TPF::DISPLACEMENT_VEC_Z];
+
 			}
 
 			cellindex[0] = static_cast<int>(t.intrinsic_features[counter].Centroid[0]+0.5);
@@ -1672,11 +1737,10 @@ void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::Tr
 			}
 			printf("Just After\n");
 		}
-		float avg_speed = 0;
+
 		float avg_distance_to_1 = 0;
 		float avg_angle_rel_to_1 = 0;
 		float contact_to_2 = 0;
-		float pathlength = 0;
 		float change_distance_to_1=0.0;
 		for(int counter =0; counter < t.tfeatures.size(); counter++)
 		{
@@ -1688,25 +1752,16 @@ void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::Tr
 			{
 				t.tfeatures[counter].scalars[TPF::CHANGE_DISTANCE_TO_1] = t.tfeatures[counter].scalars[TPF::DISTANCE_TO_1];
 			}
-			avg_speed += t.tfeatures[counter].scalars[TPF::INST_SPEED];
 			avg_distance_to_1 += t.tfeatures[counter].scalars[TPF::DISTANCE_TO_1];
 			avg_angle_rel_to_1 += t.tfeatures[counter].scalars[TPF::ANGLE_REL_TO_1];
 			contact_to_2 += t.tfeatures[counter].scalars[TPF::HAS_CONTACT_TO_2];
-			pathlength += t.tfeatures[counter].scalars[TPF::DISTANCE];
 		}
 		int tnum = t.tfeatures.size();
-		t.scalars[TF::AVG_SPEED] = avg_speed/(tnum-1);
+
 		t.scalars[TF::AVG_DIST_TO_1] = avg_distance_to_1/tnum;
 		t.scalars[TF::AVG_ANGLE_REL_TO_1] = avg_angle_rel_to_1/(tnum-1);
 		t.scalars[TF::CONTACT_TO_2] = contact_to_2/tnum;
-		t.scalars[TF::PATHLENGTH] = pathlength;
-		t.scalars[TF::DISPLACEMENT_VEC_X] = t.intrinsic_features[tnum-1].Centroid[0]*spacing[0]-t.intrinsic_features[0].Centroid[0]*spacing[0];
-		t.scalars[TF::DISPLACEMENT_VEC_Y] = t.intrinsic_features[tnum-1].Centroid[1]*spacing[1]-t.intrinsic_features[0].Centroid[1]*spacing[1];
-		t.scalars[TF::DISPLACEMENT_VEC_Z] = t.intrinsic_features[tnum-1].Centroid[2]*spacing[2]-t.intrinsic_features[0].Centroid[2]*spacing[2];
-		float total_distance = sqrt(t.scalars[TF::DISPLACEMENT_VEC_X]*t.scalars[TF::DISPLACEMENT_VEC_X]+t.scalars[TF::DISPLACEMENT_VEC_Y]*t.scalars[TF::DISPLACEMENT_VEC_Y]+t.scalars[TF::DISPLACEMENT_VEC_Z]*t.scalars[TF::DISPLACEMENT_VEC_Z]);
-		t.scalars[TF::CONFINEMENT_RATIO] = pathlength/total_distance;
 		t.scalars[TF::CHANGE_DISTANCE_TO_1] = t.tfeatures[tnum-1].scalars[TPF::DISTANCE_TO_1] - t.tfeatures[0].scalars[TPF::DISTANCE_TO_1];
-
 		tfs[tcounter] = t;
 	}
 	

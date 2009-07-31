@@ -104,7 +104,7 @@ if __name__ == '__main__':
     ############################# Tracking ##############################
 
     # track channel 1 and 2 only
-    channels_to_track = [1,2]
+    channels_to_track = [1]
     for w in channels_to_track:
         temp_fname = [];
         temp_fname.append(os.path.join(exe_dir,'tracking'))
@@ -123,16 +123,16 @@ if __name__ == '__main__':
         temp_fname = [];
         temp_fname.append(os.path.join(exe_dir,'summary'))
         temp_fname.append(str(len(time_points)))
-        temp_fname.append('2'); # number of associated channels to compute features with
+        temp_fname.append('0'); # number of associated channels to compute features with
         for t in time_points:
             temp_fname.append(os.path.join(cache_prefix, 'unmixed_' + filenames[(w,t)]))
         for t in time_points:
             temp_fname.append(os.path.join(cache_prefix, 'labeled_tracks_' + filenames[(w,t)]))
-        temp_fname.append('DC') # type of channel
-        for t in time_points:
-            temp_fname.append(os.path.join(cache_prefix, 'labeled_' + filenames[(3,t)])) # add DC segmented files too
-        temp_fname.append('Vessel') # type of channel
-        temp_fname.append(os.path.join(cache_prefix, 'vessel_trace_' + dataset_id + '_w' + str(vessel_w) + '.tif'))
+##        temp_fname.append('DC') # type of channel
+##        for t in time_points:
+##            temp_fname.append(os.path.join(cache_prefix, 'labeled_' + filenames[(3,t)])) # add DC segmented files too
+##        temp_fname.append('Vessel') # type of channel
+##        temp_fname.append(os.path.join(cache_prefix, 'vessel_trace_' + dataset_id + '_w' + str(vessel_w) + '.tif'))
         temp_fname.append(os.path.join(cache_prefix, 'track_summary_' + dataset_id + '_w' + str(w) + '.txt'))
         temp_fname.append(os.path.join(cache_prefix, 'track_points_summary_' + dataset_id + '_w' + str(w) + '.txt'))
         subprocess.call(temp_fname);

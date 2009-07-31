@@ -589,6 +589,11 @@ int main(int argc, char **argv)
 
   std::vector<ftk::TrackFeatures> tfs;
   createTrackFeatures(fvector,tfs,c,num_t);
+  printf("tfs.size() = %d first\n",tfs.size());
+
+  //first calcualte time based features
+  AnalyzeTimeFeatures(tfs);
+
   if(compute_vessel_features == true)
     {
     AnalyzeVesselCenterlines(vessel_trace,tfs);

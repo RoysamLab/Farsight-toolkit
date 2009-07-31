@@ -195,6 +195,7 @@ void getFeatureVectorsFarsight(LabelImageType::Pointer im, InputImageType::Point
 InputImageType::Pointer getLabelToBinary(LabelImageType::Pointer l);
 InputImageType::Pointer getMaxImage(InputImageType::Pointer,InputImageType::Pointer);
 std::vector<float> traverseCenterline(itk::ImageRegionIteratorWithIndex<InputImageType> iter,InputImageType::Pointer im,char neighbors[26][3],int n);
+void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs);
 void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::TrackFeatures> &tfs);
 FloatImageType::IndexType searchNearestVesselDirection(FloatImageType::Pointer dir_image[3],FloatImageType::IndexType index,InputImageType::Pointer vesselim);
 void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::TrackFeatures> &tfs, int c, int num_t);
