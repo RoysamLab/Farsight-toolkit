@@ -150,8 +150,8 @@ class EnterAlgorithmGUIwx(wx.Frame):
 		else:
 			""" Delete entries """
 			for i in range(-differenceValue):
-				self.DeleteParameterRow(self.algorithmParameterEntry[newValue+i])
-				del self.algorithmParameterEntry[newValue+i]
+				self.DeleteParameterRow(self.algorithmParameterEntry[newValue])
+				del self.algorithmParameterEntry[newValue]
 
 		self.algorithmNumberParameters = newValue
 		self.lastEntryRow = self.tempRow		# May not be necessary

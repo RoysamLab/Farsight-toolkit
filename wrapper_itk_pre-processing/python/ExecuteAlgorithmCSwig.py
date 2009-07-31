@@ -42,6 +42,7 @@ WRITER = "itkImageFileWriter"			# Class Name
 
 def defaultAlgorithmExecution(XMLFileName):
     """ Details of algorithm in XML file. Read it and execute the algorithm """
+    warnings.warn("Some of the algorithms for Python may not be supported in CSwig (without additional wrappers). Please use WrapITK.")
     xmlObject = FilterObjectXML.FilterObjectXML()
     thisalgorithm = FilterAlgorithm.FilterAlgorithm()
     xmlObject.ParseDocument(thisalgorithm, XMLFileName)
