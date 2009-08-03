@@ -42,6 +42,8 @@ limitations under the License.
 #include "ftkGUI/HistoWindow.h"
 //#include "SegmentationView.h"
 
+
+
 class NucleusEditor : public QMainWindow
 {
     Q_OBJECT;
