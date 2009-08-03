@@ -23,6 +23,7 @@ f = file("MDLParameterValues.xml")
 parameterValues = ParseXMLParameterFile("MDL", False)
 
 fullPathToInput = parameterValues["Input image"]
+fullPathToOutput = parameterValues["Output image"]
 dataDir = os.path.dirname(fullPathToInput)
 filename = os.path.basename(fullPathToInput)
 
@@ -111,14 +112,14 @@ morphStrength
 alpha
 cmd = "./MinSpanTree${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s %s %s %s %s %s %s %s %s" % \
   (dataDir+"/", "out.skel", "components_Connected.raw", sizeX, sizeY, sizeZ, \
-   edgeRange, pruneSize, morphStrength, alpha, dataDir+"/out.vtk",\
+   edgeRange, pruneSize, morphStrength, alpha, fullPathToOutput,\
    dataDir+"/out.txt", dataDir+"/Aniso_Diffused.raw")
 print "Step #7, executing the following command:\n%s" % cmd
 timeBefore = time.time()
 subprocess.call(["./MinSpanTree${CMAKE_EXECUTABLE_SUFFIX}",\
                   dataDir+"/", "out.skel", "components_Connected.raw", sizeX,\
                   sizeY, sizeZ, edgeRange, pruneSize, morphStrength, alpha,\
-                  dataDir+"/out.vtk", dataDir+"/out.txt",
+                  fullPathToOutput, dataDir+"/out.txt",
                   dataDir+"/Aniso_Diffused.raw"])
 timeElapsed = time.time() - timeBefore
 print "Step #7 completed in %d seconds\n\n" % timeElapsed

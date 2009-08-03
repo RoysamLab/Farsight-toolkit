@@ -10,6 +10,15 @@ with no header"
   >
   </parameter>
   <parameter
+  name="Output image"
+  description=
+"Where to store the tracing results.  The MDL skeletonization module currently
+supports output to .vtk or .swc file formats."
+  type="string"
+  default="output.vtk"
+  >
+  </parameter>
+  <parameter
     name="Intensity threshold"
     description=
 "Determine the background regions we are not interested in and set all the
