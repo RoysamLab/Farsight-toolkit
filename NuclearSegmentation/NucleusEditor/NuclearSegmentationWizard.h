@@ -35,6 +35,9 @@ limitations under the License.
 //#include "ftkImage/ftkImage.h"
 #include "NuclearSegmentation/ftkNuclearSegmentation.h"
 #include "SegmentationWindow.h"
+#include "Seed3D.h"
+
+
 
 class NuclearSegmentationWizard : public QWizard
 {
@@ -44,6 +47,8 @@ public:
 	enum { Page_Input, Page_Parameters, Page_Binarize, Page_Seeds, Page_Cluster, Page_Finalize, Page_Save };
 
     NuclearSegmentationWizard(QWidget *parent = 0); 
+	
+	Seed3D* Seeds;
 
 signals:
 
@@ -60,7 +65,7 @@ private slots:
 private:
 	ftk::NuclearSegmentation *seg;
 	int lastStep;
-
+	
 };
 
 class InputPage : public QWizardPage
@@ -131,12 +136,18 @@ class ClusterPage : public QWizardPage
 public:
 	ClusterPage(QWidget *parent = 0);
 	bool isComplete() const;
+	Seed3D* seeds2;
+	QPushButton *SeedEdit;
+	
 public slots:
-	void ShowImages(ftk::Image::Pointer data, ftk::Image::Pointer label);
+	void ShowImages(ftk::Image::Pointer data, ftk::Image::Pointer label, Seed3D* Seeds);
+	void ViewEditor();
 private:
 	SegmentationWindow *sWin;
 	bool hasImage;
 	QCheckBox *jumpBox;
+	
+	
 };
 
 class FinalizePage : public QWizardPage
@@ -173,5 +184,6 @@ private:
 	bool saved;
 	QString lastPath;
 };
+
 
 #endif
