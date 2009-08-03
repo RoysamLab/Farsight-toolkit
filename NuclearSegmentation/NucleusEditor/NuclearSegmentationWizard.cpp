@@ -1127,7 +1127,7 @@ Seed3D::Seed3D(QWidget * parent, Qt::WindowFlags flags)
   connect(this->MergeBox, SIGNAL(stateChanged(int)), this, SLOT(MergeSeeds()));
 
 //Resize the Window 
-  this->resize(400,400);
+  this->resize(800,400);
 }
 
 
