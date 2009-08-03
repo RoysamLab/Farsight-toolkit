@@ -116,15 +116,7 @@ limitations under the License.
 #include <QVTKWidget.h>
 #include <iostream>
 #include <fstream>
-
-
-typedef struct
-{
-float x;
-float y;
-float z;
-} point;
-
+#include "NuclearSegmentation/ftkNuclearSegmentation.h"
 
 
 class Seed3D : public QMainWindow
@@ -132,6 +124,7 @@ class Seed3D : public QMainWindow
     Q_OBJECT;
 public:
 	Seed3D(QWidget * parent = 0, Qt::WindowFlags flags = 0);
+	void GetImage(ftk::Image::Pointer data,vector<Seed> );
 	private slots:
 	//void loadImage(void);
 	void PlaceSeed();
@@ -141,12 +134,15 @@ public:
 	void DeleteSeed();
 	//void saveResult();
 	void UndoDeleteSeeds();
-    
+    void SplitSeeds();
+	void MergeSeeds();
+	
+	void DeleteObjects();
 	
 private:
 	/*void createMenus();
 	void createStatusBar();*/
-	void DeleteObjects();
+
 	
 	
 	
@@ -184,6 +180,8 @@ private:
     QCheckBox *AddBox;
     QCheckBox *DeleteBox;
     QCheckBox *UndoDelBox;	
+	QCheckBox *SplitBox;	
+	QCheckBox *MergeBox;	
     QPushButton *PlaceButton;
     QPushButton *ApplyButton;
     vtkSmartPointer<vtkRenderer> Renderer;
@@ -205,8 +203,8 @@ private:
 	int counter;
 	int flag;
 	int iRender;
-
-
+	typedef ftk::Object::Point point;
+	
 	std::vector<point> dup_points;
 	std::vector<point> MarkedPoints;
 	std::vector<point> MarkedPoints2add;
@@ -250,7 +248,11 @@ private:
 
     static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
     void rayCast(char*,char*);
-    std::vector<point>ReadPoints(char* );
+	
+    vector<point> GetSeedpts(vector<Seed> seeds);
+
+	std::vector<point> spPoint;
+	
 	double* y;
 	double* wp;
  };
