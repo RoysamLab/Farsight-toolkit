@@ -25,6 +25,7 @@ limitations under the License.
   v3: include contourFilter and rayCast renderers
   v4: converted to Qt, member names changed to fit "VTK style" more closely.
   v5: automated functions implemented structure in place for "PACE".
+  v6: "ALISA" implemented
 */
 
 #include "ftkGUI/PlotWindow.h"
@@ -562,15 +563,21 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
     unsigned int cell_id = cell_picker->GetCellId();  
     view->SelectedTraceIDs.push_back(cell_id);
     TraceLine *tline = reinterpret_cast<TraceLine*>(view->tobj->hashc[cell_id]);
-  
-  view->HighlightSelected(tline, view->SelectColor);
-    tline->Getstats();              //prints the id and end coordinates to the command prompt 
-    view->SphereActor->SetPosition(pickPos);    //sets the selector to new point
-    view->SphereActor->VisibilityOn();      //deleteTrace can turn it off 
-    view->poly_line_data->Modified();
-
+	if (view->tobj->Gaps.size() < 1)
+	{
+		view->HighlightSelected(tline, view->SelectColor);
+		tline->Getstats();              //prints the id and end coordinates to the command prompt 
+		view->SphereActor->SetPosition(pickPos);    //sets the selector to new point
+		view->SphereActor->VisibilityOn();      //deleteTrace can turn it off 
+		view->poly_line_data->Modified();
+	}
+	else
+	{	int size = view->tobj->Gaps.size();
+		int id = tline->GetId();
+		view->MergeGaps->SelectbyTraceID(id);
+	}
     //update the head Qt view here too...
-  }
+  }// end if pick
   view->QVTK->GetRenderWindow()->Render();             //update the render window
 }
 

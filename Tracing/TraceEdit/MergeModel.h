@@ -44,6 +44,7 @@ public:
   void SetTraceGaps(std::vector<TraceGap*> gaps);
   std::vector<TraceGap*>GetTraceGaps();
   std::vector<int> GetSelectedGapIDs();
+  void SelectbyTraceID(int id);
 
 signals:
   //emit this signal to tell the Qt views to update
@@ -57,15 +58,20 @@ private:
   //the first column of each row is the gap ID, as per the definition
   //of this data model's headers.
 	const static int IDColumn = 0;
+	const static int Trace1Col = 1;
+	const static int Trace2Col = 2;
 	int NumFeatures;
 	int NumGaps;
   std::vector<TraceGap*> TraceGaps;
-	QMap<int, int> IDToRowMap;	
+	QMap<int, int> IDToRowMap;
+	QMap<int, int> Trace1ToRow;
+	QMap<int, int> Trace2ToRow;
 
 	QStandardItemModel *Model;
 	QItemSelectionModel *SelectionModel; 
-  void SetupHeaders();
+	void SetupHeaders();
 	void SyncModel();
-  void MapGapIDsToRows();
+	void MapGapIDsToRows();
+	void MapTracesToRows();
 };
 #endif

@@ -105,6 +105,8 @@ void MergeModel::SyncModel()
 
   //and refresh the mapping between map ids and rows
   this->MapGapIDsToRows();
+  this->MapTracesToRows();
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -112,7 +114,7 @@ void MergeModel::MapGapIDsToRows()
 {
   if(this->GetTraceGaps().size() == 0)
     {
-    return;
+		return;
     }
   QModelIndex index;
   int ID;
@@ -124,7 +126,35 @@ void MergeModel::MapGapIDsToRows()
     this->IDToRowMap.insert(ID,row);
     }
 }
-
+void MergeModel::MapTracesToRows()
+{
+	if(this->GetTraceGaps().size() == 0)
+    {
+		return;
+    }
+	QModelIndex index1, index2;
+	int T1, T2;
+	this->Trace1ToRow.clear();
+	this->Trace2ToRow.clear();
+	for (int row = 0; row < this->Model->rowCount(); row++)
+    {
+//map trace 1
+		index1 = this->Model->index(row, this->Trace1Col);
+		T1 = this->Model->data(index1).toInt();
+		this->Trace1ToRow.insert(T1,row);
+//map trace 2		
+		index2 = this->Model->index(row, this->Trace2Col);
+		T2 = this->Model->data(index2).toInt();
+		this->Trace2ToRow.insert(T2,row);
+    }
+}
+void MergeModel::SelectbyTraceID(int id)
+{
+	int row1 = -1 , row2= -1;
+	row1 = this->Trace1ToRow.value(id);
+	row2 = this->Trace2ToRow.value(id);
+	std::cout << "\nRow 1\t" << row1 << "\tRow 2\t" << row2 << std::endl; 
+}
 ////////////////////////////////////////////////////////////////////////////////
 void MergeModel::SetTraceGaps(std::vector<TraceGap *> gaps)
 {
