@@ -45,15 +45,6 @@ namespace ftk
  *  
  */
 
-class ftkPoint
-{
-public:
-	ftkPoint(int x_in, int y_in, int z_in): x(x_in), y(y_in), z(z_in) {};
-private:
-	int x;
-	int y;
-	int z;
-};
 class NuclearSegmentation
 {
 public:
