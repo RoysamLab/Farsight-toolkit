@@ -100,12 +100,9 @@ void gbranch_break(Graph& g) {
 
 double mahalanobisDist(double meanDensityBranch, double length_leaf, double meanVesselBranch, int spineOne);
 
-
 int main(int argc, char *argv[])
 {
   //using namespace boost;
-
-
   ifstream fin;
   FILE *volfile, *vesselfile;
   FILE *fout, *fout_txt;
@@ -319,25 +316,22 @@ int main(int argc, char *argv[])
       idx = k*slsz + j*sizeX + i; 
       vol_BrchPts[idx] = 0;
   }
-  
 
   if ((brchpts_file=fopen("C:\\Xiaosong\\Data\\Microglia_astrocyte\\Mont10EunCh3.1024x1024x51_BranchPts.raw", "wb"))==NULL)  // open vol file
       {cerr << "couldn't open soma file for input" << endl;
        exit(-1);
       }
- #endif
-
-
+#endif
 
   fclose(volfile);
   fclose(vesselfile);
 
-
-  for(idx=0; idx<sz; idx++)   {  //Initialize to zero
+  for(idx=0; idx<sz; idx++)
+    {
+    //Initialize to zero
     voxelNodeIndex[idx]=0;
     nodeIndicesInitialized[idx]=0;
-
-  }
+    }
 
   // 2184 pts - Trach6A_T10DkR1k.512x512x26.Aniso_k800d02t2.grdt_div-1crt.15.step4k_sd.cv10.D6.skel
   // 2043 pts - Trach6A_T10DkR1k.512x512x26.Aniso_k800d02t2.grdt_div-1crt.15_.step4k_sd.cv50.D6.skel
@@ -351,7 +345,6 @@ int main(int argc, char *argv[])
   // read in skel points
            // 2 is not good for tlapse330_T2DkR1k.512x512x35.Aniso_k800d02t4.grdt_div-1crt.12.step4k_sd.cv.0.skel
  
-
   // Make an initial pass through the skeleton file so we know how many
   // nodes will be written to the vtk file
   num_nodes = 0;  // initial
@@ -401,20 +394,39 @@ int main(int argc, char *argv[])
 
       // Find all neighbor nodes within edgeRange
       for (kk = -edgeRange; kk <= edgeRange; kk++)
-                for (jj = -edgeRange; jj <= edgeRange; jj++)
-                    for (ii = -edgeRange; ii <= edgeRange; ii++) {
-            if (ii==0 && jj==0 && kk==0) continue; // not consider current point
-            if (int(nodePosition.x)+ii < 0 || int(nodePosition.x)+ii >= sizeX)  continue;//check if the block is inside the image
-            if (int(nodePosition.y)+jj < 0 || int(nodePosition.y)+jj >= sizeY)  continue;
-            if (int(nodePosition.z)+kk < 0 || int(nodePosition.z)+kk >= sizeZ)  continue;
+        {
+        for (jj = -edgeRange; jj <= edgeRange; jj++)
+          {
+          for (ii = -edgeRange; ii <= edgeRange; ii++)
+            {
+            if (ii==0 && jj==0 && kk==0)
+              {
+              continue; // not consider current point
+              }
+            if (int(nodePosition.x)+ii < 0 || int(nodePosition.x)+ii >= sizeX)
+              {
+              continue; //check if the block is inside the image
+              }
+            if (int(nodePosition.y)+jj < 0 || int(nodePosition.y)+jj >= sizeY)
+              {
+              continue;
+              }
+            if (int(nodePosition.z)+kk < 0 || int(nodePosition.z)+kk >= sizeZ)
+              {
+              continue;
+              }
             iidx = kk * slsz + jj*sizeX + ii;
             int iidxMid1 = int(kk/3.0) * slsz + int(jj/3.0)*sizeX + int(ii/3.0);
             int iidxMid2 = int(kk*2.0/3.0) * slsz + int(jj*2.0/3.0)*sizeX + int(ii*2.0/3.0);
             iidx = idx + iidx;
             iidxMid1 = idx + iidxMid1;
             iidxMid2 = idx + iidxMid2;
-            if (iidx<0 || iidx >= sz) continue;
-            if (voxelNodeIndex[iidx] != 0) {
+            if (iidx<0 || iidx >= sz)
+              {
+              continue;
+              }
+            if (voxelNodeIndex[iidx] != 0)
+              {
               // put into edge array of MST
               edge_array[idx_edge] = E(num_nodes, voxelNodeIndex[iidx]);
               densityFactor =  pow(double(volin[idx]+0.001), 1);
@@ -430,38 +442,38 @@ int main(int argc, char *argv[])
               edge_w[idx_edge] = sqrt(float(kk*kk + jj*jj + ii*ii)) / (densityFactor*0.02+1);
               #endif
 
-
-
 //Good for Trach6A      densityFactor =  pow(double(volin[idx]+0.001), 1);
 //              densityFactor += pow(double(volin[iidx]+0.001),1);
 //              densityFactor = fabs(pow(double(densityFactor),double(1.2)) +pow(double(voxelNodeIndex[iidxMid1]+voxelNodeIndex[iidxMid2]+1), 0.5));   // test by square densityFactor
 //              edge_w[idx_edge] = sqrt(float(kk*kk + jj*jj + ii*ii)) / (densityFactor*0.02+1);
-
-
-
-
               idx_edge++;
+              }
             }
+          }
+        }
       }
-    }
-
     fin >> nodePosition.x >> nodePosition.y >> nodePosition.z >> p;
     //if (num_nodes==5000) break;
-  }
+    }
   
   // Save vertex position in an array
   vertexPos = new VoxelPosition[num_nodes+1];
   for (k = 0; k < sizeZ; k++)
-     for (j = 0; j < sizeY; j++)
-        for (i = 0; i < sizeX; i++) {
-      idx = k*slsz + j*sizeX + i; 
-      if (voxelNodeIndex[idx] != 0) {
-        vertexPos[voxelNodeIndex[idx]].x = i;
-        vertexPos[voxelNodeIndex[idx]].y = j;
-        vertexPos[voxelNodeIndex[idx]].z = k;
+    {
+    for (j = 0; j < sizeY; j++)
+      {
+      for (i = 0; i < sizeX; i++)
+        {
+        idx = k*slsz + j*sizeX + i; 
+        if (voxelNodeIndex[idx] != 0)
+          {
+          vertexPos[voxelNodeIndex[idx]].x = i;
+          vertexPos[voxelNodeIndex[idx]].y = j;
+          vertexPos[voxelNodeIndex[idx]].z = k;
+          }
+        }
       }
-  }
-
+    }
   degree_nodes = new int[num_nodes+1];
   degree_nodes_tree = new int[num_nodes+1];
   degree_nodes_buffer = new int[num_nodes+1];
@@ -489,11 +501,12 @@ int main(int argc, char *argv[])
 #if defined(BOOST_MSVC) && BOOST_MSVC <= 1300
   Graph g(num_nodes);
   property_map<Graph, edge_weight_t>::type weightmap = get(edge_weight, g);
-  for (size_t j = 0; j < num_edges; ++j) {
+  for (size_t j = 0; j < num_edges; ++j)
+    {
     Edge e; bool inserted;
     tie(e, inserted) = add_edge(edge_array[j].first, edge_array[j].second, g);
     weightmap[e] = edge_w[j];
-  }
+    }
 #else
   Graph g(edge_array, edge_array + num_edges, edge_w, num_nodes);
 #endif
@@ -506,32 +519,34 @@ int main(int argc, char *argv[])
 
   cout << "Print the edges in the MST:" << endl;
   // Print out MST edges
-  for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
+  for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei)
+    {
     //cout << source(*ei, g) << " <--> " << target(*ei, g)
     //<< " with weight of " << weight[*ei]
     //<< endl;
-  }
+    }
 
 
   // create initial degree_nodes array
-  for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
+  for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei)
+    {
     degree_nodes[source(*ei, g)] ++;
     degree_nodes[target(*ei, g)] ++;
     degree_nodes_initialMST[source(*ei, g)] ++;
     degree_nodes_initialMST[target(*ei, g)] ++;
-  }
+    }
 
   // Create a graph for the initial MST
   Graph msTree(num_nodes+1);
   int num_edge_MST = 0;
-  for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
-      //if (degree_nodes_initialMST[source(*ei, g)]!=0 && degree_nodes_initialMST[target(*ei, g)]!=0) 
-    { 
-          add_edge(source(*ei, g), target(*ei, g), msTree);
-      num_edge_MST++;
+  for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei)
+    {
+    //if (degree_nodes_initialMST[source(*ei, g)]!=0 && degree_nodes_initialMST[target(*ei, g)]!=0) 
+    //{ 
+    add_edge(source(*ei, g), target(*ei, g), msTree);
+    num_edge_MST++;
+    //}
     }
-  }
-
 
   // -- Erosion and Dilation of MST
   // Erosion the MST by counting down the degree of nodes
@@ -540,67 +555,72 @@ int main(int argc, char *argv[])
   times_dilation = times_erosion;
   edge_eroded = new int[num_nodes*2];
   num_edge_eroded = 0;
-  while (times_erosion !=0) {
+  while (times_erosion !=0)
+    {
     times_erosion--;
-    for (i=1; i<=num_nodes; i++)   degree_nodes_buffer[i] = degree_nodes[i];
-    for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
-      if (degree_nodes_buffer[source(*ei, g)]>0 && degree_nodes_buffer[target(*ei, g)]>0)  {
-              if (degree_nodes_buffer[source(*ei, g)]==1 || degree_nodes_buffer[target(*ei, g)]==1)  {
-                  degree_nodes[source(*ei, g)] --;
-                  degree_nodes[target(*ei, g)] --;
+    for (i=1; i<=num_nodes; i++)
+      {
+      degree_nodes_buffer[i] = degree_nodes[i];
+      }
+    for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei)
+      {
+      if (degree_nodes_buffer[source(*ei, g)]>0 && degree_nodes_buffer[target(*ei, g)]>0)
+        {
+        if (degree_nodes_buffer[source(*ei, g)]==1 || degree_nodes_buffer[target(*ei, g)]==1)
+          {
+          degree_nodes[source(*ei, g)] --;
+          degree_nodes[target(*ei, g)] --;
           // Save the edges eroded in a stack-like array. Each edge takes two elements of the array
           edge_eroded[num_edge_eroded*2]  = source(*ei, g); // Saving of eroded edges
           edge_eroded[num_edge_eroded*2+1] = target(*ei, g);
           num_edge_eroded ++;
-              }
+          }
+        }
       }
     }
-  }
 
   // Dilation the MST by counting up the degree of nodes
-  while (num_edge_eroded !=0) {
+  while (num_edge_eroded !=0)
+    {
     //times_dilation--;
     num_edge_eroded --;
       //for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
     edge_source = edge_eroded[num_edge_eroded*2];  // Read the stored eroded edges
     edge_target = edge_eroded[num_edge_eroded*2+1];
-      if ((degree_nodes[edge_source]+ degree_nodes[edge_target]) == 1)  {  // if a branch tip edge
-           degree_nodes[edge_source] ++;
-           degree_nodes[edge_target] ++;
-    }
+    if ((degree_nodes[edge_source]+ degree_nodes[edge_target]) == 1)
+      {  // if a branch tip edge
+      degree_nodes[edge_source] ++;
+      degree_nodes[edge_target] ++;
+      }
     //}
-  }
-
+    }
 
   // Create a Backbone vertice flag array
-  for (i=1; i<=num_nodes; i++)   {
+  for (i=1; i<=num_nodes; i++)
+    {
     if (degree_nodes[i] >= 1)  
-        vertBackbone[i] = 1;
-  }
-
-
-
-
+      {
+      vertBackbone[i] = 1;
+      }
+    }
   //-- Label branches on Backbone of MST generated
   
   // Create a new graph from the MST generated above
   Graph msTreeBB(num_nodes+1);        // BackBone graph created
   //Graph msTreeBB_buffer(num_nodes+1);
   //num_edge_MST = 0;
-  for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
-    if (degree_nodes[source(*ei, g)]!=0 && degree_nodes[target(*ei, g)]!=0) {  // According to my proved theorem
-          
+  for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei)
+    {
+    if (degree_nodes[source(*ei, g)]!=0 && degree_nodes[target(*ei, g)]!=0)
+      {  // According to my proved theorem
       #if ONLY_OUTPUT_SPINES==0
       add_edge(source(*ei, g), target(*ei, g), msTreeBB);
       #endif
       //num_edge_MST++;
+      }
     }
-  }
   //int num_edge_MST = num_edges(msTreeBB); //not work
-
   //msTreeBB_buffer = msTreeBB; // copy to buffer for next process
-
-
 
   Edge_iter   ei, ei_end;
   Vertex_iter vi, vend;
@@ -611,12 +631,14 @@ int main(int argc, char *argv[])
   int vertsCurBranch2[MAXNumBranch][2000];  // For the 2nd level branch at BB (at most MAXNumBranch 2nd level branches, at most 2000 vertices)
   int vertsCurBr_Index2[MAXNumBranch];      // when array at [0], it is the 1st level branch at BB
 
-  for (i=0; i<MAXNumBranch; i++)  vertsCurBr_Index2[i]=0;  // Initialize to zeros
+  for (i=0; i<MAXNumBranch; i++)
+    {
+    vertsCurBr_Index2[i]=0;  // Initialize to zeros
+    }
 
   // CONSIDER ALL branches on the BackBone
   num_leaves = 0;
   //prunetimes = 1; //5;
-
 
   /* Testing for MST output only! */
 
@@ -626,20 +648,32 @@ int main(int argc, char *argv[])
 
   typedef property_map<Graph, vertex_index_t>::type IndexMap;
   IndexMap index = get(vertex_index, msTree);  // get index map of vertices
-  
-  for(boost::tie(vi, vend) = vertices(msTree); vi != vend; ++vi)  { // for all vertex in the graph
+
+  // for all vertex in the graph
+  for(boost::tie(vi, vend) = vertices(msTree); vi != vend; ++vi)
+    { 
     //printf("Index of nodes is : %d\n", index[*vi]);   //test of index[] function
     vertsCurBr_Index2[0] = 0;
     index_vert = int(index[*vi]);   // Get index from the graph IndexMap
-    if (vertBackbone[index_vert]==0) continue;  // if the vertex is not on Backbone, continue
+    if (vertBackbone[index_vert]==0)
+      {
+      continue;  // if the vertex is not on Backbone, continue
+      }
     int outdegree = out_degree(*vi, msTree);
     numBranch_on_Backbone = outdegree - degree_nodes[index_vert];
       
-    if (numBranch_on_Backbone <= 0)  continue;  // if it has at least one branch out of BackBone
+    if (numBranch_on_Backbone <= 0)
+      {
+      continue;  // if it has at least one branch out of BackBone
+      }
     // For each out branch (edge) on the BackBone
-    for (boost::tie(outei, outedge_end) = out_edges(*vi, msTree); outei != outedge_end; outei++) {
+    for (boost::tie(outei, outedge_end) = out_edges(*vi, msTree); outei != outedge_end; outei++)
+      {
       int targ = target(*outei, msTree);
-            if (vertBackbone[targ] > 0)  continue;  // the edge is on BackBone, continue
+      if (vertBackbone[targ] > 0)
+        {
+        continue;  // the edge is on BackBone, continue
+        }
       meanDensityBranch[0] = 0;
       meanVesselBranch[0] = 0;
       vertsCurBranch2[0][vertsCurBr_Index2[0]] = source(*outei, msTree);
@@ -647,29 +681,35 @@ int main(int argc, char *argv[])
       vertsCurBranch2[0][vertsCurBr_Index2[0]] = target(*outei, msTree);
       num_leaves++;
 
-      while (out_degree(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], msTree), msTree) == 2) {
+      while (out_degree(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], msTree), msTree) == 2)
+        {
         //curVert = vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], msTree);
         for (boost::tie(outei2, outedge_end2) = out_edges(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], msTree), msTree);
-                                            outei2 != outedge_end2; ++outei2) {
+                                            outei2 != outedge_end2; ++outei2)
+          {
           if (target(*outei2, msTree) == (unsigned int)vertsCurBranch2[0][vertsCurBr_Index2[0]-1])
+            {
             continue;
+            }
           vertsCurBranch2[0][vertsCurBr_Index2[0]+1] = target(*outei2, msTree);
-        }
+          }
         vertsCurBr_Index2[0]++;
-      }
+        }
       branchChosen = 1;
       // Evaluate with MDL if the branch is chosen
       //if (i == prunetimes-1) num_leaves++;
       length_leaf[0] = 0;
-      for (j = 0; j <= vertsCurBr_Index2[0]; j++) {
+      for (j = 0; j <= vertsCurBr_Index2[0]; j++)
+        {
         indVert = vertsCurBranch2[0][j];
         #if OUT_CLASSIFIER_TRAINING
           fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
         #endif
 
-        if (j==0) {
+        if (j==0)
+          {
           indVert_last = indVert;
-        }
+          }
         length_edge = (vertexPos[indVert].x-vertexPos[indVert_last].x)*(vertexPos[indVert].x-vertexPos[indVert_last].x);
         length_edge+= (vertexPos[indVert].y-vertexPos[indVert_last].y)*(vertexPos[indVert].y-vertexPos[indVert_last].y);
         length_edge+= (vertexPos[indVert].z-vertexPos[indVert_last].z)*(vertexPos[indVert].z-vertexPos[indVert_last].z);
@@ -680,10 +720,9 @@ int main(int argc, char *argv[])
         idx = vertexPos[indVert].z *slsz + vertexPos[indVert].y *sizeX + vertexPos[indVert].x;
         meanDensityBranch[0] += volin[idx];
         meanVesselBranch[0] += volvessel[idx];
-      }
+        }
       meanDensityBranch[0] = meanDensityBranch[0]/ (vertsCurBr_Index2[0]+1);
       meanVesselBranch[0] = meanVesselBranch[0] / (vertsCurBr_Index2[0]+1);
-
 
       mahalanobis_dist[0]    =      mahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 1);  
       mahalanobis_dist_nonSpine[0] = mahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 0); 
@@ -715,24 +754,27 @@ int main(int argc, char *argv[])
 
       #if DISP_ALL_BB2Branch
       // Remove the branch based on MDL critierion
-      if (branchChosen == 1)  {
-        for (j = 1; j <= vertsCurBr_Index2[0]; j++) {
+      if (branchChosen == 1)
+        {
+        for (j = 1; j <= vertsCurBr_Index2[0]; j++)
+          {
           add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeBB);
+          }
         }
-      }
       #endif
-
 
       // ## Begin to check the 2nd level of branches located at BB
       //if (out_degree(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], msTree), msTree) == 1)   continue;   //If no 2nd level branch
       int ind2Brch = 0;
 
-
       // For each 2nd level branch starting from the end of 1st level branch
       for (boost::tie(outei2, outedge_end2) = out_edges(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], msTree), msTree);
-                                          outei2 != outedge_end2; ++outei2) {
+                                          outei2 != outedge_end2; ++outei2)
+        {
         if (target(*outei2, msTree) == (unsigned int)vertsCurBranch2[0][vertsCurBr_Index2[0]-1])
+          {
           continue;  // continue if the out edge belongs to the old branch
+          }
         ind2Brch++;
         vertsCurBranch2[ind2Brch][0] = vertsCurBranch2[0][vertsCurBr_Index2[0]];
         vertsCurBr_Index2[ind2Brch] = 1;
@@ -740,33 +782,37 @@ int main(int argc, char *argv[])
         
         
         // Search for the end of 2nd level branch
-        while (out_degree(vertex(vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]], msTree), msTree) == 2) {
+        while (out_degree(vertex(vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]], msTree), msTree) == 2)
+          {
         //curVert = vertex(vertsCurBranch[vertsCurBr_Index], msTree);
           for (boost::tie(outei3, outedge_end3) = out_edges(vertex(vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]], msTree), msTree);
-                                              outei3 != outedge_end3; ++outei3) {
+                                              outei3 != outedge_end3; ++outei3)
+            {
             if (target(*outei3, msTree) == (unsigned int)vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]-1])
+              {
               continue;
+              }
             vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]+1] = target(*outei3, msTree);
-          }
+            }
           vertsCurBr_Index2[ind2Brch]++;
-        }
-
-
+          }
 
         // Compute the feature-based description length for the 2nd level branch
         length_leaf[ind2Brch] = 0;
         meanDensityBranch[ind2Brch] = 0;
         meanVesselBranch[ind2Brch] = 0;
         num_leaves++;  // for training purpose
-        for (j = 0; j <= vertsCurBr_Index2[ind2Brch]; j++) {
+        for (j = 0; j <= vertsCurBr_Index2[ind2Brch]; j++)
+          {
           indVert = vertsCurBranch2[ind2Brch][j];
           #if OUT_CLASSIFIER_TRAINING
             fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
           #endif
 
-          if (j==0) {
+          if (j==0)
+            {
             indVert_last = indVert;
-          }
+            }
           length_edge = (vertexPos[indVert].x-vertexPos[indVert_last].x)*(vertexPos[indVert].x-vertexPos[indVert_last].x);
           length_edge+= (vertexPos[indVert].y-vertexPos[indVert_last].y)*(vertexPos[indVert].y-vertexPos[indVert_last].y);
           length_edge+= (vertexPos[indVert].z-vertexPos[indVert_last].z)*(vertexPos[indVert].z-vertexPos[indVert_last].z);
@@ -777,7 +823,7 @@ int main(int argc, char *argv[])
           idx = vertexPos[indVert].z *slsz + vertexPos[indVert].y *sizeX + vertexPos[indVert].x;
           meanDensityBranch[ind2Brch] += volin[idx];
           meanVesselBranch[ind2Brch] += volvessel[idx];
-        }
+          }
         meanDensityBranch[ind2Brch] = meanDensityBranch[ind2Brch]/ (vertsCurBr_Index2[ind2Brch]+1);
         meanVesselBranch[ind2Brch] = meanVesselBranch[ind2Brch] / (vertsCurBr_Index2[ind2Brch]+1);
 
@@ -797,83 +843,85 @@ int main(int argc, char *argv[])
                 //    mahalanobis_dist_minIndex = ind2Brch;
         //}
 
-
         #if DISP_ALL_BB2Branch
-        for (j = 1; j <= vertsCurBr_Index2[ind2Brch]; j++) {
+        for (j = 1; j <= vertsCurBr_Index2[ind2Brch]; j++)
+          {
           // test: add any branches to the backbone
           add_edge(vertsCurBranch2[ind2Brch][j-1], vertsCurBranch2[ind2Brch][j], msTreeBB);   // add branch for the 2nd level
-        }
+          }
         #endif
-
 
         #if OUT_CLASSIFIER_TRAINING
           fprintf(fclass_identify, "%d  %f %f %f\n", -num_leaves, aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch]);
         #endif
-
-
-
-      } // End of 2nd level branch
-
-
+        } // End of 2nd level branch
 
       // ** Minimal MDL is solved by looking at each choice
       // 1. Empty model set is chosen (no branch)
       MDL_minIndex = -1; // Indicate that empty model set is chosen
       sum_mahalanobis_nonSpine = 0;
-      for (i = 0; i<= ind2Brch; i++)  {
+      for (i = 0; i<= ind2Brch; i++)
+        {
         sum_mahalanobis_nonSpine += mahalanobis_dist_nonSpine[i];
-      }
+        }
       MDL_min = sum_mahalanobis_nonSpine;
 
       // 2. Only 1st level branch model set
       MDL = sum_mahalanobis_nonSpine - mahalanobis_dist_nonSpine[0] + mahalanobis_dist[0];
       MDL = MDL + (1-alpha)*(1/alpha)*(-14.0/3.0);      // alpha represents the model description length of one branch
-      if (MDL < MDL_min)  {
+      if (MDL < MDL_min)
+        {
         MDL_min = MDL;
         MDL_minIndex = 0;  
-      }
+        }
 
       // 3. Two level branch model set, including 1st level and 2nd level branches
-      for (i = 1; i <= ind2Brch; i++)  {
+      for (i = 1; i <= ind2Brch; i++)
+        {
         MDL = sum_mahalanobis_nonSpine - mahalanobis_dist_nonSpine[i] + mahalanobis_dist[i];
         MDL = MDL + (1-alpha)*(1/alpha)*(-14.0/3.0);
-        if (MDL <  MDL_min) {
+        if (MDL <  MDL_min)
+          {
           MDL_min = MDL;
           MDL_minIndex =  i;
+          }
         }
-      }
-
-
 
       // Adding Spine model - Only add the branches with the minimal MDL
-      if (MDL_minIndex >= 0)   {
-                for (j = 1; j <= vertsCurBr_Index2[0]; j++) {
+      if (MDL_minIndex >= 0)
+        {
+        for (j = 0; j <= vertsCurBr_Index2[0]; j++)
+          {
           // Not to output if only need backbone output
           add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeBB);   // Comment out if only need backbone output
           if(outputAsSWC)
             {
+            if(vertsCurBranch2[0][j-1] == 5)
+              {
+              cout << "yup 3" << endl;
+              }
             fprintf(fout, "%d 4 %f %f %f 2.0 %d\n", 
                 vertsCurBranch2[0][j], vertexPos[vertsCurBranch2[0][j]].x, vertexPos[vertsCurBranch2[0][j]].y, vertexPos[vertsCurBranch2[0][j]].z, vertsCurBranch2[0][j-1]);
             //fprintf(fout, "%4.0f  %4.0f  %4.0f\n",   // Output for levelset seeds
             //  vertexPos[vertsCurBranch2[0][j]].x, vertexPos[vertsCurBranch2[0][j]].y, vertexPos[vertsCurBranch2[0][j]].z);
             }
-        }
-        if (MDL_minIndex >= 1)  {
-          for (j = 1; j <= vertsCurBr_Index2[MDL_minIndex]; j++) {
-             add_edge(vertsCurBranch2[MDL_minIndex][j-1], vertsCurBranch2[MDL_minIndex][j], msTreeBB);  //add branch for the 2nd level
           }
-
+        if (MDL_minIndex >= 1)
+          {
+          for (j = 1; j <= vertsCurBr_Index2[MDL_minIndex]; j++)
+            {
+            add_edge(vertsCurBranch2[MDL_minIndex][j-1], vertsCurBranch2[MDL_minIndex][j], msTreeBB);  //add branch for the 2nd level
+            }
+          }
         }
-      }
 
-
-
-        #if DRAW_MDL_CURVE    // 1* Output different levels of MDL values
+      #if DRAW_MDL_CURVE    // 1* Output different levels of MDL values
       // 1. Empty model set is chosen (no branch)
       sum_mahalanobis_nonSpine = 0;
-      for (i = 0; i<= ind2Brch; i++)  {
+      for (i = 0; i<= ind2Brch; i++)
+        {
         sum_mahalanobis_nonSpine += mahalanobis_dist_nonSpine[i];
-      }
+        }
 
       // 2. Only 1st level branch model set
       MDL = sum_mahalanobis_nonSpine - mahalanobis_dist_nonSpine[0] + mahalanobis_dist[0];
@@ -881,139 +929,139 @@ int main(int argc, char *argv[])
       MDL_min = MDL;
 
       // 3. Two level branch model set, including 1st level and 2nd level branches
-      for (i = 1; i <= ind2Brch; i++)  {
+      for (i = 1; i <= ind2Brch; i++)
+        {
         MDL = sum_mahalanobis_nonSpine - mahalanobis_dist_nonSpine[i] + mahalanobis_dist[i];
-        if (MDL <  MDL_min) {
+        if (MDL <  MDL_min)
+          {
           MDL_min = MDL;
           MDL_minIndex =  i;
+          }
         }
-      }
-    fprintf(fout_MDL, "%10d %20f %20f\n", ind2Brch, sum_mahalanobis_nonSpine, MDL_min);
-    #endif
-    }    // End of each out edge
-  } // End of all vertice
+      fprintf(fout_MDL, "%10d %20f %20f\n", ind2Brch, sum_mahalanobis_nonSpine, MDL_min);
+      #endif
+      }    // End of each out edge
+    } // End of all vertice
   //msTreeBB = msTreeBB_buffer;
 
-if(outputAsSWC)
-  {
-  int parent_index, cur_index;
-  int parent_index0, cur_index0;
-  int targ;
-  for(boost::tie(vi, vend) = vertices(msTree); vi != vend; ++vi)
-    { // for all vertex in the graph
-    index_vert = int(index[*vi]);   // Get index from the graph IndexMap
-    cout << "vertBackbone[index_vert]=" << vertBackbone[index_vert] << endl;
-    if (vertBackbone[index_vert]==0)
-      {
-      continue;  // if the vertex is not on Backbone, continue
+  if(outputAsSWC)
+    {
+    int parent_index, cur_index;
+    int parent_index0, cur_index0;
+    int targ;
+    for(boost::tie(vi, vend) = vertices(msTree); vi != vend; ++vi)
+      { // for all vertex in the graph
+      index_vert = int(index[*vi]);   // Get index from the graph IndexMap
+      //cout << "vertBackbone[index_vert]=" << vertBackbone[index_vert] << endl;
+      if (vertBackbone[index_vert]==0)
+        {
+        continue;  // if the vertex is not on Backbone, continue
+        }
+      //cout << "degree_nodes[index_vert]=" << degree_nodes[index_vert] << endl;
+      //cout << "out_degree of index_vert ="
+      //     << out_degree(vertex(index_vert, msTree), msTree) << endl;
+      if (out_degree(vertex(index_vert, msTree), msTree) != 1)
+        {
+        continue;  // if it is not end of backbone
+        }
+      if (vertexPos[index_vert].x> 450 && vertexPos[index_vert].y<50 )
+        {
+        break;  // to pick up particular root vertex for swc file
+        }
       }
-    cout << "degree_nodes[index_vert]=" << degree_nodes[index_vert] << endl;
-    cout << "out_degree of index_vert ="
-         << out_degree(vertex(index_vert, msTree), msTree) << endl;
-    if (out_degree(vertex(index_vert, msTree), msTree) != 1)
-      {
-      continue;  // if it is not end of backbone
-      }
-    if (vertexPos[index_vert].x> 450 && vertexPos[index_vert].y<50 )
-      {
-      break;  // to pick up particular root vertex for swc file
-      }
-    }
-  fprintf(fout, "%d 3 %f %f %f 4.0 -1\n",
-          index_vert, vertexPos[index_vert].x, vertexPos[index_vert].y,
-          vertexPos[index_vert].z);
-  parent_index = index_vert;
-  cout << "out_degree of index_vert ="
-       << out_degree(vertex(index_vert, msTree), msTree) << endl;
-  for (boost::tie(outei, outedge_end) =
-         out_edges(vertex(index_vert,msTree), msTree); ; outei++)
-    { // find next node on backbone
-    targ = target(*outei, msTree);
-    cout << "targ=" << targ << endl;
-    if (vertBackbone[targ] == 0)
-      {
-      continue;  // the edge is not on BackBone, continue
-      }
-    cur_index = targ;
-    fprintf(fout, "%d 3 %f %f %f 4.0 %d\n",cur_index, vertexPos[cur_index].x,
-            vertexPos[cur_index].y, vertexPos[cur_index].z, parent_index);
-    break;
-    }
-
-  while (degree_nodes[cur_index] == 2)
-    { //keep going on the first level of backbone branch
+    fprintf(fout, "%d 3 %f %f %f 4.0 -1\n",
+            index_vert, vertexPos[index_vert].x, vertexPos[index_vert].y,
+            vertexPos[index_vert].z);
+    parent_index = index_vert;
+    //cout << "out_degree of index_vert ="
+    //     << out_degree(vertex(index_vert, msTree), msTree) << endl;
     for (boost::tie(outei, outedge_end) =
-           out_edges(vertex(cur_index,msTree), msTree);
-         outei != outedge_end; outei++)
+           out_edges(vertex(index_vert,msTree), msTree); ; outei++)
       { // find next node on backbone
       targ = target(*outei, msTree);
-      cout << "targ=" << targ << endl;
-      if (vertBackbone[targ] == 0 || targ == parent_index)
+      //cout << "targ=" << targ << endl;
+      if (vertBackbone[targ] == 0)
         {
         continue;  // the edge is not on BackBone, continue
         }
-      parent_index = cur_index;
       cur_index = targ;
       fprintf(fout, "%d 3 %f %f %f 4.0 %d\n",cur_index, vertexPos[cur_index].x,
               vertexPos[cur_index].y, vertexPos[cur_index].z, parent_index);
       break;
       }
-    }
 
-  //Output the 2nd level of backbones
-  if (degree_nodes[cur_index] >= 3)
-    {
-    parent_index0 = parent_index;
-    cur_index0 = cur_index;
-    for (boost::tie(outei, outedge_end) =
-           out_edges(vertex(cur_index0,msTree), msTree);
-         outei != outedge_end; outei++)
-      { // find next node on backbone
-      targ = target(*outei, msTree);
-      if (vertBackbone[targ] == 0 || targ == parent_index0)
-        {
-        // the edge is not on BackBone, continue
-        continue;
-        }
-      //if (time == 0) {time = 1; continue;} //test only
-      parent_index = cur_index0;
-      cur_index = targ;
-      fprintf(fout, "%d 3 %f %f %f 4.0 %d\n",
-              cur_index, vertexPos[cur_index].x, vertexPos[cur_index].y,
-              vertexPos[cur_index].z, parent_index);
-      //keep going on each backbone branch
-      while (degree_nodes[cur_index] == 2)
-        {
-        for (boost::tie(outei2, outedge_end2) =
-               out_edges(vertex(cur_index,msTree), msTree);
-             outei2!=outedge_end2; outei2++)
+    while (degree_nodes[cur_index] == 2)
+      { //keep going on the first level of backbone branch
+      for (boost::tie(outei, outedge_end) =
+             out_edges(vertex(cur_index,msTree), msTree);
+           outei != outedge_end; outei++)
+        { // find next node on backbone
+        targ = target(*outei, msTree);
+        //cout << "targ=" << targ << endl;
+        if (vertBackbone[targ] == 0 || targ == parent_index)
           {
-          // find next node on backbone
-          targ = target(*outei2, msTree);
-          if (vertBackbone[targ] == 0 || targ == parent_index)
-            {
-            // the edge is not on BackBone, continue
-            continue;
-            }
-          parent_index = cur_index;
-          cur_index = targ;
-          fprintf(fout, "%d 3 %f %f %f 4.0 %d\n",cur_index,
-                  vertexPos[cur_index].x, vertexPos[cur_index].y,
-                  vertexPos[cur_index].z, parent_index);
-          break;
+          continue;  // the edge is not on BackBone, continue
           }
-        }//while end
-      }//for end
-    }//if end
-  }//end if(outputAsSWC)
+        parent_index = cur_index;
+        cur_index = targ;
+        fprintf(fout, "%d 3 %f %f %f 4.0 %d\n",cur_index, vertexPos[cur_index].x,
+                vertexPos[cur_index].y, vertexPos[cur_index].z, parent_index);
+        break;
+        }
+      }
+
+    //Output the 2nd level of backbones
+    if (degree_nodes[cur_index] >= 3)
+      {
+      parent_index0 = parent_index;
+      cur_index0 = cur_index;
+      for (boost::tie(outei, outedge_end) =
+             out_edges(vertex(cur_index0,msTree), msTree);
+           outei != outedge_end; outei++)
+        { // find next node on backbone
+        targ = target(*outei, msTree);
+        if (vertBackbone[targ] == 0 || targ == parent_index0)
+          {
+          // the edge is not on BackBone, continue
+          continue;
+          }
+        //if (time == 0) {time = 1; continue;} //test only
+        parent_index = cur_index0;
+        cur_index = targ;
+        fprintf(fout, "%d 3 %f %f %f 4.0 %d\n",
+                cur_index, vertexPos[cur_index].x, vertexPos[cur_index].y,
+                vertexPos[cur_index].z, parent_index);
+        //keep going on each backbone branch
+        while (degree_nodes[cur_index] == 2)
+          {
+          for (boost::tie(outei2, outedge_end2) =
+                 out_edges(vertex(cur_index,msTree), msTree);
+               outei2!=outedge_end2; outei2++)
+            {
+            // find next node on backbone
+            targ = target(*outei2, msTree);
+            if (vertBackbone[targ] == 0 || targ == parent_index)
+              {
+              // the edge is not on BackBone, continue
+              continue;
+              }
+            parent_index = cur_index;
+            cur_index = targ;
+            fprintf(fout, "%d 3 %f %f %f 4.0 %d\n",cur_index,
+                    vertexPos[cur_index].x, vertexPos[cur_index].y,
+                    vertexPos[cur_index].z, parent_index);
+            break;
+            }
+          }//while end
+        }//for end
+      }//if end
+    }//end if(outputAsSWC)
 
   #if OUT_CLASSIFIER_TRAINING
   fprintf(fclass_identify, "0 0 0 0 end");
   #endif
 
-
   /*End TEST output MST only */
-
 
 /*
   // Break graph into branches
@@ -1102,9 +1150,7 @@ if(outputAsSWC)
       add_edge(branchKnots[i*2], branchKnots[i*2+1], msTreeBB);
     }
   }
-
 */
-
 
   if(!outputAsSWC)
     {
@@ -1123,25 +1169,28 @@ if(outputAsSWC)
       }
     }
 
- #if OUTPUT_BRANCHPts
- // Output all BRANCHpts to a volume file with nonzero voxel for branch pts
-//  for (boost::tie(vi, vend) = vertices(msTreeBB); vi != vend; ++vi) {
-//    int outdeg = out_degree(*vi, msTree);
-//    }
-  for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei) {
+  #if OUTPUT_BRANCHPts
+  // Output all BRANCHpts to a volume file with nonzero voxel for branch pts
+  //for (boost::tie(vi, vend) = vertices(msTreeBB); vi != vend; ++vi) {
+  //  int outdeg = out_degree(*vi, msTree);
+  //  }
+  for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei)
+    {
     degree_nodes_tree[source(*ei, msTreeBB)] ++;
     degree_nodes_tree[target(*ei, msTreeBB)] ++;
-  }
+    }
   
-  for (i=1; i<=num_nodes; i++)  {
-      if (degree_nodes_tree[i] >= 3)  {
+  for (i=1; i<=num_nodes; i++)
+    {
+    if (degree_nodes_tree[i] >= 3)
+      {
       ii = vertexPos[i].x;
       jj = vertexPos[i].y;
       kk = vertexPos[i].z;
       idx = kk*slsz + jj*sizeX + ii;
       vol_BrchPts[idx] = 100;  //make the voxels corresponding to branch pts nonzero values
+      }
     }
-  }
   fwrite(vol_BrchPts, sizeX*sizeY*sizeZ, sizeof(DATATYPEIN), brchpts_file);
   fclose(brchpts_file);
  #endif
@@ -1177,10 +1226,9 @@ if(outputAsSWC)
   return EXIT_SUCCESS;
 }
 
-
 double mahalanobisDist(double meanDensityBranch, double length_leaf, double meanVesselBranch, int spineOne) {
   double x1, x2, x3;
-    double mahalanobis_dist = 0;
+  double mahalanobis_dist = 0;
   /* For dataset time330
   if (spineOne == 1)  {
         x1 = meanDensityBranch - 58.4550;  // minus mean_feature from matlab 
