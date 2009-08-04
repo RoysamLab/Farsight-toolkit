@@ -25,6 +25,10 @@ limitations under the License.
 #include <list>
 #include <vector>
 
+//FTK INCLUDES
+#include <ftkImage/ftkImage.h>
+#include <ftkObject.h>
+
 //LOCAL INCLUDES
 #include "cell_binarization/cell_binarization.h"
 #include "seed_detection/seedsdetection.h"
@@ -41,6 +45,7 @@ limitations under the License.
 #include "itkScalarConnectedComponentImageFilter.h"
 
 using namespace std;
+
 
 void ucharToFloat(unsigned char* fromLoc, float* toLoc,int r, int c, int z, char invert);
 unsigned char *** TriplePtr(int z, int r, int c);
@@ -109,7 +114,8 @@ public:
 	//return a list of seeds
 	vector<Seed> getSeedsList() { return mySeeds; }
 
-  
+	//
+	std::vector< int > SplitInit(ftk::Object::Point P1, ftk::Object::Point P2, ftk::Object::Point bBox1, ftk::Object::Point bBox2, int maxID);
 
 private:
 	void ExtractSeeds();

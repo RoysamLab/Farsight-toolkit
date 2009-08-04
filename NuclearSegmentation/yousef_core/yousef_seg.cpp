@@ -1158,6 +1158,193 @@ int yousef_nucleus_seg::readFromIDLFormat(std::string fileName)
   return 1;
 }
 
+std::vector< int > yousef_nucleus_seg::SplitInit(ftk::Object::Point P1, ftk::Object::Point P2, ftk::Object::Point bBox1, ftk::Object::Point bBox2, int maxID)
+{
+	//
+	//if no label (segmentation) or no data image is available then return
+	if(!clustImagePtr)
+	{
+		cerr<<"Run initial segmentation first"<<endl;
+		std::vector <int> ids_err;
+		ids_err.push_back(0);
+		ids_err.push_back(0);
+		return ids_err;
+	}
+	//Check if the two points inside the same cell
+	int id1 = clustImagePtr[(P1.z*numRows*numColumns)+(P1.y*numColumns)+P1.x];
+	int id2 = clustImagePtr[(P2.z*numRows*numColumns)+(P2.y*numColumns)+P2.x];
+	if(id1 != id2)
+	{
+		std::vector <int> ids_err;
+		ids_err.push_back(0);
+		ids_err.push_back(0);
+		return ids_err;
+	}
+
+	//Update the initial segmentation image	
+	//get the indexes of the two seeds with respect to the begining of the bounding box
+	std::vector <int> sz;
+	sz.push_back(bBox2.x - bBox1.x + 1);
+	sz.push_back(bBox2.y - bBox1.y + 1);
+	sz.push_back(bBox2.z - bBox1.z + 1);
+	
+	int ind1 = ((P1.z- bBox1.z)*sz[0]*sz[1]) + ((P1.y - bBox1.y)*sz[0]) + (P1.x - bBox1.x);
+	int ind2 = ((P2.z- bBox1.z)*sz[0]*sz[1]) + ((P2.y - bBox1.y)*sz[0]) + (P2.x - bBox1.x);
+
+	//create two new itk images with the same size as the bounding box	 	 
+	typedef    float     InputPixelType;
+	typedef itk::Image< InputPixelType,  3 >   InputImageType;
+	InputImageType::Pointer sub_im1;
+	sub_im1 = InputImageType::New();
+	InputImageType::Pointer sub_im2;
+	sub_im2 = InputImageType::New();
+	InputImageType::PointType origin;
+    origin[0] = 0.; 
+    origin[1] = 0.;    
+	origin[2] = 0.;    
+    sub_im1->SetOrigin( origin );
+	sub_im2->SetOrigin( origin );
+
+    InputImageType::IndexType start;
+    start[0] =   0;  // first index on X
+    start[1] =   0;  // first index on Y    
+	start[2] =   0;  // first index on Z    
+    InputImageType::SizeType  size;
+    size[0]  = sz[0];  // size along X
+    size[1]  = sz[1];  // size along Y
+	size[2]  = sz[2];  // size along Z
+  
+    InputImageType::RegionType rgn;
+    rgn.SetSize( size );
+    rgn.SetIndex( start );
+    
+   
+    sub_im1->SetRegions( rgn );
+    sub_im1->Allocate();
+    sub_im1->FillBuffer(0);
+	sub_im1->Update();	
+	sub_im2->SetRegions( rgn );
+    sub_im2->Allocate();
+    sub_im2->FillBuffer(0);
+	sub_im2->Update();
+
+	//set all the points in those images to zeros except for the two points corresponding to the two new seeds
+	//notice that one seed is set in each image
+	typedef itk::ImageRegionIteratorWithIndex< InputImageType > IteratorType;
+	IteratorType iterator1(sub_im1,sub_im1->GetRequestedRegion());
+	IteratorType iterator2(sub_im2,sub_im2->GetRequestedRegion());	
+		
+	for(int i=0; i<sz[0]*sz[1]*sz[2]; i++)
+	{				
+		if(i==ind1)
+			iterator1.Set(255.0);
+		else
+			iterator1.Set(0.0);		
+		if(i==ind2)
+			iterator2.Set(255.0);
+		else
+		iterator2.Set(0.0);
+		
+		++iterator1;	
+		++iterator2;	
+	}
+	
+
+	//compute the distance transforms of those binary itk images
+	typedef    float     OutputPixelType;
+	typedef itk::Image< OutputPixelType, 3 >   OutputImageType;
+	typedef itk::DanielssonDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;
+	DTFilter::Pointer dt_obj1= DTFilter::New() ;
+	DTFilter::Pointer dt_obj2= DTFilter::New() ;
+	dt_obj1->UseImageSpacingOn();
+	dt_obj1->SetInput(sub_im1) ;
+	dt_obj2->UseImageSpacingOn();
+	dt_obj2->SetInput(sub_im2) ;
+
+	try{
+		dt_obj1->Update() ;
+	}
+	catch( itk::ExceptionObject & err ){
+		std::cerr << "Error calculating distance transform: " << err << endl ;
+	}
+	try{
+		dt_obj2->Update() ;
+	}
+	catch( itk::ExceptionObject & err ){
+		std::cerr << "Error calculating distance transform: " << err << endl ;
+	}
+
+	//Now, relabel the cell points into either the old id (id1) or a new id (newID) based on the distances to the seeds
+	++maxID;		
+	int newID1 = maxID;
+	++maxID;		
+	int newID2 = maxID;
+	IteratorType iterator3(dt_obj1->GetOutput(),dt_obj1->GetOutput()->GetRequestedRegion());
+	IteratorType iterator4(dt_obj2->GetOutput(),dt_obj2->GetOutput()->GetRequestedRegion());	
+	int mx1 = 0;
+	int mx2 = 0;
+	for(int k=bBox1.z; k<=bBox2.z; k++)
+	{
+		for(int i=bBox1.y; i<=bBox2.y; i++)
+		{			
+			for(int j=bBox1.x; j<=bBox2.x; j++)
+			{
+				int d1 = (int) fabs(iterator3.Get());	 
+				int d2 = (int) fabs(iterator4.Get());	
+				if(d1>mx1)
+					mx1 = d1;
+				if(d2>mx2)
+					mx2 = d2;
+				++iterator3;
+				++iterator4;
+			}
+		}
+	}
+	iterator3.GoToBegin();
+	iterator4.GoToBegin();
+	for(int k=bBox1.z; k<=bBox2.z; k++)
+	{
+		for(int i=bBox1.y; i<=bBox2.y; i++)
+		{			
+			for(int j=bBox1.x; j<=bBox2.x; j++)
+			{
+				int d1 = (int) fabs(iterator3.Get());	 
+				int d2 = (int) fabs(iterator4.Get());					
+				++iterator3;
+				++iterator4;				
+				int pix = clustImagePtr[(k*numRows*numColumns)+(i*numColumns)+j];
+				//if(pix != id1)
+				//	continue; //maybe we need to update the LoG resp if pix = 0
+				if(d1>d2)	
+				{
+					if(pix == id1)
+						clustImagePtr[(k*numRows*numColumns)+(i*numColumns)+j] = newID1;
+					//also update the LoG resp Image
+					logImagePtr[(k*numRows*numColumns)+(i*numColumns)+j]= mx2-d2;
+				}
+				else
+				{
+					if(pix == id1)
+						clustImagePtr[(k*numRows*numColumns)+(i*numColumns)+j] = newID2;
+					//also update the LoG resp Image
+					logImagePtr[(k*numRows*numColumns)+(i*numColumns)+j]= mx1-d1;
+				}
+
+			}
+		}
+	}	
+	
+
+	//return the ids of the two cells resulting from spliting
+	std::vector <int> ids_ok;
+	ids_ok.push_back(newID1);
+	ids_ok.push_back(newID2);
+
+	//also, add the old ID to the end of the list
+	ids_ok.push_back(id1);
+
+	return ids_ok;
+}
 /*
 int yousef_nucleus_seg::saveIntoIDLFormat()
 {

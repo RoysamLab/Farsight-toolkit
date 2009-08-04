@@ -124,7 +124,8 @@ class Seed3D : public QMainWindow
     Q_OBJECT;
 public:
 	Seed3D(QWidget * parent = 0, Qt::WindowFlags flags = 0);
-	void GetImage(ftk::Image::Pointer data,vector<Seed> );
+	//void GetImage(ftk::Image::Pointer data,vector<Seed> );
+	void GetImage(ftk::NuclearSegmentation* seg,vector<Seed> seeds); //modified by Yousef
 	private slots:
 	//void loadImage(void);
 	void PlaceSeed();
@@ -142,7 +143,8 @@ public:
 private:
 	/*void createMenus();
 	void createStatusBar();*/
-
+	//added by Yousef 8-4-2009
+	ftk::NuclearSegmentation *segPtr;
 	
 	
 	

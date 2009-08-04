@@ -167,7 +167,8 @@ void NuclearSegmentationWizard::executeNextStep(int whichButton)
 			seg->RunClustering();
 			((ClusterPage*)page(Page_Cluster))->ShowImages( seg->getDataImage(), seg->getLabelImage(), Seeds );
 			//The next two lines are for the Seed Editor			
-			Seeds->GetImage(seg->getDataImage(),seg->getSeeds());
+			//Seeds->GetImage(seg->getDataImage(),seg->getSeeds());
+			Seeds->GetImage(seg,seg->getSeeds());
 			((ClusterPage*)page(Page_Cluster))->SeedEdit->setEnabled(true);
 			((FinalizePage*)page(Page_Finalize))->ShowImages( NULL, NULL );
 			((SavePage*)page(Page_Save))->ImagesSaved(false);
@@ -493,14 +494,16 @@ ClusterPage::ClusterPage(QWidget *parent)
 }
 
 
-void Seed3D::GetImage(ftk::Image::Pointer data, vector<Seed> seeds)
-
+//void Seed3D::GetImage(ftk::Image::Pointer data, vector<Seed> seeds)
+void Seed3D::GetImage(ftk::NuclearSegmentation *seg,vector<Seed> seeds) //modified by Yousef
 {
 	if(this->iRender==1)
 		DeleteObjects();
-
-   vtkSmartPointer<vtkImageData> vtkim = vtkSmartPointer<vtkImageData>::New();
-   vtkim = data->GetVtkPtr(0,0);
+   segPtr = seg; 
+   
+   vtkSmartPointer<vtkImageData> vtkim = vtkSmartPointer<vtkImageData>::New();   
+   //vtkim = data->GetVtkPtr(0,0);
+   vtkim = segPtr->getDataImage()->GetVtkPtr(0,0);
    vtkSmartPointer<vtkInteractorStyleTrackballCamera> style =
    vtkInteractorStyleTrackballCamera::New();
 
@@ -1037,6 +1040,7 @@ Seed3D::Seed3D(QWidget * parent, Qt::WindowFlags flags)
 	this->stateAdd = 0;
 	this->stateDelete = 0;
 	this->flag =1;
+	segPtr = NULL;
 	
 	
 	// QVTK  -> QVTK Widget for the main window displaying the volume.
@@ -1435,7 +1439,7 @@ void Seed3D::Apply()
 //to delete the added seeds
  
 if(this->mode==1)
-	{
+{
 	vtkIdType Id;
 	double* pointz;
 	point p;
@@ -1443,59 +1447,60 @@ if(this->mode==1)
 	std::vector<point> tobeAdded;
 	
 	for(int i =0 ; i<Id;i++)
-		{
-    			pointz = this->point3->GetPoint(i);
-				this->point1->InsertNextPoint(pointz);
-				this->polydata1->SetPoints(this->point1);
-				this->Glyph->SetInput(this->polydata1);	
-				p.x = pointz[0];
-    			p.y = pointz[1];
-    			p.z = pointz[2];	
-    			tobeAdded.push_back(p);
-				this->dup_points.push_back(p);
-				//Yousef_Code_Add_Seed
-		}
-//Remove the green glyph		
-        vtkDataArray* points2add = this->point3->GetData();    
-        points2add->Reset();
-        points2add->Squeeze();
-        this->point3->SetData(points2add);
-	    this->addglyph->SetScaleFactor(this->addglyph->GetScaleFactor()+0.0001);
-        this->SphereMapper->SetInput(this->Glyph->GetOutput());	      
-        this->Glyph->SetScaleFactor(this->Glyph->GetScaleFactor()+0.0001);//to rerender immediately
-        this->QVTK->GetRenderWindow()->Render();
-		this->MarkedPoints2add.erase(this->MarkedPoints2add.begin(),this->MarkedPoints2add.end());
+	{    			
+		pointz = this->point3->GetPoint(i);
+		this->point1->InsertNextPoint(pointz);
+		this->polydata1->SetPoints(this->point1);
+		this->Glyph->SetInput(this->polydata1);	
+		p.x = pointz[0];
+    	p.y = pointz[1];
+    	p.z = pointz[2];	
+    	tobeAdded.push_back(p);
+		this->dup_points.push_back(p);
+		//Yousef_Code_Add_Seed
+		//I will work on it later... (Yousef)
+				
+	}
+	//Remove the green glyph		
+    vtkDataArray* points2add = this->point3->GetData();    
+    points2add->Reset();
+	points2add->Squeeze();
+	this->point3->SetData(points2add);
+	this->addglyph->SetScaleFactor(this->addglyph->GetScaleFactor()+0.0001);
+	this->SphereMapper->SetInput(this->Glyph->GetOutput());	      
+	this->Glyph->SetScaleFactor(this->Glyph->GetScaleFactor()+0.0001);//to rerender immediately
+	this->QVTK->GetRenderWindow()->Render();
+	this->MarkedPoints2add.erase(this->MarkedPoints2add.begin(),this->MarkedPoints2add.end());
 }
 
 
 //Delete the seeds from the screen
 if(this->mode==2)
-        { 
-this->Glyph->SetScaleFactor(this->Glyph->GetScaleFactor()+0.0001);//to rerender immediately
-vtkIdType Id;
-double* pointz;
-point p;
-Id = this->point2->GetNumberOfPoints();
-std::vector<point> tobeDeleted;
-////cout<<Id<<endl;
-for(int i =0 ;i<Id;i++)
-{
-    pointz = this->point2->GetPoint(i);
-    p.x = pointz[0];
-    p.y = pointz[1];
-    p.z = pointz[2];	
-    tobeDeleted.push_back(p);
-    //Yousef_Code_Delete_Seed
-}
+{ 
+	this->Glyph->SetScaleFactor(this->Glyph->GetScaleFactor()+0.0001);//to rerender immediately
+	vtkIdType Id;
+	double* pointz;
+	point p;
+	Id = this->point2->GetNumberOfPoints();
+	std::vector<point> tobeDeleted;
+	////cout<<Id<<endl;
+	for(int i =0 ;i<Id;i++)
+	{
+		pointz = this->point2->GetPoint(i);
+		p.x = pointz[0];
+		p.y = pointz[1];
+		p.z = pointz[2];	
+		tobeDeleted.push_back(p);
+		//Yousef_Code_Delete_Seed
+	}
 
-vtkDataArray* points2del = this->point2->GetData();    
+	vtkDataArray* points2del = this->point2->GetData();    
 
-//Remove the glyph		
-
-for(int i =0 ;i<Id;i++)
-{		
-    points2del->RemoveTuple((vtkIdType)0);
-}
+	//Remove the glyph		
+	for(int i =0 ;i<Id;i++)
+	{		
+		points2del->RemoveTuple((vtkIdType)0);
+	}
     this->point2->SetData(points2del);
     this->delglyph->SetScaleFactor(this->Glyph->GetScaleFactor()+0.0001);    
     this->QVTK->GetRenderWindow()->Render();
@@ -1506,7 +1511,7 @@ for(int i =0 ;i<Id;i++)
 
 //Split Nuclei
 if(this->mode==3)
-	{
+{
 	vtkIdType Id;
 	double* pointz;
 	point p;
@@ -1514,63 +1519,66 @@ if(this->mode==3)
 	std::vector<point> tobeSplit;
 	
 	for(int i =0 ; i<Id;i++)
-		{
-    			pointz = this->point3->GetPoint(i);
-				this->point1->InsertNextPoint(pointz);
-				this->polydata1->SetPoints(this->point1);
-				this->Glyph->SetInput(this->polydata1);	
-				p.x = pointz[0];
-    			p.y = pointz[1];
-    			p.z = pointz[2];	
-    			tobeSplit.push_back(p);
-				this->dup_points.push_back(p);
-				//Yousef_Code_Split_Seeds
-		}
+	{
+    	pointz = this->point3->GetPoint(i);
+		this->point1->InsertNextPoint(pointz);
+		this->polydata1->SetPoints(this->point1);
+		this->Glyph->SetInput(this->polydata1);	
+		p.x = pointz[0];
+    	p.y = pointz[1];
+    	p.z = pointz[2];	
+    	tobeSplit.push_back(p);
+		this->dup_points.push_back(p);		
+	}
+	//Yousef_Code_Split_Seeds
+	//Assume that each pair of points (in order) represent two new seeds in a cell that we need to split
+	for(int i=0; i<Id; i+=2)
+	{
+		std::vector< int > newIDs = segPtr->SplitInit(tobeSplit.at(i), tobeSplit.at(i+1));
+		//newIDs will be used later for recording the edits
+	}
 
 
-//Remove the green glyph		
-        vtkDataArray* points2add = this->point3->GetData();    
-        points2add->Reset();
-        points2add->Squeeze();
-        this->point3->SetData(points2add);
-	    this->addglyph->SetScaleFactor(this->addglyph->GetScaleFactor()+0.0001);
-        this->SphereMapper->SetInput(this->Glyph->GetOutput());	      
-        this->Glyph->SetScaleFactor(this->Glyph->GetScaleFactor()+0.0001);//to rerender immediately
-        this->QVTK->GetRenderWindow()->Render();
-		this->MarkedPoints2add.erase(this->MarkedPoints2add.begin(),this->MarkedPoints2add.end());
- 
+	//Remove the green glyph		
+    vtkDataArray* points2add = this->point3->GetData();        
+	points2add->Reset();
+	points2add->Squeeze();
+	this->point3->SetData(points2add);
+	this->addglyph->SetScaleFactor(this->addglyph->GetScaleFactor()+0.0001);
+	this->SphereMapper->SetInput(this->Glyph->GetOutput());	      
+	this->Glyph->SetScaleFactor(this->Glyph->GetScaleFactor()+0.0001);//to rerender immediately
+	this->QVTK->GetRenderWindow()->Render();
+	this->MarkedPoints2add.erase(this->MarkedPoints2add.begin(),this->MarkedPoints2add.end()); 
 }
-
-
 
 
 //Delete the seeds from the screen
 if(this->mode==4)
-        { 
-this->Glyph->SetScaleFactor(this->Glyph->GetScaleFactor()+0.0001);//to rerender immediately
-vtkIdType Id;
-double* pointz;
-point p;
-Id = this->point2->GetNumberOfPoints();
-std::vector<point> tobeMerged;
-for(int i =0 ;i<Id;i++)
-{
-    pointz = this->point2->GetPoint(i);
-    p.x = pointz[0];
-    p.y = pointz[1];
-    p.z = pointz[2];	
-    tobeMerged.push_back(p);
-    //Yousef_Code_Merge_Seeds
-}
+{ 
+	this->Glyph->SetScaleFactor(this->Glyph->GetScaleFactor()+0.0001);//to rerender immediately
+	vtkIdType Id;
+	double* pointz;
+	point p;
+	Id = this->point2->GetNumberOfPoints();
+	std::vector<point> tobeMerged;
+	for(int i =0 ;i<Id;i++)
+	{
+		pointz = this->point2->GetPoint(i);
+		p.x = pointz[0];
+		p.y = pointz[1];
+		p.z = pointz[2];	
+		tobeMerged.push_back(p);
+		//Yousef_Code_Merge_Seeds
+		//I will work on it later... (Yousef)
+	}
 
-vtkDataArray* points2merge = this->point2->GetData();    
-//Remove the glyph		
-
-for(int i =0 ;i<Id;i++)
-{		
-    points2merge->RemoveTuple((vtkIdType)0);
-    ////cout<<"merge red"<<endl;		
-}
+	vtkDataArray* points2merge = this->point2->GetData();    
+	//Remove the glyph		
+	for(int i =0 ;i<Id;i++)
+	{		
+		points2merge->RemoveTuple((vtkIdType)0);
+		////cout<<"merge red"<<endl;		
+	}
     this->point2->SetData(points2merge);
     this->delglyph->SetScaleFactor(this->Glyph->GetScaleFactor()+0.0001);    
     this->QVTK->GetRenderWindow()->Render();

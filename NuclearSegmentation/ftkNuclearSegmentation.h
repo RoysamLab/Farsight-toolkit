@@ -80,6 +80,7 @@ public:
 
 	//Editing Functions  
 	std::vector< int > Split(ftk::Object::Point P1, ftk::Object::Point P2);
+	std::vector< int > SplitInit(ftk::Object::Point P1, ftk::Object::Point P2); //same as above, but applied on initial segmentation and updates LoG resp image
 	int Merge(vector<int> ids);
 	bool Delete(vector<int> ids);
 	bool Add( Object::Point p ){return 0;};
@@ -116,6 +117,8 @@ private:
 
 	ftk::Image::Pointer dataImage;
 	ftk::Image::Pointer labelImage;
+	ftk::Image::Pointer clustImage;
+	ftk::Image::Pointer logImage;
 	yousef_nucleus_seg *NucleusSeg;
 	int lastRunStep;
 
