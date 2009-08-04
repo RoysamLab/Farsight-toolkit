@@ -30,7 +30,9 @@ ADD_LIBRARY(Trace
   TraceLine.h   TraceLine.cxx
   TraceGap.h    TraceGap.cxx
   TraceObject.h TraceObject.cxx
-  MergeModel.h  MergeModel.cxx)
+  MergeModel.h  MergeModel.cxx
+  UndoBuffer.h UndoBuffer.cxx
+)
 ADD_EXECUTABLE( trace_editor  vtkTraceViewerDriver.cxx ${Sources} ${GUI_MOC_SRCS} )
 TARGET_LINK_LIBRARIES( trace_editor ${Libraries} Trace TinyXML ftkGUI)
 #ADD_EXECUTABLE( seed_editor vtkSeedViewerDriver.cxx ${Sources} )
