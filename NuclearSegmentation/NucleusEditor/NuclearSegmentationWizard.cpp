@@ -45,7 +45,7 @@ NuclearSegmentationWizard::NuclearSegmentationWizard(QWidget *parent)
 	this->setWindowTitle(tr("Nuclear Segmentation Wizard"));
 
 	seg = new ftk::NuclearSegmentation();
-	Seeds = new Seed3D(0,0);
+	Seeds = new Seed3D(0,0);	
  }
 
 //is called by QWizard to prepare page id just before it is shown as a result of the user clicking Next
@@ -1039,6 +1039,8 @@ Seed3D::Seed3D(QWidget * parent, Qt::WindowFlags flags)
 	this->counter =0;
 	this->stateAdd = 0;
 	this->stateDelete = 0;
+	this->stateSplit = 0;
+	this->stateMerge = 0;
 	this->flag =1;
 	segPtr = NULL;
 	
