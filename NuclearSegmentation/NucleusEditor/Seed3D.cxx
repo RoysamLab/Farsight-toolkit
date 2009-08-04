@@ -14,7 +14,7 @@ limitations under the License.
 =========================================================================*/
 
 #include "Seed3D.h"
-#include "Seed3DHelperClasses.h"
+//#include "Seed3DHelperClasses.h"
 
 //*******************************************************************************
 // SeedEditor

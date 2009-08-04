@@ -47,7 +47,7 @@ std::vector<std::string> *listFilesDir(char* dir) {
     std::vector<std::string> *files_dir = new std::vector<std::string>();
     
     if (dp != NULL) {
-        while(ep = readdir(dp)) {
+        while( (ep = readdir(dp)) ) {
             files_dir->push_back(ep->d_name);
         }
         closedir(dp);

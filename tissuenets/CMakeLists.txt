@@ -12,7 +12,7 @@ link_directories ( ${Boost_LIBRARY_DIRS} )
 include_directories ( ${Boost_INCLUDE_DIRS} )
 
 ADD_EXECUTABLE(bionet bionet.cpp)
-TARGET_LINK_LIBRARIES( bionet vtkCommon vtkIO vtkInfovis vtkViews vtkRendering TinyXML)
+TARGET_LINK_LIBRARIES( bionet tiff vtkCommon vtkIO vtkInfovis vtkViews vtkRendering TinyXML)
 
 INSTALL( TARGETS bionet DESTINATION bin ) 
 INSTALL( FILES tissuenets_demo.py DESTINATION python )

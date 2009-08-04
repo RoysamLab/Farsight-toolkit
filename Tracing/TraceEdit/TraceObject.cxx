@@ -295,7 +295,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
     }
   }
   fclose(fp);
-  printf("about to create the data structure.. %d\n",criticals.size());
+  printf("about to create the data structure.. %d\n", (int)criticals.size());
   std::set<int>::iterator iter = criticals.begin();
   int global_id_number = 1;
   while(iter != criticals.end())

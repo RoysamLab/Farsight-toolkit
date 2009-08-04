@@ -33,7 +33,7 @@
 #include "vtkVertexListIterator.h"
 #include "vtkTubeFilter.h"
 #include "vtkSphereSource.h"
-#include "vtkTestingColors.h"
+//#include "vtkTestingColors.h"
 #include "vtkGraphLayout.h"
 #include "vtkPassThroughLayoutStrategy.h"
 

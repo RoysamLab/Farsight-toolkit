@@ -1,20 +1,20 @@
 SET( NucluesEditor_SRCS
-	NucleusEditor.cpp
-    	SegmentationView.cpp
-    	SegmentationWindow.cpp
-    	SegmentationModel.cpp
-   	NuclearSegmentationWizard.cpp
-	Seed3D.cxx
+  NucleusEditor.cpp
+  SegmentationView.cpp
+  SegmentationWindow.cpp
+  SegmentationModel.cpp
+  NuclearSegmentationWizard.cpp
+  Seed3D.cxx
 )
 
 SET( NucluesEditor_HDRS
-	NucleusEditor.h
-    	SegmentationView.h
-    	SegmentationWindow.h
-    	SegmentationModel.h
-    	NuclearSegmentationWizard.h
-	Seed3D.h
-	Seed3DHelperClasses.h
+  NucleusEditor.h
+  SegmentationView.h
+  SegmentationWindow.h
+  SegmentationModel.h
+  NuclearSegmentationWizard.h
+  Seed3D.h
+  #Seed3DHelperClasses.h
 )
 
 SET( NucluesEditor_UIS
@@ -49,7 +49,7 @@ ADD_EXECUTABLE(NucleusEditor main.cpp
              ${NucluesEditor_RC_SRCS}
 )
 
-TARGET_LINK_LIBRARIES( NucleusEditor ${QT_LIBRARIES} QVTK ftkImage TinyXML libSVM vtkVolumeRendering NuclearSegmentation ftkGUI)
+TARGET_LINK_LIBRARIES( NucleusEditor ${QT_LIBRARIES} tiff QVTK ftkImage TinyXML libSVM vtkVolumeRendering NuclearSegmentation ftkGUI)
 
 #MAKE A GUI EXECUTABLE, NOT A CONSOLE APPLICATION
 #SET_TARGET_PROPERTIES( NucleusEditor PROPERTIES WIN32_EXECUTABLE 1)

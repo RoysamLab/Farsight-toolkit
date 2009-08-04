@@ -143,7 +143,7 @@ void TraceLine::Print(std::ostream &c,int indent)
   for(int counter=0; counter<indent; counter++)
 	  c<<" ";
   c<<"Size: "<<m_trace_bits.size()<<std::endl;
-  for(int counter=0; counter< m_branches.size(); counter++)
+  for(unsigned int counter=0; counter< m_branches.size(); counter++)
   {
 	  m_branches[counter]->Print(std::cout,indent+4);
   }

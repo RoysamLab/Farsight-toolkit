@@ -852,10 +852,10 @@ int main(int argc, char *argv[])
           add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeBB);   // Comment out if only need backbone output
           if(outputAsSWC)
             {
-            //fprintf(fout, "%d 4 %f %f %f 2.0 %d\n", 
-                //vertsCurBranch2[0][j], vertexPos[vertsCurBranch2[0][j]].x, vertexPos[vertsCurBranch2[0][j]].y, vertexPos[vertsCurBranch2[0][j]].z, vertsCurBranch2[0][j-1]);
-            fprintf(fout, "%4.0f  %4.0f  %4.0f\n",   // Output for levelset seeds
-              vertexPos[vertsCurBranch2[0][j]].x, vertexPos[vertsCurBranch2[0][j]].y, vertexPos[vertsCurBranch2[0][j]].z);
+            fprintf(fout, "%d 4 %f %f %f 2.0 %d\n", 
+                vertsCurBranch2[0][j], vertexPos[vertsCurBranch2[0][j]].x, vertexPos[vertsCurBranch2[0][j]].y, vertexPos[vertsCurBranch2[0][j]].z, vertsCurBranch2[0][j-1]);
+            //fprintf(fout, "%4.0f  %4.0f  %4.0f\n",   // Output for levelset seeds
+            //  vertexPos[vertsCurBranch2[0][j]].x, vertexPos[vertsCurBranch2[0][j]].y, vertexPos[vertsCurBranch2[0][j]].z);
             }
         }
         if (MDL_minIndex >= 1)  {
@@ -961,7 +961,6 @@ if(outputAsSWC)
     }
 
   //Output the 2nd level of backbones
-  int time=0;
   if (degree_nodes[cur_index] >= 3)
     {
     parent_index0 = parent_index;

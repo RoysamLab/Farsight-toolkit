@@ -5,6 +5,7 @@ SET( Sources
 
 #Define (additional) ITK and VTK libraries that are needed for vtkTraceViewer to be built
 SET( Libraries
+    tiff
     ITKCommon
     ITKNumerics
     ITKStatistics

@@ -50,6 +50,7 @@ TARGET_LINK_LIBRARIES( Trace3D ${Trace3D_libraries})
 ADD_EXECUTABLE ( RenderTraces Render.cxx TraceNode.h ${XML_sources})
 TARGET_LINK_LIBRARIES( RenderTraces
                        ${Trace3D_libraries}
+                       tiff
                        ITKBasicFilters
                        vtkRendering
                        vtkIO 

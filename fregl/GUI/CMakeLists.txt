@@ -38,7 +38,7 @@ ADD_LIBRARY( fregl_gui STATIC
              #${MY_RC_SRCS}
 )
 
-TARGET_LINK_LIBRARIES( fregl_gui ${QT_LIBRARIES} fregl vbl vil3d ITKCommon ITKIO)
+TARGET_LINK_LIBRARIES( fregl_gui ${QT_LIBRARIES} fregl)
 
 #This line insures that the window is opened as a standalone function. If we 
 #need a console then we add -mconsole after -mwindows
