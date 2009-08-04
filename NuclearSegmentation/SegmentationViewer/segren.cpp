@@ -1,19 +1,63 @@
-#ifdef _WIN32
-#include <direct.h>
-#define MKDIR(x) _mkdir(x)
-#else
-#include <sys/stat.h>
-#include <sys/types.h>
-#define MKDIR(x) mkdir(x, 0755);
-#endif
-
-
-#include "ftkNuclearSegmentation.h"
-
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
+
+#ifdef _WIN32
+#include <windows.h>
+#include <direct.h>
+#include <strsafe.h>
+#define MKDIR(x) _mkdir(x)
+std::vector<std::string> *listFilesDir(char* dir) {
+    WIN32_FIND_DATAA ffd;
+	HANDLE hFind = INVALID_HANDLE_VALUE;
+	char szDir[MAX_PATH];
+    int arg_length;
+	std::vector<std::string> *files_dir = new std::vector<std::string>();
+    
+    arg_length= strlen(dir);
+
+    if (arg_length > (MAX_PATH - 3))
+        return files_dir;
+
+    StringCchCopyA(szDir, MAX_PATH, dir);
+    StringCchCatA(szDir, MAX_PATH, "\\*");
+
+    hFind = FindFirstFileA(szDir, &ffd);
+
+    if (INVALID_HANDLE_VALUE == hFind)
+        return files_dir;
+        
+    do {
+         files_dir->push_back(ffd.cFileName);
+    } while (FindNextFileA(hFind, &ffd) != 0);
+    
+    FindClose(hFind);
+    return files_dir;
+}
+#else
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <dirent.h>
+#define MKDIR(x) mkdir(x, 0755);
+std::vector<std::string> *listFilesDir(char* dir) {
+    DIR *dp;
+    struct dirent *ep;
+    dp = opendir(dir);
+    std::vector<std::string> *files_dir = new std::vector<std::string>();
+    
+    if (dp != NULL) {
+        while(ep = readdir(dp)) {
+            files_dir->push_back(ep->d_name);
+        }
+        closedir(dp);
+        return files_dir;
+    }
+    return files_dir;
+}
+#endif
+
+#include "ftkNuclearSegmentation.h"
 
 #include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
@@ -78,7 +122,7 @@ struct cubeCoord
 };
 
 //Check that file exists
-bool fileExists(std::string filename)
+bool fileExists(std::string &filename)
 {
 	ifstream file(filename.c_str());
 	if(!file)
@@ -108,7 +152,7 @@ inputImageType::Pointer getEmptyImage(int s1, int s2, int s3)
 
 //Function to return pointer to a read-in image
 template <typename T>
-typename T::Pointer readImage(const std::string filename)
+typename T::Pointer readImage(const std::string &filename)
 {
 	std::cout << "Reading " << filename << " ..." << std::endl;
 	typedef typename itk::ImageFileReader<T> ReaderType;
@@ -310,7 +354,7 @@ vtkSmartPointer<vtkPolyData> getVTKPolyDataPrecise(labelImageType::Pointer label
 }
 
 //Function to generate poly data for each of the colored image files
-void generatePolyData(const std::string filename, std::string ply, std::vector<vtkSmartPointer<vtkPolyData> > &data)
+void generatePolyData(const std::string &filename, std::string &ply, std::vector<vtkSmartPointer<vtkPolyData> > &data)
 {
 	//Read in image passed from argument
 	labelImageType::Pointer itkImg = readImage<labelImageType>(filename);
@@ -337,7 +381,8 @@ void generatePolyData(const std::string filename, std::string ply, std::vector<v
 	plyoutput.close();
 }
 
-void renderPolyData(int n, float scale[], std::vector<vtkSmartPointer<vtkPolyData> > &data, std::vector<std::string> plys)
+//void renderPolyData(int n, float scale[], std::vector<vtkSmartPointer<vtkPolyData> > &data, std::vector<std::string> plys)
+void renderPolyData(int &n, float scale[], std::vector<std::string> &plys)
 {
 	//Declare a set table of ten colors
 	double colors[10][3];
@@ -414,12 +459,49 @@ void renderPolyData(int n, float scale[], std::vector<vtkSmartPointer<vtkPolyDat
 	iren->Start();
 }
 
+//Function to return file extension
+std::string getFileExt(std::string &file)
+{
+	std::string fileExt;
+	for(unsigned int i = file.size() - 1; i >= 0; i--)
+	{
+		if(file[i] == '.')
+		{
+			fileExt = file.substr(i+1, (file.size() - 1 - i));
+			return fileExt;
+		}
+	}
+	return NULL;
+}
+
+//Function to return file name before the file extension
+std::string getOrigFileName(std::string &file)
+{
+	std::string fileName;
+	for(unsigned int i = 0; i < file.size(); i++)
+	{
+		if(file[i] == '.')
+		{
+			fileName = file.substr(0, i);
+			return fileName;
+		}
+	}
+	return NULL;
+}
+
 int main(int argc, char *argv[])
 {
-	if(argc != 2)
+	//Check for minimum number of required arguments
+	if(argc < 2)
 	{
-		std::cerr << "Usage: Executable Input-File" << std::endl;
+		std::cerr << "Usage: Executable Input-File Optional-Command" << std::endl;
 		return -1;
+	}
+	//If command argument is given, set it
+	std::string argCommand;
+	if(argc == 3)
+	{
+		argCommand = argv[2];
 	}
 
 	int counter = 0;
@@ -448,55 +530,92 @@ int main(int argc, char *argv[])
 	//Read in label image file name
 	segParam >> fileName;
 
+	segParam.close();
+
 	//Check the image file extension
 	if(fileName != " " && fileName != "")
-	{
-		for(unsigned int i = fileName.size() - 1; i >= 0; i--)
-		{
-			if(fileName[i] == '.')
-			{
-				fileExt = fileName.substr(i + 1, (fileName.size() - i - 1));
-				outputFile = fileName.substr(0, i);
-				break;
-			}
-		}
+	{	
+		//Get file extension and output file base (file name without extension)
+		fileExt = getFileExt(fileName);
+		outputFile = getOrigFileName(fileName);
+
 		//If tif, process
-		if(fileExt == "tif" || fileExt == "tiff")
+		if(fileExt == "tif" || fileExt == "tiff" || fileExt == "TIF" || fileExt == "TIFF")
 		{ 
-			//Make a cache directory if one isn't already there	
-			MKDIR("cache");
-			//_mkdir("cache");
-			//mkdir("cache", S_IRWXU);
-			//Append ouput string to original file name for colored images
-			outputFile.append("_out.tif");
-			
-			//Create relative address string for the colored images to be cached
-			std::string output = "cache/";
-			output.append(outputFile);
-
-			//Run graph coloring on the original image, to divide it into colored images
-			ftk::NuclearSegmentation *segmentation = new ftk::NuclearSegmentation();
-			segmentation->RunGraphColoring(fileName, output);
-
-			//Set counter variable to number of outputted color images
-			counter = segmentation->colorImages.size();
-			//Cycle through the colored images
-			for(int i = 0; i < counter; i++)
+			//If running from cache
+			if(argCommand == "-c")
 			{
-				//Create string for .ply file name
-				colorFile = segmentation->colorImages[i];
-				plyFile = segmentation->colorImages[i].append(".ply");
-				//Add this .ply file to the vector of poly data files to be rendered later
-				plyFiles.push_back(plyFile);
-				//If this .ply file doesn't already exist, generate the poly data and write the 
-				//.ply file from the colored image files
-				if(!fileExists(plyFiles[i]))
+				std::cout << "Running from cache..." << std::endl;
+				std::vector<std::string> *dirFiles = listFilesDir("cache");
+				if(dirFiles->size() <= 2)
 				{
+					std::cout << "Cache doesn't exist/nothing in cache" << std::endl;
+					return -1;
+				}
+				std::string cacheFileExt;
+
+				//Iterate through vector of strings containing file names in the cache directory
+				for(std::vector<std::string>::iterator it = dirFiles->begin(); it != dirFiles->end(); ++it)
+				{
+					//If the proper file name base is found
+					if((*it).find(outputFile) == 0)
+					{
+						//Get cache file extension
+						cacheFileExt = getFileExt((*it));
+						//If the file is a poly data file
+						if (cacheFileExt == "ply")
+						{
+							//Add it to the poly data file list
+							std::string output = "cache/";
+							counter++;
+							output.append((*it));
+							plyFiles.push_back(output);
+						}
+					}
+				}
+				//Render poly data
+				if(counter == 0)
+				{
+					std::cout << "No cached files for this image" << std::endl;
+					return -1;
+				}
+				renderPolyData(counter, scale, plyFiles);
+			}
+			else
+			{
+				//Make a cache directory if one isn't already there	
+				MKDIR("cache");
+
+				//Append ouput string to original file name for colored images
+
+				outputFile.append("_out.tif");
+				
+				//Create relative address string for the colored images to be cached
+				std::string output = "cache/";
+				output.append(outputFile);
+				std::cout << "here" << std::endl;
+				//Run graph coloring on the original image, to divide it into colored images
+				ftk::NuclearSegmentation *segmentation = new ftk::NuclearSegmentation();
+				segmentation->RunGraphColoring(fileName, output);
+
+				//Set counter variable to number of outputted color images
+				counter = segmentation->colorImages.size();
+				//Cycle through the colored images
+				for(int i = 0; i < counter; i++)
+				{
+					//Create string for .ply file name
+					colorFile = segmentation->colorImages[i];
+					plyFile = segmentation->colorImages[i].append(".ply");
+					//Add this .ply file to the vector of poly data files to be rendered later
+					plyFiles.push_back(plyFile);
+					//If this .ply file doesn't already exist, generate the poly data and write the 
+					//.ply file from the colored image files
 					generatePolyData(colorFile, plyFiles[i], polyVect);
 				}
-
+				delete segmentation;
+				renderPolyData(counter, scale, plyFiles);
+				//renderPolyData(counter, scale, polyVect, plyFiles);
 			}
-			delete segmentation;
 		}
 		//If file not of the proper type, print error
 		else
@@ -511,8 +630,5 @@ int main(int argc, char *argv[])
 		std::cerr << "Invalid filename in parameters, load valid parameter file" << std::endl;
 		return -1;
 	}
-	segParam.close();
-	//Render the processed polydata for each colored label image
-	renderPolyData(counter, scale, polyVect, plyFiles);
 	return 0;
 }
