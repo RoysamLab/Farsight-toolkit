@@ -113,8 +113,8 @@ int main(int argc, char *argv[])
   FILE *fout;
   //FILE *fout_txt;
 
-  FILE *somafile, *distOutfile;
- double distTransFactor;
+  //  FILE *somafile, *distOutfile;
+ //double distTransFactor;
 
   DATATYPEIN *volin, *volvessel, *somaDist;
   char *filedir;
