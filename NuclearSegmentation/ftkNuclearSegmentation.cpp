@@ -1101,44 +1101,11 @@ std::vector< int > NuclearSegmentation::SplitInit(ftk::Object::Point P1, ftk::Ob
 		ids_err.push_back(0);
 		ids_err.push_back(0);
 		return ids_err;
-	}
-	//Check if the two points inside the same cell
-	int id1 = (int)labelImage->GetPixel(0,0,P1.z,P1.y,P1.x);
-	int id2 = (int)labelImage->GetPixel(0,0,P2.z,P2.y,P2.x);
-	if(id1 != id2)
-	{
-		std::vector <int> ids_err;
-		ids_err.push_back(0);
-		ids_err.push_back(0);
-		return ids_err;
-	}
+	}	
 	
-	//Update the segmentation image
-	//Now get the bounding box around the object
-	std::vector <int> ids;
-	ids.push_back(id1);
-	ftk::Object::Box region = ExtremaBox(ids);
-	
-	ftk::Object::Point bBox1;
-	bBox1.t = 0;
-	bBox1.x = region.min.x;
-	bBox1.y = region.min.y;
-	bBox1.z = region.min.z;
-	ftk::Object::Point bBox2;
-	bBox2.t = 0;
-	bBox2.x = region.max.x;
-	bBox2.y = region.max.y;
-	bBox2.z = region.max.z;
-
-	std::vector <int> ids_ok;
-	ids_ok = NucleusSeg->SplitInit(P1, P2, bBox1, bBox2, maxID);
-	
-
-	
-	//also, add the old ID to the end of the list
-	ids_ok.push_back(id1);
-
-	editsNotSaved = true;
+	//Apply the splitting
+	std::vector <int> ids_ok = NucleusSeg->SplitInit(P1, P2);
+		
 	return ids_ok;
 }
 

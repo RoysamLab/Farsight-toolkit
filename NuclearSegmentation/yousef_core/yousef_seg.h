@@ -115,7 +115,8 @@ public:
 	vector<Seed> getSeedsList() { return mySeeds; }
 
 	//
-	std::vector< int > SplitInit(ftk::Object::Point P1, ftk::Object::Point P2, ftk::Object::Point bBox1, ftk::Object::Point bBox2, int maxID);
+	std::vector< int > SplitInit(ftk::Object::Point P1, ftk::Object::Point P2);
+	int getMaxID(int);
 
 private:
 	void ExtractSeeds();
@@ -129,6 +130,8 @@ private:
 	void clearSegImagePtr();
 	void clearClustImagePtr();
 	void clearMyConnComp();
+
+	std::vector< ftk::Object::Point > getObjectBoundingBox(int id, int Int_Fin);
 
 	//Internal Image information
 	unsigned char* dataImagePtr;	//Created outside yousef_seg
@@ -148,6 +151,7 @@ private:
 	ConnComp* myConnComp;	//added by Yousef on 05-21-2008
 	int numConnComp;		//added by Yousef on 05-21-2008
 	int minLoGImg;			//minimum value from Laplacian of Gaussian image
+	int numObjects;
 
 	TParamsEntry* m_pData;
 	

@@ -287,21 +287,19 @@ void SegmentationView::mousePressEvent(QMouseEvent *event)
 
 	//added by Yousef 7-30-2009
 	//if we are in spliting mode, then add the point to the splitting list
-	if(resultModel->isSplitingMode())
+	if(resultModel)
 	{
-		int xx = origin.x();
-		int yy = origin.y();
-		/*QImage tmpImg(displayImage.width(),displayImage.height(),QImage::Format_ARGB32);
-		QPainter p(&tmpImg);
-		p.drawImage(0,0,displayImage);
-		p.setPen(Qt::red);
-		p.drawPoint(xx,yy);*/
-		xx = xx/currentScale;
-		yy = yy/currentScale;		
-		//as of now, I asume that the image starts at the top left corner (0,0) of the view window
-		if(xx<totalWidth && yy<totalHeight)
+		if(resultModel->isSplitingMode())
 		{
-			resultModel->addPointToSplitList(xx, yy, currentZ);
+			int xx = origin.x();
+			int yy = origin.y();			
+			xx = xx/currentScale;
+			yy = yy/currentScale;		
+			//as of now, I asume that the image starts at the top left corner (0,0) of the view window
+			if(xx<totalWidth && yy<totalHeight)
+			{
+				resultModel->addPointToSplitList(xx, yy, currentZ);
+			}
 		}
 	}
 }

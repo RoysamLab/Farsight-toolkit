@@ -1158,7 +1158,7 @@ int yousef_nucleus_seg::readFromIDLFormat(std::string fileName)
   return 1;
 }
 
-std::vector< int > yousef_nucleus_seg::SplitInit(ftk::Object::Point P1, ftk::Object::Point P2, ftk::Object::Point bBox1, ftk::Object::Point bBox2, int maxID)
+std::vector< int > yousef_nucleus_seg::SplitInit(ftk::Object::Point P1, ftk::Object::Point P2)
 {
 	//
 	//if no label (segmentation) or no data image is available then return
@@ -1182,7 +1182,10 @@ std::vector< int > yousef_nucleus_seg::SplitInit(ftk::Object::Point P1, ftk::Obj
 	}
 
 	//Update the initial segmentation image	
-	//get the indexes of the two seeds with respect to the begining of the bounding box
+	//get the indexes of the two seeds with respect to the begining of the bounding box	
+	std::vector< ftk::Object::Point > bBox = getObjectBoundingBox(id1, 1);
+	ftk::Object::Point bBox1 = bBox.at(0);
+	ftk::Object::Point bBox2 = bBox.at(1);
 	std::vector <int> sz;
 	sz.push_back(bBox2.x - bBox1.x + 1);
 	sz.push_back(bBox2.y - bBox1.y + 1);
@@ -1275,10 +1278,13 @@ std::vector< int > yousef_nucleus_seg::SplitInit(ftk::Object::Point P1, ftk::Obj
 	}
 
 	//Now, relabel the cell points into either the old id (id1) or a new id (newID) based on the distances to the seeds
-	++maxID;		
-	int newID1 = maxID;
-	++maxID;		
-	int newID2 = maxID;
+	if(numObjects == 0)
+		numObjects = getMaxID(1);
+
+	++numObjects;		
+	int newID1 = numObjects;
+	++numObjects;		
+	int newID2 = numObjects;
 	IteratorType iterator3(dt_obj1->GetOutput(),dt_obj1->GetOutput()->GetRequestedRegion());
 	IteratorType iterator4(dt_obj2->GetOutput(),dt_obj2->GetOutput()->GetRequestedRegion());	
 	int mx1 = 0;
@@ -1344,6 +1350,94 @@ std::vector< int > yousef_nucleus_seg::SplitInit(ftk::Object::Point P1, ftk::Obj
 	ids_ok.push_back(id1);
 
 	return ids_ok;
+}
+
+std::vector< ftk::Object::Point > yousef_nucleus_seg::getObjectBoundingBox(int id, int Int_Fin)
+{
+	int min_x, max_x, min_y, max_y, min_z, max_z;
+	max_x = max_y = max_z = 0;
+	min_x = numColumns;
+	min_y = numRows;
+	min_z = numStacks;
+	
+	int* imgPtr;
+	if(Int_Fin == 1)
+		imgPtr = clustImagePtr;
+	else
+		imgPtr = segImagePtr;
+
+	int counter = 0;
+	for( int i=0; i<numRows; i++)
+	{
+		for( int j=0; j<numColumns; j++)
+		{
+			for( int k=0; k<numStacks; k++)
+			{
+				int ID = imgPtr[(k*numRows*numColumns)+(i*numColumns)+j];
+				if(ID!=id)
+					continue;
+
+				counter++;
+
+				if(i<min_y)
+					min_y = i;
+				if(i>max_y)
+					max_y = i;
+				if(j<min_x)
+					min_x = j;
+				if(j>max_x)
+					max_x = j;
+				if(k<min_z)
+					min_z = k;
+				if(k>max_z)
+					max_z = k;
+			}
+		}
+	}
+	std::vector< ftk::Object::Point > bBox;
+	ftk::Object::Point P1;
+	ftk::Object::Point P2;
+	P1.t = 0;
+	if(counter == 0)
+		P1.x = P1.y = P1.z = P2.x = P2.y = P2.z = 0;
+	else
+	{
+		P1.x = min_x;
+		P1.y = min_y;
+		P1.z = min_z;
+		P2.t = 0;
+		P2.x = max_x;
+		P2.y = max_y;
+		P2.z = max_z;
+	}
+	bBox.push_back(P1);
+	bBox.push_back(P2);
+
+	return bBox;
+}
+
+int yousef_nucleus_seg::getMaxID(int Int_Fin)
+{
+	int maxID = 0;
+	int iid;
+	
+		
+	for( int i=0; i<numRows; i++)
+	{
+		for( int j=0; j<numColumns; j++)
+		{
+			for( int k=0; k<numStacks; k++)
+			{				
+				if(Int_Fin == 1)
+					iid = clustImagePtr[(k*numRows*numColumns)+(i*numColumns)+j];
+				else
+					iid = segImagePtr[(k*numRows*numColumns)+(i*numColumns)+j];
+				if(iid>maxID)
+					maxID = iid;
+			}
+		}
+	}
+	return iid;
 }
 /*
 int yousef_nucleus_seg::saveIntoIDLFormat()
