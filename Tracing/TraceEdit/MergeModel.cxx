@@ -153,7 +153,25 @@ void MergeModel::SelectbyTraceID(int id)
 	int row1 = -1 , row2= -1;
 	row1 = this->Trace1ToRow.value(id);
 	row2 = this->Trace2ToRow.value(id);
-	std::cout << "\nRow 1\t" << row1 << "\tRow 2\t" << row2 << std::endl; 
+	QItemSelection selection;
+	selection.clear();
+	//std::cout<< "\nTrace\t" << id;
+	if (row1 > 0)
+	//{
+	//	QModelIndex index1 = this->Model->index(row1, 0, rootIndex());
+	//	QModelIndex index2 = this->Model->index(row1,(this->Model->columnCount())-1, rootIndex());
+	//	selection.merge(QItemSelection(index1,index2),QItemSelectionModel::Select);
+	//	//std::cout << "\tRow 1\t" << row1;
+	//}
+	//if (row2 > 0)
+	//{	
+	//	QModelIndex index1 = this->Model->index(row2, 0, rootIndex());
+	//	QModelIndex index2 = this->Model->index(row2,(this->Model->columnCount())-1, rootIndex());
+	//	selection.merge(QItemSelection(index1,index2),QItemSelectionModel::Select);
+	//	//std::cout << "\tRow 2\t" << row2 << std::endl; 
+	//}
+	this->SelectionModel->select(selection,QItemSelectionModel::Toggle);
+	emit modelChanged();
 }
 ////////////////////////////////////////////////////////////////////////////////
 void MergeModel::SetTraceGaps(std::vector<TraceGap *> gaps)
