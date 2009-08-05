@@ -19,7 +19,9 @@ limitations under the License.
 // --- Author: Xiaosong Yuan, RPI    modified by xiao liang
 // --- Modified Date: 10/6/2005
 
+#if defined(_MSC_VER)
 #pragma warning(disable : 4996)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <fstream>
@@ -66,7 +68,6 @@ int main (int argc, char *argv[])
   ifstream fin;
   FILE *CurveSeedfout;
   FILE *fout;
-  char *infilename;
   Vector3D vecin;
   float *Iu, *Iv, *Iw;
  // float *Iuu, *Iuv, *Iuw, *Ivv, *Ivw, *Iww;
@@ -100,11 +101,9 @@ int main (int argc, char *argv[])
 
   // ------------------------------------  Open Gradient vector file ----------------------//
   
-  infilename = new char[80];
-  infilename = argv[1];
-  fin.open(infilename);
+  fin.open(argv[1]);
   if (!fin)  {
-     cerr << "couldn't open " << infilename << " for input" << endl;
+     cerr << "couldn't open " << argv[1] << " for input" << endl;
      return -1;
   }
  //----------------------------------------end open -------------------------------------//
@@ -166,7 +165,7 @@ int main (int argc, char *argv[])
 		fin >> x >> y >> z >> vecin.x >> vecin.y >> vecin.z;
 	}
     
-  printf("hhhhhh %d", idx);
+  printf("hhhhhh %ld", idx);
   // make surface point f[]=1
   for (k = 1; k < N-1; k++)
      for (j = 1; j < M-1; j++)
@@ -303,7 +302,7 @@ int main (int argc, char *argv[])
 		 }
   }
 //------------------------------------------end compute seeds with higher curvature ----------------------// 
-  printf("Num of seeds with higher curvature  is %d\n", numSeeds);
+  printf("Num of seeds with higher curvature  is %ld\n", numSeeds);
 
 //-------------------------------Normalizing gradient vector---------------------------------------------//
   float Length;
@@ -324,7 +323,7 @@ int main (int argc, char *argv[])
   //printf(" I am here  FFFF %d",  idx);
 
   int numBoundSeeds = numSeeds;
-  float Ngrid = 10;
+  //float Ngrid = 10;
 /*
   double totalVecLength;
 
@@ -540,7 +539,6 @@ int main (int argc, char *argv[])
   
  fclose(CurveSeedfout);
  fclose(fout);
- delete []infilename; 
  delete []Iu;
  delete []Iv;
  delete []Iw;

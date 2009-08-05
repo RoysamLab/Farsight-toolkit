@@ -19,7 +19,9 @@ limitations under the License.
 // Author: Xiaosong Yuan, RPI
 // Date: 12/22/2005
 // Status: under modification of MDL
+#if defined(_MSC_VER)
 #pragma warning(disable : 4996)
+#endif
 #include "morphGraphPrune.h"
 #include "distTransform.h"
 #include "MinSpanTree.h"
@@ -39,10 +41,8 @@ limitations under the License.
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/graph_traits.hpp>
 
-
 #define OUT_CLASSIFIER_TRAINING 0  //1: output to file all leaf branches for training
 #define DRAW_MDL_CURVE  1           // Output Lm(M) and L(M) values for MDL curve
-
 
 //#define DISP_BACKBONE_ONLY  0     // Output only backbone
 #define DISP_ALL_BB2Branch 0          //Output all two levels of branches on backbone
@@ -60,8 +60,6 @@ limitations under the License.
 #define MAX(x,y) (((x) > (y))?(x):(y))
 
 #define MAXNumBranch 10    //Suppose at most MAXNumBranch branches at the 2nd level branch from BB
-
-#define OUTPUT_SWC 0
 
 using namespace std;
 //using namespace boost;
@@ -211,6 +209,23 @@ int main(int argc, char *argv[])
   times_erosion = atoi(argv[9]);
   alpha = atof(argv[10]);
 
+  bool outputAsSWC;
+  if(strstr(argv[11], ".vtk") != NULL)
+    {
+    cout << "OK, writing output as .vtk" << endl;
+    outputAsSWC = false;
+    }
+  else if(strstr(argv[11], ".swc") != NULL)
+    {
+    cout << "Writing output as .swc" << endl;
+    outputAsSWC = true;
+    }
+  else
+    {
+    cerr << "Unsupported output file type: " << argv[11] << endl;
+    cerr << "Supported types include: .swc, .vtk" << endl;
+    exit(1);
+    }
   if ((fout = fopen(argv[11], "w")) == NULL)
   {
     printf("Cannot open %s for writing\n",argv[11]);//??????   I think it must be arg[11] ????? by Xiao Liang
@@ -258,15 +273,6 @@ int main(int argc, char *argv[])
   {
   	 printf("Cannot open MDL_Lc_data_cond_model.each.subtree.txt for writing\n");
 	 exit(1);
-  }
-  #endif
-
-  #if OUTPUT_SWC
-  FILE *file_swc;
-  if ((file_swc = fopen("C:\\Xiaosong\\Data\\Trach11A\\out_vtk2swc.swc", "w")) == NULL)  
-  {
-    printf("Cannot open .swc for writing\n");
-    exit(1);
   }
   #endif
 
@@ -372,12 +378,14 @@ int main(int argc, char *argv[])
       }
 		fin >> nodePosition.x >> nodePosition.y >> nodePosition.z >> p;
     }
-  
-  fprintf(fout, "# vtk DataFile Version 3.0\n");
-  fprintf(fout,"MST of skel\n");
-  fprintf(fout,"ASCII\n");
-  fprintf(fout,"DATASET POLYDATA\n");
-  fprintf(fout,"POINTS %d float\n",num_nodes);
+  if(!outputAsSWC)
+    {
+    fprintf(fout, "# vtk DataFile Version 3.0\n");
+    fprintf(fout,"MST of skel\n");
+    fprintf(fout,"ASCII\n");
+    fprintf(fout,"DATASET POLYDATA\n");
+    fprintf(fout,"POINTS %d float\n",num_nodes);
+    }
 
   //reinitialize the file and variables used to loop through it
   fin.clear();
@@ -395,7 +403,10 @@ int main(int argc, char *argv[])
 			voxelNodeIndex[idx] = num_nodes;   // Save the index of node (vertex) at each voxel position
 			// output the node positions to vtk file
       // Add negative sign to make output align to 3D data
-			fprintf(fout,"%f %f %f\n", nodePosition.x, -nodePosition.y, nodePosition.z);  
+      if(!outputAsSWC)
+        {
+			  fprintf(fout,"%f %f %f\n", nodePosition.x, -nodePosition.y, nodePosition.z);  
+        }
 
 			// Find all neighbor nodes within edgeRange
 			for (kk = -edgeRange; kk <= edgeRange; kk++)
@@ -483,11 +494,11 @@ int main(int argc, char *argv[])
 //  edge_w[0] = 0.4;
 //  edge_w[1] = 1.5;
 
-  std::size_t num_edges = idx_edge;   // sizeof(edge_array) / sizeof(E);
+  size_t num_edges = idx_edge;   // sizeof(edge_array) / sizeof(E);
 #if defined(BOOST_MSVC) && BOOST_MSVC <= 1300
   Graph g(num_nodes);
   property_map<Graph, edge_weight_t>::type weightmap = get(edge_weight, g);
-  for (std::size_t j = 0; j < num_edges; ++j) {
+  for (size_t j = 0; j < num_edges; ++j) {
     Edge e; bool inserted;
     tie(e, inserted) = add_edge(edge_array[j].first, edge_array[j].second, g);
     weightmap[e] = edge_w[j];
@@ -497,22 +508,22 @@ int main(int argc, char *argv[])
 #endif
 
   property_map < Graph, edge_weight_t >::type weight = get(edge_weight, g);
-  std::vector < Edge > spanning_tree;
+  vector < Edge > spanning_tree;
 
   // MST algorithm
-  kruskal_minimum_spanning_tree(g, std::back_inserter(spanning_tree));
+  kruskal_minimum_spanning_tree(g, back_inserter(spanning_tree));
 
-  std::cout << "Print the edges in the MST:" << std::endl;
+  cout << "Print the edges in the MST:" << endl;
   // Print out MST edges
-  for (std::vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
-		//std::cout << source(*ei, g) << " <--> " << target(*ei, g)
+  for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
+		//cout << source(*ei, g) << " <--> " << target(*ei, g)
 		//<< " with weight of " << weight[*ei]
-		//<< std::endl;
+		//<< endl;
   }
 
 
   // create initial degree_nodes array
-  for (std::vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
+  for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
 	  degree_nodes[source(*ei, g)] ++;
 	  degree_nodes[target(*ei, g)] ++;
 	  degree_nodes_initialMST[source(*ei, g)] ++;
@@ -522,7 +533,7 @@ int main(int argc, char *argv[])
   // Create a graph for the initial MST
   Graph msTree(num_nodes+1);
   int num_edge_MST = 0;
-  for (std::vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
+  for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
   	  //if (degree_nodes_initialMST[source(*ei, g)]!=0 && degree_nodes_initialMST[target(*ei, g)]!=0) 
 	  { 
           add_edge(source(*ei, g), target(*ei, g), msTree);
@@ -541,7 +552,7 @@ int main(int argc, char *argv[])
   while (times_erosion !=0) {
 	  times_erosion--;
 	  for (i=1; i<=num_nodes; i++)   degree_nodes_buffer[i] = degree_nodes[i];
-	  for (std::vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
+	  for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
 		  if (degree_nodes_buffer[source(*ei, g)]>0 && degree_nodes_buffer[target(*ei, g)]>0)  {
               if (degree_nodes_buffer[source(*ei, g)]==1 || degree_nodes_buffer[target(*ei, g)]==1)  {
                   degree_nodes[source(*ei, g)] --;
@@ -559,7 +570,7 @@ int main(int argc, char *argv[])
   while (num_edge_eroded !=0) {
 	  //times_dilation--;
 	  num_edge_eroded --;
-      //for (std::vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
+      //for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
 	  edge_source = edge_eroded[num_edge_eroded*2];  // Read the stored eroded edges
 	  edge_target = edge_eroded[num_edge_eroded*2+1];
       if ((degree_nodes[edge_source]+ degree_nodes[edge_target]) == 1)  {  // if a branch tip edge
@@ -585,7 +596,7 @@ int main(int argc, char *argv[])
   Graph msTreeBB(num_nodes+1);        // BackBone graph created
   //Graph msTreeBB_buffer(num_nodes+1);
   //num_edge_MST = 0;
-  for (std::vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
+  for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
 	  if (degree_nodes[source(*ei, g)]!=0 && degree_nodes[target(*ei, g)]!=0) {  // According to my proved theorem
           
 		  #if ONLY_OUTPUT_SPINES==0
@@ -850,12 +861,17 @@ int main(int argc, char *argv[])
                 for (j = 1; j <= vertsCurBr_Index2[0]; j++) {
 					// Not to output if only need backbone output
 					add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeBB);   // Comment out if only need backbone output
-					#if OUTPUT_SWC
-					  //fprintf(file_swc, "%d 4 %f %f %f 2.0 %d\n", 
-					      //vertsCurBranch2[0][j], vertexPos[vertsCurBranch2[0][j]].x, vertexPos[vertsCurBranch2[0][j]].y, vertexPos[vertsCurBranch2[0][j]].z, vertsCurBranch2[0][j-1]);
-					  fprintf(file_swc, "%4.0f  %4.0f  %4.0f\n",   // Output for levelset seeds
-						  vertexPos[vertsCurBranch2[0][j]].x, vertexPos[vertsCurBranch2[0][j]].y, vertexPos[vertsCurBranch2[0][j]].z);
-					#endif
+					if(outputAsSWC)
+            {
+            if(vertsCurBranch2[0][j-1] == 5)
+              {
+              cout << "yup 3" << endl;
+              }
+					  fprintf(fout, "%d 4 %f %f %f 2.0 %d\n", 
+					      vertsCurBranch2[0][j], vertexPos[vertsCurBranch2[0][j]].x, vertexPos[vertsCurBranch2[0][j]].y, vertexPos[vertsCurBranch2[0][j]].z, vertsCurBranch2[0][j-1]);
+					  //fprintf(fout, "%4.0f  %4.0f  %4.0f\n",   // Output for levelset seeds
+						//  vertexPos[vertsCurBranch2[0][j]].x, vertexPos[vertsCurBranch2[0][j]].y, vertexPos[vertsCurBranch2[0][j]].z);
+            }
 				}
 				if (MDL_minIndex >= 1)  {
 					for (j = 1; j <= vertsCurBr_Index2[MDL_minIndex]; j++) {
@@ -898,74 +914,71 @@ int main(int argc, char *argv[])
   } // End of all vertice
   //msTreeBB = msTreeBB_buffer;
 
+  if(outputAsSWC)
+    {
+    int parent_index, cur_index;
+    int parent_index0, cur_index0;
+    int targ;
+    for(boost::tie(vi, vend) = vertices(msTree); vi != vend; ++vi)  { // for all vertex in the graph
+      index_vert = int(index[*vi]);   // Get index from the graph IndexMap
+      //cout << "vertBackbone[index_vert]=" << vertBackbone[index_vert] << endl;
+      if (vertBackbone[index_vert]==0) continue;  // if the vertex is not on Backbone, continue
+      //cout << "degree_nodes[index_vert]=" << degree_nodes[index_vert] << endl;
+      //cout << "out_degree of index_vert =" << out_degree(vertex(index_vert, msTree), msTree) << endl;
+      //if (degree_nodes[index_vert] != 1)  
+      if (out_degree(vertex(index_vert, msTree), msTree) != 1)	continue;  // if it is not end of backbone
+      if (vertexPos[index_vert].x> 450 && vertexPos[index_vert].y<50 ) break;  // to pick up particular root vertex for swc file
+    }
+    fprintf(fout, "%d 3 %f %f %f 4.0 -1\n", index_vert, vertexPos[index_vert].x, vertexPos[index_vert].y, vertexPos[index_vert].z);
+    parent_index = index_vert;
+    //cout << "out_degree of index_vert =" << out_degree(vertex(index_vert, msTree), msTree) << endl;
+    for (boost::tie(outei, outedge_end) = out_edges(vertex(index_vert,msTree), msTree); ; outei++) { // find next node on backbone
+      targ = target(*outei, msTree);
+      //cout << "targ=" << targ << endl;
+      if (vertBackbone[targ] == 0)  continue;  // the edge is not on BackBone, continue
+      cur_index = targ;
+      fprintf(fout, "%d 3 %f %f %f 4.0 %d\n",cur_index, vertexPos[cur_index].x, vertexPos[cur_index].y, vertexPos[cur_index].z, parent_index);
+      break;
+    }
 
-#if OUTPUT_SWC
-  int parent_index, cur_index;
-  int parent_index0, cur_index0;
-  int targ;
-  for(boost::tie(vi, vend) = vertices(msTree); vi != vend; ++vi)  { // for all vertex in the graph
-		index_vert = int(index[*vi]);   // Get index from the graph IndexMap
-		std::cout << "vertBackbone[index_vert]=" << vertBackbone[index_vert] << std::endl;
-		if (vertBackbone[index_vert]==0) continue;  // if the vertex is not on Backbone, continue
-		std::cout << "degree_nodes[index_vert]=" << degree_nodes[index_vert] << std::endl;
-		std::cout << "out_degree of index_vert =" << out_degree(vertex(index_vert, msTree), msTree) << std::endl;
-		//if (degree_nodes[index_vert] != 1)  
-		if (out_degree(vertex(index_vert, msTree), msTree) != 1)	continue;  // if it is not end of backbone
-		if (vertexPos[index_vert].x> 450 && vertexPos[index_vert].y<50 ) break;  // to pick up particular root vertex for swc file
-  }
-  fprintf(file_swc, "%d 3 %f %f %f 4.0 -1\n", index_vert, vertexPos[index_vert].x, vertexPos[index_vert].y, vertexPos[index_vert].z);
-  parent_index = index_vert;
-  std::cout << "out_degree of index_vert =" << out_degree(vertex(index_vert, msTree), msTree) << std::endl;
-  for (boost::tie(outei, outedge_end) = out_edges(vertex(index_vert,msTree), msTree); ; outei++) { // find next node on backbone
-		targ = target(*outei, msTree);
-		std::cout << "targ=" << targ << std::endl;
-		if (vertBackbone[targ] == 0)  continue;  // the edge is not on BackBone, continue
-		cur_index = targ;
-		fprintf(file_swc, "%d 3 %f %f %f 4.0 %d\n",cur_index, vertexPos[cur_index].x, vertexPos[cur_index].y, vertexPos[cur_index].z, parent_index);
-		break;
-  }
+    while (degree_nodes[cur_index] == 2) {//keep going on the first level of backbone branch
+      for (boost::tie(outei, outedge_end) = out_edges(vertex(cur_index,msTree), msTree); outei != outedge_end; outei++) { // find next node on backbone
+        targ = target(*outei, msTree);
+        //cout << "targ=" << targ << endl;
+        if (vertBackbone[targ] == 0 || targ == parent_index)  continue;  // the edge is not on BackBone, continue
+        parent_index = cur_index;
+        cur_index = targ;
+        fprintf(fout, "%d 3 %f %f %f 4.0 %d\n",cur_index, vertexPos[cur_index].x, vertexPos[cur_index].y, vertexPos[cur_index].z, parent_index);
+        break;
+      }
+    }
 
-  while (degree_nodes[cur_index] == 2) {//keep going on the first level of backbone branch
-		for (boost::tie(outei, outedge_end) = out_edges(vertex(cur_index,msTree), msTree); outei != outedge_end; outei++) { // find next node on backbone
-			targ = target(*outei, msTree);
-			std::cout << "targ=" << targ << std::endl;
-			if (vertBackbone[targ] == 0 || targ == parent_index)  continue;  // the edge is not on BackBone, continue
-			parent_index = cur_index;
-			cur_index = targ;
-			fprintf(file_swc, "%d 3 %f %f %f 4.0 %d\n",cur_index, vertexPos[cur_index].x, vertexPos[cur_index].y, vertexPos[cur_index].z, parent_index);
-			break;
-		}
-  }
-
-  //Output the 2nd level of backbones
-  int time=0;
-  if (degree_nodes[cur_index] >= 3) {
-	  parent_index0 = parent_index;
-	  cur_index0 = cur_index;
-	  for (boost::tie(outei, outedge_end) = out_edges(vertex(cur_index0,msTree), msTree); outei != outedge_end; outei++) { // find next node on backbone
-			targ = target(*outei, msTree);
-			if (vertBackbone[targ] == 0 || targ == parent_index0)  continue;  // the edge is not on BackBone, continue
-			//if (time == 0) {time = 1; continue;} //test only
-			parent_index = cur_index0;
-			cur_index = targ;
-			fprintf(file_swc, "%d 3 %f %f %f 4.0 %d\n",cur_index, vertexPos[cur_index].x, vertexPos[cur_index].y, vertexPos[cur_index].z, parent_index);
-			//keep going on each backbone branch
-		    while (degree_nodes[cur_index] == 2) {
-					for (boost::tie(outei2, outedge_end2) = out_edges(vertex(cur_index,msTree), msTree); outei2!=outedge_end2; outei2++) { // find next node on backbone
-						targ = target(*outei2, msTree);
-						if (vertBackbone[targ] == 0 || targ == parent_index)  continue;  // the edge is not on BackBone, continue
-						parent_index = cur_index;
-						cur_index = targ;
-						fprintf(file_swc, "%d 3 %f %f %f 4.0 %d\n",cur_index, vertexPos[cur_index].x, vertexPos[cur_index].y, vertexPos[cur_index].z, parent_index);
-						break;
-					}
-			}//while end
-	  
-	  }//for end
-  }//if end
-
-
-#endif   //OUTPUT_SWC
+    //Output the 2nd level of backbones
+    if (degree_nodes[cur_index] >= 3) {
+      parent_index0 = parent_index;
+      cur_index0 = cur_index;
+      for (boost::tie(outei, outedge_end) = out_edges(vertex(cur_index0,msTree), msTree); outei != outedge_end; outei++) { // find next node on backbone
+        targ = target(*outei, msTree);
+        if (vertBackbone[targ] == 0 || targ == parent_index0)  continue;  // the edge is not on BackBone, continue
+        //if (time == 0) {time = 1; continue;} //test only
+        parent_index = cur_index0;
+        cur_index = targ;
+        fprintf(fout, "%d 3 %f %f %f 4.0 %d\n",cur_index, vertexPos[cur_index].x, vertexPos[cur_index].y, vertexPos[cur_index].z, parent_index);
+        //keep going on each backbone branch
+          while (degree_nodes[cur_index] == 2) {
+            for (boost::tie(outei2, outedge_end2) = out_edges(vertex(cur_index,msTree), msTree); outei2!=outedge_end2; outei2++) { // find next node on backbone
+              targ = target(*outei2, msTree);
+              if (vertBackbone[targ] == 0 || targ == parent_index)  continue;  // the edge is not on BackBone, continue
+              parent_index = cur_index;
+              cur_index = targ;
+              fprintf(fout, "%d 3 %f %f %f 4.0 %d\n",cur_index, vertexPos[cur_index].x, vertexPos[cur_index].y, vertexPos[cur_index].z, parent_index);
+              break;
+            }
+        }//while end
+      
+      }//for end
+    }//if end
+  } //end if outputAsSWC
 
 
 
@@ -999,7 +1012,7 @@ int main(int argc, char *argv[])
   //gprint(msTreeBB);
 
   // Find connected components
-  std::vector<int> component(num_vertices(msTreeBB));
+  vector<int> component(num_vertices(msTreeBB));
   int numBranch = connected_components(msTreeBB, &component[0]);    //(phantom)=82 =97 after branch break
   //int num_vertex_MST = component.size();
 
@@ -1068,18 +1081,22 @@ int main(int argc, char *argv[])
 */
 
 
+  if(!outputAsSWC)
+    {
+    // -- Output to vtk
+    line_count = 0;
+    for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei)
+      {
+      line_count++; // count the number of lines output in vtk file
+      }
+    fprintf(fout,"LINES %d %d\n", line_count, line_count*3);
 
-  // -- Output to vtk
-  line_count = 0;
-  for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei) {
-		line_count++; // count the number of lines output in vtk file
-  }
-  fprintf(fout,"LINES %d %d\n", line_count, line_count*3);
-
-  for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei) {
-	   // output lines into vtk file
-       fprintf(fout, "2 %ld %ld\n", source(*ei, msTreeBB)-1, target(*ei, msTreeBB)-1);
-  }
+    for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei)
+      {
+       // output lines into vtk file
+         fprintf(fout, "2 %ld %ld\n", source(*ei, msTreeBB)-1, target(*ei, msTreeBB)-1);
+      }
+    }
 
 
  #if OUTPUT_BRANCHPts
@@ -1128,7 +1145,11 @@ int main(int argc, char *argv[])
   somaDist = NULL;
   ///////////////
   printf("\n -- Number of nodes is : %d\n", num_nodes); 
-  printf("-- Number of Lines is : %d\n", line_count);
+  if(!outputAsSWC)
+    {
+    //line_count is only computed for .vtk files
+    printf("-- Number of Lines is : %d\n", line_count);
+    }
   fclose(fout);
   //fclose(fout_txt);
   #if OUT_CLASSIFIER_TRAINING
@@ -1136,9 +1157,6 @@ int main(int argc, char *argv[])
   #endif
   #if DRAW_MDL_CURVE 
   fclose(fout_MDL);
-  #endif
-  #if OUTPUT_SWC
-  fclose(file_swc);
   #endif
   return EXIT_SUCCESS;
 }

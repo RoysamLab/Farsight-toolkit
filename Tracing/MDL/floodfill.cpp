@@ -19,7 +19,9 @@ limitations under the License.
  *  Windows version, taken in from Linux version
  *   Author: Xiaosong Yuan, RPI
  *  Modified on Oct. 2, 2005                 */
+#if defined(_MSC_VER)
 #pragma warning(disable : 4996)
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>

@@ -22,7 +22,9 @@ limitations under the License.
  *  Input parameters
  *          1. sizeExpand   
  *          2. preproess          */
+#if defined(_MSC_VER)
 #pragma warning(disable : 4996)
+#endif
 //#include "stdafx.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -84,8 +86,6 @@ int main(int argc, char *argv[])
 	//string s;
 	FILE *infile;
 	FILE *outfile;
-	char *infilename = new char[80];
-	char *outfilename = new char[80];
 	int i,j,k, t;
 	int ii, jj, kk;
 	//int NearObjFlag;
@@ -101,24 +101,22 @@ int main(int argc, char *argv[])
 	int timesDilate;
 	int border;
 
-	infilename = argv[1];
 	sizeX = atoi(argv[2]);
 	sizeY = atoi(argv[3]);
 	sizeZ = atoi(argv[4]);
 	//sizeTime = atoi(argv[5]);
 	sizeTime = 1;
-	outfilename = argv[5];
 	threshold = atof(argv[6]);
 
 	volin = (DATATYPEIN*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(DATATYPEIN));
 	volout = (DATATYPEOUT*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(DATATYPEOUT));
 
-	if((infile=fopen(infilename,"rb"))==NULL)
+	if((infile=fopen(argv[1],"rb"))==NULL)
 			{printf("Input file open error!\n");
 			 exit(-1);
 			}
 
-	if((outfile=fopen(outfilename,"wb"))==NULL)
+	if((outfile=fopen(argv[5],"wb"))==NULL)
 			{printf("Output file open error!\n");
 			 exit(-1);
 			}
@@ -410,8 +408,6 @@ int main(int argc, char *argv[])
 	free(volout); // by xiao
 	volin=NULL;
 	volout=NULL;
-	delete []infilename;
-	delete []outfilename;
 
 	printf("Done \n");
     return 0;

@@ -21,7 +21,9 @@ limitations under the License.
 // ----  Input : Binary 3D volume with sizes.
 // ----  Output: ASCII file with vector 3 components for all object voxels
 // ----
+#if defined(_MSC_VER)
 #pragma warning(disable : 4996)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>

@@ -20,7 +20,9 @@ limitations under the License.
  *  Input parameters
  *            
  *                   */
+#if defined(_MSC_VER)
 #pragma warning(disable : 4996)
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 //#include <fstream.h>
@@ -71,8 +73,6 @@ int main(int argc, char *argv[])
 	//string s;
 	FILE *infile;
 	FILE *outfile;
-	char *infilename = new char[80];
-	char *outfilename = new char[80];
     Vector *gradVec;
 	DATATYPEOUT *volout;
 
@@ -95,11 +95,9 @@ int main(int argc, char *argv[])
 	double Dxy1, Dxy2;
 	
 
-	infilename = argv[1];
 	sizeX = atoi(argv[2]);
 	sizeY = atoi(argv[3]);
 	sizeZ = atoi(argv[4]);
-	outfilename = argv[5];
    // k_factor = atof(argv[6]);
    // timesDiffuse = atof(argv[7]);//original
 	//timesDiffuse = atoi(argv[7]); // xiao
@@ -113,12 +111,12 @@ int main(int argc, char *argv[])
 	volout = (DATATYPEOUT*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEOUT));
 	gradVec = (Vector *)malloc(sizeX*sizeY*sizeZ*sizeof(Vector));
 
-	if((infile=fopen(infilename,"rb"))==NULL)
+	if((infile=fopen(argv[1],"rb"))==NULL)
 			{printf("Input file open error!\n");
 			 exit(-1);
 			}
 
-	if((outfile=fopen(outfilename,"wb"))==NULL)
+	if((outfile=fopen(argv[5],"wb"))==NULL)
 			{printf("Output file open error!\n");
 			 exit(-1);
 			}
@@ -314,8 +312,6 @@ int main(int argc, char *argv[])
 	fwrite(volout, sizeX*sizeY*sizeZ, sizeof(DATATYPEOUT), outfile);
 	
     // memory release, added by xiao
-    delete []infilename;
-	delete []outfilename;
 	free(volin);// = (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN));
 	free(volout);//= (DATATYPEOUT*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEOUT));
 	free(gradVec);// = (Vector *)malloc(sizeX*sizeY*sizeZ*sizeof(Vector));
