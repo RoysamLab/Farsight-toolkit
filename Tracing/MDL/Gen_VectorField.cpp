@@ -21,9 +21,7 @@ limitations under the License.
 // ----  Input : Binary 3D volume with sizes.
 // ----  Output: ASCII file with vector 3 components for all object voxels
 // ----
-#if defined(_MSC_VER)
 #pragma warning(disable : 4996)
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -113,7 +111,7 @@ double dotProduct(Vector v1, Vector v2) {
     dotProd += v1.yd * v2.yd;
     dotProd += v1.zd * v2.zd;
 //    return dotProd;
-    return sign(dotProd);  // test
+    return (double)(sign((float)dotProd));  // test   (doube  is added by xiao)
 }
 
 
@@ -334,9 +332,16 @@ int main(int argc, char *argv[])
 	//   printf("%f==",force[w*sls + 7*sizeX + 5].zd);
 
 
-   fclose(fileout);
+  fclose(fileout);
 
-   printf("End \n");
+  free(volin);// = (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN));
+  free(force);// = (Vector *)malloc(sizeX*sizeY*sizeZ*sizeof(Vector));
+  free(vecLUTable);// = (Vector *)malloc(ForceRange*ForceRange*ForceRange*sizeof(Vector));
+  volin=NULL;
+  force=NULL;
+  vecLUTable=NULL;
+
+  printf("End \n");
 
    return 0;
 }

@@ -147,7 +147,7 @@ Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexP
 		msTree = msTree_buffer;
 	}  // end of prunetimes
 
-
+    printf("I am Graph");
 	return msTree;
 
 }

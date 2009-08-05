@@ -49,10 +49,14 @@ void distTransform(unsigned char *f, int L, int M, int N)
 {
   
   int i,j,k,n;
-  float *buff , df, db, d, w;
-  long *fDist;
+ //float *buff , df, db, d, w;
+  
+  //float  df, db; //d 
+  long df,db;
+  long *fDist,*buff;
+  // modify by xl
   long idx, slsz, sz;
-
+  
   slsz = L*M;		// slice size
   sz = slsz*N;
 
@@ -65,7 +69,10 @@ void distTransform(unsigned char *f, int L, int M, int N)
 
   int maxdim = MAX(L,M);
   maxdim = MAX(maxdim,N);
-  buff = new float[maxdim+10];
+  
+
+    //buff = new float[maxdim+10];
+  buff = new long[maxdim+10];
 
   // Using Algorithm 3 from Appendix 
 
@@ -104,6 +111,8 @@ void distTransform(unsigned char *f, int L, int M, int N)
     }
 
   // Step 2
+ 
+  long d,w;  // add by xiao liang
 
   for (k = 0; k < N; k++)
     for (i = 0; i < L; i++)
@@ -117,7 +126,7 @@ void distTransform(unsigned char *f, int L, int M, int N)
         if (d != 0)
         {
           int rmax, rstart, rend;
-          rmax = (int) floor(sqrt(d)) + 1;
+          rmax = (int) floor(sqrt((double)d)) + 1;
           rstart = MIN(rmax, (j-1));
           rend = MIN(rmax, (M-j));
           for (n = -rstart; n < rend; n++)
@@ -147,7 +156,7 @@ void distTransform(unsigned char *f, int L, int M, int N)
         if (d != 0)
         {
           int rmax, rstart, rend;
-          rmax = (int) floor(sqrt(d)) + 1;
+          rmax = (int) floor(sqrt((double)d)) + 1;
           rstart = MIN(rmax, (k-1));
           rend = MIN(rmax, (N-k));
           for (n = -rstart; n < rend; n++)
@@ -165,7 +174,7 @@ void distTransform(unsigned char *f, int L, int M, int N)
     }
 
   for (idx = 0; idx < slsz*N; idx++) {
-      fDist[idx] = sqrt(float(fDist[idx]));
+      fDist[idx] = (long) sqrt(float(fDist[idx]));
   }
 
 
@@ -174,9 +183,13 @@ void distTransform(unsigned char *f, int L, int M, int N)
 	  if (fDist[idx] > dMax)   dMax = fDist[idx];
   }
   for(idx=0; idx<sz; idx++)   {  // Scale the dist result to 255
-	  f[idx] = fDist[idx] * 255/ dMax;
+	   // f[idx] = fDist[idx] * 255/ dMax;
+	   f[idx] = (unsigned char) fDist[idx]; // by xiao (long)
   }
-
+  printf("I am DT");
+  // release memory by xiao liang
+  delete []buff;
+  delete []fDist;
   return;
 
 }

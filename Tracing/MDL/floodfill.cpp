@@ -19,9 +19,7 @@ limitations under the License.
  *  Windows version, taken in from Linux version
  *   Author: Xiaosong Yuan, RPI
  *  Modified on Oct. 2, 2005                 */
-#if defined(_MSC_VER)
 #pragma warning(disable : 4996)
-#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -86,7 +84,8 @@ int main(int argc, char *argv[])
 	//int NearObjFlag;
 	DATATYPEOUT *volout;
 	long idx;//, iidx;
-	float threshold;
+	//float threshold;
+	double threshold;
 	//int kmod8, kdiv8;
 	//int FlagIsolated;
 	//int NumConnectComp;
@@ -166,6 +165,12 @@ int main(int argc, char *argv[])
 
 	fclose(infile);
 	fclose(outfile);
+	free(volin);// = (DATATYPEIN*)malloc(sizeX*sizeY*(sizeZ)*sizeof(DATATYPEIN));
+	free(volout);// = (DATATYPEOUT*)malloc(sizeX*sizeY*(sizeZ)*sizeof(DATATYPEOUT));
+	volin=NULL;
+	volout=NULL;
+	delete []infilename;
+	delete []outfilename;
 	printf("Done \n");
 	return 0;
 }

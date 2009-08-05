@@ -19,9 +19,7 @@ limitations under the License.
 // --- Output: removed small objects
 // --- Author: Xiaosong Yuan, RPI
 // --- Date: 10/3/2005
-#if defined(_MSC_VER)
 #pragma warning(disable : 4996)
-#endif
 #include <stdlib.h>
 #include <stdio.h>
 //#include <fstream.h>

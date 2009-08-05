@@ -21,9 +21,7 @@ limitations under the License.
 // ----  Input : 3D volume density map with any sizes.
 // ----  Output: ASCII file with vector 3 components for all object voxels
 // ----
-#if defined(_MSC_VER)
 #pragma warning(disable : 4996)
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -215,9 +213,9 @@ int main(int argc, char *argv[])
 			//if (fc[idx]==0 || fc[idx]==SURF)   continue;  // not output
 			if (fc[idx]==0)   continue;  // not output
 
-			// Test: generate 2D vector field -- add zero slice above and below for AVS display reason
+		// Test: generate 2D vector field -- add zero slice above and below for AVS display reason
 		//if (i == 7)  fprintf(fileout,"%f %f %f\n", 0.0, 0.0, 0.0);
-			//if (i == 8)  fprintf(fileout,"%f %f %f\n", 0.0, force[k*sls+j*sizeX+i].yd*5, force[k*sls+j*sizeX+i].zd*5);
+		//if (i == 8)  fprintf(fileout,"%f %f %f\n", 0.0, force[k*sls+j*sizeX+i].yd*5, force[k*sls+j*sizeX+i].zd*5);
 		//if (i == 9)  fprintf(fileout,"%f %f %f\n", 0.0, 0.0, 0.0);
 			fprintf(fileout, "%d %d %d %f %f %f\n", i, j, k, gradVec[idx].xd*s, gradVec[idx].yd*s, gradVec[idx].zd*s);
 	}
@@ -229,10 +227,12 @@ int main(int argc, char *argv[])
 
    fclose(fileout);
 
-   delete []fc;// = (unsigned char*)malloc(sizeX*sizeY*sizeZ*sizeof(unsigned char));
-   delete []volin;// = (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN));
-   delete []gradVec;// = (Vector *)malloc(sizeX*sizeY*sizeZ*sizeof(Vector));
-
+   free(fc);// = (unsigned char*)malloc(sizeX*sizeY*sizeZ*sizeof(unsigned char));
+   free(volin);// = (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN));
+   free(gradVec);// = (Vector *)malloc(sizeX*sizeY*sizeZ*sizeof(Vector));
+   fc = NULL;
+   volin = NULL;
+   gradVec = NULL;
    printf("End \n");
 
    return 0;

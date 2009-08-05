@@ -78,6 +78,8 @@ int main(int argc, char *argv[])
 	//string s;
 	FILE *infile;
 	FILE *outfile;
+	char *infilename = new char[80];
+	char *outfilename = new char[80];
 	int i,j,k;
 	//int ii, jj, kk;
 	//int NearObjFlag;
@@ -87,39 +89,41 @@ int main(int argc, char *argv[])
 	double ThresCompVoxels;
 	int vertHistComp[100000];
 
+	infilename = argv[1];
 	sizeX = atoi(argv[2]);
 	sizeY = atoi(argv[3]);
 	sizeZ = atoi(argv[4]);
+	outfilename = argv[5];
 	ThresCompVoxels = atof(argv[6]);
 
 	volin = (DATATYPEIN*)malloc(sizeX*sizeY*(sizeZ)*sizeof(DATATYPEIN));
 	volout = (DATATYPEOUT*)malloc(sizeX*sizeY*(sizeZ)*sizeof(DATATYPEOUT));
 	volIndex = (int*)malloc(sizeX*sizeY*sizeZ*sizeof(int));
 
+	/*
 
+	if((infile=fopen(infilename,"rb"))==NULL)
+			{printf("Input file open error!\n");
+			 exit(-1);
+			}
 
-  #ifdef WIN32
+	if((outfile=fopen(outfilename,"wb"))==NULL)
+			{printf("Output file open error!\n");
+			 exit(-1);
+			}
+
+	*/
+
 	errno_t err; 
-    if((err=fopen_s(&infile,argv[1],"rb"))!=NULL)
+    if((err=fopen_s(&infile,infilename,"rb"))!=NULL)
 			{printf("Input file open error!\n");
 			 exit(-1);
 			}
   
-	if((err=fopen_s(&outfile,argv[5],"wb"))!=NULL)
+	if((err=fopen_s(&outfile,outfilename,"wb"))!=NULL)
 			{printf("Output file open error!\n");
 			 exit(-1);
 			}
-  #else
-	if((infile=fopen(argv[1],"rb"))==NULL)
-			{printf("Input file open error!\n");
-			 exit(-1);
-			}
-
-	if((outfile=fopen(argv[5],"wb"))==NULL)
-			{printf("Output file open error!\n");
-			 exit(-1);
-			}
-  #endif
 
 
 /*	if 0 	// read another file if necessary
@@ -187,9 +191,11 @@ int main(int argc, char *argv[])
 
 	fclose(infile);
 	fclose(outfile);
-	delete []volin;// = (DATATYPEIN*)malloc(sizeX*sizeY*(sizeZ)*sizeof(DATATYPEIN));
-	delete []volout;// = (DATATYPEOUT*)malloc(sizeX*sizeY*(sizeZ)*sizeof(DATATYPEOUT));
-	delete []volIndex;// = (int*)malloc(sizeX*sizeY*sizeZ*sizeof(int));
+	delete []infilename;
+	delete []outfilename;
+	free(volin);// = (DATATYPEIN*)malloc(sizeX*sizeY*(sizeZ)*sizeof(DATATYPEIN));
+	free(volout);// = (DATATYPEOUT*)malloc(sizeX*sizeY*(sizeZ)*sizeof(DATATYPEOUT));
+	free(volIndex);// = (int*)malloc(sizeX*sizeY*sizeZ*sizeof(int));
 	printf("Done \n");
 	return 0;
 }
@@ -201,6 +207,7 @@ void push (Position pos)
 	temp->next = stack;
 	stack = temp;
 	stacktop ++;
+	// delete temp; // added by xiao     ?????? why ?
 }
 
 Position pop (void)
