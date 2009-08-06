@@ -1210,6 +1210,21 @@ int NuclearSegmentation::Merge(vector<int> ids)
 	editsNotSaved = true;
 	return newID;
 }
+//this is used when we apply merging on the initial segmentation
+int NuclearSegmentation::MergeInit(ftk::Object::Point P1, ftk::Object::Point P2)
+{
+	//if no label (segmentation) or no data image is available then return
+	if(!labelImage || !dataImage)
+	{
+		errorMessage = "label image or data image doesn't exist";			
+		return 0;
+	}	
+	
+	//Apply the splitting
+	int id_ok = NucleusSeg->MergeInit(P1, P2);
+		
+	return id_ok;
+}
 
 bool NuclearSegmentation::Delete(vector<int> ids)
 {
@@ -1234,6 +1249,20 @@ bool NuclearSegmentation::Delete(vector<int> ids)
 
 	editsNotSaved = true;
 	return true;
+}
+bool NuclearSegmentation::DeleteInit(ftk::Object::Point P1)
+{
+	//if no label (segmentation) or no data image is available then return
+	if(!labelImage || !dataImage)
+	{
+		errorMessage = "label image or data image doesn't exist";			
+		return false;
+	}	
+	
+	//Apply the splitting
+	bool ids_ok = NucleusSeg->DeleteInit(P1);
+		
+	return ids_ok;
 }
 
 ftk::Object NuclearSegmentation::GetNewObject(int id, IntrinsicFeatures *features )
@@ -2205,3 +2234,4 @@ vector<Seed> NuclearSegmentation::getSeeds()
 	return NucleusSeg->getSeedsList();
 }
 }
+

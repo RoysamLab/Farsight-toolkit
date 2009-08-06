@@ -1158,7 +1158,233 @@ int yousef_nucleus_seg::readFromIDLFormat(std::string fileName)
   return 1;
 }
 
-std::vector< int > yousef_nucleus_seg::SplitInit(ftk::Object::Point P1, ftk::Object::Point P2)
+int yousef_nucleus_seg::MergeInit(ftk::Object::Point P1, ftk::Object::Point P2)
+{
+	//
+	//if no label (segmentation) is available then return
+	if(!clustImagePtr)
+	{
+		cerr<<"Run initial segmentation first"<<endl;				
+		return 0;
+	}
+	//Make sure the two points are inside two different cells
+	int id1 = clustImagePtr[(P1.z*numRows*numColumns)+(P1.y*numColumns)+P1.x];
+	int id2 = clustImagePtr[(P2.z*numRows*numColumns)+(P2.y*numColumns)+P2.x];
+	if(id1 == id2)
+	{
+		std::cerr<<"Can't use two points inside the same cell for merging"<<std::endl;
+		return 0;
+	}
+
+	
+	//Also, we have to make sure that we are trying to merge two adjacent nuclei
+	//First, get the bounding boxes
+	std::vector< ftk::Object::Point > BOX1 = getObjectBoundingBox(id1, 1);
+	ftk::Object::Point bBox1 = BOX1.at(0);
+	ftk::Object::Point bBox2 = BOX1.at(1);
+	std::vector< ftk::Object::Point > BOX2 = getObjectBoundingBox(id2, 1);
+	ftk::Object::Point bBox3 = BOX2.at(0);
+	ftk::Object::Point bBox4 = BOX2.at(1);
+	
+	//then, go over all the points of the first cell and see if any of its neighbor points belongs to the other cell
+	int adj = 0;
+	if(bBox1.y == 0)
+		bBox1.y = 1;
+	if(bBox2.y == numRows-1)
+		bBox2.y = numRows-2;
+	if(bBox1.x == 0)
+		bBox1.x = 1;
+	if(bBox2.x == numColumns-1)
+		bBox2.x = numColumns-2;
+	if(bBox1.z == 0)
+		bBox1.z = 1;
+	if(bBox2.z == numStacks-1)
+		bBox2.z = numStacks-2;
+	for( int i=bBox1.y; i<=bBox2.y; i++)
+	{
+		for( int j=bBox1.x; j<=bBox2.x; j++)
+		{
+			for( int k=bBox1.z; k<=bBox2.z; k++)
+			{
+				int pix = clustImagePtr[(k*numRows*numColumns)+(i*numColumns)+j];
+				if(pix != id1)
+					continue;
+				for( int si=i-1; si<=i+1; si++)
+				{
+					for( int sj=j-1; sj<=j+1; sj++)
+					{
+						for( int sk=k-1; sk<=k+1; sk++)
+						{
+							if(clustImagePtr[(sk*numRows*numColumns)+(si*numColumns)+sj]==id2)
+							{
+								adj = 1;
+								break;
+							}
+						}
+					}
+				}
+				
+			}
+		}
+	}
+
+	if(adj == 0)
+	{
+		std::cerr<<"The two cells need to be adjacent in order to merge them"<<std::endl;
+	}
+	//Update the initial segmentation image	
+	int min_x = min(bBox1.x, bBox3.x);
+	int min_y = min(bBox1.y, bBox3.y);
+	int min_z = min(bBox1.z, bBox3.z);
+	int max_x = max(bBox2.x, bBox4.x);
+	int max_y = max(bBox2.y, bBox4.y);
+	int max_z = max(bBox2.z, bBox4.z);
+
+	std::vector <int> sz;
+	sz.push_back(max_x - min_x + 1);
+	sz.push_back(max_y - min_y + 1);
+	sz.push_back(max_z - min_z + 1);
+
+	//these will be needed to get the center of the new cell
+	double med_x = 0.0;
+	double med_y = 0.0;
+	double med_z = 0.0;
+	int id1_count = 0;
+	int id2_count = 0;
+	for( int i=min_y; i<=max_y; i++)
+	{
+		for( int j=min_x; j<=max_x; j++)
+		{
+			for( int k=min_z; k<=max_z; k++)
+			{
+				int pix = clustImagePtr[(k*numRows*numColumns)+(i*numColumns)+j];
+				if(pix == id1)
+				{
+					id1_count++;
+					med_x +=j;					
+					med_y +=i;					
+					med_z +=k;
+				}
+				else if(pix == id2)
+				{
+					id2_count++;
+					med_x +=j;					
+					med_y +=i;					
+					med_z +=k;
+					clustImagePtr[(k*numRows*numColumns)+(i*numColumns)+j] = id1;
+				}
+			}
+		}
+	}
+	med_x /=(id1_count+id2_count);
+	med_y /=(id1_count+id2_count);
+	med_z /=(id1_count+id2_count);
+
+	
+
+	//get the indexes of the center with respect to the begining of the bounding box of the new cell
+	int ind1 = ((med_z- min_z)*sz[0]*sz[1]) + ((med_y - min_y)*sz[0]) + (med_x - min_x);	
+
+	
+	//create a new itk images with the same size as the bounding box	 	 
+	typedef    float     InputPixelType;
+	typedef itk::Image< InputPixelType,  3 >   InputImageType;
+	InputImageType::Pointer sub_im1;
+	sub_im1 = InputImageType::New();	
+	InputImageType::PointType origin;
+    origin[0] = 0.; 
+    origin[1] = 0.;    
+	origin[2] = 0.;    
+    sub_im1->SetOrigin( origin );
+
+    InputImageType::IndexType start;
+    start[0] =   0;  // first index on X
+    start[1] =   0;  // first index on Y    
+	start[2] =   0;  // first index on Z    
+    InputImageType::SizeType  size;
+    size[0]  = sz[0];  // size along X
+    size[1]  = sz[1];  // size along Y
+	size[2]  = sz[2];  // size along Z
+  
+    InputImageType::RegionType rgn;
+    rgn.SetSize( size );
+    rgn.SetIndex( start );
+    
+    sub_im1->SetRegions( rgn );
+    sub_im1->Allocate();
+    sub_im1->FillBuffer(0);
+	sub_im1->Update();	
+	
+	//set all the points in this image to zero except for the center point
+	typedef itk::ImageRegionIteratorWithIndex< InputImageType > IteratorType;
+	IteratorType iterator1(sub_im1,sub_im1->GetRequestedRegion());
+			
+	for(int i=0; i<sz[0]*sz[1]*sz[2]; i++)
+	{				
+		if(i==ind1)
+			iterator1.Set(255.0);
+		else
+			iterator1.Set(0.0);		
+				
+		++iterator1;			
+	}
+	
+
+	//compute the distance transforms of that binary itk image
+	typedef    float     OutputPixelType;
+	typedef itk::Image< OutputPixelType, 3 >   OutputImageType;
+	typedef itk::DanielssonDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;
+	DTFilter::Pointer dt_obj1= DTFilter::New() ;
+	dt_obj1->UseImageSpacingOn();
+	dt_obj1->SetInput(sub_im1) ;
+	
+	try{
+		dt_obj1->Update() ;
+	}
+	catch( itk::ExceptionObject & err ){
+		std::cerr << "Error calculating distance transform: " << err << endl ;
+	}
+	
+	//get the max distance so that you can invert the distance map
+	IteratorType iterator3(dt_obj1->GetOutput(),dt_obj1->GetOutput()->GetRequestedRegion());
+	int mx1 = 0;
+	for(int k=min_z; k<=max_z; k++)
+	{
+		for(int i=min_y; i<=max_y; i++)
+		{			
+			for(int j=min_x; j<=max_x; j++)
+			{
+				int d1 = (int) fabs(iterator3.Get());	 
+
+				if(d1>mx1)
+					mx1 = d1;			
+				++iterator3;
+			}
+		}
+	}
+	iterator3.GoToBegin();
+	for(int k=min_z; k<=max_z; k++)
+	{
+		for(int i=min_y; i<=max_y; i++)
+		{			
+			for(int j=min_x; j<=max_x; j++)
+			{
+				int d1 = (int) fabs(iterator3.Get());	 					
+				++iterator3;
+				
+				int pix = clustImagePtr[(k*numRows*numColumns)+(i*numColumns)+j];
+
+				if(pix == id1)
+					logImagePtr[(k*numRows*numColumns)+(i*numColumns)+j]= mx1-d1;				
+			}
+		}
+	}	
+	
+	//return the id of the resulting cell after merging
+	return id1;
+}
+
+vector< int > yousef_nucleus_seg::SplitInit(ftk::Object::Point P1, ftk::Object::Point P2)
 {
 	//
 	//if no label (segmentation) or no data image is available then return
@@ -1350,6 +1576,34 @@ std::vector< int > yousef_nucleus_seg::SplitInit(ftk::Object::Point P1, ftk::Obj
 	ids_ok.push_back(id1);
 
 	return ids_ok;
+}
+
+//this is applied on the initial segmentatio, and it also updates the binary image
+bool yousef_nucleus_seg::DeleteInit(ftk::Object::Point P1)
+{
+	if(!clustImagePtr)
+	{
+		cerr<<"Run initial segmentation first"<<endl;		
+		return false;
+	}
+	//Check if the two points inside the same cell
+	int id = clustImagePtr[(P1.z*numRows*numColumns)+(P1.y*numColumns)+P1.x];
+	for (int i=0; i<numRows; i++)
+	{
+		for(int j=0; j<numColumns; j++)
+		{
+			for( int k=0; k<numStacks; k++)
+			{
+				int pix = clustImagePtr[(k*numRows*numColumns)+(i*numColumns)+j];
+				if(pix == id)
+				{
+					clustImagePtr[(k*numRows*numColumns)+(i*numColumns)+j] = 0;
+					binImagePtr[(k*numRows*numColumns)+(i*numColumns)+j] = 0;
+				}
+			}
+		}
+	}
+	return true;
 }
 
 std::vector< ftk::Object::Point > yousef_nucleus_seg::getObjectBoundingBox(int id, int Int_Fin)

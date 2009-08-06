@@ -116,6 +116,8 @@ public:
 
 	//
 	std::vector< int > SplitInit(ftk::Object::Point P1, ftk::Object::Point P2);
+	int MergeInit(ftk::Object::Point P1, ftk::Object::Point P2);
+	bool DeleteInit(ftk::Object::Point P1);
 	int getMaxID(int);
 
 private:

@@ -1492,8 +1492,12 @@ if(this->mode==2)
 		p.x = pointz[0];
 		p.y = pointz[1];
 		p.z = pointz[2];	
-		tobeDeleted.push_back(p);
-		//Yousef_Code_Delete_Seed
+		tobeDeleted.push_back(p);	
+	}
+	//Yousef_Code_Delete_Seeds	
+	for(int i=0; i<Id; i++)
+	{
+		bool isOK = segPtr->DeleteInit(tobeDeleted.at(i));		
 	}
 
 	vtkDataArray* points2del = this->point2->GetData();    
@@ -1554,7 +1558,7 @@ if(this->mode==3)
 }
 
 
-//Delete the seeds from the screen
+//Merging
 if(this->mode==4)
 { 
 	this->Glyph->SetScaleFactor(this->Glyph->GetScaleFactor()+0.0001);//to rerender immediately
@@ -1570,10 +1574,17 @@ if(this->mode==4)
 		p.y = pointz[1];
 		p.z = pointz[2];	
 		tobeMerged.push_back(p);
-		//Yousef_Code_Merge_Seeds
-		//I will work on it later... (Yousef)
+		
+		
 	}
-
+	//Yousef_Code_Merge_Seeds
+	//Assume that each pair of points (in order) represent two seeds of two cells that we need to merge
+	for(int i=0; i<Id; i+=2)
+	{
+		int newID = segPtr->MergeInit(tobeMerged.at(i), tobeMerged.at(i+1));
+		//newID will be used later for recording the edits
+		//also, I will be returning the coordinates of the new seed resutling from merging, and this will be needed to update the seed viwer
+	}
 	vtkDataArray* points2merge = this->point2->GetData();    
 	//Remove the glyph		
 	for(int i =0 ;i<Id;i++)
