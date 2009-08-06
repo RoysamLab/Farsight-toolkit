@@ -259,6 +259,8 @@ int main (int argc, char *argv[])
 
    meanCurvature = (meanCurvature<0 ? 0:meanCurvature);
    highCurvatureThreshold =(meanCurvature>10 ? 10:meanCurvature);  //the threshold is a value between [0,10].
+
+   //highCurvatureThreshold=0;
    //highCurvatureThreshold =10;//;
 
    printf("mean =%f The estimated  good threshold of highCurvatureThreshold %f \n",meanCurvature, highCurvatureThreshold );
@@ -292,7 +294,7 @@ int main (int argc, char *argv[])
 	     iidx = (k+1)*slsz + j*L + i;
 	     if (curv[iidx]> curv[idx]) continue;
 
-		 if (curv[idx] != 0)  {
+		 if (curv[idx] != 0 && numSeeds <L*M*N/1000)  {
 	          //fprintf(fout,"%d %d %d %f %f\n", i, j, k, curv[idx], curv[idx]);
 		    seeds[numSeeds].x =(float)i;
             seeds[numSeeds].y =(float)j;
@@ -300,6 +302,7 @@ int main (int argc, char *argv[])
 		    fprintf(CurveSeedfout,"%d %d %d\n", i, j, k);
 		    numSeeds++;
 		 }
+		
   }
 //------------------------------------------end compute seeds with higher curvature ----------------------// 
   printf("Num of seeds with higher curvature  is %ld\n", numSeeds);
@@ -323,8 +326,9 @@ int main (int argc, char *argv[])
   //printf(" I am here  FFFF %d",  idx);
 
   int numBoundSeeds = numSeeds;
-  //float Ngrid = 10;
-/*
+  float Ngrid = 8;
+  int SemiNgrid= (int)Ngrid/2;
+
   double totalVecLength;
 
   
@@ -421,14 +425,18 @@ int main (int argc, char *argv[])
 		}
 		
      	
-	    for (kk = 0; kk<Ngrid; kk++)
-		  for (jj = 0; jj<Ngrid; jj++)
-		    for (ii = 0; ii<Ngrid; ii++) 
+	    //for (kk = 0; kk<Ngrid; kk++)
+		//  for (jj = 0; jj<Ngrid; jj++)
+		 //   for (ii = 0; ii<Ngrid; ii++) 
+
+		for (kk = SemiNgrid; kk<Ngrid; kk++)
+		  for (jj = SemiNgrid; jj<Ngrid; jj++)
+		    for (ii = SemiNgrid; ii<Ngrid; ii++)
 			{
               
 		        OutForce=interpolation(i+ii/Ngrid, j+jj/Ngrid, k+kk/Ngrid, L, M, N, Iu,Iv,Iw);
 				
-			    if( OutForce < vectorMagnitude) {   //<0.15
+			    if( OutForce < vectorMagnitude && NumCritPoints < 2*numBoundSeeds) {   //<0.15
 				
 				seeds[numSeeds].x= i + ii/Ngrid;
 				seeds[numSeeds].y= j + jj/Ngrid;
@@ -444,7 +452,7 @@ int main (int argc, char *argv[])
     // numSeeds++;
     // NumCritPoints++;
 }// end outer for 
-*/
+
 //-------------------------------------------------------------------------------------------//
  
 //printf("Number of critical points is: %d, and number of seeds %d\n", NumCritPoints, numSeeds);
@@ -498,7 +506,7 @@ int main (int argc, char *argv[])
 		     fprintf(fout,"%d %d %d %d %d\n",(int)Startpos.x,(int)Startpos.y,(int)Startpos.z, idxSeeds, idxSeeds);
 		   #endif
 		}
-	    else {
+	else {
 		   #ifdef FLOAT_SKELETON
 	             fprintf(fout,"%f %f %f %d\n", Startpos.x, Startpos.y, Startpos.z, 1);
 		    #else
@@ -602,6 +610,49 @@ double interpolation(float x, float y, float z, int sizx, int sizy, int sizz, fl
 	slsz=sizy*sizx;
 
 	float tempIu=0, tempIv=0,tempIw=0;
+	
+	/*
+	long NeigberPosition;   
+	NeigberPosition=Intz*slsz + Inty*sizx + Intx;
+    
+	float a[8];
+	a[0] = (1-alpha)*(1-beta)*(1-gamma);
+	a[1] = (1-alpha)*(1-beta)*gamma;
+	a[2] = (1-alpha)*beta*(1-gamma);
+	a[3] = alpha*(1-beta)*(1-gamma);
+	a[4] = alpha*(1-beta)*gamma;
+	a[5] = alpha*beta*(1-gamma);
+	a[6] = (1-alpha)*beta*gamma;
+	a[7] = alpha*beta*gamma;
+
+	tempIu=Iu[NeigberPosition]*a[0]
+			+Iu[NeigberPosition+slsz]*a[1]
+			+Iu[NeigberPosition+sizx]*a[2]
+			+Iu[NeigberPosition+1]*a[3]
+			+Iu[NeigberPosition+slsz+1]*a[4]
+			+Iu[NeigberPosition+sizx+1]*a[5]
+			+Iu[NeigberPosition+slsz+sizx]*a[6]
+			+Iu[NeigberPosition+slsz+sizx+1]*a[7];
+
+	
+	tempIv=Iv[NeigberPosition]*a[0]
+			+Iv[NeigberPosition+slsz]*a[1]
+			+Iv[NeigberPosition+sizx]*a[2]
+			+Iv[NeigberPosition+1]*a[3]
+			+Iv[NeigberPosition+slsz+1]*a[4]
+			+Iv[NeigberPosition+sizx+1]*a[5]
+			+Iv[NeigberPosition+slsz+sizx]*a[6]
+			+Iv[NeigberPosition+slsz+sizx+1]*a[7];	
+
+    tempIw=Iw[NeigberPosition]*a[0]
+			+Iw[NeigberPosition+slsz]*a[1]
+			+Iw[NeigberPosition+sizx]*a[2]
+			+Iw[NeigberPosition+1]*a[3]
+			+Iw[NeigberPosition+slsz+1]*a[4]
+			+Iw[NeigberPosition+sizx+1]*a[5]
+			+Iw[NeigberPosition+slsz+sizx]*a[6]
+			+Iw[NeigberPosition+slsz+sizx+1]*a[7];	
+	*/
 
 	//printf("  %f  ", Iu[Intz*slsz + Inty*sizx + Intx]);
 
@@ -631,9 +682,10 @@ double interpolation(float x, float y, float z, int sizx, int sizy, int sizz, fl
 			+Iw[Intz*slsz + (Inty+1)*sizx + (Intx+1)]*alpha*beta*(1-gamma)
 			+Iw[(Intz+1)*slsz + (Inty+1)*sizx + Intx]*(1-alpha)*beta*gamma
 			+Iw[(Intz+1)*slsz + (Inty+1)*sizx + (Intx+1)]*alpha*beta*gamma;
-		
+	
    
-	    return  (sqrt(tempIu*tempIu+tempIw*tempIw+tempIv*tempIv));
+	    //return  (sqrt(tempIu*tempIu+tempIw*tempIw+tempIv*tempIv));
+	      return abs(tempIu)+abs(tempIv)+abs(tempIw);  // because sqrt() is time consuming;
 		
-		//return 3; 
+		
     }
