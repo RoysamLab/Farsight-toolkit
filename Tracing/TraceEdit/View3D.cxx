@@ -80,7 +80,9 @@ limitations under the License.
 
 View3D::View3D(int argc, char **argv)
 {
+  unsigned int sz = 10;
   this->tobj = new TraceObject;
+  this->undoBuff = new bufferType(sz);
   int num_loaded = 0;
   this->Volume=0;
   this->somaopacity = 1.0;
@@ -116,6 +118,16 @@ View3D::View3D(int argc, char **argv)
     num_loaded++;
     }
 
+  //The copy constructor does not appear to be working, the program segfaults on that line, code should work, if fixed
+#if 0
+  std::string orig = "Original";
+  TraceObject newTobj(*(this->tobj));
+  std::pair<std::string, TraceObject> newPair;
+  newPair.first = orig;
+  newPair.second = newTobj;
+  undoBuff->Add(newPair);
+#endif
+  
 this->QVTK = 0;
 this->tobj->gapTol = .5;
 this->tobj->gapMax = 10;
@@ -200,6 +212,8 @@ void View3D::CreateGUIObjects()
   this->WriteButton = new QPushButton("&write to .swc file", this->CentralWidget);
   this->SettingsButton = new QPushButton("&edit settings", this->CentralWidget);
   this->AutomateButton = new QPushButton("&Automatic Selection", this->CentralWidget);
+  this->UndoButton = new QPushButton("&Undo", this->CentralWidget);
+  this->RedoButton = new QPushButton("&Redo", this->CentralWidget);
 
   //Setup the tolerance settings editing window
   this->SettingsWidget = new QWidget();
@@ -277,6 +291,8 @@ void View3D::CreateGUIObjects()
     SLOT(ApplyNewSettings()));
   connect(this->CancelSettingsButton, SIGNAL(clicked()), this,
     SLOT(HideSettingsWindow()));
+  connect(this->UndoButton, SIGNAL(clicked()), this, SLOT(UndoAction()));
+  connect(this->RedoButton, SIGNAL(clicked()), this, SLOT(RedoAction()));
 
   //Set up connections for the Load Soma Data window
   connect(this->OpenSomaButton, SIGNAL(clicked()), this, SLOT(GetSomaFile()));
@@ -291,6 +307,7 @@ void View3D::CreateGUIObjects()
   //Set up connections for the Soma Settings window
   connect(this->CancelSomaSettingsButton, SIGNAL(clicked()), this, SLOT(HideSomaSettingsWindow()));
   connect(this->ApplySomaSettingsButton, SIGNAL(clicked()), this, SLOT(ApplySomaSettings()));
+
 }
 
 void View3D::CreateLayout()
@@ -306,6 +323,8 @@ void View3D::CreateLayout()
   buttonLayout->addWidget(this->FlipButton, 7, 0);
   buttonLayout->addWidget(this->SettingsButton, 9, 0);
   buttonLayout->addWidget(this->WriteButton, 10, 0);
+  buttonLayout->addWidget(this->UndoButton, 11, 0);
+  buttonLayout->addWidget(this->RedoButton, 12, 0);
   buttonLayout->setSpacing(10);
   QGridLayout *viewerLayout = new QGridLayout(this->CentralWidget);
   viewerLayout->addWidget(this->QVTK, 0, 1);
@@ -756,6 +775,16 @@ void View3D::SLine()
   { 
   case QMessageBox::Yes:
   {
+//Yet again, code should work, but the copy constructor doesn't appear to
+#if 0
+	TraceObject newObj(*(this->tobj));
+    std::string smallLines = "Small Lines";
+    std::pair<std::string, TraceObject> history;
+    history.first = smallLines;
+    history.second = currentState;
+	undoBuff->Add(history);
+#endif 
+
     for (i=0;i<numLines;i++)
     { //std::cout << "Deleted line:" << i<< std::endl;          
       //this->tobj->SmallLines[i]->Getstats();
@@ -1571,6 +1600,42 @@ void View3D::AddVolumeSliders()
   sliderWidget2->EnabledOn();
 
 }
+ 
+void View3D::UndoAction()
+{
+	
+	if(!(this->undoBuff->UndoOrRedo(0)))
+	{
+		return;
+	}
+	else
+	{
+		std::pair<std::string, TraceObject> undostate = this->undoBuff->getState();
+		TraceObject newstate = undostate.second;
+		*(this->tobj) = newstate;
+		Rerender();
+	}
+	
+}
+
+
+void View3D::RedoAction()
+{
+	/*
+	if(!(this->undoBuff->UndoOrRedo(1)))
+	{
+		return;
+	}
+	else
+	{
+		std::pair<std::string, TraceObject> undostate = this->undoBuff->getState();
+		TraceObject newstate = undostate.second;
+		*(this->tobj) = newstate;
+		Rerender();
+	}
+	*/
+}
+
 void View3D::readImg(std::string sourceFile)
 {
   

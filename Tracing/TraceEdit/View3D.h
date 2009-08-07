@@ -17,6 +17,8 @@ limitations under the License.
 #define VIEW3D_H_
 
 #include "vtkSmartPointer.h"
+//#include "UndoBuffer.h"
+#include "undobuff.h"
 #include <stdio.h>
 #include <string>
 #include <QtGui>
@@ -128,7 +130,11 @@ public slots:
 	void HideSomaSettingsWindow();
 	void ApplySomaSettings();
 	//void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
-  void DereferenceGapsPlotView();
+    void DereferenceGapsPlotView();
+
+	void UndoAction();
+	void RedoAction();
+
 
 protected slots:
 	void updateSelectionHighlights();
@@ -138,6 +144,10 @@ protected:
 	void Rerender();
 
 private:
+
+	//Declares an undoBuffer
+	typedef undoBuffer<std::pair<std::string, TraceObject>> bufferType;
+	bufferType *undoBuff;
 
 	int smallLine;
 	float lineWidth;
@@ -163,6 +173,9 @@ private:
 	QPushButton *WriteButton;
 	QPushButton *SettingsButton;
 	QPushButton *AutomateButton;
+
+	QPushButton *UndoButton;
+	QPushButton *RedoButton;
 
   //qt model view objects
   MergeModel *GapModel;
