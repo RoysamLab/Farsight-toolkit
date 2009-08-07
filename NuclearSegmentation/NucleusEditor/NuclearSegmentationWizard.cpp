@@ -467,8 +467,8 @@ ClusterPage::ClusterPage(QWidget *parent)
 
  void ClusterPage::ViewEditor()
 {
- 	
-	seeds2->show();
+		seeds2->show();
+
  
 }
 
@@ -523,7 +523,7 @@ void Seed3D::GetImage(ftk::NuclearSegmentation *seg,vector<Seed> seeds) //modifi
     volumeProperty->SetColor(colorTransferFunction);
     volumeProperty->SetScalarOpacity(opacityTransferFunction);
     volumeProperty->SetInterpolationTypeToLinear();
-    vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper = vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
+    vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper    = vtkSmartPointer<	vtkOpenGLVolumeTextureMapper3D  >::New();
     volumeMapper->SetSampleDistance(0.75);
     volumeMapper->SetInput(vtkim);
 
@@ -533,8 +533,13 @@ void Seed3D::GetImage(ftk::NuclearSegmentation *seg,vector<Seed> seeds) //modifi
     volume->SetMapper(volumeMapper);
     volume->SetProperty(volumeProperty);
     volume->SetPickable(0);
-    this->Volume = volume;
-
+	volume->SetOrigin(volume->GetCenter());
+	//this->Renderer1->AddActor(volume);
+	volume->RotateWXYZ(180,1,0,0);
+	//volume->RotateWXYZ(180,0,0,1);
+	//volume->RotateWXYZ(180,0,1,0);
+	this->Volume = volume;
+	
 	
 // // Create seeds (spheres) only at coordinates specified by the text file.
 // // I also create Red (Markedpoints) and Green Spheres (Markedpoints2add) initially and delete them.
@@ -715,13 +720,16 @@ void Seed3D::GetImage(ftk::NuclearSegmentation *seg,vector<Seed> seeds) //modifi
   im_mapper->SetInput(reslice->GetOutput());
   vtkActor *imActor = vtkActor::New();
   imActor->SetMapper(im_mapper);
+  imActor->RotateWXYZ(180,0,0,1);
+  imActor->RotateWXYZ(180,0,1,0); 	
   
   this->Renderer1->AddActor(imActor);
   this->QVTK1->GetRenderWindow()->Render();
   this->Renderer1->ResetCamera();	
   this->imActor = imActor;
   this->imActor->RotateWXYZ(180,0,0,1);
-
+  this->imActor->RotateWXYZ(180,0,1,0);		
+	
   static double sagittalElements[16] = { 0, 0,-1, 0, 1, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 1 }; 
   vtkMatrix4x4 *resliceAxes1 = vtkMatrix4x4::New();
   resliceAxes->DeepCopy(sagittalElements);
@@ -740,7 +748,10 @@ void Seed3D::GetImage(ftk::NuclearSegmentation *seg,vector<Seed> seeds) //modifi
   im_mapper1->SetInput(reslice1->GetOutput());
   vtkActor *imActor1 = vtkActor::New();
   imActor1->SetMapper(im_mapper1);
-  
+  imActor1->RotateWXYZ(180,0,0,1);
+  imActor1->RotateWXYZ(180,0,1,0);
+	
+	
   this->Renderer2->AddActor(imActor1);
   this->QVTK2->GetRenderWindow()->Render();
   this->Renderer2->ResetCamera();
@@ -891,6 +902,14 @@ void Seed3D::GetImage(ftk::NuclearSegmentation *seg,vector<Seed> seeds) //modifi
   this->sliderWidget3->EnabledOn();
   
   this->iRender = 1;
+	
+	double initialPosition[3];
+	
+	initialPosition[0] = (double)origin[0];
+	initialPosition[1] = (double)origin[3];
+	initialPosition[2] = (double)origin[5];
+	
+	this->handle->SetWorldPosition(initialPosition);
   this->QVTK->GetRenderWindow()->Render();   
   this->QVTK1->GetRenderWindow()->Render();   
   this->QVTK2->GetRenderWindow()->Render(); 
@@ -1434,6 +1453,11 @@ this->mode=0;
 }
 }
 
+
+//****************
+
+
+
 void Seed3D::Apply()
 {
 //Put added seeds in a vector for Yousef
@@ -1611,6 +1635,8 @@ if(this->MarkedPoints2add.size()!=0 && this->stateDelete){
 this->msgBox = new QMessageBox(this);
 if(this->stateAdd)
 this->msgBox->setText("You have marked seeds for addition. Do you want to apply the changes?");
+if(this->stateSplit)
+this->msgBox->setText("You have marked seeds for splitting nuclei. Do you want to apply the changes?");
 this->msgBox->setStandardButtons(QMessageBox::Yes | QMessageBox::No);
 this->msgBox->setDefaultButton(QMessageBox::Yes);
 int ret = this->msgBox->exec();
@@ -1620,9 +1646,13 @@ switch (ret) {
        // Save was clicked
    if(this->stateAdd)
    this->mode =1;
+   if(this->stateSplit)
+   this->mode =3;
    Apply();
    if(this->stateAdd)
    this->AddBox->setCheckState((Qt::CheckState)0);
+   if(this->stateSplit)
+   this->SplitBox->setCheckState((Qt::CheckState)0);
    this->mode =2;
    this->DeleteBox->setCheckState((Qt::CheckState)2); 
    break;
@@ -1666,7 +1696,7 @@ switch (ret) {
        //AddSeed(); 
 	   this->DeleteBox->setCheckState((Qt::CheckState)0);
 	   this->UndoDelBox->setCheckState((Qt::CheckState)0);	
-           this->MergeBox->setCheckState((Qt::CheckState)2);
+	   this->MergeBox->setCheckState((Qt::CheckState)2);
            this->mode =4;
 	   break;
                             }
@@ -1768,7 +1798,15 @@ void Seed3D::DeleteObjects(){
   this->QVTK1->GetRenderWindow()->Render();   
   this->QVTK2->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor(this->imActor1);
   this->imActor1->Delete();
-  this->QVTK2->GetRenderWindow()->Render();    
+  this->QVTK2->GetRenderWindow()->Render(); 
+	
+	
+    this->UndoDelBox->setCheckState((Qt::CheckState)0);	
+	this->DeleteBox->setCheckState((Qt::CheckState)0);	
+	this->SplitBox->setCheckState((Qt::CheckState)0);	
+	this->MergeBox->setCheckState((Qt::CheckState)0);	
+	this->AddBox->setCheckState((Qt::CheckState)0);	
+	
 }
 
 vector <ftk::Object::Point> Seed3D::GetSeedpts(vector<Seed> seeds)
@@ -1959,7 +1997,7 @@ this->msgBox = new QMessageBox(this);
 if(this->stateAdd)
 this->msgBox->setText("You have seeds marked for addition. Do you want to apply the changes?");
 if(this->stateSplit)
-this->msgBox->setText("You have seeds marked for splitting. Do you want to apply the changes?");
+this->msgBox->setText("You have marked seeds for splitting nuclei. Do you want to apply the changes?");
 this->msgBox->setStandardButtons(QMessageBox::Yes | QMessageBox::No);
 this->msgBox->setDefaultButton(QMessageBox::Yes);
 int ret = this->msgBox->exec();
