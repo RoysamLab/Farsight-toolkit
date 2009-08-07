@@ -1322,7 +1322,7 @@ void Seed3D::PlaceSeed()
     {
 	  //double* p1 = this->handle1->GetWorldPosition();
     //double* p2 = this->handle2->GetWorldPosition();       
-	  double* p3 = this->handle->GetWorldPosition();       
+	    double* p3 = this->handle->GetWorldPosition();       
 		//double* bounds = this->Volume->GetBounds();
 		float placePoint[3] = {(float)(int)p3[0],(float)(int)p3[1],(float)(int)p3[2]};
         this->point3->InsertNextPoint(placePoint);
@@ -1609,9 +1609,22 @@ if(this->mode==4)
 		int newid = 0; //will be passed by reference and will hold the id of the cell resulted from merging
 		ftk::Object::Point newSeed = segPtr->MergeInit(tobeMerged.at(i), tobeMerged.at(i+1), &newid);
 		mergingSeeds.push_back(newSeed);
-		
-		//newid will be used later for recording the edits		
+		//newid will be used later for recording the edits				
+		float placePoint[3] = {(float)(newSeed.x),(float)(newSeed.y),(float)(newSeed.z)};
+		this->point1->InsertNextPoint(placePoint);
+		this->dup_points.push_back(newSeed);
 	}
+
+	//Add it to the relevant datastructures to make it appear on screen.
+	this->polydata1->SetPoints(this->point1);
+	this->Glyph->SetInput(this->polydata1);
+	this->SphereMapper->SetInput(this->Glyph->GetOutput());
+	this->Glyph->SetScaleFactor(this->Glyph->GetScaleFactor()+0.0001);//to rerender immediately
+	this->QVTK->GetRenderWindow()->Render();
+		
+
+	//Remove the Red glyphs before apply ! 
+	
 	vtkDataArray* points2merge = this->point2->GetData();    
 	//Remove the glyph		
 	for(int i =0 ;i<Id;i++)
@@ -1733,6 +1746,9 @@ this->UndoDelBox->setCheckState((Qt::CheckState)this->stateUndoDel);
 if(this->stateUndoDel){
 if(this->stateAdd) { this->AddBox->setCheckState((Qt::CheckState)0); }
 if(this->stateDelete){ this->DeleteBox->setCheckState((Qt::CheckState)0);}
+if(this->stateMerge) { this->MergeBox->setCheckState((Qt::CheckState)0); }
+if(this->stateSplit){ this->SplitBox->setCheckState((Qt::CheckState)0);}
+
 this->UndoDelBox->setCheckState((Qt::CheckState)2);
 this->stateUndoDel = this->UndoDelBox->checkState();
 this->mode = 5;
