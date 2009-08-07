@@ -1211,19 +1211,21 @@ int NuclearSegmentation::Merge(vector<int> ids)
 	return newID;
 }
 //this is used when we apply merging on the initial segmentation
-int NuclearSegmentation::MergeInit(ftk::Object::Point P1, ftk::Object::Point P2)
+ftk::Object::Point NuclearSegmentation::MergeInit(ftk::Object::Point P1, ftk::Object::Point P2, int* new_id)
 {
 	//if no label (segmentation) or no data image is available then return
 	if(!labelImage || !dataImage)
 	{
 		errorMessage = "label image or data image doesn't exist";			
-		return 0;
+		ftk::Object::Point err;
+		err.t = err.x = err.y = err.z = 0;
+		return err;
 	}	
 	
 	//Apply the splitting
-	int id_ok = NucleusSeg->MergeInit(P1, P2);
+	ftk::Object::Point newSeed = NucleusSeg->MergeInit(P1, P2, new_id);
 		
-	return id_ok;
+	return newSeed;
 }
 
 bool NuclearSegmentation::Delete(vector<int> ids)

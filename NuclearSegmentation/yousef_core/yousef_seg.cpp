@@ -1158,14 +1158,16 @@ int yousef_nucleus_seg::readFromIDLFormat(std::string fileName)
   return 1;
 }
 
-int yousef_nucleus_seg::MergeInit(ftk::Object::Point P1, ftk::Object::Point P2)
+ftk::Object::Point yousef_nucleus_seg::MergeInit(ftk::Object::Point P1, ftk::Object::Point P2, int* newID)
 {
 	//
 	//if no label (segmentation) is available then return
 	if(!clustImagePtr)
 	{
 		cerr<<"Run initial segmentation first"<<endl;				
-		return 0;
+		ftk::Object::Point err;
+		err.t = err.x = err.y = err.z = 0;
+		return err;
 	}
 	//Make sure the two points are inside two different cells
 	int id1 = clustImagePtr[(P1.z*numRows*numColumns)+(P1.y*numColumns)+P1.x];
@@ -1173,7 +1175,9 @@ int yousef_nucleus_seg::MergeInit(ftk::Object::Point P1, ftk::Object::Point P2)
 	if(id1 == id2)
 	{
 		std::cerr<<"Can't use two points inside the same cell for merging"<<std::endl;
-		return 0;
+		ftk::Object::Point err;
+		err.t = err.x = err.y = err.z = 0;
+		return err;
 	}
 
 	
@@ -1380,8 +1384,17 @@ int yousef_nucleus_seg::MergeInit(ftk::Object::Point P1, ftk::Object::Point P2)
 		}
 	}	
 	
-	//return the id of the resulting cell after merging
-	return id1;
+	//send back the id of the new cell after merging
+	newID[0] = id1;
+
+	//return the coordinates of the seed (center) of the new cell
+	ftk::Object::Point new_seed;
+	new_seed.t = 0;
+	new_seed.x = med_x;
+	new_seed.y = med_y;
+	new_seed.z = med_z;
+	
+	return new_seed;
 }
 
 vector< int > yousef_nucleus_seg::SplitInit(ftk::Object::Point P1, ftk::Object::Point P2)

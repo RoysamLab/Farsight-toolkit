@@ -1603,11 +1603,14 @@ if(this->mode==4)
 	}
 	//Yousef_Code_Merge_Seeds
 	//Assume that each pair of points (in order) represent two seeds of two cells that we need to merge
+	std::vector< ftk::Object::Point > mergingSeeds;
 	for(int i=0; i<Id; i+=2)
 	{
-		int newID = segPtr->MergeInit(tobeMerged.at(i), tobeMerged.at(i+1));
-		//newID will be used later for recording the edits
-		//also, I will be returning the coordinates of the new seed resutling from merging, and this will be needed to update the seed viwer
+		int newid = 0; //will be passed by reference and will hold the id of the cell resulted from merging
+		ftk::Object::Point newSeed = segPtr->MergeInit(tobeMerged.at(i), tobeMerged.at(i+1), &newid);
+		mergingSeeds.push_back(newSeed);
+		
+		//newid will be used later for recording the edits		
 	}
 	vtkDataArray* points2merge = this->point2->GetData();    
 	//Remove the glyph		
