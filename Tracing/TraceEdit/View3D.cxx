@@ -591,7 +591,7 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
 		view->poly_line_data->Modified();
 	}
 	else
-	{	int size = view->tobj->Gaps.size();
+	{ //int size = view->tobj->Gaps.size();
 		int id = tline->GetId();
 		view->MergeGaps->SelectbyTraceID(id);
 	}

@@ -146,7 +146,7 @@ protected:
 private:
 
 	//Declares an undoBuffer
-	typedef undoBuffer<std::pair<std::string, TraceObject>> bufferType;
+	typedef undoBuffer<std::pair<std::string, TraceObject> > bufferType;
 	bufferType *undoBuff;
 
 	int smallLine;

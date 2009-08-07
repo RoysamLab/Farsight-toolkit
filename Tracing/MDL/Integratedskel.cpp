@@ -685,7 +685,5 @@ double interpolation(float x, float y, float z, int sizx, int sizy, int sizz, fl
 	
    
 	    //return  (sqrt(tempIu*tempIu+tempIw*tempIw+tempIv*tempIv));
-	      return abs(tempIu)+abs(tempIv)+abs(tempIw);  // because sqrt() is time consuming;
-		
-		
+	    return fabs(tempIu)+fabs(tempIv)+fabs(tempIw);  // because sqrt() is time consuming;
     }
