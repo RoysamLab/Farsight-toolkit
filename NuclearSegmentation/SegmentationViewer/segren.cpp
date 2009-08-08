@@ -582,12 +582,11 @@ int main(int argc, char *argv[])
 				renderPolyData(counter, scale, plyFiles);
 			}
 			else
-			{
+			{				
 				//Make a cache directory if one isn't already there	
 				MKDIR("cache");
-
-				//Append ouput string to original file name for colored images
-
+	
+				//Append ouput string to original file name for colored images			
 				outputFile.append("_out.tif");
 				
 				//Create relative address string for the colored images to be cached

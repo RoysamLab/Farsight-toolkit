@@ -1421,9 +1421,10 @@ bool NuclearSegmentation::RunGraphColoring(std::string labelname, std::string fi
 	unsigned short* labs_vals = static_cast<unsigned short*> (labelImage->GetDataPtr(0,0));
 	
 	//get the maximum label
+	std::cout<<"image size is "<<r<<"x"<<c<<"x"<<z<<std::endl;	
 	max_lab = 0;
 	for(int i=0; i<r-1; i++)
-    {        		
+        {        		
         for(int j=0; j<c-1; j++)
         {						
 			for(int k=0; k<z-1; k++)
@@ -1433,11 +1434,12 @@ bool NuclearSegmentation::RunGraphColoring(std::string labelname, std::string fi
 			}
 		}
 	}
+	std::cout<<"The maximum cell label is "<<max_lab<<std::endl;
 	  
         
     //Build the region adjacency graph    
-	std::cout<<"Building Region Adjacency Graph...";
-	RAG = (int **) malloc(max_lab*sizeof(int*));
+    std::cout<<"Building Region Adjacency Graph...";
+    RAG = (int **) malloc(max_lab*sizeof(int*));
     for(int i=0; i<max_lab; i++)
     {        
 		RAG[i] = (int *) malloc(max_lab*sizeof(int));
