@@ -24,7 +24,6 @@ limitations under the License.
 #include <iostream>
 #include <time.h>
 
-using namespace std;
 
 int main(int argc, char* argv[])
 {
@@ -35,12 +34,14 @@ int main(int argc, char* argv[])
 	}
 	clock_t startTimer = clock();
 	
+	std::cout<<"reading input image...";
 	//For 8-bit grayscale images only 
 	typedef itk::Image< unsigned char, 3 > OutputImageType;
 	typedef itk::ImageFileReader< OutputImageType > ReaderType;
 	ReaderType::Pointer reader = ReaderType::New();
 	reader->SetFileName (argv[1]);
 	reader->Update();	
+	std::cout<<"done"<<std::endl;
 	//read the input image into an ITK image
 	OutputImageType::Pointer img = reader->GetOutput();	
 	//get the image dimensions
