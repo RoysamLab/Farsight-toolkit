@@ -224,7 +224,6 @@ int detect_seeds(itk::SmartPointer<InputImageType> im, int r, int c, int z,const
   //
   laplacian->SetSigma(sigma);
  
-  
   //  Finally the pipeline is executed by invoking the \code{Update()} method.
   //
  try

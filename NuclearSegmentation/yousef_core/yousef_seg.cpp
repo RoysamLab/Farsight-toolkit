@@ -985,8 +985,7 @@ int yousef_nucleus_seg::getRelabeledImage(int *IM, int connectivity, int minSize
 		++iterator1;	
 	}
 	
-	typedef itk::ScalarConnectedComponentImageFilter< InputImageType, OutputImageType > FilterType;
-	//typedef itk::ConnectedComponentImageFilter< InputImageType, OutputImageType > FilterType;
+	typedef itk::ScalarConnectedComponentImageFilter< InputImageType, OutputImageType > FilterType;	
 	FilterType::Pointer filter = FilterType::New();
 	typedef itk::RelabelComponentImageFilter< OutputImageType, OutputImageType > RelabelType;
 	RelabelType::Pointer relabel = RelabelType::New();
@@ -995,7 +994,8 @@ int yousef_nucleus_seg::getRelabeledImage(int *IM, int connectivity, int minSize
 	{				
 		//Compute the labeled connected component image		
 		filter->SetInput (im);
-		filter->SetFullyConnected( connectivity );	
+		filter->SetFullyConnected( connectivity );			
+		filter->Update();
 		//use the connected component image as the input to the relabel component filter		
 		relabel->SetInput( filter->GetOutput() );
 	}
