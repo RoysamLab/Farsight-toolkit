@@ -541,6 +541,20 @@ void Seed3D::GetImage(ftk::NuclearSegmentation *seg,vector<Seed> seeds) //modifi
 	this->Volume = volume;
 	
 	
+	// Set the extent for the Y-Z slice.
+	double* origincalc = this->Volume->GetBounds();	
+	int origin[6];
+	origin[0] = (int)origincalc[2];
+	origin[1] = (int)origincalc[3];
+	origin[2] = (int)origincalc[4];
+	origin[3] = (int)origincalc[5];
+	origin[4] = (int)origincalc[0];
+	origin[5] = (int)origincalc[1];
+	
+	
+	
+	
+	
 // // Create seeds (spheres) only at coordinates specified by the text file.
 // // I also create Red (Markedpoints) and Green Spheres (Markedpoints2add) initially and delete them.
 ////  So that the first delete and addition by the user would be 
@@ -568,7 +582,7 @@ void Seed3D::GetImage(ftk::NuclearSegmentation *seg,vector<Seed> seeds) //modifi
     this->delpcoords->SetNumberOfTuples(1);		
      for (unsigned int j=0; j<spPoint.size(); j++)
     {
-    float pts[3] = {spPoint[j].x,spPoint[j].y , spPoint[j].z };	
+    float pts[3] = {spPoint[j].x,origincalc[3]-spPoint[j].y , origincalc[5]-spPoint[j].z };	
     this->pcoords->SetTuple(j, pts);
     }
     float pts[3] = {0.0,0.0,0.0};
@@ -702,16 +716,7 @@ void Seed3D::GetImage(ftk::NuclearSegmentation *seg,vector<Seed> seeds) //modifi
   reslice->SetResliceAxes(resliceAxes);
   reslice->SetInterpolationModeToLinear();
   
-  // Set the extent for the Y-Z slice.
-  double* origincalc = this->Volume->GetBounds();	
-  int origin[6];
-  origin[0] = (int)origincalc[2];
-  origin[1] = (int)origincalc[3];
-  origin[2] = (int)origincalc[4];
-  origin[3] = (int)origincalc[5];
-  origin[4] = (int)origincalc[0];
-  origin[5] = (int)origincalc[1];
-
+  
   reslice->SetOutputExtent(origin); 	 
   reslice->SetResliceAxesOrigin((origincalc[1]-origincalc[0])/2.0,(origincalc[3]-origincalc[2])/2.0,(origincalc[5]-origincalc[4])/2.0);
   this->Reslice = reslice;
