@@ -712,8 +712,7 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 		//Call the module that does graph coloring, ML estimation, and graph learning		
 		int NC = 1000;
 		int* subsegImg = new int[x_len*y_len*z_len];			
-		float* Dterms  = multiColGraphLearning(sublogImg, subclustImg, subsegImg, y_len, x_len, z_len, &NC,refineRange);
-		std::cerr<<"    Graph Coloring done with "<<NC-1<<" colors"<<std::endl;
+		float* Dterms  = multiColGraphLearning(sublogImg, subclustImg, subsegImg, y_len, x_len, z_len, &NC,refineRange);		
 
 		std::cerr<<"    Starting alpha-expansion..";
 		//Call the alpha expansion module		

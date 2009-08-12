@@ -147,6 +147,7 @@ float* multiColGraphLearning(float* X_vals, int* labs_vals, int* color_im,int r,
 	
         
     //Build the region adjacency graph    
+	std::cout<<"Building region adjacency graph...";
 	RAG = (int **) malloc(max_lab*sizeof(int*));
     for(int i=0; i<max_lab; i++)
     {        
@@ -196,9 +197,9 @@ float* multiColGraphLearning(float* X_vals, int* labs_vals, int* color_im,int r,
 		//free(labs_im[i]);        
     }    
 	//free(labs_im);
-    
+	std::cout<<"done"<<std::endl;
         
-    //copy the RAG into an std vector of vectors
+    //copy the RAG into an std vector of vectors	
 	std::vector<std::vector<int> > MAP;
 	MAP.resize(max_lab);
     std::vector<std::vector<int> > MAP2;
@@ -243,6 +244,7 @@ float* multiColGraphLearning(float* X_vals, int* labs_vals, int* color_im,int r,
 	}
     
     //start the graph coloring using Sumit's sequential coloring code
+	std::cout<<"Starting graph coloring...";
     GVC* Gcol = new GVC();
  	ncolors = NC[0];	
  	Gcol->sequential_coloring(max_lab,  ncolors, ColorOut, MAP );
@@ -256,6 +258,7 @@ float* multiColGraphLearning(float* X_vals, int* labs_vals, int* color_im,int r,
      }
      ncolors = mx_col;
 	 NC[0] = ncolors;
+	 std::cout<<"done with "<<ncolors<<" colors"<<std::endl;
     
     //Now let's do the learning step
     //here, each pixel will have a probability of belonging to each one of the 
