@@ -62,7 +62,18 @@ if __name__ == '__main__':
             temp_fname.append('44')
             temp_fname.append(os.path.join(cache_prefix, 'extracted_' + filenames[(w,t)]))
             subprocess.call(temp_fname)
-            
+
+
+    ######################### Smooth ####################################
+    for w in channels:
+        for t in time_points:
+            temp_fname = [];
+            temp_fname.append(os.path.join(exe_dir,'anisodiff'))
+            temp_fname.append(os.path.join(cache_prefix, 'extracted_' + filenames[(w,t)]))
+            temp_fname.append('10,0.0625,2')
+            temp_fname.append(os.path.join(cache_prefix, 'smoothed_' + filenames[(w,t)]))
+            subprocess.call(temp_fname)
+    #####################################################################
     ######################### Background Subraction #####################
 ##    for w in channels:
 ##        temp_fname = [];
@@ -100,7 +111,7 @@ if __name__ == '__main__':
         for w in channels_to_segment:
             temp_fname = [];
             temp_fname.append(os.path.join(exe_dir,'segmentation'))
-            temp_fname.append(os.path.join(cache_prefix, 'extracted_' + filenames[(w,t)]))
+            temp_fname.append(os.path.join(cache_prefix, 'smoothed_' + filenames[(w,t)]))
             if w == 1 or w == 2:
                 # call yousef segmentation
                 temp_fname.append('1') # type of segmentation
@@ -130,7 +141,7 @@ if __name__ == '__main__':
         temp_fname = [];
         temp_fname.append(os.path.join(exe_dir,'tracking'))
         for t in time_points:
-            temp_fname.append(os.path.join(cache_prefix, 'extracted_' + filenames[(w,t)]))
+            temp_fname.append(os.path.join(cache_prefix, 'smoothed_' + filenames[(w,t)]))
         for t in time_points:
             temp_fname.append(os.path.join(cache_prefix, 'labeled_' + filenames[(w,t)]))
         for t in time_points:
@@ -146,7 +157,7 @@ if __name__ == '__main__':
         temp_fname.append(str(len(time_points)))
         temp_fname.append('0'); # number of associated channels to compute features with
         for t in time_points:
-            temp_fname.append(os.path.join(cache_prefix, 'extracted_' + filenames[(w,t)]))
+            temp_fname.append(os.path.join(cache_prefix, 'smoothed_' + filenames[(w,t)]))
         for t in time_points:
             temp_fname.append(os.path.join(cache_prefix, 'labeled_tracks_' + filenames[(w,t)]))
 ##        temp_fname.append('DC') # type of channel
