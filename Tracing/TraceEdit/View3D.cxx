@@ -1082,13 +1082,13 @@ void View3D::updateSelectionHighlights()
     }//end gapids size j
     if (selected == true)
     {
-      this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .15);
-      this->HighlightSelected(this->tobj->Gaps[i]->Trace2, .15);
+      this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .05);
+      this->HighlightSelected(this->tobj->Gaps[i]->Trace2, .05);
     }//end true
     else
     {
-      this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .25);
-      this->HighlightSelected(this->tobj->Gaps[i]->Trace2, .25);
+      this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .3);
+      this->HighlightSelected(this->tobj->Gaps[i]->Trace2, .3);
     }//end else true
   }//end for i
   this->poly_line_data->Modified();

@@ -155,23 +155,23 @@ void MergeModel::SelectbyTraceID(int id)
 	row2 = this->Trace2ToRow.value(id);
 	QItemSelection selection;
 	selection.clear();
-	//std::cout<< "\nTrace\t" << id;
 	if (row1 > 0)
-	//{
-	//	QModelIndex index1 = this->Model->index(row1, 0, rootIndex());
-	//	QModelIndex index2 = this->Model->index(row1,(this->Model->columnCount())-1, rootIndex());
-	//	selection.merge(QItemSelection(index1,index2),QItemSelectionModel::Select);
-	//	//std::cout << "\tRow 1\t" << row1;
-	//}
-	//if (row2 > 0)
-	//{	
-	//	QModelIndex index1 = this->Model->index(row2, 0, rootIndex());
-	//	QModelIndex index2 = this->Model->index(row2,(this->Model->columnCount())-1, rootIndex());
-	//	selection.merge(QItemSelection(index1,index2),QItemSelectionModel::Select);
-	//	//std::cout << "\tRow 2\t" << row2 << std::endl; 
-	//}
-	this->SelectionModel->select(selection,QItemSelectionModel::Toggle);
-	emit modelChanged();
+	{
+		QModelIndex index1 = this->Model->index(row1, 0, QModelIndex());
+		QModelIndex index2 = this->Model->index(row1,(this->Model->columnCount())-1, QModelIndex());
+		selection.select(index1,index2);
+		this->SelectionModel->select(selection, QItemSelectionModel::Toggle);
+		std::cout << "\tRow 1\t" << row1;
+	}
+	if (row2 > 0)
+	{	
+		QModelIndex index1 = this->Model->index(row2, 0, QModelIndex());
+		QModelIndex index2 = this->Model->index(row2,(this->Model->columnCount())-1, QModelIndex());
+		selection.select(index1,index2);
+		this->SelectionModel->select(selection, QItemSelectionModel::Toggle);
+		std::cout << "\tRow 2\t" << row2 << std::endl; 
+	}	
+	//emit modelChanged();	
 }
 ////////////////////////////////////////////////////////////////////////////////
 void MergeModel::SetTraceGaps(std::vector<TraceGap *> gaps)
