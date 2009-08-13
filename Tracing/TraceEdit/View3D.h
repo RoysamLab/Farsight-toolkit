@@ -108,7 +108,7 @@ public slots:
 	void MergeTraces();
 	void SplitTraces();
 	void FlipTraces();
-	void WriteToSWCFile();
+	void SaveToFile();
 	void ShowSettingsWindow();
 	void HideSettingsWindow();
 	void ApplyNewSettings();
@@ -197,6 +197,7 @@ private:
 
 	//QT widgets for the menu bar
 	QMenu *fileMenu;
+	QAction *saveAction;
 	QAction *exitAction;
 
 	QMenu *somaMenu;

@@ -44,6 +44,7 @@ public:
 	bool ReadFromFeatureTracksFile(char *filename, int type_offset);
 	bool ReadFromFeatureTracksFileForKymograph(char *filename,int type_offset);
 	bool WriteToSWCFile(const char * filename);
+	void WriteToVTKFile(const char * filename);
 //	operators
 	int getNewLineId();
 	void splitTrace(int selectedCellId);
@@ -73,6 +74,7 @@ public:
 	
 private:
 	std::vector<TraceLine*> trace_lines;
+	vtkSmartPointer<vtkPolyData> PolyTraces;
 	double smallLineColor, mergeLineColor;	
   void CollectTraceBitsRecursive(std::vector<TraceBit> &vec,TraceLine *l);
   void CollectIdsRecursive(std::vector<int> ids, TraceLine* tline);

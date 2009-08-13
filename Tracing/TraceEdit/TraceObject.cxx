@@ -24,6 +24,7 @@ limitations under the License.
 #include "vtkFloatArray.h"
 #include "vtkDataArray.h"
 #include "vtkAppendPolyData.h"
+#include "vtkPolyDataWriter.h"
 #include "vtkSphereSource.h"
 #include "vtkGlyph3D.h"
 #include "vtkArrowSource.h"
@@ -41,6 +42,7 @@ limitations under the License.
 
 TraceObject::TraceObject()
 {
+  this->PolyTraces = vtkSmartPointer<vtkPolyData>::New();
 }
 
 TraceObject::TraceObject(const TraceObject &T)
@@ -341,11 +343,20 @@ bool TraceObject::ReadFromSWCFile(char * filename)
   
   iter = criticals.begin();
   int pc = 0;
+  int numSkipped = 0;
   while(iter!= criticals.end())
   {
     //printf("trace_lines[%d] = %p\n",pc,trace_lines[pc]);
     if(hash_parent[*iter]>0)
-    {
+      {
+      if(hash_load[hash_parent[*iter]] == 0)
+        {
+        //cerr << "NULL trace line detected, skipping." << endl;
+        numSkipped++;
+        ++iter;
+        pc++;
+        continue;
+        }
       //printf("hash_parent %d *iter %d hash_load %p\n",hash_parent[*iter],*iter,reinterpret_cast<void*>(hash_load[hash_parent[*iter]]));
       TraceLine * t = reinterpret_cast<TraceLine*>(hash_load[hash_parent[*iter]]);
       trace_lines[pc]->SetParent(t);
@@ -356,14 +367,15 @@ bool TraceObject::ReadFromSWCFile(char * filename)
       //{
       //  printf("here is the error\n");
       //}
-    }
+      }
     else
-    {
+      {
       trace_lines[pc]->SetParent(NULL);
-    }
+      }
     pc++;
     ++iter;
-  }
+    }
+  cerr << "Number of trace lines skipped: " << numSkipped << endl;
   std::vector<TraceLine*>::iterator cleaniter = trace_lines.end();
   cleaniter--;
   for(;cleaniter!=trace_lines.begin(); cleaniter--)
@@ -532,13 +544,22 @@ bool TraceObject::WriteToSWCFile(const char *filename)
   fclose(fp);
   return true;
 }
+
+void TraceObject::WriteToVTKFile(const char *filename)
+{
+  vtkSmartPointer<vtkPolyDataWriter> writer =
+    vtkSmartPointer<vtkPolyDataWriter>::New();
+  writer->SetInput(this->PolyTraces);
+  writer->SetFileName(filename);
+  writer->Update();
+}
+
 vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
 {
   
   hashp.clear();
   hashc.clear();
   //printf("Started creating vtkPolyData for rendering purposes ... ");
-  vtkSmartPointer<vtkPolyData> poly_traces=vtkSmartPointer<vtkPolyData>::New();
   vtkSmartPointer<vtkFloatArray> point_scalars=vtkSmartPointer<vtkFloatArray>::New();
   point_scalars->SetNumberOfComponents(1);
   vtkSmartPointer<vtkPoints> line_points=vtkSmartPointer<vtkPoints>::New();
@@ -551,12 +572,12 @@ vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
     CreatePolyDataRecursive(trace_lines[counter],point_scalars,line_points,line_cells);
   }
   printf("Finished CreatePolyDataRecursive\n");
-  poly_traces->SetPoints(line_points);
-  poly_traces->SetLines(line_cells);
+  this->PolyTraces->SetPoints(line_points);
+  this->PolyTraces->SetLines(line_cells);
 
-  poly_traces->GetPointData()->SetScalars(point_scalars);
+  this->PolyTraces->GetPointData()->SetScalars(point_scalars);
   //printf("Done\n");
-  return poly_traces;
+  return this->PolyTraces;
 }
 
 bool TraceObject::ReadFromRPIXMLFile(char * filename)

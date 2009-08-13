@@ -187,6 +187,7 @@ void View3D::CreateGUIObjects()
 
   //Set up the menu bar
   this->fileMenu = this->menuBar()->addMenu(tr("&File"));
+  this->saveAction = fileMenu->addAction(tr("&Save as..."));
   this->exitAction = fileMenu->addAction(tr("&Exit"));
 
   this->somaMenu = this->menuBar()->addMenu(tr("&Somas"));
@@ -209,7 +210,7 @@ void View3D::CreateGUIObjects()
   this->MergeButton = new QPushButton("&merge traces", this->CentralWidget);
   this->SplitButton = new QPushButton("&split trace", this->CentralWidget);
   this->FlipButton = new QPushButton("&flip trace direction", this->CentralWidget);
-  this->WriteButton = new QPushButton("&write to .swc file", this->CentralWidget);
+  this->WriteButton = new QPushButton("&save as...", this->CentralWidget);
   this->SettingsButton = new QPushButton("&edit settings", this->CentralWidget);
   this->AutomateButton = new QPushButton("&Automatic Selection", this->CentralWidget);
   this->UndoButton = new QPushButton("&Undo", this->CentralWidget);
@@ -269,6 +270,7 @@ void View3D::CreateGUIObjects()
   
 
   //Setup connections for the menu bar
+  connect(this->saveAction, SIGNAL(triggered()), this, SLOT(SaveToFile()));
   connect(this->exitAction, SIGNAL(triggered()), this, SLOT(close()));
   connect(this->loadSoma, SIGNAL(triggered()), this, SLOT(ShowLoadSomaWindow()));
   connect(this->loadSeed, SIGNAL(triggered()), this, SLOT(ShowLoadSeedWindow()));
@@ -283,7 +285,7 @@ void View3D::CreateGUIObjects()
   connect(this->MergeButton, SIGNAL(clicked()), this, SLOT(MergeTraces()));
   connect(this->SplitButton, SIGNAL(clicked()), this, SLOT(SplitTraces()));
   connect(this->FlipButton, SIGNAL(clicked()), this, SLOT(FlipTraces()));
-  connect(this->WriteButton, SIGNAL(clicked()), this, SLOT(WriteToSWCFile()));
+  connect(this->WriteButton, SIGNAL(clicked()), this, SLOT(SaveToFile()));
   connect(this->AutomateButton, SIGNAL(clicked()), this, SLOT(SLine()));
   connect(this->SettingsButton, SIGNAL(clicked()), this,
     SLOT(ShowSettingsWindow()));
@@ -719,7 +721,7 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
       break;
 
     case 'w':
-      view->WriteToSWCFile();
+      view->SaveToFile();
     break;
 
     case 't':
@@ -1228,14 +1230,38 @@ void View3D::FlipTraces()
     }
 }
 
-void View3D::WriteToSWCFile()
+void View3D::SaveToFile()
 {
+  //display a save file dialog
   QString fileName = QFileDialog::getSaveFileName(
     this,
     tr("Save File"),
     "",
-    tr("SWC Images (*.swc)"));
-  this->tobj->WriteToSWCFile(fileName.toStdString().c_str()); 
+    tr("SWC Images (*.swc);;VTK files (*.vtk)"));
+
+  //if the user pressed cancel, bail out now.
+  if(fileName.isNull())
+    {
+    return;
+    }
+
+  //make sure the user supplied an appropriate output file format
+  if(!fileName.endsWith(".vtk") && !fileName.endsWith(".swc"))
+    {
+    QMessageBox::critical(this, tr("Unsupported file format"),
+      tr("Trace editor only supports output to .swc and .vtk file formats"));
+    this->SaveToFile();
+    return;
+    }
+
+  if(fileName.endsWith(".swc"))
+    {
+    this->tobj->WriteToSWCFile(fileName.toStdString().c_str()); 
+    }
+  else if(fileName.endsWith(".vtk"))
+    {
+    this->tobj->WriteToVTKFile(fileName.toStdString().c_str()); 
+    }
 }
 
 
