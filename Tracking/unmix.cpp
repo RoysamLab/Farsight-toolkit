@@ -1,7 +1,9 @@
 #include "helpers.h"
 
 using namespace helpers;
+#if defined(_MSC_VER)
 #pragma warning(disable: 4996)
+#endif
 double start_t,end_t,diff_t;
 
 bool file_exists(char *filename)
@@ -87,7 +89,7 @@ void unmix_median(InputImageType::Pointer im[],InputImageType::Pointer om[],int 
 	printf("I'm here\n");
 	MedianFilterType::Pointer filt[15];
 	IteratorType iterator[15];
-	IteratorType assigniter[15];
+	//IteratorType assigniter[15];
 
 	InputImageType::SizeType radius;
 	radius[0]=1;
@@ -113,7 +115,7 @@ void unmix_median(InputImageType::Pointer im[],InputImageType::Pointer om[],int 
 		iterator[counter]=IteratorType(om[counter],om[counter]->GetLargestPossibleRegion());
 		iterator[counter].GoToBegin();
 		max_values[counter]=-1;
-		printf(" Done.\n",counter+1);
+		printf(" Done %d.\n",counter+1);
 		for(;!iterator[counter].IsAtEnd();++iterator[counter])
 		{
 			if(max_values[counter]<iterator[counter].Value())
@@ -128,7 +130,7 @@ void unmix_median(InputImageType::Pointer im[],InputImageType::Pointer om[],int 
 
 
 
-	int total_voxels = size[0]*size[1]*size[2];
+	//int total_voxels = size[0]*size[1]*size[2];
 	int num_processed = 0;
 	printf("\tComputing maximum among channels ... ");
 	for(;!iterator[0].IsAtEnd();)
@@ -200,10 +202,10 @@ void unmixMPIInternal(InputImageType::Pointer im [4],InputImageType::Pointer om[
 		assigniter[counter].GoToBegin();
 		iterator[counter]=IteratorType(om[counter],om[counter]->GetLargestPossibleRegion());
 		iterator[counter].GoToBegin();
-		printf(" Done.\n",counter+1);
+		printf(" Done %d.\n",counter+1);
 	}
 
-	int total_voxels = size[0]*size[1]*size[2];
+	//int total_voxels = size[0]*size[1]*size[2];
 	int num_processed = 0;
 	printf("\tComputing maximum among channels ... ");
 	for(;!iterator[0].IsAtEnd();)
@@ -498,8 +500,8 @@ vcl_vector<unsigned int> getTimeAssociations(std::vector<FeaturesType> &a,std::v
 #ifdef USE_VNL_HUNGARIAN
 	vnl_matrix<double> mat(rows,cols);
 	printf("Allocated Rows = %d Cols = %d\n",mat.rows(),mat.cols());
-	int pa =0; 
-	int pb =0;
+	//int pa =0; 
+	//int pb =0;
 	for(int cr = 0; cr<rows; cr++)
 	{
 
@@ -528,7 +530,7 @@ vcl_vector<unsigned int> getTimeAssociations(std::vector<FeaturesType> &a,std::v
 	printf("About to call vnl_hungarian_algorithm\n");
 	vcl_vector<unsigned int> ret = vnl_hungarian_algorithm(mat);
 	printf("Returned from vnl_hungarian_algorithm\n");
-	for(int counter=0; counter< ret.size(); counter++)
+	for(unsigned int counter=0; counter< ret.size(); counter++)
 	{
 		if(mxIsFinite(ret[counter]))
 		{
@@ -637,7 +639,7 @@ vcl_vector<unsigned int> getTimeAssociations(std::vector<FeaturesType> &a,std::v
 void getArrayFromStdVector(std::vector<FeaturesType> &f, FeaturesType	*&farray)
 {
 	farray = new FeaturesType[f.size()];
-	for(int counter=0; counter<f.size(); counter++)
+	for(unsigned int counter=0; counter<f.size(); counter++)
 	{
 		farray[counter]=f[counter];
 	}
@@ -673,7 +675,7 @@ void createTrackFeatures(std::vector<FeaturesType> fvector[MAX_TIME][MAX_TAGS], 
 	int max_track_num = 0;
 	for(int t = 0; t< num_t; t++)
 	{
-		for(int counter=0; counter< fvector[t][c-1].size(); counter++)
+		for(unsigned int counter=0; counter< fvector[t][c-1].size(); counter++)
 		{
 			max_track_num = MAX(max_track_num,fvector[t][c-1][counter].num);
 		}
@@ -685,7 +687,7 @@ void createTrackFeatures(std::vector<FeaturesType> fvector[MAX_TIME][MAX_TAGS], 
 		trackf.intrinsic_features.clear();
 		for(int t = 0; t< num_t;t++)
 		{
-		for(int counter1 = 0; counter1 < fvector[t][c-1].size(); counter1++)
+		for(unsigned int counter1 = 0; counter1 < fvector[t][c-1].size(); counter1++)
 		{
 			if(fvector[t][c-1][counter1].num == counter)
 			{

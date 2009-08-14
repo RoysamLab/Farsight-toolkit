@@ -1,7 +1,9 @@
 #include "helpers.h"
 
 using namespace helpers;
+#if defined(_MSC_VER)
 #pragma warning(disable: 4996)
+#endif
 double start_t,end_t,diff_t;
 
 bool file_exists(char *filename)
@@ -315,8 +317,8 @@ vcl_vector<unsigned int> getTimeAssociations(std::vector<FeaturesType> &a,std::v
 #ifdef USE_VNL_HUNGARIAN
 	vnl_matrix<double> mat(rows,cols);
 	printf("Allocated Rows = %d Cols = %d\n",mat.rows(),mat.cols());
-	int pa =0; 
-	int pb =0;
+	//int pa =0; 
+	//int pb =0;
 	for(int cr = 0; cr<rows; cr++)
 	{
 
@@ -345,7 +347,7 @@ vcl_vector<unsigned int> getTimeAssociations(std::vector<FeaturesType> &a,std::v
 	printf("About to call vnl_hungarian_algorithm\n");
 	vcl_vector<unsigned int> ret = vnl_hungarian_algorithm(mat);
 	printf("Returned from vnl_hungarian_algorithm\n");
-	for(int counter=0; counter< ret.size(); counter++)
+	for(unsigned int counter=0; counter< ret.size(); counter++)
 	{
 		if(mxIsFinite(ret[counter]))
 		{
@@ -454,7 +456,7 @@ vcl_vector<unsigned int> getTimeAssociations(std::vector<FeaturesType> &a,std::v
 void getArrayFromStdVector(std::vector<FeaturesType> &f, FeaturesType	*&farray)
 {
 	farray = new FeaturesType[f.size()];
-	for(int counter=0; counter<f.size(); counter++)
+	for(unsigned int counter=0; counter<f.size(); counter++)
 	{
 		farray[counter]=f[counter];
 	}
@@ -488,7 +490,7 @@ void createTrackFeatures(std::vector<FeaturesType> fvector[MAX_TIME][MAX_TAGS], 
 	int max_track_num = 0;
 	for(int t = 0; t< num_t; t++)
 	{
-		for(int counter=0; counter< fvector[t][c-1].size(); counter++)
+		for(unsigned int counter=0; counter< fvector[t][c-1].size(); counter++)
 		{
 			max_track_num = MAX(max_track_num,fvector[t][c-1][counter].num);
 		}
@@ -500,7 +502,7 @@ void createTrackFeatures(std::vector<FeaturesType> fvector[MAX_TIME][MAX_TAGS], 
 		trackf.intrinsic_features.clear();
 		for(int t = 0; t< num_t;t++)
 		{
-		for(int counter1 = 0; counter1 < fvector[t][c-1].size(); counter1++)
+		for(unsigned int counter1 = 0; counter1 < fvector[t][c-1].size(); counter1++)
 		{
 			if(fvector[t][c-1][counter1].num == counter)
 			{
@@ -519,7 +521,7 @@ int main(int argc, char **argv)
 
 	printf("Started\n");
 	int c=1;
-	int counter = 0;
+	//int counter = 0;
   int pc = 1;
 	int num_t = atoi(argv[pc++]);
   int num_other_channels = atoi(argv[pc++]);
@@ -556,11 +558,11 @@ int main(int argc, char **argv)
   bool compute_dc_contact = false;
   bool compute_vessel_features = false;
   char dc_channel = -1;
-  char vessel_channel = -1;
+  //char vessel_channel = -1;
   InputImageType::Pointer vessel_trace;
   for(int oc = 0; oc < num_other_channels; oc++)
   {
-    if(stricmp(argv[pc],"DC")==0)
+    if(strcmp(argv[pc],"DC")==0)
       {
       pc++;
       for(int co = 0; co < num_t; co++)
@@ -570,7 +572,7 @@ int main(int argc, char **argv)
       compute_dc_contact = true;
       dc_channel = oc+2;
       }
-    else if(stricmp(argv[pc],"Vessel")==0)
+    else if(strcmp(argv[pc],"Vessel")==0)
       {
       pc++;
       vessel_trace = readImage<InputImageType>(argv[pc++]);
@@ -579,7 +581,7 @@ int main(int argc, char **argv)
   }
 
 
-  FeaturesType *farray;
+  //FeaturesType *farray;
 
   for(int t = 0; t< num_t; t++)
     {
@@ -589,7 +591,7 @@ int main(int argc, char **argv)
 
   std::vector<ftk::TrackFeatures> tfs;
   createTrackFeatures(fvector,tfs,c,num_t);
-  printf("tfs.size() = %d first\n",tfs.size());
+  printf("tfs.size() = %d first\n",(int)tfs.size());
 
   //first calcualte time based features
   AnalyzeTimeFeatures(tfs);
@@ -603,10 +605,10 @@ int main(int argc, char **argv)
     {
     AnalyzeDCContact(segmented,tfs,dc_channel,num_t);
     }
-  printf("tfs.size = %d\n",tfs.size());
+  printf("tfs.size = %d\n", (int)tfs.size());
   FILE*fp1 = fopen(argv[pc++],"w");
   FILE*fp2 = fopen(argv[pc++],"w");
-  for(int counter  = 0; counter< tfs.size(); counter++)
+  for(unsigned int counter  = 0; counter< tfs.size(); counter++)
     {
     tfs[counter].Fprintf(fp2,fp1);
     }

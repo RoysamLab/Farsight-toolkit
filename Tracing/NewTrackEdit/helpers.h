@@ -1,8 +1,10 @@
 #ifndef __HELPERS_H
 #define __HELPERS_H
 
+#if defined(_MSC_VER)
 #pragma warning(disable: 4996)
 #pragma warning(disable: 4018)
+#endif
 
 //stl includes
 #include <vector>
@@ -10,8 +12,6 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-
-
 
 //standard c++ includes
 #include <stdio.h>
@@ -186,11 +186,11 @@ struct Feature{
 //function declarations
 */
 template <typename T> typename T::Pointer readImage(const char*);
-template <typename T> typename int writeImage(typename T::Pointer,const char*);
+template <typename T> int writeImage(typename T::Pointer,const char*);
 
-template InputImageType::Pointer readImage<InputImageType>(const char*);
-template LabelImageType::Pointer readImage<LabelImageType>(const char*);
-template int writeImage<LabelImageType>(LabelImageType::Pointer, const char *);
+//template InputImageType::Pointer readImage<InputImageType>(const char*);
+//template LabelImageType::Pointer readImage<LabelImageType>(const char*);
+//template int writeImage<LabelImageType>(LabelImageType::Pointer, const char *);
 
 /*
 

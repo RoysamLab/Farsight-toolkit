@@ -1530,7 +1530,7 @@ if(this->mode==2)
 	//Yousef_Code_Delete_Seeds	
 	for(int i=0; i<Id; i++)
 	{
-		bool isOK = segPtr->DeleteInit(tobeDeleted.at(i));		
+		//bool isOK = segPtr->DeleteInit(tobeDeleted.at(i));		
 	}
 
 	vtkDataArray* points2del = this->point2->GetData();    

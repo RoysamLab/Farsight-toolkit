@@ -3,7 +3,9 @@
 
 using namespace helpers;
 
+#if defined(_MSC_VER)
 #pragma warning(disable: 4996)
+#endif
 double start_t,end_t,diff_t;
 
 bool file_exists(char *filename)
@@ -334,8 +336,8 @@ vcl_vector<unsigned int> getTimeAssociations(std::vector<FeaturesType> &a,std::v
 #ifdef USE_VNL_HUNGARIAN
 	vnl_matrix<double> mat(rows,cols);
 	printf("Allocated Rows = %d Cols = %d\n",mat.rows(),mat.cols());
-	int pa =0; 
-	int pb =0;
+	//int pa =0; 
+	//int pb =0;
 	for(int cr = 0; cr<rows; cr++)
 	{
 
@@ -364,7 +366,7 @@ vcl_vector<unsigned int> getTimeAssociations(std::vector<FeaturesType> &a,std::v
 	printf("About to call vnl_hungarian_algorithm\n");
 	vcl_vector<unsigned int> ret = vnl_hungarian_algorithm(mat);
 	printf("Returned from vnl_hungarian_algorithm\n");
-	for(int counter=0; counter< ret.size(); counter++)
+	for(unsigned int counter=0; counter< ret.size(); counter++)
 	{
 		if(mxIsFinite(ret[counter]))
 		{
@@ -473,7 +475,7 @@ vcl_vector<unsigned int> getTimeAssociations(std::vector<FeaturesType> &a,std::v
 void getArrayFromStdVector(std::vector<FeaturesType> &f, FeaturesType	*&farray)
 {
 	farray = new FeaturesType[f.size()];
-	for(int counter=0; counter<f.size(); counter++)
+	for(unsigned int counter=0; counter<f.size(); counter++)
 	{
 		farray[counter]=f[counter];
 	}
@@ -508,7 +510,7 @@ void createTrackFeatures(std::vector<FeaturesType> fvector[MAX_TIME][MAX_TAGS], 
 	int max_track_num = 0;
 	for(int t = 0; t< num_t; t++)
 	{
-		for(int counter=0; counter< fvector[t][c-1].size(); counter++)
+		for(unsigned int counter=0; counter< fvector[t][c-1].size(); counter++)
 		{
 			max_track_num = MAX(max_track_num,fvector[t][c-1][counter].num);
 		}
@@ -520,7 +522,7 @@ void createTrackFeatures(std::vector<FeaturesType> fvector[MAX_TIME][MAX_TAGS], 
 		trackf.intrinsic_features.clear();
 		for(int t = 0; t< num_t;t++)
 		{
-		for(int counter1 = 0; counter1 < fvector[t][c-1].size(); counter1++)
+		for(unsigned int counter1 = 0; counter1 < fvector[t][c-1].size(); counter1++)
 		{
 			if(fvector[t][c-1][counter1].num == counter)
 			{
@@ -563,27 +565,27 @@ int main(int argc, char **argv)
 	}
 */
 	LabelImageType::Pointer segmented[MAX_TIME][MAX_TAGS]; // FIXME
-	InputImageType::Pointer images[MAX_TIME][MAX_TAGS];
+	//InputImageType::Pointer images[MAX_TIME][MAX_TAGS];
 //	std::string dataset = files[0].id;
 
 	while(counter<num_t)
 	{
 		
-		LabelImageType::Pointer labeled[4]; 
-		char labeled_cache[1024];
+		//LabelImageType::Pointer labeled[4]; 
+		//char labeled_cache[1024];
 	//	sprintf(labeled_cache,"%s/%s",CACHE_PREFIX,file_name[counter]);
 		segmented[counter][c-1] = readImage<LabelImageType>(argv[counter+1]);
 		
 		counter++;
 	}
 
-	char vessel_cache[1024];
+	//char vessel_cache[1024];
 
 	//printf("numfiles:%d\n",num_files);
 	//printf("time slots:%d\n",num_t);
 	//int c = VESSEL_CHANNEL;
 	InputImageType::Pointer vessel_trace;
-	char vessel_trace_cache[1024];
+	//char vessel_trace_cache[1024];
 	//sprintf(vessel_trace_cache,"%s/%s",CACHE_PREFIX,file_name[2*num_files]);
 	if(!file_exists(argv[argc-1]))
 	{

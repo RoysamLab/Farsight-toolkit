@@ -24,7 +24,7 @@ class TrackingDataModel: public QStandardItemModel
 		void InitializeModel();
 		//void mergeTracks(TrackSelection *,int);
 		//void deleteTracks(TrackSelection *);
-		std::vector<std::vector<ftk::Object>> *getObjects(){return &(this->m_objects);}
+		std::vector<std::vector<ftk::Object> > * getObjects(){return &(this->m_objects);}
 		
 		unsigned int GetSizeX(){ return m_limages[0]->GetLargestPossibleRegion().GetSize()[0];}
 		unsigned int GetSizeY(){ return m_limages[0]->GetLargestPossibleRegion().GetSize()[1];}
@@ -64,7 +64,7 @@ class TrackingDataModel: public QStandardItemModel
 
 		//variables
 		typedef ftk::Object ObjectsType;
-		std::vector<std::vector<ftk::Object>> m_objects;
+		std::vector<std::vector<ftk::Object> > m_objects;
 		std::vector<std::string> m_lfilenames;// label image filenames
 		std::vector<std::string> m_rfilenames;// raw image filenames
 		std::string m_tfilename; // tracks filename

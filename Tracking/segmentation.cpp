@@ -2,7 +2,9 @@
 #include "NuclearSegmentation/yousef_core/yousef_seg.h"
 
 using namespace helpers;
+#if defined(_MSC_VER)
 #pragma warning(disable: 4996)
+#endif
 double start_t,end_t,diff_t;
 
 bool file_exists(char *filename)
@@ -172,7 +174,7 @@ LabelImageType::Pointer getYousefSegmented(InputImageType::Pointer im_input,std:
 	//	getProcessedBinaryImage(
 	NucleusSeg->runSeedDetection();
 	std::vector<Seed> seeds = NucleusSeg->getSeeds();
-	printf("In yousef_seg Seed size = %d\n",seeds.size());
+	printf("In yousef_seg Seed size = %d\n", (int)seeds.size());
 	std::vector<Seed>::iterator iter = seeds.begin();
 	for(;iter!=seeds.end();iter++)
 	{
@@ -218,7 +220,7 @@ void unmix_median(InputImageType::Pointer im[],InputImageType::Pointer om[],int 
 	printf("I'm here\n");
 	MedianFilterType::Pointer filt[15];
 	IteratorType iterator[15];
-	IteratorType assigniter[15];
+	//IteratorType assigniter[15];
 
 	InputImageType::SizeType radius;
 	radius[0]=1;
@@ -244,7 +246,7 @@ void unmix_median(InputImageType::Pointer im[],InputImageType::Pointer om[],int 
 		iterator[counter]=IteratorType(om[counter],om[counter]->GetLargestPossibleRegion());
 		iterator[counter].GoToBegin();
 		max_values[counter]=-1;
-		printf(" Done.\n",counter+1);
+		printf(" Done %d.\n",counter+1);
 		for(;!iterator[counter].IsAtEnd();++iterator[counter])
 		{
 			if(max_values[counter]<iterator[counter].Value())
@@ -255,11 +257,7 @@ void unmix_median(InputImageType::Pointer im[],InputImageType::Pointer om[],int 
 		iterator[counter].GoToBegin();
 	}
 
-
-
-
-
-	int total_voxels = size[0]*size[1]*size[2];
+	//int total_voxels = size[0]*size[1]*size[2];
 	int num_processed = 0;
 	printf("\tComputing maximum among channels ... ");
 	for(;!iterator[0].IsAtEnd();)
@@ -331,10 +329,10 @@ void unmixMPIInternal(InputImageType::Pointer im [4],InputImageType::Pointer om[
 		assigniter[counter].GoToBegin();
 		iterator[counter]=IteratorType(om[counter],om[counter]->GetLargestPossibleRegion());
 		iterator[counter].GoToBegin();
-		printf(" Done.\n",counter+1);
+		printf(" Done %d.\n",counter+1);
 	}
 
-	int total_voxels = size[0]*size[1]*size[2];
+	//int total_voxels = size[0]*size[1]*size[2];
 	int num_processed = 0;
 	printf("\tComputing maximum among channels ... ");
 	for(;!iterator[0].IsAtEnd();)
@@ -629,8 +627,8 @@ vcl_vector<unsigned int> getTimeAssociations(std::vector<FeaturesType> &a,std::v
 #ifdef USE_VNL_HUNGARIAN
 	vnl_matrix<double> mat(rows,cols);
 	printf("Allocated Rows = %d Cols = %d\n",mat.rows(),mat.cols());
-	int pa =0; 
-	int pb =0;
+	//int pa =0; 
+	//int pb =0;
 	for(int cr = 0; cr<rows; cr++)
 	{
 
@@ -854,7 +852,7 @@ int main(int argc, char **argv)
 //	printf("str1:%s %s %s\n",str1,str2,str3);
 	
 	
-	char *s1,*s2,*s3;
+	char *s1;//,*s2,*s3;
 	s1=strtok(str1,",");
 	int i =0;
 	while(s1!=NULL)
@@ -918,8 +916,7 @@ int main(int argc, char **argv)
 
 
     std::list<Seed> seed_list;
-    char labeled_cache[1024];
-
+    //char labeled_cache[1024];
       
     switch(segmentation_type)
       {

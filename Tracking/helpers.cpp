@@ -1,10 +1,10 @@
 #include "helpers.h"
 
-
-
+#if defined(_MSC_VER)
 #pragma warning(disable: 4018)
 #pragma warning(disable: 4996)
 #pragma warning(disable: 4101)
+#endif
 extern int rank, npes;
 
 namespace helpers{
@@ -170,7 +170,7 @@ Input2DImageType::Pointer getCollage(InputImageType::Pointer im[4])
 	imcollage->SetRegions(region);
 	imcollage->Allocate(); 
 
-	int startpoints[][2]={0,0,size[0],0,0,size[1],size[0],size[1]};
+	int startpoints[][2]={ {0,0},{size[0],0},{0,size[1]},{size[0],size[1]}};
 	size2d[0]=size[0];
 	size2d[1]=size[1];
 	region.SetSize(size2d);
@@ -239,10 +239,10 @@ void unmix_median(InputImageType::Pointer im[4],InputImageType::Pointer om[4],In
 		assigniter[counter].GoToBegin();
 		iterator[counter]=IteratorType(om[counter],om[counter]->GetLargestPossibleRegion());
 		iterator[counter].GoToBegin();
-		printf(" Done.\n",counter+1);
+		printf(" Done %d.\n",counter+1);
 	}
 
-	int total_voxels = size[0]*size[1]*size[2];
+	//int total_voxels = size[0]*size[1]*size[2];
 	int num_processed = 0;
 	printf("\tComputing maximum among channels ... ");
 	for(;!iterator[0].IsAtEnd();)
@@ -422,9 +422,9 @@ InputImageType::Pointer getLargeComponents(InputImageType::Pointer im, int n)
 	rfilter->Update();
 	std::vector<long unsigned int> sizes = rfilter->GetSizeOfObjectsInPixels();
 	int threshsize = -1;
-	for(int counter=0; counter<sizes.size(); counter++)
+	for(unsigned int counter=0; counter<sizes.size(); counter++)
 	{
-		if(sizes[counter] < n)
+		if(sizes[counter] < (unsigned int)n)
 		{
 			threshsize = counter;
 			break;
@@ -477,9 +477,9 @@ LabelImageType::Pointer getLargeLabels(LabelImageType::Pointer im, int n)
 	rfilter->Update();
 	std::vector<long unsigned int> sizes = rfilter->GetSizeOfObjectsInPixels();
 	int threshsize = sizes.size()+1;// just to be safe
-	for(int counter=0; counter<sizes.size(); counter++)
+	for(unsigned int counter=0; counter<sizes.size(); counter++)
 	{
-		if(sizes[counter] < n)
+		if(sizes[counter] < (unsigned int)n)
 		{
 			threshsize = counter;
 			break;
@@ -918,13 +918,13 @@ void writeNPTS(InputImageType::Pointer im, char*filename)
 	FILE*fp = fopen(filename,"w");
 	InputImageType::SizeType size = im->GetLargestPossibleRegion().GetSize();
 	InputImageType::IndexType index;
-	for(int cx=0; cx<size[0];cx++)
+	for(unsigned int cx=0; cx<size[0];cx++)
 	{
 		index[0]=cx;
-		for(int cy=0; cy<size[1];cy++)
+		for(unsigned int cy=0; cy<size[1];cy++)
 		{
 			index[1]=cy;
-			for(int cz=0; cz<size[2];cz++)
+			for(unsigned int cz=0; cz<size[2];cz++)
 			{
 				index[2]=cz;
 				if(im->GetPixel(index)>0)
@@ -999,10 +999,11 @@ ColorImageType::Pointer getColorCompositeImageFromLabelled(LabelImageType::Point
 }
 Color2DImageType::Pointer getColor2DImage(LabelImageType::Pointer labelled, int channel)
 {
-	unsigned char colorarray[][3]={255,0,0,
-		0,154,25,
-		207,141,0,
-		255,0,0};
+	unsigned char colorarray[][3]={
+    {255,0,0},
+		{0,154,25},
+		{207,141,0},
+		{255,0,0} };
 	VectorPixelType colorcodes[4];
 
 	for(int counter=0; counter<4; counter++)
@@ -1197,10 +1198,11 @@ Color2DImageType::Pointer getColorBoundaryImage(LabelImageType::Pointer labelled
 		multiplier = 6;
 	else
 		multiplier = 1.5;
-	unsigned char colorarray[][3]={255,0,0,
-		0,154,25,
-		207,141,0,
-		255,0,0};
+	unsigned char colorarray[][3]={
+    {255,0,0},
+		{0,154,25},
+		{207,141,0},
+		{255,0,0} };
 	VectorPixelType colorcodes[4];
 	VectorPixelType black;black[0]=0;black[1]=0;black[2]=0;
 
@@ -1274,7 +1276,7 @@ LabelImageType::Pointer getLabelsMapped(LabelImageType::Pointer label, std::vect
 		else
 			oiter.Set(0);
 	}
-	for(int counter=0; counter<fvec.size(); counter++)
+	for(unsigned int counter=0; counter<fvec.size(); counter++)
 	{
 		fvec[counter].num = indices[fvec[counter].num-1]+1;
 	}
@@ -1285,12 +1287,18 @@ LabelImageType::Pointer getLabelsMapped(LabelImageType::Pointer label, std::vect
 
 void CLAMP(InputImageType::IndexType &i,InputImageType::SizeType size)
 {
-	if(i[0]>size[0]-1)
+	if((unsigned int)i[0]>size[0]-1)
+    {
 		i[0]=size[0]-1;
-	if(i[1]>size[1]-1)
+    }
+	if((unsigned int)i[1]>size[1]-1)
+    {
 		i[1]=size[1]-1;
-	if(i[2]>size[2]-1)
+    }
+	if((unsigned int)i[2]>size[2]-1)
+    {
 		i[2]=size[2]-1;
+    }
 }
 
 std::vector<float> traverseCenterline(itk::ImageRegionIteratorWithIndex<InputImageType> iter,InputImageType::Pointer im,char neighbors[26][3],int n)
@@ -1325,7 +1333,9 @@ std::vector<float> traverseCenterline(itk::ImageRegionIteratorWithIndex<InputIma
 			tindex[0]=top.index[0]+neighbors[counter][0];
 			tindex[1]=top.index[1]+neighbors[counter][1];
 			tindex[2]=top.index[2]+neighbors[counter][2];
-			if(tindex[0]>=0 && tindex[1] >= 0 && tindex[2] >=0 && tindex[0] <size[0] && tindex[1] < size[1] && tindex[2] < size[2])
+			if(tindex[0]>=0 && tindex[1] >= 0 && tindex[2] >=0 &&
+         (unsigned int)tindex[0] <size[0] && (unsigned int)tindex[1] < size[1]
+         && (unsigned int)tindex[2] < size[2])
 			{
 				if(im->GetPixel(tindex)==1)
 				{
@@ -1353,7 +1363,7 @@ std::vector<float> traverseCenterline(itk::ImageRegionIteratorWithIndex<InputIma
 		output.push_back(temp.index[2]);
 	}
 	//printf("coordinates.size() = %d\n",coordinates.size());
-	for(int counter=0; counter<coordinates.size(); counter++)
+	for(unsigned int counter=0; counter<coordinates.size(); counter++)
 	{
 		im->SetPixel(coordinates[counter],1);
 	//	printf("Coordinates: %d %d %d\n",coordinates[counter][0],coordinates[counter][1],coordinates[counter][2]);
@@ -1370,7 +1380,7 @@ std::vector<float> traverseCenterline(itk::ImageRegionIteratorWithIndex<InputIma
 FloatImageType::IndexType searchNearestVesselDirection(FloatImageType::Pointer dir_image[3],FloatImageType::IndexType index,InputImageType::Pointer vesselim)
 {
 	const int sdepth = 5;
-	int cur_depth = 0;
+	//int cur_depth = 0;
 	InputImageType::IndexType tindex;
 	tindex[0] = -1;
 	tindex[1] = -1;
@@ -1468,16 +1478,16 @@ FloatImageType::IndexType searchNearestVesselDirection(FloatImageType::Pointer d
 
 void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs)
 {
-	for(int tcounter=0; tcounter < tfs.size(); tcounter++)
+	for(unsigned int tcounter=0; tcounter < tfs.size(); tcounter++)
 	{
-		printf("Beginning to read track no: %d/%d\n",tcounter+1,tfs.size());
+		printf("Beginning to read track no: %d/%d\n",tcounter+1, (int)tfs.size());
 		//std::vector<TrackPoint> track = total_tracks[tcounter];
 		if(tfs[tcounter].intrinsic_features.size()<3)
 		{
-			printf("Ignored a tiny track of size %d track.size()\n",tfs[tcounter].intrinsic_features.size());
+			printf("Ignored a tiny track of size %d track.size()\n",(int)tfs[tcounter].intrinsic_features.size());
 			continue;
 		}
-		printf("I'm working on a track of size %d\n",tfs[tcounter].intrinsic_features.size());
+		printf("I'm working on a track of size %d\n",(int)tfs[tcounter].intrinsic_features.size());
 		ftk::TrackFeatures t = tfs[tcounter];
 		std::vector<float> spacing(3);
 		spacing[0] = spacing[1] = 0.357;
@@ -1485,7 +1495,7 @@ void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs)
 		typedef ftk::TrackPointFeatures TPF;
 		typedef ftk::TrackFeatures TF;
 
-		for(int counter=0; counter< t.intrinsic_features.size(); counter++)
+		for(unsigned int counter=0; counter< t.intrinsic_features.size(); counter++)
 		{
 			ftk::TrackPointFeatures tpf;
 			Vec3f dir;
@@ -1514,7 +1524,7 @@ void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs)
 			}
 
 
-			if(counter>int(t.tfeatures.size())-1)
+			if(counter> t.tfeatures.size()-1)
 			{
 				t.tfeatures.push_back(tpf);
 			}
@@ -1526,7 +1536,7 @@ void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs)
 
 		float avg_speed = 0;
 		float pathlength = 0;
-		for(int counter =0; counter < t.tfeatures.size(); counter++)
+		for(unsigned int counter =0; counter < t.tfeatures.size(); counter++)
 		{
 
 			avg_speed += t.tfeatures[counter].scalars[TPF::INST_SPEED];
@@ -1571,7 +1581,7 @@ void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::Tr
 
 	typedef itk::ImageRegionIteratorWithIndex<InputImageType> IterWithIndexType;
 	IterWithIndexType iter = IterWithIndexType(cline,cline->GetLargestPossibleRegion());
-	float points[6];
+	//float points[6];
 
 	char neighbors[26][3];
 	int pc = 0;
@@ -1599,7 +1609,7 @@ void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::Tr
 
 	fiter1.GoToBegin();fiter2.GoToBegin();fiter3.GoToBegin();
 	float dx,dy,dz,dsum;
-	InputImageType::IndexType idx,idx2;
+	InputImageType::IndexType idx;//,idx2;
 	for(iter.GoToBegin();!iter.IsAtEnd();++iter,++fiter1,++fiter2,++fiter3)
 	{
 
@@ -1637,7 +1647,7 @@ void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::Tr
 					dx/=dsum;dy/=dsum;dz/=dsum;
 				}
 				fiter1.Set(dx);fiter2.Set(dy);fiter3.Set(dz);
-				printf("I got fpoints.size() = %d\n",fpoints.size());
+				printf("I got fpoints.size() = %d\n",(int)fpoints.size());
 				//debug_image->SetPixel(iter.GetIndex(),255);;
 			}
 			//	idx2[0] = idx[0]+dx*5;idx2[1] = idx[1]+dy*5; idx2[2]= idx[2]+dz*5;
@@ -1656,27 +1666,27 @@ void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::Tr
 
 
 
-	OffsetImageType::IndexType offset;
+	//OffsetImageType::IndexType offset;
 	InputImageType::IndexType cellindex;
 	InputImageType::IndexType vesselindex;
-	InputImageType::IndexType celldirindex;
-	for(int tcounter=0; tcounter < tfs.size(); tcounter++)
+	//InputImageType::IndexType celldirindex;
+	for(unsigned int tcounter=0; tcounter < tfs.size(); tcounter++)
 	{
-		printf("Beginning to read track no: %d/%d\n",tcounter+1,tfs.size());
+		printf("Beginning to read track no: %d/%d\n",tcounter+1,(int)tfs.size());
 		//std::vector<TrackPoint> track = total_tracks[tcounter];
 		if(tfs[tcounter].intrinsic_features.size()<3)
 		{
-			printf("Ignored a tiny track of size %d track.size()\n",tfs[tcounter].intrinsic_features.size());
+			printf("Ignored a tiny track of size %d track.size()\n",(int)tfs[tcounter].intrinsic_features.size());
 			continue;
 		}
-		printf("I'm working on a track of size %d\n",tfs[tcounter].intrinsic_features.size());
+		printf("I'm working on a track of size %d\n",(int)tfs[tcounter].intrinsic_features.size());
 		ftk::TrackFeatures t = tfs[tcounter];
 	std::vector<float> spacing(3);
 	spacing[0] = spacing[1] = 0.357;
 	spacing[2] = 2.0;
 		typedef ftk::TrackPointFeatures TPF;
 		typedef ftk::TrackFeatures TF;
-		for(int counter=0; counter< t.intrinsic_features.size(); counter++)
+		for(unsigned int counter=0; counter< t.intrinsic_features.size(); counter++)
 		{
 			ftk::TrackPointFeatures tpf;
 			Vec3f dir;
@@ -1727,7 +1737,7 @@ void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::Tr
 				tpf.scalars[TPF::ANGLE_REL_TO_1] = 0.0;
 			}
 			printf("Just before\n");
-			if(counter>int(t.tfeatures.size())-1)
+			if(counter > t.tfeatures.size()-1)
 			{
 				t.tfeatures.push_back(tpf);
 			}
@@ -1741,8 +1751,8 @@ void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::Tr
 		float avg_distance_to_1 = 0;
 		float avg_angle_rel_to_1 = 0;
 		float contact_to_2 = 0;
-		float change_distance_to_1=0.0;
-		for(int counter =0; counter < t.tfeatures.size(); counter++)
+		//float change_distance_to_1=0.0;
+		for(unsigned int counter =0; counter < t.tfeatures.size(); counter++)
 		{
 			if(counter>0)
 			{
@@ -1787,8 +1797,8 @@ InputImageType::Pointer getMaxImage(InputImageType::Pointer im1, InputImageType:
 
 void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::TrackFeatures> &tfs, int c, int num_t)
 {
-	int min_voxels = 1000;
-	float perc = 5.0f;
+	//int min_voxels = 1000;
+	//float perc = 5.0f;
 	float inc_factor = 1.25;
 	int wsize = 20;
 	float radius = -1;
@@ -1802,7 +1812,7 @@ void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::T
 	std::vector<float> spacing(3);
 	spacing[0] = spacing[1] = 0.357;
 	spacing[2] = 2.0;
-	for(int tc=0; tc < tfs.size(); tc++)
+	for(unsigned int tc=0; tc < tfs.size(); tc++)
 	{
 	//	printf("running for track :%d\n",tc);
 		// for this track = counter find dc contact feature
@@ -1811,7 +1821,7 @@ void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::T
 			TPF temptpf;
 			tfs[tc].tfeatures.push_back(temptpf);
 		}
-		for(int tp = 0; tp < tfs[tc].intrinsic_features.size(); tp++)
+		for(unsigned int tp = 0; tp < tfs[tc].intrinsic_features.size(); tp++)
 		{
 		//	printf("running for trackpoint : %d/%d\n",tc,tp);
 			int t = tfs[tc].intrinsic_features[tp].time;
@@ -1903,7 +1913,7 @@ void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::T
 		}
 		tfs[tc].scalars[TF::CONTACT_TO_2] = 0;
 		//printf("starting to add dc contact numbers\n");
-		for(int tp = 0; tp < tfs[tc].tfeatures.size(); tp++)
+		for(unsigned int tp = 0; tp < tfs[tc].tfeatures.size(); tp++)
 		{
 			tfs[tc].scalars[TF::CONTACT_TO_2] += tfs[tc].tfeatures[tp].scalars[TPF::HAS_CONTACT_TO_2];
 		}

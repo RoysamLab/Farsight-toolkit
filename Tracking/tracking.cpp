@@ -2,7 +2,9 @@
 
 
 using namespace helpers;
+#if defined(_MSC_VER)
 #pragma warning(disable: 4996)
+#endif
 double start_t,end_t,diff_t;
 
 bool file_exists(char *filename)
@@ -319,8 +321,8 @@ vcl_vector<unsigned int> getTimeAssociations(std::vector<FeaturesType> &a,std::v
 #ifdef USE_VNL_HUNGARIAN
 	vnl_matrix<double> mat(rows,cols);
 	printf("Allocated Rows = %d Cols = %d\n",mat.rows(),mat.cols());
-	int pa =0; 
-	int pb =0;
+	//int pa =0; 
+	//int pb =0;
 	for(int cr = 0; cr<rows; cr++)
 	{
 
@@ -349,7 +351,7 @@ vcl_vector<unsigned int> getTimeAssociations(std::vector<FeaturesType> &a,std::v
 	printf("About to call vnl_hungarian_algorithm\n");
 	vcl_vector<unsigned int> ret = vnl_hungarian_algorithm(mat);
 	printf("Returned from vnl_hungarian_algorithm\n");
-	for(int counter=0; counter< ret.size(); counter++)
+	for(unsigned int counter=0; counter< ret.size(); counter++)
 	{
 		if(mxIsFinite(ret[counter]))
 		{
@@ -458,7 +460,7 @@ vcl_vector<unsigned int> getTimeAssociations(std::vector<FeaturesType> &a,std::v
 void getArrayFromStdVector(std::vector<FeaturesType> &f, FeaturesType	*&farray)
 {
 	farray = new FeaturesType[f.size()];
-	for(int counter=0; counter<f.size(); counter++)
+	for(unsigned int counter=0; counter<f.size(); counter++)
 	{
 		farray[counter]=f[counter];
 	}
@@ -493,7 +495,7 @@ void createTrackFeatures(std::vector<FeaturesType> fvector[MAX_TIME][MAX_TAGS], 
 	int max_track_num = 0;
 	for(int t = 0; t< num_t; t++)
 	{
-		for(int counter=0; counter< fvector[t][c-1].size(); counter++)
+		for(unsigned int counter=0; counter< fvector[t][c-1].size(); counter++)
 		{
 			max_track_num = MAX(max_track_num,fvector[t][c-1][counter].num);
 		}
@@ -505,7 +507,7 @@ void createTrackFeatures(std::vector<FeaturesType> fvector[MAX_TIME][MAX_TAGS], 
 		trackf.intrinsic_features.clear();
 		for(int t = 0; t< num_t;t++)
 		{
-		for(int counter1 = 0; counter1 < fvector[t][c-1].size(); counter1++)
+		for(unsigned int counter1 = 0; counter1 < fvector[t][c-1].size(); counter1++)
 		{
 			if(fvector[t][c-1][counter1].num == counter)
 			{
@@ -525,7 +527,7 @@ int main(int argc, char **argv)
 	printf("Started\n");
 	/*int num_files = atoi(argv[1]);
 	int c;*/
-	int counter = 0;
+	//int counter = 0;
   printf(" I got argc = %d\n",argc);
 	int num_t = (argc-1)/3;
   /*
@@ -559,7 +561,7 @@ int main(int argc, char **argv)
 	//Now track the cells alone and compute associations
 
 	std::vector<FeaturesType> fvector[MAX_TIME][MAX_TAGS];
-	FeaturesType *farray;
+	//FeaturesType *farray;
 
 	LabelImageType::Pointer labeled;
   bool fexists = true;
@@ -588,7 +590,7 @@ int main(int argc, char **argv)
 			}
 			printf("Finished computing the features\n");
 			unsigned int * track_labels = new unsigned int[MAX_LABEL];
-			for(int cind =0; cind< fvector[0][c-1].size(); cind++)
+			for(unsigned int cind =0; cind< fvector[0][c-1].size(); cind++)
 			{
 				track_labels[fvector[0][c-1][cind].num-1] = cind;
 				printf("track_labels[%d] = %d\n",cind,fvector[0][c-1][cind].num);
@@ -605,9 +607,11 @@ int main(int argc, char **argv)
 			for(int t = 0; t< num_t-1; t++)
 			{
 				vcl_vector<unsigned> indices = getTimeAssociations(fvector[t+1][c-1],fvector[t][c-1]);
-				printf("fvector@t.size %d fvector@t+1.size %d indices.size %d\n", fvector[t][c-1].size(), fvector[t+1][c-1].size(),indices.size());
+				printf("fvector@t.size %d fvector@t+1.size %d indices.size %d\n",
+               (int)fvector[t][c-1].size(), (int)fvector[t+1][c-1].size(),
+               (int)indices.size());
 				track_labels = new unsigned int[MAX_LABEL];
-				for(int cind = 0; cind<indices.size(); cind++)
+				for(unsigned int cind = 0; cind<indices.size(); cind++)
 				{
 					if(indices[cind] > 100000)
 					{
@@ -621,7 +625,7 @@ int main(int argc, char **argv)
 				}
 
 				segmented[t+1][c-1] = getLabelsMapped(segmented[t+1][c-1],fvector[t+1][c-1],track_labels);
-				for(int cind =0; cind < fvector[t+1][c-1].size(); cind++)
+				for(unsigned int cind =0; cind < fvector[t+1][c-1].size(); cind++)
 				{
 					printf("fvector[%d].num = %d\n",cind, fvector[t+1][c-1][cind].num);
 				}
