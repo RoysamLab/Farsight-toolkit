@@ -535,9 +535,9 @@ void Seed3D::GetImage(ftk::NuclearSegmentation *seg,vector<Seed> seeds) //modifi
     volume->SetPickable(0);
 	volume->SetOrigin(volume->GetCenter());
 	//this->Renderer1->AddActor(volume);
-	volume->RotateWXYZ(180,1,0,0);
-	//volume->RotateWXYZ(180,0,0,1);
-	//volume->RotateWXYZ(180,0,1,0);
+	//volume->RotateWXYZ(180,1,0,0);
+	volume->RotateWXYZ(180,0,0,1);
+	volume->RotateWXYZ(180,0,1,0);
 	this->Volume = volume;
 	
 	
@@ -564,12 +564,12 @@ void Seed3D::GetImage(ftk::NuclearSegmentation *seg,vector<Seed> seeds) //modifi
 ////	   3) The red spheres form a single glyph.These seeds are marked for Deletion but can be unmarked
 
 //	//spPoint is the vector of seeds 
-	spPoint = GetSeedpts(seeds);
+	spPoint = GetSeedpts(seeds,origincalc);
     this->dup_points = spPoint; //dup_points contains the upto date location of seeds 
 		
     // Create a float array which represents the points.
      this->delpcoords = vtkFloatArray::New();	
-    
+     this->addpcoords = vtkFloatArray::New();	
 	
 
  	this->pcoords = vtkFloatArray::New();
@@ -579,17 +579,21 @@ void Seed3D::GetImage(ftk::NuclearSegmentation *seg,vector<Seed> seeds) //modifi
     this->pcoords->SetNumberOfComponents(3);
     this->pcoords->SetNumberOfTuples(spPoint.size());
     this->delpcoords->SetNumberOfComponents(3);
-    this->delpcoords->SetNumberOfTuples(1);		
+    this->delpcoords->SetNumberOfTuples(1);
+	this->addpcoords->SetNumberOfComponents(3);
+    this->addpcoords->SetNumberOfTuples(1);
      for (unsigned int j=0; j<spPoint.size(); j++)
     {
-    float pts[3] = {spPoint[j].x,origincalc[3]-spPoint[j].y , origincalc[5]-spPoint[j].z };	
-    this->pcoords->SetTuple(j, pts);
+    float pts[3] = {spPoint[j].x,spPoint[j].y , spPoint[j].z };	
+    //float pts[3] = {spPoint[j].x,spPoint[j].y , spPoint[j].z };	
+		this->pcoords->SetTuple(j, pts);
     }
     float pts[3] = {0.0,0.0,0.0};
     
 	this->delpcoords->SetTuple(0,pts);	
-     
-// Create vtkPoints and assign pcoords as the internal data array.
+    this->addpcoords->SetTuple(0,pts);	
+
+  // Create vtkPoints and assign pcoords as the internal data array.
   this->point1 = vtkPoints::New(); //Original Points
   this->point2 = vtkPoints::New(); //Seeds marked for deletion
   this->point3 = vtkPoints::New(); //Seeds marked for addition
@@ -597,7 +601,7 @@ void Seed3D::GetImage(ftk::NuclearSegmentation *seg,vector<Seed> seeds) //modifi
   
   this->point1->SetData(this->pcoords);	  
   this->point2->SetData(this->delpcoords);
-  this->point3->SetData(this->delpcoords);
+  this->point3->SetData(this->addpcoords);
  
   // Assign points and cells
   this->polydata1 = vtkPolyData::New();
@@ -732,8 +736,8 @@ void Seed3D::GetImage(ftk::NuclearSegmentation *seg,vector<Seed> seeds) //modifi
   this->QVTK1->GetRenderWindow()->Render();
   this->Renderer1->ResetCamera();	
   this->imActor = imActor;
-  this->imActor->RotateWXYZ(180,0,0,1);
-  this->imActor->RotateWXYZ(180,0,1,0);		
+  //this->imActor->RotateWXYZ(180,0,0,1);
+  //this->imActor->RotateWXYZ(180,0,1,0);		
 	
   static double sagittalElements[16] = { 0, 0,-1, 0, 1, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 1 }; 
   vtkMatrix4x4 *resliceAxes1 = vtkMatrix4x4::New();
@@ -1207,7 +1211,7 @@ if((unsigned int)pID<=seed->dup_points.size())    //The ids of non-seed points i
        		}    
 
 }
-	cout<<index<<" is the inD value"<<endl;
+	cout<<"Seed Selected " << finpt[0]<<"-"<<finpt[1]<<"-"<<finpt[2]<<endl;
 	seed->dup_points.erase(seed->dup_points.begin()+index);
 
        //Remove the glyph		
@@ -1215,14 +1219,14 @@ if((unsigned int)pID<=seed->dup_points.size())    //The ids of non-seed points i
         //vtkDataArray* points2delred;
         points2del->RemoveTuple((vtkIdType)index);
         seed->point1->SetData(points2del);
-	seed->Glyph->SetScaleFactor(seed->Glyph->GetScaleFactor()+0.0001);
+	    seed->Glyph->SetScaleFactor(seed->Glyph->GetScaleFactor()+0.0001);
 
       // Add the new red glyph 
         seed->point2->InsertNextPoint(finpt);
 	    seed->polydata2->SetPoints(seed->point2);
     	seed->delglyph->SetInput(seed->polydata2);
         seed->DelSphereMapper->SetInput(seed->delglyph->GetOutput());	      
-        seed->delglyph->SetScaleFactor(seed->Glyph->GetScaleFactor()+0.0001);//to rerender immediately
+        seed->delglyph->SetScaleFactor(seed->delglyph->GetScaleFactor()+0.0001);//to rerender immediately
         seed->QVTK->GetRenderWindow()->Render();
        
 
@@ -1833,7 +1837,7 @@ void Seed3D::DeleteObjects(){
 	
 }
 
-vector <ftk::Object::Point> Seed3D::GetSeedpts(vector<Seed> seeds)
+vector <ftk::Object::Point> Seed3D::GetSeedpts(vector<Seed> seeds, double* origin)
 {
 
 	point p;
@@ -1845,9 +1849,9 @@ vector <ftk::Object::Point> Seed3D::GetSeedpts(vector<Seed> seeds)
 		q = *i;
 		p.x = q.x();
 		
-		p.y = q.y();
+		p.y = origin[3] - q.y();
 		
-		p.z = q.z();
+		p.z = origin[5] - q.z();
 		
 		p.t = 0;
 		spPoint.push_back(p);
