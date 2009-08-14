@@ -74,12 +74,23 @@ public:
       this->Glyph->SetScaleFactor(static_cast<vtkSliderRepresentation *>(sliderWidget->GetRepresentation())->GetValue());
       this->addglyph->SetScaleFactor(static_cast<vtkSliderRepresentation *>(sliderWidget->GetRepresentation())->GetValue());
       this->delglyph->SetScaleFactor(static_cast<vtkSliderRepresentation *>(sliderWidget->GetRepresentation())->GetValue());
+	  this->TPglyph->SetScaleFactor(static_cast<vtkSliderRepresentation *>(sliderWidget->GetRepresentation())->GetValue());
+	  this->CPglyph->SetScaleFactor(static_cast<vtkSliderRepresentation *>(sliderWidget->GetRepresentation())->GetValue());
+	  this->FPglyph->SetScaleFactor(static_cast<vtkSliderRepresentation *>(sliderWidget->GetRepresentation())->GetValue());
+	  this->FNglyph->SetScaleFactor(static_cast<vtkSliderRepresentation *>(sliderWidget->GetRepresentation())->GetValue());
+	  
 	  //this->handleRep->SetHandleSize(static_cast<vtkSliderRepresentation *>(sliderWidget->GetRepresentation())->GetValue());
     }
   vtkSlider2DCallbackSeedSize():Glyph(0),addglyph(0),delglyph(0) {}
   vtkGlyph3D *Glyph;
   vtkGlyph3D *addglyph;
   vtkGlyph3D *delglyph; 
+  vtkGlyph3D *TPglyph; 
+  vtkGlyph3D *CPglyph; 
+  vtkGlyph3D *FPglyph; 
+  vtkGlyph3D *FNglyph; 
+  
+  
   //vtkSphereHandleRepresentation *handleRep;
 };
 
