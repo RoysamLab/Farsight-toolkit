@@ -36,6 +36,11 @@ Seed3D::Seed3D(QWidget * parent, Qt::WindowFlags flags)
 	this->counter =0;
 	this->stateAdd = 0;
 	this->stateDelete = 0;
+	this->stateTP = 0;
+	this->stateCP = 0;
+	this->stateFP = 0;
+	this->stateFN = 0;
+	
 	this->flag =1;
 	
 	
@@ -63,33 +68,56 @@ Seed3D::Seed3D(QWidget * parent, Qt::WindowFlags flags)
   this->Renderer2 = vtkRenderer::New();
   this->QVTK2->GetRenderWindow()->AddRenderer(this->Renderer2);
 
+  
+  
+  
+  
   //Setup the buttons that the user will use to interact with this program. 
+  
+  this->EditRbutton = new QRadioButton("Edit Mode",this->browse);
+  this->ValidateRbutton = new QRadioButton("Validation Mode",this->browse);
   this->AddBox = new QCheckBox("&Add Seeds", this->browse);
   this->DeleteBox = new QCheckBox("&Delete Seeds", this->browse);
-  //this->MergeBox = new QCheckBox("&Merge Nuclei", this->browse);
-  //this->SplitBox = new QCheckBox("&Split Nuclei", this->browse);
-  this->UndoDelBox = new QCheckBox("&Undo Selections for Delete", this->browse);	
+  this->UndoDelBox = new QCheckBox("&Undo Selections for Delete", this->browse);
+  this->EditRbutton->click();
+  
+  // Validation checkboxes
+  this->TPBox = new QCheckBox("&True Positives", this->browse);
+  this->CPBox = new QCheckBox("&Cluster Positives", this->browse);
+  this->FPBox = new QCheckBox("&False Positives", this->browse);
+  this->FNBox = new QCheckBox("&False Negatives", this->browse);
+    
   this->PlaceButton = new QPushButton("&Place Seed", this->browse);
   this->ApplyButton = new QPushButton("&Apply", this->browse);  
-  
+  this->ValidateButton = new QPushButton("&Validate", this->browse);  
 //********************************************************************************
 // Layouts 
 
   QGridLayout *buttonLayout = new QGridLayout(this);
-  buttonLayout->addWidget(this->AddBox,10, 2);
-  buttonLayout->addWidget(this->DeleteBox,10, 3);
-  buttonLayout->addWidget(this->UndoDelBox,10, 4);
-  buttonLayout->addWidget(this->PlaceButton,11, 2);
-  buttonLayout->addWidget(this->ApplyButton,11, 3);
+  
+  buttonLayout->addWidget(this->EditRbutton,10,1);
+  buttonLayout->addWidget(this->ValidateRbutton,10,2);
+  buttonLayout->addWidget(this->AddBox,11, 1);
+  buttonLayout->addWidget(this->DeleteBox,11,2);
+  buttonLayout->addWidget(this->UndoDelBox,11,3);
+  
+  buttonLayout->addWidget(this->TPBox,13,1);
+  buttonLayout->addWidget(this->CPBox,13,2);
+  buttonLayout->addWidget(this->FPBox,13,3);
+  buttonLayout->addWidget(this->FNBox,13,4);
+  	
+  buttonLayout->addWidget(this->PlaceButton,12, 1);
+  buttonLayout->addWidget(this->ApplyButton,12, 2);
+  buttonLayout->addWidget(this->ValidateButton,14, 1);	
+
 
   QGridLayout *viewerLayout = new QGridLayout(this->browse);
   viewerLayout->addWidget(this->QVTK, 0,0,1,2);
   viewerLayout->addWidget(this->QVTK1,1,0);
   viewerLayout->addWidget(this->QVTK2,1,1); 	
-  viewerLayout->addLayout(buttonLayout,2,0); 		
+  viewerLayout->addLayout(buttonLayout,2,0); 
 
   //********************************************************************************
-
   this->Interactor = this->QVTK->GetRenderWindow()->GetInteractor();
   this->Interactor1 = this->QVTK1->GetRenderWindow()->GetInteractor();
   this->Interactor2 = this->QVTK2->GetRenderWindow()->GetInteractor();
@@ -116,11 +144,16 @@ Seed3D::Seed3D(QWidget * parent, Qt::WindowFlags flags)
 
   //What happens when the user clicks the buttons or the Checkboxes is determined by the "SLOTS"
   connect(this->PlaceButton, SIGNAL(clicked()), this, SLOT(PlaceSeed()));
+  connect(this->ValidateButton, SIGNAL(clicked()), this, SLOT(ValidateSeeds()));
   connect(this->AddBox, SIGNAL(stateChanged(int)), this, SLOT(AddSeed()));
   connect(this->DeleteBox, SIGNAL(stateChanged(int)), this, SLOT(DeleteSeed()));
   connect(this->ApplyButton, SIGNAL(clicked()), this, SLOT(Apply()));		
   connect(this->UndoDelBox, SIGNAL(stateChanged(int)), this, SLOT(UndoDeleteSeeds()));
-  
+  connect(this->TPBox, SIGNAL(stateChanged(int)), this, SLOT(TruePositives()));
+  connect(this->CPBox, SIGNAL(stateChanged(int)), this, SLOT(ClusterPositives()));
+  connect(this->FPBox, SIGNAL(stateChanged(int)), this, SLOT(FalsePositives()));
+  connect(this->FNBox, SIGNAL(stateChanged(int)), this, SLOT(FalseNegatives()));
+
 //Resize the Window 
   this->resize(800,800);
 }
@@ -279,34 +312,60 @@ this->fileNameSeed = QFileDialog::getOpenFileName(
     // Create a float array which represents the points.
     this->pcoords = vtkFloatArray::New();
     this->delpcoords = vtkFloatArray::New();	
-    
+    this->TPpcoords = vtkFloatArray::New();	
+	this->CPpcoords = vtkFloatArray::New();	
+	this->FPpcoords = vtkFloatArray::New();	
+	this->FNpcoords = vtkFloatArray::New();	
+
+
+
+
 	// Note that by default, an array has 1 component.
     // We have to change it to 3 for points
     this->pcoords->SetNumberOfComponents(3);
     this->pcoords->SetNumberOfTuples(spPoint.size());
     this->delpcoords->SetNumberOfComponents(3);
     this->delpcoords->SetNumberOfTuples(1);		
+	this->TPpcoords->SetNumberOfComponents(3);
+    this->TPpcoords->SetNumberOfTuples(1);
+ 	this->CPpcoords->SetNumberOfComponents(3);
+    this->CPpcoords->SetNumberOfTuples(1);
+	this->FPpcoords->SetNumberOfComponents(3);
+    this->FPpcoords->SetNumberOfTuples(1);
+	this->FNpcoords->SetNumberOfComponents(3);
+    this->FNpcoords->SetNumberOfTuples(1);
 
- 	
+
+
   for (unsigned int j=0; j<spPoint.size(); j++)
     {
     float pts[3] = {spPoint[j].x,spPoint[j].y , spPoint[j].z };	
     this->pcoords->SetTuple(j, pts);
     }
     float pts[3] = {0.0,0.0,0.0};
-    
 	this->delpcoords->SetTuple(0,pts);	
-     
+    this->TPpcoords->SetTuple(0,pts);	
+	this->CPpcoords->SetTuple(0,pts);	
+	this->FPpcoords->SetTuple(0,pts);	
+	this->FNpcoords->SetTuple(0,pts);	
 // Create vtkPoints and assign pcoords as the internal data array.
   this->point1 = vtkPoints::New(); //Original Points
   this->point2 = vtkPoints::New(); //Seeds marked for deletion
   this->point3 = vtkPoints::New(); //Seeds marked for addition
+  this->pointTP = vtkPoints::New();
+  this->pointCP = vtkPoints::New();
+  this->pointFP = vtkPoints::New();
+  this->pointFN = vtkPoints::New();
   this->allpoints = vtkPoints::New();//Yousefseg downstream
   
   this->point1->SetData(this->pcoords);	  
   this->point2->SetData(this->delpcoords);
   this->point3->SetData(this->delpcoords);
- 
+  this->pointTP->SetData(this->TPpcoords);	
+  this->pointCP->SetData(this->CPpcoords);	
+  this->pointFP->SetData(this->FPpcoords);	
+  this->pointFN->SetData(this->FNpcoords);	
+
   // Assign points and cells
   this->polydata1 = vtkPolyData::New();
   this->polydata1->SetPoints(this->point1);
@@ -316,7 +375,15 @@ this->fileNameSeed = QFileDialog::getOpenFileName(
   this->polydata3 = vtkPolyData::New();	
   this->polydata3->SetPoints(this->point3);
 
-   
+  this->polydataTP = vtkPolyData::New();	
+  this->polydataTP->SetPoints(this->pointTP);
+  this->polydataCP = vtkPolyData::New();	
+  this->polydataCP->SetPoints(this->pointCP);
+  this->polydataFP = vtkPolyData::New();	
+  this->polydataFP->SetPoints(this->pointFP);
+  this->polydataFN = vtkPolyData::New();	
+  this->polydataFN->SetPoints(this->pointFN);
+
 // create the glyphing the sphere with a cone.  Create the mapper
 // and actor for the glyphs.
 
@@ -324,56 +391,154 @@ this->fileNameSeed = QFileDialog::getOpenFileName(
     vtkGlyph3D *glyph = vtkGlyph3D::New();
     vtkGlyph3D *delglyph = vtkGlyph3D::New();
     vtkGlyph3D *addglyph = vtkGlyph3D::New();
-    glyph->SetInput(this->polydata1);
+    vtkGlyph3D *TPglyph = vtkGlyph3D::New();
+    vtkGlyph3D *CPglyph = vtkGlyph3D::New();
+	vtkGlyph3D *FPglyph = vtkGlyph3D::New();
+	vtkGlyph3D *FNglyph = vtkGlyph3D::New();
+
+
+
+
+	
+	glyph->SetInput(this->polydata1);
     delglyph->SetInput(this->polydata2);
     addglyph->SetInput(this->polydata3);
-    glyph->SetSource(sphere->GetOutput());
+    TPglyph->SetInput(this->polydataTP);
+	CPglyph->SetInput(this->polydataCP);
+	FPglyph->SetInput(this->polydataFP);
+	FNglyph->SetInput(this->polydataFN);
+
+	glyph->SetSource(sphere->GetOutput());
     delglyph->SetSource(sphere->GetOutput());
     addglyph->SetSource(sphere->GetOutput());
-    glyph->SetVectorModeToUseNormal();
+    TPglyph->SetSource(sphere->GetOutput());
+	CPglyph->SetSource(sphere->GetOutput());
+	FPglyph->SetSource(sphere->GetOutput());
+	FNglyph->SetSource(sphere->GetOutput());
+
+
+
+	glyph->SetVectorModeToUseNormal();
     delglyph->SetVectorModeToUseNormal();
     addglyph->SetVectorModeToUseNormal();
-    glyph->SetScaleModeToScaleByVector();
+    TPglyph->SetVectorModeToUseNormal();
+	CPglyph->SetVectorModeToUseNormal();
+	FPglyph->SetVectorModeToUseNormal();
+	FNglyph->SetVectorModeToUseNormal();
+
+
+	glyph->SetScaleModeToScaleByVector();
     delglyph->SetScaleModeToScaleByVector();
     addglyph->SetScaleModeToScaleByVector();
-    glyph->SetScaleFactor(1);
+    TPglyph->SetScaleModeToScaleByVector();
+	CPglyph->SetScaleModeToScaleByVector();
+	FPglyph->SetScaleModeToScaleByVector();
+	FNglyph->SetScaleModeToScaleByVector();
+
+
+
+	glyph->SetScaleFactor(1);
     delglyph->SetScaleFactor(1);
     addglyph->SetScaleFactor(1);
-    glyph->GeneratePointIdsOn();
+    TPglyph->SetScaleFactor(1);
+	CPglyph->SetScaleFactor(1);
+	FPglyph->SetScaleFactor(1);
+	FNglyph->SetScaleFactor(1);
+
+
+
+	glyph->GeneratePointIdsOn();
     delglyph->GeneratePointIdsOn();
     addglyph->GeneratePointIdsOn();
-    this->Glyph = glyph;
+    TPglyph->GeneratePointIdsOn();
+	CPglyph->GeneratePointIdsOn();
+	FPglyph->GeneratePointIdsOn();
+	FNglyph->GeneratePointIdsOn();
+
+	this->Glyph = glyph;
     this->delglyph = delglyph;
     this->addglyph = addglyph;
-    this->imActor = imActor;
+    this->TPglyph = TPglyph;
+	this->CPglyph = CPglyph;
+	this->FPglyph = FPglyph;
+	this->FNglyph = FNglyph;
+	
+	
+	this->imActor = imActor;
     
 
 	// The Pipeline
     vtkPolyDataMapper *sphereMapper = vtkPolyDataMapper::New();
     vtkPolyDataMapper *delsphereMapper = vtkPolyDataMapper::New();
     vtkPolyDataMapper *addsphereMapper = vtkPolyDataMapper::New();
-    sphereMapper->SetInput(this->Glyph->GetOutput());
+    vtkPolyDataMapper *TPsphereMapper = vtkPolyDataMapper::New();
+	vtkPolyDataMapper *CPsphereMapper = vtkPolyDataMapper::New();
+	vtkPolyDataMapper *FPsphereMapper = vtkPolyDataMapper::New();
+	vtkPolyDataMapper *FNsphereMapper = vtkPolyDataMapper::New();
+
+	sphereMapper->SetInput(this->Glyph->GetOutput());
     delsphereMapper->SetInput(this->delglyph->GetOutput());
     addsphereMapper->SetInput(this->addglyph->GetOutput());
-    vtkLODActor *sphereActor = vtkLODActor::New();
+    TPsphereMapper->SetInput(this->TPglyph->GetOutput());
+	CPsphereMapper->SetInput(this->CPglyph->GetOutput());
+	FPsphereMapper->SetInput(this->FPglyph->GetOutput());
+	FNsphereMapper->SetInput(this->FNglyph->GetOutput());
+
+
+
+	vtkLODActor *sphereActor = vtkLODActor::New();
     vtkLODActor *delsphereActor = vtkLODActor::New();
     vtkLODActor *addsphereActor = vtkLODActor::New();
-    sphereActor->SetMapper(sphereMapper);
+    vtkLODActor *TPsphereActor = vtkLODActor::New();
+	vtkLODActor *CPsphereActor = vtkLODActor::New();
+	vtkLODActor *FPsphereActor = vtkLODActor::New();
+	vtkLODActor *FNsphereActor = vtkLODActor::New();
+
+	sphereActor->SetMapper(sphereMapper);
     delsphereActor->SetMapper(delsphereMapper);
     delsphereActor->GetProperty()->SetColor(0.5,0.0,0.0); 	
     addsphereActor->SetMapper(addsphereMapper);
     addsphereActor->GetProperty()->SetColor(0.0,0.5,0.0);
-    Renderer->AddVolume(volume);
+    
+	TPsphereActor->SetMapper(TPsphereMapper);
+    TPsphereActor->GetProperty()->SetColor(0.0,0.0,0.6);
+
+	CPsphereActor->SetMapper(CPsphereMapper);
+    CPsphereActor->GetProperty()->SetColor(0.0,0.8,0.6);
+
+	FPsphereActor->SetMapper(FPsphereMapper);
+    FPsphereActor->GetProperty()->SetColor(0.4,0.0,0.6);
+
+	FNsphereActor->SetMapper(FNsphereMapper);
+    FNsphereActor->GetProperty()->SetColor(0.8,0.1,0.0);
+
+	
+	Renderer->AddVolume(volume);
     Renderer->AddActor(sphereActor);
     Renderer->AddActor(delsphereActor);
     Renderer->AddActor(addsphereActor);	
+	Renderer->AddActor(TPsphereActor);	
+	Renderer->AddActor(CPsphereActor);
+	Renderer->AddActor(FPsphereActor);
+	Renderer->AddActor(FNsphereActor);
+
     this->SphereMapper = sphereMapper;
     this->SphereActor = sphereActor;
     this->DelSphereMapper = delsphereMapper;
     this->DelSphereActor = delsphereActor;		
     this->AddSphereMapper = addsphereMapper;
     this->AddSphereActor = addsphereActor;
-    
+    this->TPSphereActor = TPsphereActor;
+	this->TPsphereMapper = TPsphereMapper;
+	this->CPSphereActor = CPsphereActor;
+	this->CPsphereMapper = CPsphereMapper;
+	this->FPSphereActor = FPsphereActor;
+	this->FPsphereMapper = FPsphereMapper;
+	this->FNSphereActor = FNsphereActor;
+	this->FNsphereMapper = FNsphereMapper;
+
+
+
 	// The active camera for the main window!
 	vtkCamera *cam1 = Renderer->GetActiveCamera();
     cam1->SetViewUp (0, 1, 0);
@@ -391,6 +556,29 @@ this->fileNameSeed = QFileDialog::getOpenFileName(
     addpoint->RemoveTuple((vtkIdType)0);
     this->point3->SetData(addpoint);
     this->addglyph->SetScaleFactor(this->Glyph->GetScaleFactor()+0.0001); 	
+
+
+	vtkDataArray* TPpoint = this->pointTP->GetData();    
+    TPpoint->RemoveTuple((vtkIdType)0);
+    this->pointTP->SetData(TPpoint);
+    this->TPglyph->SetScaleFactor(this->Glyph->GetScaleFactor()+0.0001); 	
+
+	vtkDataArray* CPpoint = this->pointCP->GetData();    
+    CPpoint->RemoveTuple((vtkIdType)0);
+    this->pointCP->SetData(CPpoint);
+    this->TPglyph->SetScaleFactor(this->Glyph->GetScaleFactor()+0.0001); 	
+
+
+	vtkDataArray* FPpoint = this->pointFP->GetData();    
+    FPpoint->RemoveTuple((vtkIdType)0);
+    this->pointFP->SetData(FPpoint);
+    this->FPglyph->SetScaleFactor(this->Glyph->GetScaleFactor()+0.0001); 	
+
+
+	vtkDataArray* FNpoint = this->pointFN->GetData();    
+    FNpoint->RemoveTuple((vtkIdType)0);
+    this->pointFN->SetData(FNpoint);
+    this->FNglyph->SetScaleFactor(this->Glyph->GetScaleFactor()+0.0001); 	
 
 
 //********************************************************************************
@@ -614,6 +802,14 @@ this->fileNameSeed = QFileDialog::getOpenFileName(
   callback_seedsize->Glyph = this->Glyph;
   callback_seedsize->addglyph = this->addglyph;
   callback_seedsize->delglyph = this->delglyph;	
+  callback_seedsize->TPglyph = this->TPglyph;	
+  callback_seedsize->CPglyph = this->CPglyph;	
+  callback_seedsize->FPglyph = this->FPglyph;	
+  callback_seedsize->FNglyph = this->FNglyph;	
+
+
+
+
   this->sliderWidget3->AddObserver(vtkCommand::InteractionEvent,callback_seedsize);
   this->sliderWidget3->EnabledOn();
 
@@ -665,7 +861,7 @@ if((unsigned int)pID<=seed->dup_points.size())
                 index = j;
        		}    
 
-}
+	}
 	////cout<<index<<" is the inD value"<<endl;
 	seed->dup_points.erase(seed->dup_points.begin()+index);
 
@@ -711,6 +907,223 @@ seed->flag =0;
 else{
 seed->flag =1; 	
    }
+
+
+
+//Useful to check if clicked on a seed !   
+//If I am in Validation TP mode 
+if(seed->mode == 6) {
+
+
+vtkDataArray* pointIds = seed->Glyph->GetOutput()->GetPointData()->GetArray("InputPointIds"); 
+int pID = (int)pointIds->GetTuple1(seed->PointPicker->GetPointId()); 
+
+if((unsigned int)pID<=seed->dup_points.size())    
+//The ids of non-seed points is much greater than the ids of the seed points 
+{   				   //Use this to check if clicked on a seed or not		
+    float dist =1000.00;
+    //float dist1;
+    int index;
+    float finpt[3];
+    for (unsigned int j=0; j<seed->dup_points.size(); j++)
+
+    {
+    	float p1[3] = {seed->dup_points[j].x, seed->dup_points[j].y ,seed->dup_points[j].z };	
+    	float dist1= sqrt(pow((p1[0]-pickPos[0]),2) + pow((p1[1]-pickPos[1]),2) + pow((p1[2]-pickPos[2]),2));   
+        if (dist1<dist)
+       		{
+		dist = dist1;
+        finpt[0] = p1[0];
+		finpt[1] = p1[1];
+		finpt[2] = p1[2];
+                index = j;
+       		}    
+		
+	}
+	
+	seed->dup_points.erase(seed->dup_points.begin()+index);
+
+	//Remove the glyph		
+     vtkDataArray* points2del = seed->point1->GetData();    
+     //vtkDataArray* points2delred;
+     points2del->RemoveTuple((vtkIdType)index);
+     seed->point1->SetData(points2del);
+     seed->Glyph->SetScaleFactor(seed->Glyph->GetScaleFactor()+0.0001);
+
+
+	  // Add the new blue glyph 
+       seed->pointTP->InsertNextPoint(finpt);
+	   seed->polydataTP->SetPoints(seed->pointTP);
+	   cout<<seed->polydataTP->GetNumberOfPoints()<<"jjj"<<endl;      
+	   seed->TPglyph->SetInput(seed->polydataTP);
+       seed->TPsphereMapper->SetInput(seed->TPglyph->GetOutput());	      
+       seed->TPglyph->SetScaleFactor(seed->TPglyph->GetScaleFactor()+0.0001);//to rerender immediately
+       seed->QVTK->GetRenderWindow()->Render();
+       cout<<"Add the new blue glyph"<<endl;
+
+}
+}
+
+
+
+if(seed->mode == 7) {
+
+
+vtkDataArray* pointIds = seed->Glyph->GetOutput()->GetPointData()->GetArray("InputPointIds"); 
+int pID = (int)pointIds->GetTuple1(seed->PointPicker->GetPointId()); 
+
+if((unsigned int)pID<=seed->dup_points.size())    
+//The ids of non-seed points is much greater than the ids of the seed points 
+{   				   //Use this to check if clicked on a seed or not		
+    float dist =1000.00;
+    //float dist1;
+    int index;
+    float finpt[3];
+    for (unsigned int j=0; j<seed->dup_points.size(); j++)
+
+    {
+    	float p1[3] = {seed->dup_points[j].x, seed->dup_points[j].y ,seed->dup_points[j].z };	
+    	float dist1= sqrt(pow((p1[0]-pickPos[0]),2) + pow((p1[1]-pickPos[1]),2) + pow((p1[2]-pickPos[2]),2));   
+        if (dist1<dist)
+       		{
+		dist = dist1;
+        finpt[0] = p1[0];
+		finpt[1] = p1[1];
+		finpt[2] = p1[2];
+                index = j;
+       		}    
+		
+	}
+	
+	seed->dup_points.erase(seed->dup_points.begin()+index);
+
+	//Remove the glyph		
+     vtkDataArray* points2del = seed->point1->GetData();    
+     //vtkDataArray* points2delred;
+     points2del->RemoveTuple((vtkIdType)index);
+     seed->point1->SetData(points2del);
+     seed->Glyph->SetScaleFactor(seed->Glyph->GetScaleFactor()+0.0001);
+
+
+
+     // Add the new  glyph 
+       seed->pointCP->InsertNextPoint(finpt);
+	   cout<<seed->pointCP->GetNumberOfPoints()<<"jjj"<<endl; 
+	   cout<<seed->pointTP->GetNumberOfPoints()<<"jjj"<<endl; 	
+	   seed->polydataCP->SetPoints(seed->pointCP);
+       seed->CPglyph->SetInput(seed->polydataCP);
+       seed->CPsphereMapper->SetInput(seed->CPglyph->GetOutput());	      
+       
+	   seed->CPglyph->SetScaleFactor(seed->CPglyph->GetScaleFactor()+0.0001);//to rerender immediately
+       seed->QVTK->GetRenderWindow()->Render();
+       cout<<seed->polydataTP->GetNumberOfPoints()<<"jjj"<<endl; 
+
+}
+}
+
+
+if(seed->mode == 8) {
+
+
+vtkDataArray* pointIds = seed->Glyph->GetOutput()->GetPointData()->GetArray("InputPointIds"); 
+int pID = (int)pointIds->GetTuple1(seed->PointPicker->GetPointId()); 
+
+if((unsigned int)pID<=seed->dup_points.size())    
+//The ids of non-seed points is much greater than the ids of the seed points 
+{   				   //Use this to check if clicked on a seed or not		
+    float dist =1000.00;
+    //float dist1;
+    int index;
+    float finpt[3];
+    for (unsigned int j=0; j<seed->dup_points.size(); j++)
+
+    {
+    	float p1[3] = {seed->dup_points[j].x, seed->dup_points[j].y ,seed->dup_points[j].z };	
+    	float dist1= sqrt(pow((p1[0]-pickPos[0]),2) + pow((p1[1]-pickPos[1]),2) + pow((p1[2]-pickPos[2]),2));   
+        if (dist1<dist)
+       		{
+		dist = dist1;
+        finpt[0] = p1[0];
+		finpt[1] = p1[1];
+		finpt[2] = p1[2];
+                index = j;
+       		}    
+		
+	}
+	
+	seed->dup_points.erase(seed->dup_points.begin()+index);
+
+	//Remove the glyph		
+     vtkDataArray* points2del = seed->point1->GetData();    
+     //vtkDataArray* points2delred;
+     points2del->RemoveTuple((vtkIdType)index);
+     seed->point1->SetData(points2del);
+     seed->Glyph->SetScaleFactor(seed->Glyph->GetScaleFactor()+0.0001);
+
+
+
+     // Add the new blue glyph 
+       seed->pointFP->InsertNextPoint(finpt);
+	   seed->polydataFP->SetPoints(seed->pointFP);
+       seed->FPglyph->SetInput(seed->polydataFP);
+       seed->FPsphereMapper->SetInput(seed->FPglyph->GetOutput());	      
+       seed->FPglyph->SetScaleFactor(seed->FPglyph->GetScaleFactor()+0.0001);//to rerender immediately
+       seed->QVTK->GetRenderWindow()->Render();
+       cout<<"Add the new glyph"<<endl;
+}
+}
+
+
+
+if(seed->mode == 9) {
+
+
+vtkDataArray* pointIds = seed->Glyph->GetOutput()->GetPointData()->GetArray("InputPointIds"); 
+int pID = (int)pointIds->GetTuple1(seed->PointPicker->GetPointId()); 
+
+if((unsigned int)pID<=seed->dup_points.size())    
+//The ids of non-seed points is much greater than the ids of the seed points 
+{   				   //Use this to check if clicked on a seed or not		
+    float dist =1000.00;
+    //float dist1;
+    int index;
+    float finpt[3];
+    for (unsigned int j=0; j<seed->dup_points.size(); j++)
+
+    {
+    	float p1[3] = {seed->dup_points[j].x, seed->dup_points[j].y ,seed->dup_points[j].z };	
+    	float dist1= sqrt(pow((p1[0]-pickPos[0]),2) + pow((p1[1]-pickPos[1]),2) + pow((p1[2]-pickPos[2]),2));   
+        if (dist1<dist)
+       		{
+		dist = dist1;
+        finpt[0] = p1[0];
+		finpt[1] = p1[1];
+		finpt[2] = p1[2];
+                index = j;
+       		}    
+		
+	}
+	
+	seed->dup_points.erase(seed->dup_points.begin()+index);
+
+	//Remove the glyph		
+     vtkDataArray* points2del = seed->point1->GetData();    
+     //vtkDataArray* points2delred;
+     points2del->RemoveTuple((vtkIdType)index);
+     seed->point1->SetData(points2del);
+     seed->Glyph->SetScaleFactor(seed->Glyph->GetScaleFactor()+0.0001);
+
+     // Add the new blue glyph 
+       seed->pointFN->InsertNextPoint(finpt);
+	   seed->polydataFN->SetPoints(seed->pointFN);
+       seed->FNglyph->SetInput(seed->polydataFN);
+       seed->FNsphereMapper->SetInput(seed->FNglyph->GetOutput());	      
+       seed->FNglyph->SetScaleFactor(seed->FNglyph->GetScaleFactor()+0.0001);//to rerender immediately
+       seed->QVTK->GetRenderWindow()->Render();
+       cout<<"Add the new glyph"<<endl;
+
+}
+}
 
 
 // If the Undo Deletebox is checked, mode = 5 ! 
@@ -1040,11 +1453,43 @@ void Seed3D::saveResult()
       const char *ptr11    = bytes.data();	
 	  std::ofstream seeds;
 	  seeds.open(ptr11);
-	  for(std::vector<point>::iterator it = dup_points.begin();it!=this->dup_points.end();++it){
-				point pt = *it;
-				seeds<<pt.x<<" "<<pt.y<<" "<<pt.z<<"\n";		
-			}
-			seeds.close();
+	  
+	  if(this->EditRbutton->isChecked()){
+			
+					for(std::vector<point>::iterator it = dup_points.begin();it!=this->dup_points.end();++it){
+							point pt = *it;
+							seeds<<pt.x<<" "<<pt.y<<" "<<pt.z<<"\n";		
+																											  }
+	  }
+			
+	  if(this->ValidateRbutton->isChecked()){
+					seeds<<"True Positives"<<"\n";
+					for(std::vector<point>::iterator it = TPVec.begin();it!=this->TPVec.end();++it){
+							
+							point pt = *it;
+							seeds<<pt.x<<" "<<pt.y<<" "<<pt.z<<"\n";		
+																											  }
+					seeds<<"Cluster Positives"<<"\n";
+					for(std::vector<point>::iterator it = CPVec.begin();it!=this->CPVec.end();++it){
+					    	
+						    point pt = *it;
+							seeds<<pt.x<<" "<<pt.y<<" "<<pt.z<<"\n";		
+																											  }
+					seeds<<"False Positives"<<"\n";
+					for(std::vector<point>::iterator it = FPVec.begin();it!=this->FPVec.end();++it){
+					    	
+						    point pt = *it;
+							seeds<<pt.x<<" "<<pt.y<<" "<<pt.z<<"\n";		
+																											  }
+					seeds<<"False Negatives"<<"\n";
+					for(std::vector<point>::iterator it = FNVec.begin();it!=this->FNVec.end();++it){
+					    	
+						    point pt = *it;
+							seeds<<pt.x<<" "<<pt.y<<" "<<pt.z<<"\n";		
+																											  }
+
+	  }
+	  seeds.close();
 
 		}		
 }
@@ -1054,12 +1499,12 @@ void Seed3D::saveResult()
 
 
 void Seed3D::DeleteObjects(){
-  this->QVTK->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor(this->Volume);
+  //this->QVTK->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor(this->Volume);
   this->QVTK->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor(this->AddSphereActor);	
   this->QVTK->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor(this->DelSphereActor);
   this->QVTK->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor(this->SphereActor);
-  
-  this->Volume->Delete();
+  this->QVTK->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor(this->CPSphereActor);
+  //this->Volume->Delete();
   this->AddSphereActor->Delete();
   this->DelSphereActor->Delete();	
   this->SphereActor->Delete();
@@ -1067,22 +1512,22 @@ void Seed3D::DeleteObjects(){
   this->AddSphereMapper->Delete();
   this->DelSphereMapper->Delete();	
   this->SphereMapper->Delete();
-
+  this->CPsphereMapper->Delete();	
 
 
   this->polydata1->Delete();
   this->polydata2->Delete();	
   this->polydata3->Delete();
+  this->polydataCP->Delete();
 
-
-  this->handle->Delete();
+ /* this->handle->Delete();
   this->handle1->Delete();
   this->handle2->Delete();
   this->widget->Delete();
   this->widget1->Delete();	
-  this->widget2->Delete();
+  this->widget2->Delete();*/
 
-  this->sliderRep->Delete();
+  /*this->sliderRep->Delete();
   this->sliderWidget->Delete();
   this->sliderRep2->Delete();	
   this->sliderWidget2->Delete();
@@ -1097,7 +1542,7 @@ void Seed3D::DeleteObjects(){
   this->QVTK1->GetRenderWindow()->Render();   
   this->QVTK2->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor(this->imActor1);
   this->imActor1->Delete();
-  this->QVTK2->GetRenderWindow()->Render();   
+  this->QVTK2->GetRenderWindow()->Render();   */
   
 }
 
@@ -1128,4 +1573,145 @@ this->UndoDelBox->setCheckable(false);
 else{
 this->UndoDelBox->setCheckable(true);
 }
+}
+
+
+
+
+void Seed3D::TruePositives()
+{
+this->mode = 6;
+this->stateTP = this->TPBox->checkState();
+this->mode = 6;
+std::cout<<this->mode<<"ggg"<<std::endl;
+this->TPBox->setCheckState((Qt::CheckState)this->stateTP);
+if(this->stateTP){
+	if(this->stateDelete){ this->DeleteBox->setCheckState((Qt::CheckState)0);}
+	if(this->stateUndoDel){this->UndoDelBox->setCheckState((Qt::CheckState)0); }
+    if(this->stateAdd){this->AddBox->setCheckState((Qt::CheckState)0); }
+	if(this->stateCP){this->CPBox->setCheckState((Qt::CheckState)0); }
+	if(this->stateFP){this->FPBox->setCheckState((Qt::CheckState)0); }
+	if(this->stateFN){this->FNBox->setCheckState((Qt::CheckState)0); }
+	this->mode = 6;
+				 }
+else{
+this->mode=0;
+}
+}
+
+
+void Seed3D::ClusterPositives()
+{
+this->mode = 7;
+this->stateCP = this->CPBox->checkState();
+this->CPBox->setCheckState((Qt::CheckState)this->stateCP);
+if(this->stateCP){
+	if(this->stateDelete){ this->DeleteBox->setCheckState((Qt::CheckState)0);}
+	if(this->stateUndoDel){this->UndoDelBox->setCheckState((Qt::CheckState)0); }
+    if(this->stateAdd){this->AddBox->setCheckState((Qt::CheckState)0); }
+	if(this->stateTP){this->TPBox->setCheckState((Qt::CheckState)0); }
+	if(this->stateFP){this->FPBox->setCheckState((Qt::CheckState)0); }
+	if(this->stateFN){this->FNBox->setCheckState((Qt::CheckState)0); }
+	this->mode = 7;
+				 }
+else{
+this->mode=0;
+}
+}
+
+
+void Seed3D::FalsePositives()
+{
+this->mode = 8;
+this->stateFP = this->FPBox->checkState();
+this->FPBox->setCheckState((Qt::CheckState)this->stateFP);
+if(this->stateFP){
+	if(this->stateDelete){ this->DeleteBox->setCheckState((Qt::CheckState)0);}
+	if(this->stateUndoDel){this->UndoDelBox->setCheckState((Qt::CheckState)0); }
+    if(this->stateAdd){this->AddBox->setCheckState((Qt::CheckState)0); }
+	if(this->stateCP){this->CPBox->setCheckState((Qt::CheckState)0); }
+	if(this->stateTP){this->TPBox->setCheckState((Qt::CheckState)0); }
+	if(this->stateFN){this->FNBox->setCheckState((Qt::CheckState)0); }
+	this->mode = 8;
+				 }
+else{
+this->mode=0;
+}
+}
+
+void Seed3D::FalseNegatives()
+{
+this->mode = 9;
+this->stateFN = this->FNBox->checkState();
+this->FNBox->setCheckState((Qt::CheckState)this->stateFN);
+if(this->stateFN){
+	if(this->stateDelete){ this->DeleteBox->setCheckState((Qt::CheckState)0);}
+	if(this->stateUndoDel){this->UndoDelBox->setCheckState((Qt::CheckState)0); }
+    if(this->stateAdd){this->AddBox->setCheckState((Qt::CheckState)0); }
+	if(this->stateCP){this->CPBox->setCheckState((Qt::CheckState)0); }
+	if(this->stateFP){this->FPBox->setCheckState((Qt::CheckState)0); }
+	if(this->stateTP){this->TPBox->setCheckState((Qt::CheckState)0); }
+	this->mode = 9;
+				 }
+else{
+this->mode=0;
+}
+}
+
+void Seed3D::ValidateSeeds()
+{
+vtkIdType Id;
+double* pointz;
+point p;
+Id = this->pointTP->GetNumberOfPoints();
+////cout<<Id<<endl;
+for(int i =0 ;i<Id;i++)
+{
+    pointz = this->pointTP->GetPoint(i);
+    p.x = pointz[0];
+    p.y = pointz[1];
+    p.z = pointz[2];	
+    this->TPVec.push_back(p);
+    
+}
+
+
+Id = this->pointCP->GetNumberOfPoints();
+////cout<<Id<<endl;
+for(int i =0 ;i<Id;i++)
+{
+    pointz = this->pointCP->GetPoint(i);
+    p.x = pointz[0];
+    p.y = pointz[1];
+    p.z = pointz[2];	
+    this->CPVec.push_back(p);
+    
+}
+
+Id = this->pointFP->GetNumberOfPoints();
+
+////cout<<Id<<endl;
+for(int i =0 ;i<Id;i++)
+{
+    pointz = this->pointFP->GetPoint(i);
+    p.x = pointz[0];
+    p.y = pointz[1];
+    p.z = pointz[2];	
+    this->FPVec.push_back(p);
+    
+}
+
+Id = this->pointFN->GetNumberOfPoints();
+
+////cout<<Id<<endl;
+for(int i =0 ;i<Id;i++)
+{
+    pointz = this->pointFN->GetPoint(i);
+    p.x = pointz[0];
+    p.y = pointz[1];
+    p.z = pointz[2];	
+    this->FNVec.push_back(p);
+    
+}
+
 }
