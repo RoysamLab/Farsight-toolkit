@@ -211,7 +211,7 @@ private:
 	std::vector<point> MarkedPoints;
 	std::vector<point> MarkedPoints2add;
 	vtkFloatArray* pcoords;
-	vtkFloatArray* Addpcoords;
+	vtkFloatArray* addpcoords;
 	vtkFloatArray* delpcoords;
 	vtkPoints* point1;
 	vtkPoints* point2;
@@ -251,7 +251,7 @@ private:
     static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
     void rayCast(char*,char*);
 	
-    vector<point> GetSeedpts(vector<Seed> seeds);
+    vector<point> GetSeedpts(vector<Seed> seeds, double* x);
 
 	std::vector<point> spPoint;
 	
