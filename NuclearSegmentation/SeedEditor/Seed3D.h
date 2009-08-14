@@ -141,8 +141,11 @@ public:
 	void DeleteSeed();
 	void saveResult();
 	void UndoDeleteSeeds();
-    
-	
+    void TruePositives();
+	void ClusterPositives();
+	void FalsePositives();
+	void FalseNegatives();
+	void ValidateSeeds();
 private:
 	void createMenus();
 	void createStatusBar();
@@ -184,17 +187,29 @@ private:
     QCheckBox *AddBox;
     QCheckBox *DeleteBox;
     QCheckBox *UndoDelBox;	
-    QPushButton *PlaceButton;
+    QCheckBox *TPBox;	
+	QCheckBox *CPBox;	
+	QCheckBox *FPBox;	
+	QCheckBox *FNBox;	
+	
+	QPushButton *PlaceButton;
     QPushButton *ApplyButton;
-    vtkSmartPointer<vtkRenderer> Renderer;
+    QPushButton *ValidateButton;
+	
+	QRadioButton *EditRbutton;
+	QRadioButton *ValidateRbutton;
+
+	vtkSmartPointer<vtkRenderer> Renderer;
     vtkSmartPointer<vtkRenderer> Renderer1;
     vtkSmartPointer<vtkRenderer> Renderer2;
     vtkSphereWidget *sphereWidget;
     vtkSmartPointer<vtkGlyph3D> Glyph;
     vtkSmartPointer<vtkGlyph3D> delglyph;
     vtkSmartPointer<vtkGlyph3D> addglyph;
-
-
+	vtkSmartPointer<vtkGlyph3D> TPglyph;
+	vtkSmartPointer<vtkGlyph3D> CPglyph;
+	vtkSmartPointer<vtkGlyph3D> FPglyph;
+	vtkSmartPointer<vtkGlyph3D> FNglyph;
 
 	int mode;
 	int stateAdd;
@@ -202,24 +217,57 @@ private:
 	int stateMerge;
 	int stateSplit;
 	int stateUndoDel;
+	int stateTP;
+	int stateCP;
+	int stateFP;
+	int stateFN;
+
 	int counter;
 	int flag;
 	int iRender;
 
 
 	std::vector<point> dup_points;
+	std::vector<point> TPVec;
+	std::vector<point> CPVec;
+	std::vector<point> FPVec;
+	std::vector<point> FNVec;
 	std::vector<point> MarkedPoints;
 	std::vector<point> MarkedPoints2add;
 	vtkFloatArray* pcoords;
 	vtkFloatArray* Addpcoords;
 	vtkFloatArray* delpcoords;
+	vtkFloatArray* TPpcoords;
+	vtkFloatArray* CPpcoords;
+	vtkFloatArray* FPpcoords;
+	vtkFloatArray* FNpcoords;
+
+
+
+
 	vtkPoints* point1;
 	vtkPoints* point2;
 	vtkPoints* point3;
+	vtkPoints* pointTP;
+	vtkPoints* pointCP;
+	vtkPoints* pointFP;
+	vtkPoints* pointFN;
+
+
+
+
 	vtkPoints* allpoints;
 	vtkSmartPointer<vtkPolyData> polydata1;
 	vtkSmartPointer<vtkPolyData> polydata2;
 	vtkSmartPointer<vtkPolyData> polydata3;
+	vtkSmartPointer<vtkPolyData> polydataTP;
+	vtkSmartPointer<vtkPolyData> polydataCP;
+	vtkSmartPointer<vtkPolyData> polydataFP;
+	vtkSmartPointer<vtkPolyData> polydataFN;
+
+
+
+
 	vtkSmartPointer<vtkSphereSource> Sphere;
 	vtkSmartPointer<vtkPolyDataMapper> SphereMapper;
 	vtkSmartPointer<vtkActor> SphereActor;
@@ -227,7 +275,19 @@ private:
 	vtkSmartPointer<vtkActor> DelSphereActor;
 	vtkSmartPointer<vtkPolyDataMapper> AddSphereMapper;
 	vtkSmartPointer<vtkActor> AddSphereActor;
-    vtkSmartPointer<vtkImageData> VTKim;
+    vtkSmartPointer<vtkPolyDataMapper> TPsphereMapper;
+	vtkSmartPointer<vtkActor> TPSphereActor;
+	vtkSmartPointer<vtkPolyDataMapper> CPsphereMapper;
+	vtkSmartPointer<vtkActor> CPSphereActor;
+	vtkSmartPointer<vtkPolyDataMapper> FPsphereMapper;
+	vtkSmartPointer<vtkActor> FPSphereActor;
+	vtkSmartPointer<vtkPolyDataMapper> FNsphereMapper;
+	vtkSmartPointer<vtkActor> FNSphereActor;
+
+
+
+
+	vtkSmartPointer<vtkImageData> VTKim;
 	vtkSmartPointer<vtkImageReslice> Reslice;
 	vtkSmartPointer<vtkImageReslice> Reslice1;
 	vtkSmartPointer<vtkDataSetMapper>im_mapper;
