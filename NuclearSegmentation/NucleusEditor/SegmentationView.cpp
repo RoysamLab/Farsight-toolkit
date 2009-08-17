@@ -766,18 +766,17 @@ void SegmentationView::drawSelectionMarkers(QPainter *painter)
 				painter->drawRect( b.min.x, b.min.y, (b.max.x-b.min.x+1), (b.max.y-b.min.y+1) );							
 				
 			}
-		}
-
-		//Added by Yousef 7-31-2009
-		//if we are selecting points for splitting, mark the points
-		if(resultModel->isSplitingMode())
+		}		
+	}
+	//Added by Yousef 7-31-2009
+	//if we are selecting points for splitting, mark the points
+	if(resultModel->isSplitingMode())
+	{
+		for(int i=0; i<resultModel->getSizeOfSplittingList(); i++)		
 		{
-			for(int i=0; i<resultModel->getSizeOfSplittingList(); i++)		
-			{
-				std::vector<int> xx = resultModel->getPointFromSplittingList(i);
-				painter->setPen(Qt::red);
-				painter->drawPoint(xx.at(0), xx.at(1));
-			}
+			std::vector<int> xx = resultModel->getPointFromSplittingList(i);
+			painter->setPen(Qt::red);
+			painter->drawPoint(xx.at(0), xx.at(1));
 		}
 	}
 }
