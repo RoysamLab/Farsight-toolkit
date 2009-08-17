@@ -873,7 +873,14 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 	int id1 = (int)labelImage->GetPixel(0,0,P1.z,P1.y,P1.x);
 	int id2 = (int)labelImage->GetPixel(0,0,P2.z,P2.y,P2.x);
 	if(id1 != id2)
-	{
+	{		
+		std::vector <int> ids_err;
+		ids_err.push_back(0);
+		ids_err.push_back(0);
+		return ids_err;
+	}
+	if(id1==0 || id2==0)
+	{		
 		std::vector <int> ids_err;
 		ids_err.push_back(0);
 		ids_err.push_back(0);

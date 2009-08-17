@@ -45,6 +45,10 @@ SegmentationView::SegmentationView(QWidget *parent)
     horizontalScrollBar()->setRange(0,0);	//scrollbars for 2D navigation
     verticalScrollBar()->setRange(0,0);	
 
+	//Added by Aytekin
+	horizontalScrollBar()->setValue(0);
+	verticalScrollBar()->setValue(0);
+
 	totalWidth = 0;		//width of image in pixels
 	totalHeight = 0;	//height of image in pixels
 
@@ -292,7 +296,11 @@ void SegmentationView::mousePressEvent(QMouseEvent *event)
 		if(resultModel->isSplitingMode())
 		{
 			int xx = origin.x();
-			int yy = origin.y();			
+			int yy = origin.y();
+			// Added by Aytekin
+			xx = xx + horizontalOffset();
+			yy = yy + verticalOffset(); 
+
 			xx = xx/currentScale;
 			yy = yy/currentScale;		
 			//as of now, I asume that the image starts at the top left corner (0,0) of the view window
@@ -582,11 +590,28 @@ void SegmentationView::paintEvent(QPaintEvent *event)
 	//int xshift = qMax(0, ( viewport()->width() - newSize.width() ) / 2 );
 	//int yshift = qMax(0, ( viewport()->height() - newSize.height() ) / 2 );
 
+	
+
 	int xshift=0;int yshift=0;
 	painter.drawImage(xshift - horizontalScrollBar()->value(), 
 		                yshift - verticalScrollBar()->value(),
 						tmpImg.scaled(newSize,Qt::KeepAspectRatio,Qt::FastTransformation));
 
+	//horizontalScrollBar()->setValue(0);
+	//verticalScrollBar()->setValue(0);
+	/*
+	int h=horizontalScrollBar()->value();
+	int v=verticalScrollBar()->value();
+	int *l,*t,*r,*b;
+	l=new int();t=new int();r=new int();b=new int();
+	*l=0;*t=0;*r=0;*b=0;
+	viewport()->getContentsMargins(l,t,r,b);
+	int ll,tt,rr,bb;
+	ll=*l;
+	tt=*t;
+	rr=*r;
+	bb=*b;
+*/
 }
 
 

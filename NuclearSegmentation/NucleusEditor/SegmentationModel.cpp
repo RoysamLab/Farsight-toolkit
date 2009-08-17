@@ -290,6 +290,7 @@ void SegmentationModel::endSplitTrigger()
 			std::vector< int > newIDs = nucseg->Split(pointsForSplitting.at(i), pointsForSplitting.at(i+1));
 			if( newIDs.size()==3 )
 			{
+				
 				//Remove from table the old id (remove the splitted object)			
 				int row = RowForID(newIDs.at(2));
 				QList<QStandardItem *> items = model->takeRow(row);
