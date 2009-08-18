@@ -62,6 +62,8 @@ class View3D : public QMainWindow
 {
 Q_OBJECT;
 public:
+
+	vtkSmartPointer<vtkPolyData> poly_line_data;
 	View3D(int argc, char **argv);
 	~View3D();
 	void Initialize();
@@ -273,7 +275,7 @@ private:
 	vtkSmartPointer<vtkContourFilter> ContourFilter;
 
   //raycast
-	vtkSmartPointer<vtkPolyData> poly_line_data;
+	//vtkSmartPointer<vtkPolyData> poly_line_data;
 	vtkSmartPointer<vtkPolyData> poly;
 	vtkSmartPointer<vtkPolyDataMapper> polymap;
 	

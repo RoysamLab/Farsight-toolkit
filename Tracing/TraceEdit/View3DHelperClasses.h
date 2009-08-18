@@ -51,7 +51,8 @@ public:
       /*vtkSmartPointer<vtkPiecewiseFunction> colorTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
     colorTransferFunction->AddPoint(1.0,0.0f,0.0f,0.0f);
     colorTransferFunction->AddPoint(255*(1-value),0.5f,0.5f,0.0f);*/
-    vtkColorTransferFunction *colorTransferFunction = vtkColorTransferFunction::New();
+    vtkColorTransferFunction *colorTransferFunction =
+      vtkSmartPointer<vtkColorTransferFunction>::New();
     colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
     colorTransferFunction->AddRGBPoint(255*(1-value),1,0,0);
      this->volume->GetProperty()->SetColor(colorTransferFunction);

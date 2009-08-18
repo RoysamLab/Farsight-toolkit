@@ -182,7 +182,7 @@ void View3D::CreateGUIObjects()
 
   //Set up a QVTK Widget for embedding a VTK render window in Qt.
   this->QVTK = new QVTKWidget(this->CentralWidget);
-  this->Renderer = vtkRenderer::New();
+  this->Renderer = vtkSmartPointer<vtkRenderer>::New();
   this->QVTK->GetRenderWindow()->AddRenderer(this->Renderer);
 
   //Set up the menu bar
@@ -383,7 +383,7 @@ void View3D::CreateInteractorStyle()
 {
   this->Interactor = this->QVTK->GetRenderWindow()->GetInteractor();
   //keep mouse command observers, but change the key ones
-  this->keyPress = vtkCallbackCommand::New();
+  this->keyPress = vtkSmartPointer<vtkCallbackCommand>::New();
   this->keyPress->SetCallback(HandleKeyPress);
   this->keyPress->SetClientData(this);
 
@@ -394,12 +394,12 @@ void View3D::CreateInteractorStyle()
 
   //use trackball control for mouse commands
   vtkSmartPointer<vtkInteractorStyleTrackballCamera> style =
-    vtkInteractorStyleTrackballCamera::New();
+    vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
   this->Interactor->SetInteractorStyle(style);
-  this->CellPicker = vtkCellPicker::New();
+  this->CellPicker = vtkSmartPointer<vtkCellPicker>::New();
   this->CellPicker->SetTolerance(0.004);
   this->Interactor->SetPicker(this->CellPicker);
-  this->isPicked = vtkCallbackCommand::New();
+  this->isPicked = vtkSmartPointer<vtkCallbackCommand>::New();
   this->isPicked->SetCallback(PickCell);
 
   //isPicked caller allows observer to intepret click 
@@ -409,8 +409,8 @@ void View3D::CreateInteractorStyle()
 
 void View3D::CreateActors()
 {
-  this->LineActor = vtkActor::New();
-  this->LineMapper = vtkPolyDataMapper::New();
+  this->LineActor = vtkSmartPointer<vtkActor>::New();
+  this->LineMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   this->UpdateLineActor();
   this->LineActor->SetPickable(1);
   this->Renderer->AddActor(this->LineActor);
@@ -433,13 +433,13 @@ void View3D::CreateActors()
 
 void View3D::CreateSphereActor()
 {
-  this->Sphere = vtkSphereSource::New();
+  this->Sphere = vtkSmartPointer<vtkSphereSource>::New();
   this->Sphere->SetRadius(3);
-  this->SphereMapper = vtkPolyDataMapper::New();
+  this->SphereMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   this->SphereMapper->SetInput(this->Sphere->GetOutput());
   this->SphereMapper->GlobalImmediateModeRenderingOn();
 
-  this->SphereActor = vtkActor::New();
+  this->SphereActor = vtkSmartPointer<vtkActor>::New();
   this->SphereActor->SetMapper(this->SphereMapper);
   this->SphereActor->GetProperty()->SetOpacity(.3);
   this->SphereActor->VisibilityOff();
@@ -1470,7 +1470,8 @@ void View3D::ApplySomaSettings()
 
 void View3D::AddContourThresholdSliders()
 {
-  vtkSliderRepresentation2D *sliderRep2 = vtkSliderRepresentation2D::New();
+  vtkSliderRepresentation2D *sliderRep2 =
+    vtkSmartPointer<vtkSliderRepresentation2D>::New();
   sliderRep2->SetValue(0.8);
   sliderRep2->SetTitleText("Threshold");
   sliderRep2->GetPoint1Coordinate()->SetCoordinateSystemToNormalizedDisplay();
@@ -1485,12 +1486,13 @@ void View3D::AddContourThresholdSliders()
   sliderRep2->SetMinimumValue(0.0);
   sliderRep2->SetMaximumValue(1.0);
 
-  vtkSliderWidget *sliderWidget2 = vtkSliderWidget::New();
+  vtkSliderWidget *sliderWidget2 = vtkSmartPointer<vtkSliderWidget>::New();
   sliderWidget2->SetInteractor(Interactor);
   sliderWidget2->SetRepresentation(sliderRep2);
   sliderWidget2->SetAnimationModeToAnimate();
 
-  vtkSlider2DCallbackContourThreshold *callback_contour = vtkSlider2DCallbackContourThreshold::New();
+  vtkSlider2DCallbackContourThreshold *callback_contour =
+    vtkSmartPointer<vtkSlider2DCallbackContourThreshold>::New();
   callback_contour->cfilter = this->ContourFilter;
   sliderWidget2->AddObserver(vtkCommand::InteractionEvent,callback_contour);
   sliderWidget2->EnabledOn();
@@ -1500,7 +1502,7 @@ void View3D::AddContourThresholdSliders()
 void View3D::AddPlaybackWidget(char *filename)
 {
 
-  vtkSubRep *playbackrep = vtkSubRep::New();
+  vtkSubRep *playbackrep = vtkSmartPointer<vtkSubRep>::New();
   playbackrep->slice_counter=0;
   playbackrep->GetPositionCoordinate()->SetCoordinateSystemToNormalizedDisplay();
   playbackrep->GetPositionCoordinate()->SetValue(0.2,0.1);
@@ -1539,21 +1541,24 @@ void View3D::AddPlaybackWidget(char *filename)
   }
 
   printf("finished memcopy in playback widget\n");
-  vtkPiecewiseFunction *opacityTransferFunction = vtkPiecewiseFunction::New();
+  vtkPiecewiseFunction *opacityTransferFunction =
+    vtkSmartPointer<vtkPiecewiseFunction>::New();
   opacityTransferFunction->AddPoint(2,0.0);
   opacityTransferFunction->AddPoint(20,0.2);
 
-  vtkColorTransferFunction *colorTransferFunction = vtkColorTransferFunction::New();
+  vtkColorTransferFunction *colorTransferFunction =
+    vtkSmartPointer<vtkColorTransferFunction>::New();
   colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
   colorTransferFunction->AddRGBPoint(20.0,1,0,0);
 
   
-  vtkVolumeProperty *volumeProperty = vtkVolumeProperty::New();
-    volumeProperty->SetColor(colorTransferFunction);
-    volumeProperty->SetScalarOpacity(opacityTransferFunction);
-    volumeProperty->SetInterpolationTypeToLinear();
+  vtkVolumeProperty *volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
+  volumeProperty->SetColor(colorTransferFunction);
+  volumeProperty->SetScalarOpacity(opacityTransferFunction);
+  volumeProperty->SetInterpolationTypeToLinear();
 
-  vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper = vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
+  vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper =
+    vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
   volumeMapper->SetSampleDistance(0.5);
   volumeMapper->SetInput(vtkimarray[playbackrep->slice_counter]);
   
@@ -1572,7 +1577,8 @@ void View3D::AddPlaybackWidget(char *filename)
 }
 void View3D::AddVolumeSliders()
 {
-  vtkSliderRepresentation2D *sliderRep = vtkSliderRepresentation2D::New();
+  vtkSliderRepresentation2D *sliderRep =
+    vtkSmartPointer<vtkSliderRepresentation2D>::New();
   sliderRep->SetValue(0.1);
   sliderRep->SetTitleText("Opacity");
   sliderRep->GetPoint1Coordinate()->SetCoordinateSystemToNormalizedDisplay();
@@ -1587,12 +1593,13 @@ void View3D::AddVolumeSliders()
   sliderRep->SetMinimumValue(0.0);
   sliderRep->SetMaximumValue(1.0);
 
-  vtkSliderWidget *sliderWidget = vtkSliderWidget::New();
+  vtkSliderWidget *sliderWidget = vtkSmartPointer<vtkSliderWidget>::New();
   sliderWidget->SetInteractor(Interactor);
   sliderWidget->SetRepresentation(sliderRep);
   sliderWidget->SetAnimationModeToAnimate();
 
-  vtkSlider2DCallbackBrightness *callback_brightness = vtkSlider2DCallbackBrightness::New();
+  vtkSlider2DCallbackBrightness *callback_brightness =
+    vtkSmartPointer<vtkSlider2DCallbackBrightness>::New();
   callback_brightness->volume = this->Volume;
   sliderWidget->AddObserver(vtkCommand::InteractionEvent,callback_brightness);
   sliderWidget->EnabledOn();
@@ -1600,7 +1607,8 @@ void View3D::AddVolumeSliders()
 
 // slider 2
 
-  vtkSliderRepresentation2D *sliderRep2 = vtkSliderRepresentation2D::New();
+  vtkSliderRepresentation2D *sliderRep2 =
+    vtkSmartPointer<vtkSliderRepresentation2D>::New();
   sliderRep2->SetValue(0.8);
   sliderRep2->SetTitleText("Brightness");
   sliderRep2->GetPoint1Coordinate()->SetCoordinateSystemToNormalizedDisplay();
@@ -1615,12 +1623,13 @@ void View3D::AddVolumeSliders()
   sliderRep2->SetMinimumValue(0.0);
   sliderRep2->SetMaximumValue(1.0);
 
-  vtkSliderWidget *sliderWidget2 = vtkSliderWidget::New();
+  vtkSliderWidget *sliderWidget2 = vtkSmartPointer<vtkSliderWidget>::New();
   sliderWidget2->SetInteractor(Interactor);
   sliderWidget2->SetRepresentation(sliderRep2);
   sliderWidget2->SetAnimationModeToAnimate();
 
-  vtkSlider2DCallbackContrast *callback_contrast = vtkSlider2DCallbackContrast::New();
+  vtkSlider2DCallbackContrast *callback_contrast =
+    vtkSmartPointer<vtkSlider2DCallbackContrast>::New();
   callback_contrast->volume = this->Volume;
   sliderWidget2->AddObserver(vtkCommand::InteractionEvent,callback_contrast);
   sliderWidget2->EnabledOn();
@@ -1691,18 +1700,18 @@ void View3D::readImg(std::string sourceFile)
   connector->SetInput( reader->GetOutput() );
 
   //Route vtkImageData to the contour filter
-  this->ContourFilter = vtkContourFilter::New();
+  this->ContourFilter = vtkSmartPointer<vtkContourFilter>::New();
   this->ContourFilter->SetInput(connector->GetOutput());
   this->ContourFilter->SetValue(0,10);            // this affects render
 
   this->ContourFilter->Update();
 
   //Route contour filter output to the mapper
-  this->VolumeMapper = vtkPolyDataMapper::New();
+  this->VolumeMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   this->VolumeMapper->SetInput(this->ContourFilter->GetOutput());
 
   //Declare actor and set properties
-  this->VolumeActor = vtkActor::New();
+  this->VolumeActor = vtkSmartPointer<vtkActor>::New();
   this->VolumeActor->SetMapper(this->VolumeMapper);
 
   //this->VolumeActor->GetProperty()->SetRepresentationToWireframe();
@@ -1818,7 +1827,8 @@ void View3D::rayCast(char *raySource)
   typedef itk::ImageToVTKImageFilter<ImageType> ConnectorType;
   ConnectorType::Pointer connector= ConnectorType::New();
   connector->SetInput( i2spReader->GetOutput() );
-  vtkImageToStructuredPoints *i2sp = vtkImageToStructuredPoints::New();
+  vtkImageToStructuredPoints *i2sp =
+    vtkSmartPointer<vtkImageToStructuredPoints>::New();
   i2sp->SetInput(connector->GetOutput());
 
 
@@ -1833,31 +1843,34 @@ void View3D::rayCast(char *raySource)
   memcpy(vtkim->GetScalarPointer(),i2spReader->GetOutput()->GetBufferPointer(),size[0]*size[1]*size[2]*sizeof(unsigned char));
 
 // Create transfer mapping scalar value to opacity
-  vtkPiecewiseFunction *opacityTransferFunction = vtkPiecewiseFunction::New();
+  vtkPiecewiseFunction *opacityTransferFunction =
+    vtkSmartPointer<vtkPiecewiseFunction>::New();
 
   opacityTransferFunction->AddPoint(2,0.0);
   opacityTransferFunction->AddPoint(50,0.1);
  // opacityTransferFunction->AddPoint(40,0.1);
   // Create transfer mapping scalar value to color
   // Play around with the values in the following lines to better vizualize data
-  vtkColorTransferFunction *colorTransferFunction = vtkColorTransferFunction::New();
+  vtkColorTransferFunction *colorTransferFunction =
+    vtkSmartPointer<vtkColorTransferFunction>::New();
     colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
   colorTransferFunction->AddRGBPoint(50.0,1,0,0);
 
   // The property describes how the data will look
-  vtkVolumeProperty *volumeProperty = vtkVolumeProperty::New();
+  vtkVolumeProperty *volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
     volumeProperty->SetColor(colorTransferFunction);
     volumeProperty->SetScalarOpacity(opacityTransferFunction);
   //  volumeProperty->ShadeOn();
     volumeProperty->SetInterpolationTypeToLinear();
 
-  vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper = vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
+  vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper =
+    vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
   volumeMapper->SetSampleDistance(0.75);
   volumeMapper->SetInput(vtkim);
 
   // The volume holds the mapper and the property and
   // can be used to position/orient the volume
-  vtkVolume *volume = vtkVolume::New();
+  vtkVolume *volume = vtkSmartPointer<vtkVolume>::New();
     volume->SetMapper(volumeMapper);
     volume->SetProperty(volumeProperty);
   volume->SetPickable(0);

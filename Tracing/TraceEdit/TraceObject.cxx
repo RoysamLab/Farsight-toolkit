@@ -61,7 +61,9 @@ TraceObject::TraceObject(const TraceObject &T)
 TraceObject::~TraceObject()
 {
   for(unsigned int counter=0; counter<trace_lines.size(); counter++)
+    {
     delete trace_lines[counter];
+    }
 }
 
 double TraceObject::getSmallLineColor()
@@ -227,27 +229,33 @@ bool TraceObject::ReadFromSWCFile(char * filename)
   while(!feof(fp))
     {
     if(fgets(buff,1024,fp)==NULL)
+      {
       break;
+      }
     int pc = 0;
     while(buff[pc]==' '&&(pc<1023))
+      {
       pc++;
+      }
     if(buff[pc]=='#') // ignoring comment lines for now. We have to read scale from it! TODO
+      {
       continue;
+      }
 
     //sscanf(buff,"%d %d %*f %*f %*f %*f %d",&id,&type,&parent);
     sscanf(buff,"%d %d %*f %*f %*f %*f %d",&id,&type,&parent);
     //printf("%d\n",id);
     if(id>max_id)//find max id
-    {
+      {
       max_id=id;
-    }
+      }
 
     if(parent >= 1)
-    {
+      {
       child_count[parent]++;
+      }
+	  hash_type[id] = type;
     }
-	hash_type[id] = type;
-  }
   fclose(fp);
   //printf("I read %d lines\n",tc);
   unsigned int *child_id = (unsigned int *)malloc(numPoints * sizeof(unsigned int));
@@ -257,106 +265,106 @@ bool TraceObject::ReadFromSWCFile(char * filename)
   fp = fopen(filename,"r");
   int tcc =0;
   while(!feof(fp))
-  {
+    {
     tcc++;
     //printf("Done %d\n",tcc);
     if(fgets(buff,1024,fp)==NULL)
+      {
       break;
+      }
     int pc = 0;
     while(buff[pc]==' '&&(pc<1023))
+      {
       pc++;
+      }
     if(buff[pc]=='#') // ignoring comment lines for now. We have to read scale from it! TODO
+      {
       continue;
+      }
     sscanf(buff,"%d %d %lf %lf %lf %lf %d",&id,&type,&x,&y,&z,&r,&parent);
     TraceBit tbit;
     tbit.x=x;tbit.y=y;tbit.z=z;tbit.id=id;tbit.r =r;
     data[id] = tbit;
+
     if(parent!=-1)
-    {
+      {
       child_id[parent] = id;
-    }
+      }
     if(parent == -1)
-    {
+      {
       criticals.insert(id);
       hash_parent[id] = -1;
       //printf("hash_parent[%d] = %d\n",id,hash_parent[id]);
-    }
+      }
     else
-    {
-      if(child_count[parent]>1)
       {
+      //the logic in here is screwy, shouldn't it be child_count[id] > 1?
+      if(child_count[parent]>1)
+        {
         criticals.insert(id);
         hash_parent[id] = parent;
         //printf("hash_parent[%d] = %d\n", id, hash_parent[id]);
+        }
+      else if(hash_type[id] != hash_type[parent])
+        {
+        criticals.insert(id);
+        hash_parent[id] = parent;
+        }
       }
-	  else if(hash_type[id] != hash_type[parent])
-	  {
-		  criticals.insert(id);
-		  hash_parent[id] = parent;
-	  }
     }
-  }
   fclose(fp);
   printf("about to create the data structure.. %d\n", (int)criticals.size());
   std::set<int>::iterator iter = criticals.begin();
   int global_id_number = 1;
   while(iter != criticals.end())
-  {
+    {
     TraceLine * ttemp = new TraceLine();
     ttemp->SetId(global_id_number++);
     ttemp->SetType(hash_type[*iter]);
     //ttemp->setTraceColor(1.0/ttemp->GetType());
     switch( ttemp->GetType() )
-    {
-    case 1:
+      {
+      case 1:
         ttemp->setTraceColor(.75);//cyan
         break;
-    case 3:
-    case 4:
-    case 5:
+      case 3:
+      case 4:
+      case 5:
         ttemp->setTraceColor(.90);//blue
         break;
-    case 7:
-    case 0:
-    default:
-        ttemp->setTraceColor(.25); //yellow
-    }
+      case 7:
+      case 0:
+      default:
+          ttemp->setTraceColor(.25); //yellow
+      }
     ttemp->AddTraceBit(data[*iter]);
     int id_counter = *iter;
     while(child_count[id_counter]==1)
-    {
-		if(hash_type[id_counter] == hash_type[child_id[id_counter]])
-		{
-			id_counter = child_id[id_counter];
-			ttemp->AddTraceBit(data[id_counter]);
-		}
-		else
-			break;
-
-    }
+      {
+      if(hash_type[id_counter] == hash_type[child_id[id_counter]])
+        {
+        id_counter = child_id[id_counter];
+        ttemp->AddTraceBit(data[id_counter]);
+        }
+      else
+        {
+        break;
+        }
+      }
     hash_load[id_counter] = reinterpret_cast<unsigned long long int>(ttemp); 
     // Important: We're storing TraceLine* for points in the end of segments only.
     trace_lines.push_back(ttemp);
     iter++;
-  }
+    }
   //printf("Trace_lines size = %d\n",trace_lines.size());
   
   iter = criticals.begin();
   int pc = 0;
-  int numSkipped = 0;
   while(iter!= criticals.end())
   {
     //printf("trace_lines[%d] = %p\n",pc,trace_lines[pc]);
     if(hash_parent[*iter]>0)
       {
-      if(hash_load[hash_parent[*iter]] == 0)
-        {
-        //cerr << "NULL trace line detected, skipping." << endl;
-        numSkipped++;
-        ++iter;
-        pc++;
-        continue;
-        }
       //printf("hash_parent %d *iter %d hash_load %p\n",hash_parent[*iter],*iter,reinterpret_cast<void*>(hash_load[hash_parent[*iter]]));
       TraceLine * t = reinterpret_cast<TraceLine*>(hash_load[hash_parent[*iter]]);
       trace_lines[pc]->SetParent(t);
@@ -375,7 +383,6 @@ bool TraceObject::ReadFromSWCFile(char * filename)
     pc++;
     ++iter;
     }
-  cerr << "Number of trace lines skipped: " << numSkipped << endl;
   std::vector<TraceLine*>::iterator cleaniter = trace_lines.end();
   cleaniter--;
   for(;cleaniter!=trace_lines.begin(); cleaniter--)
