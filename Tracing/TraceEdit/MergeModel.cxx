@@ -25,18 +25,22 @@ limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////
 MergeModel::MergeModel(std::vector<TraceGap*> gaps)
 {
-  this->Model = new QStandardItemModel(0,0);
-  this->SelectionModel = new QItemSelectionModel(this->Model);
+  this->Model = new QStandardItemModel(0, 0, this);
+  this->SelectionModel = new QItemSelectionModel(this->Model, this);
   this->SetTraceGaps(gaps);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 MergeModel::~MergeModel()
 {
+  //explicit deletion isn't necessary because Qt objects take care of killing
+  //their own children
+  /*
   delete this->Model;
   this->Model = NULL;
   delete this->SelectionModel;
   this->SelectionModel = NULL;
+  */
 }
 
 ////////////////////////////////////////////////////////////////////////////////

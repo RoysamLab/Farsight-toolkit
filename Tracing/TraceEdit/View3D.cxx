@@ -147,8 +147,14 @@ View3D::~View3D()
     {
     delete this->QVTK;
     }
+  if(this->GapsPlotView)
+    {
+    delete this->GapsPlotView;
+    }
   delete this->tobj;
   delete this->undoBuff;
+  //the various Qt objects should be getting deleted by closeEvent and
+  //parent/child relationships...
 }
 
 void View3D::Initialize()
@@ -162,6 +168,7 @@ void View3D::Initialize()
   this->QVTK->GetRenderWindow()->Render();
   this->setupLinkedSpace();
 }
+
 void View3D::setupLinkedSpace()
 {  
   this->tobj->Gaps.clear();
@@ -170,6 +177,7 @@ void View3D::setupLinkedSpace()
   this->GapsTableView = new QTableView();
   this->TreeTable =new QTableView();
   this->MergeGaps = new MergeModel(this->tobj->Gaps);
+  this->MergeGaps->setParent(this);
   this->connect(MergeGaps,SIGNAL(modelChanged()),this, SLOT(updateSelectionHighlights()));
   this->connect(this->MergeGaps->GetSelectionModel(), SIGNAL(selectionChanged(const QItemSelection & , const QItemSelection &)), this, SLOT(updateSelectionHighlights()));
 }
@@ -830,7 +838,7 @@ void View3D::ListSelections()
 
 void View3D::ClearSelection()
 {
-  QMessageBox *selectionInfo = new QMessageBox();
+  QMessageBox selectionInfo;
   QString selectText;
   if (this->SelectedTraceIDs.size()<= 0)
     {
@@ -842,8 +850,8 @@ void View3D::ClearSelection()
     selectText=tr("\t\tcleared list\t\t");
     this->Rerender();
     }
-  selectionInfo->setText(selectText);
-  selectionInfo->show();
+  selectionInfo.setText(selectText);
+  selectionInfo.exec();
 }
 
 /*  delete traces functions */
@@ -1004,7 +1012,7 @@ void View3D::MergeTraces()
         }
       } 
     unsigned int i; 
-    QMessageBox *MergeInfo = new QMessageBox;
+    QMessageBox MergeInfo;
     if (this->tobj->Gaps.size() > 1)
     {
       for (i=0;i<this->tobj->Gaps.size(); i++)
@@ -1013,7 +1021,7 @@ void View3D::MergeTraces()
         //this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .25);
         //this->HighlightSelected(this->tobj->Gaps[i]->Trace2, .25);
       }
-      MergeInfo->setText("\nNumber of computed distances:\t" 
+      MergeInfo.setText("\nNumber of computed distances:\t" 
         + QString::number(this->tobj->Gaps.size())
         +"\nConflicts resolved:\t" + QString::number(conflict)
         +"\nEdit selection or press merge again");
@@ -1025,15 +1033,15 @@ void View3D::MergeTraces()
         {   
         tobj->mergeTraces(this->tobj->Gaps[0]->endPT1,this->tobj->Gaps[0]->endPT2);
         this->Rerender();
-        MergeInfo->setText(this->myText + "\nOne Trace merged");
+        MergeInfo.setText(this->myText + "\nOne Trace merged");
         }
       else
         {
         this->Rerender();
-        MergeInfo->setText("\nNo merges possible, set higher tolerances\n"); 
+        MergeInfo.setText("\nNo merges possible, set higher tolerances\n"); 
         } 
       }   
-    MergeInfo->show();
+    MergeInfo.exec();
     this->myText.clear();
     this->poly_line_data->Modified();
     this->QVTK->GetRenderWindow()->Render();
@@ -1101,12 +1109,12 @@ void View3D::MergeSelectedTraces()
   std::vector<int> GapIDs = this->MergeGaps->GetSelectedGapIDs();
   bool selected = false;
   int curID;
-  QMessageBox *MergeInfo = new QMessageBox;
+  QMessageBox MergeInfo;
   double currentAngle=0;
   QPushButton *mergeAll;
   QPushButton *mergeNone;
   unsigned int i=0, j=0,mergeCount=0;
-  MergeInfo->setText("Merge Function");
+  MergeInfo.setText("Merge Function");
   if (GapIDs.size() > 1)
   {
     for (i = 0; i < this->tobj->Gaps.size(); i++)
@@ -1130,9 +1138,8 @@ void View3D::MergeSelectedTraces()
         this->tobj->mergeTraces(this->tobj->Gaps[i]->endPT1,this->tobj->Gaps[i]->endPT2);
       }
     } 
-    MergeInfo->setText("merged " + QString::number(GapIDs.size()) + " traces.");  
-    MergeInfo->show();
-    MergeInfo->exec();
+    MergeInfo.setText("merged " + QString::number(GapIDs.size()) + " traces.");  
+    MergeInfo.exec();
   }
   else
   {
@@ -1169,19 +1176,18 @@ void View3D::MergeSelectedTraces()
       this->poly_line_data->Modified();
       this->QVTK->GetRenderWindow()->Render();
       myText+="\nNumber of further possible lines:\t" + QString::number(this->candidateGaps.size());
-      mergeAll = MergeInfo->addButton("Merge All", QMessageBox::YesRole);
-      mergeNone = MergeInfo->addButton("Merge None", QMessageBox::NoRole);
-      MergeInfo->setDetailedText(grayText);
+      mergeAll = MergeInfo.addButton("Merge All", QMessageBox::YesRole);
+      mergeNone = MergeInfo.addButton("Merge None", QMessageBox::NoRole);
+      MergeInfo.setDetailedText(grayText);
     }   //end if graylist size
     else
     {
       this->Rerender();
-      MergeInfo->setDetailedText(dtext);
+      MergeInfo.setDetailedText(dtext);
     }   //end else graylist size
-    MergeInfo->setText(myText); 
-    MergeInfo->show();
-    MergeInfo->exec();
-    if(MergeInfo->clickedButton()==mergeAll)
+    MergeInfo.setText(myText); 
+    MergeInfo.exec();
+    if(MergeInfo.clickedButton()==mergeAll)
     {
       for (j=0; j<this->candidateGaps.size();j++)
       {
@@ -1189,7 +1195,7 @@ void View3D::MergeSelectedTraces()
       }
       this->Rerender();
     }
-    else if(MergeInfo->clickedButton()==mergeNone)
+    else if(MergeInfo.clickedButton()==mergeNone)
     {
       this->candidateGaps.clear();
     }
