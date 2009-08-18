@@ -13,7 +13,7 @@ void TrackingDataModel::SetLabelImageFileNames(std::vector<std::string> &filenam
 	if(m_num_time_points==-1)
 		m_num_time_points = filenames.size();
 	else
-		assert(m_num_time_points == filenames.size());
+		assert(m_num_time_points == (int)filenames.size());
 	this->m_lfilenames = filenames; // element-by-element copy
 }
 
@@ -22,7 +22,7 @@ void TrackingDataModel::SetRawImageFileNames(std::vector<std::string> &filenames
 	if(m_num_time_points==-1)
 		m_num_time_points = filenames.size();
 	else
-		assert(m_num_time_points == filenames.size());
+		assert(m_num_time_points == (int)filenames.size());
 	this->m_rfilenames = filenames; // element-by-element copy
 }
 
@@ -37,7 +37,7 @@ void TrackingDataModel::ReadRawImages()
 	{
 		m_rimages.push_back(readImage<InputImageType>(m_rfilenames[counter].c_str()));
 	}
-	DEBUG3("Read %d raw files\n", m_rfilenames.size());
+	//DEBUG3("Read %d raw files\n", m_rfilenames.size());
 }
 
 void TrackingDataModel::ReadLabelImages()
@@ -123,7 +123,7 @@ void TrackingDataModel::GenerateObjects()
 			labfilter->Update();
 
 			std::vector<short> labels = labfilter->GetLabels();
-			for(int lco = 0; lco < labels.size(); lco++)
+			for(unsigned int lco = 0; lco < labels.size(); lco++)
 			{
 				ftk::IntrinsicFeatures *features = labfilter->GetFeatures(labels[lco]);
 				features->num = labels[lco];

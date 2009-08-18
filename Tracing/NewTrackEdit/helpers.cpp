@@ -121,7 +121,7 @@ Input2DImageType::Pointer getProjection(InputImageType::Pointer im)
 }
 vtkSmartPointer<vtkPolyData> get2DBoundary(LabelImageType::Pointer label)
 {
-	DEBUG3("Entered get2DBoundary\n");
+	//DEBUG3("Entered get2DBoundary\n");
 	LabelIteratorType liter = LabelIteratorType(label,label->GetLargestPossibleRegion());
 	liter.GoToBegin();
 
@@ -287,14 +287,14 @@ vtkSmartPointer<vtkPolyData> get2DBoundary(LabelImageType::Pointer label)
 	vtkSmartPointer<vtkPolyDataNormals> poly_norm = vtkSmartPointer<vtkPolyDataNormals>::New();
 	poly_norm->SetInput(total_contour->GetOutput());
 	poly_norm->Update();
-	DEBUG3("Exiting get2DBoundary\n");
+	//DEBUG3("Exiting get2DBoundary\n");
 	return total_contour->GetOutput();
 
 }
 
 vtkSmartPointer<vtkPolyData> getRectangle(double x1, double y1, double x2, double y2)
 {
-	DEBUG3("Entered getRectangle\n");
+	//DEBUG3("Entered getRectangle\n");
 	vtkSmartPointer<vtkPoints> sqp = vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkCellArray> sqc = vtkSmartPointer<vtkCellArray>::New();
 	double points[3];unsigned int ids[4];
@@ -318,7 +318,7 @@ vtkSmartPointer<vtkPolyData> getRectangle(double x1, double y1, double x2, doubl
 	poly->SetPoints(sqp);
 	poly->SetLines(sqc);
 	
-	DEBUG3("Leaving getRectangle\n");
+	//DEBUG3("Leaving getRectangle\n");
 	return poly;
 
 }

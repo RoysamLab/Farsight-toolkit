@@ -27,7 +27,8 @@ SET(Libraries
     QVTKWidgetPlugin
 )
 
-QT4_WRAP_CPP( GUI_MOC_SRCS TrackingImageView.h TrackingDataModel.h)#TrackingEventHandler.h TrackSelection.h TrackingModel.h TrackingVolumeView.h TrackingKymoView.h)
+QT4_WRAP_CPP( GUI_MOC_SRCS TrackingDataModel.h)#TrackingEventHandler.h TrackSelection.h TrackingModel.h TrackingVolumeView.h TrackingKymoView.h)
+#QT4_WRAP_CPP( GUI_MOC_SRCS TrackingImageView.h TrackingDataModel.h)#TrackingEventHandler.h TrackSelection.h TrackingModel.h TrackingVolumeView.h TrackingKymoView.h)
 
   ADD_EXECUTABLE(TrackingEditor main.cpp TrackingImageView.h TrackingImageView.cpp TrackingDataModel.h TrackingDataModel.cpp ${GUI_MOC_SRCS})
   ADD_LIBRARY(TrackEditHelper helpers.cpp)
