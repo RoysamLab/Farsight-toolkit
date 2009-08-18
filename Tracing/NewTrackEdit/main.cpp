@@ -45,5 +45,6 @@ int main(int argc, char**argv)
     trmodel->setColumnCount(1);
     tview->show();
 	app.exec();
+  delete trmodel;
 	return 0;
 }

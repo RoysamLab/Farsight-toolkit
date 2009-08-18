@@ -61,6 +61,7 @@
 #include <vtkColorTransferFunction.h>
 #include <vtkImageData.h>
 
+
 //Macros
 #define MAX(a,b) (((a) > (b))?(a):(b))
 #define MIN(a,b) (((a) < (b))?(a):(b))
@@ -224,4 +225,6 @@ bool mergeLabels3(LabelImageType::Pointer im, int merge_to,int n1, int n2, int n
 bool mergeLabels4(LabelImageType::Pointer im, int merge_to,int n1, int n2, int n3, int n4);
 bool mergeLabels5(LabelImageType::Pointer im, int merge_to,int n1, int n2, int n3, int n4, int n5);
 */
+
 #endif
+#include "helpers.txx"
