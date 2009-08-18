@@ -49,6 +49,7 @@ public:
 signals:
   //emit this signal to tell the Qt views to update
   void modelChanged(void);
+  void selectionChanged(void);
 
 public slots:
 	void deleteTrigger(void);

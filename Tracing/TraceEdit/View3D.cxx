@@ -1054,7 +1054,7 @@ void View3D::ShowMergeStats()
   this->GapsTableView->setModel(this->MergeGaps->GetModel());
   this->GapsTableView->setSelectionModel(this->MergeGaps->GetSelectionModel()); 
   this->GapsTableView->setSelectionBehavior(QAbstractItemView::SelectRows);
-  this->GapsTableView->sortByColumn(8,Ascending);
+ // this->GapsTableView->sortByColumn(8,Ascending);
   this->GapsTableView->update();
   this->GapsTableView->show();
   this->GapsTableView->horizontalHeader()->show();
