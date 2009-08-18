@@ -148,6 +148,7 @@ View3D::~View3D()
     delete this->QVTK;
     }
   delete this->tobj;
+  delete this->undoBuff;
 }
 
 void View3D::Initialize()

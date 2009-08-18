@@ -33,14 +33,6 @@ int main (int argc, char* argv[])
 	View3D *View = new View3D(argc, argv);
   View->show();
   int retval = app.exec();
-  vtkCellArray *verts = View->poly_line_data->GetVerts();
-  vtkCellArray *lines = View->poly_line_data->GetLines();
-  vtkCellArray *polys = View->poly_line_data->GetPolys();
-  vtkCellArray *strips = View->poly_line_data->GetStrips();
   delete View;
-  cout << "verts: " << verts->GetReferenceCount() << endl;
-  cout << "lines: " << lines->GetReferenceCount() << endl;
-  cout << "polys: " << polys->GetReferenceCount() << endl;
-  cout << "strips: " << strips->GetReferenceCount() << endl;
   return retval;
   }
