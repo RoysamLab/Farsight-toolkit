@@ -1093,6 +1093,17 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 	//also, add the old ID to the end of the list
 	ids_ok.push_back(id1);
 
+	// Update the editing history of the new cells - Aytekin
+	record.date = TimeStamp();	
+	int index;
+	for(int i=0; i<(((int)ids_ok.size())-1); ++i)
+	{
+		msg = "SPLITTED FROM: ";		
+		msg.append(NumToString(id1));
+		record.description = msg;
+		index = GetObjectIndex(ids_ok.at(i),"nucleus");
+		myObjects.at(index).AddEditRecord(record);
+	}
 	editsNotSaved = true;
 	return ids_ok;
 }
