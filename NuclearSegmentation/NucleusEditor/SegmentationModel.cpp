@@ -285,7 +285,11 @@ void SegmentationModel::endSplitTrigger()
 		SplitingMode = false;
 		//start by sending the points (pairs) to the cell plitter
 		ftk::NuclearSegmentation *nucseg = (ftk::NuclearSegmentation*)segResult;
-		for (unsigned int i = 0; i < pointsForSplitting.size(); i+=2) 
+		//the number of selected points for splitting must be even
+		int num_split = pointsForSplitting.size();
+		if((num_split%2)!=0)
+			num_split--;
+		for (unsigned int i = 0; i < num_split; i+=2) 
 		{
 			std::vector< int > newIDs = nucseg->Split(pointsForSplitting.at(i), pointsForSplitting.at(i+1));
 			if( newIDs.size()==3 )
