@@ -542,7 +542,7 @@ void Seed3D::GetImage(ftk::NuclearSegmentation *seg,vector<Seed> seeds) //modifi
 	
 	
 	// Set the extent for the Y-Z slice.
-	double* origincalc = this->Volume->GetBounds();	
+	this->origincalc = this->Volume->GetBounds();	
 	int origin[6];
 	origin[0] = (int)origincalc[2];
 	origin[1] = (int)origincalc[3];
@@ -1619,7 +1619,7 @@ if(this->mode==4)
 		ftk::Object::Point newSeed = segPtr->MergeInit(tobeMerged.at(i), tobeMerged.at(i+1), &newid);
 		mergingSeeds.push_back(newSeed);
 		//newid will be used later for recording the edits				
-		float placePoint[3] = {(float)(newSeed.x),(float)(newSeed.y),(float)(newSeed.z)};
+		float placePoint[3] = {(float)(newSeed.x),(this->origincalc[3] - (float)(newSeed.y)),(this->origincalc[5] -(float)(newSeed.z))};
 		this->point1->InsertNextPoint(placePoint);
 		this->dup_points.push_back(newSeed);
 	}
