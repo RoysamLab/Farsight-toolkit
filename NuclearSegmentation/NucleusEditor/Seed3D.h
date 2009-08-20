@@ -257,6 +257,7 @@ private:
 	
 	double* y;
 	double* wp;
+	double* origincalc;
  };
 
 #endif
