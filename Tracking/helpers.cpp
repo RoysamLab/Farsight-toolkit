@@ -1509,10 +1509,13 @@ void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs)
 				tpf.scalars[TPF::DISPLACEMENT_VEC_X]=dir.x;
 				tpf.scalars[TPF::DISPLACEMENT_VEC_Y]=dir.y;
 				tpf.scalars[TPF::DISPLACEMENT_VEC_Z]=dir.z;
-
+				
 				dir.Normalize();
 				tpf.scalars[TPF::INST_SPEED] = dirdist/(t.intrinsic_features[counter].time-t.intrinsic_features[counter-1].time);
 				tpf.scalars[TPF::DISTANCE] = dirdist;
+				//printf("here %f %f %f\n",dir.x,dir.y,dir.z);
+				//scanf("%*d");
+
 			}
 			else
 			{
@@ -1524,7 +1527,7 @@ void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs)
 			}
 
 
-			if(counter> t.tfeatures.size()-1)
+			if(counter +1 > t.tfeatures.size())
 			{
 				t.tfeatures.push_back(tpf);
 			}
@@ -1533,7 +1536,7 @@ void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs)
 				t.tfeatures[counter] = tpf;
 			}
 		}
-
+		printf("finished calculating first for loop of point features\n");
 		float avg_speed = 0;
 		float pathlength = 0;
 		for(unsigned int counter =0; counter < t.tfeatures.size(); counter++)
@@ -1688,7 +1691,7 @@ void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::Tr
 		typedef ftk::TrackFeatures TF;
 		for(unsigned int counter=0; counter< t.intrinsic_features.size(); counter++)
 		{
-			ftk::TrackPointFeatures tpf;
+			ftk::TrackPointFeatures tpf = t.tfeatures[counter];
 			Vec3f dir;
 
 			if(counter>0)
@@ -1697,7 +1700,7 @@ void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::Tr
 				dir.x = tpf.scalars[TPF::DISPLACEMENT_VEC_X];
 				dir.y = tpf.scalars[TPF::DISPLACEMENT_VEC_Y];
 				dir.z = tpf.scalars[TPF::DISPLACEMENT_VEC_Z];
-
+				dir.Normalize();
 			}
 
 			cellindex[0] = static_cast<int>(t.intrinsic_features[counter].Centroid[0]+0.5);
@@ -1727,7 +1730,11 @@ void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::Tr
 				dir2.y = spacing[1]*dir_image[1]->GetPixel(vesselindex);
 				dir2.z = spacing[2]*dir_image[2]->GetPixel(vesselindex);
 				if((dir2.x*dir2.x+dir2.y*dir2.y+dir2.z*dir2.z)<1e-6)
+				{
 					printf("Error! vessel direction is zero\n");
+					tpf.scalars[TPF::ANGLE_REL_TO_1] = 0.0;
+					continue;
+				}
 				dir2.Normalize();
 
 				tpf.scalars[TPF::ANGLE_REL_TO_1] = 90.0/acosf(0)*acosf(fabs(dir.x*dir2.x+dir.y*dir2.y+dir.z*dir2.z));
