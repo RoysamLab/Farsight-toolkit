@@ -21,10 +21,10 @@ print "Here's the outputXML file: " + outputXML
 
 #change to the binary directory before we start calling executables
 os.chdir("../bin")
-subprocess.call(["./RPITrace3D",\
+subprocess.call(["./RPITrace3D.exe",\
                  "../python/XML/RPITrace3DParameterValues.xml"])
 
 #display the results from the first step
 #some validation that everything went well would probably be smart...
-subprocess.call(["./vtkTraceViewer",\
+subprocess.call(["./vtkTraceViewer.exe",\
                  outputXML]) 
