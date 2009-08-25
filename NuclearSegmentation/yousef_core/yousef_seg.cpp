@@ -111,7 +111,7 @@ void yousef_nucleus_seg::runBinarization()
 	mySeeds.clear();
 
 	//allocate space for the binary image
-	binImagePtr = new int[numStacks*numRows*numColumns];
+	binImagePtr = new unsigned short[numStacks*numRows*numColumns];	
 
 	int ok = 0;
 	if (numStacks == 0)
@@ -196,7 +196,7 @@ void yousef_nucleus_seg::runClustering()
 	clearClustImagePtr();
 
 	//Allocate space
-	clustImagePtr = new int[numStacks*numRows*numColumns];
+	clustImagePtr = new unsigned short[numStacks*numRows*numColumns];
 
 	if (numStacks == 1)
 	{
@@ -228,7 +228,7 @@ void yousef_nucleus_seg::ExtractSeeds()
 	mySeeds.clear();
 
 	int seedVal;
-	int binVal;
+	unsigned short binVal;
 	int curNode;
 	int id = 1;
 
@@ -283,7 +283,7 @@ void yousef_nucleus_seg::outputSeeds(void)
 }
 
 
-int yousef_nucleus_seg::getConnCompImage(int *IM, int connectivity, int minSize, int r, int c, int z, int runConnComp)
+int yousef_nucleus_seg::getConnCompImage(unsigned short *IM, int connectivity, int minSize, int r, int c, int z, int runConnComp)
 {
 	typedef    int     InputPixelType;
 	typedef    int     OutputPixelType;
@@ -458,8 +458,8 @@ void yousef_nucleus_seg::runAlphaExpansion2D(){
 	//Now, we apply the next steps into the connected components one by one
 	int ind, x_len, y_len, val;
 
-	segImagePtr = new int[numRows*numColumns];
-	memset(segImagePtr/*destination*/,0/*value*/,numStacks*numRows*numColumns*sizeof(int)/*num bytes to move*/);
+	segImagePtr = new unsigned short[numRows*numColumns];
+	memset(segImagePtr/*destination*/,0/*value*/,numStacks*numRows*numColumns*sizeof(unsigned short)/*num bytes to move*/);
 
 	for( int n=0; n<numConnComp; n++ ){
 		std::cerr<<"Processing Connected Component #"<<n+1<<"...";
@@ -468,7 +468,7 @@ void yousef_nucleus_seg::runAlphaExpansion2D(){
 		x_len = myConnComp[n].x2 - myConnComp[n].x1 + 1;
 		y_len = myConnComp[n].y2 - myConnComp[n].y1 + 1;
 		float* sublogImg = new float[x_len*y_len];
-		int* subclustImg = new int[x_len*y_len];	
+		unsigned short* subclustImg = new unsigned short[x_len*y_len];	
 		std::vector<int> labelsList;
 		
 		for(int i=myConnComp[n].x1; i<=myConnComp[n].x2; i++){
@@ -596,9 +596,9 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 	//Now, we apply the next steps into the connected components one by one
 	int ind, x_len, y_len, z_len, val;
 	//int min_lbl, max_lbl;
-	segImagePtr = new int[numStacks*numRows*numColumns];
+	segImagePtr = new unsigned short[numStacks*numRows*numColumns];
 	//memcpy(segImagePtr/*destination*/, clustImagePtr/*source*/, numStacks*numRows*numColumns*sizeof(int)/*num bytes to move*/);
-	memset(segImagePtr/*destination*/,0/*value*/,numStacks*numRows*numColumns*sizeof(int)/*num bytes to move*/);
+	memset(segImagePtr/*destination*/,0/*value*/,numStacks*numRows*numColumns*sizeof(unsigned short)/*num bytes to move*/);
 
 	for(int n=0; n<numConnComp; n++)
 	{
@@ -609,7 +609,7 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 		y_len = myConnComp[n].y2 - myConnComp[n].y1 + 1;
 		z_len = myConnComp[n].z2 - myConnComp[n].z1 + 1;
 		float* sublogImg = new float[x_len*y_len*z_len];
-		int* subclustImg = new int[x_len*y_len*z_len];	
+		unsigned short* subclustImg = new unsigned short[x_len*y_len*z_len];	
 		std::vector<int> labelsList;
 		
 		for(int k=myConnComp[n].z1; k<=myConnComp[n].z2; k++)		
@@ -711,7 +711,7 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 
 		//Call the module that does graph coloring, ML estimation, and graph learning		
 		int NC = 1000;
-		int* subsegImg = new int[x_len*y_len*z_len];			
+		unsigned short* subsegImg = new unsigned short[x_len*y_len*z_len];			
 		float* Dterms  = multiColGraphLearning(sublogImg, subclustImg, subsegImg, y_len, x_len, z_len, &NC,refineRange);		
 
 		std::cerr<<"    Starting alpha-expansion..";
@@ -941,7 +941,7 @@ void yousef_nucleus_seg::readParametersFromFile(const char* pFname)
 }
 
 //Added by Yousef on 7-8-2008
-int yousef_nucleus_seg::getRelabeledImage(int *IM, int connectivity, int minSize, int r, int c, int z, int runConnComp)
+int yousef_nucleus_seg::getRelabeledImage(unsigned short *IM, int connectivity, int minSize, int r, int c, int z, int runConnComp)
 {
 	typedef    int     InputPixelType;
 	typedef    int     OutputPixelType;
@@ -1126,7 +1126,7 @@ int yousef_nucleus_seg::readFromIDLFormat(std::string fileName)
   if(!dataImagePtr)
     return -1;
   if(!segImagePtr)
-	  segImagePtr = new int[numStacks*numRows*numColumns];
+	  segImagePtr = new unsigned short[numStacks*numRows*numColumns];
 
   std::string idl_name = fileName.substr(0,fileName.find_first_of("."))+"_seg_final.dat";
   std::cout<<"reading segmentation from "<<idl_name<<std::endl;
@@ -1626,7 +1626,7 @@ std::vector< ftk::Object::Point > yousef_nucleus_seg::getObjectBoundingBox(int i
 	min_y = numRows;
 	min_z = numStacks;
 	
-	int* imgPtr;
+	unsigned short* imgPtr;
 	if(Int_Fin == 1)
 		imgPtr = clustImagePtr;
 	else

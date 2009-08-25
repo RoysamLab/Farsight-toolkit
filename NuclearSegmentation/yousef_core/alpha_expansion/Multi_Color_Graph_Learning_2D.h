@@ -6,6 +6,6 @@
 #include <math.h>
 #include "gvc.h"
 
-float* multiColGraphLearning(float* X_vals, int* labs_vals, int r, int c, int *NC);
+float* multiColGraphLearning(float* X_vals, unsigned short* labs_vals, int r, int c, int *NC);
 
 #endif

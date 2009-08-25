@@ -17,7 +17,7 @@ limitations under the License.
 #include "GraphCutConstr.cpp"
 #include "GraphCutMex.cpp"
 
-void start_alpha_expansion(float* im, int* seg_im, float* Dterms, int R, int C, int Z, int K)
+void start_alpha_expansion(float* im, unsigned short* seg_im, float* Dterms, int R, int C, int Z, int K)
 {
 	float w = 10.0;
 	//initialize the smoothness constat part
@@ -60,7 +60,7 @@ void start_alpha_expansion(float* im, int* seg_im, float* Dterms, int R, int C, 
 //{
 //}
 
-void alpha_expansion_2d( float *im, float *sublogImg, int *subclustImg, int R, int C )
+void alpha_expansion_2d( float *im, float *sublogImg, unsigned short *subclustImg, int R, int C )
 {
 	float *hCue, *vCue;
 	int K;	

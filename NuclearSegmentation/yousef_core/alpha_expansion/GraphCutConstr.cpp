@@ -70,9 +70,41 @@ GCoptimization * GraphCut3dConstr(float* ContrastIn, float* DataCostIn, float* S
 	Contrast = (Graph::captype*)ContrastIn;
 	//int uu1 = sizeof(ContrastIn[1]);
 	//int uu2 = sizeof(Contrast[1]);
-
+	
     
-    MyGraph = new GCoptimization(R*C*Z, num_labels, SET_ALL_AT_ONCE, SET_ALL_AT_ONCE);
+    //By Yousef: Estimate the number of needed edges
+	long num_ed = 0;
+	for ( int r = 0 ; r <= R - 2;  r++ )
+	{
+		for ( int c = 0 ; c <= C - 2; c++ )
+		{
+			for ( int z = 0 ; z <= Z - 2; z++ ) 
+			{
+				num_ed+=3;
+			}
+			num_ed+=2;
+		}
+		for ( int z = 0 ; z <= Z -2 ; z++ )
+		{
+			num_ed+=2;
+		}
+		num_ed+=1;
+	}
+	for ( int c = 0 ; c <= C - 2; c++ )
+	{
+		for ( int z = 0 ; z <= Z - 2; z++ )
+		{
+			num_ed+=2;
+		}
+		num_ed+=1;
+	}
+	for ( int z = 0 ; z <= Z - 2; z++ )
+	{
+		num_ed+=1;
+	}
+
+	MyGraph = new GCoptimization(R*C*Z, num_labels, SET_ALL_AT_ONCE, SET_ALL_AT_ONCE, num_ed);		
+
     /* neighborhod setup */
     GCoptimization::PixelType c(0), r(0), z(0), p(0), q(0);
     if (Contrast) {

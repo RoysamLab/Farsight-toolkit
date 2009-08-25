@@ -52,7 +52,7 @@ double Multivar_Norm(double X, double Y, double Z, double Ux, double Uy, double 
 }
 
 
-float* multiColGraphLearning(float* X_vals, int* labs_vals, int* color_im,int r, int c, int z, int *NC, int refinemetRange)
+float* multiColGraphLearning(float* X_vals, unsigned short* labs_vals, unsigned short* color_im,int r, int c, int z, int *NC, int refinemetRange)
 {  
 	//inputs are:
     //1- The LoG response image

@@ -166,6 +166,29 @@ GCoptimization::GCoptimization(PixelType nupixels,int nLabels,int dataSetup, int
 }
 
 /**************************************************************************************/
+/* By YOusef: Use this constructor for general graphs                                            */
+GCoptimization::GCoptimization(PixelType nupixels,int nLabels,int dataSetup, int smoothSetup, long numNbrs )
+{
+
+	commonNonGridInitialization(nupixels, nLabels);
+	
+	m_labeling           = (LabelType *) new LabelType[m_num_pixels];
+	terminateOnError(!m_labeling,"out of memory");
+	for ( int i = 0; i < nupixels; i++ ) m_labeling[i] = (LabelType) 0;
+
+	m_deleteLabeling = 1;
+
+	commonInitialization(dataSetup,smoothSetup);	
+
+	//number of edges between neighbors
+	nbr_count = 2*numNbrs;
+	TTY = (Neighbor **) new Neighbor[nbr_count];
+	terminateOnError(!TTY,"out of memory");
+	nbr_index = 0;
+	///////////////////////////////////////////////
+}
+
+/**************************************************************************************/
 /* Use this constructor for general graphs                                            */
 GCoptimization::GCoptimization(LabelType *m_answer, PixelType nupixels,int nLabels,int dataSetup, int smoothSetup)
 {
@@ -1373,7 +1396,7 @@ void GCoptimization::setNeighbors(PixelType pixel1, int pixel2, EnergyTermType w
 	assert(pixel1 < m_num_pixels && pixel1 >= 0 && pixel2 < m_num_pixels && pixel2 >= 0);
 	assert(m_grid_graph == 0);
 
-	Neighbor *temp1 = (Neighbor *) new Neighbor;
+	/*Neighbor *temp1 = (Neighbor *) new Neighbor;
 	Neighbor *temp2 = (Neighbor *) new Neighbor;
 
 	temp1->weight  = weight;
@@ -1381,10 +1404,20 @@ void GCoptimization::setNeighbors(PixelType pixel1, int pixel2, EnergyTermType w
 
 	temp2->weight  = weight;
 	temp2->to_node = pixel1;
-
-	m_neighbors[pixel1].addFront(temp1);
-	m_neighbors[pixel2].addFront(temp2);
 	
+	m_neighbors[pixel1].addFront(temp1);
+	m_neighbors[pixel1].addFront(temp2);*/
+	
+	TTY[nbr_index] = (Neighbor *) new Neighbor;
+	TTY[nbr_index]->weight  = weight;
+	TTY[nbr_index]->to_node = pixel2;
+	m_neighbors[pixel1].addFront(TTY[nbr_index]);
+	nbr_index++;
+	TTY[nbr_index] = (Neighbor *) new Neighbor;
+	TTY[nbr_index]->weight  = weight;
+	TTY[nbr_index]->to_node = pixel2;
+	m_neighbors[pixel2].addFront(TTY[nbr_index]);
+	nbr_index++;	
 }
 
 /**************************************************************************************/
@@ -1438,6 +1471,10 @@ GCoptimization::~GCoptimization()
  		
 	if ( ! m_grid_graph )
 	{	
+		for(int i=0; i<nbr_count; i++)
+			delete TTY[i];
+		delete [] TTY;
+
 		delete [] m_neighbors;			
 	}
 

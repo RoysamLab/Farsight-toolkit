@@ -213,16 +213,16 @@ bool NuclearSegmentation::GetResultImage()
 		return false;
 		break;
 	case 1:		
-		dptr = NucleusSeg->getBinImage();
+		dptr = (int *) NucleusSeg->getBinImage();
 		break;
 	case 2:	//Seeds:
 		dptr = NucleusSeg->getSeedImage();
 		break;
 	case 3:
-		dptr = NucleusSeg->getClustImage();
+		dptr = (int *) NucleusSeg->getClustImage();
 		break;
 	case 4:
-		dptr = NucleusSeg->getSegImage();
+		dptr = (int *) NucleusSeg->getSegImage();
 		break;
 	}
 
@@ -231,13 +231,16 @@ bool NuclearSegmentation::GetResultImage()
 		std::vector<unsigned char> color;
 		color.assign(3,255);
 		if(labelImage)
-		labelImage = 0;
-		if(lastRunStep == 2)
-			Cleandptr(dptr,size); // Temporarily deletes the seeds in the bacground from dptr
+			labelImage = 0;
 		labelImage = ftk::Image::New();
-		labelImage->AppendChannelFromData3D(dptr, itk::ImageIOBase::INT, sizeof(int), size[2], size[1], size[0], "gray", color, true);
 		if(lastRunStep == 2)
+		{
+			Cleandptr(dptr,size); // Temporarily deletes the seeds in the bacground from dptr
+			labelImage->AppendChannelFromData3D(dptr, itk::ImageIOBase::INT, sizeof(int), size[2], size[1], size[0], "gray", color, true);		
 			Restoredptr(dptr); // Adds the seeds to dptr which were deleted in Cleandptr
+		}
+		else
+			labelImage->AppendChannelFromData3D(dptr, itk::ImageIOBase::INT, sizeof(unsigned short), size[2], size[1], size[0], "gray", color, true);		
 		labelImage->Cast<unsigned short>();
 	}
 	return true;

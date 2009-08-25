@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
 	NucleusSeg->setDataImage(in_Image,size1,size2,size3,argv[1]);
 	
 	
-	int *output_img;
+	unsigned short *output_img;
 	//segmentation steps
 	//1-Binarization
 	NucleusSeg->runBinarization();

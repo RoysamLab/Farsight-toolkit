@@ -153,7 +153,7 @@ public:
 	typedef Graph::captype EnergyTermType;
 
 	/* Type of label. Can be set to char, short, int, long */
-	typedef int LabelType;
+	typedef unsigned short LabelType;
 
 	/* Type for pixel. Can be set to  short, int, long */ 
 	typedef int PixelType;
@@ -189,6 +189,8 @@ public:
 	/* above, but neighborhood structure must  be specified by any of the two setNeighbors()      */
 	/* functions */
 	GCoptimization(PixelType num_pixels,int num_labels,int dataSetup, int smoothSetup);
+	//Another constructor by Yousef
+	GCoptimization(PixelType num_pixels,int num_labels,int dataSetup, int smoothSetup, long numNbrs);
 
 	/* This constructor is the same as the first constructor, but array m_answer for                */
 	/* storage of the labels is passed. This will save space, as the answer will not have to be     */
@@ -365,6 +367,12 @@ private:
 		PixelType  to_node;
 		EnergyTermType weight;
 	} Neighbor;
+
+	//Added By Yousef//////////////////
+	Neighbor **TTY;
+	long nbr_count;
+	long nbr_index;
+	///////////////////////////////////
 
 	typedef enum 
 	{

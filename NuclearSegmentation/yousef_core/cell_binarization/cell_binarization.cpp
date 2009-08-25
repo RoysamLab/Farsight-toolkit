@@ -20,7 +20,7 @@ limitations under the License.
 using namespace std;
 
 //Main function for 2-D binarization
-int Cell_Binarization_2D(unsigned char* imgIn, int *imgOut, int R, int C, int shd)
+int Cell_Binarization_2D(unsigned char* imgIn, unsigned short *imgOut, int R, int C, int shd)
 {			
 	//Now, to do the binarization, follow these steps:
 	//1- Assuming that the histogram of the image is modeled by a mixture of two 
@@ -42,7 +42,7 @@ int Cell_Binarization_2D(unsigned char* imgIn, int *imgOut, int R, int C, int sh
 }
 
 //Main function for 3-D binarization
-int Cell_Binarization_3D(unsigned char *imgIn, int* imgOut, int R, int C, int Z, int shd) //modifed by Yousef on 5-20-2008.. The first input change from uchar* to int*
+int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, int C, int Z, int shd) //modifed by Yousef on 5-20-2008.. The first input change from uchar* to int*
 {			
 	//Now, to do the binarization, follow these steps:
 	//1- Assuming that the histogram of the image is modeled by a mixture of two 
@@ -124,7 +124,7 @@ void Seg_GC_Full_2D(unsigned char* IM,
                     double P_I, 
                     int* num_nodes, 
                     int* num_edges, 
-                    int* Seg_out)
+                    unsigned short* Seg_out)
 {    
     int curr_node;
     int rght_node;
@@ -535,7 +535,7 @@ void CompMixPoss3D(unsigned char* img, float* alpha_B, float* alpha_A, float* P_
 	
 }
 
-void MinErrorThresholding(unsigned char* img, float* alpha_B, float* alpha_A, float* P_I, int R, int C, int Z, int shiftDown, int *imgOut)
+void MinErrorThresholding(unsigned char* img, float* alpha_B, float* alpha_A, float* P_I, int R, int C, int Z, int shiftDown, unsigned short *imgOut)
 {
 	typedef  short  InputPixelType;
 	typedef  short  OutputPixelType;
@@ -619,7 +619,7 @@ void MinErrorThresholding(unsigned char* img, float* alpha_B, float* alpha_A, fl
 }
 
 
-void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_F, double alpha_B, double P_I, int* Seg_out, int* imBlock)
+void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_F, double alpha_B, double P_I, unsigned short* Seg_out, int* imBlock)
 {   
     int curr_node, nbr_node;
     double Df, Db, Dn, sig, w;

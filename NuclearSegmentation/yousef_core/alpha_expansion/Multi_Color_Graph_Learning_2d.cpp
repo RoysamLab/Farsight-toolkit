@@ -26,7 +26,7 @@ double Multivar_Norm(double X, double Y, double Ux, double Uy, double S00, doubl
 }
 
 //void mexFunction(int nlhs, mxArray *plhs[ ],int nrhs, const mxArray *prhs[ ]) 
-float* multiColGraphLearning(float* X_vals, int* labs_vals, int r, int c, int *NC)
+float* multiColGraphLearning(float* X_vals, unsigned short* labs_vals, int r, int c, int *NC)
 {  
     //Initialize variables
     int** labs_im;

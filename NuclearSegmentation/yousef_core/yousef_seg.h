@@ -81,11 +81,11 @@ public:
 	void setParams(int *params);													//All parameters passed as integers, set the parameters accordingly
   
 	unsigned char* getDataImagePtr(){ return dataImagePtr; };								
-	int* getBinImage(){ return binImagePtr; }; 
+	unsigned short* getBinImage(){ return binImagePtr; }; 
 	int* getSeedImage(){ return seedImagePtr; };
 	float* getLogImage(){ return logImagePtr; };
-	int* getClustImage(){ return clustImagePtr; };
-	int* getSegImage(){ return segImagePtr; };
+	unsigned short* getClustImage(){ return clustImagePtr; };
+	unsigned short* getSegImage(){ return segImagePtr; };
 	std::vector<int> getImageSize();		// Returns in form [0]numStacks, [1]numRows, [2]numColumns
 
 	//Return a list of seeds detected during Seeds Detection Function
@@ -123,8 +123,8 @@ public:
 private:
 	void ExtractSeeds();
 	void getConnCompInfo3D();
-	int getConnCompImage(int* IM, int connectivity, int minSize, int r, int c, int z,int runConnComp);
-	int getRelabeledImage(int* IM, int connectivity, int minSize, int r, int c, int z,int runConnComp);
+	int getConnCompImage(unsigned short* IM, int connectivity, int minSize, int r, int c, int z,int runConnComp);
+	int getRelabeledImage(unsigned short* IM, int connectivity, int minSize, int r, int c, int z,int runConnComp);
 
 	void clearBinImagePtr();
 	void clearSeedImagePtr();
@@ -138,11 +138,11 @@ private:
 	//Internal Image information
 	unsigned char* dataImagePtr;	//Created outside yousef_seg
 	string dataFilename;
-	int* binImagePtr;				//Created in yousef_seg
+	unsigned short* binImagePtr;				//Created in yousef_seg
 	int* seedImagePtr;				//Created in yousef_seg
 	float* logImagePtr;				//Created in yousef_seg
-	int* clustImagePtr;				//Created in yousef_seg
-	int* segImagePtr;				//Created in yousef_seg
+	unsigned short* clustImagePtr;				//Created in yousef_seg
+	unsigned short* segImagePtr;				//Created in yousef_seg
 	
 	//Size of all images above
 	int numStacks;

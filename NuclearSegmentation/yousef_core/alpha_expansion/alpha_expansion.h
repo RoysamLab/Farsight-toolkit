@@ -21,8 +21,8 @@ limitations under the License.
 #include "GCoptimization.h"
 #include "Multi_Color_Graph_Learning_2D.h"
 
-void start_alpha_expansion(float* im, int* seg_im, float* Dterms, int R, int C, int Z, int K);
-void alpha_expansion_2d( float *im, float *sublogImg, int *subclustImg, int R, int C);
+void start_alpha_expansion(float* im, unsigned short* seg_im, float* Dterms, int R, int C, int Z, int K);
+void alpha_expansion_2d( float *im, float *sublogImg, unsigned short *subclustImg, int R, int C);
 
 #endif
 

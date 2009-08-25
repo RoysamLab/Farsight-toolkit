@@ -4,6 +4,6 @@
 #include <iostream>
 #include <algorithm>
 
-int local_max_clust_2D(float* im_vals, int r, int c, double scale, int* out1, int* seeds_x, int* seeds_y, int num_seeds, int* bin_image);
+int local_max_clust_2D(float* im_vals, int r, int c, double scale, unsigned short* out1, int* seeds_x, int* seeds_y, int num_seeds, unsigned short* bin_image);
 
 #endif

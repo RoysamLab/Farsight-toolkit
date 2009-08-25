@@ -27,11 +27,11 @@ limitations under the License.
 
 /* Declarations */
 //void SetLabels(GCoptimization *MyGraph, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
-void SetLables(GCoptimization *MyGraph, int* seg_im);
+void SetLables(GCoptimization *MyGraph, unsigned short* seg_im);
 //void GetLabels(GCoptimization *MyGraph, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
 //void ABswaps(GCoptimization *MyGraph, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
 //void Expand(GCoptimization *MyGraph, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
-void Expand(GCoptimization *MyGraph, int* seg_im, int nrhs, int max_iterations);
+void Expand(GCoptimization *MyGraph, unsigned short* seg_im, int nrhs, int max_iterations);
 //void Energy(GCoptimization *MyGraph, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
 //GCoptimization* GetGCHandle(const mxArray *x);    /* extract ahndle from mxArry */
 
@@ -180,7 +180,7 @@ void Expand(GCoptimization *MyGraph, int* seg_im, int nrhs, int max_iterations);
  *
  */
 
-void GraphCutMex(GCoptimization *MyGraph, char mode, int* seg_im, int iter)
+void GraphCutMex(GCoptimization *MyGraph, char mode, unsigned short* seg_im, int iter)
 {    
     if ( ! MyGraph->IsClassValid() ) {
 		std::cout<<"GraphCut:handle GC handle is not valid\n";
@@ -228,7 +228,7 @@ void GraphCutMex(GCoptimization *MyGraph, char mode, int* seg_im, int iter)
  * 3. expand label - expand specific label  GraphCut(gch, mode, [], label)
  * 4. expand label at specific indices      GraphCut(gch, mode, [], label, indices) indices start with zero and not 1 like usuall matlab inices!!
  */
-void Expand(GCoptimization *MyGraph, int* seg_im, int nrhs, int max_iterations)
+void Expand(GCoptimization *MyGraph, unsigned short* seg_im, int nrhs, int max_iterations)
 {   
     //int num(0), max_iterations(0);
     //GCoptimization::LabelType label(0);
@@ -255,7 +255,7 @@ void Expand(GCoptimization *MyGraph, int* seg_im, int nrhs, int max_iterations)
 
 /**************************************************************************************/
 /* set user defined labels to graph */
-void SetLables(GCoptimization *MyGraph, int* seg_im)
+void SetLables(GCoptimization *MyGraph, unsigned short* seg_im)
 {               
     MyGraph->SetAllLabels( (GCoptimization::LabelType*) seg_im );
 }

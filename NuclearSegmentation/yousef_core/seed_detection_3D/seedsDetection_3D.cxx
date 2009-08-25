@@ -49,11 +49,11 @@ typedef itk::Image< InputPixelType,  3 >   InputImageType;
 
 int detect_seeds(itk::SmartPointer<InputImageType>, int , int , int, const double, float*, int);
 float get_maximum_3D(float* A, int r1, int r2, int c1, int c2, int z1, int z2, int R, int C);
-void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, int* out1, int* bImg);
+void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, int* out1, unsigned short* bImg);
 int distMap(itk::SmartPointer<InputImageType> im, int r, int c, int z, float* IMG);
 int distMap2(itk::SmartPointer<InputImageType> im, int r, int c, int z, float* IMG);
 
-int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int z, double sigma_min, double sigma_max, double scale_xy, double scale_z, int sampl_ratio, int* bImg, int UseDistMap)
+int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int z, double sigma_min, double sigma_max, double scale_xy, double scale_z, int sampl_ratio, unsigned short* bImg, int UseDistMap)
 {	
 	//Create an itk image
 	InputImageType::Pointer im;
@@ -284,14 +284,14 @@ float get_maximum_3D(float* A, int r1, int r2, int c1, int c2, int z1, int z2,in
 }
 
 
-void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, int* out1, int* bImg)
+void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, int* out1, unsigned short* bImg)
 {  
     int min_r, min_c, max_r, max_c, min_z, max_z;    
        
     //start by getting local maxima points
     //if a point is a local maximam give it a local maximum ID
         
-	int IND = 0;
+	//int IND = 0;
 	int II = 0;
     for(int i=0; i<r; i++)
     {
@@ -309,11 +309,11 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
 				II = (k*r*c)+(i*c)+j;
 				if(im_vals[II] == mx)    
 				{
-					IND = IND+1;
-					if(bImg[II] > 0)
+					//IND = IND+1;
+					//if(bImg[II] > 0)
 						out1[II]=255;                 
-					else
-						out1[II] = -1;
+					//else
+					//	out1[II] = -1;
 				}
 				else
 					out1[(k*r*c)+(i*c)+j]=0;

@@ -25,7 +25,7 @@ int detect_seeds(itk::SmartPointer<InputImageType>, int , int , const double, fl
 
 
 // detectSeeds2D( imgPtr, logImagePtr, seedImagePtr, numRows, numColumns, scaleMin, scaleMax, regionXY, binImagePtr );
-int detectSeeds2D( float* IM, float* IM_out, int* IM_bin, int r, int c, double sigma_min, double sigma_max, double scale, int* bImg)
+int detectSeeds2D( float* IM, float* IM_out, int* IM_bin, int r, int c, double sigma_min, double sigma_max, double scale, unsigned short* bImg)
 {
     
 	//Create an itk image from the input image
