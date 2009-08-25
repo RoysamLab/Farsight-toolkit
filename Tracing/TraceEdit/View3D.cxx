@@ -1585,7 +1585,7 @@ void View3D::AddPlaybackWidget(char *filename)
 void View3D::AddVolumeSliders()
 {
   vtkSliderRepresentation2D *sliderRep =
-    vtkSmartPointer<vtkSliderRepresentation2D>::New();
+    vtkSliderRepresentation2D::New();
   sliderRep->SetValue(0.1);
   sliderRep->SetTitleText("Opacity");
   sliderRep->GetPoint1Coordinate()->SetCoordinateSystemToNormalizedDisplay();
@@ -1600,13 +1600,13 @@ void View3D::AddVolumeSliders()
   sliderRep->SetMinimumValue(0.0);
   sliderRep->SetMaximumValue(1.0);
 
-  vtkSliderWidget *sliderWidget = vtkSmartPointer<vtkSliderWidget>::New();
+  vtkSliderWidget *sliderWidget = vtkSliderWidget::New();
   sliderWidget->SetInteractor(Interactor);
   sliderWidget->SetRepresentation(sliderRep);
   sliderWidget->SetAnimationModeToAnimate();
 
   vtkSlider2DCallbackBrightness *callback_brightness =
-    vtkSmartPointer<vtkSlider2DCallbackBrightness>::New();
+    vtkSlider2DCallbackBrightness::New();
   callback_brightness->volume = this->Volume;
   sliderWidget->AddObserver(vtkCommand::InteractionEvent,callback_brightness);
   sliderWidget->EnabledOn();
@@ -1615,7 +1615,7 @@ void View3D::AddVolumeSliders()
 // slider 2
 
   vtkSliderRepresentation2D *sliderRep2 =
-    vtkSmartPointer<vtkSliderRepresentation2D>::New();
+    vtkSliderRepresentation2D::New();
   sliderRep2->SetValue(0.8);
   sliderRep2->SetTitleText("Brightness");
   sliderRep2->GetPoint1Coordinate()->SetCoordinateSystemToNormalizedDisplay();
@@ -1630,13 +1630,13 @@ void View3D::AddVolumeSliders()
   sliderRep2->SetMinimumValue(0.0);
   sliderRep2->SetMaximumValue(1.0);
 
-  vtkSliderWidget *sliderWidget2 = vtkSmartPointer<vtkSliderWidget>::New();
+  vtkSliderWidget *sliderWidget2 = vtkSliderWidget::New();
   sliderWidget2->SetInteractor(Interactor);
   sliderWidget2->SetRepresentation(sliderRep2);
   sliderWidget2->SetAnimationModeToAnimate();
 
   vtkSlider2DCallbackContrast *callback_contrast =
-    vtkSmartPointer<vtkSlider2DCallbackContrast>::New();
+    vtkSlider2DCallbackContrast::New();
   callback_contrast->volume = this->Volume;
   sliderWidget2->AddObserver(vtkCommand::InteractionEvent,callback_contrast);
   sliderWidget2->EnabledOn();
@@ -1835,7 +1835,7 @@ void View3D::rayCast(char *raySource)
   ConnectorType::Pointer connector= ConnectorType::New();
   connector->SetInput( i2spReader->GetOutput() );
   vtkImageToStructuredPoints *i2sp =
-    vtkSmartPointer<vtkImageToStructuredPoints>::New();
+    vtkImageToStructuredPoints::New();
   i2sp->SetInput(connector->GetOutput());
 
 
@@ -1851,7 +1851,7 @@ void View3D::rayCast(char *raySource)
 
 // Create transfer mapping scalar value to opacity
   vtkPiecewiseFunction *opacityTransferFunction =
-    vtkSmartPointer<vtkPiecewiseFunction>::New();
+    vtkPiecewiseFunction::New();
 
   opacityTransferFunction->AddPoint(2,0.0);
   opacityTransferFunction->AddPoint(50,0.1);
@@ -1859,12 +1859,12 @@ void View3D::rayCast(char *raySource)
   // Create transfer mapping scalar value to color
   // Play around with the values in the following lines to better vizualize data
   vtkColorTransferFunction *colorTransferFunction =
-    vtkSmartPointer<vtkColorTransferFunction>::New();
+    vtkColorTransferFunction::New();
     colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
   colorTransferFunction->AddRGBPoint(50.0,1,0,0);
 
   // The property describes how the data will look
-  vtkVolumeProperty *volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
+  vtkVolumeProperty *volumeProperty = vtkVolumeProperty::New();
     volumeProperty->SetColor(colorTransferFunction);
     volumeProperty->SetScalarOpacity(opacityTransferFunction);
   //  volumeProperty->ShadeOn();
@@ -1877,7 +1877,7 @@ void View3D::rayCast(char *raySource)
 
   // The volume holds the mapper and the property and
   // can be used to position/orient the volume
-  vtkVolume *volume = vtkSmartPointer<vtkVolume>::New();
+  vtkVolume *volume = vtkVolume::New();
     volume->SetMapper(volumeMapper);
     volume->SetProperty(volumeProperty);
   volume->SetPickable(0);
