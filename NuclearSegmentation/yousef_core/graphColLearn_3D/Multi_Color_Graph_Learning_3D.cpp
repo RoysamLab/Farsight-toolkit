@@ -23,9 +23,10 @@ limitations under the License.
 //added by yousef on 11/3/2008
 #include "itkImage.h"
 #include "itkImageRegionIteratorWithIndex.h"
-#include "itkApproximateSignedDistanceMapImageFilter.h"
+//#include "itkApproximateSignedDistanceMapImageFilter.h"
 #include "itkImageFileWriter.h"
-#include "itkSignedDanielssonDistanceMapImageFilter.h"
+//#include "itkSignedDanielssonDistanceMapImageFilter.h"
+#include "itkSignedMaurerDistanceMapImageFilter.h"
 //////////////////////////////
 
 using namespace std;
@@ -226,7 +227,7 @@ float* multiColGraphLearning(float* X_vals, int* labs_vals, int* color_im,int r,
     //I added that for situations when two alphas are seperated by just one cell
     //and expanding both alphas will result in merging them if the cell in between
     //is a small one.
-    int NG1, NG2;
+    /*int NG1, NG2;
     for(int i=0; i<max_lab; i++)
 	{	        
 		for(unsigned int j=0; j<MAP2[i].size() ; j++)
@@ -241,7 +242,7 @@ float* multiColGraphLearning(float* X_vals, int* labs_vals, int* color_im,int r,
                     MAP[i].push_back(NG2);
             }				            
 		}
-	}
+	}*/
     
     //start the graph coloring using Sumit's sequential coloring code
 	std::cout<<"Starting graph coloring...";
@@ -299,7 +300,7 @@ float* multiColGraphLearning(float* X_vals, int* labs_vals, int* color_im,int r,
 					continue;
 				val = X_vals[(k*r*c)+(j*r)+i]; //Note,, for this function to work, LPG_im should be normalized between 0 and the maximum repetition		
 				//try this:
-				val = 1;
+				//val = 1;
 				//////////
 				U[label-1][0] += (j*val);
 				U[label-1][1] += (i*val);
@@ -330,7 +331,7 @@ float* multiColGraphLearning(float* X_vals, int* labs_vals, int* color_im,int r,
 					continue;
 				val = X_vals[(k*r*c)+(i*c)+j];
 				//try this:
-				val = 1;
+				//val = 1;
 				//////////
 				Segma[label-1][0][0] += ((j-U[label-1][0])*(j-U[label-1][0])*val);
 				Segma[label-1][0][1] += ((j-U[label-1][0])*(i-U[label-1][1])*val);
@@ -521,7 +522,9 @@ void distToEdge(int *** edge_im, int r, int c, int z)
 	dt_obj->SetInsideValue(0.0);
 	dt_obj->SetOutsideValue(255.0);*/
 
-	typedef itk::SignedDanielssonDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;
+	//typedef itk::SignedDanielssonDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;
+	//DTFilter::Pointer dt_obj= DTFilter::New() ;
+	typedef itk::SignedMaurerDistanceMapImageFilter<InputImageType, OutputImageType>  DTFilter;
 	DTFilter::Pointer dt_obj= DTFilter::New() ;
 	dt_obj->SetInput(im) ;	
 	try{

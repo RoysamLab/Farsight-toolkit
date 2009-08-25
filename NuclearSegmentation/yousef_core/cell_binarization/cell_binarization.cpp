@@ -87,6 +87,8 @@ int Cell_Binarization_3D(unsigned char *imgIn, int* imgOut, int R, int C, int Z,
 	//int num_objects = getConnCompImage(imgOut, 26, 25, R, C, Z);
 	//num_objects = getConnCompImage(imgOut, 26, 25, R, C, Z);
 		
+	delete [] subImgBlock;
+
 	return 1;//num_objects;	
 }
 

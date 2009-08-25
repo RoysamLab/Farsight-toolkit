@@ -37,6 +37,10 @@ limitations under the License.
 #include "itkSignedMaurerDistanceMapImageFilter.h"
 #include "itkCastImageFilter.h"
 
+
+////
+#include "itkImageFileWriter.h"
+
 using namespace std;
 
 
@@ -108,7 +112,7 @@ int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int
 		iterator1.GoToBegin();
 		//get the smallest acceptable scale at each point
 		//Also, change the value in dImg into the largest acceptable scale
-		minSImg = (unsigned short *) malloc(r*c*z*sizeof(unsigned short));
+		/*minSImg = (unsigned short *) malloc(r*c*z*sizeof(unsigned short));
 		for(int i=0; i<r*c*z; i++)
 		{			
 			int DD = (int) dImg[i];
@@ -125,7 +129,7 @@ int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int
 				dImg[i] = sigma_max;
 			else
 				dImg[i] = DD2;			
-		}
+		}*/
 
 	}
 	//////////////////////////
@@ -140,7 +144,7 @@ int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int
 	int minIMout = 10000;
 	double conv = 0;	
 	double sigma = sigma_min;
-	float *IMG_tmp = (float *) malloc(r*c*z*sizeof(float));
+	//float *IMG_tmp = (float *) malloc(r*c*z*sizeof(float));
 	std::cout<<"Processing scale "<<sigma<<"...";
 	detect_seeds(im,r,c,z,sigma_min,IM_out,sampl_ratio);
 	std::cout<<"done"<<std::endl;
@@ -155,13 +159,15 @@ int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int
 			break;
 		}
 		std::cout<<"Processing scale "<<sigma<<"...";
-		detect_seeds(im,r,c,z,sigma,IMG_tmp,sampl_ratio);
+//		detect_seeds(im,r,c,z,sigma,IMG_tmp,sampl_ratio);
+		detect_seeds(im,r,c,z,sigma,IM,sampl_ratio);
 		if(UseDistMap == 1)
 		{
 			for(int i=0; i<r*c*z; i++)
 			{							
-				if(sigma>=minSImg[i] && sigma<=dImg[i])
-					IM_out[i] = (IM_out[i]>=IMG_tmp[i])? IM_out[i] : IMG_tmp[i];				
+				if(sigma<=dImg[i]*2)
+					//IM_out[i] = (IM_out[i]>=IMG_tmp[i])? IM_out[i] : IMG_tmp[i];				
+					IM_out[i] = (IM_out[i]>=IM[i])? IM_out[i] : IM[i];				
 				if(IM_out[i]<minIMout)
 					minIMout = IM_out[i];
 			}
@@ -170,14 +176,21 @@ int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int
 		{
 			for(int i=0; i<r*c*z; i++)
 			{			
-				IM_out[i] = (IM_out[i]>=IMG_tmp[i])? IM_out[i] : IMG_tmp[i];				
+				//IM_out[i] = (IM_out[i]>=IMG_tmp[i])? IM_out[i] : IMG_tmp[i];				
+				IM_out[i] = (IM_out[i]>=IM[i])? IM_out[i] : IM[i];				
 				if(IM_out[i]<minIMout)
 					minIMout = IM_out[i];
 			}
 		}
 		std::cout<<"done"<<std::endl;
 	}
-	free(IMG_tmp);
+
+	//Just try this: Multiply the LoG response by a weight based on the distance from the background
+	for(int i=0; i<r*c*z; i++)
+	{
+		IM_out[i] *= (dImg[i]/sigma_min);
+	}
+	//free(IMG_tmp);
 	free(dImg);
    
 

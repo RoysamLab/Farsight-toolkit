@@ -15,6 +15,7 @@ limitations under the License.
 
 //
 #include "local_max_clust_3D.h"
+#include<math.h>
 
 using namespace std;
 
@@ -133,13 +134,7 @@ void local_max_clust_3D(float* im_vals, int* local_max_vals, int* bImg, int* out
 				{                   
 					LM = max_nghbr_im[i][j][k];
 					if(LM==0)
-						continue;
-					
-					/*int rem = ((long)LM)%(r*c);
-					int Z = (LM-rem)/(r*c);
-					int R = ((long)rem)%r;
-					int C = (rem-R)/r;*/
-				    
+						continue;													    
 					
 					//Calculate coordinates of local maximum based on its index
 					int rem = ((long)LM) % (r*c);
@@ -174,7 +169,20 @@ void local_max_clust_3D(float* im_vals, int* local_max_vals, int* bImg, int* out
                 if(local_max_vals[(int)LM] == -1 || bImg[(k*r*c)+(i*c)+j]==0)
                     out1[(k*r*c)+(i*c)+j] = 0;
                 else
-                    out1[(k*r*c)+(i*c)+j] =local_max_vals[(int)LM];
+				{
+					//modified by Yousef on 8/21/2009
+					//if the distance between me and my seed is more than a threshold.. then ignore me
+					/*int rem = ((long)LM) % (r*c);
+					int Z = (LM-rem) / (r*c); 
+				    int C = ((long)rem) % c;
+					int R = (rem-C)/c;
+					double d = (i-R)*(i-R) + (j-C)*(j-C) + 3*(k-Z)*(k-Z);
+					d = sqrt(d);
+					if(d>10)
+						out1[(k*r*c)+(i*c)+j] = 0;
+					else*/
+						out1[(k*r*c)+(i*c)+j] =local_max_vals[(int)LM];
+				}
             }
         }
     }    

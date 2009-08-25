@@ -178,7 +178,7 @@ void yousef_nucleus_seg::runSeedDetection()
 	}
 	std::cout << "Seeds Detected? " << ok << std::endl;
 
-	//delete [] imgPtr;	//cleanup
+	delete [] imgPtr;	//cleanup
 
 	//Make sure all seeds are in foreground and extract vector of seeds
 	ExtractSeeds();
