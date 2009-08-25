@@ -27,7 +27,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	createMenus();
 	createStatusBar();
 
-	setWindowTitle(tr("Nucleus Editor"));
+	setWindowTitle(tr("FARSIGHT: Nuclear Segmententation Tool"));
 
 	segResult = new ftk::NuclearSegmentation();
 	segWin = new SegmentationWindow();
