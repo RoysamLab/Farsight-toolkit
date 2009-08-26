@@ -15,12 +15,11 @@ limitations under the License.
 
 //: Save an lsm image to a list of tiff images
 //
-//  This program is a major hack from GUI/LSMImageDialog. It only
-//  deals with single time-fram for now. The input is the lsm image,
-//  and the output is a list of grayscale tiff images, each having the
-//  filename of lsm_file_name_channel_name.tiff
+//  Only deals with single time-frame for now. The input is the lsm image,
+//  and the output is a set of grayscale tiff images, each having the
+//  filename of output_base_name_channel_name.tiff
 //
-//  lsm_to_tiff lsm_image_file output_tiff_path
+//  lsm_file [output_tiff_base_name] [output_tiff_path]
 //
 
 #include <ftkImage/vtkLSMReader.h>
@@ -35,7 +34,7 @@ typedef itk::Image<unsigned char,3> ImageType;
 int main( int argc, char* argv[] )
 {
   if (argc<2) {
-    std::cerr << "Usage: " << argv[0] << " lsm_file [output_tiff_path]";
+	  std::cerr << "Usage: " << argv[0] << " lsm_file [output_tiff_base_name] [output_tiff_path]";
     return EXIT_FAILURE;
   }
   
@@ -44,7 +43,7 @@ int main( int argc, char* argv[] )
   lsmR->SetFileName(lsm_name.c_str());
   if (!lsmR->OpenFile()){
     std::cerr<<"\nFailed to open"<<lsm_name<<std::endl;
-    std::cerr <<"\nUsage: " << argv[0] << " lsm_file [output_tiff_path] ";
+    std::cerr <<"\nUsage: " << argv[0] << " lsm_file [output_tiff_base_name] [output_tiff_path] ";
     return EXIT_FAILURE;
   }
   lsmR->Update();
@@ -55,19 +54,33 @@ int main( int argc, char* argv[] )
   std::cout<<"numChannels = "<<numChannels<<std::endl;
   std::cout<<"numTimes = "<<numTimes<<std::endl;
 
-  // Get the base name of the lsm image
+  // Choose base name for output images
   std::string base_name;
-  const std::string slash = "\\/";
-  const std::string dot = ".";
-  std::string::size_type po = lsm_name.find_last_of(slash);
-  if (po != std::string::npos) lsm_name = lsm_name.substr(po+1,lsm_name.size()-po-1);
-  po = lsm_name.find_last_of(dot);
-  base_name = lsm_name.substr (0, po);
+  if (argc >= 3)
+  {
+	  base_name = argv[2];
+  }
+  else
+  {
+	  // Get the base name of the lsm image
+	  const std::string slash = "\\/";
+	  const std::string dot = ".";
+	  std::string::size_type po = lsm_name.find_last_of(slash);
+	  if (po != std::string::npos) lsm_name = lsm_name.substr(po+1,lsm_name.size()-po-1);
+	  po = lsm_name.find_last_of(dot);
+	  base_name = lsm_name.substr (0, po);
+  }
 
   // Assign tiff file names
   std::vector<std::string> tiff_names;
   for (int i = 0; i<numChannels; i++) {
-    std::string tiff_name = base_name+std::string("_")+std::string(lsmR->GetChannelName(i))+std::string(".tiff");
+	//We want to remove anything after a space in the channel name:
+	std::string chName = std::string(lsmR->GetChannelName(i));
+	const std::string delin = " -/\\.";
+	std::string::size_type po = chName.find_first_of(delin);
+	chName = chName.substr(0,po);
+
+    std::string tiff_name = base_name + std::string("_") + chName + std::string(".tiff");
     std::cout<<"tiff name = "<<tiff_name<<std::endl;
     tiff_names.push_back(tiff_name);
   }
@@ -119,9 +132,9 @@ int main( int argc, char* argv[] )
     
     typedef itk::ImageFileWriter< ImageType >  WriterType;
     WriterType::Pointer writer = WriterType::New();
-    if (argc == 3) {
-      writer->SetFileName(std::string(argv[2])+tiff_names[counter]);
-      std::cout<<std::string(argv[2])+tiff_names[counter]<<std::endl;
+    if (argc == 4) {
+      writer->SetFileName(std::string(argv[3]) + tiff_names[counter]);
+      std::cout<<std::string(argv[3])+tiff_names[counter]<<std::endl;
     }
     else writer->SetFileName(tiff_names[counter]);
     writer->SetInput( image );
