@@ -26,6 +26,6 @@ using namespace std;
 
 //int distMap(itk::SmartPointer<InputImageType> im, int r, int c, float* IMG);
 
-int detectSeeds2D( float* IM, float* IM_out, int* IM_bin, int r, int c, double sigma_min, double sigma_max, double scale, unsigned short* bImg);
+int detectSeeds2D( float* IM, float* IM_out, unsigned short* IM_bin, int r, int c, double sigma_min, double sigma_max, double scale, unsigned short* bImg);
 
 #endif

@@ -17,7 +17,7 @@ typedef itk::Image< InputPixelType,  2 >   InputImageType;
 
 double get_maximum(double** A, int r1, int r2, int c1, int c2);
 
-void Detect_Local_MaximaPoints(float* im_vals, int r, int c, double scale, int* im_bin);
+void Detect_Local_MaximaPoints(float* im_vals, int r, int c, double scale, unsigned short* im_bin);
 
 int distMap(itk::SmartPointer<InputImageType> im, int r, int c, float* IMG);
 
@@ -25,7 +25,7 @@ int detect_seeds(itk::SmartPointer<InputImageType>, int , int , const double, fl
 
 
 // detectSeeds2D( imgPtr, logImagePtr, seedImagePtr, numRows, numColumns, scaleMin, scaleMax, regionXY, binImagePtr );
-int detectSeeds2D( float* IM, float* IM_out, int* IM_bin, int r, int c, double sigma_min, double sigma_max, double scale, unsigned short* bImg)
+int detectSeeds2D( float* IM, float* IM_out, unsigned short* IM_bin, int r, int c, double sigma_min, double sigma_max, double scale, unsigned short* bImg)
 {
     
 	//Create an itk image from the input image
@@ -269,7 +269,7 @@ float get_maximum(float** A, int r1, int r2, int c1, int c2)
 }
 
 
-void Detect_Local_MaximaPoints(float* im_vals, int r, int c, double scale, int* out1)
+void Detect_Local_MaximaPoints(float* im_vals, int r, int c, double scale, unsigned short* out1)
 {  
     float** im;
     int min_r, min_c, max_r, max_c;    

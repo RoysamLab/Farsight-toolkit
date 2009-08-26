@@ -153,8 +153,8 @@ private:
 	std::string TimeStamp();
 	void ReassignLabels(std::vector<int> fromIds, int toId, ftk::Object::Box region);
 	void ReassignLabel(int fromId, int toId);
-	void Cleandptr(int*x,vector<int> y );
-	void Restoredptr(int* );
+	void Cleandptr(unsigned short*x,vector<int> y );
+	void Restoredptr(unsigned short* );
 	Object GetNewObject(int id, IntrinsicFeatures *features );
 	ftk::Object::Box ExtremaBox(std::vector<int> ids);
 

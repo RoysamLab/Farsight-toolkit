@@ -44,36 +44,35 @@ limitations under the License.
 using namespace std;
 
 
-typedef    float     InputPixelType;
-typedef itk::Image< InputPixelType,  3 >   InputImageType;
+typedef    unsigned short     MyInputPixelType;
+typedef itk::Image< MyInputPixelType,  3 >   MyInputImageType;
 
-int detect_seeds(itk::SmartPointer<InputImageType>, int , int , int, const double, float*, int);
+int detect_seeds(itk::SmartPointer<MyInputImageType>, int , int , int, const double, float*, int);
 float get_maximum_3D(float* A, int r1, int r2, int c1, int c2, int z1, int z2, int R, int C);
-void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, int* out1, unsigned short* bImg);
-int distMap(itk::SmartPointer<InputImageType> im, int r, int c, int z, float* IMG);
-int distMap2(itk::SmartPointer<InputImageType> im, int r, int c, int z, float* IMG);
+void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, unsigned short* out1, unsigned short* bImg);
+int distMap(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, unsigned short* IMG);
 
-int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int z, double sigma_min, double sigma_max, double scale_xy, double scale_z, int sampl_ratio, unsigned short* bImg, int UseDistMap)
+int Seeds_Detection_3D( float* IM, float* IM_out, unsigned short* IM_bin, int r, int c, int z, double sigma_min, double sigma_max, double scale_xy, double scale_z, int sampl_ratio, unsigned short* bImg, int UseDistMap)
 {	
 	//Create an itk image
-	InputImageType::Pointer im;
-	im = InputImageType::New();
-	InputImageType::PointType origin;
+	MyInputImageType::Pointer im;
+	im = MyInputImageType::New();
+	MyInputImageType::PointType origin;
     origin[0] = 0.; 
     origin[1] = 0.;    
 	origin[2] = 0.;    
     im->SetOrigin( origin );
 
-    InputImageType::IndexType start;
+    MyInputImageType::IndexType start;
     start[0] =   0;  // first index on X
     start[1] =   0;  // first index on Y    
 	start[2] =   0;  // first index on Z    
-    InputImageType::SizeType  size;
+    MyInputImageType::SizeType  size;
     size[0]  = c;  // size along X
     size[1]  = r;  // size along Y
 	size[2]  = z;  // size along Z
   
-    InputImageType::RegionType region;
+    MyInputImageType::RegionType region;
     region.SetSize( size );
     region.SetIndex( start );
     
@@ -88,11 +87,11 @@ int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int
     im->FillBuffer(0);
 	im->Update();	
 	//copy the input image into the ITK image
-	typedef itk::ImageRegionIteratorWithIndex< InputImageType > IteratorType;
+	typedef itk::ImageRegionIteratorWithIndex< MyInputImageType > IteratorType;
 	IteratorType iterator1(im,im->GetRequestedRegion());
 
 	///////////////////////
-	float* dImg = NULL;
+	unsigned short* dImg = NULL;
 	unsigned short* minSImg = NULL;
 	if(UseDistMap == 1)
 	{
@@ -106,7 +105,7 @@ int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int
 		
 		}
 		std::cout<<"Computing distance transform...";
-		dImg = (float *) malloc(r*c*z*sizeof(float));
+		dImg = (unsigned short *) malloc(r*c*z*sizeof(unsigned short));
 		distMap(im, r, c, z,dImg);
 		std::cout<<"done"<<std::endl;
 		iterator1.GoToBegin();
@@ -136,7 +135,7 @@ int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int
 
 	for(int i=0; i<r*c*z; i++)
 	{				
-	    iterator1.Set((float)IM[i]);	
+	    iterator1.Set((unsigned short)IM[i]);	
 		++iterator1;
 	}
 
@@ -164,7 +163,7 @@ int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int
 		if(UseDistMap == 1)
 		{
 			for(int i=0; i<r*c*z; i++)
-			{							
+			{						
 				if(sigma<=dImg[i]*2)
 					//IM_out[i] = (IM_out[i]>=IMG_tmp[i])? IM_out[i] : IMG_tmp[i];				
 					IM_out[i] = (IM_out[i]>=IM[i])? IM_out[i] : IM[i];				
@@ -186,10 +185,10 @@ int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int
 	}
 
 	//Just try this: Multiply the LoG response by a weight based on the distance from the background
-	for(int i=0; i<r*c*z; i++)
+	/*for(int i=0; i<r*c*z; i++)
 	{
 		IM_out[i] *= (dImg[i]/sigma_min);
-	}
+	}*/
 	//free(IMG_tmp);
 	free(dImg);
    
@@ -201,22 +200,22 @@ int Seeds_Detection_3D( float* IM, float* IM_out, int* IM_bin, int r, int c, int
 	return minIMout;
 }
 
-int detect_seeds(itk::SmartPointer<InputImageType> im, int r, int c, int z,const double sigma, float* IMG, int sampl_ratio)
+int detect_seeds(itk::SmartPointer<MyInputImageType> im, int r, int c, int z,const double sigma, float* IMG, int sampl_ratio)
 {
   
   //  Types should be selected on the desired input and output pixel types.
-  typedef    float     InputPixelType;
+  //typedef    float     InputPixelType;
   typedef    float     OutputPixelType;
 
 
   //  The input and output image types are instantiated using the pixel types.
-  typedef itk::Image< InputPixelType,  3 >   InputImageType;
+  //typedef itk::Image< InputPixelType,  3 >   InputImageType;
   typedef itk::Image< OutputPixelType, 3 >   OutputImageType;
 
 
   //  The filter type is now instantiated using both the input image and the
   //  output image types.
-  typedef itk::LaplacianRecursiveGaussianImageFilterNew<InputImageType, OutputImageType >  FilterType;
+  typedef itk::LaplacianRecursiveGaussianImageFilterNew<MyInputImageType, OutputImageType >  FilterType;
   FilterType::Pointer laplacian = FilterType::New();
   
 
@@ -252,7 +251,7 @@ int detect_seeds(itk::SmartPointer<InputImageType> im, int r, int c, int z,const
  
   //   Copy the resulting image into the input array
   long int i = 0;
-  typedef itk::ImageRegionIteratorWithIndex< InputImageType > IteratorType;
+  typedef itk::ImageRegionIteratorWithIndex< OutputImageType > IteratorType;
   IteratorType iterate(laplacian->GetOutput(),laplacian->GetOutput()->GetRequestedRegion());
   while ( i<r*c*z)
   {
@@ -284,7 +283,7 @@ float get_maximum_3D(float* A, int r1, int r2, int c1, int c2, int z1, int z2,in
 }
 
 
-void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, int* out1, unsigned short* bImg)
+void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, unsigned short* out1, unsigned short* bImg)
 {  
     int min_r, min_c, max_r, max_c, min_z, max_z;    
        
@@ -324,12 +323,12 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
 
 }
 
-int distMap(itk::SmartPointer<InputImageType> im, int r, int c, int z, float* IMG)
+int distMap(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, unsigned short* IMG)
 {
   
   //  Types should be selected on the desired input and output pixel types.  
-  typedef int             InputPixelType2;
-  typedef double          OutputPixelType2;
+  typedef unsigned short             InputPixelType2;
+  typedef float          OutputPixelType2;
 
   //  The input and output image types are instantiated using the pixel types.
   typedef itk::Image< InputPixelType2,  3 >   InputImageType2;
@@ -344,7 +343,7 @@ int distMap(itk::SmartPointer<InputImageType> im, int r, int c, int z, float* IM
   DTFilter::Pointer dt_obj= DTFilter::New() ;
   //dt_obj->UseImageSpacingOn();
 
-  typedef itk::CastImageFilter< InputImageType, InputImageType2> myCasterType;
+  typedef itk::CastImageFilter< MyInputImageType, InputImageType2> myCasterType;
   myCasterType::Pointer potCaster = myCasterType::New();
   potCaster->SetInput( im );
   potCaster->Update();
@@ -352,7 +351,7 @@ int distMap(itk::SmartPointer<InputImageType> im, int r, int c, int z, float* IM
   dt_obj->SetInput(potCaster->GetOutput()) ;
   dt_obj->SetSquaredDistance( false );
   dt_obj->SetUseImageSpacing( true );
-  dt_obj->SetInsideIsPositive( true );
+  dt_obj->SetInsideIsPositive( false );
 
   //dt_obj->SetInsideValue(0.0);
   //dt_obj->SetOutsideValue(255.0);
@@ -369,55 +368,15 @@ int distMap(itk::SmartPointer<InputImageType> im, int r, int c, int z, float* IM
   typedef itk::ImageRegionIteratorWithIndex< OutputImageType2 > IteratorType;
   IteratorType iterate(dt_obj->GetOutput(),dt_obj->GetOutput()->GetRequestedRegion());
   while ( i<r*c*z)
-  {
-	  IMG[i] = fabs(iterate.Get());	 	  
+  {	  
+	  double ds = iterate.Get();
+	  if(ds<=0)
+		  IMG[i] = 0;
+	  else
+		IMG[i] = (unsigned short) ds;
       ++i;
  	  ++iterate;
   }	
  
-  return EXIT_SUCCESS;
-}
-
-int distMap2(itk::SmartPointer<InputImageType> im, int r, int c, int z, float* IMG)
-{
-  
-  //  Types should be selected on the desired input and output pixel types.  
-  typedef float             InputPixelType;
-  typedef float          OutputPixelType;
-
-  //  The input and output image types are instantiated using the pixel types.
-  typedef itk::Image< InputPixelType,  3 >   InputImageType;
-  typedef itk::Image< OutputPixelType, 3 >   OutputImageType;
-
-
-  //  The filter type is now instantiated using both the input image and the
-  //  output image types.
-  //typedef itk::ApproximateSignedDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;    
-  typedef itk::DanielssonDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;  
-  DTFilter::Pointer dt_obj= DTFilter::New() ;
-  dt_obj->UseImageSpacingOn();  
-  dt_obj->SetInput(im) ;
- 
-  //dt_obj->SetInsideValue(0.0);
-  //dt_obj->SetOutsideValue(255.0);
-  try{
-	 dt_obj->Update() ;
-  }
-  catch( itk::ExceptionObject & err ){
-	std::cerr << "Error calculating distance transform: " << err << endl ;
-    return -1;
-  }
- 
-  //   Copy the resulting image into the input array
-  long int i = 0;
-  typedef itk::ImageRegionIteratorWithIndex< OutputImageType > IteratorType;
-  IteratorType iterate(dt_obj->GetOutput(),dt_obj->GetOutput()->GetRequestedRegion());
-  while ( i<r*c*z)
-  {
-	  IMG[i] = fabs(iterate.Get());	 	  
-      ++i;
- 	  ++iterate;
-  }
-
   return EXIT_SUCCESS;
 }

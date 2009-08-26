@@ -44,7 +44,7 @@ void get_maximum(float* A, int r1, int r2, int c1, int c2, int z1, int z2, int* 
 }
 
 
-void local_max_clust_3D(float* im_vals, int* local_max_vals, unsigned short* bImg, unsigned short* out1, int r, int c, int z, int scale_xy, int scale_z)
+void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned short* bImg, unsigned short* out1, int r, int c, int z, int scale_xy, int scale_z)
 {  
 	//im_vals is the Laplacian of Gaussian
 	//local_max_vals is the seed points (local maximum) with foreground seeds assigned an id > 0 and background seeds id == -1
@@ -166,7 +166,8 @@ void local_max_clust_3D(float* im_vals, int* local_max_vals, unsigned short* bIm
             {
                 LM = max_nghbr_im[i][j][k];
 								    
-                if(local_max_vals[(int)LM] == -1 || bImg[(k*r*c)+(i*c)+j]==0)
+                //if(local_max_vals[(int)LM] == -1 || bImg[(k*r*c)+(i*c)+j]==0)
+				if(local_max_vals[(int)LM] == 65535 || bImg[(k*r*c)+(i*c)+j]==0)					
                     out1[(k*r*c)+(i*c)+j] = 0;
                 else
 				{

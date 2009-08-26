@@ -204,7 +204,7 @@ bool NuclearSegmentation::GetResultImage()
 	}
 
 	vector<int> size = NucleusSeg->getImageSize();
-	int *dptr = NULL;
+	unsigned short *dptr = NULL;
 
 	switch(lastRunStep)
 	{
@@ -213,16 +213,16 @@ bool NuclearSegmentation::GetResultImage()
 		return false;
 		break;
 	case 1:		
-		dptr = (int *) NucleusSeg->getBinImage();
+		dptr = NucleusSeg->getBinImage();
 		break;
 	case 2:	//Seeds:
 		dptr = NucleusSeg->getSeedImage();
 		break;
 	case 3:
-		dptr = (int *) NucleusSeg->getClustImage();
+		dptr = NucleusSeg->getClustImage();
 		break;
 	case 4:
-		dptr = (int *) NucleusSeg->getSegImage();
+		dptr = NucleusSeg->getSegImage();
 		break;
 	}
 
@@ -236,7 +236,7 @@ bool NuclearSegmentation::GetResultImage()
 		if(lastRunStep == 2)
 		{
 			Cleandptr(dptr,size); // Temporarily deletes the seeds in the bacground from dptr
-			labelImage->AppendChannelFromData3D(dptr, itk::ImageIOBase::INT, sizeof(int), size[2], size[1], size[0], "gray", color, true);		
+			labelImage->AppendChannelFromData3D(dptr, itk::ImageIOBase::INT, sizeof(unsigned short), size[2], size[1], size[0], "gray", color, true);		
 			Restoredptr(dptr); // Adds the seeds to dptr which were deleted in Cleandptr
 		}
 		else
@@ -2207,7 +2207,7 @@ string NuclearSegmentation::NumToString(double d, int p)
  //end namespace ftk
 
 
-void NuclearSegmentation::Cleandptr(int* p, vector<int> dim){
+void NuclearSegmentation::Cleandptr(unsigned short* p, vector<int> dim){
 	int ctr =0;
 	
 if(dim.size() ==3) {
@@ -2217,7 +2217,8 @@ if(dim.size() ==3) {
 				{
 					for(int index3=0;index3<dim[0];index3++)
 						{
-						if(p[ctr]<0) 
+						    //if(p[ctr]<0)klkl 
+							if(p[ctr]==65535) 
 							{
 								p[ctr]=0;
 								this->negativeseeds.push_back(ctr);									
@@ -2233,7 +2234,7 @@ for(int index1=0;index1<dim[1];index1++)
 	{
 	for(int index2=0;index2<dim[0];index2++)
 		{
-			if(p[ctr]<0) 
+			if(p[ctr]==65535/*<0*/) 
 				{
 				p[ctr]=0;
 				this->negativeseeds.push_back(ctr);									
@@ -2245,11 +2246,11 @@ for(int index1=0;index1<dim[1];index1++)
 
 }
 
-void NuclearSegmentation::Restoredptr(int* p)
+void NuclearSegmentation::Restoredptr(unsigned short* p)
 {
  	for(list<int>::iterator index =this->negativeseeds.begin();index!=this->negativeseeds.end();++index)
 		{
-	    		p[*index]=-1;					
+	    		p[*index]=65535;//-1;					
 		}
 	this->negativeseeds.clear();
 }

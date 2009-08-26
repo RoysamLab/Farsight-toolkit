@@ -118,19 +118,17 @@ void yousef_nucleus_seg::runBinarization()
 	{}
 	else if (numStacks == 1)
 	{
-		ok = Cell_Binarization_2D(dataImagePtr,binImagePtr, numRows, numColumns, shift);
-		numConnComp = getConnCompImage(binImagePtr, 26, minObjSize, numRows, numColumns, numStacks,1);
-		getConnCompInfo3D();
+		ok = Cell_Binarization_2D(dataImagePtr,binImagePtr, numRows, numColumns, shift); //Do Binarization		
 	}
 	else
 	{
-		ok = Cell_Binarization_3D(dataImagePtr,binImagePtr, numRows, numColumns, numStacks, shift);		//Do Binarization
-		numConnComp = getConnCompImage(binImagePtr, 26, minObjSize, numRows, numColumns, numStacks,1);			//Find connected components
-		getConnCompInfo3D();																			//Populate myConnComp
+		ok = Cell_Binarization_3D(dataImagePtr,binImagePtr, numRows, numColumns, numStacks, shift);		//Do Binarization		
 	}
 
 	if(ok)
 	{
+		numConnComp = getConnCompImage(binImagePtr, 26, minObjSize, numRows, numColumns, numStacks,1);			//Find connected components
+		getConnCompInfo3D();																			//Populate myConnComp
 		cerr << "Cell Binarized.. with " << numConnComp << " connected components" << endl;	
 	}
 	else
@@ -153,7 +151,7 @@ void yousef_nucleus_seg::runSeedDetection()
 	mySeeds.clear();
 
 	//allocate space for the binary image of seed points
-	seedImagePtr = new int[numStacks*numRows*numColumns];
+	seedImagePtr = new unsigned short[numStacks*numRows*numColumns];
 	
 	//copy the binary image into the seeds image for now
 	//memcpy(seedImagePtr/*destination*/, binImagePtr/*source*/, numStacks*numRows*numColumns*sizeof(int)/*num bytes to move*/);
@@ -227,7 +225,7 @@ void yousef_nucleus_seg::ExtractSeeds()
 {
 	mySeeds.clear();
 
-	int seedVal;
+	unsigned short seedVal;
 	unsigned short binVal;
 	int curNode;
 	int id = 1;
@@ -247,7 +245,8 @@ void yousef_nucleus_seg::ExtractSeeds()
 					if(binVal == 0)		//I'm in the background
 					{
 						//Set this pixel to a -1
-						seedImagePtr[curNode] = -1;
+						//seedImagePtr[curNode] = -1;
+						seedImagePtr[curNode] = 65535;
 					}
 					else
 					{
@@ -285,8 +284,8 @@ void yousef_nucleus_seg::outputSeeds(void)
 
 int yousef_nucleus_seg::getConnCompImage(unsigned short *IM, int connectivity, int minSize, int r, int c, int z, int runConnComp)
 {
-	typedef    int     InputPixelType;
-	typedef    int     OutputPixelType;
+	typedef    short     InputPixelType;
+	typedef    short     OutputPixelType;
 	typedef itk::Image< InputPixelType,  3 >   InputImageType;
 	typedef itk::Image< OutputPixelType, 3 >   OutputImageType;
 	
@@ -360,10 +359,16 @@ int yousef_nucleus_seg::getConnCompImage(unsigned short *IM, int connectivity, i
 
 	
     //write the output of the labeling CC filter into our input image
+	int mx;
 	IteratorType iterator2(relabel->GetOutput(),relabel->GetOutput()->GetRequestedRegion());
 	for(int i=0; i<r*c*z; i++)
-	{		
-		IM[i] = iterator2.Get();		
+	{			
+		
+		mx = iterator2.Get();	
+		if(mx == -1)
+			IM[i] = 0;
+		else
+			IM[i] = mx;
 		++iterator2;	
 	}
 
@@ -993,8 +998,7 @@ int yousef_nucleus_seg::getRelabeledImage(unsigned short *IM, int connectivity, 
 	{				
 		//Compute the labeled connected component image		
 		filter->SetInput (im);
-		filter->SetFullyConnected( connectivity );			
-		filter->Update();
+		filter->SetFullyConnected( connectivity );					
 		//use the connected component image as the input to the relabel component filter		
 		relabel->SetInput( filter->GetOutput() );
 	}

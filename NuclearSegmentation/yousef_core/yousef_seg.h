@@ -82,7 +82,7 @@ public:
   
 	unsigned char* getDataImagePtr(){ return dataImagePtr; };								
 	unsigned short* getBinImage(){ return binImagePtr; }; 
-	int* getSeedImage(){ return seedImagePtr; };
+	unsigned short* getSeedImage(){ return seedImagePtr; };
 	float* getLogImage(){ return logImagePtr; };
 	unsigned short* getClustImage(){ return clustImagePtr; };
 	unsigned short* getSegImage(){ return segImagePtr; };
@@ -139,7 +139,7 @@ private:
 	unsigned char* dataImagePtr;	//Created outside yousef_seg
 	string dataFilename;
 	unsigned short* binImagePtr;				//Created in yousef_seg
-	int* seedImagePtr;				//Created in yousef_seg
+	unsigned short* seedImagePtr;				//Created in yousef_seg
 	float* logImagePtr;				//Created in yousef_seg
 	unsigned short* clustImagePtr;				//Created in yousef_seg
 	unsigned short* segImagePtr;				//Created in yousef_seg

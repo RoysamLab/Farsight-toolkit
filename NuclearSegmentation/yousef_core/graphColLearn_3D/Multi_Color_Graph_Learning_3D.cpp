@@ -442,6 +442,18 @@ float* multiColGraphLearning(float* X_vals, unsigned short* labs_vals, unsigned 
 	}
 	free(labs_im);
 
+	for(int i=0; i<max_lab; i++)
+    {        				
+        for(int j=0; j<3; j++)
+        {            
+			free(Segma[i][j]);
+        }
+		Segma[i] = (double **) malloc(3*sizeof(double*));
+		free(U[i]);
+    }
+	free(Z_sum);
+	free(P_I);
+
 	return out;
 }
 

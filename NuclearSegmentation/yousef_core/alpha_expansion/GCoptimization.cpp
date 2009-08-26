@@ -1409,11 +1409,13 @@ void GCoptimization::setNeighbors(PixelType pixel1, int pixel2, EnergyTermType w
 	m_neighbors[pixel1].addFront(temp2);*/
 	
 	TTY[nbr_index] = (Neighbor *) new Neighbor;
+	terminateOnError(!TTY[nbr_index],"out of memory");
 	TTY[nbr_index]->weight  = weight;
 	TTY[nbr_index]->to_node = pixel2;
 	m_neighbors[pixel1].addFront(TTY[nbr_index]);
 	nbr_index++;
 	TTY[nbr_index] = (Neighbor *) new Neighbor;
+	terminateOnError(!TTY[nbr_index],"out of memory");
 	TTY[nbr_index]->weight  = weight;
 	TTY[nbr_index]->to_node = pixel2;
 	m_neighbors[pixel2].addFront(TTY[nbr_index]);
