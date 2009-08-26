@@ -45,6 +45,7 @@ class vtkPolyData;
 class vtkPolyDataMapper;
 class vtkRenderer;
 class vtkRenderWindowInteractor;
+class  vtkSliderWidget;
 class vtkSphereSource;
 class vtkVolume;
 class MergeModel; 
@@ -287,5 +288,9 @@ private:
 	vtkSmartPointer<vtkLODActor> glyphActor;
 	vtkSmartPointer<vtkPolyDataMapper> glyphMapper;
 	vtkSmartPointer<vtkSphereSource> sphereSource;
+
+  //VTK widgets
+  vtkSliderWidget *OpacitySlider;
+  vtkSliderWidget *BrightnessSlider;
 };
 #endif

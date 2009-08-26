@@ -13,11 +13,11 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
 
-class vtkSlider2DCallbackBrightness : public vtkCommand
+class vtkSlider2DCallbackOpacity : public vtkCommand
 {
 public:
-  static vtkSlider2DCallbackBrightness *New() 
-    { return new vtkSlider2DCallbackBrightness; }
+  static vtkSlider2DCallbackOpacity *New() 
+    { return new vtkSlider2DCallbackOpacity; }
   virtual void Execute(vtkObject *caller, unsigned long, void*)
     {
       vtkSliderWidget *sliderWidget = 
@@ -30,18 +30,18 @@ public:
     opacityTransferFunction->AddPoint(50,value);
      this->volume->GetProperty()->SetScalarOpacity(opacityTransferFunction);
     }
-  vtkSlider2DCallbackBrightness() {
+  vtkSlider2DCallbackOpacity() {
 
   }
 
   vtkSmartPointer<vtkVolume> volume;
 };
 
-class vtkSlider2DCallbackContrast : public vtkCommand
+class vtkSlider2DCallbackBrightness : public vtkCommand
 {
 public:
-  static vtkSlider2DCallbackContrast *New() 
-    { return new vtkSlider2DCallbackContrast; }
+  static vtkSlider2DCallbackBrightness *New() 
+    { return new vtkSlider2DCallbackBrightness; }
   virtual void Execute(vtkObject *caller, unsigned long, void*)
     {
       vtkSliderWidget *sliderWidget = 
@@ -51,16 +51,15 @@ public:
       /*vtkSmartPointer<vtkPiecewiseFunction> colorTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
     colorTransferFunction->AddPoint(1.0,0.0f,0.0f,0.0f);
     colorTransferFunction->AddPoint(255*(1-value),0.5f,0.5f,0.0f);*/
-    vtkColorTransferFunction *colorTransferFunction =
-      vtkSmartPointer<vtkColorTransferFunction>::New();
+   // vtkColorTransferFunction *colorTransferFunction =
+   //   vtkSmartPointer<vtkColorTransferFunction>::New();
+    vtkColorTransferFunction *colorTransferFunction = vtkColorTransferFunction::New();
     colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
     colorTransferFunction->AddRGBPoint(255*(1-value),1,0,0);
-     this->volume->GetProperty()->SetColor(colorTransferFunction);
+    this->volume->GetProperty()->SetColor(colorTransferFunction);
+    colorTransferFunction->Delete();
     }
-  vtkSlider2DCallbackContrast() {
-
-  }
-
+  vtkSlider2DCallbackBrightness() {}
   vtkSmartPointer<vtkVolume> volume;
 };
 

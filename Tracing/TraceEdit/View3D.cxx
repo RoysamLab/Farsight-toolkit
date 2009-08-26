@@ -129,6 +129,8 @@ View3D::View3D(int argc, char **argv)
 #endif
   
 this->QVTK = 0;
+this->OpacitySlider = 0;
+this->BrightnessSlider = 0;
 this->tobj->gapTol = .5;
 this->tobj->gapMax = 10;
 this->smallLine = 5;
@@ -150,6 +152,14 @@ View3D::~View3D()
   if(this->GapsPlotView)
     {
     delete this->GapsPlotView;
+    }
+  if(this->OpacitySlider)
+    {
+    this->OpacitySlider->Delete();
+    }
+  if(this->BrightnessSlider)
+    {
+    this->BrightnessSlider->Delete();
     }
   delete this->tobj;
   delete this->undoBuff;
@@ -1584,63 +1594,70 @@ void View3D::AddPlaybackWidget(char *filename)
 }
 void View3D::AddVolumeSliders()
 {
-  vtkSliderRepresentation2D *sliderRep =
+  vtkSliderRepresentation2D *opacitySliderRep =
     vtkSliderRepresentation2D::New();
-  sliderRep->SetValue(0.1);
-  sliderRep->SetTitleText("Opacity");
-  sliderRep->GetPoint1Coordinate()->SetCoordinateSystemToNormalizedDisplay();
-  sliderRep->GetPoint1Coordinate()->SetValue(0.2,0.1);
-  sliderRep->GetPoint2Coordinate()->SetCoordinateSystemToNormalizedDisplay();
-  sliderRep->GetPoint2Coordinate()->SetValue(0.8,0.1);
-  sliderRep->SetSliderLength(0.02);
-  sliderRep->SetSliderWidth(0.03);
-  sliderRep->SetEndCapLength(0.01);
-  sliderRep->SetEndCapWidth(0.03);
-  sliderRep->SetTubeWidth(0.005);
-  sliderRep->SetMinimumValue(0.0);
-  sliderRep->SetMaximumValue(1.0);
+  opacitySliderRep->SetValue(0.1);
+  opacitySliderRep->SetTitleText("Opacity");
+  opacitySliderRep->GetPoint1Coordinate()->
+    SetCoordinateSystemToNormalizedDisplay();
+  opacitySliderRep->GetPoint1Coordinate()->SetValue(0.2,0.1);
+  opacitySliderRep->GetPoint2Coordinate()->
+    SetCoordinateSystemToNormalizedDisplay();
+  opacitySliderRep->GetPoint2Coordinate()->SetValue(0.8,0.1);
+  opacitySliderRep->SetSliderLength(0.02);
+  opacitySliderRep->SetSliderWidth(0.03);
+  opacitySliderRep->SetEndCapLength(0.01);
+  opacitySliderRep->SetEndCapWidth(0.03);
+  opacitySliderRep->SetTubeWidth(0.005);
+  opacitySliderRep->SetMinimumValue(0.0);
+  opacitySliderRep->SetMaximumValue(1.0);
 
-  vtkSliderWidget *sliderWidget = vtkSliderWidget::New();
-  sliderWidget->SetInteractor(Interactor);
-  sliderWidget->SetRepresentation(sliderRep);
-  sliderWidget->SetAnimationModeToAnimate();
+  this->OpacitySlider = vtkSliderWidget::New();
+  this->OpacitySlider->SetInteractor(this->Interactor);
+  this->OpacitySlider->SetRepresentation(opacitySliderRep);
+  this->OpacitySlider->SetAnimationModeToAnimate();
 
-  vtkSlider2DCallbackBrightness *callback_brightness =
-    vtkSlider2DCallbackBrightness::New();
-  callback_brightness->volume = this->Volume;
-  sliderWidget->AddObserver(vtkCommand::InteractionEvent,callback_brightness);
-  sliderWidget->EnabledOn();
+  vtkSlider2DCallbackOpacity *callback_opacity =
+    vtkSlider2DCallbackOpacity::New();
+  callback_opacity->volume = this->Volume;
+  this->OpacitySlider->AddObserver(vtkCommand::InteractionEvent,callback_opacity);
+  this->OpacitySlider->EnabledOn();
+  opacitySliderRep->Delete();
+  callback_opacity->Delete();
   
 
 // slider 2
 
-  vtkSliderRepresentation2D *sliderRep2 =
+  vtkSliderRepresentation2D *brightnessSliderRep =
     vtkSliderRepresentation2D::New();
-  sliderRep2->SetValue(0.8);
-  sliderRep2->SetTitleText("Brightness");
-  sliderRep2->GetPoint1Coordinate()->SetCoordinateSystemToNormalizedDisplay();
-  sliderRep2->GetPoint1Coordinate()->SetValue(0.2,0.9);
-  sliderRep2->GetPoint2Coordinate()->SetCoordinateSystemToNormalizedDisplay();
-  sliderRep2->GetPoint2Coordinate()->SetValue(0.8,0.9);
-  sliderRep2->SetSliderLength(0.02);
-  sliderRep2->SetSliderWidth(0.03);
-  sliderRep2->SetEndCapLength(0.01);
-  sliderRep2->SetEndCapWidth(0.03);
-  sliderRep2->SetTubeWidth(0.005);
-  sliderRep2->SetMinimumValue(0.0);
-  sliderRep2->SetMaximumValue(1.0);
+  brightnessSliderRep->SetValue(0.8);
+  brightnessSliderRep->SetTitleText("Brightness");
+  brightnessSliderRep->GetPoint1Coordinate()->
+    SetCoordinateSystemToNormalizedDisplay();
+  brightnessSliderRep->GetPoint1Coordinate()->SetValue(0.2,0.9);
+  brightnessSliderRep->GetPoint2Coordinate()->
+    SetCoordinateSystemToNormalizedDisplay();
+  brightnessSliderRep->GetPoint2Coordinate()->SetValue(0.8,0.9);
+  brightnessSliderRep->SetSliderLength(0.02);
+  brightnessSliderRep->SetSliderWidth(0.03);
+  brightnessSliderRep->SetEndCapLength(0.01);
+  brightnessSliderRep->SetEndCapWidth(0.03);
+  brightnessSliderRep->SetTubeWidth(0.005);
+  brightnessSliderRep->SetMinimumValue(0.0);
+  brightnessSliderRep->SetMaximumValue(1.0);
 
-  vtkSliderWidget *sliderWidget2 = vtkSliderWidget::New();
-  sliderWidget2->SetInteractor(Interactor);
-  sliderWidget2->SetRepresentation(sliderRep2);
-  sliderWidget2->SetAnimationModeToAnimate();
+  this->BrightnessSlider = vtkSliderWidget::New();
+  this->BrightnessSlider->SetInteractor(this->Interactor);
+  this->BrightnessSlider->SetRepresentation(brightnessSliderRep);
+  this->BrightnessSlider->SetAnimationModeToAnimate();
 
-  vtkSlider2DCallbackContrast *callback_contrast =
-    vtkSlider2DCallbackContrast::New();
-  callback_contrast->volume = this->Volume;
-  sliderWidget2->AddObserver(vtkCommand::InteractionEvent,callback_contrast);
-  sliderWidget2->EnabledOn();
-
+  vtkSlider2DCallbackBrightness *callback_brightness =
+    vtkSlider2DCallbackBrightness::New();
+  callback_brightness->volume = this->Volume;
+  this->BrightnessSlider->AddObserver(vtkCommand::InteractionEvent,callback_brightness);
+  this->BrightnessSlider->EnabledOn();
+  brightnessSliderRep->Delete();
+  callback_brightness->Delete();
 }
  
 void View3D::UndoAction()
@@ -1834,11 +1851,9 @@ void View3D::rayCast(char *raySource)
   typedef itk::ImageToVTKImageFilter<ImageType> ConnectorType;
   ConnectorType::Pointer connector= ConnectorType::New();
   connector->SetInput( i2spReader->GetOutput() );
-  vtkImageToStructuredPoints *i2sp =
-    vtkImageToStructuredPoints::New();
+  vtkSmartPointer<vtkImageToStructuredPoints> i2sp =
+    vtkSmartPointer<vtkImageToStructuredPoints>::New();
   i2sp->SetInput(connector->GetOutput());
-
-
   
   ImageType::SizeType size = i2spReader->GetOutput()->GetLargestPossibleRegion().GetSize();
   vtkSmartPointer<vtkImageData> vtkim = vtkSmartPointer<vtkImageData>::New();
@@ -1850,21 +1865,22 @@ void View3D::rayCast(char *raySource)
   memcpy(vtkim->GetScalarPointer(),i2spReader->GetOutput()->GetBufferPointer(),size[0]*size[1]*size[2]*sizeof(unsigned char));
 
 // Create transfer mapping scalar value to opacity
-  vtkPiecewiseFunction *opacityTransferFunction =
-    vtkPiecewiseFunction::New();
+  vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunction =
+    vtkSmartPointer<vtkPiecewiseFunction>::New();
 
   opacityTransferFunction->AddPoint(2,0.0);
   opacityTransferFunction->AddPoint(50,0.1);
  // opacityTransferFunction->AddPoint(40,0.1);
   // Create transfer mapping scalar value to color
   // Play around with the values in the following lines to better vizualize data
-  vtkColorTransferFunction *colorTransferFunction =
-    vtkColorTransferFunction::New();
+  vtkSmartPointer<vtkColorTransferFunction> colorTransferFunction =
+    vtkSmartPointer<vtkColorTransferFunction>::New();
     colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
   colorTransferFunction->AddRGBPoint(50.0,1,0,0);
 
   // The property describes how the data will look
-  vtkVolumeProperty *volumeProperty = vtkVolumeProperty::New();
+  vtkSmartPointer<vtkVolumeProperty> volumeProperty =
+    vtkSmartPointer<vtkVolumeProperty>::New();
     volumeProperty->SetColor(colorTransferFunction);
     volumeProperty->SetScalarOpacity(opacityTransferFunction);
   //  volumeProperty->ShadeOn();
@@ -1877,7 +1893,7 @@ void View3D::rayCast(char *raySource)
 
   // The volume holds the mapper and the property and
   // can be used to position/orient the volume
-  vtkVolume *volume = vtkVolume::New();
+  vtkSmartPointer<vtkVolume> volume = vtkSmartPointer<vtkVolume>::New();
     volume->SetMapper(volumeMapper);
     volume->SetProperty(volumeProperty);
   volume->SetPickable(0);
