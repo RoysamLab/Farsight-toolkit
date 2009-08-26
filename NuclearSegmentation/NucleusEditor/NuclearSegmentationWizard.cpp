@@ -729,8 +729,8 @@ void Seed3D::GetImage(ftk::NuclearSegmentation *seg,vector<Seed> seeds) //modifi
   im_mapper->SetInput(reslice->GetOutput());
   vtkActor *imActor = vtkActor::New();
   imActor->SetMapper(im_mapper);
-  imActor->RotateWXYZ(180,0,0,1);
-  imActor->RotateWXYZ(180,0,1,0); 	
+  //imActor->RotateWXYZ(180,0,0,1);
+  //imActor->RotateWXYZ(180,0,1,0); 	
   
   this->Renderer1->AddActor(imActor);
   this->QVTK1->GetRenderWindow()->Render();
