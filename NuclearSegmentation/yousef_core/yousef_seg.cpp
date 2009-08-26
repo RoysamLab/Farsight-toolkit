@@ -948,7 +948,7 @@ void yousef_nucleus_seg::readParametersFromFile(const char* pFname)
 //Added by Yousef on 7-8-2008
 int yousef_nucleus_seg::getRelabeledImage(unsigned short *IM, int connectivity, int minSize, int r, int c, int z, int runConnComp)
 {
-	typedef    int     InputPixelType;
+	typedef    unsigned short     InputPixelType;
 	typedef    int     OutputPixelType;
 	typedef itk::Image< InputPixelType,  3 >   InputImageType;
 	typedef itk::Image< OutputPixelType, 3 >   OutputImageType;
@@ -994,19 +994,19 @@ int yousef_nucleus_seg::getRelabeledImage(unsigned short *IM, int connectivity, 
 	typedef itk::RelabelComponentImageFilter< OutputImageType, OutputImageType > RelabelType;
 	RelabelType::Pointer relabel = RelabelType::New();
 
-	if(runConnComp == 1)
-	{				
+	//if(runConnComp == 1)
+	//{				
 		//Compute the labeled connected component image		
 		filter->SetInput (im);
 		filter->SetFullyConnected( connectivity );					
 		//use the connected component image as the input to the relabel component filter		
 		relabel->SetInput( filter->GetOutput() );
-	}
-	else
-	{
+	//}
+	//else
+	//{
 		//use the input image as the input to the relabel component filter 		
-		relabel->SetInput( im );
-	}
+		//relabel->SetInput( im );
+	//}
 
     //set the minimum object size
 	relabel->SetMinimumObjectSize( minSize );
@@ -1022,15 +1022,21 @@ int yousef_nucleus_seg::getRelabeledImage(unsigned short *IM, int connectivity, 
     }
 	
 	//write the output of the labeling CC filter into our input image
-	IteratorType iterator2(relabel->GetOutput(),relabel->GetOutput()->GetRequestedRegion());	
+	typedef itk::ImageRegionIteratorWithIndex< OutputImageType > IteratorType2;
+	IteratorType2 iterator2(relabel->GetOutput(),relabel->GetOutput()->GetRequestedRegion());	
 	for(int i=0; i<r*c*z; i++)
 	{		
 		if(binImagePtr[i] == 0)
 			IM[i] = 0;
 		else
-			IM[i] = iterator2.Get()-1;		
-		if(IM[i] < 0)
-			IM[i]=0;
+		{
+			int lbl = iterator2.Get()-1;		
+			if(lbl < 0)
+				IM[i]=0;
+			else
+				IM[i] = lbl;
+
+		}		
 		++iterator2;	
 	}
 
