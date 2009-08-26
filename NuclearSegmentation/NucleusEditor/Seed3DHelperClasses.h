@@ -139,7 +139,7 @@ public:
 		cout<<(bounds[5]-bounds[4])/2.0<<endl;
 		this->im_mapper = vtkDataSetMapper::New();
         this->im_mapper->SetInput(this->reslice->GetOutput());
-        this->reslice1->SetResliceAxesOrigin((bounds[1]-bounds[0])/2.0,(bounds[3]-bounds[2])/2.0,x[2]); 
+        this->reslice1->SetResliceAxesOrigin((bounds[1]-bounds[0])/2.0,(bounds[3]-bounds[2])/2.0,bounds[5]-x[2]); 
         this->im_mapper1 = vtkDataSetMapper::New();
         this->im_mapper1->SetInput(this->reslice1->GetOutput());
 		this->imActor->SetPosition(0.0,0.0,0.0);
@@ -193,7 +193,7 @@ public:
     this->placePoint[2] = (bounds1[5]/2.0)+this->handle1pos[1];
     this->handle->SetWorldPosition(this->placePoint);
 	
-	this->reslice1->SetResliceAxesOrigin((bounds1[1]-bounds1[0])/2.0,(bounds1[3]-bounds1[2])/2.0,this->placePoint[2]); 
+	this->reslice1->SetResliceAxesOrigin((bounds1[1]-bounds1[0])/2.0,(bounds1[3]-bounds1[2])/2.0,bounds1[5]-this->placePoint[2]); 
     this->im_mapper1 = vtkDataSetMapper::New();
     this->im_mapper1->SetInput(this->reslice1->GetOutput());
 	//this->imActor1->SetPosition(0.0,0.0,0.0);
