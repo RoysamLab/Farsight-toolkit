@@ -47,8 +47,10 @@ limitations under the License.
 //#define DISP_BACKBONE_ONLY  0     // Output only backbone
 #define DISP_ALL_BB2Branch 0          //Output all two levels of branches on backbone
 #define ONLY_OUTPUT_SPINES 0
-// To output backbone only
+
+// To output backbone only (without spines)
 // Comment two lines: % add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeBB);%
+#define OUTPUT_BACKBONE_ONLY 1
 
 #define OUTPUT_DISTTRANS 0
 #define OUTPUT_BRANCHPts 0
@@ -860,7 +862,9 @@ int main(int argc, char *argv[])
 			if (MDL_minIndex >= 0)   {
                 for (j = 1; j <= vertsCurBr_Index2[0]; j++) {
 					// Not to output if only need backbone output
+					#if OUTPUT_BACKBONE_ONLY==0
 					add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeBB);   // Comment out if only need backbone output
+					#endif
 					if(outputAsSWC)
             {
             if(vertsCurBranch2[0][j-1] == 5)
@@ -875,7 +879,9 @@ int main(int argc, char *argv[])
 				}
 				if (MDL_minIndex >= 1)  {
 					for (j = 1; j <= vertsCurBr_Index2[MDL_minIndex]; j++) {
+						#if OUTPUT_BACKBONE_ONLY==0
 						 add_edge(vertsCurBranch2[MDL_minIndex][j-1], vertsCurBranch2[MDL_minIndex][j], msTreeBB);  //add branch for the 2nd level
+						#endif
 					}
 
 				}
