@@ -83,6 +83,7 @@ int detectSeeds2D( float* IM, float* IM_out, unsigned short* IM_bin, int r, int 
 	float *IMG_tmp = (float *) malloc(r*c*sizeof(float));	
 
 	//Detecting seeds at min scale
+	IM_out = new float[r*c];
 	detect_seeds(im,r,c,sigma_min,IM_out);
 	
 	while(!conv)
@@ -107,6 +108,7 @@ int detectSeeds2D( float* IM, float* IM_out, unsigned short* IM_bin, int r, int 
 	free(dImg);
 	
     //get seed points (local maxima points in the LoG response image
+	IM_bin = new unsigned short[r*c];
 	Detect_Local_MaximaPoints(IM_out, r, c, scale, IM_bin);
 			
 	return 1;

@@ -1855,9 +1855,9 @@ vector <ftk::Object::Point> Seed3D::GetSeedpts(vector<Seed> seeds, double* origi
 		
 		p.t = 0;
 		spPoint.push_back(p);
-		cout<<spPoint.size()<<"--size"<<endl;
+		//cout<<spPoint.size()<<"--size"<<endl; //Yousef
 	}
-	cout<<spPoint.size()<<"--Total size"<<endl;
+	//cout<<spPoint.size()<<"--Total size"<<endl; //Yousef
 	return (spPoint);
 }
 

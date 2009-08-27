@@ -113,6 +113,7 @@ void yousef_nucleus_seg::runBinarization()
 	//allocate space for the binary image
 	binImagePtr = new unsigned short[numStacks*numRows*numColumns];	
 
+	std::cout<<"Start Binarization ..."<<std::endl;
 	int ok = 0;
 	if (numStacks == 0)
 	{}
@@ -151,7 +152,9 @@ void yousef_nucleus_seg::runSeedDetection()
 	mySeeds.clear();
 
 	//allocate space for the binary image of seed points
-	seedImagePtr = new unsigned short[numStacks*numRows*numColumns];
+	//allocate inside the 3-D seeds detection function in order to save memory for the intermediate steps
+	//seedImagePtr = 0;
+	//seedImagePtr = new unsigned short[numStacks*numRows*numColumns];
 	
 	//copy the binary image into the seeds image for now
 	//memcpy(seedImagePtr/*destination*/, binImagePtr/*source*/, numStacks*numRows*numColumns*sizeof(int)/*num bytes to move*/);
@@ -161,26 +164,28 @@ void yousef_nucleus_seg::runSeedDetection()
 	ucharToFloat(dataImagePtr /*from*/, imgPtr /*to*/, numRows, numColumns, numStacks, 1 /*invert*/);
 
 	//allocate space for the laplacian of gaussian
-	logImagePtr = new float[numStacks*numRows*numColumns];
+	//allocate inside the 3-D seeds detection function in order to save memory for the intermediate steps
+	//logImagePtr = new float[numStacks*numRows*numColumns];
 	
 	//Now do seed detection
 	int ok = 0;
 	if (numStacks == 1)
-	{
-		ok = detectSeeds2D( imgPtr, logImagePtr, seedImagePtr, numRows, numColumns, scaleMin, scaleMax, regionXY, binImagePtr );
+	{		
+		seedImagePtr = new unsigned short[numStacks*numRows*numColumns];
+		logImagePtr = new float[numStacks*numRows*numColumns];
+		ok = detectSeeds2D( imgPtr, logImagePtr, seedImagePtr, numRows, numColumns, scaleMin, scaleMax, regionXY, binImagePtr );		
 	}
 	else
-	{
-		minLoGImg = Seeds_Detection_3D( imgPtr, logImagePtr, seedImagePtr, numRows, numColumns, numStacks, scaleMin, scaleMax, regionXY, regionZ, getSamplingRatio(), binImagePtr, useDistMap );
-		ok = 1;
-	}
-	std::cout << "Seeds Detected? " << ok << std::endl;
-
+	{	
+		minLoGImg = 10000;
+		ok = Seeds_Detection_3D( imgPtr, &logImagePtr, &seedImagePtr, numRows, numColumns, numStacks, scaleMin, scaleMax, regionXY, regionZ, getSamplingRatio(), binImagePtr, useDistMap, &minLoGImg );						
+	}		
 	delete [] imgPtr;	//cleanup
-
-	//Make sure all seeds are in foreground and extract vector of seeds
-	ExtractSeeds();
-
+	if(!ok)
+		cerr << "Seed detection Failed!!" << endl;
+	else
+		//Make sure all seeds are in foreground and extract vector of seeds
+		ExtractSeeds();
 }
 
 void yousef_nucleus_seg::runClustering()
@@ -817,6 +822,34 @@ void ucharToFloat(unsigned char* fromLoc, float* toLoc,int r, int c, int z, char
 					if (invert == 1)
 						val = 255-val;
 					toLoc[curNode] = (float)val;	
+				}
+			}
+		}
+	}
+	else
+	{
+		std::cerr << "POINTERS NOT INITIALIZED in ucharToFloat" << std::endl;
+	}
+}
+
+void ucharToUshort(unsigned char* fromLoc, unsigned short* toLoc,int r, int c, int z, char invert)
+{
+	unsigned char val;
+	int curNode;
+
+	if ((toLoc != NULL) && (fromLoc != NULL))
+	{
+		for (int k=0; k<z; ++k)
+		{
+			for (int j=0; j<r; ++j)
+			{
+				for (int i=0; i<c; ++i)
+				{
+					curNode = (k*r*c)+(j*c)+i;
+					val = fromLoc[curNode];
+					if (invert == 1)
+						val = 255-val;
+					toLoc[curNode] = (unsigned short)val;	
 				}
 			}
 		}

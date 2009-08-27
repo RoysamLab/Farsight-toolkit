@@ -48,6 +48,8 @@ using namespace std;
 
 
 void ucharToFloat(unsigned char* fromLoc, float* toLoc,int r, int c, int z, char invert);
+void ucharToUShort(unsigned char* fromLoc, unsigned short* toLoc,int r, int c, int z, char invert);
+
 unsigned char *** TriplePtr(int z, int r, int c);
   
 class Seed;	//At bottom of file
@@ -120,7 +122,7 @@ public:
 	bool DeleteInit(ftk::Object::Point P1);
 	int getMaxID(int);
 
-private:
+private:	
 	void ExtractSeeds();
 	void getConnCompInfo3D();
 	int getConnCompImage(unsigned short* IM, int connectivity, int minSize, int r, int c, int z,int runConnComp);

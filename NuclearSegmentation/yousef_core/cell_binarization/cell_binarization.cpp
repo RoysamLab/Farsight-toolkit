@@ -66,10 +66,17 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	int block_divisor = 4;
 	subImgBlock[4] = 0;
 	subImgBlock[5] = Z;
+	int blk = 1;
+	int cntr = 0;
+	for(int i=0; i<R; i+=R/block_divisor)
+		for(int j=0; j<C; j+=C/block_divisor)
+			cntr++;
+
 	for(int i=0; i<R; i+=R/block_divisor)
 	{
 		for(int j=0; j<C; j+=C/block_divisor)
-		{
+		{			
+			std::cout<<"    Binarizing block "<<blk<<" of "<<cntr<<std::endl;
 			subImgBlock[0] = j;
 			subImgBlock[1] = (int)j+C/block_divisor;
 			subImgBlock[2] = i;
@@ -80,6 +87,7 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 				subImgBlock[3] = R;
 
 			Seg_GC_Full_3D_Blocks(imgIn, R, C, Z, alpha_F, alpha_B, P_I, imgOut,subImgBlock);
+			blk++;
 		}
 	}
 	//Added By Yousef: May 20, 2008
@@ -283,12 +291,12 @@ void Seg_GC_Full_3D(unsigned char* IM, int r, int c, int z, double alpha_F, doub
 		else
         B_H[i] = P_I*compute_poisson_prob(i,alpha_B);
     }
-	std::cerr << "Poisson Probabilities Computed" << std::endl;
+	//std::cerr << "Poisson Probabilities Computed" << std::endl;
     
 	//Construct the graph
 	GraphType *g = new GraphType(/*estimated # of nodes*/ num_nodes, /*estimated # of edges*/ num_edges); 
 
-	std::cerr << "Graph Memory Allocated" << std::endl;
+	//std::cerr << "Graph Memory Allocated" << std::endl;
 
 	//Here is the main loop.. 
     //For each point, compute the terminal and neighbor edge weights
@@ -335,7 +343,7 @@ void Seg_GC_Full_3D(unsigned char* IM, int r, int c, int z, double alpha_F, doub
 		}
 	}
 
-	std::cout << "First Loop Complete" << std::endl;
+	//std::cout << "First Loop Complete" << std::endl;
 	
 	sig = 30.0;
 	w=10.0;
@@ -392,7 +400,7 @@ void Seg_GC_Full_3D(unsigned char* IM, int r, int c, int z, double alpha_F, doub
 		}
 	}    
 	
-	std::cout << "Second Loop Complete" << std::endl;
+	//std::cout << "Second Loop Complete" << std::endl;
 	
 	//Compute the maximum flow:
 	g->maxflow();		//Alex DO NOT REMOVE
@@ -645,12 +653,12 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 		else
 			B_H[i] = P_I*compute_poisson_prob(i,alpha_B);
     }
-	std::cerr << "Poisson Probabilities Computed" << std::endl;
+	//std::cerr << "Poisson Probabilities Computed" << std::endl;
     
 	//Construct the graph
 	GraphType *g = new GraphType(/*estimated # of nodes*/ num_nodes, /*estimated # of edges*/ num_edges); 
 
-	std::cerr << "Graph Memory Allocated" << std::endl;
+	//std::cerr << "Graph Memory Allocated" << std::endl;
 
 	//Here is the main loop.. 
     //For each point, compute the terminal and neighbor edge weights
@@ -698,7 +706,7 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 		}
 	}
 
-	std::cout << "First Loop Complete" << std::endl;
+	//std::cout << "First Loop Complete" << std::endl;
 	
 	sig = 50.0;
 	w=10.0;
@@ -757,7 +765,7 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 		}
 	}    
 	
-	std::cout << "Second Loop Complete" << std::endl;
+	//std::cout << "Second Loop Complete" << std::endl;
 	
 	//Compute the maximum flow:
 	g->maxflow();		//Alex DO NOT REMOVE

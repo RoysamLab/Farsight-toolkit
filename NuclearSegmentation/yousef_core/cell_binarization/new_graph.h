@@ -380,7 +380,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 	if (node_num_max < 16) node_num_max = 16;
 	if (edge_num_max < 16) edge_num_max = 16;
 
-	printf("about to allocate memory\n");
+	//printf("about to allocate memory\n");
 
 	nodes = (node*) malloc(node_num_max*sizeof(node));
 	arcs = (arc*) malloc(2*edge_num_max*sizeof(arc));
