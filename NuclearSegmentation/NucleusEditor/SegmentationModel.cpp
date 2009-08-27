@@ -23,6 +23,7 @@ SegmentationModel::SegmentationModel(ftk::NuclearSegmentation *segresult)
 
 	model = new QStandardItemModel(0,0);
 	selectionModel = new QItemSelectionModel(model);
+	connect(this, SIGNAL(s_modelChanged(const QModelIndex &, const QModelIndex &)),model,SIGNAL(dataChanged(const QModelIndex &, const QModelIndex &)));
 
 	columnForID = -1;
 	numFeatures = 0;
@@ -45,8 +46,24 @@ SegmentationModel::~SegmentationModel()
 	model = NULL;
 }
 
+//Emits a signal saying that the whole model's data changed, useful to use this when changing the model data with the setData function.
+// Normally the SetData function with emit QStandardItemModel::dataChanged signal from the model.  You may be using setData many times
+// and not want this to happen at each one.  In this case you can:
+// 1. Call model->blockSignals(true).
+// 2. Make changes using setData()
+// 3. Call model->blockSignals(false).
+// 4. Call MostDataInModelChanged();
+// The advantage of calling this function is that it will allow views that are only connected the the QStandardItemModel to be updated when changes are made.
+// Views that are connected to this model (SegmentationModel) can also be linked using the modelChanged() signal present here.  This will tell these views that
+// more than just data has changed - but also information that is stored in this model beyond what is stored in the QStandardItemModel.
+void SegmentationModel::MostDataInModelChanged()
+{
+	//I have linked this signal to the QStandartItemModel signal
+	emit s_modelChanged(model->index(0,0),model->index(model->rowCount()-1,model->columnCount()-1));
+}
 void SegmentationModel::SyncModel()
 {
+	model->blockSignals(true);
 	model->setColumnCount(0);
 	model->setRowCount(0);
 
@@ -91,9 +108,11 @@ void SegmentationModel::SyncModel()
 
 		currentRow++;
 	}
+	model->blockSignals(false);
 	updateMapping();
 	columnForColor = columnForClass;
 	UpdateColors();
+	emit modelChanged();
 }
 
 void SegmentationModel::ShowOutliers(bool show)
@@ -123,6 +142,8 @@ void SegmentationModel::SetOutliers( vector<int> outs )
 
 	int z = 0;
 	int o = 1;
+
+	model->blockSignals(true);
 	for(int row = 0; row < model->rowCount(); ++row)  //Set all values to 0
 	{
 		model->setData(model->index(row, columnForOutliers), z);
@@ -137,8 +158,10 @@ void SegmentationModel::SetOutliers( vector<int> outs )
 		//QStandardItem *item = model->item(row,columnForOutliers);
 		//item->setText( QString("%0").arg(1) );
 	}
+	model->blockSignals(false);
+	this->MostDataInModelChanged();
 
-	emit modelChanged();
+	//emit modelChanged(); //Will not help us here because scatterview not linked to this signal
 }
 
 bool SegmentationModel::HasOutliers(void)
@@ -264,7 +287,8 @@ void SegmentationModel::deleteTrigger()
 			updateMapping();
 		}
 	}
-	emit modelChanged();
+	MostDataInModelChanged();
+	//emit modelChanged(); //not so useful
 
 }
 
@@ -289,7 +313,10 @@ void SegmentationModel::endSplitTrigger()
 		int num_split = pointsForSplitting.size();
 		if((num_split%2)!=0)
 			num_split--;
-		for (unsigned int i = 0; i < num_split; i+=2) 
+
+		model->blockSignals(true);
+
+		for (unsigned int i = 0; i < (unsigned int)num_split; i+=2) 
 		{
 			std::vector< int > newIDs = nucseg->Split(pointsForSplitting.at(i), pointsForSplitting.at(i+1));
 			if( newIDs.size()==3 )
@@ -312,18 +339,21 @@ void SegmentationModel::endSplitTrigger()
 					int currentRow = model->rowCount();
 					model->insertRow(currentRow);
 					model->setData(model->index(currentRow, columnForID, QModelIndex()), newIDs[i]);
+
 					vector<float> features = segResult->GetObjectPtr(newIDs[i])->GetFeatures();
 					for(int f=0; f<(int)features.size(); ++f) 
 					{
 						model->setData(model->index(currentRow, f+1, QModelIndex()), features[f]);
 					}
-	
 					int clss = segResult->GetObjectPtr(newIDs[i])->GetClass();
 					model->setData(model->index(currentRow,columnForClass,QModelIndex()),clss);
 					updateMapping();
 				}	
 			}
 		}		
+		
+		model->blockSignals(false);
+		MostDataInModelChanged();
 		
 	}
 	//finally, clear the list of points
@@ -343,6 +373,7 @@ int SegmentationModel::getSizeOfSplittingList()
 {
 	return (int) pointsForSplitting.size();
 }
+
 std::vector<int> SegmentationModel::getPointFromSplittingList(int id)
 {
 	ftk::Object::Point P = pointsForSplitting.at(id);
@@ -351,6 +382,7 @@ std::vector<int> SegmentationModel::getPointFromSplittingList(int id)
 	ret.push_back(P.y);
 	return ret;
 }
+
 void SegmentationModel::splitTrigger()
 {	
 	QModelIndexList selIndices = selectionModel->selectedRows();
@@ -411,6 +443,8 @@ void SegmentationModel::splitTrigger()
 		} 
 		updateMapping();
 
+		model->blockSignals(true);
+
 		if( newIDs.size()==2 )
 		{
 			// Add the cell-ids of 2 new (result of splitting) cells
@@ -429,11 +463,10 @@ void SegmentationModel::splitTrigger()
 				updateMapping();
 			}	
 		}
-	}
 
-	//The next two lines need to be checked
-	//UpdateColors();
-	//emit modelChanged();
+		model->blockSignals(false);
+		MostDataInModelChanged();
+	}
 }
 //Call this slot when trying to merge objects
 void SegmentationModel::mergeTrigger()
@@ -493,7 +526,9 @@ void SegmentationModel::mergeTrigger()
 		return;
 
 	ftk::NuclearSegmentation *nucseg = (ftk::NuclearSegmentation*)segResult;
+	
 	//Attempt Merge:
+	model->blockSignals(true);
 	for(unsigned int group = 0; group < ids.size(); ++group)
 	{
 		if(ids.at(group).size() <= 1)
@@ -516,6 +551,7 @@ void SegmentationModel::mergeTrigger()
 			//Add into table the new object
 			int currentRow = model->rowCount();
 			model->insertRow(currentRow);
+			model->blockSignals(true);
 			model->setData(model->index(currentRow, columnForID, QModelIndex()), newID);
 			vector<float> features = segResult->GetObjectPtr(newID)->GetFeatures();
 			for(int f=0; f<(int)features.size(); ++f)
@@ -523,13 +559,13 @@ void SegmentationModel::mergeTrigger()
 				model->setData(model->index(currentRow, f+1, QModelIndex()), features[f]);
 			}
 			int clss = segResult->GetObjectPtr(newID)->GetClass();
+			model->blockSignals(false);
 			model->setData(model->index(currentRow,columnForClass,QModelIndex()),clss);
 			updateMapping();
 		}
 	}
-	UpdateColors();
-	emit modelChanged();
-
+	model->blockSignals(false);
+	this->MostDataInModelChanged();
 }
 
 //Crude neighbor test

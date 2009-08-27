@@ -59,7 +59,8 @@ public:
 	ftk::NuclearSegmentation *SegResult(void){ return segResult; };
 
 signals:
-	void modelChanged(void);
+	void s_modelChanged(const QModelIndex & topLeft, const QModelIndex & bottomRight);
+	void modelChanged();
 
 public slots:
 	void deleteTrigger(void);
@@ -93,6 +94,7 @@ private:
 	QItemSelectionModel *selectionModel;
 
 	//Functions:
+	void MostDataInModelChanged(void);
 	void SyncModel();
 	void UpdateColors();
 	void updateMapping();

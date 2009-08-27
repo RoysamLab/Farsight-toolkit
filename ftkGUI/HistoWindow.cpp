@@ -71,7 +71,17 @@ HistoWindow::HistoWindow(QItemSelectionModel *mod, QWidget *parent)
   this->setBucketNames(); 
   this->ConstructBarChart();
 
+  connect(model, SIGNAL(headerDataChanged(Qt::Orientation, int, int)), this, SLOT(updateOptionMenus(Qt::Orientation, int, int)));
   connect(model, SIGNAL(dataChanged(const QModelIndex &, const QModelIndex &)), this, SLOT(modelChange(const QModelIndex &, const QModelIndex &)));
+}
+
+//This SLOT is used to make sure that the menu gets updated with the header changes
+void HistoWindow::updateOptionMenus(Qt::Orientation orientation, int first, int last)
+{
+	if( orientation == Qt::Horizontal)
+	{
+		updateOptionMenus();
+	}
 }
 
 void HistoWindow::updateOptionMenus()
@@ -138,13 +148,21 @@ void HistoWindow::binsChange(QAction *action)
 
 void HistoWindow::modelChange(const QModelIndex &topLeft, const QModelIndex &bottomRight)
 {
-  this->updateOptionMenus();
-  this->SyncModel();
-  this->Normalize();
-  this->SetNumofBins(numofbins);
-  this->findFrequencies();    
-  this->setBucketNames(); 
-  this->ConstructBarChart();
+  //this->updateOptionMenus();	//Doesn't need to happen here - moved to seperate slot
+
+  //Check to see if the change is in the column that we are currently displaying:
+  int l_column = topLeft.column();
+  int r_column = bottomRight.column();
+
+  if(l_column <= columnNum && r_column >= columnNum)
+  {
+	this->SyncModel();
+	this->Normalize();
+	this->SetNumofBins(numofbins);
+	this->findFrequencies();    
+	this->setBucketNames(); 
+	this->ConstructBarChart();
+  }
 }
 
 void HistoWindow::SyncModel()

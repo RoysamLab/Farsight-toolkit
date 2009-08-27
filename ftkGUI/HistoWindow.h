@@ -57,6 +57,7 @@ public:
 private slots:
 	void columnChange(QAction *action);
 	void binsChange(QAction *action);
+	void updateOptionMenus(Qt::Orientation orientation, int first, int last);
 	void modelChange(const QModelIndex &topLeft, const QModelIndex &bottomRight);
 
 private:

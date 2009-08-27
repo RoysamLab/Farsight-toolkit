@@ -82,7 +82,21 @@ TableWindow::TableWindow(SegmentationModel *mod, QWidget *parent)
 
 void TableWindow::modelChange(const QModelIndex &topLeft, const QModelIndex &bottomRight)
 {
-	this->update();
+	//this->update();	//This is too big of an update, make it more specific
+	int l_column = topLeft.column();
+	int t_row = topLeft.row();
+	int r_column = bottomRight.column();
+	int b_row = bottomRight.row();
+
+	for(int r=t_row; r<=b_row; r++)
+	{
+		table->resizeRowToContents(r);
+		table->verticalHeader()->resizeSection(r,18);
+	}
+	for(int c=l_column; c<=r_column; c++)
+	{
+		table->resizeColumnToContents(c);
+	}
 }
 
 void TableWindow::update()

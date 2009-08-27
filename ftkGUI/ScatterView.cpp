@@ -234,10 +234,19 @@ void ScatterView::dataChanged(const QModelIndex &topLeft, const QModelIndex &bot
 {
     QAbstractItemView::dataChanged(topLeft, bottomRight);
 	
-	//Find max/min x/y and adjust the axis accordingly
-	updateAxis();
+	//Check to see if the change is in the column that we are currently displaying:
+	int l_column = topLeft.column();
+	int r_column = bottomRight.column();
 
-	viewport()->update();
+	if( (l_column <= columnNumForX && r_column >= columnNumForX) 
+		|| (l_column <= columnNumForY && r_column >= columnNumForY)
+		|| (l_column <= columnNumForColoring && r_column >= columnNumForColoring) )
+	{
+		//Find max/min x/y and adjust the axis accordingly
+		updateAxis();
+
+		viewport()->update();
+	}
 }
 
 //**********************************************************************************************************
