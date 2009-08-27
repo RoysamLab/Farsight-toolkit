@@ -593,6 +593,10 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
   TiXmlDocument doc(filename);
   doc.LoadFile();
   TiXmlHandle docHandle( &doc );
+  // Read the feature header names
+  TiXmlElement* headerElement = docHandle.FirstChild("FeatureHeaderNames").Element();
+  const char * text = headerElement->GetText();
+  //write code to extract header names from text and create std::vector<std:string> in TraceObject
   TiXmlElement* lineElement =
     docHandle.FirstChild("Trace").FirstChild("TraceLine").Element();
   TiXmlElement* bitElement;
@@ -616,6 +620,7 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
     {
       lineParent = -1;
     }
+
     if(hash_load.count(lineID)>0)
     {
       tline = reinterpret_cast<TraceLine*>(hash_load[lineID]);
@@ -625,6 +630,9 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
       tline = new TraceLine();
       hash_load[lineID] = reinterpret_cast<unsigned long long int>(tline);
     }
+	//for loop over the std::vector<std::string> of header names in TraceObject
+	//if(!=)
+	// filename.c_str()
     tline->SetId(lineID);
     tline->SetType(lineType);
     //tline->setTraceColor(1.0/tline->GetType());

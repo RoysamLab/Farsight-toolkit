@@ -141,6 +141,8 @@ this->Initialize();
 this->tobj->setSmallLineColor(.25);
 this->tobj->setMergeLineColor(.4);
 this->Ascending = Qt::AscendingOrder;
+this->statusBar()->showMessage(tr("Ready"));
+
 }
 
 View3D::~View3D()
@@ -486,6 +488,7 @@ void View3D::ApplyNewSettings()
   this->lineWidth = this->LineWidthField->text().toFloat();
   //this->Rerender();
   this->SettingsWidget->hide();
+  this->statusBar()->showMessage(tr("Applying new settings"),3000);
 }
 
 void View3D::HideSettingsWindow()
@@ -642,6 +645,7 @@ void View3D::HighlightSelected(TraceLine* tline, double color)
 
 void View3D::Rerender()
 {
+  this->statusBar()->showMessage(tr("Rerender Image"), 1000);
   this->SphereActor->VisibilityOff();
   this->SelectedTraceIDs.clear();
   this->Renderer->RemoveActor(this->BranchActor);
@@ -848,25 +852,24 @@ void View3D::ListSelections()
 
 void View3D::ClearSelection()
 {
-  QMessageBox selectionInfo;
   QString selectText;
   if (this->SelectedTraceIDs.size()<= 0)
     {
-    selectText=tr("\t\tNothing Selected\t\t");
+    selectText=tr("Nothing Selected");
     }
   else
     {
     this->SelectedTraceIDs.clear();
-    selectText=tr("\t\tcleared list\t\t");
+    selectText=tr("cleared list");
     this->Rerender();
     }
-  selectionInfo.setText(selectText);
-  selectionInfo.exec();
+  this->statusBar()->showMessage(selectText, 4000);
 }
 
 /*  delete traces functions */
 void View3D::DeleteTraces()
 {
+  this->statusBar()->showMessage(tr("Deleting"));
   if(this->SelectedTraceIDs.size()>=1)
     {
     std::cout<<"selected lines \n";
@@ -880,7 +883,7 @@ void View3D::DeleteTraces()
     }
   else
     {
-    std::cout<<  "Nothing to Delete \n";
+    this->statusBar()->showMessage(tr("Nothing to Delete \n"));
     }
 }
 
@@ -1112,9 +1115,11 @@ void View3D::updateSelectionHighlights()
   }//end for i
   this->poly_line_data->Modified();
   this->QVTK->GetRenderWindow()->Render();
+  this->statusBar()->showMessage(tr("Done"));
 }
 void View3D::MergeSelectedTraces()
 {
+	this->statusBar()->showMessage(tr("Merging"));
   this->updateSelectionHighlights(); //if it didnt
   std::vector<int> GapIDs = this->MergeGaps->GetSelectedGapIDs();
   bool selected = false;
@@ -1215,6 +1220,7 @@ void View3D::MergeSelectedTraces()
   this->candidateGaps.clear();
   this->myText.clear();
   this->dtext.clear();
+  this->statusBar()->showMessage(tr("Done"));
 }
 /*  other trace modifiers */
 void View3D::SplitTraces()

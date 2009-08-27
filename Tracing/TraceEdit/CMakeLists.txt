@@ -30,6 +30,7 @@ ADD_LIBRARY(Trace
   TraceLine.h   TraceLine.cxx
   TraceGap.h    TraceGap.cxx
   TraceObject.h TraceObject.cxx
+  TraceModel.h  TraceModel.cxx
   MergeModel.h  MergeModel.cxx
   UndoBuffer.h UndoBuffer.cxx
   undobuff.h undobuff.cxx

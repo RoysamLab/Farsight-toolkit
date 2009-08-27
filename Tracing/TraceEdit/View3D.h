@@ -200,6 +200,8 @@ private:
 
 	//QT widgets for the menu bar
 	QMenu *fileMenu;
+	QToolBar *EditsToolBar;
+
 	QAction *saveAction;
 	QAction *exitAction;
 

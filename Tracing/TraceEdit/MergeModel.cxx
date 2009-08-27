@@ -47,13 +47,13 @@ MergeModel::~MergeModel()
 void MergeModel::SetupHeaders()
 {
   std::vector<QString> headers;
-  headers.push_back("ID");
-  headers.push_back("Trace 1");
-  headers.push_back("Trace 2");
-  headers.push_back("Gap");
-  headers.push_back("Angle");
-  headers.push_back("D");
-  headers.push_back("Length");
+  headers.push_back("Gap ID");
+  headers.push_back("Trace 1 ID");
+  headers.push_back("Trace 2 ID");
+  headers.push_back("Gap Distance");
+  headers.push_back("Gap Angle");
+  headers.push_back("Max Distance");
+  headers.push_back("Path Length");
   headers.push_back("Smoothness");
   headers.push_back("Cost");
   int numHeaders = headers.size();

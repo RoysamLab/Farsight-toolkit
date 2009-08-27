@@ -53,8 +53,10 @@ public:
 	int GetId();
 	int GetSize();
 	void Print(std::ostream &c,int indent);
+
 	std::vector<unsigned int> * GetMarkers();
 	std::vector<TraceLine*> * GetBranchPointer();
+	std::vector<double> Features;
 	void setTraceColor(double newColor);
 	double getTraceColor();
 	void Getstats();

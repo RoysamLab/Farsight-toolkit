@@ -65,6 +65,7 @@ public:
 	std::vector<TraceBit> CollectTraceBits();
 	std::vector<TraceLine*> SmallLines;
 	std::vector<TraceGap*> Gaps;
+	std::vector<std::string> FeatureHeaders;
 
 	double gapTol;
 	int gapMax;
