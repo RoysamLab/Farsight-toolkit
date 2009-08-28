@@ -50,17 +50,17 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 	//local_max_vals is the seed points (local maximum) with foreground seeds assigned an id > 0 and background seeds id == -1
 	// out1 will contain the clustering output
 
-    double*** max_nghbr_im;
+    int*** max_nghbr_im;
     int min_r, min_c, max_r, max_c, min_z, max_z;
     
 	//create max_nghbr_im and initialize it with its index (node) value
-	max_nghbr_im = (double ***) malloc(r*sizeof(double**)); 
+	max_nghbr_im = (int ***) malloc(r*sizeof(int**)); 
     for(int i=0; i<r; i++)
     {        
-        max_nghbr_im[i] = (double **) malloc(c*sizeof(double*));
+        max_nghbr_im[i] = (int **) malloc(c*sizeof(int*));
         for(int j=0; j<c; j++)
         {			
-			max_nghbr_im[i][j] = (double *) malloc(z*sizeof(double));
+			max_nghbr_im[i][j] = (int *) malloc(z*sizeof(int));
 			for(int k=0; k<z; k++)
 			{				
 				max_nghbr_im[i][j][k] = (k*r*c)+(i*c)+j;//LMX;

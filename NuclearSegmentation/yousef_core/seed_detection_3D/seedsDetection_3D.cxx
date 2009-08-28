@@ -52,12 +52,14 @@ typedef itk::Image< MyInputPixelType,  3 >   MyInputImageType;
 typedef itk::Image< MyInputPixelType,  2 >   MyInputImageType2D;
 
 int detect_seeds(itk::SmartPointer<MyInputImageType>, int , int , int, const double, float*, int);
-int detect_seeds_new(itk::SmartPointer<MyInputImageType> im, int r, int c, int z,const double sigma_min, double sigma_max, float* IMG, int sampl_ratio, int unsigned short* dImg, int* minIMout, int UseDistMap);
+//int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z,const double sigma_min, double sigma_max, float* IMG, int sampl_ratio, int unsigned short* dImg, int* minIMout, int UseDistMap);
+int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, int rmin, int rmax, int cmin, int cmax, int zmin, int zmax,const double sigma_min, double sigma_max, float* IMG, int sampl_ratio, int unsigned short* dImg, int* minIMout, int UseDistMap);
 float get_maximum_3D(float* A, int r1, int r2, int c1, int c2, int z1, int z2, int R, int C);
 void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, unsigned short* out1, unsigned short* bImg);
 int distMap(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, unsigned short* IMG);
 int distMap_SliceBySlice(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, unsigned short* IMG);
 MyInputImageType2D::Pointer extract2DImageSlice(itk::SmartPointer<MyInputImageType> im, int plane, int slice);
+MyInputImageType::Pointer extract3DImageRegion(itk::SmartPointer<MyInputImageType> im, int sz_x, int sz_y, int sz_z, int start_x, int start_y, int start_z, double smpl_rat );
 
 int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int r, int c, int z, double sigma_min, double sigma_max, double scale_xy, double scale_z, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout)
 {	
@@ -129,62 +131,35 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 		++iterator1;
 	}
 
-	//By Yousef (8/27/2009): multi-scale LoG is done in one function now
-	detect_seeds_new(im, r, c, z, sigma_min, sigma_max, IM, sampl_ratio, dImg, minIMout, UseDistMap);
-	//
+	//By Yousef (8/28/2009)
+	//In some situations the image is very larg and we cannot allocate memory for the LoG filter (20xthe size of the image in bytes)
+	//In such cases, we can divide the image into small tiles, process them independently, and them combine the results
+	int block_divisor = 2;	
 	
-	//Start from sigma_min to sigma sigma_max
-	/*double conv = 0;	
-	double sigma = sigma_min;
-	IM_out[0] = new float[r*c*z];
-	if(!IM_out[0])
+	int min_x, min_y, max_x, max_y;
+	for(int i=0; i<r; i+=r/block_divisor)
 	{
-		std::cerr<<"could not allocate memory for the LoG response image"<<std::endl;
-		return 0;
-	}
-	std::cout<<"Processing scale "<<sigma<<"...";
-	detect_seeds(im,r,c,z,sigma_min,IM_out[0],sampl_ratio);
-	std::cout<<"done"<<std::endl;
-	while(!conv)
-	{
-		
-		sigma = sigma+1;
-		
-		if(sigma>sigma_max)
-		{
-			conv=1;
-			break;
-		}
-		std::cout<<"Processing scale "<<sigma<<"...";
-		detect_seeds(im,r,c,z,sigma,IM,sampl_ratio);
-		if(UseDistMap == 1)
-		{
-			for(int i=0; i<r*c*z; i++)
-			{						
-				if(sigma<=dImg[i]*2)					
-					IM_out[0][i] = (IM_out[0][i]>=IM[i])? IM_out[0][i] : IM[i];				
-				if(IM_out[0][i]<minIMout[0])
-					minIMout[0] = IM_out[0][i];
-			}
-		}
-		else
-		{
-			for(int i=0; i<r*c*z; i++)
-			{							
-				IM_out[0][i] = (IM_out[0][i]>=IM[i])? IM_out[0][i] : IM[i];				
-				if(IM_out[0][i]<minIMout[0])
-					minIMout[0] = IM_out[0][i];
-			}
-		}
-		std::cout<<"done"<<std::endl;
-	}*/
+		for(int j=0; j<c; j+=c/block_divisor)
+		{						
+			min_x = j; 
+			max_x = 40+(int)j+c/block_divisor; //40 is the size of the overlapping between the two tiles along x
+			min_y = i;
+			max_y = 40+(int)i+r/block_divisor; //40 is the size of the overlapping between the two tiles along y
+			if(max_x >= c)
+				max_x = c-1;
+			if(max_y >= r)
+				max_y = r-1;
 
-	//Just try this: Multiply the LoG response by a weight based on the distance from the background
-	/*for(int i=0; i<r*c*z; i++)
-	{
-		IM_out[i] *= (dImg[i]/sigma_min);
-	}*/
-	//free(IMG_tmp);
+			//Create an itk image to hold the sub image (tile) being processing
+			MyInputImageType::Pointer im_Small = extract3DImageRegion(im, max_x-min_x+1, max_y-min_y+1, z, min_x, min_y, 0, sampl_ratio );
+						
+			//By Yousef (8/27/2009): multi-scale LoG is done in one function now
+			multiScaleLoG(im_Small, r, c, z, min_y, max_y, min_x, max_x, 0, z-1, sigma_min, sigma_max, IM, sampl_ratio, dImg, minIMout, UseDistMap);
+			//
+		}
+	}
+	
+		
 	free(dImg);
    
 	IM_out[0] = new float[r*c*z];
@@ -265,7 +240,7 @@ int detect_seeds(itk::SmartPointer<MyInputImageType> im, int r, int c, int z,con
   }
 }
 
-int detect_seeds_new(itk::SmartPointer<MyInputImageType> im, int r, int c, int z,const double sigma_min, double sigma_max, float* IMG, int sampl_ratio, int unsigned short* dImg, int* minIMout, int UseDistMap)
+int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, int rmin, int rmax, int cmin, int cmax, int zmin, int zmax,const double sigma_min, double sigma_max, float* IMG, int sampl_ratio, int unsigned short* dImg, int* minIMout, int UseDistMap)
 {
   
   //  Types should be selected on the desired input and output pixel types.
@@ -310,36 +285,69 @@ int detect_seeds_new(itk::SmartPointer<MyInputImageType> im, int r, int c, int z
     } 
  
 	//   Copy the resulting image into the input array
-	long int i = 0;
+	//long int i = 0;
 	typedef itk::ImageRegionIteratorWithIndex< OutputImageType > IteratorType;
 	IteratorType iterate(laplacian->GetOutput(),laplacian->GetOutput()->GetRequestedRegion());
-	while ( i<r*c*z)
+	long int II;
+	for(int k1=zmin; k1<=zmax; k1++)
 	{
-		if(sigma==sigma_min)
-		{
-			IMG[i] = /*sigma*sigma*/iterate.Get();			
-		}
-		else
-		{
-			float lgrsp = iterate.Get();
-			if(UseDistMap == 1)
+		for(int i1=rmin; i1<=rmax; i1++)	
+		{			
+			for(int j1=cmin; j1<=cmax; j1++)
 			{
-				if(sigma<=dImg[i]*2)
-					IMG[i] = (IMG[i]>=lgrsp)? IMG[i] : lgrsp;				
-				if(IMG[i]<minIMout[0])
-					minIMout[0] = IMG[i];
+				II = (k1*r*c)+(i1*c)+j1;
+				if(sigma==sigma_min)
+				{
+					IMG[II] = /*sigma*sigma*/iterate.Get();			
+				}
+				else
+				{
+					float lgrsp = iterate.Get();
+					if(UseDistMap == 1)
+					{
+						if(sigma<=dImg[II]*2)
+							IMG[II] = (IMG[II]>=lgrsp)? IMG[II] : lgrsp;				
+						if(IMG[II]<minIMout[0])
+							minIMout[0] = IMG[II];
+					}
+					else
+					{
+						IMG[II] = (IMG[II]>=lgrsp)? IMG[II] : lgrsp;				
+						if(IMG[II]<minIMout[0])
+							minIMout[0] = IMG[II];
+					}
+				}				
+				++iterate;		
 			}
-			else
-			{
-				IMG[i] = (IMG[i]>=lgrsp)? IMG[i] : lgrsp;				
-				if(IMG[i]<minIMout[0])
-					minIMout[0] = IMG[i];
-			}
-
 		}
-		++i;
-		++iterate;
 	}
+	//while ( i<r*c*z)
+	//{
+	//	if(sigma==sigma_min)
+	//	{
+	//		IMG[i] = /*sigma*sigma*/iterate.Get();			
+	//	}
+	//	else
+	//	{
+	//		float lgrsp = iterate.Get();
+	//		if(UseDistMap == 1)
+	//		{
+	//			if(sigma<=dImg[i]*2)
+	//				IMG[i] = (IMG[i]>=lgrsp)? IMG[i] : lgrsp;				
+	//			if(IMG[i]<minIMout[0])
+	//				minIMout[0] = IMG[i];
+	//		}
+	//		else
+	//		{
+	//			IMG[i] = (IMG[i]>=lgrsp)? IMG[i] : lgrsp;				
+	//			if(IMG[i]<minIMout[0])
+	//				minIMout[0] = IMG[i];
+	//		}
+
+	//	}
+	//	++i;
+	//	++iterate;
+	//}
 
 	std::cout<<"done"<<std::endl;
   }
@@ -494,7 +502,8 @@ int distMap_SliceBySlice(itk::SmartPointer<MyInputImageType> im, int r, int c, i
 	  //   Copy the resulting image into the input array  
       typedef itk::ImageRegionIteratorWithIndex< OutputImageType2 > IteratorType;
       IteratorType iterate(dt_obj->GetOutput(),dt_obj->GetOutput()->GetRequestedRegion());
-	  int j=0;
+	  int j=0;	  
+
       while ( j<r*c)
       {	  
 		  double ds = iterate.Get();
@@ -505,14 +514,15 @@ int distMap_SliceBySlice(itk::SmartPointer<MyInputImageType> im, int r, int c, i
 		  ++k;
 		  ++j;
  		  ++iterate;
-	  }	
+	  }
   } 
  
   return EXIT_SUCCESS;
 }
 
 
-MyInputImageType2D::Pointer extract2DImageSlice(itk::SmartPointer<MyInputImageType> im, int plane, int slice) {
+MyInputImageType2D::Pointer extract2DImageSlice(itk::SmartPointer<MyInputImageType> im, int plane, int slice) 
+{
     typedef itk::ExtractImageFilter< MyInputImageType, MyInputImageType2D > FilterType2D;
 	FilterType2D::Pointer filter = FilterType2D::New();
     
@@ -534,6 +544,36 @@ MyInputImageType2D::Pointer extract2DImageSlice(itk::SmartPointer<MyInputImageTy
     filter->SetInput( im );
 
     MyInputImageType2D::Pointer img = filter->GetOutput();
+    img->Update();
+
+    return img;
+}
+
+MyInputImageType::Pointer extract3DImageRegion(itk::SmartPointer<MyInputImageType> im, int sz_x, int sz_y, int sz_z, int start_x, int start_y, int start_z, double samp_rat )
+{
+    typedef itk::ExtractImageFilter< MyInputImageType, MyInputImageType > FilterType;
+	FilterType::Pointer filter = FilterType::New();   
+    
+    MyInputImageType::SizeType size;
+	size[0] = sz_x;
+	size[1] = sz_y;
+	size[2] = sz_z;
+    
+    MyInputImageType::IndexType start;
+    start[0] = start_x;
+	start[1] = start_y;
+	start[2] = start_z;
+    
+    MyInputImageType::RegionType desiredRegion;
+    desiredRegion.SetSize(  size  );
+    desiredRegion.SetIndex( start );
+	
+    
+    filter->SetExtractionRegion( desiredRegion );
+    
+    filter->SetInput( im );
+
+    MyInputImageType::Pointer img = filter->GetOutput();
     img->Update();
 
     return img;
