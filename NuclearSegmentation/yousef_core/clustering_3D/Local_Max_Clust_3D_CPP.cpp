@@ -119,10 +119,14 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
     int change = 1;
     double LM;
 	cerr << "Entering main Clustering Loop" << endl;
-	//Now continue to update until no more changes occur, eventually will have clusters pointing to seeds
-    while(change)
-	//for (int g=1; g<4; g++)
+	//Now continue to update until no more changes occur, eventually will have clusters pointing to seeds	
+	int iterr = 0;
+    while(change)	
     {			
+		//For now, limit it to a maximum of 10 iterations
+		iterr++;
+		if(iterr == 10)
+			break;
 		cerr<<"change="<<change<<endl;
         change=0;
 		

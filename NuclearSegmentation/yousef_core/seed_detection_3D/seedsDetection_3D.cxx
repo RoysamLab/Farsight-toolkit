@@ -28,6 +28,7 @@ limitations under the License.
 #include<stdlib.h>
 #include <iostream>
 #include <algorithm>
+#include <math.h>
 
 #include "itkImage.h"
 #include "itklaplacianrecursivegaussianimagefilternew.h"
@@ -38,7 +39,6 @@ limitations under the License.
 
 //added by Yousef on 8/26/2009
 #include "itkExtractImageFilter.h"
-//#include "itkSliceBySliceImageFilter.h"
 
 
 ////
@@ -55,11 +55,14 @@ int detect_seeds(itk::SmartPointer<MyInputImageType>, int , int , int, const dou
 //int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z,const double sigma_min, double sigma_max, float* IMG, int sampl_ratio, int unsigned short* dImg, int* minIMout, int UseDistMap);
 int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, int rmin, int rmax, int cmin, int cmax, int zmin, int zmax,const double sigma_min, double sigma_max, float* IMG, int sampl_ratio, int unsigned short* dImg, int* minIMout, int UseDistMap);
 float get_maximum_3D(float* A, int r1, int r2, int c1, int c2, int z1, int z2, int R, int C);
+unsigned short get_maximum_3D(unsigned short* A, int r1, int r2, int c1, int c2, int z1, int z2,int R, int C);
 void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, unsigned short* out1, unsigned short* bImg);
 int distMap(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, unsigned short* IMG);
 int distMap_SliceBySlice(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, unsigned short* IMG);
 MyInputImageType2D::Pointer extract2DImageSlice(itk::SmartPointer<MyInputImageType> im, int plane, int slice);
-MyInputImageType::Pointer extract3DImageRegion(itk::SmartPointer<MyInputImageType> im, int sz_x, int sz_y, int sz_z, int start_x, int start_y, int start_z, double smpl_rat );
+MyInputImageType::Pointer extract3DImageRegion(itk::SmartPointer<MyInputImageType> im, int sz_x, int sz_y, int sz_z, int start_x, int start_y, int start_z);
+void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short* distIm, double* minScale, double* maxScale, int r, int c, int z);
+int computeMedian(std::vector< std::vector<unsigned short> > scales, int cntr);
 
 int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int r, int c, int z, double sigma_min, double sigma_max, double scale_xy, double scale_z, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout)
 {	
@@ -121,7 +124,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 		//distMap(im, r, c, z,dImg);
 		distMap_SliceBySlice(im, r, c, z,dImg);
 		std::cout<<"done"<<std::endl;
-		iterator1.GoToBegin();
+		iterator1.GoToBegin();		
 	}
 	
 
@@ -131,10 +134,32 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 		++iterator1;
 	}
 
+	//try this: estimate the min and max scales
+	if(UseDistMap == 1)
+	{
+		std::cout<<"Estimating parameters..."<<std::endl;
+		estimateMinMaxScales(im, dImg, &sigma_min, &sigma_max, r, c, z);
+		scale_xy = sigma_min+1;
+		scale_z = ceil(scale_xy / sampl_ratio);
+		std::cout<<"    Minimum scale = "<<sigma_min<<std::endl;
+		std::cout<<"    Maximum scale = "<<sigma_max<<std::endl;
+		std::cout<<"    Clustering Resolution = "<<scale_xy<<std::endl;
+	}
 	//By Yousef (8/28/2009)
 	//In some situations the image is very larg and we cannot allocate memory for the LoG filter (20xthe size of the image in bytes)
 	//In such cases, we can divide the image into small tiles, process them independently, and them combine the results
-	int block_divisor = 2;	
+	int block_divisor;	
+	//see if we have enought memory for the LoG step
+	//approximately, we need (20~21)ximage size in bytes
+	//try to allocate memory for an unsigned char* of the 23ximage size
+	unsigned char *tmpp = (unsigned char*) malloc(23*r*c*z*sizeof(unsigned char));
+	if(tmpp)
+		block_divisor = 1;
+	else
+		block_divisor = 2;
+	free(tmpp); //delete it
+	tmpp = NULL;
+	
 	
 	int min_x, min_y, max_x, max_y;
 	for(int i=0; i<r; i+=r/block_divisor)
@@ -151,7 +176,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 				max_y = r-1;
 
 			//Create an itk image to hold the sub image (tile) being processing
-			MyInputImageType::Pointer im_Small = extract3DImageRegion(im, max_x-min_x+1, max_y-min_y+1, z, min_x, min_y, 0, sampl_ratio );
+			MyInputImageType::Pointer im_Small = extract3DImageRegion(im, max_x-min_x+1, max_y-min_y+1, z, min_x, min_y, 0);
 						
 			//By Yousef (8/27/2009): multi-scale LoG is done in one function now
 			multiScaleLoG(im_Small, r, c, z, min_y, max_y, min_x, max_x, 0, z-1, sigma_min, sigma_max, IM, sampl_ratio, dImg, minIMout, UseDistMap);
@@ -238,6 +263,8 @@ int detect_seeds(itk::SmartPointer<MyInputImageType> im, int r, int c, int z,con
     ++i;
 	++iterate;
   }
+
+  return EXIT_SUCCESS;
 }
 
 int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, int rmin, int rmax, int cmin, int cmax, int zmin, int zmax,const double sigma_min, double sigma_max, float* IMG, int sampl_ratio, int unsigned short* dImg, int* minIMout, int UseDistMap)
@@ -305,10 +332,12 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 					float lgrsp = iterate.Get();
 					if(UseDistMap == 1)
 					{
-						if(sigma<=dImg[II]*2)
+						if(sigma<=dImg[II])
+						{
 							IMG[II] = (IMG[II]>=lgrsp)? IMG[II] : lgrsp;				
-						if(IMG[II]<minIMout[0])
-							minIMout[0] = IMG[II];
+							if(IMG[II]<minIMout[0])
+								minIMout[0] = IMG[II];
+						}
 					}
 					else
 					{
@@ -320,34 +349,7 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 				++iterate;		
 			}
 		}
-	}
-	//while ( i<r*c*z)
-	//{
-	//	if(sigma==sigma_min)
-	//	{
-	//		IMG[i] = /*sigma*sigma*/iterate.Get();			
-	//	}
-	//	else
-	//	{
-	//		float lgrsp = iterate.Get();
-	//		if(UseDistMap == 1)
-	//		{
-	//			if(sigma<=dImg[i]*2)
-	//				IMG[i] = (IMG[i]>=lgrsp)? IMG[i] : lgrsp;				
-	//			if(IMG[i]<minIMout[0])
-	//				minIMout[0] = IMG[i];
-	//		}
-	//		else
-	//		{
-	//			IMG[i] = (IMG[i]>=lgrsp)? IMG[i] : lgrsp;				
-	//			if(IMG[i]<minIMout[0])
-	//				minIMout[0] = IMG[i];
-	//		}
-
-	//	}
-	//	++i;
-	//	++iterate;
-	//}
+	}	
 
 	std::cout<<"done"<<std::endl;
   }
@@ -359,6 +361,24 @@ float get_maximum_3D(float* A, int r1, int r2, int c1, int c2, int z1, int z2,in
 {
 	
    	float mx = A[(z1*R*C)+(r1*C)+c1];
+    for(int i=r1; i<=r2; i++)
+    {
+        for(int j=c1; j<=c2; j++)
+        {
+			for(int k=z1; k<=z2; k++)
+			{				
+				if(A[(k*R*C)+(i*C)+j]>mx)
+					mx = A[(k*R*C)+(i*C)+j];
+			}
+        }
+    }
+    return mx;
+}
+
+unsigned short get_maximum_3D(unsigned short* A, int r1, int r2, int c1, int c2, int z1, int z2,int R, int C)
+{
+	
+   	unsigned short mx = A[(z1*R*C)+(r1*C)+c1];
     for(int i=r1; i<=r2; i++)
     {
         for(int j=c1; j<=c2; j++)
@@ -412,6 +432,151 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
         }
     }  
 
+}
+
+//added by Yousef on 8/29/2009
+//Estimate the min and max scales based on the local maxima points of the distance map
+void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short* distIm, double* minScale, double* maxScale, int r, int c, int z)
+{
+	int min_r, min_c, max_r, max_c, min_z, max_z;    
+	int II = 0;
+	minScale[0] = 1000.0;
+	maxScale[0] = 0.0;
+	int cent_slice = (int) z/2;
+	std::vector< std::vector<unsigned short> > scales;
+	double mean = 0.0;
+	double stdv = 0.0;
+	int cnt = 0;
+	//ofstream p;
+	//p.open("checkme.txt");
+	for(int i=1; i<r-1; i+=2)
+    {
+        for(int j=1; j<c-1; j+=2)
+        {				
+			//for(int k=1; k<z-1; k++)
+			for(int k=cent_slice; k<=cent_slice; k++)
+			{									
+				min_r = (int) max(0.0,(double)i-2);
+				min_c = (int) max(0.0,(double)j-2);
+				min_z = (int) max(0.0,(double)k-2);
+				max_r = (int)min((double)r-1,(double)i+2);
+				max_c = (int)min((double)c-1,(double)j+2);                         
+				max_z = (int)min((double)z-1,(double)k+2);                         
+				unsigned short mx = get_maximum_3D(distIm, min_r, max_r, min_c, min_c, min_z, max_z,r,c);
+				if(mx <= 1)
+					continue; //background or edge point
+				II = (k*r*c)+(i*c)+j;
+				if(distIm[II] == mx)    
+				{																																						
+					//add the selected scale to the list of scales
+					std::vector <unsigned short> lst;
+					lst.push_back(mx);
+					lst.push_back(i);
+					lst.push_back(j);
+					lst.push_back(k);
+					//p<<j<<" "<<i<<" "<<k<<std::endl;
+					scales.push_back(lst);
+					//mean +=mx;
+					cnt++;										
+				}				
+			}			
+        }
+    } 
+	//p.close();
+	/*mean /= cnt;
+	for(int i=0; i<cnt; i++)
+		stdv+= ((scales[i][0]-mean)*(scales[i][0]-mean));
+	stdv = sqrt(stdv/cnt);		
+	if (ceil(mean-stdv)-(mean-stdv)<=.5)
+		minScale[0] = ceil((mean-stdv));///sqrt(2.0));
+	else	
+		minScale[0] = floor((mean-stdv));///sqrt(2.0));	 
+
+	if (ceil(mean+stdv)-(mean+stdv)<=.5)
+		maxScale[0] = ceil((mean+stdv));///sqrt(2.0));	 
+	else
+		maxScale[0] = floor((mean+stdv));///sqrt(2.0));	 */
+
+	//get the median of the scales(distances)
+	int medianS = computeMedian(scales, cnt);
+
+	//then compute the Median absolute deviation
+	std::vector< std::vector<unsigned short> > madList;
+	for(int i=0; i<cnt; i++)
+	{
+		std::vector<unsigned short> tmp;
+		tmp.push_back(abs(scales[i][0]-medianS));
+		madList.push_back(tmp);
+	}
+	int MAD = computeMedian(madList, cnt);
+	minScale[0] = medianS-MAD;
+	maxScale[0] = medianS+MAD;
+	
+
+	//For each local maximum point,try to find the best LoG scale
+	//To do that, suppose the distance at a given local maximum point is d, 
+	//then compute the its LoG responses at scales from d/2 to d
+	//Then, select the scale the gave us the maximum LoG response
+	//Create an itk image to hold the sub image (tile) being processing
+	int mnScl = 10000;
+	int mxScl = 0;
+	int cnt2 = 0;
+	for(int ind=0; ind<cnt; ind++)
+	{
+		int mx = scales[ind][0];
+		int i = scales[ind][1];
+		int j = scales[ind][2];
+		int k = scales[ind][3];
+		if(mx<minScale[0] || mx>maxScale[0])
+			continue;
+
+		int smin = (int) std::ceil(mx/2.0);
+		if(smin == mx)
+			continue;
+		if(smin == 1)
+			smin++;
+		cnt2++;
+		min_r = (int) max(0.0,(double)i-1.5*mx);
+		min_c = (int) max(0.0,(double)j-1.5*mx);
+		min_z = (int) max(0.0,(double)k-1.5*mx);
+		max_r = (int)min((double)r-1,(double)i+1.5*mx);
+		max_c = (int)min((double)c-1,(double)j+1.5*mx);                         
+		max_z = (int)min((double)z-1,(double)k+1.5*mx);                         
+					
+		int sub_r = i-min_r;
+		int sub_c = j-min_c;
+		int sub_z = k-min_z;
+		int sz_r = (max_r-min_r+1);
+		int sz_c = (max_c-min_c+1);
+		int sz_z = (max_z-min_z+1);
+		int ind_i = sub_z*sz_r*sz_c+sub_r*sz_c+sub_c;
+																	
+		MyInputImageType::Pointer im_Small = extract3DImageRegion(im, sz_c, sz_r, sz_z, min_c, min_r, min_z);															
+		float* IMG = new float[sz_c*sz_r*sz_z];
+		float max_resp = -100000.0;	
+		int best_scale = 0.0;
+		double sigma;
+		for(int kk=smin; kk<=mx; kk++)
+		{						
+			sigma = kk;
+			detect_seeds(im_Small, sz_r, sz_c, sz_z, sigma, IMG, 0);
+			if(IMG[ind_i]>=max_resp)
+			{
+				max_resp = IMG[ind_i];
+				best_scale = kk;
+			}
+		}
+		mx = best_scale;
+		
+		if(mx<mnScl)
+			mnScl = mx;
+		if(mx>mxScl)
+			mxScl = mx;
+
+		delete [] IMG;
+	}
+	minScale[0] = mnScl;
+	maxScale[0] = mxScl;
 }
 
 int distMap(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, unsigned short* IMG)
@@ -499,6 +664,21 @@ int distMap_SliceBySlice(itk::SmartPointer<MyInputImageType> im, int r, int c, i
 		return -1;
 	  }
 
+	  //By Yousef: try to write out the output at the central slice
+	  /*int cent_slice = (int) z/2;
+	  if(i==cent_slice)
+	  {
+		  typedef itk::CastImageFilter< OutputImageType2, MyInputImageType2D> myCasterType;
+		  myCasterType::Pointer potCaster = myCasterType::New();
+		  potCaster->SetInput( dt_obj->GetOutput() );
+		  typedef itk::ImageFileWriter< MyInputImageType2D > WriterType;
+		  WriterType::Pointer writer = WriterType::New();
+		  writer->SetFileName("dist_test.tif");
+		  writer->SetInput( potCaster->GetOutput() );
+		  writer->Update();		  
+	  }*/
+
+
 	  //   Copy the resulting image into the input array  
       typedef itk::ImageRegionIteratorWithIndex< OutputImageType2 > IteratorType;
       IteratorType iterate(dt_obj->GetOutput(),dt_obj->GetOutput()->GetRequestedRegion());
@@ -514,7 +694,7 @@ int distMap_SliceBySlice(itk::SmartPointer<MyInputImageType> im, int r, int c, i
 		  ++k;
 		  ++j;
  		  ++iterate;
-	  }
+	  }	  
   } 
  
   return EXIT_SUCCESS;
@@ -549,7 +729,7 @@ MyInputImageType2D::Pointer extract2DImageSlice(itk::SmartPointer<MyInputImageTy
     return img;
 }
 
-MyInputImageType::Pointer extract3DImageRegion(itk::SmartPointer<MyInputImageType> im, int sz_x, int sz_y, int sz_z, int start_x, int start_y, int start_z, double samp_rat )
+MyInputImageType::Pointer extract3DImageRegion(itk::SmartPointer<MyInputImageType> im, int sz_x, int sz_y, int sz_z, int start_x, int start_y, int start_z)
 {
     typedef itk::ExtractImageFilter< MyInputImageType, MyInputImageType > FilterType;
 	FilterType::Pointer filter = FilterType::New();   
@@ -577,4 +757,32 @@ MyInputImageType::Pointer extract3DImageRegion(itk::SmartPointer<MyInputImageTyp
     img->Update();
 
     return img;
+}
+
+int computeMedian(std::vector< std::vector<unsigned short> > scales, int cntr)
+{
+	if(cntr == 1)
+		return scales[0][0];
+
+	unsigned short* srtList = new unsigned short[cntr];
+	for(int i=0; i<cntr-1; i++)
+		srtList[i] = scales[i][0];
+
+	for(int i=0; i<cntr-1; i++)
+	{
+		for(int j=i+1; j<cntr; j++)
+		{
+			if(srtList[j]<srtList[i])
+			{
+				unsigned short tmp = srtList[i];
+				srtList[i] = srtList[j];
+				srtList[j] = tmp;
+			}
+		}
+	}
+
+	int mdn = (int) cntr/2;
+	mdn = srtList[mdn-1];
+
+	return mdn;
 }

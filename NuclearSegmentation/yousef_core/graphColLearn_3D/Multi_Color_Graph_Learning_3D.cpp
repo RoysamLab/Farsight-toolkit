@@ -227,7 +227,7 @@ float* multiColGraphLearning(float* X_vals, unsigned short* labs_vals, unsigned 
     //I added that for situations when two alphas are seperated by just one cell
     //and expanding both alphas will result in merging them if the cell in between
     //is a small one.
-    /*int NG1, NG2;
+    int NG1, NG2;
     for(int i=0; i<max_lab; i++)
 	{	        
 		for(unsigned int j=0; j<MAP2[i].size() ; j++)
@@ -242,7 +242,7 @@ float* multiColGraphLearning(float* X_vals, unsigned short* labs_vals, unsigned 
                     MAP[i].push_back(NG2);
             }				            
 		}
-	}*/
+	}
     
     //start the graph coloring using Sumit's sequential coloring code
 	std::cout<<"Starting graph coloring...";

@@ -591,6 +591,9 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 
 	//Now clear all subsequent variables				
 	clearSegImagePtr();
+	//added by Yousef on 8/28/2009
+	//We no longer need to use the seeds image
+	clearSeedImagePtr(); //This assumes that you can't go back to run clustering again in the segmentation wizard!
 
 	std::cerr<<"Finalizing Segmentation"<<std::endl;
 
@@ -724,42 +727,8 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 		unsigned short* subsegImg = new unsigned short[x_len*y_len*z_len];			
 		float* Dterms  = multiColGraphLearning(sublogImg, subclustImg, subsegImg, y_len, x_len, z_len, &NC,refineRange);		
 
-		std::cerr<<"    Starting alpha-expansion..";
-		//Call the alpha expansion module		
-		//memset(subsegImg/*destination*/,0/*value*/,x_len*y_len*z_len*sizeof(int)/*num bytes to move*/);
-		//memcpy(subsegImg/*destination*/,subclustImg/*source*/,x_len*y_len*z_len*sizeof(int)/*num bytes to move*/);
-		start_alpha_expansion(subDataImg, subsegImg, Dterms, y_len, x_len, z_len, NC+1);	
-		
-		//Try this for now: Set the label at each pixel based on the maximum probability (min D-trerm)
-		//ind = 0;
-		//float tmp_mn=100.0;		
-		//int tmp_lbl;
-		//int H[8];
-		//for(int jk=0; jk<8; jk++)
-		//	H[jk] = 0;
-		//for(int k=0; k<z_len; k++)		
-		//{		
-		//	for(int j=0; j<y_len; j++)			
-		//	{															
-		//		for(int i=0; i<x_len; i++)		
-		//		{					
-		//			tmp_mn = Dterms/*[(k*x_len*y_len)+(i*y_len)+j]*/[(i+j*x_len+k*x_len*y_len)*(NC+1)];
-		//			tmp_lbl = 0;
-		//			for(int h=1; h<=NC; h++)
-		//			{																	
-		//				if(Dterms/*[(h*x_len*y_len*z_len)+(k*x_len*y_len)+(i*y_len)+j]*/[(i+j*x_len+k*x_len*y_len)*(NC+1)+h]<tmp_mn)
-		//				{
-		//					tmp_lbl = h;
-		//					tmp_mn = Dterms[(i+j*x_len+k*x_len*y_len)*(NC+1)+h];
-		//				}
-		//			}
-		//			H[tmp_lbl]++;
-		//			subsegImg[ind] = tmp_lbl*20;					
-		//			ind++;
-		//		}
-		//	}			
-		//}
-					
+		std::cerr<<"    Starting alpha-expansion..";		
+		start_alpha_expansion(subDataImg, subsegImg, Dterms, y_len, x_len, z_len, NC+1);										
 
 		//relable and copy the output of the alpha expansion to the segmentaion image
 		ind = 0;		
