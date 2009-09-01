@@ -178,7 +178,7 @@ void yousef_nucleus_seg::runSeedDetection()
 	else
 	{	
 		minLoGImg = 10000;
-		ok = Seeds_Detection_3D( imgPtr, &logImagePtr, &seedImagePtr, numRows, numColumns, numStacks, scaleMin, scaleMax, regionXY, regionZ, getSamplingRatio(), binImagePtr, useDistMap, &minLoGImg );						
+		ok = Seeds_Detection_3D( imgPtr, &logImagePtr, &seedImagePtr, numRows, numColumns, numStacks, &scaleMin, &scaleMax, &regionXY, &regionZ, getSamplingRatio(), binImagePtr, useDistMap, &minLoGImg );						
 	}		
 	delete [] imgPtr;	//cleanup
 	if(!ok)

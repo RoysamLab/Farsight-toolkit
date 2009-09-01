@@ -64,8 +64,14 @@ MyInputImageType::Pointer extract3DImageRegion(itk::SmartPointer<MyInputImageTyp
 void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short* distIm, double* minScale, double* maxScale, int r, int c, int z);
 int computeMedian(std::vector< std::vector<unsigned short> > scales, int cntr);
 
-int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int r, int c, int z, double sigma_min, double sigma_max, double scale_xy, double scale_z, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout)
+int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int r, int c, int z, double *sigma_min_in, double *sigma_max_in, double *scale_xy_in, double *scale_z_in, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout)
 {	
+	//get this inputs
+	double sigma_min = sigma_min_in[0];
+	double sigma_max = sigma_max_in[0];
+	double scale_xy = scale_xy_in[0];
+	double scale_z = scale_z_in[0];
+
 	//Create an itk image
 	MyInputImageType::Pointer im;
 	im = MyInputImageType::New();
@@ -134,8 +140,9 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 		++iterator1;
 	}
 
-	//try this: estimate the min and max scales
-	/*if(UseDistMap == 1)
+	//By Yousef (8/29/2009)
+	//Estimate the segmentation parameters
+	if(UseDistMap == 1)
 	{
 		std::cout<<"Estimating parameters..."<<std::endl;
 		estimateMinMaxScales(im, dImg, &sigma_min, &sigma_max, r, c, z);
@@ -144,7 +151,13 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 		std::cout<<"    Minimum scale = "<<sigma_min<<std::endl;
 		std::cout<<"    Maximum scale = "<<sigma_max<<std::endl;
 		std::cout<<"    Clustering Resolution = "<<scale_xy<<std::endl;
-	}*/
+		//write out the parameters
+		sigma_min_in[0] = sigma_min;
+		sigma_max_in[0] = sigma_max;
+		scale_xy_in[0] =  scale_xy;
+		scale_z_in[0] = scale_z;
+	}
+
 	//By Yousef (8/28/2009)
 	//In some situations the image is very larg and we cannot allocate memory for the LoG filter (20xthe size of the image in bytes)
 	//In such cases, we can divide the image into small tiles, process them independently, and them combine the results

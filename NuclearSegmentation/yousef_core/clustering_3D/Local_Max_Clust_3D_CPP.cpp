@@ -126,8 +126,7 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 		//For now, limit it to a maximum of 10 iterations
 		iterr++;
 		if(iterr == 10)
-			break;
-		cerr<<"change="<<change<<endl;
+			break;		
         change=0;
 		
         for(int i=0; i<r; i++)
@@ -158,6 +157,7 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 				}
             }
         }
+		cerr<<"change="<<change<<endl;
     }
     
 	//cerr << "Preparing Output" << endl;

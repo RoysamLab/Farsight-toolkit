@@ -162,10 +162,10 @@ private:
 	//parameters
 	int shift;
 	int sigma;
-	int scaleMin;
-	int scaleMax;
-	int regionXY;
-	int regionZ;
+	double scaleMin;
+	double scaleMax;
+	double regionXY;
+	double regionZ;
 	int useDistMap;
 	int finalizeSegmentation;
 	int sampling_ratio_XY_to_Z;
