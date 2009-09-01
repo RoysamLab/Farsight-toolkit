@@ -274,16 +274,9 @@ ftk::Image::Pointer NucleusEditor::NewFTKImage(std::string filename)
 	return img;
 }
 
-//******************************************************************************
-//Reimplement closeEvent to also close all other windows in the application
-//******************************************************************************
-void NucleusEditor::closeEvent(QCloseEvent *event)
+//return true if ask to save and saved, or do not want to save, false if want to save and not saved
+bool NucleusEditor::checkSaveSeg()
 {
-	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-	//Stop any running threads:
-	this->abortSegment();
-
-	//Save changes:
 	if(seg)
 	{
 		if(seg->editsNotSaved)
@@ -296,12 +289,29 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 			{
 				if(	!this->saveResult()	)
 				{
-					event->ignore();
-					return;
+					return false;
 				}
 			}
 		}
 	}
+	return true;
+}
+//******************************************************************************
+//Reimplement closeEvent to also close all other windows in the application
+//******************************************************************************
+void NucleusEditor::closeEvent(QCloseEvent *event)
+{
+	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+
+	//Save changes:
+	if( !checkSaveSeg() )
+	{
+		event->ignore();
+		return;
+	}
+
+	//Stop any running threads:
+	this->abortSegment();
 
 	//First clear the model and its associated windows
 	clearModel();
@@ -405,11 +415,20 @@ void NucleusEditor::newModel(void)
 //******************************************************************************
 void NucleusEditor::loadResult(void)
 {
+
+	if( !checkSaveSeg() )
+		return;
+
 	QString filename  = QFileDialog::getOpenFileName(this,"Choose a Result",lastPath, 
 			tr("XML Files (*.xml)\n"));
 
     if(filename == "")
 		return;
+
+	if(currentModel)
+		clearModel();
+
+	abortSegment();
 
 	QString path = QFileInfo(filename).absolutePath();
 	QString name = QFileInfo(filename).baseName();
@@ -445,6 +464,7 @@ void NucleusEditor::loadResult(void)
 	// Enable the menu items for editing
 	setEditsEnabled(true);
 	newScatterAction->setEnabled(true);
+	segmentAction->setEnabled(false);
 	saveAction->setEnabled(true);
 
 }
@@ -604,6 +624,9 @@ void NucleusEditor::abortSegment()
 	segWin->SetLabelImage(NULL);
 	QApplication::restoreOverrideCursor();
 	fileMenu->setEnabled(true);
+	loadAction->setEnabled(true);
+	xmlAction->setEnabled(true);
+	segmentAction->setEnabled(true);
 	viewMenu->setEnabled(true);
 	this->setEditsEnabled(false);
 }
@@ -679,6 +702,10 @@ void NucleusEditor::segment()
 		fileMenu->setEnabled(true);
 		this->setEditsEnabled(false);
 		viewMenu->setEnabled(true);
+		loadAction->setEnabled(false);
+		saveAction->setEnabled(false);
+		xmlAction->setEnabled(false);
+		segmentAction->setEnabled(false);
 		segmentContinue->setEnabled(true);
 		segmentState = 5;
 		break;
@@ -732,6 +759,8 @@ void NucleusEditor::segment()
 		QApplication::restoreOverrideCursor();
 		fileMenu->setEnabled(true);
 		saveAction->setEnabled(true);
+		loadAction->setEnabled(true);
+		xmlAction->setEnabled(true);
 		newScatterAction->setEnabled(true);
 		this->setEditsEnabled(true);
 		viewMenu->setEnabled(true);
@@ -748,6 +777,10 @@ void NucleusEditor::segment()
 
 void NucleusEditor::loadImage()
 {
+
+	if( !checkSaveSeg() )
+		return;
+
 	QString fileName = QFileDialog::getOpenFileName(
                              this, "Select file to open", lastPath,
                              tr("Images (*.tif *.tiff *.pic *.png *.jpg *.lsm)\n"
@@ -758,6 +791,14 @@ void NucleusEditor::loadImage()
 
 	if(currentModel)
 		clearModel();
+
+	if(seg)
+	{
+		delete seg;
+		seg = NULL;
+	}
+
+	abortSegment();
 
 	lastPath = QFileInfo(fileName).absolutePath();
 	myImgName = QFileInfo(fileName).fileName();
@@ -781,6 +822,7 @@ void NucleusEditor::loadImage()
 	// Disable the menu items for editing
 	this->setEditsEnabled(false);
 	segmentAction->setEnabled(true);
+	saveAction->setEnabled(false);
 }
 
 //******************************************************************************

@@ -123,6 +123,7 @@ private slots:
 	bool saveResult(void);
 	void segmentImage(void);
 	void abortSegment(void);
+	bool checkSaveSeg(void);
 	void segment(void);
 	void about(void);
 	//void loadDatFile(void);
