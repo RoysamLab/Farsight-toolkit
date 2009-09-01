@@ -49,12 +49,19 @@ NuclearSegmentation::NuclearSegmentation()
 	classes.clear();
 
 	dataImage = NULL;
+	channelNumber = 0;
 	labelImage = NULL;
 	NucleusSeg = NULL;
 	clustImage = NULL;
 	logImage = NULL;
 	lastRunStep = 0;
 	editsNotSaved = false;
+}
+
+NuclearSegmentation::~NuclearSegmentation()
+{
+	if(NucleusSeg)
+		delete NucleusSeg;
 }
 
 //*************************************************************************************************************
@@ -126,7 +133,10 @@ bool NuclearSegmentation::LoadLabel()
 	return true;
 }
 
-bool NuclearSegmentation::Binarize()
+//*****
+// If you are not going to need to return the resulting image as ftk::Image, then pass false to this function
+//*****
+bool NuclearSegmentation::Binarize(bool getResultImg)
 {
 	if(!dataImage)
 	{
@@ -138,10 +148,13 @@ bool NuclearSegmentation::Binarize()
 	int numStacks = info->numZSlices;
 	int numRows = info->numRows;				//y-direction
 	int numColumns = info->numColumns; 			//x-direction
+	int numChannels = info->numChannels;
+	if(channelNumber >= numChannels)
+		channelNumber = 0;
 
 	//We assume that the image is unsigned char, but just in case it isn't we make it so:
 	dataImage->Cast<unsigned char>();
-	unsigned char *dptr = dataImage->GetSlicePtr<unsigned char>(0,0,0);	//Expects grayscale image
+	unsigned char *dptr = dataImage->GetSlicePtr<unsigned char>(0,channelNumber,0);	//Expects grayscale image
 
 	if(NucleusSeg)
 		delete NucleusSeg;
@@ -152,11 +165,12 @@ bool NuclearSegmentation::Binarize()
 	lastRunStep = 1;
 
 	//Get the output
-	GetResultImage();
+	if(getResultImg)
+		GetResultImage();
 	return true;
 }
 
-bool NuclearSegmentation::DetectSeeds()
+bool NuclearSegmentation::DetectSeeds(bool getResultImg)
 {
 	if(!NucleusSeg)
 	{
@@ -165,7 +179,8 @@ bool NuclearSegmentation::DetectSeeds()
 	}
 	NucleusSeg->runSeedDetection();
 	lastRunStep = 2;
-	GetResultImage();
+	if(getResultImg)
+		GetResultImage();
 	return true;
 }
 
@@ -192,6 +207,7 @@ bool NuclearSegmentation::Finalize()
 	NucleusSeg->runAlphaExpansion();
 	lastRunStep = 4;
 	GetResultImage();
+	editsNotSaved = true;
 	return true;
 }
 
@@ -283,6 +299,15 @@ bool NuclearSegmentation::SaveOutput()
 	editsNotSaved = false;
 
 	return true;
+}
+
+void NuclearSegmentation::ReleaseSegMemory()
+{
+	if(NucleusSeg)
+	{
+		delete NucleusSeg;
+		NucleusSeg = NULL;
+	}
 }
 
 //Calculate the object information from the data/result images:
@@ -825,7 +850,7 @@ bool NuclearSegmentation::SaveLabel()
 	size_t pos = dataFilename.find_last_of(".");
 	std::string base = dataFilename.substr(0,pos);
 	std::string ext = dataFilename.substr(pos+1);
-	labelFilename = base + "_label" + ".tif";//+"." + ext;
+	labelFilename = base + "_label" + "." + ext;
 
 	labelImage->Cast<unsigned short>();		//Cannot Save as int type to tiff
 	if(!labelImage->SaveChannelAs(0, base + "_label", ext))

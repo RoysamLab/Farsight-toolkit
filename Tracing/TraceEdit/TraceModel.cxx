@@ -33,7 +33,7 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines, std::vector<std::str
 	this->headers.push_back("Parent");
 	if (FeatureHeaders.size() >=1)
 	{
-		for (int i = 0; i< FeatureHeaders.size(); i++)
+		for (unsigned int i = 0; i< FeatureHeaders.size(); i++)
 		{
 			this->headers.push_back(FeatureHeaders[i].c_str());
 		}

@@ -26,27 +26,46 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 {
 	createMenus();
 	createStatusBar();
+	createSegmentToolBar();
 
 	setWindowTitle(tr("FARSIGHT: Nuclear Segmentation Tool"));
 
-	segResult = new ftk::NuclearSegmentation();
+	seg = NULL;
 	segWin = new SegmentationWindow();
 	currentModel = NULL;
 
 	lastPath = ".";
+	myImgName = "";
 
 	tblWin.clear();
 	pltWin.clear();
 	hisWin=NULL;
 	
-
 	//DEMO
 	this->pythonProcess = new QProcess();
 	this->settings = new QSettings("RPI", "Farsight");
 
+	loadThread = NULL;
+	binaryThread = NULL;
+	seedThread = NULL;
+	clusterThread = NULL;
+	finalizeThread = NULL;
+	featuresThread = NULL;
+
 	this->resize(500,500);
 	//Crashes when this is enabled!
 	//setAttribute ( Qt::WA_DeleteOnClose );	
+}
+
+NucleusEditor::~NucleusEditor()
+{
+	if(seg)
+		delete seg;
+
+	if(currentModel)
+		delete currentModel;
+
+	delete segWin;
 }
 
 //******************************************************************************
@@ -56,6 +75,31 @@ void NucleusEditor::createStatusBar()
 {
     statusLabel = new QLabel(tr(" Ready"));
     statusBar()->addWidget(statusLabel, 1);
+}
+
+//** ToolBar Setup
+void NucleusEditor::createSegmentToolBar()
+{
+	segmentTool = new QToolBar();
+
+	segmentAbort = new QAction(tr("ABORT"),this);
+	connect(segmentAbort, SIGNAL(triggered()), this, SLOT(abortSegment()));
+	segmentTool->addAction(segmentAbort);
+
+	segmentContinue = new QAction(tr("-->"),this);
+	segmentContinue->setToolTip(tr("Continue Segmentation"));
+	segmentContinue->setEnabled(false);
+	connect(segmentContinue, SIGNAL(triggered()),this, SLOT(segment()));
+	segmentTool->addAction(segmentContinue);
+	
+    segmentProgress = new QProgressBar();
+	segmentProgress->setRange(0,7);
+	segmentProgress->setTextVisible(true);
+	segmentTool->addWidget(segmentProgress); 
+
+	segmentTaskLabel = new QLabel;
+	segmentTaskLabel->setFixedWidth(80);
+	segmentTool->addWidget(segmentTaskLabel);
 }
 
 /*----------------------------------------------------------------------------*/
@@ -98,8 +142,11 @@ void NucleusEditor::createMenus()
 
 	fileMenu->addSeparator();
 
-	segmentAction = new QAction(tr("Start Segmentation Wizard..."), this);
-	segmentAction->setStatusTip(tr("Starts the Nuclear Segmenation Wizard"));
+	//segmentAction = new QAction(tr("Start Segmentation Wizard..."), this);
+	//segmentAction->setStatusTip(tr("Starts the Nuclear Segmenation Wizard"));
+	segmentAction = new QAction(tr("Start Segmentation..."), this);
+	segmentAction->setEnabled(false);
+	segmentAction->setStatusTip(tr("Starts the Nuclear Segmenation on this Image"));
 	connect(segmentAction,SIGNAL(triggered()),this,SLOT(segmentImage()));
 	fileMenu->addAction(segmentAction);
 
@@ -117,7 +164,8 @@ void NucleusEditor::createMenus()
 	fileMenu->addAction(datAction);
 	*/
 
-	saveAction = new QAction(tr("Save Result As..."), this);
+	saveAction = new QAction(tr("Save Result"), this);
+	saveAction->setEnabled(false);
 	saveAction->setStatusTip(tr("Save Changes (Edits, etc)"));
 	saveAction->setShortcut(tr("Ctrl+S"));
 	connect(saveAction, SIGNAL(triggered()), this, SLOT(saveResult()));
@@ -134,6 +182,7 @@ void NucleusEditor::createMenus()
 	//VIEW MENU
 	viewMenu = menuBar()->addMenu(tr("&View"));
 	newScatterAction = new QAction(tr("New Scatter"), this);
+	newScatterAction->setEnabled(false);
 	newScatterAction->setStatusTip(tr("Open a new Scatterplot Window"));
 	connect(newScatterAction,SIGNAL(triggered()),this,SLOT(CreateNewPlotWindow()));
 	viewMenu->addAction(newScatterAction);
@@ -152,7 +201,6 @@ void NucleusEditor::createMenus()
 
 	mergeAction = new QAction(tr("Merge Cells"), this);
 	mergeAction->setStatusTip(tr("Merge Cells"));
-	mergeAction->setEnabled(false);
 	connect(mergeAction, SIGNAL(triggered()), this, SLOT(mergeCells()));	
 	editMenu->addAction(mergeAction);
 
@@ -160,7 +208,6 @@ void NucleusEditor::createMenus()
 
 	deleteAction = new QAction(tr("Delete Cells"), this);
 	deleteAction->setStatusTip(tr("Deletes the selected cells"));
-	deleteAction->setEnabled(false);
 	connect(deleteAction,SIGNAL(triggered()),this,SLOT(deleteCells()));	
 	editMenu->addAction(deleteAction);
 
@@ -172,19 +219,16 @@ void NucleusEditor::createMenus()
 
 	//Main Splitting Menu
 	splitMenu= editMenu->addMenu(tr("&Splitting"));
-	splitMenu->setEnabled(false);
 
 	//submenu1:
 	splitStartAction = new QAction(tr("Start Splitting"), this);
 	splitStartAction->setStatusTip(tr("Start Splitting Mode"));
-	splitStartAction->setEnabled(false);
 	connect(splitStartAction,SIGNAL(triggered()),this,SLOT(startSplitting()));
 	splitMenu->addAction(splitStartAction);
 
 	//submenu2:
 	splitEndAction = new QAction(tr("End Splitting"), this);
 	splitEndAction->setStatusTip(tr("End Splitting Mode"));
-	splitEndAction->setEnabled(false);
 	connect(splitEndAction,SIGNAL(triggered()),this,SLOT(endSplitting()));
 	splitMenu->addAction(splitEndAction);
 
@@ -194,6 +238,20 @@ void NucleusEditor::createMenus()
 	aboutAction->setStatusTip(tr("About the application"));
 	connect(aboutAction, SIGNAL(triggered()), this, SLOT(about()));
 	helpMenu->addAction(aboutAction);
+
+	viewMenu->setEnabled(true);
+	setEditsEnabled(false);
+
+}
+
+void NucleusEditor::setEditsEnabled(bool val)
+{
+	editMenu->setEnabled(val);
+	mergeAction->setEnabled(val);
+	deleteAction->setEnabled(val);
+	splitMenu->setEnabled(val);
+	splitStartAction->setEnabled(val);
+	splitEndAction->setEnabled(val);
 }
 
 //****************************************************************************
@@ -221,11 +279,14 @@ ftk::Image::Pointer NucleusEditor::NewFTKImage(std::string filename)
 //******************************************************************************
 void NucleusEditor::closeEvent(QCloseEvent *event)
 {
+	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+	//Stop any running threads:
+	this->abortSegment();
 
 	//Save changes:
-	if(segResult)
+	if(seg)
 	{
-		if(segResult->editsNotSaved)
+		if(seg->editsNotSaved)
 		{
 			QString msg = tr("Recent Edits not saved do you want to save them before exiting?");
 			QMessageBox::StandardButton button = QMessageBox::information ( 0, tr("Exit"), \
@@ -257,7 +318,6 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
     }
 
 
-
 	//Then close myself
 	event->accept();
 	
@@ -265,21 +325,25 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 
 bool NucleusEditor::saveResult()
 {
-	if(segResult)
+	if(seg)
 	{
-		QString name = QFileDialog::getSaveFileName(this, tr("Save File As"), lastPath, tr("XML (*.xml)") );
-		if(name == "")
-		{
-			return false;
-		}
-		else
-		{
-			segResult->WriteToXML( name.toStdString() );
-		}
+		//QString name = QFileDialog::getSaveFileName(this, tr("Save File As"), lastPath, tr("XML (*.xml)") );
+		//if(name == "")
+		//{
+		//	return false;
+		//}
+		//else
+		//{
+		//	seg->WriteToXML( name.toStdString() );
+		//}
 
-		if(segResult->editsNotSaved)
+		if(seg->editsNotSaved)
 		{
-			segResult->SaveLabel();
+			std::string name = seg->GetDataFilename();
+			name.erase(name.find_first_of("."));
+			name.append(".xml");
+			seg->SaveLabel();
+			seg->WriteToXML( name );
 		}
 		
 	}
@@ -328,8 +392,8 @@ void NucleusEditor::newModel(void)
 	if(currentModel)
 		clearModel();
 
-	if(segResult) {
-		currentModel = new SegmentationModel(segResult);
+	if(seg) {
+		currentModel = new SegmentationModel(seg);
 	}
 }
 
@@ -353,9 +417,12 @@ void NucleusEditor::loadResult(void)
 	lastPath = path;
 
 	//segResult = new ftk::NuclearSegmentation();
-	if ( !segResult->RestoreFromXML(filename.toStdString()) )
+	if(seg)
+		delete seg;
+	seg = new ftk::NuclearSegmentation();
+	if ( !seg->RestoreFromXML(filename.toStdString()) )
 	{
-		std::cerr << segResult->GetErrorMessage() << std::endl;
+		std::cerr << seg->GetErrorMessage() << std::endl;
 		return;
 	}
 
@@ -368,19 +435,17 @@ void NucleusEditor::loadResult(void)
 	hisWin->show();
 
 	segWin->SetModels(currentModel);
-	segWin->SetChannelImage(segResult->getDataImage());
-	segWin->SetLabelImage(segResult->getLabelImage());
+	segWin->SetChannelImage(seg->getDataImage());
+	segWin->SetLabelImage(seg->getLabelImage());
 	if( this->centralWidget() != this->segWin )
 		this->setCentralWidget(segWin);
 
 	this->update();
 
 	// Enable the menu items for editing
-	mergeAction->setEnabled(true);
-	deleteAction->setEnabled(true);	
-	splitMenu->setEnabled(true);
-	splitStartAction->setEnabled(true);
-	splitEndAction->setEnabled(true);
+	setEditsEnabled(true);
+	newScatterAction->setEnabled(true);
+	saveAction->setEnabled(true);
 
 }
 
@@ -437,25 +502,252 @@ void NucleusEditor::loadDatFile(void)
 
 void NucleusEditor::segmentImage()
 {
-	// Disable the menu items for editing
-	mergeAction->setEnabled(false);
-	deleteAction->setEnabled(false);
-	splitMenu->setEnabled(false);
-	splitStartAction->setEnabled(false);
-	splitEndAction->setEnabled(false);
+
+	if(myImgName == "")
+	{
+		return;
+	}
 
 	if(currentModel)
 		clearModel();
 
-	NuclearSegmentationWizard *wizard = new NuclearSegmentationWizard();
-	wizard->setParent(NULL);
-	this->setCentralWidget(wizard);
+	QString dataFile = lastPath + "/" + myImgName;
+	QString paramFile = lastPath + "/" + "Seg_Params.ini";
+	if(seg) delete seg;
+	seg = new ftk::NuclearSegmentation();
+	if( !seg->SetInputs( dataFile.toStdString(), paramFile.toStdString() ) )
+	{
+		delete seg;
+		seg = NULL;
+		return;
+	}
+	
+	int numChannels = myImg->GetImageInfo()->numChannels;
+	if(numChannels > 1)
+	{
+		//I need to select a channel to use for segmentation
+		int useChannel = 0;
+		for (int i=0; i<numChannels; ++i)
+		{
+			std::string name = myImg->GetImageInfo()->channelNames.at(i);
+			if(name.find("Nuclei") != string::npos)
+				break;
+			useChannel++;
+		}
+		if(useChannel >= numChannels)
+		{
+			//didn't find the string, so should probably ask which one to use
+			useChannel = 0;
+		}
+		seg->SetChannel(useChannel);
+	}
+	
+	this->addToolBar(Qt::TopToolBarArea, segmentTool);
+	segmentContinue->setEnabled(false);
+	segmentTool->setVisible(true);
+	
+	segmentState = 0;
+	segment();
+
+	//NuclearSegmentationWizard *wizard = new NuclearSegmentationWizard();
+	//wizard->setParent(NULL);
+	//this->setCentralWidget(wizard);
 	//wizard->show();
 }
 
+void NucleusEditor::abortSegment()
+{
+	if(loadThread)
+	{
+		loadThread->wait();
+		delete loadThread;
+		loadThread = NULL;
+	}
+	if(binaryThread)
+	{
+		binaryThread->wait();
+		delete binaryThread;
+		binaryThread = NULL;
+	}
+	if(seedThread)
+	{
+		seedThread->wait();
+		delete seedThread;
+		seedThread = NULL;
+	}
+	if(clusterThread)
+	{
+		clusterThread->wait();
+		delete clusterThread;
+		clusterThread = NULL;
+	}
+	if(finalizeThread)
+	{
+		finalizeThread->wait();
+		delete finalizeThread;
+		finalizeThread = NULL;
+	}
+	if(featuresThread)
+	{
+		featuresThread->wait();
+		delete featuresThread;
+		featuresThread = NULL;
+	}
+
+	this->removeToolBar(segmentTool);
+	segmentState = -1;
+	//if(currentModel)
+	//	clearModel();
+	//delete seg;
+	//seg = NULL;
+
+	segWin->SetLabelImage(NULL);
+	QApplication::restoreOverrideCursor();
+	fileMenu->setEnabled(true);
+	viewMenu->setEnabled(true);
+	this->setEditsEnabled(false);
+}
+
+void NucleusEditor::segment()
+{
+	switch(segmentState)
+	{
+	case 0:
+		QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+		// Disable the menu items for editing
+		fileMenu->setEnabled(false);
+		editMenu->setEnabled(false);
+		viewMenu->setEnabled(false);
+
+		segmentTaskLabel->setText(tr(" Loading "));
+		segmentProgress->setValue(0);
+		loadThread = new Load(seg);
+		connect(loadThread, SIGNAL(finished()), this, SLOT(segment()));
+		segmentState = 1;
+		loadThread->start();
+		break;
+	case 1:
+		if(loadThread)
+		{
+			delete loadThread;
+			loadThread = NULL;
+		}
+		segmentTaskLabel->setText(tr(" Binarizing "));
+		segmentProgress->setValue(1);
+		binaryThread = new Binarize(seg);
+		connect(binaryThread, SIGNAL(finished()), this, SLOT(segment()));
+		segmentState = 2;
+		binaryThread->start();
+		break;
+	case 2:
+		if(binaryThread)
+		{
+			delete binaryThread;
+			binaryThread = NULL;
+		}
+		segmentProgress->setValue(2);
+		segmentTaskLabel->setText(tr(" Seeds "));
+		seedThread = new SeedDetect(seg);
+		connect(seedThread, SIGNAL(finished()), this, SLOT(segment()));
+		segmentState = 3;
+		seedThread->start();
+		break;
+	case 3:
+		if(seedThread)
+		{
+			delete seedThread;
+			seedThread = NULL;
+		}
+		segmentProgress->setValue(3);
+		segmentTaskLabel->setText(tr(" Clustering "));
+		clusterThread = new Cluster(seg);
+		connect(clusterThread, SIGNAL(finished()), this, SLOT(segment()));
+		segmentState = 4;
+		clusterThread->start();
+		break;
+	case 4:	//Final State we get to after successful clustering - for seed editing
+		if(clusterThread)
+		{
+			delete clusterThread;
+			clusterThread = NULL;
+		}
+		segmentProgress->setValue(4);
+		segWin->SetLabelImage(seg->getLabelImage());
+		segmentTaskLabel->setText(tr(" Editing Seeds "));
+
+		QApplication::restoreOverrideCursor();
+		fileMenu->setEnabled(true);
+		this->setEditsEnabled(false);
+		viewMenu->setEnabled(true);
+		segmentContinue->setEnabled(true);
+		segmentState = 5;
+		break;
+	case 5:
+		QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+		// Disable the menu items for editing
+		fileMenu->setEnabled(false);
+		this->setEditsEnabled(false);
+		viewMenu->setEnabled(false);
+		segmentContinue->setEnabled(false);
+
+		segmentTaskLabel->setText(tr(" Finalizing "));
+		segmentProgress->setValue(5);
+		finalizeThread = new Finalize(seg);
+		connect(finalizeThread, SIGNAL(finished()), this, SLOT(segment()));
+		segmentState = 6;
+		finalizeThread->start();
+		break;
+	case 6:
+		if(finalizeThread)
+		{
+			delete finalizeThread;
+			finalizeThread = NULL;
+		}
+		segmentProgress->setValue(6);
+		segWin->SetLabelImage(seg->getLabelImage());
+		segmentTaskLabel->setText(tr(" Features "));
+
+		featuresThread = new Features(seg);
+		connect(featuresThread, SIGNAL(finished()), this, SLOT(segment()));
+		segmentState = 7;
+		featuresThread->start();
+		break;
+	case 7:
+		if(featuresThread)
+		{
+			delete featuresThread;
+			featuresThread = NULL;
+		}
+		segmentProgress->setValue(7);
+		segmentTaskLabel->setText(tr(" DONE "));
+
+		newModel();
+		CreateNewTableWindow();
+		CreateNewPlotWindow();
+		hisWin = new HistoWindow(currentModel->GetSelectionModel());
+		hisWin->show();
+		segWin->SetModels(currentModel);
+		//this->update();
+
+		QApplication::restoreOverrideCursor();
+		fileMenu->setEnabled(true);
+		saveAction->setEnabled(true);
+		newScatterAction->setEnabled(true);
+		this->setEditsEnabled(true);
+		viewMenu->setEnabled(true);
+		segmentState = -1;
+
+		//Now remove the toolbar:
+		this->removeToolBar(segmentTool);
+
+		break;
+	}
+
+}
+
+
 void NucleusEditor::loadImage()
 {
-	segWin = new SegmentationWindow();
 	QString fileName = QFileDialog::getOpenFileName(
                              this, "Select file to open", lastPath,
                              tr("Images (*.tif *.tiff *.pic *.png *.jpg *.lsm)\n"
@@ -468,18 +760,27 @@ void NucleusEditor::loadImage()
 		clearModel();
 
 	lastPath = QFileInfo(fileName).absolutePath();
+	myImgName = QFileInfo(fileName).fileName();
 
-	ImageBrowser5D *browse = new ImageBrowser5D(fileName);
-	this->setCentralWidget(browse);
-	//browse->show();
+	//******************************************************
+
+	// NEW BROWSER:
+	//ImageBrowser5D *browse = new ImageBrowser5D(fileName);
+	//this->setCentralWidget(browse);
+	
+	// OLD BROWSER:
+	myImg = ftk::Image::New();
+	myImg->LoadFile(fileName.toStdString());
+	segWin->SetChannelImage(myImg);
+	if( this->centralWidget() != this->segWin )
+		this->setCentralWidget(segWin);
+	this->update();
+
+	//************************************************
 
 	// Disable the menu items for editing
-	mergeAction->setEnabled(false);
-	deleteAction->setEnabled(false);
-	splitMenu->setEnabled(false);
-	splitStartAction->setEnabled(false);
-	splitEndAction->setEnabled(false);
-
+	this->setEditsEnabled(false);
+	segmentAction->setEnabled(true);
 }
 
 //******************************************************************************
@@ -633,3 +934,70 @@ bool NucleusEditor::ConfirmClosePython()
    return true;
   }
 
+Load::Load(ftk::NuclearSegmentation *seg)
+: QThread()
+{
+	mySeg = seg;
+}
+
+void Load::run()
+{
+	mySeg->LoadData();
+}
+
+Binarize::Binarize(ftk::NuclearSegmentation *seg)
+: QThread()
+{
+	mySeg = seg;	
+}
+
+void Binarize::run()
+{
+	mySeg->Binarize(false);
+}
+
+SeedDetect::SeedDetect(ftk::NuclearSegmentation *seg)
+: QThread()
+{
+	mySeg = seg;	
+}
+
+void SeedDetect::run()
+{
+	mySeg->DetectSeeds(false);
+}
+
+Cluster::Cluster(ftk::NuclearSegmentation *seg)
+: QThread()
+{
+	mySeg = seg;	
+}
+
+void Cluster::run()
+{
+	mySeg->RunClustering();
+}
+
+
+Finalize::Finalize(ftk::NuclearSegmentation *seg)
+: QThread()
+{
+	mySeg = seg;
+}
+
+void Finalize::run()
+{
+	mySeg->Finalize();
+}
+
+Features::Features(ftk::NuclearSegmentation *seg)
+: QThread()
+{
+	mySeg = seg;
+}
+
+void Features::run()
+{
+	mySeg->LabelsToObjects();
+	mySeg->ReleaseSegMemory();
+}

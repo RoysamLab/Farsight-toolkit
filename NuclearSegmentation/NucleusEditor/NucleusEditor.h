@@ -26,7 +26,10 @@ limitations under the License.
 #include <QtGui/QMenu>
 #include <QtGui/QMessageBox>
 #include <QtGui/QFileDialog>
+#include <QtGui/QToolBar>
+#include <QtGui/QProgressBar>
 #include <QtCore/QFileInfo>
+#include <QtCore/QThread>
 
 
 //Farsight Includes:
@@ -35,14 +38,73 @@ limitations under the License.
 #include "ftkImage/ftkImage.h"
 #include "SegmentationModel.h"
 #include "SegmentationWindow.h"
-#include "NuclearSegmentationWizard.h"
+//#include "NuclearSegmentationWizard.h"
 #include "ftkGUI/TableWindow.h"
 #include "ftkGUI/PlotWindow.h"
 #include "ftkGUI/ImageBrowser5D.h"
 #include "ftkGUI/HistoWindow.h"
 //#include "SegmentationView.h"
 
+class Load : public QThread
+{
+public:
+	Load(ftk::NuclearSegmentation *seg = NULL);
+	void run();
 
+private:
+	ftk::NuclearSegmentation *mySeg;
+};
+
+
+class Binarize : public QThread
+{
+public:
+	Binarize(ftk::NuclearSegmentation *seg = NULL);
+	void run();
+
+private:
+	ftk::NuclearSegmentation *mySeg;
+};
+
+class SeedDetect : public QThread
+{
+public:
+	SeedDetect(ftk::NuclearSegmentation *seg = NULL);
+	void run();
+
+private:
+	ftk::NuclearSegmentation *mySeg;
+};
+
+class Cluster : public QThread
+{
+public:
+	Cluster(ftk::NuclearSegmentation *seg = NULL);
+	void run();
+
+private:
+	ftk::NuclearSegmentation *mySeg;
+};
+
+class Finalize : public QThread
+{
+public:
+	Finalize(ftk::NuclearSegmentation *seg = NULL);
+	void run();
+
+private:
+	ftk::NuclearSegmentation *mySeg;
+};
+
+class Features : public QThread
+{
+public:
+	Features(ftk::NuclearSegmentation *seg = NULL);
+	void run();
+
+private:
+	ftk::NuclearSegmentation *mySeg;
+};
 
 class NucleusEditor : public QMainWindow
 {
@@ -50,6 +112,7 @@ class NucleusEditor : public QMainWindow
 
 public:
 	NucleusEditor(QWidget * parent = 0, Qt::WindowFlags flags = 0);
+	~NucleusEditor();
 
 protected:
 	void closeEvent(QCloseEvent *event);
@@ -59,6 +122,8 @@ private slots:
 	void loadResult(void);
 	bool saveResult(void);
 	void segmentImage(void);
+	void abortSegment(void);
+	void segment(void);
 	void about(void);
 	//void loadDatFile(void);
 	//void closeWidget(QWidget *);
@@ -70,6 +135,7 @@ private slots:
 	bool BrowseForPythonExecutable();
 
 	//For Editing Menu
+	void setEditsEnabled(bool val);
 	void mergeCells(void);
 	void deleteCells(void);
 	void splitCells(void);
@@ -82,6 +148,7 @@ signals:
 private:
 	void createMenus();
 	void createStatusBar();
+	void createSegmentToolBar();
 	void clearModel();
 	void newModel();
 
@@ -116,13 +183,26 @@ private:
 	QAction *splitStartAction;
 	QAction *splitEndAction;
 	
-
 	QLabel *statusLabel;
 
-	ftk::NuclearSegmentation *segResult;
+	ftk::NuclearSegmentation *seg;
+	ftk::Image::Pointer myImg;
 	SegmentationModel *currentModel;
 
 	QString lastPath;
+	QString myImgName;
+	int segmentState;
+	QAction * segmentAbort;
+	QAction * segmentContinue;
+	QLabel * segmentTaskLabel;
+	QProgressBar * segmentProgress;
+	QToolBar * segmentTool;
+	Load * loadThread;
+	Binarize * binaryThread;
+	SeedDetect * seedThread;
+	Cluster * clusterThread;
+	Finalize * finalizeThread;
+	Features * featuresThread;
 
 	//DEMO variable
 	bool ConfirmClosePython();

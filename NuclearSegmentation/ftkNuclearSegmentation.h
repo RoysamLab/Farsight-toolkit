@@ -49,16 +49,19 @@ class NuclearSegmentation
 {
 public:
 	NuclearSegmentation();
+	~NuclearSegmentation();
 
 	//This is for beginning a completely new segmenation:
 	bool SetInputs(std::string datafile, std::string paramfile);		
+	void SetChannel(int number){channelNumber = number;};		//Set the channel number to use for segmentation
 	bool LoadData();											//Will load the data image into memory
-	bool Binarize();											//Will binarize the data image
-	bool DetectSeeds();											//If binarization has been done it will detect seeds
+	bool Binarize(bool getResultImg = true);						//Will binarize the data image
+	bool DetectSeeds(bool getResultImg = true);					//If binarization has been done it will detect seeds
 	bool RunClustering();										//Will use binary image and seeds to do initial clustering
 	bool Finalize();											//Will finilize the output using alpha expansion
 	bool GetResultImage();										//Gets the result of last module and puts it in labelImage
 	bool SaveOutput();											//Save the output of the last step executed (image format)
+	void ReleaseSegMemory();									//Delete the NucleusSeg object to release all of its memory.
 	//Segmentation is basically done at this point (hopefully), now move on to calculating the features and classification:
 	bool LabelsToObjects(void);									//Will compute Intrinsic Features and create objects from the data and results images
 	bool LoadAssociationsFromFile(std::string fName);			//Add the Associative Features to the objects
@@ -118,6 +121,7 @@ private:
 	std::string errorMessage;
 
 	ftk::Image::Pointer dataImage;
+	int channelNumber;
 	ftk::Image::Pointer labelImage;
 	ftk::Image::Pointer clustImage;
 	ftk::Image::Pointer logImage;
