@@ -135,7 +135,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	}
 
 	//try this: estimate the min and max scales
-	if(UseDistMap == 1)
+	/*if(UseDistMap == 1)
 	{
 		std::cout<<"Estimating parameters..."<<std::endl;
 		estimateMinMaxScales(im, dImg, &sigma_min, &sigma_max, r, c, z);
@@ -144,7 +144,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 		std::cout<<"    Minimum scale = "<<sigma_min<<std::endl;
 		std::cout<<"    Maximum scale = "<<sigma_max<<std::endl;
 		std::cout<<"    Clustering Resolution = "<<scale_xy<<std::endl;
-	}
+	}*/
 	//By Yousef (8/28/2009)
 	//In some situations the image is very larg and we cannot allocate memory for the LoG filter (20xthe size of the image in bytes)
 	//In such cases, we can divide the image into small tiles, process them independently, and them combine the results
