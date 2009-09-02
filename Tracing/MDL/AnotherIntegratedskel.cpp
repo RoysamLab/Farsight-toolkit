@@ -16,8 +16,8 @@ limitations under the License.
 // Extract the ridges and valleys feature in 3D vector field
 // --- Input: 3D vector field
 // --- Output: 3D image-scalar field
-// --- Author: Xiaosong Yuan, RPI    modified by xiao liang
-// --- Modified Date: 10/6/2005
+// --- Author: Xiaosong Yuan, improved and optimized by xiao liang, RPI
+// --- Modified Date: 03/Sep/2009
 
 #if defined(_MSC_VER)
 #pragma warning(disable : 4996)
@@ -79,6 +79,7 @@ void Transpose(float MatTransp[3][3], float Mat[3][3]);
 void Matrix3Multiply(float Mat[3][3], float Mat1[3][3], float Mat2[3][3]);
 void rk2(float x, float y, float z, int sizx, int sizy, int sizz, float steps, Vector3D *Force_ini, VoxelPosition *nextPos);
 Vector3D interpolation(float x, float y, float z, int sizx, int sizy, int sizz, Vector3D *forcevec);
+void RotMatrixFromAngle(float RMatrix[3][3], float cosphi, float sinphi, float costheta,float sintheta, float cospsi, float sinpsi);
 
 int main (int argc, char *argv[])
 {
@@ -384,7 +385,7 @@ int main (int argc, char *argv[])
 		 // and also you can use GDF method---------------------------------------------//
   }
 
-  printf("Numbers %d ",idx);
+  printf("Generating force vector!\n");
 
   //-----------------------------------Detelet Gradient Vector Memeory--------------------------------//
   delete []Iu;// = new float[L*M*N];
@@ -592,7 +593,7 @@ int main (int argc, char *argv[])
   }
 
 
- printf("Number of critical points is: %d, and number of seeds %d\n", NumCritPoints, numSeeds);
+ printf("Number of critical points is: %d \n, and number of seeds %d\n", NumCritPoints, numSeeds);
 
  int numBoundSeeds =numSeeds;
  //fprintf(fout,"%d %d %d %f %f\n", 1, 1, 1, -1.0, -1.0);
@@ -695,8 +696,70 @@ Vector3D interpolation(float x, float y, float z, int sizx, int sizy, int sizz, 
     {
 	
 	//-------by xiao  new implementation
-		
+    Vector3D forceInt;  
 	float alpha, beta, gamma;
+	
+	long slsz;
+    int Intx,Inty,Intz;
+	Intx=int(x);
+	Inty=int(y);
+	Intz=int(z);
+	alpha = x- Intx;   
+	beta = y- Inty;
+	gamma = z-Intz;
+	slsz=sizy*sizx;
+	float a[8];// for interpolation coefficients
+	a[0] = (1-alpha)*(1-beta)*(1-gamma);
+	a[1] = (1-alpha)*(1-beta)*gamma;
+	a[2] = (1-alpha)*beta*(1-gamma);
+	a[3] =  alpha*(1-beta)*(1-gamma); 
+	a[4] =  alpha*(1-beta)*gamma;
+	a[5] =  alpha*beta*(1-gamma);
+	a[6] =  (1-alpha)*beta*gamma;
+	a[7] =  (alpha*beta*gamma);
+
+	long Nei[8]; // considering N8 neighborhood in 3D image
+    Nei[0] = Intz*slsz + Inty*sizx + Intx;
+	Nei[1] =  Nei[0] +slsz;
+	Nei[2] =  Nei[0] +slsz+sizx;
+	Nei[3] =  Nei[0] +1;
+	Nei[4] =  Nei[0] +slsz+1;
+	Nei[5] =  Nei[0] +sizx+1;
+	Nei[6] =  Nei[0] +sizx;
+	Nei[7] =  Nei[0] +slsz+sizx+1;
+
+   //------------------------------------ compute interpolation ---------------------------------------//
+	forceInt.x=forcevec[ Nei[0]].x*a[0]
+			+forcevec[ Nei[1]].x*a[1]
+			+forcevec[ Nei[2]].x*a[2]
+			+forcevec[ Nei[3]].x*a[3]
+			+forcevec[ Nei[4]].x*a[4]
+			+forcevec[ Nei[5]].x*a[5]
+			+forcevec[ Nei[6]].x*a[6]
+			+forcevec[ Nei[7]].x*a[7];
+
+
+	forceInt.y=forcevec[ Nei[0]].y*a[0]
+			+forcevec[ Nei[1]].y*a[1]
+			+forcevec[ Nei[2]].y*a[2]
+			+forcevec[ Nei[3]].y*a[3]
+			+forcevec[ Nei[4]].y*a[4]
+			+forcevec[ Nei[5]].y*a[5]
+			+forcevec[ Nei[6]].y*a[6]
+			+forcevec[ Nei[7]].y*a[7];
+
+	forceInt.z=forcevec[ Nei[0]].z*a[0]
+			+forcevec[ Nei[1]].z*a[1]
+			+forcevec[ Nei[2]].z*a[2]
+			+forcevec[ Nei[3]].z*a[3]
+			+forcevec[ Nei[4]].z*a[4]
+			+forcevec[ Nei[5]].z*a[5]
+			+forcevec[ Nei[6]].z*a[6]
+			+forcevec[ Nei[7]].z*a[7];
+
+	return(forceInt);
+		
+	/*float alpha, beta, gamma;
 	Vector3D forceInt;
 	long slsz;
     int Intx,Inty,Intz;
@@ -736,6 +799,7 @@ Vector3D interpolation(float x, float y, float z, int sizx, int sizy, int sizz, 
 			+forcevec[(Intz+1)*slsz + (Inty+1)*sizx + (Intx+1)].z*alpha*beta*gamma;
 
 	return(forceInt);
+	*/
 
     }
 
@@ -745,23 +809,24 @@ void rk2(float x, float y, float z, int sizx, int sizy, int sizz, float steps, V
 	
     Vector3D OutForce;
 	OutForce=interpolation(x,y,z,sizx,sizy,sizz,Force_ini);
+	nextPos->x = x + OutForce.x * steps;
+	nextPos->y = y + OutForce.y * steps;
+	nextPos->z = z + OutForce.z * steps;
 
-	x = x + OutForce.x * steps;
+	/*x = x + OutForce.x * steps;
 	y = y + OutForce.y * steps;
 	z = z + OutForce.z * steps;
-
 	nextPos->x = x;
 	nextPos->y = y;
 	nextPos->z = z; 
+    */
 
    }
 
 
 
-
-
-
-
+// ----------------------------------- non optimized computing partial Derivativel ---------------------------------//
+/*
 void PartialDerivative1(float *Is, float *Isd, int direc, int L, int M, int N)  {
   // direc = 1: x-direction   2: y-direction   3: z-direction
   long idx;
@@ -791,25 +856,56 @@ void PartialDerivative1(float *Is, float *Isd, int direc, int L, int M, int N)  
         }
 }
 
+*/
+
+// ------------------------------------ Optimization for partialDerivel ----------------------------------------------//
+// ------------------------------------ ---------by Xiao Liang--------- ----------------------------------------------// 
+
+void PartialDerivative1(float *Is, float *Isd, int direc, int L, int M, int N)  {
+  // direc = 1: x-direction   2: y-direction   3: z-direction
+  long idx;
+  int i,k,j;
+  long slsz = L*M;
+  int disaway = 1;
+  for (k = disaway; k < N-disaway; k++)
+     for (j = disaway; j < M-disaway; j++)
+        for (i = disaway; i < L-disaway; i++) 
+		{
+		// forward difference;
+		idx = k*slsz + j*L +i;
+	    if (direc == 1) 
+		 Isd[idx] = Is[idx+1] - Is[idx-1];
+	    else if(direc == 2) 
+		   Isd[idx] =  Is[idx+L] - Is[idx-L];
+	    else   
+		   Isd[idx] = Is[idx+slsz] - Is[idx-slsz];
+        }// end for
+}
 
 
 
+//--------------------------------compute rotation of a matrix --------------------------------//
+/*
 void ComputeRotMatrix(float RotateMatrix[3][3], Vector3D v) {
    // Find the matrix that can rotate any vector v to x-axis direction
    float phi, theta;
    Vector3D vector1;
    float RotateMatrix1[3][3];
-
+   
    theta = atan2(v.z, v.y);
    RotMatrixFromAngle(RotateMatrix1, 0, -theta, 0);
+   
    vector1.x = RotateMatrix1[0][0]*v.x +RotateMatrix1[0][1]*v.y +RotateMatrix1[0][2]*v.z;
    vector1.y = RotateMatrix1[1][0]*v.x +RotateMatrix1[1][1]*v.y +RotateMatrix1[1][2]*v.z;
    vector1.z = RotateMatrix1[2][0]*v.x +RotateMatrix1[2][1]*v.y +RotateMatrix1[2][2]*v.z;
    phi = atan2(vector1.y, vector1.x);
+   
    RotMatrixFromAngle(RotateMatrix, -phi, -theta, 0);
 }
-
-
+*/
+// -----------------------------------------------------------------------------------------------//
+//----------------------------- non optimized Rotation of Matrix --------------------------------//
+/*
 void RotMatrixFromAngle(float RMatrix[3][3], float phi, float theta, float psi) {
   // rotation matrix is      R(0,0) R(0,1) R(0,2)
   //	        	     R(1,0) R(1,1) R(1,2)
@@ -824,7 +920,51 @@ void RotMatrixFromAngle(float RMatrix[3][3], float phi, float theta, float psi) 
    RMatrix[1][2] = -(cos(phi)*sin(theta));
    RMatrix[2][2] = cos(theta);
 }
+*/
 
+//--------------------------------optimized Rotation of Matrix --------------------------------------------------------------------//
+//-----------------------------------  this code written by Xiao Liang ------------------------------------------------------------//
+//--------------------------------------the idea is void computing cos(),sin() so many times --------------------------------------//
+
+
+void ComputeRotMatrix(float RotateMatrix[3][3], Vector3D v) {
+   // Find the matrix that can rotate any vector v to x-axis direction
+   float phi, theta;
+   Vector3D vector1;
+   float RotateMatrix1[3][3];
+   float cosphi,sinphi,cospsi,sinpsi,costheta,sintheta;
+
+   theta = atan2(v.z, v.y);
+   //RotMatrixFromAngle(RotateMatrix1, 0, -theta, 0);
+   cosphi=1;sinphi=0;costheta=cos(theta);sintheta=sin(theta);cospsi=1;sinpsi=0;
+   RotMatrixFromAngle(RotateMatrix1,cosphi,sinphi,costheta,sintheta,cospsi,sinpsi);
+   vector1.x = RotateMatrix1[0][0]*v.x +RotateMatrix1[0][1]*v.y +RotateMatrix1[0][2]*v.z;
+   vector1.y = RotateMatrix1[1][0]*v.x +RotateMatrix1[1][1]*v.y +RotateMatrix1[1][2]*v.z;
+   vector1.z = RotateMatrix1[2][0]*v.x +RotateMatrix1[2][1]*v.y +RotateMatrix1[2][2]*v.z;
+   phi = atan2(vector1.y, vector1.x);
+   
+   cosphi=cos(-phi);sinphi=sin(-phi);
+   // costheta=costheta; //it is not needed to reseted since them havenot changed
+   sintheta=-sintheta;
+   //cospsi=1;sinpsi=0;  //it is not needed to reseted since them havenot changed 
+   RotMatrixFromAngle(RotateMatrix1,cosphi,sinphi,costheta,sintheta,cospsi,sinpsi);
+   //RotMatrixFromAngle(RotateMatrix, -phi, -theta, 0);
+}
+
+void RotMatrixFromAngle(float RMatrix[3][3], float cosphi, float sinphi, float costheta,float sintheta, float cospsi, float sinpsi) {
+  // rotation matrix is      R(0,0) R(0,1) R(0,2)
+  //	        	     R(1,0) R(1,1) R(1,2)
+  //   			     R(2,0) R(2,1) R(2,2)
+   RMatrix[0][0] = cosphi*cospsi - costheta*sinphi*sinpsi;
+   RMatrix[1][0] = cospsi*sinphi + cosphi*costheta*sinpsi;
+   RMatrix[2][0] = sinpsi*sintheta;
+   RMatrix[0][1] = -cospsi*costheta*sinphi - cosphi*sinpsi;
+   RMatrix[1][1] = cosphi*cospsi*costheta - sinphi*sinpsi;
+   RMatrix[2][1] = cospsi*sintheta;
+   RMatrix[0][2] = sinphi*sintheta;
+   RMatrix[1][2] = -cosphi*sintheta;
+   RMatrix[2][2] = costheta;
+}
 
 void Transpose(float MatTransp[3][3], float Mat[3][3])  {
    for(int j=0; j<=2; j++)
