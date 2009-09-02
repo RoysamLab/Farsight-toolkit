@@ -667,6 +667,7 @@ void View3D::Rerender()
   this->UpdateBranchActor();
   this->Renderer->AddActor(this->BranchActor);
   //this->Renderer->AddActor(this->VolumeActor);
+  this->TreeModel->SetTraces(this->tobj->GetTraceLines());
   this->QVTK->GetRenderWindow()->Render();
 }
 

@@ -100,6 +100,7 @@ void TraceModel::SyncModel()
       this->Model->setData(this->Model->index(row, col), data.at(row).at(col));
       }
     }
+	this->MapTracesToRows();
   //let the views know that the model changed
   emit modelChanged();
 }
@@ -128,7 +129,7 @@ void TraceModel::SelectByIDs(int ID)
 	QModelIndex index1 = this->Model->index(row, 0, QModelIndex());
 	QModelIndex index2 = this->Model->index(row, (this->Model->columnCount())-1, QModelIndex());
 	selection.select(index1, index2);
-	this->SelectionModel->select(selection, QItemSelectionModel::Toggle);
+	this->SelectionModel->select(selection, QItemSelectionModel::Select);
 	emit selectionChanged();
 }
 std::vector<int> TraceModel::GetSelecectedIDs()
