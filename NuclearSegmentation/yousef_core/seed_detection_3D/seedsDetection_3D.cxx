@@ -64,7 +64,7 @@ MyInputImageType::Pointer extract3DImageRegion(itk::SmartPointer<MyInputImageTyp
 void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short* distIm, double* minScale, double* maxScale, int r, int c, int z);
 int computeMedian(std::vector< std::vector<unsigned short> > scales, int cntr);
 
-int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int r, int c, int z, double *sigma_min_in, double *sigma_max_in, double *scale_xy_in, double *scale_z_in, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout)
+int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int r, int c, int z, double *sigma_min_in, double *sigma_max_in, double *scale_xy_in, double *scale_z_in, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout, bool paramEstimation)
 {	
 	//get this inputs
 	double sigma_min = sigma_min_in[0];
@@ -146,7 +146,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 
 	//By Yousef (8/29/2009)
 	//Estimate the segmentation parameters
-	if(UseDistMap == 1)
+	if(UseDistMap == 1 && paramEstimation)
 	{
 		std::cout<<"Estimating parameters..."<<std::endl;
 		estimateMinMaxScales(im, dImg, &sigma_min, &sigma_max, r, c, z);

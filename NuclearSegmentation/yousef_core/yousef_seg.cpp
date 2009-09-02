@@ -33,6 +33,8 @@ yousef_nucleus_seg::yousef_nucleus_seg()
 	//int numStacks = 0;
 	//int numRows = 0;
 	//int numColumns = 0;		
+
+	autoParamEstimation = false;
 }
 
 //Destructor
@@ -179,7 +181,7 @@ void yousef_nucleus_seg::runSeedDetection()
 	else
 	{	
 		minLoGImg = 10000;
-		ok = Seeds_Detection_3D( imgPtr, &logImagePtr, &seedImagePtr, numRows, numColumns, numStacks, &scaleMin, &scaleMax, &regionXY, &regionZ, getSamplingRatio(), binImagePtr, useDistMap, &minLoGImg );						
+		ok = Seeds_Detection_3D( imgPtr, &logImagePtr, &seedImagePtr, numRows, numColumns, numStacks, &scaleMin, &scaleMax, &regionXY, &regionZ, getSamplingRatio(), binImagePtr, useDistMap, &minLoGImg, autoParamEstimation );						
 	}		
 	delete [] imgPtr;	//cleanup
 	if(!ok)
@@ -187,6 +189,13 @@ void yousef_nucleus_seg::runSeedDetection()
 	else
 		//Make sure all seeds are in foreground and extract vector of seeds
 		ExtractSeeds();
+	//added by Yousef on 9/2/2009
+	//In case we did parameter estimation, write the parameters into a file
+	if(autoParamEstimation)
+	{
+		//Write the automatically estimated parameters into a file
+		writeParametersToFile();
+	}
 }
 
 void yousef_nucleus_seg::runClustering()
@@ -877,7 +886,7 @@ void yousef_nucleus_seg::readParametersFromFile(const char* pFname)
 	params[4]=5;
 	params[5]=2;
 	params[6]=1;
-	params[7]=3;
+	params[7]=2;
 	params[8]=1;
 	//added by yousef on 11/4/2008
 	params[9]=6;
@@ -886,9 +895,14 @@ void yousef_nucleus_seg::readParametersFromFile(const char* pFname)
 	std::ifstream inFile(pFname);
 	if (! inFile)
 	{
-		cout << "Fatal Error: Could not open parameters file " << pFname
+		/*cout << "Fatal Error: Could not open parameters file " << pFname
 			<< " .... Terminating Program." << endl;
-		exit(0);
+		exit(0);*/
+		//if no file name is provided, then just use the default parameter values
+		//and later replace them with the automatically estimated values.
+		autoParamEstimation = true; 
+		setParams(params);
+		return;
 	}
 
 	while (inFile)
@@ -976,6 +990,37 @@ void yousef_nucleus_seg::readParametersFromFile(const char* pFname)
 
 	setParams(params);
 
+}
+
+
+//added by Yousef on 9-2-2009
+//This function writes the automatically estimated parameters into a text file
+void yousef_nucleus_seg::writeParametersToFile()
+{
+	std::string pFname = dataFilename.substr(0,dataFilename.find_last_of("."))+"_parameters.ini";
+	std::ofstream outFile(pFname.c_str());
+	if (! outFile)
+	{
+		cout << "Fatal Error: Could not open parameters file " << pFname
+			<< " for writing.... Terminating Program." << endl;
+		exit(0);		
+	}
+	outFile << "! Segmentation parameters File"<<std::endl; 
+	outFile << "! All parameters are case sensitive"<<std::endl;
+	outFile << std::endl;
+	outFile << "high_sensitivity\t:\t"<<shift<<std::endl;
+	outFile << "LoG_size\t:\t"<<sigma<<std::endl;
+	outFile << "min_scale\t:\t"<<scaleMin<<std::endl;
+	outFile << "max_scale\t:\t"<<scaleMax<<std::endl;
+	outFile << "xy_clustering_res\t:\t"<<regionXY<<std::endl;
+	outFile << "z_clustering_res\t:\t"<<regionZ<<std::endl;
+	outFile << "finalize_segmentation\t:\t"<<finalizeSegmentation<<std::endl;
+	outFile << "sampling_ratio_XY_to_Z\t:\t"<<sampling_ratio_XY_to_Z<<std::endl;
+	outFile << "Use_Distance_Map\t:\t"<<useDistMap<<std::endl;
+	outFile << "refinement_range\t:\t"<<refineRange<<std::endl;
+	outFile << "min_object_size\t:\t"<<minObjSize<<std::endl;
+
+	outFile.close();									
 }
 
 //Added by Yousef on 7-8-2008

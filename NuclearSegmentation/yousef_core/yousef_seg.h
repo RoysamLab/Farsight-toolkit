@@ -104,6 +104,7 @@ public:
 	void runAlphaExpansion2D();
 
 	void readParametersFromFile(const char* pFName);					//This function reads the parameters based on Yousef's parameter format
+	void writeParametersToFile();
 
 	//Come from parameters
 	int isSegmentationFinEnabled() { return finalizeSegmentation;} ;
@@ -174,6 +175,8 @@ private:
 	int refineRange;
 	//added by yousef on 12/5/2008
 	int minObjSize;
+	//added by yousef on 09/02/2009
+	bool autoParamEstimation;
 };
 
 class Seed
