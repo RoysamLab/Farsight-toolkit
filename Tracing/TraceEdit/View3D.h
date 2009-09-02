@@ -143,6 +143,7 @@ public slots:
 
 protected slots:
 	void updateSelectionHighlights();
+	void updateTraceSelectionHighlights();
 
 protected:
 	void closeEvent(QCloseEvent *event);

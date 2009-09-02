@@ -203,7 +203,12 @@ void View3D::setupLinkedSpace()
   this->TreeModel->setParent(this);
   this->ShowTreeData();
   this->connect(MergeGaps,SIGNAL(modelChanged()),this, SLOT(updateSelectionHighlights()));
-  this->connect(this->MergeGaps->GetSelectionModel(), SIGNAL(selectionChanged(const QItemSelection & , const QItemSelection &)), this, SLOT(updateSelectionHighlights()));
+  this->connect(this->MergeGaps->GetSelectionModel(), SIGNAL(selectionChanged(
+	  const QItemSelection & , const QItemSelection &)), this, SLOT(updateSelectionHighlights()));
+
+  this->connect(this->TreeModel, SIGNAL(modelChanged()),this, SLOT(updateTraceSelectionHighlights()));
+  this->connect(this->TreeModel->GetSelectionModel(), SIGNAL(selectionChanged(
+	  const QItemSelection & , const QItemSelection &)), this, SLOT(updateTraceSelectionHighlights()));
 }
 
 /*Set up the components of the interface */
@@ -621,7 +626,7 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
 	if (view->tobj->Gaps.size() < 1)
 	{
 		view->TreeModel->SelectByIDs(tline->GetId());
-		view->HighlightSelected(tline, view->SelectColor);
+		//view->HighlightSelected(tline, view->SelectColor);
 		tline->Getstats();              //prints the id and end coordinates to the command prompt 
 		view->SphereActor->SetPosition(pickPos);    //sets the selector to new point
 		view->SphereActor->VisibilityOn();      //deleteTrace can turn it off 
@@ -637,7 +642,18 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
   view->QVTK->GetRenderWindow()->Render();             //update the render window
 }
 
-
+void View3D::updateTraceSelectionHighlights()
+{
+	std::vector<TraceLine*> Selections = this->TreeModel->GetSelectedTraces();
+	for (unsigned int i = 0; i < Selections.size(); i++)
+	{
+		this->HighlightSelected(Selections[i],this->SelectColor);
+	}
+	this->poly_line_data->Modified();
+	this->QVTK->GetRenderWindow()->Render();
+	this->statusBar()->showMessage(tr("Selected\t")
+		+ QString::number(Selections.size()) +tr("\ttraces"));
+}
 void View3D::HighlightSelected(TraceLine* tline, double color)
 {
   TraceLine::TraceBitsType::iterator iter = tline->GetTraceBitIteratorBegin();
@@ -908,22 +924,21 @@ void View3D::ClearSelection()
 /*  delete traces functions */
 void View3D::DeleteTraces()
 {
-  this->statusBar()->showMessage(tr("Deleting"));
-  if(this->SelectedTraceIDs.size()>=1)
-    {
-    std::cout<<"selected lines \n";
-    for (unsigned int i = 0; i < this->SelectedTraceIDs.size(); i++)
-      {
-      std::cout<<  "\t"<<this->SelectedTraceIDs[i];
-      this->DeleteTrace(reinterpret_cast<TraceLine*>(this->tobj->hashc[this->SelectedTraceIDs[i]])); 
-      } 
-    std::cout<< " \t deleted" <<std::endl;
-    this->Rerender();
-    }
-  else
-    {
-    this->statusBar()->showMessage(tr("Nothing to Delete \n"));
-    }
+	this->statusBar()->showMessage(tr("Deleting"));
+	std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
+	if (traceList.size() >=1)
+	{
+		for (unsigned int i = 0; i < traceList.size(); i++)
+		{
+			this->DeleteTrace(traceList[i]); 
+		}
+		this->Rerender();
+		this->statusBar()->showMessage(tr("Deleted\t") + QString::number(traceList.size()) + tr("\ttraces"));
+	}
+	else
+	{
+		this->statusBar()->showMessage(tr("Nothing to Delete \n"));
+	}
 }
 
 void View3D::DeleteTrace(TraceLine *tline)
@@ -1017,52 +1032,49 @@ void View3D::MergeTraces()
   else
     {
     int conflict = 0;
-    if(this->SelectedTraceIDs.size() >= 1)
-      {     
-      std::sort(this->SelectedTraceIDs.begin(), this->SelectedTraceIDs.end());
-      std::reverse(this->SelectedTraceIDs.begin(), this->SelectedTraceIDs.end());
-      int numTrace = this->SelectedTraceIDs.size();   
-      int i,j, s=0, exist =0;
-      std::vector<TraceLine*> traceList;
-      //std::cout<< "elements passed \t" << numTrace << std::endl;
-      for (i = 0;i<numTrace; i++)
-        {
-        traceList.push_back( reinterpret_cast<TraceLine*>(
-        this->tobj->hashc[this->SelectedTraceIDs[i]]));
-        s=traceList.size()-1;
-        exist = 0;
-        if (traceList.size()>0)
-          {
-          j = 0;
-          while ( (j < s)&&(exist==0))
-            { 
-            if (traceList[s]->GetId()== traceList[j]->GetId())
-              {
-              traceList.pop_back(); 
-              exist = 1;
-              }
-            j++;      
-            }
-          }
-        }
-      conflict = this->tobj->createGapLists(traceList);
-      if(conflict == -1)
-        {
-        //user aborted
-        this->tobj->Gaps.clear();
-        return;
-        }
-      }
+	std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
+	if (traceList.size() >=1)
+	{
+    //if(this->SelectedTraceIDs.size() >= 1)
+    //  {     
+    //  std::sort(this->SelectedTraceIDs.begin(), this->SelectedTraceIDs.end());
+    //  std::reverse(this->SelectedTraceIDs.begin(), this->SelectedTraceIDs.end());
+    //  int numTrace = this->SelectedTraceIDs.size();   
+    //  int i,j, s=0, exist =0;
+    //  std::vector<TraceLine*> traceList;
+    //  //std::cout<< "elements passed \t" << numTrace << std::endl;
+    //  for (i = 0;i<numTrace; i++)
+    //    {
+    //    traceList.push_back( reinterpret_cast<TraceLine*>(
+    //    this->tobj->hashc[this->SelectedTraceIDs[i]]));
+    //    s=traceList.size()-1;
+    //    exist = 0;
+    //    if (traceList.size()>0)
+    //      {
+    //      j = 0;
+    //      while ( (j < s)&&(exist==0))
+    //        { 
+    //        if (traceList[s]->GetId()== traceList[j]->GetId())
+    //          {
+    //          traceList.pop_back(); 
+    //          exist = 1;
+    //          }
+    //        j++;      
+    //        }
+    //      }
+    //    }
+		conflict = this->tobj->createGapLists(traceList);
+     }
     else
-      {
-      conflict = this->tobj->createGapLists(this->tobj->GetTraceLines());
-      if(conflict == -1)
-        {
+    {
+		conflict = this->tobj->createGapLists(this->tobj->GetTraceLines());
+    }       
+	if(conflict == -1)
+    {
         //user aborted
         this->tobj->Gaps.clear();
         return;
-        }
-      } 
+    }
     unsigned int i; 
     QMessageBox MergeInfo;
     if (this->tobj->Gaps.size() > 1)

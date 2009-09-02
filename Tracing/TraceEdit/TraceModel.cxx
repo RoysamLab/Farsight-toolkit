@@ -144,3 +144,14 @@ std::vector<int> TraceModel::GetSelecectedIDs()
 	}
 	return SelectedIDs;
 }
+std::vector<TraceLine*> TraceModel::GetSelectedTraces()
+{
+	std::vector<TraceLine*> selectedTrace;
+	QModelIndexList selected = this->SelectionModel->selectedRows();
+	for (int i = 0; i < selected.size(); ++i)
+	{
+		int row = selected.at(i).row();
+		selectedTrace.push_back( this->GetTraces().at(row));
+	}
+	return selectedTrace;
+}
