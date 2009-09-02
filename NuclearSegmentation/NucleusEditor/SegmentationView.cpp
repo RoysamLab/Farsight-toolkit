@@ -216,6 +216,9 @@ QRegion SegmentationView::itemRegion(const QModelIndex &index) const
     if (!index.isValid())
 		 return QRegion();
 
+	//Need to return a the region in the current z slice for the object with this index!!!
+	// HARD SO DO THIS FOR NOW:
+
 	return itemRect(index);
 }
 
@@ -473,25 +476,32 @@ void SegmentationView::scrollTo(const QModelIndex &index, ScrollHint)
 //***********************************************************************************************************************
  void SegmentationView::setSelection(const QRect &rect, QItemSelectionModel::SelectionFlags command)
  {
-	 if(!resultModel)
-		 return;
+	if(!resultModel)
+	{
+		return;
+	}
+
+	if(resultModel->isSplitingMode())
+	{
+		return;
+	}
 
 	//This is the selection region
     QRect contentsRect = rect.translated( horizontalScrollBar()->value(), verticalScrollBar()->value()).normalized();
 
-    int rows = model()->rowCount(rootIndex());
-
 	QItemSelection selection;
 	selection.clear();
-    //QModelIndexList indexes;
+
+	/* REMOVED 9-02-2009 Isaac Abbott
+	int rows = model()->rowCount(rootIndex());
 	for (int row = 0; row < rows; ++row) 
 	{
 		//get the region of the item
-		QModelIndex index1 = model()->index(row, 0, rootIndex());
+		QModelIndex index1 = model()->index(row, 0, rootIndex());						
 		QModelIndex index2 = model()->index(row,(model()->columnCount())-1, rootIndex());
 
-        QRegion region = itemRegion(index1);
 		//if it intersects with the selection region, save the index
+        QRegion region = itemRegion(index1);
 		if (!region.intersect(contentsRect).isEmpty())
 		{
 			//indexes.append(index);
@@ -499,27 +509,25 @@ void SegmentationView::scrollTo(const QModelIndex &index, ScrollHint)
 			selection.merge(QItemSelection(index1,index2),command);
 		}
     }
-	selectionModel()->select(selection, command);
-
-	/*
-	if (indexes.size() > 0) 
-	{	
-		QItemSelection selection;
-		selection.clear();
-        for (int i = 0; i < indexes.size(); ++i) 
-		{
-			//Add each item's region to the selection
-			selection.merge(QItemSelection(indexes[i],indexes[i]),command);
-        }
-        selectionModel()->select(selection, command);
-    } 
-	else 
-	{
-        QModelIndex noIndex;
-        QItemSelection selection(noIndex, noIndex);
-        selectionModel()->select(selection, command);
-    }
 	*/
+	// ADDED 9-02-2009 Isaac Abbott
+	int x = contentsRect.x();
+	int y = contentsRect.y();
+
+	if (labelImg)
+	{
+		//Now find out what Label ID this point has (by checking on label image)
+		int labelval = (int)labelImg->GetPixel(currentT,0,currentZ,int(y),int(x));
+		if(labelval > 0)
+		{
+			int row = resultModel->RowForID(labelval);
+			QModelIndex index1 = model()->index(row, 0, rootIndex());						
+			QModelIndex index2 = model()->index(row,(model()->columnCount())-1, rootIndex());
+			selection.merge(QItemSelection(index1,index2),command);
+		}
+	}
+
+	selectionModel()->select(selection, command);
     viewport()->update(); 
  }
 
@@ -755,28 +763,51 @@ void SegmentationView::drawSelectionMarkers(QPainter *painter)
 		int id = model()->data(indexID).toInt();
 		vector<ftk::Object::Box> bs = resultModel->SegResult()->GetObjectPtr(id)->GetBounds();
 
-		
 		for(int i=0; i<(int)bs.size(); ++i)
 		{
 			ftk::Object::Box b = bs.at(i);
 			if ( (currentZ >= b.min.z ) && (currentZ <= b.max.z) )
 			{
-				//currently in a slice that should show the box				
 				painter->setPen(colorForSelections);
-				painter->drawRect( b.min.x, b.min.y, (b.max.x-b.min.x+1), (b.max.y-b.min.y+1) );							
-				
+				//currently in a slice that should show the box
+				/* This code is to draw a box around selected objects REMOVED 9/02/2009 IMA
+				painter->drawRect( b.min.x, b.min.y, (b.max.x-b.min.x+1), (b.max.y-b.min.y+1) );
+				//*******************************************************************************/
+				//Replaced with this code to redraw the boundary of the object in this slice:
+				int v, v1, v2, v3, v4;
+				for(int r = b.min.y; r <= b.max.y; r++) //was i
+				{
+					for(int c = b.min.x; c <= b.max.x; c++) // was j
+					{
+						v = (int)labelImg->GetPixel(0, 0, currentZ, r, c);
+						if (v > 0 && v == id)
+						{
+							v1 = (int)labelImg->GetPixel(0, 0, currentZ, r, c+1);
+							v2 = (int)labelImg->GetPixel(0, 0, currentZ, r+1, c);
+							v3 = (int)labelImg->GetPixel(0, 0, currentZ, r, c-1);
+							v4 = (int)labelImg->GetPixel(0, 0, currentZ, r-1, c);
+							if(v!=v1 || v!=v2 || v!=v3 || v!=v4)
+							{
+								painter->drawPoint(c, r);
+							}
+						}
+					}		
+				}
+				//*******************************************************************************/
 			}
-		}		
+		}
 	}
-	//Added by Yousef 7-31-2009
+
+	//Added by Yousef 7-31-2009, modified by Isaac 9-02-2009 to only draw points inside objects
 	//if we are selecting points for splitting, mark the points
 	if(resultModel->isSplitingMode())
 	{
+		painter->setPen(Qt::red);
 		for(int i=0; i<resultModel->getSizeOfSplittingList(); i++)		
 		{
 			std::vector<int> xx = resultModel->getPointFromSplittingList(i);
-			painter->setPen(Qt::red);
-			painter->drawPoint(xx.at(0), xx.at(1));
+			if ( currentZ == xx.at(2) )
+				painter->drawPoint(xx.at(0), xx.at(1));
 		}
 	}
 }

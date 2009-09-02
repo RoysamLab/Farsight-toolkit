@@ -301,14 +301,14 @@ bool NucleusEditor::checkSaveSeg()
 //******************************************************************************
 void NucleusEditor::closeEvent(QCloseEvent *event)
 {
-	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-
 	//Save changes:
 	if( !checkSaveSeg() )
 	{
 		event->ignore();
 		return;
 	}
+
+	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
 	//Stop any running threads:
 	this->abortSegment();

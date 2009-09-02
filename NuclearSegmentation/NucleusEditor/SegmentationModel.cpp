@@ -380,6 +380,7 @@ std::vector<int> SegmentationModel::getPointFromSplittingList(int id)
 	std::vector<int> ret;
 	ret.push_back(P.x);
 	ret.push_back(P.y);
+	ret.push_back(P.z);
 	return ret;
 }
 

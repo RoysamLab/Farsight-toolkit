@@ -842,6 +842,9 @@ double Image::GetPixel(int T, int CH, int Z, int R, int C)
 		|| R >= m_Info.numRows || C >= m_Info.numColumns )
 		return 0.0;
 
+	if( T < 0 || CH < 0 || Z < 0 || R < 0 || C < 0 )
+		return 0.0;
+
 	unsigned int x = m_Info.numColumns;
 	unsigned int y = m_Info.numRows;
 	unsigned int n = m_Info.bytesPerPix;
