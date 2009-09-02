@@ -196,7 +196,7 @@ int main (int argc, char *argv[])
 		fin >> x >> y >> z >> vecin.x >> vecin.y >> vecin.z;
 	}
     
-  printf("hhhhhh %ld", idx);
+  //printf("I am here %ld", idx);
   // make surface point f[]=1
   for (k = 1; k < N-1; k++)
      for (j = 1; j < M-1; j++)
@@ -381,11 +381,15 @@ int main (int argc, char *argv[])
 		 force[idx].y = Iv[idx];
          force[idx].z = Iw[idx]; 
 		 // this is just a very simple methods, you can use Xiaosong's method, i.e POW();
+		 // and also you can use GDF method---------------------------------------------//
   }
 
   printf("Numbers %d ",idx);
 
-  
+  //-----------------------------------Detelet Gradient Vector Memeory--------------------------------//
+  delete []Iu;// = new float[L*M*N];
+  delete []Iv;// = new float[L*M*N];
+  delete []Iw;// = new float[L*M*N];
 
   // find all critical points -- method 1: consider two sides
 /*  for (k = 1; k < sizeZ-1; k++)
@@ -644,7 +648,7 @@ int main (int argc, char *argv[])
 
 	FlagOnSkeleton[idx] = 1;
 
-  
+   //--------------------------------------Line path algorithm-------------------------------------------------------------------//
 	while(streamSteps < 400) //4000  
 	  {    // < 4000
 		rk2(Startpos.x, Startpos.y, Startpos.z, sizeX, sizeY, sizeZ, float(0.8), force, &Nextpos);   //0.2, 0.8, 2     float() added by xiao liang
@@ -668,7 +672,7 @@ int main (int argc, char *argv[])
 	streamSteps = 0;
 	idxSeeds--;
  } // end outer while 
-
+//----------------------------------------end of line path algorithm --------------------------------------------------------------//
 
    fclose(fout);
 
@@ -676,6 +680,7 @@ int main (int argc, char *argv[])
    delete []force;
    delete []FlagOnSkeleton;
    delete []seeds;
+   delete []curv;
 
    printf("End \n");
    return 0;
@@ -731,6 +736,7 @@ Vector3D interpolation(float x, float y, float z, int sizx, int sizy, int sizz, 
 			+forcevec[(Intz+1)*slsz + (Inty+1)*sizx + (Intx+1)].z*alpha*beta*gamma;
 
 	return(forceInt);
+
     }
 
 
