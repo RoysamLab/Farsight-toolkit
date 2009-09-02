@@ -33,11 +33,24 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines, std::vector<std::str
 	this->headers.push_back("Parent");
 	if (FeatureHeaders.size() >=1)
 	{
-		for (unsigned int i = 0; i< FeatureHeaders.size(); i++)
+		for (int i = 0; i< (int)FeatureHeaders.size(); i++)
 		{
 			this->headers.push_back(FeatureHeaders[i].c_str());
 		}
 	}
+	this->NumFeatures = this->headers.size();
+	this->SetTraces(trace_lines);
+}
+TraceModel::TraceModel(std::vector<TraceLine*> trace_lines)
+{	
+	this->Model = new QStandardItemModel(0, 0, this);
+	this->SelectionModel = new QItemSelectionModel(this->Model, this);
+//standard headers	
+	this->headers.push_back("ID");
+	this->headers.push_back("Trace Size");
+	this->headers.push_back("Type");
+	this->headers.push_back("Parent");	
+	this->NumFeatures = this->headers.size();
 	this->SetTraces(trace_lines);
 }
 void TraceModel::SetTraces(std::vector<TraceLine*> trace_lines)
@@ -49,7 +62,7 @@ void TraceModel::SetupHeaders()
 {	
 	int numHeaders = this->headers.size();
 	this->Model->setColumnCount(numHeaders);
-	for(int i=0; i<(int)headers.size(); ++i)
+	for(int i=0; i < numHeaders; ++i)
     {
 		this->Model->setHeaderData(i, Qt::Horizontal, 
 			this->headers.at(i));
@@ -62,4 +75,71 @@ void TraceModel::SyncModel()
 	{
 		return;
 	}
+	this->Model->setColumnCount(0);
+	this->Model->setRowCount(0);
+	this->SetupHeaders();
+	std::vector< std::vector< double > > data;
+	for (int i = 0; i < (int)this->GetTraces().size(); ++i)
+	{
+		std::vector<double> row;
+		row.push_back(this->GetTraces().at(i)->GetId());
+		row.push_back(this->GetTraces().at(i)->GetSize());
+		row.push_back((int)this->GetTraces().at(i)->GetType());
+		row.push_back(this->GetTraces().at(i)->GetParentID());
+		for (int j = 0; j < (int)this->GetTraces().at(i)->Features.size(); ++j)
+		{
+			row.push_back(this->GetTraces().at(i)->Features.at(j));
+		}
+		data.push_back(row);
+	}//end for traces.size  
+	for (int row=0; row<(int)this->GetTraces().size(); ++row)
+    {
+    this->Model->insertRow(row);
+    for(int col=0; col < this->Model->columnCount(); ++col)
+      {
+      this->Model->setData(this->Model->index(row, col), data.at(row).at(col));
+      }
+    }
+  //let the views know that the model changed
+  emit modelChanged();
+}
+void TraceModel::MapTracesToRows()
+{
+	if (this->GetTraces().size() == 0)
+	{
+		return;
+	}
+	QModelIndex index;
+	int ID;
+	this->IDToRowMap.clear();
+	for (int row = 0; row < this->Model->rowCount(); ++row)
+	{
+		index = this->Model->index(row, TraceModel::IDColumn);
+		ID = this->Model->data(index).toInt();
+		this->IDToRowMap.insert(ID, row);
+	}
+}
+
+void TraceModel::SelectByIDs(int ID)
+{
+	int row = this->IDToRowMap.value(ID);
+	QItemSelection selection;
+	selection.clear();
+	QModelIndex index1 = this->Model->index(row, 0, QModelIndex());
+	QModelIndex index2 = this->Model->index(row, (this->Model->columnCount())-1, QModelIndex());
+	selection.select(index1, index2);
+	this->SelectionModel->select(selection, QItemSelectionModel::Toggle);
+	emit selectionChanged();
+}
+std::vector<int> TraceModel::GetSelecectedIDs()
+{
+	std::vector<int> SelectedIDs;
+	QModelIndexList selected = this->SelectionModel->selectedRows();
+	for (int i = 0; i < selected.size(); ++i)
+	{
+		int row = selected.at(i).row();
+		int id = this->Model->data(this->Model->index(row, TraceModel::IDColumn)).toInt();
+		SelectedIDs.push_back(id);
+	}
+	return SelectedIDs;
 }

@@ -74,6 +74,7 @@ limitations under the License.
 #include "TraceGap.h"
 #include "TraceLine.h"
 #include "TraceObject.h"
+#include "TraceModel.h"
 #include "MergeModel.h"
 #include "View3DHelperClasses.h"
 #include "View3D.h"
@@ -185,11 +186,22 @@ void View3D::setupLinkedSpace()
 {  
   this->tobj->Gaps.clear();
   this->GapsPlotView = NULL;
+  this->TreePlot = NULL;
   this->histo = NULL;
   this->GapsTableView = new QTableView();
   this->TreeTable =new QTableView();
   this->MergeGaps = new MergeModel(this->tobj->Gaps);
   this->MergeGaps->setParent(this);
+  if (this->tobj->FeatureHeaders.size() >=1)
+  {
+	  this->TreeModel = new TraceModel(this->tobj->GetTraceLines(), this->tobj->FeatureHeaders);
+  }
+  else
+  {
+	  this->TreeModel = new TraceModel(this->tobj->GetTraceLines());
+  }
+  this->TreeModel->setParent(this);
+  this->ShowTreeData();
   this->connect(MergeGaps,SIGNAL(modelChanged()),this, SLOT(updateSelectionHighlights()));
   this->connect(this->MergeGaps->GetSelectionModel(), SIGNAL(selectionChanged(const QItemSelection & , const QItemSelection &)), this, SLOT(updateSelectionHighlights()));
 }
@@ -608,6 +620,7 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
     TraceLine *tline = reinterpret_cast<TraceLine*>(view->tobj->hashc[cell_id]);
 	if (view->tobj->Gaps.size() < 1)
 	{
+		view->TreeModel->SelectByIDs(tline->GetId());
 		view->HighlightSelected(tline, view->SelectColor);
 		tline->Getstats();              //prints the id and end coordinates to the command prompt 
 		view->SphereActor->SetPosition(pickPos);    //sets the selector to new point
@@ -842,12 +855,37 @@ void View3D::ListSelections()
     listText += QString::number(this->SelectedTraceIDs.size()) + " lines are selected\n";
     for (unsigned int i = 0; i < this->SelectedTraceIDs.size(); i++)
       {
-      selectedText += QString::number(this->SelectedTraceIDs[i]) + "\n";   
+      listText += QString::number(this->SelectedTraceIDs[i]) + "\n";   
       } 
     }
-  selectionInfo->setText(listText);
-  selectionInfo->setDetailedText(selectedText);
-  selectionInfo->show();
+  this->statusBar()->showMessage(listText);
+  //selectionInfo->setText(listText);
+  //selectionInfo->setDetailedText(selectedText);
+  //selectionInfo->show();
+}
+void View3D::ShowTreeData()
+{
+	if (this->TreeTable)
+	{
+		this->TreeTable->close();
+	}
+	if (this->TreePlot)
+	{
+		this->TreePlot->close();
+	}
+	this->TreeTable->setModel(this->TreeModel->GetModel());
+	this->TreeTable->setSelectionModel(this->TreeModel->GetSelectionModel());
+	this->TreeTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+	this->TreeTable->update();
+	this->TreeTable->show();
+
+	this->TreePlot = new PlotWindow(this->TreeModel->GetSelectionModel());
+	this->connect(this->TreePlot,SIGNAL(destroyed()),this, SLOT(DereferenceTreePlotView())); 
+	this->TreePlot->show();
+}
+void View3D::DereferenceTreePlotView()
+{
+	this->TreePlot = 0;
 }
 
 void View3D::ClearSelection()
@@ -1236,7 +1274,7 @@ void View3D::SplitTraces()
     }
   else
     {
-    cout << "Nothing to split" << endl;
+    this->statusBar()->showMessage(tr("Nothing to split"), 1000); 
     }
 }
 
@@ -1927,6 +1965,10 @@ void View3D::closeEvent(QCloseEvent *event)
     {
     this->TreeTable->close();
     }
+  if(this->TreePlot)
+  {
+	  this->TreePlot->close();
+  }
   event->accept();
 }
 

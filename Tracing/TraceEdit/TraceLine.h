@@ -37,6 +37,7 @@ public:
 	TraceLine(const TraceLine &t);
   ~TraceLine();
 	TraceLine *GetParent();
+	int GetParentID();
 	void SetParent(TraceLine* p);
 	void AddBranch(TraceLine* b);
 	TraceLine *GetBranch1();

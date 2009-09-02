@@ -44,7 +44,17 @@ TraceLine* TraceLine::GetParent()
 {
   return this->m_parent;
 }
-
+int TraceLine::GetParentID()
+{
+	if (this->m_parent)
+	{
+		return this->m_parent->GetId();
+	}
+	else 
+	{
+		return -1;
+	}
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 void TraceLine::SetParent(TraceLine* p)

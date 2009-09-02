@@ -48,8 +48,8 @@ class vtkRenderWindowInteractor;
 class  vtkSliderWidget;
 class vtkSphereSource;
 class vtkVolume;
-class MergeModel; 
-
+//class MergeModel; 
+class TraceModel;
 class MergeModel;
 class QTableView;
 class ScatterView;
@@ -112,6 +112,7 @@ public slots:
 	void SplitTraces();
 	void FlipTraces();
 	void SaveToFile();
+	void ShowTreeData();
 	void ShowSettingsWindow();
 	void HideSettingsWindow();
 	void ApplyNewSettings();
@@ -134,6 +135,7 @@ public slots:
 	void ApplySomaSettings();
 	//void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
     void DereferenceGapsPlotView();
+	void DereferenceTreePlotView();
 
 	void UndoAction();
 	void RedoAction();
@@ -186,18 +188,19 @@ private:
   ScatterView *MergeScatterView; 
 
 //merge statistics
-	QStandardItemModel *model;
-	QItemSelectionModel *selModel;
+	//QStandardItemModel *model;
+	//QItemSelectionModel *selModel;
 	QTableView *GapsTableView;
 	Qt::SortOrder Ascending;
 //plots	
 	PlotWindow *GapsPlotView;
 	HistoWindow *histo;
 //tobj statistics	
-	QStandardItemModel *treeModel;
-	QItemSelectionModel *TreeSelModel;
+	//QStandardItemModel *treeModel;
+	//QItemSelectionModel *TreeSelModel;
+	TraceModel *TreeModel;
 	QTableView *TreeTable;
-
+	PlotWindow *TreePlot;
 	//QT widgets for the menu bar
 	QMenu *fileMenu;
 	QToolBar *EditsToolBar;

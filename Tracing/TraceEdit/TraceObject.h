@@ -34,10 +34,22 @@ public:
 	TraceObject();
 	TraceObject(const TraceObject &T);
 	~TraceObject();
-	double getSmallLineColor();
-	double getMergeLineColor();
-	void setSmallLineColor(double set);
-	void setMergeLineColor(double set);
+	double getSmallLineColor()
+	{
+		return this->smallLineColor;
+	};
+	double getMergeLineColor()
+	{
+		return this->mergeLineColor;
+	};
+	void setSmallLineColor(double set)
+	{
+		this->smallLineColor=set;
+	};
+	void setMergeLineColor(double set)
+	{
+		this->mergeLineColor=set;
+	};
 //	I/O functions
 	bool ReadFromSWCFile(char * filename);
 	bool ReadFromRPIXMLFile(char * filename);
@@ -78,7 +90,8 @@ private:
 	vtkSmartPointer<vtkPolyData> PolyTraces;
 	double smallLineColor, mergeLineColor;	
   void CollectTraceBitsRecursive(std::vector<TraceBit> &vec,TraceLine *l);
-  void CollectIdsRecursive(std::vector<int> ids, TraceLine* tline);
+  void CollectIdsRecursive(std::vector<int> &ids, TraceLine* tline);
+  void LinearTraceLinesRecursive(std::vector<TraceLine*> &allLine, TraceLine* tline);
   void CollectBranchPointsRecursive(vtkSmartPointer<vtkPoints> p, vtkSmartPointer<vtkCellArray> cells,TraceLine *tline);
   void CollectSegmentMidPointsRecursive(vtkSmartPointer<vtkPoints>p, vtkSmartPointer<vtkCellArray> cells, vtkSmartPointer<vtkFloatArray> da,TraceLine* tline);
 };

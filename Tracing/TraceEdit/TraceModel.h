@@ -31,6 +31,7 @@ class TraceModel : public QObject
 
 public:
 	TraceModel(std::vector<TraceLine*> trace_lines, std::vector<std::string> FeatureHeaders);
+	TraceModel(std::vector<TraceLine*> trace_lines);
 
 	QStandardItemModel *GetModel()
 	{
@@ -41,7 +42,10 @@ public:
 		return this->SelectionModel;
 	};
 	int RowForID(int id);
-	int GetNumFeatures();
+	int GetNumFeatures()
+	{
+		return this->NumFeatures;
+	};
 	int GetNumTraces();
 	void SetTraces(std::vector<TraceLine*> trace_lines);
 	std::vector<TraceLine*>GetTraces()
@@ -57,7 +61,7 @@ signals:
 	void selectionChanged(void);
 
 public slots:
-	void deleteTrigger(void);
+	//void deleteTrigger(void);
 private:	
 	const static int IDColumn = 0;
 	QMap<int, int> IDToRowMap;

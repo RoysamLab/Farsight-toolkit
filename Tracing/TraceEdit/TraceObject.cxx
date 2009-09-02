@@ -66,25 +66,6 @@ TraceObject::~TraceObject()
     }
 }
 
-double TraceObject::getSmallLineColor()
-{
-  return this->smallLineColor;
-}
-
-double TraceObject::getMergeLineColor()
-{
-  return this->mergeLineColor;
-}
-
-void TraceObject::setSmallLineColor(double set)
-{
-  this->smallLineColor=set;
-}
-
-void TraceObject::setMergeLineColor(double set)
-{
-  this->mergeLineColor=set;
-}
 
 void TraceObject::Print(std::ostream &c)
 {
@@ -103,9 +84,21 @@ std::vector<TraceLine*>* TraceObject::GetTraceLinesPointer()
 
 std::vector<TraceLine*> TraceObject::GetTraceLines()
 {
-  return trace_lines;
+	std::vector<TraceLine*> allTLines;
+	for (unsigned int i = 0; i < trace_lines.size(); i++)
+	{
+		this->LinearTraceLinesRecursive(allTLines, this->trace_lines[i]);
+	}
+  return allTLines;
 }
-
+void TraceObject::LinearTraceLinesRecursive(std::vector<TraceLine*> &allLine, TraceLine *tline)
+{
+	allLine.push_back(tline);
+	for(unsigned int counter = 0; counter < tline->GetBranchPointer()->size(); counter++)
+	{
+		this->LinearTraceLinesRecursive(allLine, (*tline->GetBranchPointer())[counter]);
+	}
+}
 bool TraceObject::ReadFromFeatureTracksFileForKymograph(char *filename,int type_offset=0)
 {
   FILE * fp = fopen(filename,"r");
@@ -593,10 +586,21 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
   TiXmlDocument doc(filename);
   doc.LoadFile();
   TiXmlHandle docHandle( &doc );
+  
+
   // Read the feature header names
-  TiXmlElement* headerElement = docHandle.FirstChild("FeatureHeaderNames").Element();
-  const char * text = headerElement->GetText();
-  //write code to extract header names from text and create std::vector<std:string> in TraceObject
+  TiXmlElement* headerElement = docHandle.FirstChild("Trace").FirstChild("FeatureHeaderNames").Element();
+  if (headerElement)
+  {
+	char * text = (char*)headerElement->GetText();
+	//write code to extract header names from text and create std::vector<std:string> in TraceObject
+	char* pch = strtok (text, ",");
+	while (pch != NULL)
+	{
+		this->FeatureHeaders.push_back(pch);
+		pch = strtok(NULL, ",");
+	}//fin populate headers
+  }  
   TiXmlElement* lineElement =
     docHandle.FirstChild("Trace").FirstChild("TraceLine").Element();
   TiXmlElement* bitElement;
@@ -620,7 +624,7 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
     {
       lineParent = -1;
     }
-
+	
     if(hash_load.count(lineID)>0)
     {
       tline = reinterpret_cast<TraceLine*>(hash_load[lineID]);
@@ -630,9 +634,19 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
       tline = new TraceLine();
       hash_load[lineID] = reinterpret_cast<unsigned long long int>(tline);
     }
-	//for loop over the std::vector<std::string> of header names in TraceObject
-	//if(!=)
-	// filename.c_str()
+	if ( this->FeatureHeaders.size() >= 1)
+	{
+		for (unsigned int i = 0; i< this->FeatureHeaders.size(); ++i)
+		{
+			double newFeature;
+			if(lineElement->QueryDoubleAttribute(this->FeatureHeaders[i].c_str(), 
+				&newFeature)!= TIXML_SUCCESS)
+			{
+				newFeature = -1;
+			}
+			tline->Features.push_back(newFeature);
+		}//end of loading features
+	}
     tline->SetId(lineID);
     tline->SetType(lineType);
     //tline->setTraceColor(1.0/tline->GetType());
@@ -715,7 +729,7 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
   return true;
 }
 
-void TraceObject::CollectIdsRecursive(std::vector<int> ids, TraceLine* tline)
+void TraceObject::CollectIdsRecursive(std::vector<int> &ids, TraceLine* tline)
 {
   ids.push_back(tline->GetId());
   for(unsigned int counter = 0; counter < tline->GetBranchPointer()->size(); counter++)
