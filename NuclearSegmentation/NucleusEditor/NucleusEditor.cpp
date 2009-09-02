@@ -532,7 +532,16 @@ void NucleusEditor::segmentImage()
 		clearModel();
 
 	QString dataFile = lastPath + "/" + myImgName;
-	QString paramFile = lastPath + "/" + "Seg_Params.ini";
+
+	//Get the paramFile to use:
+	QString paramFile = "";
+	ParamsFileDialog *dialog = new ParamsFileDialog(lastPath,this);
+	if( dialog->exec() )	
+	{
+		paramFile = dialog->getFileName();
+	}
+	delete dialog;
+
 	if(seg) delete seg;
 	seg = new ftk::NuclearSegmentation();
 	if( !seg->SetInputs( dataFile.toStdString(), paramFile.toStdString() ) )
@@ -620,8 +629,10 @@ void NucleusEditor::abortSegment()
 	//	clearModel();
 	//delete seg;
 	//seg = NULL;
-
-	segWin->SetLabelImage(NULL);
+	if(seg)
+		seg->ReleaseSegMemory();
+	if(segWin)
+		segWin->SetLabelImage(NULL);
 	QApplication::restoreOverrideCursor();
 	fileMenu->setEnabled(true);
 	loadAction->setEnabled(true);
@@ -975,6 +986,75 @@ bool NucleusEditor::ConfirmClosePython()
      }
    return true;
   }
+
+
+ParamsFileDialog::ParamsFileDialog(QString lastPth, QWidget *parent)
+: QDialog(parent)
+{
+	this->lastPath = lastPth;
+	autoButton = new QRadioButton(tr("Automatic Parameter Selection"),this);
+	autoButton->setChecked(true);
+
+	fileButton = new QRadioButton(tr("Use Parameter File..."),this);
+
+	fileCombo = new QComboBox();
+	fileCombo->addItem(tr(""));
+	fileCombo->addItem(tr("Browse..."));
+	connect(fileCombo, SIGNAL(currentIndexChanged(QString)),this,SLOT(ParamBrowse(QString)));
+
+	okButton = new QPushButton(tr("OK"),this);
+	connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
+	QHBoxLayout *bLayout = new QHBoxLayout;
+	bLayout->addStretch(20);
+	bLayout->addWidget(okButton);
+
+	QVBoxLayout *layout = new QVBoxLayout;
+	layout->addWidget(autoButton);
+	layout->addWidget(fileButton);
+	layout->addWidget(fileCombo);
+	layout->addLayout(bLayout);
+	this->setLayout(layout);
+	this->setWindowTitle(tr("Parameters"));
+
+	Qt::WindowFlags flags = this->windowFlags();
+	flags &= ~Qt::WindowContextHelpButtonHint;
+	this->setWindowFlags(flags);
+}
+
+QString ParamsFileDialog::getFileName()
+{
+	if(autoButton->isChecked())
+	{
+		return QString("");
+	}
+	else
+	{
+		return fileCombo->currentText();
+	}
+}
+void ParamsFileDialog::ParamBrowse(QString comboSelection)
+{
+	//First check to see if we have selected browse
+	if (comboSelection != tr("Browse..."))
+		return;
+
+	QString newfilename  = QFileDialog::getOpenFileName(this,"Choose a Parameters File",lastPath, 
+			tr("INI Files (*.ini)\n" 
+			   "TXT Files (*.txt)\n" 
+			   "All Files (*.*)\n"));
+
+	if (newfilename == "")
+	{
+		fileCombo->setCurrentIndex(0);
+		return;
+	}
+
+	if( newfilename == fileCombo->currentText() )
+		return;
+
+	fileCombo->setCurrentIndex(0);
+	fileCombo->setItemText(0,newfilename);
+}
 
 Load::Load(ftk::NuclearSegmentation *seg)
 : QThread()

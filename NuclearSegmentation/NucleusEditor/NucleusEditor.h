@@ -28,9 +28,11 @@ limitations under the License.
 #include <QtGui/QFileDialog>
 #include <QtGui/QToolBar>
 #include <QtGui/QProgressBar>
+#include <QtGui/QDialog>
+#include <QtGui/QVBoxLayout>
+#include <QtGui/QRadioButton>
 #include <QtCore/QFileInfo>
 #include <QtCore/QThread>
-
 
 //Farsight Includes:
 //#include "SegmentationCommon/ftkSegmentationResult.h"
@@ -44,6 +46,24 @@ limitations under the License.
 #include "ftkGUI/ImageBrowser5D.h"
 #include "ftkGUI/HistoWindow.h"
 //#include "SegmentationView.h"
+
+
+class ParamsFileDialog : public QDialog
+{
+	Q_OBJECT
+public:
+	ParamsFileDialog(QString lastPth, QWidget *parent = 0);
+
+	QString getFileName();
+private slots:
+	void ParamBrowse(QString);
+private:
+	QRadioButton *autoButton;
+	QRadioButton *fileButton;
+	QComboBox *fileCombo;
+	QString lastPath;
+	QPushButton *okButton;
+};
 
 class Load : public QThread
 {
