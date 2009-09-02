@@ -54,7 +54,7 @@ void PlotWindow::setupUI(void)
 	optionsMenu->addMenu(colorMenu);
 
 	toolsMenu = menuBar()->addMenu(tr("&Tools"));
-	svmAction = new QAction(tr("SVM"), this);
+	svmAction = new QAction(tr("Find Outliers"), this);
 	connect(svmAction, SIGNAL(triggered()), this, SLOT(startSVM()));
 	toolsMenu->addAction(svmAction);
 

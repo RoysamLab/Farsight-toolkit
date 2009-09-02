@@ -513,6 +513,8 @@ void SegmentationView::scrollTo(const QModelIndex &index, ScrollHint)
 	// ADDED 9-02-2009 Isaac Abbott
 	int x = contentsRect.x();
 	int y = contentsRect.y();
+	x = x/currentScale;
+	y = y/currentScale;
 
 	if (labelImg)
 	{

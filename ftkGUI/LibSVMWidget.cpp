@@ -278,7 +278,7 @@ void LibSVMWidget::go()
 	if(columnForSVM >= model->columnCount())
 	{
 		model->insertColumn(columnForSVM);			//Add Column for svm result		
-		model->setHeaderData( columnForSVM, Qt::Horizontal, tr("svm") );
+		model->setHeaderData( columnForSVM, Qt::Horizontal, tr("outlier?") );
 	}
 
 	//stop signalling:

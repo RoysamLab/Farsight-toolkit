@@ -581,7 +581,7 @@ bool SegmentationModel::neighbor(ftk::Object *obj1, ftk::Object *obj2)
 	if(c1.t != c2.t)
 		return false;
 
-	QRect r1(QPoint(b1.min.x,b1.min.y),QPoint(b1.max.x,b1.max.y));
+	QRect r1(QPoint(b1.min.x-1,b1.min.y-1),QPoint(b1.max.x+1,b1.max.y+1));	//Go one bigger on all sides
 	QRect r2(QPoint(b2.min.x,b2.min.y),QPoint(b2.max.x,b2.max.y));
 
 	if( r1.intersects(r2) )
