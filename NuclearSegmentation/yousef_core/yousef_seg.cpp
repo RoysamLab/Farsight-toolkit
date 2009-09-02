@@ -162,6 +162,7 @@ void yousef_nucleus_seg::runSeedDetection()
 	//need to pass a float pointer with input image in it, so create it here
 	float *imgPtr = new float[numStacks*numRows*numColumns];
 	ucharToFloat(dataImagePtr /*from*/, imgPtr /*to*/, numRows, numColumns, numStacks, 1 /*invert*/);
+	//ushortToFloat(binImagePtr /*from*/, imgPtr /*to*/, numRows, numColumns, numStacks, 1 /*invert*/);
 
 	//allocate space for the laplacian of gaussian
 	//allocate inside the 3-D seeds detection function in order to save memory for the intermediate steps
@@ -751,6 +752,8 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 		delete [] subsegImg;
 		delete [] subclustImg;
 		delete [] subDataImg;
+
+		free(Dterms);
 	}		
 
 	//relabel the cells
@@ -776,6 +779,34 @@ unsigned char ***TriplePtr(int z, int r, int c)
 void ucharToFloat(unsigned char* fromLoc, float* toLoc,int r, int c, int z, char invert)
 {
 	unsigned char val;
+	int curNode;
+
+	if ((toLoc != NULL) && (fromLoc != NULL))
+	{
+		for (int k=0; k<z; ++k)
+		{
+			for (int j=0; j<r; ++j)
+			{
+				for (int i=0; i<c; ++i)
+				{
+					curNode = (k*r*c)+(j*c)+i;
+					val = fromLoc[curNode];
+					if (invert == 1)
+						val = 255-val;
+					toLoc[curNode] = (float)val;	
+				}
+			}
+		}
+	}
+	else
+	{
+		std::cerr << "POINTERS NOT INITIALIZED in ucharToFloat" << std::endl;
+	}
+}
+
+void ushortToFloat(unsigned short* fromLoc, float* toLoc,int r, int c, int z, char invert)
+{
+	unsigned short val;
 	int curNode;
 
 	if ((toLoc != NULL) && (fromLoc != NULL))

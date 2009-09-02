@@ -49,6 +49,7 @@ using namespace std;
 
 void ucharToFloat(unsigned char* fromLoc, float* toLoc,int r, int c, int z, char invert);
 void ucharToUShort(unsigned char* fromLoc, unsigned short* toLoc,int r, int c, int z, char invert);
+void ushortToFloat(unsigned short* fromLoc, float* toLoc,int r, int c, int z, char invert);
 
 unsigned char *** TriplePtr(int z, int r, int c);
   

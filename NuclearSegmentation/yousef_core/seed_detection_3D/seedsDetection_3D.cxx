@@ -109,6 +109,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	IteratorType iterator1(im,im->GetRequestedRegion());
 	
 	unsigned short* dImg = NULL;	
+	int max_dist = 1;
 	if(UseDistMap == 1)
 	{
 		for(int i=0; i<r*c*z; i++)
@@ -127,36 +128,39 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 			std::cerr<<"Failed to allocate memory for the distance image"<<std::endl;
 			return 0;
 		}
-		//distMap(im, r, c, z,dImg);
-		distMap_SliceBySlice(im, r, c, z,dImg);
+		//max_dist = distMap(im, r, c, z,dImg);
+		max_dist = distMap_SliceBySlice(im, r, c, z,dImg);
 		std::cout<<"done"<<std::endl;
 		iterator1.GoToBegin();		
 	}
 	
-
+	float multp = 1.0;
 	for(int i=0; i<r*c*z; i++)
-	{				
-	    iterator1.Set((unsigned short)IM[i]);	
+	{
+		if(UseDistMap == 1)
+			multp = .5+((float) dImg[i]/(2*max_dist));
+		
+	    iterator1.Set((unsigned short)IM[i]/multp);	
 		++iterator1;
 	}
 
 	//By Yousef (8/29/2009)
 	//Estimate the segmentation parameters
-	//if(UseDistMap == 1)
-	//{
-	//	std::cout<<"Estimating parameters..."<<std::endl;
-	//	estimateMinMaxScales(im, dImg, &sigma_min, &sigma_max, r, c, z);
-	//	scale_xy = sigma_min+1;
-	//	scale_z = ceil(scale_xy / sampl_ratio);
-	//	std::cout<<"    Minimum scale = "<<sigma_min<<std::endl;
-	//	std::cout<<"    Maximum scale = "<<sigma_max<<std::endl;
-	//	std::cout<<"    Clustering Resolution = "<<scale_xy<<std::endl;
-	//	//write out the parameters
-	//	sigma_min_in[0] = sigma_min;
-	//	sigma_max_in[0] = sigma_max;
-	//	scale_xy_in[0] =  scale_xy;
-	//	scale_z_in[0] = scale_z;
-	//}
+	if(UseDistMap == 1)
+	{
+		std::cout<<"Estimating parameters..."<<std::endl;
+		estimateMinMaxScales(im, dImg, &sigma_min, &sigma_max, r, c, z);
+		scale_xy = sigma_min+1;
+		scale_z = ceil(scale_xy / sampl_ratio);
+		std::cout<<"    Minimum scale = "<<sigma_min<<std::endl;
+		std::cout<<"    Maximum scale = "<<sigma_max<<std::endl;
+		std::cout<<"    Clustering Resolution = "<<scale_xy<<std::endl;
+		//write out the parameters
+		sigma_min_in[0] = sigma_min;
+		sigma_max_in[0] = sigma_max;
+		scale_xy_in[0] =  scale_xy;
+		scale_z_in[0] = scale_z;
+	}
 
 	//By Yousef (8/28/2009)
 	//In some situations the image is very larg and we cannot allocate memory for the LoG filter (20xthe size of the image in bytes)
@@ -573,11 +577,22 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 		{						
 			sigma = kk;
 			detect_seeds(im_Small, sz_r, sz_c, sz_z, sigma, IMG, 0);
+			//Method 1:
+			//Get the scale at which the LoG response at our point of interest is maximum
 			if(IMG[ind_i]>=max_resp)
 			{
-				max_resp = IMG[ind_i];
-				best_scale = kk;
+				max_resp = IMG[ind_i];								
+				best_scale = kk;				
 			}
+			//Method 2:
+			//We need the scale at which the maximum response in the small image region surrouding our point of interest 
+			//is maximum over scales
+			/*float mx2 = get_maximum_3D(IMG, 0, sz_r-1, 0, sz_c-1, 0, sz_z-1,sz_r,sz_c);
+			if(mx2>=max_resp)
+			{
+				max_resp = mx2;								
+				best_scale = kk;				
+			}*/
 		}
 		mx = best_scale;
 		
@@ -636,6 +651,8 @@ int distMap(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, unsigne
   long int i = 0;
   typedef itk::ImageRegionIteratorWithIndex< OutputImageType2 > IteratorType;
   IteratorType iterate(dt_obj->GetOutput(),dt_obj->GetOutput()->GetRequestedRegion());
+        
+  int max_dist = 0;
   while ( i<r*c*z)
   {	  
 	  double ds = iterate.Get();
@@ -643,11 +660,15 @@ int distMap(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, unsigne
 		  IMG[i] = 0;
 	  else
 		IMG[i] = (unsigned short) ds;
+
+	  if(IMG[i]>max_dist)
+		  max_dist = IMG[i];
+
       ++i;
  	  ++iterate;
   }	
  
-  return EXIT_SUCCESS;
+  return max_dist;
 }
 
 
@@ -661,6 +682,7 @@ int distMap_SliceBySlice(itk::SmartPointer<MyInputImageType> im, int r, int c, i
   //  The input and output image types are instantiated using the pixel types.  
   typedef itk::Image< OutputPixelType2, 2 >   OutputImageType2;
   long int k = 0;
+  int max_dist = 0;
   for(int i=0; i<z; i++)
   {
 	  MyInputImageType2D::Pointer image2D = extract2DImageSlice(im, 2, i);
@@ -695,8 +717,7 @@ int distMap_SliceBySlice(itk::SmartPointer<MyInputImageType> im, int r, int c, i
 	  //   Copy the resulting image into the input array  
       typedef itk::ImageRegionIteratorWithIndex< OutputImageType2 > IteratorType;
       IteratorType iterate(dt_obj->GetOutput(),dt_obj->GetOutput()->GetRequestedRegion());
-	  int j=0;	  
-
+	  int j=0;	  	 
       while ( j<r*c)
       {	  
 		  double ds = iterate.Get();
@@ -704,13 +725,15 @@ int distMap_SliceBySlice(itk::SmartPointer<MyInputImageType> im, int r, int c, i
 			 IMG[k] = 0;
 		  else
 			 IMG[k] = (unsigned short) ds;
+		  if(IMG[k]>max_dist)
+			  max_dist = IMG[k];
 		  ++k;
 		  ++j;
  		  ++iterate;
 	  }	  
   } 
  
-  return EXIT_SUCCESS;
+  return max_dist;
 }
 
 
