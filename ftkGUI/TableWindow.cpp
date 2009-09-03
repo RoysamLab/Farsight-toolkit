@@ -180,7 +180,7 @@ void TableWindow::ResizeToOptimalSize(void)
 	//assumes all rows have the same height
 	int rowHeight = table->rowHeight(0);
 	int numRows = table->model()->rowCount();
-	if (numRows > 5) numRows = 5;
+	if (numRows > 15) numRows = 15;
 	int bestHeight =( numRows + 1 ) * rowHeight;
 
 	int bestWidth = 0;
@@ -188,7 +188,7 @@ void TableWindow::ResizeToOptimalSize(void)
 	{
 		bestWidth = bestWidth + table->columnWidth(i);
 	}
-	bestWidth = bestWidth + 100;
+	bestWidth = bestWidth + 50;
 
 	resize(bestWidth,bestHeight+5);
 
