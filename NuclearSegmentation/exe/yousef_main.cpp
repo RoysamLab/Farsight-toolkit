@@ -27,9 +27,10 @@ limitations under the License.
 
 int main(int argc, char* argv[])
 {
-	if(argc <4)
+	if(argc <3)
 	{
-		std::cout<<"Usage: segment_nuclei <InputImageFileName> <OutputImageFileName> <ParametersFileName>\n";
+		std::cout<<"Usage1: segment_nuclei <InputImageFileName> <OutputImageFileName>\n";
+		std::cout<<"Usage2: segment_nuclei <InputImageFileName> <OutputImageFileName> <ParametersFileName>\n";
 		return 0;
 	}
 	clock_t startTimer = clock();
@@ -70,7 +71,10 @@ int main(int argc, char* argv[])
 	img=0;
 
 	yousef_nucleus_seg *NucleusSeg = new yousef_nucleus_seg();
-	NucleusSeg->readParametersFromFile(argv[3]);
+	if(argc == 3)
+		NucleusSeg->readParametersFromFile("");
+	else
+		NucleusSeg->readParametersFromFile(argv[3]);
 	NucleusSeg->setDataImage(in_Image,size1,size2,size3,argv[1]);
 	
 	
