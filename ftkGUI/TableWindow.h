@@ -22,18 +22,24 @@ limitations under the License.
 #include <QtGui/QDesktopWidget>
 #include <QtGui/QWidget>
 #include <QtGui/QStatusBar>
+#include <QtGui/QMenuBar>
+#include <QtGui/QPushButton>
+#include <QtGui/QComboBox>
 #include <QtGui/QItemSelection>
 #include <QtGui/QItemSelectionModel>
 #include <QtGui/QTableView>
 #include <QtGui/QVBoxLayout>
 #include <QtGui/QHeaderView>
 #include <QtGui/QCloseEvent>
+#include <QtGui/QDialog>
 
 #include <iostream>
 
 //#include "SegmentationModel.h"
 
-class TableWindow : public QWidget
+class ChooseItemDialog;
+
+class TableWindow : public QMainWindow
 {
     Q_OBJECT;
 
@@ -45,6 +51,7 @@ public:
 
 signals:
 	void closing(QWidget *widget);
+	void sorted();
 
 protected:
 	void closeEvent(QCloseEvent *event);
@@ -52,14 +59,30 @@ protected:
 public slots:
 	void update();
 	void modelChange(const QModelIndex &topLeft, const QModelIndex &bottomRight);
+
+private slots:
+	void createMenus();
+	void sortBy();
     
 private:
-	QVBoxLayout *layout;
 	QTableView *table;
 
-	int visibleRows;
+	QMenu *viewMenu;
+	QAction *sortByAction;
 
-	//void setup(void);
+	int visibleRows;
+};
+
+class ChooseItemDialog : public QDialog
+{
+	Q_OBJECT
+public:
+	ChooseItemDialog(QStringList items, QWidget *parent = 0);
+	QString getSelectedItem(void){return itemCombo->currentText();};
+
+private:
+	QComboBox *itemCombo;
+	QPushButton *okButton;
 };
 
 #endif

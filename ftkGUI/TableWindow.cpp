@@ -20,14 +20,11 @@ limitations under the License.
 
 //Constructor
 TableWindow::TableWindow(QItemSelectionModel *selectionModel, QWidget *parent)
-: QWidget(parent)
+: QMainWindow(parent)
 {
 	this->table = new QTableView();
 	this->table->setEditTriggers(QAbstractItemView::NoEditTriggers);
-	this->layout = new QVBoxLayout();
-	this->layout->addWidget(table);
-	this->layout->setContentsMargins(2,2,2,2); 
-	this->setLayout(layout);
+	this->setCentralWidget(this->table);
 	this->setWindowTitle(tr("Table"));
 	// The following causes the program to get crashed if we close
 	// the table first and the main window afterwards
@@ -35,50 +32,52 @@ TableWindow::TableWindow(QItemSelectionModel *selectionModel, QWidget *parent)
 
 	this->table->setModel( (QAbstractItemModel*)selectionModel->model() );
 	this->table->setSelectionModel(selectionModel);
-	
 	this->table->setSelectionBehavior( QAbstractItemView::SelectRows );
-
 	connect(selectionModel->model(), SIGNAL(dataChanged(const QModelIndex &, const QModelIndex &)), this, SLOT(modelChange(const QModelIndex &, const QModelIndex &)));
+
+	this->createMenus();
 }
 
-/*
-void TableWindow::setup()
+void TableWindow::createMenus()
 {
-	table = new QTableView();
-	table->setEditTriggers(QAbstractItemView::NoEditTriggers);
-	layout = new QVBoxLayout();
-	layout->addWidget(table);
-	layout->setContentsMargins(2,2,2,2); 
-	setLayout(layout);
-	setWindowTitle(tr("Table"));
-	setAttribute ( Qt::WA_DeleteOnClose );
+	viewMenu = menuBar()->addMenu(tr("View"));
+	sortByAction = new QAction(tr("Sort by..."),this);
+	connect(sortByAction, SIGNAL(triggered()), this, SLOT(sortBy()));
+	viewMenu->addAction(sortByAction);
 }
-*/
-/*
-TableWindow::TableWindow(QWidget *parent) 
- : QWidget(parent) 
-{
-	this->setup();
-	//QFont f = font();
-	//f.setPointSize(8);
-	//table->setFont(f);
-}
-*/
 
-/*
-TableWindow::TableWindow(SegmentationModel *mod, QWidget *parent) 
- : QWidget(parent)
+void TableWindow::sortBy()
 {
-	this->setup();
-
-	table->setModel( mod->GetModel() );
-	table->setSelectionModel( mod->GetSelectionModel() );
-	connect(mod, SIGNAL(modelChanged()), this, SLOT(update()));
-	visibleRows = mod->NumFeatures()+2;
-	//for(int i = visibleRows; i < table->model()->rowCount(); ++i)
-	//	table->setColumnHidden(i,true);
+	//Get the Currently Selected Features
+	QStringList features;
+	for( int i=0; i < this->table->model()->columnCount(); ++i)
+	{	
+		if( !this->table->isColumnHidden(i) )
+		{
+			features << this->table->model()->headerData(i,Qt::Horizontal).toString();
+		}
+	}
+	
+	//Let user choose one using popup:
+	ChooseItemDialog *dialog = new ChooseItemDialog(features, this);
+	if(!dialog->exec())
+	{
+		delete dialog;
+		return;
+	}
+	QString feat = dialog->getSelectedItem();
+	delete dialog;
+	//Which column is this feature?
+	for( int i=0; i < this->table->model()->columnCount(); ++i)
+	{	
+		if( this->table->model()->headerData(i,Qt::Horizontal).toString() == feat )
+		{
+			this->table->sortByColumn(i,Qt::AscendingOrder);
+			emit sorted();
+			break;
+		}
+	}
 }
-*/
 
 void TableWindow::modelChange(const QModelIndex &topLeft, const QModelIndex &bottomRight)
 {
@@ -164,4 +163,30 @@ void TableWindow::ResizeToOptimalSize(void)
 
 	if (this->frameGeometry().width() > screenWidth)
 		resize(screenWidth-10,bestHeight+5);
+}
+
+ChooseItemDialog::ChooseItemDialog(QStringList items, QWidget *parent)
+: QDialog(parent)
+{
+	itemCombo = new QComboBox();
+	for (int i = 0; i < items.size(); ++i)
+	{
+		itemCombo->addItem( items.at(i) );
+	}
+
+	okButton = new QPushButton(tr("OK"),this);
+	connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
+	QHBoxLayout *bLayout = new QHBoxLayout;
+	bLayout->addStretch(20);
+	bLayout->addWidget(okButton);
+
+	QVBoxLayout *layout = new QVBoxLayout;
+	layout->addWidget(itemCombo);
+	layout->addLayout(bLayout);
+	this->setLayout(layout);
+	this->setWindowTitle(tr("Choose Item"));
+
+	Qt::WindowFlags flags = this->windowFlags();
+	flags &= ~Qt::WindowContextHelpButtonHint;
+	this->setWindowFlags(flags);
 }

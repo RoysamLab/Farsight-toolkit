@@ -199,19 +199,22 @@ void NucleusEditor::createMenus()
 	// Enable them after loading results!
 	//editMenu->setEnabled(false);
 
+	clearSelectAction = new QAction(tr("Clear Selections"), this);
+	clearSelectAction->setStatusTip(tr("Clear Current Object Selections"));
+	connect(clearSelectAction, SIGNAL(triggered()), this, SLOT(clearSelections()));
+	editMenu->addAction(clearSelectAction);
+
+	editMenu->addSeparator();
+
 	mergeAction = new QAction(tr("Merge Cells"), this);
 	mergeAction->setStatusTip(tr("Merge Cells"));
 	connect(mergeAction, SIGNAL(triggered()), this, SLOT(mergeCells()));	
 	editMenu->addAction(mergeAction);
 
-	editMenu->addSeparator();
-
 	deleteAction = new QAction(tr("Delete Cells"), this);
 	deleteAction->setStatusTip(tr("Deletes the selected cells"));
 	connect(deleteAction,SIGNAL(triggered()),this,SLOT(deleteCells()));	
 	editMenu->addAction(deleteAction);
-
-	editMenu->addSeparator();
 
 	// Splitting has two modes and therefore has two submenu items:
 	// Start Splitting
@@ -247,6 +250,7 @@ void NucleusEditor::createMenus()
 void NucleusEditor::setEditsEnabled(bool val)
 {
 	editMenu->setEnabled(val);
+	clearSelectAction->setEnabled(val);
 	mergeAction->setEnabled(val);
 	deleteAction->setEnabled(val);
 	splitMenu->setEnabled(val);
@@ -392,6 +396,14 @@ void NucleusEditor::clearModel(void)
 		currentModel = NULL;
 	}
 
+}
+
+void NucleusEditor::clearSelections()
+{
+	if(currentModel)
+	{
+		currentModel->GetSelectionModel()->clearSelection();
+	}
 }
 
 //*********************************************************************************
@@ -857,6 +869,7 @@ void NucleusEditor::CreateNewTableWindow(void)
 		return;
 
 	tblWin.push_back(new TableWindow(currentModel->GetSelectionModel()));
+	connect(tblWin.back(), SIGNAL(sorted()), currentModel, SLOT(updateMapping()));
 	tblWin.back()->ResizeToOptimalSize();
 	tblWin.back()->show();
 }

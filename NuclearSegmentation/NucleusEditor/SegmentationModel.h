@@ -63,6 +63,7 @@ signals:
 	void modelChanged();
 
 public slots:
+	void updateMapping(void);
 	void deleteTrigger(void);
 	void mergeTrigger(void);
 	void splitTrigger(void);
@@ -97,7 +98,6 @@ private:
 	void MostDataInModelChanged(void);
 	void SyncModel();
 	void UpdateColors();
-	void updateMapping();
 	bool neighbor(ftk::Object *obj1, ftk::Object *obj2);
 
 	//added by Yousef 7-30-2009
