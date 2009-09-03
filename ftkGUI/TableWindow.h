@@ -32,12 +32,18 @@ limitations under the License.
 #include <QtGui/QHeaderView>
 #include <QtGui/QCloseEvent>
 #include <QtGui/QDialog>
+#include <QtGui/QGroupBox>
+#include <QtGui/QLabel>
+#include <QtGui/QCheckBox>
+#include <QtGui/QButtonGroup>
+#include <QtGui/QScrollArea>
 
 #include <iostream>
 
 //#include "SegmentationModel.h"
 
 class ChooseItemDialog;
+class ChooseItemsDialog;
 
 class TableWindow : public QMainWindow
 {
@@ -63,11 +69,13 @@ public slots:
 private slots:
 	void createMenus();
 	void sortBy();
+	void changeColumns();
     
 private:
 	QTableView *table;
 
 	QMenu *viewMenu;
+	QAction *visibleColumnsAction;
 	QAction *sortByAction;
 
 	int visibleRows;
@@ -83,6 +91,21 @@ public:
 private:
 	QComboBox *itemCombo;
 	QPushButton *okButton;
+};
+
+class ChooseItemsDialog : public QDialog
+{
+	Q_OBJECT
+public:
+	ChooseItemsDialog(QStringList items, QList<bool> * _selected, QWidget *parent = 0);
+private slots:
+	void selectionChanged(int);
+	void selectNone();
+	void selectAll();
+private:
+	QButtonGroup *itemGroup;
+	QPushButton *okButton;
+	QList<bool> *selected;
 };
 
 #endif

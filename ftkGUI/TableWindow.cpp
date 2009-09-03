@@ -44,6 +44,10 @@ void TableWindow::createMenus()
 	sortByAction = new QAction(tr("Sort by..."),this);
 	connect(sortByAction, SIGNAL(triggered()), this, SLOT(sortBy()));
 	viewMenu->addAction(sortByAction);
+
+	visibleColumnsAction = new QAction(tr("Visible Columns..."), this);
+	connect(visibleColumnsAction, SIGNAL(triggered()), this, SLOT(changeColumns()));
+	viewMenu->addAction(visibleColumnsAction);
 }
 
 void TableWindow::sortBy()
@@ -77,6 +81,33 @@ void TableWindow::sortBy()
 			break;
 		}
 	}
+}
+
+//Pop-up a window that allows the used to chang the columns that are visible in the table
+void TableWindow::changeColumns()
+{
+	//Get the Currently Features in model:
+	QStringList features;
+	QList<bool> visible;
+	for( int i=0; i < this->table->model()->columnCount(); ++i)
+	{	
+		features << this->table->model()->headerData(i,Qt::Horizontal).toString();
+		visible << !(this->table->isColumnHidden(i));
+	}
+	//Let user choose one's to display using popup:
+	ChooseItemsDialog *dialog = new ChooseItemsDialog(features, &visible, this);
+	if(!dialog->exec())
+	{
+		delete dialog;
+		return;
+	}
+	delete dialog;
+
+	for( int i=0; i < this->table->model()->columnCount(); ++i)
+	{	
+		this->table->setColumnHidden( i, !visible.at(i) );
+	}
+	this->ResizeToOptimalSize();
 }
 
 void TableWindow::modelChange(const QModelIndex &topLeft, const QModelIndex &bottomRight)
@@ -189,4 +220,101 @@ ChooseItemDialog::ChooseItemDialog(QStringList items, QWidget *parent)
 	Qt::WindowFlags flags = this->windowFlags();
 	flags &= ~Qt::WindowContextHelpButtonHint;
 	this->setWindowFlags(flags);
+}
+
+ChooseItemsDialog::ChooseItemsDialog(QStringList items, QList<bool> * _selected, QWidget *parent)
+: QDialog(parent)
+{
+	this->selected = _selected;
+
+	//First set up the items choices:
+	QGroupBox *groupBox = new QGroupBox();
+	QVBoxLayout *itemLayout = new QVBoxLayout;
+
+	QHBoxLayout *selLayout = new QHBoxLayout;
+	QLabel *selLabel = new QLabel(tr("Select:"));
+	QPushButton *allButton = new QPushButton(tr("All"));
+	QPushButton *nonButton = new QPushButton(tr("None"));
+	connect(allButton, SIGNAL(clicked()), this, SLOT(selectAll()));
+	connect(nonButton, SIGNAL(clicked()), this, SLOT(selectNone()));
+	selLayout->addWidget(selLabel);
+	selLayout->addWidget(allButton);
+	selLayout->addWidget(nonButton);
+	selLayout->addStretch(10);
+	itemLayout->addLayout(selLayout);
+
+	QWidget *groupWidget = new QWidget;
+	QVBoxLayout *vLayout = new QVBoxLayout;
+	itemGroup = new QButtonGroup;
+	itemGroup->setExclusive(false);
+
+	for (int i = 0; i < items.size(); ++i)
+	{
+		QString name = items.at(i);
+		QCheckBox *check = new QCheckBox(name);
+		if(selected->at(i))
+			check->setChecked(true);
+		else
+			check->setChecked(false);
+		vLayout->addWidget(check);
+		itemGroup->addButton(check, i);
+	}
+	connect(itemGroup, SIGNAL(buttonClicked(int)), this, SLOT(selectionChanged(int)));
+	groupWidget->setLayout(vLayout);
+
+	QScrollArea *scrollArea = new QScrollArea;
+	scrollArea->setWidget(groupWidget);
+	scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	itemLayout->addWidget(scrollArea);
+	groupBox->setLayout(itemLayout);
+	
+	//The ok button:
+	okButton = new QPushButton(tr("OK"),this);
+	connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
+	QHBoxLayout *bLayout = new QHBoxLayout;
+	bLayout->addStretch(20);
+	bLayout->addWidget(okButton);
+
+	//The final layout:
+	QVBoxLayout *layout = new QVBoxLayout;
+	layout->addWidget(groupBox);
+	layout->addLayout(bLayout);
+	this->setLayout(layout);
+	this->setWindowTitle(tr("Choose Items"));
+
+	Qt::WindowFlags flags = this->windowFlags();
+	flags &= ~Qt::WindowContextHelpButtonHint;
+	this->setWindowFlags(flags);
+}
+
+void ChooseItemsDialog::selectNone()
+{
+	QList<QAbstractButton *> buttons = itemGroup->buttons();
+	for(int b = 0; b<buttons.size(); ++b)
+	{
+		if( buttons.at(b)->isChecked() )
+		{
+			buttons.at(b)->setChecked(false);
+			selected->replace(b,false);
+		}
+	}
+}
+
+void ChooseItemsDialog::selectAll()
+{
+	QList<QAbstractButton *> buttons = itemGroup->buttons();
+	for(int b = 0; b<buttons.size(); ++b)
+	{
+		if( !buttons.at(b)->isChecked() )
+		{
+			buttons.at(b)->setChecked(true);
+			selected->replace(b,true);
+		}
+	}
+}
+
+void ChooseItemsDialog::selectionChanged(int id)
+{
+	QList<QAbstractButton *> buttons = itemGroup->buttons();
+	selected->replace( id, buttons.at(id)->isChecked() );
 }

@@ -109,7 +109,7 @@ void HistoWindow::updateOptionMenus()
   binsMenu->clear();
 
   QActionGroup *binsGroup = new QActionGroup(this);
-  for(int i=2; i<=10; ++i)
+  for(int i=2; i<=100; ++i)
   {
     QAction *xAct = new QAction( QString::number(i), this );
     xAct->setCheckable(true);
@@ -306,7 +306,8 @@ void HistoWindow::Normalize()
 
 void HistoWindow::SetNumofBins(int n)
 {
-  if ((n>1) && (n<11)) 
+  //if ((n>1) && (n<11))
+	if((n>1) && (n<1000))
     numofbins=n;
   else 
   {
