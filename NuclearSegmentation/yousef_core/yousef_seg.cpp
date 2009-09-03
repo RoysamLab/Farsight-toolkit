@@ -112,6 +112,9 @@ void yousef_nucleus_seg::runBinarization()
 	clearMyConnComp();
 	mySeeds.clear();
 
+	//By Yousef on 9-3-2009
+	//subtract the gradient image from the input image
+	//subtractGradientImage(dataImagePtr, numRows, numColumns, numStacks, sampling_ratio_XY_to_Z);
 	//allocate space for the binary image
 	binImagePtr = new unsigned short[numStacks*numRows*numColumns];	
 
@@ -233,7 +236,7 @@ void yousef_nucleus_seg::runClustering()
 		std::cerr << "Starting Initial Clustering" << std::endl;
 		local_max_clust_3D(logImagePtr/*LoG*/, seedImagePtr/*local max vals*/, binImagePtr/*binary mask*/,clustImagePtr/*output*/,\
 			numRows, numColumns, numStacks, regionXY, regionZ);		
-	}
+	}	
 }
 
 void yousef_nucleus_seg::ExtractSeeds()
@@ -607,6 +610,9 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 
 	std::cerr<<"Finalizing Segmentation"<<std::endl;
 
+	//by yousef on 9/2/2009
+	int maxNumColors = 0;
+
 	//First, add minimum plus 1 to the LoG image to insure that the minimum is 1
 	//but we need to check if the minimum is negative first
 	if(minLoGImg<=0)
@@ -737,6 +743,9 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 		unsigned short* subsegImg = new unsigned short[x_len*y_len*z_len];			
 		float* Dterms  = multiColGraphLearning(sublogImg, subclustImg, subsegImg, y_len, x_len, z_len, &NC,refineRange);		
 
+		if(NC>maxNumColors)
+			maxNumColors = NC;
+
 		std::cerr<<"    Starting alpha-expansion..";		
 		start_alpha_expansion(subDataImg, subsegImg, Dterms, y_len, x_len, z_len, NC+1);										
 
@@ -766,7 +775,7 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 	}		
 
 	//relabel the cells
-	int numOfObjs = /*getConnCompImage*/getRelabeledImage(segImagePtr, 26, 25, numRows, numColumns,numStacks, 1);	
+	int numOfObjs = /*getConnCompImage*/getRelabeledImage(segImagePtr, 6, 25, numRows, numColumns,numStacks, 1);			
 	std::cerr << "done with " << numOfObjs<<" found"<<std::endl;
 	std::cerr << "Creating Final Label Image" << std::endl;		
 }
