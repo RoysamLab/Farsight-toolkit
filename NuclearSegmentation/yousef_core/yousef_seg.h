@@ -129,7 +129,7 @@ private:
 	void getConnCompInfo3D();
 	int getConnCompImage(unsigned short* IM, int connectivity, int minSize, int r, int c, int z,int runConnComp);
 	int getRelabeledImage(unsigned short* IM, int connectivity, int minSize, int r, int c, int z,int runConnComp);
-
+	
 	void clearBinImagePtr();
 	void clearSeedImagePtr();
 	void clearLogImagePtr();
