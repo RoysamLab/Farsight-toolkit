@@ -571,7 +571,7 @@ vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
     //printf("Calling CreatePolyDataRecursive %dth time\n",counter+1);
     CreatePolyDataRecursive(trace_lines[counter],point_scalars,line_points,line_cells);
   }
-  printf("Finished CreatePolyDataRecursive\n");
+  //printf("Finished CreatePolyDataRecursive\n");
   this->PolyTraces->SetPoints(line_points);
   this->PolyTraces->SetLines(line_cells);
 

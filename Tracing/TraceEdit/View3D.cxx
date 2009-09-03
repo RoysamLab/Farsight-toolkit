@@ -627,7 +627,7 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
 	{
 		view->TreeModel->SelectByIDs(tline->GetId());
 		//view->HighlightSelected(tline, view->SelectColor);
-		tline->Getstats();              //prints the id and end coordinates to the command prompt 
+		//tline->Getstats();              //prints the id and end coordinates to the command prompt 
 		view->SphereActor->SetPosition(pickPos);    //sets the selector to new point
 		view->SphereActor->VisibilityOn();      //deleteTrace can turn it off 
 		view->poly_line_data->Modified();
@@ -644,6 +644,7 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
 
 void View3D::updateTraceSelectionHighlights()
 {
+	this->UpdateLineActor();
 	std::vector<TraceLine*> Selections = this->TreeModel->GetSelectedTraces();
 	for (unsigned int i = 0; i < Selections.size(); i++)
 	{
@@ -674,17 +675,19 @@ void View3D::HighlightSelected(TraceLine* tline, double color)
 
 void View3D::Rerender()
 {
-  this->statusBar()->showMessage(tr("Rerender Image"), 1000);
+  this->statusBar()->showMessage(tr("Rerender Image"));
   this->SphereActor->VisibilityOff();
   this->SelectedTraceIDs.clear();
   this->Renderer->RemoveActor(this->BranchActor);
   //this->Renderer->RemoveActor(this->VolumeActor);
   this->UpdateLineActor();
   this->UpdateBranchActor();
-  this->Renderer->AddActor(this->BranchActor);
+  this->Renderer->AddActor(this->BranchActor); 
   //this->Renderer->AddActor(this->VolumeActor);
+  this->statusBar()->showMessage(tr("Update Tree Plots"));
   this->TreeModel->SetTraces(this->tobj->GetTraceLines());
   this->QVTK->GetRenderWindow()->Render();
+  this->statusBar()->showMessage(tr("Finished Rerendering Image"));
 }
 
 void View3D::UpdateLineActor()
@@ -908,12 +911,14 @@ void View3D::DereferenceTreePlotView()
 void View3D::ClearSelection()
 {
   QString selectText;
-  if (this->SelectedTraceIDs.size()<= 0)
+
+  if (this->TreeModel->GetSelecectedIDs().size() <= 0)
     {
     selectText=tr("Nothing Selected");
     }
   else
-    {
+    {  
+	this->TreeModel->GetSelectionModel()->Clear;
     this->SelectedTraceIDs.clear();
     selectText=tr("cleared list");
     this->Rerender();
