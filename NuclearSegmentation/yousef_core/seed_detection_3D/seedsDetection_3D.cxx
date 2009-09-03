@@ -138,9 +138,12 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	for(int i=0; i<r*c*z; i++)
 	{
 		if(UseDistMap == 1)
-			multp = .5+((float) dImg[i]/(2*max_dist));
+			multp = 1+((float) dImg[i]/(2*max_dist));
+		if(bImg[i] > 0)
+			iterator1.Set((unsigned short)IM[i]/multp);			
+		else
+			iterator1.Set(255);
 		
-	    iterator1.Set((unsigned short)IM[i]/multp);	
 		++iterator1;
 	}
 
