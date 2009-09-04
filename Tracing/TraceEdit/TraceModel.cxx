@@ -55,6 +55,7 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines)
 }
 void TraceModel::SetTraces(std::vector<TraceLine*> trace_lines)
 {
+	this->TraceLines.clear();
 	this->TraceLines = trace_lines;
 	this->SyncModel();
 }

@@ -53,6 +53,7 @@ class TraceModel;
 class MergeModel;
 class QTableView;
 class ScatterView;
+class TableWindow;
 
 struct point
 {

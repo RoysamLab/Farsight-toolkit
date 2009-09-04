@@ -30,6 +30,7 @@ limitations under the License.
 
 #include "ftkGUI/PlotWindow.h"
 #include "ftkGUI/HistoWindow.h"
+#include "ftkGUI/TableWindow.h"
 
 #include "itkImageFileReader.h"
 #include "itkImageToVTKImageFilter.h"
@@ -678,6 +679,7 @@ void View3D::Rerender()
   this->statusBar()->showMessage(tr("Rerender Image"));
   this->SphereActor->VisibilityOff();
   this->SelectedTraceIDs.clear();
+  this->TreeModel->GetSelectionModel()->Clear;
   this->Renderer->RemoveActor(this->BranchActor);
   //this->Renderer->RemoveActor(this->VolumeActor);
   this->UpdateLineActor();
@@ -760,7 +762,7 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
       break;
 
     case 'd':
-    view->tobj->Gaps.clear();
+    //view->tobj->Gaps.clear();
       view->DeleteTraces();
       break;
     
@@ -920,9 +922,22 @@ void View3D::ClearSelection()
     {  
 	this->TreeModel->GetSelectionModel()->Clear;
     this->SelectedTraceIDs.clear();
-    selectText=tr("cleared list");
+    selectText=tr("Cleared trace list");
     this->Rerender();
     }
+  if(this->tobj->Gaps.size()>0)
+  {
+	  this->tobj->Gaps.clear();
+	  if(this->GapsPlotView)
+	  {
+		  this->GapsPlotView->close();
+      }
+	  if (this->GapsTableView)
+      {
+		  this->GapsTableView->close();
+      }
+	selectText+=tr("Cleared gaps list");
+  }
   this->statusBar()->showMessage(selectText, 4000);
 }
 
