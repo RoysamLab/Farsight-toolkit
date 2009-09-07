@@ -203,6 +203,9 @@ void yousef_nucleus_seg::runSeedDetection()
 
 void yousef_nucleus_seg::runClustering()
 {
+	//fitMixGaussians();
+	//return;
+
 	//Check for required images
 	if( !dataImagePtr || !logImagePtr || !seedImagePtr || !binImagePtr )
 		return;
@@ -239,6 +242,149 @@ void yousef_nucleus_seg::runClustering()
 	}	
 }
 
+//added by Yousef on 09/06/2009
+void yousef_nucleus_seg::fitMixGaussians()
+{
+	//First check for necessary prerequisites
+	if( !dataImagePtr || !seedImagePtr || !binImagePtr)
+	{
+		return;
+	}
+
+	//Now clear all subsequent variables				
+	clearClustImagePtr();
+	clustImagePtr = new unsigned short[numStacks*numRows*numColumns];
+	memset(clustImagePtr/*destination*/,0/*value*/,numStacks*numRows*numColumns*sizeof(unsigned short)/*num bytes to move*/);
+	
+	//std::cerr<<"Finalizing Segmentation"<<std::endl;
+
+	//First, add minimum plus 1 to the LoG image to insure that the minimum is 1
+	//but we need to check if the minimum is negative first
+	if(minLoGImg<=0)
+	{
+		minLoGImg = -minLoGImg;
+		for(int i=0; i<numStacks*numRows*numColumns; i++)
+			logImagePtr[i]+= (minLoGImg+1);
+	}
+
+	//Now, we apply the next steps into the connected components one by one
+	int ind, x_len, y_len, z_len, val;
+	//int min_lbl, max_lbl;	
+
+	int objects_count = 0;
+	for(int n=0; n<numConnComp; n++)
+	{
+		std::cerr<<"Processing Connected Component #"<<n+1<<"...";
+		//Now, get the subimages (the bounding box) for the current connected component
+		ind = 0;
+		x_len = myConnComp[n].x2 - myConnComp[n].x1 + 1;
+		y_len = myConnComp[n].y2 - myConnComp[n].y1 + 1;
+		z_len = myConnComp[n].z2 - myConnComp[n].z1 + 1;
+
+		//first, get the number of seeds in this connected component
+		int num_seeds_cc = 0;
+		int num_points_cc = 0;
+		for(int k=myConnComp[n].z1; k<=myConnComp[n].z2; k++)		 
+		{			
+			for(int i=myConnComp[n].x1; i<=myConnComp[n].x2; i++)
+			{				
+				for(int j=myConnComp[n].y1; j<=myConnComp[n].y2; j++)
+				{					
+					val = binImagePtr[(k*numRows*numColumns)+(j*numColumns)+i];
+					if(val != (n+1))
+					{
+						continue;
+					}
+					num_points_cc++;
+					val = seedImagePtr[(k*numRows*numColumns)+(j*numColumns)+i];
+					if(val > 0)
+						num_seeds_cc++;
+				}
+			}
+		}
+		//if you have only one or no seeds, then just set the object to the connected component
+		if(num_seeds_cc<2)
+		{	
+			objects_count++;
+			for(int k=myConnComp[n].z1; k<=myConnComp[n].z2; k++)		 
+			{			
+				for(int i=myConnComp[n].x1; i<=myConnComp[n].x2; i++)
+				{				
+					for(int j=myConnComp[n].y1; j<=myConnComp[n].y2; j++)
+					{					
+						val = binImagePtr[(k*numRows*numColumns)+(j*numColumns)+i];
+						if(val != (n+1))
+						{
+							continue;
+						}
+						clustImagePtr[(k*numRows*numColumns)+(j*numColumns)+i] = objects_count;
+					}
+				}
+			}			
+			std::cerr<<"done"<<std::endl;
+			continue;
+		}
+
+
+
+		//float* sublogImg = new float[x_len*y_len*z_len];
+		//unsigned short* subclustImg = new unsigned short[x_len*y_len*z_len];	
+		//std::vector<int> labelsList;
+		std::vector<std::vector<double> > X;
+		int** seeds_cc = new int*[num_seeds_cc];
+		int seeds_count_cc=0;
+		int new_obj_count = 0;
+		for(int k=myConnComp[n].z1; k<=myConnComp[n].z2; k++)		 //come back
+		{
+			for(int i=myConnComp[n].x1; i<=myConnComp[n].x2; i++)
+			{				
+				for(int j=myConnComp[n].y1; j<=myConnComp[n].y2; j++)
+				{					
+					val = binImagePtr[(k*numRows*numColumns)+(j*numColumns)+i];
+					//The bounding box could contain points from other neighbor connected components which need to be removed
+					if(val != (n+1))
+					{
+						continue;
+					}
+					std::vector<double> xx;
+					xx.push_back(i);
+					xx.push_back(j);
+					xx.push_back(k);
+					xx.push_back(dataImagePtr[(k*numRows*numColumns)+(j*numColumns)+i]);
+					X.push_back(xx);
+					val = seedImagePtr[(k*numRows*numColumns)+(j*numColumns)+i];
+					if(val > 0)
+					{
+						seeds_cc[seeds_count_cc] = new int[3];
+						seeds_cc[seeds_count_cc][0] = i;
+						seeds_cc[seeds_count_cc][1] = j;
+						seeds_cc[seeds_count_cc][2] = k;
+						seeds_count_cc++;
+					}
+				}
+			}
+		}
+		//fit a mixture of gaussians
+		EM_Gmm(&X, seeds_cc,num_points_cc, num_seeds_cc);
+		//read point to cell assigenement values
+		for(int i=0; i<num_points_cc; i++)
+		{
+			int x_cc = (int) X[i][0];
+			int y_cc = (int) X[i][1];
+			int z_cc = (int) X[i][2];
+			int ass_cc = (int) X[i][3];
+			ass_cc += objects_count;
+			clustImagePtr[(z_cc*numRows*numColumns)+(y_cc*numColumns)+x_cc] = ass_cc;
+			if(ass_cc > new_obj_count)
+				new_obj_count = ass_cc;
+		}
+		X.empty();
+		objects_count = new_obj_count;
+		std::cerr<<"done"<<std::endl;
+	}
+	std::cerr<<"Initial segmentation done with "<<objects_count<<" objects"<<std::endl;
+}
+/////////
 void yousef_nucleus_seg::ExtractSeeds()
 {
 	mySeeds.clear();

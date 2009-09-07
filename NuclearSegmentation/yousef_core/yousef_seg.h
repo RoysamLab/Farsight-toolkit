@@ -37,6 +37,7 @@ limitations under the License.
 #include "clustering_2D/Local_Max_Clust_2D.h"
 #include "graphColLearn_3D/Multi_Color_Graph_Learning_3D.h"
 #include "alpha_expansion/alpha_expansion.h"
+#include "EM_GMM/EM_Project_3_cpp_3D_comp.h"
 
 //ITK INCLUDES
 #include "itkConnectedComponentImageFilter.h"
@@ -123,6 +124,7 @@ public:
 	ftk::Object::Point MergeInit(ftk::Object::Point P1, ftk::Object::Point P2, int *newID);
 	bool DeleteInit(ftk::Object::Point P1);
 	int getMaxID(int);
+	
 
 private:	
 	void ExtractSeeds();
@@ -138,6 +140,9 @@ private:
 	void clearMyConnComp();
 
 	std::vector< ftk::Object::Point > getObjectBoundingBox(int id, int Int_Fin);
+
+	//added by Yousef on 06/09/2009
+	void fitMixGaussians();
 
 	//Internal Image information
 	unsigned char* dataImagePtr;	//Created outside yousef_seg

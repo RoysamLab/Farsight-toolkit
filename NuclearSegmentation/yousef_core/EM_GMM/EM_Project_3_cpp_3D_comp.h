@@ -37,6 +37,10 @@ void Compute_Probabilities(std::vector<std::vector<double> > *X, int num_points,
 
 void EM_Gmm(std::vector<std::vector<double> > *X,int** SEEDS,int num_points, int num_components);
 
+//added by Yousef on 09/06/2009
+void Initialize_Parameters_V2(std::vector<std::vector<double> > *X,int** SEEDS,double** U,double*** Segma,double* PI,double** Z,int num_points,int num_components);
+void Param_Maximization_V2(std::vector<std::vector<double> > *X,double **Gamma,double** U,double*** Segma,double* PI, int num_points, int num_components);
+void AssignToComponent(std::vector<std::vector<double> > *X, int num_points, int num_components, double** U,double*** Segma,double* PI);
 
 #endif
 

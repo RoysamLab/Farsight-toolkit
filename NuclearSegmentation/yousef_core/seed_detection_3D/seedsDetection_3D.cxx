@@ -467,8 +467,8 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 	double mean = 0.0;
 	double stdv = 0.0;
 	int cnt = 0;
-	//ofstream p;
-	//p.open("checkme.txt");
+	ofstream p;
+	p.open("checkme.txt");
 	for(int i=1; i<r-1; i+=2)
     {
         for(int j=1; j<c-1; j+=2)
@@ -494,7 +494,7 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 					lst.push_back(i);
 					lst.push_back(j);
 					lst.push_back(k);
-					//p<<j<<" "<<i<<" "<<k<<std::endl;
+					p<<j<<" "<<i<<" "<<k<<" "<<mx<<std::endl;
 					scales.push_back(lst);
 					//mean +=mx;
 					cnt++;										
@@ -502,7 +502,7 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 			}			
         }
     } 
-	//p.close();
+	p.close();
 	/*mean /= cnt;
 	for(int i=0; i<cnt; i++)
 		stdv+= ((scales[i][0]-mean)*(scales[i][0]-mean));
@@ -519,6 +519,9 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 
 	//get the median of the scales(distances)
 	int medianS = computeMedian(scales, cnt);
+	ofstream p2;
+	p2.open("checkme2.txt");
+	p2<<"med = "<<medianS<<std::endl;
 
 	//then compute the Median absolute deviation
 	std::vector< std::vector<unsigned short> > madList;
@@ -530,9 +533,14 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 	}
 	int MAD = computeMedian(madList, cnt);
 	minScale[0] = medianS-MAD;
-	maxScale[0] = medianS+MAD;
-	
+	maxScale[0] = medianS+MAD;		
+		
+	p2<<"mad = "<<MAD<<std::endl;
+	p2<<"med-mad = "<<minScale[0]<<std::endl;
+	p2<<"med+mad = "<<maxScale[0]<<std::endl;
 
+	ofstream p3;
+	p3.open("checkme3.txt");
 	//For each local maximum point,try to find the best LoG scale
 	//To do that, suppose the distance at a given local maximum point is d, 
 	//then compute the its LoG responses at scales from d/2 to d
@@ -543,7 +551,7 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 	int cnt2 = 0;
 	for(int ind=0; ind<cnt; ind++)
 	{
-		int mx = scales[ind][0];
+		int mx = scales[ind][0]/sqrt(2.0);
 		int i = scales[ind][1];
 		int j = scales[ind][2];
 		int k = scales[ind][3];
@@ -556,12 +564,12 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 		if(smin == 1)
 			smin++;
 		cnt2++;
-		min_r = (int) max(0.0,(double)i-1.5*mx);
-		min_c = (int) max(0.0,(double)j-1.5*mx);
-		min_z = (int) max(0.0,(double)k-1.5*mx);
-		max_r = (int)min((double)r-1,(double)i+1.5*mx);
-		max_c = (int)min((double)c-1,(double)j+1.5*mx);                         
-		max_z = (int)min((double)z-1,(double)k+1.5*mx);                         
+		min_r = (int) max(0.0,(double)i-mx);
+		min_c = (int) max(0.0,(double)j-mx);
+		min_z = (int) max(0.0,(double)k-mx);
+		max_r = (int)min((double)r-1,(double)i+mx);
+		max_c = (int)min((double)c-1,(double)j+mx);                         
+		max_z = (int)min((double)z-1,(double)k+mx);                         
 					
 		int sub_r = i-min_r;
 		int sub_c = j-min_c;
@@ -575,7 +583,7 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 		float* IMG = new float[sz_c*sz_r*sz_z];
 		float max_resp = -100000.0;	
 		int best_scale = 0.0;
-		double sigma;
+		double sigma;			
 		for(int kk=smin; kk<=mx; kk++)
 		{						
 			sigma = kk;
@@ -597,6 +605,7 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 				best_scale = kk;				
 			}*/
 		}
+		p3<<mx<<" "<<best_scale<<std::endl;
 		mx = best_scale;
 		
 		if(mx<mnScl)
@@ -607,7 +616,11 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 		delete [] IMG;
 	}
 	minScale[0] = mnScl;
-	maxScale[0] = mxScl;
+	maxScale[0] = mxScl-1;
+	p2<<"min_scale="<<mnScl<<std::endl;
+	p2<<"max_scale="<<mxScl<<std::endl;
+	p2.close();
+	p3.close();
 }
 
 int distMap(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, unsigned short* IMG)
