@@ -60,6 +60,7 @@ private slots:
     
 private:
 	QMenu *optionsMenu;
+	QAction *normalizeAction;
 	QMenu *xMenu;
 	QMenu *yMenu;
 	QMenu *colorMenu;

@@ -98,6 +98,16 @@ void ScatterView::SetColForColor(int c)
 	}
 }
 
+void ScatterView::SetNormalize(bool val)
+{
+	if( val != mySettings->normalize )
+	{
+		mySettings->normalize = val;
+		updateAxis();
+		viewport()->update();
+	}
+}
+
 //*******************************************************************************************
 // SLOT: We have two selection modes. One is the standard Single Selection mode 
 //    Implemented by QT.
@@ -312,14 +322,27 @@ void ScatterView::updateAxis(void)
 		if (v < y1) y1 = v;
 		else if (v > y2) y2 = v;
     }
-	
-	//now extend axis slightly so all data points will be visible
-	double xrange = x2-x1;
-	double yrange = y2-y1;
-	double xp = .03*double(xrange);
-	double yp = .03*double(yrange);
 
-	mySettings->setRange(x1-xp,x2+xp,y1-yp,y2+yp);
+	//Save them
+	this->mySettings->d_minX = x1;
+	this->mySettings->d_maxX = x2;
+	this->mySettings->d_minY = y1;
+	this->mySettings->d_maxY = y2;
+
+	if(this->mySettings->normalize)
+	{
+		mySettings->setRange(-1,1,-1,1);
+	}
+	else
+	{
+	
+		//now extend axis slightly so all data points will be visible
+		double xrange = x2-x1;
+		double yrange = y2-y1;
+		double xp = .03*double(xrange);
+		double yp = .03*double(yrange);
+		mySettings->setRange(x1-xp,x2+xp,y1-yp,y2+yp);
+	}
 	mySettings->adjust();
 }
 
@@ -360,6 +383,13 @@ QModelIndex ScatterView::indexAt(const QPoint &point) const
             QModelIndex indexY = model()->index(row, columnNumForY, rootIndex());
             double valueX = model()->data(indexX).toDouble();
 			double valueY = model()->data(indexY).toDouble();
+
+			//Adjust for normalization:
+			if(settings.normalize == true)
+			{
+				valueX = -1 + 2* (valueX - settings.d_minX)/(settings.d_maxX - settings.d_minX);
+				valueY = -1 + 2* (valueY - settings.d_minY)/(settings.d_maxY - settings.d_minY);
+			}
 
             double dx = valueX - settings.minX;
 			double dy = valueY - settings.minY;
@@ -415,6 +445,13 @@ QRect ScatterView::itemRect(const QModelIndex &index) const
 
     double valueX = model()->data(indexX).toDouble();
 	double valueY = model()->data(indexY).toDouble();
+
+	//Adjust for normalization:
+	if(settings.normalize == true)
+	{
+		valueX = -1 + 2* (valueX - settings.d_minX)/(settings.d_maxX - settings.d_minX);
+		valueY = -1 + 2* (valueY - settings.d_minY)/(settings.d_maxY - settings.d_minY);
+	}
 
     double dx = valueX - settings.minX;
 	double dy = valueY - settings.minY;
@@ -838,6 +875,13 @@ void ScatterView::drawCurves(QPainter *painter)
         double valueX = model()->data(indexX).toDouble();
 		double valueY = model()->data(indexY).toDouble();
 
+		//Adjust for normalization:
+		if(settings.normalize == true)
+		{
+			valueX = -1 + 2* (valueX - settings.d_minX)/(settings.d_maxX - settings.d_minX);
+			valueY = -1 + 2* (valueY - settings.d_minY)/(settings.d_maxY - settings.d_minY);
+		}
+
         double dx = valueX - settings.minX;
 		double dy = valueY - settings.minY;
 		double x = rect.left() + (dx * (rect.width() - 1) / settings.spanX());
@@ -968,6 +1012,7 @@ PlotSettings::PlotSettings()
 	minY = 0.0;
 	maxY = 10.0;
 	numYTicks = 5;
+	normalize = false;
 }
 
 //***************************************************************************************************

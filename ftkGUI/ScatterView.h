@@ -67,6 +67,7 @@ public:
 	int ColForColor(){ return columnNumForColoring; };
 
 public slots:
+	void SetNormalize(bool val);
 	void SetColForX(int x, std::string name);
 	void SetColForY(int y, std::string name);
 	void SetColForColor(int c);
@@ -149,6 +150,7 @@ public:
 	void setRange(double x1, double x2, double y1, double y2);
 	void adjust();
 
+	//These are the values that the plot shows:
 	double spanX() const { return maxX - minX; }
 	double spanY() const { return maxY - minY; }
 	double minX;
@@ -157,6 +159,14 @@ public:
 	double minY;
 	double maxY;
 	int numYTicks;
+
+	bool normalize;
+
+	//These are the values from in the actual data, needed for normalization:
+	double d_minX;
+	double d_minY;
+	double d_maxX;
+	double d_maxY;
 	
 private:
 	static void adjustAxis(double &min, double &max, int &numTicks);

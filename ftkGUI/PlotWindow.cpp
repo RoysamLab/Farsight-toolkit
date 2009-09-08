@@ -41,8 +41,24 @@ void PlotWindow::setupUI(void)
 {
 	resize(500, 500);
 
+	QWidget *centralWidget = new QWidget();
+	QVBoxLayout *vlayout = new QVBoxLayout();
+	scatter = new ScatterView();
+	vlayout->addWidget(scatter);
+	centralWidget->setLayout(vlayout);
+	this->setCentralWidget(centralWidget);
+
 	//Setup menu:
 	optionsMenu = menuBar()->addMenu(tr("&Options"));
+
+	normalizeAction = new QAction(tr("&Normalize"),this);
+	normalizeAction->setCheckable(true);
+	normalizeAction->setChecked(false);
+	normalizeAction->setShortcut(tr("Ctrl+N"));
+	connect(normalizeAction,SIGNAL(toggled(bool)), scatter, SLOT(SetNormalize(bool)));
+	optionsMenu->addAction(normalizeAction);
+
+	optionsMenu->addSeparator();
 	xMenu = new QMenu(tr("Set X Axis"));
 	connect(xMenu, SIGNAL(triggered(QAction *)), this, SLOT(xChange(QAction *)));
 	optionsMenu->addMenu(xMenu);
@@ -57,13 +73,6 @@ void PlotWindow::setupUI(void)
 	svmAction = new QAction(tr("Find Outliers"), this);
 	connect(svmAction, SIGNAL(triggered()), this, SLOT(startSVM()));
 	toolsMenu->addAction(svmAction);
-
-	QWidget *centralWidget = new QWidget();
-	QVBoxLayout *vlayout = new QVBoxLayout();
-	scatter = new ScatterView();
-	vlayout->addWidget(scatter);
-	centralWidget->setLayout(vlayout);
-	this->setCentralWidget(centralWidget);
 
 	setWindowTitle(tr("Scatter Plot"));
 	// If we do the following, the program crashes when we first close the scatterplot
