@@ -310,7 +310,7 @@ void SegmentationModel::endSplitTrigger()
 		//start by sending the points (pairs) to the cell plitter
 		ftk::NuclearSegmentation *nucseg = (ftk::NuclearSegmentation*)segResult;
 		//the number of selected points for splitting must be even
-		int num_split = pointsForSplitting.size();
+		int num_split = (int)pointsForSplitting.size();
 		if((num_split%2)!=0)
 			num_split--;
 

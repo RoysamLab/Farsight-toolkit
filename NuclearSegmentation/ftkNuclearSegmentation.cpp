@@ -849,13 +849,14 @@ bool NuclearSegmentation::SaveLabel()
 	labelFilename.clear();
 	size_t pos = dataFilename.find_last_of(".");
 	std::string base = dataFilename.substr(0,pos);
-	std::string ext = dataFilename.substr(pos+1);
+	//std::string ext = dataFilename.substr(pos+1);
+	std::string ext = "tif";
 	labelFilename = base + "_label" + "." + ext;
 
 	labelImage->Cast<unsigned short>();		//Cannot Save as int type to tiff
 	if(!labelImage->SaveChannelAs(0, base + "_label", ext))
 		std::cerr << "FAILED TO SAVE LABEL IMAGE" << std::endl;
-	std::cout<<" segmentation output saved into "<<base<<"_label"<<ext<<std::endl;
+	std::cout<<" segmentation output saved into "<<base<<"_label."<<ext<<std::endl;
 
 	//Added by Yousef on 1/18/2009: save results into a format readable by the IDL farsight
 	//if(NucleusSeg)

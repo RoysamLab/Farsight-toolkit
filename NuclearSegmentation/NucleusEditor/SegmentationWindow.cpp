@@ -97,6 +97,11 @@ SegmentationWindow::SegmentationWindow(QWidget *parent)
 	channelWidget = NULL;
 }
 
+void SegmentationWindow::SetBoundsVisible(bool val)
+{
+	segview->setBoundsVisible(val);
+}
+
 void SegmentationWindow::closeEvent(QCloseEvent *event)
 {
 	emit closing(this);

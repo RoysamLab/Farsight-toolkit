@@ -56,6 +56,7 @@ public slots:
 	void setZ(int z);
 	void setT(int t);
 	void setChannelFlags(std::vector<bool> flags){channelFlags = flags;refreshDisplayImage();};
+	void setBoundsVisible(bool val);
 	//void setZoom(double zf);
 
 signals:
@@ -120,6 +121,7 @@ private:
 	QPoint origin;
 
 	QColor colorForSelections;
+	bool showBounds;
 };
 
 #endif 

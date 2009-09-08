@@ -77,6 +77,7 @@ private slots:
 	void about(void);
 	//void loadDatFile(void);
 	//void closeWidget(QWidget *);
+	void toggleBounds();
 	void CreateNewPlotWindow();
 	void CreateNewTableWindow();
 
@@ -120,6 +121,7 @@ private:
 	//QAction *datAction;
 
 	QMenu *viewMenu;
+	QAction *showBoundsAction;
 	QAction *newScatterAction;
 	QMenu *helpMenu;
 	QAction *aboutAction;

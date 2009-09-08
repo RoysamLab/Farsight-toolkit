@@ -181,6 +181,17 @@ void NucleusEditor::createMenus()
 
 	//VIEW MENU
 	viewMenu = menuBar()->addMenu(tr("&View"));
+
+	showBoundsAction = new QAction(tr("Show &Boundaries"), this);
+	showBoundsAction->setEnabled(false);
+	showBoundsAction->setCheckable(true);
+	showBoundsAction->setChecked(false);
+	showBoundsAction->setStatusTip(tr("Draw boundaries using a label image"));
+	showBoundsAction->setShortcut(tr("Ctrl+B"));
+	connect(showBoundsAction, SIGNAL(triggered()), this, SLOT(toggleBounds()));
+	viewMenu->addAction(showBoundsAction);
+
+	viewMenu->addSeparator();
 	newScatterAction = new QAction(tr("New Scatter"), this);
 	newScatterAction->setEnabled(false);
 	newScatterAction->setStatusTip(tr("Open a new Scatterplot Window"));
@@ -475,10 +486,27 @@ void NucleusEditor::loadResult(void)
 
 	// Enable the menu items for editing
 	setEditsEnabled(true);
+	showBoundsAction->setEnabled(true);
+	showBoundsAction->setChecked(true);
 	newScatterAction->setEnabled(true);
 	segmentAction->setEnabled(false);
 	saveAction->setEnabled(true);
 
+}
+
+void NucleusEditor::toggleBounds(void)
+{
+	if(!segWin)
+		return;
+
+	if( showBoundsAction->isChecked() )
+	{
+		segWin->SetBoundsVisible(true);
+	}
+	else
+	{
+		segWin->SetBoundsVisible(false);
+	}
 }
 
 void NucleusEditor::mergeCells(void)
@@ -725,6 +753,7 @@ void NucleusEditor::segment()
 		fileMenu->setEnabled(true);
 		this->setEditsEnabled(false);
 		viewMenu->setEnabled(true);
+		showBoundsAction->setEnabled(false);
 		loadAction->setEnabled(false);
 		saveAction->setEnabled(false);
 		xmlAction->setEnabled(false);
@@ -755,6 +784,7 @@ void NucleusEditor::segment()
 		}
 		segmentProgress->setValue(6);
 		segWin->SetLabelImage(seg->getLabelImage());
+		showBoundsAction->setChecked(true);
 		segmentTaskLabel->setText(tr(" Features "));
 
 		featuresThread = new Features(seg);
@@ -785,6 +815,7 @@ void NucleusEditor::segment()
 		loadAction->setEnabled(true);
 		xmlAction->setEnabled(true);
 		newScatterAction->setEnabled(true);
+		showBoundsAction->setEnabled(true);
 		this->setEditsEnabled(true);
 		viewMenu->setEnabled(true);
 		segmentState = -1;

@@ -30,6 +30,7 @@ SegmentationView::SegmentationView(QWidget *parent)
 	resultModel = NULL;
 	channelImg = NULL;
 	labelImg = NULL;
+	showBounds = true;
 
 	currentZ = 0;
 	currentT = 0;
@@ -56,6 +57,12 @@ SegmentationView::SegmentationView(QWidget *parent)
 
 	//setSelectionMode(QAbstractItemView::SingleSelection);
 	setSelectionMode(QAbstractItemView::MultiSelection);
+}
+
+void SegmentationView::setBoundsVisible(bool val)
+{
+	this->showBounds = val;
+	refreshDisplayImage();
 }
 
 //*********************************************************************************************************
@@ -698,6 +705,9 @@ void SegmentationView::drawImage(QPainter *painter)
 void SegmentationView::drawBoundaries(QPainter *painter)
 {
 	if(!labelImg)
+		return;
+
+	if(!showBounds)
 		return;
 
 	const ftk::Image::Info *info = labelImg->GetImageInfo();
