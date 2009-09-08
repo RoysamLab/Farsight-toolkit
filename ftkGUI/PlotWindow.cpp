@@ -69,6 +69,13 @@ void PlotWindow::setupUI(void)
 	connect(colorMenu, SIGNAL(triggered(QAction *)), this, SLOT(colorChange(QAction *)));
 	optionsMenu->addMenu(colorMenu);
 
+	optionsMenu->addSeparator();
+
+	clearAction = new QAction(tr("&Clear Selections"), this);
+	clearAction->setShortcut(tr("Ctrl+C"));
+	connect(clearAction, SIGNAL(triggered()), scatter, SLOT(clearSelections()));
+	optionsMenu->addAction(clearAction);
+
 	toolsMenu = menuBar()->addMenu(tr("&Tools"));
 	svmAction = new QAction(tr("Find Outliers"), this);
 	connect(svmAction, SIGNAL(triggered()), this, SLOT(startSVM()));

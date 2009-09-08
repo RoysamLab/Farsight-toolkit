@@ -214,6 +214,7 @@ void NucleusEditor::createMenus()
 
 	clearSelectAction = new QAction(tr("Clear Selections"), this);
 	clearSelectAction->setStatusTip(tr("Clear Current Object Selections"));
+	clearSelectAction->setShortcut(tr("Ctrl+C"));
 	connect(clearSelectAction, SIGNAL(triggered()), this, SLOT(clearSelections()));
 	editMenu->addAction(clearSelectAction);
 

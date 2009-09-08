@@ -108,35 +108,11 @@ void ScatterView::SetNormalize(bool val)
 	}
 }
 
-//*******************************************************************************************
-// SLOT: We have two selection modes. One is the standard Single Selection mode 
-//    Implemented by QT.
-//      The second mode allows for the use of the select button to select all points
-//		within a region with boundary points defined by selectionRegion.
-//**************************************************************************************
-void ScatterView::selModeChanged(int s)
-{
-	if (s == 0)
-	{
-		//setSelectionMode(QAbstractItemView::SingleSelection);
-		setSelectionMode(QAbstractItemView::MultiSelection);
-		selectionRegion.clear();
-		selMode = 0;
-	}
-	else
-	{
-		setSelectionMode(QAbstractItemView::NoSelection);
-		selectionRegion.clear();
-		selMode = 1;
-	}
-	viewport()->update();
-}
-
 //**************************************************************************************
 // SLOT: call this slot to update the selection.  All objects inside the region defined
 //  for the points in selectionRegion will be selected.
 //**************************************************************************************
-void ScatterView::selectClicked(void)
+void ScatterView::selectRegion(void)
 {
 	if (selMode != 1)
 		return;
@@ -227,10 +203,9 @@ void ScatterView::setSelection(const QRegion &region, QItemSelectionModel::Selec
 //**************************************************************************************
 // SLOT: clears the selection model and selectionRegion
 //**************************************************************************************
-void ScatterView::clearClicked(void)
+void ScatterView::clearSelections(void)
 {
 	selectionRegion.clear();
-	//selectionRegions.clear();
 	selectionModel()->clear();
 	viewport()->update();
 }
@@ -507,9 +482,24 @@ void ScatterView::keyPressEvent(QKeyEvent * event)
 		case Qt::Key_Right:
 			x++;
 			break;
-		default:
-			QWidget::keyPressEvent(event);
+		case Qt::Key_Control:
+			selMode = 1;
+			break;
     }
+	QWidget::keyPressEvent(event);
+	viewport()->update();
+}
+
+void ScatterView::keyReleaseEvent(QKeyEvent * event)
+{
+	switch(event->key())
+	{
+		case Qt::Key_Control:
+			this->selectRegion();
+			selMode = 0;
+			break;
+	}
+	QWidget::keyReleaseEvent(event);
 	viewport()->update();
 }
 
@@ -546,9 +536,10 @@ void ScatterView::mouseReleaseEvent(QMouseEvent *event)
 	QPoint click = event->pos();
 
 	//Check to make sure this was just a click
-	if ( (click.x() < origin.x()-2) || (click.x() > origin.x()+2) )
+	int r = 10;
+	if ( (click.x() < origin.x() - r) || (click.x() > origin.x() + r) )
 		return;
-	if ( (click.y() < origin.y()-2) || (click.y() > origin.y()+2) )
+	if ( (click.y() < origin.y() - r) || (click.y() > origin.y() + r) )
 		return;
 
 	//Check to make sure we are in region selection mode

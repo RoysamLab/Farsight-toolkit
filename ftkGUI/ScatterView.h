@@ -73,9 +73,8 @@ public slots:
 	void SetColForColor(int c);
 	void SetColForColor(int c, QMap<int, QColor>  newMap);
 	void SetColorMap(QMap<int, QColor> map){ colorMap = map; };
-	void selModeChanged(int s);
-	void selectClicked(void);
-	void clearClicked(void);
+	void selectRegion(void);
+	void clearSelections(void);
 
 protected slots:
     void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
@@ -99,6 +98,7 @@ protected:
     void mouseMoveEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
 	void keyPressEvent(QKeyEvent * event );
+	void keyReleaseEvent(QKeyEvent *event );
 
     void paintEvent(QPaintEvent *event);
     void resizeEvent(QResizeEvent *event);

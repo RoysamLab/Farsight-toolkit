@@ -73,6 +73,8 @@ private:
 
 	void setupUI(void);	//for initial setup
 	void updateOptionMenus(bool first);
+
+	QAction *clearAction;	//clear selections
  };
 
 #endif
