@@ -21,6 +21,7 @@ SET( NucluesEditor_UIS
 )
 
 SET( NucluesEditor_RCS
+  icons.qrc
 )
 
 # this command will generate rules that will run rcc on all files from SAMPLE_RCS

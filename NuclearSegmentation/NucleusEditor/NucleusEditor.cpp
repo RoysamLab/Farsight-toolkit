@@ -82,11 +82,13 @@ void NucleusEditor::createSegmentToolBar()
 {
 	segmentTool = new QToolBar();
 
-	segmentAbort = new QAction(tr("ABORT"),this);
+	//segmentAbort = new QAction(tr("ABORT"),this);
+	segmentAbort = new QAction(QIcon(":/icons/Stop.png"), tr("ABORT"), this);
 	connect(segmentAbort, SIGNAL(triggered()), this, SLOT(abortSegment()));
 	segmentTool->addAction(segmentAbort);
 
-	segmentContinue = new QAction(tr("-->"),this);
+	//segmentContinue = new QAction(tr("-->"),this);
+	segmentContinue = new QAction(QIcon(":/icons/Play.png"), tr("-->"), this);
 	segmentContinue->setToolTip(tr("Continue Segmentation"));
 	segmentContinue->setEnabled(false);
 	connect(segmentContinue, SIGNAL(triggered()),this, SLOT(segment()));
