@@ -679,15 +679,14 @@ void View3D::Rerender()
   this->statusBar()->showMessage(tr("Rerender Image"));
   this->SphereActor->VisibilityOff();
   this->SelectedTraceIDs.clear();
-  this->TreeModel->GetSelectionModel()->Clear;
+  this->MergeGaps->GetSelectionModel()->clearSelection();
+  this->TreeModel->GetSelectionModel()->clearSelection();
   this->Renderer->RemoveActor(this->BranchActor);
   //this->Renderer->RemoveActor(this->VolumeActor);
   this->UpdateLineActor();
   this->UpdateBranchActor();
   this->Renderer->AddActor(this->BranchActor); 
-  //this->Renderer->AddActor(this->VolumeActor);
-  this->statusBar()->showMessage(tr("Update Tree Plots"));
-  this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+  //this->Renderer->AddActor(this->VolumeActor);  
   this->QVTK->GetRenderWindow()->Render();
   this->statusBar()->showMessage(tr("Finished Rerendering Image"));
 }
@@ -953,6 +952,8 @@ void View3D::DeleteTraces()
 			this->DeleteTrace(traceList[i]); 
 		}
 		this->Rerender();
+		this->statusBar()->showMessage(tr("Update Tree Plots"));
+		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 		this->statusBar()->showMessage(tr("Deleted\t") + QString::number(traceList.size()) + tr("\ttraces"));
 	}
 	else
@@ -1055,34 +1056,6 @@ void View3D::MergeTraces()
 	std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
 	if (traceList.size() >=1)
 	{
-    //if(this->SelectedTraceIDs.size() >= 1)
-    //  {     
-    //  std::sort(this->SelectedTraceIDs.begin(), this->SelectedTraceIDs.end());
-    //  std::reverse(this->SelectedTraceIDs.begin(), this->SelectedTraceIDs.end());
-    //  int numTrace = this->SelectedTraceIDs.size();   
-    //  int i,j, s=0, exist =0;
-    //  std::vector<TraceLine*> traceList;
-    //  //std::cout<< "elements passed \t" << numTrace << std::endl;
-    //  for (i = 0;i<numTrace; i++)
-    //    {
-    //    traceList.push_back( reinterpret_cast<TraceLine*>(
-    //    this->tobj->hashc[this->SelectedTraceIDs[i]]));
-    //    s=traceList.size()-1;
-    //    exist = 0;
-    //    if (traceList.size()>0)
-    //      {
-    //      j = 0;
-    //      while ( (j < s)&&(exist==0))
-    //        { 
-    //        if (traceList[s]->GetId()== traceList[j]->GetId())
-    //          {
-    //          traceList.pop_back(); 
-    //          exist = 1;
-    //          }
-    //        j++;      
-    //        }
-    //      }
-    //    }
 		conflict = this->tobj->createGapLists(traceList);
      }
     else
@@ -1196,7 +1169,7 @@ void View3D::MergeSelectedTraces()
   bool selected = false;
   int curID;
   QMessageBox MergeInfo;
-  double currentAngle=0;
+  double currentAngle=0, aveCost=0;
   QPushButton *mergeAll;
   QPushButton *mergeNone;
   unsigned int i=0, j=0,mergeCount=0;
@@ -1221,77 +1194,68 @@ void View3D::MergeSelectedTraces()
       }//end gapids size j
       if (selected == true)
       {
+		  aveCost += this->tobj->Gaps[i]->cost;
         this->tobj->mergeTraces(this->tobj->Gaps[i]->endPT1,this->tobj->Gaps[i]->endPT2);
       }
     } 
     MergeInfo.setText("merged " + QString::number(GapIDs.size()) + " traces.");  
+	this->dtext+="\nAverage Cost of Merge:\t" 
+		+ QString::number( aveCost / GapIDs.size() );
+	this->dtext+= "\nSum of Merge costs " + QString::number(aveCost);
+	MergeInfo.setDetailedText(this->dtext);
     MergeInfo.exec();
   }
   else
   {
     for (i=0;i<this->tobj->Gaps.size(); i++)
     {
-      currentAngle=fabs(this->tobj->Gaps[i]->angle); 
-      //if (currentAngle>=PI/2) 
-      //{
-      //  currentAngle= PI-currentAngle;
-      //}
-      if  ((this->tobj->Gaps[i]->dist<= this->tobj->gapMax*this->tobj->gapTol&& (currentAngle < 1.1))||
-        (this->tobj->Gaps[i]->dist<= this->tobj->gapMax && (currentAngle < .6)))
-        {
+      //currentAngle=fabs(this->tobj->Gaps[i]->angle); 
+	  if  (this->tobj->Gaps[i]->cost <=5)
+      {
         this->dtext+= "\nTrace " + QString::number(this->tobj->Gaps[i]->Trace1->GetId());
         this->dtext+= " and "+ QString::number(this->tobj->Gaps[i]->Trace2->GetId() );
-        this->dtext+="\tgap size of:" + QString::number(this->tobj->Gaps[i]->dist);         
-        this->dtext+="\tangle of" + QString::number(currentAngle*180/PI); //this->tobj->Gaps[i]->angle
-        tobj->mergeTraces(this->tobj->Gaps[i]->endPT1,this->tobj->Gaps[i]->endPT2);
-        ++mergeCount;
-        } //end of if
-      else if (this->tobj->Gaps[i]->dist<= this->tobj->gapMax*(1+this->tobj->gapTol)&& (currentAngle < .3))
-        {
+		this->dtext+="\tcost of:" + QString::number(this->tobj->Gaps[i]->cost); 
         this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .125);
         this->HighlightSelected(this->tobj->Gaps[i]->Trace2, .125);
         this->candidateGaps.push_back( this->tobj->Gaps[i]);
-        this->grayText+="\nAngle of:\t" + QString::number(currentAngle*180/PI); //this->tobj->Gaps[i]->angle
-        this->grayText+="\tWith a distance of:\t" + QString::number(this->tobj->Gaps[i]->dist);
-        
-       } //end of else
-    }//end of for merge
-    myText+="\tNumber of merged lines:\t" + QString::number(mergeCount);
-    if (this->candidateGaps.size()>=1)
-    {
-      this->poly_line_data->Modified();
-      this->QVTK->GetRenderWindow()->Render();
-      myText+="\nNumber of further possible lines:\t" + QString::number(this->candidateGaps.size());
+	  } //end of cost<5
+    }//end of for merge    
+  if (this->candidateGaps.size()>=1)
+  {      
+      myText+="\nNumber of possible lines:\t" + QString::number(this->candidateGaps.size());
       mergeAll = MergeInfo.addButton("Merge All", QMessageBox::YesRole);
       mergeNone = MergeInfo.addButton("Merge None", QMessageBox::NoRole);
-      MergeInfo.setDetailedText(grayText);
+	  MergeInfo.setText(myText); 
+	  MergeInfo.setDetailedText(this->dtext);
+	  this->poly_line_data->Modified();
+	  this->QVTK->GetRenderWindow()->Render();
+	  MergeInfo.exec();    
+	  if(MergeInfo.clickedButton()==mergeAll)
+	  {
+		  for (j=0; j<this->candidateGaps.size();j++)
+		  {
+			tobj->mergeTraces(this->candidateGaps[j]->endPT1,this->candidateGaps[j]->endPT2);
+		  }
+	  }
+	  else if(MergeInfo.clickedButton()==mergeNone)
+	  {
+		  this->candidateGaps.clear();
+		  this->statusBar()->showMessage("Merge Canceled");
+	  }
     }   //end if graylist size
     else
     {
-      this->Rerender();
-      MergeInfo.setDetailedText(dtext);
-    }   //end else graylist size
-    MergeInfo.setText(myText); 
-    MergeInfo.exec();
-    if(MergeInfo.clickedButton()==mergeAll)
-    {
-      for (j=0; j<this->candidateGaps.size();j++)
-      {
-        tobj->mergeTraces(this->candidateGaps[j]->endPT1,this->candidateGaps[j]->endPT2);
-      }
-      this->Rerender();
-    }
-    else if(MergeInfo.clickedButton()==mergeNone)
-    {
-      this->candidateGaps.clear();
-    }
+		this->statusBar()->showMessage("nothing to merge");
+    }   //end else   
   }
   this->Rerender();
   this->tobj->Gaps.clear();
   this->candidateGaps.clear();
   this->myText.clear();
   this->dtext.clear();
-  this->statusBar()->showMessage(tr("Done"));
+  this->statusBar()->showMessage(tr("Update Tree Plots"));
+  this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+  this->statusBar()->showMessage(tr("Done With Merge"));
 }
 /*  other trace modifiers */
 void View3D::SplitTraces()
@@ -1300,10 +1264,12 @@ void View3D::SplitTraces()
     {
     std::unique(this->SelectedTraceIDs.begin(), this->SelectedTraceIDs.end());
     for(unsigned int i = 0; i < this->SelectedTraceIDs.size(); i++)
-      {
-      this->tobj->splitTrace(this->SelectedTraceIDs[i]);
-      } 
+	{
+	  this->tobj->splitTrace(this->SelectedTraceIDs[i]);
+	} 
     this->Rerender();
+	this->statusBar()->showMessage(tr("Update Tree Plots"));
+	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
     }
   else
     {
