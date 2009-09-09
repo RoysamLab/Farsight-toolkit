@@ -822,7 +822,10 @@ void View3D::SLine()
   int numLines, i;
   this->tobj->FindMinLines(this->smallLine);
   numLines= this->tobj->SmallLines.size();
-  this->Rerender();
+  for (i=0; i<numLines; i++)
+  {
+	  this->TreeModel->SelectByIDs(this->tobj->SmallLines[i]);
+  }
   QMessageBox Myquestion;
   Myquestion.setText("Number of selected small lines:  " 
     + QString::number(numLines));
@@ -834,27 +837,14 @@ void View3D::SLine()
   { 
   case QMessageBox::Yes:
   {
-//Yet again, code should work, but the copy constructor doesn't appear to
-#if 0
-	TraceObject newObj(*(this->tobj));
-    std::string smallLines = "Small Lines";
-    std::pair<std::string, TraceObject> history;
-    history.first = smallLines;
-    history.second = currentState;
-	undoBuff->Add(history);
-#endif 
-
-    for (i=0;i<numLines;i++)
-    { //std::cout << "Deleted line:" << i<< std::endl;          
-      //this->tobj->SmallLines[i]->Getstats();
-      this->tobj->RemoveTraceLine(this->tobj->SmallLines[i]);
-    }
+	this->DeleteTraces();
     this->tobj->SmallLines.clear();
   }
   break;
   case QMessageBox::No:
    {
      this->tobj->SmallLines.clear();
+	 this->TreeModel->GetSelectionModel()->clearSelection();
    }
    break;
   }
@@ -943,11 +933,32 @@ void View3D::ClearSelection()
 /*  delete traces functions */
 void View3D::DeleteTraces()
 {
+	unsigned int i;
 	this->statusBar()->showMessage(tr("Deleting"));
-	std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
+	std::vector<TraceLine*> traceStructure = this->tobj->GetTraceLines(); 
+	std::vector<TraceLine*> traceList;
+	std::vector<int> IDList = this->TreeModel->GetSelecectedIDs();
+	for ( i = 0; i< IDList.size(); i++)
+	{
+		bool found = false; 
+		unsigned int j = 0;
+		while ((found == false)&&(j < traceStructure.size()))
+		{
+			if (traceStructure[j]->GetId()==IDList[i])
+			{
+				traceList.push_back(traceStructure[j]);
+				found= true;
+			}
+			else
+			{
+				j++;
+			}
+		}	
+	}
+
 	if (traceList.size() >=1)
 	{
-		for (unsigned int i = 0; i < traceList.size(); i++)
+		for (i = 0; i < traceList.size(); i++)
 		{
 			this->DeleteTrace(traceList[i]); 
 		}

@@ -75,7 +75,7 @@ public:
 	std::vector<TraceLine*>* GetTraceLinesPointer();
 	std::vector<TraceLine*> GetTraceLines();
 	std::vector<TraceBit> CollectTraceBits();
-	std::vector<TraceLine*> SmallLines;
+	std::vector<int> SmallLines;
 	std::vector<TraceGap*> Gaps;
 	std::vector<std::string> FeatureHeaders;
 

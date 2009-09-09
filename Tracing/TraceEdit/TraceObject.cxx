@@ -1222,14 +1222,15 @@ void TraceObject::FindMinLines(int smallSize)
 {
   //std::cout<< "finding small lines\n";
   TraceLine *tline;
-  std::vector<TraceLine*>::iterator iter = trace_lines.begin();
-  while(iter!=trace_lines.end())
+  std::vector<TraceLine*> lineList = this->GetTraceLines();
+  std::vector<TraceLine*>::iterator iter = lineList.begin();
+  while(iter!=lineList.end())
   {
     tline=*iter;
-    if(smallSize >= tline->GetSize())
+	if((smallSize >= tline->GetSize())&& (tline->GetBranchPointer()->size()==0))
     {
       tline->setTraceColor(this->smallLineColor);
-      SmallLines.push_back(tline);
+	  SmallLines.push_back(tline->GetId());
     }
     ++iter;
   }
