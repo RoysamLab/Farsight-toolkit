@@ -121,6 +121,14 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 			++iterator1;
 		
 		}
+		//By Yousef on 09/08/2009
+		//Just for testing purposes: Write out the distance map into an image file
+		/*typedef itk::ImageFileWriter< MyInputImageType > WriterType;
+		WriterType::Pointer writer = WriterType::New();
+		writer->SetFileName("bin_test.tif");
+		writer->SetInput( im );
+		writer->Update();*/
+		//////////////////////////////////////////////////////////////////////////
 		std::cout<<"Computing distance transform...";
 		dImg = (unsigned short *) malloc(r*c*z*sizeof(unsigned short));
 		if(!dImg)
@@ -343,16 +351,17 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 			for(int j1=cmin; j1<=cmax; j1++)
 			{
 				II = (k1*r*c)+(i1*c)+j1;
+				float lgrsp = iterate.Get();
+				//lgrsp = sigma*sigma*lgrsp;
 				if(sigma==sigma_min)
 				{
-					IMG[II] = /*sigma*sigma*/iterate.Get();			
+					IMG[II] = lgrsp;			
 				}
 				else
-				{
-					float lgrsp = iterate.Get();
+				{					
 					if(UseDistMap == 1)
 					{
-						if(sigma<=dImg[II])
+						if(sigma<=dImg[II]/100)
 						{
 							IMG[II] = (IMG[II]>=lgrsp)? IMG[II] : lgrsp;				
 							if(IMG[II]<minIMout[0])
@@ -467,34 +476,39 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 	double mean = 0.0;
 	double stdv = 0.0;
 	int cnt = 0;
-	ofstream p;
-	p.open("checkme.txt");
-	for(int i=1; i<r-1; i+=2)
+	//ofstream p;
+	int max_dist = 0;
+	//p.open("checkme.txt");
+	for(int i=1; i<r-1; i++)
     {
-        for(int j=1; j<c-1; j+=2)
+        for(int j=1; j<c-1; j++)
         {				
-			//for(int k=1; k<z-1; k++)
+			//for(int k=1; k<z-1; k+=2)
 			for(int k=cent_slice; k<=cent_slice; k++)
 			{									
 				min_r = (int) max(0.0,(double)i-2);
 				min_c = (int) max(0.0,(double)j-2);
-				min_z = (int) max(0.0,(double)k-2);
+				min_z = (int) max(0.0,(double)k);
 				max_r = (int)min((double)r-1,(double)i+2);
 				max_c = (int)min((double)c-1,(double)j+2);                         
-				max_z = (int)min((double)z-1,(double)k+2);                         
-				unsigned short mx = get_maximum_3D(distIm, min_r, max_r, min_c, min_c, min_z, max_z,r,c);
-				if(mx <= 1)
+				max_z = (int)min((double)z-1,(double)k);                         
+				unsigned short mx = get_maximum_3D(distIm, min_r, max_r, min_c, max_c, min_z, max_z,r,c);
+				
+				if(mx <= 100)
 					continue; //background or edge point
 				II = (k*r*c)+(i*c)+j;
 				if(distIm[II] == mx)    
-				{																																						
+				{		
+					//since we have scaled by 100 earlier, scale back to the original value
+					//also, we want to dived by squre root of 2 or approximately 1.4
+					mx = mx/140;							
 					//add the selected scale to the list of scales
 					std::vector <unsigned short> lst;
 					lst.push_back(mx);
 					lst.push_back(i);
 					lst.push_back(j);
 					lst.push_back(k);
-					p<<j<<" "<<i<<" "<<k<<" "<<mx<<std::endl;
+					//p<<j<<" "<<i<<" "<<k<<" "<<mx<<std::endl;
 					scales.push_back(lst);
 					//mean +=mx;
 					cnt++;										
@@ -502,26 +516,13 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 			}			
         }
     } 
-	p.close();
-	/*mean /= cnt;
-	for(int i=0; i<cnt; i++)
-		stdv+= ((scales[i][0]-mean)*(scales[i][0]-mean));
-	stdv = sqrt(stdv/cnt);		
-	if (ceil(mean-stdv)-(mean-stdv)<=.5)
-		minScale[0] = ceil((mean-stdv));///sqrt(2.0));
-	else	
-		minScale[0] = floor((mean-stdv));///sqrt(2.0));	 
-
-	if (ceil(mean+stdv)-(mean+stdv)<=.5)
-		maxScale[0] = ceil((mean+stdv));///sqrt(2.0));	 
-	else
-		maxScale[0] = floor((mean+stdv));///sqrt(2.0));	 */
-
+	//p.close();
+	
 	//get the median of the scales(distances)
 	int medianS = computeMedian(scales, cnt);
-	ofstream p2;
-	p2.open("checkme2.txt");
-	p2<<"med = "<<medianS<<std::endl;
+	//ofstream p2;
+	//p2.open("checkme2.txt");
+	//p2<<"med = "<<medianS<<std::endl;
 
 	//then compute the Median absolute deviation
 	std::vector< std::vector<unsigned short> > madList;
@@ -535,12 +536,12 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 	minScale[0] = medianS-MAD;
 	maxScale[0] = medianS+MAD;		
 		
-	p2<<"mad = "<<MAD<<std::endl;
-	p2<<"med-mad = "<<minScale[0]<<std::endl;
-	p2<<"med+mad = "<<maxScale[0]<<std::endl;
+	//p2<<"mad = "<<MAD<<std::endl;
+	//p2<<"med-mad = "<<minScale[0]<<std::endl;
+	//p2<<"med+mad = "<<maxScale[0]<<std::endl;
 
-	ofstream p3;
-	p3.open("checkme3.txt");
+	//ofstream p3;
+	//p3.open("checkme3.txt");	
 	//For each local maximum point,try to find the best LoG scale
 	//To do that, suppose the distance at a given local maximum point is d, 
 	//then compute the its LoG responses at scales from d/2 to d
@@ -551,7 +552,7 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 	int cnt2 = 0;
 	for(int ind=0; ind<cnt; ind++)
 	{
-		int mx = scales[ind][0]/sqrt(2.0);
+		int mx = scales[ind][0];
 		int i = scales[ind][1];
 		int j = scales[ind][2];
 		int k = scales[ind][3];
@@ -605,7 +606,7 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 				best_scale = kk;				
 			}*/
 		}
-		p3<<mx<<" "<<best_scale<<std::endl;
+		//p3<<j<<" "<<i<<" "<<k<<" "<<mx<<" "<<best_scale<<std::endl;
 		mx = best_scale;
 		
 		if(mx<mnScl)
@@ -615,12 +616,15 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 
 		delete [] IMG;
 	}
+	//I assume at least 4 scales must be used (will be relaxed later)
+	if(mxScl<mnScl+3)
+		mxScl = mnScl+3;
 	minScale[0] = mnScl;
-	maxScale[0] = mxScl-1;
-	p2<<"min_scale="<<mnScl<<std::endl;
-	p2<<"max_scale="<<mxScl<<std::endl;
-	p2.close();
-	p3.close();
+	maxScale[0] = mxScl;	
+	//p2<<"min_scale="<<mnScl<<std::endl;
+	//p2<<"max_scale="<<mxScl<<std::endl;
+	//p2.close();
+	//p3.close();
 }
 
 int distMap(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, unsigned short* IMG)
@@ -714,22 +718,7 @@ int distMap_SliceBySlice(itk::SmartPointer<MyInputImageType> im, int r, int c, i
 		std::cerr << "Error calculating distance transform: " << err << endl ;
 		return -1;
 	  }
-
-	  //By Yousef: try to write out the output at the central slice
-	  /*int cent_slice = (int) z/2;
-	  if(i==cent_slice)
-	  {
-		  typedef itk::CastImageFilter< OutputImageType2, MyInputImageType2D> myCasterType;
-		  myCasterType::Pointer potCaster = myCasterType::New();
-		  potCaster->SetInput( dt_obj->GetOutput() );
-		  typedef itk::ImageFileWriter< MyInputImageType2D > WriterType;
-		  WriterType::Pointer writer = WriterType::New();
-		  writer->SetFileName("dist_test.tif");
-		  writer->SetInput( potCaster->GetOutput() );
-		  writer->Update();		  
-	  }*/
-
-
+	  
 	  //   Copy the resulting image into the input array  
       typedef itk::ImageRegionIteratorWithIndex< OutputImageType2 > IteratorType;
       IteratorType iterate(dt_obj->GetOutput(),dt_obj->GetOutput()->GetRequestedRegion());
@@ -737,8 +726,12 @@ int distMap_SliceBySlice(itk::SmartPointer<MyInputImageType> im, int r, int c, i
       while ( j<r*c)
       {	  
 		  double ds = iterate.Get();
+		  ds = ds*100; //enhance the contrast
 		  if(ds<=0)
+		  {
 			 IMG[k] = 0;
+			 //iterate.Set(0.0);//try to write back 
+		  }
 		  else
 			 IMG[k] = (unsigned short) ds;
 		  if(IMG[k]>max_dist)
@@ -747,6 +740,22 @@ int distMap_SliceBySlice(itk::SmartPointer<MyInputImageType> im, int r, int c, i
 		  ++j;
  		  ++iterate;
 	  }	  
+
+	  //By Yousef: try to write out the output at the central slice
+	  /*int cent_slice = (int) z/2;
+	  if(i==cent_slice)
+	  {
+		  typedef    unsigned char     MyInputPixelTypeNew;
+		  typedef itk::Image< MyInputPixelTypeNew,  2 >   MyInputImageType2DNew;
+		  typedef itk::CastImageFilter< OutputImageType2, MyInputImageType2DNew> myCasterType;
+		  myCasterType::Pointer potCaster = myCasterType::New();
+		  potCaster->SetInput( dt_obj->GetOutput() );
+		  typedef itk::ImageFileWriter< MyInputImageType2DNew > WriterType;
+		  WriterType::Pointer writer = WriterType::New();
+		  writer->SetFileName("dist_test.tif");
+		  writer->SetInput( potCaster->GetOutput() );
+		  writer->Update();		  
+	  }*/
   } 
  
   return max_dist;
@@ -820,6 +829,7 @@ int computeMedian(std::vector< std::vector<unsigned short> > scales, int cntr)
 	for(int i=0; i<cntr-1; i++)
 		srtList[i] = scales[i][0];
 
+	//sort the distances
 	for(int i=0; i<cntr-1; i++)
 	{
 		for(int j=i+1; j<cntr; j++)
@@ -833,8 +843,20 @@ int computeMedian(std::vector< std::vector<unsigned short> > scales, int cntr)
 		}
 	}
 
-	int mdn = (int) cntr/2;
-	mdn = srtList[mdn-1];
-
+	//if the number of points is odd then the median is the mid point
+	//else, it is in between the two mid points
+	int res = cntr % 2;
+	int mdn;
+	if(res!=0)
+	{
+		mdn = (cntr+1)/2;
+		mdn = (int) srtList[mdn-1];
+	}
+	else
+	{
+		int mdn1 = cntr/2;
+		mdn = (int) (srtList[mdn1]+srtList[mdn1+1])/2;
+	}
+		
 	return mdn;
 }
