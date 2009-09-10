@@ -790,75 +790,75 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 	delete g;
 }
 
-void subtractGradientImage(unsigned char* IM, int r, int c, int z, int sampl_ratio)
-{
-	//create an ITK image
-	typedef    unsigned short     MyInputPixelType;
-	typedef itk::Image< MyInputPixelType,  3 >   MyInputImageType;
-	MyInputImageType::Pointer im;
-	im = MyInputImageType::New();
-	MyInputImageType::PointType origin;
-    origin[0] = 0.; 
-    origin[1] = 0.;    
-	origin[2] = 0.;    
-    im->SetOrigin( origin );
-
-    MyInputImageType::IndexType start;
-    start[0] =   0;  // first index on X
-    start[1] =   0;  // first index on Y    
-	start[2] =   0;  // first index on Z    
-    MyInputImageType::SizeType  size;
-    size[0]  = c;  // size along X
-    size[1]  = r;  // size along Y
-	size[2]  = z;  // size along Z
-  
-    MyInputImageType::RegionType region;
-    region.SetSize( size );
-    region.SetIndex( start );
-    
-    double spacing[3];
-	spacing[0] = 1; //spacing along x
-	spacing[1] = 1; //spacing along y
-	spacing[2] = sampl_ratio; //spacing along z
-
-    im->SetRegions( region );
-	im->SetSpacing(spacing);
-    im->Allocate();
-    im->FillBuffer(0);
-	im->Update();	
-
-	//copy the input image into the ITK image
-	typedef itk::ImageRegionIteratorWithIndex< MyInputImageType > IteratorType;
-	IteratorType iterator1(im,im->GetRequestedRegion());
-	for(int i=0; i<r*c*z; i++)
-	{
-		iterator1.Set((unsigned short) IM[i]);
-		iterator1++;
-	}
-	typedef itk::GradientMagnitudeImageFilter<MyInputImageType, MyInputImageType > FilterType;
-	FilterType::Pointer filter = FilterType::New();
-	filter->SetInput( im );
-	filter->Update();
-	IteratorType iterator2(filter->GetOutput(),filter->GetOutput()->GetRequestedRegion());	
-
-	//try to write that image for now
-	/*typedef itk::ImageFileWriter< MyInputImageType > WriterType;
-	WriterType::Pointer writer = WriterType::New();
-	writer->SetFileName("grad.tif");
-	writer->SetInput( filter->GetOutput() );
-	writer->Update();	*/
-
-	for(int i=0; i<r*c*z; i++)
-	{
-		unsigned char t = iterator2.Get();					
-		if(t>IM[i])
-			IM[i] = 0;
-		else
-			IM[i]-=t;	
-		iterator2++;
-	}	
-
-}
+//void subtractGradientImage(unsigned char* IM, int r, int c, int z, int sampl_ratio)
+//{
+//	//create an ITK image
+//	typedef    unsigned short     MyInputPixelType;
+//	typedef itk::Image< MyInputPixelType,  3 >   MyInputImageType;
+//	MyInputImageType::Pointer im;
+//	im = MyInputImageType::New();
+//	MyInputImageType::PointType origin;
+//    origin[0] = 0.; 
+//    origin[1] = 0.;    
+//	origin[2] = 0.;    
+//    im->SetOrigin( origin );
+//
+//    MyInputImageType::IndexType start;
+//    start[0] =   0;  // first index on X
+//    start[1] =   0;  // first index on Y    
+//	start[2] =   0;  // first index on Z    
+//    MyInputImageType::SizeType  size;
+//    size[0]  = c;  // size along X
+//    size[1]  = r;  // size along Y
+//	size[2]  = z;  // size along Z
+//  
+//    MyInputImageType::RegionType region;
+//    region.SetSize( size );
+//    region.SetIndex( start );
+//    
+//    double spacing[3];
+//	spacing[0] = 1; //spacing along x
+//	spacing[1] = 1; //spacing along y
+//	spacing[2] = sampl_ratio; //spacing along z
+//
+//    im->SetRegions( region );
+//	im->SetSpacing(spacing);
+//    im->Allocate();
+//    im->FillBuffer(0);
+//	im->Update();	
+//
+//	//copy the input image into the ITK image
+//	typedef itk::ImageRegionIteratorWithIndex< MyInputImageType > IteratorType;
+//	IteratorType iterator1(im,im->GetRequestedRegion());
+//	for(int i=0; i<r*c*z; i++)
+//	{
+//		iterator1.Set((unsigned short) IM[i]);
+//		iterator1++;
+//	}
+//	typedef itk::GradientMagnitudeImageFilter<MyInputImageType, MyInputImageType > FilterType;
+//	FilterType::Pointer filter = FilterType::New();
+//	filter->SetInput( im );
+//	filter->Update();
+//	IteratorType iterator2(filter->GetOutput(),filter->GetOutput()->GetRequestedRegion());	
+//
+//	//try to write that image for now
+//	/*typedef itk::ImageFileWriter< MyInputImageType > WriterType;
+//	WriterType::Pointer writer = WriterType::New();
+//	writer->SetFileName("grad.tif");
+//	writer->SetInput( filter->GetOutput() );
+//	writer->Update();	*/
+//
+//	for(int i=0; i<r*c*z; i++)
+//	{
+//		unsigned char t = iterator2.Get();					
+//		if(t>IM[i])
+//			IM[i] = 0;
+//		else
+//			IM[i]-=t;	
+//		iterator2++;
+//	}	
+//
+//}
 
 /*int post_binarization(int* bin_im, int kernel_size, int dim, int r, int c, int z)
 {	  	

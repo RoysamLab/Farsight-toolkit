@@ -44,5 +44,5 @@ void CompMixPoss(unsigned char* img, float* alpha_B, float* alpha_A, float* P_I,
 void CompMixPoss3D(unsigned char* img, float* alpha_B, float* alpha_A, float* P_I, int R, int C, int Z, int shiftDown);
 void MinErrorThresholding(unsigned char* img, float* alpha_B, float* alpha_A, float* P_I, int R, int C, int Z, int shiftDown, unsigned short *imgOut);
 void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_F, double alpha_B, double P_I, unsigned short* Seg_out, int* imBlock);
-void subtractGradientImage(unsigned char* IM, int r, int c, int z, int sampl_ratio);
+//void subtractGradientImage(unsigned char* IM, int r, int c, int z, int sampl_ratio);
 #endif
