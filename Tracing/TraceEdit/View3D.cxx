@@ -812,6 +812,10 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
         }
       break;
 
+	case 'b':
+		view->AddNewBranches();
+		break;
+
     default:
       break;
     }
@@ -1044,6 +1048,36 @@ void View3D::DeleteTrace(TraceLine *tline)
   tline->SetParent(NULL);
 }
 
+void View3D::AddNewBranches()
+{
+	TraceLine* trunk;
+	std::vector <TraceLine*> newChildren;
+	std::vector <TraceLine*> selected = this->TreeModel->GetSelectedTraces();
+	if (selected.size() > 1)
+	{
+		trunk = selected[0];
+		for (unsigned int i = 1; i < selected.size(); i ++)
+		{
+			newChildren.push_back(selected[i]);
+		}
+		this->AddChildren(trunk, newChildren);
+		this->Rerender();
+		this->statusBar()->showMessage(tr("Update Tree Plots"));
+		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+		this->statusBar()->showMessage(tr("Branching complete"));
+	}
+}
+void View3D::AddChildren(TraceLine *trunk, std::vector<TraceLine*> childTraces)
+{
+	for (unsigned int i = 0; i < childTraces.size(); i++)
+	{
+		if (childTraces[i]->GetParentID() == -1)
+		{
+			childTraces[i]->SetParent(trunk);
+			trunk->AddBranch(childTraces[i]);
+		}//end check/make connection 
+	}//end child trace size loop
+}
 /*  merging functions */
 void View3D::MergeTraces()
 {
