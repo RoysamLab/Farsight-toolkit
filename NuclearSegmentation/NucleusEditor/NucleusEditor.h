@@ -67,6 +67,7 @@ protected:
 	void closeEvent(QCloseEvent *event);
 
 private slots:
+	void setMouseStatus(int,int,int);
 	void loadImage(void);
 	void loadResult(void);
 	bool saveResult(void);
@@ -80,6 +81,8 @@ private slots:
 	void toggleBounds();
 	void CreateNewPlotWindow();
 	void CreateNewTableWindow();
+	void CreateNewHistoWindow();
+	void CreateNewSegWindow();
 
 	//DEMO - python is necessary for the demo
 	void OpenPythonWindow();

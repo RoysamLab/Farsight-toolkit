@@ -31,7 +31,6 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	setWindowTitle(tr("FARSIGHT: Nuclear Segmentation Tool"));
 
 	seg = NULL;
-	//segWin = new SegmentationWindow();
 	segWin = NULL;
 	currentModel = NULL;
 
@@ -476,19 +475,12 @@ void NucleusEditor::loadResult(void)
 	newModel();
 	CreateNewTableWindow();
 	CreateNewPlotWindow();
-	
-	hisWin = new HistoWindow(currentModel->GetSelectionModel());
-	hisWin->show();
-
-	if(segWin)
-		delete segWin;
-	segWin = new SegmentationWindow();
+	CreateNewHistoWindow();
+	CreateNewSegWindow();
 
 	segWin->SetModels(currentModel);
 	segWin->SetChannelImage(seg->getDataImage());
 	segWin->SetLabelImage(seg->getLabelImage());
-	if( this->centralWidget() != this->segWin )
-		this->setCentralWidget(segWin);
 
 	this->update();
 
@@ -812,8 +804,7 @@ void NucleusEditor::segment()
 		newModel();
 		CreateNewTableWindow();
 		CreateNewPlotWindow();
-		hisWin = new HistoWindow(currentModel->GetSelectionModel());
-		hisWin->show();
+		CreateNewHistoWindow();
 		segWin->SetModels(currentModel);
 		//this->update();
 
@@ -860,9 +851,7 @@ void NucleusEditor::loadImage()
 		seg = NULL;
 	}
 
-	if(segWin)
-		delete segWin;
-	segWin = new SegmentationWindow();
+	this->CreateNewSegWindow();
 
 	abortSegment();
 
@@ -878,9 +867,9 @@ void NucleusEditor::loadImage()
 	// OLD BROWSER:
 	myImg = ftk::Image::New();
 	myImg->LoadFile(fileName.toStdString());
+
 	segWin->SetChannelImage(myImg);
-	if( this->centralWidget() != this->segWin )
-		this->setCentralWidget(segWin);
+
 	this->update();
 
 	//************************************************
@@ -916,6 +905,41 @@ void NucleusEditor::CreateNewTableWindow(void)
 	tblWin.back()->ResizeToOptimalSize();
 	tblWin.back()->show();
 }
+
+//*******************************************************************************
+// Create new Histogram Window
+//*******************************************************************************
+void NucleusEditor::CreateNewHistoWindow(void)
+{
+	if(this->hisWin)
+		delete hisWin;
+	hisWin = new HistoWindow(currentModel->GetSelectionModel());
+	hisWin->show();
+}
+
+//*******************************************************************************
+// Delete existing segWin and create a new one
+//*******************************************************************************
+void NucleusEditor::CreateNewSegWindow(void)
+{
+	if(this->segWin)
+		delete this->segWin;
+	this->segWin = new SegmentationWindow();
+
+	if( this->centralWidget() != this->segWin )
+		this->setCentralWidget(this->segWin);
+
+	connect(segWin->viewport(),SIGNAL(mouseAt(int,int,int)), this, SLOT(setMouseStatus(int,int,int)));
+}
+
+//******************************************************************************
+// SLOT: changes the status bar to say the mouse coordinates
+//******************************************************************************
+void NucleusEditor::setMouseStatus(int x, int y, int z)
+{
+	(this->statusLabel)->setText(QString::number(x) + ", " + QString::number(y) + ", " + QString::number(z));
+}
+
 
 //******************************************************************************
 // Open a python interpreter.  Ask the user where one is located if this

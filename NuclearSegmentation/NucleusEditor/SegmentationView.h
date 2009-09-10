@@ -61,6 +61,7 @@ public slots:
 
 signals:
 	void goToZ(int newZ);
+	void mouseAt(int x, int y, int z);
 
 protected slots:
     void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);

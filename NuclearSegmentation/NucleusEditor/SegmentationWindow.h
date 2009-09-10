@@ -48,6 +48,8 @@ public:
 	//void AddChannelImage( QString &fileName );
 	//void AddLabelImage( QString &fileName );
 
+	const SegmentationView * viewport(){ return this->segview; };
+
 signals:
 	void closing(QWidget *widget);
 	

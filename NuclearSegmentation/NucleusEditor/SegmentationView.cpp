@@ -57,6 +57,8 @@ SegmentationView::SegmentationView(QWidget *parent)
 
 	//setSelectionMode(QAbstractItemView::SingleSelection);
 	setSelectionMode(QAbstractItemView::MultiSelection);
+
+	setMouseTracking(true);
 }
 
 void SegmentationView::setBoundsVisible(bool val)
@@ -325,6 +327,12 @@ void SegmentationView::mousePressEvent(QMouseEvent *event)
 void SegmentationView::mouseMoveEvent(QMouseEvent *event)
 {
     QAbstractItemView::mouseMoveEvent(event);
+	QPoint pos = event->pos();
+	int xx = ( pos.x() + horizontalOffset() ) / currentScale;
+	int yy = ( pos.y() + verticalOffset() ) / currentScale;
+
+	if( xx>=0 && xx<totalWidth && yy>=0 && yy<totalHeight )
+		emit mouseAt(xx, yy, currentZ);
 }
 
 void SegmentationView::mouseReleaseEvent(QMouseEvent *event)
@@ -355,7 +363,6 @@ void SegmentationView::wheelEvent ( QWheelEvent *e )
      double numSteps = numDegrees / 15.0f;
 	 double zf = pow(ZoomInFactor, numSteps);
 	 zoom(zf);
-
 }
 
 void SegmentationView::keyPressEvent(QKeyEvent *event)
