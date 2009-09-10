@@ -31,7 +31,8 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	setWindowTitle(tr("FARSIGHT: Nuclear Segmentation Tool"));
 
 	seg = NULL;
-	segWin = new SegmentationWindow();
+	//segWin = new SegmentationWindow();
+	segWin = NULL;
 	currentModel = NULL;
 
 	lastPath = ".";
@@ -479,6 +480,10 @@ void NucleusEditor::loadResult(void)
 	hisWin = new HistoWindow(currentModel->GetSelectionModel());
 	hisWin->show();
 
+	if(segWin)
+		delete segWin;
+	segWin = new SegmentationWindow();
+
 	segWin->SetModels(currentModel);
 	segWin->SetChannelImage(seg->getDataImage());
 	segWin->SetLabelImage(seg->getLabelImage());
@@ -854,6 +859,10 @@ void NucleusEditor::loadImage()
 		delete seg;
 		seg = NULL;
 	}
+
+	if(segWin)
+		delete segWin;
+	segWin = new SegmentationWindow();
 
 	abortSegment();
 
