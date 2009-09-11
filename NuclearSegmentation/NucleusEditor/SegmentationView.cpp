@@ -123,13 +123,8 @@ QModelIndex SegmentationView::indexAt(const QPoint &point) const
 
 	QModelIndex retval = QModelIndex();
 	// Transform the view coordinates into contents viewport coordinates.
-    double wx = point.x() + horizontalScrollBar()->value();
-	double wy = point.y() + verticalScrollBar()->value();
-
-	//Now multiply by the zoomFactor
-
-	wx = wx/currentScale;
-	wy = wy/currentScale;
+    double wx = ( point.x() + horizontalScrollBar()->value() ) / currentScale;
+	double wy = ( point.y() + verticalScrollBar()->value() ) / currentScale;
 
 	//Find the extrema of the image area in viewport coordinates
 	//QRect rect(0,0,viewport()->width(),viewport()->height());
@@ -311,27 +306,28 @@ void SegmentationView::mousePressEvent(QMouseEvent *event)
 {	
 	QAbstractItemView::mousePressEvent(event);
 	origin = event->pos();				// This is a local position (in viewport coordinates)
-	if(!resultModel)  return;
+	//Compute value in image coordinates and make sure we click within the image:
+	int xx = (origin.x() + horizontalOffset()) / currentScale;
+	int yy = (origin.y() + verticalOffset()) / currentScale;
+	if( xx < 0 || yy < 0 || xx >= totalWidth || yy >= totalHeight )
+		return;
 
 	Qt::MouseButton button = event->button();
 	if(button == Qt::LeftButton)
 	{
-		//added by Yousef 7-30-2009
+		if(!resultModel)  return;
 		//if we are in spliting mode, then add the point to the splitting list
 		if(resultModel->isSplitingMode())
 		{
-			int xx = (origin.x() + horizontalOffset()) / currentScale;
-			int yy = (origin.y() + verticalOffset()) / currentScale;
-			//as of now, I asume that the image starts at the top left corner (0,0) of the view window
-			if(xx<totalWidth && yy<totalHeight)
-			{
-					resultModel->addPointToSplitList(xx, yy, currentZ);
-			}
+			resultModel->addPointToSplitList(xx, yy, currentZ);
 		}
 	}
 	else if(button == Qt::RightButton)
 	{
-		QToolTip::showText(event->globalPos(), QString("HELLO") );	//This shows the tooltip at the global position (screen coordinates)
+		if(!this->labelImg)	return;
+		int labelval = (int)labelImg->GetPixel(currentT,0,currentZ,int(yy),int(xx));
+		//if(labelval > 0)
+		QToolTip::showText(event->globalPos(), QString("ID: ") + QString::number(labelval) );	//This shows the tooltip at the global position (screen coordinates)
 	}
 	
 }
