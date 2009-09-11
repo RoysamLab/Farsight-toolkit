@@ -57,6 +57,7 @@ public slots:
 	void setT(int t);
 	void setChannelFlags(std::vector<bool> flags){channelFlags = flags;refreshDisplayImage();};
 	void setBoundsVisible(bool val);
+	void setIDsVisible(bool val);
 	//void setZoom(double zf);
 
 signals:
@@ -103,6 +104,7 @@ private:
 	void drawImage(QPainter *painter);
 	void drawBoundaries(QPainter *painter);
 	void drawSelectionMarkers(QPainter *painter);
+	void drawObjectIDs(QPainter *painter);
 	void drawObjects(QPainter *painter);
 
 	QImage displayImage;	//Everything that is being displayed in the viewport (includes selections)
@@ -123,6 +125,7 @@ private:
 
 	QColor colorForSelections;
 	bool showBounds;
+	bool showIDs;
 };
 
 #endif 

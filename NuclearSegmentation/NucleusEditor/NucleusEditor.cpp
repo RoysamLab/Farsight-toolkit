@@ -193,6 +193,15 @@ void NucleusEditor::createMenus()
 	connect(showBoundsAction, SIGNAL(triggered()), this, SLOT(toggleBounds()));
 	viewMenu->addAction(showBoundsAction);
 
+	showIDsAction = new QAction(tr("Show &IDs"), this);
+	showIDsAction->setEnabled(false);
+	showIDsAction->setCheckable(true);
+	showIDsAction->setChecked(false);
+	showIDsAction->setStatusTip(tr("Draw ID numbers at centroid locations"));
+	showIDsAction->setShortcut(tr("Ctrl+I"));
+	connect(showIDsAction, SIGNAL(triggered()), this, SLOT(toggleIDs()));
+	viewMenu->addAction(showIDsAction);
+
 	viewMenu->addSeparator();
 	newScatterAction = new QAction(tr("New Scatter"), this);
 	newScatterAction->setEnabled(false);
@@ -488,6 +497,8 @@ void NucleusEditor::loadResult(void)
 	setEditsEnabled(true);
 	showBoundsAction->setEnabled(true);
 	showBoundsAction->setChecked(true);
+	showIDsAction->setEnabled(true);
+	showIDsAction->setChecked(true);
 	newScatterAction->setEnabled(true);
 	segmentAction->setEnabled(false);
 	saveAction->setEnabled(true);
@@ -506,6 +517,21 @@ void NucleusEditor::toggleBounds(void)
 	else
 	{
 		segWin->SetBoundsVisible(false);
+	}
+}
+
+void NucleusEditor::toggleIDs(void)
+{
+	if(!segWin)
+		return;
+
+	if( showIDsAction->isChecked() )
+	{
+		segWin->SetIDsVisible(true);
+	}
+	else
+	{
+		segWin->SetIDsVisible(false);
 	}
 }
 
@@ -754,6 +780,7 @@ void NucleusEditor::segment()
 		this->setEditsEnabled(false);
 		viewMenu->setEnabled(true);
 		showBoundsAction->setEnabled(false);
+		showIDsAction->setEnabled(false);
 		loadAction->setEnabled(false);
 		saveAction->setEnabled(false);
 		xmlAction->setEnabled(false);
@@ -817,6 +844,7 @@ void NucleusEditor::segment()
 		showBoundsAction->setEnabled(true);
 		this->setEditsEnabled(true);
 		viewMenu->setEnabled(true);
+		showIDsAction->setChecked(true);
 		segmentState = -1;
 
 		//Now remove the toolbar:

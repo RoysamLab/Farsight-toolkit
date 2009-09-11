@@ -44,6 +44,7 @@ public:
 	void SetChannelImage(ftk::Image::Pointer image);
 	void SetLabelImage(ftk::Image::Pointer image);
 	void SetBoundsVisible(bool val);
+	void SetIDsVisible(bool val);
 	//void loadImage( QString &fileName );
 	//void AddChannelImage( QString &fileName );
 	//void AddLabelImage( QString &fileName );

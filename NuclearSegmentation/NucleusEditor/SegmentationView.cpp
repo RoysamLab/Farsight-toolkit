@@ -31,6 +31,7 @@ SegmentationView::SegmentationView(QWidget *parent)
 	channelImg = NULL;
 	labelImg = NULL;
 	showBounds = true;
+	showIDs = true;
 
 	currentZ = 0;
 	currentT = 0;
@@ -59,11 +60,18 @@ SegmentationView::SegmentationView(QWidget *parent)
 	setSelectionMode(QAbstractItemView::MultiSelection);
 
 	setMouseTracking(true);
+	setToolTip("TELL ABOUT OBJECTS HERE");
 }
 
 void SegmentationView::setBoundsVisible(bool val)
 {
 	this->showBounds = val;
+	refreshDisplayImage();
+}
+
+void SegmentationView::setIDsVisible(bool val)
+{
+	this->showIDs = val;
 	refreshDisplayImage();
 }
 
@@ -298,7 +306,7 @@ int SegmentationView::verticalOffset() const
 
 void SegmentationView::mousePressEvent(QMouseEvent *event)
 {
-    QAbstractItemView::mousePressEvent(event);
+    
 	origin = event->pos();
 
 	//added by Yousef 7-30-2009
@@ -307,14 +315,10 @@ void SegmentationView::mousePressEvent(QMouseEvent *event)
 	{
 		if(resultModel->isSplitingMode())
 		{
-			int xx = origin.x();
-			int yy = origin.y();
-			// Added by Aytekin
-			xx = xx + horizontalOffset();
-			yy = yy + verticalOffset(); 
-
+			int xx = origin.x() + horizontalOffset();
+			int yy = origin.y() + verticalOffset();
 			xx = xx/currentScale;
-			yy = yy/currentScale;		
+			yy = yy/currentScale;
 			//as of now, I asume that the image starts at the top left corner (0,0) of the view window
 			if(xx<totalWidth && yy<totalHeight)
 			{
@@ -322,6 +326,7 @@ void SegmentationView::mousePressEvent(QMouseEvent *event)
 			}
 		}
 	}
+	QAbstractItemView::mousePressEvent(event);
 }
 
 void SegmentationView::mouseMoveEvent(QMouseEvent *event)
@@ -338,6 +343,7 @@ void SegmentationView::mouseMoveEvent(QMouseEvent *event)
 void SegmentationView::mouseReleaseEvent(QMouseEvent *event)
 {
     QAbstractItemView::mouseReleaseEvent(event);
+	/*
 	QPoint click = event->pos();
 	//Check to make sure this was just a click
 	if ( (click.x() < origin.x()-2) || (click.x() > origin.x()+2) )
@@ -354,7 +360,7 @@ void SegmentationView::mouseReleaseEvent(QMouseEvent *event)
 		//setSelection(QRect(click.x(),click.y(),1,1), QItemSelectionModel::SelectCurrent);
 		//setSelection(QRegion(click.x(),click.y(),1,1),QItemSelectionModel::Select);
 	}
-
+	*/
 }
 
 void SegmentationView::wheelEvent ( QWheelEvent *e )
@@ -675,6 +681,10 @@ void SegmentationView::refreshDisplayImage()
 	{
 		drawBoundaries(&painter);
 	}
+	if(resultModel)
+	{
+		drawObjectIDs(&painter);
+	}
 
 	//drawObjects(&painter);
 
@@ -738,7 +748,8 @@ void SegmentationView::drawBoundaries(QPainter *painter)
 				v4 = (int)labelImg->GetPixel(0, 0, currentZ, i-1, j);
 				if(v!=v1 || v!=v2 || v!=v3 || v!=v4)
 				{
-					QColor myColor;
+					QColor myColor = Qt::cyan;
+					/*
 					if(resultModel)
 					{
 						int row = resultModel->RowForID(v);
@@ -752,6 +763,7 @@ void SegmentationView::drawBoundaries(QPainter *painter)
 					{
 						myColor = Qt::cyan;
 					}
+					*/
 					borders.setPixel(j,i,myColor.rgb());
 				}
 				else
@@ -764,8 +776,45 @@ void SegmentationView::drawBoundaries(QPainter *painter)
 	painter->drawImage(0,0,borders);
 }
 
+void SegmentationView::drawObjectIDs(QPainter *painter)
+{
+	if(!resultModel)
+		return;
+
+	if(!showIDs)
+		return;
+
+	QColor myColor = Qt::magenta;
+	painter->setPen(myColor);
+
+	//Iterate through each object and write its id at its centroid.
+	for(int obj=0; obj < resultModel->NumObjects(); ++obj)
+	{
+		QModelIndex indexID = model()->index(obj, resultModel->ColumnForID(), rootIndex());
+		int id = model()->data(indexID).toInt();
+
+		//Find z extremes:
+		int max_z = 0;
+		int min_z = 1000;
+		std::vector<ftk::Object::Box> bs = resultModel->SegResult()->GetObjectPtr(id)->GetBounds();
+		for(int i=0; i<(int)bs.size(); ++i)
+		{
+				ftk::Object::Box b = bs.at(i);
+				max_z = (b.max.z > max_z) ? b.max.z : max_z;
+				min_z = (b.min.z < min_z) ? b.min.z : min_z;
+		}
+
+		ftk::Object::Point center = resultModel->SegResult()->GetObjectPtr(id)->GetCenters().at(0);
+		if ( (currentZ >= min_z ) && (currentZ <= max_z) )
+		{
+			painter->drawText(center.x, center.y, QString::number(id));
+		}
+
+	}
+}
+
 //***************************************************************************************
-// The drawSelectionMarkers function draws a box around the selected objects
+// The drawSelectionMarkers function paints the boundary and the ID in the appropriate color
 //***************************************************************************************
 void SegmentationView::drawSelectionMarkers(QPainter *painter)
 {
@@ -782,9 +831,13 @@ void SegmentationView::drawSelectionMarkers(QPainter *painter)
 		int id = model()->data(indexID).toInt();
 		vector<ftk::Object::Box> bs = resultModel->SegResult()->GetObjectPtr(id)->GetBounds();
 
+		int max_z = 0;
+		int min_z = 1000;
 		for(int i=0; i<(int)bs.size(); ++i)
 		{
 			ftk::Object::Box b = bs.at(i);
+			max_z = (b.max.z > max_z) ? b.max.z : max_z;
+			min_z = (b.min.z < min_z) ? b.min.z : min_z;
 			if ( (currentZ >= b.min.z ) && (currentZ <= b.max.z) )
 			{
 				painter->setPen(colorForSelections);
@@ -814,6 +867,11 @@ void SegmentationView::drawSelectionMarkers(QPainter *painter)
 				}
 				//*******************************************************************************/
 			}
+		} //End for(int i...
+		ftk::Object::Point center = resultModel->SegResult()->GetObjectPtr(id)->GetCenters().at(0);
+		if ( (currentZ >= min_z ) && (currentZ <= max_z) )
+		{
+			painter->drawText(center.x, center.y, QString::number(id));
 		}
 	}
 
