@@ -543,13 +543,11 @@ void NucleusEditor::mergeCells(void)
 void NucleusEditor::deleteCells(void)
 {
 	currentModel->deleteTrigger();
-
 }
 
 void NucleusEditor::splitCells(void)
 {
 	currentModel->splitTrigger();
-
 }
 
 void NucleusEditor::startSplitting(void)

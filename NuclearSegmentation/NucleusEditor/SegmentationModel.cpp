@@ -136,7 +136,7 @@ void SegmentationModel::SetOutliers( vector<int> outs )
 	if(columnForOutliers == -1)
 	{
 		columnForOutliers = model->columnCount();
-		model->insertColumn(columnForOutliers);			//Add Column for outliers		
+		model->insertColumn(columnForOutliers);			//Add Column for outliers
 		model->setHeaderData( columnForOutliers, Qt::Horizontal, tr("outlier?") );
 	}
 
@@ -273,6 +273,10 @@ void SegmentationModel::deleteTrigger()
 		return;
 
 	ftk::NuclearSegmentation *nucseg = (ftk::NuclearSegmentation*)segResult;
+
+	//Attempt to keep view from jumping after delete:
+	this->selectionModel->clear();
+
 	//Attempt Delete:
 	if( nucseg->Delete(ids) )
 	{
@@ -289,8 +293,9 @@ void SegmentationModel::deleteTrigger()
 		}
 	}
 	MostDataInModelChanged();
-	//emit modelChanged(); //not so useful
 
+	//QItemSelectionModel::SelectionFlags command = QItemSelectionModel::Rows | QItemSelectionModel::Current;
+	//this->selectionModel->select(this->model->index(currentRow, 0), command);
 }
 
 void SegmentationModel::startSplitTrigger()
@@ -315,6 +320,7 @@ void SegmentationModel::endSplitTrigger()
 		if((num_split%2)!=0)
 			num_split--;
 
+		this->selectionModel->clear();	//Clear the selection model
 		for (unsigned int i = 0; i < (unsigned int)num_split; i+=2) 
 		{
 			std::vector< int > newIDs = nucseg->Split(pointsForSplitting.at(i), pointsForSplitting.at(i+1));
@@ -349,8 +355,12 @@ void SegmentationModel::endSplitTrigger()
 					int clss = segResult->GetObjectPtr(newIDs[i])->GetClass();
 					model->setData(model->index(currentRow,columnForClass,QModelIndex()),clss);
 					model->blockSignals(false);
-
 					updateMapping();
+
+					//Add the new objects to the selection list
+					QItemSelectionModel::SelectionFlags command = QItemSelectionModel::Rows | QItemSelectionModel::Current;
+					this->selectionModel->select(this->model->index(currentRow, 0), command);
+
 				}	
 			}
 		}		
@@ -529,6 +539,8 @@ void SegmentationModel::mergeTrigger()
 
 	ftk::NuclearSegmentation *nucseg = (ftk::NuclearSegmentation*)segResult;
 	
+	this->selectionModel->clear();
+
 	//Attempt Merge:
 	for(unsigned int group = 0; group < ids.size(); ++group)
 	{
@@ -565,6 +577,10 @@ void SegmentationModel::mergeTrigger()
 			model->setData(model->index(currentRow,columnForClass,QModelIndex()),clss);
 			model->blockSignals(false);
 			updateMapping();
+
+			//Add the new objects to the selection list
+			QItemSelectionModel::SelectionFlags command = QItemSelectionModel::Rows | QItemSelectionModel::Current;
+			this->selectionModel->select(this->model->index(currentRow, 0), command);
 		}
 	}
 	this->MostDataInModelChanged();
