@@ -237,6 +237,7 @@ void SegmentationModel::updateMapping(void)
 		ID = model->data(index).toInt();
 		LabelToRowMap.insert(ID,row);
 	}
+	this->numObjects = model->rowCount();
 }
 
 int SegmentationModel::RowForID(int id)
@@ -314,21 +315,20 @@ void SegmentationModel::endSplitTrigger()
 		if((num_split%2)!=0)
 			num_split--;
 
-		model->blockSignals(true);
-
 		for (unsigned int i = 0; i < (unsigned int)num_split; i+=2) 
 		{
 			std::vector< int > newIDs = nucseg->Split(pointsForSplitting.at(i), pointsForSplitting.at(i+1));
 			if( newIDs.size()==3 )
 			{
-				
 				//Remove from table the old id (remove the splitted object)			
 				int row = RowForID(newIDs.at(2));
 				QList<QStandardItem *> items = model->takeRow(row);
+				model->blockSignals(true);
 				for(int i=0; i<items.size(); ++i)
 				{
 					delete items.at(i);
 				} 
+				model->blockSignals(false);
 				updateMapping();
 
 			
@@ -338,8 +338,9 @@ void SegmentationModel::endSplitTrigger()
 					//Add into table the new object
 					int currentRow = model->rowCount();
 					model->insertRow(currentRow);
-					model->setData(model->index(currentRow, columnForID, QModelIndex()), newIDs[i]);
 
+					model->blockSignals(true);
+					model->setData(model->index(currentRow, columnForID, QModelIndex()), newIDs[i]);
 					vector<float> features = segResult->GetObjectPtr(newIDs[i])->GetFeatures();
 					for(int f=0; f<(int)features.size(); ++f) 
 					{
@@ -347,14 +348,14 @@ void SegmentationModel::endSplitTrigger()
 					}
 					int clss = segResult->GetObjectPtr(newIDs[i])->GetClass();
 					model->setData(model->index(currentRow,columnForClass,QModelIndex()),clss);
+					model->blockSignals(false);
+
 					updateMapping();
 				}	
 			}
 		}		
 		
-		model->blockSignals(false);
 		MostDataInModelChanged();
-		
 	}
 	//finally, clear the list of points
 	pointsForSplitting.clear();
@@ -529,7 +530,6 @@ void SegmentationModel::mergeTrigger()
 	ftk::NuclearSegmentation *nucseg = (ftk::NuclearSegmentation*)segResult;
 	
 	//Attempt Merge:
-	model->blockSignals(true);
 	for(unsigned int group = 0; group < ids.size(); ++group)
 	{
 		if(ids.at(group).size() <= 1)
@@ -543,10 +543,12 @@ void SegmentationModel::mergeTrigger()
 			{
 				int row = RowForID( ids.at(group).at(id) );
 				QList<QStandardItem *> items = model->takeRow(row);
+				model->blockSignals(true);
 				for(int i=0; i<items.size(); ++i)
 				{
 					delete items.at(i);
 				}
+				model->blockSignals(false);
 				updateMapping();
 			}
 			//Add into table the new object
@@ -560,12 +562,11 @@ void SegmentationModel::mergeTrigger()
 				model->setData(model->index(currentRow, f+1, QModelIndex()), features[f]);
 			}
 			int clss = segResult->GetObjectPtr(newID)->GetClass();
-			model->blockSignals(false);
 			model->setData(model->index(currentRow,columnForClass,QModelIndex()),clss);
+			model->blockSignals(false);
 			updateMapping();
 		}
 	}
-	model->blockSignals(false);
 	this->MostDataInModelChanged();
 }
 

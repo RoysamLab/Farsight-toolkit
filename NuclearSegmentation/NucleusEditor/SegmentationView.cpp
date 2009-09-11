@@ -60,7 +60,10 @@ SegmentationView::SegmentationView(QWidget *parent)
 	setSelectionMode(QAbstractItemView::MultiSelection);
 
 	setMouseTracking(true);
-	setToolTip("TELL ABOUT OBJECTS HERE");
+	//These were just for testing:
+	//setToolTip("TOOL TIP");
+	//setStatusTip("STATUS TIP");
+	//setWhatsThis("WHAT'S THIS");
 }
 
 void SegmentationView::setBoundsVisible(bool val)
@@ -305,39 +308,32 @@ int SegmentationView::verticalOffset() const
 }
 
 void SegmentationView::mousePressEvent(QMouseEvent *event)
-{
-    
-	origin = event->pos();
+{	
+	QAbstractItemView::mousePressEvent(event);
+	origin = event->pos();				// This is a local position (in viewport coordinates)
+	if(!resultModel)  return;
 
-	//added by Yousef 7-30-2009
-	//if we are in spliting mode, then add the point to the splitting list
-	if(resultModel)
+	Qt::MouseButton button = event->button();
+	if(button == Qt::LeftButton)
 	{
+		//added by Yousef 7-30-2009
+		//if we are in spliting mode, then add the point to the splitting list
 		if(resultModel->isSplitingMode())
 		{
-			int xx = origin.x() + horizontalOffset();
-			int yy = origin.y() + verticalOffset();
-			xx = xx/currentScale;
-			yy = yy/currentScale;
+			int xx = (origin.x() + horizontalOffset()) / currentScale;
+			int yy = (origin.y() + verticalOffset()) / currentScale;
 			//as of now, I asume that the image starts at the top left corner (0,0) of the view window
 			if(xx<totalWidth && yy<totalHeight)
 			{
-				resultModel->addPointToSplitList(xx, yy, currentZ);
+					resultModel->addPointToSplitList(xx, yy, currentZ);
 			}
 		}
 	}
-	QAbstractItemView::mousePressEvent(event);
-}
-
-void SegmentationView::mouseMoveEvent(QMouseEvent *event)
-{
-    QAbstractItemView::mouseMoveEvent(event);
-	QPoint pos = event->pos();
-	int xx = ( pos.x() + horizontalOffset() ) / currentScale;
-	int yy = ( pos.y() + verticalOffset() ) / currentScale;
-
-	if( xx>=0 && xx<totalWidth && yy>=0 && yy<totalHeight )
-		emit mouseAt(xx, yy, currentZ);
+	else if(button == Qt::RightButton)
+	{
+		QToolTip::showText(event->globalPos(), QString("HELLO") );	//This shows the tooltip at the global position (screen coordinates)
+	}
+	
 }
 
 void SegmentationView::mouseReleaseEvent(QMouseEvent *event)
@@ -361,6 +357,17 @@ void SegmentationView::mouseReleaseEvent(QMouseEvent *event)
 		//setSelection(QRegion(click.x(),click.y(),1,1),QItemSelectionModel::Select);
 	}
 	*/
+}
+
+void SegmentationView::mouseMoveEvent(QMouseEvent *event)
+{
+    QAbstractItemView::mouseMoveEvent(event);
+	QPoint pos = event->pos();
+	int xx = ( pos.x() + horizontalOffset() ) / currentScale;
+	int yy = ( pos.y() + verticalOffset() ) / currentScale;
+
+	if( xx>=0 && xx<totalWidth && yy>=0 && yy<totalHeight )
+		emit mouseAt(xx, yy, currentZ);
 }
 
 void SegmentationView::wheelEvent ( QWheelEvent *e )

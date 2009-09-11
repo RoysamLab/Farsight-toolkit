@@ -76,7 +76,8 @@ void TableWindow::sortBy()
 	{	
 		if( this->table->model()->headerData(i,Qt::Horizontal).toString() == feat )
 		{
-			this->table->sortByColumn(i,Qt::AscendingOrder);
+			//this->table->sortByColumn(i,Qt::AscendingOrder);
+
 			emit sorted();
 			break;
 		}
@@ -112,7 +113,7 @@ void TableWindow::changeColumns()
 
 void TableWindow::modelChange(const QModelIndex &topLeft, const QModelIndex &bottomRight)
 {
-	//this->update();	//This is too big of an update, make it more specific
+	table->update();
 	int l_column = topLeft.column();
 	int t_row = topLeft.row();
 	int r_column = bottomRight.column();
@@ -127,11 +128,12 @@ void TableWindow::modelChange(const QModelIndex &topLeft, const QModelIndex &bot
 	{
 		table->resizeColumnToContents(c);
 	}
+	QWidget::update();
 }
 
 void TableWindow::update()
 {
-	QWidget::update();
+	table->update();
 	table->resizeRowsToContents();
 	table->resizeColumnsToContents();
 	//Resize Rows to be as small as possible
@@ -139,10 +141,7 @@ void TableWindow::update()
 	{
 		table->verticalHeader()->resizeSection(i,18);
 	}
-	//for(int i = visibleRows; i < table->model()->rowCount(); ++i)
-	//{
-	//	table->setColumnHidden(i,true);
-	//}
+	QWidget::update();
 }
 
 void TableWindow::closeEvent(QCloseEvent *event)

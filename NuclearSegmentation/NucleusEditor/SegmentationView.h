@@ -26,6 +26,7 @@ limitations under the License.
 #include <QtGui/QStylePainter>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QMessageBox>
+#include <QtGui/QToolTip>
 #include <QtCore/QModelIndex>
 #include <QtCore/QRect>
 #include <QtCore/QSize>
