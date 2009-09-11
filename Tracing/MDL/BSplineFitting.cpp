@@ -65,6 +65,8 @@ struct BSPLINE
 int round (float number);
 int selffloor(float number);
 
+void  spap2(int PolyNum, int order, int *t_val, VoxelPosition *points, VoxelPosition * coef, double *knots);
+double dist2pts(double x1,double y1,double z1,double x2,double y2, double z2);
 
 int main(void)
 {
@@ -83,7 +85,9 @@ int main(void)
   char *tempfile; //  temp file, 
 
   VoxelPosition *Allpoints;
+  VoxelPosition *posExtraSpines;
 
+  VoxelPosition *pointsVTK;
 
   DATATYPEIN  * volin; 
 
@@ -152,21 +156,7 @@ int main(void)
 
   // ------------------------------------------------------------------------------------------//
 
-  
-  //---------------------------  construct two files to write -----------------------------------//
-  
-  if ((outbackbone = fopen(argv[7], "w")) == NULL)
-  {
-    printf("Cannot open  backbone file %s for writing\n",argv[7]);
-    exit(1);
-  }
-
- if ((outExspine = fopen(argv[8], "w")) == NULL)
-  {
-    printf("Cannot open  backbone file %s for writing\n",argv[8]);
-    exit(1);
-  }
-
+ 
 
  //--------------------------------Processing with sketon VTK file -------------------------------------//
  // Skip first 4 lines of sketon VTK file
@@ -343,6 +333,10 @@ int NumPoints;
 
 float *t_val;
 
+float *numBranchpts; // need to further
+
+
+
 float discretePt; // sampling rate
 
 for (k=1;k<NumBranches;k++)
@@ -376,21 +370,92 @@ for (k=1;k<NumBranches;k++)
 
      
 	 // sp = spap2(NumPoly[k], 4, t_val, points)
+     //  spap2(int PolyNum, int order, int *t_val, VoxelPosition *points, VoxelPosition * coef, double *knots);
+
+
+
+
 	 
 	 delete []t_val;
-	 //    ----------------the very important function --------Spline fitting -----------------------//
+	 
+	 
+	 //    ---------------- the very important function --------Spline sampling ----------------------//
      discretePt = 0.5;
-	 t_val = new float[NumPoints *2];
+	 NumPoints = (int) (NumPoints / discretePt); // new sampling points;
+
+	 t_val = new float[NumPoints];
 	 for (j=0;j<NumPoints;j++)
-	 {t_val[2*j]   = j*2;
-	  t_val[2*j+1] = 2*j+0.5;
-	 } //  this must be modified 
+	 {t_val[j] = 1+j*discretePt;
+	 } //  generate new sampling points;
 
 
-
-     
+	 //  ----------------- Call the resampling -------------------------------------------------------//  
 
 } // End of NumBranches of curve fitting 
+
+
+ 
+//---------------------------  construct two files to write -----------------------------------------//
+  
+  if ((outbackbone = fopen(argv[7], "w")) == NULL)
+  {
+    printf("Cannot open  backbone file %s for writing\n",argv[7]);
+    exit(1);
+  }
+
+ if ((outExspine = fopen(argv[8], "w")) == NULL)
+  {
+    printf("Cannot open  backbone file %s for writing\n",argv[8]);
+    exit(1);
+  }
+//--------------------------------------------------------------------------------------------------//
+//---------------------------------- Output the extra spines to a vtk file--------------------------//
+
+  fprintf(outExspine, "# vtk DataFile Version 3.0\n");
+  fprintf(outExspine,"MST of skel\n");
+  fprintf(outExspine,"ASCII\n");
+  fprintf(outExspine,"DATASET POLYDATA\n");
+  fprintf(outExspine,"POINTS %d float\n", 2 * numExtraSpines);
+
+  for (i = 0; i<numExtraSpines*2;i++)
+	  fprintf(outExspine,"%f %f %f\n",posExtraSpines[i].x,posExtraSpines[i].y,posExtraSpines[i].z);
+   
+  fprintf(outExspine, "LINES %d %d\n", numExtraSpines, numExtraSpines*3);
+
+  for (i = 0;i<numExtraSpines;i++)
+    fprintf(outExspine, "2 %d %d\n", 2*i, 2*i+1); // 
+
+  fclose(outExspine);
+
+// ----------------------------- end write to outExspine -------------------------------------------//
+
+//---------------------------------- Output the smooth Backbone to a vtk file--------------------------//
+
+  fprintf(outbackbone, "# vtk DataFile Version 3.0\n");
+  fprintf(outbackbone,"MST of skel\n");
+  fprintf(outbackbone,"ASCII\n");
+  fprintf(outbackbone,"DATASET POLYDATA\n");
+  fprintf(outbackbone,"POINTS %d float\n", numVTKpts);
+
+  for (i = 0; i<numExtraSpines*2;i++)
+	  fprintf(outbackbone,"%f %f %f\n",pointsVTK[i].x,pointsVTK[i].y,pointsVTK[i].z);
+   
+  fprintf(outbackbone, "LINES %d %d\n", numVTKpts-NumBranches, (numVTKpts-NumBranches)*3);
+
+  int indexPts = 0;
+
+  for (i = 0; i< NumBranches; i++)
+  {
+    for(j =0; j< numBranchpts[i]-1;j++)
+	{
+        fprintf(outbackbone, "2 %d %d\n", j+indexPts, j+indexPts+1);
+    }
+    indexPts = indexPts + numBranchpts[i];
+  }
+  fclose(outbackbone);
+
+// ----------------------------- end write to outExspine -------------------------------------------//
+
 
 // ints = size(points, 2);
 
@@ -427,25 +492,50 @@ int selffloor(float number)
 // -------------------------------------------B-Spline fitting function ------------------------------//
  //sp = spap2(NumPoly[k], 4, t_val, points)
 
-BSPLINE spap2(int PolyNum, int order, int *t_val, VoxelPosition *points)
-{
+void  spap2(int PolyNum, int order, int *t_val, VoxelPosition *points, VoxelPosition * coef, double *knots)
+{ 
 	// ---------------------
 	
 	int coefslength;
 	int knotslength;
-	BSPLINE sp;
+
 	
-	sp.B='B';
-	sp.coefs = new VoxelPosition [coefslength];
-	sp.dim=  3;
-	sp.knots = new double [knotslength];
-	sp.number =13; // .....
-	sp.order =4;
 
 	// ----------------------------------------------//
 	{
       cout << " do B-Spline fitting ----/n ";
 		//..........................
 	}
-    return sp;
+    // return sp;
+}
+
+
+// -----------------------------------------resampling from B-Spline function ---------------------------//
+
+// Input:  VoxelPosition * coef are the coefficient of B-Spline basis-------------------------------------//
+// Input:  float *t_val, the resampling points -----------------------------------------------------------//
+// Output: VoxelPosition * ValuePoints -------------------------------------------------------------------// 
+
+void fnval(VoxelPosition * coef,float *t_val, VoxelPosition * ValuePoints)
+{
+	// resampling
+	int i;
+	int sizeN;
+    VoxelPosition *points;
+	sizeN=sizeof (t_val) /sizeof(float);
+    // ----------- 
+    	
+
+}
+
+//-----------------------------------------sun end ------------------------------------------------------//
+
+// --------------------------------------h = dist2pts(x1, y1, z1, x2, y2, z2) ---------------------------//
+
+double dist2pts(double x1,double y1,double z1,double x2,double y2, double z2)
+{
+ double h;
+ h=sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2)+(z1-z2)*(z1-z2));
+ return h;
+
 }
