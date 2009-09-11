@@ -46,9 +46,25 @@ struct Graphprop{
 	 float outVert[8];
 };
 
+struct BSPLINE
+{
+     char  B;
+     double *knots; //: [1x17 double]
+     VoxelPosition *coefs; //: [3x13 double]
+     int number; //: 13
+     int order;  // 4
+     int dim;    // 3
+};
+
 #define DATATYPEIN unsigned char
 
 //int main(int argc, char *argv[])
+
+//----------------------------------------sub function ----------------------------//
+
+int round (float number);
+int selffloor(float number);
+
 
 int main(void)
 {
@@ -66,7 +82,7 @@ int main(void)
   char *infilename;
   char *tempfile; //  temp file, 
 
-  VoxelPosition *nodePosition;
+  VoxelPosition *Allpoints;
 
 
   DATATYPEIN  * volin; 
@@ -160,41 +176,41 @@ int main(void)
  {fscanf(insketon,"%s",str);
   printf("%s\n", str); 
  }
- int voxelnumber;
+ int NumAllPoints;
  fscanf(insketon,"%s",str);
- voxelnumber = atoi(str);
- printf("There are %d sketon' points \n", voxelnumber);
+ NumAllPoints = atoi(str);
+ printf("There are %d sketon' points \n", NumAllPoints);
  fscanf(insketon,"%s",str);
  //---------------------------------------------------------------------------------------------------//
- nodePosition = new VoxelPosition[voxelnumber];
+ Allpoints = new VoxelPosition[NumAllPoints];
 
  //ifstream fin;
  //fin = insketon;
   float temp;
  //------------------------------- read 3D sketon points ---------------------------------------------//
- for (i=0;i<voxelnumber;i++)
+ for (i=0;i<NumAllPoints;i++)
  {
 	 fscanf (insketon,"%f",&temp);
-	 nodePosition[i].x = temp;
+	 Allpoints[i].x = temp;
 	 fscanf (insketon,"%f",&temp);
-     nodePosition[i].y = -temp; // change the sign,
+     Allpoints[i].y = -temp; // change the sign,
 	 fscanf (insketon,"%f",&temp);
-	 nodePosition[i].z =temp;
+	 Allpoints[i].z =temp;
  }
  // --------------------------------------------------------------------------------------------------//
  float *flagOnBackbone;
 
 
  Graphprop * graphInfPoints;
- graphInfPoints = new Graphprop[voxelnumber];
+ graphInfPoints = new Graphprop[NumAllPoints];
 
- flagOnBackbone = new float[voxelnumber];
+ flagOnBackbone = new float[NumAllPoints];
  
  //--------------Initialize the two arrays: flagOnBackbone (for backbone index); --------------------//
 
  //----------------  graphInfPoints(for graph connection) -------------------------------------------//
  
- for (i=0;i<voxelnumber;i++)
+ for (i=0;i<NumAllPoints;i++)
  {
 	 flagOnBackbone[i]=0;
      graphInfPoints[i].deg=0;
@@ -243,12 +259,12 @@ int mod;
 // --------- Get rid of junction point so that breaking up backbone segments -----------//
 
 int outpt;
-for (i=0;i<voxelnumber;i++)
+for (i=0;i<NumAllPoints;i++)
 {
   if (graphInfPoints[i].deg >=3)
-	  for (j=0;graphInfPoints[i].deg;j++)
+	  for (j=0;j<graphInfPoints[i].deg;j++)
 	  {
-            outpt = graphInfPoints[j].outVert[j];
+            outpt = graphInfPoints[i].outVert[j];
             graphInfPoints[outpt].deg = graphInfPoints[outpt].deg - 1;
 			if ( graphInfPoints[outpt].deg ==1)
 				if (graphInfPoints[outpt].outVert[0] == i)
@@ -272,7 +288,7 @@ int lastpoint, nextpoint;
 for (k=0;k<200;k++)
      NumPoly[k] = 0;  
 
-for (i=0;i<voxelnumber;i++)
+for (i=0;i<NumAllPoints;i++)
 {
   if (graphInfPoints[i].deg == 1)
   {
@@ -306,7 +322,130 @@ for (i=0;i<voxelnumber;i++)
   }// end if
  }// enf for 
 
+//-- -------------------  NumPoly = round(NumPoly * 0.05) ------------------------------ -------//
+
+for (k=0;k<200;k++)
+     NumPoly[k] = round(NumPoly[k]*0.05); // 0.04 , how to set this parameter ? 
+
+// ---------------- ---------------sub end ----------------------------------------------------//
+
+int numVTKpts = 0;
+int numExtraSpines = 0;
+
+// -------------------------------- Begin to curve fitting for each branch of backbones------//
+VoxelPosition *points;
+points = NULL;
+// points = new VoxelPosition[NumAllPoints];
+//
+
+int tmp=0;
+int NumPoints;
+
+float *t_val;
+
+float discretePt; // sampling rate
+
+for (k=1;k<NumBranches;k++)
+{
+
+	//----------------------------Note there will a huge loop --------------------------------//
+    if (points != NULL) delete []points;
+	for (i = 0; i< NumAllPoints; i++) // i=0 means the first number 
+	{
+     
+		if (selffloor(flagOnBackbone[i])== k)
+		{
+			indexBBpts = ((flagOnBackbone[i] - selffloor(flagOnBackbone[i])) * 1000 );
+            points = new VoxelPosition[NumAllPoints];
+		    points[i].x = Allpoints[i].x;  // In order to exchange x-coord and y-coord
+			points[i].y = Allpoints[i].y; 
+            points[i].z = Allpoints[i].z; 
+			tmp++;
+		}   
+            // %plot3(points(1,:), points(2,:), points(3,:), 'b:', 'LineWidth', 2); hold on;
+            //%In order to exchange x-coord and y-coord
+            // %plot3(points(2,:)+DispBias, points(1,:)+DispBias,  points(3,:)+DispBias, 'b*', 'MarkerSize', 2); hold on;
+            // plot3(Allpoints(1,i)+DispBias, Allpoints(2,i)+DispBias, Allpoints(3,i)+DispBias, 'b*', 'MarkerSize', 1); hold on;
+	}// end for 
+
+    // NumPoints = size(points, 2);
+     NumPoints = tmp;
+	 t_val = new float[NumPoints];
+	 for (j=0;j<NumPoints;j++)
+		 t_val[j]=j+1;
+
+     
+	 // sp = spap2(NumPoly[k], 4, t_val, points)
+	 
+	 delete []t_val;
+	 //    ----------------the very important function --------Spline fitting -----------------------//
+     discretePt = 0.5;
+	 t_val = new float[NumPoints *2];
+	 for (j=0;j<NumPoints;j++)
+	 {t_val[2*j]   = j*2;
+	  t_val[2*j+1] = 2*j+0.5;
+	 } //  this must be modified 
 
 
+
+     
+
+} // End of NumBranches of curve fitting 
+
+// ints = size(points, 2);
+
+
+
+  
  return 1;  
+}
+
+
+// ---------------------------- Round to nearest integer function-------------------------------//
+
+int round (float number)
+{  
+   int temp;
+   temp = int (number);
+   if ((number-temp)>0.5) 
+     return (int(number+0.5));
+   else 
+     return (temp);
+}
+
+//---------------------------------------------selffloor  end -----------------------------------------//
+// y = floor(a) rounds fi object a to the nearest integer in the direction of negative infinity and returns the result in fi object y.//
+
+int selffloor(float number)
+{
+   if (number >0 || number ==0) 
+	   return (int)number;
+   else
+	   return (int)(number-0.5); 
+}
+
+// -------------------------------------------B-Spline fitting function ------------------------------//
+ //sp = spap2(NumPoly[k], 4, t_val, points)
+
+BSPLINE spap2(int PolyNum, int order, int *t_val, VoxelPosition *points)
+{
+	// ---------------------
+	
+	int coefslength;
+	int knotslength;
+	BSPLINE sp;
+	
+	sp.B='B';
+	sp.coefs = new VoxelPosition [coefslength];
+	sp.dim=  3;
+	sp.knots = new double [knotslength];
+	sp.number =13; // .....
+	sp.order =4;
+
+	// ----------------------------------------------//
+	{
+      cout << " do B-Spline fitting ----/n ";
+		//..........................
+	}
+    return sp;
 }
