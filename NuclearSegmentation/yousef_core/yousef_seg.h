@@ -124,6 +124,8 @@ public:
 	ftk::Object::Point MergeInit(ftk::Object::Point P1, ftk::Object::Point P2, int *newID);
 	bool DeleteInit(ftk::Object::Point P1);
 	int getMaxID(int);
+	//added by Yousef on 9/11/2009
+	int yousef_nucleus_seg::AddObject(std::vector<int> P1, std::vector<int> P2);
 	
 
 private:	

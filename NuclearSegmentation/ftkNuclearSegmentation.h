@@ -89,6 +89,7 @@ public:
 	bool Delete(vector<int> ids);
 	bool DeleteInit(ftk::Object::Point P1); //same as above, but applied on initial segmentation (and updates LoG resp image?)
 	bool Add( Object::Point p ){return 0;};
+	int AddObject(ftk::Object::Point P1, ftk::Object::Point P2);
 	bool editsNotSaved;				//Will be true if edits have been made and not saved to file.
 
 	std::string GetErrorMessage() { return errorMessage; };

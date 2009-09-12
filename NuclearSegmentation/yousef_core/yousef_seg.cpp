@@ -1948,6 +1948,85 @@ int yousef_nucleus_seg::getMaxID(int Int_Fin)
 	}
 	return iid;
 }
+
+//int yousef_nucleus_seg::AddObject(ftk::Object::Point P1, ftk::Object::Point P2)
+int yousef_nucleus_seg::AddObject(std::vector<int> P1, std::vector<int> P2)
+{	
+	//if no label (segmentation) is available then return
+	if(!segImagePtr)
+	{
+		cerr<<"Run segmentation first"<<endl;						
+		return 0;
+	}
+	//get the coordinates of the two points and the size of the box
+	int x1 = P1[0];
+	int x2 = P2[0];
+	int y1 = P1[1];
+	int y2 = P2[1];
+	int z1 = P1[2];
+	int z2 = P2[2];
+	int sz_x = x2-x1+1;
+	int sz_y = y2-y1+1;
+	int sz_z = z2-z1+1;
+	if(sz_x<1 || sz_y<1 || sz_z<1)
+		return 0;
+	//ta3al
+	//extract the region from the raw image
+	unsigned char* subDataImagePtr = new unsigned char[sz_x*sz_y*sz_z];
+	int ind =0;
+	for(int k=z1; k<=z2; k++)
+	{
+		for(int i=y1; i<=y2; i++)
+		{
+			for(int j=x1; j<=x2; j++)
+			{
+				subDataImagePtr[ind] = dataImagePtr[(k*numRows*numColumns)+i*numColumns+j];
+				ind++;
+			}
+		}
+	}
+
+	//create an impty image to hold the binarization results
+	unsigned short* subBinImagePtr = new unsigned short[sz_x*sz_y*sz_z];
+	memset(subBinImagePtr/*destination*/,0/*value*/,sz_x*sz_y*sz_z*sizeof(unsigned short)/*num bytes to move*/);
+
+	int ok = 0;
+	if (sz_z == 1)
+	{
+		ok = Cell_Binarization_2D(subDataImagePtr,subBinImagePtr, sz_y, sz_x, 0); //Do Binarization		
+	}
+	else
+	{
+		ok = Cell_Binarization_3D(subDataImagePtr,subBinImagePtr, sz_y, sz_x, sz_z, 0);		//Do Binarization		
+	}
+	if(ok==0)
+		return 0;
+
+	if(numObjects == 0)
+		numObjects = getMaxID(0); //get the number of objects
+
+	numObjects++;
+
+	ind = 0;
+	for(int k=z1; k<=z2; k++)
+	{
+		for(int i=y1; i<=y2; i++)
+		{
+			for(int j=x1; j<=x2; j++)
+			{				
+				if(subDataImagePtr[ind] == 0 || segImagePtr[(k*numRows*numColumns)+i*numColumns+j]!=0)
+					continue;
+
+				segImagePtr[(k*numRows*numColumns)+i*numColumns+j] = numObjects;
+				ind++;
+			}
+		}
+	}
+	
+	//retuen the new object ID
+	return numObjects;					
+}
+
 /*
 int yousef_nucleus_seg::saveIntoIDLFormat()
 {

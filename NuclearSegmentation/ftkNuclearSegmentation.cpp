@@ -1275,6 +1275,30 @@ ftk::Object::Point NuclearSegmentation::MergeInit(ftk::Object::Point P1, ftk::Ob
 	return newSeed;
 }
 
+int NuclearSegmentation::AddObject(ftk::Object::Point P1, ftk::Object::Point P2)
+{
+	//if no label (segmentation) or no data image is available then return
+	if(!labelImage || !dataImage)
+	{
+		errorMessage = "label image or data image doesn't exist";					
+		return 0;
+	}	
+	//create std vectors of the points
+	//I am doing that because I want to make yousef_seg isolated from ftk
+	std::vector<int> p1;
+	std::vector<int> p2;
+	p1.push_back(P1.x);
+	p1.push_back(P1.y);
+	p1.push_back(P1.z);
+	p2.push_back(P2.x);
+	p2.push_back(P2.y);
+	p2.push_back(P2.z);
+
+
+	int newID = NucleusSeg->AddObject(p1,p2);
+	return newID;
+}
+
 bool NuclearSegmentation::Delete(vector<int> ids)
 {
 	if(!labelImage)
