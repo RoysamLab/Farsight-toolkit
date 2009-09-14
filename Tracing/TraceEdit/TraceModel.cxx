@@ -80,20 +80,20 @@ void TraceModel::SyncModel()
 	this->Model->setRowCount(0);
 	this->SetupHeaders();
 	std::vector< std::vector< double > > data;
-	for (int i = 0; i < (int)this->GetTraces().size(); ++i)
+	for (int i = 0; i < (int)this->TraceLines.size(); ++i)
 	{
 		std::vector<double> row;
-		row.push_back(this->GetTraces().at(i)->GetId());
-		row.push_back(this->GetTraces().at(i)->GetSize());
-		row.push_back((int)this->GetTraces().at(i)->GetType());
-		row.push_back(this->GetTraces().at(i)->GetParentID());
-		for (int j = 0; j < (int)this->GetTraces().at(i)->Features.size(); ++j)
+		row.push_back(this->TraceLines.at(i)->GetId());
+		row.push_back(this->TraceLines.at(i)->GetSize());
+		row.push_back((int)this->TraceLines.at(i)->GetType());
+		row.push_back(this->TraceLines.at(i)->GetParentID());
+		for (int j = 0; j < (int)this->TraceLines.at(i)->Features.size(); ++j)
 		{
-			row.push_back(this->GetTraces().at(i)->Features.at(j));
+			row.push_back(this->TraceLines.at(i)->Features.at(j));
 		}
 		data.push_back(row);
 	}//end for traces.size  
-	for (int row=0; row<(int)this->GetTraces().size(); ++row)
+	for (int row=0; row<(int)data.size(); ++row)
     {
     this->Model->insertRow(row);
     for(int col=0; col < this->Model->columnCount(); ++col)

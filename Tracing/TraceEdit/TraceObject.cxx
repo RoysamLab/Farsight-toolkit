@@ -276,7 +276,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
       }
     sscanf(buff,"%d %d %lf %lf %lf %lf %d",&id,&type,&x,&y,&z,&r,&parent);
     TraceBit tbit;
-    tbit.x=x;tbit.y=y;tbit.z=z;tbit.id=id;tbit.r =r;
+    tbit.x=(double) fabs(x);tbit.y=(double) fabs(y);tbit.z=(double) fabs(z);tbit.id=id;tbit.r =r;
     data[id] = tbit;
 
     if(parent!=-1)

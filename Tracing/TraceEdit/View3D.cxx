@@ -637,6 +637,7 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
 	{ //int size = view->tobj->Gaps.size();
 		int id = tline->GetId();
 		view->MergeGaps->SelectbyTraceID(id);
+		view->poly_line_data->Modified();
 	}
     //update the head Qt view here too...
   }// end if pick
@@ -964,6 +965,7 @@ void View3D::DeleteTraces()
 	{
 		for (i = 0; i < traceList.size(); i++)
 		{
+			this->poly_line_data->Modified();
 			this->DeleteTrace(traceList[i]); 
 		}
 		this->Rerender();
