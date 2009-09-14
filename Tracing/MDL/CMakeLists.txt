@@ -1,6 +1,7 @@
 PROJECT(MDL)
 FIND_PACKAGE( Boost REQUIRED )
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+SUBDIRS(ConnectTraces)
 ADD_EXECUTABLE(AnisoDiffuse AnisoDiffuse.cpp)
 ADD_EXECUTABLE(ConnCompntwFldfill ConnCompntwFldfill.cpp)
 ADD_EXECUTABLE(ConnectComponents ConnectComponents.cpp)

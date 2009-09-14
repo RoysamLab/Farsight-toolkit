@@ -1,0 +1,505 @@
+#include "itkImageFileReader.h"
+#include "itkImageFileWriter.h"
+#include "itkImageRegionIterator.h"
+#include "itkRGBPixel.h"
+
+#include "vtkAdjacentVertexIterator.h"
+#include "vtkDataSetAttributes.h"
+#include "vtkGraphReader.h"
+#include "vtkGraphWriter.h"
+#include "vtkIdTypeArray.h"
+#include "vtkImageData.h"
+#include "vtkPoints.h"
+#include "vtkMutableDirectedGraph.h"
+#include "vtkObjectFactory.h"
+#include "vtkPolyDataReader.h"
+#include "vtkPolyDataWriter.h"
+#include "vtkPolyLine.h"
+#include "vtkSmartPointer.h"
+#include "vtkTIFFReader.h"
+#include "vtkTree.h"
+
+#include <vtksys/SystemTools.hxx>
+
+#include "vtkPlotEdges.h"
+#include "vtkConvertMDLTracesToTrees.h"
+
+typedef itk::RGBPixel<unsigned char> RGBPixelType;
+typedef itk::Image<RGBPixelType, 3> RGBImageType;
+
+vtkStandardNewMacro(vtkConvertMDLTracesToTrees);
+vtkCxxRevisionMacro(vtkConvertMDLTracesToTrees, "$Revision$");
+
+////////////////////////////////////////////////////////////////////////////////
+vtkConvertMDLTracesToTrees::vtkConvertMDLTracesToTrees()
+{
+  this->TracesData = NULL;
+  this->SomaImage = NULL;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+vtkConvertMDLTracesToTrees::~vtkConvertMDLTracesToTrees()
+{
+  for(vtkstd::vector<vtkTree *>::iterator traceItr = this->Traces.begin();
+      traceItr != this->Traces.end();
+      ++traceItr)
+    {
+    (*traceItr)->Delete();
+    }
+  vtkstd::list<vtkstd::pair<vtkIdType, double *> >::iterator rootItr;
+  for(rootItr = this->TraceRoots.begin();
+      rootItr != this->TraceRoots.end(); ++rootItr)
+    {
+    delete [] (*rootItr).second;
+    }
+  this->TracesData->Delete();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void vtkConvertMDLTracesToTrees::PrintSelf(ostream& os, vtkIndent indent)
+{
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void vtkConvertMDLTracesToTrees::FindTraceRoots()
+{
+  this->TraceRoots.clear();
+  vtkstd::list< vtkstd::pair<vtkIdType, double *> > candidateRoots;
+  //step 1: find all the traces who have an end point in the soma
+  for(int cellID = 0; cellID < this->TracesData->GetNumberOfCells();
+      cellID++)
+    {
+    double *first_point = new double[3];
+    double *last_point = new double[3];
+    this->GetTraceEndPoint(cellID, true, first_point);
+    this->GetTraceEndPoint(cellID, false, last_point);
+    if(this->PointInSoma(first_point))
+      {
+      candidateRoots.push_back(vtkstd::make_pair(cellID, last_point));
+      delete [] first_point;
+      }
+    else if(this->PointInSoma(last_point))
+      {
+      candidateRoots.push_back(vtkstd::make_pair(cellID, first_point));
+      delete [] last_point;
+      }
+    else
+      {
+      delete [] first_point;
+      delete [] last_point;
+      }
+    }
+  //step 2: loop over the candidate roots to determine which are true trace
+  //roots.
+  //
+  //Note to self: this whole process seems inefficient because we're basically
+  //doing the same search twice (once here and once in GenerateTrace), but it is
+  //important that we start with the right list of roots to build our trees...
+  vtkstd::list<vtkstd::pair<vtkIdType, double *> >::iterator candItr;
+  for(candItr = candidateRoots.begin();
+      candItr != candidateRoots.end(); ++candItr)
+    {
+    if(this->VerifyRootTrace( (*candItr).first ))
+      {
+      this->TraceRoots.push_back( (*candItr) );
+      this->Orphans->SetValue( (*candItr).first, -1);
+      }
+    else
+      {
+      delete [] (*candItr).second;
+      }
+    }
+  cout << "number of root traces found: " << this->TraceRoots.size() << endl;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void vtkConvertMDLTracesToTrees::GetTraceEndPoint(int cellID,
+                                                  bool getFirstPoint,
+                                                  double *point)
+{
+  vtkPolyLine *polyLine = reinterpret_cast<vtkPolyLine *>
+    (this->GetTracesData()->GetCell(cellID));
+  vtkSmartPointer<vtkPoints> points = polyLine->GetPoints();
+  if(getFirstPoint)
+    {
+    points->GetPoint(0, point);
+    }
+  else
+    {
+    points->GetPoint(points->GetNumberOfPoints() - 1, point);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+bool vtkConvertMDLTracesToTrees::PointInSoma(double point[3])
+{
+  ImageType::IndexType index;
+  ImageType::PointType position;
+  ImageType::PixelType pixel;
+  position[0] = point[0];
+  position[1] = point[1];
+  position[2] = point[2];
+  this->SomaImage->TransformPhysicalPointToIndex(position, index);
+  //check if the soma image is non-zero at this point
+  pixel = this->SomaImage->GetPixel(index);
+  if(pixel != 0)
+    {
+    //if it is you're at the root of a trace.
+    return true;
+    }
+  return false;
+}
+
+//Determine whether or not a trace is connected to other traces on both
+//ends.  True trace roots do not have neighbors on both ends.
+////////////////////////////////////////////////////////////////////////////////
+bool vtkConvertMDLTracesToTrees::VerifyRootTrace(int rootID)
+{
+  bool headNeighborFound = false;
+  bool tailNeighborFound = false;
+  vtkPolyLine *polyLine = reinterpret_cast<vtkPolyLine *>
+    (this->GetTracesData()->GetCell(rootID));
+  vtkSmartPointer<vtkPoints> points = polyLine->GetPoints();
+  double first_point[3];
+  double last_point[3];
+  points->GetPoint(0, first_point);
+  points->GetPoint(points->GetNumberOfPoints() - 1, last_point);
+  for(int cellID = 0; cellID < this->TracesData->GetNumberOfCells();
+      cellID++)
+    {
+    if(cellID == rootID)
+      {
+      continue;
+      }
+    if(!headNeighborFound)
+      {
+      if(this->TraceContainsPoint(cellID, first_point))
+        {
+        headNeighborFound = true;
+        }
+      }
+    if(!tailNeighborFound)
+      {
+      if(this->TraceContainsPoint(cellID, last_point))
+        {
+        tailNeighborFound = true;
+        }
+      }
+    if(headNeighborFound && tailNeighborFound)
+      {
+      return false;
+      }
+    }
+  if(!(headNeighborFound && tailNeighborFound))
+    {
+    return true;
+    }
+  cerr << "WARNING: logic dictates that we should never go here..." << endl;
+  return false;
+}
+
+//returns true if point is one of the end points of the trace identified by
+//cellID
+////////////////////////////////////////////////////////////////////////////////
+bool vtkConvertMDLTracesToTrees::TraceContainsPoint(int cellID, double point[3])
+{
+  vtkSmartPointer<vtkPolyLine> trace = reinterpret_cast<vtkPolyLine *>
+      (this->GetTracesData()->GetCell(cellID));
+  vtkSmartPointer<vtkPoints> points = trace->GetPoints();
+  double start[3];
+  double end[3];
+  points->GetPoint(0, start);
+  points->GetPoint(points->GetNumberOfPoints() - 1, end);
+  if(start[0] == point[0] && start[1] == point[1] &&
+     start[2] == point[2])
+    {
+    return true;
+    }
+  if(end[0] == point[0] && end[1] == point[1] &&
+     end[2] == point[2])
+    {
+    return true;
+    }
+  return false;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+int vtkConvertMDLTracesToTrees::CreateTrees()
+{
+  if(this->TracesData == NULL)
+    {
+    cerr << "ERROR: Call LoadTracesData before CreateTrees." << endl;
+    return 1;
+    }
+
+  if(this->SomaImage.IsNull())
+    {
+    cerr << "ERROR: Call LoadSomas before CreateTrees." << endl;
+    return 1;
+    }
+
+  //initialize "orphans": a list of lines whose parents have not been found yet.
+  this->Orphans = vtkSmartPointer<vtkIdTypeArray>::New();
+  this->Orphans->SetNumberOfValues(this->TracesData->GetNumberOfCells());
+
+  for(int cellID = 0; cellID < this->GetTracesData()->GetNumberOfCells();
+      cellID++)
+    {
+    this->Orphans->SetValue(cellID, cellID);
+    }
+
+  //find all the lines that are rooted in somas
+  this->FindTraceRoots();
+
+  vtkstd::list<vtkstd::pair<vtkIdType, double *> >::iterator rootItr;
+  for(rootItr = this->TraceRoots.begin();
+      rootItr != this->TraceRoots.end(); ++rootItr)
+    {
+      //create a new tree for this root trace
+      vtkSmartPointer<vtkMutableDirectedGraph> trace =
+        vtkSmartPointer<vtkMutableDirectedGraph>::New();
+      vtkIdType root = trace->AddVertex();
+
+      vtkIdTypeArray *nodeIDsToLineIDs = vtkIdTypeArray::New(); 
+      nodeIDsToLineIDs->InsertValue(root, (*rootItr).first);
+      nodeIDsToLineIDs->SetName("idmap");
+
+      //call GenerateTrace to flesh out this new trace
+      cout << "calling GenerateTrace with a new root" << endl;
+      this->GenerateTrace(trace, root, (*rootItr).first, (*rootItr).second,
+                        nodeIDsToLineIDs); 
+
+      //associate a node to line mapping with this tree and add it to the
+      //vector of traces
+      trace->GetVertexData()->AddArray(nodeIDsToLineIDs);
+      vtkTree *tree = vtkTree::New();
+      tree->CheckedShallowCopy(trace);
+      nodeIDsToLineIDs->Delete();
+      this->Traces.push_back(tree);
+      cout << "just added trace #" << this->Traces.size() << endl;
+      }
+  this->CheckForOrphans();
+  return 1;
+}
+
+//this function recursively searches for lines that are connected to each
+//other's end points, growing a tree in the process.
+////////////////////////////////////////////////////////////////////////////////
+void vtkConvertMDLTracesToTrees::GenerateTrace(vtkMutableDirectedGraph *trace,
+                                             vtkIdType parent, int cellID,
+                                             double *end_point,
+                                             vtkIdTypeArray *nodeIDsToLineIDs)
+{
+  vtkIdType newNode = trace->AddChild(parent);
+  nodeIDsToLineIDs->InsertValue(newNode, cellID);
+
+  double first_point[3];
+  double last_point[3];
+  vtkPolyLine *polyLine;
+  vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+  //for each that hasn't found its parent yet
+  for(int lineID = 0; lineID < this->GetTracesData()->GetNumberOfCells();
+      lineID++)
+    {
+    if( (cellID == lineID) || (this->Orphans->GetValue(lineID) == -1) )
+      {
+      continue;
+      }
+
+    polyLine = reinterpret_cast<vtkPolyLine *>(this->GetTracesData()->GetCell(lineID));
+    points = polyLine->GetPoints();
+    points->GetPoint(0, first_point);
+    points->GetPoint(points->GetNumberOfPoints() - 1, last_point);
+    //if either of its end points match the end point of this new node
+    //create a new node associated with that line, with this node as its parent
+    if(first_point[0] == end_point[0] && first_point[1] == end_point[1] &&
+       first_point[2] == end_point[2])
+      {
+      this->Orphans->SetValue(lineID, -1);
+      this->GenerateTrace(trace, newNode, lineID, last_point, nodeIDsToLineIDs); 
+      }
+    if(last_point[0] == end_point[0] && last_point[1] == end_point[1] &&
+       last_point[2] == end_point[2])
+      {
+      this->Orphans->SetValue(lineID, -1);
+      this->GenerateTrace(trace, newNode, lineID, first_point, nodeIDsToLineIDs); 
+      }
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void vtkConvertMDLTracesToTrees::CheckForOrphans()
+{
+  int numOrphans = 0;
+  for(int i = 0; i < this->Orphans->GetSize(); i++)
+    {
+    if(this->Orphans->GetValue(i) != -1)
+      {
+      numOrphans++;
+      }
+    }
+  if(numOrphans > 0)
+    {
+    cout << numOrphans << " traces could not be connected to a soma." << endl;
+    }
+}
+
+//filename should point to a .vtk file that contains the output of a tracing
+//routine
+////////////////////////////////////////////////////////////////////////////////
+void vtkConvertMDLTracesToTrees::LoadTracesData(const char *filename)
+{
+  vtkSmartPointer<vtkPolyDataReader> tracesReader = 
+    vtkSmartPointer<vtkPolyDataReader>::New();
+  tracesReader->SetFileName(filename);
+
+  vtkSmartPointer<vtkPlotEdges> plotEdges =
+    vtkSmartPointer<vtkPlotEdges>::New();
+  plotEdges->SetInput(tracesReader->GetOutput());
+  plotEdges->Update();
+
+  this->SetTracesData(plotEdges->GetOutput());
+}
+
+//filename should point to a .tif file that contains the output of a soma
+//segementation routine
+////////////////////////////////////////////////////////////////////////////////
+void vtkConvertMDLTracesToTrees::LoadSomas(const char *filename)
+{
+  typedef itk::ImageFileReader<ImageType> ReaderType;
+  ReaderType::Pointer somaReader = ReaderType::New();
+  somaReader->SetFileName(filename);
+  this->SomaImage = somaReader->GetOutput();
+  somaReader->Update();
+}
+
+//this function attempts to read a series of .vtk files of the form <base>n.vtk
+//These files should be generated by calling vtkGraphWriter
+////////////////////////////////////////////////////////////////////////////////
+void vtkConvertMDLTracesToTrees::LoadTrees(const char *basefilename)
+{
+  vtkSmartPointer<vtkGraphReader> reader =
+    vtkSmartPointer<vtkGraphReader>::New();
+  vtkstd::string baseFileName = vtkstd::string(basefilename);
+  vtkstd::string basename = baseFileName.substr(0, baseFileName.rfind(".vtk"));
+  int itr = -1;
+  vtkstd::string currentFileName;
+  do
+    {
+    if(itr != -1)
+      {
+      reader->SetFileName(currentFileName.c_str());
+      vtkSmartPointer<vtkMutableDirectedGraph> trace =
+        reinterpret_cast<vtkMutableDirectedGraph *>(reader->GetOutput());
+      vtkTree *tree = vtkTree::New();
+      tree->CheckedShallowCopy(trace);
+      this->Traces.push_back(tree);
+      }
+    itr++;
+    currentFileName = basename;
+    vtkstd::ostringstream os;
+    os << itr;
+    currentFileName += os.str();
+    currentFileName += ".vtk";
+    }
+  while(vtksys::SystemTools::FileExists(currentFileName.c_str()));
+}
+
+//write out the trees generated by this class to a series of .vtk files
+////////////////////////////////////////////////////////////////////////////////
+void vtkConvertMDLTracesToTrees::WriteTrees(const char *basefilename)
+{
+  vtkSmartPointer<vtkGraphWriter> graphWriter =
+    vtkSmartPointer<vtkGraphWriter>::New();
+  vtkstd::string outFileName = vtkstd::string(basefilename);
+  vtkstd::string basename = outFileName.substr(0, outFileName.rfind(".vtk"));
+  vtkstd::string currentFileName;
+  int itr = 0;
+  for(vtkstd::vector<vtkTree *>::iterator traceItr = this->Traces.begin();
+      traceItr != this->Traces.end();
+      ++traceItr)
+    {
+    graphWriter->SetInput( (*traceItr) );
+    currentFileName = basename;
+    vtkstd::ostringstream os;
+    os << itr;
+    currentFileName += os.str();
+    currentFileName += ".vtk";
+    graphWriter->SetFileName(currentFileName.c_str());
+    graphWriter->Update();
+    itr++;
+    }
+}
+
+//write out the tree structure generated by this class to .swc format
+////////////////////////////////////////////////////////////////////////////////
+void vtkConvertMDLTracesToTrees::WriteToSWC(const char *filename)
+{
+  this->FileWriter.open(filename);
+  if(!this->FileWriter.is_open())
+    {
+    cerr << "unable to open " << filename << endl;
+    return;
+    }
+
+  cout << "Writing " << this->Traces.size() << " trace(s) to " << filename
+       << endl;
+
+  long int currentSWCID = 0;
+  vtkTree *tree;
+  for(vtkstd::vector<vtkTree *>::iterator traceItr = this->Traces.begin();
+      traceItr != this->Traces.end();
+      ++traceItr)
+    {
+    tree = *traceItr;
+    this->WriteTraceToSWC(tree, tree->GetRoot(), &currentSWCID,
+                          -1);
+    }
+}
+
+//recursive helper funciton for WriteToSWC.  Note that this is currently
+//hardcoding radius to 1 and class to 3.
+////////////////////////////////////////////////////////////////////////////////
+void vtkConvertMDLTracesToTrees::WriteTraceToSWC(vtkTree *trace,
+                                                vtkIdType currentNode,
+                                                long *currentSWCID,
+                                                long parentSWCID)
+{
+  //get the line associated with this node in the tree
+  vtkIdTypeArray *vertexArray = reinterpret_cast<vtkIdTypeArray *>
+    (trace->GetVertexData()->GetArray(0));
+  vtkIdType cellID = vertexArray->GetValue(currentNode);
+  vtkPolyLine *currentLine = reinterpret_cast<vtkPolyLine *>
+    (this->GetTracesData()->GetCell(cellID));
+  vtkPoints *currentPoints = currentLine->GetPoints();
+
+  //connect the first point to the parent's SWC ID
+  double xyz[3];
+  currentPoints->GetPoint(0, xyz);
+  this->FileWriter << ++(*currentSWCID) << " 3 " << xyz[0] << " " << xyz[1]
+                   << " " << xyz[2] << " 1 " << parentSWCID << endl;
+
+  //now iterate over its points, writing out each one, connecting it to the
+  //previous point.
+  for(vtkIdType pointID = 1; pointID < currentPoints->GetNumberOfPoints();
+      pointID++)
+    {
+    currentPoints->GetPoint(pointID, xyz);
+    this->FileWriter << ++(*currentSWCID) << " 3 " << xyz[0] << " " << xyz[1]
+                     << " " << xyz[2] << " 1 " << (*currentSWCID) << endl;
+    }
+ 
+  //then call this function on the children
+  long branchPointID = *currentSWCID; 
+  vtkAdjacentVertexIterator *childItr = vtkAdjacentVertexIterator::New();
+  trace->GetChildren(currentNode, childItr);
+  int numChildren = 0;
+  while(childItr->HasNext())
+    {
+    numChildren++;
+    this->WriteTraceToSWC(trace, childItr->Next(), currentSWCID, 
+                          branchPointID);
+    }
+  childItr->Delete();
+}
+
