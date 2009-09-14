@@ -31,8 +31,8 @@ set(ZLIB_LIBRARY ../vxl/lib/libzlib.* CACHE STRING
   "Set to VXL zlib library")
 
 set(DESIRED_QT_VERSION 4 CACHE STRING "Set to 4 for FARSIGHT")
-set(QT_QMAKE_EXECUTABLE /usr/local/Trolltech/Qt-4.5.1/bin/qmake CACHE STRING
-  "Set to default Mac installation directory")
+#set(QT_QMAKE_EXECUTABLE /usr/local/Trolltech/Qt-4.5.1/bin/qmake CACHE STRING
+#  "Set to default Mac installation directory")
 set(VTK_USE_CARBON ON CACHE BOOL "Set to ON for FARSIGHT on Mac OS X")
 set(VTK_USE_COCOA OFF CACHE BOOL "Set to OFF for FARSIGHT on Mac OS X")
 
