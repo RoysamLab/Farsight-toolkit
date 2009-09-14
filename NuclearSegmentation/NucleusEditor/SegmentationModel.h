@@ -67,16 +67,23 @@ public slots:
 	void deleteTrigger(void);
 	void mergeTrigger(void);
 	void splitTrigger(void);
+	void addTrigger(void);
 	void startSplitTrigger(void);
 	void endSplitTrigger(void);
 
-	//added by Yousef 7-30-2009
-	bool isSplitingMode() { return SplitingMode; }
-	void setSplitingModeToOn() { SplitingMode = true; }
-	void setSplitingModeToOff() { SplitingMode = false; }
+	bool isSplittingMode() { return SplittingMode; };
 	void addPointToSplitList(int x, int y, int z);
-	int getSizeOfSplittingList();
+	int getSizeOfSplittingList() { return (int)pointsForSplitting.size(); };
 	std::vector<int> getPointFromSplittingList(int id);
+
+	bool isAddMode() { return addMode; };
+	int getSizeOfAddList(){ return (int)pointsForAdd.size(); };
+	void addPointToAddList(int x, int y, int z);
+	std::vector<int> getStartAddPoint();
+	void abortAdd();
+
+
+
 
 private:
 	int columnForID;
@@ -101,8 +108,10 @@ private:
 	bool neighbor(ftk::Object *obj1, ftk::Object *obj2);
 
 	//added by Yousef 7-30-2009
-	bool SplitingMode; //to be used to indicate that we are in splitting mode
+	bool SplittingMode; //to be used to indicate that we are in splitting mode
+	bool addMode;  //indicates we are currently attempting to add an object (in add mode)
 	std::vector<ftk::Object::Point> pointsForSplitting;
+	std::vector<ftk::Object::Point> pointsForAdd;
 };
 
 #endif

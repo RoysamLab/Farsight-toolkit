@@ -35,7 +35,8 @@ SegmentationModel::SegmentationModel(ftk::NuclearSegmentation *segresult)
 	SyncModel();
 
 	//by Yousef: set the spliting mode flag to off
-	SplitingMode=false;
+	SplittingMode=false;
+	addMode=false;
 }
 
 SegmentationModel::~SegmentationModel()
@@ -298,11 +299,99 @@ void SegmentationModel::deleteTrigger()
 	//this->selectionModel->select(this->model->index(currentRow, 0), command);
 }
 
+//This puts us into add mode if not, or adds an object if we are:
+void SegmentationModel::addTrigger(void)
+{
+	if(!addMode)
+	{
+		addMode = true;
+		pointsForAdd.clear();
+	}
+	else
+	{
+		if(getSizeOfAddList() == 2)	//Actually do the add!
+		{
+			this->selectionModel->clear();	//Clear the selection model
+			ftk::NuclearSegmentation *nucseg = (ftk::NuclearSegmentation*)segResult;
+			int newID = nucseg->AddObject(pointsForAdd.at(0), pointsForAdd.at(1));
+			
+			// Add the cell-id of new (result of adding) cells
+			//Add into table the new object
+			int currentRow = model->rowCount();
+			model->insertRow(currentRow);
+
+			model->blockSignals(true);
+			model->setData(model->index(currentRow, columnForID, QModelIndex()), newID);
+			vector<float> features = segResult->GetObjectPtr(newID)->GetFeatures();
+			for(int f=0; f<(int)features.size(); ++f) 
+			{
+				model->setData(model->index(currentRow, f+1, QModelIndex()), features[f]);
+			}
+			int clss = segResult->GetObjectPtr(newID)->GetClass();
+			model->setData(model->index(currentRow,columnForClass,QModelIndex()),clss);
+			model->blockSignals(false);
+			updateMapping();
+
+			//Add the new objects to the selection list
+			QItemSelectionModel::SelectionFlags command = QItemSelectionModel::Rows | QItemSelectionModel::Current;
+			this->selectionModel->select(this->model->index(currentRow, 0), command);		
+		
+			MostDataInModelChanged();
+		}
+		pointsForAdd.clear();
+		addMode = false;
+	}
+}
+
+//The list should never get bigger than 2 points (2 corners of a box)
+//When we set the second corner start doing the add and clear the list.
+//Here z is the z slize the click occured on (so we calculate the offset.
+void SegmentationModel::addPointToAddList(int x, int y, int z)
+{
+	ftk::Object::Point P;
+	P.t = 0;
+	P.x = x;
+	P.y = y;
+	P.z = z;
+
+	if(getSizeOfAddList() == 0)
+	{
+		pointsForAdd.push_back(P);
+	}
+	else if(getSizeOfAddList() == 1)
+	{
+		pointsForAdd.push_back(P);
+		this->addTrigger();
+	}
+	else
+	{
+		pointsForAdd.clear();
+		addMode = false;
+	}
+}
+
+//Just get the first point in vector
+std::vector<int> SegmentationModel::getStartAddPoint()
+{
+	ftk::Object::Point P = pointsForSplitting.at(0);
+	std::vector<int> ret;
+	ret.push_back(P.x);
+	ret.push_back(P.y);
+	ret.push_back(P.z);
+	return ret;
+}
+
+void SegmentationModel::abortAdd()
+{
+	pointsForAdd.clear();
+	addMode = false;
+}
+
 void SegmentationModel::startSplitTrigger()
 {
-	if(!SplitingMode)
+	if(!SplittingMode)
 	{
-		SplitingMode = true;
+		SplittingMode = true;
 		//also clear the list of points 
 		pointsForSplitting.clear();
 	}
@@ -310,9 +399,9 @@ void SegmentationModel::startSplitTrigger()
 
 void SegmentationModel::endSplitTrigger()
 {
-	if(SplitingMode)
+	if(SplittingMode)
 	{
-		SplitingMode = false;
+		SplittingMode = false;
 		//start by sending the points (pairs) to the cell plitter
 		ftk::NuclearSegmentation *nucseg = (ftk::NuclearSegmentation*)segResult;
 		//the number of selected points for splitting must be even
@@ -378,11 +467,6 @@ void SegmentationModel::addPointToSplitList(int x, int y, int z)
 	P.y = y;
 	P.z = z;
 	pointsForSplitting.push_back(P);		
-}
-
-int SegmentationModel::getSizeOfSplittingList()
-{
-	return (int) pointsForSplitting.size();
 }
 
 std::vector<int> SegmentationModel::getPointFromSplittingList(int id)

@@ -231,13 +231,21 @@ void NucleusEditor::createMenus()
 
 	mergeAction = new QAction(tr("Merge Cells"), this);
 	mergeAction->setStatusTip(tr("Merge Cells"));
+	mergeAction->setShortcut(tr("Ctrl+M"));
 	connect(mergeAction, SIGNAL(triggered()), this, SLOT(mergeCells()));	
 	editMenu->addAction(mergeAction);
 
 	deleteAction = new QAction(tr("Delete Cells"), this);
 	deleteAction->setStatusTip(tr("Deletes the selected cells"));
+	deleteAction->setShortcut(tr("Ctrl+D"));
 	connect(deleteAction,SIGNAL(triggered()),this,SLOT(deleteCells()));	
 	editMenu->addAction(deleteAction);
+
+	addAction = new QAction(tr("Add Cell"), this);
+	addAction->setStatusTip(tr("Draw a Box to add a new cell"));
+	addAction->setShortcut(tr("Ctrl+A"));
+	connect(addAction,SIGNAL(triggered()), this, SLOT(addCell()));
+	editMenu->addAction(addAction);
 
 	// Splitting has two modes and therefore has two submenu items:
 	// Start Splitting
@@ -535,29 +543,40 @@ void NucleusEditor::toggleIDs(void)
 	}
 }
 
+void NucleusEditor::addCell(void)
+{
+	if(currentModel)
+		currentModel->addTrigger();
+}
+
 void NucleusEditor::mergeCells(void)
 {
-	currentModel->mergeTrigger();
+	if(currentModel)
+		currentModel->mergeTrigger();
 }
 
 void NucleusEditor::deleteCells(void)
 {
-	currentModel->deleteTrigger();
+	if(currentModel)
+		currentModel->deleteTrigger();
 }
 
 void NucleusEditor::splitCells(void)
 {
-	currentModel->splitTrigger();
+	if(currentModel)
+		currentModel->splitTrigger();
 }
 
 void NucleusEditor::startSplitting(void)
 {	
-	currentModel->startSplitTrigger();
+	if(currentModel)
+		currentModel->startSplitTrigger();
 }
 
 void NucleusEditor::endSplitting(void)
 {
-	currentModel->endSplitTrigger();
+	if(currentModel)
+		currentModel->endSplitTrigger();
 }
 
 // Added by Aytekin Vargun 6/03/09

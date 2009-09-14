@@ -95,6 +95,7 @@ private slots:
 	void mergeCells(void);
 	void deleteCells(void);
 	void splitCells(void);
+	void addCell(void);
 
 	void startSplitting(void);
 	void endSplitting(void);
@@ -137,6 +138,7 @@ private:
 	QAction *clearSelectAction;
 	QAction *mergeAction;
 	QAction *deleteAction;
+	QAction *addAction;
 	QMenu *splitMenu;
 	//QAction *splitAction;
 	QAction *splitStartAction;
@@ -171,7 +173,7 @@ private:
 	QLabel *currentPythonLabel;
 	QPushButton *browseForPythonButton;
 
-	//bool editStatus; //false shows that we cannot apply editing to cells						 	
+	//bool editStatus; //false shows that we cannot apply editing to cells	
  };
 
 class ParamsFileDialog : public QDialog

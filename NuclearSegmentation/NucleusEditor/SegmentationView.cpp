@@ -60,6 +60,7 @@ SegmentationView::SegmentationView(QWidget *parent)
 	setSelectionMode(QAbstractItemView::MultiSelection);
 
 	setMouseTracking(true);
+	rubberBand = NULL;
 	//These were just for testing:
 	//setToolTip("TOOL TIP");
 	//setStatusTip("STATUS TIP");
@@ -317,13 +318,38 @@ void SegmentationView::mousePressEvent(QMouseEvent *event)
 	{
 		if(!resultModel)  return;
 		//if we are in spliting mode, then add the point to the splitting list
-		if(resultModel->isSplitingMode())
+		if(resultModel->isSplittingMode())
 		{
 			resultModel->addPointToSplitList(xx, yy, currentZ);
+		}
+
+		if(resultModel->isAddMode())
+		{
+			int sz = resultModel->getSizeOfAddList();
+			if(sz == 0)
+			{
+				resultModel->addPointToAddList(xx,yy,currentZ);
+				if(!rubberBand)	rubberBand = new MyRubberBand(QRubberBand::Rectangle, this);
+				rubberBand->setGeometry(QRect(origin,QSize()));
+				rubberBand->show();
+			}
+			else if(sz == 1)
+			{
+				resultModel->addPointToAddList(xx,yy,currentZ);
+				delete rubberBand;
+				rubberBand = NULL;
+			}
 		}
 	}
 	else if(button == Qt::RightButton)
 	{
+		if(rubberBand && resultModel)
+		{
+			resultModel->abortAdd();
+			delete rubberBand;
+			rubberBand = NULL;
+		}
+
 		if(!this->labelImg)	return;
 		int labelval = (int)labelImg->GetPixel(currentT,0,currentZ,int(yy),int(xx));
 		//if(labelval > 0)
@@ -361,6 +387,16 @@ void SegmentationView::mouseMoveEvent(QMouseEvent *event)
 	QPoint pos = event->pos();
 	int xx = ( pos.x() + horizontalOffset() ) / currentScale;
 	int yy = ( pos.y() + verticalOffset() ) / currentScale;
+
+	//Draw a box!
+	if(resultModel)
+	{
+		if(resultModel->isAddMode())
+		{	
+			if(rubberBand)
+				rubberBand->setGeometry(QRect(origin, pos).normalized());
+		}
+	}
 
 	if( xx>=0 && xx<totalWidth && yy>=0 && yy<totalHeight )
 		emit mouseAt(xx, yy, currentZ);
@@ -504,7 +540,7 @@ void SegmentationView::scrollTo(const QModelIndex &index, ScrollHint)
 		return;
 	}
 
-	if(resultModel->isSplitingMode())
+	if(resultModel->isSplittingMode() || resultModel->isAddMode())
 	{
 		return;
 	}
@@ -880,7 +916,7 @@ void SegmentationView::drawSelectionMarkers(QPainter *painter)
 
 	//Added by Yousef 7-31-2009, modified by Isaac 9-02-2009 to only draw points inside objects
 	//if we are selecting points for splitting, mark the points
-	if(resultModel->isSplitingMode())
+	if(resultModel->isSplittingMode())
 	{
 		painter->setPen(Qt::red);
 		for(int i=0; i<resultModel->getSizeOfSplittingList(); i++)		
@@ -1048,4 +1084,25 @@ void SegmentationView::zoom(double zf)
 	currentScale *= zf;
 	refreshDisplayImage();
 	updateGeometries();
+}
+
+
+MyRubberBand::MyRubberBand(QRubberBand::Shape s, QWidget * p)
+: QRubberBand(s,p)
+{
+	/*
+	//QStyleOptionRubberBand * option = new QStyleOptionRubberBand();
+	//option->initFrom(this);
+	//option->opaque = false;
+	//option->palette.setBrush(QPalette::Highlight,QBrush(Qt::yellow,Qt::NoBrush));
+	//this->initStyleOption(option);
+
+	this->setBackgroundRole(QPalette::HighlightedText);
+	this->setForegroundRole(QPalette::Highlight);
+
+	QPalette pal = this->palette();
+	pal.setBrush(QPalette::Highlight,QBrush(Qt::blue, Qt::NoBrush));
+	pal.setBrush(QPalette::HighlightedText,QBrush(Qt::blue, Qt::NoBrush));
+	this->setPalette(pal);
+	*/
 }

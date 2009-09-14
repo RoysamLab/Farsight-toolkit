@@ -2023,7 +2023,7 @@ int yousef_nucleus_seg::AddObject(std::vector<int> P1, std::vector<int> P2)
 		}
 	}
 	
-	//retuen the new object ID
+	//return the new object ID
 	return numObjects;					
 }
 

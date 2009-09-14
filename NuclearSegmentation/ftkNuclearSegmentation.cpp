@@ -1294,8 +1294,80 @@ int NuclearSegmentation::AddObject(ftk::Object::Point P1, ftk::Object::Point P2)
 	p2.push_back(P2.y);
 	p2.push_back(P2.z);
 
-
 	int newID = NucleusSeg->AddObject(p1,p2);
+
+	lastRunStep = 4;
+	this->GetResultImage();
+
+	ftk::Object::Box region;
+	region.min = P1;
+	region.max = P2;
+
+	if(!labelImage || !dataImage)
+	{
+		errorMessage = "label image or data image doesn't exist";
+		return 0;
+	}
+
+	//Calculate features using feature filter
+	typedef unsigned char IPixelT;
+	typedef unsigned short LPixelT;
+	typedef itk::Image< IPixelT, 3 > IImageT;
+	typedef itk::Image< LPixelT, 3 > LImageT;
+
+	dataImage->Cast<IPixelT>();
+	labelImage->Cast<LPixelT>();
+
+	IImageT::Pointer itkIntImg = dataImage->GetItkPtr<IPixelT>(0,0);
+	LImageT::Pointer itkLabImg = labelImage->GetItkPtr<LPixelT>(0,0);
+
+	IImageT::RegionType intRegion;
+	IImageT::SizeType intSize;
+	IImageT::IndexType intIndex;
+	LImageT::RegionType labRegion;
+	LImageT::SizeType labSize;
+	LImageT::IndexType labIndex;
+
+	intIndex[0] = region.min.x;
+	intIndex[1] = region.min.y;
+	intIndex[2] = region.min.z;
+	intSize[0] = region.max.x - region.min.x + 1;
+	intSize[1] = region.max.y - region.min.y + 1;
+	intSize[2] = region.max.z - region.min.z + 1;
+
+	labIndex[0] = region.min.x;
+	labIndex[1] = region.min.y;
+	labIndex[2] = region.min.z;
+	labSize[0] = region.max.x - region.min.x + 1;
+	labSize[1] = region.max.y - region.min.y + 1;
+	labSize[2] = region.max.z - region.min.z + 1;
+
+	intRegion.SetSize(intSize);
+    intRegion.SetIndex(intIndex);
+    itkIntImg->SetRequestedRegion(intRegion);
+
+    labRegion.SetSize(labSize);
+    labRegion.SetIndex(labIndex);
+    itkLabImg->SetRequestedRegion(labRegion);
+
+	typedef ftk::LabelImageToFeatures< IPixelT, LPixelT, 3 > FeatureCalcType;
+	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
+	labFilter->SetImageInputs( itkIntImg, itkLabImg );
+	labFilter->SetLevel(3);
+	labFilter->ComputeHistogramOn();
+	labFilter->ComputeTexturesOn();
+	labFilter->Update();
+
+	myObjects.push_back( GetNewObject(newID, labFilter->GetFeatures(newID) ) );
+	
+	ftk::Object::EditRecord record;
+	record.date = TimeStamp();
+	std::string msg = "ADDED";
+	record.description = msg;
+	myObjects.back().AddEditRecord(record);
+	IdToIndexMap[newID] = (int)myObjects.size() - 1;
+
+	editsNotSaved = true;
 	return newID;
 }
 

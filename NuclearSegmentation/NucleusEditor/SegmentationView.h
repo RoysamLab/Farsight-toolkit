@@ -27,6 +27,7 @@ limitations under the License.
 #include <QtGui/QMouseEvent>
 #include <QtGui/QMessageBox>
 #include <QtGui/QToolTip>
+#include <QtGui/QRubberBand>
 #include <QtCore/QModelIndex>
 #include <QtCore/QRect>
 #include <QtCore/QSize>
@@ -37,6 +38,8 @@ limitations under the License.
 #include "SegmentationModel.h"
 
 #include <iostream>
+
+class MyRubberBand;
 
 class SegmentationView : public QAbstractItemView
 {
@@ -123,10 +126,17 @@ private:
 	int totalHeight;
 
 	QPoint origin;
-
+	MyRubberBand *rubberBand;				//Used for drawing a box for adding objects!
 	QColor colorForSelections;
 	bool showBounds;
 	bool showIDs;
+};
+
+class MyRubberBand : public QRubberBand
+{
+	Q_OBJECT;
+public:
+	MyRubberBand(Shape s, QWidget * p = 0);
 };
 
 #endif 
