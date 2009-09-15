@@ -128,7 +128,7 @@ void yousef_nucleus_seg::runBinarization()
 	}
 	else
 	{
-		ok = Cell_Binarization_3D(dataImagePtr,binImagePtr, numRows, numColumns, numStacks, shift);		//Do Binarization		
+		ok = Cell_Binarization_3D(dataImagePtr,binImagePtr, numRows, numColumns, numStacks, shift, 1);		//Do Binarization		
 	}
 
 	if(ok)
@@ -204,6 +204,9 @@ void yousef_nucleus_seg::runSeedDetection()
 void yousef_nucleus_seg::runClustering()
 {
 	//fitMixGaussians();
+	//return;
+	
+	//runGradWeightedDistance();
 	//return;
 
 	//Check for required images
@@ -924,6 +927,73 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 	int numOfObjs = /*getConnCompImage*/getRelabeledImage(segImagePtr, 6, 25, numRows, numColumns,numStacks, 1);			
 	std::cerr << "done with " << numOfObjs<<" found"<<std::endl;
 	std::cerr << "Creating Final Label Image" << std::endl;		
+}
+
+//Added by Yousef on 9/14/2009
+void yousef_nucleus_seg::runGradWeightedDistance()
+{	
+	if (!dataImagePtr)
+		return;
+
+	//computer the gradient image
+	float* gradIM = new float[numStacks*numRows*numColumns];
+	memset(gradIM/*destination*/,0.0/*value*/,numStacks*numRows*numColumns*sizeof(float)/*num bytes to move*/);
+	computeGradientImage(dataImagePtr, gradIM, numRows, numColumns, numStacks);
+	//pad with zeros	
+	float* gradIMpad;
+	if(numStacks == 1)
+	{
+		gradIMpad = new float[(numRows+2)*(numColumns+2)];
+		memset(gradIMpad/*destination*/,0.0/*value*/,(numRows+2)*(numColumns+2)*sizeof(float)/*num bytes to move*/);
+	}
+	else
+	{
+		gradIMpad = new float[(numStacks+2)*(numRows+2)*(numColumns+2)];
+		memset(gradIMpad/*destination*/,0.0/*value*/,(numStacks+2)*(numRows+2)*(numColumns+2)*sizeof(float)/*num bytes to move*/);
+	}
+
+	for(int k=0; k<numStacks; k++)
+	{
+		for(int i=0; i<numRows; i++)
+		{
+			for(int j=0; j<numColumns; j++)
+			{
+				int ind1 = k*numRows*numColumns + i*numColumns + j;
+				int ind2;
+				if(numStacks == 1)
+					ind2 = (i+1)*(numColumns+2)+j+1;
+				else
+					ind2 = (k+1)*(numRows+2)*(numColumns+2)+(i+1)*(numColumns+2)+j+1;
+				gradIMpad[ind2] = gradIM[ind1];
+			}
+		}
+	}
+	delete [] gradIM;
+
+	//Now prepare the input image to the gradient weighted distance transform
+	//In this image, each seed is set to zero, each background point is set to -inf and each foreground point is set to +inf
+	float* outImage = new float[numStacks*numRows*numColumns];
+	memset(outImage/*destination*/,0.0/*value*/,numStacks*numRows*numColumns*sizeof(float)/*num bytes to move*/);
+	prepareInputImage(binImagePtr, seedImagePtr,outImage, numRows, numColumns, numStacks);
+	
+	//finally, call the gradient-weighted distance transform function
+	gradient_enhanced_distance_map_2D( outImage, gradIMpad, numColumns, numRows);
+
+	delete [] gradIM;
+
+	//try this: copy the resulting image into the clustering image
+	for(int k=0; k<numStacks; k++)
+	{
+		for(int i=0; i<numRows; i++)
+		{
+			for(int j=0; j<numColumns; j++)
+			{
+				clustImagePtr[k*numColumns*numRows+i*numColumns+j] = (unsigned short) outImage[(k+1)*(numColumns+2)*(numRows+2)+(i+1)*(numColumns+2)+j+1];
+			}
+		}
+	}
+
+	delete [] outImage;
 }
 
 unsigned char ***TriplePtr(int z, int r, int c)
@@ -1950,14 +2020,8 @@ int yousef_nucleus_seg::getMaxID(int Int_Fin)
 }
 
 //int yousef_nucleus_seg::AddObject(ftk::Object::Point P1, ftk::Object::Point P2)
-int yousef_nucleus_seg::AddObject(std::vector<int> P1, std::vector<int> P2)
-{	
-	//if no label (segmentation) is available then return
-	if(!segImagePtr)
-	{
-		cerr<<"Run segmentation first"<<endl;						
-		return 0;
-	}
+int yousef_nucleus_seg::AddObject(unsigned char* inImage, unsigned short* lbImage, std::vector<int> P1, std::vector<int> P2, std::vector<unsigned short> imSZ, int maxID)
+{		
 	//get the coordinates of the two points and the size of the box
 	int x1 = P1[0];
 	int x2 = P2[0];
@@ -1965,22 +2029,41 @@ int yousef_nucleus_seg::AddObject(std::vector<int> P1, std::vector<int> P2)
 	int y2 = P2[1];
 	int z1 = P1[2];
 	int z2 = P2[2];
+
 	int sz_x = x2-x1+1;
 	int sz_y = y2-y1+1;
+	//if(z1==z2)
+	//{
+	//	//assume that the spacing ratio is 2
+	//	int dz = sz_x/2;
+	//	z1 -= dz;
+	//	z2 += dz;
+	//}
+	
 	int sz_z = z2-z1+1;
-	if(sz_x<1 || sz_y<1 || sz_z<1)
-		return 0;
-	//ta3al
-	//extract the region from the raw image
+	/*if(sz_x<1 || sz_y<1 || sz_z<1)
+		return 0;*/
+	
+	int cent_x = (x2+x1)/2;
+	int cent_y = (y2+y1)/2;
+	int cent_z = (z2+z1)/2;
+	int max_dist = (int) sqrt((double)(x2-cent_x)*(x2-cent_x)+(y2-cent_y)*(y2-cent_y)+(z2-cent_z)*(z2-cent_z));
+	//extract the region from the raw image	
 	unsigned char* subDataImagePtr = new unsigned char[sz_x*sz_y*sz_z];
-	int ind =0;
+	int ind =0;	
 	for(int k=z1; k<=z2; k++)
 	{
 		for(int i=y1; i<=y2; i++)
 		{
 			for(int j=x1; j<=x2; j++)
 			{
-				subDataImagePtr[ind] = dataImagePtr[(k*numRows*numColumns)+i*numColumns+j];
+				//try this: enhance the intensity at each point by multiplying by a weight
+				//that is inversly proportional to its distance from the center of the box
+				int d = (int) sqrt((double)(j-cent_x)*(j-cent_x)+(i-cent_y)*(i-cent_y)+(k-cent_z)*(k-cent_z));
+				d = max_dist-d;				
+				d/=2;
+
+				subDataImagePtr[ind] = inImage[(k*imSZ[2]*imSZ[3])+i*imSZ[3]+j]*d;
 				ind++;
 			}
 		}
@@ -1997,34 +2080,37 @@ int yousef_nucleus_seg::AddObject(std::vector<int> P1, std::vector<int> P2)
 	}
 	else
 	{
-		ok = Cell_Binarization_3D(subDataImagePtr,subBinImagePtr, sz_y, sz_x, sz_z, 0);		//Do Binarization		
+		ok = Cell_Binarization_3D(subDataImagePtr,subBinImagePtr, sz_y, sz_x, sz_z, 0, 0);		//Do Binarization		
 	}
 	if(ok==0)
 		return 0;
+	
 
-	if(numObjects == 0)
-		numObjects = getMaxID(0); //get the number of objects
+	maxID++;
 
-	numObjects++;
-
-	ind = 0;
+	ind = -1;
 	for(int k=z1; k<=z2; k++)
 	{
 		for(int i=y1; i<=y2; i++)
 		{
 			for(int j=x1; j<=x2; j++)
 			{				
-				if(subDataImagePtr[ind] == 0 || segImagePtr[(k*numRows*numColumns)+i*numColumns+j]!=0)
+				ind++;
+				if(k==z1 || k==z2 || i==y1 || i==y2 || j==x1 || j==x2) //remove border points
+					continue;
+				if(subBinImagePtr[ind] == 0 || lbImage[(k*imSZ[2]*imSZ[3])+i*imSZ[3]+j]!=0)
 					continue;
 
-				segImagePtr[(k*numRows*numColumns)+i*numColumns+j] = numObjects;
-				ind++;
+				lbImage[(k*imSZ[2]*imSZ[3])+i*imSZ[3]+j] = maxID;				
 			}
 		}
 	}
-	
+	//free memory
+	delete [] subDataImagePtr;
+	delete [] subBinImagePtr;
+
 	//return the new object ID
-	return numObjects;					
+	return maxID;					
 }
 
 /*

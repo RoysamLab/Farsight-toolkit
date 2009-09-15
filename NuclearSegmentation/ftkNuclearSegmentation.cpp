@@ -1283,31 +1283,77 @@ int NuclearSegmentation::AddObject(ftk::Object::Point P1, ftk::Object::Point P2)
 		errorMessage = "label image or data image doesn't exist";					
 		return 0;
 	}	
+	std::vector<unsigned short> size = labelImage->Size();
+	////get the coordinates of the two points and the size of the box
+	int x1 = P1.x;
+	int x2 = P2.x;
+	int y1 = P1.y;
+	int y2 = P2.y;
+	int z1 = P1.z;
+	int z2 = P2.z;
+
+	int sz_x = x2-x1+1;
+	int sz_y = y2-y1+1;
+	if(z1==z2)
+	{
+		//assume that the sampling ratio is 2
+		int dz;
+		if(sz_x > sz_y)
+			dz = sz_x/4;
+		else
+			dz = sz_y/4;
+
+		z1 -= dz;
+		if(z1<0)
+			z1=0;
+		z2 += dz;
+		if(z2>size[1]-1)
+			z2=size[1]-1;
+	}
+	
+	int sz_z = z2-z1+1;
+	if(sz_x<1 || sz_y<1 || sz_z<1)
+		return 0;
+
+	
+	
+	//We assume that the image is unsigned char, but just in case it isn't we make it so:
+	dataImage->Cast<unsigned char>();
+	unsigned char *dptr = dataImage->GetSlicePtr<unsigned char>(0,channelNumber,0);	//Expects grayscale image
+	//also get a pointer to the label image
+	unsigned short *lptr = labelImage->GetSlicePtr<unsigned short>(0,channelNumber,0);	//Expects grayscale image
+
+	if(NucleusSeg)
+		delete NucleusSeg;
+	NucleusSeg = new yousef_nucleus_seg();
+
 	//create std vectors of the points
 	//I am doing that because I want to make yousef_seg isolated from ftk
 	std::vector<int> p1;
-	std::vector<int> p2;
-	p1.push_back(P1.x);
-	p1.push_back(P1.y);
-	p1.push_back(P1.z);
-	p2.push_back(P2.x);
-	p2.push_back(P2.y);
-	p2.push_back(P2.z);
+	std::vector<int> p2;	
+	p1.push_back(x1);
+	p1.push_back(y1);
+	p1.push_back(z1);
+	p2.push_back(x2);
+	p2.push_back(y2);
+	p2.push_back(z2);
 
-	int newID = NucleusSeg->AddObject(p1,p2);
+	int newID = NucleusSeg->AddObject(dptr, lptr, p1,p2,size, maxID);
+	if(newID == 0)
+		return 0;
+	else
+		maxID = newID;
 
 	lastRunStep = 4;
 	this->GetResultImage();
 
+	//update the corner points
+	P1.z = z1;
+	P2.z = z2;
 	ftk::Object::Box region;
 	region.min = P1;
 	region.max = P2;
-
-	if(!labelImage || !dataImage)
-	{
-		errorMessage = "label image or data image doesn't exist";
-		return 0;
-	}
+	
 
 	//Calculate features using feature filter
 	typedef unsigned char IPixelT;

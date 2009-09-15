@@ -77,6 +77,12 @@ SET( cb3_SRCS
 	alpha_expansion/Multi_Color_Graph_Learning_2d.cpp
 )
 
-ADD_LIBRARY( Yousef_Nucleus_Seg ${NSRCS} ${sd3d_SRCS} ${sd2d_SRCS} ${mcgl3d_SRCS} ${emgmm_SRCS} ${clust_SRCS} ${clust2d_SRCS} ${border_SRCS} ${cbin_SRCS} ${cb3_SRCS})
+SET( gwd_SRCS
+	gradient_weighted_distance_2D/gradientweighteddistancemap.h
+	gradient_weighted_distance_2D/gradientweighteddistancemap.cpp
+)
+
+
+ADD_LIBRARY( Yousef_Nucleus_Seg ${NSRCS} ${sd3d_SRCS} ${sd2d_SRCS} ${mcgl3d_SRCS} ${emgmm_SRCS} ${clust_SRCS} ${clust2d_SRCS} ${border_SRCS} ${cbin_SRCS} ${cb3_SRCS} ${gwd_SRCS})
 
 TARGET_LINK_LIBRARIES ( Yousef_Nucleus_Seg ITKBasicFilters ITKCommon ITKIO)

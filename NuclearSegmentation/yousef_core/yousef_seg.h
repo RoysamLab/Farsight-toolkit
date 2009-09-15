@@ -38,12 +38,14 @@ limitations under the License.
 #include "graphColLearn_3D/Multi_Color_Graph_Learning_3D.h"
 #include "alpha_expansion/alpha_expansion.h"
 #include "EM_GMM/EM_Project_3_cpp_3D_comp.h"
+#include "gradient_weighted_distance_2D/gradientweighteddistancemap.h" //Still under testing
 
 //ITK INCLUDES
 #include "itkConnectedComponentImageFilter.h"
 #include "itkRelabelComponentImageFilter.h"
 #include "itkImageRegionIterator.h"
 #include "itkScalarConnectedComponentImageFilter.h"
+
 
 using namespace std;
 
@@ -103,6 +105,8 @@ public:
 	void runAlphaExpansion();
 	void runAlphaExpansion3D();
 	void runAlphaExpansion2D();
+	//added by Yousef on 9/14/2009
+	void runGradWeightedDistance();
 
 	void readParametersFromFile(const char* pFName);					//This function reads the parameters based on Yousef's parameter format
 	void writeParametersToFile();
@@ -125,7 +129,7 @@ public:
 	bool DeleteInit(ftk::Object::Point P1);
 	int getMaxID(int);
 	//added by Yousef on 9/11/2009
-	int yousef_nucleus_seg::AddObject(std::vector<int> P1, std::vector<int> P2);
+	int AddObject(unsigned char* inImage, unsigned short* lbImage, std::vector<int> P1, std::vector<int> P2, std::vector<unsigned short> imSZ, int maxID);
 	
 
 private:	
@@ -143,8 +147,8 @@ private:
 
 	std::vector< ftk::Object::Point > getObjectBoundingBox(int id, int Int_Fin);
 
-	//added by Yousef on 06/09/2009
-	void fitMixGaussians();
+	//added by Yousef on 09/06/2009
+	void fitMixGaussians();	
 
 	//Internal Image information
 	unsigned char* dataImagePtr;	//Created outside yousef_seg

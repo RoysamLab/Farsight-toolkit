@@ -43,7 +43,7 @@ int Cell_Binarization_2D(unsigned char* imgIn, unsigned short *imgOut, int R, in
 }
 
 //Main function for 3-D binarization
-int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, int C, int Z, int shd) //modifed by Yousef on 5-20-2008.. The first input change from uchar* to int*
+int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, int C, int Z, int shd, int div) //modifed by Yousef on 5-20-2008.. The first input change from uchar* to int*
 {			
 	//Now, to do the binarization, follow these steps:
 	//1- Assuming that the histogram of the image is modeled by a mixture of two 
@@ -63,8 +63,12 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 
 	//Added by Yousef on 11-18-2008: To save memory, divide the image into Blocks and 
 	//apply GC on each independently	
-	int *subImgBlock = new int[6];//[x1,y1,z1,x2,y2,z1]
-	int block_divisor = 4;
+	int *subImgBlock = new int[6];//[x1,y1,z1,x2,y2,z1]	
+	int block_divisor;
+	if(div == 0)
+		block_divisor = 1;
+	else
+		block_divisor = 4;
 	subImgBlock[4] = 0;
 	subImgBlock[5] = Z;
 	int blk = 1;
