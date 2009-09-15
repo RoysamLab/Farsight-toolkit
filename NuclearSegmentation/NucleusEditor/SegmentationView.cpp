@@ -306,6 +306,7 @@ int SegmentationView::verticalOffset() const
 void SegmentationView::mousePressEvent(QMouseEvent *event)
 {	
 	QAbstractItemView::mousePressEvent(event);
+	QPoint oldOrigin = origin;
 	origin = event->pos();				// This is a local position (in viewport coordinates)
 	//Compute value in image coordinates and make sure we click within the image:
 	int xx = (origin.x() + horizontalOffset()) / currentScale;
@@ -329,13 +330,21 @@ void SegmentationView::mousePressEvent(QMouseEvent *event)
 			if(sz == 0)
 			{
 				resultModel->addPointToAddList(xx,yy,currentZ);
-				if(!rubberBand)	rubberBand = new MyRubberBand(QRubberBand::Rectangle, this);
+				if(!rubberBand)	
+					rubberBand = new MyRubberBand(this);
 				rubberBand->setGeometry(QRect(origin,QSize()));
 				rubberBand->show();
 			}
 			else if(sz == 1)
 			{
-				resultModel->addPointToAddList(xx,yy,currentZ);
+				if(oldOrigin.x() < origin.x() && oldOrigin.y() < origin.y())
+				{
+					resultModel->addPointToAddList(xx,yy,currentZ);
+				}
+				else
+				{
+					resultModel->abortAdd();
+				}
 				delete rubberBand;
 				rubberBand = NULL;
 			}
@@ -383,7 +392,7 @@ void SegmentationView::mouseReleaseEvent(QMouseEvent *event)
 
 void SegmentationView::mouseMoveEvent(QMouseEvent *event)
 {
-    QAbstractItemView::mouseMoveEvent(event);
+    //QAbstractItemView::mouseMoveEvent(event);
 	QPoint pos = event->pos();
 	int xx = ( pos.x() + horizontalOffset() ) / currentScale;
 	int yy = ( pos.y() + verticalOffset() ) / currentScale;
@@ -394,7 +403,12 @@ void SegmentationView::mouseMoveEvent(QMouseEvent *event)
 		if(resultModel->isAddMode())
 		{	
 			if(rubberBand)
-				rubberBand->setGeometry(QRect(origin, pos).normalized());
+			{
+				if(pos.x() <= origin.x() || pos.y() <= origin.y())
+					rubberBand->setGeometry(QRect(origin,QSize()));
+				else
+					rubberBand->setGeometry(QRect(origin, pos).normalized());
+			}
 		}
 	}
 
@@ -408,6 +422,13 @@ void SegmentationView::wheelEvent ( QWheelEvent *e )
      double numSteps = numDegrees / 15.0f;
 	 double zf = pow(ZoomInFactor, numSteps);
 	 zoom(zf);
+
+	if(rubberBand && resultModel)
+	{
+		resultModel->abortAdd();
+		delete rubberBand;
+		rubberBand = NULL;
+	}
 }
 
 void SegmentationView::keyPressEvent(QKeyEvent *event)
@@ -1086,23 +1107,26 @@ void SegmentationView::zoom(double zf)
 	updateGeometries();
 }
 
-
-MyRubberBand::MyRubberBand(QRubberBand::Shape s, QWidget * p)
-: QRubberBand(s,p)
+MyRubberBand::MyRubberBand(QWidget * p)
+: QWidget(p)
 {
-	/*
-	//QStyleOptionRubberBand * option = new QStyleOptionRubberBand();
-	//option->initFrom(this);
-	//option->opaque = false;
-	//option->palette.setBrush(QPalette::Highlight,QBrush(Qt::yellow,Qt::NoBrush));
-	//this->initStyleOption(option);
-
-	this->setBackgroundRole(QPalette::HighlightedText);
-	this->setForegroundRole(QPalette::Highlight);
-
-	QPalette pal = this->palette();
-	pal.setBrush(QPalette::Highlight,QBrush(Qt::blue, Qt::NoBrush));
-	pal.setBrush(QPalette::HighlightedText,QBrush(Qt::blue, Qt::NoBrush));
-	this->setPalette(pal);
-	*/
+	this->setWindowFlags( Qt::FramelessWindowHint | this->windowFlags() );
+	this->setMouseTracking(true);
 }
+
+void MyRubberBand::paintEvent(QPaintEvent *event)
+{
+	QPainter painter(this);
+	painter.setPen(Qt::blue);
+	painter.setBrush(Qt::NoBrush);
+	QRect r = this->rect();
+	r.setWidth(r.width()-1);
+	r.setHeight(r.height()-1);
+	painter.drawRect(r.normalized());
+}
+
+void MyRubberBand::mouseMoveEvent(QMouseEvent * event)
+{
+	this->setGeometry(QRect(this->pos(), this->pos()+ event->pos()).normalized());
+}
+

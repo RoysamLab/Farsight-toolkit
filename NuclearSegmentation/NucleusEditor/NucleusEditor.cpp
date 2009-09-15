@@ -782,7 +782,7 @@ void NucleusEditor::segment()
 		segmentState = 4;
 		clusterThread->start();
 		break;
-	case 4:	//Final State we get to after successful clustering - for seed editing
+	case 4:	//Final State we get to after successful clustering - for checking parameters
 		if(clusterThread)
 		{
 			delete clusterThread;
@@ -790,7 +790,7 @@ void NucleusEditor::segment()
 		}
 		segmentProgress->setValue(4);
 		segWin->SetLabelImage(seg->getLabelImage());
-		segmentTaskLabel->setText(tr(" Editing Seeds "));
+		segmentTaskLabel->setText(tr(" Press 'GO' "));
 
 		QApplication::restoreOverrideCursor();
 		fileMenu->setEnabled(true);

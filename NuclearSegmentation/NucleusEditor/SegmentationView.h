@@ -132,11 +132,14 @@ private:
 	bool showIDs;
 };
 
-class MyRubberBand : public QRubberBand
+class MyRubberBand : public QWidget
 {
 	Q_OBJECT;
 public:
-	MyRubberBand(Shape s, QWidget * p = 0);
+	MyRubberBand(QWidget * p = 0);
+protected:
+     void paintEvent(QPaintEvent *event);
+	 void mouseMoveEvent(QMouseEvent *event);
 };
 
 #endif 
