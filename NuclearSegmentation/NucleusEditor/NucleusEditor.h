@@ -48,6 +48,7 @@ limitations under the License.
 //#include "SegmentationView.h"
 
 class ParamsFileDialog;
+class BrickDialog;
 class Load;
 class Binarize;
 class SeedDetect;
@@ -96,6 +97,7 @@ private slots:
 	void deleteCells(void);
 	void splitCells(void);
 	void addCell(void);
+	void brickRule(void);
 
 	void startSplitting(void);
 	void endSplitting(void);
@@ -143,6 +145,7 @@ private:
 	//QAction *splitAction;
 	QAction *splitStartAction;
 	QAction *splitEndAction;
+	QAction *brickAction;
 	
 	QLabel *statusLabel;
 
@@ -181,7 +184,6 @@ class ParamsFileDialog : public QDialog
 	Q_OBJECT
 public:
 	ParamsFileDialog(QString lastPth, QWidget *parent = 0);
-
 	QString getFileName();
 private slots:
 	void ParamBrowse(QString);
@@ -190,6 +192,19 @@ private:
 	QRadioButton *fileButton;
 	QComboBox *fileCombo;
 	QString lastPath;
+	QPushButton *okButton;
+};
+
+class BrickDialog : public QDialog
+{
+	Q_OBJECT
+public:
+	BrickDialog(QWidget *parent = 0);
+	int getMargin();
+	int getZ();
+private:
+	QSpinBox * marginSpin;
+	QSpinBox * zSpin;
 	QPushButton *okButton;
 };
 

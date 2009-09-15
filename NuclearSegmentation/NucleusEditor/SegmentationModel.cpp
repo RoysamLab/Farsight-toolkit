@@ -243,7 +243,10 @@ void SegmentationModel::updateMapping(void)
 
 int SegmentationModel::RowForID(int id)
 {
-	return LabelToRowMap.value(id);
+	if(LabelToRowMap.contains(id))
+		return LabelToRowMap.value(id);
+	else
+		return -1;
 }
 
 //Call this slot when trying to delete objects
@@ -459,6 +462,55 @@ void SegmentationModel::endSplitTrigger()
 	//finally, clear the list of points
 	pointsForSplitting.clear();
 }
+
+void SegmentationModel::applyBrick(int xy, int z)
+{
+	if(!segResult)
+		return;
+
+	xyBrick = xy;
+	zBrick = z;
+
+	//Find the bounds to use for brick rule:
+	ftk::Image::Pointer img = segResult->getLabelImage();
+	const ftk::Image::Info *info = img->GetImageInfo();
+	int totalWidth = (*info).numColumns;
+	int totalHeight = (*info).numRows;
+	int zSlices = (*info).numZSlices;
+
+	int min_x = 0 + xy;
+	int min_y = 0 + xy;
+	int min_z = 0 + z;
+	int max_x = totalWidth - xy - 1;
+	int max_y = totalHeight - xy - 1;
+	int max_z = zSlices - z - 1;
+
+	//Go through each object and change the validity accordingly.
+	std::vector<ftk::Object> * objects = segResult->GetObjectsPtr();
+	for(int i=0; i<objects->size(); ++i)
+	{
+		ftk::Object * obj = &(objects->at(i));
+		std::vector<ftk::Object::Point> cs = obj->GetCenters();
+		bool valid = true;
+		for(int j=0; j<(int)cs.size(); ++j)
+		{
+			ftk::Object::Point c = cs.at(j);
+			if(c.x < min_x || c.x > max_x ||
+				c.y < min_y || c.y > max_y ||
+				c.z < min_z || c.z > max_z)
+			{
+				valid = false;
+			}
+		}
+		obj->SetValidity(valid);
+	}
+	
+	segResult->editsNotSaved = true;
+	this->SyncModel();
+	MostDataInModelChanged();
+}
+
+
 void SegmentationModel::addPointToSplitList(int x, int y, int z)
 {
 	ftk::Object::Point P;

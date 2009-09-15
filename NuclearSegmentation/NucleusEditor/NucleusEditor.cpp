@@ -266,6 +266,13 @@ void NucleusEditor::createMenus()
 	connect(splitEndAction,SIGNAL(triggered()),this,SLOT(endSplitting()));
 	splitMenu->addAction(splitEndAction);
 
+	editMenu->addSeparator();
+
+	brickAction = new QAction(tr("Apply Brick Rule..."), this);
+	brickAction->setStatusTip(tr("Set parameters for brick rule"));
+	connect(brickAction, SIGNAL(triggered()), this, SLOT(brickRule()));
+	editMenu->addAction(brickAction);
+
 	//HELP MENU
 	helpMenu = menuBar()->addMenu(tr("Help"));
 	aboutAction = new QAction(tr("About"),this);
@@ -287,6 +294,7 @@ void NucleusEditor::setEditsEnabled(bool val)
 	splitMenu->setEnabled(val);
 	splitStartAction->setEnabled(val);
 	splitEndAction->setEnabled(val);
+	brickAction->setEnabled(val);
 }
 
 //****************************************************************************
@@ -577,6 +585,25 @@ void NucleusEditor::endSplitting(void)
 {
 	if(currentModel)
 		currentModel->endSplitTrigger();
+}
+
+void NucleusEditor::brickRule(void)
+{
+	//Get the parameters to use for the brick rule:
+	int xy = 0; 
+	int z = 0;
+	BrickDialog *dialog = new BrickDialog(this);
+	if( dialog->exec() )	
+	{
+		xy = dialog->getMargin();
+		z = dialog->getZ();
+	}
+	delete dialog;
+
+	//Now apply the brick rule to my image!!!!
+	if(currentModel)
+		currentModel->applyBrick(xy,z);
+
 }
 
 // Added by Aytekin Vargun 6/03/09
@@ -1111,6 +1138,48 @@ bool NucleusEditor::ConfirmClosePython()
      }
    return true;
   }
+
+BrickDialog::BrickDialog(QWidget *parent)
+: QDialog(parent)
+{
+	QLabel * header = new QLabel(tr("Please set parameters for the Brick Rule:"));
+	QLabel * mLabel = new QLabel(tr("XY Margin: "));
+	marginSpin = new QSpinBox();
+	marginSpin->setMinimum(0);
+	marginSpin->setMaximum(100);
+	QLabel * pixLabel = new QLabel(tr("pixels"));
+
+	QLabel * zLabel = new QLabel(tr("Z Margin: "));
+	zSpin = new QSpinBox();
+	zSpin->setMinimum(0);
+	zSpin->setMaximum(10);
+	QLabel * slcLabel = new QLabel(tr("slices"));
+
+	okButton = new QPushButton(tr("OK"),this);
+	connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
+
+	QGridLayout * layout = new QGridLayout();
+	layout->addWidget(header,0,0,1,3);
+	layout->addWidget(mLabel,1,0,1,1);
+	layout->addWidget(marginSpin,1,1,1,1);
+	layout->addWidget(pixLabel,1,2,1,1);
+	layout->addWidget(zLabel,2,0,1,1);
+	layout->addWidget(zSpin,2,1,1,1);
+	layout->addWidget(slcLabel,2,2,1,1);
+	layout->addWidget(okButton,3,2,1,1);
+	this->setLayout(layout);
+	this->setWindowTitle(tr("Apply Brick Rule"));
+}
+
+int BrickDialog::getMargin()
+{
+	return marginSpin->value();
+}
+
+int BrickDialog::getZ()
+{
+	return zSpin->value();
+}
 
 
 ParamsFileDialog::ParamsFileDialog(QString lastPth, QWidget *parent)

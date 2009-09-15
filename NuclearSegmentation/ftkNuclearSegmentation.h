@@ -73,7 +73,6 @@ public:
 	bool SaveLabel();														//Save the changes made to the label image
 	bool SaveLabelByClass();												//Will save a different label image for each class
 	
-
 	//We may also want to restore from previously found results:
 	bool RestoreFromXML(std::string filename);					//Complete Restore from XML file
 	bool LoadLabel();											//Load just the label image if the filename is already known

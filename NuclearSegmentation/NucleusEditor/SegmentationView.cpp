@@ -603,9 +603,12 @@ void SegmentationView::scrollTo(const QModelIndex &index, ScrollHint)
 		if(labelval > 0)
 		{
 			int row = resultModel->RowForID(labelval);
-			QModelIndex index1 = model()->index(row, 0, rootIndex());						
-			QModelIndex index2 = model()->index(row,(model()->columnCount())-1, rootIndex());
-			selection.merge(QItemSelection(index1,index2),command);
+			if(row >= 0)
+			{
+				QModelIndex index1 = model()->index(row, 0, rootIndex());						
+				QModelIndex index2 = model()->index(row,(model()->columnCount())-1, rootIndex());
+				selection.merge(QItemSelection(index1,index2),command);
+			}
 		}
 	}
 
@@ -844,19 +847,20 @@ void SegmentationView::drawObjectIDs(QPainter *painter)
 	if(!showIDs)
 		return;
 
-	QColor myColor = Qt::magenta;
-	painter->setPen(myColor);
+	QColor myIdColor = Qt::magenta;
+	QColor myBadColor = Qt::red;
 
 	//Iterate through each object and write its id at its centroid.
-	for(int obj=0; obj < resultModel->NumObjects(); ++obj)
+	std::vector<ftk::Object> * objects = resultModel->SegResult()->GetObjectsPtr();
+	for(int i=0; i<objects->size(); ++i)
 	{
-		QModelIndex indexID = model()->index(obj, resultModel->ColumnForID(), rootIndex());
-		int id = model()->data(indexID).toInt();
+		ftk::Object * obj = &(objects->at(i));
+		int id = obj->GetId();
 
 		//Find z extremes:
 		int max_z = 0;
 		int min_z = 1000;
-		std::vector<ftk::Object::Box> bs = resultModel->SegResult()->GetObjectPtr(id)->GetBounds();
+		std::vector<ftk::Object::Box> bs = obj->GetBounds();
 		for(int i=0; i<(int)bs.size(); ++i)
 		{
 				ftk::Object::Box b = bs.at(i);
@@ -864,12 +868,20 @@ void SegmentationView::drawObjectIDs(QPainter *painter)
 				min_z = (b.min.z < min_z) ? b.min.z : min_z;
 		}
 
-		ftk::Object::Point center = resultModel->SegResult()->GetObjectPtr(id)->GetCenters().at(0);
+		ftk::Object::Point center = obj->GetCenters().at(0);
 		if ( (currentZ >= min_z ) && (currentZ <= max_z) )
 		{
-			painter->drawText(center.x, center.y, QString::number(id));
+			if( obj->GetValidity() )
+			{
+				painter->setPen(myIdColor);
+				painter->drawText(center.x, center.y, QString::number(id));
+			}
+			else
+			{
+				painter->setPen(myBadColor);
+				painter->drawText(center.x, center.y, QString("X"));
+			}
 		}
-
 	}
 }
 

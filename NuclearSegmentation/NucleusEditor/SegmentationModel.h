@@ -70,6 +70,7 @@ public slots:
 	void addTrigger(void);
 	void startSplitTrigger(void);
 	void endSplitTrigger(void);
+	void applyBrick(int,int);
 
 	bool isSplittingMode() { return SplittingMode; };
 	void addPointToSplitList(int x, int y, int z);
@@ -92,6 +93,8 @@ private:
 	int columnForClass;
 	int columnForOutliers;
 	int columnForColor;
+	int xyBrick;
+	int zBrick;
 	QMap<int,QColor> colorMap;
 	QMap<int, int> LabelToRowMap;		//A label to a row in the model
 
