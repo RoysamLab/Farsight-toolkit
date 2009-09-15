@@ -113,7 +113,8 @@ main(  int argc, char* argv[] )
     jointer_register = new fregl_joint_register( reg_records, arg_multiplier(), arg_error_bound() );
     
   }
- 
+  
+  bool mutual_consistency = !arg_no_mc();
   if ( arg_no_mc() ) 
     std::cout<<"Joint registration without mutual consistency ..."<<std::endl;
   else 
@@ -123,8 +124,10 @@ main(  int argc, char* argv[] )
   if ( !graph_build && !arg_no_mc() ) {
     std::cout<<"Failed to build the graph with mutual consistency. The graph is  now built without mutual consistency."<<vcl_endl;
     jointer_register->build_graph(arg_no_mc());
+    mutual_consistency = false;
   }
-  jointer_register->write_xml(arg_xml_file(), arg_multiplier(), !arg_no_mc());
+  jointer_register->write_xml(arg_xml_file(), arg_multiplier(), mutual_consistency);
 
   return 0;
 }
+

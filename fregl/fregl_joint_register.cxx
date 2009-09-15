@@ -189,11 +189,9 @@ build_graph(int anchor, bool mutual_consistency)
         overlap_(from, anchor) = 1;
     }
   }
-  else {
-    breadth_first_connect( anchor );
-    return true;
-  }
-  return false;
+  else breadth_first_connect( anchor );
+
+  return true;
 }
 
 fregl_joint_register::TransformType::Pointer 
@@ -737,3 +735,4 @@ ToString(double val)
     strm<< val<<std::endl;
     return strm.str();
 }
+
