@@ -133,7 +133,7 @@ def register(pair_list, argv):
     f_xforms.close()
     f_o.close();
     print("\nSTART register_joint.exe...")
-    os.system('register_joint.exe xxx_123.txt')
+    os.system('register_joint.exe xxx_123.txt -multiplier 4')
     print("DONE")
     #os.system('rm xxx_123.txt')
 
