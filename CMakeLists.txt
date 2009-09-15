@@ -87,6 +87,8 @@ SUBDIRS( ftkGUI )
 ####################################################################################
 # NOW WE CAN INCLUDE THE MODULES ACCORDING TO THE OPTIONS SELECTED ABOVE:
 ####################################################################################
+SET(CPACK_NSIS_MENU_LINKS "http://www.farsight-toolkit.org" "Farsight Online Help")
+
 IF(BUILD_TRACING)
   INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Tracing )
   SUBDIRS(Tracing)
@@ -98,7 +100,8 @@ ENDIF(BUILD_TRACKER)
 
 IF(BUILD_NUCLEI)
   INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/NuclearSegmentation )
-  SUBDIRS( NuclearSegmentation )  
+  SUBDIRS( NuclearSegmentation )
+  SET(CPACK_PACKAGE_EXECUTABLES "NucleusEditor;NucleusEditor")  
 ENDIF(BUILD_NUCLEI)
 
 IF(BUILD_VESSEL)
@@ -165,9 +168,9 @@ SET(ITKBASE_SRC_NEW "")
 #")
 
 #INSTALL(DIRECTORY ${QT_LIBRARY_DIR}/ DESTINATION .)
-#IF(WIN32)
- # INSTALL(FILES ${QT_LIBRARY_DIR}/QtCore4.dll ${QT_LIBRARY_DIR}/QtGui4.dll #DESTINATION bin)
-#ENDIF(WIN32)
+IF(WIN32)
+  INSTALL(FILES ${QT_LIBRARY_DIR}/QtCore4.dll ${QT_LIBRARY_DIR}/QtGui4.dll DESTINATION bin)
+ENDIF(WIN32)
 IF(APPLE)
 INSTALL(DIRECTORY ${QT_QTCORE_LIBRARY_RELEASE} ${QT_QTGUI_LIBRARY_RELEASE} DESTINATION bin)
 ELSE(APPLE)
@@ -175,7 +178,7 @@ INSTALL(FILES ${QT_QTCORE_LIBRARY_RELEASE} ${QT_QTGUI_LIBRARY_RELEASE} DESTINATI
 ENDIF(APPLE)
 
 INSTALL(DIRECTORY python/ DESTINATION python PATTERN "*.svn" EXCLUDE)
-SET(CPACK_NSIS_MENU_LINKS "http://www.farsight-toolkit.org" "Farsight Online Help")
+
 FIND_PACKAGE(Qt4)
 IF(QT4_FOUND)
 	INCLUDE( ${QT_USE_FILE} )
