@@ -872,6 +872,9 @@ void SegmentationView::drawObjectIDs(QPainter *painter)
 		ftk::Object::Point center = obj->GetCenters().at(0);
 		if ( (currentZ >= min_z ) && (currentZ <= max_z) )
 		{
+			QFont f = painter->font();
+			f.setBold(true);
+			painter->setFont(f);
 			if( obj->GetValidity() )
 			{
 				painter->setPen(myIdColor);
@@ -932,6 +935,11 @@ void SegmentationView::drawSelectionMarkers(QPainter *painter)
 	QItemSelectionModel *selections = selectionModel();
 	QModelIndexList selIndices = selections->selectedIndexes();
 
+	painter->setPen(colorForSelections);
+	QFont f = painter->font();
+	f.setBold(true);
+	painter->setFont(f);
+
 	for (int selIndex = 0; selIndex < selIndices.size(); ++selIndex) 
 	{
 		int row = selIndices.at(selIndex).row();
@@ -948,7 +956,6 @@ void SegmentationView::drawSelectionMarkers(QPainter *painter)
 			min_z = (b.min.z < min_z) ? b.min.z : min_z;
 			if ( (currentZ >= b.min.z ) && (currentZ <= b.max.z) )
 			{
-				painter->setPen(colorForSelections);
 				//currently in a slice that should show the box
 				/* This code is to draw a box around selected objects REMOVED 9/02/2009 IMA
 				painter->drawRect( b.min.x, b.min.y, (b.max.x-b.min.x+1), (b.max.y-b.min.y+1) );
