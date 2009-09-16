@@ -58,6 +58,9 @@ public:
 	QMap<int, QColor> ColorMap(){ return colorMap; };
 	ftk::NuclearSegmentation *SegResult(void){ return segResult; };
 
+	int xyMargin;
+	int zMargin;
+
 signals:
 	void s_modelChanged(const QModelIndex & topLeft, const QModelIndex & bottomRight);
 	void modelChanged();
@@ -90,8 +93,6 @@ private:
 	int columnForClass;
 	int columnForOutliers;
 	int columnForColor;
-	int xyMargin;
-	int zMargin;
 	QMap<int,QColor> colorMap;
 	QMap<int, int> LabelToRowMap;		//A label to a row in the model
 

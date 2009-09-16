@@ -31,6 +31,8 @@ SegmentationModel::SegmentationModel(ftk::NuclearSegmentation *segresult)
 	columnForClass = -1;
 	columnForOutliers = -1;
 	columnForColor = -1;
+	xyMargin = 0;
+	zMargin = 0;
 
 	SyncModel();
 

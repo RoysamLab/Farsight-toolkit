@@ -109,6 +109,7 @@ private:
 	void drawBoundaries(QPainter *painter);
 	void drawSelectionMarkers(QPainter *painter);
 	void drawObjectIDs(QPainter *painter);
+	void drawExclusionMargin(QPainter *painter);
 	void drawObjects(QPainter *painter);
 
 	QImage displayImage;	//Everything that is being displayed in the viewport (includes selections)

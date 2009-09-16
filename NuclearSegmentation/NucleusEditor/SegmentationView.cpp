@@ -747,6 +747,7 @@ void SegmentationView::refreshDisplayImage()
 	if(resultModel)
 	{
 		drawObjectIDs(&painter);
+		drawExclusionMargin(&painter);
 	}
 
 	//drawObjects(&painter);
@@ -882,6 +883,41 @@ void SegmentationView::drawObjectIDs(QPainter *painter)
 				painter->drawText(center.x, center.y, QString("X"));
 			}
 		}
+	}
+}
+
+void SegmentationView::drawExclusionMargin(QPainter *painter)
+{
+	if(!resultModel)
+		return;
+
+	if(!channelImg && !labelImg)
+		return;
+
+	if(resultModel->xyMargin == 0 && resultModel->zMargin == 0)
+		return;
+
+	QColor myMarginColor = Qt::white;
+
+	const ftk::Image::Info *info;
+	if(channelImg)
+		info = channelImg->GetImageInfo();
+	else
+		info = labelImg->GetImageInfo();
+
+	int zSlices = (*info).numZSlices;
+
+	int x = 0 + resultModel->xyMargin;
+	int y = 0 + resultModel->xyMargin;
+	int w = totalWidth - (2*x);
+	int h = totalHeight - (2*y);
+	int min_z = 0 + resultModel->zMargin;
+	int max_z = zSlices - min_z - 1;
+
+	if ( (currentZ >= min_z ) && (currentZ <= max_z) )
+	{
+		painter->setPen(myMarginColor);
+		painter->drawRect(x, y, w, h);
 	}
 }
 
