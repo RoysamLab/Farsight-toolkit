@@ -463,13 +463,13 @@ void SegmentationModel::endSplitTrigger()
 	pointsForSplitting.clear();
 }
 
-void SegmentationModel::applyBrick(int xy, int z)
+void SegmentationModel::applyMargins(int xy, int z)
 {
 	if(!segResult)
 		return;
 
-	xyBrick = xy;
-	zBrick = z;
+	xyMargin = xy;
+	zMargin = z;
 
 	//Find the bounds to use for brick rule:
 	ftk::Image::Pointer img = segResult->getLabelImage();
@@ -478,12 +478,12 @@ void SegmentationModel::applyBrick(int xy, int z)
 	int totalHeight = (*info).numRows;
 	int zSlices = (*info).numZSlices;
 
-	int min_x = 0 + xy;
-	int min_y = 0 + xy;
-	int min_z = 0 + z;
-	int max_x = totalWidth - xy - 1;
-	int max_y = totalHeight - xy - 1;
-	int max_z = zSlices - z - 1;
+	int min_x = 0 + xyMargin;
+	int min_y = 0 + xyMargin;
+	int min_z = 0 + zMargin;
+	int max_x = totalWidth - xyMargin - 1;
+	int max_y = totalHeight - xyMargin - 1;
+	int max_z = zSlices - zMargin - 1;
 
 	//Go through each object and change the validity accordingly.
 	std::vector<ftk::Object> * objects = segResult->GetObjectsPtr();

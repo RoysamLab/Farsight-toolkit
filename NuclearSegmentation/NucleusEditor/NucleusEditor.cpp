@@ -209,6 +209,12 @@ void NucleusEditor::createMenus()
 	connect(newScatterAction,SIGNAL(triggered()),this,SLOT(CreateNewPlotWindow()));
 	viewMenu->addAction(newScatterAction);
 
+	showHistoAction = new QAction(tr("Show Histogram"),this);
+	showHistoAction->setEnabled(false);
+	showHistoAction->setStatusTip(tr("Show a Histogram"));
+	connect(showHistoAction,SIGNAL(triggered()),this,SLOT(ShowHistogram()));
+	viewMenu->addAction(showHistoAction);
+
 	pythonAction = new QAction(tr("Open Python Window"), this);
 	pythonAction->setStatusTip(tr("Start your favorite python interpreter"));
 	pythonAction->setShortcut(tr("Ctrl+P"));
@@ -268,10 +274,10 @@ void NucleusEditor::createMenus()
 
 	editMenu->addSeparator();
 
-	brickAction = new QAction(tr("Apply Brick Rule..."), this);
-	brickAction->setStatusTip(tr("Set parameters for brick rule"));
-	connect(brickAction, SIGNAL(triggered()), this, SLOT(brickRule()));
-	editMenu->addAction(brickAction);
+	exclusionAction = new QAction(tr("Apply Exclusion Margin..."), this);
+	exclusionAction->setStatusTip(tr("Set parameters for exclusion margin"));
+	connect(exclusionAction, SIGNAL(triggered()), this, SLOT(applyExclusionMargin()));
+	editMenu->addAction(exclusionAction);
 
 	//HELP MENU
 	helpMenu = menuBar()->addMenu(tr("Help"));
@@ -294,7 +300,7 @@ void NucleusEditor::setEditsEnabled(bool val)
 	splitMenu->setEnabled(val);
 	splitStartAction->setEnabled(val);
 	splitEndAction->setEnabled(val);
-	brickAction->setEnabled(val);
+	exclusionAction->setEnabled(val);
 }
 
 //****************************************************************************
@@ -500,7 +506,6 @@ void NucleusEditor::loadResult(void)
 	newModel();
 	CreateNewTableWindow();
 	CreateNewPlotWindow();
-	CreateNewHistoWindow();
 	CreateNewSegWindow();
 
 	segWin->SetModels(currentModel);
@@ -516,6 +521,7 @@ void NucleusEditor::loadResult(void)
 	showIDsAction->setEnabled(true);
 	showIDsAction->setChecked(true);
 	newScatterAction->setEnabled(true);
+	showHistoAction->setEnabled(true);
 	segmentAction->setEnabled(false);
 	saveAction->setEnabled(true);
 
@@ -587,12 +593,12 @@ void NucleusEditor::endSplitting(void)
 		currentModel->endSplitTrigger();
 }
 
-void NucleusEditor::brickRule(void)
+void NucleusEditor::applyExclusionMargin(void)
 {
 	//Get the parameters to use for the brick rule:
 	int xy = 0; 
 	int z = 0;
-	BrickDialog *dialog = new BrickDialog(this);
+	MarginDialog *dialog = new MarginDialog(this);
 	if( dialog->exec() )	
 	{
 		xy = dialog->getMargin();
@@ -602,7 +608,7 @@ void NucleusEditor::brickRule(void)
 
 	//Now apply the brick rule to my image!!!!
 	if(currentModel)
-		currentModel->applyBrick(xy,z);
+		currentModel->applyMargins(xy,z);
 
 }
 
@@ -875,7 +881,6 @@ void NucleusEditor::segment()
 		newModel();
 		CreateNewTableWindow();
 		CreateNewPlotWindow();
-		CreateNewHistoWindow();
 		segWin->SetModels(currentModel);
 		//this->update();
 
@@ -885,6 +890,7 @@ void NucleusEditor::segment()
 		loadAction->setEnabled(true);
 		xmlAction->setEnabled(true);
 		newScatterAction->setEnabled(true);
+		showHistoAction->setEnabled(true);
 		showBoundsAction->setEnabled(true);
 		this->setEditsEnabled(true);
 		viewMenu->setEnabled(true);
@@ -987,6 +993,14 @@ void NucleusEditor::CreateNewHistoWindow(void)
 		delete hisWin;
 	hisWin = new HistoWindow(currentModel->GetSelectionModel());
 	hisWin->show();
+}
+
+void NucleusEditor::ShowHistogram(void)
+{
+	if(this->hisWin)
+		hisWin->show();
+	else
+		this->CreateNewHistoWindow();
 }
 
 //*******************************************************************************
@@ -1139,7 +1153,7 @@ bool NucleusEditor::ConfirmClosePython()
    return true;
   }
 
-BrickDialog::BrickDialog(QWidget *parent)
+MarginDialog::MarginDialog(QWidget *parent)
 : QDialog(parent)
 {
 	QLabel * header = new QLabel(tr("Please set parameters for the Brick Rule:"));
@@ -1168,15 +1182,15 @@ BrickDialog::BrickDialog(QWidget *parent)
 	layout->addWidget(slcLabel,2,2,1,1);
 	layout->addWidget(okButton,3,2,1,1);
 	this->setLayout(layout);
-	this->setWindowTitle(tr("Apply Brick Rule"));
+	this->setWindowTitle(tr("Apply Exclusion Margin"));
 }
 
-int BrickDialog::getMargin()
+int MarginDialog::getMargin()
 {
 	return marginSpin->value();
 }
 
-int BrickDialog::getZ()
+int MarginDialog::getZ()
 {
 	return zSpin->value();
 }

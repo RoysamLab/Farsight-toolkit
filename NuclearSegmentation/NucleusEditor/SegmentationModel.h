@@ -70,7 +70,7 @@ public slots:
 	void addTrigger(void);
 	void startSplitTrigger(void);
 	void endSplitTrigger(void);
-	void applyBrick(int,int);
+	void applyMargins(int,int);		//Exclusion margins at image edges
 
 	bool isSplittingMode() { return SplittingMode; };
 	void addPointToSplitList(int x, int y, int z);
@@ -83,9 +83,6 @@ public slots:
 	std::vector<int> getStartAddPoint();
 	void abortAdd();
 
-
-
-
 private:
 	int columnForID;
 	int numFeatures;
@@ -93,8 +90,8 @@ private:
 	int columnForClass;
 	int columnForOutliers;
 	int columnForColor;
-	int xyBrick;
-	int zBrick;
+	int xyMargin;
+	int zMargin;
 	QMap<int,QColor> colorMap;
 	QMap<int, int> LabelToRowMap;		//A label to a row in the model
 

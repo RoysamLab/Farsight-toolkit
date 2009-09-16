@@ -37,7 +37,7 @@ SegmentationView::SegmentationView(QWidget *parent)
 	currentT = 0;
 	
 	currentScale = 1;
-	ZoomInFactor = 1.5f;
+	ZoomInFactor = 1.25f;
 	ZoomOutFactor = 1 / ZoomInFactor;
 
 	//numObjects = 0;
@@ -1114,7 +1114,13 @@ void SegmentationView::setT(int t)
 //*****************************************************************************************
 void SegmentationView::zoom(double zf)
 {
-	currentScale *= zf;
+	double newScale = currentScale * zf;
+	if(zf > 1 && newScale > 5)
+		return;
+	if(zf < 1 && newScale < 0.20)
+		return;
+
+	currentScale = newScale;
 	refreshDisplayImage();
 	updateGeometries();
 }

@@ -48,7 +48,7 @@ limitations under the License.
 //#include "SegmentationView.h"
 
 class ParamsFileDialog;
-class BrickDialog;
+class MarginDialog;
 class Load;
 class Binarize;
 class SeedDetect;
@@ -84,6 +84,7 @@ private slots:
 	void CreateNewPlotWindow();
 	void CreateNewTableWindow();
 	void CreateNewHistoWindow();
+	void ShowHistogram();
 	void CreateNewSegWindow();
 
 	//DEMO - python is necessary for the demo
@@ -97,7 +98,7 @@ private slots:
 	void deleteCells(void);
 	void splitCells(void);
 	void addCell(void);
-	void brickRule(void);
+	void applyExclusionMargin(void);
 
 	void startSplitting(void);
 	void endSplitting(void);
@@ -131,6 +132,7 @@ private:
 	QAction *showBoundsAction;
 	QAction *showIDsAction;
 	QAction *newScatterAction;
+	QAction *showHistoAction;
 	QMenu *helpMenu;
 	QAction *aboutAction;
 	QAction *pythonAction;
@@ -145,7 +147,7 @@ private:
 	//QAction *splitAction;
 	QAction *splitStartAction;
 	QAction *splitEndAction;
-	QAction *brickAction;
+	QAction *exclusionAction;
 	
 	QLabel *statusLabel;
 
@@ -195,11 +197,11 @@ private:
 	QPushButton *okButton;
 };
 
-class BrickDialog : public QDialog
+class MarginDialog : public QDialog
 {
 	Q_OBJECT
 public:
-	BrickDialog(QWidget *parent = 0);
+	MarginDialog(QWidget *parent = 0);
 	int getMargin();
 	int getZ();
 private:
