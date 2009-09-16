@@ -1625,7 +1625,7 @@ void BioNet::Kruskalmst() {
 	mstGraph->SetInput(0,this->g);
 	mstGraph->SetInput(1,mst->GetOutput());
 	
-//};
+};
 */
 
 
@@ -1640,7 +1640,12 @@ int main(int argc, char *argv[])
 			cout<<"computation method can be either avg, or med (average and median). "<<endl;
 			cout<<"Enter a big cutoff if you are not interested in seeing pyramidal region"<<endl;
 			return 0;
-	};
+	} else {
+		if (!FileExists(argv[1])) {
+			cout<<"File does not exist"<<endl;
+			return 0;
+		}
+	}
 
 	//Read the vertices and edges into graph g
 	//argv1= The name of the input network

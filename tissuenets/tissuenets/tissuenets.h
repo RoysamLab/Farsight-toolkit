@@ -69,17 +69,6 @@
 #include <vtkStringArray.h>
 #include <vector>
 
-//Required for Graph operations
-//#include <vtkBoostKruskalMinimumSpanningTree.h>
-//#include <vtkBoostPrimMinimumSpanningTree.h>
-#include <vtkTree.h>
-#include "vtkExtractSelectedGraph.h"
-
-//Temp
-#include "vtkMutableDirectedGraph.h"
-#include "vtkBoostBreadthFirstSearchTree.h"
-#include "vtkBoostBreadthFirstSearch.h"
-
 // These are required for implementing Remove vertex/edge
 #include "vtkSelectionSource.h"
 #include "vtkSelectionNode.h"
@@ -113,8 +102,19 @@
 // Use our version of vtkSurfaceRepresentation
 #include "vtkSurfaceRepresentation_.h"
 #include "vtkVariant.h"
+#include "vtkExtractSelectedGraph.h"
 
 #include <sstream>
+
+// Test DataBase support in VTK
+#include "vtkSQLiteDatabase.h"
+#include "vtkSQLQuery.h"
+#include "vtkSQLDatabaseSchema.h"
+#include "vtkRowQueryToTable.h"
+#include "vtkStdString.h"
+#include "vtkTable.h"
+#include "vtkVariantArray.h"
+
 
 #define VTK_CREATE(type, name) \
   vtkSmartPointer<type> name = vtkSmartPointer<type>::New()

@@ -52,13 +52,13 @@ HistoWindow::HistoWindow(QItemSelectionModel *mod, QWidget *parent)
     #define VTK_5_4
   #endif
 
-  #ifdef VTK_5_4
+  #ifdef VTK_NIGHTLY
     QLabel *label = new QLabel(tr("Use this window to select options for the histogram"));
     label->setWordWrap(true);
     label->setAlignment(Qt::AlignCenter);
-    setCentralWidget( label );
+    setCentralWidget( label );	
   #else
-    setCentralWidget( chartView->GetWidget() );
+    setCentralWidget( chartView->GetWidget() );    
   #endif
 
   setWindowTitle(tr("Histogram"));
@@ -446,11 +446,13 @@ void HistoWindow::ConstructBarChart()
     chartView->AddRepresentationFromInput(table);
     chartView->Update();
 
-    #ifndef VTK_5_4
+    #ifndef VTK_NIGHTLY
+	#else
       chartView->Show();
     #endif
     }
 }
+
 
 void HistoWindow::initMap(std::map<int,int> &v, int n) {
   for (int i=0;i<n; i++) 
