@@ -1058,8 +1058,16 @@ void View3D::AddNewBranches()
 	if (selected.size() > 1)
 	{
 		trunk = selected[0];
+		if (trunk->Orient(selected[1]))
+		{
+			this->tobj->ReverseSegment(trunk);
+		}
 		for (unsigned int i = 1; i < selected.size(); i ++)
 		{
+			if (!selected[i]->Orient(trunk))
+			{
+				this->tobj->ReverseSegment(selected[i]);
+			}
 			newChildren.push_back(selected[i]);
 		}
 		this->AddChildren(trunk, newChildren);

@@ -302,7 +302,30 @@ void TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
     maxdist= distances[0];
     }
 }
+bool TraceLine::Orient(TraceLine * Trunk)
+{
+	double XF, XB, YF, YB, ZF, ZB, XB2, YB2, ZB2, distances[2];
+	//trace 1
+	XF = m_trace_bits.front().x;
+	YF= m_trace_bits.front().y;
+	ZF= m_trace_bits.front().z;
+	XB = m_trace_bits.back().x;
+	YB= m_trace_bits.back().y;
+	ZB= m_trace_bits.back().z;
 
+	//Trunk 	
+	XB2=Trunk->m_trace_bits.back().x;
+	YB2=Trunk->m_trace_bits.back().y;
+	ZB2=Trunk->m_trace_bits.back().z;
+	//compute the endpt distances
+	distances[0]=sqrt(pow((XF-XB2),2)+pow((YF-YB2),2)+pow((ZF-ZB2),2));// F-B
+	distances[1]=sqrt(pow((XB-XB2),2)+pow((YB-YB2),2)+pow((ZB-ZB2),2));// B-B
+	if(distances[0] < distances[1])
+	{
+		return true;	//oriented correctly
+	}
+	return false;		//needs to be flipped
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 std::vector<double> TraceLine::stats()

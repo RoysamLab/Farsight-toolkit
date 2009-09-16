@@ -63,6 +63,7 @@ public:
 	void Getstats();
 	void EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
                  double &maxdist, double &angle);
+	bool Orient(TraceLine * Trunk);
 	std::vector<double> stats();	
 
 private:
