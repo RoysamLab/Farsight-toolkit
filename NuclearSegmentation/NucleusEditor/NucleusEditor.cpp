@@ -311,7 +311,7 @@ void NucleusEditor::about()
 {
 	    QMessageBox::about(this, tr("About FARSIGHT"),
             tr("<h2>FARSIGHT</h2>"
-			   "<h3>Renssalear Polytechnic Institute</h3>"
+			   "<h3>Rensselear Polytechnic Institute</h3>"
 			   "<a><u>http://www.farsight-toolkit.org</a></u>"
                ));
 }
@@ -891,10 +891,12 @@ void NucleusEditor::segment()
 		xmlAction->setEnabled(true);
 		newScatterAction->setEnabled(true);
 		showHistoAction->setEnabled(true);
-		showBoundsAction->setEnabled(true);
 		this->setEditsEnabled(true);
-		viewMenu->setEnabled(true);
+		showBoundsAction->setEnabled(true);
+		showBoundsAction->setChecked(true);
+		showIDsAction->setEnabled(true);
 		showIDsAction->setChecked(true);
+		viewMenu->setEnabled(true);
 		segmentState = -1;
 
 		//Now remove the toolbar:
