@@ -229,32 +229,51 @@ void View3D::CreateGUIObjects()
   this->saveAction = fileMenu->addAction(tr("&Save as..."));
   this->exitAction = fileMenu->addAction(tr("&Exit"));
 
+  
   this->somaMenu = this->menuBar()->addMenu(tr("&Somas"));
   this->loadSoma = somaMenu->addAction(tr("&Load Soma Data"));
-  this->loadSeed = somaMenu->addAction(tr("&Load Seed Data"));
   this->somaSettings = somaMenu->addAction(tr("&Settings"));
 
   this->viewSomas = somaMenu->addAction(tr("&Show Somas"));
   this->viewSomas->setCheckable(true);
   this->viewSomas->setDisabled(true);
 
-  this->viewSeeds = somaMenu->addAction(tr("&Show Seeds"));
-  this->viewSeeds->setCheckable(true);
-  this->viewSeeds->setDisabled(true);
-
   //Set up the buttons that the user will use to interact with this program. 
-  this->ListButton = new QPushButton("&list selections", this->CentralWidget);
-  this->ClearButton = new QPushButton("&clear selection", this->CentralWidget);
-  this->DeleteButton = new QPushButton("&delete trace", this->CentralWidget);
-  this->MergeButton = new QPushButton("&merge traces", this->CentralWidget);
-  this->SplitButton = new QPushButton("&split trace", this->CentralWidget);
-  this->FlipButton = new QPushButton("&flip trace direction", this->CentralWidget);
-  this->WriteButton = new QPushButton("&save as...", this->CentralWidget);
-  this->SettingsButton = new QPushButton("&edit settings", this->CentralWidget);
-  this->AutomateButton = new QPushButton("&Automatic Selection", this->CentralWidget);
-  this->UndoButton = new QPushButton("&Undo", this->CentralWidget);
-  this->RedoButton = new QPushButton("&Redo", this->CentralWidget);
+  this->ListButton = new QAction("List", this->CentralWidget);
+	connect(this->ListButton, SIGNAL(triggered()), this, SLOT(ListSelections()));
+	this->ListButton->setStatusTip("List all selections");
+  this->ClearButton = new QAction("Clear", this->CentralWidget); 
+	connect(this->ClearButton, SIGNAL(triggered()), this, SLOT(ClearSelection()));
+	this->ClearButton->setStatusTip("Clear all selections");
+  this->DeleteButton = new QAction("Delete", this->CentralWidget);
+	connect(this->DeleteButton, SIGNAL(triggered()), this, SLOT(DeleteTraces()));
+	this->DeleteButton->setStatusTip("Delete all selected traces");
+  this->MergeButton = new QAction("Merge", this->CentralWidget);
+	connect(this->MergeButton, SIGNAL(triggered()), this, SLOT(MergeTraces()));
+	this->MergeButton->setStatusTip("Start Merge on selected traces");
+  this->BranchButton = new QAction("Branch", this->CentralWidget);
+	connect(this->BranchButton, SIGNAL(triggered()), this, SLOT(AddNewBranches()));
+	this->BranchButton->setStatusTip("Add branches to trunk");
+  this->SplitButton = new QAction("Split", this->CentralWidget); 
+	connect(this->SplitButton, SIGNAL(triggered()), this, SLOT(SplitTraces()));
+	this->SplitButton->setStatusTip("Split traces at point where selected");
+  this->FlipButton = new QAction("Flip", this->CentralWidget);
+	connect(this->FlipButton, SIGNAL(triggered()), this, SLOT(FlipTraces()));
+	this->FlipButton->setStatusTip("Flip trace direction");
+  this->WriteButton = new QAction("save as...", this->CentralWidget);
+	connect(this->WriteButton, SIGNAL(triggered()), this, SLOT(SaveToFile()));
+  this->SettingsButton = new QAction("Settings", this->CentralWidget);
+	connect(this->SettingsButton, SIGNAL(triggered()), this,
+		SLOT(ShowSettingsWindow()));
+	this->SettingsButton->setStatusTip("edit the display and tolerance settings");
+  this->AutomateButton = new QAction("Small Lines", this->CentralWidget);
+	connect(this->AutomateButton, SIGNAL(triggered()), this, SLOT(SLine()));
+	this->AutomateButton->setStatusTip("Automatic selection of all small lines");
 
+  this->UndoButton = new QAction("&Undo", this->CentralWidget);  
+	connect(this->UndoButton, SIGNAL(triggered()), this, SLOT(UndoAction()));
+  this->RedoButton = new QAction("&Redo", this->CentralWidget);
+	connect(this->RedoButton, SIGNAL(triggered()), this, SLOT(RedoAction()));
   //Setup the tolerance settings editing window
   this->SettingsWidget = new QWidget();
   QIntValidator *intValidator = new QIntValidator(1, 100, this->SettingsWidget);
@@ -285,18 +304,7 @@ void View3D::CreateGUIObjects()
   this->OpenSomaButton = new QPushButton("&Open", this->LoadSomaWidget);
   this->CancelSomaButton = new QPushButton("&Cancel", this->LoadSomaWidget);
   this->BrowseSomaButton = new QPushButton("&Browse", this->LoadSomaWidget);
-
-  //Load seed window setup
-  this->LoadSeedWidget = new QWidget();
-  this->LoadSeedWidget->setWindowTitle(tr("Seed File Load"));
-  this->seedRegex.setPattern(".+\\.([a-z]+)");
-  this->seedRegex.setCaseSensitivity(Qt::CaseInsensitive);
-  this->SeedFileField = new QLineEdit(this->LoadSeedWidget);
-
-  this->OpenSeedButton = new QPushButton("&Open", this->LoadSeedWidget);
-  this->CancelSeedButton = new QPushButton("&Cancel", this->LoadSeedWidget);
-  this->BrowseSeedButton = new QPushButton("&Browse", this->LoadSeedWidget);
-
+ 
   //Soma settings window setup
   this->SomaSettingsWidget = new QWidget();
   this->SomaSettingsWidget->setWindowTitle(tr("Soma Settings"));
@@ -312,38 +320,21 @@ void View3D::CreateGUIObjects()
   connect(this->saveAction, SIGNAL(triggered()), this, SLOT(SaveToFile()));
   connect(this->exitAction, SIGNAL(triggered()), this, SLOT(close()));
   connect(this->loadSoma, SIGNAL(triggered()), this, SLOT(ShowLoadSomaWindow()));
-  connect(this->loadSeed, SIGNAL(triggered()), this, SLOT(ShowLoadSeedWindow()));
   connect(this->viewSomas, SIGNAL(triggered()), this, SLOT(ToggleSomas()));
-  connect(this->viewSeeds, SIGNAL(triggered()), this, SLOT(ToggleSeeds()));
   connect(this->somaSettings, SIGNAL(triggered()), this, SLOT(ShowSomaSettingsWindow()));
 
   //Setup connections for the buttons
-  connect(this->ListButton, SIGNAL(clicked()), this, SLOT(ListSelections()));
-  connect(this->ClearButton, SIGNAL(clicked()), this, SLOT(ClearSelection()));
-  connect(this->DeleteButton, SIGNAL(clicked()), this, SLOT(DeleteTraces()));
-  connect(this->MergeButton, SIGNAL(clicked()), this, SLOT(MergeTraces()));
-  connect(this->SplitButton, SIGNAL(clicked()), this, SLOT(SplitTraces()));
-  connect(this->FlipButton, SIGNAL(clicked()), this, SLOT(FlipTraces()));
-  connect(this->WriteButton, SIGNAL(clicked()), this, SLOT(SaveToFile()));
-  connect(this->AutomateButton, SIGNAL(clicked()), this, SLOT(SLine()));
-  connect(this->SettingsButton, SIGNAL(clicked()), this,
-    SLOT(ShowSettingsWindow()));
+
   connect(this->ApplySettingsButton, SIGNAL(clicked()), this,
     SLOT(ApplyNewSettings()));
   connect(this->CancelSettingsButton, SIGNAL(clicked()), this,
     SLOT(HideSettingsWindow()));
-  connect(this->UndoButton, SIGNAL(clicked()), this, SLOT(UndoAction()));
-  connect(this->RedoButton, SIGNAL(clicked()), this, SLOT(RedoAction()));
+
 
   //Set up connections for the Load Soma Data window
   connect(this->OpenSomaButton, SIGNAL(clicked()), this, SLOT(GetSomaFile()));
   connect(this->CancelSomaButton, SIGNAL(clicked()), this, SLOT(HideLoadSomaWindow()));
   connect(this->BrowseSomaButton, SIGNAL(clicked()), this, SLOT(GetSomaPath()));
-
-  //Set up connections for the Load Seed Data window
-  connect(this->OpenSeedButton, SIGNAL(clicked()), this, SLOT(GetSeedFile()));
-  connect(this->CancelSeedButton, SIGNAL(clicked()), this, SLOT(HideLoadSeedWindow()));
-  connect(this->BrowseSeedButton, SIGNAL(clicked()), this, SLOT(GetSeedPath()));
 
   //Set up connections for the Soma Settings window
   connect(this->CancelSomaSettingsButton, SIGNAL(clicked()), this, SLOT(HideSomaSettingsWindow()));
@@ -353,23 +344,25 @@ void View3D::CreateGUIObjects()
 
 void View3D::CreateLayout()
 {
-  //layout for the main window
-  QGridLayout *buttonLayout = new QGridLayout();
-  buttonLayout->addWidget(this->AutomateButton, 1, 0);
-  buttonLayout->addWidget(this->ListButton, 2, 0);
-  buttonLayout->addWidget(this->ClearButton, 3, 0);
-  buttonLayout->addWidget(this->DeleteButton, 4, 0);
-  buttonLayout->addWidget(this->MergeButton, 5, 0);
-  buttonLayout->addWidget(this->SplitButton, 6, 0);
-  buttonLayout->addWidget(this->FlipButton, 7, 0);
-  buttonLayout->addWidget(this->SettingsButton, 9, 0);
-  buttonLayout->addWidget(this->WriteButton, 10, 0);
-  buttonLayout->addWidget(this->UndoButton, 11, 0);
-  buttonLayout->addWidget(this->RedoButton, 12, 0);
-  buttonLayout->setSpacing(10);
+  this->EditsToolBar = addToolBar(tr("Edit Toolbar"));
+  /*this->EditsToolBar->addAction(this->saveAction);
+  this->EditsToolBar->addAction(this->exitAction);
+  this->EditsToolBar->addSeparator();*/
+  this->EditsToolBar->addAction(this->AutomateButton);
+  this->EditsToolBar->addAction(this->ListButton);
+  this->EditsToolBar->addAction(this->ClearButton);
+  this->EditsToolBar->addSeparator();
+  this->EditsToolBar->addAction(this->DeleteButton);
+  this->EditsToolBar->addAction(this->MergeButton);
+  this->EditsToolBar->addAction(this->BranchButton);
+  this->EditsToolBar->addAction(this->SplitButton);
+  this->EditsToolBar->addAction(this->FlipButton);
+  this->EditsToolBar->addSeparator();
+  this->EditsToolBar->addAction(this->SettingsButton);
+
   QGridLayout *viewerLayout = new QGridLayout(this->CentralWidget);
-  viewerLayout->addWidget(this->QVTK, 0, 1);
-  viewerLayout->addLayout(buttonLayout, 0, 0);
+  viewerLayout->addWidget(this->QVTK, 0, 0);
+ 
 
   //layout for the settings window
   QGridLayout *settingsLayout = new QGridLayout(this->SettingsWidget);
@@ -399,15 +392,6 @@ void View3D::CreateLayout()
   LoadSomaLayout->addWidget(this->BrowseSomaButton, 0, 2);
   LoadSomaLayout->addWidget(this->OpenSomaButton, 1, 0);
   LoadSomaLayout->addWidget(this->CancelSomaButton, 1, 1);
-
-  //Layout for the Load Seed Window
-  QGridLayout *LoadSeedLayout = new QGridLayout(this->LoadSeedWidget);
-  QLabel *SeedFileLabel = new QLabel(tr("Seed Point File: (.txt)"));
-  LoadSeedLayout->addWidget(SeedFileLabel, 0, 0);
-  LoadSeedLayout->addWidget(this->SeedFileField, 0, 1);
-  LoadSeedLayout->addWidget(this->BrowseSeedButton, 0, 2);
-  LoadSeedLayout->addWidget(this->OpenSeedButton, 1, 0);
-  LoadSeedLayout->addWidget(this->CancelSeedButton, 1, 1);
 
   //Layout for the Soma Settings Window
   QGridLayout *SomaSettingsLayout = new QGridLayout(this->SomaSettingsWidget);
@@ -1447,71 +1431,6 @@ void View3D::HideLoadSomaWindow()
   this->LoadSomaWidget->hide();
 }
 
-void View3D::ShowLoadSeedWindow()
-{
-  this->LoadSeedWidget->show();
-}
-
-void View3D::GetSeedPath()
-{
-  //Gets seed file path from the file browser
-  QString path;
-  path = QFileDialog::getOpenFileName(this->LoadSeedWidget, "choose a file to load", QString::null, QString::null);
-  this->SeedFileField->setText(path);
-}
-
-void View3D::GetSeedFile()
-{
-  //Checks that file has the the correct format
-  if(this->seedRegex.exactMatch(this->SeedFileField->text()))
-  {
-    //Takes input from file field text box and casts it as an std string
-    std::string fileName;
-    std::string fileEx;
-    fileName = this->SeedFileField->text().toStdString();
-
-    //Takes captured file extension from the regex and stores it as an std string
-    fileEx = this->seedRegex.cap(1).toStdString();
-    for(unsigned int i = 0; i < fileEx.size(); i++)
-    {
-      fileEx[i] = tolower(fileEx[i]);
-    }
-      
-    //Checks for proper file extension and accepts
-    if(fileEx == "txt")
-    {
-      //Checks that file exists
-      if(this->CheckFileExists(fileName.c_str()) == 1)
-      {
-        this->SeedFile = fileName;
-        this->viewSeeds->setEnabled(true);
-        this->LoadSeedWidget->hide();
-        this->generateSeeds();
-        return;
-      }
-      else
-      {
-        std::cerr << "TXT file doesn't exist." << std::endl;
-        return;
-      }
-    }
-    else
-    {
-      std::cerr << "Invalid File Type: Please load correct seed point TXT image." << std::endl;
-      return;
-    }
-  }
-  else
-  {
-    std::cerr << "Invalid File Type: Please load correct seed point TXT image." << std::endl;
-  }
-}
-
-void View3D::HideLoadSeedWindow()
-{
-  this->LoadSeedWidget->hide();
-}
-
 void View3D::ShowSomaSettingsWindow()
 {
   this->SomaOpacityField->setText(QString::number(this->somaopacity));
@@ -1543,25 +1462,6 @@ void View3D::ToggleSomas()
   }
 }
 
-void View3D::ToggleSeeds()
-{
-  //If view seeds option is checked, render seeds
-  if(this->viewSeeds->isChecked())
-  {
-    this->Renderer->AddActor(this->glyphActor);
-    this->QVTK->GetRenderWindow()->Render();
-    std::cout << "Seed Points Rendered" << std::endl;
-    return;
-  }
-  //If unchecked, remove them
-  else
-  {
-    this->Renderer->RemoveActor(this->glyphActor);
-    this->QVTK->GetRenderWindow()->Render();
-    std::cout << "Seeds Removed" << std::endl;
-    return;
-  }
-}
 
 void View3D::ApplySomaSettings()
 {
@@ -1844,87 +1744,6 @@ void View3D::readImg(std::string sourceFile)
   std::cout << "Nuclei contour produced" << std::endl;
 }
 
-//Function to generate the seed point glyphs
-void View3D::generateSeeds()
-{
-  //Call readSeeds function to process seedpoint file and return vector of points
-  this->sdPts = readSeeds(this->SeedFile.c_str());
-
-  //Set up float array
-  this->pcoords = vtkSmartPointer<vtkFloatArray>::New();
-  this->pcoords->SetNumberOfComponents(3);
-  this->pcoords->SetNumberOfTuples(this->sdPts.size());
-
-  //Read in vector of points into the float array
-  for(unsigned int i = 0; i < this->sdPts.size(); i++)
-  {
-    float pts[3] = {this->sdPts[i].x, this->sdPts[i].y, this->sdPts[i].z};
-    this->pcoords->SetTuple(i, pts);
-  }
-
-  //Set up vtkPoints from the float array
-  this->points = vtkSmartPointer<vtkPoints>::New();
-  this->points->SetData(this->pcoords);
-
-  //Set up vtkPolyData from vtkPoints
-  this->seedPoly = vtkSmartPointer<vtkPolyData>::New();
-  this->seedPoly->SetPoints(this->points);
-
-  //Create seed glyphs from sphere source, located at points in the polydata
-  this->sphereSource = vtkSmartPointer<vtkSphereSource>::New();
-  this->seedGlyph = vtkSmartPointer<vtkGlyph3D>::New();
-  this->seedGlyph->SetInput(this->seedPoly);
-  this->seedGlyph->SetSource(sphereSource->GetOutput());
-  this->seedGlyph->SetVectorModeToUseNormal();
-  this->seedGlyph->SetScaleModeToScaleByVector();
-  this->seedGlyph->SetScaleFactor(20);
-  this->seedGlyph->GeneratePointIdsOn();
-
-  //Set up mapper and actor for the seeds
-  this->glyphMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-  this->glyphMapper->SetInput(this->seedGlyph->GetOutput());
-  this->glyphActor = vtkSmartPointer<vtkLODActor>::New();
-  this->glyphActor->SetMapper(this->glyphMapper);
-
-  std::cout << "Seed Points Processed" << std::endl;
-}
-
-//Function to read in seed point coordinates from a .txt file
-std::vector<point> View3D::readSeeds(std::string seedSource)
-{
-  point p;
-  std::vector<point> pts;
-  pts.clear();
-  //int numLines = 0;
-  
-  //std::cout << seedSource << " filename" <<  std::endl;
-  ifstream input(seedSource.c_str());
-
-  if(!input)
-  {
-    std::cerr << "ERROR: Seed file can't be opened" << std::endl;
-  }
-
-  //Read in coordinates until the end of file, adding each set of point coordinates into the point vector
-  while(true)
-  {
-    if(input.eof())
-    {
-      break;
-    } 
-    if(!(input >> p.x >> p.y >> p.z))
-    {
-      //std::cerr << "Invalid data point" << std::endl;
-      input.clear();
-      input.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    }
-    else
-    {
-      pts.push_back(p);
-    }
-  }
-  return pts;
-}
 
 void View3D::rayCast(char *raySource)
 {

@@ -55,10 +55,6 @@ class QTableView;
 class ScatterView;
 class TableWindow;
 
-struct point
-{
-	float x, y, z;
-};
 
 class View3D : public QMainWindow 
 {
@@ -83,8 +79,7 @@ public:
 	void AddContourThresholdSliders();
 	void AddPlaybackWidget(char*);
 	void readImg(std::string sourceFile);
-	void generateSeeds();
-	std::vector<point> readSeeds(std::string seedSource);
+	
 	void rayCast(char* raySource);
 
 	static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
@@ -99,7 +94,7 @@ public:
 	void CalculateGaps();
 
 	bool CheckFileExists(const char *filename);
-	void ShowSeeds();
+
 
 	bool setTol();
 	//todo: make these private with accessors
@@ -126,12 +121,6 @@ public slots:
 	void GetSomaFile();
 	void HideLoadSomaWindow();
 	void ToggleSomas();
-
-	void ShowLoadSeedWindow();
-	void GetSeedPath();
-	void GetSeedFile();
-	void HideLoadSeedWindow();
-	void ToggleSeeds();
 
 	void ShowSomaSettingsWindow();
 	void HideSomaSettingsWindow();
@@ -162,9 +151,8 @@ private:
 	float lineWidth;
 	double SelectColor;
 	std::string SomaFile;
-	std::string SeedFile;
 	double somaopacity;
-	std::vector<point> sdPts;
+	
 
     //VTK render window embedded in a Qt widget
 	QVTKWidget *QVTK;
@@ -173,35 +161,32 @@ private:
 	//Qt widgets on the main window
     QWidget *CentralWidget;
 
-	QPushButton *ListButton;
-	QPushButton *ClearButton;
-	QPushButton *DeleteButton;
-	QPushButton *MergeButton;
-	QPushButton *SplitButton;
-	QPushButton *FlipButton;
-	QPushButton *WriteButton;
-	QPushButton *SettingsButton;
-	QPushButton *AutomateButton;
+	QAction *ListButton;
+	QAction *ClearButton;
+	QAction *DeleteButton;
+	QAction *MergeButton;
+	QAction *BranchButton;
+	QAction *SplitButton;
+	QAction *FlipButton;
+	QAction *WriteButton;
+	QAction *SettingsButton;
+	QAction *AutomateButton;
 
-	QPushButton *UndoButton;
-	QPushButton *RedoButton;
+	QAction *UndoButton;
+	QAction *RedoButton;
 
   //qt model view objects
   MergeModel *GapModel;
   QTableView *MergeTableView; 
   ScatterView *MergeScatterView; 
 
-//merge statistics
-	//QStandardItemModel *model;
-	//QItemSelectionModel *selModel;
+//merge statistics	
 	QTableView *GapsTableView;
 	Qt::SortOrder Ascending;
 //plots	
 	PlotWindow *GapsPlotView;
 	HistoWindow *histo;
 //tobj statistics	
-	//QStandardItemModel *treeModel;
-	//QItemSelectionModel *TreeSelModel;
 	TraceModel *TreeModel;
 	QTableView *TreeTable;
 	PlotWindow *TreePlot;
@@ -217,7 +202,7 @@ private:
 	QAction *loadSeed;
 	QAction *somaSettings;
 	QAction *viewSomas;
-	QAction *viewSeeds;
+
 
 
 	//Qt widgets for the settings window
@@ -239,12 +224,6 @@ private:
 	QRegExp somaRegex;
 
 	//Qt Widgets for the seed point file reader window
-	QWidget *LoadSeedWidget;
-	QLineEdit *SeedFileField;
-	QPushButton *OpenSeedButton;
-	QPushButton *CancelSeedButton;
-	QPushButton *BrowseSeedButton;
-	QRegExp seedRegex;
 
 	//Qt Widgets for the soma settings window
 	QWidget *SomaSettingsWidget;
@@ -288,15 +267,6 @@ private:
 	//vtkSmartPointer<vtkPolyData> poly_line_data;
 	vtkSmartPointer<vtkPolyData> poly;
 	vtkSmartPointer<vtkPolyDataMapper> polymap;
-	
-	//Seed points
-	vtkSmartPointer<vtkFloatArray> pcoords;
-	vtkSmartPointer<vtkPoints> points;
-	vtkSmartPointer<vtkPolyData> seedPoly;
-	vtkSmartPointer<vtkGlyph3D> seedGlyph;
-	vtkSmartPointer<vtkLODActor> glyphActor;
-	vtkSmartPointer<vtkPolyDataMapper> glyphMapper;
-	vtkSmartPointer<vtkSphereSource> sphereSource;
 
   //VTK widgets
   vtkSliderWidget *OpacitySlider;
