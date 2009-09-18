@@ -920,12 +920,13 @@ void SegmentationView::drawObjectIDs(QPainter *painter)
 			QFont f = painter->font();
 			f.setBold(true);
 			painter->setFont(f);
-			if( obj->GetValidity() )
+			char val = obj->GetValidity();
+			if( val == ftk::Object::VALID )
 			{
 				painter->setPen(myIdColor);
 				painter->drawText(center.x, center.y, QString::number(id));
 			}
-			else
+			else if( val == ftk::Object::EXCLUDED )
 			{
 				painter->setPen(myBadColor);
 				painter->drawText(center.x, center.y, QString("X"));

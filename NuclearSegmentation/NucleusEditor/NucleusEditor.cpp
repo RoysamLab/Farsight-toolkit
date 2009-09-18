@@ -513,7 +513,6 @@ void NucleusEditor::loadResult(void)
 	CreateNewTableWindow();
 	CreateNewPlotWindow();
 	CreateNewSegWindow();
-
 	segWin->SetModels(currentModel);
 	segWin->SetChannelImage(seg->getDataImage());
 	segWin->SetLabelImage(seg->getLabelImage());

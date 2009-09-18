@@ -28,6 +28,7 @@ SegmentationModel::SegmentationModel(ftk::NuclearSegmentation *segresult)
 	columnForID = -1;
 	numFeatures = 0;
 	numObjects = 0;
+	numValidObjects = 0;
 	columnForClass = -1;
 	columnForOutliers = -1;
 	columnForColor = -1;
@@ -66,7 +67,6 @@ void SegmentationModel::MostDataInModelChanged()
 }
 void SegmentationModel::SyncModel()
 {
-	model->blockSignals(true);
 	model->setColumnCount(0);
 	model->setRowCount(0);
 
@@ -92,11 +92,12 @@ void SegmentationModel::SyncModel()
 	//Fill in the data
 	for (int obj=0; obj<numObjects; ++obj)
 	{
-		if (objects->at(obj).GetValidity() == false)
+		if (objects->at(obj).GetValidity() != ftk::Object::VALID)
 			continue;
 
 		model->insertRow(currentRow);
 
+		model->blockSignals(true);
 		int id = objects->at(obj).GetId();
 		model->setData(model->index(currentRow, columnForID, QModelIndex()), id);
 
@@ -108,10 +109,9 @@ void SegmentationModel::SyncModel()
 
 		int clss = objects->at(obj).GetClass();
 		model->setData(model->index(currentRow,columnForClass,QModelIndex()),clss);
-
+		model->blockSignals(false);
 		currentRow++;
 	}
-	model->blockSignals(false);
 	updateMapping();
 	columnForColor = columnForClass;
 	UpdateColors();
@@ -182,6 +182,12 @@ void SegmentationModel::UpdateColors(void)
 	if(columnForColor <= 0)
 		return;
 
+	if(this->numValidObjects <= 0)
+	{
+		colorMap.insert(-1,Qt::cyan);
+		return;
+	}
+
 	//Check to be sure this row contains integers:
 	QVariant val = model->data(model->index(0,columnForColor));
 	string type = val.typeName();
@@ -240,7 +246,7 @@ void SegmentationModel::updateMapping(void)
 		ID = model->data(index).toInt();
 		LabelToRowMap.insert(ID,row);
 	}
-	this->numObjects = model->rowCount();
+	this->numValidObjects = model->rowCount();
 }
 
 int SegmentationModel::RowForID(int id)
@@ -493,14 +499,18 @@ void SegmentationModel::applyMargins(int xy, int z)
 	{
 		ftk::Object * obj = &(objects->at(i));
 		ftk::Object::Point c = obj->GetCentroid();
-		bool valid = true;
 		if(c.x < min_x || c.x > max_x ||
 		   c.y < min_y || c.y > max_y ||
 		   c.z < min_z || c.z > max_z)
 		{
-			valid = false;
+			if(obj->GetValidity() == ftk::Object::VALID)
+				obj->SetValidity(ftk::Object::EXCLUDED);
 		}
-		obj->SetValidity(valid);
+		else	//Toggle back to VALID
+		{
+			if(obj->GetValidity() == ftk::Object::EXCLUDED)
+				obj->SetValidity(ftk::Object::VALID);
+		}
 	}
 	
 	segResult->editsNotSaved = true;

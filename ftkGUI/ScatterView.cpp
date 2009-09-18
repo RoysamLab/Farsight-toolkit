@@ -911,6 +911,9 @@ QMap<int, QColor> ScatterView::GetDefaultColors()
 
 	QMap<int, QColor> classColors;
 
+	if(model()->rowCount() <= 0)
+		return classColors;
+
 	//Check to be sure this row contains integers:
 	QVariant val = model()->data(model()->index(0,columnNumForColoring));
 	std::string type = val.typeName();

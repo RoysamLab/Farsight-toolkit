@@ -701,7 +701,7 @@ bool NuclearSegmentation::LoadFromMETA(std::string META_file, std::string header
 
 		Object object("nucleus");
 		object.SetId(id);
-		object.SetValidity(1);
+		object.SetValidity(ftk::Object::VALID);
 		object.SetDuplicated(0);
 		if( classColumn != -1 && metaRow != -1 )
 			object.SetClass( char(meta.at(metaRow).at(classColumn)) );
@@ -1046,7 +1046,7 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 	//set the old object to invalid
 	//and add this edit to the editing record
 	int inn = GetObjectIndex(id1,"nucleus");
-	myObjects.at(inn).SetValidity(false);
+	myObjects.at(inn).SetValidity(ftk::Object::SPLIT);
 	ftk::Object::EditRecord record;
 	record.date = TimeStamp();
 	std::string msg = "SPLIT TO BECOME ";
@@ -1173,7 +1173,7 @@ int NuclearSegmentation::Merge(vector<int> ids)
 		int index = GetObjectIndex(ids.at(i),"nucleus");
 		if(index < 0 ) return 0;
 
-		myObjects.at(index).SetValidity(false);
+		myObjects.at(index).SetValidity(ftk::Object::MERGED);
 		ftk::Object::EditRecord record;
 		record.date = TimeStamp();
 		std::string msg = "MERGED TO BECOME ";
@@ -1429,7 +1429,7 @@ bool NuclearSegmentation::Delete(vector<int> ids)
 		if (index < 0) return false;
 
 		// 1. Invalidate
-		myObjects.at( index ).SetValidity(false);
+		myObjects.at( index ).SetValidity(ftk::Object::DELETED);
 		// 2. Add to Edit Record
 		ftk::Object::EditRecord record;
 		record.date = TimeStamp();
@@ -1460,7 +1460,7 @@ ftk::Object NuclearSegmentation::GetNewObject(int id, IntrinsicFeatures *feature
 {
 	Object object("nucleus");
 	object.SetId(id);
-	object.SetValidity(1);
+	object.SetValidity(ftk::Object::VALID);
 	object.SetDuplicated(0);
 	object.SetClass(-1);
 
@@ -2269,7 +2269,7 @@ bool NuclearSegmentation::WriteToMETA(std::string filename)
 	//Now write out the features
 	for(unsigned int obj = 0; obj < myObjects.size(); ++obj)
 	{
-		if( myObjects.at(obj).GetValidity() == false )
+		if( myObjects.at(obj).GetValidity() != ftk::Object::VALID )
 			continue;
 
 		vector<float> feats = myObjects.at(obj).GetFeatures();
@@ -2318,7 +2318,7 @@ bool NuclearSegmentation::WriteToLibSVM(std::string filename)
 	//Now write out the features
 	for(unsigned int obj = 0; obj < myObjects.size(); ++obj)
 	{
-		if( myObjects.at(obj).GetValidity() == false )
+		if( myObjects.at(obj).GetValidity() == ftk::Object::VALID )
 			continue;
 
 		outFile << myObjects.at(obj).GetId() << " ";			//This should be the class

@@ -43,6 +43,7 @@ namespace ftk
 class Object
 {
 public:
+	enum ValidityTypes { VALID, EXCLUDED, DELETED, MERGED, SPLIT };
 	typedef struct { int x; int y; int z; int t; } Point;
 	typedef struct { Point min; Point max; } Box;
 	typedef struct {string date; string description; } EditRecord;

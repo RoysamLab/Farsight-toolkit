@@ -54,6 +54,7 @@ public:
 	int RowForID(int id);
 	int NumFeatures(){ return numFeatures; };
 	int NumObjects(){ return numObjects; };
+	int NumValidObjects(){ return numValidObjects; };
 	int ColumnForColor(){ return columnForColor; };
 	QMap<int, QColor> ColorMap(){ return colorMap; };
 	ftk::NuclearSegmentation *SegResult(void){ return segResult; };
@@ -89,7 +90,8 @@ public slots:
 private:
 	int columnForID;
 	int numFeatures;
-	int numObjects;
+	int numObjects;				//Number of objects 
+	int numValidObjects;		//Number of objects that are VALID
 	int columnForClass;
 	int columnForOutliers;
 	int columnForColor;
