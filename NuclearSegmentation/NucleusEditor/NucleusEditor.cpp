@@ -221,6 +221,12 @@ void NucleusEditor::createMenus()
 	connect(pythonAction, SIGNAL(triggered()), this, SLOT(OpenPythonWindow()));
 	viewMenu->addAction(pythonAction);
 
+	imageIntensityAction = new QAction(tr("Adjust Image Intensity"), this);
+	imageIntensityAction->setStatusTip(tr("Allows modification of image intensity"));
+	imageIntensityAction->setShortcut(tr("Ctrl+A"));
+	imageIntensityAction->setEnabled(false);
+	viewMenu->addAction(imageIntensityAction);
+
 	//EDITING MENU	
 	editMenu = menuBar()->addMenu(tr("&Editing"));
 	// There is nothing to edit initially. Disabled, merge,delete, and split
@@ -1017,7 +1023,9 @@ void NucleusEditor::CreateNewSegWindow(void)
 	if( this->centralWidget() != this->segWin )
 		this->setCentralWidget(this->segWin);
 
+	this->imageIntensityAction->setEnabled(true);
 	connect(segWin->viewport(),SIGNAL(mouseAt(int,int,int)), this, SLOT(setMouseStatus(int,int,int)));
+	connect(this->imageIntensityAction, SIGNAL(triggered()), segWin->viewport(), SLOT(AdjustImageIntensity()));
 }
 
 //******************************************************************************
@@ -1196,7 +1204,6 @@ int MarginDialog::getZ()
 {
 	return zSpin->value();
 }
-
 
 ParamsFileDialog::ParamsFileDialog(QString lastPth, QWidget *parent)
 : QDialog(parent)

@@ -136,6 +136,7 @@ private:
 	QMenu *helpMenu;
 	QAction *aboutAction;
 	QAction *pythonAction;
+	QAction *imageIntensityAction;
 
 	//For Editing Menu
 	QMenu *editMenu;

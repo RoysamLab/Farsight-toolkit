@@ -39,6 +39,9 @@ SegmentationView::SegmentationView(QWidget *parent)
 	currentScale = 1;
 	ZoomInFactor = 1.25f;
 	ZoomOutFactor = 1 / ZoomInFactor;
+	initGrayscaleColorTable();
+	backgroundThreshold = 1;		//When adjusting intensities, only change values >= this
+	foregroundOffset = 0;			//Offset to ADD to intensity values.
 
 	//numObjects = 0;
 	channelFlags.clear();
@@ -545,7 +548,8 @@ void SegmentationView::scrollTo(const QModelIndex &index, ScrollHint)
              verticalScrollBar()->value() + qMin(
                  rect.bottom() - area.bottom(), rect.top() - area.top()));
 
-	 refreshDisplayImage();
+	 //refreshDisplayImage();
+	 viewport()->update();
 }
 
 //***********************************************************************************************************************
@@ -728,9 +732,7 @@ void SegmentationView::refreshDisplayImage()
 		return;
 	}
 
-	//displayImage = QImage(channelImg->NumColumns(),channelImg->NumRows(),QImage::Format_ARGB32);
 	displayImage = QImage(totalWidth,totalHeight,QImage::Format_ARGB32);
-	//displayImage = QImage(1000,1000,QImage::Format_ARGB32);
 	displayImage.fill(qRgb(0,0,0));
 	QPainter painter(&displayImage);
 	painter.setCompositionMode(QPainter::CompositionMode_Plus);
@@ -774,9 +776,71 @@ void SegmentationView::drawImage(QPainter *painter)
 			gray.fill(qRgb(color[0],color[1],color[2]));
 			unsigned char * p = channelImg->GetSlicePtr<unsigned char>( currentT, i, currentZ );
 			if(p)
-				gray.setAlphaChannel(QImage(p, (*info).numColumns, (*info).numRows, (*info).numColumns, QImage::Format_Indexed8)); 
+			{
+				//Get the image:
+				QImage img(p, (*info).numColumns, (*info).numRows, (*info).numColumns, QImage::Format_Indexed8);
+				if(foregroundOffset == 0)
+				{
+					gray.setAlphaChannel(img);	//Set it to the alpha channel
+				}
+				else
+				{
+					QImage img2 = img.copy();
+					scaleIntensity( &img2, backgroundThreshold, foregroundOffset );
+					gray.setAlphaChannel( img2 );	//Set it to the alpha channel
+				}
+			}
 			painter->drawImage(0,0,gray);
 		}
+	}
+}
+
+//img must be of QImage::Format_Indexed8
+void SegmentationView::scaleIntensity(QImage *img, int threshold, int offset)
+{
+	if( threshold < 0) threshold = 0;
+
+	img->setColorTable(grayscaleColorTable);
+	int old_v, new_v;
+	//int max = 0;
+	for(int c=0; c<img->width(); ++c)
+	{
+		for(int r=0; r<img->height(); ++r)
+		{
+			old_v = img->pixelIndex(r,c);
+			if( old_v >= threshold)
+			{
+				new_v = old_v + offset;
+				if(new_v > 255) new_v=255;
+				else if(new_v < 0) new_v=0;
+				img->setPixel(r,c, new_v);
+				//if(old_v > max) max = old_v;
+			}
+		}
+	}
+	//std::cerr << "max: " << max << std::endl;
+}
+
+void SegmentationView::AdjustImageIntensity(void)
+{
+	IntensityDialog *dialog = new IntensityDialog(backgroundThreshold, foregroundOffset, this);
+	connect(dialog, SIGNAL(valuesChanged(int,int)), this, SLOT(AdjustImageIntensity(int,int)));
+	dialog->show();
+}
+
+void SegmentationView::AdjustImageIntensity(int threshold, int offset)
+{
+	backgroundThreshold = threshold;
+	foregroundOffset = offset;
+	this->refreshDisplayImage();
+}
+
+void SegmentationView::initGrayscaleColorTable(void)
+{
+	grayscaleColorTable.clear();
+	for(int i=0; i<256; ++i)
+	{
+		grayscaleColorTable.append(qRgb(i,i,i));
 	}
 }
 
@@ -853,7 +917,7 @@ void SegmentationView::drawObjectIDs(QPainter *painter)
 
 	//Iterate through each object and write its id at its centroid.
 	std::vector<ftk::Object> * objects = resultModel->SegResult()->GetObjectsPtr();
-	for(int i=0; i<objects->size(); ++i)
+	for(int i=0; i<(int)objects->size(); ++i)
 	{
 		ftk::Object * obj = &(objects->at(i));
 		int id = obj->GetId();
@@ -1191,3 +1255,51 @@ void MyRubberBand::mouseMoveEvent(QMouseEvent * event)
 	this->setGeometry(QRect(this->pos(), this->pos()+ event->pos()).normalized());
 }
 
+IntensityDialog::IntensityDialog(int threshold, int offset, QWidget *parent)
+: QDialog(parent)
+{
+	QLabel * header = new QLabel(tr("Adjust values for Intensity shifting:"));
+	QLabel * label1 = new QLabel(tr("Threshold: "));
+	QString thresholdMessage(tr("Any intensity value below this threshold with not be changed"));
+	label1->setToolTip(thresholdMessage);
+	thresholdSpin = new QSpinBox();
+	thresholdSpin->setRange(0,255);
+	thresholdSpin->setValue(threshold);
+	thresholdSpin->setToolTip(thresholdMessage);
+	connect(thresholdSpin, SIGNAL(valueChanged(int)), this, SLOT(changeThreshold(int)));
+
+	QLabel * label2 = new QLabel(tr("Offset: "));
+	QString offsetMessage(tr("This value will be added to the intensity values of each channel"));
+	label2->setToolTip(offsetMessage);
+	offsetSpin = new QSpinBox();
+	offsetSpin->setRange(-255,255);
+	offsetSpin->setSingleStep(5);
+	offsetSpin->setValue(offset);
+	offsetSpin->setToolTip(offsetMessage);
+	connect(offsetSpin, SIGNAL(valueChanged(int)), this, SLOT(changeOffset(int)));
+
+	hideButton = new QPushButton(tr("DONE"));
+	connect(hideButton, SIGNAL(clicked()), this, SLOT(close()));
+
+	QGridLayout * layout = new QGridLayout();
+	layout->addWidget(header,0,0,1,2);
+	layout->addWidget(label1,1,0,1,1);
+	layout->addWidget(thresholdSpin,1,1,1,1);
+	layout->addWidget(label2,2,0,1,1);
+	layout->addWidget(offsetSpin,2,1,1,1);
+	layout->addWidget(hideButton,3,1,1,1);
+	this->setLayout(layout);
+	this->setWindowTitle(tr("Adjust Image Intensity"));
+	this->setModal(false);
+	this->setAttribute(Qt::WA_DeleteOnClose, true);
+}
+
+void IntensityDialog::changeThreshold(int v)
+{
+	emit valuesChanged(v, offsetSpin->value());
+}
+
+void IntensityDialog::changeOffset(int v)
+{
+	emit valuesChanged(thresholdSpin->value(), v);
+}

@@ -28,6 +28,10 @@ limitations under the License.
 #include <QtGui/QMessageBox>
 #include <QtGui/QToolTip>
 #include <QtGui/QRubberBand>
+#include <QtGui/QSpinBox>
+#include <QtGui/QLabel>
+#include <QtGui/QPushButton>
+#include <QtGui/QGridLayout>
 #include <QtCore/QModelIndex>
 #include <QtCore/QRect>
 #include <QtCore/QSize>
@@ -40,6 +44,7 @@ limitations under the License.
 #include <iostream>
 
 class MyRubberBand;
+class IntensityDialog;
 
 class SegmentationView : public QAbstractItemView
 {
@@ -59,6 +64,7 @@ public:
 public slots:
 	void setZ(int z);
 	void setT(int t);
+	void AdjustImageIntensity();
 	void setChannelFlags(std::vector<bool> flags){channelFlags = flags;refreshDisplayImage();};
 	void setBoundsVisible(bool val);
 	void setIDsVisible(bool val);
@@ -70,6 +76,7 @@ signals:
 
 protected slots:
     void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
+	void AdjustImageIntensity(int threshold, int offset);
 	void refreshDisplayImage(void);
     //void rowsInserted(const QModelIndex &parent, int start, int end);
     //void rowsAboutToBeRemoved(const QModelIndex &parent, int start, int end);
@@ -106,11 +113,14 @@ private:
 	void zoom(double zf);
 
 	void drawImage(QPainter *painter);
+	void scaleIntensity(QImage *img, int threshold, int offset);
 	void drawBoundaries(QPainter *painter);
 	void drawSelectionMarkers(QPainter *painter);
 	void drawObjectIDs(QPainter *painter);
 	void drawExclusionMargin(QPainter *painter);
 	void drawObjects(QPainter *painter);
+	void initGrayscaleColorTable();
+	QVector<QRgb> grayscaleColorTable;
 
 	QImage displayImage;	//Everything that is being displayed in the viewport (includes selections)
 	SegmentationModel *resultModel;
@@ -122,6 +132,8 @@ private:
 	double currentScale;							//Current scaling of the image 
 	double ZoomInFactor;							//Constant zoom-in factor
 	double ZoomOutFactor;							//Constant zoom-out factor
+	int backgroundThreshold;						//When adjusting intensities, only change values bigger than this
+	int foregroundOffset;							//Offset to ADD to intensity values.
 
 	int totalWidth;									//These are the sizes of the original image (scale = 1)
 	int totalHeight;
@@ -141,6 +153,22 @@ public:
 protected:
      void paintEvent(QPaintEvent *event);
 	 void mouseMoveEvent(QMouseEvent *event);
+};
+
+class IntensityDialog : public QDialog
+{
+	Q_OBJECT
+public:
+	IntensityDialog(int threshold, int offset, QWidget *parent = 0);
+signals:
+	void valuesChanged(int threshold,int offset);
+private:
+	QSpinBox *thresholdSpin;
+	QSpinBox *offsetSpin;
+	QPushButton *hideButton;
+private slots:
+	void changeThreshold(int v);
+	void changeOffset(int v);
 };
 
 #endif 
