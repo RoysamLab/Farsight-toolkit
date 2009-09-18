@@ -491,6 +491,11 @@ void NucleusEditor::loadResult(void)
 	if(currentModel)
 		clearModel();
 
+	if(segWin)
+	{
+		delete segWin;
+		segWin = NULL;
+	}
 	abortSegment();
 
 	QString path = QFileInfo(filename).absolutePath();
