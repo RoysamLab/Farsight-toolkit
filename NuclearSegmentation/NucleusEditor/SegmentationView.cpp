@@ -208,20 +208,17 @@ QRect SegmentationView::itemRect(const QModelIndex &index) const
 	int row = index.row();	
 	QModelIndex indexID = model()->index(row, resultModel->ColumnForID(), rootIndex());
 	int id = model()->data(indexID).toInt();
-	vector<ftk::Object::Box> boxes = resultModel->SegResult()->GetObjectPtr(id)->GetBounds();
+	ftk::Object::Box b = resultModel->SegResult()->GetObjectPtr(id)->GetBoundingBox();
 
-	for(int i=0; i<(int)boxes.size(); ++i)
-	{
-		ftk::Object::Box b = boxes.at(i);
-		if ( currentZ >= b.min.z && currentZ <= b.max.z )
-		{	
-			int minX = int( double(b.min.x)*currentScale );
-			int minY = int( double(b.min.y)*currentScale );
-			int sizeX = int( double(b.max.x-b.min.x+5)*currentScale );
-			int sizeY = int( double(b.max.y-b.min.y+5)*currentScale );
-			return QRect( minX, minY, sizeX, sizeY );
-		}
+	if ( currentZ >= b.min.z && currentZ <= b.max.z )
+	{	
+		int minX = int( double(b.min.x)*currentScale );
+		int minY = int( double(b.min.y)*currentScale );
+		int sizeX = int( double(b.max.x-b.min.x+5)*currentScale );
+		int sizeY = int( double(b.max.y-b.min.y+5)*currentScale );
+		return QRect( minX, minY, sizeX, sizeY );
 	}
+
 	return QRect();
 }
 
@@ -511,22 +508,12 @@ void SegmentationView::scrollTo(const QModelIndex &index, ScrollHint)
 	int row = index.row();
 	QModelIndex indexID = model()->index(row, resultModel->ColumnForID(), rootIndex());
 	int id = model()->data(indexID).toInt();
-	vector<ftk::Object::Box> boxes = resultModel->SegResult()->GetObjectPtr(id)->GetBounds();
-
-	bool ok = false;
-	for(int i=0; i<(int)boxes.size(); ++i)
+	
+	ftk::Object::Box b = resultModel->SegResult()->GetObjectPtr(id)->GetBoundingBox();
+	if( currentZ < b.min.z || currentZ > b.max.z )	//If I'm on wrong z:
 	{
-		ftk::Object::Box b = boxes.at(i);
-		if ( currentZ >= b.min.z && currentZ <= b.max.z )
-		{
-			ok = true;
-			break;	//Exit the loop
-		}
-	}
-	if(!ok)
-	{
-		vector<ftk::Object::Point> ps = resultModel->SegResult()->GetObjectPtr(id)->GetCenters();
-		emit goToZ(ps.at(0).z);
+		ftk::Object::Point p = resultModel->SegResult()->GetObjectPtr(id)->GetCentroid();
+		emit goToZ(p.z);
 	}
 
      QRect area = viewport()->rect();
@@ -925,16 +912,10 @@ void SegmentationView::drawObjectIDs(QPainter *painter)
 		//Find z extremes:
 		int max_z = 0;
 		int min_z = 1000;
-		std::vector<ftk::Object::Box> bs = obj->GetBounds();
-		for(int i=0; i<(int)bs.size(); ++i)
-		{
-				ftk::Object::Box b = bs.at(i);
-				max_z = (b.max.z > max_z) ? b.max.z : max_z;
-				min_z = (b.min.z < min_z) ? b.min.z : min_z;
-		}
+		ftk::Object::Box b = obj->GetBoundingBox();
+		ftk::Object::Point center = obj->GetCentroid();
 
-		ftk::Object::Point center = obj->GetCenters().at(0);
-		if ( (currentZ >= min_z ) && (currentZ <= max_z) )
+		if ( (currentZ >= b.min.z ) && (currentZ <= b.max.z) )
 		{
 			QFont f = painter->font();
 			f.setBold(true);
@@ -1009,46 +990,38 @@ void SegmentationView::drawSelectionMarkers(QPainter *painter)
 		int row = selIndices.at(selIndex).row();
 		QModelIndex indexID = model()->index(row, resultModel->ColumnForID(), rootIndex());
 		int id = model()->data(indexID).toInt();
-		vector<ftk::Object::Box> bs = resultModel->SegResult()->GetObjectPtr(id)->GetBounds();
+		ftk::Object::Box b = resultModel->SegResult()->GetObjectPtr(id)->GetBoundingBox();
 
-		int max_z = 0;
-		int min_z = 1000;
-		for(int i=0; i<(int)bs.size(); ++i)
+		if ( (currentZ >= b.min.z ) && (currentZ <= b.max.z) )
 		{
-			ftk::Object::Box b = bs.at(i);
-			max_z = (b.max.z > max_z) ? b.max.z : max_z;
-			min_z = (b.min.z < min_z) ? b.min.z : min_z;
-			if ( (currentZ >= b.min.z ) && (currentZ <= b.max.z) )
+			//currently in a slice that should show the box
+			/* This code is to draw a box around selected objects REMOVED 9/02/2009 IMA
+			painter->drawRect( b.min.x, b.min.y, (b.max.x-b.min.x+1), (b.max.y-b.min.y+1) );
+			//*******************************************************************************/
+			//Replaced with this code to redraw the boundary of the object in this slice:
+			int v, v1, v2, v3, v4;
+			for(int r = b.min.y; r <= b.max.y; r++)
 			{
-				//currently in a slice that should show the box
-				/* This code is to draw a box around selected objects REMOVED 9/02/2009 IMA
-				painter->drawRect( b.min.x, b.min.y, (b.max.x-b.min.x+1), (b.max.y-b.min.y+1) );
-				//*******************************************************************************/
-				//Replaced with this code to redraw the boundary of the object in this slice:
-				int v, v1, v2, v3, v4;
-				for(int r = b.min.y; r <= b.max.y; r++) //was i
+				for(int c = b.min.x; c <= b.max.x; c++)
 				{
-					for(int c = b.min.x; c <= b.max.x; c++) // was j
+					v = (int)labelImg->GetPixel(0, 0, currentZ, r, c);
+					if (v > 0 && v == id)
 					{
-						v = (int)labelImg->GetPixel(0, 0, currentZ, r, c);
-						if (v > 0 && v == id)
+						v1 = (int)labelImg->GetPixel(0, 0, currentZ, r, c+1);
+						v2 = (int)labelImg->GetPixel(0, 0, currentZ, r+1, c);
+						v3 = (int)labelImg->GetPixel(0, 0, currentZ, r, c-1);
+						v4 = (int)labelImg->GetPixel(0, 0, currentZ, r-1, c);
+						if(v!=v1 || v!=v2 || v!=v3 || v!=v4)
 						{
-							v1 = (int)labelImg->GetPixel(0, 0, currentZ, r, c+1);
-							v2 = (int)labelImg->GetPixel(0, 0, currentZ, r+1, c);
-							v3 = (int)labelImg->GetPixel(0, 0, currentZ, r, c-1);
-							v4 = (int)labelImg->GetPixel(0, 0, currentZ, r-1, c);
-							if(v!=v1 || v!=v2 || v!=v3 || v!=v4)
-							{
-								painter->drawPoint(c, r);
-							}
+							painter->drawPoint(c, r);
 						}
-					}		
-				}
-				//*******************************************************************************/
+					}
+				}		
 			}
-		} //End for(int i...
-		ftk::Object::Point center = resultModel->SegResult()->GetObjectPtr(id)->GetCenters().at(0);
-		if ( (currentZ >= min_z ) && (currentZ <= max_z) )
+			//*******************************************************************************/
+		}
+		ftk::Object::Point center = resultModel->SegResult()->GetObjectPtr(id)->GetCentroid();
+		if ( (currentZ >= b.min.z ) && (currentZ <= b.max.z) )
 		{
 			painter->drawText(center.x, center.y, QString::number(id));
 		}
@@ -1263,7 +1236,7 @@ IntensityDialog::IntensityDialog(int threshold, int offset, QWidget *parent)
 	QString thresholdMessage(tr("Any intensity value below this threshold with not be changed"));
 	label1->setToolTip(thresholdMessage);
 	thresholdSpin = new QSpinBox();
-	thresholdSpin->setRange(0,255);
+	thresholdSpin->setRange(1,255);
 	thresholdSpin->setValue(threshold);
 	thresholdSpin->setToolTip(thresholdMessage);
 	connect(thresholdSpin, SIGNAL(valueChanged(int)), this, SLOT(changeThreshold(int)));

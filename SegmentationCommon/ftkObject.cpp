@@ -33,9 +33,13 @@ Object::Object(string type)
 	myId = -1;							
 	valid = -1;					
 	duplicated = -1;				
-	myClass = -1;					
-	myCenters.clear();		
-	myBounds.clear();			
+	myClass = -1;
+	myCentroid.x = 0;
+	myCentroid.y = 0;
+	myCentroid.z = 0;
+	myCentroid.t = 0;
+	myBoundingBox.min = myCentroid;
+	myBoundingBox.max = myCentroid;
 	myFeatures.clear();		
 	myHistory.clear();   
 }

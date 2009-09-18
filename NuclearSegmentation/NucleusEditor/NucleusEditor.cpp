@@ -517,6 +517,7 @@ void NucleusEditor::loadResult(void)
 	segWin->SetModels(currentModel);
 	segWin->SetChannelImage(seg->getDataImage());
 	segWin->SetLabelImage(seg->getLabelImage());
+	segWin->SetIDsVisible(true);
 
 	this->update();
 
@@ -530,7 +531,6 @@ void NucleusEditor::loadResult(void)
 	showHistoAction->setEnabled(true);
 	segmentAction->setEnabled(false);
 	saveAction->setEnabled(true);
-
 }
 
 void NucleusEditor::toggleBounds(void)
@@ -902,6 +902,7 @@ void NucleusEditor::segment()
 		showBoundsAction->setChecked(true);
 		showIDsAction->setEnabled(true);
 		showIDsAction->setChecked(true);
+		segWin->SetIDsVisible(true);
 		viewMenu->setEnabled(true);
 		segmentState = -1;
 

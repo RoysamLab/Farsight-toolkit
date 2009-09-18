@@ -489,20 +489,16 @@ void SegmentationModel::applyMargins(int xy, int z)
 
 	//Go through each object and change the validity accordingly.
 	std::vector<ftk::Object> * objects = segResult->GetObjectsPtr();
-	for(int i=0; i<objects->size(); ++i)
+	for(int i=0; i<(int)objects->size(); ++i)
 	{
 		ftk::Object * obj = &(objects->at(i));
-		std::vector<ftk::Object::Point> cs = obj->GetCenters();
+		ftk::Object::Point c = obj->GetCentroid();
 		bool valid = true;
-		for(int j=0; j<(int)cs.size(); ++j)
+		if(c.x < min_x || c.x > max_x ||
+		   c.y < min_y || c.y > max_y ||
+		   c.z < min_z || c.z > max_z)
 		{
-			ftk::Object::Point c = cs.at(j);
-			if(c.x < min_x || c.x > max_x ||
-				c.y < min_y || c.y > max_y ||
-				c.z < min_z || c.z > max_z)
-			{
-				valid = false;
-			}
+			valid = false;
 		}
 		obj->SetValidity(valid);
 	}
@@ -727,10 +723,10 @@ void SegmentationModel::mergeTrigger()
 //Crude neighbor test
 bool SegmentationModel::neighbor(ftk::Object *obj1, ftk::Object *obj2)
 {
-	ftk::Object::Point c1 = obj1->GetCenters().at(0);
-	ftk::Object::Point c2 = obj2->GetCenters().at(0);
-	ftk::Object::Box b1 = obj1->GetBounds().at(0);
-	ftk::Object::Box b2 = obj2->GetBounds().at(0);
+	ftk::Object::Point c1 = obj1->GetCentroid();
+	ftk::Object::Point c2 = obj2->GetCentroid();
+	ftk::Object::Box b1 = obj1->GetBoundingBox();
+	ftk::Object::Box b2 = obj2->GetBoundingBox();
 
 	//check t
 	if(c1.t != c2.t)

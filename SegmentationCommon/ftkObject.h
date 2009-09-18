@@ -53,10 +53,8 @@ public:
 	void SetValidity( char val) { valid = val; };
 	void SetDuplicated( char dup) { duplicated = dup; };
 	void SetClass(char c) { myClass = c; };
-	void AddCenter( Point p ) { myCenters.push_back(p); };
-	void ClearCenters(){ myCenters.clear(); };
-	void AddBound( Box b ) { myBounds.push_back(b); };
-	void ClearBounds(){ myBounds.clear(); };
+	void SetCentroid( Point p ) { myCentroid = p; };
+	void SetBoundingBox( Box b ) { myBoundingBox = b; };
 	void SetFeatures( vector<float> f ){ myFeatures = f; };
 	void AddEditRecord( EditRecord record ) { myHistory.push_back(record); };
 
@@ -65,8 +63,8 @@ public:
 	char GetValidity() { return valid; };
 	char GetDuplicated() { return duplicated; };
 	char GetClass() { return myClass; };
-	vector<Point> GetCenters() { return myCenters; };
-	vector<Box> GetBounds() { return myBounds; };
+	Point GetCentroid() { return myCentroid; };
+	Box GetBoundingBox() { return myBoundingBox; };
 	vector<float> GetFeatures() { return myFeatures; };
 	vector<EditRecord> getHistory() { return myHistory; };
 
@@ -76,8 +74,8 @@ private:
 	char valid;						//May be marked as invalid 
 	char duplicated;				//Useful for nuclei
 	char myClass;					//May have class identifier
-	vector<Point> myCenters;		//Should have atleast one center (splines have many)
-	vector<Box> myBounds;			//Could have several boxes that determine bounds
+	Point myCentroid;				//Should have one centroid (splines have many)
+	Box myBoundingBox;				//should have one bounding box
 	vector<float> myFeatures;		//May have a variable list of features
 	vector<EditRecord> myHistory;   //May have a list of edits/other modifications
 	

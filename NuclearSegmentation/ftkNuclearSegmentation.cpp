@@ -715,7 +715,7 @@ bool NuclearSegmentation::LoadFromMETA(std::string META_file, std::string header
 		c.y = (int)features->Centroid[1];
 		c.z = (int)features->Centroid[2];
 		c.t = 0;
-		object.AddCenter(c);
+		object.SetCentroid(c);
 
 		Object::Box b;
 		b.min.x = (int)features->BoundingBox[0];
@@ -726,7 +726,7 @@ bool NuclearSegmentation::LoadFromMETA(std::string META_file, std::string header
 		b.max.z = (int)features->BoundingBox[5];
 		b.min.t = 0;
 		b.max.t = 0;
-		object.AddBound(b);
+		object.SetBoundingBox(b);
 
 		vector< float > f(0);
 		for (int i=0; i<(int)header.size(); ++i)
@@ -869,10 +869,10 @@ bool NuclearSegmentation::SaveLabel()
 
 ftk::Object::Box NuclearSegmentation::ExtremaBox(vector<int> ids)
 {
-	ftk::Object::Box extreme = myObjects.at( GetObjectIndex(ids.at(0),"nucleus") ).GetBounds().at(0);
+	ftk::Object::Box extreme = myObjects.at( GetObjectIndex(ids.at(0),"nucleus") ).GetBoundingBox();
 	for(int i=1; i<(int)ids.size(); ++i)
 	{
-		ftk::Object::Box test = myObjects.at( GetObjectIndex(ids.at(i),"nucleus") ).GetBounds().at(0);;
+		ftk::Object::Box test = myObjects.at( GetObjectIndex(ids.at(i),"nucleus") ).GetBoundingBox();
 
 		extreme.min.x = min(extreme.min.x, test.min.x);
 		extreme.min.y = min(extreme.min.y, test.min.y);
@@ -1472,7 +1472,7 @@ ftk::Object NuclearSegmentation::GetNewObject(int id, IntrinsicFeatures *feature
 	c.y = (int)features->Centroid[1];
 	c.z = (int)features->Centroid[2];
 	c.t = 0;
-	object.AddCenter(c);
+	object.SetCentroid(c);
 
 	Object::Box b;
 	b.min.x = (int)features->BoundingBox[0];
@@ -1483,7 +1483,7 @@ ftk::Object NuclearSegmentation::GetNewObject(int id, IntrinsicFeatures *feature
 	b.max.z = (int)features->BoundingBox[5];
 	b.min.t = 0;
 	b.max.t = 0;
-	object.AddBound(b);
+	object.SetBoundingBox(b);
 
 	vector< float > f(0);
 	for (int i=0; i< IntrinsicFeatures::N; ++i)
@@ -1505,7 +1505,7 @@ void NuclearSegmentation::ReassignLabel(int fromId, int toId)
 	int R = labelImage->Size()[2];
 	int Z = labelImage->Size()[1];
 
-	ftk::Object::Box region = myObjects.at( GetObjectIndex(fromId,"nucleus") ).GetBounds().at(0);
+	ftk::Object::Box region = myObjects.at( GetObjectIndex(fromId,"nucleus") ).GetBoundingBox();
 
 	if(region.min.x < 0) region.min.x = 0;
 	if(region.min.y < 0) region.min.y = 0;
@@ -1936,11 +1936,11 @@ Object NuclearSegmentation::parseObject(TiXmlElement *objectElement)
 		}
 		else if ( strcmp( memberName, "center") == 0 )
 		{
-			object.AddCenter( parseCenter(member) );
+			object.SetCentroid( parseCenter(member) );
 		}
 		else if ( strcmp( memberName, "bound") == 0 )
 		{
-			object.AddBound( parseBound(member) );
+			object.SetBoundingBox( parseBound(member) );
 		}
 		else if ( strcmp( memberName, "features") == 0 )
 		{
@@ -2177,51 +2177,54 @@ TiXmlElement* NuclearSegmentation::GetObjectElement(Object object)
 		cElement->LinkEndChild( new TiXmlText( NumToString(object.GetClass()) ) );
 		objectElement->LinkEndChild(cElement);
 	}
-	vector<Object::Point> centers = object.GetCenters();
-	for (unsigned int c=0; c<centers.size(); ++c)
+	Object::Point center = object.GetCentroid();
+	if(center.x != 0 || center.y != 0 || center.z != 0 || center.t != 0)
 	{
 		TiXmlElement *oElement = new TiXmlElement("center");
 		TiXmlElement *xElement = new TiXmlElement("x");
-		xElement->LinkEndChild( new TiXmlText( NumToString(centers[c].x) ) );
+		xElement->LinkEndChild( new TiXmlText( NumToString(center.x) ) );
 		oElement->LinkEndChild(xElement);
 		TiXmlElement *yElement = new TiXmlElement("y");
-		yElement->LinkEndChild( new TiXmlText( NumToString(centers[c].y) ) );
+		yElement->LinkEndChild( new TiXmlText( NumToString(center.y) ) );
 		oElement->LinkEndChild(yElement);
 		TiXmlElement *zElement = new TiXmlElement("z");
-		zElement->LinkEndChild( new TiXmlText( NumToString(centers[c].z) ) );
+		zElement->LinkEndChild( new TiXmlText( NumToString(center.z) ) );
 		oElement->LinkEndChild(zElement);
 		TiXmlElement *tElement = new TiXmlElement("t");
-		tElement->LinkEndChild( new TiXmlText( NumToString(centers[c].t) ) );
+		tElement->LinkEndChild( new TiXmlText( NumToString(center.t) ) );
 		oElement->LinkEndChild(tElement);
 		objectElement->LinkEndChild(oElement);
 	}
-	vector<Object::Box> bounds = object.GetBounds();
-	for (unsigned int b=0; b<bounds.size(); ++b)
+	Object::Box bound = object.GetBoundingBox();
+	if(bound.max.x != center.x || bound.min.x != center.x ||
+	   bound.max.y != center.y || bound.min.y != center.y ||
+	   bound.max.z != center.z || bound.min.z != center.z ||
+	   bound.max.t != center.t || bound.min.t != center.t)
 	{
 		TiXmlElement *bElement = new TiXmlElement("bound");
 		TiXmlElement *xminElement = new TiXmlElement("xmin");
-		xminElement->LinkEndChild( new TiXmlText( NumToString(bounds[b].min.x) ) );
+		xminElement->LinkEndChild( new TiXmlText( NumToString(bound.min.x) ) );
 		bElement->LinkEndChild(xminElement);
 		TiXmlElement *yminElement = new TiXmlElement("ymin");
-		yminElement->LinkEndChild( new TiXmlText( NumToString(bounds[b].min.y) ) );
+		yminElement->LinkEndChild( new TiXmlText( NumToString(bound.min.y) ) );
 		bElement->LinkEndChild(yminElement);
 		TiXmlElement *zminElement = new TiXmlElement("zmin");
-		zminElement->LinkEndChild( new TiXmlText( NumToString(bounds[b].min.z) ) );
+		zminElement->LinkEndChild( new TiXmlText( NumToString(bound.min.z) ) );
 		bElement->LinkEndChild(zminElement);
 		TiXmlElement *tminElement = new TiXmlElement("tmin");
-		tminElement->LinkEndChild( new TiXmlText( NumToString(bounds[b].min.t) ) );
+		tminElement->LinkEndChild( new TiXmlText( NumToString(bound.min.t) ) );
 		bElement->LinkEndChild(tminElement);
 		TiXmlElement *xmaxElement = new TiXmlElement("xmax");
-		xmaxElement->LinkEndChild( new TiXmlText( NumToString(bounds[b].max.x) ) );
+		xmaxElement->LinkEndChild( new TiXmlText( NumToString(bound.max.x) ) );
 		bElement->LinkEndChild(xmaxElement);
 		TiXmlElement *ymaxElement = new TiXmlElement("ymax");
-		ymaxElement->LinkEndChild( new TiXmlText( NumToString(bounds[b].max.y) ) );
+		ymaxElement->LinkEndChild( new TiXmlText( NumToString(bound.max.y) ) );
 		bElement->LinkEndChild(ymaxElement);
 		TiXmlElement *zmaxElement = new TiXmlElement("zmax");
-		zmaxElement->LinkEndChild( new TiXmlText( NumToString(bounds[b].max.z) ) );
+		zmaxElement->LinkEndChild( new TiXmlText( NumToString(bound.max.z) ) );
 		bElement->LinkEndChild(zmaxElement);
 		TiXmlElement *tmaxElement = new TiXmlElement("tmax");
-		tmaxElement->LinkEndChild( new TiXmlText( NumToString(bounds[b].max.t) ) );
+		tmaxElement->LinkEndChild( new TiXmlText( NumToString(bound.max.t) ) );
 		bElement->LinkEndChild(tmaxElement);
 		objectElement->LinkEndChild(bElement);
 	}
