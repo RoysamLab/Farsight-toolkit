@@ -502,17 +502,18 @@ for (k=1;k<NumBranches;k++)
 	tmp=0;
 	for (i = 0; i< NumAllPoints; i++) // i=0 means the first number 
 	{
-     
+         //cout << "????????????????" << selffloor(flagOnBackbone[i]) << endl;
 		if (selffloor(flagOnBackbone[i])== k)
 		{
-			indexBBpts =(int) ((flagOnBackbone[i] - selffloor(flagOnBackbone[i])) * 1000 ); // 
-
-			// cout << "indexBBpts" << indexBBpts << endl;
-			tmpindex = (int) indexBBpts;
+			//indexBBpts =(int) ((flagOnBackbone[i] - selffloor(flagOnBackbone[i])) * 1000 ); // 
+			tmpindex =round((flagOnBackbone[i] - selffloor(flagOnBackbone[i])) * 1000 )-1;
+            
+			 cout << "tmpindex" << tmpindex << endl;
+			//tmpindex = (int) indexBBpts;
 		    points[tmpindex].x = Allpoints[i].x;  // In order to exchange x-coord and y-coord
 			points[tmpindex].y = Allpoints[i].y; 
             points[tmpindex].z = Allpoints[i].z;
-            //printf("%f %f %f\n", points[tmpindex].x , points[tmpindex].y , points[tmpindex].z);
+           // printf("%f %f %f\n", points[tmpindex].x , points[tmpindex].y , points[tmpindex].z);
 			tmp++;
 		}   
             // %plot3(points(1,:), points(2,:), points(3,:), 'b:', 'LineWidth', 2); hold on;
@@ -531,11 +532,11 @@ for (k=1;k<NumBranches;k++)
     */
 
 	 printf("%d   \n\n\n\n\n",tmp);
-     // for (i=0;i<NumPoints; i++) printf("%f %f %f\n", points[i].x , points[i].y , points[i].z); // for test 
+       //for (i=0;i<NumPoints; i++) printf("%f %f %f\n", points[i].x , points[i].y , points[i].z); // for test 
 
      cout << "come to Fit here \n" << endl;
 
-	 FitNPSpline(NumPoints/2,NumPoints, points);// B-Spline coeff;
+	 FitNPSpline(NumPoints,NumPoints, points);// B-Spline coeff;
 	
      cout << "end of  Fitting here \n" <<endl; 
 	 
