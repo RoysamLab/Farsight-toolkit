@@ -150,17 +150,39 @@ void View3D::LoadTraces()
 	std::string traceFile;
 	QString trace = QFileDialog::getOpenFileName(this , "Load Trace Data", ".",
 		tr("TraceFile(*.xml *.swc"));
-	traceFile = trace.toStdString();
-	if(trace.endsWith("swc"))
-    {
-		this->statusBar()->showMessage("Loading swc file");
-		//this->tobj->ReadFromSWCFile(traceFile.c_str);
-    }
-    else if (trace.endsWith("xml"))
-    {
-		this->statusBar()->showMessage("Loading xml file");
-		//this->tobj->ReadFromRPIXMLFile(traceFile.c_str);
-    }
+	if (!trace.isEmpty())
+	{
+		traceFile = trace.toStdString();
+		if(trace.endsWith("swc"))
+		{
+			this->statusBar()->showMessage("Loading swc file");
+			this->tobj->ReadFromSWCFile((char*)traceFile.c_str());
+		}
+		else if (trace.endsWith("xml"))
+		{
+			this->statusBar()->showMessage("Loading xml file");
+			this->tobj->ReadFromRPIXMLFile((char*)traceFile.c_str());
+		}
+	}	
+	else
+	{
+		this->statusBar()->showMessage("Please select a Trace Data file");
+	}
+}
+void View3D::LoadImageData()
+{
+	QString trace = QFileDialog::getOpenFileName(this , "Load Trace Image Data", ".",
+		tr("Trace Image (*.tiff *.tif *.pic *.PIC"));
+	if (!trace.isEmpty())
+	{
+		this->statusBar()->showMessage("Loading Image file");
+		std::string traceFile = trace.toStdString();
+		this->rayCast( (char*)traceFile.c_str());
+	}
+	else
+	{
+		this->statusBar()->showMessage("Please select an Image file");
+	}
 }
 View3D::~View3D()
 {
@@ -249,6 +271,10 @@ void View3D::CreateGUIObjects()
     connect(this->loadTraceAction, SIGNAL(triggered()), this, SLOT(LoadTraces()));
     this->loadTraceAction->setStatusTip("Load traces from .xml or .swc file");
 	this->fileMenu->addAction(this->loadTraceAction);
+  this->loadTraceImage = new QAction("Load Image", this->CentralWidget);
+	connect (this->loadTraceImage, SIGNAL(triggered()), this, SLOT(LoadImageData()));
+	this->loadTraceImage->setStatusTip("Load an Image to RayCast Rendering");
+	this->fileMenu->addAction(this->loadTraceImage);
 
   //Set up the buttons that the user will use to interact with this program. 
   this->ListButton = new QAction("List", this->CentralWidget);

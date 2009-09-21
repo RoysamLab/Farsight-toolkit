@@ -116,6 +116,7 @@ public slots:
 	void ApplyNewSettings();
 	void SLine();
 	void LoadTraces();
+	void LoadImageData();
 	void GetSomaFile();
 
 	//void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
@@ -147,6 +148,7 @@ private:
     //VTK render window embedded in a Qt widget
 	QVTKWidget *QVTK;
 	QAction *loadTraceAction;
+	QAction *loadTraceImage;
 
 	//Qt widgets on the main window
     QWidget *CentralWidget;
