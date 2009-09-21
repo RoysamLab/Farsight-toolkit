@@ -59,7 +59,7 @@ ENDIF(VTK_FOUND)
 
 QT4_WRAP_CPP( GUI_MOC_SRCS Seed3D.h )
 
-ADD_EXECUTABLE( SeedEditor  vtkSeeds3D.cxx ${Sources} ${GUI_MOC_SRCS} )
+ADD_EXECUTABLE( SeedEditor  vtkSeeds3D.cxx Seed3D.cxx ${Sources} ${GUI_MOC_SRCS} )
 
 TARGET_LINK_LIBRARIES( SeedEditor ${Libraries})
 

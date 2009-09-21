@@ -125,34 +125,105 @@ float y;
 float z;
 } point;
 
+//enum modeStates {noState=0, addState, delState, cpState, fpState};
+// when creating a new checkbox, add its index (before BOXMAX_IDX) 
+enum StateIndex { idxAdd, idxDel, idxCP, idxFP, idxReset, idxUndoDel, STATE_MAX_IDX};
+const short numofStates     = STATE_MAX_IDX;
+const float MAX_SEARCH_DIST = 20.0;
+
+// when creating a new glyph instance, add its index (before GLYPHMAX_IDX) and color below
+enum GlyphIndex { idxdelAddedglyph, idxdelOrigglyph, idxAddglyph,  idxOrigglyph,  idxCPglyph,    idxFPglyph, idxGTglyph, GLYPHMAX_IDX};
+const float colorArray[GLYPHMAX_IDX][3] =
+				{{0.5,0.5,0.0},     {0.5,0.2,0.2},  {0.0,0.0,0.9}, {0.9,0.7,0.5}, {0.7,0.0,0.6}, {0.8,0.4,0.0}, {0.35,0.9, 0.9} };
+const int NAME_STR_MAX = 64;
+const char GLYPH_NAMES[GLYPHMAX_IDX][NAME_STR_MAX] = 
+{
+	"Deleted From Added list",
+		"Deleted From Original list",
+		"Added Seeds (False Negatives)",
+		"Original remaining Seeds (True Positives)",
+		"Cluster Positives",
+		"False Positives",
+		"Ground Truth"
+};
+
+class Seed3D;
+
+ class myGlyph
+ {
+ public:
+	 
+	 myGlyph(Seed3D *Owner, const float *color, vtkSmartPointer<vtkSphereSource> sphere);
+	 ~myGlyph();
+	 vtkSmartPointer<vtkGlyph3D>    Glyph;
+	 //void AddPoint(vtkIdType idx, float *p);
+	 void AddPoint(float *p);
+	 void RemovePoint(int idx);
+	 vtkIdType Search(double *pickPos, float &mindist, float *finpt);
+	 bool isEmpty() {return ( points->GetNumberOfPoints()==0 );}
+	 // this is used only for Origglyph, and future GroundTruthglyph
+	 void ReadFilePts(std::string sfilename);
+	 void SaveToOutfile(std::ofstream *outfstrm );
+	 int  GetNumberOfPoints() {return points->GetNumberOfPoints();}
+	 void GetPoint( vtkIdType i, float* p) {pcoords->GetTupleValue(i, p);}
+	 void Clear();
+ private:
+	 
+	 vtkSmartPointer<vtkFloatArray> pcoords;
+	 vtkSmartPointer<vtkPoints> points;
+	 vtkSmartPointer<vtkPolyData> polydata;
+	 vtkSmartPointer<vtkSphereSource> Sphere;
+	 vtkSmartPointer<vtkPolyDataMapper> SphereMapper;
+	 vtkSmartPointer<vtkLODActor> SphereActor;
+	Seed3D *OwnerClass;
+};
 
 
 class Seed3D : public QMainWindow
 {
     Q_OBJECT;
 public:
+	QVTKWidget *QVTK;
+	vtkSmartPointer<vtkPointPicker> PointPicker;
+	vtkSmartPointer<vtkRenderer> Renderer;
 	Seed3D(QWidget * parent = 0, Qt::WindowFlags flags = 0);
 	private slots:
 	void loadImage(void);
 	void PlaceSeed();
-    void Apply();
-    void AddSeed(); 
-	void Check();
-	void DeleteSeed();
+    void ApplyAdd();
+	void ApplyDel();
+
+	void AddSeedCheck();
+	
+	//void Check();
+	void loadSeedsGT();
 	void saveResult();
-	void UndoDeleteSeeds();
-    void TruePositives();
-	void ClusterPositives();
-	void FalsePositives();
-	void FalseNegatives();
-	void ValidateSeeds();
+	std::string SeedFileDialog(const char *seedtype);
+
+	void PointTransfer(double *pickPos, 
+						myGlyph *src1, myGlyph *src2, 
+						myGlyph *target1, myGlyph *target2);
+    	
 private:
+
+	//TaggedGlyph *CPglyph, *FPglyph;
+	//OrigGlyph   *Origglyph;
+	//DelGlyph    *delAddedglyph, *delOrigglyph;
+	//AddedGlyph  *Addglyph;
+	
+	//this is an array of the myGlyphs needed. They will be initialized 
+	// in a loop.
+	myGlyph *myGlyphArray[GLYPHMAX_IDX]; 
+	// These are the same as above; used as aliases for better readability.
+	myGlyph *CPglyph, *FPglyph, *Origglyph, *delAddedglyph, *delOrigglyph, *Addglyph, *GTglyph;
+
 	void createMenus();
 	void createStatusBar();
-	void DeleteObjects();
+	void CleanUp(); //was DeleteObjects();
 	
+	//void StateChange(QCheckBox *currBox);
 	
-	
+	void SetButtonColor(QRadioButton *b, GlyphIndex i);
 	
 	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;
 	vtkSmartPointer<vtkRenderWindowInteractor> Interactor1;
@@ -163,146 +234,74 @@ private:
 	vtkSliderWidget *sliderWidget;
 	vtkSliderWidget *sliderWidget2;
 	vtkSliderWidget *sliderWidget3;
-    vtkSmartPointer<vtkCellPicker> CellPicker;
-	vtkSmartPointer<vtkPointPicker> PointPicker;
+    //vtkSmartPointer<vtkCellPicker> CellPicker;
+	//vtkSmartPointer<vtkPointPicker> PointPicker;
 	vtkSmartPointer<vtkCallbackCommand> isPicked;
-	vtkSmartPointer<vtkCallbackCommand> keyPress;
+	//vtkSmartPointer<vtkCallbackCommand> keyPress;
 
     
 	QMenu *fileMenu;
 	QAction *loadAction;
+	QAction *loadActionGT;
 	QAction *saveAction;
 	QAction *exitAction;
 	QLabel *statusLabel;
 	QString lastPath;
 	QString fileName;
-	QString fileNameSeed;
+	
 	QWidget *browse;
-    QVTKWidget *QVTK;
+    
     QVTKWidget *QVTK1;	
     QVTKWidget *QVTK2;
-	QMessageBox* msgBox;
+
   
 	//Qt widgets on the main window
-    QCheckBox *AddBox;
+    /*QCheckBox *AddBox;
     QCheckBox *DeleteBox;
     QCheckBox *UndoDelBox;	
-    QCheckBox *TPBox;	
+    QCheckBox *ResetBox;	
 	QCheckBox *CPBox;	
-	QCheckBox *FPBox;	
-	QCheckBox *FNBox;	
-	
+	QCheckBox *FPBox;	*/
+	//QCheckBox *FNBox;	
+	QRadioButton *AddBtn;
+    QRadioButton *DelBtn;
+    QRadioButton *UndoDelBtn;	
+    QRadioButton *ResetBtn;	
+	QRadioButton *CPBtn;	
+	QRadioButton *FPBtn;	
+	//bool States[numofStates];
+	//QRadioButton *BoxArray[numofCheckBoxes];
 	QPushButton *PlaceButton;
-    QPushButton *ApplyButton;
-    QPushButton *ValidateButton;
-	
-	QRadioButton *EditRbutton;
-	QRadioButton *ValidateRbutton;
+    QPushButton *ApplyAddButton;
+	QPushButton *ApplyDelButton;
 
-	vtkSmartPointer<vtkRenderer> Renderer;
+	
     vtkSmartPointer<vtkRenderer> Renderer1;
     vtkSmartPointer<vtkRenderer> Renderer2;
-    vtkSphereWidget *sphereWidget;
-    vtkSmartPointer<vtkGlyph3D> Glyph;
-    vtkSmartPointer<vtkGlyph3D> delglyph;
-    vtkSmartPointer<vtkGlyph3D> addglyph;
-	vtkSmartPointer<vtkGlyph3D> TPglyph;
-	vtkSmartPointer<vtkGlyph3D> CPglyph;
-	vtkSmartPointer<vtkGlyph3D> FPglyph;
-	vtkSmartPointer<vtkGlyph3D> FNglyph;
 
-	int mode;
-	int stateAdd;
-	int stateDelete;
-	int stateMerge;
-	int stateSplit;
-	int stateUndoDel;
-	int stateTP;
-	int stateCP;
-	int stateFP;
-	int stateFN;
+	//modeStates mode;
+	//int flag; //rename 
+	int iRender; 
 
-	int counter;
-	int flag;
-	int iRender;
-
-
-	std::vector<point> dup_points;
-	std::vector<point> TPVec;
-	std::vector<point> CPVec;
-	std::vector<point> FPVec;
-	std::vector<point> FNVec;
-	std::vector<point> MarkedPoints;
-	std::vector<point> MarkedPoints2add;
-	vtkFloatArray* pcoords;
-	vtkFloatArray* Addpcoords;
-	vtkFloatArray* delpcoords;
-	vtkFloatArray* TPpcoords;
-	vtkFloatArray* CPpcoords;
-	vtkFloatArray* FPpcoords;
-	vtkFloatArray* FNpcoords;
-
-
-
-
-	vtkPoints* point1;
-	vtkPoints* point2;
-	vtkPoints* point3;
-	vtkPoints* pointTP;
-	vtkPoints* pointCP;
-	vtkPoints* pointFP;
-	vtkPoints* pointFN;
-
-
-
-
-	vtkPoints* allpoints;
-	vtkSmartPointer<vtkPolyData> polydata1;
-	vtkSmartPointer<vtkPolyData> polydata2;
-	vtkSmartPointer<vtkPolyData> polydata3;
-	vtkSmartPointer<vtkPolyData> polydataTP;
-	vtkSmartPointer<vtkPolyData> polydataCP;
-	vtkSmartPointer<vtkPolyData> polydataFP;
-	vtkSmartPointer<vtkPolyData> polydataFN;
-
-
-
-
-	vtkSmartPointer<vtkSphereSource> Sphere;
-	vtkSmartPointer<vtkPolyDataMapper> SphereMapper;
-	vtkSmartPointer<vtkActor> SphereActor;
-	vtkSmartPointer<vtkPolyDataMapper> DelSphereMapper;
-	vtkSmartPointer<vtkActor> DelSphereActor;
-	vtkSmartPointer<vtkPolyDataMapper> AddSphereMapper;
-	vtkSmartPointer<vtkActor> AddSphereActor;
-    vtkSmartPointer<vtkPolyDataMapper> TPsphereMapper;
-	vtkSmartPointer<vtkActor> TPSphereActor;
-	vtkSmartPointer<vtkPolyDataMapper> CPsphereMapper;
-	vtkSmartPointer<vtkActor> CPSphereActor;
-	vtkSmartPointer<vtkPolyDataMapper> FPsphereMapper;
-	vtkSmartPointer<vtkActor> FPSphereActor;
-	vtkSmartPointer<vtkPolyDataMapper> FNsphereMapper;
-	vtkSmartPointer<vtkActor> FNSphereActor;
-
-
+	//int newseedcounter; 
 
 
 	vtkSmartPointer<vtkImageData> VTKim;
-	vtkSmartPointer<vtkImageReslice> Reslice;
-	vtkSmartPointer<vtkImageReslice> Reslice1;
+	//vtkSmartPointer<vtkImageReslice> Reslice;
+	//vtkSmartPointer<vtkImageReslice> Reslice1;
 	vtkSmartPointer<vtkDataSetMapper>im_mapper;
 	vtkSmartPointer<vtkDataSetMapper>im_mapper1;
 	vtkSmartPointer<vtkActor> imActor;
 	vtkSmartPointer<vtkActor> imActor1;
 
-	vtkSmartPointer<vtkHandleWidget> widget;
+	//vtkSmartPointer<vtkHandleWidget> widget;
 	vtkSmartPointer<vtkPointHandleRepresentation3D> handle;
-	vtkSmartPointer<vtkHandleWidget> widget1;
-	vtkSmartPointer<vtkPointHandleRepresentation2D> handle1;
-	vtkSmartPointer<vtkHandleWidget> widget2;
-	vtkSmartPointer<vtkPointHandleRepresentation2D> handle2;
+	//vtkSmartPointer<vtkHandleWidget> widget1;
+	//vtkSmartPointer<vtkPointHandleRepresentation2D> handle1;
+	//vtkSmartPointer<vtkHandleWidget> widget2;
+	//vtkSmartPointer<vtkPointHandleRepresentation2D> handle2;
 	vtkSmartPointer<vtkAppendPolyData> apd;
-	vtkSmartPointer<vtkPolyDataMapper> VolumeMapper;
+	//vtkSmartPointer<vtkPolyDataMapper> VolumeMapper;
 	vtkSmartPointer<vtkActor> VolumeActor;
 	vtkSmartPointer<vtkVolume> Volume;
 	vtkSmartPointer<vtkPolyData> poly;
@@ -310,9 +309,50 @@ private:
 
     static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
     void rayCast(char*,char*);
-    std::vector<point>ReadPoints(char* );
+    //std::vector<point> ReadPoints(char* );
 	double* y;
 	double* wp;
  };
+
+
+ //TaggedGlyph::Populate()
+ //{
+
+ //}
+
+ //class TaggedGlyph : public ParentGlyph
+ //{
+ //public:
+	// TaggedGlyph();
+	// virtual void Populate();
+	// virtual void Undo();
+ //}
+
+
+ // class OrigGlyph : public ParentGlyph
+ //{
+ //public:
+	// OrigGlyph(char *);
+	// virtual void Populate();
+	// virtual void Undo();
+
+ //}
+
+ // class AddedGlyph : public ParentGlyph
+ //{
+ //public:
+	// AddedGlyph();
+	// virtual void Populate();
+	// virtual void Undo();
+ //}
+
+ // class DelGlyph : public ParentGlyph
+ //{
+ //public:
+	// DelGlyph();
+	// virtual void Populate();
+	// virtual void Undo();
+ //}
+
 
 #endif

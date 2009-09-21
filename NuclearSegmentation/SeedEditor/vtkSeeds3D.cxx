@@ -1,16 +1,22 @@
 #include <iostream>
 
 #include "Seed3D.h"
-#include "Seed3D.cxx"
+
 #include <QtGui/QApplication>
 #include <QtCore/QObject>
 
+// to bypass linking error 2019 
+// 2019 unresolved external symbol _WinMain@16
+// go to project properties->Linker -> System -> SubSystem: choose Console
 int main (int argc, char  **argv)
   {
-  
+ 
   QApplication app(argc, argv);
+ 
 	Seed3D Seeds(0, 0);
+	
   Seeds.show();
+  
   return app.exec();
   }
 
