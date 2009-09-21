@@ -186,6 +186,8 @@ void TableWindow::ResizeToOptimalSize(void)
 	for (int i=0; i<table->model()->columnCount(); i++)
 	{
 		bestWidth = bestWidth + table->columnWidth(i);
+		if(bestWidth > 600)
+			break;
 	}
 	bestWidth = bestWidth + 50;
 
