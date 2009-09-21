@@ -470,7 +470,7 @@ for (i=0;i<NumBranches+1;i++)
  numBranchpts[i]=0;
 
 
-float discretePt=0.5; // sampling rate
+float discretePt=1.0; // sampling rate
 
 int NewNumAllPoints = (int) (((double) NumAllPoints)/discretePt)+1; // the number points which to be write in VTK file ;
 
@@ -492,8 +492,11 @@ for (i=0;i<NewNumAllPoints-1;i++) //initialization
  cout << "come to here  \n" << "NumBranches" << NumBranches << endl; 
 
 int tmpindex; // 
-
-for (k=1;k<NumBranches;k++)
+//NumBranches =1;//test one branch  by branch
+for (k=1;k<=NumBranches;k++)
+//for (k=2;k<=2;k++)
+//for (k=1;k<=1;k++)
+//for (k=2;k<=2;k++)
 {
 
 	//----------------------------Note there will a huge loop --------------------------------//
@@ -506,9 +509,9 @@ for (k=1;k<NumBranches;k++)
 		if (selffloor(flagOnBackbone[i])== k)
 		{
 			//indexBBpts =(int) ((flagOnBackbone[i] - selffloor(flagOnBackbone[i])) * 1000 ); // 
-			tmpindex =round((flagOnBackbone[i] - selffloor(flagOnBackbone[i])) * 1000 )-1;
+			tmpindex =round((flagOnBackbone[i] - selffloor(flagOnBackbone[i])) * 1000)-1;
             
-			 cout << "tmpindex" << tmpindex << endl;
+			 //cout << "tmpindex" << tmpindex << endl;
 			//tmpindex = (int) indexBBpts;
 		    points[tmpindex].x = Allpoints[i].x;  // In order to exchange x-coord and y-coord
 			points[tmpindex].y = Allpoints[i].y; 
@@ -517,26 +520,24 @@ for (k=1;k<NumBranches;k++)
 			tmp++;
 		}   
             // %plot3(points(1,:), points(2,:), points(3,:), 'b:', 'LineWidth', 2); hold on;
-            //%In order to exchange x-coord and y-coord
+            // %In order to exchange x-coord and y-coord
             // %plot3(points(2,:)+DispBias, points(1,:)+DispBias,  points(3,:)+DispBias, 'b*', 'MarkerSize', 2); hold on;
-            // plot3(Allpoints(1,i)+DispBias, Allpoints(2,i)+DispBias, Allpoints(3,i)+DispBias, 'b*', 'MarkerSize', 1); hold on;
+            // %plot3(Allpoints(1,i)+DispBias, Allpoints(2,i)+DispBias, Allpoints(3,i)+DispBias, 'b*', 'MarkerSize', 1); hold on;
 	}// end for 
 
     // NumPoints = size(points, 2);
 
 	 numBranchpts[k] = tmp;
      NumPoints = tmp; 
-	/* t_val = new float[NumPoints];
-	 for (j=0;j<NumPoints;j++)
-		 t_val[j]=j+1;
-    */
-
+    
+    //-----------------------------------------------------------------------------------------------------------
+	 
 	 printf("%d   \n\n\n\n\n",tmp);
        //for (i=0;i<NumPoints; i++) printf("%f %f %f\n", points[i].x , points[i].y , points[i].z); // for test 
 
      cout << "come to Fit here \n" << endl;
 
-	 FitNPSpline(NumPoints,NumPoints, points);// B-Spline coeff;
+	 FitNPSpline(4,NumPoints, points);// B-Spline coeff;  // NB =4
 	
      cout << "end of  Fitting here \n" <<endl; 
 	 
@@ -570,6 +571,18 @@ for (k=1;k<NumBranches;k++)
     }
 	
 	delete [] xyz_vals; // release memory
+    
+	//-----------------------------------------------------------------------------------------------------------------------------------//
+  /*
+	 for (i=numVTKpts;i<numVTKpts+NumPoints;i++) // copy these points which locate at this branch to pointsVTK;
+    {
+		pointsVTK[i].x =points[i-numVTKpts].x;
+		pointsVTK[i].y =points[i-numVTKpts].y;
+		pointsVTK[i].z =points[i-numVTKpts].z;
+		//printf("%f %f %f\n",pointsVTK[i].x,pointsVTK[i].y,pointsVTK[i].z);
+    }
+    // test no fitting is ok
+   */
     numVTKpts += NumPoints;
 
 	cout << "now there are " << numVTKpts << "points" << endl;
@@ -642,7 +655,9 @@ for (k=1;k<NumBranches;k++)
 
   int indexPts = 0;
   cout << "I am come to here, one step I will be succeed!";
-  for (i = 1; i< NumBranches; i++)
+ for (i = 1; i<= NumBranches; i++)
+  //for (k=1;k<=1;k++)
+  //i=2;
   {
     for(j =0; j< numBranchpts[i]-1;j++)
 	{
