@@ -115,16 +115,9 @@ public slots:
 	void HideSettingsWindow();
 	void ApplyNewSettings();
 	void SLine();
-
-	void ShowLoadSomaWindow();
-	void GetSomaPath();
+	void LoadTraces();
 	void GetSomaFile();
-	void HideLoadSomaWindow();
-	void ToggleSomas();
 
-	void ShowSomaSettingsWindow();
-	void HideSomaSettingsWindow();
-	void ApplySomaSettings();
 	//void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
     void DereferenceGapsPlotView();
 	void DereferenceTreePlotView();
@@ -150,13 +143,10 @@ private:
 	int smallLine;
 	float lineWidth;
 	double SelectColor;
-	std::string SomaFile;
-	double somaopacity;
-	
 
     //VTK render window embedded in a Qt widget
 	QVTKWidget *QVTK;
-	QAction *loadAction;
+	QAction *loadTraceAction;
 
 	//Qt widgets on the main window
     QWidget *CentralWidget;
@@ -177,7 +167,7 @@ private:
 
   //qt model view objects
   MergeModel *GapModel;
-  QTableView *MergeTableView; 
+  //QTableView *MergeTableView; 
   ScatterView *MergeScatterView; 
 
 //merge statistics	
@@ -197,13 +187,8 @@ private:
 	QAction *saveAction;
 	QAction *exitAction;
 
-	QMenu *somaMenu;
 	QAction *loadSoma;
-	QAction *loadSeed;
-	QAction *somaSettings;
 	QAction *viewSomas;
-
-
 
 	//Qt widgets for the settings window
 	QWidget *SettingsWidget;
@@ -222,15 +207,6 @@ private:
 	QPushButton *CancelSomaButton;
 	QPushButton *BrowseSomaButton;
 	QRegExp somaRegex;
-
-	//Qt Widgets for the seed point file reader window
-
-	//Qt Widgets for the soma settings window
-	QWidget *SomaSettingsWidget;
-	QLineEdit *SomaOpacityField;
-	QPushButton *ApplySomaSettingsButton;
-	QPushButton *CancelSomaSettingsButton;
-
 
 	//stuff for tol and selection
     //general render window variables

@@ -87,7 +87,6 @@ View3D::View3D(int argc, char **argv)
   this->undoBuff = new bufferType(sz);
   int num_loaded = 0;
   this->Volume=0;
-  this->somaopacity = 1.0;
 
   // load as many files as possible. Provide offset for differentiating types
   for(int counter=1; counter<argc; counter++)
@@ -146,7 +145,23 @@ this->Ascending = Qt::AscendingOrder;
 this->statusBar()->showMessage(tr("Ready"));
 
 }
-
+void View3D::LoadTraces()
+{
+	std::string traceFile;
+	QString trace = QFileDialog::getOpenFileName(this , "Load Trace Data", ".",
+		tr("TraceFile(*.xml *.swc"));
+	traceFile = trace.toStdString();
+	if(trace.endsWith("swc"))
+    {
+		this->statusBar()->showMessage("Loading swc file");
+		//this->tobj->ReadFromSWCFile(traceFile.c_str);
+    }
+    else if (trace.endsWith("xml"))
+    {
+		this->statusBar()->showMessage("Loading xml file");
+		//this->tobj->ReadFromRPIXMLFile(traceFile.c_str);
+    }
+}
 View3D::~View3D()
 {
   if(this->QVTK)
@@ -227,16 +242,13 @@ void View3D::CreateGUIObjects()
   //Set up the menu bar
   this->fileMenu = this->menuBar()->addMenu(tr("&File"));
   this->saveAction = fileMenu->addAction(tr("&Save as..."));
+    connect(this->saveAction, SIGNAL(triggered()), this, SLOT(SaveToFile()));
   this->exitAction = fileMenu->addAction(tr("&Exit"));
-
-  
-  this->somaMenu = this->menuBar()->addMenu(tr("&Somas"));
-  this->loadSoma = somaMenu->addAction(tr("&Load Soma Data"));
-  this->somaSettings = somaMenu->addAction(tr("&Settings"));
-
-  this->viewSomas = somaMenu->addAction(tr("&Show Somas"));
-  this->viewSomas->setCheckable(true);
-  this->viewSomas->setDisabled(true);
+  connect(this->exitAction, SIGNAL(triggered()), this, SLOT(close()));
+  this->loadTraceAction = new QAction("Load Trace", this->CentralWidget);
+    connect(this->loadTraceAction, SIGNAL(triggered()), this, SLOT(LoadTraces()));
+    this->loadTraceAction->setStatusTip("Load traces from .xml or .swc file");
+	this->fileMenu->addAction(this->loadTraceAction);
 
   //Set up the buttons that the user will use to interact with this program. 
   this->ListButton = new QAction("List", this->CentralWidget);
@@ -291,55 +303,15 @@ void View3D::CreateGUIObjects()
   this->LineWidthField->setValidator(doubleValidator);
   this->ApplySettingsButton = new QPushButton("&Apply", this->SettingsWidget);
   this->CancelSettingsButton = new QPushButton("&Cancel", this->SettingsWidget);
-
-  //Load soma window setup
-  this->LoadSomaWidget = new QWidget();
-  this->LoadSomaWidget->setWindowTitle(tr("Soma File Load"));
-  //this->somaRegex->setPattern(".+\\.([a-z]+)"); //Set up regular expression for soma file field
-  //this->somaRegex->setCaseSensitivity(Qt::CaseInsensitive);
-  this->somaRegex.setPattern(".+\\.([a-z]+)"); 
-  this->somaRegex.setCaseSensitivity(Qt::CaseInsensitive);
-  this->SomaFileField = new QLineEdit(this->LoadSomaWidget);
-
-  this->OpenSomaButton = new QPushButton("&Open", this->LoadSomaWidget);
-  this->CancelSomaButton = new QPushButton("&Cancel", this->LoadSomaWidget);
-  this->BrowseSomaButton = new QPushButton("&Browse", this->LoadSomaWidget);
- 
-  //Soma settings window setup
-  this->SomaSettingsWidget = new QWidget();
-  this->SomaSettingsWidget->setWindowTitle(tr("Soma Settings"));
-
-  this->SomaOpacityField = new QLineEdit(this->SomaSettingsWidget);
-  this->SomaOpacityField->setValidator(doubleValidator);
-
-  this->ApplySomaSettingsButton = new QPushButton("&Apply", this->SomaSettingsWidget);
-  this->CancelSomaSettingsButton = new QPushButton("&Cancel", this->SomaSettingsWidget);
-  
-
-  //Setup connections for the menu bar
-  connect(this->saveAction, SIGNAL(triggered()), this, SLOT(SaveToFile()));
-  connect(this->exitAction, SIGNAL(triggered()), this, SLOT(close()));
-  connect(this->loadSoma, SIGNAL(triggered()), this, SLOT(ShowLoadSomaWindow()));
-  connect(this->viewSomas, SIGNAL(triggered()), this, SLOT(ToggleSomas()));
-  connect(this->somaSettings, SIGNAL(triggered()), this, SLOT(ShowSomaSettingsWindow()));
-
-  //Setup connections for the buttons
-
   connect(this->ApplySettingsButton, SIGNAL(clicked()), this,
     SLOT(ApplyNewSettings()));
   connect(this->CancelSettingsButton, SIGNAL(clicked()), this,
-    SLOT(HideSettingsWindow()));
-
-
-  //Set up connections for the Load Soma Data window
-  connect(this->OpenSomaButton, SIGNAL(clicked()), this, SLOT(GetSomaFile()));
-  connect(this->CancelSomaButton, SIGNAL(clicked()), this, SLOT(HideLoadSomaWindow()));
-  connect(this->BrowseSomaButton, SIGNAL(clicked()), this, SLOT(GetSomaPath()));
-
-  //Set up connections for the Soma Settings window
-  connect(this->CancelSomaSettingsButton, SIGNAL(clicked()), this, SLOT(HideSomaSettingsWindow()));
-  connect(this->ApplySomaSettingsButton, SIGNAL(clicked()), this, SLOT(ApplySomaSettings()));
-
+    SLOT(HideSettingsWindow())); 
+//Loading soma data
+  this->loadSoma = new QAction("Load Somas", this->CentralWidget);
+   connect(this->loadSoma, SIGNAL(triggered()), this, SLOT(GetSomaFile()));
+   this->fileMenu->addAction(this->loadSoma);
+ 
 }
 
 void View3D::CreateLayout()
@@ -358,13 +330,13 @@ void View3D::CreateLayout()
   this->EditsToolBar->addAction(this->SplitButton);
   this->EditsToolBar->addAction(this->FlipButton);
   this->EditsToolBar->addSeparator();
+  this->EditsToolBar->addAction(this->loadSoma);
   this->EditsToolBar->addAction(this->SettingsButton);
 
   QGridLayout *viewerLayout = new QGridLayout(this->CentralWidget);
   viewerLayout->addWidget(this->QVTK, 0, 0);
- 
-
-  //layout for the settings window
+  //may add a tree view here
+   //layout for the settings window
   QGridLayout *settingsLayout = new QGridLayout(this->SettingsWidget);
   QLabel *maxGapLabel = new QLabel(tr("Maximum gap length:"));
   settingsLayout->addWidget(maxGapLabel, 0, 0);
@@ -385,21 +357,6 @@ void View3D::CreateLayout()
   settingsLayout->addWidget(this->CancelSettingsButton, 5, 1); 
 
   //Layout for the Load Soma Window
-  QGridLayout *LoadSomaLayout = new QGridLayout(this->LoadSomaWidget);
-  QLabel *SomaFileLabel = new QLabel(tr("Soma Image File:"));
-  LoadSomaLayout->addWidget(SomaFileLabel, 0, 0);
-  LoadSomaLayout->addWidget(this->SomaFileField, 0, 1);
-  LoadSomaLayout->addWidget(this->BrowseSomaButton, 0, 2);
-  LoadSomaLayout->addWidget(this->OpenSomaButton, 1, 0);
-  LoadSomaLayout->addWidget(this->CancelSomaButton, 1, 1);
-
-  //Layout for the Soma Settings Window
-  QGridLayout *SomaSettingsLayout = new QGridLayout(this->SomaSettingsWidget);
-  QLabel *SomaOpacityLabel = new QLabel(tr("Soma Opacity (0 to 1):"));
-  SomaSettingsLayout->addWidget(SomaOpacityLabel, 0, 0);
-  SomaSettingsLayout->addWidget(this->SomaOpacityField, 0, 1);
-  SomaSettingsLayout->addWidget(this->ApplySomaSettingsButton, 1, 0);
-  SomaSettingsLayout->addWidget(this->CancelSomaSettingsButton, 1, 1);
 }
 
 void View3D::CreateInteractorStyle()
@@ -1365,122 +1322,15 @@ void View3D::SaveToFile()
 
 
 /*  Soma display stuff  */
-void View3D::ShowLoadSomaWindow()
-{
-  this->LoadSomaWidget->show();
-  //this->OpenSomaButton->setDisabled(true);
-}
-
-void View3D::GetSomaPath()
-{
-  //Open file browser to select a file, takes file path and inserts it into the file field text box
-  QString path;
-  path = QFileDialog::getOpenFileName(this->LoadSomaWidget, "choose a file to load", QString::null, QString::null);
-  this->SomaFileField->setText(path);
-}
 void View3D::GetSomaFile()
 {
-
-  //Checks that file has the the correct format
-  if(this->somaRegex.exactMatch(this->SomaFileField->text()))
-  {
-    //Takes input from file field text box and casts it as an std string
-    std::string fileName;
-    std::string fileEx;
-    fileName = this->SomaFileField->text().toStdString();
-
-    //Takes captured file extension from the regex and stores it as an std string
-    fileEx = this->somaRegex.cap(1).toStdString();
-    for(unsigned int i = 0; i < fileEx.size(); i++)
-    {
-      fileEx[i] = tolower(fileEx[i]);
-    }
-      
-    //Checks for proper file extension and accepts
-    if(fileEx == "tiff" || fileEx == "tif")
-    {
-      //Checks that file exists
-      if(this->CheckFileExists(fileName.c_str()) == 1)
-      {
-        this->SomaFile = fileName;
-        this->viewSomas->setEnabled(true);
-        this->LoadSomaWidget->hide();
-        this->readImg(this->SomaFile);
-        return;
-      }
-      else
-      {
-        std::cerr << "TIFF file doesn't exist." << std::endl;
-        return;
-      }
-    }
-    else
-    {
-      std::cerr << "Invalid File Type: Please load correct soma TIFF image." << std::endl;
-      return;
-    }
-  }
-  else
-  {
-    std::cerr << "Invalid File Type: Please load correct soma TIFF image." << std::endl;
-  }
-}
-
-void View3D::HideLoadSomaWindow()
-{
-  this->LoadSomaWidget->hide();
-}
-
-void View3D::ShowSomaSettingsWindow()
-{
-  this->SomaOpacityField->setText(QString::number(this->somaopacity));
-  this->SomaSettingsWidget->show();
-}
-
-void View3D::HideSomaSettingsWindow()
-{
-  this->SomaSettingsWidget->hide();
-}
-
-void View3D::ToggleSomas()
-{
-  //If view somas options is checked, render somas
-  if(this->viewSomas->isChecked())
-  {
-    this->Renderer->AddActor(this->VolumeActor);
-    this->QVTK->GetRenderWindow()->Render();
-    std::cout << "Somas Rendered" << std::endl;
-    return;
-  }
-  //If unchecked, remove them
-  else
-  {
-    this->Renderer->RemoveActor(this->VolumeActor);
-    this->QVTK->GetRenderWindow()->Render();
-    std::cout << "Somas Removed" << std::endl;
-    return;
-  }
-}
-
-
-void View3D::ApplySomaSettings()
-{
-  //If somas are currently on screen, change opacity and rerender
-  if(this->viewSomas->isChecked())
-  {
-    
-    this->somaopacity = this->SomaOpacityField->text().toDouble();
-    this->VolumeActor->GetProperty()->SetOpacity(this->somaopacity);
-    this->SomaSettingsWidget->hide();
-    this->QVTK->GetRenderWindow()->Render();
-    return;
-  }
-  //Else just change the soma opacity variable
-  else
-  {
-    this->somaopacity = this->SomaOpacityField->text().toDouble();
-    this->SomaSettingsWidget->hide();
-  }
+	QString somaFile = QFileDialog::getOpenFileName(this , "Choose a Soma file to load", ".", 
+	  tr("Image File (*.tiff *.tif *.pic *.PIC)"));
+	if(!somaFile.isNull())
+	{
+		this->statusBar()->showMessage("Loading Soma Image");
+		this->readImg(somaFile.toStdString());
+	}
 }
 
 void View3D::AddContourThresholdSliders()
@@ -1737,11 +1587,11 @@ void View3D::readImg(std::string sourceFile)
   this->VolumeActor->SetMapper(this->VolumeMapper);
 
   //this->VolumeActor->GetProperty()->SetRepresentationToWireframe();
-  this->VolumeActor->GetProperty()->SetOpacity(this->somaopacity);
+  this->VolumeActor->GetProperty()->SetOpacity(.5);
   this->VolumeActor->GetProperty()->SetColor(0.5,0.5,0.5);
   this->VolumeActor->SetPickable(0);
 
-  std::cout << "Nuclei contour produced" << std::endl;
+  this->statusBar()->showMessage("Rendered Contour Image");
 }
 
 
