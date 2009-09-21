@@ -163,6 +163,11 @@ void View3D::LoadTraces()
 			this->statusBar()->showMessage("Loading xml file");
 			this->tobj->ReadFromRPIXMLFile((char*)traceFile.c_str());
 		}
+		this->UpdateLineActor();
+		this->UpdateBranchActor();
+		this->QVTK->GetRenderWindow()->Render();
+		this->statusBar()->showMessage(tr("Update Tree Plots"));
+		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 	}	
 	else
 	{
@@ -178,6 +183,9 @@ void View3D::LoadImageData()
 		this->statusBar()->showMessage("Loading Image file");
 		std::string traceFile = trace.toStdString();
 		this->rayCast( (char*)traceFile.c_str());
+		this->Renderer->AddActor(this->Volume);
+		this->AddVolumeSliders();
+		this->statusBar()->showMessage("Image File Rendered");
 	}
 	else
 	{
@@ -1356,6 +1364,12 @@ void View3D::GetSomaFile()
 	{
 		this->statusBar()->showMessage("Loading Soma Image");
 		this->readImg(somaFile.toStdString());
+		if(this->VolumeActor!=NULL)
+		{
+			this->Renderer->AddVolume(this->VolumeActor);
+			this->QVTK->GetRenderWindow()->Render();
+			this->statusBar()->showMessage("Somas Rendered");
+		}
 	}
 }
 
@@ -1617,7 +1631,7 @@ void View3D::readImg(std::string sourceFile)
   this->VolumeActor->GetProperty()->SetColor(0.5,0.5,0.5);
   this->VolumeActor->SetPickable(0);
 
-  this->statusBar()->showMessage("Rendered Contour Image");
+  this->statusBar()->showMessage("Created Contour Image");
 }
 
 
