@@ -1735,16 +1735,3 @@ void View3D::closeEvent(QCloseEvent *event)
   event->accept();
 }
 
-bool View3D::CheckFileExists(const char *filename)
-{
-  FILE *fp = fopen(filename, "r");
-  if(fp == NULL)
-  {
-    return false;
-  }
-  else
-  {
-    fclose(fp);
-    return true;
-  }
-}

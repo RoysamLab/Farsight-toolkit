@@ -67,7 +67,6 @@ public:
 	void Initialize();
 	void CreateGUIObjects();
 	void CreateLayout();
-  void CreateModelsAndViews();
 	void CreateInteractorStyle();
 	void CreateActors();
 	void UpdateLineActor();
@@ -92,9 +91,6 @@ public:
 	void setupLinkedSpace();
 	void ShowMergeStats();
 	void CalculateGaps();
-
-	bool CheckFileExists(const char *filename);
-
 
 	bool setTol();
 	//todo: make these private with accessors
@@ -149,7 +145,9 @@ private:
 	QVTKWidget *QVTK;
 	QAction *loadTraceAction;
 	QAction *loadTraceImage;
-
+	QAction *saveAction;
+	QAction *exitAction;
+	QAction *loadSoma;
 	//Qt widgets on the main window
     QWidget *CentralWidget;
 
@@ -166,31 +164,20 @@ private:
 
 	QAction *UndoButton;
 	QAction *RedoButton;
-
-  //qt model view objects
-  MergeModel *GapModel;
-  //QTableView *MergeTableView; 
-  ScatterView *MergeScatterView; 
-
-//merge statistics	
-	QTableView *GapsTableView;
+    //merge info
+	std::vector<TraceGap*> candidateGaps;
+	QString myText;	QString dtext;	QString grayText;
+	
+	QMenu *fileMenu;
+	QToolBar *EditsToolBar;	
 	Qt::SortOrder Ascending;
-//plots	
-	PlotWindow *GapsPlotView;
-	HistoWindow *histo;
-//tobj statistics	
 	TraceModel *TreeModel;
+	MergeModel *MergeGaps;
+	PlotWindow *GapsPlotView;
+	QTableView *GapsTableView;
+	HistoWindow *histo;
 	QTableView *TreeTable;
 	PlotWindow *TreePlot;
-	//QT widgets for the menu bar
-	QMenu *fileMenu;
-	QToolBar *EditsToolBar;
-
-	QAction *saveAction;
-	QAction *exitAction;
-
-	QAction *loadSoma;
-	QAction *viewSomas;
 
 	//Qt widgets for the settings window
 	QWidget *SettingsWidget;
@@ -202,14 +189,6 @@ private:
 	QPushButton *ApplySettingsButton;
 	QPushButton *CancelSettingsButton;
 
-	//Qt Widgets for the soma file reader window
-	QWidget *LoadSomaWidget;
-	QLineEdit *SomaFileField;
-	QPushButton *OpenSomaButton;
-	QPushButton *CancelSomaButton;
-	QPushButton *BrowseSomaButton;
-	QRegExp somaRegex;
-
 	//stuff for tol and selection
     //general render window variables
 	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;
@@ -219,22 +198,17 @@ private:
     //interactor variables and point picking
 	vtkSmartPointer<vtkCallbackCommand> isPicked;
 	vtkSmartPointer<vtkCallbackCommand> keyPress;
-	
 	vtkSmartPointer<vtkCellPicker> CellPicker;
 
   //ID numbers of the selected traces
 	std::vector<int> SelectedTraceIDs;
 
-    //merge info
-	std::vector<TraceGap*> candidateGaps;
-	QString myText;	QString dtext;	QString grayText;
-	MergeModel *MergeGaps;
 
 	vtkSmartPointer<vtkSphereSource> Sphere;
 	vtkSmartPointer<vtkPolyDataMapper> SphereMapper;
 	vtkSmartPointer<vtkActor> SphereActor;
 
-    //  img reading	and contour->3d
+ //  img reading and contour->3d
 	vtkSmartPointer<vtkPolyDataMapper> VolumeMapper;
 	vtkSmartPointer<vtkActor> VolumeActor;
 	TraceObject* tobj;
@@ -242,7 +216,6 @@ private:
 	vtkSmartPointer<vtkContourFilter> ContourFilter;
 
   //raycast
-	//vtkSmartPointer<vtkPolyData> poly_line_data;
 	vtkSmartPointer<vtkPolyData> poly;
 	vtkSmartPointer<vtkPolyDataMapper> polymap;
 
