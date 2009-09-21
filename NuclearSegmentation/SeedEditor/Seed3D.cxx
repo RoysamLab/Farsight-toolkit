@@ -1019,7 +1019,7 @@ void Seed3D::SetButtonColor(QRadioButton *Btn, GlyphIndex idx)
 	for (int i=0; i<3; i++)
 	{
 		rgbcol[i] = (int)255*colorArray[idx][i];
-		itoa(rgbcol[i], rgbstr[i], 10);
+		//itoa(rgbcol[i], rgbstr[i], 10);   // PLEASE REPLACE THIS FUNCTION WITH STANDARD C LIBRARY FUNCTIONS
 	}
 	sprintf(style, "* {background-color:rgb(%s,%s,%s); padding: 7px ; color:rgb(255,255,255)}", rgbstr[0],rgbstr[1],rgbstr[2]);
 	Btn->setStyleSheet(style);

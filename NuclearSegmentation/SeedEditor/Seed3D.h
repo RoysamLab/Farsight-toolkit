@@ -158,7 +158,7 @@ class Seed3D;
 	 vtkSmartPointer<vtkGlyph3D>    Glyph;
 	 //void AddPoint(vtkIdType idx, float *p);
 	 void AddPoint(float *p);
-	 void RemovePoint(int idx);
+	 void RemovePoint(vtkIdType idx);
 	 vtkIdType Search(double *pickPos, float &mindist, float *finpt);
 	 bool isEmpty() {return ( points->GetNumberOfPoints()==0 );}
 	 // this is used only for Origglyph, and future GroundTruthglyph
