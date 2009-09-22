@@ -682,7 +682,6 @@ void myGlyph::Clear()
 	int numpts = GetNumberOfPoints();
 	for(int i =0; i<numpts; i++)
 		points->GetData()->RemoveFirstTuple();
-	//numpts = GetNumberOfPoints();
 	OwnerClass->QVTK->GetRenderWindow()->Render();
 	Glyph->SetScaleFactor(Glyph->GetScaleFactor()+0.0001);
 }
@@ -1019,7 +1018,7 @@ void Seed3D::SetButtonColor(QRadioButton *Btn, GlyphIndex idx)
 	for (int i=0; i<3; i++)
 	{
 		rgbcol[i] = (int)255*colorArray[idx][i];
-		//itoa(rgbcol[i], rgbstr[i], 10);   // PLEASE REPLACE THIS FUNCTION WITH STANDARD C LIBRARY FUNCTIONS
+		sprintf(rgbstr[i], "%d", rgbcol[i]);
 	}
 	sprintf(style, "* {background-color:rgb(%s,%s,%s); padding: 7px ; color:rgb(255,255,255)}", rgbstr[0],rgbstr[1],rgbstr[2]);
 	Btn->setStyleSheet(style);
