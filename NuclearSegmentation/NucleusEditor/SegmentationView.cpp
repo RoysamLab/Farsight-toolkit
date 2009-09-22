@@ -361,8 +361,8 @@ void SegmentationView::mousePressEvent(QMouseEvent *event)
 
 		if(!this->labelImg)	return;
 		int labelval = (int)labelImg->GetPixel(currentT,0,currentZ,int(yy),int(xx));
-		//if(labelval > 0)
-		QToolTip::showText(event->globalPos(), QString("ID: ") + QString::number(labelval) );	//This shows the tooltip at the global position (screen coordinates)
+		if(labelval > 0)
+			QToolTip::showText(event->globalPos(), QString("ID: ") + QString::number(labelval) );	//This shows the tooltip at the global position (screen coordinates)
 	}
 	
 }
@@ -899,7 +899,7 @@ void SegmentationView::drawObjectIDs(QPainter *painter)
 	if(!showIDs)
 		return;
 
-	QColor myIdColor = Qt::magenta;
+	QColor myIdColor = Qt::green;
 	QColor myBadColor = Qt::red;
 
 	//Iterate through each object and write its id at its centroid.
@@ -917,9 +917,9 @@ void SegmentationView::drawObjectIDs(QPainter *painter)
 
 		if ( (currentZ >= b.min.z ) && (currentZ <= b.max.z) )
 		{
-			QFont f = painter->font();
-			f.setBold(true);
-			painter->setFont(f);
+			//QFont f = painter->font();
+			//f.setBold(true);
+			//painter->setFont(f);
 			char val = obj->GetValidity();
 			if( val == ftk::Object::VALID )
 			{
@@ -982,9 +982,9 @@ void SegmentationView::drawSelectionMarkers(QPainter *painter)
 	QModelIndexList selIndices = selections->selectedIndexes();
 
 	painter->setPen(colorForSelections);
-	QFont f = painter->font();
-	f.setBold(true);
-	painter->setFont(f);
+	//QFont f = painter->font();
+	//f.setBold(true);
+	//painter->setFont(f);
 
 	for (int selIndex = 0; selIndex < selIndices.size(); ++selIndex) 
 	{

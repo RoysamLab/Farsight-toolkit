@@ -206,6 +206,10 @@ bool NuclearSegmentation::Finalize()
 	}
 	NucleusSeg->runAlphaExpansion();
 	lastRunStep = 4;
+	Parameter p;
+	p.name = "sampling_ratio";
+	p.value = NucleusSeg->getSamplingRatio();
+	this->myParameters.push_back(p);
 	GetResultImage();
 	editsNotSaved = true;
 	return true;
