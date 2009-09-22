@@ -228,7 +228,9 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	//Detect the seed points (which are also the local maxima points)	
 	std::cout<<"Detecting Seeds"<<std::endl;
 	IM_bin[0] = new unsigned short[r*c*z];
+  std::cout << "about to call Detect_Local_MaximaPoints_3D" << std::endl;
 	Detect_Local_MaximaPoints_3D(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0], bImg);	
+  std::cout << "done detecting seeds" << std::endl;
 	
 	return 1;
 }
@@ -432,6 +434,8 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
         
 	//int IND = 0;
 	int II = 0;
+  int itr = 0;
+  std::cout << "In Detect_Local_MaximaPoints_3D, about to plunge in the loop" << std::endl;
     for(int i=0; i<r; i++)
     {
         for(int j=0; j<c; j++)
@@ -444,6 +448,11 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
 				max_r = (int)min((double)r-1,i+scale_xy);
 				max_c = (int)min((double)c-1,j+scale_xy);                         
 				max_z = (int)min((double)z-1,k+scale_z);                         
+        if(itr % 1000 == 0)
+          {
+          std::cout << ".";
+          std::cout.flush();
+          }
 				float mx = get_maximum_3D(im_vals, min_r, max_r, min_c, max_c, min_z, max_z,r,c);
 				II = (k*r*c)+(i*c)+j;
 				if(im_vals[II] == mx)    
@@ -456,11 +465,11 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
 				}
 				else
 					out1[(k*r*c)+(i*c)+j]=0;
-
+      itr++;
 			}			
         }
     }  
-
+  std::cout << std::endl << "made it out of the loop" << std::endl;
 }
 
 //added by Yousef on 8/29/2009
@@ -473,11 +482,11 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 	maxScale[0] = 0.0;
 	int cent_slice = (int) z/2;
 	std::vector< std::vector<unsigned short> > scales;
-	double mean = 0.0;
-	double stdv = 0.0;
+//	double mean = 0.0;
+//	double stdv = 0.0;
 	int cnt = 0;
 	//ofstream p;
-	int max_dist = 0;
+//	int max_dist = 0;
 	//p.open("checkme.txt");
 	for(int i=1; i<r-1; i++)
     {

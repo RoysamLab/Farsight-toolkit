@@ -593,7 +593,7 @@ int main (int argc, char *argv[])
   }
 
 
- printf("Number of critical points is: %d \n, and number of seeds %d\n", NumCritPoints, numSeeds);
+ printf("Number of critical points is: %ld \n, and number of seeds %ld\n", NumCritPoints, numSeeds);
 
  int numBoundSeeds =numSeeds;
  //fprintf(fout,"%d %d %d %f %f\n", 1, 1, 1, -1.0, -1.0);

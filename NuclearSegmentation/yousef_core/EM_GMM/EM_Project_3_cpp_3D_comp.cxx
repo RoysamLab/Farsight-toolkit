@@ -394,12 +394,12 @@ void EM_Gmm(std::vector<std::vector<double> > *X,int** SEEDS,int num_points, int
 //This function is used to initialized the parameter
 void Initialize_Parameters_V2(std::vector<std::vector<double> > *X,int** SEEDS,double** U,double*** Segma,double* PI,double** Z,int num_points,int num_components)
 {
-    bool converged = false;
-    double thresh = 1.0;
+    //bool converged = false;
+    //double thresh = 1.0;
     double d;
     double tmp;
     int ind_min;
-    double u1, u2,u3;
+    //double u1, u2,u3;
     double ZZ_SUM;
 	ind_min = 0;
     

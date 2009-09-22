@@ -52,13 +52,13 @@ int gradient_enhanced_distance_map_2D( float *GRAD_IM_2D, float *GRAD_IMW, int s
 		}
 	}
 //Pop and push pixels till all the pixels are set, i.e, queue is empty
-	float temp,temp1;
+	//float temp,temp1;
 	int best_val_not_found; //added by Yousef (was producing a compilation error)
 	while( !icy_needs_a_change.empty() ){
 		im_ind temp_inds;
-		int i,j,k,best_val_found;
+		int i,j,k;//,best_val_found;
 		int neigh_vals[8],neigh_vals_cpy[8];
-		float temp_hold;
+		//float temp_hold;
 		best_val_not_found = 1;
 		icy_needs_a_change.pop(); //modified by Yousef (was producing a compilation error)
 

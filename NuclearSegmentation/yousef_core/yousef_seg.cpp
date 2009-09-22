@@ -191,12 +191,14 @@ void yousef_nucleus_seg::runSeedDetection()
 		cerr << "Seed detection Failed!!" << endl;
 	else
 		//Make sure all seeds are in foreground and extract vector of seeds
+    cout << "zackdebug: extracing seeds" << endl;
 		ExtractSeeds();
 	//added by Yousef on 9/2/2009
 	//In case we did parameter estimation, write the parameters into a file
 	if(autoParamEstimation)
 	{
 		//Write the automatically estimated parameters into a file
+    cout << "zackdebug: writing parameters to file" << endl;
 		writeParametersToFile();
 	}
 }

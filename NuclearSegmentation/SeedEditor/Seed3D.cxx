@@ -805,7 +805,7 @@ myGlyph::~myGlyph()
 
 myGlyph::myGlyph(Seed3D *Owner, const float *color, vtkSmartPointer<vtkSphereSource> sphere)
 {
-	float pts[3] = {0.0,0.0,0.0};
+	//float pts[3] = {0.0,0.0,0.0};
 	OwnerClass = Owner;
 	pcoords = vtkFloatArray::New();
 	pcoords->SetNumberOfComponents(3);
@@ -994,7 +994,7 @@ void myGlyph::AddPoint(float *p)
 void myGlyph::RemovePoint(vtkIdType idx)
 {
 	points->GetData()->RemoveTuple(idx);
-	int numpts=points->GetNumberOfPoints();
+	//int numpts=points->GetNumberOfPoints();
 	Glyph->SetScaleFactor(Glyph->GetScaleFactor()+0.0001);
 	//Glyph->Update();
 }

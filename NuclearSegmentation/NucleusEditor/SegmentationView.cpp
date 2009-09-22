@@ -910,8 +910,8 @@ void SegmentationView::drawObjectIDs(QPainter *painter)
 		int id = obj->GetId();
 
 		//Find z extremes:
-		int max_z = 0;
-		int min_z = 1000;
+		//int max_z = 0;
+		//int min_z = 1000;
 		ftk::Object::Box b = obj->GetBoundingBox();
 		ftk::Object::Point center = obj->GetCentroid();
 
@@ -998,6 +998,7 @@ void SegmentationView::drawSelectionMarkers(QPainter *painter)
 			//currently in a slice that should show the box
 			/* This code is to draw a box around selected objects REMOVED 9/02/2009 IMA
 			painter->drawRect( b.min.x, b.min.y, (b.max.x-b.min.x+1), (b.max.y-b.min.y+1) );
+      */
 			//*******************************************************************************/
 			//Replaced with this code to redraw the boundary of the object in this slice:
 			int v, v1, v2, v3, v4;
