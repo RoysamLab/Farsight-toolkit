@@ -175,7 +175,7 @@ private:
 	MergeModel *MergeGaps;
 	PlotWindow *GapsPlotView;
 	QTableView *GapsTableView;
-	HistoWindow *histo;
+	//HistoWindow *histo;
 	QTableView *TreeTable;
 	PlotWindow *TreePlot;
 

@@ -93,6 +93,15 @@ std::vector<TraceLine*> TraceObject::GetTraceLines()
 }
 void TraceObject::LinearTraceLinesRecursive(std::vector<TraceLine*> &allLine, TraceLine *tline)
 {
+	if (tline->GetParentID() == -1)
+	{
+		tline->setRoot( tline->GetId(), 0);
+	}
+	else
+	{ 
+		TraceLine *parent = tline->GetParent();
+		tline->setRoot(parent->GetRootID(), parent->GetLevel() +1);
+	}
 	allLine.push_back(tline);
 	for(unsigned int counter = 0; counter < tline->GetBranchPointer()->size(); counter++)
 	{
@@ -1254,6 +1263,10 @@ int TraceObject::createGapLists(std::vector<TraceLine*> traceList)
       TraceGap *newGap = new TraceGap;
       newGap->Trace1 = traceList[i];
       newGap->Trace2 = traceList[j];
+	  if (newGap->Trace1->GetRootID() == newGap->Trace2->GetRootID())
+	  {
+		  continue;
+	  }
       newGap->Trace1->EndPtDist(
           newGap->Trace2,newGap->endPT1, newGap->endPT2, 
           newGap->dist, newGap->maxdist, newGap->angle);

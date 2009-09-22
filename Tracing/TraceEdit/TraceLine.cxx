@@ -30,6 +30,8 @@ limitations under the License.
 TraceLine::TraceLine()
 {
   this->m_parent = NULL;
+  this->root= -1;
+  this->level = 0;
   this->m_id = -(1<<30);
   this->m_branches.clear();
 }
@@ -61,7 +63,19 @@ void TraceLine::SetParent(TraceLine* p)
 {
   this->m_parent = p;
 }
-
+int TraceLine::GetRootID()
+{
+	return this->root;
+}
+int TraceLine::GetLevel()
+{
+	return this->level;
+}
+void TraceLine::setRoot(int RootID, int traceLevel)
+{
+	this->root = RootID;
+	this->level = traceLevel;
+}
 ///////////////////////////////////////////////////////////////////////////////
 void TraceLine::AddBranch(TraceLine* b)
 { 

@@ -29,7 +29,7 @@ limitations under the License.
 */
 
 #include "ftkGUI/PlotWindow.h"
-#include "ftkGUI/HistoWindow.h"
+//#include "ftkGUI/HistoWindow.h"
 #include "ftkGUI/TableWindow.h"
 
 #include "itkImageFileReader.h"
@@ -233,7 +233,7 @@ void View3D::setupLinkedSpace()
   this->tobj->Gaps.clear();
   this->GapsPlotView = NULL;
   this->TreePlot = NULL;
-  this->histo = NULL;
+//  this->histo = NULL;
   this->GapsTableView = new QTableView();
   this->TreeTable =new QTableView();
   this->MergeGaps = new MergeModel(this->tobj->Gaps);
@@ -940,7 +940,7 @@ void View3D::DeleteTraces()
 	{
 		for (i = 0; i < traceList.size(); i++)
 		{
-			this->poly_line_data->Modified();
+			//this->poly_line_data->Modified();
 			this->DeleteTrace(traceList[i]); 
 		}
 		this->Rerender();
@@ -1716,10 +1716,10 @@ void View3D::closeEvent(QCloseEvent *event)
     {
     this->GapsPlotView->close();
     }
-  if(this->histo)
-    {
-    this->histo->close();
-    }
+  //if(this->histo)
+  //  {
+  //  this->histo->close();
+  //  }
   if(this->GapsTableView)
     {
     this->GapsTableView->close();

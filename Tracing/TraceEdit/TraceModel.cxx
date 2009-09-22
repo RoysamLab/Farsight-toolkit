@@ -50,6 +50,8 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines)
 	this->headers.push_back("Trace Size");
 	this->headers.push_back("Type");
 	this->headers.push_back("Parent");	
+	this->headers.push_back("Root ID");
+	this->headers.push_back("Level");
 	this->NumFeatures = this->headers.size();
 	this->SetTraces(trace_lines);
 }
@@ -87,6 +89,8 @@ void TraceModel::SyncModel()
 		row.push_back(this->TraceLines.at(i)->GetSize());
 		row.push_back((int)this->TraceLines.at(i)->GetType());
 		row.push_back(this->TraceLines.at(i)->GetParentID());
+		row.push_back(this->TraceLines.at(i)->GetRootID());
+		row.push_back(this->TraceLines.at(i)->GetLevel());
 		for (int j = 0; j < (int)this->TraceLines.at(i)->Features.size(); ++j)
 		{
 			row.push_back(this->TraceLines.at(i)->Features.at(j));
