@@ -39,7 +39,6 @@ limitations under the License.
 using namespace std;
 //using namespace boost;
 
-
 #define Dimention  3;
 
 struct  VoxelPosition
@@ -162,9 +161,6 @@ void SampleNPSpline(int NPointsSample,VoxelPosition *PSample, float P1, float P2
 
 
 #define DATATYPEIN unsigned char
-
-//int main(int argc, char *argv[])
-
 //--------------------------------------------------------some sub function ------------------------------------------------------------//
 
 int round (float number);
@@ -173,24 +169,25 @@ int selffloor(float number);
 void  spap2(int PolyNum, int order, int *t_val, VoxelPosition *points, VoxelPosition * coef, double *knots);
 double dist2pts(double x1,double y1,double z1,double x2,double y2, double z2);
 
+
+//int main(int argc, char *argv[])
 int main(void)
 {
    
   char *argv[10];
-  int argc=9; // test
+  int argc=9; 
   //ifstream fin;
   FILE *infile, *insketon;
   FILE *outbackbone, *outExspine;
   long sz;  // the variable: sz= sizx*sizey
   
-
   //DATATYPEIN *volin, *volvessel, *somaDist;
   char *filedir;
   char *infilename;
   char *tempfile; //  temp file, 
 
   VoxelPosition *Allpoints;
-  VoxelPosition *posExtraSpines;
+  //VoxelPosition *posExtraSpines;
 
  // VoxelPosition *pointsVTK;
 
@@ -250,10 +247,10 @@ int main(void)
 
 
   
- //------------------------------------ read volume data ----------------------------------//
+ //----------------------------------------------------------- read volume data -------------------------------------------------------------------------------//
 
   
-  volin = (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN)); //  the memory application for volume data
+ volin = (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN)); //  the memory application for volume data
 
   if ( fread(volin, sizeof(DATATYPEIN), sz, infile) < (unsigned long)sz)  // read in vol file
   {
@@ -261,11 +258,9 @@ int main(void)
     exit(1);
   }
 
-  // ------------------------------------------------------------------------------------------//
-
  
 
- //--------------------------------Processing with sketon VTK file -------------------------------------//
+ //--------------------------------------------------------Processing with sketon VTK file ----------------------------------------------------------------------//
  // Skip first 4 lines of sketon VTK file
  
  char str[200]; 
@@ -434,19 +429,17 @@ for (i=0;i<NumAllPoints;i++)
 	exit(-1);
   }
 
+
+  
   //for (i = 0; i< NumAllPoints; i++) printf("%f  ",flagOnBackbone[i]);
-  float temp1;
-  
-  for (i = 0; i< NumAllPoints; i++) {fprintf (flagfile,"%f \n",flagOnBackbone[i]); }// flagOnBackbone[i]=temp1;}
+  //for (i = 0; i< NumAllPoints; i++) {fprintf (flagfile,"%f \n",flagOnBackbone[i]); }// flagOnBackbone[i]=temp1;}
 
   
-
-
 
 //-- -------------------  NumPoly = round(NumPoly * 0.05) ------------------------------ ------------------------------------------------//
 
 for (k=0;k<200;k++)
-     NumPoly[k] = (float) round(NumPoly[k]*0.05); // 0.04 , how to set this parameter ? 
+     NumPoly[k] =  round(float ((NumPoly[k])*0.05)); // 0.04 , how to set this parameter ?    float 
 
 // ---------------- ---------------sub end ----------------------------------------------------------------------------------------------//
 
@@ -462,20 +455,17 @@ points = NULL;
 int tmp=0;
 int NumPoints; // belong to one branch;
 
-//float *t_val;
 
-float *numBranchpts; // need to further
-numBranchpts = new float[NumBranches+1]; // this is to record the points in each branches;
+
+int *numBranchpts; // need to further
+numBranchpts = new int[NumBranches+1]; // this is to record the points in each branches;
 for (i=0;i<NumBranches+1;i++)
  numBranchpts[i]=0;
 
 
-float discretePt=1.0; // sampling rate
-
+float discretePt=1; // sampling rate
 int NewNumAllPoints = (int) (((double) NumAllPoints)/discretePt)+1; // the number points which to be write in VTK file ;
-
 cout << "the number of total new points  " <<  NewNumAllPoints <<  endl;
-
 VoxelPosition *pointsVTK; 
 pointsVTK = new VoxelPosition[NewNumAllPoints];
 
@@ -489,23 +479,17 @@ for (i=0;i<NewNumAllPoints-1;i++) //initialization
  pointsVTK[NewNumAllPoints-1].y =-9999;
  pointsVTK[NewNumAllPoints-1].z =-9999; //end flag
 
- cout << "come to here  \n" << "NumBranches" << NumBranches << endl; 
+cout << "There are " <<  NumBranches  << " NumBranches" << endl; 
 
 int tmpindex; // 
-//NumBranches =1;//test one branch  by branch
 for (k=1;k<=NumBranches;k++)
-//for (k=2;k<=2;k++)
-//for (k=1;k<=1;k++)
-//for (k=2;k<=2;k++)
 {
-
 	//----------------------------Note there will a huge loop --------------------------------//
     if (points != NULL) delete []points;
     points = new VoxelPosition[NumAllPoints];
 	tmp=0;
 	for (i = 0; i< NumAllPoints; i++) // i=0 means the first number 
 	{
-         //cout << "????????????????" << selffloor(flagOnBackbone[i]) << endl;
 		if (selffloor(flagOnBackbone[i])== k)
 		{
 			//indexBBpts =(int) ((flagOnBackbone[i] - selffloor(flagOnBackbone[i])) * 1000 ); // 
@@ -519,46 +503,33 @@ for (k=1;k<=NumBranches;k++)
            // printf("%f %f %f\n", points[tmpindex].x , points[tmpindex].y , points[tmpindex].z);
 			tmp++;
 		}   
-            // %plot3(points(1,:), points(2,:), points(3,:), 'b:', 'LineWidth', 2); hold on;
-            // %In order to exchange x-coord and y-coord
-            // %plot3(points(2,:)+DispBias, points(1,:)+DispBias,  points(3,:)+DispBias, 'b*', 'MarkerSize', 2); hold on;
-            // %plot3(Allpoints(1,i)+DispBias, Allpoints(2,i)+DispBias, Allpoints(3,i)+DispBias, 'b*', 'MarkerSize', 1); hold on;
+           
 	}// end for 
-
-    // NumPoints = size(points, 2);
 
 	 numBranchpts[k] = tmp;
      NumPoints = tmp; 
     
     //-----------------------------------------------------------------------------------------------------------
 	 
-	 printf("%d   \n\n\n\n\n",tmp);
-       //for (i=0;i<NumPoints; i++) printf("%f %f %f\n", points[i].x , points[i].y , points[i].z); // for test 
 
-     cout << "come to Fit here \n" << endl;
+    //for (i=0;i<NumPoints; i++) printf("%f %f %f\n", points[i].x , points[i].y , points[i].z); // for test 
+    // cout << "come to Fit here \n" << endl;
 
-	 FitNPSpline(4,NumPoints, points);// B-Spline coeff;  // NB =4
-	
-     cout << "end of  Fitting here \n" <<endl; 
+	 FitNPSpline(6,NumPoints, points);// B-Spline coeff;  // NB =4
 	 
-	 
-	 //    ---------------- the very important function --------Spline sampling ----------------------//
+	 //---------------- the very important function --------Spline sampling ----------------------------------------------------------//
     
 	 NumPoints = (int) (NumPoints / discretePt); // new sampling points;
 
 	 VoxelPosition *xyz_vals;
      xyz_vals = new VoxelPosition [NumPoints];
      
-	 
-     cout << "come to Sample here \n" <<endl; 
+	 //  ----------------- Call the resampling -------------------------------------------------------//  
+     //cout << "come to Sample here \n" <<endl; 
 	 SampleNPSpline(NumPoints,xyz_vals, 0, 1);
 
 	 //for (i=0;i<NumPoints;i++) printf("%f %f %f\n",xyz_vals[i].x,xyz_vals[i].y,xyz_vals[i].z);// copy these points which locate at this branch to pointsVTK;
-    
-
-	 cout << "end of Sampling here \n" <<endl; 
-
-	  // currently there are numVTKpts VTK pts to be write 
+	 // currently there are numVTKpts VTK pts to be write 
 
      for (i=numVTKpts;i<numVTKpts+NumPoints;i++) // copy these points which locate at this branch to pointsVTK;
     {
@@ -585,16 +556,7 @@ for (k=1;k<=NumBranches;k++)
    */
     numVTKpts += NumPoints;
 
-	cout << "now there are " << numVTKpts << "points" << endl;
-	 /*
-	 t_val = new float[NumPoints];
-	 for (j=0;j<NumPoints;j++)
-	 {t_val[j] = 1+j*discretePt;
-	 } */ //  generate new sampling points;
-
-
-	 //  ----------------- Call the resampling -------------------------------------------------------//  
-
+	cout << "there are " << numVTKpts << "points on branch " << k << endl;
 } // End of NumBranches of curve fitting //   end of loop
 
 
@@ -634,9 +596,9 @@ for (k=1;k<=NumBranches;k++)
 */
   fclose(outExspine);
 
-// ----------------------------- end write to outExspine -------------------------------------------//
+// ----------------------------- end write to outExspine -------------------------------------------------------------------------------//
 
-//---------------------------------- Output the smooth Backbone to a vtk file--------------------------//
+//---------------------------------- Output the smooth Backbone to a vtk file-----------------------------------------------------------//
 
   fprintf(outbackbone, "# vtk DataFile Version 3.0\n");
   fprintf(outbackbone,"MST of skel\n");
@@ -647,7 +609,7 @@ for (k=1;k<=NumBranches;k++)
   cout << "come to write VTK file" << endl;
 
   for (i = 0; i<numVTKpts;i++)
-  {fprintf(outbackbone,"%f %f %f\n",pointsVTK[i].x,pointsVTK[i].y,pointsVTK[i].z);
+  {fprintf(outbackbone,"%f %f %f\n",pointsVTK[i].x,-pointsVTK[i].y,pointsVTK[i].z); // - pointsVTK[i].y  is just for view
    //printf("%f %f %f\n",pointsVTK[i].x,pointsVTK[i].y,pointsVTK[i].z);
   }
    
@@ -669,26 +631,26 @@ for (k=1;k<=NumBranches;k++)
   cout << "I am come to here ";
   fclose(outbackbone);
 
-// ----------------------------- end write to outExspine -------------------------------------------//
-
-
-// ints = size(points, 2);
-
-
-
-  
+// ----------------------------------------------------release global memory--------------------------------------------------------------//
+ 
+ delete []pointsVTK;
+ delete []Allpoints;
+ delete []graphInfPoints;
+ delete []numBranchpts;
  return 1;  
-}
+}  // end 
 
 
-// ---------------------------- Round to nearest integer function-------------------------------//
+
+
+// ---------------------------- Round to nearest integer function-----------------------------------------------------------------------//
 
 int round (float number)
 {  
    int temp;
    temp = int (number);
    if ((number-temp)>0.5) 
-     return (int(number+0.5));
+     return (int(number+float(0.5)));
    else 
      return (temp);
 }
@@ -704,49 +666,7 @@ int selffloor(float number)
 	   return (int)(number-0.5); 
 }
 
-/*
 
-// -------------------------------------------B-Spline fitting function ------------------------------//
- //sp = spap2(NumPoly[k], 4, t_val, points)
-
-void  spap2(int PolyNum, int order, int *t_val, VoxelPosition *points, VoxelPosition * coef, double *knots)
-{ 
-	// ---------------------
-	
-	int coefslength;
-	int knotslength;
-
-	
-
-	// ----------------------------------------------//
-	{
-      cout << " do B-Spline fitting ----/n ";
-		//..........................
-	}
-    // return sp;
-}
-
-
-// -----------------------------------------resampling from B-Spline function ---------------------------//
-
-// Input:  VoxelPosition * coef are the coefficient of B-Spline basis-------------------------------------//
-// Input:  float *t_val, the resampling points -----------------------------------------------------------//
-// Output: VoxelPosition * ValuePoints -------------------------------------------------------------------// 
-
-void fnval(VoxelPosition * coef,float *t_val, VoxelPosition * ValuePoints)
-{
-	// resampling
-	int i;
-	int sizeN;
-    VoxelPosition *points;
-	sizeN=sizeof (t_val) /sizeof(float);
-    // ----------- 
-    	
-
-}
-*/
-
-//-----------------------------------------sun end ------------------------------------------------------//
 
 // --------------------------------------h = dist2pts(x1, y1, z1, x2, y2, z2) ---------------------------//
 
