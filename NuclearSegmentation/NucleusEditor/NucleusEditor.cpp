@@ -223,7 +223,7 @@ void NucleusEditor::createMenus()
 
 	imageIntensityAction = new QAction(tr("Adjust Image Intensity"), this);
 	imageIntensityAction->setStatusTip(tr("Allows modification of image intensity"));
-	imageIntensityAction->setShortcut(tr("Ctrl+A"));
+	imageIntensityAction->setShortcut(tr("Ctrl+G"));
 	imageIntensityAction->setEnabled(false);
 	viewMenu->addAction(imageIntensityAction);
 
