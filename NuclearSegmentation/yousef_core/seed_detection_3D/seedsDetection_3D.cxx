@@ -63,6 +63,8 @@ MyInputImageType2D::Pointer extract2DImageSlice(itk::SmartPointer<MyInputImageTy
 MyInputImageType::Pointer extract3DImageRegion(itk::SmartPointer<MyInputImageType> im, int sz_x, int sz_y, int sz_z, int start_x, int start_y, int start_z);
 void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short* distIm, double* minScale, double* maxScale, int r, int c, int z);
 int computeMedian(std::vector< std::vector<unsigned short> > scales, int cntr);
+void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned short* distIm, double* minScale, double* maxScale, int r, int c, int z);
+int computeWeightedMedian(std::vector< std::vector<float> > scales, int cntr);
 
 int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int r, int c, int z, double *sigma_min_in, double *sigma_max_in, double *scale_xy_in, double *scale_z_in, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout, bool paramEstimation)
 {	
@@ -160,7 +162,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	if(UseDistMap == 1 && paramEstimation)
 	{
 		std::cout<<"Estimating parameters..."<<std::endl;
-		estimateMinMaxScales(im, dImg, &sigma_min, &sigma_max, r, c, z);
+		estimateMinMaxScalesV2(im, dImg, &sigma_min, &sigma_max, r, c, z);
 		scale_xy = sigma_min+1;
 		scale_z = ceil(scale_xy / sampl_ratio);
 		std::cout<<"    Minimum scale = "<<sigma_min<<std::endl;
@@ -289,7 +291,7 @@ int detect_seeds(itk::SmartPointer<MyInputImageType> im, int r, int c, int z,con
   IteratorType iterate(laplacian->GetOutput(),laplacian->GetOutput()->GetRequestedRegion());
   while ( i<r*c*z)
   {
-    IMG[i] = /*sigma*sigma*/iterate.Get();
+    IMG[i] = /*sigma*sigma*/iterate.Get()/sqrt(sigma);
     ++i;
 	++iterate;
   }
@@ -354,7 +356,7 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 			{
 				II = (k1*r*c)+(i1*c)+j1;
 				float lgrsp = iterate.Get();
-				//lgrsp = sigma*sigma*lgrsp;
+				//lgrsp /= sqrt((double)sigma);
 				if(sigma==sigma_min)
 				{
 					IMG[II] = lgrsp;			
@@ -435,7 +437,7 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
 	//int IND = 0;
 	int II = 0;
   int itr = 0;
-  std::cout << "In Detect_Local_MaximaPoints_3D, about to plunge in the loop" << std::endl;
+  //std::cout << "In Detect_Local_MaximaPoints_3D, about to plunge in the loop" << std::endl;
     for(int i=0; i<r; i++)
     {
         for(int j=0; j<c; j++)
@@ -450,7 +452,7 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
 				max_z = (int)min((double)z-1,k+scale_z);                         
         if(itr % 1000 == 0)
           {
-          std::cout << ".";
+          //std::cout << ".";
           std::cout.flush();
           }
 				float mx = get_maximum_3D(im_vals, min_r, max_r, min_c, max_c, min_z, max_z,r,c);
@@ -469,7 +471,7 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
 			}			
         }
     }  
-  std::cout << std::endl << "made it out of the loop" << std::endl;
+  //std::cout << std::endl << "made it out of the loop" << std::endl;
 }
 
 //added by Yousef on 8/29/2009
@@ -485,9 +487,9 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 //	double mean = 0.0;
 //	double stdv = 0.0;
 	int cnt = 0;
-	//ofstream p;
+	ofstream p;
 //	int max_dist = 0;
-	//p.open("checkme.txt");
+	p.open("checkme.txt");
 	for(int i=1; i<r-1; i++)
     {
         for(int j=1; j<c-1; j++)
@@ -517,7 +519,7 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 					lst.push_back(i);
 					lst.push_back(j);
 					lst.push_back(k);
-					//p<<j<<" "<<i<<" "<<k<<" "<<mx<<std::endl;
+					p<<j<<" "<<i<<" "<<k<<" "<<mx<<std::endl;
 					scales.push_back(lst);
 					//mean +=mx;
 					cnt++;										
@@ -525,7 +527,7 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 			}			
         }
     } 
-	//p.close();
+	p.close();
 	
 	//get the median of the scales(distances)
 	int medianS = computeMedian(scales, cnt);
@@ -549,8 +551,8 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 	//p2<<"med-mad = "<<minScale[0]<<std::endl;
 	//p2<<"med+mad = "<<maxScale[0]<<std::endl;
 
-	//ofstream p3;
-	//p3.open("checkme3.txt");	
+	ofstream p3;
+	p3.open("checkme3.txt");	
 	//For each local maximum point,try to find the best LoG scale
 	//To do that, suppose the distance at a given local maximum point is d, 
 	//then compute the its LoG responses at scales from d/2 to d
@@ -565,8 +567,8 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 		int i = scales[ind][1];
 		int j = scales[ind][2];
 		int k = scales[ind][3];
-		if(mx<minScale[0] || mx>maxScale[0])
-			continue;
+		//if(mx<minScale[0] || mx>maxScale[0])
+		//	continue;
 
 		int smin = (int) std::ceil(mx/2.0);
 		if(smin == mx)
@@ -615,7 +617,7 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 				best_scale = kk;				
 			}*/
 		}
-		//p3<<j<<" "<<i<<" "<<k<<" "<<mx<<" "<<best_scale<<std::endl;
+		p3<<j<<" "<<i<<" "<<k<<" "<<mx<<" "<<best_scale<<" "<<max_resp<<std::endl;
 		mx = best_scale;
 		
 		if(mx<mnScl)
@@ -633,7 +635,181 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 	//p2<<"min_scale="<<mnScl<<std::endl;
 	//p2<<"max_scale="<<mxScl<<std::endl;
 	//p2.close();
-	//p3.close();
+	p3.close();
+}
+
+
+//added by Yousef on 9/17/2009
+//Estimate the min and max scales based on the local maxima points of the distance map
+void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned short* distIm, double* minScale, double* maxScale, int r, int c, int z)
+{
+	int min_r, min_c, max_r, max_c, min_z, max_z;    
+	int II = 0;
+	minScale[0] = 1000.0;
+	maxScale[0] = 0.0;
+	int cent_slice = (int) z/2;
+	std::vector< std::vector<unsigned short> > scales;
+	double mean = 0.0;
+	double stdv = 0.0;
+	int cnt = 0;
+	ofstream p;
+	int max_dist = 0;
+	p.open("checkme.txt");
+	for(int i=1; i<r-1; i++)
+    {
+        for(int j=1; j<c-1; j++)
+        {				
+			//for(int k=1; k<z-1; k+=2)
+			for(int k=cent_slice; k<=cent_slice; k++)
+			{									
+				min_r = (int) max(0.0,(double)i-2);
+				min_c = (int) max(0.0,(double)j-2);
+				min_z = (int) max(0.0,(double)k);
+				max_r = (int)min((double)r-1,(double)i+2);
+				max_c = (int)min((double)c-1,(double)j+2);                         
+				max_z = (int)min((double)z-1,(double)k);                         
+				unsigned short mx = get_maximum_3D(distIm, min_r, max_r, min_c, max_c, min_z, max_z,r,c);
+				
+				if(mx <= 100)
+					continue; //background or edge point
+				II = (k*r*c)+(i*c)+j;
+				if(distIm[II] == mx)    
+				{		
+					//since we have scaled by 100 earlier, scale back to the original value
+					//also, we want to dived by squre root of 2 or approximately 1.4
+					mx = mx/140;							
+					//add the selected scale to the list of scales
+					std::vector <unsigned short> lst;
+					lst.push_back(mx);
+					lst.push_back(i);
+					lst.push_back(j);
+					lst.push_back(k);
+					p<<j<<" "<<i<<" "<<k<<" "<<mx<<std::endl;
+					scales.push_back(lst);
+					//mean +=mx;
+					cnt++;										
+				}				
+			}			
+        }
+    } 
+	p.close();
+	
+	//get the median of the scales(distances)
+	int medianS = computeMedian(scales, cnt);
+	//ofstream p2;
+	//p2.open("checkme2.txt");
+	//p2<<"med = "<<medianS<<std::endl;				
+
+	ofstream p3;
+	p3.open("checkme3.txt");	
+	//For each local maximum point,try to find the best LoG scale
+	//To do that, suppose the distance at a given local maximum point is d, 
+	//then compute the its LoG responses at scales from d/2 to d
+	//Then, select the scale the gave us the maximum LoG response
+	int mnScl = 10000;
+	int mxScl = 0;
+	int cnt2 = 0;
+	std::vector<std::vector<float>> smallScales;
+	std::vector<std::vector<float>> largeScales;
+	int numSmall = 0;
+	int numLarge = 0;
+
+	for(int ind=0; ind<cnt; ind++)
+	{
+		int mx = scales[ind][0];
+		int i = scales[ind][1];
+		int j = scales[ind][2];
+		int k = scales[ind][3];		
+
+		int smin = (int) std::ceil(mx/2.0);
+		if(smin == mx)
+			continue;
+		if(smin == 1)
+			smin++;
+		cnt2++;
+		min_r = (int) max(0.0,(double)i-mx);
+		min_c = (int) max(0.0,(double)j-mx);
+		min_z = (int) max(0.0,(double)k-mx);
+		max_r = (int)min((double)r-1,(double)i+mx);
+		max_c = (int)min((double)c-1,(double)j+mx);                         
+		max_z = (int)min((double)z-1,(double)k+mx);                         
+					
+		int sub_r = i-min_r;
+		int sub_c = j-min_c;
+		int sub_z = k-min_z;
+		int sz_r = (max_r-min_r+1);
+		int sz_c = (max_c-min_c+1);
+		int sz_z = (max_z-min_z+1);
+		int ind_i = sub_z*sz_r*sz_c+sub_r*sz_c+sub_c;
+																	
+		MyInputImageType::Pointer im_Small = extract3DImageRegion(im, sz_c, sz_r, sz_z, min_c, min_r, min_z);															
+		float* IMG = new float[sz_c*sz_r*sz_z];
+		float max_resp = -100000.0;	
+		int best_scale = 0.0;
+		double sigma;	
+	
+		for(int kk=smin; kk<=mx; kk++)
+		{						
+			sigma = kk;
+			detect_seeds(im_Small, sz_r, sz_c, sz_z, sigma, IMG, 0);
+			//Method 1:
+			//Get the scale at which the LoG response at our point of interest is maximum
+			if(IMG[ind_i]>=max_resp)
+			{
+				max_resp = IMG[ind_i];								
+				best_scale = kk;				
+			}
+			//Method 2:
+			//We need the scale at which the maximum response in the small image region surrouding our point of interest 
+			//is maximum over scales
+			/*float mx2 = get_maximum_3D(IMG, 0, sz_r-1, 0, sz_c-1, 0, sz_z-1,sz_r,sz_c);
+			if(mx2>=max_resp)
+			{
+				max_resp = mx2;								
+				best_scale = kk;				
+			}*/
+		}
+		std::vector<float> pp;
+		pp.push_back(best_scale);
+		pp.push_back(max_resp);
+
+		if(mx<=medianS)
+		{	
+			numSmall++;		
+			smallScales.push_back(pp);
+		}
+		else
+		{
+			numLarge++;		
+			largeScales.push_back(pp);
+		}
+
+		p3<<j<<" "<<i<<" "<<k<<" "<<mx<<" "<<best_scale<<" "<<max_resp<<std::endl;
+		/*mx = best_scale;	
+		if(mx<mnScl)
+			mnScl = mx;
+		if(mx>mxScl)
+			mxScl = mx;*/
+
+		delete [] IMG;
+	}
+	p3.close();
+	//set the min and max scales to the LoG-weighted medians of the small and large scale sets
+	mnScl =  computeWeightedMedian(smallScales, numSmall);
+	mxScl =  computeWeightedMedian(largeScales, numLarge);
+
+	scales.clear();
+	smallScales.clear();
+	largeScales.clear();
+
+	//I assume at least 4 scales must be used (will be relaxed later)
+	if(mxScl<mnScl+3)
+		mxScl = mnScl+3;
+	minScale[0] = mnScl;
+	maxScale[0] = mxScl;	
+	//p2<<"min_scale="<<mnScl<<std::endl;
+	//p2<<"max_scale="<<mxScl<<std::endl;
+	//p2.close();	
 }
 
 int distMap(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, unsigned short* IMG)
@@ -869,3 +1045,62 @@ int computeMedian(std::vector< std::vector<unsigned short> > scales, int cntr)
 		
 	return mdn;
 }
+
+int computeWeightedMedian(std::vector< std::vector<float> > scales, int cntr)
+{
+	if(cntr == 1)
+		return scales[0][0];
+
+	float* srtList = new float[cntr];
+	float* wgtList = new float[cntr];
+	
+
+	float sumWeights = 0;
+	for(int i=0; i<cntr; i++)
+	{
+		srtList[i] = scales[i][0];
+		wgtList[i] = scales[i][1];		
+		sumWeights+= wgtList[i];
+	}
+
+	//normalize the list of weights
+	for(int i=0; i<cntr; i++)
+		wgtList[i] /= sumWeights;
+
+	//sort the distances
+	for(int i=0; i<cntr-1; i++)
+	{
+		for(int j=i+1; j<cntr; j++)
+		{
+			if(srtList[j]<srtList[i])
+			{
+				float tmp = srtList[i];
+				srtList[i] = srtList[j];
+				srtList[j] = tmp;
+				tmp = wgtList[i];
+				wgtList[i] = wgtList[j];
+				wgtList[j] = tmp;
+
+			}
+		}
+	}
+
+	//Find the point at which the cummulative sum exceeds .5
+	float cumSum = 0;
+	int mdn;
+	for(int i=0; i<cntr; i++)
+	{
+		cumSum+=wgtList[i];
+		if(cumSum > .5)
+		{
+			mdn = srtList[i];
+			break;
+		}
+
+	}	
+		
+	delete [] srtList;
+	delete [] wgtList;
+	return mdn;
+}
+

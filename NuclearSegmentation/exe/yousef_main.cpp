@@ -83,23 +83,23 @@ int main(int argc, char* argv[])
 	//1-Binarization
 	NucleusSeg->runBinarization();
 	//2-Seeds Detection
-  std::cout << "zackdebug: beginning seed detection" << std::endl;
+  //std::cout << "zackdebug: beginning seed detection" << std::endl;
 	NucleusSeg->runSeedDetection();
 	
-  std::cout << "zackdebug: clustering" << std::endl;
+  //std::cout << "zackdebug: clustering" << std::endl;
 	//3-Initial Segmentation (CLustering)
 	NucleusSeg->runClustering();
 	if(NucleusSeg->isSegmentationFinEnabled())
 	{
 		//4-Optional Segmentation Refinement (Alpha-expansion) 
-    std::cout << "zackdebug: alpha expansion" << std::endl;
+    //std::cout << "zackdebug: alpha expansion" << std::endl;
 		NucleusSeg->runAlphaExpansion();		
 		output_img=NucleusSeg->getSegImage();
 	}
 	else
 		output_img=NucleusSeg->getClustImage();
 	
-  std::cout << "zackdebug: output assigned" << std::endl;
+  //std::cout << "zackdebug: output assigned" << std::endl;
 	
 	//Hard coded parameters, add cin for each if required..
 	/*int params[6];
