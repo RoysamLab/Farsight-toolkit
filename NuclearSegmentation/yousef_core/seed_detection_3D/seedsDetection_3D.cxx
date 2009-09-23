@@ -25,6 +25,8 @@ limitations under the License.
 
 
 #include <stdio.h>
+#include <iostream>
+#include <fstream>
 #include<stdlib.h>
 #include <iostream>
 #include <algorithm>
@@ -709,8 +711,8 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 	int mnScl = 10000;
 	int mxScl = 0;
 	int cnt2 = 0;
-	std::vector<std::vector<float>> smallScales;
-	std::vector<std::vector<float>> largeScales;
+	std::vector<std::vector<float> > smallScales;
+	std::vector<std::vector<float> > largeScales;
 	int numSmall = 0;
 	int numLarge = 0;
 
