@@ -669,7 +669,9 @@ void View3D::Rerender()
 
 void View3D::UpdateLineActor()
 {
+	
   this->poly_line_data = this->tobj->GetVTKPolyData();
+  this->poly_line_data->Modified();
   this->LineMapper->SetInput(this->poly_line_data);
   this->LineActor->SetMapper(this->LineMapper);
   this->LineActor->GetProperty()->SetColor(0,1,0);
@@ -881,33 +883,20 @@ void View3D::DereferenceTreePlotView()
 
 void View3D::ClearSelection()
 {
-  QString selectText;
-
-  if (this->TreeModel->GetSelecectedIDs().size() <= 0)
-    {
-    selectText=tr("Nothing Selected");
-    }
-  else
-    {  
-	this->TreeModel->GetSelectionModel()->Clear;
-    this->SelectedTraceIDs.clear();
-    selectText=tr("Cleared trace list");
-    this->Rerender();
-    }
-  if(this->tobj->Gaps.size()>0)
-  {
-	  this->tobj->Gaps.clear();
-	  if(this->GapsPlotView)
-	  {
-		  this->GapsPlotView->close();
-      }
-	  if (this->GapsTableView)
-      {
-		  this->GapsTableView->close();
-      }
-	selectText+=tr("Cleared gaps list");
-  }
-  this->statusBar()->showMessage(selectText, 4000);
+	if(this->GapsPlotView)
+	{
+	  this->GapsPlotView->close();
+	}
+	if (this->GapsTableView)
+	{
+	  this->GapsTableView->close();
+	}
+	this->tobj->Gaps.clear();
+	this->candidateGaps.clear();
+	this->myText.clear();
+	this->dtext.clear();
+	this->Rerender();
+	this->statusBar()->showMessage("All Clear", 4000);
 }
 
 /*  delete traces functions */
@@ -943,7 +932,7 @@ void View3D::DeleteTraces()
 			//this->poly_line_data->Modified();
 			this->DeleteTrace(traceList[i]); 
 		}
-		this->Rerender();
+		this->ClearSelection();
 		this->statusBar()->showMessage(tr("Update Tree Plots"));
 		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 		this->statusBar()->showMessage(tr("Deleted\t") + QString::number(traceList.size()) + tr("\ttraces"));
@@ -1046,7 +1035,7 @@ void View3D::AddNewBranches()
 			newChildren.push_back(selected[i]);
 		}
 		this->AddChildren(trunk, newChildren);
-		this->Rerender();
+		this->ClearSelection();
 		this->statusBar()->showMessage(tr("Update Tree Plots"));
 		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 		this->statusBar()->showMessage(tr("Branching complete"));
@@ -1076,9 +1065,7 @@ void View3D::MergeTraces()
       {
       this->GapsTableView->close();
       }
-    this->MergeSelectedTraces();
-    //this->Rerender();
-    this->tobj->Gaps.clear();
+    this->MergeSelectedTraces();  	
     }
   else
     {
@@ -1119,8 +1106,11 @@ void View3D::MergeTraces()
       if (this->tobj->Gaps.size() ==1)
         {   
         tobj->mergeTraces(this->tobj->Gaps[0]->endPT1,this->tobj->Gaps[0]->endPT2);
-        this->Rerender();
+		this->ClearSelection();
         MergeInfo.setText(this->myText + "\nOne Trace merged");
+		this->statusBar()->showMessage(tr("Update Tree Plots"));
+		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+		this->statusBar()->showMessage(tr("Done With Merge"));
         }
       else
         {
@@ -1278,11 +1268,7 @@ void View3D::MergeSelectedTraces()
 		this->statusBar()->showMessage("nothing to merge");
     }   //end else   
   }
-  this->Rerender();
-  this->tobj->Gaps.clear();
-  this->candidateGaps.clear();
-  this->myText.clear();
-  this->dtext.clear();
+  this->ClearSelection();
   this->statusBar()->showMessage(tr("Update Tree Plots"));
   this->TreeModel->SetTraces(this->tobj->GetTraceLines());
   this->statusBar()->showMessage(tr("Done With Merge"));
@@ -1297,7 +1283,7 @@ void View3D::SplitTraces()
 	{
 	  this->tobj->splitTrace(this->SelectedTraceIDs[i]);
 	} 
-    this->Rerender();
+	this->ClearSelection();
 	this->statusBar()->showMessage(tr("Update Tree Plots"));
 	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
     }
@@ -1311,12 +1297,12 @@ void View3D::FlipTraces()
 {
   if(this->SelectedTraceIDs.size()>=1)
     {
-    for(unsigned int i=0; i< this->SelectedTraceIDs.size(); i++)
-      {
-      this->tobj->ReverseSegment(reinterpret_cast<TraceLine*>(
-        this->tobj->hashc[this->SelectedTraceIDs[i]]));
-      }
-    this->Rerender();
+		for(unsigned int i=0; i< this->SelectedTraceIDs.size(); i++)
+		{
+			this->tobj->ReverseSegment(reinterpret_cast<TraceLine*>(
+				this->tobj->hashc[this->SelectedTraceIDs[i]]));
+		}
+		this->Rerender();
     }
 }
 
