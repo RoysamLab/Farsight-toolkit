@@ -166,7 +166,7 @@ LabelImageType::Pointer getYousefSegmented(InputImageType::Pointer im_input,std:
 	NucleusSeg->readParametersFromFile(configfile);
 	NucleusSeg->setDataImage(in_Image,size[0],size[1],size[2]+1,"null");
 
-	int * output_img;
+	unsigned short * output_img;
 	//	int *bounds_img;
 	NucleusSeg->runBinarization();
 	output_img = NucleusSeg->getBinImage();

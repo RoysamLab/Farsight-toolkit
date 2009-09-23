@@ -1,5 +1,6 @@
 import os, re, operator, pdb, subprocess
 
+
 def populate_directories(path, dataset_id):
     if os.path.lexists(path) == False:
         os.mkdir(path)
@@ -11,30 +12,31 @@ def populate_directories(path, dataset_id):
 if __name__ == '__main__':
 
     # default values for all variables defined here
-    data_directory = 'D:\\ucb dataset\\data\\051309B6CFPLATGFPinB3rd matrixlinearUnmix_median4x4movie4 track_w1'
-    cwd = 'D:\\ucb dataset\\output\\ena\\run'
-    exe_dir = 'D:\\farsight\\bin'
+    data_directory = 'C:\\Users\\Arun\\Research\\piexoto_data\\TSeries-02102009-1455-624-3Dmovies'
+    cwd = 'C:\\Users\\Arun\\Research\\Tracking\\harvard'
+    exe_dir = 'C:\\Users\\Arun\\Research\\Farsight_bin\\bin'
     dataset_id = 'second_'
     dirList = os.listdir(data_directory)
     list_of_filenames =[]
     channels = []
     time_points = []
-    
+    #pdb.set_trace()
     for fname in dirList:
         if fname.endswith('.tif') and os.path.isfile(os.path.join(data_directory,fname)):
             list_of_filenames.append(fname)
-
+    #pdf.set_trace()
     filenames = {(0,0):'Null'}
+    #TSeries-02102009-1455-624_Cycle001_CurrentSettings_Ch2
     for fname in list_of_filenames:
-        m = re.search('^(.*)_w([0-9]+).*_t([0-9]+)\.tif',fname) 
+        m = re.search('^(.*)_Cycle([0-9]+).*_Ch([0-9]+)\.tif',fname) 
         dataset_temp = m.group(1) # set dataset_id
-        channels.append(int(m.group(2))) # collect all channel values
-        time_points.append(int(m.group(3))) # collect all time_points
-        filenames[int(m.group(2)), int(m.group(3))] = fname # we establish a reverse dictionary lookup of the filenames from channel number and time point
+        channels.append(int(m.group(3))) # collect all channel values
+        time_points.append(int(m.group(2))) # collect all time_points
+        filenames[int(m.group(3)), int(m.group(2))] = fname # we establish a reverse dictionary lookup of the filenames from channel number and time point
         
     channels = sorted(list(set(channels)))
     time_points = sorted(list(set(time_points)))
-
+    #pdb.set_trace()
     dataset_id += dataset_temp
     num_channels = len(channels)
     num_time_points = len(time_points)
@@ -50,9 +52,10 @@ if __name__ == '__main__':
     # prefix the filanames with necessary things like
     # unmixed_, labeled_, labeled_tracks_, vessel_binarized_, etc..
 
-    time_points = time_points[0:5] # DEBUG
-    channels = [1,2]
-##    ######################### Delete slices #############################
+    time_points = time_points[0:15] # DEBUG
+    #channels = [2,3,4]
+    #pdb.set_trace()
+    ######################### Delete slices #############################
 ##    for w in channels:
 ##        for t in time_points:
 ##            temp_fname = [];
@@ -62,17 +65,23 @@ if __name__ == '__main__':
 ##            temp_fname.append('44')
 ##            temp_fname.append(os.path.join(cache_prefix, 'extracted_' + filenames[(w,t)]))
 ##            subprocess.call(temp_fname)
-##
-##
-##    ######################### Smooth ####################################
-##    for w in channels:
-##        for t in time_points:
-##            temp_fname = [];
-##            temp_fname.append(os.path.join(exe_dir,'anisodiff'))
-##            temp_fname.append(os.path.join(cache_prefix, 'extracted_' + filenames[(w,t)]))
-##            temp_fname.append('10,0.0625,2')
-##            temp_fname.append(os.path.join(cache_prefix, 'smoothed_' + filenames[(w,t)]))
-##            subprocess.call(temp_fname)
+
+
+    ######################### Smooth ####################################
+    for w in channels:
+        for t in time_points:
+            temp_fname = []
+            # for anisodiff
+            # temp_fname.append(os.path.join(exe_dir,'anisodiff'))
+            # for medianfilter
+            temp_fname.append(os.path.join(exe_dir,'medianfilter'))
+            temp_fname.append(os.path.join(data_directory,filenames[(w,t)]))
+            #for anisodiff
+            #temp_fname.append('10,0.0625,2')
+            #for medianfilter
+            temp_fname.append('2,2,1')
+            temp_fname.append(os.path.join(cache_prefix, 'smoothed_' + filenames[(w,t)]))
+            subprocess.call(temp_fname)
     #####################################################################
     ######################### Background Subraction #####################
 ##    for w in channels:
@@ -99,29 +108,35 @@ if __name__ == '__main__':
 ##        subprocess.call(temp_fname)
 
     ######################## Segmentation ###############################
-##
-##    nuclei_segmentation_cfg = 'CellSegmentation.ini'
-##    params = [];
-##    params.append('15,50,10');
-##    params.append('2,50,5');
-##
-##    channels_to_segment = [1]
-##    # segment all the channels first. Then trace the vessels.
-##    for t  in time_points:
-##        for w in channels_to_segment:
-##            temp_fname = [];
-##            temp_fname.append(os.path.join(exe_dir,'segmentation'))
-##            temp_fname.append(os.path.join(cache_prefix, 'smoothed_' + filenames[(w,t)]))
-##            if w == 1 or w == 2:
-##                # call yousef segmentation
-##                temp_fname.append('1') # type of segmentation
-##                temp_fname.append(nuclei_segmentation_cfg)# parameters filename
-##            else:
-##                # call simple binary morphological operators based segmentation
-##                temp_fname.append('2') # type of segmentation
-##                temp_fname.append(params[int(w)-3]) # paramerters
-##            temp_fname.append(os.path.join(cache_prefix, 'labeled_' + filenames[(w,t)]))
-##            subprocess.call(temp_fname)
+
+    nuclei_segmentation_cfg = 'CellSegmentation.ini'
+    params = [];
+    params.append('70,30,5');
+    params.append('2,50,5');
+
+    channels_to_segment = [2,3,4]
+    # segment all the channels first. Then trace the vessels.
+    for t  in time_points:
+        for w in channels_to_segment:
+            temp_fname = [];
+            output_filename = os.path.join(cache_prefix, 'labeled_' + filenames[(w,t)])
+            if os.path.exists(output_filename): # dont do anything if the output file exists
+                continue;
+            if w == 3 or w == 4:
+                # call yousef segmentation
+                temp_fname.append(os.path.join(exe_dir,'segment_nuclei'))
+                temp_fname.append(os.path.join(cache_prefix, 'smoothed_' + filenames[(w,t)]))
+                temp_fname.append(output_filename)
+                #temp_fname.append(nuclei_segmentation_cfg)# parameters filename
+            else:
+                # call simple binary morphological operators based segmentation
+                temp_fname.append(os.path.join(exe_dir,'segmentation'))
+                temp_fname.append(os.path.join(cache_prefix, 'smoothed_' + filenames[(w,t)]))
+                temp_fname.append('2') # type of segmentation
+                temp_fname.append(params[0]) # paramerters
+                temp_fname.append(output_filename)
+            
+            subprocess.call(temp_fname)
 
     # vessel tracing
 ##    vessel_w = 4; #vessel channel
@@ -136,7 +151,7 @@ if __name__ == '__main__':
     ############################# Tracking ##############################
 
     # track channel 1 and 2 only
-    channels_to_track = [1,2]
+    channels_to_track = [3,4]
     for w in channels_to_track:
         temp_fname = [];
         temp_fname.append(os.path.join(exe_dir,'tracking'))

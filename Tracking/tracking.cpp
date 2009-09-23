@@ -585,7 +585,7 @@ int main(int argc, char **argv)
 			int cur_max = 0;
 			for(int t = 0; t < num_t; t++)
 			{
-				segmented[t][c-1] = getLargeLabels(segmented[t][c-1],150);
+				segmented[t][c-1] = getLargeLabels(segmented[t][c-1],100);
 				getFeatureVectorsFarsight(segmented[t][c-1],images[t][c-1],fvector[t][c-1],t,c);
 			}
 			printf("Finished computing the features\n");
