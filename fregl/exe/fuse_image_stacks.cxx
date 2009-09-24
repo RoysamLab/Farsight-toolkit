@@ -78,20 +78,22 @@ read_image( std::string const & file_name, int channel )
 int main(int argc, char* argv[])
 {
   if (argc<4) {
-    std::cerr << "Usage: " << argv[0] << " Inputimage1 InputImage2 OutputGrayImage rgb_channel  ";
+    std::cerr << "Usage: " << argv[0] << " Inputimage1 InputImage2 OutputGrayImage rgb_channel_1 rgb_channel_2  ";
     return EXIT_FAILURE;
   }
 
   std::string filename1 = argv[1];
   std::string filename2 = argv[2];
   const char *outfilename = argv[3];
-  int channel = 0;
+  int channel1 = 0, channel2 = 0;
 
-  if (argc == 5) channel = atoi(argv[4]);
+  if (argc > 4) channel1 = atoi(argv[4]);
+  if (argc > 5) channel2 = atoi(argv[5]);
+  else channel2 = channel1;
 
   ImageType::Pointer image1, image2, image_out;
-  image1 = fregl_util_read_image( filename1, true, channel, false );
-  image2 = fregl_util_read_image( filename2, true, channel, false );
+  image1 = fregl_util_read_image( filename1, true, channel1, false );
+  image2 = fregl_util_read_image( filename2, true, channel2, false );
 
   // Perform the fusing here
   //
