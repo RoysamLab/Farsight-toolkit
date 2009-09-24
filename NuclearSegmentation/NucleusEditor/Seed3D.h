@@ -125,78 +125,93 @@ class Seed3D : public QMainWindow
 public:
 	Seed3D(QWidget * parent = 0, Qt::WindowFlags flags = 0);
 	//void GetImage(ftk::Image::Pointer data,vector<Seed> );
-	void GetImage(ftk::NuclearSegmentation* seg,vector<Seed> seeds); //modified by Yousef
+	void LoadImage3D(QString x,ftk::NuclearSegmentation *segPtr,unsigned char segFlag);
+	//void GetImage(ftk::NuclearSegmentation* seg,vector<Seed> seeds); //modified by Yousef
 	private slots:
 	//void loadImage(void);
-	void PlaceSeed();
-    void Apply();
-    void AddSeed(); 
-	void Check();
-	void DeleteSeed();
-	//void saveResult();
-	void UndoDeleteSeeds();
-    void SplitSeeds();
-	void MergeSeeds();
-	
-	void DeleteObjects();
-	
+	//void PlaceSeed();
+    //void Apply();
+    //void AddSeed(); 
+	//void Check();
+	//void DeleteSeed();
+	////void saveResult();
+	//void UndoDeleteSeeds();
+    //void SplitSeeds();
+	//void MergeSeeds();
+	//void DeleteObjects();
+    
 private:
 	/*void createMenus();
 	void createStatusBar();*/
 	//added by Yousef 8-4-2009
-	ftk::NuclearSegmentation *segPtr;
+	//ftk::NuclearSegmentation *segPtr;
 	
 	
 	
-	
+	typedef ftk::Object::Point point;
 	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;
-	vtkSmartPointer<vtkRenderWindowInteractor> Interactor1;
-    vtkSmartPointer<vtkRenderWindowInteractor> Interactor2;
+	/*vtkSmartPointer<vtkRenderWindowInteractor> Interactor1;
+    vtkSmartPointer<vtkRenderWindowInteractor> Interactor2;*/
 	vtkSliderRepresentation2D *sliderRep;
 	vtkSliderRepresentation2D *sliderRep2;
 	vtkSliderRepresentation2D *sliderRep3;
 	vtkSliderWidget *sliderWidget;
 	vtkSliderWidget *sliderWidget2;
 	vtkSliderWidget *sliderWidget3;
-    vtkSmartPointer<vtkCellPicker> CellPicker;
+    //vtkSmartPointer<vtkCellPicker> CellPicker;
 	vtkSmartPointer<vtkPointPicker> PointPicker;
 	vtkSmartPointer<vtkCallbackCommand> isPicked;
-	vtkSmartPointer<vtkCallbackCommand> keyPress;
-
+	//vtkSmartPointer<vtkCallbackCommand> keyPress;
+	
     
-	QMenu *fileMenu;
+	/*QMenu *fileMenu;
 	QAction *loadAction;
 	QAction *saveAction;
 	QAction *exitAction;
 	QLabel *statusLabel;
 	QString lastPath;
 	QString fileName;
-	QString fileNameSeed;
+	QString fileNameSeed;*/
+	
+	
 	QWidget *browse;
     QVTKWidget *QVTK;
-    QVTKWidget *QVTK1;	
-    QVTKWidget *QVTK2;
-	QMessageBox* msgBox;
+
+	vtkFloatArray* pcoords;
+	vtkPoints* point1;
+	vtkSmartPointer<vtkPolyData> polydata1;
+	vtkSmartPointer<vtkSphereSource> sphere;
+	vtkSmartPointer<vtkPolyDataMapper> sphereMapper;
+	vtkSmartPointer<vtkActor> sphereActor;
+	vtkSmartPointer<vtkGlyph3D> glyph;
+	std::vector<point> spPoint;
+	vector<point> GetSeedpts(vector<Seed> seeds, double* x);
+	vtkSmartPointer<vtkVolume> volume;
+	unsigned char viewFlag;
+	unsigned char sFlag;
+ //   QVTKWidget *QVTK1;	
+ //   QVTKWidget *QVTK2;
+	//QMessageBox* msgBox;
   
 	//Qt widgets on the main window
-    QCheckBox *AddBox;
+   /* QCheckBox *AddBox;
     QCheckBox *DeleteBox;
     QCheckBox *UndoDelBox;	
 	QCheckBox *SplitBox;	
 	QCheckBox *MergeBox;	
     QPushButton *PlaceButton;
-    QPushButton *ApplyButton;
+    QPushButton *ApplyButton;*/
     vtkSmartPointer<vtkRenderer> Renderer;
-    vtkSmartPointer<vtkRenderer> Renderer1;
+   /* vtkSmartPointer<vtkRenderer> Renderer1;
     vtkSmartPointer<vtkRenderer> Renderer2;
     vtkSphereWidget *sphereWidget;
     vtkSmartPointer<vtkGlyph3D> Glyph;
     vtkSmartPointer<vtkGlyph3D> delglyph;
-    vtkSmartPointer<vtkGlyph3D> addglyph;
+    vtkSmartPointer<vtkGlyph3D> addglyph;*/
 
 
 
-	int mode;
+	/*int mode;
 	int stateAdd;
 	int stateDelete;
 	int stateMerge;
@@ -205,9 +220,10 @@ private:
 	int counter;
 	int flag;
 	int iRender;
-	typedef ftk::Object::Point point;
+	typedef ftk::Object::Point point;*/
 	
-	std::vector<point> dup_points;
+	ftk::Image::Pointer myVol;
+	/*std::vector<point> dup_points;
 	std::vector<point> MarkedPoints;
 	std::vector<point> MarkedPoints2add;
 	vtkFloatArray* pcoords;
@@ -226,38 +242,39 @@ private:
 	vtkSmartPointer<vtkPolyDataMapper> DelSphereMapper;
 	vtkSmartPointer<vtkActor> DelSphereActor;
 	vtkSmartPointer<vtkPolyDataMapper> AddSphereMapper;
-	vtkSmartPointer<vtkActor> AddSphereActor;
+	vtkSmartPointer<vtkActor> AddSphereActor;*/
     vtkSmartPointer<vtkImageData> VTKim;
-	vtkSmartPointer<vtkImageReslice> Reslice;
+	/*vtkSmartPointer<vtkImageReslice> Reslice;
 	vtkSmartPointer<vtkImageReslice> Reslice1;
 	vtkSmartPointer<vtkDataSetMapper>im_mapper;
 	vtkSmartPointer<vtkDataSetMapper>im_mapper1;
 	vtkSmartPointer<vtkActor> imActor;
-	vtkSmartPointer<vtkActor> imActor1;
+	vtkSmartPointer<vtkActor> imActor1;*/
+	static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
+	void DeleteObjects(unsigned char x);
+	//vtkSmartPointer<vtkHandleWidget> widget;
+	//vtkSmartPointer<vtkPointHandleRepresentation3D> handle;
+	//vtkSmartPointer<vtkHandleWidget> widget1;
+	//vtkSmartPointer<vtkPointHandleRepresentation2D> handle1;
+	//vtkSmartPointer<vtkHandleWidget> widget2;
+	//vtkSmartPointer<vtkPointHandleRepresentation2D> handle2;
+	//vtkSmartPointer<vtkAppendPolyData> apd;
+	//vtkSmartPointer<vtkPolyDataMapper> VolumeMapper;
+	//vtkSmartPointer<vtkActor> VolumeActor;
+	//vtkSmartPointer<vtkVolume> Volume;
+	//vtkSmartPointer<vtkPolyData> poly;
+	//vtkSmartPointer<vtkPolyDataMapper> polymap;
 
-	vtkSmartPointer<vtkHandleWidget> widget;
-	vtkSmartPointer<vtkPointHandleRepresentation3D> handle;
-	vtkSmartPointer<vtkHandleWidget> widget1;
-	vtkSmartPointer<vtkPointHandleRepresentation2D> handle1;
-	vtkSmartPointer<vtkHandleWidget> widget2;
-	vtkSmartPointer<vtkPointHandleRepresentation2D> handle2;
-	vtkSmartPointer<vtkAppendPolyData> apd;
-	vtkSmartPointer<vtkPolyDataMapper> VolumeMapper;
-	vtkSmartPointer<vtkActor> VolumeActor;
-	vtkSmartPointer<vtkVolume> Volume;
-	vtkSmartPointer<vtkPolyData> poly;
-	vtkSmartPointer<vtkPolyDataMapper> polymap;
-
-    static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
-    void rayCast(char*,char*);
+    
+    /*void rayCast(char*,char*);*/
 	
-    vector<point> GetSeedpts(vector<Seed> seeds, double* x);
+    /*vector<point> GetSeedpts(vector<Seed> seeds, double* x);*/
 
-	std::vector<point> spPoint;
+	/*std::vector<point> spPoint;
 	
 	double* y;
 	double* wp;
-	double* origincalc;
+	double* origincalc;*/
  };
 
 #endif

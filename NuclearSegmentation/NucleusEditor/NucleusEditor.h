@@ -45,6 +45,10 @@ limitations under the License.
 #include "ftkGUI/PlotWindow.h"
 #include "ftkGUI/ImageBrowser5D.h"
 #include "ftkGUI/HistoWindow.h"
+#include "vtkSliderWidget.h"
+#include "vtkSliderRepresentation2D.h"
+#include "vtkCallbackCommand.h"
+#include "Seed3D.h"
 //#include "SegmentationView.h"
 
 class ParamsFileDialog;
@@ -86,7 +90,7 @@ private slots:
 	void CreateNewHistoWindow();
 	void ShowHistogram();
 	void CreateNewSegWindow();
-
+	void view3D(); 
 	//DEMO - python is necessary for the demo
 	void OpenPythonWindow();
 	bool BrowseForPythonExecutable();
@@ -111,6 +115,9 @@ private:
 	void createSegmentToolBar();
 	void clearModel();
 	void newModel();
+	
+	
+
 
 	std::vector<PlotWindow *> pltWin;
 	std::vector<TableWindow *> tblWin;
@@ -137,6 +144,23 @@ private:
 	QAction *aboutAction;
 	QAction *pythonAction;
 	QAction *imageIntensityAction;
+	QAction *seed3DAction;
+
+
+// 3D Viewer variables
+	Seed3D *Seeds;
+	unsigned char segFlag;
+	/*QWidget *browse;
+	vtkSmartPointer<vtkRenderer> Renderer;
+	QVTKWidget *QVTK;
+	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;
+	vtkSmartPointer<vtkPointPicker>PointPicker;
+	vtkSmartPointer<vtkCallbackCommand> isPicked;
+	vtkSliderRepresentation2D *sliderRep;
+	vtkSliderRepresentation2D *sliderRep2;
+	vtkSliderWidget *sliderWidget;
+	vtkSliderWidget *sliderWidget2;*/
+	
 
 	//For Editing Menu
 	QMenu *editMenu;
@@ -178,6 +202,7 @@ private:
 	QLabel *pythonLabel;
 	QLabel *currentPythonLabel;
 	QPushButton *browseForPythonButton;
+
 
 	//bool editStatus; //false shows that we cannot apply editing to cells	
  };

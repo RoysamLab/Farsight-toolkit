@@ -14,7 +14,7 @@ limitations under the License.
 =========================================================================*/
 
 #include "NucleusEditor.h"
-
+#include "Seed3DHelperClasses.h"
 //*******************************************************************************
 // NucleusEditor
 //
@@ -53,6 +53,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	featuresThread = NULL;
 
 	this->resize(500,500);
+	segFlag = 0;
 	//Crashes when this is enabled!
 	//setAttribute ( Qt::WA_DeleteOnClose );	
 }
@@ -226,6 +227,15 @@ void NucleusEditor::createMenus()
 	imageIntensityAction->setShortcut(tr("Ctrl+G"));
 	imageIntensityAction->setEnabled(false);
 	viewMenu->addAction(imageIntensityAction);
+
+	seed3DAction = new QAction(tr("View Image in 3D"), this);
+	seed3DAction->setStatusTip(tr("View the image in 3D"));
+	seed3DAction->setShortcut(tr("Ctrl+V"));
+	seed3DAction->setEnabled(true);
+	connect(seed3DAction, SIGNAL(triggered()), this, SLOT(view3D()));
+	viewMenu->addAction(seed3DAction);
+
+
 
 	//EDITING MENU	
 	editMenu = menuBar()->addMenu(tr("&Editing"));
@@ -916,6 +926,10 @@ void NucleusEditor::segment()
 		break;
 	}
 
+	// FOr View3D slot... to display seeds.
+
+	segFlag = 1;
+
 }
 
 
@@ -958,7 +972,6 @@ void NucleusEditor::loadImage()
 	// OLD BROWSER:
 	myImg = ftk::Image::New();
 	myImg->LoadFile(fileName.toStdString());
-
 	segWin->SetChannelImage(myImg);
 
 	this->update();
@@ -1345,3 +1358,454 @@ void Features::run()
 	mySeg->LabelsToObjects();
 	mySeg->ReleaseSegMemory();
 }
+
+
+// 3 D viewer Classes : 
+
+Seed3D::Seed3D(QWidget * parent, Qt::WindowFlags flags)
+: QMainWindow(parent,flags)
+{
+	setWindowTitle(tr("3D Viewer"));
+	QVTK = 0;
+	//This variable is used to indicate if an image has already been loaded
+//	iRender=0;
+
+	//Set up the Widgets & Renderers to display the actors and the Volume	
+	browse = new QWidget(this);
+	this->setCentralWidget(browse);
+	QVTK = new QVTKWidget(this);
+	this->Renderer = vtkRenderer::New();
+	QVTK->GetRenderWindow()->AddRenderer(Renderer);
+	//********************************************************************************
+	Interactor = QVTK->GetRenderWindow()->GetInteractor();
+	//use trackball control for mouse commands
+	vtkSmartPointer<vtkInteractorStyleTrackballCamera> style =
+		vtkInteractorStyleTrackballCamera::New();
+	Interactor->SetInteractorStyle(style);
+
+	QGridLayout *viewerLayout = new QGridLayout(this->browse);
+	viewerLayout->addWidget(this->QVTK, 0,0,1,1);
+
+	
+	//PointPicker = vtkPointPicker::New();
+	//PointPicker->SetTolerance(0.004);
+	//Interactor->SetPicker(PointPicker);
+	//isPicked = vtkCallbackCommand::New();
+	//isPicked->SetCallback(PickCell);
+
+	////isPicked caller allows observer to intepret click 
+	//isPicked->SetClientData(this);            
+	//Interactor->AddObserver(vtkCommand::RightButtonPressEvent,isPicked); 
+
+	//Resize the Window 
+	this->resize(500,500);
+}
+
+void NucleusEditor::view3D() 
+{
+   ftk::NuclearSegmentation *segPtr;
+   segPtr = this->seg;	
+   Seeds = new Seed3D(0,0);
+   QString dataFile = lastPath + "/" + myImgName;
+   Seeds->LoadImage3D(dataFile,segPtr,this->segFlag);	
+   Seeds->show();
+}
+
+
+void Seed3D::LoadImage3D(QString dataFile,ftk::NuclearSegmentation *segPtr,unsigned char segFlag)
+{
+	
+	if(viewFlag == 1)
+	{
+		DeleteObjects(sFlag);							
+	}
+	
+	sFlag = segFlag;
+	viewFlag = 1;
+	myVol = ftk::Image::New();
+	myVol->LoadFile(dataFile.toStdString());
+	vtkSmartPointer<vtkImageData> vtkim = vtkSmartPointer<vtkImageData>::New();   
+	//vtkim = seg->getDataImage()->GetVtkPtr(0,0);
+	vtkim = myVol->GetVtkPtr(0,0);
+	std::cout<<dataFile.toStdString()<<std::endl;
+	// Create transfer AddObservermapping scalar value to opacity
+	vtkPiecewiseFunction *opacityTransferFunction = vtkPiecewiseFunction::New();
+	opacityTransferFunction->AddPoint(2,0.0);
+	opacityTransferFunction->AddPoint(100,0.5);
+	// Create transfer mapping scalar value to color
+	// Play around with the values in the following lines to better vizualize data
+	vtkColorTransferFunction *colorTransferFunction = vtkColorTransferFunction::New();
+	colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
+	colorTransferFunction->AddRGBPoint(50.0,0.5,0.5,0.5);
+	// The property describes how the data will look
+	vtkVolumeProperty *volumeProperty = vtkVolumeProperty::New();
+	volumeProperty->SetColor(colorTransferFunction);
+	volumeProperty->SetScalarOpacity(opacityTransferFunction);
+	volumeProperty->SetInterpolationTypeToLinear();
+	vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper = vtkSmartPointer<	vtkOpenGLVolumeTextureMapper3D>::New();
+	volumeMapper->SetSampleDistance(0.75);
+	volumeMapper->SetInput(vtkim);
+
+	// The volume holds the mapper and the property and
+	// can be used to position/orient the volume
+	volume = vtkVolume::New();
+	volume->SetMapper(volumeMapper);
+	volume->SetProperty(volumeProperty);
+	volume->SetPickable(0);
+	volume->SetOrigin(volume->GetCenter());
+	Renderer->AddVolume(volume);
+	//volume->RotateWXYZ(180,1,0,0);
+	volume->RotateWXYZ(180,0,0,1);
+	volume->RotateWXYZ(180,0,1,0);
+
+cout<<"cgcgcgcgc"<<endl;
+	// The active camera for the main window!
+	vtkCamera *cam1 = Renderer->GetActiveCamera();
+	cam1->SetViewUp (0, 1, 0);
+	cam1->SetPosition (0, 0, 50);
+	Renderer->ResetCamera();	
+
+	//********************************************************************************  
+	//These are the sliders used to control the opacity, brightness and seed size !
+
+	//OPACITY
+	sliderRep = vtkSliderRepresentation2D::New();
+	sliderRep->SetValue(0.8);
+	sliderRep->SetTitleText("Opacity");
+	sliderRep->GetPoint1Coordinate()->SetCoordinateSystemToNormalizedDisplay();
+	sliderRep->GetPoint1Coordinate()->SetValue(0.2,0.1);
+	sliderRep->GetPoint2Coordinate()->SetCoordinateSystemToNormalizedDisplay();
+	sliderRep->GetPoint2Coordinate()->SetValue(0.8,0.1);
+	sliderRep->SetSliderLength(0.02);
+	sliderRep->SetSliderWidth(0.03);
+	sliderRep->SetEndCapLength(0.01);
+	sliderRep->SetEndCapWidth(0.03);
+	sliderRep->SetTubeWidth(0.005);
+	sliderRep->SetMinimumValue(0.0);
+	sliderRep->SetMaximumValue(1.0);
+
+	sliderWidget = vtkSliderWidget::New();
+	sliderWidget->SetInteractor(Interactor);
+	sliderWidget->SetRepresentation(sliderRep);
+	sliderWidget->SetAnimationModeToAnimate();
+	vtkSlider2DCallbackBrightness *callback_brightness = vtkSlider2DCallbackBrightness::New();
+	callback_brightness->volume = volume;
+	sliderWidget->AddObserver(vtkCommand::InteractionEvent,callback_brightness);
+	sliderWidget->EnabledOn();
+
+	//Brightness
+	sliderRep2 = vtkSliderRepresentation2D::New();
+	sliderRep2->SetValue(0.8);
+	sliderRep2->SetTitleText("Brightness");
+	sliderRep2->GetPoint1Coordinate()->SetCoordinateSystemToNormalizedDisplay();
+	sliderRep2->GetPoint1Coordinate()->SetValue(0.2,0.9);
+	sliderRep2->GetPoint2Coordinate()->SetCoordinateSystemToNormalizedDisplay();
+	sliderRep2->GetPoint2Coordinate()->SetValue(0.8,0.9);
+	sliderRep2->SetSliderLength(0.02);
+	sliderRep2->SetSliderWidth(0.03);
+	sliderRep2->SetEndCapLength(0.01);
+	sliderRep2->SetEndCapWidth(0.03);
+	sliderRep2->SetTubeWidth(0.005);
+	sliderRep2->SetMinimumValue(0.0);
+	sliderRep2->SetMaximumValue(1.0);
+
+	sliderWidget2 = vtkSliderWidget::New();
+	sliderWidget2->SetInteractor(Interactor);
+	sliderWidget2->SetRepresentation(sliderRep2);				
+	sliderWidget2->SetAnimationModeToAnimate();
+	vtkSlider2DCallbackContrast *callback_contrast = vtkSlider2DCallbackContrast::New();
+	callback_contrast->volume = volume;
+	sliderWidget2->AddObserver(vtkCommand::InteractionEvent,callback_contrast);
+	sliderWidget2->EnabledOn();
+
+	//If the segmentation has been performed, then initialize the seed-size widget and 
+	//display the seeds.
+cout<<sFlag<<"-cgcgcgcgc"<<endl;
+cout<<segFlag<<"-cgcgcgcgc"<<endl;
+	if(sFlag==1 )
+	{
+		//Display Seeds
+		cout<<"cgcgcgcgc"<<endl;
+		spPoint = GetSeedpts(segPtr->getSeeds(),volume->GetBounds());
+		pcoords = vtkFloatArray::New();
+		/*  Note that by default, an array has 1 component.
+		We have to change it to 3 for points*/
+		cout<<"cgcgcgcgc"<<endl;
+		pcoords->SetNumberOfComponents(3);
+		pcoords->SetNumberOfTuples(spPoint.size());
+		for (unsigned int j=0; j<spPoint.size(); j++)
+		{
+			float pts[3] = {spPoint[j].x,spPoint[j].y , spPoint[j].z };	
+			pcoords->SetTuple(j, pts);
+		}
+		
+		point1 = vtkPoints::New(); //Original Points
+		point1->SetData(pcoords);
+		cout<<point1->GetNumberOfPoints()<<"HAI"<<endl;
+		
+		polydata1 = vtkPolyData::New();
+		polydata1->SetPoints(point1);
+
+		sphere = vtkSphereSource::New();
+		glyph = vtkGlyph3D::New();
+		glyph->SetInput(polydata1);
+		glyph->SetSource(sphere->GetOutput());
+		glyph->SetVectorModeToUseNormal();
+		glyph->SetScaleModeToScaleByVector();
+		glyph->SetScaleFactor(1);
+		glyph->GeneratePointIdsOn();
+		sphereMapper = vtkPolyDataMapper::New();
+		sphereMapper->SetInput(glyph->GetOutput());
+		sphereActor = vtkLODActor::New();
+		sphereActor->SetMapper(sphereMapper);
+		Renderer->AddActor(sphereActor);
+		glyph->SetScaleFactor(glyph->GetScaleFactor()+0.0001);
+
+		
+		//Seed Size Widget
+		sliderRep3 = vtkSliderRepresentation2D::New();
+		sliderRep3->SetValue(0.8);
+		sliderRep3->SetTitleText("Seed Size");
+		sliderRep3->GetPoint1Coordinate()->SetCoordinateSystemToNormalizedDisplay();
+		sliderRep3->GetPoint1Coordinate()->SetValue(0.1,0.2);
+		sliderRep3->GetPoint2Coordinate()->SetCoordinateSystemToNormalizedDisplay();
+		sliderRep3->GetPoint2Coordinate()->SetValue(0.1,0.9);
+		sliderRep3->SetSliderLength(0.01);
+		sliderRep3->SetSliderWidth(0.03);
+		sliderRep3->SetEndCapLength(0.01);
+		sliderRep3->SetEndCapWidth(0.03);
+		sliderRep3->SetTubeWidth(0.005);
+		sliderRep3->SetMinimumValue(1.0);
+		sliderRep3->SetMaximumValue(15.0);
+		sliderWidget3 = vtkSliderWidget::New();
+		sliderWidget3->SetInteractor(Interactor);
+		sliderWidget3->SetRepresentation(sliderRep3);
+		sliderWidget3->SetAnimationModeToAnimate();
+
+		vtkSlider2DCallbackSeedSize *callback_seedsize = vtkSlider2DCallbackSeedSize::New();
+		callback_seedsize->Glyph = glyph;
+		sliderWidget3->AddObserver(vtkCommand::InteractionEvent,callback_seedsize);
+		sliderWidget3->EnabledOn();
+	}
+	cout<<sFlag<<"-cgcgcgcgc"<<endl;
+	QVTK->GetRenderWindow()->Render();   
+}
+
+//void Seed3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata)
+//{ 
+//	Seed3D* seed = (Seed3D*)clientdata;
+//	/*  PickPoint allows fot the point id and coordinates to be returned 
+//	as well as adding a marker on the last picked point
+//	R_click to select point on line  */
+//
+//	int *pos = seed->Interactor->GetEventPosition();
+//	seed->Interactor->GetPicker()->Pick(pos[0],pos[1],0.0,seed->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
+//	double pickPos[3];
+//	seed->PointPicker->GetPickPosition(pickPos);    //this is the coordinates of the pick  
+//	cout<<"Point Selected " << pickPos[0]<<"-"<<pickPos[1]<<"-"<<pickPos[2]<<endl;
+//
+//	//Useful to check if clicked on a seed !   
+//	//If I am in Delete mode 
+//
+//	//if((seed->mode == 2||seed->mode == 4) && seed->flag == 1){
+//
+//	//	vtkDataArray* pointIds = seed->Glyph->GetOutput()->GetPointData()->GetArray("InputPointIds"); 
+//	//	int pID = (int)pointIds->GetTuple1(seed->PointPicker->GetPointId()); 
+//	//	if((unsigned int)pID<=seed->dup_points.size())    //The ids of non-seed points is much greater than the ids of the seed points 
+//	//	{   				   //Use this to check if clicked on a seed or not		
+//	//		float dist =10.00;
+//	//		//float dist1;
+//	//		int index;
+//	//		index = -1;
+//	//		float finpt[3];
+//	//		for (unsigned int j=0; j<seed->dup_points.size(); j++)
+//	//		{
+//
+//	//			float p1[3] = {seed->dup_points[j].x, seed->dup_points[j].y ,seed->dup_points[j].z };	
+//	//			float dist1= sqrt(pow((p1[0]-pickPos[0]),2) + pow((p1[1]-pickPos[1]),2) + pow((p1[2]-pickPos[2]),2));   
+//	//			if (dist1<dist)
+//	//			{
+//	//				dist = dist1;
+//	//				finpt[0] = p1[0];
+//	//				finpt[1] = p1[1];
+//	//				finpt[2] = p1[2];
+//	//				index = j;
+//	//			}    
+//
+//	//		}
+//
+//	//		if(index!=-1){   
+//	//			seed->dup_points.erase(seed->dup_points.begin()+index);
+//	//			//Remove the glyph		
+//	//			vtkDataArray* points2del = seed->point1->GetData();    
+//	//			//vtkDataArray* points2delred;
+//	//			points2del->RemoveTuple((vtkIdType)index);
+//	//			seed->point1->SetData(points2del);
+//	//			seed->Glyph->SetScaleFactor(seed->Glyph->GetScaleFactor()+0.0001);
+//
+//	//			// Add the new red glyph 
+//	//			seed->point2->InsertNextPoint(finpt);
+//	//			seed->polydata2->SetPoints(seed->point2);
+//	//			seed->delglyph->SetInput(seed->polydata2);
+//	//			seed->DelSphereMapper->SetInput(seed->delglyph->GetOutput());	      
+//	//			seed->delglyph->SetScaleFactor(seed->delglyph->GetScaleFactor()+0.0001);//to rerender immediately
+//	//			seed->QVTK->GetRenderWindow()->Render();
+//
+//
+//
+//
+//	//			//Keep Track of seeds marked for deletion/merge in a vector 
+//	//			//Useful while undoing it 
+//
+//	//			vtkIdType Id;
+//	//			double* pointz;
+//	//			point p;
+//	//			Id = seed->point2->GetNumberOfPoints();
+//
+//	//			pointz = seed->point2->GetPoint(Id-1);
+//	//			p.x = pointz[0];
+//	//			p.y = pointz[1];
+//	//			p.z = pointz[2];	
+//	//			seed->MarkedPoints.push_back(p);
+//	//		}
+//	//	}
+//	//}
+//
+//
+//	////If all points are marked, don't allow to delete anymore seeds.
+//	////Set the flag so that it does not enter into delete mode functionality 
+//
+//	//if(seed->MarkedPoints.size()==seed->spPoint.size() || seed->dup_points.size()==0) 
+//	//{
+//	//	seed->flag =0; 	 
+//	//}
+//	//else{
+//	//	seed->flag =1; 	 
+//	//}
+//
+//
+//	//if(seed->mode == 5){
+//
+//	//	vtkDataArray* pointIds = seed->delglyph->GetOutput()->GetPointData()->GetArray("InputPointIds"); 
+//	//	int pID = (int)pointIds->GetTuple1(seed->PointPicker->GetPointId()); 
+//	//	if((unsigned int)pID<=seed->MarkedPoints.size())    //The ids of non-seed points is much greater than the ids of the seed points 
+//
+//	//	{    
+//	//		float dist =10.00;
+//	//		//float dist1;
+//	//		int index;
+//	//		float finpt[3];
+//	//		for (unsigned int j=0; j<seed->MarkedPoints.size(); j++)
+//	//		{
+//	//			float p1[3] = {seed->MarkedPoints[j].x, seed->MarkedPoints[j].y ,seed->MarkedPoints[j].z };	
+//	//			float dist1= sqrt(pow((p1[0]-pickPos[0]),2) + pow((p1[1]-pickPos[1]),2) + pow((p1[2]-pickPos[2]),2));   
+//	//			if (dist1<dist)
+//	//			{
+//	//				dist = dist1;
+//	//				finpt[0] = p1[0];
+//	//				finpt[1] = p1[1];
+//	//				finpt[2] = p1[2];
+//	//				index = j;
+//	//			}
+//	//		}
+//
+//	//		if(index!=-1){
+//
+//	//			seed->MarkedPoints.erase(seed->MarkedPoints.begin()+index);
+//
+//	//			//Remove the red glyph		
+//	//			vtkDataArray* points2put = seed->point2->GetData();    
+//	//			points2put->RemoveTuple((vtkIdType)index);
+//	//			seed->point2->SetData(points2put);
+//	//			seed->delglyph->SetScaleFactor(seed->delglyph->GetScaleFactor()+0.0001);
+//	//			cout<<"MarkedPoints " <<seed->MarkedPoints.size()<<endl;
+//	//			cout<<"Number of Points in point2 "<<seed->point2->GetNumberOfPoints()<<endl;
+//
+//	//			// Add the new silver glyph 
+//	//			seed->point1->InsertNextPoint(finpt);
+//	//			seed->polydata1->SetPoints(seed->point1);
+//	//			seed->Glyph->SetInput(seed->polydata1);
+//	//			seed->SphereMapper->SetInput(seed->Glyph->GetOutput());	      
+//	//			seed->Glyph->SetScaleFactor(seed->Glyph->GetScaleFactor()+0.0001);//to rerender immediately
+//	//			seed->QVTK->GetRenderWindow()->Render();
+//
+//	//			//Update the duplicate Seed list vector
+//
+//	//			point addPoint;
+//	//			addPoint.x = finpt[0];
+//	//			addPoint.y = finpt[1];
+//	//			addPoint.z = finpt[2];
+//	//			seed->dup_points.push_back(addPoint);
+//	//		}
+//	//	}
+//
+//	//}
+//	//seed->Check();	
+//}
+
+vector <ftk::Object::Point> Seed3D::GetSeedpts(vector<Seed> seeds, double* origin)
+{
+
+	point p;
+	Seed q;
+	std::vector<point> spPoint;
+	spPoint.clear();
+	for (std::vector<Seed>::iterator i = seeds.begin (); i != seeds.end (); i++)
+	{
+		q = *i;
+		p.x = q.x();
+		
+		p.y = origin[3] - q.y();
+		
+		p.z = origin[5] - q.z();
+		
+		p.t = 0;
+		spPoint.push_back(p);
+		//cout<<spPoint.size()<<"--size"<<endl; //Yousef
+	}
+	//cout<<spPoint.size()<<"--Total size"<<endl; //Yousef
+	return (spPoint);
+}
+
+
+
+void Seed3D::DeleteObjects(unsigned char flag)
+{
+  
+  cout<<"cgcgcgcgc"<<endl;		
+  //this->QVTK->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor(this->volume);
+  this->QVTK->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveVolume(this->volume);
+  this->QVTK->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor(this->sphereActor);
+  this->volume->Delete();
+  
+  this->polydata1->Delete();
+  this->sliderRep->Delete();
+  this->sliderWidget->Delete();
+  this->sliderRep2->Delete();	
+  this->sliderWidget2->Delete();
+
+ cout<<"cgcgcgcgc"<<endl; 
+  if(flag==1)
+  {
+	  sphereActor->Delete();
+	  sphereMapper->Delete();
+	  this->sliderRep3->Delete();	
+	  this->sliderWidget3->Delete();
+	cout<<"cgcgcgcgc"<<endl;	
+
+  } 
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
