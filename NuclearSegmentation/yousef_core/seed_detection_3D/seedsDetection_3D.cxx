@@ -165,7 +165,9 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	{
 		std::cout<<"Estimating parameters..."<<std::endl;
 		estimateMinMaxScalesV2(im, dImg, &sigma_min, &sigma_max, r, c, z);
-		scale_xy = sigma_min+1;
+		scale_xy = sigma_min;
+		if(scale_xy<3)
+			scale_xy = 3; //just avoid very small search boxes
 		scale_z = ceil(scale_xy / sampl_ratio);
 		std::cout<<"    Minimum scale = "<<sigma_min<<std::endl;
 		std::cout<<"    Maximum scale = "<<sigma_max<<std::endl;
@@ -232,7 +234,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	//Detect the seed points (which are also the local maxima points)	
 	std::cout<<"Detecting Seeds"<<std::endl;
 	IM_bin[0] = new unsigned short[r*c*z];
-  std::cout << "about to call Detect_Local_MaximaPoints_3D" << std::endl;
+  //std::cout << "about to call Detect_Local_MaximaPoints_3D" << std::endl;
 	Detect_Local_MaximaPoints_3D(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0], bImg);	
   std::cout << "done detecting seeds" << std::endl;
 	
