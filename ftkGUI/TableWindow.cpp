@@ -36,11 +36,14 @@ TableWindow::TableWindow(QItemSelectionModel *selectionModel, QWidget *parent)
 	connect(selectionModel->model(), SIGNAL(dataChanged(const QModelIndex &, const QModelIndex &)), this, SLOT(modelChange(const QModelIndex &, const QModelIndex &)));
 
 	this->createMenus();
+	this->filters = new FilterRowsDialog( this->table, this);
+	this->filters->hide();
 }
 
 void TableWindow::createMenus()
 {
 	viewMenu = menuBar()->addMenu(tr("View"));
+
 	sortByAction = new QAction(tr("Sort by..."),this);
 	connect(sortByAction, SIGNAL(triggered()), this, SLOT(sortBy()));
 	viewMenu->addAction(sortByAction);
@@ -48,6 +51,16 @@ void TableWindow::createMenus()
 	visibleColumnsAction = new QAction(tr("Visible Columns..."), this);
 	connect(visibleColumnsAction, SIGNAL(triggered()), this, SLOT(changeColumns()));
 	viewMenu->addAction(visibleColumnsAction);
+
+	filterRowsAction = new QAction(tr("Filters..."), this);
+	filterRowsAction->setStatusTip(tr("Hide/Show rows by applying filters"));
+	connect(filterRowsAction, SIGNAL(triggered()), this, SLOT(showFilters()));
+	viewMenu->addAction(filterRowsAction);
+}
+
+void TableWindow::showFilters()
+{
+	this->filters->show();
 }
 
 void TableWindow::sortBy()
@@ -84,7 +97,7 @@ void TableWindow::sortBy()
 	}
 }
 
-//Pop-up a window that allows the used to chang the columns that are visible in the table
+//Pop-up a window that allows the used to change the columns that are visible in the table
 void TableWindow::changeColumns()
 {
 	//Get the Currently Features in model:
@@ -318,4 +331,365 @@ void ChooseItemsDialog::selectionChanged(int id)
 {
 	QList<QAbstractButton *> buttons = itemGroup->buttons();
 	selected->replace( id, buttons.at(id)->isChecked() );
+}
+
+
+FilterRowsDialog::FilterRowsDialog(QTableView *table, QWidget *parent)
+: QDialog(parent)
+{
+	this->setVisible(false);
+
+	mTable = table;
+
+	smaller = tr("<=");
+	bigger = tr(">");
+
+	//Add Filter button on left always:
+	addButton = new QPushButton(tr("Add Filter..."));
+	connect(addButton,SIGNAL(clicked()), this, SLOT(AddEquation()));
+	delButton = new QPushButton(tr("Remove"));
+	connect(delButton,SIGNAL(clicked()), this, SLOT(RemoveEquation()));
+
+	minVal1 = new QDoubleSpinBox;
+	minVal2 = new QDoubleSpinBox;
+	minVal3 = new QDoubleSpinBox;
+	maxVal1 = new QDoubleSpinBox;
+	maxVal2 = new QDoubleSpinBox;
+	maxVal3 = new QDoubleSpinBox;
+	this->InitRanges();
+	minComp1 = this->NewCompButton(1);
+	minComp2 = this->NewCompButton(2);
+	minComp3 = this->NewCompButton(3);
+	maxComp1 = this->NewCompButton(1);
+	maxComp2 = this->NewCompButton(2);
+	maxComp3 = this->NewCompButton(3);
+	feature1 = this->NewFeatureCombo();
+	feature2 = this->NewFeatureCombo();
+	feature3 = this->NewFeatureCombo();
+	bool1 = this->NewBoolCombo();
+	bool2 = this->NewBoolCombo();
+
+	fLayout = new QGridLayout;
+	this->AddWidget(minVal1,0,0);
+	this->AddWidget(minComp1,0,1);
+	this->AddWidget(feature1,0,2);
+	this->AddWidget(maxComp1,0,3);
+	this->AddWidget(maxVal1,0,4);
+	this->AddWidget(addButton,1,0);
+
+	numEquations = 1;
+
+	groupBox = new QGroupBox(tr("Create Filters"));
+	groupBox->setLayout(fLayout);
+
+	//Hide Button always on the right:
+	updateButton = new QPushButton(tr("UPDATE"));
+	connect(updateButton, SIGNAL(clicked()), this, SLOT(DoFilter()));
+	QHBoxLayout *updateLayout = new QHBoxLayout;
+	updateLayout->addStretch(50);
+	updateLayout->addWidget(updateButton);
+
+	//topLayout manages the filters and the hide button:
+	QVBoxLayout *topLayout = new QVBoxLayout();
+	topLayout->addWidget(groupBox);
+	topLayout->addStretch(50);
+	topLayout->addLayout(updateLayout);
+	this->setLayout(topLayout);
+	this->setWindowTitle(tr("Filters"));
+}
+
+//Set initial ranges of the spin boxes from 0 to the highest ID!
+void FilterRowsDialog::InitRanges()
+{
+	double max = 0;
+	for( int row=0; row < this->mTable->model()->rowCount(); ++row)
+	{
+		QModelIndex index = this->mTable->model()->index(row, 0);
+		double val = this->mTable->model()->data(index).toDouble();
+		if( val > max ) max = val;
+	}
+	maxVal1->setMaximum(max);
+	maxVal2->setMaximum(max);
+	maxVal3->setMaximum(max);
+}
+
+QPushButton * FilterRowsDialog::NewCompButton(int n)
+{
+	QPushButton *button = new QPushButton(smaller);
+	switch(n)
+	{
+	case 1:
+		connect(button, SIGNAL(clicked()), this, SLOT(ToggleComp1()));
+		break;
+	case 2:
+		connect(button, SIGNAL(clicked()), this, SLOT(ToggleComp2()));
+		break;
+	case 3:
+		connect(button, SIGNAL(clicked()), this, SLOT(ToggleComp3()));
+		break;
+	}
+	return button;
+}
+
+void FilterRowsDialog::ToggleComp(int n)
+{
+	switch(n)
+	{
+	case 1:
+		if( minComp1->text() == smaller )
+		{
+			minComp1->setText(bigger);
+			maxComp1->setText(bigger);
+		}
+		else
+		{
+			minComp1->setText(smaller);
+			maxComp1->setText(smaller);
+		}
+		break;
+	case 2:
+		if( minComp2->text() == smaller )
+		{
+			minComp2->setText(bigger);
+			maxComp2->setText(bigger);
+		}
+		else
+		{
+			minComp2->setText(smaller);
+			maxComp2->setText(smaller);
+		}
+		break;
+	case 3:
+		if( minComp3->text() == smaller )
+		{
+			minComp3->setText(bigger);
+			maxComp3->setText(bigger);
+		}
+		else
+		{
+			minComp3->setText(smaller);
+			maxComp3->setText(smaller);
+		}
+		break;
+	}
+}
+
+QComboBox * FilterRowsDialog::NewFeatureCombo()
+{
+	QStringList features = GetVisibleFeatures();
+	QComboBox *combo = new QComboBox;
+	combo->addItems(features);
+	return combo;
+}
+
+QStringList FilterRowsDialog::GetVisibleFeatures()
+{
+	QStringList features;
+	for( int i=0; i < this->mTable->model()->columnCount(); ++i)
+	{
+		if ( !(this->mTable->isColumnHidden(i)) )
+		{
+			features << this->mTable->model()->headerData(i,Qt::Horizontal).toString();
+		}
+	}
+	return features;
+}
+
+QComboBox * FilterRowsDialog::NewBoolCombo()
+{
+	QComboBox *combo = new QComboBox;
+	combo->addItem(tr("AND"));
+	combo->addItem(tr("OR"));
+	return combo;
+}
+
+void FilterRowsDialog::AddEquation()
+{
+	switch(numEquations)
+	{
+	case 1:
+		numEquations = 2;
+		this->RemoveWidget(addButton);
+		this->AddWidget(bool1,0,5);
+		this->AddWidget(minVal2,1,0);
+		this->AddWidget(minComp2,1,1);
+		this->AddWidget(feature2,1,2);
+		this->AddWidget(maxComp2,1,3);
+		this->AddWidget(maxVal2,1,4);
+		this->AddWidget(delButton,1,5);
+		this->AddWidget(addButton,2,0);	
+		break;
+	case 2:
+		numEquations = 3;
+		this->RemoveWidget(delButton);
+		this->RemoveWidget(addButton);
+		this->AddWidget(bool2,1,5);
+		this->AddWidget(minVal3,2,0);
+		this->AddWidget(minComp3,2,1);
+		this->AddWidget(feature3,2,2);
+		this->AddWidget(maxComp3,2,3);
+		this->AddWidget(maxVal3,2,4);
+		this->AddWidget(delButton,2,5);
+		break;
+	default:
+		break;
+	}
+}
+
+void FilterRowsDialog::RemoveEquation()
+{
+	switch(numEquations)
+	{
+	case 2:
+		numEquations = 1;
+		this->RemoveWidget(delButton);
+		this->RemoveWidget(addButton);
+		this->RemoveWidget(bool1);
+		this->RemoveWidget(minVal2);
+		this->RemoveWidget(minComp2);
+		this->RemoveWidget(feature2);
+		this->RemoveWidget(maxComp2);
+		this->RemoveWidget(maxVal2);
+		this->AddWidget(addButton,2,0);	
+		break;
+	case 3:
+		numEquations = 2;
+		this->RemoveWidget(delButton);
+		this->RemoveWidget(bool2);
+		this->RemoveWidget(minVal3);
+		this->RemoveWidget(minComp3);
+		this->RemoveWidget(feature3);
+		this->RemoveWidget(maxComp3);
+		this->RemoveWidget(maxVal3);
+		this->AddWidget(delButton,1,5);
+		this->AddWidget(addButton,2,0);
+		break;
+	default:
+		break;
+	}
+}
+
+void FilterRowsDialog::RemoveWidget(QWidget *widget)
+{
+	widget->setVisible(false);
+	fLayout->removeWidget(widget);
+}
+
+void FilterRowsDialog::AddWidget(QWidget *widget, int r, int c)
+{
+	fLayout->addWidget(widget, r, c);
+	widget->setVisible(true);
+}
+
+void FilterRowsDialog::DoFilter(void)
+{
+	//First find out which column numbers I care about!
+	int featureColumns[3];
+	for( int i=0; i < this->mTable->model()->columnCount(); ++i)
+	{	
+		QString f = this->mTable->model()->headerData(i,Qt::Horizontal).toString();
+		if( f == feature1->currentText() )
+		{
+			featureColumns[0] = i;
+		}
+		else if ( f == feature2->currentText() )
+		{
+			featureColumns[1] = i;
+		}
+		else if ( f == feature2->currentText() )
+		{
+			featureColumns[2] = i;
+		}
+	}
+
+	//************************************************************************************
+	// Do each equation
+	// NOTE: smaller means in between two values (including ends)
+	//       bigger means outside of two values
+	//*************************************************************************************
+	for( int row=0; row < this->mTable->model()->rowCount(); ++row)
+	{
+		bool ok[3];
+		for(int c=0; c<numEquations; c++)
+		{
+			QModelIndex index = this->mTable->model()->index(row, featureColumns[c]);
+			double val = this->mTable->model()->data(index).toDouble();
+			if(c==0)
+			{
+				if( minComp1->text() == smaller )	//I want to be inside the range
+				{
+					if( val >= minVal1->value() && val <= maxVal1->value() )
+						ok[c] = true;
+					else
+						ok[c] = false;
+				}
+				else		// I want to be outside the range
+				{
+					if( val < minVal1->value() || val > maxVal1->value() )
+						ok[c] = true;
+					else
+						ok[c] = false;
+				}
+			}
+			else if(c==1)
+			{
+				if( minComp2->text() == smaller )	//I want to be inside the range
+				{
+					if( val >= minVal2->value() && val <= maxVal2->value() )
+						ok[c] = true;
+					else
+						ok[c] = false;
+				}
+				else		// I want to be outside the range
+				{
+					if( val < minVal2->value() || val > maxVal2->value() )
+						ok[c] = true;
+					else
+						ok[c] = false;
+				}
+			}
+			else if(c==2)
+			{
+				if( minComp3->text() == smaller )	//I want to be inside the range
+				{
+					if( val >= minVal3->value() && val <= maxVal3->value() )
+						ok[c] = true;
+					else
+						ok[c] = false;
+				}
+				else		// I want to be outside the range
+				{
+					if( val < minVal3->value() || val > maxVal3->value() )
+						ok[c] = true;
+					else
+						ok[c] = false;
+				}
+			}
+		}
+
+		//Now check the equations:
+		if(numEquations == 1)
+		{
+			this->mTable->setRowHidden(row, !ok[0]);
+		}
+		else if( numEquations == 2)
+		{
+			if(bool1->currentText() == tr("AND"))
+				this->mTable->setRowHidden(row, !( ok[0] && ok[1] ) );
+			else if( bool1->currentText() == tr("OR"))
+				this->mTable->setRowHidden(row, !( ok[0] || ok[1] ) );
+
+		}
+		else if( numEquations == 3)
+		{
+			if(bool1->currentText() == tr("AND") && bool2->currentText() == tr("AND"))
+				this->mTable->setRowHidden(row, !( ok[0] && ok[1] && ok[2] ) );
+			else if(bool1->currentText() == tr("AND") && bool2->currentText() == tr("OR"))
+				this->mTable->setRowHidden(row, !( (ok[0] && ok[1]) || ok[2] ) );
+			else if(bool1->currentText() == tr("OR") && bool2->currentText() == tr("AND"))
+				this->mTable->setRowHidden(row, !( (ok[0] || ok[1]) && ok[2] ) );
+			else if(bool1->currentText() == tr("OR") && bool2->currentText() == tr("OR"))
+				this->mTable->setRowHidden(row, !( (ok[0] || ok[1]) || ok[2] ) );
+		}
+	}
 }

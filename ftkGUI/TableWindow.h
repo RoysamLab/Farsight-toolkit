@@ -37,6 +37,8 @@ limitations under the License.
 #include <QtGui/QCheckBox>
 #include <QtGui/QButtonGroup>
 #include <QtGui/QScrollArea>
+#include <QtGui/QDoubleSpinBox>
+
 
 #include <iostream>
 
@@ -44,6 +46,7 @@ limitations under the License.
 
 class ChooseItemDialog;
 class ChooseItemsDialog;
+class FilterRowsDialog;
 
 class TableWindow : public QMainWindow
 {
@@ -70,15 +73,16 @@ private slots:
 	void createMenus();
 	void sortBy();
 	void changeColumns();
+	void showFilters();
     
 private:
 	QTableView *table;
+	FilterRowsDialog *filters;
 
 	QMenu *viewMenu;
 	QAction *visibleColumnsAction;
 	QAction *sortByAction;
-
-	int visibleRows;
+	QAction *filterRowsAction;
 };
 
 class ChooseItemDialog : public QDialog
@@ -106,6 +110,60 @@ private:
 	QButtonGroup *itemGroup;
 	QPushButton *okButton;
 	QList<bool> *selected;
+};
+
+class FilterRowsDialog : public QDialog
+{
+	Q_OBJECT
+public:
+	FilterRowsDialog(QTableView *table, QWidget *parent = 0);
+
+private:
+	QTableView *mTable;
+	QGridLayout *fLayout;
+	QGroupBox *groupBox;
+	QPushButton *addButton;
+	QPushButton *delButton;
+	QDoubleSpinBox *minVal1;
+	QDoubleSpinBox *minVal2;
+	QDoubleSpinBox *minVal3;
+	QDoubleSpinBox *maxVal1;
+	QDoubleSpinBox *maxVal2;
+	QDoubleSpinBox *maxVal3;
+	QPushButton *minComp1;
+	QPushButton *minComp2;
+	QPushButton *minComp3;
+	QPushButton *maxComp1;
+	QPushButton *maxComp2;
+	QPushButton *maxComp3;
+	QComboBox *feature1;
+	QComboBox *feature2;
+	QComboBox *feature3;
+	QComboBox *bool1;
+	QComboBox *bool2;
+	QPushButton *updateButton;
+
+	int numEquations;
+	
+	QString smaller;
+	QString bigger;
+
+	QStringList GetVisibleFeatures();
+	QComboBox * NewFeatureCombo();
+	QComboBox * NewBoolCombo();
+	QPushButton * NewCompButton(int n);
+
+private slots:
+	void DoFilter();
+	void AddEquation();
+	void RemoveEquation();
+	void RemoveWidget(QWidget *widget);
+	void AddWidget(QWidget *widget, int r, int c);
+	void ToggleComp1(){ ToggleComp(1); };
+	void ToggleComp2(){ ToggleComp(2); };
+	void ToggleComp3(){ ToggleComp(3); };
+	void ToggleComp(int n);
+	void InitRanges();
 };
 
 #endif
