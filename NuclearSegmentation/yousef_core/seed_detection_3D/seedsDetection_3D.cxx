@@ -656,9 +656,9 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 	double mean = 0.0;
 	double stdv = 0.0;
 	int cnt = 0;
-	ofstream p;
+	//ofstream p;
 	int max_dist = 0;
-	p.open("checkme.txt");
+	//p.open("checkme.txt");
 	for(int i=1; i<r-1; i++)
     {
         for(int j=1; j<c-1; j++)
@@ -688,7 +688,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 					lst.push_back(i);
 					lst.push_back(j);
 					lst.push_back(k);
-					p<<j<<" "<<i<<" "<<k<<" "<<mx<<std::endl;
+					//p<<j<<" "<<i<<" "<<k<<" "<<mx<<std::endl;
 					scales.push_back(lst);
 					//mean +=mx;
 					cnt++;										
@@ -696,7 +696,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 			}			
         }
     } 
-	p.close();
+	//p.close();
 	
 	//get the median of the scales(distances)
 	int medianS = computeMedian(scales, cnt);
@@ -704,8 +704,8 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 	//p2.open("checkme2.txt");
 	//p2<<"med = "<<medianS<<std::endl;				
 
-	ofstream p3;
-	p3.open("checkme3.txt");	
+	//ofstream p3;
+	//p3.open("checkme3.txt");	
 	//For each local maximum point,try to find the best LoG scale
 	//To do that, suppose the distance at a given local maximum point is d, 
 	//then compute the its LoG responses at scales from d/2 to d
@@ -788,7 +788,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 			largeScales.push_back(pp);
 		}
 
-		p3<<j<<" "<<i<<" "<<k<<" "<<mx<<" "<<best_scale<<" "<<max_resp<<std::endl;
+		//p3<<j<<" "<<i<<" "<<k<<" "<<mx<<" "<<best_scale<<" "<<max_resp<<std::endl;
 		/*mx = best_scale;	
 		if(mx<mnScl)
 			mnScl = mx;
@@ -797,7 +797,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 
 		delete [] IMG;
 	}
-	p3.close();
+	//p3.close();
 	//set the min and max scales to the LoG-weighted medians of the small and large scale sets
 	mnScl =  computeWeightedMedian(smallScales, numSmall);
 	mxScl =  computeWeightedMedian(largeScales, numLarge);

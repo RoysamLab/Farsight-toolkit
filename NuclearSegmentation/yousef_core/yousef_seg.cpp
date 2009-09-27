@@ -2196,7 +2196,7 @@ int yousef_nucleus_seg::AddObject(unsigned char* inImage, unsigned short* lbImag
 
 				//This following code replaces the three commented lines above
 				unsigned short tmp = iterator2.Get();
-				iterator2++;
+				++iterator2;
 				if(tmp == 0 || lbImage[(k*imSZ[2]*imSZ[3])+i*imSZ[3]+j]!=0)
 					continue;				
 				////////////////////////////////////////////////////////////
