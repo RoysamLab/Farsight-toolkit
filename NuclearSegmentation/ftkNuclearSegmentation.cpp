@@ -1341,8 +1341,13 @@ int NuclearSegmentation::AddObject(ftk::Object::Point P1, ftk::Object::Point P2)
 	p2.push_back(x2);
 	p2.push_back(y2);
 	p2.push_back(z2);
+	
+	int newID = 0;
+	if(size[1] == 1)
+		newID = NucleusSeg->AddObject2D(dptr, lptr, p1,p2,size, maxID);
+	else
+		newID = NucleusSeg->AddObject(dptr, lptr, p1,p2,size, maxID);
 
-	int newID = NucleusSeg->AddObject(dptr, lptr, p1,p2,size, maxID);
 	if(newID == 0)
 		return 0;
 	else

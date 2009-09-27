@@ -2076,14 +2076,14 @@ int yousef_nucleus_seg::AddObject(unsigned char* inImage, unsigned short* lbImag
 	memset(subBinImagePtr/*destination*/,0/*value*/,sz_x*sz_y*sz_z*sizeof(unsigned short)/*num bytes to move*/);
 
 	int ok = 0;
-	if (sz_z == 1)
-	{
-		ok = Cell_Binarization_2D(subDataImagePtr,subBinImagePtr, sz_y, sz_x, 0); //Do Binarization		
-	}
-	else
-	{
+	//if (sz_z == 1)
+	//{
+	//	ok = Cell_Binarization_2D(subDataImagePtr,subBinImagePtr, sz_y, sz_x, 0); //Do Binarization		
+	//}
+	//else
+	//{
 		ok = Cell_Binarization_3D(subDataImagePtr,subBinImagePtr, sz_y, sz_x, sz_z, 0, 0);		//Do Binarization		
-	}
+	//}
 	if(ok==0)
 		return 0;
 	
@@ -2206,6 +2206,166 @@ int yousef_nucleus_seg::AddObject(unsigned char* inImage, unsigned short* lbImag
 
 				lbImage[(k*imSZ[2]*imSZ[3])+i*imSZ[3]+j] = maxID;				
 			}
+		}
+	}
+	//free memory
+	delete [] subDataImagePtr;
+	delete [] subBinImagePtr;
+
+	//return the new object ID
+	return maxID;					
+}
+
+
+int yousef_nucleus_seg::AddObject2D(unsigned char* inImage, unsigned short* lbImage, std::vector<int> P1, std::vector<int> P2, std::vector<unsigned short> imSZ, int maxID)
+{		
+	//get the coordinates of the two points and the size of the box
+	int x1 = P1[0];
+	int x2 = P2[0];
+	int y1 = P1[1];
+	int y2 = P2[1];
+
+	int sz_x = x2-x1+1;
+	int sz_y = y2-y1+1;		
+	
+	int cent_x = (x2+x1)/2;
+	int cent_y = (y2+y1)/2;	
+	int max_dist = (int) sqrt((double)(x2-cent_x)*(x2-cent_x)+(y2-cent_y)*(y2-cent_y));
+	//extract the region from the raw image	
+	unsigned char* subDataImagePtr = new unsigned char[sz_x*sz_y];
+	int ind =0;		
+	for(int i=y1; i<=y2; i++)
+	{
+		for(int j=x1; j<=x2; j++)
+		{
+			//try this: enhance the intensity at each point by multiplying by a weight
+			//that is inversly proportional to its distance from the center of the box
+			int d = (int) sqrt((double)(j-cent_x)*(j-cent_x)+(i-cent_y)*(i-cent_y));
+			d = max_dist-d;				
+			d/=2;
+
+			subDataImagePtr[ind] = inImage[i*imSZ[3]+j]*d;
+			ind++;
+		}
+	}
+	
+	//create an impty image to hold the binarization results
+	unsigned short* subBinImagePtr = new unsigned short[sz_x*sz_y];
+	memset(subBinImagePtr/*destination*/,0/*value*/,sz_x*sz_y*sizeof(unsigned short)/*num bytes to move*/);
+	
+	int ok = Cell_Binarization_2D(subDataImagePtr,subBinImagePtr, sz_y, sz_x, 0); //Do Binarization		
+	if(ok==0)
+		return 0;
+	
+
+	//Added by Yousef on 9/26/2009
+	//Apply binary morphological closing on the resulting binary object
+	//First, create an ITK image to hold the binary sub-image that contain the new object
+	typedef    unsigned short     TempPixelType;
+	typedef itk::Image< TempPixelType,  2 >   TempImageType;
+	TempImageType::Pointer sub_im;
+	sub_im = TempImageType::New();	
+	
+	TempImageType::PointType origin;
+    origin[0] = 0.; 
+    origin[1] = 0.;    
+	
+    sub_im->SetOrigin( origin );
+
+    TempImageType::IndexType start;
+    start[0] =   0;  // first index on X
+    start[1] =   0;  // first index on Y    
+	    
+	TempImageType::SizeType  size;
+    size[0]  = sz_x;  // size along X
+    size[1]  = sz_y;  // size along Y	
+  
+    TempImageType::RegionType rgn;
+    rgn.SetSize( size );
+    rgn.SetIndex( start );
+    
+   
+    sub_im->SetRegions( rgn );
+    sub_im->Allocate();
+    sub_im->FillBuffer(0);
+	sub_im->Update();	
+	
+
+	//Copy the sub-binary image into the ITK image
+	//notice that one seed is set in each image
+	typedef itk::ImageRegionIteratorWithIndex< TempImageType > IteratorType;
+	IteratorType iterator(sub_im,sub_im->GetRequestedRegion());			
+	for(int i=0; i<sz_x*sz_y; i++)
+	{						
+		iterator.Set(subBinImagePtr[i]);				
+		++iterator;	
+	}
+
+	//Binary Morphological closing....
+	//1-Create the structuring element
+	typedef itk::BinaryBallStructuringElement< TempPixelType, 2 > KernelType;
+	KernelType ball;
+	KernelType::SizeType ballSize;
+	ballSize.Fill( 4 ); //for now, set the radius to 4
+	ball.SetRadius( ballSize );
+	ball.CreateStructuringElement();
+	
+	typedef itk::BinaryMorphologicalClosingImageFilter< TempImageType, TempImageType, KernelType > FilterType;
+	FilterType::Pointer filter = FilterType::New();
+	filter->SetInput( sub_im );
+	filter->SetKernel( ball );
+	// test the default attribute values, and exercise the accesors
+	if( !filter->GetSafeBorder() )
+	{
+		std::cerr << "Wrong SafeBorder default value" << std::endl;
+		return EXIT_FAILURE;
+    }
+	filter->SafeBorderOff();
+	filter->SafeBorderOn();
+	filter->SetSafeBorder( true );
+	
+	filter->SetForegroundValue( 255 ); 
+
+    try
+    {
+		filter->Update();
+    } 
+    catch ( itk::ExceptionObject & excp )
+    {
+		std::cerr << excp << std::endl;
+		return EXIT_FAILURE;
+    }
+		
+	IteratorType iterator2(filter->GetOutput(),filter->GetOutput()->GetRequestedRegion());				
+
+	//typedef itk::ImageFileWriter< TempImageType > WriterType;
+	//WriterType::Pointer writer = WriterType::New();
+	//writer->SetInput( filter->GetOutput() );
+	//writer->SetFileName( "anothertest.tif" );
+	//writer->Update();
+	////
+	maxID++;
+
+	//ind = -1;
+	for(int i=y1; i<=y2; i++)
+	{
+		for(int j=x1; j<=x2; j++)
+		{												
+			//ind++;
+			//if(subBinImagePtr[ind] == 0 || lbImage[(k*imSZ[2]*imSZ[3])+i*imSZ[3]+j]!=0)
+			//	continue;
+
+			//This following code replaces the three commented lines above
+			unsigned short tmp = iterator2.Get();
+			++iterator2;
+			if(tmp == 0 || lbImage[i*imSZ[3]+j]!=0)
+				continue;				
+			////////////////////////////////////////////////////////////
+
+			if(i==y1 || i==y2 || j==x1 || j==x2) //remove border points
+				continue;
+
+			lbImage[i*imSZ[3]+j] = maxID;					
 		}
 	}
 	//free memory
