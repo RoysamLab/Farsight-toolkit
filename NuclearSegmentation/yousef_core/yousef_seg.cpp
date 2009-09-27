@@ -2088,19 +2088,120 @@ int yousef_nucleus_seg::AddObject(unsigned char* inImage, unsigned short* lbImag
 		return 0;
 	
 
+	//Added by Yousef on 9/26/2009
+	//Apply binary morphological closing on the resulting binary object
+	//First, create an ITK image to hold the binary sub-image that contain the new object
+	typedef    unsigned short     TempPixelType;
+	typedef itk::Image< TempPixelType,  3 >   TempImageType;
+	TempImageType::Pointer sub_im;
+	sub_im = TempImageType::New();	
+	
+	TempImageType::PointType origin;
+    origin[0] = 0.; 
+    origin[1] = 0.;    
+	origin[2] = 0.;    
+    sub_im->SetOrigin( origin );
+
+    TempImageType::IndexType start;
+    start[0] =   0;  // first index on X
+    start[1] =   0;  // first index on Y    
+	start[2] =   0;  // first index on Z    
+    
+	TempImageType::SizeType  size;
+    size[0]  = sz_x;  // size along X
+    size[1]  = sz_y;  // size along Y
+	size[2]  = sz_z;  // size along Z
+  
+    TempImageType::RegionType rgn;
+    rgn.SetSize( size );
+    rgn.SetIndex( start );
+    
+   
+    sub_im->SetRegions( rgn );
+    sub_im->Allocate();
+    sub_im->FillBuffer(0);
+	sub_im->Update();	
+	
+
+	//Copy the sub-binary image into the ITK image
+	//notice that one seed is set in each image
+	typedef itk::ImageRegionIteratorWithIndex< TempImageType > IteratorType;
+	IteratorType iterator(sub_im,sub_im->GetRequestedRegion());			
+	for(int i=0; i<sz_x*sz_y*sz_z; i++)
+	{						
+		iterator.Set(subBinImagePtr[i]);				
+		++iterator;	
+	}
+
+	//Binary Morphological closing....
+	//1-Create the structuring element
+	typedef itk::BinaryBallStructuringElement< TempPixelType, 3 > KernelType;
+	KernelType ball;
+	KernelType::SizeType ballSize;
+	ballSize.Fill( 4 ); //for now, set the radius to 4
+	ball.SetRadius( ballSize );
+	ball.CreateStructuringElement();
+	
+	typedef itk::BinaryMorphologicalClosingImageFilter< TempImageType, TempImageType, KernelType > FilterType;
+	FilterType::Pointer filter = FilterType::New();
+	filter->SetInput( sub_im );
+	filter->SetKernel( ball );
+	// test the default attribute values, and exercise the accesors
+	if( !filter->GetSafeBorder() )
+	{
+		std::cerr << "Wrong SafeBorder default value" << std::endl;
+		return EXIT_FAILURE;
+    }
+	filter->SafeBorderOff();
+	filter->SafeBorderOn();
+	filter->SetSafeBorder( true );
+
+	/*if( filter->GetForegroundValue() != 255 )
+    {
+    std::cerr << "Wrong Foreground default value" << std::endl;
+    return EXIT_FAILURE;
+    }*/
+	filter->SetForegroundValue( 255 ); 
+
+    try
+    {
+		filter->Update();
+    } 
+    catch ( itk::ExceptionObject & excp )
+    {
+		std::cerr << excp << std::endl;
+		return EXIT_FAILURE;
+    }
+		
+	IteratorType iterator2(filter->GetOutput(),filter->GetOutput()->GetRequestedRegion());				
+
+	//typedef itk::ImageFileWriter< TempImageType > WriterType;
+	//WriterType::Pointer writer = WriterType::New();
+	//writer->SetInput( filter->GetOutput() );
+	//writer->SetFileName( "anothertest.tif" );
+	//writer->Update();
+	////
 	maxID++;
 
-	ind = -1;
+	//ind = -1;
 	for(int k=z1; k<=z2; k++)
 	{
 		for(int i=y1; i<=y2; i++)
 		{
 			for(int j=x1; j<=x2; j++)
-			{				
-				ind++;
+			{												
+				//ind++;
+				//if(subBinImagePtr[ind] == 0 || lbImage[(k*imSZ[2]*imSZ[3])+i*imSZ[3]+j]!=0)
+				//	continue;
+
+				//This following code replaces the three commented lines above
+				unsigned short tmp = iterator2.Get();
+				iterator2++;
+				if(tmp == 0 || lbImage[(k*imSZ[2]*imSZ[3])+i*imSZ[3]+j]!=0)
+					continue;				
+				////////////////////////////////////////////////////////////
+
 				if(k==z1 || k==z2 || i==y1 || i==y2 || j==x1 || j==x2) //remove border points
-					continue;
-				if(subBinImagePtr[ind] == 0 || lbImage[(k*imSZ[2]*imSZ[3])+i*imSZ[3]+j]!=0)
 					continue;
 
 				lbImage[(k*imSZ[2]*imSZ[3])+i*imSZ[3]+j] = maxID;				
