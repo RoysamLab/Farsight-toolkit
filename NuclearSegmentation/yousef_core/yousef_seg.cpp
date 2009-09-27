@@ -179,7 +179,7 @@ void yousef_nucleus_seg::runSeedDetection()
 	{		
 		seedImagePtr = new unsigned short[numStacks*numRows*numColumns];		
 		logImagePtr = new float[numStacks*numRows*numColumns];
-		ok = detectSeeds2D( imgPtr, logImagePtr, seedImagePtr, numRows, numColumns, scaleMin, scaleMax, regionXY, binImagePtr );		
+		ok = detectSeeds2D( imgPtr, logImagePtr, seedImagePtr, numRows, numColumns, &scaleMin, &scaleMax, &regionXY, binImagePtr, autoParamEstimation );		
 	}
 	else
 	{	
