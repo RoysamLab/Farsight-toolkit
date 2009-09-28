@@ -159,6 +159,7 @@ private:
 	void ReassignLabel(int fromId, int toId);
 	void Cleandptr(unsigned short*x,vector<int> y );
 	void Restoredptr(unsigned short* );
+	void GetParameters(void);
 	Object GetNewObject(int id, IntrinsicFeatures *features );
 	ftk::Object::Box ExtremaBox(std::vector<int> ids);
 

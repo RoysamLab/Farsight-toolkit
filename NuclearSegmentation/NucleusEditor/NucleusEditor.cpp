@@ -84,16 +84,23 @@ void NucleusEditor::createSegmentToolBar()
 	segmentTool = new QToolBar();
 
 	//segmentAbort = new QAction(tr("ABORT"),this);
-	segmentAbort = new QAction(QIcon(":/icons/Stop.png"), tr("ABORT"), this);
+	segmentAbort = new QAction(QIcon(":/icons/abort.png"), tr("ABORT"), this);
+	segmentAbort->setToolTip(tr("Abort Segmentation and save nothing"));
+	segmentAbort->setEnabled(true);
 	connect(segmentAbort, SIGNAL(triggered()), this, SLOT(abortSegment()));
 	segmentTool->addAction(segmentAbort);
 
-	//segmentContinue = new QAction(tr("-->"),this);
-	segmentContinue = new QAction(QIcon(":/icons/Play.png"), tr("-->"), this);
+	segmentContinue = new QAction(QIcon(":/icons/go.png"), tr("GO"), this);
 	segmentContinue->setToolTip(tr("Continue Segmentation"));
 	segmentContinue->setEnabled(false);
 	connect(segmentContinue, SIGNAL(triggered()),this, SLOT(segment()));
 	segmentTool->addAction(segmentContinue);
+
+	segmentStop = new QAction(QIcon(":/icons/end.png"), tr("STOP"), this);
+	segmentStop->setToolTip(tr("Stop Segmentation (skip finalization), and use clustering as result"));
+	segmentStop->setEnabled(false);
+	connect(segmentStop, SIGNAL(triggered()), this, SLOT(stopSegment()));
+	segmentTool->addAction(segmentStop);
 	
     segmentProgress = new QProgressBar();
 	segmentProgress->setRange(0,7);
@@ -708,6 +715,7 @@ void NucleusEditor::segmentImage()
 	}
 	
 	this->addToolBar(Qt::TopToolBarArea, segmentTool);
+	segmentStop->setEnabled(false);
 	segmentContinue->setEnabled(false);
 	segmentTool->setVisible(true);
 	
@@ -719,6 +727,7 @@ void NucleusEditor::segmentImage()
 	//this->setCentralWidget(wizard);
 	//wizard->show();
 }
+
 
 void NucleusEditor::abortSegment()
 {
@@ -776,6 +785,22 @@ void NucleusEditor::abortSegment()
 	segmentAction->setEnabled(true);
 	viewMenu->setEnabled(true);
 	this->setEditsEnabled(false);
+}
+
+void NucleusEditor::stopSegment(void)
+{
+	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+	// Disable the menu items for editing
+	fileMenu->setEnabled(false);
+	this->setEditsEnabled(false);
+	viewMenu->setEnabled(false);
+	segmentStop->setEnabled(false);
+	segmentContinue->setEnabled(false);
+
+	segmentTaskLabel->setText(tr(" Skipping "));
+	segmentProgress->setValue(5);
+	segmentState = 6;
+	this->segment();
 }
 
 void NucleusEditor::segment()
@@ -843,7 +868,7 @@ void NucleusEditor::segment()
 		}
 		segmentProgress->setValue(4);
 		segWin->SetLabelImage(seg->getLabelImage());
-		segmentTaskLabel->setText(tr(" Press 'GO' "));
+		segmentTaskLabel->setText(tr(" Inspect "));
 
 		QApplication::restoreOverrideCursor();
 		fileMenu->setEnabled(true);
@@ -855,6 +880,7 @@ void NucleusEditor::segment()
 		saveAction->setEnabled(false);
 		xmlAction->setEnabled(false);
 		segmentAction->setEnabled(false);
+		segmentStop->setEnabled(true);
 		segmentContinue->setEnabled(true);
 		segmentState = 5;
 		break;
@@ -864,6 +890,7 @@ void NucleusEditor::segment()
 		fileMenu->setEnabled(false);
 		this->setEditsEnabled(false);
 		viewMenu->setEnabled(false);
+		segmentStop->setEnabled(false);
 		segmentContinue->setEnabled(false);
 
 		segmentTaskLabel->setText(tr(" Finalizing "));

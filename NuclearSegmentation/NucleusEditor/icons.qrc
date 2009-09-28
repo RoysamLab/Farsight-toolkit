@@ -1,6 +1,7 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
-	<file>icons/Stop.png</file>
-	<file>icons/Play.png</file>
+	<file>icons/abort.png</file>
+	<file>icons/go.png</file>
+  <file>icons/end.png</file>
 </qresource>
 </RCC>

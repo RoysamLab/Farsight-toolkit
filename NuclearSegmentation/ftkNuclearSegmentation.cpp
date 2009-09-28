@@ -193,8 +193,17 @@ bool NuclearSegmentation::RunClustering()
 	}
 	NucleusSeg->runClustering();
 	lastRunStep = 3;
-	GetResultImage();
+	this->GetParameters();
+	this->GetResultImage();
 	return true;
+}
+
+void NuclearSegmentation::GetParameters()
+{
+	Parameter p;
+	p.name = "sampling_ratio";
+	p.value = NucleusSeg->getSamplingRatio();
+	this->myParameters.push_back(p);
 }
 
 bool NuclearSegmentation::Finalize()
@@ -206,12 +215,7 @@ bool NuclearSegmentation::Finalize()
 	}
 	NucleusSeg->runAlphaExpansion();
 	lastRunStep = 4;
-	Parameter p;
-	p.name = "sampling_ratio";
-	p.value = NucleusSeg->getSamplingRatio();
-	this->myParameters.push_back(p);
-	GetResultImage();
-	editsNotSaved = true;
+	this->GetResultImage();
 	return true;
 }
 
@@ -364,7 +368,7 @@ bool NuclearSegmentation::LabelsToObjects(void)
 	if(classFile.size())
 		LoadClassInfoFromFile(classFile);
 	*/
-
+	editsNotSaved = true;
 	return true;
 }
 

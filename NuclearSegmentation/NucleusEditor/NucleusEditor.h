@@ -78,6 +78,7 @@ private slots:
 	bool saveResult(void);
 	void segmentImage(void);
 	void abortSegment(void);
+	void stopSegment(void);
 	bool checkSaveSeg(void);
 	void segment(void);
 	void about(void);
@@ -184,6 +185,7 @@ private:
 	QString myImgName;
 	int segmentState;
 	QAction * segmentAbort;
+	QAction * segmentStop;
 	QAction * segmentContinue;
 	QLabel * segmentTaskLabel;
 	QProgressBar * segmentProgress;
