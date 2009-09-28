@@ -241,7 +241,7 @@ void TraceContainer::CheckConsistency(SpineImageType::Pointer image) {
 	TraceSegNodeVecType::iterator	niter;
 	SpineImageType::IndexType		idx;
 	ImagePixelType                  muI;
-	SpineImageType::SizeType        maxmu = {0,0,0};
+	SpineImageType::SizeType        maxmu = {{0,0,0}};
 	int                             inconsistF = 0, inconsistSize=0;
 	ImagePixelType					minf,maxf,minb,maxb;
 	ImagePixelType					F, B, muImin,muImax;

@@ -69,8 +69,8 @@ bool GlobalDetector::SpineRing::RingSE() {
 	inring_f_idx.reserve(spr_MAXCANDSIZE);
 	DEBUGSTMT(inring_all_idx.reserve(5000));
 	SpineImageType::SizeType im_dim = Parent->image->GetRequestedRegion().GetSize();
-	int f_count = 0;
-	int b_count = 0;
+	//int f_count = 0;
+	//int b_count = 0;
 	double forgrnd  = seg->f;
 	double bakgrnd  = seg->b;
 	//double s1 = seg->a1;
@@ -113,7 +113,7 @@ bool GlobalDetector::SpineRing::RingSE() {
 							if (abs(pixelVal-forgrnd)-abs(pixelVal-bakgrnd)<0) 
 							{
 								inring_f_vals.push_back(pixelVal);
-								for (ii=0;ii<3;ii++) 
+								for (int ii=0;ii<3;ii++) 
 								{
 									//imidx[ii]=(long int)ndx[ii];
 									if (Parent->bbmin[ii] > pixelIndex[ii])

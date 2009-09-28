@@ -285,7 +285,7 @@ void SpCandidate::PrintSelf() {
 }
 
 SpCandidate::SpCandidate(GlobalDetector* gd, int trID, unsigned short cid) : valid(true), 
-ParentDet(gd) , traceID(trID), candID(cid) {
+ParentDet(gd), candID(cid), traceID(trID) {
 	pxls  = PointSetType::New();
 	pcont = PointSetType::PointsContainer::New();
 	pdata = PointSetType::PointDataContainer::New();
@@ -342,19 +342,21 @@ void SpCandidate::GetClosestMUs() {
 	const PointSetType::Pointer mus = ParentDet->DendMuMap->find(traceID)->second;
 	PSDists = new PointSetDistS(pxls, mus);
 
-	std::vector<int>::iterator psiter = PSDists->minidx21a.begin();
 	ImagePixelType nodeID;
-	TraceSegNodeVecType  *NodeList = ParentDet->NodeList;
+	//TraceSegNodeVecType  *NodeList = ParentDet->NodeList;
 	TraceSegNode		 *seg;
 
 	PSDists->set2->GetPointData(PSDists->minidx2, &nodeID);
 	munode = ParentDet->getSegment((int)nodeID);
 
-	for (psiter; psiter!=PSDists->minidx21a.end(); psiter++) {
+	std::vector<int>::iterator psiter;
+	for (psiter = PSDists->minidx21a.begin(); psiter!=PSDists->minidx21a.end();
+       psiter++)
+    {
 		PSDists->set2->GetPointData((*psiter), &nodeID);
 		seg = ParentDet->getSegment((int)nodeID);
 		GetNbrMUs(seg, MUOFFSET);		
-	}
+	  }
 	//	std::sort(mucands.begin(), mucands.end());
 	//	std::unique_copy( mucands.begin(), mucands.end(), 
 	//						std::back_inserter( CloseNodeidx ) );
@@ -366,32 +368,39 @@ void SpCandidate::GetClosestMUs() {
 	//mucandidx = CloseNodeidx;
 }
 
-void SpCandidate::GetNbrMUs(TraceSegNode *seg, int count){
+void SpCandidate::GetNbrMUs(TraceSegNode *seg, int count)
+{
 	PointType currpt;
 	for (int ptidx=0; ptidx<spr_SPIMGDIMENSION; ptidx++)
 		currpt[ptidx]=seg->mu[ptidx];
 	NbrMusPtCont->push_back(currpt);
 	NbrMuIDVec.push_back(seg->ID);
 	short nbrs = seg->NbrID.size();
-	if (count) {
-		for (int i = 0; i < nbrs; i++) {
+	if (count)
+    {
+		for (int i = 0; i < nbrs; i++)
+      {
 			TraceSegNode* s1=ParentDet->getSegment(seg->NbrID[i]);
 			if ((s1->TraceID) != (seg->TraceID))
+        {
 				continue;
+        }
 			bool found=false;
-			std::vector<int>::iterator iter = NbrMuIDVec.begin();
-			for (iter; iter!=NbrMuIDVec.end(); iter++)
-				if (*iter == s1->ID) 
-				{
-					found=true;
-					break;
-				}
-				if (!found)
-				{
-					GetNbrMUs(s1, count-1);
-				}
-		}
-	}
+			std::vector<int>::iterator iter;
+			for (iter = NbrMuIDVec.begin(); iter!=NbrMuIDVec.end(); iter++)
+        {
+        if (*iter == s1->ID) 
+          {
+          found=true;
+          break;
+          }
+        }
+      if (!found)
+        {
+        GetNbrMUs(s1, count-1);
+        }
+		  }
+	  }
 }
 
 bool SpCandidate::Validate() {
@@ -485,8 +494,8 @@ void PointSetDistS::Compute(){
 	//% mind21a  = vector of minimum distances from 2 to 1
 	// FD = Discrete Frechet dist = min (max distances array from set1 to set2)
 	// HD = Discrete Housdorf dist = max(min ................................) 
-	int set1size = set1->GetNumberOfPoints();
-	int set2size = set2->GetNumberOfPoints();
+	//int set1size = set1->GetNumberOfPoints();
+	//int set2size = set2->GetNumberOfPoints();
 	int mini, minj,maxi,maxj, minji, summaxidx;
 	double d, currmax=0, currpt1mind, currmin = 10000000.0;//some big number
 	std::vector<int> minidx21;

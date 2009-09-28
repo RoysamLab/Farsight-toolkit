@@ -32,7 +32,7 @@ void ImStatsSpeedImageType(SpeedImageType::Pointer im, std::string s);
 
 class ImageDebugger {
 public:
-	ImageDebugger(SpineImageType::Pointer im, std::string fn): im3D(im), basefilename(fn), MIP(0) 
+	ImageDebugger(SpineImageType::Pointer im, std::string fn): im3D(im), MIP(0), basefilename(fn)
 	{
 		MIP     = MIPGenerator(im);
 		rgbim2D = CreateRGBImFrom2D(MIP);

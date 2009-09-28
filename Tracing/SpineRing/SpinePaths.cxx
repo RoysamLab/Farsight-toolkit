@@ -23,7 +23,7 @@ void SpCandidate::PathPtsOfInt()
 	//int muoffset=10; //%before and after current mu to find best path endpt on CV
 	//roundpxl      = unique(round(spcell.pxl)','rows')';
 
-	int maxiter = NUMMAX(spr_MAXPATHITERINIT, 2*pxls->GetNumberOfPoints());
+	//int maxiter = NUMMAX(spr_MAXPATHITERINIT, 2*pxls->GetNumberOfPoints());
 	//[dumd2mu spgpp.sproot spgpp.mu dumu2tip spgpp.X spgpp.X2 mui1 mucandidx] = ...
 	//   testClosest2Ptsets(roundpxl, MU);
 	//sproot = PSDists.pt1m;
