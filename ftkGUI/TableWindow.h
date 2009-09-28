@@ -152,6 +152,8 @@ private:
 	QComboBox * NewFeatureCombo();
 	QComboBox * NewBoolCombo();
 	QPushButton * NewCompButton(int n);
+	int GetColumnFor(QString headerText);
+	void GetMinMaxFor(int c, double *min, double *max);
 
 private slots:
 	void DoFilter();
@@ -164,6 +166,9 @@ private slots:
 	void ToggleComp3(){ ToggleComp(3); };
 	void ToggleComp(int n);
 	void InitRanges();
+	void SetF1Ranges(QString text);
+	void SetF2Ranges(QString text);
+	void SetF3Ranges(QString text);
 };
 
 #endif

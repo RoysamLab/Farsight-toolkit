@@ -346,8 +346,12 @@ FilterRowsDialog::FilterRowsDialog(QTableView *table, QWidget *parent)
 
 	//Add Filter button on left always:
 	addButton = new QPushButton(tr("Add Filter..."));
+	addButton->setDefault(false);
+	addButton->setAutoDefault(false);
 	connect(addButton,SIGNAL(clicked()), this, SLOT(AddEquation()));
 	delButton = new QPushButton(tr("Remove"));
+	delButton->setDefault(false);
+	delButton->setAutoDefault(false);
 	connect(delButton,SIGNAL(clicked()), this, SLOT(RemoveEquation()));
 
 	minVal1 = new QDoubleSpinBox;
@@ -356,7 +360,6 @@ FilterRowsDialog::FilterRowsDialog(QTableView *table, QWidget *parent)
 	maxVal1 = new QDoubleSpinBox;
 	maxVal2 = new QDoubleSpinBox;
 	maxVal3 = new QDoubleSpinBox;
-	this->InitRanges();
 	minComp1 = this->NewCompButton(1);
 	minComp2 = this->NewCompButton(2);
 	minComp3 = this->NewCompButton(3);
@@ -364,8 +367,12 @@ FilterRowsDialog::FilterRowsDialog(QTableView *table, QWidget *parent)
 	maxComp2 = this->NewCompButton(2);
 	maxComp3 = this->NewCompButton(3);
 	feature1 = this->NewFeatureCombo();
+	connect(feature1, SIGNAL(currentIndexChanged(QString)), this, SLOT(SetF1Ranges(QString)));
 	feature2 = this->NewFeatureCombo();
+	connect(feature2, SIGNAL(currentIndexChanged(QString)), this, SLOT(SetF2Ranges(QString)));
 	feature3 = this->NewFeatureCombo();
+	connect(feature3, SIGNAL(currentIndexChanged(QString)), this, SLOT(SetF3Ranges(QString)));
+	this->InitRanges();
 	bool1 = this->NewBoolCombo();
 	bool2 = this->NewBoolCombo();
 
@@ -388,6 +395,7 @@ FilterRowsDialog::FilterRowsDialog(QTableView *table, QWidget *parent)
 	QHBoxLayout *updateLayout = new QHBoxLayout;
 	updateLayout->addStretch(50);
 	updateLayout->addWidget(updateButton);
+	addButton->setDefault(true);
 
 	//topLayout manages the filters and the hide button:
 	QVBoxLayout *topLayout = new QVBoxLayout();
@@ -401,21 +409,55 @@ FilterRowsDialog::FilterRowsDialog(QTableView *table, QWidget *parent)
 //Set initial ranges of the spin boxes from 0 to the highest ID!
 void FilterRowsDialog::InitRanges()
 {
-	double max = 0;
-	for( int row=0; row < this->mTable->model()->rowCount(); ++row)
-	{
-		QModelIndex index = this->mTable->model()->index(row, 0);
-		double val = this->mTable->model()->data(index).toDouble();
-		if( val > max ) max = val;
-	}
-	maxVal1->setMaximum(max);
-	maxVal2->setMaximum(max);
-	maxVal3->setMaximum(max);
+	SetF1Ranges(feature1->currentText());
+	minVal1->setSingleStep(.01);
+	maxVal1->setSingleStep(.01);
+	SetF2Ranges(feature2->currentText());
+	minVal2->setSingleStep(.01);
+	maxVal2->setSingleStep(.01);
+	SetF3Ranges(feature3->currentText());
+	minVal3->setSingleStep(.01);
+	maxVal3->setSingleStep(.01);
+}
+
+void FilterRowsDialog::SetF1Ranges(QString text)
+{
+	int c = this->GetColumnFor(text);
+	double max, min;
+	this->GetMinMaxFor(c, &min, &max);
+	minVal1->setRange(min,max);
+	minVal1->setValue(min);
+	maxVal1->setRange(min,max);
+	maxVal1->setValue(max);
+}
+
+void FilterRowsDialog::SetF2Ranges(QString text)
+{
+	int c = this->GetColumnFor(text);
+	double max, min;
+	this->GetMinMaxFor(c, &min, &max);
+	minVal2->setRange(min,max);
+	minVal2->setValue(min);
+	maxVal2->setRange(min,max);
+	maxVal2->setValue(max);
+}
+
+void FilterRowsDialog::SetF3Ranges(QString text)
+{
+	int c = this->GetColumnFor(text);
+	double max, min;
+	this->GetMinMaxFor(c, &min, &max);
+	minVal3->setRange(min,max);
+	minVal3->setValue(min);
+	maxVal3->setRange(min,max);
+	maxVal3->setValue(max);
 }
 
 QPushButton * FilterRowsDialog::NewCompButton(int n)
 {
 	QPushButton *button = new QPushButton(smaller);
+	button->setDefault(false);
+	button->setAutoDefault(false);
 	switch(n)
 	{
 	case 1:
@@ -581,25 +623,49 @@ void FilterRowsDialog::AddWidget(QWidget *widget, int r, int c)
 	widget->setVisible(true);
 }
 
+int FilterRowsDialog::GetColumnFor(QString headerText)
+{
+	for( int i=0; i < this->mTable->model()->columnCount(); ++i)
+	{	
+		QString f = this->mTable->model()->headerData(i,Qt::Horizontal).toString();
+		if( f == headerText )
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+void FilterRowsDialog::GetMinMaxFor(int c, double *min, double *max)
+{
+	//Initialize
+	QModelIndex index = this->mTable->model()->index(0, c);
+	double val = this->mTable->model()->data(index).toDouble();
+	(*min) = val;
+	(*max) = val;
+
+	for( int row=1; row < this->mTable->model()->rowCount(); ++row)
+	{
+		QModelIndex index = this->mTable->model()->index(row, c);
+		double val = this->mTable->model()->data(index).toDouble();
+		if( val > (*max) ) (*max) = val;
+		else if( val < (*min) ) (*min) = val;
+	}
+}
+
 void FilterRowsDialog::DoFilter(void)
 {
 	//First find out which column numbers I care about!
 	int featureColumns[3];
-	for( int i=0; i < this->mTable->model()->columnCount(); ++i)
-	{	
-		QString f = this->mTable->model()->headerData(i,Qt::Horizontal).toString();
-		if( f == feature1->currentText() )
-		{
-			featureColumns[0] = i;
-		}
-		else if ( f == feature2->currentText() )
-		{
-			featureColumns[1] = i;
-		}
-		else if ( f == feature2->currentText() )
-		{
-			featureColumns[2] = i;
-		}
+	switch(numEquations)
+	{
+	case 3:
+		featureColumns[2] = GetColumnFor( feature3->currentText() );
+	case 2:
+		featureColumns[1] = GetColumnFor( feature2->currentText() );
+	case 1:
+		featureColumns[0] = GetColumnFor( feature1->currentText() );
+		break;
 	}
 
 	//************************************************************************************
