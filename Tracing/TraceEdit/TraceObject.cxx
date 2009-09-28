@@ -585,6 +585,7 @@ vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
   this->PolyTraces->SetLines(line_cells);
 
   this->PolyTraces->GetPointData()->SetScalars(point_scalars);
+  this->PolyTraces->BuildCells();
   //printf("Done\n");
   return this->PolyTraces;
 }
