@@ -310,10 +310,17 @@ void ScatterView::updateAxis(void)
 	}
 	else
 	{
-	
 		//now extend axis slightly so all data points will be visible
 		double xrange = x2-x1;
+    if(xrange == 0)
+      {
+      xrange = 0.1;
+      }
 		double yrange = y2-y1;
+    if(yrange == 0)
+      {
+      yrange = 0.1;
+      }
 		double xp = .03*double(xrange);
 		double yp = .03*double(yrange);
 		mySettings->setRange(x1-xp,x2+xp,y1-yp,y2+yp);
