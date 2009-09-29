@@ -398,6 +398,82 @@ void SegmentationModel::abortAdd()
 	addMode = false;
 }
 
+//Split the selected object along the current z slice
+void SegmentationModel::splitTrigger(int z)
+{
+	//Extract a list of IDs
+	QModelIndexList selIndices = selectionModel->selectedRows();
+	if(selIndices.size() != 1)
+	{
+		QString msg = tr("Can only split one object at a time");
+		QMessageBox::StandardButton button = QMessageBox::critical ( 0, tr("Split Error"), msg);
+		return;
+	}
+
+	QString idstring;
+	int row = selIndices.at(0).row();
+	int id = model->data( model->index(row, columnForID) ).toInt();
+
+	QString msg = tr("Do you want to split this object:\n");
+	msg.append(QString::number(id));
+	msg.append("?");
+
+	//Verify operation:
+	QMessageBox::StandardButton button = QMessageBox::information ( 0, tr("Split"), \
+		msg, QMessageBox::Yes | QMessageBox::No , QMessageBox::NoButton );
+
+	if(button != QMessageBox::Yes)
+		return;
+
+	ftk::NuclearSegmentation *nucseg = (ftk::NuclearSegmentation*)segResult;
+
+	//Attempt to keep view from jumping after delete:
+	this->selectionModel->clear();
+
+	//Attempt Split:
+	std::vector< int > newIDs = nucseg->SplitAlongZ(id, z);
+	if( newIDs.size()== 3 )
+	{
+		//Remove from table the old id (remove the splitted object)			
+		int row = RowForID(id);
+		QList<QStandardItem *> items = model->takeRow(row);
+		model->blockSignals(true);
+		for(int i=0; i<items.size(); ++i)
+		{
+			delete items.at(i);
+		} 
+		model->blockSignals(false);
+		updateMapping();
+
+		
+		// Add the cell-ids of 2 new (result of splitting) cells
+		for (unsigned int i=0;i<2;i++) 
+		{
+			//Add into table the new object
+			int currentRow = model->rowCount();
+			model->insertRow(currentRow);
+
+			model->blockSignals(true);
+			model->setData(model->index(currentRow, columnForID, QModelIndex()), newIDs[i]);
+			vector<float> features = segResult->GetObjectPtr(newIDs[i])->GetFeatures();
+			for(int f=0; f<(int)features.size(); ++f) 
+			{
+				model->setData(model->index(currentRow, f+1, QModelIndex()), features[f]);
+			}
+			int clss = segResult->GetObjectPtr(newIDs[i])->GetClass();
+			model->setData(model->index(currentRow,columnForClass,QModelIndex()),clss);
+			model->blockSignals(false);
+			updateMapping();
+
+			//Add the new objects to the selection list
+			QItemSelectionModel::SelectionFlags command = QItemSelectionModel::Rows | QItemSelectionModel::Current;
+			this->selectionModel->select(this->model->index(currentRow, 0), command);
+		}	
+	}
+	MostDataInModelChanged();
+}
+
+
 void SegmentationModel::startSplitTrigger()
 {
 	if(!SplittingMode)
@@ -406,6 +482,26 @@ void SegmentationModel::startSplitTrigger()
 		//also clear the list of points 
 		pointsForSplitting.clear();
 	}
+}
+
+void SegmentationModel::addPointToSplitList(int x, int y, int z)
+{
+	ftk::Object::Point P;
+	P.t = 0;
+	P.x = x;
+	P.y = y;
+	P.z = z;
+	pointsForSplitting.push_back(P);		
+}
+
+std::vector<int> SegmentationModel::getPointFromSplittingList(int id)
+{
+	ftk::Object::Point P = pointsForSplitting.at(id);
+	std::vector<int> ret;
+	ret.push_back(P.x);
+	ret.push_back(P.y);
+	ret.push_back(P.z);
+	return ret;
 }
 
 void SegmentationModel::endSplitTrigger()
@@ -518,27 +614,7 @@ void SegmentationModel::applyMargins(int xy, int z)
 	MostDataInModelChanged();
 }
 
-
-void SegmentationModel::addPointToSplitList(int x, int y, int z)
-{
-	ftk::Object::Point P;
-	P.t = 0;
-	P.x = x;
-	P.y = y;
-	P.z = z;
-	pointsForSplitting.push_back(P);		
-}
-
-std::vector<int> SegmentationModel::getPointFromSplittingList(int id)
-{
-	ftk::Object::Point P = pointsForSplitting.at(id);
-	std::vector<int> ret;
-	ret.push_back(P.x);
-	ret.push_back(P.y);
-	ret.push_back(P.z);
-	return ret;
-}
-
+/* OLD SPLIT TRIGGER, NOT WORKING NEEDS FIXING
 void SegmentationModel::splitTrigger()
 {	
 	QModelIndexList selIndices = selectionModel->selectedRows();
@@ -624,6 +700,10 @@ void SegmentationModel::splitTrigger()
 		MostDataInModelChanged();
 	}
 }
+*/
+
+
+
 //Call this slot when trying to merge objects
 void SegmentationModel::mergeTrigger()
 {

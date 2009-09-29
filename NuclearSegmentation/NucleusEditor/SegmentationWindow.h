@@ -45,6 +45,7 @@ public:
 	void SetLabelImage(ftk::Image::Pointer image);
 	void SetBoundsVisible(bool val);
 	void SetIDsVisible(bool val);
+	int GetCurrentZ(void) { return this->vSpin->value(); };
 	//void loadImage( QString &fileName );
 	//void AddChannelImage( QString &fileName );
 	//void AddLabelImage( QString &fileName );

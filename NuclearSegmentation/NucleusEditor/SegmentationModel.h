@@ -70,7 +70,7 @@ public slots:
 	void updateMapping(void);
 	void deleteTrigger(void);
 	void mergeTrigger(void);
-	void splitTrigger(void);
+	void splitTrigger(int z);
 	void addTrigger(void);
 	void startSplitTrigger(void);
 	void endSplitTrigger(void);

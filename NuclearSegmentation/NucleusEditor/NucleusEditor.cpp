@@ -238,11 +238,9 @@ void NucleusEditor::createMenus()
 	seed3DAction = new QAction(tr("View Image in 3D"), this);
 	seed3DAction->setStatusTip(tr("View the image in 3D"));
 	seed3DAction->setShortcut(tr("Ctrl+V"));
-	seed3DAction->setEnabled(true);
+	seed3DAction->setEnabled(false);
 	connect(seed3DAction, SIGNAL(triggered()), this, SLOT(view3D()));
 	viewMenu->addAction(seed3DAction);
-
-
 
 	//EDITING MENU	
 	editMenu = menuBar()->addMenu(tr("&Editing"));
@@ -276,10 +274,15 @@ void NucleusEditor::createMenus()
 	connect(addAction,SIGNAL(triggered()), this, SLOT(addCell()));
 	editMenu->addAction(addAction);
 
+	splitAction = new QAction(tr("Split Cell"), this);
+	splitAction->setStatusTip(tr("Split selected cell along the current Z slice"));
+	splitAction->setShortcut(tr("Ctrl+T"));
+	connect(splitAction, SIGNAL(triggered()), this, SLOT(splitCell()));
+	editMenu->addAction(splitAction);
+
 	// Splitting has two modes and therefore has two submenu items:
 	// Start Splitting
 	// End Splitting
-
 	//Main Splitting Menu
 	splitMenu= editMenu->addMenu(tr("&Splitting"));
 
@@ -321,6 +324,7 @@ void NucleusEditor::setEditsEnabled(bool val)
 	mergeAction->setEnabled(val);
 	deleteAction->setEnabled(val);
 	splitMenu->setEnabled(val);
+	splitAction->setEnabled(val);
 	splitStartAction->setEnabled(val);
 	splitEndAction->setEnabled(val);
 	exclusionAction->setEnabled(val);
@@ -602,10 +606,11 @@ void NucleusEditor::deleteCells(void)
 		currentModel->deleteTrigger();
 }
 
-void NucleusEditor::splitCells(void)
+//void NucleusEditor::splitCells(void)
+void NucleusEditor::splitCell(void)
 {
 	if(currentModel)
-		currentModel->splitTrigger();
+		currentModel->splitTrigger(segWin->GetCurrentZ());		//Along the current z axis.
 }
 
 void NucleusEditor::startSplitting(void)

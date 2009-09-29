@@ -101,12 +101,13 @@ private slots:
 	void clearSelections(void);
 	void mergeCells(void);
 	void deleteCells(void);
-	void splitCells(void);
+	//void splitCells(void);	//Optimally split several cells - not implemented
+	void splitCell(void);		//Split single cell along current z
 	void addCell(void);
 	void applyExclusionMargin(void);
 
-	void startSplitting(void);
-	void endSplitting(void);
+	void startSplitting(void);	//begin splitting mode - user must select seeds
+	void endSplitting(void);	//end splitting mode and do the splits
 
 signals:
     
@@ -117,9 +118,6 @@ private:
 	void clearModel();
 	void newModel();
 	
-	
-
-
 	std::vector<PlotWindow *> pltWin;
 	std::vector<TableWindow *> tblWin;
 	HistoWindow * hisWin;
@@ -162,16 +160,15 @@ private:
 	vtkSliderWidget *sliderWidget;
 	vtkSliderWidget *sliderWidget2;*/
 	
-
 	//For Editing Menu
 	QMenu *editMenu;
 	QAction *clearSelectAction;
 	QAction *mergeAction;
 	QAction *deleteAction;
 	QAction *addAction;
-	QMenu *splitMenu;
-	//QAction *splitAction;
-	QAction *splitStartAction;
+	QMenu *splitMenu;	
+	QAction *splitAction;			//for split along z direction
+	QAction *splitStartAction;		//for regular seed split
 	QAction *splitEndAction;
 	QAction *exclusionAction;
 	
