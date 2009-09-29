@@ -223,6 +223,7 @@ void View3D::Initialize()
   this->CreateInteractorStyle();
   this->CreateActors();
   this->resize(640, 480);
+  this->move(40, 59);
   this->setWindowTitle(tr("Trace editor"));
   this->QVTK->GetRenderWindow()->Render();
   this->setupLinkedSpace();
@@ -836,7 +837,7 @@ void View3D::SLine()
 
 void View3D::ListSelections()
 {
-  QMessageBox *selectionInfo = new QMessageBox;
+  //QMessageBox *selectionInfo = new QMessageBox;
   QString listText;
   QString selectedText;
   if (this->SelectedTraceIDs.size()<= 0)
@@ -869,11 +870,15 @@ void View3D::ShowTreeData()
 	this->TreeTable->setModel(this->TreeModel->GetModel());
 	this->TreeTable->setSelectionModel(this->TreeModel->GetSelectionModel());
 	this->TreeTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+  this->TreeTable->setSortingEnabled(true);
+  this->TreeTable->resize(650, 200);
+  this->TreeTable->move(32, 561);
 	this->TreeTable->update();
 	this->TreeTable->show();
 
 	this->TreePlot = new PlotWindow(this->TreeModel->GetSelectionModel());
 	this->connect(this->TreePlot,SIGNAL(destroyed()),this, SLOT(DereferenceTreePlotView())); 
+  this->TreePlot->move(681, 59);
 	this->TreePlot->show();
 }
 void View3D::DereferenceTreePlotView()
@@ -1189,10 +1194,10 @@ void View3D::MergeSelectedTraces()
   bool selected = false;
   int curID;
   QMessageBox MergeInfo;
-  double currentAngle=0, aveCost=0;
+  double /*currentAngle=0,*/ aveCost=0;
   QPushButton *mergeAll;
   QPushButton *mergeNone;
-  unsigned int i=0, j=0,mergeCount=0;
+  unsigned int i=0, j=0/*,mergeCount=0*/;
   MergeInfo.setText("Merge Function");
   if (GapIDs.size() > 1)
   {

@@ -178,7 +178,6 @@ bool TraceObject::ReadFromFeatureTracksFile(char *filename,int type_offset=0)
 
 bool TraceObject::ReadFromSWCFile(char * filename)
 {
-
   FILE * fp = fopen(filename, "r");
   if(fp==NULL)
   {
@@ -228,6 +227,8 @@ bool TraceObject::ReadFromSWCFile(char * filename)
   int id, type,parent;
   double x,y,z,r;
   int max_id = -1;
+  //second pass: get the max id, store the type of each point, and figure out
+  //how many children each point has.
   while(!feof(fp))
     {
     if(fgets(buff,1024,fp)==NULL)
@@ -258,13 +259,10 @@ bool TraceObject::ReadFromSWCFile(char * filename)
       }
 	  hash_type[id] = type;
     }
-  fclose(fp);
-  //printf("I read %d lines\n",tc);
-  unsigned int *child_id = (unsigned int *)malloc(numPoints * sizeof(unsigned int));
-  //memset(child_id,0,sizeof(unsigned int)*(max_id));
-  std::vector<TraceBit> data(max_id+1);
 
-  fp = fopen(filename,"r");
+  rewind(fp);
+  unsigned int *child_id = (unsigned int *)malloc(numPoints * sizeof(unsigned int));
+  std::vector<TraceBit> data(max_id+1);
   int tcc =0;
   while(!feof(fp))
     {
@@ -923,7 +921,7 @@ void TraceObject::ReverseSegment(TraceLine *tline)
   {
     TraceLine * temp1 = tline->GetParent();
     TraceLine * temp2 = tline->GetParent()->GetBranch1();
-    if(temp2 == tline)
+    if(temp2 == tline || temp2 == 0)
     {
       temp2 = tline->GetParent()->GetBranch2();
     }
