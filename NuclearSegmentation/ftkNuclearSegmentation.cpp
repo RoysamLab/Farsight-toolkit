@@ -1164,6 +1164,141 @@ std::vector< int > NuclearSegmentation::SplitInit(ftk::Object::Point P1, ftk::Ob
 	return ids_ok;
 }
 
+
+std::vector< int > NuclearSegmentation::SplitAlongZ(int objID, int cutSlice)
+{
+	//if no label (segmentation) or no data image is available then return
+	if(!labelImage || !dataImage)
+	{
+		errorMessage = "label image or data image doesn't exist";	
+		std::vector <int> ids_err;
+		ids_err.push_back(0);
+		ids_err.push_back(0);
+		return ids_err;
+	}			
+	
+	//Update the segmentation image
+	//Now get the bounding box around the object
+	std::vector <int> ids;
+	ids.push_back(objID);
+	ftk::Object::Box region = ExtremaBox(ids);	
+
+	//Now, relabel the cell points into either newID1 or newID2 based on the z-slice
+	++maxID;		
+	int newID1 = maxID;
+	++maxID;		
+	int newID2 = maxID;		
+	for(int k=region.min.z; k<=region.max.z; k++)
+	{
+		for(int i=region.min.y; i<=region.max.y; i++)
+		{			
+			for(int j=region.min.x; j<=region.max.x; j++)
+			{				
+				int pix = (int)labelImage->GetPixel(0,0,k,i,j);
+				if(pix != objID)
+					continue;
+				if(k<cutSlice)
+					labelImage->SetPixel(0,0,k,i,j,newID1);
+				else
+					labelImage->SetPixel(0,0,k,i,j,newID2);
+
+			}
+		}
+	}	
+
+	//set the old object to invalid
+	//and add this edit to the editing record
+	int inn = GetObjectIndex(objID,"nucleus");
+	myObjects.at(inn).SetValidity(ftk::Object::SPLIT);
+	ftk::Object::EditRecord record;
+	record.date = TimeStamp();
+	std::string msg = "SPLIT TO BECOME ";
+	msg.append(NumToString(newID1));
+	msg.append(" and ");
+	msg.append(NumToString(newID2));
+	record.description = msg;
+	myObjects.at(inn).AddEditRecord(record);	
+
+	//Calculate features of the two new objects using feature filter
+	typedef unsigned char IPixelT;
+	typedef unsigned short LPixelT;
+	typedef itk::Image< IPixelT, 3 > IImageT;
+	typedef itk::Image< LPixelT, 3 > LImageT;
+
+	dataImage->Cast<IPixelT>();
+	labelImage->Cast<LPixelT>();
+
+	IImageT::Pointer itkIntImg = dataImage->GetItkPtr<IPixelT>(0,0);
+	LImageT::Pointer itkLabImg = labelImage->GetItkPtr<LPixelT>(0,0);
+
+	typedef ftk::LabelImageToFeatures< IPixelT, LPixelT, 3 > FeatureCalcType;
+	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
+	labFilter->SetLevel(3);
+	labFilter->ComputeHistogramOn();
+	labFilter->ComputeTexturesOn();
+
+	
+	IImageT::RegionType intRegion;
+	IImageT::SizeType intSize;
+	IImageT::IndexType intIndex;
+	LImageT::RegionType labRegion;
+	LImageT::SizeType labSize;
+	LImageT::IndexType labIndex;
+
+	//start with the first one
+	intIndex[0] = region.min.x;
+	intIndex[1] = region.min.y;
+	intIndex[2] = region.min.z;
+	intSize[0] = region.max.x - region.min.x + 1;
+	intSize[1] = region.max.y - region.min.y + 1;
+	intSize[2] = region.max.z - region.min.z + 1;
+
+	labIndex[0] = region.min.x;
+	labIndex[1] = region.min.y;
+	labIndex[2] = region.min.z;
+	labSize[0] = region.max.x - region.min.x + 1;
+	labSize[1] = region.max.y - region.min.y + 1;
+	labSize[2] = region.max.z - region.min.z + 1;
+
+	intRegion.SetSize(intSize);
+    intRegion.SetIndex(intIndex);
+    itkIntImg->SetRequestedRegion(intRegion);
+
+    labRegion.SetSize(labSize);
+    labRegion.SetIndex(labIndex);
+    itkLabImg->SetRequestedRegion(labRegion);
+	
+	labFilter->SetImageInputs( itkIntImg, itkLabImg );
+	labFilter->Update();
+
+	//add them to the features list
+	myObjects.push_back( GetNewObject(newID1, labFilter->GetFeatures(newID1) ) );
+	myObjects.push_back( GetNewObject(newID2, labFilter->GetFeatures(newID2) ) );
+	IdToIndexMap[newID1] = (int)myObjects.size() - 2;
+	IdToIndexMap[newID2] = (int)myObjects.size() - 1;
+
+	//return the ids of the two cells resulting from spliting
+	std::vector <int> ids_ok;
+	ids_ok.push_back(newID1);
+	ids_ok.push_back(newID2);
+
+	//also, add the old ID to the end of the list
+	ids_ok.push_back(objID);
+
+	// Update the editing history of the new cells - Aytekin
+	record.date = TimeStamp();	
+	int index;
+	for(int i=0; i<(((int)ids_ok.size())-1); ++i)
+	{
+		msg = "SPLITTED FROM: ";		
+		msg.append(NumToString(objID));
+		record.description = msg;
+		index = GetObjectIndex(ids_ok.at(i),"nucleus");
+		myObjects.at(index).AddEditRecord(record);
+	}
+	editsNotSaved = true;
+	return ids_ok;
+}
 int NuclearSegmentation::Merge(vector<int> ids)
 {
 	if(!labelImage)
