@@ -1,0 +1,17 @@
+# This project is designed to be built outside the Insight source tree.
+cmake_minimum_required(VERSION 2.6)
+
+PROJECT(test)
+
+# Find ITK.
+FIND_PACKAGE(ITK REQUIRED)
+IF(ITK_FOUND)
+  INCLUDE(${ITK_USE_FILE})
+ENDIF(ITK_FOUND)
+
+INCLUDE_DIRECTORIES(${BSplineFitting_SOURCE_DIR})
+
+ADD_EXECUTABLE(BSplineFitting BSplineFitting.cpp)
+
+TARGET_LINK_LIBRARIES(BSplineFitting
+ITKBasicFilters ITKCommon ITKIO ITKStatistics)
