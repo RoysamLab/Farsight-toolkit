@@ -12,6 +12,11 @@ ADD_EXECUTABLE(MinSpanTree distTransform.cpp MinSpanTree.cpp morphGraphPrune.cpp
 ADD_EXECUTABLE(Integratedskel Integratedskel.cpp)
 ADD_EXECUTABLE(volumeProcess volumeProcess.cpp)
 
+#INCLUDE_DIRECTORIES(${BSplineFitting_SOURCE_DIR})
+ADD_EXECUTABLE(BSplineFitting BSplineFitting.cpp)
+TARGET_LINK_LIBRARIES(BSplineFitting
+ITKBasicFilters ITKCommon ITKIO ITKStatistics)
+
 ADD_CUSTOM_COMMAND(
   TARGET MinSpanTree
   POST_BUILD
@@ -40,3 +45,4 @@ INSTALL( TARGETS GradientVecField DESTINATION bin/MDL )
 INSTALL( TARGETS MinSpanTree DESTINATION bin/MDL )
 INSTALL( TARGETS Integratedskel DESTINATION bin/MDL )
 INSTALL( TARGETS volumeProcess DESTINATION bin/MDL )
+INSTALL( TARGETS BSplineFitting DESTINATION bin/MDL )
