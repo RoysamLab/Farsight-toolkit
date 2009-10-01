@@ -16,12 +16,6 @@ limitations under the License.
 #ifndef HISTOWINDOW_H
 #define HISTOWINDOW_H
 
-#if VTK_MINOR_VERSION % 2 == 1
-  #define VTK_NIGHTLY 1
-#else
-  #define VTK_RELEASE 1
-#endif
-
 #include <QtGui/QAction>
 #include <QtGui/QMainWindow>
 #include <QtGui/QWidget>
@@ -50,6 +44,15 @@ limitations under the License.
 #include <string>
 #include <sstream>
 #include <algorithm>
+
+#if (VTK_MINOR_VERSION % 2) == 1
+  #define VTK_NIGHTLY 1
+  #define VTK_RELEASE 0
+#else
+  #define VTK_NIGHTLY 0
+  #define VTK_RELEASE 1
+  #error  
+#endif
 
 class HistoWindow : public QMainWindow
 {

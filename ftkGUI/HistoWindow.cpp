@@ -47,6 +47,8 @@ HistoWindow::HistoWindow(QItemSelectionModel *mod, QWidget *parent)
   chartView->SetAxisTitle(0,"Frequency");
   chartView->SetAxisTitle(1, columnName.c_str() );
 
+std::cout << VTK_MINOR_VERSION % 2;
+
 #if(VTK_NIGHTLY)
 		setCentralWidget( chartView->GetWidget() );
 #else
