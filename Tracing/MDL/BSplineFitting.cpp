@@ -192,7 +192,7 @@ int main(int argc, char **argv)
   int sizeX,sizeY,sizeZ;         // Sizes in x,y,z dimensions
   int i,j,k;
   
-  if (argc < 9)
+  if (argc < 8)
     {
     if(argc > 1 && strcmp(argv[1], "debug") == 0)
       {
@@ -206,7 +206,7 @@ int main(int argc, char **argv)
       argv[6]="18";
       argv[7]="smoothBB.vtk";
       argv[8]="Exspine.vtk";
-      argv[9]="flag.txt";
+      //argv[9]="flag.txt";
       }
     else
       {
@@ -415,7 +415,7 @@ int main(int argc, char **argv)
   //--------------------NumPoly = round(NumPoly * 0.05)-----------------------//
   // for (i = 0; i< NumAllPoints; i++) printf("%f  ",flagOnBackbone[i]);
 
-  FILE * flagfile;
+ /* FILE * flagfile;
   tempfile = filedir + argv[9];
   cout << "flagbone file name" << tempfile << endl;
 
@@ -424,7 +424,7 @@ int main(int argc, char **argv)
     cerr << "couldn't open flag file " << filedir << " for input" << endl;
     exit(-1);
     }
-  
+  */
   //for (i = 0; i< NumAllPoints; i++) printf("%f  ",flagOnBackbone[i]);
   //for (i = 0; i< NumAllPoints; i++)
     //{
