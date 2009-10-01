@@ -1262,8 +1262,22 @@ int TraceObject::createGapLists(std::vector<TraceLine*> traceList)
       TraceGap *newGap = new TraceGap;
       newGap->Trace1 = traceList[i];
       newGap->Trace2 = traceList[j];
-	  if (newGap->Trace1->GetRootID() == newGap->Trace2->GetRootID())
+	  int id1= newGap->Trace1->GetId(), id2= newGap->Trace2->GetId(), 
+		  r1= newGap->Trace1->GetRootID(), r2=newGap->Trace2->GetRootID() ;
+	  if (r1 == r2)
 	  {
+		  continue;
+	  }
+	  if (( id1 != r1) &&(id2 != r2))
+	  {/*
+		  if (newGap->Trace1->GetLevel() > newGap->Trace2->GetLevel())
+		  {
+			  this->ReverseSegment(newGap->Trace2);
+		  }
+		  else
+		  {
+			  this->ReverseSegment(newGap->Trace1);
+		  }*/		//remove this comment to reverse tree structure
 		  continue;
 	  }
       newGap->Trace1->EndPtDist(

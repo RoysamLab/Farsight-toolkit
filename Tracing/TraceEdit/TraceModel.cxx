@@ -31,6 +31,8 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines, std::vector<std::str
 	this->headers.push_back("Trace Size");
 	this->headers.push_back("Type");
 	this->headers.push_back("Parent");
+	this->headers.push_back("Root ID");
+	this->headers.push_back("Level");
 	if (FeatureHeaders.size() >=1)
 	{
 		for (int i = 0; i< (int)FeatureHeaders.size(); i++)
