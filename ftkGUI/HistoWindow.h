@@ -50,8 +50,7 @@ limitations under the License.
   #define VTK_RELEASE 0
 #else
   #define VTK_NIGHTLY 0
-  #define VTK_RELEASE 1
-  #error  
+  #define VTK_RELEASE 1  
 #endif
 
 class HistoWindow : public QMainWindow
