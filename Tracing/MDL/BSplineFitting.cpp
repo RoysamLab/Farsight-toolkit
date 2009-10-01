@@ -241,15 +241,13 @@ int main(int argc, char **argv)
   
   //----------------------------read volume data-----------------------------//
 
-  // the memory application for volume data
- volin = (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN)); 
+  volin = (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN)); //  the memory application for volume data
 
-  // read in vol file
-  if ( fread(volin, sizeof(DATATYPEIN), sz, infile) < (unsigned long)sz)
-    {
+  if ( fread(volin, sizeof(DATATYPEIN), sizeX*sizeY*sizeZ, infile) < (unsigned int)(sizeX*sizeY*sizeZ))  // read in vol file
+  {
     printf("File size is not the same as volume size\n");
     exit(1);
-    }
+  }
 
   //------------------Processing with skeleton VTK file ---------------------//
 
@@ -445,37 +443,35 @@ int main(int argc, char **argv)
   //---------------------------------sub end----------------------------------//
 
   int numVTKpts = 0;
-  //int numExtraSpines = 0;
+  int numExtraSpines = 0;
 
   //-----------Begin to curve fitting for each branch of backbones------------//
+ 
   VoxelPosition *points;
   points = NULL;
-  // points = new VoxelPosition[NumAllPoints];
-  //
-
   int tmp=0;
   int NumPoints; // belong to one branch;
-
   int *numBranchpts; // need to further
-  // this is to record the points in each branches;
-  numBranchpts = new int[NumBranches+1];
-  for (i=0;i<NumBranches+1;i++)
-    {
-    numBranchpts[i]=0;
-    }
-
+  numBranchpts = new int[NumBranches+1]; // this is to record the points in each branches;
   float discretePt=1; // sampling rate
-  // the number points which to be write in VTK file:
-  int NewNumAllPoints = (int) (((double) NumAllPoints)/discretePt)+1;
+  int NewNumAllPoints = (int) (((double) NumAllPoints)/discretePt)+1; // the number points which to be write in VTK file ;
   cout << "the number of total new points  " <<  NewNumAllPoints <<  endl;
   VoxelPosition *pointsVTK; 
+  VoxelPosition *posExtraSpines;
   pointsVTK = new VoxelPosition[NewNumAllPoints];
+  posExtraSpines = new VoxelPosition[NewNumAllPoints]; 
+
+  for (i=0;i<NumBranches+1;i++)
+      numBranchpts[i]=0;
 
   for (i=0;i<NewNumAllPoints-1;i++) //initialization 
     {
     pointsVTK[i].x =0;
     pointsVTK[i].y =0;
     pointsVTK[i].z =0;
+	posExtraSpines[i].x=-9999;
+	posExtraSpines[i].y=-9999;
+	posExtraSpines[i].z=-9999;
     }
   pointsVTK[NewNumAllPoints-1].x =-9999;
   pointsVTK[NewNumAllPoints-1].y =-9999;
@@ -483,7 +479,17 @@ int main(int argc, char **argv)
 
   cout << "There are " <<  NumBranches  << " NumBranches" << endl; 
 
-  int tmpindex; 
+  int tmpindex; // 
+  int x_val_index;
+  float minDist;
+  float dis;
+  int minIndex;
+  float mintemp;
+  int *Index_Min_dist2spline;
+  float  *Min_dist2spline;
+  int IsLocalMax;
+  int x1,y1,z1;
+  int aveInt;
   for (k=1;k<=NumBranches;k++)
     {
     //----------------------Note there will a huge loop-----------------------//
@@ -553,22 +559,100 @@ int main(int argc, char **argv)
       //printf("%f %f %f\n",pointsVTK[i].x,pointsVTK[i].y,pointsVTK[i].z);
       }
   
-    delete [] xyz_vals; // release memory
-    //------------------------------------------------------------------------//
-    /*
-    // copy these points which locate at this branch to pointsVTK;
-    for (i=numVTKpts;i<numVTKpts+NumPoints;i++)
-      {
-      pointsVTK[i].x =points[i-numVTKpts].x;
-      pointsVTK[i].y =points[i-numVTKpts].y;
-      pointsVTK[i].z =points[i-numVTKpts].z;
-      //printf("%f %f %f\n",pointsVTK[i].x,pointsVTK[i].y,pointsVTK[i].z);
-      }
-    // test no fitting is ok
-    */
-    numVTKpts += NumPoints;
 
-    cout << "there are " << numVTKpts << "points on branch " << k << endl;
+  
+    //------------------------------- Compute missing spines from spline function and original 3D points-------------------------------//
+       mintemp=points[0].x;
+	   for (i = 0;i<NumPoints-1;i++)
+	   {	 
+		   if (points[i].x<=mintemp)
+			   mintemp = points[i].x;
+	   }
+        
+
+        Min_dist2spline = new float [NumPoints];
+        Index_Min_dist2spline = new int [NumPoints];
+
+	    for (i = 0;i<NumPoints-1;i++)
+		{
+		  x_val_index = selffloor((points[i].x-mintemp)/discretePt);  //
+          if(x_val_index <= 0)       
+			  x_val_index=0;
+          if (x_val_index >= NumPoints-1)
+			  x_val_index=NumPoints-1; 
+
+        //Initialize the min dist and corresponding index with a parallel point on the spline function
+		  minDist = (float) dist2pts(points[i].y, points[i].x, points[i].z,  xyz_vals[x_val_index].y,  xyz_vals[x_val_index].x, xyz_vals[x_val_index].z);
+          minIndex = x_val_index;
+          for( j = 0;j<NumPoints-1;j++)
+		  {  if(abs(points[i].x - xyz_vals[j].x)< minDist)  // If the point on spline falls within the local range
+			  {//evaluate the current distance of two points
+                dis = (float) dist2pts(points[i].y, points[i].x, points[i].z, xyz_vals[j].y,  xyz_vals[j].x, xyz_vals[j].z);
+                if (dis < minDist)
+				{
+                    minDist = dis;
+                    minIndex = j;
+				}
+			  }
+		  }
+        Min_dist2spline[i] = minDist;
+        Index_Min_dist2spline[i] = minIndex;
+        // plot3([points(1,i), x_val(minIndex)]+DispBias,  [points(2,i), yz_vals(1,minIndex)]+DispBias,   [points(3,i), yz_vals(2,minIndex)]+DispBias, 'r:'); 
+        
+		}// end for 
+
+	 //----------------------------------- Find all the spines with local max distance---------------------------------------------------//  
+	    for (i = 0;i<NumPoints-1;i++)
+		{
+         IsLocalMax = 1;
+         for(j = 0;j<NumPoints-1;j++)
+		 {
+			 if (dist2pts(points[j].y, points[j].x, points[j].z,  points[i].y, points[i].x, points[i].z ) < 5)
+                //Consider only neighbor points
+                if (Min_dist2spline[j] > Min_dist2spline[i])  
+				{IsLocalMax=0;  break; }
+		 }// end subfor
+
+		 x1 = round(points[i].x);  
+		 y1 = round(points[i].y);
+		 z1 = round(points[i].z);
+         long idx = z1*sz + y1*sizeX +x1;
+         aveInt = volin[idx];//[z1][y1][x1];//D(z, y, x); 
+		 idx=Index_Min_dist2spline[i];
+		 x1 = round(xyz_vals[idx].x);
+         y1 = round(xyz_vals[idx].y);
+		 z1 = round(xyz_vals[idx].z);
+
+		 idx = z1*sz + y1*sizeX +x1;
+
+		 aveInt = (aveInt + volin[idx])/2; 
+
+        // printf("%d \n", aveInt);
+		
+      
+		 if ( IsLocalMax == 1 && Min_dist2spline[i]>= 1.3 && aveInt > 20)   // 2, 1.5 - threshold for the detect of missing spines  
+		 {
+			
+            numExtraSpines = numExtraSpines + 1;
+			
+			posExtraSpines[numExtraSpines*2-2].x = points[i].x;
+            posExtraSpines[numExtraSpines*2-2].y = points[i].y;
+		    posExtraSpines[numExtraSpines*2-2].z = points[i].z;
+        
+			idx = Index_Min_dist2spline[i];
+			posExtraSpines[numExtraSpines*2-1].x =  xyz_vals[idx].x;
+            posExtraSpines[numExtraSpines*2-1].y =  xyz_vals[idx].y;
+			posExtraSpines[numExtraSpines*2-1].z =  xyz_vals[idx].z;
+			 
+		 }
+        
+		} 
+
+	 numVTKpts += NumPoints;
+     delete []xyz_vals; // release memory
+	 delete []Index_Min_dist2spline;
+     delete []Min_dist2spline;
+     cout << "there are " << numVTKpts << "points on branch " << k << endl;
     } // End of NumBranches of curve fitting //   end of loop
 
   if (points != NULL)
@@ -592,26 +676,19 @@ int main(int argc, char **argv)
     }
   //--------------------------------------------------------------------------//
   //------------------Output the extra spines to a vtk file-------------------//
-  /*
-  fprintf(outExspine, "# vtk DataFile Version 3.0\n");
+   fprintf(outExspine, "# vtk DataFile Version 3.0\n");
   fprintf(outExspine,"MST of skel\n");
   fprintf(outExspine,"ASCII\n");
   fprintf(outExspine,"DATASET POLYDATA\n");
   fprintf(outExspine,"POINTS %d float\n", 2 * numExtraSpines);
 
   for (i = 0; i<numExtraSpines*2;i++)
-    {
-    fprintf(outExspine,"%f %f %f\n",posExtraSpines[i].x,posExtraSpines[i].y,
-            posExtraSpines[i].z);
-    }
+	  fprintf(outExspine,"%f %f %f\n",posExtraSpines[i].x,-posExtraSpines[i].y,posExtraSpines[i].z);
    
   fprintf(outExspine, "LINES %d %d\n", numExtraSpines, numExtraSpines*3);
 
   for (i = 0;i<numExtraSpines;i++)
-    {
     fprintf(outExspine, "2 %d %d\n", 2*i, 2*i+1); // 
-    }
-  */
   fclose(outExspine);
 
   //-------------------------end write to outExspine--------------------------//
