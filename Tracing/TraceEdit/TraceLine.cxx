@@ -71,6 +71,17 @@ int TraceLine::GetLevel()
 {
 	return this->level;
 }
+bool TraceLine::isLeaf()
+{
+	if (this->m_branches.size() ==0)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
 void TraceLine::setRoot(int RootID, int traceLevel)
 {
 	this->root = RootID;
