@@ -243,7 +243,7 @@ void TraceLine::Getstats()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
+bool TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
                           double &maxdist, double &angle) 
 {
   //int center1=this->GetSize()/2, center2=Trace2->GetSize()/2;
@@ -298,6 +298,8 @@ void TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
   // from min determine orientation and return distance
   if (mark ==0)
     {
+	if (this->m_branches.size() > 0 && Trace2->m_branches.size()> 0)
+		{return false;}
     dist = distances[0];
     dir1= m_trace_bits.front().marker;
     dir2= Trace2->m_trace_bits.front().marker;
@@ -306,6 +308,8 @@ void TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
     }
   else if (mark ==1)
     {
+	if ((this->GetParentID() != -1)||!Trace2->isLeaf())
+		{return false;}
     dist = distances[1];
     dir1= m_trace_bits.front().marker;
     dir2= Trace2->m_trace_bits.back().marker;
@@ -313,6 +317,8 @@ void TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
     }
   else if (mark ==2)
     {
+		if (!this->isLeaf() || (Trace2->GetParentID()!=-1))
+		{return false;}
     dist = distances[2];
     dir1= m_trace_bits.back().marker;
     dir2= Trace2->m_trace_bits.front().marker;
@@ -320,12 +326,15 @@ void TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
     }
   else
     {
+	if (!this->isLeaf() || !Trace2->isLeaf()) 
+		{return false;}
     dist = distances[3];
     dir1= m_trace_bits.back().marker;
     dir2= Trace2->m_trace_bits.back().marker;
     angle=PI-angle;
     maxdist= distances[0];
     }
+  return true;
 }
 bool TraceLine::Orient(TraceLine * Trunk)
 {

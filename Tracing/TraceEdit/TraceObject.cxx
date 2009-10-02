@@ -1268,13 +1268,9 @@ int TraceObject::createGapLists(std::vector<TraceLine*> traceList)
       newGap->Trace1 = traceList[i];
       newGap->Trace2 = traceList[j];
 	  int id2= newGap->Trace2->GetId(), r2=newGap->Trace2->GetRootID() ;
-	  if (( id2 != r2) && !newGap->Trace2->isLeaf() )
+	  if ((( id2 != r2) && !newGap->Trace2->isLeaf() )||(r1 == r2))
 	  {
 		continue;	//is neither root or leaf cannot merge
-	  }
-	  if (r1 == r2)
-	  {
-		  continue;	//avoid loops
 	  }
 	  if (( id1 != r1) &&(id2 != r2))
 	  {/*
@@ -1288,9 +1284,10 @@ int TraceObject::createGapLists(std::vector<TraceLine*> traceList)
 		  }*/		//remove this comment to reverse tree structure
 		  continue;
 	  }
-      newGap->Trace1->EndPtDist(
+      if (!newGap->Trace1->EndPtDist(
           newGap->Trace2,newGap->endPT1, newGap->endPT2, 
-          newGap->dist, newGap->maxdist, newGap->angle);
+          newGap->dist, newGap->maxdist, newGap->angle))
+	  {continue;}
       newGap->length = newGap->Trace1->GetSize() + newGap->Trace2->GetSize() + newGap->dist;
       newGap->smoothness = newGap->length / newGap->maxdist;
       newGap->cost = newGap->angle*(newGap->dist/gapMax)*newGap->smoothness;
