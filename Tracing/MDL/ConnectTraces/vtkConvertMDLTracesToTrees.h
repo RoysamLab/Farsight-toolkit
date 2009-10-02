@@ -63,9 +63,10 @@ protected:
                      vtkIdTypeArray *nodeIDsToLineIDs);
   void CheckForOrphans();
   void WriteTraceToSWC(vtkTree *trace, vtkIdType currentNode,
-                       long *currentSWCID, long parentSWCID);
+                       long *currentSWCID, long parentSWCID,
+                       double *parentEndPoint);
   void GetTraceEndPoint(int cellID, bool getFirstPoint, double *point);
-  int GetSomaAtPoint(double point[3]);
+  unsigned long GetSomaAtPoint(double point[3]);
   bool VerifyRootTrace(int cellID);
   bool TraceContainsPoint(int cellID, double point[3]);
 
@@ -83,6 +84,7 @@ private:
    * trace connects to.
    **/
   vtkstd::map<vtkIdType, vtkstd::pair<double *, int> > TraceRoots;
+  vtkstd::map<LabelType, bool> SomaHasTraces;
   vtkPolyData *TracesData;
   bool WriteGraphs;
   ofstream FileWriter;

@@ -53,7 +53,6 @@ vtkConvertMDLTracesToTrees::~vtkConvertMDLTracesToTrees()
     (*traceItr).first->Delete();
     }
   vtkstd::map<vtkIdType, vtkstd::pair<double *, int> >::iterator rootItr;
-  //vtkstd::list<vtkstd::pair<vtkIdType, double *> >::iterator rootItr;
   for(rootItr = this->TraceRoots.begin();
       rootItr != this->TraceRoots.end(); ++rootItr)
     {
@@ -71,7 +70,6 @@ void vtkConvertMDLTracesToTrees::PrintSelf(ostream& os, vtkIndent indent)
 void vtkConvertMDLTracesToTrees::FindTraceRoots()
 {
   this->TraceRoots.clear();
-  //vtkstd::list< vtkstd::pair<vtkIdType, double *> > candidateRoots;
   vtkstd::map<vtkIdType, vtkstd::pair<double *, int> > candidateRoots;
   //step 1: find all the traces who have an end point in the soma
   for(int cellID = 0; cellID < this->TracesData->GetNumberOfCells();
@@ -81,19 +79,19 @@ void vtkConvertMDLTracesToTrees::FindTraceRoots()
     double *last_point = new double[3];
     this->GetTraceEndPoint(cellID, true, first_point);
     this->GetTraceEndPoint(cellID, false, last_point);
-    int somaAtPoint = this->GetSomaAtPoint(first_point);
-    if(somaAtPoint != -1)
+    unsigned long somaAtPoint = this->GetSomaAtPoint(first_point);
+    if(somaAtPoint != 0)
       {
-      //candidateRoots.push_back(vtkstd::make_pair(cellID, last_point));
+      this->SomaHasTraces[somaAtPoint] = true;
       candidateRoots[cellID] = vtkstd::make_pair(last_point, somaAtPoint);
       delete [] first_point;
       }
     else
       {
       somaAtPoint = this->GetSomaAtPoint(last_point);
-      if(somaAtPoint != -1)
+      if(somaAtPoint != 0)
         {
-        //candidateRoots.push_back(vtkstd::make_pair(cellID, first_point));
+        this->SomaHasTraces[somaAtPoint] = true;
         candidateRoots[cellID] = vtkstd::make_pair(first_point, somaAtPoint);
         delete [] last_point;
         }
@@ -148,7 +146,7 @@ void vtkConvertMDLTracesToTrees::GetTraceEndPoint(int cellID,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-int vtkConvertMDLTracesToTrees::GetSomaAtPoint(double point[3])
+unsigned long vtkConvertMDLTracesToTrees::GetSomaAtPoint(double point[3])
 {
   LabelMapType::IndexType index;
   LabelMapType::PointType position;
@@ -167,9 +165,11 @@ int vtkConvertMDLTracesToTrees::GetSomaAtPoint(double point[3])
   if(pixel != 0)
     {
     //If it is you're at the root of a trace.  Return the soma ID at this point
-    return (int)this->Somas->GetLabelObject(index)->GetLabel();
+    unsigned long matchedSoma = this->Somas->GetLabelObject(index)->GetLabel();
+    this->SomaHasTraces[matchedSoma] = true;
+    return matchedSoma;
     }
-  return -1;
+  return 0;
 }
 
 //Determine whether or not a trace is connected to other traces on both
@@ -274,7 +274,7 @@ int vtkConvertMDLTracesToTrees::CreateTrees()
   cout << "searching for trace roots" << endl;
   this->FindTraceRoots();
 
-  cout << "generating trace.s" << vtkstd::flush;
+  cout << "generating traces" << endl;
   vtkstd::map<vtkIdType, vtkstd::pair<double *, int> >::iterator rootItr;
   for(rootItr = this->TraceRoots.begin();
       rootItr != this->TraceRoots.end(); ++rootItr)
@@ -285,7 +285,7 @@ int vtkConvertMDLTracesToTrees::CreateTrees()
       vtkIdType root = trace->AddVertex();
 
       vtkIdTypeArray *nodeIDsToLineIDs = vtkIdTypeArray::New(); 
-      nodeIDsToLineIDs->InsertValue(root, rootItr->first);
+      nodeIDsToLineIDs->InsertValue(root, -1);
       nodeIDsToLineIDs->SetName("idmap");
 
       //call GenerateTrace to flesh out this new trace
@@ -300,7 +300,6 @@ int vtkConvertMDLTracesToTrees::CreateTrees()
       nodeIDsToLineIDs->Delete();
       this->Traces.push_back(vtkstd::make_pair(tree, rootItr->second.second));
       }
-  cout << endl;
   this->CheckForOrphans();
   return 1;
 }
@@ -338,12 +337,20 @@ void vtkConvertMDLTracesToTrees::GenerateTrace(vtkMutableDirectedGraph *trace,
     if(first_point[0] == end_point[0] && first_point[1] == end_point[1] &&
        first_point[2] == end_point[2])
       {
+      if(lineID == 452)
+        {
+        cout << "I should never go here 1" << endl;
+        }
       this->Orphans->SetValue(lineID, -1);
       this->GenerateTrace(trace, newNode, lineID, last_point, nodeIDsToLineIDs); 
       }
     if(last_point[0] == end_point[0] && last_point[1] == end_point[1] &&
        last_point[2] == end_point[2])
       {
+      if(lineID == 452)
+        {
+        cout << "I should never go here 2" << endl;
+        }
       this->Orphans->SetValue(lineID, -1);
       this->GenerateTrace(trace, newNode, lineID, first_point, nodeIDsToLineIDs); 
       }
@@ -403,6 +410,15 @@ void vtkConvertMDLTracesToTrees::LoadSomas(const char *filename)
   converter->SetInput(reader->GetOutput());
   this->Somas = converter->GetOutput();
   converter->Update();
+
+  //initialize the label -> bool SomaHasTraces map to all false
+  //these values will be switched to true in FindTraceRoots
+  this->SomaHasTraces.clear();
+  unsigned int numLabels = this->Somas->GetNumberOfLabelObjects();
+  for(unsigned int label=1; label<= numLabels; label++)
+    {
+    this->SomaHasTraces[label] = false;
+    }
 }
 
 //write out the trees generated by this class to a series of .vtk files
@@ -448,11 +464,16 @@ void vtkConvertMDLTracesToTrees::WriteToSWC(const char *filename)
 
   long int currentSWCID = 0;
 
-  //write out all the somas first.
+  //write out the somas first.
   unsigned int numLabels = this->Somas->GetNumberOfLabelObjects();
   vtkstd::vector<int> somaSWCIDs(numLabels + 1);
   for(unsigned int label=1; label<= numLabels; label++)
     {
+    //skip somas that don't have any traces coming out of them.
+    if(this->SomaHasTraces[label] == false)
+      {
+      continue;
+      }
     // we don't need a SmartPointer of the label object here, because the
     // reference is kept in the label map.
     const LabelObjectType * labelObject = this->Somas->GetLabelObject(label);
@@ -460,12 +481,13 @@ void vtkConvertMDLTracesToTrees::WriteToSWC(const char *filename)
     this->FileWriter << ++currentSWCID << " 1 " << centroid[0] << " "
                      << centroid[1] << " " << centroid[2] << " 0 " << "-1"
                      << endl;
-    //keep track of this mapping between somas and SWC IDs
+    //keep track of this mapping between somas and SWC IDs.
     somaSWCIDs[label] = currentSWCID;
     }
 
-  //now write out all the traces
+  //write out all the traces
   vtkTree *tree;
+  int somaID = -1;
   int somaSWCID = -1;
   for(vtkstd::vector<vtkstd::pair<vtkTree *, int> >::iterator
       traceItr = this->Traces.begin();
@@ -473,42 +495,112 @@ void vtkConvertMDLTracesToTrees::WriteToSWC(const char *filename)
       ++traceItr)
     {
     tree = (*traceItr).first;
-    somaSWCID = (*traceItr).second;
-    this->WriteTraceToSWC(tree, tree->GetRoot(), &currentSWCID,
-                          somaSWCID);
+    somaID = (*traceItr).second;
+    somaSWCID = somaSWCIDs[somaID];
+
+    //find the xyz point that connects the trace to the soma
+    vtkIdTypeArray *vertexArray = reinterpret_cast<vtkIdTypeArray *>
+      (tree->GetVertexData()->GetArray(0));
+    vtkIdType cellID = vertexArray->GetValue(1);
+    double *nonSomaEndPoint = this->TraceRoots[cellID].first;
+    vtkPolyLine *traceLine = reinterpret_cast<vtkPolyLine *>
+      (this->GetTracesData()->GetCell(cellID));
+    vtkPoints *tracePoints = traceLine->GetPoints();
+    double xyz[3];
+    tracePoints->GetPoint(0, xyz);
+    if(xyz[0] == nonSomaEndPoint[0] && xyz[1] == nonSomaEndPoint[1] &&
+       xyz[2] == nonSomaEndPoint[2])
+      {
+      tracePoints->GetPoint(tracePoints->GetNumberOfPoints() - 1, xyz);
+      }
+
+    //don't write out the root of the tree, as it isn't associated with
+    //a vtkPolyLine
+    this->WriteTraceToSWC(tree, 1, &currentSWCID,
+                          somaSWCID, xyz);
     }
 }
 
-//recursive helper funciton for WriteToSWC.  Note that this is currently
+//recursive helper function for WriteToSWC.  Note that this is currently
 //hardcoding radius to 1 and class to 3.
 ////////////////////////////////////////////////////////////////////////////////
 void vtkConvertMDLTracesToTrees::WriteTraceToSWC(vtkTree *trace,
                                                 vtkIdType currentNode,
                                                 long *currentSWCID,
-                                                long parentSWCID)
+                                                long parentSWCID,
+                                                double *parentEndPoint)
 {
   //get the line associated with this node in the tree
   vtkIdTypeArray *vertexArray = reinterpret_cast<vtkIdTypeArray *>
     (trace->GetVertexData()->GetArray(0));
   vtkIdType cellID = vertexArray->GetValue(currentNode);
+  //special case: the trace's root isn't associated with a line of its own.
   vtkPolyLine *currentLine = reinterpret_cast<vtkPolyLine *>
     (this->GetTracesData()->GetCell(cellID));
   vtkPoints *currentPoints = currentLine->GetPoints();
 
-  //connect the first point to the parent's SWC ID
+  //figure out which end of this trace connects to the parent
+  bool firstPointConnectsToParent;
   double xyz[3];
   currentPoints->GetPoint(0, xyz);
+  if(xyz[0] == parentEndPoint[0] && xyz[1] == parentEndPoint[1] &&
+     xyz[2] == parentEndPoint[2])
+    {
+    if(cellID == 452)
+      {
+      cout << "my first point connects to my parent: " << xyz[0] << ", " << xyz[1] << ", " << xyz[2] << endl;
+      }
+    firstPointConnectsToParent = true;
+    }
+  else
+    {
+    currentPoints->GetPoint(currentPoints->GetNumberOfPoints() - 1, xyz);
+    if(xyz[0] == parentEndPoint[0] && xyz[1] == parentEndPoint[1] &&
+       xyz[2] == parentEndPoint[2])
+      {
+      firstPointConnectsToParent = false;
+      }
+    else
+      {
+      cout << "BUG: neither my first nor last point connects to my parent!" << endl;
+      cout << "parent SWC == " << parentSWCID << ", current ID == "
+           << *currentSWCID << ", cell ID == " << cellID << endl;
+      }
+    }
+
+  //connect the first point to the parent's SWC ID
+  if(firstPointConnectsToParent)
+    {
+    currentPoints->GetPoint(1, xyz);
+    }
+  else
+    {
+    currentPoints->GetPoint(currentPoints->GetNumberOfPoints() - 2, xyz);
+    }
   this->FileWriter << ++(*currentSWCID) << " 3 " << xyz[0] << " " << xyz[1]
                    << " " << xyz[2] << " 1 " << parentSWCID << endl;
 
-  //now iterate over its points, writing out each one, connecting it to the
-  //previous point.
-  for(vtkIdType pointID = 1; pointID < currentPoints->GetNumberOfPoints();
-      pointID++)
+  //now iterate over the trace's points, writing out each one, connecting it to
+  //the previous point.
+  if(firstPointConnectsToParent)
     {
-    currentPoints->GetPoint(pointID, xyz);
-    this->FileWriter << ++(*currentSWCID) << " 3 " << xyz[0] << " " << xyz[1]
-                     << " " << xyz[2] << " 1 " << (*currentSWCID) << endl;
+    for(vtkIdType pointID = 2; pointID < currentPoints->GetNumberOfPoints();
+        pointID++)
+      {
+      currentPoints->GetPoint(pointID, xyz);
+      this->FileWriter << ++(*currentSWCID) << " 3 " << xyz[0] << " " << xyz[1]
+                       << " " << xyz[2] << " 1 " << (*currentSWCID) << endl;
+      }
+    }
+  else
+    {
+    for(vtkIdType pointID = currentPoints->GetNumberOfPoints() - 3; pointID > -1;
+        pointID--)
+      {
+      currentPoints->GetPoint(pointID, xyz);
+      this->FileWriter << ++(*currentSWCID) << " 3 " << xyz[0] << " " << xyz[1]
+                       << " " << xyz[2] << " 1 " << (*currentSWCID) << endl;
+      }
     }
  
   //then call this function on the children
@@ -520,7 +612,7 @@ void vtkConvertMDLTracesToTrees::WriteTraceToSWC(vtkTree *trace,
     {
     numChildren++;
     this->WriteTraceToSWC(trace, childItr->Next(), currentSWCID, 
-                          branchPointID);
+                          branchPointID, xyz);
     }
   childItr->Delete();
 }
