@@ -152,53 +152,25 @@ ENDIF(WRAP_PYTHON)
 #####################################################################################
 # SOME INSTALL RULES
 ######################################################################################
-#These install rules are for use when linking against ITK/VTK build trees
-#They won't work without modification if linked against ITK/VTK installs
-SET(ITKBASE_SRC "")
-SET(ITKBASE_SRC_NEW "")
-
-#INSTALL(DIRECTORY ${VTK_DIR}/bin/\${BUILD_TYPE}/ DESTINATION .)
-#INSTALL(DIRECTORY ${ITK_DIR}/bin/\${BUILD_TYPE}/ DESTINATION .)
-
-#INSTALL(DIRECTORY ${ITK_DIR}/Wrapping/CSwig/Python/\${BUILD_TYPE}/ DESTINATION .)
-#INSTALL(CODE "
-#  file(READ \${CMAKE_INSTALL_PREFIX}/itkbase.py ITKBASE_SRC)
-#  string(REGEX REPLACE \"pkgdir = '[^']*'\" \"pkgdir = '.'\" ITKBASE_SRC_NEW \"\${ITKBASE_SRC}\")
-#  file(WRITE \${CMAKE_INSTALL_PREFIX}/itkbase.py \"\${ITKBASE_SRC_NEW}\")
-#")
-
-#INSTALL(DIRECTORY ${QT_LIBRARY_DIR}/ DESTINATION .)
 IF(WIN32)
   INSTALL(FILES ${QT_LIBRARY_DIR}/QtCore4.dll ${QT_LIBRARY_DIR}/QtGui4.dll DESTINATION bin)
 ENDIF(WIN32)
 IF(APPLE)
   INSTALL(DIRECTORY ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY} ${QT_QTSQL_LIBRARY} ${QT_QTNETWORK_LIBRARY} DESTINATION bin)
-#ELSE(APPLE)
-  #INSTALL(FILES ${QT_QTCORE_LIBRARY_RELEASE} ${QT_QTGUI_LIBRARY_RELEASE} DESTINATION bin)
 ENDIF(APPLE)
 
 INSTALL(DIRECTORY python/ DESTINATION python PATTERN "*.svn" EXCLUDE)
 
-#REMOVED 9/22/2009 - ISAAC - THIS IS ABOVE (MINUS THE XML PART)
-#FIND_PACKAGE(Qt4)
-#IF(QT4_FOUND)
-#	INCLUDE( ${QT_USE_FILE} )
-#	IF (QT_QTXML_FOUND)
-#		INCLUDE_DIRECTORIES(${QT_QTXML_INCLUDE_DIR})
-#	ELSE(QT_QTXML_FOUND)
-#		MESSAGE(FATAL ERROR "Qt XML libraries missing.")
-#	ENDIF(QT_QTXML_FOUND)
-	#IF (QT_QTHELP_FOUND)
-	#	INCLUDE_DIRECTORIES(${QT_QTHELP_INCLUDE_DIR})
-	#ELSE(QT_QTHELP_FOUND)
-	#	MESSAGE(FATAL ERROR "Qt HELP libraries missing.")
-	#ENDIF(QT_QTHELP_FOUND)
-#ELSE(QT4_FOUND)
-#	MESSAGE(FATAL_ERROR "Cannot build without Qt4")
-#ENDIF(QT4_FOUND)
-
 INCLUDE(InstallRequiredSystemLibraries)
 
+
+#####################################################################################
+#####################################################################################
+# CPACK SETUP FOR BUILDING INSTALLERS
+######################################################################################
+SET(CPACK_PACKAGE_VERSION_MAJOR 0)
+SET(CPACK_PACKAGE_VERSION_MINOR 1)
+SET(CPACK_PACKAGE_VERSION_PATCH 0)
 INCLUDE(CPack)
 
 ###########################################################################
