@@ -54,6 +54,7 @@ public:
   void WriteToSWC(const char *filename);
   void WriteTrees(const char *basefilename);
   void FindTraceRoots();
+  void WriteCellsToSWCFiles(const char *filename);
 
 protected:
   vtkConvertMDLTracesToTrees();

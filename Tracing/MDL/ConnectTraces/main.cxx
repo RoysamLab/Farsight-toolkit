@@ -12,7 +12,8 @@ int main(int argc, char **argv)
   treeBuilder->LoadTracesData(argv[1]);
   treeBuilder->LoadSomas(argv[2]);
   treeBuilder->CreateTrees();
-  treeBuilder->WriteToSWC(argv[3]);
+  treeBuilder->WriteCellsToSWCFiles(argv[3]);
+  //treeBuilder->WriteToSWC(argv[3]);
   return 1;
   }
 
