@@ -41,7 +41,9 @@ public:
 	void SetParent(TraceLine* p);
 	int GetRootID();
 	int GetLevel();
-	void setRoot(int RootID, int traceLevel);
+	int GetPathLength()
+		{return PathLength;}
+	void setRoot(int RootID, int traceLevel, int parentPath);
 	void AddBranch(TraceLine* b);
 	TraceLine *GetBranch1();
 	void SetBranch1(TraceLine* b0);
@@ -72,7 +74,7 @@ public:
 
 private:
 	double traceColor;
-	int m_id, root, level;
+	int m_id, root, level, PathLength;
 	std::vector<unsigned int> m_markers;
 	unsigned char m_type;
 	TraceLine *m_parent;

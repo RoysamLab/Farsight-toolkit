@@ -95,12 +95,12 @@ void TraceObject::LinearTraceLinesRecursive(std::vector<TraceLine*> &allLine, Tr
 {
 	if (tline->GetParentID() == -1)
 	{
-		tline->setRoot( tline->GetId(), 0);
+		tline->setRoot( tline->GetId(), 0, 0);
 	}
 	else
 	{ 
 		TraceLine *parent = tline->GetParent();
-		tline->setRoot(parent->GetRootID(), parent->GetLevel() +1);
+		tline->setRoot(parent->GetRootID(), parent->GetLevel() +1, parent->GetPathLength());
 	}
 	allLine.push_back(tline);
 	for(unsigned int counter = 0; counter < tline->GetBranchPointer()->size(); counter++)

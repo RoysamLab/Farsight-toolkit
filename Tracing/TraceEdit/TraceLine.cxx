@@ -82,10 +82,11 @@ bool TraceLine::isLeaf()
 		return false;
 	}
 }
-void TraceLine::setRoot(int RootID, int traceLevel)
+void TraceLine::setRoot(int RootID, int traceLevel, int parentPath)
 {
 	this->root = RootID;
 	this->level = traceLevel;
+	this->PathLength = parentPath + this->GetSize();
 }
 ///////////////////////////////////////////////////////////////////////////////
 void TraceLine::AddBranch(TraceLine* b)
