@@ -19,17 +19,6 @@ supports output to .vtk or .swc file formats."
   >
   </parameter>
   <parameter
-    name="Intensity threshold"
-    description=
-"Determine the background regions we are not interested in and set all the
-voxels below it to zero.  Use higher values for high background intensities."
-    type="number"
-    min="2"
-    max="7"
-    default="2"
-  >
-  </parameter>
-  <parameter
     name="Connected components size"
     description=
 "Used to remove objects smaller than this volume size.  Use higher values for

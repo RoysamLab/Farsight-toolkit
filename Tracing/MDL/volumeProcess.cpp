@@ -22,21 +22,21 @@ limitations under the License.
  *  Input parameters
  *          1. sizeExpand   
  *          2. preproess          */
+
 #if defined(_MSC_VER)
 #pragma warning(disable : 4996)
 #endif
-//#include "stdafx.h"
-#include <stdlib.h>
-#include <stdio.h>
-//#include <fstream.h>
-//#include <iostream.h>
-#include <string.h>
-#include <math.h>
-#define FillColor 1  //111
-#define OBJECT 200
-#define COLORseed 0  //usually 0, can be selected as OBJECT
 
-//using namespace std;
+#include <iostream>
+
+#include "itkImage.h"
+#include "itkImageFileReader.h"
+#include "itkImageFileWriter.h"
+
+using std::cerr;
+using std::cout;
+using std::endl;
+using std::string;
 
 #define DATATYPEIN unsigned char
 #define DATATYPEOUT unsigned char
@@ -44,536 +44,262 @@ limitations under the License.
 const unsigned char  m_NumberOfHistogramBins = 128;
 
 DATATYPEIN *volin;
-int sizeX, sizeY, sizeZ, sizeTime;
-long voxelCount=0;
+int sizeX, sizeY, sizeZ;
 
-struct  Position
-{
-	int x;
-	int y;
-	int z;
-};
-
-struct StackOfPoints
-{
-	Position ps;
-	StackOfPoints *next;
-};
-
-StackOfPoints *stack = new StackOfPoints;
-int stacktop = 0;
-
-void lineseed(int, int, int);
-void push (Position pos);
-Position pop (void);
-bool empty(void);
-int findstartx(Position ps);
-int findendx(Position ps);
-void spread(Position pos, int startx, int endx, int direction);
-void lineSeed();
 double  OtsuThreshold (int sizeX,int sizeY,int sizeZ);
-
-
 
 int main(int argc, char *argv[])
 {
-	
-	if(argc < 6) {
-	    printf("\nUsage: <input file> <sizeX> <sizeY> <sizeZ> <output file> <threshold>.\n");
-	    exit(1);
-	}
 
-	//string s;
-	FILE *infile;
-	FILE *outfile;
-	int i,j,k, t;
-	int ii, jj, kk;
-	//int NearObjFlag;
-	DATATYPEOUT *volout;
-	long idx;//, iidx;
-	double threshold;
-	//float threshold;
-	//int kmod8, kdiv8;
-	//int FlagIsolated;
-	//int NumConnectComp;
-	int sizeExpand = 0;  //10;
-	DATATYPEOUT blockMax;
-	int timesDilate;
-	int border;
+  //check that the user specified the right number of command line arguments
+  if(argc < 3)
+    {
+    cerr << argv[0] << " <input file> <output file>" << endl;
+    cerr << argv[0] << " <raw input file> <sizeX> <sizeY> <sizeZ> <output file>"
+         << endl;
+    return EXIT_FAILURE;
+    }
 
-	sizeX = atoi(argv[2]);
-	sizeY = atoi(argv[3]);
-	sizeZ = atoi(argv[4]);
-	//sizeTime = atoi(argv[5]);
-	sizeTime = 1;
-	threshold = atof(argv[6]);
+  //check if the input image is .raw
+  bool rawInput = false;
+  string inputFileName = argv[1];
+  const char *outputFileName;
+  if(inputFileName.rfind(".raw") != string::npos)
+    {
+    //if so, the user is also required to pass in image dimensions
+    if(argc < 6)
+      {
+      cerr << "Usage: <raw input file> <sizeX> <sizeY> <sizeZ> <output file>" << endl;
+      return EXIT_FAILURE;
+      }
+    rawInput = true;
+    sizeX = atoi(argv[2]);
+    sizeY = atoi(argv[3]);
+    sizeZ = atoi(argv[4]);
+    outputFileName = argv[5];
+    }
+  else
+    {
+    outputFileName = argv[2];
+    }
 
-	volin = (DATATYPEIN*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(DATATYPEIN));
-	volout = (DATATYPEOUT*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(DATATYPEOUT));
+  FILE *infile;
+  FILE *outfile;
+  int i,j,k;
+  int ii, jj, kk;
+  DATATYPEOUT *volout;
+  long idx;
+  double threshold;
+  int sizeExpand = 0;
+  DATATYPEOUT blockMax;
+  int timesDilate;
+  int border;
 
-	if((infile=fopen(argv[1],"rb"))==NULL)
-			{printf("Input file open error!\n");
-			 exit(-1);
-			}
+  //make sure we can write to the output file
+  if((outfile=fopen(outputFileName, "wb")) == NULL)
+    {
+    cerr << "Output file open error!" << endl;
+    return EXIT_FAILURE;
+    }
 
-	if((outfile=fopen(argv[5],"wb"))==NULL)
-			{printf("Output file open error!\n");
-			 exit(-1);
-			}
+  //initialize the input image
+  if(rawInput)
+    {
+    if((infile=fopen(inputFileName.c_str(), "rb"))==NULL)
+      {
+      cout << "Input file open error!" << endl;
+      return EXIT_FAILURE;
+      }
 
-/*	if 0 	// read another file if necessary
-	FILE *infile2;
-	unsigned char *volin2;
-	volin2 = (unsigned char*)malloc(sizeX*sizeY*sizeZ*sizeof(unsigned char));
-	if((infile2=fopen("contrast_thres.64x64x32.img","rb"))==NULL)
-			{printf("Input file open error!\n");
-			 exit(-1);
-			}
-	fread(volin2,sizeX*sizeY*sizeZ,sizeof(unsigned char), infile2);
-*/
+    volin = (DATATYPEIN*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(DATATYPEIN));
 
-	for (t=0; t<sizeTime; t++) {
-		
-		if (fread(volin, sizeof(DATATYPEIN), sizeX*sizeY*sizeZ, infile) < (unsigned int)(sizeX*sizeY*sizeZ))
-		{
-			printf("File size is not the same as volume size\n");
-		    exit(1);
-		}
-		//fread(volin,sizeX*sizeY*sizeZ,sizeof(DATATYPEIN), infile);
+    if (fread(volin, sizeof(DATATYPEIN), sizeX*sizeY*sizeZ, infile) < (unsigned int)(sizeX*sizeY*sizeZ))
+      {
+      cerr << "File size is not the same as volume size" << endl;
+      return EXIT_FAILURE;
+      }
+    }
+  else
+    {
+    //use ITK to read all non-raw images
+    typedef unsigned char     PixelType;
+    const   unsigned int      Dimension = 3;
+    typedef itk::Image< PixelType, Dimension >    ImageType;
+    typedef itk::ImageFileReader< ImageType >  ReaderType;
+    ReaderType::Pointer reader = ReaderType::New();
+    ImageType::Pointer inputImage = reader->GetOutput();
+    reader->SetFileName( inputFileName.c_str()  );
+    try 
+      { 
+      reader->Update(); 
+      } 
+    catch( itk::ExceptionObject & err ) 
+      { 
+      cerr << "ExceptionObject caught!" << endl; 
+      cerr << err << endl; 
+      return EXIT_FAILURE;
+      } 
+    ImageType::RegionType region = inputImage->GetBufferedRegion();
+    ImageType::SizeType  size = region.GetSize();
+    cout << "input image size: " << size << endl;
+    sizeX = size[0];
+    sizeY = size[1];
+    sizeZ = size[2];
+    
+    //manually copy the values from inputImage to volin, which we will use for
+    //the rest of the MDL process
+    itk::ImageRegionIterator< ImageType >
+      itr( inputImage, inputImage->GetBufferedRegion() );
+    itr.GoToBegin();
+    long int idx = 0;
+    volin = (DATATYPEIN*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(DATATYPEIN));
+    while( ! itr.IsAtEnd() )
+      {
+      volin[idx] = itr.Get();
+      ++itr;
+      ++idx;
+      }
+    }
 
+  //allocate memory for the output image
+  volout = (DATATYPEOUT*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(DATATYPEOUT));
 
-		printf("Volume Processing # %d ...\n", t);
+  cout << "Volume Processing..." << endl;
 
+  // Pre-Processing 
+  // by xiao liang, using 3 sigma theory to estimate threshold;
+  double meanValue =0.0, VarianceValue =  0.0;
 
-		// Pre-Processing 
+  // threshold first
+  for (k=0; k<sizeZ; k++)
+    {
+    for (j=0; j<sizeY; j++) 
+      {
+      for (i=0; i<sizeX; i++)
+        {
+        idx = k *sizeX*sizeY + j *sizeX + i;
+        meanValue += volin[idx];
+        }
+      }
+    }
 
-		// by xiao liang, using 3 sigma theory to estimate threshold;
-        double meanValue =0.0, VarianceValue =  0.0;
+  meanValue = meanValue/(double)(sizeX*sizeY*sizeZ);
 
-		for (k=0; k<sizeZ; k++)
-		{  // threshlod first
-			for (j=0; j<sizeY; j++) 
-			{
-				for (i=0; i<sizeX; i++)
-				{
-					idx = k *sizeX*sizeY + j *sizeX + i;
-					meanValue += volin[idx];
-				}
-			}
-		}
+  // threshold first
+  for (k=0; k<sizeZ; k++)
+    {
+    for (j=0; j<sizeY; j++) 
+      {
+      for (i=0; i<sizeX; i++)
+        {
+        idx = k *sizeX*sizeY + j *sizeX + i;
+        VarianceValue += (volin[idx]-meanValue)*(volin[idx]-meanValue);
+        }
+      }
+    }
 
-       meanValue = meanValue/(double)(sizeX*sizeY*sizeZ);
- 
-	   for (k=0; k<sizeZ; k++)
-		{  // threshlod first
-			for (j=0; j<sizeY; j++) 
-			{
-				for (i=0; i<sizeX; i++)
-				{
-					idx = k *sizeX*sizeY + j *sizeX + i;
-					VarianceValue += (volin[idx]-meanValue)*(volin[idx]-meanValue);
-				}
-			}
-		}
+  VarianceValue =  VarianceValue/(double)(sizeX*sizeY*sizeZ);
+  VarianceValue = sqrt(VarianceValue);
 
-       VarianceValue =  VarianceValue/(double)(sizeX*sizeY*sizeZ);
-	   VarianceValue = sqrt(VarianceValue);
+  double m_threshold=OtsuThreshold (sizeX,sizeY,sizeZ);
+  if (m_threshold > 7 || m_threshold < 0)
+    {
+    threshold =(meanValue-VarianceValue/30); 
+    }
+  else
+    {
+    threshold = m_threshold;
+    }
 
-	   double m_threshold=OtsuThreshold (sizeX,sizeY,sizeZ);
-	   if (m_threshold > 7||m_threshold<0)threshold =(meanValue-VarianceValue/30); 
-	   else
-		   threshold = m_threshold;
+  cout << "OTSU optimal threshold " << threshold << endl;
 
-	   printf ("OTSU optimal threshold %f", threshold);
-	
-	  // cout << meanValue << VarianceValue;
-     // printf("hello %f,hello %f, %f, optimalthreshold= %f ",meanValue,VarianceValue,threshold,m_threshold);
-	
+     for (k=0; k<(sizeZ+sizeExpand*2); k++)
+      for (j=0; j<sizeY; j++)
+        for (i=0; i<sizeX; i++) {
 
-	   for (k=0; k<(sizeZ+sizeExpand*2); k++)
-			for (j=0; j<sizeY; j++)
-				for (i=0; i<sizeX; i++) {
+          volout[k *sizeX*sizeY + j *sizeX + i] = 0; 
+        }  //initial to zeros
 
-					volout[k *sizeX*sizeY + j *sizeX + i] = 0; 
-				}  //initial to zeros
+  for (k=0; k<sizeZ; k++)
+    {
+    // threshold first
+    for (j=0; j<sizeY; j++)
+      {
+      for (i=0; i<sizeX; i++)
+        {
+        idx = k *sizeX*sizeY + j *sizeX + i;
+        if (volin[idx] < threshold) 
+          {
+          volin[idx] = 0;
+          }
+        }
+      }
+    }   
 
+  // Method 2: Dilation of the object
+  timesDilate = 1;
+  border = 3;
+  while (timesDilate >0 )
+    {
+    for (k=border; k<sizeZ-border; k++)
+      {
+      for (j=border; j<sizeY-border; j++)
+        {
+        for (i=border; i<sizeX-border; i++)
+          {
+          blockMax = volin[k *sizeX*sizeY + j *sizeX + i];
+          for (kk=-1; kk<=1; kk++)
+            {
+            for (jj=-1; jj<=1; jj++)
+              {
+              for (ii=-1; ii<=1; ii++)
+                {
+                if(volin[(k+kk)*sizeX*sizeY + (j+jj)*sizeX + (i+ii)] > blockMax) 
+                  {
+                  blockMax = volin[(k+kk)*sizeX*sizeY + (j+jj)*sizeX + (i+ii)];
+                  }
+                }
+              }
+            }
+          // Keep the peak of the original intensity
+          if (blockMax == volin[k *sizeX*sizeY + j *sizeX + i] && blockMax != 0)
+            {
+            blockMax = blockMax + 1;
+            //if (blockMax > 255)   blockMax = 255;
+            }
+          volout[k *sizeX*sizeY + j *sizeX + i] = blockMax;
+          }
+        }
+      }
 
+    // copy volout back to volin for the next dilation
+    for (k=0; k<sizeZ; k++) 
+      {
+      for (j=0; j<sizeY; j++) 
+        {
+        for (i=0; i<sizeX; i++)
+          {
+          volin[k *sizeX*sizeY + j *sizeX + i] = volout[k *sizeX*sizeY + j *sizeX + i];
+          }
+        }
+      }
+    timesDilate--;
+    }
 
+  //write the output image and free memory
+  fwrite(volout, sizeX*sizeY*sizeZ, sizeof(DATATYPEOUT), outfile);
 
-		for (k=0; k<sizeZ; k++) {  // threshlod first
-			for (j=0; j<sizeY; j++) {
-				for (i=0; i<sizeX; i++)
-				{
-					idx = k *sizeX*sizeY + j *sizeX + i;
+  fclose(infile);
+  fclose(outfile);
 
-					if (volin[idx] >= threshold) 
-					{}
-					/*if (volin[idx] >= meanValue-3*VarianceValue) 
-					{
-						//volin[idx] = volin[idx];
-					}
-					*/
+  free(volin);  // by xiao
+  free(volout); // by xiao
+  volin=NULL;
+  volout=NULL;
 
-
-					else
-						volin[idx] = 0;
-				}
-			}
-		}   
-/*
-		for (k=0; k<sizeZ; k++)
-			for (j=0; j<sizeY; j++)
-				for (i=0; i<sizeX; i++) {
-					volout[(k+sizeExpand)*sizeX*sizeY + j*sizeX + i] = volin[k*sizeX*sizeY + j*sizeX + i];
-				}  // expand the size and pad with zeros
-		sizeZ = sizeZ + 2* sizeExpand;
-		for (k=0; k<sizeZ; k++)
-			for (j=0; j<sizeY; j++)
-				for (i=0; i<sizeX; i++) {
-					volin[k *sizeX*sizeY + j*sizeX + i] = volout[k *sizeX*sizeY + j*sizeX + i];
-				}  // save back to volin
-
-*/
-
-		// Method 1: Cutting a part of the object
-/*		for (k=0; k<sizeZ; k++) {
-			for (j=0; j<sizeY; j++) {
-				for (i=0; i<sizeX; i++)
-				{
-					idx = k *sizeX*sizeY + j *sizeX + i;
-					if (volin[idx] == 0)
-						volout[idx] = 0;
-					    else
-						volout[idx] = OBJECT;
-					if ((k<=2 || k>=sizeZ-3)||(j<=2 || j>=sizeZ-3)||(i<=2 || i>=sizeZ-3))
-						volout[idx] = 0;
-				}
-			}
-		}
-*/
-
-		// Method 2: Dilation of the object
-	   timesDilate = 1;
-	   border = 3;
-	   while (timesDilate >0 ) {
-		for (k=border; k<sizeZ-border; k++) {
-			for (j=border; j<sizeY-border; j++) {
-				for (i=border; i<sizeX-border; i++)
-				{
-				    blockMax = volin[k *sizeX*sizeY + j *sizeX + i];
-				    for (kk=-1; kk<=1; kk++)
-				      for (jj=-1; jj<=1; jj++)
-						for (ii=-1; ii<=1; ii++) {
-							if(volin[(k+kk)*sizeX*sizeY + (j+jj)*sizeX + (i+ii)] > blockMax) 
-								blockMax = volin[(k+kk)*sizeX*sizeY + (j+jj)*sizeX + (i+ii)];
-						}
-					// Keep the peak of the original intensity
-					if (blockMax == volin[k *sizeX*sizeY + j *sizeX + i] && blockMax != 0)  {
-						blockMax = blockMax + 1;
-						//if (blockMax > 255)   blockMax = 255;
-					}
-					volout[k *sizeX*sizeY + j *sizeX + i] = blockMax;
-				}
-			}
-		}
-
-		// copy volout back to volin for the next dilation
-		for (k=0; k<sizeZ; k++) 
-			for (j=0; j<sizeY; j++) 
-				for (i=0; i<sizeX; i++)  {
-					volin[k *sizeX*sizeY + j *sizeX + i] = volout[k *sizeX*sizeY + j *sizeX + i];
-				}
-        timesDilate--;
-	   }
-
-
-		// Method 3: Threshold the voxel intensity
-/*		for (k=0; k<sizeZ; k++) {
-			for (j=0; j<sizeY; j++) {
-				for (i=0; i<sizeX; i++)
-				{
-					idx = k *sizeX*sizeY + j *sizeX + i;
-					if (volin[idx] >= threshold) {
-						volout[idx] = OBJECT;
-					}
-					else
-						volout[idx] = 0;
-				}
-			}
-		}
-*/
-
-		// Method 4: Flood/scanlines fill
-	/*	lineSeed();
-		for (k=0; k<sizeZ; k++) {
-			for (j=0; j<sizeY; j++) {
-				for (i=0; i<sizeX; i++)
-				{
-					idx = k *sizeX*sizeY + j *sizeX + i;
-					if(volin[idx] != FillColor) {
-						volout[idx] = OBJECT;
-					}
-					else {
-						volout[idx] = 0;
-					}
-				}
-			}
-		}
-
-
-		// Method 5: Put 64x64x32 slice by slice into one whole image
-		int NumXImages = 8;
-		int NumYImages = 4;
-		for (k=0; k<sizeZ; k++)
-			for (j=0; j<sizeY; j++)
-				for (i=0; i<sizeX; i++) {
-					idx = k *sizeX*sizeY + j *sizeX + i;
-					kmod8 = k % NumXImages;
-					kdiv8 = k / NumXImages;
-					ii = kmod8*sizeX + i;
-					jj = kdiv8*sizeY + j;
-					kk = 0;
-					iidx = kk*sizeX*sizeY*NumXImages*NumYImages + jj*sizeX*NumXImages + ii;
-					volout[iidx] = volin[idx];
-
-		}
-*/
-
-		//Method 6: Take away each isolated dot (noise) and keep clusters
-		// i.e., according to #voxels of each connected components must be >= 2
-/*		for (k=0; k<sizeZ; k++)
-		    for (j=0; j<sizeY; j++)
-			for (i=0; i<sizeX; i++)  {
-				idx = k *sizeX*sizeY + j *sizeX + i;
-				NumConnectComp = 0;
-				for (kk=-1; kk<=1; kk++)
-				    for (jj=-1; jj<=1; jj++)
-					for (ii=-1; ii<=1; ii++) {
-						iidx = idx + kk*sizeX*sizeY + jj*sizeX + ii;
-						if (iidx == idx || iidx < 0 || iidx >= sizeX*sizeY*sizeZ)  continue;
-						if(volin[iidx] != 0)  NumConnectComp++;
-				}
-				if(NumConnectComp < 3)
-					volout[idx] = 0;
-				   else
-					volout[idx] = volin[idx];
-		}
-
-
-		// Method 7: Subtract one image from another
-		for (k=0; k<sizeZ; k++) {
-			for (j=0; j<sizeY; j++) {
-				for (i=0; i<sizeX; i++)
-				{
-					idx = k *sizeX*sizeY + j *sizeX + i;
-					volout[idx] = volin[idx];
-					if (volin[idx] == 0)  continue;
-					if (volin2[idx] != 0)  volout[idx] = 0;
-				}
-			}
-		}
-*/
-
-		// Method 8: Creat a small test volume
-/*		sizeX=5;
-		sizeY=5;
-		sizeZ=5;
-		for (k=0; k<sizeZ; k++) {
-			for (j=0; j<sizeY; j++) {
-				for (i=0; i<sizeX; i++)
-				{
-					if (i==j && i==k) {
-                        volout[k *sizeX*sizeY + j *sizeX + i] = 100;
-					}
-					else  {
-						volout[k *sizeX*sizeY + j *sizeX + i] = 0;
-					}
-
-					if (i==2 && j==2 && k==3)
-						volout[k *sizeX*sizeY + j *sizeX + i] = 100;
-				}
-			}
-		}
-*/
-
-		fwrite(volout, sizeX*sizeY*sizeZ, sizeof(DATATYPEOUT), outfile);
-
-	}
-
-
-	fclose(infile);
-	fclose(outfile);
-
-	free(volin);  // by xiao
-	free(volout); // by xiao
-	volin=NULL;
-	volout=NULL;
-
-	printf("Done \n");
-    return 0;
+  cout << "Done" << endl;
+  return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void push (Position pos)
-{
-	StackOfPoints *temp = new StackOfPoints;
-	temp->ps = pos;
-	temp->next = stack;
-	stack = temp;
-	stacktop ++;
-}
-
-Position pop (void)
-{
-	StackOfPoints *temp;
-	Position outp = stack->ps;
-	temp = stack;
-	stack = stack->next;
-	stacktop --;
-	delete temp;
-	return outp;
-}
-
-bool empty(void)
-{
-	return stacktop == 0 ;
-}
-
-int findstartx(Position ps)
-{
-	while (volin[ps.z *sizeX*sizeY + ps.y *sizeX + ps.x] == COLORseed && ps.x >=0)
-	{
-		ps.x --;
-	}
-	ps.x ++;
-	return ps.x;
-}
-
-int findendx(Position ps)
-{
-	while (volin[ps.z *sizeX*sizeY + ps.y *sizeX + ps.x] == COLORseed && ps.x < sizeX)
-	{
-		ps.x ++;
-	}
-	ps.x --;
-	return ps.x;
-}
-
-void spread(Position pos, int startx, int endx, int direction)
-{
-	Position pos1; // in a new row
-	int newy, newz;
-	int startx0, endx0;
-	int startx1;//, endx1;
-	int laststartx;
-
-	switch (direction)
-	{
-		case 1:
-			newy = pos.y + 1;
-			newz = pos.z;
-			break;
-		case 2:
-			newy = pos.y - 1;
-			newz = pos.z;
-			break;
-		case 3:
-			newy = pos.y;
-			newz = pos.z +1;
-			break;
-		case 4:
-			newy = pos.y;
-			newz = pos.z -1;
-			break;
-	}
-
-	if (newy < sizeY && newy >= 0 && newz < sizeZ && newz >=0) // within boundary
-	{
-		startx0 = startx;
-		endx0 = endx;
-		laststartx = -1;
-		for (int i = startx0; i<= endx0; i++ )
-		{
-			if (volin[newz *sizeX*sizeY + newy *sizeX + i] == COLORseed)
-			{
-				pos1.x = i;
-				pos1.y = newy;
-				pos1.z = newz;
-				startx1 = findstartx(pos1);
-				if (startx1 != laststartx)
-				{
-					pos1.x = startx1;
-					pos1.y = newy;
-					pos1.z = newz;
-					push(pos1);
-					laststartx = startx1;
-				}
-			}
-
-
-		}
-
-	}
-
-}
-
-
-void lineSeed()
-{
-	Position pos;
-	int startx, endx;
-
-	Position initialSeed = {0, 0, 0}; // set the seed position
-	push(initialSeed);
-	while (!empty())
-	{
-		pos = pop();
-		if(volin[pos.z *sizeX*sizeY + pos.y *sizeX + pos.x] == COLORseed)
-		{
-			startx = pos.x;
-			endx = findendx(pos);
-			for (int i = startx; i<= endx; i++)
-				volin[pos.z *sizeX*sizeY + pos.y *sizeX + i] = FillColor;
-			// four directions
-			spread(pos, startx, endx, 1);
-			spread(pos, startx, endx, 2);
-			spread(pos, startx, endx, 3);
-			spread(pos, startx, endx, 4);
-
-		}
-
-	}
-}
-
-
-
-
-
 
 
 // This function is designed to compute the opyimal threshold using OTSU method;
@@ -594,46 +320,46 @@ double  OtsuThreshold (int sizeX,int sizeY,int sizeZ)
   int idx; // just for the location0
 
   for (k=0; k < sizeZ; k++)
-	{  // 
-	 for (j=0; j < sizeY; j++) 
-			{
-				for (i=0; i<sizeX; i++)
-				{
-					idx = k *sizeX*sizeY + j *sizeX + i;
-					meanValue += volin[idx];
-					if (volin[idx]> MaxValue) MaxValue = volin[idx];
-					if (volin[idx]< MinValue) MinValue = volin[idx];
+  {  // 
+   for (j=0; j < sizeY; j++) 
+      {
+        for (i=0; i<sizeX; i++)
+        {
+          idx = k *sizeX*sizeY + j *sizeX + i;
+          meanValue += volin[idx];
+          if (volin[idx]> MaxValue) MaxValue = volin[idx];
+          if (volin[idx]< MinValue) MinValue = volin[idx];
 
-				}
-			}
-		}
+        }
+      }
+    }
 
-      printf("Max= %d,Minin= %d", MaxValue,MinValue);
+      cout << "Max = " << (int)MaxValue << ", Min = " << (int)MinValue << endl;
        meanValue = meanValue/totalPixels;
  
-	   for (k=0; k<sizeZ; k++)
-		{  //
-			for (j=0; j<sizeY; j++) 
-			{
-				for (i=0; i<sizeX; i++)
-				{
-					idx = k *sizeX*sizeY + j *sizeX + i;
-					varianceValue += (volin[idx]-meanValue)*(volin[idx]-meanValue);
-				}
-			}
-		} 
+     for (k=0; k<sizeZ; k++)
+    {  //
+      for (j=0; j<sizeY; j++) 
+      {
+        for (i=0; i<sizeX; i++)
+        {
+          idx = k *sizeX*sizeY + j *sizeX + i;
+          varianceValue += (volin[idx]-meanValue)*(volin[idx]-meanValue);
+        }
+      }
+    } 
 
 
     if ( MinValue >= MaxValue)
     {
-	   m_Threshold=MinValue;
+     m_Threshold=MinValue;
        return m_Threshold;
     
     }
    
-	m_Threshold = (meanValue-varianceValue/30); 
-	  // this step is only initialized a good experimental value for m_Threshold, because the 3D image
-	  // is sparse, there are lots of zero values; 
+  m_Threshold = (meanValue-varianceValue/30); 
+    // this step is only initialized a good experimental value for m_Threshold, because the 3D image
+    // is sparse, there are lots of zero values; 
 
   // create a histogram
   double relativeFrequency[m_NumberOfHistogramBins];
@@ -644,19 +370,19 @@ double  OtsuThreshold (int sizeX,int sizeY,int sizeZ)
     }
 
   double binMultiplier = (double) m_NumberOfHistogramBins /(double) ( MaxValue - MinValue);
-  printf("binmultiple %f \n", binMultiplier);
+  cout << "binMultiplier = " << binMultiplier << endl;
  
   
   double Voxelvalue; // temp variable
   unsigned int binNumber;
 
   for (k=0; k<sizeZ; k++) 
-	{  // 
-	for (j=0; j<sizeY; j++) 
-	 {
-	for (i=0; i<sizeX; i++)
-	 {
-		idx = k *sizeX*sizeY + j *sizeX + i;
+  {  // 
+  for (j=0; j<sizeY; j++) 
+   {
+  for (i=0; i<sizeX; i++)
+   {
+    idx = k *sizeX*sizeY + j *sizeX + i;
         Voxelvalue = volin[idx];
 
         if ( Voxelvalue == MinValue ) 
@@ -677,13 +403,13 @@ double  OtsuThreshold (int sizeX,int sizeY,int sizeZ)
        //  printf("binNumber???? = %f  MaxValue=%f \n", binNumber+1,MaxValue);
          relativeFrequency[binNumber] += 1.0;
    
-	}//
-	}
+  }//
+  }
    }
 // test 
 
-//	for (i=0;i<m_NumberOfHistogramBins;i++)
-//		printf ( "%d bin = %f,  ",i, relativeFrequency[i]);
+//  for (i=0;i<m_NumberOfHistogramBins;i++)
+//    printf ( "%d bin = %f,  ",i, relativeFrequency[i]);
  
   // normalize the frequencies
   double totalMean = 0.0;
@@ -734,6 +460,6 @@ double  OtsuThreshold (int sizeX,int sizeY,int sizeZ)
     } 
 
     m_Threshold = double( MinValue + ( maxBinNumber + 1 ) / binMultiplier );
-	printf("m_threshold=%f ",m_Threshold );
-	return m_Threshold; 
+  cout << "m_threshold = " << m_Threshold << endl;
+  return m_Threshold; 
 }

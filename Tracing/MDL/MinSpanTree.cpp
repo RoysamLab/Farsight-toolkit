@@ -66,6 +66,7 @@ limitations under the License.
 using namespace std;
 //using namespace boost;
 
+
 struct  VoxelPosition
 {
 	float x;
@@ -211,26 +212,9 @@ int main(int argc, char *argv[])
   times_erosion = atoi(argv[9]);
   alpha = atof(argv[10]);
 
-  bool outputAsSWC;
-  if(strstr(argv[11], ".vtk") != NULL)
-    {
-    cout << "OK, writing output as .vtk" << endl;
-    outputAsSWC = false;
-    }
-  else if(strstr(argv[11], ".swc") != NULL)
-    {
-    cout << "Writing output as .swc" << endl;
-    outputAsSWC = true;
-    }
-  else
-    {
-    cerr << "Unsupported output file type: " << argv[11] << endl;
-    cerr << "Supported types include: .swc, .vtk" << endl;
-    exit(1);
-    }
   if ((fout = fopen(argv[11], "w")) == NULL)
   {
-    printf("Cannot open %s for writing\n",argv[11]);//??????   I think it must be arg[11] ????? by Xiao Liang
+    printf("Cannot open %s for writing\n",argv[11]);
     exit(1);
   }
 
@@ -380,14 +364,11 @@ int main(int argc, char *argv[])
       }
 		fin >> nodePosition.x >> nodePosition.y >> nodePosition.z >> p;
     }
-  if(!outputAsSWC)
-    {
-    fprintf(fout, "# vtk DataFile Version 3.0\n");
-    fprintf(fout,"MST of skel\n");
-    fprintf(fout,"ASCII\n");
-    fprintf(fout,"DATASET POLYDATA\n");
-    fprintf(fout,"POINTS %d float\n",num_nodes);
-    }
+  fprintf(fout, "# vtk DataFile Version 3.0\n");
+  fprintf(fout,"MST of skel\n");
+  fprintf(fout,"ASCII\n");
+  fprintf(fout,"DATASET POLYDATA\n");
+  fprintf(fout,"POINTS %d float\n",num_nodes);
 
   //reinitialize the file and variables used to loop through it
   fin.clear();
@@ -405,10 +386,7 @@ int main(int argc, char *argv[])
 			voxelNodeIndex[idx] = num_nodes;   // Save the index of node (vertex) at each voxel position
 			// output the node positions to vtk file
       // Add negative sign to make output align to 3D data
-      if(!outputAsSWC)
-        {
-			  fprintf(fout,"%f %f %f\n", nodePosition.x, -nodePosition.y, nodePosition.z);  
-        }
+      fprintf(fout,"%f %f %f\n", nodePosition.x, -nodePosition.y, nodePosition.z);  
 
 			// Find all neighbor nodes within edgeRange
 			for (kk = -edgeRange; kk <= edgeRange; kk++)
@@ -865,17 +843,6 @@ int main(int argc, char *argv[])
 					#if OUTPUT_BACKBONE_ONLY==0
 					add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeBB);   // Comment out if only need backbone output
 					#endif
-					if(outputAsSWC)
-            {
-            if(vertsCurBranch2[0][j-1] == 5)
-              {
-              cout << "yup 3" << endl;
-              }
-					  fprintf(fout, "%d 4 %f %f %f 2.0 %d\n", 
-					      vertsCurBranch2[0][j], vertexPos[vertsCurBranch2[0][j]].x, vertexPos[vertsCurBranch2[0][j]].y, vertexPos[vertsCurBranch2[0][j]].z, vertsCurBranch2[0][j-1]);
-					  //fprintf(fout, "%4.0f  %4.0f  %4.0f\n",   // Output for levelset seeds
-						//  vertexPos[vertsCurBranch2[0][j]].x, vertexPos[vertsCurBranch2[0][j]].y, vertexPos[vertsCurBranch2[0][j]].z);
-            }
 				}
 				if (MDL_minIndex >= 1)  {
 					for (j = 1; j <= vertsCurBr_Index2[MDL_minIndex]; j++) {
@@ -919,74 +886,6 @@ int main(int argc, char *argv[])
 		}    // End of each out edge
   } // End of all vertice
   //msTreeBB = msTreeBB_buffer;
-
-  if(outputAsSWC)
-    {
-    int parent_index, cur_index;
-    int parent_index0, cur_index0;
-    int targ;
-    for(boost::tie(vi, vend) = vertices(msTree); vi != vend; ++vi)  { // for all vertex in the graph
-      index_vert = int(index[*vi]);   // Get index from the graph IndexMap
-      //cout << "vertBackbone[index_vert]=" << vertBackbone[index_vert] << endl;
-      if (vertBackbone[index_vert]==0) continue;  // if the vertex is not on Backbone, continue
-      //cout << "degree_nodes[index_vert]=" << degree_nodes[index_vert] << endl;
-      //cout << "out_degree of index_vert =" << out_degree(vertex(index_vert, msTree), msTree) << endl;
-      //if (degree_nodes[index_vert] != 1)  
-      if (out_degree(vertex(index_vert, msTree), msTree) != 1)	continue;  // if it is not end of backbone
-      if (vertexPos[index_vert].x> 450 && vertexPos[index_vert].y<50 ) break;  // to pick up particular root vertex for swc file
-    }
-    fprintf(fout, "%d 3 %f %f %f 4.0 -1\n", index_vert, vertexPos[index_vert].x, vertexPos[index_vert].y, vertexPos[index_vert].z);
-    parent_index = index_vert;
-    //cout << "out_degree of index_vert =" << out_degree(vertex(index_vert, msTree), msTree) << endl;
-    for (boost::tie(outei, outedge_end) = out_edges(vertex(index_vert,msTree), msTree); ; outei++) { // find next node on backbone
-      targ = target(*outei, msTree);
-      //cout << "targ=" << targ << endl;
-      if (vertBackbone[targ] == 0)  continue;  // the edge is not on BackBone, continue
-      cur_index = targ;
-      fprintf(fout, "%d 3 %f %f %f 4.0 %d\n",cur_index, vertexPos[cur_index].x, vertexPos[cur_index].y, vertexPos[cur_index].z, parent_index);
-      break;
-    }
-
-    while (degree_nodes[cur_index] == 2) {//keep going on the first level of backbone branch
-      for (boost::tie(outei, outedge_end) = out_edges(vertex(cur_index,msTree), msTree); outei != outedge_end; outei++) { // find next node on backbone
-        targ = target(*outei, msTree);
-        //cout << "targ=" << targ << endl;
-        if (vertBackbone[targ] == 0 || targ == parent_index)  continue;  // the edge is not on BackBone, continue
-        parent_index = cur_index;
-        cur_index = targ;
-        fprintf(fout, "%d 3 %f %f %f 4.0 %d\n",cur_index, vertexPos[cur_index].x, vertexPos[cur_index].y, vertexPos[cur_index].z, parent_index);
-        break;
-      }
-    }
-
-    //Output the 2nd level of backbones
-    if (degree_nodes[cur_index] >= 3) {
-      parent_index0 = parent_index;
-      cur_index0 = cur_index;
-      for (boost::tie(outei, outedge_end) = out_edges(vertex(cur_index0,msTree), msTree); outei != outedge_end; outei++) { // find next node on backbone
-        targ = target(*outei, msTree);
-        if (vertBackbone[targ] == 0 || targ == parent_index0)  continue;  // the edge is not on BackBone, continue
-        //if (time == 0) {time = 1; continue;} //test only
-        parent_index = cur_index0;
-        cur_index = targ;
-        fprintf(fout, "%d 3 %f %f %f 4.0 %d\n",cur_index, vertexPos[cur_index].x, vertexPos[cur_index].y, vertexPos[cur_index].z, parent_index);
-        //keep going on each backbone branch
-          while (degree_nodes[cur_index] == 2) {
-            for (boost::tie(outei2, outedge_end2) = out_edges(vertex(cur_index,msTree), msTree); outei2!=outedge_end2; outei2++) { // find next node on backbone
-              targ = target(*outei2, msTree);
-              if (vertBackbone[targ] == 0 || targ == parent_index)  continue;  // the edge is not on BackBone, continue
-              parent_index = cur_index;
-              cur_index = targ;
-              fprintf(fout, "%d 3 %f %f %f 4.0 %d\n",cur_index, vertexPos[cur_index].x, vertexPos[cur_index].y, vertexPos[cur_index].z, parent_index);
-              break;
-            }
-        }//while end
-      
-      }//for end
-    }//if end
-  } //end if outputAsSWC
-
-
 
   #if OUT_CLASSIFIER_TRAINING
   fprintf(fclass_identify, "0 0 0 0 end");
@@ -1087,21 +986,17 @@ int main(int argc, char *argv[])
 */
 
 
-  if(!outputAsSWC)
+  line_count = 0;
+  for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei)
     {
-    // -- Output to vtk
-    line_count = 0;
-    for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei)
-      {
-      line_count++; // count the number of lines output in vtk file
-      }
-    fprintf(fout,"LINES %d %d\n", line_count, line_count*3);
+    line_count++; // count the number of lines output in vtk file
+    }
+  fprintf(fout,"LINES %d %d\n", line_count, line_count*3);
 
-    for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei)
-      {
-       // output lines into vtk file
-         fprintf(fout, "2 %ld %ld\n", source(*ei, msTreeBB)-1, target(*ei, msTreeBB)-1);
-      }
+  for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei)
+    {
+     // output lines into vtk file
+       fprintf(fout, "2 %ld %ld\n", source(*ei, msTreeBB)-1, target(*ei, msTreeBB)-1);
     }
 
 
@@ -1151,11 +1046,7 @@ int main(int argc, char *argv[])
   somaDist = NULL;
   ///////////////
   printf("\n -- Number of nodes is : %d\n", num_nodes); 
-  if(!outputAsSWC)
-    {
-    //line_count is only computed for .vtk files
-    printf("-- Number of Lines is : %d\n", line_count);
-    }
+  printf("-- Number of Lines is : %d\n", line_count);
   fclose(fout);
   //fclose(fout_txt);
   #if OUT_CLASSIFIER_TRAINING

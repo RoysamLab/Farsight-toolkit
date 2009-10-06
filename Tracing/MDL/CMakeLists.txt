@@ -11,6 +11,7 @@ ADD_EXECUTABLE(GradientVecField GradientVecField.cpp)
 ADD_EXECUTABLE(MinSpanTree distTransform.cpp MinSpanTree.cpp morphGraphPrune.cpp) 
 ADD_EXECUTABLE(Integratedskel Integratedskel.cpp)
 ADD_EXECUTABLE(volumeProcess volumeProcess.cpp)
+TARGET_LINK_LIBRARIES(volumeProcess ITKIO ITKStatistics)
 
 #INCLUDE_DIRECTORIES(${BSplineFitting_SOURCE_DIR})
 ADD_EXECUTABLE(BSplineFitting BSplineFitting.cpp)

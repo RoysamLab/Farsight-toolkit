@@ -25,29 +25,48 @@ parameterValues = ParseXMLParameterFile("MDL", False)
 fullPathToInput = parameterValues["Input image"]
 fullPathToOutput = parameterValues["Output image"]
 dataDir = os.path.dirname(fullPathToInput)
+if dataDir == "":
+  dataDir = "."
 filename = os.path.basename(fullPathToInput)
 
-match = re.compile(r".*?\.(\d+)x(\d+)x(\d+)\.").search(filename)
-sizeX = match.group(1)
-sizeY = match.group(2)
-sizeZ = match.group(3)
-intensityThreshold = parameterValues["Intensity threshold"]
+rawInput = False
+if fullPathToInput.endswith(".raw"):
+  rawInput = True
+  match = re.compile(r".*?\.(\d+)x(\d+)x(\d+)\.").search(filename)
+  sizeX = match.group(1)
+  sizeY = match.group(2)
+  sizeZ = match.group(3)
+
 connectedComponentsSize = parameterValues["Connected components size"]
 
 #change to the binary directory before we start calling executables
 os.chdir("${CMAKE_BINARY_DIR}")
 
-cmd = "./volumeProcess${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s %s" % \
-  (fullPathToInput, sizeX, sizeY, sizeZ, dataDir+"/volume_Processed.raw",\
-   intensityThreshold)
-print "Step #1, executing the following command:\n%s" % cmd
 timeBefore = time.time()
-subprocess.call(["./volumeProcess${CMAKE_EXECUTABLE_SUFFIX}",\
-                  fullPathToInput, sizeX, sizeY, sizeZ, \
-                  dataDir+"/volume_Processed.raw", intensityThreshold])
+if rawInput:
+  cmd = "./volumeProcess${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s" % \
+    (fullPathToInput, sizeX, sizeY, sizeZ, dataDir+"/volume_Processed.raw")
+  print "Step #1, executing the following command:\n%s" % cmd
+  subprocess.call(["./volumeProcess${CMAKE_EXECUTABLE_SUFFIX}",\
+                    fullPathToInput, sizeX, sizeY, sizeZ, \
+                    dataDir+"/volume_Processed.raw"])
+  timeElapsed = time.time() - timeBefore
+  print "Step #1 completed in %d seconds\n\n" % timeElapsed
+else:
+  cmd = "./volumeProcess${CMAKE_EXECUTABLE_SUFFIX} %s %s " % \
+    (fullPathToInput, dataDir+"/volume_Processed.raw")
+  print "Step #1, executing the following command:\n%s" % cmd
+  timeBefore = time.time()
+  output = subprocess.Popen(["./volumeProcess", fullPathToInput,\
+    dataDir+"/volume_Processed.raw"], stdout=subprocess.PIPE).communicate()[0]
+  print output
+  match = re.compile(r"input image size: \[(\d+), (\d+), (\d+)\]").search(output)
+  sizeX = match.group(1)
+  sizeY = match.group(2)
+  sizeZ = match.group(3)
 timeElapsed = time.time() - timeBefore
 print "Step #1 completed in %d seconds\n\n" % timeElapsed
-
+  
 cmd = "./ConnCompntwFldfill${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s %s" % \
   (dataDir+"/volume_Processed.raw", sizeX, sizeY, sizeZ,\
    dataDir+"/components_Connected.raw", connectedComponentsSize)
