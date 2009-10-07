@@ -236,7 +236,7 @@ void View3D::setupLinkedSpace()
   this->TreePlot = NULL;
 //  this->histo = NULL;
   this->GapsTableView = new QTableView();
-  this->TreeTable =new QTableView();
+  //this->TreeTable =new QTableView();
   this->MergeGaps = new MergeModel(this->tobj->Gaps);
   this->MergeGaps->setParent(this);
   if (this->tobj->FeatureHeaders.size() >=1)
@@ -863,22 +863,27 @@ void View3D::ListSelections()
 }
 void View3D::ShowTreeData()
 {
-	if (this->TreeTable)
+	if (this->FTKTable)
 	{
-		this->TreeTable->close();
+		this->FTKTable->close();
 	}
 	if (this->TreePlot)
 	{
 		this->TreePlot->close();
 	}
-	this->TreeTable->setModel(this->TreeModel->GetModel());
+	this->FTKTable = new TableWindow(this->TreeModel->GetSelectionModel());
+	connect(this->FTKTable, SIGNAL(sorted()),this->TreeModel, SLOT(MapTracesToRows()));
+	this->FTKTable->ResizeToOptimalSize();
+	this->FTKTable->move(32, 561);
+	this->FTKTable->show();
+	/*this->TreeTable->setModel(this->TreeModel->GetModel());
 	this->TreeTable->setSelectionModel(this->TreeModel->GetSelectionModel());
 	this->TreeTable->setSelectionBehavior(QAbstractItemView::SelectRows);
   this->TreeTable->setSortingEnabled(true);
   this->TreeTable->resize(650, 200);
   this->TreeTable->move(32, 561);
 	this->TreeTable->update();
-	this->TreeTable->show();
+	this->TreeTable->show();*/
 
 	this->TreePlot = new PlotWindow(this->TreeModel->GetSelectionModel());
 	this->connect(this->TreePlot,SIGNAL(destroyed()),this, SLOT(DereferenceTreePlotView())); 
@@ -1720,10 +1725,14 @@ void View3D::closeEvent(QCloseEvent *event)
     {
     this->GapsTableView->close();
     }
-  if(this->TreeTable)
+  /*if(this->TreeTable)
     {
     this->TreeTable->close();
-    }
+    }*/
+  if(this->FTKTable)
+  {
+	  this->FTKTable->close();
+  }
   if(this->TreePlot)
   {
 	  this->TreePlot->close();

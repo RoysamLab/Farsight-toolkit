@@ -63,6 +63,7 @@ signals:
 	void selectionChanged(void);
 
 public slots:
+	void MapTracesToRows();
 	//void deleteTrigger(void);
 private:	
 	const static int IDColumn = 0, RootCol = 4;
@@ -75,6 +76,6 @@ private:
 	QItemSelectionModel *SelectionModel; 
 	void SetupHeaders();
 	void SyncModel();	
-	void MapTracesToRows();
+	
 };
 #endif

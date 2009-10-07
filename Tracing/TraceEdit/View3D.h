@@ -174,10 +174,11 @@ private:
 	Qt::SortOrder Ascending;
 	TraceModel *TreeModel;
 	MergeModel *MergeGaps;
+	TableWindow * FTKTable;
 	PlotWindow *GapsPlotView;
 	QTableView *GapsTableView;
 	//HistoWindow *histo;
-	QTableView *TreeTable;
+	//QTableView *TreeTable;
 	PlotWindow *TreePlot;
 
 	//Qt widgets for the settings window
