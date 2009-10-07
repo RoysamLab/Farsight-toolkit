@@ -82,6 +82,7 @@ void TraceModel::SyncModel()
 	{
 		return;
 	}
+	this->Model->blockSignals(true);
 	this->Model->setColumnCount(0);
 	this->Model->setRowCount(0);
 	this->SetupHeaders();
@@ -111,6 +112,7 @@ void TraceModel::SyncModel()
       }
     }
 	this->MapTracesToRows();
+	this->Model->blockSignals(false);
   //let the views know that the model changed
   emit modelChanged();
 }
@@ -139,7 +141,7 @@ void TraceModel::SelectByIDs(int ID)
 	QModelIndex index1 = this->Model->index(row, 0, QModelIndex());
 	QModelIndex index2 = this->Model->index(row, (this->Model->columnCount())-1, QModelIndex());
 	selection.select(index1, index2);
-	this->SelectionModel->select(selection, QItemSelectionModel::Select);
+	this->SelectionModel->select(selection, QItemSelectionModel::Toggle);
 	emit selectionChanged();
 }
 std::vector<int> TraceModel::GetSelecectedIDs()
@@ -164,4 +166,21 @@ std::vector<TraceLine*> TraceModel::GetSelectedTraces()
 		selectedTrace.push_back( this->GetTraces().at(row));
 	}
 	return selectedTrace;
+}
+void TraceModel::root()
+{
+	std::vector<int> RootIDs;
+	QModelIndexList selected = this->SelectionModel->selectedRows();
+	for (int i = 0; i < selected.size(); ++i)
+	{
+		int row = selected.at(i).row();
+		int id = this->Model->data(this->Model->index(row, TraceModel::RootCol)).toInt();
+		RootIDs.push_back(id);
+	}
+	//std::sort(RootIDs.begin(),RootIDs.end());
+	//std::unique(RootIDs.begin(),RootIDs.end());
+	for (int i = 0; i < RootIDs.size(); i++)
+	{
+		std::cout<< "/t"<< RootIDs[i];
+	}
 }

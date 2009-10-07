@@ -316,6 +316,8 @@ void View3D::CreateGUIObjects()
   this->AutomateButton = new QAction("Small Lines", this->CentralWidget);
 	connect(this->AutomateButton, SIGNAL(triggered()), this, SLOT(SLine()));
 	this->AutomateButton->setStatusTip("Automatic selection of all small lines");
+  //this->root = new QAction("root", this->CentralWidget);
+	//connect(this->root, SIGNAL(triggered()), this, SLOT(this->TreeModel->root()));
 
   this->UndoButton = new QAction("&Undo", this->CentralWidget);  
 	connect(this->UndoButton, SIGNAL(triggered()), this, SLOT(UndoAction()));
@@ -367,6 +369,7 @@ void View3D::CreateLayout()
   this->EditsToolBar->addSeparator();
   this->EditsToolBar->addAction(this->loadSoma);
   this->EditsToolBar->addAction(this->SettingsButton);
+  //this->EditsToolBar->addAction(this->root);
 
   QGridLayout *viewerLayout = new QGridLayout(this->CentralWidget);
   viewerLayout->addWidget(this->QVTK, 0, 0);
@@ -837,25 +840,26 @@ void View3D::SLine()
 
 void View3D::ListSelections()
 {
-  //QMessageBox *selectionInfo = new QMessageBox;
-  QString listText;
-  QString selectedText;
-  if (this->SelectedTraceIDs.size()<= 0)
-    {
-    listText = tr("No traces selected");
-    }
-  else
-    {
-    listText += QString::number(this->SelectedTraceIDs.size()) + " lines are selected\n";
-    for (unsigned int i = 0; i < this->SelectedTraceIDs.size(); i++)
-      {
-      listText += QString::number(this->SelectedTraceIDs[i]) + "\n";   
-      } 
-    }
-  this->statusBar()->showMessage(listText);
-  //selectionInfo->setText(listText);
-  //selectionInfo->setDetailedText(selectedText);
-  //selectionInfo->show();
+	std::vector<int> IDs = this->TreeModel->GetSelecectedIDs();
+	QMessageBox *selectionInfo = new QMessageBox;
+	QString listText;
+	QString selectedText;
+	if (IDs.size()<= 0)
+	{
+	listText = tr("No traces selected");
+	}
+	else
+	{
+	listText += QString::number(IDs.size()) + " lines are selected\n";
+	for (unsigned int i = 0; i < IDs.size(); i++)
+	  {
+	  selectedText += QString::number(IDs[i]) + "\n";   
+	  } 
+	}
+	this->statusBar()->showMessage(listText);
+	selectionInfo->setText(listText);
+	selectionInfo->setDetailedText(selectedText);
+	selectionInfo->show();
 }
 void View3D::ShowTreeData()
 {
@@ -909,7 +913,8 @@ void View3D::DeleteTraces()
 {
 	unsigned int i;
 	this->statusBar()->showMessage(tr("Deleting"));
-	std::vector<TraceLine*> traceStructure = this->tobj->GetTraceLines(); 
+	std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
+	/*std::vector<TraceLine*> traceStructure = this->tobj->GetTraceLines(); 
 	std::vector<TraceLine*> traceList;
 	std::vector<int> IDList = this->TreeModel->GetSelecectedIDs();
 	for ( i = 0; i< IDList.size(); i++)
@@ -928,7 +933,7 @@ void View3D::DeleteTraces()
 				j++;
 			}
 		}	
-	}
+	}*/
 
 	if (traceList.size() >=1)
 	{

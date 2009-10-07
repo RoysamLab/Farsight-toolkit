@@ -54,6 +54,7 @@ public:
 	};
 	std::vector<TraceLine*>GetSelectedTraces();
 	std::vector<int> GetSelecectedIDs();
+	void root();
 	void SelectByIDs(int ID);
 
 signals:
@@ -64,7 +65,7 @@ signals:
 public slots:
 	//void deleteTrigger(void);
 private:	
-	const static int IDColumn = 0;
+	const static int IDColumn = 0, RootCol = 4;
 	QMap<int, int> IDToRowMap;
 	std::vector<TraceLine*> TraceLines;
 	std::vector<QString> headers;

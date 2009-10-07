@@ -161,6 +161,7 @@ private:
 	QAction *WriteButton;
 	QAction *SettingsButton;
 	QAction *AutomateButton;
+	QAction *root;
 
 	QAction *UndoButton;
 	QAction *RedoButton;
