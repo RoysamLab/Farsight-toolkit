@@ -235,8 +235,6 @@ void View3D::setupLinkedSpace()
   this->GapsPlotView = NULL;
   this->TreePlot = NULL;
 //  this->histo = NULL;
-  this->GapsTableView = new QTableView();
-  //this->TreeTable =new QTableView();
   this->MergeGaps = new MergeModel(this->tobj->Gaps);
   this->MergeGaps->setParent(this);
   if (this->tobj->FeatureHeaders.size() >=1)
@@ -1143,13 +1141,13 @@ void View3D::MergeTraces()
 void View3D::ShowMergeStats()
 {
   this->MergeGaps->SetTraceGaps(this->tobj->Gaps);
-  this->GapsTableView->setModel(this->MergeGaps->GetModel());
-  this->GapsTableView->setSelectionModel(this->MergeGaps->GetSelectionModel()); 
-  this->GapsTableView->setSelectionBehavior(QAbstractItemView::SelectRows);
- // this->GapsTableView->sortByColumn(8,Ascending);
-  this->GapsTableView->update();
+  this->GapsTableView = new TableWindow(this->MergeGaps->GetSelectionModel()); 
+  connect(this->GapsTableView, SIGNAL(sorted()),this->MergeGaps, SLOT(MapTracesToRows()));
+  connect(this->GapsTableView, SIGNAL(sorted()),this->MergeGaps, SLOT(MapGapIDsToRows()));
+  this->GapsTableView->ResizeToOptimalSize();
   this->GapsTableView->show();
-  this->GapsTableView->horizontalHeader()->show();
+  //this->GapsTableView->horizontalHeader()->show();
+
   this->GapsPlotView = new PlotWindow(this->MergeGaps->GetSelectionModel());
   this->connect(this->GapsPlotView,SIGNAL(destroyed()),this, SLOT(DereferenceGapsPlotView()));
   this->GapsPlotView->show();
@@ -1725,10 +1723,6 @@ void View3D::closeEvent(QCloseEvent *event)
     {
     this->GapsTableView->close();
     }
-  /*if(this->TreeTable)
-    {
-    this->TreeTable->close();
-    }*/
   if(this->FTKTable)
   {
 	  this->FTKTable->close();

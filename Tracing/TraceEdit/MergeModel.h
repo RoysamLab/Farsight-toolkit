@@ -54,6 +54,8 @@ signals:
 public slots:
 	void deleteTrigger(void);
 	void mergeTrigger(void);
+	void MapGapIDsToRows();
+	void MapTracesToRows();
 
 private:
   //the first column of each row is the gap ID, as per the definition
@@ -72,7 +74,5 @@ private:
 	QItemSelectionModel *SelectionModel; 
 	void SetupHeaders();
 	void SyncModel();
-	void MapGapIDsToRows();
-	void MapTracesToRows();
 };
 #endif
