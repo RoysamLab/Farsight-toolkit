@@ -89,7 +89,7 @@ void TableWindow::sortBy()
 	{	
 		if( this->table->model()->headerData(i,Qt::Horizontal).toString() == feat )
 		{
-			//this->table->sortByColumn(i,Qt::AscendingOrder);
+			this->table->sortByColumn(i,Qt::AscendingOrder);
 
 			emit sorted();
 			break;
