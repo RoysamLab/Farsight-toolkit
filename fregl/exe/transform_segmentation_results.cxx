@@ -15,31 +15,51 @@ limitations under the License.
 
 //: Generate text files containing transformed points in the global space
 //
-//  The input includes the xml file of the joint transformations and
-//  the xml file containing the result sets. The output will be
-//  written to a directory with the name
-//  "transformed_to_anchor_name". Only surace points and trace points
-//  are transformed. For the nuclear results, each class has its own
-//  output file.
+//  The input includes the xml file of the transformations, the name
+//  of the reference space, and the list of (from_image_name
+//  feature_file_name) pairs. The pair for the reference image should
+//  be included if its features are part of the global space too. Each
+//  feature_file starts with the name of the image for segmentation as
+//  the first line. Following the image name are the features for
+//  segmented objects, one line per object. The format is as follows
+//  and only the first 4 fields are essential:
+//
+//  image_name_for_segmentation
+//  ID x y z feature1 feature2 ...
+//  ID x y z feature1 feature2 ...
+//  ...
+//
+//  The output file contains the following information:
+//
+//  image_name_for_segmentation FROM from_image_name TO reference_image_name
+//  ID xformed_x xformed_y xformed_z feature1 feature2 ...
+//  ID xformed_x xformed_y xformed_z feature1 feature2 ...
+//  ...
+//
+//  Only the coordinates are transformed. The features are ignored and written
+//  directly to the transformed output file.
 //
 //  Usage:
 //
-//  tranform_segmentation_results xml_joint_transforms xml_result_sets
-//  anchor_image_name
+//  tranform_segmentation_results xml_joint_transforms reference_image
+//  feature_file_list 
 //
 //  where
-//   xml_joint_transforms   Name of the xml file containing the joint transformations
-//   xml_result_sets        Name of the xml file containing the result sets
-//   anchor_image_name      Name of the anchor image shown in xml_joint_transforms
+//   xml_transforms         Name of the xml file containing the transformations
+//   reference_image        Name of the reference image name found in the xml_transforms
+//   feature_file_list      List of (from_image_name feature_file_name) pairs.
+//
+//  Optional arguments:
+//
+//  -output_prefix          The prefix for the output file. If not given, the default is "transformed_"  
 //
 
 #include <fregl/fregl_joint_register.h>
 #include <fregl/fregl_space_transformer.h>
-#include <fregl/fregl_result_record.h>
-#include <maciej_seg/maciejSegmentation.h>
-#include <maciej_seg/xml_util.h>
 
 #include <vnl/vnl_vector_fixed.h>
+#include <vul/vul_file.h>
+#include <vul/vul_arg.h>
 
 #include <vector>
 #include <string>
@@ -47,186 +67,93 @@ limitations under the License.
 int 
 main( int argc, char* argv[] )
 {
-  if (argc < 4) {
-    std::cerr<<"Usage: "<<argv[0]<<" xml_joint_transforms xml_result_sets anchor_image_name"<<std::endl;
-    return 0;
-  }
-  std::string anchor = argv[3];
-  std::string path = std::string("transformed_to_")+anchor;
-  std::string cmd1 = "mkdir "+path;
-  std::system(cmd1.c_str());
-  path = path + std::string("/");
+  // 1. Get the input arguments
+  vul_arg< vcl_string > arg_file_xforms  ( 0, "The xml file containing transformations." );
+  vul_arg< vcl_string > arg_file_to    ( 0, "The reference image name in the transformation file." );
+  vul_arg< vcl_string > arg_feature_list    ( 0, "List of (from_image_name feature_file_name) pairs." );
+  vul_arg< vcl_string > arg_prefix    ( "-output_prefix", " The prefix for the output file. If not given, the default is transformed_", "transformed_");
+
+  vul_arg_parse( argc, argv );
   
-  // Get the space transformer ready
+  // 2. Get the space transformer ready
   //
-  fregl_joint_register::Pointer joint_register = new fregl_joint_register( argv[1] );
-fregl_space_transformer space_transformer(joint_register);
+  fregl_joint_register::Pointer joint_register = new fregl_joint_register( arg_file_xforms() );
+  fregl_space_transformer space_transformer(joint_register);
   bool overlap_only = false;
   bool in_anchor = false;
-  space_transformer.set_anchor( anchor, in_anchor, overlap_only );
+  space_transformer.set_anchor( arg_file_to(), in_anchor, overlap_only );
   fregl_space_transformer::PointType origin = space_transformer.origin();
-
-  // Transform the results
-  //
-  std::vector<fregl_result_record::Pointer> result_records;
-  result_record_read_xml(argv[2], result_records);
   std::vector<std::string> const& image_names = space_transformer.image_names();
+  // 3. Read in the pairs in the feature_file_list and process each
+  // feature file
+  std::ifstream inList;
+  inList.open(arg_feature_list().c_str());
+  if ( !inList ){
+    std::cerr<<"Couldn't open "<<arg_feature_list()<<std::endl;
+    exit( 0 );
+  }
+  
+  std::string line_str;
+  std::string from_image_name, feature_file_name;
+  while ( inList ) {
+    std::getline( inList, line_str );
+    if (line_str.length() == 0) continue;
+    
+    std::istringstream line_stream(line_str);
+    line_stream>> from_image_name >> feature_file_name;
 
-  std::string  image_path;
-  std::string  image_name;
-  std::string output_file;
-  std::vector< vnl_vector_fixed< float, 3 > > points;
-  vnl_vector_fixed< float, 3 > point, xformed_pt, one(1,1,1);
-
-  for (unsigned int img_ind = 0; img_ind<image_names.size(); img_ind++) {
-
-    int record_index;
-    for (unsigned int k = 0; k<result_records.size(); k++) {
-      if (result_records[k]->registration_image() == image_names[img_ind]) {
-        record_index = k;
+    // Locate the transformation
+    int from_img_ind = 0;
+    for (unsigned int img_ind = 0; img_ind<image_names.size(); img_ind++) {
+      if (from_image_name == image_names[img_ind]) {
+        from_img_ind = img_ind;
         break;
       }
     }
-
-    // Transform the nuclear boundary points *************************
+    
+    // Process each feature file
     //
-    if (result_records[record_index]->nuclear_xml().length() > 0) {
-      points.clear();
-      std::cout<<"Transforming "<<result_records[record_index]->nuclear_xml()<<" ..."<<std::endl;
-      maciejSegmentation::Pointer nuclear_result = new maciejSegmentation();
-      xml_util_read( "./", result_records[record_index]->nuclear_xml(),
-                     image_path ,image_name ,*nuclear_result );
-      
-      // count the number of classes
-      std::vector<rich_cell::Pointer> const& cells = nuclear_result->all_cells();
-      int class_count = 0;
-      for (unsigned i = 0; i<cells.size(); i++) {
-        if (class_count < cells[i]->class_type_) class_count = cells[i]->class_type_;
-      }
-      // For each class generate one text file
-      for (int ci = 1; ci<= class_count; ci++) {
-        char class_num[5] ;
-        std::sprintf( class_num, "%d", ci);
-        output_file = path+result_records[record_index]->nuclear_xml()+std::string("_class")+ class_num+std::string(".txt");
-        std::ofstream outfile;
-        outfile.open(output_file.c_str());
-        
-        for (int i = 0; i<cells.size(); i++) {
-          if (cells[i]->class_type_ != ci || !cells[i]->valid_ || cells[i]->dup_) continue;
-          
-          const std::vector< vnl_vector_fixed< float, 3 > >& points = cells[i]->boundary_points_;
-          for (int pi = 0; pi<points.size(); pi++) {
-            // transform the point and output in [z,y,x] format
-            space_transformer.in_anchor( points[pi], img_ind, xformed_pt);
-            outfile << xformed_pt[2]-origin[2]<<"\t"<<xformed_pt[1]-origin[1]<<"\t"<<xformed_pt[0]-origin[0]<<"\t0\t0\n";
-          }
-          
-        }
-        outfile.close();
-      }
+    // Prepare the input file
+    std::ifstream inFeatures;
+    inFeatures.open(feature_file_name.c_str());
+    if ( !inFeatures ){
+      std::cerr<<"Couldn't open "<<feature_file_name<<std::endl;
+      exit( 0 );
     }
+    std::string result_file_name;
+    std::cin >> result_file_name;
 
-    // Transform the vessel surface points ************************
-    //
-    points.clear();
-    std::string vessel_result = result_records[record_index]->vessel_xml();
-    if ( vessel_result.length() > 0 ) {
-      std::ifstream infile;
-      std::ofstream outfile;
-      std::cout<<"Transforming "<<vessel_result<<" ..."<<std::endl;
-      infile.open( vessel_result.c_str(), std::ifstream::in );
-      if ( !infile ){
-        std::cerr<<"Couldn't open "<<vessel_result<<std::endl;
-        exit( 0 );
-      }
-      output_file = path+std::string("transformed_")+vessel_result;
-      outfile.open(output_file.c_str());
+    //Prepare the output file
+    std::string output_file = arg_prefix()+feature_file_name;
+    std::ofstream outFeatures;
+    outFeatures.open(output_file.c_str());
+    outFeatures<<result_file_name<<" FROM "<<from_image_name<<" TO "<<arg_file_to()<<std::endl;
       
-      std::string line_str;
-      while ( infile ) {
-        std::getline( infile, line_str );
-        if (line_str.length() == 0) continue;
-        
-        std::istringstream line_stream(line_str);
-        line_stream>> point[2] >> point[1] >> point[0];
-        //We have to subtract [1,1,1] from the position, since Arun starts
-        //the index from [1,1,1], instead of [0,0,0]
-        point = point-one;
-        space_transformer.in_anchor( point, img_ind, xformed_pt);
-        outfile << xformed_pt[2]-origin[2]<<"\t"<<xformed_pt[1]-origin[1]<<"\t"<<xformed_pt[0]-origin[0]<<"\t0\t0\n";
-      }
-      infile.close();
-      outfile.close();
-    }
+    // Parce each line and transform the location to the global space.
+    int id;
+    vnl_vector_fixed< float, 3 > point, xformed_pt;
+    std::string remaining_str;
+    
+    while (inFeatures) {
+      std::getline( inFeatures, line_str );
+      if (line_str.length() == 0) continue;
 
-    // Transform the astrocyte points ******************************
-    //
-    points.clear();
-    std::string astrocyte_result = result_records[record_index]->astrocyte_xml();
-    if ( astrocyte_result.length() > 0 ) {
-      std::ifstream infile;
-      std::ofstream outfile;
-      std::cout<<"Transforming "<<astrocyte_result<<" ..."<<std::endl;
-      infile.open( astrocyte_result.c_str(), std::ifstream::in );
-      if ( !infile ){
-        std::cerr<<"Couldn't open "<<astrocyte_result<<std::endl;
-        exit( 0 );
-      }
-      output_file = path+std::string("transformed_")+astrocyte_result;
-      outfile.open(output_file.c_str());
-      
-      std::string line_str;
-      while ( infile ) {
-        std::getline( infile, line_str );
-        if (line_str.length() == 0) continue;
-        
-        std::istringstream line_stream(line_str);
-        line_stream>> point[0] >> point[1] >> point[2];
-        if (point[0] < 0) { //delineator
-          outfile << point[0]<<"\t"<<point[1]<<"\t"<<point[2]<<std::endl;
-        }
-        else {
-          space_transformer.in_anchor( point, img_ind, xformed_pt);
-          outfile << xformed_pt[0]-origin[0]<<"\t"<<xformed_pt[1]-origin[1]<<"\t"<<xformed_pt[2]-origin[2]<<"\t0\t0\n";}
-      }
-      infile.close();
-      outfile.close();
-    }
+      // Get the first 4 essential components
+      line_stream.str(line_str);
+      line_stream>> id >> point[0] >> point[1] >> point[2];
 
-    // Transform the microglia trace points ************************
-    //
-    points.clear();
-    std::string microglia_result = result_records[record_index]->microglia_xml();
-    if ( microglia_result.length() > 0 ) {
-      std::ifstream infile;
-      std::ofstream outfile;
-      std::cout<<"Transforming "<<microglia_result<<" ..."<<std::endl;
-      infile.open( microglia_result.c_str(), std::ifstream::in );
-      if ( !infile ){
-        std::cerr<<"Couldn't open "<<microglia_result<<std::endl;
-        exit( 0 );
-      }
-      output_file = path+std::string("transformed_")+microglia_result;
-      outfile.open(output_file.c_str());
+      // Get the remaining of the line. To be done later ...
+      remaining_str = line_str.substr(line_stream.tellg());
       
-      std::string line_str;
-      while ( infile ) {
-        std::getline( infile, line_str );
-        if (line_str.length() == 0) continue;
-        
-        std::istringstream line_stream(line_str);
-        line_stream>> point[0] >> point[1] >> point[2];
-        if (point[0] < 0) { //delineator
-          outfile << point[0]<<"\t"<<point[1]<<"\t"<<point[2]<<std::endl;
-        }
-        else {
-          space_transformer.in_anchor( point, img_ind, xformed_pt);
-          outfile << xformed_pt[0]-origin[0]<<"\t"<<xformed_pt[1]-origin[1]<<"\t"<<xformed_pt[2]-origin[2]<<"\t0\t0\n";}
-      }
-      infile.close();
-      outfile.close();
+      // Transform the point, shift the point by the origin, and write
+      // to the output file output
+      space_transformer.in_anchor( point, from_img_ind, xformed_pt);
+      outFeatures<<id<<"\t"<<xformed_pt[0]-origin[0]<<"\t"<<xformed_pt[1]-origin[1]<<"\t"<<xformed_pt[2]-origin[2]<<"\t"<<remaining_str<<std::endl;
+      
     }
+    inFeatures.close();
   }
+  inList.close();
 
   return 0;
 }

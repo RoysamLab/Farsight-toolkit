@@ -20,9 +20,8 @@ TARGET_LINK_LIBRARIES( lsm_to_tiff ftkImage ITKCommon ITKIO)
 #ADD_EXECUTABLE( npts_to_tiff npts_to_tiff.cxx)
 #TARGET_LINK_LIBRARIES( npts_to_tiff vnl ITKCommon ITKIO)
 
-#ADD_EXECUTABLE( transform_segmentation_results transform_segmentation_results.cxx)
-#TARGET_LINK_LIBRARIES( transform_segmentation_results maciejseg fregl
-#vnl )
+ADD_EXECUTABLE( transform_segmentation_results transform_segmentation_results.cxx)
+TARGET_LINK_LIBRARIES( transform_segmentation_results fregl vnl )
 
 ADD_EXECUTABLE( generate_color_stack generate_color_stack.cxx)
 TARGET_LINK_LIBRARIES( generate_color_stack ITKCommon ITKIO )
