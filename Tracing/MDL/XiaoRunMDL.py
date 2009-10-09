@@ -35,7 +35,7 @@ connectedComponentsSize = parameterValues["Connected components size"]
 
 #change to the binary directory before we start calling executables
 ##os.chdir("${CMAKE_BINARY_DIR}")
-os.chdir("D:/MDL0804/bin/release")
+os.chdir("D:/MDL102/bin/release")
 
 cmd = "./volumeProcess.exe %s %s %s %s 1 %s %s" % \
   (fullPathToInput, sizeX, sizeY, sizeZ, dataDir+"/volume_Processed.raw",\
@@ -112,3 +112,13 @@ subprocess.call(["./SpineMinSpanTree",\
                   dataDir+"/out.txt", dataDir+"/Aniso_Diffused.raw"])
 timeElapsed = time.time() - timeBefore
 print "Step #7 completed in %d seconds\n\n" % timeElapsed
+cmd = "./BSplineFitting.exe %s %s %s %s %s %s %s %s" % \
+  (dataDir+"/", "Aniso_Diffused.raw", "Backbone.vtk", sizeX, sizeY, sizeZ, \
+   dataDir+"/SmoothBacbone.vtk", dataDir+"/ExtraSpine.vtk")
+print "Step #8, executing the following command:\n%s" % cmd
+timeBefore = time.time()
+subprocess.call(["./BSplineFitting",\
+                  dataDir+"/", "Aniso_Diffused.raw", "Backbone.vtk", sizeX,sizeY,sizeZ,\
+                  dataDir+"/SmoothBacbone.vtk", dataDir+"/ExtraSpine.vtk"])
+timeElapsed = time.time() - timeBefore
+print "Step #8 completed in %d seconds\n\n" % timeElapsed
