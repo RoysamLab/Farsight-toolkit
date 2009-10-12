@@ -121,8 +121,9 @@ main( int argc, char* argv[] )
       exit( 0 );
     }
     std::string result_file_name;
-    std::cin >> result_file_name;
-
+    inFeatures >> result_file_name;
+    std::cout<<"Transforming "<<feature_file_name<<std::endl;
+    
     //Prepare the output file
     std::string output_file = arg_prefix()+feature_file_name;
     std::ofstream outFeatures;
@@ -132,23 +133,21 @@ main( int argc, char* argv[] )
     // Parce each line and transform the location to the global space.
     int id;
     vnl_vector_fixed< float, 3 > point, xformed_pt;
-    std::string remaining_str;
+    std::string remaining_str = "hello";
     
     while (inFeatures) {
       std::getline( inFeatures, line_str );
       if (line_str.length() == 0) continue;
-
-      // Get the first 4 essential components
-      line_stream.str(line_str);
-      line_stream>> id >> point[0] >> point[1] >> point[2];
-
-      // Get the remaining of the line. To be done later ...
-      remaining_str = line_str.substr(line_stream.tellg());
+      
+      // Get the first 4 essential components and the remaining string
+      std::istringstream line_stream1(line_str);
+      line_stream1>> id >> point[0] >> point[1] >> point[2];
+      remaining_str = line_str.substr((int)line_stream1.tellg()+1);
       
       // Transform the point, shift the point by the origin, and write
       // to the output file output
       space_transformer.in_anchor( point, from_img_ind, xformed_pt);
-      outFeatures<<id<<"\t"<<xformed_pt[0]-origin[0]<<"\t"<<xformed_pt[1]-origin[1]<<"\t"<<xformed_pt[2]-origin[2]<<"\t"<<remaining_str<<std::endl;
+      outFeatures<<id<<" "<<xformed_pt[0]-origin[0]<<" "<<xformed_pt[1]-origin[1]<<" "<<xformed_pt[2]-origin[2]<<" "<<remaining_str<<std::endl;
       
     }
     inFeatures.close();
