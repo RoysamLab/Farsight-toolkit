@@ -48,5 +48,5 @@ ADD_LIBRARY( ftkGUI STATIC
              ${GUI_RC_SRCS}
 )
 
-TARGET_LINK_LIBRARIES( ftkGUI ${QT_LIBRARIES} QVTK ftkImage TinyXML libSVM libKPLS vtkVolumeRendering)
+TARGET_LINK_LIBRARIES( ftkGUI ${QT_LIBRARIES} QVTK ftkImage TinyXML libSVM vtkVolumeRendering)
 
