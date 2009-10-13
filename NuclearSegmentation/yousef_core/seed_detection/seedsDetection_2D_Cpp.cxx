@@ -25,7 +25,7 @@ int distMap(itk::SmartPointer<InputImageType> im, int r, int c, float* IMG);
 
 int detect_seeds(itk::SmartPointer<InputImageType>, int , int , const double, float*);
 
-void estimateMinMaxScales2D(itk::SmartPointer<InputImageType> im, unsigned short* distIm, double* minScale, double* maxScale, int r, int c);
+void estimateMinMaxScales2D(itk::SmartPointer<InputImageType> im, float* distIm, double* minScale, double* maxScale, int r, int c);
 
 unsigned short get_maximumV2(unsigned short* A, int r1, int r2, int c1, int c2, int r, int c);
 
@@ -95,7 +95,7 @@ int detectSeeds2D( float* IM, float* IM_out, unsigned short* IM_bin, int r, int 
 	if(paramEstimation)
 	{
 		std::cout<<"Estimating parameters..."<<std::endl;
-		//estimateMinMaxScales2D(im, dImg, &sigma_min, &sigma_max, r, c);
+		estimateMinMaxScales2D(im, dImg, &sigma_min, &sigma_max, r, c);		
 		scale = sigma_min;
 		if(scale<3)
 			scale = 3; //just avoid very small search boxes		
@@ -303,7 +303,7 @@ float get_maximum(float** A, int r1, int r2, int c1, int c2)
     return mx;
 }
 
-unsigned short get_maximumV2(unsigned short* A, int r1, int r2, int c1, int c2, int r, int c)
+unsigned short get_maximumV2(float* A, int r1, int r2, int c1, int c2, int r, int c)
 {
     unsigned short mx = A[0];
     for(int i=r1; i<=r2; i++)
@@ -311,7 +311,7 @@ unsigned short get_maximumV2(unsigned short* A, int r1, int r2, int c1, int c2, 
         for(int j=c1; j<=c2; j++)
         {
             if(A[i*c+j]>mx)
-                mx = A[i*c+j];
+                mx = (unsigned short) A[i*c+j];
         }
     }
     return mx;
@@ -408,7 +408,7 @@ int distMap(itk::SmartPointer<InputImageType> im, int r, int c, float* IMG)
 
 //added by Yousef on 9/26/2009
 //Estimate the min and max scales based on the local maxima points of the distance map
-void estimateMinMaxScales2D(itk::SmartPointer<InputImageType> im, unsigned short* distIm, double* minScale, double* maxScale, int r, int c)
+void estimateMinMaxScales2D(itk::SmartPointer<InputImageType> im, float* distIm, double* minScale, double* maxScale, int r, int c)
 {
 	int min_r, min_c, max_r, max_c;
 	int II = 0;
