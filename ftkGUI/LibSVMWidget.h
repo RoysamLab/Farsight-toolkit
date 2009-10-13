@@ -17,6 +17,7 @@ limitations under the License.
 #define LIBSVMWIDGET_H
 
 #include <PatternAnalysis/libsvm/svm.h>
+#include <PatternAnalysis/embrex/kpls.h>
 
 #include <iostream>
 #include <vector>
@@ -50,6 +51,7 @@ public:
 
 private slots:
 	void go();
+	void goKPLS();
 	void selectNone();
 	void selectAll();
     

@@ -302,3 +302,77 @@ void LibSVMWidget::go()
 
 	
 }
+
+void LibSVMWidget::goKPLS()
+{
+	//Find out which features are checked (which columns to use).
+	std::vector<int> columnsToUse;
+	QList<QAbstractButton *> buttons = featureGroup->buttons();
+	for(int b = 0; b<buttons.size(); ++b)
+	{
+		if( buttons.at(b)->isChecked() )
+		{
+			columnsToUse.push_back( featureGroup->id(buttons.at(b)) );
+		}
+	}
+
+	//Setup up the kpls:
+	//KPLS *kpls = new KPLS();
+	//kpls->SetLatentVars(5);
+	//kpls->SetSigma(20);
+
+	int num_rows = (int)model->rowCount();
+	int num_cols = (int)columnsToUse.size();
+
+	//MATRIX data = kpls->GetDataPtr(num_rows, num_cols);
+	//VECTOR ids = kpls->GetIDPtr();
+	//VECTOR training = kpls->GetTrainingPtr();
+/*
+	//extract data from the model
+	QModelIndex index;
+	for(int r=0; r<(int)model->rowCount(); ++r)
+	{
+		index = model->index(r,0);
+		ids[r] = model->data(index).toDouble();
+		for(int c=0; c<(int)columnsToUse.size(); ++c)
+		{
+			index = model->index(r, columnsToUse.at(c));
+			double val = model->data(index).toDouble();
+			data[r][c] = val;
+		}
+		index = model->index(r,model->rowCount()-1);
+		training[r] = model->data(index).toDouble();
+	}
+*/
+//	kpls->ScaleData();
+//	kpls->Train();
+//	kpls->Classify();
+
+	/*
+	//Add the outliers to the model!!
+	if(columnForSVM >= model->columnCount())
+	{
+		model->insertColumn(columnForSVM);			//Add Column for svm result		
+		model->setHeaderData( columnForSVM, Qt::Horizontal, tr("outlier?") );
+	}
+
+	//stop signalling:
+	model->blockSignals(true);
+
+	int z = 0;
+	int o = 1;
+	for(int row = 0; (int)row < model->rowCount(); ++row)  //Set all values to 0
+	{
+		model->setData(model->index(row, columnForSVM), z);         
+	}
+
+	for(int i = 0; i < (int)outliers.size()-1; ++i)							//Set outliers to 1
+	{
+		model->setData(model->index(outliers.at(i), columnForSVM), o);
+	}
+
+	//turn signals back on & change one more piece of data to force dataChanged signal
+	model->blockSignals(false);
+	model->setData(model->index(outliers.back(), columnForSVM), o);
+	*/
+}
