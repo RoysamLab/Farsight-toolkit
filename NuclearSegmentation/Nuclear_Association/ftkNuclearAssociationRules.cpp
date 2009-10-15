@@ -90,7 +90,7 @@ void NuclearAssociationRules::Compute()
 		reader2->SetFileName(assocRulesList[i].GetTargetFileNmae());
 		reader2->Update();		
 		//cout<<"Computing Features For Association Rule "<<i+1<<": ";
-		for(int j=0; j<numOfLabels; j++)
+		for(int j=149; j<numOfLabels; j++)
 		{
 			//cout<<j+1;
 			cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<j+1<<"/"<<numOfLabels;
