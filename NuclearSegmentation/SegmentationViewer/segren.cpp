@@ -8,7 +8,7 @@
 #include <direct.h>
 #include <strsafe.h>
 #define MKDIR(x) _mkdir(x)
-std::vector<std::string> *listFilesDir(char* dir) {
+std::vector<std::string> *listFilesDir(const char* dir) {
     WIN32_FIND_DATAA ffd;
 	HANDLE hFind = INVALID_HANDLE_VALUE;
 	char szDir[MAX_PATH];
@@ -40,7 +40,7 @@ std::vector<std::string> *listFilesDir(char* dir) {
 #include <sys/types.h>
 #include <dirent.h>
 #define MKDIR(x) mkdir(x, 0755);
-std::vector<std::string> *listFilesDir(char* dir) {
+std::vector<std::string> *listFilesDir(const char* dir) {
     DIR *dp;
     struct dirent *ep;
     dp = opendir(dir);

@@ -321,8 +321,8 @@ void LibSVMWidget::goKPLS()
 	//kpls->SetLatentVars(5);
 	//kpls->SetSigma(20);
 
-	int num_rows = (int)model->rowCount();
-	int num_cols = (int)columnsToUse.size();
+	//int num_rows = (int)model->rowCount();
+	//int num_cols = (int)columnsToUse.size();
 
 	//MATRIX data = kpls->GetDataPtr(num_rows, num_cols);
 	//VECTOR ids = kpls->GetIDPtr();

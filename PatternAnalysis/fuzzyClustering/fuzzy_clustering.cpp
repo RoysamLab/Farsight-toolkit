@@ -556,8 +556,6 @@ int FuzzyClustering::Validate()
 	}
 	for(int i=0; i<num_Samples; i++)
 	{		
-		if(i==28)
-			int kk=0;
 		cluster_Distributions[clustering_Output[i]-1]++;	
 		for(int j=0; j<num_Clusters; j++)
 			tmpMembVals[j] = Memberships[i][combs[best_comb][j]-1];

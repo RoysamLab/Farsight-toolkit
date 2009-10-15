@@ -179,7 +179,7 @@ void TraceModel::root()
 	}
 	//std::sort(RootIDs.begin(),RootIDs.end());
 	//std::unique(RootIDs.begin(),RootIDs.end());
-	for (int i = 0; i < RootIDs.size(); i++)
+	for (unsigned int i = 0; i < RootIDs.size(); i++)
 	{
 		std::cout<< "/t"<< RootIDs[i];
 	}
