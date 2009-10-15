@@ -17,6 +17,7 @@ limitations under the License.
 #define __fuzzy_clustering_h
 
 #include <iostream>
+#include <vector>
 
 using namespace std;
 
@@ -40,8 +41,16 @@ public:
 	int* GetClusteringOutput() { return clustering_Output; }
 	void WriteClusteringOutputToFile(const char *filename);
 	void WriteTrainingSetToFile(const char *filename);
+	//added by Yousef on 10/13/2009
+	int Validate(); 
 private:	
 	void SortMembershipValues(double* vals, int* ids, int l);
+	//added by Yousef on 10/13/2009
+	void rearrangeLabels(int* tmpLabels, int* arrangement);
+	void rotate(int *c,int start, int len);
+	void rotrec(int start,int lenth,int len, int *c, int** combs, int* ll);
+	void NormalizeFeatures();
+	//
 	int num_Clusters;
 	int num_Iterations;
 	double precision;
@@ -60,6 +69,8 @@ private:
 	int* clustering_Output;
 	int* cluster_Distributions;
 	int trainingSetSize;
+	//added by Yousef on 10/13/2009
+	int* labels;
 };
 #endif
 

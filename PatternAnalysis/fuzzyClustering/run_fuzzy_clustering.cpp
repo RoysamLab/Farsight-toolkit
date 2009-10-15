@@ -8,7 +8,7 @@ http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either expressed or implied.
 See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
@@ -35,11 +35,14 @@ endl;
 	//run fuzzy clustering
 	FzCl->Run();
 
+	//This is optional and used for validation
+	FzCl->Validate();
+
 	//Write clustering output (cluster assignment and membership values)
 	FzCl->WriteClusteringOutputToFile(argv[3]);
 
 	//extract training set 
-	FzCl->ExtractTrainingSet(atoi(argv[4]));
+	FzCl->ExtractTrainingSet(atof(argv[4]));
 
 	//write the training set to a file
 	FzCl->WriteTrainingSetToFile(argv[5]);
