@@ -385,8 +385,7 @@ int main(int argc, char *argv[])
 			num_nodes++;
 			voxelNodeIndex[idx] = num_nodes;   // Save the index of node (vertex) at each voxel position
 			// output the node positions to vtk file
-      // Add negative sign to make output align to 3D data
-      fprintf(fout,"%f %f %f\n", nodePosition.x, -nodePosition.y, nodePosition.z);  
+      fprintf(fout,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z);  
 
 			// Find all neighbor nodes within edgeRange
 			for (kk = -edgeRange; kk <= edgeRange; kk++)
