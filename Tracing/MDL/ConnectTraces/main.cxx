@@ -4,7 +4,8 @@ int main(int argc, char **argv)
   {
   if(argc < 4)
     {
-    cerr << argv[0] << " <traces file> <soma file> <output file>" << endl;
+    cerr << argv[0] << " <traces .vtk file> <soma segmentation file> "
+         << "<output .swc file>" << endl;
     return 0;
     }
   vtkSmartPointer<vtkConvertMDLTracesToTrees> treeBuilder =
