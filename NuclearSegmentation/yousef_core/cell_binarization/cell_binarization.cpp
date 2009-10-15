@@ -27,18 +27,28 @@ int Cell_Binarization_2D(unsigned char* imgIn, unsigned short *imgOut, int R, in
 	//1- Assuming that the histogram of the image is modeled by a mixture of two 
 	//poisson distributions, estimate the parameters of the mixture model 
 	float alpha_B, alpha_F, P_I;
-	alpha_B = alpha_F = P_I = 0;
-	//CompMixPoss(imgIn, &alpha_B, &alpha_F, &P_I, R, C, shd); 	
-	MinErrorThresholding(imgIn, &alpha_B, &alpha_F, &P_I, R, C, 1, shd,imgOut); 	
+	alpha_B = alpha_F = P_I = 0;	
+	//MinErrorThresholding(imgIn, &alpha_B, &alpha_F, &P_I, R, C, 1, shd,imgOut); 	
+	float alpha_C, P_I2;
+	alpha_C = P_I2 = 0.0;
+	threeLevelMinErrorThresh(imgIn, &alpha_B, &alpha_F, &alpha_C, &P_I, &P_I2, R, C, 1);
 
-	//2- Use graph cuts to binarize the image
-	//this function will start by graph building (learning step) and then it will 
-	//do the inference step (max-flow)
+	//2- Apply binarization refinement using graph-cuts	
 	int n_nodes, n_edges;
-	Seg_GC_Full_2D(imgIn, R, C, alpha_F, alpha_B, P_I, &n_nodes, &n_edges, imgOut);
-	//cout<<"Finalizing Binarization..";
-	//post_binarization(imgOut, 2, 2, R, C, 1);
-	//cout<<"done"<<endl;
+	if(alpha_C == -1)//this is a two levels case
+	{
+		//graph-cuts
+		Seg_GC_Full_2D(imgIn, R, C, alpha_F, alpha_B, P_I, &n_nodes, &n_edges, imgOut);
+	}
+	else  //three levels case
+	{
+		//try this
+		alpha_C = (alpha_C+alpha_F)/2;
+		alpha_B = (alpha_B+alpha_F)/2;
+		//graph-cuts
+		Seg_GC_Full_2D_Three_Level(imgIn, R, C, alpha_C,alpha_B, alpha_F, P_I, P_I2,&n_nodes, &n_edges, imgOut);
+	}		
+	
 	return 1;	
 }
 
@@ -242,10 +252,10 @@ void Seg_GC_Full_2D(unsigned char* IM,
             
                    
         //from Boykov's paper instead
-Dd = 10*exp(-pow((double)IM[i*c + j]-(double)IM[(i+1)*c + j],2)/(2*pow(sig,2)));
+Dd = 20*exp(-pow((double)IM[i*c + j]-(double)IM[(i+1)*c + j],2)/(2*pow(sig,2)));
 g->add_edge( curr_node, down_node,    /* capacities */  Dd, Dd );
                  
-Dg = 10*exp(-pow((double)IM[i*c + j]-(double)IM[(i+1)*c + (j+1)],2)/(2*pow(sig,2)));
+Dg = 20*exp(-pow((double)IM[i*c + j]-(double)IM[(i+1)*c + (j+1)],2)/(2*pow(sig,2)));
 g->add_edge( curr_node, diag_node,    /* capacities */  Dg, Dg );            
                
         }
@@ -789,6 +799,258 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 					Seg_out[(k*r*c)+(j*c)+i]=255;
 			}
 		}
+	}
+
+	delete g;
+}
+
+void threeLevelMinErrorThresh(unsigned char* im, float* Alpha1, float* Alpha2, float* Alpha3, float* P_I1, float* P_I2, int r, int c, int z)
+{
+	//create a normalized image histogram
+	float Hst[256];
+	for(int i=0; i<256; i++)
+		Hst[i] = 0.0;
+	
+	for(int i=0; i<r*c*z; i++)
+	{
+		int v = (int) im[i];
+		Hst[v]++;
+	}
+
+	for(int i=0; i<256; i++)
+		Hst[i] /= (r*c*z);
+
+
+	//The three-level min error thresholding algorithm
+	float P0, U0, P1, U1, P2, U2, U, J, min_J;
+	min_J = 1000000.0;
+	for(int i=0; i<254; i++)//to set the first threshold
+	{
+		//compute the current parameters of the first component
+		P0 = U0 = 0.0;		
+		for(int l=0; l<=i; l++)
+		{
+			P0+=Hst[l];
+			U0+=(l+1)*Hst[l];
+		}
+		U0 /= P0;
+
+		for(int j=i+1; j<255; j++)//to set the second threshold
+		{
+			//compute the current parameters of the second component
+			P1 = U1 = 0.0;		
+		    for(int l=i+1; l<=j; l++)
+			{
+				P1+=Hst[l];
+				U1+=(l+1)*Hst[l];
+			}
+			U1 /= P1;
+
+			//compute the current parameters of the third component
+			P2 = U2 = 0.0;		
+		    for(int l=j+1; l<=255; l++)
+			{
+				P2+=Hst[l];
+				U2+=(l+1)*Hst[l];
+			}
+			U2 /= P2;
+			
+			//compute the overall mean
+			U = P0*U0 + P1*U1 + P2*U2;
+
+			//Compute the current value of the error criterion function
+			J =  U - (P0*(log(P0)+U0*log(U0))+ P1*(log(P1)+U1*log(U1)) + P2*(log(P2)+U2*log(U2)));
+			if(J<min_J)
+			{
+				min_J = J;
+				Alpha1[0] = U0;
+				P_I1[0] = P0;
+				Alpha2[0] = U1;
+				P_I2[0] = P1;
+				Alpha3[0] = U2;				
+			}
+		}
+	}
+
+	//try this: see if using two components is better
+	for(int i=0; i<254; i++)//to set the first threshold
+	{
+		//compute the current parameters of the first component
+		P0 = U0 = 0.0;		
+		for(int l=0; l<=i; l++)
+		{
+			P0+=Hst[l];
+			U0+=(l+1)*Hst[l];
+		}
+		U0 /= P0;
+
+		for(int j=i+1; j<255; j++)//to set the second threshold
+		{
+			//compute the current parameters of the second component
+			P1 = U1 = 0.0;		
+		    for(int l=j; l<=255; l++)
+			{
+				P1+=Hst[l];
+				U1+=(l+1)*Hst[l];
+			}
+			U1 /= P1;
+
+			//compute the overall mean
+			U = P0*U0 + P1*U1;
+
+			//Compute the current value of the error criterion function
+			J =  U - (P0*(log(P0)+U0*log(U0))+ P1*(log(P1)+U1*log(U1)));
+			if(J<min_J)
+			{
+				min_J = J;
+				Alpha1[0] = U0;
+				P_I1[0] = P0;
+				Alpha2[0] = U1;
+				P_I2[0] = P1;
+				Alpha3[0] = -1; //Just a negative number to let the program knows that two levels will be used		
+			}
+		}
+	}
+	
+}
+
+void Seg_GC_Full_2D_Three_Level(unsigned char* IM,
+                    int r, 
+                    int c, 
+                    double alpha_F, 
+                    double alpha_B1, 
+					double alpha_B2,
+                    double P_I1, 
+					double P_I2,
+                    int* num_nodes, 
+                    int* num_edges, 
+                    unsigned short* Seg_out)
+{    
+    int curr_node;
+    int rght_node;
+    int down_node;
+    int diag_node;
+    double Df;
+    double Db;
+    double Dr;
+    double Dd; 
+    double Dg; 
+    double sig;
+    double F_H[256];
+    double B_H[256];
+    typedef Graph_B<int,int,int> GraphType;
+       
+    //Set the number of edges and the number of nodes and open the files that
+    //will be used to save the weights
+    num_nodes[0] = r*c;
+    num_edges[0] = 3*r*c-2*r-2*c+1;
+        	
+    
+    //Before entering the loop, compute the poisson probs 
+    for(int i=0; i<256; i++)
+    {
+		if(i>=alpha_F)
+			F_H[i] = (1-P_I1-P_I2)*compute_poisson_prob((int)alpha_F,alpha_F);
+		else
+			F_H[i] = (1-P_I1-P_I2)*compute_poisson_prob(i,alpha_F);
+		if(i<=alpha_B1)
+			B_H[i] = (P_I1)*compute_poisson_prob(int(alpha_B1),alpha_B1)+(P_I2)*compute_poisson_prob(int(alpha_B2),alpha_B2);
+		else
+        B_H[i] = (P_I1)*compute_poisson_prob(i,alpha_B1)+(P_I2)*compute_poisson_prob(i,alpha_B2);
+    }
+	
+    //Here is the main loop.. 
+    //For each point, compute the terminal and neighbor edge weights
+	GraphType *g = new GraphType(/*estimated # of nodes*/ num_nodes[0], /*estimated # of edges*/ num_edges[0]); 
+    for(int i=0; i<r; i++)
+    {
+        for(int j=0; j<c; j++)
+        {			
+			/*Get the terminal edges capacities and write them to a file
+			These capacities represent penalties of assigning each point to
+			either the fg or the bg. Now, I am using the distance of the point
+			to the fg and bg. Then a short distance between a point and a class (fg or bg)
+			means the penalty of the assignement is low and vice versa*/ 
+								
+		   //Isaac change on 5/9/08
+		   //int intst = (int) IM[i][j];
+			int intst = (int) IM[i*c + j];
+
+            //Added by Yousef on jan 17, 2008
+            //check if this is a seed point
+            if(intst == 255)
+            {
+                Df = 0;
+                Db = 1000;
+            }
+            else if(intst == 0)
+            {
+                Df = 1000;
+                Db = 0;
+            }
+            else
+            {                
+                Df = -log(F_H[intst]);  //it was multiplied by .5          
+                if(Df>1000.0)
+                    Df = 1000;
+                Db = -log(B_H[intst]);
+                if(Db>1000.0)
+                    Db=1000;
+                
+            }            
+            
+            curr_node = (i*c)+j; 
+            
+			g -> add_node();
+			g -> add_tweights( curr_node,   /* capacities */ Df,Db);                            			
+		}
+	}
+
+    sig = 25.0;
+    for(int i=0; i<r-1; i++)
+      {
+      for(int j=0; j<c-1; j++)
+        {			
+        // get the neighbor edges capacities and write them to a file.
+	// Now, each edge capacity between two neighbors p and q represent
+	// the penalty for discontinuety. Since I am using the difference in
+	// the intensities, I should take the inverse so that very similar
+	// objects should have a large discontinuety penalty between them*/
+
+	curr_node = (i*c)+j; 
+        rght_node = curr_node+1;
+        down_node = curr_node+c;
+        diag_node = curr_node+c+1;
+            
+            
+        //from Boykov's paper instead
+	Dr = 10*exp(-pow((double)IM[i*c + j]-(double)IM[i*c + j+1],2)/(2*pow(sig,2)));
+	g -> add_edge( curr_node, rght_node,    /* capacities */  Dr, Dr );	
+            
+                   
+        //from Boykov's paper instead
+Dd = 20*exp(-pow((double)IM[i*c + j]-(double)IM[(i+1)*c + j],2)/(2*pow(sig,2)));
+g->add_edge( curr_node, down_node,    /* capacities */  Dd, Dd );
+                 
+Dg = 20*exp(-pow((double)IM[i*c + j]-(double)IM[(i+1)*c + (j+1)],2)/(2*pow(sig,2)));
+g->add_edge( curr_node, diag_node,    /* capacities */  Dg, Dg );            
+               
+        }
+      }    
+	
+    //Compute the maximum flow:
+	g->maxflow();		//Alex DO NOT REMOVE
+
+
+	int RR,CC;
+	for(int i=0; i<num_nodes[0]; i++)
+	{
+		CC = ((long)i)%c;
+        RR = (i-CC)/c;
+		if(g->what_segment(i) == GraphType::SOURCE)
+			Seg_out[RR*c + CC]=0;
+		else
+			Seg_out[RR*c + CC]=255;
 	}
 
 	delete g;
