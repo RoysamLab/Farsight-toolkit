@@ -137,6 +137,11 @@ this->tobj->gapMax = 10;
 this->smallLine = 5;
 this->SelectColor =.1;
 this->lineWidth= 2;
+this->GapsPlotView = NULL;
+this->TreePlot = NULL;
+this->FTKTable = NULL;
+this->GapsTableView = NULL;
+//  this->histo = NULL;
 
 this->Initialize();
 this->tobj->setSmallLineColor(.25);
@@ -232,9 +237,6 @@ void View3D::Initialize()
 void View3D::setupLinkedSpace()
 {  
   this->tobj->Gaps.clear();
-  this->GapsPlotView = NULL;
-  this->TreePlot = NULL;
-//  this->histo = NULL;
   this->MergeGaps = new MergeModel(this->tobj->Gaps);
   this->MergeGaps->setParent(this);
   if (this->tobj->FeatureHeaders.size() >=1)
