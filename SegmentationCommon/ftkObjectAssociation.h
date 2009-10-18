@@ -112,9 +112,12 @@ protected:
 	/* This is the object type (ex. nucleus, spine, etc..) */
 	string objectType;
 
+	//added by Yousef on 10-18-2009
+	unsigned short* invalidObjects;
+
 private:
 	string segImageName;
-	int numOfAssocRules;
+	int numOfAssocRules;	
 			
 }; // end ObjectAssociation
 

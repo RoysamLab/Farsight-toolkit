@@ -75,12 +75,13 @@ void NuclearAssociationRules::Compute()
 	labGeometryFilter->SetInput( labImage );
 	//labGeometryFilter->SetIntensityInput( labImage );
 	labGeometryFilter->Update();
-	//get the number of objects	
+	//get the number of objects	(Most probably it gets the maximum object label, so be careful!) 
 	numOfLabels  = labGeometryFilter->GetNumberOfObjects();
 	numOfLabels--; //because the first one is the background
 
 	//allocate memory for the features list
 	assocMeasurementsList = new float*[GetNumofAssocRules()];
+	
 	//3. then, for each type of the associations get the requested reigion based on the type and the value of the inside and outside distances.
 	for(int i=0; i<GetNumofAssocRules(); i++)
 	{
@@ -90,14 +91,30 @@ void NuclearAssociationRules::Compute()
 		reader2->SetFileName(assocRulesList[i].GetTargetFileNmae());
 		reader2->Update();		
 		//cout<<"Computing Features For Association Rule "<<i+1<<": ";
-		for(int j=149; j<numOfLabels; j++)
+		for(int j=0; j<numOfLabels; j++)
 		{
-			//cout<<j+1;
+			//cout<<j+1;			
 			cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<j+1<<"/"<<numOfLabels;
-			assocMeasurementsList[i][j] = ComputeOneAssocMeasurement(reader2->GetOutput(), i, j+1);			
+			assocMeasurementsList[i][j] = ComputeOneAssocMeasurement(reader2->GetOutput(), i, j+1);						
 		}		
 		cout<<"\tdone"<<endl;
-	}						
+	}	
+	
+	//Flag invalid objects
+	//allocate memory for the invalid objects list
+	invalidObjects = new unsigned short[numOfLabels];
+	for(int j=0; j<numOfLabels; j++)
+	{
+		if(j==380)
+			int jjj=1;
+		unsigned short all_neg = 1;
+		for(int i=0; i<GetNumofAssocRules(); i++)
+		{
+			if(assocMeasurementsList[i][j] != -1.0)
+				all_neg = 0;
+		}
+		invalidObjects[j] = all_neg;
+	}
 }
 
 /* use this function to compute one associative measurement */
@@ -107,6 +124,16 @@ float NuclearAssociationRules::ComputeOneAssocMeasurement(itk::SmartPointer<Targ
 	//The bounding box is defined by the area around the object such that the object+outerdistance are included	
 	int imBounds[6] = {0,x_Size,0,y_Size,0,z_Size};
 	LabelGeometryType::BoundingBoxType bbox = labGeometryFilter->GetBoundingBox(objID);
+	//make sure the object exists
+	int valid = 0;
+	for(int dim=0; dim < imDim*2; ++dim)
+	{
+		if(bbox[dim] > 0)
+			valid = 1;
+	}
+	if(valid == 0)
+		return -1;
+
 	std::vector< int > retBbox(0);
 	int dist, val;
 	dist = assocRulesList[ruleID].GetOutDistance();

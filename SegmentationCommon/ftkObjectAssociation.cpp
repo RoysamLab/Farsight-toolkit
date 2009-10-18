@@ -48,6 +48,8 @@ ObjectAssociation::ObjectAssociation(string AssocFName, int numOfRules)
 	numOfAssocRules = numOfRules;		
 	assocMeasurementsList=NULL;
 	numOfLabels=0;
+	//added by Yousef on 10-18-2009
+	invalidObjects = NULL;
 }
 
 /* Add association rules to the list of rules */
@@ -270,6 +272,10 @@ void ObjectAssociation::WriteAssociativeFeaturesToXML(string xmlFname)
 	//go over the objects one by one	
 	for(int j=0; j<numOfLabels; j++)
 	{
+		//if the object is invalid, then just ignore it
+		if(invalidObjects[j]==1)
+			continue;
+
 		TiXmlElement *element = new TiXmlElement("Object");
 		element->SetAttribute("Type",objectType.c_str());		
 		stringstream out1;
