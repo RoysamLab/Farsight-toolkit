@@ -13,6 +13,9 @@ ADD_EXECUTABLE(Integratedskel Integratedskel.cpp)
 ADD_EXECUTABLE(volumeProcess volumeProcess.cpp)
 TARGET_LINK_LIBRARIES(volumeProcess ITKIO ITKStatistics)
 
+ADD_EXECUTABLE(AddSpinesToSmoothedBackbone AddSpinesToSmoothedBackbone.cxx)
+TARGET_LINK_LIBRARIES(AddSpinesToSmoothedBackbone vtkCommon vtkIO vtkGraphics)
+
 #INCLUDE_DIRECTORIES(${BSplineFitting_SOURCE_DIR})
 ADD_EXECUTABLE(BSplineFitting BSplineFitting.cpp)
 TARGET_LINK_LIBRARIES(BSplineFitting
@@ -47,3 +50,5 @@ INSTALL( TARGETS MinSpanTree DESTINATION bin/MDL )
 INSTALL( TARGETS Integratedskel DESTINATION bin/MDL )
 INSTALL( TARGETS volumeProcess DESTINATION bin/MDL )
 INSTALL( TARGETS BSplineFitting DESTINATION bin/MDL )
+INSTALL( TARGETS AddSpinesToSmoothedBackbone DESTINATION bin/MDL )
+

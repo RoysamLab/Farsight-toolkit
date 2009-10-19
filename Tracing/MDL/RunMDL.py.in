@@ -100,7 +100,6 @@ subprocess.call(["./GradientVecField${CMAKE_EXECUTABLE_SUFFIX}",\
 timeElapsed = time.time() - timeBefore
 print "Step #4 completed in %d seconds\n\n" % timeElapsed
 
-
 cmd = "./Integratedskel${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s 0.05 %s %s" % \
   (dataDir+"/out.vec", sizeX, sizeY, sizeZ, dataDir+"/out.seed",\
    dataDir+"/out.skel")
@@ -112,16 +111,49 @@ subprocess.call(["./Integratedskel${CMAKE_EXECUTABLE_SUFFIX}",\
 timeElapsed = time.time() - timeBefore
 print "Step #5 completed in %d seconds\n\n" % timeElapsed
 
-
-cmd = "./MinSpanTree${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s %s 8 4 170 0.70 %s %s %s" % \
+outBaseName = os.path.basename(fullPathToOutput);
+backbonePath = dataDir + "/" + outBaseName[0:outBaseName.rfind(".vtk")] + "-backbone.vtk"
+cmd = "./MinSpanTree${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s %s 8 4 170 0.70 %s %s yes no" % \
   (dataDir+"/", "out.skel", "components_Connected.raw", sizeX, sizeY, sizeZ, \
-   fullPathToOutput, dataDir+"/out.txt", dataDir+"/Aniso_Diffused.raw")
+   backbonePath, dataDir+"/Aniso_Diffused.raw")
 print "Step #6, executing the following command:\n%s" % cmd
 timeBefore = time.time()
 subprocess.call(["./MinSpanTree${CMAKE_EXECUTABLE_SUFFIX}",\
                   dataDir+"/", "out.skel", "components_Connected.raw", sizeX,\
-                  sizeY, sizeZ, "8", "4", "170", "0.7", fullPathToOutput,\
-                  dataDir+"/out.txt", dataDir+"/Aniso_Diffused.raw"])
+                  sizeY, sizeZ, "8", "4", "170", "0.7", backbonePath,\
+                  dataDir+"/Aniso_Diffused.raw", "yes", "no"])
 timeElapsed = time.time() - timeBefore
 print "Step #6 completed in %d seconds\n\n" % timeElapsed
 
+cmd = "./BSplineFitting${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s %s %s/smoothBB.vtk %s/smoothSpine.vtk" %\
+  (dataDir+"/", filename, os.path.basename(backbonePath), sizeX, sizeY, sizeZ, dataDir, dataDir) 
+print "Step #7, executing the following command:\n%s" % cmd
+timeBefore = time.time()
+subprocess.call(["./BSplineFitting${CMAKE_EXECUTABLE_SUFFIX}",\
+                dataDir+"/", filename, os.path.basename(backbonePath), sizeX,\
+                sizeY, sizeZ, dataDir+"/smoothBB.vtk", dataDir+"/smoothSpine.vtk"])
+timeElapsed = time.time() - timeBefore
+print "Step #7 completed in %d seconds\n\n" % timeElapsed
+
+spinesPath = dataDir + "/" + outBaseName[0:outBaseName.rfind(".vtk")] + "-spines.vtk"
+cmd = "./MinSpanTree${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s %s 8 4 170 0.70 %s %s no yes" % \
+  (dataDir+"/", "out.skel", "components_Connected.raw", sizeX, sizeY, sizeZ, \
+   spinesPath, dataDir+"/Aniso_Diffused.raw")
+print "Step #8, executing the following command:\n%s" % cmd
+timeBefore = time.time()
+subprocess.call(["./MinSpanTree${CMAKE_EXECUTABLE_SUFFIX}",\
+                  dataDir+"/", "out.skel", "components_Connected.raw", sizeX,\
+                  sizeY, sizeZ, "8", "4", "170", "0.7", spinesPath,\
+                  dataDir+"/Aniso_Diffused.raw", "no", "yes"])
+timeElapsed = time.time() - timeBefore
+print "Step #8 completed in %d seconds\n\n" % timeElapsed
+
+cmd = "./AddSpinesToSmoothedBackbone${CMAKE_EXECUTABLE_SUFFIX} %s/smoothBB.vtk %s %s" % \
+  (dataDir, spinesPath, fullPathToOutput)
+print "Step #9, executing the following command:\n%s" % cmd
+timeBefore = time.time()
+subprocess.call(["./AddSpinesToSmoothedBackbone${CMAKE_EXECUTABLE_SUFFIX}",\
+                  dataDir+"/smoothBB.vtk", spinesPath, fullPathToOutput])
+timeElapsed = time.time() - timeBefore
+print "Step #9 completed in %d seconds\n\n" % timeElapsed
+                 
