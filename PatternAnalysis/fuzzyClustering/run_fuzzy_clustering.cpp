@@ -20,8 +20,7 @@ int main(int argc, char* argv[])
 {
 	if(argc<6)
 	{
-		cout<< "Usage: fuzzy_clustering InputFileName NumberOfClasses ClusterOutputFileName TrainingSetPercentage TrainingOutputFile [options]" << 
-endl;	
+		cout<< "Usage: fuzzy_clustering InputFileName NumberOfClasses ClusterOutputFileName TrainingSetPercentage TrainingOutputFile [options]" << endl;	
 		return 0;
 	}
 	
