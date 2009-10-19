@@ -85,6 +85,7 @@ public:
 	static void HandleKeyPress(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
 
 	void HighlightSelected(TraceLine* tline, double SelectColor);
+	void SetTraceType();
 	void DeleteTrace(TraceLine *tline);
 	void AddChildren(TraceLine *trunk, std::vector<TraceLine*> childTraces);
 	void MergeSelectedTraces();
@@ -92,7 +93,6 @@ public:
 	void ShowMergeStats();
 	void CalculateGaps();
 
-	bool setTol();
 	//todo: make these private with accessors
 	vtkSmartPointer<vtkRenderer> Renderer;
 	vtkSmartPointer<vtkActor> BranchActor;
@@ -185,11 +185,11 @@ private:
 	QWidget *SettingsWidget;
 	QLineEdit *MaxGapField;
 	QLineEdit *GapToleranceField;
-	QLineEdit *LineLengthField;
-	QLineEdit *ColorValueField;
-	QLineEdit *LineWidthField;
-	QPushButton *ApplySettingsButton;
-	QPushButton *CancelSettingsButton;
+	QSpinBox *LineLengthField;
+	QSpinBox *ColorValueField;
+	QSpinBox *LineWidthField;
+	QDialogButtonBox *ApplySettingsButton;
+	//QPushButton *CancelSettingsButton;
 
 	//stuff for tol and selection
     //general render window variables

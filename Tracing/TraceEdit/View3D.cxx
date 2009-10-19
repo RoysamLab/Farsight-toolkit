@@ -154,7 +154,7 @@ void View3D::LoadTraces()
 {
 	std::string traceFile;
 	QString trace = QFileDialog::getOpenFileName(this , "Load Trace Data", ".",
-		tr("TraceFile(*.xml *.swc"));
+		tr("TraceFile( *.xml *.swc" ));
 	if (!trace.isEmpty())
 	{
 		traceFile = trace.toStdString();
@@ -182,7 +182,7 @@ void View3D::LoadTraces()
 void View3D::LoadImageData()
 {
 	QString trace = QFileDialog::getOpenFileName(this , "Load Trace Image Data", ".",
-		tr("Trace Image (*.tiff *.tif *.pic *.PIC"));
+		tr("Trace Image ( *.tiff *.tif *.pic *.PIC " ));
 	if (!trace.isEmpty())
 	{
 		this->statusBar()->showMessage("Loading Image file");
@@ -332,18 +332,17 @@ void View3D::CreateGUIObjects()
   this->MaxGapField->setValidator(intValidator);
   this->GapToleranceField = new QLineEdit(this->SettingsWidget);
   this->GapToleranceField->setValidator(intValidator);
-  this->LineLengthField = new QLineEdit(this->SettingsWidget);
-  this->LineLengthField->setValidator(doubleValidator);
-  this->ColorValueField = new QLineEdit(this->SettingsWidget);
-  this->ColorValueField->setValidator(doubleValidator);
-  this->LineWidthField = new QLineEdit(this->SettingsWidget);
-  this->LineWidthField->setValidator(doubleValidator);
-  this->ApplySettingsButton = new QPushButton("&Apply", this->SettingsWidget);
-  this->CancelSettingsButton = new QPushButton("&Cancel", this->SettingsWidget);
-  connect(this->ApplySettingsButton, SIGNAL(clicked()), this,
-    SLOT(ApplyNewSettings()));
-  connect(this->CancelSettingsButton, SIGNAL(clicked()), this,
-    SLOT(HideSettingsWindow())); 
+  this->LineLengthField = new QSpinBox(this->SettingsWidget);
+  this->LineLengthField->setRange(0,100);
+  this->ColorValueField = new QSpinBox(this->SettingsWidget);
+  this->ColorValueField->setRange(0,100);
+  this->LineWidthField = new QSpinBox(this->SettingsWidget);
+  this->LineWidthField->setRange(1,5);
+  this->ApplySettingsButton = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+  //this->CancelSettingsButton = new QPushButton("&Cancel", this->SettingsWidget);
+  connect(this->ApplySettingsButton, SIGNAL(accepted()), this, SLOT(ApplyNewSettings()));
+  connect(this->ApplySettingsButton, SIGNAL(rejected()), this, SLOT(HideSettingsWindow()));
+
 //Loading soma data
   this->loadSoma = new QAction("Load Somas", this->CentralWidget);
    connect(this->loadSoma, SIGNAL(triggered()), this, SLOT(GetSomaFile()));
@@ -375,25 +374,14 @@ void View3D::CreateLayout()
   viewerLayout->addWidget(this->QVTK, 0, 0);
   //may add a tree view here
    //layout for the settings window
-  QGridLayout *settingsLayout = new QGridLayout(this->SettingsWidget);
-  QLabel *maxGapLabel = new QLabel(tr("Maximum gap length:"));
-  settingsLayout->addWidget(maxGapLabel, 0, 0);
-  settingsLayout->addWidget(this->MaxGapField, 0, 1);
-  QLabel *gapToleranceLabel = new QLabel(tr("Gap length tolerance:"));
-  settingsLayout->addWidget(gapToleranceLabel, 1, 0);
-  settingsLayout->addWidget(this->GapToleranceField, 1, 1);
-  QLabel *lineLengthLabel = new QLabel(tr("Small line length:"));
-  settingsLayout->addWidget(lineLengthLabel, 2, 0);
-  settingsLayout->addWidget(this->LineLengthField, 2, 1);
-  QLabel *colorValueLabel = new QLabel(tr("Color value RGB scalar 0 to 1:"));
-  settingsLayout->addWidget(colorValueLabel, 3, 0);
-  settingsLayout->addWidget(this->ColorValueField, 3, 1);
-  QLabel *lineWidthLabel = new QLabel(tr("Line width:"));
-  settingsLayout->addWidget(lineWidthLabel, 4, 0);
-  settingsLayout->addWidget(this->LineWidthField, 4, 1);
-  settingsLayout->addWidget(this->ApplySettingsButton, 5, 0);
-  settingsLayout->addWidget(this->CancelSettingsButton, 5, 1); 
-
+  QFormLayout *settingsLayout = new QFormLayout(this->SettingsWidget);
+  settingsLayout->addRow(tr("Maximum gap length:"), this->MaxGapField);
+  settingsLayout->addRow(tr("Gap length tolerance:"),this->GapToleranceField);
+  settingsLayout->addRow(tr("Small line length:"),this->LineLengthField);
+  settingsLayout->addRow(tr("Color value RGB scalar 0 to 1:"),this->ColorValueField);
+  settingsLayout->addRow(tr("Line width:"),this->LineWidthField);
+  settingsLayout->addRow(this->ApplySettingsButton);
+ 
   //Layout for the Load Soma Window
 }
 
@@ -470,9 +458,9 @@ void View3D::ShowSettingsWindow()
   //make sure the values in the input fields are up-to-date
   this->MaxGapField->setText(QString::number(this->tobj->gapMax));
   this->GapToleranceField->setText(QString::number(this->tobj->gapTol));
-  this->LineLengthField->setText(QString::number(this->smallLine));
-  this->ColorValueField->setText(QString::number(this->SelectColor));
-  this->LineWidthField->setText(QString::number(this->lineWidth));
+  this->LineLengthField->setValue(this->smallLine);
+  this->ColorValueField->setValue(this->SelectColor*100);
+  this->LineWidthField->setValue(this->lineWidth);
   this->SettingsWidget->show();
 }
 
@@ -481,7 +469,7 @@ void View3D::ApplyNewSettings()
   this->tobj->gapMax = this->MaxGapField->text().toInt();
   this->tobj->gapTol = this->GapToleranceField->text().toDouble();
   this->smallLine = this->LineLengthField->text().toFloat();
-  this->SelectColor = this->ColorValueField->text().toDouble();
+  this->SelectColor = this->ColorValueField->text().toDouble()/100;
   this->lineWidth = this->LineWidthField->text().toFloat();
   //this->Rerender();
   this->SettingsWidget->hide();
@@ -491,93 +479,6 @@ void View3D::ApplyNewSettings()
 void View3D::HideSettingsWindow()
 {
   this->SettingsWidget->hide();
-}
-bool View3D::setTol()
-{
-  bool change = false;
-  char select=0;
-  std::cout<<"Settings Configuration:\n gap (t)olerance:\t" <<this->tobj->gapTol
-    <<"\ngap (m)ax:\t"<<this->tobj->gapMax
-    <<"\n(s)mall line:\t"<< smallLine
-    <<"\nselection (c)olor:\t"<<SelectColor
-    <<"\nline (w)idth:\t"<<lineWidth
-    <<"\n(e)nd edit settings\n";
-  while (select !='e')
-  {
-    std::cout<< "select option:\t"; 
-    std::cin>>select;
-    switch(select)
-    {
-    case 'm':
-      {
-        int newMax;
-        std::cout<< "maximum gap length\n";
-        std::cin>>newMax;
-        if (newMax!=this->tobj->gapMax)
-        {
-          this->tobj->gapMax=newMax;
-          change= true;
-        }
-        break;
-      }//end of 'm'
-    case 't':
-      {
-        double newTol;
-        std::cout<< "gap length tolerance\n";
-        std::cin>>newTol;
-        if (newTol!=this->tobj->gapTol)
-        {
-          this->tobj->gapTol=newTol;
-          change= true;
-        }
-        break;
-      }//end of 't'
-    case 's':
-      {
-        float newSmall;
-        std::cout<< "small line length\n";
-        std::cin>>newSmall;
-        if (newSmall!=smallLine)
-        {
-          smallLine=newSmall;
-          change= true;
-        }
-        break;
-      }// end of 's'
-    case 'c':
-      {
-        double newColor;
-        std::cout<< "color value RGB scalar 0 to 1\n";
-        std::cin>>newColor;
-        if (newColor!=SelectColor)
-        {
-          SelectColor=newColor;
-          change= true;
-        }
-        break;
-      }//end of 'c'
-    case 'w':
-      {
-        float newWidth;
-        std::cout<<"line Width\n";
-        std::cin>>newWidth;
-        if (newWidth!=lineWidth)
-        {
-          lineWidth=newWidth;
-          change= true;
-        }
-        break;
-      }
-    }//end of switch
-  }// end of while
-  if (change== true)
-  {std::cout<<"Settings Configuration are now:\n gap tollerance:\t" <<this->tobj->gapTol
-    <<"\ngap max:\t"<<this->tobj->gapMax
-    <<"\nsmall line:\t"<< smallLine
-    <<"\nselection color:\t"<<SelectColor
-    <<"\nline width:\t"<<lineWidth;
-  }
-  return change;
 }
 /*  picking */
 void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata)
@@ -1310,17 +1211,35 @@ void View3D::SplitTraces()
 
 void View3D::FlipTraces()
 {
-  if(this->SelectedTraceIDs.size()>=1)
-    {
-		for(unsigned int i=0; i< this->SelectedTraceIDs.size(); i++)
+	std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
+	if (traceList.size() >=1)
+	{
+		for (unsigned int i = 0; i < traceList.size(); i++)
 		{
-			this->tobj->ReverseSegment(reinterpret_cast<TraceLine*>(
-				this->tobj->hashc[this->SelectedTraceIDs[i]]));
-		}
+			this->tobj->ReverseSegment(traceList[i]);
+		}		
+		this->statusBar()->showMessage(tr("Reversed Selected"));
 		this->Rerender();
-    }
+	}
+	else
+	{
+		this->statusBar()->showMessage(tr("Nothing Selected"));
+	}
 }
-
+void View3D::SetTraceType()
+{
+	std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
+	if (traceList.size() >=1)
+	{
+		for (unsigned int i = 0; i < traceList.size(); i++)
+		{
+		}
+	}
+	else
+	{
+		this->statusBar()->showMessage(tr("Nothing Selected"));
+	}
+}
 void View3D::SaveToFile()
 {
   //display a save file dialog
@@ -1360,7 +1279,7 @@ void View3D::SaveToFile()
 void View3D::GetSomaFile()
 {
 	QString somaFile = QFileDialog::getOpenFileName(this , "Choose a Soma file to load", ".", 
-	  tr("Image File (*.tiff *.tif *.pic *.PIC)"));
+	  tr("Image File ( *.tiff *.tif *.pic *.PIC ) "));
 	if(!somaFile.isNull())
 	{
 		this->statusBar()->showMessage("Loading Soma Image");
