@@ -77,6 +77,24 @@ void TraceObject::Print(std::ostream &c)
   }
 }
 
+double TraceObject::getTraceLUT(unsigned char type)
+{
+	switch( type )
+      {
+      case 1:
+        return .75;//cyan
+        break;
+      case 3:
+      case 4:
+      case 5:
+        return .90;//blue
+        break;
+      case 7:
+      case 0:
+      default:
+          return .25; //yellow
+      }
+}
 std::vector<TraceLine*>* TraceObject::GetTraceLinesPointer()
 {
   return &trace_lines;
@@ -322,21 +340,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
     ttemp->SetId(global_id_number++);
     ttemp->SetType(hash_type[*iter]);
     //ttemp->setTraceColor(1.0/ttemp->GetType());
-    switch( ttemp->GetType() )
-      {
-      case 1:
-        ttemp->setTraceColor(.75);//cyan
-        break;
-      case 3:
-      case 4:
-      case 5:
-        ttemp->setTraceColor(.90);//blue
-        break;
-      case 7:
-      case 0:
-      default:
-          ttemp->setTraceColor(.25); //yellow
-      }
+    ttemp->setTraceColor( getTraceLUT( ttemp->GetType() ));
     ttemp->AddTraceBit(data[*iter]);
     int id_counter = *iter;
     while(child_count[id_counter]==1)
@@ -659,22 +663,23 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
     tline->SetType(lineType);
     //tline->setTraceColor(1.0/tline->GetType());
     //lauren added 11.6.2009
-    switch( tline->GetType() )
-    {
-    case 1:
-        tline->setTraceColor(.75);//cyan
-        break;
-    case 3:
-    case 4:
-    case 5:
-        tline->setTraceColor(.90);//blue
-        break;
-    case 7:
-    case 0:
-    default:
-        tline->setTraceColor(.25); //yellow
-    }
-    //end of added code
+	tline->setTraceColor( getTraceLUT( tline->GetType() ));   
+	//switch( tline->GetType() )
+ //   {
+ //   case 1:
+ //       tline->setTraceColor(.75);//cyan
+ //       break;
+ //   case 3:
+ //   case 4:
+ //   case 5:
+ //       tline->setTraceColor(.90);//blue
+ //       break;
+ //   case 7:
+ //   case 0:
+ //   default:
+ //       tline->setTraceColor(.25); //yellow
+ //   }
+ //   //end of added code
     
 
 

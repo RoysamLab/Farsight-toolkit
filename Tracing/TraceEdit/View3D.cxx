@@ -87,7 +87,7 @@ View3D::View3D(int argc, char **argv)
   this->undoBuff = new bufferType(sz);
   int num_loaded = 0;
   this->Volume=0;
-
+    
   // load as many files as possible. Provide offset for differentiating types
   for(int counter=1; counter<argc; counter++)
     {
@@ -343,6 +343,12 @@ void View3D::CreateGUIObjects()
   connect(this->ApplySettingsButton, SIGNAL(accepted()), this, SLOT(ApplyNewSettings()));
   connect(this->ApplySettingsButton, SIGNAL(rejected()), this, SLOT(HideSettingsWindow()));
 
+	QStringList types;
+	types <<"0 = undefined" << "1 = soma" <<"2 = axon" <<"3 = dendrite" 
+		<<"4 = apical dendrite" <<"5 = fork point" <<"6 = end point" <<"7 = custom";
+	this->typeCombo = new QComboBox;
+	this->typeCombo->addItems(types);
+	connect(this->typeCombo, SIGNAL(activated( int )), this, SLOT(SetTraceType(int )));
 //Loading soma data
   this->loadSoma = new QAction("Load Somas", this->CentralWidget);
    connect(this->loadSoma, SIGNAL(triggered()), this, SLOT(GetSomaFile()));
@@ -365,6 +371,7 @@ void View3D::CreateLayout()
   this->EditsToolBar->addAction(this->BranchButton);
   this->EditsToolBar->addAction(this->SplitButton);
   this->EditsToolBar->addAction(this->FlipButton);
+  this->EditsToolBar->addWidget(this->typeCombo);
   this->EditsToolBar->addSeparator();
   this->EditsToolBar->addAction(this->loadSoma);
   this->EditsToolBar->addAction(this->SettingsButton);
@@ -1226,14 +1233,20 @@ void View3D::FlipTraces()
 		this->statusBar()->showMessage(tr("Nothing Selected"));
 	}
 }
-void View3D::SetTraceType()
+void View3D::SetTraceType(int newType)
 {
 	std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
 	if (traceList.size() >=1)
 	{
 		for (unsigned int i = 0; i < traceList.size(); i++)
 		{
+			traceList[i]->SetType((unsigned char) newType);
+			traceList[i]->setTraceColor(this->tobj->getTraceLUT((unsigned char) newType));
 		}
+		this->ClearSelection();
+		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+		this->statusBar()->showMessage(QString::number(traceList.size())
+			+ tr(" traces set to type")+ QString::number(newType));
 	}
 	else
 	{

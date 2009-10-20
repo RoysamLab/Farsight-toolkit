@@ -50,6 +50,8 @@ public:
 	{
 		this->mergeLineColor=set;
 	};
+	void setLUT(int num);
+	double getTraceLUT(unsigned char type);
 //	I/O functions
 	bool ReadFromSWCFile(char * filename);
 	bool ReadFromRPIXMLFile(char * filename);

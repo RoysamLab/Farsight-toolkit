@@ -85,7 +85,6 @@ public:
 	static void HandleKeyPress(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
 
 	void HighlightSelected(TraceLine* tline, double SelectColor);
-	void SetTraceType();
 	void DeleteTrace(TraceLine *tline);
 	void AddChildren(TraceLine *trunk, std::vector<TraceLine*> childTraces);
 	void MergeSelectedTraces();
@@ -114,6 +113,7 @@ public slots:
 	void LoadTraces();
 	void LoadImageData();
 	void GetSomaFile();
+	void SetTraceType(int newType);
 
 	//void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
     void DereferenceGapsPlotView();
@@ -189,6 +189,8 @@ private:
 	QSpinBox *ColorValueField;
 	QSpinBox *LineWidthField;
 	QDialogButtonBox *ApplySettingsButton;
+	QComboBox *typeCombo;
+	//QStringList *types;
 	//QPushButton *CancelSettingsButton;
 
 	//stuff for tol and selection
