@@ -12,6 +12,7 @@
 //added by Yousef on 9/26/2009
 #include "itkExtractImageFilter.h"
 
+#include "itkSignedMaurerDistanceMapImageFilter.h"
 //,.,.
 
 typedef    float     InputPixelType;
@@ -81,13 +82,17 @@ int detectSeeds2D( float* IM, float* IM_out, unsigned short* IM_bin, int r, int 
 	//Compute Distance Map
 	float* dImg = (float *) malloc(r*c*sizeof(float));
 	distMap(im, r, c, dImg);
-	iterator1.GoToBegin();
+	iterator1.GoToBegin();	
 	
 	//Copy the input image into an ITK image
 	for(int i=0; i<r*c; i++)
 	{				
 		iterator1.Set(IM[i]);		
 		++iterator1;	
+
+		//try this
+		if(bImg[i] == 0)
+			dImg[i] = 0;
 	}
 
 	//By Yousef (9/26/2009)
@@ -376,12 +381,15 @@ int distMap(itk::SmartPointer<InputImageType> im, int r, int c, float* IMG)
 
   //  The filter type is now instantiated using both the input image and the
   //  output image types.
-  //typedef itk::ApproximateSignedDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;
-  typedef itk::DanielssonDistanceMapImageFilter <InputImageType, OutputImageType > DTFilter ;
+  /*typedef itk::DanielssonDistanceMapImageFilter <InputImageType, OutputImageType > DTFilter ;
+  DTFilter::Pointer dt_obj= DTFilter::New() ;
+  dt_obj->SetInput(im) ;*/
+  typedef itk::SignedMaurerDistanceMapImageFilter<InputImageType, OutputImageType>  DTFilter;
   DTFilter::Pointer dt_obj= DTFilter::New() ;
   dt_obj->SetInput(im) ;
-  //dt_obj->SetInsideValue(0.0);
-  //dt_obj->SetOutsideValue(255.0);
+  dt_obj->SetSquaredDistance( false );      
+  dt_obj->SetInsideIsPositive( false );
+  
 
   try{
 	 dt_obj->Update() ;
@@ -419,6 +427,7 @@ void estimateMinMaxScales2D(itk::SmartPointer<InputImageType> im, float* distIm,
 	int cnt = 0;
 	//ofstream p;
 	//p.open("checkme.txt");
+	unsigned short mmx = 0;
 	for(int i=1; i<r-1; i++)
     {
         for(int j=1; j<c-1; j++)
@@ -428,7 +437,7 @@ void estimateMinMaxScales2D(itk::SmartPointer<InputImageType> im, float* distIm,
 			max_r = (int)min((double)r-1,(double)i+2);
 			max_c = (int)min((double)c-1,(double)j+2);                         			
 			unsigned short mx = get_maximumV2(distIm, min_r, max_r, min_c, max_c, r, c);
-				
+			
 			if(mx <= 2)
 				continue; //background or edge point
 			II = (i*c)+j;
