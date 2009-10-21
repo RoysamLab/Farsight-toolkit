@@ -76,8 +76,13 @@ void NuclearAssociationRules::Compute()
 	//labGeometryFilter->SetIntensityInput( labImage );
 	labGeometryFilter->Update();
 	//get the number of objects	(Most probably it gets the maximum object label, so be careful!) 
-	numOfLabels  = labGeometryFilter->GetNumberOfObjects();
+	//numOfLabels  = labGeometryFilter->GetNumberOfLabels();//GetNumberOfObjects();
 	//numOfLabels--; //because the first one is the background
+
+	//Get the list of labels
+	labelsList = labGeometryFilter->GetLabels();
+	numOfLabels = labelsList.size();
+	//int maxLable = labelsList[numOfLabels-1];
 
 	//allocate memory for the features list
 	assocMeasurementsList = new float*[GetNumofAssocRules()];
@@ -91,20 +96,19 @@ void NuclearAssociationRules::Compute()
 		reader2->SetFileName(assocRulesList[i].GetTargetFileNmae());
 		reader2->Update();		
 		//cout<<"Computing Features For Association Rule "<<i+1<<": ";
-		for(int j=1; j<=numOfLabels; j++)
+		for(int j=1; j<numOfLabels; j++)
 		{
 			//cout<<j+1;
-			if(j==numOfLabels)
-				int jjj=1;
-			cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<j<<"/"<<numOfLabels;
-			assocMeasurementsList[i][j-1] = ComputeOneAssocMeasurement(reader2->GetOutput(), i, j);						
+			int lbl = labelsList[j];			
+			cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<lbl<<"/"<<numOfLabels;
+			assocMeasurementsList[i][j-1] = ComputeOneAssocMeasurement(reader2->GetOutput(), i, lbl);						
 		}		
 		cout<<"\tdone"<<endl;
 	}	
 	
 	//Flag invalid objects
 	//allocate memory for the invalid objects list
-	invalidObjects = new unsigned short[numOfLabels];
+	/*invalidObjects = new unsigned short[numOfLabels];
 	for(int j=0; j<numOfLabels; j++)
 	{		
 		unsigned short all_neg = 1;
@@ -114,7 +118,7 @@ void NuclearAssociationRules::Compute()
 				all_neg = 0;
 		}
 		invalidObjects[j] = all_neg;
-	}
+	}*/
 }
 
 /* use this function to compute one associative measurement */

@@ -78,7 +78,7 @@ private:
 	float FindMin(vector<int> LST);
 	float FindMax(vector<int> LST);
 	float ComputeTotal(vector<int> LST);
-	float ComputeAverage(vector<int> LST);
+	float ComputeAverage(vector<int> LST);	
 	
 }; // end NuclearAssociation
 }  // end namespace ftk
