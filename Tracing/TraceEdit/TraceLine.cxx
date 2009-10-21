@@ -82,11 +82,29 @@ bool TraceLine::isLeaf()
 		return false;
 	}
 }
-void TraceLine::setRoot(int RootID, int traceLevel, int parentPath)
+void TraceLine::setRoot(int RootID, int traceLevel, double parentPath)
 {
 	this->root = RootID;
 	this->level = traceLevel;
-	this->PathLength = parentPath + this->GetSize();
+	this->PathLength = parentPath + this->GetLength();
+}
+void TraceLine::calculateVol()
+{
+	double dist = 0, r = 0;
+	TraceBit pre, cur;
+	TraceBitsType::iterator it = this->m_trace_bits.begin();
+	pre = *it; 
+	it++;
+	r = pre.r;
+	for (it; it != this->m_trace_bits.end(); it++)
+	{
+		cur = *it;
+		r += cur.r;
+		dist += Euclidian(pre, cur);
+	}
+	this->length = dist;
+	this->radii = r / this->m_trace_bits.size(); //ave radii
+	this->volume = pow((this->radii),2)*this->length;
 }
 ///////////////////////////////////////////////////////////////////////////////
 void TraceLine::AddBranch(TraceLine* b)
@@ -244,42 +262,39 @@ void TraceLine::Getstats()
 
 
 ///////////////////////////////////////////////////////////////////////////////
+double TraceLine::Euclidian(TraceBit bit1, TraceBit bit2)
+{
+	double distance, x, y, z;
+	x = pow((bit1.x -bit2.x),2);
+	y = pow((bit1.y -bit2.y),2);
+	z = pow((bit1.y -bit2.y),2);
+	distance = sqrt(x +y +z);
+	return distance;
+
+}
+double TraceLine::Angle(TraceBit bit1f, TraceBit bit1b, TraceBit bit2f, TraceBit bit2b)
+{
+	double delX1, delX2, delY1, delY2, delZ1, delZ2,  norm1, norm2;
+	//delta x,y,z 
+	delX1=bit1f.x-bit1b.x;	delX2=bit2f.x-bit2b.x;
+	delY1=bit1f.y-bit1b.y;	delY2=bit2f.y-bit2b.y;
+	delZ1=bit1f.z-bit1b.z;	delZ2=bit2f.z-bit2b.z;
+	norm1=sqrt(pow((delX1),2)+ pow((delY1),2)+ pow((delZ1),2));
+	norm2=sqrt(pow((delX2),2)+ pow((delY2),2)+ pow((delZ2),2));
+	return acos(((delX1 * delX2) + (delY1 *delY2) + (delZ1 * delZ2)) /
+          (norm2 * norm1));
+}
 bool TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
                           double &maxdist, double &angle) 
 {
   //int center1=this->GetSize()/2, center2=Trace2->GetSize()/2;
-  double XF, XB, YF, YB, ZF, ZB, XF2,XB2, YF2, YB2, ZF2, ZB2, distances[4];
-  double delX1, delX2, delY1, delY2, delZ1, delZ2, min, norm1, norm2;
-
-  //trace 1
-  XF = m_trace_bits.front().x;
-  YF= m_trace_bits.front().y;
-  ZF= m_trace_bits.front().z;
-  XB = m_trace_bits.back().x;
-  YB= m_trace_bits.back().y;
-  ZB= m_trace_bits.back().z;
-
-  //trace 2 
-  XF2=Trace2->m_trace_bits.front().x;
-  YF2=Trace2->m_trace_bits.front().y;
-  ZF2=Trace2->m_trace_bits.front().z;
-  XB2=Trace2->m_trace_bits.back().x;
-  YB2=Trace2->m_trace_bits.back().y;
-  ZB2=Trace2->m_trace_bits.back().z;
-
-  //delta x,y,z 
-  delX1=XF-XB;
-  delX2=XF2-XB2;
-  delY1=YF-YB;
-  delY2=YF2-YB2;
-  delZ1=ZF-ZB;
-  delZ2=ZF2-ZB2;
+  double min, distances[4];
 
   //compute the endpt distances
-  distances[0]=sqrt(pow((XF-XF2),2)+pow((YF-YF2),2)+pow((ZF-ZF2),2));//0 F-F
-  distances[1]=sqrt(pow((XF-XB2),2)+pow((YF-YB2),2)+pow((ZF-ZB2),2));//1 F-B
-  distances[2]=sqrt(pow((XB-XF2),2)+pow((YB-YF2),2)+pow((ZB-ZF2),2));//2 B-F
-  distances[3]=sqrt(pow((XB-XB2),2)+pow((YB-YB2),2)+pow((ZB-ZB2),2));//3 B-B
+  distances[0]=Euclidian(m_trace_bits.front(), Trace2->m_trace_bits.front());//0 F-F
+  distances[1]=Euclidian(m_trace_bits.front(), Trace2->m_trace_bits.back());//1 F-B
+  distances[2]=Euclidian(m_trace_bits.back(), Trace2->m_trace_bits.front());//2 B-F
+  distances[3]=Euclidian(m_trace_bits.back(), Trace2->m_trace_bits.back());//3 B-B
 
   //determine minimum spacing
   min = distances[0];
@@ -292,10 +307,9 @@ bool TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
       mark=i;
       }
     } 
-  norm1=sqrt(pow((delX1),2)+ pow((delY1),2)+ pow((delZ1),2));
-  norm2=sqrt(pow((delX2),2)+ pow((delY2),2)+ pow((delZ2),2));
-  angle = acos(((delX1 * delX2) + (delY1 *delY2) + (delZ1 * delZ2)) /
-          (norm2 * norm1));
+  
+  angle = Angle(m_trace_bits.front(),m_trace_bits.back(), 
+	  Trace2->m_trace_bits.front(),Trace2->m_trace_bits.back());
   // from min determine orientation and return distance
   if (mark ==0)
     {
@@ -339,22 +353,10 @@ bool TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
 }
 bool TraceLine::Orient(TraceLine * Trunk)
 {
-	double XF, XB, YF, YB, ZF, ZB, XB2, YB2, ZB2, distances[2];
-	//trace 1
-	XF = m_trace_bits.front().x;
-	YF= m_trace_bits.front().y;
-	ZF= m_trace_bits.front().z;
-	XB = m_trace_bits.back().x;
-	YB= m_trace_bits.back().y;
-	ZB= m_trace_bits.back().z;
-
-	//Trunk 	
-	XB2=Trunk->m_trace_bits.back().x;
-	YB2=Trunk->m_trace_bits.back().y;
-	ZB2=Trunk->m_trace_bits.back().z;
+	double distances[2];
 	//compute the endpt distances
-	distances[0]=sqrt(pow((XF-XB2),2)+pow((YF-YB2),2)+pow((ZF-ZB2),2));// F-B
-	distances[1]=sqrt(pow((XB-XB2),2)+pow((YB-YB2),2)+pow((ZB-ZB2),2));// B-B
+	distances[0]= Euclidian(m_trace_bits.front(),	Trunk->m_trace_bits.back());// F-B
+	distances[1]= Euclidian(m_trace_bits.back(),	Trunk->m_trace_bits.back());// B-B
 	if(distances[0] < distances[1])
 	{
 		return true;	//oriented correctly

@@ -27,13 +27,7 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines, std::vector<std::str
 	this->Model = new QStandardItemModel(0, 0, this);
 	this->SelectionModel = new QItemSelectionModel(this->Model, this);
 //standard headers	
-	this->headers.push_back("ID");
-	this->headers.push_back("Trace Size");
-	this->headers.push_back("Type");
-	this->headers.push_back("Parent");
-	this->headers.push_back("Root ID");
-	this->headers.push_back("Level");
-	this->headers.push_back("Path Length");
+	this->stdHeaders();
 	if (FeatureHeaders.size() >=1)
 	{
 		for (int i = 0; i< (int)FeatureHeaders.size(); i++)
@@ -49,15 +43,22 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines)
 	this->Model = new QStandardItemModel(0, 0, this);
 	this->SelectionModel = new QItemSelectionModel(this->Model, this);
 //standard headers	
+	this->stdHeaders();
+	this->NumFeatures = this->headers.size();
+	this->SetTraces(trace_lines);
+}
+void TraceModel::stdHeaders()
+{
 	this->headers.push_back("ID");
-	this->headers.push_back("Trace Size");
+	this->headers.push_back("# of Bits");
+	this->headers.push_back("Path Length");
+	this->headers.push_back("Radius");
+	this->headers.push_back("Volume");
 	this->headers.push_back("Type");
 	this->headers.push_back("Parent");	
 	this->headers.push_back("Root ID");
 	this->headers.push_back("Level");
-	this->headers.push_back("Path Length");
-	this->NumFeatures = this->headers.size();
-	this->SetTraces(trace_lines);
+	this->headers.push_back("Path To Root");
 }
 void TraceModel::SetTraces(std::vector<TraceLine*> trace_lines)
 {
@@ -92,6 +93,9 @@ void TraceModel::SyncModel()
 		std::vector<double> row;
 		row.push_back(this->TraceLines.at(i)->GetId());
 		row.push_back(this->TraceLines.at(i)->GetSize());
+		row.push_back(this->TraceLines.at(i)->GetLength());
+		row.push_back(this->TraceLines.at(i)->GetRadii());
+		row.push_back(this->TraceLines.at(i)->GetVolume());
 		row.push_back((int)this->TraceLines.at(i)->GetType());
 		row.push_back(this->TraceLines.at(i)->GetParentID());
 		row.push_back(this->TraceLines.at(i)->GetRootID());

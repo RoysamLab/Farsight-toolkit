@@ -41,9 +41,13 @@ public:
 	void SetParent(TraceLine* p);
 	int GetRootID();
 	int GetLevel();
-	int GetPathLength()
+	double GetPathLength()
 		{return PathLength;}
-	void setRoot(int RootID, int traceLevel, int parentPath);
+	void calculateVol();
+	double GetLength() {return length;}
+	double GetRadii(){return radii;}
+	double GetVolume() {return volume;}
+	void setRoot(int RootID, int traceLevel, double parentPath);
 	void AddBranch(TraceLine* b);
 	TraceLine *GetBranch1();
 	void SetBranch1(TraceLine* b0);
@@ -73,8 +77,12 @@ public:
 	std::vector<double> stats();	
 
 private:
-	double traceColor;
-	int m_id, root, level, PathLength;
+
+	double Euclidian(TraceBit bit1, TraceBit bit2);
+	double Angle(TraceBit bit1f, TraceBit bit1b, TraceBit bit2f, TraceBit bit2b);
+
+	double traceColor, radii, length, volume, PathLength;
+	int m_id, root, level;
 	std::vector<unsigned int> m_markers;
 	unsigned char m_type;
 	TraceLine *m_parent;

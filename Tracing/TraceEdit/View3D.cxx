@@ -190,6 +190,7 @@ void View3D::LoadImageData()
 		this->rayCast( (char*)traceFile.c_str());
 		this->Renderer->AddActor(this->Volume);
 		this->AddVolumeSliders();
+		this->Rerender();
 		this->statusBar()->showMessage("Image File Rendered");
 	}
 	else
@@ -781,6 +782,7 @@ void View3D::ShowTreeData()
 	}
 	this->FTKTable = new TableWindow(this->TreeModel->GetSelectionModel());
 	connect(this->FTKTable, SIGNAL(sorted()),this->TreeModel, SLOT(MapTracesToRows()));
+	this->FTKTable->setWindowTitle("Trace Object Features Table");
 	this->FTKTable->ResizeToOptimalSize();
 	this->FTKTable->move(32, 561);
 	this->FTKTable->show();
@@ -795,6 +797,7 @@ void View3D::ShowTreeData()
 
 	this->TreePlot = new PlotWindow(this->TreeModel->GetSelectionModel());
 	this->connect(this->TreePlot,SIGNAL(destroyed()),this, SLOT(DereferenceTreePlotView())); 
+	this->TreePlot->setWindowTitle("Trace Object Features Plot");
   this->TreePlot->move(681, 59);
 	this->TreePlot->show();
 }
@@ -1054,12 +1057,14 @@ void View3D::ShowMergeStats()
   this->GapsTableView = new TableWindow(this->MergeGaps->GetSelectionModel()); 
   connect(this->GapsTableView, SIGNAL(sorted()),this->MergeGaps, SLOT(MapTracesToRows()));
   connect(this->GapsTableView, SIGNAL(sorted()),this->MergeGaps, SLOT(MapGapIDsToRows()));
+  this->GapsTableView->setWindowTitle("Computed Features for Merge");
   this->GapsTableView->ResizeToOptimalSize();
   this->GapsTableView->show();
   //this->GapsTableView->horizontalHeader()->show();
 
   this->GapsPlotView = new PlotWindow(this->MergeGaps->GetSelectionModel());
   this->connect(this->GapsPlotView,SIGNAL(destroyed()),this, SLOT(DereferenceGapsPlotView()));
+  this->GapsPlotView->setWindowTitle("Computed Features for Merge");
   this->GapsPlotView->show();
 }
 

@@ -111,6 +111,7 @@ std::vector<TraceLine*> TraceObject::GetTraceLines()
 }
 void TraceObject::LinearTraceLinesRecursive(std::vector<TraceLine*> &allLine, TraceLine *tline)
 {
+	tline->calculateVol();	//this call should go somewhere else in the pipeline
 	if (tline->GetParentID() == -1)
 	{
 		tline->setRoot( tline->GetId(), 0, 0);
@@ -1293,7 +1294,7 @@ int TraceObject::createGapLists(std::vector<TraceLine*> traceList)
           newGap->Trace2,newGap->endPT1, newGap->endPT2, 
           newGap->dist, newGap->maxdist, newGap->angle))
 	  {continue;}
-      newGap->length = newGap->Trace1->GetSize() + newGap->Trace2->GetSize() + newGap->dist;
+	  newGap->length = newGap->Trace1->GetLength() + newGap->Trace2->GetLength() + newGap->dist;
       newGap->smoothness = newGap->length / newGap->maxdist;
       newGap->cost = newGap->angle*(newGap->dist/gapMax)*newGap->smoothness;
       if(!(newGap->dist >= newGap->Trace1->GetSize()*gapTol) &&
