@@ -49,7 +49,7 @@ ObjectAssociation::ObjectAssociation(string AssocFName, int numOfRules)
 	assocMeasurementsList=NULL;
 	numOfLabels=0;
 	//added by Yousef on 10-18-2009
-	invalidObjects = NULL;
+	//invalidObjects = NULL;
 }
 
 /* Add association rules to the list of rules */
@@ -270,23 +270,23 @@ void ObjectAssociation::WriteAssociativeFeaturesToXML(string xmlFname)
 	root->LinkEndChild( comment );  
 
 	//go over the objects one by one	
-	for(int j=0; j<numOfLabels; j++)
+	for(int jj=1; jj<labelsList.size(); jj++)
 	{
 		//if the object is invalid, then just ignore it
-		if(invalidObjects[j]==1)
-			continue;
-
+		//if(invalidObjects[j]==1)
+		//	continue;
+		int j = labelsList[jj];
 		TiXmlElement *element = new TiXmlElement("Object");
 		element->SetAttribute("Type",objectType.c_str());		
 		stringstream out1;
-		out1 << setprecision(2) << fixed << j+1;
+		out1 << setprecision(2) << fixed << j;//+1;
 		element->SetAttribute("ID",out1.str());		
 		//Add the Associative measurements one by one
 		for(int i=0; i<numOfAssocRules; i++)
 		{	
 			TiXmlElement *element2 = new TiXmlElement("Association");
 			stringstream out2;
-			out2 << setprecision(2) << fixed << assocMeasurementsList[i][j];
+			out2 << setprecision(2) << fixed << assocMeasurementsList[i][jj-1];
 			//element2->SetAttribute(assocRulesList[i].GetRuleName(),out2.str());			
 			element2->SetAttribute("Name",assocRulesList[i].GetRuleName());			
 			element2->SetAttribute("Value",out2.str());

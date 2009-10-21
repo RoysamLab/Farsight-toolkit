@@ -113,7 +113,10 @@ protected:
 	string objectType;
 
 	//added by Yousef on 10-18-2009
-	unsigned short* invalidObjects;
+	//unsigned short* invalidObjects;
+
+	//added by Yousef on 10/20/2009
+	std::vector< unsigned short > labelsList;
 
 private:
 	string segImageName;
