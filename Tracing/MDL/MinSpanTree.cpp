@@ -95,6 +95,7 @@ int main(int argc, char *argv[])
   FILE *fout;
   DATATYPEIN *volin, *volvessel, *somaDist;
   FILE *fout_MDL;  // add by xiao
+  FILE *fout_Spine; // add by xiao
   int sizeX,sizeY,sizeZ;         // Sizes in x,y,z dimensions
   int i, j, k;
   int ii, jj, kk;
@@ -147,9 +148,9 @@ int main(int argc, char *argv[])
   double sum_mahalanobis_nonSpine;
   double alpha;
 
-  if (argc < 13)
+  if (argc < 14)
   {
-    printf("Usage: %s <dir> <skel pt file> <vol file> <xs> <ys> <zs> <edgeRange> <graph prune size> <morph strength> <weight factor> <out vtk graph> <full path to vessel file> [output backbone=yes] [output spines=yes].\n", argv[0]);
+    printf("Usage: %s <dir> <skel pt file> <vol file> <xs> <ys> <zs> <edgeRange> <graph prune size> <morph strength> <weight factor> <full path to vessel file> <out vtk graph> <out spine VTK graph>[output backbone=yes] [output spines=yes].\n", argv[0]);
     exit(1);
   }
 
@@ -179,36 +180,61 @@ int main(int argc, char *argv[])
   times_erosion = atoi(argv[9]);
   alpha = atof(argv[10]);
 
-  if ((fout = fopen(argv[11], "w")) == NULL)
-    {
-    printf("Cannot open %s for writing\n",argv[11]);
-    exit(1);
-    }
-
-  if((vesselfile=fopen(argv[12], "rb"))==NULL)  // open vol file
+  if((vesselfile=fopen(argv[11], "rb"))==NULL)  // open vol file
       {cerr << "couldn't open vessel file for input" << endl;
        exit(-1);
       }
 
-  bool outputBackbone = true;
-  if(argc > 13)
+  if ((fout = fopen(argv[12], "w")) == NULL)
     {
-    //should we output backbone? 
-    if(argv[13][0] == 'n' || argv[13][0] == 'N')
-      {
-      outputBackbone = false;
-      }
-    }
-  bool outputSpines = true;
-  if(argc > 14)
-    {
-    //should we output spines? 
-    if(argv[14][0] == 'n' || argv[14][0] == 'N')
-      {
-      outputSpines = false;
-      }
+    printf("Cannot open %s for writing\n",argv[12]);
+    exit(1);
     }
 
+  if ((fout_Spine = fopen(argv[13], "w")) == NULL)
+    {
+    printf("Cannot open %s for writing\n",argv[13]);
+    exit(1);
+    }
+
+  bool outputOnlyBackbone = true; //  output backbone
+  bool outputOnlySpine = true;   // 
+  bool outputTotal = false;
+
+
+  
+/*
+  if ((argv[14][0] == 'y' || argv[14][0] == 'Y'))
+	   {
+		outputOnlyBackbone = true; 
+		printf("We will only output backbone in a file!");
+    }
+
+  if((argv[15][0] == 'y' || argv[15][0] == 'Y'))
+       {
+        outputOnlySpine = true;
+	    printf("We will only out putspines in a file!");
+       }
+
+   if((argv[14][0] == 'y'|| argv[14][0] == 'Y') && (argv[15][0]=='y' || argv[15][0] == 'Y'))
+	  {
+        printf("We will output both backbone and spine in seperate file!");
+		outputOnlySpine = true; outputOnlyBackbone = true;
+      }
+
+	if ((argv[14][0] == 'n'|| argv[14][0] == 'N') && (argv[15][0]=='n ' || argv[15][0] == 'N'))
+	  {
+        outputTotal=true;
+		printf("We will output the total skeleton!");
+		
+	  }
+	else
+	  { printf("Your parameters setting is wrong, so we will do nothing!");
+	    
+	   // exit(0);
+	  } 
+
+*/
 
   #if DRAW_MDL_CURVE
   if ((fout_MDL = fopen("MDL_Lc_data_cond_model.each.subtree.txt", "w")) == NULL)  // open MDL data description file to write
@@ -282,11 +308,22 @@ int main(int argc, char *argv[])
       }
     fin >> nodePosition.x >> nodePosition.y >> nodePosition.z >> p;
     }
-  fprintf(fout, "# vtk DataFile Version 3.0\n");
-  fprintf(fout,"MST of skel\n");
-  fprintf(fout,"ASCII\n");
-  fprintf(fout,"DATASET POLYDATA\n");
-  fprintf(fout,"POINTS %d float\n",num_nodes);
+   if (outputOnlyBackbone == true ||outputTotal == true)
+     {  
+	  fprintf(fout, "# vtk DataFile Version 3.0\n");
+      fprintf(fout,"MST of skel\n");
+      fprintf(fout,"ASCII\n");
+      fprintf(fout,"DATASET POLYDATA\n");
+      fprintf(fout,"POINTS %d float\n",num_nodes);
+     }
+   if(outputOnlySpine == true ) // output spines to VTK file
+    {
+      fprintf(fout_Spine, "# vtk DataFile Version 3.0\n");
+      fprintf(fout_Spine,"MST of skel\n");
+      fprintf(fout_Spine,"ASCII\n");
+      fprintf(fout_Spine,"DATASET POLYDATA\n");
+      fprintf(fout_Spine,"POINTS %d float\n",num_nodes);
+    }
 
   //reinitialize the file and variables used to loop through it
   fin.clear();
@@ -303,7 +340,12 @@ int main(int argc, char *argv[])
       num_nodes++;
       voxelNodeIndex[idx] = num_nodes;   // Save the index of node (vertex) at each voxel position
       // output the node positions to vtk file
-      fprintf(fout,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z);  
+	  if (outputOnlyBackbone == true || outputTotal == true)
+        fprintf(fout,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z);  
+	  
+	  if(outputOnlySpine == true) // output spines to VTK file
+        fprintf(fout_Spine,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z);  
+     
 
       // Find all neighbor nodes within edgeRange
       for (kk = -edgeRange; kk <= edgeRange; kk++)
@@ -428,14 +470,14 @@ int main(int argc, char *argv[])
       //if (degree_nodes_initialMST[source(*ei, g)]!=0 && degree_nodes_initialMST[target(*ei, g)]!=0) 
     { 
           add_edge(source(*ei, g), target(*ei, g), msTree);
-      num_edge_MST++;
+          num_edge_MST++;
     }
   }
 
 
   // -- Erosion and Dilation of MST
   // Erosion the MST by counting down the degree of nodes
-  times_erosion = 50; //2; 10; 70;
+  //times_erosion = 0; //2; 10; 70;
   //times_erosion = 0; // TEST output MST only
   times_dilation = times_erosion;
   edge_eroded = new int[num_nodes*2];
@@ -484,14 +526,15 @@ int main(int argc, char *argv[])
   //-- Label branches on Backbone of MST generated
   
   // Create a new graph from the MST generated above
-  Graph msTreeBB(num_nodes+1);        // BackBone graph created
+  Graph msTreeBB(num_nodes+1);        // BackBone graph created or Graph for the parts of total skeletons 
+  Graph msTreeSpineCandidate(num_nodes+1);     // Spine Candidate graph created, is to save the possible spine,  Xiaoliang added 
   //Graph msTreeBB_buffer(num_nodes+1);
   //num_edge_MST = 0;
   for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
     if (degree_nodes[source(*ei, g)]!=0 && degree_nodes[target(*ei, g)]!=0) {  // According to my proved theorem
           
       //#if ONLY_OUTPUT_SPINES==0
-      if(outputBackbone)
+      if(outputOnlyBackbone == true || outputTotal == true)
         {
         add_edge(source(*ei, g), target(*ei, g), msTreeBB);
         }
@@ -502,7 +545,8 @@ int main(int argc, char *argv[])
   //int num_edge_MST = num_edges(msTreeBB); //not work
 
   //msTreeBB_buffer = msTreeBB; // copy to buffer for next process
-
+  
+  int NumberNodesofSpine=0;
 
 
   Edge_iter   ei, ei_end;
@@ -711,9 +755,9 @@ int main(int argc, char *argv[])
       }
 
 
-
+    
       // Adding Spine model - Only add the branches with the minimal MDL
-      if(outputSpines)
+      if(outputOnlySpine == true)
         {
         if (MDL_minIndex >= 0)
           {
@@ -721,7 +765,11 @@ int main(int argc, char *argv[])
             {
             // Not to output if only need backbone output
             //#if OUTPUT_BACKBONE_ONLY==0
-            add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeBB);   // Comment out if only need backbone output
+           
+            add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeSpineCandidate); 
+			//add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeBB);   
+
+			NumberNodesofSpine++;
             //#endif
             }
           if (MDL_minIndex >= 1)
@@ -729,12 +777,34 @@ int main(int argc, char *argv[])
             for (j = 1; j <= vertsCurBr_Index2[MDL_minIndex]; j++)
               {
               //#if OUTPUT_BACKBONE_ONLY==0
-               add_edge(vertsCurBranch2[MDL_minIndex][j-1], vertsCurBranch2[MDL_minIndex][j], msTreeBB);  //add branch for the 2nd level
+              // add_edge(vertsCurBranch2[MDL_minIndex][j-1], vertsCurBranch2[MDL_minIndex][j], msTreeBB);  //add branch for the 2nd level
+
+               add_edge(vertsCurBranch2[MDL_minIndex][j-1], vertsCurBranch2[MDL_minIndex][j],  msTreeSpineCandidate);
+			   NumberNodesofSpine++;
               //#endif
               }
             }
           }
         }
+
+	  if(outputTotal == true)
+        {
+        if (MDL_minIndex >= 0)
+          {
+          for (j = 1; j <= vertsCurBr_Index2[0]; j++)
+            {
+			add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeBB);   
+            }
+          if (MDL_minIndex >= 1)
+            {
+            for (j = 1; j <= vertsCurBr_Index2[MDL_minIndex]; j++)
+              {
+              
+               add_edge(vertsCurBranch2[MDL_minIndex][j-1], vertsCurBranch2[MDL_minIndex][j], msTreeBB);  //add branch for the 2nd level
+              }//end for
+            }// end if
+          }// end if
+        }// end for
 
 
 
@@ -864,18 +934,40 @@ int main(int argc, char *argv[])
 */
 
 
-  line_count = 0;
-  for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei)
-    {
-    line_count++; // count the number of lines output in vtk file
-    }
-  fprintf(fout,"LINES %d %d\n", line_count, line_count*3);
 
-  for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei)
-    {
+   if(outputTotal == true ||outputOnlyBackbone == true) //  VTK file
+   {
+	 line_count = 0;
+     for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei)
+     {
+      line_count++; // count the number of lines output in vtk file
+     }
+      fprintf(fout,"LINES %d %d\n", line_count, line_count*3);
+
+     for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei)
+     {
      // output lines into vtk file
        fprintf(fout, "2 %ld %ld\n", source(*ei, msTreeBB)-1, target(*ei, msTreeBB)-1);
-    }
+     }
+   } // end if
+
+   if(outputOnlySpine == true) // only output spines to VTK file
+     {
+      line_count = 0;
+      for (tie(ei, ei_end) = edges(msTreeSpineCandidate); ei != ei_end; ++ei)
+      {
+       line_count++; // count the number of lines output in vtk file
+      }
+       fprintf(fout_Spine,"LINES %d %d\n", line_count, line_count*3);
+  
+       for (tie(ei, ei_end) = edges(msTreeSpineCandidate); ei != ei_end; ++ei)
+       {
+         // output lines into vtk file
+         fprintf(fout_Spine, "2 %ld %ld\n", source(*ei, msTreeSpineCandidate)-1, target(*ei, msTreeSpineCandidate)-1);
+      }
+    } // end if
+
+ 
 
   //cleanup the memory we've allocated...
   delete [] nodeIndicesInitialized;
@@ -894,6 +986,8 @@ int main(int argc, char *argv[])
   free(volin);// = (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN));
   free(volvessel);// = (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN));
   free(somaDist);//= (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN));
+  free(fout_Spine);
+  fout_Spine = NULL;
   volin = NULL;
   volvessel = NULL;
   somaDist = NULL;
@@ -928,7 +1022,7 @@ double mahalanobisDist(double meanDensityBranch, double length_leaf, double mean
   */
 
   // For dataset Trach6A
-  /*
+  
   if (spineOne == 1)  {
         x1 = meanDensityBranch - 44.54;  // minus mean_feature from matlab 
         x2 = length_leaf - 14.43;               //if (x2>10)  x2=10; //keep long dendrite 
@@ -941,10 +1035,11 @@ double mahalanobisDist(double meanDensityBranch, double length_leaf, double mean
         x3 = meanVesselBranch - 178.26;
     mahalanobis_dist = x1*x1*0.0018+ 2*x1*x2*(-0.0002)+ 2*x1*x3*(-0.0003)+ x2*x2*0.0182+ 2*x2*x3*0.0010 +x3*x3*0.0004;
   }
-  */
+  
   
 
   // For dataset MBFsp
+  /*
   if (spineOne == 1)  {
         x1 = meanDensityBranch - 58.4550;  // minus mean_feature from matlab 
         x2 = length_leaf -    14.0834;              //if (x2>10)  x2=10; //keep long dendrite 
@@ -958,7 +1053,7 @@ double mahalanobisDist(double meanDensityBranch, double length_leaf, double mean
     mahalanobis_dist = x1*x1*0.0101+ 2*x1*x2*(0.0011)+ 2*x1*x3*(-0.0025)+ x2*x2*0.0202+ 2*x2*x3*(-0.0011) +x3*x3*0.0009;
   }
   
-  
+  */
 
   return mahalanobis_dist;
 }
