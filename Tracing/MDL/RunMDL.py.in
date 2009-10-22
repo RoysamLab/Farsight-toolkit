@@ -113,15 +113,16 @@ print "Step #5 completed in %d seconds\n\n" % timeElapsed
 
 outBaseName = os.path.basename(fullPathToOutput);
 backbonePath = dataDir + "/" + outBaseName[0:outBaseName.rfind(".vtk")] + "-backbone.vtk"
-cmd = "./MinSpanTree${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s %s 8 4 170 0.70 %s %s yes no" % \
+spinesPath = dataDir + "/" + outBaseName[0:outBaseName.rfind(".vtk")] + "-spines.vtk"
+cmd = "./MinSpanTree${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s %s 8 4 170 0.70 %s %s %s" % \
   (dataDir+"/", "out.skel", "components_Connected.raw", sizeX, sizeY, sizeZ, \
-   backbonePath, dataDir+"/Aniso_Diffused.raw")
+   dataDir+"/Aniso_Diffused.raw", backbonePath, spinesPath)
 print "Step #6, executing the following command:\n%s" % cmd
 timeBefore = time.time()
 subprocess.call(["./MinSpanTree${CMAKE_EXECUTABLE_SUFFIX}",\
                   dataDir+"/", "out.skel", "components_Connected.raw", sizeX,\
-                  sizeY, sizeZ, "8", "4", "170", "0.7", backbonePath,\
-                  dataDir+"/Aniso_Diffused.raw", "yes", "no"])
+                  sizeY, sizeZ, "8", "4", "170", "0.7",
+                  dataDir+"/Aniso_Diffused.raw", backbonePath, spinesPath])
 timeElapsed = time.time() - timeBefore
 print "Step #6 completed in %d seconds\n\n" % timeElapsed
 
@@ -135,25 +136,12 @@ subprocess.call(["./BSplineFitting${CMAKE_EXECUTABLE_SUFFIX}",\
 timeElapsed = time.time() - timeBefore
 print "Step #7 completed in %d seconds\n\n" % timeElapsed
 
-spinesPath = dataDir + "/" + outBaseName[0:outBaseName.rfind(".vtk")] + "-spines.vtk"
-cmd = "./MinSpanTree${CMAKE_EXECUTABLE_SUFFIX} %s %s %s %s %s %s 8 4 170 0.70 %s %s no yes" % \
-  (dataDir+"/", "out.skel", "components_Connected.raw", sizeX, sizeY, sizeZ, \
-   spinesPath, dataDir+"/Aniso_Diffused.raw")
-print "Step #8, executing the following command:\n%s" % cmd
-timeBefore = time.time()
-subprocess.call(["./MinSpanTree${CMAKE_EXECUTABLE_SUFFIX}",\
-                  dataDir+"/", "out.skel", "components_Connected.raw", sizeX,\
-                  sizeY, sizeZ, "8", "4", "170", "0.7", spinesPath,\
-                  dataDir+"/Aniso_Diffused.raw", "no", "yes"])
-timeElapsed = time.time() - timeBefore
-print "Step #8 completed in %d seconds\n\n" % timeElapsed
-
 cmd = "./AddSpinesToSmoothedBackbone${CMAKE_EXECUTABLE_SUFFIX} %s/smoothBB.vtk %s %s" % \
   (dataDir, spinesPath, fullPathToOutput)
-print "Step #9, executing the following command:\n%s" % cmd
+print "Step #8, executing the following command:\n%s" % cmd
 timeBefore = time.time()
 subprocess.call(["./AddSpinesToSmoothedBackbone${CMAKE_EXECUTABLE_SUFFIX}",\
                   dataDir+"/smoothBB.vtk", spinesPath, fullPathToOutput])
 timeElapsed = time.time() - timeBefore
-print "Step #9 completed in %d seconds\n\n" % timeElapsed
+print "Step #8 completed in %d seconds\n\n" % timeElapsed
                  

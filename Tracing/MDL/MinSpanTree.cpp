@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
 
+
 // MinSpanTree - Generate graph structure from a list of 3D points
 // Input format: .skel  (3D points)
 // Output format: .vtk  (3D graph format)
@@ -149,10 +150,13 @@ int main(int argc, char *argv[])
   double alpha;
 
   if (argc < 14)
-  {
-    printf("Usage: %s <dir> <skel pt file> <vol file> <xs> <ys> <zs> <edgeRange> <graph prune size> <morph strength> <weight factor> <full path to vessel file> <out vtk graph> <out spine VTK graph>[output backbone=yes] [output spines=yes].\n", argv[0]);
-    exit(1);
-  }
+    {
+    cout << argv[0] << " <data dir> <skel pt file> <vol file> <xs> <ys> <zs> "
+         << "<edgeRange> <graph prune size> <morph strength> <weight factor> "
+         << "<full path to vessel file> <out vtk graph> "
+         << "<out spine VTK graph | --combine-output>" << endl;
+    return 1;
+    }
 
   std::string infilename = argv[1];
   infilename += argv[2];
@@ -191,50 +195,19 @@ int main(int argc, char *argv[])
     exit(1);
     }
 
-  if ((fout_Spine = fopen(argv[13], "w")) == NULL)
-    {
-    printf("Cannot open %s for writing\n",argv[13]);
-    exit(1);
-    }
-
-  bool outputOnlyBackbone = true; //  output backbone
-  bool outputOnlySpine = true;   // 
   bool outputTotal = false;
-
-
-  
-/*
-  if ((argv[14][0] == 'y' || argv[14][0] == 'Y'))
-	   {
-		outputOnlyBackbone = true; 
-		printf("We will only output backbone in a file!");
+  if(strcmp(argv[13], "--combine-output") == 0)
+    {
+    outputTotal = true;
     }
-
-  if((argv[15][0] == 'y' || argv[15][0] == 'Y'))
-       {
-        outputOnlySpine = true;
-	    printf("We will only out putspines in a file!");
-       }
-
-   if((argv[14][0] == 'y'|| argv[14][0] == 'Y') && (argv[15][0]=='y' || argv[15][0] == 'Y'))
-	  {
-        printf("We will output both backbone and spine in seperate file!");
-		outputOnlySpine = true; outputOnlyBackbone = true;
+  else
+    {
+    if ((fout_Spine = fopen(argv[13], "w")) == NULL)
+      {
+      printf("Cannot open %s for writing\n",argv[13]);
+      exit(1);
       }
-
-	if ((argv[14][0] == 'n'|| argv[14][0] == 'N') && (argv[15][0]=='n ' || argv[15][0] == 'N'))
-	  {
-        outputTotal=true;
-		printf("We will output the total skeleton!");
-		
-	  }
-	else
-	  { printf("Your parameters setting is wrong, so we will do nothing!");
-	    
-	   // exit(0);
-	  } 
-
-*/
+    }
 
   #if DRAW_MDL_CURVE
   if ((fout_MDL = fopen("MDL_Lc_data_cond_model.each.subtree.txt", "w")) == NULL)  // open MDL data description file to write
@@ -308,21 +281,21 @@ int main(int argc, char *argv[])
       }
     fin >> nodePosition.x >> nodePosition.y >> nodePosition.z >> p;
     }
-   if (outputOnlyBackbone == true ||outputTotal == true)
-     {  
-	  fprintf(fout, "# vtk DataFile Version 3.0\n");
-      fprintf(fout,"MST of skel\n");
-      fprintf(fout,"ASCII\n");
-      fprintf(fout,"DATASET POLYDATA\n");
-      fprintf(fout,"POINTS %d float\n",num_nodes);
-     }
-   if(outputOnlySpine == true ) // output spines to VTK file
+
+  //print header information in the main output file
+  fprintf(fout, "# vtk DataFile Version 3.0\n");
+  fprintf(fout,"MST of skel\n");
+  fprintf(fout,"ASCII\n");
+  fprintf(fout,"DATASET POLYDATA\n");
+  fprintf(fout,"POINTS %d float\n",num_nodes);
+
+  if(outputTotal == false) // output spines to a separate VTK file
     {
-      fprintf(fout_Spine, "# vtk DataFile Version 3.0\n");
-      fprintf(fout_Spine,"MST of skel\n");
-      fprintf(fout_Spine,"ASCII\n");
-      fprintf(fout_Spine,"DATASET POLYDATA\n");
-      fprintf(fout_Spine,"POINTS %d float\n",num_nodes);
+    fprintf(fout_Spine, "# vtk DataFile Version 3.0\n");
+    fprintf(fout_Spine,"MST of skel\n");
+    fprintf(fout_Spine,"ASCII\n");
+    fprintf(fout_Spine,"DATASET POLYDATA\n");
+    fprintf(fout_Spine,"POINTS %d float\n",num_nodes);
     }
 
   //reinitialize the file and variables used to loop through it
@@ -333,63 +306,73 @@ int main(int argc, char *argv[])
   itr = 0;
   fin >> nodePosition.x >> nodePosition.y >> nodePosition.z >> p;
   while (!fin.eof() ) 
-  {
+    {
     itr++;
-   idx = int(nodePosition.z)*slsz + int(nodePosition.y)*sizeX + int(nodePosition.x);
-    if (voxelNodeIndex[idx] == 0) {
+    idx = int(nodePosition.z)*slsz + int(nodePosition.y)*sizeX + int(nodePosition.x);
+    if (voxelNodeIndex[idx] == 0)
+      {
       num_nodes++;
-      voxelNodeIndex[idx] = num_nodes;   // Save the index of node (vertex) at each voxel position
+      // Save the index of node (vertex) at each voxel position
+      voxelNodeIndex[idx] = num_nodes;
       // output the node positions to vtk file
-	  if (outputOnlyBackbone == true || outputTotal == true)
-        fprintf(fout,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z);  
+      fprintf(fout,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z);  
 	  
-	  if(outputOnlySpine == true) // output spines to VTK file
+	    if(!outputTotal) // output spines to a separate VTK file
+        {
         fprintf(fout_Spine,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z);  
+        }
      
-
       // Find all neighbor nodes within edgeRange
       for (kk = -edgeRange; kk <= edgeRange; kk++)
-                for (jj = -edgeRange; jj <= edgeRange; jj++)
-                    for (ii = -edgeRange; ii <= edgeRange; ii++) {
-            if (ii==0 && jj==0 && kk==0) continue; // not consider current point
-            if (int(nodePosition.x)+ii < 0 || int(nodePosition.x)+ii >= sizeX)  continue;//check if the block is inside the image
-            if (int(nodePosition.y)+jj < 0 || int(nodePosition.y)+jj >= sizeY)  continue;
-            if (int(nodePosition.z)+kk < 0 || int(nodePosition.z)+kk >= sizeZ)  continue;
+        {
+        for (jj = -edgeRange; jj <= edgeRange; jj++)
+          {
+          for (ii = -edgeRange; ii <= edgeRange; ii++)
+            {
+            if (ii==0 && jj==0 && kk==0)
+              {
+              //don't consider current point
+              continue;
+              }
+            if (int(nodePosition.x)+ii < 0 || int(nodePosition.x)+ii >= sizeX)
+              {
+              //check if the block is inside the image
+              continue;
+              }
+            if (int(nodePosition.y)+jj < 0 || int(nodePosition.y)+jj >= sizeY)
+              {
+              continue;
+              }
+            if (int(nodePosition.z)+kk < 0 || int(nodePosition.z)+kk >= sizeZ)
+              {
+              continue;
+              }
             iidx = kk * slsz + jj*sizeX + ii;
             int iidxMid1 = int(kk/3.0) * slsz + int(jj/3.0)*sizeX + int(ii/3.0);
             int iidxMid2 = int(kk*2.0/3.0) * slsz + int(jj*2.0/3.0)*sizeX + int(ii*2.0/3.0);
             iidx = idx + iidx;
             iidxMid1 = idx + iidxMid1;
             iidxMid2 = idx + iidxMid2;
-            if (iidx<0 || iidx >= sz) continue;
-            if (voxelNodeIndex[iidx] != 0) {
+            if (iidx<0 || iidx >= sz)
+              {
+              continue;
+              }
+            if (voxelNodeIndex[iidx] != 0)
+              {
               // put into edge array of MST
               edge_array[idx_edge] = E(num_nodes, voxelNodeIndex[iidx]);
               densityFactor =(float)  pow(double(volin[idx]+0.001), 1); // by xiao (float)
               densityFactor += (float)pow(double(volin[iidx]+0.001),1);
               densityFactor =(float) fabs(pow(double(densityFactor),double(1.05)) +pow(double(voxelNodeIndex[iidxMid1]+voxelNodeIndex[iidxMid2]+1), 0.5));   // test by square densityFactor
-              //densityFactor = fabs(1/(pow(double(densityFactor),double(1.2))*0.02+1));   // test by square densityFactor
-
               edge_w[idx_edge] = (float)(sqrt(float(kk*kk + jj*jj + ii*ii)) / (densityFactor*0.02+1));
-
-
-
-//Good for Trach6A      densityFactor =  pow(double(volin[idx]+0.001), 1);
-//              densityFactor += pow(double(volin[iidx]+0.001),1);
-//              densityFactor = fabs(pow(double(densityFactor),double(1.2)) +pow(double(voxelNodeIndex[iidxMid1]+voxelNodeIndex[iidxMid2]+1), 0.5));   // test by square densityFactor
-//              edge_w[idx_edge] = sqrt(float(kk*kk + jj*jj + ii*ii)) / (densityFactor*0.02+1);
-
-
-
-
               idx_edge++;
+              }
             }
+          }
+        }
       }
-    }
-
     fin >> nodePosition.x >> nodePosition.y >> nodePosition.z >> p;
-    //if (num_nodes==5000) break;
-  }
+    }
   
   // Save vertex position in an array
   vertexPos = new VoxelPosition[num_nodes+1];
@@ -530,18 +513,13 @@ int main(int argc, char *argv[])
   Graph msTreeSpineCandidate(num_nodes+1);     // Spine Candidate graph created, is to save the possible spine,  Xiaoliang added 
   //Graph msTreeBB_buffer(num_nodes+1);
   //num_edge_MST = 0;
-  for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
-    if (degree_nodes[source(*ei, g)]!=0 && degree_nodes[target(*ei, g)]!=0) {  // According to my proved theorem
-          
-      //#if ONLY_OUTPUT_SPINES==0
-      if(outputOnlyBackbone == true || outputTotal == true)
-        {
-        add_edge(source(*ei, g), target(*ei, g), msTreeBB);
-        }
-      //#endif
-      //num_edge_MST++;
+  for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei)
+    {
+    if (degree_nodes[source(*ei, g)]!=0 && degree_nodes[target(*ei, g)]!=0)
+      {  // According to my proved theorem
+      add_edge(source(*ei, g), target(*ei, g), msTreeBB);
+      }
     }
-  }
   //int num_edge_MST = num_edges(msTreeBB); //not work
 
   //msTreeBB_buffer = msTreeBB; // copy to buffer for next process
@@ -575,7 +553,8 @@ int main(int argc, char *argv[])
   typedef property_map<Graph, vertex_index_t>::type IndexMap;
   IndexMap index = get(vertex_index, msTree);  // get index map of vertices
   
-  for(boost::tie(vi, vend) = vertices(msTree); vi != vend; ++vi)  { // for all vertex in the graph
+  for(boost::tie(vi, vend) = vertices(msTree); vi != vend; ++vi)
+    { // for all vertex in the graph
     //printf("Index of nodes is : %d\n", index[*vi]);   //test of index[] function
     vertsCurBr_Index2[0] = 0;
     index_vert = int(index[*vi]);   // Get index from the graph IndexMap
@@ -585,9 +564,10 @@ int main(int argc, char *argv[])
       
     if (numBranch_on_Backbone <= 0)  continue;  // if it has at least one branch out of BackBone
     // For each out branch (edge) on the BackBone
-    for (boost::tie(outei, outedge_end) = out_edges(*vi, msTree); outei != outedge_end; outei++) {
+    for (boost::tie(outei, outedge_end) = out_edges(*vi, msTree); outei != outedge_end; outei++)
+      {
       int targ = target(*outei, msTree);
-            if (vertBackbone[targ] > 0)  continue;  // the edge is on BackBone, continue
+      if (vertBackbone[targ] > 0)  continue;  // the edge is on BackBone, continue
       meanDensityBranch[0] = 0;
       meanVesselBranch[0] = 0;
       vertsCurBranch2[0][vertsCurBr_Index2[0]] = source(*outei, msTree);
@@ -595,25 +575,30 @@ int main(int argc, char *argv[])
       vertsCurBranch2[0][vertsCurBr_Index2[0]] = target(*outei, msTree);
       num_leaves++;
 
-      while (out_degree(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], msTree), msTree) == 2) {
-        //curVert = vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], msTree);
-        for (boost::tie(outei2, outedge_end2) = out_edges(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], msTree), msTree);
-                                            outei2 != outedge_end2; ++outei2) {
+      while (out_degree(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], msTree), msTree) == 2)
+        {
+        for (boost::tie(outei2, outedge_end2) =
+             out_edges(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], msTree),
+                       msTree);
+             outei2 != outedge_end2; ++outei2)
+          {
           if (target(*outei2, msTree) == (unsigned int)vertsCurBranch2[0][vertsCurBr_Index2[0]-1])
             continue;
           vertsCurBranch2[0][vertsCurBr_Index2[0]+1] = target(*outei2, msTree);
-        }
+          }
         vertsCurBr_Index2[0]++;
-      }
+        }
       branchChosen = 1;
       // Evaluate with MDL if the branch is chosen
       //if (i == prunetimes-1) num_leaves++;
       length_leaf[0] = 0;
-      for (j = 0; j <= vertsCurBr_Index2[0]; j++) {
+      for (j = 0; j <= vertsCurBr_Index2[0]; j++)
+        {
         indVert = vertsCurBranch2[0][j];
-        if (j==0) {
+        if (j==0)
+          {
           indVert_last = indVert;
-        }
+          }
         length_edge = (vertexPos[indVert].x-vertexPos[indVert_last].x)*(vertexPos[indVert].x-vertexPos[indVert_last].x);
         length_edge+= (vertexPos[indVert].y-vertexPos[indVert_last].y)*(vertexPos[indVert].y-vertexPos[indVert_last].y);
         length_edge+= (vertexPos[indVert].z-vertexPos[indVert_last].z)*(vertexPos[indVert].z-vertexPos[indVert_last].z);
@@ -624,7 +609,7 @@ int main(int argc, char *argv[])
         idx =(long) (vertexPos[indVert].z *slsz + vertexPos[indVert].y *sizeX + vertexPos[indVert].x); // add long by xiao
         meanDensityBranch[0] += volin[idx];
         meanVesselBranch[0] += volvessel[idx];
-      }
+        }
       meanDensityBranch[0] = meanDensityBranch[0]/ (vertsCurBr_Index2[0]+1);
       meanVesselBranch[0] = meanVesselBranch[0] / (vertsCurBr_Index2[0]+1);
 
@@ -636,22 +621,25 @@ int main(int argc, char *argv[])
   
       #if DISP_ALL_BB2Branch
       // Remove the branch based on MDL critierion
-      if (branchChosen == 1)  {
-        for (j = 1; j <= vertsCurBr_Index2[0]; j++) {
+      if (branchChosen == 1)
+        {
+        for (j = 1; j <= vertsCurBr_Index2[0]; j++)
+          {
           add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeBB);
+          }
         }
-      }
       #endif
-
 
       // ## Begin to check the 2nd level of branches located at BB
       //if (out_degree(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], msTree), msTree) == 1)   continue;   //If no 2nd level branch
       int ind2Brch = 0;
 
-
       // For each 2nd level branch starting from the end of 1st level branch
-      for (boost::tie(outei2, outedge_end2) = out_edges(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], msTree), msTree);
-                                          outei2 != outedge_end2; ++outei2) {
+      for (boost::tie(outei2, outedge_end2) =
+           out_edges(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], msTree),
+                     msTree);
+           outei2 != outedge_end2; ++outei2)
+        {
         if (target(*outei2, msTree) == (unsigned int)vertsCurBranch2[0][vertsCurBr_Index2[0]-1])
           continue;  // continue if the out edge belongs to the old branch
         ind2Brch++;
@@ -661,30 +649,31 @@ int main(int argc, char *argv[])
         
         
         // Search for the end of 2nd level branch
-        while (out_degree(vertex(vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]], msTree), msTree) == 2) {
-        //curVert = vertex(vertsCurBranch[vertsCurBr_Index], msTree);
+        while (out_degree(vertex(vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]], msTree), msTree) == 2)
+          {
+          //curVert = vertex(vertsCurBranch[vertsCurBr_Index], msTree);
           for (boost::tie(outei3, outedge_end3) = out_edges(vertex(vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]], msTree), msTree);
-                                              outei3 != outedge_end3; ++outei3) {
+                                                outei3 != outedge_end3; ++outei3) {
             if (target(*outei3, msTree) == (unsigned int)vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]-1])
               continue;
             vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]+1] = target(*outei3, msTree);
-          }
+            }
           vertsCurBr_Index2[ind2Brch]++;
-        }
-
-
+          }
 
         // Compute the feature-based description length for the 2nd level branch
         length_leaf[ind2Brch] = 0;
         meanDensityBranch[ind2Brch] = 0;
         meanVesselBranch[ind2Brch] = 0;
         num_leaves++;  // for training purpose
-        for (j = 0; j <= vertsCurBr_Index2[ind2Brch]; j++) {
+        for (j = 0; j <= vertsCurBr_Index2[ind2Brch]; j++)
+          {
           indVert = vertsCurBranch2[ind2Brch][j];
 
-          if (j==0) {
+          if (j==0)
+            {
             indVert_last = indVert;
-          }
+            }
           length_edge = (vertexPos[indVert].x-vertexPos[indVert_last].x)*(vertexPos[indVert].x-vertexPos[indVert_last].x);
           length_edge+= (vertexPos[indVert].y-vertexPos[indVert_last].y)*(vertexPos[indVert].y-vertexPos[indVert_last].y);
           length_edge+= (vertexPos[indVert].z-vertexPos[indVert_last].z)*(vertexPos[indVert].z-vertexPos[indVert_last].z);
@@ -695,7 +684,7 @@ int main(int argc, char *argv[])
           idx = (long)(vertexPos[indVert].z *slsz + vertexPos[indVert].y *sizeX + vertexPos[indVert].x);
           meanDensityBranch[ind2Brch] += volin[idx];
           meanVesselBranch[ind2Brch] += volvessel[idx];
-        }
+          }
         meanDensityBranch[ind2Brch] = meanDensityBranch[ind2Brch]/ (vertsCurBr_Index2[ind2Brch]+1);
         meanVesselBranch[ind2Brch] = meanVesselBranch[ind2Brch] / (vertsCurBr_Index2[ind2Brch]+1);
 
@@ -710,79 +699,62 @@ int main(int argc, char *argv[])
         mahalanobis_dist[ind2Brch]    = mahalanobisDist(aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch], 1);
         mahalanobis_dist_nonSpine[ind2Brch]=mahalanobisDist(aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch], 0);
         
-        //if (mahalanobis_dist[ind2Brch] < mahalanobis_dist_min) {
-                //    mahalanobis_dist_min = mahalanobis_dist[ind2Brch];
-                //    mahalanobis_dist_minIndex = ind2Brch;
-        //}
-
-
         #if DISP_ALL_BB2Branch
-        for (j = 1; j <= vertsCurBr_Index2[ind2Brch]; j++) {
+        for (j = 1; j <= vertsCurBr_Index2[ind2Brch]; j++)
+          {
           // test: add any branches to the backbone
           add_edge(vertsCurBranch2[ind2Brch][j-1], vertsCurBranch2[ind2Brch][j], msTreeBB);   // add branch for the 2nd level
-        }
+          }
         #endif
 
-      } // End of 2nd level branch
-
-
+        } // End of 2nd level branch
 
       // ** Minimal MDL is solved by looking at each choice
       // 1. Empty model set is chosen (no branch)
       MDL_minIndex = -1; // Indicate that empty model set is chosen
       sum_mahalanobis_nonSpine = 0;
-      for (i = 0; i<= ind2Brch; i++)  {
+      for (i = 0; i<= ind2Brch; i++)
+        {
         sum_mahalanobis_nonSpine += mahalanobis_dist_nonSpine[i];
-      }
+        }
       MDL_min = sum_mahalanobis_nonSpine;
 
       // 2. Only 1st level branch model set
       MDL = sum_mahalanobis_nonSpine - mahalanobis_dist_nonSpine[0] + mahalanobis_dist[0];
       MDL = MDL + (1-alpha)*(1/alpha)*(-14.0/3.0);      // alpha represents the model description length of one branch
-      if (MDL < MDL_min)  {
+      if (MDL < MDL_min)
+        {
         MDL_min = MDL;
         MDL_minIndex = 0;  
-      }
+        }
 
       // 3. Two level branch model set, including 1st level and 2nd level branches
-      for (i = 1; i <= ind2Brch; i++)  {
+      for (i = 1; i <= ind2Brch; i++)
+        {
         MDL = sum_mahalanobis_nonSpine - mahalanobis_dist_nonSpine[i] + mahalanobis_dist[i];
         MDL = MDL + (1-alpha)*(1/alpha)*(-14.0/3.0);
-        if (MDL <  MDL_min) {
+        if (MDL <  MDL_min)
+          {
           MDL_min = MDL;
           MDL_minIndex =  i;
+          }
         }
-      }
-
-
     
       // Adding Spine model - Only add the branches with the minimal MDL
-      if(outputOnlySpine == true)
+      if (MDL_minIndex >= 0)
         {
-        if (MDL_minIndex >= 0)
+        for (j = 1; j <= vertsCurBr_Index2[0]; j++)
           {
-          for (j = 1; j <= vertsCurBr_Index2[0]; j++)
+          add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeSpineCandidate); 
+          NumberNodesofSpine++;
+          }
+        if (MDL_minIndex >= 1)
+          {
+          for (j = 1; j <= vertsCurBr_Index2[MDL_minIndex]; j++)
             {
-            // Not to output if only need backbone output
-            //#if OUTPUT_BACKBONE_ONLY==0
-           
-            add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeSpineCandidate); 
-			//add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeBB);   
-
-			NumberNodesofSpine++;
-            //#endif
-            }
-          if (MDL_minIndex >= 1)
-            {
-            for (j = 1; j <= vertsCurBr_Index2[MDL_minIndex]; j++)
-              {
-              //#if OUTPUT_BACKBONE_ONLY==0
-              // add_edge(vertsCurBranch2[MDL_minIndex][j-1], vertsCurBranch2[MDL_minIndex][j], msTreeBB);  //add branch for the 2nd level
-
-               add_edge(vertsCurBranch2[MDL_minIndex][j-1], vertsCurBranch2[MDL_minIndex][j],  msTreeSpineCandidate);
-			   NumberNodesofSpine++;
-              //#endif
-              }
+            add_edge(vertsCurBranch2[MDL_minIndex][j-1],
+                     vertsCurBranch2[MDL_minIndex][j],  msTreeSpineCandidate);
+            NumberNodesofSpine++;
             }
           }
         }
@@ -804,7 +776,7 @@ int main(int argc, char *argv[])
               }//end for
             }// end if
           }// end if
-        }// end for
+        }// end if(outputTotal)
 
 
 
@@ -935,37 +907,36 @@ int main(int argc, char *argv[])
 
 
 
-   if(outputTotal == true ||outputOnlyBackbone == true) //  VTK file
+ line_count = 0;
+ for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei)
    {
-	 line_count = 0;
-     for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei)
-     {
-      line_count++; // count the number of lines output in vtk file
-     }
-      fprintf(fout,"LINES %d %d\n", line_count, line_count*3);
+   line_count++; // count the number of lines output in vtk file
+   }
+ fprintf(fout,"LINES %d %d\n", line_count, line_count*3);
 
-     for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei)
+ for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei)
+   {
+   // output lines into vtk file
+   fprintf(fout, "2 %ld %ld\n", source(*ei, msTreeBB)-1, target(*ei, msTreeBB)-1);
+   }
+
+ if(!outputTotal)
+   {
+   // output spines to a separate VTK file
+   line_count = 0;
+   for (tie(ei, ei_end) = edges(msTreeSpineCandidate); ei != ei_end; ++ei)
+     {
+     line_count++; // count the number of lines output in vtk file
+     }
+   fprintf(fout_Spine,"LINES %d %d\n", line_count, line_count*3);
+
+   for (tie(ei, ei_end) = edges(msTreeSpineCandidate); ei != ei_end; ++ei)
      {
      // output lines into vtk file
-       fprintf(fout, "2 %ld %ld\n", source(*ei, msTreeBB)-1, target(*ei, msTreeBB)-1);
+     fprintf(fout_Spine, "2 %ld %ld\n", source(*ei, msTreeSpineCandidate) - 1,
+             target(*ei, msTreeSpineCandidate) - 1);
      }
    } // end if
-
-   if(outputOnlySpine == true) // only output spines to VTK file
-     {
-      line_count = 0;
-      for (tie(ei, ei_end) = edges(msTreeSpineCandidate); ei != ei_end; ++ei)
-      {
-       line_count++; // count the number of lines output in vtk file
-      }
-       fprintf(fout_Spine,"LINES %d %d\n", line_count, line_count*3);
-  
-       for (tie(ei, ei_end) = edges(msTreeSpineCandidate); ei != ei_end; ++ei)
-       {
-         // output lines into vtk file
-         fprintf(fout_Spine, "2 %ld %ld\n", source(*ei, msTreeSpineCandidate)-1, target(*ei, msTreeSpineCandidate)-1);
-      }
-    } // end if
 
  
 
@@ -986,8 +957,11 @@ int main(int argc, char *argv[])
   free(volin);// = (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN));
   free(volvessel);// = (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN));
   free(somaDist);//= (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN));
-  free(fout_Spine);
-  fout_Spine = NULL;
+  if(!outputTotal)
+    {
+    fclose(fout_Spine);
+    fout_Spine = NULL;
+    }
   volin = NULL;
   volvessel = NULL;
   somaDist = NULL;
