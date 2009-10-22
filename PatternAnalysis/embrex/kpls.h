@@ -29,19 +29,30 @@ class KPLS
 public:
 	KPLS();
 	~KPLS();
-
+	
+	//USE THES FUNCTIONS TO MANUALLY PREPARE THE DATA:
 	MATRIX GetDataPtr(int rows, int columns);
 	VECTOR GetIDPtr(void);
 	VECTOR GetTrainingPtr(void);
+	void InitVariables(void);
+
+	//USE THESE FUNCTIONS TO LOAD FROM A FILE
 	void LoadFromMetaNeuralFormat(char * train_fname, char * test_fname);
 
+	//SETUP PARAMETERS:
 	void SetLatentVars(int n) { latent_vars = n; };
 	void SetSigma(int n) { sigma = n; };
 
+	//PROCESS:
 	void ScaleData();
 	void Train();
 	void Classify();
 	void Statistics();
+	void SaveResults();
+	void SaveLatents();
+
+	//GET RESULTS:
+	VECTOR GetPredictions(void);
 
 	struct {bool scaled; bool trained; bool classified;} flag;
 
@@ -70,7 +81,7 @@ private:
 	int num_data;		//Number of Data points
 	int num_feats;      //Number of Features (does not count IDs or Class)
 	int num_classes;	//Number of Classes
-	int num_train_data; //Number of Data used in training (gets set in Allocate_Intermediates
+	int num_train_data; //Number of Data used in training
 
 	//INTERMEDIATE VARIABLES (variables I need to keep around for classification):
 	VECTOR tID;					//IDs of data with known classes;
