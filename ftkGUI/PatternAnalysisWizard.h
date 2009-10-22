@@ -1,0 +1,116 @@
+/*=========================================================================
+Copyright 2009 Rensselaer Polytechnic Institute
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. 
+=========================================================================*/
+
+#ifndef PATTERNANALYSISWIZARD_H
+#define PATTERNANALYSISWIZARD_H
+
+//QT INCLUDES
+#include <QtGui/QWizard>
+#include <QtGui/QLabel>
+//#include <QtGui/QCheckBox>
+#include <QtGui/QPushButton>
+#include <QtGui/QRadioButton>
+#include <QtGui/QButtonGroup>
+#include <QtGui/QVBoxLayout>
+#include <QtGui/QGroupBox>
+#include <QtGui/QCheckBox>
+#include <QtGui/QScrollArea>
+//#include <QtGui/QComboBox>
+//#include <QtGui/QFileDialog>
+//#include <QtGui/QTextBrowser>
+#include <QtCore/QAbstractItemModel>
+//#include <QtCore/QFileInfo>
+//#include <QtCore/QFile>
+//#include <QtCore/QByteArray>
+//#include <QtCore/QTextStream>
+
+//OTHER FARSIGHT INCLUDES
+#include <PatternAnalysis/libsvm/svm.h>
+#include <PatternAnalysis/embrex/kpls.h>
+
+#include <iostream>
+#include <vector>
+#include <float.h>
+
+class PatternAnalysisWizard : public QWizard
+{
+    Q_OBJECT;
+
+public:
+	enum { Page_Start, Page_Features, Page_Training, Page_Parameters, Page_Execute };
+
+    PatternAnalysisWizard(QAbstractItemModel *mod, int outputColumn, QWidget *parent = 0); 
+	
+protected:
+	//void initializePage(int id);
+	//void cleanupPage(int id);
+	bool validateCurrentPage();
+	int nextId() const;
+
+	void runSVM();
+	void runKPLS();
+
+private:
+	void initFeatureGroup(void);
+	QButtonGroup *featureGroup;
+
+	void initOptionGroup(void);
+	QButtonGroup *optionGroup;
+
+	QAbstractItemModel *model;
+	int columnForPrediction;
+};
+
+
+class StartPage : public QWizardPage
+{
+	Q_OBJECT;
+
+public:
+	StartPage(QButtonGroup *oGroup, QWidget *parent = 0);
+};
+
+class FeaturesPage : public QWizardPage
+{
+	Q_OBJECT;
+
+public:
+	FeaturesPage(QButtonGroup *fGroup, QWidget *parent = 0);
+	bool isComplete() const;
+private:
+	QGroupBox * initFeatureBox(QButtonGroup *fGroup);
+	QButtonGroup *featureGroup;
+private slots:
+	void selectNone();
+	void selectAll();
+};
+
+/*
+class TrainingPage : public QWizardPage
+{
+	Q_OBJECT;
+public:
+	TrainingPage(QWidget *parent = 0);
+};
+*/
+/*
+class ExecutePage : public QWizardPage
+{
+	Q_OBJECT;
+public:
+	ExecutePage(QWidget *parent = 0);
+};
+*/
+#endif

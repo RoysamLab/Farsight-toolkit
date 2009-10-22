@@ -203,11 +203,12 @@ void TableWindow::ResizeToOptimalSize(void)
 			break;
 	}
 	bestWidth = bestWidth + 50;
+	bestHeight+=5;
 
-	resize(bestWidth,bestHeight+5);
+	if (bestWidth > screenWidth)
+		bestWidth = screenWidth-10;
 
-	if (this->frameGeometry().width() > screenWidth)
-		resize(screenWidth-10,bestHeight+5);
+	resize(bestWidth,bestHeight);
 }
 
 ChooseItemDialog::ChooseItemDialog(QStringList items, QWidget *parent)
@@ -377,12 +378,12 @@ FilterRowsDialog::FilterRowsDialog(QTableView *table, QWidget *parent)
 	bool2 = this->NewBoolCombo();
 
 	fLayout = new QGridLayout;
-	this->AddWidget(minVal1,0,0);
-	this->AddWidget(minComp1,0,1);
-	this->AddWidget(feature1,0,2);
-	this->AddWidget(maxComp1,0,3);
-	this->AddWidget(maxVal1,0,4);
-	this->AddWidget(addButton,1,0);
+	fLayout->addWidget(minVal1,0,0);
+	fLayout->addWidget(minComp1,0,1);
+	fLayout->addWidget(feature1,0,2);
+	fLayout->addWidget(maxComp1,0,3);
+	fLayout->addWidget(maxVal1,0,4);
+	fLayout->addWidget(addButton,1,0);
 
 	numEquations = 1;
 

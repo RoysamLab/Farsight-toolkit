@@ -84,7 +84,7 @@ public:
 	std::vector< int > Split(ftk::Object::Point P1, ftk::Object::Point P2);
 	std::vector< int > SplitInit(ftk::Object::Point P1, ftk::Object::Point P2); //same as above, but applied on initial segmentation and updates LoG resp image	
 	std::vector< int > SplitAlongZ(int objID, int cutSlice);
-	int Merge(vector<int> ids);	
+	int Merge(vector<int> ids);
 	ftk::Object::Point MergeInit(ftk::Object::Point P1, ftk::Object::Point P2, int* new_id); //same as above, but applied on initial segmentation and updates LoG resp image
 	bool Delete(vector<int> ids);
 	bool DeleteInit(ftk::Object::Point P1); //same as above, but applied on initial segmentation (and updates LoG resp image?)

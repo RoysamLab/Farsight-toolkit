@@ -72,6 +72,7 @@ public slots:
 	void mergeTrigger(void);
 	void splitTrigger(int z);
 	void addTrigger(void);
+	void classTrigger(void);
 	void startSplitTrigger(void);
 	void endSplitTrigger(void);
 	void applyMargins(int,int);		//Exclusion margins at image edges

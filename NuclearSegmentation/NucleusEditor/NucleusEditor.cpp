@@ -256,6 +256,12 @@ void NucleusEditor::createMenus()
 
 	editMenu->addSeparator();
 
+	classAction = new QAction(tr("Change Class"), this);
+	classAction->setStatusTip(tr("Modify the class designation for the selected objects"));
+	classAction->setShortcut(tr("Ctrl+L"));
+	connect(classAction, SIGNAL(triggered()), this, SLOT(changeClass()));
+	editMenu->addAction(classAction);
+
 	mergeAction = new QAction(tr("Merge Cells"), this);
 	mergeAction->setStatusTip(tr("Merge Cells"));
 	mergeAction->setShortcut(tr("Ctrl+M"));
@@ -586,6 +592,12 @@ void NucleusEditor::toggleIDs(void)
 	{
 		segWin->SetIDsVisible(false);
 	}
+}
+
+void NucleusEditor::changeClass(void)
+{
+	if(currentModel)
+		currentModel->classTrigger();
 }
 
 void NucleusEditor::addCell(void)

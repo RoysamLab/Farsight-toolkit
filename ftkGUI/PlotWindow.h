@@ -34,6 +34,7 @@ limitations under the License.
 
 #include "ScatterView.h"
 #include "LibSVMWidget.h"
+#include "PatternAnalysisWizard.h"
 
 //class PlotWindow : public QWidget
 class PlotWindow : public QMainWindow
@@ -70,6 +71,7 @@ private:
 
 	ScatterView *scatter;
 	LibSVMWidget *svmWidget;
+	PatternAnalysisWizard *pWizard;
 
 	void setupUI(void);	//for initial setup
 	void updateOptionMenus(bool first);

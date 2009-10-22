@@ -35,6 +35,7 @@ PlotWindow::PlotWindow(QItemSelectionModel *mod, QWidget *parent)
 
 	connect(mod->model(), SIGNAL(dataChanged(const QModelIndex &, const QModelIndex &)), this, SLOT(modelChange(const QModelIndex &, const QModelIndex &)));
 	svmWidget = NULL;
+	pWizard = NULL;
 }
 
 void PlotWindow::setupUI(void)
@@ -77,7 +78,7 @@ void PlotWindow::setupUI(void)
 	optionsMenu->addAction(clearAction);
 
 	toolsMenu = menuBar()->addMenu(tr("&Tools"));
-	svmAction = new QAction(tr("Find Outliers"), this);
+	svmAction = new QAction(tr("Classify"), this);
 	connect(svmAction, SIGNAL(triggered()), this, SLOT(startSVM()));
 	toolsMenu->addAction(svmAction);
 
@@ -175,10 +176,16 @@ void PlotWindow::modelChange(const QModelIndex &topLeft, const QModelIndex &bott
 
 void PlotWindow::startSVM()
 {
-	if(!svmWidget)
-		svmWidget = new LibSVMWidget( scatter->model() );
+	//if(!svmWidget)
+	//	svmWidget = new LibSVMWidget( scatter->model() );
 
-	svmWidget->show();
+	//svmWidget->show();
+
+	if(!pWizard)
+		pWizard = new PatternAnalysisWizard( scatter->model(), scatter->model()->columnCount() );
+	else
+		pWizard->restart();
+	pWizard->show();
 }
 
 /*

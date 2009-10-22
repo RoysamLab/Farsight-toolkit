@@ -8,6 +8,7 @@ SET( GUI_SRCS
    		HistoWindow.cpp
     	ImageBrowser5D.cpp
     	LibSVMWidget.cpp
+    	PatternAnalysisWizard.cpp
 )
 
 SET( GUI_HDRS
@@ -20,6 +21,7 @@ SET( GUI_HDRS
     	HistoWindow.h
     	ImageBrowser5D.h
     	LibSVMWidget.h
+    	PatternAnalysisWizard.h
 )
 
 SET( GUI_UIS
@@ -48,5 +50,5 @@ ADD_LIBRARY( ftkGUI STATIC
              ${GUI_RC_SRCS}
 )
 
-TARGET_LINK_LIBRARIES( ftkGUI ${QT_LIBRARIES} QVTK ftkImage TinyXML libSVM vtkVolumeRendering)
+TARGET_LINK_LIBRARIES( ftkGUI ${QT_LIBRARIES} QVTK ftkImage TinyXML libSVM libKPLS vtkVolumeRendering)
 

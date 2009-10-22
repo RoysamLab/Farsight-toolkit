@@ -105,6 +105,7 @@ private slots:
 	void splitCell(void);		//Split single cell along current z
 	void addCell(void);
 	void applyExclusionMargin(void);
+	void changeClass(void);
 
 	void startSplitting(void);	//begin splitting mode - user must select seeds
 	void endSplitting(void);	//end splitting mode and do the splits
@@ -171,6 +172,7 @@ private:
 	QAction *splitStartAction;		//for regular seed split
 	QAction *splitEndAction;
 	QAction *exclusionAction;
+	QAction *classAction;
 	
 	QLabel *statusLabel;
 

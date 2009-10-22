@@ -15,6 +15,7 @@ limitations under the License.
 
 #include "SegmentationModel.h"
 #include <QtGui/QMessageBox>
+#include <QtGui/QInputDialog>
 #include <algorithm>
 
 SegmentationModel::SegmentationModel(ftk::NuclearSegmentation *segresult)
@@ -255,6 +256,47 @@ int SegmentationModel::RowForID(int id)
 		return LabelToRowMap.value(id);
 	else
 		return -1;
+}
+
+//Call this when you want to change the class of the selected objects:
+void SegmentationModel::classTrigger(void)
+{
+	//Extract a list of IDs
+	QModelIndexList selIndices = selectionModel->selectedRows();
+	vector<int> ids(0);
+	QString idlist;
+	for (int selIndex = 0; selIndex < selIndices.size(); ++selIndex) 
+	{
+		int row = selIndices.at(selIndex).row();
+		int id = model->data( model->index(row, columnForID) ).toInt();
+		ids.push_back(id);
+		idlist.append(QString::number(id));
+		idlist.append(", ");
+	}
+
+	if(ids.size() <= 0)
+		return;
+
+	QString msg = tr("Change the class of these ") + QString::number(selIndices.size()) + tr(" objects:\n");
+	msg.append(idlist);
+	msg.append(tr("to: "));
+
+	//Get the new class number:
+	bool ok;
+	int newClass = QInputDialog::getInteger(NULL, tr("Change Class"), msg, -1, -1, 10, 1, &ok);
+	
+	//Change the class of these objects:
+	if(ok)
+	{
+		for(int i=0; i<(int)ids.size(); ++i)
+		{
+			ftk::Object *o = segResult->GetObjectPtr( ids.at(i) );
+			o->SetClass(newClass);
+			model->setData(model->index( this->RowForID( ids.at(i) ), columnForClass), newClass );
+		}
+	}
+
+	segResult->editsNotSaved = true;
 }
 
 //Call this slot when trying to delete objects
