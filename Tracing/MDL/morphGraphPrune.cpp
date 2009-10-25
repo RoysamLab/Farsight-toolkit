@@ -57,7 +57,7 @@ struct  VoxelPosition
 // Arguments of function: degree_nodes[], tree graph, vertexPos[]
 // Output to the same Graph: msTree (after remove_edge()).
 
-Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexPos, float length_leaf) 
+Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexPos, float length_Threshold) 
 {
 	//struct VoxelPosition *vertexPos;
 	Graph msTree_buffer(num_nodes+1);
@@ -72,11 +72,12 @@ Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexP
 	graph_traits<Graph>::out_edge_iterator  outei, outedge_end;
 	int curBranchVerts[2000];
 	int curBrVerts_Index = 0;
-	float length_edge;
+	float length_edge = 0; // notice that xiaosong did not set the initial value, I don't know why, does it work ? by xiao
 	int indVert, indVert_last;
 	int num_leaves;
 	int i, j;
     int branchChosen;
+	float length_leaf = 0;
 
 
 	// Consider all leaves
@@ -85,41 +86,51 @@ Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexP
 	int prunetimes = 1; 
 	  
 	for (i=0; i< prunetimes; i++) {
-		for(boost::tie(vi, vend) = vertices(msTree); vi != vend; ++vi)  { // for all vertex in the graph
+		for(boost::tie(vi, vend) = vertices(msTree); vi != vend; ++vi) 
+		 { // for all vertex in the graph
 			curBrVerts_Index = 0;
-			if (out_degree(*vi, msTree) == 1)  { // if it is a leaf tip
-				for (boost::tie(outei, outedge_end) = out_edges(*vi, msTree); outei != outedge_end; ++outei) {
+			if (out_degree(*vi, msTree) == 1)  
+			   { // if it is a leaf tip
+				 for (boost::tie(outei, outedge_end) = out_edges(*vi, msTree); outei != outedge_end; ++outei)
+				   {
 					curBranchVerts[curBrVerts_Index] = source(*outei, msTree);
 					curBrVerts_Index++;
 					curBranchVerts[curBrVerts_Index] = target(*outei, msTree);
-				}
-				while (out_degree(vertex(curBranchVerts[curBrVerts_Index], msTree), msTree) == 2) {
+				   } // end for
+
+				  while (out_degree(vertex(curBranchVerts[curBrVerts_Index], msTree), msTree) == 2) 
+				   {
 					//curVert = vertex(curBranchVerts[curBrVerts_Index], msTree);
 					for (boost::tie(outei, outedge_end) = out_edges(vertex(curBranchVerts[curBrVerts_Index], msTree), msTree);
-																							outei != outedge_end; ++outei) {
+																							outei != outedge_end; ++outei)
+					  {
 						if (target(*outei, msTree) == (unsigned int)curBranchVerts[curBrVerts_Index-1])
 							continue;
 						curBranchVerts[curBrVerts_Index+1] = target(*outei, msTree);
-					}
-					curBrVerts_Index++;
-				}
+					  } //end for
+					  curBrVerts_Index++;
+				   } // end while
 				branchChosen = 1;
 				// Evaluate with MDL if the branch is chosen
 				if (i == prunetimes-1) num_leaves++;
-				for (j = 0; j <= curBrVerts_Index; j++) {
+                length_leaf = 0;  // must be reset the value,by xiaoliang
+				for (j = 0; j <= curBrVerts_Index; j++)
+				{
 					indVert = curBranchVerts[j];
 
-					if (j==0) {
+					if (j==0) 
+					 {
 						indVert_last = indVert;
-					}
+					  } // end if
 					length_edge = (vertexPos[indVert].x-vertexPos[indVert_last].x)*(vertexPos[indVert].x-vertexPos[indVert_last].x);
 					length_edge+= (vertexPos[indVert].y-vertexPos[indVert_last].y)*(vertexPos[indVert].y-vertexPos[indVert_last].y);
 					length_edge+= (vertexPos[indVert].z-vertexPos[indVert_last].z)*(vertexPos[indVert].z-vertexPos[indVert_last].z);
 					length_edge = sqrt(length_edge);
 					length_leaf += length_edge;
 					indVert_last = indVert;
+					//printf("%f ",length_leaf);
 
-				}
+				} //end for
 	/*
 				mahalanobis_dist = 0;
 				x1 = meanDensityBranch - 30.81;  // minus mean_feature from matlab 
@@ -132,13 +143,17 @@ Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexP
 	*/
 				//if (meanDensityBranch < 150)     branchChosen = 0;
 				//if (length_leaf > 25)            branchChosen = 1;
-
-				if (length_leaf < 4)      branchChosen = 0;     // Parameter length_leaf to choose -> 2, 3, 5
+              
+				if (length_leaf < length_Threshold)    
+				{  
+					branchChosen = 0;     // Parameter length_leaf to choose -> 2, 3, 5
+				}
 
 				// Remove the branch based on MDL critierion
 				if (branchChosen == 0)  {
 					for (j = 1; j <= curBrVerts_Index; j++) {
 						remove_edge(curBranchVerts[j-1], curBranchVerts[j], msTree_buffer);
+					    //printf ("length_leaf= %f ",length_leaf);
 					}
 				}
 
