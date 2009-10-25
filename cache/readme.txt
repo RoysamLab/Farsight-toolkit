@@ -1,41 +1,33 @@
 Initial cache files for CMake configuration of various dependencies.
 
-For example, to compile VXL as needed for FARSIGHT, use:
+1) Install prerequisites (Boost, QT, GLUT) for your platform.
+  * On Debian/Ubuntu, use packages: libboost-dev, qt4-qmake, libglut3-dev
+  * On Mac OS X, use MacPorts packages: boost, qt4-mac, mesa
 
-  cmake -C /path/to/farsight/cache/VXL.cmake /path/to/VXL
+For more details, see:
 
-Or edit the configuration file and then use the shell scripts:
+  http://farsight-toolkit.org/wiki/FARSIGHT_HowToBuild
 
-  vi vars.conf
-  bash build-vxl.sh
-  bash build-itk.sh
-  bash build-vtk.sh
-  bash build-ftk.sh
+2) Download source code for VXL, VTK and ITK (either tarballs or from CVS).
 
-Or compile everything:
+3) Edit the configuration file according to your directory structure:
 
   vi vars.conf
+
+4) Compile everything with:
+
   bash build-all.sh
 
 
-=========
-VTK notes
-=========
+============================
+Known working configurations
+============================
 
-After installing VTK, even with VTK_USE_GUISUPPORT and VTK_USE_QVTK set to ON,
-two VTK header files will be missing from the installation directory
-(/usr/local/include/vtk-5.4):
-
-  GUISupport/Qt/vtkQtBarChartView.h
-  GUISupport/Qt/vtkQtChartViewBase.h
-
-The build-vtk.sh script will try to copy these files for you.
-
-
-=========
-FTK notes
-=========
-
-To install GLUT on Linux, you can use freeglut:
-
-  sudo aptitude install libglut3-dev
+   OS: Mac OS X 10.5.8 with Xcode 3.1.3
+Boost: Installed boost package using MacPorts on 2009-10-24.
+   QT: Installed qt4-mac package using MacPorts on 2009-10-24.
+ GLUT: Installed mesa package using MacPorts on 2009-10-24.
+  VXL: 1.13.0 release version, compiled from source
+  ITK: 3.16.0 release version, compiled from source
+  VTK: 5.4.2 release version, compiled from source
+  FTK: r1146 from Subversion

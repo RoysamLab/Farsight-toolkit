@@ -13,7 +13,7 @@ then
 fi
 
 CMAKE_CACHE=$FTK_DIR/cache/$PROJECT.cmake
-OUT_FILE=../$BIN_DIR.txt
+OUT_FILE=$BIN_DIR/$PROJECT.txt
 
 mkdir -p $BIN_DIR
 cd $BIN_DIR
