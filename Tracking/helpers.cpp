@@ -587,6 +587,8 @@ void getFeatureVectorsFarsight(LabelImageType::Pointer im, InputImageType::Point
 		FeatureCalculator2DType::Pointer fc2d = FeatureCalculator2DType::New();
 		fc2d->SetImageInputs(i2d,l2d);
 		fc2d->SetLevel(3);
+				fc2d->ComputeTexturesOn();
+		fc2d->ComputeHistogramOn();
 		fc2d->Update();
 		std::vector<Label2DImageType::PixelType> labels = fc2d->GetLabels();
 		for(unsigned int counter=0; counter<labels.size();counter++)
@@ -606,6 +608,8 @@ void getFeatureVectorsFarsight(LabelImageType::Pointer im, InputImageType::Point
 		FeatureCalculatorType::Pointer fc = FeatureCalculatorType::New();
 		fc->SetImageInputs(in_image,im);
 		fc->SetLevel(3);
+		fc->ComputeTexturesOn();
+		fc->ComputeHistogramOn();
 		fc->Update();
 		std::vector<LabelImageType::PixelType> labels = fc->GetLabels();
 		for(unsigned int counter=0; counter< labels.size(); counter++)

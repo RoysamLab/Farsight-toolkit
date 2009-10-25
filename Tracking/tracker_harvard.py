@@ -52,7 +52,7 @@ if __name__ == '__main__':
     # prefix the filanames with necessary things like
     # unmixed_, labeled_, labeled_tracks_, vessel_binarized_, etc..
 
-    time_points = time_points[0:15] # DEBUG
+    time_points = time_points # DEBUG
     #channels = [2,3,4]
     #pdb.set_trace()
     ######################### Delete slices #############################
@@ -161,6 +161,7 @@ if __name__ == '__main__':
             temp_fname.append(os.path.join(cache_prefix, 'labeled_' + filenames[(w,t)]))
         for t in time_points:
             temp_fname.append(os.path.join(cache_prefix, 'labeled_tracks_' + filenames[(w,t)]))
+        print temp_fname
         subprocess.call(temp_fname);
     
     ####################### Feature computation #########################
@@ -170,14 +171,14 @@ if __name__ == '__main__':
         temp_fname = [];
         temp_fname.append(os.path.join(exe_dir,'summary'))
         temp_fname.append(str(len(time_points)))
-        temp_fname.append('0'); # number of associated channels to compute features with
+        temp_fname.append('1'); # number of associated channels to compute features with
         for t in time_points:
             temp_fname.append(os.path.join(cache_prefix, 'smoothed_' + filenames[(w,t)]))
         for t in time_points:
             temp_fname.append(os.path.join(cache_prefix, 'labeled_tracks_' + filenames[(w,t)]))
-##        temp_fname.append('DC') # type of channel
-##        for t in time_points:
-##            temp_fname.append(os.path.join(cache_prefix, 'labeled_' + filenames[(3,t)])) # add DC segmented files too
+        temp_fname.append('DC') # type of channel
+        for t in time_points:
+            temp_fname.append(os.path.join(cache_prefix, 'labeled_' + filenames[(2,t)])) # add DC segmented files too
 ##        temp_fname.append('Vessel') # type of channel
 ##        temp_fname.append(os.path.join(cache_prefix, 'vessel_trace_' + dataset_id + '_w' + str(vessel_w) + '.tif'))
         temp_fname.append(os.path.join(cache_prefix, 'track_summary_' + dataset_id + '_w' + str(w) + '.txt'))
