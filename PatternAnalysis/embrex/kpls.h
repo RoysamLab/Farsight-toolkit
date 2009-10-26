@@ -20,9 +20,9 @@ limitations under the License.
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-typedef double *PFLOAT;
-typedef PFLOAT VECTOR;
-typedef PFLOAT *MATRIX;
+typedef double *EMB_PFLOAT;
+typedef EMB_PFLOAT VECTOR;
+typedef EMB_PFLOAT *MATRIX;
 
 class KPLS
 {
