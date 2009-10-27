@@ -30,3 +30,6 @@ set(BUILD_TrackEdit OFF CACHE BOOL "Set to OFF for FARSIGHT")
 set(BUILD_VESSEL OFF CACHE BOOL "Set to OFF for FARSIGHT")
 set(BUILD_ftl2d OFF CACHE BOOL "Set to OFF for FARSIGHT")
 set(BUILD_ftl3d OFF CACHE BOOL "Set to OFF for FARSIGHT")
+
+#set(USE_KPLS ON CACHE BOOL "Compile with proprietary KPLS library")
+set(USE_KPLS OFF CACHE BOOL "Compile without proprietary KPLS library")

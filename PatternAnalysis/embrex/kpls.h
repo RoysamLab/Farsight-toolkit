@@ -10,7 +10,7 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License. 
+limitations under the License.
 =========================================================================*/
 
 #ifndef NUCLEUS_EDITOR_H
@@ -19,6 +19,8 @@ limitations under the License.
 #ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS
 #endif
+
+#ifdef USE_KPLS
 
 typedef double *EMB_PFLOAT;
 typedef EMB_PFLOAT VECTOR;
@@ -29,7 +31,7 @@ class KPLS
 public:
 	KPLS();
 	~KPLS();
-	
+
 	//USE THES FUNCTIONS TO MANUALLY PREPARE THE DATA:
 	MATRIX GetDataPtr(int rows, int columns);
 	VECTOR GetIDPtr(void);
@@ -70,7 +72,7 @@ private:
 
 	//PRIVATE
 	VECTOR myID;			//We associate with an ID
-	MATRIX myData;			//All Data ( scaled in ScaleData, if called )	
+	MATRIX myData;			//All Data ( scaled in ScaleData, if called )
 	VECTOR myTraining;		//Training Class membership (-1 for not-assigned)
 	MATRIX myResponses;		//Provides Responses for each object to each class.
 	VECTOR myPredictions;	//Predicted class membership
@@ -90,5 +92,7 @@ private:
 	MATRIX bbmatrixx;			//kernel: weights for each class for each row
 	MATRIX tClassScalers;		//HOLDS avg and std devs of each class
 };
+
+#endif
 
 #endif

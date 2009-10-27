@@ -10,7 +10,7 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License. 
+limitations under the License.
 =========================================================================*/
 
 #include "PatternAnalysisWizard.h"
@@ -25,7 +25,7 @@ PatternAnalysisWizard::PatternAnalysisWizard(QAbstractItemModel *mod, int output
 		model->insertColumn(columnForPrediction);			//Add Column for svm result
 		model->setHeaderData(columnForPrediction, Qt::Horizontal, tr("pattern") );
 	}
-	
+
 	optionGroup = new QButtonGroup;
 	initOptionGroup();
 
@@ -149,7 +149,7 @@ StartPage::StartPage(QButtonGroup *oGroup, QWidget *parent)
 {
 	setTitle(tr("Select Module"));
 	//setPixmap(QWizard::WatermarkPixmap, QPixmap(":/images/watermark.png"));
-	
+
 	QVBoxLayout *layout = new QVBoxLayout;
 
 	QList<QAbstractButton *> buttons = oGroup->buttons();
@@ -168,7 +168,7 @@ FeaturesPage::FeaturesPage(QButtonGroup *fGroup, QWidget *parent)
 	: QWizardPage(parent)
 {
 	setTitle(tr("Choose Features"));
-	
+
 	QVBoxLayout *layout = new QVBoxLayout;
 	layout->addWidget( initFeatureBox(fGroup) );
 	setLayout(layout);
@@ -253,7 +253,7 @@ ExecutePage::ExecutePage(QWidget *parent)
 	: QWizardPage(parent)
 {
 	setTitle(tr("Execute"));
-	
+
 	QVBoxLayout *layout = new QVBoxLayout;
 
 	QList<QAbstractButton *> buttons = featureGroup->buttons();
@@ -295,7 +295,7 @@ void PatternAnalysisWizard::runSVM()
 
 	//Find out which featueres are checked (which columns to use).
 	std::vector<int> columnsToUse;
-	
+
 	QList<QAbstractButton *> buttons = featureGroup->buttons();
 	for(int b = 0; b<buttons.size(); ++b)
 	{
@@ -372,7 +372,7 @@ void PatternAnalysisWizard::runSVM()
 		x_space[ columnsToUse.size() ].index = -1;
 		prob.x[r] = &x_space[0];	//Point to this new set of nodes.
 	}
-	
+
 	//Set the Parameters
 	struct svm_parameter param;
 	param.svm_type = ONE_CLASS;
@@ -433,7 +433,7 @@ void PatternAnalysisWizard::runSVM()
 	int o = 1;
 	for(int row = 0; (int)row < model->rowCount(); ++row)  //Set all values to 0
 	{
-		model->setData(model->index(row, columnForPrediction), z);         
+		model->setData(model->index(row, columnForPrediction), z);
 	}
 
 	for(int i = 0; i < (int)outliers.size()-1; ++i)							//Set outliers to 1
@@ -452,6 +452,7 @@ void PatternAnalysisWizard::runSVM()
 //****************************************************************************
 void PatternAnalysisWizard::runKPLS()
 {
+#ifdef USE_KPLS
 	//Find out which features are checked (which columns to use).
 	std::vector<int> columnsToUse;
 	QList<QAbstractButton *> buttons = featureGroup->buttons();
@@ -504,11 +505,14 @@ void PatternAnalysisWizard::runKPLS()
 	model->blockSignals(true);
 	for(int row = 1; (int)row < model->rowCount(); ++row)  //Set all values to 0
 	{
-		model->setData(model->index(row, columnForPrediction), (int)predictions[row]);         
+		model->setData(model->index(row, columnForPrediction), (int)predictions[row]);
 	}
 	//turn signals back on & change one more piece of data to force dataChanged signal
 	model->blockSignals(false);
 	model->setData(model->index(0, columnForPrediction), (int)predictions[0]);
-	
+
 	delete kpls;
+#else
+	QMessageBox::information(this, tr("MESSAGE"), tr("FARSIGHT was not compiled with KPLS library"));
+#endif
 }

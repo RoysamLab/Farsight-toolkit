@@ -10,7 +10,7 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License. 
+limitations under the License.
 =========================================================================*/
 #include "LibSVMWidget.h"
 
@@ -34,8 +34,7 @@ LibSVMWidget::LibSVMWidget(QAbstractItemModel *mod, QWidget *parent)
 	optionLayout->addStretch(50);
 
 	goButton = new QPushButton(tr("GO"));
-	connect(goButton, SIGNAL(clicked()), this, SLOT(goKPLS()));
-	//connect(goButton, SIGNAL(clicked()), this, SLOT(go()));
+	connect(goButton, SIGNAL(clicked()), this, SLOT(go()));
 	optionLayout->addWidget(goButton);
 
 	allLayout->addLayout(optionLayout);
@@ -142,10 +141,80 @@ void LibSVMWidget::selectAll()
 }
 
 void LibSVMWidget::go()
+#ifdef USE_KPLS
+{
+	//Find out which features are checked (which columns to use).
+	std::vector<int> columnsToUse;
+	QList<QAbstractButton *> buttons = featureGroup->buttons();
+	for(int b = 0; b<buttons.size(); ++b)
+	{
+		if( buttons.at(b)->isChecked() )
+		{
+			columnsToUse.push_back( featureGroup->id(buttons.at(b)) );
+		}
+	}
+
+	//Find out which column is for class
+
+	//Setup up the kpls:
+	KPLS *kpls = new KPLS();
+	kpls->SetLatentVars(5);
+	kpls->SetSigma(20);
+
+	int num_rows = (int)model->rowCount();
+	int num_cols = (int)columnsToUse.size();
+
+	MATRIX data = kpls->GetDataPtr(num_rows, num_cols);
+	VECTOR ids = kpls->GetIDPtr();
+	VECTOR training = kpls->GetTrainingPtr();
+
+	//extract data from the model
+	QModelIndex index;
+	for(int r=0; r<num_rows; ++r)
+	{
+		index = model->index(r,0);
+		ids[r] = model->data(index).toDouble();
+		for(int c=0; c<num_cols; ++c)
+		{
+			index = model->index(r, columnsToUse.at(c));
+			double val = model->data(index).toDouble();
+			data[r][c] = val;
+		}
+		index = model->index(r,model->columnCount()-1);
+		training[r] = model->data(index).toDouble();
+	}
+
+	kpls->InitVariables();
+	kpls->ScaleData();
+	kpls->Train();
+	kpls->Classify();
+
+	VECTOR predictions = kpls->GetPredictions();
+
+	//Add the outliers to the model!!
+	if(columnForSVM >= model->columnCount())
+	{
+		model->insertColumn(columnForSVM);			//Add Column for svm result
+		model->setHeaderData(columnForSVM, Qt::Horizontal, tr("predict"));
+	}
+
+	//stop signalling:
+	model->blockSignals(true);
+	for(int row = 1; (int)row < model->rowCount(); ++row)  //Set all values to 0
+	{
+		model->setData(model->index(row, columnForSVM), (int)predictions[row]);
+	}
+	//turn signals back on & change one more piece of data to force dataChanged signal
+	model->blockSignals(false);
+	model->setData(model->index(0, columnForSVM), (int)predictions[0]);
+
+	delete kpls;
+}
+#else
 {
 	//Find out which featueres are checked (which columns to use).
 	std::vector<int> columnsToUse;
-	
+
 	QList<QAbstractButton *> buttons = featureGroup->buttons();
 	for(int b = 0; b<buttons.size(); ++b)
 	{
@@ -222,7 +291,7 @@ void LibSVMWidget::go()
 		x_space[ columnsToUse.size() ].index = -1;
 		prob.x[r] = &x_space[0];	//Point to this new set of nodes.
 	}
-	
+
 	//Set the Parameters
 	struct svm_parameter param;
 	param.svm_type = ONE_CLASS;
@@ -277,7 +346,7 @@ void LibSVMWidget::go()
 	//Add the outliers to the model!!
 	if(columnForSVM >= model->columnCount())
 	{
-		model->insertColumn(columnForSVM);			//Add Column for svm result		
+		model->insertColumn(columnForSVM);			//Add Column for svm result
 		model->setHeaderData( columnForSVM, Qt::Horizontal, tr("outlier?") );
 	}
 
@@ -288,7 +357,7 @@ void LibSVMWidget::go()
 	int o = 1;
 	for(int row = 0; (int)row < model->rowCount(); ++row)  //Set all values to 0
 	{
-		model->setData(model->index(row, columnForSVM), z);         
+		model->setData(model->index(row, columnForSVM), z);
 	}
 
 	for(int i = 0; i < (int)outliers.size()-1; ++i)							//Set outliers to 1
@@ -299,76 +368,5 @@ void LibSVMWidget::go()
 	//turn signals back on & change one more piece of data to force dataChanged signal
 	model->blockSignals(false);
 	model->setData(model->index(outliers.back(), columnForSVM), o);
-
-	
 }
-
-void LibSVMWidget::goKPLS()
-{
-	//Find out which features are checked (which columns to use).
-	std::vector<int> columnsToUse;
-	QList<QAbstractButton *> buttons = featureGroup->buttons();
-	for(int b = 0; b<buttons.size(); ++b)
-	{
-		if( buttons.at(b)->isChecked() )
-		{
-			columnsToUse.push_back( featureGroup->id(buttons.at(b)) );
-		}
-	}
-
-	//Find out which column is for class
-
-	//Setup up the kpls:
-	KPLS *kpls = new KPLS();
-	kpls->SetLatentVars(5);
-	kpls->SetSigma(20);
-
-	int num_rows = (int)model->rowCount();
-	int num_cols = (int)columnsToUse.size();
-
-	MATRIX data = kpls->GetDataPtr(num_rows, num_cols);
-	VECTOR ids = kpls->GetIDPtr();
-	VECTOR training = kpls->GetTrainingPtr();
-
-	//extract data from the model
-	QModelIndex index;
-	for(int r=0; r<num_rows; ++r)
-	{
-		index = model->index(r,0);
-		ids[r] = model->data(index).toDouble();
-		for(int c=0; c<num_cols; ++c)
-		{
-			index = model->index(r, columnsToUse.at(c));
-			double val = model->data(index).toDouble();
-			data[r][c] = val;
-		}
-		index = model->index(r,model->columnCount()-1);
-		training[r] = model->data(index).toDouble();
-	}
-
-	kpls->InitVariables();
-	kpls->ScaleData();
-	kpls->Train();
-	kpls->Classify();
-
-	VECTOR predictions = kpls->GetPredictions();
-
-	//Add the outliers to the model!!
-	if(columnForSVM >= model->columnCount())
-	{
-		model->insertColumn(columnForSVM);			//Add Column for svm result		
-		model->setHeaderData(columnForSVM, Qt::Horizontal, tr("predict"));
-	}
-
-	//stop signalling:
-	model->blockSignals(true);
-	for(int row = 1; (int)row < model->rowCount(); ++row)  //Set all values to 0
-	{
-		model->setData(model->index(row, columnForSVM), (int)predictions[row]);         
-	}
-	//turn signals back on & change one more piece of data to force dataChanged signal
-	model->blockSignals(false);
-	model->setData(model->index(0, columnForSVM), (int)predictions[0]);
-	
-	delete kpls;
-}
+#endif

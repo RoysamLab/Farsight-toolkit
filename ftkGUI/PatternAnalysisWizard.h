@@ -10,7 +10,7 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License. 
+limitations under the License.
 =========================================================================*/
 
 #ifndef PATTERNANALYSISWIZARD_H
@@ -35,6 +35,7 @@ limitations under the License.
 //#include <QtCore/QFile>
 //#include <QtCore/QByteArray>
 //#include <QtCore/QTextStream>
+#include <QtGui/QMessageBox>
 
 //OTHER FARSIGHT INCLUDES
 #include <PatternAnalysis/libsvm/svm.h>
@@ -51,8 +52,8 @@ class PatternAnalysisWizard : public QWizard
 public:
 	enum { Page_Start, Page_Features, Page_Training, Page_Parameters, Page_Execute };
 
-    PatternAnalysisWizard(QAbstractItemModel *mod, int outputColumn, QWidget *parent = 0); 
-	
+    PatternAnalysisWizard(QAbstractItemModel *mod, int outputColumn, QWidget *parent = 0);
+
 protected:
 	//void initializePage(int id);
 	//void cleanupPage(int id);

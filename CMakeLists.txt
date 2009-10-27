@@ -21,9 +21,10 @@ OPTION( BUILD_REGISTRATION "Build Image Registration (fregl)" ON )
 OPTION( BUILD_BIONET "Build Bionet" OFF )
 OPTION( BUILD_SAMPLE_EDITOR "Build Sample Editor" OFF )
 OPTION( BUILD_TISSUENETS "Build TissueNets" OFF )
-OPTION( BUILD_TRACKER "Build Cell Tracker" OFF)
+OPTION( BUILD_TRACKER "Build Cell Tracker" OFF )
+OPTION( USE_KPLS "Use KPLS module for classification" ON )
 OPTION( WRAP_PYTHON "Wrap Farsight in Python" OFF )
-OPTION( BUILD_EMBREX "Build Mark Embrecht's KPLS module" OFF)
+OPTION( BUILD_EMBREX "Build Mark Embrecht's KPLS module" OFF )
 MARK_AS_ADVANCED(BUILD_EMBREX)
 MARK_AS_ADVANCED(WRAP_PYTHON)
 
@@ -67,7 +68,7 @@ ENDIF(QT4_FOUND)
 ################################################################################
 ################################################################################
 # FARSIGHT ALSO HAS A NUMBER OF COMMON LIBRARIES THAT ARE INTERNAL TO
-# THE PROJECT: 
+# THE PROJECT:
 ################################################################################
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkImage )
 SUBDIRS( ftkImage )
@@ -81,6 +82,8 @@ SUBDIRS( tinyxml )
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/PatternAnalysis )
 SUBDIRS( PatternAnalysis )
 
+IF(USE_KPLS)
+ADD_DEFINITIONS(-DUSE_KPLS)
 IF( NOT BUILD_EMBREX )
   IF(WIN32)
   	LINK_DIRECTORIES( ${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/win32 )
@@ -89,7 +92,8 @@ IF( NOT BUILD_EMBREX )
   ELSE(WIN32)
 	LINK_DIRECTORIES( ${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/win64 )
   ENDIF(WIN32)
-ENDIF( NOT BUILD_EMBREX)
+ENDIF( NOT BUILD_EMBREX )
+ENDIF(USE_KPLS)
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkGUI )
 SUBDIRS( ftkGUI )
@@ -112,7 +116,7 @@ ENDIF(BUILD_TRACKER)
 IF(BUILD_NUCLEI)
   INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/NuclearSegmentation )
   SUBDIRS( NuclearSegmentation )
-  SET(CPACK_PACKAGE_EXECUTABLES "NucleusEditor;NucleusEditor")  
+  SET(CPACK_PACKAGE_EXECUTABLES "NucleusEditor;NucleusEditor")
 ENDIF(BUILD_NUCLEI)
 
 IF(BUILD_VESSEL)
