@@ -24,11 +24,11 @@ limitations under the License.
 
 int main (int argc, char* argv[])
   {
-  if(argc < 2)
-    {
-    cerr << argv[0] << " <filename>" << endl;
-    return 0;
-    }
+  //if(argc < 2)
+  //  {
+  //  cerr << argv[0] << " <filename>" << endl;
+  //  return 0;
+  //  }
   QApplication app(argc, argv);
 	View3D *View = new View3D(argc, argv);
   View->show();

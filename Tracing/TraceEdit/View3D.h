@@ -63,6 +63,7 @@ public:
 
 	vtkSmartPointer<vtkPolyData> poly_line_data;
 	View3D(int argc, char **argv);
+	View3D(TraceObject* Traces);
 	~View3D();
 	void Initialize();
 	void CreateGUIObjects();

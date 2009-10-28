@@ -82,12 +82,10 @@ limitations under the License.
 
 View3D::View3D(int argc, char **argv)
 {
-  unsigned int sz = 10;
-  this->tobj = new TraceObject;
-  this->undoBuff = new bufferType(sz);
+   this->tobj = new TraceObject;
   int num_loaded = 0;
   this->Volume=0;
-    
+  bool tracesLoaded = false;
   // load as many files as possible. Provide offset for differentiating types
   for(int counter=1; counter<argc; counter++)
     {
@@ -96,11 +94,13 @@ View3D::View3D(int argc, char **argv)
       {
       printf("I detected swc\n");
       this->tobj->ReadFromSWCFile(argv[counter]);
+	  tracesLoaded = true;
        }
     else if (strcmp(argv[counter]+len-3,"xml")==0)
       {
       printf("I detected xml\n");
       this->tobj->ReadFromRPIXMLFile(argv[counter]);
+	  tracesLoaded = true;
       }
     else if( strcmp(argv[counter]+len-3,"tks")==0)
       {
@@ -118,37 +118,24 @@ View3D::View3D(int argc, char **argv)
       }
     num_loaded++;
     }
-
-  //The copy constructor does not appear to be working, the program segfaults on that line, code should work, if fixed
-#if 0
-  std::string orig = "Original";
-  TraceObject newTobj(*(this->tobj));
-  std::pair<std::string, TraceObject> newPair;
-  newPair.first = orig;
-  newPair.second = newTobj;
-  undoBuff->Add(newPair);
-#endif
-  
-this->QVTK = 0;
-this->OpacitySlider = 0;
-this->BrightnessSlider = 0;
-this->tobj->gapTol = .5;
-this->tobj->gapMax = 10;
-this->smallLine = 5;
-this->SelectColor =.1;
-this->lineWidth= 2;
-this->GapsPlotView = NULL;
-this->TreePlot = NULL;
-this->FTKTable = NULL;
-this->GapsTableView = NULL;
-//  this->histo = NULL;
-
-this->Initialize();
-this->tobj->setSmallLineColor(.25);
-this->tobj->setMergeLineColor(.4);
-this->Ascending = Qt::AscendingOrder;
-this->statusBar()->showMessage(tr("Ready"));
-
+	this->Initialize();
+	if (tracesLoaded)
+	{
+		this->ShowTreeData();
+	}
+	else if (num_loaded < 1)
+	{
+		this->LoadTraces();
+	}
+	this->statusBar()->showMessage(tr("Ready"));
+}
+View3D::View3D(TraceObject *Traces)
+{
+	this->tobj = Traces;
+	this->Volume=0;
+	this->Initialize();
+	this->ShowTreeData();
+	this->statusBar()->showMessage(tr("Trace Editor Started"));
 }
 void View3D::LoadTraces()
 {
@@ -168,6 +155,15 @@ void View3D::LoadTraces()
 			this->statusBar()->showMessage("Loading xml file");
 			this->tobj->ReadFromRPIXMLFile((char*)traceFile.c_str());
 		}
+		if (this->tobj->FeatureHeaders.size() >=1)
+		  {
+			 this->TreeModel = new TraceModel(this->tobj->GetTraceLines(), this->tobj->FeatureHeaders);
+		  }
+		else
+		  {
+			 this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+		  }
+		this->ShowTreeData();
 		this->UpdateLineActor();
 		this->UpdateBranchActor();
 		this->QVTK->GetRenderWindow()->Render();
@@ -224,15 +220,32 @@ View3D::~View3D()
 
 void View3D::Initialize()
 {
-  this->CreateGUIObjects();
-  this->CreateLayout();
-  this->CreateInteractorStyle();
-  this->CreateActors();
-  this->resize(640, 480);
-  this->move(40, 59);
-  this->setWindowTitle(tr("Trace editor"));
-  this->QVTK->GetRenderWindow()->Render();
-  this->setupLinkedSpace();
+	this->QVTK = 0;
+	this->OpacitySlider = 0;
+	this->BrightnessSlider = 0;
+	this->tobj->gapTol = .5;
+	this->tobj->gapMax = 10;
+	this->smallLine = 5;
+	this->SelectColor =.1;
+	this->lineWidth= 2;
+	this->GapsPlotView = NULL;
+	this->TreePlot = NULL;
+	this->FTKTable = NULL;
+	this->GapsTableView = NULL;
+
+	this->tobj->setSmallLineColor(.25);
+	this->tobj->setMergeLineColor(.4);
+	this->Ascending = Qt::AscendingOrder;
+
+	this->CreateGUIObjects();
+	this->CreateLayout();
+	this->CreateInteractorStyle();
+	this->CreateActors();
+	this->resize(640, 480);
+	this->move(40, 59);
+	this->setWindowTitle(tr("Trace editor"));
+	this->QVTK->GetRenderWindow()->Render();
+	this->setupLinkedSpace();
 }
 
 void View3D::setupLinkedSpace()
@@ -249,7 +262,7 @@ void View3D::setupLinkedSpace()
 	  this->TreeModel = new TraceModel(this->tobj->GetTraceLines());
   }
   this->TreeModel->setParent(this);
-  this->ShowTreeData();
+  //this->ShowTreeData();
   this->connect(MergeGaps,SIGNAL(modelChanged()),this, SLOT(updateSelectionHighlights()));
   this->connect(this->MergeGaps->GetSelectionModel(), SIGNAL(selectionChanged(
 	  const QItemSelection & , const QItemSelection &)), this, SLOT(updateSelectionHighlights()));
