@@ -28,10 +28,12 @@ limitations under the License.
 #include "vtkSphereSource.h"
 #include "vtkGlyph3D.h"
 #include "vtkArrowSource.h"
+
 #include "TraceBit.h"
 #include "TraceLine.h"
 #include "TraceObject.h"
 #include "TraceGap.h"
+#include "branchPT.h"
 
 #define VTK_CREATE(type, var) \
   vtkSmartPointer<type> var = vtkSmartPointer<type>::New()

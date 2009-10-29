@@ -26,6 +26,7 @@ limitations under the License.
   v4: converted to Qt, member names changed to fit "VTK style" more closely.
   v5: automated functions implemented structure in place for "PACE".
   v6: "ALISA" implemented
+  v7: new GUI and file control
 */
 
 #include "ftkGUI/PlotWindow.h"
@@ -75,6 +76,7 @@ limitations under the License.
 #include "TraceGap.h"
 #include "TraceLine.h"
 #include "TraceObject.h"
+#include "branchPT.h"
 #include "TraceModel.h"
 #include "MergeModel.h"
 #include "View3DHelperClasses.h"

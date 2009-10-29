@@ -22,6 +22,8 @@ limitations under the License.
 class TraceBit;
 class TraceLine;
 class TraceGap;
+class branchPT;
+
 class vtkPoints;
 class vtkPolyData;
 class vtkCellArray;

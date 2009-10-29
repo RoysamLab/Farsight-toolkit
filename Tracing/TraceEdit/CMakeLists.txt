@@ -32,8 +32,9 @@ ADD_LIBRARY(Trace
   TraceObject.h TraceObject.cxx
   TraceModel.h  TraceModel.cxx
   MergeModel.h  MergeModel.cxx
-  UndoBuffer.h UndoBuffer.cxx
-  undobuff.h undobuff.cxx
+  UndoBuffer.h	UndoBuffer.cxx
+  undobuff.h	undobuff.cxx
+  branchPT.h	branchPT.cxx
 )
 ADD_EXECUTABLE( trace_editor  vtkTraceViewerDriver.cxx ${Sources} ${GUI_MOC_SRCS} )
 TARGET_LINK_LIBRARIES( trace_editor ${Libraries} Trace TinyXML ftkGUI)

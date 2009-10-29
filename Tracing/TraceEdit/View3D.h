@@ -32,6 +32,8 @@ class TraceBit;
 class TraceGap;
 class TraceLine;
 class TraceObject;
+class branchPT;
+
 class vtkActor;
 class vtkCallbackCommand;
 class vtkContourFilter;
@@ -48,7 +50,7 @@ class vtkRenderWindowInteractor;
 class  vtkSliderWidget;
 class vtkSphereSource;
 class vtkVolume;
-//class MergeModel; 
+  
 class TraceModel;
 class MergeModel;
 class QTableView;
