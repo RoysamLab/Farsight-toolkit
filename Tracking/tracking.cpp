@@ -480,7 +480,7 @@ void getStdVectorFromArray(FeaturesType *farray, int n,std::vector<FeaturesType>
 
 //#define CACHE_PREFIX "D:/ucb dataset/output/ena/cache"
 #define CACHE_PREFIX "cache"
-#define MAX_TIME 50
+#define MAX_TIME 200
 #define MAX_TAGS 4
 #define MAX_LABEL 10000
 #define VESSEL_CHANNEL 4 // FIXME : make it dynamic based on user input
@@ -520,9 +520,30 @@ void createTrackFeatures(std::vector<FeaturesType> fvector[MAX_TIME][MAX_TAGS], 
 		//PRINTF("Added %d elements to tfs\n",counter);
 	}
 }
-int main(int argc, char **argv)
+int main()//int argc, char **argv)
 {
 	//ST();
+	int num_tc = 100;
+	int argc = num_tc*3+1;
+	
+	char ** argv = new char* [argc];
+	int ch = 3;
+	for(int counter=1; counter <argc; counter++)
+	{
+		argv[counter] = new char [1024];
+	}
+	for(int counter =1; counter<=num_tc; counter++)
+	{
+		sprintf(argv[counter],"C:\\Users\\Arun\\Research\\Tracking\\harvard\\cache\\second_TSeries-02102009-1455-624\\smoothed_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,ch);
+	}
+	for(int counter =1; counter<=num_tc; counter++)
+	{
+		sprintf(argv[counter+num_tc],"C:\\Users\\Arun\\Research\\Tracking\\harvard\\cache\\second_TSeries-02102009-1455-624\\labeled_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,ch);
+	}
+	for(int counter =1; counter<=num_tc; counter++)
+	{
+		sprintf(argv[counter+num_tc*2],"C:\\Users\\Arun\\Research\\Tracking\\harvard\\cache\\second_TSeries-02102009-1455-624\\labeled_tracks_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,ch);
+	}
 
 	printf("Started\n");
 	/*int num_files = atoi(argv[1]);

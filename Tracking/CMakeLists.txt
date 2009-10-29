@@ -6,8 +6,6 @@ if(COMMAND cmake_policy)
   cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-
-
 SET(SRCS helpers.h itkBinaryThinningImageFilter3D.h ftkTrackFeatures.h itkBinaryThinningImageFilter3D.h itkBinaryThinningImageFilter3D.txx)
 
 ADD_LIBRARY(trackingHelpers helpers.cpp helpers.h)
@@ -23,6 +21,7 @@ ADD_EXECUTABLE(extract_slices extract_slices.cpp helpers.h)
 ADD_EXECUTABLE(medianfilter medianfilter.cpp helpers.h)
 ADD_EXECUTABLE(anisodiff anisodiff.cpp helpers.h)
 ADD_EXECUTABLE(tracklog tracklog.cpp helpers.h)
+ADD_EXECUTABLE(render_tracks render_tracks.cpp helpers.h)
 
 TARGET_LINK_LIBRARIES(unmix ITKCommon ITKIO Yousef_Nucleus_Seg ITKStatistics trackingHelpers)
 TARGET_LINK_LIBRARIES(segmentation ITKCommon ITKIO Yousef_Nucleus_Seg ITKStatistics trackingHelpers)
@@ -34,6 +33,8 @@ TARGET_LINK_LIBRARIES(extract_slices ITKCommon ITKIO Yousef_Nucleus_Seg ITKStati
 TARGET_LINK_LIBRARIES(anisodiff ITKCommon ITKIO ITKStatistics trackingHelpers)
 TARGET_LINK_LIBRARIES(medianfilter ITKCommon ITKIO ITKStatistics trackingHelpers)
 TARGET_LINK_LIBRARIES(tracklog ITKCommon ITKIO ITKStatistics trackingHelpers)
+TARGET_LINK_LIBRARIES(render_tracks ITKCommon ITKIO ITKStatistics ITKBasicFilters trackingHelpers vtkVolumeRendering vtkRendering vtkCommon vtkIO vtksys vtkFiltering vtkHybrid)
+
 
 INSTALL(TARGETS unmix RUNTIME DESTINATION bin)
 INSTALL(TARGETS segmentation RUNTIME DESTINATION bin)
@@ -45,4 +46,5 @@ INSTALL(TARGETS extract_slices RUNTIME DESTINATION bin)
 INSTALL(TARGETS anisodiff RUNTIME DESTINATION bin)
 INSTALL(TARGETS medianfilter RUNTIME DESTINATION bin)
 INSTALL(TARGETS tracklog RUNTIME DESTINATION bin)
+INSTALL(TARGETS render_tracks RUNTIME DESTINATION bin)
 

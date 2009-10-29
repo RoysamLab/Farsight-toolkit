@@ -36,7 +36,7 @@ class TrackFeatures{
 	
 		std::vector<ftk::IntrinsicFeatures> intrinsic_features;
 		std::vector<ftk::TrackPointFeatures> tfeatures;
-		enum{ AVG_SPEED, AVG_DIST_TO_1, AVG_ANGLE_REL_TO_1,CHANGE_DISTANCE_TO_1,CONTACT_TO_2, DISPLACEMENT_VEC_X, DISPLACEMENT_VEC_Y, DISPLACEMENT_VEC_Z, PATHLENGTH, CONFINEMENT_RATIO};
+		enum{ AVG_SPEED, AVG_DIST_TO_1, AVG_ANGLE_REL_TO_1,CHANGE_DISTANCE_TO_1, CONTACT_TO_2, DISPLACEMENT_VEC_X, DISPLACEMENT_VEC_Y, DISPLACEMENT_VEC_Z, PATHLENGTH, CONFINEMENT_RATIO};
 		float scalars[CONFINEMENT_RATIO+1];
 		void Fprintf(FILE* fp1 = stdout,FILE *fp2 = stdout)
 		{
