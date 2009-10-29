@@ -515,10 +515,10 @@ void createTrackFeatures(std::vector<FeaturesType> fvector[MAX_TIME][MAX_TAGS], 
 		//PRINTF("Added %d elements to tfs\n",counter);
 	}
 }
-int main()//int argc, char **argv)
+int main(int argc, char **argv)
 {
 	//ST();
-
+/*
 	int num_tc = 100;
 	int argc = num_tc*3+9;
 	int pp = 1;
@@ -546,7 +546,7 @@ int main()//int argc, char **argv)
 	}
 	sprintf(argv[pp++],"C:\\Users\\Arun\\Research\\Tracking\\harvard\\cache\\second_TSeries-02102009-1455-624\\track_summary_second_TSeries-02102009-1455-624_w%d.txt",ch);
 	sprintf(argv[pp++],"C:\\Users\\Arun\\Research\\Tracking\\harvard\\cache\\second_TSeries-02102009-1455-624\\track_points_summary_second_TSeries-02102009-1455-624_w%d.txt",ch);
-
+*/
 	printf("Started\n");
 	int c=1;
 	//int counter = 0;
