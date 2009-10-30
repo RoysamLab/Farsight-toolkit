@@ -19,4 +19,34 @@ limitations under the License.
 
 branchPT::branchPT()
 {
+	this->solved = false;
+
+}
+branchPT::branchPT(TraceBit branchBit, std::vector<TraceLine*> connected)
+{
+	this->branchBit = branchBit;
+	this->connected = connected;
+	this->solved = false;
+}
+void branchPT::parent(int id)
+{
+	unsigned int found = 0, i = 0;
+	while ( !found && (i < this->connected.size() ))
+	{
+		if (id== this->connected.at(i)->GetId())
+		{
+			this->branch = this->connected.at(i);
+			this->connected.erase(this->connected.begin() + i - 1);
+			this->solved = true;
+			found = true;
+		}//end if
+		else
+		{
+			i++;
+		}//end else
+	}//end while
+}
+bool branchPT::state()
+{
+	return this->solved;
 }

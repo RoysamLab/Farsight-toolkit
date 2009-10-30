@@ -22,9 +22,14 @@ class branchPT
 {
 public:
 	branchPT();
+	branchPT(TraceBit branchBit, std::vector<TraceLine*> connected);
+	void parent(int id);
+	bool state();
 
 private:
 	TraceBit branchBit;
+	TraceLine* branch;
 	std::vector<TraceLine*> connected;
+	bool solved;
 };
 #endif
