@@ -20,7 +20,7 @@ ADD_EXECUTABLE(background_subtraction background_subtraction.cpp helpers.h)
 ADD_EXECUTABLE(extract_slices extract_slices.cpp helpers.h)
 ADD_EXECUTABLE(medianfilter medianfilter.cpp helpers.h)
 ADD_EXECUTABLE(anisodiff anisodiff.cpp helpers.h)
-ADD_EXECUTABLE(tracklog tracklog.cpp helpers.h)
+#ADD_EXECUTABLE(tracklog tracklog.cpp helpers.h)
 ADD_EXECUTABLE(render_tracks render_tracks.cpp helpers.h)
 
 TARGET_LINK_LIBRARIES(unmix ITKCommon ITKIO Yousef_Nucleus_Seg ITKStatistics trackingHelpers)
@@ -32,7 +32,7 @@ TARGET_LINK_LIBRARIES(background_subtraction ITKCommon ITKIO Yousef_Nucleus_Seg 
 TARGET_LINK_LIBRARIES(extract_slices ITKCommon ITKIO Yousef_Nucleus_Seg ITKStatistics trackingHelpers)
 TARGET_LINK_LIBRARIES(anisodiff ITKCommon ITKIO ITKStatistics trackingHelpers)
 TARGET_LINK_LIBRARIES(medianfilter ITKCommon ITKIO ITKStatistics trackingHelpers)
-TARGET_LINK_LIBRARIES(tracklog ITKCommon ITKIO ITKStatistics trackingHelpers)
+#TARGET_LINK_LIBRARIES(tracklog ITKCommon ITKIO ITKStatistics trackingHelpers)
 TARGET_LINK_LIBRARIES(render_tracks ITKCommon ITKIO ITKStatistics ITKBasicFilters trackingHelpers vtkVolumeRendering vtkRendering vtkCommon vtkIO vtksys vtkFiltering vtkHybrid)
 
 
@@ -45,6 +45,6 @@ INSTALL(TARGETS background_subtraction RUNTIME DESTINATION bin)
 INSTALL(TARGETS extract_slices RUNTIME DESTINATION bin)
 INSTALL(TARGETS anisodiff RUNTIME DESTINATION bin)
 INSTALL(TARGETS medianfilter RUNTIME DESTINATION bin)
-INSTALL(TARGETS tracklog RUNTIME DESTINATION bin)
+#INSTALL(TARGETS tracklog RUNTIME DESTINATION bin)
 INSTALL(TARGETS render_tracks RUNTIME DESTINATION bin)
 
