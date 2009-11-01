@@ -43,6 +43,7 @@ limitations under the License.
 
 #include <vul/vul_file.h>
 #include <vul/vul_arg.h>
+#include <vul/vul_timer.h>
 
 #include <fregl/fregl_pairwise_register.h>
 #include <fregl/fregl_reg_record.h>
@@ -94,7 +95,6 @@ main(  int argc, char* argv[] )
 {
   vul_arg< vcl_string > arg_file_from  ( 0, "From image file" );
   vul_arg< vcl_string > arg_file_to    ( 0, "To image file" );
-  //vul_arg< bool >      alpha           ("-alpha", "Input are color images with alpha channel. This is ignored if -color not set", false);
   vul_arg< int >       channel         ("-channel", "The color channel (0-red, 1-green, 2-blue), or the image channel if the original image is a lsm image.",0);
   vul_arg< float >     background      ("-bg", "threshold value for the background", 30);
   vul_arg< double >      smooth        ("-smooth", "If smoothing is performed", 0.5);
@@ -112,7 +112,7 @@ main(  int argc, char* argv[] )
   // Read the image
   //
   //
-  
+  std::cout<<"Image pair: "<<arg_file_from()<<" to "<<arg_file_to()<<std::endl;
   from_image = fregl_util_read_image( arg_file_from(), channel.set(), channel() );
   to_image = fregl_util_read_image( arg_file_to(), channel.set(), channel() );
   if (!from_image || !to_image) {
@@ -129,26 +129,20 @@ main(  int argc, char* argv[] )
   writer3D->Update();
   */
   
-  // Apply Gaussian smoothing if demanded
-  //
-  /*
-  if ( smooth() ) {
-    std::cout<<"Perform smoothing ..."<<std::endl;
-    from_image = smooth_image( from_image, streaming() );
-    to_image = smooth_image( to_image, streaming() );
-  }
-  */
-
   // Perform registration
   //
   fregl_pairwise_register registor(from_image, to_image, background());
-  //if (exhaustive()) registor.set_exhausive_search(true);
   if (slices.set()) registor.set_stack_size( slices() );
   registor.set_smoothing( smooth() );
 
   double obj_value;
   bool failed = false;
+  vul_timer timer;
+  timer.mark();
   if (registor.run(obj_value, gdbicp(), scaling_arg())) {
+    std::cout << "Timing: Successful registration in  ";
+    timer.print( std::cout );
+    std::cout<<std::endl;
     
     // Set the registration result
     ImageType3D::SizeType from_image_size = from_image->GetLargestPossibleRegion().GetSize();
@@ -167,22 +161,23 @@ main(  int argc, char* argv[] )
     xform->GetInverse(inv_xform);
 
     //Create the reg_record and write to xml output
-    std::cout<<"Writing the xml output"<<std::endl;
-    
-   
     fregl_reg_record::Pointer record = new fregl_reg_record();
     record->set_from_image_info(from_image_id, from_image_size);
     record->set_to_image_info(to_image_id, to_image_size);
     record->set_transform( inv_xform );
     record->set_obj_value( obj_value );
-    record->set_overlap(1);
+    double vol_overlap = fregl_util_overlap(inv_xform, from_image_size,
+                                            to_image_size);
+    record->set_overlap(vol_overlap);
     std::string xml_file = from_image_id_wo_ext+std::string("_to_")+
       to_image_id_wo_ext+std::string("_transform.xml");
     record->write_xml( xml_file );
   }
   else {
     failed = true; 
-    std::cout<<"Registration failed"<<std::endl;
+    std::cout<<"Timing: Failed registration in ";
+    timer.print( std::cout );
+    std::cout<<std::endl;
   }
 
   if (remove_2d()) {

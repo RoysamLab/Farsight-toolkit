@@ -14,8 +14,11 @@ limitations under the License.
 =========================================================================*/
 
 #include "fregl_joint_register.h"
+#include "fregl_util.h"
 
 #include <vnl/vnl_math.h>
+#include <vul/vul_timer.h>
+
 #include <rrel/rrel_muset_obj.h>
 
 static std::string ToString(double val);
@@ -80,7 +83,7 @@ initialize(std::vector<fregl_reg_record::Pointer> const & reg_records)
   overlap_.resize(image_ids_.size(), image_ids_.size());
   overlap_.fill( 0 );
   obj_.resize(image_ids_.size(), image_ids_.size());
-  obj_.fill( 0 );
+  obj_.fill( 1 );
   
   // If scale_multiplier_ is set, run muse scale estimator to compute
   // the error scale. Set the error_bound_ to be
@@ -90,21 +93,25 @@ initialize(std::vector<fregl_reg_record::Pointer> const & reg_records)
   errors.reserve(reg_records.size());
   if (scale_multiplier_ > 0) {
     for (unsigned int i = 0; i<reg_records.size(); i++) {
-      //obj is in the range of [-1,0]. It is expected to be the value
-      //computed using NormalizedCorssCorrelation metric
-      errors.push_back( 1+reg_records[i]->obj()); 
+      //obj is in the range of [0,1]. It is expected to be the value
+      //computed using NormalizedCorssCorrelation metric shifted by 1
+      //so that it is the range of [0,1]
+      
+      //errors.push_back( 1+reg_records[i]->obj());
+      errors.push_back( reg_records[i]->obj()); 
     }
 
     rrel_muset_obj muse_obj( 0, false );
     double scale = muse_obj.scale(errors.begin(), errors.end());
-    error_bound_ = scale*scale_multiplier_-1;
+    //error_bound_ = scale*scale_multiplier_-1;
+    error_bound_ = scale*scale_multiplier_;
     std::cout<<"Estimated muse scale = "<<scale<<", error_bound = "
              <<error_bound_<<std::endl;
     // Compute the average error from the accepted pairs
     float sum = 0;
     int count = 0;
     for (unsigned int i = 0; i<errors.size(); i++) { 
-      if (errors[i]-1<error_bound_) {
+      if (errors[i]<error_bound_) {
         sum += errors[i];
         count++;
       }
@@ -133,6 +140,14 @@ initialize(std::vector<fregl_reg_record::Pointer> const & reg_records)
     else 
       std::cout<<"Eliminated pair "<<reg_records[i]->from_image()<<" to "<<reg_records[i]->to_image()<<" with obj="<<reg_records[i]->obj()<<std::endl;
   }
+
+  // Set the diagonal elements to identity transformation
+  for (unsigned int i = 0; i<transforms_.rows(); i++) {
+    transforms_(i,i) = TransformType::New();
+    transforms_(i,i)->SetIdentity();
+    overlap_(i,i) = 1;
+    obj_(i,i) = 0;
+  }
   
   // Set the inverse transform of pair (i,j) to pair (j,i) if the
   // transform does not exist.
@@ -150,6 +165,7 @@ initialize(std::vector<fregl_reg_record::Pointer> const & reg_records)
       }
     }
   }
+
   std::cout<<"End of Initialization"<<std::endl;
 }
 
@@ -157,10 +173,16 @@ bool
 fregl_joint_register::
 build_graph(bool mutual_consistency)
 {
+  vul_timer timer;
+  timer.mark();
   for (unsigned int i = 0; i<transforms_.rows(); i++) {
     std::cout<<"Building the graph for image "<<image_ids_[i]<<std::endl;
     if (!build_graph( i, mutual_consistency )) return false;
   }
+  std::cout << "Timing: Joint registration in  ";
+  timer.print( std::cout );
+  std::cout<<std::endl;
+  
   return true;
 }
 
@@ -168,29 +190,20 @@ bool
 fregl_joint_register::
 build_graph(int anchor, bool mutual_consistency)
 {
-  // Set the diagonal elements to identity transformation
-  for (unsigned int i = 0; i<transforms_.rows(); i++) {
-    transforms_(i,i) = TransformType::New();
-    transforms_(i,i)->SetIdentity();
-    overlap_(i,i) = 1;
-    obj_(i,i) = 0;
-  }
-
   // If mutual consistency not required, simply use breadth first
   // search to propagate the transformation. Otherwise, perform bundle
   // adjustment to impose mutual consistency outside the anchor space.
   if ( mutual_consistency ) {
     if ( !corresp_generated_ ) generate_correspondences();
-    if (!estimate( anchor )) return false;
-    
-    // check for overlaps
-    for (unsigned int from = 0; from<transforms_.rows(); from++) {
-      if ( overlapping(from, anchor) )
-        overlap_(from, anchor) = 1;
-    }
+    if (!estimate( anchor )) return false; 
   }
   else breadth_first_connect( anchor );
 
+  // update overlaps
+  for (unsigned int from = 0; from<transforms_.rows(); from++) {
+    overlap_(from, anchor) = fregl_util_overlap(transforms_(from, anchor), image_sizes_[from], image_sizes_[anchor]);
+  }
+    
   return true;
 }
 
@@ -266,27 +279,6 @@ is_overlapped(int from, int to)
   else return false;
 }
 
-bool
-fregl_joint_register::
-overlapping(int from, int to)
-{
-  bool overlap = true;
-
-  TransformType::Pointer transform = transforms_(from, to);
-  if ( !transform ) return false;
-  
-  TransformType::ParametersType params = transform->GetParameters();
-  double tx = params[9];
-  double ty = params[10];
-  SizeType size_from = image_sizes_[from];
-  SizeType size_to = image_sizes_[to];
-
-  if (tx > size_to[0] || ty > size_to[1]) overlap = false;
-  if (-tx> size_from[0] || -ty> size_from[1]) overlap = false;
-  
-  return overlap;
-}
-
 void 
 fregl_joint_register::
 breadth_first_connect( int anchor ) 
@@ -332,10 +324,12 @@ breadth_first_connect( int anchor )
           transforms_(i,anchor)->Compose(transforms_(i,from_index), true);
           transforms_(anchor,i) = TransformType::New();
           transforms_(i,anchor)->GetInverse( transforms_(anchor,i) );
+          /*
           if ( overlapping(i, anchor) )
             overlap_(i, anchor) = 1;
 	  if ( overlapping( anchor, i) )
             overlap_(anchor, i) = 1;
+          */
         }
       }
       explored[from_index] = true;
@@ -599,7 +593,7 @@ generate_correspondences()
   SizeType size_from, size_to; 
   for (unsigned int from = 0; from<image_ids_.size(); from++) {
     for (unsigned int to = from+1; to<image_ids_.size(); to++) {
-      if ( overlap_[from][to] ) {
+      if ( overlap_[from][to] > 0 ) {
         // generate the correspondences
         size_from = image_sizes_[from];
         int z_space = vnl_math_min(10, int(size_from[2]/3));
@@ -723,7 +717,7 @@ read_xml(std::string const & filename)
   }
   
   initialize( reg_records );
-  build_graph();
+  //build_graph();
   
 }
 

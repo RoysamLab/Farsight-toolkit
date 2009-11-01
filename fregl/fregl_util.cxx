@@ -14,7 +14,6 @@ limitations under the License.
 =========================================================================*/
 
 #include <fregl/fregl_util.h>
-//#include <Common/fsc_channel_accessor.h>
 #include "itkImageSliceIteratorWithIndex.h"
 #include "itkImageLinearIteratorWithIndex.h"
 #include "itkRescaleIntensityImageFilter.h"
@@ -185,6 +184,41 @@ fregl_util_max_projection(ImageType::Pointer image, float sigma)
   }
 
   return caster->GetOutput();
+}
+
+//: Determine the approximate amount of overlap between two images
+//
+//  Whether two images overlap is roughly determined by the
+//  translation in x and y, since we assume not much distortion from
+//  other parameters.
+double
+fregl_util_overlap(TransformType::Pointer transform, itk::Size<3> size_from, itk::Size<3> size_to)
+{
+  bool is_overlap = true;
+  double overlap = 0.0;
+  
+  if ( !transform ) return false;
+
+  // A quick check to see if the two volumes overlap
+  TransformType::ParametersType params = transform->GetParameters();
+  double tx = params[9];
+  double ty = params[10];
+
+  if (tx > size_to[0] || ty > size_to[1]) is_overlap = false;
+  if (-tx> size_from[0] || -ty> size_from[1]) is_overlap = false;
+  
+  if (!is_overlap) return overlap;
+  
+  //Work out the appoximate amount of overlapping using only the x-y
+  //translation since the z-dimension changes.
+  double total_area = size_to[0]*size_to[1];
+  double top_x = tx>0?tx:0;
+  double top_y = ty>0?ty:0;
+  double bot_x = size_to[0]>size_from[0]+tx?size_from[0]-1+tx:size_to[0]-1;
+  double bot_y = size_to[1]>size_from[1]+ty?size_from[1]-1+ty:size_to[1]-1;
+  overlap = (bot_x-top_x)*(bot_y-top_y)/total_area;
+
+  return overlap;
 }
 
 ColorImageType2D::Pointer

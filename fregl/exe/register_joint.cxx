@@ -47,7 +47,7 @@ main(  int argc, char* argv[] )
 
   vul_arg< double > arg_multiplier    ( "-multiplier", "The multiplier for the error scale. 4 is a good value.",0);
   
-  vul_arg< double > arg_error_bound    ( "-error_bound", "The upper bound for the accepted error in the range of [-1,0]. When set to 0, all pairs are accepted",0);
+  vul_arg< double > arg_error_bound    ( "-error_bound", "The upper bound for the accepted error in the range of [0,1]. The default is 1 (all pairs are accepted)",1);
 
   vul_arg< bool > arg_no_mc         ( "-quick", "No mutual consistency is imposed", false);
 

@@ -118,13 +118,6 @@ public:
 
 private: 
   void initialize(std::vector<fregl_reg_record::Pointer> const & reg_records);
-  //: Determine if two images overlap
-  //
-  //  Whether two images overlap is roughly determined by the
-  //  translation in x and y, since we assume not much distortion from
-  //  other parameters. The overlap property is only used to keep
-  //  track of adjacency between two images.
-  bool overlapping( int from, int to);
   
   // : Build the graph with mutual consistency
   bool estimate(int anchor);

@@ -14,6 +14,7 @@ limitations under the License.
 =========================================================================*/
 
 #include "fregl_pairwise_register.h"
+#include "fregl_util.h"
 
 #include "itkMeanSquaresImageToImageMetric.h"
 #include "itkNormalizedCorrelationImageToImageMetric.h"
@@ -140,17 +141,11 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
   // to obtain a transformation accurate in x-y plan, since it is
   // where the major motion is. The shift in the z-stack is taken care
   // of later by the coarse-to-fine refinement in 3D
-  vul_timer timer;
-  timer.mark();
-  ImageType2D::Pointer from_image_2d, to_image_2d;
-  vcl_cout << "Projecting the from_image ....\n";
-  maximum_projection( from_image_, from_image_2d );
-  vcl_cout << "Projecting the to_image ....\n";
-  maximum_projection( to_image_, to_image_2d );
 
-  vcl_cout << " Time spent in reading and projecting images: " << vcl_endl;
-  timer.print( vcl_cout );
-  vcl_cout << "\n";
+  ImageType2D::Pointer from_image_2d =fregl_util_max_projection(from_image_);
+  vcl_cout << "Projecting the from_image ....\n";
+  ImageType2D::Pointer to_image_2d = fregl_util_max_projection(to_image_);
+  vcl_cout << "Projecting the to_image ....\n";
 
   // output max projected images to files and read them back as vxl
   // images. This might not be a very neat approach, but it is much
@@ -278,7 +273,6 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
       transform_->SetParameters( parameters );
     }
     else {
-    
       InterpolatorType::Pointer interpolator = InterpolatorType::New();
       MetricType::Pointer metric = MetricType::New();
       TransformType::Pointer transform = TransformType::New();
@@ -325,13 +319,7 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
       final_parameters = registrator->GetLastTransformParameters();
       if (!transform_) transform_ = TransformType::New();
       transform_->SetParameters( final_parameters );
-      obj_value = optimizer->GetValue();
-      /*
-      if (obj_value > 1000) { 
-        vcl_cout << "Registration failed in 3D. Please try a different channel with more intensity variation." << vcl_endl;
-        return false;
-      }
-      */
+      obj_value = 1+optimizer->GetValue(); //NCC is in the range of [-1~0]
     }
     
   }
@@ -345,74 +333,6 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
 }
 
 /************** Private Functions ************************************/
-
-// Project a 3D image to 2D image using maximum projection
-void 
-fregl_pairwise_register::
-maximum_projection( InputImageType::Pointer image_3d,
-                    ImageType2D::Pointer& image_2d )
-{
-  typedef itk::ImageLinearIteratorWithIndex< ImageType2D > LinearIteratorType;
-  typedef itk::ImageSliceIteratorWithIndex< InputImageType >  SliceIteratorType1;
-  
-  ImageType2D::RegionType region;
-  ImageType2D::RegionType::SizeType size;
-  ImageType2D::RegionType::IndexType index;
-  ImageType2D::SpacingType spacing;
-  ImageType2D::PointType origin;
-  
-  InputImageType::RegionType requestedRegion = image_3d->GetRequestedRegion();
-  index[ 0 ] = 0;
-  index[ 1 ] = 0;
-  size[ 0 ] = requestedRegion.GetSize()[ 0 ];
-  size[ 1 ] = requestedRegion.GetSize()[ 1 ];
-  region.SetSize( size );
-  region.SetIndex( index );
-
-  image_2d = ImageType2D::New();
-  image_2d->SetRegions( region );
-  image_2d->Allocate();
-
-  //Set the iterator
-  SliceIteratorType1 output3DIt( image_3d, image_3d->GetRequestedRegion() );
-  LinearIteratorType output2DIt( image_2d, image_2d->GetRequestedRegion() );
-
-  unsigned int direction[2];
-  direction[0] = 0;
-  direction[1] = 1;
-
-  output3DIt.SetFirstDirection( direction[1] );
-  output3DIt.SetSecondDirection( direction[0] );
-  output2DIt.SetDirection( 1 - direction[0] );
-
-  // Initialized the 2D image
-  output2DIt.GoToBegin();
-  while ( ! output2DIt.IsAtEnd() ) {
-    while ( ! output2DIt.IsAtEndOfLine() ) {
-      output2DIt.Set( itk::NumericTraits<unsigned short>::NonpositiveMin() );
-      ++output2DIt;
-    }
-    output2DIt.NextLine();
-  }
-
-  // Now do the max projection
-  output3DIt.GoToBegin();
-  output2DIt.GoToBegin();
-
-  while( !output3DIt.IsAtEnd() ) {
-    while ( !output3DIt.IsAtEndOfSlice() ) {
-      while ( !output3DIt.IsAtEndOfLine() ) {
-        output2DIt.Set( vnl_math_max( static_cast<unsigned char>(output3DIt.Get()), output2DIt.Get() ));
-        ++output3DIt;
-        ++output2DIt;
-      }
-      output2DIt.NextLine();
-      output3DIt.NextLine();
-    }
-    output2DIt.GoToBegin();
-    output3DIt.NextSlice();
-  }
-}
 
 // Compute the z shift, and set the region of interest to the overlap
 double
@@ -651,8 +571,7 @@ crop_image( InputImageType::Pointer image )
       }
   }
 
-  if (!smoothing_)
-    return image_crop;
+  if (!smoothing_) return image_crop;
 
   // perform smoothing
 

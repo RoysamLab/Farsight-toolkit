@@ -64,7 +64,7 @@ public:
   typedef itk::Image< InputPixelType, 3 >   InputImageType;
   typedef float                             InternalPixelType;
   typedef itk::Image<InternalPixelType, 3 > InternalImageType;
-  typedef itk::Image< unsigned char, 2 >    ImageType2D;
+  typedef itk::Image<InputPixelType, 2 >    ImageType2D;
 
   typedef itk::AffineTransform< double, 3>   TransformType;
 
@@ -103,10 +103,7 @@ public:
   void set_smoothing(double variance);
 
 private: 
-  //: Project a 3D image to 2D image using maximum projection
-  void maximum_projection( InputImageType::Pointer image_3d,
-                           ImageType2D::Pointer& image_2d );
-
+  
   //: Compute the z shift 
   //
   //  This function also set the region of interest to the overlap
