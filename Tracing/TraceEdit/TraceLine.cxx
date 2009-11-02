@@ -96,7 +96,7 @@ void TraceLine::calculateVol()
 	pre = *it; 
 	it++;
 	r = pre.r;
-	for (it; it != this->m_trace_bits.end(); it++)
+	for (; it != this->m_trace_bits.end(); it++)
 	{
 		cur = *it;
 		r += cur.r;

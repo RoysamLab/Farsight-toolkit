@@ -239,6 +239,8 @@ void View3D::Initialize()
 	this->tobj->setMergeLineColor(.4);
 	this->Ascending = Qt::AscendingOrder;
 
+  this->undoBuff = new bufferType;
+
 	this->CreateGUIObjects();
 	this->CreateLayout();
 	this->CreateInteractorStyle();
