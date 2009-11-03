@@ -97,7 +97,7 @@ set_anchor( std::string const & anchor_name, bool in_anchor, bool overlap_only, 
   
   if (space_set) {
     std::cout<<"Origin = "<<origin_[0]<<","<<origin_[1]<<","<<origin_[2]<<std::endl;
-    std::cout<<"Image_size = "<<image_size_[0]<<","<<image_size_[1]<<","<<image_size_[2]<<std::endl;
+    std::cout<<"Image_size = "<<image_size_[0]<<" x "<<image_size_[1]<<" x "<<image_size_[2]<<std::endl;
     return;
   }
 

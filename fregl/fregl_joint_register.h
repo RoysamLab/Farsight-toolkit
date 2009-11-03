@@ -51,13 +51,13 @@ public:
   typedef std::vector< correspondence >  CorrespondenceList;
 
   //: Constructor taking only one xml_file 
-  fregl_joint_register(std::string const & filename, double scale_multiplier = 0, double error_bound = 0);
+  fregl_joint_register(std::string const & filename, double scale_multiplier = 0, double error_bound = 1);
 
   //: Constructor, taking a list of xml filenames of pairwise registratin records
-  fregl_joint_register( std::vector<std::string> const & filenames, double scale_multiplier = 0, double error_bound = 0);
+  fregl_joint_register( std::vector<std::string> const & filenames, double scale_multiplier = 0, double error_bound = 1);
   
   //: Constructor, taking a list of pairwise reg records
-  fregl_joint_register( std::vector<fregl_reg_record::Pointer> const& reg_records, double scale_multiplier = 0, double error_bound = 0 );
+  fregl_joint_register( std::vector<fregl_reg_record::Pointer> const& reg_records, double scale_multiplier = 0, double error_bound = 1 );
 
   //: Destructor
   ~fregl_joint_register(){};
