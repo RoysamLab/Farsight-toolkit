@@ -22,7 +22,7 @@ fregl_reg_record()
 {
   transform_ = NULL;
   overlap_ = 0;
-  obj_value_ = -1;
+  obj_value_ = 1;
 }
 
 fregl_reg_record::
@@ -37,7 +37,7 @@ fregl_reg_record( std::string const & from_image_id,
   to_image_size_ = to_image_size;
   transform_ = NULL;
   overlap_ = 0;
-  obj_value_ = -1;
+  obj_value_ = 1;
 }
 
 void 
@@ -228,7 +228,7 @@ read_xml_node(TiXmlElement* parent_node)
 
     // overlapping
     if (strcmp( value, "overlap_percentage") == 0 ) {
-      overlap_ = atoi(cur_node->GetText());
+      std::stringstream( cur_node->GetText() ) >> overlap_;
       continue;
     }
 

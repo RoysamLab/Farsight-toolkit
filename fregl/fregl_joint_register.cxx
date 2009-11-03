@@ -91,6 +91,7 @@ initialize(std::vector<fregl_reg_record::Pointer> const & reg_records)
   //
   std::vector<double> errors;
   errors.reserve(reg_records.size());
+  std::cout<<"Error_bound = "<<error_bound_<<std::endl;
   if (scale_multiplier_ > 0) {
     for (unsigned int i = 0; i<reg_records.size(); i++) {
       //obj is in the range of [0,1]. It is expected to be the value
