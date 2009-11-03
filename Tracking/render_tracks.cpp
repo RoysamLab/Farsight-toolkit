@@ -353,9 +353,10 @@ void renderPolyData(std::vector<SP_PDM> vec,std::vector<vtkSmartPointer<vtkTextA
 	//	0,154/255.0,25/255.0,
 	//	207/255.0,141/255.0,0,
 	//	1,0,0};
-	float vtkcolor[][3]={1,0,0,
-		0,1,0,
-		0,0,1};
+ float vtkcolor[4][3]={0,1,0,
+		0,154/255.0,25/255.0,
+		207/255.0,141/255.0,0,
+		1,0,0};
 
 
 	//vec[0]->Print(cout);
@@ -368,7 +369,7 @@ void renderPolyData(std::vector<SP_PDM> vec,std::vector<vtkSmartPointer<vtkTextA
 		vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
 		actor->SetMapper(mapper);
 		actor->GetProperty()->SetColor(vtkcolor[counter][0],vtkcolor[counter][1],vtkcolor[counter][2]);
-		actor->SetScale(1,1,5);
+		actor->SetScale(1,1,4);
 		ren->AddActor(actor);
 	}
 
@@ -479,8 +480,9 @@ int main(int argc, char **argv)
 	//int counter = 0;
   int pc = 1;
   int num_t = 1; //atoi(argv[pc++]);
-  int num_channels = 3;//atoi(argv[pc++]);
-  float colors[][3]={1,0,0,0,1,0,0,0,1}; 
+  int num_channels = 4;//atoi(argv[pc++]);
+ 
+
 
   //for (int counter = 0; counter< num_channels; counter++)
   //{
@@ -506,22 +508,20 @@ int main(int argc, char **argv)
 	LabelImageType::Pointer segmented[MAX_TIME][MAX_TAGS]; // FIXME
 	InputImageType::Pointer images[MAX_TIME][MAX_TAGS];
 	std::vector<FeaturesType> fvector[MAX_TIME][MAX_TAGS];
-
+	#define BASE "C:\\Users\\Arun\\Research\\Tracking\\berkeley\\cache\\wF5p120507m1s5\\"
 	for(int c = 0; c< num_channels; c++)
 	{
 		for(int counter=0; counter< num_t; counter++)
 		{
 			char buff[1024];
-			if(c==0)
-				sprintf(buff,"C:\\Users\\Arun\\Research\\Tracking\\harvard\\cache\\second_TSeries-02102009-1455-624\\labeled_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter+1+OFFSET,c+2);
+			if(c<2)
+				sprintf(buff,BASE"labeled_tracks_wF5p120507m1s5_w%d_t%d.tif",c+1,counter+1);
 			else
-				sprintf(buff,"C:\\Users\\Arun\\Research\\Tracking\\harvard\\cache\\second_TSeries-02102009-1455-624\\labeled_tracks_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter+1+OFFSET,c+2);
+				sprintf(buff,BASE"labeled_wF5p120507m1s5_w%d_t%d.tif",c+1,counter+1);
 			segmented[counter][c] = getFlippedUD(readImage<LabelImageType>(buff));
 		}
 	}
-	
-
-	InputImageType::Pointer tempim = readImage<InputImageType>("C:\\Users\\Arun\\Research\\Tracking\\harvard\\cache\\second_TSeries-02102009-1455-624\\smoothed_TSeries-02102009-1455-624_Cycle001_CurrentSettings_Ch2.tif");
+	InputImageType::Pointer tempim = readImage<InputImageType>(BASE"unmixed_wF5p120507m1s5_w1_t1.tif");
 	for(int counter=0; counter< num_t; counter++)
 	{
 		std::vector<SP_PDM> v;
@@ -530,8 +530,7 @@ int main(int argc, char **argv)
 			getFeatureVectorsFarsight(segmented[counter][c-1],tempim,fvector[counter][c-1],counter,c);
 			v.push_back(getVTKPolyDataPrecise(segmented[counter][c-1]));
 		}
-		
-		renderPolyData(v,getTextActors(fvector,counter+1),counter);
+		renderPolyData(v,getTextActors(fvector,counter),counter);
 	}
 	//for(int c=1;c<(num_channels+1);c++)
 	
