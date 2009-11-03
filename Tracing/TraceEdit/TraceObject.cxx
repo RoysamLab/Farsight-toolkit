@@ -1367,3 +1367,42 @@ int TraceObject::createGapLists(std::vector<TraceLine*> traceList)
     }
   return conflict;
 }
+
+void TraceObject::SetBranchPoints(std::vector<branchPT*> Branches)
+{
+	this->BranchPoints = Branches;
+	this->unsolvedBranches = (int) this->BranchPoints.size();
+}
+int TraceObject::solveParents(std::vector<int> ids)
+{
+	int numToSolve = this->unsolvedBranches;
+	for (unsigned int i =0; i < ids.size(); i++)
+	{
+		this->isParent(ids.at(i));
+	}//end for i
+	return numToSolve;
+}
+bool TraceObject::isParent(int id)
+{
+	unsigned int i = 0;
+	bool found = false;
+	while ((i< this->BranchPoints.size())&& !found)
+	{
+		found = this->BranchPoints.at(i)->SeekParent(id);
+		if (found)
+		{
+			this->unsolvedBranches--;
+			std::vector<int> ids = this->BranchPoints.at(i)->childIDS();
+			for (unsigned int j= 0; j < ids.size(); j++)
+			{
+				this->isParent(ids.at(j));
+			}
+			return true;
+		}
+		else
+		{
+			i++;
+		}
+	}
+	return false;	
+}

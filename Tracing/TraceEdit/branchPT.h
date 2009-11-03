@@ -28,6 +28,7 @@ public:
 	TraceBit GetBit();
 	bool state();
 	std::vector<TraceLine*> GetChildren();
+	std::vector<int> childIDS();
 
 private:
 	TraceBit branchBit;

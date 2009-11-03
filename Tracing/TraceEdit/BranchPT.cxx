@@ -61,3 +61,13 @@ bool branchPT::state()
 {
 	return this->solved;
 }
+std::vector<int> branchPT::childIDS()
+{
+	std::vector<int> ids;
+	unsigned int i;
+	for ( i = 0; i < this->children.size(); i++)
+	{
+		ids.push_back( this->children.at(i)->GetId());
+	}
+	return ids;
+}

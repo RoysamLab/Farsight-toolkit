@@ -61,6 +61,7 @@ public:
 	bool ReadFromFeatureTracksFileForKymograph(char *filename,int type_offset);
 	bool WriteToSWCFile(const char * filename);
 	void WriteToVTKFile(const char * filename);
+	void SetBranchPoints(std::vector<branchPT*> Branches);
 //	operators
 	int getNewLineId();
 	void splitTrace(int selectedCellId);
@@ -71,6 +72,7 @@ public:
 	void CreatePolyDataRecursive(TraceLine* , vtkSmartPointer<vtkFloatArray> , vtkSmartPointer<vtkPoints> ,vtkSmartPointer<vtkCellArray>);
 	void FindMinLines(int smallSize);
 	int createGapLists(std::vector<TraceLine*> traceList);
+	int solveParents(std::vector<int> ids);
 //	public data
 	vtkSmartPointer<vtkPolyData> GetVTKPolyData();
 	vtkSmartPointer<vtkPolyData> generateBranchIllustrator();
@@ -81,6 +83,7 @@ public:
 	std::vector<TraceBit> CollectTraceBits();
 	std::vector<int> SmallLines;
 	std::vector<TraceGap*> Gaps;
+	std::vector<branchPT*> BranchPoints;
 	std::vector<std::string> FeatureHeaders;
 
 	double gapTol;
@@ -93,6 +96,8 @@ private:
 	std::vector<TraceLine*> trace_lines;
 	vtkSmartPointer<vtkPolyData> PolyTraces;
 	double smallLineColor, mergeLineColor;	
+	int unsolvedBranches;
+	bool isParent(int id);
   void CollectTraceBitsRecursive(std::vector<TraceBit> &vec,TraceLine *l);
   void CollectIdsRecursive(std::vector<int> &ids, TraceLine* tline);
   void LinearTraceLinesRecursive(std::vector<TraceLine*> &allLine, TraceLine* tline);
