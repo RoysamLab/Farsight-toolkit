@@ -28,13 +28,14 @@ int Cell_Binarization_2D(unsigned char* imgIn, unsigned short *imgOut, int R, in
 	//poisson distributions, estimate the parameters of the mixture model 
 	float alpha_B, alpha_F, P_I;
 	alpha_B = alpha_F = P_I = 0;	
-	//MinErrorThresholding(imgIn, &alpha_B, &alpha_F, &P_I, R, C, 1, shd,imgOut); 	
+	//MinErrorThresholding(imgIn, &alpha_B, &alpha_F, &P_I, R, C, 1, shd,imgOut); 		
 	float alpha_C, P_I2;
 	alpha_C = P_I2 = 0.0;
 	threeLevelMinErrorThresh(imgIn, &alpha_B, &alpha_F, &alpha_C, &P_I, &P_I2, R, C, 1);
 
 	//2- Apply binarization refinement using graph-cuts	
 	int n_nodes, n_edges;
+	//alpha_C = -1;
 	if(alpha_C == -1)//this is a two levels case
 	{
 		//graph-cuts
@@ -78,7 +79,7 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	if(div == 0)
 		block_divisor = 1;
 	else
-		block_divisor = 4;
+		block_divisor = 5;
 	subImgBlock[4] = 0;
 	subImgBlock[5] = Z;
 	int blk = 1;
@@ -824,6 +825,11 @@ void threeLevelMinErrorThresh(unsigned char* im, float* Alpha1, float* Alpha2, f
 	//The three-level min error thresholding algorithm
 	float P0, U0, P1, U1, P2, U2, U, J, min_J;
 	min_J = 1000000.0;
+	// Try this: we need to define a penalty term that depends on the number of parameters
+	//The penalty term is given as 0.5*k*ln(n)
+	//where k is the number of parameters of the model and n is the number of samples
+	//In this case, k=6 and n=256
+	double PenTerm3 =  sqrt(6.0)*log(256.0);
 	for(int i=0; i<254; i++)//to set the first threshold
 	{
 		//compute the current parameters of the first component
@@ -860,6 +866,9 @@ void threeLevelMinErrorThresh(unsigned char* im, float* Alpha1, float* Alpha2, f
 
 			//Compute the current value of the error criterion function
 			J =  U - (P0*(log(P0)+U0*log(U0))+ P1*(log(P1)+U1*log(U1)) + P2*(log(P2)+U2*log(U2)));
+			//Add the penalty term
+			J +=PenTerm3;
+			
 			if(J<min_J)
 			{
 				min_J = J;
@@ -873,6 +882,9 @@ void threeLevelMinErrorThresh(unsigned char* im, float* Alpha1, float* Alpha2, f
 	}
 
 	//try this: see if using two components is better
+	//The penalty term is given as sqrt(k)*ln(n)	
+	//In this case, k=4 and n=256
+	double PenTerm2 =  2*log(256.0);
 	for(int i=0; i<254; i++)//to set the first threshold
 	{
 		//compute the current parameters of the first component
@@ -900,6 +912,8 @@ void threeLevelMinErrorThresh(unsigned char* im, float* Alpha1, float* Alpha2, f
 
 			//Compute the current value of the error criterion function
 			J =  U - (P0*(log(P0)+U0*log(U0))+ P1*(log(P1)+U1*log(U1)));
+			//Add the penalty term
+			J +=PenTerm2;
 			if(J<min_J)
 			{
 				min_J = J;
