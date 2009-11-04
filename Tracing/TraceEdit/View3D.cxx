@@ -120,14 +120,30 @@ View3D::View3D(int argc, char **argv)
       }
     num_loaded++;
     }
+	if (num_loaded < 1)
+	{
+		std::string traceFile;
+		QString trace = QFileDialog::getOpenFileName(this , "Load Trace Data", ".",
+			tr("TraceFile( *.xml *.swc" ));
+		if (!trace.isEmpty())
+		{
+			traceFile = trace.toStdString();
+			if(trace.endsWith("swc"))
+			{
+				this->tobj->ReadFromSWCFile((char*)traceFile.c_str());
+				tracesLoaded = true;
+			}
+			else if (trace.endsWith("xml"))
+			{
+				this->tobj->ReadFromRPIXMLFile((char*)traceFile.c_str());
+				tracesLoaded = true;
+			}
+		}//end if empty
+	}//end load
 	this->Initialize();
 	if (tracesLoaded)
 	{
 		this->ShowTreeData();
-	}
-	else if (num_loaded < 1)
-	{
-		this->LoadTraces();
 	}
 	this->statusBar()->showMessage(tr("Ready"));
 }

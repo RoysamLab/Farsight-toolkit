@@ -1397,12 +1397,11 @@ bool TraceObject::isParent(int id)
 			{
 				this->isParent(ids.at(j));
 			}
-			return true;
 		}
 		else
 		{
 			i++;
 		}
 	}
-	return false;	
+	return found;	
 }
