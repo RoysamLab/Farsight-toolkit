@@ -100,13 +100,13 @@ public:
   void replace_image_name_substr(std::string const & old_str, std::string  const & new_str);
 
   //: Write the result to an xml file
-  void write_xml(std::string const & filename, float multiplier, bool mutual_consistency);
+  void write_xml(std::string const & filename, bool mutual_consistency);
 
   //: Read the results from an xml file
   void read_xml(std::string const & filename);
 
   //: Return if two images overlap
-  bool is_overlapped(int from, int to);
+  bool is_overlapped(int from, int to) const;
 
   //: Return the obj of an image pair
   //
@@ -114,7 +114,10 @@ public:
   double get_obj(int from, int to) const;
 
   //: Get the registration record
-  fregl_reg_record::Pointer get_reg_record(int from, int to);
+  fregl_reg_record::Pointer get_reg_record(int from, int to) const;
+
+  //: Get the error bound
+  double get_error_bound() const;
 
 private: 
   void initialize(std::vector<fregl_reg_record::Pointer> const & reg_records);

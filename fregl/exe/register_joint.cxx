@@ -126,7 +126,7 @@ main(  int argc, char* argv[] )
     jointer_register->build_graph(arg_no_mc());
     mutual_consistency = false;
   }
-  jointer_register->write_xml(arg_xml_file(), arg_multiplier(), mutual_consistency);
+  jointer_register->write_xml(arg_xml_file(), mutual_consistency);
 
   return 0;
 }

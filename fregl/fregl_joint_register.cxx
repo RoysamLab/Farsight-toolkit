@@ -221,6 +221,12 @@ fregl_joint_register::get_obj(int from, int to) const
   return obj_(from, to);
 }
 
+double 
+fregl_joint_register::get_error_bound() const
+{
+  return error_bound_;
+}
+
 std::vector<std::string> const &
 fregl_joint_register::
 image_names() const
@@ -274,7 +280,7 @@ replace_image_name_substr(std::string const& old_str, std::string const& new_str
 
 bool 
 fregl_joint_register::
-is_overlapped(int from, int to)
+is_overlapped(int from, int to) const
 {
   if (overlap_(from,to) > 0) return true;
   else return false;
@@ -631,7 +637,7 @@ generate_correspondences()
 
 fregl_reg_record::Pointer 
 fregl_joint_register::
-get_reg_record(int from, int to)
+get_reg_record(int from, int to) const
 {
   fregl_reg_record::Pointer reg_rec = new fregl_reg_record();
   reg_rec->set_from_image_info( image_ids_[from], image_sizes_[from] );
@@ -646,7 +652,7 @@ get_reg_record(int from, int to)
 
 void
 fregl_joint_register::
-write_xml(std::string const& filename, float multiplier, bool mutual_consistency)
+write_xml(std::string const& filename, bool mutual_consistency)
 {
   TiXmlDocument doc;       /* document pointer */
   std::string str;
@@ -664,8 +670,11 @@ write_xml(std::string const& filename, float multiplier, bool mutual_consistency
   else 
     root_node->SetAttribute("mutual_consistency", "no");
   
-  str = ToString( multiplier );
+  str = ToString( scale_multiplier_ );
   root_node->SetAttribute("error_scale_multiplier",str.c_str() );
+
+  str = ToString( error_bound_ );
+  root_node->SetAttribute("error_bound",str.c_str() );
   doc.LinkEndChild( root_node );
   
   for (unsigned int j = 0; j<transforms_.cols(); j++) {
@@ -704,11 +713,17 @@ read_xml(std::string const & filename)
     vcl_cerr<<"Incorrect XML root Element: "<<vcl_endl;
     return;
   }
+
+  // get the error bound
+  scale_multiplier_ = atoi(root_element->Attribute("number_of_images"));
+  
+  // get the scale_multiplier
+  std::stringstream(root_element->Attribute("error_bound")) >> error_bound_;
   
   // number of images
   int num_images;
   num_images = atoi(root_element->Attribute("number_of_images"));
-  
+    
   std::vector<fregl_reg_record::Pointer> reg_records;
   TiXmlElement* cur_node = root_element->FirstChildElement();
   for (; cur_node; cur_node = cur_node->NextSiblingElement() ) {
