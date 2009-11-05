@@ -428,7 +428,8 @@ int main(int argc, char *argv[])
 
   // MST algorithm
   kruskal_minimum_spanning_tree(g, back_inserter(spanning_tree));
-
+ 
+  /*
   cout << "Print the edges in the MST:" << endl;
   // Print out MST edges
   for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
@@ -436,7 +437,7 @@ int main(int argc, char *argv[])
     //<< " with weight of " << weight[*ei]
     //<< endl;
   }
-
+  */
 
   // create initial degree_nodes array
   for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
