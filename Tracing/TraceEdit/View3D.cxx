@@ -350,8 +350,9 @@ void View3D::CreateGUIObjects()
   this->AutomateButton = new QAction("Small Lines", this->CentralWidget);
 	connect(this->AutomateButton, SIGNAL(triggered()), this, SLOT(SLine()));
 	this->AutomateButton->setStatusTip("Automatic selection of all small lines");
-  //this->root = new QAction("root", this->CentralWidget);
-	//connect(this->root, SIGNAL(triggered()), this, SLOT(this->TreeModel->root()));
+  this->root = new QAction("Set Root", this->CentralWidget);
+	connect(this->root, SIGNAL(triggered()), this, SLOT(SetRoots()));
+	this->root->setStatusTip("Solve Branch order by defining Root Trace Lines");
 
   this->UndoButton = new QAction("&Undo", this->CentralWidget);  
 	connect(this->UndoButton, SIGNAL(triggered()), this, SLOT(UndoAction()));
@@ -409,7 +410,7 @@ void View3D::CreateLayout()
   this->EditsToolBar->addSeparator();
   this->EditsToolBar->addAction(this->loadSoma);
   this->EditsToolBar->addAction(this->SettingsButton);
-  //this->EditsToolBar->addAction(this->root);
+  this->EditsToolBar->addAction(this->root);
 
   QGridLayout *viewerLayout = new QGridLayout(this->CentralWidget);
   viewerLayout->addWidget(this->QVTK, 0, 0);
@@ -973,6 +974,15 @@ void View3D::DeleteTrace(TraceLine *tline)
   tline->SetParent(NULL);
 }
 
+/*	branching functions	*/
+void View3D::SetRoots()
+{
+	std::vector<int> ids = this->TreeModel->GetSelecectedIDs();
+	int numToSolve= this->tobj->solveParents(ids);
+	this->ClearSelection();
+	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+	this->statusBar()->showMessage(QString::number(numToSolve)+ " Remaining Branches");
+}
 void View3D::AddNewBranches()
 {
 	TraceLine* trunk;

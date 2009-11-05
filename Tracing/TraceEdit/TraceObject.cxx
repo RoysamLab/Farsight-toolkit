@@ -1375,12 +1375,20 @@ void TraceObject::SetBranchPoints(std::vector<branchPT*> Branches)
 }
 int TraceObject::solveParents(std::vector<int> ids)
 {
-	int numToSolve = this->unsolvedBranches;
-	for (unsigned int i =0; i < ids.size(); i++)
+	unsigned int i;
+	this->unsolvedBranches = 0;
+	for ( i =0; i < ids.size(); i++)
 	{
 		this->isParent(ids.at(i));
 	}//end for i
-	return numToSolve;
+	for (i=0;i< this->BranchPoints.size();i++)
+	{
+		if (!this->BranchPoints.at(i)->state())
+		{
+			this->unsolvedBranches++;
+		}
+	}
+	return this->unsolvedBranches;
 }
 bool TraceObject::isParent(int id)
 {
@@ -1388,16 +1396,39 @@ bool TraceObject::isParent(int id)
 	bool found = false;
 	while ((i< this->BranchPoints.size())&& !found)
 	{
-		found = this->BranchPoints.at(i)->SeekParent(id);
-		if (found)
+		if (!this->BranchPoints.at(i)->state())
 		{
-			this->unsolvedBranches--;
-			std::vector<int> ids = this->BranchPoints.at(i)->childIDS();
-			for (unsigned int j= 0; j < ids.size(); j++)
+			found = this->BranchPoints.at(i)->SeekParent(id);
+			if (found)
+			{	
+				TraceLine* Parent = this->BranchPoints.at(i)->getParent();
+				std::vector<TraceLine*>children = this->BranchPoints.at(i)->GetChildren();
+				TraceBit ThisBit = this->BranchPoints.at(i)->GetBit();
+				if (!Parent->Orient(ThisBit))
+				{
+					this->ReverseSegment(Parent);				
+				}
+				Parent->AddTraceBit(ThisBit);
+				for (unsigned int j= 0; j < children.size(); j++)
+				{
+					if (!children.at(j)->Orient(Parent))
+					{
+						this->ReverseSegment(children.at(j));
+					}
+					children.at(j)->SetParent(Parent);
+					Parent->AddBranch(children.at(j));
+				}
+				std::vector<int> ids = this->BranchPoints.at(i)->childIDS();
+				for (unsigned int j= 0; j < ids.size(); j++)
+				{
+					this->isParent(ids.at(j));
+				}// end recursive children
+			}//end if found
+			else
 			{
-				this->isParent(ids.at(j));
+				i++;
 			}
-		}
+		}//end state
 		else
 		{
 			i++;

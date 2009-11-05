@@ -74,6 +74,7 @@ public:
 	bool EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
                  double &maxdist, double &angle);
 	bool Orient(TraceLine * Trunk);
+	bool Orient(TraceBit bit);
 	std::vector<double> stats();	
 
 private:

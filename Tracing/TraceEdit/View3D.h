@@ -103,6 +103,7 @@ public slots:
 	void ListSelections();
 	void ClearSelection();
 	void DeleteTraces();
+	void SetRoots();
 	void AddNewBranches();
 	void MergeTraces();
 	void SplitTraces();

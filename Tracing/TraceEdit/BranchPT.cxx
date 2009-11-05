@@ -30,19 +30,22 @@ branchPT::branchPT(TraceBit branchBit, std::vector<TraceLine*> connected)
 }
 bool branchPT::SeekParent(int id)
 {	
-	this->children.clear();
-	for (unsigned int i = 0; i < this->connected.size(); i++)
+	if (!this->solved)
 	{
-		if (id== this->connected.at(i)->GetId())
+		this->children.clear();
+		for (unsigned int i = 0; i < this->connected.size(); i++)
 		{
-			this->branch = this->connected.at(i);			
-			this->solved = true;			
-		}//end if
-		else
-		{
-			this->children.push_back(this->connected.at(i));
-		}//end else
-	}//end while
+			if (id== this->connected.at(i)->GetId())
+			{
+				this->branch = this->connected.at(i);			
+				this->solved = true;			
+			}//end if
+			else
+			{
+				this->children.push_back(this->connected.at(i));
+			}//end else
+		}//end while
+	}
 	return this->solved;
 }
 TraceBit branchPT::GetBit()

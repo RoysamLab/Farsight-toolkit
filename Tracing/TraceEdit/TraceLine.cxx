@@ -363,7 +363,18 @@ bool TraceLine::Orient(TraceLine * Trunk)
 	}
 	return false;		//needs to be flipped
 }
-
+bool TraceLine::Orient(TraceBit bit)
+{
+	double distances[2];
+	//compute the endpt distances
+	distances[0]= Euclidian(m_trace_bits.front(),	bit);// F-Bit
+	distances[1]= Euclidian(m_trace_bits.back(),	bit);// B-Bit
+	if(distances[0] > distances[1])
+	{
+		return true;	//oriented correctly
+	}
+	return false;		//needs to be flipped
+}
 ///////////////////////////////////////////////////////////////////////////////
 std::vector<double> TraceLine::stats()
 {
