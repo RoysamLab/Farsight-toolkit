@@ -19,7 +19,6 @@ limitations under the License.
 //QT INCLUDES
 #include <QtGui/QWizard>
 #include <QtGui/QLabel>
-//#include <QtGui/QCheckBox>
 #include <QtGui/QPushButton>
 #include <QtGui/QRadioButton>
 #include <QtGui/QButtonGroup>
@@ -27,15 +26,12 @@ limitations under the License.
 #include <QtGui/QGroupBox>
 #include <QtGui/QCheckBox>
 #include <QtGui/QScrollArea>
-//#include <QtGui/QComboBox>
-//#include <QtGui/QFileDialog>
-//#include <QtGui/QTextBrowser>
-#include <QtCore/QAbstractItemModel>
-//#include <QtCore/QFileInfo>
-//#include <QtCore/QFile>
-//#include <QtCore/QByteArray>
-//#include <QtCore/QTextStream>
 #include <QtGui/QMessageBox>
+
+//VTK INCLUDES
+#include <vtkTable.h>
+#include <vtkSmartPointer.h>
+#include <vtkDoubleArray.h>
 
 //OTHER FARSIGHT INCLUDES
 #include <PatternAnalysis/libsvm/svm.h>
@@ -51,8 +47,9 @@ class PatternAnalysisWizard : public QWizard
 
 public:
 	enum { Page_Start, Page_Features, Page_Training, Page_Parameters, Page_Execute };
+	//typedef enum { SVM, KPLS } Module;
 
-    PatternAnalysisWizard(QAbstractItemModel *mod, int outputColumn, QWidget *parent = 0);
+    PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, char * trainColumn, char * resultColumn, QWidget *parent = 0);
 
 protected:
 	//void initializePage(int id);
@@ -63,6 +60,9 @@ protected:
 	void runSVM();
 	void runKPLS();
 
+signals:
+	void changedTable(void);
+
 private:
 	void initFeatureGroup(void);
 	QButtonGroup *featureGroup;
@@ -70,8 +70,9 @@ private:
 	void initOptionGroup(void);
 	QButtonGroup *optionGroup;
 
-	QAbstractItemModel *model;
-	int columnForPrediction;
+	vtkSmartPointer<vtkTable> m_table;
+	char * columnForTraining;
+	char * columnForPrediction;
 };
 
 

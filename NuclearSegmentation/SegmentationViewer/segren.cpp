@@ -595,16 +595,16 @@ int main(int argc, char *argv[])
 				std::cout << "here" << std::endl;
 				//Run graph coloring on the original image, to divide it into colored images
 				ftk::NuclearSegmentation *segmentation = new ftk::NuclearSegmentation();
-				segmentation->RunGraphColoring(fileName, output);
+				std::vector<std::string> colorFiles = segmentation->RunGraphColoring(fileName, output);
 
 				//Set counter variable to number of outputted color images
-				counter = segmentation->colorImages.size();
+				counter = colorFiles.size();
 				//Cycle through the colored images
 				for(int i = 0; i < counter; i++)
 				{
 					//Create string for .ply file name
-					colorFile = segmentation->colorImages[i];
-					plyFile = segmentation->colorImages[i].append(".ply");
+					colorFile = colorFiles[i];
+					plyFile = colorFiles[i].append(".ply");
 					//Add this .ply file to the vector of poly data files to be rendered later
 					plyFiles.push_back(plyFile);
 					//If this .ply file doesn't already exist, generate the poly data and write the 

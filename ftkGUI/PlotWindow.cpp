@@ -22,20 +22,12 @@ limitations under the License.
 
 //for DBL_MAX...
 #include <float.h>
+
 //Constructor
-PlotWindow::PlotWindow(QItemSelectionModel *mod, QWidget *parent)
+PlotWindow::PlotWindow(QWidget *parent)
 : QMainWindow(parent)
 {
 	this->setupUI();
-
-	this->scatter->setModel( (QAbstractItemModel*)mod->model() );
-	this->scatter->setSelectionModel(mod);
-
-	this->updateOptionMenus(true);
-
-	connect(mod->model(), SIGNAL(dataChanged(const QModelIndex &, const QModelIndex &)), this, SLOT(modelChange(const QModelIndex &, const QModelIndex &)));
-	svmWidget = NULL;
-	pWizard = NULL;
 }
 
 void PlotWindow::setupUI(void)
@@ -44,7 +36,7 @@ void PlotWindow::setupUI(void)
 
 	QWidget *centralWidget = new QWidget();
 	QVBoxLayout *vlayout = new QVBoxLayout();
-	scatter = new ScatterView();
+	scatter = new ScatterView(this);
 	vlayout->addWidget(scatter);
 	centralWidget->setLayout(vlayout);
 	this->setCentralWidget(centralWidget);
@@ -77,15 +69,28 @@ void PlotWindow::setupUI(void)
 	connect(clearAction, SIGNAL(triggered()), scatter, SLOT(clearSelections()));
 	optionsMenu->addAction(clearAction);
 
-	toolsMenu = menuBar()->addMenu(tr("&Tools"));
-	svmAction = new QAction(tr("Classify"), this);
-	connect(svmAction, SIGNAL(triggered()), this, SLOT(startSVM()));
-	toolsMenu->addAction(svmAction);
-
 	setWindowTitle(tr("Scatter Plot"));
 	// If we do the following, the program crashes when we first close the scatterplot
 	// and then close the  image viewer. 
 	//setAttribute ( Qt::WA_DeleteOnClose );
+}
+
+void PlotWindow::setModels(vtkSmartPointer<vtkTable> tbl, ObjectSelection * sels)
+{
+	scatter->setModels(tbl,sels);
+	updateOptionMenus(tbl);
+}
+
+//Redefine update:
+void PlotWindow::update()
+{
+	vtkSmartPointer<vtkTable> tbl = scatter->GetTable();
+	if(tbl)
+		this->updateOptionMenus( tbl );
+	if(scatter)
+		scatter->update();
+
+	QWidget::update();
 }
 
 void PlotWindow::closeEvent(QCloseEvent *event)
@@ -96,13 +101,13 @@ void PlotWindow::closeEvent(QCloseEvent *event)
 
 void PlotWindow::xChange(QAction *action)
 {
-	scatter->SetColForX(action->toolTip().toInt(), action->text().toStdString());
+	scatter->SetColForX( action->toolTip().toInt() );
 	action->setChecked(true);
 }
 
 void PlotWindow::yChange(QAction *action)
 {
-	scatter->SetColForY(action->toolTip().toInt(), action->text().toStdString());
+	scatter->SetColForY( action->toolTip().toInt() );
 	action->setChecked(true);
 }
 
@@ -112,19 +117,13 @@ void PlotWindow::colorChange(QAction *action)
 	action->setChecked(true);
 }
 
-void PlotWindow::updateOptionMenus(bool first = false)
+void PlotWindow::updateOptionMenus(vtkSmartPointer<vtkTable> tbl)
 {
-	QAbstractItemModel *model = scatter->model();
+	if(!scatter) return;
 
-	int xc = 0;
-	int yc = 1;
-	int cc = 0;
-	if(!first)
-	{
-		xc = scatter->ColForX();
-		yc = scatter->ColForY();
-		cc = scatter->ColForColor();
-	}
+	int xc = scatter->ColForX();
+	int yc = scatter->ColForY();
+	int cc = scatter->ColForColor();
 
 	//Add a new Action for each column for each menu item:
 	xMenu->clear();
@@ -135,9 +134,9 @@ void PlotWindow::updateOptionMenus(bool first = false)
 	QActionGroup *yGroup = new QActionGroup(this);
 	QActionGroup *cGroup = new QActionGroup(this);
 
-	for (int c=0; c<model->columnCount(); ++c)
+	for (int c=1; c<tbl->GetNumberOfColumns(); ++c)
 	{
-		QString name = model->headerData(c,Qt::Horizontal).toString();
+		QString name = QString(tbl->GetColumnName(c));
 		QAction *xAct = new QAction( name, this );
 		xAct->setToolTip( QString::number(c) );
 		xAct->setCheckable(true);
@@ -155,50 +154,18 @@ void PlotWindow::updateOptionMenus(bool first = false)
 		colorMenu->addAction(cAct);
 		cGroup->addAction(cAct);
 
-		if(first)
-		{
-			if(name == "class")
-				cc = c;
-		}
 		if(c==xc)
-			xChange(xAct);
+			xAct->setChecked(true);
 		if(c==yc)
-			yChange(yAct);
+			yAct->setChecked(true);
 		if(c==cc)
-			colorChange(cAct);
+			cAct->setChecked(true);
 	}
 }
 
+/*
 void PlotWindow::modelChange(const QModelIndex &topLeft, const QModelIndex &bottomRight)
 {
 	updateOptionMenus();
 }
-
-void PlotWindow::startSVM()
-{
-	//if(!svmWidget)
-	//	svmWidget = new LibSVMWidget( scatter->model() );
-
-	//svmWidget->show();
-
-	if(!pWizard)
-		pWizard = new PatternAnalysisWizard( scatter->model(), scatter->model()->columnCount() );
-	else
-		pWizard->restart();
-	pWizard->show();
-}
-
-/*
-void PlotWindow::keyPressEvent(QKeyEvent *event)
- {	
-     //switch (event->key()) {
-	 //case Qt::Key_D:	//For delete
-	//	 resultModel->deleteTrigger();
-	//	 break;
-     //default:
-     //    QWidget::keyPressEvent(event);
-     //}
-	 
-	 QWidget::keyPressEvent(event);
- }
 */

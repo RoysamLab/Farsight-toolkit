@@ -40,10 +40,10 @@ int main(int argc, char* argv[])
 	}
 	if(argc == 6)
 	{
-		segmentation->LoadClassInfoFromFile(argv[5]);
+		//segmentation->LoadClassInfoFromFile(argv[5]);
 	}
 
-	segmentation->WriteToXML(resultsName);	
+	//segmentation->WriteToXML(resultsName);	
 	
 	delete segmentation;
 

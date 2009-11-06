@@ -12,21 +12,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
-
-/****************************************************************************
- **
- ** Adapted from the Qt Examples pieview.h
- **
- ****************************************************************************/
-
 #ifndef SCATTERVIEW_H
 #define SCATTERVIEW_H
 
-#include <QtGui/QAbstractItemView>
 #include <QtGui/QFont>
-#include <QtGui/QItemSelection>
-#include <QtGui/QItemSelectionModel>
-#include <QtGui/QStandardItemModel>
 #include <QtGui/QWidget>
 #include <QtGui/QBitmap>
 #include <QtGui/QPixmap>
@@ -36,112 +25,79 @@ limitations under the License.
 #include <QtGui/QPainter>
 #include <QtGui/QScrollBar>
 #include <QtGui/QMouseEvent>
-#include <QtCore/QModelIndex>
 #include <QtCore/QRect>
 #include <QtCore/QSize>
 #include <QtCore/QPoint>
 #include <QtCore/QMap>
 
-#include <iostream>
+#include <vtkTable.h>
+#include <vtkVariant.h>
+#include <vtkSmartPointer.h>
 
-//#include "SegmentationModel.h"
+#include "ObjectSelection.h"
+
+#include <iostream>
 
 class QRubberBand;
 class PlotSettings;
 
-class ScatterView : public QAbstractItemView
+class ScatterView : public QWidget
 {
 	Q_OBJECT
 
 public:
 	ScatterView(QWidget *parent = 0);
-
-	void setModel(QAbstractItemModel *model);
-	
-    QRect visualRect(const QModelIndex &index) const;
-    void scrollTo(const QModelIndex &index, ScrollHint hint = EnsureVisible);
-    QModelIndex indexAt(const QPoint &point) const;
+	void setModels(vtkSmartPointer<vtkTable> tbl, ObjectSelection * sels = NULL);
 
 	int ColForX(){ return columnNumForX; };
 	int ColForY(){ return columnNumForY; };
-	int ColForColor(){ return columnNumForColoring; };
+	int ColForColor(){ return columnNumForColor; };
+	vtkSmartPointer<vtkTable> GetTable(){ return table; };
 
 public slots:
-	void SetNormalize(bool val);
-	void SetColForX(int x, std::string name);
-	void SetColForY(int y, std::string name);
-	void SetColForColor(int c);
-	void SetColForColor(int c, QMap<int, QColor>  newMap);
-	void SetColorMap(QMap<int, QColor> map){ colorMap = map; };
-	void selectRegion(void);
 	void clearSelections(void);
+	void SetNormalize(bool val);
+	void SetColForX(int x);
+	void SetColForY(int y);
+	void SetColForColor(int c);
 
 protected slots:
-    void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
-	void dataChanged();
-    //void rowsInserted(const QModelIndex &parent, int start, int end);
-    //void rowsAboutToBeRemoved(const QModelIndex &parent, int start, int end);
 
 protected:
-    bool edit(const QModelIndex &index, EditTrigger trigger, QEvent *event);
-    QModelIndex moveCursor(QAbstractItemView::CursorAction cursorAction, Qt::KeyboardModifiers modifiers);
-
-    int horizontalOffset() const;
-    int verticalOffset() const;
-
-    bool isIndexHidden(const QModelIndex &index) const;
-
-    void setSelection(const QRect&, QItemSelectionModel::SelectionFlags command);
-	void setSelection(const QRegion &region, QItemSelectionModel::SelectionFlags command);
-
-    void mousePressEvent(QMouseEvent *event);
+    void paintEvent(QPaintEvent *event);
+	void resizeEvent(QResizeEvent *event);
+	void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
 	void keyPressEvent(QKeyEvent * event );
 	void keyReleaseEvent(QKeyEvent *event );
 
-    void paintEvent(QPaintEvent *event);
-    void resizeEvent(QResizeEvent *event);
-    //void scrollContentsBy(int dx, int dy);
-
-    QRegion visualRegionForSelection(const QItemSelection &selection) const;
-
 private:
-    QRect itemRect(const QModelIndex &item) const;
-    QRegion itemRegion(const QModelIndex &index) const;
-    //int rows(const QModelIndex &index = QModelIndex()) const;
-
+	void selectRegion(void);
 	void refreshPixmap();
 	void drawGrid(QPainter *painter);
 	void drawCurves(QPainter *painter);
-	QMap<int, QColor> GetDefaultColors();
 	void drawSelection(QPainter *painter);
-	bool itemInRowIsSelected(int row);
-	void initColumns();
+	QRect getObjectRect(long int row);
+	long int indexAt(QPoint &point);
 	void updateAxis();
 	enum {LMargin = 60, BMargin = 35, RMargin = 20, TMargin = 20};
 
 	int columnNumForX;
-	std::string columnNameForX;
 	int columnNumForY;
-	std::string columnNameForY;
-	int columnNumForColoring;
-	QMap<int, QColor> colorMap;
+	int columnNumForColor;
 
-	int selMode;
+	vtkSmartPointer<vtkTable> table;
+	ObjectSelection * selection;
 
-    QPoint origin;
-    QRubberBand *rubberBand;
 	QPixmap pixmap;
 	PlotSettings *mySettings;
 
-	QVector<QPoint> selectionRegion;			//current region
-	//Removed don't need to repaint all the time
-	//QVector<QVector<QPoint>> selectionRegions; //past regions
-
-	int x;
-	int y;
+	QPoint origin;	//Set upon mouse press
+	QVector<QPoint> selectionRegion;	//current boundary points for group selection
+	int selMode;	//Set to 1 while control key is pressed (0 otherwise)
 };
+
 
 class PlotSettings
 {

@@ -21,6 +21,9 @@ limitations under the License.
   Version:   $Revision: 0.00 $
 
 =========================================================================*/
+//
+// FOR CLASS DETAILS SEE ftkLabelImageToFeatures.txx
+//
 #ifndef __ftkLabelImageToFeatures_h
 #define __ftkLabelImageToFeatures_h
 

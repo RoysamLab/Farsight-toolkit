@@ -39,24 +39,29 @@ limitations under the License.
 #include <QtGui/QScrollArea>
 #include <QtGui/QDoubleSpinBox>
 
+#include <QtCore/QMap>
+
+#include <vtkTable.h>
+#include <vtkSmartPointer.h>
+#include <vtkQtTableModelAdapter.h>
+
+#include "ObjectSelection.h"
 
 #include <iostream>
-
-//#include "SegmentationModel.h"
 
 class ChooseItemDialog;
 class ChooseItemsDialog;
 class FilterRowsDialog;
+class SelectionAdapter;
 
 class TableWindow : public QMainWindow
 {
     Q_OBJECT;
 
 public:
-	TableWindow(QItemSelectionModel *mod, QWidget *parent = 0);
-
-	//void SetModels(QItemSelectionModel *selectionModel);
-	void ResizeToOptimalSize(void);
+	TableWindow(QWidget * parent = 0);
+	void setQtModels(QItemSelectionModel *mod);
+	void setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels = NULL);
 
 signals:
 	void closing(QWidget *widget);
@@ -67,23 +72,26 @@ protected:
 
 public slots:
 	void update();
-	void modelChange(const QModelIndex &topLeft, const QModelIndex &bottomRight);
 
 private slots:
+	void setup();
 	void createMenus();
 	void sortBy();
 	void changeColumns();
 	void showFilters();
     
 private:
-	QTableView *table;
-	FilterRowsDialog *filters;
+	QTableView *tableView;
+	vtkQtTableModelAdapter * modAdapter;
+	SelectionAdapter * selAdapter;
+	ObjectSelection * selection;
 
 	QMenu *viewMenu;
 	QAction *visibleColumnsAction;
 	QAction *sortByAction;
 	QAction *filterRowsAction;
 };
+
 
 class ChooseItemDialog : public QDialog
 {
@@ -112,11 +120,12 @@ private:
 	QList<bool> *selected;
 };
 
+
 class FilterRowsDialog : public QDialog
 {
 	Q_OBJECT
 public:
-	FilterRowsDialog(QTableView *table, QWidget *parent = 0);
+	FilterRowsDialog(QTableView *tableView, QWidget *parent = 0);
 
 private:
 	QTableView *mTable;
@@ -169,6 +178,23 @@ private slots:
 	void SetF1Ranges(QString text);
 	void SetF2Ranges(QString text);
 	void SetF3Ranges(QString text);
+};
+
+class SelectionAdapter : QObject
+{
+	Q_OBJECT
+public:
+	SelectionAdapter();
+	void SetPair(ObjectSelection * obj, QItemSelectionModel * qmod);
+
+protected slots:
+	void updateQMOD(void);
+	void updateOBJ(const QItemSelection & selected, const QItemSelection & deselected);
+
+private:
+	ObjectSelection * m_obj;
+	QItemSelectionModel * m_qmod;
+	bool okToChange;	//set to false when I am changing so I don't get into recursion
 };
 
 #endif

@@ -20,63 +20,52 @@ limitations under the License.
 #include <QtGui/QMainWindow>
 #include <QtGui/QWidget>
 #include <QtGui/QStatusBar>
-#include <QtGui/QItemSelectionModel>
 #include <QtGui/QVBoxLayout>
-#include <QtGui/QHBoxLayout>
-#include <QtGui/QGridLayout>
-#include <QtGui/QComboBox>
-#include <QtGui/QLabel>
-#include <QtGui/QPushButton>
 #include <QtGui/QCloseEvent>
 #include <QtGui/QMenuBar>
 #include <QtGui/QMenu>
 #include <QtGui/QActionGroup>
 
-#include "ScatterView.h"
-#include "LibSVMWidget.h"
-#include "PatternAnalysisWizard.h"
+#include <vtkSmartPointer.h>
+#include <vtkTable.h>
 
-//class PlotWindow : public QWidget
+#include "ScatterView.h"
+#include "ObjectSelection.h"
+
 class PlotWindow : public QMainWindow
 {
     Q_OBJECT;
 
 public:
-	//PlotWindow(QWidget *parent = 0);
-	PlotWindow(QItemSelectionModel *mod, QWidget *parent = 0); 
+	PlotWindow(QWidget *parent = 0);
+	void setModels(vtkSmartPointer<vtkTable> tbl, ObjectSelection * sels = NULL);
+
+public slots:
+	void update(void);
 
 signals:
 	void closing(QWidget *widget);
 
 protected:
 	void closeEvent(QCloseEvent *event);
-	//void keyPressEvent(QKeyEvent *event);
 
 private slots:
 	void xChange(QAction *action);
 	void yChange(QAction *action);
 	void colorChange(QAction *action);
-	void modelChange(const QModelIndex &topLeft, const QModelIndex &bottomRight);
-	void startSVM();
     
 private:
 	QMenu *optionsMenu;
-	QAction *normalizeAction;
-	QMenu *xMenu;
-	QMenu *yMenu;
-	QMenu *colorMenu;
-
-	QMenu *toolsMenu;
-	QAction *svmAction;
+	QAction *normalizeAction;	//Normalize the data in the plot
+	QMenu *xMenu;				//Choose x column
+	QMenu *yMenu;				//Choose y column
+	QMenu *colorMenu;			//Choose color column
+	QAction *clearAction;		//clear selections
 
 	ScatterView *scatter;
-	LibSVMWidget *svmWidget;
-	PatternAnalysisWizard *pWizard;
 
 	void setupUI(void);	//for initial setup
-	void updateOptionMenus(bool first);
-
-	QAction *clearAction;	//clear selections
+	void updateOptionMenus(vtkSmartPointer<vtkTable> tbl);
  };
 
 #endif

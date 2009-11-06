@@ -14,7 +14,6 @@ limitations under the License.
 =========================================================================*/
 
 #include "NucleusEditor.h"
-#include "Seed3DHelperClasses.h"
 //*******************************************************************************
 // NucleusEditor
 //
@@ -24,15 +23,15 @@ limitations under the License.
 NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 : QMainWindow(parent,flags)
 {
+	segView = new SegmentationView();
+	connect(segView, SIGNAL(mouseAt(int,int,int)), this, SLOT(setMouseStatus(int,int,int)));
+	this->setCentralWidget(segView);
+
 	createMenus();
 	createStatusBar();
 	createSegmentToolBar();
 
 	setWindowTitle(tr("FARSIGHT: Nuclear Segmentation Tool"));
-
-	seg = NULL;
-	segWin = NULL;
-	currentModel = NULL;
 
 	lastPath = ".";
 	myImgName = "";
@@ -40,33 +39,27 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	tblWin.clear();
 	pltWin.clear();
 	hisWin=NULL;
-	
-	//DEMO
-	this->pythonProcess = new QProcess();
-	this->settings = new QSettings("RPI", "Farsight");
+	pWizard=NULL;
 
+	nucSeg = NULL;
 	loadThread = NULL;
 	binaryThread = NULL;
 	seedThread = NULL;
 	clusterThread = NULL;
 	finalizeThread = NULL;
 	featuresThread = NULL;
+	table = NULL;
+	selection = NULL;
 
 	this->resize(500,500);
-	segFlag = 0;
 	//Crashes when this is enabled!
 	//setAttribute ( Qt::WA_DeleteOnClose );	
 }
 
 NucleusEditor::~NucleusEditor()
 {
-	if(seg)
-		delete seg;
-
-	if(currentModel)
-		delete currentModel;
-
-	delete segWin;
+	if(nucSeg) delete nucSeg;
+	if(selection) delete selection;
 }
 
 //******************************************************************************
@@ -152,8 +145,6 @@ void NucleusEditor::createMenus()
 
 	fileMenu->addSeparator();
 
-	//segmentAction = new QAction(tr("Start Segmentation Wizard..."), this);
-	//segmentAction->setStatusTip(tr("Starts the Nuclear Segmenation Wizard"));
 	segmentAction = new QAction(tr("Start Segmentation..."), this);
 	segmentAction->setEnabled(false);
 	segmentAction->setStatusTip(tr("Starts the Nuclear Segmenation on this Image"));
@@ -166,13 +157,6 @@ void NucleusEditor::createMenus()
 	xmlAction->setStatusTip(tr("Open an XML result file"));
 	connect(xmlAction,SIGNAL(triggered()), this, SLOT(loadResult()));
 	fileMenu->addAction(xmlAction);
-
-	/*
-	xmlAction = new QAction(tr("Load From a dat file..."), this);
-	xmlAction->setStatusTip(tr("Open a .dat file"));
-	connect(xmlAction,SIGNAL(triggered()), this, SLOT(loadDatFile()));
-	fileMenu->addAction(datAction);
-	*/
 
 	saveAction = new QAction(tr("Save Result"), this);
 	saveAction->setEnabled(false);
@@ -207,8 +191,8 @@ void NucleusEditor::createMenus()
 	showIDsAction->setChecked(false);
 	showIDsAction->setStatusTip(tr("Draw ID numbers at centroid locations"));
 	showIDsAction->setShortcut(tr("Ctrl+I"));
-	connect(showIDsAction, SIGNAL(triggered()), this, SLOT(toggleIDs()));
-	viewMenu->addAction(showIDsAction);
+	//connect(showIDsAction, SIGNAL(triggered()), this, SLOT(toggleIDs()));
+	//viewMenu->addAction(showIDsAction);
 
 	viewMenu->addSeparator();
 	newScatterAction = new QAction(tr("New Scatter"), this);
@@ -223,30 +207,14 @@ void NucleusEditor::createMenus()
 	connect(showHistoAction,SIGNAL(triggered()),this,SLOT(ShowHistogram()));
 	viewMenu->addAction(showHistoAction);
 
-	pythonAction = new QAction(tr("Open Python Window"), this);
-	pythonAction->setStatusTip(tr("Start your favorite python interpreter"));
-	pythonAction->setShortcut(tr("Ctrl+P"));
-	connect(pythonAction, SIGNAL(triggered()), this, SLOT(OpenPythonWindow()));
-	viewMenu->addAction(pythonAction);
-
 	imageIntensityAction = new QAction(tr("Adjust Image Intensity"), this);
 	imageIntensityAction->setStatusTip(tr("Allows modification of image intensity"));
 	imageIntensityAction->setShortcut(tr("Ctrl+G"));
 	imageIntensityAction->setEnabled(false);
 	viewMenu->addAction(imageIntensityAction);
 
-	seed3DAction = new QAction(tr("View Image in 3D"), this);
-	seed3DAction->setStatusTip(tr("View the image in 3D"));
-	seed3DAction->setShortcut(tr("Ctrl+V"));
-	seed3DAction->setEnabled(false);
-	connect(seed3DAction, SIGNAL(triggered()), this, SLOT(view3D()));
-	viewMenu->addAction(seed3DAction);
-
 	//EDITING MENU	
 	editMenu = menuBar()->addMenu(tr("&Editing"));
-	// There is nothing to edit initially. Disabled, merge,delete, and split
-	// Enable them after loading results!
-	//editMenu->setEnabled(false);
 
 	clearSelectAction = new QAction(tr("Clear Selections"), this);
 	clearSelectAction->setStatusTip(tr("Clear Current Object Selections"));
@@ -262,6 +230,13 @@ void NucleusEditor::createMenus()
 	connect(classAction, SIGNAL(triggered()), this, SLOT(changeClass()));
 	editMenu->addAction(classAction);
 
+	addAction = new QAction(tr("Add Cell"), this);
+	addAction->setStatusTip(tr("Draw a Box to add a new cell"));
+	addAction->setShortcut(tr("Ctrl+A"));
+	connect(addAction,SIGNAL(triggered()), segView, SLOT(GetBox()));
+	connect(segView, SIGNAL(boxDrawn(int,int,int,int,int)), this, SLOT(addCell(int,int,int,int,int)));
+	editMenu->addAction(addAction);
+
 	mergeAction = new QAction(tr("Merge Cells"), this);
 	mergeAction->setStatusTip(tr("Merge Cells"));
 	mergeAction->setShortcut(tr("Ctrl+M"));
@@ -273,12 +248,6 @@ void NucleusEditor::createMenus()
 	deleteAction->setShortcut(tr("Ctrl+D"));
 	connect(deleteAction,SIGNAL(triggered()),this,SLOT(deleteCells()));	
 	editMenu->addAction(deleteAction);
-
-	addAction = new QAction(tr("Add Cell"), this);
-	addAction->setStatusTip(tr("Draw a Box to add a new cell"));
-	addAction->setShortcut(tr("Ctrl+A"));
-	connect(addAction,SIGNAL(triggered()), this, SLOT(addCell()));
-	editMenu->addAction(addAction);
 
 	splitAction = new QAction(tr("Split Cell"), this);
 	splitAction->setStatusTip(tr("Split selected cell along the current Z slice"));
@@ -311,6 +280,11 @@ void NucleusEditor::createMenus()
 	connect(exclusionAction, SIGNAL(triggered()), this, SLOT(applyExclusionMargin()));
 	editMenu->addAction(exclusionAction);
 
+	toolMenu = menuBar()->addMenu(tr("Tools"));
+	patternAction = new QAction(tr("Pattern Analysis"), this);
+	connect(patternAction, SIGNAL(triggered()), this, SLOT(startPattern()));
+	toolMenu->addAction(patternAction);
+
 	//HELP MENU
 	helpMenu = menuBar()->addMenu(tr("Help"));
 	aboutAction = new QAction(tr("About"),this);
@@ -319,6 +293,7 @@ void NucleusEditor::createMenus()
 	helpMenu->addAction(aboutAction);
 
 	viewMenu->setEnabled(true);
+
 	setEditsEnabled(false);
 
 }
@@ -349,35 +324,14 @@ void NucleusEditor::about()
                ));
 }
 
-ftk::Image::Pointer NucleusEditor::NewFTKImage(std::string filename)
+//******************************************************************************
+// SLOT: changes the status bar to say the mouse coordinates
+//******************************************************************************
+void NucleusEditor::setMouseStatus(int x, int y, int z)
 {
-	ftk::Image::Pointer img = ftk::Image::New();
-	img->LoadFile(filename);
-	return img;
+	(this->statusLabel)->setText(QString::number(x) + ", " + QString::number(y) + ", " + QString::number(z));
 }
 
-//return true if ask to save and saved, or do not want to save, false if want to save and not saved
-bool NucleusEditor::checkSaveSeg()
-{
-	if(seg)
-	{
-		if(seg->editsNotSaved)
-		{
-			QString msg = tr("Recent Edits not saved do you want to save them before exiting?");
-			QMessageBox::StandardButton button = QMessageBox::information ( 0, tr("Exit"), \
-				msg, QMessageBox::Yes | QMessageBox::No , QMessageBox::NoButton );
-
-			if(button == QMessageBox::Yes)
-			{
-				if(	!this->saveResult()	)
-				{
-					return false;
-				}
-			}
-		}
-	}
-	return true;
-}
 //******************************************************************************
 //Reimplement closeEvent to also close all other windows in the application
 //******************************************************************************
@@ -395,10 +349,6 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 	//Stop any running threads:
 	this->abortSegment();
 
-	//First clear the model and its associated windows
-	clearModel();
-
-	
 	//Then Close all other windows
 	foreach (QWidget *widget, qApp->topLevelWidgets()) 
 	{
@@ -408,92 +358,54 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 				widget->close();
 		}
     }
-
-
 	//Then close myself
 	event->accept();
-	
-} 
+}
+
+//return true if ask to save and saved, or do not want to save, false if want to save and not saved
+bool NucleusEditor::checkSaveSeg()
+{
+	if(nucSeg)
+	{
+		if(nucSeg->EditsNotSaved())
+		{
+			QString msg = tr("Recent Edits not saved do you want to save them before exiting?");
+			QMessageBox::StandardButton button = QMessageBox::information ( 0, tr("Exit"), \
+				msg, QMessageBox::Yes | QMessageBox::No , QMessageBox::NoButton );
+
+			if(button == QMessageBox::Yes)
+			{
+				if(	!this->saveResult()	)
+				{
+					return false;
+				}
+			}
+		}
+	}
+	return true;
+}
 
 bool NucleusEditor::saveResult()
 {
-	if(seg)
+	if(nucSeg)
 	{
-		//QString name = QFileDialog::getSaveFileName(this, tr("Save File As"), lastPath, tr("XML (*.xml)") );
-		//if(name == "")
-		//{
-		//	return false;
-		//}
-		//else
-		//{
-		//	seg->WriteToXML( name.toStdString() );
-		//}
-
-		if(seg->editsNotSaved)
+		if(nucSeg->EditsNotSaved())
 		{
-			std::string name = seg->GetDataFilename();
+			std::string name = nucSeg->GetDataFilename();
 			name.erase(name.find_first_of("."));
 			name.append(".xml");
-			seg->SaveLabel();
-			seg->WriteToXML( name );
+			nucSeg->SaveChanges(name);
 		}
 		
 	}
 	return true;
 }
 
-//***************************************************************************
-//  THIS FUNCTION CLEARS THE MODEL/SEGMENTATION BY CLOSING OPEN WINDOW 
-//  GROUPS ASSOCIATED WITH THEM, THEN DELETING THE MODEL AND SEGMENTATION
-//***************************************************************************
-void NucleusEditor::clearModel(void)
-{	
-	for(unsigned int p=0; p<pltWin.size(); ++p)
-		if ((pltWin.at(p))->isVisible())
-			(pltWin.at(p))->close();
-	
-	
-	for(unsigned int p=0; p<tblWin.size(); ++p)	
-		if ((tblWin.at(p))->isVisible())
-			(tblWin.at(p))->close();
-
-	//Close the histogram
-	if (hisWin !=NULL) 
-	{
-		hisWin->close();
-		hisWin=NULL;
-	}
-
-	pltWin.clear();
-	tblWin.clear();
-
-	
-	if(currentModel)
-	{
-		delete currentModel;
-		currentModel = NULL;
-	}
-
-}
-
 void NucleusEditor::clearSelections()
 {
-	if(currentModel)
+	if(selection)
 	{
-		currentModel->GetSelectionModel()->clearSelection();
-	}
-}
-
-//*********************************************************************************
-// This function initializes the model and selection model
-//*********************************************************************************
-void NucleusEditor::newModel(void)
-{	
-	if(currentModel)
-		clearModel();
-
-	if(seg) {
-		currentModel = new SegmentationModel(seg);
+		selection->clear();
 	}
 }
 
@@ -505,7 +417,6 @@ void NucleusEditor::newModel(void)
 //******************************************************************************
 void NucleusEditor::loadResult(void)
 {
-
 	if( !checkSaveSeg() )
 		return;
 
@@ -515,14 +426,6 @@ void NucleusEditor::loadResult(void)
     if(filename == "")
 		return;
 
-	if(currentModel)
-		clearModel();
-
-	if(segWin)
-	{
-		delete segWin;
-		segWin = NULL;
-	}
 	abortSegment();
 
 	QString path = QFileInfo(filename).absolutePath();
@@ -531,26 +434,24 @@ void NucleusEditor::loadResult(void)
 	lastPath = path;
 
 	//segResult = new ftk::NuclearSegmentation();
-	if(seg)
-		delete seg;
-	seg = new ftk::NuclearSegmentation();
-	if ( !seg->RestoreFromXML(filename.toStdString()) )
+	if(nucSeg) delete nucSeg;
+	nucSeg = new ftk::NuclearSegmentation();
+	if ( !nucSeg->RestoreFromXML(filename.toStdString()) )
 	{
-		std::cerr << seg->GetErrorMessage() << std::endl;
+		std::cerr << nucSeg->GetErrorMessage() << std::endl;
 		return;
 	}
 
-	//Now I have objects stored in memory - put the features into the model
-	newModel();
+	table = nucSeg->GetFeatureTable();
+
+	if(selection) delete selection;
+	selection = new ObjectSelection();
+
+	segView->SetChannelImage(nucSeg->GetDataImage());
+	segView->SetLabelImage(nucSeg->GetLabelImage(), selection);
+
 	CreateNewTableWindow();
 	CreateNewPlotWindow();
-	CreateNewSegWindow();
-	segWin->SetModels(currentModel);
-	segWin->SetChannelImage(seg->getDataImage());
-	segWin->SetLabelImage(seg->getLabelImage());
-	segWin->SetIDsVisible(true);
-
-	this->update();
 
 	// Enable the menu items for editing
 	setEditsEnabled(true);
@@ -564,77 +465,175 @@ void NucleusEditor::loadResult(void)
 	saveAction->setEnabled(true);
 }
 
-void NucleusEditor::toggleBounds(void)
+void NucleusEditor::loadImage()
 {
-	if(!segWin)
+	if( !checkSaveSeg() )
 		return;
 
-	if( showBoundsAction->isChecked() )
+	QString fileName = QFileDialog::getOpenFileName(
+                             this, "Select file to open", lastPath,
+                             tr("Images (*.tif *.tiff *.pic *.png *.jpg *.lsm)\n"
+							    "All Files (*.*)"));
+
+    if(fileName == "")
+		return;
+
+	abortSegment();
+
+	lastPath = QFileInfo(fileName).absolutePath();
+	myImgName = QFileInfo(fileName).fileName();
+
+	//******************************************************
+	// NEW BROWSER:
+	//ImageBrowser5D *browse = new ImageBrowser5D(fileName);
+	//this->setCentralWidget(browse);
+	
+	// OLD BROWSER:
+	myImg = ftk::Image::New();
+	myImg->LoadFile(fileName.toStdString());
+	segView->SetChannelImage(myImg);
+
+	// Disable the menu items for editing
+	this->setEditsEnabled(false);
+	segmentAction->setEnabled(true);
+	saveAction->setEnabled(false);
+}
+
+//**********************************************************************
+// SLOT: start the pattern analysis widget:
+//**********************************************************************
+void NucleusEditor::startPattern()
+{
+	if(!table) return;
+
+	if(pWizard)
 	{
-		segWin->SetBoundsVisible(true);
+		delete pWizard;
 	}
+	pWizard = new PatternAnalysisWizard( table, "", "pattern", this);
+	connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
+	pWizard->show();
+}
+
+//******************************************************************************
+// Create a new Plot window and give it the provided model and selection model
+//******************************************************************************
+void NucleusEditor::CreateNewPlotWindow(void)
+{
+	if(!table) return;
+
+	pltWin.push_back(new PlotWindow());
+	pltWin.back()->setModels(table,selection);
+	pltWin.back()->show();
+}
+
+//******************************************************************************
+// Create a new table window
+//******************************************************************************
+void NucleusEditor::CreateNewTableWindow(void)
+{
+	if(!table) return;
+
+	tblWin.push_back(new TableWindow());
+	tblWin.back()->setModels(table,selection);
+	tblWin.back()->show();
+
+	//vtkQtTableView * view = vtkQtTableView::New();
+	//view->AddRepresentationFromInput(table);
+	//view->Update();
+	//view->GetWidget()->show();
+}
+
+//*******************************************************************************
+// Create new Histogram Window
+//*******************************************************************************
+void NucleusEditor::CreateNewHistoWindow(void)
+{
+	//if(this->hisWin)
+	//	delete hisWin;
+	//hisWin = new HistoWindow(currentModel->GetSelectionModel());
+	//hisWin->show();
+}
+
+void NucleusEditor::ShowHistogram(void)
+{
+	if(this->hisWin)
+		hisWin->show();
 	else
-	{
-		segWin->SetBoundsVisible(false);
-	}
+		this->CreateNewHistoWindow();
+}
+
+void NucleusEditor::toggleBounds(void)
+{
+	if(!segView) return;
+
+	if( showBoundsAction->isChecked() )
+		segView->SetBoundsVisible(true);
+	else
+		segView->SetBoundsVisible(false);
 }
 
 void NucleusEditor::toggleIDs(void)
 {
-	if(!segWin)
-		return;
+	//if(!segView) return;
 
-	if( showIDsAction->isChecked() )
-	{
-		segWin->SetIDsVisible(true);
-	}
-	else
-	{
-		segWin->SetIDsVisible(false);
-	}
+	//if( showIDsAction->isChecked() )
+	//	segView->SetIDsVisible(true);
+	//else
+	//	segView->SetIDsVisible(false);
 }
 
 void NucleusEditor::changeClass(void)
 {
-	if(currentModel)
-		currentModel->classTrigger();
+	//if(currentModel)
+	//	currentModel->classTrigger();
 }
 
-void NucleusEditor::addCell(void)
+void NucleusEditor::addCell(int x1, int y1, int x2, int y2, int z)
 {
-	if(currentModel)
-		currentModel->addTrigger();
-}
-
-void NucleusEditor::mergeCells(void)
-{
-	if(currentModel)
-		currentModel->mergeTrigger();
+	if(!nucSeg) return;
+	int id = nucSeg->AddObject(x1, y1, z, x2, y2, z);
+	if(id != 0)
+	{
+		this->updateViews();
+		selection->select(id);
+	}
 }
 
 void NucleusEditor::deleteCells(void)
 {
-	if(currentModel)
-		currentModel->deleteTrigger();
+	if(!nucSeg) return;
+
+	std::set<long int> sels = selection->getSelections();
+	std::vector<int> ids(sels.begin(), sels.end());
+	nucSeg->Delete(ids);
+	selection->clear();
+	this->updateViews();
+}
+
+void NucleusEditor::mergeCells(void)
+{
+	//if(currentModel)
+	//	currentModel->mergeTrigger();
 }
 
 //void NucleusEditor::splitCells(void)
 void NucleusEditor::splitCell(void)
 {
-	if(currentModel)
-		currentModel->splitTrigger(segWin->GetCurrentZ());		//Along the current z axis.
+	//if(currentModel)
+		//currentModel->splitTrigger(segWin->GetCurrentZ());		//Along the current z axis.
 }
 
 void NucleusEditor::startSplitting(void)
 {	
-	if(currentModel)
-		currentModel->startSplitTrigger();
+	//if(currentModel)
+	//	currentModel->startSplitTrigger();
 }
 
 void NucleusEditor::endSplitting(void)
 {
-	if(currentModel)
-		currentModel->endSplitTrigger();
+	//if(currentModel)
+	//	currentModel->endSplitTrigger();
 }
 
 void NucleusEditor::applyExclusionMargin(void)
@@ -651,45 +650,17 @@ void NucleusEditor::applyExclusionMargin(void)
 	delete dialog;
 
 	//Now apply the brick rule to my image!!!!
-	if(currentModel)
-		currentModel->applyMargins(xy,z);
+	//if(currentModel)
+	//	currentModel->applyMargins(xy,z);
 
 }
-
-// Added by Aytekin Vargun 6/03/09
-//
-/*
-void NucleusEditor::loadDatFile(void)
-{
-	QString filename  = QFileDialog::getOpenFileName(this,"Choose a dat file",lastPath, 
-			tr("dat Files (*.dat)\n"));
-
-    if(fileName == "")
-		return;
-
-	if(currentModel)
-		clearModel();
-
-	lastPath = QFileInfo(fileName).absolutePath();
-
-	//ImageBrowser5D *browse = new ImageBrowser5D(fileName);
-	yousef_nucleus_seg *browse = new yousef_nucleus_seg();
-	browse->readFromIDLFormat(fileName);
-	this->setCentralWidget(browse);
-
-}
-*/
 
 void NucleusEditor::segmentImage()
 {
-
 	if(myImgName == "")
 	{
 		return;
 	}
-
-	if(currentModel)
-		clearModel();
 
 	QString dataFile = lastPath + "/" + myImgName;
 
@@ -702,12 +673,12 @@ void NucleusEditor::segmentImage()
 	}
 	delete dialog;
 
-	if(seg) delete seg;
-	seg = new ftk::NuclearSegmentation();
-	if( !seg->SetInputs( dataFile.toStdString(), paramFile.toStdString() ) )
+	if(nucSeg) delete nucSeg;
+	nucSeg = new ftk::NuclearSegmentation();
+	if( !nucSeg->SetInputs( dataFile.toStdString(), paramFile.toStdString() ) )
 	{
-		delete seg;
-		seg = NULL;
+		delete nucSeg;
+		nucSeg = NULL;
 		return;
 	}
 	
@@ -728,7 +699,7 @@ void NucleusEditor::segmentImage()
 			//didn't find the string, so should probably ask which one to use
 			useChannel = 0;
 		}
-		seg->SetChannel(useChannel);
+		nucSeg->SetChannel(useChannel);
 	}
 	
 	this->addToolBar(Qt::TopToolBarArea, segmentTool);
@@ -744,7 +715,6 @@ void NucleusEditor::segmentImage()
 	//this->setCentralWidget(wizard);
 	//wizard->show();
 }
-
 
 void NucleusEditor::abortSegment()
 {
@@ -787,14 +757,9 @@ void NucleusEditor::abortSegment()
 
 	this->removeToolBar(segmentTool);
 	segmentState = -1;
-	//if(currentModel)
-	//	clearModel();
-	//delete seg;
-	//seg = NULL;
-	if(seg)
-		seg->ReleaseSegMemory();
-	if(segWin)
-		segWin->SetLabelImage(NULL);
+
+	quitNucSeg();
+
 	QApplication::restoreOverrideCursor();
 	fileMenu->setEnabled(true);
 	loadAction->setEnabled(true);
@@ -804,6 +769,53 @@ void NucleusEditor::abortSegment()
 	this->setEditsEnabled(false);
 }
 
+//Call this slot when the table has been modified (new rows or columns) to update the views:
+void NucleusEditor::updateViews()
+{
+	for(unsigned int p=0; p<pltWin.size(); ++p)
+		pltWin.at(p)->update();
+	
+	for(unsigned int p=0; p<tblWin.size(); ++p)	
+		tblWin.at(p)->update();
+
+	if(segView)
+		segView->update();
+}
+
+//***************************************************************************
+// THIS FUNCTION CLEARS MEMORY BY CLOSING OPEN WINDOWS 
+// THEN CLEARING THE SEGMENTATION
+//***************************************************************************
+void NucleusEditor::quitNucSeg(void)
+{
+	for(unsigned int p=0; p<pltWin.size(); ++p)
+		if ((pltWin.at(p))->isVisible())
+			(pltWin.at(p))->close();
+	
+	for(unsigned int p=0; p<tblWin.size(); ++p)	
+		if ((tblWin.at(p))->isVisible())
+			(tblWin.at(p))->close();
+
+	pltWin.clear();
+	tblWin.clear();
+
+	//Close the histogram
+	if (hisWin !=NULL) 
+	{
+		hisWin->close();
+		hisWin=NULL;
+	}
+
+	segView->SetChannelImage(NULL);
+	segView->SetLabelImage(NULL);
+	if(nucSeg)
+	{
+		delete nucSeg;
+		nucSeg = NULL;
+	}
+}
+
+//Go here when the "jump" button in clicked during nuclear segmentation:
 void NucleusEditor::stopSegment(void)
 {
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
@@ -833,7 +845,7 @@ void NucleusEditor::segment()
 
 		segmentTaskLabel->setText(tr(" Loading "));
 		segmentProgress->setValue(0);
-		loadThread = new Load(seg);
+		loadThread = new Load(nucSeg);
 		connect(loadThread, SIGNAL(finished()), this, SLOT(segment()));
 		segmentState = 1;
 		loadThread->start();
@@ -846,7 +858,7 @@ void NucleusEditor::segment()
 		}
 		segmentTaskLabel->setText(tr(" Binarizing "));
 		segmentProgress->setValue(1);
-		binaryThread = new Binarize(seg);
+		binaryThread = new Binarize(nucSeg);
 		connect(binaryThread, SIGNAL(finished()), this, SLOT(segment()));
 		segmentState = 2;
 		binaryThread->start();
@@ -859,7 +871,7 @@ void NucleusEditor::segment()
 		}
 		segmentProgress->setValue(2);
 		segmentTaskLabel->setText(tr(" Seeds "));
-		seedThread = new SeedDetect(seg);
+		seedThread = new SeedDetect(nucSeg);
 		connect(seedThread, SIGNAL(finished()), this, SLOT(segment()));
 		segmentState = 3;
 		seedThread->start();
@@ -872,7 +884,7 @@ void NucleusEditor::segment()
 		}
 		segmentProgress->setValue(3);
 		segmentTaskLabel->setText(tr(" Clustering "));
-		clusterThread = new Cluster(seg);
+		clusterThread = new Cluster(nucSeg);
 		connect(clusterThread, SIGNAL(finished()), this, SLOT(segment()));
 		segmentState = 4;
 		clusterThread->start();
@@ -884,7 +896,7 @@ void NucleusEditor::segment()
 			clusterThread = NULL;
 		}
 		segmentProgress->setValue(4);
-		segWin->SetLabelImage(seg->getLabelImage());
+		segView->SetLabelImage(nucSeg->GetLabelImage());
 		segmentTaskLabel->setText(tr(" Inspect "));
 
 		QApplication::restoreOverrideCursor();
@@ -912,7 +924,7 @@ void NucleusEditor::segment()
 
 		segmentTaskLabel->setText(tr(" Finalizing "));
 		segmentProgress->setValue(5);
-		finalizeThread = new Finalize(seg);
+		finalizeThread = new Finalize(nucSeg);
 		connect(finalizeThread, SIGNAL(finished()), this, SLOT(segment()));
 		segmentState = 6;
 		finalizeThread->start();
@@ -924,11 +936,13 @@ void NucleusEditor::segment()
 			finalizeThread = NULL;
 		}
 		segmentProgress->setValue(6);
-		segWin->SetLabelImage(seg->getLabelImage());
+		if(selection) delete selection;
+		selection = new ObjectSelection();
+		segView->SetLabelImage(nucSeg->GetLabelImage(),selection);
 		showBoundsAction->setChecked(true);
 		segmentTaskLabel->setText(tr(" Features "));
 
-		featuresThread = new Features(seg);
+		featuresThread = new Features(nucSeg);
 		connect(featuresThread, SIGNAL(finished()), this, SLOT(segment()));
 		segmentState = 7;
 		featuresThread->start();
@@ -941,12 +955,10 @@ void NucleusEditor::segment()
 		}
 		segmentProgress->setValue(7);
 		segmentTaskLabel->setText(tr(" DONE "));
-
-		newModel();
+		
+		table = nucSeg->GetFeatureTable();
 		CreateNewTableWindow();
 		CreateNewPlotWindow();
-		segWin->SetModels(currentModel);
-		//this->update();
 
 		QApplication::restoreOverrideCursor();
 		fileMenu->setEnabled(true);
@@ -960,7 +972,7 @@ void NucleusEditor::segment()
 		showBoundsAction->setChecked(true);
 		showIDsAction->setEnabled(true);
 		showIDsAction->setChecked(true);
-		segWin->SetIDsVisible(true);
+		//segWin->SetIDsVisible(true);
 		viewMenu->setEnabled(true);
 		segmentState = -1;
 
@@ -970,261 +982,14 @@ void NucleusEditor::segment()
 		break;
 	}
 
-	// FOr View3D slot... to display seeds.
-
-	segFlag = 1;
-
 }
 
-
-void NucleusEditor::loadImage()
-{
-
-	if( !checkSaveSeg() )
-		return;
-
-	QString fileName = QFileDialog::getOpenFileName(
-                             this, "Select file to open", lastPath,
-                             tr("Images (*.tif *.tiff *.pic *.png *.jpg *.lsm)\n"
-							    "All Files (*.*)"));
-
-    if(fileName == "")
-		return;
-
-	if(currentModel)
-		clearModel();
-
-	if(seg)
-	{
-		delete seg;
-		seg = NULL;
-	}
-
-	this->CreateNewSegWindow();
-
-	abortSegment();
-
-	lastPath = QFileInfo(fileName).absolutePath();
-	myImgName = QFileInfo(fileName).fileName();
-
-	//******************************************************
-
-	// NEW BROWSER:
-	//ImageBrowser5D *browse = new ImageBrowser5D(fileName);
-	//this->setCentralWidget(browse);
-	
-	// OLD BROWSER:
-	myImg = ftk::Image::New();
-	myImg->LoadFile(fileName.toStdString());
-	segWin->SetChannelImage(myImg);
-
-	this->update();
-
-	//************************************************
-
-	// Disable the menu items for editing
-	this->setEditsEnabled(false);
-	segmentAction->setEnabled(true);
-	saveAction->setEnabled(false);
-}
-
-//******************************************************************************
-// Create a new Plot window and give it the provided model and selection model
-//******************************************************************************
-void NucleusEditor::CreateNewPlotWindow(void)
-{
-	if(!currentModel)
-		return;
-
-	pltWin.push_back(new PlotWindow(currentModel->GetSelectionModel()));
-	pltWin.back()->show();
-}
-
-//******************************************************************************
-// Create a new table window
-//******************************************************************************
-void NucleusEditor::CreateNewTableWindow(void)
-{
-	if(!currentModel)
-		return;
-
-	tblWin.push_back(new TableWindow(currentModel->GetSelectionModel()));
-	connect(tblWin.back(), SIGNAL(sorted()), currentModel, SLOT(updateMapping()));
-	tblWin.back()->ResizeToOptimalSize();
-	tblWin.back()->show();
-}
-
-//*******************************************************************************
-// Create new Histogram Window
-//*******************************************************************************
-void NucleusEditor::CreateNewHistoWindow(void)
-{
-	if(this->hisWin)
-		delete hisWin;
-	hisWin = new HistoWindow(currentModel->GetSelectionModel());
-	hisWin->show();
-}
-
-void NucleusEditor::ShowHistogram(void)
-{
-	if(this->hisWin)
-		hisWin->show();
-	else
-		this->CreateNewHistoWindow();
-}
-
-//*******************************************************************************
-// Delete existing segWin and create a new one
-//*******************************************************************************
-void NucleusEditor::CreateNewSegWindow(void)
-{
-	if(this->segWin)
-		delete this->segWin;
-	this->segWin = new SegmentationWindow();
-
-	if( this->centralWidget() != this->segWin )
-		this->setCentralWidget(this->segWin);
-
-	this->imageIntensityAction->setEnabled(true);
-	connect(segWin->viewport(),SIGNAL(mouseAt(int,int,int)), this, SLOT(setMouseStatus(int,int,int)));
-	connect(this->imageIntensityAction, SIGNAL(triggered()), segWin->viewport(), SLOT(AdjustImageIntensity()));
-}
-
-//******************************************************************************
-// SLOT: changes the status bar to say the mouse coordinates
-//******************************************************************************
-void NucleusEditor::setMouseStatus(int x, int y, int z)
-{
-	(this->statusLabel)->setText(QString::number(x) + ", " + QString::number(y) + ", " + QString::number(z));
-}
-
-
-//******************************************************************************
-// Open a python interpreter.  Ask the user where one is located if this
-// information hasn't been specified yet.
-//******************************************************************************
-void NucleusEditor::OpenPythonWindow()
-{
-/* this code is still in progress...
-	if(this->settings->contains("farsight/installpath") == false)
-	  {
-		this->settings->setValue("farsight/installpath","");
-	  }
-	QString installPath = this->settings->value("farsight/installpath").toString();
-	QString quote = QString("\"");
-	while(!QDir(installPath).exists() || !QDir(installPath + "/python").exists()
-        || !QDir(installPath+ "/bin").exists())
-	  {
-		//Need to browse for the farsight install folder
-		installPath = QFileDialog::getExistingDirectory(this, tr("Select Farsight installation directory"));
-		if(installPath == "")
-		  {
-			//user pressed cancel, bail out now.
-			return;
-		  }
-		this->settings->setValue("farsight/installpath",installPath);
-	  }
-
-	this->pythonFiles = installPath + QString("/python");
-	this->exeFiles = installPath + QString("/bin");
-
-  this->PythonDialog = new QtPythonDialog(this, this->argv0);
-  QObject::connect(this->PythonDialog, SIGNAL(interpreterInitialized()),
-                   this, SLOT(initPythonInterpretor()));
-  this->PythonDialog->initializeInterpretor();
-  this->PythonDialog->show();
-  this->PythonDialog->raise();
-  this->PythonDialog->activateWindow();
-*/
-	if(this->settings->contains("python/window") == false)
-    {
-		if(this->BrowseForPythonExecutable() == false)
-		{
-		//user cancelled operation, abort
-		return;
-		}
-    }
-
-	if(this->settings->contains("farsight/installpath") == false)
-	{
-		this->settings->setValue("farsight/installpath","");
-	}
-
-	QString cmd = this->settings->value("python/window").toString();
-	QString installPath = this->settings->value("farsight/installpath").toString();
-	QString quote = QString("\"");
-
-	while(!QDir(installPath).exists() || !QDir(installPath + "/python").exists() || !QDir(installPath+ "/bin").exists())
-	{
-		//Need to browse for the farsight install folder folder
-		installPath = QFileDialog::getExistingDirectory(this, tr("Select directory containing Farsight python scripts"));
-		if(installPath == "")
-		{
-			//user pressed cancel, bail out now.
-			return;
-		}
-		this->settings->setValue("farsight/installpath",installPath);
-	}
-
-	QString pythonFiles = installPath + QString("/python");
-	QString exeFiles = installPath + QString("/bin");
-	QString saxonFile = installPath + QString("/bin/saxon9.jar");
-
-	QString path1Cmd = QString("import sys;sys.path.append('") + pythonFiles + QString("');");
-	QString path2Cmd = QString("import os;os.environ['PATH'] = os.environ['PATH'] + ';") + exeFiles + QString("';");
-	QString path3Cmd = QString("os.environ['PATH'] = os.environ['PATH'] + ';") + pythonFiles + QString("';");
-	QString path4Cmd = QString("os.environ['CLASSPATH'] = ';") + saxonFile + QString("';");
-	QString importCmds = QString("from farsightutils import *;");
-	QString printCmd = QString("print 'FARSIGHT ENVIRONMENT';");
-	QString arg = QString(" -i -c ") + quote + path1Cmd + path2Cmd + path3Cmd + path4Cmd + importCmds + printCmd + quote;
-	cmd.append(arg);
-  
-	this->pythonProcess->startDetached(cmd);
-}
-
-//******************************************************************************
-// Ask the user to select a python interpreter to use with Farsight
-//******************************************************************************
-bool NucleusEditor::BrowseForPythonExecutable()
-  {
-  if(this->pythonProcess->state() != QProcess::NotRunning)
-    {
-    if(this->ConfirmClosePython() == false)
-      {
-      //we can't change farsight's associated python program command until the
-      //user is ready to shut it down...
-      return false;
-      }
-    this->pythonProcess->terminate();
-    }
-  QString pythonExecutable = QFileDialog::getOpenFileName(this, tr("Open Python"));
-  if(pythonExecutable == "")
-    {
-    //user pressed cancel, bail out now.
-    return false;
-    }
-  this->settings->setValue("python/window", pythonExecutable);
-  this->currentPythonLabel->setText(pythonExecutable);
-  return true;
-  }
-
-//******************************************************************************
-// Ask the user for permission to shut down their Python process.
-//******************************************************************************
-bool NucleusEditor::ConfirmClosePython()
-  {
-   QMessageBox msgBox;
-   msgBox.setText(tr("Python shutdown required to continue"));
-   msgBox.setInformativeText(tr("OK to shutdown Farsight's python process?"));
-   msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-   msgBox.setDefaultButton(QMessageBox::Cancel);
-   if(msgBox.exec() == QMessageBox::Cancel)
-     {
-     return false;
-     }
-   return true;
-  }
-
+//******************************************************************************************
+//******************************************************************************************
+//******************************************************************************************
+//******************************************************************************************
+// A dialog for changing the exclusion margin used for this image:
+//******************************************************************************************
 MarginDialog::MarginDialog(QWidget *parent)
 : QDialog(parent)
 {
@@ -1266,7 +1031,15 @@ int MarginDialog::getZ()
 {
 	return zSpin->value();
 }
+//***********************************************************************************
+//***********************************************************************************
+//***********************************************************************************
+//***********************************************************************************
 
+//***********************************************************************************
+//***********************************************************************************
+// A dialog to get the paramaters file to use
+//***********************************************************************************
 ParamsFileDialog::ParamsFileDialog(QString lastPth, QWidget *parent)
 : QDialog(parent)
 {
@@ -1299,7 +1072,6 @@ ParamsFileDialog::ParamsFileDialog(QString lastPth, QWidget *parent)
 	flags &= ~Qt::WindowContextHelpButtonHint;
 	this->setWindowFlags(flags);
 }
-
 QString ParamsFileDialog::getFileName()
 {
 	if(autoButton->isChecked())
@@ -1334,7 +1106,17 @@ void ParamsFileDialog::ParamBrowse(QString comboSelection)
 	fileCombo->setCurrentIndex(0);
 	fileCombo->setItemText(0,newfilename);
 }
+//***********************************************************************************
+//***********************************************************************************
+//***********************************************************************************
+//***********************************************************************************
 
+
+//***********************************************************************************
+//***********************************************************************************
+//***********************************************************************************
+// Threads for running the segmentation algorithm:
+//***********************************************************************************
 Load::Load(ftk::NuclearSegmentation *seg)
 : QThread()
 {
@@ -1399,449 +1181,14 @@ Features::Features(ftk::NuclearSegmentation *seg)
 
 void Features::run()
 {
-	mySeg->LabelsToObjects();
+	mySeg->ComputeFeatures();
 	mySeg->ReleaseSegMemory();
 }
 
-
-// 3 D viewer Classes : 
-
-Seed3D::Seed3D(QWidget * parent, Qt::WindowFlags flags)
-: QMainWindow(parent,flags)
-{
-	setWindowTitle(tr("3D Viewer"));
-	QVTK = 0;
-	//This variable is used to indicate if an image has already been loaded
-//	iRender=0;
-
-	//Set up the Widgets & Renderers to display the actors and the Volume	
-	browse = new QWidget(this);
-	this->setCentralWidget(browse);
-	QVTK = new QVTKWidget(this);
-	this->Renderer = vtkRenderer::New();
-	QVTK->GetRenderWindow()->AddRenderer(Renderer);
-	//********************************************************************************
-	Interactor = QVTK->GetRenderWindow()->GetInteractor();
-	//use trackball control for mouse commands
-	vtkSmartPointer<vtkInteractorStyleTrackballCamera> style =
-		vtkInteractorStyleTrackballCamera::New();
-	Interactor->SetInteractorStyle(style);
-
-	QGridLayout *viewerLayout = new QGridLayout(this->browse);
-	viewerLayout->addWidget(this->QVTK, 0,0,1,1);
-
-	
-	//PointPicker = vtkPointPicker::New();
-	//PointPicker->SetTolerance(0.004);
-	//Interactor->SetPicker(PointPicker);
-	//isPicked = vtkCallbackCommand::New();
-	//isPicked->SetCallback(PickCell);
-
-	////isPicked caller allows observer to intepret click 
-	//isPicked->SetClientData(this);            
-	//Interactor->AddObserver(vtkCommand::RightButtonPressEvent,isPicked); 
-
-	//Resize the Window 
-	this->resize(500,500);
-}
-
-void NucleusEditor::view3D() 
-{
-   ftk::NuclearSegmentation *segPtr;
-   segPtr = this->seg;	
-   Seeds = new Seed3D(0,0);
-   QString dataFile = lastPath + "/" + myImgName;
-   Seeds->LoadImage3D(dataFile,segPtr,this->segFlag);	
-   Seeds->show();
-}
-
-
-void Seed3D::LoadImage3D(QString dataFile,ftk::NuclearSegmentation *segPtr,unsigned char segFlag)
-{
-	
-	if(viewFlag == 1)
-	{
-		DeleteObjects(sFlag);							
-	}
-	
-	sFlag = segFlag;
-	viewFlag = 1;
-	myVol = ftk::Image::New();
-	myVol->LoadFile(dataFile.toStdString());
-	vtkSmartPointer<vtkImageData> vtkim = vtkSmartPointer<vtkImageData>::New();   
-	//vtkim = seg->getDataImage()->GetVtkPtr(0,0);
-	vtkim = myVol->GetVtkPtr(0,0);
-	std::cout<<dataFile.toStdString()<<std::endl;
-	// Create transfer AddObservermapping scalar value to opacity
-	vtkPiecewiseFunction *opacityTransferFunction = vtkPiecewiseFunction::New();
-	opacityTransferFunction->AddPoint(2,0.0);
-	opacityTransferFunction->AddPoint(100,0.5);
-	// Create transfer mapping scalar value to color
-	// Play around with the values in the following lines to better vizualize data
-	vtkColorTransferFunction *colorTransferFunction = vtkColorTransferFunction::New();
-	colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
-	colorTransferFunction->AddRGBPoint(50.0,0.5,0.5,0.5);
-	// The property describes how the data will look
-	vtkVolumeProperty *volumeProperty = vtkVolumeProperty::New();
-	volumeProperty->SetColor(colorTransferFunction);
-	volumeProperty->SetScalarOpacity(opacityTransferFunction);
-	volumeProperty->SetInterpolationTypeToLinear();
-	vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper = vtkSmartPointer<	vtkOpenGLVolumeTextureMapper3D>::New();
-	volumeMapper->SetSampleDistance(0.75);
-	volumeMapper->SetInput(vtkim);
-
-	// The volume holds the mapper and the property and
-	// can be used to position/orient the volume
-	volume = vtkVolume::New();
-	volume->SetMapper(volumeMapper);
-	volume->SetProperty(volumeProperty);
-	volume->SetPickable(0);
-	volume->SetOrigin(volume->GetCenter());
-	Renderer->AddVolume(volume);
-	//volume->RotateWXYZ(180,1,0,0);
-	volume->RotateWXYZ(180,0,0,1);
-	volume->RotateWXYZ(180,0,1,0);
-
-cout<<"cgcgcgcgc"<<endl;
-	// The active camera for the main window!
-	vtkCamera *cam1 = Renderer->GetActiveCamera();
-	cam1->SetViewUp (0, 1, 0);
-	cam1->SetPosition (0, 0, 50);
-	Renderer->ResetCamera();	
-
-	//********************************************************************************  
-	//These are the sliders used to control the opacity, brightness and seed size !
-
-	//OPACITY
-	sliderRep = vtkSliderRepresentation2D::New();
-	sliderRep->SetValue(0.8);
-	sliderRep->SetTitleText("Opacity");
-	sliderRep->GetPoint1Coordinate()->SetCoordinateSystemToNormalizedDisplay();
-	sliderRep->GetPoint1Coordinate()->SetValue(0.2,0.1);
-	sliderRep->GetPoint2Coordinate()->SetCoordinateSystemToNormalizedDisplay();
-	sliderRep->GetPoint2Coordinate()->SetValue(0.8,0.1);
-	sliderRep->SetSliderLength(0.02);
-	sliderRep->SetSliderWidth(0.03);
-	sliderRep->SetEndCapLength(0.01);
-	sliderRep->SetEndCapWidth(0.03);
-	sliderRep->SetTubeWidth(0.005);
-	sliderRep->SetMinimumValue(0.0);
-	sliderRep->SetMaximumValue(1.0);
-
-	sliderWidget = vtkSliderWidget::New();
-	sliderWidget->SetInteractor(Interactor);
-	sliderWidget->SetRepresentation(sliderRep);
-	sliderWidget->SetAnimationModeToAnimate();
-	vtkSlider2DCallbackBrightness *callback_brightness = vtkSlider2DCallbackBrightness::New();
-	callback_brightness->volume = volume;
-	sliderWidget->AddObserver(vtkCommand::InteractionEvent,callback_brightness);
-	sliderWidget->EnabledOn();
-
-	//Brightness
-	sliderRep2 = vtkSliderRepresentation2D::New();
-	sliderRep2->SetValue(0.8);
-	sliderRep2->SetTitleText("Brightness");
-	sliderRep2->GetPoint1Coordinate()->SetCoordinateSystemToNormalizedDisplay();
-	sliderRep2->GetPoint1Coordinate()->SetValue(0.2,0.9);
-	sliderRep2->GetPoint2Coordinate()->SetCoordinateSystemToNormalizedDisplay();
-	sliderRep2->GetPoint2Coordinate()->SetValue(0.8,0.9);
-	sliderRep2->SetSliderLength(0.02);
-	sliderRep2->SetSliderWidth(0.03);
-	sliderRep2->SetEndCapLength(0.01);
-	sliderRep2->SetEndCapWidth(0.03);
-	sliderRep2->SetTubeWidth(0.005);
-	sliderRep2->SetMinimumValue(0.0);
-	sliderRep2->SetMaximumValue(1.0);
-
-	sliderWidget2 = vtkSliderWidget::New();
-	sliderWidget2->SetInteractor(Interactor);
-	sliderWidget2->SetRepresentation(sliderRep2);				
-	sliderWidget2->SetAnimationModeToAnimate();
-	vtkSlider2DCallbackContrast *callback_contrast = vtkSlider2DCallbackContrast::New();
-	callback_contrast->volume = volume;
-	sliderWidget2->AddObserver(vtkCommand::InteractionEvent,callback_contrast);
-	sliderWidget2->EnabledOn();
-
-	//If the segmentation has been performed, then initialize the seed-size widget and 
-	//display the seeds.
-cout<<sFlag<<"-cgcgcgcgc"<<endl;
-cout<<segFlag<<"-cgcgcgcgc"<<endl;
-	if(sFlag==1 )
-	{
-		//Display Seeds
-		cout<<"cgcgcgcgc"<<endl;
-		spPoint = GetSeedpts(segPtr->getSeeds(),volume->GetBounds());
-		pcoords = vtkFloatArray::New();
-		/*  Note that by default, an array has 1 component.
-		We have to change it to 3 for points*/
-		cout<<"cgcgcgcgc"<<endl;
-		pcoords->SetNumberOfComponents(3);
-		pcoords->SetNumberOfTuples(spPoint.size());
-		for (unsigned int j=0; j<spPoint.size(); j++)
-		{
-			float pts[3] = {spPoint[j].x,spPoint[j].y , spPoint[j].z };	
-			pcoords->SetTuple(j, pts);
-		}
-		
-		point1 = vtkPoints::New(); //Original Points
-		point1->SetData(pcoords);
-		cout<<point1->GetNumberOfPoints()<<"HAI"<<endl;
-		
-		polydata1 = vtkPolyData::New();
-		polydata1->SetPoints(point1);
-
-		sphere = vtkSphereSource::New();
-		glyph = vtkGlyph3D::New();
-		glyph->SetInput(polydata1);
-		glyph->SetSource(sphere->GetOutput());
-		glyph->SetVectorModeToUseNormal();
-		glyph->SetScaleModeToScaleByVector();
-		glyph->SetScaleFactor(1);
-		glyph->GeneratePointIdsOn();
-		sphereMapper = vtkPolyDataMapper::New();
-		sphereMapper->SetInput(glyph->GetOutput());
-		sphereActor = vtkLODActor::New();
-		sphereActor->SetMapper(sphereMapper);
-		Renderer->AddActor(sphereActor);
-		glyph->SetScaleFactor(glyph->GetScaleFactor()+0.0001);
-
-		
-		//Seed Size Widget
-		sliderRep3 = vtkSliderRepresentation2D::New();
-		sliderRep3->SetValue(0.8);
-		sliderRep3->SetTitleText("Seed Size");
-		sliderRep3->GetPoint1Coordinate()->SetCoordinateSystemToNormalizedDisplay();
-		sliderRep3->GetPoint1Coordinate()->SetValue(0.1,0.2);
-		sliderRep3->GetPoint2Coordinate()->SetCoordinateSystemToNormalizedDisplay();
-		sliderRep3->GetPoint2Coordinate()->SetValue(0.1,0.9);
-		sliderRep3->SetSliderLength(0.01);
-		sliderRep3->SetSliderWidth(0.03);
-		sliderRep3->SetEndCapLength(0.01);
-		sliderRep3->SetEndCapWidth(0.03);
-		sliderRep3->SetTubeWidth(0.005);
-		sliderRep3->SetMinimumValue(1.0);
-		sliderRep3->SetMaximumValue(15.0);
-		sliderWidget3 = vtkSliderWidget::New();
-		sliderWidget3->SetInteractor(Interactor);
-		sliderWidget3->SetRepresentation(sliderRep3);
-		sliderWidget3->SetAnimationModeToAnimate();
-
-		vtkSlider2DCallbackSeedSize *callback_seedsize = vtkSlider2DCallbackSeedSize::New();
-		callback_seedsize->Glyph = glyph;
-		sliderWidget3->AddObserver(vtkCommand::InteractionEvent,callback_seedsize);
-		sliderWidget3->EnabledOn();
-	}
-	cout<<sFlag<<"-cgcgcgcgc"<<endl;
-	QVTK->GetRenderWindow()->Render();   
-}
-
-//void Seed3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata)
-//{ 
-//	Seed3D* seed = (Seed3D*)clientdata;
-//	/*  PickPoint allows fot the point id and coordinates to be returned 
-//	as well as adding a marker on the last picked point
-//	R_click to select point on line  */
-//
-//	int *pos = seed->Interactor->GetEventPosition();
-//	seed->Interactor->GetPicker()->Pick(pos[0],pos[1],0.0,seed->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
-//	double pickPos[3];
-//	seed->PointPicker->GetPickPosition(pickPos);    //this is the coordinates of the pick  
-//	cout<<"Point Selected " << pickPos[0]<<"-"<<pickPos[1]<<"-"<<pickPos[2]<<endl;
-//
-//	//Useful to check if clicked on a seed !   
-//	//If I am in Delete mode 
-//
-//	//if((seed->mode == 2||seed->mode == 4) && seed->flag == 1){
-//
-//	//	vtkDataArray* pointIds = seed->Glyph->GetOutput()->GetPointData()->GetArray("InputPointIds"); 
-//	//	int pID = (int)pointIds->GetTuple1(seed->PointPicker->GetPointId()); 
-//	//	if((unsigned int)pID<=seed->dup_points.size())    //The ids of non-seed points is much greater than the ids of the seed points 
-//	//	{   				   //Use this to check if clicked on a seed or not		
-//	//		float dist =10.00;
-//	//		//float dist1;
-//	//		int index;
-//	//		index = -1;
-//	//		float finpt[3];
-//	//		for (unsigned int j=0; j<seed->dup_points.size(); j++)
-//	//		{
-//
-//	//			float p1[3] = {seed->dup_points[j].x, seed->dup_points[j].y ,seed->dup_points[j].z };	
-//	//			float dist1= sqrt(pow((p1[0]-pickPos[0]),2) + pow((p1[1]-pickPos[1]),2) + pow((p1[2]-pickPos[2]),2));   
-//	//			if (dist1<dist)
-//	//			{
-//	//				dist = dist1;
-//	//				finpt[0] = p1[0];
-//	//				finpt[1] = p1[1];
-//	//				finpt[2] = p1[2];
-//	//				index = j;
-//	//			}    
-//
-//	//		}
-//
-//	//		if(index!=-1){   
-//	//			seed->dup_points.erase(seed->dup_points.begin()+index);
-//	//			//Remove the glyph		
-//	//			vtkDataArray* points2del = seed->point1->GetData();    
-//	//			//vtkDataArray* points2delred;
-//	//			points2del->RemoveTuple((vtkIdType)index);
-//	//			seed->point1->SetData(points2del);
-//	//			seed->Glyph->SetScaleFactor(seed->Glyph->GetScaleFactor()+0.0001);
-//
-//	//			// Add the new red glyph 
-//	//			seed->point2->InsertNextPoint(finpt);
-//	//			seed->polydata2->SetPoints(seed->point2);
-//	//			seed->delglyph->SetInput(seed->polydata2);
-//	//			seed->DelSphereMapper->SetInput(seed->delglyph->GetOutput());	      
-//	//			seed->delglyph->SetScaleFactor(seed->delglyph->GetScaleFactor()+0.0001);//to rerender immediately
-//	//			seed->QVTK->GetRenderWindow()->Render();
-//
-//
-//
-//
-//	//			//Keep Track of seeds marked for deletion/merge in a vector 
-//	//			//Useful while undoing it 
-//
-//	//			vtkIdType Id;
-//	//			double* pointz;
-//	//			point p;
-//	//			Id = seed->point2->GetNumberOfPoints();
-//
-//	//			pointz = seed->point2->GetPoint(Id-1);
-//	//			p.x = pointz[0];
-//	//			p.y = pointz[1];
-//	//			p.z = pointz[2];	
-//	//			seed->MarkedPoints.push_back(p);
-//	//		}
-//	//	}
-//	//}
-//
-//
-//	////If all points are marked, don't allow to delete anymore seeds.
-//	////Set the flag so that it does not enter into delete mode functionality 
-//
-//	//if(seed->MarkedPoints.size()==seed->spPoint.size() || seed->dup_points.size()==0) 
-//	//{
-//	//	seed->flag =0; 	 
-//	//}
-//	//else{
-//	//	seed->flag =1; 	 
-//	//}
-//
-//
-//	//if(seed->mode == 5){
-//
-//	//	vtkDataArray* pointIds = seed->delglyph->GetOutput()->GetPointData()->GetArray("InputPointIds"); 
-//	//	int pID = (int)pointIds->GetTuple1(seed->PointPicker->GetPointId()); 
-//	//	if((unsigned int)pID<=seed->MarkedPoints.size())    //The ids of non-seed points is much greater than the ids of the seed points 
-//
-//	//	{    
-//	//		float dist =10.00;
-//	//		//float dist1;
-//	//		int index;
-//	//		float finpt[3];
-//	//		for (unsigned int j=0; j<seed->MarkedPoints.size(); j++)
-//	//		{
-//	//			float p1[3] = {seed->MarkedPoints[j].x, seed->MarkedPoints[j].y ,seed->MarkedPoints[j].z };	
-//	//			float dist1= sqrt(pow((p1[0]-pickPos[0]),2) + pow((p1[1]-pickPos[1]),2) + pow((p1[2]-pickPos[2]),2));   
-//	//			if (dist1<dist)
-//	//			{
-//	//				dist = dist1;
-//	//				finpt[0] = p1[0];
-//	//				finpt[1] = p1[1];
-//	//				finpt[2] = p1[2];
-//	//				index = j;
-//	//			}
-//	//		}
-//
-//	//		if(index!=-1){
-//
-//	//			seed->MarkedPoints.erase(seed->MarkedPoints.begin()+index);
-//
-//	//			//Remove the red glyph		
-//	//			vtkDataArray* points2put = seed->point2->GetData();    
-//	//			points2put->RemoveTuple((vtkIdType)index);
-//	//			seed->point2->SetData(points2put);
-//	//			seed->delglyph->SetScaleFactor(seed->delglyph->GetScaleFactor()+0.0001);
-//	//			cout<<"MarkedPoints " <<seed->MarkedPoints.size()<<endl;
-//	//			cout<<"Number of Points in point2 "<<seed->point2->GetNumberOfPoints()<<endl;
-//
-//	//			// Add the new silver glyph 
-//	//			seed->point1->InsertNextPoint(finpt);
-//	//			seed->polydata1->SetPoints(seed->point1);
-//	//			seed->Glyph->SetInput(seed->polydata1);
-//	//			seed->SphereMapper->SetInput(seed->Glyph->GetOutput());	      
-//	//			seed->Glyph->SetScaleFactor(seed->Glyph->GetScaleFactor()+0.0001);//to rerender immediately
-//	//			seed->QVTK->GetRenderWindow()->Render();
-//
-//	//			//Update the duplicate Seed list vector
-//
-//	//			point addPoint;
-//	//			addPoint.x = finpt[0];
-//	//			addPoint.y = finpt[1];
-//	//			addPoint.z = finpt[2];
-//	//			seed->dup_points.push_back(addPoint);
-//	//		}
-//	//	}
-//
-//	//}
-//	//seed->Check();	
-//}
-
-vector <ftk::Object::Point> Seed3D::GetSeedpts(vector<Seed> seeds, double* origin)
-{
-
-	point p;
-	Seed q;
-	std::vector<point> spPoint;
-	spPoint.clear();
-	for (std::vector<Seed>::iterator i = seeds.begin (); i != seeds.end (); i++)
-	{
-		q = *i;
-		p.x = q.x();
-		
-		p.y = origin[3] - q.y();
-		
-		p.z = origin[5] - q.z();
-		
-		p.t = 0;
-		spPoint.push_back(p);
-		//cout<<spPoint.size()<<"--size"<<endl; //Yousef
-	}
-	//cout<<spPoint.size()<<"--Total size"<<endl; //Yousef
-	return (spPoint);
-}
-
-
-
-void Seed3D::DeleteObjects(unsigned char flag)
-{
-  
-  cout<<"cgcgcgcgc"<<endl;		
-  //this->QVTK->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor(this->volume);
-  this->QVTK->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveVolume(this->volume);
-  this->QVTK->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor(this->sphereActor);
-  this->volume->Delete();
-  
-  this->polydata1->Delete();
-  this->sliderRep->Delete();
-  this->sliderWidget->Delete();
-  this->sliderRep2->Delete();	
-  this->sliderWidget2->Delete();
-
- cout<<"cgcgcgcgc"<<endl; 
-  if(flag==1)
-  {
-	  sphereActor->Delete();
-	  sphereMapper->Delete();
-	  this->sliderRep3->Delete();	
-	  this->sliderWidget3->Delete();
-	cout<<"cgcgcgcgc"<<endl;	
-
-  } 
-}
-
-
-
+//***********************************************************************************
+//***********************************************************************************
+//***********************************************************************************
+//***********************************************************************************
 
 
 

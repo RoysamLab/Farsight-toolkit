@@ -18,35 +18,64 @@ limitations under the License.
 //***********************************************************************************
 #include "TableWindow.h"
 
-//Constructor
-TableWindow::TableWindow(QItemSelectionModel *selectionModel, QWidget *parent)
+//Constructors:
+TableWindow::TableWindow(QWidget * parent)
 : QMainWindow(parent)
 {
-	this->table = new QTableView();
-	this->table->setEditTriggers(QAbstractItemView::NoEditTriggers);
-	this->setCentralWidget(this->table);
+	this->setup();
+}
+
+void TableWindow::setQtModels(QItemSelectionModel * mod)
+{
+	this->tableView->setModel( (QAbstractItemModel*)mod->model() );
+	this->tableView->setSelectionModel(mod);
+	this->tableView->setSelectionBehavior( QAbstractItemView::SelectRows );
+	this->update();
+}
+	
+void TableWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels)
+{
+	if(!this->modAdapter)
+		this->modAdapter = new vtkQtTableModelAdapter();
+	this->modAdapter->setTable(  table );
+	this->tableView->setModel( modAdapter );
+
+	QItemSelectionModel *mod = new QItemSelectionModel(modAdapter);
+	this->tableView->setSelectionModel(mod);
+	this->tableView->setSelectionBehavior( QAbstractItemView::SelectRows );
+
+	if(sels)
+	{
+		this->selection = sels;
+		selAdapter = new SelectionAdapter();
+		selAdapter->SetPair(selection,mod);
+	}
+	this->update();
+}
+
+void TableWindow::setup()
+{
+	this->tableView = new QTableView();
+	this->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+	this->setCentralWidget(this->tableView);
 	this->setWindowTitle(tr("Table"));
+	this->createMenus();
+	this->resize(800,300);
+
+	selAdapter = NULL;
+	modAdapter = NULL;
 	// The following causes the program to get crashed if we close
 	// the table first and the main window afterwards
 	//this->setAttribute ( Qt::WA_DeleteOnClose );
-
-	this->table->setModel( (QAbstractItemModel*)selectionModel->model() );
-	this->table->setSelectionModel(selectionModel);
-	this->table->setSelectionBehavior( QAbstractItemView::SelectRows );
-	connect(selectionModel->model(), SIGNAL(dataChanged(const QModelIndex &, const QModelIndex &)), this, SLOT(modelChange(const QModelIndex &, const QModelIndex &)));
-
-	this->createMenus();
-	this->filters = new FilterRowsDialog( this->table, this);
-	this->filters->hide();
 }
 
 void TableWindow::createMenus()
 {
 	viewMenu = menuBar()->addMenu(tr("View"));
 
-	sortByAction = new QAction(tr("Sort by..."),this);
-	connect(sortByAction, SIGNAL(triggered()), this, SLOT(sortBy()));
-	viewMenu->addAction(sortByAction);
+	//sortByAction = new QAction(tr("Sort by..."),this);
+	//connect(sortByAction, SIGNAL(triggered()), this, SLOT(sortBy()));
+	//viewMenu->addAction(sortByAction);
 
 	visibleColumnsAction = new QAction(tr("Visible Columns..."), this);
 	connect(visibleColumnsAction, SIGNAL(triggered()), this, SLOT(changeColumns()));
@@ -58,20 +87,49 @@ void TableWindow::createMenus()
 	viewMenu->addAction(filterRowsAction);
 }
 
+void TableWindow::closeEvent(QCloseEvent *event)
+{
+	emit closing(this);
+	event->accept();
+} 
+
+void TableWindow::update()
+{
+	if(modAdapter)
+		modAdapter->setTable( modAdapter->table() );
+
+	tableView->resizeRowsToContents();
+	tableView->resizeColumnsToContents();
+	//Resize Rows to be as small as possible
+	for (int i=0; i<tableView->model()->rowCount(); i++)
+	{
+		tableView->verticalHeader()->resizeSection(i,18);
+	}
+	QWidget::update();
+}
+
 void TableWindow::showFilters()
 {
-	this->filters->show();
+	if(!this->tableView->model())
+		return;
+
+	FilterRowsDialog * filters = new FilterRowsDialog( this->tableView, this);
+	filters->exec();
+	delete filters;
 }
 
 void TableWindow::sortBy()
 {
+	if(!this->tableView->model())
+		return;
+
 	//Get the Currently Selected Features
 	QStringList features;
-	for( int i=0; i < this->table->model()->columnCount(); ++i)
+	for( int i=0; i < this->tableView->model()->columnCount(); ++i)
 	{	
-		if( !this->table->isColumnHidden(i) )
+		if( !this->tableView->isColumnHidden(i) )
 		{
-			features << this->table->model()->headerData(i,Qt::Horizontal).toString();
+			features << this->tableView->model()->headerData(i,Qt::Horizontal).toString();
 		}
 	}
 	
@@ -85,12 +143,11 @@ void TableWindow::sortBy()
 	QString feat = dialog->getSelectedItem();
 	delete dialog;
 	//Which column is this feature?
-	for( int i=0; i < this->table->model()->columnCount(); ++i)
+	for( int i=0; i < this->tableView->model()->columnCount(); ++i)
 	{	
-		if( this->table->model()->headerData(i,Qt::Horizontal).toString() == feat )
+		if( this->tableView->model()->headerData(i,Qt::Horizontal).toString() == feat )
 		{
-			this->table->sortByColumn(i,Qt::AscendingOrder);
-
+			this->tableView->sortByColumn(i,Qt::AscendingOrder);
 			emit sorted();
 			break;
 		}
@@ -100,13 +157,16 @@ void TableWindow::sortBy()
 //Pop-up a window that allows the used to change the columns that are visible in the table
 void TableWindow::changeColumns()
 {
-	//Get the Currently Features in model:
+	if( !this->tableView->model() )
+		return;
+
+	//Get the Currently Visible Features in model:
 	QStringList features;
 	QList<bool> visible;
-	for( int i=0; i < this->table->model()->columnCount(); ++i)
+	for( int i=0; i < this->tableView->model()->columnCount(); ++i)
 	{	
-		features << this->table->model()->headerData(i,Qt::Horizontal).toString();
-		visible << !(this->table->isColumnHidden(i));
+		features << this->tableView->model()->headerData(i,Qt::Horizontal).toString();
+		visible << !(this->tableView->isColumnHidden(i));
 	}
 	//Let user choose one's to display using popup:
 	ChooseItemsDialog *dialog = new ChooseItemsDialog(features, &visible, this);
@@ -117,100 +177,20 @@ void TableWindow::changeColumns()
 	}
 	delete dialog;
 
-	for( int i=0; i < this->table->model()->columnCount(); ++i)
+	for( int i=0; i < this->tableView->model()->columnCount(); ++i)
 	{	
-		this->table->setColumnHidden( i, !visible.at(i) );
+		this->tableView->setColumnHidden( i, !visible.at(i) );
 	}
-	this->ResizeToOptimalSize();
+	//this->update();
 }
 
-void TableWindow::modelChange(const QModelIndex &topLeft, const QModelIndex &bottomRight)
-{
-	table->update();
-	int l_column = topLeft.column();
-	int t_row = topLeft.row();
-	int r_column = bottomRight.column();
-	int b_row = bottomRight.row();
-
-	for(int r=t_row; r<=b_row; r++)
-	{
-		table->resizeRowToContents(r);
-		table->verticalHeader()->resizeSection(r,18);
-	}
-	for(int c=l_column; c<=r_column; c++)
-	{
-		table->resizeColumnToContents(c);
-	}
-	QWidget::update();
-}
-
-void TableWindow::update()
-{
-	table->update();
-	table->resizeRowsToContents();
-	table->resizeColumnsToContents();
-	//Resize Rows to be as small as possible
-	for (int i=0; i<table->model()->rowCount(); i++)
-	{
-		table->verticalHeader()->resizeSection(i,18);
-	}
-	QWidget::update();
-}
-
-void TableWindow::closeEvent(QCloseEvent *event)
-{
-	emit closing(this);
-	event->accept();
-} 
-
-/*
-void TableWindow::SetModels(QItemSelectionModel *selectionModel)
-{
-	table->setModel( (QAbstractItemModel*)selectionModel->model() );
-	table->setSelectionModel(selectionModel);
-}
-*/
-
-//***********************************************************************************
-//This function calculates the optimal size of the window so that all columns can be
-//displayed.  It also figures the a good height depending on the number of rows in the
-//model.
-//***********************************************************************************
-void TableWindow::ResizeToOptimalSize(void)
-{
-	int screenWidth = qApp->desktop()->width();
-	//Resize rows to minimum height
-	table->resizeRowsToContents();
-	table->resizeColumnsToContents();
-
-	//Resize Rows to be as small as possible
-	for (int i=0; i<table->model()->rowCount(); i++)
-	{
-		table->verticalHeader()->resizeSection(i,18);
-	}
-
-	//assumes all rows have the same height
-	int rowHeight = table->rowHeight(0);
-	int numRows = table->model()->rowCount();
-	if (numRows > 15) numRows = 15;
-	int bestHeight =( numRows + 1 ) * rowHeight;
-
-	int bestWidth = 0;
-	for (int i=0; i<table->model()->columnCount(); i++)
-	{
-		bestWidth = bestWidth + table->columnWidth(i);
-		if(bestWidth > 600)
-			break;
-	}
-	bestWidth = bestWidth + 50;
-	bestHeight+=5;
-
-	if (bestWidth > screenWidth)
-		bestWidth = screenWidth-10;
-
-	resize(bestWidth,bestHeight);
-}
-
+//***************************************************************************************************************
+//***************************************************************************************************************
+//***************************************************************************************************************
+//***************************************************************************************************************
+//***************************************************************************************************************
+// OTHER USEFUL CLASSES:
+//***************************************************************************************************************
 ChooseItemDialog::ChooseItemDialog(QStringList items, QWidget *parent)
 : QDialog(parent)
 {
@@ -335,12 +315,10 @@ void ChooseItemsDialog::selectionChanged(int id)
 }
 
 
-FilterRowsDialog::FilterRowsDialog(QTableView *table, QWidget *parent)
+FilterRowsDialog::FilterRowsDialog(QTableView *tableView, QWidget *parent)
 : QDialog(parent)
 {
-	this->setVisible(false);
-
-	mTable = table;
+	mTable = tableView;
 
 	smaller = tr("<=");
 	bigger = tr(">");
@@ -759,4 +737,80 @@ void FilterRowsDialog::DoFilter(void)
 				this->mTable->setRowHidden(row, !( (ok[0] || ok[1]) || ok[2] ) );
 		}
 	}
+	accept();
+}
+
+//******************************************************************************************************
+//******************************************************************************************************
+//******************************************************************************************************
+// This class will convert between the two selection models (make sure they are syncronized)
+//******************************************************************************************************
+SelectionAdapter::SelectionAdapter()
+: QObject()
+{
+	m_obj = NULL;
+	m_qmod = NULL;
+	okToChange = TRUE;
+}
+
+void SelectionAdapter::SetPair(ObjectSelection * obj, QItemSelectionModel * qmod)
+{
+	m_obj = obj;
+	m_qmod = qmod;
+
+	connect(m_obj, SIGNAL(changed()), this, SLOT(updateQMOD()));
+	connect(m_qmod, SIGNAL(selectionChanged(const QItemSelection &, const QItemSelection &)), \
+			this,SLOT(updateOBJ(const QItemSelection &, const QItemSelection &)));
+}
+
+void SelectionAdapter::updateQMOD(void)
+{
+	if(!okToChange) return;
+	okToChange = FALSE;
+	const QAbstractItemModel * model = m_qmod->model();
+	int rows = model->rowCount();
+	QItemSelection selection;
+	selection.clear();
+
+	for (int row = 0; row < rows; ++row) 
+	{
+		QModelIndex index1 = model->index(row, 0);
+		QModelIndex index2 = model->index(row, model->columnCount()-1);
+		int id = model->data(index1).toInt();
+		if (m_obj->isSelected(id))
+		{
+			selection.merge(QItemSelection(index1,index2),QItemSelectionModel::Select);
+		}
+    }
+	m_qmod->select(selection, QItemSelectionModel::ClearAndSelect);
+	okToChange = TRUE;
+}
+
+void SelectionAdapter::updateOBJ(const QItemSelection & selected, const QItemSelection & deselected)
+{
+	if(!okToChange) return;
+	okToChange = FALSE;
+	std::set<long int> ids;
+	const QAbstractItemModel * model = m_qmod->model();
+	int rows = model->rowCount();
+	int columns = model->columnCount();
+	
+	QModelIndexList sels = m_qmod->selectedRows();
+	for(int i=0; i<sels.size(); ++i)
+	{
+		QModelIndex index = sels.at(i);
+		long int id = model->data(index).toInt();
+		ids.insert(id);
+	}
+	//for (int row=0; row<rows; ++row)
+	//{
+	//	QModelIndex index = model->index(row, 0);
+	//	long int id = model->data(index).toInt();
+	//	if (m_qmod->isSelected(index))
+	//	{
+	//		ids.insert(id);
+	//	}
+	//}
+	m_obj->select(ids);
+	okToChange = TRUE;
 }

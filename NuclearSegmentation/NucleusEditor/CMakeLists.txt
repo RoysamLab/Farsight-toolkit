@@ -1,20 +1,12 @@
 SET( NucluesEditor_SRCS
   NucleusEditor.cpp
   SegmentationView.cpp
-  SegmentationWindow.cpp
-  SegmentationModel.cpp
-  NuclearSegmentationWizard.cpp
-  Seed3D.cxx
 )
 
 SET( NucluesEditor_HDRS
   NucleusEditor.h
   SegmentationView.h
-  SegmentationWindow.h
-  SegmentationModel.h
-  NuclearSegmentationWizard.h
-  Seed3D.h
-  #Seed3DHelperClasses.h
+
 )
 
 SET( NucluesEditor_UIS

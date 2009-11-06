@@ -15,16 +15,13 @@ limitations under the License.
 
 #include "PatternAnalysisWizard.h"
 
-PatternAnalysisWizard::PatternAnalysisWizard(QAbstractItemModel *mod, int outputColumn, QWidget *parent)
+PatternAnalysisWizard::PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, char * trainColumn, char * resultColumn, QWidget *parent)
 	: QWizard(parent)
 {
-	model = mod;
-	this->columnForPrediction = outputColumn;
-	if(columnForPrediction >= model->columnCount())
-	{
-		model->insertColumn(columnForPrediction);			//Add Column for svm result
-		model->setHeaderData(columnForPrediction, Qt::Horizontal, tr("pattern") );
-	}
+	this->m_table = table;
+
+	this->columnForTraining = trainColumn;
+	this->columnForPrediction = resultColumn;
 
 	optionGroup = new QButtonGroup;
 	initOptionGroup();
@@ -35,10 +32,6 @@ PatternAnalysisWizard::PatternAnalysisWizard(QAbstractItemModel *mod, int output
 	this->setPage(Page_Start, new StartPage(optionGroup));
 	this->setPage(Page_Features, new FeaturesPage(featureGroup));
 	//this->setPage(Page_Execute, new ExecutePage();
-	//this->setPage(Page_Binarize, new BinarizePage);
-	//this->setPage(Page_Seeds, new SeedsPage);
-	//this->setPage(Page_Cluster, new ClusterPage);
-	//this->setPage(Page_Finalize, new FinalizePage);
 
 	this->setStartId(Page_Start);
 	this->setModal(true);
@@ -57,13 +50,15 @@ PatternAnalysisWizard::PatternAnalysisWizard(QAbstractItemModel *mod, int output
 
 void PatternAnalysisWizard::initFeatureGroup(void)
 {
-	if(!model) return;
+	if(!m_table) return;
 
 	featureGroup->setExclusive(false);
-	for (int c=1; c<model->columnCount()-1; ++c)
+	for (int c=1; c<m_table->GetNumberOfColumns(); ++c)
 	{
-		QString name = model->headerData(c,Qt::Horizontal).toString();
-		QCheckBox *check = new QCheckBox(name);
+		const char * name = m_table->GetColumnName(c);
+		if( strcmp(name,columnForTraining) == 0 || strcmp(name,columnForPrediction) == 0 )
+			continue;
+		QCheckBox * check = new QCheckBox(QString(name));
 		check->setChecked(false);
 		featureGroup->addButton(check, c);
 	}
@@ -311,19 +306,17 @@ void PatternAnalysisWizard::runSVM()
 	std::vector<double> f_min;						//The minimum value of each feature
 	f_min.assign(columnsToUse.size(), DBL_MAX);
 
-	std::vector< std::vector< double > > features;
-	features.resize( model->rowCount() );
+	std::vector< std::vector< double > > features;	//Will contain the normalized features
+	features.resize( m_table->GetNumberOfRows() );
 
 	//exract data from the model and get min/max values:
-	QModelIndex index;
-	for(int r=0; r<(int)model->rowCount(); ++r)
+	for(int r=0; r<(int)features.size(); ++r)
 	{
 		for(int c=0; c<(int)columnsToUse.size(); ++c)
 		{
-			index = model->index(r, columnsToUse.at(c));
-			double val = model->data(index).toDouble();
+			int col = columnsToUse.at(c);
+			double val = m_table->GetValue(r,col).ToDouble();
 			features.at(r).push_back( val );
-
 			if( normalize )
 			{
 				//Also gather min/max
@@ -354,7 +347,7 @@ void PatternAnalysisWizard::runSVM()
 	#define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 	struct svm_problem prob;
 
-	prob.l = model->rowCount();							//Number of objects
+	prob.l = (int)features.size();					//Number of objects
 	prob.y = Malloc(double,prob.l);					//Array Containing target values (unknowns)
 	prob.x = Malloc(struct svm_node *,prob.l);		//Array of Pointers to Nodes
 
@@ -424,6 +417,28 @@ void PatternAnalysisWizard::runSVM()
 	}
 	svm_destroy_model(m_svm_model);
 
+	//If need to create a new column do so now:
+	vtkAbstractArray * output = m_table->GetColumnByName(columnForPrediction);
+	if(output == 0)
+	{
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( columnForPrediction );
+		column->SetNumberOfValues( m_table->GetNumberOfRows() );
+		m_table->AddColumn(column);
+	}
+	for(int row = 0; (int)row < m_table->GetNumberOfRows(); ++row)  //Set all values to 0
+	{
+		m_table->SetValueByName(row,columnForPrediction, 0);
+	}
+	for(int i = 0; i < (int)outliers.size(); ++i)					//Set outliers to 1
+	{
+		int row = outliers.at(i);
+		m_table->SetValueByName(row,columnForPrediction, 1);
+	}
+	
+	emit changedTable();
+
+	/*
 	model->setHeaderData( columnForPrediction, Qt::Horizontal, tr("outlier?") );
 
 	//stop signalling:
@@ -444,6 +459,7 @@ void PatternAnalysisWizard::runSVM()
 	//turn signals back on & change one more piece of data to force dataChanged signal
 	model->blockSignals(false);
 	model->setData(model->index(outliers.back(), columnForPrediction), o);
+	*/
 }
 //****************************************************************************
 //****************************************************************************

@@ -1,27 +1,23 @@
 SET( GUI_SRCS
-    	#ControlBar.cpp
     	PlotWindow.cpp
     	ScatterView.cpp
     	TableWindow.cpp		
-   	#TableView.cpp
-   	#Histogram.cpp
    		HistoWindow.cpp
     	ImageBrowser5D.cpp
-    	LibSVMWidget.cpp
     	PatternAnalysisWizard.cpp
+    	ObjectSelection.cpp
+    	LabelImageViewQT.cpp
 )
 
 SET( GUI_HDRS
-    	#ControlBar.h
     	PlotWindow.h
     	ScatterView.h
     	TableWindow.h
-   		#TableView.h
-    	#Histogram.h
     	HistoWindow.h
     	ImageBrowser5D.h
-    	LibSVMWidget.h
     	PatternAnalysisWizard.h
+    	ObjectSelection.h
+    	LabelImageViewQT.h
 )
 
 SET( GUI_UIS

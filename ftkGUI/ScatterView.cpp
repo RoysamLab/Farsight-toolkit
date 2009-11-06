@@ -12,105 +12,202 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
-
-//****************************************************************************************
-// Adapted from Qt Example pieview.cpp
-//
-// This view inherits from QAbstractItemView and is therefore part of the model/view 
-// framework of QT.  It allows for data in a model to be represented by scatterplots.
-// The selection method is slightly adjusted so that a plot point is shown as selected
-// if any of the items in its row are actually selected.
-//****************************************************************************************
 #include <math.h>
 
 #include "ScatterView.h"
 
-ScatterView::ScatterView(QWidget *parent) : QAbstractItemView(parent)
+ScatterView::ScatterView(QWidget *parent) : QWidget(parent)
 {
-    horizontalScrollBar()->setRange(0, 0);
-    verticalScrollBar()->setRange(0, 0);
-
-	//setSelectionMode(QAbstractItemView::ExtendedSelection);
-	setSelectionMode(QAbstractItemView::MultiSelection);
-	//setSelectionMode(QAbstractItemView::SingleSelection);
-
-	//Set Defaults
-	columnNumForX = -1;
-	columnNameForX = "x";
-	columnNumForY = -1;
-	columnNameForY = "y";
-	columnNumForColoring = -1;
-
 	mySettings = new PlotSettings();
+	this->setFocusPolicy(Qt::StrongFocus);
 
+	columnNumForX = 1;
+	columnNumForY = 2;
+	columnNumForColor = -1;
+
+	table = NULL;
+	selection = NULL;
 	selMode = 0;
-    rubberBand = 0;
-
-	x = 0;
-	y = 0;
 }
 
-//********************************************************************************************
-// SLOT
-//********************************************************************************************
-void ScatterView::SetColForX(int x, std::string name)
-{ 
-	if (x >= 0 && x < model()->columnCount())
-	{
-		columnNumForX = x;
-		columnNameForX = name;
-		updateAxis();
-		viewport()->update();
-	}
-}
-//********************************************************************************************
-// SLOT
-//********************************************************************************************
-void ScatterView::SetColForY(int y, std::string name)
-{ 
-	if (y >= 0 && y < model()->columnCount())
-	{
-		columnNumForY = y;
-		columnNameForY = name;
-		updateAxis();
-		viewport()->update();
-	}
-}
-//********************************************************************************************
-// SLOT
-//********************************************************************************************
-void ScatterView::SetColForColor(int c, QMap<int, QColor>  newMap)
-{ 
-	if (c >= 0 && c < model()->columnCount())
-	{
-		columnNumForColoring = c;
-		colorMap = newMap;
-		viewport()->update();
-	}
-}
-void ScatterView::SetColForColor(int c)
+//*****************************************************************************************
+// Add to the setModel function so that the axis are updated
+//*****************************************************************************************
+void ScatterView::setModels(vtkSmartPointer<vtkTable> tbl, ObjectSelection * sels)
 {
-	if (c >= 0 && c < model()->columnCount())
-	{
-		columnNumForColoring = c;
-		colorMap = GetDefaultColors();
-		viewport()->update();
-	}
+	this->table = tbl;
+	if(!sels)
+		this->selection = new ObjectSelection();
+	else
+		this->selection = sels;
+	connect(selection, SIGNAL(changed()), this, SLOT(repaint()));
+
+	updateAxis();
+	this->update();
 }
 
+//**************************************************************************************
+// SLOT: clears the selections and selectionRegion
+//**************************************************************************************
+void ScatterView::clearSelections(void)
+{
+	selectionRegion.clear();
+	if(selection)
+		selection->clear();
+}
+
+//********************************************************************************************
+// SLOT
+//********************************************************************************************
 void ScatterView::SetNormalize(bool val)
 {
 	if( val != mySettings->normalize )
 	{
 		mySettings->normalize = val;
 		updateAxis();
-		viewport()->update();
+		this->update();
 	}
 }
 
+//********************************************************************************************
+// SLOT
+//********************************************************************************************
+void ScatterView::SetColForX(int x)
+{
+	if(!table) return;
+	if (x > 0 && x < table->GetNumberOfColumns())
+	{
+		columnNumForX = x;
+		updateAxis();
+		this->update();
+	}
+}
+//********************************************************************************************
+// SLOT
+//********************************************************************************************
+void ScatterView::SetColForY(int y)
+{ 
+	if(!table) return;
+	if (y > 0 && y < table->GetNumberOfColumns())
+	{
+		columnNumForY = y;
+		updateAxis();
+		this->update();
+	}
+}
+
+void ScatterView::SetColForColor(int c)
+{
+	if(!table) return;
+	if(c>0 && c<table->GetNumberOfColumns())
+	{
+		columnNumForColor = c;
+		this->update();
+	}
+}
+
+//***********************************************************************************************
+//***********************************************************************************************
+//***********************************************************************************************
+// Mouse Events:
+//***********************************************************************************************
+void ScatterView::mousePressEvent(QMouseEvent *event)
+{
+    QWidget::mousePressEvent(event);
+    origin = event->pos();
+
+	if(!selection) return;
+	int labelval = indexAt(origin);
+
+	Qt::KeyboardModifiers modifiers = event->modifiers();
+	if( selMode == 1 )
+	{
+		selectionRegion.append(origin);
+		this->repaint();
+	}
+	else
+	{
+		if(modifiers == Qt::ControlModifier && labelval > 0)
+			selection->toggle( labelval );
+		else if(modifiers == Qt::NoModifier && labelval > 0)
+			selection->select( labelval );
+	}
+}
+
+void ScatterView::mouseMoveEvent(QMouseEvent *event)
+{
+	QWidget::mouseMoveEvent(event);
+}
+void ScatterView::mouseReleaseEvent(QMouseEvent *event)
+{
+    QWidget::mouseReleaseEvent(event);
+}
+
+void ScatterView::keyPressEvent(QKeyEvent * event)
+{
+	switch(event->key()) 
+	{
+		case Qt::Key_Shift:
+			selMode = 1;
+		break;
+    }
+	QWidget::keyPressEvent(event);
+}
+
+void ScatterView::keyReleaseEvent(QKeyEvent * event)
+{
+	switch(event->key())
+	{
+		case Qt::Key_Shift:
+			this->selectRegion();
+			selMode = 0;
+		break;
+	}
+	QWidget::keyReleaseEvent(event);
+}
+
 //**************************************************************************************
-// SLOT: call this slot to update the selection.  All objects inside the region defined
-//  for the points in selectionRegion will be selected.
+// This event happens when the window is resized.  For simplicity I clear the selection
+// region so that I do not have to scale it accordingly and redraw it.
+//**************************************************************************************
+void ScatterView::resizeEvent(QResizeEvent *event)
+{
+	selectionRegion.clear();
+	QWidget::resizeEvent(event);
+}
+
+//*********************************************************************************************************
+//Returns the ID of the item at the coordinate.
+//*********************************************************************************************************
+long int ScatterView::indexAt(QPoint &point)
+{
+	if(!table) return -1;
+
+	long int retval = -1;
+    double wx = point.x();
+	double wy = point.y();
+
+	//First check to be sure clicked location is inside of plot area
+	//QRect rect(LMargin, TMargin, this->width() - (LMargin+RMargin), this->height() - (BMargin+TMargin));
+	//if ( (wx > rect.left()) && (wx < rect.right()) && (wy > rect.top()) && (wy < rect.bottom()) )
+	//{
+		for (int row = 0; row < table->GetNumberOfRows(); ++row) 
+		{
+			QRect oRect = getObjectRect(row);
+
+			if ( ( wx >= oRect.left() ) && ( wx <= oRect.right() ) && ( wy >= oRect.top() ) && ( wy <= oRect.bottom() ) ) 
+			{
+				//returns the index of the first column which is ID
+				retval = table->GetValue(row,0).ToLong();
+				break;
+			}
+		}
+	//}
+	return retval;
+}
+
+//**************************************************************************************
+// All objects inside the a region defined by selectionRegion will be selected.
 //**************************************************************************************
 void ScatterView::selectRegion(void)
 {
@@ -120,180 +217,80 @@ void ScatterView::selectRegion(void)
 	if(selectionRegion.size() <= 0)
 		return;
 
-	//I replace the last point with the first point to create a closed loop
-	int numPoints = selectionRegion.size();
-	selectionRegion[numPoints-1] = selectionRegion[0];
+	if(!table)
+		return;
 
-	//I turn my list of clicks into a path
+	//Make the last point the first point to create a closed loop
+	selectionRegion.append( selectionRegion[0] );
+	int numPoints = selectionRegion.size();
+
+	//Turn my list of clicks into a path
 	QPainterPath path;
 	path.moveTo(selectionRegion[0]);
-	for (int i=1; i < numPoints; i++)
+	for (int i=0; i < numPoints; i++)
 	{
 		path.lineTo(selectionRegion[i]);
 	}
-
 	//Draw the path in an image
-	//QRect rect(Margin, Margin, viewport()->width() - 2*Margin, viewport()->height() - 2*Margin);
-	QRect rect(LMargin, TMargin, viewport()->width() - (LMargin+RMargin), viewport()->height() - (BMargin+TMargin));
+	//QRect rect(LMargin, TMargin, this->width() - (LMargin+RMargin), this->height() - (BMargin+TMargin));
+	QRect rect(0,0,this->width(), this->height());
 	QImage img(rect.width(),rect.height(),QImage::Format_Mono);
 	img.fill(Qt::white);
 	QPainter painter(&img);
 	painter.setPen(Qt::black);
 	painter.setBrush(Qt::black);
 	painter.drawPath(path);
-
 	//Turn the image into a Region
 	QBitmap bitmap = QBitmap::fromImage(img, Qt::MonoOnly | Qt::ThresholdDither);
 	QRegion region(bitmap);
-	//QItemSelectionModel::SelectionFlags command = QItemSelectionModel::Select;
-	//setSelection(region,QItemSelectionModel::ClearAndSelect);
-	setSelection(region,QItemSelectionModel::Select);
-	viewport()->update();
-	//selectionRegions.append(selectionRegion);
-	selectionRegion.clear();
-}
 
-//**************************************************************************************
-// All objects in region are selected/de according to selection flags command
-//**************************************************************************************
-void ScatterView::setSelection(const QRegion &region, QItemSelectionModel::SelectionFlags command)
-{
-	int rows = model()->rowCount(rootIndex());
-	QItemSelection selection;
-	selection.clear();
-    //QModelIndexList indexes;
+	//Get the Ids of the objects within this region and select them:
+	std::set<long int> sels;
+	int rows = table->GetNumberOfRows();
 	for (int row = 0; row < rows; ++row) 
 	{
-		//get the region of the item
-		QModelIndex index1 = model()->index(row, 0, rootIndex());
-		QModelIndex index2 = model()->index(row, model()->columnCount()-1, rootIndex());
-        QRegion point = itemRegion(index1);
+        QRegion point = getObjectRect( row );
 		//if it intersects with the selection region, save the index
 		if (!point.intersect(region).isEmpty())
 		{
-			//indexes.append(index);
-			selection.merge(QItemSelection(index1,index2),command);
+			sels.insert( table->GetValue(row,0).ToLong() );
 		}
     }
-	selectionModel()->select(selection, command);
-
-	/*
-	if (indexes.size() > 0) 
-	{	
-		QItemSelection selection;
-		selection.clear();
-        for (int i = 0; i < indexes.size(); ++i) 
-		{
-			//Add each item's region to the selection
-			selection.merge(QItemSelection(indexes[i],indexes[i]),command);
-        }
-        selectionModel()->select(selection, command);
-		selectionModel()->setCurrentIndex(indexes.last(),QItemSelectionModel::NoUpdate);
-    } 
-	else 
-	{
-        QModelIndex noIndex;
-        QItemSelection selection(noIndex, noIndex);
-        selectionModel()->select(selection, command);
-    }
-	*/
-    update();
-}
-
-//**************************************************************************************
-// SLOT: clears the selection model and selectionRegion
-//**************************************************************************************
-void ScatterView::clearSelections(void)
-{
 	selectionRegion.clear();
-	selectionModel()->clear();
-	viewport()->update();
+	selection->add(sels);
 }
 
-//*********************************************************************************************************
-//	This slot is called when items are changed in the model. 
-//  The changed items are those from topLeft to bottomRight inclusive. 
-//  If just one item is changed topLeft == bottomRight. 
-//*********************************************************************************************************
-void ScatterView::dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight)
-{
-    QAbstractItemView::dataChanged(topLeft, bottomRight);
-	
-	//Check to see if the change is in the column that we are currently displaying:
-	int l_column = topLeft.column();
-	int r_column = bottomRight.column();
+//***********************************************************************************************
+//***********************************************************************************************
+//***********************************************************************************************
 
-	if( (l_column <= columnNumForX && r_column >= columnNumForX) 
-		|| (l_column <= columnNumForY && r_column >= columnNumForY)
-		|| (l_column <= columnNumForColoring && r_column >= columnNumForColoring) )
-	{
-		//Find max/min x/y and adjust the axis accordingly
-		updateAxis();
-
-		viewport()->update();
-	}
-}
-
-//**********************************************************************************************************
-// This is a convenience slot that shows that all data has changed
-//**********************************************************************************************************
-void ScatterView::dataChanged()
-{
-	const QModelIndex topLeft = model()->index(0,0);
-	const QModelIndex bottomRight = model()->index( model()->rowCount() - 1, model()->columnCount() - 1 );
-	this->dataChanged(topLeft,bottomRight);
-}
-
-//*****************************************************************************************
-// Add to the setModel function so that the axis are updated
-//*****************************************************************************************
-void ScatterView::setModel(QAbstractItemModel *model)
-{
-	QAbstractItemView::setModel(model);
-	initColumns();
-	updateAxis();
-	viewport()->update();
-}
-
-void ScatterView::initColumns()
-{
-	columnNumForX = 0;
-	columnNameForX = (model()->headerData(0,Qt::Horizontal).toString()).toStdString();
-	columnNumForY = 1;
-	columnNameForY = (model()->headerData(1, Qt::Horizontal).toString()).toStdString();
-	columnNumForColoring = -1;
-}
 //*********************************************************************************************************
 // Find the maximum and minimum values of the data points and update the axis to show all data
 //*********************************************************************************************************
 void ScatterView::updateAxis(void)
 {
+	if(!table) return;
+
 	double x1 = 0;
 	double x2 = 0;
 	double y1 = 0;
 	double y2 = 0;
 	double v = 0;
-	QModelIndex index;
-	int rows = model()->rowCount(rootIndex());
+	int rows = table->GetNumberOfRows();
 
 	if (rows > 0)
 	{	//initialize values
-		index = model()->index(0, columnNumForX, rootIndex());
-		x1 = model()->data(index).toDouble();
+		x1 = table->GetValue(0,columnNumForX).ToDouble();
 		x2 = x1;
-		index = model()->index(0, columnNumForY, rootIndex());
-		y1 = model()->data(index).toDouble();
+		y1 = table->GetValue(0,columnNumForY).ToDouble();
 		y2 = y1;
 	}
 	for (int row = 1; row < rows; ++row) 
-	{
-		//find min/max of each axis
-		index = model()->index(row, columnNumForX, rootIndex());
-		v = model()->data(index).toDouble();
+	{	//find min/max of each axis
+		v = table->GetValue(row,columnNumForX).ToDouble();
 		if (v < x1) x1 = v;
 		else if (v > x2) x2 = v;
-		index = model()->index(row, columnNumForY, rootIndex());
-		v = model()->data(index).toDouble();
+		v = table->GetValue(row,columnNumForY).ToDouble();
 		if (v < y1) y1 = v;
 		else if (v > y2) y2 = v;
     }
@@ -312,15 +309,11 @@ void ScatterView::updateAxis(void)
 	{
 		//now extend axis slightly so all data points will be visible
 		double xrange = x2-x1;
-    if(xrange == 0)
-      {
-      xrange = 0.1;
-      }
+		if(xrange == 0)
+			xrange = 0.1;
 		double yrange = y2-y1;
-    if(yrange == 0)
-      {
-      yrange = 0.1;
-      }
+		if(yrange == 0)
+			yrange = 0.1;
 		double xp = .03*double(xrange);
 		double yp = .03*double(yrange);
 		mySettings->setRange(x1-xp,x2+xp,y1-yp,y2+yp);
@@ -328,432 +321,15 @@ void ScatterView::updateAxis(void)
 	mySettings->adjust();
 }
 
-//*********************************************************************************************************
-//	Starts editing the item corresponding to the given index if it is editable
-//*********************************************************************************************************
-bool ScatterView::edit(const QModelIndex &index, EditTrigger trigger, QEvent *event)
-{
-   //return QAbstractItemView::edit(index, trigger, event);
-	return false;
-}
-
-//*********************************************************************************************************
-//Returns the item that covers the coordinate given in the view.
-//
-//Required function
-//*********************************************************************************************************
-QModelIndex ScatterView::indexAt(const QPoint &point) const
-{
-	QModelIndex retval = QModelIndex();
-	// Transform the view coordinates into contents viewport coordinates.
-    double wx = point.x() + horizontalScrollBar()->value();
-	double wy = point.y() + verticalScrollBar()->value();
-
-	// Find the extrema of the plot area in viewport coordinates
-	//QRect rect(Margin, Margin, viewport()->width() - 2*Margin, viewport()->height() - 2*Margin);
-	QRect rect(LMargin, TMargin, viewport()->width() - (LMargin+RMargin), viewport()->height() - (BMargin+TMargin));
-
-	//First check to be sure clicked location is inside of plot area
-	if ( (wx > rect.left()) && (wx < rect.right()) && (wy > rect.top()) && (wy < rect.bottom()) )
-	{
-		//Convert wx and wy to real x and real y values
-		PlotSettings settings = *mySettings;
-
-		for (int row = 0; row < model()->rowCount(rootIndex()); ++row) 
-		{
-			QModelIndex indexX = model()->index(row, columnNumForX, rootIndex());
-            QModelIndex indexY = model()->index(row, columnNumForY, rootIndex());
-            double valueX = model()->data(indexX).toDouble();
-			double valueY = model()->data(indexY).toDouble();
-
-			//Adjust for normalization:
-			if(settings.normalize == true)
-			{
-				valueX = -1 + 2* (valueX - settings.d_minX)/(settings.d_maxX - settings.d_minX);
-				valueY = -1 + 2* (valueY - settings.d_minY)/(settings.d_maxY - settings.d_minY);
-			}
-
-            double dx = valueX - settings.minX;
-			double dy = valueY - settings.minY;
-			double x = rect.left() + (dx * (rect.width() - 1) / settings.spanX());
-			double y = rect.bottom() - (dy * (rect.height() - 1) / settings.spanY());
-
-			if ( ( wx > (x-2) ) && ( wx < (x+2) ) && ( wy > (y-2) ) && ( wy < (y+2) ) ) 
-			{
-				//returns the index of the first column which is ID
-				retval = model()->index(row, 0/*columnNumForX*/, rootIndex());
-				break;
-			}
-		}
-	}
-	//retval = model()->index(0, 0, rootIndex());
-	return retval;
-}
-
-//*********************************************************************************************************
-//Returns false because we do not hide any items in our view
-//
-//Required function
-//*********************************************************************************************************
-bool ScatterView::isIndexHidden(const QModelIndex & /*index*/) const
-{
-	return false;
-}
-
-//*********************************************************************************************************
-//     Returns the rectangle of the item with index index in the
-//     model. The rectangle is in viewport coordinates.
-//*********************************************************************************************************
-QRect ScatterView::itemRect(const QModelIndex &index) const
-{
-	//std::cerr << "In itemRect" << std::endl;
-
-	if (!index.isValid())
-		return QRect();
-
-	// Get current viewport region
-	//QRect viewportRect(Margin, Margin, viewport()->width() - 2*Margin, viewport()->height() - 2*Margin);
-	QRect viewportRect(LMargin, TMargin, viewport()->width() - (LMargin+RMargin), viewport()->height() - (BMargin+TMargin));
-
-	// If not a valid viewport leave
-	if (!viewportRect.isValid())
-		return QRect();
-
-	//PlotSettings settings = PlotSettings();
-	PlotSettings settings = *mySettings;
-	int row = index.row();
-	QModelIndex indexX = model()->index(row, columnNumForX, rootIndex());
-    QModelIndex indexY = model()->index(row, columnNumForY, rootIndex());
-
-    double valueX = model()->data(indexX).toDouble();
-	double valueY = model()->data(indexY).toDouble();
-
-	//Adjust for normalization:
-	if(settings.normalize == true)
-	{
-		valueX = -1 + 2* (valueX - settings.d_minX)/(settings.d_maxX - settings.d_minX);
-		valueY = -1 + 2* (valueY - settings.d_minY)/(settings.d_maxY - settings.d_minY);
-	}
-
-    double dx = valueX - settings.minX;
-	double dy = valueY - settings.minY;
-	double x = viewportRect.left() + (dx * (viewportRect.width() - 1) / settings.spanX());
-	double y = viewportRect.bottom() - (dy * (viewportRect.height() - 1) / settings.spanY());
-
-	return QRect(int(x-3),int(y-3),7,7);
-}
-
-
-//*********************************************************************************************************
-//     Returns the region of the item with index index in the
-//     model. The region is in viewport coordinates.
-//*********************************************************************************************************
-QRegion ScatterView::itemRegion(const QModelIndex &index) const
-{
-	//std::cerr << "In itemRegion" << std::endl;
-
-    if (!index.isValid())
-		 return QRegion();
-
-	
-	return itemRect(index);
-}
-//**************************************************************************************
-// If we used scrollbars we would need this
-//**************************************************************************************
-int ScatterView::horizontalOffset() const
-{
-    return horizontalScrollBar()->value();
-}
-//**************************************************************************************
-// If we used scrollbars we would need this
-//**************************************************************************************
-int ScatterView::verticalOffset() const
-{
-    return verticalScrollBar()->value();
-}
-
-void ScatterView::keyPressEvent(QKeyEvent * event)
-{
-	switch (event->key()) 
-	{
-		case Qt::Key_Up:
-			y--;
-			break;
-		case Qt::Key_Down:
-			y++;
-			break;
-		case Qt::Key_Left:
-			x--;
-			break;
-		case Qt::Key_Right:
-			x++;
-			break;
-		case Qt::Key_Control:
-			selMode = 1;
-			break;
-    }
-	QWidget::keyPressEvent(event);
-	viewport()->update();
-}
-
-void ScatterView::keyReleaseEvent(QKeyEvent * event)
-{
-	switch(event->key())
-	{
-		case Qt::Key_Control:
-			this->selectRegion();
-			selMode = 0;
-			break;
-	}
-	QWidget::keyReleaseEvent(event);
-	viewport()->update();
-}
-
-void ScatterView::mousePressEvent(QMouseEvent *event)
-{
-    QAbstractItemView::mousePressEvent(event);
-    origin = event->pos();
-    /*if (!rubberBand)
-	{
-        rubberBand = new QRubberBand(QRubberBand::Rectangle, this);
-	}
-	rubberBand->setGeometry(QRect(origin, QSize()));
-	rubberBand->show();*/
-
-}
-
-void ScatterView::mouseMoveEvent(QMouseEvent *event)
-{
-	QAbstractItemView::mouseMoveEvent(event);
-    /*if (rubberBand)
-	{
-        rubberBand->setGeometry(QRect(origin, event->pos()).normalized());
-		//setSelection(QRect(origin, event->pos()).normalized(), QItemSelectionModel::ClearAndSelect);
-	}*/
-}
-//**************************************************************************************
-// Upon mouse release, check to make sure I'm close to press (indicating a mouse click)
-// Then check my selection mode.  If selection mode is 1 then I add the object under the 
-// mouse to the selection
-//**************************************************************************************
-void ScatterView::mouseReleaseEvent(QMouseEvent *event)
-{
-    QAbstractItemView::mouseReleaseEvent(event);
-	QPoint click = event->pos();
-
-	//Check to make sure this was just a click
-	int r = 10;
-	if ( (click.x() < origin.x() - r) || (click.x() > origin.x() + r) )
-		return;
-	if ( (click.y() < origin.y() - r) || (click.y() > origin.y() + r) )
-		return;
-
-	//Check to make sure we are in region selection mode
-	if ( selMode != 1 )
-		return;
-
-	if ( indexAt(click) == QModelIndex() )
-	{
-		selectionRegion.append(click);
-	}
-	if ( indexAt(click) != QModelIndex() )
-	{
-		setSelection(QRegion(click.x(),click.y(),1,1),QItemSelectionModel::Select);
-	}
-    /*if (rubberBand)
-	{
-        rubberBand->hide();
-	}	*/
-    viewport()->update();
-}
-
-//**************************************************************************************
-// This event happens when the window is resized.  For simplicity I clear the selection
-// region so that I do not have to scale it accordingly and redraw it.
-//**************************************************************************************
-void ScatterView::resizeEvent(QResizeEvent *event)
-{
-	selectionRegion.clear();
-	//selectionRegions.clear();
-	QAbstractItemView::resizeEvent(event);
-}
-
-//*****************************************************************************************************************
-//	Moves the cursor in the view according to the given cursorAction and keyboard modifiers specified by modifiers.
-//*****************************************************************************************************************
-QModelIndex ScatterView::moveCursor(QAbstractItemView::CursorAction cursorAction, Qt::KeyboardModifiers /*modifiers*/)
-{
-     QModelIndex current = currentIndex();
-	 //std::cerr << "In moveCursor" << std::endl;
-/*
-     switch (cursorAction) {
-         case MoveLeft:
-         case MoveUp:
-             if (current.row() > 0)
-                 current = model()->index(current.row() - 1, current.column(),
-                                          rootIndex());
-             else
-                 current = model()->index(0, current.column(), rootIndex());
-             break;
-         case MoveRight:
-         case MoveDown:
-             if (current.row() < rows(current) - 1)
-                 current = model()->index(current.row() + 1, current.column(),
-                                          rootIndex());
-             else
-                 current = model()->index(rows(current) - 1, current.column(),
-                                          rootIndex());
-             break;
-         default:
-             break;
-     }
-*/
-     viewport()->update();
-     return current;
- }
 //**************************************************************************************
 //Repaints the view.  Called automatically
 //**************************************************************************************
- void ScatterView::paintEvent(QPaintEvent *event)
- {
-	 refreshPixmap();
-	 QStylePainter painter(viewport());
-	 painter.drawPixmap(0, 0, pixmap);
- }
-
- //*********************************************************************************************************
- //	Scrolls the view if necessary to ensure that the item at index is visible. 
- //	The view will try to position the item according to the given hint
- //*********************************************************************************************************
- void ScatterView::scrollTo(const QModelIndex &index, ScrollHint)
- {
-     QRect area = viewport()->rect();
-     QRect rect = visualRect(index);
-
-     if (rect.left() < area.left())
-         horizontalScrollBar()->setValue(
-             horizontalScrollBar()->value() + rect.left() - area.left());
-     else if (rect.right() > area.right())
-         horizontalScrollBar()->setValue(
-             horizontalScrollBar()->value() + qMin(
-                 rect.right() - area.right(), rect.left() - area.left()));
-
-     if (rect.top() < area.top())
-         verticalScrollBar()->setValue(
-             verticalScrollBar()->value() + rect.top() - area.top());
-     else if (rect.bottom() > area.bottom())
-         verticalScrollBar()->setValue(
-             verticalScrollBar()->value() + qMin(
-                 rect.bottom() - area.bottom(), rect.top() - area.top()));
-
-     update();
- }
-
-//***********************************************************************************************************************
-//   Find the indices corresponding to the extent of the selection.
-//	 Applies the selection flags to the items in or touched by the rectangle, rect. 
-//   When implementing your own itemview setSelection should call selectionModel()->select(selection, flags) 
-//		where selection is either an empty QModelIndex or a QItemSelection that contains all items that are contained in rect. 
-//***********************************************************************************************************************
-void ScatterView::setSelection(const QRect &rect, QItemSelectionModel::SelectionFlags command)
-{	
-	//Over-ride command for select only (use clear button to deselect)
-	//command = QItemSelectionModel::Select;
-	//This is the selection region
-    QRect contentsRect = rect.translated( horizontalScrollBar()->value(), verticalScrollBar()->value()).normalized();
-
-	//std::cerr << "left = " << contentsRect.left() << ", right = " << contentsRect.right() << ", top = " << contentsRect.top() << ", bottom = " << contentsRect.bottom() << std::endl;
-
-    int rows = model()->rowCount(rootIndex());
-
-    //QModelIndexList indexes;
-	QItemSelection selection;
-	selection.clear();
-	for (int row = 0; row < rows; ++row) 
-	{
-		//get the region of the item
-		QModelIndex index1 = model()->index(row, 0, rootIndex());
-		QModelIndex index2 = model()->index(row, model()->columnCount()-1, rootIndex());
-		//QModelIndex index = model()->index(row, 0, rootIndex());
-        QRegion region = itemRegion(index1);
-		//if it intersects with the selection region, save the index
-		if (!region.intersect(contentsRect).isEmpty())
-		{
-			//indexes.append(index);
-			selection.merge(QItemSelection(index1,index2),command);
-		}
-    }
-	selectionModel()->select(selection, command);
-
-	/*
-	if (indexes.size() > 0) 
-	{	
-		QItemSelection selection;
-		selection.clear();
-        for (int i = 0; i < indexes.size(); ++i) 
-		{
-			//Add each item's region to the selection
-			selection.merge(QItemSelection(indexes[i],indexes[i]),command);
-        }
-        selectionModel()->select(selection, command);
-    } 
-	else 
-	{
-        QModelIndex noIndex;
-        QItemSelection selection(noIndex, noIndex);
-        selectionModel()->select(selection, command);
-    }
-	*/
-    update();
-}
-
-//********************************************************************************************************************
-//	 Returns the rectangle on the viewport (in viewport coordinates) occupied by the item at index. 
-//   If your item is displayed in several areas then visualRect should return the primary area that contains index 
-//		and not the complete area that index might encompasses, touch or cause drawing. 
-//   In the base class this is a pure virtual function. 
-//********************************************************************************************************************
-QRect ScatterView::visualRect(const QModelIndex &index) const
+void ScatterView::paintEvent(QPaintEvent *event)
 {
-	/*  Old Code Saved in case I use scrollbars later
-	QRect rect = itemRect(index);
-    if (rect.isValid())
-        return QRect(rect.left() - horizontalScrollBar()->value(), rect.top() - verticalScrollBar()->value(), rect.width(), rect.height());
-    else
-        return rect;
-	*/
-	//std::cerr << "In visualrect" << std::endl;
-	return itemRect(index);
-	//return viewport()->rect();
+	refreshPixmap();
+	QStylePainter painter(this);
+	painter.drawPixmap(0, 0, pixmap);
 }
-
-//********************************************************************************************************************
-//     Returns a region corresponding to the selection in viewport coordinates.
-//	 Returns the region from the viewport of the items in the given selection.
-//********************************************************************************************************************
-QRegion ScatterView::visualRegionForSelection(const QItemSelection &selection) const
-{
-	//std::cerr << "In regionforselection" << std::endl;
-    int ranges = selection.count();
-
-    if (ranges == 0)
-        return QRect();
-
-	QRegion region;
-    for (int i = 0; i < ranges; ++i) {
-		QItemSelectionRange range = selection.at(i);
-        for (int row = range.top(); row <= range.bottom(); ++row) 
-		{
-            for (int col = range.left(); col <= range.right(); ++col) 
-			{
-				QModelIndex index = model()->index(row, col, rootIndex());
-                region += visualRect(index);
-            }
-        }
-    }
-    return region;
-} 
 
  //***************************************************************************************************
 //The refreshPixmap() function redraws the plot onto the off-screen pixmap and updates the display.
@@ -770,16 +346,12 @@ QRegion ScatterView::visualRegionForSelection(const QItemSelection &selection) c
 void ScatterView::refreshPixmap()
 {
 	pixmap = QPixmap(size());
-	//pixmap.fill(this, 0, 0);
-	//pixmap.fill(Qt::white);
 	pixmap.fill(QColor(220,220,220));
 	QPainter painter(&pixmap);
 	painter.initFrom(this);
 	drawGrid(&painter);
 	drawCurves(&painter);
 	drawSelection(&painter);
-	//painter.drawImage(0,0,bitmap.toImage());
-	//update();   //Removed because this calls paintEvent which calls this function
 }
 
 //***************************************************************************************************
@@ -798,7 +370,7 @@ void ScatterView::refreshPixmap()
 void ScatterView::drawGrid(QPainter *painter)
 {	
 	//This rectangle is the graph area
-	QRect rect(LMargin, TMargin, viewport()->width() - (LMargin+RMargin), viewport()->height() - (BMargin+TMargin));
+	QRect rect(LMargin, TMargin, this->width() - (LMargin+RMargin), this->height() - (BMargin+TMargin));
 	if (!rect.isValid())
 		return;
 	//Retrieve current plotSettings
@@ -836,12 +408,22 @@ void ScatterView::drawGrid(QPainter *painter)
 	painter->drawRect(rect.adjusted(0, 0, -1, -1));
 	
 	//Now draw the labels for the x and y axis:
-	//painter->drawText(rect.left(),rect.bottom() + 20, rect.width(), 20, Qt::AlignHCenter, QString("XXXXXXXXXXXXX"));
-	painter->drawText(rect.left(),rect.bottom() + 20, rect.width(), 20, Qt::AlignHCenter, QString::fromStdString(columnNameForX));
+	QString xName;
+	QString yName;
+	if(table)
+	{
+		xName = QString( table->GetColumnName(columnNumForX) );
+		yName = QString( table->GetColumnName(columnNumForY) );
+	}
+	else
+	{
+		xName = QString("x");
+		yName = QString("y");
+	}
+	painter->drawText(rect.left(),rect.bottom() + 20, rect.width(), 20, Qt::AlignHCenter, xName);
 	painter->save();
 	painter->rotate(-90);
-	//painter->drawText(-1*rect.bottom(), rect.top() - TMargin, rect.height(), 20, Qt::AlignHCenter, QString("YYYYYYYYYYYYYYYYYYY"));
-	painter->drawText(-1*rect.bottom(), rect.top() - TMargin, rect.height(), 20, Qt::AlignHCenter, QString::fromStdString(columnNameForY));
+	painter->drawText(-1*rect.bottom(), rect.top() - TMargin, rect.height(), 20, Qt::AlignHCenter, yName);
 	painter->restore();
 }
 
@@ -853,130 +435,33 @@ void ScatterView::drawGrid(QPainter *painter)
 //***************************************************************************************************
 void ScatterView::drawCurves(QPainter *painter)
 {
-	//QItemSelectionModel *selections = selectionModel();
-
-	PlotSettings settings = *mySettings;
-	//QRect rect(Margin, Margin, viewport()->width() - 2*Margin, viewport()->height() - 2*Margin);
-	QRect rect(LMargin, TMargin, viewport()->width() - (LMargin+RMargin), viewport()->height() - (BMargin+TMargin));
-	if (!rect.isValid())
+	if(!table)
 		return;
 
-	painter->setClipRect(rect.adjusted(+1, +1, -1, -1));
+	const int numColors = 5;
+	//Yellow is reserved for selections!!!!
+	QColor defaultColor[numColors] = {Qt::cyan, Qt::magenta, Qt::green, Qt::red, Qt::blue};
 
-	QVector<QRect> rectangles(model()->rowCount(rootIndex()));
-	for (int row = 0; row < model()->rowCount(rootIndex()); ++row) 
+	QVector<QRect> rectangles( table->GetNumberOfRows() );
+	for (int row = 0; row < table->GetNumberOfRows(); ++row) 
 	{
-		QModelIndex indexX = model()->index(row, columnNumForX, rootIndex());
-        QModelIndex indexY = model()->index(row, columnNumForY, rootIndex());
-		QModelIndex indexC = model()->index(row, columnNumForColoring, rootIndex());
-		int c = model()->data(indexC).toInt();
-        double valueX = model()->data(indexX).toDouble();
-		double valueY = model()->data(indexY).toDouble();
+		rectangles[row] = getObjectRect(row);
 
-		//Adjust for normalization:
-		if(settings.normalize == true)
+		int c = table->GetValue(row,columnNumForColor).ToInt();
+		QColor myColor = defaultColor[ c % numColors ];
+
+		painter->setPen(Qt::black);
+		if(selection)
 		{
-			valueX = -1 + 2* (valueX - settings.d_minX)/(settings.d_maxX - settings.d_minX);
-			valueY = -1 + 2* (valueY - settings.d_minY)/(settings.d_maxY - settings.d_minY);
-		}
-
-        double dx = valueX - settings.minX;
-		double dy = valueY - settings.minY;
-		double x = rect.left() + (dx * (rect.width() - 1) / settings.spanX());
-		double y = rect.bottom() - (dy * (rect.height() - 1) / settings.spanY());
-		rectangles[row] = QRect(int(x-2),int(y-2),5,5);
-
-		QColor myColor;
-		int numColors = colorMap.size();
-		if (numColors == 0)
-			myColor = Qt::cyan;
-		else
-			myColor = colorMap.value(c);
-
-		if ( itemInRowIsSelected(row) )
-		{
-			painter->setBrush(QBrush(Qt::yellow,Qt::SolidPattern));
-			//painter->setPen(Qt::black);
-			//painter->setPen(myColor);
-			painter->setPen(Qt::yellow);
-		}
-		else
-		{
-			painter->setBrush(QBrush(myColor,Qt::SolidPattern));
-			painter->setPen(Qt::black);
-        }
-		painter->drawRect(rectangles[row]);
-	}
-}
-
-//**************************************************************************************
-//Create a default colorMap;
-//**************************************************************************************
-QMap<int, QColor> ScatterView::GetDefaultColors()
-{
-	QColor defaultColor[5]  = {Qt::magenta, Qt::red, Qt::cyan, Qt::blue, Qt::green}; //Yellow is reserved for selections!!!!
-
-	QMap<int, QColor> classColors;
-
-	if(model()->rowCount() <= 0)
-		return classColors;
-
-	//Check to be sure this row contains integers:
-	QVariant val = model()->data(model()->index(0,columnNumForColoring));
-	std::string type = val.typeName();
-	if(type != "int")
-	{
-		return classColors;
-	}
-	
-	//Now find possible classes(limit: 6 for now)
-	std::vector<int> classId(0);
-	for (int r=0; r<model()->rowCount(); ++r)
-	{
-		int clss = model()->data(model()->index(r,columnNumForColoring)).toInt();
-		bool found = false;
-		for(unsigned int c=0; c<classId.size(); ++c)
-		{
-			if(classId[c] == clss)
+			if(selection->isSelected( table->GetValue(row,0).ToLong() ) )
 			{
-				found = true;
-				break;
+				myColor = Qt::yellow;
+				painter->setPen(myColor);
 			}
 		}
-		if(!found)
-		{
-			classId.push_back(clss);
-			//if(classId.size() >= 6)
-				//break;
-		}
+		painter->setBrush(QBrush(myColor,Qt::SolidPattern));
+		painter->drawRect(rectangles[row]);
 	}
-	
-	//Now assign colors to the classes
-	classColors.clear();
-	for(unsigned int c=0; c<classId.size(); ++c)
-	{
-		int v = 4 - c%5;
-		classColors.insert(classId[c],defaultColor[v]);
-	}
-
-	return classColors;
-}
-
-//**************************************************************************************
-//Checks to see if any of the items in row are selected
-//**************************************************************************************
-bool ScatterView::itemInRowIsSelected(int row)
-{
-	QItemSelectionModel *selections = selectionModel();
-	QModelIndex index;
-	int columns = model()->columnCount();
-	for (int column=0; column<columns;column++)
-	{
-		index = model()->index(row, column, rootIndex());
-		if (selections->isSelected(index))
-			return true;
-	}
-	return false;
 }
 
 //**************************************************************************************
@@ -992,13 +477,30 @@ void ScatterView::drawSelection(QPainter *painter)
 			painter->drawLine(selectionRegion[i-1],selectionRegion[i]);
 		}
 	}
-	/*for (int i=0; i < selectionRegions.size(); i++)
+}
+
+QRect ScatterView::getObjectRect(long int row)
+{
+	if(!table) return QRect();
+
+	QRect rect(LMargin, TMargin, this->width() - (LMargin+RMargin), this->height() - (BMargin+TMargin));
+	PlotSettings settings = *mySettings;
+
+	double valueX = table->GetValue(row,columnNumForX).ToDouble();
+	double valueY = table->GetValue(row,columnNumForY).ToDouble();
+
+	//Adjust for normalization:
+	if(settings.normalize == true)
 	{
-		for (int j=1; j < selectionRegions[i].size(); j++)
-		{
-			painter->drawLine(selectionRegions[i][j-1],selectionRegions[i][j]);
-		}
-	}*/
+		valueX = -1 + 2* (valueX - settings.d_minX)/(settings.d_maxX - settings.d_minX);
+		valueY = -1 + 2* (valueY - settings.d_minY)/(settings.d_maxY - settings.d_minY);
+	}
+
+    double dx = valueX - settings.minX;
+	double dy = valueY - settings.minY;
+	double x = rect.left() + (dx * (rect.width() - 1) / settings.spanX());
+	double y = rect.bottom() - (dy * (rect.height() - 1) / settings.spanY());
+	return QRect(int(x-2),int(y-2),5,5);
 }
 
 

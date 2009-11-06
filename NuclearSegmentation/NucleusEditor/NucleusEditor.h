@@ -35,21 +35,17 @@ limitations under the License.
 #include <QtCore/QThread>
 
 //Farsight Includes:
-//#include "SegmentationCommon/ftkSegmentationResult.h"
 #include "NuclearSegmentation/ftkNuclearSegmentation.h"
 #include "ftkImage/ftkImage.h"
-#include "SegmentationModel.h"
-#include "SegmentationWindow.h"
-//#include "NuclearSegmentationWizard.h"
+#include "ftkGUI/PatternAnalysisWizard.h"
 #include "ftkGUI/TableWindow.h"
 #include "ftkGUI/PlotWindow.h"
 #include "ftkGUI/ImageBrowser5D.h"
 #include "ftkGUI/HistoWindow.h"
-#include "vtkSliderWidget.h"
-#include "vtkSliderRepresentation2D.h"
-#include "vtkCallbackCommand.h"
-#include "Seed3D.h"
-//#include "SegmentationView.h"
+#include "SegmentationView.h"
+
+//VTK includes:
+#include "vtkQtTableView.h"
 
 class ParamsFileDialog;
 class MarginDialog;
@@ -82,33 +78,31 @@ private slots:
 	bool checkSaveSeg(void);
 	void segment(void);
 	void about(void);
-	//void loadDatFile(void);
-	//void closeWidget(QWidget *);
+
 	void toggleBounds();
 	void toggleIDs();
 	void CreateNewPlotWindow();
 	void CreateNewTableWindow();
 	void CreateNewHistoWindow();
 	void ShowHistogram();
-	void CreateNewSegWindow();
-	void view3D(); 
-	//DEMO - python is necessary for the demo
-	void OpenPythonWindow();
-	bool BrowseForPythonExecutable();
 
 	//For Editing Menu
 	void setEditsEnabled(bool val);
 	void clearSelections(void);
+	void addCell(int x1, int y1, int x2, int y2, int z);//Once box is drawn we call this to add a cell
 	void mergeCells(void);
 	void deleteCells(void);
-	//void splitCells(void);	//Optimally split several cells - not implemented
 	void splitCell(void);		//Split single cell along current z
-	void addCell(void);
 	void applyExclusionMargin(void);
 	void changeClass(void);
 
 	void startSplitting(void);	//begin splitting mode - user must select seeds
 	void endSplitting(void);	//end splitting mode and do the splits
+
+	//For Tools menu
+	void startPattern();
+
+	void updateViews();
 
 signals:
     
@@ -116,16 +110,13 @@ private:
 	void createMenus();
 	void createStatusBar();
 	void createSegmentToolBar();
-	void clearModel();
-	void newModel();
+	void quitNucSeg();
 	
+	SegmentationView *segView;
 	std::vector<PlotWindow *> pltWin;
 	std::vector<TableWindow *> tblWin;
 	HistoWindow * hisWin;
-	SegmentationWindow *segWin;
-
-	ftk::Image::Pointer NewFTKImage(std::vector<std::string> filenames);
-	ftk::Image::Pointer NewFTKImage(std::string filename);
+	PatternAnalysisWizard *pWizard;
 
 	QMenu *fileMenu;
 	QAction *loadAction;
@@ -133,40 +124,26 @@ private:
 	QAction *xmlAction;
 	QAction *segmentAction;
 	QAction *exitAction;
-	//QAction *datAction;
 
 	QMenu *viewMenu;
 	QAction *showBoundsAction;
 	QAction *showIDsAction;
 	QAction *newScatterAction;
 	QAction *showHistoAction;
+	QAction *imageIntensityAction;
+
 	QMenu *helpMenu;
 	QAction *aboutAction;
-	QAction *pythonAction;
-	QAction *imageIntensityAction;
-	QAction *seed3DAction;
 
-
-// 3D Viewer variables
-	Seed3D *Seeds;
-	unsigned char segFlag;
-	/*QWidget *browse;
-	vtkSmartPointer<vtkRenderer> Renderer;
-	QVTKWidget *QVTK;
-	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;
-	vtkSmartPointer<vtkPointPicker>PointPicker;
-	vtkSmartPointer<vtkCallbackCommand> isPicked;
-	vtkSliderRepresentation2D *sliderRep;
-	vtkSliderRepresentation2D *sliderRep2;
-	vtkSliderWidget *sliderWidget;
-	vtkSliderWidget *sliderWidget2;*/
+	QMenu *toolMenu;
+	QAction *patternAction;		//Start the PatternAnalysis wizard
 	
 	//For Editing Menu
 	QMenu *editMenu;
 	QAction *clearSelectAction;
+	QAction *addAction;
 	QAction *mergeAction;
 	QAction *deleteAction;
-	QAction *addAction;
 	QMenu *splitMenu;	
 	QAction *splitAction;			//for split along z direction
 	QAction *splitStartAction;		//for regular seed split
@@ -174,14 +151,16 @@ private:
 	QAction *exclusionAction;
 	QAction *classAction;
 	
-	QLabel *statusLabel;
+	QLabel *statusLabel;			//Shown at bottom of main window
 
-	ftk::NuclearSegmentation *seg;
-	ftk::Image::Pointer myImg;
-	SegmentationModel *currentModel;
+	ftk::NuclearSegmentation *nucSeg;//Used for segmentation execution, loading, and editing
+	ftk::Image::Pointer myImg;		//My currently visible image
+	QString myImgName;				//Name of the currently visible image
+	ObjectSelection * selection;	//object selection list
+	vtkSmartPointer<vtkTable> table;//table
 
 	QString lastPath;
-	QString myImgName;
+	
 	int segmentState;
 	QAction * segmentAbort;
 	QAction * segmentStop;
@@ -189,6 +168,7 @@ private:
 	QLabel * segmentTaskLabel;
 	QProgressBar * segmentProgress;
 	QToolBar * segmentTool;
+
 	Load * loadThread;
 	Binarize * binaryThread;
 	SeedDetect * seedThread;
@@ -196,17 +176,8 @@ private:
 	Finalize * finalizeThread;
 	Features * featuresThread;
 
-	//DEMO variable
-	bool ConfirmClosePython();
-	QSettings *settings;
-	QProcess *pythonProcess;
-	QLabel *pythonLabel;
-	QLabel *currentPythonLabel;
-	QPushButton *browseForPythonButton;
-
-
-	//bool editStatus; //false shows that we cannot apply editing to cells	
  };
+
 
 class ParamsFileDialog : public QDialog
 {
