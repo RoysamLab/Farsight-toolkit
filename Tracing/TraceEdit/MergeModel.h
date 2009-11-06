@@ -20,6 +20,12 @@ limitations under the License.
 //QT INCLUDES
 #include <QtCore>
 #include <QtGui>
+#include "vtkTable.h"
+#include "vtkSmartPointer.h"
+#include "vtkDoubleArray.h"
+#include "vtkAbstractArray.h"
+#include "vtkVariantArray.h"
+#include <ftkGui/ObjectSelection.h>
 
 class QStandardItemModel;
 class QItemSelectionModel;
@@ -45,6 +51,8 @@ public:
   std::vector<TraceGap*>GetTraceGaps();
   std::vector<int> GetSelectedGapIDs();
   void SelectbyTraceID(int id);
+	vtkSmartPointer<vtkTable> getDataTable();
+	ObjectSelection * GetObjectSelection();
 
 signals:
   //emit this signal to tell the Qt views to update
@@ -73,6 +81,8 @@ private:
 	QStandardItemModel *Model;
 	QItemSelectionModel *SelectionModel; 
 	void SetupHeaders();
-	void SyncModel();
+	void SyncModel();	
+	vtkSmartPointer<vtkTable> DataTable;
+	ObjectSelection * Selection;
 };
 #endif

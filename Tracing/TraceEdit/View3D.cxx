@@ -825,10 +825,11 @@ void View3D::ShowTreeData()
 	{
 		this->TreePlot->close();
 	}
-	this->FTKTable = new TableWindow(this->TreeModel->GetSelectionModel());
-	connect(this->FTKTable, SIGNAL(sorted()),this->TreeModel, SLOT(MapTracesToRows()));
+	this->FTKTable = new TableWindow();
+	//connect(this->FTKTable, SIGNAL(sorted()),this->TreeModel, SLOT(MapTracesToRows()));
+	this->FTKTable->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
 	this->FTKTable->setWindowTitle("Trace Object Features Table");
-	this->FTKTable->ResizeToOptimalSize();
+	//this->FTKTable->ResizeToOptimalSize();
 	this->FTKTable->move(32, 561);
 	this->FTKTable->show();
 	/*this->TreeTable->setModel(this->TreeModel->GetModel());
@@ -840,8 +841,9 @@ void View3D::ShowTreeData()
 	this->TreeTable->update();
 	this->TreeTable->show();*/
 
-	this->TreePlot = new PlotWindow(this->TreeModel->GetSelectionModel());
-	this->connect(this->TreePlot,SIGNAL(destroyed()),this, SLOT(DereferenceTreePlotView())); 
+	this->TreePlot = new PlotWindow();
+	this->TreePlot->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
+	//this->connect(this->TreePlot,SIGNAL(destroyed()),this, SLOT(DereferenceTreePlotView())); 
 	this->TreePlot->setWindowTitle("Trace Object Features Plot");
   this->TreePlot->move(681, 59);
 	this->TreePlot->show();
@@ -1108,16 +1110,18 @@ void View3D::MergeTraces()
 void View3D::ShowMergeStats()
 {
   this->MergeGaps->SetTraceGaps(this->tobj->Gaps);
-  this->GapsTableView = new TableWindow(this->MergeGaps->GetSelectionModel()); 
-  connect(this->GapsTableView, SIGNAL(sorted()),this->MergeGaps, SLOT(MapTracesToRows()));
-  connect(this->GapsTableView, SIGNAL(sorted()),this->MergeGaps, SLOT(MapGapIDsToRows()));
+  this->GapsTableView = new TableWindow(); 
+  this->GapsTableView->setModels(this->MergeGaps->getDataTable(), this->MergeGaps->GetObjectSelection());
+  //connect(this->GapsTableView, SIGNAL(sorted()),this->MergeGaps, SLOT(MapTracesToRows()));
+ // connect(this->GapsTableView, SIGNAL(sorted()),this->MergeGaps, SLOT(MapGapIDsToRows()));
   this->GapsTableView->setWindowTitle("Computed Features for Merge");
-  this->GapsTableView->ResizeToOptimalSize();
+  //this->GapsTableView->ResizeToOptimalSize();
   this->GapsTableView->show();
   //this->GapsTableView->horizontalHeader()->show();
 
-  this->GapsPlotView = new PlotWindow(this->MergeGaps->GetSelectionModel());
-  this->connect(this->GapsPlotView,SIGNAL(destroyed()),this, SLOT(DereferenceGapsPlotView()));
+  this->GapsPlotView = new PlotWindow();
+  this->GapsPlotView->setModels(this->MergeGaps->getDataTable(), this->MergeGaps->GetObjectSelection());
+  //this->connect(this->GapsPlotView,SIGNAL(destroyed()),this, SLOT(DereferenceGapsPlotView()));
   this->GapsPlotView->setWindowTitle("Computed Features for Merge");
   this->GapsPlotView->show();
 }

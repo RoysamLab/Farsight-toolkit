@@ -25,7 +25,9 @@ limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////
 MergeModel::MergeModel(std::vector<TraceGap*> gaps)
 {
+	this->DataTable = vtkSmartPointer<vtkTable>::New();
   this->Model = new QStandardItemModel(0, 0, this);
+  this->Selection = new ObjectSelection();
   this->SelectionModel = new QItemSelectionModel(this->Model, this);
   this->SetTraceGaps(gaps);
 }
@@ -46,24 +48,31 @@ MergeModel::~MergeModel()
 ////////////////////////////////////////////////////////////////////////////////
 void MergeModel::SetupHeaders()
 {
-  std::vector<QString> headers;
-  headers.push_back("Gap ID");
-  headers.push_back("Trace 1 ID");
-  headers.push_back("Trace 2 ID");
-  headers.push_back("Gap Distance");
-  headers.push_back("Gap Angle");
-  headers.push_back("Max Distance");
-  headers.push_back("Path Length");
-  headers.push_back("Smoothness");
-  headers.push_back("Cost");
-  int numHeaders = headers.size();
-  this->Model->setColumnCount(numHeaders);
-  for(int i=0; i<(int)headers.size(); ++i)
-    {
-    this->Model->setHeaderData(i, Qt::Horizontal, headers.at(i));
-    }
+	std::vector<QString> headers;
+	headers.push_back("Gap ID");
+	headers.push_back("Trace 1 ID");
+	headers.push_back("Trace 2 ID");
+	headers.push_back("Gap Distance");
+	headers.push_back("Gap Angle");
+	headers.push_back("Max Distance");
+	headers.push_back("Path Length");
+	headers.push_back("Smoothness");
+	headers.push_back("Cost");
+	int numHeaders = headers.size();
+	this->Model->setColumnCount(numHeaders);
+	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+	for(int i=0; i<(int)headers.size(); ++i)
+	{
+		this->Model->setHeaderData(i, Qt::Horizontal, headers.at(i));
+		column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( headers.at(i).toStdString().c_str() );
+		this->DataTable->AddColumn(column);
+	}
 }
-
+ObjectSelection * MergeModel::GetObjectSelection()
+{
+	return this->Selection;
+}
 ////////////////////////////////////////////////////////////////////////////////
 void MergeModel::SyncModel()
 {
@@ -98,11 +107,14 @@ void MergeModel::SyncModel()
     {
     //create a new row
     this->Model->insertRow(row);
+	vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
     //insert the data for a gap in this row
     for(int col=0; col < this->Model->columnCount(); ++col)
       {
-      this->Model->setData(this->Model->index(row, col), data.at(row).at(col));
+		  DataRow->InsertNextValue( vtkVariant(data.at(row).at(col)) );
+		  this->Model->setData(this->Model->index(row, col), data.at(row).at(col));
       }
+	this->DataTable->InsertNextRow(DataRow);
     }
   //let the views know that the model changed
   emit modelChanged();
@@ -112,7 +124,10 @@ void MergeModel::SyncModel()
   this->MapTracesToRows();
 
 }
-
+vtkSmartPointer<vtkTable> MergeModel::getDataTable()
+{
+	return this->DataTable;
+}
 ////////////////////////////////////////////////////////////////////////////////
 void MergeModel::MapGapIDsToRows()
 {

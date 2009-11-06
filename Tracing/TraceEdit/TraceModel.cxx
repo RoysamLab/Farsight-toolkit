@@ -24,7 +24,9 @@ limitations under the License.
 
 TraceModel::TraceModel(std::vector<TraceLine*> trace_lines, std::vector<std::string> FeatureHeaders)
 {  
+	this->DataTable = vtkSmartPointer<vtkTable>::New();
 	this->Model = new QStandardItemModel(0, 0, this);
+	this->Selection = new ObjectSelection();
 	this->SelectionModel = new QItemSelectionModel(this->Model, this);
 //standard headers	
 	this->stdHeaders();
@@ -39,8 +41,9 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines, std::vector<std::str
 	this->SetTraces(trace_lines);
 }
 TraceModel::TraceModel(std::vector<TraceLine*> trace_lines)
-{	
+{	this->DataTable = vtkSmartPointer<vtkTable>::New();
 	this->Model = new QStandardItemModel(0, 0, this);
+	this->Selection = new ObjectSelection();
 	this->SelectionModel = new QItemSelectionModel(this->Model, this);
 //standard headers	
 	this->stdHeaders();
@@ -70,13 +73,20 @@ void TraceModel::SetupHeaders()
 {	
 	int numHeaders = this->headers.size();
 	this->Model->setColumnCount(numHeaders);
+	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
 	for(int i=0; i < numHeaders; ++i)
     {
 		this->Model->setHeaderData(i, Qt::Horizontal, 
 			this->headers.at(i));
+		column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( this->headers.at(i).toStdString().c_str() );
+		this->DataTable->AddColumn(column);
     }
 }
-
+ObjectSelection * TraceModel::GetObjectSelection()
+{
+	return this->Selection;
+}
 void TraceModel::SyncModel()
 {
 	if(this->GetTraces().size() == 0)
@@ -110,10 +120,14 @@ void TraceModel::SyncModel()
 	for (int row=0; row<(int)data.size(); ++row)
     {
     this->Model->insertRow(row);
+	vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
+
     for(int col=0; col < this->Model->columnCount(); ++col)
       {
+		  DataRow->InsertNextValue( vtkVariant(data.at(row).at(col)) );
       this->Model->setData(this->Model->index(row, col), data.at(row).at(col));
       }
+	this->DataTable->InsertNextRow(DataRow);
     }
 	this->MapTracesToRows();
 	this->Model->blockSignals(false);
@@ -136,7 +150,10 @@ void TraceModel::MapTracesToRows()
 		this->IDToRowMap.insert(ID, row);
 	}
 }
-
+vtkSmartPointer<vtkTable> TraceModel::getDataTable()
+{
+	return this->DataTable;
+}
 void TraceModel::SelectByIDs(int ID)
 {
 	int row = this->IDToRowMap.value(ID);
