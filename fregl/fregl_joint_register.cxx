@@ -652,7 +652,7 @@ get_reg_record(int from, int to) const
 
 void
 fregl_joint_register::
-write_xml(std::string const& filename, bool mutual_consistency)
+write_xml(std::string const& filename, bool mutual_consistency, bool gen_temp_stuff)
 {
   TiXmlDocument doc;       /* document pointer */
   std::string str;
@@ -676,6 +676,13 @@ write_xml(std::string const& filename, bool mutual_consistency)
   str = ToString( error_bound_ );
   root_node->SetAttribute("error_bound",str.c_str() );
   doc.LinkEndChild( root_node );
+
+  // Set up the temp file for storing the overlap & errors
+  std::ofstream tempout;
+  if (gen_temp_stuff) {
+    std::string filename_temp = filename+"_debug.txt";
+    tempout.open(filename_temp.c_str());
+  }
   
   for (unsigned int j = 0; j<transforms_.cols(); j++) {
     for (unsigned int i = 0; i<transforms_.rows(); i++) {
@@ -683,9 +690,18 @@ write_xml(std::string const& filename, bool mutual_consistency)
 
       fregl_reg_record::Pointer reg_rec = this->get_reg_record(i,j);
       reg_rec->write_xml_node(root_node);
+
+      if (gen_temp_stuff) {
+        if (reg_rec->obj()!=1) {
+          tempout<<reg_rec->from_image()<<"\t"<<reg_rec->to_image()<<"\t"<<vnl_math_rnd(reg_rec->overlap()*1000)/1000.0<<"\t"<<vnl_math_rnd(reg_rec->obj()*1000)/1000.0;
+          if (reg_rec->obj() > error_bound_) tempout<<"\tremoved\n";
+          else tempout<<"\n";
+        }
+      }
     }
   }
-  
+  if (gen_temp_stuff) tempout.close();
+      
   /* 
    * Dumping document to a file
    */
@@ -723,7 +739,8 @@ read_xml(std::string const & filename)
   // number of images
   int num_images;
   num_images = atoi(root_element->Attribute("number_of_images"));
-    
+
+  // Reading the records
   std::vector<fregl_reg_record::Pointer> reg_records;
   TiXmlElement* cur_node = root_element->FirstChildElement();
   for (; cur_node; cur_node = cur_node->NextSiblingElement() ) {

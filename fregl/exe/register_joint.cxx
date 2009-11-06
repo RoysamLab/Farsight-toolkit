@@ -52,7 +52,8 @@ main(  int argc, char* argv[] )
   vul_arg< bool > arg_no_mc         ( "-quick", "No mutual consistency is imposed", false);
 
   vul_arg< vcl_string > arg_roi_file ("-roi", "Text file containing the list of image names in the ROI");
- 
+  vul_arg< bool > arg_debug ("-debug","Dump out the statistics to a temp file which has the same name as the xml file with the suffix debug.txt",false);
+  
   vul_arg_parse( argc, argv );
 
   //Read in the filename
@@ -126,7 +127,7 @@ main(  int argc, char* argv[] )
     jointer_register->build_graph(arg_no_mc());
     mutual_consistency = false;
   }
-  jointer_register->write_xml(arg_xml_file(), mutual_consistency);
+  jointer_register->write_xml(arg_xml_file(), mutual_consistency, arg_debug());
 
   return 0;
 }
