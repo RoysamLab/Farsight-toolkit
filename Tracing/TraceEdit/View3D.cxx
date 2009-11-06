@@ -104,6 +104,12 @@ View3D::View3D(int argc, char **argv)
       this->tobj->ReadFromRPIXMLFile(argv[counter]);
 	  tracesLoaded = true;
       }
+    else if (strcmp(argv[counter]+len-3,"vtk")==0)
+      {
+      printf("I detected vtk\n");
+      this->tobj->ReadFromVTKFile(argv[counter]);
+	  tracesLoaded = true;
+      }
     else if( strcmp(argv[counter]+len-3,"tks")==0)
       {
       printf("I detected tks\n");
@@ -124,7 +130,7 @@ View3D::View3D(int argc, char **argv)
 	{
 		std::string traceFile;
 		QString trace = QFileDialog::getOpenFileName(this , "Load Trace Data", ".",
-			tr("TraceFile( *.xml *.swc" ));
+			tr("TraceFile( *.xml *.swc *.vtk" ));
 		if (!trace.isEmpty())
 		{
 			traceFile = trace.toStdString();
@@ -136,6 +142,11 @@ View3D::View3D(int argc, char **argv)
 			else if (trace.endsWith("xml"))
 			{
 				this->tobj->ReadFromRPIXMLFile((char*)traceFile.c_str());
+				tracesLoaded = true;
+			}
+			else if (trace.endsWith("vtk"))
+			{
+				this->tobj->ReadFromVTKFile((char*)traceFile.c_str());
 				tracesLoaded = true;
 			}
 		}//end if empty

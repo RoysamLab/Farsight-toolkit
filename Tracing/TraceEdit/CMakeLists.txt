@@ -35,6 +35,7 @@ ADD_LIBRARY(Trace
   UndoBuffer.h	UndoBuffer.cxx
   undobuff.h	undobuff.cxx
   branchPT.h	branchPT.cxx
+  vtkPlotEdges.h	vtkPlotEdges.cxx
 )
 ADD_EXECUTABLE( trace_editor  vtkTraceViewerDriver.cxx ${Sources} ${GUI_MOC_SRCS} )
 TARGET_LINK_LIBRARIES( trace_editor ${Libraries} Trace TinyXML ftkGUI)

@@ -20,14 +20,22 @@ limitations under the License.
 branchPT::branchPT()
 {
 	this->solved = false;
-
 }
+
 branchPT::branchPT(TraceBit branchBit, std::vector<TraceLine*> connected)
 {
 	this->branchBit = branchBit;
 	this->connected = connected;
 	this->solved = false;
 }
+
+//it's the TraceObject's responsibility to delete these lines.
+branchPT::~branchPT()
+{
+  this->connected.clear();
+  this->children.clear();
+}
+
 bool branchPT::SeekParent(int id)
 {	
 	if (!this->solved)
@@ -52,6 +60,10 @@ TraceBit branchPT::GetBit()
 {
 	return this->branchBit;
 }
+void branchPT::SetBit(TraceBit b)
+{
+  this->branchBit = b;
+}
 TraceLine* branchPT::getParent()
 {
 	return this->branch;
@@ -74,3 +86,9 @@ std::vector<int> branchPT::childIDS()
 	}
 	return ids;
 }
+
+void branchPT::AddConnection(TraceLine *line)
+{
+  this->connected.push_back(line);
+}
+

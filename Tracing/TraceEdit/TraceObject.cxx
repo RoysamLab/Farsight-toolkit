@@ -17,23 +17,28 @@ limitations under the License.
 #include <queue>
 #include <set>
 #include <QProgressDialog>
+
+#include "vtkAppendPolyData.h"
+#include "vtkArrowSource.h"
+#include "vtkCellArray.h"
+#include "vtkDataArray.h"
+#include "vtkFloatArray.h"
+#include "vtkGlyph3D.h"
+#include "vtkIdTypeArray.h"
 #include "vtkPoints.h"
 #include "vtkPointData.h"
 #include "vtkPolyData.h"
-#include "vtkCellArray.h"
-#include "vtkFloatArray.h"
-#include "vtkDataArray.h"
-#include "vtkAppendPolyData.h"
+#include "vtkPolyLine.h"
+#include "vtkPolyDataReader.h"
 #include "vtkPolyDataWriter.h"
 #include "vtkSphereSource.h"
-#include "vtkGlyph3D.h"
-#include "vtkArrowSource.h"
 
 #include "TraceBit.h"
 #include "TraceLine.h"
 #include "TraceObject.h"
 #include "TraceGap.h"
 #include "branchPT.h"
+#include "vtkPlotEdges.h"
 
 #define VTK_CREATE(type, var) \
   vtkSmartPointer<type> var = vtkSmartPointer<type>::New()
@@ -45,6 +50,8 @@ limitations under the License.
 TraceObject::TraceObject()
 {
   this->PolyTraces = vtkSmartPointer<vtkPolyData>::New();
+  this->NextTraceBitID = -1;
+  this->CombineShortVTKLines = true;
 }
 
 TraceObject::TraceObject(const TraceObject &T)
@@ -66,6 +73,24 @@ TraceObject::~TraceObject()
     {
     delete trace_lines[counter];
     }
+  for(vtkstd::vector<vtkstd::pair<int, double *> >::iterator
+      pairItr = this->VTKTraceEnds.begin();
+      pairItr != this->VTKTraceEnds.end();
+      ++pairItr)
+    {
+    delete [] (*pairItr).second;
+    }
+
+/*
+ * not having this might cause a memory leak...
+  vtkstd::vector<branchPT*>::iterator branchItr;
+  for(branchItr = this->BranchPoints.begin();
+      branchItr != this->BranchPoints.end();
+      ++branchItr)
+    {
+    delete (*branchItr);
+    }
+*/
 }
 
 
@@ -237,7 +262,6 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 
   vtksys::hash_map<unsigned int,int> hash_type; // smaller hash functions only for the critical points.. saves us memory and time
   vtksys::hash_map<unsigned int,int> hash_parent;
-  vtksys::hash_map<unsigned int,unsigned long long int> hash_load;
 
   //memset(child_count,0,sizeof(unsigned char)*100000);
   
@@ -403,6 +427,366 @@ bool TraceObject::ReadFromSWCFile(char * filename)
   free(child_count);
   free(child_id);
   return true;
+}
+
+void TraceObject::ReadFromVTKFile(char * filename)
+{
+  VTK_CREATE(vtkPolyDataReader, polyReader);
+  polyReader->SetFileName(filename);
+  this->VTKData = vtkSmartPointer<vtkPolyData>::New();
+
+  if(this->CombineShortVTKLines)
+    {
+    VTK_CREATE(vtkPlotEdges, plotEdgesFilter);
+    plotEdgesFilter->SetInput(polyReader->GetOutput());
+    this->VTKData = plotEdgesFilter->GetOutput();
+    cout << "Combining small vtkLines, please be patient." << endl;
+    plotEdgesFilter->Update();
+    }
+  else
+    {
+    this->VTKData = polyReader->GetOutput();
+    polyReader->Update();
+    }
+  this->ConvertVTKDataToTraceLines();
+  this->SetBranchPoints(this->branchPTsInProgress);
+}
+
+void TraceObject::ConvertVTKDataToTraceLines()
+{
+  //initialize our trace bit counter
+  this->NextTraceBitID = this->GetMaximumBitId();
+
+  //find the vtkLines which are good starting points for traces.
+  this->FindVTKTraceEnds();
+
+  //work through this list of VTKTraceEnds, generating TraceLines and TraceBits
+  for(std::vector<std::pair<int, double *> >::iterator itr = 
+      this->VTKTraceEnds.begin();
+      itr != this->VTKTraceEnds.end(); ++itr) 
+    {
+    this->ConvertVTKLineToTrace((*itr).first, -1, (*itr).second);
+    }
+
+  //if any vtkLines slipped through the cracks and still aren't represented in
+  //the TraceObject, we'll add them here.
+}
+
+//generate a list of all the vtkLines that only have one neighbor
+//also populate an array so that we can keep track of whether or not
+//each such line has been added to the TraceObject yet.
+//VTKTraceEnds is a vector of pairs: lines and their open end points
+void TraceObject::FindVTKTraceEnds()
+{
+  this->VTKTraceEnds.clear();
+  for(int cellID = 0; cellID < this->VTKData->GetNumberOfCells(); cellID++)
+    {
+    int connectionInfo = this->VTKLineIsTraceEnd(cellID);
+    if(connectionInfo == -1)
+      {
+      continue;
+      }
+    vtkPolyLine *polyLine = reinterpret_cast<vtkPolyLine *>
+      (this->VTKData->GetCell(cellID));
+    vtkSmartPointer<vtkPoints> points = polyLine->GetPoints();
+    double *point = new double[3];
+    if(connectionInfo == 0)
+      {
+      //the first point is connected
+      points->GetPoint(points->GetNumberOfPoints() - 1, point);
+      this->VTKTraceEnds.push_back(vtkstd::make_pair(cellID, point));
+      }
+    else
+      {
+      //the last point is connected
+      points->GetPoint(0, point);
+      this->VTKTraceEnds.push_back(vtkstd::make_pair(cellID, point));
+      }
+    }
+
+  //initialize DisconnectedVTKLines: the list of vtkLines that haven't
+  //been connected to the TraceObject yet.
+  this->DisconnectedVTKLines = vtkSmartPointer<vtkIdTypeArray>::New();
+  int numLines = this->VTKData->GetNumberOfCells();
+  this->DisconnectedVTKLines->SetNumberOfValues(numLines);
+  for(int i = 0; i < numLines; i++)
+    {
+    this->DisconnectedVTKLines->SetValue(i, 1); 
+    }
+}
+
+//Determine whether or not a vtkLine is connected to other vtkLines on both
+//ends.  vtkLines with less than two neighbors are potential starting points
+//for recursive TraceLine building.
+//This function returns the index of the unconnected end point if the line
+//is only connected on one end.  It returns -1 if the line has connections on
+//both of its end points.
+////////////////////////////////////////////////////////////////////////////////
+int TraceObject::VTKLineIsTraceEnd(int rootID)
+{
+  bool headNeighborFound = false;
+  bool tailNeighborFound = false;
+  vtkPolyLine *polyLine = reinterpret_cast<vtkPolyLine *>
+    (this->VTKData->GetCell(rootID));
+  vtkSmartPointer<vtkPoints> points = polyLine->GetPoints();
+  double first_point[3];
+  double last_point[3];
+  points->GetPoint(0, first_point);
+  points->GetPoint(points->GetNumberOfPoints() - 1, last_point);
+  for(int cellID = 0; cellID < this->VTKData->GetNumberOfCells();
+      cellID++)
+    {
+    if(cellID == rootID)
+      {
+      continue;
+      }
+    if(!headNeighborFound)
+      {
+      if(this->VTKLineContainsPoint(cellID, first_point) != -1)
+        {
+        headNeighborFound = true;
+        }
+      }
+    if(!tailNeighborFound)
+      {
+      if(this->VTKLineContainsPoint(cellID, last_point) != -1)
+        {
+        tailNeighborFound = true;
+        }
+      }
+    if(headNeighborFound && tailNeighborFound)
+      {
+      return -1;
+      }
+    }
+  if(!headNeighborFound)
+    {
+    return 0;
+    }
+  if(!tailNeighborFound)
+    {
+    return points->GetNumberOfPoints() - 1;
+    }
+  cerr << "WARNING: logic dictates that we should never go here..." << endl;
+  return -1;
+}
+
+//returns the index of the point if it is one of the end points of the vtkLine
+//identified by cellID, -1 otherwise
+////////////////////////////////////////////////////////////////////////////////
+int TraceObject::VTKLineContainsPoint(int cellID, double point[3])
+{
+  vtkSmartPointer<vtkPolyLine> line = reinterpret_cast<vtkPolyLine *>
+      (this->VTKData->GetCell(cellID));
+  vtkSmartPointer<vtkPoints> points = line->GetPoints();
+  double start[3];
+  double end[3];
+  points->GetPoint(0, start);
+  points->GetPoint(points->GetNumberOfPoints() - 1, end);
+  if(start[0] == point[0] && start[1] == point[1] &&
+     start[2] == point[2])
+    {
+    return 0;
+    }
+  if(end[0] == point[0] && end[1] == point[1] &&
+     end[2] == point[2])
+    {
+    return points->GetNumberOfPoints() - 1;
+    }
+  return -1;
+}
+
+//add the vtkLine represented by cellID to this TraceObject, then recursively
+//calls this function on any lines that connect to its endpoint.
+//endPoint is the end of the line represented by cellID.  In other words, it is
+//the point where all of cellID's children connect to it.
+////////////////////////////////////////////////////////////////////////////////
+void TraceObject::ConvertVTKLineToTrace(int cellID, int parentTraceLineID,
+                                        double *endPoint)
+{
+  //Disconnected.. == 1 means this line is already represented in the
+  //TraceObject.  No need to do it again.
+  if(this->DisconnectedVTKLines->GetValue(cellID) == -1)
+    {
+    return;
+    }
+
+  //setup a new TraceLine, either hooking it up to its parent, or adding it
+  //to the list of root lines, as appropriate.
+  int newLineID = this->getNewLineId();
+  TraceLine *tline = new TraceLine();
+  this->hash_load[newLineID] = reinterpret_cast<unsigned long long int>(tline);
+  tline->SetId(newLineID);
+  tline->SetType(3);
+	tline->setTraceColor( this->getTraceLUT( tline->GetType() ));   
+
+  if(parentTraceLineID != -1)
+    {
+    TraceLine *tparent;
+    if(this->hash_load.count(parentTraceLineID)==0)
+      {
+      tparent = new TraceLine();
+      this->hash_load[parentTraceLineID] =
+        reinterpret_cast<unsigned long long int>(tparent);
+      }
+    else
+      {
+      tparent = reinterpret_cast<TraceLine*>(this->hash_load[parentTraceLineID]);
+      }
+    tline->SetParent(tparent);
+    tparent->GetBranchPointer()->push_back(tline);
+    }
+  else
+    {
+    this->trace_lines.push_back(tline);
+    }
+  //add all of this new line's points as TraceBits
+  vtkSmartPointer<vtkPolyLine> line = reinterpret_cast<vtkPolyLine *>
+      (this->VTKData->GetCell(cellID));
+  vtkSmartPointer<vtkPoints> points = line->GetPoints();
+  double point[3];
+  //which direction we iterate through the points depends on which end of this
+  //line is the parameter endPoint
+
+  int connectionPoint = this->VTKLineContainsPoint(cellID, endPoint);
+  //keep track of the end bit separately so we can generate a branchPT later
+  TraceBit endBit;
+  int firstPointIndex = -1;
+  if(connectionPoint == 0)
+    {
+    //its the first point, that means we have to iterate backwards
+    firstPointIndex = points->GetNumberOfPoints() -1;
+    for(int i = firstPointIndex; i > -1; i--)
+      {
+      points->GetPoint(i, point);
+      if(i == 0)
+        {
+        endBit.x = point[0];
+        endBit.y = point[1];
+        endBit.z = point[2];
+        endBit.r = 1;
+        endBit.id = this->NextTraceBitID;
+        this->NextTraceBitID++;
+        tline->AddTraceBit(endBit);
+        }
+      else
+        {
+        TraceBit tbit;
+        tbit.x = point[0];
+        tbit.y = point[1];
+        tbit.z = point[2];
+        tbit.r = 1;
+        tbit.id = this->NextTraceBitID;
+        this->NextTraceBitID++;
+        tline->AddTraceBit(tbit);
+        }
+      }
+    }
+  else if(connectionPoint == points->GetNumberOfPoints() - 1)
+    {
+    //its the last point, iterate over the points normally
+    firstPointIndex = 0;
+    for(int i = firstPointIndex; i < points->GetNumberOfPoints(); i++)
+      {
+      points->GetPoint(i, point);
+      if(i == points->GetNumberOfPoints() - 1)
+        {
+        endBit.x = point[0];
+        endBit.y = point[1];
+        endBit.z = point[2];
+        endBit.r = 1;
+        endBit.id = this->NextTraceBitID;
+        this->NextTraceBitID++;
+        tline->AddTraceBit(endBit);
+        }
+      else
+        {
+        TraceBit tbit;
+        tbit.x = point[0];
+        tbit.y = point[1];
+        tbit.z = point[2];
+        tbit.r = 1;
+        tbit.id = this->NextTraceBitID;
+        this->NextTraceBitID++;
+        tline->AddTraceBit(tbit);
+        }
+      }
+    }
+  else
+    {
+    cerr << "BUG: line #" << cellID << " doesn't connect to its endPoint"
+         << endl;
+    }
+
+  //find the branch point that this new line emanates from and add this line
+  //as a connection to it.
+  branchPT *formerBranchPoint = NULL;
+  if(parentTraceLineID != -1 && firstPointIndex != -1)
+    {
+    points->GetPoint(firstPointIndex, point);
+    vtkstd::vector<branchPT*>::iterator branchItr;
+    for(branchItr = this->branchPTsInProgress.begin();
+        branchItr != this->branchPTsInProgress.end();
+        ++branchItr)
+      {
+      TraceBit b = (*branchItr)->GetBit();
+      if(b.x == point[0] && b.y == point[1] && b.z == point[2])
+        {
+        formerBranchPoint = (*branchItr);
+        break;
+        }
+      }
+    }
+  if(formerBranchPoint != NULL)
+    {
+    formerBranchPoint->AddConnection(tline);
+    }
+
+  //remove this line from the list of disconnect vtkLines
+  this->DisconnectedVTKLines->SetValue(cellID, -1);
+
+  //find lines that connect to the one we just added, and call this function
+  //on them to connect them into the TraceObject.
+  branchPT *branchPoint = new branchPT();
+  bool childFound = false;
+  for(int i = 0; i < this->VTKData->GetNumberOfCells(); i++)
+    {
+    if(i == cellID)
+      {
+      continue;
+      }
+    connectionPoint = this->VTKLineContainsPoint(i, endPoint);
+    if(connectionPoint == -1)
+      {
+      continue;
+      }
+    vtkSmartPointer<vtkPolyLine> childLine = reinterpret_cast<vtkPolyLine *>
+        (this->VTKData->GetCell(i));
+    vtkSmartPointer<vtkPoints> childPoints = childLine->GetPoints();
+    if(connectionPoint == 0)
+      {
+      //it connected at its beginning, so we need to pass in its end point
+      //as a parameter to this function
+      childPoints->GetPoint(childPoints->GetNumberOfPoints() - 1, point);
+      }
+    else
+      {
+      //it connected at its end, so we need to pass in its first point
+      //as a parameter to this function
+      childPoints->GetPoint(0, point);
+      }
+    //update our running vector of branch points
+    if(!childFound)
+      {
+      branchPoint->SetBit(endBit);
+      branchPoint->AddConnection(tline);
+      childFound = true;
+      }
+    this->branchPTsInProgress.push_back(branchPoint);
+
+    //recursively call this function on the child that we just found.
+    this->ConvertVTKLineToTrace(i, newLineID, point);
+    }
 }
 
 void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkFloatArray> point_scalars, 
@@ -623,7 +1007,6 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
   int lineType, lineParent, bitID;
   double bitX, bitY, bitZ;
   TraceLine * tline;
-  vtksys::hash_map<unsigned int, unsigned long long int> hash_load;
   while(lineElement)
   {
     if(lineElement->QueryFloatAttribute("ID", &lineID) != TIXML_SUCCESS)
@@ -753,6 +1136,7 @@ void TraceObject::CollectIdsRecursive(std::vector<int> &ids, TraceLine* tline)
     this->CollectIdsRecursive(ids,(*tline->GetBranchPointer())[counter]);
   }
 }
+
 int TraceObject::getNewLineId()
 {
   std::vector<int> ids;
@@ -770,38 +1154,23 @@ int TraceObject::getNewLineId()
     }
   }
   return newId;
-
-  //bool uniqueId = false;
-  //std::vector<TraceLine*>::iterator itr;
-  //while(!uniqueId)
-  //  {
-  //  newId++;
-  //  uniqueId = true;
-  //  for(itr = this->trace_lines.begin(); itr != this->trace_lines.end(); itr++)
-  //    {
-  //    if((*itr)->GetId() == newId)
-  //      {
-  //      uniqueId = false;
-  //      break;
-  //      }
-  //    //this assumes that a TraceLine will only have either 0 or 2 children
-  //    if((*itr)->GetBranchPointer()->size() != 0)
-  //      {
-  //  for(int counter=0; counter < (*itr)->GetBranchPointer()->size(); counter++)
-  //  {
-  //    if( (*(*itr)->GetBranchPointer())[counter]->GetId() == newId)
-  //    {
-  //      uniqueId = false;
-  //      break;
-  //    }
-  //  }
-  //  if(uniqueId == false)
-  //    break;
-  //      }
-  //    }
-  //  }
-  //return newId;
 } 
+
+//find the greatest TraceBit ID
+int TraceObject::GetMaximumBitId()
+{
+  std::vector<TraceBit> bits = this->CollectTraceBits();
+  int maxID = -1;
+  for(std::vector<TraceBit>::iterator itr = bits.begin();
+      itr != bits.end(); ++itr)
+    {
+    if((*itr).id > maxID)
+      {
+      maxID = (*itr).id;
+      }
+    }
+  return maxID;
+}
 
 /** For now splitTrace makes the following assumptions:
  *  1.  The newly created line should have the same type as the line it's being

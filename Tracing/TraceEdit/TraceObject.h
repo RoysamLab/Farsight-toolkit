@@ -57,6 +57,7 @@ public:
 //	I/O functions
 	bool ReadFromSWCFile(char * filename);
 	bool ReadFromRPIXMLFile(char * filename);
+	void ReadFromVTKFile(char * filename);
 	bool ReadFromFeatureTracksFile(char *filename, int type_offset);
 	bool ReadFromFeatureTracksFileForKymograph(char *filename,int type_offset);
 	bool WriteToSWCFile(const char * filename);
@@ -64,6 +65,7 @@ public:
 	void SetBranchPoints(std::vector<branchPT*> Branches);
 //	operators
 	int getNewLineId();
+  int GetMaximumBitId();
 	void splitTrace(int selectedCellId);
 	void ReverseSegment(TraceLine*);
 	void RemoveTraceLine(TraceLine*);
@@ -73,6 +75,7 @@ public:
 	void FindMinLines(int smallSize);
 	int createGapLists(std::vector<TraceLine*> traceList);
 	int solveParents(std::vector<int> ids);
+  void SetCombineShortVTKLines(bool b) { this->CombineShortVTKLines = b; }
 //	public data
 	vtkSmartPointer<vtkPolyData> GetVTKPolyData();
 	vtkSmartPointer<vtkPolyData> generateBranchIllustrator();
@@ -85,6 +88,7 @@ public:
 	std::vector<TraceGap*> Gaps;
 	std::vector<branchPT*> BranchPoints;
 	std::vector<std::string> FeatureHeaders;
+  vtksys::hash_map<unsigned int, unsigned long long int> hash_load;
 
 	double gapTol;
 	int gapMax;
@@ -103,6 +107,20 @@ private:
   void LinearTraceLinesRecursive(std::vector<TraceLine*> &allLine, TraceLine* tline);
   void CollectBranchPointsRecursive(vtkSmartPointer<vtkPoints> p, vtkSmartPointer<vtkCellArray> cells,TraceLine *tline);
   void CollectSegmentMidPointsRecursive(vtkSmartPointer<vtkPoints>p, vtkSmartPointer<vtkCellArray> cells, vtkSmartPointer<vtkFloatArray> da,TraceLine* tline);
+
+  //helper functions & objects for converting .vtk polydata into a TraceObject
+  void ConvertVTKDataToTraceLines();
+  void FindVTKTraceEnds();
+  int VTKLineIsTraceEnd(int rootID);
+  int VTKLineContainsPoint(int cellID, double point[3]);
+  void ConvertVTKLineToTrace(int cellID, int parentTraceLineID, double *endPoint);
+  vtkSmartPointer<vtkPolyData> VTKData;
+	std::vector< std::pair<int, double *> > VTKTraceEnds;
+  vtkSmartPointer<vtkIdTypeArray> DisconnectedVTKLines;
+  //WARNING: this is only guaranteed to be accurate in the context of the above function.
+  int NextTraceBitID;  
+  bool CombineShortVTKLines;
+	std::vector<branchPT*> branchPTsInProgress;
 };
 
 #endif
