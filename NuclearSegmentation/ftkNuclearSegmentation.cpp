@@ -65,7 +65,7 @@ void NuclearSegmentation::ResetAll(void)
 
 	bBoxMap.clear();
 	centerMap.clear();
-	idToRowMap.clear();
+	//idToRowMap.clear();
 
 	this->ReleaseSegMemory();
 }
@@ -379,7 +379,7 @@ bool NuclearSegmentation::ComputeFeatures()
 
 		bBoxMap[(int)id] = b;
 		centerMap[(int)id] = c;
-		idToRowMap[(int)id] = r++;
+		//idToRowMap[(int)id] = r++;
 	}
 	editsNotSaved = true;
 	return true;
@@ -912,21 +912,18 @@ string NuclearSegmentation::TimeStamp()
 //**********************************************************************************************************
 long int NuclearSegmentation::maxID(void)
 {
+	long int max = -1;
 	if(featureTable)
 	{
-		long int max = -1;
-		for(long int row=0; row < featureTable->GetNumberOfRows(); ++row)
+		for(int row = 0; row < featureTable->GetNumberOfRows(); ++row)
 		{
 			long int id = featureTable->GetValue(row,0).ToLong();
 			if( id > max ) max = id;
 		}
-		return max;
 	}
-	else
-	{
-		return 0;
-	}
+	return max;
 }
+
 //**********************************************************************************************************
 //This function finds the bounding box of the object with id "fromId",
 // and uses that area to change the pixels to "toId"
@@ -1247,25 +1244,6 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 	return ids_ok;
 }
 
-//This function is applied on the initial segmentation image and updates the LoG response image
-std::vector< int > NuclearSegmentation::SplitInit(ftk::Object::Point P1, ftk::Object::Point P2)
-{
-	//if no label (segmentation) or no data image is available then return
-	if(!labelImage || !dataImage)
-	{
-		errorMessage = "label image or data image doesn't exist";	
-		std::vector <int> ids_err;
-		ids_err.push_back(0);
-		ids_err.push_back(0);
-		return ids_err;
-	}	
-	
-	//Apply the splitting
-	std::vector <int> ids_ok = NucleusSeg->SplitInit(P1, P2);
-		
-	return ids_ok;
-}
-
 
 std::vector< int > NuclearSegmentation::SplitAlongZ(int objID, int cutSlice)
 {
@@ -1404,8 +1382,11 @@ std::vector< int > NuclearSegmentation::SplitAlongZ(int objID, int cutSlice)
 }
 int NuclearSegmentation::Merge(vector<int> ids)
 {
-	if(!labelImage)
+	if(!labelImage || !dataImage)
+	{
+		errorMessage = "label image or data image doesn't exist";					
 		return 0;
+	}
 
 	//Merge is difficult because we are going to invalidate all merged objects,
 	// create a new label and assign the old object labels to it,
@@ -1414,111 +1395,16 @@ int NuclearSegmentation::Merge(vector<int> ids)
 	// Return the new ID
 
 	int newID = maxID() + 1;
-	for(int i=0; i<(int)ids.size(); ++i)
-	{
-		//int index = GetObjectIndex(ids.at(i),"nucleus");
-		//if(index < 0 ) return 0;
-
-		//myObjects.at(index).SetValidity(ftk::Object::MERGED);
-		ftk::Object::EditRecord record;
-		record.date = TimeStamp();
-		std::string msg = "MERGED TO BECOME ";
-		msg.append(NumToString(newID));
-		record.description = msg;
-		//myObjects.at(index).AddEditRecord(record);
-	}
-	ReassignLabels(ids, newID);		//Assign all old labels to this new label
-
-	if(!labelImage || !dataImage)
-	{
-		errorMessage = "label image or data image doesn't exist";
-		return 0;
-	}
-
-	//Calculate features using feature filter
-	typedef unsigned char IPixelT;
-	typedef unsigned short LPixelT;
-	typedef itk::Image< IPixelT, 3 > IImageT;
-	typedef itk::Image< LPixelT, 3 > LImageT;
-
-	dataImage->Cast<IPixelT>();
-	labelImage->Cast<LPixelT>();
-
-	IImageT::Pointer itkIntImg = dataImage->GetItkPtr<IPixelT>(0,0);
-	LImageT::Pointer itkLabImg = labelImage->GetItkPtr<LPixelT>(0,0);
-
-	IImageT::RegionType intRegion;
-	IImageT::SizeType intSize;
-	IImageT::IndexType intIndex;
-	LImageT::RegionType labRegion;
-	LImageT::SizeType labSize;
-	LImageT::IndexType labIndex;
-
+	ReassignLabels(ids, newID);					//Assign all old labels to this new label
 	ftk::Object::Box region = ExtremaBox(ids);
-	intIndex[0] = region.min.x;
-	intIndex[1] = region.min.y;
-	intIndex[2] = region.min.z;
-	intSize[0] = region.max.x - region.min.x + 1;
-	intSize[1] = region.max.y - region.min.y + 1;
-	intSize[2] = region.max.z - region.min.z + 1;
-
-	labIndex[0] = region.min.x;
-	labIndex[1] = region.min.y;
-	labIndex[2] = region.min.z;
-	labSize[0] = region.max.x - region.min.x + 1;
-	labSize[1] = region.max.y - region.min.y + 1;
-	labSize[2] = region.max.z - region.min.z + 1;
-
-	intRegion.SetSize(intSize);
-    intRegion.SetIndex(intIndex);
-    itkIntImg->SetRequestedRegion(intRegion);
-
-    labRegion.SetSize(labSize);
-    labRegion.SetIndex(labIndex);
-    itkLabImg->SetRequestedRegion(labRegion);
-
-	typedef ftk::LabelImageToFeatures< IPixelT, LPixelT, 3 > FeatureCalcType;
-	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
-	labFilter->SetImageInputs( itkIntImg, itkLabImg );
-	labFilter->SetLevel(3);
-	labFilter->ComputeHistogramOn();
-	labFilter->ComputeTexturesOn();
-	labFilter->Update();
-
-	//myObjects.push_back( GetNewObject(newID, labFilter->GetFeatures(newID) ) );
-	
-	ftk::Object::EditRecord record;
-	record.date = TimeStamp();
-	std::string msg = "MERGED TO FROM: ";
-	msg.append(NumToString(ids.at(0)));
-	for(int i=1; i<(int)ids.size(); ++i)
+	this->computeFeatures(newID, region.min.x, region.min.y, region.min.z, region.max.x, region.max.y, region.max.z);
+	for(int i=0; i<ids.size(); ++i)
 	{
-		msg.append(", ");
-		msg.append(NumToString(ids.at(i)));
+		removeFeatures(ids.at(i));
 	}
-	record.description = msg;
-	//myObjects.back().AddEditRecord(record);
-	//IdToIndexMap[newID] = (int)myObjects.size() - 1;
+	//NEED TO ADD AN EDIT RECORD:
 
-	editsNotSaved = true;
 	return newID;
-}
-//this is used when we apply merging on the initial segmentation
-ftk::Object::Point NuclearSegmentation::MergeInit(ftk::Object::Point P1, ftk::Object::Point P2, int* new_id)
-{
-	//if no label (segmentation) or no data image is available then return
-	if(!labelImage || !dataImage)
-	{
-		errorMessage = "label image or data image doesn't exist";			
-		ftk::Object::Point err;
-		err.t = err.x = err.y = err.z = 0;
-		return err;
-	}	
-	
-	//Apply the splitting
-	ftk::Object::Point newSeed = NucleusSeg->MergeInit(P1, P2, new_id);
-		
-	return newSeed;
 }
 
 int NuclearSegmentation::AddObject(int x1, int y1, int z1, int x2, int y2, int z2)
@@ -1598,41 +1484,37 @@ bool NuclearSegmentation::Delete(vector<int> ids)
 	for(int i=0; i<(int)ids.size(); ++i)
 	{
 		ReassignLabel(ids.at(i),0);				//Turn each label in list to zero
-
-		//Remove From Table:
-		if(featureTable)
-		{
-			featureTable->RemoveRow( idToRowMap[ids.at(i)] );
-			idToRowMap.erase( ids.at(i) );
-			centerMap.erase( ids.at(i) );
-			bBoxMap.erase( ids.at(i) );
-		}
-
+		removeFeatures(ids.at(i));				//Remove Features From Table:
 		//Create Edit Record:
 	}
 
-	editsNotSaved = true;
 	return true;
 }
 
-//*****************************************************************************
-// Applied to initial segmentation, doesn't change table (table doesn't exist
-//*****************************************************************************
-bool NuclearSegmentation::DeleteInit(ftk::Object::Point P1)
+void NuclearSegmentation::removeFeatures(int ID)
 {
-	if(!NucleusSeg) return false;
-
-	//if no label (segmentation) or no data image is available then return
-	if(!labelImage || !dataImage)
+	if(featureTable)
 	{
-		errorMessage = "label image or data image doesn't exist";			
-		return false;
-	}	
-	
-	bool ids_ok = NucleusSeg->DeleteInit(P1);
-	return ids_ok;
+		featureTable->RemoveRow( rowForID(ID) );
+		//idToRowMap.erase( ID );
+		centerMap.erase( ID );
+		bBoxMap.erase( ID );
+	}
+	editsNotSaved = true;
 }
 
+int NuclearSegmentation::rowForID(int id)
+{
+	if(featureTable)
+	{
+		for(int row = 0; row < featureTable->GetNumberOfRows(); ++row)
+		{
+			if( id == featureTable->GetValue(row,0).ToInt() )
+				return row;
+		}
+	}
+	return -1;
+}
 
 //Calculate the features within a specific region of the image for a specific ID, and update the table
 bool NuclearSegmentation::computeFeatures(int ID, int x1, int y1, int z1, int x2, int y2, int z2)
@@ -1734,11 +1616,68 @@ bool NuclearSegmentation::computeFeatures(int ID, int x1, int y1, int z1, int x2
 
 		bBoxMap[(int)id] = b;
 		centerMap[(int)id] = c;
-		idToRowMap[(int)id] = featureTable->GetNumberOfRows()-1;
+		//idToRowMap[(int)id] = featureTable->GetNumberOfRows()-1;
 	}
 	editsNotSaved = true;
 	return true;
 
+}
+
+//*****************************************************************************
+// Applied to initial segmentation, doesn't change table (table doesn't exist
+//*****************************************************************************
+bool NuclearSegmentation::DeleteInit(ftk::Object::Point P1)
+{
+	if(!NucleusSeg) return false;
+
+	//if no label (segmentation) or no data image is available then return
+	if(!labelImage || !dataImage)
+	{
+		errorMessage = "label image or data image doesn't exist";			
+		return false;
+	}	
+	
+	bool ids_ok = NucleusSeg->DeleteInit(P1);
+	return ids_ok;
+}
+
+//This function is applied on the initial segmentation image and updates the LoG response image
+std::vector< int > NuclearSegmentation::SplitInit(ftk::Object::Point P1, ftk::Object::Point P2)
+{
+	if(!NucleusSeg) return std::vector<int>(0);
+	//if no label (segmentation) or no data image is available then return
+	if(!labelImage || !dataImage)
+	{
+		errorMessage = "label image or data image doesn't exist";	
+		std::vector <int> ids_err;
+		ids_err.push_back(0);
+		ids_err.push_back(0);
+		return ids_err;
+	}	
+	
+	//Apply the splitting
+	std::vector <int> ids_ok = NucleusSeg->SplitInit(P1, P2);
+		
+	return ids_ok;
+}
+
+//this is used when we apply merging on the initial segmentation
+ftk::Object::Point NuclearSegmentation::MergeInit(ftk::Object::Point P1, ftk::Object::Point P2, int* new_id)
+{
+	ftk::Object::Point newSeed;
+	newSeed.t = newSeed.x = newSeed.y = newSeed.z = 0;
+	if(!NucleusSeg) return newSeed; 
+	//if no label (segmentation) or no data image is available then return
+	if(!labelImage || !dataImage)
+	{
+		errorMessage = "label image or data image doesn't exist";			
+		return newSeed;
+	}	
+	
+	//Apply the splitting
+	newSeed = NucleusSeg->MergeInit(P1, P2, new_id);
+		
+	return newSeed;
 }
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -2310,7 +2249,7 @@ void NuclearSegmentation::parseFeaturesToTable(int id, TiXmlElement *featureElem
 		row->InsertNextValue( vtkVariant(tempFeatures.at(i)) );
 	}
 	featureTable->InsertNextRow(row);
-	idToRowMap[id] = featureTable->GetNumberOfRows()-1;
+	//idToRowMap[id] = featureTable->GetNumberOfRows()-1;
 }
 
 /* OLD METHOD:

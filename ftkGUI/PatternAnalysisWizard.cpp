@@ -485,27 +485,23 @@ void PatternAnalysisWizard::runKPLS()
 	kpls->SetLatentVars(5);
 	kpls->SetSigma(20);
 
-	int num_rows = (int)model->rowCount();
+	int num_rows = m_table->GetNumberOfRows();
 	int num_cols = (int)columnsToUse.size();
 
 	MATRIX data = kpls->GetDataPtr(num_rows, num_cols);
 	VECTOR ids = kpls->GetIDPtr();
 	VECTOR training = kpls->GetTrainingPtr();
 
-	//extract data from the model
-	QModelIndex index;
+	//extract data from the table:
 	for(int r=0; r<num_rows; ++r)
 	{
-		index = model->index(r,0);
-		ids[r] = model->data(index).toDouble();
+		ids[r] = m_table->GetValue(r,0).ToDouble();
 		for(int c=0; c<num_cols; ++c)
 		{
-			index = model->index(r, columnsToUse.at(c));
-			double val = model->data(index).toDouble();
+			double val = m_table->GetValue(r, columnsToUse.at(c)).ToDouble();
 			data[r][c] = val;
 		}
-		index = model->index(r,model->columnCount()-2);
-		training[r] = model->data(index).toDouble();
+		training[r] = m_table->GetValueByName(r,columnForTraining).ToDouble();
 	}
 
 	kpls->InitVariables();
@@ -515,17 +511,22 @@ void PatternAnalysisWizard::runKPLS()
 
 	VECTOR predictions = kpls->GetPredictions();
 
-	model->setHeaderData(columnForPrediction, Qt::Horizontal, tr("predict"));
-
-	//stop signalling:
-	model->blockSignals(true);
-	for(int row = 1; (int)row < model->rowCount(); ++row)  //Set all values to 0
+	//If need to create a new column do so now:
+	vtkAbstractArray * output = m_table->GetColumnByName(columnForPrediction);
+	if(output == 0)
 	{
-		model->setData(model->index(row, columnForPrediction), (int)predictions[row]);
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( columnForPrediction );
+		column->SetNumberOfValues( m_table->GetNumberOfRows() );
+		m_table->AddColumn(column);
 	}
-	//turn signals back on & change one more piece of data to force dataChanged signal
-	model->blockSignals(false);
-	model->setData(model->index(0, columnForPrediction), (int)predictions[0]);
+
+	for(int row = 0; (int)row < m_table->GetNumberOfRows(); ++row)  
+	{
+		m_table->SetValueByName(row, columnForPrediction, vtkVariant(predictions[row]));
+	}
+
+	emit changedTable();
 
 	delete kpls;
 #else

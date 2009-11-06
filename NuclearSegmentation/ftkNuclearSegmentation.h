@@ -88,13 +88,15 @@ public:
 	//Editing Functions 
 	bool EditsNotSaved(void){ return this->editsNotSaved; };
 	std::vector< int > Split(ftk::Object::Point P1, ftk::Object::Point P2);
-	std::vector< int > SplitInit(ftk::Object::Point P1, ftk::Object::Point P2); //same as above, but applied on initial segmentation and updates LoG resp image	
 	std::vector< int > SplitAlongZ(int objID, int cutSlice);
 	int Merge(vector<int> ids);
-	ftk::Object::Point MergeInit(ftk::Object::Point P1, ftk::Object::Point P2, int* new_id); //same as above, but applied on initial segmentation and updates LoG resp image
 	bool Delete(vector<int> ids);
-	bool DeleteInit(ftk::Object::Point P1); //same as above, but applied on initial segmentation (and updates LoG resp image?)
 	int AddObject(int x1, int y1, int z1, int x2, int y2, int z2);
+
+	//Edits applied on initial segmentation and updates LoG resp image
+	ftk::Object::Point MergeInit(ftk::Object::Point P1, ftk::Object::Point P2, int* new_id); 
+	std::vector< int > SplitInit(ftk::Object::Point P1, ftk::Object::Point P2);
+	bool DeleteInit(ftk::Object::Point P1);
 
 	//Misc string Gets
 	std::string GetErrorMessage() { return errorMessage; };
@@ -132,7 +134,7 @@ private:
 	std::vector<Parameter> myParameters;
 	std::map<int, ftk::Object::Box>		bBoxMap;			//Bounding boxes
 	std::map<int, ftk::Object::Point>	centerMap;			//Centroids
-	std::map<int, int>	idToRowMap;							//Mapping from ID to row in table!!!!
+	//std::map<int, int>	idToRowMap;							//Mapping from ID to row in table!!!!
 	vtkSmartPointer<vtkTable> featureTable;
 
 	void GetParameters(void);								//Retrieve the Parameters from nuclear segmentation.
@@ -153,6 +155,8 @@ private:
 
 	//Editing Utilities:
 	long int maxID(void);										//Get the maximum ID in the table!
+	int rowForID(int id);										//Iterate through table and get row for ID:
+	void removeFeatures(int ID);
 	bool computeFeatures(int ID, int x1, int y1, int z1, int x2, int y2, int z2); //features, update table for single ID
 	void ReassignLabels(std::vector<int> fromIds, int toId);
 	void ReassignLabel(int fromId, int toId);

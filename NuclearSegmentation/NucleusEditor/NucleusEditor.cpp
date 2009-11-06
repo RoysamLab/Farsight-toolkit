@@ -613,8 +613,13 @@ void NucleusEditor::deleteCells(void)
 
 void NucleusEditor::mergeCells(void)
 {
-	//if(currentModel)
-	//	currentModel->mergeTrigger();
+	if(!nucSeg) return;
+
+	std::set<long int> sels = selection->getSelections();
+	std::vector<int> ids(sels.begin(), sels.end());
+	nucSeg->Merge(ids);
+	selection->clear();
+	this->updateViews();
 }
 
 //void NucleusEditor::splitCells(void)
