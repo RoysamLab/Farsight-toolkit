@@ -130,7 +130,7 @@ View3D::View3D(int argc, char **argv)
 	{
 		std::string traceFile;
 		QString trace = QFileDialog::getOpenFileName(this , "Load Trace Data", ".",
-			tr("TraceFile( *.xml *.swc *.vtk" ));
+			tr(" TraceFile( *.xml *.swc *.vtk" ));
 		if (!trace.isEmpty())
 		{
 			traceFile = trace.toStdString();
@@ -170,7 +170,7 @@ void View3D::LoadTraces()
 {
 	std::string traceFile;
 	QString trace = QFileDialog::getOpenFileName(this , "Load Trace Data", ".",
-		tr("TraceFile( *.xml *.swc" ));
+		tr(" TraceFile ( *.xml *.swc *.vtk" ));
 	if (!trace.isEmpty())
 	{
 		traceFile = trace.toStdString();
@@ -179,10 +179,14 @@ void View3D::LoadTraces()
 			this->statusBar()->showMessage("Loading swc file");
 			this->tobj->ReadFromSWCFile((char*)traceFile.c_str());
 		}
-		else if (trace.endsWith("xml"))
+		else if(trace.endsWith("xml"))
 		{
 			this->statusBar()->showMessage("Loading xml file");
 			this->tobj->ReadFromRPIXMLFile((char*)traceFile.c_str());
+		}
+		else if (trace.endsWith("vtk"))
+		{
+			this->tobj->ReadFromVTKFile((char*)traceFile.c_str());
 		}
 		if (this->tobj->FeatureHeaders.size() >=1)
 		  {
@@ -294,13 +298,13 @@ void View3D::setupLinkedSpace()
   }
   this->TreeModel->setParent(this);
   //this->ShowTreeData();
-  this->connect(MergeGaps,SIGNAL(modelChanged()),this, SLOT(updateSelectionHighlights()));
-  this->connect(this->MergeGaps->GetSelectionModel(), SIGNAL(selectionChanged(
-	  const QItemSelection & , const QItemSelection &)), this, SLOT(updateSelectionHighlights()));
-
-  this->connect(this->TreeModel, SIGNAL(modelChanged()),this, SLOT(updateTraceSelectionHighlights()));
-  this->connect(this->TreeModel->GetSelectionModel(), SIGNAL(selectionChanged(
-	  const QItemSelection & , const QItemSelection &)), this, SLOT(updateTraceSelectionHighlights()));
+  //this->connect(MergeGaps,SIGNAL(modelChanged()),this, SLOT(updateSelectionHighlights()));
+  ///*this->connect(this->MergeGaps->GetSelectionModel(), SIGNAL(selectionChanged(
+	 // const QItemSelection & , const QItemSelection &)), this, SLOT(updateSelectionHighlights()));*/
+  this->connect(this->TreeModel->GetObjectSelection(), SIGNAL(changed()), this, SLOT(updateTraceSelectionHighlights()));
+  //this->connect(this->TreeModel, SIGNAL(modelChanged()),
+  ///*this->connect(this->TreeModel->GetSelectionModel(), SIGNAL(selectionChanged(
+	 // const QItemSelection & , const QItemSelection &)), this, SLOT(updateTraceSelectionHighlights()));*/
 }
 
 /*Set up the components of the interface */
@@ -613,14 +617,12 @@ void View3D::Rerender()
   this->statusBar()->showMessage(tr("Rerender Image"));
   this->SphereActor->VisibilityOff();
   this->SelectedTraceIDs.clear();
-  this->MergeGaps->GetSelectionModel()->clearSelection();
-  this->TreeModel->GetSelectionModel()->clearSelection();
+  /*this->MergeGaps->GetSelectionModel()->clearSelection();
+  this->TreeModel->GetSelectionModel()->clearSelection();*/
   this->Renderer->RemoveActor(this->BranchActor);
-  //this->Renderer->RemoveActor(this->VolumeActor);
   this->UpdateLineActor();
   this->UpdateBranchActor();
-  this->Renderer->AddActor(this->BranchActor); 
-  //this->Renderer->AddActor(this->VolumeActor);  
+  this->Renderer->AddActor(this->BranchActor);  
   this->QVTK->GetRenderWindow()->Render();
   this->statusBar()->showMessage(tr("Finished Rerendering Image"));
 }
@@ -645,10 +647,6 @@ void View3D::UpdateBranchActor()
   this->BranchActor = vtkSmartPointer<vtkActor>::New();
   this->BranchActor->SetMapper(this->polymap);
   this->BranchActor->SetPickable(0);
-  //this->AddPointsAsPoints(this->tobj->CollectTraceBits());
-  //Renderer->AddActor(BranchActor);
-  //BranchActor->Print(std::cout);
-
 }
 void View3D::AddPointsAsPoints(std::vector<TraceBit> vec)
 {
@@ -732,21 +730,21 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
       view->updateSelectionHighlights();
       break;
 
-    case '-':
-      if(view->SelectedTraceIDs.size()>=1)
-        {
-        TraceLine* tline=reinterpret_cast<TraceLine*>(
-          view->tobj->hashc[view->SelectedTraceIDs[view->SelectedTraceIDs.size()-1]]);
-        view->HighlightSelected(tline, tline->getTraceColor()-.25);
-        view->SelectedTraceIDs.pop_back();
-        cout<< " These lines: ";
-        for (unsigned int i = 0; i < view->SelectedTraceIDs.size(); i++)
-          {
-          cout<<  "\t"<<view->SelectedTraceIDs[i];   
-          } 
-        cout<< " \t are selected \n" ;   
-        }
-      break;
+    //case '-':
+    //  if(view->SelectedTraceIDs.size()>=1)
+    //    {
+    //    TraceLine* tline=reinterpret_cast<TraceLine*>(
+    //      view->tobj->hashc[view->SelectedTraceIDs[view->SelectedTraceIDs.size()-1]]);
+    //    view->HighlightSelected(tline, tline->getTraceColor()-.25);
+    //    view->SelectedTraceIDs.pop_back();
+    //    cout<< " These lines: ";
+    //    for (unsigned int i = 0; i < view->SelectedTraceIDs.size(); i++)
+    //      {
+    //      cout<<  "\t"<<view->SelectedTraceIDs[i];   
+    //      } 
+    //    cout<< " \t are selected \n" ;   
+    //    }
+    //  break;
 
 	case 'b':
 		view->AddNewBranches();
@@ -784,7 +782,7 @@ void View3D::SLine()
   case QMessageBox::No:
    {
      this->tobj->SmallLines.clear();
-	 this->TreeModel->GetSelectionModel()->clearSelection();
+	 this->TreeModel->GetObjectSelection()->clear();
    }
    break;
   }

@@ -38,14 +38,6 @@ public:
 	TraceModel(std::vector<TraceLine*> trace_lines, std::vector<std::string> FeatureHeaders);
 	TraceModel(std::vector<TraceLine*> trace_lines);
 
-	QStandardItemModel *GetModel()
-	{
-		return this->Model;
-	};
-	QItemSelectionModel *GetSelectionModel()
-	{
-		return this->SelectionModel;
-	};
 	int RowForID(int id);
 	int GetNumFeatures()
 	{
@@ -67,7 +59,7 @@ public:
 
 signals:
 	//emit this signal to tell the Qt views to update
-	void modelChanged(void);
+	//void modelChanged(void);
 	void selectionChanged(void);
 
 public slots:

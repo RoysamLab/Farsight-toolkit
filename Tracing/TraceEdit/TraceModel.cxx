@@ -25,9 +25,7 @@ limitations under the License.
 TraceModel::TraceModel(std::vector<TraceLine*> trace_lines, std::vector<std::string> FeatureHeaders)
 {  
 	this->DataTable = vtkSmartPointer<vtkTable>::New();
-	this->Model = new QStandardItemModel(0, 0, this);
 	this->Selection = new ObjectSelection();
-	this->SelectionModel = new QItemSelectionModel(this->Model, this);
 //standard headers	
 	this->stdHeaders();
 	if (FeatureHeaders.size() >=1)
@@ -41,10 +39,8 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines, std::vector<std::str
 	this->SetTraces(trace_lines);
 }
 TraceModel::TraceModel(std::vector<TraceLine*> trace_lines)
-{	this->DataTable = vtkSmartPointer<vtkTable>::New();
-	this->Model = new QStandardItemModel(0, 0, this);
+{	this->DataTable = vtkSmartPointer<vtkTable>::New();	
 	this->Selection = new ObjectSelection();
-	this->SelectionModel = new QItemSelectionModel(this->Model, this);
 //standard headers	
 	this->stdHeaders();
 	this->NumFeatures = this->headers.size();
@@ -72,12 +68,9 @@ void TraceModel::SetTraces(std::vector<TraceLine*> trace_lines)
 void TraceModel::SetupHeaders()
 {	
 	int numHeaders = this->headers.size();
-	this->Model->setColumnCount(numHeaders);
 	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
 	for(int i=0; i < numHeaders; ++i)
-    {
-		this->Model->setHeaderData(i, Qt::Horizontal, 
-			this->headers.at(i));
+    {		
 		column = vtkSmartPointer<vtkDoubleArray>::New();
 		column->SetName( this->headers.at(i).toStdString().c_str() );
 		this->DataTable->AddColumn(column);
@@ -93,46 +86,29 @@ void TraceModel::SyncModel()
 	{
 		return;
 	}
-	this->Model->blockSignals(true);
-	this->Model->setColumnCount(0);
-	this->Model->setRowCount(0);
 	this->SetupHeaders();
-	std::vector< std::vector< double > > data;
+	//std::vector< std::vector< double > > data;
 	for (int i = 0; i < (int)this->TraceLines.size(); ++i)
 	{
-		std::vector<double> row;
-		row.push_back(this->TraceLines.at(i)->GetId());
-		row.push_back(this->TraceLines.at(i)->GetSize());
-		row.push_back(this->TraceLines.at(i)->GetLength());
-		row.push_back(this->TraceLines.at(i)->GetRadii());
-		row.push_back(this->TraceLines.at(i)->GetVolume());
-		row.push_back((int)this->TraceLines.at(i)->GetType());
-		row.push_back(this->TraceLines.at(i)->GetParentID());
-		row.push_back(this->TraceLines.at(i)->GetRootID());
-		row.push_back(this->TraceLines.at(i)->GetLevel());
-		row.push_back(this->TraceLines.at(i)->GetPathLength());
+		vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
+		
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetId());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetSize());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetLength());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetRadii());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetVolume());
+		DataRow->InsertNextValue((int)this->TraceLines.at(i)->GetType());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetParentID());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetRootID());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetLevel());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetPathLength());
 		for (int j = 0; j < (int)this->TraceLines.at(i)->Features.size(); ++j)
 		{
-			row.push_back(this->TraceLines.at(i)->Features.at(j));
+			DataRow->InsertNextValue(this->TraceLines.at(i)->Features.at(j));
 		}
-		data.push_back(row);
+		this->DataTable->InsertNextRow(DataRow);
 	}//end for traces.size  
-	for (int row=0; row<(int)data.size(); ++row)
-    {
-    this->Model->insertRow(row);
-	vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
-
-    for(int col=0; col < this->Model->columnCount(); ++col)
-      {
-		  DataRow->InsertNextValue( vtkVariant(data.at(row).at(col)) );
-      this->Model->setData(this->Model->index(row, col), data.at(row).at(col));
-      }
-	this->DataTable->InsertNextRow(DataRow);
-    }
-	this->MapTracesToRows();
-	this->Model->blockSignals(false);
-  //let the views know that the model changed
-  emit modelChanged();
+	//this->MapTracesToRows();
 }
 void TraceModel::MapTracesToRows()
 {
@@ -140,15 +116,15 @@ void TraceModel::MapTracesToRows()
 	{
 		return;
 	}
-	QModelIndex index;
-	int ID;
-	this->IDToRowMap.clear();
-	for (int row = 0; row < this->Model->rowCount(); ++row)
-	{
-		index = this->Model->index(row, TraceModel::IDColumn);
-		ID = this->Model->data(index).toInt();
-		this->IDToRowMap.insert(ID, row);
-	}
+	//QModelIndex index;
+	//int ID;
+	//this->IDToRowMap.clear();
+	//for (int row = 0; row < this->Model->rowCount(); ++row)
+	//{
+	//	index = this->Model->index(row, TraceModel::IDColumn);
+	//	ID = this->Model->data(index).toInt();
+	//	this->IDToRowMap.insert(ID, row);
+	//}
 }
 vtkSmartPointer<vtkTable> TraceModel::getDataTable()
 {
@@ -156,52 +132,40 @@ vtkSmartPointer<vtkTable> TraceModel::getDataTable()
 }
 void TraceModel::SelectByIDs(int ID)
 {
-	int row = this->IDToRowMap.value(ID);
-	QItemSelection selection;
-	selection.clear();
-	QModelIndex index1 = this->Model->index(row, 0, QModelIndex());
-	QModelIndex index2 = this->Model->index(row, (this->Model->columnCount())-1, QModelIndex());
-	selection.select(index1, index2);
-	this->SelectionModel->select(selection, QItemSelectionModel::Toggle);
+	this->Selection->toggle((long) ID);
 	emit selectionChanged();
 }
 std::vector<int> TraceModel::GetSelecectedIDs()
 {
 	std::vector<int> SelectedIDs;
-	QModelIndexList selected = this->SelectionModel->selectedRows();
-	for (int i = 0; i < selected.size(); ++i)
-	{
-		int row = selected.at(i).row();
-		int id = this->Model->data(this->Model->index(row, TraceModel::IDColumn)).toInt();
-		SelectedIDs.push_back(id);
+	std::set<long> selected = this->Selection->getSelections();
+	std::set<long>::iterator it;
+	for (it = selected.begin(); it != selected.end(); ++it)
+	{		
+		SelectedIDs.push_back(*it);
 	}
 	return SelectedIDs;
 }
 std::vector<TraceLine*> TraceModel::GetSelectedTraces()
 {
 	std::vector<TraceLine*> selectedTrace;
-	QModelIndexList selected = this->SelectionModel->selectedRows();
-	for (int i = 0; i < selected.size(); ++i)
+	std::vector<int> IDList = this->GetSelecectedIDs();
+	for ( unsigned int i = 0; i< IDList.size(); i++)
 	{
-		int row = selected.at(i).row();
-		selectedTrace.push_back( this->GetTraces().at(row));
-	}
+		bool found = false; 
+		unsigned int j = 0;
+		while ((!found )&&(j < this->TraceLines.size()))
+		{
+			if (this->TraceLines[j]->GetId()==IDList[i])
+			{
+				selectedTrace.push_back(this->TraceLines[j]);
+				found= true;
+			}
+			else
+			{
+				j++;
+			}
+		}//end search for trace
+	}//finished with id search
 	return selectedTrace;
-}
-void TraceModel::root()
-{
-	std::vector<int> RootIDs;
-	QModelIndexList selected = this->SelectionModel->selectedRows();
-	for (int i = 0; i < selected.size(); ++i)
-	{
-		int row = selected.at(i).row();
-		int id = this->Model->data(this->Model->index(row, TraceModel::RootCol)).toInt();
-		RootIDs.push_back(id);
-	}
-	//std::sort(RootIDs.begin(),RootIDs.end());
-	//std::unique(RootIDs.begin(),RootIDs.end());
-	for (unsigned int i = 0; i < RootIDs.size(); i++)
-	{
-		std::cout<< "/t"<< RootIDs[i];
-	}
 }
