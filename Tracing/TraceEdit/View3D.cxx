@@ -297,14 +297,11 @@ void View3D::setupLinkedSpace()
 	  this->TreeModel = new TraceModel(this->tobj->GetTraceLines());
   }
   this->TreeModel->setParent(this);
-  //this->ShowTreeData();
-  //this->connect(MergeGaps,SIGNAL(modelChanged()),this, SLOT(updateSelectionHighlights()));
-  ///*this->connect(this->MergeGaps->GetSelectionModel(), SIGNAL(selectionChanged(
-	 // const QItemSelection & , const QItemSelection &)), this, SLOT(updateSelectionHighlights()));*/
-  this->connect(this->TreeModel->GetObjectSelection(), SIGNAL(changed()), this, SLOT(updateTraceSelectionHighlights()));
-  //this->connect(this->TreeModel, SIGNAL(modelChanged()),
-  ///*this->connect(this->TreeModel->GetSelectionModel(), SIGNAL(selectionChanged(
-	 // const QItemSelection & , const QItemSelection &)), this, SLOT(updateTraceSelectionHighlights()));*/
+  this->connect(this->MergeGaps->GetObjectSelection(), SIGNAL(changed()), 
+	  this,SLOT(updateSelectionHighlights()));
+  this->connect(this->TreeModel->GetObjectSelection(), SIGNAL(changed()), 
+	  this, SLOT(updateTraceSelectionHighlights()));
+
 }
 
 /*Set up the components of the interface */

@@ -26,10 +26,8 @@ limitations under the License.
 MergeModel::MergeModel(std::vector<TraceGap*> gaps)
 {
 	this->DataTable = vtkSmartPointer<vtkTable>::New();
-  this->Model = new QStandardItemModel(0, 0, this);
-  this->Selection = new ObjectSelection();
-  this->SelectionModel = new QItemSelectionModel(this->Model, this);
-  this->SetTraceGaps(gaps);
+	this->Selection = new ObjectSelection();
+	this->SetTraceGaps(gaps);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -37,18 +35,12 @@ MergeModel::~MergeModel()
 {
   //explicit deletion isn't necessary because Qt objects take care of killing
   //their own children
-  /*
-  delete this->Model;
-  this->Model = NULL;
-  delete this->SelectionModel;
-  this->SelectionModel = NULL;
-  */
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void MergeModel::SetupHeaders()
 {
-	std::vector<QString> headers;
+	std::vector<std::string> headers;
 	headers.push_back("Gap ID");
 	headers.push_back("Trace 1 ID");
 	headers.push_back("Trace 2 ID");
@@ -58,14 +50,12 @@ void MergeModel::SetupHeaders()
 	headers.push_back("Path Length");
 	headers.push_back("Smoothness");
 	headers.push_back("Cost");
-	int numHeaders = headers.size();
-	this->Model->setColumnCount(numHeaders);
+	//int numHeaders = headers.size();
 	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
 	for(int i=0; i<(int)headers.size(); ++i)
-	{
-		this->Model->setHeaderData(i, Qt::Horizontal, headers.at(i));
+	{		
 		column = vtkSmartPointer<vtkDoubleArray>::New();
-		column->SetName( headers.at(i).toStdString().c_str() );
+		column->SetName( headers.at(i).c_str() );
 		this->DataTable->AddColumn(column);
 	}
 }
@@ -81,47 +71,26 @@ void MergeModel::SyncModel()
     return;
     }
 
-  //clear the model
-  this->Model->setColumnCount(0);
-  this->Model->setRowCount(0);
+  //clear the model 
   this->SetupHeaders();
   //and then repopulate it with data from the trace gaps
-  std::vector< std::vector< double > > data;
   std::vector<TraceGap*> Gaps = this->GetTraceGaps();
   for(unsigned int i = 0;i < this->GetTraceGaps().size(); i++)
     {
-    std::vector<double> row;
-	row.push_back(Gaps[i]->compID);
-    row.push_back(Gaps[i]->Trace1->GetId());
-    row.push_back(Gaps[i]->Trace2->GetId());
-    row.push_back(Gaps[i]->dist);
-    row.push_back(Gaps[i]->angle);
-    row.push_back(Gaps[i]->maxdist);
-    row.push_back(Gaps[i]->length);
-    row.push_back(Gaps[i]->smoothness);
-    row.push_back(Gaps[i]->cost);
-    data.push_back(row);
-    }
-
-  for (int row=0; row<(int)this->GetTraceGaps().size(); ++row)
-    {
-    //create a new row
-    this->Model->insertRow(row);
-	vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
-    //insert the data for a gap in this row
-    for(int col=0; col < this->Model->columnCount(); ++col)
-      {
-		  DataRow->InsertNextValue( vtkVariant(data.at(row).at(col)) );
-		  this->Model->setData(this->Model->index(row, col), data.at(row).at(col));
-      }
-	this->DataTable->InsertNextRow(DataRow);
-    }
-  //let the views know that the model changed
-  emit modelChanged();
-
-  //and refresh the mapping between map ids and rows
+		vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
+		DataRow->InsertNextValue(Gaps[i]->compID);
+		DataRow->InsertNextValue(Gaps[i]->Trace1->GetId());
+		DataRow->InsertNextValue(Gaps[i]->Trace2->GetId());
+		DataRow->InsertNextValue(Gaps[i]->dist);
+		DataRow->InsertNextValue(Gaps[i]->angle);
+		DataRow->InsertNextValue(Gaps[i]->maxdist);
+		DataRow->InsertNextValue(Gaps[i]->length);
+		DataRow->InsertNextValue(Gaps[i]->smoothness);
+		DataRow->InsertNextValue(Gaps[i]->cost);
+		this->DataTable->InsertNextRow(DataRow);
+    }/*
   this->MapGapIDsToRows();
-  this->MapTracesToRows();
+  this->MapTracesToRows();*/
 
 }
 vtkSmartPointer<vtkTable> MergeModel::getDataTable()
@@ -129,66 +98,53 @@ vtkSmartPointer<vtkTable> MergeModel::getDataTable()
 	return this->DataTable;
 }
 ////////////////////////////////////////////////////////////////////////////////
-void MergeModel::MapGapIDsToRows()
-{
-  if(this->GetTraceGaps().size() == 0)
-    {
-		return;
-    }
-  QModelIndex index;
-  int ID;
-  this->IDToRowMap.clear();
-  for (int row = 0; row < this->Model->rowCount(); row++)
-    {
-    index = this->Model->index(row, MergeModel::IDColumn);
-    ID = this->Model->data(index).toInt();
-    this->IDToRowMap.insert(ID,row);
-    }
-}
-void MergeModel::MapTracesToRows()
-{
-	if(this->GetTraceGaps().size() == 0)
-    {
-		return;
-    }
-	QModelIndex index1, index2;
-	int T1, T2;
-	this->Trace1ToRow.clear();
-	this->Trace2ToRow.clear();
-	for (int row = 0; row < this->Model->rowCount(); row++)
-    {
-//map trace 1
-		index1 = this->Model->index(row, this->Trace1Col);
-		T1 = this->Model->data(index1).toInt();
-		this->Trace1ToRow.insert(T1,row);
-//map trace 2		
-		index2 = this->Model->index(row, this->Trace2Col);
-		T2 = this->Model->data(index2).toInt();
-		this->Trace2ToRow.insert(T2,row);
-    }
-}
 void MergeModel::SelectbyTraceID(int id)
 {
-	int row1, row2;
-	row1 = this->Trace1ToRow.value(id);
-	row2 = this->Trace2ToRow.value(id);
-	QItemSelection selection;
-	selection.clear();
-	//std::cout << "\nID:\t" << id;
-	if (row1 > 0)
+	unsigned int i = 0;
+	int id1 =-1, id2= -1;
+	bool foundT1 = false, foundT2 = false;
+	while ((i < this->TraceGaps.size()) && !(foundT1 && foundT2))
 	{
-		QModelIndex index1 = this->Model->index(row1, 0, QModelIndex());
-		QModelIndex index2 = this->Model->index(row1,(this->Model->columnCount())-1, QModelIndex());
-		selection.select(index1,index2);
+		if (!foundT1)
+		{
+			if (id == this->TraceGaps.at(i)->Trace1->GetId())
+			{
+				id1 = this->TraceGaps.at(i)->compID;
+				foundT1 = true;
+			}
+		}//end search t1
+		if (!foundT2)
+		{
+			if (id == this->TraceGaps.at(i)->Trace2->GetId())
+			{
+				id2 = this->TraceGaps.at(i)->compID;
+				foundT2 = true;
+			}
+		}//end search t2
+		i++;
 	}
-	if (row2 > 0)
-	{	
-		QModelIndex index1 = this->Model->index(row2, 0, QModelIndex());
-		QModelIndex index2 = this->Model->index(row2,(this->Model->columnCount())-1, QModelIndex());
-		selection.select(index1,index2);
+	if (foundT1 && foundT2)
+	{
+		if (this->Selection->isSelected((long) id1)
+			!=this->Selection->isSelected((long) id2))
+		{
+			this->Selection->remove((long) id1);
+			this->Selection->remove((long) id2);
+		}
+		else
+		{
+			this->Selection->toggle((long) id1);
+			this->Selection->toggle((long) id2);
+		}
 	}
-	this->SelectionModel->select(selection, QItemSelectionModel::Toggle);
-	emit selectionChanged();
+	else if(foundT1)
+	{
+		this->Selection->toggle((long) id1);
+	}
+	else if(foundT2)
+	{
+		this->Selection->toggle((long) id2);
+	}
 }
 ////////////////////////////////////////////////////////////////////////////////
 void MergeModel::SetTraceGaps(std::vector<TraceGap *> gaps)
@@ -204,72 +160,15 @@ std::vector<TraceGap *> MergeModel::GetTraceGaps()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-QStandardItemModel* MergeModel::GetModel()
-{
-  return this->Model;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-QItemSelectionModel* MergeModel::GetSelectionModel()
-{
-  return this->SelectionModel;
-}
-
-/**
- * Call this slot when deleting gaps.
- * Note that actual changes to the trace data are performed by the TraceObject
- * class.
- **/
-////////////////////////////////////////////////////////////////////////////////
-void MergeModel::deleteTrigger(void)
-{
-  //Extract a list of IDs
-  QModelIndexList selectedIndices = this->SelectionModel->selectedRows();
-  std::vector<int> ids(0);
-  for (int selectedIndex = 0;
-       selectedIndex < selectedIndices.size();
-       ++selectedIndex)
-    {
-    int row = selectedIndices.at(selectedIndex).row();
-    QList<QStandardItem *> items = this->Model->takeRow(row);
-    for(int i = 0; i < items.size(); ++i)
-      {
-      delete items.at(i);
-      }
-    }
-  this->MapGapIDsToRows();
-  emit modelChanged();
-}
-
-/**
- * Call this slot when merging gaps.
- * Note that actual changes to the trace data are performed by the TraceObject
- * class.
- **/
-
- //how is this different?  the gap still goes bye-bye.
- //I guess it needs to emit a different signal so View3D knows what to do.
- //View3D already knows what to do, it's the one driving the action.
- //but it does need to know when the model's selection changes.
-////////////////////////////////////////////////////////////////////////////////
-void MergeModel::mergeTrigger(void)
-{
-}
-
-////////////////////////////////////////////////////////////////////////////////
 std::vector<int> MergeModel::GetSelectedGapIDs()
 {
-  std::vector<int> selectedGapIDs;
-	QModelIndexList selectedIndices = this->SelectionModel->selectedRows();
-	for (int selectedIndex = 0;
-       selectedIndex < selectedIndices.size();
-       ++selectedIndex) 
-	  {
-		int row = selectedIndices.at(selectedIndex).row();
-		int id = this->Model->data(
-      this->Model->index(row, MergeModel::IDColumn) ).toInt();
-		selectedGapIDs.push_back(id);
-	  }
-  return selectedGapIDs;
+	std::vector<int> SelectedIDs;
+	std::set<long> selected = this->Selection->getSelections();
+	std::set<long>::iterator it;
+	for (it = selected.begin(); it != selected.end(); ++it)
+	{		
+		SelectedIDs.push_back(*it);
+	}
+	return SelectedIDs;
 }
 
