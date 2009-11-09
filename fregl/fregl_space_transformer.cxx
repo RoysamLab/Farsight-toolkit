@@ -90,7 +90,7 @@ set_anchor( std::string const & anchor_name, bool in_anchor, bool overlap_only, 
 
     image_size_ = image_sizes[anchor_];
     std::cout<<"Origin = "<<origin_[0]<<","<<origin_[1]<<","<<origin_[2]<<std::endl;
-    std::cout<<"Image_size = "<<image_size_[0]<<","<<image_size_[1]<<","<<image_size_[2]<<std::endl;
+    std::cout<<"Image_size = "<<image_size_[0]<<" x "<<image_size_[1]<<" x "<<image_size_[2]<<std::endl;
     
     return;  
   }
@@ -158,7 +158,7 @@ set_anchor( std::string const & anchor_name, bool in_anchor, bool overlap_only, 
   image_size_[2] =  ceil(max_pt[2]-origin_[2] + 1);
  
   std::cout<<"Origin = "<<origin_[0]<<","<<origin_[1]<<","<<origin_[2]<<std::endl;
-  std::cout<<"Image_size = "<<image_size_[0]<<","<<image_size_[1]<<","<<image_size_[2]<<std::endl;
+  std::cout<<"Image_size = "<<image_size_[0]<<" x "<<image_size_[1]<<" x "<<image_size_[2]<<std::endl;
 }
 
 bool 
