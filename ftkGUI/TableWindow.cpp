@@ -98,8 +98,10 @@ void TableWindow::update()
 	if(modAdapter)
 		modAdapter->setTable( modAdapter->table() );
 
-	tableView->resizeRowsToContents();
-	tableView->resizeColumnsToContents();
+	//I took these out because sometimes they were really, really slow:
+	//tableView->resizeRowsToContents();
+	//tableView->resizeColumnsToContents();
+
 	//Resize Rows to be as small as possible
 	for (int i=0; i<tableView->model()->rowCount(); i++)
 	{
