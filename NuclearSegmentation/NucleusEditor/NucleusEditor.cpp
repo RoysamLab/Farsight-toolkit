@@ -233,7 +233,7 @@ void NucleusEditor::createMenus()
 	addAction = new QAction(tr("Add Cell"), this);
 	addAction->setStatusTip(tr("Draw a Box to add a new cell"));
 	addAction->setShortcut(tr("Ctrl+A"));
-	connect(addAction,SIGNAL(triggered()), segView, SLOT(GetBox()));
+	connect(addAction, SIGNAL(triggered()), segView, SLOT(GetBox()));
 	connect(segView, SIGNAL(boxDrawn(int,int,int,int,int)), this, SLOT(addCell(int,int,int,int,int)));
 	editMenu->addAction(addAction);
 
@@ -249,29 +249,18 @@ void NucleusEditor::createMenus()
 	connect(deleteAction,SIGNAL(triggered()),this,SLOT(deleteCells()));	
 	editMenu->addAction(deleteAction);
 
-	splitAction = new QAction(tr("Split Cell"), this);
-	splitAction->setStatusTip(tr("Split selected cell along the current Z slice"));
-	splitAction->setShortcut(tr("Ctrl+T"));
-	connect(splitAction, SIGNAL(triggered()), this, SLOT(splitCell()));
+	splitZAction = new QAction(tr("Split Cell At Z"), this);
+	splitZAction->setStatusTip(tr("Split selected cell along the current Z slice"));
+	splitZAction->setShortcut(tr("Ctrl+T"));
+	connect(splitZAction, SIGNAL(triggered()), this, SLOT(splitCellAlongZ()));
+	editMenu->addAction(splitZAction);
+
+	splitAction = new QAction(tr("Split Cell X-Y"), this);
+	splitAction->setStatusTip(tr("Split a cell by choosing two seed points"));
+	splitAction->setShortcut(tr("Ctrl+P"));
+	connect(splitAction, SIGNAL(triggered()), segView, SLOT(Get2Points()));
+	connect(segView, SIGNAL(pointsClicked(int,int,int,int,int,int)), this, SLOT(splitCell(int,int,int,int,int,int)));
 	editMenu->addAction(splitAction);
-
-	// Splitting has two modes and therefore has two submenu items:
-	// Start Splitting
-	// End Splitting
-	//Main Splitting Menu
-	splitMenu= editMenu->addMenu(tr("&Splitting"));
-
-	//submenu1:
-	splitStartAction = new QAction(tr("Start Splitting"), this);
-	splitStartAction->setStatusTip(tr("Start Splitting Mode"));
-	connect(splitStartAction,SIGNAL(triggered()),this,SLOT(startSplitting()));
-	splitMenu->addAction(splitStartAction);
-
-	//submenu2:
-	splitEndAction = new QAction(tr("End Splitting"), this);
-	splitEndAction->setStatusTip(tr("End Splitting Mode"));
-	connect(splitEndAction,SIGNAL(triggered()),this,SLOT(endSplitting()));
-	splitMenu->addAction(splitEndAction);
 
 	editMenu->addSeparator();
 
@@ -304,10 +293,8 @@ void NucleusEditor::setEditsEnabled(bool val)
 	clearSelectAction->setEnabled(val);
 	mergeAction->setEnabled(val);
 	deleteAction->setEnabled(val);
-	splitMenu->setEnabled(val);
+	splitZAction->setEnabled(val);
 	splitAction->setEnabled(val);
-	splitStartAction->setEnabled(val);
-	splitEndAction->setEnabled(val);
 	exclusionAction->setEnabled(val);
 }
 
@@ -622,23 +609,37 @@ void NucleusEditor::mergeCells(void)
 	this->updateViews();
 }
 
-//void NucleusEditor::splitCells(void)
-void NucleusEditor::splitCell(void)
+void NucleusEditor::splitCell(int x1, int y1, int z1, int x2, int y2, int z2)
 {
-	//if(currentModel)
-		//currentModel->splitTrigger(segWin->GetCurrentZ());		//Along the current z axis.
+	if(!nucSeg) return;
+
+	ftk::Object::Point P1;
+	ftk::Object::Point P2;
+	P1.t=0;
+	P1.x=x1;
+	P1.y=y1;
+	P1.z=z1;
+	P2.t=0;
+	P2.x=x2;
+	P2.y=y2;
+	P2.z=z2;
+
+	nucSeg->Split(P1, P2);
+	selection->clear();
+	this->updateViews();
 }
 
-void NucleusEditor::startSplitting(void)
-{	
-	//if(currentModel)
-	//	currentModel->startSplitTrigger();
-}
-
-void NucleusEditor::endSplitting(void)
+void NucleusEditor::splitCellAlongZ(void)
 {
-	//if(currentModel)
-	//	currentModel->endSplitTrigger();
+	if(!nucSeg) return;
+
+	std::set<long int> sels = selection->getSelections();
+	selection->clear();
+	for ( set<long int>::iterator it=sels.begin(); it != sels.end(); it++ )
+	{
+		nucSeg->SplitAlongZ(*it,segView->GetCurrentZ());
+	}
+	this->updateViews();
 }
 
 void NucleusEditor::applyExclusionMargin(void)

@@ -47,6 +47,7 @@ LabelImageViewQT::LabelImageViewQT(QWidget *parent)
 
 	setMouseTracking(true);				//Will emit the current mouse position!
 	rubberBand = NULL;					//For drawing a box!!
+	pointsMode = false;					//For collecting points
 
 }
 
@@ -207,8 +208,17 @@ void LabelImageViewQT::SetIDsVisible(bool val)
 
 void LabelImageViewQT::GetBox(void)
 {
+	if(pointsMode) return;
+
 	if(!rubberBand)	
 		rubberBand = new MyRubberBand(this);
+}
+
+void LabelImageViewQT::Get2Points(void)
+{
+	if(rubberBand) return;
+
+	pointsMode = true;
 }
 
 void LabelImageViewQT::updateVSlider(void)
@@ -426,6 +436,8 @@ void LabelImageViewQT::mousePressEvent(QMouseEvent *event)
 		return;
 	}
 
+	if(pointsMode) return;
+
 	QPoint v_origin = origin - corner;	// This is a local position (in viewport coordinates)
 
 	const ftk::Image::Info *info;
@@ -504,7 +516,7 @@ void LabelImageViewQT::mouseMoveEvent(QMouseEvent *event)
 
 void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 {
-	if(rubberBand)
+	if(rubberBand || pointsMode)
 	{
 		QPoint corner = scrollArea->pos();
 		QPoint pos = event->pos() - corner;		// This is a local position (in viewport coordinates)
@@ -514,11 +526,34 @@ void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 		int x2 = (pos.x() + scrollArea->horizontalScrollBar()->value()) / currentScale;
 		int y2 = (pos.y() + scrollArea->verticalScrollBar()->value()) / currentScale;
 
-		delete rubberBand;
-		rubberBand = NULL;
-		origin = QPoint();
-
-		emit boxDrawn(x1, y1, x2, y2, vSpin->value());
+		if(rubberBand)
+		{
+			delete rubberBand;
+			rubberBand = NULL;
+			origin = QPoint();
+			emit boxDrawn(x1, y1, x2, y2, vSpin->value());
+		}
+		else //pointsMode
+		{
+			if( abs(x1-x2) < 5 && abs(y1-y2) < 5 )		//I haven't moved for during this click
+			{
+				if(origin3.size() == 0)
+				{
+					origin3.push_back(x2);
+					origin3.push_back(y2);
+					origin3.push_back(vSpin->value());
+				}
+				else
+				{
+					x1 = origin3.at(0);
+					y1 = origin3.at(1);
+					int z1 = origin3.at(2);
+					origin3.clear();
+					pointsMode = false;
+					emit pointsClicked(x1,y1,z1,x2,y2,vSpin->value());
+				}
+			}
+		}
 	}
 }
 
@@ -558,6 +593,7 @@ void LabelImageViewQT::refreshDisplayImage()
 	drawBoundaries(&painter);
 	//drawObjectIDs(&painter);
 
+	//Do zooming:
 	int oldX = scrollArea->horizontalScrollBar()->value();
 	int oldY = scrollArea->verticalScrollBar()->value();
 

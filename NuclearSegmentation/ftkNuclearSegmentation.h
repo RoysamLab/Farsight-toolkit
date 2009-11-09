@@ -48,6 +48,9 @@ namespace ftk
  *  Handles the execution, result, and editing of a nuclear segmentation
  *  
  */
+typedef unsigned char IPixelT;
+typedef unsigned short LPixelT;
+typedef ftk::LabelImageToFeatures< IPixelT, LPixelT, 3 > FeatureCalcType;
 
 class NuclearSegmentation
 {
@@ -157,7 +160,9 @@ private:
 	long int maxID(void);										//Get the maximum ID in the table!
 	int rowForID(int id);										//Iterate through table and get row for ID:
 	void removeFeatures(int ID);
-	bool computeFeatures(int ID, int x1, int y1, int z1, int x2, int y2, int z2); //features, update table for single ID
+	bool addObjectToTable(int ID, int x1, int y1, int z1, int x2, int y2, int z2);
+	bool addObjectsToTable(std::set<int> IDs, int x1, int y1, int z1, int x2, int y2, int z2);
+	FeatureCalcType::Pointer computeFeatures(int x1, int y1, int z1, int x2, int y2, int z2);
 	void ReassignLabels(std::vector<int> fromIds, int toId);
 	void ReassignLabel(int fromId, int toId);
 	ftk::Object::Box ExtremaBox(std::vector<int> ids);

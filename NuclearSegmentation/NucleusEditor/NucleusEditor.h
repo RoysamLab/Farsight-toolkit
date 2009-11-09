@@ -92,12 +92,10 @@ private slots:
 	void addCell(int x1, int y1, int x2, int y2, int z);//Once box is drawn we call this to add a cell
 	void mergeCells(void);
 	void deleteCells(void);
-	void splitCell(void);		//Split single cell along current z
+	void splitCellAlongZ(void);		//Split single cell along current z
+	void splitCell(int x1, int y1, int z1, int x2, int y2, int z2);
 	void applyExclusionMargin(void);
 	void changeClass(void);
-
-	void startSplitting(void);	//begin splitting mode - user must select seeds
-	void endSplitting(void);	//end splitting mode and do the splits
 
 	//For Tools menu
 	void startPattern();
@@ -144,10 +142,8 @@ private:
 	QAction *addAction;
 	QAction *mergeAction;
 	QAction *deleteAction;
-	QMenu *splitMenu;	
-	QAction *splitAction;			//for split along z direction
-	QAction *splitStartAction;		//for regular seed split
-	QAction *splitEndAction;
+	QAction *splitZAction;			//for split along z direction
+	QAction *splitAction;			//for split along x-y direction
 	QAction *exclusionAction;
 	QAction *classAction;
 	

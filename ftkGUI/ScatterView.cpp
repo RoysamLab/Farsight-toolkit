@@ -42,7 +42,6 @@ void ScatterView::setModels(vtkSmartPointer<vtkTable> tbl, ObjectSelection * sel
 		this->selection = sels;
 	connect(selection, SIGNAL(changed()), this, SLOT(repaint()));
 
-	updateAxis();
 	this->update();
 }
 
@@ -64,7 +63,6 @@ void ScatterView::SetNormalize(bool val)
 	if( val != mySettings->normalize )
 	{
 		mySettings->normalize = val;
-		updateAxis();
 		this->update();
 	}
 }
@@ -78,7 +76,6 @@ void ScatterView::SetColForX(int x)
 	if (x > 0 && x < table->GetNumberOfColumns())
 	{
 		columnNumForX = x;
-		updateAxis();
 		this->update();
 	}
 }
@@ -91,7 +88,6 @@ void ScatterView::SetColForY(int y)
 	if (y > 0 && y < table->GetNumberOfColumns())
 	{
 		columnNumForY = y;
-		updateAxis();
 		this->update();
 	}
 }
@@ -345,6 +341,7 @@ void ScatterView::paintEvent(QPaintEvent *event)
 //***************************************************************************************************
 void ScatterView::refreshPixmap()
 {
+	this->updateAxis();
 	pixmap = QPixmap(size());
 	pixmap.fill(QColor(220,220,220));
 	QPainter painter(&pixmap);

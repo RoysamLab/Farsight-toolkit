@@ -254,12 +254,12 @@ bool NuclearSegmentation::GetResultImage()
 		if(lastRunStep == 2)
 		{
 			Cleandptr(dptr,size); // Temporarily deletes the seeds in the background from dptr
-			labelImage->AppendChannelFromData3D(dptr, itk::ImageIOBase::INT, sizeof(unsigned short), size[2], size[1], size[0], "gray", color, true);		
+			labelImage->AppendChannelFromData3D(dptr, itk::ImageIOBase::INT, sizeof(unsigned short), size[2], size[1], size[0], "cyan", color, true);		
 			Restoredptr(dptr); // Adds the seeds to dptr which were deleted in Cleandptr
 		}
 		else
 		{
-			labelImage->AppendChannelFromData3D(dptr, itk::ImageIOBase::INT, sizeof(unsigned short), size[2], size[1], size[0], "gray", color, true);		
+			labelImage->AppendChannelFromData3D(dptr, itk::ImageIOBase::INT, sizeof(unsigned short), size[2], size[1], size[0], "cyan", color, true);		
 		}
 		labelImage->Cast<unsigned short>();
 	}
@@ -324,7 +324,7 @@ bool NuclearSegmentation::ComputeFeatures()
 		return false;		
 	}
 	//Compute features:
-	typedef ftk::LabelImageToFeatures< unsigned char, unsigned short, 3 > FeatureCalcType;
+	//typedef ftk::LabelImageToFeatures< unsigned char, unsigned short, 3 > FeatureCalcType;
 	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
 	labFilter->SetImageInputs( dataImage->GetItkPtr<unsigned char>(0,channelNumber), labelImage->GetItkPtr<unsigned short>(0,0) );
 	labFilter->SetLevel(3);
@@ -995,32 +995,27 @@ ftk::Object::Box NuclearSegmentation::ExtremaBox(std::vector<int> ids)
 //**********************************************************************************************************
 std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object::Point P2)
 {
-	//if no label (segmentation) or no data image is available then return
-	if(!labelImage || !dataImage)
+	std::vector <int> ret_ids;
+	ret_ids.push_back(0);
+	ret_ids.push_back(0);
+
+	//if no label (segmentation) image return
+	if(!labelImage)
 	{
-		errorMessage = "label image or data image doesn't exist";	
-		std::vector <int> ids_err;
-		ids_err.push_back(0);
-		ids_err.push_back(0);
-		return ids_err;
+		errorMessage = "label image doesn't exist";	
+		return ret_ids;
 	}
+
 	//Check if the two points inside the same cell
-	int id1 = (int)labelImage->GetPixel(0,0,P1.z,P1.y,P1.x);
-	int id2 = (int)labelImage->GetPixel(0,0,P2.z,P2.y,P2.x);
-	if(id1 != id2)
+	int id1 = (int)labelImage->GetPixel(0,channelNumber,P1.z,P1.y,P1.x);
+	int id2 = (int)labelImage->GetPixel(0,channelNumber,P2.z,P2.y,P2.x);
+	if( id1!=id2 || id1==0 || id2==0)
 	{		
-		std::vector <int> ids_err;
-		ids_err.push_back(0);
-		ids_err.push_back(0);
-		return ids_err;
+		errorMessage = "points are not within the same cell";
+		return ret_ids;
 	}
-	if(id1==0 || id2==0)
-	{		
-		std::vector <int> ids_err;
-		ids_err.push_back(0);
-		ids_err.push_back(0);
-		return ids_err;
-	}
+		
+	int objID = id1;		//The ID of the object I am splitting!!
 	
 	//Update the segmentation image
 	//Now get the bounding box around the object
@@ -1028,26 +1023,25 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 	ids.push_back(id1);
 	ftk::Object::Box region = ExtremaBox(ids);
 
-	//get the indexes of the two seeds with respect to the begining of the bounding box
+	//size of the bounding box:
 	std::vector <int> sz;
 	sz.push_back(region.max.x - region.min.x + 1);
 	sz.push_back(region.max.y - region.min.y + 1);
 	sz.push_back(region.max.z - region.min.z + 1);
 	
+	//get the indexes of the two seeds with respect to the beginning of the bounding box:
 	int ind1 = ((P1.z- region.min.z)*sz[0]*sz[1]) + ((P1.y - region.min.y)*sz[0]) + (P1.x - region.min.x);
 	int ind2 = ((P2.z- region.min.z)*sz[0]*sz[1]) + ((P2.y - region.min.y)*sz[0]) + (P2.x - region.min.x);
 
 	//create two new itk images with the same size as the bounding box	 	 
-	typedef    float     InputPixelType;
-	typedef itk::Image< InputPixelType,  3 >   InputImageType;
-	InputImageType::Pointer sub_im1;
-	sub_im1 = InputImageType::New();
-	InputImageType::Pointer sub_im2;
-	sub_im2 = InputImageType::New();
+	typedef float InputPixelType;
+	typedef itk::Image< InputPixelType, 3 > InputImageType;
+	InputImageType::Pointer sub_im1 = InputImageType::New();
+	InputImageType::Pointer sub_im2 = InputImageType::New();
 	InputImageType::PointType origin;
-    origin[0] = 0.; 
-    origin[1] = 0.;    
-	origin[2] = 0.;    
+    origin[0] = 0.0; 
+    origin[1] = 0.0;    
+	origin[2] = 0.0;    
     sub_im1->SetOrigin( origin );
 	sub_im2->SetOrigin( origin );
 
@@ -1064,14 +1058,13 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
     rgn.SetSize( size );
     rgn.SetIndex( start );
     
-   
     sub_im1->SetRegions( rgn );
     sub_im1->Allocate();
-    sub_im1->FillBuffer(0);
+    sub_im1->FillBuffer(0.0);
 	sub_im1->Update();	
 	sub_im2->SetRegions( rgn );
     sub_im2->Allocate();
-    sub_im2->FillBuffer(0);
+    sub_im2->FillBuffer(0.0);
 	sub_im2->Update();
 
 	//set all the points in those images to zeros except for the two points corresponding to the two new seeds
@@ -1089,7 +1082,7 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 		if(i==ind2)
 			iterator2.Set(255.0);
 		else
-		iterator2.Set(0.0);
+			iterator2.Set(0.0);
 		
 		++iterator1;	
 		++iterator2;	
@@ -1097,35 +1090,37 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 	
 
 	//compute the distance transforms of those binary itk images
-	typedef    float     OutputPixelType;
-	typedef itk::Image< OutputPixelType, 3 >   OutputImageType;
-	typedef itk::DanielssonDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;
-	DTFilter::Pointer dt_obj1= DTFilter::New() ;
-	DTFilter::Pointer dt_obj2= DTFilter::New() ;
+	typedef float OutputPixelType;
+	typedef itk::Image< OutputPixelType, 3 > OutputImageType;
+	typedef itk::DanielssonDistanceMapImageFilter< InputImageType, OutputImageType > DTFilter;
+	DTFilter::Pointer dt_obj1= DTFilter::New();
+	DTFilter::Pointer dt_obj2= DTFilter::New();
 	dt_obj1->UseImageSpacingOn();
 	dt_obj1->SetInput(sub_im1) ;
 	dt_obj2->UseImageSpacingOn();
 	dt_obj2->SetInput(sub_im2) ;
 
-	try{
+	try
+	{
 		dt_obj1->Update() ;
 	}
-	catch( itk::ExceptionObject & err ){
+	catch( itk::ExceptionObject & err )
+	{
 		std::cerr << "Error calculating distance transform: " << err << endl ;
 	}
-	try{
+	try
+	{
 		dt_obj2->Update() ;
 	}
-	catch( itk::ExceptionObject & err ){
+	catch( itk::ExceptionObject & err )
+	{
 		std::cerr << "Error calculating distance transform: " << err << endl ;
 	}
 
-	//Now, relabel the cell points into either the old id (id1) or a new id (newID) based on the distances to the seeds
-	int max_id = maxID();
-	++max_id;		
-	int newID1 = max_id;
-	++max_id;		
-	int newID2 = max_id;
+	//Now, relabel the cell points into either newID1 or newID2 based on the distances to the seeds
+	int max_id = maxID();		
+	int newID1 = ++max_id;		
+	int newID2 = ++max_id;
 	IteratorType iterator3(dt_obj1->GetOutput(),dt_obj1->GetOutput()->GetRequestedRegion());
 	IteratorType iterator4(dt_obj2->GetOutput(),dt_obj2->GetOutput()->GetRequestedRegion());	
 	for(int k=region.min.z; k<=region.max.z; k++)
@@ -1139,136 +1134,56 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 				++iterator3;
 				++iterator4;
 				int pix = (int)labelImage->GetPixel(0,0,k,i,j);
-				if(pix != id1)
+				if(pix != objID)
 					continue;
 				if(d1>d2)
 					labelImage->SetPixel(0,0,k,i,j,newID1);
 				else
 					labelImage->SetPixel(0,0,k,i,j,newID2);
-
 			}
 		}
 	}	
 
-	//set the old object to invalid
-	//and add this edit to the editing record
-	//int inn = GetObjectIndex(id1,"nucleus");
-	//myObjects.at(inn).SetValidity(ftk::Object::SPLIT);
-	ftk::Object::EditRecord record;
-	record.date = TimeStamp();
-	std::string msg = "SPLIT TO BECOME ";
-	msg.append(NumToString(newID1));
-	msg.append(" and ");
-	msg.append(NumToString(newID2));
-	record.description = msg;
-	//myObjects.at(inn).AddEditRecord(record);	
+	std::set<int> add_ids;
+	add_ids.insert(newID1);
+	add_ids.insert(newID2);
+	//Add features for the two new objects
+	this->addObjectsToTable(add_ids, region.min.x, region.min.y, region.min.z, region.max.x, region.max.y, region.max.z);
+	this->removeFeatures(objID);				//Remove features of the old object
 
-	//Calculate features of the two new objects using feature filter
-	typedef unsigned char IPixelT;
-	typedef unsigned short LPixelT;
-	typedef itk::Image< IPixelT, 3 > IImageT;
-	typedef itk::Image< LPixelT, 3 > LImageT;
-
-	dataImage->Cast<IPixelT>();
-	labelImage->Cast<LPixelT>();
-
-	IImageT::Pointer itkIntImg = dataImage->GetItkPtr<IPixelT>(0,0);
-	LImageT::Pointer itkLabImg = labelImage->GetItkPtr<LPixelT>(0,0);
-
-	typedef ftk::LabelImageToFeatures< IPixelT, LPixelT, 3 > FeatureCalcType;
-	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
-	labFilter->SetLevel(3);
-	labFilter->ComputeHistogramOn();
-	labFilter->ComputeTexturesOn();
-
-	
-	IImageT::RegionType intRegion;
-	IImageT::SizeType intSize;
-	IImageT::IndexType intIndex;
-	LImageT::RegionType labRegion;
-	LImageT::SizeType labSize;
-	LImageT::IndexType labIndex;
-
-	//start with the first one
-	intIndex[0] = region.min.x;
-	intIndex[1] = region.min.y;
-	intIndex[2] = region.min.z;
-	intSize[0] = region.max.x - region.min.x + 1;
-	intSize[1] = region.max.y - region.min.y + 1;
-	intSize[2] = region.max.z - region.min.z + 1;
-
-	labIndex[0] = region.min.x;
-	labIndex[1] = region.min.y;
-	labIndex[2] = region.min.z;
-	labSize[0] = region.max.x - region.min.x + 1;
-	labSize[1] = region.max.y - region.min.y + 1;
-	labSize[2] = region.max.z - region.min.z + 1;
-
-	intRegion.SetSize(intSize);
-    intRegion.SetIndex(intIndex);
-    itkIntImg->SetRequestedRegion(intRegion);
-
-    labRegion.SetSize(labSize);
-    labRegion.SetIndex(labIndex);
-    itkLabImg->SetRequestedRegion(labRegion);
-	
-	labFilter->SetImageInputs( itkIntImg, itkLabImg );
-	labFilter->Update();
-
-	//add them to the features list
-	//myObjects.push_back( GetNewObject(newID1, labFilter->GetFeatures(newID1) ) );
-	//myObjects.push_back( GetNewObject(newID2, labFilter->GetFeatures(newID2) ) );
-	//IdToIndexMap[newID1] = (int)myObjects.size() - 2;
-	//IdToIndexMap[newID2] = (int)myObjects.size() - 1;
-
-	//return the ids of the two cells resulting from spliting
-	std::vector <int> ids_ok;
-	ids_ok.push_back(newID1);
-	ids_ok.push_back(newID2);
-
-	//also, add the old ID to the end of the list
-	ids_ok.push_back(id1);
-
-	// Update the editing history of the new cells - Aytekin
-	record.date = TimeStamp();	
-	int index;
-	for(int i=0; i<(((int)ids_ok.size())-1); ++i)
-	{
-		msg = "SPLITTED FROM: ";		
-		msg.append(NumToString(id1));
-		record.description = msg;
-		//index = GetObjectIndex(ids_ok.at(i),"nucleus");
-		//myObjects.at(index).AddEditRecord(record);
-	}
-	editsNotSaved = true;
-	return ids_ok;
+	ret_ids.at(0) = newID1;
+	ret_ids.at(1) = newID2;
+	return ret_ids;
 }
 
 
 std::vector< int > NuclearSegmentation::SplitAlongZ(int objID, int cutSlice)
 {
+	std::vector <int> ret_ids;
+	ret_ids.push_back(0);
+	ret_ids.push_back(0);
+
 	//if no label (segmentation) or no data image is available then return
 	if(!labelImage || !dataImage)
 	{
 		errorMessage = "label image or data image doesn't exist";	
-		std::vector <int> ids_err;
-		ids_err.push_back(0);
-		ids_err.push_back(0);
-		return ids_err;
-	}			
+		return ret_ids;
+	}
+
+	std::vector<unsigned short> size = labelImage->Size();
+	if(size[1] == 1)	//Only 1 z slice
+	{
+		errorMessage = "2D image cannot be split along z";
+		return ret_ids;
+	}
 	
-	//Update the segmentation image
-	//Now get the bounding box around the object
-	std::vector <int> ids;
-	ids.push_back(objID);
-	ftk::Object::Box region = ExtremaBox(ids);	
+	//Get the bounding box around the object
+	ftk::Object::Box region = bBoxMap[objID];	
 
 	//Now, relabel the cell points into either newID1 or newID2 based on the z-slice
-	int max_id = maxID();
-	++max_id;		
-	int newID1 = max_id;
-	++max_id;		
-	int newID2 = max_id;		
+	int max_id = maxID();		
+	int newID1 = ++max_id;		
+	int newID2 = ++max_id;		
 	for(int k=region.min.z; k<=region.max.z; k++)
 	{
 		for(int i=region.min.y; i<=region.max.y; i++)
@@ -1276,109 +1191,28 @@ std::vector< int > NuclearSegmentation::SplitAlongZ(int objID, int cutSlice)
 			for(int j=region.min.x; j<=region.max.x; j++)
 			{				
 				int pix = (int)labelImage->GetPixel(0,0,k,i,j);
-				if(pix != objID)
-					continue;
+				if(pix != objID) continue;
 				if(k<cutSlice)
 					labelImage->SetPixel(0,0,k,i,j,newID1);
 				else
 					labelImage->SetPixel(0,0,k,i,j,newID2);
-
 			}
 		}
 	}	
 
-	//set the old object to invalid
-	//and add this edit to the editing record
-	//int inn = GetObjectIndex(objID,"nucleus");
-	//myObjects.at(inn).SetValidity(ftk::Object::SPLIT);
-	ftk::Object::EditRecord record;
-	record.date = TimeStamp();
-	std::string msg = "SPLIT TO BECOME ";
-	msg.append(NumToString(newID1));
-	msg.append(" and ");
-	msg.append(NumToString(newID2));
-	record.description = msg;
-	//myObjects.at(inn).AddEditRecord(record);	
+	std::set<int> ids;
+	ids.insert(newID1);
+	ids.insert(newID2);
+	//Add features for the two new objects
+	this->addObjectsToTable(ids, region.min.x, region.min.y, region.min.z, region.max.x, region.max.y, region.max.z);
+	this->removeFeatures(objID);				//Remove features of the old object
 
-	//Calculate features of the two new objects using feature filter
-	typedef unsigned char IPixelT;
-	typedef unsigned short LPixelT;
-	typedef itk::Image< IPixelT, 3 > IImageT;
-	typedef itk::Image< LPixelT, 3 > LImageT;
-
-	dataImage->Cast<IPixelT>();
-	labelImage->Cast<LPixelT>();
-
-	IImageT::Pointer itkIntImg = dataImage->GetItkPtr<IPixelT>(0,0);
-	LImageT::Pointer itkLabImg = labelImage->GetItkPtr<LPixelT>(0,0);
-
-	typedef ftk::LabelImageToFeatures< IPixelT, LPixelT, 3 > FeatureCalcType;
-	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
-	labFilter->SetLevel(3);
-	labFilter->ComputeHistogramOn();
-	labFilter->ComputeTexturesOn();
-
-	
-	IImageT::RegionType intRegion;
-	IImageT::SizeType intSize;
-	IImageT::IndexType intIndex;
-	LImageT::RegionType labRegion;
-	LImageT::SizeType labSize;
-	LImageT::IndexType labIndex;
-
-	//start with the first one
-	intIndex[0] = region.min.x;
-	intIndex[1] = region.min.y;
-	intIndex[2] = region.min.z;
-	intSize[0] = region.max.x - region.min.x + 1;
-	intSize[1] = region.max.y - region.min.y + 1;
-	intSize[2] = region.max.z - region.min.z + 1;
-
-	labIndex[0] = region.min.x;
-	labIndex[1] = region.min.y;
-	labIndex[2] = region.min.z;
-	labSize[0] = region.max.x - region.min.x + 1;
-	labSize[1] = region.max.y - region.min.y + 1;
-	labSize[2] = region.max.z - region.min.z + 1;
-
-	intRegion.SetSize(intSize);
-    intRegion.SetIndex(intIndex);
-    itkIntImg->SetRequestedRegion(intRegion);
-
-    labRegion.SetSize(labSize);
-    labRegion.SetIndex(labIndex);
-    itkLabImg->SetRequestedRegion(labRegion);
-	
-	labFilter->SetImageInputs( itkIntImg, itkLabImg );
-	labFilter->Update();
-
-	//add them to the features list
-	//myObjects.push_back( GetNewObject(newID1, labFilter->GetFeatures(newID1) ) );
-	//myObjects.push_back( GetNewObject(newID2, labFilter->GetFeatures(newID2) ) );
-	//IdToIndexMap[newID1] = (int)myObjects.size() - 2;
-	//IdToIndexMap[newID2] = (int)myObjects.size() - 1;
+	//ALSO NEED AN EDIT LOG:
 
 	//return the ids of the two cells resulting from spliting
-	std::vector <int> ids_ok;
-	ids_ok.push_back(newID1);
-	ids_ok.push_back(newID2);
-
-	//also, add the old ID to the end of the list
-	ids_ok.push_back(objID);
-
-	// Update the editing history of the new cells - Aytekin
-	record.date = TimeStamp();	
-	int index;
-	for(int i=0; i<(((int)ids_ok.size())-1); ++i)
-	{
-		msg = "SPLITTED FROM: ";		
-		msg.append(NumToString(objID));
-		record.description = msg;
-		//index = GetObjectIndex(ids_ok.at(i),"nucleus");
-		//myObjects.at(index).AddEditRecord(record);
-	}
-	editsNotSaved = true;
-	return ids_ok;
+	ret_ids.at(0) = newID1;
+	ret_ids.at(1) = newID2;
+	return ret_ids;
 }
 int NuclearSegmentation::Merge(vector<int> ids)
 {
@@ -1388,16 +1222,10 @@ int NuclearSegmentation::Merge(vector<int> ids)
 		return 0;
 	}
 
-	//Merge is difficult because we are going to invalidate all merged objects,
-	// create a new label and assign the old object labels to it,
-	// calculate the features for this new label
-	// then the model should also be updated to display properly
-	// Return the new ID
-
 	int newID = maxID() + 1;
 	ReassignLabels(ids, newID);					//Assign all old labels to this new label
 	ftk::Object::Box region = ExtremaBox(ids);
-	this->computeFeatures(newID, region.min.x, region.min.y, region.min.z, region.max.x, region.max.y, region.max.z);
+	this->addObjectToTable(newID, region.min.x, region.min.y, region.min.z, region.max.x, region.max.y, region.max.z);
 	for(int i=0; i<ids.size(); ++i)
 	{
 		removeFeatures(ids.at(i));
@@ -1440,11 +1268,8 @@ int NuclearSegmentation::AddObject(int x1, int y1, int z1, int x2, int y2, int z
 	if(sz_x<1 || sz_y<1 || sz_z<1)
 		return 0;
 
-	//We assume that the image is unsigned char, but just in case it isn't we make it so:
-	dataImage->Cast<unsigned char>();
-	unsigned char *dptr = dataImage->GetSlicePtr<unsigned char>(0,channelNumber,0);	//Expects grayscale image
-	//also get a pointer to the label image
-	unsigned short *lptr = labelImage->GetSlicePtr<unsigned short>(0,channelNumber,0);	//Expects grayscale image
+	IPixelT *dptr = dataImage->GetSlicePtr<IPixelT>(0,channelNumber,0);		//Expects grayscale image
+	LPixelT *lptr = labelImage->GetSlicePtr<LPixelT>(0,channelNumber,0);	//Expects grayscale image
 
 	ReleaseSegMemory();	//If I'm in add mode must be done with segmentation!!!
 	NucleusSeg = new yousef_nucleus_seg();
@@ -1470,7 +1295,7 @@ int NuclearSegmentation::AddObject(int x1, int y1, int z1, int x2, int y2, int z
 
 	lastRunStep = 4;	//To make sure we retrieve the correct image!!!
 	this->GetResultImage();
-	this->computeFeatures(newID, x1, y1, z1, x2, y2, z2);
+	this->addObjectToTable(newID, x1, y1, z1, x2, y2, z2);
 	
 	//NOW I NEED TO DO AN EDIT LOG
 
@@ -1517,27 +1342,81 @@ int NuclearSegmentation::rowForID(int id)
 }
 
 //Calculate the features within a specific region of the image for a specific ID, and update the table
-bool NuclearSegmentation::computeFeatures(int ID, int x1, int y1, int z1, int x2, int y2, int z2)
+bool NuclearSegmentation::addObjectToTable(int ID, int x1, int y1, int z1, int x2, int y2, int z2)
 {
-	if(!dataImage)
-	{
-		errorMessage = "No Data Image";
-		return false;
-	}
-	if(!labelImage)
-	{
-		errorMessage = "No Label Image";
-		return false;		
-	}
+	std::set<int> ids;
+	ids.insert(ID);
+	return addObjectsToTable(ids,x1,y1,z1,x2,y2,z2);
+}
+
+bool NuclearSegmentation::addObjectsToTable(std::set<int> IDs, int x1, int y1, int z1, int x2, int y2, int z2)
+{
 	if(!featureTable)
 	{
 		errorMessage = "Please Compute All Features First";
 		return false;
 	}
 
+	FeatureCalcType::Pointer labFilter = computeFeatures(x1,y1,z1,x2,y2,z2);
+	if(!labFilter) return false;
+
+	//Add to the table:
+	std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
+	for (int i=0; i<(int)labels.size(); ++i)
+	{
+		FeatureCalcType::LabelPixelType id = labels.at(i);
+		if(IDs.find(id) == IDs.end()) continue;	//Don't care about this id, so skip it
+
+		ftk::IntrinsicFeatures * features = labFilter->GetFeatures(id);
+		vtkSmartPointer<vtkVariantArray> row = vtkSmartPointer<vtkVariantArray>::New();
+		row->InsertNextValue( vtkVariant(id) );
+		for (int i=0; i< IntrinsicFeatures::N; ++i)
+		{
+			row->InsertNextValue( vtkVariant(features->ScalarFeatures[i]) );
+		}
+		featureTable->InsertNextRow(row);
+
+		Object::Point c;
+		c.x = (int)features->Centroid[0];
+		c.y = (int)features->Centroid[1];
+		c.z = (int)features->Centroid[2];
+		c.t = 0;
+
+		Object::Box b;
+		b.min.x = (int)features->BoundingBox[0];
+		b.max.x = (int)features->BoundingBox[1];
+		b.min.y = (int)features->BoundingBox[2];
+		b.max.y = (int)features->BoundingBox[3];
+		b.min.z = (int)features->BoundingBox[4];
+		b.max.z = (int)features->BoundingBox[5];
+		b.min.t = 0;
+		b.max.t = 0;
+
+		bBoxMap[(int)id] = b;
+		centerMap[(int)id] = c;
+		//idToRowMap[(int)id] = featureTable->GetNumberOfRows()-1;
+	}
+	editsNotSaved = true;
+	return true;
+
+}
+
+//Calculate the features within a specific region of the image and return the filter:
+//bool NuclearSegmentation::computeFeatures(int x1, int y1, int z1, int x2, int y2, int z2)
+FeatureCalcType::Pointer NuclearSegmentation::computeFeatures(int x1, int y1, int z1, int x2, int y2, int z2)
+{
+	if(!dataImage)
+	{
+		errorMessage = "No Data Image";
+		return NULL;
+	}
+	if(!labelImage)
+	{
+		errorMessage = "No Label Image";
+		return NULL;		
+	}
+
 	//Calculate features using feature filter
-	typedef unsigned char IPixelT;
-	typedef unsigned short LPixelT;
 	typedef itk::Image< IPixelT, 3 > IImageT;
 	typedef itk::Image< LPixelT, 3 > LImageT;
 
@@ -1574,7 +1453,7 @@ bool NuclearSegmentation::computeFeatures(int ID, int x1, int y1, int z1, int x2
     itkLabImg->SetRequestedRegion(labRegion);
 
 	//Compute features:
-	typedef ftk::LabelImageToFeatures< IPixelT, LPixelT, 3 > FeatureCalcType;
+	//typedef ftk::LabelImageToFeatures< IPixelT, LPixelT, 3 > FeatureCalcType;
 	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
 	labFilter->SetImageInputs( itkIntImg, itkLabImg );
 	labFilter->SetLevel(3);
@@ -1582,45 +1461,7 @@ bool NuclearSegmentation::computeFeatures(int ID, int x1, int y1, int z1, int x2
 	labFilter->ComputeTexturesOn();
 	labFilter->Update();
 
-	//Add to the table:
-	std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
-	for (int i=0; i<(int)labels.size(); ++i)
-	{
-		FeatureCalcType::LabelPixelType id = labels.at(i);
-		if(id != ID) continue;
-
-		ftk::IntrinsicFeatures * features = labFilter->GetFeatures(id);
-		vtkSmartPointer<vtkVariantArray> row = vtkSmartPointer<vtkVariantArray>::New();
-		row->InsertNextValue( vtkVariant(id) );
-		for (int i=0; i< IntrinsicFeatures::N; ++i)
-		{
-			row->InsertNextValue( vtkVariant(features->ScalarFeatures[i]) );
-		}
-		featureTable->InsertNextRow(row);
-
-		Object::Point c;
-		c.x = (int)features->Centroid[0];
-		c.y = (int)features->Centroid[1];
-		c.z = (int)features->Centroid[2];
-		c.t = 0;
-
-		Object::Box b;
-		b.min.x = (int)features->BoundingBox[0];
-		b.max.x = (int)features->BoundingBox[1];
-		b.min.y = (int)features->BoundingBox[2];
-		b.max.y = (int)features->BoundingBox[3];
-		b.min.z = (int)features->BoundingBox[4];
-		b.max.z = (int)features->BoundingBox[5];
-		b.min.t = 0;
-		b.max.t = 0;
-
-		bBoxMap[(int)id] = b;
-		centerMap[(int)id] = c;
-		//idToRowMap[(int)id] = featureTable->GetNumberOfRows()-1;
-	}
-	editsNotSaved = true;
-	return true;
-
+	return labFilter;
 }
 
 //*****************************************************************************

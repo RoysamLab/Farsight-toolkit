@@ -63,11 +63,15 @@ public slots:
 	void SetBoundsVisible(bool val);
 	//void SetIDsVisible(int img, bool val);
 	void GetBox(void);
+	void Get2Points(void);
 	void update(void);
+	int GetCurrentZ(void){ return vSpin->value(); };
+	int GetCurrentT(void){ return hSpin->value(); };
 
 signals:
 	void mouseAt(int x, int y, int z);
 	void boxDrawn(int x1, int y1, int x2, int y2, int z);
+	void pointsClicked(int x1, int y1, int z1, int x2, int y2, int z2);
 
 protected slots:
 	void refreshDisplayImage(void);
@@ -133,6 +137,10 @@ protected:
 
 	bool showBounds;
 	//bool showIDs;
+
+	//For collecting two points:
+	bool pointsMode;
+	std::vector<int> origin3;	//a 3D origin for points mode!!
 
 	//For Getting a Box:
 	QPoint origin;
