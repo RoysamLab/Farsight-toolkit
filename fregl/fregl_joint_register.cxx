@@ -99,13 +99,15 @@ initialize(std::vector<fregl_reg_record::Pointer> const & reg_records)
       //so that it is the range of [0,1]
       
       //errors.push_back( 1+reg_records[i]->obj());
-      errors.push_back( reg_records[i]->obj()); 
+      if (reg_records[i]->obj() < 1)
+        errors.push_back( reg_records[i]->obj()); 
     }
 
     rrel_muset_obj muse_obj( 0, false );
     double scale = muse_obj.scale(errors.begin(), errors.end());
     //error_bound_ = scale*scale_multiplier_-1;
     error_bound_ = scale*scale_multiplier_;
+    std::cout<<"scale_multiplier_ = "<<scale_multiplier_<<"\n";
     std::cout<<"Estimated muse scale = "<<scale<<", error_bound = "
              <<error_bound_<<std::endl;
     // Compute the average error from the accepted pairs
@@ -133,13 +135,26 @@ initialize(std::vector<fregl_reg_record::Pointer> const & reg_records)
         to_image_index = j;
     }
 
-    if (reg_records[i]->obj()<= error_bound_) {
+    transforms_(from_image_index, to_image_index) = reg_records[i]->transform();
+    obj_(from_image_index, to_image_index) = reg_records[i]->obj();
+
+    if (reg_records[i]->obj()< error_bound_)
+      overlap_(from_image_index, to_image_index) = reg_records[i]->overlap();
+    
+    /*
+    if (reg_records[i]->obj()< error_bound_) {
       transforms_(from_image_index, to_image_index) = reg_records[i]->transform(); 
       overlap_(from_image_index, to_image_index) = reg_records[i]->overlap();
       obj_(from_image_index, to_image_index) = reg_records[i]->obj();
     }
-    else 
+    else if (reg_records[i]->obj()< 1) {
       std::cout<<"Eliminated pair "<<reg_records[i]->from_image()<<" to "<<reg_records[i]->to_image()<<" with obj="<<reg_records[i]->obj()<<std::endl;
+      transforms_(from_image_index, to_image_index) = reg_records[i]->transform(); 
+      overlap_(from_image_index, to_image_index) = 0; //no corresp will be generated
+      obj_(from_image_index, to_image_index) = reg_records[i]->obj();
+    }
+    */
+    
   }
 
   // Set the diagonal elements to identity transformation
@@ -601,7 +616,7 @@ generate_correspondences()
   for (unsigned int from = 0; from<image_ids_.size(); from++) {
     for (unsigned int to = from+1; to<image_ids_.size(); to++) {
       if ( overlap_[from][to] > 0 ) {
-        // generate the correspondences
+        // generate the correspondences if two images overlap
         size_from = image_sizes_[from];
         int z_space = vnl_math_min(10, int(size_from[2]/3));
         size_to = image_sizes_[to];
@@ -678,10 +693,14 @@ write_xml(std::string const& filename, bool mutual_consistency, bool gen_temp_st
   doc.LinkEndChild( root_node );
 
   // Set up the temp file for storing the overlap & errors
-  std::ofstream tempout;
+  std::ofstream temp_good, temp_bad, temp_overlap;
   if (gen_temp_stuff) {
-    std::string filename_temp = filename+"_debug.txt";
-    tempout.open(filename_temp.c_str());
+    std::string filename_good = filename+"_debug_good.txt";
+    std::string filename_bad = filename+"_debug_bad.txt";
+    std::string filename_overlap = filename+"_debug_overlapped.txt";
+    temp_good.open(filename_good.c_str());
+    temp_bad.open(filename_bad.c_str());
+    temp_overlap.open(filename_overlap.c_str());
   }
   
   for (unsigned int j = 0; j<transforms_.cols(); j++) {
@@ -691,17 +710,24 @@ write_xml(std::string const& filename, bool mutual_consistency, bool gen_temp_st
       fregl_reg_record::Pointer reg_rec = this->get_reg_record(i,j);
       reg_rec->write_xml_node(root_node);
 
-      if (gen_temp_stuff) {
-        if (reg_rec->obj()!=1) {
-          tempout<<reg_rec->from_image()<<"\t"<<reg_rec->to_image()<<"\t"<<vnl_math_rnd(reg_rec->overlap()*1000)/1000.0<<"\t"<<vnl_math_rnd(reg_rec->obj()*1000)/1000.0;
-          if (reg_rec->obj() > error_bound_) tempout<<"\tremoved\n";
-          else tempout<<"\n";
+      if (gen_temp_stuff && i>j) {
+        if (reg_rec->obj()< 1) {
+          if (reg_rec->obj() < error_bound_)
+            temp_good<<reg_rec->from_image()<<"\t"<<reg_rec->to_image()<<"\t"<<vnl_math_rnd(reg_rec->overlap()*1000)/1000.0<<"\t"<<vnl_math_rnd(reg_rec->obj()*1000)/1000.0 <<"\n";
+          else temp_bad<<reg_rec->from_image()<<"\t"<<reg_rec->to_image()<<"\t"<<vnl_math_rnd(reg_rec->overlap()*1000)/1000.0<<"\t"<<vnl_math_rnd(reg_rec->obj()*1000)/1000.0 <<"\n";
+        }
+        else if (reg_rec->overlap() > 0.01){
+          temp_overlap<<reg_rec->from_image()<<"\t"<<reg_rec->to_image()<<"\t"<<vnl_math_rnd(reg_rec->overlap()*1000)/1000.0<<"\t"<<vnl_math_rnd(reg_rec->obj()*1000)/1000.0 <<"\n";
         }
       }
     }
   }
-  if (gen_temp_stuff) tempout.close();
-      
+  if (gen_temp_stuff) {
+    temp_good.close();
+    temp_bad.close();
+    temp_overlap.close();
+  }
+  
   /* 
    * Dumping document to a file
    */
@@ -731,7 +757,7 @@ read_xml(std::string const & filename)
   }
 
   // get the error bound
-  scale_multiplier_ = atoi(root_element->Attribute("number_of_images"));
+  scale_multiplier_ = atoi(root_element->Attribute("error_scale_multiplier"));
   
   // get the scale_multiplier
   std::stringstream(root_element->Attribute("error_bound")) >> error_bound_;
