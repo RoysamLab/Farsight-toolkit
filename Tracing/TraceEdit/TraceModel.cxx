@@ -36,6 +36,7 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines, std::vector<std::str
 		}
 	}
 	this->NumFeatures = this->headers.size();
+	this->SetupHeaders();
 	this->SetTraces(trace_lines);
 }
 TraceModel::TraceModel(std::vector<TraceLine*> trace_lines)
@@ -86,8 +87,9 @@ void TraceModel::SyncModel()
 	{
 		return;
 	}
+	this->DataTable->Initialize();	
 	this->SetupHeaders();
-	//std::vector< std::vector< double > > data;
+	
 	for (int i = 0; i < (int)this->TraceLines.size(); ++i)
 	{
 		vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();

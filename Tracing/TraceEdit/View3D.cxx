@@ -614,13 +614,15 @@ void View3D::Rerender()
   this->statusBar()->showMessage(tr("Rerender Image"));
   this->SphereActor->VisibilityOff();
   this->SelectedTraceIDs.clear();
-  /*this->MergeGaps->GetSelectionModel()->clearSelection();
-  this->TreeModel->GetSelectionModel()->clearSelection();*/
+  /*this->MergeGaps->GetSelectionModel()->clearSelection();*/
   this->Renderer->RemoveActor(this->BranchActor);
   this->UpdateLineActor();
   this->UpdateBranchActor();
   this->Renderer->AddActor(this->BranchActor);  
   this->QVTK->GetRenderWindow()->Render();
+  this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+  this->FTKTable->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
+  this->TreePlot->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
   this->statusBar()->showMessage(tr("Finished Rerendering Image"));
 }
 
@@ -860,6 +862,7 @@ void View3D::ClearSelection()
 	}
 	this->tobj->Gaps.clear();
 	this->candidateGaps.clear();
+	this->TreeModel->GetObjectSelection()->clear();
 	this->myText.clear();
 	this->dtext.clear();
 	this->Rerender();
@@ -901,8 +904,6 @@ void View3D::DeleteTraces()
 			this->DeleteTrace(traceList[i]); 
 		}
 		this->ClearSelection();
-		this->statusBar()->showMessage(tr("Update Tree Plots"));
-		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 		this->statusBar()->showMessage(tr("Deleted\t") + QString::number(traceList.size()) + tr("\ttraces"));
 	}
 	else
