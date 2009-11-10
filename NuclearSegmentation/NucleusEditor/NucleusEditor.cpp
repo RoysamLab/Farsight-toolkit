@@ -205,12 +205,13 @@ void NucleusEditor::createMenus()
 	showHistoAction->setEnabled(false);
 	showHistoAction->setStatusTip(tr("Show a Histogram"));
 	connect(showHistoAction,SIGNAL(triggered()),this,SLOT(ShowHistogram()));
-	viewMenu->addAction(showHistoAction);
+	//viewMenu->addAction(showHistoAction);
 
 	imageIntensityAction = new QAction(tr("Adjust Image Intensity"), this);
 	imageIntensityAction->setStatusTip(tr("Allows modification of image intensity"));
 	imageIntensityAction->setShortcut(tr("Ctrl+G"));
 	imageIntensityAction->setEnabled(false);
+	connect(imageIntensityAction, SIGNAL(triggered()), segView, SLOT(AdjustImageIntensity()));
 	viewMenu->addAction(imageIntensityAction);
 
 	//EDITING MENU	
@@ -228,7 +229,7 @@ void NucleusEditor::createMenus()
 	classAction->setStatusTip(tr("Modify the class designation for the selected objects"));
 	classAction->setShortcut(tr("Ctrl+L"));
 	connect(classAction, SIGNAL(triggered()), this, SLOT(changeClass()));
-	editMenu->addAction(classAction);
+	//editMenu->addAction(classAction);
 
 	addAction = new QAction(tr("Add Cell"), this);
 	addAction->setStatusTip(tr("Draw a Box to add a new cell"));
@@ -262,12 +263,12 @@ void NucleusEditor::createMenus()
 	connect(segView, SIGNAL(pointsClicked(int,int,int,int,int,int)), this, SLOT(splitCell(int,int,int,int,int,int)));
 	editMenu->addAction(splitAction);
 
-	editMenu->addSeparator();
+	//editMenu->addSeparator();
 
 	exclusionAction = new QAction(tr("Apply Exclusion Margin..."), this);
 	exclusionAction->setStatusTip(tr("Set parameters for exclusion margin"));
 	connect(exclusionAction, SIGNAL(triggered()), this, SLOT(applyExclusionMargin()));
-	editMenu->addAction(exclusionAction);
+	//editMenu->addAction(exclusionAction);
 
 	toolMenu = menuBar()->addMenu(tr("Tools"));
 	patternAction = new QAction(tr("Pattern Analysis"), this);
@@ -423,7 +424,7 @@ void NucleusEditor::loadResult(void)
 	//segResult = new ftk::NuclearSegmentation();
 	if(nucSeg) delete nucSeg;
 	nucSeg = new ftk::NuclearSegmentation();
-	if ( !nucSeg->RestoreFromXML(filename.toStdString()) )
+	if ( !nucSeg->LoadAll(filename.toStdString()) )
 	{
 		std::cerr << nucSeg->GetErrorMessage() << std::endl;
 		return;
@@ -448,6 +449,7 @@ void NucleusEditor::loadResult(void)
 	showIDsAction->setChecked(true);
 	newScatterAction->setEnabled(true);
 	showHistoAction->setEnabled(true);
+	imageIntensityAction->setEnabled(true);
 	segmentAction->setEnabled(false);
 	saveAction->setEnabled(true);
 }
@@ -483,6 +485,7 @@ void NucleusEditor::loadImage()
 	// Disable the menu items for editing
 	this->setEditsEnabled(false);
 	segmentAction->setEnabled(true);
+	imageIntensityAction->setEnabled(true);
 	saveAction->setEnabled(false);
 }
 

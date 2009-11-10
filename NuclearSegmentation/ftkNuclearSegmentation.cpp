@@ -66,6 +66,8 @@ void NuclearSegmentation::ResetAll(void)
 	bBoxMap.clear();
 	centerMap.clear();
 	//idToRowMap.clear();
+	myParameters.clear();
+	myEditRecords.clear();
 
 	this->ReleaseSegMemory();
 }
@@ -116,7 +118,7 @@ bool NuclearSegmentation::LoadData()
 //***********************************************************************************************************
 // Will load the label image into memory (using ftk::Image)
 //***********************************************************************************************************
-bool NuclearSegmentation::LoadLabel()
+bool NuclearSegmentation::LoadLabel(bool updateMaps)
 {
 	labelImage = ftk::Image::New();
 	if(!labelImage->LoadFile(labelFilename))	//Load for display
@@ -126,6 +128,46 @@ bool NuclearSegmentation::LoadLabel()
 		return false;
 	}
 	editsNotSaved = false;
+
+	if(!updateMaps)
+		return true;
+
+	//Compute region features:
+	//typedef ftk::LabelImageToFeatures< unsigned char, unsigned short, 3 > FeatureCalcType;
+	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
+	labFilter->SetImageInputs( dataImage->GetItkPtr<IPixelT>(0,channelNumber), labelImage->GetItkPtr<LPixelT>(0,0) );
+	labFilter->SetLevel(1);
+	labFilter->Update();
+
+	//Now populate centroid and bounding box maps::
+	std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
+	for (int i=0; i<(int)labels.size(); ++i)
+	{
+		FeatureCalcType::LabelPixelType id = labels.at(i);
+		if(id == 0) continue;
+
+		ftk::IntrinsicFeatures * features = labFilter->GetFeatures(id);
+
+		Object::Point c;
+		c.x = (int)features->Centroid[0];
+		c.y = (int)features->Centroid[1];
+		c.z = (int)features->Centroid[2];
+		c.t = 0;
+
+		Object::Box b;
+		b.min.x = (int)features->BoundingBox[0];
+		b.max.x = (int)features->BoundingBox[1];
+		b.min.y = (int)features->BoundingBox[2];
+		b.max.y = (int)features->BoundingBox[3];
+		b.min.z = (int)features->BoundingBox[4];
+		b.max.z = (int)features->BoundingBox[5];
+		b.min.t = 0;
+		b.max.t = 0;
+
+		bBoxMap[(int)id] = b;
+		centerMap[(int)id] = c;
+		//idToRowMap[(int)id] = r++;
+	}
 	return true;
 }
 
@@ -279,35 +321,22 @@ bool NuclearSegmentation::SaveResultImage()
 		return false;
 	}
 
-	std::string tag;
-
-	switch(lastRunStep)
+	if(labelFilename.size() == 0)
 	{
-	case 0:
-	case 3:
-	case 4:
-		tag = "_label";	//should mean that NucleusSeg doesn't exist
-		break;
-	case 1:
-		tag = "_bin";
-		break;
-	case 2:	//Seeds:
-		tag = "_seed";
-		break;
-	default:
-		errorMessage = "Nothing To Save";
-		return false;
-		break;
+		size_t pos = dataFilename.find_last_of(".");
+		std::string base = dataFilename.substr(0,pos);
+		std::string tag = "_label";
+		std::string ext = "tif";
+		labelFilename = base + tag + "." + ext;
 	}
-	size_t pos = dataFilename.find_last_of(".");
-	std::string base = dataFilename.substr(0,pos);
-	//std::string ext = dataFilename.substr(pos);
-	std::string ext = "tif";
-	this->labelFilename = base + tag + "." + ext;
-	if(!labelImage->SaveChannelAs(0, base + tag, ext ))
+
+	size_t pos = labelFilename.find_last_of(".");
+	std::string base = labelFilename.substr(0,pos);
+	std::string ext = labelFilename.substr(pos+1);
+
+	if(!labelImage->SaveChannelAs(0, base, ext ))
 		return false;
 
-	editsNotSaved = false;
 	return true;
 }
 
@@ -326,7 +355,7 @@ bool NuclearSegmentation::ComputeFeatures()
 	//Compute features:
 	//typedef ftk::LabelImageToFeatures< unsigned char, unsigned short, 3 > FeatureCalcType;
 	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
-	labFilter->SetImageInputs( dataImage->GetItkPtr<unsigned char>(0,channelNumber), labelImage->GetItkPtr<unsigned short>(0,0) );
+	labFilter->SetImageInputs( dataImage->GetItkPtr<IPixelT>(0,channelNumber), labelImage->GetItkPtr<LPixelT>(0,0) );
 	labFilter->SetLevel(3);
 	labFilter->ComputeHistogramOn();
 	labFilter->ComputeTexturesOn();
@@ -345,7 +374,7 @@ bool NuclearSegmentation::ComputeFeatures()
 	}
 
 	//Now populate the table:
-	int r = 0;
+	//int r = 0;
 	std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
 	for (int i=0; i<(int)labels.size(); ++i)
 	{
@@ -402,6 +431,7 @@ bool NuclearSegmentation::SaveFeaturesTable()
 		{
 			outFile << NumToString( featureTable->GetValue(row,c).ToFloat() ) << "\t";
 		}
+		outFile << "\n";
 	}
 	outFile.close();
 
@@ -415,6 +445,26 @@ bool NuclearSegmentation::SaveFeaturesTable()
 	for(int c=0; c<featureTable->GetNumberOfColumns(); ++c)
 	{
 		outFile << featureTable->GetColumnName(c) << "\n";
+	}
+	outFile.close();
+	return true;
+}
+
+//Save the Edit record
+bool NuclearSegmentation::SaveEditRecords()
+{
+	//This function writes the features to a text file that can be read be MetaNeural program
+	ofstream outFile; 
+	outFile.open(editFilename.c_str(), ios::out | ios::app );
+	if ( !outFile.is_open() )
+	{
+		std::cerr << "Failed to Load Document: " << outFile << std::endl;
+		return false;
+	}
+	//Now write out the edits
+	for(unsigned int rec = 0; rec < (int)myEditRecords.size(); ++rec)
+	{
+		outFile << myEditRecords.at(rec).date << "\t" << myEditRecords.at(rec).description << "\n";
 	}
 	outFile.close();
 	return true;
@@ -703,6 +753,173 @@ std::vector<std::string> NuclearSegmentation::GetFeatureNames()
 //*******************************************************************************************
 //*******************************************************************************************
 //*******************************************************************************************
+// LOAD UP FORMER RESULTS FROM FILES:
+//*******************************************************************************************
+bool NuclearSegmentation::LoadAll(std::string filename)
+{
+	this->ResetAll();
+
+	TiXmlDocument doc;
+	if ( !doc.LoadFile( filename.c_str() ) )
+	{
+		errorMessage = "Unable to load XML File";
+		return 0;
+	}
+
+	TiXmlElement* rootElement = doc.FirstChildElement();
+	const char* docname = rootElement->Value();
+	if ( strcmp( docname, "NuclearSegmentation" ) != 0 && strcmp( docname, "SegmentationResult" ) != 0 )
+	{
+		errorMessage = "Incorrect XML root Element: ";
+		errorMessage.append(rootElement->Value());
+		return 0;
+	}
+	
+	const char* version = rootElement->Attribute("version");
+	if(version == 0)
+		return RestoreFromXML(filename);
+
+	//Parents we know of: datafilename,resultfilename,object,parameter
+	TiXmlElement* parentElement = rootElement->FirstChildElement();
+	while (parentElement)
+	{
+		const char * parent = parentElement->Value();
+
+		if ( strcmp( parent, "datafile" ) == 0 )
+		{
+			dataFilename = parentElement->GetText();
+		}
+		else if ( strcmp( parent, "resultfile" ) == 0 )
+		{
+			labelFilename = parentElement->GetText();
+		}
+		else if ( strcmp( parent, "featurefile" ) == 0 )
+		{
+			featureFilename = parentElement->GetText();
+		}
+		else if ( strcmp( parent, "headerfile" ) == 0 )
+		{
+			headerFilename = parentElement->GetText();
+		}
+		else if ( strcmp( parent, "paramfile" ) == 0 )
+		{
+			paramFilename = parentElement->GetText();
+		}
+		else if ( strcmp( parent, "editfile" ) == 0 )
+		{
+			editFilename = parentElement->GetText();
+		}
+		else
+		{
+			errorMessage = "Unrecognized parent element: ";
+			errorMessage.append(parent);
+			return 0;
+		}
+		parentElement = parentElement->NextSiblingElement();
+	} // end while(parentElement)
+
+	//doc.close();
+
+	if(!LoadData())
+		return false;
+
+	if(!LoadLabel(true))	//load label and update the centroid and bounding boxes
+		return false;
+
+	if(!LoadFeatures())
+		return false;
+
+	editsNotSaved = false;
+	return true;
+}
+
+bool NuclearSegmentation::LoadFeatures(void)
+{
+	if(!FileExists(featureFilename.c_str()))
+	{
+		errorMessage = "No Features File";
+		return false;
+	}
+	if(!FileExists(headerFilename.c_str()))
+	{
+		errorMessage = "No Features File";
+		return false;
+	}
+
+	const int MAXLINESIZE = 1024;	//Numbers could be in scientific notation in this file
+	char line[MAXLINESIZE];
+
+	//LOAD THE HEADER INFO:
+	ifstream headerFile; 
+	headerFile.open( headerFilename.c_str() );
+	if ( !headerFile.is_open() )
+	{
+		errorMessage = "Failed to Load Document";
+		return false;
+	}
+
+	std::vector< std::string > header; 
+	headerFile.getline(line, MAXLINESIZE);
+	while ( !headerFile.eof() ) //Get all values
+	{
+		std::string h;
+		char * pch = strtok (line," \t");
+		while (pch != NULL)
+		{
+			h = pch;
+			pch = strtok (NULL, " \t");
+		}
+		header.push_back( h );
+		headerFile.getline(line, MAXLINESIZE);
+	}
+	headerFile.close();
+
+	if ( !header.at(0).compare("ID") && !header.at(0).compare("id") && !header.at(0).compare("Id") )
+	{
+		errorMessage = "First column must be ID";
+		return false;
+	}
+
+	//SET UP THE TABLE:
+	featureTable = vtkSmartPointer<vtkTable>::New();		//Start with a new table
+	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+	for (int i=0; i < (int)header.size(); ++i)
+	{
+		column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( header.at(i).c_str() );
+		featureTable->AddColumn(column);
+	}
+
+	//LOAD ALL OF THE FEATURES INFO:
+	ifstream featureFile; 
+	featureFile.open( featureFilename.c_str() );
+	if ( !featureFile.is_open() )
+	{
+		errorMessage = "Failed to Load Document";
+		return false;
+	}
+
+	featureFile.getline(line, MAXLINESIZE);
+	while ( !featureFile.eof() ) //Get all values
+	{
+		vtkSmartPointer<vtkVariantArray> row = vtkSmartPointer<vtkVariantArray>::New();
+		char * pch = strtok (line," \t");
+		while (pch != NULL)
+		{
+			row->InsertNextValue( vtkVariant( atof(pch) ) );
+			pch = strtok (NULL, " \t");
+		}
+		featureTable->InsertNextRow(row);
+		featureFile.getline(line, MAXLINESIZE);
+	}
+	featureFile.close();
+	return true;
+}
+
+//*******************************************************************************************
+//*******************************************************************************************
+//*******************************************************************************************
+//*******************************************************************************************
 // These functions write the objects to an XML file using particular XML Format!!
 //*******************************************************************************************
 bool NuclearSegmentation::SaveChanges(std::string filename)
@@ -718,56 +935,71 @@ bool NuclearSegmentation::SaveChanges(std::string filename)
 	{
 		headerFilename = base + "_header.txt";
 	}
+	if(editFilename.size() == 0)
+	{
+		editFilename = base + "_edits.txt";
+	}
 
 	if(this->editsNotSaved)
 	{
 		SaveResultImage();
 		SaveFeaturesTable();
+		SaveEditRecords();
+		myEditRecords.clear();
 	}
 
-	/*
+	//Write the XML file:
 	TiXmlDocument doc;   
  
 	TiXmlElement * root = new TiXmlElement( "NuclearSegmentation" );  
 	doc.LinkEndChild( root );  
 	root->SetAttribute("program", "Yousef_Nucleus_Seg");
-
-	TiXmlComment * comment = new TiXmlComment();
-	comment->SetValue(" Segmentation Results/Parameters/Features/Edits " );  
-	root->LinkEndChild( comment );  
+	root->SetAttribute("version", "2"); 
  
-	TiXmlElement * dfile = new TiXmlElement("datafile");
-	size_t pos1 = dataFilename.find_last_of("/\\");
-	std::string dName = dataFilename.substr(pos1+1);
-	dfile->LinkEndChild( new TiXmlText( dName.c_str() ) );
-	root->LinkEndChild(dfile);
-
-	TiXmlElement *rfile = new TiXmlElement("resultfile");
-	size_t pos2 = labelFilename.find_last_of("/\\");
-	std::string lName = labelFilename.substr(pos2+1);
-	rfile->LinkEndChild( new TiXmlText( lName.c_str() ) );
-	root->LinkEndChild(rfile);
-
-	//Attach parameters
-	for (unsigned int pnum = 0; pnum < myParameters.size(); ++pnum)
+	if(dataFilename.size() > 0)
 	{
-		TiXmlElement *element = new TiXmlElement("parameter");
-		element->SetAttribute( "name", myParameters[pnum].name );
-		element->LinkEndChild( new TiXmlText( NumToString(myParameters[pnum].value) ) );
-		root->LinkEndChild(element);
-
+		TiXmlElement * dfile = new TiXmlElement("datafile");
+		dfile->LinkEndChild( new TiXmlText( dataFilename.c_str() ) );
+		root->LinkEndChild(dfile);
 	}
-
-	//Attach Objects
-	for (unsigned int onum=0; onum<myObjects.size(); ++onum)
+	if(labelFilename.size() > 0)
 	{
-		root->LinkEndChild( GetObjectElement(myObjects[onum]) );
+		TiXmlElement *rfile = new TiXmlElement("resultfile");
+		rfile->LinkEndChild( new TiXmlText( labelFilename.c_str() ) );
+		root->LinkEndChild(rfile);
+	}
+	if(headerFilename.size() > 0)
+	{
+		TiXmlElement *hfile = new TiXmlElement("headerfile");
+		hfile->LinkEndChild( new TiXmlText( headerFilename.c_str() ) );
+		root->LinkEndChild(hfile);
+	}
+	if(featureFilename.size() > 0)
+	{
+		TiXmlElement *ffile = new TiXmlElement("featurefile");
+		ffile->LinkEndChild( new TiXmlText( featureFilename.c_str() ) );
+		root->LinkEndChild(ffile);
+	}
+	if(paramFilename.size() > 0)
+	{
+		TiXmlElement *pfile = new TiXmlElement("featurefile");
+		pfile->LinkEndChild( new TiXmlText( paramFilename.c_str() ) );
+		root->LinkEndChild(pfile);
+	}
+	if(paramFilename.size() > 0)
+	{
+		TiXmlElement *efile = new TiXmlElement("editfile");
+		efile->LinkEndChild( new TiXmlText( paramFilename.c_str() ) );
+		root->LinkEndChild(efile);
 	}
 
 	doc.SaveFile( filename.c_str() );
-	*/
+
+	this->editsNotSaved = false;
 	return true;
 }
+
+
 //*******************************************************************************************
 //*******************************************************************************************
 //*******************************************************************************************
@@ -866,28 +1098,28 @@ bool NuclearSegmentation::FileExists(std::string filename)
 	return true;
 }
 
-string NuclearSegmentation::NumToString(double d)
+std::string NuclearSegmentation::NumToString(double d)
 {
 	stringstream out;
 	out << setprecision(2) << fixed << d;	//Default is to use 2 decimal places
 	return out.str();
 }
 
-string NuclearSegmentation::NumToString(int i)
+std::string NuclearSegmentation::NumToString(int i)
 {
 	stringstream out;
 	out << i ;	 
 	return out.str();
 }
 
-string NuclearSegmentation::NumToString(double d, int p)
+std::string NuclearSegmentation::NumToString(double d, int p)
 {
 	stringstream out;
 	out << setprecision(p) << fixed << d;	
 	return out.str();
 }
 
-string NuclearSegmentation::TimeStamp()
+std::string NuclearSegmentation::TimeStamp()
 {
 	time_t rawtime;
 	struct tm *timeinfo;
@@ -972,7 +1204,21 @@ void NuclearSegmentation::ReassignLabels(vector<int> fromIds, int toId)
 //**********************************************************************************************************
 ftk::Object::Box NuclearSegmentation::ExtremaBox(std::vector<int> ids)
 {
-	ftk::Object::Box extreme = bBoxMap[ids.at(0)];
+	ftk::Object::Box extreme;
+	if(bBoxMap.size() == 0)
+	{
+		extreme.min.x=0;
+		extreme.max.x=0;
+		extreme.min.y=0;
+		extreme.max.y=0;
+		extreme.min.z=0;
+		extreme.max.z=0;
+		extreme.min.t=0;
+		extreme.max.t=0;
+		return extreme;	//Will return bad
+	}
+
+	extreme = bBoxMap[ids.at(0)];
 	for(int i=1; i<(int)ids.size(); ++i)
 	{
 		ftk::Object::Box test = bBoxMap[ids.at(i)];
@@ -1151,6 +1397,12 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 	this->addObjectsToTable(add_ids, region.min.x, region.min.y, region.min.z, region.max.x, region.max.y, region.max.z);
 	this->removeFeatures(objID);				//Remove features of the old object
 
+	//Add an edit record:
+	EditRecord record;
+	record.date = TimeStamp();
+	record.description = std::string("S") + "\t" + NumToString(objID) + "\t" + NumToString(newID1) + "," + NumToString(newID2);
+	myEditRecords.push_back(record);
+
 	ret_ids.at(0) = newID1;
 	ret_ids.at(1) = newID2;
 	return ret_ids;
@@ -1174,6 +1426,11 @@ std::vector< int > NuclearSegmentation::SplitAlongZ(int objID, int cutSlice)
 	if(size[1] == 1)	//Only 1 z slice
 	{
 		errorMessage = "2D image cannot be split along z";
+		return ret_ids;
+	}
+	if(bBoxMap.size() == 0)
+	{
+		errorMessage = "bounding boxes not known";
 		return ret_ids;
 	}
 	
@@ -1208,6 +1465,10 @@ std::vector< int > NuclearSegmentation::SplitAlongZ(int objID, int cutSlice)
 	this->removeFeatures(objID);				//Remove features of the old object
 
 	//ALSO NEED AN EDIT LOG:
+	EditRecord record;
+	record.date = TimeStamp();
+	record.description = std::string("S") + "\t" + NumToString(objID) + "\t" + NumToString(newID1) + "," + NumToString(newID2);
+	myEditRecords.push_back(record);
 
 	//return the ids of the two cells resulting from spliting
 	ret_ids.at(0) = newID1;
@@ -1230,7 +1491,17 @@ int NuclearSegmentation::Merge(vector<int> ids)
 	{
 		removeFeatures(ids.at(i));
 	}
+
 	//NEED TO ADD AN EDIT RECORD:
+	EditRecord record;
+	record.date = TimeStamp();
+	record.description = std::string("M") + "\t" + NumToString(ids.at(0));
+	for(int i=1; i<ids.size(); ++i)
+	{
+		record.description.append("," + NumToString(ids.at(i)));
+	}
+	record.description.append("\t" + NumToString(newID));
+	myEditRecords.push_back(record);
 
 	return newID;
 }
@@ -1297,7 +1568,11 @@ int NuclearSegmentation::AddObject(int x1, int y1, int z1, int x2, int y2, int z
 	this->GetResultImage();
 	this->addObjectToTable(newID, x1, y1, z1, x2, y2, z2);
 	
-	//NOW I NEED TO DO AN EDIT LOG
+	//NEED TO ADD AN EDIT RECORD:
+	EditRecord record;
+	record.date = TimeStamp();
+	record.description = std::string("A") + "\t" + NumToString(newID);
+	myEditRecords.push_back(record);
 
 	return newID;
 }
@@ -1311,6 +1586,10 @@ bool NuclearSegmentation::Delete(vector<int> ids)
 		ReassignLabel(ids.at(i),0);				//Turn each label in list to zero
 		removeFeatures(ids.at(i));				//Remove Features From Table:
 		//Create Edit Record:
+		EditRecord record;
+		record.date = TimeStamp();
+		record.description = std::string("D") + "\t" + NumToString(ids.at(i));
+		myEditRecords.push_back(record);
 	}
 
 	return true;

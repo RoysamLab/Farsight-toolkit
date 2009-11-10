@@ -39,6 +39,7 @@ limitations under the License.
 #include <ftkObject.h>
 #include <map>
 #include <set>
+#include <string>
 
 namespace ftk
 { 
@@ -82,7 +83,7 @@ public:
 	
 	//We may also want to restore from previously found results:
 	bool RestoreFromXML(std::string filename);					//Complete Restore from FORMER XML file format
-	bool LoadAll(std::string filename){};						//Complete Restore from NEW FORMAT
+	bool LoadAll(std::string filename);							//Complete Restore from NEW FORMAT
 
 	//OTHER LOAD METHEDS
 	bool LoadFromImages(std::string dfile, std::string rfile);	//Load from images -> then convert to objects
@@ -123,6 +124,7 @@ private:
 	std::string paramFilename;	//the filename of the parameter file	(full path)
 	std::string featureFilename;//the filename of the feature txt file	(full path)
 	std::string headerFilename; //the filename of the feature names txt (full path)
+	std::string editFilename;	//the filename of the edit record txt	(full path)
 
 	std::string errorMessage;
 
@@ -133,8 +135,10 @@ private:
 	int lastRunStep;					//0,1,2,3,4 for the stages in a nuclear segmentation.
 	bool editsNotSaved;					//Will be true if edits have been made and not saved to file.
 
-	typedef struct { string name; int value; } Parameter;
+	typedef struct { string name; int value; } Parameter;			
+	typedef struct {string date; string description; } EditRecord;		
 	std::vector<Parameter> myParameters;
+	std::vector<EditRecord> myEditRecords;
 	std::map<int, ftk::Object::Box>		bBoxMap;			//Bounding boxes
 	std::map<int, ftk::Object::Point>	centerMap;			//Centroids
 	//std::map<int, int>	idToRowMap;							//Mapping from ID to row in table!!!!
@@ -147,7 +151,9 @@ private:
 	bool GetResultImage();										//Gets the result of last module and puts it in labelImage
 	bool SaveResultImage();										//Save the output image of the last step executed (image format)
 	bool SaveFeaturesTable();									//Save 2 txt files: one with features other with names of features
-	bool LoadLabel();											//Load just the label image if the filename is already known
+	bool SaveEditRecords();										//Append Edit Records to file 
+	bool LoadLabel(bool updateMaps = false);					//Load just the label image if the filename is already known
+	bool LoadFeatures();
 
 	//General Utilites:
 	bool FileExists(std::string filename);

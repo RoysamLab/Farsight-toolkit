@@ -733,7 +733,8 @@ void LabelImageViewQT::drawBoundaries(QPainter *painter)
 					v4 = (int)labelImg->GetPixel(currentT, ch, currentZ, i-1, j);
 					if(v!=v1 || v!=v2 || v!=v3 || v!=v4)
 					{
-						painter->setPen(qcolor);
+						//painter->setPen(qcolor);
+						painter->setPen(colorForNormal);
 						if(selection) 
 							if(selection->isSelected(v))
 								painter->setPen(colorForSelections);

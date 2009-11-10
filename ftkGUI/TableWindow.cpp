@@ -35,8 +35,9 @@ void TableWindow::setQtModels(QItemSelectionModel * mod)
 	
 void TableWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels)
 {
-	if(!this->modAdapter)
-		this->modAdapter = new vtkQtTableModelAdapter();
+	if(this->modAdapter)
+		delete this->modAdapter;	
+	this->modAdapter = new vtkQtTableModelAdapter();
 	this->modAdapter->setTable(  table );
 	this->tableView->setModel( modAdapter );
 
@@ -50,7 +51,12 @@ void TableWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * s
 		selAdapter = new SelectionAdapter();
 		selAdapter->SetPair(selection,mod);
 	}
-	this->update();
+		
+	//Resize Rows to be as small as possible
+	for (int i=0; i<tableView->model()->rowCount(); i++)
+	{
+		tableView->verticalHeader()->resizeSection(i,18);
+	}
 }
 
 void TableWindow::setup()
