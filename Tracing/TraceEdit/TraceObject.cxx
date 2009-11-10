@@ -620,7 +620,7 @@ void TraceObject::ConvertVTKLineToTrace(int cellID, int parentTraceLineID,
   tline->SetType(3);
 	tline->setTraceColor( this->getTraceLUT( tline->GetType() ));   
 
-  if(parentTraceLineID != -1)
+  /*if(parentTraceLineID != -1)
     {
     TraceLine *tparent;
     if(this->hash_load.count(parentTraceLineID)==0)
@@ -639,7 +639,7 @@ void TraceObject::ConvertVTKLineToTrace(int cellID, int parentTraceLineID,
   else
     {
     this->trace_lines.push_back(tline);
-    }
+    }*/this->trace_lines.push_back(tline);
   //add all of this new line's points as TraceBits
   vtkSmartPointer<vtkPolyLine> line = reinterpret_cast<vtkPolyLine *>
       (this->VTKData->GetCell(cellID));

@@ -621,8 +621,10 @@ void View3D::Rerender()
   this->Renderer->AddActor(this->BranchActor);  
   this->QVTK->GetRenderWindow()->Render();
   this->TreeModel->SetTraces(this->tobj->GetTraceLines());
-  this->FTKTable->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
-  this->TreePlot->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
+ // this->FTKTable->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
+  this->FTKTable->update();
+  //this->TreePlot->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
+  this->TreePlot->update();
   this->statusBar()->showMessage(tr("Finished Rerendering Image"));
 }
 
@@ -1284,8 +1286,8 @@ void View3D::FlipTraces()
 		{
 			this->tobj->ReverseSegment(traceList[i]);
 		}		
+		this->ClearSelection();
 		this->statusBar()->showMessage(tr("Reversed Selected"));
-		this->Rerender();
 	}
 	else
 	{

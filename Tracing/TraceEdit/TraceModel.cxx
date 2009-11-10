@@ -88,6 +88,7 @@ void TraceModel::SyncModel()
 		return;
 	}
 	this->DataTable->Initialize();	
+	this->Selection->clear();
 	this->SetupHeaders();
 	
 	for (int i = 0; i < (int)this->TraceLines.size(); ++i)

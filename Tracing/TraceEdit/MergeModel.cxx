@@ -72,6 +72,8 @@ void MergeModel::SyncModel()
     }
 
   //clear the model 
+  this->DataTable->Initialize();
+  this->Selection->clear();
   this->SetupHeaders();
   //and then repopulate it with data from the trace gaps
   std::vector<TraceGap*> Gaps = this->GetTraceGaps();
