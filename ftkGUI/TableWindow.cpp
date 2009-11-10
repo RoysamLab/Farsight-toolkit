@@ -48,6 +48,7 @@ void TableWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * s
 	if(sels)
 	{
 		this->selection = sels;
+		if(selAdapter) delete selAdapter;
 		selAdapter = new SelectionAdapter();
 		selAdapter->SetPair(selection,mod);
 	}

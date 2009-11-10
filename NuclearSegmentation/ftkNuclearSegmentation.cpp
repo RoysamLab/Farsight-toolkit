@@ -464,7 +464,7 @@ bool NuclearSegmentation::SaveEditRecords()
 	//Now write out the edits
 	for(unsigned int rec = 0; rec < (int)myEditRecords.size(); ++rec)
 	{
-		outFile << myEditRecords.at(rec).date << "\t" << myEditRecords.at(rec).description << "\n";
+		outFile << myEditRecords.at(rec).date << "\t\t" << myEditRecords.at(rec).description << "\n";
 	}
 	outFile.close();
 	return true;
