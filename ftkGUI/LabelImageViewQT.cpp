@@ -152,8 +152,11 @@ void LabelImageViewQT::SetChannelImage(ftk::Image::Pointer img)
 			selection = NULL;
 		}
 	}
-	updateVSlider();
-	updateHSlider();
+	if(!labelImg)
+	{
+		updateVSlider();
+		updateHSlider();
+	}
 	createChannelWidget();
 	//refreshDisplayImage();	//Called after creating the channel widget;
 }
@@ -179,6 +182,11 @@ void LabelImageViewQT::SetLabelImage(ftk::Image::Pointer img, ObjectSelection * 
 			channelImg = NULL;
 		}
 	}
+	if(!channelImg)
+	{
+		updateVSlider();
+		updateHSlider();
+	}
 
 	if(sels)
 	{
@@ -186,8 +194,6 @@ void LabelImageViewQT::SetLabelImage(ftk::Image::Pointer img, ObjectSelection * 
 		connect(selection, SIGNAL(changed()), this, SLOT(refreshDisplayImage()));
 	}
 
-	updateVSlider();
-	updateHSlider();
 	//refreshFeatures();
 	refreshDisplayImage();
 }

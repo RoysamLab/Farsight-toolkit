@@ -146,7 +146,6 @@ void NucleusEditor::createMenus()
 	fileMenu->addSeparator();
 
 	segmentAction = new QAction(tr("Start Segmentation..."), this);
-	segmentAction->setEnabled(false);
 	segmentAction->setStatusTip(tr("Starts the Nuclear Segmenation on this Image"));
 	connect(segmentAction,SIGNAL(triggered()),this,SLOT(segmentImage()));
 	fileMenu->addAction(segmentAction);
@@ -159,7 +158,6 @@ void NucleusEditor::createMenus()
 	fileMenu->addAction(xmlAction);
 
 	saveAction = new QAction(tr("Save Result"), this);
-	saveAction->setEnabled(false);
 	saveAction->setStatusTip(tr("Save Changes (Edits, etc)"));
 	saveAction->setShortcut(tr("Ctrl+S"));
 	connect(saveAction, SIGNAL(triggered()), this, SLOT(saveResult()));
@@ -177,7 +175,6 @@ void NucleusEditor::createMenus()
 	viewMenu = menuBar()->addMenu(tr("&View"));
 
 	showBoundsAction = new QAction(tr("Show &Boundaries"), this);
-	showBoundsAction->setEnabled(false);
 	showBoundsAction->setCheckable(true);
 	showBoundsAction->setChecked(false);
 	showBoundsAction->setStatusTip(tr("Draw boundaries using a label image"));
@@ -186,7 +183,6 @@ void NucleusEditor::createMenus()
 	viewMenu->addAction(showBoundsAction);
 
 	showIDsAction = new QAction(tr("Show &IDs"), this);
-	showIDsAction->setEnabled(false);
 	showIDsAction->setCheckable(true);
 	showIDsAction->setChecked(false);
 	showIDsAction->setStatusTip(tr("Draw ID numbers at centroid locations"));
@@ -196,13 +192,11 @@ void NucleusEditor::createMenus()
 
 	viewMenu->addSeparator();
 	newScatterAction = new QAction(tr("New Scatter"), this);
-	newScatterAction->setEnabled(false);
 	newScatterAction->setStatusTip(tr("Open a new Scatterplot Window"));
 	connect(newScatterAction,SIGNAL(triggered()),this,SLOT(CreateNewPlotWindow()));
 	viewMenu->addAction(newScatterAction);
 
 	showHistoAction = new QAction(tr("Show Histogram"),this);
-	showHistoAction->setEnabled(false);
 	showHistoAction->setStatusTip(tr("Show a Histogram"));
 	connect(showHistoAction,SIGNAL(triggered()),this,SLOT(ShowHistogram()));
 	//viewMenu->addAction(showHistoAction);
@@ -210,7 +204,6 @@ void NucleusEditor::createMenus()
 	imageIntensityAction = new QAction(tr("Adjust Image Intensity"), this);
 	imageIntensityAction->setStatusTip(tr("Allows modification of image intensity"));
 	imageIntensityAction->setShortcut(tr("Ctrl+G"));
-	imageIntensityAction->setEnabled(false);
 	connect(imageIntensityAction, SIGNAL(triggered()), segView, SLOT(AdjustImageIntensity()));
 	viewMenu->addAction(imageIntensityAction);
 
@@ -270,6 +263,7 @@ void NucleusEditor::createMenus()
 	connect(exclusionAction, SIGNAL(triggered()), this, SLOT(applyExclusionMargin()));
 	//editMenu->addAction(exclusionAction);
 
+	//TOOL MENU
 	toolMenu = menuBar()->addMenu(tr("Tools"));
 	patternAction = new QAction(tr("Pattern Analysis"), this);
 	connect(patternAction, SIGNAL(triggered()), this, SLOT(startPattern()));
@@ -282,21 +276,42 @@ void NucleusEditor::createMenus()
 	connect(aboutAction, SIGNAL(triggered()), this, SLOT(about()));
 	helpMenu->addAction(aboutAction);
 
-	viewMenu->setEnabled(true);
-
-	setEditsEnabled(false);
-
+	setMenusForResult(false);
+	segmentAction->setEnabled(false);
 }
 
 void NucleusEditor::setEditsEnabled(bool val)
 {
-	editMenu->setEnabled(val);
 	clearSelectAction->setEnabled(val);
+	addAction->setEnabled(val);
 	mergeAction->setEnabled(val);
 	deleteAction->setEnabled(val);
 	splitZAction->setEnabled(val);
 	splitAction->setEnabled(val);
 	exclusionAction->setEnabled(val);
+}
+
+void NucleusEditor::setMenusForResult(bool val)
+{
+	saveAction->setEnabled(val);
+
+	showBoundsAction->setEnabled(val);
+	showIDsAction->setEnabled(val);
+	newScatterAction->setEnabled(val);
+	showHistoAction->setEnabled(val);
+	imageIntensityAction->setEnabled(val);
+
+	patternAction->setEnabled(val);
+
+	this->setEditsEnabled(val);
+}
+
+void NucleusEditor::menusEnabled(bool val)
+{
+	fileMenu->setEnabled(val);
+	viewMenu->setEnabled(val);
+	editMenu->setEnabled(val);
+	toolMenu->setEnabled(val);
 }
 
 //****************************************************************************
@@ -442,16 +457,8 @@ void NucleusEditor::loadResult(void)
 	CreateNewPlotWindow();
 
 	// Enable the menu items for editing
-	setEditsEnabled(true);
-	showBoundsAction->setEnabled(true);
-	showBoundsAction->setChecked(true);
-	showIDsAction->setEnabled(true);
-	showIDsAction->setChecked(true);
-	newScatterAction->setEnabled(true);
-	showHistoAction->setEnabled(true);
-	imageIntensityAction->setEnabled(true);
-	segmentAction->setEnabled(false);
-	saveAction->setEnabled(true);
+	setMenusForResult(true);
+	segmentAction->setEnabled(true);
 }
 
 void NucleusEditor::loadImage()
@@ -483,10 +490,9 @@ void NucleusEditor::loadImage()
 	segView->SetChannelImage(myImg);
 
 	// Disable the menu items for editing
-	this->setEditsEnabled(false);
+	this->setMenusForResult(false);
 	segmentAction->setEnabled(true);
 	imageIntensityAction->setEnabled(true);
-	saveAction->setEnabled(false);
 }
 
 //**********************************************************************
@@ -673,12 +679,21 @@ void NucleusEditor::segmentImage()
 
 	QString dataFile = lastPath + "/" + myImgName;
 
+	QVector<QString> chs;
+	int numChannels = myImg->GetImageInfo()->numChannels;
+	for (int i=0; i<numChannels; ++i)
+	{
+		chs.push_back(QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i)));
+	}
+
 	//Get the paramFile to use:
 	QString paramFile = "";
-	ParamsFileDialog *dialog = new ParamsFileDialog(lastPath,this);
+	int useChannel;
+	ParamsFileDialog *dialog = new ParamsFileDialog(lastPath,chs,this);
 	if( dialog->exec() )	
 	{
 		paramFile = dialog->getFileName();
+		useChannel = dialog->getChannelNumber();
 	}
 	delete dialog;
 
@@ -691,25 +706,7 @@ void NucleusEditor::segmentImage()
 		return;
 	}
 	
-	int numChannels = myImg->GetImageInfo()->numChannels;
-	if(numChannels > 1)
-	{
-		//I need to select a channel to use for segmentation
-		int useChannel = 0;
-		for (int i=0; i<numChannels; ++i)
-		{
-			std::string name = myImg->GetImageInfo()->channelNames.at(i);
-			if(name.find("Nuclei") != string::npos)
-				break;
-			useChannel++;
-		}
-		if(useChannel >= numChannels)
-		{
-			//didn't find the string, so should probably ask which one to use
-			useChannel = 0;
-		}
-		nucSeg->SetChannel(useChannel);
-	}
+	nucSeg->SetChannel(useChannel);
 	
 	this->addToolBar(Qt::TopToolBarArea, segmentTool);
 	segmentStop->setEnabled(false);
@@ -770,12 +767,8 @@ void NucleusEditor::abortSegment()
 	quitNucSeg();
 
 	QApplication::restoreOverrideCursor();
-	fileMenu->setEnabled(true);
-	loadAction->setEnabled(true);
-	xmlAction->setEnabled(true);
-	segmentAction->setEnabled(true);
-	viewMenu->setEnabled(true);
-	this->setEditsEnabled(false);
+	menusEnabled(true);
+	setMenusForResult(false);
 }
 
 //Call this slot when the table has been modified (new rows or columns) to update the views:
@@ -815,7 +808,7 @@ void NucleusEditor::quitNucSeg(void)
 		hisWin=NULL;
 	}
 
-	segView->SetChannelImage(NULL);
+	//segView->SetChannelImage(NULL);
 	segView->SetLabelImage(NULL);
 	if(nucSeg)
 	{
@@ -829,9 +822,7 @@ void NucleusEditor::stopSegment(void)
 {
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 	// Disable the menu items for editing
-	fileMenu->setEnabled(false);
-	this->setEditsEnabled(false);
-	viewMenu->setEnabled(false);
+	menusEnabled(false);
 	segmentStop->setEnabled(false);
 	segmentContinue->setEnabled(false);
 
@@ -847,10 +838,7 @@ void NucleusEditor::segment()
 	{
 	case 0:
 		QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-		// Disable the menu items for editing
-		fileMenu->setEnabled(false);
-		editMenu->setEnabled(false);
-		viewMenu->setEnabled(false);
+		menusEnabled(false);
 
 		segmentTaskLabel->setText(tr(" Loading "));
 		segmentProgress->setValue(0);
@@ -909,25 +897,13 @@ void NucleusEditor::segment()
 		segmentTaskLabel->setText(tr(" Inspect "));
 
 		QApplication::restoreOverrideCursor();
-		fileMenu->setEnabled(true);
-		this->setEditsEnabled(false);
-		viewMenu->setEnabled(true);
-		showBoundsAction->setEnabled(false);
-		showIDsAction->setEnabled(false);
-		loadAction->setEnabled(false);
-		saveAction->setEnabled(false);
-		xmlAction->setEnabled(false);
-		segmentAction->setEnabled(false);
 		segmentStop->setEnabled(true);
 		segmentContinue->setEnabled(true);
+		//I should pop-up a msg here:
 		segmentState = 5;
 		break;
 	case 5:
 		QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-		// Disable the menu items for editing
-		fileMenu->setEnabled(false);
-		this->setEditsEnabled(false);
-		viewMenu->setEnabled(false);
 		segmentStop->setEnabled(false);
 		segmentContinue->setEnabled(false);
 
@@ -948,7 +924,6 @@ void NucleusEditor::segment()
 		if(selection) delete selection;
 		selection = new ObjectSelection();
 		segView->SetLabelImage(nucSeg->GetLabelImage(),selection);
-		showBoundsAction->setChecked(true);
 		segmentTaskLabel->setText(tr(" Features "));
 
 		featuresThread = new Features(nucSeg);
@@ -970,19 +945,11 @@ void NucleusEditor::segment()
 		CreateNewPlotWindow();
 
 		QApplication::restoreOverrideCursor();
-		fileMenu->setEnabled(true);
-		saveAction->setEnabled(true);
-		loadAction->setEnabled(true);
-		xmlAction->setEnabled(true);
-		newScatterAction->setEnabled(true);
-		showHistoAction->setEnabled(true);
-		this->setEditsEnabled(true);
-		showBoundsAction->setEnabled(true);
+		menusEnabled(true);
+		setMenusForResult(true);
 		showBoundsAction->setChecked(true);
-		showIDsAction->setEnabled(true);
 		showIDsAction->setChecked(true);
-		//segWin->SetIDsVisible(true);
-		viewMenu->setEnabled(true);
+
 		segmentState = -1;
 
 		//Now remove the toolbar:
@@ -1047,12 +1014,24 @@ int MarginDialog::getZ()
 
 //***********************************************************************************
 //***********************************************************************************
-// A dialog to get the paramaters file to use
+// A dialog to get the paramaters file to use and specify the channel if image has
+// more than one:
 //***********************************************************************************
-ParamsFileDialog::ParamsFileDialog(QString lastPth, QWidget *parent)
+ParamsFileDialog::ParamsFileDialog(QString lastPth, QVector<QString> channels, QWidget *parent)
 : QDialog(parent)
 {
 	this->lastPath = lastPth;
+
+	channelLabel = new QLabel("Choose Channel: ");
+	channelCombo = new QComboBox();
+	for(int v = 0; v<channels.size(); ++v)
+	{
+			channelCombo->addItem(channels.at(v));
+	}
+	QHBoxLayout *chLayout = new QHBoxLayout;
+	chLayout->addWidget(channelLabel);
+	chLayout->addWidget(channelCombo);
+
 	autoButton = new QRadioButton(tr("Automatic Parameter Selection"),this);
 	autoButton->setChecked(true);
 
@@ -1070,6 +1049,7 @@ ParamsFileDialog::ParamsFileDialog(QString lastPth, QWidget *parent)
 	bLayout->addWidget(okButton);
 
 	QVBoxLayout *layout = new QVBoxLayout;
+	layout->addLayout(chLayout);
 	layout->addWidget(autoButton);
 	layout->addWidget(fileButton);
 	layout->addWidget(fileCombo);
@@ -1092,6 +1072,12 @@ QString ParamsFileDialog::getFileName()
 		return fileCombo->currentText();
 	}
 }
+
+int ParamsFileDialog::getChannelNumber()
+{
+	return channelCombo->currentIndex();
+}
+
 void ParamsFileDialog::ParamBrowse(QString comboSelection)
 {
 	//First check to see if we have selected browse

@@ -526,7 +526,7 @@ bool NuclearSegmentation::LoadFromDAT(std::string dfile, std::string rfile)
 
 	//We assume that the image is unsigned char, but just in case it isn't we make it so:
 	dataImage->Cast<unsigned char>();
-	unsigned char *dptr = dataImage->GetSlicePtr<unsigned char>(0,0,0);		//Expects grayscale image	
+	unsigned char *dptr = dataImage->GetSlicePtr<unsigned char>(0,channelNumber,0);		//Expects grayscale image	
 	NucleusSeg->setDataImage( dptr, numColumns, numRows, numStacks, dataFilename.c_str() );
 	NucleusSeg->readFromIDLFormat(rfile);
 	ReleaseSegMemory();
@@ -788,6 +788,7 @@ bool NuclearSegmentation::LoadAll(std::string filename)
 		if ( strcmp( parent, "datafile" ) == 0 )
 		{
 			dataFilename = parentElement->GetText();
+			channelNumber = atoi(parentElement->Attribute("ch"));
 		}
 		else if ( strcmp( parent, "resultfile" ) == 0 )
 		{
@@ -959,6 +960,7 @@ bool NuclearSegmentation::SaveChanges(std::string filename)
 	if(dataFilename.size() > 0)
 	{
 		TiXmlElement * dfile = new TiXmlElement("datafile");
+		dfile->SetAttribute("ch", NumToString(channelNumber).c_str());
 		dfile->LinkEndChild( new TiXmlText( dataFilename.c_str() ) );
 		root->LinkEndChild(dfile);
 	}
@@ -1253,8 +1255,8 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 	}
 
 	//Check if the two points inside the same cell
-	int id1 = (int)labelImage->GetPixel(0,channelNumber,P1.z,P1.y,P1.x);
-	int id2 = (int)labelImage->GetPixel(0,channelNumber,P2.z,P2.y,P2.x);
+	int id1 = (int)labelImage->GetPixel(0,0,P1.z,P1.y,P1.x);
+	int id2 = (int)labelImage->GetPixel(0,0,P2.z,P2.y,P2.x);
 	if( id1!=id2 || id1==0 || id2==0)
 	{		
 		errorMessage = "points are not within the same cell";
@@ -1539,8 +1541,8 @@ int NuclearSegmentation::AddObject(int x1, int y1, int z1, int x2, int y2, int z
 	if(sz_x<1 || sz_y<1 || sz_z<1)
 		return 0;
 
-	IPixelT *dptr = dataImage->GetSlicePtr<IPixelT>(0,channelNumber,0);		//Expects grayscale image
-	LPixelT *lptr = labelImage->GetSlicePtr<LPixelT>(0,channelNumber,0);	//Expects grayscale image
+	unsigned char *dptr = dataImage->GetSlicePtr<unsigned char>(0,channelNumber,0);		//Expects grayscale image
+	unsigned short *lptr = labelImage->GetSlicePtr<unsigned short>(0,0,0);				//Expects grayscale image
 
 	ReleaseSegMemory();	//If I'm in add mode must be done with segmentation!!!
 	NucleusSeg = new yousef_nucleus_seg();

@@ -79,6 +79,8 @@ private slots:
 	void segment(void);
 	void about(void);
 
+	void menusEnabled(bool val);
+	void setMenusForResult(bool val);
 	void toggleBounds();
 	void toggleIDs();
 	void CreateNewPlotWindow();
@@ -179,11 +181,14 @@ class ParamsFileDialog : public QDialog
 {
 	Q_OBJECT
 public:
-	ParamsFileDialog(QString lastPth, QWidget *parent = 0);
+	ParamsFileDialog(QString lastPth, QVector<QString> chs, QWidget *parent = 0);
 	QString getFileName();
+	int getChannelNumber();
 private slots:
 	void ParamBrowse(QString);
 private:
+	QLabel *channelLabel;
+	QComboBox *channelCombo;
 	QRadioButton *autoButton;
 	QRadioButton *fileButton;
 	QComboBox *fileCombo;
