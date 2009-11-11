@@ -150,7 +150,8 @@ void SampleEditor::loadFile()
 		plot->close();
 		delete plot;
 	}
-	plot = new PlotWindow(selModel);
+	//plot = new PlotWindow(selModel);
+	plot = new PlotWindow(this);
 	plot->show();
 
 	if(histo)

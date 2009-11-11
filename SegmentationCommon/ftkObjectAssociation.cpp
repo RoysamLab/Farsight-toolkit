@@ -270,7 +270,7 @@ void ObjectAssociation::WriteAssociativeFeaturesToXML(string xmlFname)
 	root->LinkEndChild( comment );  
 
 	//go over the objects one by one	
-	for(int jj=1; jj<labelsList.size(); jj++)
+	for(unsigned int jj=1; jj<labelsList.size(); jj++)
 	{
 		//if the object is invalid, then just ignore it
 		//if(invalidObjects[j]==1)

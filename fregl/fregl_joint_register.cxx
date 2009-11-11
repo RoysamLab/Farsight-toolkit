@@ -21,6 +21,8 @@ limitations under the License.
 
 #include <rrel/rrel_muset_obj.h>
 
+#include <fstream>
+
 static std::string ToString(double val);
 
 

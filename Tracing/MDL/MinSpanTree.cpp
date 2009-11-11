@@ -963,6 +963,14 @@ int main(int argc, char *argv[])
     fclose(fout_Spine);
     fout_Spine = NULL;
     }
+
+  //temporary testing....
+  ofstream graph_writer;
+  graph_writer.open("out_graph.dot");
+  write_graphviz(graph_writer, msTree);
+  graph_writer.close();
+  //end testing
+
   volin = NULL;
   volvessel = NULL;
   somaDist = NULL;
