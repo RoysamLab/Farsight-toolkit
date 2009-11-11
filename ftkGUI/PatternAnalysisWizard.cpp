@@ -15,13 +15,14 @@ limitations under the License.
 
 #include "PatternAnalysisWizard.h"
 
-PatternAnalysisWizard::PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, char * trainColumn, char * resultColumn, QWidget *parent)
+PatternAnalysisWizard::PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, Module mod, char * trainColumn, char * resultColumn, QWidget *parent)
 	: QWizard(parent)
 {
 	this->m_table = table;
 
 	this->columnForTraining = trainColumn;
 	this->columnForPrediction = resultColumn;
+	this->m_module = mod;
 
 	optionGroup = new QButtonGroup;
 	initOptionGroup();
@@ -33,7 +34,7 @@ PatternAnalysisWizard::PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, ch
 	this->setPage(Page_Features, new FeaturesPage(featureGroup));
 	//this->setPage(Page_Execute, new ExecutePage();
 
-	this->setStartId(Page_Start);
+	this->setStartId(Page_Features);
 	this->setModal(true);
 
 	//this->setOption(QWizard::HaveCustomButton1);
@@ -71,7 +72,11 @@ void PatternAnalysisWizard::initOptionGroup(void)
 	QRadioButton *classifyButton = new QRadioButton(tr("Classify (using KPLS)"));
 	optionGroup->addButton(outlierButton, 0);
 	optionGroup->addButton(classifyButton, 1);
-	outlierButton->setChecked(true);
+	
+	if(m_module == _SVM)
+		outlierButton->setChecked(true);
+	else
+		classifyButton->setChecked(true);
 }
 
 /*
@@ -479,6 +484,9 @@ void PatternAnalysisWizard::runKPLS()
 			columnsToUse.push_back( featureGroup->id(buttons.at(b)) );
 		}
 	}
+	
+	if(columnsToUse.size() <= 0)
+		return;
 
 	//Setup up the kpls:
 	KPLS *kpls = new KPLS();
@@ -492,6 +500,7 @@ void PatternAnalysisWizard::runKPLS()
 	VECTOR ids = kpls->GetIDPtr();
 	VECTOR training = kpls->GetTrainingPtr();
 
+	std::set<int> outcomes;
 	//extract data from the table:
 	for(int r=0; r<num_rows; ++r)
 	{
@@ -502,6 +511,13 @@ void PatternAnalysisWizard::runKPLS()
 			data[r][c] = val;
 		}
 		training[r] = m_table->GetValueByName(r,columnForTraining).ToDouble();
+		outcomes.insert(int(training[r]));
+	}
+
+	if(outcomes.size() <= 1)
+	{
+		delete kpls;
+		return;
 	}
 
 	kpls->InitVariables();

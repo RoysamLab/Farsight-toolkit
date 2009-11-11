@@ -40,6 +40,7 @@ limitations under the License.
 #include <iostream>
 #include <vector>
 #include <float.h>
+#include <set>
 
 class PatternAnalysisWizard : public QWizard
 {
@@ -47,9 +48,9 @@ class PatternAnalysisWizard : public QWizard
 
 public:
 	enum { Page_Start, Page_Features, Page_Training, Page_Parameters, Page_Execute };
-	//typedef enum { SVM, KPLS } Module;
+	typedef enum { _SVM, _KPLS } Module;
 
-    PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, char * trainColumn, char * resultColumn, QWidget *parent = 0);
+    PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, Module mod, char * trainColumn, char * resultColumn, QWidget *parent = 0);
 
 protected:
 	//void initializePage(int id);
@@ -73,6 +74,7 @@ private:
 	vtkSmartPointer<vtkTable> m_table;
 	char * columnForTraining;
 	char * columnForPrediction;
+	Module m_module;
 };
 
 

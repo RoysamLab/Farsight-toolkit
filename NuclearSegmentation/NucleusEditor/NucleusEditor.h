@@ -98,9 +98,11 @@ private slots:
 	void splitCell(int x1, int y1, int z1, int x2, int y2, int z2);
 	void applyExclusionMargin(void);
 	void changeClass(void);
+	void markVisited(void);
 
 	//For Tools menu
-	void startPattern();
+	void startSVM();
+	void startKPLS();
 
 	void updateViews();
 
@@ -136,7 +138,8 @@ private:
 	QAction *aboutAction;
 
 	QMenu *toolMenu;
-	QAction *patternAction;		//Start the PatternAnalysis wizard
+	QAction *svmAction;		//Start the One-Class SVM outlier detecter
+	QAction *kplsAction;	//Start the KPLS Classifier
 	
 	//For Editing Menu
 	QMenu *editMenu;
@@ -148,6 +151,7 @@ private:
 	QAction *splitAction;			//for split along x-y direction
 	QAction *exclusionAction;
 	QAction *classAction;
+	QAction *visitAction;			//Mark an object as visited
 	
 	QLabel *statusLabel;			//Shown at bottom of main window
 

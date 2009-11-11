@@ -76,7 +76,6 @@ void NucleusEditor::createSegmentToolBar()
 {
 	segmentTool = new QToolBar();
 
-	//segmentAbort = new QAction(tr("ABORT"),this);
 	segmentAbort = new QAction(QIcon(":/icons/abort.png"), tr("ABORT"), this);
 	segmentAbort->setToolTip(tr("Abort Segmentation and save nothing"));
 	segmentAbort->setEnabled(true);
@@ -216,13 +215,19 @@ void NucleusEditor::createMenus()
 	connect(clearSelectAction, SIGNAL(triggered()), this, SLOT(clearSelections()));
 	editMenu->addAction(clearSelectAction);
 
+	visitAction = new QAction(tr("Mark as Visited"), this);
+	visitAction->setStatusTip(tr("Mark Selected Objects as Visited"));
+	visitAction->setShortcut(tr("Ctrl+V"));
+	connect(visitAction, SIGNAL(triggered()), this, SLOT(markVisited()));
+	editMenu->addAction(visitAction);
+
 	editMenu->addSeparator();
 
 	classAction = new QAction(tr("Change Class"), this);
 	classAction->setStatusTip(tr("Modify the class designation for the selected objects"));
 	classAction->setShortcut(tr("Ctrl+L"));
 	connect(classAction, SIGNAL(triggered()), this, SLOT(changeClass()));
-	//editMenu->addAction(classAction);
+	editMenu->addAction(classAction);
 
 	addAction = new QAction(tr("Add Cell"), this);
 	addAction->setStatusTip(tr("Draw a Box to add a new cell"));
@@ -265,9 +270,13 @@ void NucleusEditor::createMenus()
 
 	//TOOL MENU
 	toolMenu = menuBar()->addMenu(tr("Tools"));
-	patternAction = new QAction(tr("Pattern Analysis"), this);
-	connect(patternAction, SIGNAL(triggered()), this, SLOT(startPattern()));
-	toolMenu->addAction(patternAction);
+	svmAction = new QAction(tr("Detect Outliers"), this);
+	connect(svmAction, SIGNAL(triggered()), this, SLOT(startSVM()));
+	toolMenu->addAction(svmAction);
+
+	kplsAction = new QAction(tr("Classify"), this);
+	connect(kplsAction, SIGNAL(triggered()), this, SLOT(startKPLS()));
+	toolMenu->addAction(kplsAction);
 
 	//HELP MENU
 	helpMenu = menuBar()->addMenu(tr("Help"));
@@ -283,11 +292,13 @@ void NucleusEditor::createMenus()
 void NucleusEditor::setEditsEnabled(bool val)
 {
 	clearSelectAction->setEnabled(val);
+	visitAction->setEnabled(val);
 	addAction->setEnabled(val);
 	mergeAction->setEnabled(val);
 	deleteAction->setEnabled(val);
 	splitZAction->setEnabled(val);
 	splitAction->setEnabled(val);
+	classAction->setEnabled(val);
 	exclusionAction->setEnabled(val);
 }
 
@@ -301,7 +312,8 @@ void NucleusEditor::setMenusForResult(bool val)
 	showHistoAction->setEnabled(val);
 	imageIntensityAction->setEnabled(val);
 
-	patternAction->setEnabled(val);
+	svmAction->setEnabled(val);
+	kplsAction->setEnabled(val);
 
 	this->setEditsEnabled(val);
 }
@@ -498,7 +510,7 @@ void NucleusEditor::loadImage()
 //**********************************************************************
 // SLOT: start the pattern analysis widget:
 //**********************************************************************
-void NucleusEditor::startPattern()
+void NucleusEditor::startSVM()
 {
 	if(!table) return;
 
@@ -506,7 +518,23 @@ void NucleusEditor::startPattern()
 	{
 		delete pWizard;
 	}
-	pWizard = new PatternAnalysisWizard( table, "", "pattern", this);
+	pWizard = new PatternAnalysisWizard( table, PatternAnalysisWizard::_SVM, "", "outlier?", this);
+	connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
+	pWizard->show();
+}
+
+//**********************************************************************
+// SLOT: start the pattern analysis widget:
+//**********************************************************************
+void NucleusEditor::startKPLS()
+{
+	if(!table) return;
+
+	if(pWizard)
+	{
+		delete pWizard;
+	}
+	pWizard = new PatternAnalysisWizard( table, PatternAnalysisWizard::_KPLS, "class", "prediction", this);
 	connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
 	pWizard->show();
 }
@@ -581,8 +609,33 @@ void NucleusEditor::toggleIDs(void)
 
 void NucleusEditor::changeClass(void)
 {
-	//if(currentModel)
-	//	currentModel->classTrigger();
+	if(!nucSeg) return;
+
+	std::set<long int> sels = selection->getSelections();
+	std::vector<int> ids(sels.begin(), sels.end());
+
+	//Get the new class number:
+	bool ok;
+	QString msg = tr("Change the class of all selected items to: \n");
+	int newClass = QInputDialog::getInteger(NULL, tr("Change Class"), msg, -1, -1, 10, 1, &ok);
+	
+	//Change the class of these objects:
+	if(ok)
+	{
+		nucSeg->SetClass(ids,newClass);
+		this->updateViews();
+	}
+}
+
+void NucleusEditor::markVisited(void)
+{
+	if(!nucSeg) return;
+
+	std::set<long int> sels = selection->getSelections();
+	std::vector<int> ids(sels.begin(), sels.end());
+	
+	nucSeg->MarkAsVisited(ids,1);
+	this->updateViews();
 }
 
 void NucleusEditor::addCell(int x1, int y1, int x2, int y2, int z)

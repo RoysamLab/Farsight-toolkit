@@ -96,6 +96,8 @@ public:
 	int Merge(vector<int> ids);
 	bool Delete(vector<int> ids);
 	int AddObject(int x1, int y1, int z1, int x2, int y2, int z2);
+	bool SetClass(vector<int> ids, int clss);
+	bool MarkAsVisited(vector<int> ids, int val);
 
 	//Edits applied on initial segmentation and updates LoG resp image
 	ftk::Object::Point MergeInit(ftk::Object::Point P1, ftk::Object::Point P2, int* new_id); 
@@ -141,7 +143,7 @@ private:
 	std::vector<EditRecord> myEditRecords;
 	std::map<int, ftk::Object::Box>		bBoxMap;			//Bounding boxes
 	std::map<int, ftk::Object::Point>	centerMap;			//Centroids
-	//std::map<int, int>	idToRowMap;							//Mapping from ID to row in table!!!!
+	//std::map<int, int>	idToRowMap;						//Mapping from ID to row in table!!!!
 	vtkSmartPointer<vtkTable> featureTable;
 
 	void GetParameters(void);								//Retrieve the Parameters from nuclear segmentation.

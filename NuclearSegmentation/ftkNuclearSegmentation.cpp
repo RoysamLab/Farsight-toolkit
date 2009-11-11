@@ -373,6 +373,16 @@ bool NuclearSegmentation::ComputeFeatures()
 		featureTable->AddColumn(column);
 	}
 
+	//Add class column
+	column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName( "class" );
+	featureTable->AddColumn(column); 
+
+	//Add visited column
+	column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName( "visited?" );
+	featureTable->AddColumn(column);
+
 	//Now populate the table:
 	//int r = 0;
 	std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
@@ -388,7 +398,13 @@ bool NuclearSegmentation::ComputeFeatures()
 		{
 			row->InsertNextValue( vtkVariant(features->ScalarFeatures[i]) );
 		}
+		int numExtraRows = featureTable->GetNumberOfColumns() - row->GetNumberOfValues();
+		for (int i=0; i<numExtraRows; ++i)
+		{
+			row->InsertNextValue( vtkVariant(-1) );
+		}
 		featureTable->InsertNextRow(row);
+		
 
 		Object::Point c;
 		c.x = (int)features->Centroid[0];
@@ -1241,6 +1257,26 @@ ftk::Object::Box NuclearSegmentation::ExtremaBox(std::vector<int> ids)
 //**********************************************************************************************************
 // EDITING FUNCTIONS:
 //**********************************************************************************************************
+bool NuclearSegmentation::SetClass(vector<int> ids, int clss)
+{
+	for(int i=0; i<ids.size(); ++i)
+	{
+		featureTable->SetValueByName( rowForID(ids.at(i)), "class", vtkVariant(clss) );
+	}
+	this->editsNotSaved = true;
+	return true;
+}
+
+bool NuclearSegmentation::MarkAsVisited(vector<int> ids, int val)
+{
+	for(int i=0; i<ids.size(); ++i)
+	{
+		featureTable->SetValueByName( rowForID(ids.at(i)), "visited?", vtkVariant(val) );
+	}
+	this->editsNotSaved = true;
+	return true;
+}
+
 std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object::Point P2)
 {
 	std::vector <int> ret_ids;
@@ -1654,6 +1690,11 @@ bool NuclearSegmentation::addObjectsToTable(std::set<int> IDs, int x1, int y1, i
 		for (int i=0; i< IntrinsicFeatures::N; ++i)
 		{
 			row->InsertNextValue( vtkVariant(features->ScalarFeatures[i]) );
+		}
+		int numExtraRows = featureTable->GetNumberOfColumns() - row->GetNumberOfValues();
+		for (int i=0; i<numExtraRows; ++i)
+		{
+			row->InsertNextValue( vtkVariant(-1) );
 		}
 		featureTable->InsertNextRow(row);
 
