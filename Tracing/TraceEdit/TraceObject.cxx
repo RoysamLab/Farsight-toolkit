@@ -112,11 +112,17 @@ double TraceObject::getTraceLUT(unsigned char type)
         return .75;//cyan
         break;
       case 3:
-      case 4:
-      case 5:
         return .90;//blue
         break;
+      case 4:
+        return .80;//
+        break;
+      case 5:
+        return .60;//
+        break;
       case 7:
+        return .90;//blue
+        break;
       case 0:
       default:
           return .25; //yellow

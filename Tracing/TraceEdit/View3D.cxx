@@ -618,12 +618,12 @@ void View3D::Rerender()
   this->Renderer->RemoveActor(this->BranchActor);
   this->UpdateLineActor();
   this->UpdateBranchActor();
-  this->Renderer->AddActor(this->BranchActor);  
+  this->Renderer->AddActor(this->BranchActor); 
+  this->TreeModel->SetTraces(this->tobj->GetTraceLines()); 
   this->QVTK->GetRenderWindow()->Render();
-  this->TreeModel->SetTraces(this->tobj->GetTraceLines());
  // this->FTKTable->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
   this->FTKTable->update();
-  //this->TreePlot->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
+  this->TreePlot->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
   this->TreePlot->update();
   this->statusBar()->showMessage(tr("Finished Rerendering Image"));
 }
@@ -864,7 +864,7 @@ void View3D::ClearSelection()
 	}
 	this->tobj->Gaps.clear();
 	this->candidateGaps.clear();
-	this->TreeModel->GetObjectSelection()->clear();
+	//this->TreeModel->GetObjectSelection()->clear();
 	this->myText.clear();
 	this->dtext.clear();
 	this->Rerender();
@@ -990,7 +990,7 @@ void View3D::SetRoots()
 {
 	std::vector<int> ids = this->TreeModel->GetSelecectedIDs();
 	int numToSolve= this->tobj->solveParents(ids);
-	this->ClearSelection();
+	//this->ClearSelection();
 	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 	this->statusBar()->showMessage(QString::number(numToSolve)+ " Remaining Branches");
 }
@@ -1002,7 +1002,7 @@ void View3D::AddNewBranches()
 	if (selected.size() > 1)
 	{
 		trunk = selected[0];
-		if (trunk->Orient(selected[1]))
+		if (trunk->Orient(selected[2]))
 		{
 			this->tobj->ReverseSegment(trunk);
 		}
