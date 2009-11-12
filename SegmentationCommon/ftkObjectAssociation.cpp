@@ -30,7 +30,7 @@ namespace ftk
 {	
 
 /* The constructor of the Association Rule Class */
-AssociationRule::AssociationRule(string name)
+AssociationRule::AssociationRule(std::string name)
 {
 	SetRuleName(name);	
 	segFileName = "";
@@ -42,7 +42,7 @@ AssociationRule::AssociationRule(string name)
 }
 
 /* From here, we start defining the member functions of the ObjectAssociation class */
-ObjectAssociation::ObjectAssociation(string AssocFName, int numOfRules)
+ObjectAssociation::ObjectAssociation(std::string AssocFName, int numOfRules)
 {
 	segImageName = AssocFName;
 	numOfAssocRules = numOfRules;		
@@ -53,7 +53,7 @@ ObjectAssociation::ObjectAssociation(string AssocFName, int numOfRules)
 }
 
 /* Add association rules to the list of rules */
-void ObjectAssociation::AddAssociation(string ruleName,string targFileName, int outsideDistance, int insideDistance,	bool useAllObject, int assocType)
+void ObjectAssociation::AddAssociation(std::string ruleName,std::string targFileName, int outsideDistance, int insideDistance,	bool useAllObject, int assocType)
 {
 	AssociationRule *assocRule = new AssociationRule(ruleName);
 	assocRule->SetSegmentationFileNmae(segImageName);
@@ -83,7 +83,7 @@ void ObjectAssociation::AddAssociation(string ruleName,string targFileName, int 
 }
 
 /* Write the defined Association Rules into an XML file */
-void ObjectAssociation::WriteRulesToXML(string xmlFname)
+void ObjectAssociation::WriteRulesToXML(std::string xmlFname)
 {
 	TiXmlDocument doc;   
  
@@ -135,13 +135,13 @@ void ObjectAssociation::WriteRulesToXML(string xmlFname)
 }
 
 /* Read the defined Association Rules from an XML file */
-int ObjectAssociation::ReadRulesFromXML(string xmlFname)
+int ObjectAssociation::ReadRulesFromXML(std::string xmlFname)
 {
 	//open the xml file
 	TiXmlDocument doc;
 	if ( !doc.LoadFile( xmlFname.c_str() ) )
 	{
-		cout<<"Unable to load XML File";
+		std::cout<<"Unable to load XML File";
 		return 0;
 	}
 
@@ -150,7 +150,7 @@ int ObjectAssociation::ReadRulesFromXML(string xmlFname)
 	const char* docname = rootElement->Value();
 	if ( strcmp( docname, "ObjectAssociationRules" ) != 0 )
 	{
-		cout<<"Incorrect XML root Element";		
+		std::cout<<"Incorrect XML root Element";		
 		return 0;
 	}
 		
@@ -159,7 +159,7 @@ int ObjectAssociation::ReadRulesFromXML(string xmlFname)
 	numOfAssocRules = atoi(rootElement->Attribute("NumberOfAssociativeMeasures"));
 	if(numOfAssocRules<=0)
 	{
-		cout<<"Incorrect number of association rules";		
+		std::cout<<"Incorrect number of association rules";		
 		return 0;
 	}
 	
@@ -172,14 +172,14 @@ int ObjectAssociation::ReadRulesFromXML(string xmlFname)
 
 		if ( strcmp( parent, "AssociationRule" ) != 0 )
 		{
-			cout<<"The XML file format is incorrect!";
+			std::cout<<"The XML file format is incorrect!";
 			return 0;
 		}
 		//get the attributes one by one
 		TiXmlAttribute *atrib = parentElement->FirstAttribute();
 		if(strcmp(atrib->Name(),"Name")!=0)
 		{
-			cout<<"First attribute in an Association rule must be its name";
+			std::cout<<"First attribute in an Association rule must be its name";
 			return 0;
 		}
 		int numAttribs = 6;
@@ -239,7 +239,7 @@ int ObjectAssociation::ReadRulesFromXML(string xmlFname)
 		//if you have a wrong number of attributes, then exit
 		if(numAttribs != 0)
 		{
-			cout<<"The XML file has incorrect format";
+			std::cout<<"The XML file has incorrect format";
 			return 0;
 		}
 
@@ -254,7 +254,7 @@ int ObjectAssociation::ReadRulesFromXML(string xmlFname)
 }
 
 /* Write the computer Associative features of all the objects to an XML file */
-void ObjectAssociation::WriteAssociativeFeaturesToXML(string xmlFname)
+void ObjectAssociation::WriteAssociativeFeaturesToXML(std::string xmlFname)
 {
 	TiXmlDocument doc;   
  
@@ -278,15 +278,15 @@ void ObjectAssociation::WriteAssociativeFeaturesToXML(string xmlFname)
 		int j = labelsList[jj];
 		TiXmlElement *element = new TiXmlElement("Object");
 		element->SetAttribute("Type",objectType.c_str());		
-		stringstream out1;
-		out1 << setprecision(2) << fixed << j;//+1;
+		std::stringstream out1;
+		out1 << std::setprecision(2) << std::fixed << j;//+1;
 		element->SetAttribute("ID",out1.str());		
 		//Add the Associative measurements one by one
 		for(int i=0; i<numOfAssocRules; i++)
 		{	
 			TiXmlElement *element2 = new TiXmlElement("Association");
-			stringstream out2;
-			out2 << setprecision(2) << fixed << assocMeasurementsList[i][jj-1];
+			std::stringstream out2;
+			out2 << std::setprecision(2) << std::fixed << assocMeasurementsList[i][jj-1];
 			//element2->SetAttribute(assocRulesList[i].GetRuleName(),out2.str());			
 			element2->SetAttribute("Name",assocRulesList[i].GetRuleName());			
 			element2->SetAttribute("Value",out2.str());
@@ -301,42 +301,42 @@ void ObjectAssociation::WriteAssociativeFeaturesToXML(string xmlFname)
 void ObjectAssociation::PrintSelf()
 {
 	//Print the header
-	cout<<"\n---------------------------------------------------------------\n";	
-	cout<<"Object Association Rules\n"; 
-	cout<<"SegmentationSource "<<segImageName.c_str()<<endl;
-	cout<<"NumberOfAssociativeMeasures "<<numOfAssocRules<<endl;
-	cout<<".................................................................\n";	
+	std::cout<<"\n---------------------------------------------------------------\n";	
+	std::cout<<"Object Association Rules\n"; 
+	std::cout<<"SegmentationSource "<<segImageName.c_str()<<std::endl;
+	std::cout<<"NumberOfAssociativeMeasures "<<numOfAssocRules<<std::endl;
+	std::cout<<".................................................................\n";	
 	//Print the Association Rules one by one
 	for(int i=0; i<numOfAssocRules; i++)
 	{		
-		cout<<"Name("<<i<<"): "<<assocRulesList[i].GetRuleName().c_str()<<endl;
-		cout<<"Target_Image("<<i<<"): "<<assocRulesList[i].GetTargetFileNmae().c_str()<<endl;
-		cout<<"Outside_Distance("<<i<<"): "<<assocRulesList[i].GetOutDistance()<<endl;
-		cout<<"Inside_Distance("<<i<<"): "<<assocRulesList[i].GetInDistance()<<endl;		
+		std::cout<<"Name("<<i<<"): "<<assocRulesList[i].GetRuleName().c_str()<<std::endl;
+		std::cout<<"Target_Image("<<i<<"): "<<assocRulesList[i].GetTargetFileNmae().c_str()<<std::endl;
+		std::cout<<"Outside_Distance("<<i<<"): "<<assocRulesList[i].GetOutDistance()<<std::endl;
+		std::cout<<"Inside_Distance("<<i<<"): "<<assocRulesList[i].GetInDistance()<<std::endl;		
 		if(assocRulesList[i].IsUseWholeObject())
-			cout<<"Use_Whole_Object("<<i<<"): True"<<endl;			
+			std::cout<<"Use_Whole_Object("<<i<<"): True"<<std::endl;			
 		else
-			cout<<"Use_Whole_Object("<<i<<"): False"<<endl;
+			std::cout<<"Use_Whole_Object("<<i<<"): False"<<std::endl;
 
 		switch(assocRulesList[i].GetAssocType())
 		{
 		case ASSOC_MIN:
-			cout<<"Association_Type("<<i<<"): MIN"<<endl;			
+			std::cout<<"Association_Type("<<i<<"): MIN"<<std::endl;			
 			break;
 		case ASSOC_MAX:
-			cout<<"Association_Type("<<i<<"): MAX"<<endl;
+			std::cout<<"Association_Type("<<i<<"): MAX"<<std::endl;
 			break;
 		case ASSOC_TOTAL:
-			cout<<"Association_Type("<<i<<"): TOTAL"<<endl;
+			std::cout<<"Association_Type("<<i<<"): TOTAL"<<std::endl;
 			break;
 		case ASSOC_AVERAGE:
-			cout<<"Association_Type("<<i<<"): AVERAGE"<<endl;
+			std::cout<<"Association_Type("<<i<<"): AVERAGE"<<std::endl;
 			break;
 		default:
-			cout<<"Association_Type("<<i<<"): AVERAGE"<<endl;
+			std::cout<<"Association_Type("<<i<<"): AVERAGE"<<std::endl;
 		}		
 	}
-	cout<<"---------------------------------------------------------------\n";
+	std::cout<<"---------------------------------------------------------------\n";
 }
 
 } //end namespace ftk

@@ -27,7 +27,7 @@ namespace ftk
 {
 
 //Object Constructor
-Object::Object(string type)
+Object::Object(std::string type)
 {
 	myType = type;
 	myId = -1;							

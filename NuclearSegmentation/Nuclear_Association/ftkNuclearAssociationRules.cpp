@@ -34,7 +34,7 @@ limitations under the License.
 
 namespace ftk 
 {	
-NuclearAssociationRules::NuclearAssociationRules(string AssocFName, int numOfRules):ObjectAssociation(AssocFName, numOfRules)
+NuclearAssociationRules::NuclearAssociationRules(std::string AssocFName, int numOfRules):ObjectAssociation(AssocFName, numOfRules)
 {
 	labImage= NULL;
 	labGeometryFilter= NULL;	
@@ -46,7 +46,7 @@ NuclearAssociationRules::NuclearAssociationRules(string AssocFName, int numOfRul
 /* This is the main function for computing associative features */
 void NuclearAssociationRules::Compute()
 {
-	cout<<"Starting Associative Features Computation\n";
+	std::cout<<"Starting Associative Features Computation\n";
 
 	//1. read the label image	
 	ReaderType::Pointer reader = ReaderType::New();
@@ -100,10 +100,10 @@ void NuclearAssociationRules::Compute()
 		{
 			//cout<<j+1;
 			int lbl = labelsList[j];			
-			cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<lbl<<"/"<<numOfLabels;
+			std::cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<lbl<<"/"<<numOfLabels;
 			assocMeasurementsList[i][j-1] = ComputeOneAssocMeasurement(reader2->GetOutput(), i, lbl);						
 		}		
-		cout<<"\tdone"<<endl;
+		std::cout<<"\tdone"<<std::endl;
 	}	
 	
 	//Flag invalid objects
@@ -253,7 +253,7 @@ float NuclearAssociationRules::ComputeOneAssocMeasurement(itk::SmartPointer<Targ
 	//now, mask out all the pixels (in the sub-seg image) that are not in the region of interest as defined by the association rule and get the intensities of the needed pixels from the target image. The intensities are saved into an std vector
 	IteratorType2 iterator3(dt_obj->GetOutput(), dt_obj->GetOutput()->GetRequestedRegion());
 	IteratorType iterator4(trgIm, trgIm->GetRequestedRegion());
-	vector<int> trgInt;
+	std::vector<int> trgInt;
 	int counter_in = 0;
 	int counter_at = 0;
 	int counter_ot = 0;
@@ -306,7 +306,7 @@ float NuclearAssociationRules::ComputeOneAssocMeasurement(itk::SmartPointer<Targ
 
 /* the next functions will compute the measurements for the different cases */
 //find maximum
-float NuclearAssociationRules::FindMax(vector<int> LST)
+float NuclearAssociationRules::FindMax(std::vector<int> LST)
 {
 	float mx = LST[0];
 	for(unsigned int i=1; i<LST.size(); i++)
@@ -318,7 +318,7 @@ float NuclearAssociationRules::FindMax(vector<int> LST)
 }
 
 //find minimum
-float NuclearAssociationRules::FindMin(vector<int> LST)
+float NuclearAssociationRules::FindMin(std::vector<int> LST)
 {
 	float mn = LST[0];
 	for(unsigned int i=1; i<LST.size(); i++)
@@ -330,7 +330,7 @@ float NuclearAssociationRules::FindMin(vector<int> LST)
 }
 
 //compute total
-float NuclearAssociationRules::ComputeTotal(vector<int> LST)
+float NuclearAssociationRules::ComputeTotal(std::vector<int> LST)
 {
 	float tl = LST[0];
 	for(unsigned int i=1; i<LST.size(); i++)
@@ -341,7 +341,7 @@ float NuclearAssociationRules::ComputeTotal(vector<int> LST)
 }
 
 //compute average
-float NuclearAssociationRules::ComputeAverage(vector<int> LST)
+float NuclearAssociationRules::ComputeAverage(std::vector<int> LST)
 {
 	float av = LST[0];
 	for(unsigned int i=1; i<LST.size(); i++)

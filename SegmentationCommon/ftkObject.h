@@ -29,8 +29,6 @@ limitations under the License.
 
 #include "ftkIntrinsicFeatures.h"
 
-using namespace std;
-
 namespace ftk
 {
 /** \class Object
@@ -46,9 +44,9 @@ public:
 	enum ValidityTypes { VALID, EXCLUDED, DELETED, MERGED, SPLIT };
 	typedef struct { int x; int y; int z; int t; } Point;
 	typedef struct { Point min; Point max; } Box;
-	typedef struct {string date; string description; } EditRecord;
+	typedef struct { std::string date; std::string description; } EditRecord;
 
-	Object(string type);			//USE type = "null" for an empty object.
+	Object(std::string type);			//USE type = "null" for an empty object.
 
 	void SetId(int id) { myId = id; };
 	void SetValidity( char val) { valid = val; };
@@ -56,29 +54,29 @@ public:
 	void SetClass(char c) { myClass = c; };
 	void SetCentroid( Point p ) { myCentroid = p; };
 	void SetBoundingBox( Box b ) { myBoundingBox = b; };
-	void SetFeatures( vector<float> f ){ myFeatures = f; };
+	void SetFeatures( std::vector<float> f ){ myFeatures = f; };
 	void AddEditRecord( EditRecord record ) { myHistory.push_back(record); };
 
-	string GetType() { return myType; };
+	std::string GetType() { return myType; };
     int GetId () { return myId; };
 	char GetValidity() { return valid; };
 	char GetDuplicated() { return duplicated; };
 	char GetClass() { return myClass; };
 	Point GetCentroid() { return myCentroid; };
 	Box GetBoundingBox() { return myBoundingBox; };
-	vector<float> GetFeatures() { return myFeatures; };
-	vector<EditRecord> getHistory() { return myHistory; };
+	std::vector<float> GetFeatures() { return myFeatures; };
+	std::vector<EditRecord> getHistory() { return myHistory; };
 
 private:
-	string myType;					//The type of object this is 
+	std::string myType;				//The type of object this is 
 	int myId;						//Must have an id
 	char valid;						//May be marked as invalid 
 	char duplicated;				//Useful for nuclei
 	char myClass;					//May have class identifier
 	Point myCentroid;				//Should have one centroid (splines have many)
 	Box myBoundingBox;				//should have one bounding box
-	vector<float> myFeatures;		//May have a variable list of features
-	vector<EditRecord> myHistory;   //May have a list of edits/other modifications
+	std::vector<float> myFeatures;	//May have a variable list of features
+	std::vector<EditRecord> myHistory;   //May have a list of edits/other modifications
 	
 }; // end Object
 

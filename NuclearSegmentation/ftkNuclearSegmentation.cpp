@@ -1436,7 +1436,7 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 	this->removeFeatures(objID);				//Remove features of the old object
 
 	//Add an edit record:
-	EditRecord record;
+	ftk::Object::EditRecord record;
 	record.date = TimeStamp();
 	record.description = std::string("S") + "\t" + NumToString(objID) + "\t" + NumToString(newID1) + "," + NumToString(newID2);
 	myEditRecords.push_back(record);
@@ -1503,7 +1503,7 @@ std::vector< int > NuclearSegmentation::SplitAlongZ(int objID, int cutSlice)
 	this->removeFeatures(objID);				//Remove features of the old object
 
 	//ALSO NEED AN EDIT LOG:
-	EditRecord record;
+	ftk::Object::EditRecord record;
 	record.date = TimeStamp();
 	record.description = std::string("S") + "\t" + NumToString(objID) + "\t" + NumToString(newID1) + "," + NumToString(newID2);
 	myEditRecords.push_back(record);
@@ -1531,7 +1531,7 @@ int NuclearSegmentation::Merge(vector<int> ids)
 	}
 
 	//NEED TO ADD AN EDIT RECORD:
-	EditRecord record;
+	ftk::Object::EditRecord record;
 	record.date = TimeStamp();
 	record.description = std::string("M") + "\t" + NumToString(ids.at(0));
 	for(int i=1; i<ids.size(); ++i)
@@ -1607,7 +1607,7 @@ int NuclearSegmentation::AddObject(int x1, int y1, int z1, int x2, int y2, int z
 	this->addObjectToTable(newID, x1, y1, z1, x2, y2, z2);
 	
 	//NEED TO ADD AN EDIT RECORD:
-	EditRecord record;
+	ftk::Object::EditRecord record;
 	record.date = TimeStamp();
 	record.description = std::string("A") + "\t" + NumToString(newID);
 	myEditRecords.push_back(record);
@@ -1624,7 +1624,7 @@ bool NuclearSegmentation::Delete(vector<int> ids)
 		ReassignLabel(ids.at(i),0);				//Turn each label in list to zero
 		removeFeatures(ids.at(i));				//Remove Features From Table:
 		//Create Edit Record:
-		EditRecord record;
+		ftk::Object::EditRecord record;
 		record.date = TimeStamp();
 		record.description = std::string("D") + "\t" + NumToString(ids.at(i));
 		myEditRecords.push_back(record);
@@ -2222,7 +2222,7 @@ bool NuclearSegmentation::RestoreFromXML(std::string filename)
 	if(!LoadLabel())
 		return false;
 
-	editsNotSaved = false;
+	editsNotSaved = true;
 	return true;
 }
 
@@ -2285,6 +2285,7 @@ Object NuclearSegmentation::parseObject(TiXmlElement *objectElement)
 					r.date = record->Attribute("date");
 					r.description = record->GetText();
 					object.AddEditRecord( r );
+					myEditRecords.push_back(r);
 				}
 				record = record->NextSiblingElement();
 			}

@@ -48,26 +48,26 @@ class AssociationRule
 {
 public:		
 	/* Constructor */
-	AssociationRule(string ruleName);	
+	AssociationRule(std::string ruleName);	
 	/* Set and Get functions */
-	void SetRuleName(string rName) {ruleName = rName;};
-	void SetSegmentationFileNmae(string name){ segFileName = name; };
-	void SetTargetFileNmae(string name){ targFileName = name; };
+	void SetRuleName(std::string rName) {ruleName = rName;};
+	void SetSegmentationFileNmae(std::string name){ segFileName = name; };
+	void SetTargetFileNmae(std::string name){ targFileName = name; };
 	void SetOutDistance(int dist){outsideDistance = dist;};
 	void SetInDistance(int dist){insideDistance = dist;};
 	void SetUseWholeObject(bool useAll){useWholeObject = useAll;};
 	void SetAssocType(AssociationType tp ){assocType = tp;};
-	string GetRuleName() { return ruleName;};
-	string GetSegmentationFileNmae(){ return segFileName;};
-	string GetTargetFileNmae(){ return targFileName; };
+	std::string GetRuleName() { return ruleName;};
+	std::string GetSegmentationFileNmae(){ return segFileName;};
+	std::string GetTargetFileNmae(){ return targFileName; };
 	int GetOutDistance(){ return outsideDistance; };
 	int GetInDistance(){ return insideDistance; };
 	bool IsUseWholeObject() {return useWholeObject; };
 	AssociationType GetAssocType() {return assocType; };
 private:
-	string ruleName;
-	string segFileName;
-	string targFileName;
+	std::string ruleName;
+	std::string segFileName;
+	std::string targFileName;
 	int outsideDistance;
 	int insideDistance;
 	bool useWholeObject;
@@ -84,19 +84,19 @@ class ObjectAssociation
 {
 public:
 	/* Contsructor */
-	ObjectAssociation(string segImageName, int numOfAssocRules);
+	ObjectAssociation(std::string segImageName, int numOfAssocRules);
 	/* Used to add a new association rule to the rules list */
-	void AddAssociation(string ruleName,string targFileName, int outsideDistance, int insideDistance,	bool useAllObject, int assocType);
+	void AddAssociation(std::string ruleName,std::string targFileName, int outsideDistance, int insideDistance,	bool useAllObject, int assocType);
 	/* I/O	*/
-	void WriteRulesToXML(string xmlFname);
-	int ReadRulesFromXML(string xmlFname);
-	void WriteAssociativeFeaturesToXML(string xmlFname);
+	void WriteRulesToXML(std::string xmlFname);
+	int ReadRulesFromXML(std::string xmlFname);
+	void WriteAssociativeFeaturesToXML(std::string xmlFname);
 
 	/* used for validation. In other words, it can be used to make sure that the XML reader works fine */
 	void PrintSelf(); 
 
 	/* Get the values of private member variables */
-	string GetSegImgName() {return segImageName;};
+	std::string GetSegImgName() {return segImageName;};
 	int GetNumofAssocRules() {return numOfAssocRules;};
 
 	/* Get the features list*/
@@ -104,13 +104,13 @@ public:
 	
 protected:
 	/* This is the list of association rules */
-	vector<AssociationRule> assocRulesList;
+	std::vector<AssociationRule> assocRulesList;
 	/* This is the list of associative measurements */
 	float** assocMeasurementsList;
 	/* This is the total number of objects/labels */
 	int numOfLabels;
 	/* This is the object type (ex. nucleus, spine, etc..) */
-	string objectType;
+	std::string objectType;
 
 	//added by Yousef on 10-18-2009
 	//unsigned short* invalidObjects;
@@ -119,7 +119,7 @@ protected:
 	std::vector< unsigned short > labelsList;
 
 private:
-	string segImageName;
+	std::string segImageName;
 	int numOfAssocRules;	
 			
 }; // end ObjectAssociation

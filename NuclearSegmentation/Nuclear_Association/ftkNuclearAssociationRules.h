@@ -45,7 +45,7 @@ class NuclearAssociationRules : public ObjectAssociation
 {
 public:
 	/* Contsructor */
-	NuclearAssociationRules(string segImageName, int numOfAssocRules);	
+	NuclearAssociationRules(std::string segImageName, int numOfAssocRules);	
 
 	/* This method computes all the associative measurements for all the objects */
 	void Compute();
@@ -75,10 +75,10 @@ private:
 	float ComputeOneAssocMeasurement(itk::SmartPointer<TargImageType> trgIm, int ruleID, int objID);
 
 	/* the next functions will compute the measurements for the different cases */
-	float FindMin(vector<int> LST);
-	float FindMax(vector<int> LST);
-	float ComputeTotal(vector<int> LST);
-	float ComputeAverage(vector<int> LST);	
+	float FindMin(std::vector<int> LST);
+	float FindMax(std::vector<int> LST);
+	float ComputeTotal(std::vector<int> LST);
+	float ComputeAverage(std::vector<int> LST);	
 	
 }; // end NuclearAssociation
 }  // end namespace ftk

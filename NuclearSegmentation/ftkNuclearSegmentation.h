@@ -137,10 +137,9 @@ private:
 	int lastRunStep;					//0,1,2,3,4 for the stages in a nuclear segmentation.
 	bool editsNotSaved;					//Will be true if edits have been made and not saved to file.
 
-	typedef struct { string name; int value; } Parameter;			
-	typedef struct {string date; string description; } EditRecord;		
+	typedef struct { string name; int value; } Parameter;				
 	std::vector<Parameter> myParameters;
-	std::vector<EditRecord> myEditRecords;
+	std::vector<ftk::Object::EditRecord> myEditRecords;
 	std::map<int, ftk::Object::Box>		bBoxMap;			//Bounding boxes
 	std::map<int, ftk::Object::Point>	centerMap;			//Centroids
 	//std::map<int, int>	idToRowMap;						//Mapping from ID to row in table!!!!
