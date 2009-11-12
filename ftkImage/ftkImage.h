@@ -69,7 +69,8 @@ public:
 	//Each of these LoadFile commands will clear any previous image data
 	bool LoadFile( std::string fName ); //Load 1 file (multi-page assumed to be z-direction)
 	bool LoadFileAsTimeSeries( std::string fName ); //Load 1 file (multi-page assumed to be time series)
-	bool LoadFileSeries( std::string arg, int start, int end, int step ); //Always assume each file contains a new T
+	bool LoadFileSeries( std::string arg, int start, int end, int step ); //Always assume each file contains a new Z
+	bool LoadGrayscaleFilesAsMultipleChannels(std::vector<std::string> filenames, std::vector<std::string> channelnames, std::vector<unsigned char> colors);
 
 	bool SaveChannelAs( int channel, std::string baseName, std::string ext );
 

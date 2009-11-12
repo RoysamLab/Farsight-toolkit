@@ -18,6 +18,7 @@ limitations under the License.
 //itk includes:
 #include <itkImageRegionConstIterator.h>
 #include <itkNumericSeriesFileNames.h>
+#include <itkRescaleIntensityImageFilter.h>
 
 //vtk includes:
 #include <vtkCharArray.h>
@@ -85,6 +86,76 @@ void Image::SetSpacing(float x, float y, float z)
 	m_Info.spacing.at(0) = x;
 	m_Info.spacing.at(1) = y;
 	m_Info.spacing.at(2) = z;
+}
+
+//Load up each of these 3D grayscale images, convert to 8Bit, and make one image with multiple channels:
+bool Image::LoadGrayscaleFilesAsMultipleChannels(std::vector<std::string> filenames, std::vector<std::string> channelnames, std::vector<unsigned char> colors)
+{
+	typedef unsigned short UShortPixelType;
+	typedef unsigned char UCharPixelType;
+	typedef itk::Image< UShortPixelType, 3 > UShortImageType;
+	typedef itk::Image< UCharPixelType, 3 > UCharImageType;
+	typedef itk::ImageFileReader< UShortImageType > ImageFileReaderType;
+	typedef itk::RescaleIntensityImageFilter< UShortImageType, UCharImageType > RescaleIntensityFilterType;
+
+	int count = (int)filenames.size();
+	if( (int)channelnames.size() != count || (int)colors.size() != 3*count )
+		return false;
+
+	DeleteData();
+	m_Info.channelColors.clear();
+	m_Info.channelNames.clear();
+
+	for( int i=0; i < count; ++i )
+	{
+		std::string fname = filenames.at(i);
+		std::string chname = channelnames.at(i);
+
+		//Parse the color info for the channel
+		std::vector< unsigned char > color(3);
+		color[0] = (unsigned char)( colors.at(i*3 + 0) );
+		color[1] = (unsigned char)( colors.at(i*3 + 1) );
+		color[2] = (unsigned char)( colors.at(i*3 + 2) );
+
+		//Using ITK to read images and then passing the buffer pointer and meta info to AppendChannelFromData3D to add the channels and their names
+		ImageFileReaderType::Pointer imagefilereader = ImageFileReaderType::New();
+		imagefilereader->SetFileName( fname );
+		try
+		{
+	       imagefilereader->Update();
+		}
+		catch( itk::ExceptionObject & excp )
+		{
+			std::cerr << excp << std::endl;
+			return false;
+		}
+
+		RescaleIntensityFilterType::Pointer rescalefilter = RescaleIntensityFilterType::New();
+		rescalefilter->SetOutputMaximum( 255 );
+		rescalefilter->SetOutputMinimum( 0 );
+		rescalefilter->SetInput( imagefilereader->GetOutput() );
+		try
+		{
+	       rescalefilter->Update();
+		}
+		catch( itk::ExceptionObject & excp )
+		{
+			std::cerr << excp << std::endl;
+			return false;
+		}
+
+		UCharImageType::Pointer image_channel = UCharImageType::New();
+		image_channel = rescalefilter->GetOutput();
+		int size1 = image_channel->GetLargestPossibleRegion().GetSize()[0];
+		int size2 = image_channel->GetLargestPossibleRegion().GetSize()[1];
+		int size3 = image_channel->GetLargestPossibleRegion().GetSize()[2];
+
+		UCharPixelType *temp_ptr = image_channel->GetBufferPointer();
+
+		//void *dptr, DataType dataType, int bpPix, int cs, int rs, int zs, std::string name, std::vector<unsigned char> color, bool copy
+		this->AppendChannelFromData3D( temp_ptr, itk::ImageIOBase::UCHAR, sizeof( UCharPixelType ), size1, size2, size3, chname, color, true );
+	}
+	return true;
 }
 
 bool Image::LoadFileSeries( std::string arg, int start, int end, int step)
