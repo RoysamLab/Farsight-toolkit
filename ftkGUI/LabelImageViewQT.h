@@ -13,6 +13,18 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
 
+//************************************************************************
+// LabelImageViewQT
+//
+// This is a QWidget used for displaying an image with corresponding label images.
+// Both images may be up to 5 dimensions (up to 6 channels).  When drawing,
+// the label images will be used to create boundaries around regions with the
+// same label.  When the user clicks in the image, the label value in that
+// region will be added to the selection.
+//
+// The view also has a couple of conveniences like adjusting the intensity
+// of the images, show/hide boundaries, retrieve box or retrieve points.
+//************************************************************************
 #ifndef LABELIMAGEVIEWQT
 #define LABELIMAGEVIEWQT
 
@@ -37,7 +49,6 @@ limitations under the License.
 #include <QtCore/QMap>
 
 #include <ftkImage/ftkImage.h>
-//#include "SegmentationCommon/itkLabelGeometryImageFilter.h"
 #include "ObjectSelection.h"
 
 #include <iostream>
@@ -46,7 +57,6 @@ class MyRubberBand;
 class IntensityDialog;
 class LabelGeometry;
 
-//class LabelImageViewQT : public QAbstractScrollArea
 class LabelImageViewQT : public QWidget
 {
 	Q_OBJECT

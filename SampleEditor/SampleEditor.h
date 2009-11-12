@@ -13,6 +13,13 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
 
+//**************************************************************************
+// SampleEditor
+//
+// A simple tool to show how to use the ftkGUI classes for table viewing
+// and manipulation.
+// 
+//**************************************************************************
 #ifndef SAMPLE_EDITOR_H
 #define SAMPLE_EDITOR_H
 
@@ -22,14 +29,20 @@ limitations under the License.
 #include <QtGui/QMenu>
 #include <QtGui/QMessageBox>
 #include <QtGui/QFileDialog>
-#include <QtGui/QStandardItemModel>
 #include <QtGui/QTableView>
 #include <QtCore/QFileInfo>
 
+//VTK Includes:
+#include <vtkTable.h>
+#include <vtkSmartPointer.h>
+#include <vtkVariantArray.h>
+#include <vtkDoubleArray.h>
 
 //Farsight Includes:
+#include "ftkGUI/TableWindow.h"
 #include "ftkGUI/PlotWindow.h"
-#include "ftkGUI/HistoWindow.h"
+//#include "ftkGUI/HistoWindow.h"
+#include "ftkGUI/ObjectSelection.h"
 
 #include <vector>
 #include <string>
@@ -41,7 +54,6 @@ class SampleEditor : public QMainWindow
 public:
 	SampleEditor(QWidget * parent = 0, Qt::WindowFlags flags = 0);
 
-
 private slots:
 	void loadFile(void);
 
@@ -50,17 +62,22 @@ signals:
 private:
 	void createMenus();
 	void createStatusBar();
+	void ReadFiles(std::string hname, std::string dname);
 
 	QMenu *fileMenu;
 	QAction *loadAction;
+	QMenu *editMenu;
+	QAction *removeRows;
+	QAction *addBlankRow;
+	QAction *changeRowData;
 
-	QStandardItemModel *model;
-	QItemSelectionModel *selModel;
-
-	QTableView *table;
+	TableWindow *table;
 	PlotWindow *plot;
-	HistoWindow *histo;
+	//HistoWindow *histo;
 
+	vtkSmartPointer<vtkTable> data;
+	ObjectSelection *selection;
+	QString lastPath;
  };
 
 

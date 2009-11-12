@@ -22,19 +22,19 @@ limitations under the License.
 SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 : QMainWindow(parent,flags)
 {
-	model = NULL;
-	selModel = NULL;
-	plot = NULL;
-	histo = NULL;
+	table = new TableWindow(this);
+	plot = new PlotWindow(this);
+	//histo = NULL;
+
+	data = NULL;
+	selection = new ObjectSelection();
+
+	lastPath = ".";
 
 	createMenus();
 	createStatusBar();
 
-	table = new QTableView();
-	//table->setEditTriggers(QAbstractItemView::NoEditTriggers);
-	//table->setSelectionBehavior( QAbstractItemView::SelectRows );
 	setCentralWidget(table);
-
 	setWindowTitle(tr("Sample Editor"));
 
 	this->resize(500,500);
@@ -88,78 +88,84 @@ void SampleEditor::createMenus()
 	fileMenu->addAction(loadAction);
 }
 
+//********************************************************************************
+// LoadFile()
+//
+// Ask for the header file and the data file that define a table and load the data
+// into vtkTable, then show results.
+//********************************************************************************
 void SampleEditor::loadFile()
 {
-	//QString filename  = QFileDialog::getOpenFileName(this,"Choose a File", ".", 
-	//		tr("TXT Files (*.txt)\n"
-	//		   "SWC Files (*.swc)\n"
-	//		   "All Files (*.*)"));
+	QString headername = QFileDialog::getOpenFileName(this,"Choose a Header File", lastPath, tr("TXT Files (*.txt)") );
+	if(headername == "") return;
+	lastPath = QFileInfo(headername).absolutePath();
 
-	//if(filename == "")
-	//	return;
-
-	//READ FILE HERE!!!!!
-	std::vector<QString> headers;
-	for(int i=0; i<10; ++i)
-	{
-		headers.push_back("Header " + QString::number(i));
-	}
+	QString dataname = QFileDialog::getOpenFileName(this,"Choose a Data File", lastPath, tr("TXT Files (*.txt)") );
+	if(dataname == "") return;
+	lastPath = QFileInfo(dataname).absolutePath();
 	
-	int numRows = 100;
-	std::vector< std::vector< double > > data;
-	for(int i=0; i<numRows; ++i)
-	{
-		std::vector<double> row;
-		row.assign(10,i);
-		data.push_back(row);
-	}
+	ReadFiles(headername.toStdString(), dataname.toStdString());
 
-	//Now put data into Model:
-	if(selModel)
-		delete selModel;
+	table->setModels(data,selection);
+	table->show();
 
-	if(model)
-		delete model;
-
-	model = new QStandardItemModel;
-	selModel = new QItemSelectionModel(model);
-
-	model->clear();
-	model->setColumnCount(headers.size());
-
-	for(int i=0; i<(int)headers.size(); ++i)
-	{
-		model->setHeaderData(i, Qt::Horizontal, headers.at(i));
-	}
-
-	for (int row=0; row<(int)numRows; ++row)
-	{
-		model->insertRow(row);
-		for(int col=0; col<(int)headers.size(); ++col)
-		{
-			model->setData(model->index(row, col), data.at(row).at(col));
-		}
-	}
-
-	table->setModel(model);
-	table->setSelectionModel(selModel); 
-	table->update();
-
-	if(plot)
-	{
-		plot->close();
-		delete plot;
-	}
-	//plot = new PlotWindow(selModel);
-	plot = new PlotWindow(this);
+	plot->setModels(data,selection);
 	plot->show();
 
-	if(histo)
-	{
-		histo->close();
-		delete histo;
-	}
-	histo = new HistoWindow(selModel);
-	histo->show();
+}
 
+
+void SampleEditor::ReadFiles(std::string hname, std::string dname)
+{
+
+	const int MAXLINESIZE = 1024;	//Numbers could be in scientific notation in this file
+	char line[MAXLINESIZE];
+
+	data = vtkSmartPointer<vtkTable>::New();		//Start with a new table
+
+	//LOAD THE HEADER INFO:
+	ifstream headerFile; 
+	headerFile.open( hname.c_str() );
+	if ( !headerFile.is_open() )
+		return ;
+
+	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+	headerFile.getline(line, MAXLINESIZE);
+	while ( !headerFile.eof() ) //Get all values
+	{
+		std::string h;
+		char * pch = strtok (line," \t");
+		while (pch != NULL)
+		{
+			h = pch;
+			pch = strtok (NULL, " \t");
+		}
+		column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( h.c_str() );
+		data->AddColumn(column);
+
+		headerFile.getline(line, MAXLINESIZE);
+	}
+	headerFile.close();
+
+	//LOAD ALL OF THE FEATURES INFO:
+	ifstream featureFile; 
+	featureFile.open( dname.c_str() );
+	if ( !featureFile.is_open() )
+		return;
+
+	featureFile.getline(line, MAXLINESIZE);
+	while ( !featureFile.eof() ) //Get all values
+	{
+		vtkSmartPointer<vtkVariantArray> row = vtkSmartPointer<vtkVariantArray>::New();
+		char * pch = strtok (line," \t");
+		while (pch != NULL)
+		{
+			row->InsertNextValue( vtkVariant( atof(pch) ) );
+			pch = strtok (NULL, " \t");
+		}
+		data->InsertNextRow(row);
+		featureFile.getline(line, MAXLINESIZE);
+	}
+	featureFile.close();
 }
