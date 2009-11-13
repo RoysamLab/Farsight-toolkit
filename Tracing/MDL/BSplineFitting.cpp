@@ -192,40 +192,38 @@ int main(int argc, char **argv)
   int sizeX,sizeY,sizeZ;         // Sizes in x,y,z dimensions
   int i,j,k;
   
-  if (argc < 8)
+  if (argc < 7)
     {
     if(argc > 1 && strcmp(argv[1], "debug") == 0)
       {
       //---- for debug test----//
       argv[0]="BSplineFitting.exe";
-      argv[1]="D:\\MDL0804\\B-Spline\\Debug\\";
-      argv[2]="Trach11A.512x512x18.raw";
-      argv[3]="Backbone.vtk";
+      argv[1]="Trach11A.512x512x18.raw";
+      argv[2]="Backbone.vtk";
+      argv[3]="512";
       argv[4]="512";
-      argv[5]="512";
-      argv[6]="18";
-      argv[7]="smoothBB.vtk";
-      argv[8]="Exspine.vtk";
+      argv[5]="18";
+      argv[6]="smoothBB.vtk";
+      argv[7]="Exspine.vtk";
       //argv[9]="flag.txt";
       }
     else
       {
-      cerr << "Usage: " << argv[0] << " <dir> <3Ddata raw file> <Skeleton file>"
+      cerr << "Usage: " << argv[0] << " <3Ddata raw file> <Skeleton file>"
            << " <xs> <ys> <zs> <out backbonevtk graph> <out spinevtk graph>"
            << " [measureTimeFlag]" << endl;
       exit(1);
       }
     }
 
-  filedir = argv[1];
-  infilename = filedir + argv[2];
+  infilename = argv[1];
   if(( infile=fopen(infilename.c_str(), "rb")) == NULL)  // open volume file
     {
     cerr << "couldn't open volume file " << infilename << " for input" << endl;
     exit(-1);
     }
 
-  tempfile = filedir + argv[3];
+  tempfile = argv[2];
   cout << "second file name" << tempfile << endl;
 
   if((inskeleton=fopen(tempfile.c_str(), "rb")) == NULL)  // open skeleton file
@@ -234,9 +232,9 @@ int main(int argc, char **argv)
     exit(-1);
     }
   
-  sizeX = atoi(argv[4]); // read the size parameters of input image 
-  sizeY = atoi(argv[5]);
-  sizeZ = atoi(argv[6]);
+  sizeX = atoi(argv[3]); // read the size parameters of input image 
+  sizeY = atoi(argv[4]);
+  sizeZ = atoi(argv[5]);
   sz= sizeX*sizeY;
   
   //----------------------------read volume data-----------------------------//
@@ -663,15 +661,15 @@ int main(int argc, char **argv)
   cout << "the loop is over" << endl; 
  
   //-----------------------construct two files to write-----------------------//
-  if ((outbackbone = fopen(argv[7], "w")) == NULL)
+  if ((outbackbone = fopen(argv[6], "w")) == NULL)
     {
-    printf("Cannot open  backbone file %s for writing\n",argv[7]);
+    printf("Cannot open  backbone file %s for writing\n",argv[6]);
     exit(1);
     }
 
- if ((outExspine = fopen(argv[8], "w")) == NULL)
+ if ((outExspine = fopen(argv[7], "w")) == NULL)
     {
-    printf("Cannot open  backbone file %s for writing\n",argv[8]);
+    printf("Cannot open  backbone file %s for writing\n",argv[7]);
     exit(1);
     }
   //--------------------------------------------------------------------------//

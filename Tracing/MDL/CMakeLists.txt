@@ -1,12 +1,8 @@
 PROJECT(MDL)
 FIND_PACKAGE( Boost REQUIRED )
-INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
-SUBDIRS(ConnectTraces)
+INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} ${Farsight_BINARY_DIR}/Tracing/MDL )
 ADD_EXECUTABLE(AnisoDiffuse AnisoDiffuse.cpp)
 ADD_EXECUTABLE(ConnCompntwFldfill ConnCompntwFldfill.cpp)
-ADD_EXECUTABLE(ConnectComponents ConnectComponents.cpp)
-ADD_EXECUTABLE(floodfill floodfill.cpp)
-ADD_EXECUTABLE(Gen_VectorField Gen_VectorField.cpp)
 ADD_EXECUTABLE(GradientVecField GradientVecField.cpp)
 ADD_EXECUTABLE(MinSpanTree distTransform.cpp MinSpanTree.cpp morphGraphPrune.cpp) 
 ADD_EXECUTABLE(Integratedskel Integratedskel.cpp)
@@ -14,13 +10,20 @@ ADD_EXECUTABLE(volumeProcess volumeProcess.cpp)
 ADD_EXECUTABLE(RefiningSkeleton RefiningSkeleton.cpp)
 TARGET_LINK_LIBRARIES(volumeProcess ITKIO ITKStatistics)
 
-ADD_EXECUTABLE(AddSpinesToSmoothedBackbone AddSpinesToSmoothedBackbone.cxx)
-TARGET_LINK_LIBRARIES(AddSpinesToSmoothedBackbone vtkCommon vtkIO vtkGraphics)
+#ADD_EXECUTABLE(AddSpinesToSmoothedBackbone AddSpinesToSmoothedBackbone.cxx)
+#TARGET_LINK_LIBRARIES(AddSpinesToSmoothedBackbone vtkCommon vtkIO vtkGraphics)
 
-#INCLUDE_DIRECTORIES(${BSplineFitting_SOURCE_DIR})
 ADD_EXECUTABLE(BSplineFitting BSplineFitting.cpp)
 TARGET_LINK_LIBRARIES(BSplineFitting
-ITKBasicFilters ITKCommon ITKIO ITKStatistics)
+  ITKBasicFilters ITKCommon ITKIO ITKStatistics)
+
+QT4_WRAP_UI( MY_UI_HDRS MDLGUI.ui )
+QT4_WRAP_CPP( GUI_MOC_SRCS MDLGUI.h )
+SET(MDLGUI_SRCS
+  MDLGUI.h MDLGUI.cxx 
+  MDLGUI-main.cxx ${GUI_MOC_SRCS} ${MY_UI_HDRS})
+ADD_EXECUTABLE(MDLGUI ${MDLGUI_SRCS} )
+TARGET_LINK_LIBRARIES(MDLGUI ${QT_LIBRARIES})
 
 ADD_CUSTOM_COMMAND(
   TARGET MinSpanTree
@@ -43,14 +46,11 @@ ADD_CUSTOM_COMMAND(TARGET MinSpanTree POST_BUILD
 
 INSTALL( TARGETS AnisoDiffuse DESTINATION bin/MDL )
 INSTALL( TARGETS ConnCompntwFldfill DESTINATION bin/MDL )
-INSTALL( TARGETS ConnectComponents DESTINATION bin/MDL )
-INSTALL( TARGETS floodfill DESTINATION bin/MDL )
-INSTALL( TARGETS Gen_VectorField DESTINATION bin/MDL )
 INSTALL( TARGETS GradientVecField DESTINATION bin/MDL )
 INSTALL( TARGETS MinSpanTree DESTINATION bin/MDL )
 INSTALL( TARGETS Integratedskel DESTINATION bin/MDL )
 INSTALL( TARGETS volumeProcess DESTINATION bin/MDL )
 INSTALL( TARGETS BSplineFitting DESTINATION bin/MDL )
 INSTALL( TARGETS RefiningSkeleton DESTINATION bin/MDL )
-INSTALL( TARGETS AddSpinesToSmoothedBackbone DESTINATION bin/MDL )
+#INSTALL( TARGETS AddSpinesToSmoothedBackbone DESTINATION bin/MDL )
 
