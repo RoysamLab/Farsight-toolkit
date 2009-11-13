@@ -54,8 +54,14 @@ class SampleEditor : public QMainWindow
 public:
 	SampleEditor(QWidget * parent = 0, Qt::WindowFlags flags = 0);
 
+protected:
+	void closeEvent(QCloseEvent *event);
+
 private slots:
 	void loadFile(void);
+	void removeRows(void);
+	void addBlankRow(void);
+	void changeRowData(void);
 
 signals:
     
@@ -67,9 +73,9 @@ private:
 	QMenu *fileMenu;
 	QAction *loadAction;
 	QMenu *editMenu;
-	QAction *removeRows;
-	QAction *addBlankRow;
-	QAction *changeRowData;
+	QAction *removeRowsAction;
+	QAction *addBlankRowAction;
+	QAction *changeRowDataAction;
 
 	TableWindow *table;
 	PlotWindow *plot;

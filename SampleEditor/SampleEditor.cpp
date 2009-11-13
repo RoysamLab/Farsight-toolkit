@@ -22,11 +22,13 @@ limitations under the License.
 SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 : QMainWindow(parent,flags)
 {
-	table = new TableWindow(this);
+	table = new TableWindow();
 	plot = new PlotWindow(this);
 	//histo = NULL;
 
 	data = NULL;
+	data = vtkSmartPointer<vtkTable>::New();		//Start with a new table
+
 	selection = new ObjectSelection();
 
 	lastPath = ".";
@@ -38,6 +40,24 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 	setWindowTitle(tr("Sample Editor"));
 
 	this->resize(500,500);
+}
+
+//******************************************************************************
+//Reimplement closeEvent to also close all other windows in the application
+//******************************************************************************
+void SampleEditor::closeEvent(QCloseEvent *event)
+{
+	//Then Close all other windows
+	foreach (QWidget *widget, qApp->topLevelWidgets()) 
+	{
+		if (this != widget)
+		{
+			if(widget->isVisible())
+				widget->close();
+		}
+    }
+	//Then close myself
+	event->accept();
 }
 
 //******************************************************************************
@@ -81,11 +101,26 @@ void SampleEditor::createMenus()
 {
 	//FIRST HANDLE FILE MENU
 	fileMenu = menuBar()->addMenu(tr("&File"));
-
 	loadAction = new QAction(tr("Load File..."), this);
 	loadAction->setStatusTip(tr("Load to table from text file"));
 	connect(loadAction, SIGNAL(triggered()), this, SLOT(loadFile()));
 	fileMenu->addAction(loadAction);
+
+	editMenu = menuBar()->addMenu(tr("&Edit"));
+	removeRowsAction = new QAction(tr("Remove Selected Rows"),this);
+	removeRowsAction->setStatusTip(tr("Remove selected rows from the table"));
+	connect(removeRowsAction, SIGNAL(triggered()), this, SLOT(removeRows()));
+	editMenu->addAction(removeRowsAction);
+
+	addBlankRowAction = new QAction(tr("Add Blank Row"), this);
+	addBlankRowAction->setStatusTip(tr("Add blank row to bottom of table"));
+	connect(addBlankRowAction, SIGNAL(triggered()), this, SLOT(addBlankRow()));
+	editMenu->addAction(addBlankRowAction);
+
+	changeRowDataAction = new QAction(tr("Change Row Data..."), this);
+	changeRowDataAction->setStatusTip(tr("Change data for selected row"));
+	connect(changeRowDataAction, SIGNAL(triggered()), this, SLOT(changeRowData()));
+	editMenu->addAction(changeRowDataAction);
 }
 
 //********************************************************************************
@@ -104,6 +139,8 @@ void SampleEditor::loadFile()
 	if(dataname == "") return;
 	lastPath = QFileInfo(dataname).absolutePath();
 	
+	selection->clear();
+
 	ReadFiles(headername.toStdString(), dataname.toStdString());
 
 	table->setModels(data,selection);
@@ -121,7 +158,8 @@ void SampleEditor::ReadFiles(std::string hname, std::string dname)
 	const int MAXLINESIZE = 1024;	//Numbers could be in scientific notation in this file
 	char line[MAXLINESIZE];
 
-	data = vtkSmartPointer<vtkTable>::New();		//Start with a new table
+	//data = vtkSmartPointer<vtkTable>::New();		//Start with a new table
+	data->Initialize();
 
 	//LOAD THE HEADER INFO:
 	ifstream headerFile; 
@@ -168,4 +206,66 @@ void SampleEditor::ReadFiles(std::string hname, std::string dname)
 		featureFile.getline(line, MAXLINESIZE);
 	}
 	featureFile.close();
+}
+
+//***********************************************************************************
+// This functions demonstrates how to remove rows from the table and how 
+// to make sure that the views are updated accordingly.
+//
+// It is important to realize that row numbers change after removing a row.
+// This means you cannot iterate through the table to remove rows, but 
+// must look for each row independently.
+//
+// Also note that it is important to remove the ids of removed rows from selections.
+//***********************************************************************************
+void SampleEditor::removeRows(void)
+{
+	std::set<long int> sels = selection->getSelections();
+	std::set<long int>::iterator it;
+	for(it=sels.begin(); it!=sels.end(); ++it)
+	{
+		for(int i=0; i<data->GetNumberOfRows(); ++i)
+		{
+			if( data->GetValue(i,0).ToLong() == (*it) )
+			{
+				data->RemoveRow(i);
+				break;
+			}
+		}
+	}
+	selection->clear();
+	table->update();
+	plot->update();
+}
+
+void SampleEditor::addBlankRow(void)
+{
+	//Get the maximum ID:
+	long max = 0;
+	for(int i=0; i<data->GetNumberOfRows(); ++i)
+	{
+		long val = data->GetValue(i,0).ToLong();
+		if( val > max )
+			max = val;
+	}
+
+	//Insert blank row:
+	data->InsertNextBlankRow();
+
+	long newID = max+1;
+
+	//Set the ID of the new ROW:
+	data->SetValue( data->GetNumberOfRows() - 1, 0, vtkVariant(newID));
+
+	//Select the new row only:
+	selection->select(newID);
+	
+	//update views:
+	table->update();
+	plot->update();
+
+}
+
+void SampleEditor::changeRowData(void)
+{
 }
