@@ -69,7 +69,7 @@ main(  int argc, char* argv[] )
   vul_arg< vcl_string > arg_old_str   ("-old_str","The old substr in the image names to be replaced");
   vul_arg< vcl_string > arg_new_str   ("-new_str","The new substr in the image names");
   vul_arg< bool >       arg_3d        ("-3d", "Generate a 3D image as well",false);
-  vul_arg< vcl_string > arg_outfile   ("-output","The name of the output");
+  vul_arg< vcl_string > arg_outfile   ("-output","The name of the output directory for the stack slices.");
   vul_arg< bool >       arg_in_anchor ("-in_anchor","The final space is set to the anchor image", false);
   vul_arg< bool >       arg_overlap   ("-overlap_only","Only consider images that overlap the anchor image", false);
   vul_arg< bool > arg_nn("-nn","Use Nearest-Neighbor interpolation", false);
