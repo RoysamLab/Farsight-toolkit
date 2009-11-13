@@ -15,5 +15,5 @@ ADD_LIBRARY( NuclearSegmentation
 TARGET_LINK_LIBRARIES( NuclearSegmentation SegmentationCommon ftkImage Yousef_Nucleus_Seg Nuclear_Association)
 #INSTALL( TARGETS NuclearSegmentation DESTINATION . )
 
-SUBDIRS( yousef_core  Nuclear_Association SeedEditor exe NucleusEditor SegmentationViewer )
+SUBDIRS( yousef_core  Nuclear_Association exe NucleusEditor SegmentationViewer )
 

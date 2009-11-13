@@ -74,7 +74,8 @@ void NucleusEditor::createStatusBar()
 //** ToolBar Setup
 void NucleusEditor::createSegmentToolBar()
 {
-	segmentTool = new QToolBar();
+	segmentTool = this->addToolBar(tr("Segment"));
+	segmentTool->setVisible(false);
 
 	segmentAbort = new QAction(QIcon(":/icons/abort.png"), tr("ABORT"), this);
 	segmentAbort->setToolTip(tr("Abort Segmentation and save nothing"));
@@ -758,10 +759,8 @@ void NucleusEditor::segmentImage()
 		nucSeg = NULL;
 		return;
 	}
-	
 	nucSeg->SetChannel(useChannel);
 	
-	this->addToolBar(Qt::TopToolBarArea, segmentTool);
 	segmentStop->setEnabled(false);
 	segmentContinue->setEnabled(false);
 	segmentTool->setVisible(true);
@@ -814,7 +813,7 @@ void NucleusEditor::abortSegment()
 		featuresThread = NULL;
 	}
 
-	this->removeToolBar(segmentTool);
+	segmentTool->setVisible(false);
 	segmentState = -1;
 
 	quitNucSeg();
@@ -1006,7 +1005,7 @@ void NucleusEditor::segment()
 		segmentState = -1;
 
 		//Now remove the toolbar:
-		this->removeToolBar(segmentTool);
+		segmentTool->setVisible(false);
 
 		break;
 	}
