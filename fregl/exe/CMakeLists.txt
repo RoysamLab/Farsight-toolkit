@@ -35,6 +35,9 @@ TARGET_LINK_LIBRARIES( max_project_multi_channels vnl ITKCommon ITKIO )
 ADD_EXECUTABLE( multi_channels_2D multi_channels_2D.cxx)
 TARGET_LINK_LIBRARIES( multi_channels_2D vnl ITKCommon ITKIO )
 
+ADD_EXECUTABLE( multi_channels_3D multi_channels_3D.cxx)
+TARGET_LINK_LIBRARIES( multi_channels_3D vnl ITKCommon ITKIO )
+
 ADD_EXECUTABLE( montage_blending montage_blending.cxx)
 TARGET_LINK_LIBRARIES( montage_blending fregl vnl ITKCommon ITKIO )
 
