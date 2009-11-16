@@ -262,7 +262,7 @@ void NucleusEditor::createMenus()
 	connect(segView, SIGNAL(pointsClicked(int,int,int,int,int,int)), this, SLOT(splitCell(int,int,int,int,int,int)));
 	editMenu->addAction(splitAction);
 
-	//editMenu->addSeparator();
+	editMenu->addSeparator();
 
 	exclusionAction = new QAction(tr("Apply Exclusion Margin..."), this);
 	exclusionAction->setStatusTip(tr("Set parameters for exclusion margin"));
