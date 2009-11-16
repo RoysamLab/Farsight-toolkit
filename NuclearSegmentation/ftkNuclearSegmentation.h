@@ -95,6 +95,7 @@ public:
 	std::vector< int > SplitAlongZ(int objID, int cutSlice);
 	int Merge(vector<int> ids);
 	bool Delete(vector<int> ids);
+	bool Exclude(int xy, int z);
 	int AddObject(int x1, int y1, int z1, int x2, int y2, int z2);
 	bool SetClass(vector<int> ids, int clss);
 	bool MarkAsVisited(vector<int> ids, int val);

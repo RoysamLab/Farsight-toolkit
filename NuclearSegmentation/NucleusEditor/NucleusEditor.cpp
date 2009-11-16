@@ -267,7 +267,7 @@ void NucleusEditor::createMenus()
 	exclusionAction = new QAction(tr("Apply Exclusion Margin..."), this);
 	exclusionAction->setStatusTip(tr("Set parameters for exclusion margin"));
 	connect(exclusionAction, SIGNAL(triggered()), this, SLOT(applyExclusionMargin()));
-	//editMenu->addAction(exclusionAction);
+	editMenu->addAction(exclusionAction);
 
 	//TOOL MENU
 	toolMenu = menuBar()->addMenu(tr("Tools"));
@@ -718,10 +718,9 @@ void NucleusEditor::applyExclusionMargin(void)
 	}
 	delete dialog;
 
-	//Now apply the brick rule to my image!!!!
-	//if(currentModel)
-	//	currentModel->applyMargins(xy,z);
-
+	selection->clear();
+	nucSeg->Exclude(xy, z);
+	this->updateViews();
 }
 
 void NucleusEditor::segmentImage()

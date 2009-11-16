@@ -1614,7 +1614,7 @@ int NuclearSegmentation::AddObject(int x1, int y1, int z1, int x2, int y2, int z
 	return newID;
 }
 
-bool NuclearSegmentation::Delete(vector<int> ids)
+bool NuclearSegmentation::Delete(std::vector<int> ids)
 {
 	if(!labelImage) return false;
 
@@ -1622,12 +1622,70 @@ bool NuclearSegmentation::Delete(vector<int> ids)
 	{
 		ReassignLabel(ids.at(i),0);				//Turn each label in list to zero
 		removeFeatures(ids.at(i));				//Remove Features From Table:
-		//Create Edit Record:
-		ftk::Object::EditRecord record;
-		record.date = TimeStamp();
-		record.description = std::string("D") + "\t" + NumToString(ids.at(i));
-		myEditRecords.push_back(record);
 	}
+
+	//Create Edit Record:
+	ftk::Object::EditRecord record;
+	record.date = TimeStamp();
+	record.description = std::string("D") + "\t" + NumToString(ids.at(0));
+	for(int i=1; i<ids.size(); ++i)
+	{
+		record.description.append("," + NumToString(ids.at(i)));
+	}
+	myEditRecords.push_back(record);
+
+	return true;
+}
+
+bool NuclearSegmentation::Exclude(int xy, int z)
+{
+	if(!labelImage) return false;
+
+	//Find the bounds to use for exclusion margin:
+	const ftk::Image::Info *info = labelImage->GetImageInfo();
+	int totalWidth = (*info).numColumns;
+	int totalHeight = (*info).numRows;
+	int zSlices = (*info).numZSlices;
+
+	int min_x = 0 + xy;
+	int min_y = 0 + xy;
+	int min_z = 0 + z;
+	int max_x = totalWidth - xy - 1;
+	int max_y = totalHeight - xy - 1;
+	int max_z = zSlices - z - 1;
+
+	//Go through each object and exclude accordingly.
+	std::vector<int> ids;
+	std::map<int, ftk::Object::Point>::iterator it;
+	for(it=centerMap.begin(); it!=centerMap.end(); ++it)
+	{
+		int id = (*it).first;
+		ftk::Object::Point c = (*it).second;
+
+		if(c.x < min_x || c.x > max_x ||
+		   c.y < min_y || c.y > max_y ||
+		   c.z < min_z || c.z > max_z)
+		{
+			ids.push_back(id);
+		}
+		
+	}
+	
+	for(int i=0; i<(int)ids.size(); ++i)
+	{
+		ReassignLabel(ids.at(i),0);				//Turn each label in list to zero
+		removeFeatures(ids.at(i));				//Remove Features From Table:
+	}
+
+	//Create Edit Record:
+	ftk::Object::EditRecord record;
+	record.date = TimeStamp();
+	record.description = std::string("E") + "\t" + NumToString(ids.at(0));
+	for(int i=1; i<ids.size(); ++i)
+	{
+		record.description.append("," + NumToString(ids.at(i)));
+	}
+	myEditRecords.push_back(record);
 
 	return true;
 }
