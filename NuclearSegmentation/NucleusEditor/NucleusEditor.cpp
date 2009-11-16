@@ -23,7 +23,7 @@ limitations under the License.
 NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 : QMainWindow(parent,flags)
 {
-	segView = new SegmentationView();
+	segView = new LabelImageViewQT();
 	connect(segView, SIGNAL(mouseAt(int,int,int)), this, SLOT(setMouseStatus(int,int,int)));
 	this->setCentralWidget(segView);
 

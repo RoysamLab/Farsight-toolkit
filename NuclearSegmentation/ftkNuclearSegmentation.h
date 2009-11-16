@@ -121,7 +121,7 @@ public:
 	std::vector<std::string> RunGraphColoring(std::string labelname, std::string filename);	//Run Graph coloring on label image and save adjacency file as filename
 	std::vector<Seed> getSeeds();
 
-private:
+protected:
 	std::string dataFilename;	//the filename of the data image		(full path)
 	std::string labelFilename;	//the filename of the label image		(full path)
 	std::string paramFilename;	//the filename of the parameter file	(full path)

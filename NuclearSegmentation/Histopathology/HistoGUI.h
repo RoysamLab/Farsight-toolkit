@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
 
-#ifndef NUCLEUS_EDITOR_H
-#define NUCLEUS_EDITOR_H
+#ifndef HistoGUI_H
+#define HistoGUI_H
 
 #ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS
@@ -33,6 +33,7 @@ limitations under the License.
 #include <QtGui/QRadioButton>
 #include <QtCore/QFileInfo>
 #include <QtCore/QThread>
+#include <QtCore/QString>
 
 //Farsight Includes:
 #include "NuclearSegmentation/ftkNuclearSegmentation.h"
@@ -44,25 +45,13 @@ limitations under the License.
 #include "ftkGUI/HistoWindow.h"
 #include "ftkGUI/LabelImageViewQT.h"
 
-//VTK includes:
-#include "vtkQtTableView.h"
-
-class ParamsFileDialog;
-class MarginDialog;
-class Load;
-class Binarize;
-class SeedDetect;
-class Cluster;
-class Finalize;
-class Features;
-
-class NucleusEditor : public QMainWindow
+class HistoGUI : public QMainWindow
 {
     Q_OBJECT;
 
 public:
-	NucleusEditor(QWidget * parent = 0, Qt::WindowFlags flags = 0);
-	~NucleusEditor();
+	HistoGUI(QWidget * parent = 0, Qt::WindowFlags flags = 0);
+	~HistoGUI();
 
 protected:
 	void closeEvent(QCloseEvent *event);
@@ -72,11 +61,6 @@ private slots:
 	void loadImage(void);
 	void loadResult(void);
 	bool saveResult(void);
-	void segmentImage(void);
-	void abortSegment(void);
-	void stopSegment(void);
-	bool checkSaveSeg(void);
-	void segment(void);
 	void about(void);
 
 	void menusEnabled(bool val);
@@ -96,35 +80,27 @@ private slots:
 	void deleteCells(void);
 	void splitCellAlongZ(void);		//Split single cell along current z
 	void splitCell(int x1, int y1, int z1, int x2, int y2, int z2);
-	void applyExclusionMargin(void);
 	void changeClass(void);
 	void markVisited(void);
 
-	//For Tools menu
-	void startSVM();
-	void startKPLS();
-
 	void updateViews();
-
+ 
 signals:
     
 private:
 	void createMenus();
 	void createStatusBar();
-	void createSegmentToolBar();
-	void quitNucSeg();
 	
 	LabelImageViewQT *segView;
 	std::vector<PlotWindow *> pltWin;
 	std::vector<TableWindow *> tblWin;
 	HistoWindow * hisWin;
-	PatternAnalysisWizard *pWizard;
 
 	QMenu *fileMenu;
 	QAction *loadAction;
 	QAction *saveAction;
 	QAction *xmlAction;
-	QAction *segmentAction;
+	//QAction *segmentAction;
 	QAction *exitAction;
 
 	QMenu *viewMenu;
@@ -136,10 +112,6 @@ private:
 
 	QMenu *helpMenu;
 	QAction *aboutAction;
-
-	QMenu *toolMenu;
-	QAction *svmAction;		//Start the One-Class SVM outlier detecter
-	QAction *kplsAction;	//Start the KPLS Classifier
 	
 	//For Editing Menu
 	QMenu *editMenu;
@@ -149,7 +121,6 @@ private:
 	QAction *deleteAction;
 	QAction *splitZAction;			//for split along z direction
 	QAction *splitAction;			//for split along x-y direction
-	QAction *exclusionAction;
 	QAction *classAction;
 	QAction *visitAction;			//Mark an object as visited
 	
@@ -162,116 +133,6 @@ private:
 	vtkSmartPointer<vtkTable> table;//table
 
 	QString lastPath;
-	
-	int segmentState;
-	QAction * segmentAbort;
-	QAction * segmentStop;
-	QAction * segmentContinue;
-	QLabel * segmentTaskLabel;
-	QProgressBar * segmentProgress;
-	QToolBar * segmentTool;
-
-	Load * loadThread;
-	Binarize * binaryThread;
-	SeedDetect * seedThread;
-	Cluster * clusterThread;
-	Finalize * finalizeThread;
-	Features * featuresThread;
-
  };
-
-
-class ParamsFileDialog : public QDialog
-{
-	Q_OBJECT
-public:
-	ParamsFileDialog(QString lastPth, QVector<QString> chs, QWidget *parent = 0);
-	QString getFileName();
-	int getChannelNumber();
-private slots:
-	void ParamBrowse(QString);
-private:
-	QLabel *channelLabel;
-	QComboBox *channelCombo;
-	QRadioButton *autoButton;
-	QRadioButton *fileButton;
-	QComboBox *fileCombo;
-	QString lastPath;
-	QPushButton *okButton;
-};
-
-class MarginDialog : public QDialog
-{
-	Q_OBJECT
-public:
-	MarginDialog(QWidget *parent = 0);
-	int getMargin();
-	int getZ();
-private:
-	QSpinBox * marginSpin;
-	QSpinBox * zSpin;
-	QPushButton *okButton;
-};
-
-class Load : public QThread
-{
-public:
-	Load(ftk::NuclearSegmentation *seg = NULL);
-	void run();
-
-private:
-	ftk::NuclearSegmentation *mySeg;
-};
-
-
-class Binarize : public QThread
-{
-public:
-	Binarize(ftk::NuclearSegmentation *seg = NULL);
-	void run();
-
-private:
-	ftk::NuclearSegmentation *mySeg;
-};
-
-class SeedDetect : public QThread
-{
-public:
-	SeedDetect(ftk::NuclearSegmentation *seg = NULL);
-	void run();
-
-private:
-	ftk::NuclearSegmentation *mySeg;
-};
-
-class Cluster : public QThread
-{
-public:
-	Cluster(ftk::NuclearSegmentation *seg = NULL);
-	void run();
-
-private:
-	ftk::NuclearSegmentation *mySeg;
-};
-
-class Finalize : public QThread
-{
-public:
-	Finalize(ftk::NuclearSegmentation *seg = NULL);
-	void run();
-
-private:
-	ftk::NuclearSegmentation *mySeg;
-};
-
-class Features : public QThread
-{
-public:
-	Features(ftk::NuclearSegmentation *seg = NULL);
-	void run();
-
-private:
-	ftk::NuclearSegmentation *mySeg;
-};
 
 #endif
