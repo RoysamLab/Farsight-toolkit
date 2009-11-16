@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
 	segmentation->LoadFromDAT(imageName,imageName);
 	std::cout<<"done"<<std::endl;
 	
-	//segmentation->SaveLabel();
+	segmentation->SaveResultImage();
 	
 	delete segmentation;
 

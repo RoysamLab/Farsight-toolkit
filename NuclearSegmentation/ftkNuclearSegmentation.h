@@ -75,6 +75,7 @@ public:
 
 	//Save functions:
 	bool SaveChanges(std::string filename);						//Save changes made to label image, features table, project def file(xml)
+	bool SaveResultImage();										//Save the output image of the last step executed (image format)
 	bool SaveLabelByClass();									//Will save a different label image for each class
 
 	//Save features in various other supported formats:
@@ -151,7 +152,6 @@ protected:
 
 	//Saving Utilities:
 	bool GetResultImage();										//Gets the result of last module and puts it in labelImage
-	bool SaveResultImage();										//Save the output image of the last step executed (image format)
 	bool SaveFeaturesTable();									//Save 2 txt files: one with features other with names of features
 	bool SaveEditRecords();										//Append Edit Records to file 
 	bool LoadLabel(bool updateMaps = false);					//Load just the label image if the filename is already known

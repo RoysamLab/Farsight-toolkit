@@ -544,8 +544,9 @@ bool NuclearSegmentation::LoadFromDAT(std::string dfile, std::string rfile)
 	unsigned char *dptr = dataImage->GetSlicePtr<unsigned char>(0,channelNumber,0);		//Expects grayscale image	
 	NucleusSeg->setDataImage( dptr, numColumns, numRows, numStacks, dataFilename.c_str() );
 	NucleusSeg->readFromIDLFormat(rfile);
-	ReleaseSegMemory();
+	this->lastRunStep = 4;
 	this->GetResultImage();
+	ReleaseSegMemory();
 
 	return ComputeFeatures();
 }
