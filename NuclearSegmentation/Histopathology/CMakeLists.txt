@@ -1,9 +1,11 @@
 SET( HistoGUI_SRCS
   HistoGUI.cpp
+  ftkHistopathology.cpp
 )
 
 SET( HistoGUI_HDRS
   HistoGUI.h
+  ftkHistopathology.h
 )
 
 SET( HistoGUI_UIS
@@ -20,7 +22,7 @@ QT4_ADD_RESOURCES( HistoGUI_RC_SRCS ${HistoGUI_RCS} )
 QT4_WRAP_UI( HistoGUI_UI_HDRS ${HistoGUI_UIS} )
 
 # and finally this will run moc:
-QT4_WRAP_CPP( HistoGUI_MOC_SRCS ${HistoGUI_HDRS} )
+QT4_WRAP_CPP( HistoGUI_MOC_SRCS HistoGUI.h )
 
 ADD_EXECUTABLE(HistoGUI main.cpp
              ${HistoGUI_SRCS}

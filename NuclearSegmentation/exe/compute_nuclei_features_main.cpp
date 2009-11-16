@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 		//segmentation->LoadClassInfoFromFile(argv[5]);
 	}
 
-	//segmentation->WriteToXML(resultsName);	
+	segmentation->SaveChanges(resultsName);	
 	
 	delete segmentation;
 

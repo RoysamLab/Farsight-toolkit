@@ -42,19 +42,19 @@ HistoGUI::HistoGUI(QWidget * parent, Qt::WindowFlags flags)
 	pltWin.clear();
 	hisWin=NULL;
 
-	nucSeg = NULL;
+	patho = NULL;
 
 	table = NULL;
 	selection = NULL;
 
-	this->resize(500,500);
+	this->resize(800,800);
 	//Crashes when this is enabled!
 	//setAttribute ( Qt::WA_DeleteOnClose );	
 }
 
 HistoGUI::~HistoGUI()
 {
-	if(nucSeg) delete nucSeg;
+	if(patho) delete patho;
 	if(selection) delete selection;
 }
 
@@ -107,23 +107,10 @@ void HistoGUI::createMenus()
 
 	fileMenu->addSeparator();
 
-	//segmentAction = new QAction(tr("Start Segmentation..."), this);
-	//segmentAction->setStatusTip(tr("Starts the Nuclear Segmenation on this Image"));
-	//connect(segmentAction,SIGNAL(triggered()),this,SLOT(segmentImage()));
-	//fileMenu->addAction(segmentAction);
-
-	fileMenu->addSeparator();
-
 	xmlAction = new QAction(tr("Load Result..."), this);
 	xmlAction->setStatusTip(tr("Open an XML result file"));
 	connect(xmlAction,SIGNAL(triggered()), this, SLOT(loadResult()));
 	fileMenu->addAction(xmlAction);
-
-	saveAction = new QAction(tr("Save Result"), this);
-	saveAction->setStatusTip(tr("Save Changes (Edits, etc)"));
-	saveAction->setShortcut(tr("Ctrl+S"));
-	connect(saveAction, SIGNAL(triggered()), this, SLOT(saveResult()));
-	fileMenu->addAction(saveAction);
 
 	fileMenu->addSeparator();
 
@@ -169,61 +156,6 @@ void HistoGUI::createMenus()
 	connect(imageIntensityAction, SIGNAL(triggered()), segView, SLOT(AdjustImageIntensity()));
 	viewMenu->addAction(imageIntensityAction);
 
-	//EDITING MENU	
-	editMenu = menuBar()->addMenu(tr("&Editing"));
-
-	clearSelectAction = new QAction(tr("Clear Selections"), this);
-	clearSelectAction->setStatusTip(tr("Clear Current Object Selections"));
-	clearSelectAction->setShortcut(tr("Ctrl+C"));
-	connect(clearSelectAction, SIGNAL(triggered()), this, SLOT(clearSelections()));
-	editMenu->addAction(clearSelectAction);
-
-	visitAction = new QAction(tr("Mark as Visited"), this);
-	visitAction->setStatusTip(tr("Mark Selected Objects as Visited"));
-	visitAction->setShortcut(tr("Ctrl+V"));
-	connect(visitAction, SIGNAL(triggered()), this, SLOT(markVisited()));
-	editMenu->addAction(visitAction);
-
-	editMenu->addSeparator();
-
-	classAction = new QAction(tr("Change Class"), this);
-	classAction->setStatusTip(tr("Modify the class designation for the selected objects"));
-	classAction->setShortcut(tr("Ctrl+L"));
-	connect(classAction, SIGNAL(triggered()), this, SLOT(changeClass()));
-	editMenu->addAction(classAction);
-
-	addAction = new QAction(tr("Add Cell"), this);
-	addAction->setStatusTip(tr("Draw a Box to add a new cell"));
-	addAction->setShortcut(tr("Ctrl+A"));
-	connect(addAction, SIGNAL(triggered()), segView, SLOT(GetBox()));
-	connect(segView, SIGNAL(boxDrawn(int,int,int,int,int)), this, SLOT(addCell(int,int,int,int,int)));
-	editMenu->addAction(addAction);
-
-	mergeAction = new QAction(tr("Merge Cells"), this);
-	mergeAction->setStatusTip(tr("Merge Cells"));
-	mergeAction->setShortcut(tr("Ctrl+M"));
-	connect(mergeAction, SIGNAL(triggered()), this, SLOT(mergeCells()));	
-	editMenu->addAction(mergeAction);
-
-	deleteAction = new QAction(tr("Delete Cells"), this);
-	deleteAction->setStatusTip(tr("Deletes the selected cells"));
-	deleteAction->setShortcut(tr("Ctrl+D"));
-	connect(deleteAction,SIGNAL(triggered()),this,SLOT(deleteCells()));	
-	editMenu->addAction(deleteAction);
-
-	splitZAction = new QAction(tr("Split Cell At Z"), this);
-	splitZAction->setStatusTip(tr("Split selected cell along the current Z slice"));
-	splitZAction->setShortcut(tr("Ctrl+T"));
-	connect(splitZAction, SIGNAL(triggered()), this, SLOT(splitCellAlongZ()));
-	editMenu->addAction(splitZAction);
-
-	splitAction = new QAction(tr("Split Cell X-Y"), this);
-	splitAction->setStatusTip(tr("Split a cell by choosing two seed points"));
-	splitAction->setShortcut(tr("Ctrl+P"));
-	connect(splitAction, SIGNAL(triggered()), segView, SLOT(Get2Points()));
-	connect(segView, SIGNAL(pointsClicked(int,int,int,int,int,int)), this, SLOT(splitCell(int,int,int,int,int,int)));
-	editMenu->addAction(splitAction);
-
 	//HELP MENU
 	helpMenu = menuBar()->addMenu(tr("Help"));
 	aboutAction = new QAction(tr("About"),this);
@@ -234,36 +166,19 @@ void HistoGUI::createMenus()
 	setMenusForResult(false);
 }
 
-void HistoGUI::setEditsEnabled(bool val)
-{
-	clearSelectAction->setEnabled(val);
-	visitAction->setEnabled(val);
-	addAction->setEnabled(val);
-	mergeAction->setEnabled(val);
-	deleteAction->setEnabled(val);
-	splitZAction->setEnabled(val);
-	splitAction->setEnabled(val);
-	classAction->setEnabled(val);
-}
-
 void HistoGUI::setMenusForResult(bool val)
 {
-	saveAction->setEnabled(val);
-
 	showBoundsAction->setEnabled(val);
 	showIDsAction->setEnabled(val);
 	newScatterAction->setEnabled(val);
 	showHistoAction->setEnabled(val);
 	imageIntensityAction->setEnabled(val);
-
-	this->setEditsEnabled(val);
 }
 
 void HistoGUI::menusEnabled(bool val)
 {
 	fileMenu->setEnabled(val);
 	viewMenu->setEnabled(val);
-	editMenu->setEnabled(val);
 }
 
 //****************************************************************************
@@ -307,30 +222,6 @@ void HistoGUI::closeEvent(QCloseEvent *event)
 	event->accept();
 }
 
-bool HistoGUI::saveResult()
-{
-	if(nucSeg)
-	{
-		if(nucSeg->EditsNotSaved())
-		{
-			std::string name = nucSeg->GetDataFilename();
-			name.erase(name.find_first_of("."));
-			name.append(".xml");
-			nucSeg->SaveChanges(name);
-		}
-		
-	}
-	return true;
-}
-
-void HistoGUI::clearSelections()
-{
-	if(selection)
-	{
-		selection->clear();
-	}
-}
-
 //******************************************************************************
 // This function loads a segmentation result from XML
 // The XML file should tell where to find the original image/data
@@ -351,24 +242,24 @@ void HistoGUI::loadResult(void)
 	lastPath = path;
 
 	//segResult = new ftk::NuclearSegmentation();
-	if(nucSeg) delete nucSeg;
-	nucSeg = new ftk::NuclearSegmentation();
-	if ( !nucSeg->LoadAll(filename.toStdString()) )
+	if(patho) delete patho;
+	patho = new ftk::Histopathology();
+	if ( !patho->LoadAll(filename.toStdString()) )
 	{
-		std::cerr << nucSeg->GetErrorMessage() << std::endl;
+		std::cerr << patho->GetErrorMessage() << std::endl;
 		return;
 	}
 
-	table = nucSeg->GetFeatureTable();
+	//table = nucSeg->GetFeatureTable();
 
 	if(selection) delete selection;
 	selection = new ObjectSelection();
 
-	segView->SetChannelImage(nucSeg->GetDataImage());
-	segView->SetLabelImage(nucSeg->GetLabelImage(), selection);
+	segView->SetChannelImage(patho->GetDataImage());
+	segView->SetLabelImage(patho->GetLabelImage(), selection);
 
-	CreateNewTableWindow();
-	CreateNewPlotWindow();
+	//CreateNewTableWindow();
+	//CreateNewPlotWindow();
 
 	// Enable the menu items for editing
 	setMenusForResult(true);
@@ -471,103 +362,6 @@ void HistoGUI::toggleIDs(void)
 	//	segView->SetIDsVisible(true);
 	//else
 	//	segView->SetIDsVisible(false);
-}
-
-void HistoGUI::changeClass(void)
-{
-	if(!nucSeg) return;
-
-	std::set<long int> sels = selection->getSelections();
-	std::vector<int> ids(sels.begin(), sels.end());
-
-	//Get the new class number:
-	bool ok;
-	QString msg = tr("Change the class of all selected items to: \n");
-	int newClass = QInputDialog::getInteger(NULL, tr("Change Class"), msg, -1, -1, 10, 1, &ok);
-	
-	//Change the class of these objects:
-	if(ok)
-	{
-		nucSeg->SetClass(ids,newClass);
-		this->updateViews();
-	}
-}
-
-void HistoGUI::markVisited(void)
-{
-	if(!nucSeg) return;
-
-	std::set<long int> sels = selection->getSelections();
-	std::vector<int> ids(sels.begin(), sels.end());
-	
-	nucSeg->MarkAsVisited(ids,1);
-	this->updateViews();
-}
-
-void HistoGUI::addCell(int x1, int y1, int x2, int y2, int z)
-{
-	if(!nucSeg) return;
-	int id = nucSeg->AddObject(x1, y1, z, x2, y2, z);
-	if(id != 0)
-	{
-		this->updateViews();
-		selection->select(id);
-	}
-}
-
-void HistoGUI::deleteCells(void)
-{
-	if(!nucSeg) return;
-
-	std::set<long int> sels = selection->getSelections();
-	std::vector<int> ids(sels.begin(), sels.end());
-	nucSeg->Delete(ids);
-	selection->clear();
-	this->updateViews();
-}
-
-void HistoGUI::mergeCells(void)
-{
-	if(!nucSeg) return;
-
-	std::set<long int> sels = selection->getSelections();
-	std::vector<int> ids(sels.begin(), sels.end());
-	nucSeg->Merge(ids);
-	selection->clear();
-	this->updateViews();
-}
-
-void HistoGUI::splitCell(int x1, int y1, int z1, int x2, int y2, int z2)
-{
-	if(!nucSeg) return;
-
-	ftk::Object::Point P1;
-	ftk::Object::Point P2;
-	P1.t=0;
-	P1.x=x1;
-	P1.y=y1;
-	P1.z=z1;
-	P2.t=0;
-	P2.x=x2;
-	P2.y=y2;
-	P2.z=z2;
-
-	nucSeg->Split(P1, P2);
-	selection->clear();
-	this->updateViews();
-}
-
-void HistoGUI::splitCellAlongZ(void)
-{
-	if(!nucSeg) return;
-
-	std::set<long int> sels = selection->getSelections();
-	selection->clear();
-	for ( set<long int>::iterator it=sels.begin(); it != sels.end(); it++ )
-	{
-		nucSeg->SplitAlongZ(*it,segView->GetCurrentZ());
-	}
-	this->updateViews();
 }
 
 //Call this slot when the table has been modified (new rows or columns) to update the views:

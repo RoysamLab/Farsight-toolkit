@@ -39,7 +39,7 @@
 #include <QtCore/QString>
 
 //Farsight Includes:
-#include "NuclearSegmentation/ftkNuclearSegmentation.h"
+#include "ftkHistopathology.h"
 #include "ftkImage/ftkImage.h"
 #include "ftkGUI/PatternAnalysisWizard.h"
 #include "ftkGUI/TableWindow.h"
@@ -63,7 +63,6 @@ private slots:
 	void setMouseStatus(int,int,int);
 	void loadImage(void);
 	void loadResult(void);
-	bool saveResult(void);
 	void about(void);
 
 	void menusEnabled(bool val);
@@ -74,17 +73,6 @@ private slots:
 	void CreateNewTableWindow();
 	void CreateNewHistoWindow();
 	void ShowHistogram();
-
-	//For Editing Menu
-	void setEditsEnabled(bool val);
-	void clearSelections(void);
-	void addCell(int x1, int y1, int x2, int y2, int z);//Once box is drawn we call this to add a cell
-	void mergeCells(void);
-	void deleteCells(void);
-	void splitCellAlongZ(void);		//Split single cell along current z
-	void splitCell(int x1, int y1, int z1, int x2, int y2, int z2);
-	void changeClass(void);
-	void markVisited(void);
 
 	void updateViews();
  
@@ -101,9 +89,7 @@ private:
 
 	QMenu *fileMenu;
 	QAction *loadAction;
-	QAction *saveAction;
 	QAction *xmlAction;
-	//QAction *segmentAction;
 	QAction *exitAction;
 
 	QMenu *viewMenu;
@@ -116,20 +102,9 @@ private:
 	QMenu *helpMenu;
 	QAction *aboutAction;
 	
-	//For Editing Menu
-	QMenu *editMenu;
-	QAction *clearSelectAction;
-	QAction *addAction;
-	QAction *mergeAction;
-	QAction *deleteAction;
-	QAction *splitZAction;			//for split along z direction
-	QAction *splitAction;			//for split along x-y direction
-	QAction *classAction;
-	QAction *visitAction;			//Mark an object as visited
-	
 	QLabel *statusLabel;			//Shown at bottom of main window
 
-	ftk::NuclearSegmentation *nucSeg;//Used for segmentation execution, loading, and editing
+	ftk::Histopathology *patho;		//Histopathology module
 	ftk::Image::Pointer myImg;		//My currently visible image
 	QString myImgName;				//Name of the currently visible image
 	ObjectSelection * selection;	//object selection list

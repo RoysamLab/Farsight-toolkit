@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
 	ftk::NuclearSegmentation *segmentation = new ftk::NuclearSegmentation();
 	segmentation->RestoreFromXML(xmlFullName);
 	//segmentation->LoadClassInfoFromFile(classFile);
-	//segmentation->WriteToXML(xmlFullName);
+	segmentation->SaveChanges(xmlFullName);
 
 	//Now load up the label image and split it into a separate image for each class
 	segmentation->SaveLabelByClass();
