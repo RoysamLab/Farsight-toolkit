@@ -38,6 +38,8 @@ limitations under the License.
 #include <vtkQtBarChartView.h>
 #include <vtkDoubleArray.h>
 
+#include "ObjectSelection.h"
+
 #include <set>
 #include <vector>
 #include <map>
@@ -45,12 +47,10 @@ limitations under the License.
 #include <sstream>
 #include <algorithm>
 
-#if (VTK_MINOR_VERSION % 2) == 1
-  #define VTK_NIGHTLY 1
-  #define VTK_RELEASE 0
+#if (VTK_MAJOR_VERSION >= 5 && VTK_MINOR_VERSION >= 5)
+  #define CHART_IS_WIDGET 1
 #else
-  #define VTK_NIGHTLY 0
-  #define VTK_RELEASE 1  
+	#define CHART_IS_WIDGET 0 
 #endif
 
 class HistoWindow : public QMainWindow
@@ -58,13 +58,15 @@ class HistoWindow : public QMainWindow
 	Q_OBJECT;
 
 public:
-	HistoWindow(QItemSelectionModel *mod, QWidget *parent = 0);
+	HistoWindow(QWidget *parent = 0);
+	void setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels = NULL);
+
+public slots:
+	void update(void);
 
 private slots:
 	void columnChange(QAction *action);
 	void binsChange(QAction *action);
-	void updateOptionMenus(Qt::Orientation orientation, int first, int last);
-	void modelChange(const QModelIndex &topLeft, const QModelIndex &bottomRight);
 
 private:
 	void SyncModel();
@@ -85,8 +87,10 @@ private:
 	std::vector<std::string> names; //Names of bins will be stored here
 
 	std::multiset<double> data;		//The column of all data
-	QAbstractItemModel *model;
-	vtkSmartPointer<vtkTable> table;
+
+	ObjectSelection *selection;
+	vtkSmartPointer<vtkTable> m_table;
+	vtkSmartPointer<vtkTable> hisTable;
 	vtkSmartPointer<vtkQtBarChartView> chartView;
 
 	QVBoxLayout *layout;

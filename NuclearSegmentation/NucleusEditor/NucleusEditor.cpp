@@ -199,7 +199,7 @@ void NucleusEditor::createMenus()
 	showHistoAction = new QAction(tr("Show Histogram"),this);
 	showHistoAction->setStatusTip(tr("Show a Histogram"));
 	connect(showHistoAction,SIGNAL(triggered()),this,SLOT(ShowHistogram()));
-	//viewMenu->addAction(showHistoAction);
+	viewMenu->addAction(showHistoAction);
 
 	imageIntensityAction = new QAction(tr("Adjust Image Intensity"), this);
 	imageIntensityAction->setStatusTip(tr("Allows modification of image intensity"));
@@ -574,10 +574,13 @@ void NucleusEditor::CreateNewTableWindow(void)
 //*******************************************************************************
 void NucleusEditor::CreateNewHistoWindow(void)
 {
-	//if(this->hisWin)
-	//	delete hisWin;
-	//hisWin = new HistoWindow(currentModel->GetSelectionModel());
-	//hisWin->show();
+	if(!table) return;
+
+	if(this->hisWin)
+		delete hisWin;
+	hisWin = new HistoWindow();
+	hisWin->setModels(table,selection);
+	hisWin->show();
 }
 
 void NucleusEditor::ShowHistogram(void)

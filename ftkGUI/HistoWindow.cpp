@@ -13,21 +13,22 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
 
-//#include "Common.h"
 #include "HistoWindow.h"
+
 //Constructor
-// Requires a selection model (also requires itemmodel)
-HistoWindow::HistoWindow(QItemSelectionModel *mod, QWidget *parent)
+HistoWindow::HistoWindow(QWidget *parent)
 : QMainWindow(parent)
 {
-  model = (QAbstractItemModel *)mod->model();
-
   columnNum=0;
   columnName = "Feature";
   numofbins=5;
   status=true; //we assume there will be more than 2 bins (false when less then 2 bins!!)
   distanceToUpperBound = 0.0001; //Change this for more precision
-  normalized=false; //data is nor normalized initially
+  normalized=false; //data is not normalized initially
+
+  selection = NULL;
+  m_table = NULL;
+  hisTable = NULL;
 
   //Setup menu:
   optionsMenu = menuBar()->addMenu(tr("&Options"));
@@ -37,7 +38,6 @@ HistoWindow::HistoWindow(QItemSelectionModel *mod, QWidget *parent)
   binsMenu = new QMenu(tr("Set Number of Bins"));
   connect(binsMenu, SIGNAL(triggered(QAction *)), this, SLOT(binsChange(QAction *)));
   optionsMenu->addMenu(binsMenu);
-  this->updateOptionMenus();
 
   //Setup ChartView:
   chartView = vtkSmartPointer<vtkQtBarChartView>::New();
@@ -47,7 +47,7 @@ HistoWindow::HistoWindow(QItemSelectionModel *mod, QWidget *parent)
   chartView->SetAxisTitle(0,"Frequency");
   chartView->SetAxisTitle(1, columnName.c_str() );
 
-#if(VTK_NIGHTLY)
+#if(CHART_IS_WIDGET)
 		setCentralWidget( chartView->GetWidget() );
 #else
 		QLabel *label = new QLabel(tr("Use this window to select options for the histogram"));
@@ -56,77 +56,68 @@ HistoWindow::HistoWindow(QItemSelectionModel *mod, QWidget *parent)
 		setCentralWidget( label );
 #endif
 
-/*
-#ifdef VTK_NIGHTLY
-	setCentralWidget( chartView->GetWidget() );    
-  #else
-	QLabel *label = new QLabel(tr("Use this window to select options for the histogram"));
-    label->setWordWrap(true);
-    label->setAlignment(Qt::AlignCenter);
-    setCentralWidget( label );	        
-  #endif
-*/
-
   setWindowTitle(tr("Histogram"));
   this->resize(700,500);
-
-  this->SyncModel();
-  this->Normalize();
-  this->SetNumofBins(numofbins);
-  this->findFrequencies();    
-  this->setBucketNames(); 
-  this->ConstructBarChart();
-
-  connect(model, SIGNAL(headerDataChanged(Qt::Orientation, int, int)), this, SLOT(updateOptionMenus(Qt::Orientation, int, int)));
-  connect(model, SIGNAL(dataChanged(const QModelIndex &, const QModelIndex &)), this, SLOT(modelChange(const QModelIndex &, const QModelIndex &)));
 }
 
-//This SLOT is used to make sure that the menu gets updated with the header changes
-void HistoWindow::updateOptionMenus(Qt::Orientation orientation, int first, int last)
+void HistoWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels)
 {
-	if( orientation == Qt::Horizontal)
-	{
-		updateOptionMenus();
-	}
+	m_table = table;
+	selection = sels;
+
+	this->update();
+}
+
+void HistoWindow::update(void)
+{
+	this->updateOptionMenus();
+	this->SyncModel();
+	this->Normalize();
+	this->SetNumofBins(numofbins);
+	this->findFrequencies();    
+	this->setBucketNames(); 
+	this->ConstructBarChart();
 }
 
 void HistoWindow::updateOptionMenus()
 {
-  //Add a new Action for each column for each menu item:
-  columnMenu->clear();
+	if(!m_table) return;
 
-  QActionGroup *columnGroup = new QActionGroup(this);
-  for (int c=0; c<model->columnCount(); ++c)
-  {
-    QString name = model->headerData(c,Qt::Horizontal).toString();
-    QAction *xAct = new QAction( name, this );
-    xAct->setToolTip( QString::number(c) );
-    xAct->setCheckable(true);
-    columnMenu->addAction(xAct);
-    columnGroup->addAction(xAct);
+	//Add a new Action for each column for each menu item:
+	columnMenu->clear();
 
-    if(c == columnNum)
-    {
-      xAct->setChecked(true);
-    }
-  }
+	QActionGroup *columnGroup = new QActionGroup(this);
+	for (int c=0; c<m_table->GetNumberOfColumns(); ++c)
+	{
+		QString name = QString( m_table->GetColumnName(c) );
+		QAction *xAct = new QAction( name, this );
+		xAct->setToolTip( QString::number(c) );
+		xAct->setCheckable(true);
+		columnMenu->addAction(xAct);
+		columnGroup->addAction(xAct);
 
-  //Setup bins menu:
-  binsMenu->clear();
+		if(c == columnNum)
+		{
+			xAct->setChecked(true);
+		}
+	}
 
-  QActionGroup *binsGroup = new QActionGroup(this);
-  for(int i=2; i<=100; ++i)
-  {
-    QAction *xAct = new QAction( QString::number(i), this );
-    xAct->setCheckable(true);
-    binsMenu->addAction(xAct);
-    binsGroup->addAction(xAct);
+	//Setup bins menu:
+	binsMenu->clear();
 
-    if(i == numofbins)
-    {
-      xAct->setChecked(true);
-    }
-  }
+	QActionGroup *binsGroup = new QActionGroup(this);
+	for(int i=2; i<=100; ++i)
+	{
+		QAction *xAct = new QAction( QString::number(i), this );
+		xAct->setCheckable(true);
+		binsMenu->addAction(xAct);
+		binsGroup->addAction(xAct);
+
+		if(i == numofbins)
+		{
+		  xAct->setChecked(true);
+		}
+	}
 }
 
 void HistoWindow::columnChange(QAction *action)
@@ -152,117 +143,20 @@ void HistoWindow::binsChange(QAction *action)
   this->ConstructBarChart();
 }
 
-void HistoWindow::modelChange(const QModelIndex &topLeft, const QModelIndex &bottomRight)
-{
-  //this->updateOptionMenus();	//Doesn't need to happen here - moved to seperate slot
-
-  //Check to see if the change is in the column that we are currently displaying:
-  int l_column = topLeft.column();
-  int r_column = bottomRight.column();
-
-  if(l_column <= columnNum && r_column >= columnNum)
-  {
-	this->SyncModel();
-	this->Normalize();
-	this->SetNumofBins(numofbins);
-	this->findFrequencies();    
-	this->setBucketNames(); 
-	this->ConstructBarChart();
-  }
-}
-
 void HistoWindow::SyncModel()
 {
-  if(columnNum >= (int)model->columnCount())
-    return;
+	if(!m_table) return;
+	if(columnNum >= m_table->GetNumberOfColumns())
+		return;
 
-  data.clear();
+	data.clear();
   
-  for(int r=0; r<(int)model->rowCount(); ++r)
-  {
-    double val = model->data( model->index(r,columnNum)).toDouble();
-    data.insert(val);
-  }
+	for(int r=0; r<m_table->GetNumberOfRows(); ++r)
+	{
+		double val = m_table->GetValue(r,columnNum).ToDouble();
+		data.insert(val);
+	}
 }
-
-/*
-bool HistoWindow::ReadHistogramData(const char* fileName)
-{  
-  TiXmlDocument doc(fileName);
-  doc.LoadFile();
-  TiXmlHandle docHandle( &doc );
-  TiXmlElement* levelOneElement =
-  docHandle.FirstChild("histogram_data").Element();
-  //docHandle.FirstChild("Trace").FirstChild().Element();
-  TiXmlElement *levelTwoElement;
-  const char *nodeName;
-  double num;
-
-  data.clear();
- 
-  while(levelOneElement)
-    {
-    nodeName = levelOneElement->Value();
-
-  //Check if this is a histogram_data file
-    if (strcmp(nodeName,"histogram_data") == 0)
-      {
-
-    //Construct the bar title from the attribute values
-    //strcat(barTitle,levelOneElement->Attribute("Class_Membership"));
-    //strcat(barTitle," -  Frequency (Y-axis)  vs  ");
-    //strcat(feature,levelOneElement->Attribute("feature"));
-    //strcat(barTitle,levelOneElement->Attribute("feature"));
-    //strcat(barTitle," (X-axis)     Cell Type: ");
-    //strcat(barTitle,levelOneElement->Attribute("Class_Membership"));
-
-      levelTwoElement = levelOneElement->FirstChildElement();
-      while(levelTwoElement)
-        {
-        nodeName = (char*)levelTwoElement->Value();
-
-        //Check if there is tag <d> first then get the data located between <d> and </d>
-    if (strcmp(nodeName,"d") == 0){
-      // Data coming from the XML file is char*. Convert it to a numeric value 
-      num=atof(levelTwoElement->GetText());
-      data.insert(num);     
-    }     
-        else if (strcmp(nodeName,"text") == 0) 
-          {
-          //Do Nothing
-          }
-        else
-          {
-          cerr << "XML File contains a tag that cannot be identified! " << nodeName << endl;
-          return false;
-          }
-    levelTwoElement = levelTwoElement->NextSiblingElement("d");
-    //cout<<"level two "<<levelTwoElement<<endl;
-    }
-      }
-    else
-      {
-      cerr << "Incorrect Histogram Data format! " << nodeName << endl;
-      return false;
-      }
-  levelOneElement=levelOneElement->NextSiblingElement();
-  }
-
-  // Check if we read any data from the XML file.
-  // If not, we cannot construct a histogram
-  if (data.size() == 0) {status=false;
-             return false;} 
-
-  return true;
-}
-*/
-
-// Description:
-// Normalizes the data using this formula:
-// (Xi - Xmean)/StdDeviation
-// StdDeviation = sqrt(variance)
-// variance = (sum (sqr(Xi-Xmean)))/N
-// where N is the number of elements
 
 void HistoWindow::Normalize() 
 { 
@@ -424,38 +318,38 @@ void HistoWindow::setBucketNames()
 
 void HistoWindow::ConstructBarChart() 
 {
-  if (status) 
-    {
-    vtkSmartPointer<vtkDoubleArray> column1 = vtkSmartPointer<vtkDoubleArray>::New();
-    //vtkSmartPointer<vtkDoubleArray> column2 = vtkSmartPointer<vtkDoubleArray>::New();
-    column1->SetName("C1");
-    //column2->SetName("C2");
+	if (status) 
+	{
+		vtkSmartPointer<vtkDoubleArray> column1 = vtkSmartPointer<vtkDoubleArray>::New();
+		//vtkSmartPointer<vtkDoubleArray> column2 = vtkSmartPointer<vtkDoubleArray>::New();
+		column1->SetName("C1");
+		//column2->SetName("C2");
 
-    for (unsigned int i=0; i<(unsigned int)numofbins; ++i) 
-      {
-      column1->InsertNextValue(result_fq[i]);
-      //column2->InsertNextValue(col2[i]);
-      }
+		for (unsigned int i=0; i<(unsigned int)numofbins; ++i) 
+		{
+			column1->InsertNextValue(result_fq[i]);
+			//column2->InsertNextValue(col2[i]);
+		}
 
-    // Create a table
-    table = vtkSmartPointer<vtkTable>::New();
-    // Add the data to the table
-    table->AddColumn(column1);
-    //table->AddColumn(column2);
+		// Create a table
+		hisTable = vtkSmartPointer<vtkTable>::New();
+		// Add the data to the table
+		hisTable->AddColumn(column1);
+		//table->AddColumn(column2);
 
-    // Set the chart title
-    //chartView->SetTitle("HI EVERYONE");
-    //chartView->SetAxisTitle(0,"Frequency");
-    //chartView->SetAxisTitle(1,"Feature");
-    //chartView->SetAxisTitle(1,feature);
-    chartView->RemoveAllRepresentations();
-    chartView->AddRepresentationFromInput(table);
-    chartView->Update();
+		// Set the chart title
+		//chartView->SetTitle("HI EVERYONE");
+		//chartView->SetAxisTitle(0,"Frequency");
+		//chartView->SetAxisTitle(1,"Feature");
+		//chartView->SetAxisTitle(1,feature);
+		chartView->RemoveAllRepresentations();
+		chartView->AddRepresentationFromInput(hisTable);
+		chartView->Update();
 
-	#if(!VTK_NIGHTLY)
-		chartView->Show();
-	#endif
-    }
+		#if(!CHART_IS_WIDGET)
+			chartView->Show();
+		#endif
+	}
 }
 
 
