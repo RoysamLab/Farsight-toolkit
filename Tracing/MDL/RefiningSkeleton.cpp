@@ -66,29 +66,22 @@ int main(int argc, char **argv)
   VoxelPosition *AllSpinepoints;
   VoxelPosition *AllExtraSpinepoints;
   
+  int NumBackbonePoints;
+  int NumExtraSpinePoints;
+  int NumSpinePoints;
   
+  int BacboneOnly = 0; 
+
   int i;
   
-  if (argc < 5)
+  if (argc < 6)
     {
-    if(argc > 1 && strcmp(argv[1], "debug") == 0)
-      {
-      //---- for debug test----//
-      argv[0]="RefiningSkeleton.exe";
-      argv[1]="C:\\Farsight\\Bin\\Tracing\\MDL\\release\\";   
-      argv[2]="smoothBB.vtk";
-      argv[3]="-spines.vtk";
-	  argv[4]="smoothSpine.vtk";
-	  argv[5]="RefineSkel.skel";
-      //argv[9]="flag.txt";
-      }
-    else
-      {
+   
       cerr << "Usage: " << argv[0] << " <dir> <smooth backbone Skeleton file>"
            << "  <Spine skeleton file> <ExtraSpine file> <out refine skeleton file >"
-           << " [measureTimeFlag]" << endl;
+           << " OnlyBacbone" << " [measureTimeFlag]" << endl;
       exit(1);
-      }
+
     }
 
   filedir = argv[1];
@@ -99,27 +92,37 @@ int main(int argc, char **argv)
     exit(-1);
     }
 
-  tempfile1 = filedir + argv[3];
-  cout << "second file name" << tempfile1 << endl;
 
-  if((spine=fopen(tempfile1.c_str(), "rb")) == NULL)  // open spineskeleton file
+  
+  
+  BacboneOnly =  atoi(argv[6]);
+    for (i=1;i<10000;i++)
+	  printf ("%d ", BacboneOnly);
+
+  if(!BacboneOnly)
+  {
+   tempfile1 = filedir + argv[3];
+   cout << "second file name" << tempfile1 << endl;
+
+   if((spine=fopen(tempfile1.c_str(), "rb")) == NULL)  // open spineskeleton file
     {
     cerr << "couldn't open spine skeleton file " << filedir << " for input" << endl;
     exit(-1);
     }
+ 
+   tempfile2 = filedir + argv[4];
+   cout << "second file name" << tempfile2 << endl;
 
-  tempfile2 = filedir + argv[4];
-  cout << "second file name" << tempfile2 << endl;
-
-  if((ExtraSpine=fopen(tempfile2.c_str(), "rb")) == NULL)  // open spineskeleton file
+   if((ExtraSpine=fopen(tempfile2.c_str(), "rb")) == NULL)  // open spineskeleton file
     {
     cerr << "couldn't open Extra spine skeleton file " << filedir << " for input" << endl;
     exit(-1);
     }
-  
+  }//end if 
+
   tempfile3 = filedir + argv[5];
   cout << "second file name" << tempfile3 << endl;
-
+  
   if((outrefineskel=fopen(tempfile3.c_str(), "wb")) == NULL)  // open spineskeleton file
     {
     cerr << "couldn't open  skeleton file " << filedir << " for output" << endl;
@@ -137,7 +140,7 @@ int main(int argc, char **argv)
     fscanf(smoothbackbone,"%s",str);
     printf("%s\n", str); 
     }
-  int NumBackbonePoints;
+ 
   fscanf(smoothbackbone,"%s",str);
   NumBackbonePoints = atoi(str);
   printf("There are %d skeleton' points \n", NumBackbonePoints);
@@ -159,73 +162,73 @@ int main(int argc, char **argv)
 //------------------Read From spine skeleton VTK file ---------------------//
 
    // Skip first 4 lines of skeleton VTK file
-
-  for (i=0;i<12;i++)
+ if(!BacboneOnly)
+  {
+   for (i=0;i<12;i++)
     {
     fscanf(spine,"%s",str);
     printf("%s\n", str); 
     }
-  int NumSpinePoints;
-  fscanf(spine,"%s",str);
-  NumSpinePoints = atoi(str);
-  printf("There are %d spine skeleton' points \n", NumSpinePoints);
-  fscanf(spine,"%s",str);
-
-  AllSpinepoints = new VoxelPosition[NumSpinePoints];
-  float temp3;  
-  for (i=0;i<NumSpinePoints;i++)
-  {
-   fscanf (spine,"%f",&temp3);
-   AllSpinepoints[i].x = temp3;
-   fscanf (spine,"%f",&temp3);
-   AllSpinepoints[i].y = temp3; // change the sign,
-   fscanf (spine,"%f",&temp3);
-   AllSpinepoints[i].z =temp3;
-  }
-  fclose (spine);
+  
+   fscanf(spine,"%s",str);
+   NumSpinePoints = atoi(str);
+   printf("There are %d spine skeleton' points \n", NumSpinePoints);
+   fscanf(spine,"%s",str);
+   AllSpinepoints = new VoxelPosition[NumSpinePoints];
+   float temp3;  
+   for (i=0;i<NumSpinePoints;i++)
+   {
+    fscanf (spine,"%f",&temp3);
+    AllSpinepoints[i].x = temp3;
+    fscanf (spine,"%f",&temp3);
+    AllSpinepoints[i].y = temp3; // change the sign,
+    fscanf (spine,"%f",&temp3);
+    AllSpinepoints[i].z =temp3;
+   }
+   fclose (spine);
 
 //------------------Read From Extra-spine skeleton VTK file ---------------------//
 
  // Skip first 4 lines of skeleton VTK file
   //rewind (ExtraSpine);
 
-  for (i=0;i<12;i++)
+   for (i=0;i<12;i++)
     {
     fscanf(ExtraSpine,"%s",str);
     printf("%s\n", str); 
     }
-  int NumExtraSpinePoints;
-  fscanf(ExtraSpine,"%s",str);
-  NumExtraSpinePoints = atoi(str);
-  
-  fscanf(ExtraSpine,"%s",str);
-
-  AllExtraSpinepoints = new VoxelPosition[NumExtraSpinePoints];
-  //float temp;  
-  for (i=0;i<NumExtraSpinePoints;i++)
-  {
-   fscanf (ExtraSpine,"%f",&temp);
-   AllExtraSpinepoints[i].x = temp;
-   fscanf (ExtraSpine,"%f",&temp);
-   AllExtraSpinepoints[i].y = temp; // change the sign,
-   fscanf (ExtraSpine,"%f",&temp);
-   AllExtraSpinepoints[i].z =temp;
-  }
-  fclose (ExtraSpine);
  
+   fscanf(ExtraSpine,"%s",str);
+   NumExtraSpinePoints = atoi(str);
+   fscanf(ExtraSpine,"%s",str);
+   AllExtraSpinepoints = new VoxelPosition[NumExtraSpinePoints];
+   for (i=0;i<NumExtraSpinePoints;i++)
+   {
+    fscanf (ExtraSpine,"%f",&temp);
+    AllExtraSpinepoints[i].x = temp;
+    fscanf (ExtraSpine,"%f",&temp);
+    AllExtraSpinepoints[i].y = temp; // change the sign,
+    fscanf (ExtraSpine,"%f",&temp);
+    AllExtraSpinepoints[i].z =temp;
+   }
+   fclose (ExtraSpine);
+  } // end if 
  //---------------------------Output to Skel File
   for (i=0;i<NumBackbonePoints;i++)
     fprintf(outrefineskel,"%f %f %f %d\n", AllBackbonepoints[i].x, AllBackbonepoints[i].y , AllBackbonepoints[i].z,1);
-  for (i=0;i<NumSpinePoints;i++)
-    fprintf(outrefineskel,"%f %f %f %d\n", AllSpinepoints[i].x, AllSpinepoints[i].y , AllSpinepoints[i].z,1);
-  for (i=0;i<NumExtraSpinePoints;i++)
-    fprintf(outrefineskel,"%f %f %f %d\n", AllExtraSpinepoints[i].x, AllExtraSpinepoints[i].y , AllExtraSpinepoints[i].z,1);
-  
+  if(!BacboneOnly)
+  {
+    for (i=0;i<NumSpinePoints;i++)
+     fprintf(outrefineskel,"%f %f %f %d\n", AllSpinepoints[i].x, AllSpinepoints[i].y , AllSpinepoints[i].z,1);
+    for (i=0;i<NumExtraSpinePoints;i++)
+     fprintf(outrefineskel,"%f %f %f %d\n", AllExtraSpinepoints[i].x, AllExtraSpinepoints[i].y , AllExtraSpinepoints[i].z,1);
+  } // end if 
   fclose (outrefineskel);
   //release memnory
   delete []AllBackbonepoints;
-  delete []AllSpinepoints;
-  delete []AllExtraSpinepoints;
-
+  if(!BacboneOnly)
+  { delete []AllSpinepoints;
+    delete []AllExtraSpinepoints;
+  }// end if
  
 }
