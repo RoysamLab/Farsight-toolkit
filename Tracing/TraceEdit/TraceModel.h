@@ -62,19 +62,15 @@ signals:
 	//void modelChanged(void);
 	void selectionChanged(void);
 
-public slots:
-	void MapTracesToRows();
 	//void deleteTrigger(void);
 private:	
 	void stdHeaders();
 	const static int IDColumn = 0, RootCol = 4;
-	QMap<int, int> IDToRowMap;
+	
 	std::vector<TraceLine*> TraceLines;
 	std::vector<QString> headers;
 	int NumTraces;
 	int NumFeatures;
-	QStandardItemModel *Model;
-	QItemSelectionModel *SelectionModel; 
 	void SetupHeaders();
 	void SyncModel();	
 	vtkSmartPointer<vtkTable> DataTable;

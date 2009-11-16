@@ -16,9 +16,6 @@ limitations under the License.
 #include <vector>
 #include <string>
 
-#include <QtGui/QStandardItemModel>
-#include <QtGui/QItemSelectionModel>
-
 #include "TraceLine.h"
 #include "TraceModel.h"
 
@@ -112,22 +109,6 @@ void TraceModel::SyncModel()
 		this->DataTable->InsertNextRow(DataRow);
 	}//end for traces.size  
 	//this->MapTracesToRows();
-}
-void TraceModel::MapTracesToRows()
-{
-	if (this->GetTraces().size() == 0)
-	{
-		return;
-	}
-	//QModelIndex index;
-	//int ID;
-	//this->IDToRowMap.clear();
-	//for (int row = 0; row < this->Model->rowCount(); ++row)
-	//{
-	//	index = this->Model->index(row, TraceModel::IDColumn);
-	//	ID = this->Model->data(index).toInt();
-	//	this->IDToRowMap.insert(ID, row);
-	//}
 }
 vtkSmartPointer<vtkTable> TraceModel::getDataTable()
 {

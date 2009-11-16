@@ -621,7 +621,7 @@ void View3D::Rerender()
   this->Renderer->AddActor(this->BranchActor); 
   this->TreeModel->SetTraces(this->tobj->GetTraceLines()); 
   this->QVTK->GetRenderWindow()->Render();
- // this->FTKTable->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
+  this->FTKTable->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
   this->FTKTable->update();
   this->TreePlot->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
   this->TreePlot->update();
@@ -990,7 +990,7 @@ void View3D::SetRoots()
 {
 	std::vector<int> ids = this->TreeModel->GetSelecectedIDs();
 	int numToSolve= this->tobj->solveParents(ids);
-	//this->ClearSelection();
+	this->Rerender();
 	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 	this->statusBar()->showMessage(QString::number(numToSolve)+ " Remaining Branches");
   this->Rerender();
