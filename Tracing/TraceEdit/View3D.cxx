@@ -993,6 +993,7 @@ void View3D::SetRoots()
 	//this->ClearSelection();
 	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 	this->statusBar()->showMessage(QString::number(numToSolve)+ " Remaining Branches");
+  this->Rerender();
 }
 void View3D::AddNewBranches()
 {
