@@ -3,7 +3,7 @@
 
 #include "helpers.h"
 #include "ftkObject.h"
-#include "SegmentationCommon/ftkLabelImageToFeatures.h"
+#include "ftkCommon/ftkLabelImageToFeatures.h"
 #include "QStandardItemModel.h"
 #include <QObject>
 #include <QMap>

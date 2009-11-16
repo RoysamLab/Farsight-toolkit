@@ -33,10 +33,10 @@ limitations under the License.
 #include <vtkDoubleArray.h>
 #include <vtkVariantArray.h>
 #include <vtkTable.h>
-#include <SegmentationCommon/ftkLabelImageToFeatures.h>
+#include <ftkCommon/ftkLabelImageToFeatures.h>
 #include <yousef_core/yousef_seg.h>
 #include <tinyxml/tinyxml.h>
-#include <ftkObject.h>
+#include <ftkCommon/ftkObject.h>
 #include <map>
 #include <set>
 #include <string>

@@ -1,11 +1,11 @@
-SET( SEGMENTATIONCOMMON_SRCS
+SET( FTKCOMMON_SRCS
   #ftkSegmentationResult.cpp
   ftkIntrinsicFeatures.cpp
   ftkObject.cpp 
   ftkObjectAssociation.cpp
 )
 
-SET( SEGMENTATIONCOMMON_HDRS
+SET( FTKCOMMON_HDRS
   #ftkSegmentationResult.h
   ftkLabelImageToFeatures.h
   ftkLabelImageToFeatures.txx
@@ -17,14 +17,14 @@ SET( SEGMENTATIONCOMMON_HDRS
 )
 
 
-ADD_LIBRARY( SegmentationCommon
-            ${SEGMENTATIONCOMMON_SRCS} 
-            ${SEGMENTATIONCOMMON_HDRS} 
+ADD_LIBRARY( ftkCommon
+            ${FTKCOMMON_SRCS} 
+            ${FTKCOMMON_HDRS} 
 )
 
-TARGET_LINK_LIBRARIES( SegmentationCommon TinyXML
+TARGET_LINK_LIBRARIES( ftkCommon TinyXML
                        vtksys vtkCommon vtkFiltering
                        ITKCommon ITKBasicFilters ITKIO ITKStatistics vtkIO)
 
-#INSTALL( TARGETS SegmentationCommon DESTINATION . )
+#INSTALL( TARGETS ftkCommon DESTINATION . )
 

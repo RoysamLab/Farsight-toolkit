@@ -26,7 +26,7 @@ limitations under the License.
 #define __ftkNuclearAssociationRules_h
 
 #include <ftkObject.h>
-#include <SegmentationCommon/ftkObjectAssociation.h>
+#include <ftkCommon/ftkObjectAssociation.h>
 #include "itkLabelGeometryImageFilter.h"
 #include "itkImage.h"
 #include "itkImageFileReader.h"

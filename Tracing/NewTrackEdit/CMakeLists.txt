@@ -32,4 +32,4 @@ QT4_WRAP_CPP( GUI_MOC_SRCS TrackingDataModel.h)#TrackingEventHandler.h TrackSele
 
   ADD_EXECUTABLE(TrackingEditor main.cpp TrackingImageView.h TrackingImageView.cpp TrackingDataModel.h TrackingDataModel.cpp ${GUI_MOC_SRCS})
   ADD_LIBRARY(TrackEditHelper helpers.cpp)
-  TARGET_LINK_LIBRARIES(TrackingEditor ${Libraries} ${QT_LIBRARIES} TrackEditHelper SegmentationCommon)
+  TARGET_LINK_LIBRARIES(TrackingEditor ${Libraries} ${QT_LIBRARIES} TrackEditHelper ftkCommon)
