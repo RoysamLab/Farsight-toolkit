@@ -289,7 +289,8 @@ int main(int argc, char *argv[])
   //write the output image and free memory
   fwrite(volout, sizeX*sizeY*sizeZ, sizeof(DATATYPEOUT), outfile);
 
-  fclose(infile);
+  if (rawInput)
+	  fclose(infile);
   fclose(outfile);
 
   free(volin);  // by xiao
