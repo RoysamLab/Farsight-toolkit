@@ -149,14 +149,14 @@ print "Step #8 completed in %d seconds\n\n" % timeElapsed
 outBaseName = os.path.basename(fullPathToOutput);
 RefineSkelPath = dataDir + "/" + outBaseName[0:outBaseName.rfind(".Skel")] + "RefineSkel.Skel"
 
-cmd = "./RefiningSkeleton %s %s %s %s %s " % \
+cmd = "./RefiningSkeleton %s %s %s %s %s 0" % \
   (dataDir+"/", "smoothBB.vtk", "smoothSpine.vtk", "-Spine.vtk", \
    RefineSkelPath)
 print "Step #9, executing the following command:\n%s" % cmd
 timeBefore = time.time()
 subprocess.call(["./RefiningSkeleton",\
                   dataDir+"/", "smoothBB.vtk", "smoothSpine.vtk", "-spines.vtk",\
-                  RefineSkelPath])
+                  RefineSkelPath,"0"])
 timeElapsed = time.time() - timeBefore
 print "Step #9 completed in %d seconds\n\n" % timeElapsed
 
