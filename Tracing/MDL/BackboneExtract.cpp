@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
     {
     cout << argv[0] << " <data dir> <skel pt file> <vol file> <xs> <ys> <zs> "
          << "<edgeRange> <Erosion seps>"
-         << "<out spine VTK graph >" << " Power " <<endl;
+         << "<out backbone VTK file >" << " Power " <<endl;
     return 1;
     }
   
