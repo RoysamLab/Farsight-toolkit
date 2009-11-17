@@ -21,6 +21,7 @@ limitations under the License.
 #include "undobuff.h"
 #include <stdio.h>
 #include <string>
+#include <set>
 #include <QtGui>
 
 //forward declarations
@@ -47,7 +48,7 @@ class vtkPolyData;
 class vtkPolyDataMapper;
 class vtkRenderer;
 class vtkRenderWindowInteractor;
-class  vtkSliderWidget;
+class vtkSliderWidget;
 class vtkSphereSource;
 class vtkVolume;
   
@@ -119,10 +120,6 @@ public slots:
 	void GetSomaFile();
 	void SetTraceType(int newType);
 
-	//void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
-    void DereferenceGapsPlotView();
-	void DereferenceTreePlotView();
-
 	void UndoAction();
 	void RedoAction();
 
@@ -141,7 +138,7 @@ private:
 	typedef undoBuffer<std::pair<std::string, TraceObject> > bufferType;
 	bufferType *undoBuff;
 
-	int smallLine;
+	int SmallLineLength;
 	float lineWidth;
 	double SelectColor;
 

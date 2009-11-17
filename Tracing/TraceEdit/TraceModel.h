@@ -53,6 +53,7 @@ public:
 	std::vector<int> GetSelecectedIDs();
 	void root();
 	void SelectByIDs(int ID);
+	void SelectByIDs(std::set<long int> ID);
 	vtkSmartPointer<vtkTable> getDataTable();
 	ObjectSelection * GetObjectSelection();
 

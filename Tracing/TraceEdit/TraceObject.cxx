@@ -1613,7 +1613,7 @@ void TraceObject::FindMinLines(int smallSize)
 {
   //std::cout<< "finding small lines\n";
   TraceLine *tline;
- // std::vector<TraceLine*> lineList =  this->GetTraceLines();
+  this->SmallLines.clear();
   std::vector<TraceLine*>::iterator iter = this->trace_lines.begin();//lineList.begin();
   while(iter!=this->trace_lines.end())
   {
@@ -1621,7 +1621,7 @@ void TraceObject::FindMinLines(int smallSize)
 	if((smallSize >= tline->GetSize())&& (tline->GetBranchPointer()->size()==0))
     {
       tline->setTraceColor(this->smallLineColor);
-	  SmallLines.push_back(tline->GetId());
+	  this->SmallLines.insert( (long) tline->GetId());
     }
     ++iter;
   }
@@ -1810,4 +1810,18 @@ bool TraceObject::isParent(int id)
 		}
 	}
 	return found;	
+}
+
+void TraceObject::cleanTree()
+{
+	std::vector<TraceLine*> TempTraceLines;
+	for (unsigned int i = 0; i < this->trace_lines.size(); i++)
+	{
+		if (this->trace_lines.at(i)->GetParentID() == -1)
+		{
+			TempTraceLines.push_back(this->trace_lines.at(i));
+		}
+	}
+	this->trace_lines.clear();
+	this->trace_lines = TempTraceLines;
 }

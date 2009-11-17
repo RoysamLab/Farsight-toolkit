@@ -16,6 +16,7 @@ limitations under the License.
 #ifndef __TRACEOBJECT_H
 #define __TRACEOBJECT_H
 #include <vector>
+#include <set>
 #include <vtksys/hash_map.hxx> /* Platform independent hashmap */
 #include "vtkSmartPointer.h"
 
@@ -73,6 +74,7 @@ public:
 	void mergeTraces(unsigned long long int eMarker, unsigned long long int sMarker);
 	void CreatePolyDataRecursive(TraceLine* , vtkSmartPointer<vtkFloatArray> , vtkSmartPointer<vtkPoints> ,vtkSmartPointer<vtkCellArray>);
 	void FindMinLines(int smallSize);
+	void cleanTree();
 	int createGapLists(std::vector<TraceLine*> traceList);
 	int solveParents(std::vector<int> ids);
   void SetCombineShortVTKLines(bool b) { this->CombineShortVTKLines = b; }
@@ -84,7 +86,7 @@ public:
 	std::vector<TraceLine*>* GetTraceLinesPointer();
 	std::vector<TraceLine*> GetTraceLines();
 	std::vector<TraceBit> CollectTraceBits();
-	std::vector<int> SmallLines;
+	std::set<long int> SmallLines;
 	std::vector<TraceGap*> Gaps;
 	std::vector<branchPT*> BranchPoints;
 	std::vector<std::string> FeatureHeaders;

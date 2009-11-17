@@ -258,7 +258,7 @@ void View3D::Initialize()
 	this->BrightnessSlider = 0;
 	this->tobj->gapTol = .5;
 	this->tobj->gapMax = 10;
-	this->smallLine = 5;
+	this->SmallLineLength = 5;
 	this->SelectColor =.1;
 	this->lineWidth= 2;
 	this->GapsPlotView = NULL;
@@ -512,7 +512,7 @@ void View3D::ShowSettingsWindow()
   //make sure the values in the input fields are up-to-date
   this->MaxGapField->setText(QString::number(this->tobj->gapMax));
   this->GapToleranceField->setText(QString::number(this->tobj->gapTol));
-  this->LineLengthField->setValue(this->smallLine);
+  this->LineLengthField->setValue(this->SmallLineLength);
   this->ColorValueField->setValue(this->SelectColor*100);
   this->LineWidthField->setValue(this->lineWidth);
   this->SettingsWidget->show();
@@ -522,7 +522,7 @@ void View3D::ApplyNewSettings()
 {
   this->tobj->gapMax = this->MaxGapField->text().toInt();
   this->tobj->gapTol = this->GapToleranceField->text().toDouble();
-  this->smallLine = this->LineLengthField->text().toFloat();
+  this->SmallLineLength = this->LineLengthField->text().toFloat();
   this->SelectColor = this->ColorValueField->text().toDouble()/100;
   this->lineWidth = this->LineWidthField->text().toFloat();
   //this->Rerender();
@@ -722,9 +722,6 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
 
     case 'a':
       view->SLine();
-      /*std::cout<<"select small lines\n";
-      view->tobj->FindMinLines(view->smallLine);
-      view->Rerender();*/
       break;
 
     case 'q':
@@ -758,13 +755,10 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
 /*  Actions   */
 void View3D::SLine()
 {
-  int numLines, i;
-  this->tobj->FindMinLines(this->smallLine);
+  int numLines;
+  this->tobj->FindMinLines(this->SmallLineLength);
   numLines= this->tobj->SmallLines.size();
-  for (i=0; i<numLines; i++)
-  {
-	  this->TreeModel->SelectByIDs(this->tobj->SmallLines[i]);
-  }
+  this->TreeModel->SelectByIDs(this->tobj->SmallLines);
   QMessageBox Myquestion;
   Myquestion.setText("Number of selected small lines:  " 
     + QString::number(numLines));
@@ -797,7 +791,12 @@ void View3D::ListSelections()
 	QMessageBox *selectionInfo = new QMessageBox;
 	QString listText;
 	QString selectedText;
-	if (IDs.size()<= 0)
+	if(this->tobj->BranchPoints.size()> 0)
+	{
+		listText += QString::number(this->tobj->BranchPoints.size())
+			+ " Branches are unsolved/n";
+	}
+	else if (IDs.size()<= 0)
 	{
 	listText = tr("No traces selected");
 	}
@@ -825,31 +824,16 @@ void View3D::ShowTreeData()
 		this->TreePlot->close();
 	}
 	this->FTKTable = new TableWindow();
-	//connect(this->FTKTable, SIGNAL(sorted()),this->TreeModel, SLOT(MapTracesToRows()));
 	this->FTKTable->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
 	this->FTKTable->setWindowTitle("Trace Object Features Table");
-	//this->FTKTable->ResizeToOptimalSize();
 	this->FTKTable->move(32, 561);
 	this->FTKTable->show();
-	/*this->TreeTable->setModel(this->TreeModel->GetModel());
-	this->TreeTable->setSelectionModel(this->TreeModel->GetSelectionModel());
-	this->TreeTable->setSelectionBehavior(QAbstractItemView::SelectRows);
-  this->TreeTable->setSortingEnabled(true);
-  this->TreeTable->resize(650, 200);
-  this->TreeTable->move(32, 561);
-	this->TreeTable->update();
-	this->TreeTable->show();*/
 
 	this->TreePlot = new PlotWindow();
 	this->TreePlot->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
-	//this->connect(this->TreePlot,SIGNAL(destroyed()),this, SLOT(DereferenceTreePlotView())); 
 	this->TreePlot->setWindowTitle("Trace Object Features Plot");
-  this->TreePlot->move(681, 59);
+	this->TreePlot->move(681, 59);
 	this->TreePlot->show();
-}
-void View3D::DereferenceTreePlotView()
-{
-	this->TreePlot = 0;
 }
 
 void View3D::ClearSelection()
@@ -990,6 +974,7 @@ void View3D::SetRoots()
 {
 	std::vector<int> ids = this->TreeModel->GetSelecectedIDs();
 	int numToSolve= this->tobj->solveParents(ids);
+	this->tobj->cleanTree();
 	this->Rerender();
 	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 	this->statusBar()->showMessage(QString::number(numToSolve)+ " Remaining Branches");
@@ -1111,23 +1096,12 @@ void View3D::ShowMergeStats()
   this->MergeGaps->SetTraceGaps(this->tobj->Gaps);
   this->GapsTableView = new TableWindow(); 
   this->GapsTableView->setModels(this->MergeGaps->getDataTable(), this->MergeGaps->GetObjectSelection());
-  //connect(this->GapsTableView, SIGNAL(sorted()),this->MergeGaps, SLOT(MapTracesToRows()));
- // connect(this->GapsTableView, SIGNAL(sorted()),this->MergeGaps, SLOT(MapGapIDsToRows()));
   this->GapsTableView->setWindowTitle("Computed Features for Merge");
-  //this->GapsTableView->ResizeToOptimalSize();
   this->GapsTableView->show();
-  //this->GapsTableView->horizontalHeader()->show();
-
   this->GapsPlotView = new PlotWindow();
   this->GapsPlotView->setModels(this->MergeGaps->getDataTable(), this->MergeGaps->GetObjectSelection());
-  //this->connect(this->GapsPlotView,SIGNAL(destroyed()),this, SLOT(DereferenceGapsPlotView()));
   this->GapsPlotView->setWindowTitle("Computed Features for Merge");
   this->GapsPlotView->show();
-}
-
-void View3D::DereferenceGapsPlotView()
-{
-  this->GapsPlotView = 0;
 }
 
 void View3D::updateSelectionHighlights()
@@ -1174,10 +1148,10 @@ void View3D::MergeSelectedTraces()
   bool selected = false;
   int curID;
   QMessageBox MergeInfo;
-  double /*currentAngle=0,*/ aveCost=0;
+  double aveCost=0;
   QPushButton *mergeAll;
   QPushButton *mergeNone;
-  unsigned int i=0, j=0/*,mergeCount=0*/;
+  unsigned int i=0, j=0;
   MergeInfo.setText("Merge Function");
   if (GapIDs.size() > 1)
   {
@@ -1214,7 +1188,6 @@ void View3D::MergeSelectedTraces()
   {
     for (i=0;i<this->tobj->Gaps.size(); i++)
     {
-      //currentAngle=fabs(this->tobj->Gaps[i]->angle); 
 	  if  (this->tobj->Gaps[i]->cost <=5)
       {
         this->dtext+= "\nTrace " + QString::number(this->tobj->Gaps[i]->Trace1->GetId());

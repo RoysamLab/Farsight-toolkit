@@ -119,6 +119,11 @@ void TraceModel::SelectByIDs(int ID)
 	this->Selection->toggle((long) ID);
 	emit selectionChanged();
 }
+void TraceModel::SelectByIDs(std::set<long int> ID)
+{
+	this->Selection->add(ID);
+	emit selectionChanged();
+}
 std::vector<int> TraceModel::GetSelecectedIDs()
 {
 	std::vector<int> SelectedIDs;
