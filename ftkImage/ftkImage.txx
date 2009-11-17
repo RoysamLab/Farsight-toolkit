@@ -330,7 +330,7 @@ template <typename pType, typename rType> rType Image::GetPixelValue(void * p)
 	return static_cast<rType>(*pval);
 }
 
-template<typename TComp> void Image::LoadImageITK(std::string fileName, itkPixelType pixType, bool stacksAreForTime)
+template<typename TComp> void Image::LoadImageITK(std::string fileName, unsigned int numChannels, itkPixelType pixType, bool stacksAreForTime, bool appendChannels)
 {
 	if(imageDataPtrs.size() > 0)
 	{
@@ -354,7 +354,7 @@ template<typename TComp> void Image::LoadImageITK(std::string fileName, itkPixel
 		case itk::ImageIOBase::COVARIANTVECTOR:
 		case itk::ImageIOBase::SYMMETRICSECONDRANKTENSOR:
 		case itk::ImageIOBase::DIFFUSIONTENSOR3D:
-			LoadImageITK<TComp>( fileName, m_Info.numChannels, stacksAreForTime );
+			LoadImageITK<TComp>( fileName, numChannels, stacksAreForTime, appendChannels );
 		break;
 
 		case itk::ImageIOBase::OFFSET:
@@ -370,34 +370,35 @@ template<typename TComp> void Image::LoadImageITK(std::string fileName, itkPixel
 }
 
 //THIS IS AN INTERMEDIATE STEP WHEN A TYPE WITH VARIABLE LENGTH FIELDS IS USED:
-template< typename TComp> void Image::LoadImageITK(std::string fileName, unsigned int numChannels, bool stacksAreForTime)
+template< typename TComp> void Image::LoadImageITK(std::string fileName, unsigned int numChannels, bool stacksAreForTime, bool appendChannels)
 {
 	switch(numChannels)
 	{
 	case 1:
-		LoadImageITK< TComp, 1 >( fileName, stacksAreForTime );
+		LoadImageITK< TComp, 1 >( fileName, stacksAreForTime, appendChannels );
 	break;
 	case 2:
-		LoadImageITK< TComp, 2 >( fileName, stacksAreForTime );
+		LoadImageITK< TComp, 2 >( fileName, stacksAreForTime, appendChannels );
 	break;
 	case 3:
-		LoadImageITK< TComp, 3 >( fileName, stacksAreForTime );
+		LoadImageITK< TComp, 3 >( fileName, stacksAreForTime, appendChannels );
 	break;
 	case 4:
-		LoadImageITK< TComp, 4 >( fileName, stacksAreForTime );
+		LoadImageITK< TComp, 4 >( fileName, stacksAreForTime, appendChannels );
 	break;
 	case 5:
-		LoadImageITK< TComp, 5 >( fileName, stacksAreForTime );
+		LoadImageITK< TComp, 5 >( fileName, stacksAreForTime, appendChannels );
 	break;
 	case 6:
-		LoadImageITK< TComp, 6 >( fileName, stacksAreForTime );
+		LoadImageITK< TComp, 6 >( fileName, stacksAreForTime, appendChannels );
 	break;
-	//NOTE 6 IS MAXIMUM ITK WILL HANDLE
+		//NOTE 6 IS MAXIMUM ITK WILL HANDLE
 	}
 }
 
-//THIS ASSUMES THAT THE IMAGE CAN BE LOADED AS A FIXED ARRAY!!!!
-template< typename TComp, unsigned int channels > void Image::LoadImageITK(std::string fileName, bool stacksAreForTime)
+//THIS ASSUMES THAT THE IMAGE CAN BE LOADED AS A FIXED ARRAY!!!! 
+//IF DATA ALREADY EXITS WILL ATTEMPT TO APPEND THE NEW IMAGE
+template< typename TComp, unsigned int channels > void Image::LoadImageITK(std::string fileName, bool stacksAreForTime, bool appendChannels)
 {
 	typedef itk::FixedArray<TComp,channels>		PixelType;
 	typedef itk::Image< PixelType, 3 >			ImageType;
@@ -410,19 +411,19 @@ template< typename TComp, unsigned int channels > void Image::LoadImageITK(std::
 	reader->Update();
 	ImagePointer img = reader->GetOutput();
 
-	//Set up the size info of the image:
+	//Set up the size info of the new image I am about to load:
 	typename ImageType::RegionType region = img->GetBufferedRegion();
 	typename ImageType::RegionType::IndexType start = region.GetIndex();
 	typename ImageType::RegionType::SizeType size = region.GetSize();
-	Info nInfo;
-	nInfo.numColumns = size[0] - start[0];
-	nInfo.numRows = size[1] - start[1];
-	nInfo.numZSlices = size[2] - start[2];
-	nInfo.numTSlices = 1;
-	nInfo.bytesPerPix = sizeof(TComp);		//Already know this matches existing
-	nInfo.dataType = m_Info.dataType;		//Preserve this value(set earlier)
-	nInfo.numChannels = m_Info.numChannels;	//Preserve this value(set earlier)
-	nInfo.spacing = m_Info.spacing;			//Preserve (set earlier)
+	Info nInfo;											//Info of this new image!!
+	nInfo.numColumns = size[0] - start[0];				//x-dimension
+	nInfo.numRows = size[1] - start[1];					//y-dimension
+	nInfo.numZSlices = size[2] - start[2];				//z-dimension
+	nInfo.numTSlices = 1;								//t-dimension
+	nInfo.bytesPerPix = sizeof(TComp);					//Already know bytes per pixel by component type
+	nInfo.dataType = m_Info.dataType;					//Preserve (set earlier)
+	nInfo.numChannels = channels;						//Part of template definition
+	nInfo.spacing = m_Info.spacing;						//Preserve (set earlier)
 
 	if(stacksAreForTime)	//Switch the Z and T numbers:
 	{
@@ -430,7 +431,10 @@ template< typename TComp, unsigned int channels > void Image::LoadImageITK(std::
 		nInfo.numZSlices  = 1;
 	}
 
+	unsigned short startingCH = 0;
 	unsigned short startingT = 0;
+
+	//If data is already loaded we must make sure that this new image will be appended correctly:
 	if(imageDataPtrs.size() > 0)		//Already have data
 	{
 		//Check Size to be sure match:
@@ -441,17 +445,41 @@ template< typename TComp, unsigned int channels > void Image::LoadImageITK(std::
 			throw excp;
 			return;
 		}
-		startingT = m_Info.numTSlices;	//Number of existing T slices changes
+
+		if(appendChannels)		//T must also match!!!
+		{
+			if(m_Info.numTSlices != nInfo.numTSlices)
+			{
+				itk::ExceptionObject excp;
+				excp.SetDescription("Image T Slices does not match");
+				throw excp;
+				return;
+			}
+			startingCH = m_Info.numChannels;	//Number of channels changes
+		}
+
+		if(stacksAreForTime)	//Channels must also match!!!
+		{
+			if(m_Info.numChannels != nInfo.numChannels)		//Make sure number of components matches:
+			{
+				itk::ExceptionObject excp;
+				excp.SetDescription("Number of Channels does not match");
+				throw excp;
+				return;
+			}
+			startingT = m_Info.numTSlices;		//Number of existing T slices changes
+		}
 	}
 	else	//Don't already have data
 	{
 		m_Info = nInfo;		//Set the Image Info
-		this->SetDefaultColors();
 	}
 	
 	//Change the number of Time slices if I'm adding some, and resize the vector:
 	m_Info.numTSlices = startingT + nInfo.numTSlices;
 	imageDataPtrs.resize(m_Info.numTSlices);
+
+	m_Info.numChannels = startingCH + nInfo.numChannels;
 
 	unsigned int numBytesPerChunk = m_Info.BytesPerChunk();
 
@@ -460,7 +488,7 @@ template< typename TComp, unsigned int channels > void Image::LoadImageITK(std::
 	block.manager = FTK;
 	for(int t=startingT; t<m_Info.numTSlices; ++t)
 	{
-		for(int c=0; c<m_Info.numChannels; ++c)
+		for(int c=startingCH; c<m_Info.numChannels; ++c)
 		{
 			//block.mem = (void *)(new TComp[numBytesPerChunk]);
 			void * mem = malloc(numBytesPerChunk);
@@ -480,9 +508,10 @@ template< typename TComp, unsigned int channels > void Image::LoadImageITK(std::
 	{
 		//create a pixel object & Get each channel value
 		typename ImageType::PixelType pixelValue = it.Get();
-		for(int c=0; c<m_Info.numChannels; ++c)
+		unsigned short ch = startingCH;
+		for(int c=0; c<nInfo.numChannels; ++c)
 		{
-			TComp *toLoc = ((TComp*)(imageDataPtrs[t][c].mem));
+			TComp *toLoc = ((TComp*)(imageDataPtrs[t][ch++].mem));
 			toLoc[b] = (TComp)pixelValue[c];
 		}
 

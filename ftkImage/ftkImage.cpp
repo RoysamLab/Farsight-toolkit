@@ -88,16 +88,9 @@ void Image::SetSpacing(float x, float y, float z)
 	m_Info.spacing.at(2) = z;
 }
 
-//Load up each of these 3D grayscale images, convert to 8Bit, and make one image with multiple channels:
-bool Image::LoadGrayscaleFilesAsMultipleChannels(std::vector<std::string> filenames, std::vector<std::string> channelnames, std::vector<unsigned char> colors)
+//Each file contains 1 or more channels that will be appended.  All other sizes must match in each file.
+bool Image::LoadFilesAsMultipleChannels(std::vector<std::string> filenames, std::vector<std::string> channelnames, std::vector<unsigned char> colors)
 {
-	typedef unsigned short UShortPixelType;
-	typedef unsigned char UCharPixelType;
-	typedef itk::Image< UShortPixelType, 3 > UShortImageType;
-	typedef itk::Image< UCharPixelType, 3 > UCharImageType;
-	typedef itk::ImageFileReader< UShortImageType > ImageFileReaderType;
-	typedef itk::RescaleIntensityImageFilter< UShortImageType, UCharImageType > RescaleIntensityFilterType;
-
 	int count = (int)filenames.size();
 	if( (int)channelnames.size() != count || (int)colors.size() != 3*count )
 		return false;
@@ -106,9 +99,11 @@ bool Image::LoadGrayscaleFilesAsMultipleChannels(std::vector<std::string> filena
 	m_Info.channelColors.clear();
 	m_Info.channelNames.clear();
 
-	for( int i=0; i < count; ++i )
+	for(int i=0; i<count; ++i)
 	{
-		std::string fname = filenames.at(i);
+		if( !this->LoadStandardImage( filenames.at(i), false, true ) )
+			return false;
+
 		std::string chname = channelnames.at(i);
 
 		//Parse the color info for the channel
@@ -117,49 +112,18 @@ bool Image::LoadGrayscaleFilesAsMultipleChannels(std::vector<std::string> filena
 		color[1] = (unsigned char)( colors.at(i*3 + 1) );
 		color[2] = (unsigned char)( colors.at(i*3 + 2) );
 
-		//Using ITK to read images and then passing the buffer pointer and meta info to AppendChannelFromData3D to add the channels and their names
-		ImageFileReaderType::Pointer imagefilereader = ImageFileReaderType::New();
-		imagefilereader->SetFileName( fname );
-		try
-		{
-	       imagefilereader->Update();
-		}
-		catch( itk::ExceptionObject & excp )
-		{
-			std::cerr << excp << std::endl;
-			return false;
-		}
-
-		RescaleIntensityFilterType::Pointer rescalefilter = RescaleIntensityFilterType::New();
-		rescalefilter->SetOutputMaximum( 255 );
-		rescalefilter->SetOutputMinimum( 0 );
-		rescalefilter->SetInput( imagefilereader->GetOutput() );
-		try
-		{
-	       rescalefilter->Update();
-		}
-		catch( itk::ExceptionObject & excp )
-		{
-			std::cerr << excp << std::endl;
-			return false;
-		}
-
-		UCharImageType::Pointer image_channel = UCharImageType::New();
-		image_channel = rescalefilter->GetOutput();
-		int size1 = image_channel->GetLargestPossibleRegion().GetSize()[0];
-		int size2 = image_channel->GetLargestPossibleRegion().GetSize()[1];
-		int size3 = image_channel->GetLargestPossibleRegion().GetSize()[2];
-
-		UCharPixelType *temp_ptr = image_channel->GetBufferPointer();
-
-		//void *dptr, DataType dataType, int bpPix, int cs, int rs, int zs, std::string name, std::vector<unsigned char> color, bool copy
-		this->AppendChannelFromData3D( temp_ptr, itk::ImageIOBase::UCHAR, sizeof( UCharPixelType ), size1, size2, size3, chname, color, true );
+		m_Info.channelColors.push_back(color);	//Use provided color
+		m_Info.channelNames.push_back(chname);	//Use provided name
 	}
 	return true;
 }
 
+//Each file contains a 2D image (may be multiple channels) that will be a new Z:
+//Always assume each file contains a new Z
 bool Image::LoadFileSeries( std::string arg, int start, int end, int step)
 {	
+	DeleteData();
+
 	typedef itk::NumericSeriesFileNames NameGeneratorType;
 	NameGeneratorType::Pointer nameGenerator = NameGeneratorType::New();
 	nameGenerator->SetSeriesFormat( arg );
@@ -170,36 +134,51 @@ bool Image::LoadFileSeries( std::string arg, int start, int end, int step)
 	std::vector<std::string> names = nameGenerator->GetFileNames();
 	for(int i=0; i<(int)names.size(); ++i)
 	{
-		if( !this->LoadFile( names.at(i) ) )
+		if( !this->LoadStandardImage( names.at(i), false, false ) )
 			return false;
 	}
+	this->SetDefaultColors();
 	return true;
 }
 
-//Loads a File normally (2D/3D)
+////Load 1 file normally (2D/3D - multi-page assumed to be z-direction)
 bool Image::LoadFile( std::string fName)
 {
+	DeleteData();
+
 	if( GetFileExtension(fName) == "lsm" )
 		return this->LoadLSMImage( fName );
 	else
-		return this->LoadStandardImage( fName, false);
+	{
+		if(!this->LoadStandardImage( fName, false, false))
+			return false;
+		this->SetDefaultColors();
+	}
+	return true;
 }
 
 //Attempts to load a multi-page image and treat each page as a separate time slice.
 //Does not work for LSM images
 bool Image::LoadFileAsTimeSeries( std::string fName)
 {
+	DeleteData();
+
 	if( GetFileExtension(fName) == "lsm" )
 		return false;
 	else
-		return this->LoadStandardImage( fName, true);
+	{
+		if(!this->LoadStandardImage( fName, true, false))
+			return false;
+		this->SetDefaultColors();
+	}
+	return true;
 }
 
 //**********************************************************************************************************
 // IF IMAGE HAS MULTIPLE PAGES IT IS ASSUMED THAT THEY REPRESENT A 3D IMAGE, BUT THEY CAN BE FORCED TO BE T
 //
 //***********************************************************************************************************
-bool Image::LoadStandardImage( std::string fileName, bool stacksAreForTime = false )
+bool Image::LoadStandardImage( std::string fileName, bool stacksAreForTime, bool appendChannels )
 {
 	// Find out the pixel type of the image in file
 	itk::ImageIOBase::Pointer imageIO = itk::ImageIOFactory::CreateImageIO( fileName.c_str(), itk::ImageIOFactory::ReadMode );
@@ -217,6 +196,8 @@ bool Image::LoadStandardImage( std::string fileName, bool stacksAreForTime = fal
 	itkPixelType pixelType = imageIO->GetPixelType();
 	DataType dataType = imageIO->GetComponentType();
 	int numComponents = imageIO->GetNumberOfComponents();
+	int numDimensions = imageIO->GetNumberOfDimensions();
+	int dim3size = 1;
 
 	if( numComponents > 6 )	//Can't handle more than 6 channels
 	{
@@ -226,15 +207,38 @@ bool Image::LoadStandardImage( std::string fileName, bool stacksAreForTime = fal
 		return false;
 	}
 
-	if(imageDataPtrs.size() > 0)
+	if(imageDataPtrs.size() > 0)	//Already have data, make sure I can load this new image:
 	{
-		if(m_Info.dataType != dataType || m_Info.numChannels != numComponents)
+		if(m_Info.dataType != dataType)
 			return false;
+
+		for(int d=0; d<numDimensions; ++d)
+		{
+			if(d==0 && m_Info.numColumns != imageIO->GetDimensions(d))
+				return false;
+			if(d==1 && m_Info.numRows != imageIO->GetDimensions(d))
+				return false;
+			if(d==2)
+				dim3size = imageIO->GetDimensions(d);
+			if(d>=3)
+				return false;
+		}
+		if(stacksAreForTime)
+		{
+			if(m_Info.numChannels != numDimensions)
+				return false;
+			if(appendChannels && m_Info.numTSlices != dim3size)
+				return false;
+		}
+		else
+		{
+			if(appendChannels && m_Info.numZSlices != dim3size)
+				return false;
+		}
 	}
 	else
 	{
-		//My first image so set some stuff:
-		m_Info.numChannels = numComponents;
+		//My first image so set some stuff (rest will be set later):
 		m_Info.dataType = dataType;
 		m_Info.spacing.assign(3,1);
 	}
@@ -242,34 +246,34 @@ bool Image::LoadStandardImage( std::string fileName, bool stacksAreForTime = fal
 	switch( m_Info.dataType )
     {
 		case itk::ImageIOBase::UCHAR:
-			LoadImageITK<unsigned char>(fileName, pixelType, stacksAreForTime);
+			LoadImageITK<unsigned char>(fileName, numComponents, pixelType, stacksAreForTime, appendChannels);
 		break;
 		case itk::ImageIOBase::CHAR:
-			LoadImageITK<char>(fileName, pixelType, stacksAreForTime);
+			LoadImageITK<char>(fileName, numComponents, pixelType, stacksAreForTime, appendChannels);
 		break;
 		case itk::ImageIOBase::USHORT:
-			LoadImageITK<unsigned short>(fileName, pixelType, stacksAreForTime);
+			LoadImageITK<unsigned short>(fileName, numComponents, pixelType, stacksAreForTime, appendChannels);
 		break;
 		case itk::ImageIOBase::SHORT:
-			LoadImageITK<short>(fileName, pixelType, stacksAreForTime);
+			LoadImageITK<short>(fileName, numComponents, pixelType, stacksAreForTime, appendChannels);
 		break;
 		case itk::ImageIOBase::UINT:
-			LoadImageITK<unsigned int>(fileName, pixelType, stacksAreForTime);
+			LoadImageITK<unsigned int>(fileName, numComponents, pixelType, stacksAreForTime, appendChannels);
 		break;
 		case itk::ImageIOBase::INT:
-			LoadImageITK<int>(fileName, pixelType, stacksAreForTime);
+			LoadImageITK<int>(fileName, numComponents, pixelType, stacksAreForTime, appendChannels);
 		break;
 		case itk::ImageIOBase::ULONG:
-			LoadImageITK<unsigned long>(fileName, pixelType, stacksAreForTime);
+			LoadImageITK<unsigned long>(fileName, numComponents, pixelType, stacksAreForTime, appendChannels);
 		break;
 		case itk::ImageIOBase::LONG:
-			LoadImageITK<long>(fileName, pixelType, stacksAreForTime);
+			LoadImageITK<long>(fileName, numComponents, pixelType, stacksAreForTime, appendChannels);
 		break;
 		case itk::ImageIOBase::FLOAT:
-			LoadImageITK<float>(fileName, pixelType, stacksAreForTime);
+			LoadImageITK<float>(fileName, numComponents, pixelType, stacksAreForTime, appendChannels);
 		break;
 		case itk::ImageIOBase::DOUBLE:
-			LoadImageITK<double>(fileName, pixelType, stacksAreForTime);
+			LoadImageITK<double>(fileName, numComponents, pixelType, stacksAreForTime, appendChannels);
 		break;
 		default:
 			itk::ExceptionObject excp;

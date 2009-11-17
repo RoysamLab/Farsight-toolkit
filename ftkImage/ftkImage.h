@@ -70,7 +70,7 @@ public:
 	bool LoadFile( std::string fName ); //Load 1 file (multi-page assumed to be z-direction)
 	bool LoadFileAsTimeSeries( std::string fName ); //Load 1 file (multi-page assumed to be time series)
 	bool LoadFileSeries( std::string arg, int start, int end, int step ); //Always assume each file contains a new Z
-	bool LoadGrayscaleFilesAsMultipleChannels(std::vector<std::string> filenames, std::vector<std::string> channelnames, std::vector<unsigned char> colors);
+	bool LoadFilesAsMultipleChannels(std::vector<std::string> filenames, std::vector<std::string> channelnames, std::vector<unsigned char> colors);
 
 	bool SaveChannelAs( int channel, std::string baseName, std::string ext );
 
@@ -142,7 +142,7 @@ private:
 	std::string GetPath(std::string);
 	std::string itoa(const int x);
 
-	bool LoadStandardImage( std::string fileName, bool stacksAreForTime);
+	bool LoadStandardImage( std::string fileName, bool stacksAreForTime = false, bool appendChannels = false);
 	void SetDefaultColors(void);
 	bool LoadLSMImage( std::string fileName );
 
@@ -157,9 +157,9 @@ private:
 	template<typename TPixel> bool WriteImageITK(int channel, std::string baseName, std::string ext);
 	template<typename TPixel> bool WriteImageITK(std::string fullFilename, int T, int CH);
 
-	template<typename TComp> void LoadImageITK(std::string fileName, itkPixelType pixType, bool stacksAreForTime);
-	template<typename TComp> void LoadImageITK(std::string filename, unsigned int numChannels, bool stacksAreForTime);
-	template<typename TComp, unsigned int channels> void LoadImageITK(std::string fileName, bool stacksAreForTime);
+	template<typename TComp> void LoadImageITK(std::string fileName, unsigned int numChannels, itkPixelType pixType, bool stacksAreForTime, bool appendChannels);
+	template<typename TComp> void LoadImageITK(std::string filename, unsigned int numChannels, bool stacksAreForTime, bool appendChannels);
+	template<typename TComp, unsigned int channels> void LoadImageITK(std::string fileName, bool stacksAreForTime, bool appendChannels);
 };
 
 }  // end namespace ftk

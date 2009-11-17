@@ -121,7 +121,7 @@ bool Histopathology::LoadAll(std::string filename)
 	//doc.close();
 
 	dataImage = ftk::Image::New();
-	if(!dataImage->LoadGrayscaleFilesAsMultipleChannels(dataFilename,dataChName,dataColor))	//Load for display
+	if(!dataImage->LoadFilesAsMultipleChannels(dataFilename,dataChName,dataColor))	//Load for display
 	{
 		errorMessage = "Data Image failed to load";
 		dataImage = 0;
@@ -129,7 +129,7 @@ bool Histopathology::LoadAll(std::string filename)
 	}
 
 	labelImage = ftk::Image::New();
-	if(!labelImage->LoadGrayscaleFilesAsMultipleChannels(labelFilename,lablChName,lablColor))	//Load for display
+	if(!labelImage->LoadFilesAsMultipleChannels(labelFilename,lablChName,lablColor))	//Load for display
 	{
 		errorMessage = "Label Image failed to load";
 		labelImage = 0;
