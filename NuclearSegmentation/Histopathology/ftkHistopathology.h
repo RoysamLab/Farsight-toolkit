@@ -82,9 +82,6 @@ protected:
 	ftk::Image::Pointer dataImage;		//The data image
 	ftk::Image::Pointer labelImage;		//My label image
 
-	bool LoadData();											//Will load the data image into memory
-	bool LoadLabel();											//Load just the label image if the filename is already known
-
 }; // end Histopathology
 
 }  // end namespace ftk

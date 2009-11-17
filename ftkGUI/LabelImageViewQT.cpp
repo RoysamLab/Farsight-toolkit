@@ -667,13 +667,13 @@ void LabelImageViewQT::scaleIntensity(QImage *img, int threshold, int offset)
 	{
 		for(int r=0; r<img->height(); ++r)
 		{
-			old_v = img->pixelIndex(r,c);
+			old_v = img->pixelIndex(c,r);
 			if( old_v >= threshold)
 			{
 				new_v = old_v + offset;
 				if(new_v > 255) new_v=255;
 				else if(new_v < 0) new_v=0;
-				img->setPixel(r,c, new_v);
+				img->setPixel(c,r, new_v);
 			}
 		}
 	}
@@ -722,8 +722,16 @@ void LabelImageViewQT::drawBoundaries(QPainter *painter)
 
 	for(int ch = 0; ch < chs; ++ch)
 	{
-		std::vector<unsigned char> color = (*info).channelColors[ch];
-		QColor qcolor(color[0],color[1],color[2]); 
+		QColor qcolor;
+		if(chs > 1)
+		{
+			std::vector<unsigned char> color = (*info).channelColors[ch];
+			qcolor = QColor(color[0],color[1],color[2]);
+		}
+		else
+		{
+			qcolor = colorForNormal;
+		}
 
 		int v, v1, v2, v3, v4;
 		for(int i=1; i < h-1; i++)
@@ -739,8 +747,7 @@ void LabelImageViewQT::drawBoundaries(QPainter *painter)
 					v4 = (int)labelImg->GetPixel(currentT, ch, currentZ, i-1, j);
 					if(v!=v1 || v!=v2 || v!=v3 || v!=v4)
 					{
-						//painter->setPen(qcolor);
-						painter->setPen(colorForNormal);
+						painter->setPen(qcolor);
 						if(selection) 
 							if(selection->isSelected(v))
 								painter->setPen(colorForSelections);

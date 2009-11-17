@@ -66,6 +66,11 @@ bool Histopathology::LoadAll(std::string filename)
 		return 0;
 	}
 
+	std::vector<std::string> dataChName;
+	std::vector<unsigned char> dataColor;
+	std::vector<std::string> lablChName;
+	std::vector<unsigned char> lablColor;
+
 	//Parents we know of: datafilename,resultfilename,object,parameter
 	TiXmlElement* parentElement = rootElement->FirstChildElement();
 	while (parentElement)
@@ -74,10 +79,18 @@ bool Histopathology::LoadAll(std::string filename)
 
 		if ( strcmp( parent, "datafile" ) == 0 )
 		{
+			dataChName.push_back( parentElement->Attribute("chname") );
+			dataColor.push_back( atoi(parentElement->Attribute("r")) );
+			dataColor.push_back( atoi(parentElement->Attribute("g")) );
+			dataColor.push_back( atoi(parentElement->Attribute("b")) );
 			dataFilename.push_back( parentElement->GetText() );
 		}
 		else if ( strcmp( parent, "resultfile" ) == 0 )
 		{
+			lablChName.push_back( parentElement->Attribute("chname") );
+			lablColor.push_back( atoi(parentElement->Attribute("r")) );
+			lablColor.push_back( atoi(parentElement->Attribute("g")) );
+			lablColor.push_back( atoi(parentElement->Attribute("b")) );
 			labelFilename.push_back( parentElement->GetText() );
 		}
 		else if ( strcmp( parent, "featurefile" ) == 0 )
@@ -107,47 +120,23 @@ bool Histopathology::LoadAll(std::string filename)
 
 	//doc.close();
 
-	if(!LoadData())
-		return false;
-
-	if(!LoadLabel())
-		return false;
-
-	return true;
-}
-
-//***********************************************************************************************************
-// Will load the data image into memory (using ftk::Image)
-//***********************************************************************************************************
-bool Histopathology::LoadData()
-{
 	dataImage = ftk::Image::New();
-	if(!dataImage->LoadFile(dataFilename.at(0)))	//Load for display
+	if(!dataImage->LoadGrayscaleFilesAsMultipleChannels(dataFilename,dataChName,dataColor))	//Load for display
 	{
 		errorMessage = "Data Image failed to load";
 		dataImage = 0;
 		return false;
 	}
-	return true;
-}
 
-//***********************************************************************************************************
-// Will load the label image into memory (using ftk::Image)
-//***********************************************************************************************************
-bool Histopathology::LoadLabel()
-{
 	labelImage = ftk::Image::New();
-	if(!labelImage->LoadFile(labelFilename.at(0)))	//Load for display
+	if(!labelImage->LoadGrayscaleFilesAsMultipleChannels(labelFilename,lablChName,lablColor))	//Load for display
 	{
 		errorMessage = "Label Image failed to load";
 		labelImage = 0;
 		return false;
 	}
+
 	return true;
 }
-
-
-
-
 
 } //END NAMESPACE FTK
