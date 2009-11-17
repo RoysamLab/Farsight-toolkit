@@ -276,7 +276,7 @@ void View3D::Initialize()
 	this->CreateLayout();
 	this->CreateInteractorStyle();
 	this->CreateActors();
-	this->resize(640, 480);
+	this->resize(850, 480);
 	this->move(40, 59);
 	this->setWindowTitle(tr("Trace editor"));
 	this->QVTK->GetRenderWindow()->Render();
@@ -832,7 +832,7 @@ void View3D::ShowTreeData()
 	this->TreePlot = new PlotWindow();
 	this->TreePlot->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
 	this->TreePlot->setWindowTitle("Trace Object Features Plot");
-	this->TreePlot->move(681, 59);
+  this->TreePlot->move(890, 59);
 	this->TreePlot->show();
 }
 
@@ -853,6 +853,8 @@ void View3D::ClearSelection()
 	this->dtext.clear();
 	this->Rerender();
 	this->statusBar()->showMessage("All Clear", 4000);
+
+	cout << this->TreePlot->pos().x() << ", " << this->TreePlot->pos().y() << endl;
 }
 
 /*  delete traces functions */
