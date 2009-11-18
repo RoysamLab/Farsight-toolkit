@@ -1745,6 +1745,7 @@ int TraceObject::createGapLists(std::vector<TraceLine*> traceList)
 
 void TraceObject::SetBranchPoints(std::vector<branchPT*> Branches)
 {
+	this->BranchPoints.clear();
 	this->BranchPoints = Branches;
 	this->unsolvedBranches = (int) this->BranchPoints.size();
 }

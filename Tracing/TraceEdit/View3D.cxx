@@ -317,21 +317,24 @@ void View3D::CreateGUIObjects()
   this->QVTK->GetRenderWindow()->AddRenderer(this->Renderer);
 
   //Set up the menu bar
-  this->fileMenu = this->menuBar()->addMenu(tr("&File"));
-  this->saveAction = fileMenu->addAction(tr("&Save as..."));
+ 
+  this->saveAction = new QAction(tr("&Save as..."), this->CentralWidget);
     connect(this->saveAction, SIGNAL(triggered()), this, SLOT(SaveToFile()));
-  this->exitAction = fileMenu->addAction(tr("&Exit"));
-  connect(this->exitAction, SIGNAL(triggered()), this, SLOT(close()));
+	this->saveAction->setStatusTip("Save results to file");
+  this->exitAction = new QAction(tr("&Exit"), this->CentralWidget);
+	connect(this->exitAction, SIGNAL(triggered()), this, SLOT(close()));
+	this->exitAction->setStatusTip("Exit the Trace Editor");
   this->loadTraceAction = new QAction("Load Trace", this->CentralWidget);
     connect(this->loadTraceAction, SIGNAL(triggered()), this, SLOT(LoadTraces()));
     this->loadTraceAction->setStatusTip("Load traces from .xml or .swc file");
-	this->fileMenu->addAction(this->loadTraceAction);
   this->loadTraceImage = new QAction("Load Image", this->CentralWidget);
 	connect (this->loadTraceImage, SIGNAL(triggered()), this, SLOT(LoadImageData()));
 	this->loadTraceImage->setStatusTip("Load an Image to RayCast Rendering");
-	this->fileMenu->addAction(this->loadTraceImage);
+//Loading soma data
+  this->loadSoma = new QAction("Load Somas", this->CentralWidget);
+   connect(this->loadSoma, SIGNAL(triggered()), this, SLOT(GetSomaFile()));
 
-  //Set up the buttons that the user will use to interact with this program. 
+ //Set up the buttons that the user will use to interact with this program. 
   this->ListButton = new QAction("List", this->CentralWidget);
 	connect(this->ListButton, SIGNAL(triggered()), this, SLOT(ListSelections()));
 	this->ListButton->setStatusTip("List all selections");
@@ -353,8 +356,6 @@ void View3D::CreateGUIObjects()
   this->FlipButton = new QAction("Flip", this->CentralWidget);
 	connect(this->FlipButton, SIGNAL(triggered()), this, SLOT(FlipTraces()));
 	this->FlipButton->setStatusTip("Flip trace direction");
-  this->WriteButton = new QAction("save as...", this->CentralWidget);
-	connect(this->WriteButton, SIGNAL(triggered()), this, SLOT(SaveToFile()));
   this->SettingsButton = new QAction("Settings", this->CentralWidget);
 	connect(this->SettingsButton, SIGNAL(triggered()), this,
 		SLOT(ShowSettingsWindow()));
@@ -396,16 +397,22 @@ void View3D::CreateGUIObjects()
 	this->typeCombo = new QComboBox;
 	this->typeCombo->addItems(types);
 	connect(this->typeCombo, SIGNAL(activated( int )), this, SLOT(SetTraceType(int )));
-//Loading soma data
-  this->loadSoma = new QAction("Load Somas", this->CentralWidget);
-   connect(this->loadSoma, SIGNAL(triggered()), this, SLOT(GetSomaFile()));
-   this->fileMenu->addAction(this->loadSoma);
+
  
 }
 
 void View3D::CreateLayout()
 {
+	this->fileMenu = this->menuBar()->addMenu(tr("&File"));
+	this->fileMenu->addAction(this->loadTraceAction);
+	this->fileMenu->addAction(this->loadTraceImage);
+	this->fileMenu->addAction(this->loadSoma);
+	this->fileMenu->addAction(this->saveAction);
+	this->fileMenu->addAction(this->exitAction);
+
   this->EditsToolBar = addToolBar(tr("Edit Toolbar"));
+  this->EditsToolBar->setToolTip("EditToolBar");
+  this->fileMenu->addAction(this->EditsToolBar->toggleViewAction());
   /*this->EditsToolBar->addAction(this->saveAction);
   this->EditsToolBar->addAction(this->exitAction);
   this->EditsToolBar->addSeparator();*/
@@ -415,14 +422,18 @@ void View3D::CreateLayout()
   this->EditsToolBar->addSeparator();
   this->EditsToolBar->addAction(this->DeleteButton);
   this->EditsToolBar->addAction(this->MergeButton);
-  this->EditsToolBar->addAction(this->BranchButton);
   this->EditsToolBar->addAction(this->SplitButton);
   this->EditsToolBar->addAction(this->FlipButton);
   this->EditsToolBar->addWidget(this->typeCombo);
   this->EditsToolBar->addSeparator();
   this->EditsToolBar->addAction(this->loadSoma);
   this->EditsToolBar->addAction(this->SettingsButton);
-  this->EditsToolBar->addAction(this->root);
+
+  this->BranchToolBar = addToolBar(tr("Branch Toolbar"));
+  this->BranchToolBar->setToolTip("Branch Toolbar");
+  this->fileMenu->addAction(this->BranchToolBar->toggleViewAction());
+  this->BranchToolBar->addAction(this->BranchButton);
+  this->BranchToolBar->addAction(this->root);
 
   QGridLayout *viewerLayout = new QGridLayout(this->CentralWidget);
   viewerLayout->addWidget(this->QVTK, 0, 0);
@@ -847,7 +858,8 @@ void View3D::ClearSelection()
 	  this->GapsTableView->close();
 	}
 	this->tobj->Gaps.clear();
-	this->candidateGaps.clear();
+	this->candidateGaps.clear();	
+	this->tobj->BranchPoints.clear();
 	//this->TreeModel->GetObjectSelection()->clear();
 	this->myText.clear();
 	this->dtext.clear();
@@ -980,7 +992,7 @@ void View3D::SetRoots()
 	this->Rerender();
 	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 	this->statusBar()->showMessage(QString::number(numToSolve)+ " Remaining Branches");
-  this->Rerender();
+  //this->Rerender();
 }
 void View3D::AddNewBranches()
 {

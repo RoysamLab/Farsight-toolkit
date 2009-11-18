@@ -172,6 +172,7 @@ private:
 	
 	QMenu *fileMenu;
 	QToolBar *EditsToolBar;	
+	QToolBar *BranchToolBar;
 	Qt::SortOrder Ascending;
 	TraceModel *TreeModel;
 	MergeModel *MergeGaps;
@@ -191,9 +192,6 @@ private:
 	QSpinBox *LineWidthField;
 	QDialogButtonBox *ApplySettingsButton;
 	QComboBox *typeCombo;
-	//QStringList *types;
-	//QPushButton *CancelSettingsButton;
-
 	//stuff for tol and selection
     //general render window variables
 	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;
