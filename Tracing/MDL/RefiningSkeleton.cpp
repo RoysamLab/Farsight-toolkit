@@ -65,6 +65,8 @@ int main(int argc, char **argv)
   VoxelPosition *AllBackbonepoints;
   VoxelPosition *AllSpinepoints;
   VoxelPosition *AllExtraSpinepoints;
+
+  bool *RealPointsID,*RealSpineID,*ExtraSpineID;
   
   int NumBackbonePoints;
   int NumExtraSpinePoints;
@@ -73,6 +75,8 @@ int main(int argc, char **argv)
   int BacboneOnly = 0; 
 
   int i;
+  int tmp1, tmp2,tmp3;
+  int NumLines, SkipNmuber;
   
   if (argc < 6)
     {
@@ -91,13 +95,8 @@ int main(int argc, char **argv)
     cerr << "couldn't open smoothbackbone file " << infilename << " for input" << endl;
     exit(-1);
     }
-
-
-  
   
   BacboneOnly =  atoi(argv[6]);
-    for (i=1;i<10000;i++)
-	  printf ("%d ", BacboneOnly);
 
   if(!BacboneOnly)
   {
@@ -118,7 +117,7 @@ int main(int argc, char **argv)
     cerr << "couldn't open Extra spine skeleton file " << filedir << " for input" << endl;
     exit(-1);
     }
-  }//end if 
+  }//end if (!BacboneOnly)
 
   tempfile3 = filedir + argv[5];
   cout << "second file name" << tempfile3 << endl;
@@ -138,7 +137,6 @@ int main(int argc, char **argv)
   for (i=0;i<12;i++)
     {
     fscanf(smoothbackbone,"%s",str);
-    printf("%s\n", str); 
     }
  
   fscanf(smoothbackbone,"%s",str);
@@ -157,6 +155,28 @@ int main(int argc, char **argv)
    fscanf (smoothbackbone,"%f",&temp);
    AllBackbonepoints[i].z =temp;
   }
+ 
+  //- choose the real backpoints from the Backbone.VTK file 
+
+  RealPointsID = new bool[ NumBackbonePoints];
+  for (i=0;i<NumBackbonePoints;i++)
+  {
+   RealPointsID[i]=false;// init flag
+  }
+ 
+  fscanf(smoothbackbone,"%s",str); // read LINES
+  fscanf(smoothbackbone,"%d",&NumLines);
+  fscanf(smoothbackbone,"%d",&SkipNmuber); // skip the last number in this line
+  for (i=0;i<NumLines;i++)
+    {
+    // Read one line into an array;
+    fscanf (smoothbackbone,"%d",&tmp1); // skip first number in the Line
+    fscanf (smoothbackbone,"%d",&tmp2); // read second number in the line 
+    fscanf (smoothbackbone,"%d",&tmp3); // read third number in the line 
+    RealPointsID[tmp2]= true;
+	RealPointsID[tmp3]= true;
+
+    }
   fclose (smoothbackbone);
 
 //------------------Read From spine skeleton VTK file ---------------------//
@@ -167,7 +187,6 @@ int main(int argc, char **argv)
    for (i=0;i<12;i++)
     {
     fscanf(spine,"%s",str);
-    printf("%s\n", str); 
     }
   
    fscanf(spine,"%s",str);
@@ -185,6 +204,26 @@ int main(int argc, char **argv)
     fscanf (spine,"%f",&temp3);
     AllSpinepoints[i].z =temp3;
    }
+
+   RealSpineID =  new bool [NumSpinePoints];
+   for (i=0;i<NumSpinePoints;i++)
+  {
+   RealSpineID[i]=false;// init flag
+  }
+ 
+  fscanf(spine,"%s",str); // read LINES
+  fscanf(spine,"%d",&NumLines);
+  fscanf(spine,"%d",&SkipNmuber); // skip the last number in this line
+  for (i=0;i<NumLines;i++)
+    {
+    // Read one line into an array;
+    fscanf (spine,"%d",&tmp1); // skip first number in the Line
+    fscanf (spine,"%d",&tmp2); // read second number in the line 
+    fscanf (spine,"%d",&tmp3); // read third number in the line 
+    RealSpineID[tmp2]= true;
+	RealSpineID[tmp3]= true;
+
+    }
    fclose (spine);
 
 //------------------Read From Extra-spine skeleton VTK file ---------------------//
@@ -195,7 +234,6 @@ int main(int argc, char **argv)
    for (i=0;i<12;i++)
     {
     fscanf(ExtraSpine,"%s",str);
-    printf("%s\n", str); 
     }
  
    fscanf(ExtraSpine,"%s",str);
@@ -211,24 +249,54 @@ int main(int argc, char **argv)
     fscanf (ExtraSpine,"%f",&temp);
     AllExtraSpinepoints[i].z =temp;
    }
+
+   ExtraSpineID =  new bool [NumExtraSpinePoints];
+   for (i=0;i<NumExtraSpinePoints;i++)
+  {
+   ExtraSpineID[i]=false;// init flag
+  }
+ 
+  fscanf(ExtraSpine,"%s",str); // read LINES
+  fscanf(ExtraSpine,"%d",&NumLines);
+  fscanf(ExtraSpine,"%d",&SkipNmuber); // skip the last number in this line
+  for (i=0;i<NumLines;i++)
+    {
+    // Read one line into an array;
+    fscanf (ExtraSpine,"%d",&tmp1); // skip first number in the Line
+    fscanf (ExtraSpine,"%d",&tmp2); // read second number in the line 
+    fscanf (ExtraSpine,"%d",&tmp3); // read third number in the line 
+    ExtraSpineID[tmp2]= true;
+	ExtraSpineID[tmp3]= true;
+
+    }
    fclose (ExtraSpine);
   } // end if 
  //---------------------------Output to Skel File
   for (i=0;i<NumBackbonePoints;i++)
+  { if (RealPointsID[i]) // if it is a real backbone points
     fprintf(outrefineskel,"%f %f %f %d\n", AllBackbonepoints[i].x, AllBackbonepoints[i].y , AllBackbonepoints[i].z,1);
+  }
   if(!BacboneOnly)
-  {
+  { 
     for (i=0;i<NumSpinePoints;i++)
+	{if(RealSpineID[i])
      fprintf(outrefineskel,"%f %f %f %d\n", AllSpinepoints[i].x, AllSpinepoints[i].y , AllSpinepoints[i].z,1);
+	}
     for (i=0;i<NumExtraSpinePoints;i++)
+	{if(ExtraSpineID[i])
      fprintf(outrefineskel,"%f %f %f %d\n", AllExtraSpinepoints[i].x, AllExtraSpinepoints[i].y , AllExtraSpinepoints[i].z,1);
+	}
+	
   } // end if 
   fclose (outrefineskel);
   //release memnory
   delete []AllBackbonepoints;
+  delete []RealPointsID;
   if(!BacboneOnly)
   { delete []AllSpinepoints;
     delete []AllExtraSpinepoints;
+	delete []RealSpineID;
+	delete []ExtraSpineID;
   }// end if
  
 }
