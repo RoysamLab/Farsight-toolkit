@@ -695,14 +695,16 @@ write_xml(std::string const& filename, bool mutual_consistency, bool gen_temp_st
   doc.LinkEndChild( root_node );
 
   // Set up the temp file for storing the overlap & errors
-  std::ofstream temp_good, temp_bad, temp_overlap;
+  std::ofstream temp_good, temp_bad, temp_overlap, temp_debug;
   if (gen_temp_stuff) {
     std::string filename_good = filename+"_debug_good.txt";
     std::string filename_bad = filename+"_debug_bad.txt";
     std::string filename_overlap = filename+"_debug_overlapped.txt";
+    std::string filename_debug = filename+"_debug.txt";
     temp_good.open(filename_good.c_str());
     temp_bad.open(filename_bad.c_str());
     temp_overlap.open(filename_overlap.c_str());
+    temp_debug.open(filename_debug.c_str());
   }
   
   for (unsigned int j = 0; j<transforms_.cols(); j++) {
@@ -717,9 +719,12 @@ write_xml(std::string const& filename, bool mutual_consistency, bool gen_temp_st
           if (reg_rec->obj() < error_bound_)
             temp_good<<reg_rec->from_image()<<"\t"<<reg_rec->to_image()<<"\t"<<vnl_math_rnd(reg_rec->overlap()*1000)/1000.0<<"\t"<<vnl_math_rnd(reg_rec->obj()*1000)/1000.0 <<"\n";
           else temp_bad<<reg_rec->from_image()<<"\t"<<reg_rec->to_image()<<"\t"<<vnl_math_rnd(reg_rec->overlap()*1000)/1000.0<<"\t"<<vnl_math_rnd(reg_rec->obj()*1000)/1000.0 <<"\n";
+          
+          temp_debug<<vnl_math_rnd(reg_rec->overlap()*1000)/1000.0<<"\t"<<vnl_math_rnd(reg_rec->obj()*1000)/1000.0 <<"\n";
         }
         else if (reg_rec->overlap() > 0.01){
           temp_overlap<<reg_rec->from_image()<<"\t"<<reg_rec->to_image()<<"\t"<<vnl_math_rnd(reg_rec->overlap()*1000)/1000.0<<"\t"<<vnl_math_rnd(reg_rec->obj()*1000)/1000.0 <<"\n";
+          temp_debug<<vnl_math_rnd(reg_rec->overlap()*1000)/1000.0<<"\t"<<vnl_math_rnd(reg_rec->obj()*1000)/1000.0 <<"\n";
         }
       }
     }
@@ -753,16 +758,17 @@ read_xml(std::string const & filename)
   TiXmlElement* root_element = doc.RootElement();
   const char* docname = root_element->Value();
   if ( strcmp( docname, "Joint_Registration" ) != 0 &&
-       strcmp( docname, "Pairwise_Registration" )) {
+       strcmp( docname, "Pairwise_Registration" ) !=0) {
     vcl_cerr<<"Incorrect XML root Element: "<<vcl_endl;
     return;
   }
 
-  // get the error bound
-  scale_multiplier_ = atoi(root_element->Attribute("error_scale_multiplier"));
-  
-  // get the scale_multiplier
-  std::stringstream(root_element->Attribute("error_bound")) >> error_bound_;
+  if (strcmp(docname, "Joint_Registration") ==0) {
+    // get the error bound
+    scale_multiplier_ = atoi(root_element->Attribute("error_scale_multiplier"));
+    // get the scale_multiplier
+    std::stringstream(root_element->Attribute("error_bound")) >> error_bound_;
+  }
   
   // number of images
   int num_images;

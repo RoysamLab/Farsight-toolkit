@@ -1076,7 +1076,6 @@ read_xml(std::string const & filename, std::string& montage_directory,
         }
         if ( strcmp("z", sub_node->Value()) == 0 ) {
           image_size_[2] = atoi( sub_node->GetText() );
-          std::cout<<"image_size_[2] = "<<image_size_[2]<<std::endl;
           continue;
         }
       }
