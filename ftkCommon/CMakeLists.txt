@@ -1,5 +1,6 @@
 SET( FTKCOMMON_SRCS
   #ftkSegmentationResult.cpp
+  ftkUtils.cpp
   ftkIntrinsicFeatures.cpp
   ftkObject.cpp 
   ftkObjectAssociation.cpp
@@ -7,6 +8,7 @@ SET( FTKCOMMON_SRCS
 
 SET( FTKCOMMON_HDRS
   #ftkSegmentationResult.h
+  ftkUtils.h
   ftkLabelImageToFeatures.h
   ftkLabelImageToFeatures.txx
   ftkIntrinsicFeatures.h
