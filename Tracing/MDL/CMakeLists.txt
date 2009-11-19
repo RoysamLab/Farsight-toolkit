@@ -6,10 +6,12 @@ ADD_EXECUTABLE(AnisoDiffuse AnisoDiffuse.cpp)
 ADD_EXECUTABLE(ConnCompntwFldfill ConnCompntwFldfill.cpp)
 ADD_EXECUTABLE(GradientVecField GradientVecField.cpp)
 ADD_EXECUTABLE(MinSpanTree distTransform.cpp MinSpanTree.cpp morphGraphPrune.cpp) 
+ADD_EXECUTABLE(MDABasedSpineExtraction distTransform.cpp MDABasedSpineExtraction.cpp morphGraphPrune.cpp)
 ADD_EXECUTABLE(Integratedskel Integratedskel.cpp)
 ADD_EXECUTABLE(volumeProcess volumeProcess.cpp)
 ADD_EXECUTABLE(RefiningSkeleton RefiningSkeleton.cpp)
 ADD_EXECUTABLE(BackboneExtract BackboneExtract.cpp)
+
 TARGET_LINK_LIBRARIES(volumeProcess ITKIO ITKStatistics)
 
 ADD_EXECUTABLE(AddSpinesToSmoothedBackbone AddSpinesToSmoothedBackbone.cxx)
@@ -49,4 +51,5 @@ INSTALL( TARGETS BSplineFitting DESTINATION bin/MDL )
 INSTALL( TARGETS RefiningSkeleton DESTINATION bin/MDL )
 INSTALL( TARGETS BackboneExtract DESTINATION bin/MDL )
 INSTALL( TARGETS AddSpinesToSmoothedBackbone DESTINATION bin/MDL )
+INSTALL( TARGETS MDABasedSpineExtraction DESTINATION bin/MDL)
 
