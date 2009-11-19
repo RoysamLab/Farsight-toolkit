@@ -84,7 +84,8 @@ signals:
 	void pointsClicked(int x1, int y1, int z1, int x2, int y2, int z2);
 
 protected slots:
-	void refreshDisplayImage(void);
+	void refreshBaseImage(void);
+	void refreshBoundsImage(void);
 	void sliderChange(int v);
 	void spinChange(int v);
 	void adjustImageIntensity(int threshold, int offset);
@@ -99,6 +100,7 @@ protected:
     void mouseMoveEvent(QMouseEvent *event);
 	void mouseReleaseEvent(QMouseEvent *event);
 	void keyPressEvent( QKeyEvent *event );
+	void paintEvent(QPaintEvent *event);
 
 //private: make protected so we can access from inherited class
 	void setupUI(void);
@@ -107,10 +109,7 @@ protected:
 	void createChannelWidget(void);
 	void removeChannelWidget(void);
 
-	void drawImage(QPainter *painter);
 	void scaleIntensity(QImage *img, int threshold, int offset);
-	void drawBoundaries(QPainter *painter);
-	//void drawObjectIDs(QPainter *painter);
 
 	void initGrayscaleColorTable();
 	QVector<QRgb> grayscaleColorTable;
@@ -133,7 +132,9 @@ protected:
 	int numChBoxes;					//number of checkboxes (number of channels)
 	std::vector<bool> channelFlags;	//is channel is visible or not
 
-	QImage displayImage;				//Everything that is being displayed in the viewport (includes selections)
+	QImage baseImage;					//The intensity image (2D)
+	QImage boundsImage;					//Image containing boundaries (2D)
+
 	ftk::Image::Pointer labelImg;
 	//std::map<int, LabelGeometry> labelGeometries;
 	ftk::Image::Pointer channelImg;

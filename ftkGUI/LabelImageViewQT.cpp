@@ -123,7 +123,7 @@ void LabelImageViewQT::setupUI(void)
 	connect(vSlider, SIGNAL(valueChanged(int)), this, SLOT(sliderChange(int)));
 	connect(hSlider, SIGNAL(valueChanged(int)), this, SLOT(sliderChange(int)));
 	connect(vSpin, SIGNAL(valueChanged(int)), this, SLOT(spinChange(int)));
-	connect(vSpin, SIGNAL(valueChanged(int)), this, SLOT(spinChange(int)));
+	connect(hSpin, SIGNAL(valueChanged(int)), this, SLOT(spinChange(int)));
 
 	setAttribute ( Qt::WA_DeleteOnClose );
 	setWindowTitle(tr("Image Browser"));
@@ -138,7 +138,7 @@ void LabelImageViewQT::SetChannelImage(ftk::Image::Pointer img)
 	{
 		channelImg = NULL;
 		removeChannelWidget();
-		refreshDisplayImage();
+		refreshBaseImage();
 		return;
 	}
 
@@ -158,7 +158,6 @@ void LabelImageViewQT::SetChannelImage(ftk::Image::Pointer img)
 		updateHSlider();
 	}
 	createChannelWidget();
-	//refreshDisplayImage();	//Called after creating the channel widget;
 }
 
 //***************************************************************************************
@@ -169,7 +168,7 @@ void LabelImageViewQT::SetLabelImage(ftk::Image::Pointer img, ObjectSelection * 
 	if(!img)
 	{
 		labelImg = NULL;
-		refreshDisplayImage();
+		refreshBoundsImage();
 		return;
 	}
 
@@ -180,8 +179,10 @@ void LabelImageViewQT::SetLabelImage(ftk::Image::Pointer img, ObjectSelection * 
 		{
 			removeChannelWidget();
 			channelImg = NULL;
+			refreshBaseImage();
 		}
 	}
+
 	if(!channelImg)
 	{
 		updateVSlider();
@@ -191,24 +192,23 @@ void LabelImageViewQT::SetLabelImage(ftk::Image::Pointer img, ObjectSelection * 
 	if(sels)
 	{
 		selection = sels;
-		connect(selection, SIGNAL(changed()), this, SLOT(refreshDisplayImage()));
+		connect(selection, SIGNAL(changed()), this, SLOT(refreshBoundsImage()));
 	}
 
 	//refreshFeatures();
-	refreshDisplayImage();
+	refreshBoundsImage();
 }
 
 void LabelImageViewQT::SetBoundsVisible(bool val)
 {
 	this->showBounds = val;
-	refreshDisplayImage();
+	refreshBoundsImage();
 }
 
 /*
 void LabelImageViewQT::SetIDsVisible(bool val)
 {
 	this->showIDs = val;
-	refreshDisplayImage();
 }
 */
 
@@ -360,7 +360,7 @@ void LabelImageViewQT::updateChFlags(bool b)
 	{
 		channelFlags.push_back(chBoxes[ch]->isChecked());
 	}
-	refreshDisplayImage();
+	refreshBaseImage();
 }
 
 //*******************************************************************
@@ -375,18 +375,18 @@ void LabelImageViewQT::sliderChange(int v)
 {
 	vSpin->setValue(vSlider->value());
 	hSpin->setValue(hSlider->value());
-	refreshDisplayImage();
 }
 void LabelImageViewQT::spinChange(int v)
 {
 	vSlider->setValue(vSpin->value());
 	hSlider->setValue(hSpin->value());
-	refreshDisplayImage();
+	refreshBaseImage();		//Only need this in either slider or spin changes!!!
+	refreshBoundsImage();
 }
 
 void LabelImageViewQT::update()
 {
-	refreshDisplayImage();
+	refreshBoundsImage();
 	QWidget::update();
 }
 
@@ -575,29 +575,26 @@ void LabelImageViewQT::zoom(double zf)
 		return;
 
 	currentScale = newScale;
-	refreshDisplayImage();
+	this->repaint();
 }
 
- //***************************************************************************************************
-//The function redraws the plot onto the off-screen pixmap and updates the display.
-//***************************************************************************************************
-void LabelImageViewQT::refreshDisplayImage()
-{
-	const ftk::Image::Info *info;
-	if(channelImg)    info = channelImg->GetImageInfo();	//Get info of new image
-	else if(labelImg) info = labelImg->GetImageInfo();
-	else return;
-	int totalWidth = (*info).numColumns;
-	int totalHeight = (*info).numRows;
+//****************************************************************************************************
+// Reimplement paintEvent to set the displayImage!!
+//****************************************************************************************************
+void LabelImageViewQT::paintEvent(QPaintEvent * event)
+{	
+	QWidget::paintEvent(event);
 
-	displayImage = QImage(totalWidth, totalHeight, QImage::Format_ARGB32);	
-	displayImage.fill(qRgb(0,0,0));
+	if(baseImage.height() <= 0 || baseImage.width() <= 0)
+		return;
+
+	QImage displayImage = baseImage;
 	QPainter painter(&displayImage);
-	painter.setCompositionMode(QPainter::CompositionMode_Plus);
-	drawImage(&painter);
-	painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
-	drawBoundaries(&painter);
-	//drawObjectIDs(&painter);
+	if(labelImg && showBounds)
+	{
+		painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+		painter.drawImage(0,0,boundsImage);
+	}
 
 	//Do zooming:
 	int oldX = scrollArea->horizontalScrollBar()->value();
@@ -613,21 +610,29 @@ void LabelImageViewQT::refreshDisplayImage()
 
 	scrollArea->horizontalScrollBar()->setValue(oldX);
 	scrollArea->verticalScrollBar()->setValue(oldY);
-
 }
 
-//***************************************************************************************
-// The drawImage function draws the iamge
-//***************************************************************************************
-void LabelImageViewQT::drawImage(QPainter *painter)
+void LabelImageViewQT::refreshBaseImage()
 {
+	const ftk::Image::Info *info;
+	if(channelImg)    info = channelImg->GetImageInfo();	//Get info of new image
+	else if(labelImg) info = labelImg->GetImageInfo();
+	else return;
+	int totalWidth = (*info).numColumns;
+	int totalHeight = (*info).numRows;
+
+	baseImage = QImage(totalWidth, totalHeight, QImage::Format_ARGB32);	
+	baseImage.fill(qRgb(0,0,0));
+
 	if(!channelImg)
 		return;
+
+	QPainter painter(&baseImage);
+	painter.setCompositionMode(QPainter::CompositionMode_Plus);
 
 	int currentZ = vSpin->value();
 	int currentT = hSpin->value();
 
-	const ftk::Image::Info *info = channelImg->GetImageInfo();
 	for (int i=0; i < (*info).numChannels; i++)
 	{
 		if (channelFlags[i])
@@ -651,9 +656,10 @@ void LabelImageViewQT::drawImage(QPainter *painter)
 					gray.setAlphaChannel( img2 );	//Set it to the alpha channel
 				}
 			}
-			painter->drawImage(0,0,gray);
+			painter.drawImage(0,0,gray);
 		}
 	}
+	this->repaint();
 }
 
 //img must be of QImage::Format_Indexed8
@@ -690,7 +696,7 @@ void LabelImageViewQT::adjustImageIntensity(int threshold, int offset)
 {
 	backgroundThreshold = threshold;
 	foregroundOffset = offset;
-	this->refreshDisplayImage();
+	this->refreshBaseImage();
 }
 
 void LabelImageViewQT::initGrayscaleColorTable(void)
@@ -701,24 +707,29 @@ void LabelImageViewQT::initGrayscaleColorTable(void)
 		grayscaleColorTable.append(qRgb(i,i,i));
 	}
 }
-
-//***************************************************************************************
-// The drawBoundaries function draws the boundaries of the label image
-//***************************************************************************************
-void LabelImageViewQT::drawBoundaries(QPainter *painter)
+#include <time.h>
+void LabelImageViewQT::refreshBoundsImage(void)
 {
 	if(!labelImg)
 		return;
 
-	if(!showBounds)
-		return;
+	clock_t startTimer = clock();
 
-	const ftk::Image::Info *info = labelImg->GetImageInfo();
+	const ftk::Image::Info *info;
+	if(channelImg)    info = channelImg->GetImageInfo();	//Get info of new image
+	else if(labelImg) info = labelImg->GetImageInfo();
+	else return;
 	int chs = (*info).numChannels;
 	int h = (*info).numRows;
 	int w = (*info).numColumns;
 	int currentZ = vSpin->value();
 	int currentT = hSpin->value();
+
+	boundsImage = QImage(w, h, QImage::Format_ARGB32);	
+	boundsImage.fill(qRgb(0,0,0));
+
+	QPainter painter(&boundsImage);
+	//painter.setCompositionMode(QPainter::CompositionMode_Plus);
 
 	for(int ch = 0; ch < chs; ++ch)
 	{
@@ -747,16 +758,18 @@ void LabelImageViewQT::drawBoundaries(QPainter *painter)
 					v4 = (int)labelImg->GetPixel(currentT, ch, currentZ, i-1, j);
 					if(v!=v1 || v!=v2 || v!=v3 || v!=v4)
 					{
-						painter->setPen(qcolor);
+						painter.setPen(qcolor);
 						if(selection) 
 							if(selection->isSelected(v))
-								painter->setPen(colorForSelections);
-						painter->drawPoint(j,i);
+								painter.setPen(colorForSelections);
+						painter.drawPoint(j,i);
 					}
 				}
 			}
 		}
 	}
+	std::cout<<"Time elapsed is: "<<(((double)clock() - startTimer) / CLOCKS_PER_SEC)<<" seconds"<<std::endl;
+	this->repaint();
 }
 
 /* SHOULD REWRITE THIS SO IT DOESN'T NEED CENTROID, JUST DRAWS ID
