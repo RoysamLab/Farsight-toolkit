@@ -36,12 +36,12 @@
 #include <vtkVariantArray.h>
 #include <vtkTable.h>
 #include <ftkCommon/ftkLabelImageToFeatures.h>
+#include <ftkCommon/ftkUtils.h>
 #include <yousef_core/yousef_seg.h>
 #include <tinyxml/tinyxml.h>
 #include <ftkCommon/ftkObject.h>
 #include <map>
 #include <set>
-#include <string>
 
 namespace ftk
 { 
@@ -112,6 +112,7 @@ public:
 	std::string GetErrorMessage() { return errorMessage; };
 	std::string GetDataFilename() { return dataFilename; };
 	std::string GetParamFilename() { return paramFilename; };
+	std::string GetLabelFilename() { return labelFilename; };
 
 	//Get Data:
 	std::vector<std::string> GetFeatureNames();	//Extract Feature Names from the table!!!
@@ -158,13 +159,6 @@ protected:
 	bool SaveEditRecords();										//Append Edit Records to file 
 	bool LoadLabel(bool updateMaps = false);					//Load just the label image if the filename is already known
 	bool LoadFeatures();
-
-	//General Utilites:
-	bool FileExists(std::string filename);
-	std::string NumToString(int i);
-	std::string NumToString(double d);
-	std::string NumToString(double d, int p);
-	std::string TimeStamp();
 
 	//Editing Utilities:
 	long int maxID(void);										//Get the maximum ID in the table!

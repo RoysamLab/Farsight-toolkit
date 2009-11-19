@@ -30,35 +30,34 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include <ftkImage/ftkImage.h>
-#include <vtkSmartPointer.h>
-#include <vtkDoubleArray.h>
-#include <vtkVariantArray.h>
-#include <vtkTable.h>
-#include <ftkCommon/ftkLabelImageToFeatures.h>
-#include <yousef_core/yousef_seg.h>
-#include <tinyxml/tinyxml.h>
-#include <ftkCommon/ftkObject.h>
-#include <map>
-#include <set>
-#include <string>
+#include "ftkImage/ftkImage.h"
+#include "tinyxml/tinyxml.h"
+#include "ftkCommon/ftkUtils.h"
+#include "NuclearSegmentation/ftkNuclearSegmentation.h"
+#include "CytoplasmSegmentation/CytoplasmSegmentation.h"
 
 namespace ftk
 { 
-/** \class NuclearSegmentation
- *  \brief For storage of a complete nuclear segmentation 
+
+class Operation;
+class Input;
+
+/** \class Histopathology
+ *  \brief For storage of a complete Histopathology segmentation 
  *   
- *  Handles the execution, result, and editing of a nuclear segmentation
+ *  Handles the execution, result, and editing of a Histopathology segmentation
  *  
  */
-
 class Histopathology
 {
 public:
 	Histopathology();
 	~Histopathology();
 
-	bool LoadAll(std::string filename);							//Complete Restore from files
+	bool LoadProject(std::string xmlfname);		//Load from the xml file containing the project definition
+	bool ProcessInputs();						//Process the inputs from the beginning
+	bool LoadImages();
+	bool LoadAll(std::string filename);			//Complete Restore from files
 
 	//Misc string Gets
 	std::string GetErrorMessage() { return errorMessage; };
@@ -69,6 +68,15 @@ public:
 	//*********************************************************************************************
 
 protected:
+	Input parseInputElement(TiXmlElement *objectElement);
+	Operation parseOperationElement(TiXmlElement *operationElement);
+
+	bool RunNuclearSegmentation(Input in);
+	bool RunCytoplasmSegmentation(Input in);
+
+	std::string xmlFilename;				//The project file (full path)
+	std::vector<Input> input;				//The input information defining the project
+
 	std::vector<std::string> dataFilename;	//the filename of the data image		(full path)
 	std::vector<std::string> labelFilename;	//the filename of the label image		(full path)
 	std::string paramFilename;				//the filename of the parameter file	(full path)
@@ -83,6 +91,30 @@ protected:
 	ftk::Image::Pointer labelImage;		//My label image
 
 }; // end Histopathology
+
+class Operation
+{
+public:
+	Operation(){done = false;};
+	std::string type;
+	std::string infile;
+	std::string outfile;
+	bool done;
+};
+
+class Input
+{
+public:
+	Input(){channel = 0;};
+	std::string filename;
+	int channel;
+	std::string chname;
+	unsigned char color[3];
+	std::string type;
+	Operation operation;
+};
+
+
 
 }  // end namespace ftk
 

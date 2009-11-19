@@ -25,10 +25,8 @@
 =========================================================================*/
 #include "ftkNuclearSegmentation.h"
 #include <itkImageRegionConstIteratorWithIndex.h>
-#include <ctime>
 #include <iostream>
 #include <fstream>
-#include <iomanip>
 #include <stdio.h>
 
 #include "yousef_core/graphColLearn_3D/sequential_coloring.cpp"
@@ -1098,58 +1096,6 @@ bool NuclearSegmentation::WriteToLibSVM(std::string filename)
 	return true;
 }
 
-//**********************************************************************************************************
-//**********************************************************************************************************
-//**********************************************************************************************************
-//**********************************************************************************************************
-// A FEW UTILITIES
-//**********************************************************************************************************
-//Check to see if the file will filename fname exists in 
-// the project path.
-//**********************************************************************************************************
-bool NuclearSegmentation::FileExists(std::string filename)
-{
-	FILE * pFile = fopen (filename.c_str(),"r");
-	if (pFile==NULL)
-	{
-		return false;
-	}
-	fclose (pFile);
-	return true;
-}
-
-std::string NuclearSegmentation::NumToString(double d)
-{
-	stringstream out;
-	out << setprecision(2) << fixed << d;	//Default is to use 2 decimal places
-	return out.str();
-}
-
-std::string NuclearSegmentation::NumToString(int i)
-{
-	stringstream out;
-	out << i ;	 
-	return out.str();
-}
-
-std::string NuclearSegmentation::NumToString(double d, int p)
-{
-	stringstream out;
-	out << setprecision(p) << fixed << d;	
-	return out.str();
-}
-
-std::string NuclearSegmentation::TimeStamp()
-{
-	time_t rawtime;
-	struct tm *timeinfo;
-	time ( &rawtime );
-	timeinfo = localtime ( &rawtime );
-	string dt = asctime(timeinfo);
-	size_t end = dt.find('\n');
-	dt.erase(end);
-	return dt;
-}
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************

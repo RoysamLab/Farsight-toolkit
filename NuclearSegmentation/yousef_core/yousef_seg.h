@@ -40,7 +40,7 @@
 #include "graphColLearn_3D/Multi_Color_Graph_Learning_3D.h"
 #include "alpha_expansion/alpha_expansion.h"
 #include "EM_GMM/EM_Project_3_cpp_3D_comp.h"
-#include "gradient_weighted_distance_2D/gradientweighteddistancemap.h" //Still under testing
+//#include "gradient_weighted_distance_2D/gradientweighteddistancemap.h" //Still under testing
 
 //ITK INCLUDES
 #include "itkConnectedComponentImageFilter.h"
@@ -112,7 +112,7 @@ public:
 	void runAlphaExpansion3D();
 	void runAlphaExpansion2D();
 	//added by Yousef on 9/14/2009
-	void runGradWeightedDistance();
+	//void runGradWeightedDistance();
 
 	void readParametersFromFile(const char* pFName);					//This function reads the parameters based on Yousef's parameter format
 	void writeParametersToFile();

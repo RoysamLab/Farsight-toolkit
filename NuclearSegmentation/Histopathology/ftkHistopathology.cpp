@@ -24,11 +24,6 @@
 
 =========================================================================*/
 #include "ftkHistopathology.h"
-#include <ctime>
-#include <iostream>
-#include <fstream>
-#include <iomanip>
-#include <stdio.h>
 
 namespace ftk 
 {
@@ -36,10 +31,248 @@ namespace ftk
 //Constructor
 Histopathology::Histopathology()
 {
+	dataImage = NULL;
+	labelImage = NULL;
 }
 
 Histopathology::~Histopathology()
 {
+	dataImage = NULL;
+	labelImage = NULL;
+}
+
+//*************************************************************************
+//
+// The project definition is found in an XML file.  This function loads up
+// all of the information from this XML file.  It does not actually load
+// any data.
+//
+//*************************************************************************
+bool Histopathology::LoadProject(std::string xmlfname)
+{
+	xmlFilename = xmlfname;
+	input.clear();
+
+	TiXmlDocument doc;
+	if ( !doc.LoadFile( xmlFilename.c_str() ) )
+	{
+		errorMessage = "Unable to load XML File";
+		return 0;
+	}
+
+	TiXmlElement* rootElement = doc.FirstChildElement();
+	const char* docname = rootElement->Value();
+	if ( strcmp( docname, "Histopathology" ) != 0 )
+	{
+		errorMessage = "Incorrect XML root Element: ";
+		errorMessage.append(rootElement->Value());
+		return 0;
+	}
+
+	//Parents we know of: input
+	TiXmlElement* parentElement = rootElement->FirstChildElement();
+	while (parentElement)
+	{
+		const char * parent = parentElement->Value();
+
+		if ( strcmp( parent, "input" ) == 0 )	//Get the new input:
+		{
+			input.push_back( parseInputElement(parentElement) );
+		}
+		else
+		{
+			errorMessage = "Unrecognized parent element: ";
+			errorMessage.append(parent);
+			return 0;
+		}
+		parentElement = parentElement->NextSiblingElement();
+	} // end while(parentElement)
+	//doc.close();
+
+	return true;
+}
+
+Input Histopathology::parseInputElement(TiXmlElement *inputElement)
+{
+	Input input;
+
+	if ( strcmp( inputElement->Value(), "input" ) != 0 )
+		return input;
+
+	TiXmlElement *member = inputElement->FirstChildElement();
+	while(member)
+	{
+		const char* memberName = member->Value();
+		if ( strcmp( memberName, "filename" ) == 0 )
+		{
+			input.filename = member->GetText();
+		}
+		else if ( strcmp( memberName, "channel" ) == 0 )
+		{
+			input.channel = atoi(member->GetText());
+		}
+		else if ( strcmp( memberName, "name" ) == 0 )
+		{
+			input.chname = member->GetText();
+		}
+		else if ( strcmp( memberName, "color" ) == 0 )
+		{
+			input.color[0] = atoi(member->Attribute("r"));
+			input.color[1] = atoi(member->Attribute("g"));
+			input.color[2] = atoi(member->Attribute("b"));
+		}
+		else if ( strcmp( memberName, "type") == 0 )
+		{
+			input.type = member->GetText();
+		}
+		else if ( strcmp( memberName, "operation") == 0 )
+		{
+			input.operation = parseOperationElement(member);
+		}
+		member = member->NextSiblingElement();
+	}
+	return input;
+}
+
+Operation Histopathology::parseOperationElement(TiXmlElement *operationElement)
+{
+	Operation op;
+	op.done = false;
+	op.type = "none";
+	op.outfile = "";
+
+	if ( strcmp( operationElement->Value(), "operation" ) != 0 )
+		return op;
+
+	op.type = operationElement->Attribute("type");
+
+	TiXmlElement *member = operationElement->FirstChildElement();
+	while(member)
+	{
+		const char* memberName = member->Value();
+		if ( strcmp( memberName, "resultfile" ) == 0 )
+		{
+			op.outfile = member->GetText();
+		}
+		if( strcmp( memberName, "nucfile" ) == 0 )
+		{
+			op.infile = member->GetText();
+		}
+		member = member->NextSiblingElement();
+	}
+
+	if(FileExists(op.outfile))
+		op.done = true;
+
+	return op;
+}
+
+bool Histopathology::ProcessInputs(void)
+{
+	//First do the nuclear segmentations:
+	for(int i=0; i<input.size(); ++i)
+	{
+		if( input.at(i).operation.type == "NucSeg" && input.at(i).operation.done == false )
+		{
+			if(!RunNuclearSegmentation(input.at(i)))
+				return false;
+		}
+	}
+	//Then do the Cytoplasm Segmentations:
+	for(int i=0; i<input.size(); ++i)
+	{
+		if( input.at(i).operation.type == "CytoSeg" && input.at(i).operation.done == false )
+		{
+			if(!RunCytoplasmSegmentation(input.at(i)))
+				return false;
+		}
+	}
+	return true;
+}
+
+bool Histopathology::RunNuclearSegmentation(Input in)
+{
+	ftk::NuclearSegmentation * seg = new ftk::NuclearSegmentation();
+	seg->SetInputs(in.filename,"");
+	seg->SetChannel(in.channel);
+	seg->LoadData();
+	seg->Binarize();
+	seg->DetectSeeds(false);
+	seg->RunClustering();
+	seg->Finalize();
+	//seg->ComputeFeatures();
+	//seg->ReleaseSegMemory();
+	seg->SaveResultImage();
+	in.operation.outfile = seg->GetLabelFilename();
+	in.operation.done = true;
+
+	delete seg;
+	return true;
+}
+
+bool Histopathology::RunCytoplasmSegmentation(Input in)
+{
+	CytoplasmSegmentation * seg = new CytoplasmSegmentation();
+	seg->Run(in.filename,in.operation.infile,in.operation.outfile);
+	in.operation.done = true;
+
+	delete seg;
+	return true;
+}
+
+//This function loads the data images and the result (label) images into an ftk::Image 
+bool Histopathology::LoadImages()
+{
+	std::vector<std::string> dataChName;
+	std::vector<unsigned char> dataColor;
+	std::vector<std::string> lablChName;
+	std::vector<unsigned char> lablColor;
+
+	//First do the nuclear segmentations:
+	for(int i=0; i<input.size(); ++i)
+	{
+		if( input.at(i).operation.type == "NucSeg" || input.at(i).operation.type == "CytoSeg")
+		{
+			dataChName.push_back( input.at(i).chname );
+			dataColor.push_back(input.at(i).color[0]);
+			dataColor.push_back(input.at(i).color[1]);
+			dataColor.push_back(input.at(i).color[2]);
+			dataFilename.push_back( input.at(i).filename );
+			if( input.at(i).operation.done == true )
+			{
+				lablChName.push_back( input.at(i).chname );
+				lablColor.push_back(input.at(i).color[0]);
+				lablColor.push_back(input.at(i).color[1]);
+				lablColor.push_back(input.at(i).color[2]);
+				labelFilename.push_back( input.at(i).operation.outfile );
+			}
+		}
+		else
+		{
+			dataChName.push_back( input.at(i).chname );
+			dataColor.push_back(input.at(i).color[0]);
+			dataColor.push_back(input.at(i).color[1]);
+			dataColor.push_back(input.at(i).color[2]);
+			dataFilename.push_back( input.at(i).filename );
+		}
+	}
+
+	dataImage = ftk::Image::New();
+	if(!dataImage->LoadFilesAsMultipleChannels(dataFilename,dataChName,dataColor))	//Load for display
+	{
+		errorMessage = "Data Image failed to load";
+		dataImage = 0;
+		return false;
+	}
+
+	labelImage = ftk::Image::New();
+	if(!labelImage->LoadFilesAsMultipleChannels(labelFilename,lablChName,lablColor))	//Load for display
+	{
+		errorMessage = "Label Image failed to load";
+		labelImage = 0;
+		return false;
+	}
+	return true;
 }
 
 //*******************************************************************************************

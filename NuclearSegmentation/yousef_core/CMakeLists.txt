@@ -78,8 +78,8 @@ SET( cb3_SRCS
 )
 
 SET( gwd_SRCS
-	gradient_weighted_distance_2D/gradientweighteddistancemap.h
-	gradient_weighted_distance_2D/gradientweighteddistancemap.cpp
+	#gradient_weighted_distance_2D/gradientweighteddistancemap.h
+	#gradient_weighted_distance_2D/gradientweighteddistancemap.cpp
 )
 
 

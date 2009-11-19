@@ -934,71 +934,72 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 }
 
 //Added by Yousef on 9/14/2009
-void yousef_nucleus_seg::runGradWeightedDistance()
-{	
-	if (!dataImagePtr)
-		return;
-
-	//computer the gradient image
-	float* gradIM = new float[numStacks*numRows*numColumns];
-	memset(gradIM/*destination*/,0.0/*value*/,numStacks*numRows*numColumns*sizeof(float)/*num bytes to move*/);
-	computeGradientImage(dataImagePtr, gradIM, numRows, numColumns, numStacks);
-	//pad with zeros	
-	float* gradIMpad;
-	if(numStacks == 1)
-	{
-		gradIMpad = new float[(numRows+2)*(numColumns+2)];
-		memset(gradIMpad/*destination*/,0.0/*value*/,(numRows+2)*(numColumns+2)*sizeof(float)/*num bytes to move*/);
-	}
-	else
-	{
-		gradIMpad = new float[(numStacks+2)*(numRows+2)*(numColumns+2)];
-		memset(gradIMpad/*destination*/,0.0/*value*/,(numStacks+2)*(numRows+2)*(numColumns+2)*sizeof(float)/*num bytes to move*/);
-	}
-
-	for(int k=0; k<numStacks; k++)
-	{
-		for(int i=0; i<numRows; i++)
-		{
-			for(int j=0; j<numColumns; j++)
-			{
-				int ind1 = k*numRows*numColumns + i*numColumns + j;
-				int ind2;
-				if(numStacks == 1)
-					ind2 = (i+1)*(numColumns+2)+j+1;
-				else
-					ind2 = (k+1)*(numRows+2)*(numColumns+2)+(i+1)*(numColumns+2)+j+1;
-				gradIMpad[ind2] = gradIM[ind1];
-			}
-		}
-	}
-	delete [] gradIM;
-
-	//Now prepare the input image to the gradient weighted distance transform
-	//In this image, each seed is set to zero, each background point is set to -inf and each foreground point is set to +inf
-	float* outImage = new float[numStacks*numRows*numColumns];
-	memset(outImage/*destination*/,0.0/*value*/,numStacks*numRows*numColumns*sizeof(float)/*num bytes to move*/);
-	prepareInputImage(binImagePtr, seedImagePtr,outImage, numRows, numColumns, numStacks);
-	
-	//finally, call the gradient-weighted distance transform function
-	gradient_enhanced_distance_map_2D( outImage, gradIMpad, numColumns, numRows);
-
-	delete [] gradIM;
-
-	//try this: copy the resulting image into the clustering image
-	for(int k=0; k<numStacks; k++)
-	{
-		for(int i=0; i<numRows; i++)
-		{
-			for(int j=0; j<numColumns; j++)
-			{
-				clustImagePtr[k*numColumns*numRows+i*numColumns+j] = (unsigned short) outImage[(k+1)*(numColumns+2)*(numRows+2)+(i+1)*(numColumns+2)+j+1];
-			}
-		}
-	}
-
-	delete [] outImage;
-}
+//
+//void yousef_nucleus_seg::runGradWeightedDistance()
+//{	
+//	if (!dataImagePtr)
+//		return;
+//
+//	//computer the gradient image
+//	float* gradIM = new float[numStacks*numRows*numColumns];
+//	memset(gradIM/*destination*/,0.0/*value*/,numStacks*numRows*numColumns*sizeof(float)/*num bytes to move*/);
+//	computeGradientImage(dataImagePtr, gradIM, numRows, numColumns, numStacks);
+//	//pad with zeros	
+//	float* gradIMpad;
+//	if(numStacks == 1)
+//	{
+//		gradIMpad = new float[(numRows+2)*(numColumns+2)];
+//		memset(gradIMpad/*destination*/,0.0/*value*/,(numRows+2)*(numColumns+2)*sizeof(float)/*num bytes to move*/);
+//	}
+//	else
+//	{
+//		gradIMpad = new float[(numStacks+2)*(numRows+2)*(numColumns+2)];
+//		memset(gradIMpad/*destination*/,0.0/*value*/,(numStacks+2)*(numRows+2)*(numColumns+2)*sizeof(float)/*num bytes to move*/);
+//	}
+//
+//	for(int k=0; k<numStacks; k++)
+//	{
+//		for(int i=0; i<numRows; i++)
+//		{
+//			for(int j=0; j<numColumns; j++)
+//			{
+//				int ind1 = k*numRows*numColumns + i*numColumns + j;
+//				int ind2;
+//				if(numStacks == 1)
+//					ind2 = (i+1)*(numColumns+2)+j+1;
+//				else
+//					ind2 = (k+1)*(numRows+2)*(numColumns+2)+(i+1)*(numColumns+2)+j+1;
+//				gradIMpad[ind2] = gradIM[ind1];
+//			}
+//		}
+//	}
+//	delete [] gradIM;
+//
+//	//Now prepare the input image to the gradient weighted distance transform
+//	//In this image, each seed is set to zero, each background point is set to -inf and each foreground point is set to +inf
+//	float* outImage = new float[numStacks*numRows*numColumns];
+//	memset(outImage/*destination*/,0.0/*value*/,numStacks*numRows*numColumns*sizeof(float)/*num bytes to move*/);
+//	prepareInputImage(binImagePtr, seedImagePtr,outImage, numRows, numColumns, numStacks);
+//	
+//	//finally, call the gradient-weighted distance transform function
+//	gradient_enhanced_distance_map_2D( outImage, gradIMpad, numColumns, numRows);
+//
+//	delete [] gradIM;
+//
+//	//try this: copy the resulting image into the clustering image
+//	for(int k=0; k<numStacks; k++)
+//	{
+//		for(int i=0; i<numRows; i++)
+//		{
+//			for(int j=0; j<numColumns; j++)
+//			{
+//				clustImagePtr[k*numColumns*numRows+i*numColumns+j] = (unsigned short) outImage[(k+1)*(numColumns+2)*(numRows+2)+(i+1)*(numColumns+2)+j+1];
+//			}
+//		}
+//	}
+//
+//	delete [] outImage;
+//}
 
 unsigned char ***TriplePtr(int z, int r, int c)
 {

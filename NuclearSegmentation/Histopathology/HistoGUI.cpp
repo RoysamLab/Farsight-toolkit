@@ -244,6 +244,19 @@ void HistoGUI::loadResult(void)
 	//segResult = new ftk::NuclearSegmentation();
 	if(patho) delete patho;
 	patho = new ftk::Histopathology();
+
+	patho->LoadProject(filename.toStdString());
+	patho->ProcessInputs();
+	patho->LoadImages();
+
+	if(selection) delete selection;
+	selection = new ObjectSelection();
+
+	segView->SetChannelImage(patho->GetDataImage());
+	segView->SetLabelImage(patho->GetLabelImage(), selection);
+	setMenusForResult(true);
+
+	/*
 	if ( !patho->LoadAll(filename.toStdString()) )
 	{
 		std::cerr << patho->GetErrorMessage() << std::endl;
@@ -263,6 +276,7 @@ void HistoGUI::loadResult(void)
 
 	// Enable the menu items for editing
 	setMenusForResult(true);
+	*/
 }
 
 void HistoGUI::loadImage()

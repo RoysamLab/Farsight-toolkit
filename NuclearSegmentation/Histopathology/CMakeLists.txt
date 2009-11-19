@@ -14,6 +14,8 @@ SET( HistoGUI_UIS
 SET( HistoGUI_RCS
 )
 
+SUBDIRS( CytoplasmSegmentation )
+
 # this command will generate rules that will run rcc on all files from SAMPLE_RCS
 # in result SAMPLE_RC_SRCS variable will contain paths to files produced by rcc
 QT4_ADD_RESOURCES( HistoGUI_RC_SRCS ${HistoGUI_RCS} )
@@ -32,7 +34,7 @@ ADD_EXECUTABLE(HistoGUI main.cpp
              ${HistoGUI_RC_SRCS}
 )
 
-TARGET_LINK_LIBRARIES( HistoGUI ${QT_LIBRARIES} QVTK ftkImage TinyXML libSVM vtkVolumeRendering NuclearSegmentation ftkGUI)
+TARGET_LINK_LIBRARIES( HistoGUI ${QT_LIBRARIES} QVTK ftkImage TinyXML libSVM vtkVolumeRendering CytoplasmSegmentation NuclearSegmentation ftkGUI)
 
 #MAKE A GUI EXECUTABLE, NOT A CONSOLE APPLICATION
 #SET_TARGET_PROPERTIES( HistoGUI PROPERTIES WIN32_EXECUTABLE 1)
