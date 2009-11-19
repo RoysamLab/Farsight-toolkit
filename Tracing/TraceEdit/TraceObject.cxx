@@ -1826,3 +1826,25 @@ void TraceObject::cleanTree()
 	this->trace_lines.clear();
 	this->trace_lines = TempTraceLines;
 }
+void TraceObject::explode(TraceLine *parent)
+{
+	std::vector<TraceLine*> connected;
+	for(unsigned int counter = 0; counter < parent->GetBranchPointer()->size(); counter++)
+	{
+		connected.push_back((*parent->GetBranchPointer())[counter]);
+	}
+	if (connected.size()>=2)
+	{
+		//remove children from parent
+		branchPT *newPT = new branchPT();
+		newPT->SetBit( parent->removeLastBit());
+		newPT->AddConnection(parent);
+		for (unsigned int i = 0; i< connected.size(); i++)
+		{
+			connected.at(i)->SetParent(NULL);
+			newPT->AddConnection(connected.at(i));
+			this->explode(connected.at(i));
+		}
+		this->BranchPoints.push_back(newPT);
+	}
+}

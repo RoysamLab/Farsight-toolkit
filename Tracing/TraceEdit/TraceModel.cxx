@@ -158,3 +158,31 @@ std::vector<TraceLine*> TraceModel::GetSelectedTraces()
 	}//finished with id search
 	return selectedTrace;
 }
+std::vector<TraceLine*> TraceModel::getRoots()
+{
+	std::vector<TraceLine*> roots;
+	std::vector<int> IDList;
+	std::vector<TraceLine*> selectedTrace = this->GetSelectedTraces();
+	for (unsigned int i = 0; i, selectedTrace.size(); i++)
+	{
+		IDList.push_back(selectedTrace.at(i)->GetRootID());
+	}
+	for ( unsigned int i = 0; i< IDList.size(); i++)
+	{
+		bool found = false; 
+		unsigned int j = 0;
+		while ((!found )&&(j < this->TraceLines.size()))
+		{
+			if (this->TraceLines[j]->GetId()==IDList[i])
+			{
+				roots.push_back(this->TraceLines[j]);
+				found= true;
+			}
+			else
+			{
+				j++;
+			}
+		}//end search for trace
+	}//finished with id search
+	return roots;
+}

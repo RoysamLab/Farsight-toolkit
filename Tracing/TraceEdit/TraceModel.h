@@ -51,7 +51,7 @@ public:
 	};
 	std::vector<TraceLine*>GetSelectedTraces();
 	std::vector<int> GetSelecectedIDs();
-	void root();
+	std::vector<TraceLine*> getRoots();
 	void SelectByIDs(int ID);
 	void SelectByIDs(std::set<long int> ID);
 	vtkSmartPointer<vtkTable> getDataTable();

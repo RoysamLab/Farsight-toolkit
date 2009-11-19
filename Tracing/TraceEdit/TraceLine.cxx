@@ -154,7 +154,12 @@ void TraceLine::AddTraceBit(TraceBit tbit)
 {
   this->m_trace_bits.push_back(tbit);
 }
-
+TraceBit TraceLine::removeLastBit()
+{
+	TraceBit lastBit = this->m_trace_bits.back();
+	this->m_trace_bits.pop_back();
+	return lastBit;
+}
 ///////////////////////////////////////////////////////////////////////////////
 TraceLine::TraceBitsType::iterator TraceLine::GetTraceBitIteratorBegin()
 {

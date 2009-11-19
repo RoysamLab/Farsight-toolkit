@@ -75,6 +75,7 @@ public:
 	void CreatePolyDataRecursive(TraceLine* , vtkSmartPointer<vtkFloatArray> , vtkSmartPointer<vtkPoints> ,vtkSmartPointer<vtkCellArray>);
 	void FindMinLines(int smallSize);
 	void cleanTree();
+	void explode(TraceLine* parent);
 	int createGapLists(std::vector<TraceLine*> traceList);
 	int solveParents(std::vector<int> ids);
   void SetCombineShortVTKLines(bool b) { this->CombineShortVTKLines = b; }
