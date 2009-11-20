@@ -726,7 +726,7 @@ void LabelImageViewQT::refreshBoundsImage(void)
 	int currentT = hSpin->value();
 
 	boundsImage = QImage(w, h, QImage::Format_ARGB32);	
-	boundsImage.fill(qRgb(0,0,0));
+	boundsImage.fill(qRgba(0,0,0,0));
 
 	QPainter painter(&boundsImage);
 	//painter.setCompositionMode(QPainter::CompositionMode_Plus);
