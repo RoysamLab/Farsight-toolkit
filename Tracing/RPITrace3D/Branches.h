@@ -22,7 +22,7 @@ class CVessel;
 class CPoint;
 class CIntersectionPoint;
 
-typedef enum TopEnd{Top = 0, End = 1};
+enum TopEnd{Top = 0, End = 1};
 
 
 

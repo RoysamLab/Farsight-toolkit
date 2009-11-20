@@ -368,7 +368,7 @@ int main(int argc, char *argv[])
  for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei)
    {
    // output lines into vtk file
-   fprintf(fout, "2 %ld %ld\n", source(*ei, msTreeBB)-1, target(*ei, msTreeBB)-1);
+   fprintf(fout, "2 %zu %zu\n", source(*ei, msTreeBB)-1, target(*ei, msTreeBB)-1);
    }
 
   fclose(fout); 

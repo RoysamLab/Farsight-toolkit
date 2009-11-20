@@ -309,6 +309,7 @@ return SpeedFun;
 
 
 # if 0
+/*
 function DendSpF = testPathExtract2(DendSp, img, CVi, CV)
 % 04/17/09   muoffset changed from 4 to 10 since now we are taking median geodesic distance for endpoints
 global IMGpe DBGG DOPATHMERGE
@@ -592,4 +593,6 @@ end
 else
 pxl=cp';
 end
+*/
 #endif
+

@@ -37,7 +37,7 @@ class C3DImage
 {
 public:
 
-	typedef enum PgmPic
+	enum PgmPic
 	{
 		pgm		= 0,
 		pic		= 1

@@ -4903,7 +4903,7 @@ int main(int argc, char* argv[])
 	printf("Finished Initializing Radiosity .....\n");
 	//scanf("%*d");
 	//    glBegin(GL_LINES);
-	GLCanvas *g;
+	GLCanvas *g = new GLCanvas();
 	//BoundingBox *b = m->getBoundingBox();
 	//      m->PaintWireframe();
 	g->initialize(ap,r);
@@ -4912,5 +4912,7 @@ int main(int argc, char* argv[])
 
 	//m->PaintWireframe();
 	// b->paint();
+  
+  delete g;
 	return 0;
 }

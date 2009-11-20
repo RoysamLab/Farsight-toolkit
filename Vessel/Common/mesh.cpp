@@ -127,7 +127,7 @@ void Mesh::texture_list_init()
 //		fread(rasterxy[counter],sizeof(unsigned char),npixels,fpi);
 	printf("I read %d\n",(int)fread(rasterxy,sizeof(unsigned char),npixels*rdepth,fpi));
 	//rdepth+=1;//CHANGED
-	printf("done reading %d %d %d %d %lu\n",rwidth, rlength,rdepth,(1<<twopow),sizeof(unsigned char));
+	printf("done reading %d %d %d %d %zu\n",rwidth, rlength,rdepth,(1<<twopow),sizeof(unsigned char));
 	printf("I'm encoding the data now\n");
 	//double max1=-1,min1=23423423,mean1=0;
 	//int num1;

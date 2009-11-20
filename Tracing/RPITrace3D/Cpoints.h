@@ -21,12 +21,12 @@ limitations under the License.
 using namespace std;
 
 //typedef enum boolean {FALSE = 0, TRUE};
-typedef enum VesselOrSoma
+enum VesselOrSoma
 {
 	VESSEL		= 1,
 	SOMA		= 2
 };
-typedef enum PointType
+enum PointType
 {
 	ORIGINAL	= 1,
 	MERGED		= 2,
@@ -258,7 +258,7 @@ public:
 	~CIntersectionPoints();
 
 	// better than using "#define"
-	typedef enum Constants
+	enum Constants
 	{
 		BlockSize = 20
 	};

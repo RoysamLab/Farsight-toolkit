@@ -36,7 +36,7 @@ using namespace std;
 // forward declration
 class C3DImage;
 
-typedef enum PgmPic
+enum PgmPic
 {
 	pgm		= 0,
 	pic		= 1

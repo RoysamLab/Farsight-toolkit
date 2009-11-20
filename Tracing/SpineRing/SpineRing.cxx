@@ -2,6 +2,7 @@
 #include "ImageProc.h"
 #include <itkRegionOfInterestImageFilter.h>
 #include <algorithm>
+#include <limits.h>
 
 TraceSegNode* GlobalDetector::getSegment(long i) {
 	TraceSegNodeVecType::iterator	niter;
@@ -60,12 +61,14 @@ void GlobalDetector::SpineRing::RestartRing(TraceSegNode* trbit) {
 			thickness+= seg->a3;
 		else
 			thickness+= seg->a3/5.0;
-	if (RingType==RingTypeSE) {
-		if (validring = RingSE()) {
+	if (RingType==RingTypeSE)
+    {
+		if ( (validring = RingSE()) )
+      {
 			DEBUGSTMT(PrintSelf());
 			CCimUpdate();
-		}
-	}
+		  }
+	  }
 	else {
 		////////////////// Possible Future Work: //////////////////
 		// in case we needed to create the cylindrical detector:

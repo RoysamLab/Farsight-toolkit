@@ -3,6 +3,7 @@
 //#include <algorithm>
 //#include "vnl/vnl_math.h"
 
+#include <limits.h>
 
 #include <itkImage.h>
 //#include "itkObjectFactory.h"
