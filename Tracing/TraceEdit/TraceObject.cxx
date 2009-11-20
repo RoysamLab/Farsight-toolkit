@@ -1842,8 +1842,12 @@ void TraceObject::explode(TraceLine *parent)
 		for (unsigned int i = 0; i< connected.size(); i++)
 		{
 			connected.at(i)->SetParent(NULL);
+			this->trace_lines.push_back(connected.at(i));
 			newPT->AddConnection(connected.at(i));
-			this->explode(connected.at(i));
+			if (connected.at(i)->isLeaf())
+			{
+				this->explode(connected.at(i));
+			}
 		}
 		this->BranchPoints.push_back(newPT);
 	}

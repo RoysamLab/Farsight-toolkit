@@ -366,6 +366,9 @@ void View3D::CreateGUIObjects()
   this->root = new QAction("Set Root", this->CentralWidget);
 	connect(this->root, SIGNAL(triggered()), this, SLOT(SetRoots()));
 	this->root->setStatusTip("Solve Branch order by defining Root Trace Lines");
+  this->explodeTree = new QAction("Explode", this->CentralWidget);
+  connect(this->explodeTree, SIGNAL(triggered()), this, SLOT( ExplodeTree()));
+  this->explodeTree->setStatusTip("Break tree into segments, Tree can be rebuilt using set root");
 
   this->UndoButton = new QAction("&Undo", this->CentralWidget);  
 	connect(this->UndoButton, SIGNAL(triggered()), this, SLOT(UndoAction()));
@@ -432,6 +435,7 @@ void View3D::CreateLayout()
   this->BranchToolBar = addToolBar(tr("Branch Toolbar"));
   this->BranchToolBar->setToolTip("Branch Toolbar");
   this->fileMenu->addAction(this->BranchToolBar->toggleViewAction());
+  this->BranchToolBar->addAction(this->explodeTree);
   this->BranchToolBar->addAction(this->BranchButton);
   this->BranchToolBar->addAction(this->root);
 
@@ -1020,6 +1024,18 @@ void View3D::AddNewBranches()
 		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 		this->statusBar()->showMessage(tr("Branching complete"));
 	}
+}
+void View3D::ExplodeTree()
+{
+	this->tobj->BranchPoints.clear();
+	std::vector<TraceLine*> roots = this->TreeModel->getRoots();
+	for (unsigned int i = 0; i < roots.size(); i++)
+	{
+		this->tobj->explode(roots.at(i));
+	}
+	//this->tobj->cleanTree();
+	this->Rerender();
+	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 }
 void View3D::AddChildren(TraceLine *trunk, std::vector<TraceLine*> childTraces)
 {
