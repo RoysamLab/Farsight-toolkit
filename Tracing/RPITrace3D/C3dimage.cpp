@@ -332,8 +332,9 @@ int C3DImage::Read(const string& achFName)
 			// read the header information
 			SliceFile.getline(tempLine, 90, '\n');
 
-			if (tempLine)
-			{
+      //the following condition is always true...
+			//if (tempLine)
+			//{
 				strcpy(Type, tempLine);
 				if (strcmp(Type, "P5") != 0)
 				{
@@ -377,7 +378,7 @@ int C3DImage::Read(const string& achFName)
 						  	sliceSize);
 				i++;
 				SliceFile.close();
-			}
+			//}
 		}
 
 		FileOfSlices.close();

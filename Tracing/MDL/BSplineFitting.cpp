@@ -197,14 +197,14 @@ int main(int argc, char **argv)
     if(argc > 1 && strcmp(argv[1], "debug") == 0)
       {
       //---- for debug test----//
-      argv[0]="BSplineFitting.exe";
-      argv[1]="Trach11A.512x512x18.raw";
-      argv[2]="Backbone.vtk";
-      argv[3]="512";
-      argv[4]="512";
-      argv[5]="18";
-      argv[6]="smoothBB.vtk";
-      argv[7]="Exspine.vtk";
+      argv[0] = (char *)"BSplineFitting.exe";
+      argv[1] = (char *)"Trach11A.512x512x18.raw";
+      argv[2] = (char *)"Backbone.vtk";
+      argv[3] = (char *)"512";
+      argv[4] = (char *)"512";
+      argv[5] = (char *)"18";
+      argv[6] = (char *)"smoothBB.vtk";
+      argv[7] = (char *)"Exspine.vtk";
       //argv[9]="flag.txt";
       }
     else

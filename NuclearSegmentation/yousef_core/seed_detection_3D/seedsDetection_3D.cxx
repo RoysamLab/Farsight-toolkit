@@ -655,11 +655,11 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 	maxScale[0] = 0.0;
 	int cent_slice = (int) z/2;
 	std::vector< std::vector<unsigned short> > scales;
-	double mean = 0.0;
-	double stdv = 0.0;
+	//double mean = 0.0;
+	//double stdv = 0.0;
 	int cnt = 0;
 	//ofstream p;
-	int max_dist = 0;
+	//int max_dist = 0;
 	//p.open("checkme.txt");
 	for(int i=1; i<r-1; i++)
     {

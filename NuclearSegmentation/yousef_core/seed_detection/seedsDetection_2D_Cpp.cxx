@@ -444,7 +444,7 @@ void estimateMinMaxScales2D(itk::SmartPointer<InputImageType> im, float* distIm,
 	int cnt = 0;
 	//ofstream p;
 	//p.open("checkme.txt");
-	unsigned short mmx = 0;
+	//unsigned short mmx = 0;
 	for(int i=1; i<r-1; i++)
     {
         for(int j=1; j<c-1; j++)

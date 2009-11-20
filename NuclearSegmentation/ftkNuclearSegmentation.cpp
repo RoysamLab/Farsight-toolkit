@@ -477,7 +477,7 @@ bool NuclearSegmentation::SaveEditRecords()
 		return false;
 	}
 	//Now write out the edits
-	for(unsigned int rec = 0; rec < (int)myEditRecords.size(); ++rec)
+	for(unsigned int rec = 0; rec < myEditRecords.size(); ++rec)
 	{
 		outFile << myEditRecords.at(rec).date << "\t\t" << myEditRecords.at(rec).description << "\n";
 	}
@@ -578,7 +578,7 @@ bool NuclearSegmentation::LoadAssociationsFromFile(std::string fName)
 
 	std::string source = rootElement->Attribute("SegmentationSource");
 	//int numMeasures = atoi( rootElement->Attribute("NumberOfAssociativeMeasures") );
-	unsigned int numObjects = atoi( rootElement->Attribute("NumberOfObjects") );
+	//unsigned int numObjects = atoi( rootElement->Attribute("NumberOfObjects") );
 
 	vtkSmartPointer<vtkTable> assocTable = vtkSmartPointer<vtkTable>::New();
 	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
@@ -1207,7 +1207,7 @@ ftk::Object::Box NuclearSegmentation::ExtremaBox(std::vector<int> ids)
 //**********************************************************************************************************
 bool NuclearSegmentation::SetClass(vector<int> ids, int clss)
 {
-	for(int i=0; i<ids.size(); ++i)
+	for(unsigned int i=0; i<ids.size(); ++i)
 	{
 		featureTable->SetValueByName( rowForID(ids.at(i)), "class", vtkVariant(clss) );
 	}
@@ -1217,7 +1217,7 @@ bool NuclearSegmentation::SetClass(vector<int> ids, int clss)
 
 bool NuclearSegmentation::MarkAsVisited(vector<int> ids, int val)
 {
-	for(int i=0; i<ids.size(); ++i)
+	for(unsigned int i=0; i<ids.size(); ++i)
 	{
 		featureTable->SetValueByName( rowForID(ids.at(i)), "visited?", vtkVariant(val) );
 	}
@@ -1473,7 +1473,7 @@ int NuclearSegmentation::Merge(vector<int> ids)
 	ReassignLabels(ids, newID);					//Assign all old labels to this new label
 	ftk::Object::Box region = ExtremaBox(ids);
 	this->addObjectToTable(newID, region.min.x, region.min.y, region.min.z, region.max.x, region.max.y, region.max.z);
-	for(int i=0; i<ids.size(); ++i)
+	for(unsigned int i=0; i<ids.size(); ++i)
 	{
 		removeFeatures(ids.at(i));
 	}
@@ -1482,7 +1482,7 @@ int NuclearSegmentation::Merge(vector<int> ids)
 	ftk::Object::EditRecord record;
 	record.date = TimeStamp();
 	record.description = std::string("M") + "\t" + NumToString(ids.at(0));
-	for(int i=1; i<ids.size(); ++i)
+	for(unsigned int i=1; i<ids.size(); ++i)
 	{
 		record.description.append("," + NumToString(ids.at(i)));
 	}
@@ -1577,7 +1577,7 @@ bool NuclearSegmentation::Delete(std::vector<int> ids)
 	ftk::Object::EditRecord record;
 	record.date = TimeStamp();
 	record.description = std::string("D") + "\t" + NumToString(ids.at(0));
-	for(int i=1; i<ids.size(); ++i)
+	for(unsigned int i=1; i<ids.size(); ++i)
 	{
 		record.description.append("," + NumToString(ids.at(i)));
 	}
@@ -1630,7 +1630,7 @@ bool NuclearSegmentation::Exclude(int xy, int z)
 	ftk::Object::EditRecord record;
 	record.date = TimeStamp();
 	record.description = std::string("E") + "\t" + NumToString(ids.at(0));
-	for(int i=1; i<ids.size(); ++i)
+	for(unsigned int i=1; i<ids.size(); ++i)
 	{
 		record.description.append("," + NumToString(ids.at(i)));
 	}

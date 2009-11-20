@@ -15,7 +15,9 @@ limitations under the License.
 
 #include "PatternAnalysisWizard.h"
 
-PatternAnalysisWizard::PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, Module mod, char * trainColumn, char * resultColumn, QWidget *parent)
+PatternAnalysisWizard::PatternAnalysisWizard(
+  vtkSmartPointer<vtkTable> table, Module mod, const char * trainColumn,
+  const char * resultColumn, QWidget *parent)
 	: QWizard(parent)
 {
 	this->m_table = table;
@@ -245,10 +247,10 @@ bool FeaturesPage::isComplete() const
 }
 //****************************************************************************
 
-/*
 //****************************************************************************
 // ExecutePage
 //****************************************************************************
+/*
 ExecutePage::ExecutePage(QWidget *parent)
 	: QWizardPage(parent)
 {

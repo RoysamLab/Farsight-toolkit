@@ -316,7 +316,7 @@ void Histogram::RecordImage (char* imgFileName) {
 	writer->SetInput(img->GetOutput());
 	char buff[1024];
 	strcat(imgFileName,".tiff"); //Image will be saved as a tiff file
-	sprintf(buff,imgFileName);
+	strcpy(buff,imgFileName);
 	writer->SetFileName(buff);
 	writer->Update();	
 }

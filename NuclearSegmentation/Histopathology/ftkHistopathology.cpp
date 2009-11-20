@@ -170,7 +170,7 @@ Operation Histopathology::parseOperationElement(TiXmlElement *operationElement)
 bool Histopathology::ProcessInputs(void)
 {
 	//First do the nuclear segmentations:
-	for(int i=0; i<input.size(); ++i)
+	for(unsigned int i=0; i<input.size(); ++i)
 	{
 		if( input.at(i).operation.type == "NucSeg" && input.at(i).operation.done == false )
 		{
@@ -179,7 +179,7 @@ bool Histopathology::ProcessInputs(void)
 		}
 	}
 	//Then do the Cytoplasm Segmentations:
-	for(int i=0; i<input.size(); ++i)
+	for(unsigned int i=0; i<input.size(); ++i)
 	{
 		if( input.at(i).operation.type == "CytoSeg" && input.at(i).operation.done == false )
 		{
@@ -229,7 +229,7 @@ bool Histopathology::LoadImages()
 	std::vector<unsigned char> lablColor;
 
 	//First do the nuclear segmentations:
-	for(int i=0; i<input.size(); ++i)
+	for(unsigned int i=0; i<input.size(); ++i)
 	{
 		if( input.at(i).operation.type == "NucSeg" || input.at(i).operation.type == "CytoSeg")
 		{

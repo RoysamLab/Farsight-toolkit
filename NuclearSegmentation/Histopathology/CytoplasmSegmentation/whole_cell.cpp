@@ -54,7 +54,9 @@ void WholeCellSeg::RunBinarization(){
 	int size1=cyt_im_inp->GetLargestPossibleRegion().GetSize()[0];
 	int size2=cyt_im_inp->GetLargestPossibleRegion().GetSize()[1];
 
-	if( ( size1 != nuclab_inp->GetLargestPossibleRegion().GetSize()[0] ) || ( size2 != nuclab_inp->GetLargestPossibleRegion().GetSize()[1] ) ){
+	if( ( size1 != (int)nuclab_inp->GetLargestPossibleRegion().GetSize()[0] ) ||
+      ( size2 != (int)nuclab_inp->GetLargestPossibleRegion().GetSize()[1] ) )
+    {
 		std::cerr<<"The input images must be of the same size\n";
 		return;
 	}
@@ -142,7 +144,7 @@ void WholeCellSeg::RunBinarization(){
 
 		unsigned int asd,asd1; asd=0; asd1=0;
 		IteratorType iterator ( intermediate_bin_im_out, intermediate_bin_im_out->GetRequestedRegion() );
-		for(unsigned long int i=0; i<(unsigned long int(size1*size2)); ++i){
+		for(unsigned long int i=0; i < (unsigned long int)(size1*size2); ++i){
 			if( bin_Image[i] )
 			iterator.Set( dum1 );
 			else
@@ -276,7 +278,7 @@ void WholeCellSeg::RunSegmentation(){
 	long ind=0;
 	for ( pix_buf.GoToBegin(); !pix_buf.IsAtEnd(); ++pix_buf, ++ind )
 		INP_IM_2D[ind] = ( pix_buf.Get() );
-	int testing=0;
+	//int testing=0;
 
 	if( use_mem_img ){
 		GaussianFilterType::Pointer  gaussianfilter1 = GaussianFilterType::New();

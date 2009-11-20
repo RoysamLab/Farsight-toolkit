@@ -50,7 +50,7 @@ void BioNet::Averages() {
   int inNodes=0, outNodes=0;
   vtkIdType neighborCount =0;
   float subtotal=0, avg=0;
-  char* fileName = "CoordinatesAndAverageDistances.txt";
+  char* fileName = (char *)"CoordinatesAndAverageDistances.txt";
   ofstream myfile (fileName);
   VTK_CREATE(vtkVertexListIterator, vertices);
   VTK_CREATE(vtkOutEdgeIterator, outEdges);
@@ -111,7 +111,7 @@ void BioNet::Medians() {
   int inNodes=0, outNodes=0;
   vtkIdType neighborCount =0;
   float subtotal=0, med=0,med1=0, med2=0;
-  char* fileName = "CoordinatesAndMedianDistances.txt";
+  char* fileName = (char *)"CoordinatesAndMedianDistances.txt";
   ofstream myfile (fileName);
   VTK_CREATE(vtkVertexListIterator, vertices);
   VTK_CREATE(vtkOutEdgeIterator, outEdges);
@@ -373,7 +373,7 @@ void BioNet::ListDegrees() {
 // The result is a file that can be used by scluster program in Cluto                  /
 /**************************************************************************************/
 void BioNet::GenerateClutoGraphFile() {	  
-  char* fileName = "ClutoGraph.txt";
+  char* fileName = (char *)"ClutoGraph.txt";
   ofstream myfile (fileName);
   VTK_CREATE(vtkVertexListIterator, vertices);
   VTK_CREATE(vtkOutEdgeIterator, outEdges);
@@ -1469,13 +1469,13 @@ SelectedVerticesAndEdges* BioNet::GetSelections(vtkSelectionLink* sel) {
 		 for (int i=0;i<n->GetSelectionList()->GetNumberOfTuples();i++) {
 			 vtkVariant aaa=arra->GetVariantValue(i);
 			// Decide if this is a vertex or an edge
-			 if (aaa.GetTypeAsString() == "double" ) //VERTEX ids have type of double 
+			 if (strcmp(aaa.GetTypeAsString(), "double") == 0) //VERTEX ids have type of double 
 				 //vtkIdType id = (vtkIdType) aaa.ToInt();
 				 //vtkIdType id = (vtkIdType) this->GetNetwork()->GetVertexData()->GetPedigreeIds()->GetVariantValue(aaa).ToDouble()
 				 //this->InsertIntoMap(&sve->vertices, this->GetNetwork()->GetVertexData()->GetPedigreeIds()->GetVariantValue(id).ToDouble());				
 		 
 				 this->InsertIntoMap(&sve->vertices, (aaa.ToDouble()));
-			 else if (aaa.GetTypeAsString() == "string" ) //edge ids have type of string
+			 else if (strcmp(aaa.GetTypeAsString(), "string") == 0) //edge ids have type of string
 				  sve->edges.insert(aaa.ToString());
 		 }
 		 cout<<endl<<endl;

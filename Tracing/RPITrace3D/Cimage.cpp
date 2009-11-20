@@ -361,8 +361,9 @@ void CImage::ProcessHeader(istream& inFile)
 	{
 		// read the header information
 		inFile.getline(tempLine, 90, '\n');
-		if (tempLine)
-		{
+    //the following condition is always true...
+		//if (tempLine)
+		//{
 			strncpy(Type, tempLine, 3);
 			if (strcmp(Type, "P5") != 0)
 			{
@@ -387,7 +388,7 @@ void CImage::ProcessHeader(istream& inFile)
 					<< endl;
 				exit(0);
 			}
-		}
+	//	}
 	}
 	else if (type == pic)
 	{

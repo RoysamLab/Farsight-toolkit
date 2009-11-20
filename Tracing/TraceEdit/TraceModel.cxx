@@ -163,7 +163,7 @@ std::vector<TraceLine*> TraceModel::getRoots()
 	std::vector<TraceLine*> roots;
 	std::vector<int> IDList;
 	std::vector<TraceLine*> selectedTrace = this->GetSelectedTraces();
-	for (unsigned int i = 0; i, selectedTrace.size(); i++)
+	for (unsigned int i = 0; i < selectedTrace.size(); i++)
 	{
 		IDList.push_back(selectedTrace.at(i)->GetRootID());
 	}

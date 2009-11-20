@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
   }
    
   num_nodes = 0;  // initial
- int Allnumnodes =0; 
+ //int Allnumnodes =0; 
  int itr = 0;
  fin >> nodePosition.x >> nodePosition.y >> nodePosition.z >> p;
   while (!fin.eof() ) 

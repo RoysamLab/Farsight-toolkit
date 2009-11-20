@@ -50,7 +50,9 @@ public:
 	enum { Page_Start, Page_Features, Page_Training, Page_Parameters, Page_Execute };
 	typedef enum { _SVM, _KPLS } Module;
 
-    PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, Module mod, char * trainColumn, char * resultColumn, QWidget *parent = 0);
+  PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, Module mod,
+                        const char * trainColumn, const char * resultColumn,
+                        QWidget *parent = 0);
 
 protected:
 	//void initializePage(int id);
@@ -72,8 +74,8 @@ private:
 	QButtonGroup *optionGroup;
 
 	vtkSmartPointer<vtkTable> m_table;
-	char * columnForTraining;
-	char * columnForPrediction;
+	const char * columnForTraining;
+	const char * columnForPrediction;
 	Module m_module;
 };
 

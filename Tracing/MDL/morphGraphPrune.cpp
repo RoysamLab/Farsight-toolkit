@@ -162,7 +162,7 @@ Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexP
 		msTree = msTree_buffer;
 	}  // end of prunetimes
 
-    printf("The Graph Pruning is done with respect to the threshold %d",length_Threshold);
+    printf("The Graph Pruning is done with respect to the threshold %f",length_Threshold);
 	return msTree;
 
 }

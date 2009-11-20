@@ -801,8 +801,8 @@ void SelectionAdapter::updateOBJ(const QItemSelection & selected, const QItemSel
 	okToChange = FALSE;
 	std::set<long int> ids;
 	const QAbstractItemModel * model = m_qmod->model();
-	int rows = model->rowCount();
-	int columns = model->columnCount();
+	//int rows = model->rowCount();
+	//int columns = model->columnCount();
 	
 	QModelIndexList sels = m_qmod->selectedRows();
 	for(int i=0; i<sels.size(); ++i)

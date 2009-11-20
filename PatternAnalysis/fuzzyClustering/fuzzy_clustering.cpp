@@ -16,6 +16,7 @@ limitations under the License.
 #include "fuzzy_clustering.h"
 #include <math.h>
 #include <stdlib.h> /* exit */
+#include <cstdio>
 
 
 // CTOR1
