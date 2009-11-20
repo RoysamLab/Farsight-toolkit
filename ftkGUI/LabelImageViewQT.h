@@ -86,6 +86,7 @@ signals:
 protected slots:
 	void refreshBaseImage(void);
 	void refreshBoundsImage(void);
+	void selectionChange(void);
 	void sliderChange(int v);
 	void spinChange(int v);
 	void adjustImageIntensity(int threshold, int offset);

@@ -37,7 +37,6 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	setWindowTitle(tr("FARSIGHT: Nuclear Segmentation Tool"));
 
 	lastPath = ".";
-	myImgName = "";
 
 	tblWin.clear();
 	pltWin.clear();
@@ -54,7 +53,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	table = NULL;
 	selection = NULL;
 
-	this->resize(500,500);
+	this->resize(800,800);
 	//Crashes when this is enabled!
 	//setAttribute ( Qt::WA_DeleteOnClose );	
 }
@@ -485,30 +484,75 @@ void NucleusEditor::loadImage()
 	QString fileName = QFileDialog::getOpenFileName(
                              this, "Select file to open", lastPath,
                              tr("Images (*.tif *.tiff *.pic *.png *.jpg *.lsm)\n"
+								"XML Image Definition (*.xml)\n"
 							    "All Files (*.*)"));
-
     if(fileName == "")
 		return;
 
 	abortSegment();
 
 	lastPath = QFileInfo(fileName).absolutePath();
-	myImgName = QFileInfo(fileName).fileName();
-
-	//******************************************************
-	// NEW BROWSER:
-	//ImageBrowser5D *browse = new ImageBrowser5D(fileName);
-	//this->setCentralWidget(browse);
-	
-	// OLD BROWSER:
-	myImg = ftk::Image::New();
-	myImg->LoadFile(fileName.toStdString());
+	QString myExt = QFileInfo(fileName).suffix();
+	if(QFileInfo(fileName).suffix() == "xml")
+	{
+		if(!this->loadXMLImage(fileName.toStdString())) return;
+	}
+	else
+	{
+		myImg = ftk::Image::New();
+		if(!myImg->LoadFile(fileName.toStdString()))
+		{
+			myImg = NULL;
+			return;
+		}
+	}
 	segView->SetChannelImage(myImg);
 
 	// Disable the menu items for editing
 	this->setMenusForResult(false);
 	segmentAction->setEnabled(true);
 	imageIntensityAction->setEnabled(true);
+}
+
+bool NucleusEditor::loadXMLImage(std::string filename)
+{
+	TiXmlDocument doc;
+	if ( !doc.LoadFile( filename.c_str() ) )
+		return false;
+
+	TiXmlElement* rootElement = doc.FirstChildElement();
+	const char* docname = rootElement->Value();
+	if ( strcmp( docname, "Image" ) != 0 )
+		return false;
+
+	std::vector<std::string> files;
+	std::vector<std::string> chName;
+	std::vector<unsigned char> color;
+
+	//Parents we know of: datafilename,resultfilename,object,parameter
+	TiXmlElement* parentElement = rootElement->FirstChildElement();
+	while (parentElement)
+	{
+		const char * parent = parentElement->Value();
+		if ( strcmp( parent, "file" ) == 0 )
+		{
+			files.push_back( parentElement->GetText() );
+			chName.push_back( parentElement->Attribute("chname") );
+			color.push_back( atoi(parentElement->Attribute("r")) );
+			color.push_back( atoi(parentElement->Attribute("g")) );
+			color.push_back( atoi(parentElement->Attribute("b")) );
+		}
+		parentElement = parentElement->NextSiblingElement();
+	} // end while(parentElement)
+	//doc.close();
+
+	myImg = ftk::Image::New();
+	if(!myImg->LoadFilesAsMultipleChannels(files,chName,color))	//Load for display
+	{
+		myImg = NULL;
+		return false;
+	}
+	return true;
 }
 
 //**********************************************************************
@@ -731,11 +775,7 @@ void NucleusEditor::applyExclusionMargin(void)
 
 void NucleusEditor::segmentImage()
 {
-	if(myImgName == "")
-	{
-		return;
-	}
-
+	QString myImgName = "CHANGE ME";
 	QString dataFile = lastPath + "/" + myImgName;
 
 	QVector<QString> chs;

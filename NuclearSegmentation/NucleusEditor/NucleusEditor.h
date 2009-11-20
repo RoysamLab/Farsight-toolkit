@@ -116,6 +116,7 @@ private:
 	void createStatusBar();
 	void createSegmentToolBar();
 	void quitNucSeg();
+	bool loadXMLImage(std::string filename);
 	
 	LabelImageViewQT *segView;
 	std::vector<PlotWindow *> pltWin;
@@ -160,7 +161,6 @@ private:
 
 	ftk::NuclearSegmentation *nucSeg;//Used for segmentation execution, loading, and editing
 	ftk::Image::Pointer myImg;		//My currently visible image
-	QString myImgName;				//Name of the currently visible image
 	ObjectSelection * selection;	//object selection list
 	vtkSmartPointer<vtkTable> table;//table
 

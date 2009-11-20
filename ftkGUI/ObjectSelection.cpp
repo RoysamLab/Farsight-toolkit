@@ -22,8 +22,11 @@ ObjectSelection::ObjectSelection()
 
 void ObjectSelection::clear(void)
 {
-	selections.clear();
-	emit changed();
+	if(selections.size() > 0)
+	{
+		selections.clear();
+		emit changed();
+	}
 }
 
 bool ObjectSelection::isSelected(long int id)
@@ -81,8 +84,17 @@ bool ObjectSelection::remove(std::set<long int> ids)
 
 bool ObjectSelection::select(long int id)
 {
+	std::set<long int>::iterator it;
+	it=selections.find(id);
+	if( it != selections.end() && selections.size() == 1)	//found it, it's the only 1 selected
+	{
+		return false;
+	}
+	//didn't find it so clear and add it
 	selections.clear();
-	return add(id);
+	selections.insert(id);
+	emit changed();
+	return true;
 }
 
 bool ObjectSelection::select(std::set<long int> ids)

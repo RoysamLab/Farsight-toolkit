@@ -192,7 +192,7 @@ void LabelImageViewQT::SetLabelImage(ftk::Image::Pointer img, ObjectSelection * 
 	if(sels)
 	{
 		selection = sels;
-		connect(selection, SIGNAL(changed()), this, SLOT(refreshBoundsImage()));
+		connect(selection, SIGNAL(changed()), this, SLOT(selectionChange()));
 	}
 
 	//refreshFeatures();
@@ -707,13 +707,16 @@ void LabelImageViewQT::initGrayscaleColorTable(void)
 		grayscaleColorTable.append(qRgb(i,i,i));
 	}
 }
-#include <time.h>
+
+void LabelImageViewQT::selectionChange(void)
+{
+	this->refreshBoundsImage();
+}
+
 void LabelImageViewQT::refreshBoundsImage(void)
 {
 	if(!labelImg)
 		return;
-
-	clock_t startTimer = clock();
 
 	const ftk::Image::Info *info;
 	if(channelImg)    info = channelImg->GetImageInfo();	//Get info of new image
@@ -729,7 +732,6 @@ void LabelImageViewQT::refreshBoundsImage(void)
 	boundsImage.fill(qRgba(0,0,0,0));
 
 	QPainter painter(&boundsImage);
-	//painter.setCompositionMode(QPainter::CompositionMode_Plus);
 
 	for(int ch = 0; ch < chs; ++ch)
 	{
@@ -768,7 +770,6 @@ void LabelImageViewQT::refreshBoundsImage(void)
 			}
 		}
 	}
-	std::cout<<"Time elapsed is: "<<(((double)clock() - startTimer) / CLOCKS_PER_SEC)<<" seconds"<<std::endl;
 	this->repaint();
 }
 

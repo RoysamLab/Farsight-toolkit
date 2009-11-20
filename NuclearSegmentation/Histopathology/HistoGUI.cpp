@@ -21,7 +21,7 @@
 // HistoGUI
 //
 // This widget is a main window for Histopathology Project.  
-//********************************************************************************
+//********************************************************************************h
 
 HistoGUI::HistoGUI(QWidget * parent, Qt::WindowFlags flags)
 : QMainWindow(parent,flags)
@@ -125,7 +125,7 @@ void HistoGUI::createMenus()
 
 	showBoundsAction = new QAction(tr("Show &Boundaries"), this);
 	showBoundsAction->setCheckable(true);
-	showBoundsAction->setChecked(false);
+	showBoundsAction->setChecked(true);
 	showBoundsAction->setStatusTip(tr("Draw boundaries using a label image"));
 	showBoundsAction->setShortcut(tr("Ctrl+B"));
 	connect(showBoundsAction, SIGNAL(triggered()), this, SLOT(toggleBounds()));
