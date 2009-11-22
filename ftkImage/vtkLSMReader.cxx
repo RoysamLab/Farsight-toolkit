@@ -45,7 +45,9 @@ limitations under the License.
 #ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS
 #endif
-
+#if defined(_MSC_VER)
+#pragma warning(disable : 4996)
+#endif
 #include "vtkLSMReader.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageData.h"
