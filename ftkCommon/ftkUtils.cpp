@@ -21,6 +21,9 @@ limitations under the License.
   Version:   $Revision: 0.00 $
 
 =========================================================================*/
+#if defined(_MSC_VER)
+#pragma warning(disable : 4996)
+#endif
 #include "ftkUtils.h"
 
 namespace ftk
