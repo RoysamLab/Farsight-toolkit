@@ -12,8 +12,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
-
-
+#if defined(_MSC_VER)
+#pragma warning(disable : 4996)
+#endif
 #include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
 #include <itkVTKImageExport.h>
