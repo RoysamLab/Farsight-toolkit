@@ -400,6 +400,7 @@ void WholeCellSeg::RunSegmentation(){
 	WatershedFilterType::Pointer watershedfilter = WatershedFilterType::New();
 	watershedfilter->SetInput1( image2 );
 	watershedfilter->SetInput2( nuclab_inp_int );
+	//watershedfilter->SetMarkWatershedLine( 0 );
 	watershedfilter->SetMarkWatershedLine( 1 );
 	watershedfilter->Update();
 

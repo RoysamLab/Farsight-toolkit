@@ -43,12 +43,12 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	hisWin=NULL;
 	pWizard=NULL;
 
+	myImg = NULL;
+	labImg = NULL;
+
 	nucSeg = NULL;
-	loadThread = NULL;
-	binaryThread = NULL;
-	seedThread = NULL;
-	clusterThread = NULL;
-	finalizeThread = NULL;
+	nucChannel = 0;
+	nucsegThread = NULL;
 	featuresThread = NULL;
 	table = NULL;
 	selection = NULL;
@@ -98,7 +98,7 @@ void NucleusEditor::createSegmentToolBar()
 	segmentTool->addAction(segmentStop);
 	
     segmentProgress = new QProgressBar();
-	segmentProgress->setRange(0,7);
+	segmentProgress->setRange(0,6);
 	segmentProgress->setTextVisible(true);
 	segmentTool->addWidget(segmentProgress); 
 
@@ -147,10 +147,15 @@ void NucleusEditor::createMenus()
 
 	fileMenu->addSeparator();
 
-	segmentAction = new QAction(tr("Start Segmentation..."), this);
+	segmentAction = new QAction(tr("Nuclear Segmentation"), this);
 	segmentAction->setStatusTip(tr("Starts the Nuclear Segmenation on this Image"));
 	connect(segmentAction,SIGNAL(triggered()),this,SLOT(segmentImage()));
 	fileMenu->addAction(segmentAction);
+
+	cytoAction = new QAction(tr("Cytoplasm Segmentation"), this);
+	cytoAction->setStatusTip(tr("Starts the Cytoplasm Segmentation"));
+	connect(cytoAction, SIGNAL(triggered()), this, SLOT(cytoSeg()));
+	fileMenu->addAction(cytoAction);
 
 	fileMenu->addSeparator();
 
@@ -290,6 +295,7 @@ void NucleusEditor::createMenus()
 
 	setMenusForResult(false);
 	segmentAction->setEnabled(false);
+	cytoAction->setEnabled(false);
 }
 
 void NucleusEditor::setEditsEnabled(bool val)
@@ -385,8 +391,8 @@ bool NucleusEditor::checkSaveSeg()
 {
 	if(nucSeg)
 	{
-		if(nucSeg->EditsNotSaved())
-		{
+		//if(nucSeg->EditsNotSaved())
+		//{
 			QString msg = tr("Recent Edits not saved do you want to save them before exiting?");
 			QMessageBox::StandardButton button = QMessageBox::information ( 0, tr("Exit"), \
 				msg, QMessageBox::Yes | QMessageBox::No , QMessageBox::NoButton );
@@ -398,7 +404,7 @@ bool NucleusEditor::checkSaveSeg()
 					return false;
 				}
 			}
-		}
+		//}
 	}
 	return true;
 }
@@ -407,13 +413,13 @@ bool NucleusEditor::saveResult()
 {
 	if(nucSeg)
 	{
-		if(nucSeg->EditsNotSaved())
-		{
+		//if(nucSeg->EditsNotSaved())
+		//{
 			std::string name = nucSeg->GetDataFilename();
 			name.erase(name.find_first_of("."));
 			name.append(".xml");
-			nucSeg->SaveChanges(name);
-		}
+			//nucSeg->SaveChanges(name);
+		//}
 		
 	}
 	return true;
@@ -454,13 +460,13 @@ void NucleusEditor::loadResult(void)
 	//segResult = new ftk::NuclearSegmentation();
 	if(nucSeg) delete nucSeg;
 	nucSeg = new ftk::NuclearSegmentation();
-	if ( !nucSeg->LoadAll(filename.toStdString()) )
+	if ( 0 )//!nucSeg->LoadAll(filename.toStdString()) )
 	{
 		std::cerr << nucSeg->GetErrorMessage() << std::endl;
 		return;
 	}
 
-	table = nucSeg->GetFeatureTable();
+	//table = nucSeg->GetFeatureTable();
 
 	if(selection) delete selection;
 	selection = new ObjectSelection();
@@ -474,6 +480,7 @@ void NucleusEditor::loadResult(void)
 	// Enable the menu items for editing
 	setMenusForResult(true);
 	segmentAction->setEnabled(true);
+	cytoAction->setEnabled(true);
 }
 
 void NucleusEditor::loadImage()
@@ -511,6 +518,7 @@ void NucleusEditor::loadImage()
 	// Disable the menu items for editing
 	this->setMenusForResult(false);
 	segmentAction->setEnabled(true);
+	cytoAction->setEnabled(false);
 	imageIntensityAction->setEnabled(true);
 }
 
@@ -673,7 +681,7 @@ void NucleusEditor::changeClass(void)
 	//Change the class of these objects:
 	if(ok)
 	{
-		nucSeg->SetClass(ids,newClass);
+		//nucSeg->SetClass(ids,newClass);
 		this->updateViews();
 	}
 }
@@ -685,7 +693,7 @@ void NucleusEditor::markVisited(void)
 	std::set<long int> sels = selection->getSelections();
 	std::vector<int> ids(sels.begin(), sels.end());
 	
-	nucSeg->MarkAsVisited(ids,1);
+	//nucSeg->MarkAsVisited(ids,1);
 	this->updateViews();
 }
 
@@ -773,11 +781,42 @@ void NucleusEditor::applyExclusionMargin(void)
 	this->updateViews();
 }
 
+void NucleusEditor::cytoSeg(void)
+{
+	QStringList chs;
+	int numChannels = myImg->GetImageInfo()->numChannels;
+	for (int i=0; i<numChannels; ++i)
+	{
+		chs << QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i));
+	}
+
+	bool ok=false;
+	QString choice = QInputDialog::getItem(this, tr("Cytoplasm Channel"), tr("Cytoplasm Channel:"),chs,0,false,&ok);
+	if( !ok || choice.isEmpty() )
+		return;
+
+	int cytoChannel=0;
+	for(int i=0; i<numChannels; ++i)
+	{
+		if( choice == QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i)) )
+		{
+			cytoChannel = i;
+			break;
+		}	
+	}
+
+	ftk::CytoplasmSegmentation * cytoSeg = new ftk::CytoplasmSegmentation();
+	cytoSeg->SetDataInput(myImg, "data_channel", cytoChannel);
+	cytoSeg->SetNucleiInput(labImg, "label_image");
+	cytoSeg->Run();
+	cytoSeg->SaveOutputImage();
+	delete cytoSeg;
+
+	this->updateViews();
+}
+
 void NucleusEditor::segmentImage()
 {
-	QString myImgName = "CHANGE ME";
-	QString dataFile = lastPath + "/" + myImgName;
-
 	QVector<QString> chs;
 	int numChannels = myImg->GetImageInfo()->numChannels;
 	for (int i=0; i<numChannels; ++i)
@@ -787,25 +826,19 @@ void NucleusEditor::segmentImage()
 
 	//Get the paramFile to use:
 	QString paramFile = "";
-	int useChannel;
 	ParamsFileDialog *dialog = new ParamsFileDialog(lastPath,chs,this);
 	if( dialog->exec() )	
 	{
 		paramFile = dialog->getFileName();
-		useChannel = dialog->getChannelNumber();
+		nucChannel = dialog->getChannelNumber();
 	}
 	delete dialog;
 
 	if(nucSeg) delete nucSeg;
 	nucSeg = new ftk::NuclearSegmentation();
-	if( !nucSeg->SetInputs( dataFile.toStdString(), paramFile.toStdString() ) )
-	{
-		delete nucSeg;
-		nucSeg = NULL;
-		return;
-	}
-	nucSeg->SetChannel(useChannel);
-	
+	nucSeg->SetInput(this->myImg, "nuc_channel", nucChannel);
+	nucSeg->SetParameters(paramFile.toStdString());
+
 	segmentStop->setEnabled(false);
 	segmentContinue->setEnabled(false);
 	segmentTool->setVisible(true);
@@ -821,35 +854,11 @@ void NucleusEditor::segmentImage()
 
 void NucleusEditor::abortSegment()
 {
-	if(loadThread)
+	if(nucsegThread)
 	{
-		loadThread->wait();
-		delete loadThread;
-		loadThread = NULL;
-	}
-	if(binaryThread)
-	{
-		binaryThread->wait();
-		delete binaryThread;
-		binaryThread = NULL;
-	}
-	if(seedThread)
-	{
-		seedThread->wait();
-		delete seedThread;
-		seedThread = NULL;
-	}
-	if(clusterThread)
-	{
-		clusterThread->wait();
-		delete clusterThread;
-		clusterThread = NULL;
-	}
-	if(finalizeThread)
-	{
-		finalizeThread->wait();
-		delete finalizeThread;
-		finalizeThread = NULL;
+		nucsegThread->wait();
+		delete nucsegThread;
+		nucsegThread = NULL;
 	}
 	if(featuresThread)
 	{
@@ -857,7 +866,6 @@ void NucleusEditor::abortSegment()
 		delete featuresThread;
 		featuresThread = NULL;
 	}
-
 	segmentTool->setVisible(false);
 	segmentState = -1;
 
@@ -924,8 +932,8 @@ void NucleusEditor::stopSegment(void)
 	segmentContinue->setEnabled(false);
 
 	segmentTaskLabel->setText(tr(" Skipping "));
-	segmentProgress->setValue(5);
-	segmentState = 6;
+	segmentProgress->setValue(segmentState);
+	segmentState++;
 	this->segment();
 }
 
@@ -936,113 +944,78 @@ void NucleusEditor::segment()
 	case 0:
 		QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 		menusEnabled(false);
-
-		segmentTaskLabel->setText(tr(" Loading "));
-		segmentProgress->setValue(0);
-		loadThread = new Load(nucSeg);
-		connect(loadThread, SIGNAL(finished()), this, SLOT(segment()));
-		segmentState = 1;
-		loadThread->start();
+		segmentTaskLabel->setText(tr(" Binarizing "));
+		segmentProgress->setValue(segmentState);
+		segmentState++;
+		nucsegThread = new NucSegThread(nucSeg);
+		connect(nucsegThread, SIGNAL(finished()), this, SLOT(segment()));
+		nucsegThread->start();
 		break;
 	case 1:
-		if(loadThread)
-		{
-			delete loadThread;
-			loadThread = NULL;
-		}
-		segmentTaskLabel->setText(tr(" Binarizing "));
-		segmentProgress->setValue(1);
-		binaryThread = new Binarize(nucSeg);
-		connect(binaryThread, SIGNAL(finished()), this, SLOT(segment()));
-		segmentState = 2;
-		binaryThread->start();
+		segmentProgress->setValue(segmentState);
+		segmentTaskLabel->setText(tr(" Seeds "));
+		segmentState++;
+		nucsegThread->start();
 		break;
 	case 2:
-		if(binaryThread)
-		{
-			delete binaryThread;
-			binaryThread = NULL;
-		}
-		segmentProgress->setValue(2);
-		segmentTaskLabel->setText(tr(" Seeds "));
-		seedThread = new SeedDetect(nucSeg);
-		connect(seedThread, SIGNAL(finished()), this, SLOT(segment()));
-		segmentState = 3;
-		seedThread->start();
-		break;
-	case 3:
-		if(seedThread)
-		{
-			delete seedThread;
-			seedThread = NULL;
-		}
-		segmentProgress->setValue(3);
+		segmentProgress->setValue(segmentState);
 		segmentTaskLabel->setText(tr(" Clustering "));
-		clusterThread = new Cluster(nucSeg);
-		connect(clusterThread, SIGNAL(finished()), this, SLOT(segment()));
-		segmentState = 4;
-		clusterThread->start();
+		segmentState++;
+		nucsegThread->start();
 		break;
-	case 4:	//Final State we get to after successful clustering - for checking parameters
-		if(clusterThread)
-		{
-			delete clusterThread;
-			clusterThread = NULL;
-		}
-		segmentProgress->setValue(4);
+	case 3:	//Final State we get to after successful clustering - for checking parameters
+		segmentProgress->setValue(segmentState);
 		segView->SetLabelImage(nucSeg->GetLabelImage());
 		segmentTaskLabel->setText(tr(" Inspect "));
-
 		QApplication::restoreOverrideCursor();
 		segmentStop->setEnabled(true);
 		segmentContinue->setEnabled(true);
+		segmentState++;
 		//I should pop-up a msg here:
-		segmentState = 5;
 		break;
-	case 5:
+	case 4:
 		QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 		segmentStop->setEnabled(false);
 		segmentContinue->setEnabled(false);
-
 		segmentTaskLabel->setText(tr(" Finalizing "));
-		segmentProgress->setValue(5);
-		finalizeThread = new Finalize(nucSeg);
-		connect(finalizeThread, SIGNAL(finished()), this, SLOT(segment()));
-		segmentState = 6;
-		finalizeThread->start();
+		segmentProgress->setValue(segmentState);
+		segmentState++;
+		nucsegThread->start();
 		break;
-	case 6:
-		if(finalizeThread)
+	case 5:
+		if(nucsegThread)
 		{
-			delete finalizeThread;
-			finalizeThread = NULL;
+			delete nucsegThread;
+			nucsegThread = NULL;
 		}
-		segmentProgress->setValue(6);
+		segmentProgress->setValue(segmentState);
 		if(selection) delete selection;
 		selection = new ObjectSelection();
-		segView->SetLabelImage(nucSeg->GetLabelImage(),selection);
+		labImg = nucSeg->GetLabelImage();
+		segView->SetLabelImage(labImg,selection);
 		segmentTaskLabel->setText(tr(" Features "));
 
-		featuresThread = new Features(nucSeg);
+		featuresThread = new Features(myImg, labImg, nucChannel, "");
 		connect(featuresThread, SIGNAL(finished()), this, SLOT(segment()));
-		segmentState = 7;
+		segmentState++;
 		featuresThread->start();
 		break;
-	case 7:
+	case 6:
 		if(featuresThread)
 		{
+			table = featuresThread->GetTable();
 			delete featuresThread;
 			featuresThread = NULL;
 		}
-		segmentProgress->setValue(7);
+		segmentProgress->setValue(segmentState);
 		segmentTaskLabel->setText(tr(" DONE "));
 		
-		table = nucSeg->GetFeatureTable();
 		CreateNewTableWindow();
 		CreateNewPlotWindow();
 
 		QApplication::restoreOverrideCursor();
 		menusEnabled(true);
+		cytoAction->setEnabled(true);
 		setMenusForResult(true);
 		showBoundsAction->setChecked(true);
 		showIDsAction->setChecked(true);
@@ -1051,7 +1024,6 @@ void NucleusEditor::segment()
 
 		//Now remove the toolbar:
 		segmentTool->setVisible(false);
-
 		break;
 	}
 
@@ -1209,72 +1181,54 @@ void ParamsFileDialog::ParamBrowse(QString comboSelection)
 //***********************************************************************************
 // Threads for running the segmentation algorithm:
 //***********************************************************************************
-Load::Load(ftk::NuclearSegmentation *seg)
+NucSegThread::NucSegThread(ftk::NuclearSegmentation *seg)
 : QThread()
 {
 	mySeg = seg;
+	step = 0;
 }
 
-void Load::run()
+void NucSegThread::run()
 {
-	mySeg->LoadData();
+	switch(step)
+	{
+	case 0:
+		mySeg->Binarize(false);
+		step++;
+		break;
+	case 1:
+		mySeg->DetectSeeds(false);
+		step++;
+		break;
+	case 2:
+		mySeg->RunClustering(true);
+		step++;
+		break;
+	case 3:
+		mySeg->Finalize();
+		mySeg->ReleaseSegMemory();
+		step++;
+		break;
+	}
 }
 
-Binarize::Binarize(ftk::NuclearSegmentation *seg)
+Features::Features(ftk::Image::Pointer dImg, ftk::Image::Pointer lImg, int chan, std::string pre)
 : QThread()
 {
-	mySeg = seg;	
-}
-
-void Binarize::run()
-{
-	mySeg->Binarize(false);
-}
-
-SeedDetect::SeedDetect(ftk::NuclearSegmentation *seg)
-: QThread()
-{
-	mySeg = seg;	
-}
-
-void SeedDetect::run()
-{
-	mySeg->DetectSeeds(false);
-}
-
-Cluster::Cluster(ftk::NuclearSegmentation *seg)
-: QThread()
-{
-	mySeg = seg;	
-}
-
-void Cluster::run()
-{
-	mySeg->RunClustering();
-}
-
-
-Finalize::Finalize(ftk::NuclearSegmentation *seg)
-: QThread()
-{
-	mySeg = seg;
-}
-
-void Finalize::run()
-{
-	mySeg->Finalize();
-}
-
-Features::Features(ftk::NuclearSegmentation *seg)
-: QThread()
-{
-	mySeg = seg;
+	dataImg = dImg;
+	labImg = lImg;
+	channel = chan;
+	prefix = pre;
+	table = NULL;
 }
 
 void Features::run()
 {
-	mySeg->ComputeFeatures();
-	mySeg->ReleaseSegMemory();
+	ftk::IntrinsicFeatureCalculator *iCalc = new ftk::IntrinsicFeatureCalculator();
+	iCalc->SetInputImages(dataImg,labImg,channel,0);
+	iCalc->SetFeaturePrefix(prefix);
+	table = iCalc->Compute();
+	delete iCalc;
 }
 
 //***********************************************************************************

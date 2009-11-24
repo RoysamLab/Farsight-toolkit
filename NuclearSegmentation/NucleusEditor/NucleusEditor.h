@@ -39,6 +39,8 @@
 
 //Farsight Includes:
 #include "NuclearSegmentation/ftkNuclearSegmentation.h"
+#include "NuclearSegmentation/CytoplasmSegmentation/CytoplasmSegmentation.h"
+#include "ftkCommon/ftkLabelImageToFeatures.h"
 #include "ftkImage/ftkImage.h"
 #include "ftkGUI/PatternAnalysisWizard.h"
 #include "ftkGUI/TableWindow.h"
@@ -52,11 +54,7 @@
 
 class ParamsFileDialog;
 class MarginDialog;
-class Load;
-class Binarize;
-class SeedDetect;
-class Cluster;
-class Finalize;
+class NucSegThread;
 class Features;
 
 class NucleusEditor : public QMainWindow
@@ -81,6 +79,7 @@ private slots:
 	bool checkSaveSeg(void);
 	void segment(void);
 	void about(void);
+	void cytoSeg(void);
 
 	void menusEnabled(bool val);
 	void setMenusForResult(bool val);
@@ -129,6 +128,7 @@ private:
 	QAction *saveAction;
 	QAction *xmlAction;
 	QAction *segmentAction;
+	QAction *cytoAction;
 	QAction *exitAction;
 
 	QMenu *viewMenu;
@@ -161,6 +161,9 @@ private:
 
 	ftk::NuclearSegmentation *nucSeg;//Used for segmentation execution, loading, and editing
 	ftk::Image::Pointer myImg;		//My currently visible image
+	ftk::Image::Pointer labImg;		//Currently visible label image
+	int nucChannel;
+	int cytChannel;
 	ObjectSelection * selection;	//object selection list
 	vtkSmartPointer<vtkTable> table;//table
 
@@ -174,11 +177,7 @@ private:
 	QProgressBar * segmentProgress;
 	QToolBar * segmentTool;
 
-	Load * loadThread;
-	Binarize * binaryThread;
-	SeedDetect * seedThread;
-	Cluster * clusterThread;
-	Finalize * finalizeThread;
+	NucSegThread *nucsegThread;
 	Features * featuresThread;
 
  };
@@ -216,65 +215,31 @@ private:
 	QPushButton *okButton;
 };
 
-class Load : public QThread
+class NucSegThread : public QThread
 {
 public:
-	Load(ftk::NuclearSegmentation *seg = NULL);
+	NucSegThread(ftk::NuclearSegmentation *seg = NULL);
 	void run();
-
+	int getNext(void){ return step; };
 private:
 	ftk::NuclearSegmentation *mySeg;
-};
-
-
-class Binarize : public QThread
-{
-public:
-	Binarize(ftk::NuclearSegmentation *seg = NULL);
-	void run();
-
-private:
-	ftk::NuclearSegmentation *mySeg;
-};
-
-class SeedDetect : public QThread
-{
-public:
-	SeedDetect(ftk::NuclearSegmentation *seg = NULL);
-	void run();
-
-private:
-	ftk::NuclearSegmentation *mySeg;
-};
-
-class Cluster : public QThread
-{
-public:
-	Cluster(ftk::NuclearSegmentation *seg = NULL);
-	void run();
-
-private:
-	ftk::NuclearSegmentation *mySeg;
-};
-
-class Finalize : public QThread
-{
-public:
-	Finalize(ftk::NuclearSegmentation *seg = NULL);
-	void run();
-
-private:
-	ftk::NuclearSegmentation *mySeg;
+	int step;
 };
 
 class Features : public QThread
 {
 public:
-	Features(ftk::NuclearSegmentation *seg = NULL);
+	Features(ftk::Image::Pointer dImg, ftk::Image::Pointer lImg, int chan, std::string pre);
 	void run();
+	vtkSmartPointer<vtkTable> GetTable(void){ return table; };
 
 private:
-	ftk::NuclearSegmentation *mySeg;
+	ftk::Image::Pointer dataImg;
+	ftk::Image::Pointer labImg;
+	vtkSmartPointer<vtkTable> table;
+	int channel;
+	std::string prefix;
+
 };
 
 #endif

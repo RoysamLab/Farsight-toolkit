@@ -33,10 +33,11 @@ int main(int argc, char* argv[])
 	ftk::NuclearSegmentation *segmentation = new ftk::NuclearSegmentation();	
 
 	std::cout<<" Reading from dat segmentation output...";
-	segmentation->LoadFromDAT(imageName,imageName);
+	segmentation->LoadInput(imageName);
+	segmentation->LoadFromDAT(imageName);
 	std::cout<<"done"<<std::endl;
 	
-	segmentation->SaveResultImage();
+	segmentation->SaveLabelImage();
 	
 	delete segmentation;
 

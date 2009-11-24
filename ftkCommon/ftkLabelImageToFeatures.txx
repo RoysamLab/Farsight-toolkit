@@ -146,6 +146,63 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 }
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
+bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
+::SetImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn, TLPixel index[VImageDimension], TLPixel size[VImageDimension])
+{
+	IntensityImageType::RegionType intRegion;
+	IntensityImageType::IndexType intIndex;
+	IntensityImageType::SizeType intSize;
+	LabelImageType::RegionType labRegion;
+	LabelImageType::IndexType labIndex;
+	LabelImageType::SizeType labSize;
+
+	for(int i=0; i<VImageDimension; ++i)
+	{
+		intIndex[i] = (TIPixel)index[i];
+		intSize[i] = (TIPixel)size[i];
+		labIndex[i] = (TLPixel)index[i];
+		labSize[i] = (TLPixel)size[i];
+	}
+
+	//Need to check size
+	if( labRegion != intRegion )
+		return false;
+		
+	//Need to check regions:
+	if( intRegion != intImgIn->GetBufferedRegion() )
+	{
+		//Crop Image to Requested Region
+		typedef itk::ExtractImageFilter< IntensityImageType, IntensityImageType > CropFilterType;
+		typename CropFilterType::Pointer cropFilter = CropFilterType::New();
+		cropFilter->SetInput(intImgIn);
+		cropFilter->SetExtractionRegion(intRegion);
+		cropFilter->Update();
+		intensityImage = cropFilter->GetOutput();
+	}
+	else
+	{
+		intensityImage = intImgIn;		//Use Full Image
+	} 
+	
+	if( labRegion != lblImgIn->GetBufferedRegion() )
+	{
+		//Crop Image to Requestedd Region
+		typedef itk::ExtractImageFilter< LabelImageType, LabelImageType > CropFilterType;
+		typename CropFilterType::Pointer cropFilter = CropFilterType::New();
+		cropFilter->SetInput(lblImgIn);
+		cropFilter->SetExtractionRegion(labRegion);
+		cropFilter->Update();
+		labelImage = cropFilter->GetOutput();
+	}
+	else
+	{
+		labelImage = lblImgIn;
+	}
+
+	return true;
+}
+
+template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
 void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 ::ComputeHistogramOn()
 {

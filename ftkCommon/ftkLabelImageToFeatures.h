@@ -35,13 +35,48 @@ limitations under the License.
 #include <itkScalarImageTextureCalculator.h>
 #include <itkGradientMagnitudeImageFilter.h>
 
+#include <vtkSmartPointer.h>
+#include <vtkDoubleArray.h>
+#include <vtkVariantArray.h>
+#include <vtkTable.h>
+
 #include "ftkIntrinsicFeatures.h"
+#include "ftkImage/ftkImage.h"
 
 #include <iostream>
 #include <map>
+#include <set>
 
 namespace ftk
 {
+
+class IntrinsicFeatureCalculator
+{
+public:
+	IntrinsicFeatureCalculator();
+	bool SetInputImages(ftk::Image::Pointer intImg, ftk::Image::Pointer labImg, int intChannel=0, int labChannel=0);
+	void SetFeaturesOn(void);							//Turn on all features
+	void SetFeaturesOn(std::set<int> onFeats);			//Turn on only these features
+	void SetFeatureOn(int feat, bool v = true);			//Set the value of this feature
+	void SetFeaturePrefix(std::string prefix);			//Set Prefix for feature names
+	vtkSmartPointer<vtkTable> Compute(void);			//Compute features that are ON and return table with values (for all objects)
+	void Update(vtkSmartPointer<vtkTable> table);		//Update the features in this table whose names match (sets doFeat)
+	void Append(vtkSmartPointer<vtkTable> table);		//Compute features that are ON and append them to the existing table
+
+private:
+	ftk::Image::Pointer intensityImage;
+	int intensityChannel;
+	ftk::Image::Pointer labelImage;
+	int labelChannel;
+	std::string fPrefix;
+	bool doFeat[IntrinsicFeatures::N];
+
+	int getMaxFeatureTurnedOn(void);
+	bool needTextures(void);
+	bool needHistogram(void);
+	int needLevel(void);
+};
+
 
 //********************************************************************************************************
 //THIS IS THE CLASS THAT DOES THE CALCULATIONS (THE ENGINE)
@@ -68,6 +103,7 @@ public:
 	itkTypeMacro(LabelImageToFeatures, LightObject);
 
 	bool SetImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn );
+	bool SetImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn, TLPixel index[VImageDimension], TLPixel size[VImageDimension] );
 	void Update();
 	LabelPixelType GetMaxLabel();
 	float GetPercentSharedBoundary(TLPixel focusLabel, TLPixel neighborLabel);

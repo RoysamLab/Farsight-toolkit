@@ -34,18 +34,18 @@ int main(int argc, char* argv[])
 	std::string resultsName = argv[3];
 	ftk::NuclearSegmentation *segmentation = new ftk::NuclearSegmentation();	
 
-	segmentation->LoadFromImages(imageName,labelName);
+	//segmentation->LoadFromImages(imageName,labelName);
 	
 	if(argc == 5)
 	{
-		segmentation->LoadAssociationsFromFile(argv[4]);
+		//segmentation->LoadAssociationsFromFile(argv[4]);
 	}
 	if(argc == 6)
 	{
 		//segmentation->LoadClassInfoFromFile(argv[5]);
 	}
 
-	segmentation->SaveChanges(resultsName);	
+	//segmentation->SaveChanges(resultsName);	
 	
 	delete segmentation;
 

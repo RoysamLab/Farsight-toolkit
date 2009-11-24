@@ -31,10 +31,6 @@
 #endif
 
 #include <ftkImage/ftkImage.h>
-#include <vtkSmartPointer.h>
-#include <vtkDoubleArray.h>
-#include <vtkVariantArray.h>
-#include <vtkTable.h>
 #include <ftkCommon/ftkLabelImageToFeatures.h>
 #include <ftkCommon/ftkUtils.h>
 #include <yousef_core/yousef_seg.h>
@@ -54,6 +50,7 @@ namespace ftk
 typedef unsigned char IPixelT;
 typedef unsigned short LPixelT;
 typedef ftk::LabelImageToFeatures< IPixelT, LPixelT, 3 > FeatureCalcType;
+typedef struct { string name; int value; } Parameter;
 
 class NuclearSegmentation
 {
@@ -62,46 +59,33 @@ public:
 	~NuclearSegmentation();
 
 	//This is for beginning a completely new segmenation:
-	bool SetInputs(std::string datafile, std::string paramfile);		
-	void SetChannel(int number){channelNumber = number;};		//Set the channel number to use for segmentation
-	bool LoadData();											//Will load the data image into memory
-	bool Binarize(bool getResultImg = true);					//Will binarize the data image
-	bool DetectSeeds(bool getResultImg = true);					//If binarization has been done it will detect seeds
-	bool RunClustering();										//Will use binary image and seeds to do initial clustering
+	bool LoadInput(std::string fname, int chNumber = 0);							//Load the input image from a file
+	bool SetInput(ftk::Image::Pointer inImg, std::string fname, int chNumber = 0); //Pass a pointer to the already loaded image
+	void SetParameters(std::string paramfile);
+	bool Binarize(bool getResultImg = false);					//Will binarize the data image
+	bool DetectSeeds(bool getResultImg = false);				//If binarization has been done it will detect seeds
+	bool RunClustering(bool getResultImg = false);				//Will use binary image and seeds to do initial clustering
 	bool Finalize();											//Will finilize the output using alpha expansion
 	void ReleaseSegMemory();									//Delete the NucleusSeg object to release all of its memory.
+	bool ComputeAllGeometries();									//Compute all geometries for the label image!!!
 
-	//Segmentation is basically done at this point (hopefully), now move on to calculating the features and classification:
-	bool ComputeFeatures(void);									//Compute Intrinsic Features and create vtkTable
-	bool LoadAssociationsFromFile(std::string fName);			//Add the Associative Features to the objects
+	//For use when loading from pre-existing results:
+	bool LoadLabelImage(std::string fname);						//Filename of the label image to load
+	bool LoadFromDAT(std::string fname);						//Load label image from .dat
+	bool SetLabelImage(ftk::Image::Pointer labImg, std::string fname);	//Pass pointer to already loaded label image
 
 	//Save functions:
-	bool SaveChanges(std::string filename);						//Save changes made to label image, features table, project def file(xml)
-	bool SaveResultImage();										//Save the output image of the last step executed (image format)
-	bool SaveLabelByClass();									//Will save a different label image for each class
-
-	//Save features in various other supported formats:
-	bool WriteToMETA(std::string filename);
-	bool WriteToLibSVM(std::string filename);
+	bool SaveLabelImage(std::string fname = "");				//Save the output image of the last step executed (image format)
+	//bool SaveLabelByClass();									//Will save a different label image for each class
 	
-	//We may also want to restore from previously found results:
-	bool RestoreFromXML(std::string filename);					//Complete Restore from FORMER XML file format
-	bool LoadAll(std::string filename);							//Complete Restore from NEW FORMAT
-
-	//OTHER LOAD METHEDS
-	bool LoadFromImages(std::string dfile, std::string rfile);	//Load from images -> then convert to objects
-	bool LoadFromDAT(std::string dfile, std::string rfile);		//Load from .dat -> then convert to objects
-
 	//Editing Functions 
-	bool EditsNotSaved(void){ return this->editsNotSaved; };
 	std::vector< int > Split(ftk::Object::Point P1, ftk::Object::Point P2);
 	std::vector< int > SplitAlongZ(int objID, int cutSlice);
 	int Merge(vector<int> ids);
 	bool Delete(vector<int> ids);
 	bool Exclude(int xy, int z);
 	int AddObject(int x1, int y1, int z1, int x2, int y2, int z2);
-	bool SetClass(vector<int> ids, int clss);
-	bool MarkAsVisited(vector<int> ids, int val);
+	bool EditsNotSaved;
 
 	//Edits applied on initial segmentation and updates LoG resp image
 	ftk::Object::Point MergeInit(ftk::Object::Point P1, ftk::Object::Point P2, int* new_id); 
@@ -115,8 +99,6 @@ public:
 	std::string GetLabelFilename() { return labelFilename; };
 
 	//Get Data:
-	std::vector<std::string> GetFeatureNames();	//Extract Feature Names from the table!!!
-	vtkSmartPointer<vtkTable> GetFeatureTable() { return featureTable; };
 	ftk::Image::Pointer GetDataImage(void){ return dataImage; };	
 	ftk::Image::Pointer GetLabelImage(void){ return labelImage; };
 	//*********************************************************************************************
@@ -126,57 +108,37 @@ public:
 	std::vector<Seed> getSeeds();
 
 protected:
-	std::string dataFilename;	//the filename of the data image		(full path)
-	std::string labelFilename;	//the filename of the label image		(full path)
-	std::string paramFilename;	//the filename of the parameter file	(full path)
-	std::string featureFilename;//the filename of the feature txt file	(full path)
-	std::string headerFilename; //the filename of the feature names txt (full path)
-	std::string editFilename;	//the filename of the edit record txt	(full path)
-
 	std::string errorMessage;
 
+	std::string dataFilename;			//Name of the file that the data came from
 	ftk::Image::Pointer dataImage;		//The data image
 	int channelNumber;					//Use this channel from the dataImage for segmentation
+	std::string labelFilename;			//Name of the file that is the label image
 	ftk::Image::Pointer labelImage;		//My label image
 	yousef_nucleus_seg *NucleusSeg;		//The Nuclear Segmentation module
 	int lastRunStep;					//0,1,2,3,4 for the stages in a nuclear segmentation.
-	bool editsNotSaved;					//Will be true if edits have been made and not saved to file.
-
-	typedef struct { string name; int value; } Parameter;				
+			
+	std::string paramFilename;
 	std::vector<Parameter> myParameters;
-	std::vector<ftk::Object::EditRecord> myEditRecords;
+
+	//Geometry information that is kept for editing purposes:
 	std::map<int, ftk::Object::Box>		bBoxMap;			//Bounding boxes
 	std::map<int, ftk::Object::Point>	centerMap;			//Centroids
-	//std::map<int, int>	idToRowMap;						//Mapping from ID to row in table!!!!
-	vtkSmartPointer<vtkTable> featureTable;
 
+	bool GetResultImage();										//Gets the result of last module and puts it in labelImage
 	void GetParameters(void);								//Retrieve the Parameters from nuclear segmentation.
 	void ResetAll(void);									//Clear all memory and variables
-
-	//Saving Utilities:
-	bool GetResultImage();										//Gets the result of last module and puts it in labelImage
-	bool SaveFeaturesTable();									//Save 2 txt files: one with features other with names of features
-	bool SaveEditRecords();										//Append Edit Records to file 
-	bool LoadLabel(bool updateMaps = false);					//Load just the label image if the filename is already known
-	bool LoadFeatures();
-
+	
 	//Editing Utilities:
 	long int maxID(void);										//Get the maximum ID in the table!
-	int rowForID(int id);										//Iterate through table and get row for ID:
-	void removeFeatures(int ID);
-	bool addObjectToTable(int ID, int x1, int y1, int z1, int x2, int y2, int z2);
-	bool addObjectsToTable(std::set<int> IDs, int x1, int y1, int z1, int x2, int y2, int z2);
-	FeatureCalcType::Pointer computeFeatures(int x1, int y1, int z1, int x2, int y2, int z2);
+	bool addObjectToMaps(int ID, int x1, int y1, int z1, int x2, int y2, int z2);
+	bool addObjectsToMaps(std::set<int> IDs, int x1, int y1, int z1, int x2, int y2, int z2);
+	void removeObjectFromMaps(int ID);
+	FeatureCalcType::Pointer computeGeometries(int x1, int y1, int z1, int x2, int y2, int z2);
 	void ReassignLabels(std::vector<int> fromIds, int toId);
 	void ReassignLabel(int fromId, int toId);
 	ftk::Object::Box ExtremaBox(std::vector<int> ids);
 	
-	//Utilities for parsing XML (on read) (kept for legacy reasons):
-	Object parseObject(TiXmlElement *object);
-	Object::Point parseCenter(TiXmlElement *centerElement);
-	Object::Box parseBound(TiXmlElement *boundElement);
-	void parseFeaturesToTable(int id, TiXmlElement *featureElement);
-
 	//FOR PRINTING SEEDS IMAGE:
 	void Cleandptr(unsigned short*x,vector<int> y );
 	void Restoredptr(unsigned short* );
