@@ -147,28 +147,21 @@ void NucleusEditor::createMenus()
 
 	fileMenu->addSeparator();
 
-	segmentAction = new QAction(tr("Nuclear Segmentation"), this);
-	segmentAction->setStatusTip(tr("Starts the Nuclear Segmenation on this Image"));
-	connect(segmentAction,SIGNAL(triggered()),this,SLOT(segmentImage()));
-	fileMenu->addAction(segmentAction);
-
-	cytoAction = new QAction(tr("Cytoplasm Segmentation"), this);
-	cytoAction->setStatusTip(tr("Starts the Cytoplasm Segmentation"));
-	connect(cytoAction, SIGNAL(triggered()), this, SLOT(cytoSeg()));
-	fileMenu->addAction(cytoAction);
-
-	fileMenu->addSeparator();
-
 	xmlAction = new QAction(tr("Load Result..."), this);
 	xmlAction->setStatusTip(tr("Open an XML result file"));
 	connect(xmlAction,SIGNAL(triggered()), this, SLOT(loadResult()));
 	fileMenu->addAction(xmlAction);
 
 	saveAction = new QAction(tr("Save Result"), this);
-	saveAction->setStatusTip(tr("Save Changes (Edits, etc)"));
+	saveAction->setStatusTip(tr("Save a segmentation result image"));
 	saveAction->setShortcut(tr("Ctrl+S"));
 	connect(saveAction, SIGNAL(triggered()), this, SLOT(saveResult()));
 	fileMenu->addAction(saveAction);
+
+	saveTableAction = new QAction(tr("Save Table"), this);
+	saveTableAction->setStatusTip(tr("Save the features table"));
+	connect(saveTableAction, SIGNAL(triggered()), this, SLOT(saveTable()));
+	fileMenu->addAction(saveTableAction);
 
 	fileMenu->addSeparator();
 
@@ -213,6 +206,29 @@ void NucleusEditor::createMenus()
 	imageIntensityAction->setShortcut(tr("Ctrl+G"));
 	connect(imageIntensityAction, SIGNAL(triggered()), segView, SLOT(AdjustImageIntensity()));
 	viewMenu->addAction(imageIntensityAction);
+
+	//TOOL MENU
+	toolMenu = menuBar()->addMenu(tr("Tools"));
+
+	segmentAction = new QAction(tr("Nuclear Segmentation"), this);
+	segmentAction->setStatusTip(tr("Starts the Nuclear Segmenation on this Image"));
+	connect(segmentAction,SIGNAL(triggered()),this,SLOT(segmentImage()));
+	toolMenu->addAction(segmentAction);
+
+	cytoAction = new QAction(tr("Cytoplasm Segmentation"), this);
+	cytoAction->setStatusTip(tr("Starts the Cytoplasm Segmentation"));
+	connect(cytoAction, SIGNAL(triggered()), this, SLOT(cytoSeg()));
+	toolMenu->addAction(cytoAction);
+
+	toolMenu->addSeparator();
+
+	svmAction = new QAction(tr("Detect Outliers"), this);
+	connect(svmAction, SIGNAL(triggered()), this, SLOT(startSVM()));
+	toolMenu->addAction(svmAction);
+
+	kplsAction = new QAction(tr("Classify"), this);
+	connect(kplsAction, SIGNAL(triggered()), this, SLOT(startKPLS()));
+	toolMenu->addAction(kplsAction);
 
 	//EDITING MENU	
 	editMenu = menuBar()->addMenu(tr("&Editing"));
@@ -275,16 +291,6 @@ void NucleusEditor::createMenus()
 	exclusionAction->setStatusTip(tr("Set parameters for exclusion margin"));
 	connect(exclusionAction, SIGNAL(triggered()), this, SLOT(applyExclusionMargin()));
 	editMenu->addAction(exclusionAction);
-
-	//TOOL MENU
-	toolMenu = menuBar()->addMenu(tr("Tools"));
-	svmAction = new QAction(tr("Detect Outliers"), this);
-	connect(svmAction, SIGNAL(triggered()), this, SLOT(startSVM()));
-	toolMenu->addAction(svmAction);
-
-	kplsAction = new QAction(tr("Classify"), this);
-	connect(kplsAction, SIGNAL(triggered()), this, SLOT(startKPLS()));
-	toolMenu->addAction(kplsAction);
 
 	//HELP MENU
 	helpMenu = menuBar()->addMenu(tr("Help"));
@@ -391,8 +397,8 @@ bool NucleusEditor::checkSaveSeg()
 {
 	if(nucSeg)
 	{
-		//if(nucSeg->EditsNotSaved())
-		//{
+		if(nucSeg->EditsNotSaved)
+		{
 			QString msg = tr("Recent Edits not saved do you want to save them before exiting?");
 			QMessageBox::StandardButton button = QMessageBox::information ( 0, tr("Exit"), \
 				msg, QMessageBox::Yes | QMessageBox::No , QMessageBox::NoButton );
@@ -404,25 +410,47 @@ bool NucleusEditor::checkSaveSeg()
 					return false;
 				}
 			}
-		//}
+		}
 	}
 	return true;
 }
 
 bool NucleusEditor::saveResult()
 {
-	if(nucSeg)
-	{
-		//if(nucSeg->EditsNotSaved())
-		//{
-			std::string name = nucSeg->GetDataFilename();
-			name.erase(name.find_first_of("."));
-			name.append(".xml");
-			//nucSeg->SaveChanges(name);
-		//}
-		
-	}
-	return true;
+	if(!labImg)
+		return false;
+
+	int ch = requestChannel(labImg);
+	
+	if(ch==-1)
+		return false;
+
+	QString filename = QFileDialog::getSaveFileName(this, tr("Save As..."),lastPath, tr("TIFF Image (*.tif)"));
+
+	if(filename == "")
+		return false;
+
+	QString path = QFileInfo(filename).absolutePath();
+	QString name = QFileInfo(filename).baseName();
+	lastPath = path;
+
+	QString fullBase = path + "/" + name;
+	return labImg->SaveChannelAs(ch,fullBase.toStdString() ,"tif");
+}
+
+bool NucleusEditor::saveTable()
+{
+	if(!table)
+		return false;
+
+	QString filename = QFileDialog::getSaveFileName(this, tr("Save As..."),lastPath, tr("TEXT(*.txt)"));
+
+	if(filename == "")
+		return false;
+
+	lastPath = QFileInfo(filename).absolutePath();
+
+	return ftk::SaveTable(filename.toStdString(), table);
 }
 
 void NucleusEditor::clearSelections()
@@ -781,36 +809,48 @@ void NucleusEditor::applyExclusionMargin(void)
 	this->updateViews();
 }
 
-void NucleusEditor::cytoSeg(void)
+int NucleusEditor::requestChannel(ftk::Image::Pointer img)
 {
 	QStringList chs;
-	int numChannels = myImg->GetImageInfo()->numChannels;
+	int numChannels = img->GetImageInfo()->numChannels;
 	for (int i=0; i<numChannels; ++i)
 	{
-		chs << QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i));
+		chs << QString::fromStdString(img->GetImageInfo()->channelNames.at(i));
 	}
 
 	bool ok=false;
-	QString choice = QInputDialog::getItem(this, tr("Cytoplasm Channel"), tr("Cytoplasm Channel:"),chs,0,false,&ok);
+	QString choice = QInputDialog::getItem(this, tr("Choose Channel"), tr("Channel:"),chs,0,false,&ok);
 	if( !ok || choice.isEmpty() )
-		return;
+		return -1;
 
-	int cytoChannel=0;
+	int ch=0;
 	for(int i=0; i<numChannels; ++i)
 	{
-		if( choice == QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i)) )
+		if( choice == QString::fromStdString(img->GetImageInfo()->channelNames.at(i)) )
 		{
-			cytoChannel = i;
+			ch = i;
 			break;
 		}	
 	}
+	return ch;
+}
+
+void NucleusEditor::cytoSeg(void)
+{
+	cytChannel = requestChannel(myImg);
 
 	ftk::CytoplasmSegmentation * cytoSeg = new ftk::CytoplasmSegmentation();
-	cytoSeg->SetDataInput(myImg, "data_channel", cytoChannel);
+	cytoSeg->SetDataInput(myImg, "data_channel", cytChannel);
 	cytoSeg->SetNucleiInput(labImg, "label_image");
 	cytoSeg->Run();
 	cytoSeg->SaveOutputImage();
 	delete cytoSeg;
+
+	ftk::IntrinsicFeatureCalculator *iCalc = new ftk::IntrinsicFeatureCalculator();
+	iCalc->SetInputImages(myImg,labImg,cytChannel,1);
+	iCalc->SetFeaturePrefix("cyto_");
+	iCalc->Append(table);
+	delete iCalc;
 
 	this->updateViews();
 }

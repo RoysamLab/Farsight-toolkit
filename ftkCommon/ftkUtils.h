@@ -24,6 +24,10 @@ limitations under the License.
 #ifndef __ftkUtils_h
 #define __ftkUtils_h
 
+#include <vtkSmartPointer.h>
+#include <vtkTable.h>
+#include <vtkVariant.h>
+
 #include <string>
 #include <ctime>
 #include <cstdio>
@@ -34,6 +38,8 @@ namespace ftk
 {
 
 bool FileExists(std::string filename);
+bool SaveTable(std::string filename, vtkSmartPointer<vtkTable> table);
+//vtkSmartPointer<vtkTable> LoadTable(std::string filename);
 std::string NumToString(double d);
 std::string NumToString(int i);
 std::string NumToString(double d, int p);

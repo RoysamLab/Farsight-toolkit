@@ -41,6 +41,7 @@
 #include "NuclearSegmentation/ftkNuclearSegmentation.h"
 #include "NuclearSegmentation/CytoplasmSegmentation/CytoplasmSegmentation.h"
 #include "ftkCommon/ftkLabelImageToFeatures.h"
+#include "ftkCommon/ftkUtils.h"
 #include "ftkImage/ftkImage.h"
 #include "ftkGUI/PatternAnalysisWizard.h"
 #include "ftkGUI/TableWindow.h"
@@ -73,6 +74,7 @@ private slots:
 	void loadImage(void);
 	void loadResult(void);
 	bool saveResult(void);
+	bool saveTable(void);
 	void segmentImage(void);
 	void abortSegment(void);
 	void stopSegment(void);
@@ -116,6 +118,7 @@ private:
 	void createSegmentToolBar();
 	void quitNucSeg();
 	bool loadXMLImage(std::string filename);
+	int requestChannel(ftk::Image::Pointer img);
 	
 	LabelImageViewQT *segView;
 	std::vector<PlotWindow *> pltWin;
@@ -126,9 +129,8 @@ private:
 	QMenu *fileMenu;
 	QAction *loadAction;
 	QAction *saveAction;
+	QAction *saveTableAction;
 	QAction *xmlAction;
-	QAction *segmentAction;
-	QAction *cytoAction;
 	QAction *exitAction;
 
 	QMenu *viewMenu;
@@ -142,6 +144,8 @@ private:
 	QAction *aboutAction;
 
 	QMenu *toolMenu;
+	QAction *segmentAction;
+	QAction *cytoAction;
 	QAction *svmAction;		//Start the One-Class SVM outlier detecter
 	QAction *kplsAction;	//Start the KPLS Classifier
 	
@@ -179,8 +183,7 @@ private:
 
 	NucSegThread *nucsegThread;
 	Features * featuresThread;
-
- };
+};
 
 
 class ParamsFileDialog : public QDialog

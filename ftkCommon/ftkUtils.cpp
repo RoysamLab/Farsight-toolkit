@@ -71,4 +71,39 @@ std::string TimeStamp()
 	return dt;
 }
 
+bool SaveTable(std::string filename, vtkSmartPointer<vtkTable> table)
+{
+	if(!table)
+		return false;
+
+	if(filename == "")
+		return false;
+
+	//This function writes the features to a text file
+	ofstream outFile; 
+	outFile.open(filename.c_str(), ios::out | ios::trunc );
+	if ( !outFile.is_open() )
+	{
+		std::cerr << "Failed to Load Document: " << outFile << std::endl;
+		return false;
+	}
+	//Write the headers:
+	for(int c=0; c<table->GetNumberOfColumns(); ++c)
+	{
+		outFile << table->GetColumnName(c) << "\t";
+	}
+	outFile << "\n";
+	//Write out the features:
+	for(int row = 0; row < table->GetNumberOfRows(); ++row)
+	{
+		for(int c=0; c < table->GetNumberOfColumns(); ++c)
+		{
+			outFile << ftk::NumToString( table->GetValue(row,c).ToFloat() ) << "\t";
+		}
+		outFile << "\n";
+	}
+	outFile.close();
+	return true;
+}
+
 }  // end namespace ftk

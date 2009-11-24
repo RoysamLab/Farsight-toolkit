@@ -232,12 +232,12 @@ bool NuclearSegmentation::GetResultImage()
 		if(lastRunStep == 2)
 		{
 			Cleandptr(dptr,size); // Temporarily deletes the seeds in the background from dptr
-			labelImage->AppendChannelFromData3D(dptr, itk::ImageIOBase::USHORT, sizeof(unsigned short), size[2], size[1], size[0], "gray", color, true);		
+			labelImage->AppendChannelFromData3D(dptr, itk::ImageIOBase::USHORT, sizeof(unsigned short), size[2], size[1], size[0], "nuc", color, true);		
 			Restoredptr(dptr); // Adds the seeds to dptr which were deleted in Cleandptr
 		}
 		else
 		{
-			labelImage->AppendChannelFromData3D(dptr, itk::ImageIOBase::USHORT, sizeof(unsigned short), size[2], size[1], size[0], "gray", color, true);
+			labelImage->AppendChannelFromData3D(dptr, itk::ImageIOBase::USHORT, sizeof(unsigned short), size[2], size[1], size[0], "nuc", color, true);
 		}
 	}
 	else
