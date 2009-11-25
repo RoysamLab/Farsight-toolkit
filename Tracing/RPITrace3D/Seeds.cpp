@@ -47,8 +47,10 @@ int giMinDirDistance = 3;
 void FindTwoMaxima(CPoint aPoints[], CPoint** pPoint1, CPoint** pPoint2)
 {
 	register int i = 0;
-	int iIndex1, iMax1 = 0;
-				int iIndex2, iMax2 = 0;
+	int iIndex1 = 0;
+  int iMax1 = 0;
+	int iIndex2 = 0;
+  int iMax2 = 0;
 	int iBefore, iAfter;
 
 	*pPoint1 = 0;

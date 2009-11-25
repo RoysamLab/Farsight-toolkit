@@ -101,7 +101,7 @@ public:
 private:
 
   Edge(const Edge&) { assert(0); }
-  Edge& operator=(const Edge&) { assert(0); }
+  //Edge& operator=(const Edge&) { assert(0); }
 
   
 

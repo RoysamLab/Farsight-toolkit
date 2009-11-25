@@ -345,7 +345,7 @@ void SpCandidate::GetClosestMUs() {
 	const PointSetType::Pointer mus = ParentDet->DendMuMap->find(traceID)->second;
 	PSDists = new PointSetDistS(pxls, mus);
 
-	ImagePixelType nodeID;
+	ImagePixelType nodeID = 0;
 	//TraceSegNodeVecType  *NodeList = ParentDet->NodeList;
 	TraceSegNode		 *seg;
 
@@ -499,7 +499,12 @@ void PointSetDistS::Compute(){
 	// HD = Discrete Housdorf dist = max(min ................................) 
 	//int set1size = set1->GetNumberOfPoints();
 	//int set2size = set2->GetNumberOfPoints();
-	int mini, minj,maxi,maxj, minji, summaxidx;
+	int mini = 10000000.0;
+  int minj = 10000000.0;
+  int maxi = -10000000.0;
+  int maxj = 10000000.0;
+  int minji = 10000000.0;
+  int summaxidx = -10000000.0;
 	double d, currmax=0, currpt1mind, currmin = 10000000.0;//some big number
 	std::vector<int> minidx21;
 	std::vector<double> maxd21a;

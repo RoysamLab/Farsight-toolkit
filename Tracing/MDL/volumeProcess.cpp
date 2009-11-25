@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
     outputFileName = argv[2];
     }
 
-  FILE *infile;
+  FILE *infile = 0;
   FILE *outfile;
   int i,j,k;
   int ii, jj, kk;

@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
   FILE *fout;
   DATATYPEIN *volin, *volvessel, *somaDist;
   FILE *fout_MDL;  // add by xiao
-  FILE *fout_Spine; // add by xiao
+  FILE *fout_Spine = 0; // add by xiao
   int sizeX,sizeY,sizeZ;         // Sizes in x,y,z dimensions
   int i, j, k;
   int ii, jj, kk;

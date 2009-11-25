@@ -49,7 +49,8 @@ public:
 
 	// default CTOR
 	CPoint() : m_iX(0), m_iY(0), m_iZ(0), m_iHDir(0), m_iVDir(0), m_iValue(0),
-		m_lUserFlag(0), m_iVerifiable(0), m_fVWidth(0), m_fHWidth(0), m_iID(0), m_iParID(0)
+		m_lUserFlag(0), m_iVerifiable(0), m_iPixelValue(0), m_fVWidth(0),
+    m_fHWidth(0), m_iID(0), m_iParID(0)
 	{
 	}
 

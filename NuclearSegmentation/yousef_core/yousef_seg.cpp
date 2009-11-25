@@ -2003,7 +2003,7 @@ std::vector< ftk::Object::Point > yousef_nucleus_seg::getObjectBoundingBox(int i
 int yousef_nucleus_seg::getMaxID(int Int_Fin)
 {
 	int maxID = 0;
-	int iid;
+	int iid = 0;
 	
 		
 	for( int i=0; i<numRows; i++)

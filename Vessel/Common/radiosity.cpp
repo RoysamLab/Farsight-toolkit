@@ -1294,7 +1294,9 @@ HandleGLError();
 int processHits (GLint hits, GLuint buffer[]) {
   int i;
   unsigned int j;
-  GLuint names, *ptr, minZ,*ptrNames, numberOfNames;
+  GLuint names, *ptr, minZ;
+  GLuint numberOfNames = 0;
+  GLuint *ptrNames = 0;
   
   if (hits <= 0) return -1;
   ptr = (GLuint *) buffer;

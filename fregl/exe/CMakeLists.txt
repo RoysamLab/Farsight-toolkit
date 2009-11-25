@@ -91,7 +91,7 @@ TARGET_LINK_LIBRARIES( extract_stack_interfaces fregl vul ITKCommon ITKIO )
 #ENDIF(BUILD_FREGL)
 
 INSTALL( TARGETS lsm_to_tiff register_pair register_joint mosaic_image_pair mosaic_images
-DESTINATION bin )
+DESTINATION bin/fregl )
 
 #copy the gdbicp to the installation directory
 #IF (WIN32) 
@@ -109,12 +109,12 @@ IF (WIN32)
     ${PROJECT_SOURCE_DIR}/fregl/exe/gdbicp_win.exe
     ${PROJECT_BINARY_DIR}/fregl/exe/gdbicp.exe
     COPYONLY)
-  INSTALL( PROGRAMS ${PROJECT_BINARY_DIR}/fregl/exe/gdbicp.exe DESTINATION bin )
+  INSTALL( PROGRAMS ${PROJECT_BINARY_DIR}/fregl/exe/gdbicp.exe DESTINATION bin/fregl )
 ELSE (WIN32)
   CONFIGURE_FILE(
     ${PROJECT_SOURCE_DIR}/fregl/exe/gdbicp_unix
     ${PROJECT_BINARY_DIR}/fregl/exe/gdbicp
     COPYONLY)
-  INSTALL( PROGRAMS ${PROJECT_BINARY_DIR}/fregl/exe/gdbicp DESTINATION bin )
+  INSTALL( PROGRAMS ${PROJECT_BINARY_DIR}/fregl/exe/gdbicp DESTINATION bin/fregl )
 ENDIF (WIN32) 
 

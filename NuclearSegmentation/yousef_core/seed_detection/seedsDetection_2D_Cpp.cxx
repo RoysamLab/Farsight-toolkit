@@ -664,7 +664,7 @@ int computeWeightedMedian2D(std::vector< std::vector<float> > scales, int cntr)
 
 	//Find the point at which the cummulative sum exceeds .5
 	float cumSum = 0;
-	int mdn;
+	int mdn = -1;
 	for(int i=0; i<cntr; i++)
 	{
 		cumSum+=wgtList[i];

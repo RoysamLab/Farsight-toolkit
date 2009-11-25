@@ -377,8 +377,8 @@ void View3D::CreateGUIObjects()
   //Setup the tolerance settings editing window
   this->SettingsWidget = new QWidget();
   QIntValidator *intValidator = new QIntValidator(1, 100, this->SettingsWidget);
-  QDoubleValidator *doubleValidator =
-    new QDoubleValidator(0, 100, 2, this->SettingsWidget);
+  //QDoubleValidator *doubleValidator =
+  //  new QDoubleValidator(0, 100, 2, this->SettingsWidget);
   this->MaxGapField = new QLineEdit(this->SettingsWidget);
   this->MaxGapField->setValidator(intValidator);
   this->GapToleranceField = new QLineEdit(this->SettingsWidget);

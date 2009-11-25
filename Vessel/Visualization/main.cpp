@@ -3080,7 +3080,7 @@ void LoadOBJ(FILE *fp, Mesh *mesh)
 {
 
 	bool once = true;
-	Array<Vertex*> *array;
+	Array<Vertex*> *array = 0;
 	while(!feof(fp))
 	{
 		double a,b,c;
@@ -3864,7 +3864,7 @@ Vec3f fit_circle(Array<Face*> *arr,float &fit,int max_iterations=10,double delta
 		mean = mean + (*arr)[counter]->getCenter();
 	}
 	mean = mean/arr->Count();
-	float r_est;
+	float r_est = 0.0;
 	Vec3f c_est = mean;// begin with the mean as a good estimate;
 	double sum_x,sum_y;
 

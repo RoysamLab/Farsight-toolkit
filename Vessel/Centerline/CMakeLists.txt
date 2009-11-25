@@ -33,6 +33,6 @@ TARGET_LINK_LIBRARIES(centerline ${OPENGL_LIBRARIES} ${GLUT_glut_LIBRARY} vtksys
 ADD_EXECUTABLE(votestotiff votestotiff.cpp)
 TARGET_LINK_LIBRARIES(votestotiff ITKCommon ITKIO)
 
-INSTALL(TARGETS centerline DESTINATION bin)
-INSTALL(TARGETS votestotiff DESTINATION bin)
+INSTALL(TARGETS centerline DESTINATION bin/Vessel)
+INSTALL(TARGETS votestotiff DESTINATION bin/Vessel)
 

@@ -234,11 +234,6 @@ void MDLGUI:: RunvolumeProcess()
   //start a timer
   this->Time.start();
 
-  cout << "*** volume ***" << endl;
-  cout << arguments.size() << endl;
-  for (int i = 0; i < arguments.size(); ++i)
-      cout << arguments.at(i).toLocal8Bit().constData() << endl;
-
   //run the executable
   this->volumeProcess->start("./volumeProcess", arguments);
 }
@@ -251,10 +246,8 @@ void MDLGUI:: RunConnCompntwFldfill()
   this->OutputDisplay->append(
     "Step #1 completed in " + QString::number(secondsElapsed) + " seconds.\n");
 
-  cout << "*** Compnt ***" << endl;
   if(!(this->RawInput))
     {
-    cout << "I go here" << endl;
     //also have to grab image size out of the output
     QRegExp rx("input image size: \\[(\\d+), (\\d+), (\\d+)\\]"); 
     if(this->OutputDisplay->document()->toPlainText().indexOf(rx) != -1)
@@ -263,13 +256,9 @@ void MDLGUI:: RunConnCompntwFldfill()
       this->ImageSizeX = list[1];
       this->ImageSizeY = list[2];
       this->ImageSizeZ = list[3];
-      cout << " X == " << this->ImageSizeX.toStdString() << endl;
-      cout << " Y == " << this->ImageSizeY.toStdString() << endl;
-      cout << " Z == " << this->ImageSizeZ.toStdString() << endl;
       }
     else
       {
-      cout << "fux0red..." << endl;
       QMessageBox msgBox;
       msgBox.setText("BUG: Didn't find the image size in output...");
       msgBox.setIcon(QMessageBox::Warning);
@@ -364,34 +353,23 @@ void MDLGUI:: RunMinSpanTree()
     this->UnsmoothedBackbonesFile.replace(QString(".vtk"),
                                          QString("-unsmoothed.vtk"));
     arguments << this->UnsmoothedBackbonesFile;
-    if(this->CombineOutputsButton->isChecked())
-      {
-      arguments << "--combine-outputs";
-      }
-    else
-      {
-      this->UnsmoothedSpinesFile = this->SpinesFile.filePath();
-      this->UnsmoothedSpinesFile.replace(QString(".vtk"),
-                                         QString("-unsmoothed.vtk"));
-      arguments << this->UnsmoothedSpinesFile;
-      }
     }
   else
     {
     arguments << this->OutputFile.filePath();
-    if(this->CombineOutputsButton->isChecked())
-      {
-      arguments << "--combine-outputs";
-      }
-    else
-      {
-      arguments << this->SpinesFile.filePath();
-      }
     }
-  cout << "*** tree ***" << endl;
+  if(this->CombineOutputsButton->isChecked())
+    {
+    arguments << "--combine-outputs";
+    }
+  else
+    {
+    arguments << this->SpinesFile.filePath();
+    }
+  cout << "*** volume ***" << endl;
+  cout << arguments.size() << endl;
   for (int i = 0; i < arguments.size(); ++i)
       cout << arguments.at(i).toLocal8Bit().constData() << endl;
-
   this->OutputDisplay->append("Step #6, executing MinSpanTree\n");
   this->Time.restart();
   this->MinSpanTree->start("./MinSpanTree", arguments);
@@ -413,7 +391,7 @@ void MDLGUI:: RunBSplineFitting()
   QStringList arguments;
   arguments << this->InputFile.filePath() << this->UnsmoothedBackbonesFile
             << this->ImageSizeX << this->ImageSizeY << this->ImageSizeZ 
-            << this->OutputFile.filePath() << this->SpinesFile.filePath();
+            << this->OutputFile.filePath() << "unused"; //this->SpinesFile.filePath();
 
   this->OutputDisplay->append("Step #7, executing BSplineFitting\n");
   this->Time.restart();

@@ -149,12 +149,12 @@ template< typename TIPixel, typename TLPixel, unsigned int VImageDimension >
 bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 ::SetImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn, TLPixel index[VImageDimension], TLPixel size[VImageDimension])
 {
-	IntensityImageType::RegionType intRegion;
-	IntensityImageType::IndexType intIndex;
-	IntensityImageType::SizeType intSize;
-	LabelImageType::RegionType labRegion;
-	LabelImageType::IndexType labIndex;
-	LabelImageType::SizeType labSize;
+	typename IntensityImageType::RegionType intRegion;
+	typename IntensityImageType::IndexType intIndex;
+	typename IntensityImageType::SizeType intSize;
+	typename LabelImageType::RegionType labRegion;
+	typename LabelImageType::IndexType labIndex;
+	typename LabelImageType::SizeType labSize;
 
 	for(int i=0; i<VImageDimension; ++i)
 	{

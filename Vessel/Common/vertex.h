@@ -57,7 +57,7 @@ private:
 
   // don't use these constructors
   Vertex() { assert(0); }
-  Vertex& operator=(const Vertex&) { assert(0); }
+  //Vertex& operator=(const Vertex&) { assert(0); }
   Vertex(const Vertex&) { assert(0); }
   
   // ==============

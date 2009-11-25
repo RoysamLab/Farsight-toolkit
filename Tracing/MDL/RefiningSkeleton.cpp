@@ -53,7 +53,7 @@ struct  VoxelPosition
 int main(int argc, char **argv)
 {
   //ifstream fin;
-  FILE  *smoothbackbone,*spine, *ExtraSpine;
+  FILE  *smoothbackbone,*spine, *ExtraSpine = 0;
   FILE  *outrefineskel;
   
   std::string filedir;
@@ -63,14 +63,14 @@ int main(int argc, char **argv)
   std::string tempfile3; //  temp file, 
 
   VoxelPosition *AllBackbonepoints;
-  VoxelPosition *AllSpinepoints;
-  VoxelPosition *AllExtraSpinepoints;
+  VoxelPosition *AllSpinepoints = 0;
+  VoxelPosition *AllExtraSpinepoints = 0;
 
-  bool *RealPointsID,*RealSpineID,*ExtraSpineID;
+  bool *RealPointsID,*RealSpineID,*ExtraSpineID = 0;
   
   int NumBackbonePoints;
-  int NumExtraSpinePoints;
-  int NumSpinePoints;
+  int NumExtraSpinePoints = 0;
+  int NumSpinePoints = 0;
   
   int BacboneOnly = 0; 
 
