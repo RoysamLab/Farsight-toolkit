@@ -18,20 +18,17 @@ OPTION( BUILD_TRACING "Build Tracing Tools" ON )
 OPTION( BUILD_NUCLEI "Build Nuclear Segmentation" ON )
 OPTION( BUILD_VESSEL "Build Vessel Surface Segmentation" ON )
 OPTION( BUILD_REGISTRATION "Build Image Registration (fregl)" ON )
-OPTION( BUILD_BIONET "Build Bionet" OFF )
-OPTION( BUILD_SAMPLE_EDITOR "Build Sample Editor" OFF )
+OPTION( BUILD_BIONET "Build Bionet" ON )
+OPTION( BUILD_SAMPLE_EDITOR "Build Sample Editor" ON )
 OPTION( BUILD_TISSUENETS "Build TissueNets" OFF )
 OPTION( BUILD_TRACKER "Build Cell Tracker" OFF )
-OPTION( USE_KPLS "Use KPLS module for classification" ON )
+OPTION( USE_KPLS "Use KPLS module for classification" OFF )
 OPTION( WRAP_PYTHON "Wrap Farsight in Python" OFF )
 OPTION( BUILD_EMBREX "Build Mark Embrecht's KPLS module" OFF )
 MARK_AS_ADVANCED(BUILD_EMBREX)
 MARK_AS_ADVANCED(WRAP_PYTHON)
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR} )
-
-#CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/Common/ParseParameters.py
-#               ${PROJECT_BINARY_DIR}/Common/ParseParameters.py)
 
 CONFIGURE_FILE (
   ${PROJECT_SOURCE_DIR}/FarsightConfig.h.in
