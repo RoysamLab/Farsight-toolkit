@@ -25,7 +25,7 @@ limitations under the License.
 #include "vtkDoubleArray.h"
 #include "vtkAbstractArray.h"
 #include "vtkVariantArray.h"
-#include <ftkGui/ObjectSelection.h>
+#include <ftkGUI/ObjectSelection.h>
 
 class QStandardItemModel;
 class QItemSelectionModel;
