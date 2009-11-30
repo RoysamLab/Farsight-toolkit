@@ -129,11 +129,11 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 		}
 		//By Yousef on 09/08/2009
 		//Just for testing purposes: Write out the distance map into an image file
-		/*typedef itk::ImageFileWriter< MyInputImageType > WriterType;
+		typedef itk::ImageFileWriter< MyInputImageType > WriterType;
 		WriterType::Pointer writer = WriterType::New();
 		writer->SetFileName("bin_test.tif");
 		writer->SetInput( im );
-		writer->Update();*/
+		writer->Update();
 		//////////////////////////////////////////////////////////////////////////
 		std::cout<<"Computing distance transform...";
 		dImg = (unsigned short *) malloc(r*c*z*sizeof(unsigned short));
@@ -658,9 +658,9 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 	//double mean = 0.0;
 	//double stdv = 0.0;
 	int cnt = 0;
-	//ofstream p;
+	ofstream p;
 	//int max_dist = 0;
-	//p.open("checkme.txt");
+	p.open("checkme.txt");
 	for(int i=1; i<r-1; i++)
     {
         for(int j=1; j<c-1; j++)
@@ -690,7 +690,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 					lst.push_back(i);
 					lst.push_back(j);
 					lst.push_back(k);
-					//p<<j<<" "<<i<<" "<<k<<" "<<mx<<std::endl;
+					p<<j<<" "<<i<<" "<<k<<" "<<mx<<std::endl;
 					scales.push_back(lst);
 					//mean +=mx;
 					cnt++;										
@@ -698,7 +698,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 			}			
         }
     } 
-	//p.close();
+	p.close();
 	
 	//get the median of the scales(distances)
 	int medianS = computeMedian(scales, cnt);
@@ -933,7 +933,7 @@ int distMap_SliceBySlice(itk::SmartPointer<MyInputImageType> im, int r, int c, i
 	  }	  
 
 	  //By Yousef: try to write out the output at the central slice
-	  /*int cent_slice = (int) z/2;
+	  int cent_slice = (int) z/2;
 	  if(i==cent_slice)
 	  {
 		  typedef    unsigned char     MyInputPixelTypeNew;
@@ -946,7 +946,7 @@ int distMap_SliceBySlice(itk::SmartPointer<MyInputImageType> im, int r, int c, i
 		  writer->SetFileName("dist_test.tif");
 		  writer->SetInput( potCaster->GetOutput() );
 		  writer->Update();		  
-	  }*/
+	  }
   } 
  
   return max_dist;
