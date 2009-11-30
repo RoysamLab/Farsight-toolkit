@@ -40,6 +40,7 @@
 //Farsight Includes:
 #include "NuclearSegmentation/ftkNuclearSegmentation.h"
 #include "NuclearSegmentation/CytoplasmSegmentation/CytoplasmSegmentation.h"
+#include "NuclearSegmentation/Nuclear_Association/ftkNuclearAssociationRules.h"
 #include "ftkCommon/ftkLabelImageToFeatures.h"
 #include "ftkCommon/ftkUtils.h"
 #include "ftkImage/ftkImage.h"
@@ -105,6 +106,7 @@ private slots:
 	void markVisited(void);
 
 	//For Tools menu
+	void startAssociations();
 	void startSVM();
 	void startKPLS();
 
@@ -147,6 +149,7 @@ private:
 	QMenu *toolMenu;
 	QAction *segmentAction;
 	QAction *cytoAction;
+	QAction *assocAction;
 	QAction *svmAction;		//Start the One-Class SVM outlier detecter
 	QAction *kplsAction;	//Start the KPLS Classifier
 	

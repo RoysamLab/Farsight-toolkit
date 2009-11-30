@@ -34,10 +34,32 @@
 #include "itkImageFileReader.h"
 #include "itkImageRegionIteratorWithIndex.h"
 //#include "itkApproximateSignedDistanceMapImageFilter.h"
-#include <itkSignedDanielssonDistanceMapImageFilter.h> 
+#include <itkSignedDanielssonDistanceMapImageFilter.h>
+
+#include <vtkSmartPointer.h>
+#include <vtkDoubleArray.h>
+#include <vtkVariantArray.h>
+#include <vtkTable.h>
 
 namespace ftk
 { 
+
+class AssociativeFeatureCalculator
+{
+public:
+	AssociativeFeatureCalculator();
+	void SetInputFile(std::string filename);
+	void SetFeaturePrefix(std::string prefix);			//Set Prefix for feature names
+	vtkSmartPointer<vtkTable> Compute(void);			//Compute and return table with values (for all objects)
+	void Update(vtkSmartPointer<vtkTable> table);		//Update the features in this table whose names match (sets doFeat)
+	void Append(vtkSmartPointer<vtkTable> table);		//Compute features that are ON and append them to the existing table
+
+private:
+	std::string inFilename;
+	std::string fPrefix;
+};
+
+
 /** \class NuclearAssociation
  *  \brief To define a set of association rules between nuclei and other objects and to compute the corresponding associative measures. 
  *  

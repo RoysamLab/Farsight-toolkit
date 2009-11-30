@@ -101,6 +101,8 @@ public:
 
 	/* Get the features list*/
 	float** GetAssocFeaturesList() {return assocMeasurementsList;};
+	std::vector<AssociationRule> GetAssociationRules(){ return assocRulesList; };
+	std::vector<unsigned short> GetLabels(){ return labelsList; };
 	
 protected:
 	/* This is the list of association rules */

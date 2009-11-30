@@ -36,6 +36,152 @@
 
 namespace ftk 
 {	
+
+AssociativeFeatureCalculator::AssociativeFeatureCalculator()
+{
+	inFilename = "";
+	fPrefix = "";
+}
+
+void AssociativeFeatureCalculator::SetInputFile(std::string filename)
+{
+	inFilename = filename;
+}
+	
+void AssociativeFeatureCalculator::SetFeaturePrefix(std::string prefix)
+{
+	fPrefix = prefix;
+}
+
+//Compute features turned ON in doFeat and puts them in a new table
+vtkSmartPointer<vtkTable> AssociativeFeatureCalculator::Compute(void)
+{
+	//Compute features:
+	ftk::NuclearAssociationRules *assoc = new ftk::NuclearAssociationRules("",0);
+	assoc->ReadRulesFromXML(inFilename);
+	assoc->PrintSelf();
+	assoc->Compute();
+
+	//Init the table (headers):
+	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
+	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName( "ID" );
+	table->AddColumn(column);
+	for (int i=0; i < assoc->GetNumofAssocRules(); ++i)
+	{
+		column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( (fPrefix+assoc->GetAssociationRules().at(i).GetRuleName()).c_str() );
+		table->AddColumn(column);
+	}
+
+	//Now populate the table:
+	std::vector<unsigned short> labels = assoc->GetLabels();
+	float** vals = assoc->GetAssocFeaturesList();
+	for (int i=0; i<(int)labels.size(); ++i)
+	{
+		unsigned short id = labels.at(i);
+		if(id == 0) continue;
+
+		vtkSmartPointer<vtkVariantArray> row = vtkSmartPointer<vtkVariantArray>::New();
+		row->InsertNextValue( vtkVariant(id) );
+		for (int r=0; r<assoc->GetNumofAssocRules(); ++r)
+		{
+			row->InsertNextValue( vtkVariant(vals[r][i]) );
+		}
+		table->InsertNextRow(row);
+	}
+	return table;
+}
+
+//Update the features in this table whose names match (sets doFeat)
+void AssociativeFeatureCalculator::Update(vtkSmartPointer<vtkTable> table)
+{
+	//Compute features:
+	ftk::NuclearAssociationRules *assoc = new ftk::NuclearAssociationRules("",0);
+	assoc->ReadRulesFromXML(inFilename);
+	assoc->PrintSelf();
+	assoc->Compute();
+
+	//Now update the table:
+	std::vector<unsigned short> labels = assoc->GetLabels();
+	float** vals = assoc->GetAssocFeaturesList();
+	for (int i=0; i<(int)labels.size(); ++i)
+	{
+		unsigned short id = labels.at(i);
+		if(id == 0) continue;
+
+		int row = -1;
+		for(int r=0; r<table->GetNumberOfRows(); ++r)
+		{
+			if( table->GetValue(r,0) == id )
+			{
+				row = r;
+				break;
+			}
+		}
+
+		if(row == -1) continue;
+
+		for (int f=0; f<assoc->GetNumofAssocRules(); ++f)
+		{
+			table->SetValueByName(row,(fPrefix+assoc->GetAssociationRules().at(f).GetRuleName()).c_str(), vtkVariant(vals[f][i]));
+		}
+	}
+}
+
+//Update the features in this table whose names match (sets doFeat)
+void AssociativeFeatureCalculator::Append(vtkSmartPointer<vtkTable> table)
+{
+	//Compute features:
+	ftk::NuclearAssociationRules *assoc = new ftk::NuclearAssociationRules("",0);
+	assoc->ReadRulesFromXML(inFilename);
+	assoc->PrintSelf();
+	assoc->Compute();
+
+	//Init the table (headers):
+	for (int i=0; i < assoc->GetNumofAssocRules(); ++i)
+	{
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( (fPrefix+assoc->GetAssociationRules().at(i).GetRuleName()).c_str() );
+		column->SetNumberOfValues( table->GetNumberOfRows() );
+		table->AddColumn(column);
+	}
+
+	//Now update the table:
+	std::vector<unsigned short> labels = assoc->GetLabels();
+	float** vals = assoc->GetAssocFeaturesList();
+	for (int i=0; i<(int)labels.size(); ++i)
+	{
+		unsigned short id = labels.at(i);
+		if(id == 0) continue;
+
+		int row = -1;
+		for(int r=0; r<table->GetNumberOfRows(); ++r)
+		{
+			if( table->GetValue(r,0) == id )
+			{
+				row = r;
+				break;
+			}
+		}
+
+		if(row == -1) continue;
+
+		for (int f=0; f<assoc->GetNumofAssocRules(); ++f)
+		{
+			table->SetValueByName(row,(fPrefix+assoc->GetAssociationRules().at(f).GetRuleName()).c_str(), vtkVariant(vals[f][i]));
+		}
+	}
+}
+
+//****************************************************************************************************************************
+//****************************************************************************************************************************
+//****************************************************************************************************************************
+//****************************************************************************************************************************
+//****************************************************************************************************************************
+//****************************************************************************************************************************
+//****************************************************************************************************************************
+
 NuclearAssociationRules::NuclearAssociationRules(std::string AssocFName, int numOfRules):ObjectAssociation(AssocFName, numOfRules)
 {
 	labImage= NULL;
@@ -83,7 +229,7 @@ void NuclearAssociationRules::Compute()
 
 	//Get the list of labels
 	labelsList = labGeometryFilter->GetLabels();
-	numOfLabels = labelsList.size();
+	numOfLabels = (int)labelsList.size();
 	//int maxLable = labelsList[numOfLabels-1];
 
 	//allocate memory for the features list
@@ -98,12 +244,14 @@ void NuclearAssociationRules::Compute()
 		reader2->SetFileName(assocRulesList[i].GetTargetFileNmae());
 		reader2->Update();		
 		//cout<<"Computing Features For Association Rule "<<i+1<<": ";
-		for(int j=1; j<numOfLabels; j++)
+		for(int j=0; j<numOfLabels; j++)
 		{
 			//cout<<j+1;
-			int lbl = labelsList[j];			
+			int lbl = labelsList.at(j);
+			if(lbl == 0) continue;
+
 			std::cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<lbl<<"/"<<numOfLabels;
-			assocMeasurementsList[i][j-1] = ComputeOneAssocMeasurement(reader2->GetOutput(), i, lbl);						
+			assocMeasurementsList[i][j] = ComputeOneAssocMeasurement(reader2->GetOutput(), i, lbl);						
 		}		
 		std::cout<<"\tdone"<<std::endl;
 	}	

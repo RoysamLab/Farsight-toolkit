@@ -225,6 +225,11 @@ void NucleusEditor::createMenus()
 	connect(cytoAction, SIGNAL(triggered()), this, SLOT(cytoSeg()));
 	toolMenu->addAction(cytoAction);
 
+	assocAction = new QAction(tr("Compute Associations"), this);
+	assocAction->setStatusTip(tr("Choose association rule definition file to compute associative features"));
+	connect(assocAction, SIGNAL(triggered()), this, SLOT(startAssociations()));
+	toolMenu->addAction(assocAction);
+
 	toolMenu->addSeparator();
 
 	svmAction = new QAction(tr("Detect Outliers"), this);
@@ -594,6 +599,34 @@ bool NucleusEditor::loadXMLImage(std::string filename)
 		return false;
 	}
 	return true;
+}
+
+//**********************************************************************
+// SLOT: start the nuclear associations tool:
+//**********************************************************************
+void NucleusEditor::startAssociations()
+{
+	QString fileName = QFileDialog::getOpenFileName(
+                             this, "Select file to open", lastPath,
+                             tr("XML Association Definition (*.xml)\n"
+							    "All Files (*.*)"));
+    if(fileName == "")
+		return;
+
+	lastPath = QFileInfo(fileName).absolutePath();
+
+	ftk::AssociativeFeatureCalculator * assocCal = new ftk::AssociativeFeatureCalculator();
+	assocCal->SetInputFile(fileName.toStdString());
+
+	if(!table)
+	{
+		table = assocCal->Compute();
+		CreateNewTableWindow();
+	}
+	else
+		assocCal->Append(table);
+
+	delete assocCal;
 }
 
 //**********************************************************************
