@@ -232,7 +232,8 @@ void Seg_GC_Full_2D(unsigned char* IM,
 		}
 	}
 
-    sig = 25.0;
+    sig = 15.0;
+	double w = 2.0;
     for(int i=0; i<r-1; i++)
       {
       for(int j=0; j<c-1; j++)
@@ -243,23 +244,23 @@ void Seg_GC_Full_2D(unsigned char* IM,
 	// the intensities, I should take the inverse so that very similar
 	// objects should have a large discontinuety penalty between them*/
 
-	curr_node = (i*c)+j; 
+		curr_node = (i*c)+j; 
         rght_node = curr_node+1;
         down_node = curr_node+c;
         diag_node = curr_node+c+1;
             
             
         //from Boykov's paper instead
-	Dr = 10*exp(-pow((double)IM[i*c + j]-(double)IM[i*c + j+1],2)/(2*pow(sig,2)));
-	g -> add_edge( curr_node, rght_node,    /* capacities */  Dr, Dr );	
+		Dr = w*exp(-pow((double)IM[i*c + j]-(double)IM[i*c + j+1],2)/(2*pow(sig,2)));
+		g -> add_edge( curr_node, rght_node,    /* capacities */  Dr, Dr );	
             
                    
         //from Boykov's paper instead
-Dd = 20*exp(-pow((double)IM[i*c + j]-(double)IM[(i+1)*c + j],2)/(2*pow(sig,2)));
-g->add_edge( curr_node, down_node,    /* capacities */  Dd, Dd );
+		Dd = w*exp(-pow((double)IM[i*c + j]-(double)IM[(i+1)*c + j],2)/(2*pow(sig,2)));
+		g->add_edge( curr_node, down_node,    /* capacities */  Dd, Dd );
                  
-Dg = 20*exp(-pow((double)IM[i*c + j]-(double)IM[(i+1)*c + (j+1)],2)/(2*pow(sig,2)));
-g->add_edge( curr_node, diag_node,    /* capacities */  Dg, Dg );            
+		Dg = w*exp(-pow((double)IM[i*c + j]-(double)IM[(i+1)*c + (j+1)],2)/(2*pow(sig,2)));
+		g->add_edge( curr_node, diag_node,    /* capacities */  Dg, Dg );            
                
         }
       }    
