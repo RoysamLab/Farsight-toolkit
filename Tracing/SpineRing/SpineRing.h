@@ -28,7 +28,7 @@
 //#include "vnl/vnl_sample.h"
 #include "SpineConsts.h"
 #include "CommonTypeDefs.h"
-#include "SpineTypeDefs.h"
+#include "SpineTypedefs.h"
 #include "SpineUtils.h"
 #include "TraceSegNode.h"
 

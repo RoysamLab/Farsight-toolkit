@@ -96,7 +96,7 @@
 #include "vtkInteractorStyleTrackballCamera.h"
 //#include "vtkRenderInteractor.h"
 #include "vtkCellPicker.h"
-#include "vtkCallBackCommand.h"
+#include "vtkCallbackCommand.h"
 #include "vtkDataRepresentation.h"
 #include "vtkSelectionLink.h"
 // Use our version of vtkSurfaceRepresentation
