@@ -247,11 +247,17 @@ void NuclearAssociationRules::Compute()
 		for(int j=0; j<numOfLabels; j++)
 		{
 			//cout<<j+1;
+<<<<<<< .mine
+			int lbl = labelsList[j];			
+			cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<j<<"/"<<numOfLabels;
+			assocMeasurementsList[i][j-1] = ComputeOneAssocMeasurement(reader2->GetOutput(), i, lbl);						
+=======
 			int lbl = labelsList.at(j);
 			if(lbl == 0) continue;
 
 			std::cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<lbl<<"/"<<numOfLabels;
 			assocMeasurementsList[i][j] = ComputeOneAssocMeasurement(reader2->GetOutput(), i, lbl);						
+>>>>>>> .r1264
 		}		
 		std::cout<<"\tdone"<<std::endl;
 	}	
@@ -320,7 +326,10 @@ float NuclearAssociationRules::ComputeOneAssocMeasurement(itk::SmartPointer<Targ
     LabImageType::SizeType  size;
     size[0]  = retBbox[1]-retBbox[0]+1;  // size along X
     size[1]  = retBbox[3]-retBbox[2]+1;  // size along Y
-	size[2]  = retBbox[5]-retBbox[4]+1;  // size along Z
+	if(imDim == 3)
+		size[2]  = retBbox[5]-retBbox[4]+1;  // size along Z
+	else
+		size[2] = 1;
   
     LabImageType::RegionType region;
     region.SetSize( size );
@@ -334,7 +343,10 @@ float NuclearAssociationRules::ComputeOneAssocMeasurement(itk::SmartPointer<Targ
 	LabImageType::IndexType start2;
     start2[0] =   retBbox[0];  // first index on X
     start2[1] =   retBbox[2];  // first index on Y    
-	start2[2] =   retBbox[4];  // first index on Z    
+	if(imDim == 3)
+		start2[2] =   retBbox[4];  // first index on Z   
+	else
+		start2[2] = 0;
 	LabImageType::RegionType region2;
     region2.SetSize( size );
     region2.SetIndex( start2 );
