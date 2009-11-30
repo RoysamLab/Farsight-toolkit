@@ -98,12 +98,43 @@ std::vector<int> yousef_nucleus_seg::getImageSize()
 //*********************************************************************************************
 // internal module functions
 //*********************************************************************************************
-void yousef_nucleus_seg::runBinarization()
+void yousef_nucleus_seg::runGradAnisDiffSmoothing()
 {
 	//First check to be sure that we have a dataImage to use
 	if (!dataImagePtr)
 		return;
 	
+	//Now clear all subsequent variables 
+	numConnComp = 0;
+	clearBinImagePtr();
+	clearSeedImagePtr();
+	clearLogImagePtr();
+	clearSegImagePtr();
+	clearClustImagePtr();
+	clearMyConnComp();
+	mySeeds.clear();
+
+	std::cout<<"Starting anisotropic diffusion...";
+	int ok = runGrAnisDiff(dataImagePtr, numRows, numColumns, numStacks, 5, .2, 2);
+	
+	if(ok)
+	{
+		std::cout<<"done\n";
+	}
+	else
+	{
+		std::cout<<"failed!\n segmentation will be applied on the raw image\n";
+	}
+}
+void yousef_nucleus_seg::runBinarization()
+{
+	//try this for now
+	//runGradAnisDiffSmoothing();
+
+	//First check to be sure that we have a dataImage to use
+	if (!dataImagePtr)
+		return;
+		
 	//Now clear all subsequent variables (dependent upon this binary image
 	numConnComp = 0;
 	clearBinImagePtr();
