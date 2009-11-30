@@ -34,7 +34,7 @@ ADD_LIBRARY(Trace
   MergeModel.h  MergeModel.cxx
   UndoBuffer.h	UndoBuffer.cxx
   undobuff.h	undobuff.cxx
-  branchPT.h	branchPT.cxx
+  branchPT.h	BranchPT.cxx
   vtkPlotEdges.h	vtkPlotEdges.cxx
 )
 ADD_EXECUTABLE( trace_editor  vtkTraceViewerDriver.cxx ${Sources} ${GUI_MOC_SRCS} )
