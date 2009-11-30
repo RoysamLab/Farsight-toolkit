@@ -626,6 +626,8 @@ void NucleusEditor::startAssociations()
 	else
 		assocCal->Append(table);
 
+	this->updateViews();
+
 	delete assocCal;
 }
 

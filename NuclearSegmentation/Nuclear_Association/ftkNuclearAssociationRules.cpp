@@ -247,9 +247,10 @@ void NuclearAssociationRules::Compute()
 		for(int j=0; j<numOfLabels; j++)
 		{
 			//cout<<j+1;
-			int lbl = labelsList[j];			
-			cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<j<<"/"<<numOfLabels;
-			assocMeasurementsList[i][j-1] = ComputeOneAssocMeasurement(reader2->GetOutput(), i, lbl);						
+			int lbl = labelsList[j];
+			if(lbl == 0) continue;
+			cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<j<<"/"<<numOfLabels-1;
+			assocMeasurementsList[i][j] = ComputeOneAssocMeasurement(reader2->GetOutput(), i, lbl);						
 		}		
 		std::cout<<"\tdone"<<std::endl;
 	}	

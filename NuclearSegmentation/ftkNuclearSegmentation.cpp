@@ -387,6 +387,7 @@ bool NuclearSegmentation::LoadFromDAT(std::string fname)
 	this->GetResultImage();
 	ReleaseSegMemory();
 	EditsNotSaved = true;
+	return true;
 }
 
 /*
