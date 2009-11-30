@@ -163,6 +163,11 @@ void NucleusEditor::createMenus()
 	connect(saveTableAction, SIGNAL(triggered()), this, SLOT(saveTable()));
 	fileMenu->addAction(saveTableAction);
 
+	saveDisplayAction = new QAction(tr("Save Display Image"), this);
+	saveDisplayAction->setStatusTip(tr("Save displayed image to file"));
+	connect(saveDisplayAction, SIGNAL(triggered()), segView, SLOT(SaveDiplayImageToFile()));
+	fileMenu->addAction(saveDisplayAction);
+
 	fileMenu->addSeparator();
 
     exitAction = new QAction(tr("Exit"), this);
@@ -1275,14 +1280,3 @@ void Features::run()
 //***********************************************************************************
 //***********************************************************************************
 //***********************************************************************************
-
-
-
-
-
-
-
-
-
-
-

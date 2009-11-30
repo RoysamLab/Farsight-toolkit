@@ -129,6 +129,7 @@ private:
 	QMenu *fileMenu;
 	QAction *loadAction;
 	QAction *saveAction;
+	QAction *saveDisplayAction;
 	QAction *saveTableAction;
 	QAction *xmlAction;
 	QAction *exitAction;

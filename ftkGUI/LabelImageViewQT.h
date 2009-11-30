@@ -36,6 +36,7 @@ limitations under the License.
 #include <QtGui/QStylePainter>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QMessageBox>
+#include <QtGui/QFileDialog>
 #include <QtGui/QToolTip>
 #include <QtGui/QSpinBox>
 #include <QtGui/QLabel>
@@ -69,6 +70,7 @@ public:
 	ftk::Image::Pointer GetLabelImage(){return labelImg;};
 
 public slots:
+	void SaveDiplayImageToFile();
 	void AdjustImageIntensity();
 	void SetBoundsVisible(bool val);
 	//void SetIDsVisible(int img, bool val);
@@ -133,6 +135,7 @@ protected:
 	int numChBoxes;					//number of checkboxes (number of channels)
 	std::vector<bool> channelFlags;	//is channel is visible or not
 
+	QImage displayImage;				//Currently displayed image
 	QImage baseImage;					//The intensity image (2D)
 	QImage boundsImage;					//Image containing boundaries (2D)
 

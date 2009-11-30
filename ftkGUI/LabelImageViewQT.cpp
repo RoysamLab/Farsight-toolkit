@@ -227,6 +227,18 @@ void LabelImageViewQT::Get2Points(void)
 	pointsMode = true;
 }
 
+void LabelImageViewQT::SaveDiplayImageToFile()
+{
+	QString fileName = QFileDialog::getSaveFileName(this, tr("Save Display Image"), ".", tr("Images (*.bmp *gif *.jpg *.png *.tif)"));
+	if(fileName.size() == 0)
+		return;
+
+	bool ok = displayImage.save( fileName );
+
+	if(!ok)
+		QMessageBox::warning(this, tr("Save Failure"), tr("Image Failed to Save"));
+}
+
 void LabelImageViewQT::updateVSlider(void)
 {
 	const ftk::Image::Info *info;
@@ -588,7 +600,7 @@ void LabelImageViewQT::paintEvent(QPaintEvent * event)
 	if(baseImage.height() <= 0 || baseImage.width() <= 0)
 		return;
 
-	QImage displayImage = baseImage;
+	displayImage = baseImage;
 	QPainter painter(&displayImage);
 	if(labelImg && showBounds)
 	{
