@@ -30,9 +30,8 @@ public:
 
 public slots:
   void SelectInputImage();
-  void SelectOutputImage();
+  void SelectBackboneImage();
   void SelectSpinesFile();
-  void ToggleSpinesInputButton();
   void CheckInputs();
   void AppendOutputToDisplay(QObject *o);
   void RunSkeletonization();
@@ -41,8 +40,13 @@ public slots:
   void RunAnisoDiffuse();
   void RunGradientVecField();
   void RunIntegratedskel();
-  void RunMinSpanTree();
+  void RunBackboneExtract1();
+  void RunMDABasedSpineExtraction1();
   void RunBSplineFitting();
+  void RunRefiningSkeleton1();
+  void RunBackboneExtract2();
+  void RunRefiningSkeleton2();
+  void RunMDABasedSpineExtraction2();
   void FinishedRunningSkeletonization();
 
 protected:
@@ -54,16 +58,21 @@ private:
 	QMenu *FileMenu;
 	QAction *ExitAction;
   QFileInfo InputFile;
-  QFileInfo OutputFile;
+  QFileInfo BackboneFile;
   QFileInfo SpinesFile;
   QTime Time;
-  QProcess *AnisoDiffuse;
-  QProcess *BSplineFitting;
+  QProcess *volumeProcess;
   QProcess *ConnCompntwFldfill;
+  QProcess *AnisoDiffuse;
   QProcess *GradientVecField;
   QProcess *Integratedskel;
-  QProcess *MinSpanTree;
-  QProcess *volumeProcess;
+  QProcess *BackboneExtract1;
+  QProcess *MDABasedSpineExtraction1;
+  QProcess *BSplineFitting;;
+  QProcess *RefiningSkeleton1;
+  QProcess *BackboneExtract2;
+  QProcess *RefiningSkeleton2;
+  QProcess *MDABasedSpineExtraction2;
   bool RawInput;
   QString ImageSizeX;
   QString ImageSizeY;
@@ -74,11 +83,14 @@ private:
   QString AnisoDiffusedFile;
   QString VectorFile;
   QString SeedFile;
+  QString DataDir;
   QString SkeletonFile;
-  QString BackboneFile;
-  QString UnsmoothedBackbonesFile;
-  QString UnsmoothedSpinesFile;
-  QString SpinesFileName;
+  QString BackboneCandidateFile;
+  QString MDLFeatureFile;
+  QString SpineCandidateFile;
+  QString SmoothBackboneFile;
+  QString ExtraSpineFile;
+  QString RefinedSkeletonFile;
 };
 #endif
 

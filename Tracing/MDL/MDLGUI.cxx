@@ -23,13 +23,18 @@ using std::endl;
 
 MDLGUI::MDLGUI()
 {
-  this->AnisoDiffuse = new QProcess(this);
-  this->BSplineFitting = new QProcess(this);
+  this->volumeProcess = new QProcess(this);
   this->ConnCompntwFldfill = new QProcess(this);
+  this->AnisoDiffuse = new QProcess(this);
   this->GradientVecField = new QProcess(this);
   this->Integratedskel = new QProcess(this);
-  this->MinSpanTree = new QProcess(this);
-  this->volumeProcess = new QProcess(this);
+  this->BackboneExtract1 = new QProcess(this);
+  this->MDABasedSpineExtraction1 = new QProcess(this);
+  this->BSplineFitting = new QProcess(this);
+  this->RefiningSkeleton1 = new QProcess(this);
+  this->BackboneExtract2 = new QProcess(this);
+  this->RefiningSkeleton2 = new QProcess(this);
+  this->MDABasedSpineExtraction2 = new QProcess(this);
   this->Mapper = new QSignalMapper(this);
   this->setObjectName("MDLGUI");
   this->Initialize();
@@ -51,16 +56,14 @@ void MDLGUI::SetupSignalsAndSlots()
 {
   this->connect(this->SelectInputButton, SIGNAL(pressed()), this,
     SLOT(SelectInputImage()));
-  this->connect(this->SelectOutputButton, SIGNAL(pressed()), this,
-    SLOT(SelectOutputImage()));
+  this->connect(this->SelectBackboneButton, SIGNAL(pressed()), this,
+    SLOT(SelectBackboneImage()));
   this->connect(this->SelectSpinesButton, SIGNAL(pressed()), this,
     SLOT(SelectSpinesFile()));
   this->connect(this->ComponentsSizeInput, SIGNAL(textChanged(const QString &)),
     this, SLOT(CheckInputs()));
   this->connect(this->RunSkeletonizationButton, SIGNAL(pressed()), this,
     SLOT(RunSkeletonization()));
-  this->connect(this->CombineOutputsButton, SIGNAL(toggled(bool)), this,
-    SLOT(ToggleSpinesInputButton()));
   
   //set up the QSignalMapper so that each process can append to the
   //DisplayOutput field
@@ -69,8 +72,15 @@ void MDLGUI::SetupSignalsAndSlots()
   this->Mapper->setMapping(this->ConnCompntwFldfill, this->ConnCompntwFldfill);
   this->Mapper->setMapping(this->GradientVecField, this->GradientVecField);
   this->Mapper->setMapping(this->Integratedskel, this->Integratedskel);
-  this->Mapper->setMapping(this->MinSpanTree, this->MinSpanTree);
   this->Mapper->setMapping(this->volumeProcess, this->volumeProcess);
+  this->Mapper->setMapping(this->BackboneExtract1, this->BackboneExtract1);
+  this->Mapper->setMapping(this->MDABasedSpineExtraction1,
+                           this->MDABasedSpineExtraction1);
+  this->Mapper->setMapping(this->RefiningSkeleton1, this->RefiningSkeleton1);
+  this->Mapper->setMapping(this->BackboneExtract2, this->BackboneExtract2);
+  this->Mapper->setMapping(this->RefiningSkeleton2, this->RefiningSkeleton2);
+  this->Mapper->setMapping(this->MDABasedSpineExtraction2,
+                           this->MDABasedSpineExtraction2);
   connect(this->AnisoDiffuse, SIGNAL(readyReadStandardOutput()), this->Mapper,
     SLOT(map()));
   connect(this->BSplineFitting, SIGNAL(readyReadStandardOutput()), this->Mapper,
@@ -81,10 +91,21 @@ void MDLGUI::SetupSignalsAndSlots()
     this->Mapper, SLOT(map()));
   connect(this->Integratedskel, SIGNAL(readyReadStandardOutput()), this->Mapper,
     SLOT(map()));
-  connect(this->MinSpanTree, SIGNAL(readyReadStandardOutput()), this->Mapper,
-    SLOT(map()));
   connect(this->volumeProcess, SIGNAL(readyReadStandardOutput()), this->Mapper,
     SLOT(map()));
+  connect(this->BackboneExtract1, SIGNAL(readyReadStandardOutput()),
+          this->Mapper, SLOT(map()));
+  connect(this->MDABasedSpineExtraction1, SIGNAL(readyReadStandardOutput()),
+          this->Mapper, SLOT(map()));
+  connect(this->RefiningSkeleton1, SIGNAL(readyReadStandardOutput()),
+          this->Mapper, SLOT(map()));
+  connect(this->BackboneExtract2, SIGNAL(readyReadStandardOutput()),
+          this->Mapper, SLOT(map()));
+  connect(this->RefiningSkeleton2, SIGNAL(readyReadStandardOutput()),
+          this->Mapper, SLOT(map()));
+  connect(this->MDABasedSpineExtraction2, SIGNAL(readyReadStandardOutput()),
+          this->Mapper, SLOT(map()));
+
   connect(this->Mapper, SIGNAL(mapped(QObject *)), this,
           SLOT(AppendOutputToDisplay(QObject *)));
 
@@ -99,65 +120,54 @@ void MDLGUI::SetupSignalsAndSlots()
   this->connect(this->GradientVecField, SIGNAL(finished(int, QProcess::ExitStatus)),
                 this, SLOT(RunIntegratedskel()));
   this->connect(this->Integratedskel, SIGNAL(finished(int, QProcess::ExitStatus)),
-                this, SLOT(RunMinSpanTree()));
-  this->connect(this->MinSpanTree, SIGNAL(finished(int, QProcess::ExitStatus)),
+                this, SLOT(RunBackboneExtract1()));
+  this->connect(this->BackboneExtract1, SIGNAL(finished(int, QProcess::ExitStatus)),
+                this, SLOT(RunMDABasedSpineExtraction1()));
+  this->connect(this->MDABasedSpineExtraction1, SIGNAL(finished(int, QProcess::ExitStatus)),
                 this, SLOT(RunBSplineFitting()));
   this->connect(this->BSplineFitting, SIGNAL(finished(int, QProcess::ExitStatus)),
+                this, SLOT(RunRefiningSkeleton1()));
+  this->connect(this->RefiningSkeleton1, SIGNAL(finished(int, QProcess::ExitStatus)),
+                this, SLOT(RunBackboneExtract2()));
+  this->connect(this->BackboneExtract2, SIGNAL(finished(int, QProcess::ExitStatus)),
+                this, SLOT(RunRefiningSkeleton2()));
+  this->connect(this->RefiningSkeleton2, SIGNAL(finished(int, QProcess::ExitStatus)),
+                this, SLOT(RunMDABasedSpineExtraction2()));
+  this->connect(this->MDABasedSpineExtraction2, SIGNAL(finished(int, QProcess::ExitStatus)),
                 this, SLOT(FinishedRunningSkeletonization()));
 }
 
 void MDLGUI::SelectInputImage()
 {
-   QString filePath = QFileDialog::getOpenFileName(this,
-     tr("Select Input Image"), "", tr("Image Files (*.*)"));
-   this->InputFile = QFileInfo(filePath);
-   this->InputImageLabel->setText(this->InputFile.fileName());
-   this->CheckInputs();
+  QString filePath = QFileDialog::getOpenFileName(this,
+    tr("Select Input Image"), "", tr("Image Files (*.*)"));
+  this->InputFile = QFileInfo(filePath);
+  this->InputImageLabel->setText(this->InputFile.fileName());
+  this->CheckInputs();
 }
 
-void MDLGUI::SelectOutputImage()
+void MDLGUI::SelectBackboneImage()
 {
-   QString filePath = QFileDialog::getSaveFileName(this,
-     tr("Select Output File"), "", tr("VTK files (*.vtk)"));
-   this->OutputFile = QFileInfo(filePath);
-   this->OutputImageLabel->setText(this->OutputFile.fileName());
-   this->CheckInputs();
+  QString filePath = QFileDialog::getSaveFileName(this,
+    tr("Select Output File"), "", tr("VTK files (*.vtk)"));
+  this->BackboneFile = QFileInfo(filePath);
+  this->DataDir = this->BackboneFile.dir().absolutePath() + "/";
+  this->OutputImageLabel->setText(this->BackboneFile.fileName());
+  this->CheckInputs();
 }
 
 void MDLGUI::SelectSpinesFile()
 {
-   QString filePath = QFileDialog::getSaveFileName(this,
-     tr("Select Spines File"), "", tr("VTK files (*.vtk)"));
-   this->SpinesFile = QFileInfo(filePath);
-   this->SpinesLabel->setText(this->SpinesFile.fileName());
-   this->CheckInputs();
-}
-
-void MDLGUI::ToggleSpinesInputButton()
-{
-  if(this->CombineOutputsButton->isChecked())
-    {
-    this->SelectSpinesButton->setEnabled(false);
-    this->SpinesLabel->hide();
-    }
-  else
-    {
-    this->SelectSpinesButton->setEnabled(true);
-    this->SpinesLabel->show();
-    }
+  QString filePath = QFileDialog::getSaveFileName(this,
+    tr("Select Spines File"), "", tr("VTK files (*.vtk)"));
+  this->SpinesFile = QFileInfo(filePath);
+  this->SpinesLabel->setText(this->SpinesFile.fileName());
   this->CheckInputs();
 }
 
 void MDLGUI::CheckInputs()
 {
-  if(!this->CombineOutputsButton->isChecked() &&
-     this->SpinesFile.filePath() == "")
-    {
-    this->RunSkeletonizationButton->setEnabled(false);
-    return;
-    }
-
-  if(this->InputFile.filePath() != "" && this->OutputFile.filePath() != "" &&
+  if(this->InputFile.filePath() != "" && this->BackboneFile.filePath() != "" &&
      this->ComponentsSizeInput->text() != "")
     {
     this->RunSkeletonizationButton->setEnabled(true);
@@ -216,7 +226,7 @@ void MDLGUI:: RunvolumeProcess()
   //construct the list of arguments
   QStringList arguments;
   this->VolumeProcessedFile =
-    this->OutputFile.dir().absolutePath() + "/volume_Processed.raw";
+    this->BackboneFile.dir().absolutePath() + "/volume_Processed.raw";
   if(this->RawInput)
     {
     arguments << this->InputFile.filePath() << this->ImageSizeX
@@ -229,7 +239,7 @@ void MDLGUI:: RunvolumeProcess()
     }
 
   //provide some feedback to the user
-  this->OutputDisplay->append("Step #1, executing volumeProcess\n");
+  this->OutputDisplay->append("Executing volumeProcess\n");
 
   //start a timer
   this->Time.start();
@@ -244,7 +254,7 @@ void MDLGUI:: RunConnCompntwFldfill()
   int secondsElapsed = this->Time.elapsed() / 1000.0;
 
   this->OutputDisplay->append(
-    "Step #1 completed in " + QString::number(secondsElapsed) + " seconds.\n");
+    "volumeProcess completed in " + QString::number(secondsElapsed) + " seconds.\n");
 
   if(!(this->RawInput))
     {
@@ -268,13 +278,13 @@ void MDLGUI:: RunConnCompntwFldfill()
 
   //construct a list of arguments
   this->ComponentsConnectedFile = 
-    this->OutputFile.dir().absolutePath() + "/components_Connected.raw";
+    this->BackboneFile.dir().absolutePath() + "/components_Connected.raw";
   QStringList arguments;
   arguments << this->VolumeProcessedFile << this->ImageSizeX
             << this->ImageSizeY << this->ImageSizeZ
             << this->ComponentsConnectedFile << this->ConnectedComponentsSize;
   
-  this->OutputDisplay->append("Step #2, executing ConnCompntwFldfill\n");
+  this->OutputDisplay->append("Executing ConnCompntwFldfill\n");
   this->Time.restart();
   this->ConnCompntwFldfill->start("./ConnCompntwFldfill", arguments);
 }
@@ -283,16 +293,16 @@ void MDLGUI:: RunAnisoDiffuse()
 {
   int secondsElapsed = this->Time.elapsed() / 1000.0;
   this->OutputDisplay->append(
-    "Step #2 completed in " + QString::number(secondsElapsed) + " seconds.\n");
+    "ConnCompntwFldfill completed in " + QString::number(secondsElapsed) + " seconds.\n");
 
   this->AnisoDiffusedFile =
-    this->OutputFile.dir().absolutePath() + "/Aniso_Diffused.raw";
+    this->BackboneFile.dir().absolutePath() + "/Aniso_Diffused.raw";
 
   QStringList arguments;
   arguments << this->ComponentsConnectedFile << this->ImageSizeX
             << this->ImageSizeY << this->ImageSizeZ << this->AnisoDiffusedFile;
 
-  this->OutputDisplay->append("Step #3, executing AnisoDiffuse\n");
+  this->OutputDisplay->append("Executing AnisoDiffuse\n");
   this->Time.restart();
   this->AnisoDiffuse->start("./AnisoDiffuse", arguments);
 }
@@ -301,15 +311,15 @@ void MDLGUI:: RunGradientVecField()
 {
   int secondsElapsed = this->Time.elapsed() / 1000.0;
   this->OutputDisplay->append(
-    "Step #3 completed in " + QString::number(secondsElapsed) + " seconds.\n");
+    "AnisoDiffuse completed in " + QString::number(secondsElapsed) + " seconds.\n");
 
-  this->VectorFile = this->OutputFile.dir().absolutePath() + "/out.vec";
+  this->VectorFile = this->BackboneFile.dir().absolutePath() + "/out.vec";
 
   QStringList arguments;
   arguments << this->AnisoDiffusedFile << this->ImageSizeX << this->ImageSizeY
             << this->ImageSizeZ << this->VectorFile;
 
-  this->OutputDisplay->append("Step #4, executing GradientVecField\n");
+  this->OutputDisplay->append("Executing GradientVecField\n");
   this->Time.restart();
   this->GradientVecField->start("./GradientVecField", arguments);
 }
@@ -318,85 +328,147 @@ void MDLGUI:: RunIntegratedskel()
 {
   int secondsElapsed = this->Time.elapsed() / 1000.0;
   this->OutputDisplay->append(
-    "Step #4 completed in " + QString::number(secondsElapsed) + " seconds.\n");
+    "GradientVecField completed in " + QString::number(secondsElapsed) + " seconds.\n");
 
-  this->SeedFile = this->OutputFile.dir().absolutePath() + "/out.seed";
-  this->SkeletonFile = this->OutputFile.dir().absolutePath() + "/out.skel";
+  this->SeedFile = this->BackboneFile.dir().absolutePath() + "/out.seed";
+  this->SkeletonFile = this->BackboneFile.dir().absolutePath() + "/out.skel";
 
   QStringList arguments;
   arguments << this->VectorFile << this->ImageSizeX << this->ImageSizeY
             << this->ImageSizeZ << "0.05" << this->SeedFile
             << this->SkeletonFile;
 
-  this->OutputDisplay->append("Step #5, executing Integratedskel\n");
+  this->OutputDisplay->append("Executing Integratedskel\n");
   this->Time.restart();
   this->Integratedskel->start("./Integratedskel", arguments);
 }
 
-void MDLGUI:: RunMinSpanTree()
+void MDLGUI:: RunBackboneExtract1()
 {
   int secondsElapsed = this->Time.elapsed() / 1000.0;
   this->OutputDisplay->append(
-    "Step #5 completed in " + QString::number(secondsElapsed) + " seconds.\n");
+    "Integratedskel completed in " + QString::number(secondsElapsed) + " seconds.\n");
 
-  QString dataDir = this->OutputFile.dir().absolutePath() + "/";
-  this->SeedFile = this->OutputFile.dir().absolutePath() + "/out.seed";
-  this->SkeletonFile = this->OutputFile.dir().absolutePath() + "/out.skel";
+  this->BackboneCandidateFile =  this->BackboneFile.dir().absolutePath() +
+    "/BackboneCandidate.vtk";
 
   QStringList arguments;
-  arguments << dataDir << "out.skel" << "components_Connected.raw"
-            << this->ImageSizeX << this->ImageSizeY << this->ImageSizeZ
-            << "8" << "4" << "170" << "0.7" << this->AnisoDiffusedFile;
-  if(this->SmoothBackbonesButton->isChecked())
-    {
-    this->UnsmoothedBackbonesFile = this->OutputFile.filePath();
-    this->UnsmoothedBackbonesFile.replace(QString(".vtk"),
-                                         QString("-unsmoothed.vtk"));
-    arguments << this->UnsmoothedBackbonesFile;
-    }
-  else
-    {
-    arguments << this->OutputFile.filePath();
-    }
-  if(this->CombineOutputsButton->isChecked())
-    {
-    arguments << "--combine-outputs";
-    }
-  else
-    {
-    arguments << this->SpinesFile.filePath();
-    }
-  cout << "*** volume ***" << endl;
-  cout << arguments.size() << endl;
-  for (int i = 0; i < arguments.size(); ++i)
-      cout << arguments.at(i).toLocal8Bit().constData() << endl;
-  this->OutputDisplay->append("Step #6, executing MinSpanTree\n");
+  arguments << this->DataDir << "out.skel" << "components_Connected.raw"
+            << this->ImageSizeX << this->ImageSizeY << this->ImageSizeZ 
+            << "10" << "50" <<  this->BackboneCandidateFile << "1";
+
+  this->OutputDisplay->append("Executing BackboneExtract (first pass)\n");
   this->Time.restart();
-  this->MinSpanTree->start("./MinSpanTree", arguments);
+  this->BackboneExtract1->start("./BackboneExtract", arguments);
+}
+
+void MDLGUI:: RunMDABasedSpineExtraction1()
+{
+  int secondsElapsed = this->Time.elapsed() / 1000.0;
+  this->OutputDisplay->append(
+    "BackboneExtract (first pass) completed in " + QString::number(secondsElapsed) + " seconds.\n");
+
+  this->MDLFeatureFile = this->BackboneFile.dir().absolutePath() +
+    "/MDLFeature.txt";
+  this->SpineCandidateFile = this->BackboneFile.dir().absolutePath() +
+    "/SpineCandidate.vtk";
+
+  QStringList arguments;
+  arguments << this->DataDir << "out.skel" << "components_Connected.raw"
+            << this->ImageSizeX << this->ImageSizeY << this->ImageSizeZ 
+            << "10" << "10" << "50" << "0.7" << this->AnisoDiffusedFile
+            << this->MDLFeatureFile << this->SpineCandidateFile;
+
+  this->OutputDisplay->append("Executing MDABasedSpineExtraction (first pass)\n");
+  this->Time.restart();
+  this->MDABasedSpineExtraction1->start("./MDABasedSpineExtraction", arguments);
 }
 
 void MDLGUI:: RunBSplineFitting()
 {
-  if(!this->SmoothBackbonesButton->isChecked())
-    {
-    this->FinishedRunningSkeletonization();
-    return;
-    }
-
   int secondsElapsed = this->Time.elapsed() / 1000.0;
   this->OutputDisplay->append(
-    "Step #6 completed in " + QString::number(secondsElapsed) + " seconds.\n");
+    "MDABasedSpineExtraction (first pass) completed in " + QString::number(secondsElapsed) + " seconds.\n");
 
-  QString dataDir = this->OutputFile.dir().absolutePath() + "/";
+  this->SmoothBackboneFile = this->BackboneFile.dir().absolutePath() +
+    "/SmoothBackbone.vtk";
+  this->ExtraSpineFile = this->BackboneFile.dir().absolutePath() +
+    "/ExtraSpine.vtk";
+
   QStringList arguments;
-  arguments << this->InputFile.filePath() << this->UnsmoothedBackbonesFile
+  arguments << this->ComponentsConnectedFile << this->BackboneCandidateFile
             << this->ImageSizeX << this->ImageSizeY << this->ImageSizeZ 
-            << this->OutputFile.filePath() << "unused"; //this->SpinesFile.filePath();
+            << this->SmoothBackboneFile << this->ExtraSpineFile;
 
-  this->OutputDisplay->append("Step #7, executing BSplineFitting\n");
+  this->OutputDisplay->append("Executing BSplineFitting\n");
   this->Time.restart();
   this->BSplineFitting->start("./BSplineFitting", arguments);
 }
+
+void MDLGUI:: RunRefiningSkeleton1()
+{
+  int secondsElapsed = this->Time.elapsed() / 1000.0;
+  this->OutputDisplay->append(
+    "BSplineFitting completed in " + QString::number(secondsElapsed) + " seconds.\n");
+
+  this->RefinedSkeletonFile = this->BackboneFile.dir().absolutePath() +
+    "/RefinedSkel.skel";
+
+  QStringList arguments;
+  arguments << this->DataDir << "SmoothBackbone.vtk" << "SpineCandidate.vtk"
+            << "ExtraSpine.vtk" << "RefinedSkel.skel" << "1";
+  this->OutputDisplay->append("Executing RefiningSkeleton (first pass)\n");
+  this->Time.restart();
+  this->RefiningSkeleton1->start("./RefiningSkeleton", arguments);
+}
+
+void MDLGUI:: RunBackboneExtract2()
+{
+  int secondsElapsed = this->Time.elapsed() / 1000.0;
+  this->OutputDisplay->append(
+    "RefiningSkeleton (first pass) completed in " + QString::number(secondsElapsed) + " seconds.\n");
+
+  QStringList arguments;
+  arguments << this->DataDir << "RefinedSkel.skel" << "components_Connected.raw"
+            << this->ImageSizeX << this->ImageSizeY << this->ImageSizeZ 
+            << "10" << "50" << this->BackboneFile.absoluteFilePath() << "0";
+
+  this->OutputDisplay->append("Executing BackboneExtract (second pass)\n");
+  this->Time.restart();
+  this->BackboneExtract2->start("./BackboneExtract", arguments);
+}
+
+void MDLGUI:: RunRefiningSkeleton2()
+{
+  int secondsElapsed = this->Time.elapsed() / 1000.0;
+  this->OutputDisplay->append(
+    "BackboneExtract (second pass) completed in " + QString::number(secondsElapsed) + " seconds.\n");
+
+  QStringList arguments;
+  arguments << this->DataDir << this->BackboneFile.fileName() 
+            << "SpineCandidate.vtk" <<  "ExtraSpine.vtk" << "RefinedSkel.skel"
+            << "0";
+  this->OutputDisplay->append("Executing RefiningSkeleton (second pass)\n");
+  this->Time.restart();
+  this->RefiningSkeleton2->start("./RefiningSkeleton", arguments);
+}
+
+void MDLGUI:: RunMDABasedSpineExtraction2()
+{
+  int secondsElapsed = this->Time.elapsed() / 1000.0;
+  this->OutputDisplay->append(
+    "RefiningSkeleton (second pass) completed in " + QString::number(secondsElapsed) + " seconds.\n");
+
+  QStringList arguments;
+  arguments << this->DataDir << "RefinedSkel.skel" << "components_Connected.raw"
+            << this->ImageSizeX << this->ImageSizeY << this->ImageSizeZ 
+            << "10" << "10" << "50" << "0.7" << this->AnisoDiffusedFile
+            << this->MDLFeatureFile << this->SpinesFile.absoluteFilePath();
+  this->OutputDisplay->append("Executing MDABasedSpineExtraction (second pass)\n");
+  this->Time.restart();
+  this->MDABasedSpineExtraction2->start("./MDABasedSpineExtraction", arguments);
+}
+
 
 void MDLGUI::DeleteIntermediaryFiles()
 {
@@ -430,20 +502,30 @@ void MDLGUI::DeleteIntermediaryFiles()
     {
     f6.remove();
     }
-  QFile f7(this->BackboneFile);
+  QFile f7(this->BackboneCandidateFile);
   if(f7.exists())
     {
     f7.remove();
     }
-  QFile f8(this->UnsmoothedBackbonesFile);
+  QFile f8(this->SpineCandidateFile);
   if(f8.exists())
     {
     f8.remove();
     }
-  QFile f9(this->UnsmoothedSpinesFile);
+  QFile f9(this->SmoothBackboneFile);
   if(f9.exists())
     {
     f9.remove();
+    }
+  QFile f10(this->ExtraSpineFile);
+  if(f10.exists())
+    {
+    f10.remove();
+    }
+  QFile f11(this->RefinedSkeletonFile);
+  if(f11.exists())
+    {
+    f11.remove();
     }
 }
 
@@ -451,7 +533,8 @@ void MDLGUI::FinishedRunningSkeletonization()
 {
   int secondsElapsed = this->Time.elapsed() / 1000.0;
   this->OutputDisplay->append(
-    "Last step completed in " + QString::number(secondsElapsed) + " seconds.\n");
+    "Final step completed in " + QString::number(secondsElapsed) + " seconds.\n");
+  this->OutputDisplay->append("Skeletonization complete.\n\n");
   this->RunSkeletonizationButton->setEnabled(true);
   if(this->DeleteIntermediaryFilesCheckBox->isChecked())
     {
