@@ -106,4 +106,50 @@ bool SaveTable(std::string filename, vtkSmartPointer<vtkTable> table)
 	return true;
 }
 
+vtkSmartPointer<vtkTable> LoadTable(std::string filename)
+{
+	if( !FileExists(filename.c_str()) )
+		return NULL;
+
+	const int MAXLINESIZE = 1024;	//Numbers could be in scientific notation in this file
+	char line[MAXLINESIZE];
+
+	//Open the file:
+	ifstream inFile; 
+	inFile.open( filename.c_str() );
+	if ( !inFile.is_open() )
+		return NULL;
+
+	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();	
+
+	//LOAD THE HEADER INFO:
+	inFile.getline(line, MAXLINESIZE);
+	char * pch = strtok (line," \t");
+	while (pch != NULL)
+	{
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( pch );
+		table->AddColumn(column);
+		pch = strtok (NULL, " \t");
+	}
+
+	//LOAD THE DATA:
+	inFile.getline(line, MAXLINESIZE);
+	while ( !inFile.eof() ) //Get all values
+	{
+		vtkSmartPointer<vtkVariantArray> row = vtkSmartPointer<vtkVariantArray>::New();
+		char * pch = strtok (line," \t");
+		while (pch != NULL)
+		{
+			row->InsertNextValue( vtkVariant( atof(pch) ) );
+			pch = strtok (NULL, " \t");
+		}
+		table->InsertNextRow(row);
+		inFile.getline(line, MAXLINESIZE);
+	}
+	inFile.close();
+	
+	return table;
+}
+
 }  // end namespace ftk

@@ -93,6 +93,7 @@ private slots:
 	void setMouseStatus(int,int,int);
 	void loadImage(void);
 	void loadResult(void);
+	void loadTable(void);
 	bool saveResult(void);
 	bool saveTable(void);
 	void segmentImage(void);
@@ -153,7 +154,7 @@ private:
 	void createStatusBar();
 	void createSegmentToolBar();
 	void quitNucSeg();
-	bool loadXMLImage(std::string filename);
+	ftk::Image::Pointer loadXMLImage(std::string filename);
 	int requestChannel(ftk::Image::Pointer img);
 	
 	LabelImageViewQT *segView;
@@ -163,11 +164,12 @@ private:
 	PatternAnalysisWizard *pWizard;
 
 	QMenu *fileMenu;
-	QAction *loadAction;
+	QAction *loadImageAction;
+	QAction *loadLabelAction;
+	QAction *loadTableAction;
 	QAction *saveAction;
 	QAction *saveDisplayAction;
 	QAction *saveTableAction;
-	QAction *xmlAction;
 	QAction *exitAction;
 
 	QMenu *viewMenu;

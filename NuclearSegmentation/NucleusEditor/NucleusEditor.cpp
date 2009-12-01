@@ -28,6 +28,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 {
 	segView = new LabelImageViewQT();
 	connect(segView, SIGNAL(mouseAt(int,int,int)), this, SLOT(setMouseStatus(int,int,int)));
+	selection = new ObjectSelection();
 	this->setCentralWidget(segView);
 
 	createMenus();
@@ -51,7 +52,6 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	nucsegThread = NULL;
 	featuresThread = NULL;
 	table = NULL;
-	selection = NULL;
 
 	this->resize(800,800);
 	//Crashes when this is enabled!
@@ -140,17 +140,22 @@ void NucleusEditor::createMenus()
 	//FIRST HANDLE FILE MENU
 	fileMenu = menuBar()->addMenu(tr("&File"));
 
-	loadAction = new QAction(tr("Load Image..."), this);
-	loadAction->setStatusTip(tr("Load an image into the 5D image browser"));
-	connect(loadAction, SIGNAL(triggered()), this, SLOT(loadImage()));
-	fileMenu->addAction(loadAction);
+	loadImageAction = new QAction(tr("Load Image..."), this);
+	loadImageAction->setStatusTip(tr("Load an image into the 5D image browser"));
+	connect(loadImageAction, SIGNAL(triggered()), this, SLOT(loadImage()));
+	fileMenu->addAction(loadImageAction);
+
+	loadLabelAction = new QAction(tr("Load Result..."), this);
+	loadLabelAction->setStatusTip(tr("Load a result image into the image browser"));
+	connect(loadLabelAction,SIGNAL(triggered()), this, SLOT(loadResult()));
+	fileMenu->addAction(loadLabelAction);
+
+	loadTableAction = new QAction(tr("Load Table..."), this);
+	loadTableAction->setStatusTip(tr("Load data table from text file"));
+	connect(loadTableAction, SIGNAL(triggered()), this, SLOT(loadTable()));
+	fileMenu->addAction(loadTableAction);
 
 	fileMenu->addSeparator();
-
-	xmlAction = new QAction(tr("Load Result..."), this);
-	xmlAction->setStatusTip(tr("Open an XML result file"));
-	connect(xmlAction,SIGNAL(triggered()), this, SLOT(loadResult()));
-	fileMenu->addAction(xmlAction);
 
 	saveAction = new QAction(tr("Save Result"), this);
 	saveAction->setStatusTip(tr("Save a segmentation result image"));
@@ -546,6 +551,32 @@ void NucleusEditor::clearSelections()
 	}
 }
 
+void NucleusEditor::loadTable()
+{
+	QString fileName  = QFileDialog::getOpenFileName(this, "Select table file to open", lastPath,
+								tr("TXT Files (*.txt)"));
+
+    if(fileName == "")
+		return;
+
+	abortSegment();
+
+	lastPath = QFileInfo(fileName).absolutePath();
+
+	table = ftk::LoadTable(fileName.toStdString());
+
+	if(!table)
+		return;
+	
+	selection->clear();
+	this->CreateNewTableWindow();
+
+	// Enable the menu items for editing
+	setMenusForResult(true);
+	segmentAction->setEnabled(true);
+	cytoAction->setEnabled(true);
+}
+
 //******************************************************************************
 // This function loads a segmentation result from XML
 // The XML file should tell where to find the original image/data
@@ -557,38 +588,31 @@ void NucleusEditor::loadResult(void)
 	if( !checkSaveSeg() )
 		return;
 
-	QString filename  = QFileDialog::getOpenFileName(this,"Choose a Result",lastPath, 
-			tr("XML Files (*.xml)\n"));
+	QString fileName  = QFileDialog::getOpenFileName(
+								this, "Select file to open", lastPath,
+								tr("Images (*.tif *.tiff *.pic *.png *.jpg *.lsm)\n"
+								"XML Image Definition (*.xml)\n"
+							    "All Files (*.*)"));
 
-    if(filename == "")
+    if(fileName == "")
 		return;
 
 	abortSegment();
 
-	QString path = QFileInfo(filename).absolutePath();
-	QString name = QFileInfo(filename).baseName();
-
-	lastPath = path;
-
-	//segResult = new ftk::NuclearSegmentation();
-	if(nucSeg) delete nucSeg;
-	nucSeg = new ftk::NuclearSegmentation();
-	if ( 0 )//!nucSeg->LoadAll(filename.toStdString()) )
+	lastPath = QFileInfo(fileName).absolutePath();
+	QString myExt = QFileInfo(fileName).suffix();
+	if(QFileInfo(fileName).suffix() == "xml")
 	{
-		std::cerr << nucSeg->GetErrorMessage() << std::endl;
-		return;
+		labImg = this->loadXMLImage(fileName.toStdString());
 	}
-
-	//table = nucSeg->GetFeatureTable();
-
-	if(selection) delete selection;
-	selection = new ObjectSelection();
-
-	segView->SetChannelImage(nucSeg->GetDataImage());
-	segView->SetLabelImage(nucSeg->GetLabelImage(), selection);
-
-	CreateNewTableWindow();
-	CreateNewPlotWindow();
+	else
+	{
+		labImg = ftk::Image::New();
+		if(!labImg->LoadFile(fileName.toStdString()))
+			labImg = NULL;
+	}
+	selection->clear();
+	segView->SetLabelImage(labImg, selection);
 
 	// Enable the menu items for editing
 	setMenusForResult(true);
@@ -615,16 +639,13 @@ void NucleusEditor::loadImage()
 	QString myExt = QFileInfo(fileName).suffix();
 	if(QFileInfo(fileName).suffix() == "xml")
 	{
-		if(!this->loadXMLImage(fileName.toStdString())) return;
+		myImg = this->loadXMLImage(fileName.toStdString());
 	}
 	else
 	{
 		myImg = ftk::Image::New();
 		if(!myImg->LoadFile(fileName.toStdString()))
-		{
 			myImg = NULL;
-			return;
-		}
 	}
 	segView->SetChannelImage(myImg);
 
@@ -646,7 +667,7 @@ void NucleusEditor::loadImage()
 	
 }
 
-bool NucleusEditor::loadXMLImage(std::string filename)
+ftk::Image::Pointer NucleusEditor::loadXMLImage(std::string filename)
 {
 	TiXmlDocument doc;
 	if ( !doc.LoadFile( filename.c_str() ) )
@@ -678,13 +699,12 @@ bool NucleusEditor::loadXMLImage(std::string filename)
 	} // end while(parentElement)
 	//doc.close();
 
-	myImg = ftk::Image::New();
-	if(!myImg->LoadFilesAsMultipleChannels(files,chName,color))	//Load for display
+	ftk::Image::Pointer img = ftk::Image::New();
+	if(!img->LoadFilesAsMultipleChannels(files,chName,color))	//Load for display
 	{
-		myImg = NULL;
-		return false;
+		img = NULL;
 	}
-	return true;
+	return img;
 }
 
 //**********************************************************************
@@ -824,20 +844,20 @@ void NucleusEditor::changeClass(void)
 {
 	if(!nucSeg) return;
 
-	std::set<long int> sels = selection->getSelections();
-	std::vector<int> ids(sels.begin(), sels.end());
+	//std::set<long int> sels = selection->getSelections();
+	//std::vector<int> ids(sels.begin(), sels.end());
 
 	//Get the new class number:
-	bool ok;
-	QString msg = tr("Change the class of all selected items to: \n");
+	//bool ok;
+	//QString msg = tr("Change the class of all selected items to: \n");
 	//int newClass = QInputDialog::getInteger(NULL, tr("Change Class"), msg, -1, -1, 10, 1, &ok);
 	
 	//Change the class of these objects:
-	if(ok)
-	{
+	//if(ok)
+	//{
 		//nucSeg->SetClass(ids,newClass);
-		this->updateViews();
-	}
+		//this->updateViews();
+	//}
 }
 
 void NucleusEditor::markVisited(void)
@@ -969,7 +989,6 @@ void NucleusEditor::cytoSeg(void)
 	cytoSeg->SetDataInput(myImg, "data_channel", cytChannel);
 	cytoSeg->SetNucleiInput(labImg, "label_image");
 	cytoSeg->Run();
-	cytoSeg->SaveOutputImage();
 	delete cytoSeg;
 
 	ftk::IntrinsicFeatureCalculator *iCalc = new ftk::IntrinsicFeatureCalculator();
@@ -1035,8 +1054,6 @@ void NucleusEditor::abortSegment()
 	segmentTool->setVisible(false);
 	segmentState = -1;
 
-	quitNucSeg();
-
 	QApplication::restoreOverrideCursor();
 	menusEnabled(true);
 	setMenusForResult(false);
@@ -1080,6 +1097,7 @@ void NucleusEditor::quitNucSeg(void)
 	}
 
 	//segView->SetChannelImage(NULL);
+	selection->clear();
 	segView->SetLabelImage(NULL);
 	if(nucSeg)
 	{
@@ -1131,7 +1149,8 @@ void NucleusEditor::segment()
 		break;
 	case 3:	//Final State we get to after successful clustering - for checking parameters
 		segmentProgress->setValue(segmentState);
-		segView->SetLabelImage(nucSeg->GetLabelImage());
+		selection->clear();
+		segView->SetLabelImage(nucSeg->GetLabelImage(), selection);
 		segmentTaskLabel->setText(tr(" Inspect "));
 		QApplication::restoreOverrideCursor();
 		segmentStop->setEnabled(true);
@@ -1155,8 +1174,7 @@ void NucleusEditor::segment()
 			nucsegThread = NULL;
 		}
 		segmentProgress->setValue(segmentState);
-		if(selection) delete selection;
-		selection = new ObjectSelection();
+		selection->clear();
 		labImg = nucSeg->GetLabelImage();
 		segView->SetLabelImage(labImg,selection);
 		segmentTaskLabel->setText(tr(" Features "));
