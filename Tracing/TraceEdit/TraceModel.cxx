@@ -117,7 +117,7 @@ void TraceModel::SyncModel()
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetRootID());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetLevel());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetPathLength());
-		for (unsigned int j = 0; j < (int)this->TraceLines.at(i)->Features.size(); ++j)
+		for (int j = 0; j < (int)this->TraceLines.at(i)->Features.size(); ++j)
 		{
 			DataRow->InsertNextValue(this->TraceLines.at(i)->Features.at(j));
 		}
