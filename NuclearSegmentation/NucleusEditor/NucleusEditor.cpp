@@ -744,7 +744,7 @@ void NucleusEditor::changeClass(void)
 	//Get the new class number:
 	bool ok;
 	QString msg = tr("Change the class of all selected items to: \n");
-	int newClass = QInputDialog::getInteger(NULL, tr("Change Class"), msg, -1, -1, 10, 1, &ok);
+	//int newClass = QInputDialog::getInteger(NULL, tr("Change Class"), msg, -1, -1, 10, 1, &ok);
 	
 	//Change the class of these objects:
 	if(ok)

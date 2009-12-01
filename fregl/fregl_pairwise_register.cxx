@@ -633,10 +633,12 @@ valid_2d_xform( rgrl_transformation_sptr xform2d, bool scaling )
   }
   // Condition 3: No substaintial deformation
   //if ( vnl_math_abs(1-A(0,0)*A(1,1)) > 0.2 ||  vnl_math_abs(A(0,1)*A(1,0))>0.001) return false;
-  if ( !scaling && vnl_math_abs(1-A(0,0)*A(1,1)) > 0.2 ||  vnl_math_abs(A(0,1)*A(1,0))>0.01){
+  if ( (!scaling && vnl_math_abs(1-A(0,0)*A(1,1))) > 0.2 ||
+       (vnl_math_abs(A(0,1)*A(1,0))>0.01) )
+    {
     vcl_cout<<"2D xform failed the condition: No substaintial deformation"<<vcl_endl;
     return false;
-  }
+    }
   return true;
 }
 

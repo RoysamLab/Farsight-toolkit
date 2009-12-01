@@ -156,7 +156,7 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	typename LabelImageType::IndexType labIndex;
 	typename LabelImageType::SizeType labSize;
 
-	for(int i=0; i<VImageDimension; ++i)
+	for(unsigned int i=0; i<VImageDimension; ++i)
 	{
 		intIndex[i] = (TIPixel)index[i];
 		intSize[i] = (TIPixel)size[i];
