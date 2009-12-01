@@ -49,9 +49,17 @@ void TraceModel::stdHeaders()
 	this->headers.push_back("ID");
 	this->headers.push_back("# of Bits");
 	this->headers.push_back("Path Length");
+	this->headers.push_back("Euclidian Length");
+	this->headers.push_back("Smoothness");
 	this->headers.push_back("Radius");
 	this->headers.push_back("Volume");
 	this->headers.push_back("Type");
+	this->headers.push_back("Front.x");
+	this->headers.push_back("Front.y");
+	this->headers.push_back("Front.z");	
+	this->headers.push_back("Back.x");
+	this->headers.push_back("Back.y");
+	this->headers.push_back("Back.z");
 	this->headers.push_back("Parent");	
 	this->headers.push_back("Root ID");
 	this->headers.push_back("Level");
@@ -95,14 +103,21 @@ void TraceModel::SyncModel()
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetId());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetSize());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetLength());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetEuclidianLength());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetFragmentationSmoothness());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetRadii());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetVolume());
 		DataRow->InsertNextValue((int)this->TraceLines.at(i)->GetType());
+		std::vector<double> thisStats= this->TraceLines.at(i)->stats();
+		for (unsigned int j = 0; j<thisStats.size(); j++)
+		{
+			DataRow->InsertNextValue(thisStats.at(j));
+		}
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetParentID());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetRootID());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetLevel());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetPathLength());
-		for (int j = 0; j < (int)this->TraceLines.at(i)->Features.size(); ++j)
+		for (unsigned int j = 0; j < (int)this->TraceLines.at(i)->Features.size(); ++j)
 		{
 			DataRow->InsertNextValue(this->TraceLines.at(i)->Features.at(j));
 		}

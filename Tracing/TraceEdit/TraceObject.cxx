@@ -1847,7 +1847,7 @@ void TraceObject::explode(TraceLine *parent)
 			connected.at(i)->SetParent(NULL);
 			this->trace_lines.push_back(connected.at(i));
 			newPT->AddConnection(connected.at(i));
-			if (connected.at(i)->isLeaf())
+			if (!connected.at(i)->isLeaf())
 			{
 				this->explode(connected.at(i));
 			}

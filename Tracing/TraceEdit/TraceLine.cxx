@@ -34,6 +34,7 @@ TraceLine::TraceLine()
   this->level = 0;
   this->m_id = -(1<<30);
   this->m_branches.clear();
+  this->EuclidianD = -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -101,10 +102,26 @@ void TraceLine::calculateVol()
 		cur = *it;
 		r += cur.r;
 		dist += Euclidian(pre, cur);
+		pre = cur;
 	}
 	this->length = dist;
 	this->radii = r / this->m_trace_bits.size(); //ave radii
 	this->volume = pow((this->radii),2)*this->length;
+}
+double TraceLine::GetEuclidianLength()
+{
+	TraceBit front = this->m_trace_bits.front();
+	TraceBit back  = this->m_trace_bits.back();
+	this->EuclidianD = this->Euclidian(front, back);
+	return this->EuclidianD;
+}
+double TraceLine::GetFragmentationSmoothness()
+{
+	if (!(this->EuclidianD > -1))
+	{
+		this->GetEuclidianLength();
+	}
+	return this->length/this->EuclidianD;
 }
 ///////////////////////////////////////////////////////////////////////////////
 void TraceLine::AddBranch(TraceLine* b)
@@ -383,10 +400,10 @@ bool TraceLine::Orient(TraceBit bit)
 ///////////////////////////////////////////////////////////////////////////////
 std::vector<double> TraceLine::stats()
 {
-  std::vector<double> thisStats;
+  std::vector<double> thisStats;/*
   thisStats.push_back(this->m_id);
   thisStats.push_back(this->m_type);
-  thisStats.push_back(this->GetSize());
+  thisStats.push_back(this->GetSize());*/
   //thisStats.push_back(this->m_parent->GetId());
   thisStats.push_back(this->m_trace_bits.front().x);
   thisStats.push_back(this->m_trace_bits.front().y);
