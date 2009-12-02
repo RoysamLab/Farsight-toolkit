@@ -27,6 +27,8 @@ limitations under the License.
 #include <fstream>
 #include <iostream>
 #include <math.h>
+#include <algorithm>
+#include "robustness.h"
 
 using namespace std;
 
@@ -80,7 +82,7 @@ void Matrix3Multiply(float Mat[3][3], float Mat1[3][3], float Mat2[3][3]);
 void rk2(float x, float y, float z, int sizx, int sizy, int sizz, float steps, Vector3D *Force_ini, VoxelPosition *nextPos);
 Vector3D interpolation(float x, float y, float z, int sizx, int sizy, int sizz, Vector3D *forcevec);
 void RotMatrixFromAngle(float RMatrix[3][3], float cosphi, float sinphi, float costheta,float sintheta, float cospsi, float sinpsi);
-
+//double TrimmedMean(float a[],int elements, double r);
 int main (int argc, char *argv[])
 {
   ifstream fin;
@@ -286,23 +288,28 @@ int main (int argc, char *argv[])
 // ---------------------use the mean value of the mean curvature as the threshold -----------------------------//
 
    double meanCurvature=0;
+   double Tmean = 0; 
    for (k = DisAway; k < N-DisAway; k++)
      for (j = DisAway; j < M-DisAway; j++)
         for (i = DisAway; i < L-DisAway; i++) 
 		{
 	       idx = k*slsz + j*L +i;
 		   meanCurvature += curv[idx];
-		   
+		   //printf("%f ",curv[idx]);
 		}
-
+   
+   //test();
+   //Tmean =TrimmedMean(curv,N*M*L,0.45);
    meanCurvature /=(double)(L*M*N); 
    
    meanCurvature = (meanCurvature<0 ? 0:meanCurvature);
    //highCurvatureThreshold =(meanCurvature>10 ? 10:meanCurvature);  //the threshold is a value between [0,10].
    highCurvatureThreshold = meanCurvature;
+  
+   //highCurvatureThreshold = Tmean;
    // highCurvatureThreshold=0.05;
    //highCurvatureThreshold =5;//;
-
+   printf("Trimmed- mean is %f\n",Tmean);
    printf("mean =%f The estimated  good threshold of highCurvatureThreshold %f \n",meanCurvature, highCurvatureThreshold );
 
 // --------------------------------------------- ---------end estimation  -------------------------------------------- //
@@ -577,7 +584,7 @@ int main (int argc, char *argv[])
 			//printf("div=%f (%d)  ", div, k);
 			continue;
 		}
-		
+		//vectorMagnitude = 0.03;
 	    for (kk = semiNgrid; kk<Ngrid; kk++)
 		  for (jj = semiNgrid; jj<Ngrid; jj++)
 		    for (ii = semiNgrid; ii<Ngrid; ii++) {
@@ -650,7 +657,7 @@ int main (int argc, char *argv[])
 	FlagOnSkeleton[idx] = 1;
 
    //--------------------------------------Line path algorithm-------------------------------------------------------------------//
-	while(streamSteps < 400) //4000  
+	while(streamSteps < 4000) //4000  
 	  {    // < 4000
 		rk2(Startpos.x, Startpos.y, Startpos.z, sizeX, sizeY, sizeZ, float(0.8), force, &Nextpos);   //0.2, 0.8, 2     float() added by xiao liang
 		streamSteps++;
@@ -980,3 +987,32 @@ void Matrix3Multiply(float Mat[3][3], float Mat1[3][3], float Mat2[3][3]) {
              Mat[j][i] = Mat1[j][0]*Mat2[0][i] +Mat1[j][1]*Mat2[1][i] +Mat1[j][2]*Mat2[2][i];
 	}
 }
+
+/*
+double TrimmedMean(float a[], int elements, double r)
+{
+   printf("hello!");
+   int i =0;
+   //int elements = sizeof(a) / sizeof(a[0]); 
+   printf("%d",elements);
+   float *b = new float[elements];
+   //std::sort(a, a + elements);
+   for (int i = 0; i < elements; ++i) 
+   {// printf("%f ", a[i]);
+     b[i] = a[i];
+   }
+
+   int g = 0;
+   if(r>=0 && r<0.5)
+     g = int (r*elements);
+   else g = 0;
+   
+   double Tmean =0;
+   for (i=g;i<elements-g;i++)
+	   Tmean +=(double)b[i];
+   Tmean /=(double)(elements-2*g);  
+   return Tmean;
+  
+}
+
+*/
