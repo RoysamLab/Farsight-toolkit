@@ -46,7 +46,7 @@ typedef std::pair<int, int>  E;
 typedef graph_traits < Graph >::edge_iterator Edge_iter;  
 typedef graph_traits < Graph >::vertex_iterator Vertex_iter;
 
-
+//void  GraphtoTraceObject(Graph msTree, int num_nodes, struct VoxelPosition *vertexPos); 
 
 
 // Head file: MinSpanTree.h
