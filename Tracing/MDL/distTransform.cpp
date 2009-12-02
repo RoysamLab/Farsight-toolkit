@@ -191,7 +191,6 @@ void distTransform(unsigned char *f, int L, int M, int N)
   delete []buff;
   delete []fDist;
   return;
-
 }
 
 
