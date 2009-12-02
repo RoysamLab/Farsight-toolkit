@@ -510,12 +510,16 @@ bool NucleusEditor::saveResult()
 	if(!labImg)
 		return false;
 
-	int ch = requestChannel(labImg);
+	//int ch = requestChannel(labImg);
 	
-	if(ch==-1)
-		return false;
+	//if(ch==-1)
+	//	return false;
 
-	QString filename = QFileDialog::getSaveFileName(this, tr("Save As..."),lastPath, tr("TIFF Image (*.tif)"));
+	QString filename;
+	if(labImg->GetImageInfo()->numChannels == 1)
+		filename = QFileDialog::getSaveFileName(this, tr("Save As..."),lastPath, tr("TIFF Image (*.tif)"));
+	else
+		filename = QFileDialog::getSaveFileName(this, tr("Save As..."),lastPath, tr("XML Image Definition(*.xml)"));
 
 	if(filename == "")
 		return false;
@@ -525,7 +529,10 @@ bool NucleusEditor::saveResult()
 	lastPath = path;
 
 	QString fullBase = path + "/" + name;
-	return labImg->SaveChannelAs(ch,fullBase.toStdString() ,"tif");
+	if(labImg->GetImageInfo()->numChannels == 1)
+		return labImg->SaveChannelAs(0, fullBase.toStdString(), "tif");
+	else
+		return ftk::SaveXMLImage(filename.toStdString(), labImg);
 }
 
 bool NucleusEditor::saveTable()
@@ -603,7 +610,7 @@ void NucleusEditor::loadResult(void)
 	QString myExt = QFileInfo(fileName).suffix();
 	if(QFileInfo(fileName).suffix() == "xml")
 	{
-		labImg = this->loadXMLImage(fileName.toStdString());
+		labImg = ftk::LoadXMLImage(fileName.toStdString());
 	}
 	else
 	{
@@ -639,7 +646,7 @@ void NucleusEditor::loadImage()
 	QString myExt = QFileInfo(fileName).suffix();
 	if(QFileInfo(fileName).suffix() == "xml")
 	{
-		myImg = this->loadXMLImage(fileName.toStdString());
+		myImg = ftk::LoadXMLImage(fileName.toStdString());
 	}
 	else
 	{
@@ -663,48 +670,6 @@ void NucleusEditor::loadImage()
 	GSDilateAction->setEnabled(true);
 	GSOpenAction->setEnabled(true);
 	GSCloseAction->setEnabled(true);
-	
-	
-}
-
-ftk::Image::Pointer NucleusEditor::loadXMLImage(std::string filename)
-{
-	TiXmlDocument doc;
-	if ( !doc.LoadFile( filename.c_str() ) )
-		return false;
-
-	TiXmlElement* rootElement = doc.FirstChildElement();
-	const char* docname = rootElement->Value();
-	if ( strcmp( docname, "Image" ) != 0 )
-		return false;
-
-	std::vector<std::string> files;
-	std::vector<std::string> chName;
-	std::vector<unsigned char> color;
-
-	//Parents we know of: datafilename,resultfilename,object,parameter
-	TiXmlElement* parentElement = rootElement->FirstChildElement();
-	while (parentElement)
-	{
-		const char * parent = parentElement->Value();
-		if ( strcmp( parent, "file" ) == 0 )
-		{
-			files.push_back( parentElement->GetText() );
-			chName.push_back( parentElement->Attribute("chname") );
-			color.push_back( atoi(parentElement->Attribute("r")) );
-			color.push_back( atoi(parentElement->Attribute("g")) );
-			color.push_back( atoi(parentElement->Attribute("b")) );
-		}
-		parentElement = parentElement->NextSiblingElement();
-	} // end while(parentElement)
-	//doc.close();
-
-	ftk::Image::Pointer img = ftk::Image::New();
-	if(!img->LoadFilesAsMultipleChannels(files,chName,color))	//Load for display
-	{
-		img = NULL;
-	}
-	return img;
 }
 
 //**********************************************************************
@@ -1179,7 +1144,7 @@ void NucleusEditor::segment()
 		segView->SetLabelImage(labImg,selection);
 		segmentTaskLabel->setText(tr(" Features "));
 
-		featuresThread = new Features(myImg, labImg, nucChannel, "");
+		featuresThread = new FeaturesThread(myImg, labImg, nucChannel, "");
 		connect(featuresThread, SIGNAL(finished()), this, SLOT(segment()));
 		segmentState++;
 		featuresThread->start();
@@ -1396,7 +1361,7 @@ void NucSegThread::run()
 	}
 }
 
-Features::Features(ftk::Image::Pointer dImg, ftk::Image::Pointer lImg, int chan, std::string pre)
+FeaturesThread::FeaturesThread(ftk::Image::Pointer dImg, ftk::Image::Pointer lImg, int chan, std::string pre)
 : QThread()
 {
 	dataImg = dImg;
@@ -1406,7 +1371,7 @@ Features::Features(ftk::Image::Pointer dImg, ftk::Image::Pointer lImg, int chan,
 	table = NULL;
 }
 
-void Features::run()
+void FeaturesThread::run()
 {
 	ftk::IntrinsicFeatureCalculator *iCalc = new ftk::IntrinsicFeatureCalculator();
 	iCalc->SetInputImages(dataImg,labImg,channel,0);

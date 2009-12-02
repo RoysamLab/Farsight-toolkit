@@ -89,9 +89,9 @@ void Image::SetSpacing(float x, float y, float z)
 }
 
 //Each file contains 1 or more channels that will be appended.  All other sizes must match in each file.
-bool Image::LoadFilesAsMultipleChannels(std::vector<std::string> filenames, std::vector<std::string> channelnames, std::vector<unsigned char> colors)
+bool Image::LoadFilesAsMultipleChannels(std::vector<std::string> fnames, std::vector<std::string> channelnames, std::vector<unsigned char> colors)
 {
-	int count = (int)filenames.size();
+	int count = (int)fnames.size();
 	if( (int)channelnames.size() != count || (int)colors.size() != 3*count )
 		return false;
 
@@ -101,7 +101,7 @@ bool Image::LoadFilesAsMultipleChannels(std::vector<std::string> filenames, std:
 
 	for(int i=0; i<count; ++i)
 	{
-		if( !this->LoadStandardImage( filenames.at(i), false, true ) )
+		if( !this->LoadStandardImage( fnames.at(i), false, true ) )
 			return false;
 
 		std::string chname = channelnames.at(i);
@@ -115,6 +115,7 @@ bool Image::LoadFilesAsMultipleChannels(std::vector<std::string> filenames, std:
 		m_Info.channelColors.push_back(color);	//Use provided color
 		m_Info.channelNames.push_back(chname);	//Use provided name
 	}
+	filenames = fnames;
 	return true;
 }
 

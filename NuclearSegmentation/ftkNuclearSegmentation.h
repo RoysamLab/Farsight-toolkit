@@ -33,9 +33,9 @@
 #include <ftkImage/ftkImage.h>
 #include <ftkCommon/ftkLabelImageToFeatures.h>
 #include <ftkCommon/ftkUtils.h>
-#include <yousef_core/yousef_seg.h>
-#include <tinyxml/tinyxml.h>
 #include <ftkCommon/ftkObject.h>
+#include <yousef_core/yousef_seg.h>
+
 #include <map>
 #include <set>
 

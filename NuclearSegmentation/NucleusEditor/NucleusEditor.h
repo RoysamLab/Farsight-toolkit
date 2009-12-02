@@ -43,7 +43,6 @@
 #include "NuclearSegmentation/Nuclear_Association/ftkNuclearAssociationRules.h"
 #include "ftkCommon/ftkLabelImageToFeatures.h"
 #include "ftkCommon/ftkUtils.h"
-#include "ftkImage/ftkImage.h"
 #include "ftkGUI/PatternAnalysisWizard.h"
 #include "ftkGUI/TableWindow.h"
 #include "ftkGUI/PlotWindow.h"
@@ -74,9 +73,8 @@
 class ParamsFileDialog;
 class MarginDialog;
 class NucSegThread;
-class Features;
+class FeaturesThread;
 class PreprocessParamsDialog;
-
 
 class NucleusEditor : public QMainWindow
 {
@@ -154,7 +152,6 @@ private:
 	void createStatusBar();
 	void createSegmentToolBar();
 	void quitNucSeg();
-	ftk::Image::Pointer loadXMLImage(std::string filename);
 	int requestChannel(ftk::Image::Pointer img);
 	
 	LabelImageViewQT *segView;
@@ -242,7 +239,7 @@ private:
 	QToolBar * segmentTool;
 
 	NucSegThread *nucsegThread;
-	Features * featuresThread;
+	FeaturesThread * featuresThread;
 };
 
 
@@ -343,10 +340,10 @@ private:
 	int step;
 };
 
-class Features : public QThread
+class FeaturesThread : public QThread
 {
 public:
-	Features(ftk::Image::Pointer dImg, ftk::Image::Pointer lImg, int chan, std::string pre);
+	FeaturesThread(ftk::Image::Pointer dImg, ftk::Image::Pointer lImg, int chan, std::string pre);
 	void run();
 	vtkSmartPointer<vtkTable> GetTable(void){ return table; };
 

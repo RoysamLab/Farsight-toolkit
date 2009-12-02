@@ -152,4 +152,80 @@ vtkSmartPointer<vtkTable> LoadTable(std::string filename)
 	return table;
 }
 
+ftk::Image::Pointer LoadXMLImage(std::string filename)
+{
+	TiXmlDocument doc;
+	if ( !doc.LoadFile( filename.c_str() ) )
+		return false;
+
+	TiXmlElement* rootElement = doc.FirstChildElement();
+	const char* docname = rootElement->Value();
+	if ( strcmp( docname, "Image" ) != 0 )
+		return false;
+
+	std::vector<std::string> files;
+	std::vector<std::string> chName;
+	std::vector<unsigned char> color;
+
+	//Parents we know of: datafilename,resultfilename,object,parameter
+	TiXmlElement* parentElement = rootElement->FirstChildElement();
+	while (parentElement)
+	{
+		const char * parent = parentElement->Value();
+		if ( strcmp( parent, "file" ) == 0 )
+		{
+			files.push_back( parentElement->GetText() );
+			chName.push_back( parentElement->Attribute("chname") );
+			color.push_back( atoi(parentElement->Attribute("r")) );
+			color.push_back( atoi(parentElement->Attribute("g")) );
+			color.push_back( atoi(parentElement->Attribute("b")) );
+		}
+		parentElement = parentElement->NextSiblingElement();
+	} // end while(parentElement)
+	//doc.close();
+
+	ftk::Image::Pointer img = ftk::Image::New();
+	if(!img->LoadFilesAsMultipleChannels(files,chName,color))	//Load for display
+	{
+		img = NULL;
+	}
+	return img;
+}
+
+bool SaveXMLImage(std::string filename, ftk::Image::Pointer image)
+{
+	size_t pos = filename.find_last_of("/\\");
+	std::string path = filename.substr(0,pos);
+	pos = filename.find_last_of(".");
+	std::string pre = filename.substr(0,pos);
+
+	std::vector<std::string> names;
+
+	//Save each channel:
+	for(int i=0; i<image->GetImageInfo()->numChannels; ++i)
+	{
+		std::string tag = "_" + image->GetImageInfo()->channelNames.at(i);
+		names.push_back( pre + tag + ".tif" );
+		image->SaveChannelAs(i, pre + tag , "tif");
+	}
+
+	TiXmlDocument doc;   
+ 
+	TiXmlElement * root = new TiXmlElement( "Image" );  
+	doc.LinkEndChild( root );  
+ 
+	for(int i=0; i<names.size(); ++i)
+	{
+		TiXmlElement * file = new TiXmlElement("file");
+		file->SetAttribute("chname", image->GetImageInfo()->channelNames.at(i));
+		file->SetAttribute("r", NumToString(image->GetImageInfo()->channelColors.at(i).at(0)));
+		file->SetAttribute("g", NumToString(image->GetImageInfo()->channelColors.at(i).at(1)));
+		file->SetAttribute("b", NumToString(image->GetImageInfo()->channelColors.at(i).at(2)));
+		file->LinkEndChild( new TiXmlText( names.at(i).c_str() ) );
+		root->LinkEndChild(file);
+	}
+	doc.SaveFile( filename.c_str() );
+	return true;
+}
+
 }  // end namespace ftk

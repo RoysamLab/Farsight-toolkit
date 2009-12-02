@@ -29,6 +29,9 @@ limitations under the License.
 #include <vtkVariantArray.h>
 #include <vtkDoubleArray.h>
 
+#include "ftkImage/ftkImage.h"
+#include <tinyxml/tinyxml.h>
+
 #include <string>
 #include <ctime>
 #include <cstdio>
@@ -41,6 +44,8 @@ namespace ftk
 bool FileExists(std::string filename);
 bool SaveTable(std::string filename, vtkSmartPointer<vtkTable> table);
 vtkSmartPointer<vtkTable> LoadTable(std::string filename);
+bool SaveXMLImage(std::string filename, ftk::Image::Pointer image);
+ftk::Image::Pointer LoadXMLImage(std::string filename);
 std::string NumToString(double d);
 std::string NumToString(int i);
 std::string NumToString(double d, int p);

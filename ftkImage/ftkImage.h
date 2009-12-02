@@ -70,7 +70,7 @@ public:
 	bool LoadFile( std::string fName ); //Load 1 file (multi-page assumed to be z-direction)
 	bool LoadFileAsTimeSeries( std::string fName ); //Load 1 file (multi-page assumed to be time series)
 	bool LoadFileSeries( std::string arg, int start, int end, int step ); //Always assume each file contains a new Z
-	bool LoadFilesAsMultipleChannels(std::vector<std::string> filenames, std::vector<std::string> channelnames, std::vector<unsigned char> colors);
+	bool LoadFilesAsMultipleChannels(std::vector<std::string> fnames, std::vector<std::string> channelnames, std::vector<unsigned char> colors);
 
 	bool SaveChannelAs( int channel, std::string baseName, std::string ext );
 
@@ -80,6 +80,7 @@ public:
 	void SetSpacing(float x, float y, float z);
 
 	std::vector< unsigned short > Size(void);
+	std::vector< std::string > GetFilenames(void){ return filenames; };
 
 	void * GetDataPtr(int T, int CH, PtrMode mode = DEFAULT);			//Returns void * to this 3D stack using 1 of 3 modes, PtrMode defaults to DEFAULT
 	VtkImagePtr GetVtkPtr(int T, int CH, PtrMode mode = DEFAULT);		//Returns vtkSmartPointer of vtkImageData at this T and CH, PtrMode defaults to DEFAULT

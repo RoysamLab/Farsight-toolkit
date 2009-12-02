@@ -26,8 +26,8 @@ ADD_LIBRARY( ftkCommon
 )
 
 TARGET_LINK_LIBRARIES( ftkCommon TinyXML
-                       vtksys vtkCommon vtkFiltering
-                       ITKCommon ITKBasicFilters ITKIO ITKStatistics vtkIO)
+                       vtksys vtkCommon vtkFiltering vtkIO
+                       ITKCommon ITKBasicFilters ITKIO ITKStatistics )
 
 #INSTALL( TARGETS ftkCommon DESTINATION . )
 

@@ -31,7 +31,7 @@ ADD_EXECUTABLE(NucleusEditor main.cpp
              ${NucluesEditor_RC_SRCS}
 )
 
-TARGET_LINK_LIBRARIES( NucleusEditor ${QT_LIBRARIES} QVTK ftkImage TinyXML libSVM vtkVolumeRendering NuclearSegmentation CytoplasmSegmentation ftkGUI)
+TARGET_LINK_LIBRARIES( NucleusEditor ${QT_LIBRARIES} ftkGUI ftkImage ftkCommon libSVM vtkVolumeRendering QVTK NuclearSegmentation CytoplasmSegmentation )
 
 #MAKE A GUI EXECUTABLE, NOT A CONSOLE APPLICATION
 #SET_TARGET_PROPERTIES( NucleusEditor PROPERTIES WIN32_EXECUTABLE 1)
