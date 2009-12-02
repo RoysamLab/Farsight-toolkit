@@ -78,6 +78,11 @@ private:
   QString ImageSizeY;
   QString ImageSizeZ;
   QString ConnectedComponentsSize;
+  QString VectorMagnitude;
+  QString EdgeRange;
+  QString GraphPruneSize;
+  QString MorphStrength;
+  QString WeightFactor;
   QString VolumeProcessedFile;
   QString ComponentsConnectedFile;
   QString AnisoDiffusedFile;

@@ -72,16 +72,16 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>170</y>
-      <width>113</width>
+      <y>110</y>
+      <width>40</width>
       <height>22</height>
      </rect>
     </property>
     <property name="toolTip">
-     <string>Used to remove objects smaller than this volume size.  Use higher values forlarger noisy objects.  Typical values range between 10 and 100.</string>
+     <string>Used to remove objects smaller than this volume size.  Use higher values for larger noisy objects.  Typical values range between 10 and 100.</string>
     </property>
     <property name="whatsThis">
-     <string>Used to remove objects smaller than this volume size.  Use higher values forlarger noisy objects.</string>
+     <string>Used to remove objects smaller than this volume size.  Use higher values for larger noisy objects.  Typical values range between 10 and 100.</string>
     </property>
     <property name="inputMask">
      <string>900; </string>
@@ -89,12 +89,15 @@
     <property name="text">
      <string>10</string>
     </property>
+    <property name="cursorPosition">
+     <number>2</number>
+    </property>
    </widget>
    <widget class="QLabel" name="ComponentsSizeLabel">
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>150</y>
+      <y>90</y>
       <width>181</width>
       <height>20</height>
      </rect>
@@ -157,9 +160,9 @@
    <widget class="QCheckBox" name="DeleteIntermediaryFilesCheckBox">
     <property name="geometry">
      <rect>
-      <x>610</x>
-      <y>180</y>
-      <width>181</width>
+      <x>620</x>
+      <y>170</y>
+      <width>180</width>
       <height>21</height>
      </rect>
     </property>
@@ -203,6 +206,187 @@
     </property>
     <property name="text">
      <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>220</x>
+      <y>90</y>
+      <width>120</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Vector magnitude</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>590</x>
+      <y>90</y>
+      <width>80</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Edge range</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_4">
+    <property name="geometry">
+     <rect>
+      <x>680</x>
+      <y>90</y>
+      <width>110</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Graph prune size</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_5">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>90</y>
+      <width>100</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Morph strength</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_6">
+    <property name="geometry">
+     <rect>
+      <x>470</x>
+      <y>90</y>
+      <width>91</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Weight factor</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="VectorMagnitudeInput">
+    <property name="geometry">
+     <rect>
+      <x>220</x>
+      <y>113</y>
+      <width>40</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>When an interpolated vector in the sub-voxel position has magnitude belowthis value, we take it as a critical point.  Use higher values for morecritical points.  Typical values range between 0.04 and 0.15.</string>
+    </property>
+    <property name="whatsThis">
+     <string>When an interpolated vector in the sub-voxel position has magnitude belowthis value, we take it as a critical point.  Use higher values for morecritical points.  Typical values range between 0.04 and 0.15.</string>
+    </property>
+    <property name="inputMask">
+     <string>9.90; </string>
+    </property>
+    <property name="text">
+     <string>0.05</string>
+    </property>
+    <property name="cursorPosition">
+     <number>4</number>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="EdgeRangeInput">
+    <property name="geometry">
+     <rect>
+      <x>590</x>
+      <y>110</y>
+      <width>40</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>If the distance between 2 points is above this distance, we assume thereis no edge between them in the graph structure before generating the IW-MST.Use higher values for a more connected graph.  Typical values range between 5 and 15.</string>
+    </property>
+    <property name="whatsThis">
+     <string>If the distance between 2 points is above this distance, we assume thereis no edge between them in the graph structure before generating the IW-MST.Use higher values for a more connected graph.  Typical values range between 5 and 15.</string>
+    </property>
+    <property name="inputMask">
+     <string>90; </string>
+    </property>
+    <property name="text">
+     <string>10</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="GraphPruneSizeInput">
+    <property name="geometry">
+     <rect>
+      <x>680</x>
+      <y>110</y>
+      <width>40</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>Prune the tree structure when the trivial branches are shorter than thislength.  Use higher values for pruning longer branches.  Typical values range between 2 and 10.</string>
+    </property>
+    <property name="whatsThis">
+     <string>Prune the tree structure when the trivial branches are shorter than thislength.  Use higher values for pruning longer branches.  Typical values range between 2 and 10.</string>
+    </property>
+    <property name="inputMask">
+     <string>90; </string>
+    </property>
+    <property name="text">
+     <string>10</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="MorphStrengthInput">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>110</y>
+      <width>40</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>In graph morphological method with iteration of graph erosion and dilationsteps, we set the morphology strength as the number of iterations for grapherosion and dilation.  Use higher values to remove longer branches.  Typical values range between 30 and 70.</string>
+    </property>
+    <property name="whatsThis">
+     <string>In graph morphological method with iteration of graph erosion and dilationsteps, we set the morphology strength as the number of iterations for grapherosion and dilation.  Use higher values to remove longer branches.</string>
+    </property>
+    <property name="inputMask">
+     <string>90; </string>
+    </property>
+    <property name="text">
+     <string>50</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="WeightFactorInput">
+    <property name="geometry">
+     <rect>
+      <x>470</x>
+      <y>110</y>
+      <width>40</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>Used to emphasize the function of either model description or the datadescription (tradeoff between coverage and conciseness).  Use higher valuesfor more complex models.  Typical values range between 0.5 and 0.95.</string>
+    </property>
+    <property name="whatsThis">
+     <string>Used to emphasize the function of either model description or the datadescription (tradeoff between coverage and conciseness).  Use higher valuesfor more complex models.  Typical values range between 0.5 and 0.95.</string>
+    </property>
+    <property name="inputMask">
+     <string>9.90; </string>
+    </property>
+    <property name="text">
+     <string>0.7</string>
+    </property>
+    <property name="cursorPosition">
+     <number>3</number>
     </property>
    </widget>
   </widget>

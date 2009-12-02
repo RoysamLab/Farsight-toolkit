@@ -62,6 +62,16 @@ void MDLGUI::SetupSignalsAndSlots()
     SLOT(SelectSpinesFile()));
   this->connect(this->ComponentsSizeInput, SIGNAL(textChanged(const QString &)),
     this, SLOT(CheckInputs()));
+  this->connect(this->VectorMagnitudeInput, SIGNAL(textChanged(const QString &)),
+    this, SLOT(CheckInputs()));
+  this->connect(this->EdgeRangeInput, SIGNAL(textChanged(const QString &)),
+    this, SLOT(CheckInputs()));
+  this->connect(this->GraphPruneSizeInput, SIGNAL(textChanged(const QString &)),
+    this, SLOT(CheckInputs()));
+  this->connect(this->MorphStrengthInput, SIGNAL(textChanged(const QString &)),
+    this, SLOT(CheckInputs()));
+  this->connect(this->WeightFactorInput, SIGNAL(textChanged(const QString &)),
+    this, SLOT(CheckInputs()));
   this->connect(this->RunSkeletonizationButton, SIGNAL(pressed()), this,
     SLOT(RunSkeletonization()));
   
@@ -168,7 +178,12 @@ void MDLGUI::SelectSpinesFile()
 void MDLGUI::CheckInputs()
 {
   if(this->InputFile.filePath() != "" && this->BackboneFile.filePath() != "" &&
-     this->ComponentsSizeInput->text() != "")
+     this->ComponentsSizeInput->text() != "" &&
+     this->VectorMagnitudeInput->text() != "" &&
+     this->EdgeRangeInput->text() != "" &&
+     this->GraphPruneSizeInput->text() != "" &&
+     this->MorphStrengthInput->text() != "" &&
+     this->WeightFactorInput->text() != "")
     {
     this->RunSkeletonizationButton->setEnabled(true);
     }
@@ -221,7 +236,7 @@ void MDLGUI::RunSkeletonization()
   this->RunvolumeProcess();
 }
 
-void MDLGUI:: RunvolumeProcess()
+void MDLGUI::RunvolumeProcess()
 {
   //construct the list of arguments
   QStringList arguments;
@@ -243,12 +258,11 @@ void MDLGUI:: RunvolumeProcess()
 
   //start a timer
   this->Time.start();
-
   //run the executable
   this->volumeProcess->start("./volumeProcess", arguments);
 }
 
-void MDLGUI:: RunConnCompntwFldfill()
+void MDLGUI::RunConnCompntwFldfill()
 {
   //provide information about how long the last step took.
   int secondsElapsed = this->Time.elapsed() / 1000.0;
@@ -289,7 +303,7 @@ void MDLGUI:: RunConnCompntwFldfill()
   this->ConnCompntwFldfill->start("./ConnCompntwFldfill", arguments);
 }
 
-void MDLGUI:: RunAnisoDiffuse()
+void MDLGUI::RunAnisoDiffuse()
 {
   int secondsElapsed = this->Time.elapsed() / 1000.0;
   this->OutputDisplay->append(
@@ -307,7 +321,7 @@ void MDLGUI:: RunAnisoDiffuse()
   this->AnisoDiffuse->start("./AnisoDiffuse", arguments);
 }
 
-void MDLGUI:: RunGradientVecField()
+void MDLGUI::RunGradientVecField()
 {
   int secondsElapsed = this->Time.elapsed() / 1000.0;
   this->OutputDisplay->append(
@@ -324,7 +338,7 @@ void MDLGUI:: RunGradientVecField()
   this->GradientVecField->start("./GradientVecField", arguments);
 }
 
-void MDLGUI:: RunIntegratedskel()
+void MDLGUI::RunIntegratedskel()
 {
   int secondsElapsed = this->Time.elapsed() / 1000.0;
   this->OutputDisplay->append(
@@ -332,10 +346,11 @@ void MDLGUI:: RunIntegratedskel()
 
   this->SeedFile = this->BackboneFile.dir().absolutePath() + "/out.seed";
   this->SkeletonFile = this->BackboneFile.dir().absolutePath() + "/out.skel";
+  this->VectorMagnitude = this->VectorMagnitudeInput->text();
 
   QStringList arguments;
   arguments << this->VectorFile << this->ImageSizeX << this->ImageSizeY
-            << this->ImageSizeZ << "0.05" << this->SeedFile
+            << this->ImageSizeZ << this->VectorMagnitude << this->SeedFile
             << this->SkeletonFile;
 
   this->OutputDisplay->append("Executing Integratedskel\n");
@@ -343,26 +358,28 @@ void MDLGUI:: RunIntegratedskel()
   this->Integratedskel->start("./Integratedskel", arguments);
 }
 
-void MDLGUI:: RunBackboneExtract1()
+void MDLGUI::RunBackboneExtract1()
 {
   int secondsElapsed = this->Time.elapsed() / 1000.0;
   this->OutputDisplay->append(
     "Integratedskel completed in " + QString::number(secondsElapsed) + " seconds.\n");
-
   this->BackboneCandidateFile =  this->BackboneFile.dir().absolutePath() +
     "/BackboneCandidate.vtk";
+  this->EdgeRange = this->EdgeRangeInput->text();
+  this->MorphStrength = this->MorphStrengthInput->text();
 
   QStringList arguments;
   arguments << this->DataDir << "out.skel" << "components_Connected.raw"
             << this->ImageSizeX << this->ImageSizeY << this->ImageSizeZ 
-            << "10" << "50" <<  this->BackboneCandidateFile << "1";
+            << this->EdgeRange << this->MorphStrength
+            << this->BackboneCandidateFile << "1";
 
   this->OutputDisplay->append("Executing BackboneExtract (first pass)\n");
   this->Time.restart();
   this->BackboneExtract1->start("./BackboneExtract", arguments);
 }
 
-void MDLGUI:: RunMDABasedSpineExtraction1()
+void MDLGUI::RunMDABasedSpineExtraction1()
 {
   int secondsElapsed = this->Time.elapsed() / 1000.0;
   this->OutputDisplay->append(
@@ -372,19 +389,22 @@ void MDLGUI:: RunMDABasedSpineExtraction1()
     "/MDLFeature.txt";
   this->SpineCandidateFile = this->BackboneFile.dir().absolutePath() +
     "/SpineCandidate.vtk";
+  this->GraphPruneSize = this->GraphPruneSizeInput->text();
+  this->MorphStrength = this->MorphStrengthInput->text();
+  this->WeightFactor = this->WeightFactorInput->text();
 
   QStringList arguments;
   arguments << this->DataDir << "out.skel" << "components_Connected.raw"
             << this->ImageSizeX << this->ImageSizeY << this->ImageSizeZ 
-            << "10" << "10" << "50" << "0.7" << this->AnisoDiffusedFile
+            << this->EdgeRange << this->GraphPruneSize << this->MorphStrength
+            << this->WeightFactor <<  this->AnisoDiffusedFile
             << this->MDLFeatureFile << this->SpineCandidateFile;
-
   this->OutputDisplay->append("Executing MDABasedSpineExtraction (first pass)\n");
   this->Time.restart();
   this->MDABasedSpineExtraction1->start("./MDABasedSpineExtraction", arguments);
 }
 
-void MDLGUI:: RunBSplineFitting()
+void MDLGUI::RunBSplineFitting()
 {
   int secondsElapsed = this->Time.elapsed() / 1000.0;
   this->OutputDisplay->append(
@@ -405,7 +425,7 @@ void MDLGUI:: RunBSplineFitting()
   this->BSplineFitting->start("./BSplineFitting", arguments);
 }
 
-void MDLGUI:: RunRefiningSkeleton1()
+void MDLGUI::RunRefiningSkeleton1()
 {
   int secondsElapsed = this->Time.elapsed() / 1000.0;
   this->OutputDisplay->append(
@@ -422,7 +442,7 @@ void MDLGUI:: RunRefiningSkeleton1()
   this->RefiningSkeleton1->start("./RefiningSkeleton", arguments);
 }
 
-void MDLGUI:: RunBackboneExtract2()
+void MDLGUI::RunBackboneExtract2()
 {
   int secondsElapsed = this->Time.elapsed() / 1000.0;
   this->OutputDisplay->append(
@@ -431,14 +451,14 @@ void MDLGUI:: RunBackboneExtract2()
   QStringList arguments;
   arguments << this->DataDir << "RefinedSkel.skel" << "components_Connected.raw"
             << this->ImageSizeX << this->ImageSizeY << this->ImageSizeZ 
-            << "10" << "50" << this->BackboneFile.absoluteFilePath() << "0";
-
+            << this->EdgeRange << this->MorphStrength
+            << this->BackboneFile.absoluteFilePath() << "0";
   this->OutputDisplay->append("Executing BackboneExtract (second pass)\n");
   this->Time.restart();
   this->BackboneExtract2->start("./BackboneExtract", arguments);
 }
 
-void MDLGUI:: RunRefiningSkeleton2()
+void MDLGUI::RunRefiningSkeleton2()
 {
   int secondsElapsed = this->Time.elapsed() / 1000.0;
   this->OutputDisplay->append(
@@ -453,7 +473,7 @@ void MDLGUI:: RunRefiningSkeleton2()
   this->RefiningSkeleton2->start("./RefiningSkeleton", arguments);
 }
 
-void MDLGUI:: RunMDABasedSpineExtraction2()
+void MDLGUI::RunMDABasedSpineExtraction2()
 {
   int secondsElapsed = this->Time.elapsed() / 1000.0;
   this->OutputDisplay->append(
@@ -462,13 +482,13 @@ void MDLGUI:: RunMDABasedSpineExtraction2()
   QStringList arguments;
   arguments << this->DataDir << "RefinedSkel.skel" << "components_Connected.raw"
             << this->ImageSizeX << this->ImageSizeY << this->ImageSizeZ 
-            << "10" << "10" << "50" << "0.7" << this->AnisoDiffusedFile
+            << this->EdgeRange << this->GraphPruneSize << this->MorphStrength
+            << this->WeightFactor <<  this->AnisoDiffusedFile
             << this->MDLFeatureFile << this->SpinesFile.absoluteFilePath();
   this->OutputDisplay->append("Executing MDABasedSpineExtraction (second pass)\n");
   this->Time.restart();
   this->MDABasedSpineExtraction2->start("./MDABasedSpineExtraction", arguments);
 }
-
 
 void MDLGUI::DeleteIntermediaryFiles()
 {
@@ -540,7 +560,6 @@ void MDLGUI::FinishedRunningSkeletonization()
     {
     this->DeleteIntermediaryFiles();
     }
-  //also need to reset the processes and clear the inputs
 }
 
 void MDLGUI::closeEvent(QCloseEvent *event)
