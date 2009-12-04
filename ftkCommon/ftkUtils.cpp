@@ -224,8 +224,10 @@ bool SaveXMLImage(std::string filename, ftk::Image::Pointer image)
 		file->LinkEndChild( new TiXmlText( names.at(i).c_str() ) );
 		root->LinkEndChild(file);
 	  }
-	doc.SaveFile( filename.c_str() );
-	return true;
+	if( doc.SaveFile( filename.c_str() ) )
+		return true;
+	else
+		return false;
 }
 
 }  // end namespace ftk
