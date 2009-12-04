@@ -214,8 +214,8 @@ bool SaveXMLImage(std::string filename, ftk::Image::Pointer image)
 	TiXmlElement * root = new TiXmlElement( "Image" );  
 	doc.LinkEndChild( root );  
  
-	for(int i=0; i<names.size(); ++i)
-	{
+	for(unsigned int i=0; i<names.size(); ++i)
+	  {
 		TiXmlElement * file = new TiXmlElement("file");
 		file->SetAttribute("chname", image->GetImageInfo()->channelNames.at(i));
 		file->SetAttribute("r", NumToString(image->GetImageInfo()->channelColors.at(i).at(0)));
@@ -223,7 +223,7 @@ bool SaveXMLImage(std::string filename, ftk::Image::Pointer image)
 		file->SetAttribute("b", NumToString(image->GetImageInfo()->channelColors.at(i).at(2)));
 		file->LinkEndChild( new TiXmlText( names.at(i).c_str() ) );
 		root->LinkEndChild(file);
-	}
+	  }
 	doc.SaveFile( filename.c_str() );
 	return true;
 }
