@@ -35,6 +35,7 @@
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkCastImageFilter.h"
+#include "itkExtractImageFilter.h"
 
 #include "ftkImage/ftkImage.h"
 

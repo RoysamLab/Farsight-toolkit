@@ -98,8 +98,10 @@ bool CytoplasmSegmentation::Run()
 	typedef itk::Image< unsigned char, 3 > UCharImageType3D;
 	typedef itk::Image< unsigned short, 2 > UShortImageType2D;
 	typedef itk::Image< unsigned char, 2 > UCharImageType2D;
-	typedef itk::CastImageFilter< UCharImageType3D, UShortImageType2D > DataCastType;
-	typedef itk::CastImageFilter< UShortImageType3D, UShortImageType2D > LabelCastType;
+	typedef itk::ExtractImageFilter< UCharImageType3D, UCharImageType2D > DataExtractType;
+	typedef itk::ExtractImageFilter< UShortImageType3D, UShortImageType2D > LabelExtractType; 
+	typedef itk::CastImageFilter< UCharImageType2D, UShortImageType2D > DataCastType;
+	typedef itk::CastImageFilter< UShortImageType2D, UShortImageType2D > LabelCastType;
 
 	if(!dataImage)
 		return false;
@@ -109,13 +111,33 @@ bool CytoplasmSegmentation::Run()
 	UCharImageType3D::Pointer data = dataImage->GetItkPtr<unsigned char>(0,channelNumber);
 	UShortImageType3D::Pointer nuc = labelImage->GetItkPtr<unsigned short>(0,nucChannelNumber);
 
-	DataCastType::Pointer dFilter = DataCastType::New();
-	dFilter->SetInput( data );
-	dFilter->Update();
+	DataExtractType::Pointer deFilter = DataExtractType::New();
+	UCharImageType3D::RegionType dRegion = data->GetLargestPossibleRegion();
+	dRegion.SetSize(2,0);
+	deFilter->SetExtractionRegion(dRegion);
+	deFilter->SetInput( data );
 
+	LabelExtractType::Pointer leFilter = LabelExtractType::New();
+	UShortImageType3D::RegionType lRegion = nuc->GetLargestPossibleRegion();
+	lRegion.SetSize(2,0);
+	leFilter->SetExtractionRegion(lRegion);
+	leFilter->SetInput( nuc );
+
+	DataCastType::Pointer dFilter = DataCastType::New();
+	dFilter->SetInput( deFilter->GetOutput() );
 	LabelCastType::Pointer lFilter = LabelCastType::New();
-	lFilter->SetInput( nuc );
-	lFilter->Update();
+	lFilter->SetInput( leFilter->GetOutput() );
+	try
+	{
+		dFilter->Update();
+		lFilter->Update();
+	}
+	catch( itk::ExceptionObject & excep )
+	{
+		std::cerr << "Exception caught !" << std::endl;
+		std::cerr << excep << std::endl;
+		return false;
+	}
 
 	WholeCellSeg *whole_cell = new WholeCellSeg;
 	whole_cell->set_nuc_img( lFilter->GetOutput() );
