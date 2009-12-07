@@ -210,7 +210,7 @@ int main(int argc, char *argv[])
     {
     threshold = m_threshold;
     }
-
+  threshold =18;
   cout << "OTSU optimal threshold " << threshold << endl;
 
      for (k=0; k<(sizeZ+sizeExpand*2); k++)
