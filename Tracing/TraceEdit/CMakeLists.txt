@@ -40,6 +40,6 @@ ADD_LIBRARY(Trace
 ADD_EXECUTABLE( trace_editor  vtkTraceViewerDriver.cxx ${Sources} ${GUI_MOC_SRCS} )
 TARGET_LINK_LIBRARIES( trace_editor ${Libraries} Trace TinyXML ftkGUI)
 
-INSTALL(TARGETS trace_editor DESTINATION bin/Tracing)
+INSTALL(TARGETS trace_editor DESTINATION bin )
 SET(CPACK_PACKAGE_EXECUTABLES "trace_editor;Trace Editor")
 

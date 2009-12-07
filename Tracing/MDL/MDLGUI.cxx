@@ -562,6 +562,31 @@ void MDLGUI::FinishedRunningSkeletonization()
     }
 }
 
+int MDLGUI::Test(int argc, char **argv)
+{
+  if(argc < 10)
+    {
+    cerr << argv[0] << "<args>" << endl;
+    return 1;
+    }
+  this->InputFile = QFileInfo(argv[1]);
+  this->BackboneFile = QFileInfo(argv[2]);
+  this->SpinesFile = QFileInfo(argv[3]);
+  return 0;
+  //baseline file (compare backbones for now)
+  /*
+  this->ConnectedComponentsSize;
+  this->VectorMagnitude;
+  this->EdgeRange;
+  this->GraphPruneSize;
+  this->MorphStrength;
+  this->WeightFactor;
+  //need some way of knowing it's done, to compare with the baseline...
+  //kwsys looks like it can help us out: SystemTools::FilesDiffer(source, new_destination.c_str()))
+  //if make an if in Finished...I guess is easiest...
+  */
+}
+
 void MDLGUI::closeEvent(QCloseEvent *event)
 {
   event->accept();

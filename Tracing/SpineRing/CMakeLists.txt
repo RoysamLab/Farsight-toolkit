@@ -49,6 +49,6 @@ INCLUDE_DIRECTORIES(
 
 ADD_EXECUTABLE ( SpineSegmentation ${SpineSegmentation_sources} SpineMain.cxx )
 TARGET_LINK_LIBRARIES( SpineSegmentation ${Libraries} )
-INSTALL(TARGETS SpineSegmentation DESTINATION bin/Tracing)
+INSTALL(TARGETS SpineSegmentation DESTINATION bin )
 
 

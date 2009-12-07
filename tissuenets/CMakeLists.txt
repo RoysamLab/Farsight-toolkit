@@ -14,9 +14,9 @@ include_directories ( ${Boost_INCLUDE_DIRS} )
 ADD_EXECUTABLE(bionet bionet.cpp)
 TARGET_LINK_LIBRARIES( bionet tiff vtkCommon vtkIO vtkInfovis vtkViews vtkRendering TinyXML)
 
-INSTALL( TARGETS bionet DESTINATION bin/tissuenets ) 
+INSTALL( TARGETS bionet DESTINATION bin ) 
 INSTALL( FILES tissuenets_demo.py DESTINATION python )
-INSTALL( FILES saxon9.jar DESTINATION bin/tissuenets )
+INSTALL( FILES saxon9.jar DESTINATION bin )
 
 
 SUBDIRS( histogram )

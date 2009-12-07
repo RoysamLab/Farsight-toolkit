@@ -27,6 +27,7 @@ public:
 	~MDLGUI();
   void Initialize();
 	void SetupSignalsAndSlots();
+  int Test(int argc, char **argv);
 
 public slots:
   void SelectInputImage();

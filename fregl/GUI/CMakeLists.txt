@@ -60,4 +60,4 @@ TARGET_LINK_LIBRARIES( MontageNavigator
                        fregl_gui
 )
 
-INSTALL( TARGETS MontageNavigator DESTINATION bin/fregl )
+INSTALL( TARGETS MontageNavigator DESTINATION bin )

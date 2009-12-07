@@ -15,4 +15,4 @@ include_directories( ${Boost_INCLUDE_DIRS})
 ADD_EXECUTABLE(histogram histogram.cpp)
 TARGET_LINK_LIBRARIES( histogram tiff vtkCommon vtkIO vtkInfovis vtkViews vtkRendering TinyXML)
 
-INSTALL( TARGETS histogram DESTINATION bin/tissuenets )
+INSTALL( TARGETS histogram DESTINATION bin )
