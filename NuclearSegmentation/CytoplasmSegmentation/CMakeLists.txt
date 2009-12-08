@@ -8,7 +8,9 @@ SET( NHDRS
 	CytoplasmSegmentation.h
 	whole_cell.h
 	itkMorphologicalWatershedFromMarkersImageFilter.h
+	itkLabelGeometryImageFilter.h
 	itkMorphologicalWatershedFromMarkersImageFilter.txx
+	itkLabelGeometryImageFilter.txx
 )
 
 ADD_LIBRARY( CytoplasmSegmentation ${NSRCS} ${NHDRS} )

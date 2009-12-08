@@ -1,6 +1,9 @@
 #ifndef _CYTOPLASM_SEG_CXX_
 #define _CYTOPLASM_SEG_CXX_
 
+
+#define cylab(a,b) CY_LAB[(a)+(b)*size1]
+#define nulab(a,b) NU_LAB[(a)+(b)*size1]
 #define BIN_Image(a,b) bin_Image[(a)+(b)*size1]
 #define inp_im_2D(a,b) INP_IM_2D[(a)+(b)*size1]
 #define inp_im_2D1(a,b) INP_IM_2D1[(a)+(b)*size1]
@@ -18,12 +21,16 @@
 #include "whole_cell.h"
 //Constructor
 WholeCellSeg::WholeCellSeg(){
-	shift_bin = 0;
-	num_levels = 1;
-	num_levels_incl = 1;
+	shift_bin = 0; //Sensitive graph cuts binarization
+	num_levels = 1; //When >1 Multi-level  Otsu is used
+	num_levels_incl = 1; // Specifies how many levels are included in FG in the multi-level Otsu output
 	scaling = 255;
 	mem_scaling = 1;
-	use_mem_img = 0;
+	use_mem_img = 0; // Use gradient information from a membrane marker channel
+	draw_real_bounds = 1; // Add code
+	draw_synth_bounds = 0; // Add code
+	radius_of_synth_bounds = 20; // Add code
+	remove_small_objs = 0; // Add code
 	bin_done = 0;
 	seg_done = 0;
 	nuc_im_set = 0;
@@ -46,6 +53,11 @@ void WholeCellSeg::set_parameters ( int *parameters ){
 }
 
 void WholeCellSeg::RunBinarization(){
+	if( draw_real_bounds )
+		this->BinarizationForRealBounds();
+}
+
+void WholeCellSeg::BinarizationForRealBounds(){
 	if( !nuc_im_set || !cyt_im_set ){
 		std::cerr<<"Complete segmenting nuclei and set input imge before starting segmentation\n";
 		return;
@@ -240,6 +252,15 @@ void WholeCellSeg::RunBinarization(){
 
 
 void WholeCellSeg::RunSegmentation(){
+	if( draw_real_bounds )
+		this->RealBoundaries();
+	if( draw_real_bounds && remove_small_objs )
+		this->RemoveSmallObjs();
+	if(	(draw_real_bounds && remove_small_objs && draw_synth_bounds) || (!draw_real_bounds && draw_synth_bounds) )
+		this->SyntheticBoundaries();
+}
+
+void WholeCellSeg::RealBoundaries(){
 	int size1=cyt_im_inp->GetLargestPossibleRegion().GetSize()[0];
 	int size2=cyt_im_inp->GetLargestPossibleRegion().GetSize()[1];
 
@@ -400,8 +421,8 @@ void WholeCellSeg::RunSegmentation(){
 	WatershedFilterType::Pointer watershedfilter = WatershedFilterType::New();
 	watershedfilter->SetInput1( image2 );
 	watershedfilter->SetInput2( nuclab_inp_int );
-	//watershedfilter->SetMarkWatershedLine( 0 );
-	watershedfilter->SetMarkWatershedLine( 1 );
+	watershedfilter->SetMarkWatershedLine( 0 );
+	//watershedfilter->SetMarkWatershedLine( 1 );
 	watershedfilter->Update();
 
 	CastIntUSType::Pointer castIntUSfilter = CastIntUSType::New();
@@ -432,8 +453,126 @@ void WholeCellSeg::RunSegmentation(){
 			++pix_bufed3;
 		}
 */
-	seg_done = 1;
+	if( !remove_small_objs )
+		seg_done = 1;
 }
+
+
+void WholeCellSeg::RemoveSmallObjs(){
+/*
+	typedef itk::LabelGeometryImageFilter< UShortImageType > GeometryFilterType;
+	typedef itk::LabelStatisticsImageFilter< UShortImageType,UShortImageType > StatisticsFilterType;
+	typedef itk::FixedArray< UShortImageType > FarrType;
+
+	int size1=cyt_im_inp->GetLargestPossibleRegion().GetSize()[0];
+	int size2=cyt_im_inp->GetLargestPossibleRegion().GetSize()[1];
+
+	unsigned short *CY_LAB,*NU_LAB;
+	CY_LAB = seg_im_out->GetBufferPointer();
+	NU_LAB = nuclab_inp->GetBufferPointer();
+
+	GeometryFilterType::Pointer geomfilt1 = GeometryFilterType::New();
+	GeometryFilterType::Pointer geomfilt2 = GeometryFilterType::New();
+
+	StatisticsFilterType::Pointer statsfilt = StatisticsFilterType::New();
+
+	geomfilt1->SetInput( seg_im_out );
+	geomfilt2->SetInput( nuclab_inp );
+
+	statsfilt->SetInput( cyt_im_inp );
+	statsfilt->SetLabelInput( nuclab_inp );
+
+	float nuc_sz, cyt_sz;
+
+	for( unsigned long i=0; i<statsfilt->GetNumberOfObjects(); i++ ){
+		cyt_sz = (float)geomfilt1->GetVolume(i+1);
+		nuc_sz = (float)geomfilt2->GetVolume(i+1);
+		if( cyt_sz > 0 ){
+			if( (cyt_sz/nuc_sz) > 1.1 ){
+				FarrType matrix1 = geomfilt2->GetBoundingBox(i+1);
+
+
+			}
+		}
+	}
+*/
+	//if( !draw_synth_bounds )
+	//	seg_done = 1;
+}
+
+void WholeCellSeg::SyntheticBoundaries(){
+
+	typedef itk::RescaleIntensityImageFilter< UShortImageType, IntImageType > RescaleIOIntType;
+	typedef itk::RescaleIntensityImageFilter< FltImageType, IntImageType > RescaleFltIntType;
+	typedef itk::CastImageFilter< UShortImageType, IntImageType > CastUSIntType;
+	typedef itk::CastImageFilter< IntImageType, UShortImageType > CastIntUSType;
+	typedef itk::BinaryThresholdImageFilter< IntImageType, IntImageType > BinaryThresholdFilterType;
+	typedef itk::BinaryThresholdImageFilter< FltImageType, IntImageType > BinaryThresholdFilterTypeFI;
+	typedef itk::AndImageFilter< IntImageType, IntImageType, IntImageType > AndFilterType;
+	typedef itk::SignedMaurerDistanceMapImageFilter< IntImageType, FltImageType > SignedMaurerDistanceMapFilterType;
+	typedef itk::MorphologicalWatershedFromMarkersImageFilter< IntImageType, IntImageType > WatershedFilterType;
+
+//Cast inverted ctoplasm binary image to Int
+	RescaleIOIntType::Pointer RescaleIOInt = RescaleIOIntType::New();
+	RescaleIOInt->SetOutputMaximum( INT_MAX );
+	RescaleIOInt->SetOutputMinimum( 0 );
+	RescaleIOInt->SetInput( nuclab_inp );
+
+//Threshold input label image -- for input into distance map function
+	BinaryThresholdFilterType::Pointer binarythreshfilter = BinaryThresholdFilterType::New();
+	binarythreshfilter->SetInsideValue( INT_MAX );
+	binarythreshfilter->SetOutsideValue( 0 );
+	binarythreshfilter->SetLowerThreshold( 1 );
+	binarythreshfilter->SetUpperThreshold( INT_MAX );
+	binarythreshfilter->SetInput( RescaleIOInt->GetOutput() );
+	binarythreshfilter->Update();
+
+//Distance map for synthetic boundaries around nuclei that do not have any marker around them
+	SignedMaurerDistanceMapFilterType::Pointer distancemapfilter = SignedMaurerDistanceMapFilterType::New();
+	distancemapfilter->SetInput(binarythreshfilter->GetOutput());
+	distancemapfilter->SquaredDistanceOff();
+	distancemapfilter->Update();
+
+//Threshold the map to limit the max distance to the radius limit set by the user
+	BinaryThresholdFilterTypeFI::Pointer binarythreshfilterfi = BinaryThresholdFilterTypeFI::New();
+	binarythreshfilterfi->SetInsideValue( INT_MAX );
+	binarythreshfilterfi->SetOutsideValue( 0 );
+	binarythreshfilterfi->SetLowerThreshold( 1 );
+	binarythreshfilterfi->SetUpperThreshold( radius_of_synth_bounds );
+	binarythreshfilterfi->SetInput( distancemapfilter->GetOutput() );
+	RescaleFltIntType::Pointer rescalefltint = RescaleFltIntType::New();
+	rescalefltint->SetOutputMaximum( INT_MAX );
+	rescalefltint->SetOutputMinimum( 0 );
+	rescalefltint->SetInput( distancemapfilter->GetOutput() );
+	AndFilterType::Pointer andfilter1 = AndFilterType::New();
+	andfilter1->SetInput1( rescalefltint->GetOutput() );
+	andfilter1->SetInput2( binarythreshfilterfi->GetOutput() );
+	AndFilterType::Pointer andfilter2 = AndFilterType::New();
+	andfilter2->SetInput1( andfilter1->GetOutput() );
+	andfilter2->SetInput2( binarythreshfilterfi->GetOutput() );
+	andfilter2->Update();
+
+	CastUSIntType::Pointer castUSIntfilter = CastUSIntType::New();
+	castUSIntfilter->SetInput( nuclab_inp );
+	castUSIntfilter->Update();
+	IntImageType::Pointer nuclab_inp_int = IntImageType::New();
+	nuclab_inp_int = castUSIntfilter->GetOutput();
+
+//Draw synthetic boundaries using the seeded Watershed algorithm
+	WatershedFilterType::Pointer watershedfilter = WatershedFilterType::New();
+	watershedfilter->SetInput1( andfilter2->GetOutput() );
+	watershedfilter->SetInput2( nuclab_inp_int );
+	watershedfilter->SetMarkWatershedLine( 0 );
+	watershedfilter->Update();
+
+	CastIntUSType::Pointer castIntUSfilter = CastIntUSType::New();
+	castIntUSfilter->SetInput( watershedfilter->GetOutput() );
+	castIntUSfilter->Update();
+	seg_im_out = castIntUSfilter->GetOutput();
+
+	//seg_done = 1;
+}
+
 
 UShortImageType::Pointer WholeCellSeg::getBinPointer(){
 	if( bin_done ) return bin_im_out;

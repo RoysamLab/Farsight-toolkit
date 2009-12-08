@@ -16,7 +16,12 @@
 #include "itkBinaryBallStructuringElement.h" 
 #include "itkBinaryThresholdImageFilter.h"
 #include "itkOrImageFilter.h"
+#include "itkAndImageFilter.h"
+#include "itkSignedMaurerDistanceMapImageFilter.h"
 #include "itkCastImageFilter.h"
+#include "itkLabelGeometryImageFilter.h"
+#include "itkLabelStatisticsImageFilter.h"
+
 
 //LOCAL INCLUDES
 #include "NuclearSegmentation/yousef_core/cell_binarization/cell_binarization.h"
@@ -39,9 +44,9 @@ typedef itk::Image< unsigned long int, 2 > ULongImageType;
 
 class WholeCellSeg{
 	//Binarization Parameters
-	int shift_bin, num_levels, num_levels_incl;
+	int shift_bin, num_levels, num_levels_incl, draw_real_bounds, draw_synth_bounds;
 	//Scaling and mem_scaling
-	int scaling, mem_scaling,use_mem_img;
+	int radius_of_synth_bounds, remove_small_objs, scaling, mem_scaling,use_mem_img;
 	unsigned short *bin_Image;
 
 	//Flags
@@ -72,6 +77,11 @@ public:
 		mem_im_set = 1;
 		use_mem_img = 1;
 	}
+
+	void RealBoundaries();
+	void BinarizationForRealBounds();
+	void RemoveSmallObjs();
+	void SyntheticBoundaries();
 
 	//Two steps in the segmentation
 	//1-> Run Binarization
