@@ -125,7 +125,7 @@ class FilterRowsDialog : public QDialog
 {
 	Q_OBJECT
 public:
-	FilterRowsDialog(QTableView *tableView, QWidget *parent = 0);
+	FilterRowsDialog(QTableView *tableView, ObjectSelection * sel = 0, QWidget *parent = 0);
 
 private:
 	QTableView *mTable;
@@ -163,6 +163,8 @@ private:
 	QPushButton * NewCompButton(int n);
 	int GetColumnFor(QString headerText);
 	void GetMinMaxFor(int c, double *min, double *max);
+
+	ObjectSelection * selection;
 
 private slots:
 	void DoFilter();

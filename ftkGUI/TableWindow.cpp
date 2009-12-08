@@ -122,7 +122,7 @@ void TableWindow::showFilters()
 	if(!this->tableView->model())
 		return;
 
-	FilterRowsDialog * filters = new FilterRowsDialog( this->tableView, this);
+	FilterRowsDialog * filters = new FilterRowsDialog( this->tableView, this->selection, this);
 	filters->exec();
 	delete filters;
 }
@@ -324,10 +324,11 @@ void ChooseItemsDialog::selectionChanged(int id)
 }
 
 
-FilterRowsDialog::FilterRowsDialog(QTableView *tableView, QWidget *parent)
+FilterRowsDialog::FilterRowsDialog(QTableView *tableView, ObjectSelection * sel, QWidget *parent)
 : QDialog(parent)
 {
 	mTable = tableView;
+	selection = sel;
 
 	smaller = tr("<=");
 	bigger = tr(">");
@@ -656,6 +657,8 @@ void FilterRowsDialog::DoFilter(void)
 		break;
 	}
 
+	std::set<long int> matchIds;	//Ids that match the filter
+
 	//************************************************************************************
 	// Do each equation
 	// NOTE: smaller means in between two values (including ends)
@@ -721,31 +724,42 @@ void FilterRowsDialog::DoFilter(void)
 			}
 		}
 
+		bool mOK = false;				//Master OK
+
 		//Now check the equations:
 		if(numEquations == 1)
 		{
-			this->mTable->setRowHidden(row, !ok[0]);
+			mOK = ok[0];
 		}
 		else if( numEquations == 2)
 		{
 			if(bool1->currentText() == tr("AND"))
-				this->mTable->setRowHidden(row, !( ok[0] && ok[1] ) );
+				mOK = ok[0] && ok[1];
 			else if( bool1->currentText() == tr("OR"))
-				this->mTable->setRowHidden(row, !( ok[0] || ok[1] ) );
-
+				mOK = ok[0] || ok[1];
 		}
 		else if( numEquations == 3)
 		{
 			if(bool1->currentText() == tr("AND") && bool2->currentText() == tr("AND"))
-				this->mTable->setRowHidden(row, !( ok[0] && ok[1] && ok[2] ) );
+				mOK = ok[0] && ok[1] && ok[2];
 			else if(bool1->currentText() == tr("AND") && bool2->currentText() == tr("OR"))
-				this->mTable->setRowHidden(row, !( (ok[0] && ok[1]) || ok[2] ) );
+				mOK = (ok[0] && ok[1]) || ok[2];
 			else if(bool1->currentText() == tr("OR") && bool2->currentText() == tr("AND"))
-				this->mTable->setRowHidden(row, !( (ok[0] || ok[1]) && ok[2] ) );
+				mOK = (ok[0] || ok[1]) && ok[2];
 			else if(bool1->currentText() == tr("OR") && bool2->currentText() == tr("OR"))
-				this->mTable->setRowHidden(row, !( (ok[0] || ok[1]) || ok[2] ) );
+				mOK = ok[0] || ok[1] || ok[2];
+		}
+
+		//this->mTable->setRowHidden(row, !mOK);
+		if(mOK)
+		{
+			QModelIndex index = this->mTable->model()->index(row, 0);
+			int val = this->mTable->model()->data(index).toInt();
+			matchIds.insert(val);
 		}
 	}
+
+	selection->select(matchIds);
 	accept();
 }
 
