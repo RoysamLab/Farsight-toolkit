@@ -25,6 +25,9 @@ IntrinsicFeatureCalculator::IntrinsicFeatureCalculator()
 	labelChannel = 0;
 	fPrefix = "";
 	SetFeaturesOn();
+	useRegion = false;
+	useIDs = false;
+	IDs.clear();
 }
 
 bool IntrinsicFeatureCalculator::SetInputImages(ftk::Image::Pointer intImg, ftk::Image::Pointer labImg, int intChannel, int labChannel)
@@ -78,6 +81,25 @@ void IntrinsicFeatureCalculator::SetFeaturePrefix(std::string prefix)
 	fPrefix = prefix;
 }
 
+void IntrinsicFeatureCalculator::SetRegion(int x1, int y1, int z1, int x2, int y2, int z2)
+{
+	useRegion = true;
+
+	regionIndex[0] = x1;
+	regionIndex[1] = y1;
+	regionIndex[2] = z1;
+
+	regionSize[0] = x2 - x1 + 1;
+	regionSize[1] = y2 - y1 + 1;
+	regionSize[2] = z2 - z1 + 1;
+}
+
+void IntrinsicFeatureCalculator::SetIDs(std::set<LPixelT> ids)
+{
+	useIDs = true;
+	IDs = ids;
+}
+
 int IntrinsicFeatureCalculator::getMaxFeatureTurnedOn(void)
 {
 	int max = 0;
@@ -126,9 +148,16 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 	}
 
 	//Compute features:
-	typedef ftk::LabelImageToFeatures< unsigned char, unsigned short, 3 > FeatureCalcType;
+	typedef ftk::LabelImageToFeatures< IPixelT, LPixelT, 3 > FeatureCalcType;
 	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
-	labFilter->SetImageInputs( intensityImage->GetItkPtr<unsigned char>(0,intensityChannel), labelImage->GetItkPtr<unsigned short>(0,labelChannel) );
+	if(useRegion)
+	{
+		labFilter->SetImageInputs( intensityImage->GetItkPtr<IPixelT>(0,intensityChannel), labelImage->GetItkPtr<LPixelT>(0,labelChannel), regionIndex, regionSize );
+	}
+	else
+	{
+		labFilter->SetImageInputs( intensityImage->GetItkPtr<IPixelT>(0,intensityChannel), labelImage->GetItkPtr<LPixelT>(0,labelChannel) );
+	}
 	labFilter->SetLevel( needLevel() );
 	if( needHistogram() )
 		labFilter->ComputeHistogramOn();
@@ -156,6 +185,8 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 	{
 		FeatureCalcType::LabelPixelType id = labels.at(i);
 		if(id == 0) continue;
+		if(useIDs)
+			if(IDs.find(id) == IDs.end()) continue;	//Don't care about this id, so skip it
 
 		ftk::IntrinsicFeatures * features = labFilter->GetFeatures(id);
 		vtkSmartPointer<vtkVariantArray> row = vtkSmartPointer<vtkVariantArray>::New();
@@ -171,31 +202,53 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 }
 
 //Update the features in this table whose names match (sets doFeat)
-void IntrinsicFeatureCalculator::Update(vtkSmartPointer<vtkTable> table)
+//Will create new rows if necessary:
+void IntrinsicFeatureCalculator::Update(vtkSmartPointer<vtkTable> table, std::map<int, ftk::Object::Point> * cc, std::map<int, ftk::Object::Box> * bbox)
 {
 	if(!intensityImage || !labelImage)
 		return;
 
-	//Determine needed features:
-	for(int i=0; i<IntrinsicFeatures::N; ++i)
+	if(table)
 	{
-		std::string name = fPrefix+IntrinsicFeatures::Info[i].name;
-		vtkAbstractArray * arr = table->GetColumnByName( name.c_str() );
-		if(arr == NULL || arr == 0)
-			doFeat[i] = false;
-		else
-			doFeat[i] = true;
+		//Determine needed features:
+		for(int i=0; i<IntrinsicFeatures::N; ++i)
+		{
+			std::string name = fPrefix+IntrinsicFeatures::Info[i].name;
+			vtkAbstractArray * arr = table->GetColumnByName( name.c_str() );
+			if(arr == NULL || arr == 0)
+				doFeat[i] = false;
+			else
+				doFeat[i] = true;
+		}
 	}
 
 	//Compute features:
-	typedef ftk::LabelImageToFeatures< unsigned char, unsigned short, 3 > FeatureCalcType;
+	typedef ftk::LabelImageToFeatures< IPixelT, LPixelT, 3 > FeatureCalcType;
 	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
-	labFilter->SetImageInputs( intensityImage->GetItkPtr<unsigned char>(0,intensityChannel), labelImage->GetItkPtr<unsigned short>(0,labelChannel) );
-	labFilter->SetLevel( needLevel() );
-	if( needHistogram() )
-		labFilter->ComputeHistogramOn();
-	if( needTextures() )
-		labFilter->ComputeTexturesOn();
+	if(useRegion)
+	{
+		labFilter->SetImageInputs( intensityImage->GetItkPtr<IPixelT>(0,intensityChannel), labelImage->GetItkPtr<LPixelT>(0,labelChannel), regionIndex, regionSize );
+	}
+	else
+	{
+		labFilter->SetImageInputs( intensityImage->GetItkPtr<IPixelT>(0,intensityChannel), labelImage->GetItkPtr<LPixelT>(0,labelChannel) );
+	}
+	
+	if(table)
+	{
+		labFilter->SetLevel( needLevel() );
+		if( needHistogram() )
+			labFilter->ComputeHistogramOn();
+		if( needTextures() )
+			labFilter->ComputeTexturesOn();
+	}
+	else
+	{
+		labFilter->SetLevel(1);
+		labFilter->ComputeHistogramOff();
+		labFilter->ComputeTexturesOff();
+	}
+
 	labFilter->Update();
 
 	//Now update the table:
@@ -204,38 +257,87 @@ void IntrinsicFeatureCalculator::Update(vtkSmartPointer<vtkTable> table)
 	{
 		FeatureCalcType::LabelPixelType id = labels.at(i);
 		if(id == 0) continue;
+		if(useIDs)
+			if(IDs.find(id) == IDs.end()) continue;	//Don't care about this id, so skip it
 
-		int row = -1;
-		for(int r=0; r<table->GetNumberOfRows(); ++r)
+		ftk::IntrinsicFeatures * features = labFilter->GetFeatures(id);
+
+		if(table)
 		{
-			if( table->GetValue(r,0) == id )
+			int row = -1;
+			for(int r=0; r<table->GetNumberOfRows(); ++r)
 			{
-				row = r;
-				break;
+				if( table->GetValue(r,0) == id )
+				{
+					row = r;
+					break;
+				}
+			}
+
+			//Must Create a new row:
+			if(row == -1)
+			{
+				vtkSmartPointer<vtkVariantArray> nrow = vtkSmartPointer<vtkVariantArray>::New();
+				nrow->SetNumberOfValues( table->GetNumberOfColumns() );
+				table->InsertNextRow(nrow);
+				row = table->GetNumberOfRows() - 1;
+				table->SetValue(row, 0, vtkVariant(id));
+			}
+
+			//Update table:
+			for (int f=0; f<IntrinsicFeatures::N; ++f)
+			{
+				if(doFeat[f])
+					table->SetValueByName(row,(fPrefix+IntrinsicFeatures::Info[f].name).c_str(), vtkVariant(features->ScalarFeatures[f]));
 			}
 		}
 
-		if(row == -1) continue;
-
-		ftk::IntrinsicFeatures * features = labFilter->GetFeatures(id);
-		for (int f=0; f<IntrinsicFeatures::N; ++f)
+		//Update centroids:
+		if(cc)
 		{
-			if(doFeat[f])
-				table->SetValueByName(row,(fPrefix+IntrinsicFeatures::Info[f].name).c_str(), vtkVariant(features->ScalarFeatures[f]));
+			Object::Point c;
+			c.x = (int)features->Centroid[0];
+			c.y = (int)features->Centroid[1];
+			c.z = (int)features->Centroid[2];
+			c.t = 0;
+			(*cc)[(int)id] = c;
+		}
+
+		//Update bounding boxes:
+		if(bbox)
+		{
+			Object::Box b;
+			b.min.x = (int)features->BoundingBox[0];
+			b.max.x = (int)features->BoundingBox[1];
+			b.min.y = (int)features->BoundingBox[2];
+			b.max.y = (int)features->BoundingBox[3];
+			b.min.z = (int)features->BoundingBox[4];
+			b.max.z = (int)features->BoundingBox[5];
+			b.min.t = 0;
+			b.max.t = 0;
+			(*bbox)[(int)id] = b;
 		}
 	}
 }
 
 //Update the features in this table whose names match (sets doFeat)
+//Will creat new rows if necessary:
 void IntrinsicFeatureCalculator::Append(vtkSmartPointer<vtkTable> table)
 {
 	if(!intensityImage || !labelImage)
 		return;
 
 	//Compute features:
-	typedef ftk::LabelImageToFeatures< unsigned char, unsigned short, 3 > FeatureCalcType;
+	typedef ftk::LabelImageToFeatures< IPixelT, LPixelT, 3 > FeatureCalcType;
 	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
-	labFilter->SetImageInputs( intensityImage->GetItkPtr<unsigned char>(0,intensityChannel), labelImage->GetItkPtr<unsigned short>(0,labelChannel) );
+	if(useRegion)
+	{
+		labFilter->SetImageInputs( intensityImage->GetItkPtr<IPixelT>(0,intensityChannel), labelImage->GetItkPtr<LPixelT>(0,labelChannel), regionIndex, regionSize );
+	}
+	else
+	{
+		labFilter->SetImageInputs( intensityImage->GetItkPtr<IPixelT>(0,intensityChannel), labelImage->GetItkPtr<LPixelT>(0,labelChannel) );
+	}
 	labFilter->SetLevel( needLevel() );
 	if( needHistogram() )
 		labFilter->ComputeHistogramOn();
@@ -261,6 +363,8 @@ void IntrinsicFeatureCalculator::Append(vtkSmartPointer<vtkTable> table)
 	{
 		FeatureCalcType::LabelPixelType id = labels.at(i);
 		if(id == 0) continue;
+		if(useIDs)
+			if(IDs.find(id) == IDs.end()) continue;	//Don't care about this id, so skip it
 
 		int row = -1;
 		for(int r=0; r<table->GetNumberOfRows(); ++r)
@@ -272,9 +376,18 @@ void IntrinsicFeatureCalculator::Append(vtkSmartPointer<vtkTable> table)
 			}
 		}
 
-		if(row == -1) continue;
-
 		ftk::IntrinsicFeatures * features = labFilter->GetFeatures(id);
+
+		//Must Create a new row:
+		if(row == -1)
+		{
+			vtkSmartPointer<vtkVariantArray> nrow = vtkSmartPointer<vtkVariantArray>::New();
+			nrow->SetNumberOfValues( table->GetNumberOfColumns() );
+			table->InsertNextRow(nrow);
+			row = table->GetNumberOfRows() - 1;
+			table->SetValue(row, 0, vtkVariant(id));
+		}
+
 		for (int f=0; f<IntrinsicFeatures::N; ++f)
 		{
 			if(doFeat[f])

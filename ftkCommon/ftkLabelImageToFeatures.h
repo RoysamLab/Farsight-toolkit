@@ -41,6 +41,7 @@ limitations under the License.
 #include <vtkTable.h>
 
 #include "ftkIntrinsicFeatures.h"
+#include "ftkObject.h"
 #include "ftkImage/ftkImage.h"
 
 #include <iostream>
@@ -53,15 +54,24 @@ namespace ftk
 class IntrinsicFeatureCalculator
 {
 public:
+	typedef unsigned char IPixelT;
+	typedef unsigned short LPixelT;
+
 	IntrinsicFeatureCalculator();
 	bool SetInputImages(ftk::Image::Pointer intImg, ftk::Image::Pointer labImg, int intChannel=0, int labChannel=0);
 	void SetFeaturesOn(void);							//Turn on all features
 	void SetFeaturesOn(std::set<int> onFeats);			//Turn on only these features
 	void SetFeatureOn(int feat, bool v = true);			//Set the value of this feature
 	void SetFeaturePrefix(std::string prefix);			//Set Prefix for feature names
+	void SetRegion(int x1, int y1, int z1, int x2, int y2, int z2);	//Compute features for objects in this region
+	void SetIDs(std::set<LPixelT> ids);					//Only update these ids
+	void ClearRegion(void){ useRegion = false; };		//Clear the Region;
+	void ClearIDs(void){ useIDs = false; IDs.clear(); };//Clear the IDs;
+
 	vtkSmartPointer<vtkTable> Compute(void);			//Compute features that are ON and return table with values (for all objects)
-	void Update(vtkSmartPointer<vtkTable> table);		//Update the features in this table whose names match (sets doFeat)
-	void Append(vtkSmartPointer<vtkTable> table);		//Compute features that are ON and append them to the existing table
+	//void Update(vtkSmartPointer<vtkTable> table);		//Update the features in this table whose names match (sets doFeat)
+	void Update(vtkSmartPointer<vtkTable> table, std::map<int, ftk::Object::Point> * cc = NULL, std::map<int, ftk::Object::Box> * bbox = NULL);
+	void Append(vtkSmartPointer<vtkTable> table);		//Compute features that are ON and append them to the existing table (makes more columns)
 
 private:
 	ftk::Image::Pointer intensityImage;
@@ -70,6 +80,13 @@ private:
 	int labelChannel;
 	std::string fPrefix;
 	bool doFeat[IntrinsicFeatures::N];
+
+	bool useRegion;
+	LPixelT regionIndex[3];
+	LPixelT regionSize[3];
+	bool useIDs;
+	std::set<LPixelT> IDs;
+
 
 	int getMaxFeatureTurnedOn(void);
 	bool needTextures(void);

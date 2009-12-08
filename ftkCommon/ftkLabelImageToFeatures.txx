@@ -158,15 +158,16 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 
 	for(unsigned int i=0; i<VImageDimension; ++i)
 	{
-		intIndex[i] = (TIPixel)index[i];
-		intSize[i] = (TIPixel)size[i];
-		labIndex[i] = (TLPixel)index[i];
-		labSize[i] = (TLPixel)size[i];
+		intIndex[i] = index[i];
+		intSize[i] = size[i];
+		labIndex[i] = index[i];
+		labSize[i] = size[i];
 	}
 
-	//Need to check size
-	if( labRegion != intRegion )
-		return false;
+	intRegion.SetIndex(intIndex);
+	intRegion.SetSize(intSize);
+	labRegion.SetIndex(labIndex);
+	labRegion.SetSize(labSize);
 		
 	//Need to check regions:
 	if( intRegion != intImgIn->GetBufferedRegion() )
@@ -250,13 +251,13 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	//LEVEL 1:
 	if(computationLevel >= 1)
 	{
-		RunLabelGeometryFilter();
+		if(!RunLabelGeometryFilter()) return;	//Should throw exception
 	}
 	
 	//LEVEL 2:
 	if(computationLevel >= 2)
 	{
-		RunLabelStatisticsFilter();
+		if(!RunLabelStatisticsFilter()) return; //Should throw exception
 	}
 	
 	//LEVEL 3:
@@ -269,7 +270,7 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	//TEXTURE CALCULATOR:
 	if (this->computeTextures)
     {
-		this->RunTextureFilter();
+		if(!this->RunTextureFilter()) return;		//Should throw exception
     }
 }
 
