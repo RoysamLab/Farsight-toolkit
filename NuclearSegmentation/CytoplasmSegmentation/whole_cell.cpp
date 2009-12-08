@@ -252,12 +252,12 @@ void WholeCellSeg::BinarizationForRealBounds(){
 
 
 void WholeCellSeg::RunSegmentation(){
-	if( draw_real_bounds )
+	//if( draw_real_bounds )
 		this->RealBoundaries();
-	if( draw_real_bounds && remove_small_objs )
-		this->RemoveSmallObjs();
-	if(	(draw_real_bounds && remove_small_objs && draw_synth_bounds) || (!draw_real_bounds && draw_synth_bounds) )
-		this->SyntheticBoundaries();
+	//if( draw_real_bounds && remove_small_objs )
+	//	this->RemoveSmallObjs();
+	//if(	(draw_real_bounds && remove_small_objs && draw_synth_bounds) || (!draw_real_bounds && draw_synth_bounds) )
+	//	this->SyntheticBoundaries();
 }
 
 void WholeCellSeg::RealBoundaries(){
@@ -570,7 +570,7 @@ void WholeCellSeg::SyntheticBoundaries(){
 	castIntUSfilter->Update();
 	seg_im_out = castIntUSfilter->GetOutput();
 
-	//seg_done = 1;
+	seg_done = 1;
 }
 
 
