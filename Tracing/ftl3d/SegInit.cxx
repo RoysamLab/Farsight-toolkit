@@ -1490,7 +1490,7 @@ bool SegInit::fitSE (ImageType3D::Pointer im, TVessel& vessel, double iterations
 	damp.sign_S[0] = 0.0;
 	damp.sign_S[1] = 0.0;
 	damp.sign_S[2] = 0.0;
-	damp.sign_S[4] = 0.0;
+	damp.sign_S[3] = 0.0;
 
     memcpy(damp.dt_a, damp.dt_u,sizeof(double)*3);
 

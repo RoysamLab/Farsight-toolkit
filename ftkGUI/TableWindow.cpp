@@ -666,7 +666,7 @@ void FilterRowsDialog::DoFilter(void)
 	//*************************************************************************************
 	for( int row=0; row < this->mTable->model()->rowCount(); ++row)
 	{
-		bool ok[3];
+		bool ok[3] = {false, false, false};
 		for(int c=0; c<numEquations; c++)
 		{
 			QModelIndex index = this->mTable->model()->index(row, featureColumns[c]);

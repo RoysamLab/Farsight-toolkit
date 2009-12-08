@@ -34,6 +34,10 @@ limitations under the License.
 //    -output       The output image name.
 //    -channel      Needed if the input image is rgb or rgba
 
+#include <iostream>
+using std::cerr;
+using std::endl;
+
 #include <vul/vul_arg.h>
 #include <vul/vul_file.h>
 #include <fregl/fregl_joint_register.h>
@@ -159,7 +163,10 @@ main(  int argc, char* argv[] )
   }
 
   std::string command = std::string("mkdir ")+name_prefix;
-  vcl_system(command.c_str());
+  if(vcl_system(command.c_str()) != 0)
+    {
+    cerr << "mkdir returned nonzero" << endl;
+    }
   
   typedef itk::NumericSeriesFileNames NameGeneratorType;
   typedef itk::ImageSeriesWriter< ColorImageType, ColorImageType2D > SeriesWriterType;

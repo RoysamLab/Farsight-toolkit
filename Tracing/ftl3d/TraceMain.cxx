@@ -38,6 +38,9 @@ limitations under the License.
 #include "Seed2Seg.h"
 #include "TraceContainer3D.h"
 
+using std::cerr;
+using std::endl;
+
 typedef itk::Image< float, 2 >   ImageType2D;
 typedef itk::Image< float, 3 >   ImageType3D;
 
@@ -51,7 +54,10 @@ static void WriteSeedImage(ImageType2D::Pointer, SeedContainer3D::Pointer,std::s
 int main (int argc, char *argv[])
 {
 
-	system("cls");
+	if( system("cls") != 0)
+    {
+    cerr << "system call to cls returned nonzero..." << endl;
+    }
 	std::cout << "SuperEllipsoid Trace3D version-0.1\tSept 11, 2007" << std::endl << std::endl;
 	if (argc < 2)	{
 		std::cout << "Usage: "<<argv[0] << " [ImageFile] [Grid spacing] [AspectRatio]" <<std::endl;

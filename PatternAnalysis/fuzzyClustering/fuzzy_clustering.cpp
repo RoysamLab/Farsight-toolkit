@@ -153,7 +153,10 @@ out:
 		Singularities[i] = new int[num_Clusters];
 
 		double label;		
-		fscanf(fp,"%lf",&label);	
+		if( fscanf(fp,"%lf",&label) == EOF )
+      {
+      cerr << "fscanf encountered end of file!" << endl;
+      }
 		labels[i] = (int) label;
 		
 		int dd;

@@ -744,7 +744,10 @@ void load_points( char * fname)
 
 	while (!feof(fp))
 	{
-		fscanf(fp,"%lf %lf %lf %*f %*f %*f",&z1,&y1,&x1);
+		if( fscanf(fp,"%lf %lf %lf %*f %*f %*f",&z1,&y1,&x1) == EOF )
+      {
+      cerr << "EOF encountered in fscanf" << endl;
+      }
 		//		if(!(x1 <300 &&  y1 <600 && y1>400 ))
 		//				continue;
 
@@ -785,7 +788,10 @@ void load_points_without_normal( char * fname)
 	while (!feof(fp))
 	{
 
-		fscanf(fp,"%lf %lf %lf %d %lf",&z1,&y1,&x1,&l1,&l2);
+		if( fscanf(fp,"%lf %lf %lf %d %lf",&z1,&y1,&x1,&l1,&l2) == EOF )
+      {
+      cerr << "EOF encountered in fscanf" << endl;
+      }
 		//if(!(x1 <256 && y1<256))
 		//	continue;
 		//	if(!(x1 >400 && x1< 600  && y1>400 && y1 <600 ))
@@ -891,7 +897,10 @@ void load_points_other( char * fname)
 				//		fscanf(
 				//		fread(c,1,1,fp);
 				//		fread(c+1,1,1,fp);
-				fscanf(fp,"%d",&linteger);
+				if( fscanf(fp,"%d",&linteger) == EOF )
+          {
+          cerr << "EOF encountered in fscanf" << endl;
+          }
 				//	if(ret!=2)
 				//	{
 				//		printf("yo! %d\n",rand());
@@ -3039,10 +3048,16 @@ void LoadOBJ(char * fname)
 	{
 		double a,b,c;
 		char ch;
-		fscanf(fp,"%c",&ch);
+		if( fscanf(fp,"%c",&ch) == EOF )
+      {
+      cerr << "EOF encountered in fscanf" << endl;
+      }
 		if(ch=='v')
 		{
-			fscanf(fp," %lf %lf %lf\n",&a,&b,&c);
+			if( fscanf(fp," %lf %lf %lf\n",&a,&b,&c) == EOF )
+        {
+        cerr << "EOF encountered in fscanf" << endl;
+        }
 			//	printf("vertex %lf %lf %lf\n",a,b,c);
 			maxx = MAX(maxx,a);
 			maxy = MAX(maxy,b);
@@ -3052,7 +3067,10 @@ void LoadOBJ(char * fname)
 		else if(ch=='f')
 		{
 			int p,q,r;
-			fscanf(fp," %d %d %d\n",&p,&q,&r);
+			if( fscanf(fp," %d %d %d\n",&p,&q,&r) == EOF )
+        {
+        cerr << "EOF encountered in fscanf" << endl;
+        }
 			//	printf("Face %d %d %d\n",p,q,r);
 			if(once)
 			{
@@ -3083,17 +3101,26 @@ void LoadOBJ(FILE *fp, Mesh *mesh)
 	{
 		double a,b,c;
 		char ch;
-		fscanf(fp,"%c",&ch);
+		if ( fscanf(fp,"%c",&ch) == EOF ) 
+      {
+      cerr << "EOF encountered in fscanf" << endl;
+      }
 		if(ch=='v')
 		{
-			fscanf(fp," %lf %lf %lf\n",&a,&b,&c);
+			if( fscanf(fp," %lf %lf %lf\n",&a,&b,&c) == EOF )
+        {
+        cerr << "EOF encountered in fscanf" << endl;
+        }
 			//	printf("vertex %lf %lf %lf\n",a,b,c);
 			mesh->addVertex(Vec3f(a,b,c));
 		}
 		else if(ch=='f')
 		{
 			int p,q,r;
-			fscanf(fp," %d %d %d\n",&p,&q,&r);
+			if( fscanf(fp," %d %d %d\n",&p,&q,&r) == EOF )
+        {
+        cerr << "EOF encountered in fscanf" << endl;
+        }
 			//	printf("Face %d %d %d\n",p,q,r);
 			if(once)
 			{
@@ -3862,7 +3889,7 @@ Vec3f fit_circle(Array<Face*> *arr,float &fit,int max_iterations=10,double delta
 		mean = mean + (*arr)[counter]->getCenter();
 	}
 	mean = mean/arr->Count();
-	float r_est;
+	float r_est = 0;
 	Vec3f c_est = mean;// begin with the mean as a good estimate;
 	double sum_x,sum_y;
 
@@ -4758,7 +4785,10 @@ void load_votes_from_file(char *filename)
 		{
 			for(int coz =0; coz <maxz; coz++)
 			{
-				fscanf(fp,"%d %d %d %d",&a[0],&a[1],&a[2],&a[3]);
+				if( fscanf(fp,"%d %d %d %d",&a[0],&a[1],&a[2],&a[3]) == EOF )
+          {
+          cerr << "EOF encountered in fscanf" << endl;
+          }
 				if(feof(fp))
 					goto label;
 			//	printf("%d %d %d %d\n",a[0],a[1],a[2],a[3]);

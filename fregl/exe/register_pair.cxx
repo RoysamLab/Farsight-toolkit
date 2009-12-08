@@ -31,6 +31,10 @@ limitations under the License.
 //  -background     Intensities below -background are ignored.
 //  -smooth         Gaussian smoothing is required
 
+#include <iostream>
+using std::cerr;
+using std::endl;
+
 #include "itkImageFileReader.h"
 #include "itkCastImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
@@ -186,9 +190,18 @@ main(  int argc, char* argv[] )
     vcl_system("del xxx_to_image_proj.tif");
     vcl_system("del mosaic_xxx_from_image_proj_to_xxx_to_image_proj.xform");
 #else
-    vcl_system("rm xxx_from_image_proj.tif");
-    vcl_system("rm xxx_to_image_proj.tif");
-    vcl_system("rm mosaic_xxx_from_image_proj_to_xxx_to_image_proj.xform");
+    if( vcl_system("rm xxx_from_image_proj.tif") != 0 )
+      {
+      cerr << "The command 'rm xxx_from_image_proj.tif' returned nonzero" << endl;
+      }
+    if( vcl_system("rm xxx_to_image_proj.tif") != 0 )
+      {
+      cerr << "The command 'rm xxx_to_image_proj.tif' returned nonzero" << endl;
+      }
+    if( vcl_system("rm mosaic_xxx_from_image_proj_to_xxx_to_image_proj.xform") != 0 )
+      {
+      cerr << "The command 'rm mosaic_xxx_from_image_proj_to_xxx_to_image_proj.xform' returned nonzero" << endl;
+      }
 #endif
   }
 

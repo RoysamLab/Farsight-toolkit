@@ -397,7 +397,7 @@ std::vector<double> ImageBrowser5D::RGBtoHSV(std::vector<unsigned char> rgb)
 	if( rgb.size() != 3)
 		return rVal;
 
-	double h,s,v;
+	double h,s,v = 0.0;
 
 	//Get RGB values and normalize:
 	double r = (double)rgb.at(0)/255.0;

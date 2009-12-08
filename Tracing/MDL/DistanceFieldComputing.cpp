@@ -44,15 +44,17 @@ struct  VoxelPosition
 
 int main(int argc, char *argv[])
 {
-   int sizeX, sizeY, sizeZ;
+  int sizeX = 0;
+  int sizeY = 0;
+  int sizeZ = 0;
 
   typedef unsigned char OutputPixelType;
   typedef itk::Image< OutputPixelType, 3 > OutputImageType;
   //check that the user specified the right number of command line arguments
   if(argc < 3)
     {
-    cerr << argv[0] << " <input binary image file>  <Disdance output  file>" << endl;
-    cerr << argv[0] << " <input binary image raw input file> <sizeX> <sizeY> <sizeZ>  <Disdance output file>"
+    cerr << argv[0] << " <input binary image file>  <Distance output  file>" << endl;
+    cerr << argv[0] << " <input binary image raw input file> <sizeX> <sizeY> <sizeZ>  <Distance output file>"
          << endl;
     return EXIT_FAILURE;
     }
@@ -60,25 +62,25 @@ int main(int argc, char *argv[])
   //check if the input image is .raw
   bool rawInput = false;
   string inputFileName = argv[1];
-  const char *DisdanceFileName;
+  const char *DistanceFileName;
 
   if(inputFileName.rfind(".raw") != string::npos)
     {
     //if so, the user is also required to pass in image dimensions
     if(argc < 6)
       {
-      cerr << "Usage: <input binary image raw input file> <sizeX> <sizeY> <sizeZ> <Disdance output file>" << endl;
+      cerr << "Usage: <input binary image raw input file> <sizeX> <sizeY> <sizeZ> <Distance output file>" << endl;
       return EXIT_FAILURE;
       }
     rawInput = true;
     sizeX = atoi(argv[2]);
     sizeY = atoi(argv[3]);
     sizeZ = atoi(argv[4]);
-    DisdanceFileName = argv[5];
+    DistanceFileName = argv[5];
     }
   else
     {
-    DisdanceFileName = argv[2];
+    DistanceFileName = argv[2];
     }
   
   DATATYPEIN *volin;
@@ -89,7 +91,7 @@ int main(int argc, char *argv[])
   int sizeExpand = 0;
 
   //make sure we can write to the output file
-  if((outfile=fopen(DisdanceFileName, "wb")) == NULL)
+  if((outfile=fopen(DistanceFileName, "wb")) == NULL)
     {
     cerr << "Output file open error!" << endl;
     return EXIT_FAILURE;

@@ -241,7 +241,8 @@ int findendx(Position ps)
 void spread(Position pos, int startx, int endx, int direction)
 {
 	Position pos1; // in a new row
-	int newy, newz = 0;
+	int newy = 0;
+  int newz = 0;
 	int startx0, endx0;
 	int startx1;
 	int laststartx;

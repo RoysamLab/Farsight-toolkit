@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
   std::stringstream( input ) >> frac2;
   const char *outfilename = argv[3];
 
-  const char *maskfilename;
+  const char *maskfilename = 0;
   if (argc == 5) maskfilename = argv[4];
 
   ReaderType::Pointer reader1 = ReaderType::New();

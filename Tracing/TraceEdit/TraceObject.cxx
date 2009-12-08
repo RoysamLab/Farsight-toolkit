@@ -181,7 +181,11 @@ bool TraceObject::ReadFromFeatureTracksFileForKymograph(char *filename,int type_
     double x,y,z;
     int t;
     TraceBit tbit;
-    fscanf(fp,"%d %d %lf %lf %lf",&track,&t,&x,&y,&z);//We do not represent the z axis, instead use it for coloring the tracks
+    //We do not represent the z axis, instead use it for coloring the tracks
+    if( fscanf(fp,"%d %d %lf %lf %lf",&track,&t,&x,&y,&z) == EOF )
+      {
+      cerr << "End-of-file encountered within fscanf" << endl;
+      }
 
     tbit.x = x; tbit.y = 2.97/2.79*y; tbit.z = t; tbit.id = z;line_count++;   
     tbit.r = 1;
@@ -214,7 +218,11 @@ bool TraceObject::ReadFromFeatureTracksFile(char *filename,int type_offset=0)
   {
     int track;
     TraceBit tbit;
-    fscanf(fp,"%d %d %lf %lf %lf",&track,&tbit.id,&tbit.x,&tbit.y,&tbit.z);
+    if(fscanf(fp,"%d %d %lf %lf %lf",&track,&tbit.id,&tbit.x,&tbit.y,&tbit.z)
+         == EOF)
+      {
+      cerr << "End-of-file enountered within fscanf" << endl;
+      }
     tbit.r = 1;
     if(track!=curr_track)
     {
@@ -1000,15 +1008,15 @@ bool TraceObject::ReadFromSuperellipseXML(char * filename)
 	currTrace = xmlTraceID;
 	int lid = this->getNewLineId();
 	while (currentEllipse)
-	{
+	  {
 		TraceLine * tline = new TraceLine();
 		tline->SetId(lid);
 		lid++;
 		currentEllipse->QueryIntAttribute("TraceID", &xmlTraceID);
-
-		int ptID =0;
-		double x = -1, y = -1, z = -1, a1 = -1, a2= -1, r = -1;
-	}//end currentEllipse
+    //feel free to uncomment when you do something with these variables...
+		//int ptID =0;
+		//double x = -1, y = -1, z = -1, a1 = -1, a2= -1, r = -1;
+	  }//end currentEllipse
 	return true;
 }
 bool TraceObject::ReadFromRPIXMLFile(char * filename)

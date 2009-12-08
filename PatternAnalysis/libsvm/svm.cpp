@@ -15,6 +15,7 @@ limitations under the License.
 #if defined(_MSC_VER)
 #pragma warning(disable : 4996)
 #endif
+#include <iostream>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,6 +24,8 @@ limitations under the License.
 #include <string.h>
 #include <stdarg.h>
 #include "svm.h"
+using std::cerr;
+using std::endl;
 typedef float Qfloat;
 typedef signed char schar;
 #ifndef min
@@ -2726,11 +2729,17 @@ svm_model *svm_load_model(const char *model_file_name)
 	char cmd[81];
 	while(1)
 	{
-		fscanf(fp,"%80s",cmd);
+		if( fscanf(fp,"%80s",cmd) == EOF )
+      {
+      cerr << "End of file encountered in fscanf!" << endl;
+      }
 
 		if(strcmp(cmd,"svm_type")==0)
 		{
-			fscanf(fp,"%80s",cmd);
+			if( fscanf(fp,"%80s",cmd) == EOF )
+        {
+        cerr << "End of file encountered in fscanf!" << endl;
+        }
 			int i;
 			for(i=0;svm_type_table[i];i++)
 			{
@@ -2752,7 +2761,10 @@ svm_model *svm_load_model(const char *model_file_name)
 		}
 		else if(strcmp(cmd,"kernel_type")==0)
 		{		
-			fscanf(fp,"%80s",cmd);
+			if( fscanf(fp,"%80s",cmd) == EOF )
+        {
+        cerr << "End of file encountered in fscanf!" << endl;
+        }
 			int i;
 			for(i=0;kernel_type_table[i];i++)
 			{
@@ -2773,49 +2785,99 @@ svm_model *svm_load_model(const char *model_file_name)
 			}
 		}
 		else if(strcmp(cmd,"degree")==0)
-			fscanf(fp,"%d",&param.degree);
+      {
+			if( fscanf(fp,"%d",&param.degree) == EOF )
+        {
+        cerr << "End of file encountered in fscanf!" << endl;
+        }
+      }
 		else if(strcmp(cmd,"gamma")==0)
-			fscanf(fp,"%lf",&param.gamma);
+      {
+			if( fscanf(fp,"%lf",&param.gamma) == EOF )
+        {
+        cerr << "End of file encountered in fscanf!" << endl;
+        }
+      }
 		else if(strcmp(cmd,"coef0")==0)
-			fscanf(fp,"%lf",&param.coef0);
+      {
+			if( fscanf(fp,"%lf",&param.coef0) == EOF )
+        {
+        cerr << "End of file encountered in fscanf!" << endl;
+        }
+      }
 		else if(strcmp(cmd,"nr_class")==0)
-			fscanf(fp,"%d",&model->nr_class);
+      {
+			if( fscanf(fp,"%d",&model->nr_class) == EOF )
+        {
+        cerr << "End of file encountered in fscanf!" << endl;
+        }
+      }
 		else if(strcmp(cmd,"total_sv")==0)
-			fscanf(fp,"%d",&model->l);
+      {
+			if( fscanf(fp,"%d",&model->l) == EOF )
+        {
+        cerr << "End of file encountered in fscanf!" << endl;
+        }
+      }
 		else if(strcmp(cmd,"rho")==0)
 		{
 			int n = model->nr_class * (model->nr_class-1)/2;
 			model->rho = Malloc(double,n);
 			for(int i=0;i<n;i++)
-				fscanf(fp,"%lf",&model->rho[i]);
+        {
+				if( fscanf(fp,"%lf",&model->rho[i]) == EOF )
+          {
+          cerr << "End of file encountered in fscanf!" << endl;
+          }
+        }
 		}
 		else if(strcmp(cmd,"label")==0)
 		{
 			int n = model->nr_class;
 			model->label = Malloc(int,n);
 			for(int i=0;i<n;i++)
-				fscanf(fp,"%d",&model->label[i]);
+        {
+				if( fscanf(fp,"%d",&model->label[i]) == EOF )
+          {
+          cerr << "End of file encountered in fscanf!" << endl;
+          }
+        }
 		}
 		else if(strcmp(cmd,"probA")==0)
 		{
 			int n = model->nr_class * (model->nr_class-1)/2;
 			model->probA = Malloc(double,n);
 			for(int i=0;i<n;i++)
-				fscanf(fp,"%lf",&model->probA[i]);
+        {
+				if( fscanf(fp,"%lf",&model->probA[i]) == EOF )
+          {
+          cerr << "End of file encountered in fscanf!" << endl;
+          }
+        }
 		}
 		else if(strcmp(cmd,"probB")==0)
 		{
 			int n = model->nr_class * (model->nr_class-1)/2;
 			model->probB = Malloc(double,n);
 			for(int i=0;i<n;i++)
-				fscanf(fp,"%lf",&model->probB[i]);
+        {
+				if( fscanf(fp,"%lf",&model->probB[i]) == EOF )
+          {
+          cerr << "End of file encountered in fscanf!" << endl;
+          }
+        }
 		}
 		else if(strcmp(cmd,"nr_sv")==0)
 		{
 			int n = model->nr_class;
 			model->nSV = Malloc(int,n);
 			for(int i=0;i<n;i++)
-				fscanf(fp,"%d",&model->nSV[i]);
+        {
+				if( fscanf(fp,"%d",&model->nSV[i]) == EOF )
+          {
+          cerr << "End of file encountered in fscanf!" << endl;
+          }
+        }
 		}
 		else if(strcmp(cmd,"SV")==0)
 		{
@@ -2876,7 +2938,12 @@ out:
 	{
 		model->SV[i] = &x_space[j];
 		for(int k=0;k<m;k++)
-			fscanf(fp,"%lf",&model->sv_coef[k][i]);
+      {
+			if( fscanf(fp,"%lf",&model->sv_coef[k][i]) == EOF )
+        {
+        cerr << "End of file encountered in fscanf!" << endl;
+        }
+      }
 		while(1)
 		{
 			int c;
@@ -2885,7 +2952,10 @@ out:
 				if(c=='\n') goto out2;
 			} while(isspace(c));
 			ungetc(c,fp);
-			fscanf(fp,"%d:%lf",&(x_space[j].index),&(x_space[j].value));
+			if( fscanf(fp,"%d:%lf",&(x_space[j].index),&(x_space[j].value)) == EOF )
+        {
+        cerr << "End of file encountered in fscanf!" << endl;
+        }
 			++j;
 		}	
 out2:

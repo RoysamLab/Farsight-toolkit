@@ -345,8 +345,7 @@ void Matrix::Read(FILE *F) {
   assert (F != NULL);
   for (int y = 0; y < 4; y++) {
     for (int x = 0; x < 4; x++) {
-      int scanned = fscanf (F,"%f",&data[y][x]);
-      assert (scanned == 1); 
+      assert ( fscanf (F,"%f",&data[y][x]) == 1 );
     }
   } 
 }

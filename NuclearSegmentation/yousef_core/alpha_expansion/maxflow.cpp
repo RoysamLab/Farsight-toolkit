@@ -670,11 +670,11 @@ void Graph::process_sink_orphan(node *i)
 
 Graph::flowtype Graph::maxflow()
 {
-	node *i, *j, *current_node = NULL, *s_start, *t_start;
-	captype *cap_middle, *rev_cap_middle;
-	arc_forward *a_for, *a_for_first, *a_for_last;
-	arc_reverse *a_rev, *a_rev_first, *a_rev_last;
-	nodeptr *np, *np_next;
+	node *i, *j, *current_node, *s_start, *t_start = NULL;
+	captype *cap_middle, *rev_cap_middle = NULL;
+	arc_forward *a_for, *a_for_first, *a_for_last = NULL;
+	arc_reverse *a_rev, *a_rev_first, *a_rev_last = NULL;
+	nodeptr *np, *np_next = NULL;
 
 
 	prepare_graph();

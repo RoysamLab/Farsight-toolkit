@@ -744,8 +744,11 @@ void load_points( char * fname)
 		printf("wo no! fp is null\n");
 
 	while (!feof(fp))
-	{
-		fscanf(fp,"%lf %lf %lf %*f %*f %*f",&z1,&y1,&x1);
+	  {
+		if( fscanf(fp,"%lf %lf %lf %*f %*f %*f",&z1,&y1,&x1) == EOF)
+      {
+      cerr << "End of file encountered in fscanf" << endl;
+      }
 		//		if(!(x1 <300 &&  y1 <600 && y1>400 ))
 		//				continue;
 
@@ -763,7 +766,7 @@ void load_points( char * fname)
 		maxx = MAX(maxx,(x-1)/SKIP+2);
 		maxy = MAX(maxy,(y-1)/SKIP+2);
 		maxz = MAX(maxz,z-1+2);
-	}
+	  }
 	printf("Read %d points. maxx = %d, maxy =%d,maxz = %d\n",count,maxx, maxy,maxz);
 	fclose(fp);
 }
@@ -784,9 +787,11 @@ void load_points_without_normal( char * fname)
 		printf("wo no! fp is null\n");
 
 	while (!feof(fp))
-	{
-
-		fscanf(fp,"%lf %lf %lf %d %lf",&z1,&y1,&x1,&l1,&l2);
+	  {
+		if( fscanf(fp,"%lf %lf %lf %d %lf",&z1,&y1,&x1,&l1,&l2) == EOF )
+      {
+      cerr << "End of file encountered in fscanf" << endl;
+      }
 		//if(!(x1 <256 && y1<256))
 		//	continue;
 		//	if(!(x1 >400 && x1< 600  && y1>400 && y1 <600 ))
@@ -814,7 +819,7 @@ void load_points_without_normal( char * fname)
 		maxx = MAX(maxx,(x-1)/SKIP+2);
 		maxy = MAX(maxy,(y-1)/SKIP+2);
 		maxz = MAX(maxz,z-1+2);
-	}
+	  }
 	printf("Read %d points. maxx = %d, maxy =%d,maxz = %d\n",count,maxx, maxy,maxz);
 	fclose(fp);
 	//scanf("%*d");
@@ -888,12 +893,15 @@ void load_points_other( char * fname)
 	for (int countery =0; countery <1024; countery ++)
 		for (int counterx =0; counterx <1024; counterx ++)
 			for (int counterz =0; counterz < 58; counterz ++)
-			{
+			  {
 				//		int ret =fscanf(fp,"%c%c",&a,&b);
 				//		fscanf(
 				//		fread(c,1,1,fp);
 				//		fread(c+1,1,1,fp);
-				fscanf(fp,"%d",&linteger);
+				if( fscanf(fp,"%d",&linteger) == EOF )
+          {
+          cerr << "End of file encountered in fscanf" << endl;
+          }
 				//	if(ret!=2)
 				//	{
 				//		printf("yo! %d\n",rand());
@@ -945,7 +953,7 @@ void load_points_other( char * fname)
 				//		}
 
 
-			}
+			  }
 
 			//printf("I got %d points of label 150\n",ran);
 			fclose(fp);
@@ -3033,7 +3041,7 @@ void LoadOBJ(char * fname)
 {
 	FILE *fp = fopen(fname,"r");
 	bool once = true;
-	Array<Vertex*> *array;
+	Array<Vertex*> *array = NULL;
 	maxx = -1;
 	maxy = -1;
 	maxz = -1;
@@ -3041,20 +3049,29 @@ void LoadOBJ(char * fname)
 	{
 		double a,b,c;
 		char ch;
-		fscanf(fp,"%c",&ch);
+		if( fscanf(fp,"%c",&ch) == EOF )
+      {
+      cerr << "End of file encountered in fscanf" << endl;
+      }
 		if(ch=='v')
-		{
-			fscanf(fp," %lf %lf %lf\n",&a,&b,&c);
+		  {
+			if( fscanf(fp," %lf %lf %lf\n",&a,&b,&c) == EOF )
+        {
+        cerr << "End of file encountered in fscanf" << endl;
+        }
 			//	printf("vertex %lf %lf %lf\n",a,b,c);
 			maxx = MAX(maxx,a);
 			maxy = MAX(maxy,b);
 			maxz = MAX(maxz,c);
 			m->addVertex(Vec3f(a,b,c));
-		}
+		  }
 		else if(ch=='f')
 		{
 			int p,q,r;
-			fscanf(fp," %d %d %d\n",&p,&q,&r);
+			if( fscanf(fp," %d %d %d\n",&p,&q,&r) == EOF )
+        {
+        cerr << "End of file encountered in fscanf" << endl;
+        }
 			//	printf("Face %d %d %d\n",p,q,r);
 			if(once)
 			{
@@ -3085,17 +3102,26 @@ void LoadOBJ(FILE *fp, Mesh *mesh)
 	{
 		double a,b,c;
 		char ch;
-		fscanf(fp,"%c",&ch);
+		if( fscanf(fp,"%c",&ch) == EOF )
+      {
+      cerr << "End of file encountered in fscanf" << endl;
+      }
 		if(ch=='v')
 		{
-			fscanf(fp," %lf %lf %lf\n",&a,&b,&c);
+			if( fscanf(fp," %lf %lf %lf\n",&a,&b,&c) == EOF )
+        {
+        cerr << "End of file encountered in fscanf" << endl;
+        }
 			//	printf("vertex %lf %lf %lf\n",a,b,c);
 			mesh->addVertex(Vec3f(a,b,c));
 		}
 		else if(ch=='f')
 		{
 			int p,q,r;
-			fscanf(fp," %d %d %d\n",&p,&q,&r);
+			if( fscanf(fp," %d %d %d\n",&p,&q,&r) == EOF )
+        {
+        cerr << "End of file encountered in fscanf" << endl;
+        }
 			//	printf("Face %d %d %d\n",p,q,r);
 			if(once)
 			{
@@ -4760,7 +4786,10 @@ void load_votes_from_file(char *filename)
 		{
 			for(int coz =0; coz <maxz; coz++)
 			{
-				fscanf(fp,"%d %d %d %d",&a[0],&a[1],&a[2],&a[3]);
+				if( fscanf(fp,"%d %d %d %d",&a[0],&a[1],&a[2],&a[3]) == EOF )
+          {
+          cerr << "End of file encountered in fscanf" << endl;
+          }
 				if(feof(fp))
 					goto label;
 			//	printf("%d %d %d %d\n",a[0],a[1],a[2],a[3]);

@@ -253,14 +253,23 @@ int main(int argc, char **argv)
   char str[200]; 
   for (i=0;i<12;i++)
     {
-    fscanf(inskeleton,"%s",str);
+    if( fscanf(inskeleton,"%s",str)  == EOF )
+      {
+      cerr << "fscanf encountered end of file!" << endl;
+      }
     printf("%s\n", str); 
     }
   int NumAllPoints;
-  fscanf(inskeleton,"%s",str);
+  if( fscanf(inskeleton,"%s",str) == EOF )
+    {
+    cerr << "fscanf encountered end of file!" << endl;
+    }
   NumAllPoints = atoi(str);
   printf("There are %d skeleton' points \n", NumAllPoints);
-  fscanf(inskeleton,"%s",str);
+  if( fscanf(inskeleton,"%s",str) == EOF )
+    {
+    cerr << "fscanf encountered end of file!" << endl;
+    }
   //--------------------------------------------------------------------------//
   Allpoints = new VoxelPosition[NumAllPoints];
 
@@ -270,11 +279,20 @@ int main(int argc, char **argv)
   //------------------------read 3D skeleton points---------------------------//
   for (i=0;i<NumAllPoints;i++)
   {
-   fscanf (inskeleton,"%f",&temp);
+   if( fscanf (inskeleton,"%f",&temp) == EOF )
+     {
+     cerr << "fscanf encountered end of file!" << endl;
+     }
    Allpoints[i].x = temp;
-   fscanf (inskeleton,"%f",&temp);
-     Allpoints[i].y = -temp; // change the sign,
-   fscanf (inskeleton,"%f",&temp);
+   if( fscanf (inskeleton,"%f",&temp) == EOF )
+     {
+     cerr << "fscanf encountered end of file!" << endl;
+     }
+   Allpoints[i].y = -temp; // change the sign,
+   if( fscanf (inskeleton,"%f",&temp) == EOF )
+     {
+     cerr << "fscanf encountered end of file!" << endl;
+     }
    Allpoints[i].z =temp;
   }
   //--------------------------------------------------------------------------//
@@ -301,9 +319,19 @@ int main(int argc, char **argv)
   //--------------------------------------------------------------------------//
   //---------------------- read in the 'LINES' line --------------------------//
   int NumLines, SkipNmuber;
-  fscanf(inskeleton,"%s",str); // read LINES
-  fscanf(inskeleton,"%d",&NumLines);
-  fscanf(inskeleton,"%d",&SkipNmuber); // skip the last number in this line
+  if( fscanf(inskeleton,"%s",str) == EOF ) // read LINES
+    {
+    cerr << "fscanf encountered end of file!" << endl;
+    }
+  if( fscanf(inskeleton,"%d",&NumLines) == EOF )
+    {
+    cerr << "fscanf encountered end of file!" << endl;
+    }
+  // skip the last number in this line
+  if( fscanf(inskeleton,"%d",&SkipNmuber) == EOF )
+    {
+    cerr << "fscanf encountered end of file!" << endl;
+    }
    
   //------------------------------ sub - end ---------------------------------//
 
@@ -315,9 +343,18 @@ int main(int argc, char **argv)
   for (i=0;i<NumLines;i++)
     {
     // Read one line into an array;
-    fscanf (inskeleton,"%d",&tmp1); // skip first number in the Line
-    fscanf (inskeleton,"%d",&tmp2); // read second number in the line 
-    fscanf (inskeleton,"%d",&tmp3); // read third number in the line 
+    if( fscanf (inskeleton,"%d",&tmp1) == EOF ) // skip first number in the Line
+      {
+      cerr << "fscanf encountered end of file!" << endl;
+      }
+    if( fscanf (inskeleton,"%d",&tmp2) == EOF ) // read second number in the line 
+      {
+      cerr << "fscanf encountered end of file!" << endl;
+      }
+    if( fscanf (inskeleton,"%d",&tmp3) == EOF ) // read third number in the line 
+      {
+      cerr << "fscanf encountered end of file!" << endl;
+      }
   
     tmpdeg = graphInfPoints[tmp2].deg; // get the corresponding deg of the node;
     graphInfPoints[tmp2].deg = tmpdeg+1;

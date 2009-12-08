@@ -53,8 +53,10 @@ struct  VoxelPosition
 int main(int argc, char **argv)
 {
   //ifstream fin;
-  FILE  *smoothbackbone,*spine, *ExtraSpine = 0;
-  FILE  *outrefineskel;
+  FILE *smoothbackbone = 0;
+  FILE *spine = 0;
+  FILE *ExtraSpine = 0;
+  FILE *outrefineskel = 0;
   
   std::string filedir;
   std::string infilename;
@@ -136,25 +138,45 @@ int main(int argc, char **argv)
   char str[200]; 
   for (i=0;i<12;i++)
     {
-    fscanf(smoothbackbone,"%s",str);
+    if( fscanf(smoothbackbone,"%s",str) == EOF )
+      {
+      cerr << "End of file encountered in fscanf!" << endl;
+      }
     }
  
-  fscanf(smoothbackbone,"%s",str);
+  if( fscanf(smoothbackbone,"%s",str) == EOF )
+    {
+    cerr << "End of file encountered in fscanf!" << endl;
+    }
   NumBackbonePoints = atoi(str);
   printf("There are %d skeleton' points \n", NumBackbonePoints);
-  fscanf(smoothbackbone,"%s",str);
+  if( fscanf(smoothbackbone,"%s",str) == EOF )
+    {
+    cerr << "End of file encountered in fscanf!" << endl;
+    }
 
   AllBackbonepoints = new VoxelPosition[ NumBackbonePoints];
   float temp;  
   for (i=0;i<NumBackbonePoints;i++)
-  {
-   fscanf (smoothbackbone,"%f",&temp);
-   AllBackbonepoints[i].x = temp;
-   fscanf (smoothbackbone,"%f",&temp);
-   AllBackbonepoints[i].y = temp; // change the sign,
-   fscanf (smoothbackbone,"%f",&temp);
-   AllBackbonepoints[i].z =temp;
-  }
+    {
+     if( fscanf (smoothbackbone,"%f",&temp) == EOF ) 
+       {
+       cerr << "End of file encountered in fscanf!" << endl;
+       }
+     AllBackbonepoints[i].x = temp;
+
+     if( fscanf (smoothbackbone,"%f",&temp) == EOF ) 
+       {
+       cerr << "End of file encountered in fscanf!" << endl;
+       }
+     AllBackbonepoints[i].y = temp; // change the sign,
+
+     if( fscanf (smoothbackbone,"%f",&temp) == EOF ) 
+       {
+       cerr << "End of file encountered in fscanf!" << endl;
+       }
+     AllBackbonepoints[i].z =temp;
+    }
  
   //- choose the real backpoints from the Backbone.VTK file 
 
@@ -164,18 +186,39 @@ int main(int argc, char **argv)
    RealPointsID[i]=false;// init flag
   }
  
-  fscanf(smoothbackbone,"%s",str); // read LINES
-  fscanf(smoothbackbone,"%d",&NumLines);
-  fscanf(smoothbackbone,"%d",&SkipNmuber); // skip the last number in this line
+  if( fscanf(smoothbackbone,"%s",str) == EOF ) // read LINES
+    {
+    cerr << "End of file encountered in fscanf!" << endl;
+    }
+  if( fscanf(smoothbackbone,"%d",&NumLines) == EOF )
+    {
+    cerr << "End of file encountered in fscanf!" << endl;
+    }
+  // skip the last number in this line
+  if( fscanf(smoothbackbone,"%d",&SkipNmuber) == EOF )
+    {
+    cerr << "End of file encountered in fscanf!" << endl;
+    }
   for (i=0;i<NumLines;i++)
     {
     // Read one line into an array;
-    fscanf (smoothbackbone,"%d",&tmp1); // skip first number in the Line
-    fscanf (smoothbackbone,"%d",&tmp2); // read second number in the line 
-    fscanf (smoothbackbone,"%d",&tmp3); // read third number in the line 
+    // skip first number in the Line
+    if( fscanf (smoothbackbone,"%d",&tmp1) == EOF )
+      {
+      cerr << "End of file encountered in fscanf!" << endl;
+      }
+    // skip second number in the Line
+    if( fscanf (smoothbackbone,"%d",&tmp2) == EOF )
+      {
+      cerr << "End of file encountered in fscanf!" << endl;
+      }
+    // skip third number in the Line
+    if( fscanf (smoothbackbone,"%d",&tmp3) == EOF )
+      {
+      cerr << "End of file encountered in fscanf!" << endl;
+      }
     RealPointsID[tmp2]= true;
-	RealPointsID[tmp3]= true;
-
+	  RealPointsID[tmp3]= true;
     }
   fclose (smoothbackbone);
 
@@ -186,23 +229,40 @@ int main(int argc, char **argv)
   {
    for (i=0;i<12;i++)
     {
-    fscanf(spine,"%s",str);
+    if( fscanf(spine,"%s",str) == EOF )
+      {
+      cerr << "End of file encountered in fscanf!" << endl;
+      }
     }
-  
-   fscanf(spine,"%s",str);
+   if( fscanf(spine,"%s",str) == EOF )
+     {
+     cerr << "End of file encountered in fscanf!" << endl;
+     }
    NumSpinePoints = atoi(str);
    printf("There are %d spine skeleton' points \n", NumSpinePoints);
-   fscanf(spine,"%s",str);
+   if( fscanf(spine,"%s",str) == EOF )
+     {
+     cerr << "End of file encountered in fscanf!" << endl;
+     }
    AllSpinepoints = new VoxelPosition[NumSpinePoints];
    float temp3;  
    for (i=0;i<NumSpinePoints;i++)
-   {
-    fscanf (spine,"%f",&temp3);
-    AllSpinepoints[i].x = temp3;
-    fscanf (spine,"%f",&temp3);
-    AllSpinepoints[i].y = temp3; // change the sign,
-    fscanf (spine,"%f",&temp3);
-    AllSpinepoints[i].z =temp3;
+     {
+     if( fscanf(spine,"%f",&temp3) == EOF )
+       {
+       cerr << "End of file encountered in fscanf!" << endl;
+       }
+     AllSpinepoints[i].x = temp3;
+     if( fscanf(spine,"%f",&temp3) == EOF )
+       {
+       cerr << "End of file encountered in fscanf!" << endl;
+       }
+     AllSpinepoints[i].y = temp3; // change the sign,
+     if( fscanf(spine,"%f",&temp3) == EOF )
+       {
+       cerr << "End of file encountered in fscanf!" << endl;
+       }
+     AllSpinepoints[i].z =temp3;
    }
 
    RealSpineID =  new bool [NumSpinePoints];
@@ -211,18 +271,36 @@ int main(int argc, char **argv)
    RealSpineID[i]=false;// init flag
   }
  
-  fscanf(spine,"%s",str); // read LINES
-  fscanf(spine,"%d",&NumLines);
-  fscanf(spine,"%d",&SkipNmuber); // skip the last number in this line
+  if( fscanf(spine,"%s",str) == EOF ) // read LINES
+    {
+    cerr << "End of file encountered in fscanf!" << endl;
+    }
+  if( fscanf(spine,"%d",&NumLines) == EOF )
+    {
+    cerr << "End of file encountered in fscanf!" << endl;
+    }
+  // skip the last number in this line
+  if( fscanf(spine,"%d",&SkipNmuber) == EOF ) 
+    {
+    cerr << "End of file encountered in fscanf!" << endl;
+    }
   for (i=0;i<NumLines;i++)
     {
     // Read one line into an array;
-    fscanf (spine,"%d",&tmp1); // skip first number in the Line
-    fscanf (spine,"%d",&tmp2); // read second number in the line 
-    fscanf (spine,"%d",&tmp3); // read third number in the line 
+    if( fscanf (spine,"%d",&tmp1) == EOF ) // skip first number in the Line
+      {
+      cerr << "End of file encountered in fscanf!" << endl;
+      }
+    if( fscanf (spine,"%d",&tmp2) == EOF ) // read second number in the line 
+      {
+      cerr << "End of file encountered in fscanf!" << endl;
+      }
+    if( fscanf (spine,"%d",&tmp3) == EOF ) // read third number in the line 
+      {
+      cerr << "End of file encountered in fscanf!" << endl;
+      }
     RealSpineID[tmp2]= true;
-	RealSpineID[tmp3]= true;
-
+	  RealSpineID[tmp3]= true;
     }
    fclose (spine);
 
@@ -233,38 +311,72 @@ int main(int argc, char **argv)
 
    for (i=0;i<12;i++)
     {
-    fscanf(ExtraSpine,"%s",str);
+    if( fscanf(ExtraSpine,"%s",str) == EOF )
+      {
+      cerr << "End of file encountered in fscanf!" << endl;
+      }
     }
  
-   fscanf(ExtraSpine,"%s",str);
+   if( fscanf(ExtraSpine,"%s",str) == EOF )
+     {
+     cerr << "End of file encountered in fscanf!" << endl;
+     }
    NumExtraSpinePoints = atoi(str);
-   fscanf(ExtraSpine,"%s",str);
+   if( fscanf(ExtraSpine,"%s",str) == EOF )
+     {
+     cerr << "End of file encountered in fscanf!" << endl;
+     }
    AllExtraSpinepoints = new VoxelPosition[NumExtraSpinePoints];
    for (i=0;i<NumExtraSpinePoints;i++)
-   {
-    fscanf (ExtraSpine,"%f",&temp);
-    AllExtraSpinepoints[i].x = temp;
-    fscanf (ExtraSpine,"%f",&temp);
-    AllExtraSpinepoints[i].y = temp; // change the sign,
-    fscanf (ExtraSpine,"%f",&temp);
-    AllExtraSpinepoints[i].z =temp;
-   }
+     {
+     if( fscanf (ExtraSpine,"%f",&temp) == EOF )
+       {
+       cerr << "End of file encountered in fscanf!" << endl;
+       }
+     AllExtraSpinepoints[i].x = temp;
+     if( fscanf (ExtraSpine,"%f",&temp) == EOF )
+       {
+       cerr << "End of file encountered in fscanf!" << endl;
+       }
+     AllExtraSpinepoints[i].y = temp; // change the sign,
+     if( fscanf (ExtraSpine,"%f",&temp) == EOF )
+       {
+       cerr << "End of file encountered in fscanf!" << endl;
+       }
+     AllExtraSpinepoints[i].z =temp;
+     }
 
    ExtraSpineID =  new bool [NumExtraSpinePoints];
    for (i=0;i<NumExtraSpinePoints;i++)
-  {
-   ExtraSpineID[i]=false;// init flag
-  }
+     {
+     ExtraSpineID[i]=false;// init flag
+     }
  
-  fscanf(ExtraSpine,"%s",str); // read LINES
-  fscanf(ExtraSpine,"%d",&NumLines);
-  fscanf(ExtraSpine,"%d",&SkipNmuber); // skip the last number in this line
+  if( fscanf(ExtraSpine,"%s",str) == EOF ) // read LINES
+    {
+    }
+  if( fscanf(ExtraSpine,"%d",&NumLines) == EOF )
+    {
+    }
+  // skip the last number in this line
+  if( fscanf(ExtraSpine,"%d",&SkipNmuber) == EOF ) 
+    {
+    }
   for (i=0;i<NumLines;i++)
     {
     // Read one line into an array;
-    fscanf (ExtraSpine,"%d",&tmp1); // skip first number in the Line
-    fscanf (ExtraSpine,"%d",&tmp2); // read second number in the line 
-    fscanf (ExtraSpine,"%d",&tmp3); // read third number in the line 
+    if( fscanf (ExtraSpine,"%d",&tmp1) == EOF ) // skip first number in the Line
+      {
+      cerr << "End of file encountered in fscanf!" << endl;
+      }
+    if( fscanf (ExtraSpine,"%d",&tmp2) == EOF ) // read second number in the line
+      {
+      cerr << "End of file encountered in fscanf!" << endl;
+      }
+    if( fscanf (ExtraSpine,"%d",&tmp3) == EOF ) // read third number in the line
+      {
+      cerr << "End of file encountered in fscanf!" << endl;
+      }
     ExtraSpineID[tmp2]= true;
 	ExtraSpineID[tmp3]= true;
 

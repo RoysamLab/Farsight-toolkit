@@ -247,7 +247,11 @@ vtkSmartPointer<vtkPolyData> GetLines(char*filename_microgliatrace)
 				start = true;
 				continue;
 			}
-			fscanf(fp,"%*f %*f");//fscanf(fp,"%*f %*f %*d %*d %*d");
+      //fscanf(fp,"%*f %*f %*d %*d %*d");
+			if( fscanf(fp,"%*f %*f") == EOF )
+        {
+        cerr << "End of file reached within fscanf" << endl;
+        }
 			start = false;
 			Vec3f temp;
 			temp.x=x/SKIP;
@@ -329,7 +333,11 @@ void WriteLines(char*filename_microgliatrace, char *filename_write)
 				start = true;
 				continue;
 			}
-			fscanf(fp,"%*f %*f %*f %*f %*f");//fscanf(fp,"%*f %*f %*d %*d %*d");
+      //fscanf(fp,"%*f %*f %*d %*d %*d");
+			if( fscanf(fp,"%*f %*f %*f %*f %*f") == EOF )
+        {
+        cerr << "End of file reached within fscanf" << endl;
+        }
 			start = false;
 			Vec3f temp;
 			temp.x=x/SKIP;
@@ -391,8 +399,11 @@ void loadImageFromFile(char*filename,vtkSmartPointer<vtkImageData> imdata, int d
 		printf("not null!\n");
 	int n=0;
 	while(1)
-	{
-		fscanf(fp,"%lf %lf %lf %*f %*f",&z,&y,&x);
+	  {
+		if( fscanf(fp,"%lf %lf %lf %*f %*f",&z,&y,&x) == EOF )
+      {
+      cerr << "End of file reached within fscanf" << endl;
+      }
 		//fscanf(fp,"%lf %lf %lf %*lf %*lf",&z,&y,&x);
 		n++;
 		if(n%10000==0)
@@ -404,7 +415,7 @@ void loadImageFromFile(char*filename,vtkSmartPointer<vtkImageData> imdata, int d
 		*((unsigned char*)(imdata->GetScalarPointer(x/SKIP,y/SKIP,z)))=255;
 	//	}
 		//IM((int)x/SKIP,(int)y,(int)z)=255;
-	}
+	  }
 	fclose(fp);
 	printf("Done\n");
 	//imdata->Print(cout);
@@ -1086,7 +1097,10 @@ int main(int argc, char**argv)
 	bool mask[500];
 	int counter=0;
 	float scale[3];
-	fscanf(fp,"%f %f %f\n",scale, scale+1,scale+2);
+	if( fscanf(fp,"%f %f %f\n",scale, scale+1,scale+2) == EOF )
+    {
+    cerr << "End of file reached within fscanf" << endl;
+    }
 	while(fgets(buff,1000,fp)!=NULL)
 	{
 		char filename[1024];

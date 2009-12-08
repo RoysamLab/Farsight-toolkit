@@ -269,7 +269,8 @@ void insertNormal(const Vec3f &p1, const Vec3f &p2, const Vec3f &p3) {
   glNormal3f(normal.x(), normal.y(), normal.z());
 }
 
-Vec3f Radiosity::whichVisualization(enum RENDER_MODE mode, Face *f, int i) {
+Vec3f Radiosity::whichVisualization(enum RENDER_MODE mode, Face *f, int i)
+{
   assert (getPatch(i) == f);
   assert (i >= 0 && i < n);
   if (mode == RENDER_LIGHTS) {
@@ -1017,13 +1018,19 @@ void GLCanvas::redo_editing()
 void GLCanvas::get_annotation(void)
 {
 	printf("\nEnter the annotation for the current edit :");
-	fgets(curr_annotation, sizeof(curr_annotation), stdin);
+	if( fgets(curr_annotation, sizeof(curr_annotation), stdin) == NULL )
+    {
+    cerr << "fgets returned null..." << endl;
+    }
 }
 void GLCanvas::load_edits(void)
 {
 	printf("\n Enter the filename to load the edits from: ");
 	char filename[512];
-	fgets(filename, sizeof(filename), stdin);
+	if( fgets(filename, sizeof(filename), stdin) == NULL )
+    {
+    cerr << "fgets returned null..." << endl;
+    }
 	//char ch;
 	//while((ch=getc(stdin))!=EOF);
 	FILE * fp = fopen(filename,"r");
@@ -1038,19 +1045,37 @@ void GLCanvas::load_edits(void)
 	while(fscanf(fp,"Edit %d\n",&num)>0)
 	{
 		pc++;
-		fscanf(fp,"Type %d\n",&curr_type);
+		if( fscanf(fp,"Type %d\n",&curr_type) == EOF )
+      {
+      cerr << "EOF encountered by fscanf" << endl;
+      }
 		t.type = curr_type;
 		t.edit_number = num;
-		fscanf(fp,"Triangles %d %d %d\n",&t.a,&t.b,&t.c);
-		fgets(filename,512,fp);
+		if( fscanf(fp,"Triangles %d %d %d\n",&t.a,&t.b,&t.c) == EOF )
+      {
+      cerr << "EOF encountered by fscanf" << endl;
+      }
+		if( fgets(filename,512,fp) == NULL )
+      {
+      cerr << "fgets returned null..." << endl;
+      }
 		printf("f-%s\n",filename);
-		fgets(filename,512,fp);
+		if( fgets(filename,512,fp) == NULL )
+      {
+      cerr << "fgets returned null..." << endl;
+      }
 		printf("f-%s\n",filename);
-		fgets(filename,512,fp);
+		if( fgets(filename,512,fp) == NULL )
+      {
+      cerr << "fgets returned null..." << endl;
+      }
 		printf("f-%s\n",filename);
 		//finished throwing junk
 		fscanf(fp,"Annotation:'");
-		fgets(t.annotation,512,fp);
+		if( fgets(t.annotation,512,fp) == NULL )
+      {
+      cerr << "fgets returned null..." << endl;
+      }
 	//	printf("\nt.annotation size = %d\n t.annotation = |%s|\n",strlen(t.annotation),t.annotation);
 		t.annotation[strlen(t.annotation)-2]=0;
 	//	printf("annot-%s-",t.annotation);
@@ -1129,7 +1154,10 @@ void GLCanvas::save_edits(void)
 	//ask for the filename
 	printf("\nEnter the filename to save the edits: ");
 	char filename[512];
-	fgets(filename, sizeof(filename), stdin);
+	if( fgets(filename, sizeof(filename), stdin) == NULL )
+    {
+    cerr << "fgets returned null..." << endl;
+    }
 	printf("Writing to file %s\n",filename);
 	FILE * fp = fopen(filename,"w");
 	vector<trio> stk = radiosity->getMesh()->undo_operations;

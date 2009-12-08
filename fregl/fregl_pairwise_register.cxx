@@ -249,7 +249,8 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
       metric->SetFixedImageRegion( to_image_crop->GetRequestedRegion() );
       //metric->Initialize();
 
-      double value, min_value;
+      double value = 0;
+      double min_value = 1000000;
       int index = 0;
       bool value_set = false;
       for( int dx = -10; dx <=10; dx++) {

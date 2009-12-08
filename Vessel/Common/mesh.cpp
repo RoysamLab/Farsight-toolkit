@@ -69,7 +69,10 @@ void Mesh::texture_list_init()
 	//scanf("%*d");
 	FILE * fpi = fopen(pic_name,"rb");
 	unsigned char temp[77];
-	fread((void*)temp,sizeof(unsigned char),76,fpi);
+	if( fread((void*)temp,sizeof(unsigned char),76,fpi) != 76 )
+    {
+    cerr << "Less than 76 elements read by fread" << endl;
+    }
 	//printf("%d %d %d\n",CFH(temp[0],0)+CFH(temp[1],2),CFH(temp[2],0)+CFH(temp[3],2),CFH(temp[4],0)+CFH(temp[5],2));
 	rwidth = CFH(temp[0],0)+CFH(temp[1],2);
 	rlength = CFH(temp[2],0)+CFH(temp[3],2);
@@ -406,13 +409,17 @@ void Mesh::removeFace2(Face *f) {
 
   // remove elements from master lists
 //  printf("%d %d %d\n",ea,eb,ec);
-  scanf("%*d");
+  int unused = scanf("%*d");
+  unused++;
   edges->Remove(ea);
-  scanf("%*d");
+  unused = scanf("%*d");
+  unused++;
   edges->Remove(eb);
-  scanf("%*d");
+  unused = scanf("%*d");
+  unused++;
   edges->Remove(ec);
-  scanf("%*d");
+  unused = scanf("%*d");
+  unused++;
 //  edges->Remove(ed);
  //printf("just before faces->Remove(f)\n");
 
