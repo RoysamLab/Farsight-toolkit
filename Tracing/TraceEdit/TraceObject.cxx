@@ -988,6 +988,29 @@ vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
   return this->PolyTraces;
 }
 
+bool TraceObject::ReadFromSuperellipseXML(char * filename)
+{
+	int currTrace = -1, xmlTraceID = -1;
+	cout << "Started reading from " << filename << endl;
+	TiXmlDocument doc(filename);
+	doc.LoadFile();
+	TiXmlHandle docHandle( &doc );
+	TiXmlElement* currentEllipse = docHandle.FirstChild("Superellipse").Element();
+	currentEllipse->QueryIntAttribute("TraceID", &xmlTraceID);
+	currTrace = xmlTraceID;
+	int lid = this->getNewLineId();
+	while (currentEllipse)
+	{
+		TraceLine * tline = new TraceLine();
+		tline->SetId(lid);
+		lid++;
+		currentEllipse->QueryIntAttribute("TraceID", &xmlTraceID);
+
+		int ptID =0;
+		double x = -1, y = -1, z = -1, a1 = -1, a2= -1, r = -1;
+	}//end currentEllipse
+	return true;
+}
 bool TraceObject::ReadFromRPIXMLFile(char * filename)
 {
   cout << "Started reading from " << filename << endl;

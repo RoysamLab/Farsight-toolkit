@@ -58,6 +58,7 @@ public:
 //	I/O functions
 	bool ReadFromSWCFile(char * filename);
 	bool ReadFromRPIXMLFile(char * filename);
+	bool ReadFromSuperellipseXML(char * filename);
 	void ReadFromVTKFile(char * filename);
 	bool ReadFromFeatureTracksFile(char *filename, int type_offset);
 	bool ReadFromFeatureTracksFileForKymograph(char *filename,int type_offset);
