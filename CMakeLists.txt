@@ -73,6 +73,9 @@ SUBDIRS( ftkImage )
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkCommon )
 SUBDIRS( ftkCommon )
 
+INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkGUI )
+SUBDIRS( ftkGUI )
+
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/tinyxml )
 SUBDIRS( tinyxml )
 
@@ -91,9 +94,6 @@ IF( NOT BUILD_EMBREX )
   ENDIF(WIN32)
 ENDIF( NOT BUILD_EMBREX )
 ENDIF(USE_KPLS)
-
-INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkGUI )
-SUBDIRS( ftkGUI )
 
 ####################################################################################
 ####################################################################################
