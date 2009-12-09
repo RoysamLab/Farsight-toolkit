@@ -260,7 +260,7 @@ void yousef_nucleus_seg::runClustering()
 		std::cout << "Starting Initial Clustering" << std::endl;
 		//ExtractSeeds();
 		int *seed_xmclust, *seed_ymclust;
-		int numseedsmclust = mySeeds.size();
+		int numseedsmclust = (int)mySeeds.size();
 		seed_xmclust = (int *) malloc(mySeeds.size()*sizeof(int));
 		seed_ymclust = (int *) malloc(mySeeds.size()*sizeof(int));
 		for (int i=0; i<((int)mySeeds.size()); ++i)
