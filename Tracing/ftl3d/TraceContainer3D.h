@@ -56,6 +56,7 @@ public:
 	itkNewMacro(Self);
 
 	typedef std::vector<Trace*> TraceContainer;
+	void Configure(TraceConfig::Pointer&);
 	void ComputeTrace(ImageType3D::Pointer , Seed2Seg::Pointer );
 	void WriteTraceToTxtFile(std::string SegTxtFname);
 	void WriteTraceToXMLFile(std::string);
@@ -64,6 +65,8 @@ public:
 private:
 	NodeContainer3D::Pointer NodeList;
 	TraceContainer TraceList;
+	double m_THRESH, m_minL, m_Stepsize, m_AspectRatio;
+	itk::FixedArray<double, 3> m_Spacing;
 
 	//TVessel* Step(TVessel *, double* , ImageType3D::Pointer , unsigned long );
 	Trace* InitiazeTracer(TVessel* , unsigned long );

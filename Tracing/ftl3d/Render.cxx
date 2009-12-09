@@ -15,7 +15,7 @@ limitations under the License.
 
 /**
  \brief Code to render the traces . 
- \author $ Author: Amit Mukherjee, Arunachalam Narayanaswamy $
+ \author $ Author: Amit Mukherjee $
  \version $Revision 1.0 $
  \date May 05 2009
 */
@@ -111,9 +111,90 @@ void ConnectPipelines(ExportFilterType::Pointer exporter, vtkImageImport*& impor
   importer->SetCallbackUserData(exporter->GetCallbackUserData());
 }
 
+class vtkSlider2DCallbackBrightness : public vtkCommand
+{
+public:
+  static vtkSlider2DCallbackBrightness *New() 
+    { return new vtkSlider2DCallbackBrightness; }
+  virtual void Execute(vtkObject *caller, unsigned long f, void* g)
+    {
+      vtkSliderWidget *sliderWidget = 
+        reinterpret_cast<vtkSliderWidget*>(caller);
+      double value = static_cast<vtkSliderRepresentation *>(sliderWidget->GetRepresentation())->GetValue();
+
+      vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
+    opacityTransferFunction->AddPoint(1,0.0);
+    //opacityTransferFunction->AddPoint(2+256*(1-value),0.2);
+    opacityTransferFunction->AddPoint(255,value);
+     this->volume->GetProperty()->SetScalarOpacity(opacityTransferFunction);
+    }
+  vtkSlider2DCallbackBrightness() {
+
+  }
+
+  vtkSmartPointer<vtkVolume> volume;
+};
+
+class vtkSlider2DCallbackContrast : public vtkCommand
+{
+public:
+  static vtkSlider2DCallbackContrast *New() 
+    { return new vtkSlider2DCallbackContrast; }
+  virtual void Execute(vtkObject *caller, unsigned long f, void* g)
+    {
+      vtkSliderWidget *sliderWidget = 
+        reinterpret_cast<vtkSliderWidget*>(caller);
+      double value = static_cast<vtkSliderRepresentation *>(sliderWidget->GetRepresentation())->GetValue();
+
+    vtkColorTransferFunction *colorTransferFunction = vtkColorTransferFunction::New();
+    colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
+    colorTransferFunction->AddRGBPoint(255*(1-value),1.0,1.0,1.0);
+     this->volume->GetProperty()->SetColor(colorTransferFunction);
+    }
+  vtkSlider2DCallbackContrast() {
+
+  }
+
+  vtkSmartPointer<vtkVolume> volume;
+};
 
 
+double getEuclideanDistance(const std::vector<TraceNode*>& NodeContainer, long nID, TraceNode* nd)	{
+	std::vector<TraceNode*>::const_iterator itn = NodeContainer.begin();
+	while (itn < NodeContainer.end())	{
+		if ((*itn)->ID == nID)	{
+			double dist = vcl_sqrt( (nd->loc[0] - (*itn)->loc[0]) * (nd->loc[0] - (*itn)->loc[0]) + 
+						(nd->loc[1] - (*itn)->loc[1]) * (nd->loc[1] - (*itn)->loc[1]) + 
+						(nd->loc[2] - (*itn)->loc[2]) * (nd->loc[2] - (*itn)->loc[2]) );
+			return dist;
+		}
+	}
+	return 0.0;
+}
+/*
+void PrintStatistics(const std::vector<TraceNode*>& NodeContainer)	{
+	std::vector<double> length;
+	length.resize(NodeContainer.size());
+	std::vector<double>::iterator itl = length.begin();
+	while (itl < length.end())	{
+		(*itl) = 0.0;
+		++itl;
+	}
+	
+	std::vector<TraceNode*>::const_iterator itn = NodeContainer.begin();
 
+	while(itn < NodeContainer.end())	{
+		for (int i = 0; i < (*itn)->nbrID.size() ; i++) {
+			long tID = (*itn)->TraceID;
+			if ((*itn)->nbrID[i] < (*itn)->ID)	{
+				length[tID] += getEuclideanDistance(NodeContainer, (*itn)->nbrID[i], (*itn));
+			}
+		}
+		++itn;
+	}
+
+}
+*/
 int main(const int argc, char** argv)	{
 	if (argc != 3)	{
 		std::cout << "Usage: "<<argv[0] << " [ImageFile] [TraceFile]" <<std::endl;
@@ -131,8 +212,17 @@ int main(const int argc, char** argv)	{
 	rescaler->SetOutputMinimum(0);
 	rescaler->SetInput(reader->GetOutput());
     ImageType::Pointer im2 = rescaler->GetOutput();
-	im2->Update();
+	try {
+		im2->Update();
+	}
+	catch (itk::ExceptionObject &e)	{
+		std::cerr << "Could not read file "<< std::endl << e << std::endl;
+	}
+
 	std::cout << "done! " <<std::endl << "Reading " << argv[2] << " ...";
+
+	double spacing[] = {1.0, 1.0, 1.0};
+	im2->SetSpacing(spacing);
 
 	ExportFilterType::Pointer itkExporter = ExportFilterType::New();
 	itkExporter->SetInput( im2 );
@@ -141,7 +231,7 @@ int main(const int argc, char** argv)	{
     ConnectPipelines(itkExporter, vtkImporter);
     
 	VTK_CREATE(vtkPiecewiseFunction, opacityTransferFunction);
-	opacityTransferFunction->AddPoint(2,0.0);
+	opacityTransferFunction->AddPoint(1,0.0);
 	//opacityTransferFunction->AddPoint(20,1.0);
 	opacityTransferFunction->AddPoint(255,1.0);
 
@@ -174,6 +264,8 @@ int main(const int argc, char** argv)	{
 	VTK_CREATE(vtkPolyDataMapper, traceMapper);
 	VTK_CREATE(vtkActor, traceActor);
 
+	std::vector<vtkActor*> branchpoints;
+	/// read the traces
 	std::vector<TraceNode*> NodeContainer;
 	if (ReadNodeXMLFile(argv[2], NodeContainer))	{
 		
@@ -189,12 +281,25 @@ int main(const int argc, char** argv)	{
 		
 		// create the cells
 		for(itr = NodeContainer.begin(); itr != NodeContainer.end(); ++itr)	{
-			for (unsigned int i = 0; i < (*itr)->nbrID.size() ; i++) {
+
+			for (int i = 0; i < (*itr)->nbrID.size() ; i++) {
 				if ((*itr)->nbrID[i] < (*itr)->ID)	{
 					cells->InsertNextCell(2);
 					cells->InsertCellPoint(IDmap[(*itr)->ID]);
 					cells->InsertCellPoint(IDmap[(*itr)->nbrID[i]]);
 				}
+			}
+			if ((*itr)->nbrID.size() > 2)	{
+				vtkSphereSource *sphere = vtkSphereSource::New();
+				sphere->SetRadius(3);
+				vtkPolyDataMapper* sphereMap = vtkPolyDataMapper::New();
+				sphereMap->SetInput(sphere->GetOutput());
+				vtkActor* sphereAct = vtkActor::New();
+				sphereAct->SetMapper(sphereMap);
+				sphereAct->GetProperty()->SetOpacity(1);
+				sphereAct->SetPosition( (*itr)->loc[0], (*itr)->loc[1], (*itr)->loc[2] );
+				sphereAct->VisibilityOn();
+				branchpoints.push_back(sphereAct);
 			}
 		}
 		traces->SetPoints(points);
@@ -204,17 +309,24 @@ int main(const int argc, char** argv)	{
 		traceActor->SetMapper(traceMapper);
 		traceActor->GetProperty()->SetPointSize(2.0);
 		traceActor->GetProperty()->SetLineWidth(2.0);
+
+		//PrintStatistics(NodeContainer);
 	}
 	else {
 		std::cout << "Failed !! " << std::endl << "Rendering the volume only " << std::endl;
 	}
-
 	
 	VTK_CREATE(vtkRenderer, renderer);
     renderer->AddVolume(volume);
 	if (NodeContainer.size() > 0)	{
 		renderer->AddActor(traceActor);
 	}
+	//add branch point actors
+	std::vector<vtkActor*>::iterator bpit = branchpoints.begin();
+	for( ; bpit < branchpoints.end(); ++bpit)	{
+		renderer->AddActor(*bpit);
+	}
+
     renderer->SetBackground(0.4392, 0.5020, 0.5647);
 
 	VTK_CREATE(vtkRenderWindow, renWin);
@@ -228,6 +340,61 @@ int main(const int argc, char** argv)	{
     iren->SetRenderWindow(renWin);
     iren->SetInteractorStyle(style);
 
+	
+	//Add volume sliders
+	vtkSliderRepresentation2D *sliderRep = vtkSliderRepresentation2D::New();
+	sliderRep->SetValue(0.8);
+	sliderRep->SetTitleText("Opacity");
+	sliderRep->GetPoint1Coordinate()->SetCoordinateSystemToNormalizedDisplay();
+	sliderRep->GetPoint1Coordinate()->SetValue(0.2,0.1);
+	sliderRep->GetPoint2Coordinate()->SetCoordinateSystemToNormalizedDisplay();
+	sliderRep->GetPoint2Coordinate()->SetValue(0.8,0.1);
+	sliderRep->SetSliderLength(0.02);
+	sliderRep->SetSliderWidth(0.03);
+	sliderRep->SetEndCapLength(0.01);
+	sliderRep->SetEndCapWidth(0.03);
+	sliderRep->SetTubeWidth(0.005);
+	sliderRep->SetMinimumValue(0.0);
+	sliderRep->SetMaximumValue(1.0);
+
+	vtkSliderWidget *sliderWidget = vtkSliderWidget::New();
+	sliderWidget->SetInteractor(iren);
+	sliderWidget->SetRepresentation(sliderRep);
+	sliderWidget->SetAnimationModeToAnimate();
+
+	vtkSlider2DCallbackBrightness *callback_brightness = vtkSlider2DCallbackBrightness::New();
+	callback_brightness->volume = volume;
+	sliderWidget->AddObserver(vtkCommand::InteractionEvent,callback_brightness);
+	sliderWidget->EnabledOn();
+  
+
+	// slider 2
+
+	vtkSliderRepresentation2D *sliderRep2 = vtkSliderRepresentation2D::New();
+	sliderRep2->SetValue(0.8);
+	sliderRep2->SetTitleText("Brightness");
+	sliderRep2->GetPoint1Coordinate()->SetCoordinateSystemToNormalizedDisplay();
+	sliderRep2->GetPoint1Coordinate()->SetValue(0.2,0.9);
+	sliderRep2->GetPoint2Coordinate()->SetCoordinateSystemToNormalizedDisplay();
+	sliderRep2->GetPoint2Coordinate()->SetValue(0.8,0.9);
+	sliderRep2->SetSliderLength(0.02);
+	sliderRep2->SetSliderWidth(0.03);
+	sliderRep2->SetEndCapLength(0.01);
+	sliderRep2->SetEndCapWidth(0.03);
+	sliderRep2->SetTubeWidth(0.005);
+	sliderRep2->SetMinimumValue(0.0);
+	sliderRep2->SetMaximumValue(1.0);
+
+	vtkSliderWidget *sliderWidget2 = vtkSliderWidget::New();
+	sliderWidget2->SetInteractor(iren);
+	sliderWidget2->SetRepresentation(sliderRep2);
+	sliderWidget2->SetAnimationModeToAnimate();
+
+	vtkSlider2DCallbackContrast *callback_contrast = vtkSlider2DCallbackContrast::New();
+	callback_contrast->volume = volume;
+	sliderWidget2->AddObserver(vtkCommand::InteractionEvent,callback_contrast);
+	sliderWidget2->EnabledOn();
+
     // Bring up the render window and begin interaction.
     renWin->Render();
     iren->Start();
@@ -235,7 +402,7 @@ int main(const int argc, char** argv)	{
 }
 
 bool ReadNodeXMLFile(const char* xmlfname, std::vector<TraceNode*>& NodeContainer) {
-	NodeContainer.reserve(1000);
+	NodeContainer.reserve(10000);
 	TiXmlDocument doc(xmlfname);
 	if (!doc.LoadFile()) {
 		return false;

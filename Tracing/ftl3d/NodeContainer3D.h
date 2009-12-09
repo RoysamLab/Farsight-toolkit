@@ -68,6 +68,7 @@ public:
     bool IsTraceValid(Trace *, TVessel*);
 	void WriteSegmentsToTextFile(std::string&);
 	void WriteSegmentsToXMLFile(std::string&);
+	void GenerateStatistics(std::string& , itk::FixedArray<double,3> );
 
 private:
 	NodeContainerType NodeList;

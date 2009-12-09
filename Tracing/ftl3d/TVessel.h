@@ -67,7 +67,7 @@ public:
     unsigned int numNbrs;
 
     void PrintSelf();
-    bool IsSegmentValid(TVessel*);
+    bool IsSegmentValid(TVessel*, double, double);
     TVessel* CopyToNewSegment();
 
 };

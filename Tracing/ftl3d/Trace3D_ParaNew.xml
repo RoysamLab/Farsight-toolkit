@@ -1,0 +1,42 @@
+<?xml version="1.0" ?>
+<SuperElliposoidTracing>
+	<Parameter GridSpacing = "25" />
+	<Parameter StepRatio = "0.5" />
+	<Parameter AspectRatio = "2.0" />
+	<Parameter THRESHOLD = "0.2" />
+	<Parameter minContrast = "3.0" />
+	<Parameter MaximumVesselWidth = "80" />
+	<Parameter MinimumVesselLength = "20" />
+	<Parameter MinimumVesselWidth = "3" />
+	<Parameter XYSpacing = "0.6" />
+	<Parameter ZSpacing = "1.2" />	
+	<Parameter StartTHRESH = "0.3" />
+	<Parameter StartIterations = "100" />
+	<Data InputFileName="F:\BHerron\Oct05\25_0_1050_129_left_b_Ch1_16.tif" OutputFileName="F:\BHerron\Oct05\25_0_1050_129_left_b_Ch1_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_0_1050_129_right_Ch1_16.tif" OutputFileName="F:\BHerron\Oct05\25_0_1050_129_right_Ch1_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_0_1051_129_left_Ch1_16.tif" OutputFileName="F:\BHerron\Oct05\25_0_1051_129_left_Ch1_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_0_1051_129_right_b_Ch1_16.tif" OutputFileName="F:\BHerron\Oct05\25_0_1051_129_right_b_Ch1_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_0_1053_129_left_Ch1_16.tif" OutputFileName="F:\BHerron\Oct05\25_0_1053_129_left_Ch1_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_0_1053_129_right_Ch1_16.tif" OutputFileName="F:\BHerron\Oct05\25_0_1053_129_right_Ch1_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_0_1054_129_left_Ch1_16.tif" OutputFileName="F:\BHerron\Oct05\25_0_1054_129_left_Ch1_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_0_1056_b6_left_Ch1_16.tif" OutputFileName="F:\BHerron\Oct05\25_0_1056_b6_left_Ch1_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_0_1056_b6_right_Ch1_16.tif" OutputFileName="F:\BHerron\Oct05\25_0_1056_b6_right_Ch1_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_0_1057_b6_right_Ch1_16.tif" OutputFileName="F:\BHerron\Oct05\25_0_1057_b6_right_Ch1_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_0_1058_b6_left_Ch1_16.tif" OutputFileName="F:\BHerron\Oct05\25_0_1058_b6_left_Ch1_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_0_1058_b6_right_Ch1_16.tif" OutputFileName="F:\BHerron\Oct05\25_0_1058_b6_right_Ch1_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_0_1059_b6_left_Ch1_16.tif" OutputFileName="F:\BHerron\Oct05\25_0_1059_b6_left_Ch1_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_0_1059_b6_right_Ch1_16.tif" OutputFileName="F:\BHerron\Oct05\25_0_1059_b6_right_Ch1_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_1_1051_129_left_Ch2_16.tif" OutputFileName="F:\BHerron\Oct05\25_1_1051_129_left_Ch2_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_1_1051_129_right_Ch2_16.tif" OutputFileName="F:\BHerron\Oct05\25_1_1051_129_right_Ch2_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_1_1054_129_left_Ch2_16.tif" OutputFileName="F:\BHerron\Oct05\25_1_1054_129_left_Ch2_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_1_1054_129_right_Ch2_16.tif" OutputFileName="F:\BHerron\Oct05\25_1_1054_129_right_Ch2_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_1_1058_b6_right_Ch2_16.tif" OutputFileName="F:\BHerron\Oct05\25_1_1058_b6_right_Ch2_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_1_1059_b6_left_Ch2_16.tif" OutputFileName="F:\BHerron\Oct05\25_1_1059_b6_left_Ch2_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_1_1059_b6_right_Ch2_16.tif" OutputFileName="F:\BHerron\Oct05\25_1_1059_b6_right_Ch2_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_2_1053_129_left_Ch2_16.tif" OutputFileName="F:\BHerron\Oct05\25_2_1053_129_left_Ch2_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_2_1053_129_right_Ch2_16.tif" OutputFileName="F:\BHerron\Oct05\25_2_1053_129_right_Ch2_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_2_1057_b6_left_Ch2_16.tif" OutputFileName="F:\BHerron\Oct05\25_2_1057_b6_left_Ch2_16.xml" />
+	<Data InputFileName="F:\BHerron\Oct05\25_2_1057_b6_right_Ch2_16.tif" OutputFileName="F:\BHerron\Oct05\25_2_1057_b6_right_Ch2_16.xml" />
+
+</SuperElliposoidTracing>
+

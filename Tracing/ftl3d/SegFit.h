@@ -73,7 +73,7 @@ public:
 class SegFit : public SegInit	{
 public:
 
-bool fitSE (ImageType3D::Pointer, TVessel&, double , double );
+bool fitSE (ImageType3D::Pointer, TVessel&, double , double , double);
 
 public:
 	SegFit()	{

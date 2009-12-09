@@ -14,16 +14,26 @@ limitations under the License.
 =========================================================================*/
 
 #include "TraceContainer3D.h"
-
-#include "myDebug.h"
+#define S(x) std::cout<< x <<std::endl;
 
 #define STEP_FWD 1
 #define STEP_BWD -1
 
 TraceContainer3D::TraceContainer3D() {
 	TraceList.reserve(1000);
+	m_THRESH = 0.2;
+	m_minL = 3.0;
+	m_Stepsize = 0.5;
+	m_Spacing.Fill(1.0);
 }
 
+void TraceContainer3D::Configure(TraceConfig::Pointer& config)	{
+	m_THRESH = config->getTHRESHOLD();
+	m_minL = config->getminContrast();
+	m_Stepsize = config->getStepRatio();
+	m_AspectRatio = config->getAspectRatio();
+	m_Spacing = config->GetSpacing();
+}
 
 TraceContainer3D::~TraceContainer3D() {
 	TraceContainer::iterator it2;
@@ -38,7 +48,7 @@ void TraceContainer3D::ComputeTrace(ImageType3D::Pointer im, Seed2Seg::Pointer s
 
 	unsigned long tID = 0;
 	unsigned long segID = 0;
-
+	double iterations = 25.0;
 	NodeList = NodeContainer3D::New();
 
 
@@ -65,14 +75,15 @@ void TraceContainer3D::ComputeTrace(ImageType3D::Pointer im, Seed2Seg::Pointer s
 		while(numStep < 1000)	{
 
 			numStep++;
-			TVessel *seg1 = tr->Step(seg, im, segID, STEP_FWD);
+			TVessel *seg1 = tr->Step(seg, im, segID, STEP_FWD, iterations, m_AspectRatio, m_THRESH);
+			
 
 			if (!seg1) {
 				S("seg 1 returned empty")
 				break;
 			}
 
-			if (seg1->IsSegmentValid(seg)==0)	{
+			if (seg1->IsSegmentValid(seg, m_THRESH, m_minL)==0)	{
 				seg1->PrintSelf();
 				S("Seg Valid Violation")
 				break;
@@ -84,7 +95,7 @@ void TraceContainer3D::ComputeTrace(ImageType3D::Pointer im, Seed2Seg::Pointer s
 			tr->UpdateTrace(seg, seg1, STEP_FWD);
 			NodeList->getPropagationDirectionR3( seg1->ID, tr);
 
-			seg1->PrintSelf();	tr->PrintSelf();	//NodeList->PrintSelf();	S("Step done ")
+			//seg1->PrintSelf();	tr->PrintSelf();	//NodeList->PrintSelf();	S("Step done ")
 
 
 			if (NodeList->IsTraceValid(tr, seg1)==0)	{
@@ -95,11 +106,11 @@ void TraceContainer3D::ComputeTrace(ImageType3D::Pointer im, Seed2Seg::Pointer s
 			long hitSeg = NodeList->HitTest(seg1, tr);
 			if (hitSeg > -1)	{
 				AddBranchPoint(seg1, NodeList->getSegment(hitSeg));
-				S("Hit segment" << hitSeg)
+				S("Hit segment " << hitSeg)
 				break;
 			}
-
 			seg = seg1;
+			std::cout <<">";
 		}
 
 		//travel reverse in node container
@@ -110,26 +121,26 @@ void TraceContainer3D::ComputeTrace(ImageType3D::Pointer im, Seed2Seg::Pointer s
 		while(numStep < 1000)	{
 
 			numStep++;
-			TVessel *seg1 = tr->Step(seg, im, segID, STEP_BWD);
+			TVessel *seg1 = tr->Step(seg, im, segID, STEP_BWD, iterations, m_AspectRatio, m_THRESH);
 
 			if (!seg1) {
 				S("seg 1 returned empty")
 				break;
 			}
 
-			if (seg1->IsSegmentValid(seg)==0)	{
+			if (seg1->IsSegmentValid(seg, m_THRESH, m_minL)==0)	{
 				seg1->PrintSelf();
 				S("Seg Valid Violation")
 				break;
 			}
 
-			NodeList->AddFront(seg1);
+			NodeList->AddNode(seg1);
 			segID++;
 
 			tr->UpdateTrace(seg, seg1, STEP_BWD);
 			NodeList->getPropagationDirectionR3( seg1->ID, tr);
 
-			seg1->PrintSelf();	tr->PrintSelf();	//NodeList->PrintSelf();	S("Step done ")
+			//seg1->PrintSelf();	tr->PrintSelf();	//NodeList->PrintSelf();	S("Step done ")
 
 
 			if (NodeList->IsTraceValid(tr, seg1)==0)	{
@@ -140,11 +151,12 @@ void TraceContainer3D::ComputeTrace(ImageType3D::Pointer im, Seed2Seg::Pointer s
 			long hitSeg = NodeList->HitTest(seg1, tr);
 			if (hitSeg > -1)	{
 				AddBranchPoint(seg1, NodeList->getSegment(hitSeg));
-				S("Hit segment" << hitSeg)
+				S("Hit segment " << hitSeg)
 				break;
 			}
 
 			seg = seg1;
+			std::cout <<"<";
 		}
 
 		tr->PrintSelf();
@@ -189,6 +201,7 @@ Trace* TraceContainer3D::InitiazeTracer(TVessel* seg, unsigned long tID)	{
 
 void TraceContainer3D::WriteTraceToXMLFile(std::string SegXMLFname)	{
 	NodeList->WriteSegmentsToXMLFile(SegXMLFname);
+	NodeList->GenerateStatistics(SegXMLFname , m_Spacing );
 }
 
 void TraceContainer3D::AddBranchPoint(TVessel *s1, TVessel *s2)	{
@@ -210,4 +223,3 @@ void TraceContainer3D::AddBranchPoint(TVessel *s1, TVessel *s2)	{
 	s1->PrintSelf();
 	s2->PrintSelf();
 }
-

@@ -14,7 +14,6 @@ limitations under the License.
 =========================================================================*/
 
 #include "SegInit.h"
-#include "myDebug.h"
 
 #define VERBOSEFB 0
 #define VERBOSEITER 0
@@ -411,8 +410,13 @@ bool SegInit::interp3DefBG(ImageType3D::Pointer  im, double * pF, TFacet * pFace
 	typedef InterpolatorType::PointType PointType3D;
 	InterpolatorType::Pointer interp = InterpolatorType::New();
 	interp->SetInputImage(im);
+	ImageType3D::SizeType sz = im->GetBufferedRegion().GetSize();
+	itk::ContinuousIndex<double,3> szd;
+	szd[0] = static_cast<double> (sz[0] - 1);
+	szd[1] = static_cast<double> (sz[1] - 1);
+	szd[2] = static_cast<double> (sz[2] - 1);
 
-	//int SUCCESS = 0;
+	int SUCCESS = 0;
 	int i1,i2,i3;
 	double tx,ty,tz;
 	unsigned int inCount = 0, outCount = 0;
@@ -425,12 +429,13 @@ bool SegInit::interp3DefBG(ImageType3D::Pointer  im, double * pF, TFacet * pFace
 		ty = (pVertexC[i1].p[1]+pVertexC[i2].p[1]+pVertexC[i3].p[1])/3.0;
 		tz = (pVertexC[i1].p[2]+pVertexC[i2].p[2]+pVertexC[i3].p[2])/3.0;
 
-		PointType3D pt;
-		pt[0] = tx;
-		pt[1] = ty;
-		pt[2] = tz;
-		if (interp->IsInsideBuffer( pt ))	{
-			pF[fi] = static_cast<double>(interp->Evaluate( pt ));
+		if ( (tx>1.0) && (ty>1.0) && (tz>1.0) && (tx<szd[0]) && (ty<szd[1]) && (tz<szd[2]) )	{
+			itk::ContinuousIndex<double,3> pt;
+			pt[0] = tx;
+			pt[1] = ty;
+			pt[2] = tz;
+		//if (interp->IsInsideBuffer( pt ))	{
+			pF[fi] = static_cast<double>(interp->EvaluateAtContinuousIndex( pt ));
 			inCount = inCount+1;
 		}
 		else	{
@@ -465,7 +470,7 @@ int SegInit::interp3(ImageType3D::Pointer  im, double * pF, TFacet * pFacets, in
 		ty = (pVertexC[i1].p[1]+pVertexC[i2].p[1]+pVertexC[i3].p[1])/3.0;
 		tz = (pVertexC[i1].p[2]+pVertexC[i2].p[2]+pVertexC[i3].p[2])/3.0;
 
-		PointType3D pt;
+		itk::ContinuousIndex<double,3> pt;
 		pt[0] = tx;
 		pt[1] = ty;
 		pt[2] = tz;
@@ -1134,7 +1139,7 @@ double SegInit::update_FBNew(ImageType3D::Pointer im, TVessel & vessel , int Ini
 	bdev.reserve(b_tmp.size());
 	std::vector<double>::iterator it2;
 	for (it2 = b_tmp.begin(); it2<b_tmp.end(); it2++) {
-		bdev.push_back(vnl_math_abs(vessel.b- (*it2)));
+		bdev.push_back(vnl_math_abs(vessel.b - (*it2)));
 	}
 	double MAD2 = getMedian(bdev);
 
@@ -1447,7 +1452,7 @@ int SegInit::handle_end( ImageType3D::Pointer im, double * pF, TVessel & vessel,
 
 
 //void SegInit::MainFunction (int nlhs, mxArray* *plhs, int nrhs, const mxArray* *prhs) {
-bool SegInit::fitSE (ImageType3D::Pointer im, TVessel& vessel, double iterations, double AS_RATIO) {
+bool SegInit::fitSE (ImageType3D::Pointer im, TVessel& vessel, double iterations, double AS_RATIO, double THRESH) {
 
 
     //mexPrintf("number of lhs args %i\n",nlhs);
@@ -1490,7 +1495,7 @@ bool SegInit::fitSE (ImageType3D::Pointer im, TVessel& vessel, double iterations
 	damp.sign_S[0] = 0.0;
 	damp.sign_S[1] = 0.0;
 	damp.sign_S[2] = 0.0;
-	damp.sign_S[3] = 0.0;
+	damp.sign_S[4] = 0.0;
 
     memcpy(damp.dt_a, damp.dt_u,sizeof(double)*3);
 
@@ -1510,10 +1515,10 @@ bool SegInit::fitSE (ImageType3D::Pointer im, TVessel& vessel, double iterations
 
     for( int i = 1; i <= iterations; i++){
 
-        if( i%25 == 0 || i == 10 ){
+        if( (i%25 == 0) || (i == 10) ){
             update_FBNew(im,vessel, 0);
             //update_FBSimple(im,vessel);
-            if( vessel.L < vessel.MAD*.5 && i > 25 && vessel.a3 > 10 )	{
+            if(( vessel.L < vessel.MAD * THRESH) && (i > 25) && (vessel.a3 > 10 ))	{
 				//std::cout << "EXIT CRITERION: Likelihood failed" << std::endl;
 				ret = 0;
                 break;
@@ -1576,8 +1581,6 @@ bool SegInit::fitSE (ImageType3D::Pointer im, TVessel& vessel, double iterations
 			vessel.PrintSelf();
 			std::cin.get();
 		}
-
-
     }
 
     L = update_FBNew(im,vessel, 0);
@@ -1635,4 +1638,3 @@ double SegInit::getMean(std::vector<double> arr)	{
 	}
 	return (mean/r);
 }
-

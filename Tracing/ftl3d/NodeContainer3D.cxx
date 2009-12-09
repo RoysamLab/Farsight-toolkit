@@ -14,9 +14,7 @@ limitations under the License.
 =========================================================================*/
 
 #include "NodeContainer3D.h"
-//#include "ColorConsole.h"
-#include "myDebug.h"
-
+#define S(x) std::cout<< x <<std::endl;
 #define SHOWTRACEDIG 0
 
 NodeContainer3D::NodeContainer3D()	{
@@ -236,7 +234,6 @@ bool NodeContainer3D::IsInList(NodeContainerType& tlist,  long id)	{
 
 
 void NodeContainer3D::PrintSelf()	{
-	//std::cout << std::endl << yellow << "Number of Nodes " << NodeList.size() << std::endl;
 	std::cout << std::endl << "Number of Nodes " << NodeList.size() << std::endl;
 		NodeContainerType::iterator it;
 		for (it = NodeList.begin(); it != NodeList.end(); ++it)	{
@@ -246,7 +243,6 @@ void NodeContainer3D::PrintSelf()	{
 			}
 			std::cout << std::endl;
 		}
-		//std::cout << white << std::endl;
 		std::cout << std::endl;
 }
 
@@ -558,8 +554,7 @@ void NodeContainer3D::WriteSegmentsToTextFile(std::string& fname) {
 
 void NodeContainer3D::WriteSegmentsToXMLFile(std::string& fname) {
 
-	std::string xmlfname = fname+std::string(".xml");
-	std::cout << "Writing output to XMLfile. " << std::endl << "Filename: " << xmlfname << std::endl;
+	std::cout << "Writing output to XMLfile. " << std::endl << "Filename: " << fname << std::endl;
 	TiXmlDocument doc;
 	TiXmlDeclaration * decl = new TiXmlDeclaration( "1.0", "", "" );
 	doc.LinkEndChild( decl );
@@ -603,6 +598,50 @@ void NodeContainer3D::WriteSegmentsToXMLFile(std::string& fname) {
 	}
 	
 	
-	doc.SaveFile( xmlfname.c_str() );
+	doc.SaveFile( fname.c_str() );
 	std::cout << "...Complete."<<std::endl;
 }
+
+
+void NodeContainer3D::GenerateStatistics(std::string& fname, itk::FixedArray<double,3> spacing) {
+	fname.replace(fname.length()-4,11 ,"_Stats.txt");
+	std::cout << "Writing Statistics file. " << std::endl << "Filename: " << fname << std::endl;
+
+	NodeContainerType::iterator it;
+	double totLen = 0.0;
+	unsigned long numBranchPts = 0;
+
+	for (it = NodeList.begin(); it != NodeList.end(); ++it)	{
+		double x = (*it)->mu[0];
+		double y = (*it)->mu[1];
+		double z = (*it)->mu[2];
+		
+		if ((*it)->numNbrs > 2)	{
+			numBranchPts++;
+		}
+
+		for (unsigned int i=0; i<(*it)->numNbrs; i++) {
+			long nt = (*it)->NbrID[i];
+			if((*it)->NbrID[i] < (*it)->ID)	{
+				TVessel* nseg = getSegment(nt);
+				double x1 = nseg->mu[0];
+				double y1 = nseg->mu[1];
+				double z1 = nseg->mu[2];
+
+				double dx = (x - x1)*spacing[0];
+				double dy = (y - y1)*spacing[1];
+				double dz = (z - z1)*spacing[2];
+				totLen += vcl_sqrt( dx*dx + dy*dy + dz*dz);
+			}
+		}
+	}
+	std::ofstream ofile;
+	ofile.open(fname.c_str(), std::ios::out);
+	ofile << "Image spacing used: "  << spacing << " microns" << std::endl;
+	ofile << "Total length of traces: "  << totLen << " microns" << std::endl;
+	ofile << "Total number of branches: "  << numBranchPts << std::endl;
+	ofile.close();
+	std::cout << "...Complete."<<std::endl;
+}
+
+

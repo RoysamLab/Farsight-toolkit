@@ -14,11 +14,21 @@ limitations under the License.
 =========================================================================*/
 
 # include "Seed2Seg.h"
-#include "myDebug.h"
 
 Seed2Seg::Seed2Seg()	{
 	iterations = 100.0;
 	AS_RATIO = 2.0;
+	min_a = 1.5;
+	THRESH = 0.3;
+	minL = 3.0;
+}
+
+void Seed2Seg::Configure(TraceConfig::Pointer& config)	{
+	iterations = config->getFitIterations();
+	AS_RATIO = config->getAspectRatio();
+	min_a = config->getMinimumVesselWidth();
+	THRESH = config->getStartThreshold();
+	minL = config->getminContrast();
 }
 
 
@@ -31,15 +41,10 @@ Seed2Seg::~Seed2Seg() {
 
 void Seed2Seg::ComuputeStartSegments(SeedContainer3D::Pointer seeds, ImageType3D::Pointer im, TraceConfig::Pointer  conf)	{
 
-	iterations = 100.0;
-	AS_RATIO = 2.0;
-
 	long int ID = 0;
-
 	SeedContainerType SeedContainer = seeds->getContainer();
 	SeedContainerType::iterator it;
 	for (it = SeedContainer.begin(); it != SeedContainer.end(); ++it)	{
-		std::cout<<".";
 		if (!HitTestSeedPoints(*it))	{
 			TVessel* segment = new  TVessel();
 			//copy seed information here
@@ -50,13 +55,20 @@ void Seed2Seg::ComuputeStartSegments(SeedContainer3D::Pointer seeds, ImageType3D
 			segment->ID = ID;
 
 			SegInit *fitter = new SegInit();
-			bool ret = fitter->fitSE(im, *segment, iterations, AS_RATIO);
+			bool ret = fitter->fitSE(im, *segment, iterations, AS_RATIO, conf->getStartThreshold());
 
 			if (ret) {
 				if (!HitTestSeg(segment) && IsStartSegmentValid(segment))	{
 					SSContainer.push_back(segment);
 					ID = ID+1;
+					std::cout<<"*";  //accepted segments
 				}
+				else {
+					std::cout<<"|";	//good segments but hit 
+				}
+			}
+			else {
+				std::cout<<".";
 			}
 			delete fitter;
 		}
@@ -67,10 +79,10 @@ void Seed2Seg::ComuputeStartSegments(SeedContainer3D::Pointer seeds, ImageType3D
 
 
 bool Seed2Seg::IsStartSegmentValid(TVessel* seg)	{
-	if ((seg->a1==1.5) && (seg->a2==1.5)&& (seg->a3 <=3))	{
+	if ((seg->a1 < this->min_a) && (seg->a2 < this->min_a)&& (seg->a3 <= (2 * this->min_a)))	{
 		return false;
 	}
-	if (((seg->L/seg->MAD) < 0.5) || (seg->L < 3.0))	{
+	if (((seg->L/seg->MAD) < this->THRESH) || (seg->L < this->minL ))	{
 		return false;
 	}
 	return true;
@@ -84,7 +96,6 @@ bool Seed2Seg::HitTestSeedPoints(SeedPoint3D* sd) {
 	double min_D = 1.0;
 	double loc = -2.0;
 
-	//P(mu1);
 	for (it = SSContainer.begin(); it != SSContainer.end(); ++it)	{
 
 		//(*it)->PrintSelf();

@@ -14,7 +14,6 @@ limitations under the License.
 =========================================================================*/
 
 #include "TVessel.h"
-//#include "ColorConsole.h"
 
 TVessel::TVessel()	{
     for (int i=0; i<4; i++) {
@@ -66,9 +65,9 @@ TVessel::TVessel()	{
 TVessel::~TVessel()	{
 }
 
-bool TVessel::IsSegmentValid(TVessel* refSeg)	{
+bool TVessel::IsSegmentValid(TVessel* refSeg, double THRESH, double minL)	{
 
-	if (this->L < 0.5*this->MAD || this->L < 3.0)	{
+	if (this->L < THRESH*this->MAD || this->L < minL)	{
 		return 0;
 	}
 	double maxW = vnl_math_max(refSeg->a1, refSeg->a2);
@@ -88,7 +87,6 @@ bool TVessel::IsSegmentValid(TVessel* refSeg)	{
 
 
 void TVessel::PrintSelf()	{
-		//std::cout << std::endl << green <<"ID = " << ID << " TraceID = " << TraceID << " @ [" << mu[0] << "," << mu[1] << "," <<  mu[2] << "]" << std::endl;
 		std::cout << std::endl <<"ID = " << ID << " TraceID = " << TraceID << " @ [" << mu[0] << "," << mu[1] << "," <<  mu[2] << "]" << std::endl;
 		std::cout << " A:<" << a1 << ", " << a2 << ", " <<  a3 << ">\n Q:<" << q1[0]<< ", "<< q1[1] << ", "<< q1[2] << ", " << q1[3] << ">" << std::endl;
 		std::cout << " R:\t" << R1[0] << " " << R2[0] << " " <<  R3[0] << std::endl;
@@ -99,7 +97,6 @@ void TVessel::PrintSelf()	{
 			for (unsigned int i=0; i<this->numNbrs; i++)	{
 				std::cout << NbrID[i] <<", ";
 		}
-		//std::cout << white << std::endl;
 		std::cout << std::endl;
 }
 

@@ -46,6 +46,7 @@ limitations under the License.
 #include "TVessel.h"
 #include "SegInit.h"
 #include "SeedContainer3D.h"
+#include "TraceConfig.h"
 
 typedef itk::Image<float , 3> ImageType3D;
 typedef std::vector<SeedPoint3D *> SeedContainerType;
@@ -59,6 +60,7 @@ public:
 	itkNewMacro(Self);
 	typedef vnl_vector_fixed<double,3> Vect3;
 
+	void Configure(TraceConfig::Pointer &);
 	void ComuputeStartSegments(SeedContainer3D::Pointer , ImageType3D::Pointer, TraceConfig::Pointer);
 	void SortStartSegments();
 	unsigned int getNumberOfStartSegments() {return SSContainer.size();}
@@ -74,11 +76,13 @@ private:
 	double iterations;
 	double AS_RATIO;
 	StartSegContainerType SSContainer;
+	double min_a, THRESH, minL;
 
 
 
 protected:
 	Seed2Seg();
+	Seed2Seg(TraceConfig::Pointer& );
 
 	~Seed2Seg();
 };

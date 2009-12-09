@@ -14,15 +14,13 @@ limitations under the License.
 =========================================================================*/
 
 #include "SegFit.h"
-#include "myDebug.h"
 
 #define VERBOSEFB 0
 #define VERBOSEITER 0
 
 
 
-//void SegInit::MainFunction (int nlhs, mxArray* *plhs, int nrhs, const mxArray* *prhs) {
-bool SegFit::fitSE (ImageType3D::Pointer im, TVessel& vessel, double iterations, double AS_RATIO) {
+bool SegFit::fitSE (ImageType3D::Pointer im, TVessel& vessel, double iterations, double AS_RATIO, double THRESH) {
 
 
     //if the mu is outside image then return 0 
@@ -33,9 +31,6 @@ bool SegFit::fitSE (ImageType3D::Pointer im, TVessel& vessel, double iterations,
 
     gNum_facets = 0;
     gNum_points = 0;
-
-    //double * im = mxGetPr(prhs[0]);
-    //ImageType3D::SizeType im_dim = im->GetBufferedRegion().GetSize();
 
     bool ret = 1;
 
@@ -78,15 +73,13 @@ bool SegFit::fitSE (ImageType3D::Pointer im, TVessel& vessel, double iterations,
 
 	TRMatrix R;
 
-    //mexPrintf("death 1\n");
-
-	for( int i = 1; i <= iterations; i++){
+   	for( int i = 1; i <= iterations; i++){
 
         if( i%25 == 0 || i == 10 ){
             update_FBNew(im,vessel, 0);
             //update_FBSimple(im,vessel);
 //            mexPrintf("%i\n",i);
-            if( vessel.L < vessel.MAD*.5 && i > 25 && vessel.a3 > 10 )	{
+            if( (vessel.L < vessel.MAD*THRESH) && (i > 25) && (vessel.a3 > 10 ))	{
 				//std::cout << "EXIT CRITERION: Likelihood failed" << std::endl;
 				ret = 0;
 				//vessel.PrintSelf();
@@ -118,18 +111,7 @@ bool SegFit::fitSE (ImageType3D::Pointer im, TVessel& vessel, double iterations,
 			break;
 		}
 
-        //END = interp3( im, gF, gFacets, gNum_facets, gVertexC );
-        //if(END){
-        //    END = handle_end(im,gF,vessel,gFacets,gNum_facets,gVertexU,gVertexS,gVertexC,gNum_points);
-        //    if(END){
-        //        END=2;
-        //        P("END of image")
-        //        break;
-        //    }else
-        //        END=1;
-        //}
-
-        total_area = 0.0;
+		total_area = 0.0;
         total_f = 0.0;
 		total_f2 = 0.0;
 

@@ -30,11 +30,13 @@ limitations under the License.
 #include "itkLightObject.h"
 
 #include "itkImage.h"
+#include "itkFixedArray.h"
 
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <cstdlib>
+#include "tinyxml.h"
 
 typedef itk::Image <float, 2> ImageType2D;
 typedef itk::Image <float, 3> ImageType3D;
@@ -51,41 +53,60 @@ public:
 	   itkNewMacro(Self);
 	   //default constructor loads default configuration values
 
-	   void LoadParameters (char *);
-	   int getGridSpacing() {return(GridSpacing);}
-	   int getInitSeedSize() {return(SeedSize);}
-	   int getSeedIntensityThreshold() {return(SeedIntensityThreshold);}
-	   double getStepRatio() {return(StepRatio);}
-	   double getAspectRatio() {return(AspectRatio);}
-	   double getMinimumVesselWidth() {return(MinimumVesselWidth);}
-	   double getMaximumVesselWidth() {return(MaximumVesselWidth);}
-	   double getMinimumVesselLength() {return(MinimumVesselLength);}
-	   double getPROP() {return(PROP);}
+		bool LoadParameters (char *);
 
-	   std::string getInputFileName() {return(InputFileName);}
-	   std::string getOutputFileName() {return(OutputFileName);}
-	   void SetFileNames(char* fname);
-	   void SetGridSpacing(char *);
-	   void SetAspectRatio(char *);
+		int getGridSpacing() {return(GridSpacing);}
+		double getStepRatio() {return(StepRatio);}
+		double getAspectRatio() {return(AspectRatio);}
+		double getTHRESHOLD() {return THRESHOLD;}
+		double getminContrast() {return minContrast;}
+		double getMaximumVesselWidth() {return(MaximumVesselWidth);}
+		double getMinimumVesselLength() {return(MinimumVesselLength);}
+		int getFitIterations() { return FitIterations;}
+		double getMinimumVesselWidth() {return(MinimumVesselWidth);}
+		double getStartThreshold() {return StartTHRESHOLD;}
+		itk::FixedArray<double,3> GetSpacing() {return Spacing;}
+		int getNumberOfDataFiles() {return numDataFiles;}
+		int getHessianFlag() {return UseMultiscaleHessianFilter;}
+		
+		std::string getInputFileName(unsigned int i) {
+			if (i < numDataFiles)
+				return(InputFileNames[i]);
+			else
+				return (std::string(" "));
+		}
+		std::string getOutputFileName(unsigned int i) {
+			if (i < numDataFiles)
+				return(OutputFileNames[i]);
+			else
+				return (std::string(" "));
+		}
+		
+		void SetFileNames(char* fname);
+		void SetGridSpacing(char *);
+		void SetAspectRatio(char *);
 
 		~TraceConfig ();
 
 private:
-        std::string InputFileName;
-        std::string OutputFileName;
+		bool ParseDoubleInput(double, double, double, const char* );
+		std::vector<std::string> InputFileNames;
+        std::vector<std::string> OutputFileNames;
+		unsigned int numDataFiles;
 
-		//seed parameters
-        int GridSpacing;
-        int SeedSize;
-        int SeedIntensityThreshold;
         //tracing parameters
-        double StepRatio;
-        double AspectRatio;
-        double MinimumVesselWidth;
-        double MaximumVesselWidth;
-        double MinimumVesselLength;
-        double PROP;
-
+		int GridSpacing;
+		double StepRatio;
+		double AspectRatio;
+		double THRESHOLD;
+		double minContrast;
+		double MaximumVesselWidth;
+		double MinimumVesselLength;
+		int FitIterations;
+		double MinimumVesselWidth;
+		double StartTHRESHOLD;
+		itk::FixedArray<double, 3> Spacing;
+		unsigned int UseMultiscaleHessianFilter;
 
 protected:
    		TraceConfig ();

@@ -32,6 +32,7 @@ limitations under the License.
 #include "itkImage.h"
 #include "itkLinearInterpolateImageFunction.h"
 #include "vnl/vnl_math.h"
+#include "itkContinuousIndex.h"
 
 
 #include <stdlib.h>
@@ -103,7 +104,7 @@ public:
 class SegInit	{
 public:
 
-bool fitSE (ImageType3D::Pointer, TVessel&, double , double );
+bool fitSE (ImageType3D::Pointer, TVessel&, double , double , double);
 void reverse(TVessel & seg);
 
 

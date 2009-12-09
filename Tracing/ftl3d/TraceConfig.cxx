@@ -22,22 +22,28 @@ limitations under the License.
 #define MY_ENCODING "ISO-8859-1"
 
 TraceConfig::TraceConfig()  {
-     GridSpacing = 10;
-     StepRatio = 0.8;
-     AspectRatio = 2.5;
-     SeedIntensityThreshold = 100;
-     MinimumVesselWidth = 2.0;
+     GridSpacing = 15;
+     StepRatio = 0.5;
+     AspectRatio = 2.0;
+     THRESHOLD = 0.5;
+     minContrast = 3.0;
      MaximumVesselWidth = 20.0;
      MinimumVesselLength = 2.0;
-//     ParameterFileName = "Tracing_parameters.input";
+	 FitIterations = 100.0;
+     MinimumVesselWidth = 1.5;
+	 StartTHRESHOLD = 0.3;
+	 Spacing[0] = 0.6;
+	 Spacing[1] = 0.6;
+	 Spacing[2] = 1.2;
+	 numDataFiles = 0;
+	 UseMultiscaleHessianFilter = 0;
 }
 
 TraceConfig::~TraceConfig() { }
 
 void TraceConfig::SetFileNames(char* fname) 	{
-	this->InputFileName = std::string(fname);
-	this->OutputFileName = std::string(fname) + std::string("_SEs.txt");
-
+	this->InputFileNames.push_back(std::string(fname));
+	this->OutputFileNames.push_back(std::string(fname) + std::string("_SEs.txt"));
 }
 
 void TraceConfig::SetGridSpacing(char * gs) 	{
@@ -48,94 +54,349 @@ void TraceConfig::SetAspectRatio(char * ar)	{
 	this->AspectRatio = atof(ar);
 }
 
+/*
+bool TraceConfig::LoadParameters(char * ParameterFileName)  {
 
-
-
-void TraceConfig::LoadParameters(char * ParameterFileName)  {
-
-/*	char *contents;
-	xmlChar* attribute;
-	xmlDocPtr doc;
-	xmlNodePtr root_element, main_node = NULL, parm_node = NULL;
-	std::string whitespaces (" \t\f\v\n\r");
-
-	LIBXML_TEST_VERSION;
-
-	//Parse the resource
-	doc = xmlReadFile(ParameterFileName, NULL, 0);
-	if (doc == NULL) {
-		std::cerr<<"Failed to parse "<<ParameterFileName<<std::endl;
-	    return;
+	TiXmlDocument doc(ParameterFileName);
+	if (!doc.LoadFile()) {
+		return false;
 	}
 
-	main_node = xmlDocGetRootElement(doc);
-
-	//main_node =  root_element->children;
-	std::cout<<"Parsing input XML tag : " <<main_node->name <<std::endl;
-	if (main_node->type == XML_ELEMENT_NODE && !xmlStrcmp(main_node->name, BAD_CAST "Tracing_Paramenter_3D") ){
-		parm_node = main_node->children;
-
-
-		for ( ; parm_node; parm_node = parm_node->next) {
-
-			//std::cout<<"Parameter name - " <<parm_node->name <<std::endl;
-			if (parm_node->type != XML_ELEMENT_NODE) continue;
-
-			if ( !xmlStrcmp(parm_node->name, BAD_CAST "InputFileName") ) {
-
-			      InputFileName = (char*)xmlNodeGetContent(parm_node);
-			      //erasing whitespaces -from begining and end only
-			      InputFileName = InputFileName.substr(InputFileName.find_first_not_of(whitespaces),
-			      InputFileName.find_last_not_of(whitespaces) - InputFileName.find_first_not_of(whitespaces)+1);
-
-			      std::cout<<"InputFileName = "<<InputFileName << " Size = "<<InputFileName.size() <<std::endl;
-			      continue;
-			   }
-
-			if ( !xmlStrcmp(parm_node->name, BAD_CAST "OutputFileName") ) {
-
-				  OutputFileName = (char*)xmlNodeGetContent(parm_node);
-				  //erasing whitespaces -from begining and end only
-				  OutputFileName = OutputFileName.substr(OutputFileName.find_first_not_of(whitespaces),
-			      OutputFileName.find_last_not_of(whitespaces) - OutputFileName.find_first_not_of(whitespaces)+1);
-
-				  std::cout<<"OutputFileName = "<<OutputFileName<<" Size = "<<OutputFileName.size() <<std::endl;
-				  continue;
-			   }
-
-			if ( !xmlStrcmp(parm_node->name, BAD_CAST "GridSpacing") ) {
-
-				  GridSpacing = atoi((char*)xmlNodeGetContent(parm_node));
-				  std::cout<<"GridSpacing = "<<GridSpacing<<std::endl;
-				  continue;
-			   }
-
-			if ( !xmlStrcmp(parm_node->name, BAD_CAST "StepRatio") ) {
-
-				  StepRatio = atof((char*)xmlNodeGetContent(parm_node));
-				  std::cout<<"StepRatio = "<<StepRatio<<std::endl;
-				  continue;
-			  }
-
-			if ( !xmlStrcmp(parm_node->name, BAD_CAST "AspectRatio") ) {
-
-				  AspectRatio = atof((char*)xmlNodeGetContent(parm_node));
-				  std::cout<<"AspectRatio = "<<AspectRatio<<std::endl;
-				  continue;
-			  }
-
-			if ( !xmlStrcmp(parm_node->name, BAD_CAST "Sensitivity") ) {
-
-				  PROP = atof((char*)xmlNodeGetContent(parm_node));
-				  std::cout<<"Sensitivity = "<<PROP<<std::endl;			//check range
-				  continue;
-			  }
+	TiXmlElement* root = doc.FirstChildElement( "SuperElliposoidTracing" );
+	if ( root )		{
+		TiXmlAttribute* rAttrib = root->FirstAttribute();
+		while (rAttrib)	{
+			if (!strcmp(rAttrib->Name(),"InputFileName"))	{
+				this->InputFileName = std::string(rAttrib->Value());
+				std::cout << "Input file name: " << this->InputFileName << std::endl;
+			}
+			else if (!strcmp(rAttrib->Name(),"OutputFileName"))	{
+				this->OutputFileName = std::string(rAttrib->Value());
+				std::cout << "Output file name: " << this->OutputFileName << std::endl;
+			}
+			rAttrib=rAttrib->Next();
 		}
+		TiXmlElement* param = root->FirstChildElement( "Parameter" );
+		while ( param )	{
+			// TODO: look for data as well as Parameter tag HERE
+			TiXmlAttribute* pAttrib = param->FirstAttribute();
+			if (pAttrib){
+				if (!strcmp(pAttrib->Name(),"GridSpacing"))	{
+					double temp = -1.0;
+					if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS) {
+						if (!ParseDoubleInput(temp, 15 , 100, "GridSpacing") )	{
+							return false;
+						}
+						GridSpacing = temp;
+					}
+					std::cout << "GridSpacing:  " << temp << " ("<< pAttrib->Value()  <<")" << std::endl;
+				}
+				else if (!strcmp(pAttrib->Name(),"StepRatio"))	{
+					double temp = -1.0;
+					if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS)	{
+						if (!ParseDoubleInput(temp, 0.2 , 1.0, "StepRatio") )	{
+							return false;
+						}
+						StepRatio = temp;
+					}
+					std::cout << "StepRatio:  " << temp << " ("<< pAttrib->Value()  <<")" << std::endl;
+				}
+				else if (!strcmp(pAttrib->Name(),"XYSpacing"))	{
+					double temp = -1.0;
+					if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS)	{
+						if (!ParseDoubleInput(temp, 0.0 , 100.0, "XYSpacing") )	{
+							return false;
+						}
+						Spacing[0] = temp;
+						Spacing[1] = temp;
+					}
+					std::cout << "XYspacing:  " << temp << " ("<< pAttrib->Value()  <<")" << std::endl;
+				}
 
+				else if (!strcmp(pAttrib->Name(),"ZSpacing"))	{
+					double temp = -1.0;
+					if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS)	{
+						if (!ParseDoubleInput(temp, 0.0 , 100.0, "ZSpacing") )	{
+							return false;
+						}
+						Spacing[2] = temp;
+					}
+					std::cout << "ZSpacing:  " << temp << " ("<< pAttrib->Value()  <<")" << std::endl;
+				}
+
+				else if (!strcmp(pAttrib->Name(),"MaxModelAspectRatio"))	{
+					double temp = -1.0;
+					if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS)	{
+						if (!ParseDoubleInput(temp, 1.5 , 3.0, "MaxModelAspectRatio") )	{
+							return false;
+						}
+						AspectRatio = temp;
+					}
+					std::cout << "MaxModelAspectRatio:  " << temp << " ("<< pAttrib->Value()  <<")" << std::endl;
+				}
+				else if (!strcmp(pAttrib->Name(),"THRESHOLD"))	{
+					double temp = -1.0;
+					if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS) {
+						if (!ParseDoubleInput(temp, 0.1 , 1.0, "THRESHOLD") )	{
+							return false;
+						}
+						THRESHOLD = temp;
+					}
+					std::cout << "THRESHOLD:  " << temp << " ("<< pAttrib->Value()  <<")" << std::endl;
+				}
+				else if(!strcmp(pAttrib->Name(),"minContrast"))	{
+					double temp = -1.0;
+					if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS)	{
+						if (!ParseDoubleInput(temp, 3.0 , 20.0, "minContrast") )	{
+							return false;
+						}
+						minContrast = temp;
+					}
+					std::cout << "minContrast:  " << temp << " ("<< pAttrib->Value()  <<")" << std::endl;
+				}
+				else if(!strcmp(pAttrib->Name(),"MaximumVesselWidth"))	{
+					double temp = -1.0;
+					if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS)	{
+						if (!ParseDoubleInput(temp, 10.0 , 100.0, "MaximumVesselWidth") )	{
+							return false;
+						}
+						MaximumVesselWidth = temp/2.0;
+					}
+					std::cout << "MaximumVesselWidth:  " << 2*MaximumVesselWidth << " ("<< pAttrib->Value()  <<")" << std::endl;
+				}
+				else if(!strcmp(pAttrib->Name(),"MinimumVesselWidth"))	{
+					double temp = -1.0;
+					if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS)	{
+						if (!ParseDoubleInput(temp, 3.0 , 10.0, "MinimumVesselWidth") )	{
+							return false;
+						}
+						MinimumVesselWidth = temp/2.0;
+					}
+					std::cout << "MinimumVesselWidth:  " << 2*MaximumVesselWidth << " ("<< pAttrib->Value()  <<")" << std::endl;
+				}
+
+				else if(!strcmp(pAttrib->Name(),"MinimumVesselLength"))	{
+					double temp = -1.0;
+					if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS)  {
+						if (!ParseDoubleInput(temp, 3.0 , 20.0, "MinimumVesselWidth") )	{
+							return false;
+						}
+						MinimumVesselLength = temp;
+					}
+					std::cout << "MinimumVesselLength:  " << temp << " ("<< pAttrib->Value()  <<")" << std::endl;
+				}
+
+				else if(!strcmp(pAttrib->Name(),"StartTHRESH"))	{
+					double temp = -1.0;
+					if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS)	{
+						if (!ParseDoubleInput(temp, 0.1 , 1.0, "StartTHRESH") )	{
+							return false;
+						}
+						StartTHRESHOLD = temp;
+					}
+					std::cout << "StartTHRESH:  " << temp << " ("<< pAttrib->Value()  <<")" << std::endl;
+				}
+
+				else if(!strcmp(pAttrib->Name(),"StartIterations"))	{
+					int temp = -1;
+					if (pAttrib->QueryIntValue(&temp)==TIXML_SUCCESS)
+						FitIterations = temp;
+					std::cout << "StartIterations:  " << temp << " ("<< pAttrib->Value()  <<")" << std::endl;
+				}
+				else {
+					std::cout << "UNRECOGNIZED TAG:  " << pAttrib->Value() << std::endl;
+				}
+			}
+			param = param->NextSiblingElement();
+		}
 	}
-	xmlCleanupParser();
-  	xmlMemoryDump();
-*/
+	return true;
 }
+*/
+bool TraceConfig::ParseDoubleInput(double val, double minV, double maxV, const char* errmsg)	{
+	if((val > maxV) || (val < minV))	{
+		std::cout << "Input " << errmsg << " exceeds range. Value read" << val << " whereas the range is [min:" << minV << 
+			" , max: " << maxV << "]" << std::endl;
+		return false;
+	}
+	return true;
+}
+
+
+bool TraceConfig::LoadParameters(char * ParameterFileName)  {
+
+	TiXmlDocument doc(ParameterFileName);
+	if (!doc.LoadFile()) {
+		return false;
+	}
+
+	TiXmlElement* root = doc.FirstChildElement( "SuperElliposoidTracing" );
+	if ( root )		{
+		TiXmlNode* node = root->FirstChild();
+		while ( node )	{
+			// Check if this is NODE
+			if (node->Type() != TiXmlNode::ELEMENT) {
+				continue;
+			}
+			//decide data tag or parameter tag	
+			if (!strncmp(node->Value(), "Data", 4)) {
+				TiXmlAttribute* rAttrib = node->ToElement()->FirstAttribute();
+				while (rAttrib)	{
+					if (!strcmp(rAttrib->Name(),"InputFileName"))	{
+						this->InputFileNames.push_back(std::string(rAttrib->Value()));
+						std::cout << "Input file name: " << this->InputFileNames[numDataFiles] << std::endl;
+					}
+					else if (!strcmp(rAttrib->Name(),"OutputFileName"))	{
+						this->OutputFileNames.push_back(std::string(rAttrib->Value()));
+						std::cout << "Output file name: " << this->OutputFileNames[numDataFiles] << std::endl;
+					}
+					rAttrib=rAttrib->Next();
+				}
+				numDataFiles++;
+			}
+			else if (!strncmp(node->Value(), "Parameter", 9)) {
+				TiXmlAttribute* pAttrib = node->ToElement()->FirstAttribute();
+				if (pAttrib){
+					if (!strcmp(pAttrib->Name(),"GridSpacing"))	{
+						double temp = -1.0;
+						if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS) {
+							if (!ParseDoubleInput(temp, 15 , 100, "GridSpacing") )	{
+								return false;
+							}
+							GridSpacing = temp;
+						}
+						std::cout << "GridSpacing:  " << temp << " ("<< pAttrib->Value()  <<")" << std::endl;
+					}
+					else if (!strcmp(pAttrib->Name(),"StepRatio"))	{
+						double temp = -1.0;
+						if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS)	{
+							if (!ParseDoubleInput(temp, 0.2 , 1.0, "StepRatio") )	{
+								return false;
+							}
+							StepRatio = temp;
+						}
+						std::cout << "StepRatio:  " << temp << " ("<< pAttrib->Value()  <<")" << std::endl;
+					}
+					else if (!strcmp(pAttrib->Name(),"UseMultiscaleHessianFilter"))	{
+						int temp = 0;
+						if (pAttrib->QueryIntValue(&temp)==TIXML_SUCCESS)	{
+							UseMultiscaleHessianFilter = temp;
+						}
+						std::cout << "UseMultiscaleHessianFilter:  " << temp << " ("<< pAttrib->Value()  <<")" << std::endl;
+					}
+					else if (!strcmp(pAttrib->Name(),"XYSpacing"))	{
+						double temp = -1.0;
+						if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS)	{
+							if (!ParseDoubleInput(temp, 0.0 , 100.0, "XYSpacing") )	{
+								return false;
+							}
+							Spacing[0] = temp;
+							Spacing[1] = temp;
+						}
+						std::cout << "XYspacing:  " << temp << " ("<< pAttrib->Value()  <<")" << std::endl;
+					}
+
+					else if (!strcmp(pAttrib->Name(),"ZSpacing"))	{
+						double temp = -1.0;
+						if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS)	{
+							if (!ParseDoubleInput(temp, 0.0 , 100.0, "ZSpacing") )	{
+								return false;
+							}
+							Spacing[2] = temp;
+						}
+						std::cout << "ZSpacing:  " << temp << " ("<< pAttrib->Value()  <<")" << std::endl;
+					}
+
+					else if (!strcmp(pAttrib->Name(),"MaxModelAspectRatio"))	{
+						double temp = -1.0;
+						if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS)	{
+							if (!ParseDoubleInput(temp, 1.5 , 3.0, "MaxModelAspectRatio") )	{
+								return false;
+							}
+							AspectRatio = temp;
+						}
+						std::cout << "MaxModelAspectRatio:  " << temp << " ("<< pAttrib->Value()  <<")" << std::endl;
+					}
+					else if (!strcmp(pAttrib->Name(),"THRESHOLD"))	{
+						double temp = -1.0;
+						if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS) {
+							if (!ParseDoubleInput(temp, 0.1 , 1.0, "THRESHOLD") )	{
+								return false;
+							}
+							THRESHOLD = temp;
+						}
+						std::cout << "THRESHOLD:  " << temp << " ("<< pAttrib->Value()  <<")" << std::endl;
+					}
+					else if(!strcmp(pAttrib->Name(),"minContrast"))	{
+						double temp = -1.0;
+						if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS)	{
+							if (!ParseDoubleInput(temp, 3.0 , 20.0, "minContrast") )	{
+								return false;
+							}
+							minContrast = temp;
+						}
+						std::cout << "minContrast:  " << temp << " ("<< pAttrib->Value()  <<")" << std::endl;
+					}
+					else if(!strcmp(pAttrib->Name(),"MaximumVesselWidth"))	{
+						double temp = -1.0;
+						if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS)	{
+							if (!ParseDoubleInput(temp, 10.0 , 100.0, "MaximumVesselWidth") )	{
+								return false;
+							}
+							MaximumVesselWidth = temp/2.0;
+						}
+						std::cout << "MaximumVesselWidth:  " << 2*MaximumVesselWidth << " ("<< pAttrib->Value()  <<")" << std::endl;
+					}
+					else if(!strcmp(pAttrib->Name(),"MinimumVesselWidth"))	{
+						double temp = -1.0;
+						if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS)	{
+							if (!ParseDoubleInput(temp, 3.0 , 10.0, "MinimumVesselWidth") )	{
+								return false;
+							}
+							MinimumVesselWidth = temp/2.0;
+						}
+						std::cout << "MinimumVesselWidth:  " << 2*MaximumVesselWidth << " ("<< pAttrib->Value()  <<")" << std::endl;
+					}
+
+					else if(!strcmp(pAttrib->Name(),"MinimumVesselLength"))	{
+						double temp = -1.0;
+						if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS)  {
+							if (!ParseDoubleInput(temp, 3.0 , 20.0, "MinimumVesselWidth") )	{
+								return false;
+							}
+							MinimumVesselLength = temp;
+						}
+						std::cout << "MinimumVesselLength:  " << temp << " ("<< pAttrib->Value()  <<")" << std::endl;
+					}
+
+					else if(!strcmp(pAttrib->Name(),"StartTHRESH"))	{
+						double temp = -1.0;
+						if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS)	{
+							if (!ParseDoubleInput(temp, 0.1 , 1.0, "StartTHRESH") )	{
+								return false;
+							}
+							StartTHRESHOLD = temp;
+						}
+						std::cout << "StartTHRESH:  " << temp << " ("<< pAttrib->Value()  <<")" << std::endl;
+					}
+
+					else if(!strcmp(pAttrib->Name(),"StartIterations"))	{
+						int temp = -1;
+						if (pAttrib->QueryIntValue(&temp)==TIXML_SUCCESS)
+							FitIterations = temp;
+						std::cout << "StartIterations:  " << temp << " ("<< pAttrib->Value()  <<")" << std::endl;
+					}
+					else {
+						std::cout << "UNRECOGNIZED TAG:  " << pAttrib->Value() << std::endl;
+					}
+				}
+			}
+			node = node->NextSibling();
+		}
+	}
+	return true;
+}
+
+
 
 

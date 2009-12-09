@@ -55,7 +55,7 @@ public:
     void PrintSelf();
     bool IsInList(TraceIDListType tlist, long id);
     void UpdateTrace(TVessel *&seg, TVessel *&seg1, const int );
-    TVessel* Step(TVessel *, ImageType3D::Pointer , unsigned long , char);
+    TVessel* Step(TVessel *, ImageType3D::Pointer , unsigned long , char,  double, double, double);
 	void Reverse(TVessel *);
 
 private:

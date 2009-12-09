@@ -10,12 +10,12 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License. 
+limitations under the License.
 =========================================================================*/
 
 /**
- \brief Main function for tracing in 3D volume. The input image can be 
- \author $ Author: Amit Mukherjee, James Alex Tyrrell $
+ \brief Main function for tracing in 3D volume. The input image can be
+ \author $ Author: Amit Mukherjee$
  \version $Revision 1.0 $
  \date May 05 2009
 */
@@ -30,7 +30,18 @@ limitations under the License.
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkImageRegionIterator.h"
+#include "itkMedianImageFilter.h"
 #include "itkStatisticsImageFilter.h"
+
+#include "itkArray.h"
+#include "itkCovariantVector.h"
+#include "itkRescaleIntensityImageFilter.h"
+#include "itkImageRegionIterator.h"
+#include "itkHessianRecursiveGaussianImageFilter.h"
+#include "itkSmoothingRecursiveGaussianImageFilter.h"
+#include "itkShapedNeighborhoodIterator.h"
+#include "itkSymmetricEigenAnalysis.h"
+#include "vnl/vnl_math.h"
 #include <vnl/vnl_vector_fixed.h>
 
 #include "TraceConfig.h"
@@ -38,15 +49,22 @@ limitations under the License.
 #include "Seed2Seg.h"
 #include "TraceContainer3D.h"
 
-using std::cerr;
-using std::endl;
 
-typedef itk::Image< float, 2 >   ImageType2D;
-typedef itk::Image< float, 3 >   ImageType3D;
+
+typedef	 float PixelType ;
+typedef itk::Image< PixelType, 2 >   ImageType2D;
+typedef itk::Image< PixelType, 3 >   ImageType3D;
+//typedef   itk::HessianRecursiveGaussianImageFilter<  ImageType3D > HessianFilterType;
+//typedef   HessianFilterType::OutputImageType            HessianImageType;
+//typedef   HessianImageType::PixelType                   HessianPixelType;
+
 
 typedef vnl_vector_fixed<double,3> Vect3;
 
-
+void ImageDenoise(ImageType3D::Pointer&, int );
+void UpdateMultiscale( ImageType3D::Pointer& , ImageType3D::Pointer& );
+//void GetFeature( ImageType3D::Pointer&, ImageType3D::Pointer& , const float);
+void GetFeature( ImageType3D::Pointer&, ImageType3D::Pointer&);
 void ImageStatistics(ImageType3D::Pointer & );
 static void WriteSeedImage(ImageType2D::Pointer, SeedContainer3D::Pointer,std::string );
 
@@ -54,70 +72,128 @@ static void WriteSeedImage(ImageType2D::Pointer, SeedContainer3D::Pointer,std::s
 int main (int argc, char *argv[])
 {
 
-	if( system("cls") != 0)
-    {
-    cerr << "system call to cls returned nonzero..." << endl;
-    }
-	std::cout << "SuperEllipsoid Trace3D version-0.1\tSept 11, 2007" << std::endl << std::endl;
-	if (argc < 2)	{
-		std::cout << "Usage: "<<argv[0] << " [ImageFile] [Grid spacing] [AspectRatio]" <<std::endl;
+	std::cout << "SuperEllipsoid Trace3D version-2.0\tDec 04, 2009" << std::endl << std::endl;
+	if (argc != 2)	{
+		std::cout << "Usage: "<<argv[0] << " [InputParameterFilename.xml]" <<std::endl;
 		exit(1);
 	}
 
-	std::cout << "Tracing "<< argv[1] << std::endl;
+	std::cout << "Reading "<< argv[1] << std::endl;
 	TraceConfig::Pointer m_Config = TraceConfig::New();
-	m_Config->SetFileNames(argv[1]);
-	if (argc>2)	{
-		m_Config->SetGridSpacing(argv[2]);
+	if ( !m_Config->LoadParameters(argv[1]) ) {
+		std::cout << "Problem encountered in reading "<< argv[1] << std::endl;
+		return EXIT_FAILURE;
 	}
+	std::cout <<  std::endl <<  std::endl<<
+		"Parameter file parsed successfully, " <<m_Config->getNumberOfDataFiles() <<" images in the processing list!!" <<  std::endl<<  std::endl;
 
-	if (argc>3)	{
-		m_Config->SetAspectRatio(argv[3]);
+
+	for (unsigned int k = 0; k < m_Config->getNumberOfDataFiles(); k++) {
+		std::cout << "Tracing " << k+1 <<" out of " << m_Config->getNumberOfDataFiles()
+			<< " image: " << m_Config->getInputFileName(k) << std::endl<< std::endl;
+
+		ImageType3D::Pointer image3D = ImageType3D::New();
+		ImageType2D::Pointer MIPimage = ImageType2D::New();
+		typedef itk::ImageFileReader<ImageType3D> ReaderType;
+		ReaderType::GlobalWarningDisplayOff();
+		ReaderType::Pointer reader = ReaderType::New();
+
+		reader->SetFileName(m_Config->getInputFileName(k));
+		image3D = (reader->GetOutput());
+		try {
+			image3D->Update();
+		}
+		catch (itk::ExceptionObject &e)	{
+			std::cout << "Exception caught in opening input image file!!! " << std::endl << e << std::endl;
+			return EXIT_FAILURE;
+		}
+		std::cout << "Image of size " << image3D->GetBufferedRegion().GetSize() << " read successfully " << std::endl;
+
+		ImageDenoise(image3D, m_Config->getHessianFlag());
+		ImageStatistics(image3D);
+
+		try	{
+			SeedContainer3D::Pointer m_Seeds = SeedContainer3D::New();
+			m_Seeds->Configure(m_Config);
+			m_Seeds->Detect(image3D, MIPimage);
+			WriteSeedImage(MIPimage, m_Seeds , m_Config->getOutputFileName(k));
+
+			Seed2Seg::Pointer m_SS = Seed2Seg::New();
+			m_SS->Configure(m_Config);
+			m_SS->ComuputeStartSegments(m_Seeds , image3D, m_Config);
+			m_SS->SortStartSegments();
+
+			TraceContainer3D::Pointer m_Tracer = TraceContainer3D::New();
+			m_Tracer->Configure(m_Config);
+			m_Tracer->ComputeTrace(image3D, m_SS) ;
+			//m_Tracer->WriteTraceToTxtFile(m_Config->getOutputFileName(k));
+			m_Tracer->WriteTraceToXMLFile(m_Config->getOutputFileName(k));
+
+			m_Seeds = NULL;
+			m_SS = NULL;
+			m_Tracer = NULL;
+			image3D = NULL;
+			MIPimage = NULL;
+		}
+		catch (itk::ExceptionObject & err )	    {
+			std::cout << "ExceptionObject caught !" << std::endl;
+			std::cout << err << std::endl;
+			return EXIT_FAILURE;
+		}
 	}
-
-	ImageType3D::Pointer image3D = ImageType3D::New();
-	ImageType2D::Pointer MIPimage = ImageType2D::New();
-
-	typedef itk::ImageFileReader<ImageType3D> ReaderType;
-	ReaderType::GlobalWarningDisplayOff();
-	ReaderType::Pointer reader = ReaderType::New();
-	reader->SetFileName(m_Config->getInputFileName());
-	image3D = (reader->GetOutput());
-	image3D->Update();
-	std::cout << "Image of size " << image3D->GetBufferedRegion().GetSize() << " read successfully " << std::endl;
-
-	ImageStatistics(image3D);
-
-
-
-	try	{
-		SeedContainer3D::Pointer m_Seeds = SeedContainer3D::New();
-		m_Seeds->Configure(m_Config);
-		m_Seeds->Detect(image3D, MIPimage);
-		WriteSeedImage(MIPimage, m_Seeds , m_Config->getOutputFileName());
-
-		Seed2Seg::Pointer m_SS = Seed2Seg::New();
-		m_SS->ComuputeStartSegments(m_Seeds , image3D, m_Config);
-		m_SS->SortStartSegments();
-
-        TraceContainer3D::Pointer m_Tracer = TraceContainer3D::New();
-        m_Tracer->ComputeTrace(image3D, m_SS) ;
-//		m_Tracer->ApplyRules();
-		m_Tracer->WriteTraceToTxtFile(m_Config->getOutputFileName());
-		m_Tracer->WriteTraceToXMLFile(m_Config->getOutputFileName());
-
-	}
-	catch (itk::ExceptionObject & err )	    {
-	    std::cout << "ExceptionObject caught !" << std::endl;
-	    std::cout << err << std::endl;
-	    return EXIT_FAILURE;
-    }
-
-	//delete m_Config; m_Config = NULL;
 
 	return EXIT_SUCCESS;
 }
 
+//void ImageDenoise(ImageType3D::Pointer& vol)	{
+void ImageDenoise(ImageType3D::Pointer& im3D, int hessianFlag)	{
+	// use median filtering based denoising to get rid of impulsive noise
+	std::cout << "Denoising Image..." << std::endl;
+	typedef itk::MedianImageFilter<ImageType3D, ImageType3D> MedianFilterType;
+	MedianFilterType::Pointer medfilt = MedianFilterType::New();
+	medfilt->SetInput(im3D);
+	ImageType3D::SizeType rad = {1, 1, 1};
+	medfilt->SetRadius(rad);
+
+	ImageType3D::Pointer vol = medfilt->GetOutput();
+	vol->Update();
+
+	if (hessianFlag == 1)	{
+ 		ImageType3D::PixelType sigmas[] = { 2.0f, 2.88f, 4.0f, 5.68f, 8.0f };
+		ImageType3D::Pointer temp = ImageType3D::New();
+		ImageType3D::Pointer maxF = ImageType3D::New();
+
+		temp->SetRegions(vol->GetLargestPossibleRegion());
+		temp->Allocate();
+		temp->FillBuffer(0.0);
+		maxF->SetRegions(vol->GetLargestPossibleRegion());
+		maxF->Allocate();
+		maxF->FillBuffer(0.0);
+
+
+		typedef itk::SmoothingRecursiveGaussianImageFilter< ImageType3D , ImageType3D> GFilterType;
+		GFilterType::Pointer gauss = GFilterType::New();
+
+		for (unsigned int i = 0; i < 4; ++i)	{
+			std::cout << "Performing 3D Line Filtering using Hessian at " << sigmas[i] ;
+			gauss->SetInput( vol );
+			gauss->SetSigma( sigmas[i] );
+			gauss->SetNormalizeAcrossScale(true);
+			ImageType3D::Pointer svol = gauss->GetOutput();
+			svol->Update();
+
+			std::cout << "...";
+			//GetFeature( vol, temp, sigmas[i] );
+			GetFeature( temp, svol );
+			std::cout << "....done" << std::endl;
+			UpdateMultiscale( temp, maxF);
+		}
+		im3D = maxF;
+	}
+	else {
+		im3D = vol;
+	}
+}
 
 void ImageStatistics(ImageType3D::Pointer & im3D)	{
 	typedef itk::StatisticsImageFilter<ImageType3D>  StatisticsType;
@@ -137,7 +213,7 @@ void ImageStatistics(ImageType3D::Pointer & im3D)	{
 		IteratorType it(im3D, im3D->GetRequestedRegion());
 		for (it.GoToBegin(); !it.IsAtEnd(); ++it)	{
 			float d = it.Get();
-			float imax2 = imean+2*istd;
+			float imax2 = imean+4*istd;
 			d = (d > (imax2)) ? (imax2) : d;
 			d = 1 - (d - imin)/(imax2 - imin);
 			it.Set(255.0*d);
@@ -147,47 +223,15 @@ void ImageStatistics(ImageType3D::Pointer & im3D)	{
 		IteratorType it(im3D, im3D->GetRequestedRegion());
 			for (it.GoToBegin(); !it.IsAtEnd(); ++it)	{
 			float d = it.Get();
-			float imin2 = imean-2*istd;
+			float imin2 = imean-4*istd;
 			d = (d < (imin2)) ? (imin2) : d;
 			d = (d - imin2)/(imax - imin2);
 			it.Set(255.0*d);
 		}
 	}
-
-	//itk::ImageFileWriter<ImageType3D>::Pointer w = itk::ImageFileWriter<ImageType3D>::New();
-	//w->SetFileName("ProcessedInput.mhd");
-	//w->SetInput(im3D);
-	//w->Update();
-
 }
 
-/*static void WriteStartSegments(Seed2Seg::Pointer stseg, std::string filename)	{
 
-	std::ofstream ssfile;
-	std::string file = filename + std::string("_SSeg.txt");
-	ssfile.open (file.c_str());
-
-	P(stseg->getNumberOfStartSegments())
-	stseg->getStartSegment(1)->PrintSelf();
-	S("Before Writing")
-
-    for (unsigned int i=0; i< stseg->getNumberOfStartSegments(); i++ )	{
-		TVessel* seg = stseg->getStartSegment(i);
-
-		ssfile << "ID = " << seg->ID << " @ [" << seg->mu[0] << "," << seg->mu[1] << "," <<  seg->mu[2] << "]" << \
-		" Foregd:" << seg->f << "  Backgd:" << seg->b << "  Lhood:" <<  seg->L << "  MAD:" <<  seg->MAD << \
-		" A:<" << seg->a1 << ", " << seg->a2 << ", " <<  seg->a3 << "> Q:<" << seg->q1[0]<< ", "<< seg->q1[1] << ", "<< seg->q1[2] << ", " << seg->q1[3] << ">" << \
-		" R:\t" << seg->R1[0] << " " << seg->R2[0] << " " <<  seg->R3[0] << " \t" << seg->R1[1] << " " << seg->R2[1] << " " <<  seg->R3[1] << " \t" << seg->R1[2] << " " << seg->R2[2] << " " <<  seg->R3[2] << std::endl;
-
-		std::cout << "ID = " << seg->ID << " @ [" << seg->mu[0] << "," << seg->mu[1] << "," <<  seg->mu[2] << "]" << \
-		" Foregd:" << seg->f << "  Backgd:" << seg->b << "  Lhood:" <<  seg->L << "  MAD:" <<  seg->MAD << \
-		" A:<" << seg->a1 << ", " << seg->a2 << ", " <<  seg->a3 << "> Q:<" << seg->q1[0]<< ", "<< seg->q1[1] << ", "<< seg->q1[2] << ", " << seg->q1[3] << ">" << \
-		" R:\t" << seg->R1[0] << " " << seg->R2[0] << " " <<  seg->R3[0] << " \t" << seg->R1[1] << " " << seg->R2[1] << " " <<  seg->R3[1] << " \t" << seg->R1[2] << " " << seg->R2[2] << " " <<  seg->R3[2] << std::endl;
-
-	}
-	ssfile.close();
-}
-*/
 
 static void WriteSeedImage(ImageType2D::Pointer im, SeedContainer3D::Pointer seedCnt ,std::string filename)	{
 
@@ -200,9 +244,7 @@ static void WriteSeedImage(ImageType2D::Pointer im, SeedContainer3D::Pointer see
   start[0] = 0;
   start[1] = 0;
 
-
   RGBImageType::SizeType size = im->GetRequestedRegion().GetSize();;
-
 
   RGBImageType::RegionType region;
   region.SetSize( size );
@@ -231,7 +273,6 @@ static void WriteSeedImage(ImageType2D::Pointer im, SeedContainer3D::Pointer see
 
   std::cout << "Writing "<< seedCnt->getNumberOfSeeds() << " seeds";
 
-  //for (unsigned int i = 1; i< 4 ;i++) {
   for (unsigned int i = 0; i< seedCnt->getNumberOfSeeds() ;i++){
 
 	  Vect3 pos = seedCnt->getSeed(i)->getPosition();
@@ -265,5 +306,122 @@ static void WriteSeedImage(ImageType2D::Pointer im, SeedContainer3D::Pointer see
 }
 
 
-//static void WriteTraceImage(ImageType3D::Pointer&, Tracer *,std::string )	{
-//}
+void UpdateMultiscale( ImageType3D::Pointer& temp, ImageType3D::Pointer& maxF)	{
+	itk::ImageRegionIterator<ImageType3D> itt(temp, temp->GetBufferedRegion());
+	itk::ImageRegionIterator<ImageType3D> itm(maxF, maxF->GetBufferedRegion());
+	for (itt.GoToBegin(), itm.GoToBegin(); !itt.IsAtEnd(); ++itt, ++itm)	{
+		itm.Set(vnl_math_max(itm.Get(), itt.Get()));
+	}
+}
+
+
+void GetFeature( ImageType3D::Pointer& temp, ImageType3D::Pointer& svol)	{
+		// set the diagonal terms in neighborhood iterator
+	itk::Offset<3>
+		xp =  {2 ,  0 ,   0},
+		xn =  {-2,  0,    0},
+		yp =  {0,   2,	  0},
+		yn =  {0,  -2,    0},
+		zp =  {0,   0,    2},
+		zn =  {0,   0,   -2},
+		center = {0, 0 , 0};
+
+	itk::Size<3> rad = {{1,1,1}};
+	itk::NeighborhoodIterator<ImageType3D> nit(rad , svol, svol->GetBufferedRegion());
+	itk::ImageRegionIterator<ImageType3D> it(svol, svol->GetBufferedRegion());
+	itk::ImageRegionIterator<ImageType3D> itt(temp, temp->GetBufferedRegion());
+
+
+	unsigned int
+		xy1 =  17,
+		xy2 =  9,
+		xy3 =  15,
+		xy4 =  11,
+
+		yz1 =  25,
+		yz2 =  1,
+		yz3 =  19,
+		yz4 =  7,
+
+		xz1 =  23,
+		xz2 =  3,
+		xz3 =  21,
+		xz4 =  5;
+
+
+	typedef itk::FixedArray< double, 3 > EigenValuesArrayType;
+	typedef itk::Matrix< double, 3, 3 > EigenVectorMatrixType;
+	typedef itk::SymmetricSecondRankTensor<double,3> TensorType;
+
+	itk::Size<3> sz = svol->GetBufferedRegion().GetSize();
+	sz[0] = sz[0] - 3; sz[1] = sz[1] - 3; sz[2] = sz[2] - 3;
+
+	it.GoToBegin();
+	nit.GoToBegin();
+	itt.GoToBegin();
+	itk::Vector<float,3> sp = svol->GetSpacing();
+
+	float alpha1 = 0.5;
+	float alpha2 = 2;
+
+	while(!nit.IsAtEnd())	{
+		itk::Index<3> ndx = it.GetIndex();
+		if ( (ndx[0]<2) || (ndx[1]<2) || (ndx[2]<2) || (ndx[0]>sz[0]) || (ndx[1]>sz[1]) || (ndx[2]>sz[2]) )	{
+			++itt;
+			++it;
+			++nit;
+			continue;
+		}
+
+		TensorType h;
+		h.Fill(0.0);
+		h[0] = svol->GetPixel( ndx + xp ) + svol->GetPixel( ndx + xn ) - 2*nit.GetPixel( 13 );
+		h[3] = svol->GetPixel( ndx + yp ) + svol->GetPixel( ndx + yn ) - 2*nit.GetPixel( 13 );
+		h[5] = svol->GetPixel( ndx + zp ) + svol->GetPixel( ndx + zn ) - 2*nit.GetPixel( 13 );
+
+		float p = 0.0f;
+
+		if ( (h[0]+h[3]+h[5]) < 0)	{
+			h[1] = nit.GetPixel(xy1) + nit.GetPixel(xy2) - nit.GetPixel(xy3) - nit.GetPixel(xy4);
+			h[2] = nit.GetPixel(xz1) + nit.GetPixel(xz2) - nit.GetPixel(xz3) - nit.GetPixel(xz4);
+			h[4] = nit.GetPixel(yz1) + nit.GetPixel(yz2) - nit.GetPixel(yz3) - nit.GetPixel(yz4);
+
+			EigenValuesArrayType ev;
+			EigenVectorMatrixType em;
+			h.ComputeEigenAnalysis (ev, em);
+
+			float temp;
+			if(ev[0] > ev[1])	{
+				temp = ev[0];
+				ev[0] = ev[1];
+				ev[1] = temp;
+			}
+			if(ev[1] > ev[2])	{
+				temp = ev[1];
+				ev[1] = ev[2];
+				ev[2] = temp;
+			}
+
+			//Assign vesselness
+			if (ev[1] < 0)	{
+				//use -ev[1] as normalization, and ev[2] as the numerator
+				float norm = 0;
+				if(ev[2] > 0)	{
+					norm = vnl_math_sqr(ev[2]/(alpha1*ev[1]));
+				}
+				else	{
+					norm = vnl_math_sqr(ev[2]/(alpha2*ev[1]));
+				}
+				p = -1*ev[1]*vcl_exp(-0.5*norm);
+			}
+			else	{
+				p = 0.0;
+			}
+		}
+		itt.Set(p);
+		++itt;
+		++it;
+		++nit;
+	}
+}
+
