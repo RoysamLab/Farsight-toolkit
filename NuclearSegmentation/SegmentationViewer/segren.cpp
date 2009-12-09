@@ -32,7 +32,7 @@ std::vector<std::string> *listFilesDir(const char* dir) {
     int arg_length;
 	std::vector<std::string> *files_dir = new std::vector<std::string>();
     
-    arg_length= strlen(dir);
+    arg_length= (int)strlen(dir);
 
     if (arg_length > (MAX_PATH - 3))
         return files_dir;
@@ -480,7 +480,7 @@ void renderPolyData(int &n, float scale[], std::vector<std::string> &plys)
 std::string getFileExt(std::string &file)
 {
 	std::string fileExt;
-	for(unsigned int i = file.size() - 1; i >= 0; i--)
+	for(unsigned int i = (unsigned int)file.size() - 1; i >= 0; i--)
 	{
 		if(file[i] == '.')
 		{
@@ -615,7 +615,7 @@ int main(int argc, char *argv[])
 				std::vector<std::string> colorFiles = segmentation->RunGraphColoring(fileName, output);
 
 				//Set counter variable to number of outputted color images
-				counter = colorFiles.size();
+				counter = (int)colorFiles.size();
 				//Cycle through the colored images
 				for(int i = 0; i < counter; i++)
 				{
