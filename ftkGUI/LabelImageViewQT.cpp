@@ -229,6 +229,9 @@ void LabelImageViewQT::Get2Points(void)
 
 void LabelImageViewQT::SaveDiplayImageToFile()
 {
+	if(!channelImg && !labelImg)
+		return;
+
 	QString fileName = QFileDialog::getSaveFileName(this, tr("Save Display Image"), ".", tr("Images (*.bmp *gif *.jpg *.png *.tif)"));
 	if(fileName.size() == 0)
 		return;
@@ -699,6 +702,9 @@ void LabelImageViewQT::scaleIntensity(QImage *img, int threshold, int offset)
 
 void LabelImageViewQT::AdjustImageIntensity(void)
 {
+	if(!channelImg)
+		return;
+
 	IntensityDialog *dialog = new IntensityDialog(backgroundThreshold, foregroundOffset, this);
 	connect(dialog, SIGNAL(valuesChanged(int,int)), this, SLOT(adjustImageIntensity(int,int)));
 	dialog->show();
