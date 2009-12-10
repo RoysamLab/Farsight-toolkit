@@ -457,7 +457,7 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 {
 	this->abortProcess();
 
-	if(!projectFiles.inputSaved || !projectFiles.outputSaved || !projectFiles.logSaved || !projectFiles.definitionSaved || !projectFiles.tableSaved)
+	if(!projectFiles.inputSaved || !projectFiles.outputSaved || !projectFiles.definitionSaved || !projectFiles.tableSaved)
 		this->saveProject();
 
 	//Then Close all other windows
@@ -503,10 +503,9 @@ bool NucleusEditor::saveProject()
 	{
 		this->saveResult();
 	}
-	if(projectFiles.log != "" && !projectFiles.logSaved)
-	{
-
-	}
+	//if(projectFiles.log != "" && !projectFiles.logSaved)
+	//{	
+	//}
 	if(projectFiles.definition != "" && !projectFiles.definitionSaved)
 	{
 		if(projectDefinition.Write(projectFiles.definition))
@@ -648,6 +647,14 @@ bool NucleusEditor::saveTable()
 	return ok;
 }
 
+void NucleusEditor::createDefaultLogName(void)
+{
+	QString filename = QString::fromStdString(projectFiles.input);
+	QString name = QFileInfo(filename).baseName() + "_log.txt";
+	QFileInfo inf(QDir(lastPath),name);
+	projectFiles.log = inf.absoluteFilePath().toStdString(); 	
+}
+
 //************************************************************************************************
 //************************************************************************************************
 //************************************************************************************************
@@ -679,9 +686,9 @@ void NucleusEditor::loadProject()
 	{
 		this->loadResult(QString::fromStdString(projectFiles.output));
 	}
-	if(projectFiles.log != "")
+	if(projectFiles.log == "")	//Not opposite boolean here
 	{
-
+		this->createDefaultLogName();		//If log file not given, use the default name.
 	}
 	if(projectFiles.definition != "")
 	{
@@ -1069,6 +1076,11 @@ void NucleusEditor::addCell(int x1, int y1, int x2, int y2, int z)
 		projectFiles.tableSaved = false;
 		this->updateViews();
 		selection->select(id);
+
+		std::string log_entry = "ADD\t";
+		log_entry += ftk::NumToString(id) + "\t";
+		log_entry += ftk::TimeStamp();
+		ftk::AppendTextFile(projectFiles.log, log_entry);
 	}
 }
 
@@ -1078,12 +1090,24 @@ void NucleusEditor::deleteCells(void)
 
 	std::set<long int> sels = selection->getSelections();
 	std::vector<int> ids(sels.begin(), sels.end());
+
+	if(ids.size() == 0)
+		return;
+
 	if(nucSeg->Delete(ids, table))
 	{
 		projectFiles.outputSaved = false;
 		projectFiles.tableSaved = false;
 		selection->clear();
 		this->updateViews();
+
+		std::string log_entry = "DELETE\t";
+		log_entry += ftk::NumToString(ids.at(0));
+		for(int i=1; i<(int)ids.size(); ++i)
+			log_entry += "," + ftk::NumToString(ids.at(i));
+		log_entry += "\t";
+		log_entry += ftk::TimeStamp();
+		ftk::AppendTextFile(projectFiles.log, log_entry);		
 	}
 }
 
@@ -1093,12 +1117,18 @@ void NucleusEditor::mergeCells(void)
 
 	std::set<long int> sels = selection->getSelections();
 	std::vector<int> ids(sels.begin(), sels.end());
-	if(nucSeg->Merge(ids, table) != -1)
+	int newObj = nucSeg->Merge(ids, table);
+	if(newObj != -1)
 	{
 		projectFiles.outputSaved = false;
 		projectFiles.tableSaved = false;
 		selection->clear();
 		this->updateViews();
+
+		std::string log_entry = "MERGE\t";
+		log_entry += ftk::NumToString(newObj) + "\t";
+		log_entry += ftk::TimeStamp();
+		ftk::AppendTextFile(projectFiles.log, log_entry);
 	}
 }
 
@@ -1117,12 +1147,18 @@ void NucleusEditor::splitCell(int x1, int y1, int z1, int x2, int y2, int z2)
 	P2.y=y2;
 	P2.z=z2;
 
-	if(nucSeg->Split(P1, P2, table).size() != 0)
+	std::vector<int> ret = nucSeg->Split(P1, P2, table);
+	if(ret.size() != 0)
 	{
 		projectFiles.outputSaved = false;
 		projectFiles.tableSaved = false;
 		selection->clear();
 		this->updateViews();
+
+		std::string log_entry = "SPLIT\t";
+		log_entry += ftk::NumToString(ret.at(0)) + "\t";
+		log_entry += ftk::TimeStamp();
+		ftk::AppendTextFile(projectFiles.log, log_entry);
 	}
 }
 
@@ -1133,17 +1169,25 @@ void NucleusEditor::splitCellAlongZ(void)
 	std::set<long int> sels = selection->getSelections();
 	if(sels.size() == 0)
 		return;
+	if(labImg->GetImageInfo()->numZSlices == 1)
+		return;
 
+	std::string log_entry = "SPLIT\t";
 	selection->clear();
 	for ( set<long int>::iterator it=sels.begin(); it != sels.end(); it++ )
 	{
 		if(nucSeg->SplitAlongZ(*it,segView->GetCurrentZ(), table).size() != 0)
 		{
+			log_entry += ftk::NumToString(*it) + ",";
 			projectFiles.outputSaved = false;
 			projectFiles.tableSaved = false;
 		}
 	}
 	this->updateViews();
+
+	log_entry += "\t";
+	log_entry += ftk::TimeStamp();
+	ftk::AppendTextFile(projectFiles.log, log_entry);
 }
 
 void NucleusEditor::applyExclusionMargin(void)
@@ -1165,6 +1209,11 @@ void NucleusEditor::applyExclusionMargin(void)
 		projectFiles.outputSaved = false;
 		projectFiles.tableSaved = false;
 		this->updateViews();
+
+		std::string log_entry = "EXCLUSION_MARGIN\t";
+		log_entry += ftk::NumToString(xy) + "," + ftk::NumToString(z) + "\t";
+		log_entry += ftk::TimeStamp();
+		ftk::AppendTextFile(projectFiles.log, log_entry);
 	}
 }
 
@@ -1267,6 +1316,9 @@ void NucleusEditor::startProcess()
 	//Assumes Image is already loaded up:
 	if(!myImg) return;
 
+	if(projectFiles.log == "")
+		this->createDefaultLogName();
+
 	//Set up a new processor:
 	pProc = new ftk::ProjectProcessor();
 	pProc->SetInputImage(myImg);
@@ -1310,13 +1362,18 @@ void NucleusEditor::process()
 		table = pProc->GetTable();
 		projectFiles.tableSaved = false;
 
+		deleteProcess();
+
+		std::string log_entry = "NUCLEAR_SEGMENTATION\t";
+		log_entry += ftk::NumToString((int)table->GetNumberOfRows()) + "\t";
+		log_entry += ftk::TimeStamp();
+		ftk::AppendTextFile(projectFiles.log, log_entry);
+
 		this->closeViews();
 		CreateNewTableWindow();
 		CreateNewPlotWindow();
 		this->startEditing();
-		projectFiles.logSaved = false;
 		
-		deleteProcess();
 	}
 }
 

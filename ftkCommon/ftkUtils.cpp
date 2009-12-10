@@ -38,6 +38,20 @@ bool FileExists(std::string filename)
 	return true;
 }
 
+//Add new line to the file with the given text
+bool AppendTextFile(std::string filename, std::string text)
+{
+	ofstream outFile; 
+	outFile.open(filename.c_str(), ios::app);
+	if ( !outFile.is_open() )
+		return false;
+
+	outFile << text << "\n";
+
+	outFile.close();
+	return true;
+}
+
 std::string NumToString(double d)
 {
 	std::stringstream out;

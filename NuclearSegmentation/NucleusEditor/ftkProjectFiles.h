@@ -55,7 +55,7 @@ public:
 
 	bool inputSaved;
 	bool outputSaved;
-	bool logSaved;
+	//bool logSaved; //Log is continuously saved
 	bool definitionSaved;
 	bool tableSaved;
 

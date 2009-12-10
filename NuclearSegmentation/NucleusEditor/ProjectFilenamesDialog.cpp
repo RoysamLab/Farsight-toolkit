@@ -85,6 +85,7 @@ ProjectFilenamesDialog::ProjectFilenamesDialog(QString path, ftk::ProjectFiles *
 	logFile->setFrameShadow(QFrame::Sunken);
 	logFile->setFrameShape(QFrame::StyledPanel);
 	logButton = new QPushButton(buttonText);
+	logButton->setEnabled(false);					//Cannot change the log file here!!
 	connect(logButton, SIGNAL(clicked()), this, SLOT(changeLog()));
 	lLayout->addWidget(logLabel);
 	lLayout->addWidget(logFile);
@@ -203,7 +204,6 @@ void ProjectFilenamesDialog::changeLog(void)
 	{
 		logFile->setText(filename);
 		pFiles->log = filename.toStdString();
-		pFiles->logSaved = false;
 	}
 }
 void ProjectFilenamesDialog::changeDefinition(void)

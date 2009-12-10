@@ -42,6 +42,7 @@ namespace ftk
 {
 
 bool FileExists(std::string filename);
+bool AppendTextFile(std::string filename, std::string text);			//Add new line to the file with the given text
 bool SaveTable(std::string filename, vtkSmartPointer<vtkTable> table);
 vtkSmartPointer<vtkTable> LoadTable(std::string filename);
 bool SaveXMLImage(std::string filename, ftk::Image::Pointer image);

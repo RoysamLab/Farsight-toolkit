@@ -42,7 +42,7 @@ ProjectFiles::ProjectFiles()
 
 	inputSaved = true;
 	outputSaved = true;
-	logSaved = true;
+	//logSaved = true;
 	definitionSaved = true;
 	tableSaved = true;
 }

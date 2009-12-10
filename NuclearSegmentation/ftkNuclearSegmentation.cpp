@@ -765,6 +765,7 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 	this->removeObjectFromMaps(objID, table);
 	EditsNotSaved = true;
 
+	ret_ids.push_back(objID);
 	ret_ids.push_back(newID1);
 	ret_ids.push_back(newID2);
 	return ret_ids;
@@ -825,6 +826,7 @@ std::vector< int > NuclearSegmentation::SplitAlongZ(int objID, int cutSlice, vtk
 	EditsNotSaved = true;
 
 	//return the ids of the two cells resulting from spliting
+	ret_ids.push_back(objID);
 	ret_ids.push_back(newID1);
 	ret_ids.push_back(newID2);
 	return ret_ids;

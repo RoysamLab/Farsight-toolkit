@@ -121,6 +121,7 @@ private slots:
 	bool saveResult(void);
 	bool askSaveTable(void);
 	bool saveTable(void);
+	void createDefaultLogName(void);
 	
 	//Views:
 	void toggleBounds();
