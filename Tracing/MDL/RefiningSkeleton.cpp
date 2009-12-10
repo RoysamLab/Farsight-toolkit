@@ -57,12 +57,15 @@ int main(int argc, char **argv)
   FILE *spine = 0;
   FILE *ExtraSpine = 0;
   FILE *outrefineskel = 0;
+  FILE *outseed = 0;
   
   std::string filedir;
   std::string infilename;
   std::string tempfile1; //  temp file, 
   std::string tempfile2; //  temp file, 
   std::string tempfile3; //  temp file, 
+  std::string tempfile4; //  temp file,
+  std::string tempfile5; //  temp file,
 
   VoxelPosition *AllBackbonepoints;
   VoxelPosition *AllSpinepoints = 0;
@@ -99,11 +102,18 @@ int main(int argc, char **argv)
     }
   
   BacboneOnly =  atoi(argv[6]);
+  
+  tempfile4 = filedir + "refine.seed";
+  if((outseed=fopen(tempfile4.c_str(), "w")) == NULL)  // open spineskeleton file
+    {
+    cerr << "couldn't open seed file " << filedir << " for output" << endl;
+    exit(-1);
+    }
 
   if(!BacboneOnly)
   {
    tempfile1 = filedir + argv[3];
-   cout << "second file name" << tempfile1 << endl;
+   cout << "first file name" << tempfile1 << endl;
 
    if((spine=fopen(tempfile1.c_str(), "rb")) == NULL)  // open spineskeleton file
     {
@@ -122,15 +132,15 @@ int main(int argc, char **argv)
   }//end if (!BacboneOnly)
 
   tempfile3 = filedir + argv[5];
-  cout << "second file name" << tempfile3 << endl;
+  cout << "third file name" << tempfile3 << endl;
   
   if((outrefineskel=fopen(tempfile3.c_str(), "wb")) == NULL)  // open spineskeleton file
     {
     cerr << "couldn't open  skeleton file " << filedir << " for output" << endl;
     exit(-1);
     }
-   
  
+
    
   //------------------Read From smooth backbone skeleton VTK file ---------------------//
 
@@ -223,6 +233,7 @@ int main(int argc, char **argv)
   fclose (smoothbackbone);
 
 //------------------Read From spine skeleton VTK file ---------------------//
+
 
    // Skip first 4 lines of skeleton VTK file
  if(!BacboneOnly)
@@ -387,20 +398,24 @@ int main(int argc, char **argv)
   for (i=0;i<NumBackbonePoints;i++)
   { if (RealPointsID[i]) // if it is a real backbone points
     fprintf(outrefineskel,"%f %f %f %d\n", AllBackbonepoints[i].x, AllBackbonepoints[i].y , AllBackbonepoints[i].z,1);
+    fprintf(outseed,"%d %d %d\n", (int) AllBackbonepoints[i].x, (int) AllBackbonepoints[i].y , (int) AllBackbonepoints[i].z);
   }
   if(!BacboneOnly)
   { 
     for (i=0;i<NumSpinePoints;i++)
 	{if(RealSpineID[i])
      fprintf(outrefineskel,"%f %f %f %d\n", AllSpinepoints[i].x, AllSpinepoints[i].y , AllSpinepoints[i].z,1);
+	 //fprintf(outseed,"%d %d %d\n", (int) AllBackbonepoints[i].x, (int) AllBackbonepoints[i].y , (int) AllBackbonepoints[i].z);
 	}
     for (i=0;i<NumExtraSpinePoints;i++)
 	{if(ExtraSpineID[i])
      fprintf(outrefineskel,"%f %f %f %d\n", AllExtraSpinepoints[i].x, AllExtraSpinepoints[i].y , AllExtraSpinepoints[i].z,1);
+	 //fprintf(outseed,"%d %d %d\n", (int) AllBackbonepoints[i].x, (int) AllBackbonepoints[i].y , (int) AllBackbonepoints[i].z);
 	}
 	
   } // end if 
   fclose (outrefineskel);
+  fclose (outseed);
   //release memnory
   delete []AllBackbonepoints;
   delete []RealPointsID;
