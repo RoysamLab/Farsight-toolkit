@@ -160,6 +160,7 @@ private slots:
 	//For Tools menu
 	void segmentNuclei(void);
 	void startEditing(void);
+	void stopEditing(void);
 	void startSVM();
 	void startKPLS();
 

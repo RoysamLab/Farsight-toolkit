@@ -1019,6 +1019,14 @@ void NucleusEditor::startEditing(void)
 	setEditsEnabled(true);
 }
 
+void NucleusEditor::stopEditing(void)
+{
+	if(nucSeg) delete nucSeg;
+	nucSeg = NULL;
+
+	setEditsEnabled(false);
+}
+
 void NucleusEditor::changeClass(void)
 {
 	

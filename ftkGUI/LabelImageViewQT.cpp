@@ -779,9 +779,13 @@ void LabelImageViewQT::refreshBoundsImage(void)
 					if(v!=v1 || v!=v2 || v!=v3 || v!=v4)
 					{
 						painter.setPen(qcolor);
-						if(selection) 
+						if(selection)
+						{
 							if(selection->isSelected(v))
+							{
 								painter.setPen(colorForSelections);
+							}
+						}
 						painter.drawPoint(j,i);
 					}
 				}

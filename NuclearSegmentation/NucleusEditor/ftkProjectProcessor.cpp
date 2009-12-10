@@ -59,6 +59,12 @@ void ProjectProcessor::Initialize(void)
 		case ProjectDefinition::CYTOPLASM_SEGMENTATION:
 			t.inputChannel = definition->FindInputChannel("CYTOPLASM");
 			break;
+		case ProjectDefinition::RAW_ASSOCIATIONS:
+			break;
+		case ProjectDefinition::CLASSIFY:
+			break;
+		case ProjectDefinition::ANALYTE_MEASUREMENTS:
+			break;
 		}
 		t.done = false;
 		tasks.push_back(t);
