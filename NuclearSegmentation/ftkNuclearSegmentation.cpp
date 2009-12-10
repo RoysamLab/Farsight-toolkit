@@ -262,9 +262,9 @@ bool NuclearSegmentation::ComputeAllGeometries(void)
 	}
 
 	//Compute region features:
-	//typedef ftk::LabelImageToFeatures< unsigned char, unsigned short, 3 > FeatureCalcType;
+	typedef ftk::LabelImageToFeatures< IntrinsicFeatureCalculator::IPixelT,  IntrinsicFeatureCalculator::LPixelT, 3 > FeatureCalcType;
 	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
-	labFilter->SetImageInputs( dataImage->GetItkPtr<IPixelT>(0,channelNumber), labelImage->GetItkPtr<LPixelT>(0,0) );
+	labFilter->SetImageInputs( dataImage->GetItkPtr<IntrinsicFeatureCalculator::IPixelT>(0,channelNumber), labelImage->GetItkPtr<IntrinsicFeatureCalculator::LPixelT>(0,0) );
 	labFilter->SetLevel(1);
 	labFilter->Update();
 
@@ -607,7 +607,7 @@ ftk::Object::Box NuclearSegmentation::ExtremaBox(std::vector<int> ids)
 //**********************************************************************************************************
 // EDITING FUNCTIONS:
 //**********************************************************************************************************
-std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object::Point P2)
+std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object::Point P2, vtkSmartPointer<vtkTable> table)
 {
 	std::vector <int> ret_ids;
 	ret_ids.push_back(0);
@@ -757,12 +757,12 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 		}
 	}	
 
-	std::set<int> add_ids;
-	add_ids.insert(newID1);
-	add_ids.insert(newID2);
+	std::set<unsigned short> add_ids;
+	add_ids.insert((unsigned short)newID1);
+	add_ids.insert((unsigned short)newID2);
 	//Add features for the two new objects
-	this->addObjectsToMaps(add_ids, region.min.x, region.min.y, region.min.z, region.max.x, region.max.y, region.max.z);
-	this->removeObjectFromMaps(objID);
+	this->addObjectsToMaps(add_ids, region.min.x, region.min.y, region.min.z, region.max.x, region.max.y, region.max.z, table);
+	this->removeObjectFromMaps(objID, table);
 	EditsNotSaved = true;
 
 	ret_ids.at(0) = newID1;
@@ -770,7 +770,7 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 	return ret_ids;
 }
 
-std::vector< int > NuclearSegmentation::SplitAlongZ(int objID, int cutSlice)
+std::vector< int > NuclearSegmentation::SplitAlongZ(int objID, int cutSlice, vtkSmartPointer<vtkTable> table)
 {
 	std::vector <int> ret_ids;
 	ret_ids.push_back(0);
@@ -818,12 +818,12 @@ std::vector< int > NuclearSegmentation::SplitAlongZ(int objID, int cutSlice)
 		}
 	}	
 
-	std::set<int> ids;
-	ids.insert(newID1);
-	ids.insert(newID2);
+	std::set<unsigned short> ids;
+	ids.insert((unsigned short)newID1);
+	ids.insert((unsigned short)newID2);
 	//Add features for the two new objects
-	this->addObjectsToMaps(ids, region.min.x, region.min.y, region.min.z, region.max.x, region.max.y, region.max.z);
-	this->removeObjectFromMaps(objID);
+	this->addObjectsToMaps(ids, region.min.x, region.min.y, region.min.z, region.max.x, region.max.y, region.max.z, table);
+	this->removeObjectFromMaps(objID, table);
 	EditsNotSaved = true;
 
 	//return the ids of the two cells resulting from spliting
@@ -832,7 +832,7 @@ std::vector< int > NuclearSegmentation::SplitAlongZ(int objID, int cutSlice)
 	return ret_ids;
 }
 
-int NuclearSegmentation::Merge(vector<int> ids)
+int NuclearSegmentation::Merge(vector<int> ids, vtkSmartPointer<vtkTable> table)
 {
 	if(!labelImage || !dataImage)
 	{
@@ -843,17 +843,17 @@ int NuclearSegmentation::Merge(vector<int> ids)
 	int newID = maxID() + 1;
 	ReassignLabels(ids, newID);					//Assign all old labels to this new label
 	ftk::Object::Box region = ExtremaBox(ids);
-	this->addObjectToMaps(newID, region.min.x, region.min.y, region.min.z, region.max.x, region.max.y, region.max.z);
+	this->addObjectToMaps(newID, region.min.x, region.min.y, region.min.z, region.max.x, region.max.y, region.max.z, table);
 	for(unsigned int i=0; i<ids.size(); ++i)
 	{
-		removeObjectFromMaps(ids.at(i));
+		removeObjectFromMaps(ids.at(i),table);
 	}
 	EditsNotSaved = true;
 
 	return newID;
 }
 
-int NuclearSegmentation::AddObject(int x1, int y1, int z1, int x2, int y2, int z2)
+int NuclearSegmentation::AddObject(int x1, int y1, int z1, int x2, int y2, int z2, vtkSmartPointer<vtkTable> table)
 {
 	//if no label (segmentation) or no data image is available then return
 	if(!labelImage || !dataImage)
@@ -913,27 +913,27 @@ int NuclearSegmentation::AddObject(int x1, int y1, int z1, int x2, int y2, int z
 
 	lastRunStep = 4;	//To make sure we retrieve the correct image!!!
 	this->GetResultImage();
-	this->addObjectToMaps(newID, x1, y1, z1, x2, y2, z2);
+	this->addObjectToMaps(newID, x1, y1, z1, x2, y2, z2, table);
 	EditsNotSaved = true;
 
 	return newID;
 }
 
-bool NuclearSegmentation::Delete(std::vector<int> ids)
+bool NuclearSegmentation::Delete(std::vector<int> ids, vtkSmartPointer<vtkTable> table)
 {
 	if(!labelImage) return false;
 
 	for(int i=0; i<(int)ids.size(); ++i)
 	{
 		ReassignLabel(ids.at(i),0);				//Turn each label in list to zero
-		removeObjectFromMaps(ids.at(i));
+		removeObjectFromMaps(ids.at(i),table);
 	}
 	EditsNotSaved = true;
 
 	return true;
 }
 
-bool NuclearSegmentation::Exclude(int xy, int z)
+bool NuclearSegmentation::Exclude(int xy, int z, vtkSmartPointer<vtkTable> table)
 {
 	if(!labelImage) return false;
 
@@ -970,7 +970,7 @@ bool NuclearSegmentation::Exclude(int xy, int z)
 	for(int i=0; i<(int)ids.size(); ++i)
 	{
 		ReassignLabel(ids.at(i),0);				//Turn each label in list to zero
-		removeObjectFromMaps(ids.at(i));			
+		removeObjectFromMaps(ids.at(i),table);			
 	}
 	EditsNotSaved = true;
 
@@ -1036,22 +1036,41 @@ ftk::Object::Point NuclearSegmentation::MergeInit(ftk::Object::Point P1, ftk::Ob
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-void NuclearSegmentation::removeObjectFromMaps(int ID)
+void NuclearSegmentation::removeObjectFromMaps(int ID, vtkSmartPointer<vtkTable> table)
 {
+	if(table)
+	{
+		for(int row = 0; row<table->GetNumberOfRows(); ++row)
+		{
+			if(table->GetValue(row,0) == ID)
+			{
+				table->RemoveRow( row );
+				break;
+			}
+		}
+	}
 	centerMap.erase( ID );
 	bBoxMap.erase( ID );
 }
 
 //Calculate the features within a specific region of the image for a specific ID, and update the table
-bool NuclearSegmentation::addObjectToMaps(int ID, int x1, int y1, int z1, int x2, int y2, int z2)
+bool NuclearSegmentation::addObjectToMaps(int ID, int x1, int y1, int z1, int x2, int y2, int z2, vtkSmartPointer<vtkTable> table)
 {
-	std::set<int> ids;
-	ids.insert(ID);
-	return addObjectsToMaps(ids,x1,y1,z1,x2,y2,z2);
+	std::set<unsigned short> ids;
+	ids.insert((unsigned short)ID);
+	return addObjectsToMaps(ids,x1,y1,z1,x2,y2,z2,table);
 }
 
-bool NuclearSegmentation::addObjectsToMaps(std::set<int> IDs, int x1, int y1, int z1, int x2, int y2, int z2)
+bool NuclearSegmentation::addObjectsToMaps(std::set<unsigned short> IDs, int x1, int y1, int z1, int x2, int y2, int z2, vtkSmartPointer<vtkTable> table)
 {
+	IntrinsicFeatureCalculator * calc = new IntrinsicFeatureCalculator();
+	calc->SetInputImages(dataImage, labelImage);
+	calc->SetRegion(x1,y1,z1,x2,y2,z2);
+	calc->SetIDs(IDs);
+	calc->Update(table, &centerMap, &bBoxMap);
+	delete calc;
+
+	/*
 	FeatureCalcType::Pointer labFilter = computeGeometries(x1,y1,z1,x2,y2,z2);
 	if(!labFilter) return false;
 
@@ -1083,13 +1102,16 @@ bool NuclearSegmentation::addObjectsToMaps(std::set<int> IDs, int x1, int y1, in
 		bBoxMap[(int)id] = b;
 		centerMap[(int)id] = c;
 	}
+	*/
 	return true;
 }
 
 //Calculate the features within a specific region of the image and return the filter:
 //bool NuclearSegmentation::computeFeatures(int x1, int y1, int z1, int x2, int y2, int z2)
+/*
 FeatureCalcType::Pointer NuclearSegmentation::computeGeometries(int x1, int y1, int z1, int x2, int y2, int z2)
 {
+	
 	if(!dataImage)
 	{
 		errorMessage = "No Data Image";
@@ -1126,6 +1148,7 @@ FeatureCalcType::Pointer NuclearSegmentation::computeGeometries(int x1, int y1, 
 	labFilter->Update();
 	return labFilter;
 }
+*/
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************

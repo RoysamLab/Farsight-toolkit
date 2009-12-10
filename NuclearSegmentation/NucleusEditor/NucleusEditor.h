@@ -15,6 +15,14 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+/*=========================================================================
+
+  Program:   Farsight Biological Image Segmentation and Visualization Toolkit
+  Language:  C++
+  Date:      $Date:  $
+  Version:   $Revision: 0.00 $
+
+=========================================================================*/
 
 #ifndef NUCLEUS_EDITOR_H
 #define NUCLEUS_EDITOR_H
@@ -37,6 +45,10 @@
 #include <QtCore/QFileInfo>
 #include <QtCore/QThread>
 
+#include "ProjectFilenamesDialog.h"
+#include "ftkProjectProcessor.h"
+#include "ftkProjectFiles.h"
+
 //Farsight Includes:
 #include "NuclearSegmentation/ftkNuclearSegmentation.h"
 #include "NuclearSegmentation/CytoplasmSegmentation/CytoplasmSegmentation.h"
@@ -53,9 +65,7 @@
 //VTK includes:
 #include "vtkQtTableView.h"
 
-
-//ITK Preprocessing includes
-
+//ITK Preprocessing includes:
 #include "itkGradientAnisotropicDiffusionImageFilter.h"
 #include "itkCastImageFilter.h"
 #include "itkMedianImageFilter.h"
@@ -72,8 +82,7 @@
 
 class ParamsFileDialog;
 class MarginDialog;
-class NucSegThread;
-class FeaturesThread;
+class ProcessThread;
 class PreprocessParamsDialog;
 
 class NucleusEditor : public QMainWindow
@@ -89,27 +98,35 @@ protected:
 
 private slots:
 	void setMouseStatus(int,int,int);
-	void loadImage(void);
-	void loadResult(void);
-	void loadTable(void);
+
+	//Loading:
+	void askLoadImage(void);
+	void loadImage(QString fileName);
+	void askLoadResult(void);
+	void loadResult(QString fileName);
+	void askLoadTable(void);
+	void loadTable(QString fileName);
+	void loadProject(void);
+	//Processing:
+	void processProject(void);
+	void startProcess(void);
+	void process(void);
+	void abortProcess(void);
+	void deleteProcess(void);
+	//Saving:
+	bool saveProject(void);
+	bool askSaveImage(void);
+	bool saveImage(void);
 	bool saveResult(void);
 	bool saveTable(void);
-	void segmentImage(void);
-	void abortSegment(void);
-	void stopSegment(void);
-	bool checkSaveSeg(void);
-	void segment(void);
-	void about(void);
-	void cytoSeg(void);
-
-	void menusEnabled(bool val);
-	void setMenusForResult(bool val);
+	
+	//Views:
 	void toggleBounds();
-	void toggleIDs();
 	void CreateNewPlotWindow();
 	void CreateNewTableWindow();
 	void CreateNewHistoWindow();
 	void ShowHistogram();
+	void updateViews();
 
 	//For Editing Menu
 	void setEditsEnabled(bool val);
@@ -123,8 +140,9 @@ private slots:
 	void changeClass(void);
 	void markVisited(void);
 
+	//***************************************************
 	// Preprocessing Menu
-	
+	void setPreprocessingEnabled(bool val);
 	void AnisotropicDiffusion(void);
 	void MedianFilter(void);
 	void SigmoidFilter(void);
@@ -134,25 +152,27 @@ private slots:
 	void GrayscaleClose(void);
 	void CurvAnisotropicDiffusion(void);
 	//void Resample(void);
-
-
-
+	//*****************************************************
 
 	//For Tools menu
-	void startAssociations();
+	void segmentNuclei(void);
+	void startEditing(void);
 	void startSVM();
 	void startKPLS();
 
-	void updateViews();
+	void about(void);
+
+	void menusEnabled(bool val);
 
 signals:
     
 private:
 	void createMenus();
 	void createStatusBar();
-	void createSegmentToolBar();
-	void quitNucSeg();
-	int requestChannel(ftk::Image::Pointer img);
+	void createProcessToolBar();
+	void createPreprocessingMenu();
+
+	int requestChannel(ftk::Image::Pointer img);	//Request a channel from this image
 	
 	LabelImageViewQT *segView;
 	std::vector<PlotWindow *> pltWin;
@@ -164,25 +184,24 @@ private:
 	QAction *loadImageAction;
 	QAction *loadLabelAction;
 	QAction *loadTableAction;
-	QAction *saveAction;
-	QAction *saveDisplayAction;
+	QAction *loadProjectAction;
+	QAction *processProjectAction;
+	QAction *saveProjectAction;
+	QAction *saveImageAction;
+	QAction *saveLabelAction;
 	QAction *saveTableAction;
+	QAction *saveDisplayAction;
 	QAction *exitAction;
 
 	QMenu *viewMenu;
 	QAction *showBoundsAction;
-	QAction *showIDsAction;
 	QAction *newScatterAction;
 	QAction *showHistoAction;
 	QAction *imageIntensityAction;
 
-	QMenu *helpMenu;
-	QAction *aboutAction;
-
 	QMenu *toolMenu;
-	QAction *segmentAction;
-	QAction *cytoAction;
-	QAction *assocAction;
+	QAction *segmentNucleiAction;
+	QAction *editNucleiAction;
 	QAction *svmAction;		//Start the One-Class SVM outlier detecter
 	QAction *kplsAction;	//Start the KPLS Classifier
 	
@@ -197,7 +216,11 @@ private:
 	QAction *exclusionAction;
 	QAction *classAction;
 	QAction *visitAction;			//Mark an object as visited
+
+	QMenu *helpMenu;
+	QAction *aboutAction;
 	
+	//************************************************************************
 	//Preprocess menu
 	QMenu *PreprocessMenu;
     QAction *AnisotropicAction;
@@ -214,32 +237,29 @@ private:
 	typedef unsigned char   InpPixelType;
 	typedef itk::Image<unsigned char, 3> InpImageType;		
     typedef itk::Image<float, 3> FloatImageType;
+	//*********************************************************************
 	
-	
-	
-	
-	QLabel *statusLabel;			//Shown at bottom of main window
+	QLabel *statusLabel;						//Shown at bottom of main window
+	QString lastPath;							//Last path that has been navigated to
+	QString standardImageTypes;
 
-	ftk::NuclearSegmentation *nucSeg;//Used for segmentation execution, loading, and editing
-	ftk::Image::Pointer myImg;		//My currently visible image
-	ftk::Image::Pointer labImg;		//Currently visible label image
-	int nucChannel;
-	int cytChannel;
-	ObjectSelection * selection;	//object selection list
-	vtkSmartPointer<vtkTable> table;//table
-
-	QString lastPath;
+	ftk::NuclearSegmentation *nucSeg;			//Used for editing a nuclear segmentation
+	ftk::ProjectProcessor *pProc;				//My project processor
+	ftk::Image::Pointer myImg;					//My currently visible image
+	ftk::Image::Pointer labImg;					//Currently visible label image
+	ObjectSelection * selection;				//object selection list
+	vtkSmartPointer<vtkTable> table;			//table
+	ftk::ProjectFiles projectFiles;				//files in the currently visible project
+	ftk::ProjectDefinition projectDefinition;	//the project definition currently being used.
 	
-	int segmentState;
-	QAction * segmentAbort;
-	QAction * segmentStop;
-	QAction * segmentContinue;
-	QLabel * segmentTaskLabel;
-	QProgressBar * segmentProgress;
-	QToolBar * segmentTool;
-
-	NucSegThread *nucsegThread;
-	FeaturesThread * featuresThread;
+	//Processing toolbar and thread pointers:
+	bool abortProcessFlag;
+	QAction * processAbort;
+	QAction * processContinue;
+	QLabel * processTaskLabel;
+	QProgressBar * processProgress;
+	QToolBar * processToolbar;
+	ProcessThread *processThread;
 };
 
 
@@ -262,6 +282,33 @@ private:
 	QPushButton *okButton;
 };
 
+class MarginDialog : public QDialog
+{
+	Q_OBJECT
+public:
+	MarginDialog(QWidget *parent = 0);
+	int getMargin();
+	int getZ();
+private:
+	QSpinBox * marginSpin;
+	QSpinBox * zSpin;
+	QPushButton *okButton;
+};
+
+class ProcessThread : public QThread
+{
+public:
+	ProcessThread(ftk::ProjectProcessor *proc = NULL);
+	void run();
+private:
+	ftk::ProjectProcessor *myProc;
+};
+
+
+//***************************************************************************
+//***************************************************************************
+// FOR PRE-PROCESSING:
+//***************************************************************************
 class PreprocessParamsDialog : public QDialog
 {
 	Q_OBJECT
@@ -310,50 +357,6 @@ private:
 		
 	vector<double> parameters;
 	
-};
-
-
-
-
-
-class MarginDialog : public QDialog
-{
-	Q_OBJECT
-public:
-	MarginDialog(QWidget *parent = 0);
-	int getMargin();
-	int getZ();
-private:
-	QSpinBox * marginSpin;
-	QSpinBox * zSpin;
-	QPushButton *okButton;
-};
-
-class NucSegThread : public QThread
-{
-public:
-	NucSegThread(ftk::NuclearSegmentation *seg = NULL);
-	void run();
-	int getNext(void){ return step; };
-private:
-	ftk::NuclearSegmentation *mySeg;
-	int step;
-};
-
-class FeaturesThread : public QThread
-{
-public:
-	FeaturesThread(ftk::Image::Pointer dImg, ftk::Image::Pointer lImg, int chan, std::string pre);
-	void run();
-	vtkSmartPointer<vtkTable> GetTable(void){ return table; };
-
-private:
-	ftk::Image::Pointer dataImg;
-	ftk::Image::Pointer labImg;
-	vtkSmartPointer<vtkTable> table;
-	int channel;
-	std::string prefix;
-
 };
 
 #endif

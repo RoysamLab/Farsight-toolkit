@@ -1,9 +1,17 @@
 SET( NucluesEditor_SRCS
   NucleusEditor.cpp
+  ProjectFilenamesDialog.cpp
+  ftkProjectDefinition.cpp
+  ftkProjectProcessor.cpp
+  ftkProjectFiles.cpp
 )
 
 SET( NucluesEditor_HDRS
   NucleusEditor.h
+  ProjectFilenamesDialog.h
+  ftkProjectDefinition.h
+  ftkProjectProcessor.h
+  ftkProjectFiles.h
 )
 
 SET( NucluesEditor_UIS
@@ -21,7 +29,7 @@ QT4_ADD_RESOURCES( NucluesEditor_RC_SRCS ${NucluesEditor_RCS} )
 QT4_WRAP_UI( NucluesEditor_UI_HDRS ${NucluesEditor_UIS} )
 
 # and finally this will run moc:
-QT4_WRAP_CPP( NucluesEditor_MOC_SRCS ${NucluesEditor_HDRS} )
+QT4_WRAP_CPP( NucluesEditor_MOC_SRCS NucleusEditor.h ProjectFilenamesDialog.h )
 
 ADD_EXECUTABLE(NucleusEditor main.cpp
              ${NucluesEditor_SRCS}

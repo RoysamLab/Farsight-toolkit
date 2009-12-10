@@ -15,6 +15,14 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+/*=========================================================================
+
+  Program:   Farsight Biological Image Segmentation and Visualization Toolkit
+  Language:  C++
+  Date:      $Date:  $
+  Version:   $Revision: 0.00 $
+
+=========================================================================*/
 
 #include "NucleusEditor.h"
 //*******************************************************************************
@@ -33,9 +41,15 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 
 	createMenus();
 	createStatusBar();
-	createSegmentToolBar();
+	createProcessToolBar();
 
-	setWindowTitle(tr("FARSIGHT: Nuclear Segmentation Tool"));
+	setEditsEnabled(false);
+
+	setWindowTitle(tr("FARSIGHT: Nucleus Editing Tool"));
+
+	standardImageTypes = tr("Images (*.tif *.tiff *.pic *.png *.jpg *.lsm)\n"
+							"XML Image Definition (*.xml)\n"
+							"All Files (*.*)");
 
 	lastPath = ".";
 
@@ -48,9 +62,8 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	labImg = NULL;
 
 	nucSeg = NULL;
-	nucChannel = 0;
-	nucsegThread = NULL;
-	featuresThread = NULL;
+	pProc = NULL;
+	processThread = NULL;
 	table = NULL;
 
 	this->resize(800,800);
@@ -60,7 +73,6 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 
 NucleusEditor::~NucleusEditor()
 {
-	if(nucSeg) delete nucSeg;
 	if(selection) delete selection;
 }
 
@@ -74,37 +86,31 @@ void NucleusEditor::createStatusBar()
 }
 
 //** ToolBar Setup
-void NucleusEditor::createSegmentToolBar()
+void NucleusEditor::createProcessToolBar()
 {
-	segmentTool = this->addToolBar(tr("Segment"));
-	segmentTool->setVisible(false);
+	processToolbar = this->addToolBar(tr("Process"));
+	processToolbar->setVisible(false);
 
-	segmentAbort = new QAction(QIcon(":/icons/abort.png"), tr("ABORT"), this);
-	segmentAbort->setToolTip(tr("Abort Segmentation and save nothing"));
-	segmentAbort->setEnabled(true);
-	connect(segmentAbort, SIGNAL(triggered()), this, SLOT(abortSegment()));
-	segmentTool->addAction(segmentAbort);
+	processAbort = new QAction(QIcon(":/icons/abort.png"), tr("ABORT"), this);
+	processAbort->setToolTip(tr("Abort Processing"));
+	processAbort->setEnabled(true);
+	connect(processAbort, SIGNAL(triggered()), this, SLOT(abortProcess()));
+	processToolbar->addAction(processAbort);
 
-	segmentContinue = new QAction(QIcon(":/icons/go.png"), tr("GO"), this);
-	segmentContinue->setToolTip(tr("Continue Segmentation"));
-	segmentContinue->setEnabled(false);
-	connect(segmentContinue, SIGNAL(triggered()),this, SLOT(segment()));
-	segmentTool->addAction(segmentContinue);
-
-	segmentStop = new QAction(QIcon(":/icons/end.png"), tr("STOP"), this);
-	segmentStop->setToolTip(tr("Stop Segmentation (skip finalization), and use clustering as result"));
-	segmentStop->setEnabled(false);
-	connect(segmentStop, SIGNAL(triggered()), this, SLOT(stopSegment()));
-	segmentTool->addAction(segmentStop);
+	processContinue = new QAction(QIcon(":/icons/go.png"), tr("GO"), this);
+	processContinue->setToolTip(tr("Continue Processing"));
+	processContinue->setEnabled(false);
+	connect(processContinue, SIGNAL(triggered()),this, SLOT(process()));
+	processToolbar->addAction(processContinue);
 	
-    segmentProgress = new QProgressBar();
-	segmentProgress->setRange(0,6);
-	segmentProgress->setTextVisible(true);
-	segmentTool->addWidget(segmentProgress); 
+    processProgress = new QProgressBar();
+	processProgress->setRange(0,0);
+	processProgress->setTextVisible(true);
+	processToolbar->addWidget(processProgress); 
 
-	segmentTaskLabel = new QLabel;
-	segmentTaskLabel->setFixedWidth(80);
-	segmentTool->addWidget(segmentTaskLabel);
+	processTaskLabel = new QLabel;
+	processTaskLabel->setFixedWidth(250);
+	processToolbar->addWidget(processTaskLabel);
 }
 
 /*----------------------------------------------------------------------------*/
@@ -140,35 +146,57 @@ void NucleusEditor::createMenus()
 	//FIRST HANDLE FILE MENU
 	fileMenu = menuBar()->addMenu(tr("&File"));
 
+	loadProjectAction = new QAction(tr("Load Project..."), this);
+	loadProjectAction->setStatusTip(tr("Load ftk project"));
+	loadProjectAction->setShortcut(tr("Ctrl+L"));
+	connect(loadProjectAction, SIGNAL(triggered()), this, SLOT(loadProject()));
+	fileMenu->addAction(loadProjectAction);
+
 	loadImageAction = new QAction(tr("Load Image..."), this);
 	loadImageAction->setStatusTip(tr("Load an image into the 5D image browser"));
-	connect(loadImageAction, SIGNAL(triggered()), this, SLOT(loadImage()));
+	connect(loadImageAction, SIGNAL(triggered()), this, SLOT(askLoadImage()));
 	fileMenu->addAction(loadImageAction);
 
 	loadLabelAction = new QAction(tr("Load Result..."), this);
 	loadLabelAction->setStatusTip(tr("Load a result image into the image browser"));
-	connect(loadLabelAction,SIGNAL(triggered()), this, SLOT(loadResult()));
+	connect(loadLabelAction,SIGNAL(triggered()), this, SLOT(askLoadResult()));
 	fileMenu->addAction(loadLabelAction);
 
 	loadTableAction = new QAction(tr("Load Table..."), this);
 	loadTableAction->setStatusTip(tr("Load data table from text file"));
-	connect(loadTableAction, SIGNAL(triggered()), this, SLOT(loadTable()));
+	connect(loadTableAction, SIGNAL(triggered()), this, SLOT(askLoadTable()));
 	fileMenu->addAction(loadTableAction);
 
 	fileMenu->addSeparator();
 
-	saveAction = new QAction(tr("Save Result"), this);
-	saveAction->setStatusTip(tr("Save a segmentation result image"));
-	saveAction->setShortcut(tr("Ctrl+S"));
-	connect(saveAction, SIGNAL(triggered()), this, SLOT(saveResult()));
-	fileMenu->addAction(saveAction);
+	processProjectAction = new QAction(tr("Process project..."), this);
+	connect(processProjectAction, SIGNAL(triggered()), this, SLOT(processProject()));
+	fileMenu->addAction(processProjectAction);
 
-	saveTableAction = new QAction(tr("Save Table"), this);
+	fileMenu->addSeparator();
+
+	saveProjectAction = new QAction(tr("SaveProject.."), this);
+	saveProjectAction->setStatusTip(tr("Save the active project files..."));
+	saveProjectAction->setShortcut(tr("Ctrl+S"));
+	connect(saveProjectAction, SIGNAL(triggered()), this, SLOT(saveProject()));
+	fileMenu->addAction(saveProjectAction);
+
+	saveImageAction = new QAction(tr("Save Image..."), this);
+	saveImageAction->setStatusTip(tr("Save image currently displayed"));
+	connect(saveImageAction, SIGNAL(triggered()), this, SLOT(askSaveImage()));
+	fileMenu->addAction(saveImageAction);
+
+	saveLabelAction = new QAction(tr("Save Result..."), this);
+	saveLabelAction->setStatusTip(tr("Save a segmentation result image"));
+	connect(saveLabelAction, SIGNAL(triggered()), this, SLOT(saveResult()));
+	fileMenu->addAction(saveLabelAction);
+
+	saveTableAction = new QAction(tr("Save Table..."), this);
 	saveTableAction->setStatusTip(tr("Save the features table"));
 	connect(saveTableAction, SIGNAL(triggered()), this, SLOT(saveTable()));
 	fileMenu->addAction(saveTableAction);
 
-	saveDisplayAction = new QAction(tr("Save Display Image"), this);
+	saveDisplayAction = new QAction(tr("Save Display Image..."), this);
 	saveDisplayAction->setStatusTip(tr("Save displayed image to file"));
 	connect(saveDisplayAction, SIGNAL(triggered()), segView, SLOT(SaveDiplayImageToFile()));
 	fileMenu->addAction(saveDisplayAction);
@@ -192,15 +220,8 @@ void NucleusEditor::createMenus()
 	connect(showBoundsAction, SIGNAL(triggered()), this, SLOT(toggleBounds()));
 	viewMenu->addAction(showBoundsAction);
 
-	showIDsAction = new QAction(tr("Show &IDs"), this);
-	showIDsAction->setCheckable(true);
-	showIDsAction->setChecked(false);
-	showIDsAction->setStatusTip(tr("Draw ID numbers at centroid locations"));
-	showIDsAction->setShortcut(tr("Ctrl+I"));
-	//connect(showIDsAction, SIGNAL(triggered()), this, SLOT(toggleIDs()));
-	//viewMenu->addAction(showIDsAction);
-
 	viewMenu->addSeparator();
+
 	newScatterAction = new QAction(tr("New Scatter"), this);
 	newScatterAction->setStatusTip(tr("Open a new Scatterplot Window"));
 	connect(newScatterAction,SIGNAL(triggered()),this,SLOT(CreateNewPlotWindow()));
@@ -213,29 +234,19 @@ void NucleusEditor::createMenus()
 
 	imageIntensityAction = new QAction(tr("Adjust Image Intensity"), this);
 	imageIntensityAction->setStatusTip(tr("Allows modification of image intensity"));
-	imageIntensityAction->setShortcut(tr("Ctrl+G"));
 	connect(imageIntensityAction, SIGNAL(triggered()), segView, SLOT(AdjustImageIntensity()));
 	viewMenu->addAction(imageIntensityAction);
 
 	//TOOL MENU
 	toolMenu = menuBar()->addMenu(tr("Tools"));
 
-	segmentAction = new QAction(tr("Nuclear Segmentation"), this);
-	segmentAction->setStatusTip(tr("Starts the Nuclear Segmenation on this Image"));
-	connect(segmentAction,SIGNAL(triggered()),this,SLOT(segmentImage()));
-	toolMenu->addAction(segmentAction);
+	segmentNucleiAction = new QAction(tr("Segment Nuclei..."), this);
+	connect(segmentNucleiAction, SIGNAL(triggered()), this, SLOT(segmentNuclei()));
+	toolMenu->addAction(segmentNucleiAction);
 
-	cytoAction = new QAction(tr("Cytoplasm Segmentation"), this);
-	cytoAction->setStatusTip(tr("Starts the Cytoplasm Segmentation"));
-	connect(cytoAction, SIGNAL(triggered()), this, SLOT(cytoSeg()));
-	toolMenu->addAction(cytoAction);
-
-	assocAction = new QAction(tr("Compute Associations"), this);
-	assocAction->setStatusTip(tr("Choose association rule definition file to compute associative features"));
-	connect(assocAction, SIGNAL(triggered()), this, SLOT(startAssociations()));
-	toolMenu->addAction(assocAction);
-
-	toolMenu->addSeparator();
+	editNucleiAction = new QAction(tr("Edit Nuclei"), this);
+	connect(editNucleiAction, SIGNAL(triggered()), this, SLOT(startEditing()));
+	toolMenu->addAction(editNucleiAction);
 
 	svmAction = new QAction(tr("Detect Outliers"), this);
 	connect(svmAction, SIGNAL(triggered()), this, SLOT(startSVM()));
@@ -264,7 +275,6 @@ void NucleusEditor::createMenus()
 
 	classAction = new QAction(tr("Change Class"), this);
 	classAction->setStatusTip(tr("Modify the class designation for the selected objects"));
-	classAction->setShortcut(tr("Ctrl+L"));
 	connect(classAction, SIGNAL(triggered()), this, SLOT(changeClass()));
 	editMenu->addAction(classAction);
 
@@ -307,95 +317,77 @@ void NucleusEditor::createMenus()
 	connect(exclusionAction, SIGNAL(triggered()), this, SLOT(applyExclusionMargin()));
 	editMenu->addAction(exclusionAction);
 
-	 // PRE-PROCESSING
-
-    PreprocessMenu = menuBar()->addMenu(tr("&Preprocessing"));
+	// PRE-PROCESSING:
+	createPreprocessingMenu();
 	
-   
-	AnisotropicAction = new QAction(tr("Gradient Anisotropic Diffusion Filter"), this);
-	AnisotropicAction->setStatusTip(tr("Apply Gradient Anisotropic Diffusion Filtering "));
-	AnisotropicAction->setShortcut(tr("Ctrl+A"));
-	AnisotropicAction->setEnabled(false);
-	connect(AnisotropicAction, SIGNAL(triggered()), this, SLOT(AnisotropicDiffusion()));
-	PreprocessMenu->addAction(AnisotropicAction);
-	
-	
-	CurvAnisotropicAction = new QAction(tr("Curvature Anisotropic Diffusion Filter"), this);
-	CurvAnisotropicAction->setStatusTip(tr("Apply Curvature Anisotropic Diffusion Filtering "));
-	CurvAnisotropicAction->setShortcut(tr("Shift+Ctrl+A"));
-	CurvAnisotropicAction->setEnabled(false);
-	connect(CurvAnisotropicAction, SIGNAL(triggered()), this, SLOT(CurvAnisotropicDiffusion()));
-	PreprocessMenu->addAction(CurvAnisotropicAction);
-
-	 GSErodeAction = new QAction(tr("Grayscale Erosion Filter"), this);
-	 GSErodeAction->setStatusTip(tr("Apply Grayscale Erosion"));
-	 GSErodeAction->setShortcut(tr("Ctrl+E"));
-	 GSErodeAction->setEnabled(false);
-	 connect(GSErodeAction, SIGNAL(triggered()), this, SLOT(GrayscaleErode()));
-	 PreprocessMenu->addAction(GSErodeAction);
-
-
-
-	 GSDilateAction = new QAction(tr("Grayscale Dilation Filter"), this);
-	 GSDilateAction->setStatusTip(tr("Apply Grayscale Dilation"));
-	 GSDilateAction->setShortcut(tr("Ctrl+D"));
-	 GSDilateAction->setEnabled(false);
-	 connect(GSDilateAction, SIGNAL(triggered()), this, SLOT(GrayscaleDilate()));
-	 PreprocessMenu->addAction(GSDilateAction);
-	 
-	 GSOpenAction = new QAction(tr("Grayscale Open Filter"), this);
-	 GSOpenAction->setStatusTip(tr("Apply Grayscale Opening"));
-	 GSOpenAction->setShortcut(tr("Ctrl+O"));
-	 GSOpenAction->setEnabled(false);
-	 connect(GSOpenAction, SIGNAL(triggered()), this, SLOT(GrayscaleOpen()));
-	 PreprocessMenu->addAction(GSOpenAction);
-	 
-	 GSCloseAction = new QAction(tr("Grayscale Close Filter"), this);
-	 GSCloseAction->setStatusTip(tr("Apply Grayscale Closing"));
-	 GSCloseAction->setShortcut(tr("Ctrl+C"));
-	 GSCloseAction->setEnabled(false);
-	 connect(GSCloseAction, SIGNAL(triggered()), this, SLOT(GrayscaleClose()));
-	 PreprocessMenu->addAction(GSCloseAction);
-
-
-	 MedianAction = new QAction(tr("Median Filter"), this);
-	 MedianAction->setStatusTip(tr("Apply Median Filter "));
-	 MedianAction->setShortcut(tr("Ctrl+M"));
-	 MedianAction->setEnabled(false);
-	 connect(MedianAction, SIGNAL(triggered()), this, SLOT(MedianFilter()));
-	 PreprocessMenu->addAction(MedianAction);
-	
-	 
-	 SigmoidAction = new QAction(tr("Sigmoid Filter"), this);
-	 SigmoidAction->setStatusTip(tr("Apply Sigmoid Filter "));
-	 SigmoidAction->setShortcut(tr("Ctrl+S"));
-	 SigmoidAction->setEnabled(false);
-	 connect(SigmoidAction, SIGNAL(triggered()), this, SLOT(SigmoidFilter()));
-	 PreprocessMenu->addAction(SigmoidAction);
-	
-	 /* ResampleAction = new QAction(tr("Resample Image Filter"), this);
-	ResampleAction->setStatusTip(tr("Resample the Image"));
-	ResampleAction->setShortcut(tr("Ctrl+R"));
-	connect(ResampleAction, SIGNAL(triggered()), this, SLOT(Resample()));
-	PreprocessMenu->addAction(ResampleAction);
- */
-	
-
-
 	//HELP MENU
 	helpMenu = menuBar()->addMenu(tr("Help"));
 	aboutAction = new QAction(tr("About"),this);
 	aboutAction->setStatusTip(tr("About the application"));
 	connect(aboutAction, SIGNAL(triggered()), this, SLOT(about()));
 	helpMenu->addAction(aboutAction);
+}
 
-	setMenusForResult(false);
-	segmentAction->setEnabled(false);
-	cytoAction->setEnabled(false);
+void NucleusEditor::createPreprocessingMenu()
+{
+	//************************************************************************************************
+	//************************************************************************************************
+	// PRE-PROCESSING
+	//************************************************************************************************
+    PreprocessMenu = menuBar()->addMenu(tr("&Preprocessing"));
+	
+	AnisotropicAction = new QAction(tr("Gradient Anisotropic Diffusion Filter"), this);
+	AnisotropicAction->setStatusTip(tr("Apply Gradient Anisotropic Diffusion Filtering "));
+	connect(AnisotropicAction, SIGNAL(triggered()), this, SLOT(AnisotropicDiffusion()));
+	PreprocessMenu->addAction(AnisotropicAction);
+	
+	CurvAnisotropicAction = new QAction(tr("Curvature Anisotropic Diffusion Filter"), this);
+	CurvAnisotropicAction->setStatusTip(tr("Apply Curvature Anisotropic Diffusion Filtering "));
+	connect(CurvAnisotropicAction, SIGNAL(triggered()), this, SLOT(CurvAnisotropicDiffusion()));
+	PreprocessMenu->addAction(CurvAnisotropicAction);
+
+	GSErodeAction = new QAction(tr("Grayscale Erosion Filter"), this);
+	GSErodeAction->setStatusTip(tr("Apply Grayscale Erosion"));
+	connect(GSErodeAction, SIGNAL(triggered()), this, SLOT(GrayscaleErode()));
+	PreprocessMenu->addAction(GSErodeAction);
+
+	GSDilateAction = new QAction(tr("Grayscale Dilation Filter"), this);
+	GSDilateAction->setStatusTip(tr("Apply Grayscale Dilation"));
+	connect(GSDilateAction, SIGNAL(triggered()), this, SLOT(GrayscaleDilate()));
+	PreprocessMenu->addAction(GSDilateAction);
+	 
+	GSOpenAction = new QAction(tr("Grayscale Open Filter"), this);
+	GSOpenAction->setStatusTip(tr("Apply Grayscale Opening"));
+	connect(GSOpenAction, SIGNAL(triggered()), this, SLOT(GrayscaleOpen()));
+	PreprocessMenu->addAction(GSOpenAction);
+	 
+	GSCloseAction = new QAction(tr("Grayscale Close Filter"), this);
+	GSCloseAction->setStatusTip(tr("Apply Grayscale Closing"));
+	connect(GSCloseAction, SIGNAL(triggered()), this, SLOT(GrayscaleClose()));
+	PreprocessMenu->addAction(GSCloseAction);
+
+	MedianAction = new QAction(tr("Median Filter"), this);
+	MedianAction->setStatusTip(tr("Apply Median Filter "));
+	connect(MedianAction, SIGNAL(triggered()), this, SLOT(MedianFilter()));
+	PreprocessMenu->addAction(MedianAction);
+	 
+	SigmoidAction = new QAction(tr("Sigmoid Filter"), this);
+	SigmoidAction->setStatusTip(tr("Apply Sigmoid Filter "));
+	connect(SigmoidAction, SIGNAL(triggered()), this, SLOT(SigmoidFilter()));
+	PreprocessMenu->addAction(SigmoidAction);
+	
+	//ResampleAction = new QAction(tr("Resample Image Filter"), this);
+	//ResampleAction->setStatusTip(tr("Resample the Image"));
+	//connect(ResampleAction, SIGNAL(triggered()), this, SLOT(Resample()));
+	//PreprocessMenu->addAction(ResampleAction);
+
+	//************************************************************************************************
+	//************************************************************************************************
 }
 
 void NucleusEditor::setEditsEnabled(bool val)
 {
+	editMenu->setEnabled(val);
 	clearSelectAction->setEnabled(val);
 	visitAction->setEnabled(val);
 	addAction->setEnabled(val);
@@ -407,20 +399,17 @@ void NucleusEditor::setEditsEnabled(bool val)
 	exclusionAction->setEnabled(val);
 }
 
-void NucleusEditor::setMenusForResult(bool val)
+void NucleusEditor::setPreprocessingEnabled(bool val)
 {
-	saveAction->setEnabled(val);
-
-	showBoundsAction->setEnabled(val);
-	showIDsAction->setEnabled(val);
-	newScatterAction->setEnabled(val);
-	showHistoAction->setEnabled(val);
-	imageIntensityAction->setEnabled(val);
-
-	svmAction->setEnabled(val);
-	kplsAction->setEnabled(val);
-
-	this->setEditsEnabled(val);
+	PreprocessMenu->setEnabled(val);
+	AnisotropicAction->setEnabled(val);
+	CurvAnisotropicAction->setEnabled(val);
+	SigmoidAction->setEnabled(val);
+	MedianAction->setEnabled(val);
+	GSErodeAction->setEnabled(val);
+	GSDilateAction->setEnabled(val);
+	GSOpenAction->setEnabled(val);
+	GSCloseAction->setEnabled(val);
 }
 
 void NucleusEditor::menusEnabled(bool val)
@@ -429,6 +418,7 @@ void NucleusEditor::menusEnabled(bool val)
 	viewMenu->setEnabled(val);
 	editMenu->setEnabled(val);
 	toolMenu->setEnabled(val);
+	PreprocessMenu->setEnabled(val);
 }
 
 //****************************************************************************
@@ -457,17 +447,7 @@ void NucleusEditor::setMouseStatus(int x, int y, int z)
 //******************************************************************************
 void NucleusEditor::closeEvent(QCloseEvent *event)
 {
-	//Save changes:
-	if( !checkSaveSeg() )
-	{
-		event->ignore();
-		return;
-	}
-
-	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-
-	//Stop any running threads:
-	this->abortSegment();
+	this->abortProcess();
 
 	//Then Close all other windows
 	foreach (QWidget *widget, qApp->topLevelWidgets()) 
@@ -482,45 +462,17 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 	event->accept();
 }
 
-//return true if ask to save and saved, or do not want to save, false if want to save and not saved
-bool NucleusEditor::checkSaveSeg()
+//************************************************************************************************
+//*********************************************************************************
+//*********************************************************************************
+//*********************************************************************************
+// Saving SLOTS:
+//*********************************************************************************
+//*********************************************************************************
+bool NucleusEditor::saveProject()
 {
-	if(nucSeg)
-	{
-		if(nucSeg->EditsNotSaved)
-		{
-			QString msg = tr("Recent Edits not saved do you want to save them before exiting?");
-			QMessageBox::StandardButton button = QMessageBox::information ( 0, tr("Exit"), \
-				msg, QMessageBox::Yes | QMessageBox::No , QMessageBox::NoButton );
-
-			if(button == QMessageBox::Yes)
-			{
-				if(	!this->saveResult()	)
-				{
-					return false;
-				}
-			}
-		}
-	}
-	return true;
-}
-
-bool NucleusEditor::saveResult()
-{
-	if(!labImg)
-		return false;
-
-	//int ch = requestChannel(labImg);
+	QString	filename = QFileDialog::getSaveFileName(this, tr("Save As..."),lastPath, tr("XML Project File(*.xml)"));
 	
-	//if(ch==-1)
-	//	return false;
-
-	QString filename;
-	if(labImg->GetImageInfo()->numChannels == 1)
-		filename = QFileDialog::getSaveFileName(this, tr("Save As..."),lastPath, tr("TIFF Image (*.tif)"));
-	else
-		filename = QFileDialog::getSaveFileName(this, tr("Save As..."),lastPath, tr("XML Image Definition(*.xml)"));
-
 	if(filename == "")
 		return false;
 
@@ -528,11 +480,126 @@ bool NucleusEditor::saveResult()
 	QString name = QFileInfo(filename).baseName();
 	lastPath = path;
 
-	QString fullBase = path + "/" + name;
-	if(labImg->GetImageInfo()->numChannels == 1)
-		return labImg->SaveChannelAs(0, fullBase.toStdString(), "tif");
+	ProjectFilenamesDialog *dialog = new ProjectFilenamesDialog(lastPath, &projectFiles, filename, this);
+	if(dialog->exec() == QDialog::Rejected)
+		return false;
+
+	if(projectFiles.input != "" && !projectFiles.inputSaved)
+	{
+		this->saveImage();
+	}
+	if(projectFiles.output != "" && !projectFiles.outputSaved)
+	{
+		this->saveResult();
+	}
+	if(projectFiles.log != "" && !projectFiles.logSaved)
+	{
+
+	}
+	if(projectFiles.definition != "" && !projectFiles.definitionSaved)
+	{
+		if(projectDefinition.Write(projectFiles.definition))
+			projectFiles.definitionSaved = true;
+	}
+	if(projectFiles.table != "" && !projectFiles.tableSaved)
+	{
+		this->saveTable();
+	}
+
+	projectFiles.Write(filename.toStdString());
+	return true;
+}
+
+bool NucleusEditor::askSaveImage()
+{
+	if(!myImg)
+		return false;
+
+	QString filename;
+
+	if(myImg->GetImageInfo()->numChannels == 1)
+		filename = QFileDialog::getSaveFileName(this, tr("Save As..."),lastPath, standardImageTypes);
 	else
-		return ftk::SaveXMLImage(filename.toStdString(), labImg);
+		filename = QFileDialog::getSaveFileName(this, tr("Save As..."),lastPath, tr("XML Image Definition(*.xml)"));
+
+	if(filename == "")
+	{
+		return false;
+	}
+	else
+	{
+		QString path = QFileInfo(filename).absolutePath();
+		lastPath = path;
+		projectFiles.input = filename.toStdString();
+	}
+	
+	this->saveImage();
+}
+
+bool NucleusEditor::saveImage()
+{
+	if(!myImg)
+		return false;
+
+	
+	QString filename = QString::fromStdString(projectFiles.input);
+	if(filename == "")
+	{
+		return false;
+	}
+		
+	QString path = QFileInfo(filename).absolutePath();
+	QString name = QFileInfo(filename).baseName();
+	QString ext = QFileInfo(filename).suffix();
+
+	QString fullBase = path + "/" + name;
+	bool ok;
+	if(ext == "tif")
+		ok = myImg->SaveChannelAs(0, fullBase.toStdString(), ext.toStdString());
+	else
+		ok = ftk::SaveXMLImage(filename.toStdString(), myImg);
+
+	projectFiles.inputSaved = ok;
+	return ok;	
+}
+
+bool NucleusEditor::saveResult()
+{
+	if(!labImg)
+		return false;
+
+	QString filename = QString::fromStdString(projectFiles.output);
+	if(filename == "")
+	{
+		if(labImg->GetImageInfo()->numChannels == 1)
+			filename = QFileDialog::getSaveFileName(this, tr("Save As..."),lastPath, tr("TIFF Image (*.tif)"));
+		else
+			filename = QFileDialog::getSaveFileName(this, tr("Save As..."),lastPath, tr("XML Image Definition(*.xml)"));
+
+		if(filename == "")
+		{
+			return false;
+		}
+		else
+		{
+			projectFiles.output = filename.toStdString();
+		}
+	}
+
+	QString path = QFileInfo(filename).absolutePath();
+	QString name = QFileInfo(filename).baseName();
+	QString ext = QFileInfo(filename).suffix();
+	lastPath = path;
+
+	QString fullBase = path + "/" + name;
+	bool ok;
+	if(ext == "tif")
+		ok = labImg->SaveChannelAs(0, fullBase.toStdString(), ext.toStdString());
+	else
+		ok = ftk::SaveXMLImage(filename.toStdString(), labImg);
+
+	projectFiles.outputSaved = ok;
+	return ok;	
 }
 
 bool NucleusEditor::saveTable()
@@ -540,75 +607,114 @@ bool NucleusEditor::saveTable()
 	if(!table)
 		return false;
 
-	QString filename = QFileDialog::getSaveFileName(this, tr("Save As..."),lastPath, tr("TEXT(*.txt)"));
-
+	QString filename = QString::fromStdString(projectFiles.table);
 	if(filename == "")
-		return false;
+	{
+		filename = QFileDialog::getSaveFileName(this, tr("Save Table As..."),lastPath, tr("TEXT(*.txt)"));
+		if(filename == "")
+		{
+			return false;
+		}
+		else
+		{
+			projectFiles.table = filename.toStdString();
+		}
+	}
 
 	lastPath = QFileInfo(filename).absolutePath();
 
-	return ftk::SaveTable(filename.toStdString(), table);
+	bool ok = ftk::SaveTable(filename.toStdString(), table);
+	projectFiles.tableSaved = ok;
+	return ok;
 }
 
-void NucleusEditor::clearSelections()
+//************************************************************************************************
+//************************************************************************************************
+//************************************************************************************************
+// LOADERS:
+//************************************************************************************************
+//************************************************************************************************
+void NucleusEditor::loadProject()
 {
-	if(selection)
+
+	QString filename = QFileDialog::getOpenFileName(this, "Open project...", lastPath, tr("XML Project File(*.xml)"));
+	if(filename == "")
+		return;
+
+	QString path = QFileInfo(filename).absolutePath();
+	QString name = QFileInfo(filename).baseName();
+	lastPath = path;
+
+	projectFiles.Read(filename.toStdString());
+
+	ProjectFilenamesDialog *dialog = new ProjectFilenamesDialog(lastPath, &projectFiles, filename, this);
+	if(dialog->exec() == QDialog::Rejected)
+		return;
+
+	if(projectFiles.input != "")
 	{
-		selection->clear();
+		this->loadImage(QString::fromStdString(projectFiles.input));
 	}
+	if(projectFiles.output != "")
+	{
+		this->loadResult(QString::fromStdString(projectFiles.output));
+	}
+	if(projectFiles.log != "")
+	{
+
+	}
+	if(projectFiles.definition != "")
+	{
+		projectDefinition.Load(projectFiles.definition);
+		projectFiles.definitionSaved = true;
+	}
+	if(projectFiles.table != "")
+	{
+		this->loadTable(QString::fromStdString(projectFiles.table));
+	}
+
+	this->startEditing();
 }
 
-void NucleusEditor::loadTable()
+void NucleusEditor::askLoadTable()
 {
 	QString fileName  = QFileDialog::getOpenFileName(this, "Select table file to open", lastPath,
 								tr("TXT Files (*.txt)"));
 
-    if(fileName == "")
+    if(fileName == "") 
 		return;
 
-	abortSegment();
+	this->loadTable(fileName);
+}
 
+void NucleusEditor::loadTable(QString fileName)
+{
 	lastPath = QFileInfo(fileName).absolutePath();
 
 	table = ftk::LoadTable(fileName.toStdString());
-
-	if(!table)
-		return;
+	if(!table) return;
 	
 	selection->clear();
 	this->CreateNewTableWindow();
+	this->CreateNewPlotWindow();
 
-	// Enable the menu items for editing
-	setMenusForResult(true);
-	segmentAction->setEnabled(true);
-	cytoAction->setEnabled(true);
+	projectFiles.table = fileName.toStdString();
+	projectFiles.tableSaved = true;
 }
 
-//******************************************************************************
-// This function loads a segmentation result from XML
-// The XML file should tell where to find the original image/data
-//   It also contains all of the feature and segmentation information
-//   As well as what type of segmentation has been performed
-//******************************************************************************
-void NucleusEditor::loadResult(void)
+void NucleusEditor::askLoadResult(void)
 {
-	if( !checkSaveSeg() )
-		return;
+	QString fileName  = QFileDialog::getOpenFileName(this, "Open File", lastPath, standardImageTypes);
+	if(fileName == "") return;
 
-	QString fileName  = QFileDialog::getOpenFileName(
-								this, "Select file to open", lastPath,
-								tr("Images (*.tif *.tiff *.pic *.png *.jpg *.lsm)\n"
-								"XML Image Definition (*.xml)\n"
-							    "All Files (*.*)"));
+	this->loadResult(fileName);
+}
 
-    if(fileName == "")
-		return;
-
-	abortSegment();
-
+void NucleusEditor::loadResult(QString fileName)
+{
 	lastPath = QFileInfo(fileName).absolutePath();
 	QString myExt = QFileInfo(fileName).suffix();
-	if(QFileInfo(fileName).suffix() == "xml")
+	if(myExt == "xml")
 	{
 		labImg = ftk::LoadXMLImage(fileName.toStdString());
 	}
@@ -621,30 +727,26 @@ void NucleusEditor::loadResult(void)
 	selection->clear();
 	segView->SetLabelImage(labImg, selection);
 
-	// Enable the menu items for editing
-	setMenusForResult(true);
-	segmentAction->setEnabled(true);
-	cytoAction->setEnabled(true);
+	projectFiles.output = fileName.toStdString();
+	projectFiles.outputSaved = true;
 }
 
-void NucleusEditor::loadImage()
+void NucleusEditor::askLoadImage()
 {
-	if( !checkSaveSeg() )
-		return;
-
-	QString fileName = QFileDialog::getOpenFileName(
-                             this, "Select file to open", lastPath,
-                             tr("Images (*.tif *.tiff *.pic *.png *.jpg *.lsm)\n"
-								"XML Image Definition (*.xml)\n"
-							    "All Files (*.*)"));
+	//Get the filename of the new image
+	QString fileName = QFileDialog::getOpenFileName(this, "Open Image", lastPath, standardImageTypes);
+	//If no filename do nothing
     if(fileName == "")
 		return;
 
-	abortSegment();
+	this->loadImage(fileName);
+}
 
+void NucleusEditor::loadImage(QString fileName)
+{
 	lastPath = QFileInfo(fileName).absolutePath();
 	QString myExt = QFileInfo(fileName).suffix();
-	if(QFileInfo(fileName).suffix() == "xml")
+	if(myExt == "xml")
 	{
 		myImg = ftk::LoadXMLImage(fileName.toStdString());
 	}
@@ -656,22 +758,14 @@ void NucleusEditor::loadImage()
 	}
 	segView->SetChannelImage(myImg);
 
-	// Disable the menu items for editing
-	this->setMenusForResult(false);
-	segmentAction->setEnabled(true);
-	cytoAction->setEnabled(false);
-	imageIntensityAction->setEnabled(true);
-	
-	AnisotropicAction->setEnabled(true);
-	CurvAnisotropicAction->setEnabled(true);
-	SigmoidAction->setEnabled(true);
-	MedianAction->setEnabled(true);
-	GSErodeAction->setEnabled(true);
-	GSDilateAction->setEnabled(true);
-	GSOpenAction->setEnabled(true);
-	GSCloseAction->setEnabled(true);
+	projectFiles.input = fileName.toStdString();
+	projectFiles.inputSaved = true;
 }
-
+//************************************************************************************************
+//************************************************************************************************
+//************************************************************************************************
+//************************************************************************************************
+/*
 //**********************************************************************
 // SLOT: start the nuclear associations tool:
 //**********************************************************************
@@ -701,6 +795,7 @@ void NucleusEditor::startAssociations()
 
 	delete assocCal;
 }
+*/
 
 //**********************************************************************
 // SLOT: start the pattern analysis widget:
@@ -785,6 +880,14 @@ void NucleusEditor::ShowHistogram(void)
 		this->CreateNewHistoWindow();
 }
 
+void NucleusEditor::clearSelections()
+{
+	if(selection)
+	{
+		selection->clear();
+	}
+}
+
 void NucleusEditor::toggleBounds(void)
 {
 	if(!segView) return;
@@ -795,19 +898,39 @@ void NucleusEditor::toggleBounds(void)
 		segView->SetBoundsVisible(false);
 }
 
-void NucleusEditor::toggleIDs(void)
+//******************************************************************************************
+//******************************************************************************************
+//******************************************************************************************
+//******************************************************************************************
+//******************************************************************************************
+//******************************************************************************************
+// EDITING SLOTS:
+//******************************************************************************************
+//******************************************************************************************
+void NucleusEditor::startEditing(void)
 {
-	//if(!segView) return;
+	if(!myImg || !labImg) return;
 
-	//if( showIDsAction->isChecked() )
-	//	segView->SetIDsVisible(true);
-	//else
-	//	segView->SetIDsVisible(false);
+	int nucChannel = projectDefinition.FindInputChannel("NUCLEAR");
+	if(nucChannel == -1)
+	{
+		nucChannel=requestChannel(myImg);
+		projectDefinition.MakeDefaultNucleusSegmentation(nucChannel);
+	}
+
+	if(nucSeg) delete nucSeg;
+	nucSeg = new ftk::NuclearSegmentation();
+	nucSeg->SetInput(myImg,"nuc_img", nucChannel);
+	nucSeg->SetLabelImage(labImg,"lab_img");
+	nucSeg->ComputeAllGeometries();
+
+	setEditsEnabled(true);
 }
 
 void NucleusEditor::changeClass(void)
 {
-	if(!nucSeg) return;
+	
+	//if(!nucSeg) return;
 
 	//std::set<long int> sels = selection->getSelections();
 	//std::vector<int> ids(sels.begin(), sels.end());
@@ -839,7 +962,7 @@ void NucleusEditor::markVisited(void)
 void NucleusEditor::addCell(int x1, int y1, int x2, int y2, int z)
 {
 	if(!nucSeg) return;
-	int id = nucSeg->AddObject(x1, y1, z, x2, y2, z);
+	int id = nucSeg->AddObject(x1, y1, z, x2, y2, z, table);
 	if(id != 0)
 	{
 		this->updateViews();
@@ -853,7 +976,7 @@ void NucleusEditor::deleteCells(void)
 
 	std::set<long int> sels = selection->getSelections();
 	std::vector<int> ids(sels.begin(), sels.end());
-	nucSeg->Delete(ids);
+	nucSeg->Delete(ids, table);
 	selection->clear();
 	this->updateViews();
 }
@@ -864,7 +987,7 @@ void NucleusEditor::mergeCells(void)
 
 	std::set<long int> sels = selection->getSelections();
 	std::vector<int> ids(sels.begin(), sels.end());
-	nucSeg->Merge(ids);
+	nucSeg->Merge(ids, table);
 	selection->clear();
 	this->updateViews();
 }
@@ -884,7 +1007,7 @@ void NucleusEditor::splitCell(int x1, int y1, int z1, int x2, int y2, int z2)
 	P2.y=y2;
 	P2.z=z2;
 
-	nucSeg->Split(P1, P2);
+	nucSeg->Split(P1, P2, table);
 	selection->clear();
 	this->updateViews();
 }
@@ -897,14 +1020,14 @@ void NucleusEditor::splitCellAlongZ(void)
 	selection->clear();
 	for ( set<long int>::iterator it=sels.begin(); it != sels.end(); it++ )
 	{
-		nucSeg->SplitAlongZ(*it,segView->GetCurrentZ());
+		nucSeg->SplitAlongZ(*it,segView->GetCurrentZ(), table);
 	}
 	this->updateViews();
 }
 
 void NucleusEditor::applyExclusionMargin(void)
 {
-	//Get the parameters to use for the brick rule:
+	//Get the parameters to use for the exclusion margin:
 	int xy = 0; 
 	int z = 0;
 	MarginDialog *dialog = new MarginDialog(this);
@@ -916,7 +1039,7 @@ void NucleusEditor::applyExclusionMargin(void)
 	delete dialog;
 
 	selection->clear();
-	nucSeg->Exclude(xy, z);
+	nucSeg->Exclude(xy, z, table);
 	this->updateViews();
 }
 
@@ -926,7 +1049,7 @@ int NucleusEditor::requestChannel(ftk::Image::Pointer img)
 	int numChannels = img->GetImageInfo()->numChannels;
 	for (int i=0; i<numChannels; ++i)
 	{
-		chs << QString::fromStdString(img->GetImageInfo()->channelNames.at(i));
+		chs << QString::number(i) + ". " + QString::fromStdString(img->GetImageInfo()->channelNames.at(i));
 	}
 
 	bool ok=false;
@@ -946,36 +1069,47 @@ int NucleusEditor::requestChannel(ftk::Image::Pointer img)
 	return ch;
 }
 
-void NucleusEditor::cytoSeg(void)
+//******************************************************************************************
+//******************************************************************************************
+//******************************************************************************************
+//******************************************************************************************
+
+//Call this slot when the table has been modified (new rows or columns) to update the views:
+void NucleusEditor::updateViews()
 {
-	cytChannel = requestChannel(myImg);
+	if(segView)
+		segView->update();
 
-	ftk::CytoplasmSegmentation * cytoSeg = new ftk::CytoplasmSegmentation();
-	cytoSeg->SetDataInput(myImg, "data_channel", cytChannel);
-	cytoSeg->SetNucleiInput(labImg, "label_image");
-	cytoSeg->Run();
-	delete cytoSeg;
+	for(unsigned int p=0; p<tblWin.size(); ++p)	
+		tblWin.at(p)->update();
 
-	ftk::IntrinsicFeatureCalculator *iCalc = new ftk::IntrinsicFeatureCalculator();
-	iCalc->SetInputImages(myImg,labImg,cytChannel,1);
-	iCalc->SetFeaturePrefix("cyto_");
-	iCalc->Append(table);
-	delete iCalc;
+	for(unsigned int p=0; p<pltWin.size(); ++p)
+		pltWin.at(p)->update();
 
-	this->updateViews();
+	if(hisWin)
+		hisWin->update();
 }
 
-void NucleusEditor::segmentImage()
+//******************************************************************************************
+//******************************************************************************************
+//******************************************************************************************
+//******************************************************************************************
+// CREATE A NUCLEAR SEGMENTATION PROJECT AND THEN GET IT STARTED FOR THE CURRENT IMAGE:
+void NucleusEditor::segmentNuclei()
 {
+	if(!myImg) return;
+
+	//Get Channels in current Image:
 	QVector<QString> chs;
 	int numChannels = myImg->GetImageInfo()->numChannels;
 	for (int i=0; i<numChannels; ++i)
 	{
-		chs.push_back(QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i)));
+		chs << QString::number(i) + ". " + QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i));
 	}
 
-	//Get the paramFile to use:
+	//Get the paramFile and channel to use:
 	QString paramFile = "";
+	int nucChannel = 0;
 	ParamsFileDialog *dialog = new ParamsFileDialog(lastPath,chs,this);
 	if( dialog->exec() )	
 	{
@@ -984,198 +1118,137 @@ void NucleusEditor::segmentImage()
 	}
 	delete dialog;
 
-	if(nucSeg) delete nucSeg;
-	nucSeg = new ftk::NuclearSegmentation();
-	nucSeg->SetInput(this->myImg, "nuc_channel", nucChannel);
-	nucSeg->SetParameters(paramFile.toStdString());
+	projectDefinition.MakeDefaultNucleusSegmentation(nucChannel);
+	projectFiles.definitionSaved = false;
 
-	segmentStop->setEnabled(false);
-	segmentContinue->setEnabled(false);
-	segmentTool->setVisible(true);
+	startProcess();
+}
+
+//******************************************************************************************
+//******************************************************************************************
+//******************************************************************************************
+//******************************************************************************************
+//******************************************************************************************
+//******************************************************************************************
+// TAKE CARE OF PROCESSING PROJECTS
+//******************************************************************************************
+//******************************************************************************************
+void NucleusEditor::processProject(void)
+{
+	QString projectName = QFileDialog::getOpenFileName(
+                             this, "Select Project", lastPath,
+                             tr("XML Project Definition (*.xml)\n"
+							    "All Files (*.*)"));
+	if(projectName == "")  return;
+	lastPath = QFileInfo(projectName).absolutePath();
+
+	//Load up the definition
+	if( !projectDefinition.Load(projectName.toStdString()) ) return;
+
+	projectFiles.definition = projectName.toStdString();
+	projectFiles.definitionSaved = true;
 	
-	segmentState = 0;
-	segment();
-
-	//NuclearSegmentationWizard *wizard = new NuclearSegmentationWizard();
-	//wizard->setParent(NULL);
-	//this->setCentralWidget(wizard);
-	//wizard->show();
+	startProcess();
 }
 
-void NucleusEditor::abortSegment()
+void NucleusEditor::startProcess()
 {
-	if(nucsegThread)
-	{
-		nucsegThread->wait();
-		delete nucsegThread;
-		nucsegThread = NULL;
-	}
-	if(featuresThread)
-	{
-		featuresThread->wait();
-		delete featuresThread;
-		featuresThread = NULL;
-	}
-	segmentTool->setVisible(false);
-	segmentState = -1;
+	//Assumes Image is already loaded up:
+	if(!myImg) return;
 
-	QApplication::restoreOverrideCursor();
-	menusEnabled(true);
-	setMenusForResult(false);
-}
+	//Set up a new processor:
+	pProc = new ftk::ProjectProcessor();
+	pProc->SetInputImage(myImg);
+	pProc->SetDefinition(&projectDefinition);
+	pProc->Initialize();
 
-//Call this slot when the table has been modified (new rows or columns) to update the views:
-void NucleusEditor::updateViews()
-{
-	for(unsigned int p=0; p<pltWin.size(); ++p)
-		pltWin.at(p)->update();
-	
-	for(unsigned int p=0; p<tblWin.size(); ++p)	
-		tblWin.at(p)->update();
-
-	if(segView)
-		segView->update();
-}
-
-//***************************************************************************
-// THIS FUNCTION CLEARS MEMORY BY CLOSING OPEN WINDOWS 
-// THEN CLEARING THE SEGMENTATION
-//***************************************************************************
-void NucleusEditor::quitNucSeg(void)
-{
-	for(unsigned int p=0; p<pltWin.size(); ++p)
-		if ((pltWin.at(p))->isVisible())
-			(pltWin.at(p))->close();
-	
-	for(unsigned int p=0; p<tblWin.size(); ++p)	
-		if ((tblWin.at(p))->isVisible())
-			(tblWin.at(p))->close();
-
-	pltWin.clear();
-	tblWin.clear();
-
-	//Close the histogram
-	if (hisWin !=NULL) 
-	{
-		hisWin->close();
-		hisWin=NULL;
-	}
-
-	//segView->SetChannelImage(NULL);
-	selection->clear();
-	segView->SetLabelImage(NULL);
-	if(nucSeg)
-	{
-		delete nucSeg;
-		nucSeg = NULL;
-	}
-}
-
-//Go here when the "jump" button in clicked during nuclear segmentation:
-void NucleusEditor::stopSegment(void)
-{
-	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-	// Disable the menu items for editing
+	//Set up the process toolbar:
+	processContinue->setEnabled(false);
+	processToolbar->setVisible(true);
+	processTaskLabel->setText(tr("Processing Project: ") + tr(projectDefinition.name.c_str()) );
+	abortProcessFlag = false;
 	menusEnabled(false);
-	segmentStop->setEnabled(false);
-	segmentContinue->setEnabled(false);
-
-	segmentTaskLabel->setText(tr(" Skipping "));
-	segmentProgress->setValue(segmentState);
-	segmentState++;
-	this->segment();
+	
+	//start a new thread for the process:
+	processThread = new ProcessThread(pProc);
+	connect(processThread, SIGNAL(finished()), this, SLOT(process()));
+	processThread->start();
 }
 
-void NucleusEditor::segment()
+//This slot keeps the processing going and updates the processToolbar
+void NucleusEditor::process()
 {
-	switch(segmentState)
+	//Check to see if abort has been clicked:
+	if(abortProcessFlag)
 	{
-	case 0:
-		QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-		menusEnabled(false);
-		segmentTaskLabel->setText(tr(" Binarizing "));
-		segmentProgress->setValue(segmentState);
-		segmentState++;
-		nucsegThread = new NucSegThread(nucSeg);
-		connect(nucsegThread, SIGNAL(finished()), this, SLOT(segment()));
-		nucsegThread->start();
-		break;
-	case 1:
-		segmentProgress->setValue(segmentState);
-		segmentTaskLabel->setText(tr(" Seeds "));
-		segmentState++;
-		nucsegThread->start();
-		break;
-	case 2:
-		segmentProgress->setValue(segmentState);
-		segmentTaskLabel->setText(tr(" Clustering "));
-		segmentState++;
-		nucsegThread->start();
-		break;
-	case 3:	//Final State we get to after successful clustering - for checking parameters
-		segmentProgress->setValue(segmentState);
-		selection->clear();
-		segView->SetLabelImage(nucSeg->GetLabelImage(), selection);
-		segmentTaskLabel->setText(tr(" Inspect "));
+		deleteProcess();
 		QApplication::restoreOverrideCursor();
-		segmentStop->setEnabled(true);
-		segmentContinue->setEnabled(true);
-		segmentState++;
-		//I should pop-up a msg here:
-		break;
-	case 4:
-		QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-		segmentStop->setEnabled(false);
-		segmentContinue->setEnabled(false);
-		segmentTaskLabel->setText(tr(" Finalizing "));
-		segmentProgress->setValue(segmentState);
-		segmentState++;
-		nucsegThread->start();
-		break;
-	case 5:
-		if(nucsegThread)
-		{
-			delete nucsegThread;
-			nucsegThread = NULL;
-		}
-		segmentProgress->setValue(segmentState);
-		selection->clear();
-		labImg = nucSeg->GetLabelImage();
-		segView->SetLabelImage(labImg,selection);
-		segmentTaskLabel->setText(tr(" Features "));
+		return;
+	}
 
-		featuresThread = new FeaturesThread(myImg, labImg, nucChannel, "");
-		connect(featuresThread, SIGNAL(finished()), this, SLOT(segment()));
-		segmentState++;
-		featuresThread->start();
-		break;
-	case 6:
-		if(featuresThread)
-		{
-			table = featuresThread->GetTable();
-			delete featuresThread;
-			featuresThread = NULL;
-		}
-		segmentProgress->setValue(segmentState);
-		segmentTaskLabel->setText(tr(" DONE "));
-		
+	if(!pProc->DoneProcessing()) //Not done, so continue:
+	{
+		processThread->start();
+	}
+	else		//All done, so get results and clean up:
+	{
+		selection->clear();
+		labImg = pProc->GetOutputImage();
+		projectFiles.outputSaved = false;
+		segView->SetLabelImage(labImg,selection);
+		table = pProc->GetTable();
+		projectFiles.tableSaved = false;
 		CreateNewTableWindow();
 		CreateNewPlotWindow();
-
-		QApplication::restoreOverrideCursor();
-		menusEnabled(true);
-		cytoAction->setEnabled(true);
-		setMenusForResult(true);
-		showBoundsAction->setChecked(true);
-		showIDsAction->setChecked(true);
-
-		segmentState = -1;
-
-		//Now remove the toolbar:
-		segmentTool->setVisible(false);
-		break;
+		this->startEditing();
+		projectFiles.logSaved = false;
+		
+		deleteProcess();
 	}
+}
 
+//Call this slot when the abort process button is clicked
+void NucleusEditor::abortProcess()
+{
+	if(processThread)
+	{
+		QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+		processTaskLabel->setText("Aborting Process");
+		abortProcessFlag = true;
+	}
+}
+
+void NucleusEditor::deleteProcess()
+{
+	if(processThread)
+	{
+		delete processThread;
+		processThread = NULL;
+	}
+	if(pProc)
+	{
+		delete pProc;
+		pProc = NULL;
+	}
+	processToolbar->setVisible(false);
+	menusEnabled(true);
+}
+
+//***********************************************************************************
+//***********************************************************************************
+//***********************************************************************************
+// Thread for running the segmentation algorithm:
+//***********************************************************************************
+ProcessThread::ProcessThread(ftk::ProjectProcessor *proc)
+: QThread()
+{
+	myProc = proc;
+}
+
+void ProcessThread::run()
+{
+	if(!myProc->DoneProcessing())
+		myProc->ProcessNext();
 }
 
 //******************************************************************************************
@@ -1324,63 +1397,22 @@ void ParamsFileDialog::ParamBrowse(QString comboSelection)
 //***********************************************************************************
 //***********************************************************************************
 
-
-//***********************************************************************************
-//***********************************************************************************
-//***********************************************************************************
-// Threads for running the segmentation algorithm:
-//***********************************************************************************
-NucSegThread::NucSegThread(ftk::NuclearSegmentation *seg)
-: QThread()
-{
-	mySeg = seg;
-	step = 0;
-}
-
-void NucSegThread::run()
-{
-	switch(step)
-	{
-	case 0:
-		mySeg->Binarize(false);
-		step++;
-		break;
-	case 1:
-		mySeg->DetectSeeds(false);
-		step++;
-		break;
-	case 2:
-		mySeg->RunClustering(true);
-		step++;
-		break;
-	case 3:
-		mySeg->Finalize();
-		mySeg->ReleaseSegMemory();
-		step++;
-		break;
-	}
-}
-
-FeaturesThread::FeaturesThread(ftk::Image::Pointer dImg, ftk::Image::Pointer lImg, int chan, std::string pre)
-: QThread()
-{
-	dataImg = dImg;
-	labImg = lImg;
-	channel = chan;
-	prefix = pre;
-	table = NULL;
-}
-
-void FeaturesThread::run()
-{
-	ftk::IntrinsicFeatureCalculator *iCalc = new ftk::IntrinsicFeatureCalculator();
-	iCalc->SetInputImages(dataImg,labImg,channel,0);
-	iCalc->SetFeaturePrefix(prefix);
-	table = iCalc->Compute();
-	delete iCalc;
-}
-
-
+//**
+//*******************************************************************************************************************************
+//*******************************************************************************************************************************
+//*******************************************************************************************************************************
+//*******************************************************************************************************************************
+//*******************************************************************************************************************************
+//*******************************************************************************************************************************
+//*******************************************************************************************************************************
+//*******************************************************************************************************************************
+//*******************************************************************************************************************************
+//*******************************************************************************************************************************
+//*******************************************************************************************************************************
+//*******************************************************************************************************************************
+// PREPROCESSING METHODS:::
+//******************************************************************************************
+//******************************************************************************************
 //******************************************************************************************
 //******************************************************************************************
 // A dialog to get the paramaters file for the preprocessing to use and specify the channel 
@@ -1647,10 +1679,13 @@ return this->parameters;
 
 void NucleusEditor::AnisotropicDiffusion()
 {
+	if(!myImg) return;
+
 	QVector<QString> chs;
 	int numChannels = myImg->GetImageInfo()->numChannels;
 	vector<double> filterParams;
 	unsigned char reject;
+	int nucChannel;
 	reject = 0;
 	for (int i=0; i<numChannels; ++i)
 	{
@@ -1734,12 +1769,13 @@ void NucleusEditor::AnisotropicDiffusion()
 
 void NucleusEditor::MedianFilter()
 {
-	
+	if(!myImg) return;
 	
 	QVector<QString> chs;
 	int numChannels = myImg->GetImageInfo()->numChannels;
 	vector<double> filterParams;
 	unsigned char reject;
+	int nucChannel;
 	reject = 0 ;
 	for (int i=0; i<numChannels; ++i)
 	{
@@ -1817,12 +1853,13 @@ if(!reject==1){
 
 void NucleusEditor::SigmoidFilter()
 {
-	
+	if(!myImg) return;
 
 	QVector<QString> chs;
 	int numChannels = myImg->GetImageInfo()->numChannels;
 	vector<double> filterParams;
 	unsigned char reject;
+	int nucChannel;
 	reject = 0 ;
 	for (int i=0; i<numChannels; ++i)
 	{
@@ -1884,12 +1921,13 @@ if(!reject==1){
 
 void NucleusEditor::GrayscaleErode()
 {
-	
+	if(!myImg) return;
 
 	QVector<QString> chs;
 	int numChannels = myImg->GetImageInfo()->numChannels;
 	vector<double> filterParams;
 	unsigned char reject;
+	int nucChannel;
 	reject = 0 ;
 	for (int i=0; i<numChannels; ++i)
 	{
@@ -1959,12 +1997,13 @@ if(!reject==1){
 
 void NucleusEditor::GrayscaleDilate()
 {
-	
+	if(!myImg) return;
 
 	QVector<QString> chs;
 	int numChannels = myImg->GetImageInfo()->numChannels;
 	vector<double> filterParams;
 	unsigned char reject;
+	int nucChannel;
 	reject = 0 ;
 	for (int i=0; i<numChannels; ++i)
 	{
@@ -2038,12 +2077,13 @@ if(!reject==1){
 
 void NucleusEditor::GrayscaleOpen()
 {
-	
+	if(!myImg) return;
 
 	QVector<QString> chs;
 	int numChannels = myImg->GetImageInfo()->numChannels;
 	vector<double> filterParams;
 	unsigned char reject;
+	int nucChannel;
 	reject = 0 ;
 	for (int i=0; i<numChannels; ++i)
 	{
@@ -2116,13 +2156,14 @@ if(!reject==1){
 
 void NucleusEditor::GrayscaleClose()
 {
-	
+	if(!myImg) return;
 
 	QVector<QString> chs;
 	int numChannels = myImg->GetImageInfo()->numChannels;
 	vector<double> filterParams;
 	unsigned char reject;
 	reject = 0 ;
+	int nucChannel;
 	for (int i=0; i<numChannels; ++i)
 	{
 		chs.push_back(QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i)));
@@ -2196,7 +2237,8 @@ if(!reject==1){
 
 /* void NucleusEditor::Resample()
 {
-	
+	if(!myImg) return;
+
 QVector<QString> chs;
 	int numChannels = myImg->GetImageInfo()->numChannels;
 	vector<double> filterParams;
@@ -2301,10 +2343,13 @@ if(!reject==1){
 
 void NucleusEditor::CurvAnisotropicDiffusion()
 {
+	if(!myImg) return;
+
 	QVector<QString> chs;
 	int numChannels = myImg->GetImageInfo()->numChannels;
 	vector<double> filterParams;
 	unsigned char reject;
+	int nucChannel;
 	reject = 0;
 	for (int i=0; i<numChannels; ++i)
 	{
@@ -2385,32 +2430,6 @@ void NucleusEditor::CurvAnisotropicDiffusion()
 	}
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 //***********************************************************************************
 //***********************************************************************************

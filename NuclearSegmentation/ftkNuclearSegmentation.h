@@ -36,6 +36,9 @@
 #include <ftkCommon/ftkObject.h>
 #include <yousef_core/yousef_seg.h>
 
+#include <vtkSmartPointer.h>
+#include <vtkTable.h>
+
 #include <map>
 #include <set>
 
@@ -47,14 +50,11 @@ namespace ftk
  *  Handles the execution, result, and editing of a nuclear segmentation
  *  
  */
-typedef unsigned char IPixelT;
-typedef unsigned short LPixelT;
-typedef ftk::LabelImageToFeatures< IPixelT, LPixelT, 3 > FeatureCalcType;
-typedef struct { string name; int value; } Parameter;
-
 class NuclearSegmentation
 {
 public:
+	typedef struct { string name; int value; } Parameter;
+
 	NuclearSegmentation();
 	~NuclearSegmentation();
 
@@ -79,12 +79,12 @@ public:
 	//bool SaveLabelByClass();									//Will save a different label image for each class
 	
 	//Editing Functions 
-	std::vector< int > Split(ftk::Object::Point P1, ftk::Object::Point P2);
-	std::vector< int > SplitAlongZ(int objID, int cutSlice);
-	int Merge(vector<int> ids);
-	bool Delete(vector<int> ids);
-	bool Exclude(int xy, int z);
-	int AddObject(int x1, int y1, int z1, int x2, int y2, int z2);
+	std::vector< int > Split(ftk::Object::Point P1, ftk::Object::Point P2, vtkSmartPointer<vtkTable> table = NULL);
+	std::vector< int > SplitAlongZ(int objID, int cutSlice, vtkSmartPointer<vtkTable> table = NULL);
+	int Merge(vector<int> ids, vtkSmartPointer<vtkTable> table = NULL);
+	bool Delete(vector<int> ids, vtkSmartPointer<vtkTable> table = NULL);
+	bool Exclude(int xy, int z, vtkSmartPointer<vtkTable> table = NULL);
+	int AddObject(int x1, int y1, int z1, int x2, int y2, int z2, vtkSmartPointer<vtkTable> table = NULL);
 	bool EditsNotSaved;
 
 	//Edits applied on initial segmentation and updates LoG resp image
@@ -131,10 +131,10 @@ protected:
 	
 	//Editing Utilities:
 	long int maxID(void);										//Get the maximum ID in the table!
-	bool addObjectToMaps(int ID, int x1, int y1, int z1, int x2, int y2, int z2);
-	bool addObjectsToMaps(std::set<int> IDs, int x1, int y1, int z1, int x2, int y2, int z2);
-	void removeObjectFromMaps(int ID);
-	FeatureCalcType::Pointer computeGeometries(int x1, int y1, int z1, int x2, int y2, int z2);
+	bool addObjectToMaps(int ID, int x1, int y1, int z1, int x2, int y2, int z2, vtkSmartPointer<vtkTable> table = NULL);
+	bool addObjectsToMaps(std::set<unsigned short> IDs, int x1, int y1, int z1, int x2, int y2, int z2, vtkSmartPointer<vtkTable> table = NULL);
+	void removeObjectFromMaps(int ID, vtkSmartPointer<vtkTable> table);
+	//FeatureCalcType::Pointer computeGeometries(int x1, int y1, int z1, int x2, int y2, int z2);
 	void ReassignLabels(std::vector<int> fromIds, int toId);
 	void ReassignLabel(int fromId, int toId);
 	ftk::Object::Box ExtremaBox(std::vector<int> ids);
