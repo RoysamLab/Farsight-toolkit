@@ -47,7 +47,7 @@ void ProjectProcessor::Initialize(void)
 
 	tasks.clear();
 
-	for(int i=0; i<definition->pipeline.size(); ++i)
+	for(int i=0; i<(int)definition->pipeline.size(); ++i)
 	{
 		Task t;
 		t.type = definition->pipeline.at(i);
@@ -83,10 +83,13 @@ void ProjectProcessor::ProcessNext(void)
 		taskDone = SegmentCytoplasm(tasks.at(thisTask).inputChannel);
 		break;
 	case ProjectDefinition::RAW_ASSOCIATIONS:
+		taskDone = false;
 		break;
 	case ProjectDefinition::CLASSIFY:
+		taskDone = false;
 		break;
 	case ProjectDefinition::ANALYTE_MEASUREMENTS:
+		taskDone = false;
 		break;
 	}
 	

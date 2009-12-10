@@ -178,7 +178,7 @@ bool ProjectDefinition::Write(std::string filename)
 	if(inputs.size() > 0)
 	{
 		TiXmlElement * inputElement = new TiXmlElement("Inputs");
-		for(int i=0; i<inputs.size(); ++i)
+		for(int i=0; i<(int)inputs.size(); ++i)
 		{
 			TiXmlElement *chElement = new TiXmlElement("channel");
 			chElement->SetAttribute("number", ftk::NumToString(inputs.at(i).number));
@@ -193,7 +193,7 @@ bool ProjectDefinition::Write(std::string filename)
 	if(pipeline.size() > 0)
 	{
 		TiXmlElement * pipelineElement = new TiXmlElement("Pipeline");
-		for(int i=0; i<pipeline.size(); ++i)
+		for(int i=0; i<(int)pipeline.size(); ++i)
 		{
 			TiXmlElement * stepElement = new TiXmlElement("step");
 			stepElement->SetAttribute("name", GetTaskString(pipeline.at(i)));
@@ -206,7 +206,7 @@ bool ProjectDefinition::Write(std::string filename)
 	if(nuclearParameters.size() > 0)
 	{
 		TiXmlElement * paramsElement = new TiXmlElement("NuclearSegmentationParameters");
-		for(int i=0; i<nuclearParameters.size(); ++i)
+		for(int i=0; i<(int)nuclearParameters.size(); ++i)
 		{
 			paramsElement->LinkEndChild( GetParameterElement(nuclearParameters.at(i)) );
 		}
@@ -217,7 +217,7 @@ bool ProjectDefinition::Write(std::string filename)
 	if(cytoplasmParameters.size() > 0)
 	{
 		TiXmlElement * paramsElement = new TiXmlElement("CytoplasmSegmentationParameters");
-		for(int i=0; i<cytoplasmParameters.size(); ++i)
+		for(int i=0; i<(int)cytoplasmParameters.size(); ++i)
 		{
 			paramsElement->LinkEndChild( GetParameterElement(cytoplasmParameters.at(i)) );
 		}
@@ -228,7 +228,7 @@ bool ProjectDefinition::Write(std::string filename)
 	if(classificationParameters.size() > 0)
 	{
 		TiXmlElement * paramsElement = new TiXmlElement("ClassificationParameters");
-		for(int i=0; i<classificationParameters.size(); ++i)
+		for(int i=0; i<(int)classificationParameters.size(); ++i)
 		{
 			paramsElement->LinkEndChild( GetParameterElement(classificationParameters.at(i)) );
 		}
@@ -284,7 +284,7 @@ int ProjectDefinition::FindInputChannel(std::string name)
 	int retval = -1;
 
 	//First look for the Nuclear Segmentation
-	for(int i=0; i<inputs.size(); ++i)
+	for(int i=0; i<(int)inputs.size(); ++i)
 	{
 		if(inputs.at(i).type == name)
 		{
