@@ -117,7 +117,9 @@ private slots:
 	bool saveProject(void);
 	bool askSaveImage(void);
 	bool saveImage(void);
+	bool askSaveResult(void);
 	bool saveResult(void);
+	bool askSaveTable(void);
 	bool saveTable(void);
 	
 	//Views:
@@ -125,8 +127,9 @@ private slots:
 	void CreateNewPlotWindow();
 	void CreateNewTableWindow();
 	void CreateNewHistoWindow();
-	void ShowHistogram();
 	void updateViews();
+	void viewClosing(QWidget * view);
+	void closeViews();
 
 	//For Editing Menu
 	void setEditsEnabled(bool val);
@@ -177,7 +180,7 @@ private:
 	LabelImageViewQT *segView;
 	std::vector<PlotWindow *> pltWin;
 	std::vector<TableWindow *> tblWin;
-	HistoWindow * hisWin;
+	std::vector<HistoWindow *> hisWin;
 	PatternAnalysisWizard *pWizard;
 
 	QMenu *fileMenu;
@@ -195,8 +198,9 @@ private:
 
 	QMenu *viewMenu;
 	QAction *showBoundsAction;
+	QAction *newTableAction;
 	QAction *newScatterAction;
-	QAction *showHistoAction;
+	QAction *newHistoAction;
 	QAction *imageIntensityAction;
 
 	QMenu *toolMenu;

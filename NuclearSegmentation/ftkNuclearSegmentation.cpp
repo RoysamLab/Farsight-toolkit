@@ -609,9 +609,7 @@ ftk::Object::Box NuclearSegmentation::ExtremaBox(std::vector<int> ids)
 //**********************************************************************************************************
 std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object::Point P2, vtkSmartPointer<vtkTable> table)
 {
-	std::vector <int> ret_ids;
-	ret_ids.push_back(0);
-	ret_ids.push_back(0);
+	std::vector<int> ret_ids;
 
 	//if no label (segmentation) image return
 	if(!labelImage)
@@ -719,7 +717,8 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 	}
 	catch( itk::ExceptionObject & err )
 	{
-		std::cerr << "Error calculating distance transform: " << err << endl ;
+		std::cerr << "Error calculating distance transform: " << err << endl;
+		return ret_ids;
 	}
 	try
 	{
@@ -727,7 +726,8 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 	}
 	catch( itk::ExceptionObject & err )
 	{
-		std::cerr << "Error calculating distance transform: " << err << endl ;
+		std::cerr << "Error calculating distance transform: " << err << endl;
+		return ret_ids;
 	}
 
 	//Now, relabel the cell points into either newID1 or newID2 based on the distances to the seeds
@@ -765,16 +765,14 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 	this->removeObjectFromMaps(objID, table);
 	EditsNotSaved = true;
 
-	ret_ids.at(0) = newID1;
-	ret_ids.at(1) = newID2;
+	ret_ids.push_back(newID1);
+	ret_ids.push_back(newID2);
 	return ret_ids;
 }
 
 std::vector< int > NuclearSegmentation::SplitAlongZ(int objID, int cutSlice, vtkSmartPointer<vtkTable> table)
 {
 	std::vector <int> ret_ids;
-	ret_ids.push_back(0);
-	ret_ids.push_back(0);
 
 	//if no label (segmentation) or no data image is available then return
 	if(!labelImage || !dataImage)
@@ -827,8 +825,8 @@ std::vector< int > NuclearSegmentation::SplitAlongZ(int objID, int cutSlice, vtk
 	EditsNotSaved = true;
 
 	//return the ids of the two cells resulting from spliting
-	ret_ids.at(0) = newID1;
-	ret_ids.at(1) = newID2;
+	ret_ids.push_back(newID1);
+	ret_ids.push_back(newID2);
 	return ret_ids;
 }
 
@@ -837,7 +835,7 @@ int NuclearSegmentation::Merge(vector<int> ids, vtkSmartPointer<vtkTable> table)
 	if(!labelImage || !dataImage)
 	{
 		errorMessage = "label image or data image doesn't exist";					
-		return 0;
+		return -1;
 	}
 
 	int newID = maxID() + 1;
@@ -859,7 +857,7 @@ int NuclearSegmentation::AddObject(int x1, int y1, int z1, int x2, int y2, int z
 	if(!labelImage || !dataImage)
 	{
 		errorMessage = "label image or data image doesn't exist";					
-		return 0;
+		return -1;
 	}	
 	std::vector<unsigned short> size = labelImage->Size();
 

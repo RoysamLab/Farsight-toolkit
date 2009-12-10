@@ -60,6 +60,12 @@ HistoWindow::HistoWindow(QWidget *parent)
   this->resize(700,500);
 }
 
+void HistoWindow::closeEvent(QCloseEvent *event)
+{
+	emit closing(this);
+	event->accept();
+} 
+
 void HistoWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels)
 {
 	m_table = table;

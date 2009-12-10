@@ -55,7 +55,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 
 	tblWin.clear();
 	pltWin.clear();
-	hisWin=NULL;
+	hisWin.clear();
 	pWizard=NULL;
 
 	myImg = NULL;
@@ -74,6 +74,9 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 NucleusEditor::~NucleusEditor()
 {
 	if(selection) delete selection;
+	if(nucSeg) delete nucSeg;
+	if(pProc) delete pProc;
+
 }
 
 //******************************************************************************
@@ -188,12 +191,12 @@ void NucleusEditor::createMenus()
 
 	saveLabelAction = new QAction(tr("Save Result..."), this);
 	saveLabelAction->setStatusTip(tr("Save a segmentation result image"));
-	connect(saveLabelAction, SIGNAL(triggered()), this, SLOT(saveResult()));
+	connect(saveLabelAction, SIGNAL(triggered()), this, SLOT(askSaveResult()));
 	fileMenu->addAction(saveLabelAction);
 
 	saveTableAction = new QAction(tr("Save Table..."), this);
 	saveTableAction->setStatusTip(tr("Save the features table"));
-	connect(saveTableAction, SIGNAL(triggered()), this, SLOT(saveTable()));
+	connect(saveTableAction, SIGNAL(triggered()), this, SLOT(askSaveTable()));
 	fileMenu->addAction(saveTableAction);
 
 	saveDisplayAction = new QAction(tr("Save Display Image..."), this);
@@ -222,15 +225,20 @@ void NucleusEditor::createMenus()
 
 	viewMenu->addSeparator();
 
-	newScatterAction = new QAction(tr("New Scatter"), this);
+	newTableAction = new QAction(tr("New Table"), this);
+	newTableAction->setStatusTip(tr("Open a new table window"));
+	connect(newTableAction, SIGNAL(triggered()), this, SLOT(CreateNewTableWindow()));
+	viewMenu->addAction(newTableAction);
+
+	newScatterAction = new QAction(tr("New Scatterplot"), this);
 	newScatterAction->setStatusTip(tr("Open a new Scatterplot Window"));
 	connect(newScatterAction,SIGNAL(triggered()),this,SLOT(CreateNewPlotWindow()));
 	viewMenu->addAction(newScatterAction);
 
-	showHistoAction = new QAction(tr("Show Histogram"),this);
-	showHistoAction->setStatusTip(tr("Show a Histogram"));
-	connect(showHistoAction,SIGNAL(triggered()),this,SLOT(ShowHistogram()));
-	viewMenu->addAction(showHistoAction);
+	newHistoAction = new QAction(tr("New Histogram"),this);
+	newHistoAction->setStatusTip(tr("Open a new Histogram Window"));
+	connect(newHistoAction,SIGNAL(triggered()),this,SLOT(CreateNewHistoWindow()));
+	viewMenu->addAction(newHistoAction);
 
 	imageIntensityAction = new QAction(tr("Adjust Image Intensity"), this);
 	imageIntensityAction->setStatusTip(tr("Allows modification of image intensity"));
@@ -449,6 +457,9 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 {
 	this->abortProcess();
 
+	if(!projectFiles.inputSaved || !projectFiles.outputSaved || !projectFiles.logSaved || !projectFiles.definitionSaved || !projectFiles.tableSaved)
+		this->saveProject();
+
 	//Then Close all other windows
 	foreach (QWidget *widget, qApp->topLevelWidgets()) 
 	{
@@ -471,7 +482,7 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 //*********************************************************************************
 bool NucleusEditor::saveProject()
 {
-	QString	filename = QFileDialog::getSaveFileName(this, tr("Save As..."),lastPath, tr("XML Project File(*.xml)"));
+	QString	filename = QFileDialog::getSaveFileName(this, tr("Save Project As..."),lastPath, tr("XML Project File(*.xml)"));
 	
 	if(filename == "")
 		return false;
@@ -518,9 +529,9 @@ bool NucleusEditor::askSaveImage()
 	QString filename;
 
 	if(myImg->GetImageInfo()->numChannels == 1)
-		filename = QFileDialog::getSaveFileName(this, tr("Save As..."),lastPath, standardImageTypes);
+		filename = QFileDialog::getSaveFileName(this, tr("Save Image As..."),lastPath, standardImageTypes);
 	else
-		filename = QFileDialog::getSaveFileName(this, tr("Save As..."),lastPath, tr("XML Image Definition(*.xml)"));
+		filename = QFileDialog::getSaveFileName(this, tr("Save Image As..."),lastPath, tr("XML Image Definition(*.xml)"));
 
 	if(filename == "")
 	{
@@ -528,12 +539,11 @@ bool NucleusEditor::askSaveImage()
 	}
 	else
 	{
-		QString path = QFileInfo(filename).absolutePath();
-		lastPath = path;
+		lastPath = QFileInfo(filename).absolutePath();
 		projectFiles.input = filename.toStdString();
 	}
 	
-	this->saveImage();
+	return this->saveImage();
 }
 
 bool NucleusEditor::saveImage()
@@ -544,9 +554,7 @@ bool NucleusEditor::saveImage()
 	
 	QString filename = QString::fromStdString(projectFiles.input);
 	if(filename == "")
-	{
 		return false;
-	}
 		
 	QString path = QFileInfo(filename).absolutePath();
 	QString name = QFileInfo(filename).baseName();
@@ -554,13 +562,38 @@ bool NucleusEditor::saveImage()
 
 	QString fullBase = path + "/" + name;
 	bool ok;
-	if(ext == "tif")
-		ok = myImg->SaveChannelAs(0, fullBase.toStdString(), ext.toStdString());
-	else
+	if(ext == "xml")
 		ok = ftk::SaveXMLImage(filename.toStdString(), myImg);
+	else
+		ok = myImg->SaveChannelAs(0, fullBase.toStdString(), ext.toStdString());
 
 	projectFiles.inputSaved = ok;
 	return ok;	
+}
+
+bool NucleusEditor::askSaveResult()
+{
+	if(!labImg)
+		return false;
+
+	QString filename;
+
+	if(labImg->GetImageInfo()->numChannels == 1)
+		filename = QFileDialog::getSaveFileName(this, tr("Save Result As..."),lastPath, tr("TIFF Image (*.tif)"));
+	else
+		filename = QFileDialog::getSaveFileName(this, tr("Save Result As..."),lastPath, tr("XML Image Definition(*.xml)"));
+
+	if(filename == "")
+	{
+		return false;
+	}
+	else
+	{
+		lastPath = QFileInfo(filename).absolutePath();
+		projectFiles.output = filename.toStdString();
+	}
+	
+	return this->saveResult();
 }
 
 bool NucleusEditor::saveResult()
@@ -570,36 +603,36 @@ bool NucleusEditor::saveResult()
 
 	QString filename = QString::fromStdString(projectFiles.output);
 	if(filename == "")
-	{
-		if(labImg->GetImageInfo()->numChannels == 1)
-			filename = QFileDialog::getSaveFileName(this, tr("Save As..."),lastPath, tr("TIFF Image (*.tif)"));
-		else
-			filename = QFileDialog::getSaveFileName(this, tr("Save As..."),lastPath, tr("XML Image Definition(*.xml)"));
-
-		if(filename == "")
-		{
-			return false;
-		}
-		else
-		{
-			projectFiles.output = filename.toStdString();
-		}
-	}
+		return false;
 
 	QString path = QFileInfo(filename).absolutePath();
 	QString name = QFileInfo(filename).baseName();
 	QString ext = QFileInfo(filename).suffix();
-	lastPath = path;
 
 	QString fullBase = path + "/" + name;
 	bool ok;
-	if(ext == "tif")
-		ok = labImg->SaveChannelAs(0, fullBase.toStdString(), ext.toStdString());
-	else
+	if(ext == "xml")
 		ok = ftk::SaveXMLImage(filename.toStdString(), labImg);
+	else
+		ok = labImg->SaveChannelAs(0, fullBase.toStdString(), ext.toStdString());
 
 	projectFiles.outputSaved = ok;
 	return ok;	
+}
+
+bool NucleusEditor::askSaveTable()
+{
+	if(!table)
+		return false;
+
+	QString filename = QFileDialog::getSaveFileName(this, tr("Save Table As..."),lastPath, tr("TEXT(*.txt)"));
+	if(filename == "")
+		return false;
+
+	lastPath = QFileInfo(filename).absolutePath();
+	projectFiles.table = filename.toStdString();
+
+	return this->saveTable();
 }
 
 bool NucleusEditor::saveTable()
@@ -607,23 +640,10 @@ bool NucleusEditor::saveTable()
 	if(!table)
 		return false;
 
-	QString filename = QString::fromStdString(projectFiles.table);
-	if(filename == "")
-	{
-		filename = QFileDialog::getSaveFileName(this, tr("Save Table As..."),lastPath, tr("TEXT(*.txt)"));
-		if(filename == "")
-		{
-			return false;
-		}
-		else
-		{
-			projectFiles.table = filename.toStdString();
-		}
-	}
+	if(projectFiles.table == "")
+		return false;
 
-	lastPath = QFileInfo(filename).absolutePath();
-
-	bool ok = ftk::SaveTable(filename.toStdString(), table);
+	bool ok = ftk::SaveTable(projectFiles.table, table);
 	projectFiles.tableSaved = ok;
 	return ok;
 }
@@ -689,17 +709,23 @@ void NucleusEditor::askLoadTable()
 
 void NucleusEditor::loadTable(QString fileName)
 {
+	if(!projectFiles.tableSaved)
+	{
+		this->saveProject();
+	}
+
 	lastPath = QFileInfo(fileName).absolutePath();
 
 	table = ftk::LoadTable(fileName.toStdString());
 	if(!table) return;
-	
-	selection->clear();
-	this->CreateNewTableWindow();
-	this->CreateNewPlotWindow();
 
 	projectFiles.table = fileName.toStdString();
 	projectFiles.tableSaved = true;
+	
+	selection->clear();
+
+	this->closeViews();
+	this->CreateNewTableWindow();
 }
 
 void NucleusEditor::askLoadResult(void)
@@ -712,6 +738,11 @@ void NucleusEditor::askLoadResult(void)
 
 void NucleusEditor::loadResult(QString fileName)
 {
+	if(!projectFiles.outputSaved)
+	{
+		this->saveProject();
+	}
+
 	lastPath = QFileInfo(fileName).absolutePath();
 	QString myExt = QFileInfo(fileName).suffix();
 	if(myExt == "xml")
@@ -744,6 +775,11 @@ void NucleusEditor::askLoadImage()
 
 void NucleusEditor::loadImage(QString fileName)
 {
+	if(!projectFiles.inputSaved)
+	{
+		this->saveProject();
+	}
+
 	lastPath = QFileInfo(fileName).absolutePath();
 	QString myExt = QFileInfo(fileName).suffix();
 	if(myExt == "xml")
@@ -829,6 +865,69 @@ void NucleusEditor::startKPLS()
 	pWizard->show();
 }
 
+//*********************************************************************************************************
+//Connect the closing signal from views to this slot to remove it from my lists of open views:
+//*********************************************************************************************************
+void NucleusEditor::viewClosing(QWidget * view)
+{
+	std::vector<TableWindow *>::iterator table_it; 
+	for ( table_it = tblWin.begin(); table_it < tblWin.end(); table_it++ )
+	{
+		if( *table_it == view )
+		{
+			tblWin.erase(table_it);
+			return;
+		}
+	}
+
+	std::vector<PlotWindow *>::iterator plot_it;
+	for ( plot_it = pltWin.begin(); plot_it < pltWin.end(); plot_it++ )
+	{
+		if( *plot_it == view )
+		{
+			pltWin.erase(plot_it);
+			return;
+		}
+	}
+
+	std::vector<HistoWindow *>::iterator hist_it;
+	for ( hist_it = hisWin.begin(); hist_it < hisWin.end(); hist_it++ )
+	{
+		if( *hist_it == view )
+		{
+			hisWin.erase(hist_it);
+			return;
+		}
+	}
+}
+
+void NucleusEditor::closeViews()
+{
+	for(int p=0; p<(int)tblWin.size(); ++p)	
+		tblWin.at(p)->close();
+
+	for(int p=0; p<(int)pltWin.size(); ++p)
+		pltWin.at(p)->close();
+
+	for(int p=0; p<(int)hisWin.size(); ++p)
+		hisWin.at(p)->close();
+}
+
+//Call this slot when the table has been modified (new rows or columns) to update the views:
+void NucleusEditor::updateViews()
+{
+	if(segView)
+		segView->update();
+
+	for(int p=0; p<(int)tblWin.size(); ++p)	
+		tblWin.at(p)->update();
+
+	for(int p=0; p<(int)pltWin.size(); ++p)
+		pltWin.at(p)->update();
+
+	for(int p=0; p<(int)hisWin.size(); ++p)
+		hisWin.at(p)->update();
+}
 //******************************************************************************
 // Create a new Plot window and give it the provided model and selection model
 //******************************************************************************
@@ -837,6 +936,7 @@ void NucleusEditor::CreateNewPlotWindow(void)
 	if(!table) return;
 
 	pltWin.push_back(new PlotWindow());
+	connect(pltWin.back(), SIGNAL(closing(QWidget *)), this, SLOT(viewClosing(QWidget *)));
 	pltWin.back()->setModels(table,selection);
 	pltWin.back()->show();
 }
@@ -849,6 +949,7 @@ void NucleusEditor::CreateNewTableWindow(void)
 	if(!table) return;
 
 	tblWin.push_back(new TableWindow());
+	connect(tblWin.back(), SIGNAL(closing(QWidget *)), this, SLOT(viewClosing(QWidget *)));
 	tblWin.back()->setModels(table,selection);
 	tblWin.back()->show();
 
@@ -865,19 +966,10 @@ void NucleusEditor::CreateNewHistoWindow(void)
 {
 	if(!table) return;
 
-	if(this->hisWin)
-		delete hisWin;
-	hisWin = new HistoWindow();
-	hisWin->setModels(table,selection);
-	hisWin->show();
-}
-
-void NucleusEditor::ShowHistogram(void)
-{
-	if(this->hisWin)
-		hisWin->show();
-	else
-		this->CreateNewHistoWindow();
+	hisWin.push_back(new HistoWindow());
+	connect(hisWin.back(), SIGNAL(closing(QWidget *)), this, SLOT(viewClosing(QWidget *)));
+	hisWin.back()->setModels(table,selection);
+	hisWin.back()->show();
 }
 
 void NucleusEditor::clearSelections()
@@ -965,6 +1057,8 @@ void NucleusEditor::addCell(int x1, int y1, int x2, int y2, int z)
 	int id = nucSeg->AddObject(x1, y1, z, x2, y2, z, table);
 	if(id != 0)
 	{
+		projectFiles.outputSaved = false;
+		projectFiles.tableSaved = false;
 		this->updateViews();
 		selection->select(id);
 	}
@@ -976,9 +1070,13 @@ void NucleusEditor::deleteCells(void)
 
 	std::set<long int> sels = selection->getSelections();
 	std::vector<int> ids(sels.begin(), sels.end());
-	nucSeg->Delete(ids, table);
-	selection->clear();
-	this->updateViews();
+	if(nucSeg->Delete(ids, table))
+	{
+		projectFiles.outputSaved = false;
+		projectFiles.tableSaved = false;
+		selection->clear();
+		this->updateViews();
+	}
 }
 
 void NucleusEditor::mergeCells(void)
@@ -987,9 +1085,13 @@ void NucleusEditor::mergeCells(void)
 
 	std::set<long int> sels = selection->getSelections();
 	std::vector<int> ids(sels.begin(), sels.end());
-	nucSeg->Merge(ids, table);
-	selection->clear();
-	this->updateViews();
+	if(nucSeg->Merge(ids, table) != -1)
+	{
+		projectFiles.outputSaved = false;
+		projectFiles.tableSaved = false;
+		selection->clear();
+		this->updateViews();
+	}
 }
 
 void NucleusEditor::splitCell(int x1, int y1, int z1, int x2, int y2, int z2)
@@ -1007,9 +1109,13 @@ void NucleusEditor::splitCell(int x1, int y1, int z1, int x2, int y2, int z2)
 	P2.y=y2;
 	P2.z=z2;
 
-	nucSeg->Split(P1, P2, table);
-	selection->clear();
-	this->updateViews();
+	if(nucSeg->Split(P1, P2, table).size() != 0)
+	{
+		projectFiles.outputSaved = false;
+		projectFiles.tableSaved = false;
+		selection->clear();
+		this->updateViews();
+	}
 }
 
 void NucleusEditor::splitCellAlongZ(void)
@@ -1017,10 +1123,17 @@ void NucleusEditor::splitCellAlongZ(void)
 	if(!nucSeg) return;
 
 	std::set<long int> sels = selection->getSelections();
+	if(sels.size() == 0)
+		return;
+
 	selection->clear();
 	for ( set<long int>::iterator it=sels.begin(); it != sels.end(); it++ )
 	{
-		nucSeg->SplitAlongZ(*it,segView->GetCurrentZ(), table);
+		if(nucSeg->SplitAlongZ(*it,segView->GetCurrentZ(), table).size() != 0)
+		{
+			projectFiles.outputSaved = false;
+			projectFiles.tableSaved = false;
+		}
 	}
 	this->updateViews();
 }
@@ -1039,8 +1152,12 @@ void NucleusEditor::applyExclusionMargin(void)
 	delete dialog;
 
 	selection->clear();
-	nucSeg->Exclude(xy, z, table);
-	this->updateViews();
+	if(nucSeg->Exclude(xy, z, table))
+	{
+		projectFiles.outputSaved = false;
+		projectFiles.tableSaved = false;
+		this->updateViews();
+	}
 }
 
 int NucleusEditor::requestChannel(ftk::Image::Pointer img)
@@ -1072,24 +1189,7 @@ int NucleusEditor::requestChannel(ftk::Image::Pointer img)
 //******************************************************************************************
 //******************************************************************************************
 //******************************************************************************************
-//******************************************************************************************
-
-//Call this slot when the table has been modified (new rows or columns) to update the views:
-void NucleusEditor::updateViews()
-{
-	if(segView)
-		segView->update();
-
-	for(unsigned int p=0; p<tblWin.size(); ++p)	
-		tblWin.at(p)->update();
-
-	for(unsigned int p=0; p<pltWin.size(); ++p)
-		pltWin.at(p)->update();
-
-	if(hisWin)
-		hisWin->update();
-}
-
+//*****************************************************************************************
 //******************************************************************************************
 //******************************************************************************************
 //******************************************************************************************
@@ -1141,6 +1241,9 @@ void NucleusEditor::processProject(void)
 							    "All Files (*.*)"));
 	if(projectName == "")  return;
 	lastPath = QFileInfo(projectName).absolutePath();
+
+	if(!projectFiles.definitionSaved)
+		this->saveProject();
 
 	//Load up the definition
 	if( !projectDefinition.Load(projectName.toStdString()) ) return;
@@ -1198,6 +1301,8 @@ void NucleusEditor::process()
 		segView->SetLabelImage(labImg,selection);
 		table = pProc->GetTable();
 		projectFiles.tableSaved = false;
+
+		this->closeViews();
 		CreateNewTableWindow();
 		CreateNewPlotWindow();
 		this->startEditing();

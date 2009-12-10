@@ -64,6 +64,12 @@ public:
 public slots:
 	void update(void);
 
+signals:
+	void closing(QWidget *widget);
+
+protected:
+	void closeEvent(QCloseEvent *event);
+
 private slots:
 	void columnChange(QAction *action);
 	void binsChange(QAction *action);
