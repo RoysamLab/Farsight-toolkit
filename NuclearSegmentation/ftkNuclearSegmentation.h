@@ -62,6 +62,7 @@ public:
 	bool LoadInput(std::string fname, int chNumber = 0);							//Load the input image from a file
 	bool SetInput(ftk::Image::Pointer inImg, std::string fname, int chNumber = 0); //Pass a pointer to the already loaded image
 	void SetParameters(std::string paramfile);
+	void SetParameter(std::string name, int value);
 	bool Binarize(bool getResultImg = false);					//Will binarize the data image
 	bool DetectSeeds(bool getResultImg = false);				//If binarization has been done it will detect seeds
 	bool RunClustering(bool getResultImg = false);				//Will use binary image and seeds to do initial clustering
@@ -97,6 +98,8 @@ public:
 	std::string GetDataFilename() { return dataFilename; };
 	std::string GetParamFilename() { return paramFilename; };
 	std::string GetLabelFilename() { return labelFilename; };
+	int GetParameter(std::string name);
+	std::vector<std::string> GetParameterNames(){ return paramNames; };
 
 	//Get Data:
 	ftk::Image::Pointer GetDataImage(void){ return dataImage; };	
@@ -120,14 +123,16 @@ protected:
 			
 	std::string paramFilename;
 	std::vector<Parameter> myParameters;
+	std::vector<std::string> paramNames;
 
 	//Geometry information that is kept for editing purposes:
 	std::map<int, ftk::Object::Box>		bBoxMap;			//Bounding boxes
 	std::map<int, ftk::Object::Point>	centerMap;			//Centroids
 
-	bool GetResultImage();										//Gets the result of last module and puts it in labelImage
+	bool GetResultImage();									//Gets the result of last module and puts it in labelImage
 	void GetParameters(void);								//Retrieve the Parameters from nuclear segmentation.
 	void ResetAll(void);									//Clear all memory and variables
+	void ConvertParameters(int params[11]);
 	
 	//Editing Utilities:
 	long int maxID(void);										//Get the maximum ID in the table!

@@ -39,6 +39,18 @@ NuclearSegmentation::NuclearSegmentation()
 {
 	NucleusSeg = NULL;
 	this->ResetAll();
+
+	paramNames.push_back("high_sensitivity");
+	paramNames.push_back("LoG_size");
+	paramNames.push_back("min_scale");
+	paramNames.push_back("max_scale");
+	paramNames.push_back("xy_clustering_res");
+	paramNames.push_back("z_clustering_res");
+	paramNames.push_back("finalize_segmentation");
+	paramNames.push_back("sampling_ratio_XY_to_Z");
+	paramNames.push_back("Use_Distance_Map");
+	paramNames.push_back("refinement_range");
+	paramNames.push_back("min_object_size");
 }
 
 NuclearSegmentation::~NuclearSegmentation()
@@ -107,6 +119,82 @@ void NuclearSegmentation::SetParameters(std::string paramfile)
 	this->paramFilename = paramfile;
 }
 
+void NuclearSegmentation::SetParameter(std::string name, int value)
+{
+	bool found = false;
+	for(int i=0; i<(int)myParameters.size(); ++i)
+	{
+		if(myParameters.at(i).name == name)
+		{
+			myParameters.at(i).value = value;
+			found = true;
+			break;
+		}
+	}
+
+	if(!found)		//Add the parameter
+	{
+		Parameter newP;
+		newP.name = name;
+		newP.value = value;
+		myParameters.push_back(newP);
+	}
+}
+
+int NuclearSegmentation::GetParameter(std::string name)
+{
+	for(int i=0; i<(int)myParameters.size(); ++i)
+	{
+		if(myParameters.at(i).name == name)
+		{
+			return myParameters.at(i).value;
+		}
+	}
+	return -1;
+}
+
+void NuclearSegmentation::ConvertParameters(int params[11])
+{
+	//These are defaults:
+	params[0]=0;
+	params[1]=30;
+	params[2]=5;
+	params[3]=8;
+	params[4]=5;
+	params[5]=2;
+	params[6]=1;
+	params[7]=2;
+	params[8]=1;
+	params[9]=6;
+	params[10]=100;
+
+	for(int i=0; i<(int)myParameters.size(); ++i)
+	{
+		if(myParameters.at(i).name == paramNames.at(0))
+			params[0] = myParameters.at(i).value;
+		if(myParameters.at(i).name == paramNames.at(1))
+			params[1] = myParameters.at(i).value;
+		if(myParameters.at(i).name == paramNames.at(2))
+			params[2] = myParameters.at(i).value;
+		if(myParameters.at(i).name == paramNames.at(3))
+			params[3] = myParameters.at(i).value;
+		if(myParameters.at(i).name == paramNames.at(4))
+			params[4] = myParameters.at(i).value;
+		if(myParameters.at(i).name == paramNames.at(5))
+			params[5] = myParameters.at(i).value;
+		if(myParameters.at(i).name == paramNames.at(6))
+			params[6] = myParameters.at(i).value;
+		if(myParameters.at(i).name == paramNames.at(7))
+			params[7] = myParameters.at(i).value;
+		if(myParameters.at(i).name == paramNames.at(8))
+			params[8] = myParameters.at(i).value;
+		if(myParameters.at(i).name == paramNames.at(9))
+			params[9] = myParameters.at(i).value;
+		if(myParameters.at(i).name == paramNames.at(10))
+			params[10] = myParameters.at(i).value;
+	}
+}
+
 //*****
 // If you are not going to need to return the resulting image as ftk::Image, then pass false to this function
 //*****
@@ -127,7 +215,18 @@ bool NuclearSegmentation::Binarize(bool getResultImg)
 
 	if(NucleusSeg) delete NucleusSeg;
 	NucleusSeg = new yousef_nucleus_seg();
-	NucleusSeg->readParametersFromFile(paramFilename.c_str());
+
+	if(myParameters.size() == 0)
+	{
+		NucleusSeg->readParametersFromFile("");		//Will use automatic parameter detection	
+	}
+	else
+	{
+		int params[11];
+		ConvertParameters(params);
+		NucleusSeg->setParams(params); //Will use the parameters that have been set and defauls for the rest
+	}
+
 	NucleusSeg->setDataImage( dptr, numColumns, numRows, numStacks, dataFilename.c_str() );
 	NucleusSeg->runBinarization();
 	lastRunStep = 1;
@@ -185,10 +284,50 @@ bool NuclearSegmentation::Finalize()
 
 void NuclearSegmentation::GetParameters()
 {
-	Parameter p;
-	p.name = "sampling_ratio";
-	p.value = NucleusSeg->getSamplingRatio();
-	this->myParameters.push_back(p);
+	Parameter p1;
+	p1.name = "high_sensitivity";
+	p1.value = NucleusSeg->getShift();
+	this->myParameters.push_back(p1);
+	Parameter p2;
+	p2.name = "LoG_size";
+	p2.value = NucleusSeg->getSigma();
+	this->myParameters.push_back(p2);
+	Parameter p3;
+	p3.name = "min_scale";
+	p3.value = NucleusSeg->getScaleMin();
+	this->myParameters.push_back(p3);
+	Parameter p4;
+	p4.name = "max_scale";
+	p4.value = NucleusSeg->getScaleMax();
+	this->myParameters.push_back(p4);
+	Parameter p5;
+	p5.name = "xy_clustering_res";
+	p5.value = NucleusSeg->getRegionXY();
+	this->myParameters.push_back(p5);
+	Parameter p6;
+	p6.name = "z_clustering_res";
+	p6.value = NucleusSeg->getRegionZ();
+	this->myParameters.push_back(p6);
+	Parameter p7;
+	p7.name = "finalize_segmentation";
+	p7.value = NucleusSeg->isSegmentationFinEnabled();
+	this->myParameters.push_back(p7);
+	Parameter p8;
+	p8.name = "sampling_ratio_XY_to_Z";
+	p8.value = NucleusSeg->getSamplingRatio();
+	this->myParameters.push_back(p8);
+	Parameter p9;
+	p9.name = "Use_Distance_Map";
+	p9.value = NucleusSeg->isUseDapEnabled();
+	this->myParameters.push_back(p9);
+	Parameter p10;
+	p10.name = "refinement_range";
+	p10.value = NucleusSeg->getRefineRange();
+	this->myParameters.push_back(p10);
+	Parameter p11;
+	p11.name = "min_object_size";
+	p11.value = NucleusSeg->getMinObjSize();
+	this->myParameters.push_back(p11);
 }
 
 bool NuclearSegmentation::GetResultImage()

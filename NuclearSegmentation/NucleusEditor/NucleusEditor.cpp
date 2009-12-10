@@ -1293,7 +1293,7 @@ void NucleusEditor::segmentNuclei()
 void NucleusEditor::processProject(void)
 {
 	QString projectName = QFileDialog::getOpenFileName(
-                             this, "Select Project", lastPath,
+                             this, "Select Defintion File", lastPath,
                              tr("XML Project Definition (*.xml)\n"
 							    "All Files (*.*)"));
 	if(projectName == "")  return;
@@ -1361,6 +1361,7 @@ void NucleusEditor::process()
 		segView->SetLabelImage(labImg,selection);
 		table = pProc->GetTable();
 		projectFiles.tableSaved = false;
+		projectFiles.definitionSaved = false;
 
 		deleteProcess();
 

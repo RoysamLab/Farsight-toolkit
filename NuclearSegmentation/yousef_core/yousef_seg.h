@@ -121,9 +121,17 @@ public:
 	void writeParametersToFile();
 
 	//Come from parameters
+	int getShift(){ return shift; };
+	int getSigma(){ return sigma; };
+	int getScaleMin(){ return scaleMin; };
+	int getScaleMax(){ return scaleMax; };
+	int getRegionXY(){ return regionXY; };
+	int getRegionZ(){ return regionZ; };
 	int isSegmentationFinEnabled() { return finalizeSegmentation;} ;
 	int getSamplingRatio() { return sampling_ratio_XY_to_Z;} ;
 	int isUseDapEnabled() { return useDistMap;} ;
+	int getRefineRange(){ return refineRange; };
+	int getMinObjSize(){ return minObjSize; };
 
 	//Convert the label image to the previous IDL format
 	int saveIntoIDLFormat(std::string imageName);

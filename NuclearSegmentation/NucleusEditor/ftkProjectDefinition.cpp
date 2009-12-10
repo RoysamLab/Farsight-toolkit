@@ -149,7 +149,7 @@ std::vector<ProjectDefinition::Parameter> ProjectDefinition::ReadParameters(TiXm
 	while (parameterElement)
 	{
 		const char * parent = parameterElement->Value();
-		if ( strcmp( parent, "channel" ) == 0 )
+		if ( strcmp( parent, "parameter" ) == 0 )
 		{
 			Parameter parameter;
 			parameter.name = parameterElement->Attribute("name");

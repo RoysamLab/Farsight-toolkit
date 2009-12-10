@@ -113,17 +113,50 @@ bool ProjectProcessor::SegmentNuclei(int nucChannel)
 
 	ftk::NuclearSegmentation * nucSeg = new ftk::NuclearSegmentation();
 	nucSeg->SetInput(inputImage, "data_image", nucChannel);
-	nucSeg->SetParameters("");
+
+	//Setup the Parameters:
+	bool finalize = true;	//The Default
+	for(int i=0; i<(int)definition->nuclearParameters.size(); ++i)
+	{
+		nucSeg->SetParameter(definition->nuclearParameters.at(i).name, int(definition->nuclearParameters.at(i).value));
+		if(definition->nuclearParameters.at(i).name == "finalize_segmentation")
+		{
+			if(definition->nuclearParameters.at(i).value == 0)
+				finalize = false;
+		}
+	}
+
+	//Process:
 	nucSeg->Binarize(false);
 	nucSeg->DetectSeeds(false);
-	nucSeg->RunClustering(true);
-	nucSeg->Finalize();
+	if(finalize)
+	{
+		nucSeg->RunClustering(false);
+		nucSeg->Finalize();
+	}
+	else
+	{
+		nucSeg->RunClustering(true);
+	}
 	nucSeg->ReleaseSegMemory();
 	outputImage = nucSeg->GetLabelImage();
+
+	//Update For params actually used:
+	definition->nuclearParameters.clear();
+	std::vector<std::string> paramNames = nucSeg->GetParameterNames();
+	for(int i=0; i<(int)paramNames.size(); ++i)
+	{	
+		ProjectDefinition::Parameter p;
+		p.name = paramNames.at(i);
+		p.value = nucSeg->GetParameter(p.name);
+		definition->nuclearParameters.push_back(p);
+	}
+
 	delete nucSeg;
 
 	std::cout << "Done NucSeg\n";
 
+	//Calc Features:
 	ftk::IntrinsicFeatureCalculator *iCalc = new ftk::IntrinsicFeatureCalculator();
 	iCalc->SetInputImages(inputImage,outputImage,nucChannel,0);
 	//iCalc->SetFeaturePrefix("nuc_");
