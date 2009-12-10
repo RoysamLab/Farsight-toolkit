@@ -1178,7 +1178,7 @@ void NucleusEditor::splitCellAlongZ(void)
 	{
 		if(nucSeg->SplitAlongZ(*it,segView->GetCurrentZ(), table).size() != 0)
 		{
-			log_entry += ftk::NumToString(*it) + ",";
+			log_entry += ftk::NumToString((int)*it) + ",";
 			projectFiles.outputSaved = false;
 			projectFiles.tableSaved = false;
 		}
