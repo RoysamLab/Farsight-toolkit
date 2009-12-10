@@ -149,6 +149,7 @@ void ProjectFilenamesDialog::changeName(void)
      if (ok && !text.isEmpty() && text!=nameText->text())
 	 {
          nameText->setText(text);
+		 pFiles->name = text.toStdString();
 	 }
 }
 
