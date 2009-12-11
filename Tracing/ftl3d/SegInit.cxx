@@ -416,7 +416,7 @@ bool SegInit::interp3DefBG(ImageType3D::Pointer  im, double * pF, TFacet * pFace
 	szd[1] = static_cast<double> (sz[1] - 1);
 	szd[2] = static_cast<double> (sz[2] - 1);
 
-	int SUCCESS = 0;
+	//int SUCCESS = 0;
 	int i1,i2,i3;
 	double tx,ty,tz;
 	unsigned int inCount = 0, outCount = 0;

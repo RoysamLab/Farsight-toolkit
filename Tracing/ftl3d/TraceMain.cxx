@@ -88,7 +88,7 @@ int main (int argc, char *argv[])
 		"Parameter file parsed successfully, " <<m_Config->getNumberOfDataFiles() <<" images in the processing list!!" <<  std::endl<<  std::endl;
 
 
-	for (unsigned int k = 0; k < m_Config->getNumberOfDataFiles(); k++) {
+	for (int k = 0; k < m_Config->getNumberOfDataFiles(); k++) {
 		std::cout << "Tracing " << k+1 <<" out of " << m_Config->getNumberOfDataFiles()
 			<< " image: " << m_Config->getInputFileName(k) << std::endl<< std::endl;
 
@@ -152,7 +152,7 @@ void ImageDenoise(ImageType3D::Pointer& im3D, int hessianFlag)	{
 	typedef itk::MedianImageFilter<ImageType3D, ImageType3D> MedianFilterType;
 	MedianFilterType::Pointer medfilt = MedianFilterType::New();
 	medfilt->SetInput(im3D);
-	ImageType3D::SizeType rad = {1, 1, 1};
+	ImageType3D::SizeType rad = { {1, 1, 1} };
 	medfilt->SetRadius(rad);
 
 	ImageType3D::Pointer vol = medfilt->GetOutput();
@@ -318,14 +318,13 @@ void UpdateMultiscale( ImageType3D::Pointer& temp, ImageType3D::Pointer& maxF)	{
 void GetFeature( ImageType3D::Pointer& temp, ImageType3D::Pointer& svol)	{
 		// set the diagonal terms in neighborhood iterator
 	itk::Offset<3>
-		xp =  {2 ,  0 ,   0},
-		xn =  {-2,  0,    0},
-		yp =  {0,   2,	  0},
-		yn =  {0,  -2,    0},
-		zp =  {0,   0,    2},
-		zn =  {0,   0,   -2},
-		center = {0, 0 , 0};
-
+		xp =  { {2 ,  0 ,   0} },
+		xn =  { {-2,  0,    0} },
+		yp =  { {0,   2,	  0} },
+		yn =  { {0,  -2,    0} },
+		zp =  { {0,   0,    2} },
+		zn =  { {0,   0,   -2} };
+		//center = { {0, 0 , 0} };
 	itk::Size<3> rad = {{1,1,1}};
 	itk::NeighborhoodIterator<ImageType3D> nit(rad , svol, svol->GetBufferedRegion());
 	itk::ImageRegionIterator<ImageType3D> it(svol, svol->GetBufferedRegion());
@@ -366,12 +365,14 @@ void GetFeature( ImageType3D::Pointer& temp, ImageType3D::Pointer& svol)	{
 
 	while(!nit.IsAtEnd())	{
 		itk::Index<3> ndx = it.GetIndex();
-		if ( (ndx[0]<2) || (ndx[1]<2) || (ndx[2]<2) || (ndx[0]>sz[0]) || (ndx[1]>sz[1]) || (ndx[2]>sz[2]) )	{
+		if ( (ndx[0]<2) || (ndx[1]<2) || (ndx[2]<2) || (ndx[0]>(int)sz[0])
+                    || (ndx[1]>(int)sz[1]) || (ndx[2]>(int)sz[2]) )
+      {
 			++itt;
 			++it;
 			++nit;
 			continue;
-		}
+		  }
 
 		TensorType h;
 		h.Fill(0.0);
