@@ -25,6 +25,7 @@ limitations under the License.
 #define __ftkProjectFiles_h
 
 #include <tinyxml/tinyxml.h>
+#include <ftkCommon/ftkUtils.h>
 
 #include <vector>
 #include <string>
@@ -45,6 +46,7 @@ public:
 
 	//VARIABLES
 	std::string name;
+	bool nucSegValidated;	//Nuclear Segmentation is validated
 
 	//Filenames:
 	std::string input;

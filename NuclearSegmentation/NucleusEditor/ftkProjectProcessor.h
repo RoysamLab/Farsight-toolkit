@@ -47,6 +47,7 @@ public:
 	void Initialize(void);
 	void ProcessNext(void);						//Keep calling this until DoneProcessing is true;
 	bool DoneProcessing(void){ return (lastTask == numTasks-1); };
+	bool ReadyToEdit(void){ return resultIsEditable; };
 
 	//Outputs
 	ftk::Image::Pointer GetOutputImage(void){ return outputImage; };
@@ -69,6 +70,7 @@ protected:
 private:
 	int numTasks;
 	int lastTask;
+	bool resultIsEditable;  //Only true when done nucleus segmentation!!
 };
 
 }  // end namespace ftk

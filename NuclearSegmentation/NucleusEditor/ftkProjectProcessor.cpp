@@ -39,6 +39,7 @@ ProjectProcessor::ProjectProcessor()
 	table = NULL;
 	numTasks = 0;
 	lastTask = -1;
+	resultIsEditable = false;
 }
 
 void ProjectProcessor::Initialize(void)
@@ -165,6 +166,7 @@ bool ProjectProcessor::SegmentNuclei(int nucChannel)
 
 	std::cout << "Done NucFeats\n";
 
+	resultIsEditable = true;
 	return true;
 }
 
@@ -189,6 +191,7 @@ bool ProjectProcessor::SegmentCytoplasm(int cytChannel)
 
 	std::cout << "Done CytoFeats\n";
 
+	resultIsEditable = false;
 	return true;
 }
 
@@ -206,6 +209,7 @@ void ProjectProcessor::ComputeAssociations(void)
 	else
 		assocCal->Append(table);
 	*/
+	resultIsEditable = false;
 }
 
 //************************************************************************

@@ -81,6 +81,7 @@ bool ProjectFiles::Read(std::string filename)
 		else if( strcmp( parent, "log" ) == 0 )
 		{
 			 log = parentElement->Attribute("file");
+			 nucSegValidated = parentElement->Attribute("validated");
 		}
 		else if( strcmp( parent, "definition" ) == 0 )
 		{
@@ -116,6 +117,7 @@ bool ProjectFiles::Write(std::string filename)
 
 	file = new TiXmlElement("log");
 	file->SetAttribute("file", log.c_str());
+	file->SetAttribute("validated", ftk::NumToString(nucSegValidated));
 	root->LinkEndChild(file);
 
 	file = new TiXmlElement("definition");

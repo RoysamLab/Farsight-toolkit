@@ -100,6 +100,7 @@ public:
 	std::string GetLabelFilename() { return labelFilename; };
 	int GetParameter(std::string name);
 	std::vector<std::string> GetParameterNames(){ return paramNames; };
+	int GetNumberOfObjects(void){ return (int)centerMap.size(); };
 
 	//Get Data:
 	ftk::Image::Pointer GetDataImage(void){ return dataImage; };	

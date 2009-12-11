@@ -103,12 +103,12 @@ void NucleusEditor::createProcessToolBar()
 	processContinue = new QAction(QIcon(":/icons/go.png"), tr("GO"), this);
 	processContinue->setToolTip(tr("Continue Processing"));
 	processContinue->setEnabled(false);
-	connect(processContinue, SIGNAL(triggered()),this, SLOT(process()));
+	connect(processContinue, SIGNAL(triggered()),this, SLOT(continueProcess()));
 	processToolbar->addAction(processContinue);
 	
     processProgress = new QProgressBar();
 	processProgress->setRange(0,0);
-	processProgress->setTextVisible(true);
+	processProgress->setTextVisible(false);
 	processToolbar->addWidget(processProgress); 
 
 	processTaskLabel = new QLabel;
@@ -1023,6 +1023,12 @@ void NucleusEditor::startEditing(void)
 	nucSeg->SetLabelImage(labImg,"lab_img");
 	nucSeg->ComputeAllGeometries();
 
+	std::string log_entry = "NUCLEAR_SEGMENTATION\t";
+	log_entry += ftk::NumToString(nucSeg->GetNumberOfObjects()) + "\t";
+	log_entry += ftk::TimeStamp();
+	ftk::AppendTextFile(projectFiles.log, log_entry);
+
+	projectFiles.nucSegValidated = false;
 	setEditsEnabled(true);
 }
 
@@ -1032,6 +1038,11 @@ void NucleusEditor::stopEditing(void)
 	nucSeg = NULL;
 
 	setEditsEnabled(false);
+
+	std::string log_entry = "NUCLEAR_SEGMENTATION_VALIDATED\t";
+	log_entry += ftk::TimeStamp();
+	ftk::AppendTextFile(projectFiles.log, log_entry);
+	projectFiles.nucSegValidated = true;
 }
 
 void NucleusEditor::changeClass(void)
@@ -1277,6 +1288,7 @@ void NucleusEditor::segmentNuclei()
 
 	projectDefinition.MakeDefaultNucleusSegmentation(nucChannel);
 	projectFiles.definitionSaved = false;
+	projectFiles.nucSegValidated = false;
 
 	startProcess();
 }
@@ -1307,6 +1319,7 @@ void NucleusEditor::processProject(void)
 
 	projectFiles.definition = projectName.toStdString();
 	projectFiles.definitionSaved = true;
+	projectFiles.nucSegValidated = false;
 	
 	startProcess();
 }
@@ -1328,8 +1341,9 @@ void NucleusEditor::startProcess()
 	//Set up the process toolbar:
 	processContinue->setEnabled(false);
 	processToolbar->setVisible(true);
-	processTaskLabel->setText(tr("Processing Project: ") + tr(projectDefinition.name.c_str()) );
+	processTaskLabel->setText(tr("  Processing Project: ") + tr(projectDefinition.name.c_str()) );
 	abortProcessFlag = false;
+	continueProcessFlag = false;
 	menusEnabled(false);
 	
 	//start a new thread for the process:
@@ -1344,37 +1358,57 @@ void NucleusEditor::process()
 	//Check to see if abort has been clicked:
 	if(abortProcessFlag)
 	{
+		abortProcessFlag = false;
 		deleteProcess();
 		QApplication::restoreOverrideCursor();
 		return;
 	}
-
-	if(!pProc->DoneProcessing()) //Not done, so continue:
+	//Check to see if continue process has been clicked:
+	if(continueProcessFlag)
 	{
-		processThread->start();
+		processProgress->setRange(0,0);
+		processTaskLabel->setText(tr("  Processing Project: ") + tr(projectDefinition.name.c_str()) );
+		if(pProc->ReadyToEdit())	//Means I was editing
+		{
+			stopEditing();
+		}
+		continueProcessFlag = false;
 	}
-	else		//All done, so get results and clean up:
+
+	//Means I just finished nuclear segmentation and editing is not done:
+	if(pProc->ReadyToEdit() && projectFiles.nucSegValidated == false)
 	{
 		selection->clear();
 		labImg = pProc->GetOutputImage();
-		projectFiles.outputSaved = false;
 		segView->SetLabelImage(labImg,selection);
 		table = pProc->GetTable();
+		projectFiles.outputSaved = false;
 		projectFiles.tableSaved = false;
 		projectFiles.definitionSaved = false;
 
-		deleteProcess();
-
-		std::string log_entry = "NUCLEAR_SEGMENTATION\t";
-		log_entry += ftk::NumToString((int)table->GetNumberOfRows()) + "\t";
-		log_entry += ftk::TimeStamp();
-		ftk::AppendTextFile(projectFiles.log, log_entry);
+		processContinue->setEnabled(true);
+		processTaskLabel->setText(tr("  You May Edit Nuclear Segmentation"));
+		processProgress->setRange(0,2);
+		processProgress->setValue(1);
 
 		this->closeViews();
 		CreateNewTableWindow();
 		CreateNewPlotWindow();
 		this->startEditing();
-		
+	}
+	else if(pProc->DoneProcessing()) //All done, so get results and clean up:
+	{
+		selection->clear();
+		projectFiles.outputSaved = false;
+		projectFiles.tableSaved = false;
+		projectFiles.definitionSaved = false;
+
+		deleteProcess();
+		this->updateViews();
+	}
+	else		//Not done, so continue:
+	{
+		processThread->start();
 	}
 }
 
@@ -1384,8 +1418,19 @@ void NucleusEditor::abortProcess()
 	if(processThread)
 	{
 		QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-		processTaskLabel->setText("Aborting Process");
+		processTaskLabel->setText(tr("  Aborting Process"));
 		abortProcessFlag = true;
+	}
+}
+
+//Call this slot when the continue process button is clicked
+void NucleusEditor::continueProcess()
+{
+	if(processThread)
+	{
+		processContinue->setEnabled(false);
+		continueProcessFlag = true;
+		process();
 	}
 }
 

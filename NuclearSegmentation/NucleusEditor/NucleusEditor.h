@@ -112,6 +112,7 @@ private slots:
 	void startProcess(void);
 	void process(void);
 	void abortProcess(void);
+	void continueProcess(void);
 	void deleteProcess(void);
 	//Saving:
 	bool saveProject(void);
@@ -260,6 +261,7 @@ private:
 	
 	//Processing toolbar and thread pointers:
 	bool abortProcessFlag;
+	bool continueProcessFlag;
 	QAction * processAbort;
 	QAction * processContinue;
 	QLabel * processTaskLabel;
