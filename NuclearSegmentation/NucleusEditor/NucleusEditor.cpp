@@ -172,13 +172,14 @@ void NucleusEditor::createMenus()
 
 	fileMenu->addSeparator();
 
-	processProjectAction = new QAction(tr("Process project..."), this);
+	processProjectAction = new QAction(tr("Process Image..."), this);
+	processProjectAction->setStatusTip(tr("Choose project definition file to use in processing the current image"));
 	connect(processProjectAction, SIGNAL(triggered()), this, SLOT(processProject()));
 	fileMenu->addAction(processProjectAction);
 
 	fileMenu->addSeparator();
 
-	saveProjectAction = new QAction(tr("SaveProject.."), this);
+	saveProjectAction = new QAction(tr("Save Project.."), this);
 	saveProjectAction->setStatusTip(tr("Save the active project files..."));
 	saveProjectAction->setShortcut(tr("Ctrl+S"));
 	connect(saveProjectAction, SIGNAL(triggered()), this, SLOT(saveProject()));
@@ -314,7 +315,9 @@ void NucleusEditor::createMenus()
 	splitAction = new QAction(tr("Split Cell X-Y"), this);
 	splitAction->setStatusTip(tr("Split a cell by choosing two seed points"));
 	splitAction->setShortcut(tr("Ctrl+P"));
-	connect(splitAction, SIGNAL(triggered()), segView, SLOT(Get2Points()));
+	splitAction->setCheckable(true);
+	splitAction->setChecked(false);
+	connect(splitAction, SIGNAL(triggered()), this, SLOT(splitCells()));
 	connect(segView, SIGNAL(pointsClicked(int,int,int,int,int,int)), this, SLOT(splitCell(int,int,int,int,int,int)));
 	editMenu->addAction(splitAction);
 
@@ -1143,6 +1146,19 @@ void NucleusEditor::mergeCells(void)
 	}
 }
 
+void NucleusEditor::splitCells(void)
+{
+	if(splitAction->isChecked())
+	{
+		segView->Get2Points();
+		connect(segView, SIGNAL(pointsClicked(int,int,int,int,int,int)), this, SLOT(splitCell(int,int,int,int,int,int)));
+	}
+	else
+	{
+		disconnect(segView, SIGNAL(pointsClicked(int,int,int,int,int,int)), this, SLOT(splitCell(int,int,int,int,int,int)));
+	}
+}
+
 void NucleusEditor::splitCell(int x1, int y1, int z1, int x2, int y2, int z2)
 {
 	if(!nucSeg) return;
@@ -1170,6 +1186,11 @@ void NucleusEditor::splitCell(int x1, int y1, int z1, int x2, int y2, int z2)
 		log_entry += ftk::NumToString(ret.at(0)) + "\t";
 		log_entry += ftk::TimeStamp();
 		ftk::AppendTextFile(projectFiles.log, log_entry);
+	}
+
+	if(splitAction->isChecked())
+	{
+		segView->Get2Points();
 	}
 }
 

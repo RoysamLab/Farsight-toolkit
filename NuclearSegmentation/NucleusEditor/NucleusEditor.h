@@ -140,6 +140,7 @@ private slots:
 	void mergeCells(void);
 	void deleteCells(void);
 	void splitCellAlongZ(void);		//Split single cell along current z
+	void splitCells(void);
 	void splitCell(int x1, int y1, int z1, int x2, int y2, int z2);
 	void applyExclusionMargin(void);
 	void changeClass(void);
