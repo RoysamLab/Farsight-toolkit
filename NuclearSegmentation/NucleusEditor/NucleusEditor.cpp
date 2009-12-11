@@ -1386,6 +1386,7 @@ void NucleusEditor::process()
 		projectFiles.tableSaved = false;
 		projectFiles.definitionSaved = false;
 
+		processAbort->setEnabled(false);
 		processContinue->setEnabled(true);
 		processTaskLabel->setText(tr("  You May Edit Nuclear Segmentation"));
 		processProgress->setRange(0,2);
@@ -1428,6 +1429,7 @@ void NucleusEditor::continueProcess()
 {
 	if(processThread)
 	{
+		processAbort->setEnabled(true);
 		processContinue->setEnabled(false);
 		continueProcessFlag = true;
 		process();

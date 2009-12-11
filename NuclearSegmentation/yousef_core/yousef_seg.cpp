@@ -1140,19 +1140,19 @@ void yousef_nucleus_seg::readParametersFromFile(const char* pFname)
 	int iCounter = 0;
 	int m_iNumOfElements = 0;
 	int params[11];//modified by yousef on 11/4/2008
-	params[0]=0;
-	params[1]=30;
-	params[2]=5;
-	params[3]=8;
-	params[4]=5;
-	params[5]=2;
-	params[6]=1;
-	params[7]=2;
-	params[8]=1;
+	params[0]=0;	//sensitivity
+	params[1]=30;	//loG size
+	params[2]=5;	//min_scale
+	params[3]=8;	//max_scale
+	params[4]=5;	//xy_clustering
+	params[5]=2;	//z_clust
+	params[6]=0;	//finalize
+	params[7]=2;	//sampling ratio
+	params[8]=1;	//use_dist_map
 	//added by yousef on 11/4/2008
-	params[9]=6;
+	params[9]=6;	//refinement range
 	//added by yousef on 12/5/2008
-	params[10]=100;
+	params[10]=100;	//min_object_size
 	std::ifstream inFile(pFname);
 	if (! inFile)
 	{

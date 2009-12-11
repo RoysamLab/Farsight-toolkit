@@ -1,17 +1,19 @@
-/*=========================================================================
-Copyright 2009 Rensselaer Polytechnic Institute
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. 
-=========================================================================*/
+/* 
+ * Copyright 2009 Rensselaer Polytechnic Institute
+ * This program is free software; you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation; either version 2 of the License, or 
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but 
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+ * for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 
 /*=========================================================================
 
@@ -116,14 +118,14 @@ bool ProjectProcessor::SegmentNuclei(int nucChannel)
 	nucSeg->SetInput(inputImage, "data_image", nucChannel);
 
 	//Setup the Parameters:
-	bool finalize = true;	//The Default
+	bool finalize = false;	//The Default
 	for(int i=0; i<(int)definition->nuclearParameters.size(); ++i)
 	{
 		nucSeg->SetParameter(definition->nuclearParameters.at(i).name, int(definition->nuclearParameters.at(i).value));
 		if(definition->nuclearParameters.at(i).name == "finalize_segmentation")
 		{
-			if(definition->nuclearParameters.at(i).value == 0)
-				finalize = false;
+			if(definition->nuclearParameters.at(i).value == 1)
+				finalize = true;
 		}
 	}
 
@@ -160,6 +162,8 @@ bool ProjectProcessor::SegmentNuclei(int nucChannel)
 	//Calc Features:
 	ftk::IntrinsicFeatureCalculator *iCalc = new ftk::IntrinsicFeatureCalculator();
 	iCalc->SetInputImages(inputImage,outputImage,nucChannel,0);
+	if(definition->intrinsicFeatures.size() > 0)
+		iCalc->SetFeaturesOn( GetOnIntrinsicFeatures() );
 	//iCalc->SetFeaturePrefix("nuc_");
 	table = iCalc->Compute();									//Create a new table
 	delete iCalc;
@@ -210,6 +214,24 @@ void ProjectProcessor::ComputeAssociations(void)
 		assocCal->Append(table);
 	*/
 	resultIsEditable = false;
+}
+
+std::set<int> ProjectProcessor::GetOnIntrinsicFeatures(void)
+{
+	std::set<int> retSet;
+
+	for(int f=0; f<IntrinsicFeatures::N; ++f)
+	{
+		std::string name = IntrinsicFeatures::Info[f].name;
+		for(int p=0; p<(int)definition->intrinsicFeatures.size(); ++p)
+		{
+			if( definition->intrinsicFeatures.at(p) == name )
+			{
+				retSet.insert(f);
+			}
+		}
+	}
+	return retSet;
 }
 
 //************************************************************************
