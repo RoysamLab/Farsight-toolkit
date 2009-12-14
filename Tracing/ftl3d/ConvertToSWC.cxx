@@ -63,6 +63,14 @@ void WriteSWCFile(const std::string& SWCFilename, const std::vector<TraceNode*>&
 	//if you know the SOMA, then this should be the SOMA and initilise likewise, here I have choosen arbit.
 	TraceNode* node = NodeContainer[0];
 	unsigned int ID = 1;
+	std::vector<TraceNode*>::const_iterator fit1;
+	for(fit1 = NodeContainer.begin(); fit1 < NodeContainer.end(); fit1++)	{
+		if ((reg[(*fit1)->ID] == 0) && ((*fit1)->nbrID.size() <= 1))	{
+			ID = (*fit1)->ID;
+			break;
+		}
+	}
+	
 	reg[node->ID] = ID;
 	swc << ID << " 10 " << node->loc[0] << " " << node->loc[1] << " " << node->loc[2] << " " << node->radius << "  -1" << std::endl;
 
@@ -115,7 +123,7 @@ void WriteSWCFile(const std::string& SWCFilename, const std::vector<TraceNode*>&
 			//begin a new tree
 			std::vector<TraceNode*>::const_iterator fit;
 			for(fit = NodeContainer.begin(); fit < NodeContainer.end(); fit++)	{
-				if (reg[(*fit)->ID] == 0)	{
+				if ((reg[(*fit)->ID] == 0) && ((*fit)->nbrID.size() <= 1))	{
 					ID++;
 					swc << ID << " 10 " << (*fit)->loc[0] << " " << (*fit)->loc[1] << " " << (*fit)->loc[2] << " " << (*fit)->radius << "  -1" << std::endl;
 					std::cout <<"\r" << (numDone*100/numNodes) << " % complete          ";
