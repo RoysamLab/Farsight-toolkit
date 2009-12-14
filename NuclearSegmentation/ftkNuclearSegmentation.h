@@ -82,6 +82,7 @@ public:
 	//Editing Functions 
 	std::vector< int > Split(ftk::Object::Point P1, ftk::Object::Point P2, vtkSmartPointer<vtkTable> table = NULL);
 	std::vector< int > SplitAlongZ(int objID, int cutSlice, vtkSmartPointer<vtkTable> table = NULL);
+	std::vector< int > GroupMerge(vector<int> ids, vtkSmartPointer<vtkTable> table = NULL);
 	int Merge(vector<int> ids, vtkSmartPointer<vtkTable> table = NULL);
 	bool Delete(vector<int> ids, vtkSmartPointer<vtkTable> table = NULL);
 	bool Exclude(int xy, int z, vtkSmartPointer<vtkTable> table = NULL);
@@ -144,6 +145,8 @@ protected:
 	void ReassignLabels(std::vector<int> fromIds, int toId);
 	void ReassignLabel(int fromId, int toId);
 	ftk::Object::Box ExtremaBox(std::vector<int> ids);
+	ftk::Object::Box GrowBox(ftk::Object::Box b, int s);
+	std::vector<int> GetNeighbors(int id);
 	
 	//FOR PRINTING SEEDS IMAGE:
 	void Cleandptr(unsigned short*x,vector<int> y );

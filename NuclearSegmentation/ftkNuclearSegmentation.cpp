@@ -707,8 +707,76 @@ void NuclearSegmentation::ReassignLabels(vector<int> fromIds, int toId)
 		}
 	}
 }
+
+std::vector<int> NuclearSegmentation::GetNeighbors(int id)
+{
+	if(!labelImage || !dataImage)
+	{
+		errorMessage = "label image or data image doesn't exist";					
+		return std::vector<int>(0);
+	}
+	
+	std::vector<int> in_id;
+	in_id.push_back(id);
+	ftk::Object::Box region = GrowBox( ExtremaBox(in_id), 1 ); //Get the extrema and grow it by 1.
+
+	IntrinsicFeatureCalculator::LPixelT regionIndex[3];
+	IntrinsicFeatureCalculator::LPixelT regionSize[3];
+	regionIndex[0] = region.min.x;
+	regionIndex[1] = region.min.y;
+	regionIndex[2] = region.min.z;
+	regionSize[0] = region.max.x - region.min.x + 1;
+	regionSize[1] = region.max.y - region.min.y + 1;
+	regionSize[2] = region.max.z - region.min.z + 1;
+
+	typedef ftk::LabelImageToFeatures< IntrinsicFeatureCalculator::IPixelT,  IntrinsicFeatureCalculator::LPixelT, 3 > FeatureCalcType;
+	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
+	itk::Image<IntrinsicFeatureCalculator::IPixelT, 3>::Pointer chImg = dataImage->GetItkPtr<IntrinsicFeatureCalculator::IPixelT>(0,channelNumber);
+	itk::Image<IntrinsicFeatureCalculator::LPixelT, 3>::Pointer lbImg = labelImage->GetItkPtr<IntrinsicFeatureCalculator::LPixelT>(0,0);
+	labFilter->SetImageInputs( chImg, lbImg, regionIndex, regionSize );
+	labFilter->SetLevel(3);	//Needed for neighbor information
+	labFilter->Update();
+
+	std::vector<IntrinsicFeatureCalculator::LPixelT> nbs = labFilter->GetContactNeighbors(id);
+	std::vector<int> retVector;
+	for(int i=0; i<(int)nbs.size(); ++i)
+		retVector.push_back(nbs.at(i));
+	return retVector;
+}
 //**********************************************************************************************************
 //**********************************************************************************************************
+ftk::Object::Box NuclearSegmentation::GrowBox(ftk::Object::Box b, int s)
+{
+	ftk::Object::Box nb;
+	nb.min.x = b.min.x - s;
+	nb.min.y = b.min.y - s;
+	nb.min.z = b.min.z - s;
+	nb.max.x = b.max.x + s;
+	nb.max.y = b.max.y + s;
+	nb.max.z = b.max.z + s;
+
+	if(!labelImage)		//If no label image return the box
+		return nb;
+
+	//If there is a label image check to be sure the new box fits in it.
+	if(nb.min.x < 0)
+		nb.min.x = 0;
+	if(nb.min.y < 0)
+		nb.min.y = 0;
+	if(nb.min.z < 0)
+		nb.min.z = 0;
+
+	if(nb.max.x >= labelImage->GetImageInfo()->numColumns)
+		nb.max.x = labelImage->GetImageInfo()->numColumns - 1;
+	if(nb.max.y >= labelImage->GetImageInfo()->numRows)
+		nb.max.y = labelImage->GetImageInfo()->numRows - 1;
+	if(nb.max.z >= labelImage->GetImageInfo()->numZSlices)
+		nb.max.z = labelImage->GetImageInfo()->numZSlices - 1;
+
+	return nb;
+
+}
+
 ftk::Object::Box NuclearSegmentation::ExtremaBox(std::vector<int> ids)
 {
 	ftk::Object::Box extreme;
@@ -969,6 +1037,75 @@ std::vector< int > NuclearSegmentation::SplitAlongZ(int objID, int cutSlice, vtk
 	ret_ids.push_back(newID1);
 	ret_ids.push_back(newID2);
 	return ret_ids;
+}
+
+std::vector<int> NuclearSegmentation::GroupMerge(std::vector<int> ids, vtkSmartPointer<vtkTable> table)
+{
+	if(!labelImage || !dataImage)
+	{
+		errorMessage = "label image or data image doesn't exist";					
+		return std::vector<int>(0);
+	}
+
+	std::vector< std::vector<int> > groups;
+
+	while(ids.size() != 0)
+	{
+		std::vector<int> grp;
+		//Get neighbors of first object in vector:
+		int currentID = ids.at(0);
+		std::vector<int> nbs = GetNeighbors(currentID);
+		//iterate though ids to find out which ones are neighbors and add to group.
+		for(int i=0; i<(int)ids.size(); ++i)
+		{
+			for(int j=0; j<(int)nbs.size(); ++j)
+			{
+				if(ids.at(i) == nbs.at(j))
+				{
+					grp.push_back( ids.at(i) );
+				}
+			}
+		}
+
+		//Remove everything in the group from the input ids vector:
+		for(int g=0; g<(int)grp.size(); ++g)
+		{
+			for(int i=0; i<(int)ids.size(); ++i)
+			{
+				if(grp.at(g) == ids.at(i))
+				{
+					ids.erase( ids.begin()+i );
+					break;
+				}
+			}
+		}
+
+		//If I found neighbors and myself (currentID) to the group:
+		if(grp.size() > 0) 
+		{
+			grp.push_back( currentID );
+			groups.push_back( grp );
+		}
+
+		//erase currentID from the input ids:
+		for(int i=0; i<(int)ids.size(); ++i)
+		{
+			if(ids.at(i) == currentID)
+			{
+				ids.erase( ids.begin() + i );
+			}
+		}
+	}
+
+	//Iterate though groups and merge them together
+	std::vector<int> retVector;
+	for(int i=0; i<(int)groups.size(); ++i)
+	{
+		int newID = Merge(groups.at(i), table);
+		retVector.push_back(newID);
+	}
+	return retVector;
+
 }
 
 int NuclearSegmentation::Merge(vector<int> ids, vtkSmartPointer<vtkTable> table)

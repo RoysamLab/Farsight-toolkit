@@ -1131,8 +1131,9 @@ void NucleusEditor::mergeCells(void)
 
 	std::set<long int> sels = selection->getSelections();
 	std::vector<int> ids(sels.begin(), sels.end());
-	int newObj = nucSeg->Merge(ids, table);
-	if(newObj != -1)
+	//int newObj = nucSeg->Merge(ids, table);
+	std::vector<int> new_ids = nucSeg->GroupMerge(ids, table);
+	if(new_ids.size() != 0)
 	{
 		projectFiles.outputSaved = false;
 		projectFiles.tableSaved = false;
@@ -1140,7 +1141,10 @@ void NucleusEditor::mergeCells(void)
 		this->updateViews();
 
 		std::string log_entry = "MERGE\t";
-		log_entry += ftk::NumToString(newObj) + "\t";
+		log_entry += ftk::NumToString(new_ids.at(0));
+		for(int i=1; i<(int)new_ids.size(); ++i)
+			log_entry += "," + ftk::NumToString(new_ids.at(i));
+		log_entry += "\t";
 		log_entry += ftk::TimeStamp();
 		ftk::AppendTextFile(projectFiles.log, log_entry);
 	}
@@ -1155,6 +1159,7 @@ void NucleusEditor::splitCells(void)
 	}
 	else
 	{
+		segView->ClearGets();
 		disconnect(segView, SIGNAL(pointsClicked(int,int,int,int,int,int)), this, SLOT(splitCell(int,int,int,int,int,int)));
 	}
 }

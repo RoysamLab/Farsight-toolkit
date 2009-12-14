@@ -211,6 +211,20 @@ void LabelImageViewQT::SetIDsVisible(bool val)
 	this->showIDs = val;
 }
 */
+void LabelImageViewQT::ClearGets(void)
+{
+	//stop getting points:
+	pointsMode = false;
+	origin3.clear();
+
+	//stop getting box:
+	if(rubberBand)
+	{
+		delete rubberBand;
+		rubberBand = NULL;
+		origin = QPoint();
+	}
+}
 
 void LabelImageViewQT::GetBox(void)
 {

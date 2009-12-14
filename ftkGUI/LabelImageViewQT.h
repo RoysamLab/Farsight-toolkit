@@ -74,6 +74,7 @@ public slots:
 	void AdjustImageIntensity();
 	void SetBoundsVisible(bool val);
 	//void SetIDsVisible(int img, bool val);
+	void ClearGets(void);
 	void GetBox(void);
 	void Get2Points(void);
 	void update(void);
