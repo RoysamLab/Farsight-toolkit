@@ -142,17 +142,24 @@ private:
 	int SmallLineLength;
 	float lineWidth;
 	double SelectColor;
-
+	int numSplit, numDeleted, numMerged;
+	QString TraceFiles;
+	QString Image;
+	QString EditLog;
     //VTK render window embedded in a Qt widget
-	QVTKWidget *QVTK;
+	QVTKWidget *QVTK;	
+    QWidget *CentralWidget;
+	QMenu *fileMenu;
+	QMenu *ShowToolBars;
+	QToolBar *EditsToolBar;	
+	QToolBar *BranchToolBar;
+
+	//Qt widgets on the main window
 	QAction *loadTraceAction;
 	QAction *loadTraceImage;
 	QAction *saveAction;
 	QAction *exitAction;
 	QAction *loadSoma;
-	//Qt widgets on the main window
-    QWidget *CentralWidget;
-
 	QAction *ListButton;
 	QAction *ClearButton;
 	QAction *DeleteButton;
@@ -171,19 +178,14 @@ private:
     //merge info
 	std::vector<TraceGap*> candidateGaps;
 	QString myText;	QString dtext;	QString grayText;
-	
-	QMenu *fileMenu;
-	QToolBar *EditsToolBar;	
-	QToolBar *BranchToolBar;
+
 	Qt::SortOrder Ascending;
 	TraceModel *TreeModel;
 	MergeModel *MergeGaps;
 	TableWindow * FTKTable;
+	PlotWindow *TreePlot;
 	PlotWindow *GapsPlotView;
 	TableWindow *GapsTableView;
-	//HistoWindow *histo;
-	//QTableView *TreeTable;
-	PlotWindow *TreePlot;
 
 	//Qt widgets for the settings window
 	QWidget *SettingsWidget;
@@ -207,7 +209,6 @@ private:
 
   //ID numbers of the selected traces
 	std::vector<int> SelectedTraceIDs;
-
 
 	vtkSmartPointer<vtkSphereSource> Sphere;
 	vtkSmartPointer<vtkPolyDataMapper> SphereMapper;

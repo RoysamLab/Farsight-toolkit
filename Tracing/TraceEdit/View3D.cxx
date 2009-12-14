@@ -84,10 +84,13 @@ limitations under the License.
 
 View3D::View3D(int argc, char **argv)
 {
-   this->tobj = new TraceObject;
-  int num_loaded = 0;
-  this->Volume=0;
-  bool tracesLoaded = false;
+	this->tobj = new TraceObject;
+	int num_loaded = 0;
+	this->Volume=0;
+	bool tracesLoaded = false;
+	//this->TraceFiles.clear();
+	this->Image.clear();
+	this->EditLog.clear();
   // load as many files as possible. Provide offset for differentiating types
   for(int counter=1; counter<argc; counter++)
     {
@@ -97,6 +100,8 @@ View3D::View3D(int argc, char **argv)
       printf("I detected swc\n");
       this->tobj->ReadFromSWCFile(argv[counter]);
 	  tracesLoaded = true;
+	  this->TraceFiles = QString(argv[counter]);
+	  //this->TraceFiles
        }
     else if (strcmp(argv[counter]+len-3,"xml")==0)
       {
@@ -130,9 +135,10 @@ View3D::View3D(int argc, char **argv)
 	{
 		std::string traceFile;
 		QString trace = QFileDialog::getOpenFileName(this , "Load Trace Data", ".",
-			tr(" TraceFile( *.xml *.swc *.vtk" ));
+			tr(" TraceFile ( *.xml *.swc *.vtk " ));
 		if (!trace.isEmpty())
 		{
+			this->TraceFiles = trace.section('/',-1);
 			traceFile = trace.toStdString();
 			if(trace.endsWith("swc"))
 			{
@@ -170,9 +176,10 @@ void View3D::LoadTraces()
 {
 	std::string traceFile;
 	QString trace = QFileDialog::getOpenFileName(this , "Load Trace Data", ".",
-		tr(" TraceFile ( *.xml *.swc *.vtk" ));
+		tr(" TraceFile ( *.xml *.swc *.vtk " ));
 	if (!trace.isEmpty())
 	{
+		this->TraceFiles = trace.section('/',-1);
 		traceFile = trace.toStdString();
 		if(trace.endsWith("swc"))
 		{
@@ -270,15 +277,24 @@ void View3D::Initialize()
 	this->tobj->setMergeLineColor(.4);
 	this->Ascending = Qt::AscendingOrder;
 
-  this->undoBuff = new bufferType;
-
+  //this->undoBuff = new bufferType;
+	this->numDeleted = 0;
+	this->numMerged = 0;
+	this->numSplit = 0;
 	this->CreateGUIObjects();
 	this->CreateLayout();
 	this->CreateInteractorStyle();
 	this->CreateActors();
 	this->resize(850, 480);
 	this->move(40, 59);
-	this->setWindowTitle(tr("Trace editor"));
+	if (!this->TraceFiles.isEmpty())
+	{
+		this->setWindowTitle(tr("Trace Editor: ")+ this->TraceFiles);
+	}
+	else
+	{
+		this->setWindowTitle(tr("Trace Editor"));
+	}
 	this->QVTK->GetRenderWindow()->Render();
 	this->setupLinkedSpace();
 }
@@ -413,9 +429,11 @@ void View3D::CreateLayout()
 	this->fileMenu->addAction(this->saveAction);
 	this->fileMenu->addAction(this->exitAction);
 
+	this->ShowToolBars = this->menuBar()->addMenu(tr("Tool Bars"));
+
   this->EditsToolBar = addToolBar(tr("Edit Toolbar"));
   this->EditsToolBar->setToolTip("EditToolBar");
-  this->fileMenu->addAction(this->EditsToolBar->toggleViewAction());
+  this->ShowToolBars->addAction(this->EditsToolBar->toggleViewAction());
   /*this->EditsToolBar->addAction(this->saveAction);
   this->EditsToolBar->addAction(this->exitAction);
   this->EditsToolBar->addSeparator();*/
@@ -434,7 +452,7 @@ void View3D::CreateLayout()
 
   this->BranchToolBar = addToolBar(tr("Branch Toolbar"));
   this->BranchToolBar->setToolTip("Branch Toolbar");
-  this->fileMenu->addAction(this->BranchToolBar->toggleViewAction());
+  this->ShowToolBars->addAction(this->BranchToolBar->toggleViewAction());
   this->BranchToolBar->addAction(this->explodeTree);
   this->BranchToolBar->addAction(this->BranchButton);
   this->BranchToolBar->addAction(this->root);
@@ -864,7 +882,6 @@ void View3D::ClearSelection()
 	this->tobj->Gaps.clear();
 	this->candidateGaps.clear();	
 	this->tobj->BranchPoints.clear();
-	//this->TreeModel->GetObjectSelection()->clear();
 	this->myText.clear();
 	this->dtext.clear();
 	this->Rerender();
@@ -879,27 +896,6 @@ void View3D::DeleteTraces()
 	unsigned int i;
 	this->statusBar()->showMessage(tr("Deleting"));
 	std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
-	/*std::vector<TraceLine*> traceStructure = this->tobj->GetTraceLines(); 
-	std::vector<TraceLine*> traceList;
-	std::vector<int> IDList = this->TreeModel->GetSelecectedIDs();
-	for ( i = 0; i< IDList.size(); i++)
-	{
-		bool found = false; 
-		unsigned int j = 0;
-		while ((found == false)&&(j < traceStructure.size()))
-		{
-			if (traceStructure[j]->GetId()==IDList[i])
-			{
-				traceList.push_back(traceStructure[j]);
-				found= true;
-			}
-			else
-			{
-				j++;
-			}
-		}	
-	}*/
-
 	if (traceList.size() >=1)
 	{
 		for (i = 0; i < traceList.size(); i++)
