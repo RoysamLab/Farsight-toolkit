@@ -2101,7 +2101,8 @@ double getAngle(Vertex *a, Vertex*mid, Vertex *b)
 	if(acos(p.Dot3(q)/p.Length()/q.Length())-M_PI>1e-2)
 	{
 		printf("acos is greater than pi?! %lf\n",acos(p.Dot3(q)/p.Length()/q.Length()));
-		scanf("%*d");
+		int unused = scanf("%*d");
+    unused++;
 	}
 
 	float answer = 180.0/M_PI*acos(p.Dot3(q)/p.Length()/q.Length());
@@ -2111,7 +2112,8 @@ double getAngle(Vertex *a, Vertex*mid, Vertex *b)
 		printf("acos is greater than pi?! %lf\n",acos(p.Dot3(q)/p.Length()/q.Length()));
 		printf("my M_PI is %lf\n",M_PI);
 		printf("my answer is %f %lf %lf %lf",answer,180.0,M_PI,acos(p.Dot3(q)/p.Length()/q.Length()));
-		scanf("%*d");
+		int unused = scanf("%*d");
+    unused++;
 	}
 	return answer;
 }

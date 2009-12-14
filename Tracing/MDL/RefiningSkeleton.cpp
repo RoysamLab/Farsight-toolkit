@@ -71,7 +71,9 @@ int main(int argc, char **argv)
   VoxelPosition *AllSpinepoints = 0;
   VoxelPosition *AllExtraSpinepoints = 0;
 
-  bool *RealPointsID,*RealSpineID,*ExtraSpineID = 0;
+  bool *RealPointsID = 0;
+  bool *RealSpineID = 0;
+  bool *ExtraSpineID = 0;
   
   int NumBackbonePoints;
   int NumExtraSpinePoints = 0;

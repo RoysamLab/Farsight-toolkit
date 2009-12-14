@@ -1071,7 +1071,8 @@ void GLCanvas::load_edits(void)
       }
 		printf("f-%s\n",filename);
 		//finished throwing junk
-		fscanf(fp,"Annotation:'");
+		int unused = fscanf(fp,"Annotation:'");
+    unused++;
 		if( fgets(t.annotation,512,fp) == NULL )
       {
       cerr << "fgets returned null..." << endl;

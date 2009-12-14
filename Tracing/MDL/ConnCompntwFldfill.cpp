@@ -24,12 +24,13 @@ limitations under the License.
 #include <stdlib.h>
 #include <stdio.h>
 //#include <fstream.h>
-//#include <iostream.h>
+#include <iostream>
 #include <string.h>
 
 #define OBJ_BEFORE_CONNCOMP -1
 //#define ThresCompVoxels 1000   // Determine size of components removed
-//using namespace std;
+using std::cerr;
+using std::endl;
 
 #define DATATYPEIN unsigned char
 #define DATATYPEOUT unsigned char
@@ -132,7 +133,11 @@ int main(int argc, char *argv[])
 */
 
 
-	fread(volin,sizeX*sizeY*sizeZ,sizeof(DATATYPEIN), infile);
+	if( fread(volin,sizeX*sizeY*sizeZ,sizeof(DATATYPEIN), infile) < sizeof(DATATYPEIN) )
+    {
+    cerr << "fread read less elements than expected" << endl;
+    }
+
 	printf("Label Components Growing # ...\n");
 
 	//Initialize volIndex to binary value (either Zeros or OBJ_BEFORE_CONNCOMP as -1)
