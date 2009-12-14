@@ -263,7 +263,7 @@ void NucleusEditor::createMenus()
 
 	kplsAction = new QAction(tr("Classify"), this);
 	connect(kplsAction, SIGNAL(triggered()), this, SLOT(startKPLS()));
-	toolMenu->addAction(kplsAction);
+	//toolMenu->addAction(kplsAction);
 
 	//EDITING MENU	
 	editMenu = menuBar()->addMenu(tr("&Editing"));
@@ -278,7 +278,7 @@ void NucleusEditor::createMenus()
 	visitAction->setStatusTip(tr("Mark Selected Objects as Visited"));
 	visitAction->setShortcut(tr("Ctrl+V"));
 	connect(visitAction, SIGNAL(triggered()), this, SLOT(markVisited()));
-	editMenu->addAction(visitAction);
+	//editMenu->addAction(visitAction);
 
 	editMenu->addSeparator();
 
