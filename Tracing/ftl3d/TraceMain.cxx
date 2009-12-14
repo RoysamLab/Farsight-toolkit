@@ -116,7 +116,7 @@ int main (int argc, char *argv[])
 			SeedContainer3D::Pointer m_Seeds = SeedContainer3D::New();
 			m_Seeds->Configure(m_Config);
 			m_Seeds->Detect(image3D, MIPimage);
-			WriteSeedImage(MIPimage, m_Seeds , m_Config->getOutputFileName(k));
+			//WriteSeedImage(MIPimage, m_Seeds , m_Config->getOutputFileName(k));
 
 			Seed2Seg::Pointer m_SS = Seed2Seg::New();
 			m_SS->Configure(m_Config);

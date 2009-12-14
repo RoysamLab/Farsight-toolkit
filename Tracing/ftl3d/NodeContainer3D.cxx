@@ -571,6 +571,8 @@ void NodeContainer3D::WriteSegmentsToXMLFile(std::string& fname) {
 		element->SetDoubleAttribute("a1", (*it)->a1 );
 		element->SetDoubleAttribute("a2", (*it)->a2 );
 		element->SetDoubleAttribute("a3", (*it)->a3 );
+		element->SetDoubleAttribute("e1", (*it)->e1 );
+		element->SetDoubleAttribute("e2", (*it)->e2 );
 		element->SetDoubleAttribute("q1", (*it)->q1[0] );
 		element->SetDoubleAttribute("q2", (*it)->q1[1]);
 		element->SetDoubleAttribute("q3", (*it)->q1[2]);

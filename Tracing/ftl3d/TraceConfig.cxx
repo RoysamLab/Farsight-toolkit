@@ -260,7 +260,7 @@ bool TraceConfig::LoadParameters(char * ParameterFileName)  {
 					if (!strcmp(pAttrib->Name(),"GridSpacing"))	{
 						double temp = -1.0;
 						if (pAttrib->QueryDoubleValue(&temp)==TIXML_SUCCESS) {
-							if (!ParseDoubleInput(temp, 15 , 100, "GridSpacing") )	{
+							if (!ParseDoubleInput(temp, 5 , 100, "GridSpacing") )	{
 								return false;
 							}
 							GridSpacing = temp;
