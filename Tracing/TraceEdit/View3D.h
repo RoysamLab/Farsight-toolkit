@@ -146,6 +146,7 @@ private:
 	QString TraceFiles;
 	QString Image;
 	QString EditLog;
+	QLabel *SplitLabel, *DeleteLabel, *MergeLabel;
     //VTK render window embedded in a Qt widget
 	QVTKWidget *QVTK;	
     QWidget *CentralWidget;

@@ -417,7 +417,12 @@ void View3D::CreateGUIObjects()
 	this->typeCombo->addItems(types);
 	connect(this->typeCombo, SIGNAL(activated( int )), this, SLOT(SetTraceType(int )));
 
- 
+	this->SplitLabel = new QLabel(this);
+	this->SplitLabel->setText(QString::number(this->numSplit));
+	this->MergeLabel = new QLabel(this);
+	this->MergeLabel->setText(QString::number(this->numMerged));
+	this->DeleteLabel = new QLabel(this);
+	this->DeleteLabel->setText(QString::number(this->numDeleted));
 }
 
 void View3D::CreateLayout()
@@ -469,7 +474,13 @@ void View3D::CreateLayout()
   settingsLayout->addRow(tr("Line width:"),this->LineWidthField);
   settingsLayout->addRow(this->ApplySettingsButton);
  
-  //Layout for the Load Soma Window
+  this->statusBar()->addPermanentWidget(new QLabel("Statistics: Split: ", this));
+  this->statusBar()->addPermanentWidget(this->SplitLabel,0);
+  this->statusBar()->addPermanentWidget(new QLabel(" Merged: ", this));
+  this->statusBar()->addPermanentWidget(this->MergeLabel,0);
+  this->statusBar()->addPermanentWidget(new QLabel(" Deleted: ", this));
+  this->statusBar()->addPermanentWidget(this->DeleteLabel,0);
+
 }
 
 void View3D::CreateInteractorStyle()
@@ -658,6 +669,9 @@ void View3D::Rerender()
   this->FTKTable->update();
   this->TreePlot->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
   this->TreePlot->update();
+	this->SplitLabel->setText(QString::number(this->numSplit));
+	this->MergeLabel->setText(QString::number(this->numMerged));
+	this->DeleteLabel->setText(QString::number(this->numDeleted));
   this->statusBar()->showMessage(tr("Finished Rerendering Image"));
 }
 
@@ -903,6 +917,7 @@ void View3D::DeleteTraces()
 			//this->poly_line_data->Modified();
 			this->DeleteTrace(traceList[i]); 
 		}
+		this->numDeleted += (int) traceList.size();
 		this->ClearSelection();
 		this->statusBar()->showMessage(tr("Deleted\t") + QString::number(traceList.size()) + tr("\ttraces"));
 	}
@@ -1098,6 +1113,7 @@ void View3D::MergeTraces()
       if (this->tobj->Gaps.size() ==1)
         {   
         tobj->mergeTraces(this->tobj->Gaps[0]->endPT1,this->tobj->Gaps[0]->endPT2);
+		this->numMerged++;
 		this->ClearSelection();
         MergeInfo.setText(this->myText + "\nOne Trace merged");
 		this->statusBar()->showMessage(tr("Update Tree Plots"));
@@ -1204,6 +1220,7 @@ void View3D::MergeSelectedTraces()
       }
     } 
     MergeInfo.setText("merged " + QString::number(GapIDs.size()) + " traces.");  
+	this->numMerged += (int)GapIDs.size();
 	this->dtext+="\nAverage Cost of Merge:\t" 
 		+ QString::number( aveCost / GapIDs.size() );
 	this->dtext+= "\nSum of Merge costs " + QString::number(aveCost);
@@ -1236,6 +1253,7 @@ void View3D::MergeSelectedTraces()
 	  MergeInfo.exec();    
 	  if(MergeInfo.clickedButton()==mergeAll)
 	  {
+		  this->numMerged += (int)this->candidateGaps.size();
 		  for (j=0; j<this->candidateGaps.size();j++)
 		  {
 			tobj->mergeTraces(this->candidateGaps[j]->endPT1,this->candidateGaps[j]->endPT2);
@@ -1267,6 +1285,7 @@ void View3D::SplitTraces()
 	{
 	  this->tobj->splitTrace(this->SelectedTraceIDs[i]);
 	} 
+	this->numSplit += (int) this->SelectedTraceIDs.size();
 	this->ClearSelection();
 	this->statusBar()->showMessage(tr("Update Tree Plots"));
 	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
