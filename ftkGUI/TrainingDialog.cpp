@@ -173,7 +173,7 @@ void TrainingDialog::updateTable(void)
 	for(int row = 0; (int)row < m_table->GetNumberOfRows(); ++row)  
 	{
 		int id = m_table->GetValue(row,0).ToInt();
-		for(int c=0; c<training.size(); ++c)
+		for(int c=0; c<(int)training.size(); ++c)
 		{
 			if( training.at(c).find(id) != training.at(c).end() )
 			{
