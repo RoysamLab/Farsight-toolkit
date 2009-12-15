@@ -1044,6 +1044,8 @@ void NucleusEditor::startEditing(void)
 	nucSeg->SetLabelImage(labImg,"lab_img");
 	nucSeg->ComputeAllGeometries();
 
+	segView->SetCenterMapPointer( nucSeg->GetCenterMapPointer() );
+
 	std::string log_entry = "NUCLEAR_SEGMENTATION\t";
 	log_entry += ftk::NumToString(nucSeg->GetNumberOfObjects()) + "\t";
 	log_entry += ftk::TimeStamp();
@@ -1055,6 +1057,8 @@ void NucleusEditor::startEditing(void)
 
 void NucleusEditor::stopEditing(void)
 {
+	segView->SetCenterMapPointer(0);//Remove the centermap pointer (because I'm about to delete the data structure
+
 	if(nucSeg) delete nucSeg;
 	nucSeg = NULL;
 

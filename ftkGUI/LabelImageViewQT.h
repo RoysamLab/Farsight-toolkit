@@ -50,9 +50,11 @@ limitations under the License.
 #include <QtCore/QMap>
 
 #include <ftkImage/ftkImage.h>
+#include <ftkCommon/ftkObject.h>
 #include "ObjectSelection.h"
 
 #include <iostream>
+#include <map>
 
 class MyRubberBand;
 class IntensityDialog;
@@ -68,6 +70,7 @@ public:
 	ftk::Image::Pointer GetChannelImage(){return channelImg;};
 	void SetLabelImage(ftk::Image::Pointer img, ObjectSelection * sels = NULL);
 	ftk::Image::Pointer GetLabelImage(){return labelImg;};
+	void SetCenterMapPointer(std::map<int, ftk::Object::Point> * cMap = NULL);
 
 public slots:
 	void SaveDiplayImageToFile();
@@ -78,6 +81,7 @@ public slots:
 	void GetBox(void);
 	void Get2Points(void);
 	void update(void);
+	void goToSelection(void);
 	int GetCurrentZ(void){ return vSpin->value(); };
 	int GetCurrentT(void){ return hSpin->value(); };
 
@@ -141,6 +145,7 @@ protected:
 	QImage boundsImage;					//Image containing boundaries (2D)
 
 	ftk::Image::Pointer labelImg;
+	std::map<int, ftk::Object::Point> *	centerMap;
 	//std::map<int, LabelGeometry> labelGeometries;
 	ftk::Image::Pointer channelImg;
 	ObjectSelection * selection;

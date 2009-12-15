@@ -25,6 +25,7 @@ LabelImageViewQT::LabelImageViewQT(QWidget *parent)
 
 	channelImg = NULL;
 	labelImg = NULL;
+	centerMap = NULL;
 
 	showBounds = true;
 	//showIDs = false;
@@ -203,6 +204,11 @@ void LabelImageViewQT::SetBoundsVisible(bool val)
 {
 	this->showBounds = val;
 	refreshBoundsImage();
+}
+
+void LabelImageViewQT::SetCenterMapPointer(std::map<int, ftk::Object::Point> * cMap)
+{
+	centerMap = cMap;
 }
 
 /*
@@ -742,7 +748,19 @@ void LabelImageViewQT::initGrayscaleColorTable(void)
 
 void LabelImageViewQT::selectionChange(void)
 {
+	this->goToSelection();
 	this->refreshBoundsImage();
+}
+
+void LabelImageViewQT::goToSelection(void)
+{
+	if(!centerMap) return;
+
+	std::set<long> sels = selection->getSelections();
+	if(sels.size() != 1) return;
+
+	long id = *(sels.begin());
+	vSpin->setValue( ((*centerMap)[id]).z );
 }
 
 void LabelImageViewQT::refreshBoundsImage(void)
