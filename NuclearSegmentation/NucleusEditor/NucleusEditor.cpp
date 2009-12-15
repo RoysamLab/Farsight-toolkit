@@ -261,9 +261,15 @@ void NucleusEditor::createMenus()
 	connect(svmAction, SIGNAL(triggered()), this, SLOT(startSVM()));
 	toolMenu->addAction(svmAction);
 
+	classifyMenu = toolMenu->addMenu(tr("Classifier"));
+
+	trainAction = new QAction(tr("Train"), this);
+	connect(trainAction, SIGNAL(triggered()), this, SLOT(startTraining()));
+	classifyMenu->addAction(trainAction);
+
 	kplsAction = new QAction(tr("Classify"), this);
 	connect(kplsAction, SIGNAL(triggered()), this, SLOT(startKPLS()));
-	//toolMenu->addAction(kplsAction);
+	classifyMenu->addAction(kplsAction);
 
 	//EDITING MENU	
 	editMenu = menuBar()->addMenu(tr("&Editing"));
@@ -860,6 +866,18 @@ void NucleusEditor::startSVM()
 }
 
 //**********************************************************************
+// SLOT: start the training dialog:
+//**********************************************************************
+void NucleusEditor::startTraining()
+{
+	if(!table) return;
+
+	TrainingDialog *d = new TrainingDialog(table, "train", this);
+	connect(d, SIGNAL(changedTable()), this, SLOT(updateViews()));
+	d->exec();
+}
+
+//**********************************************************************
 // SLOT: start the pattern analysis widget:
 //**********************************************************************
 void NucleusEditor::startKPLS()
@@ -870,7 +888,7 @@ void NucleusEditor::startKPLS()
 	{
 		delete pWizard;
 	}
-	pWizard = new PatternAnalysisWizard( table, PatternAnalysisWizard::_KPLS, "class", "prediction", this);
+	pWizard = new PatternAnalysisWizard( table, PatternAnalysisWizard::_KPLS, "train", "prediction", this);
 	connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
 	pWizard->show();
 }

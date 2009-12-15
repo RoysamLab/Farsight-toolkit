@@ -142,6 +142,7 @@ bool CytoplasmSegmentation::Run()
 	WholeCellSeg *whole_cell = new WholeCellSeg;
 	whole_cell->set_nuc_img( lFilter->GetOutput() );
 	whole_cell->set_cyt_img( dFilter->GetOutput() );
+	//whole_cell->set_parameters(params[6]);
 	whole_cell->RunBinarization();
 	whole_cell->RunSegmentation();
 

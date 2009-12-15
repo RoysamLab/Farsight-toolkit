@@ -7,6 +7,7 @@ SET( GUI_SRCS
     	PatternAnalysisWizard.cpp
     	ObjectSelection.cpp
     	LabelImageViewQT.cpp
+    	TrainingDialog.cpp
 )
 
 SET( GUI_HDRS
@@ -18,6 +19,7 @@ SET( GUI_HDRS
     	PatternAnalysisWizard.h
     	ObjectSelection.h
     	LabelImageViewQT.h
+    	TrainingDialog.h
 )
 
 SET( GUI_UIS

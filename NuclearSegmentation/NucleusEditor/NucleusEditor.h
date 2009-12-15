@@ -55,6 +55,7 @@
 #include "NuclearSegmentation/Nuclear_Association/ftkNuclearAssociationRules.h"
 #include "ftkCommon/ftkLabelImageToFeatures.h"
 #include "ftkCommon/ftkUtils.h"
+#include "ftkGUI/TrainingDialog.h"
 #include "ftkGUI/PatternAnalysisWizard.h"
 #include "ftkGUI/TableWindow.h"
 #include "ftkGUI/PlotWindow.h"
@@ -165,6 +166,7 @@ private slots:
 	void startEditing(void);
 	void stopEditing(void);
 	void startSVM();
+	void startTraining();
 	void startKPLS();
 
 	void about(void);
@@ -211,6 +213,8 @@ private:
 	QAction *segmentNucleiAction;
 	QAction *editNucleiAction;
 	QAction *svmAction;		//Start the One-Class SVM outlier detecter
+	QMenu *classifyMenu;
+	QAction *trainAction;	//Train the KPLS Classifier
 	QAction *kplsAction;	//Start the KPLS Classifier
 	
 	//For Editing Menu
