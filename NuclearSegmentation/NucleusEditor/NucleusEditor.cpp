@@ -444,11 +444,15 @@ void NucleusEditor::menusEnabled(bool val)
 //****************************************************************************
 void NucleusEditor::about()
 {
-	    QMessageBox::about(this, tr("About FARSIGHT"),
-            tr("<h2>FARSIGHT</h2>"
-			   "<h3>Rensselear Polytechnic Institute</h3>"
-			   "<a><u>http://www.farsight-toolkit.org</a></u>"
-               ));
+	QString version = QString::number(int(CPACK_PACKAGE_VERSION_MAJOR));
+	version += "." + QString::number(int(CPACK_PACKAGE_VERSION_MINOR));
+	version += "." + QString::number(int(CPACK_PACKAGE_VERSION_PATCH));
+
+	QString text = tr("<h2>FARSIGHT ") + version + tr("</h2>");
+	text += tr("<h3>Rensselear Polytechnic Institute</h3>");
+	text += tr("<a><u>http://www.farsight-toolkit.org</a></u>");
+
+	QMessageBox::about(this, tr("About FARSIGHT"), text);
 }
 
 //******************************************************************************

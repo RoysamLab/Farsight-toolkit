@@ -761,6 +761,8 @@ void LabelImageViewQT::goToSelection(void)
 
 	long id = *(sels.begin());
 	vSpin->setValue( ((*centerMap)[id]).z );
+
+
 }
 
 void LabelImageViewQT::refreshBoundsImage(void)
