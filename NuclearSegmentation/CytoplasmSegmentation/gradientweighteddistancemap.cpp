@@ -34,7 +34,7 @@ int gradient_enhanced_distance_map( float *INP_IM_2D, float *GRAD_IMW, int size1
 	float flot_mini,root2;
 
 	flot_mini = FLT_MAX*-1;
-	root2 = sqrt(2.0);
+	root2 = (float)sqrt(2.0);
 
 	std::queue<im_ind> icy_needs_a_change;
 
