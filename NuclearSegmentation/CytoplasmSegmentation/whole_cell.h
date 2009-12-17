@@ -54,6 +54,7 @@ class WholeCellSeg{
 
 	//Image Pointers
 	UShortImageType::Pointer nuclab_inp;
+	UShortImageType::Pointer nuclab_inp_cpy;
 	UShortImageType::Pointer cyt_im_inp;
 	UShortImageType::Pointer mem_im_inp;
 	UShortImageType::Pointer bin_im_out;

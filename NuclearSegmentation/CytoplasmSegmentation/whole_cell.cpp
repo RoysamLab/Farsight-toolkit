@@ -27,10 +27,10 @@ WholeCellSeg::WholeCellSeg(){
 	scaling = 255;
 	mem_scaling = 1;
 	use_mem_img = 0; // Use gradient information from a membrane marker channel
-	draw_real_bounds = 1; // Add code
-	draw_synth_bounds = 0; // Add code
-	radius_of_synth_bounds = 20; // Add code
-	remove_small_objs = 0; // Add code
+	draw_real_bounds = 1;
+	draw_synth_bounds = 0;
+	radius_of_synth_bounds = 20;
+	remove_small_objs = 0;
 	bin_done = 0;
 	seg_done = 0;
 	nuc_im_set = 0;
@@ -53,7 +53,7 @@ void WholeCellSeg::set_parameters ( int *parameters ){
 }
 
 void WholeCellSeg::RunBinarization(){
-	if( draw_real_bounds )
+	if( draw_real_bounds || remove_small_objs )
 		this->BinarizationForRealBounds();
 }
 
@@ -252,12 +252,14 @@ void WholeCellSeg::BinarizationForRealBounds(){
 
 
 void WholeCellSeg::RunSegmentation(){
-	//if( draw_real_bounds )
+	if( draw_real_bounds )
 		this->RealBoundaries();
-	//if( draw_real_bounds && remove_small_objs )
-	//	this->RemoveSmallObjs();
-	//if(	(draw_real_bounds && remove_small_objs && draw_synth_bounds) || (!draw_real_bounds && draw_synth_bounds) )
-	//	this->SyntheticBoundaries();
+	if( draw_real_bounds && remove_small_objs )
+		this->RemoveSmallObjs();
+	if(	(draw_real_bounds && remove_small_objs && draw_synth_bounds) || (!draw_real_bounds && draw_synth_bounds) )
+		this->SyntheticBoundaries();
+	if( !draw_real_bounds && remove_small_objs )
+		this->RemoveSmallObjs();
 }
 
 void WholeCellSeg::RealBoundaries(){
@@ -458,49 +460,6 @@ void WholeCellSeg::RealBoundaries(){
 		seg_done = 1;
 }
 
-
-void WholeCellSeg::RemoveSmallObjs(){
-/*
-	typedef itk::LabelGeometryImageFilter< UShortImageType > GeometryFilterType;
-	typedef itk::LabelStatisticsImageFilter< UShortImageType,UShortImageType > StatisticsFilterType;
-	typedef itk::FixedArray< UShortImageType > FarrType;
-
-	int size1=cyt_im_inp->GetLargestPossibleRegion().GetSize()[0];
-	int size2=cyt_im_inp->GetLargestPossibleRegion().GetSize()[1];
-
-	unsigned short *CY_LAB,*NU_LAB;
-	CY_LAB = seg_im_out->GetBufferPointer();
-	NU_LAB = nuclab_inp->GetBufferPointer();
-
-	GeometryFilterType::Pointer geomfilt1 = GeometryFilterType::New();
-	GeometryFilterType::Pointer geomfilt2 = GeometryFilterType::New();
-
-	StatisticsFilterType::Pointer statsfilt = StatisticsFilterType::New();
-
-	geomfilt1->SetInput( seg_im_out );
-	geomfilt2->SetInput( nuclab_inp );
-
-	statsfilt->SetInput( cyt_im_inp );
-	statsfilt->SetLabelInput( nuclab_inp );
-
-	float nuc_sz, cyt_sz;
-
-	for( unsigned long i=0; i<statsfilt->GetNumberOfObjects(); i++ ){
-		cyt_sz = (float)geomfilt1->GetVolume(i+1);
-		nuc_sz = (float)geomfilt2->GetVolume(i+1);
-		if( cyt_sz > 0 ){
-			if( (cyt_sz/nuc_sz) > 1.1 ){
-				FarrType matrix1 = geomfilt2->GetBoundingBox(i+1);
-
-
-			}
-		}
-	}
-*/
-	//if( !draw_synth_bounds )
-	//	seg_done = 1;
-}
-
 void WholeCellSeg::SyntheticBoundaries(){
 
 	typedef itk::RescaleIntensityImageFilter< UShortImageType, IntImageType > RescaleIOIntType;
@@ -554,7 +513,10 @@ void WholeCellSeg::SyntheticBoundaries(){
 	andfilter2->Update();
 
 	CastUSIntType::Pointer castUSIntfilter = CastUSIntType::New();
-	castUSIntfilter->SetInput( nuclab_inp );
+	if( draw_real_bounds && remove_small_objs )
+		castUSIntfilter->SetInput( nuclab_inp_cpy );
+	else
+		castUSIntfilter->SetInput( nuclab_inp );
 	castUSIntfilter->Update();
 	IntImageType::Pointer nuclab_inp_int = IntImageType::New();
 	nuclab_inp_int = castUSIntfilter->GetOutput();
@@ -570,10 +532,65 @@ void WholeCellSeg::SyntheticBoundaries(){
 	castIntUSfilter->SetInput( watershedfilter->GetOutput() );
 	castIntUSfilter->Update();
 	seg_im_out = castIntUSfilter->GetOutput();
-
-	seg_done = 1;
+//********************************** add procedure to "or" if real boundaries are drawn
+	if( ( !remove_small_objs ) || ( draw_real_bounds && remove_small_objs )  )
+		seg_done = 1;
 }
 
+
+void WholeCellSeg::RemoveSmallObjs(){
+
+	typedef itk::LabelGeometryImageFilter< UShortImageType > GeometryFilterType;
+	typedef itk::LabelStatisticsImageFilter< UShortImageType,UShortImageType > StatisticsFilterType;
+	typedef itk::CastImageFilter< UShortImageType, UShortImageType > CastUSUSType;
+	typedef itk::ImageRegionIteratorWithIndex< UShortImageType > IteratorType;
+	typedef GeometryFilterType::LabelIndicesType labelindicestype;
+
+	int size1=cyt_im_inp->GetLargestPossibleRegion().GetSize()[0];
+	int size2=cyt_im_inp->GetLargestPossibleRegion().GetSize()[1];
+
+	GeometryFilterType::Pointer geomfilt1 = GeometryFilterType::New();
+
+	StatisticsFilterType::Pointer statsfilt = StatisticsFilterType::New();
+	statsfilt->UseHistogramsOn();
+
+	geomfilt1->SetInput( seg_im_out );
+
+	statsfilt->SetInput( bin_im_out );
+	statsfilt->SetLabelInput( seg_im_out );
+	statsfilt->Update();
+
+	CastUSUSType::Pointer castUSUSfilter = CastUSUSType::New();
+
+	if( draw_real_bounds && draw_synth_bounds ){
+		castUSUSfilter->SetInput( nuclab_inp );
+		castUSUSfilter->Update();
+		nuclab_inp_cpy = castUSUSfilter->GetOutput();
+	}
+
+	for( unsigned short i=0; i<=statsfilt->GetNumberOfLabels(); i++ ){
+		if( statsfilt->HasLabel(i) ){
+			labelindicestype indices1;
+			indices1 = geomfilt1->GetPixelIndices( i );
+			if( !statsfilt->GetSum( i ) ){
+				IteratorType iterator ( seg_im_out, seg_im_out->GetRequestedRegion() );
+				for( int j=0; j<(int)indices1.size(); ++j ){
+					iterator.SetIndex( indices1[i] );
+					iterator.Set( 0 );
+				}
+			}
+			else if( draw_real_bounds && draw_synth_bounds ){
+				IteratorType iterator ( nuclab_inp_cpy, nuclab_inp_cpy->GetRequestedRegion() );
+				for( int j=0; j<(int)indices1.size(); ++j ){
+					iterator.SetIndex( indices1[i] );
+					iterator.Set( 0 );
+				}
+			}
+		}
+	}
+	if( !draw_synth_bounds && draw_real_bounds )
+		seg_done = 1;
+}
 
 UShortImageType::Pointer WholeCellSeg::getBinPointer(){
 	if( bin_done ) return bin_im_out;
