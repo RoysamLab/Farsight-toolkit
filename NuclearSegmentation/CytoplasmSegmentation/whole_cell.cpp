@@ -439,7 +439,8 @@ void WholeCellSeg::RealBoundaries(){
 	WriterType::Pointer writer = WriterType::New();
 	writer->SetFileName( "bin_info.tif" );
 	writer->SetInput( RescaleIntIO1->GetOutput() );//RescaleIntIO1--finalO/P
-	writer->Update();*/
+	writer->Update();
+*/
 
 //Get Array into IDL
 /*	IntImageType::Pointer image_fin = IntImageType::New();

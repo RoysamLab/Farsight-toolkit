@@ -1,3 +1,5 @@
+INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkCommon )
+
 SET( NSRCS
 	CytoplasmSegmentation.cpp
 	whole_cell.cpp
@@ -8,9 +10,9 @@ SET( NHDRS
 	CytoplasmSegmentation.h
 	whole_cell.h
 	itkMorphologicalWatershedFromMarkersImageFilter.h
-	itkLabelGeometryImageFilter.h
+	${PROJECT_SOURCE_DIR}/ftkCommon/itkLabelGeometryImageFilter.h
 	itkMorphologicalWatershedFromMarkersImageFilter.txx
-	itkLabelGeometryImageFilter.txx
+	${PROJECT_SOURCE_DIR}/ftkCommon/itkLabelGeometryImageFilter.txx
 )
 
 ADD_LIBRARY( CytoplasmSegmentation ${NSRCS} ${NHDRS} )
