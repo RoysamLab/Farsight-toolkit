@@ -15,5 +15,6 @@ ADD_LIBRARY( NuclearSegmentation
 TARGET_LINK_LIBRARIES( NuclearSegmentation ftkCommon ftkImage Yousef_Nucleus_Seg Nuclear_Association)
 #INSTALL( TARGETS NuclearSegmentation DESTINATION . )
 
-SUBDIRS( yousef_core Nuclear_Association exe CytoplasmSegmentation NucleusEditor SegmentationViewer )
-
+#Remove SegmentationViewer (segren) because it does not compile on Windows 7 machine.
+#SUBDIRS( yousef_core Nuclear_Association exe CytoplasmSegmentation NucleusEditor SegmentationViewer )
+SUBDIRS( yousef_core Nuclear_Association exe CytoplasmSegmentation NucleusEditor )
