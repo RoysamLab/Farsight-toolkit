@@ -42,6 +42,7 @@ ProjectProcessor::ProjectProcessor()
 	numTasks = 0;
 	lastTask = -1;
 	resultIsEditable = false;
+	inputTypeNeeded = 0;
 }
 
 void ProjectProcessor::Initialize(void)
@@ -92,7 +93,7 @@ void ProjectProcessor::ProcessNext(void)
 		taskDone = SegmentCytoplasm(tasks.at(thisTask).inputChannel);
 		break;
 	case ProjectDefinition::RAW_ASSOCIATIONS:
-		taskDone = false;
+		taskDone = ComputeAssociations();
 		break;
 	case ProjectDefinition::CLASSIFY:
 		taskDone = false;
@@ -187,10 +188,13 @@ bool ProjectProcessor::SegmentCytoplasm(int cytChannel)
 
 	std::cout << "Done CytoSeg\n";
 
+	//Calc Features:
 	ftk::IntrinsicFeatureCalculator *iCalc = new ftk::IntrinsicFeatureCalculator();
 	iCalc->SetInputImages(inputImage,outputImage,cytChannel,1);
+	if(definition->intrinsicFeatures.size() > 0)
+		iCalc->SetFeaturesOn( GetOnIntrinsicFeatures() );
 	iCalc->SetFeaturePrefix("cyto_");
-	iCalc->Append(table);										//Append features to the table
+	iCalc->Append(table); //Append features to the table
 	delete iCalc;
 
 	std::cout << "Done CytoFeats\n";
@@ -199,21 +203,28 @@ bool ProjectProcessor::SegmentCytoplasm(int cytChannel)
 	return true;
 }
 
-void ProjectProcessor::ComputeAssociations(void)
+bool ProjectProcessor::ComputeAssociations(void)
 {
-	/*
-	ftk::AssociativeFeatureCalculator * assocCal = new ftk::AssociativeFeatureCalculator();
-	assocCal->SetInputFile(fileName.toStdString());
-
-	if(!table)
+	if(definition->associationRules.size() == 0)
 	{
-		table = assocCal->Compute();
-		CreateNewTableWindow();
+		inputTypeNeeded = 3;
+		return false;
 	}
-	else
-		assocCal->Append(table);
-	*/
+	
+	for(int i=0; i<(int)definition->associationRules.size(); ++i)
+	{
+		ftk::AssociativeFeatureCalculator * assocCal = new ftk::AssociativeFeatureCalculator();
+		assocCal->SetInputFile( definition->associationRules.at(i) );
+		if(table)
+		{
+			assocCal->Append(table);
+		}
+		delete assocCal;
+	}
+
 	resultIsEditable = false;
+	std::cout << "Done Associations\n";
+	return true;
 }
 
 std::set<int> ProjectProcessor::GetOnIntrinsicFeatures(void)

@@ -19,7 +19,7 @@
 #include "itkAndImageFilter.h"
 #include "itkSignedMaurerDistanceMapImageFilter.h"
 #include "itkCastImageFilter.h"
-#include "itkLabelGeometryImageFilter.h"
+#include "ftkCommon/itkLabelGeometryImageFilter.h"
 #include "itkLabelStatisticsImageFilter.h"
 
 

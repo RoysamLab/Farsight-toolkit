@@ -50,6 +50,7 @@ public:
 	void ProcessNext(void);						//Keep calling this until DoneProcessing is true;
 	bool DoneProcessing(void){ return (lastTask == numTasks-1); };
 	bool ReadyToEdit(void){ return resultIsEditable; };
+	int NeedInput(void){ return inputTypeNeeded; };	//Return non-zero value indicating type of input needed
 
 	//Outputs
 	ftk::Image::Pointer GetOutputImage(void){ return outputImage; };
@@ -59,7 +60,7 @@ protected:
 	//Tasks I can do:
 	bool SegmentNuclei(int nucChannel);					//Segment nucChannel as Nuclei & Compute Intrinsic Features
 	bool SegmentCytoplasm(int cytChannel);				//Segment Cytoplasm Channel & Compute Intrinsic Features
-	void ComputeAssociations(void);						//Compute Associative Measures
+	bool ComputeAssociations(void);						//Compute Associative Measures
 	void Classify(void);								//Classify Cells
 	void ComputeAnalyteMeasures(void);					//Compute Analyte Measures by Class
 
@@ -75,6 +76,7 @@ private:
 	int numTasks;
 	int lastTask;
 	bool resultIsEditable;  //Only true when done nucleus segmentation!!
+	int inputTypeNeeded;
 };
 
 }  // end namespace ftk

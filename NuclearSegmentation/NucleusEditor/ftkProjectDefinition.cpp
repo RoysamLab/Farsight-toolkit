@@ -82,6 +82,7 @@ bool ProjectDefinition::Load(std::string filename)
 		}
 		else if( strcmp( parent, "AssociationRules" ) == 0 )
 		{
+			associationRules = this->ParseText(parentElement);
 		}
 		else if( strcmp( parent, "IntrinsicFeatures" ) == 0 )
 		{
@@ -257,6 +258,17 @@ bool ProjectDefinition::Write(std::string filename)
 	}
 
 	//AssociationRules:
+	if(associationRules.size() > 0)
+	{
+		TiXmlElement * assocElement = new TiXmlElement("IntrinsicFeatures");
+		std::string text = associationRules.at(0);
+		for(int i=1; i<(int)associationRules.size(); ++i)
+		{
+			text += "," + associationRules.at(i);
+		}
+		assocElement->LinkEndChild( new TiXmlText( text.c_str() ) );
+		root->LinkEndChild(assocElement);
+	}
 
 	//IntrinsicFeatures:
 	if(intrinsicFeatures.size() > 0)

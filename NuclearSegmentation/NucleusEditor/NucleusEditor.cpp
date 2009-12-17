@@ -182,7 +182,7 @@ void NucleusEditor::createMenus()
 	saveProjectAction = new QAction(tr("Save Project.."), this);
 	saveProjectAction->setStatusTip(tr("Save the active project files..."));
 	saveProjectAction->setShortcut(tr("Ctrl+S"));
-	connect(saveProjectAction, SIGNAL(triggered()), this, SLOT(saveProject()));
+	connect(saveProjectAction, SIGNAL(triggered()), this, SLOT(askSaveProject()));
 	fileMenu->addAction(saveProjectAction);
 
 	saveImageAction = new QAction(tr("Save Image..."), this);
@@ -473,7 +473,7 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 	this->abortProcess();
 
 	if(!projectFiles.inputSaved || !projectFiles.outputSaved || !projectFiles.definitionSaved || !projectFiles.tableSaved)
-		this->saveProject();
+		this->askSaveProject();
 
 	//Then Close all other windows
 	foreach (QWidget *widget, qApp->topLevelWidgets()) 
@@ -495,10 +495,10 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 // Saving SLOTS:
 //*********************************************************************************
 //*********************************************************************************
-bool NucleusEditor::saveProject()
+bool NucleusEditor::askSaveProject()
 {
 	QString	filename = QFileDialog::getSaveFileName(this, tr("Save Project As..."),lastPath, tr("XML Project File(*.xml)"));
-	
+
 	if(filename == "")
 		return false;
 
@@ -506,9 +506,32 @@ bool NucleusEditor::saveProject()
 	QString name = QFileInfo(filename).baseName();
 	lastPath = path;
 
-	ProjectFilenamesDialog *dialog = new ProjectFilenamesDialog(lastPath, &projectFiles, filename, this);
-	if(dialog->exec() == QDialog::Rejected)
-		return false;
+	return this->saveProject(filename, false);
+}
+
+bool NucleusEditor::saveProject(QString filename, bool defaults)
+{
+
+	if(defaults && (projectFiles.input.size() != 0))
+	{
+		QString fname = QString::fromStdString(projectFiles.input);
+		
+		QFileInfo inf(QDir(lastPath), QFileInfo(fname).baseName() + "_label.xml");
+		projectFiles.output = inf.absoluteFilePath().toStdString();
+
+		QFileInfo inf2(QDir(lastPath), QFileInfo(fname).baseName() + "_def.xml");
+		projectFiles.definition = inf2.absoluteFilePath().toStdString();
+
+		QFileInfo inf3(QDir(lastPath), QFileInfo(fname).baseName() + "_table.txt");
+		projectFiles.table = inf3.absoluteFilePath().toStdString();
+
+	}
+	else
+	{
+		ProjectFilenamesDialog *dialog = new ProjectFilenamesDialog(lastPath, &projectFiles, filename, this);
+		if(dialog->exec() == QDialog::Rejected)
+			return false;
+	}
 
 	if(projectFiles.input != "" && !projectFiles.inputSaved)
 	{
@@ -531,7 +554,9 @@ bool NucleusEditor::saveProject()
 		this->saveTable();
 	}
 
-	projectFiles.Write(filename.toStdString());
+	if(filename != "")
+		projectFiles.Write(filename.toStdString());
+
 	return true;
 }
 
@@ -733,7 +758,7 @@ void NucleusEditor::loadTable(QString fileName)
 {
 	if(!projectFiles.tableSaved)
 	{
-		this->saveProject();
+		this->askSaveProject();
 	}
 
 	lastPath = QFileInfo(fileName).absolutePath();
@@ -762,7 +787,7 @@ void NucleusEditor::loadResult(QString fileName)
 {
 	if(!projectFiles.outputSaved)
 	{
-		this->saveProject();
+		this->askSaveProject();
 	}
 
 	lastPath = QFileInfo(fileName).absolutePath();
@@ -799,7 +824,7 @@ void NucleusEditor::loadImage(QString fileName)
 {
 	if(!projectFiles.inputSaved)
 	{
-		this->saveProject();
+		this->askSaveProject();
 	}
 
 	lastPath = QFileInfo(fileName).absolutePath();
@@ -1308,6 +1333,25 @@ int NucleusEditor::requestChannel(ftk::Image::Pointer img)
 	return ch;
 }
 
+void NucleusEditor::CreateDefaultAssociationRules()
+{
+	//filename of the label image to use:
+	QString fname = QString::fromStdString(projectFiles.output);
+	QFileInfo inf(QDir(lastPath), QFileInfo(fname).baseName() + "_nuc.tif");
+	std::string label_name = inf.absoluteFilePath().toStdString();
+	//Do associations:
+	ftk::NuclearAssociationRules * objAssoc = new ftk::NuclearAssociationRules(label_name, 1);
+	std::vector<std::string> targFileNames = myImg->GetFilenames();
+	std::string targFileName = targFileNames.at(projectDefinition.FindInputChannel("CYTOPLASM"));
+	objAssoc->AddAssociation("nuc_CK", targFileName, 0, 0, true, 3);
+	//filename of the output xml and save:
+	QFileInfo inf2(QDir(lastPath), QFileInfo(fname).baseName() + "_assoc.xml");
+	objAssoc->WriteRulesToXML(inf2.absoluteFilePath().toStdString());
+	//put the output xml in the project definition:
+	projectDefinition.associationRules.push_back( inf2.absoluteFilePath().toStdString() );
+
+}
+
 //******************************************************************************************
 //******************************************************************************************
 //******************************************************************************************
@@ -1366,7 +1410,7 @@ void NucleusEditor::processProject(void)
 	lastPath = QFileInfo(projectName).absolutePath();
 
 	if(!projectFiles.definitionSaved)
-		this->saveProject();
+		this->askSaveProject();
 
 	//Load up the definition
 	if( !projectDefinition.Load(projectName.toStdString()) ) return;
@@ -1425,6 +1469,7 @@ void NucleusEditor::process()
 		if(pProc->ReadyToEdit())	//Means I was editing
 		{
 			stopEditing();
+			this->saveProject("",true);	//Will create default filenames and save the files
 		}
 		continueProcessFlag = false;
 	}
@@ -1463,6 +1508,16 @@ void NucleusEditor::process()
 	}
 	else		//Not done, so continue:
 	{
+		//I need some type of input for the processor to continue:
+		if( pProc->NeedInput() )
+		{
+			switch( pProc->NeedInput() )
+			{
+			case 3:			//Need something for association rules
+				this->CreateDefaultAssociationRules();
+				break;
+			}
+		}
 		processThread->start();
 	}
 }

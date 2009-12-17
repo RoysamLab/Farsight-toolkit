@@ -116,7 +116,8 @@ private slots:
 	void continueProcess(void);
 	void deleteProcess(void);
 	//Saving:
-	bool saveProject(void);
+	bool askSaveProject(void);
+	bool saveProject(QString filename, bool defaults);
 	bool askSaveImage(void);
 	bool saveImage(void);
 	bool askSaveResult(void);
@@ -263,6 +264,9 @@ private:
 	vtkSmartPointer<vtkTable> table;			//table
 	ftk::ProjectFiles projectFiles;				//files in the currently visible project
 	ftk::ProjectDefinition projectDefinition;	//the project definition currently being used.
+
+	//This does not belong here, but is a temporary fix:
+	void CreateDefaultAssociationRules();
 	
 	//Processing toolbar and thread pointers:
 	bool abortProcessFlag;
