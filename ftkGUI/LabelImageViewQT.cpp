@@ -206,15 +206,21 @@ void LabelImageViewQT::SetBoundsVisible(bool val)
 	refreshBoundsImage();
 }
 
+void LabelImageViewQT::SetIDsVisible(bool val)
+{
+	this->showIDs = val;
+	refreshBoundsImage();
+}
+
+
 void LabelImageViewQT::SetCenterMapPointer(std::map<int, ftk::Object::Point> * cMap)
 {
 	centerMap = cMap;
 }
 
-
-void LabelImageViewQT::SetIDsVisible(bool val)
+void LabelImageViewQT::SetBoundingBoxMapPointer(std::map<int, ftk::Object::Box> * bMap)
 {
-	this->showIDs = val;
+	bBoxMap = bMap;
 }
 
 void LabelImageViewQT::ClearGets(void)

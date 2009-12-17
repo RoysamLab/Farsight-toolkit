@@ -71,6 +71,7 @@ public:
 	void SetLabelImage(ftk::Image::Pointer img, ObjectSelection * sels = NULL);
 	ftk::Image::Pointer GetLabelImage(){return labelImg;};
 	void SetCenterMapPointer(std::map<int, ftk::Object::Point> * cMap = NULL);
+	void SetBoundingBoxMapPointer(std::map<int, ftk::Object::Box> * bMap = NULL);
 
 public slots:
 	void SaveDiplayImageToFile();
@@ -147,7 +148,7 @@ protected:
 
 	ftk::Image::Pointer labelImg;
 	std::map<int, ftk::Object::Point> *	centerMap;
-	//std::map<int, LabelGeometry> labelGeometries;
+	std::map<int, ftk::Object::Box> * bBoxMap;
 	ftk::Image::Pointer channelImg;
 	ObjectSelection * selection;
 
@@ -167,13 +168,6 @@ protected:
 	//For Getting a Box:
 	QPoint origin;
 	MyRubberBand *rubberBand;
-};
-
-class LabelGeometry
-{
-public:
-	float Centroid[3];			// X, Y, Z
-	float BoundingBox[6];		// min(X), max(X), min(Y), max(Y), min(Z), max(Z),...]
 };
 
 class MyRubberBand : public QWidget

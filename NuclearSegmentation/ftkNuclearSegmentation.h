@@ -107,6 +107,7 @@ public:
 	ftk::Image::Pointer GetDataImage(void){ return dataImage; };	
 	ftk::Image::Pointer GetLabelImage(void){ return labelImage; };
 	std::map<int, ftk::Object::Point> * GetCenterMapPointer(){ return &centerMap; };
+	std::map<int, ftk::Object::Box> * GetBoundingBoxMapPointer(){ return &bBoxMap; };
 	//*********************************************************************************************
 
 	//ADDED BY YOUSEF/RAGHAV:

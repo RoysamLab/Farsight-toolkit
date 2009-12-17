@@ -218,7 +218,7 @@ void NucleusEditor::createMenus()
 
 	showBoundsAction = new QAction(tr("Show &Boundaries"), this);
 	showBoundsAction->setCheckable(true);
-	showBoundsAction->setChecked(false);
+	showBoundsAction->setChecked(true);
 	showBoundsAction->setStatusTip(tr("Draw boundaries using a label image"));
 	showBoundsAction->setShortcut(tr("Ctrl+B"));
 	connect(showBoundsAction, SIGNAL(triggered()), this, SLOT(toggleBounds()));
@@ -1094,6 +1094,7 @@ void NucleusEditor::startEditing(void)
 	nucSeg->ComputeAllGeometries();
 
 	segView->SetCenterMapPointer( nucSeg->GetCenterMapPointer() );
+	segView->SetBoundingBoxMapPointer( nucSeg->GetBoundingBoxMapPointer() );
 
 	std::string log_entry = "NUCLEAR_SEGMENTATION\t";
 	log_entry += ftk::NumToString(nucSeg->GetNumberOfObjects()) + "\t";
@@ -1107,6 +1108,7 @@ void NucleusEditor::startEditing(void)
 void NucleusEditor::stopEditing(void)
 {
 	segView->SetCenterMapPointer(0);//Remove the centermap pointer (because I'm about to delete the data structure
+	segView->SetBoundingBoxMapPointer(0);
 
 	if(nucSeg) delete nucSeg;
 	nucSeg = NULL;
