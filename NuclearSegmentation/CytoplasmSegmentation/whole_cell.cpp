@@ -240,9 +240,12 @@ void WholeCellSeg::BinarizationForRealBounds(){
 
 //Update bin array
 	ind=0;
-	ConstIteratorType pix_buf3( bin_im_out, bin_im_out->GetRequestedRegion() );
-	for ( pix_buf3.GoToBegin(); !pix_buf3.IsAtEnd(); ++pix_buf3, ++ind )
-	bin_Image[ind]=(pix_buf3.Get());
+	if( draw_real_bounds ){
+		ConstIteratorType pix_buf3( bin_im_out, bin_im_out->GetRequestedRegion() );
+		for ( pix_buf3.GoToBegin(); !pix_buf3.IsAtEnd(); ++pix_buf3, ++ind )
+		bin_Image[ind]=(pix_buf3.Get());
+	}else
+		free( bin_Image );
 
 	return;
 }
@@ -471,6 +474,7 @@ void WholeCellSeg::SyntheticBoundaries(){
 	typedef itk::AndImageFilter< IntImageType, IntImageType, IntImageType > AndFilterType;
 	typedef itk::SignedMaurerDistanceMapImageFilter< IntImageType, FltImageType > SignedMaurerDistanceMapFilterType;
 	typedef itk::MorphologicalWatershedFromMarkersImageFilter< IntImageType, IntImageType > WatershedFilterType;
+	typedef itk::ImageRegionIteratorWithIndex< UShortImageType > IteratorType;
 
 //Cast inverted ctoplasm binary image to Int
 	RescaleIOIntType::Pointer RescaleIOInt = RescaleIOIntType::New();
@@ -531,8 +535,21 @@ void WholeCellSeg::SyntheticBoundaries(){
 	CastIntUSType::Pointer castIntUSfilter = CastIntUSType::New();
 	castIntUSfilter->SetInput( watershedfilter->GetOutput() );
 	castIntUSfilter->Update();
-	seg_im_out = castIntUSfilter->GetOutput();
-//********************************** add procedure to "or" if real boundaries are drawn
+
+	if( draw_real_bounds ){
+		UShortImageType::Pointer image1=castIntUSfilter->GetOutput();
+		IteratorType pix_bufed( image1, image1->GetRequestedRegion() );
+		pix_bufed.GoToBegin();
+		IteratorType pix_bufed1( seg_im_out, seg_im_out->GetRequestedRegion() );
+		pix_bufed1.GoToBegin();
+		while( !pix_bufed1.IsAtEnd() ){
+			if( !pix_bufed1.Get() )
+				pix_bufed1.Set( pix_bufed.Get());
+			++pix_bufed; ++pix_bufed1;
+		}
+	}
+	else
+		seg_im_out = castIntUSfilter->GetOutput();
 	if( ( !remove_small_objs ) || ( draw_real_bounds && remove_small_objs )  )
 		seg_done = 1;
 }
