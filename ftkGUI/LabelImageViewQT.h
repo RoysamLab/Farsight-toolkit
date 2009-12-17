@@ -76,7 +76,7 @@ public slots:
 	void SaveDiplayImageToFile();
 	void AdjustImageIntensity();
 	void SetBoundsVisible(bool val);
-	//void SetIDsVisible(int img, bool val);
+	void SetIDsVisible(bool val);
 	void ClearGets(void);
 	void GetBox(void);
 	void Get2Points(void);
@@ -93,6 +93,7 @@ signals:
 protected slots:
 	void refreshBaseImage(void);
 	void refreshBoundsImage(void);
+	void drawObjectIDs(QPainter *painter);
 	void selectionChange(void);
 	void sliderChange(int v);
 	void spinChange(int v);
@@ -157,7 +158,7 @@ protected:
 	int foregroundOffset;							//Offset to ADD to intensity values.
 
 	bool showBounds;
-	//bool showIDs;
+	bool showIDs;
 
 	//For collecting two points:
 	bool pointsMode;

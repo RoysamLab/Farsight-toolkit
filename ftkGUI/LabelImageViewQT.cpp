@@ -28,7 +28,7 @@ LabelImageViewQT::LabelImageViewQT(QWidget *parent)
 	centerMap = NULL;
 
 	showBounds = true;
-	//showIDs = false;
+	showIDs = false;
 	
 	currentScale = 1;					//Image scaling and zooming variables:
 	ZoomInFactor = 1.25f;
@@ -211,12 +211,12 @@ void LabelImageViewQT::SetCenterMapPointer(std::map<int, ftk::Object::Point> * c
 	centerMap = cMap;
 }
 
-/*
+
 void LabelImageViewQT::SetIDsVisible(bool val)
 {
 	this->showIDs = val;
 }
-*/
+
 void LabelImageViewQT::ClearGets(void)
 {
 	//stop getting points:
@@ -826,32 +826,35 @@ void LabelImageViewQT::refreshBoundsImage(void)
 			}
 		}
 	}
+
+	this->drawObjectIDs(&painter);
+
 	this->repaint();
 }
 
-/* SHOULD REWRITE THIS SO IT DOESN'T NEED CENTROID, JUST DRAWS ID
+// SHOULD REWRITE THIS SO IT DOESN'T NEED CENTROID, JUST DRAWS ID
 void LabelImageViewQT::drawObjectIDs(QPainter *painter)
 {
 	if(!showIDs) return;
 	if(!labelImg) return;
-	if(labelGeometries.size() == 0) return;
+	if(!centerMap) return;
 
 	int currentZ = vSpin->value();
 
 	//Iterate through each object and write its id at its centroid.
-	std::map<int,LabelGeometry>::iterator it;
-	for ( it = labelGeometries.begin() ; it != labelGeometries.end(); ++it )
+	std::map<int,ftk::Object::Point>::iterator it;
+	for ( it = centerMap->begin() ; it != centerMap->end(); ++it )
 	{
 		int id = (*it).first;
-		LabelGeometry geo = (*it).second;
-		if ( (currentZ >= geo.BoundingBox[4]) && (currentZ <= geo.BoundingBox[5]) )
+		ftk::Object::Point point = (*it).second;
+		if ( (currentZ == point.z) )
 		{
 			painter->setPen(colorForIDs);
-			painter->drawText(geo.Centroid[0], geo.Centroid[1], QString::number(id));
+			painter->drawText(point.x, point.y, QString::number(id));
 		}
 	}
 }
-*/
+
 /*
 void LabelImageViewQT::refreshFeatures(void)
 {

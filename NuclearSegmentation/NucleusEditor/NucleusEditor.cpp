@@ -224,6 +224,14 @@ void NucleusEditor::createMenus()
 	connect(showBoundsAction, SIGNAL(triggered()), this, SLOT(toggleBounds()));
 	viewMenu->addAction(showBoundsAction);
 
+	showIDsAction = new QAction(tr("Show Object IDs"), this);
+	showIDsAction->setCheckable(true);
+	showIDsAction->setChecked(false);
+	showIDsAction->setStatusTip(tr("Show IDs at centroids of objects"));
+	showIDsAction->setShortcut(tr("Ctrl+I"));
+	connect(showIDsAction, SIGNAL(triggered()), this, SLOT(toggleIDs()));
+	viewMenu->addAction(showIDsAction);
+
 	viewMenu->addSeparator();
 
 	newTableAction = new QAction(tr("New Table"), this);
@@ -1049,6 +1057,16 @@ void NucleusEditor::toggleBounds(void)
 		segView->SetBoundsVisible(false);
 }
 
+void NucleusEditor::toggleIDs(void)
+{
+	if(!segView) return;
+
+	if( showIDsAction->isChecked() )
+		segView->SetIDsVisible(true);
+	else
+		segView->SetIDsVisible(false);
+}
+
 //******************************************************************************************
 //******************************************************************************************
 //******************************************************************************************
@@ -1338,17 +1356,24 @@ void NucleusEditor::CreateDefaultAssociationRules()
 	//filename of the label image to use:
 	QString fname = QString::fromStdString(projectFiles.output);
 	QFileInfo inf(QDir(lastPath), QFileInfo(fname).baseName() + "_nuc.tif");
-	std::string label_name = inf.absoluteFilePath().toStdString();
-	//Do associations:
+	std::string label_name = inf.absoluteFilePath().toStdString();			
+	//Create association rules:
+	//1. Pass the constructor the filename of the label image to use and the number of associations to compute:
 	ftk::NuclearAssociationRules * objAssoc = new ftk::NuclearAssociationRules(label_name, 1);
 	std::vector<std::string> targFileNames = myImg->GetFilenames();
 	std::string targFileName = targFileNames.at(projectDefinition.FindInputChannel("CYTOPLASM"));
+	//2. Create each association rule: name, filename of target image, outside distance, inside distance, whole object, type
 	objAssoc->AddAssociation("nuc_CK", targFileName, 0, 0, true, 3);
 	//filename of the output xml and save:
 	QFileInfo inf2(QDir(lastPath), QFileInfo(fname).baseName() + "_assoc.xml");
+	//3. Write to file:
 	objAssoc->WriteRulesToXML(inf2.absoluteFilePath().toStdString());
-	//put the output xml in the project definition:
+	//4. put the output xml in the project definition:
 	projectDefinition.associationRules.push_back( inf2.absoluteFilePath().toStdString() );
+
+	//Now create other rules:
+
+	//AND create other XML association definition files for other label images:
 
 }
 
