@@ -32,12 +32,14 @@ CytoplasmSegmentation::CytoplasmSegmentation()
 {
 	dataFilename.clear();				//Name of the file that the data came from
 	dataImage = NULL;					//The data image
-	channelNumber = 0;					//Use this channel from the dataImage for segmentation
+	cytchannelNumber  = 0;				//Use this channel from the dataImage for segmentation
+	memchannelNumber = 0;				//Use this channel from the dataImage for segmentation
 	nucLabelFilename.clear();			//Name of the file that is the nuclear label image
 	labelImage = NULL;					//my label image (I will append the cytoplasm segmentation)
 	nucChannelNumber = 0;
 	cytoChannelNumber = 0;
 	cytoLabelFilename.clear();			//The label image of cytoplasm channel
+	removestromcells = 1;
 }
 
 //Load the input images from files
@@ -59,9 +61,11 @@ bool CytoplasmSegmentation::LoadInputs(std::string datafname, std::string nucfna
 }
 
 //Pass a pointer to the already loaded data image
-bool CytoplasmSegmentation::SetDataInput(ftk::Image::Pointer inImg, std::string fname, int chNumber)
+bool CytoplasmSegmentation::SetDataInput(ftk::Image::Pointer inImg, std::string fname, int cytNumber , int memNumber )
 {
-	if(chNumber > inImg->GetImageInfo()->numChannels)
+	if(cytNumber > inImg->GetImageInfo()->numChannels)
+		return false;
+	if(memNumber > inImg->GetImageInfo()->numChannels)
 		return false;
 	if(inImg->GetImageInfo()->numZSlices != 1)
 		return false;
@@ -70,7 +74,8 @@ bool CytoplasmSegmentation::SetDataInput(ftk::Image::Pointer inImg, std::string 
 
 	this->dataFilename = fname;
 	this->dataImage = inImg;
-	this->channelNumber = chNumber;
+	this->cytchannelNumber = cytNumber;
+	this->memchannelNumber = memNumber;
 	return true;
 
 }
@@ -108,14 +113,58 @@ bool CytoplasmSegmentation::Run()
 	if(!labelImage)
 		return false;
 
-	UCharImageType3D::Pointer data = dataImage->GetItkPtr<unsigned char>(0,channelNumber);
-	UShortImageType3D::Pointer nuc = labelImage->GetItkPtr<unsigned short>(0,nucChannelNumber);
+	WholeCellSeg *whole_cell = new WholeCellSeg;
 
-	DataExtractType::Pointer deFilter = DataExtractType::New();
-	UCharImageType3D::RegionType dRegion = data->GetLargestPossibleRegion();
-	dRegion.SetSize(2,0);
-	deFilter->SetExtractionRegion(dRegion);
-	deFilter->SetInput( data );
+	if( cytchannelNumber > -1 ){
+		UCharImageType3D::Pointer data = dataImage->GetItkPtr<unsigned char>(0,cytchannelNumber);
+		DataExtractType::Pointer deFilter = DataExtractType::New();
+		UCharImageType3D::RegionType dRegion = data->GetLargestPossibleRegion();
+		dRegion.SetSize(2,0);
+		deFilter->SetExtractionRegion(dRegion);
+		deFilter->SetInput( data );
+
+		DataCastType::Pointer dFilter = DataCastType::New();
+		dFilter->SetInput( deFilter->GetOutput() );
+
+		try{
+			dFilter->Update();
+		}
+		catch( itk::ExceptionObject & excep )
+		{
+				std::cerr << "Exception caught !" << std::endl;
+			std::cerr << excep << std::endl;
+			return false;
+		}
+		whole_cell->set_cyt_img( dFilter->GetOutput() );
+		whole_cell->draw_real_bounds=1;
+		whole_cell->draw_synth_bounds=0;
+	}
+
+	if( memchannelNumber > -1 ){
+		UCharImageType3D::Pointer data = dataImage->GetItkPtr<unsigned char>(0,memchannelNumber);
+		DataExtractType::Pointer deFilter = DataExtractType::New();
+		UCharImageType3D::RegionType dRegion = data->GetLargestPossibleRegion();
+		dRegion.SetSize(2,0);
+		deFilter->SetExtractionRegion(dRegion);
+		deFilter->SetInput( data );
+
+		DataCastType::Pointer dFilter = DataCastType::New();
+		dFilter->SetInput( deFilter->GetOutput() );
+
+		try{
+			dFilter->Update();
+		}
+		catch( itk::ExceptionObject & excep )
+		{
+				std::cerr << "Exception caught !" << std::endl;
+			std::cerr << excep << std::endl;
+			return false;
+		}
+		whole_cell->set_mem_img( dFilter->GetOutput() );
+		whole_cell->use_mem_img=1;
+	}
+
+	UShortImageType3D::Pointer nuc = labelImage->GetItkPtr<unsigned short>(0,nucChannelNumber);
 
 	LabelExtractType::Pointer leFilter = LabelExtractType::New();
 	UShortImageType3D::RegionType lRegion = nuc->GetLargestPossibleRegion();
@@ -123,13 +172,10 @@ bool CytoplasmSegmentation::Run()
 	leFilter->SetExtractionRegion(lRegion);
 	leFilter->SetInput( nuc );
 
-	DataCastType::Pointer dFilter = DataCastType::New();
-	dFilter->SetInput( deFilter->GetOutput() );
 	LabelCastType::Pointer lFilter = LabelCastType::New();
 	lFilter->SetInput( leFilter->GetOutput() );
 	try
 	{
-		dFilter->Update();
 		lFilter->Update();
 	}
 	catch( itk::ExceptionObject & excep )
@@ -139,9 +185,9 @@ bool CytoplasmSegmentation::Run()
 		return false;
 	}
 
-	WholeCellSeg *whole_cell = new WholeCellSeg;
 	whole_cell->set_nuc_img( lFilter->GetOutput() );
-	whole_cell->set_cyt_img( dFilter->GetOutput() );
+	//**********************************
+	//Add code to set other params
 	//whole_cell->set_parameters(params[6]);
 	whole_cell->RunBinarization();
 	whole_cell->RunSegmentation();

@@ -48,22 +48,23 @@ public:
 	CytoplasmSegmentation();
 
 	bool LoadInputs(std::string datafname, std::string nucfname, int nucDataChNumber = 0, int nucLabChNumber = 0);	//Load the input image from a file
-	bool SetDataInput(ftk::Image::Pointer inImg, std::string fname, int chNumber = 0);	//Pass a pointer to the already loaded image
+	bool SetDataInput(ftk::Image::Pointer inImg, std::string fname, int cytNumber = -1, int memNumber = -1 );	//Pass a pointer to the already loaded image
 	bool SetNucleiInput(ftk::Image::Pointer lbImg, std::string fname, int chNumber = 0);
-
+	void RemoveStromalCells(bool input);
 	bool Run();
 
 	bool SaveOutputImage(std::string fname = "");			//Save the output image
 
 private:
-	std::string dataFilename;			//Name of the file that the data came from
-	ftk::Image::Pointer dataImage;		//The data image
-	int channelNumber;					//Use this channel from the dataImage for segmentation
-	std::string nucLabelFilename;		//Name of the file that is the nuclear label image
-	ftk::Image::Pointer labelImage;		//my label image (I will append the cyto label image)
-	int nucChannelNumber;
-	int cytoChannelNumber;
-	std::string cytoLabelFilename;		//The label image of cytoplasm channel
+	std::string dataFilename;				//Name of the file that the data came from
+	ftk::Image::Pointer dataImage;			//The data image
+	int cytchannelNumber,memchannelNumber;	//Use this channel from the dataImage for segmentation
+	std::string nucLabelFilename;			//Name of the file that is the nuclear label image
+	ftk::Image::Pointer labelImage;			//my label image (I will append the cyto label image)
+	int nucChannelNumber;					//Input Nucleus Labeled Image
+	int cytoChannelNumber;					//Output Labeled Image
+	std::string cytoLabelFilename;			//The label image of cytoplasm channel
+	bool removestromcells;
 };
 
 }  // end namespace ftk

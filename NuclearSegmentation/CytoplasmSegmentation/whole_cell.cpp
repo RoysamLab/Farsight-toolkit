@@ -27,8 +27,8 @@ WholeCellSeg::WholeCellSeg(){
 	scaling = 255;
 	mem_scaling = 1;
 	use_mem_img = 0; // Use gradient information from a membrane marker channel
-	draw_real_bounds = 1;
-	draw_synth_bounds = 0;
+	draw_real_bounds = 0;
+	draw_synth_bounds = 1;
 	radius_of_synth_bounds = 20;
 	remove_small_objs = 0;
 	bin_done = 0;
@@ -44,12 +44,14 @@ WholeCellSeg::~WholeCellSeg(){
 
 //Set Parameters
 void WholeCellSeg::set_parameters ( int *parameters ){
-	shift_bin = *parameters; parameters++;
+	draw_synth_bounds = *parameters; parameters++;
+	use_mem_img = *parameters; parameters++;
+	/*shift_bin = *parameters; parameters++;
 	num_levels = *parameters; parameters++;
 	num_levels_incl = *parameters; parameters++;
 	scaling = *parameters; parameters++;
 	mem_scaling = *parameters; parameters++;
-	use_mem_img = *parameters;
+	use_mem_img = *parameters;*/
 }
 
 void WholeCellSeg::RunBinarization(){

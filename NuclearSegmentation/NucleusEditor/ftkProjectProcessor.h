@@ -40,7 +40,7 @@ namespace ftk
 class ProjectProcessor
 {
 public:
-	typedef struct { ftk::ProjectDefinition::TaskType type; int inputChannel; bool done; } Task;
+	typedef struct { ftk::ProjectDefinition::TaskType type; int inputChannel1; int inputChannel2; bool done; } Task;
 	ProjectProcessor();
 
 	//Steps to use
@@ -58,13 +58,13 @@ public:
 	
 protected:
 	//Tasks I can do:
-	bool SegmentNuclei(int nucChannel);					//Segment nucChannel as Nuclei & Compute Intrinsic Features
-	bool SegmentCytoplasm(int cytChannel);				//Segment Cytoplasm Channel & Compute Intrinsic Features
+	bool SegmentNuclei(int nucChannel);						//Segment nucChannel as Nuclei & Compute Intrinsic Features
+	bool SegmentCytoplasm(int cytChannel, int memChannel);	//Segment Cytoplasm Channel & Compute Intrinsic Features
 	bool ComputeAssociations(void);						//Compute Associative Measures
-	void Classify(void);								//Classify Cells
-	void ComputeAnalyteMeasures(void);					//Compute Analyte Measures by Class
+	void Classify(void);									//Classify Cells
+	void ComputeAnalyteMeasures(void);						//Compute Analyte Measures by Class
 
-	std::set<int> GetOnIntrinsicFeatures(void);			//Return the list of intrinsic features to calculate
+	std::set<int> GetOnIntrinsicFeatures(void);				//Return the list of intrinsic features to calculate
 
 	ftk::Image::Pointer inputImage;
 	ftk::Image::Pointer outputImage;

@@ -58,10 +58,11 @@ void ProjectProcessor::Initialize(void)
 		switch(t.type)
 		{
 		case ProjectDefinition::NUCLEAR_SEGMENTATION:
-			t.inputChannel = definition->FindInputChannel("NUCLEAR");
+			t.inputChannel1 = definition->FindInputChannel("NUCLEAR");
 			break;
 		case ProjectDefinition::CYTOPLASM_SEGMENTATION:
-			t.inputChannel = definition->FindInputChannel("CYTOPLASM");
+			t.inputChannel1 = definition->FindInputChannel("CYTOPLASM");
+			t.inputChannel2 = definition->FindInputChannel("MEMBRANE");
 			break;
 		case ProjectDefinition::RAW_ASSOCIATIONS:
 			break;
@@ -87,10 +88,10 @@ void ProjectProcessor::ProcessNext(void)
 	switch(tasks.at(thisTask).type)
 	{
 	case ProjectDefinition::NUCLEAR_SEGMENTATION:
-		taskDone = SegmentNuclei(tasks.at(thisTask).inputChannel);
+		taskDone = SegmentNuclei(tasks.at(thisTask).inputChannel1);
 		break;
 	case ProjectDefinition::CYTOPLASM_SEGMENTATION:
-		taskDone = SegmentCytoplasm(tasks.at(thisTask).inputChannel);
+		taskDone = SegmentCytoplasm(tasks.at(thisTask).inputChannel1, tasks.at(thisTask).inputChannel2);
 		break;
 	case ProjectDefinition::RAW_ASSOCIATIONS:
 		taskDone = ComputeAssociations();
@@ -175,7 +176,7 @@ bool ProjectProcessor::SegmentNuclei(int nucChannel)
 	return true;
 }
 
-bool ProjectProcessor::SegmentCytoplasm(int cytChannel)
+bool ProjectProcessor::SegmentCytoplasm(int cytChannel, int memChannel)
 {
 	if(!inputImage || !outputImage || !table)
 		return false;
