@@ -44,6 +44,10 @@ typedef itk::Image< unsigned long int, 2 > ULongImageType;
 
 class WholeCellSeg{
 	unsigned short *bin_Image;
+	//Binarization Parameters
+	int shift_bin, num_levels, num_levels_incl, draw_real_bounds, draw_synth_bounds;
+	//Scaling and mem_scaling
+	int radius_of_synth_bounds, remove_small_objs, scaling, mem_scaling,use_mem_img;
 
 	//Flags
 	int nuc_im_set, cyt_im_set, mem_im_set, bin_done, seg_done;
@@ -57,10 +61,6 @@ class WholeCellSeg{
 	UShortImageType::Pointer seg_im_out;
 
 public:
-	//Binarization Parameters
-	int shift_bin, num_levels, num_levels_incl, draw_real_bounds, draw_synth_bounds;
-	//Scaling and mem_scaling
-	int radius_of_synth_bounds, remove_small_objs, scaling, mem_scaling,use_mem_img;
 	//Function to set parameters
 	void set_parameters ( int *parameters );
 

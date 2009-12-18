@@ -184,7 +184,23 @@ bool ProjectProcessor::SegmentCytoplasm(int cytChannel, int memChannel)
 	ftk::CytoplasmSegmentation * cytoSeg = new ftk::CytoplasmSegmentation();
 	cytoSeg->SetDataInput(inputImage, "data_image", cytChannel,memChannel);
 	cytoSeg->SetNucleiInput(outputImage, "label_image");		//Will append the result to outputImage
+
+	for(int i=0; i<(int)definition->cytoplasmParameters.size(); ++i)
+		cytoSeg->SetParameter(definition->cytoplasmParameters.at(i).name, int(definition->cytoplasmParameters.at(i).value));
+
 	cytoSeg->Run();
+
+	definition->cytoplasmParameters.clear();
+	std::vector<std::string> paramNames = cytoSeg->GetParameterNames();
+	for(int i=0; i<(int)paramNames.size(); ++i)
+	{	
+		ProjectDefinition::Parameter p;
+		p.name = paramNames.at(i);
+		p.value = cytoSeg->GetParameter(p.name);
+		definition->cytoplasmParameters.push_back(p);
+	}
+
+
 	delete cytoSeg;
 
 	std::cout << "Done CytoSeg\n";

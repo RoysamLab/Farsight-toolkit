@@ -44,14 +44,19 @@ WholeCellSeg::~WholeCellSeg(){
 
 //Set Parameters
 void WholeCellSeg::set_parameters ( int *parameters ){
-	/*draw_synth_bounds = *parameters; parameters++;
-	use_mem_img = *parameters; parameters++;
-	shift_bin = *parameters; parameters++;
+	/*List order from CytoplasmSegmetation.cpp
+	paramNames.push_back("draw_real_boundaries");				//0
+	paramNames.push_back("remove_stromal_cell_boundaries");		//1
+	paramNames.push_back("draw_synthetic_boundaries");			//2
+	paramNames.push_back("radius_of_synthetic_boundaries");		//3
+	paramNames.push_back("number_of_levels");					//4
+	paramNames.push_back("number_of_levels_in_foreground");		//5*/
+	draw_real_bounds = *parameters; parameters++;
+	remove_small_objs = *parameters; parameters++;
+	draw_synth_bounds = *parameters; parameters++;
+	radius_of_synth_bounds = *parameters; parameters++;
 	num_levels = *parameters; parameters++;
-	num_levels_incl = *parameters; parameters++;
-	scaling = *parameters; parameters++;
-	mem_scaling = *parameters; parameters++;
-	use_mem_img = *parameters;*/
+	num_levels_incl = *parameters;
 }
 
 void WholeCellSeg::RunBinarization(){

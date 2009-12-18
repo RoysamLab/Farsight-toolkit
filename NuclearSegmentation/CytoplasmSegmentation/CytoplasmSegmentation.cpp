@@ -32,15 +32,43 @@ CytoplasmSegmentation::CytoplasmSegmentation()
 {
 	dataFilename.clear();				//Name of the file that the data came from
 	dataImage = NULL;					//The data image
-	cytchannelNumber  = 0;				//Use this channel from the dataImage for segmentation
-	memchannelNumber = 0;				//Use this channel from the dataImage for segmentation
+	cytchannelNumber  = -1;				//Use this channel from the dataImage for segmentation
+	memchannelNumber = -1;				//Use this channel from the dataImage for segmentation
 	nucLabelFilename.clear();			//Name of the file that is the nuclear label image
 	labelImage = NULL;					//my label image (I will append the cytoplasm segmentation)
-	nucChannelNumber = 0;
-	cytoChannelNumber = 0;
+	nucChannelNumber = -1;
+	cytoChannelNumber = -1;
 	cytoLabelFilename.clear();			//The label image of cytoplasm channel
-	removestromcells = 1;
+
+	paramNames.push_back("draw_real_boundaries");				//0
+	paramNames.push_back("remove_stromal_cell_boundaries");		//1
+	paramNames.push_back("draw_synthetic_boundaries");			//2
+	paramNames.push_back("radius_of_synthetic_boundaries");		//3
+	paramNames.push_back("number_of_levels");					//4
+	paramNames.push_back("number_of_levels_in_foreground");		//5
+
+	//Defaults
+	params[3] = 12;
+	params[4] = 1;
+	params[5] = 1;
+
 }
+
+void CytoplasmSegmentation::SetParameter(std::string name, int value)
+{
+	for( int i=0; i<(int)paramNames.size(); ++i )
+		if( paramNames.at(i) == name )
+			params[i] = value;
+}
+
+int CytoplasmSegmentation::GetParameter(std::string name)
+{
+	for(int i=0; i<(int)paramNames.size(); ++i)
+		if(paramNames.at(i) == name)
+			return params[i];
+	return -1;
+}
+
 
 //Load the input images from files
 bool CytoplasmSegmentation::LoadInputs(std::string datafname, std::string nucfname, int nucDataChNumber, int nucLabChNumber )
@@ -115,6 +143,19 @@ bool CytoplasmSegmentation::Run()
 
 	WholeCellSeg *whole_cell = new WholeCellSeg;
 
+	/*List from constructor
+	paramNames.push_back("draw_real_boundaries");				//0
+	paramNames.push_back("remove_stromal_cell_boundaries");		//1
+	paramNames.push_back("draw_synthetic_boundaries");			//2
+	paramNames.push_back("radius_of_synthetic_boundaries");		//3
+	paramNames.push_back("number_of_levels");					//4
+	paramNames.push_back("number_of_levels_in_foreground");		//5*/
+
+	if( cytchannelNumber == -1 ){
+		params[0] = 0;
+		params[2] = 1;
+	}
+
 	if( cytchannelNumber > -1 ){
 		UCharImageType3D::Pointer data = dataImage->GetItkPtr<unsigned char>(0,cytchannelNumber);
 		DataExtractType::Pointer deFilter = DataExtractType::New();
@@ -136,8 +177,6 @@ bool CytoplasmSegmentation::Run()
 			return false;
 		}
 		whole_cell->set_cyt_img( dFilter->GetOutput() );
-		whole_cell->draw_real_bounds=1;
-		whole_cell->draw_synth_bounds=0;
 	}
 
 	if( memchannelNumber > -1 ){
@@ -161,7 +200,6 @@ bool CytoplasmSegmentation::Run()
 			return false;
 		}
 		whole_cell->set_mem_img( dFilter->GetOutput() );
-		whole_cell->use_mem_img=1;
 	}
 
 	UShortImageType3D::Pointer nuc = labelImage->GetItkPtr<unsigned short>(0,nucChannelNumber);
