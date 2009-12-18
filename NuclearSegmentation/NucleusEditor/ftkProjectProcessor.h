@@ -40,7 +40,7 @@ namespace ftk
 class ProjectProcessor
 {
 public:
-	typedef struct { ftk::ProjectDefinition::TaskType type; int inputChannel1; int inputChannel2; bool done; } Task;
+	typedef struct { ftk::ProjectDefinition::TaskType type; int inputChannel1; int inputChannel2; int inputChannel3; bool done; } Task;
 	ProjectProcessor();
 
 	//Steps to use

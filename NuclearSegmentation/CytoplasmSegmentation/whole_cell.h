@@ -21,7 +21,7 @@
 #include "itkCastImageFilter.h"
 #include "ftkCommon/itkLabelGeometryImageFilter.h"
 #include "itkLabelStatisticsImageFilter.h"
-
+//#include "itkImageFileWriter.h" 
 
 //LOCAL INCLUDES
 #include "NuclearSegmentation/yousef_core/cell_binarization/cell_binarization.h"

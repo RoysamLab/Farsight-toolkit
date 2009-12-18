@@ -61,8 +61,8 @@ void ProjectProcessor::Initialize(void)
 			t.inputChannel1 = definition->FindInputChannel("NUCLEAR");
 			break;
 		case ProjectDefinition::CYTOPLASM_SEGMENTATION:
-			t.inputChannel1 = definition->FindInputChannel("CYTOPLASM");
-			t.inputChannel2 = definition->FindInputChannel("MEMBRANE");
+			t.inputChannel2 = definition->FindInputChannel("CYTOPLASM");
+			t.inputChannel3 = definition->FindInputChannel("MEMBRANE");
 			break;
 		case ProjectDefinition::RAW_ASSOCIATIONS:
 			break;
@@ -91,7 +91,7 @@ void ProjectProcessor::ProcessNext(void)
 		taskDone = SegmentNuclei(tasks.at(thisTask).inputChannel1);
 		break;
 	case ProjectDefinition::CYTOPLASM_SEGMENTATION:
-		taskDone = SegmentCytoplasm(tasks.at(thisTask).inputChannel1, tasks.at(thisTask).inputChannel2);
+		taskDone = SegmentCytoplasm(tasks.at(thisTask).inputChannel2, tasks.at(thisTask).inputChannel3);
 		break;
 	case ProjectDefinition::RAW_ASSOCIATIONS:
 		taskDone = ComputeAssociations();
@@ -182,7 +182,7 @@ bool ProjectProcessor::SegmentCytoplasm(int cytChannel, int memChannel)
 		return false;
 
 	ftk::CytoplasmSegmentation * cytoSeg = new ftk::CytoplasmSegmentation();
-	cytoSeg->SetDataInput(inputImage, "data_image", cytChannel);
+	cytoSeg->SetDataInput(inputImage, "data_image", cytChannel,memChannel);
 	cytoSeg->SetNucleiInput(outputImage, "label_image");		//Will append the result to outputImage
 	cytoSeg->Run();
 	delete cytoSeg;
