@@ -218,7 +218,7 @@ void View3D::LoadTraces()
 void View3D::LoadImageData()
 {
 	QString trace = QFileDialog::getOpenFileName(this , "Load Trace Image Data", ".",
-		tr("Trace Image ( *.tiff *.tif *.pic *.PIC " ));
+		tr("Trace Image ( *.tiff *.tif *.pic *.PIC *.mhd" ));
 	if (!trace.isEmpty())
 	{
 		this->statusBar()->showMessage("Loading Image file");
@@ -277,7 +277,7 @@ void View3D::Initialize()
 	this->tobj->setMergeLineColor(.4);
 	this->Ascending = Qt::AscendingOrder;
 
-  //this->undoBuff = new bufferType;
+	this->undoBuff = new bufferType;
 	this->numDeleted = 0;
 	this->numMerged = 0;
 	this->numSplit = 0;
