@@ -50,10 +50,10 @@ public:
 	bool LoadInputs(std::string datafname, std::string nucfname, int nucDataChNumber = 0, int nucLabChNumber = 0);	//Load the input image from a file
 	bool SetDataInput(ftk::Image::Pointer inImg, std::string fname, int cytNumber = -1, int memNumber = -1 );	//Pass a pointer to the already loaded image
 	std::vector<std::string> GetParameterNames(){ return paramNames; };
-	void CytoplasmSegmentation::SetParameter(std::string name, int value);
+	void SetParameter(std::string name, int value);
 	bool SetNucleiInput(ftk::Image::Pointer lbImg, std::string fname, int chNumber = 0);
 	bool Run();
-	int CytoplasmSegmentation::GetParameter(std::string name);
+	int GetParameter(std::string name);
 
 	bool SaveOutputImage(std::string fname = "");			//Save the output image
 
