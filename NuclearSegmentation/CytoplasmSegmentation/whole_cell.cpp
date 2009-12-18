@@ -434,7 +434,6 @@ void WholeCellSeg::RealBoundaries(){
 	WatershedFilterType::Pointer watershedfilter = WatershedFilterType::New();
 	watershedfilter->SetInput1( image2 );
 	watershedfilter->SetInput2( nuclab_inp_int );
-	//watershedfilter->SetMarkWatershedLine( 0 );
 	watershedfilter->SetMarkWatershedLine( 1 );
 	watershedfilter->Update();
 
@@ -534,16 +533,16 @@ void WholeCellSeg::SyntheticBoundaries(){
 	nuclab_inp_int = castUSIntfilter->GetOutput();
 
 	IntImageType::Pointer image2=andfilter2->GetOutput();
-	//*********************************************
 	IteratorType1 pix_bufed2( image2, image2->GetRequestedRegion() );
 	pix_bufed2.GoToBegin();
 	IteratorType1 pix_bufed3( nuclab_inp_int, nuclab_inp_int->GetRequestedRegion() );
 	pix_bufed3.GoToBegin();
-	while( !pix_bufed2.IsAtEnd() )
+	while( !pix_bufed2.IsAtEnd() || !pix_bufed3.IsAtEnd() ){
 			if( !pix_bufed2.Get() )
 				if( !pix_bufed3.Get() )
 					pix_bufed2.Set( INT_MIN );
-					++pix_bufed2; ++pix_bufed3;
+			++pix_bufed2; ++pix_bufed3;
+	}
 
 //Draw synthetic boundaries using the seeded Watershed algorithm
 	WatershedFilterType::Pointer watershedfilter = WatershedFilterType::New();
@@ -581,7 +580,7 @@ void WholeCellSeg::SyntheticBoundaries(){
 	typedef itk::ImageFileWriter< UShortImageType > WriterType;
 	WriterType::Pointer writer = WriterType::New();
 	writer->SetFileName( "bin_info.tif" );
-	writer->SetInput( RescaleIntIO1->GetOutput() );//RescaleIntIO1--finalO/P
+	writer->SetInput( seg_im_out );//RescaleIntIO1--finalO/P
 	writer->Update();
 */
 
@@ -617,7 +616,6 @@ void WholeCellSeg::RemoveSmallObjs(){
 		nuclab_inp_cpy = castUSUSfilter->GetOutput();
 	}
 
-	//*********************************************
 	for( unsigned short i=0; i<=statsfilt->GetNumberOfLabels(); i++ ){
 		if( statsfilt->HasLabel(i) ){
 			labelindicestype indices1;

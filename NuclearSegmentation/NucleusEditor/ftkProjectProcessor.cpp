@@ -190,13 +190,15 @@ bool ProjectProcessor::SegmentCytoplasm(int cytChannel, int memChannel)
 	std::cout << "Done CytoSeg\n";
 
 	//Calc Features:
-	ftk::IntrinsicFeatureCalculator *iCalc = new ftk::IntrinsicFeatureCalculator();
-	iCalc->SetInputImages(inputImage,outputImage,cytChannel,1);
-	if(definition->intrinsicFeatures.size() > 0)
-		iCalc->SetFeaturesOn( GetOnIntrinsicFeatures() );
-	iCalc->SetFeaturePrefix("cyto_");
-	iCalc->Append(table); //Append features to the table
-	delete iCalc;
+	if( cytChannel > -1 ){
+		ftk::IntrinsicFeatureCalculator *iCalc = new ftk::IntrinsicFeatureCalculator();
+		iCalc->SetInputImages(inputImage,outputImage,cytChannel,1);
+		if(definition->intrinsicFeatures.size() > 0)
+			iCalc->SetFeaturesOn( GetOnIntrinsicFeatures() );
+		iCalc->SetFeaturePrefix("cyto_");
+		iCalc->Append(table); //Append features to the table
+		delete iCalc;
+	}
 
 	std::cout << "Done CytoFeats\n";
 
