@@ -132,37 +132,18 @@ View3D::View3D(int argc, char **argv)
     num_loaded++;
     }
 	if (num_loaded < 1)
-	{
-		std::string traceFile;
-		QString trace = QFileDialog::getOpenFileName(this , "Load Trace Data", ".",
-			tr(" TraceFile ( *.xml *.swc *.vtk " ));
-		if (!trace.isEmpty())
-		{
-			this->TraceFiles = trace.section('/',-1);
-			traceFile = trace.toStdString();
-			if(trace.endsWith("swc"))
-			{
-				this->tobj->ReadFromSWCFile((char*)traceFile.c_str());
-				tracesLoaded = true;
-			}
-			else if (trace.endsWith("xml"))
-			{
-				this->tobj->ReadFromRPIXMLFile((char*)traceFile.c_str());
-				tracesLoaded = true;
-			}
-			else if (trace.endsWith("vtk"))
-			{
-				this->tobj->ReadFromVTKFile((char*)traceFile.c_str());
-				tracesLoaded = true;
-			}
-		}//end if empty
+	{	
+		this->CreateBootLoader();
+		return;
 	}//end load
-	this->Initialize();
-	if (tracesLoaded)
-	{
-		this->ShowTreeData();
+	else{
+		
+		if (tracesLoaded)
+		{
+			this->ShowTreeData();
+		}
+		this->statusBar()->showMessage(tr("Ready"));
 	}
-	this->statusBar()->showMessage(tr("Ready"));
 }
 View3D::View3D(TraceObject *Traces)
 {
@@ -172,9 +153,55 @@ View3D::View3D(TraceObject *Traces)
 	this->ShowTreeData();
 	this->statusBar()->showMessage(tr("Trace Editor Started"));
 }
-void View3D::LoadTraces()
+void View3D::CreateBootLoader()
 {
-	std::string traceFile;
+	// Create a window that allows files to be loaded
+	this->bootLoadFiles = new QWidget;
+	this->BootTrace = new QPushButton("Trace",this->bootLoadFiles);
+	connect(this->BootTrace, SIGNAL(clicked()), this, SLOT(getTraceFile()));
+	this->BootImage = new QPushButton("Image",this->bootLoadFiles);
+	connect(this->BootImage, SIGNAL(clicked()), this, SLOT(getImageFile()));
+	this->BootSoma = new QPushButton("Somas", this->bootLoadFiles);
+	connect(this->BootSoma, SIGNAL(clicked()), this, SLOT(getSomaFile()));
+	this->GetAUserName =  new QLineEdit(this->bootLoadFiles);
+	this->GetAUserName->setText("default user");
+	this->okBoot = new QPushButton("Start",this->bootLoadFiles);
+	connect(this->okBoot, SIGNAL(clicked()), this, SLOT(OkToBoot()));
+	QFormLayout *LoadLayout = new QFormLayout(this->bootLoadFiles);
+	LoadLayout->addRow(tr("Trace File"), this->BootTrace);
+	LoadLayout->addRow(tr("Image File"), this->BootImage);
+	LoadLayout->addRow(tr("Somas File"), this->BootSoma);
+	LoadLayout->addRow(tr("User Name "), this->GetAUserName);
+	LoadLayout->addRow(tr("Somas File"), this->BootSoma);
+	LoadLayout->addRow(tr("Run Trace Editor"), this->okBoot);
+	this->bootLoadFiles->show();
+}
+void View3D::OkToBoot()
+{
+	if(!this->TraceFiles.isEmpty() || !this->Image.isEmpty() || !this->SomaFile.isEmpty())
+	{
+		this->UserName = this->GetAUserName->text();
+		this->Initialize();
+		if (!this->TraceFiles.isEmpty() )
+		{
+			this->ShowTreeData();
+		}
+		this->bootLoadFiles->hide();
+	}
+}
+QString View3D::getSomaFile()
+{
+	QString somaFile = QFileDialog::getOpenFileName(this , "Choose a Soma file to load", ".", 
+	  tr("Image File ( *.tiff *.tif *.pic *.PIC ) "));
+	if(!somaFile.isNull())
+	{
+		this->statusBar()->showMessage("Loading Soma Image");
+		this->readImg(somaFile.toStdString());
+	}
+	return somaFile;
+}
+QString View3D::getTraceFile()
+{	std::string traceFile;
 	QString trace = QFileDialog::getOpenFileName(this , "Load Trace Data", ".",
 		tr(" TraceFile ( *.xml *.swc *.vtk " ));
 	if (!trace.isEmpty())
@@ -183,18 +210,37 @@ void View3D::LoadTraces()
 		traceFile = trace.toStdString();
 		if(trace.endsWith("swc"))
 		{
-			this->statusBar()->showMessage("Loading swc file");
 			this->tobj->ReadFromSWCFile((char*)traceFile.c_str());
 		}
 		else if(trace.endsWith("xml"))
 		{
-			this->statusBar()->showMessage("Loading xml file");
 			this->tobj->ReadFromRPIXMLFile((char*)traceFile.c_str());
 		}
 		else if (trace.endsWith("vtk"))
 		{
 			this->tobj->ReadFromVTKFile((char*)traceFile.c_str());
 		}
+	}
+	return trace;
+}
+QString View3D::getImageFile()
+{
+	QString trace = QFileDialog::getOpenFileName(this , "Load Trace Image Data", ".",
+		tr("Trace Image ( *.tiff *.tif *.pic *.PIC *.mhd" ));
+	if (!trace.isEmpty())
+	{
+		this->Image = trace.section('/',-1);
+		std::string traceFile = trace.toStdString();
+		this->rayCast( (char*)traceFile.c_str());
+	}
+	return trace;
+}
+void View3D::LoadTraces()
+{
+	QString trace = this->getTraceFile();
+	if (!trace.isEmpty())
+	{
+		this->statusBar()->showMessage(tr("Loading Trace") + this->TraceFiles);
 		if (this->tobj->FeatureHeaders.size() >=1)
 		  {
 			 this->TreeModel = new TraceModel(this->tobj->GetTraceLines(), this->tobj->FeatureHeaders);
@@ -207,7 +253,6 @@ void View3D::LoadTraces()
 		this->UpdateLineActor();
 		this->UpdateBranchActor();
 		this->QVTK->GetRenderWindow()->Render();
-		this->statusBar()->showMessage(tr("Update Tree Plots"));
 		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 	}	
 	else
@@ -217,13 +262,10 @@ void View3D::LoadTraces()
 }
 void View3D::LoadImageData()
 {
-	QString trace = QFileDialog::getOpenFileName(this , "Load Trace Image Data", ".",
-		tr("Trace Image ( *.tiff *.tif *.pic *.PIC *.mhd" ));
+	QString trace = this->getImageFile();
 	if (!trace.isEmpty())
 	{
-		this->statusBar()->showMessage("Loading Image file");
-		std::string traceFile = trace.toStdString();
-		this->rayCast( (char*)traceFile.c_str());
+		this->statusBar()->showMessage("Loading Image file" + this->Image);
 		this->Renderer->AddActor(this->Volume);
 		this->AddVolumeSliders();
 		this->Rerender();
@@ -232,6 +274,19 @@ void View3D::LoadImageData()
 	else
 	{
 		this->statusBar()->showMessage("Please select an Image file");
+	}
+}
+void View3D::LoadSomaFile()
+{
+	QString somaFile = this->getSomaFile();
+	if(!somaFile.isNull())
+	{
+		if(this->VolumeActor!=NULL)
+		{
+			this->Renderer->AddVolume(this->VolumeActor);
+			this->QVTK->GetRenderWindow()->Render();
+			this->statusBar()->showMessage("Somas Rendered");
+		}
 	}
 }
 View3D::~View3D()
@@ -348,7 +403,7 @@ void View3D::CreateGUIObjects()
 	this->loadTraceImage->setStatusTip("Load an Image to RayCast Rendering");
 //Loading soma data
   this->loadSoma = new QAction("Load Somas", this->CentralWidget);
-   connect(this->loadSoma, SIGNAL(triggered()), this, SLOT(GetSomaFile()));
+   connect(this->loadSoma, SIGNAL(triggered()), this, SLOT(LoadSomaFile()));
 
  //Set up the buttons that the user will use to interact with this program. 
   this->ListButton = new QAction("List", this->CentralWidget);
@@ -522,14 +577,15 @@ void View3D::CreateActors()
   this->UpdateBranchActor();
   this->Renderer->AddActor(this->BranchActor);
  
-  if(this->Volume!=NULL)
-  {
-    this->Renderer->AddVolume(this->Volume);
-    this->AddVolumeSliders();
-  }
-
-  //this->Renderer->AddActor(this->VolumeActor);
-
+	if(this->Volume!=NULL)
+	{
+		this->Renderer->AddVolume(this->Volume);
+		this->AddVolumeSliders();
+	}
+	if(this->VolumeActor!=NULL)
+	{
+		this->Renderer->AddActor(this->VolumeActor);
+	}
   //sphere is used to mark the picks
   this->CreateSphereActor();
   Renderer->AddActor(this->SphereActor);
@@ -1369,22 +1425,6 @@ void View3D::SaveToFile()
 
 
 /*  Soma display stuff  */
-void View3D::GetSomaFile()
-{
-	QString somaFile = QFileDialog::getOpenFileName(this , "Choose a Soma file to load", ".", 
-	  tr("Image File ( *.tiff *.tif *.pic *.PIC ) "));
-	if(!somaFile.isNull())
-	{
-		this->statusBar()->showMessage("Loading Soma Image");
-		this->readImg(somaFile.toStdString());
-		if(this->VolumeActor!=NULL)
-		{
-			this->Renderer->AddVolume(this->VolumeActor);
-			this->QVTK->GetRenderWindow()->Render();
-			this->statusBar()->showMessage("Somas Rendered");
-		}
-	}
-}
 
 void View3D::AddContourThresholdSliders()
 {

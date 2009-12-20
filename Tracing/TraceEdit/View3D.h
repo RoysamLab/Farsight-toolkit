@@ -68,6 +68,7 @@ public:
 	View3D(int argc, char **argv);
 	View3D(TraceObject* Traces);
 	~View3D();
+	void CreateBootLoader();
 	void Initialize();
 	void CreateGUIObjects();
 	void CreateLayout();
@@ -118,12 +119,16 @@ public slots:
 	void SLine();
 	void LoadTraces();
 	void LoadImageData();
-	void GetSomaFile();
+	void LoadSomaFile();
 	void SetTraceType(int newType);
 
 	void UndoAction();
 	void RedoAction();
-
+//these are for bootloadfile
+	QString getTraceFile();
+	QString getImageFile();
+	QString getSomaFile();
+	void OkToBoot();
 
 protected slots:
 	void updateSelectionHighlights();
@@ -135,6 +140,16 @@ protected:
 
 private:
 
+
+	QString TraceFiles, Image, SomaFile, UserName, EditLog;
+	QWidget * bootLoadFiles;
+	bool isInitalized;
+	QPushButton * BootTrace;
+	QPushButton * BootSoma;
+	QPushButton * BootImage;
+	QPushButton * okBoot;
+	QLineEdit * GetAUserName;
+
 	//Declares an undoBuffer
 	typedef undoBuffer<std::pair<std::string, TraceObject> > bufferType;
 	bufferType *undoBuff;
@@ -143,9 +158,6 @@ private:
 	float lineWidth;
 	double SelectColor;
 	int numSplit, numDeleted, numMerged;
-	QString TraceFiles;
-	QString Image;
-	QString EditLog;
 	QLabel *SplitLabel, *DeleteLabel, *MergeLabel;
     //VTK render window embedded in a Qt widget
 	QVTKWidget *QVTK;	
@@ -156,10 +168,10 @@ private:
 	QToolBar *BranchToolBar;
 
 	//Qt widgets on the main window
-	QAction *loadTraceAction;
-	QAction *loadTraceImage;
 	QAction *saveAction;
 	QAction *exitAction;
+	QAction *loadTraceAction;
+	QAction *loadTraceImage;
 	QAction *loadSoma;
 	QAction *ListButton;
 	QAction *ClearButton;
