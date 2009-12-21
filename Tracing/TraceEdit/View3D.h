@@ -140,10 +140,10 @@ protected:
 
 private:
 
-
-	QString TraceFiles, Image, SomaFile, UserName, EditLog;
+	QTextDocument * EditLog;
+	QTextEdit * EditLogDisplay;
+	QString TraceFiles, Image, SomaFile, UserName;
 	QWidget * bootLoadFiles;
-	bool isInitalized;
 	QPushButton * BootTrace;
 	QPushButton * BootSoma;
 	QPushButton * BootImage;

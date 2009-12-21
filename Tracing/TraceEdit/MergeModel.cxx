@@ -48,8 +48,8 @@ void MergeModel::SetupHeaders()
 	headers.push_back("Gap Angle");
 	headers.push_back("Max Distance");
 	headers.push_back("Path Length");
-	headers.push_back("Smoothness");
-	headers.push_back("Cost");
+	headers.push_back("Tortuosity");
+	headers.push_back("Merging Cost");
 	//int numHeaders = headers.size();
 	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
 	for(int i=0; i<(int)headers.size(); ++i)

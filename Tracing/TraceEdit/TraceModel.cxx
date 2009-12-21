@@ -50,7 +50,7 @@ void TraceModel::stdHeaders()
 	this->headers.push_back("# of Bits");
 	this->headers.push_back("Path Length");
 	this->headers.push_back("Euclidian Length");
-	this->headers.push_back("Smoothness");
+	this->headers.push_back("Tortuosity");
 	this->headers.push_back("Radius");
 	this->headers.push_back("Volume");
 	this->headers.push_back("Type");

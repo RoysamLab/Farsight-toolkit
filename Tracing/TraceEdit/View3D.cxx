@@ -90,7 +90,7 @@ View3D::View3D(int argc, char **argv)
 	bool tracesLoaded = false;
 	//this->TraceFiles.clear();
 	this->Image.clear();
-	this->EditLog.clear();
+	this->EditLog = new QTextDocument(this);
   // load as many files as possible. Provide offset for differentiating types
   for(int counter=1; counter<argc; counter++)
     {
@@ -133,11 +133,12 @@ View3D::View3D(int argc, char **argv)
     }
 	if (num_loaded < 1)
 	{	
+		this->hide();
 		this->CreateBootLoader();
 		return;
 	}//end load
-	else{
-		
+	else
+	{		
 		if (tracesLoaded)
 		{
 			this->ShowTreeData();
@@ -172,14 +173,15 @@ void View3D::CreateBootLoader()
 	LoadLayout->addRow(tr("Image File"), this->BootImage);
 	LoadLayout->addRow(tr("Somas File"), this->BootSoma);
 	LoadLayout->addRow(tr("User Name "), this->GetAUserName);
-	LoadLayout->addRow(tr("Somas File"), this->BootSoma);
 	LoadLayout->addRow(tr("Run Trace Editor"), this->okBoot);
 	this->bootLoadFiles->show();
+	this->hide();
 }
 void View3D::OkToBoot()
 {
 	if(!this->TraceFiles.isEmpty() || !this->Image.isEmpty() || !this->SomaFile.isEmpty())
 	{
+		this->show();
 		this->UserName = this->GetAUserName->text();
 		this->Initialize();
 		if (!this->TraceFiles.isEmpty() )
@@ -187,6 +189,12 @@ void View3D::OkToBoot()
 			this->ShowTreeData();
 		}
 		this->bootLoadFiles->hide();
+	}
+	else
+	{
+		QMessageBox *bootFailed = new QMessageBox;
+		bootFailed->setText("There are no files to open. Please select a file to continue.");
+		bootFailed->show();
 	}
 }
 QString View3D::getSomaFile()
@@ -437,9 +445,9 @@ void View3D::CreateGUIObjects()
   this->root = new QAction("Set Root", this->CentralWidget);
 	connect(this->root, SIGNAL(triggered()), this, SLOT(SetRoots()));
 	this->root->setStatusTip("Solve Branch order by defining Root Trace Lines");
-  this->explodeTree = new QAction("Explode", this->CentralWidget);
+  this->explodeTree = new QAction("Break", this->CentralWidget);
   connect(this->explodeTree, SIGNAL(triggered()), this, SLOT( ExplodeTree()));
-  this->explodeTree->setStatusTip("Break tree into segments, Tree can be rebuilt using set root");
+  this->explodeTree->setStatusTip("Break tree into segments,aka Explode. Tree can be rebuilt using set root");
 
   this->UndoButton = new QAction("&Undo", this->CentralWidget);  
 	connect(this->UndoButton, SIGNAL(triggered()), this, SLOT(UndoAction()));
