@@ -821,6 +821,7 @@ void NucleusEditor::loadResult(QString fileName)
 	}
 	selection->clear();
 	segView->SetLabelImage(labImg, selection);
+	this->updateNucSeg();
 
 	projectFiles.output = fileName.toStdString();
 	projectFiles.outputSaved = true;
@@ -857,7 +858,7 @@ void NucleusEditor::loadImage(QString fileName)
 			myImg = NULL;
 	}
 	segView->SetChannelImage(myImg);
-
+	this->updateNucSeg();
 	projectFiles.input = fileName.toStdString();
 	projectFiles.inputSaved = true;
 }
@@ -1095,18 +1096,31 @@ void NucleusEditor::toggleCentroids(void)
 // EDITING SLOTS:
 //******************************************************************************************
 //******************************************************************************************
-void NucleusEditor::startEditing(void)
+void NucleusEditor::updateNucSeg(bool ask)
 {
-	if(!myImg || !labImg) return;
+	if(nucSeg)
+	{
+		segView->SetCenterMapPointer( 0 );
+		segView->SetBoundingBoxMapPointer( 0 );
+		delete nucSeg;
+		nucSeg = NULL;
+	}
+
+	if(!myImg || !labImg)
+		return;
 
 	int nucChannel = projectDefinition.FindInputChannel("NUCLEAR");
-	if(nucChannel == -1)
+	if(nucChannel == -1 && ask)
 	{
 		nucChannel=requestChannel(myImg);
 		projectDefinition.MakeDefaultNucleusSegmentation(nucChannel);
 	}
+	else
+	{
+		nucChannel=0;
+		projectDefinition.MakeDefaultNucleusSegmentation(nucChannel);
+	}
 
-	if(nucSeg) delete nucSeg;
 	nucSeg = new ftk::NuclearSegmentation();
 	nucSeg->SetInput(myImg,"nuc_img", nucChannel);
 	nucSeg->SetLabelImage(labImg,"lab_img");
@@ -1114,7 +1128,10 @@ void NucleusEditor::startEditing(void)
 
 	segView->SetCenterMapPointer( nucSeg->GetCenterMapPointer() );
 	segView->SetBoundingBoxMapPointer( nucSeg->GetBoundingBoxMapPointer() );
+}
 
+void NucleusEditor::startEditing(void)
+{
 	std::string log_entry = "NUCLEAR_SEGMENTATION\t";
 	log_entry += ftk::NumToString(nucSeg->GetNumberOfObjects()) + "\t";
 	log_entry += ftk::TimeStamp();
@@ -1126,12 +1143,6 @@ void NucleusEditor::startEditing(void)
 
 void NucleusEditor::stopEditing(void)
 {
-	segView->SetCenterMapPointer(0);//Remove the centermap pointer (because I'm about to delete the data structure
-	segView->SetBoundingBoxMapPointer(0);
-
-	if(nucSeg) delete nucSeg;
-	nucSeg = NULL;
-
 	setEditsEnabled(false);
 
 	std::string log_entry = "NUCLEAR_SEGMENTATION_VALIDATED\t";
@@ -1526,6 +1537,7 @@ void NucleusEditor::process()
 		selection->clear();
 		labImg = pProc->GetOutputImage();
 		segView->SetLabelImage(labImg,selection);
+		this->updateNucSeg();
 		table = pProc->GetTable();
 		projectFiles.outputSaved = false;
 		projectFiles.tableSaved = false;
@@ -1550,6 +1562,7 @@ void NucleusEditor::process()
 		projectFiles.definitionSaved = false;
 
 		deleteProcess();
+		this->updateNucSeg();
 		this->updateViews();
 	}
 	else		//Not done, so continue:

@@ -183,6 +183,7 @@ private:
 	void createStatusBar();
 	void createProcessToolBar();
 	void createPreprocessingMenu();
+	void updateNucSeg(bool ask = false);
 
 	int requestChannel(ftk::Image::Pointer img);	//Request a channel from this image
 	

@@ -789,11 +789,11 @@ void LabelImageViewQT::refreshBoundsImage(void)
 	if(channelImg)    info = channelImg->GetImageInfo();	//Get info of new image
 	else if(labelImg) info = labelImg->GetImageInfo();
 	else return;
-	int chs = (*info).numChannels;
+	//int chs = (*info).numChannels;
 	int h = (*info).numRows;
 	int w = (*info).numColumns;
-	int currentZ = vSpin->value();
-	int currentT = hSpin->value();
+	//int currentZ = vSpin->value();
+	//int currentT = hSpin->value();
 
 	boundsImage = QImage(w, h, QImage::Format_ARGB32);	
 	boundsImage.fill(qRgba(0,0,0,0));
@@ -879,7 +879,7 @@ void LabelImageViewQT::drawObjectIDs(QPainter *painter)
 	{
 		int id = (*it).first;
 		ftk::Object::Point point = (*it).second;
-		//if ( (currentZ == point.z) )
+		if ( (currentZ == point.z) )
 		if( currentZ >= ((*bBoxMap)[id]).min.z && currentZ <= ((*bBoxMap)[id]).max.z )
 		{
 			painter->setPen(colorForIDs);
@@ -900,7 +900,7 @@ void LabelImageViewQT::drawObjectCentroids(QPainter *painter)
 	std::map<int,ftk::Object::Point>::iterator it;
 	for ( it = centerMap->begin() ; it != centerMap->end(); ++it )
 	{
-		int id = (*it).first;
+		//int id = (*it).first;
 		ftk::Object::Point point = (*it).second;
 		if ( (currentZ == point.z) )
 		{
