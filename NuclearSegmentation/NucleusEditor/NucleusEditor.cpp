@@ -202,7 +202,7 @@ void NucleusEditor::createMenus()
 
 	saveDisplayAction = new QAction(tr("Save Display Image..."), this);
 	saveDisplayAction->setStatusTip(tr("Save displayed image to file"));
-	connect(saveDisplayAction, SIGNAL(triggered()), segView, SLOT(SaveDiplayImageToFile()));
+	connect(saveDisplayAction, SIGNAL(triggered()), segView, SLOT(SaveDisplayImageToFile()));
 	fileMenu->addAction(saveDisplayAction);
 
 	fileMenu->addSeparator();

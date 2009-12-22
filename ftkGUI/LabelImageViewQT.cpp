@@ -22,6 +22,7 @@ LabelImageViewQT::LabelImageViewQT(QWidget *parent)
   : QWidget(parent)
 {
 	this->setupUI();
+	this->SetColorsToDefaults();
 
 	channelImg = NULL;
 	labelImg = NULL;
@@ -43,15 +44,13 @@ LabelImageViewQT::LabelImageViewQT(QWidget *parent)
 	channelFlags.push_back(true);
 	channelWidget = NULL;
 
-	colorForSelections = Qt::yellow;	//Color used for boundary of selected object
-	colorForNormal = Qt::cyan;			//Color for unselected boundaries
-	colorForIDs = Qt::green;
+	classMap.clear();
+
 	selection = NULL;					//pointer to ObjectSelections class
 
 	setMouseTracking(true);				//Will emit the current mouse position!
 	rubberBand = NULL;					//For drawing a box!!
 	pointsMode = false;					//For collecting points
-
 }
 
 void LabelImageViewQT::setupUI(void)
@@ -132,6 +131,17 @@ void LabelImageViewQT::setupUI(void)
 	setWindowTitle(tr("Image Browser"));
 }
 
+void LabelImageViewQT::SetColorsToDefaults(void)
+{
+	//Default Colors:
+	colorForSelections = Qt::yellow;	//Color used for boundary of selected object
+	colorForBounds = Qt::cyan;			//Color for unselected boundaries
+	colorForIDs = Qt::green;			//Color for ID numbers
+
+	centroidColorTable.clear();
+	centroidColorTable.append(Qt::red);
+	
+}
 //***************************************************************************************
 // This is the original image that the segmentation came from
 //***************************************************************************************
@@ -202,6 +212,21 @@ void LabelImageViewQT::SetLabelImage(ftk::Image::Pointer img, ObjectSelection * 
 	refreshBoundsImage();
 }
 
+void LabelImageViewQT::SetClassMap(vtkSmartPointer<vtkTable> table, int column)
+{
+	classMap.clear();
+
+	if(column >= table->GetNumberOfColumns())
+		column = 0;
+
+	for(int i=0; i<table->GetNumberOfRows(); ++i)
+	{
+		classMap[table->GetValue(i,0).ToInt()] = table->GetValue(i,column).ToInt();
+	}
+
+	refreshBoundsImage();
+}
+
 void LabelImageViewQT::SetBoundsVisible(bool val)
 {
 	this->showBounds = val;
@@ -224,11 +249,13 @@ void LabelImageViewQT::SetCentroidsVisible(bool val)
 void LabelImageViewQT::SetCenterMapPointer(std::map<int, ftk::Object::Point> * cMap)
 {
 	centerMap = cMap;
+	this->update();
 }
 
 void LabelImageViewQT::SetBoundingBoxMapPointer(std::map<int, ftk::Object::Box> * bMap)
 {
 	bBoxMap = bMap;
+	this->update();
 }
 
 void LabelImageViewQT::ClearGets(void)
@@ -261,7 +288,7 @@ void LabelImageViewQT::Get2Points(void)
 	pointsMode = true;
 }
 
-void LabelImageViewQT::SaveDiplayImageToFile()
+void LabelImageViewQT::SaveDisplayImageToFile()
 {
 	if(!channelImg && !labelImg)
 		return;
@@ -830,7 +857,7 @@ void LabelImageViewQT::drawObjectBoundaries(QPainter *painter)
 		}
 		else
 		{
-			qcolor = colorForNormal;
+			qcolor = colorForBounds;
 		}
 
 		int v, v1, v2, v3, v4;
@@ -900,12 +927,18 @@ void LabelImageViewQT::drawObjectCentroids(QPainter *painter)
 	std::map<int,ftk::Object::Point>::iterator it;
 	for ( it = centerMap->begin() ; it != centerMap->end(); ++it )
 	{
-		//int id = (*it).first;
+		int id = (*it).first;
+		int cls = 1;
+		if(classMap.size() > 0)
+			cls = classMap[id];
+
+		QColor myColor = centroidColorTable.at(cls-1);
+		painter->setPen(myColor);
+		painter->setBrush(myColor);
+
 		ftk::Object::Point point = (*it).second;
 		if ( (currentZ == point.z) )
 		{
-			painter->setPen(Qt::red);
-			painter->setBrush(Qt::red);
 			//painter->drawRect(point.x - 2, point.y - 2, 5, 5);
 			painter->drawEllipse(point.x - 2, point.y - 2, 5, 5);
 		}

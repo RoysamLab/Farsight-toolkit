@@ -53,6 +53,9 @@ limitations under the License.
 #include <ftkCommon/ftkObject.h>
 #include "ObjectSelection.h"
 
+#include "vtkTable.h"
+#include "vtkSmartPointer.h"
+
 #include <iostream>
 #include <map>
 
@@ -72,9 +75,15 @@ public:
 	ftk::Image::Pointer GetLabelImage(){return labelImg;};
 	void SetCenterMapPointer(std::map<int, ftk::Object::Point> * cMap = NULL);
 	void SetBoundingBoxMapPointer(std::map<int, ftk::Object::Box> * bMap = NULL);
+	void SetClassMap(vtkSmartPointer<vtkTable> table, int column);
+	void ClearClassMap(void){ classMap.clear(); refreshBoundsImage();};
+	void SetColorForSelections(QColor color){ colorForSelections = color; refreshBoundsImage(); };
+	void SetColorForBounds(QColor color){ colorForBounds = color; refreshBoundsImage(); };
+	void SetColorForIDs(QColor color){ colorForIDs = color; refreshBoundsImage(); };
+	void SetColorMapForCentroids(QVector<QColor> table){ centroidColorTable = table; refreshBoundsImage(); };
 
 public slots:
-	void SaveDiplayImageToFile();
+	void SaveDisplayImageToFile();
 	void AdjustImageIntensity();
 	void SetBoundsVisible(bool val);
 	void SetIDsVisible(bool val);
@@ -86,6 +95,7 @@ public slots:
 	void goToSelection(void);
 	int GetCurrentZ(void){ return vSpin->value(); };
 	int GetCurrentT(void){ return hSpin->value(); };
+	void SetColorsToDefaults(void);
 
 signals:
 	void mouseAt(int x, int y, int z);
@@ -124,11 +134,12 @@ protected:
 
 	void scaleIntensity(QImage *img, int threshold, int offset);
 
-	void initGrayscaleColorTable();
+	void initGrayscaleColorTable(void);
 	QVector<QRgb> grayscaleColorTable;
 	QColor colorForSelections;
-	QColor colorForNormal;
+	QColor colorForBounds;
 	QColor colorForIDs;
+	QVector<QColor> centroidColorTable;
 
 	//UI Widgets:
 	QScrollArea *scrollArea;	//Where the image is displayed
@@ -152,6 +163,8 @@ protected:
 	ftk::Image::Pointer labelImg;
 	std::map<int, ftk::Object::Point> *	centerMap;
 	std::map<int, ftk::Object::Box> * bBoxMap;
+	std::map<int, int> classMap;
+
 	ftk::Image::Pointer channelImg;
 	ObjectSelection * selection;
 
