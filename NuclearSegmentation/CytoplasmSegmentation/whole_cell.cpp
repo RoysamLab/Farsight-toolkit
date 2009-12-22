@@ -625,17 +625,18 @@ void WholeCellSeg::RemoveSmallObjs(){
 		if( statsfilt->HasLabel(i) ){
 			labelindicestype indices1;
 			indices1 = geomfilt1->GetPixelIndices( i );
+			labelindicestype::iterator itPixind = indices1.begin();
 			if( !statsfilt->GetSum( i ) ){
 				IteratorType iterator ( seg_im_out, seg_im_out->GetRequestedRegion() );
-				for( int j=0; j<(int)indices1.size(); ++j ){
-					iterator.SetIndex( indices1[i] );
+				for( int j=0; j<(int)indices1.size(); ++j, ++itPixind ){
+					iterator.SetIndex( *itPixind );
 					iterator.Set( 0 );
 				}
 			}
 			else if( draw_real_bounds && draw_synth_bounds ){
 				IteratorType iterator ( nuclab_inp_cpy, nuclab_inp_cpy->GetRequestedRegion() );
-				for( int j=0; j<(int)indices1.size(); ++j ){
-					iterator.SetIndex( indices1[i] );
+				for( int j=0; j<(int)indices1.size(); ++j, ++itPixind ){
+					iterator.SetIndex( *itPixind );
 					iterator.Set( 0 );
 				}
 			}
