@@ -129,6 +129,7 @@ private slots:
 	//Views:
 	void toggleBounds();
 	void toggleIDs();
+	void toggleCentroids();
 	void CreateNewPlotWindow();
 	void CreateNewTableWindow();
 	void CreateNewHistoWindow();
@@ -207,6 +208,7 @@ private:
 	QMenu *viewMenu;
 	QAction *showBoundsAction;
 	QAction *showIDsAction;
+	QAction *showCentroidsAction;
 	QAction *newTableAction;
 	QAction *newScatterAction;
 	QAction *newHistoAction;

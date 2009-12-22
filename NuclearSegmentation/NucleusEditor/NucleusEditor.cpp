@@ -227,10 +227,19 @@ void NucleusEditor::createMenus()
 	showIDsAction = new QAction(tr("Show Object IDs"), this);
 	showIDsAction->setCheckable(true);
 	showIDsAction->setChecked(false);
-	showIDsAction->setStatusTip(tr("Show IDs at centroids of objects"));
+	showIDsAction->setStatusTip(tr("Show IDs of objects"));
 	showIDsAction->setShortcut(tr("Ctrl+I"));
 	connect(showIDsAction, SIGNAL(triggered()), this, SLOT(toggleIDs()));
 	viewMenu->addAction(showIDsAction);
+
+	showCentroidsAction = new QAction(tr("Show Object Centroids"), this);
+	showCentroidsAction->setCheckable(true);
+	showCentroidsAction->setChecked(false);
+	showCentroidsAction->setStatusTip(tr("Show Centroids of objects"));
+	//showCentroidsAction->setShortcut(tr(""));
+	connect(showCentroidsAction, SIGNAL(triggered()), this, SLOT(toggleCentroids()));
+	viewMenu->addAction(showCentroidsAction);
+
 
 	viewMenu->addSeparator();
 
@@ -1065,6 +1074,16 @@ void NucleusEditor::toggleIDs(void)
 		segView->SetIDsVisible(true);
 	else
 		segView->SetIDsVisible(false);
+}
+
+void NucleusEditor::toggleCentroids(void)
+{
+	if(!segView) return;
+
+	if( showCentroidsAction->isChecked() )
+		segView->SetCentroidsVisible(true);
+	else
+		segView->SetCentroidsVisible(false);
 }
 
 //******************************************************************************************

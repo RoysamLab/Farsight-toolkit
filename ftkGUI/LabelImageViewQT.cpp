@@ -26,9 +26,11 @@ LabelImageViewQT::LabelImageViewQT(QWidget *parent)
 	channelImg = NULL;
 	labelImg = NULL;
 	centerMap = NULL;
+	bBoxMap = NULL;
 
 	showBounds = true;
 	showIDs = false;
+	showCentroids = false;
 	
 	currentScale = 1;					//Image scaling and zooming variables:
 	ZoomInFactor = 1.25f;
@@ -209,6 +211,12 @@ void LabelImageViewQT::SetBoundsVisible(bool val)
 void LabelImageViewQT::SetIDsVisible(bool val)
 {
 	this->showIDs = val;
+	refreshBoundsImage();
+}
+
+void LabelImageViewQT::SetCentroidsVisible(bool val)
+{
+	this->showCentroids = val;
 	refreshBoundsImage();
 }
 
@@ -631,7 +639,7 @@ void LabelImageViewQT::paintEvent(QPaintEvent * event)
 
 	displayImage = baseImage;
 	QPainter painter(&displayImage);
-	if(labelImg && showBounds)
+	if(labelImg)
 	{
 		painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
 		painter.drawImage(0,0,boundsImage);
@@ -760,15 +768,16 @@ void LabelImageViewQT::selectionChange(void)
 
 void LabelImageViewQT::goToSelection(void)
 {
-	if(!centerMap) return;
+	if(!centerMap || !bBoxMap) return;
 
 	std::set<long> sels = selection->getSelections();
 	if(sels.size() != 1) return;
 
 	long id = *(sels.begin());
-	vSpin->setValue( ((*centerMap)[id]).z );
+	int visZ = vSpin->value();
 
-
+	if( visZ < ((*bBoxMap)[id]).min.z || visZ > ((*bBoxMap)[id]).max.z )
+		vSpin->setValue( ((*centerMap)[id]).z );
 }
 
 void LabelImageViewQT::refreshBoundsImage(void)
@@ -790,6 +799,26 @@ void LabelImageViewQT::refreshBoundsImage(void)
 	boundsImage.fill(qRgba(0,0,0,0));
 
 	QPainter painter(&boundsImage);
+	this->drawObjectBoundaries(&painter);
+	this->drawObjectIDs(&painter);
+	this->drawObjectCentroids(&painter);
+	this->repaint();
+}
+
+void LabelImageViewQT::drawObjectBoundaries(QPainter *painter)
+{
+	if(!showBounds) return;
+	if(!labelImg) return;
+
+	const ftk::Image::Info *info;
+	if(channelImg)    info = channelImg->GetImageInfo();	//Get info of new image
+	else if(labelImg) info = labelImg->GetImageInfo();
+	else return;
+	int chs = (*info).numChannels;
+	int h = (*info).numRows;
+	int w = (*info).numColumns;
+	int currentZ = vSpin->value();
+	int currentT = hSpin->value();
 
 	for(int ch = 0; ch < chs; ++ch)
 	{
@@ -818,30 +847,50 @@ void LabelImageViewQT::refreshBoundsImage(void)
 					v4 = (int)labelImg->GetPixel(currentT, ch, currentZ, i-1, j);
 					if(v!=v1 || v!=v2 || v!=v3 || v!=v4)
 					{
-						painter.setPen(qcolor);
+						painter->setPen(qcolor);
 						if(selection)
 						{
 							if(selection->isSelected(v))
 							{
-								painter.setPen(colorForSelections);
+								painter->setPen(colorForSelections);
 							}
 						}
-						painter.drawPoint(j,i);
+						painter->drawPoint(j,i);
 					}
 				}
 			}
 		}
 	}
-
-	this->drawObjectIDs(&painter);
-
-	this->repaint();
 }
 
 // SHOULD REWRITE THIS SO IT DOESN'T NEED CENTROID, JUST DRAWS ID
 void LabelImageViewQT::drawObjectIDs(QPainter *painter)
 {
 	if(!showIDs) return;
+	if(!labelImg) return;
+	if(!centerMap) return;
+	if(!bBoxMap) return;
+
+	int currentZ = vSpin->value();
+
+	//Iterate through each object and write its id at its centroid.
+	std::map<int,ftk::Object::Point>::iterator it;
+	for ( it = centerMap->begin() ; it != centerMap->end(); ++it )
+	{
+		int id = (*it).first;
+		ftk::Object::Point point = (*it).second;
+		//if ( (currentZ == point.z) )
+		if( currentZ >= ((*bBoxMap)[id]).min.z && currentZ <= ((*bBoxMap)[id]).max.z )
+		{
+			painter->setPen(colorForIDs);
+			painter->drawText(point.x + 2, point.y - 2, QString::number(id));
+		}
+	}
+}
+
+void LabelImageViewQT::drawObjectCentroids(QPainter *painter)
+{
+	if(!showCentroids) return;
 	if(!labelImg) return;
 	if(!centerMap) return;
 
@@ -855,8 +904,10 @@ void LabelImageViewQT::drawObjectIDs(QPainter *painter)
 		ftk::Object::Point point = (*it).second;
 		if ( (currentZ == point.z) )
 		{
-			painter->setPen(colorForIDs);
-			painter->drawText(point.x, point.y, QString::number(id));
+			painter->setPen(Qt::red);
+			painter->setBrush(Qt::red);
+			//painter->drawRect(point.x - 2, point.y - 2, 5, 5);
+			painter->drawEllipse(point.x - 2, point.y - 2, 5, 5);
 		}
 	}
 }
