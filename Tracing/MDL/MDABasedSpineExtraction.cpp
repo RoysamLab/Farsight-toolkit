@@ -121,6 +121,11 @@ int main(int argc, char *argv[])
 
   FILE *fclass_identify;  // this file is used to record the spine candidate' possible feature; 
 
+  FILE *foutSpineCandidate; // this file is used to record the spine candidate;
+
+
+ 
+
   if (argc < 14)
     {
       cout << argv[0] << " <data dir> <skel pt file> <vol file> <xs> <ys> <zs> "
@@ -179,6 +184,12 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
+  if ((foutSpineCandidate = fopen("Spine_Candiate_MedialResult.vtk ", "w")) == NULL)  
+  {
+    printf("Cannot open Spine_Candiate_MedialResult.vtk for writing\n");
+    exit(1);
+  }
+
   voxelNodeIndex = new int[sizeX*sizeY*sizeZ];
   int *nodeIndicesInitialized = new int[sizeX*sizeY*sizeZ];
   volin = (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN));
@@ -233,6 +244,12 @@ int main(int argc, char *argv[])
     fprintf(fout_Spine,"ASCII\n");
     fprintf(fout_Spine,"DATASET POLYDATA\n");
     fprintf(fout_Spine,"POINTS %d float\n",num_nodes);
+
+	fprintf(foutSpineCandidate,"# vtk DataFile Version 3.0\n");
+    fprintf(foutSpineCandidate,"MST of skel\n");
+    fprintf(foutSpineCandidate,"ASCII\n");
+    fprintf(foutSpineCandidate,"DATASET POLYDATA\n");
+    fprintf(foutSpineCandidate,"POINTS %d float\n",num_nodes);
    
   //reinitialize the file and variables used to loop through it
     fin.clear();
@@ -252,6 +269,7 @@ int main(int argc, char *argv[])
       voxelNodeIndex[idx] = num_nodes;
       // output the node positions to vtk file
       fprintf(fout_Spine,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z);  
+      fprintf(foutSpineCandidate,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z); 
       // Find all neighbor nodes within edgeRange
        for (kk = -edgeRange; kk <= edgeRange; kk++)
         {
@@ -431,7 +449,9 @@ int main(int argc, char *argv[])
   num_leaves = 0;
 
   // PRUNING short branches on the initial MST under certain threshold (e.g. 5)
-  msTree = morphGraphPrune(msTree, num_nodes, vertexPos, leaf_length);
+
+  // msTree = morphGraphPrune(msTree, num_nodes, vertexPos, leaf_length);
+
   //ONLY run this first!
 
   typedef property_map<Graph, vertex_index_t>::type IndexMap;
@@ -506,6 +526,15 @@ int main(int argc, char *argv[])
         mahalanobis_dist_minIndex = 0;
         // output the spine candidate feature sample;  
 		fprintf(fclass_identify, "%d  %f %f %f\n", -num_leaves, meanDensityBranch[0], length_leaf[0], meanVesselBranch[0]);
+        
+		if (branchChosen == 1)  
+		{
+		 for (j = 1; j <= vertsCurBr_Index2[0]; j++) 
+		 {
+			add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeSpineCandidate);   // add branch for the 1nd level
+            NumberNodesofSpine++;
+		  }
+		 }
 
       // ## Begin to check the 2nd level of branches located at BB
        int ind2Brch = 0;
@@ -542,7 +571,7 @@ int main(int argc, char *argv[])
           indVert = vertsCurBranch2[ind2Brch][j];
 		  // second level feature 
           fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
-
+         
           if (j==0)
             {
             indVert_last = indVert;
@@ -573,11 +602,22 @@ int main(int argc, char *argv[])
         mahalanobis_dist_nonSpine[ind2Brch]=mahalanobisDist(aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch], 0);
         // out put 
 		fprintf(fclass_identify, "%d  %f %f %f\n", -num_leaves, aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch]);      
-  
+     
+		for (j = 1; j <= vertsCurBr_Index2[ind2Brch]; j++) 
+		{
+			// test: add any branches to the backbone
+		add_edge(vertsCurBranch2[ind2Brch][j-1], vertsCurBranch2[ind2Brch][j], msTreeSpineCandidate);   // add branch for the 2nd level
+        NumberNodesofSpine++;
+		}
+
         } // End of 2nd level branch
 
       // ** Minimal MDL is solved by looking at each choice
       // 1. Empty model set is chosen (no branch)
+      
+
+     //----------------------------MDL fitness for spine --------------------------------------//
+
       MDL_minIndex = -1; // Indicate that empty model set is chosen
       sum_mahalanobis_nonSpine = 0;
       for (i = 0; i<= ind2Brch; i++)
@@ -604,30 +644,31 @@ int main(int argc, char *argv[])
           MDL_min = MDL;
           MDL_minIndex =  i;
           }
-        }
+        } //end for
     
       // Adding Spine model - Only add the branches with the minimal MDL
       if (MDL_minIndex >= 0)
         {
         for (j = 1; j <= vertsCurBr_Index2[0]; j++)
           {
-          add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeSpineCandidate); 
-          NumberNodesofSpine++;
+        //  add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeSpineCandidate); 
+        //  NumberNodesofSpine++;
           }
         if (MDL_minIndex >= 1)
           {
           for (j = 1; j <= vertsCurBr_Index2[MDL_minIndex]; j++)
             {
-            add_edge(vertsCurBranch2[MDL_minIndex][j-1],
-                     vertsCurBranch2[MDL_minIndex][j],  msTreeSpineCandidate);
-            NumberNodesofSpine++;
-            }
-          }
-        }
+           //  add_edge(vertsCurBranch2[MDL_minIndex][j-1],
+           //          vertsCurBranch2[MDL_minIndex][j],  msTreeSpineCandidate);
+           // NumberNodesofSpine++;
+            } // end for
+          }// end if
+        }// end if
 
       // 1. Empty model set is chosen (no branch)
       sum_mahalanobis_nonSpine = 0;
-      for (i = 0; i<= ind2Brch; i++)  {
+      for (i = 0; i<= ind2Brch; i++) 
+	  {
         sum_mahalanobis_nonSpine += mahalanobis_dist_nonSpine[i];
       }
 
@@ -637,19 +678,48 @@ int main(int argc, char *argv[])
       MDL_min = MDL;
 
       // 3. Two level branch model set, including 1st level and 2nd level branches
-      for (i = 1; i <= ind2Brch; i++)  {
+      for (i = 1; i <= ind2Brch; i++) 
+	  {
         MDL = sum_mahalanobis_nonSpine - mahalanobis_dist_nonSpine[i] + mahalanobis_dist[i];
-        if (MDL <  MDL_min) {
+        if (MDL <  MDL_min) 
+		{
           MDL_min = MDL;
           MDL_minIndex =  i;
         }
-      }
+      }// end for 
       fprintf(fout_MDL, "%10d %20f %20f\n", ind2Brch, sum_mahalanobis_nonSpine, MDL_min);
-    }    // End of each out edge
+
+    }    // End of each out edge 
+	
+
+  //----------------------------End MDL fitness for spine --------------------------------------//
+
   } // End of all vertice
   //msTreeBB = msTreeBB_buffer;
-
+ 
    fprintf(fclass_identify, "0 0 0 0 end");
+   
+  
+   // - Spine-Candidate Writer
+   line_count = 0;
+
+   for (tie(ei, ei_end) = edges(msTreeSpineCandidate); ei != ei_end; ++ei)
+     {
+     line_count++; // count the number of lines output in vtk file
+     }
+   fprintf(foutSpineCandidate,"LINES %d %d\n", line_count, line_count*3);
+
+   for (tie(ei, ei_end) = edges(msTreeSpineCandidate); ei != ei_end; ++ei)
+     { 
+       fprintf(foutSpineCandidate, "2 %ld %ld\n", source(*ei, msTreeSpineCandidate) - 1,
+             target(*ei, msTreeSpineCandidate) - 1);  
+     }
+
+
+   // --------  prune the spine andidate to get the finall spine
+   msTreeSpineCandidate = morphGraphPrune(msTreeSpineCandidate, num_nodes, vertexPos, leaf_length);
+
+
    // - Spine Writer
    line_count = 0;
    for (tie(ei, ei_end) = edges(msTreeSpineCandidate); ei != ei_end; ++ei)
@@ -683,8 +753,10 @@ int main(int argc, char *argv[])
   // release memory for malloc   by xiao liang
   free(volin);// = (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN));
   free(volvessel);// = (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN));
+  fclose(foutSpineCandidate);
   fclose(fout_Spine);
   fout_Spine = NULL;
+  foutSpineCandidate = NULL;
   volin = NULL;
   volvessel = NULL;
   fclose(fout_MDL);
