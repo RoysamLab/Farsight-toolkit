@@ -119,6 +119,8 @@ int main(int argc, char *argv[])
   double sum_mahalanobis_nonSpine;
   double alpha;
 
+  FILE *fclass_identify;  // this file is used to record the spine candidate' possible feature; 
+
   if (argc < 14)
     {
       cout << argv[0] << " <data dir> <skel pt file> <vol file> <xs> <ys> <zs> "
@@ -170,6 +172,12 @@ int main(int argc, char *argv[])
       printf("Cannot open %s for writing\n",argv[13]);
       exit(1);
       }
+  
+  if ((fclass_identify = fopen("CLASSIFIER_TRAINING.txt", "w")) == NULL)  
+  {
+    printf("Cannot open CLASSIFIER_TRAINING.txt for writing\n");
+    exit(1);
+  }
 
   voxelNodeIndex = new int[sizeX*sizeY*sizeZ];
   int *nodeIndicesInitialized = new int[sizeX*sizeY*sizeZ];
@@ -470,7 +478,10 @@ int main(int argc, char *argv[])
       for (j = 0; j <= vertsCurBr_Index2[0]; j++)
         {
         indVert = vertsCurBranch2[0][j];
-        if (j==0)
+		// output the locations 
+		fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
+        
+		if (j==0)
           {
           indVert_last = indVert;
           }
@@ -493,6 +504,8 @@ int main(int argc, char *argv[])
         mahalanobis_dist_nonSpine[0] = mahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 0); 
         mahalanobis_dist_min = mahalanobis_dist[0];
         mahalanobis_dist_minIndex = 0;
+        // output the spine candidate feature sample;  
+		fprintf(fclass_identify, "%d  %f %f %f\n", -num_leaves, meanDensityBranch[0], length_leaf[0], meanVesselBranch[0]);
 
       // ## Begin to check the 2nd level of branches located at BB
        int ind2Brch = 0;
@@ -527,6 +540,8 @@ int main(int argc, char *argv[])
         for (j = 0; j <= vertsCurBr_Index2[ind2Brch]; j++)
           {
           indVert = vertsCurBranch2[ind2Brch][j];
+		  // second level feature 
+          fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
 
           if (j==0)
             {
@@ -556,7 +571,9 @@ int main(int argc, char *argv[])
         // mahalanobis distance is based on features of two-level branches
         mahalanobis_dist[ind2Brch]    = mahalanobisDist(aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch], 1);
         mahalanobis_dist_nonSpine[ind2Brch]=mahalanobisDist(aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch], 0);
-
+        // out put 
+		fprintf(fclass_identify, "%d  %f %f %f\n", -num_leaves, aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch]);      
+  
         } // End of 2nd level branch
 
       // ** Minimal MDL is solved by looking at each choice
@@ -632,7 +649,7 @@ int main(int argc, char *argv[])
   } // End of all vertice
   //msTreeBB = msTreeBB_buffer;
 
-
+   fprintf(fclass_identify, "0 0 0 0 end");
    // - Spine Writer
    line_count = 0;
    for (tie(ei, ei_end) = edges(msTreeSpineCandidate); ei != ei_end; ++ei)
