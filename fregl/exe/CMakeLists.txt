@@ -39,7 +39,7 @@ ADD_EXECUTABLE( multi_channels_3D multi_channels_3D.cxx)
 TARGET_LINK_LIBRARIES( multi_channels_3D vnl ITKCommon ITKIO )
 
 ADD_EXECUTABLE( montage_blending montage_blending.cxx)
-TARGET_LINK_LIBRARIES( montage_blending fregl vnl ITKCommon ITKIO )
+TARGET_LINK_LIBRARIES( montage_blending fregl vil vul vnl ITKCommon ITKIO )
 
 ADD_EXECUTABLE( extract_stack_interfaces extract_stack_interfaces.cxx)
 TARGET_LINK_LIBRARIES( extract_stack_interfaces fregl vul ITKCommon ITKIO )
