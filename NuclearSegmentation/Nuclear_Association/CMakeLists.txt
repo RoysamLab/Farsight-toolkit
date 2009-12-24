@@ -1,8 +1,7 @@
 SET( SRCS
 	ftkNuclearAssociationRules.h
 	ftkNuclearAssociationRules.cpp
-	multithreshs.cpp
-	ec_feature.cpp
+	AssociationAuxFns.cpp
 )
 
 ADD_LIBRARY( Nuclear_Association ${SRCS} )
