@@ -39,4 +39,4 @@ unsigned short returnthresh( USImageType::Pointer input_image, int num_bins, int
 
 }
 
-#endif _MULTITHRESHS_CPP_
+#endif

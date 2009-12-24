@@ -82,4 +82,4 @@ std::vector<float> compute_ec_features( UShortImageType::Pointer input_image,  U
 	return quantified_numbers;
 }
 
-#endif _EC_FEATURES_CPP_
+#endif
