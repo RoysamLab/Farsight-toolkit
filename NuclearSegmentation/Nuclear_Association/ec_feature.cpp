@@ -27,8 +27,8 @@ std::vector<float> compute_ec_features( UShortImageType::Pointer input_image,  U
 	typedef itk::ImageRegionIteratorWithIndex< UShortImageType > IteratorType;
 	typedef GeometryFilterType::LabelIndicesType labelindicestype;
 
-	int size1 = input_image->GetLargestPossibleRegion().GetSize()[0];
-	int size2 = input_image->GetLargestPossibleRegion().GetSize()[1];
+	//int size1 = input_image->GetLargestPossibleRegion().GetSize()[0];
+	//int size2 = input_image->GetLargestPossibleRegion().GetSize()[1];
 
 	GeometryFilterType::Pointer geomfilt1 = GeometryFilterType::New();
 
@@ -43,9 +43,9 @@ std::vector<float> compute_ec_features( UShortImageType::Pointer input_image,  U
 
 	CastUSUSType::Pointer castUSUSfilter = CastUSUSType::New();
 
-	for( unsigned short i=0; i<=statsfilt->GetNumberOfLabels(); ++i ){
+	for( unsigned short i=0; (int)i <= statsfilt->GetNumberOfLabels(); ++i ){
 		std::vector<float> quantified_numbers_cell;
-		assert(quantified_numbers_cell.size() == number_of_rois);
+		//assert(quantified_numbers_cell.size() == number_of_rois);
 		for( int j=0; j<number_of_rois; ++j ) quantified_numbers_cell.push_back(0);
 		if( statsfilt->HasLabel(i) ){
 			double centroid_x = (double)(geomfilt1->GetCentroid(i)[0]);
