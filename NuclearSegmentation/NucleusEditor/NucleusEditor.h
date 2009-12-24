@@ -67,19 +67,8 @@
 #include "vtkQtTableView.h"
 
 //ITK Preprocessing includes:
-#include "itkGradientAnisotropicDiffusionImageFilter.h"
-#include "itkCastImageFilter.h"
-#include "itkMedianImageFilter.h"
-#include "itkSigmoidImageFilter.h"
-#include "itkGrayscaleErodeImageFilter.h"
-#include "itkGrayscaleDilateImageFilter.h"
-#include "itkBinaryBallStructuringElement.h" 
-#include "itkGrayscaleMorphologicalOpeningImageFilter.h"
-#include "itkGrayscaleMorphologicalClosingImageFilter.h"
-#include "itkResampleImageFilter.h"
-#include "itkAffineTransform.h"
-#include "itkNearestNeighborInterpolateImageFunction.h"
-#include "itkCurvatureAnisotropicDiffusionImageFilter.h"
+#include "ftkPreprocessDialog.h"
+#include "ftkPreprocess.h"
 
 class ParamsFileDialog;
 class MarginDialog;
@@ -152,15 +141,15 @@ private slots:
 
 	//***************************************************
 	// Preprocessing Menu
-	void setPreprocessingEnabled(bool val);
-	void AnisotropicDiffusion(void);
-	void MedianFilter(void);
-	void SigmoidFilter(void);
-	void GrayscaleErode(void);
-	void GrayscaleDilate(void);
-	void GrayscaleOpen(void);
-	void GrayscaleClose(void);
-	void CurvAnisotropicDiffusion(void);
+	 void setPreprocessingEnabled(bool val);
+		/*void AnisotropicDiffusion(void);
+	 */	void MedianFilter(void);
+	/* void SigmoidFilter(void);
+		void GrayscaleErode(void);
+		void GrayscaleDilate(void);
+		void GrayscaleOpen(void);
+		void GrayscaleClose(void);
+		void CurvAnisotropicDiffusion(void); */
 	//void Resample(void);
 	//*****************************************************
 
@@ -241,14 +230,14 @@ private:
 	//************************************************************************
 	//Preprocess menu
 	QMenu *PreprocessMenu;
-    QAction *AnisotropicAction;
+    //QAction *AnisotropicAction;
 	QAction *MedianAction;
-	QAction *SigmoidAction;
-	QAction *GSErodeAction;
-	QAction *GSDilateAction;
-	QAction *GSOpenAction;
-	QAction *GSCloseAction;
-	QAction *CurvAnisotropicAction;
+	/* QAction *SigmoidAction;
+		QAction *GSErodeAction;
+		QAction *GSDilateAction;
+		QAction *GSOpenAction;
+		QAction *GSCloseAction;
+		QAction *CurvAnisotropicAction; */
 	//QAction *ResampleAction;
 	vector<double> filterParams;
 	std::string FN;
@@ -326,59 +315,5 @@ private:
 	ftk::ProjectProcessor *myProc;
 };
 
-
-//***************************************************************************
-//***************************************************************************
-// FOR PRE-PROCESSING:
-//***************************************************************************
-class PreprocessParamsDialog : public QDialog
-{
-	Q_OBJECT
-public:
-	PreprocessParamsDialog(QString lastPth, QVector<QString> chs, unsigned char id,QWidget *parent = 0);
-	QString getFileName();
-	int getChannelNumber();
-	vector<double> getParams(unsigned char id); 
-	
-
-private:
-	QLabel *channelLabel;
-	QComboBox *channelCombo;
-	QLabel *QTParamLabel1;
-	QLabel *QTParamLabel2;
-	QLabel *QTParamLabel3;
-	QLabel *QTParamLabel4;
-	QLabel *QTParamLabel5;
-	QLabel *QTParamLabel6;
-	QLabel *QTParamLabel7;
-	QLabel *QTParamLabel8;
-	QLabel *QTParamLabel9;
-
-	QLineEdit *QTParam1;
-	QLineEdit *QTParam2;	
-	QLineEdit *QTParam3;	
-	QLineEdit *QTParam4;	
-	QLineEdit *QTParam5;	
-	QLineEdit *QTParam6;	
-	QLineEdit *QTParam7;	
-	QLineEdit *QTParam8;	
-	QLineEdit *QTParam9;	
-	
-	QString lastPath;
-	QPushButton *okButton;
-	
-	double paramVal1;
-	double paramVal2;	
-	double paramVal3;
-	double paramVal4;
-	double paramVal5;
-	double paramVal6;
-	double paramVal7;
-	double paramVal8;
-	double paramVal9;
-		
-	vector<double> parameters;
-	
-};
 
 #endif

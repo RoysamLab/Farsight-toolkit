@@ -38,9 +38,15 @@ TrainingDialog::TrainingDialog(vtkSmartPointer<vtkTable> table, const char * tra
 	bLayout->addStretch(20);
 
 	saveButton = new QPushButton(tr("Save Model"));
-	connect(saveButton, SIGNAL(clicked()), this, SLOT(saveModel()));
+	connect(saveButton, SIGNAL(clicked()), this, SLOT(saveModel(void)));
 	saveButton->setDefault(false);
 	saveButton->setAutoDefault(false);
+	
+	loadButton = new QPushButton(tr("Load Model"));
+	connect(loadButton, SIGNAL(clicked()), this, SLOT(loadModel()));
+	loadButton->setDefault(false);
+	loadButton->setAutoDefault(false);
+	
 	quitButton = new QPushButton(tr("Cancel"));
 	connect(quitButton, SIGNAL(clicked()), this, SLOT(reject()));
 	quitButton->setDefault(false);
@@ -49,9 +55,11 @@ TrainingDialog::TrainingDialog(vtkSmartPointer<vtkTable> table, const char * tra
 	connect(doneButton, SIGNAL(clicked()), this, SLOT(accept()));
 	doneButton->setDefault(false);
 	doneButton->setAutoDefault(false);
+	
 
 	QHBoxLayout *endLayout = new QHBoxLayout;
-	endLayout->addStretch(20);
+	endLayout->addStretch(25);
+	endLayout->addWidget(loadButton);
 	endLayout->addWidget(saveButton);
 	endLayout->addWidget(quitButton);
 	endLayout->addWidget(doneButton);
@@ -120,10 +128,121 @@ void TrainingDialog::remClass(void)
 
 }
 
+
 void TrainingDialog::saveModel(void)
-{
-	QMessageBox::critical(this, tr("Oops"), tr("This function not yet implemented"));
+{	
+	
+	QString filename = QFileDialog::getSaveFileName(this, tr("Save Model As..."),lastPath, tr("TEXT(*.xml)"));
+	if(filename == "")
+		return;
+	lastPath = QFileInfo(filename).absolutePath();
+	
+	this->accept();
+	
+	if(training.size()<2)
+	{
+	QMessageBox::critical(this, tr("Oops"), tr("Please enter ids for atleast 2 classes to save the model"));
+	this->show();
+	return;
+	}
+	
+	
+	 //Load the model into a new table 
+	 vtkSmartPointer<vtkTable> new_table = vtkSmartPointer<vtkTable>::New();
+	 new_table->Initialize();
+	 
+	 
+	 //Add columns to the model table
+	 vtkSmartPointer<vtkVariantArray> model_data = vtkSmartPointer<vtkVariantArray>::New();
+	 model_data = m_table->GetRow(1);	
+	 for(int i =0;i<model_data->GetNumberOfValues();++i)
+				{
+					vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+					column->SetName( m_table->GetColumnName(i) );
+					new_table->AddColumn(column);
+			  }	  
+			  
+				
+					
+	//Add only the rows which have been selected by the user					
+	for(int row = 0; (int)row < m_table->GetNumberOfRows(); ++row)  
+		{	
+		  vtkSmartPointer<vtkVariantArray> model_data = vtkSmartPointer<vtkVariantArray>::New();
+		  if(m_table->GetValueByName(row, columnForTraining)!=-1)
+			   {	
+				for(int i =0;i<m_table->GetNumberOfColumns();++i)
+						{	
+							model_data->InsertNextValue(m_table->GetValue(row,i));
+						}
+						new_table->InsertNextRow(model_data);
+			   }
+		 }
+		
+	//Write the model into an XML file.	
+	bool ok = ftk::SaveTable(filename.toStdString(),new_table);
 }
+
+
+
+void TrainingDialog::loadModel(void)
+{	
+
+	 QString fileName  = QFileDialog::getOpenFileName(this, "Select training model to open", lastPath,
+									tr("TXT Files (*.xml)"));
+		if(fileName == "") 
+			return;
+	 	lastPath = QFileInfo(fileName).absolutePath();
+		model_table = ftk::LoadTable(fileName.toStdString());
+		if(!model_table) return;
+		//Append the data to the current table
+		this->Append();
+				
+}
+
+
+
+//Update the features in this table whose names match (sets doFeat)
+//Will creat new rows if necessary:
+void TrainingDialog::Append()
+{
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName(columnForTraining );
+		column->SetNumberOfValues( m_table->GetNumberOfRows() );
+		column->FillComponent(0,-1);
+		
+		vtkSmartPointer<vtkStringArray> discrim_column = vtkSmartPointer<vtkStringArray>::New();
+		discrim_column->SetName("Original/Model" );
+		discrim_column->SetNumberOfValues( m_table->GetNumberOfRows() );
+		
+		m_table->AddColumn(column);
+		m_table->AddColumn(discrim_column);		
+		
+		for(int row = 0; (int)row < m_table->GetNumberOfRows(); ++row)  
+			{
+				m_table->SetValueByName(row, columnForTraining, -1);
+				break;
+			}
+		
+		
+		for(int row = 0; (int)row < m_table->GetNumberOfRows(); ++row)  
+			{
+				m_table->SetValueByName(row, "Original/Model", "Original");
+			}
+
+		vtkSmartPointer<vtkVariantArray> model_data = vtkSmartPointer<vtkVariantArray>::New();
+		
+		
+		for(int row = 0; (int)row < model_table->GetNumberOfRows(); ++row)  
+			{
+				model_data = model_table->GetRow(row);
+				m_table->InsertNextRow(model_data); 
+				m_table->SetValueByName(m_table->GetNumberOfRows()-1, "Original/Model", "Model");
+			}
+
+ 		emit changedTable();		
+}
+
+
 
 void TrainingDialog::accept(void)
 {
@@ -139,6 +258,7 @@ void TrainingDialog::parseInputValues(void)
 {
 	training.clear();
 
+	
 	for(int c=0; c<inputValues.size(); ++c)
 	{
 		std::set<int> ids;
@@ -161,6 +281,7 @@ void TrainingDialog::updateTable(void)
 
 	//If need to create a new column do so now:
 	vtkAbstractArray * output = m_table->GetColumnByName(columnForTraining);
+	
 	if(output == 0)
 	{
 		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
@@ -185,3 +306,8 @@ void TrainingDialog::updateTable(void)
 
 	emit changedTable();
 }
+
+
+
+
+

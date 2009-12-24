@@ -27,17 +27,21 @@ limitations under the License.
 #include <QtGui/QScrollArea>
 #include <QtGui/QMessageBox>
 #include <QtGui/QLineEdit>
+#include <QtGui/QFileDialog>
 
 //VTK INCLUDES
 #include <vtkTable.h>
 #include <vtkSmartPointer.h>
 #include <vtkDoubleArray.h>
+#include <vtkStringArray.h>
 
 #include <iostream>
 #include <vector>
 #include <set>
 #include <list>
 #include <float.h>
+
+#include "ftkUtils.h"
 
 class TrainingDialog : public QDialog
 {
@@ -48,7 +52,7 @@ public:
 
 public slots:
 	  void accept();
-
+	  
 protected:
 
 signals:
@@ -58,8 +62,11 @@ private slots:
 	void addClass(void);
 	void remClass(void);
 	void saveModel(void);
+	void loadModel(void);
 	void updateTable(void);
 	void parseInputValues(void);
+	void Append(void);
+	
 
 private:
 	QVBoxLayout * inputsLayout;
@@ -69,11 +76,14 @@ private:
 	QPushButton * addButton;
 	QPushButton * delButton;
 	QPushButton * saveButton;
+	QPushButton * loadButton;
 	QPushButton * quitButton;
 	QPushButton * doneButton;
-
+	
+	QString lastPath;							//Last path that has been navigated to
 	std::vector< std::set<int> > training;
 	vtkSmartPointer<vtkTable> m_table;
+	vtkSmartPointer<vtkTable> model_table;
 	const char * columnForTraining;
 };
 

@@ -2,12 +2,13 @@ SET( GUI_SRCS
     	PlotWindow.cpp
     	ScatterView.cpp
     	TableWindow.cpp		
-   		HistoWindow.cpp
+   	HistoWindow.cpp
     	ImageBrowser5D.cpp
     	PatternAnalysisWizard.cpp
     	ObjectSelection.cpp
     	LabelImageViewQT.cpp
     	TrainingDialog.cpp
+	ftkPreprocessDialog.cpp
 )
 
 SET( GUI_HDRS
@@ -20,6 +21,7 @@ SET( GUI_HDRS
     	ObjectSelection.h
     	LabelImageViewQT.h
     	TrainingDialog.h
+	ftkPreprocessDialog.h
 )
 
 SET( GUI_UIS

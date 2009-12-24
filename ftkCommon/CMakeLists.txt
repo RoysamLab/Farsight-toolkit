@@ -5,6 +5,7 @@ SET( FTKCOMMON_SRCS
   ftkIntrinsicFeatures.cpp
   ftkObject.cpp 
   ftkObjectAssociation.cpp
+  ftkPreprocess.cpp
 )
 
 SET( FTKCOMMON_HDRS
@@ -17,6 +18,7 @@ SET( FTKCOMMON_HDRS
   ftkObjectAssociation.h
   itkLabelGeometryImageFilter.h
   itkLabelGeometryImageFilter.txx 
+  ftkPreprocess.h
 )
 
 
