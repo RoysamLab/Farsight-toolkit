@@ -17,10 +17,12 @@
 // if image has more than one:
 //******************************************************************************************
 
-ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, unsigned char id, QWidget *parent)
+ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, std::string id, QWidget *parent)
 : QDialog(parent)
 {
 
+	InitializeFilters();
+	filtername = id;
 	channelLabel = new QLabel("Choose Channel: ");
 	channelCombo = new QComboBox();
 	
@@ -36,11 +38,11 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, unsigned cha
 	layout->addWidget(channelLabel,0,0);
 	layout->addWidget(channelCombo,0,1);
 
-	 switch(id)
+
+switch(FilterValue[id])
 	{
-	
 	//Mean and Median Filter
-	case 0:case 1:  
+	case Filter1:case Filter2:  
 		QTParamLabel1 = new QLabel("Window Size - X");
 		QTParam1 = new QLineEdit(); 
 		
@@ -59,9 +61,8 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, unsigned cha
 		
 		 break;
 
-
 	//G and C Anisotropic Diffusion
-	case 2:case 3: 
+	case Filter3:case Filter4: 
 		QTParamLabel1 = new QLabel("TimeStep");
 		QTParam1 = new QLineEdit(); 
 		
@@ -81,7 +82,7 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, unsigned cha
 		 break;
 		 
 	//Sigmoid Filters		 
-	case 4: 
+	case Filter5: 
 		QTParamLabel1 = new QLabel("Alpha");
 		QTParam1 = new QLineEdit(); 
 		
@@ -106,7 +107,7 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, unsigned cha
 		 break;
 		 
 	//Grayscale Morphological Filters	 
-	case 5:case 6:case 7:case 8: 
+	case Filter6:case Filter7:case Filter8:case Filter9: 
 		QTParamLabel1 = new QLabel("Radius");
 		QTParam1 = new QLineEdit(); 
 		
@@ -116,7 +117,7 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, unsigned cha
 		 break;
 
 	//Smoothing Recursive Gaussian	 
-	case 9:
+	case Filter10:
 		
 		QTParamLabel1 = new QLabel("Sigma");
 		QTParam1 = new QLineEdit(); 
@@ -135,7 +136,7 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, unsigned cha
 		 break;
 	
 	//	Opening/Closing by Reconstruction 	 	 
-	case 10:case 11:
+	case Filter11:case Filter12:
 		
 		QTParamLabel1 = new QLabel("Radius");
 		QTParam1 = new QLineEdit(); 
@@ -153,13 +154,13 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, unsigned cha
 		layout->addWidget(QTParam6,3,1);
 		 break;
 	 
-	 case 12:
+	 case Filter13:
 	 
 	 //Normalize
 	 break;
 	 
 	 //Shift and Scale
-	 case 13:
+	 case Filter14:
 		QTParamLabel1 = new QLabel("Shift Parameter");
 		QTParam1 = new QLineEdit(); 
 		layout->addWidget(QTParamLabel1,1,0);
@@ -172,7 +173,7 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, unsigned cha
 		break;
 		
 	//Sobel Edge Detection	
-	case 14:	
+	case Filter15:	
 		QTParamLabel1 = new QLabel("Number of Threads");
 		QTParam1 = new QLineEdit(); 
 		layout->addWidget(QTParamLabel1,1,0);
@@ -180,7 +181,7 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, unsigned cha
 		break;
 	
 	//Curvature Flow Filter
-	case 15:
+	case Filter16:
 		QTParamLabel1 = new QLabel("TimeStep");
 		QTParam1 = new QLineEdit(); 
 		layout->addWidget(QTParamLabel1,1,0);
@@ -193,7 +194,7 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, unsigned cha
 		break;
 		 
 	//Min-Max Flow Filter
-	case 16:
+	case Filter17:
 		QTParamLabel1 = new QLabel("TimeStep");
 		QTParam1 = new QLineEdit(); 
 		layout->addWidget(QTParamLabel1,1,0);
@@ -211,37 +212,36 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, unsigned cha
 		layout->addWidget(QTParam3,3,1); 
 		 break;
 		 
-	case 17:
+	case Filter18:
 	//Resample
-	
-	case 18:
-	
-		QTParamLabel1 = new QLabel("Sigma Min");
-		QTParam1 = new QLineEdit(); 
+	break;
+	/* case 18:
 		
-		layout->addWidget(QTParamLabel1,1,0);
-		layout->addWidget(QTParam1,1,1);
-		
-		QTParamLabel2 = new QLabel("Sigma Max");
-		QTParam2 = new QLineEdit(); 
-		layout->addWidget(QTParamLabel2,2,0);
-		layout->addWidget(QTParam2,2,1);
-		
-		QTParamLabel3 = new QLabel("Number of Sigma Steps");
-		QTParam3 = new QLineEdit(); 
-		layout->addWidget(QTParamLabel3,3,0);
-		layout->addWidget(QTParam3,3,1);
-		
-		QTParamLabel4 = new QLabel("Number Of Iterations");
-		QTParam4 = new QLineEdit(); 
-		layout->addWidget(QTParamLabel4,4,0);
-		layout->addWidget(QTParam4,4,1); 
-		break;
-		
-	case 19:
+			QTParamLabel1 = new QLabel("Sigma Min");
+			QTParam1 = new QLineEdit(); 
+			
+			layout->addWidget(QTParamLabel1,1,0);
+			layout->addWidget(QTParam1,1,1);
+			
+			QTParamLabel2 = new QLabel("Sigma Max");
+			QTParam2 = new QLineEdit(); 
+			layout->addWidget(QTParamLabel2,2,0);
+			layout->addWidget(QTParam2,2,1);
+			
+			QTParamLabel3 = new QLabel("Number of Sigma Steps");
+			QTParam3 = new QLineEdit(); 
+			layout->addWidget(QTParamLabel3,3,0);
+			layout->addWidget(QTParam3,3,1);
+			
+			QTParamLabel4 = new QLabel("Number Of Iterations");
+			QTParam4 = new QLineEdit(); 
+			layout->addWidget(QTParamLabel4,4,0);
+			layout->addWidget(QTParam4,4,1); 
+			break;
+	 */		
+	case Filter19:
 	//Laplacian	
 	break;	
-	 
 	} 
 
 	okButton = new QPushButton(tr("OK"),this);
@@ -261,33 +261,119 @@ int ftkPreprocessDialog::getChannelNumber()
 }
 
 
-ftk::Image::Pointer ftkPreprocessDialog::getImage() 
-{
-
-		vector<double> fParams = this->getParams(16); 
+ftk::Image::Pointer ftkPreprocessDialog::getImage(void) 
+{		
+		
+		vector<double> fParams = this->getParams(filtername); 
 		ftkPreprocess *ftkpp = new ftkPreprocess();
 		ftkpp->myImg = this->myImg;
 		ftkpp->filterParams = fParams;
-		myImg = ftkpp->MinMaxCurvatureFlow();
-		return myImg;
+		
+		switch(FilterValue[filtername])
+		{
+		case Filter1:
+					myImg = ftkpp->MedianFilter();	
+					break;
+		case Filter2:
+					myImg = ftkpp->MeanFilter();	
+					break;			
+		case Filter3:
+					myImg = ftkpp->GADiffusion();	
+					break;			
+		case Filter4:
+					myImg = ftkpp->CurvAnisotropicDiffusion();	
+					break;
+		case Filter5:
+					myImg = ftkpp->SigmoidFilter();	
+					break;
+		case Filter6:
+					myImg = ftkpp->GrayscaleErode();	
+					break;		
+		case Filter7:
+					myImg = ftkpp->GrayscaleDilate();	
+					break;				
+		case Filter8:
+					myImg = ftkpp->GrayscaleOpen();	
+					break;
+		case Filter9:
+					myImg = ftkpp->GrayscaleClose();	
+					break;
+		case Filter10:
+					myImg = ftkpp->ThreeDSmoothingRGFilter();	
+					break;
+		case Filter11:
+					myImg = ftkpp->OpeningbyReconstruction();	
+					break;				
+		case Filter12:
+					myImg = ftkpp->ClosingbyReconstruction();	
+					break;
+		case Filter13:
+					myImg = ftkpp->NormalizeImage();	
+					break;
+		case Filter14:
+					myImg = ftkpp->ShiftScale();	
+					break;						
+		case Filter15:
+					myImg = ftkpp->SobelEdgeDetection();	
+					break;
+		case Filter16:
+					myImg = ftkpp->CurvatureFlow();	
+					break;
+		case Filter17:
+					myImg = ftkpp->MinMaxCurvatureFlow();	
+					break;
+		case Filter18:
+					myImg = ftkpp->Resample();	
+					break;
+		case Filter19:
+					myImg = ftkpp->LaplacianFilter();	
+					break;			
+		default:
+				    std::cout<<"Something went wrong. Please contact the System Administrator"<<std::endl;
+					break;
+		}									
 
+		return myImg;
 }	
 	
+void ftkPreprocessDialog::InitializeFilters(void) 
 
-vector<double> ftkPreprocessDialog::getParams(unsigned char id)
 {
+FilterValue["Median"] = Filter1;
+FilterValue["Mean"] = Filter2;
+FilterValue["GAnisotropicDiffusion"] = Filter3;
+FilterValue["CAnisotropicDiffusion"] = Filter4;
+FilterValue["Sigmoid"] = Filter5;
+FilterValue["GSErode"] = Filter6;
+FilterValue["GSDilate"] = Filter7;
+FilterValue["GSOpen"] = Filter8;
+FilterValue["GSClose"] = Filter9;
+FilterValue["SRGaussian"] = Filter10;//Needs work
+FilterValue["OpeningbyReconstruction"] = Filter11;
+FilterValue["ClosingbyReconstruction"] = Filter12;
+FilterValue["Normalize"] = Filter13;
+FilterValue["ShiftandScale"] = Filter14;		
+FilterValue["Sobel"] = Filter15;
+FilterValue["CurvatureFlow"] = Filter16;
+FilterValue["MinMax"] = Filter17;
+FilterValue["Resample"] = Filter18;
+FilterValue["Laplacian"] = Filter19;
+}
 
+
+
+vector<double> ftkPreprocessDialog::getParams(std::string id)
+{
 	paramVal1 = 0;
 	paramVal2 = 0;
 	paramVal3 = 0;
 	paramVal4 = 0; 
 	paramVal5 = 0; 
-
 	
-	 switch(id)
+    switch(FilterValue[id])
 	{
-	case 0:case 1:case 2:case 3:case 9:case 10:case 11:case 16: 
-		paramVal1 = QTParam1->text().toDouble();
+	case Filter1:case Filter2:case Filter3:case Filter4:case Filter10:case Filter11:case Filter12:case Filter17: 
+		paramVal1 =  QTParam1->text().toDouble();
 		paramVal2  = QTParam2->text().toDouble();
 		paramVal3  = QTParam3->text().toDouble();
 		
@@ -297,7 +383,7 @@ vector<double> ftkPreprocessDialog::getParams(unsigned char id)
 		break;
 
 
-	case 4:case 18: 
+	case Filter5: 
 		paramVal1 = QTParam1->text().toDouble();
 		paramVal2  = QTParam2->text().toDouble();
 		paramVal3  = QTParam3->text().toDouble();
@@ -310,16 +396,17 @@ vector<double> ftkPreprocessDialog::getParams(unsigned char id)
 		break;
 		
 		
-	case 5: case 6:case 7:case 8:case 14: 
+	case Filter6: case Filter7:case Filter8:case Filter9:case Filter15: 
 		paramVal1 = QTParam1->text().toDouble();
-		
 		parameters.push_back(paramVal1);
-
 		break;
 		
-	case 13:case 15: 
+	case Filter14:case Filter16: 
+		
 		paramVal1 = QTParam1->text().toDouble();
 		paramVal2  = QTParam2->text().toDouble();
+		
+		
 		
 		parameters.push_back(paramVal1);
 		parameters.push_back(paramVal2);
@@ -331,4 +418,7 @@ vector<double> ftkPreprocessDialog::getParams(unsigned char id)
 return this->parameters;
 
 }
+
+
+
 

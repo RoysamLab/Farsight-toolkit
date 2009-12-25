@@ -38,7 +38,7 @@
 #include "ftkCommon/ftkLabelImageToFeatures.h"
 #include "ftkCommon/ftkUtils.h"
 #include "ftkImage/ftkImage.h"
-#include "ftkGUI/PatternAnalysisWizard.h"
+//#include "ftkGUI/PatternAnalysisWizard.h"
 #include "ftkGUI/TableWindow.h"
 #include "ftkGUI/PlotWindow.h"
 #include "ftkGUI/ImageBrowser5D.h"
@@ -50,21 +50,27 @@
 
 // Preprocess
 //#include "ftkPreprocess.h"
+#include <map>
 
 
 class ftkPreprocessDialog : public QDialog
 {
 	Q_OBJECT
 public:
-	ftkPreprocessDialog(QVector<QString> chs, unsigned char id,QWidget *parent = 0);
-	int getChannelNumber();
-	ftk::Image::Pointer getImage();
-	std::vector<double> getParams(unsigned char id); 
+	ftkPreprocessDialog(QVector<QString> chs, std::string id,QWidget *parent = 0);
 	QLabel *channelLabel;
 	ftk::Image::Pointer myImg;
+	enum Filters {Filter1,Filter2,Filter3,Filter4,Filter5,Filter6,Filter7,Filter8,Filter9,Filter10,Filter11,Filter12,Filter13,Filter14,Filter15,Filter16,Filter17,Filter18,Filter19}; // Value-Defintions of the different String values
+	std::map<std::string, Filters> FilterValue;	// Map to associate the strings with the enum values
+	ftk::Image::Pointer getImage(void);
+	std::vector<double> getParams(std::string id); 
+	std::string filtername;
+
+	int getChannelNumber(void);
+	void InitializeFilters(void); 
 
 private:
-	
+
 	QComboBox *channelCombo;
 	QLabel *QTParamLabel1;
 	QLabel *QTParamLabel2;
@@ -76,6 +82,7 @@ private:
 	QLineEdit *QTParam2;	
 	QLineEdit *QTParam3;	
 	QLineEdit *QTParam4;		
+	
 	QCheckBox *QTParam5;	
 	QCheckBox *QTParam6;	
 	
@@ -87,9 +94,7 @@ private:
 	double paramVal3;
 	double paramVal4;
 	double paramVal5;
-	
 	std::vector<double> parameters;
-	
 };
 
 
