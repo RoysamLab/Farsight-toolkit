@@ -41,7 +41,8 @@ enum AssociationType {
       ASSOC_MIN = 1,
       ASSOC_MAX = 2,
       ASSOC_TOTAL = 3,
-      ASSOC_AVERAGE = 4
+      ASSOC_AVERAGE = 4,
+	  ASSOC_SURROUNDEDNESS = 5
 };
 
 class AssociationRule
@@ -56,13 +57,21 @@ public:
 	void SetOutDistance(int dist){outsideDistance = dist;};
 	void SetInDistance(int dist){insideDistance = dist;};
 	void SetUseWholeObject(bool useAll){useWholeObject = useAll;};
+	void SetUseBackgroundSubtraction(bool sBkgr){subBkground = sBkgr;};
+	void SetUseMultiLevelThresholding(bool umulthr){use_multiple_thresh = umulthr;};
+	void SetNumberOfThresholds(int numthr){num_threshs = numthr;};
+	void SetNumberIncludedInForeground(int numfg){num_in_fg = numfg;};
 	void SetAssocType(AssociationType tp ){assocType = tp;};
 	std::string GetRuleName() { return ruleName;};
 	std::string GetSegmentationFileNmae(){ return segFileName;};
 	std::string GetTargetFileNmae(){ return targFileName; };
 	int GetOutDistance(){ return outsideDistance; };
 	int GetInDistance(){ return insideDistance; };
-	bool IsUseWholeObject() {return useWholeObject; };
+	bool IsUseWholeObject() {return subBkground; };
+	bool IsUseBackgroundSubtraction() {return use_multiple_thresh; };
+	bool IsUseMultiLevelThresholding() {return use_multiple_thresh; };
+	int GetNumberOfThresholds(){ return num_threshs; };
+	int GetNumberIncludedInForeground(){ return num_in_fg; };
 	AssociationType GetAssocType() {return assocType; };
 private:
 	std::string ruleName;
@@ -71,6 +80,10 @@ private:
 	int outsideDistance;
 	int insideDistance;
 	bool useWholeObject;
+	bool subBkground;
+	bool use_multiple_thresh;
+	int num_threshs;
+	int num_in_fg;
 	AssociationType assocType;
 }; // end AssociationRule
 
@@ -86,7 +99,7 @@ public:
 	/* Contsructor */
 	ObjectAssociation(std::string segImageName, int numOfAssocRules);
 	/* Used to add a new association rule to the rules list */
-	void AddAssociation(std::string ruleName,std::string targFileName, int outsideDistance, int insideDistance,	bool useAllObject, int assocType);
+	void AddAssociation(std::string ruleName,std::string targFileName, int outsideDistance, int insideDistance,	bool useAllObject, bool subBkground, bool use_multiple_thresh, int num_threshs, int num_in_fg, int assocType);
 	/* I/O	*/
 	void WriteRulesToXML(std::string xmlFname);
 	int ReadRulesFromXML(std::string xmlFname);

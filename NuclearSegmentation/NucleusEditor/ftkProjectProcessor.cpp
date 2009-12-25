@@ -96,10 +96,10 @@ void ProjectProcessor::ProcessNext(void)
 	case ProjectDefinition::RAW_ASSOCIATIONS:
 		taskDone = ComputeAssociations();
 		break;
-	case ProjectDefinition::CLASSIFY:
+	case ProjectDefinition::ANALYTE_MEASUREMENTS:
 		taskDone = false;
 		break;
-	case ProjectDefinition::ANALYTE_MEASUREMENTS:
+	case ProjectDefinition::CLASSIFY:
 		taskDone = false;
 		break;
 	}

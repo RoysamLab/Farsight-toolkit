@@ -38,7 +38,11 @@ AssociationRule::AssociationRule(std::string name)
 	outsideDistance = 0;
 	insideDistance = 0;
 	useWholeObject = false;
-	assocType = ASSOC_AVERAGE;	
+	subBkground = false;
+	use_multiple_thresh = false;
+	num_threshs = 1;
+	num_in_fg = 1;
+	assocType = ASSOC_AVERAGE;
 }
 
 /* From here, we start defining the member functions of the ObjectAssociation class */
@@ -53,7 +57,7 @@ ObjectAssociation::ObjectAssociation(std::string AssocFName, int numOfRules)
 }
 
 /* Add association rules to the list of rules */
-void ObjectAssociation::AddAssociation(std::string ruleName,std::string targFileName, int outsideDistance, int insideDistance,	bool useAllObject, int assocType)
+void ObjectAssociation::AddAssociation(std::string ruleName,std::string targFileName, int outsideDistance, int insideDistance,	bool useAllObject, bool subBkground, bool use_multiple_thresh, int num_threshs, int num_in_fg, int assocType)
 {
 	AssociationRule *assocRule = new AssociationRule(ruleName);
 	assocRule->SetSegmentationFileNmae(segImageName);
@@ -61,6 +65,22 @@ void ObjectAssociation::AddAssociation(std::string ruleName,std::string targFile
 	assocRule->SetOutDistance(outsideDistance);
 	assocRule->SetInDistance(insideDistance);
 	assocRule->SetUseWholeObject(useAllObject);
+	assocRule->SetUseBackgroundSubtraction(subBkground);
+	if(subBkground)
+		assocRule->SetUseMultiLevelThresholding(use_multiple_thresh);
+	else
+		assocRule->SetUseMultiLevelThresholding(false);
+	if(subBkground&&use_multiple_thresh){
+		assocRule->SetNumberOfThresholds(num_threshs);
+		if( num_threshs >= num_in_fg )
+			assocRule->SetNumberOfThresholds(num_in_fg);
+		else
+			assocRule->SetNumberIncludedInForeground(num_threshs);
+	}
+	else{
+		assocRule->SetNumberOfThresholds(1);
+		assocRule->SetNumberIncludedInForeground(1);
+	}
 	switch(assocType)
 	{
 	case 1:
@@ -74,6 +94,9 @@ void ObjectAssociation::AddAssociation(std::string ruleName,std::string targFile
 		break;
 	case 4:
 		assocRule->SetAssocType(ASSOC_AVERAGE);
+		break;
+	case 5:
+		assocRule->SetAssocType(ASSOC_SURROUNDEDNESS);
 		break;
 	default:
 		assocRule->SetAssocType(ASSOC_AVERAGE);
@@ -109,7 +132,16 @@ void ObjectAssociation::WriteRulesToXML(std::string xmlFname)
 			element->SetAttribute("Use_Whole_Object","True");
 		else
 			element->SetAttribute("Use_Whole_Object","False");
-
+		if(assocRulesList[i].IsUseBackgroundSubtraction())
+			element->SetAttribute("Use_Background_Subtraction","True");
+		else
+			element->SetAttribute("Use_Background_Subtraction","False");
+		if(assocRulesList[i].IsUseMultiLevelThresholding())
+			element->SetAttribute("Use_MultiLevel_Thresholding","True");
+		else
+			element->SetAttribute("Use_MultiLevel_Thresholding","False");
+		element->SetAttribute("Number_Of_Thresholds",assocRulesList[i].GetNumberOfThresholds());
+		element->SetAttribute("Number_Included_In_Foreground",assocRulesList[i].GetNumberIncludedInForeground());
 		switch(assocRulesList[i].GetAssocType())
 		{
 		case ASSOC_MIN:
@@ -123,6 +155,9 @@ void ObjectAssociation::WriteRulesToXML(std::string xmlFname)
 			break;
 		case ASSOC_AVERAGE:
 			element->SetAttribute("Association_Type","AVERAGE");
+			break;
+		case ASSOC_SURROUNDEDNESS:
+			element->SetAttribute("Association_Type","SURROUNDEDNESS");
 			break;
 		default:
 			element->SetAttribute("Association_Type","AVERAGE");
@@ -182,7 +217,7 @@ int ObjectAssociation::ReadRulesFromXML(std::string xmlFname)
 			std::cout<<"First attribute in an Association rule must be its name";
 			return 0;
 		}
-		int numAttribs = 6;
+		int numAttribs = 10;
 		//an association rule object
 		AssociationRule *assocRule = new AssociationRule(atrib->ValueStr());		
 		while(atrib)
@@ -218,6 +253,36 @@ int ObjectAssociation::ReadRulesFromXML(std::string xmlFname)
 
 				numAttribs--;
 			}
+			else if(strcmp(atrib->Name(),"Use_Background_Subtraction")==0)
+			{
+				const char* V = atrib->Value();
+				if(strcmp(V,"True")==0)
+					assocRule->SetUseBackgroundSubtraction(true);
+				else
+					assocRule->SetUseBackgroundSubtraction(false);
+
+				numAttribs--;
+			}
+			else if(strcmp(atrib->Name(),"Use_MultiLevel_Thresholding")==0)
+			{
+				const char* V = atrib->Value();
+				if(strcmp(V,"True")==0)
+					assocRule->SetUseMultiLevelThresholding(true);
+				else
+					assocRule->SetUseMultiLevelThresholding(false);
+
+				numAttribs--;
+			}
+			else if(strcmp(atrib->Name(),"Number_Of_Thresholds")==0)
+			{
+				assocRule->SetNumberOfThresholds(atoi(atrib->ValueStr().c_str()));
+				numAttribs--;
+			}
+			else if(strcmp(atrib->Name(),"Number_Included_In_Foreground")==0)
+			{
+				assocRule->SetNumberIncludedInForeground(atoi(atrib->ValueStr().c_str()));
+				numAttribs--;
+			}
 			else if(strcmp(atrib->Name(),"Association_Type")==0)
 			{
 				const char* V = atrib->Value();
@@ -227,6 +292,8 @@ int ObjectAssociation::ReadRulesFromXML(std::string xmlFname)
 					assocRule->SetAssocType(ASSOC_MAX);
 				else if(strcmp(V,"TOTAL")==0)
 					assocRule->SetAssocType(ASSOC_TOTAL);
+				else if(strcmp(V,"SURROUNDEDNESS")==0)
+					assocRule->SetAssocType(ASSOC_SURROUNDEDNESS);
 				else 
 					assocRule->SetAssocType(ASSOC_AVERAGE);
 
@@ -255,7 +322,7 @@ int ObjectAssociation::ReadRulesFromXML(std::string xmlFname)
 
 /* Write the computer Associative features of all the objects to an XML file */
 void ObjectAssociation::WriteAssociativeFeaturesToXML(std::string xmlFname)
-{
+{//*************************************************************************Add code to write EC_array
 	TiXmlDocument doc;   
  
 	//Root node
@@ -317,7 +384,16 @@ void ObjectAssociation::PrintSelf()
 			std::cout<<"Use_Whole_Object("<<i<<"): True"<<std::endl;			
 		else
 			std::cout<<"Use_Whole_Object("<<i<<"): False"<<std::endl;
-
+		if(assocRulesList[i].IsUseBackgroundSubtraction())
+			std::cout<<"Use_Background_Subtraction("<<i<<"): True"<<std::endl;			
+		else
+			std::cout<<"Use_Background_Subtraction("<<i<<"): False"<<std::endl;
+		if(assocRulesList[i].IsUseMultiLevelThresholding())
+			std::cout<<"Use_MultiLevel_Thresholding("<<i<<"): True"<<std::endl;			
+		else
+			std::cout<<"Use_MultiLevel_Thresholding("<<i<<"): False"<<std::endl;
+		std::cout<<"Number_Of_Thresholds("<<i<<"): "<<assocRulesList[i].GetNumberOfThresholds()<<std::endl;		
+		std::cout<<"Number_Included_In_Foreground("<<i<<"): "<<assocRulesList[i].GetNumberIncludedInForeground()<<std::endl;		
 		switch(assocRulesList[i].GetAssocType())
 		{
 		case ASSOC_MIN:
@@ -331,6 +407,9 @@ void ObjectAssociation::PrintSelf()
 			break;
 		case ASSOC_AVERAGE:
 			std::cout<<"Association_Type("<<i<<"): AVERAGE"<<std::endl;
+			break;
+		case ASSOC_SURROUNDEDNESS:
+			std::cout<<"Association_Type("<<i<<"): SURROUNDEDNESS"<<std::endl;
 			break;
 		default:
 			std::cout<<"Association_Type("<<i<<"): AVERAGE"<<std::endl;

@@ -41,6 +41,12 @@
 #include <vtkVariantArray.h>
 #include <vtkTable.h>
 
+
+typedef itk::Image< unsigned short, 3 > LabImageType;
+typedef itk::Image< unsigned short, 3 > TargImageType;
+std::vector<float> compute_ec_features( TargImageType::Pointer input_image,  LabImageType::Pointer input_labeled, int number_of_rois );
+unsigned short returnthresh( TargImageType::Pointer input_image, int num_bin_levs, int num_in_fg );
+
 namespace ftk
 { 
 
@@ -57,6 +63,7 @@ public:
 private:
 	std::string inFilename;
 	std::string fPrefix;
+	static const int num_rois=8;
 };
 
 
@@ -78,8 +85,6 @@ public:
 	int GetNumOfObjects() {return numOfLabels;};
 private:
 	/* Private member variables */
-	typedef itk::Image< unsigned short, 3 > LabImageType;
-	typedef itk::Image< unsigned short, 3 > TargImageType;
 	typedef itk::Image< double, 3 > DistImageType;
 	typedef itk::ImageFileReader< LabImageType > ReaderType;
 	typedef itk::LabelGeometryImageFilter< LabImageType, LabImageType > LabelGeometryType;
@@ -91,7 +96,9 @@ private:
 	int x_Size;
 	int y_Size;
 	int z_Size;
-	int imDim;		
+	int imDim;
+
+	unsigned short thresh;
 
 
 private:

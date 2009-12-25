@@ -41,7 +41,7 @@
 #define MM_PI_2		1.57079632679489661923
 
 typedef unsigned short USPixelType;
-typedef itk::Image< USPixelType, 2 > UShortImageType;
+typedef itk::Image< USPixelType, 3 > UShortImageType;
 
 std::vector<float> compute_ec_features( UShortImageType::Pointer input_image,  UShortImageType::Pointer input_labeled, int number_of_rois ){
 

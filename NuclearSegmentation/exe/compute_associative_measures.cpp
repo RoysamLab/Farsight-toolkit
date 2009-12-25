@@ -26,8 +26,8 @@ int main(int argc, char* argv[])
 {
 	string segFName;
 	string xmlFname;
-	
-	
+
+
 	//ftk::ObjectAssociation *ObjAssoc;	
 	ftk::NuclearAssociationRules *ObjAssoc;
 	if(argc ==2)
@@ -45,8 +45,9 @@ int main(int argc, char* argv[])
 		
 		//Now, the user will add the rules (define them) one by one
 		string ruleName,targFileName;
-		int outsideDistance, insideDistance, assocType, useAllObj;
-		bool useAllObject; 
+		int outsideDistance, insideDistance, assocType, useAllObj, num_threshs, num_in_fg;
+		bool useAllObject,subBkground,use_multiple_thresh;
+		subBkground = false; use_multiple_thresh = false; num_threshs=1; num_in_fg=1;
 		for(int i=1; i<=atoi(argv[3]); i++)
 		{
 			cout<<"Enter Rule("<<i<<") Name:";
@@ -68,11 +69,23 @@ int main(int argc, char* argv[])
 				cout<<"Enter Inside Distance("<<i<<") value:";
 				cin>>insideDistance;
 			}
-			cout<<"Enter Association Type("<<i<<"):\n1=min\n2=max\n3=total\n4=average\n";
+			cout<<"Subtract Background("<<i<<") ?:(1=True,else=False)";
+			cin>>subBkground;
+			if( subBkground ){
+				cout<<"Use multiple level thresholding?("<<i<<") ?:(1=True,else=False)";
+				cin>>use_multiple_thresh;
+			}
+			if( use_multiple_thresh ){
+				cout<<"Number of levels to use in("<<i<<"):";
+				cin>>num_threshs;
+				cout<<"Number of levels to include in the foreground in("<<i<<"):";
+				cin>>num_in_fg;
+			}
+			cout<<"Enter Association Type("<<i<<"):\n1=min\n2=max\n3=total\n4=average\n5=surroundedness\n";
 			cin>>assocType;
 
             //Now having all the parameters of the ith rule defined, add this rule to the list of rules
-			ObjAssoc->AddAssociation(ruleName, targFileName, outsideDistance, insideDistance, useAllObject, assocType);
+			ObjAssoc->AddAssociation(ruleName, targFileName, outsideDistance, insideDistance, useAllObject, subBkground, use_multiple_thresh, num_threshs, num_in_fg, assocType );
 		}
 
 		//Now, write the association rules into an xml file (can be used at any later time)
@@ -84,7 +97,7 @@ int main(int argc, char* argv[])
 		std::cout<<"Usage2: compute_associative_measures <SegmentationResultsFileName> <AssocDefinitionXMLFileName> <NumberOfAssociationRule>"<<std::endl; 
 return 0;
 	}	
-	
+
 	ObjAssoc->PrintSelf();
 	ObjAssoc->Compute();
 	std::string inImageFName = argv[1];
@@ -93,4 +106,3 @@ return 0;
 	ObjAssoc->WriteAssociativeFeaturesToXML(outXMLFname.c_str());
 	return 1;
 }
-

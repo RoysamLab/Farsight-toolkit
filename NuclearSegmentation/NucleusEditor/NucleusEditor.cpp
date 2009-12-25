@@ -1409,7 +1409,7 @@ void NucleusEditor::CreateDefaultAssociationRules()
 	std::vector<std::string> targFileNames = myImg->GetFilenames();
 	std::string targFileName = targFileNames.at(projectDefinition.FindInputChannel("CYTOPLASM"));
 	//2. Create each association rule: name, filename of target image, outside distance, inside distance, whole object, type
-	objAssoc->AddAssociation("nuc_CK", targFileName, 0, 0, true, 3);
+	objAssoc->AddAssociation("nuc_CK", targFileName, 0, 0, true, false, false, 0, 0, 3);
 	//filename of the output xml and save:
 	QFileInfo inf2(QDir(lastPath), QFileInfo(fname).baseName() + "_assoc.xml");
 	//3. Write to file:

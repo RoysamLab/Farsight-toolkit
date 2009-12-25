@@ -54,7 +54,7 @@ WholeCellSeg::WholeCellSeg(){
 	use_mem_img = 0; // Use gradient information from a membrane marker channel
 	draw_real_bounds = 0;
 	draw_synth_bounds = 1;
-	radius_of_synth_bounds = 20;
+	radius_of_synth_bounds = 12;
 	remove_small_objs = 0;
 	bin_done = 0;
 	seg_done = 0;
@@ -85,7 +85,7 @@ void WholeCellSeg::set_parameters ( int *parameters ){
 }
 
 void WholeCellSeg::RunBinarization(){
-	if( draw_real_bounds || remove_small_objs )
+	if( (draw_real_bounds || remove_small_objs) && cyt_im_set )
 		this->BinarizationForRealBounds();
 }
 
@@ -295,11 +295,11 @@ void WholeCellSeg::BinarizationForRealBounds(){
 void WholeCellSeg::RunSegmentation(){
 	if( draw_real_bounds )
 		this->RealBoundaries();
-	if( draw_real_bounds && remove_small_objs )
+	if( draw_real_bounds && remove_small_objs && cyt_im_set )
 		this->RemoveSmallObjs();
 	if(	(draw_real_bounds && remove_small_objs && draw_synth_bounds) || (!draw_real_bounds && draw_synth_bounds) )
 		this->SyntheticBoundaries();
-	if( !draw_real_bounds && remove_small_objs )
+	if( !draw_real_bounds && remove_small_objs && cyt_im_set )
 		this->RemoveSmallObjs();
 }
 

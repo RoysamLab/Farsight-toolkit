@@ -242,7 +242,19 @@ void NuclearAssociationRules::Compute()
 		//read the ith target image (the image from which we need to compute the ith assoc. rule
 		ReaderType::Pointer reader2 = ReaderType::New();
 		reader2->SetFileName(assocRulesList[i].GetTargetFileNmae());
-		reader2->Update();		
+		reader2->Update();
+		if( assocRulesList[i].IsUseBackgroundSubtraction() ){
+			if( assocRulesList[i].IsUseMultiLevelThresholding() )
+				if( assocRulesList[i].GetNumberOfThresholds()>=assocRulesList[i].GetNumberIncludedInForeground() )
+					thresh=returnthresh( reader2->GetOutput(), assocRulesList[i].GetNumberOfThresholds(), assocRulesList[i].GetNumberIncludedInForeground() );
+				else
+					thresh=returnthresh( reader2->GetOutput(), assocRulesList[i].GetNumberOfThresholds(), assocRulesList[i].GetNumberOfThresholds() );
+			else
+				thresh=returnthresh( reader2->GetOutput(), 1, 1 );
+		}
+		else
+			thresh = 0;
+		//****************************************************Add rule for ECs
 		//cout<<"Computing Features For Association Rule "<<i+1<<": ";
 		for(int j=0; j<numOfLabels; j++)
 		{
@@ -487,10 +499,11 @@ float NuclearAssociationRules::FindMin(std::vector<int> LST)
 //compute total
 float NuclearAssociationRules::ComputeTotal(std::vector<int> LST)
 {
-	float tl = LST[0];
-	for(unsigned int i=1; i<LST.size(); i++)
-	{		
-		tl += LST[i];
+	float tl = 0;
+	for(unsigned int i=0; i<LST.size(); i++)
+	{
+		if( LST[i] >= thresh )
+			tl += LST[i];
 	}
 	return tl;
 }
@@ -498,14 +511,18 @@ float NuclearAssociationRules::ComputeTotal(std::vector<int> LST)
 //compute average
 float NuclearAssociationRules::ComputeAverage(std::vector<int> LST)
 {
-	float av = LST[0];
-	for(unsigned int i=1; i<LST.size(); i++)
-	{		
-		av += LST[i];
+	float av = 0;
+	float lst_sz = (float)LST.size();
+	for(unsigned int i=0; i<LST.size(); i++)
+	{
+		if( LST[i] >= thresh )
+			av += LST[i];
+		else
+			--lst_sz;
 	}
-	av/=LST.size();	
+	if( lst_sz )
+		av/=lst_sz;
 	return av;
 }
 
 } //end namespace ftk
-
