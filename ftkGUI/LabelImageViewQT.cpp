@@ -945,6 +945,34 @@ void LabelImageViewQT::drawObjectCentroids(QPainter *painter)
 	}
 }
 
+
+QVector<QColor> LabelImageViewQT::createColorTable()
+{
+	colorTable.clear();
+	
+	//Colors for 10 classes
+	colorTable.append(Qt::red);
+	colorTable.append(Qt::green);
+	colorTable.append(Qt::blue);
+	colorTable.append(Qt::cyan);
+	colorTable.append(Qt::yellow);
+	colorTable.append(Qt::magenta);
+	colorTable.append(Qt::gray);
+	colorTable.append(Qt::white);
+	colorTable.append(Qt::darkGreen);
+	colorTable.append(Qt::darkBlue);
+	
+	return colorTable;
+}
+
+	
+	
+
+
+
+
+
+
 /*
 void LabelImageViewQT::refreshFeatures(void)
 {

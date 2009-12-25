@@ -76,6 +76,7 @@ public:
 	void SetCenterMapPointer(std::map<int, ftk::Object::Point> * cMap = NULL);
 	void SetBoundingBoxMapPointer(std::map<int, ftk::Object::Box> * bMap = NULL);
 	void SetClassMap(vtkSmartPointer<vtkTable> table, int column);
+	QVector<QColor> createColorTable(void);
 	void ClearClassMap(void){ classMap.clear(); refreshBoundsImage();};
 	void SetColorForSelections(QColor color){ colorForSelections = color; refreshBoundsImage(); };
 	void SetColorForBounds(QColor color){ colorForBounds = color; refreshBoundsImage(); };
@@ -136,6 +137,7 @@ protected:
 
 	void initGrayscaleColorTable(void);
 	QVector<QRgb> grayscaleColorTable;
+	QVector<QColor> colorTable;
 	QColor colorForSelections;
 	QColor colorForBounds;
 	QColor colorForIDs;
