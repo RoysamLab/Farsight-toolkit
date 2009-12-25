@@ -1824,7 +1824,8 @@ void NucleusEditor:: MedianFilter()
 	 dialog->myImg = this->myImg;
  	if(dialog->exec())
 	 {
-	 segView->SetChannelImage(dialog->getImage());
+		 this->myImg = 	dialog->getImage(); 	
+		 segView->SetChannelImage(dialog->getImage());
 	 }
  }
 
@@ -1841,7 +1842,8 @@ void NucleusEditor:: AnisotropicDiffusion()
 	 dialog->myImg = this->myImg;
  	if(dialog->exec())
 	 {
-	 segView->SetChannelImage(dialog->getImage());
+		 this->myImg = 	dialog->getImage();	
+		 segView->SetChannelImage(dialog->getImage());
 	 }
  }
 
@@ -1858,7 +1860,8 @@ void NucleusEditor:: CurvAnisotropicDiffusion()
 	 dialog->myImg = this->myImg;
  	if(dialog->exec())
 	 {
-	 segView->SetChannelImage(dialog->getImage());
+		 this->myImg = 	dialog->getImage();		
+		 segView->SetChannelImage(dialog->getImage());
 	 }
  }
 
@@ -1876,7 +1879,8 @@ void NucleusEditor:: CurvAnisotropicDiffusion()
  	 dialog->myImg = this->myImg;
   	if(dialog->exec())
  	 {
- 	 segView->SetChannelImage(dialog->getImage());
+ 		 this->myImg = 	dialog->getImage();	
+		 segView->SetChannelImage(dialog->getImage());
  	 }
  }
 
@@ -1894,7 +1898,8 @@ void NucleusEditor:: CurvAnisotropicDiffusion()
  	 dialog->myImg = this->myImg;
   	if(dialog->exec())
  	 {
- 	 segView->SetChannelImage(dialog->getImage());
+ 		 this->myImg = 	dialog->getImage();	
+		 segView->SetChannelImage(dialog->getImage());
  	 }
  }
 
@@ -1912,7 +1917,8 @@ void NucleusEditor:: CurvAnisotropicDiffusion()
  	 dialog->myImg = this->myImg;
   	if(dialog->exec())
  	 {
- 	 segView->SetChannelImage(dialog->getImage());
+ 		 this->myImg = 	dialog->getImage();		
+		 segView->SetChannelImage(dialog->getImage());
  	 }
  }
 
@@ -1930,7 +1936,8 @@ void NucleusEditor:: CurvAnisotropicDiffusion()
  	 dialog->myImg = this->myImg;
   	if(dialog->exec())
  	 {
- 	 segView->SetChannelImage(dialog->getImage());
+ 		 this->myImg = 	dialog->getImage();		
+		 segView->SetChannelImage(dialog->getImage());
  	 }
  }
 
@@ -1947,6 +1954,7 @@ void NucleusEditor:: CurvAnisotropicDiffusion()
  	 dialog->myImg = this->myImg;
   	if(dialog->exec())
  	 {
- 	 segView->SetChannelImage(dialog->getImage());
+ 		 this->myImg = 	dialog->getImage();
+		 segView->SetChannelImage(dialog->getImage());
  	 }
  }
