@@ -1,17 +1,17 @@
-/* 
+/*
  * Copyright 2009 Rensselaer Polytechnic Institute
- * This program is free software; you can redistribute it and/or modify 
- * it under the terms of the GNU General Public License as published by 
- * the Free Software Foundation; either version 2 of the License, or 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
  * for more details.
- * 
- * You should have received a copy of the GNU General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
@@ -28,7 +28,7 @@
 //*******************************************************************************
 // NucleusEditor
 //
-// This widget is a main window for editing nuclei.  
+// This widget is a main window for editing nuclei.
 //********************************************************************************
 
 NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
@@ -66,9 +66,11 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	processThread = NULL;
 	table = NULL;
 
+	kplsRun = 0;
+
 	this->resize(800,800);
 	//Crashes when this is enabled!
-	//setAttribute ( Qt::WA_DeleteOnClose );	
+	//setAttribute ( Qt::WA_DeleteOnClose );
 }
 
 NucleusEditor::~NucleusEditor()
@@ -105,11 +107,11 @@ void NucleusEditor::createProcessToolBar()
 	processContinue->setEnabled(false);
 	connect(processContinue, SIGNAL(triggered()),this, SLOT(continueProcess()));
 	processToolbar->addAction(processContinue);
-	
+
     processProgress = new QProgressBar();
 	processProgress->setRange(0,0);
 	processProgress->setTextVisible(false);
-	processToolbar->addWidget(processProgress); 
+	processToolbar->addWidget(processProgress);
 
 	processTaskLabel = new QLabel;
 	processTaskLabel->setFixedWidth(250);
@@ -141,7 +143,7 @@ void NucleusEditor::createProcessToolBar()
 /*     modules should be defined as "private" operators in the main class.    */
 /*     The actual routines performing the operations (e.g., an image          */
 /*     thresholding operation) must be accessed from within the called module.*/
-/*	   Finally, after all these action's, we bind them to a "QActionGroup".       */ 
+/*	   Finally, after all these action's, we bind them to a "QActionGroup".       */
 /*----------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------*/
 void NucleusEditor::createMenus()
@@ -288,7 +290,7 @@ void NucleusEditor::createMenus()
 	connect(kplsAction, SIGNAL(triggered()), this, SLOT(startKPLS()));
 	classifyMenu->addAction(kplsAction);
 
-	//EDITING MENU	
+	//EDITING MENU
 	editMenu = menuBar()->addMenu(tr("&Editing"));
 
 	clearSelectAction = new QAction(tr("Clear Selections"), this);
@@ -320,13 +322,13 @@ void NucleusEditor::createMenus()
 	mergeAction = new QAction(tr("Merge Cells"), this);
 	mergeAction->setStatusTip(tr("Merge Cells"));
 	mergeAction->setShortcut(tr("Ctrl+M"));
-	connect(mergeAction, SIGNAL(triggered()), this, SLOT(mergeCells()));	
+	connect(mergeAction, SIGNAL(triggered()), this, SLOT(mergeCells()));
 	editMenu->addAction(mergeAction);
 
 	deleteAction = new QAction(tr("Delete Cells"), this);
 	deleteAction->setStatusTip(tr("Deletes the selected cells"));
 	deleteAction->setShortcut(tr("Ctrl+D"));
-	connect(deleteAction,SIGNAL(triggered()),this,SLOT(deleteCells()));	
+	connect(deleteAction,SIGNAL(triggered()),this,SLOT(deleteCells()));
 	editMenu->addAction(deleteAction);
 
 	splitZAction = new QAction(tr("Split Cell At Z"), this);
@@ -353,7 +355,7 @@ void NucleusEditor::createMenus()
 
 	// PRE-PROCESSING:
 	createPreprocessingMenu();
-	
+
 	//HELP MENU
 	helpMenu = menuBar()->addMenu(tr("Help"));
 	aboutAction = new QAction(tr("About"),this);
@@ -369,12 +371,19 @@ void NucleusEditor::createPreprocessingMenu()
 	// PRE-PROCESSING
 	//************************************************************************************************
     PreprocessMenu = menuBar()->addMenu(tr("&Preprocessing"));
-	
-	/* AnisotropicAction = new QAction(tr("Gradient Anisotropic Diffusion Filter"), this);
+
+
+	    MedianAction = new QAction(tr("Median Filter"), this);
+	   	MedianAction->setStatusTip(tr("Apply Median Filter "));
+	   	connect(MedianAction, SIGNAL(triggered()), this, SLOT(MedianFilter()));
+	   	PreprocessMenu->addAction(MedianAction);
+
+
+	   	AnisotropicAction = new QAction(tr("Gradient Anisotropic Diffusion Filter"), this);
 		AnisotropicAction->setStatusTip(tr("Apply Gradient Anisotropic Diffusion Filtering "));
 		connect(AnisotropicAction, SIGNAL(triggered()), this, SLOT(AnisotropicDiffusion()));
 		PreprocessMenu->addAction(AnisotropicAction);
-		
+
 		CurvAnisotropicAction = new QAction(tr("Curvature Anisotropic Diffusion Filter"), this);
 		CurvAnisotropicAction->setStatusTip(tr("Apply Curvature Anisotropic Diffusion Filtering "));
 		connect(CurvAnisotropicAction, SIGNAL(triggered()), this, SLOT(CurvAnisotropicDiffusion()));
@@ -389,27 +398,23 @@ void NucleusEditor::createPreprocessingMenu()
 		GSDilateAction->setStatusTip(tr("Apply Grayscale Dilation"));
 		connect(GSDilateAction, SIGNAL(triggered()), this, SLOT(GrayscaleDilate()));
 		PreprocessMenu->addAction(GSDilateAction);
-		 
+
 		GSOpenAction = new QAction(tr("Grayscale Open Filter"), this);
 		GSOpenAction->setStatusTip(tr("Apply Grayscale Opening"));
 		connect(GSOpenAction, SIGNAL(triggered()), this, SLOT(GrayscaleOpen()));
 		PreprocessMenu->addAction(GSOpenAction);
-		 
+
 		GSCloseAction = new QAction(tr("Grayscale Close Filter"), this);
 		GSCloseAction->setStatusTip(tr("Apply Grayscale Closing"));
 		connect(GSCloseAction, SIGNAL(triggered()), this, SLOT(GrayscaleClose()));
 		PreprocessMenu->addAction(GSCloseAction);
-	 */
-	MedianAction = new QAction(tr("Median Filter"), this);
-	MedianAction->setStatusTip(tr("Apply Median Filter "));
-	connect(MedianAction, SIGNAL(triggered()), this, SLOT(MedianFilter()));
-	PreprocessMenu->addAction(MedianAction);
-	 
-	/* SigmoidAction = new QAction(tr("Sigmoid Filter"), this);
+
+
+	SigmoidAction = new QAction(tr("Sigmoid Filter"), this);
 	SigmoidAction->setStatusTip(tr("Apply Sigmoid Filter "));
 	connect(SigmoidAction, SIGNAL(triggered()), this, SLOT(SigmoidFilter()));
-	PreprocessMenu->addAction(SigmoidAction); */
-	
+	PreprocessMenu->addAction(SigmoidAction);
+
 	//ResampleAction = new QAction(tr("Resample Image Filter"), this);
 	//ResampleAction->setStatusTip(tr("Resample the Image"));
 	//connect(ResampleAction, SIGNAL(triggered()), this, SLOT(Resample()));
@@ -493,7 +498,7 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 		this->askSaveProject();
 
 	//Then Close all other windows
-	foreach (QWidget *widget, qApp->topLevelWidgets()) 
+	foreach (QWidget *widget, qApp->topLevelWidgets())
 	{
 		if (this != widget)
 		{
@@ -532,7 +537,7 @@ bool NucleusEditor::saveProject(QString filename, bool defaults)
 	if(defaults && (projectFiles.input.size() != 0))
 	{
 		QString fname = QString::fromStdString(projectFiles.input);
-		
+
 		QFileInfo inf(QDir(lastPath), QFileInfo(fname).baseName() + "_label.xml");
 		projectFiles.output = inf.absoluteFilePath().toStdString();
 
@@ -559,7 +564,7 @@ bool NucleusEditor::saveProject(QString filename, bool defaults)
 		this->saveResult();
 	}
 	//if(projectFiles.log != "" && !projectFiles.logSaved)
-	//{	
+	//{
 	//}
 	if(projectFiles.definition != "" && !projectFiles.definitionSaved)
 	{
@@ -598,7 +603,7 @@ bool NucleusEditor::askSaveImage()
 		lastPath = QFileInfo(filename).absolutePath();
 		projectFiles.input = filename.toStdString();
 	}
-	
+
 	return this->saveImage();
 }
 
@@ -607,11 +612,11 @@ bool NucleusEditor::saveImage()
 	if(!myImg)
 		return false;
 
-	
+
 	QString filename = QString::fromStdString(projectFiles.input);
 	if(filename == "")
 		return false;
-		
+
 	QString path = QFileInfo(filename).absolutePath();
 	QString name = QFileInfo(filename).baseName();
 	QString ext = QFileInfo(filename).suffix();
@@ -624,7 +629,7 @@ bool NucleusEditor::saveImage()
 		ok = myImg->SaveChannelAs(0, fullBase.toStdString(), ext.toStdString());
 
 	projectFiles.inputSaved = ok;
-	return ok;	
+	return ok;
 }
 
 bool NucleusEditor::askSaveResult()
@@ -648,7 +653,7 @@ bool NucleusEditor::askSaveResult()
 		lastPath = QFileInfo(filename).absolutePath();
 		projectFiles.output = filename.toStdString();
 	}
-	
+
 	return this->saveResult();
 }
 
@@ -673,7 +678,7 @@ bool NucleusEditor::saveResult()
 		ok = labImg->SaveChannelAs(0, fullBase.toStdString(), ext.toStdString());
 
 	projectFiles.outputSaved = ok;
-	return ok;	
+	return ok;
 }
 
 bool NucleusEditor::askSaveTable()
@@ -709,7 +714,7 @@ void NucleusEditor::createDefaultLogName(void)
 	QString filename = QString::fromStdString(projectFiles.input);
 	QString name = QFileInfo(filename).baseName() + "_log.txt";
 	QFileInfo inf(QDir(lastPath),name);
-	projectFiles.log = inf.absoluteFilePath().toStdString(); 	
+	projectFiles.log = inf.absoluteFilePath().toStdString();
 }
 
 //************************************************************************************************
@@ -765,7 +770,7 @@ void NucleusEditor::askLoadTable()
 	QString fileName  = QFileDialog::getOpenFileName(this, "Select table file to open", lastPath,
 								tr("TXT Files (*.txt)"));
 
-    if(fileName == "") 
+    if(fileName == "")
 		return;
 
 	this->loadTable(fileName);
@@ -785,7 +790,7 @@ void NucleusEditor::loadTable(QString fileName)
 
 	projectFiles.table = fileName.toStdString();
 	projectFiles.tableSaved = true;
-	
+
 	selection->clear();
 
 	this->closeViews();
@@ -940,6 +945,7 @@ void NucleusEditor::startKPLS()
 	pWizard = new PatternAnalysisWizard( table, PatternAnalysisWizard::_KPLS, "train", "prediction", this);
 	connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
 	pWizard->show();
+	kplsRun = 1;
 }
 
 //*********************************************************************************************************
@@ -947,7 +953,7 @@ void NucleusEditor::startKPLS()
 //*********************************************************************************************************
 void NucleusEditor::viewClosing(QWidget * view)
 {
-	std::vector<TableWindow *>::iterator table_it; 
+	std::vector<TableWindow *>::iterator table_it;
 	for ( table_it = tblWin.begin(); table_it < tblWin.end(); table_it++ )
 	{
 		if( *table_it == view )
@@ -980,7 +986,7 @@ void NucleusEditor::viewClosing(QWidget * view)
 
 void NucleusEditor::closeViews()
 {
-	for(int p=0; p<(int)tblWin.size(); ++p)	
+	for(int p=0; p<(int)tblWin.size(); ++p)
 		tblWin.at(p)->close();
 
 	for(int p=0; p<(int)pltWin.size(); ++p)
@@ -996,7 +1002,7 @@ void NucleusEditor::updateViews()
 	if(segView)
 		segView->update();
 
-	for(int p=0; p<(int)tblWin.size(); ++p)	
+	for(int p=0; p<(int)tblWin.size(); ++p)
 		tblWin.at(p)->update();
 
 	for(int p=0; p<(int)pltWin.size(); ++p)
@@ -1082,7 +1088,15 @@ void NucleusEditor::toggleCentroids(void)
 	if(!segView) return;
 
 	if( showCentroidsAction->isChecked() )
+		{
+		if(kplsRun ==1)
+		{
+		    segView->SetClassMap(table,table->GetNumberOfColumns()-1);
+			QVector<QColor> cTable =  segView->createColorTable();
+			segView->SetColorMapForCentroids(cTable);
+		}
 		segView->SetCentroidsVisible(true);
+		}
 	else
 		segView->SetCentroidsVisible(false);
 }
@@ -1153,7 +1167,7 @@ void NucleusEditor::stopEditing(void)
 
 void NucleusEditor::changeClass(void)
 {
-	
+
 	//if(!nucSeg) return;
 
 	//std::set<long int> sels = selection->getSelections();
@@ -1163,7 +1177,7 @@ void NucleusEditor::changeClass(void)
 	//bool ok;
 	//QString msg = tr("Change the class of all selected items to: \n");
 	//int newClass = QInputDialog::getInteger(NULL, tr("Change Class"), msg, -1, -1, 10, 1, &ok);
-	
+
 	//Change the class of these objects:
 	//if(ok)
 	//{
@@ -1178,7 +1192,7 @@ void NucleusEditor::markVisited(void)
 
 	std::set<long int> sels = selection->getSelections();
 	std::vector<int> ids(sels.begin(), sels.end());
-	
+
 	//nucSeg->MarkAsVisited(ids,1);
 	this->updateViews();
 }
@@ -1224,7 +1238,7 @@ void NucleusEditor::deleteCells(void)
 			log_entry += "," + ftk::NumToString(ids.at(i));
 		log_entry += "\t";
 		log_entry += ftk::TimeStamp();
-		ftk::AppendTextFile(projectFiles.log, log_entry);		
+		ftk::AppendTextFile(projectFiles.log, log_entry);
 	}
 }
 
@@ -1333,10 +1347,10 @@ void NucleusEditor::splitCellAlongZ(void)
 void NucleusEditor::applyExclusionMargin(void)
 {
 	//Get the parameters to use for the exclusion margin:
-	int xy = 0; 
+	int xy = 0;
 	int z = 0;
 	MarginDialog *dialog = new MarginDialog(this);
-	if( dialog->exec() )	
+	if( dialog->exec() )
 	{
 		xy = dialog->getMargin();
 		z = dialog->getZ();
@@ -1378,7 +1392,7 @@ int NucleusEditor::requestChannel(ftk::Image::Pointer img)
 		{
 			ch = i;
 			break;
-		}	
+		}
 	}
 	return ch;
 }
@@ -1388,7 +1402,7 @@ void NucleusEditor::CreateDefaultAssociationRules()
 	//filename of the label image to use:
 	QString fname = QString::fromStdString(projectFiles.output);
 	QFileInfo inf(QDir(lastPath), QFileInfo(fname).baseName() + "_nuc.tif");
-	std::string label_name = inf.absoluteFilePath().toStdString();			
+	std::string label_name = inf.absoluteFilePath().toStdString();
 	//Create association rules:
 	//1. Pass the constructor the filename of the label image to use and the number of associations to compute:
 	ftk::NuclearAssociationRules * objAssoc = new ftk::NuclearAssociationRules(label_name, 1);
@@ -1434,7 +1448,7 @@ void NucleusEditor::segmentNuclei()
 	QString paramFile = "";
 	int nucChannel = 0;
 	ParamsFileDialog *dialog = new ParamsFileDialog(lastPath,chs,this);
-	if( dialog->exec() )	
+	if( dialog->exec() )
 	{
 		paramFile = dialog->getFileName();
 		nucChannel = dialog->getChannelNumber();
@@ -1475,7 +1489,7 @@ void NucleusEditor::processProject(void)
 	projectFiles.definition = projectName.toStdString();
 	projectFiles.definitionSaved = true;
 	projectFiles.nucSegValidated = false;
-	
+
 	startProcess();
 }
 
@@ -1500,7 +1514,7 @@ void NucleusEditor::startProcess()
 	abortProcessFlag = false;
 	continueProcessFlag = false;
 	menusEnabled(false);
-	
+
 	//start a new thread for the process:
 	processThread = new ProcessThread(pProc);
 	connect(processThread, SIGNAL(finished()), this, SLOT(process()));
@@ -1761,9 +1775,9 @@ void ParamsFileDialog::ParamBrowse(QString comboSelection)
 	if (comboSelection != tr("Browse..."))
 		return;
 
-	QString newfilename  = QFileDialog::getOpenFileName(this,"Choose a Parameters File",lastPath, 
-			tr("INI Files (*.ini)\n" 
-			   "TXT Files (*.txt)\n" 
+	QString newfilename  = QFileDialog::getOpenFileName(this,"Choose a Parameters File",lastPath,
+			tr("INI Files (*.ini)\n"
+			   "TXT Files (*.txt)\n"
 			   "All Files (*.*)\n"));
 
 	if (newfilename == "")
@@ -1800,17 +1814,139 @@ void ParamsFileDialog::ParamBrowse(QString comboSelection)
 
 void NucleusEditor:: MedianFilter()
  {
-	  QVector<QString> chs;
-	 int numChannels = myImg->GetImageInfo()->numChannels;
-	 for (int i=0; i<numChannels; ++i)
-	 {
-		 chs.push_back(QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i)));
-	 }
-
-	 ftkPreprocessDialog *dialog = new ftkPreprocessDialog(chs,16,this);
-	 dialog->myImg = this->myImg; 
+	 	QVector<QString> chs;
+	int numChannels = myImg->GetImageInfo()->numChannels;
+	for (int i=0; i<numChannels; ++i)
+	{
+		chs << QString::number(i) + ". " + QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i));
+	}
+	 ftkPreprocessDialog *dialog = new ftkPreprocessDialog(chs,"Median",this);
+	 dialog->myImg = this->myImg;
  	if(dialog->exec())
 	 {
 	 segView->SetChannelImage(dialog->getImage());
 	 }
+ }
+
+
+void NucleusEditor:: AnisotropicDiffusion()
+ {
+	 	QVector<QString> chs;
+	int numChannels = myImg->GetImageInfo()->numChannels;
+	for (int i=0; i<numChannels; ++i)
+	{
+		chs << QString::number(i) + ". " + QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i));
+	}
+	 ftkPreprocessDialog *dialog = new ftkPreprocessDialog(chs,"GAnisotropicDiffusion",this);
+	 dialog->myImg = this->myImg;
+ 	if(dialog->exec())
+	 {
+	 segView->SetChannelImage(dialog->getImage());
+	 }
+ }
+
+
+void NucleusEditor:: CurvAnisotropicDiffusion()
+ {
+	 	QVector<QString> chs;
+	int numChannels = myImg->GetImageInfo()->numChannels;
+	for (int i=0; i<numChannels; ++i)
+	{
+		chs << QString::number(i) + ". " + QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i));
+	}
+	 ftkPreprocessDialog *dialog = new ftkPreprocessDialog(chs,"CAnisotropicDiffusion",this);
+	 dialog->myImg = this->myImg;
+ 	if(dialog->exec())
+	 {
+	 segView->SetChannelImage(dialog->getImage());
+	 }
+ }
+
+
+
+ void NucleusEditor:: GrayscaleErode()
+  {
+ 	 	QVector<QString> chs;
+ 	int numChannels = myImg->GetImageInfo()->numChannels;
+ 	for (int i=0; i<numChannels; ++i)
+ 	{
+ 		chs << QString::number(i) + ". " + QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i));
+ 	}
+ 	 ftkPreprocessDialog *dialog = new ftkPreprocessDialog(chs,"GSErode",this);
+ 	 dialog->myImg = this->myImg;
+  	if(dialog->exec())
+ 	 {
+ 	 segView->SetChannelImage(dialog->getImage());
+ 	 }
+ }
+
+
+
+ void NucleusEditor:: GrayscaleDilate()
+  {
+ 	 	QVector<QString> chs;
+ 	int numChannels = myImg->GetImageInfo()->numChannels;
+ 	for (int i=0; i<numChannels; ++i)
+ 	{
+ 		chs << QString::number(i) + ". " + QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i));
+ 	}
+ 	 ftkPreprocessDialog *dialog = new ftkPreprocessDialog(chs,"GSDilate",this);
+ 	 dialog->myImg = this->myImg;
+  	if(dialog->exec())
+ 	 {
+ 	 segView->SetChannelImage(dialog->getImage());
+ 	 }
+ }
+
+
+
+ void NucleusEditor:: GrayscaleOpen()
+  {
+ 	 	QVector<QString> chs;
+ 	int numChannels = myImg->GetImageInfo()->numChannels;
+ 	for (int i=0; i<numChannels; ++i)
+ 	{
+ 		chs << QString::number(i) + ". " + QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i));
+ 	}
+ 	 ftkPreprocessDialog *dialog = new ftkPreprocessDialog(chs,"GSOpen",this);
+ 	 dialog->myImg = this->myImg;
+  	if(dialog->exec())
+ 	 {
+ 	 segView->SetChannelImage(dialog->getImage());
+ 	 }
+ }
+
+
+
+ void NucleusEditor:: GrayscaleClose()
+  {
+ 	 	QVector<QString> chs;
+ 	int numChannels = myImg->GetImageInfo()->numChannels;
+ 	for (int i=0; i<numChannels; ++i)
+ 	{
+ 		chs << QString::number(i) + ". " + QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i));
+ 	}
+ 	 ftkPreprocessDialog *dialog = new ftkPreprocessDialog(chs,"GSClose",this);
+ 	 dialog->myImg = this->myImg;
+  	if(dialog->exec())
+ 	 {
+ 	 segView->SetChannelImage(dialog->getImage());
+ 	 }
+ }
+
+
+ void NucleusEditor:: SigmoidFilter()
+  {
+ 	 	QVector<QString> chs;
+ 	int numChannels = myImg->GetImageInfo()->numChannels;
+ 	for (int i=0; i<numChannels; ++i)
+ 	{
+ 		chs << QString::number(i) + ". " + QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i));
+ 	}
+ 	 ftkPreprocessDialog *dialog = new ftkPreprocessDialog(chs,"Sigmoid",this);
+ 	 dialog->myImg = this->myImg;
+  	if(dialog->exec())
+ 	 {
+ 	 segView->SetChannelImage(dialog->getImage());
+ 	 }
  }
