@@ -196,6 +196,9 @@ void TrainingDialog::loadModel(void)
 		if(!model_table) return;
 		//Append the data to the current table
 		this->Append();
+	
+		//Exit:
+	QDialog::accept();
 				
 }
 
@@ -231,12 +234,15 @@ void TrainingDialog::Append()
 
 		vtkSmartPointer<vtkVariantArray> model_data = vtkSmartPointer<vtkVariantArray>::New();
 		
+		unsigned char maxrow = m_table->GetNumberOfRows();
 		
 		for(int row = 0; (int)row < model_table->GetNumberOfRows(); ++row)  
 			{
 				model_data = model_table->GetRow(row);
 				m_table->InsertNextRow(model_data); 
+				m_table->SetValue(maxrow,0,maxrow+1);
 				m_table->SetValueByName(m_table->GetNumberOfRows()-1, "Original/Model", "Model");
+				maxrow++;
 			}
 
  		emit changedTable();		
@@ -303,11 +309,5 @@ void TrainingDialog::updateTable(void)
 			}
 		}
 	}
-
 	emit changedTable();
 }
-
-
-
-
-
