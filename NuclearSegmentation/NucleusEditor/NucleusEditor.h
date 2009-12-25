@@ -1,17 +1,17 @@
-/* 
+/*
  * Copyright 2009 Rensselaer Polytechnic Institute
- * This program is free software; you can redistribute it and/or modify 
- * it under the terms of the GNU General Public License as published by 
- * the Free Software Foundation; either version 2 of the License, or 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
  * for more details.
- * 
- * You should have received a copy of the GNU General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
@@ -73,7 +73,7 @@
 class ParamsFileDialog;
 class MarginDialog;
 class ProcessThread;
-class PreprocessParamsDialog;
+
 
 class NucleusEditor : public QMainWindow
 {
@@ -114,7 +114,7 @@ private slots:
 	bool askSaveTable(void);
 	bool saveTable(void);
 	void createDefaultLogName(void);
-	
+
 	//Views:
 	void toggleBounds();
 	void toggleIDs();
@@ -142,14 +142,14 @@ private slots:
 	//***************************************************
 	// Preprocessing Menu
 	 void setPreprocessingEnabled(bool val);
-		/*void AnisotropicDiffusion(void);
-	 */	void MedianFilter(void);
-	/* void SigmoidFilter(void);
-		void GrayscaleErode(void);
-		void GrayscaleDilate(void);
-		void GrayscaleOpen(void);
-		void GrayscaleClose(void);
-		void CurvAnisotropicDiffusion(void); */
+	 void AnisotropicDiffusion(void);
+	 void MedianFilter(void);
+	 void SigmoidFilter(void);
+	 void GrayscaleErode(void);
+	 void GrayscaleDilate(void);
+	 void GrayscaleOpen(void);
+	 void GrayscaleClose(void);
+	 void CurvAnisotropicDiffusion(void);
 	//void Resample(void);
 	//*****************************************************
 
@@ -166,7 +166,7 @@ private slots:
 	void menusEnabled(bool val);
 
 signals:
-    
+
 private:
 	void createMenus();
 	void createStatusBar();
@@ -175,7 +175,7 @@ private:
 	void updateNucSeg(bool ask = false);
 
 	int requestChannel(ftk::Image::Pointer img);	//Request a channel from this image
-	
+
 	LabelImageViewQT *segView;
 	std::vector<PlotWindow *> pltWin;
 	std::vector<TableWindow *> tblWin;
@@ -211,7 +211,7 @@ private:
 	QMenu *classifyMenu;
 	QAction *trainAction;	//Train the KPLS Classifier
 	QAction *kplsAction;	//Start the KPLS Classifier
-	
+
 	//For Editing Menu
 	QMenu *editMenu;
 	QAction *clearSelectAction;
@@ -226,26 +226,23 @@ private:
 
 	QMenu *helpMenu;
 	QAction *aboutAction;
-	
+
+
 	//************************************************************************
 	//Preprocess menu
 	QMenu *PreprocessMenu;
-    //QAction *AnisotropicAction;
+    QAction *AnisotropicAction;
 	QAction *MedianAction;
-	/* QAction *SigmoidAction;
-		QAction *GSErodeAction;
-		QAction *GSDilateAction;
-		QAction *GSOpenAction;
-		QAction *GSCloseAction;
-		QAction *CurvAnisotropicAction; */
+	QAction *SigmoidAction;
+	QAction *GSErodeAction;
+	QAction *GSDilateAction;
+	QAction *GSOpenAction;
+	QAction *GSCloseAction;
+	QAction *CurvAnisotropicAction;
 	//QAction *ResampleAction;
-	vector<double> filterParams;
-	std::string FN;
-	typedef unsigned char   InpPixelType;
-	typedef itk::Image<unsigned char, 3> InpImageType;		
-    typedef itk::Image<float, 3> FloatImageType;
+
 	//*********************************************************************
-	
+
 	QLabel *statusLabel;						//Shown at bottom of main window
 	QString lastPath;							//Last path that has been navigated to
 	QString standardImageTypes;
@@ -258,10 +255,11 @@ private:
 	vtkSmartPointer<vtkTable> table;			//table
 	ftk::ProjectFiles projectFiles;				//files in the currently visible project
 	ftk::ProjectDefinition projectDefinition;	//the project definition currently being used.
+	unsigned char   kplsRun;
 
 	//This does not belong here, but is a temporary fix:
 	void CreateDefaultAssociationRules();
-	
+
 	//Processing toolbar and thread pointers:
 	bool abortProcessFlag;
 	bool continueProcessFlag;
