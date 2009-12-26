@@ -97,6 +97,8 @@ public:
 	void set_cyt_img( UShortImageType::Pointer cyt_im_16 ){
 		cyt_im_inp = cyt_im_16;
 		cyt_im_set = 1;
+		draw_real_bounds=1; draw_synth_bounds=0;
+
 	}
 	void set_mem_img( UShortImageType::Pointer mem_im_16 ){
 		mem_im_inp = mem_im_16;

@@ -1132,7 +1132,8 @@ void NucleusEditor::updateNucSeg(bool ask)
 	else
 	{
 		nucChannel=0;
-		projectDefinition.MakeDefaultNucleusSegmentation(nucChannel);
+		if( !projectDefinition.inputs.size() ) //ISAAC: THIS IS A HACK TO GET THE HISTOPATHOGLOGY PROJECT WORKING WILL FIX SOON SORRY -KEDAR
+			projectDefinition.MakeDefaultNucleusSegmentation(nucChannel);
 	}
 
 	nucSeg = new ftk::NuclearSegmentation();

@@ -224,8 +224,7 @@ bool CytoplasmSegmentation::Run()
 	}
 
 	whole_cell->set_nuc_img( lFilter->GetOutput() );
-	//Add code to set other params
-	whole_cell->set_parameters(params);
+	//whole_cell->set_parameters(params);
 	whole_cell->RunBinarization();
 	whole_cell->RunSegmentation();
 
