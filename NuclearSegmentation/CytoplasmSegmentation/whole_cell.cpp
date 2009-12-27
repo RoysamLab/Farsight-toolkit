@@ -80,8 +80,10 @@ void WholeCellSeg::set_parameters ( int *parameters ){
 	remove_small_objs = *parameters; parameters++;
 	draw_synth_bounds = *parameters; parameters++;
 	radius_of_synth_bounds = *parameters; parameters++;
-	num_levels = *parameters; parameters++;
-	num_levels_incl = *parameters;
+	if( *parameters > 0 ){
+		num_levels = *parameters; parameters++;
+		num_levels_incl = *parameters;
+	}
 }
 
 void WholeCellSeg::RunBinarization(){
