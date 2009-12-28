@@ -22,7 +22,7 @@ limitations under the License.
 #if defined(_MSC_VER)
 #pragma warning(disable : 4996)
 #endif
-#include <stdio.h>
+#include <iostream>
 #include <stdlib.h>
 #include <fstream>
 #include <iostream>
@@ -30,7 +30,9 @@ limitations under the License.
 #include <algorithm>
 #include "robustness.h"
 
-using namespace std;
+using std::cerr;
+using std::cout;
+using std::endl;
 
 struct  Vector3D
 {
@@ -121,17 +123,19 @@ int main (int argc, char *argv[])
 
   if (argc < 8)
    {
-    printf("Usage: %s <vector file> <xs> <ys> <zs> <vector mag> <seeds file> <out skel> [measureTimeFlag].\n",argv[0]);
-    exit(1);
+   cerr << "Usage: " << argv[0] << " <vector file> <xs> <ys> <zs> <vector mag> "
+        << "<seeds file> <out skel> [measureTimeFlag]" << endl;
+    return 1;
    }
 
   // ------------------------------------  Open Gradient vector file ----------------------//
   
   fin.open(argv[1]);
-  if (!fin)  {
-     cerr << "couldn't open " << argv[1] << " for input" << endl;
-     return -1;
-  }
+  if (!fin)
+    {
+    cerr << "couldn't open " << argv[1] << " for input" << endl;
+    return -1;
+    }
  //----------------------------------------end open -------------------------------------//
 
   L = atoi(argv[2]);
@@ -150,16 +154,16 @@ int main (int argc, char *argv[])
   
 
   if ((CurveSeedfout= fopen(argv[6],"w")) == NULL)  // arg[6]
-  {
-    printf("Cannot open %s for writing\n",argv[6]);  
-    exit(1);
-  }
+    {
+    cerr << "Cannot open " << argv[6] << " for writing" << endl;
+    return 1;
+    }
 
   if ((fout= fopen(argv[7],"w")) == NULL)  // arg[7]
-  {
-    printf("Cannot open %s for writing\n",argv[6]);  
-    exit(1);
-  }
+    {
+    cerr << "Cannot open " << argv[7] << " for writing" << endl;
+    return 1;
+    }
 
   Iu = new float[L*M*N];
   Iv = new float[L*M*N];
@@ -309,8 +313,10 @@ int main (int argc, char *argv[])
    //highCurvatureThreshold = Tmean;
    // highCurvatureThreshold=0.05;
    //highCurvatureThreshold =5;//;
-   printf("Trimmed- mean is %f\n",Tmean);
-   printf("mean =%f The estimated  good threshold of highCurvatureThreshold %f \n",meanCurvature, highCurvatureThreshold );
+   cout << "Trimmed mean is " << Tmean << endl;
+   cout << "mean = " << meanCurvature << "." << endl;
+   cout << "The estimated good threshold of highCurvatureThreshold "
+        << highCurvatureThreshold << endl;
 
 // --------------------------------------------- ---------end estimation  -------------------------------------------- //
 
@@ -353,7 +359,7 @@ int main (int argc, char *argv[])
 		
   }
 //------------------------------------------end compute seeds with higher curvature ----------------------// 
-  printf("Num of seeds with higher curvature  is %ld\n", numSeeds);
+  cout << "Num of seeds with higher curvature is " << numSeeds << endl;
 
 //-------------------------------Normalizing force vector---------------------------------------------//
   float Length;
@@ -392,7 +398,7 @@ int main (int argc, char *argv[])
 		 // and also you can use GDF method---------------------------------------------//
   }
 
-  printf("Generating force vector!\n");
+  cout << "Generating force vector!" << endl;
 
   //-----------------------------------Detelet Gradient Vector Memeory--------------------------------//
   delete []Iu;// = new float[L*M*N];
@@ -599,8 +605,8 @@ int main (int argc, char *argv[])
 	    }
   }
 
-
- printf("Number of critical points is: %ld \n, and number of seeds %ld\n", NumCritPoints, numSeeds);
+ cout << "Number of critical points is: " << NumCritPoints << endl;
+ cout << "Number of seeds is: " << numSeeds << endl;
 
  int numBoundSeeds =numSeeds;
  //fprintf(fout,"%d %d %d %f %f\n", 1, 1, 1, -1.0, -1.0);
@@ -690,9 +696,8 @@ int main (int argc, char *argv[])
    delete []seeds;
    delete []curv;
 
-   printf("End \n");
+   cout << "End" << endl;
    return 0;
-
 }
 
 

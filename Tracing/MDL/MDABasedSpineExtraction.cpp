@@ -29,7 +29,6 @@ limitations under the License.
 #include <boost/graph/graphviz.hpp>
 #include <iostream>
 #include <fstream>
-#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <boost/config.hpp>
@@ -128,11 +127,11 @@ int main(int argc, char *argv[])
 
   if (argc < 14)
     {
-      cout << argv[0] << " <data dir> <skel pt file> <vol file> <xs> <ys> <zs> "
-         << "<edgeRange> <graph prune size> <morph strength> <weight factor> "
-         << "<full path to vessel file> <out Feature txt file> "
-         << "<out spine VTK graph>" << endl;
-      return 1;
+    cerr << argv[0] << " <data dir> <skel pt file> <vol file> <xs> <ys> <zs> "
+       << "<edgeRange> <graph prune size> <morph strength> <weight factor> "
+       << "<full path to vessel file> <out Feature txt file> "
+       << "<out spine VTK graph>" << endl;
+    return 1;
     }
 
   std::string infilename = argv[1];
@@ -162,21 +161,22 @@ int main(int argc, char *argv[])
   alpha = atof(argv[10]);
 
   if((vesselfile=fopen(argv[11], "rb"))==NULL)  // open vol file
-      {cerr << "couldn't open vessel file for input" << endl;
-       exit(-1);
-      }
+    {
+    cerr << "couldn't open vessel file for input" << endl;
+    return -1;
+    }
 
   if ((fout_MDL = fopen(argv[12], "w")) == NULL) // 
     {
-    printf("Cannot open %s for writing\n",argv[12]);
-    exit(1);
+    cerr << "Cannot open " << argv[12] << " for writing" << endl;
+    return 1;
     }
   
   if ((fout_Spine = fopen(argv[13], "w")) == NULL)
-      {
-      printf("Cannot open %s for writing\n",argv[13]);
-      exit(1);
-      }
+    {
+    cerr << "Cannot open " << argv[13] << " for writing" << endl;
+    return 1;
+    }
   
   if ((fclass_identify = fopen("CLASSIFIER_TRAINING.txt", "w")) == NULL)  
   {
@@ -201,16 +201,16 @@ int main(int argc, char *argv[])
   //edge_array = (E*)malloc(MAX_NUM_EDGE*sizeof(E));
 
   if ( fread(volin, sizeof(DATATYPEIN), sz, volfile) < (unsigned long)sz)  // read in vol file
-  {
-    printf("File size is not the same as volume size\n");
-    exit(1);
-  }
+    {
+    cerr << "File size is not the same as volume size" << endl;
+    return 1;
+    }
 
   if ( fread(volvessel, sizeof(DATATYPEIN), sz, vesselfile) < (unsigned long)sz)  // read in vessel file
-  {
-    printf("File size is not the same as vessel size\n");
-    exit(1);
-  }
+    {
+    cerr << "File size is not the same as vessel size" << endl;
+    return 1;
+    }
 
   fclose(volfile);
   fclose(vesselfile);
@@ -760,7 +760,7 @@ int main(int argc, char *argv[])
   volin = NULL;
   volvessel = NULL;
   fclose(fout_MDL);
-  printf("Spine Extraction is done"); 
+  cout << "Spine Extraction is done" << endl; 
   return EXIT_SUCCESS;
 }
 

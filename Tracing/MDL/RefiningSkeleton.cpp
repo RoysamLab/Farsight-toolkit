@@ -25,7 +25,6 @@ limitations under the License.
 #endif
 
 #include <cstring>
-#include <stdio.h>
 #include <vector>
 #include <iostream>
 #include <fstream>
@@ -35,9 +34,9 @@ limitations under the License.
 #include <vnl/vnl_vector.h>
 #include <vnl/algo/vnl_matrix_inverse.h>
 
-
-using namespace std;
-//using namespace boost;
+using std::cerr;
+using std::cout;
+using std::endl;
 
 #define Dimention  3;
 
@@ -91,7 +90,7 @@ int main(int argc, char **argv)
       cerr << "Usage: " << argv[0] << " <dir> <smooth backbone Skeleton file>"
            << "  <Spine skeleton file> <ExtraSpine file> <out refine skeleton file >"
            << " OnlyBacbone" << " [measureTimeFlag]" << endl;
-      exit(1);
+      return 1;
 
     }
 
@@ -100,7 +99,7 @@ int main(int argc, char **argv)
   if(( smoothbackbone=fopen(infilename.c_str(), "rb")) == NULL)  // open smoothbackbone file
     {
     cerr << "couldn't open smoothbackbone file " << infilename << " for input" << endl;
-    exit(-1);
+    return -1;
     }
   
   BacboneOnly =  atoi(argv[6]);
@@ -109,40 +108,35 @@ int main(int argc, char **argv)
   if((outseed=fopen(tempfile4.c_str(), "w")) == NULL)  // open spineskeleton file
     {
     cerr << "couldn't open seed file " << filedir << " for output" << endl;
-    exit(-1);
+    return -1;
     }
 
   if(!BacboneOnly)
   {
    tempfile1 = filedir + argv[3];
-   cout << "first file name" << tempfile1 << endl;
 
    if((spine=fopen(tempfile1.c_str(), "rb")) == NULL)  // open spineskeleton file
     {
     cerr << "couldn't open spine skeleton file " << filedir << " for input" << endl;
-    exit(-1);
+    return -1;
     }
  
    tempfile2 = filedir + argv[4];
-   cout << "second file name" << tempfile2 << endl;
 
    if((ExtraSpine=fopen(tempfile2.c_str(), "rb")) == NULL)  // open spineskeleton file
     {
     cerr << "couldn't open Extra spine skeleton file " << filedir << " for input" << endl;
-    exit(-1);
+    return -1;
     }
   }//end if (!BacboneOnly)
 
   tempfile3 = filedir + argv[5];
-  cout << "third file name" << tempfile3 << endl;
   
   if((outrefineskel=fopen(tempfile3.c_str(), "wb")) == NULL)  // open spineskeleton file
     {
     cerr << "couldn't open  skeleton file " << filedir << " for output" << endl;
-    exit(-1);
+    return -1;
     }
- 
-
    
   //------------------Read From smooth backbone skeleton VTK file ---------------------//
 
@@ -161,7 +155,7 @@ int main(int argc, char **argv)
     cerr << "End of file encountered in fscanf!" << endl;
     }
   NumBackbonePoints = atoi(str);
-  printf("There are %d skeleton' points \n", NumBackbonePoints);
+  cout << "There are " << NumBackbonePoints << " skeleton points" << endl;
   if( fscanf(smoothbackbone,"%s",str) == EOF )
     {
     cerr << "End of file encountered in fscanf!" << endl;
@@ -252,7 +246,7 @@ int main(int argc, char **argv)
      cerr << "End of file encountered in fscanf!" << endl;
      }
    NumSpinePoints = atoi(str);
-   printf("There are %d spine skeleton' points \n", NumSpinePoints);
+   cout << "There are " << NumSpinePoints << " spine skeleton points" << endl;
    if( fscanf(spine,"%s",str) == EOF )
      {
      cerr << "End of file encountered in fscanf!" << endl;

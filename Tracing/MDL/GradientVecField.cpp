@@ -24,10 +24,13 @@ limitations under the License.
 #if defined(_MSC_VER)
 #pragma warning(disable : 4996)
 #endif
-#include <stdio.h>
+#include <iostream>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+using std::cerr;
+using std::cout;
+using std::endl;
 
 #define MIN(x,y) (((x) < (y))?(x):(y))
 #define MAX(x,y) (((x) > (y))?(x):(y))
@@ -83,15 +86,16 @@ int main(int argc, char *argv[])
 
   if (argc < 6)
   {
-    printf("Usage: %s <volfile> <xs> <ys> <zs> <outfile> [measureTimeFlag].\n",argv[0]);
-    exit(1);
+    cerr << "Usage: " << argv[0] << " <volfile> <xs> <ys> <zs> <outfile> "
+         << "[measureTimeFlag]" << endl;
+    return 1;
   }
 
 
   if ((filein = fopen(argv[1],"rb")) == NULL)
   {
-    printf("Cannot open %s\n",argv[1]);
-    exit(1);
+    cerr << "Cannot open " << argv[1] << endl;
+    return 1;
   }
 
   sizeX = atoi(argv[2]);
@@ -113,14 +117,14 @@ int main(int argc, char *argv[])
 
   if ( fread(volin, sizeof(DATATYPEIN), sz, filein) < (unsigned long)sz)
   {
-    printf("File size is not the same as volume size\n");
-    exit(1);
+    cerr << "File size is not the same as volume size" << endl;
+    return 1;
   }
 
   if ((fileout = fopen(argv[5],"w")) == NULL)
   {
-    printf("Cannot open %s for writing\n",argv[5]);
-    exit(1);
+    cerr << "Cannot open " << argv[5] << " for writing" << endl;
+    return 1;
   }
 
 
@@ -235,7 +239,7 @@ int main(int argc, char *argv[])
    fc = NULL;
    volin = NULL;
    gradVec = NULL;
-   printf("End \n");
+   cout << "End" << endl;
 
    return 0;
 }

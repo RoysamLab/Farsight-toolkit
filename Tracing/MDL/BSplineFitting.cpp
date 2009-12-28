@@ -25,7 +25,7 @@ limitations under the License.
 #endif
 
 #include <cstring>
-#include <stdio.h>
+#include <iostream>
 #include <vector>
 #include <iostream>
 #include <fstream>
@@ -34,10 +34,10 @@ limitations under the License.
 #include <vnl/vnl_matrix.h>
 #include <vnl/vnl_vector.h>
 #include <vnl/algo/vnl_matrix_inverse.h>
-//#include "BSpline.h"
 
-using namespace std;
-//using namespace boost;
+using std::cerr;
+using std::cout;
+using std::endl;
 
 #define Dimention  3;
 
@@ -212,7 +212,7 @@ int main(int argc, char **argv)
       cerr << "Usage: " << argv[0] << " <3Ddata raw file> <Skeleton file>"
            << " <xs> <ys> <zs> <out backbonevtk graph> <out spinevtk graph>"
            << " [measureTimeFlag]" << endl;
-      exit(1);
+      return 1;
       }
     }
 
@@ -220,16 +220,15 @@ int main(int argc, char **argv)
   if(( infile=fopen(infilename.c_str(), "rb")) == NULL)  // open volume file
     {
     cerr << "couldn't open volume file " << infilename << " for input" << endl;
-    exit(-1);
+    return -1;
     }
 
   tempfile = argv[2];
-  cout << "second file name" << tempfile << endl;
 
   if((inskeleton=fopen(tempfile.c_str(), "rb")) == NULL)  // open skeleton file
     {
     cerr << "couldn't open skeleton file " << filedir << " for input" << endl;
-    exit(-1);
+    return -1;
     }
   
   sizeX = atoi(argv[3]); // read the size parameters of input image 
@@ -243,8 +242,8 @@ int main(int argc, char **argv)
 
   if ( fread(volin, sizeof(DATATYPEIN), sizeX*sizeY*sizeZ, infile) < (unsigned int)(sizeX*sizeY*sizeZ))  // read in vol file
   {
-    printf("File size is not the same as volume size\n");
-    exit(1);
+    cerr << "File size is not the same as volume size" << endl;
+    return 1;
   }
 
   //------------------Processing with skeleton VTK file ---------------------//
@@ -257,7 +256,6 @@ int main(int argc, char **argv)
       {
       cerr << "fscanf encountered end of file!" << endl;
       }
-    printf("%s\n", str); 
     }
   int NumAllPoints;
   if( fscanf(inskeleton,"%s",str) == EOF )
@@ -265,7 +263,7 @@ int main(int argc, char **argv)
     cerr << "fscanf encountered end of file!" << endl;
     }
   NumAllPoints = atoi(str);
-  printf("There are %d skeleton' points \n", NumAllPoints);
+  cout << "There are " << NumAllPoints << " skeleton points" << endl;
   if( fscanf(inskeleton,"%s",str) == EOF )
     {
     cerr << "fscanf encountered end of file!" << endl;
@@ -699,16 +697,16 @@ int main(int argc, char **argv)
  
   //-----------------------construct two files to write-----------------------//
   if ((outbackbone = fopen(argv[6], "w")) == NULL)
-    {
-    printf("Cannot open  backbone file %s for writing\n",argv[6]);
-    exit(1);
-    }
+   {
+   cerr << "Cannot open " << argv[6] << " for writing" << endl;
+   return 1;
+   }
 
  if ((outExspine = fopen(argv[7], "w")) == NULL)
-    {
-    printf("Cannot open  backbone file %s for writing\n",argv[7]);
-    exit(1);
-    }
+   {
+   cerr << "Cannot open " << argv[7] << " for writing" << endl;
+   return 1;
+   }
   //--------------------------------------------------------------------------//
   //------------------Output the extra spines to a vtk file-------------------//
    fprintf(outExspine, "# vtk DataFile Version 3.0\n");
@@ -735,7 +733,7 @@ int main(int argc, char **argv)
   fprintf(outbackbone,"DATASET POLYDATA\n");
   fprintf(outbackbone,"POINTS %d float\n", numVTKpts);
 
-  cout << "come to write VTK file" << endl;
+  cout << "writing VTK file..." << endl;
 
   for (i = 0; i<numVTKpts;i++)
     {
@@ -748,7 +746,6 @@ int main(int argc, char **argv)
   fprintf(outbackbone, "LINES %d %d\n", numVTKpts-NumBranches, (numVTKpts-NumBranches)*3);
 
   int indexPts = 0;
-  cout << "I am come to here, one step I will be succeed!";
   for (i = 1; i<= NumBranches; i++)
   //for (k=1;k<=1;k++)
   //i=2;
@@ -760,7 +757,7 @@ int main(int argc, char **argv)
     indexPts = indexPts + (int)numBranchpts[i];
     }
 
-  cout << "I am come to here ";
+  cout << "...finished" << endl;
   fclose(outbackbone);
 
   //--------------------------release global memory---------------------------//

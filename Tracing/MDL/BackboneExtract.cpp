@@ -30,7 +30,6 @@ limitations under the License.
 #include <boost/graph/graphviz.hpp>
 #include <iostream>
 #include <fstream>
-#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <boost/config.hpp>
@@ -122,8 +121,8 @@ int main(int argc, char *argv[])
 
   if ((fout = fopen(argv[9], "w")) == NULL)
     {
-     printf("Cannot open %s for writing\n",argv[9]);
-     exit(1);
+    cerr << "Cannot open " << argv[9] << " for writing" << endl;
+    return 1;
     }
   double pr=atof(argv[10]); 
 
@@ -140,8 +139,8 @@ int main(int argc, char *argv[])
   // -read in vol file
   if ( fread(volin, sizeof(DATATYPEIN), sz, volfile) < (unsigned long)sz)  
   {
-    printf("File size is not the same as volume size\n");
-    exit(1);
+    cerr << "File size is not the same as volume size" << endl;
+    return 1;
   }
   fclose(volfile);
 
@@ -387,8 +386,8 @@ int main(int argc, char *argv[])
   delete [] degree_nodes_buffer;
   delete [] edge_eroded;
 
-  printf("\n -- Number of backbone nodes is : %d\n", num_nodes); 
-  printf("-- Number of banckbone Lines is : %d\n", line_count);
+  cout << "-- Number of backbone nodes is : " << num_nodes << endl;
+  cout << "-- Number of backbone Lines is : " << line_count << endl;
 
   return EXIT_SUCCESS;
 
