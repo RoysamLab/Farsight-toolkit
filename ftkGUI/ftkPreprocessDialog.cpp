@@ -370,7 +370,7 @@ vector<double> ftkPreprocessDialog::getParams(std::string id)
 	paramVal4 = 0; 
 	paramVal5 = 0; 
 	
-    switch(FilterValue[id])
+  switch(FilterValue[id])
 	{
 	case Filter1:case Filter2:case Filter3:case Filter4:case Filter10:case Filter11:case Filter12:case Filter17: 
 		paramVal1 =  QTParam1->text().toDouble();
@@ -406,12 +406,12 @@ vector<double> ftkPreprocessDialog::getParams(std::string id)
 		paramVal1 = QTParam1->text().toDouble();
 		paramVal2  = QTParam2->text().toDouble();
 		
-		
-		
 		parameters.push_back(paramVal1);
 		parameters.push_back(paramVal2);
-		
 		break;											
+
+  default:
+    break;
 
 	}
 

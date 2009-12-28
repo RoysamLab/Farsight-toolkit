@@ -180,6 +180,10 @@ void TrainingDialog::saveModel(void)
 		
 	//Write the model into an XML file.	
 	bool ok = ftk::SaveTable(filename.toStdString(),new_table);
+  if(!ok)
+    {
+    cerr << "problem writing model to " << filename.toStdString() << endl;
+    }
 }
 
 
