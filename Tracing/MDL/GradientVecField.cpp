@@ -25,6 +25,7 @@ limitations under the License.
 #pragma warning(disable : 4996)
 #endif
 #include <iostream>
+#include <cstdio>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>

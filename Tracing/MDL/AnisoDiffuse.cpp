@@ -24,9 +24,13 @@ limitations under the License.
 #pragma warning(disable : 4996)
 #endif
 #include <stdlib.h>
-#include <iostream.h>
+#include <iostream>
 #include <string.h>
 #include "math.h"
+
+using std::cerr;
+using std::cout;
+using std::endl;
 
 //using namespace std;
 

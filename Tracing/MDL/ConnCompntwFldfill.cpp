@@ -23,6 +23,7 @@ limitations under the License.
 
 #include <stdlib.h>
 #include <iostream>
+#include <cstdio>
 #include <string.h>
 
 #define OBJ_BEFORE_CONNCOMP -1
