@@ -87,6 +87,8 @@ public:
 	bool Delete(vector<int> ids, vtkSmartPointer<vtkTable> table = NULL);
 	bool Exclude(int xy, int z, vtkSmartPointer<vtkTable> table = NULL);
 	int AddObject(int x1, int y1, int z1, int x2, int y2, int z2, vtkSmartPointer<vtkTable> table = NULL);
+	bool FillObjects(vector<int> ids);
+	bool FillAnObject(int id);
 	bool EditsNotSaved;
 
 	//Edits applied on initial segmentation and updates LoG resp image

@@ -138,6 +138,7 @@ private slots:
 	void applyExclusionMargin(void);
 	void changeClass(void);
 	void markVisited(void);
+	void fillCells(void);
 
 	//***************************************************
 	// Preprocessing Menu
@@ -218,6 +219,7 @@ private:
 	QAction *addAction;
 	QAction *mergeAction;
 	QAction *deleteAction;
+	QAction *fillAction;
 	QAction *splitZAction;			//for split along z direction
 	QAction *splitAction;			//for split along x-y direction
 	QAction *exclusionAction;

@@ -25,6 +25,7 @@
 =========================================================================*/
 #include "ftkNuclearSegmentation.h"
 #include <itkImageRegionConstIteratorWithIndex.h>
+#include <itkVotingBinaryIterativeHoleFillingImageFilter.h>
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
@@ -1250,6 +1251,147 @@ bool NuclearSegmentation::Exclude(int xy, int z, vtkSmartPointer<vtkTable> table
 	}
 	EditsNotSaved = true;
 
+	return true;
+}
+
+//Used to fill objects with holes
+bool NuclearSegmentation::FillObjects(std::vector<int> ids)
+{
+	if(!labelImage) return false;
+
+	for(int i=0; i<(int)ids.size(); ++i)
+	{
+		FillAnObject(ids.at(i));				//fill them one by one		
+	}
+	EditsNotSaved = true;
+
+	return true;
+}
+
+//Used to fill a single object with holes
+bool NuclearSegmentation::FillAnObject(int objID)
+{
+	//Start by getting the bounding box around the object of interest
+	ftk::Object::Box region = bBoxMap[objID];	
+	//Extend the bounding box by 10 from each size
+	std::vector<unsigned short> SZ = labelImage->Size();
+	int min_x = region.min.x-10;
+	if(min_x<0)
+		min_x = 0;
+	int min_y = region.min.y-10;
+	if(min_y<0)
+		min_y = 0;
+	int min_z = region.min.z-10;
+	if(min_z<0)
+		min_z = 0;
+	int max_x = region.max.x+10;
+	if(max_x > SZ[3]-1)
+		max_x = SZ[3]-1;
+	int max_y = region.max.y+10;
+	if(max_y > SZ[2]-1)
+		max_y = SZ[2]-1;
+	int max_z = region.max.z+10;
+	if(max_z > SZ[1]-1)
+		max_z = SZ[1]-1;
+
+	//create an ITK image of the same size as the bounding box	
+	typedef unsigned short PixelType;
+	typedef itk::Image<PixelType, 3> ImageType;
+	ImageType::Pointer img = ImageType::New();
+	ImageType::PointType origin;
+    origin[0] = 0.; 
+    origin[1] = 0.;    
+	origin[2] = 0.;    
+    img->SetOrigin( origin );
+
+    ImageType::IndexType start;
+    start[0] =   0;  // first index on X
+    start[1] =   0;  // first index on Y    
+	start[2] =   0;  // first index on Z    
+    ImageType::SizeType  size;
+ //   size[0]  = region.max.x-region.min.x+1;  // size along X
+ //   size[1]  = region.max.y-region.min.y+1;  // size along Y
+	//size[2]  = region.max.z-region.min.z+1;  // size along Z
+	size[0] = max_x-min_x+1;
+	size[1] = max_y-min_y+1;
+	size[2] = max_z-min_z+1;
+  
+    ImageType::RegionType rgn;
+    rgn.SetSize( size );
+    rgn.SetIndex( start );
+    
+    double spacing[3];
+	spacing[0] = 1; //spacing along x
+	spacing[1] = 1; //spacing along y
+	spacing[2] = 1; //spacing along z //leave it for 1 as of now
+
+    img->SetRegions( rgn );
+	img->SetSpacing(spacing);
+    img->Allocate();
+    img->FillBuffer(0);
+	img->Update();	
+		
+	//Iterate through Image & fill in with the object of interest
+	typedef itk::ImageRegionIteratorWithIndex< ImageType > IteratorType;
+	IteratorType it(img,img->GetRequestedRegion());
+	/*for(int k=region.min.z; k<=region.max.z; k++)
+	{
+		for(int i=region.min.y; i<=region.max.y; i++)
+		{			
+			for(int j=region.min.x; j<=region.max.x; j++)*/
+	for(int k=min_z; k<=max_z; k++)
+	{
+		for(int i=min_y; i<=max_y; i++)
+		{			
+			for(int j=min_x; j<=max_x; j++)
+			{
+				int pix = (int)labelImage->GetPixel(0,0,k,i,j);
+				if(pix != objID)
+					it.Set(0);
+				else
+					it.Set(255);
+				++it;
+			}
+		}
+	}
+
+	//Fill the itk image
+	typedef itk::VotingBinaryIterativeHoleFillingImageFilter< ImageType > FilterType;
+    FilterType::Pointer filter = FilterType::New();
+	ImageType::SizeType indexRadius;
+	indexRadius[0] = 5; // radius along x
+	indexRadius[1] = 5; // radius along y
+	indexRadius[2] = 5; // radius along z
+	filter->SetRadius( indexRadius );
+	filter->SetBackgroundValue( 0 );
+	filter->SetForegroundValue( 255 );
+	filter->SetMajorityThreshold( 2 );
+	filter->SetMaximumNumberOfIterations( 5 );
+	filter->SetInput( img );
+	filter->Update();
+
+	//Copy the filled itk image back to the label image	
+	IteratorType it2(filter->GetOutput(),filter->GetOutput()->GetRequestedRegion());
+	/*for(int k=region.min.z; k<=region.max.z; k++)
+	{
+		for(int i=region.min.y; i<=region.max.y; i++)
+		{			
+			for(int j=region.min.x; j<=region.max.x; j++)*/
+	for(int k=min_z; k<=max_z; k++)
+	{
+		for(int i=min_y; i<=max_y; i++)
+		{			
+			for(int j=min_x; j<=max_x; j++)
+			{
+				int pix = (int)labelImage->GetPixel(0,0,k,i,j);
+				int pix2 = (int) it2.Get();
+				if(pix ==0 && pix2>0) //just copy pixels that were zeros
+					labelImage->SetPixel(0,0,k,i,j,objID);										
+				++it2;
+			}
+		}
+	}
+	
 	return true;
 }
 

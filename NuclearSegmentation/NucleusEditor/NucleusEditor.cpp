@@ -331,6 +331,12 @@ void NucleusEditor::createMenus()
 	connect(deleteAction,SIGNAL(triggered()),this,SLOT(deleteCells()));
 	editMenu->addAction(deleteAction);
 
+	fillAction = new QAction(tr("Fill Cells"), this);
+	fillAction->setStatusTip(tr("Fill holes in the selected cells"));
+	fillAction->setShortcut(tr("Ctrl+F"));
+	connect(fillAction,SIGNAL(triggered()),this,SLOT(fillCells()));	
+	editMenu->addAction(fillAction);
+
 	splitZAction = new QAction(tr("Split Cell At Z"), this);
 	splitZAction->setStatusTip(tr("Split selected cell along the current Z slice"));
 	splitZAction->setShortcut(tr("Ctrl+T"));
@@ -432,6 +438,7 @@ void NucleusEditor::setEditsEnabled(bool val)
 	addAction->setEnabled(val);
 	mergeAction->setEnabled(val);
 	deleteAction->setEnabled(val);
+	fillAction->setEnabled(val);
 	splitZAction->setEnabled(val);
 	splitAction->setEnabled(val);
 	classAction->setEnabled(val);
@@ -1338,6 +1345,26 @@ void NucleusEditor::splitCellAlongZ(void)
 			projectFiles.tableSaved = false;
 		}
 	}
+	this->updateViews();
+
+	log_entry += "\t";
+	log_entry += ftk::TimeStamp();
+	ftk::AppendTextFile(projectFiles.log, log_entry);
+}
+
+void NucleusEditor::fillCells(void)
+{
+	if(!nucSeg) return;
+
+	std::set<long int> sels = selection->getSelections();
+	if(sels.size() == 0)
+		return;
+	std::vector<int> ids(sels.begin(), sels.end());
+
+	nucSeg->FillObjects(ids);
+	std::string log_entry = "FILL\t";
+	selection->clear();
+	
 	this->updateViews();
 
 	log_entry += "\t";

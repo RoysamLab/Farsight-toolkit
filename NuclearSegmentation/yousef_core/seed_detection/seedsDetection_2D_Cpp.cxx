@@ -96,6 +96,7 @@ int detectSeeds2D( float* IM, float* IM_out, unsigned short* IM_bin, int r, int 
 			iterator1.Set(0.0);
 		++iterator1;	
 	}
+	
 	//Compute Distance Map
 	float* dImg = (float *) malloc(r*c*sizeof(float));
 	distMap(im, r, c, dImg);
