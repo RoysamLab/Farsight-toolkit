@@ -19,7 +19,6 @@ OPTION( BUILD_TRACING "Build Tracing Tools" ON )
 OPTION( BUILD_NUCLEI "Build Nuclear Segmentation" ON )
 OPTION( BUILD_VESSEL "Build Vessel Surface Segmentation" ON )
 OPTION( BUILD_REGISTRATION "Build Image Registration (fregl)" ON )
-OPTION( BUILD_BIONET "Build Bionet" ON )
 OPTION( BUILD_SAMPLE_EDITOR "Build Sample Editor" ON )
 OPTION( BUILD_TISSUENETS "Build TissueNets" OFF )
 OPTION( BUILD_TRACKER "Build Cell Tracker" OFF )
@@ -100,7 +99,6 @@ ENDIF(USE_KPLS)
 ####################################################################################
 # NOW WE CAN INCLUDE THE MODULES ACCORDING TO THE OPTIONS SELECTED ABOVE:
 ####################################################################################
-SET(CPACK_NSIS_MENU_LINKS "http://www.farsight-toolkit.org" "Farsight Online Help")
 
 IF(BUILD_TRACING)
   INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Tracing )
@@ -132,36 +130,32 @@ IF(BUILD_SAMPLE_EDITOR)
   SUBDIRS( SampleEditor )
 ENDIF(BUILD_SAMPLE_EDITOR)
 
-IF(BUILD_BIONET)
-  INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/tissuenets )
-  SUBDIRS(tissuenets)
-ENDIF(BUILD_BIONET)
-
 IF(BUILD_TISSUENETS)
   INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/tissuenets )
   SUBDIRS(tissuenets)
 ENDIF(BUILD_TISSUENETS)
 
-#####################################################################################
-IF(WRAP_PYTHON)
-  IF(NOT BUILD_SHARED_LIBS)
-    MESSAGE(FATAL_ERROR "Wrapping requires a shared build, change BUILD_SHARED_LIBS to ON")
-  ENDIF(NOT BUILD_SHARED_LIBS)
-  FIND_PACKAGE(PythonLibs)
-  IF(PYTHON_INCLUDE_PATH)
-    INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
-  ELSE(PYTHON_INCLUDE_PATH)
-    MESSAGE(FATAL_ERROR "Python libraries must be installed for python wrapping.")
-  ENDIF(PYTHON_INCLUDE_PATH)
-  # CableSwig is included in the source distribution of farsight
-  SET(CMAKE_MODULE_PATH ${Farsight_SOURCE_DIR}/PythonWrapping/CableSwig/SWIG/CMake)
-  SET(CableSwig_DIR ${Farsight_BINARY_DIR}/PythonWrapping/CableSwig CACHE PATH "CableSwig_DIR: The directory containing CableSwigConfig.cmake.")
-  SET(CableSwig_INSTALL_ROOT ${Farsight_INSTALL_LIB_DIR}/CSwig)
-  INCLUDE(${CableSwig_DIR}/CableSwigConfig.cmake OPTIONAL)
-  SUBDIRS(PythonWrapping/CableSwig)
-ENDIF(WRAP_PYTHON)
+IF(BUILD_TISSUENETS OR BUILD_MDL)
+  FIND_PACKAGE(Boost)
+  MARK_AS_ADVANCED(CLEAR Boost_INCLUDE_DIR)
+ENDIF(BUILD_TISSUENETS OR BUILD_MDL)
+
 
 #####################################################################################
+# Optionally find Farsight's data directory, used for testing and installers
+# You can check out the data directory from subversion like so:
+# svn co svn://www.openworld.rpi.edu/repos/farsight/data
+#####################################################################################
+
+FIND_PATH(FARSIGHT_DATA_ROOT FarsightData.readme 
+  ${Farsight_SOURCE_DIR}/data 
+  ${Farsight_SOURCE_DIR}/../data 
+  ${Farsight_SOURCE_DIR}/../../data 
+  $ENV{FARSIGHT_DATA_ROOT}
+  DOC "The repository for data used for testing.  To obtain from SVN: \"svn co svn://www.openworld.rpi.edu/repos/farsight/data\"")
+
+#####################################################################################
+
 #####################################################################################
 # SOME INSTALL RULES
 ######################################################################################
@@ -172,7 +166,20 @@ IF(APPLE)
   INSTALL(DIRECTORY ${QT_QTCORE_LIBRARY_RELEASE} ${QT_QTGUI_LIBRARY_RELEASE} ${QT_QTSQL_LIBRARY_RELEASE} ${QT_QTNETWORK_LIBRARY_RELEASE} DESTINATION bin)
 ENDIF(APPLE)
 
+#python scripts
 INSTALL(DIRECTORY python/ DESTINATION python PATTERN "*.svn" EXCLUDE)
+
+#sample data and results
+IF(FARSIGHT_DATA_ROOT)
+  INSTALL(FILES ${FARSIGHT_DATA_ROOT}/BioArt_5_channel_test_images/1G_Nuclei_crop1.tif
+          DESTINATION data/BioArt)
+  INSTALL(FILES ${FARSIGHT_DATA_ROOT}/SpineData/Trach6A.512x512x26.raw
+          DESTINATION data/SpineData)
+  INSTALL(FILES ${FARSIGHT_DATA_ROOT}/TraceData/MBFsp5.308x512x49.raw
+          DESTINATION data/TraceData)
+  INSTALL(DIRECTORY ${FARSIGHT_DATA_ROOT}/Baseline/
+          DESTINATION data/Baseline PATTERN "*.svn" EXCLUDE)
+ENDIF(FARSIGHT_DATA_ROOT)
 
 INCLUDE(InstallRequiredSystemLibraries)
 
@@ -198,6 +205,8 @@ SET(CPACK_RESOURCE_FILE_WELCOME "${Farsight_SOURCE_DIR}/welcome.txt")
 #second screen?
 SET(CPACK_RESOURCE_FILE_README "${Farsight_SOURCE_DIR}/readme.txt")
 SET(CPACK_RESOURCE_FILE_LICENSE "${Farsight_SOURCE_DIR}/license.txt") 
+
+SET(CPACK_NSIS_MENU_LINKS "http://www.farsight-toolkit.org" "Farsight Online Help")
 
 INCLUDE(CPack)
 

@@ -6,8 +6,6 @@ ENDIF(COMMAND CMAKE_POLICY)
 
 #PROJECT( bionet )
 
-find_package( Boost 1.37 COMPONENTS regex graph )
-
 link_directories ( ${Boost_LIBRARY_DIRS} )
 include_directories ( ${Boost_INCLUDE_DIRS} )
 
