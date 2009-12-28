@@ -25,6 +25,7 @@ limitations under the License.
 #endif
 #include <stdlib.h>
 #include <iostream>
+#include <cstdio>
 #include <string.h>
 #include "math.h"
 
