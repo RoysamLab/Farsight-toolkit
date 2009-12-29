@@ -216,40 +216,50 @@ void TrainingDialog::Append()
 		column->SetName(columnForTraining );
 		column->SetNumberOfValues( m_table->GetNumberOfRows() );
 		column->FillComponent(0,-1);
-		
-		vtkSmartPointer<vtkStringArray> discrim_column = vtkSmartPointer<vtkStringArray>::New();
-		discrim_column->SetName("Original/Model" );
-		discrim_column->SetNumberOfValues( m_table->GetNumberOfRows() );
-		
 		m_table->AddColumn(column);
-		m_table->AddColumn(discrim_column);		
-		
+				
 		for(int row = 0; (int)row < m_table->GetNumberOfRows(); ++row)  
 			{
 				m_table->SetValueByName(row, columnForTraining, -1);
 				break;
 			}
 		
+		unsigned char maxrow = m_table->GetNumberOfRows();
+		unsigned char maxrow2 = m_table->GetNumberOfRows();
 		
-		for(int row = 0; (int)row < m_table->GetNumberOfRows(); ++row)  
-			{
-				m_table->SetValueByName(row, "Original/Model", "Original");
-			}
+		std::cout<<maxrow2<<std::endl;
 
 		vtkSmartPointer<vtkVariantArray> model_data = vtkSmartPointer<vtkVariantArray>::New();
-		
-		unsigned char maxrow = m_table->GetNumberOfRows();
-		
+
 		for(int row = 0; (int)row < model_table->GetNumberOfRows(); ++row)  
 			{
 				model_data = model_table->GetRow(row);
 				m_table->InsertNextRow(model_data); 
 				m_table->SetValue(maxrow,0,maxrow+1);
-				m_table->SetValueByName(m_table->GetNumberOfRows()-1, "Original/Model", "Model");
-				maxrow++;
+				maxrow = maxrow + 1;
 			}
+		
+		//vtkSmartPointer<vtkStringArray> discrim_column = vtkSmartPointer<vtkStringArray>::New();
+		//discrim_column->SetName("Original/Model" );
+		//discrim_column->SetNumberOfValues(m_table->GetNumberOfRows());
+		//m_table->AddColumn(discrim_column);
+		//
+		//for(int row = 0; (int)row < m_table->GetNumberOfRows(); ++row)  
+		//	{	
+		//		std::cout<<"I was here"<<std::endl;
+		//		if(row<maxrow2)
+		//		{
+		//			m_table->SetValueByName(row, "Original/Model", "Original");
+		//			std::cout<<"I was here"<<std::endl;
+		//		}
+		//		if(row>=maxrow2)
+		//		{
+		//			m_table->SetValueByName(row, "Original/Model", "Model");
+		//			std::cout<<"I was there"<<std::endl;
+		//		}
+		//	}
 
- 		emit changedTable();		
+ 		emit changedTable();
 }
 
 
