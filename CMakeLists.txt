@@ -169,16 +169,12 @@ ENDIF(APPLE)
 #python scripts
 INSTALL(DIRECTORY python/ DESTINATION python PATTERN "*.svn" EXCLUDE)
 
-#sample data and results
+#install rules for sample data and results are kept in a separate
+#CMakeLists.txt file in the data directory, so we don't have to keep changing
+#the top-level CMakeLists.txt file whenever you want to include a new sample
+#data set in the installers
 IF(FARSIGHT_DATA_ROOT)
-  INSTALL(FILES ${FARSIGHT_DATA_ROOT}/BioArt_5_channel_test_images/1G_Nuclei_crop1.tif
-          DESTINATION data/BioArt)
-  INSTALL(FILES ${FARSIGHT_DATA_ROOT}/SpineData/Trach6A.512x512x26.raw
-          DESTINATION data/SpineData)
-  INSTALL(FILES ${FARSIGHT_DATA_ROOT}/TraceData/MBFsp5.308x512x49.raw
-          DESTINATION data/TraceData)
-  INSTALL(DIRECTORY ${FARSIGHT_DATA_ROOT}/Baseline/
-          DESTINATION data/Baseline PATTERN "*.svn" EXCLUDE)
+  SUBDIRS( ${FARSIGHT_DATA_ROOT} )
 ENDIF(FARSIGHT_DATA_ROOT)
 
 INCLUDE(InstallRequiredSystemLibraries)
