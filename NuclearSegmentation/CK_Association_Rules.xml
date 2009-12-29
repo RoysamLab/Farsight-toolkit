@@ -1,0 +1,5 @@
+<ObjectAssociationRules SegmentationSource="C:\Documents and Settings\Guest\Desktop\Histopathogy_test\segmentation_results_cyto.tif" NumberOfAssociativeMeasures="2">
+    <!-- Definition of Association Rules between different objects -->
+    <AssociationRule Name="CK_sig" Target_Image="C:\Documents and Settings\Guest\Desktop\Histopathogy_test\Image_Cube_CK_Data.tif" Outside_Distance="0" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="True" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="TOTAL" />
+    <AssociationRule Name="HER2_sig" Target_Image="C:\Documents and Settings\Guest\Desktop\Histopathogy_test\Image_Cube_HER2_Data.tif" Outside_Distance="0" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="True" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="TOTAL" />
+</ObjectAssociationRules>
