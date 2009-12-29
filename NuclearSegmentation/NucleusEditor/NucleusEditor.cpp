@@ -1443,7 +1443,10 @@ void NucleusEditor::CreateDefaultAssociationRules()
 	//3. Write to file:
 	objAssoc->WriteRulesToXML(inf2.absoluteFilePath().toStdString());
 	//4. put the output xml in the project definition:
-	projectDefinition.associationRules.push_back( inf2.absoluteFilePath().toStdString() );
+	//typedef struct { std::string name; std::string value; } StringParameter;
+	ftk::ProjectDefinition::StringParameter tpm;
+	tpm.value=inf2.absoluteFilePath().toStdString();
+	projectDefinition.associationRules.push_back( tpm );
 
 	//Now create other rules:
 

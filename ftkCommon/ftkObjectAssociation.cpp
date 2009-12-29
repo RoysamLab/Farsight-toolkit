@@ -52,9 +52,19 @@ ObjectAssociation::ObjectAssociation(std::string AssocFName, int numOfRules)
 	numOfAssocRules = numOfRules;		
 	assocMeasurementsList=NULL;
 	numOfLabels=0;
+	lab_im=NULL;
 	//added by Yousef on 10-18-2009
 	//invalidObjects = NULL;
 }
+ObjectAssociation::ObjectAssociation(std::string AssocFName, int numOfRules,  UShortImageType3D::Pointer Labeled_Image_Pointer)
+{
+	segImageName = AssocFName;
+	numOfAssocRules = numOfRules;		
+	assocMeasurementsList=NULL;
+	numOfLabels=0;
+	lab_im=Labeled_Image_Pointer;
+}
+
 
 /* Add association rules to the list of rules */
 void ObjectAssociation::AddAssociation(std::string ruleName,std::string targFileName, int outsideDistance, int insideDistance,	bool useAllObject, bool subBkground, bool use_multiple_thresh, int num_threshs, int num_in_fg, int assocType)
@@ -217,7 +227,7 @@ int ObjectAssociation::ReadRulesFromXML(std::string xmlFname)
 			std::cout<<"First attribute in an Association rule must be its name";
 			return 0;
 		}
-		int numAttribs = 10;
+		int numAttribs = 9;
 		//an association rule object
 		AssociationRule *assocRule = new AssociationRule(atrib->ValueStr());		
 		while(atrib)
@@ -231,7 +241,6 @@ int ObjectAssociation::ReadRulesFromXML(std::string xmlFname)
 			else if(strcmp(atrib->Name(),"Target_Image")==0)
 			{
 				assocRule->SetTargetFileNmae(atrib->ValueStr());
-				numAttribs--;
 			}
 			else if(strcmp(atrib->Name(),"Outside_Distance")==0)
 			{

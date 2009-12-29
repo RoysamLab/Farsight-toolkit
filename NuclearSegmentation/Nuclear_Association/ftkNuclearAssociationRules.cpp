@@ -41,6 +41,7 @@ AssociativeFeatureCalculator::AssociativeFeatureCalculator()
 {
 	inFilename = "";
 	fPrefix = "";
+	lab_im_set = false;
 }
 
 void AssociativeFeatureCalculator::SetInputFile(std::string filename)
@@ -129,11 +130,47 @@ void AssociativeFeatureCalculator::Update(vtkSmartPointer<vtkTable> table)
 	}
 }
 
+void AssociativeFeatureCalculator::SetInputImage(ftk::Image::Pointer input_labeled_image, int channel_number){
+
+	typedef itk::Image< unsigned short, 3 > UShortImageType3D;
+	typedef itk::ExtractImageFilter< UShortImageType3D, UShortImageType3D > LabelExtractType;
+	typedef itk::CastImageFilter< UShortImageType3D, UShortImageType3D > LabelCastType;
+
+	UShortImageType3D::Pointer lab_image = input_labeled_image->GetItkPtr<unsigned short>(0,channel_number);
+
+	LabelExtractType::Pointer leFilter = LabelExtractType::New();
+	UShortImageType3D::RegionType lRegion = lab_image->GetLargestPossibleRegion();
+	lRegion.SetSize(3,0);
+	leFilter->SetExtractionRegion(lRegion);
+	leFilter->SetInput( lab_image );
+
+	LabelCastType::Pointer lFilter = LabelCastType::New();
+	lFilter->SetInput( leFilter->GetOutput() );
+	try
+	{
+		lFilter->Update();
+	}
+	catch( itk::ExceptionObject & excep )
+	{
+		std::cerr << "Exception caught !" << std::endl;
+		std::cerr << excep << std::endl;
+		return;
+	}
+
+	lab_im = lFilter->GetOutput();
+
+	lab_im_set=1;
+}
+
 //Update the features in this table whose names match (sets doFeat)
 void AssociativeFeatureCalculator::Append(vtkSmartPointer<vtkTable> table)
 {
 	//Compute features:
-	ftk::NuclearAssociationRules *assoc = new ftk::NuclearAssociationRules("",0);
+	ftk::NuclearAssociationRules *assoc;
+	if( IsLabeledImageSet() == false )
+		assoc = new ftk::NuclearAssociationRules("",0,lab_im);
+	else
+		assoc = new ftk::NuclearAssociationRules("",0);
 	assoc->ReadRulesFromXML(inFilename);
 	assoc->PrintSelf();
 	assoc->Compute();
@@ -189,6 +226,16 @@ NuclearAssociationRules::NuclearAssociationRules(std::string AssocFName, int num
 	x_Size = y_Size = z_Size = 0;
 	imDim=3;	
 	objectType = "Nucleus";
+	lab_im_set = false;
+}
+
+NuclearAssociationRules::NuclearAssociationRules(std::string AssocFName, int numOfRules,LabImageType::Pointer lab_im):ObjectAssociation(AssocFName, numOfRules, lab_im){
+	labImage= lab_im;
+	labGeometryFilter= NULL;	
+	x_Size = y_Size = z_Size = 0;
+	imDim=3;	
+	objectType = "Nucleus";
+	lab_im_set = true;
 }
 
 /* This is the main function for computing associative features */
@@ -196,22 +243,24 @@ void NuclearAssociationRules::Compute()
 {
 	std::cout<<"Starting Associative Features Computation\n";
 
-	//1. read the label image	
-	ReaderType::Pointer reader = ReaderType::New();
-	std::string fname = GetSegImgName();
-	reader->SetFileName(fname);
-	try
-	{
-		reader->Update();
-	}
-	catch( itk::ExceptionObject & err )
-	{
-		std::cerr << err << std::endl;
-		return;
+	//1. read the label image
+	if( lab_im_set == false ){
+		ReaderType::Pointer reader = ReaderType::New();
+		std::string fname = GetSegImgName();
+		reader->SetFileName(fname);
+		try
+		{
+			reader->Update();
+		}
+		catch( itk::ExceptionObject & err )
+		{
+			std::cerr << err << std::endl;
+			return;
+		}
+		labImage = LabImageType::New();
+		labImage = reader->GetOutput();
 	}
 
-	labImage = LabImageType::New();
-	labImage = reader->GetOutput();
 	x_Size=labImage->GetLargestPossibleRegion().GetSize()[0];
 	y_Size=labImage->GetLargestPossibleRegion().GetSize()[1];
 	z_Size=labImage->GetLargestPossibleRegion().GetSize()[2];

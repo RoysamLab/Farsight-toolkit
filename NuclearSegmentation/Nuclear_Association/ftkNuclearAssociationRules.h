@@ -29,10 +29,13 @@
 
 #include <ftkObject.h>
 #include <ftkCommon/ftkObjectAssociation.h>
+#include "ftkImage/ftkImage.h"
 #include "itkLabelGeometryImageFilter.h"
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageRegionIteratorWithIndex.h"
+#include "itkCastImageFilter.h"
+#include "itkExtractImageFilter.h"
 //#include "itkApproximateSignedDistanceMapImageFilter.h"
 #include <itkSignedDanielssonDistanceMapImageFilter.h>
 
@@ -59,10 +62,14 @@ public:
 	vtkSmartPointer<vtkTable> Compute(void);			//Compute and return table with values (for all objects)
 	void Update(vtkSmartPointer<vtkTable> table);		//Update the features in this table whose names match (sets doFeat)
 	void Append(vtkSmartPointer<vtkTable> table);		//Compute features that are ON and append them to the existing table
+	void SetInputImage(ftk::Image::Pointer input_labeled_image, int channel_number);
+	bool IsLabeledImageSet(){ return lab_im_set; }
 
 private:
 	std::string inFilename;
 	std::string fPrefix;
+	LabImageType::Pointer lab_im;
+	bool lab_im_set;
 	static const int num_rois=8;
 };
 
@@ -76,7 +83,8 @@ class NuclearAssociationRules : public ObjectAssociation
 {
 public:
 	/* Contsructor */
-	NuclearAssociationRules(std::string segImageName, int numOfAssocRules);	
+	NuclearAssociationRules(std::string segImageName, int numOfAssocRules);
+	NuclearAssociationRules(std::string segImageName, int numOfAssocRules, LabImageType::Pointer lab_im);
 
 	/* This method computes all the associative measurements for all the objects */
 	void Compute();
@@ -97,6 +105,7 @@ private:
 	int y_Size;
 	int z_Size;
 	int imDim;
+	bool lab_im_set;
 
 	unsigned short thresh;
 

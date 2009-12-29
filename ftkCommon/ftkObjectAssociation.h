@@ -27,6 +27,7 @@ limitations under the License.
 
 #include <tinyxml/tinyxml.h> //needed to read from and write to XML files
 #include <ftkObject.h> //don't remove this line
+#include "itkImage.h"
 //need to include some other headers here
 //I think ftkLableImageFeatures.h should be included
 
@@ -44,7 +45,7 @@ enum AssociationType {
       ASSOC_AVERAGE = 4,
 	  ASSOC_SURROUNDEDNESS = 5
 };
-
+typedef itk::Image< unsigned short, 3 > UShortImageType3D;
 class AssociationRule
 {
 public:		
@@ -98,6 +99,7 @@ class ObjectAssociation
 public:
 	/* Contsructor */
 	ObjectAssociation(std::string segImageName, int numOfAssocRules);
+	ObjectAssociation(std::string segImageName, int numOfAssocRules, UShortImageType3D::Pointer Labeled_Image_Pointer);
 	/* Used to add a new association rule to the rules list */
 	void AddAssociation(std::string ruleName,std::string targFileName, int outsideDistance, int insideDistance,	bool useAllObject, bool subBkground, bool use_multiple_thresh, int num_threshs, int num_in_fg, int assocType);
 	/* I/O	*/
@@ -106,7 +108,7 @@ public:
 	void WriteAssociativeFeaturesToXML(std::string xmlFname);
 
 	/* used for validation. In other words, it can be used to make sure that the XML reader works fine */
-	void PrintSelf(); 
+	void PrintSelf();
 
 	/* Get the values of private member variables */
 	std::string GetSegImgName() {return segImageName;};
@@ -135,7 +137,8 @@ protected:
 
 private:
 	std::string segImageName;
-	int numOfAssocRules;	
+	int numOfAssocRules;
+	UShortImageType3D::Pointer lab_im;
 			
 }; // end ObjectAssociation
 

@@ -82,7 +82,7 @@ bool ProjectDefinition::Load(std::string filename)
 		}
 		else if( strcmp( parent, "AssociationRules" ) == 0 )
 		{
-			associationRules = this->ParseText(parentElement);
+			associationRules = this->ReadStringParameters(parentElement);
 		}
 		else if( strcmp( parent, "IntrinsicFeatures" ) == 0 )
 		{
@@ -164,6 +164,27 @@ std::vector<ProjectDefinition::Parameter> ProjectDefinition::ReadParameters(TiXm
 	} // end while(parentElement)
 	return returnVector;
 }
+
+std::vector<ProjectDefinition::StringParameter> ProjectDefinition::ReadStringParameters(TiXmlElement * inputElement)
+{
+	std::vector<StringParameter> returnVector;
+
+	TiXmlElement * parameterElement = inputElement->FirstChildElement();
+	while (parameterElement)
+	{
+		const char * parent = parameterElement->Value();
+		if ( strcmp( parent, "parameter" ) == 0 )
+		{
+			StringParameter parameter;
+			parameter.name = parameterElement->Attribute("name");
+			parameter.value = atoi(parameterElement->Attribute("value"));
+			returnVector.push_back(parameter);
+		}
+		parameterElement = parameterElement->NextSiblingElement();
+	} // end while(parentElement)
+	return returnVector;
+}
+
 
 std::vector<std::string> ProjectDefinition::ParseText(TiXmlElement * element)
 {
@@ -260,11 +281,11 @@ bool ProjectDefinition::Write(std::string filename)
 	//AssociationRules:
 	if(associationRules.size() > 0)
 	{
-		TiXmlElement * assocElement = new TiXmlElement("IntrinsicFeatures");
-		std::string text = associationRules.at(0);
+		TiXmlElement * assocElement = new TiXmlElement("AssociationRules");
+		std::string text = associationRules.at(0).value;
 		for(int i=1; i<(int)associationRules.size(); ++i)
 		{
-			text += "," + associationRules.at(i);
+			text += "," + associationRules.at(i).name;
 		}
 		assocElement->LinkEndChild( new TiXmlText( text.c_str() ) );
 		root->LinkEndChild(assocElement);

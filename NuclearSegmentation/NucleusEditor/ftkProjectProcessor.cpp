@@ -159,7 +159,7 @@ bool ProjectProcessor::SegmentNuclei(int nucChannel)
 
 	delete nucSeg;
 
-	std::cout << "Done NucSeg\n";
+	std::cout << "Done Nucleus Segmentation\nComputing intrisic features for the nuclei\n";
 
 	//Calc Features:
 	ftk::IntrinsicFeatureCalculator *iCalc = new ftk::IntrinsicFeatureCalculator();
@@ -170,7 +170,7 @@ bool ProjectProcessor::SegmentNuclei(int nucChannel)
 	table = iCalc->Compute();									//Create a new table
 	delete iCalc;
 
-	std::cout << "Done NucFeats\n";
+	std::cout << "Done: Instrinsic Nuclear Features\n";
 
 	resultIsEditable = true;
 	return true;
@@ -180,6 +180,8 @@ bool ProjectProcessor::SegmentCytoplasm(int cytChannel, int memChannel)
 {
 	if(!inputImage || !outputImage || !table)
 		return false;
+
+	std::cout << "Begin Cytoplasm Segmentation\n";
 
 	ftk::CytoplasmSegmentation * cytoSeg = new ftk::CytoplasmSegmentation();
 	cytoSeg->SetDataInput(inputImage, "data_image", cytChannel,memChannel);
@@ -203,7 +205,7 @@ bool ProjectProcessor::SegmentCytoplasm(int cytChannel, int memChannel)
 
 	delete cytoSeg;
 
-	std::cout << "Done CytoSeg\n";
+	std::cout << "Done: Cytoplasm Segmentation\nComputing intrisic features for the whole cell\n";
 
 	//Calc Features:
 	if( cytChannel > -1 ){
@@ -216,7 +218,7 @@ bool ProjectProcessor::SegmentCytoplasm(int cytChannel, int memChannel)
 		delete iCalc;
 	}
 
-	std::cout << "Done CytoFeats\n";
+	std::cout << "Done: Intrisic features for the whole cell\n";
 
 	resultIsEditable = false;
 	return true;
@@ -229,11 +231,32 @@ bool ProjectProcessor::ComputeAssociations(void)
 		inputTypeNeeded = 3;
 		return false;
 	}
-	
+
 	for(int i=0; i<(int)definition->associationRules.size(); ++i)
 	{
+
+		int channel_number=-1;
+		if( strcmp( definition->associationRules.at(i).name.c_str(), "NUCLEAR" ) == 0 ){
+			if( !outputImage->GetImageInfo()->numChannels ){
+				std::cout<<"Unable to access labeled nuclear image while computing associative features\n";
+				return false;
+			}
+			channel_number = 0;
+			
+		} else if( strcmp( definition->associationRules.at(i).name.c_str(), "CYTOPLASM" ) == 0 ){
+			if( outputImage->GetImageInfo()->numChannels < 2 ){
+				std::cout<<"Unable to access labeled cytoplasmic image while computing associative features\n";
+				return false;
+			}
+			channel_number = 1;
+		} else{
+			std::cout<<"Please check region type for associative feature computation\n";
+			return false;
+		}
+
 		ftk::AssociativeFeatureCalculator * assocCal = new ftk::AssociativeFeatureCalculator();
-		assocCal->SetInputFile( definition->associationRules.at(i) );
+		assocCal->SetInputFile( definition->associationRules.at(i).value );
+		assocCal->SetInputImage( outputImage, channel_number );
 		if(table)
 		{
 			assocCal->Append(table);
