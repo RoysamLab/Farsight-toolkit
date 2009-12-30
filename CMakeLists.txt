@@ -154,33 +154,19 @@ FIND_PATH(FARSIGHT_DATA_ROOT FarsightData.readme
   $ENV{FARSIGHT_DATA_ROOT}
   DOC "The repository for data used for testing.  To obtain from SVN: \"svn co svn://www.openworld.rpi.edu/repos/farsight/data\"")
 
-#####################################################################################
+##########################################################################
+# Testing stuff
+###########################################################################
+ENABLE_TESTING()
+IF(BUILD_TESTING)
+  CONFIGURE_FILE(${Farsight_SOURCE_DIR}/CMake/CTestCustom.ctest.in
+    ${Farsight_BINARY_DIR}/CMake/CTestCustom.ctest @ONLY)
+  FILE(WRITE ${Farsight_BINARY_DIR}/CTestCustom.cmake
+    "INCLUDE(\"${Farsight_BINARY_DIR}/CMake/CTestCustom.ctest\")\n")
+  SET(BUILDNAME "${BUILDNAME}" CACHE STRING "Name of build on the dashboard")
+  MARK_AS_ADVANCED(BUILDNAME)
+ENDIF(BUILD_TESTING)
 
-#####################################################################################
-# SOME INSTALL RULES
-######################################################################################
-IF(WIN32)
-  INSTALL(FILES ${QT_LIBRARY_DIR}/QtCore4.dll ${QT_LIBRARY_DIR}/QtGui4.dll DESTINATION bin)
-ENDIF(WIN32)
-IF(APPLE)
-  INSTALL(DIRECTORY ${QT_QTCORE_LIBRARY_RELEASE} ${QT_QTGUI_LIBRARY_RELEASE} ${QT_QTSQL_LIBRARY_RELEASE} ${QT_QTNETWORK_LIBRARY_RELEASE} DESTINATION bin)
-ENDIF(APPLE)
-
-#python scripts
-INSTALL(DIRECTORY python/ DESTINATION python PATTERN "*.svn" EXCLUDE)
-
-#install rules for sample data and results are kept in a separate
-#CMakeLists.txt file in the data directory, so we don't have to keep changing
-#the top-level CMakeLists.txt file whenever you want to include a new sample
-#data set in the installers
-IF(FARSIGHT_DATA_ROOT)
-  SUBDIRS( ${FARSIGHT_DATA_ROOT} )
-ENDIF(FARSIGHT_DATA_ROOT)
-
-INCLUDE(InstallRequiredSystemLibraries)
-
-
-#####################################################################################
 #####################################################################################
 # CPACK SETUP FOR BUILDING INSTALLERS
 ######################################################################################
@@ -206,18 +192,64 @@ SET(CPACK_NSIS_MENU_LINKS "http://www.farsight-toolkit.org" "Farsight Online Hel
 
 INCLUDE(CPack)
 
-###########################################################################
-##########################################################################
-# Testing stuff
-###########################################################################
-ENABLE_TESTING()
-IF(BUILD_TESTING)
-  CONFIGURE_FILE(${Farsight_SOURCE_DIR}/CMake/CTestCustom.ctest.in
-    ${Farsight_BINARY_DIR}/CMake/CTestCustom.ctest @ONLY)
-  FILE(WRITE ${Farsight_BINARY_DIR}/CTestCustom.cmake
-    "INCLUDE(\"${Farsight_BINARY_DIR}/CMake/CTestCustom.ctest\")\n")
-  SET(BUILDNAME "${BUILDNAME}" CACHE STRING "Name of build on the dashboard")
-  MARK_AS_ADVANCED(BUILDNAME)
-ENDIF(BUILD_TESTING)
+#####################################################################################
+# SOME INSTALL RULES
+######################################################################################
 
+#stuff to make drag-n-droppable Mac OS X applications
+set(FARSIGHT_BUNDLE_LOCATION 
+  "FARSIGHT ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+if(WIN32)
+  set(EXE_TYPE WIN32)
+endif(WIN32)
+if(APPLE)
+  set(EXE_TYPE MACOSX_BUNDLE)
+  set(MAKE_BUNDLE MACOSX_BUNDLE)
+  set(MACOSX_BUNDLE_BUNDLE_NAME "${PROJECT_NAME}")
+
+  set(FARSIGHT_INSTALL_DESTINATION_ARGS
+    RUNTIME DESTINATION "${FARSIGHT_BUNDLE_LOCATION}")
+
+  set(FARSIGHT_INSTALL_DESTINATION_ARGS
+    BUNDLE DESTINATION "${FARSIGHT_BUNDLE_LOCATION}")
+
+  set(INSTALL_BIN_DIR ${FARSIGHT_BUNDLE_LOCATION}/bin)
+
+else(APPLE)
+  set(INSTALL_BIN_DIR bin)
+endif(APPLE)
+
+
+#Qt libraries 
+IF(WIN32)
+  INSTALL(FILES ${QT_LIBRARY_DIR}/QtCore4.dll ${QT_LIBRARY_DIR}/QtGui4.dll DESTINATION bin)
+ENDIF(WIN32)
+#IF(APPLE)
+#  INSTALL(DIRECTORY ${QT_QTCORE_LIBRARY_RELEASE} ${QT_QTGUI_LIBRARY_RELEASE} ${QT_QTSQL_LIBRARY_RELEASE} ${QT_QTNETWORK_LIBRARY_RELEASE} DESTINATION bin)
+#ENDIF(APPLE)
+
+#python scripts
+if(APPLE)
+  INSTALL(DIRECTORY python/
+          DESTINATION ${FARSIGHT_BUNDLE_LOCATION}/python
+          PATTERN "*.svn" EXCLUDE)
+else(APPLE)
+  INSTALL(DIRECTORY python/ DESTINATION python PATTERN "*.svn" EXCLUDE)
+endif(APPLE)
+
+#install rules for sample data and results are kept in a separate
+#CMakeLists.txt file in the data directory, so we don't have to keep changing
+#the top-level CMakeLists.txt file whenever you want to include a new sample
+#data set in the installers
+IF(FARSIGHT_DATA_ROOT)
+  SUBDIRS( ${FARSIGHT_DATA_ROOT} )
+ENDIF(FARSIGHT_DATA_ROOT)
+
+INCLUDE(InstallRequiredSystemLibraries)
+# IMPORTANT:
+# Keep this chunk of code here at the very bottom of the main
+# CMakeLists.txt file so that the install rules that install the
+# bundles and any files inside of them are already run before these
+# script steps are run.
+add_subdirectory(InstallRules)
 

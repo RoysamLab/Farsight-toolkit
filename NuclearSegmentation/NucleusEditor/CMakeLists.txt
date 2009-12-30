@@ -31,13 +31,13 @@ QT4_WRAP_UI( NucluesEditor_UI_HDRS ${NucluesEditor_UIS} )
 # and finally this will run moc:
 QT4_WRAP_CPP( NucluesEditor_MOC_SRCS NucleusEditor.h ProjectFilenamesDialog.h )
 
-ADD_EXECUTABLE(NucleusEditor main.cpp
-             ${NucluesEditor_SRCS}
-             ${NucluesEditor_HDRS} 
-             ${NucluesEditor_MOC_SRCS} 
-             ${NucluesEditor_UI_HDRS}
-             ${NucluesEditor_RC_SRCS}
-)
+ADD_EXECUTABLE( NucleusEditor ${EXE_TYPE}
+                main.cpp
+                ${NucluesEditor_SRCS}
+                ${NucluesEditor_HDRS} 
+                ${NucluesEditor_MOC_SRCS} 
+                ${NucluesEditor_UI_HDRS}
+                ${NucluesEditor_RC_SRCS} )
 
 TARGET_LINK_LIBRARIES( NucleusEditor ${QT_LIBRARIES} ftkGUI ftkImage ftkCommon libSVM vtkVolumeRendering QVTK NuclearSegmentation CytoplasmSegmentation )
 
@@ -46,6 +46,11 @@ TARGET_LINK_LIBRARIES( NucleusEditor ${QT_LIBRARIES} ftkGUI ftkImage ftkCommon l
 #OR MAKE A CONSOLE APPLICATION
 SET_TARGET_PROPERTIES( NucleusEditor PROPERTIES WIN32_EXECUTABLE 0)
 
-INSTALL( TARGETS NucleusEditor DESTINATION bin )
+SET(CPACK_PACKAGE_EXECUTABLES "NucleusEditor;Nucleus Editor")
 
+if(APPLE)
+   install(TARGETS NucleusEditor DESTINATION ${FARSIGHT_BUNDLE_LOCATION})
+else(APPLE)
+   install(TARGETS NucleusEditor DESTINATION bin )
+endif(APPLE)
 

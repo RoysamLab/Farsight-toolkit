@@ -87,6 +87,7 @@ View3D::View3D(int argc, char **argv)
 	this->tobj = new TraceObject;
 	int num_loaded = 0;
 	this->Volume=0;
+  this->TreePlot = 0;
 	bool tracesLoaded = false;
 	//this->TraceFiles.clear();
 	this->Image.clear();

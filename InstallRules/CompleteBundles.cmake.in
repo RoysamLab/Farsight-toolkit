@@ -1,0 +1,86 @@
+#
+# WARNING:
+#   This file is based on ParaView3/Applications/Client/CompleteBundle.cmake.in
+#   If that file changes, this one will likely need a similar change.
+#
+
+
+# Make sure this CMake has BundleUtilities.cmake:
+#
+if(NOT EXISTS "${CMAKE_ROOT}/Modules/BundleUtilities.cmake")
+  message(FATAL_ERROR "error: BundleUtilities.cmake not found. Use CMake 2.6.2 or later.")
+endif(NOT EXISTS "${CMAKE_ROOT}/Modules/BundleUtilities.cmake")
+
+
+# Avoid following symlinks encountered during FILE GLOB_RECURSE calls:
+#
+if(COMMAND CMAKE_POLICY)
+  cmake_policy(SET CMP0009 NEW)
+
+  if(POLICY CMP0011)
+    cmake_policy(SET CMP0011 NEW)
+  endif(POLICY CMP0011)
+endif(COMMAND CMAKE_POLICY)
+
+
+# gp_item_default_embedded_path_override item default_embedded_path_var
+#
+# Return the path that others should refer to the item by when the item
+# is embedded inside a bundle.
+#
+# This is a project-specific override of BundleUtilities.cmake's
+# gp_item_default_embedded_path
+#
+function(gp_item_default_embedded_path_override item default_embedded_path_var)
+
+  # By default, embed items as set by gp_item_default_embedded_path:
+  #
+  set(path "${${default_embedded_path_var}}")
+
+  # But for ParaView...
+  #
+  # ...embed *.dylib in the Libraries folder:
+  #
+  if(item MATCHES "\\.dylib$")
+    set(path "@executable_path/../Libraries")
+  endif(item MATCHES "\\.dylib$")
+
+  # ...embed *Plugin.dylib in the Plugins folder:
+  #
+  if(item MATCHES "Plugin\\.dylib$")
+    set(path "@executable_path/../Plugins")
+  endif(item MATCHES "Plugin\\.dylib$")
+
+  # ...embed *.so in the Plugins folder:
+  #
+  if(item MATCHES "\\.so$")
+    set(path "@executable_path/../Plugins")
+  endif(item MATCHES "\\.so$")
+
+  # ...embed *Python.so in the Libraries folder:
+  #
+  if(item MATCHES "Python\\.so$")
+    set(path "@executable_path/../Libraries")
+  endif(item MATCHES "Python\\.so$")
+
+  set(${default_embedded_path_var} "${path}" PARENT_SCOPE)
+endfunction(gp_item_default_embedded_path_override)
+
+
+# Fixup the .app bundle in the install tree:
+#
+include(BundleUtilities)
+
+
+fixup_bundle(
+  "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/TraceEdit.app"
+  ""
+  "@EXECUTABLE_OUTPUT_PATH@/@CMAKE_CFG_INTDIR@"
+  )
+
+fixup_bundle(
+  "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/NucleusEditor.app"
+  ""
+  "@EXECUTABLE_OUTPUT_PATH@/@CMAKE_CFG_INTDIR@"
+  )
+
