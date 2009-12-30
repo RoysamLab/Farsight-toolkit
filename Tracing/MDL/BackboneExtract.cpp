@@ -262,6 +262,7 @@ int main(int argc, char *argv[])
     fin >> nodePosition.x >> nodePosition.y >> nodePosition.z >> p;
     }
 
+   printf ("nodes reading is finished over!\n"); 
    degree_nodes = new int[num_nodes+1];
    degree_nodes_buffer = new int[num_nodes+1];
 
@@ -290,6 +291,8 @@ int main(int argc, char *argv[])
 
   // MST algorithm
   kruskal_minimum_spanning_tree(g, back_inserter(spanning_tree));
+
+  printf("MST is finished!\n");
   
   // create initial degree_nodes array
   for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
@@ -328,7 +331,7 @@ int main(int argc, char *argv[])
       }
     }
   }
-
+  printf("Erosion of MST is finished!");
   // Dilation the MST by counting up the degree of nodes
   while (num_edge_eroded !=0) {
     //times_dilation--;
@@ -342,6 +345,8 @@ int main(int argc, char *argv[])
     }
   }
 
+  printf("Dilation of MST is finished!\n");
+
   num_nodes                 =0;
   // Create a msTree graph for backbone from the MST generated above
   Graph msTreeBB(num_nodes+1);        // BackBone graph created or Graph for the parts of total skeletons 
@@ -354,6 +359,7 @@ int main(int argc, char *argv[])
       }
     }
  
+ printf("Lines generating is finished!\n");
 
  Edge_iter   ei, ei_end; 
  line_count = 0;
@@ -370,6 +376,8 @@ int main(int argc, char *argv[])
    //fprintf(fout, "2 %zu %zu\n", source(*ei, msTreeBB)-1, target(*ei, msTreeBB)-1);
 	   fprintf(fout, "2 %ld %ld\n", source(*ei, msTreeBB)-1, target(*ei, msTreeBB)-1);
    }
+  
+ printf("Sucess!\n");
 
   fclose(fout); 
 
