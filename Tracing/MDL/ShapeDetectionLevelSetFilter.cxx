@@ -689,7 +689,7 @@ int main( int argc, char *argv[] )
 
   //  Software Guide : BeginCodeSnippet
   shapeDetection->SetMaximumRMSError( 0.02 );
-  shapeDetection->SetNumberOfIterations( 20 ); //800, 30
+  shapeDetection->SetNumberOfIterations( 10 ); //800, 30
   //  Software Guide : EndCodeSnippet 
 
   
