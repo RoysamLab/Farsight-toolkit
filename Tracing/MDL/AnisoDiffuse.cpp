@@ -312,6 +312,30 @@ int main(int argc, char *argv[])
 
   fwrite(volout, sizeX*sizeY*sizeZ, sizeof(DATATYPEOUT), outfile);
   
+
+  FILE *mhdfile;
+  
+  if((mhdfile=fopen("Aniso_Diffused.mhd","w"))==NULL)
+    {
+    cerr << "output file open error!" << endl;
+    return -1;
+    }
+  fprintf (mhdfile,"ObjectType = Image\n");
+  fprintf (mhdfile,"NDims = 3\n");
+  fprintf (mhdfile,"BinaryData = True\n");
+  fprintf (mhdfile,"BinaryDataByteOrderMSB = False\n");
+  fprintf (mhdfile,"CompressedData = False\n");
+  fprintf (mhdfile,"TransformMatrix = 1 0 0 0 1 0 0 0 1\n");
+  fprintf (mhdfile,"Offset = 0 0 0\n");
+  fprintf (mhdfile,"CenterOfRotation = 0 0 0\n");
+  fprintf (mhdfile,"AnatomicalOrientation = RAI\n");
+  fprintf (mhdfile,"ElementSpacing = 1 1 1\n");
+  fprintf (mhdfile,"DimSize = %d %d %d\n",sizeX,sizeY,sizeZ);
+  fprintf (mhdfile,"ElementType = MET_UCHAR\n");
+  fprintf (mhdfile,"ElementDataFile = Aniso_Diffused.raw\n");
+  fclose(mhdfile);
+
+  
     // memory release, added by xiao
   free(volin);// = (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN));
   free(volout);//= (DATATYPEOUT*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEOUT));
