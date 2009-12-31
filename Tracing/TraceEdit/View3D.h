@@ -68,8 +68,9 @@ public:
 	View3D(int argc, char **argv);
 	View3D(TraceObject* Traces);
 	~View3D();
-	void CreateBootLoader();
 	void Initialize();
+  void LoadFiles(int argc, char **argv);
+	void CreateBootLoader();
 	void CreateGUIObjects();
 	void CreateLayout();
 	void CreateInteractorStyle();
