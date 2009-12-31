@@ -1,10 +1,13 @@
 PROJECT(MDL)
+FIND_PACKAGE( Boost REQUIRED )
 INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} ${Farsight_BINARY_DIR}/Tracing/MDL )
 ADD_EXECUTABLE(AnisoDiffuse AnisoDiffuse.cpp)
 ADD_EXECUTABLE(ConnCompntwFldfill ConnCompntwFldfill.cpp)
 ADD_EXECUTABLE(GradientVecField GradientVecField.cpp)
 ADD_EXECUTABLE(MinSpanTree distTransform.cpp MinSpanTree.cpp morphGraphPrune.cpp) 
 ADD_EXECUTABLE(Integratedskel Integratedskel.cpp)
+ADD_EXECUTABLE(ObjectVolumeProcess ObjectVolumeProcess.cpp)
+TARGET_LINK_LIBRARIES(ObjectVolumeProcess ITKIO ITKStatistics)
 ADD_EXECUTABLE(volumeProcess volumeProcess.cpp)
 TARGET_LINK_LIBRARIES(volumeProcess ITKIO ITKStatistics)
 ADD_EXECUTABLE(RefiningSkeleton RefiningSkeleton.cpp)
@@ -14,6 +17,11 @@ ADD_EXECUTABLE(ShapeDetectionLevelSegmentation ShapeDetectionLevelSetFilter.cxx)
 TARGET_LINK_LIBRARIES(ShapeDetectionLevelSegmentation  ITKBasicFilters ITKCommon ITKIO ITKStatistics)
 ADD_EXECUTABLE(DistanceFieldComputing distTransform.cpp DistanceFieldComputing.cpp) 
 TARGET_LINK_LIBRARIES(DistanceFieldComputing  ITKIO ITKStatistics)
+ADD_EXECUTABLE(MSHS3DToVesseFilter itkMultiScaleHessianSmoothed3DToVesselnessMeasureImageFilterTest.cxx)
+TARGET_LINK_LIBRARIES(MSHS3DToVesseFilter  ITKBasicFilters ITKCommon ITKIO ITKStatistics)
+
+#ADD_EXECUTABLE(AddSpinesToSmoothedBackbone AddSpinesToSmoothedBackbone.cxx)
+#TARGET_LINK_LIBRARIES(AddSpinesToSmoothedBackbone vtkCommon vtkIO vtkGraphics)
 
 ADD_EXECUTABLE(BSplineFitting BSplineFitting.cpp)
 TARGET_LINK_LIBRARIES(BSplineFitting
@@ -26,14 +34,6 @@ SET(MDLGUI_SRCS
   MDLGUI-main.cxx ${GUI_MOC_SRCS} ${MY_UI_HDRS})
 ADD_EXECUTABLE(MDLGUI ${MDLGUI_SRCS} )
 TARGET_LINK_LIBRARIES(MDLGUI ${QT_LIBRARIES})
-
-#QT4_WRAP_UI( MY_UI_HDRS MDLWizard.ui )
-#QT4_WRAP_CPP( Wizard_MOC_SRCS MDLWizard.h )
-#SET(MDLWizard_SRCS
-#  MDLWizard.h MDLWizard.cxx 
-#  MDLWizard-main.cxx ${Wizard_MOC_SRCS} ${MY_UI_HDRS})
-#ADD_EXECUTABLE(MDLWizard ${MDLWizard_SRCS} )
-#TARGET_LINK_LIBRARIES(MDLWizard ${QT_LIBRARIES})
 
 ADD_CUSTOM_COMMAND(
   TARGET MinSpanTree
@@ -54,16 +54,17 @@ ADD_CUSTOM_COMMAND(TARGET MinSpanTree POST_BUILD
   ${PROJECT_SOURCE_DIR}/MDLParameterDescriptions.xml
   ${PROJECT_BINARY_DIR}/MDLParameterDescriptions.xml)
 
-INSTALL( TARGETS AnisoDiffuse DESTINATION ${INSTALL_BIN_DIR} )
-INSTALL( TARGETS ConnCompntwFldfill DESTINATION ${INSTALL_BIN_DIR} )
-INSTALL( TARGETS GradientVecField DESTINATION ${INSTALL_BIN_DIR} )
-INSTALL( TARGETS MinSpanTree DESTINATION ${INSTALL_BIN_DIR} )
-INSTALL( TARGETS Integratedskel DESTINATION ${INSTALL_BIN_DIR} )
-INSTALL( TARGETS volumeProcess DESTINATION ${INSTALL_BIN_DIR} )
-INSTALL( TARGETS BSplineFitting DESTINATION ${INSTALL_BIN_DIR} )
-INSTALL( TARGETS RefiningSkeleton DESTINATION ${INSTALL_BIN_DIR} )
-INSTALL( TARGETS MDLGUI DESTINATION ${INSTALL_BIN_DIR} )
-INSTALL( TARGETS MDABasedSpineExtraction DESTINATION ${INSTALL_BIN_DIR} )
-INSTALL( TARGETS ShapeDetectionLevelSegmentation DESTINATION ${INSTALL_BIN_DIR} )
-INSTALL( TARGETS DistanceFieldComputing DESTINATION ${INSTALL_BIN_DIR} )
-
+INSTALL( TARGETS AnisoDiffuse DESTINATION bin/Tracing/MDL )
+INSTALL( TARGETS ConnCompntwFldfill DESTINATION bin/Tracing/MDL )
+INSTALL( TARGETS GradientVecField DESTINATION bin/Tracing/MDL )
+INSTALL( TARGETS MinSpanTree DESTINATION bin/Tracing/MDL )
+INSTALL( TARGETS Integratedskel DESTINATION bin/Tracing/MDL )
+INSTALL( TARGETS volumeProcess DESTINATION bin/Tracing/MDL )
+INSTALL( TARGETS ObjectVolumeProcess DESTINATION bin/Tracing/MDL )
+INSTALL( TARGETS BSplineFitting DESTINATION bin/Tracing/MDL )
+INSTALL( TARGETS RefiningSkeleton DESTINATION bin/Tracing/MDL )
+INSTALL( TARGETS MDLGUI DESTINATION bin/Tracing/MDL )
+#INSTALL( TARGETS AddSpinesToSmoothedBackbone DESTINATION bin/Tracing/MDL )
+INSTALL( TARGETS MDABasedSpineExtraction DESTINATION bin/Tracing/MDL)
+INSTALL( TARGETS ShapeDetectionLevelSegmentation DESTINATION bin/Tracing/MDL)
+INSTALL( TARGETS DistanceFieldComputing DESTINATION bin/Tracing/MDL)
