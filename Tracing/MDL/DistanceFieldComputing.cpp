@@ -161,22 +161,28 @@ int main(int argc, char *argv[])
   printf("I come to distance transform !");
   distTransform(volin, sizeX, sizeY, sizeZ);
   fwrite(volin, sizeX*sizeY*sizeZ, sizeof(DATATYPEOUT), outfile);
-/*
-  typedef  itk::ImageFileWriter<  OutputImageType  > WriterType;
-  WriterType::Pointer writer = WriterType::New();
-  Const IteratorType in(inputImage,inputImage->GetRequestRegion());
-  IteratorType out(outputImage,inputImage->GetRequestRegion()) ;
+  FILE *mhdfile;
+ 
+  if((mhdfile=fopen("distancefields.mhd","w"))==NULL)
+    {
+    cerr << "output file open error!" << endl;
+    return -1;
+    }
+  fprintf (mhdfile,"ObjectType = Image\n");
+  fprintf (mhdfile,"NDims = 3\n");
+  fprintf (mhdfile,"BinaryData = True\n");
+  fprintf (mhdfile,"BinaryDataByteOrderMSB = False\n");
+  fprintf (mhdfile,"CompressedData = False\n");
+  fprintf (mhdfile,"TransformMatrix = 1 0 0 0 1 0 0 0 1\n");
+  fprintf (mhdfile,"Offset = 0 0 0\n");
+  fprintf (mhdfile,"CenterOfRotation = 0 0 0\n");
+  fprintf (mhdfile,"AnatomicalOrientation = RAI\n");
+  fprintf (mhdfile,"ElementSpacing = 1 1 1\n");
+  fprintf (mhdfile,"DimSize = %d %d %d\n",sizeX,sizeY,sizeZ);
+  fprintf (mhdfile,"ElementType = MET_UCHAR\n");
+  fprintf (mhdfile,"ElementDataFile = %s\n",DistanceFileName);
+  fclose(mhdfile);
 
-  long idx = 0;
-  while(! itr.IsAtEnd())
-  {	   ++idx;
-	  out.set(volin[idx]);
-  }
-
-  //writer->SetInput(volin);
-  writer->SetFileName("DistanceField.tif");   
-  writer->Update();
-*/
   if (rawInput)
 	  fclose(neuronSegfile);
   fclose(outfile);
