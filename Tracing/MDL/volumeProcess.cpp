@@ -32,6 +32,7 @@ limitations under the License.
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
+#include "itkOtsuThresholdImageFilter.h" 
 
 using std::cerr;
 using std::cout;
@@ -64,6 +65,7 @@ int main(int argc, char *argv[])
   bool rawInput = false;
   string inputFileName = argv[1];
   const char *outputFileName;
+  double space[3]={1,1,1};
   if(inputFileName.rfind(".raw") != string::npos)
     {
     //if so, the user is also required to pass in image dimensions
@@ -89,7 +91,8 @@ int main(int argc, char *argv[])
   int ii, jj, kk;
   DATATYPEOUT *volout;
   long idx;
-  double threshold;
+  double threshold; 
+  double itkThreshold = -9999; 
   int sizeExpand = 0;
   DATATYPEOUT blockMax;
   int timesDilate;
@@ -139,13 +142,29 @@ int main(int argc, char *argv[])
       cerr << err << endl; 
       return EXIT_FAILURE;
       } 
+
+    //--------------------otsu--------//
+	typedef itk::OtsuThresholdImageFilter<
+               ImageType, ImageType >  OTSUFilterType;
+    OTSUFilterType::Pointer OTSUFilter = OTSUFilterType::New();
+
+    OTSUFilter->SetInput(inputImage);
+	OTSUFilter->SetNumberOfHistogramBins(64);
+	OTSUFilter->Update();
+    itkThreshold = OTSUFilter->GetThreshold();
+    std::cout << "itk Threshold is " << itkThreshold << std::endl;
+	
+    //----------------------------------//
+
     ImageType::RegionType region = inputImage->GetBufferedRegion();
     ImageType::SizeType  size = region.GetSize();
     cout << "input image size: " << size << endl;
     sizeX = size[0];
     sizeY = size[1];
     sizeZ = size[2];
-    
+	//ImageType::SpacingType spacing;
+    //const ImageType = SpacingType& sp =inputImage->GetSpacing();
+
     //manually copy the values from inputImage to volin, which we will use for
     //the rest of the MDL process
     itk::ImageRegionIterator< ImageType >
@@ -210,6 +229,11 @@ int main(int argc, char *argv[])
     {
     threshold = m_threshold;
     }
+
+  if (itkThreshold > 0 && itkThreshold <12)
+	  threshold = itkThreshold;
+  else  
+	  threshold = itkThreshold /12;
   //threshold =9;
   cout << "OTSU optimal threshold " << threshold << endl;
 
