@@ -190,6 +190,8 @@ SET(CPACK_RESOURCE_FILE_LICENSE "${Farsight_SOURCE_DIR}/license.txt")
 
 SET(CPACK_NSIS_MENU_LINKS "http://www.farsight-toolkit.org" "Farsight Online Help")
 
+SET(CPACK_PACKAGING_INSTALL_PREFIX "/")
+SET(CPACK_PACKAGE_DEFAULT_LOCATION "/Applications")
 INCLUDE(CPack)
 
 #####################################################################################
@@ -204,7 +206,6 @@ set(FARSIGHT_BUNDLE_LOCATION
 #  set(EXE_TYPE WIN32)
 #endif(WIN32)
 if(APPLE)
-  set(CMAKE_INSTALL_PREFIX "/")
   set(EXE_TYPE MACOSX_BUNDLE)
   set(MAKE_BUNDLE MACOSX_BUNDLE)
   set(MACOSX_BUNDLE_BUNDLE_NAME "${PROJECT_NAME}")
