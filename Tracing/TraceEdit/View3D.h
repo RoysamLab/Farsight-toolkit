@@ -23,6 +23,8 @@ limitations under the License.
 #include <string>
 #include <set>
 #include <QtGui>
+#include <QDate>
+#include <QTime>
 
 //forward declarations
 class HistoWindow;
@@ -141,20 +143,26 @@ protected:
 
 private:
 
-	QTextDocument * EditLog;
+	//for the widget the buttons must be used instead of actions 
+	//the get____file functions called as renderer is not initalized
+	//QTextDocument * EditLog;
+	QDockWidget * InformationDisplays;
 	QTextEdit * EditLogDisplay;
 	QString TraceFiles, Image, SomaFile, UserName;
 	QWidget * bootLoadFiles;
+	/*QWidget * LogViewer;*/
 	QPushButton * BootTrace;
 	QPushButton * BootSoma;
 	QPushButton * BootImage;
 	QPushButton * okBoot;
 	QLineEdit * GetAUserName;
+	QDate  Date;
+	QTime  Time;
 
 	//Declares an undoBuffer
 	typedef undoBuffer<std::pair<std::string, TraceObject> > bufferType;
 	bufferType *undoBuff;
-
+//settings for display
 	int SmallLineLength;
 	float lineWidth;
 	double SelectColor;

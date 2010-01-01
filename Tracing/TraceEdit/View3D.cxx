@@ -84,26 +84,18 @@ limitations under the License.
 
 View3D::View3D(int argc, char **argv)
 {
-  this->tobj = new TraceObject;
-  this->Initialize();
-  this->LoadFiles(argc, argv);
-}
-
-View3D::View3D(TraceObject *Traces)
-{
-  this->tobj = Traces;
-  this->Initialize();
-  this->ShowTreeData();
-  this->statusBar()->showMessage(tr("Trace Editor Started"));
-}
-
-void View3D::LoadFiles(int argc, char **argv)
-{
-  int num_loaded = 0;
-  bool tracesLoaded = false;
-  //this->TraceFiles.clear();
-  this->Image.clear();
-  this->EditLog = new QTextDocument(this);
+	this->tobj = new TraceObject;
+	int num_loaded = 0;
+	this->Volume=0;
+	bool tracesLoaded = false;
+	this->Date.currentDate();
+	this->Time.currentTime();
+	this->Image.clear();
+	this->EditLogDisplay = new QTextEdit();
+	this->EditLogDisplay->setReadOnly(true);
+	this->EditLogDisplay->append("Farsight Trace Editor Started at: \nDate: \t" + this->Date.currentDate().toString( "ddd MMMM d yy" ) );
+	this->EditLogDisplay->append("Time: \t" + this->Time.currentTime().toString( "h:m:s ap" ) );
+	
   // load as many files as possible. Provide offset for differentiating types
   for(int counter=1; counter<argc; counter++)
     {
@@ -112,20 +104,21 @@ void View3D::LoadFiles(int argc, char **argv)
       {
       printf("I detected swc\n");
       this->tobj->ReadFromSWCFile(argv[counter]);
-    tracesLoaded = true;
-    this->TraceFiles = QString(argv[counter]);
+	  tracesLoaded = true;
+	  this->TraceFiles = QString(argv[counter]);
+	  //this->TraceFiles
        }
     else if (strcmp(argv[counter]+len-3,"xml")==0)
       {
       printf("I detected xml\n");
       this->tobj->ReadFromRPIXMLFile(argv[counter]);
-    tracesLoaded = true;
+	  tracesLoaded = true;
       }
     else if (strcmp(argv[counter]+len-3,"vtk")==0)
       {
       printf("I detected vtk\n");
       this->tobj->ReadFromVTKFile(argv[counter]);
-    tracesLoaded = true;
+	  tracesLoaded = true;
       }
     else if( strcmp(argv[counter]+len-3,"tks")==0)
       {
@@ -143,173 +136,187 @@ void View3D::LoadFiles(int argc, char **argv)
       }
     num_loaded++;
     }
-  if (num_loaded < 1)
-    { 
-    this->CreateBootLoader();
-    return;
-    }//end load
-  else
-    {   
-    if (tracesLoaded)
-      {
-      this->ShowTreeData();
-      }
-    this->statusBar()->showMessage(tr("Ready"));
-    }
+	if (num_loaded < 1)
+	{	
+		this->hide();
+		this->CreateBootLoader();
+		return;
+	}//end load
+	else
+	{		
+		if (tracesLoaded)
+		{
+			this->ShowTreeData();
+		}
+		this->statusBar()->showMessage(tr("Ready"));
+	}
 }
-
+View3D::View3D(TraceObject *Traces)
+{
+	this->tobj = Traces;
+	this->Volume=0;
+	this->Initialize();
+	this->ShowTreeData();
+	this->statusBar()->showMessage(tr("Trace Editor Started"));
+}
 void View3D::CreateBootLoader()
 {
-  // Create a window that allows files to be loaded
-  this->bootLoadFiles = new QWidget;
-  this->BootTrace = new QPushButton("Trace",this->bootLoadFiles);
-  connect(this->BootTrace, SIGNAL(clicked()), this, SLOT(getTraceFile()));
-  this->BootImage = new QPushButton("Image",this->bootLoadFiles);
-  connect(this->BootImage, SIGNAL(clicked()), this, SLOT(getImageFile()));
-  this->BootSoma = new QPushButton("Somas", this->bootLoadFiles);
-  connect(this->BootSoma, SIGNAL(clicked()), this, SLOT(getSomaFile()));
-  this->GetAUserName =  new QLineEdit(this->bootLoadFiles);
-  this->GetAUserName->setText("default user");
-  this->okBoot = new QPushButton("Start",this->bootLoadFiles);
-  connect(this->okBoot, SIGNAL(clicked()), this, SLOT(OkToBoot()));
-  QFormLayout *LoadLayout = new QFormLayout(this->bootLoadFiles);
-  LoadLayout->addRow(tr("Trace File"), this->BootTrace);
-  LoadLayout->addRow(tr("Image File"), this->BootImage);
-  LoadLayout->addRow(tr("Somas File"), this->BootSoma);
-  LoadLayout->addRow(tr("User Name "), this->GetAUserName);
-  LoadLayout->addRow(tr("Run Trace Editor"), this->okBoot);
-  this->bootLoadFiles->setWindowModality(Qt::ApplicationModal);
-  this->bootLoadFiles->show();
+	// Create a window that allows files to be loaded
+	this->bootLoadFiles = new QWidget;
+	this->BootTrace = new QPushButton("Trace",this->bootLoadFiles);
+	connect(this->BootTrace, SIGNAL(clicked()), this, SLOT(getTraceFile()));
+	this->BootImage = new QPushButton("Image",this->bootLoadFiles);
+	connect(this->BootImage, SIGNAL(clicked()), this, SLOT(getImageFile()));
+	this->BootSoma = new QPushButton("Somas", this->bootLoadFiles);
+	connect(this->BootSoma, SIGNAL(clicked()), this, SLOT(getSomaFile()));
+	this->GetAUserName =  new QLineEdit(this->bootLoadFiles);
+	this->GetAUserName->setText("default user");
+	this->okBoot = new QPushButton("Start",this->bootLoadFiles);
+	connect(this->okBoot, SIGNAL(clicked()), this, SLOT(OkToBoot()));
+	QFormLayout *LoadLayout = new QFormLayout(this->bootLoadFiles);
+	LoadLayout->addRow(tr("Trace File"), this->BootTrace);
+	LoadLayout->addRow(tr("Image File"), this->BootImage);
+	LoadLayout->addRow(tr("Somas File"), this->BootSoma);
+	LoadLayout->addRow(tr("User Name "), this->GetAUserName);
+	LoadLayout->addRow(tr("Run Trace Editor"), this->okBoot);
+	this->bootLoadFiles->show();
+	this->hide();
 }
-
 void View3D::OkToBoot()
 {
-  if(!this->TraceFiles.isEmpty() || !this->Image.isEmpty() || !this->SomaFile.isEmpty())
-    {
-    this->UserName = this->GetAUserName->text();
-    if (!this->TraceFiles.isEmpty() )
-      {
-      this->ShowTreeData();
-      }
-    this->bootLoadFiles->hide();
-    this->Rerender();
-    this->Renderer->ResetCamera();
-    this->Rerender();
-    }
-  else
-    {
-    QMessageBox *bootFailed = new QMessageBox;
-    bootFailed->setText("There are no files to open. Please select a file to continue.");
-    bootFailed->show();
-    }
+	if(!this->TraceFiles.isEmpty() || !this->Image.isEmpty() || !this->SomaFile.isEmpty())
+	{
+		this->show();
+		this->UserName = this->GetAUserName->text();
+		this->Initialize();
+		if (!this->TraceFiles.isEmpty() )
+		{	
+			this->EditLogDisplay->append("Trace file: \t" + this->TraceFiles);
+			this->ShowTreeData();
+		}
+		if (!this->Image.isEmpty())
+		{
+			this->EditLogDisplay->append("Image file: \t" + this->Image);
+		}
+		if (!this->SomaFile.isEmpty())
+		{
+		}
+		this->EditLogDisplay->append("User: \t" + this->UserName);
+		this->bootLoadFiles->hide();
+		//this->statusBar()->showMessage("started at " );//+ this->Time->toString( "mm:ss" )
+	}
+	else
+	{
+		QMessageBox *bootFailed = new QMessageBox;
+		bootFailed->setText("There are no files to open. Please select a file to continue.");
+		bootFailed->show();
+	}
 }
-
 QString View3D::getSomaFile()
 {
-  QString somaFile = QFileDialog::getOpenFileName(this , "Choose a Soma file to load", ".", 
-    tr("Image File ( *.tiff *.tif *.pic *.PIC ) "));
-  if(!somaFile.isNull())
-  {
-    this->statusBar()->showMessage("Loading Soma Image");
-    this->readImg(somaFile.toStdString());
-  }
-  return somaFile;
+	QString somaFiles = QFileDialog::getOpenFileName(this , "Choose a Soma file to load", ".", 
+	  tr("Image File ( *.tiff *.tif *.pic *.PIC ) "));
+	if(!somaFiles.isNull())
+	{
+		this->SomaFile = somaFiles;
+		//this->statusBar()->showMessage("Loading Soma Image");
+		this->readImg(somaFiles.toStdString());
+	}
+	return somaFiles.section('/',-1);
 }
-
 QString View3D::getTraceFile()
-{ std::string traceFile;
-  QString trace = QFileDialog::getOpenFileName(this , "Load Trace Data", ".",
-    tr(" TraceFile ( *.xml *.swc *.vtk " ));
-  if (!trace.isEmpty())
-  {
-    this->TraceFiles = trace.section('/',-1);
-    traceFile = trace.toStdString();
-    if(trace.endsWith("swc"))
-    {
-      this->tobj->ReadFromSWCFile((char*)traceFile.c_str());
-    }
-    else if(trace.endsWith("xml"))
-    {
-      this->tobj->ReadFromRPIXMLFile((char*)traceFile.c_str());
-    }
-    else if (trace.endsWith("vtk"))
-    {
-      this->tobj->ReadFromVTKFile((char*)traceFile.c_str());
-    }
-  }
-  return trace;
+{	std::string traceFile;
+	QString trace = QFileDialog::getOpenFileName(this , "Load Trace Data", ".",
+		tr(" TraceFile ( *.xml *.swc *.vtk " ));
+	if (!trace.isEmpty())
+	{
+		this->TraceFiles = trace;
+		traceFile = trace.toStdString();
+		if(trace.endsWith("swc"))
+		{
+			this->tobj->ReadFromSWCFile((char*)traceFile.c_str());
+		}
+		else if(trace.endsWith("xml"))
+		{
+			this->tobj->ReadFromRPIXMLFile((char*)traceFile.c_str());
+		}
+		else if (trace.endsWith("vtk"))
+		{
+			this->tobj->ReadFromVTKFile((char*)traceFile.c_str());
+		}
+	}
+	return trace.section('/',-1);
 }
-
 QString View3D::getImageFile()
 {
-  QString trace = QFileDialog::getOpenFileName(this , "Load Trace Image Data", ".",
-    tr("Trace Image ( *.tiff *.tif *.pic *.PIC *.mhd" ));
-  if (!trace.isEmpty())
-  {
-    this->Image = trace.section('/',-1);
-    std::string traceFile = trace.toStdString();
-    this->rayCast( (char*)traceFile.c_str());
-  }
-  return trace;
+	QString trace = QFileDialog::getOpenFileName(this , "Load Trace Image Data", ".",
+		tr("Trace Image ( *.tiff *.tif *.pic *.PIC *.mhd" ));
+	if (!trace.isEmpty())
+	{
+		this->Image = trace;
+		std::string traceFile = trace.toStdString();
+		this->rayCast( (char*)traceFile.c_str());
+	}
+	return trace.section('/',-1);
 }
-
 void View3D::LoadTraces()
 {
-  QString trace = this->getTraceFile();
-  if (!trace.isEmpty())
-  {
-    this->statusBar()->showMessage(tr("Loading Trace") + this->TraceFiles);
-    if (this->tobj->FeatureHeaders.size() >=1)
-      {
-       this->TreeModel = new TraceModel(this->tobj->GetTraceLines(), this->tobj->FeatureHeaders);
-      }
-    else
-      {
-       this->TreeModel->SetTraces(this->tobj->GetTraceLines());
-      }
-    this->ShowTreeData();
-    this->UpdateLineActor();
-    this->UpdateBranchActor();
-    this->QVTK->GetRenderWindow()->Render();
-    this->TreeModel->SetTraces(this->tobj->GetTraceLines());
-  } 
-  else
-  {
-    this->statusBar()->showMessage("Please select a Trace Data file");
-  }
+	QString trace = this->getTraceFile();
+	if (!trace.isEmpty())
+	{
+		this->statusBar()->showMessage(tr("Loading Trace") + trace);
+		this->EditLogDisplay->append("Trace file: \t" + this->TraceFiles);
+		if (this->tobj->FeatureHeaders.size() >=1)
+		  {
+			 this->TreeModel = new TraceModel(this->tobj->GetTraceLines(), this->tobj->FeatureHeaders);
+		  }
+		else
+		  {
+			 this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+		  }
+		this->ShowTreeData();
+		this->UpdateLineActor();
+		this->UpdateBranchActor();
+		this->QVTK->GetRenderWindow()->Render();
+		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+	}	
+	else
+	{
+		this->statusBar()->showMessage("Please select a Trace Data file");
+	}
 }
 
 void View3D::LoadImageData()
 {
-  QString trace = this->getImageFile();
-  if (!trace.isEmpty())
-  {
-    this->statusBar()->showMessage("Loading Image file" + this->Image);
-    this->Renderer->AddActor(this->Volume);
-    this->AddVolumeSliders();
-    this->Rerender();
-    this->statusBar()->showMessage("Image File Rendered");
-  }
-  else
-  {
-    this->statusBar()->showMessage("Please select an Image file");
-  }
+	QString newImage = this->getImageFile();
+	if (!newImage.isEmpty())
+	{
+		this->statusBar()->showMessage("Loading Image file" + newImage);
+		this->EditLogDisplay->append("Image file: \t" + this->Image);
+		this->Renderer->AddActor(this->Volume);
+		this->AddVolumeSliders();
+		this->Rerender();
+		this->statusBar()->showMessage("Image File Rendered");
+	}
+	else
+	{
+		this->statusBar()->showMessage("Please select an Image file");
+	}
 }
-
 void View3D::LoadSomaFile()
 {
-  QString somaFile = this->getSomaFile();
-  if(!somaFile.isNull())
-  {
-    if(this->VolumeActor!=NULL)
-    {
-      this->Renderer->AddVolume(this->VolumeActor);
-      this->QVTK->GetRenderWindow()->Render();
-      this->statusBar()->showMessage("Somas Rendered");
-    }
-  }
+	QString somaFile = this->getSomaFile();
+	if(!somaFile.isNull())
+	{
+		if(this->VolumeActor!=NULL)
+		{
+			this->EditLogDisplay->append("Soma file: \t" + this->SomaFile);
+			this->Renderer->AddVolume(this->VolumeActor);
+			this->QVTK->GetRenderWindow()->Render();
+			this->statusBar()->showMessage("Somas Rendered");
+		}
+	}
 }
-
 View3D::~View3D()
 {
   if(this->QVTK)
@@ -336,44 +343,43 @@ View3D::~View3D()
 
 void View3D::Initialize()
 {
-  this->QVTK = 0;
-  this->OpacitySlider = 0;
-  this->BrightnessSlider = 0;
-  this->tobj->gapTol = .5;
-  this->tobj->gapMax = 10;
-  this->SmallLineLength = 5;
-  this->SelectColor =.1;
-  this->lineWidth= 2;
-  this->GapsPlotView = NULL;
-  this->TreePlot = NULL;
-  this->FTKTable = NULL;
-  this->GapsTableView = NULL;
-  this->Volume = 0;
+	this->QVTK = 0;
+	this->OpacitySlider = 0;
+	this->BrightnessSlider = 0;
+	this->tobj->gapTol = .5;
+	this->tobj->gapMax = 10;
+	this->SmallLineLength = 5;
+	this->SelectColor =.1;
+	this->lineWidth= 2;
+	this->GapsPlotView = NULL;
+	this->TreePlot = NULL;
+	this->FTKTable = NULL;
+	this->GapsTableView = NULL;
 
-  this->tobj->setSmallLineColor(.25);
-  this->tobj->setMergeLineColor(.4);
-  this->Ascending = Qt::AscendingOrder;
+	this->tobj->setSmallLineColor(.25);
+	this->tobj->setMergeLineColor(.4);
+	this->Ascending = Qt::AscendingOrder;
 
-  this->undoBuff = new bufferType;
-  this->numDeleted = 0;
-  this->numMerged = 0;
-  this->numSplit = 0;
-  this->CreateGUIObjects();
-  this->CreateLayout();
-  this->CreateInteractorStyle();
-  this->CreateActors();
-  this->resize(850, 480);
-  this->move(40, 59);
-  if (!this->TraceFiles.isEmpty())
-  {
-    this->setWindowTitle(tr("Trace Editor: ")+ this->TraceFiles);
-  }
-  else
-  {
-    this->setWindowTitle(tr("Trace Editor"));
-  }
-  this->QVTK->GetRenderWindow()->Render();
-  this->setupLinkedSpace();
+	this->undoBuff = new bufferType;
+	this->numDeleted = 0;
+	this->numMerged = 0;
+	this->numSplit = 0;
+	this->CreateGUIObjects();
+	this->CreateLayout();
+	this->CreateInteractorStyle();
+	this->CreateActors();
+	this->resize(850, 480);
+	this->move(40, 59);
+	if (!this->TraceFiles.isEmpty())
+	{
+		this->setWindowTitle(tr("Trace Editor: ")+ this->TraceFiles);
+	}
+	else
+	{
+		this->setWindowTitle(tr("Trace Editor"));
+	}
+	this->QVTK->GetRenderWindow()->Render();
+	this->setupLinkedSpace();
 }
 
 void View3D::setupLinkedSpace()
@@ -383,17 +389,17 @@ void View3D::setupLinkedSpace()
   this->MergeGaps->setParent(this);
   if (this->tobj->FeatureHeaders.size() >=1)
   {
-    this->TreeModel = new TraceModel(this->tobj->GetTraceLines(), this->tobj->FeatureHeaders);
+	  this->TreeModel = new TraceModel(this->tobj->GetTraceLines(), this->tobj->FeatureHeaders);
   }
   else
   {
-    this->TreeModel = new TraceModel(this->tobj->GetTraceLines());
+	  this->TreeModel = new TraceModel(this->tobj->GetTraceLines());
   }
   this->TreeModel->setParent(this);
   this->connect(this->MergeGaps->GetObjectSelection(), SIGNAL(changed()), 
-    this,SLOT(updateSelectionHighlights()));
+	  this,SLOT(updateSelectionHighlights()));
   this->connect(this->TreeModel->GetObjectSelection(), SIGNAL(changed()), 
-    this, SLOT(updateTraceSelectionHighlights()));
+	  this, SLOT(updateTraceSelectionHighlights()));
 
 }
 
@@ -413,60 +419,60 @@ void View3D::CreateGUIObjects()
  
   this->saveAction = new QAction(tr("&Save as..."), this->CentralWidget);
     connect(this->saveAction, SIGNAL(triggered()), this, SLOT(SaveToFile()));
-  this->saveAction->setStatusTip("Save results to file");
+	this->saveAction->setStatusTip("Save results to file");
   this->exitAction = new QAction(tr("&Exit"), this->CentralWidget);
-  connect(this->exitAction, SIGNAL(triggered()), this, SLOT(close()));
-  this->exitAction->setStatusTip("Exit the Trace Editor");
+	connect(this->exitAction, SIGNAL(triggered()), this, SLOT(close()));
+	this->exitAction->setStatusTip("Exit the Trace Editor");
   this->loadTraceAction = new QAction("Load Trace", this->CentralWidget);
     connect(this->loadTraceAction, SIGNAL(triggered()), this, SLOT(LoadTraces()));
     this->loadTraceAction->setStatusTip("Load traces from .xml or .swc file");
   this->loadTraceImage = new QAction("Load Image", this->CentralWidget);
-  connect (this->loadTraceImage, SIGNAL(triggered()), this, SLOT(LoadImageData()));
-  this->loadTraceImage->setStatusTip("Load an Image to RayCast Rendering");
+	connect (this->loadTraceImage, SIGNAL(triggered()), this, SLOT(LoadImageData()));
+	this->loadTraceImage->setStatusTip("Load an Image to RayCast Rendering");
 //Loading soma data
   this->loadSoma = new QAction("Load Somas", this->CentralWidget);
    connect(this->loadSoma, SIGNAL(triggered()), this, SLOT(LoadSomaFile()));
 
  //Set up the buttons that the user will use to interact with this program. 
   this->ListButton = new QAction("List", this->CentralWidget);
-  connect(this->ListButton, SIGNAL(triggered()), this, SLOT(ListSelections()));
-  this->ListButton->setStatusTip("List all selections");
+	connect(this->ListButton, SIGNAL(triggered()), this, SLOT(ListSelections()));
+	this->ListButton->setStatusTip("List all selections");
   this->ClearButton = new QAction("Clear", this->CentralWidget); 
-  connect(this->ClearButton, SIGNAL(triggered()), this, SLOT(ClearSelection()));
-  this->ClearButton->setStatusTip("Clear all selections");
+	connect(this->ClearButton, SIGNAL(triggered()), this, SLOT(ClearSelection()));
+	this->ClearButton->setStatusTip("Clear all selections");
   this->DeleteButton = new QAction("Delete", this->CentralWidget);
-  connect(this->DeleteButton, SIGNAL(triggered()), this, SLOT(DeleteTraces()));
-  this->DeleteButton->setStatusTip("Delete all selected traces");
+	connect(this->DeleteButton, SIGNAL(triggered()), this, SLOT(DeleteTraces()));
+	this->DeleteButton->setStatusTip("Delete all selected traces");
   this->MergeButton = new QAction("Merge", this->CentralWidget);
-  connect(this->MergeButton, SIGNAL(triggered()), this, SLOT(MergeTraces()));
-  this->MergeButton->setStatusTip("Start Merge on selected traces");
+	connect(this->MergeButton, SIGNAL(triggered()), this, SLOT(MergeTraces()));
+	this->MergeButton->setStatusTip("Start Merge on selected traces");
   this->BranchButton = new QAction("Branch", this->CentralWidget);
-  connect(this->BranchButton, SIGNAL(triggered()), this, SLOT(AddNewBranches()));
-  this->BranchButton->setStatusTip("Add branches to trunk");
+	connect(this->BranchButton, SIGNAL(triggered()), this, SLOT(AddNewBranches()));
+	this->BranchButton->setStatusTip("Add branches to trunk");
   this->SplitButton = new QAction("Split", this->CentralWidget); 
-  connect(this->SplitButton, SIGNAL(triggered()), this, SLOT(SplitTraces()));
-  this->SplitButton->setStatusTip("Split traces at point where selected");
+	connect(this->SplitButton, SIGNAL(triggered()), this, SLOT(SplitTraces()));
+	this->SplitButton->setStatusTip("Split traces at point where selected");
   this->FlipButton = new QAction("Flip", this->CentralWidget);
-  connect(this->FlipButton, SIGNAL(triggered()), this, SLOT(FlipTraces()));
-  this->FlipButton->setStatusTip("Flip trace direction");
+	connect(this->FlipButton, SIGNAL(triggered()), this, SLOT(FlipTraces()));
+	this->FlipButton->setStatusTip("Flip trace direction");
   this->SettingsButton = new QAction("Settings", this->CentralWidget);
-  connect(this->SettingsButton, SIGNAL(triggered()), this,
-    SLOT(ShowSettingsWindow()));
-  this->SettingsButton->setStatusTip("edit the display and tolerance settings");
+	connect(this->SettingsButton, SIGNAL(triggered()), this,
+		SLOT(ShowSettingsWindow()));
+	this->SettingsButton->setStatusTip("edit the display and tolerance settings");
   this->AutomateButton = new QAction("Small Lines", this->CentralWidget);
-  connect(this->AutomateButton, SIGNAL(triggered()), this, SLOT(SLine()));
-  this->AutomateButton->setStatusTip("Automatic selection of all small lines");
+	connect(this->AutomateButton, SIGNAL(triggered()), this, SLOT(SLine()));
+	this->AutomateButton->setStatusTip("Automatic selection of all small lines");
   this->root = new QAction("Set Root", this->CentralWidget);
-  connect(this->root, SIGNAL(triggered()), this, SLOT(SetRoots()));
-  this->root->setStatusTip("Solve Branch order by defining Root Trace Lines");
+	connect(this->root, SIGNAL(triggered()), this, SLOT(SetRoots()));
+	this->root->setStatusTip("Solve Branch order by defining Root Trace Lines");
   this->explodeTree = new QAction("Break", this->CentralWidget);
   connect(this->explodeTree, SIGNAL(triggered()), this, SLOT( ExplodeTree()));
   this->explodeTree->setStatusTip("Break tree into segments,aka Explode. Tree can be rebuilt using set root");
 
   this->UndoButton = new QAction("&Undo", this->CentralWidget);  
-  connect(this->UndoButton, SIGNAL(triggered()), this, SLOT(UndoAction()));
+	connect(this->UndoButton, SIGNAL(triggered()), this, SLOT(UndoAction()));
   this->RedoButton = new QAction("&Redo", this->CentralWidget);
-  connect(this->RedoButton, SIGNAL(triggered()), this, SLOT(RedoAction()));
+	connect(this->RedoButton, SIGNAL(triggered()), this, SLOT(RedoAction()));
   //Setup the tolerance settings editing window
   this->SettingsWidget = new QWidget();
   QIntValidator *intValidator = new QIntValidator(1, 100, this->SettingsWidget);
@@ -487,31 +493,32 @@ void View3D::CreateGUIObjects()
   connect(this->ApplySettingsButton, SIGNAL(accepted()), this, SLOT(ApplyNewSettings()));
   connect(this->ApplySettingsButton, SIGNAL(rejected()), this, SLOT(HideSettingsWindow()));
 
-  QStringList types;
-  types <<"0 = undefined" << "1 = soma" <<"2 = axon" <<"3 = dendrite" 
-    <<"4 = apical dendrite" <<"5 = fork point" <<"6 = end point" <<"7 = custom";
-  this->typeCombo = new QComboBox;
-  this->typeCombo->addItems(types);
-  connect(this->typeCombo, SIGNAL(activated( int )), this, SLOT(SetTraceType(int )));
-
-  this->SplitLabel = new QLabel(this);
-  this->SplitLabel->setText(QString::number(this->numSplit));
-  this->MergeLabel = new QLabel(this);
-  this->MergeLabel->setText(QString::number(this->numMerged));
-  this->DeleteLabel = new QLabel(this);
-  this->DeleteLabel->setText(QString::number(this->numDeleted));
+	QStringList types;
+	types <<"0 = undefined" << "1 = soma" <<"2 = axon" <<"3 = dendrite" 
+		<<"4 = apical dendrite" <<"5 = fork point" <<"6 = end point" <<"7 = custom";
+	this->typeCombo = new QComboBox;
+	this->typeCombo->addItems(types);
+	connect(this->typeCombo, SIGNAL(activated( int )), this, SLOT(SetTraceType(int )));
+	
+// Lables for the status bar to show edit counts
+	this->SplitLabel = new QLabel(this);
+	this->SplitLabel->setText(QString::number(this->numSplit));
+	this->MergeLabel = new QLabel(this);
+	this->MergeLabel->setText(QString::number(this->numMerged));
+	this->DeleteLabel = new QLabel(this);
+	this->DeleteLabel->setText(QString::number(this->numDeleted));
 }
 
 void View3D::CreateLayout()
 {
-  this->fileMenu = this->menuBar()->addMenu(tr("&File"));
-  this->fileMenu->addAction(this->loadTraceAction);
-  this->fileMenu->addAction(this->loadTraceImage);
-  this->fileMenu->addAction(this->loadSoma);
-  this->fileMenu->addAction(this->saveAction);
-  this->fileMenu->addAction(this->exitAction);
+	this->fileMenu = this->menuBar()->addMenu(tr("&File"));
+	this->fileMenu->addAction(this->loadTraceAction);
+	this->fileMenu->addAction(this->loadTraceImage);
+	this->fileMenu->addAction(this->loadSoma);
+	this->fileMenu->addAction(this->saveAction);
+	this->fileMenu->addAction(this->exitAction);
 
-  this->ShowToolBars = this->menuBar()->addMenu(tr("Tool Bars"));
+	this->ShowToolBars = this->menuBar()->addMenu(tr("Tool Bars"));
 
   this->EditsToolBar = addToolBar(tr("Edit Toolbar"));
   this->EditsToolBar->setToolTip("EditToolBar");
@@ -551,6 +558,7 @@ void View3D::CreateLayout()
   settingsLayout->addRow(tr("Line width:"),this->LineWidthField);
   settingsLayout->addRow(this->ApplySettingsButton);
  
+
   this->statusBar()->addPermanentWidget(new QLabel("Statistics: Split: ", this));
   this->statusBar()->addPermanentWidget(this->SplitLabel,0);
   this->statusBar()->addPermanentWidget(new QLabel(" Merged: ", this));
@@ -558,6 +566,13 @@ void View3D::CreateLayout()
   this->statusBar()->addPermanentWidget(new QLabel(" Deleted: ", this));
   this->statusBar()->addPermanentWidget(this->DeleteLabel,0);
 
+  this->InformationDisplays = new QDockWidget("Edit Log Information", this);
+	//this->LogViewer = new QWidget(this->InformationDisplays);
+  //QGridLayout *EditViewerLayout = new QGridLayout(this->LogViewer);
+  //EditViewerLayout->addWidget(this->EditLogDisplay);
+  this->InformationDisplays->setWidget(this->EditLogDisplay);
+  this->addDockWidget(Qt::LeftDockWidgetArea, this->InformationDisplays);
+  this->ShowToolBars->addAction(this->InformationDisplays->toggleViewAction());
 }
 
 void View3D::CreateInteractorStyle()
@@ -599,15 +614,15 @@ void View3D::CreateActors()
   this->UpdateBranchActor();
   this->Renderer->AddActor(this->BranchActor);
  
-  if(this->Volume!=NULL)
-  {
-    this->Renderer->AddVolume(this->Volume);
-    this->AddVolumeSliders();
-  }
-  if(this->VolumeActor!=NULL)
-  {
-    this->Renderer->AddActor(this->VolumeActor);
-  }
+	if(this->Volume!=NULL)
+	{
+		this->Renderer->AddVolume(this->Volume);
+		this->AddVolumeSliders();
+	}
+	if(this->VolumeActor!=NULL)
+	{
+		this->Renderer->AddActor(this->VolumeActor);
+	}
   //sphere is used to mark the picks
   this->CreateSphereActor();
   Renderer->AddActor(this->SphereActor);
@@ -680,21 +695,21 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
     unsigned int cell_id = cell_picker->GetCellId();  
     view->SelectedTraceIDs.push_back(cell_id);
     TraceLine *tline = reinterpret_cast<TraceLine*>(view->tobj->hashc[cell_id]);
-  if (view->tobj->Gaps.size() < 1)
-  {
-    view->TreeModel->SelectByIDs(tline->GetId());
-    //view->HighlightSelected(tline, view->SelectColor);
-    //tline->Getstats();              //prints the id and end coordinates to the command prompt 
-    view->SphereActor->SetPosition(pickPos);    //sets the selector to new point
-    view->SphereActor->VisibilityOn();      //deleteTrace can turn it off 
-    view->poly_line_data->Modified();
-  }
-  else
-  { //int size = view->tobj->Gaps.size();
-    int id = tline->GetId();
-    view->MergeGaps->SelectbyTraceID(id);
-    view->poly_line_data->Modified();
-  }
+	if (view->tobj->Gaps.size() < 1)
+	{
+		view->TreeModel->SelectByIDs(tline->GetId());
+		//view->HighlightSelected(tline, view->SelectColor);
+		//tline->Getstats();              //prints the id and end coordinates to the command prompt 
+		view->SphereActor->SetPosition(pickPos);    //sets the selector to new point
+		view->SphereActor->VisibilityOn();      //deleteTrace can turn it off 
+		view->poly_line_data->Modified();
+	}
+	else
+	{ //int size = view->tobj->Gaps.size();
+		int id = tline->GetId();
+		view->MergeGaps->SelectbyTraceID(id);
+		view->poly_line_data->Modified();
+	}
     //update the head Qt view here too...
   }// end if pick
   view->QVTK->GetRenderWindow()->Render();             //update the render window
@@ -702,16 +717,16 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
 
 void View3D::updateTraceSelectionHighlights()
 {
-  this->UpdateLineActor();
-  std::vector<TraceLine*> Selections = this->TreeModel->GetSelectedTraces();
-  for (unsigned int i = 0; i < Selections.size(); i++)
-  {
-    this->HighlightSelected(Selections[i],this->SelectColor);
-  }
-  this->poly_line_data->Modified();
-  this->QVTK->GetRenderWindow()->Render();
-  this->statusBar()->showMessage(tr("Selected\t")
-    + QString::number(Selections.size()) +tr("\ttraces"));
+	this->UpdateLineActor();
+	std::vector<TraceLine*> Selections = this->TreeModel->GetSelectedTraces();
+	for (unsigned int i = 0; i < Selections.size(); i++)
+	{
+		this->HighlightSelected(Selections[i],this->SelectColor);
+	}
+	this->poly_line_data->Modified();
+	this->QVTK->GetRenderWindow()->Render();
+	this->statusBar()->showMessage(tr("Selected\t")
+		+ QString::number(Selections.size()) +tr("\ttraces"));
 }
 void View3D::HighlightSelected(TraceLine* tline, double color)
 {
@@ -747,15 +762,15 @@ void View3D::Rerender()
   this->FTKTable->update();
   this->TreePlot->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
   this->TreePlot->update();
-  this->SplitLabel->setText(QString::number(this->numSplit));
-  this->MergeLabel->setText(QString::number(this->numMerged));
-  this->DeleteLabel->setText(QString::number(this->numDeleted));
+	this->SplitLabel->setText(QString::number(this->numSplit));
+	this->MergeLabel->setText(QString::number(this->numMerged));
+	this->DeleteLabel->setText(QString::number(this->numDeleted));
   this->statusBar()->showMessage(tr("Finished Rerendering Image"));
 }
 
 void View3D::UpdateLineActor()
 {
-  
+	
   this->poly_line_data = this->tobj->GetVTKPolyData();
   this->poly_line_data->Modified();
   this->LineMapper->SetInput(this->poly_line_data);
@@ -869,9 +884,9 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
     //    }
     //  break;
 
-  case 'b':
-    view->AddNewBranches();
-    break;
+	case 'b':
+		view->AddNewBranches();
+		break;
 
     default:
       break;
@@ -895,14 +910,14 @@ void View3D::SLine()
   { 
   case QMessageBox::Yes:
   {
-  this->DeleteTraces();
+	this->DeleteTraces();
     this->tobj->SmallLines.clear();
   }
   break;
   case QMessageBox::No:
    {
      this->tobj->SmallLines.clear();
-   this->TreeModel->GetObjectSelection()->clear();
+	 this->TreeModel->GetObjectSelection()->clear();
    }
    break;
   }
@@ -912,97 +927,97 @@ void View3D::SLine()
 
 void View3D::ListSelections()
 {
-  std::vector<int> IDs = this->TreeModel->GetSelecectedIDs();
-  QMessageBox *selectionInfo = new QMessageBox;
-  QString listText;
-  QString selectedText;
-  if(this->tobj->BranchPoints.size()> 0)
-  {
-    listText += QString::number(this->tobj->BranchPoints.size())
-      + " Branches are unsolved/n";
-  }
-  else if (IDs.size()<= 0)
-  {
-  listText = tr("No traces selected");
-  }
-  else
-  {
-  listText += QString::number(IDs.size()) + " lines are selected\n";
-  for (unsigned int i = 0; i < IDs.size(); i++)
-    {
-    selectedText += QString::number(IDs[i]) + "\n";   
-    } 
-  }
-  this->statusBar()->showMessage(listText);
-  selectionInfo->setText(listText);
-  selectionInfo->setDetailedText(selectedText);
-  selectionInfo->show();
+	std::vector<int> IDs = this->TreeModel->GetSelecectedIDs();
+	QMessageBox *selectionInfo = new QMessageBox;
+	QString listText;
+	QString selectedText;
+	if(this->tobj->BranchPoints.size()> 0)
+	{
+		listText += QString::number(this->tobj->BranchPoints.size())
+			+ " Branches are unsolved/n";
+	}
+	else if (IDs.size()<= 0)
+	{
+	listText = tr("No traces selected");
+	}
+	else
+	{
+	listText += QString::number(IDs.size()) + " lines are selected\n";
+	for (unsigned int i = 0; i < IDs.size(); i++)
+	  {
+	  selectedText += QString::number(IDs[i]) + "\n";   
+	  } 
+	}
+	this->statusBar()->showMessage(listText);
+	selectionInfo->setText(listText);
+	selectionInfo->setDetailedText(selectedText);
+	selectionInfo->show();
 }
 void View3D::ShowTreeData()
 {
-  if (this->FTKTable)
-  {
-    this->FTKTable->close();
-  }
-  if (this->TreePlot)
-  {
-    this->TreePlot->close();
-  }
-  this->FTKTable = new TableWindow();
-  this->FTKTable->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
-  this->FTKTable->setWindowTitle("Trace Object Features Table");
-  this->FTKTable->move(32, 561);
-  this->FTKTable->show();
+	if (this->FTKTable)
+	{
+		this->FTKTable->close();
+	}
+	if (this->TreePlot)
+	{
+		this->TreePlot->close();
+	}
+	this->FTKTable = new TableWindow();
+	this->FTKTable->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
+	this->FTKTable->setWindowTitle("Trace Object Features Table");
+	this->FTKTable->move(32, 561);
+	this->FTKTable->show();
 
-  this->TreePlot = new PlotWindow();
-  this->TreePlot->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
-  this->TreePlot->setWindowTitle("Trace Object Features Plot");
+	this->TreePlot = new PlotWindow();
+	this->TreePlot->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
+	this->TreePlot->setWindowTitle("Trace Object Features Plot");
   this->TreePlot->move(890, 59);
-  this->TreePlot->show();
+	this->TreePlot->show();
 }
 
 void View3D::ClearSelection()
 {
-  if(this->GapsPlotView)
-  {
-    this->GapsPlotView->close();
-  }
-  if (this->GapsTableView)
-  {
-    this->GapsTableView->close();
-  }
-  this->tobj->Gaps.clear();
-  this->candidateGaps.clear();  
-  this->tobj->BranchPoints.clear();
-  this->myText.clear();
-  this->dtext.clear();
-  this->Rerender();
-  this->statusBar()->showMessage("All Clear", 4000);
+	if(this->GapsPlotView)
+	{
+	  this->GapsPlotView->close();
+	}
+	if (this->GapsTableView)
+	{
+	  this->GapsTableView->close();
+	}
+	this->tobj->Gaps.clear();
+	this->candidateGaps.clear();	
+	this->tobj->BranchPoints.clear();
+	this->myText.clear();
+	this->dtext.clear();
+	this->Rerender();
+	this->statusBar()->showMessage("All Clear", 4000);
 
-  cout << this->TreePlot->pos().x() << ", " << this->TreePlot->pos().y() << endl;
+	cout << this->TreePlot->pos().x() << ", " << this->TreePlot->pos().y() << endl;
 }
 
 /*  delete traces functions */
 void View3D::DeleteTraces()
 {
-  unsigned int i;
-  this->statusBar()->showMessage(tr("Deleting"));
-  std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
-  if (traceList.size() >=1)
-  {
-    for (i = 0; i < traceList.size(); i++)
-    {
-      //this->poly_line_data->Modified();
-      this->DeleteTrace(traceList[i]); 
-    }
-    this->numDeleted += (int) traceList.size();
-    this->ClearSelection();
-    this->statusBar()->showMessage(tr("Deleted\t") + QString::number(traceList.size()) + tr("\ttraces"));
-  }
-  else
-  {
-    this->statusBar()->showMessage(tr("Nothing to Delete \n"));
-  }
+	unsigned int i;
+	this->statusBar()->showMessage(tr("Deleting"));
+	std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
+	if (traceList.size() >=1)
+	{
+		for (i = 0; i < traceList.size(); i++)
+		{
+			//this->poly_line_data->Modified();
+			this->DeleteTrace(traceList[i]); 
+		}
+		this->numDeleted += (int) traceList.size();
+		this->ClearSelection();
+		this->statusBar()->showMessage(tr("Deleted\t") + QString::number(traceList.size()) + tr("\ttraces"));
+	}
+	else
+	{
+		this->statusBar()->showMessage(tr("Nothing to Delete \n"));
+	}
 }
 
 void View3D::DeleteTrace(TraceLine *tline)
@@ -1076,66 +1091,66 @@ void View3D::DeleteTrace(TraceLine *tline)
   tline->SetParent(NULL);
 }
 
-/*  branching functions */
+/*	branching functions	*/
 void View3D::SetRoots()
 {
-  std::vector<int> ids = this->TreeModel->GetSelecectedIDs();
-  int numToSolve= this->tobj->solveParents(ids);
-  this->tobj->cleanTree();
-  this->Rerender();
-  this->TreeModel->SetTraces(this->tobj->GetTraceLines());
-  this->statusBar()->showMessage(QString::number(numToSolve)+ " Remaining Branches");
+	std::vector<int> ids = this->TreeModel->GetSelecectedIDs();
+	int numToSolve= this->tobj->solveParents(ids);
+	this->tobj->cleanTree();
+	this->Rerender();
+	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+	this->statusBar()->showMessage(QString::number(numToSolve)+ " Remaining Branches");
   //this->Rerender();
 }
 void View3D::AddNewBranches()
 {
-  TraceLine* trunk;
-  std::vector <TraceLine*> newChildren;
-  std::vector <TraceLine*> selected = this->TreeModel->GetSelectedTraces();
-  if (selected.size() > 1)
-  {
-    trunk = selected[0];
-    if (trunk->Orient(selected[2]))
-    {
-      this->tobj->ReverseSegment(trunk);
-    }
-    for (unsigned int i = 1; i < selected.size(); i ++)
-    {
-      if (!selected[i]->Orient(trunk))
-      {
-        this->tobj->ReverseSegment(selected[i]);
-      }
-      newChildren.push_back(selected[i]);
-    }
-    this->AddChildren(trunk, newChildren);
-    this->ClearSelection();
-    this->statusBar()->showMessage(tr("Update Tree Plots"));
-    this->TreeModel->SetTraces(this->tobj->GetTraceLines());
-    this->statusBar()->showMessage(tr("Branching complete"));
-  }
+	TraceLine* trunk;
+	std::vector <TraceLine*> newChildren;
+	std::vector <TraceLine*> selected = this->TreeModel->GetSelectedTraces();
+	if (selected.size() > 1)
+	{
+		trunk = selected[0];
+		if (trunk->Orient(selected[2]))
+		{
+			this->tobj->ReverseSegment(trunk);
+		}
+		for (unsigned int i = 1; i < selected.size(); i ++)
+		{
+			if (!selected[i]->Orient(trunk))
+			{
+				this->tobj->ReverseSegment(selected[i]);
+			}
+			newChildren.push_back(selected[i]);
+		}
+		this->AddChildren(trunk, newChildren);
+		this->ClearSelection();
+		this->statusBar()->showMessage(tr("Update Tree Plots"));
+		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+		this->statusBar()->showMessage(tr("Branching complete"));
+	}
 }
 void View3D::ExplodeTree()
 {
-  this->tobj->BranchPoints.clear();
-  std::vector<TraceLine*> roots = this->TreeModel->getRoots();
-  for (unsigned int i = 0; i < roots.size(); i++)
-  {
-    this->tobj->explode(roots.at(i));
-  }
-  //this->tobj->cleanTree();
-  this->Rerender();
-  this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+	this->tobj->BranchPoints.clear();
+	std::vector<TraceLine*> roots = this->TreeModel->getRoots();
+	for (unsigned int i = 0; i < roots.size(); i++)
+	{
+		this->tobj->explode(roots.at(i));
+	}
+	//this->tobj->cleanTree();
+	this->Rerender();
+	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 }
 void View3D::AddChildren(TraceLine *trunk, std::vector<TraceLine*> childTraces)
 {
-  for (unsigned int i = 0; i < childTraces.size(); i++)
-  {
-    if (childTraces[i]->GetParentID() == -1)
-    {
-      childTraces[i]->SetParent(trunk);
-      trunk->AddBranch(childTraces[i]);
-    }//end check/make connection 
-  }//end child trace size loop
+	for (unsigned int i = 0; i < childTraces.size(); i++)
+	{
+		if (childTraces[i]->GetParentID() == -1)
+		{
+			childTraces[i]->SetParent(trunk);
+			trunk->AddBranch(childTraces[i]);
+		}//end check/make connection 
+	}//end child trace size loop
 }
 /*  merging functions */
 void View3D::MergeTraces()
@@ -1150,21 +1165,21 @@ void View3D::MergeTraces()
       {
       this->GapsTableView->close();
       }
-    this->MergeSelectedTraces();    
+    this->MergeSelectedTraces();  	
     }
   else
     {
     int conflict = 0;
-  std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
-  if (traceList.size() >=1)
-  {
-    conflict = this->tobj->createGapLists(traceList);
+	std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
+	if (traceList.size() >=1)
+	{
+		conflict = this->tobj->createGapLists(traceList);
      }
     else
     {
-    conflict = this->tobj->createGapLists(this->tobj->GetTraceLines());
+		conflict = this->tobj->createGapLists(this->tobj->GetTraceLines());
     }       
-  if(conflict == -1)
+	if(conflict == -1)
     {
         //user aborted
         this->tobj->Gaps.clear();
@@ -1191,12 +1206,12 @@ void View3D::MergeTraces()
       if (this->tobj->Gaps.size() ==1)
         {   
         tobj->mergeTraces(this->tobj->Gaps[0]->endPT1,this->tobj->Gaps[0]->endPT2);
-    this->numMerged++;
-    this->ClearSelection();
+		this->numMerged++;
+		this->ClearSelection();
         MergeInfo.setText(this->myText + "\nOne Trace merged");
-    this->statusBar()->showMessage(tr("Update Tree Plots"));
-    this->TreeModel->SetTraces(this->tobj->GetTraceLines());
-    this->statusBar()->showMessage(tr("Done With Merge"));
+		this->statusBar()->showMessage(tr("Update Tree Plots"));
+		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+		this->statusBar()->showMessage(tr("Done With Merge"));
         }
       else
         {
@@ -1262,7 +1277,7 @@ void View3D::updateSelectionHighlights()
 }
 void View3D::MergeSelectedTraces()
 {
-  this->statusBar()->showMessage(tr("Merging"));
+	this->statusBar()->showMessage(tr("Merging"));
   this->updateSelectionHighlights(); //if it didnt
   std::vector<int> GapIDs = this->MergeGaps->GetSelectedGapIDs();
   bool selected = false;
@@ -1293,59 +1308,59 @@ void View3D::MergeSelectedTraces()
       }//end gapids size j
       if (selected == true)
       {
-      aveCost += this->tobj->Gaps[i]->cost;
+		  aveCost += this->tobj->Gaps[i]->cost;
         this->tobj->mergeTraces(this->tobj->Gaps[i]->endPT1,this->tobj->Gaps[i]->endPT2);
       }
     } 
     MergeInfo.setText("merged " + QString::number(GapIDs.size()) + " traces.");  
-  this->numMerged += (int)GapIDs.size();
-  this->dtext+="\nAverage Cost of Merge:\t" 
-    + QString::number( aveCost / GapIDs.size() );
-  this->dtext+= "\nSum of Merge costs " + QString::number(aveCost);
-  MergeInfo.setDetailedText(this->dtext);
+	this->numMerged += (int)GapIDs.size();
+	this->dtext+="\nAverage Cost of Merge:\t" 
+		+ QString::number( aveCost / GapIDs.size() );
+	this->dtext+= "\nSum of Merge costs " + QString::number(aveCost);
+	MergeInfo.setDetailedText(this->dtext);
     MergeInfo.exec();
   }
   else
   {
     for (i=0;i<this->tobj->Gaps.size(); i++)
     {
-    if  (this->tobj->Gaps[i]->cost <=5)
+	  if  (this->tobj->Gaps[i]->cost <=5)
       {
         this->dtext+= "\nTrace " + QString::number(this->tobj->Gaps[i]->Trace1->GetId());
         this->dtext+= " and "+ QString::number(this->tobj->Gaps[i]->Trace2->GetId() );
-    this->dtext+="\tcost of:" + QString::number(this->tobj->Gaps[i]->cost); 
+		this->dtext+="\tcost of:" + QString::number(this->tobj->Gaps[i]->cost); 
         this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .125);
         this->HighlightSelected(this->tobj->Gaps[i]->Trace2, .125);
         this->candidateGaps.push_back( this->tobj->Gaps[i]);
-    } //end of cost<5
+	  } //end of cost<5
     }//end of for merge    
   if (this->candidateGaps.size()>=1)
   {      
       myText+="\nNumber of possible lines:\t" + QString::number(this->candidateGaps.size());
       mergeAll = MergeInfo.addButton("Merge All", QMessageBox::YesRole);
       mergeNone = MergeInfo.addButton("Merge None", QMessageBox::NoRole);
-    MergeInfo.setText(myText); 
-    MergeInfo.setDetailedText(this->dtext);
-    this->poly_line_data->Modified();
-    this->QVTK->GetRenderWindow()->Render();
-    MergeInfo.exec();    
-    if(MergeInfo.clickedButton()==mergeAll)
-    {
-      this->numMerged += (int)this->candidateGaps.size();
-      for (j=0; j<this->candidateGaps.size();j++)
-      {
-      tobj->mergeTraces(this->candidateGaps[j]->endPT1,this->candidateGaps[j]->endPT2);
-      }
-    }
-    else if(MergeInfo.clickedButton()==mergeNone)
-    {
-      this->candidateGaps.clear();
-      this->statusBar()->showMessage("Merge Canceled");
-    }
+	  MergeInfo.setText(myText); 
+	  MergeInfo.setDetailedText(this->dtext);
+	  this->poly_line_data->Modified();
+	  this->QVTK->GetRenderWindow()->Render();
+	  MergeInfo.exec();    
+	  if(MergeInfo.clickedButton()==mergeAll)
+	  {
+		  this->numMerged += (int)this->candidateGaps.size();
+		  for (j=0; j<this->candidateGaps.size();j++)
+		  {
+			tobj->mergeTraces(this->candidateGaps[j]->endPT1,this->candidateGaps[j]->endPT2);
+		  }
+	  }
+	  else if(MergeInfo.clickedButton()==mergeNone)
+	  {
+		  this->candidateGaps.clear();
+		  this->statusBar()->showMessage("Merge Canceled");
+	  }
     }   //end if graylist size
     else
     {
-    this->statusBar()->showMessage("nothing to merge");
+		this->statusBar()->showMessage("nothing to merge");
     }   //end else   
   }
   this->ClearSelection();
@@ -1360,13 +1375,13 @@ void View3D::SplitTraces()
     {
     std::unique(this->SelectedTraceIDs.begin(), this->SelectedTraceIDs.end());
     for(unsigned int i = 0; i < this->SelectedTraceIDs.size(); i++)
-  {
-    this->tobj->splitTrace(this->SelectedTraceIDs[i]);
-  } 
-  this->numSplit += (int) this->SelectedTraceIDs.size();
-  this->ClearSelection();
-  this->statusBar()->showMessage(tr("Update Tree Plots"));
-  this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+	{
+	  this->tobj->splitTrace(this->SelectedTraceIDs[i]);
+	} 
+	this->numSplit += (int) this->SelectedTraceIDs.size();
+	this->ClearSelection();
+	this->statusBar()->showMessage(tr("Update Tree Plots"));
+	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
     }
   else
     {
@@ -1376,40 +1391,40 @@ void View3D::SplitTraces()
 
 void View3D::FlipTraces()
 {
-  std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
-  if (traceList.size() >=1)
-  {
-    for (unsigned int i = 0; i < traceList.size(); i++)
-    {
-      this->tobj->ReverseSegment(traceList[i]);
-    }   
-    this->ClearSelection();
-    this->statusBar()->showMessage(tr("Reversed Selected"));
-  }
-  else
-  {
-    this->statusBar()->showMessage(tr("Nothing Selected"));
-  }
+	std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
+	if (traceList.size() >=1)
+	{
+		for (unsigned int i = 0; i < traceList.size(); i++)
+		{
+			this->tobj->ReverseSegment(traceList[i]);
+		}		
+		this->ClearSelection();
+		this->statusBar()->showMessage(tr("Reversed Selected"));
+	}
+	else
+	{
+		this->statusBar()->showMessage(tr("Nothing Selected"));
+	}
 }
 void View3D::SetTraceType(int newType)
 {
-  std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
-  if (traceList.size() >=1)
-  {
-    for (unsigned int i = 0; i < traceList.size(); i++)
-    {
-      traceList[i]->SetType((unsigned char) newType);
-      traceList[i]->setTraceColor(this->tobj->getTraceLUT((unsigned char) newType));
-    }
-    this->ClearSelection();
-    this->TreeModel->SetTraces(this->tobj->GetTraceLines());
-    this->statusBar()->showMessage(QString::number(traceList.size())
-      + tr(" traces set to type")+ QString::number(newType));
-  }
-  else
-  {
-    this->statusBar()->showMessage(tr("Nothing Selected"));
-  }
+	std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
+	if (traceList.size() >=1)
+	{
+		for (unsigned int i = 0; i < traceList.size(); i++)
+		{
+			traceList[i]->SetType((unsigned char) newType);
+			traceList[i]->setTraceColor(this->tobj->getTraceLUT((unsigned char) newType));
+		}
+		this->ClearSelection();
+		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+		this->statusBar()->showMessage(QString::number(traceList.size())
+			+ tr(" traces set to type")+ QString::number(newType));
+	}
+	else
+	{
+		this->statusBar()->showMessage(tr("Nothing Selected"));
+	}
 }
 void View3D::SaveToFile()
 {
@@ -1625,37 +1640,37 @@ void View3D::AddVolumeSliders()
  
 void View3D::UndoAction()
 {
-  
-  if(!(this->undoBuff->UndoOrRedo(0)))
-  {
-    return;
-  }
-  else
-  {
-    std::pair<std::string, TraceObject> undostate = this->undoBuff->getState();
-    TraceObject newstate = undostate.second;
-    *(this->tobj) = newstate;
-    Rerender();
-  }
-  
+	
+	if(!(this->undoBuff->UndoOrRedo(0)))
+	{
+		return;
+	}
+	else
+	{
+		std::pair<std::string, TraceObject> undostate = this->undoBuff->getState();
+		TraceObject newstate = undostate.second;
+		*(this->tobj) = newstate;
+		Rerender();
+	}
+	
 }
 
 
 void View3D::RedoAction()
 {
-  /*
-  if(!(this->undoBuff->UndoOrRedo(1)))
-  {
-    return;
-  }
-  else
-  {
-    std::pair<std::string, TraceObject> undostate = this->undoBuff->getState();
-    TraceObject newstate = undostate.second;
-    *(this->tobj) = newstate;
-    Rerender();
-  }
-  */
+	/*
+	if(!(this->undoBuff->UndoOrRedo(1)))
+	{
+		return;
+	}
+	else
+	{
+		std::pair<std::string, TraceObject> undostate = this->undoBuff->getState();
+		TraceObject newstate = undostate.second;
+		*(this->tobj) = newstate;
+		Rerender();
+	}
+	*/
 }
 
 void View3D::readImg(std::string sourceFile)
@@ -1801,11 +1816,11 @@ void View3D::closeEvent(QCloseEvent *event)
     }
   if(this->FTKTable)
   {
-    this->FTKTable->close();
+	  this->FTKTable->close();
   }
   if(this->TreePlot)
   {
-    this->TreePlot->close();
+	  this->TreePlot->close();
   }
   event->accept();
 }
