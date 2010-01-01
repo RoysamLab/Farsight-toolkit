@@ -80,7 +80,7 @@ void WholeCellSeg::set_parameters ( int *parameters ){
 	remove_small_objs = *parameters; parameters++;
 	draw_synth_bounds = *parameters; parameters++;
 	radius_of_synth_bounds = *parameters; parameters++;
-	if( *parameters > 0 ){
+	if( *parameters > 1 ){
 		num_levels = *parameters; parameters++;
 		num_levels_incl = *parameters;
 	}
@@ -123,8 +123,6 @@ void WholeCellSeg::BinarizationForRealBounds(){
  	typedef itk::BinaryBallStructuringElement< UShortPixelType, 2 > StructuringElementType;
 	typedef itk::BinaryErodeImageFilter< UShortImageType, UShortImageType, StructuringElementType > ErodeFilterType;
 	typedef itk::BinaryDilateImageFilter< UShortImageType, UShortImageType, StructuringElementType > DilateFilterType;
-
-	UShortImageType::Pointer intermediate_bin_im_out;
 
 	unsigned char *in_Image;
 	unsigned long int ind=0;
@@ -290,10 +288,6 @@ void WholeCellSeg::BinarizationForRealBounds(){
 	return;
 }
 
-
-
-
-
 void WholeCellSeg::RunSegmentation(){
 	if( draw_real_bounds )
 		this->RealBoundaries();
@@ -310,6 +304,7 @@ void WholeCellSeg::RealBoundaries(){
 	int size2=cyt_im_inp->GetLargestPossibleRegion().GetSize()[1];
 
 	typedef itk::SmoothingRecursiveGaussianImageFilter< UShortImageType, UShortImageType > GaussianFilterType;
+	typedef itk::GradientMagnitudeImageFilter< UShortImageType, UShortImageType > GradientMagnitudeType;
 	typedef itk::RescaleIntensityImageFilter< UShortImageType, FltImageType > RescaleUSFltType;
 	typedef itk::CastImageFilter< UShortImageType, IntImageType > CastUSIntType;
 	typedef itk::CastImageFilter< IntImageType, UShortImageType > CastIntUSType;
@@ -323,12 +318,15 @@ void WholeCellSeg::RealBoundaries(){
 	gaussianfilter->SetSigma( 1.25 );
 	gaussianfilter->SetInput( cyt_im_inp );
 	gaussianfilter->Update();
+	GradientMagnitudeType::Pointer gradmagfilter = GradientMagnitudeType::New();
+	gradmagfilter->SetInput( gaussianfilter->GetOutput() );
+	gradmagfilter->Update();
 
 //Rescale image
 	RescaleUSFltType::Pointer rescaleusflt = RescaleUSFltType::New();
 	rescaleusflt->SetOutputMaximum( scaling );
 	rescaleusflt->SetOutputMinimum( 1 );
-	rescaleusflt->SetInput( gaussianfilter->GetOutput() );
+	rescaleusflt->SetInput( gradmagfilter->GetOutput() );
 	rescaleusflt->Update();
 
 //Get the rescaled gradient image from ITK into an array of known size and indexing system
@@ -351,10 +349,13 @@ void WholeCellSeg::RealBoundaries(){
 		gaussianfilter1->SetSigma( 1.25 );
 		gaussianfilter1->SetInput( mem_im_inp );
 		gaussianfilter1->Update();
+		GradientMagnitudeType::Pointer gradmagfilter1 = GradientMagnitudeType::New();
+		gradmagfilter1->SetInput( gaussianfilter1->GetOutput() );
+		gradmagfilter1->Update();
 		RescaleUSFltType::Pointer rescaleusflt1 = RescaleUSFltType::New();
 		rescaleusflt1->SetOutputMaximum( scaling );
 		rescaleusflt1->SetOutputMinimum( 1 );
-		rescaleusflt1->SetInput( gaussianfilter1->GetOutput() );
+		rescaleusflt1->SetInput( gradmagfilter1->GetOutput() );
 		rescaleusflt1->Update();
 		FltImageType::Pointer grad_img1 = FltImageType::New();
 		grad_img1 = rescaleusflt1->GetOutput();
@@ -475,11 +476,20 @@ void WholeCellSeg::RealBoundaries(){
 	seg_im_out = castIntUSfilter->GetOutput();
 
 //Write the output for testing
-/*	RescaleIntIOType::Pointer RescaleIntIO1 = RescaleIntIOType::New();
-	RescaleIntIO1->SetOutputMaximum( 255 );
+/*	IteratorType1 pix_bufed33( image2, image2->GetRequestedRegion() );
+	pix_bufed33.GoToBegin();
+	while( !pix_bufed33.IsAtEnd() ){
+		if( 0 > pix_bufed33.Get() )
+			pix_bufed33.Set(0);
+		++pix_bufed33;
+	}
+	typedef itk::RescaleIntensityImageFilter< IntImageType, UShortImageType  > RescaleUsIntType;
+	RescaleIntIOType::Pointer RescaleIntIO1 = RescaleIntIOType::New();
+	RescaleIntIO1->SetOutputMaximum( USHRT_MAX );
 	RescaleIntIO1->SetOutputMinimum( 0 );
-	RescaleIntIO1->SetInput( rescaleiointfilter->GetOutput() ); //watershedfilter->GetOutput() image1
+	RescaleIntIO1->SetInput( image2 ); //watershedfilter->GetOutput() image1
 	RescaleIntIO1->Update();
+	typedef itk::ImageFileWriter< UShortImageType > WriterType;
 	WriterType::Pointer writer = WriterType::New();
 	writer->SetFileName( "bin_info.tif" );
 	writer->SetInput( RescaleIntIO1->GetOutput() );//RescaleIntIO1--finalO/P
@@ -603,16 +613,23 @@ void WholeCellSeg::SyntheticBoundaries(){
 		seg_im_out = castIntUSfilter->GetOutput();
 
 /*
+	IteratorType1 pix_bufed33( image2, image2->GetRequestedRegion() );
+	pix_bufed33.GoToBegin();
+	while( !pix_bufed33.IsAtEnd() ){
+		if( 0 > pix_bufed33.Get() )
+			pix_bufed33.Set(0);
+		++pix_bufed33;
+	}
 	typedef itk::RescaleIntensityImageFilter< IntImageType, UShortImageType  > RescaleUsIntType;
-	RescaleUsIntType::Pointer RescaleIntIO1 = RescaleUsIntType::New();
-	RescaleIntIO1->SetOutputMaximum( 255 );
+	RescaleIntIOType::Pointer RescaleIntIO1 = RescaleIntIOType::New();
+	RescaleIntIO1->SetOutputMaximum( USHRT_MAX );
 	RescaleIntIO1->SetOutputMinimum( 0 );
-	RescaleIntIO1->SetInput( andfilter2->GetOutput() ); //watershedfilter->GetOutput() image1
+	RescaleIntIO1->SetInput( image2 ); //watershedfilter->GetOutput() image1
 	RescaleIntIO1->Update();
 	typedef itk::ImageFileWriter< UShortImageType > WriterType;
 	WriterType::Pointer writer = WriterType::New();
 	writer->SetFileName( "bin_info.tif" );
-	writer->SetInput( seg_im_out );//RescaleIntIO1--finalO/P
+	writer->SetInput( RescaleIntIO1->GetOutput() );//RescaleIntIO1--finalO/P
 	writer->Update();
 */
 
@@ -623,20 +640,24 @@ void WholeCellSeg::SyntheticBoundaries(){
 
 void WholeCellSeg::RemoveSmallObjs(){
 
-	typedef itk::LabelGeometryImageFilter< UShortImageType > GeometryFilterType;
+	typedef itk::LabelGeometryImageFilter< UShortImageType, UShortImageType > GeometryFilterType;
 	typedef itk::LabelStatisticsImageFilter< UShortImageType,UShortImageType > StatisticsFilterType;
 	typedef itk::CastImageFilter< UShortImageType, UShortImageType > CastUSUSType;
 	typedef itk::ImageRegionIteratorWithIndex< UShortImageType > IteratorType;
 	typedef GeometryFilterType::LabelIndicesType labelindicestype;
 
+	std::vector< unsigned short > labelsList;
+
 	GeometryFilterType::Pointer geomfilt1 = GeometryFilterType::New();
+	geomfilt1->SetInput( seg_im_out );
+	geomfilt1->SetCalculatePixelIndices( true );
+	geomfilt1->Update();
+	labelsList = geomfilt1->GetLabels();
 
 	StatisticsFilterType::Pointer statsfilt = StatisticsFilterType::New();
 	statsfilt->UseHistogramsOn();
 
-	geomfilt1->SetInput( seg_im_out );
-
-	statsfilt->SetInput( bin_im_out );
+	statsfilt->SetInput( intermediate_bin_im_out );
 	statsfilt->SetLabelInput( seg_im_out );
 	statsfilt->Update();
 
@@ -648,24 +669,22 @@ void WholeCellSeg::RemoveSmallObjs(){
 		nuclab_inp_cpy = castUSUSfilter->GetOutput();
 	}
 
-	for( unsigned short i=0; i<=statsfilt->GetNumberOfLabels(); i++ ){
-		if( statsfilt->HasLabel(i) ){
-			labelindicestype indices1;
-			indices1 = geomfilt1->GetPixelIndices( i );
-			labelindicestype::iterator itPixind = indices1.begin();
-			if( !statsfilt->GetSum( i ) ){
-				IteratorType iterator ( seg_im_out, seg_im_out->GetRequestedRegion() );
-				for( int j=0; j<(int)indices1.size(); ++j, ++itPixind ){
-					iterator.SetIndex( *itPixind );
-					iterator.Set( 0 );
-				}
+	for( unsigned short i=0; (int)i<(int)labelsList.size(); ++i ){
+		if( !labelsList[i] ) continue;
+		labelindicestype indices1;
+		indices1 = geomfilt1->GetPixelIndices( labelsList[i] );
+		if( !(statsfilt->GetSum( labelsList[i] )) ){
+			IteratorType iterator ( seg_im_out, seg_im_out->GetRequestedRegion() );
+			for( labelindicestype::const_iterator itPixind = indices1.begin(); itPixind != indices1.end(); ++itPixind ){
+				iterator.SetIndex( *itPixind );
+				iterator.Set( 0 );
 			}
-			else if( draw_real_bounds && draw_synth_bounds ){
-				IteratorType iterator ( nuclab_inp_cpy, nuclab_inp_cpy->GetRequestedRegion() );
-				for( int j=0; j<(int)indices1.size(); ++j, ++itPixind ){
-					iterator.SetIndex( *itPixind );
-					iterator.Set( 0 );
-				}
+		}
+		else if( draw_real_bounds && draw_synth_bounds ){
+			IteratorType iterator ( nuclab_inp_cpy, nuclab_inp_cpy->GetRequestedRegion() );
+			for( labelindicestype::const_iterator itPixind = indices1.begin(); itPixind != indices1.end(); ++itPixind ){
+				iterator.SetIndex( *itPixind );
+				iterator.Set( 0 );
 			}
 		}
 	}

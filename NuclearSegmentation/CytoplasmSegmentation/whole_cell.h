@@ -29,6 +29,7 @@
 //ITK Includes
 #include "itkImage.h"
 #include "itkSmoothingRecursiveGaussianImageFilter.h"
+#include "itkGradientMagnitudeImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkImageRegionConstIterator.h"
 #include "itkImageRegionIterator.h"
@@ -83,6 +84,7 @@ class WholeCellSeg{
 	UShortImageType::Pointer cyt_im_inp;
 	UShortImageType::Pointer mem_im_inp;
 	UShortImageType::Pointer bin_im_out;
+	UShortImageType::Pointer intermediate_bin_im_out;
 	UShortImageType::Pointer seg_im_out;
 
 public:

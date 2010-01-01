@@ -118,7 +118,7 @@ int gradient_enhanced_distance_map( float *INP_IM_2D, float *GRAD_IMW, int size1
 			if( neigh_vals_cpy[k] <= 0 ) continue;
 			//At this point the negative vals have been skipped and the lowest +ve value is the current value on the sorted list
 			if( best_val_not_found ){
-				if( ( grad_imw(i,j) > neigh_vals_cpy[k] ) && ( (fabs(grad_imw(i,j)-neigh_vals_cpy[k])) > 0.5 )  ){
+				if( ( grad_imw(i,j) > neigh_vals_cpy[k] ) && ( (fabs(grad_imw(i,j)-neigh_vals_cpy[k])) > 0.01 )  ){
 					grad_imw(i,j) = neigh_vals_cpy[k];
 					best_val_not_found = 0;
 					continue;
