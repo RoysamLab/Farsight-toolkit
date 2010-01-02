@@ -1005,8 +1005,10 @@ void View3D::DeleteTraces()
 	std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
 	if (traceList.size() >=1)
 	{
+		this->EditLogDisplay->append(tr("Deleted\t") + QString::number(traceList.size()) + tr("\ttraces"));
 		for (i = 0; i < traceList.size(); i++)
 		{
+			this->EditLogDisplay->append("\tTrace\t"+ QString::number(traceList[i]->GetId()));
 			//this->poly_line_data->Modified();
 			this->DeleteTrace(traceList[i]); 
 		}
@@ -1095,6 +1097,7 @@ void View3D::DeleteTrace(TraceLine *tline)
 void View3D::SetRoots()
 {
 	std::vector<int> ids = this->TreeModel->GetSelecectedIDs();
+	this->EditLogDisplay->append("Setting roots");
 	int numToSolve= this->tobj->solveParents(ids);
 	this->tobj->cleanTree();
 	this->Rerender();
@@ -1206,6 +1209,9 @@ void View3D::MergeTraces()
       if (this->tobj->Gaps.size() ==1)
         {   
         tobj->mergeTraces(this->tobj->Gaps[0]->endPT1,this->tobj->Gaps[0]->endPT2);
+		this->EditLogDisplay->append("Merged Trace:\t"  
+			+ QString::number(this->tobj->Gaps[0]->Trace1->GetId()) + "\tto\t" 
+			+ QString::number(this->tobj->Gaps[0]->Trace2->GetId()));
 		this->numMerged++;
 		this->ClearSelection();
         MergeInfo.setText(this->myText + "\nOne Trace merged");
@@ -1313,10 +1319,12 @@ void View3D::MergeSelectedTraces()
       }
     } 
     MergeInfo.setText("merged " + QString::number(GapIDs.size()) + " traces.");  
+	this->EditLogDisplay->append("merged " + QString::number(GapIDs.size()) + " traces.");  
 	this->numMerged += (int)GapIDs.size();
 	this->dtext+="\nAverage Cost of Merge:\t" 
 		+ QString::number( aveCost / GapIDs.size() );
 	this->dtext+= "\nSum of Merge costs " + QString::number(aveCost);
+	this->EditLogDisplay->append(this->dtext);
 	MergeInfo.setDetailedText(this->dtext);
     MergeInfo.exec();
   }
@@ -1346,6 +1354,9 @@ void View3D::MergeSelectedTraces()
 	  MergeInfo.exec();    
 	  if(MergeInfo.clickedButton()==mergeAll)
 	  {
+		  this->EditLogDisplay->append("Merged " + 
+			  QString::number(this->candidateGaps.size()) + " traces");
+		  this->EditLogDisplay->append(this->dtext);
 		  this->numMerged += (int)this->candidateGaps.size();
 		  for (j=0; j<this->candidateGaps.size();j++)
 		  {
@@ -1379,6 +1390,7 @@ void View3D::SplitTraces()
 	  this->tobj->splitTrace(this->SelectedTraceIDs[i]);
 	} 
 	this->numSplit += (int) this->SelectedTraceIDs.size();
+	this->EditLogDisplay->append("split " + QString::number(this->SelectedTraceIDs.size()) +" Traces");
 	this->ClearSelection();
 	this->statusBar()->showMessage(tr("Update Tree Plots"));
 	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
@@ -1394,8 +1406,10 @@ void View3D::FlipTraces()
 	std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
 	if (traceList.size() >=1)
 	{
+		this->EditLogDisplay->append("Fipped " +  QString::number(traceList.size()) + " Traces");
 		for (unsigned int i = 0; i < traceList.size(); i++)
 		{
+			this->EditLogDisplay->append("\tTrace\t" + QString::number(traceList[i]->GetId()));
 			this->tobj->ReverseSegment(traceList[i]);
 		}		
 		this->ClearSelection();
@@ -1411,8 +1425,11 @@ void View3D::SetTraceType(int newType)
 	std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
 	if (traceList.size() >=1)
 	{
+		this->EditLogDisplay->append( QString::number(traceList.size())
+			+ " Traces set to type: " +  QString::number( newType));
 		for (unsigned int i = 0; i < traceList.size(); i++)
 		{
+			this->EditLogDisplay->append( "\tTrace\t" + QString::number(traceList[i]->GetId()));
 			traceList[i]->SetType((unsigned char) newType);
 			traceList[i]->setTraceColor(this->tobj->getTraceLUT((unsigned char) newType));
 		}
@@ -1458,6 +1475,9 @@ void View3D::SaveToFile()
     {
     this->tobj->WriteToVTKFile(fileName.toStdString().c_str()); 
     }
+  this->statusBar()->showMessage("File saves as:\t" + fileName.section('/',-1));
+  this->EditLogDisplay->append("File saves as:\t" + fileName 
+	  + " at time: \t" + this->Time.currentTime().toString( "h:m:s ap" ));
 }
 
 
