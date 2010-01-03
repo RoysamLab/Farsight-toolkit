@@ -291,6 +291,10 @@ void WholeCellSeg::BinarizationForRealBounds(){
 void WholeCellSeg::RunSegmentation(){
 	if( draw_real_bounds )
 		this->RealBoundaries();
+	if( draw_synth_bounds && ( radius_of_synth_bounds < 0 ) ){
+		std::cerr<<"Radius of synthetic boundaries set to zero\!\n";
+		return;
+	}
 	if( draw_real_bounds && remove_small_objs && cyt_im_set )
 		this->RemoveSmallObjs();
 	if(	(draw_real_bounds && remove_small_objs && draw_synth_bounds) || (!draw_real_bounds && draw_synth_bounds) )
@@ -531,6 +535,11 @@ void WholeCellSeg::SyntheticBoundaries(){
 	RescaleIOInt->SetOutputMaximum( INT_MAX );
 	RescaleIOInt->SetOutputMinimum( 0 );
 	RescaleIOInt->SetInput( nuclab_inp );
+	if( draw_real_bounds && remove_small_objs )
+		RescaleIOInt->SetInput( nuclab_inp_cpy );
+	else
+		RescaleIOInt->SetInput( nuclab_inp );
+	RescaleIOInt->Update();
 
 	BinaryThresholdFilterType::Pointer binarythreshfilter = BinaryThresholdFilterType::New();
 	binarythreshfilter->SetInsideValue( INT_MAX );
@@ -681,10 +690,11 @@ void WholeCellSeg::RemoveSmallObjs(){
 			}
 		}
 		else if( draw_real_bounds && draw_synth_bounds ){
-			IteratorType iterator ( nuclab_inp_cpy, nuclab_inp_cpy->GetRequestedRegion() );
+			IteratorType iterator1 ( nuclab_inp_cpy, nuclab_inp_cpy->GetRequestedRegion() );
 			for( labelindicestype::const_iterator itPixind = indices1.begin(); itPixind != indices1.end(); ++itPixind ){
-				iterator.SetIndex( *itPixind );
-				iterator.Set( 0 );
+				iterator1.SetIndex( *itPixind );
+				if( iterator1.Get()==labelsList[i] )
+					iterator1.Set( 0 );
 			}
 		}
 	}
