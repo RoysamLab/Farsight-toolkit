@@ -159,7 +159,7 @@ void AssociativeFeatureCalculator::SetInputImage(ftk::Image::Pointer input_label
 
 	lab_im = lFilter->GetOutput();
 
-	lab_im_set=1;
+	lab_im_set=true;
 }
 
 //Update the features in this table whose names match (sets doFeat)
@@ -167,7 +167,7 @@ void AssociativeFeatureCalculator::Append(vtkSmartPointer<vtkTable> table)
 {
 	//Compute features:
 	ftk::NuclearAssociationRules *assoc;
-	if( IsLabeledImageSet() == false )
+	if( IsLabeledImageSet() == true )
 		assoc = new ftk::NuclearAssociationRules("",0,lab_im);
 	else
 		assoc = new ftk::NuclearAssociationRules("",0);
