@@ -473,11 +473,11 @@ void NucleusEditor::menusEnabled(bool val)
 //****************************************************************************
 void NucleusEditor::about()
 {
-	QString version = CPACK_PACKAGE_VERSION_MAJOR;
+	QString version = QString::number(CPACK_PACKAGE_VERSION_MAJOR);
 	version += ".";
-	version += CPACK_PACKAGE_VERSION_MINOR;
+	version += QString::number(CPACK_PACKAGE_VERSION_MINOR);
 	version += ".";
-	version += CPACK_PACKAGE_VERSION_PATCH;
+	version += QString::number(CPACK_PACKAGE_VERSION_PATCH);
 
 	QString text = tr("<h2>FARSIGHT ") + version + tr("</h2>");
 	text += tr("<h3>Rensselear Polytechnic Institute</h3>");
