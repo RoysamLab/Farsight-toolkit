@@ -144,6 +144,7 @@ View3D::View3D(int argc, char **argv)
 	}//end load
 	else
 	{		
+		this->show();
 		if (tracesLoaded)
 		{
 			this->ShowTreeData();
@@ -170,17 +171,52 @@ void View3D::CreateBootLoader()
 	this->BootSoma = new QPushButton("Somas", this->bootLoadFiles);
 	connect(this->BootSoma, SIGNAL(clicked()), this, SLOT(getSomaFile()));
 	this->GetAUserName =  new QLineEdit(this->bootLoadFiles);
-	this->GetAUserName->setText("default user");
+	this->GetAUserName->setText(this->TraceEditSettings.value("boot/userName", "default user").toString());
 	this->okBoot = new QPushButton("Start",this->bootLoadFiles);
 	connect(this->okBoot, SIGNAL(clicked()), this, SLOT(OkToBoot()));
+	this->Reload = new QPushButton("Reload", this->bootLoadFiles);
+	connect(this->Reload, SIGNAL(clicked()), this, SLOT(ReloadState()));
 	QFormLayout *LoadLayout = new QFormLayout(this->bootLoadFiles);
 	LoadLayout->addRow(tr("Trace File"), this->BootTrace);
 	LoadLayout->addRow(tr("Image File"), this->BootImage);
 	LoadLayout->addRow(tr("Somas File"), this->BootSoma);
 	LoadLayout->addRow(tr("User Name "), this->GetAUserName);
 	LoadLayout->addRow(tr("Run Trace Editor"), this->okBoot);
+	LoadLayout->addRow(tr("Reload Previous Session"), this->Reload);
 	this->bootLoadFiles->show();
-	this->hide();
+	this->bootLoadFiles->move(this->TraceEditSettings.value("boot/pos",QPoint(40, 59)).toPoint());
+}
+void View3D::ReloadState()
+{
+	this->Image = this->TraceEditSettings.value("lastOpen/Image").toString();
+	if(!this->Image.isEmpty()) 
+	{
+		std::string imageFile = this->Image.toStdString();
+		this->rayCast( (char*) imageFile.c_str() );
+	}
+	this->TraceFiles = this->TraceEditSettings.value("lastOpen/Trace").toString();
+	if(!this->TraceFiles.isEmpty()) 
+	{		
+		std::string traceFile = this->TraceFiles.toStdString();
+		if(this->TraceFiles.endsWith("swc"))
+		{
+			this->tobj->ReadFromSWCFile((char*)traceFile.c_str());
+		}
+		else if(this->TraceFiles.endsWith("xml"))
+		{
+			this->tobj->ReadFromRPIXMLFile((char*)traceFile.c_str());
+		}
+		else if (this->TraceFiles.endsWith("vtk"))
+		{
+			this->tobj->ReadFromVTKFile((char*)traceFile.c_str());
+		}
+	}
+	this->SomaFile = this->TraceEditSettings.value("lastOpen/Soma").toString();
+	if(!this->SomaFile.isEmpty()) 
+	{
+		this->readImg(this->SomaFile.toStdString());
+	}
+	this->OkToBoot();
 }
 void View3D::OkToBoot()
 {
@@ -202,7 +238,9 @@ void View3D::OkToBoot()
 		{
 		}
 		this->EditLogDisplay->append("User: \t" + this->UserName);
-		this->bootLoadFiles->hide();
+		this->TraceEditSettings.setValue("boot/pos", this->bootLoadFiles->pos());
+		this->bootLoadFiles->close();
+		this->show();
 		//this->statusBar()->showMessage("started at " );//+ this->Time->toString( "mm:ss" )
 	}
 	else
@@ -216,7 +254,7 @@ QString View3D::getSomaFile()
 {
 	QString somaFiles = QFileDialog::getOpenFileName(this , "Choose a Soma file to load", ".", 
 	  tr("Image File ( *.tiff *.tif *.pic *.PIC ) "));
-	if(!somaFiles.isNull())
+	if(!somaFiles.isEmpty())
 	{
 		this->SomaFile = somaFiles;
 		//this->statusBar()->showMessage("Loading Soma Image");
@@ -249,15 +287,15 @@ QString View3D::getTraceFile()
 }
 QString View3D::getImageFile()
 {
-	QString trace = QFileDialog::getOpenFileName(this , "Load Trace Image Data", ".",
+	QString NewImageFile = QFileDialog::getOpenFileName(this , "Load Trace Image Data", ".",
 		tr("Trace Image ( *.tiff *.tif *.pic *.PIC *.mhd" ));
-	if (!trace.isEmpty())
+	if (!NewImageFile.isEmpty())
 	{
-		this->Image = trace;
-		std::string traceFile = trace.toStdString();
-		this->rayCast( (char*)traceFile.c_str());
+		this->Image = NewImageFile;
+		std::string imageFile = NewImageFile.toStdString();
+		this->rayCast( (char*)imageFile.c_str());
 	}
-	return trace.section('/',-1);
+	return NewImageFile.section('/',-1);
 }
 void View3D::LoadTraces()
 {
@@ -368,8 +406,8 @@ void View3D::Initialize()
 	this->CreateLayout();
 	this->CreateInteractorStyle();
 	this->CreateActors();
-	this->resize(850, 480);
-	this->move(40, 59);
+	this->resize(this->TraceEditSettings.value("mainWin/size",QSize(850, 480)).toSize());
+	this->move(this->TraceEditSettings.value("mainWin/pos",QPoint(40, 59)).toPoint());
 	if (!this->TraceFiles.isEmpty())
 	{
 		this->setWindowTitle(tr("Trace Editor: ")+ this->TraceFiles);
@@ -1822,6 +1860,15 @@ void View3D::rayCast(char *raySource)
 
 void View3D::closeEvent(QCloseEvent *event)
 {
+	this->TraceEditSettings.setValue("boot/userName", this->UserName);
+	this->TraceEditSettings.setValue("mainWin/size", this->size());
+	this->TraceEditSettings.setValue("mainWin/pos",	this->pos());
+	this->TraceEditSettings.setValue("lastOpen/Image", this->Image);
+	this->TraceEditSettings.setValue("lastOpen/Trace",this->TraceFiles);
+	this->TraceEditSettings.setValue("lastOpen/Soma", this->SomaFile);
+	
+	this->TraceEditSettings.sync();
+
   if(this->GapsPlotView)
     {
     this->GapsPlotView->close();

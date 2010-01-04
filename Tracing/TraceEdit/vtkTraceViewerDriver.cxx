@@ -30,8 +30,11 @@ int main (int argc, char* argv[])
   //  return 0;
   //  }
   QApplication app(argc, argv);
+  app.setOrganizationName("FARSIGHT Toolkit");
+  app.setOrganizationDomain("farsight-toolkit.org");
+  app.setApplicationName("Trace Editor");
 	View3D *View = new View3D(argc, argv);
-  View->show();
+  //View->show();
   int retval = app.exec();
   delete View;
   return retval;

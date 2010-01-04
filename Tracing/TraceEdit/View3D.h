@@ -124,6 +124,7 @@ public slots:
 	void LoadImageData();
 	void LoadSomaFile();
 	void SetTraceType(int newType);
+	void ReloadState();
 
 	void UndoAction();
 	void RedoAction();
@@ -145,16 +146,16 @@ private:
 
 	//for the widget the buttons must be used instead of actions 
 	//the get____file functions called as renderer is not initalized
-	//QTextDocument * EditLog;
+	QSettings TraceEditSettings;
 	QDockWidget * InformationDisplays;
 	QTextEdit * EditLogDisplay;
-	QString TraceFiles, Image, SomaFile, UserName;
+	QString TraceFiles, Image, SomaFile, tempTraceFile, UserName;
 	QWidget * bootLoadFiles;
-	/*QWidget * LogViewer;*/
 	QPushButton * BootTrace;
 	QPushButton * BootSoma;
 	QPushButton * BootImage;
 	QPushButton * okBoot;
+	QPushButton * Reload;
 	QLineEdit * GetAUserName;
 	QDate  Date;
 	QTime  Time;
