@@ -177,7 +177,7 @@ std::vector<ProjectDefinition::StringParameter> ProjectDefinition::ReadStringPar
 		{
 			StringParameter parameter;
 			parameter.name = parameterElement->Attribute("name");
-			parameter.value = atoi(parameterElement->Attribute("value"));
+			parameter.value = parameterElement->Attribute("value");
 			returnVector.push_back(parameter);
 		}
 		parameterElement = parameterElement->NextSiblingElement();
