@@ -69,6 +69,8 @@ private:
 	std::string inFilename;
 	std::string fPrefix;
 	LabImageType::Pointer lab_im;
+	ftk::Image::Pointer lblImg;
+	ftk::Image::Pointer grayImg;
 	bool lab_im_set;
 	static const int num_rois=8;
 };
