@@ -138,9 +138,11 @@ void AssociativeFeatureCalculator::SetInputImage(ftk::Image::Pointer input_label
 
 	UShortImageType3D::Pointer lab_image = input_labeled_image->GetItkPtr<unsigned short>(0,channel_number);
 
+	int z = input_labeled_image->GetImageInfo()->numZSlices;
+
 	LabelExtractType::Pointer leFilter = LabelExtractType::New();
 	UShortImageType3D::RegionType lRegion = lab_image->GetLargestPossibleRegion();
-	lRegion.SetSize(2,1);
+	lRegion.SetSize(2,z);
 	leFilter->SetExtractionRegion(lRegion);
 	leFilter->SetInput( lab_image );
 

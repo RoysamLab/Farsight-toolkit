@@ -19,6 +19,7 @@ TrainingDialog::TrainingDialog(vtkSmartPointer<vtkTable> table, const char * tra
 	: QDialog(parent)
 {
 	this->setWindowTitle(tr("Training"));
+	this->setModal(false);
 
 	QLabel *topLabel = new QLabel(tr("Please enter comma separated list of IDs: "));
 

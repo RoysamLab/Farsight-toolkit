@@ -63,8 +63,10 @@ void distTransform(unsigned char *f, int L, int M, int N)
   fDist = new long[L*M*N];
 
   for (idx = 0; idx < slsz*N; idx++) {
-      if (f[idx] > 0)   fDist[idx] = 0;
-	  else fDist[idx] = 5000;
+      //if (f[idx] > 0)   fDist[idx] = 0;
+	  //else fDist[idx] = 5000;
+	  if (f[idx] > 0)   fDist[idx] = 5000;
+	  else fDist[idx] = 0;
   }
 
   int maxdim = MAX(L,M);

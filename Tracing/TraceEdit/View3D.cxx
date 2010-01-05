@@ -91,6 +91,9 @@ View3D::View3D(int argc, char **argv)
 	this->Date.currentDate();
 	this->Time.currentTime();
 	this->Image.clear();
+	this->TraceFiles.clear();
+	this->SomaFile.clear();
+	this->tempTraceFile.clear();
 	this->EditLogDisplay = new QTextEdit();
 	this->EditLogDisplay->setReadOnly(true);
 	this->EditLogDisplay->append("Farsight Trace Editor Started at: \nDate: \t" + this->Date.currentDate().toString( "ddd MMMM d yy" ) );
@@ -194,7 +197,27 @@ void View3D::ReloadState()
 		std::string imageFile = this->Image.toStdString();
 		this->rayCast( (char*) imageFile.c_str() );
 	}
-	this->TraceFiles = this->TraceEditSettings.value("lastOpen/Trace").toString();
+	
+	this->tempTraceFile = this->TraceEditSettings.value("lastOpen/Temp").toString();
+	if (!this->tempTraceFile.isEmpty())
+	{	//opens last saved file 
+		this->TraceFiles = this->tempTraceFile;
+		// if saved file find log file
+		QString logFileName = this->TraceEditSettings.value("lastOpen/Log").toString();
+		if (!logFileName.isEmpty())
+		{	//read and add old log file to new one
+			QFile readLog(logFileName);
+			if (readLog.open(QIODevice::ReadOnly | QIODevice::Text))
+			{
+				QTextStream in(&readLog);
+				this->EditLogDisplay->append(in.readAll());
+			}
+		}//end of has log
+	}
+	else
+	{	//if the last file was never saved open this
+		this->TraceFiles = this->TraceEditSettings.value("lastOpen/Trace").toString();
+	}
 	if(!this->TraceFiles.isEmpty()) 
 	{		
 		std::string traceFile = this->TraceFiles.toStdString();
@@ -384,11 +407,11 @@ void View3D::Initialize()
 	this->QVTK = 0;
 	this->OpacitySlider = 0;
 	this->BrightnessSlider = 0;
-	this->tobj->gapTol = .5;
-	this->tobj->gapMax = 10;
-	this->SmallLineLength = 5;
-	this->SelectColor =.1;
-	this->lineWidth= 2;
+	this->tobj->gapTol = this->TraceEditSettings.value("mainWin/gapTol", .5).toDouble() ;
+	this->tobj->gapMax = this->TraceEditSettings.value("mainWin/gapMax", 10).toInt();
+	this->SmallLineLength = this->TraceEditSettings.value("mainWin/smallLine", 10).toInt();
+	this->SelectColor =this->TraceEditSettings.value("mainWin/selectColor", .1).toDouble();
+	this->lineWidth= this->TraceEditSettings.value("mainWin/gapMax", 2).toDouble();
 	this->GapsPlotView = NULL;
 	this->TreePlot = NULL;
 	this->FTKTable = NULL;
@@ -1495,7 +1518,7 @@ void View3D::SaveToFile()
     {
     return;
     }
-
+  this->tempTraceFile = fileName;
   //make sure the user supplied an appropriate output file format
   if(!fileName.endsWith(".vtk") && !fileName.endsWith(".swc"))
     {
@@ -1513,9 +1536,23 @@ void View3D::SaveToFile()
     {
     this->tobj->WriteToVTKFile(fileName.toStdString().c_str()); 
     }
-  this->statusBar()->showMessage("File saves as:\t" + fileName.section('/',-1));
-  this->EditLogDisplay->append("File saves as:\t" + fileName 
-	  + " at time: \t" + this->Time.currentTime().toString( "h:m:s ap" ));
+  this->statusBar()->showMessage("File saved as:\t" + fileName.section('/',-1));
+  this->EditLogDisplay->append(QString("File saved as: %1  at time: %2").arg(fileName) 
+	   .arg(this->Time.currentTime().toString( "h:m:s ap" )));
+//Edit Log written to file
+  QString logFileName = this->tempTraceFile.section('.',0,-1);
+  logFileName.append("_log.txt");
+  QFile logFile(logFileName);
+  if (!logFile.open(QIODevice::WriteOnly | QIODevice::Text))
+  {
+	  return;
+  }
+  else
+  {
+	  this->TraceEditSettings.setValue("lastOpen/Log", logFileName);
+	  QTextStream out(&logFile);
+	  out << this->EditLogDisplay->toPlainText();
+  }
 }
 
 
@@ -1863,9 +1900,15 @@ void View3D::closeEvent(QCloseEvent *event)
 	this->TraceEditSettings.setValue("boot/userName", this->UserName);
 	this->TraceEditSettings.setValue("mainWin/size", this->size());
 	this->TraceEditSettings.setValue("mainWin/pos",	this->pos());
+	this->TraceEditSettings.setValue("mainWin/gapTol", this->tobj->gapTol ) ;
+	this->TraceEditSettings.setValue("mainWin/gapMax", this->tobj->gapMax);
+	this->TraceEditSettings.setValue("mainWin/smallLine", this->SmallLineLength);
+	this->TraceEditSettings.setValue("mainWin/selectColor", this->SelectColor);
+	this->TraceEditSettings.setValue("mainWin/gapMax", this->lineWidth);
 	this->TraceEditSettings.setValue("lastOpen/Image", this->Image);
 	this->TraceEditSettings.setValue("lastOpen/Trace",this->TraceFiles);
 	this->TraceEditSettings.setValue("lastOpen/Soma", this->SomaFile);
+	this->TraceEditSettings.setValue("lastOpen/Temp", this->tempTraceFile);
 	
 	this->TraceEditSettings.sync();
 

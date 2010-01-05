@@ -312,39 +312,39 @@ void NucleusEditor::createMenus()
 	connect(classAction, SIGNAL(triggered()), this, SLOT(changeClass()));
 	editMenu->addAction(classAction);
 
-	addAction = new QAction(tr("Add Cell"), this);
-	addAction->setStatusTip(tr("Draw a Box to add a new cell"));
+	addAction = new QAction(tr("Add Object"), this);
+	addAction->setStatusTip(tr("Draw a Box to add a new object"));
 	addAction->setShortcut(tr("Ctrl+A"));
 	connect(addAction, SIGNAL(triggered()), segView, SLOT(GetBox()));
 	connect(segView, SIGNAL(boxDrawn(int,int,int,int,int)), this, SLOT(addCell(int,int,int,int,int)));
 	editMenu->addAction(addAction);
 
-	mergeAction = new QAction(tr("Merge Cells"), this);
-	mergeAction->setStatusTip(tr("Merge Cells"));
+	mergeAction = new QAction(tr("Merge Objects"), this);
+	mergeAction->setStatusTip(tr("Merge Objects"));
 	mergeAction->setShortcut(tr("Ctrl+M"));
 	connect(mergeAction, SIGNAL(triggered()), this, SLOT(mergeCells()));
 	editMenu->addAction(mergeAction);
 
-	deleteAction = new QAction(tr("Delete Cells"), this);
-	deleteAction->setStatusTip(tr("Deletes the selected cells"));
+	deleteAction = new QAction(tr("Delete Objects"), this);
+	deleteAction->setStatusTip(tr("Deletes the selected objects"));
 	deleteAction->setShortcut(tr("Ctrl+D"));
 	connect(deleteAction,SIGNAL(triggered()),this,SLOT(deleteCells()));
 	editMenu->addAction(deleteAction);
 
-	fillAction = new QAction(tr("Fill Cells"), this);
-	fillAction->setStatusTip(tr("Fill holes in the selected cells"));
+	fillAction = new QAction(tr("Fill Objects"), this);
+	fillAction->setStatusTip(tr("Fill holes in the selected objects"));
 	fillAction->setShortcut(tr("Ctrl+F"));
 	connect(fillAction,SIGNAL(triggered()),this,SLOT(fillCells()));	
 	editMenu->addAction(fillAction);
 
-	splitZAction = new QAction(tr("Split Cell At Z"), this);
-	splitZAction->setStatusTip(tr("Split selected cell along the current Z slice"));
+	splitZAction = new QAction(tr("Split Objects At Z"), this);
+	splitZAction->setStatusTip(tr("Split selected objects along the current Z slice"));
 	splitZAction->setShortcut(tr("Ctrl+T"));
 	connect(splitZAction, SIGNAL(triggered()), this, SLOT(splitCellAlongZ()));
 	editMenu->addAction(splitZAction);
 
-	splitAction = new QAction(tr("Split Cell X-Y"), this);
-	splitAction->setStatusTip(tr("Split a cell by choosing two seed points"));
+	splitAction = new QAction(tr("Split Objects X-Y"), this);
+	splitAction->setStatusTip(tr("Split objects by choosing two seed points"));
 	splitAction->setShortcut(tr("Ctrl+P"));
 	splitAction->setCheckable(true);
 	splitAction->setChecked(false);
@@ -935,7 +935,7 @@ void NucleusEditor::startTraining()
 
 	TrainingDialog *d = new TrainingDialog(table, "train", this);
 	connect(d, SIGNAL(changedTable()), this, SLOT(updateViews()));
-	d->exec();
+	d->show();
 }
 
 //**********************************************************************

@@ -271,6 +271,7 @@ int main (int argc, char *argv[])
 
 	     //case 1: get neg maximum
 	     if (curv[idx]>10000) curv[idx]=10000;
+		 if (curv[idx]< -1 ) curv[idx]= 0; // first phase: threshold the curvature value (larger->fewer)
 
 	    // ---- if (curv[idx]< highCurvatureThreshold ) curv[idx]= 0; // first phase: threshold the curvature value (larger->fewer)
 	}
@@ -311,7 +312,7 @@ int main (int argc, char *argv[])
    highCurvatureThreshold = meanCurvature;
   
    //highCurvatureThreshold = Tmean;
-   // highCurvatureThreshold=0.05;
+   //highCurvatureThreshold=10;
    //highCurvatureThreshold =5;//;
    cout << "Trimmed mean is " << Tmean << endl;
    cout << "mean = " << meanCurvature << "." << endl;
@@ -347,8 +348,8 @@ int main (int argc, char *argv[])
 	     iidx = (k+1)*slsz + j*L + i;
 	     if (curv[iidx]> curv[idx]) continue;
 
-		 if (curv[idx] != 0 && numSeeds <L*M*N/1000)  {
-		// if (curv[idx] != 0) {
+		 //if (curv[idx] != 0 && numSeeds <L*M*N/1000)  {
+		 if (curv[idx] != 0) {
 	          //fprintf(fout,"%d %d %d %f %f\n", i, j, k, curv[idx], curv[idx]);
 		    seeds[numSeeds].x =(float)i;
             seeds[numSeeds].y =(float)j;
@@ -398,7 +399,7 @@ int main (int argc, char *argv[])
 		 // and also you can use GDF method---------------------------------------------//
   }
 
-  cout << "Generating force vector!" << endl;
+  cout << "Generating force vector!\n" << endl;
 
   //-----------------------------------Detelet Gradient Vector Memeory--------------------------------//
   delete []Iu;// = new float[L*M*N];
@@ -507,7 +508,8 @@ int main (int argc, char *argv[])
 
   // find all critical points -- method 4: use points with small length of vector
   float Ngrid = 10;
-  int semiNgrid=(int)(Ngrid/5);  // original is 0
+  //int semiNgrid=(int)(Ngrid/5);  // original is 0
+  int semiNgrid=0;
   Vector3D  OutForce;
   double  divx,divy,divz,div;
   long    NumCritPoints =0;
@@ -838,7 +840,7 @@ void rk2(float x, float y, float z, int sizx, int sizy, int sizz, float steps, V
 
 
 // ----------------------------------- non optimized computing partial Derivativel ---------------------------------//
-/*
+
 void PartialDerivative1(float *Is, float *Isd, int direc, int L, int M, int N)  {
   // direc = 1: x-direction   2: y-direction   3: z-direction
   long idx;
@@ -868,11 +870,11 @@ void PartialDerivative1(float *Is, float *Isd, int direc, int L, int M, int N)  
         }
 }
 
-*/
+
 
 // ------------------------------------ Optimization for partialDerivel ----------------------------------------------//
 // ------------------------------------ ---------by Xiao Liang--------- ----------------------------------------------// 
-
+/*
 void PartialDerivative1(float *Is, float *Isd, int direc, int L, int M, int N)  {
   // direc = 1: x-direction   2: y-direction   3: z-direction
   long idx;
@@ -893,7 +895,7 @@ void PartialDerivative1(float *Is, float *Isd, int direc, int L, int M, int N)  
 		   Isd[idx] = Is[idx+slsz] - Is[idx-slsz];
         }// end for
 }
-
+*/
 
 
 //--------------------------------compute rotation of a matrix --------------------------------//

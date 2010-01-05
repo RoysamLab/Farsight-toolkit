@@ -1,57 +1,41 @@
-/*
- *  ftkPreprocessDialog.h
- *  Farsight
- *
- *  Created by RAGHAV on 12/3/09.
- *  Copyright 2009 __MyCompanyName__. All rights reserved.
- *
- */
+/*=========================================================================
+Copyright 2009 Rensselaer Polytechnic Institute
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
+http://www.apache.org/licenses/LICENSE-2.0
 
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+=========================================================================*/
 #ifndef FTKPREPROCESSDIALOG_H
 #define FTKPREPROCESSDIALOG_H
-
 
 #ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-
 //QT Includes:
-#include <QtGui/QMainWindow>
-#include <QtGui/QMenuBar>
-#include <QtGui/QMenu>
-#include <QtGui/QMessageBox>
-#include <QtGui/QFileDialog>
-#include <QtGui/QToolBar>
-#include <QtGui/QProgressBar>
 #include <QtGui/QDialog>
-#include <QtGui/QVBoxLayout>
-#include <QtGui/QRadioButton>
-#include <QtCore/QFileInfo>
-#include <QtCore/QThread>
+#include <QtGui/QGridLayout>
+#include <QtGui/QLineEdit>
+#include <QtGui/QCheckBox>
+#include <QtGui/QLabel>
+#include <QtGui/QComboBox>
+#include <QtGui/QPushButton>
 
 //Farsight Includes:
-#include "NuclearSegmentation/ftkNuclearSegmentation.h"
-#include "NuclearSegmentation/CytoplasmSegmentation/CytoplasmSegmentation.h"
-#include "NuclearSegmentation/Nuclear_Association/ftkNuclearAssociationRules.h"
-#include "ftkCommon/ftkLabelImageToFeatures.h"
-#include "ftkCommon/ftkUtils.h"
 #include "ftkImage/ftkImage.h"
-//#include "ftkGUI/PatternAnalysisWizard.h"
-#include "ftkGUI/TableWindow.h"
-#include "ftkGUI/PlotWindow.h"
-#include "ftkGUI/ImageBrowser5D.h"
-#include "ftkGUI/HistoWindow.h"
-#include "ftkGUI/LabelImageViewQT.h"
-
-//VTK includes:
-#include "vtkQtTableView.h"
 
 // Preprocess
 //#include "ftkPreprocess.h"
-#include <map>
 
+#include <map>
+#include <vector>
 
 class ftkPreprocessDialog : public QDialog
 {

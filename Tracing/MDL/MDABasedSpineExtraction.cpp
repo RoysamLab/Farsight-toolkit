@@ -38,6 +38,8 @@ limitations under the License.
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/graph_traits.hpp>
 
+
+#define InterMedial 1
 #define DATATYPEIN unsigned char
 #define MAX_NUM_EDGE 28885000  //2885000, 85000  //why 90000 causes crash?
 
@@ -90,7 +92,7 @@ int main(int argc, char *argv[])
   int *degree_nodes_tree; //record degree for final node
   int *degree_nodes_buffer;
   int *degree_nodes_initialMST;
-  int times_erosion;
+  int times_erosion = 0;
   int times_dilation;
   float densityFactor;
   double meanDensityBranch[MAXNumBranch];   // Suppose at most MAXNumBranch branches at the 2nd level branch from BB
@@ -190,6 +192,16 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
+  #if InterMedial
+   
+    FILE *tempfile1;
+    if ((tempfile1 = fopen("MST.vtk ", "w")) == NULL)  
+     {
+     printf("Cannot open MST.vtk for writing\n");
+     exit(1);
+     }
+  #endif
+
   voxelNodeIndex = new int[sizeX*sizeY*sizeZ];
   int *nodeIndicesInitialized = new int[sizeX*sizeY*sizeZ];
   volin = (DATATYPEIN*)malloc(sizeX*sizeY*sizeZ*sizeof(DATATYPEIN));
@@ -250,6 +262,17 @@ int main(int argc, char *argv[])
     fprintf(foutSpineCandidate,"ASCII\n");
     fprintf(foutSpineCandidate,"DATASET POLYDATA\n");
     fprintf(foutSpineCandidate,"POINTS %d float\n",num_nodes);
+
+	#if InterMedial
+	if(times_erosion > 1)
+	{
+	 fprintf(tempfile1,"# vtk DataFile Version 3.0\n");
+     fprintf(tempfile1,"MST of skel\n");
+     fprintf(tempfile1,"ASCII\n");
+     fprintf(tempfile1,"DATASET POLYDATA\n");
+     fprintf(tempfile1,"POINTS %d float\n",num_nodes);
+	}
+    #endif
    
   //reinitialize the file and variables used to loop through it
     fin.clear();
@@ -270,6 +293,12 @@ int main(int argc, char *argv[])
       // output the node positions to vtk file
       fprintf(fout_Spine,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z);  
       fprintf(foutSpineCandidate,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z); 
+	  #if InterMedial
+	  if(times_erosion > 1){
+		  fprintf(tempfile1,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z);
+	  }
+
+      #endif
       // Find all neighbor nodes within edgeRange
        for (kk = -edgeRange; kk <= edgeRange; kk++)
         {
@@ -387,6 +416,28 @@ int main(int argc, char *argv[])
           add_edge(source(*ei, g), target(*ei, g), msTree);
           num_edge_MST++;
   }
+  
+   // - initial MST Writer
+ 
+   Edge_iter   ei, ei_end;
+
+ #if InterMedial
+   if(times_erosion > 1)
+   {
+    line_count = 0;
+    for (tie(ei, ei_end) = edges(msTree); ei != ei_end; ++ei)
+     {
+     line_count++; // count the number of lines output in vtk file
+     }
+    fprintf(tempfile1,"LINES %d %d\n", line_count, line_count*3);
+    for (tie(ei, ei_end) = edges(msTree); ei != ei_end; ++ei)
+     {
+	   fprintf(tempfile1, "2 %ld %ld\n", source(*ei, msTree) - 1,
+             target(*ei, msTree) - 1);
+     }
+   fclose (tempfile1);
+   } // end if
+ #endif 
 
   times_dilation = times_erosion;
   edge_eroded = new int[num_nodes*2];
@@ -434,9 +485,11 @@ int main(int argc, char *argv[])
 
   //-- Label branches on Backbone of MST generated     
   Graph msTreeSpineCandidate(num_nodes+1);     // Spine Candidate graph created, is to save the possible spine
+  Graph DetectedSpine(num_nodes+1); 
   
-  int NumberNodesofSpine=0;
-  Edge_iter   ei, ei_end;
+  int NumberNodesofSpineCandidate=0;
+  int NumberNodesofRealSpine=0;
+  //Edge_iter   ei, ei_end;
   Vertex_iter vi, vend;
   graph_traits<Graph>::out_edge_iterator  outei, outedge_end, outei2, outedge_end2, outei3, outedge_end3;
 
@@ -450,8 +503,8 @@ int main(int argc, char *argv[])
 
   // PRUNING short branches on the initial MST under certain threshold (e.g. 5)
 
-  // msTree = morphGraphPrune(msTree, num_nodes, vertexPos, leaf_length);
-
+  msTree = morphGraphPrune(msTree, num_nodes, vertexPos, leaf_length);
+  
   //ONLY run this first!
 
   typedef property_map<Graph, vertex_index_t>::type IndexMap;
@@ -532,7 +585,7 @@ int main(int argc, char *argv[])
 		 for (j = 1; j <= vertsCurBr_Index2[0]; j++) 
 		 {
 			add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeSpineCandidate);   // add branch for the 1nd level
-            NumberNodesofSpine++;
+            NumberNodesofSpineCandidate++;
 		  }
 		 }
 
@@ -605,9 +658,9 @@ int main(int argc, char *argv[])
      
 		for (j = 1; j <= vertsCurBr_Index2[ind2Brch]; j++) 
 		{
-			// test: add any branches to the backbone
+			// test: add any branches to the Spine Candidate
 		add_edge(vertsCurBranch2[ind2Brch][j-1], vertsCurBranch2[ind2Brch][j], msTreeSpineCandidate);   // add branch for the 2nd level
-        NumberNodesofSpine++;
+        NumberNodesofSpineCandidate++;
 		}
 
         } // End of 2nd level branch
@@ -651,16 +704,19 @@ int main(int argc, char *argv[])
         {
         for (j = 1; j <= vertsCurBr_Index2[0]; j++)
           {
-        //  add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeSpineCandidate); 
-        //  NumberNodesofSpine++;
+          //add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeSpineCandidate); 
+		  add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], DetectedSpine); 
+          NumberNodesofRealSpine++;
           }
         if (MDL_minIndex >= 1)
           {
           for (j = 1; j <= vertsCurBr_Index2[MDL_minIndex]; j++)
             {
-           //  add_edge(vertsCurBranch2[MDL_minIndex][j-1],
-           //          vertsCurBranch2[MDL_minIndex][j],  msTreeSpineCandidate);
-           // NumberNodesofSpine++;
+             add_edge(vertsCurBranch2[MDL_minIndex][j-1],
+                     vertsCurBranch2[MDL_minIndex][j],  DetectedSpine);
+			 //add_edge(vertsCurBranch2[MDL_minIndex][j-1],
+             //        vertsCurBranch2[MDL_minIndex][j],  msTreeSpineCandidate);
+             NumberNodesofRealSpine++;
             } // end for
           }// end if
         }// end if
@@ -717,23 +773,23 @@ int main(int argc, char *argv[])
 
 
    // --------  prune the spine andidate to get the finall spine
-   msTreeSpineCandidate = morphGraphPrune(msTreeSpineCandidate, num_nodes, vertexPos, leaf_length);
+   //msTreeSpineCandidate = morphGraphPrune(msTreeSpineCandidate, num_nodes, vertexPos, leaf_length);
 
 
    // - Spine Writer
    line_count = 0;
-   for (tie(ei, ei_end) = edges(msTreeSpineCandidate); ei != ei_end; ++ei)
+   for (tie(ei, ei_end) = edges(DetectedSpine); ei != ei_end; ++ei)
      {
      line_count++; // count the number of lines output in vtk file
      }
    fprintf(fout_Spine,"LINES %d %d\n", line_count, line_count*3);
 
-   for (tie(ei, ei_end) = edges(msTreeSpineCandidate); ei != ei_end; ++ei)
+   for (tie(ei, ei_end) = edges(DetectedSpine); ei != ei_end; ++ei)
      {
      // output lines into vtk file
      //fprintf(fout_Spine, "2 %zu %zu\n", source(*ei, msTreeSpineCandidate) - 1,
-	   fprintf(fout_Spine, "2 %ld %ld\n", source(*ei, msTreeSpineCandidate) - 1,
-             target(*ei, msTreeSpineCandidate) - 1);
+	   fprintf(fout_Spine, "2 %ld %ld\n", source(*ei, DetectedSpine) - 1,
+             target(*ei, DetectedSpine) - 1);
      }
 
 

@@ -37,7 +37,7 @@ PatternAnalysisWizard::PatternAnalysisWizard(
 	//this->setPage(Page_Execute, new ExecutePage();
 
 	this->setStartId(Page_Features);
-	this->setModal(true);
+	this->setModal(false);
 
 	//this->setOption(QWizard::HaveCustomButton1);
 	//this->setButtonText(QWizard::CustomButton1,"Execute");
