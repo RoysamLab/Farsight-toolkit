@@ -46,7 +46,7 @@ const unsigned char  m_NumberOfHistogramBins = 128;
 
 DATATYPEIN *volin;
 int sizeX, sizeY, sizeZ;
-
+float *tempimage;
 double  OtsuThreshold (int sizeX,int sizeY,int sizeZ);
 
 int main(int argc, char *argv[])
@@ -97,6 +97,7 @@ int main(int argc, char *argv[])
   DATATYPEOUT blockMax;
   int timesDilate;
   int border;
+  float temp;
 
   //make sure we can write to the output file
   if((outfile=fopen(outputFileName, "wb")) == NULL)
@@ -125,7 +126,7 @@ int main(int argc, char *argv[])
   else
     {
     //use ITK to read all non-raw images
-    typedef unsigned char     PixelType;
+    typedef float     PixelType;
     const   unsigned int      Dimension = 3;
     typedef itk::Image< PixelType, Dimension >    ImageType;
     typedef itk::ImageFileReader< ImageType >  ReaderType;
@@ -142,6 +143,7 @@ int main(int argc, char *argv[])
       cerr << err << endl; 
       return EXIT_FAILURE;
       } 
+    // ---------------Linear Mapping --------------------//
 
     //--------------------otsu--------//
 	typedef itk::OtsuThresholdImageFilter<
@@ -149,7 +151,7 @@ int main(int argc, char *argv[])
     OTSUFilterType::Pointer OTSUFilter = OTSUFilterType::New();
 
     OTSUFilter->SetInput(inputImage);
-	OTSUFilter->SetNumberOfHistogramBins(64);
+	OTSUFilter->SetNumberOfHistogramBins(128);
 	OTSUFilter->Update();
     itkThreshold = OTSUFilter->GetThreshold();
     std::cout << "itk Threshold is " << itkThreshold << std::endl;
@@ -172,12 +174,16 @@ int main(int argc, char *argv[])
     itr.GoToBegin();
     long int idx = 0;
     volin = (DATATYPEIN*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(DATATYPEIN));
+    //tempimage = (float*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(float));
     while( ! itr.IsAtEnd() )
       {
+      //tempimage[idx] = itr.Get();
       volin[idx] = itr.Get();
       ++itr;
       ++idx;
       }
+	 
+
     }
 
   //allocate memory for the output image
@@ -234,7 +240,7 @@ int main(int argc, char *argv[])
 	  threshold = itkThreshold;
   else  
 	  threshold = itkThreshold /12;
-  //threshold =9;
+  //threshold =7;
   cout << "OTSU optimal threshold " << threshold << endl;
 
      for (k=0; k<(sizeZ+sizeExpand*2); k++)
