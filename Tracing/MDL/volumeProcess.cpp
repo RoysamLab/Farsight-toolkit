@@ -34,6 +34,11 @@ limitations under the License.
 #include "itkImageFileWriter.h"
 #include "itkOtsuThresholdImageFilter.h" 
 
+#include "itkCastImageFilter.h"
+#include "itkRescaleIntensityImageFilter.h"
+#include "itkShiftScaleImageFilter.h"
+#include "itkNormalizeImageFilter.h"
+
 using std::cerr;
 using std::cout;
 using std::endl;
@@ -144,7 +149,38 @@ int main(int argc, char *argv[])
       return EXIT_FAILURE;
       } 
     // ---------------Linear Mapping --------------------//
+    
+	typedef itk::CastImageFilter<
+               ImageType, ImageType >  CastFilterType;
 
+    typedef itk::RescaleIntensityImageFilter<
+               ImageType, ImageType>  RescaleFilterType;
+
+    typedef itk::ShiftScaleImageFilter<
+               ImageType, ImageType >  ShiftScaleFilterType;
+
+    //typedef itk::NormalizeImageFilter<
+    //           ImageType, ImageType >  NormalizeFilterType;
+
+    CastFilterType::Pointer       castFilter       = CastFilterType::New();
+    RescaleFilterType::Pointer    rescaleFilter    = RescaleFilterType::New();
+    ShiftScaleFilterType::Pointer shiftFilter      = ShiftScaleFilterType::New();
+    //NormalizeFilterType::Pointer  normalizeFilter = NormalizeFilterType::New();
+
+	castFilter->SetInput(reader->GetOutput());
+	//shiftFilter->SetInput(      reader->GetOutput() );
+    rescaleFilter->SetInput(    reader->GetOutput() );
+    //normalizeFilter->SetInput( reader->GetOutput() );
+	rescaleFilter->SetOutputMinimum(  0 );
+    rescaleFilter->SetOutputMaximum( 255 );
+	//shiftFilter->SetScale( 1.2 );
+    //shiftFilter->SetShift( 25 );
+    castFilter->Update();
+    //shiftFilter->Update();
+    rescaleFilter->Update();
+    //normalizeFilter->Update();
+	inputImage = rescaleFilter->GetOutput();
+	cout << "The Linear Mapping is done\n";
     //--------------------otsu--------//
 	typedef itk::OtsuThresholdImageFilter<
                ImageType, ImageType >  OTSUFilterType;
