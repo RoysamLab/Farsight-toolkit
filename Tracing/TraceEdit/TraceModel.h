@@ -56,6 +56,7 @@ public:
 	void SelectByIDs(std::set<long int> ID);
 	vtkSmartPointer<vtkTable> getDataTable();
 	ObjectSelection * GetObjectSelection();
+	double scaleFactor;
 
 
 signals:

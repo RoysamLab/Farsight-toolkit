@@ -146,7 +146,7 @@ private:
 
 	//for the widget the buttons must be used instead of actions 
 	//the get____file functions called as renderer is not initalized
-	double Spacing[3]; //0 x, 1 y, 2 z
+	double uMperVoxel; //0 x, 1 y, 2 z
 	QSettings TraceEditSettings;
 	QDockWidget * InformationDisplays;
 	QTextEdit * EditLogDisplay;
@@ -157,7 +157,7 @@ private:
 	QPushButton * BootImage;
 	QPushButton * okBoot;
 	QPushButton * Reload;
-	QDoubleSpinBox *spaceX, *spaceY, *spaceZ;
+	QDoubleSpinBox *scale;
 	QComboBox * GetAUserName, *GetLab, *GetProject;
 	QDate  Date;
 	QTime  Time;

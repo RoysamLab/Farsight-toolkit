@@ -181,15 +181,9 @@ void View3D::CreateBootLoader()
 	this->GetLab->setEditable(true);
 	this->GetLab->setInsertPolicy(QComboBox::InsertAtCurrent);
 	this->GetLab->addItems(this->TraceEditSettings.value("boot/LabName", "Roysam Lab").toStringList());
-	this->spaceX = new QDoubleSpinBox(this->bootLoadFiles);
-	this->spaceX->setValue(this->TraceEditSettings.value("boot/spaceX", 1).toDouble());
-	this->spaceX->setSingleStep(.01);
-	this->spaceY = new QDoubleSpinBox(this->bootLoadFiles);
-	this->spaceY->setValue(this->TraceEditSettings.value("boot/spaceY", 1).toDouble());
-	this->spaceY->setSingleStep(.01);
-	this->spaceZ = new QDoubleSpinBox(this->bootLoadFiles);
-	this->spaceZ->setValue(this->TraceEditSettings.value("boot/spaceZ", 1).toDouble());
-	this->spaceZ->setSingleStep(.01);
+	this->scale = new QDoubleSpinBox(this->bootLoadFiles);
+	this->scale->setValue(this->TraceEditSettings.value("boot/scale", 1).toDouble());
+	this->scale->setSingleStep(.01);
 	this->okBoot = new QPushButton("Start",this->bootLoadFiles);
 	connect(this->okBoot, SIGNAL(clicked()), this, SLOT(OkToBoot()));
 	this->Reload = new QPushButton("Reload", this->bootLoadFiles);
@@ -200,9 +194,7 @@ void View3D::CreateBootLoader()
 	LoadLayout->addRow(tr("Trace File"), this->BootTrace);
 	LoadLayout->addRow(tr("Image File"), this->BootImage);
 	LoadLayout->addRow(tr("Somas File"), this->BootSoma);
-	LoadLayout->addRow(tr("Spacing X"), this->spaceX);
-	LoadLayout->addRow(tr("Spacing Y"), this->spaceY);
-	LoadLayout->addRow(tr("Spacing Z"), this->spaceZ);
+	LoadLayout->addRow(tr("uM Per Voxel"), this->scale);
 	LoadLayout->addRow(tr("Run Trace Editor"), this->okBoot);
 	LoadLayout->addRow(tr("Reload Previous Session"), this->Reload);
 	this->bootLoadFiles->show();
@@ -265,12 +257,8 @@ void View3D::OkToBoot()
 	if(!this->TraceFiles.isEmpty() || !this->Image.isEmpty() || !this->SomaFile.isEmpty())
 	{
 		//this->show();
-		this->Spacing[0] = this->spaceX->value();
-		this->TraceEditSettings.setValue("boot/spaceX", this->Spacing[0]);
-		this->Spacing[1] = this->spaceY->value();
-		this->TraceEditSettings.setValue("boot/spaceY", this->Spacing[1]);
-		this->Spacing[2] = this->spaceZ->value();
-		this->TraceEditSettings.setValue("boot/spaceZ", this->Spacing[2]);
+		this->uMperVoxel = this->scale->value();
+		this->TraceEditSettings.setValue("boot/scale", this->uMperVoxel);
 		this->Initialize();
 		if (!this->TraceFiles.isEmpty() )
 		{	
@@ -372,6 +360,7 @@ void View3D::LoadTraces()
 		  {
 			 this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 		  }
+		this->TreeModel->scaleFactor = this->uMperVoxel;
 		this->ShowTreeData();
 		this->UpdateLineActor();
 		this->UpdateBranchActor();
@@ -1064,13 +1053,14 @@ void View3D::ShowTreeData()
 	this->FTKTable = new TableWindow();
 	this->FTKTable->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
 	this->FTKTable->setWindowTitle("Trace Object Features Table");
-	this->FTKTable->move(32, 561);
+	this->FTKTable->move(this->TraceEditSettings.value("TraceTable/pos",QPoint(32, 561)).toPoint());
+	this->FTKTable->resize(this->TraceEditSettings.value("TraceTable/size",QSize(600, 480)).toSize());
 	this->FTKTable->show();
 
 	this->TreePlot = new PlotWindow();
 	this->TreePlot->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
 	this->TreePlot->setWindowTitle("Trace Object Features Plot");
-  this->TreePlot->move(890, 59);
+	this->TreePlot->move(this->TraceEditSettings.value("TracePlot/pos",QPoint(890, 59)).toPoint());
 	this->TreePlot->show();
 }
 
@@ -1917,7 +1907,7 @@ void View3D::rayCast(char *raySource)
 
   vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper =
     vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
-  volumeMapper->SetSampleDistance(0.75);
+  volumeMapper->SetSampleDistance(0.5);
   volumeMapper->SetInput(vtkim);
 
   // The volume holds the mapper and the property and
