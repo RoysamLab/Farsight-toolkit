@@ -308,8 +308,8 @@ int main (int argc, char *argv[])
    meanCurvature /=(double)(L*M*N); 
    
    meanCurvature = (meanCurvature<0 ? 0:meanCurvature);
-   //highCurvatureThreshold =(meanCurvature>10 ? 10:meanCurvature);  //the threshold is a value between [0,10].
-   highCurvatureThreshold = meanCurvature;
+   highCurvatureThreshold =(meanCurvature>10 ? 10:meanCurvature);  //the threshold is a value between [0,10].
+   //highCurvatureThreshold = meanCurvature;
   
    //highCurvatureThreshold = Tmean;
    //highCurvatureThreshold=10;

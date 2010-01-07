@@ -840,20 +840,23 @@ double mahalanobisDist(double meanDensityBranch, double length_leaf, double mean
   */
 
   // For dataset Trach6A
- /* 
-  if (spineOne == 1)  {
+
+ // For dataset Trach6A
+	/*
+	if (spineOne == 1)  {
         x1 = meanDensityBranch - 44.54;  // minus mean_feature from matlab 
-        x2 = length_leaf - 14.43;               //if (x2>10)  x2=10; //keep long dendrite 
+        x2 = length_leaf - 14.43;             	//if (x2>10)  x2=10; //keep long dendrite 
         x3 = meanVesselBranch - 198.62;
-    mahalanobis_dist = x1*x1*0.0019+ 2*x1*x2*(0.0031)+ 2*x1*x3*(-0.0002)+ x2*x2*0.0252+ 2*x2*x3*0.0002  +x3*x3*0.0004;
-  }
-  else  {
+		mahalanobis_dist = x1*x1*0.0019+ 2*x1*x2*(0.0031)+ 2*x1*x3*(-0.0002)+ x2*x2*0.0252+ 2*x2*x3*0.0002	+x3*x3*0.0004;
+	}
+	else	{
         x1 = meanDensityBranch - 37.52;  // assume non-spine has close-to-zero distribution, but the same variance as spines 
         x2 = length_leaf - 9.42;                             
         x3 = meanVesselBranch - 178.26;
-    mahalanobis_dist = x1*x1*0.0018+ 2*x1*x2*(-0.0002)+ 2*x1*x3*(-0.0003)+ x2*x2*0.0182+ 2*x2*x3*0.0010 +x3*x3*0.0004;
-  }
-  */
+		mahalanobis_dist = x1*x1*0.0018+ 2*x1*x2*(-0.0002)+ 2*x1*x3*(-0.0003)+ x2*x2*0.0182+ 2*x2*x3*0.0010	+x3*x3*0.0004;
+	}
+	
+*/
   
 
   // For dataset MBFsp
