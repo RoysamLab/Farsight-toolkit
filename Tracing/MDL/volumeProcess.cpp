@@ -156,15 +156,15 @@ int main(int argc, char *argv[])
     typedef itk::RescaleIntensityImageFilter<
                ImageType, ImageType>  RescaleFilterType;
 
-    typedef itk::ShiftScaleImageFilter<
-               ImageType, ImageType >  ShiftScaleFilterType;
+    //typedef itk::ShiftScaleImageFilter<
+    //           ImageType, ImageType >  ShiftScaleFilterType;
 
     //typedef itk::NormalizeImageFilter<
     //           ImageType, ImageType >  NormalizeFilterType;
 
     CastFilterType::Pointer       castFilter       = CastFilterType::New();
     RescaleFilterType::Pointer    rescaleFilter    = RescaleFilterType::New();
-    ShiftScaleFilterType::Pointer shiftFilter      = ShiftScaleFilterType::New();
+    //ShiftScaleFilterType::Pointer shiftFilter      = ShiftScaleFilterType::New();
     //NormalizeFilterType::Pointer  normalizeFilter = NormalizeFilterType::New();
 
 	castFilter->SetInput(reader->GetOutput());
@@ -275,7 +275,7 @@ int main(int argc, char *argv[])
   if (itkThreshold > 0 && itkThreshold <12)
 	  threshold = itkThreshold;
   else  
-	  threshold = itkThreshold /12;
+	  threshold = itkThreshold /3.3;
   //threshold =7;
   cout << "OTSU optimal threshold " << threshold << endl;
 
