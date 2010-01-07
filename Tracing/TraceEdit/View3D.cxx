@@ -173,17 +173,36 @@ void View3D::CreateBootLoader()
 	connect(this->BootImage, SIGNAL(clicked()), this, SLOT(getImageFile()));
 	this->BootSoma = new QPushButton("Somas", this->bootLoadFiles);
 	connect(this->BootSoma, SIGNAL(clicked()), this, SLOT(getSomaFile()));
-	this->GetAUserName =  new QLineEdit(this->bootLoadFiles);
-	this->GetAUserName->setText(this->TraceEditSettings.value("boot/userName", "default user").toString());
+	this->GetAUserName =  new QComboBox(this->bootLoadFiles);
+	this->GetAUserName->setEditable(true);
+	this->GetAUserName->setInsertPolicy(QComboBox::InsertAtCurrent);
+	this->GetAUserName->addItems(this->TraceEditSettings.value("boot/userName", "default user").toStringList());
+	this->GetLab = new QComboBox(this->bootLoadFiles);
+	this->GetLab->setEditable(true);
+	this->GetLab->setInsertPolicy(QComboBox::InsertAtCurrent);
+	this->GetLab->addItems(this->TraceEditSettings.value("boot/LabName", "Roysam Lab").toStringList());
+	this->spaceX = new QDoubleSpinBox(this->bootLoadFiles);
+	this->spaceX->setValue(this->TraceEditSettings.value("boot/spaceX", 1).toDouble());
+	this->spaceX->setSingleStep(.01);
+	this->spaceY = new QDoubleSpinBox(this->bootLoadFiles);
+	this->spaceY->setValue(this->TraceEditSettings.value("boot/spaceY", 1).toDouble());
+	this->spaceY->setSingleStep(.01);
+	this->spaceZ = new QDoubleSpinBox(this->bootLoadFiles);
+	this->spaceZ->setValue(this->TraceEditSettings.value("boot/spaceZ", 1).toDouble());
+	this->spaceZ->setSingleStep(.01);
 	this->okBoot = new QPushButton("Start",this->bootLoadFiles);
 	connect(this->okBoot, SIGNAL(clicked()), this, SLOT(OkToBoot()));
 	this->Reload = new QPushButton("Reload", this->bootLoadFiles);
 	connect(this->Reload, SIGNAL(clicked()), this, SLOT(ReloadState()));
 	QFormLayout *LoadLayout = new QFormLayout(this->bootLoadFiles);
+	LoadLayout->addRow(tr("User Name "), this->GetAUserName);
+	LoadLayout->addRow(tr("Lab Name "), this->GetLab);
 	LoadLayout->addRow(tr("Trace File"), this->BootTrace);
 	LoadLayout->addRow(tr("Image File"), this->BootImage);
 	LoadLayout->addRow(tr("Somas File"), this->BootSoma);
-	LoadLayout->addRow(tr("User Name "), this->GetAUserName);
+	LoadLayout->addRow(tr("Spacing X"), this->spaceX);
+	LoadLayout->addRow(tr("Spacing Y"), this->spaceY);
+	LoadLayout->addRow(tr("Spacing Z"), this->spaceZ);
 	LoadLayout->addRow(tr("Run Trace Editor"), this->okBoot);
 	LoadLayout->addRow(tr("Reload Previous Session"), this->Reload);
 	this->bootLoadFiles->show();
@@ -245,8 +264,13 @@ void View3D::OkToBoot()
 {
 	if(!this->TraceFiles.isEmpty() || !this->Image.isEmpty() || !this->SomaFile.isEmpty())
 	{
-		this->show();
-		this->UserName = this->GetAUserName->text();
+		//this->show();
+		this->Spacing[0] = this->spaceX->value();
+		this->TraceEditSettings.setValue("boot/spaceX", this->Spacing[0]);
+		this->Spacing[1] = this->spaceY->value();
+		this->TraceEditSettings.setValue("boot/spaceY", this->Spacing[1]);
+		this->Spacing[2] = this->spaceZ->value();
+		this->TraceEditSettings.setValue("boot/spaceZ", this->Spacing[2]);
 		this->Initialize();
 		if (!this->TraceFiles.isEmpty() )
 		{	
@@ -259,8 +283,21 @@ void View3D::OkToBoot()
 		}
 		if (!this->SomaFile.isEmpty())
 		{
+			this->EditLogDisplay->append("Soma file: \t" + this->SomaFile);
 		}
+		this->UserName = this->GetAUserName->currentText();
+		QStringList allUsers = this->TraceEditSettings.value("boot/userName").toStringList();
+		allUsers.removeAll(this->UserName);
+		allUsers.prepend(this->UserName);
+		this->TraceEditSettings.setValue("boot/userName", allUsers);
 		this->EditLogDisplay->append("User: \t" + this->UserName);
+
+		this->LabName = this->GetLab->currentText();
+		QStringList allLabs = this->TraceEditSettings.value("boot/LabName").toStringList();
+		allLabs.removeAll(this->LabName);
+		allLabs.prepend(this->LabName);
+		this->TraceEditSettings.setValue("boot/LabName", allLabs);
+		this->EditLogDisplay->append("Lab: \t" + this->LabName);
 		this->TraceEditSettings.setValue("boot/pos", this->bootLoadFiles->pos());
 		this->bootLoadFiles->close();
 		this->show();
@@ -411,7 +448,7 @@ void View3D::Initialize()
 	this->tobj->gapMax = this->TraceEditSettings.value("mainWin/gapMax", 10).toInt();
 	this->SmallLineLength = this->TraceEditSettings.value("mainWin/smallLine", 10).toInt();
 	this->SelectColor =this->TraceEditSettings.value("mainWin/selectColor", .1).toDouble();
-	this->lineWidth= this->TraceEditSettings.value("mainWin/gapMax", 2).toDouble();
+	this->lineWidth= this->TraceEditSettings.value("mainWin/LineWidth", 2).toDouble();
 	this->GapsPlotView = NULL;
 	this->TreePlot = NULL;
 	this->FTKTable = NULL;
@@ -1896,15 +1933,14 @@ void View3D::rayCast(char *raySource)
 }
 
 void View3D::closeEvent(QCloseEvent *event)
-{
-	this->TraceEditSettings.setValue("boot/userName", this->UserName);
+{	
 	this->TraceEditSettings.setValue("mainWin/size", this->size());
 	this->TraceEditSettings.setValue("mainWin/pos",	this->pos());
 	this->TraceEditSettings.setValue("mainWin/gapTol", this->tobj->gapTol ) ;
 	this->TraceEditSettings.setValue("mainWin/gapMax", this->tobj->gapMax);
 	this->TraceEditSettings.setValue("mainWin/smallLine", this->SmallLineLength);
 	this->TraceEditSettings.setValue("mainWin/selectColor", this->SelectColor);
-	this->TraceEditSettings.setValue("mainWin/gapMax", this->lineWidth);
+	this->TraceEditSettings.setValue("mainWin/LineWidth", this->lineWidth);
 	this->TraceEditSettings.setValue("lastOpen/Image", this->Image);
 	this->TraceEditSettings.setValue("lastOpen/Trace",this->TraceFiles);
 	this->TraceEditSettings.setValue("lastOpen/Soma", this->SomaFile);

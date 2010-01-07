@@ -146,17 +146,19 @@ private:
 
 	//for the widget the buttons must be used instead of actions 
 	//the get____file functions called as renderer is not initalized
+	double Spacing[3]; //0 x, 1 y, 2 z
 	QSettings TraceEditSettings;
 	QDockWidget * InformationDisplays;
 	QTextEdit * EditLogDisplay;
-	QString TraceFiles, Image, SomaFile, tempTraceFile, UserName;
+	QString TraceFiles, Image, SomaFile, tempTraceFile, UserName, LabName, ProjectName;
 	QWidget * bootLoadFiles;
 	QPushButton * BootTrace;
 	QPushButton * BootSoma;
 	QPushButton * BootImage;
 	QPushButton * okBoot;
 	QPushButton * Reload;
-	QLineEdit * GetAUserName;
+	QDoubleSpinBox *spaceX, *spaceY, *spaceZ;
+	QComboBox * GetAUserName, *GetLab, *GetProject;
 	QDate  Date;
 	QTime  Time;
 
