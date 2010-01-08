@@ -27,6 +27,8 @@ limitations under the License.
 #pragma warning(disable : 4996)
 #endif
 
+
+# define FAST_RVERSION  1
 #include <iostream>
 
 #include "itkImage.h"
@@ -38,6 +40,8 @@ limitations under the License.
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkShiftScaleImageFilter.h"
 #include "itkNormalizeImageFilter.h"
+
+#include "itkCurvatureAnisotropicDiffusionImageFilter.h"
 
 using std::cerr;
 using std::cout;
@@ -102,7 +106,7 @@ int main(int argc, char *argv[])
   DATATYPEOUT blockMax;
   int timesDilate;
   int border;
-  float temp;
+  
 
   //make sure we can write to the output file
   if((outfile=fopen(outputFileName, "wb")) == NULL)
@@ -181,7 +185,31 @@ int main(int argc, char *argv[])
     //normalizeFilter->Update();
 	inputImage = rescaleFilter->GetOutput();
 	cout << "The Linear Mapping is done\n";
-    //--------------------otsu--------//
+
+	//---------------------------------Curvature based diffusion --------------------//
+	 // CurvatureAnisotropicDiffusionImageFilter
+    # if FAST_RVERSION 
+	{
+     typedef itk::CurvatureAnisotropicDiffusionImageFilter<
+               ImageType, ImageType >  MCD_FilterType;
+
+     MCD_FilterType::Pointer MCDFilter = MCD_FilterType::New();
+    
+     //Initialnization,  using the paper's optimal parameters
+     const unsigned int numberOfIterations = 5;
+     const double       timeStep = 0.0425;
+     const double       conductance = 3;
+     MCDFilter->SetNumberOfIterations(numberOfIterations);
+     MCDFilter->SetTimeStep( timeStep );
+     MCDFilter->SetConductanceParameter( conductance );
+     MCDFilter->SetInput(inputImage);
+     MCDFilter->Update();
+     inputImage=MCDFilter->GetOutput(); 
+     cout << "The Curvature Diffusion is done\n";
+	}
+	#endif
+   //---------------------------------------------------------------------------------//
+    //--------------------otsu--------------------------------------------------------//
 	typedef itk::OtsuThresholdImageFilter<
                ImageType, ImageType >  OTSUFilterType;
     OTSUFilterType::Pointer OTSUFilter = OTSUFilterType::New();
@@ -192,7 +220,7 @@ int main(int argc, char *argv[])
     itkThreshold = OTSUFilter->GetThreshold();
     std::cout << "itk Threshold is " << itkThreshold << std::endl;
 	
-    //----------------------------------//
+    //------------------------------------------------------------------------------//
 
     ImageType::RegionType region = inputImage->GetBufferedRegion();
     ImageType::SizeType  size = region.GetSize();
@@ -213,7 +241,6 @@ int main(int argc, char *argv[])
     //tempimage = (float*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(float));
     while( ! itr.IsAtEnd() )
       {
-      //tempimage[idx] = itr.Get();
       volin[idx] = itr.Get();
       ++itr;
       ++idx;
@@ -548,7 +575,7 @@ double  OtsuThreshold (int sizeX,int sizeY,int sizeZ)
 
     } 
 
-    m_Threshold = double( MinValue + ( maxBinNumber + 1 ) / binMultiplier );
+  m_Threshold = double( MinValue + ( maxBinNumber + 1 ) / binMultiplier );
   cout << "m_threshold = " << m_Threshold << endl;
   return m_Threshold; 
 }
