@@ -21,6 +21,7 @@ limitations under the License.
 #include <list>
 #include <vector>
 #include <set>
+#include <sstream>
 #include "vtkSmartPointer.h"
 
 class TraceBit;
@@ -78,7 +79,7 @@ public:
                  double &maxdist, double &angle);
 	bool Orient(TraceLine * Trunk);
 	bool Orient(TraceBit bit);
-	std::vector<double> stats();	
+	std::string stats();	
 
 private:
 

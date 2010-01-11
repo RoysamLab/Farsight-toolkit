@@ -28,6 +28,7 @@ class TraceGap
 public:
   TraceGap();
   ~TraceGap();
+  std::string stats();
 	int compID;
 	TraceLine *Trace1;
 	TraceLine *Trace2;

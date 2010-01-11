@@ -398,19 +398,25 @@ bool TraceLine::Orient(TraceBit bit)
 	return false;		//needs to be flipped
 }
 ///////////////////////////////////////////////////////////////////////////////
-std::vector<double> TraceLine::stats()
+std::string TraceLine::stats()
 {
-  std::vector<double> thisStats;/*
-  thisStats.push_back(this->m_id);
-  thisStats.push_back(this->m_type);
-  thisStats.push_back(this->GetSize());*/
-  //thisStats.push_back(this->m_parent->GetId());
-  thisStats.push_back(this->m_trace_bits.front().x);
-  thisStats.push_back(this->m_trace_bits.front().y);
-  thisStats.push_back(this->m_trace_bits.front().z);
-  thisStats.push_back(this->m_trace_bits.back().x);
-  thisStats.push_back(this->m_trace_bits.back().y);
-  thisStats.push_back(this->m_trace_bits.back().z);
-  return thisStats;
+	std::stringstream thisStats;
+	thisStats << "ID\t";
+	thisStats << this->GetId();
+	thisStats << "\tType\t";
+	thisStats << (int)this->GetType();
+	thisStats << "\tSize\t" ;
+	thisStats << this->GetSize();
+	thisStats << "\tLength\t";
+	thisStats << this->GetLength();
+	thisStats << "\tEuclidian Length\t" ;
+	thisStats << this->GetEuclidianLength();
+	thisStats << "\tRadii\t" ;
+	thisStats << this->GetRadii();
+	thisStats << "\tFragmentation Smoothness\t";
+	thisStats << this->GetFragmentationSmoothness() ;
+	thisStats << "\tParent ID\t";
+	thisStats << this->GetParentID();
+	return thisStats.str();
 }
 

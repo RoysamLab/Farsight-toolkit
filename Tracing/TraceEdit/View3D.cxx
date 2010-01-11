@@ -1096,7 +1096,7 @@ void View3D::DeleteTraces()
 		this->EditLogDisplay->append(tr("Deleted\t") + QString::number(traceList.size()) + tr("\ttraces"));
 		for (i = 0; i < traceList.size(); i++)
 		{
-			this->EditLogDisplay->append("\tTrace\t"+ QString::number(traceList[i]->GetId()));
+			this->EditLogDisplay->append( QString(traceList[i]->stats().c_str()));
 			//this->poly_line_data->Modified();
 			this->DeleteTrace(traceList[i]); 
 		}
@@ -1297,9 +1297,9 @@ void View3D::MergeTraces()
       if (this->tobj->Gaps.size() ==1)
         {   
         tobj->mergeTraces(this->tobj->Gaps[0]->endPT1,this->tobj->Gaps[0]->endPT2);
-		this->EditLogDisplay->append("Merged Trace:\t"  
+		this->EditLogDisplay->append("Merged Trace:\t"  + QString(this->tobj->Gaps[0]->stats().c_str()));/*
 			+ QString::number(this->tobj->Gaps[0]->Trace1->GetId()) + "\tto\t" 
-			+ QString::number(this->tobj->Gaps[0]->Trace2->GetId()));
+			+ QString::number(this->tobj->Gaps[0]->Trace2->GetId()));*/
 		this->numMerged++;
 		this->ClearSelection();
         MergeInfo.setText(this->myText + "\nOne Trace merged");
@@ -1404,6 +1404,7 @@ void View3D::MergeSelectedTraces()
       {
 		  aveCost += this->tobj->Gaps[i]->cost;
         this->tobj->mergeTraces(this->tobj->Gaps[i]->endPT1,this->tobj->Gaps[i]->endPT2);
+		this->dtext += this->tobj->Gaps[i]->stats().c_str();
       }
     } 
     MergeInfo.setText("merged " + QString::number(GapIDs.size()) + " traces.");  
@@ -1422,9 +1423,9 @@ void View3D::MergeSelectedTraces()
     {
 	  if  (this->tobj->Gaps[i]->cost <=5)
       {
-        this->dtext+= "\nTrace " + QString::number(this->tobj->Gaps[i]->Trace1->GetId());
+		  this->dtext+= this->tobj->Gaps[i]->stats().c_str();/*"\nTrace " + QString::number(this->tobj->Gaps[i]->Trace1->GetId());
         this->dtext+= " and "+ QString::number(this->tobj->Gaps[i]->Trace2->GetId() );
-		this->dtext+="\tcost of:" + QString::number(this->tobj->Gaps[i]->cost); 
+		this->dtext+="\tcost of:" + QString::number(this->tobj->Gaps[i]->cost); */
         this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .125);
         this->HighlightSelected(this->tobj->Gaps[i]->Trace2, .125);
         this->candidateGaps.push_back( this->tobj->Gaps[i]);
