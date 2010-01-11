@@ -680,7 +680,7 @@ void LabelImageViewQT::paintEvent(QPaintEvent * event)
 	imageLabel->adjustSize();
 	if(currentScale != 1)
 	{
-		QSize newSize = displayImage.size()*abs(currentScale);
+		QSize newSize = displayImage.size()*currentScale;
 		imageLabel->resize(newSize);
 	}
 
