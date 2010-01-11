@@ -1052,40 +1052,65 @@ std::vector<int> NuclearSegmentation::GroupMerge(std::vector<int> ids, vtkSmartP
 
 	while(ids.size() != 0)
 	{
-		std::vector<int> grp;
 		//Get neighbors of first object in vector:
 		int currentID = ids.at(0);
 		std::vector<int> nbs = GetNeighbors(currentID);
-		//iterate though ids to find out which ones are neighbors and add to group.
-		for(int i=0; i<(int)ids.size(); ++i)
+
+		bool added = false;
+		//iterate through groups, to see if I belong to a different group (if one of my neighbors is already in a group):
+		for(int n=0; n<(int)nbs.size(); ++n)
 		{
-			for(int j=0; j<(int)nbs.size(); ++j)
+			int currentN = nbs.at(n);
+			for(int i=0; i<(int)groups.size(); ++i)
 			{
-				if(ids.at(i) == nbs.at(j))
+				for(int j=0; j<(int)groups.at(i).size(); ++j)
 				{
-					grp.push_back( ids.at(i) );
+					if(groups.at(i).at(j) == currentN) //Found match so add current ID to group
+					{
+						groups.at(i).push_back(currentID);
+						added = true;
+						break;
+					}
 				}
 			}
 		}
 
-		//Remove everything in the group from the input ids vector:
-		for(int g=0; g<(int)grp.size(); ++g)
+		if(!added)
 		{
+			std::vector<int> grp;
+
+			//iterate though ids to find out which ones are neighbors and add to group.
 			for(int i=0; i<(int)ids.size(); ++i)
 			{
-				if(grp.at(g) == ids.at(i))
+				for(int j=0; j<(int)nbs.size(); ++j)
 				{
-					ids.erase( ids.begin()+i );
-					break;
+					if(ids.at(i) == nbs.at(j))
+					{
+						grp.push_back( ids.at(i) );
+					}
 				}
 			}
-		}
 
-		//If I found neighbors and myself (currentID) to the group:
-		if(grp.size() > 0) 
-		{
-			grp.push_back( currentID );
-			groups.push_back( grp );
+			//Remove everything in the group from the input ids vector:
+			for(int g=0; g<(int)grp.size(); ++g)
+			{
+				for(int i=0; i<(int)ids.size(); ++i)
+				{
+					if(grp.at(g) == ids.at(i))
+					{
+						ids.erase( ids.begin()+i );
+						break;
+					}
+				}
+			}
+
+			//If I found neighbors add myself (currentID) to the group:
+			if(grp.size() > 0) 
+			{
+				grp.push_back( currentID );
+				groups.push_back( grp );
+			}
+
 		}
 
 		//erase currentID from the input ids:
