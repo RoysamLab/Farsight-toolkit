@@ -224,41 +224,49 @@ bool ProjectProcessor::SegmentCytoplasm(int cytChannel, int memChannel)
 	return true;
 }
 
-bool ProjectProcessor::ComputeAssociations(void)
-{
-	if(definition->associationRules.size() == 0)
-	{
+bool ProjectProcessor::ComputeAssociations(void){
+
+	if(definition->associationRules.size() == 0){
 		inputTypeNeeded = 3;
 		return false;
 	}
 
-	for(int i=0; i<(int)definition->associationRules.size(); ++i)
-	{
+	for(std::vector<ftk::AssociationRule>::iterator ascit=definition->associationRules.begin(); ascit!=definition->associationRules.end(); ++ascit ){
 
-		int channel_number=-1;
-		if( strcmp( definition->associationRules.at(i).name.c_str(), "NUCLEAR" ) == 0 ){
+		int seg_channel_number=-1;
+		int inp_channel_number=-1;
+		if( strcmp( ascit->GetSegmentationFileName().c_str(), "NUCLEAR" ) == 0 ){
 			if( !outputImage->GetImageInfo()->numChannels ){
 				std::cout<<"Unable to access labeled nuclear image while computing associative features\n";
 				return false;
 			}
-			channel_number = 0;
+			seg_channel_number = 0;
 			
-		} else if( strcmp( definition->associationRules.at(i).name.c_str(), "CYTOPLASM" ) == 0 ){
+		} else if( strcmp( ascit->GetSegmentationFileName().c_str(), "CYTOPLASM" ) == 0 ){
 			if( outputImage->GetImageInfo()->numChannels < 2 ){
 				std::cout<<"Unable to access labeled cytoplasmic image while computing associative features\n";
 				return false;
 			}
-			channel_number = 1;
+			seg_channel_number = 1;
 		} else{
 			std::cout<<"Please check region type for associative feature computation\n";
 			return false;
 		}
 
+		for( int j=0; j<(int)inputImage->GetImageInfo()->channelNames.size(); ++j )
+			if( strcmp( inputImage->GetImageInfo()->channelNames.at(j).c_str(), ascit->GetTargetFileNmae().c_str() ) == 0 ){
+				inp_channel_number=j;
+				break;
+			}
+
+		if( inp_channel_number == -1 ){
+			std::cout<<"Unable to access grayscale image while computing associative feature: "<<ascit->GetRuleName()<<std::endl;
+			return false;
+		}
+
 		ftk::AssociativeFeatureCalculator * assocCal = new ftk::AssociativeFeatureCalculator();
-		assocCal->SetInputFile( definition->associationRules.at(i).value );
-		assocCal->SetInputImage( outputImage, channel_number );
-		if(table)
-		{
+		assocCal->SetInputs(inputImage, inp_channel_number, outputImage, seg_channel_number, &(*ascit) );
+		if(table){
 			assocCal->Append(table);
 		}
 		delete assocCal;

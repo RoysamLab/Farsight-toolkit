@@ -1444,9 +1444,9 @@ void NucleusEditor::CreateDefaultAssociationRules()
 	objAssoc->WriteRulesToXML(inf2.absoluteFilePath().toStdString());
 	//4. put the output xml in the project definition:
 	//typedef struct { std::string name; std::string value; } StringParameter;
-	ftk::ProjectDefinition::StringParameter tpm;
-	tpm.value=inf2.absoluteFilePath().toStdString();
-	projectDefinition.associationRules.push_back( tpm );
+	//ftk::ProjectDefinition::StringParameter tpm;	//ISAAC: THIS IS A HACK TO GET THE HISTOPATHOGLOGY PROJECT WORKING WILL FIX SOON SORRY -KEDAR
+	//tpm.value=inf2.absoluteFilePath().toStdString();	//ISAAC: THIS IS A HACK TO GET THE HISTOPATHOGLOGY PROJECT WORKING WILL FIX SOON SORRY -KEDAR
+	//projectDefinition.associationRules.push_back( tpm );	//ISAAC: THIS IS A HACK TO GET THE HISTOPATHOGLOGY PROJECT WORKING WILL FIX SOON SORRY -KEDAR
 
 	//Now create other rules:
 

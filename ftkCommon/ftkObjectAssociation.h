@@ -63,8 +63,10 @@ public:
 	void SetNumberOfThresholds(int numthr){num_threshs = numthr;};
 	void SetNumberIncludedInForeground(int numfg){num_in_fg = numfg;};
 	void SetAssocType(AssociationType tp ){assocType = tp;};
+	void SetGrayImage(UShortImageType3D::Pointer inpgrayImPtr){grayImPtr=inpgrayImPtr;grayIm_set=true;};
+	void SetSegImage(UShortImageType3D::Pointer inpsegImPtr){segImPtr=inpsegImPtr;segIm_set=true;};
 	std::string GetRuleName() { return ruleName;};
-	std::string GetSegmentationFileNmae(){ return segFileName;};
+	std::string GetSegmentationFileName(){ return segFileName;};
 	std::string GetTargetFileNmae(){ return targFileName; };
 	int GetOutDistance(){ return outsideDistance; };
 	int GetInDistance(){ return insideDistance; };
@@ -78,11 +80,15 @@ private:
 	std::string ruleName;
 	std::string segFileName;
 	std::string targFileName;
+	UShortImageType3D::Pointer grayImPtr;
+	UShortImageType3D::Pointer segImPtr;
 	int outsideDistance;
 	int insideDistance;
 	bool useWholeObject;
 	bool subBkground;
 	bool use_multiple_thresh;
+	bool grayIm_set;
+	bool segIm_set;
 	int num_threshs;
 	int num_in_fg;
 	AssociationType assocType;
@@ -138,7 +144,6 @@ protected:
 private:
 	std::string segImageName;
 	int numOfAssocRules;
-	UShortImageType3D::Pointer lab_im;
 			
 }; // end ObjectAssociation
 

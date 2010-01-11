@@ -40,6 +40,8 @@ AssociationRule::AssociationRule(std::string name)
 	useWholeObject = false;
 	subBkground = false;
 	use_multiple_thresh = false;
+	grayIm_set=false;
+	segIm_set=false;
 	num_threshs = 1;
 	num_in_fg = 1;
 	assocType = ASSOC_AVERAGE;
@@ -52,19 +54,9 @@ ObjectAssociation::ObjectAssociation(std::string AssocFName, int numOfRules)
 	numOfAssocRules = numOfRules;		
 	assocMeasurementsList=NULL;
 	numOfLabels=0;
-	lab_im=NULL;
 	//added by Yousef on 10-18-2009
 	//invalidObjects = NULL;
 }
-ObjectAssociation::ObjectAssociation(std::string AssocFName, int numOfRules,  UShortImageType3D::Pointer Labeled_Image_Pointer)
-{
-	segImageName = AssocFName;
-	numOfAssocRules = numOfRules;		
-	assocMeasurementsList=NULL;
-	numOfLabels=0;
-	lab_im=Labeled_Image_Pointer;
-}
-
 
 /* Add association rules to the list of rules */
 void ObjectAssociation::AddAssociation(std::string ruleName,std::string targFileName, int outsideDistance, int insideDistance,	bool useAllObject, bool subBkground, bool use_multiple_thresh, int num_threshs, int num_in_fg, int assocType)

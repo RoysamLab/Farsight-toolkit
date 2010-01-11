@@ -71,6 +71,7 @@ int runGrAnisDiff(unsigned char* imgIn, int r, int c, int z, int iter, int timeS
 	}
 	catch( itk::ExceptionObject & err ) 
     { 
+		std::cerr << err << std::endl;
 		return 0;
 	}
 

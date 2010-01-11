@@ -31,6 +31,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+
 //just for testing
 #include "itkImageFileWriter.h"
 
@@ -41,14 +42,63 @@ AssociativeFeatureCalculator::AssociativeFeatureCalculator()
 {
 	inFilename = "";
 	fPrefix = "";
-	lab_im_set = false;
+	inputs_set = false;
 }
 
 void AssociativeFeatureCalculator::SetInputFile(std::string filename)
 {
 	inFilename = filename;
 }
-	
+
+void AssociativeFeatureCalculator::SetInputs(ftk::Image::Pointer inp_labeled_image, int inp_channel_number, ftk::Image::Pointer seg_labeled_image, int seg_channel_number, ftk::AssociationRule *associationrule){
+	input_association = associationrule;
+	if( seg_channel_number == -1 || inp_channel_number == -1 )
+		return;
+
+	typedef itk::ExtractImageFilter< LabImageType, LabImageType > LabelExtractType;
+	typedef itk::ExtractImageFilter< TargImageType, TargImageType > InputExtractType;
+	typedef itk::CastImageFilter< LabImageType, LabImageType > LabelCastType;
+	typedef itk::CastImageFilter< TargImageType, TargImageType > InputCastType;
+
+	LabImageType::Pointer lab_image = seg_labeled_image->GetItkPtr<unsigned short>(0,seg_channel_number);
+	TargImageType::Pointer inp_image = inp_labeled_image->GetItkPtr<unsigned short>(0,inp_channel_number);
+
+	int z = seg_labeled_image->GetImageInfo()->numZSlices;
+	int z1 = inp_labeled_image->GetImageInfo()->numZSlices;
+
+	LabelExtractType::Pointer leFilter = LabelExtractType::New();
+	InputExtractType::Pointer leFilter1 = InputExtractType::New();
+	LabImageType::RegionType lRegion = lab_image->GetLargestPossibleRegion();
+	TargImageType::RegionType lRegion1 = inp_image->GetLargestPossibleRegion();
+	lRegion.SetSize(2,z);
+	lRegion1.SetSize(2,z1);
+	leFilter->SetExtractionRegion(lRegion);
+	leFilter1->SetExtractionRegion(lRegion1);
+	leFilter->SetInput( lab_image );
+	leFilter1->SetInput( inp_image );
+
+	LabelCastType::Pointer lFilter = LabelCastType::New();
+	InputCastType::Pointer lFilter1 = InputCastType::New();
+	lFilter->SetInput( leFilter->GetOutput() );
+	lFilter1->SetInput( leFilter1->GetOutput() );
+	try
+	{
+		lFilter->Update();
+		lFilter1->Update();
+	}
+	catch( itk::ExceptionObject & excep )
+	{
+		std::cerr << "Exception caught !" << std::endl;
+		std::cerr << excep << std::endl;
+		return;
+	}
+
+	lab_im = lFilter->GetOutput();
+	inp_im = lFilter1->GetOutput();
+
+	inputs_set = true;
+}
+
 void AssociativeFeatureCalculator::SetFeaturePrefix(std::string prefix)
 {
 	fPrefix = prefix;
@@ -58,8 +108,15 @@ void AssociativeFeatureCalculator::SetFeaturePrefix(std::string prefix)
 vtkSmartPointer<vtkTable> AssociativeFeatureCalculator::Compute(void)
 {
 	//Compute features:
-	ftk::NuclearAssociationRules *assoc = new ftk::NuclearAssociationRules("",0);
-	assoc->ReadRulesFromXML(inFilename);
+	ftk::NuclearAssociationRules *assoc;
+	if( inputs_set ){
+		assoc = new ftk::NuclearAssociationRules("",0,lab_im, inp_im);
+		assoc->AddAssociation( input_association->GetRuleName(), "", input_association->GetOutDistance(), input_association->GetInDistance(),	input_association->IsUseWholeObject(), input_association->IsUseBackgroundSubtraction(), input_association->IsUseMultiLevelThresholding(), input_association->GetNumberOfThresholds(), input_association->GetNumberIncludedInForeground(), input_association->GetAssocType());
+	}
+	else{
+		assoc = new ftk::NuclearAssociationRules("",0);
+		assoc->ReadRulesFromXML(inFilename);
+	}
 	assoc->PrintSelf();
 	assoc->Compute();
 
@@ -98,8 +155,15 @@ vtkSmartPointer<vtkTable> AssociativeFeatureCalculator::Compute(void)
 void AssociativeFeatureCalculator::Update(vtkSmartPointer<vtkTable> table)
 {
 	//Compute features:
-	ftk::NuclearAssociationRules *assoc = new ftk::NuclearAssociationRules("",0);
-	assoc->ReadRulesFromXML(inFilename);
+	ftk::NuclearAssociationRules *assoc;
+	if( inputs_set ){
+		assoc = new ftk::NuclearAssociationRules("",0,lab_im, inp_im);
+		assoc->AddAssociation( input_association->GetRuleName(), "", input_association->GetOutDistance(), input_association->GetInDistance(),	input_association->IsUseWholeObject(), input_association->IsUseBackgroundSubtraction(), input_association->IsUseMultiLevelThresholding(), input_association->GetNumberOfThresholds(), input_association->GetNumberIncludedInForeground(), input_association->GetAssocType());
+	}
+	else{
+		assoc = new ftk::NuclearAssociationRules("",0);
+		assoc->ReadRulesFromXML(inFilename);
+	}
 	assoc->PrintSelf();
 	assoc->Compute();
 
@@ -130,50 +194,19 @@ void AssociativeFeatureCalculator::Update(vtkSmartPointer<vtkTable> table)
 	}
 }
 
-void AssociativeFeatureCalculator::SetInputImage(ftk::Image::Pointer input_labeled_image, int channel_number){
-
-	typedef itk::Image< unsigned short, 3 > UShortImageType3D;
-	typedef itk::ExtractImageFilter< UShortImageType3D, UShortImageType3D > LabelExtractType;
-	typedef itk::CastImageFilter< UShortImageType3D, UShortImageType3D > LabelCastType;
-
-	UShortImageType3D::Pointer lab_image = input_labeled_image->GetItkPtr<unsigned short>(0,channel_number);
-
-	int z = input_labeled_image->GetImageInfo()->numZSlices;
-
-	LabelExtractType::Pointer leFilter = LabelExtractType::New();
-	UShortImageType3D::RegionType lRegion = lab_image->GetLargestPossibleRegion();
-	lRegion.SetSize(2,z);
-	leFilter->SetExtractionRegion(lRegion);
-	leFilter->SetInput( lab_image );
-
-	LabelCastType::Pointer lFilter = LabelCastType::New();
-	lFilter->SetInput( leFilter->GetOutput() );
-	try
-	{
-		lFilter->Update();
-	}
-	catch( itk::ExceptionObject & excep )
-	{
-		std::cerr << "Exception caught !" << std::endl;
-		std::cerr << excep << std::endl;
-		return;
-	}
-
-	lab_im = lFilter->GetOutput();
-
-	lab_im_set=true;
-}
-
 //Update the features in this table whose names match (sets doFeat)
 void AssociativeFeatureCalculator::Append(vtkSmartPointer<vtkTable> table)
 {
 	//Compute features:
 	ftk::NuclearAssociationRules *assoc;
-	if( IsLabeledImageSet() == true )
-		assoc = new ftk::NuclearAssociationRules("",0,lab_im);
-	else
+	if( inputs_set ){
+		assoc = new ftk::NuclearAssociationRules("",0,lab_im, inp_im);
+		assoc->AddAssociation( input_association->GetRuleName(), "", input_association->GetOutDistance(), input_association->GetInDistance(),	input_association->IsUseWholeObject(), input_association->IsUseBackgroundSubtraction(), input_association->IsUseMultiLevelThresholding(), input_association->GetNumberOfThresholds(), input_association->GetNumberIncludedInForeground(), input_association->GetAssocType());
+	}
+	else{
 		assoc = new ftk::NuclearAssociationRules("",0);
-	assoc->ReadRulesFromXML(inFilename);
+		assoc->ReadRulesFromXML(inFilename);
+	}
 	assoc->PrintSelf();
 	assoc->Compute();
 
@@ -228,16 +261,17 @@ NuclearAssociationRules::NuclearAssociationRules(std::string AssocFName, int num
 	x_Size = y_Size = z_Size = 0;
 	imDim=3;	
 	objectType = "Nucleus";
-	lab_im_set = false;
+	inputs_set = false;
 }
 
-NuclearAssociationRules::NuclearAssociationRules(std::string AssocFName, int numOfRules,LabImageType::Pointer lab_im):ObjectAssociation(AssocFName, numOfRules, lab_im){
-	labImage= lab_im;
+NuclearAssociationRules::NuclearAssociationRules(std::string AssocFName, int numOfRules, LabImageType::Pointer lImage, TargImageType::Pointer iImage):ObjectAssociation(AssocFName, numOfRules){
+	labImage= lImage;
+	inpImage= iImage;
 	labGeometryFilter= NULL;	
 	x_Size = y_Size = z_Size = 0;
 	imDim=3;	
 	objectType = "Nucleus";
-	lab_im_set = true;
+	inputs_set = true;
 }
 
 /* This is the main function for computing associative features */
@@ -246,7 +280,7 @@ void NuclearAssociationRules::Compute()
 	std::cout<<"Starting Associative Features Computation\n";
 
 	//1. read the label image
-	if( lab_im_set == false ){
+	if( inputs_set == false ){
 		ReaderType::Pointer reader = ReaderType::New();
 		std::string fname = GetSegImgName();
 		reader->SetFileName(fname);
@@ -291,17 +325,21 @@ void NuclearAssociationRules::Compute()
 	{
 		assocMeasurementsList[i] = new float[numOfLabels];
 		//read the ith target image (the image from which we need to compute the ith assoc. rule
-		ReaderType::Pointer reader2 = ReaderType::New();
-		reader2->SetFileName(assocRulesList[i].GetTargetFileNmae());
-		reader2->Update();
+		if( inputs_set == false ){
+			ReaderType::Pointer reader2 = ReaderType::New();
+			reader2->SetFileName(assocRulesList[i].GetTargetFileNmae());
+			reader2->Update();
+			inpImage = reader2->GetOutput();
+		}
+
 		if( assocRulesList[i].IsUseBackgroundSubtraction() ){
 			if( assocRulesList[i].IsUseMultiLevelThresholding() )
 				if( assocRulesList[i].GetNumberOfThresholds()>=assocRulesList[i].GetNumberIncludedInForeground() )
-					thresh=returnthresh( reader2->GetOutput(), assocRulesList[i].GetNumberOfThresholds(), assocRulesList[i].GetNumberIncludedInForeground() );
+					thresh=returnthresh( inpImage, assocRulesList[i].GetNumberOfThresholds(), assocRulesList[i].GetNumberIncludedInForeground() );
 				else
-					thresh=returnthresh( reader2->GetOutput(), assocRulesList[i].GetNumberOfThresholds(), assocRulesList[i].GetNumberOfThresholds() );
+					thresh=returnthresh( inpImage, assocRulesList[i].GetNumberOfThresholds(), assocRulesList[i].GetNumberOfThresholds() );
 			else
-				thresh=returnthresh( reader2->GetOutput(), 1, 1 );
+				thresh=returnthresh( inpImage, 1, 1 );
 		}
 		else
 			thresh = 0;
@@ -313,7 +351,7 @@ void NuclearAssociationRules::Compute()
 			int lbl = labelsList[j];
 			if(lbl == 0) continue;
 			cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<j<<"/"<<numOfLabels-1;
-			assocMeasurementsList[i][j] = ComputeOneAssocMeasurement(reader2->GetOutput(), i, lbl);						
+			assocMeasurementsList[i][j] = ComputeOneAssocMeasurement(inpImage, i, lbl);						
 		}		
 		std::cout<<"\tdone"<<std::endl;
 	}	

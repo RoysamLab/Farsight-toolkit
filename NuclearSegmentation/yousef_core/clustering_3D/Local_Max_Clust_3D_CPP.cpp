@@ -143,7 +143,7 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 					
 					//Calculate coordinates of local maximum based on its index
 					int rem = ((long)LM) % (r*c);
-					int Z = (LM-rem) / (r*c); 
+					int Z = ((int)LM-rem) / (r*c); 
 				    int C = ((long)rem) % c;
 					int R = (rem-C)/c;
 					

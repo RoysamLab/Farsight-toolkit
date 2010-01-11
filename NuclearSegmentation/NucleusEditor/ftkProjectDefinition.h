@@ -28,6 +28,7 @@
 
 #include <tinyxml/tinyxml.h>
 #include <ftkCommon/ftkUtils.h>
+#include <ftkCommon/ftkObjectAssociation.h>
 
 #include <vector>
 #include <string>
@@ -45,7 +46,6 @@ public:
 	enum TaskType { NUCLEAR_SEGMENTATION, CYTOPLASM_SEGMENTATION, RAW_ASSOCIATIONS, CLASSIFY, ANALYTE_MEASUREMENTS };
 	typedef struct { int number; std::string name; std::string type; } Channel;
 	typedef struct { std::string name; double value; } Parameter;
-	typedef struct { std::string name; std::string value; } StringParameter;
 
 	//FUNCTIONS:
 	ProjectDefinition();
@@ -56,7 +56,7 @@ public:
 	std::vector<Channel> ReadChannels(TiXmlElement * inputElement);
 	std::vector<TaskType> ReadSteps(TiXmlElement * pipelineElement);
 	std::vector<Parameter> ReadParameters(TiXmlElement * inputElement);
-	std::vector<StringParameter> ReadStringParameters(TiXmlElement * inputElement);
+	void ReadAssociationParameters(TiXmlElement * inputElement);
 	std::vector<std::string> ParseText(TiXmlElement * element);
 	TiXmlElement * GetParameterElement( Parameter param );
 
@@ -73,7 +73,7 @@ public:
 	std::vector<Parameter> cytoplasmParameters;
 	std::vector<Parameter> classificationParameters;
 
-	std::vector<StringParameter> associationRules;
+	std::vector<ftk::AssociationRule> associationRules;
 	std::vector<std::string> intrinsicFeatures;
 	std::vector<std::string> analyteMeasures;
 

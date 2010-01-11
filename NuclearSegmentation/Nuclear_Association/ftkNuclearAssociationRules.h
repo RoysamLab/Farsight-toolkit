@@ -29,14 +29,13 @@
 
 #include <ftkObject.h>
 #include <ftkCommon/ftkObjectAssociation.h>
-#include "ftkImage/ftkImage.h"
+#include "ftkImage.h"
 #include "itkLabelGeometryImageFilter.h"
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkCastImageFilter.h"
 #include "itkExtractImageFilter.h"
-//#include "itkApproximateSignedDistanceMapImageFilter.h"
 #include <itkSignedDanielssonDistanceMapImageFilter.h>
 
 #include <vtkSmartPointer.h>
@@ -58,20 +57,20 @@ class AssociativeFeatureCalculator
 public:
 	AssociativeFeatureCalculator();
 	void SetInputFile(std::string filename);
+	void SetInputs(ftk::Image::Pointer inp_labeled_image, int inp_channel_number, ftk::Image::Pointer seg_labeled_image, int seg_channel_number, ftk::AssociationRule *associationrule);
 	void SetFeaturePrefix(std::string prefix);			//Set Prefix for feature names
 	vtkSmartPointer<vtkTable> Compute(void);			//Compute and return table with values (for all objects)
 	void Update(vtkSmartPointer<vtkTable> table);		//Update the features in this table whose names match (sets doFeat)
 	void Append(vtkSmartPointer<vtkTable> table);		//Compute features that are ON and append them to the existing table
-	void SetInputImage(ftk::Image::Pointer input_labeled_image, int channel_number);
-	bool IsLabeledImageSet(){ return lab_im_set; }
+	bool AreInputsSet(){ return inputs_set; }
 
 private:
+	ftk::AssociationRule *input_association;
 	std::string inFilename;
 	std::string fPrefix;
+	bool inputs_set;
 	LabImageType::Pointer lab_im;
-	ftk::Image::Pointer lblImg;
-	ftk::Image::Pointer grayImg;
-	bool lab_im_set;
+	TargImageType::Pointer inp_im;
 	static const int num_rois=8;
 };
 
@@ -86,7 +85,7 @@ class NuclearAssociationRules : public ObjectAssociation
 public:
 	/* Contsructor */
 	NuclearAssociationRules(std::string segImageName, int numOfAssocRules);
-	NuclearAssociationRules(std::string segImageName, int numOfAssocRules, LabImageType::Pointer lab_im);
+	NuclearAssociationRules(std::string AssocFName, int numOfRules, LabImageType::Pointer lImage, TargImageType::Pointer iImage);
 
 	/* This method computes all the associative measurements for all the objects */
 	void Compute();
@@ -102,12 +101,13 @@ private:
 	typedef itk::SignedDanielssonDistanceMapImageFilter<DistImageType, DistImageType > DTFilter ;
 
 	LabImageType::Pointer labImage;
+	TargImageType::Pointer inpImage;
 	LabelGeometryType::Pointer labGeometryFilter;	
 	int x_Size;
 	int y_Size;
 	int z_Size;
 	int imDim;
-	bool lab_im_set;
+	bool inputs_set;
 
 	unsigned short thresh;
 

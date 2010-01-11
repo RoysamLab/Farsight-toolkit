@@ -66,13 +66,13 @@ int local_max_clust_2D(float* im_vals, int r, int c, double scale, unsigned shor
 	int s_ind = 0;
 	for(int i=0; i<num_seeds; i++)
 	{
-		float LMX = (seeds_y[i]*c)+seeds_x[i];
+		float LMX = (float)((seeds_y[i]*c)+seeds_x[i]);
 		if(bin_image[(int)LMX] == 0)
 			local_max_im[seeds_y[i]][seeds_x[i]] = -1;
 		else
 		{
 			s_ind++;
-			local_max_im[seeds_y[i]][seeds_x[i]] = s_ind;
+			local_max_im[seeds_y[i]][seeds_x[i]] = float(s_ind);
 		}
 		max_nghbr_im[seeds_y[i]][seeds_x[i]] = LMX;
 	}
@@ -116,7 +116,7 @@ int local_max_clust_2D(float* im_vals, int r, int c, double scale, unsigned shor
                 if(max_nghbr_im[R][C]>0)
                     ind = max_nghbr_im[R][C];
                 else
-                    ind = (R*c)+C;
+                    ind = (float)((R*c)+C);
             
                 max_nghbr_im[i][j] = ind;	
             }
@@ -144,7 +144,7 @@ int local_max_clust_2D(float* im_vals, int r, int c, double scale, unsigned shor
                     continue;
                 
 				int C = ((long)LM)%c;
-				int R = (LM-C)/c;
+				int R = ((int)LM-C)/c;
 				
                 //if it is a local maxima, or has been assigned to a local maxima ignore it
                 if(local_max_im[i][j] !=0 || local_max_im[R][C]!=0) 
@@ -168,7 +168,7 @@ int local_max_clust_2D(float* im_vals, int r, int c, double scale, unsigned shor
 			int C = ((long)LMX)%c;
 			int R = (LMX-C)/c;
 			if(local_max_im[R][C]>0 && bin_image[(i*c)+j]>0)
-				out1[(i*c)+j] = local_max_im[R][C];
+				out1[(i*c)+j] = (unsigned short)local_max_im[R][C];
 			else
 				out1[(i*c)+j] = 0;
         }

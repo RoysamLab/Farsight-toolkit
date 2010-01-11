@@ -302,7 +302,7 @@ float* multiColGraphLearning(float* X_vals, unsigned short* labs_vals, int r, in
                 }               
 			}
 			for(int cc=0; cc<ncolors+1; cc++)//[(x+y*width)*#labels + l]				
-				out[(j+i*c)*(ncolors+1) + cc] = min(-log(Pr[cc]),100.0);     //I need to double check this line!!           
+				out[(j+i*c)*(ncolors+1) + cc] = (float)min(-log(Pr[cc]),100.0);     //I need to double check this line!!           
         }
     }
    
