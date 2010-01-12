@@ -300,11 +300,18 @@ class MarginDialog : public QDialog
 	Q_OBJECT
 public:
 	MarginDialog(QWidget *parent = 0);
-	int getMargin();
-	int getZ();
+	int getMargin(int x);
 private:
-	QSpinBox * marginSpin;
-	QSpinBox * zSpin;
+	void addSpin(QString label, int min, int deflt, int max, QString units);
+
+	QGridLayout * layout;
+	QVector<QSpinBox *> spins;
+	//QSpinBox * leftSpin;
+	//QSpinBox * rightSpin;
+	//QSpinBox * topSpin;
+	//QSpinBox * bottomSpin;
+	//QSpinBox * z1Spin;
+	//QSpinBox * z2Spin;
 	QPushButton *okButton;
 };
 

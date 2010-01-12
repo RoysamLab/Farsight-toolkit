@@ -85,7 +85,7 @@ public:
 	std::vector< int > GroupMerge(vector<int> ids, vtkSmartPointer<vtkTable> table = NULL);
 	int Merge(vector<int> ids, vtkSmartPointer<vtkTable> table = NULL);
 	bool Delete(vector<int> ids, vtkSmartPointer<vtkTable> table = NULL);
-	bool Exclude(int xy, int z, vtkSmartPointer<vtkTable> table = NULL);
+	bool Exclude(int l, int r, int t, int b, int z1, int z2, vtkSmartPointer<vtkTable> table = NULL);
 	int AddObject(int x1, int y1, int z1, int x2, int y2, int z2, vtkSmartPointer<vtkTable> table = NULL);
 	bool FillObjects(vector<int> ids);
 	bool FillAnObject(int id);

@@ -947,7 +947,7 @@ void LabelImageViewQT::drawObjectCentroids(QPainter *painter)
 }
 
 
-QVector<QColor> LabelImageViewQT::createColorTable()
+QVector<QColor> LabelImageViewQT::CreateColorTable()
 {
 	colorTable.clear();
 	

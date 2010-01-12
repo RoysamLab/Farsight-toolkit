@@ -1235,7 +1235,7 @@ bool NuclearSegmentation::Delete(std::vector<int> ids, vtkSmartPointer<vtkTable>
 	return true;
 }
 
-bool NuclearSegmentation::Exclude(int xy, int z, vtkSmartPointer<vtkTable> table)
+bool NuclearSegmentation::Exclude(int l, int r, int t, int b, int z1, int z2, vtkSmartPointer<vtkTable> table)
 {
 	if(!labelImage) return false;
 
@@ -1245,12 +1245,12 @@ bool NuclearSegmentation::Exclude(int xy, int z, vtkSmartPointer<vtkTable> table
 	int totalHeight = (*info).numRows;
 	int zSlices = (*info).numZSlices;
 
-	int min_x = 0 + xy;
-	int min_y = 0 + xy;
-	int min_z = 0 + z;
-	int max_x = totalWidth - xy - 1;
-	int max_y = totalHeight - xy - 1;
-	int max_z = zSlices - z - 1;
+	int min_x = 0 + l;
+	int min_y = 0 + t;
+	int min_z = 0 + z1;
+	int max_x = totalWidth - r - 1;
+	int max_y = totalHeight - b - 1;
+	int max_z = zSlices - z2 - 1;
 
 	//Go through each object and exclude accordingly.
 	std::vector<int> ids;

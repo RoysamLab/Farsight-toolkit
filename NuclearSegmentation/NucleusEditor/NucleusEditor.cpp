@@ -1098,7 +1098,7 @@ void NucleusEditor::toggleCentroids(void)
 		if(kplsRun ==1)
 		{
 		    segView->SetClassMap(table,table->GetNumberOfColumns()-1);
-			QVector<QColor> cTable =  segView->createColorTable();
+			QVector<QColor> cTable =  segView->CreateColorTable();
 			segView->SetColorMapForCentroids(cTable);
 		}
 		segView->SetCentroidsVisible(true);
@@ -1374,25 +1374,35 @@ void NucleusEditor::fillCells(void)
 void NucleusEditor::applyExclusionMargin(void)
 {
 	//Get the parameters to use for the exclusion margin:
-	int xy = 0;
-	int z = 0;
+	int l = 0;
+	int r = 0;
+	int t = 0;
+	int b = 0;
+	int z1 = 0;
+	int z2 = 0;
 	MarginDialog *dialog = new MarginDialog(this);
 	if( dialog->exec() )
 	{
-		xy = dialog->getMargin();
-		z = dialog->getZ();
+		l = dialog->getMargin(0);
+		r = dialog->getMargin(1);
+		t = dialog->getMargin(2);
+		b = dialog->getMargin(3);
+		z1 = dialog->getMargin(4);
+		z2 = dialog->getMargin(5);
 	}
 	delete dialog;
 
 	selection->clear();
-	if(nucSeg->Exclude(xy, z, table))
+	if(nucSeg->Exclude(l, r, t, b, z1, z2, table))
 	{
 		projectFiles.outputSaved = false;
 		projectFiles.tableSaved = false;
 		this->updateViews();
 
 		std::string log_entry = "EXCLUSION_MARGIN\t";
-		log_entry += ftk::NumToString(xy) + "," + ftk::NumToString(z) + "\t";
+		log_entry += ftk::NumToString(l) + "," + ftk::NumToString(r) + ",";
+		log_entry += ftk::NumToString(t) + "," + ftk::NumToString(b) + ",";
+		log_entry += ftk::NumToString(z1)+ "," + ftk::NumToString(z2)+ "," + "\t";
 		log_entry += ftk::TimeStamp();
 		ftk::AppendTextFile(projectFiles.log, log_entry);
 	}
@@ -1696,43 +1706,48 @@ void ProcessThread::run()
 MarginDialog::MarginDialog(QWidget *parent)
 : QDialog(parent)
 {
+	layout = new QGridLayout();
 	QLabel * header = new QLabel(tr("Please set parameters for the Brick Rule:"));
-	QLabel * mLabel = new QLabel(tr("XY Margin: "));
-	marginSpin = new QSpinBox();
-	marginSpin->setMinimum(0);
-	marginSpin->setMaximum(100);
-	QLabel * pixLabel = new QLabel(tr("pixels"));
+	layout->addWidget(header,0,0,1,3);
 
-	QLabel * zLabel = new QLabel(tr("Z Margin: "));
-	zSpin = new QSpinBox();
-	zSpin->setMinimum(0);
-	zSpin->setMaximum(10);
-	QLabel * slcLabel = new QLabel(tr("slices"));
+	this->addSpin(tr("Left Margin: "),0,10,100,tr("pixels"));
+	this->addSpin(tr("Right Margin: "),0,10,100,tr("pixels"));
+	this->addSpin(tr("Top Margin: "),0,10,100,tr("pixels"));
+	this->addSpin(tr("Bottom Margin: "),0,10,100,tr("pixels"));
+	this->addSpin(tr("Lower Z Margin: "),0,4,10,tr("slices"));
+	this->addSpin(tr("Upper Z Margin: "),0,4,10,tr("slices"));
 
 	okButton = new QPushButton(tr("OK"),this);
 	connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
+	layout->addWidget(okButton,(spins.size()+1), 2, 1, 1);
 
-	QGridLayout * layout = new QGridLayout();
-	layout->addWidget(header,0,0,1,3);
-	layout->addWidget(mLabel,1,0,1,1);
-	layout->addWidget(marginSpin,1,1,1,1);
-	layout->addWidget(pixLabel,1,2,1,1);
-	layout->addWidget(zLabel,2,0,1,1);
-	layout->addWidget(zSpin,2,1,1,1);
-	layout->addWidget(slcLabel,2,2,1,1);
-	layout->addWidget(okButton,3,2,1,1);
 	this->setLayout(layout);
 	this->setWindowTitle(tr("Apply Exclusion Margin"));
 }
 
-int MarginDialog::getMargin()
+int MarginDialog::getMargin(int x)
 {
-	return marginSpin->value();
+	if( x < (int)spins.size() )
+		return spins.at(x)->value();
+	else
+		return 0;
 }
 
-int MarginDialog::getZ()
+void MarginDialog::addSpin(QString label, int min, int deflt, int max, QString units)
 {
-	return zSpin->value();
+	QLabel * mLabel = new QLabel(label);
+	QSpinBox * mSpin = new QSpinBox();
+	mSpin->setMinimum(min);
+	mSpin->setMaximum(max);
+	mSpin->setValue(deflt);
+	QLabel * unitLabel = new QLabel(units);
+
+	spins.push_back(mSpin);
+	int row = spins.size();
+
+	layout->addWidget(mLabel,row,0,1,1);
+	layout->addWidget(mSpin,row,1,1,1);
+	layout->addWidget(unitLabel,row,2,1,1);
 }
 //***********************************************************************************
 //***********************************************************************************
