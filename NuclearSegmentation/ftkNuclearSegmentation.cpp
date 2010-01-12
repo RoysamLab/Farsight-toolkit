@@ -1040,12 +1040,12 @@ std::vector< int > NuclearSegmentation::SplitAlongZ(int objID, int cutSlice, vtk
 	return ret_ids;
 }
 
-std::vector<int> NuclearSegmentation::GroupMerge(std::vector<int> ids, vtkSmartPointer<vtkTable> table)
+std::vector< std::vector<int> > NuclearSegmentation::GroupMerge(std::vector<int> ids, vtkSmartPointer<vtkTable> table)
 {
 	if(!labelImage || !dataImage)
 	{
 		errorMessage = "label image or data image doesn't exist";					
-		return std::vector<int>(0);
+		return std::vector< std::vector<int> >(0);
 	}
 
 	std::vector< std::vector<int> > groups;
@@ -1124,13 +1124,12 @@ std::vector<int> NuclearSegmentation::GroupMerge(std::vector<int> ids, vtkSmartP
 	}
 
 	//Iterate though groups and merge them together
-	std::vector<int> retVector;
 	for(int i=0; i<(int)groups.size(); ++i)
 	{
 		int newID = Merge(groups.at(i), table);
-		retVector.push_back(newID);
+		groups.at(i).push_back(newID);	//Put the new id at the end of the group
 	}
-	return retVector;
+	return groups;
 
 }
 

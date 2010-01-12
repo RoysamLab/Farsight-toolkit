@@ -52,6 +52,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 							"All Files (*.*)");
 
 	lastPath = ".";
+	projectFilename = "";
 
 	tblWin.clear();
 	pltWin.clear();
@@ -502,7 +503,7 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 	this->abortProcess();
 
 	if(!projectFiles.inputSaved || !projectFiles.outputSaved || !projectFiles.definitionSaved || !projectFiles.tableSaved)
-		this->askSaveProject();
+		this->saveProject(projectFilename,false);
 
 	//Then Close all other windows
 	foreach (QWidget *widget, qApp->topLevelWidgets())
@@ -526,7 +527,11 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 //*********************************************************************************
 bool NucleusEditor::askSaveProject()
 {
-	QString	filename = QFileDialog::getSaveFileName(this, tr("Save Project As..."),lastPath, tr("XML Project File(*.xml)"));
+	QString	filename;
+	if(projectFilename != "")
+		filename = QFileDialog::getSaveFileName(this, tr("Save Project As..."),projectFilename, tr("XML Project File(*.xml)"));
+	else
+		filename = QFileDialog::getSaveFileName(this, tr("Save Project As..."),lastPath, tr("XML Project File(*.xml)"));
 
 	if(filename == "")
 		return false;
@@ -534,7 +539,7 @@ bool NucleusEditor::askSaveProject()
 	QString path = QFileInfo(filename).absolutePath();
 	QString name = QFileInfo(filename).baseName();
 	lastPath = path;
-
+	
 	return this->saveProject(filename, false);
 }
 
@@ -584,7 +589,10 @@ bool NucleusEditor::saveProject(QString filename, bool defaults)
 	}
 
 	if(filename != "")
+	{
+		projectFilename = filename;
 		projectFiles.Write(filename.toStdString());
+	}
 
 	return true;
 }
@@ -747,6 +755,8 @@ void NucleusEditor::loadProject()
 	if(dialog->exec() == QDialog::Rejected)
 		return;
 
+	projectFilename = filename;
+
 	if(projectFiles.input != "")
 	{
 		this->loadImage(QString::fromStdString(projectFiles.input));
@@ -787,7 +797,7 @@ void NucleusEditor::loadTable(QString fileName)
 {
 	if(!projectFiles.tableSaved)
 	{
-		this->askSaveProject();
+		this->saveProject(projectFilename,false);
 	}
 
 	lastPath = QFileInfo(fileName).absolutePath();
@@ -816,7 +826,7 @@ void NucleusEditor::loadResult(QString fileName)
 {
 	if(!projectFiles.outputSaved)
 	{
-		this->askSaveProject();
+		this->askSaveResult();
 	}
 
 	lastPath = QFileInfo(fileName).absolutePath();
@@ -854,7 +864,7 @@ void NucleusEditor::loadImage(QString fileName)
 {
 	if(!projectFiles.inputSaved)
 	{
-		this->askSaveProject();
+		this->askSaveImage();
 	}
 
 	lastPath = QFileInfo(fileName).absolutePath();
@@ -1153,8 +1163,8 @@ void NucleusEditor::updateNucSeg(bool ask)
 
 void NucleusEditor::startEditing(void)
 {
-	std::string log_entry = "NUCLEAR_SEGMENTATION\t";
-	log_entry += ftk::NumToString(nucSeg->GetNumberOfObjects()) + "\t";
+	std::string log_entry = "NUCLEAR_SEGMENTATION , ";
+	log_entry += ftk::NumToString(nucSeg->GetNumberOfObjects()) + " , ";
 	log_entry += ftk::TimeStamp();
 	ftk::AppendTextFile(projectFiles.log, log_entry);
 
@@ -1166,7 +1176,7 @@ void NucleusEditor::stopEditing(void)
 {
 	setEditsEnabled(false);
 
-	std::string log_entry = "NUCLEAR_SEGMENTATION_VALIDATED\t";
+	std::string log_entry = "NUCLEAR_SEGMENTATION_VALIDATED , ";
 	log_entry += ftk::TimeStamp();
 	ftk::AppendTextFile(projectFiles.log, log_entry);
 	projectFiles.nucSegValidated = true;
@@ -1215,8 +1225,8 @@ void NucleusEditor::addCell(int x1, int y1, int x2, int y2, int z)
 		this->updateViews();
 		selection->select(id);
 
-		std::string log_entry = "ADD\t";
-		log_entry += ftk::NumToString(id) + "\t";
+		std::string log_entry = "ADD , ";
+		log_entry += ftk::NumToString(id) + " , ";
 		log_entry += ftk::TimeStamp();
 		ftk::AppendTextFile(projectFiles.log, log_entry);
 	}
@@ -1239,11 +1249,10 @@ void NucleusEditor::deleteCells(void)
 		selection->clear();
 		this->updateViews();
 
-		std::string log_entry = "DELETE\t";
-		log_entry += ftk::NumToString(ids.at(0));
-		for(int i=1; i<(int)ids.size(); ++i)
-			log_entry += "," + ftk::NumToString(ids.at(i));
-		log_entry += "\t";
+		std::string log_entry = "DELETE , ";
+		for(int i=0; i<(int)ids.size(); ++i)
+			log_entry += " " + ftk::NumToString(ids.at(i));
+		log_entry += " , ";
 		log_entry += ftk::TimeStamp();
 		ftk::AppendTextFile(projectFiles.log, log_entry);
 	}
@@ -1256,21 +1265,27 @@ void NucleusEditor::mergeCells(void)
 	std::set<long int> sels = selection->getSelections();
 	std::vector<int> ids(sels.begin(), sels.end());
 	//int newObj = nucSeg->Merge(ids, table);
-	std::vector<int> new_ids = nucSeg->GroupMerge(ids, table);
-	if(new_ids.size() != 0)
+	std::vector< std::vector<int> > new_grps = nucSeg->GroupMerge(ids, table);
+	if(new_grps.size() != 0)
 	{
 		projectFiles.outputSaved = false;
 		projectFiles.tableSaved = false;
 		selection->clear();
 		this->updateViews();
 
-		std::string log_entry = "MERGE\t";
-		log_entry += ftk::NumToString(new_ids.at(0));
-		for(int i=1; i<(int)new_ids.size(); ++i)
-			log_entry += "," + ftk::NumToString(new_ids.at(i));
-		log_entry += "\t";
-		log_entry += ftk::TimeStamp();
-		ftk::AppendTextFile(projectFiles.log, log_entry);
+		for(int i=0; i<(int)new_grps.size(); ++i)
+		{
+			std::string log_entry = "MERGE , ";
+			for(int j=0; j<(int)new_grps.at(i).size()-1; ++j)
+			{
+				log_entry += " " + ftk::NumToString(new_grps.at(i).at(j));
+			}
+			log_entry += " , ";
+			log_entry += ftk::NumToString(new_grps.at(i).at(new_grps.at(i).size()-1));
+			log_entry += " , ";
+			log_entry += ftk::TimeStamp();
+			ftk::AppendTextFile(projectFiles.log, log_entry);
+		}
 	}
 }
 
@@ -1311,8 +1326,11 @@ void NucleusEditor::splitCell(int x1, int y1, int z1, int x2, int y2, int z2)
 		selection->clear();
 		this->updateViews();
 
-		std::string log_entry = "SPLIT\t";
-		log_entry += ftk::NumToString(ret.at(0)) + "\t";
+		std::string log_entry = "SPLIT , ";
+		log_entry += ftk::NumToString(ret.at(0)) + " , ";
+		for(int i=1; i<(int)ret.size(); ++i)
+			log_entry += ftk::NumToString(ret.at(i)) + " ";
+		log_entry += ", ";
 		log_entry += ftk::TimeStamp();
 		ftk::AppendTextFile(projectFiles.log, log_entry);
 	}
@@ -1333,22 +1351,25 @@ void NucleusEditor::splitCellAlongZ(void)
 	if(labImg->GetImageInfo()->numZSlices == 1)
 		return;
 
-	std::string log_entry = "SPLIT\t";
 	selection->clear();
 	for ( set<long int>::iterator it=sels.begin(); it != sels.end(); it++ )
 	{
-		if(nucSeg->SplitAlongZ(*it,segView->GetCurrentZ(), table).size() != 0)
+		std::vector<int> ret = nucSeg->SplitAlongZ(*it,segView->GetCurrentZ(), table);
+		if(ret.size() != 0)
 		{
-			log_entry += ftk::NumToString((int)*it) + ",";
 			projectFiles.outputSaved = false;
 			projectFiles.tableSaved = false;
+
+			std::string log_entry = "SPLIT , ";
+			log_entry += ftk::NumToString(ret.at(0)) + " , ";
+			for(int i=1; i<(int)ret.size(); ++i)
+				log_entry += ftk::NumToString(ret.at(i)) + " ";
+			log_entry += ", ";
+			log_entry += ftk::TimeStamp();
+			ftk::AppendTextFile(projectFiles.log, log_entry);
 		}
 	}
 	this->updateViews();
-
-	log_entry += "\t";
-	log_entry += ftk::TimeStamp();
-	ftk::AppendTextFile(projectFiles.log, log_entry);
 }
 
 void NucleusEditor::fillCells(void)
@@ -1361,14 +1382,15 @@ void NucleusEditor::fillCells(void)
 	std::vector<int> ids(sels.begin(), sels.end());
 
 	nucSeg->FillObjects(ids);
-	std::string log_entry = "FILL\t";
-	selection->clear();
-	
-	this->updateViews();
-
-	log_entry += "\t";
+	std::string log_entry = "FILL , ";
+	for(int i=0; i<(int)ids.size(); ++i)
+		log_entry += ftk::NumToString(ids.at(i)) + " ";
+	log_entry += ", ";
 	log_entry += ftk::TimeStamp();
 	ftk::AppendTextFile(projectFiles.log, log_entry);
+
+	selection->clear();
+	this->updateViews();
 }
 
 void NucleusEditor::applyExclusionMargin(void)
@@ -1399,10 +1421,10 @@ void NucleusEditor::applyExclusionMargin(void)
 		projectFiles.tableSaved = false;
 		this->updateViews();
 
-		std::string log_entry = "EXCLUSION_MARGIN\t";
-		log_entry += ftk::NumToString(l) + "," + ftk::NumToString(r) + ",";
-		log_entry += ftk::NumToString(t) + "," + ftk::NumToString(b) + ",";
-		log_entry += ftk::NumToString(z1)+ "," + ftk::NumToString(z2)+ "," + "\t";
+		std::string log_entry = "EXCLUSION_MARGIN, ";
+		log_entry += ftk::NumToString(l) + " " + ftk::NumToString(r) + " ";
+		log_entry += ftk::NumToString(t) + " " + ftk::NumToString(b) + " ";
+		log_entry += ftk::NumToString(z1)+ " " + ftk::NumToString(z2)+ " , ";
 		log_entry += ftk::TimeStamp();
 		ftk::AppendTextFile(projectFiles.log, log_entry);
 	}
@@ -1527,7 +1549,7 @@ void NucleusEditor::processProject(void)
 	lastPath = QFileInfo(projectName).absolutePath();
 
 	if(!projectFiles.definitionSaved)
-		this->askSaveProject();
+		this->saveProject(projectFilename,false);
 
 	//Load up the definition
 	if( !projectDefinition.Load(projectName.toStdString()) ) return;

@@ -258,6 +258,7 @@ private:
 	ObjectSelection * selection;				//object selection list
 	vtkSmartPointer<vtkTable> table;			//table
 	ftk::ProjectFiles projectFiles;				//files in the currently visible project
+	QString projectFilename;					//filename of file that points to all project files (.xml)
 	ftk::ProjectDefinition projectDefinition;	//the project definition currently being used.
 	unsigned char   kplsRun;
 

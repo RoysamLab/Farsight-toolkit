@@ -82,7 +82,7 @@ public:
 	//Editing Functions 
 	std::vector< int > Split(ftk::Object::Point P1, ftk::Object::Point P2, vtkSmartPointer<vtkTable> table = NULL);
 	std::vector< int > SplitAlongZ(int objID, int cutSlice, vtkSmartPointer<vtkTable> table = NULL);
-	std::vector< int > GroupMerge(vector<int> ids, vtkSmartPointer<vtkTable> table = NULL);
+	std::vector< std::vector< int > > GroupMerge(vector<int> ids, vtkSmartPointer<vtkTable> table = NULL);
 	int Merge(vector<int> ids, vtkSmartPointer<vtkTable> table = NULL);
 	bool Delete(vector<int> ids, vtkSmartPointer<vtkTable> table = NULL);
 	bool Exclude(int l, int r, int t, int b, int z1, int z2, vtkSmartPointer<vtkTable> table = NULL);
