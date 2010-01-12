@@ -152,6 +152,7 @@ private slots:
 	 void GrayscaleClose(void);
 	 void CurvAnisotropicDiffusion(void);
 	//void Resample(void);
+	 void preprocess(QString id);
 	//*****************************************************
 
 	//For Tools menu
@@ -176,6 +177,7 @@ private:
 	void updateNucSeg(bool ask = false);
 
 	int requestChannel(ftk::Image::Pointer img);	//Request a channel from this image
+	QVector<QString> getChannelStrings(void);
 
 	LabelImageViewQT *segView;
 	std::vector<PlotWindow *> pltWin;

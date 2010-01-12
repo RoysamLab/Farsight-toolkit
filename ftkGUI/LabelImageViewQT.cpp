@@ -462,6 +462,7 @@ void LabelImageViewQT::spinChange(int v)
 
 void LabelImageViewQT::update()
 {
+	refreshBaseImage();
 	refreshBoundsImage();
 	QWidget::update();
 }

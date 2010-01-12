@@ -19,84 +19,73 @@ limitations under the License.
 
 ftkPreprocess::ftkPreprocess()
 {
-
-std::cout<<"I was here"<<std::endl;
-
+	//std::cout<<"I was here"<<std::endl;
+	channelNumber = 0;
 }
 
-
-
-
-
-
-ftk::Image::Pointer ftkPreprocess::GADiffusion(void)
+void ftkPreprocess::GADiffusion(void)
 {
+	typedef itk::GradientAnisotropicDiffusionImageFilter<InpImageType,FloatImageType> FilterType;
+	typedef itk::CastImageFilter<FloatImageType,InpImageType> ReverseCastFilter;	
+	FilterType::Pointer filter = FilterType::New();
+    filter->SetInput(myImg->GetItkPtr<InpPixelType>(0,channelNumber));
+	filter->SetTimeStep(filterParams[0]);
+	filter->SetNumberOfIterations(filterParams[1]);
+	filter->SetConductanceParameter(filterParams[2]);
 		
-	     typedef itk::GradientAnisotropicDiffusionImageFilter<InpImageType,FloatImageType> FilterType;
-		 typedef itk::CastImageFilter<FloatImageType,InpImageType> ReverseCastFilter;	
-		 FilterType::Pointer filter = FilterType::New();
-         filter->SetInput(myImg->GetItkPtr<InpPixelType>(0,0));
-		 filter->SetTimeStep(filterParams[0]);
-		 filter->SetNumberOfIterations(filterParams[1]);
-		 filter->SetConductanceParameter(filterParams[2]);
-		
-		std::cout << "Applying Anisotropic Diffusion Filter.........: " << std::endl;
-		  
-		try
-		{
-			filter->Update();
-		}
-		catch( itk::ExceptionObject & err )
-		{
+	std::cout << "Applying Anisotropic Diffusion Filter.........: " << std::endl;
+	//Run the filter:	
+	try
+	{
+		filter->Update();
+	}
+	catch( itk::ExceptionObject & err )
+	{
 		std::cerr << "Exception caught: " << err << std::endl;
-		}
+	}
  
-		 FloatImageType::Pointer imf = filter->GetOutput();
-		 typedef itk::ImageRegionIterator<FloatImageType> IRI;
-		 IRI iter(imf,imf->GetLargestPossibleRegion());
-						
-		 for(iter.GoToBegin();!iter.IsAtEnd(); ++iter)
-			{
-				float value = iter.Get();
-				value = ((value < 0)?0:((value>255)?255:value));
-				iter.Set(value);
-			}
-
-			ReverseCastFilter::Pointer rfilter = ReverseCastFilter::New();
-			rfilter->SetInput(filter->GetOutput());
-			rfilter->Update();
-		
-		   std::vector<unsigned char> color(3,255);
-		   ftk::Image::Pointer filtImg = ftk::Image::New();	 	 
-		   filtImg->AppendChannelFromData3D(rfilter->GetOutput()->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), myImg->GetImageInfo()->numColumns, myImg->GetImageInfo()->numRows, myImg->GetImageInfo()->numZSlices, "gray", color, true);
-		   myImg = filtImg;			
-		   return myImg;								
-																	
-			/* typedef itk::ImageFileWriter<imagetype > WriterType;
-			   WriterType::Pointer writer = WriterType::New();
-			   std::string fName = this->FN+"_median"+".tif";
-			   writer->SetFileName(fName.c_str());
-			   writer->SetInput(mfilter->GetOutput());
-			   writer->Update();
-	 */	 
-			//QApplication::restoreOverrideCursor();			 
+	//Iterate through output and truncate result:
+	FloatImageType::Pointer imf = filter->GetOutput();
+	typedef itk::ImageRegionIterator<FloatImageType> IRI;
+	IRI iter(imf,imf->GetLargestPossibleRegion());					
+	for(iter.GoToBegin();!iter.IsAtEnd(); ++iter)
+	{
+		float value = iter.Get();
+		value = ((value < 0)?0:((value>255)?255:value));
+		iter.Set(value);
 	}
 
-
-ftk::Image::Pointer ftkPreprocess::MedianFilter(void)
-{
-	 
-	 typedef itk::MedianImageFilter<InpImageType,InpImageType> FilterType;
-     
-	 FilterType::Pointer mFilter = FilterType::New();
-	 InpImageType::SizeType indexRadius; 
-	 indexRadius[0] = this->filterParams[0]; // radius along x 
-	 indexRadius[1] = filterParams[1]; // radius along y 
-	 indexRadius[2] = filterParams[2]; // radius along y 
+	//Cast the image back to uchar:
+	ReverseCastFilter::Pointer rfilter = ReverseCastFilter::New();
+	rfilter->SetInput(filter->GetOutput());
+	rfilter->Update();
 	
+	//Replace myImg:
+	const ftk::Image::Info * info = myImg->GetImageInfo();
+	int bpChunk = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+	memcpy( myImg->GetDataPtr(0,channelNumber), rfilter->GetOutput()->GetBufferPointer(), bpChunk );									
+																	
+	/* typedef itk::ImageFileWriter<imagetype > WriterType;
+	WriterType::Pointer writer = WriterType::New();
+	std::string fName = this->FN+"_median"+".tif";
+	writer->SetFileName(fName.c_str());
+	writer->SetInput(mfilter->GetOutput());
+	writer->Update();
+	 */	 			 
+}
 
+void ftkPreprocess::MedianFilter(void)
+{
+	typedef itk::MedianImageFilter<InpImageType,InpImageType> FilterType;
+     
+	FilterType::Pointer mFilter = FilterType::New();
+	InpImageType::SizeType indexRadius; 
+	indexRadius[0] = this->filterParams[0]; // radius along x 
+	indexRadius[1] = filterParams[1]; // radius along y 
+	indexRadius[2] = filterParams[2]; // radius along y 
+	
 	mFilter->SetRadius( indexRadius );  
-	mFilter->SetInput(myImg->GetItkPtr<InpPixelType>(0,0) );
+	mFilter->SetInput(myImg->GetItkPtr<InpPixelType>(0,channelNumber) );
 
     std::cout << "Applying Median Filter.........: " << std::endl;
 	
@@ -109,8 +98,10 @@ ftk::Image::Pointer ftkPreprocess::MedianFilter(void)
 		std::cerr << "Exception caught: " << err << std::endl;
     }
 
-    
-		
+	const ftk::Image::Info * info = myImg->GetImageInfo();
+	int bpChunk = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+	memcpy( myImg->GetDataPtr(0,channelNumber), mFilter->GetOutput()->GetBufferPointer(), bpChunk );
+
 	/* typedef itk::ImageFileWriter<imagetype > WriterType;
 	WriterType::Pointer writer = WriterType::New();
 	std::string fName = this->FN+"_median"+".tif";
@@ -118,24 +109,18 @@ ftk::Image::Pointer ftkPreprocess::MedianFilter(void)
 	writer->SetInput(mfilter->GetOutput());
 	writer->Update();
 	 */	 
-	std::vector<unsigned char> color(3,255);
-    ftk::Image::Pointer filtImg = ftk::Image::New();	 	 
-	filtImg->AppendChannelFromData3D(mFilter->GetOutput()->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), myImg->GetImageInfo()->numColumns, myImg->GetImageInfo()->numRows, myImg->GetImageInfo()->numZSlices, "gray", color, true);
-	myImg = filtImg;
-	return myImg;
 }
 
 
 
-ftk::Image::Pointer ftkPreprocess::SigmoidFilter(void)
+void ftkPreprocess::SigmoidFilter(void)
 {
-	
-   // Declare the anisotropic diffusion vesselness filter
-    typedef itk::SigmoidImageFilter< InpImageType,InpImageType>  SigmoidImFilter;
+	// Declare the anisotropic diffusion vesselness filter
+	typedef itk::SigmoidImageFilter< InpImageType,InpImageType>  SigmoidImFilter;
 
-  // Create a vesselness Filter
+	// Create a vesselness Filter
     SigmoidImFilter::Pointer SigmoidFilter = SigmoidImFilter::New();
-    SigmoidFilter->SetInput(myImg->GetItkPtr<InpPixelType>(0,0));
+    SigmoidFilter->SetInput(myImg->GetItkPtr<InpPixelType>(0,channelNumber));
 	SigmoidFilter->SetAlpha(filterParams[0]); 
 	SigmoidFilter->SetBeta( filterParams[1] ); 
     SigmoidFilter->SetOutputMinimum( filterParams[2] ); 
@@ -143,29 +128,22 @@ ftk::Image::Pointer ftkPreprocess::SigmoidFilter(void)
 
 	std::cout << "Applying Sigmoid Filter.........: " << std::endl;
 
-  try
+	try
     {
-    SigmoidFilter->Update();
+		SigmoidFilter->Update();
     }
-  catch( itk::ExceptionObject & err )
+	catch( itk::ExceptionObject & err )
     {
-    std::cerr << "Exception caught: " << err << std::endl;
+		std::cerr << "Exception caught: " << err << std::endl;
     }
-
-	// Add the filter to the segmentation view
-	std::vector<unsigned char> color(3,255);
-    ftk::Image::Pointer filtImg = ftk::Image::New();	 	 
-	filtImg->AppendChannelFromData3D(SigmoidFilter->GetOutput()->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), myImg->GetImageInfo()->numColumns, myImg->GetImageInfo()->numRows, myImg->GetImageInfo()->numZSlices, "gray", color, true);
-	myImg = filtImg;
-	return myImg;
-
-    }
-
-
-
-ftk::Image::Pointer ftkPreprocess::GrayscaleErode(void)
-{
 	
+	const ftk::Image::Info * info = myImg->GetImageInfo();
+	int bpChunk = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+	memcpy( myImg->GetDataPtr(0,channelNumber), SigmoidFilter->GetOutput()->GetBufferPointer(), bpChunk );
+}
+
+void ftkPreprocess::GrayscaleErode(void)
+{
 	typedef itk::BinaryBallStructuringElement<InpPixelType,3> StructuringElementType;
 	typedef itk::GrayscaleErodeImageFilter<InpImageType,InpImageType,StructuringElementType > ErodeFilterType;
 	ErodeFilterType::Pointer  grayscaleErode  = ErodeFilterType::New();
@@ -173,33 +151,29 @@ ftk::Image::Pointer ftkPreprocess::GrayscaleErode(void)
 	structuringElement.CreateStructuringElement();
 	structuringElement.SetRadius(filterParams[0]);
 	grayscaleErode->SetKernel(  structuringElement );	 
-	grayscaleErode->SetInput(myImg->GetItkPtr<InpPixelType>(0,0));
+	grayscaleErode->SetInput(myImg->GetItkPtr<InpPixelType>(0,channelNumber));
 
-  std::cout << "Applying Grayscale Erosion Filter.........: " << std::endl;
+	std::cout << "Applying Grayscale Erosion Filter.........: " << std::endl;
 
-  try
+	try
     {
-    grayscaleErode->Update();
+		grayscaleErode->Update();
     }
-  catch( itk::ExceptionObject & err )
+	catch( itk::ExceptionObject & err )
     {
-    std::cerr << "Exception caught: " << err << std::endl;
+		std::cerr << "Exception caught: " << err << std::endl;
     }
 
-	// Add the filter to the segmentation view
-	std::vector<unsigned char> color(3,255);
-    ftk::Image::Pointer filtImg = ftk::Image::New();	 	 
-	filtImg->AppendChannelFromData3D(grayscaleErode->GetOutput()->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), myImg->GetImageInfo()->numColumns, myImg->GetImageInfo()->numRows, myImg->GetImageInfo()->numZSlices, "gray", color, true);
-	myImg = filtImg;
-	return myImg;
+	const ftk::Image::Info * info = myImg->GetImageInfo();
+	int bpChunk = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+	memcpy( myImg->GetDataPtr(0,channelNumber), grayscaleErode->GetOutput()->GetBufferPointer(), bpChunk );
 }
 
 
 
 
-ftk::Image::Pointer ftkPreprocess::GrayscaleDilate(void)
+void ftkPreprocess::GrayscaleDilate(void)
 {
-	
 	typedef itk::BinaryBallStructuringElement<InpPixelType,3> StructuringElementType;
 	typedef itk::GrayscaleDilateImageFilter<InpImageType,InpImageType,StructuringElementType> DilateFilterType;	
 	DilateFilterType::Pointer  grayscaleDilate  = DilateFilterType::New();
@@ -207,32 +181,25 @@ ftk::Image::Pointer ftkPreprocess::GrayscaleDilate(void)
 	structuringElement.CreateStructuringElement();
 	structuringElement.SetRadius(filterParams[0]);
 	grayscaleDilate->SetKernel(structuringElement);	 
-	grayscaleDilate->SetInput(myImg->GetItkPtr<InpPixelType>(0,0));
+	grayscaleDilate->SetInput(myImg->GetItkPtr<InpPixelType>(0,channelNumber));
 
+	std::cout << "Applying Grayscale Dilation Filter.........: " << std::endl;
 
-  std::cout << "Applying Grayscale Dilation Filter.........: " << std::endl;
-
-  try
+	try
     {
-    grayscaleDilate->Update();
+		grayscaleDilate->Update();
     }
-  catch( itk::ExceptionObject & err )
+	catch( itk::ExceptionObject & err )
     {
-    std::cerr << "Exception caught: " << err << std::endl;
+		std::cerr << "Exception caught: " << err << std::endl;
     }
 
-	// Add the filter to the segmentation view
-	std::vector<unsigned char> color(3,255);
-    ftk::Image::Pointer filtImg = ftk::Image::New();	 	 
-	filtImg->AppendChannelFromData3D(grayscaleDilate->GetOutput()->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), myImg->GetImageInfo()->numColumns, myImg->GetImageInfo()->numRows, myImg->GetImageInfo()->numZSlices, "gray", color, true);
-	//Update the segmentation view
-	myImg = filtImg;
-	return myImg;
-    }
+	const ftk::Image::Info * info = myImg->GetImageInfo();
+	int bpChunk = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+	memcpy( myImg->GetDataPtr(0,channelNumber), grayscaleDilate->GetOutput()->GetBufferPointer(), bpChunk );
+}
 
-
-
-ftk::Image::Pointer ftkPreprocess::GrayscaleOpen(void)
+void ftkPreprocess::GrayscaleOpen(void)
 {
 	typedef itk::BinaryBallStructuringElement<InpPixelType,3> StructuringElementType;
 	typedef itk::GrayscaleMorphologicalOpeningImageFilter<InpImageType,InpImageType,StructuringElementType >  OpenFilterType;
@@ -241,32 +208,25 @@ ftk::Image::Pointer ftkPreprocess::GrayscaleOpen(void)
 	structuringElement.CreateStructuringElement();
 	structuringElement.SetRadius(filterParams[0]);
 	grayscaleOpen->SetKernel(  structuringElement );	 
-	grayscaleOpen->SetInput(myImg->GetItkPtr<InpPixelType>(0,0));
-
+	grayscaleOpen->SetInput(myImg->GetItkPtr<InpPixelType>(0,channelNumber));
 
 	std::cout << "Applying Grayscale Opening Filter.........: " << std::endl;
 
 	try
-		{
-			grayscaleOpen->Update();
-		}
+	{
+		grayscaleOpen->Update();
+	}
 	catch( itk::ExceptionObject & err )
-		{
-			std::cerr << "Exception caught: " << err << std::endl;
-		}
+	{
+		std::cerr << "Exception caught: " << err << std::endl;
+	}
 
-	// Add the filter to the segmentation view
-	std::vector<unsigned char> color(3,255);
-    ftk::Image::Pointer filtImg = ftk::Image::New();	 	 
-	filtImg->AppendChannelFromData3D(grayscaleOpen->GetOutput()->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), myImg->GetImageInfo()->numColumns, myImg->GetImageInfo()->numRows, myImg->GetImageInfo()->numZSlices, "gray", color, true);
-	myImg = filtImg;
-	return myImg;
+	const ftk::Image::Info * info = myImg->GetImageInfo();
+	int bpChunk = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+	memcpy( myImg->GetDataPtr(0,channelNumber), grayscaleOpen->GetOutput()->GetBufferPointer(), bpChunk );
+}
 
-    }
-
-
-
-ftk::Image::Pointer ftkPreprocess::GrayscaleClose(void)
+void ftkPreprocess::GrayscaleClose(void)
 {
 	typedef itk::BinaryBallStructuringElement<InpPixelType,3> StructuringElementType;
 	typedef itk::GrayscaleMorphologicalClosingImageFilter<InpImageType,InpImageType,StructuringElementType > CloseFilterType;
@@ -276,221 +236,185 @@ ftk::Image::Pointer ftkPreprocess::GrayscaleClose(void)
 	structuringElement.CreateStructuringElement();
 	structuringElement.SetRadius(filterParams[0]);
 	grayscaleClose->SetKernel(structuringElement );	 
-	grayscaleClose->SetInput(myImg->GetItkPtr<InpPixelType>(0,0));
-
+	grayscaleClose->SetInput(myImg->GetItkPtr<InpPixelType>(0,channelNumber));
 
 	std::cout << "Applying Grayscale Closing Filter.........: " << std::endl;
 
 	try
-		{
-			grayscaleClose->Update();
-		}
+	{
+		grayscaleClose->Update();
+	}
 	catch( itk::ExceptionObject & err )
-		{
-			std::cerr << "Exception caught: " << err << std::endl;
-		}
-
-	std::vector<unsigned char> color(3,255);
-    ftk::Image::Pointer filtImg = ftk::Image::New();	 	 
-	filtImg->AppendChannelFromData3D(grayscaleClose->GetOutput()->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), myImg->GetImageInfo()->numColumns, myImg->GetImageInfo()->numRows, myImg->GetImageInfo()->numZSlices, "gray", color, true);
-	myImg = filtImg;
-	return myImg;
-
-    }
- 
-
-
-
-
- ftk::Image::Pointer ftkPreprocess::Resample(void)
-{
-		
-		typedef   float     InternalPixelType;
-		typedef itk::Image< InternalPixelType, 3 >   InternalImageType;	
-		typedef itk::IntensityWindowingImageFilter< 
-                                  InpImageType, 
-                                  InternalImageType >  IntensityFilterType;
-		
-		  typedef itk::RecursiveGaussianImageFilter< 
-                                InpImageType,
-                                InpImageType > GaussianFilterType;
-		
-		 GaussianFilterType::Pointer smootherX = GaussianFilterType::New();
-		 GaussianFilterType::Pointer smootherY = GaussianFilterType::New();
-
-		 smootherX->SetInput( myImg->GetItkPtr<InpPixelType>(0,0) );
-         smootherY->SetInput( smootherX->GetOutput() );
-		
-		
-		 InpImageType::Pointer inputImage = myImg->GetItkPtr<InpPixelType>(0,0);
-         const InpImageType::SpacingType& inputSpacing = inputImage->GetSpacing();
-		 const double isoSpacing = vcl_sqrt( inputSpacing[2] * inputSpacing[0] );
-         smootherX->SetSigma( isoSpacing );
-		 smootherY->SetSigma( isoSpacing );
-		 
-		 
-		smootherX->SetDirection( 0 );
-		smootherY->SetDirection( 1 );
-		smootherX->SetNormalizeAcrossScale( true );
-		smootherY->SetNormalizeAcrossScale( true );
-
-		
-		typedef   unsigned char   OutputPixelType;
-		typedef itk::Image< OutputPixelType,3 >   OutputImageType;
-        typedef itk::ResampleImageFilter<
-                InpImageType, OutputImageType >  ResampleFilterType;
-        ResampleFilterType::Pointer resampler = ResampleFilterType::New();	
-				
-		typedef itk::IdentityTransform< double,3>  TransformType;
-        TransformType::Pointer transform = TransformType::New();
-        transform->SetIdentity();
-		resampler->SetTransform( transform );
-						
-		typedef itk::LinearInterpolateImageFunction< 
-                          InpImageType, double >  InterpolatorType;
-		InterpolatorType::Pointer interpolator = InterpolatorType::New();
-		resampler->SetInterpolator( interpolator );
-		resampler->SetDefaultPixelValue( 255 ); // highlight regions without source				
-		resampler->SetOutputOrigin( inputImage->GetOrigin() );
-		resampler->SetOutputDirection(inputImage->GetDirection() );
-									
-		  InpImageType::SizeType   inputSize = 
-                    inputImage->GetLargestPossibleRegion().GetSize();
-  
-		typedef InpImageType::SizeType::SizeValueType SizeValueType;
-
-		const double dx = inputSize[0] * inputSpacing[0] / isoSpacing;
-		const double dy = inputSize[1] * inputSpacing[1] / isoSpacing;
-		const double dz = (inputSize[2] - 1 ) * inputSpacing[2] / isoSpacing;
-		InpImageType::SizeType   size;
-
-		size[0] = static_cast<SizeValueType>( dx );
-		size[1] = static_cast<SizeValueType>( dy );
-		size[2] = static_cast<SizeValueType>( dz );	
-																											
-		resampler->SetSize( size );																																																																											
-		resampler->SetInput( smootherY->GetOutput() );
-		
-		std::cout << "Resampling the image.........: " << std::endl;
-		
-		resampler->Update();
-		
-		std::vector<unsigned char> color(3,255);						
-		ftk::Image::Pointer filtImg = ftk::Image::New();	 	 
-		filtImg->AppendChannelFromData3D(resampler->GetOutput()->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), myImg->GetImageInfo()->numColumns, myImg->GetImageInfo()->numRows, myImg->GetImageInfo()->numZSlices, "gray", color, true);
-	    myImg = filtImg;
-		return myImg;		
-	
+	{
+		std::cerr << "Exception caught: " << err << std::endl;
 	}
 
-
-ftk::Image::Pointer ftkPreprocess::CurvAnisotropicDiffusion(void)
-{
-		 
-		 typedef itk::CurvatureAnisotropicDiffusionImageFilter<InpImageType,FloatImageType> FilterType;
-		 typedef itk::CastImageFilter<FloatImageType,InpImageType> ReverseCastFilter;	
-		 FilterType::Pointer cfilter = FilterType::New();
-         cfilter->SetInput(myImg->GetItkPtr<InpPixelType>(0,0));
-		 cfilter->SetTimeStep(filterParams[0]);
-		 cfilter->SetNumberOfIterations(filterParams[1]);
-		 cfilter->SetConductanceParameter(filterParams[2]);
-		
-		std::cout << "Applying Curvature Anisotropic Diffusion Filter.........: " << std::endl;
-		  
-		try
-		{
-			cfilter->Update();
-		}
-		catch( itk::ExceptionObject & err )
-		{
-		std::cerr << "Exception caught: " << err << std::endl;
-		}
+	const ftk::Image::Info * info = myImg->GetImageInfo();
+	int bpChunk = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+	memcpy( myImg->GetDataPtr(0,channelNumber), grayscaleClose->GetOutput()->GetBufferPointer(), bpChunk );
+}
  
-		FloatImageType::Pointer imf = cfilter->GetOutput();
-		typedef itk::ImageRegionIterator<FloatImageType> IRI;
-		IRI iter(imf,imf->GetLargestPossibleRegion());
-						
-		for(iter.GoToBegin();!iter.IsAtEnd(); ++iter)
-			{
-				float value = iter.Get();
-				value = ((value < 0)?0:((value>255)?255:value));
-				iter.Set(value);
-			}
-
-		ReverseCastFilter::Pointer rfilter = ReverseCastFilter::New();
-		rfilter->SetInput(cfilter->GetOutput());
-		rfilter->Update();
+void ftkPreprocess::Resample(void)
+{
+	typedef float InternalPixelType;
+	typedef itk::Image< InternalPixelType, 3 > InternalImageType;	
+	typedef itk::IntensityWindowingImageFilter< InpImageType,InternalImageType > IntensityFilterType;
+	typedef itk::RecursiveGaussianImageFilter< InpImageType,InpImageType > GaussianFilterType;
 		
-		std::vector<unsigned char> color(3,255);
-		ftk::Image::Pointer filtImg = ftk::Image::New();	 	 
-		filtImg->AppendChannelFromData3D(rfilter->GetOutput()->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), myImg->GetImageInfo()->numColumns, myImg->GetImageInfo()->numRows, myImg->GetImageInfo()->numZSlices, "gray", color, true);
-		myImg = filtImg;
-		return myImg;			
-										
-																		
-			/* typedef itk::ImageFileWriter<imagetype > WriterType;
-			   WriterType::Pointer writer = WriterType::New();
-			   std::string fName = this->FN+"_median"+".tif";
-			   writer->SetFileName(fName.c_str());
-			   writer->SetInput(mfilter->GetOutput());
-			   writer->Update();*/
-		 
+	GaussianFilterType::Pointer smootherX = GaussianFilterType::New();
+	GaussianFilterType::Pointer smootherY = GaussianFilterType::New();
+
+	smootherX->SetInput( myImg->GetItkPtr<InpPixelType>(0,channelNumber) );
+    smootherY->SetInput( smootherX->GetOutput() );
+		
+	InpImageType::Pointer inputImage = myImg->GetItkPtr<InpPixelType>(0,0);
+	const InpImageType::SpacingType& inputSpacing = inputImage->GetSpacing();
+	const double isoSpacing = vcl_sqrt( inputSpacing[2] * inputSpacing[0] );
+    smootherX->SetSigma( isoSpacing );
+	smootherY->SetSigma( isoSpacing );
+	smootherX->SetDirection( 0 );
+	smootherY->SetDirection( 1 );
+	smootherX->SetNormalizeAcrossScale( true );
+	smootherY->SetNormalizeAcrossScale( true );
+
+	typedef unsigned char   OutputPixelType;
+	typedef itk::Image< OutputPixelType,3 >   OutputImageType;
+    typedef itk::ResampleImageFilter< InpImageType, OutputImageType >  ResampleFilterType;
+    ResampleFilterType::Pointer resampler = ResampleFilterType::New();	
+				
+	typedef itk::IdentityTransform< double, 3 >  TransformType;
+    TransformType::Pointer transform = TransformType::New();
+    transform->SetIdentity();
+	resampler->SetTransform( transform );
+						
+	typedef itk::LinearInterpolateImageFunction< InpImageType, double >  InterpolatorType;
+	InterpolatorType::Pointer interpolator = InterpolatorType::New();
+	resampler->SetInterpolator( interpolator );
+	resampler->SetDefaultPixelValue( 255 ); // highlight regions without source				
+	resampler->SetOutputOrigin( inputImage->GetOrigin() );
+	resampler->SetOutputDirection(inputImage->GetDirection() );
+									
+	InpImageType::SizeType inputSize = inputImage->GetLargestPossibleRegion().GetSize();
+  
+	typedef InpImageType::SizeType::SizeValueType SizeValueType;
+
+	const double dx = inputSize[0] * inputSpacing[0] / isoSpacing;
+	const double dy = inputSize[1] * inputSpacing[1] / isoSpacing;
+	const double dz = (inputSize[2] - 1 ) * inputSpacing[2] / isoSpacing;
+	InpImageType::SizeType size;
+
+	size[0] = static_cast<SizeValueType>( dx );
+	size[1] = static_cast<SizeValueType>( dy );
+	size[2] = static_cast<SizeValueType>( dz );	
+																											
+	resampler->SetSize( size );																																																																											
+	resampler->SetInput( smootherY->GetOutput() );
+		
+	std::cout << "Resampling the image.........: " << std::endl;
+		
+	resampler->Update();
+		
+	const ftk::Image::Info * info = myImg->GetImageInfo();
+	int bpChunk = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+	memcpy( myImg->GetDataPtr(0,channelNumber), resampler->GetOutput()->GetBufferPointer(), bpChunk );		
 }
 
-
-
-
-
-ftk::Image::Pointer ftkPreprocess::OpeningbyReconstruction(void)
+void ftkPreprocess::CurvAnisotropicDiffusion(void)
 {
-	typedef itk::BinaryBallStructuringElement<InpPixelType,3> StructuringElementType;
-	typedef itk::OpeningByReconstructionImageFilter<InpImageType,InpImageType,StructuringElementType > ROpenFilter;
+	typedef itk::CurvatureAnisotropicDiffusionImageFilter<InpImageType,FloatImageType> FilterType;
+	typedef itk::CastImageFilter<FloatImageType,InpImageType> ReverseCastFilter;	
+	FilterType::Pointer cfilter = FilterType::New();
+    cfilter->SetInput(myImg->GetItkPtr<InpPixelType>(0,channelNumber));
+	cfilter->SetTimeStep(filterParams[0]);
+	cfilter->SetNumberOfIterations(filterParams[1]);
+	cfilter->SetConductanceParameter(filterParams[2]);
+		
+	std::cout << "Applying Curvature Anisotropic Diffusion Filter.........: " << std::endl;
+		  
+	try
+	{
+		cfilter->Update();
+	}
+	catch( itk::ExceptionObject & err )
+	{
+		std::cerr << "Exception caught: " << err << std::endl;
+	}
+ 
+	FloatImageType::Pointer imf = cfilter->GetOutput();
+	typedef itk::ImageRegionIterator<FloatImageType> IRI;
+	IRI iter(imf,imf->GetLargestPossibleRegion());				
+	for(iter.GoToBegin();!iter.IsAtEnd(); ++iter)
+	{
+		float value = iter.Get();
+		value = ((value < 0)?0:((value>255)?255:value));
+		iter.Set(value);
+	}
+
+	ReverseCastFilter::Pointer rfilter = ReverseCastFilter::New();
+	rfilter->SetInput(cfilter->GetOutput());
+	rfilter->Update();
+
+	const ftk::Image::Info * info = myImg->GetImageInfo();
+	int bpChunk = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+	memcpy( myImg->GetDataPtr(0,channelNumber), rfilter->GetOutput()->GetBufferPointer(), bpChunk );		
+											
+	/* typedef itk::ImageFileWriter<imagetype > WriterType;
+	WriterType::Pointer writer = WriterType::New();
+	std::string fName = this->FN+"_median"+".tif";
+	writer->SetFileName(fName.c_str());
+	writer->SetInput(mfilter->GetOutput());
+	writer->Update();*/	 
+}
+
+void ftkPreprocess::OpeningbyReconstruction(void)
+{
+	typedef itk::BinaryBallStructuringElement< InpPixelType, 3 > StructuringElementType;
+	typedef itk::OpeningByReconstructionImageFilter< InpImageType,InpImageType,StructuringElementType > ROpenFilter;
 
 	ROpenFilter::Pointer  RgrayscaleOpen  = ROpenFilter::New();
 	StructuringElementType  structuringElement;
 	structuringElement.CreateStructuringElement();
 	structuringElement.SetRadius(filterParams[0]);
 	RgrayscaleOpen->SetKernel(structuringElement );	 
-	RgrayscaleOpen->SetInput(myImg->GetItkPtr<InpPixelType>(0,0));
-	if(filterParams[1]){
-	RgrayscaleOpen->PreserveIntensitiesOn();
-					   }
-	else{
-	RgrayscaleOpen->PreserveIntensitiesOff();	
+	RgrayscaleOpen->SetInput(myImg->GetItkPtr<InpPixelType>(0,channelNumber));
+
+	if(filterParams[1])
+	{
+		RgrayscaleOpen->PreserveIntensitiesOn();
+	}
+	else
+	{
+		RgrayscaleOpen->PreserveIntensitiesOff();				   
+	}				   
 					   
-		}				   
 					   
-					   
-	if(filterParams[2]){
+	if(filterParams[2])
+	{
 		RgrayscaleOpen->FullyConnectedOn ();
-					   }
-	else{
+	}
+	else
+	{
 		RgrayscaleOpen->FullyConnectedOff ();	
-		}
+	}
 					   
 					   
 	std::cout << "Applying Grayscale Opening by Reconstruction Filter.........: " << std::endl;
 
 	try
-		{
-			RgrayscaleOpen->Update();
-		}
+	{
+		RgrayscaleOpen->Update();
+	}
 	catch( itk::ExceptionObject & err )
-		{
-			std::cerr << "Exception caught: " << err << std::endl;
-		}
+	{
+		std::cerr << "Exception caught: " << err << std::endl;
+	}
 
-	std::vector<unsigned char> color(3,255);
-    ftk::Image::Pointer filtImg = ftk::Image::New();	 	 
-	filtImg->AppendChannelFromData3D(RgrayscaleOpen->GetOutput()->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), myImg->GetImageInfo()->numColumns, myImg->GetImageInfo()->numRows, myImg->GetImageInfo()->numZSlices, "gray", color, true);
-	myImg = filtImg;
-	return myImg;
+	const ftk::Image::Info * info = myImg->GetImageInfo();
+	int bpChunk = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+	memcpy( myImg->GetDataPtr(0,channelNumber), RgrayscaleOpen->GetOutput()->GetBufferPointer(), bpChunk );
+}
 
-    }
-
-
-
-ftk::Image::Pointer ftkPreprocess::ClosingbyReconstruction(void)
+void ftkPreprocess::ClosingbyReconstruction(void)
 {
 	typedef itk::BinaryBallStructuringElement<InpPixelType,3> StructuringElementType;
 	typedef itk::ClosingByReconstructionImageFilter<InpImageType,InpImageType,StructuringElementType > RCloseFilter;
@@ -500,55 +424,56 @@ ftk::Image::Pointer ftkPreprocess::ClosingbyReconstruction(void)
 	structuringElement.CreateStructuringElement();
 	structuringElement.SetRadius(filterParams[0]);
 	RgrayscaleClose->SetKernel(structuringElement );	 
-	RgrayscaleClose->SetInput(myImg->GetItkPtr<InpPixelType>(0,0));
-	if(filterParams[1]){
-	RgrayscaleClose->PreserveIntensitiesOn();
-					   }
-	else{
-	RgrayscaleClose->PreserveIntensitiesOff();				   
-		}				   
+	RgrayscaleClose->SetInput(myImg->GetItkPtr<InpPixelType>(0,channelNumber));
+
+	if(filterParams[1])
+	{
+		RgrayscaleClose->PreserveIntensitiesOn();
+	}
+	else
+	{
+		RgrayscaleClose->PreserveIntensitiesOff();				   
+	}				   
 					   
 					   
-	if(filterParams[2]){
+	if(filterParams[2])
+	{
 		RgrayscaleClose->FullyConnectedOn ();
-					   }
-	else{
+	}
+	else
+	{
 		RgrayscaleClose->FullyConnectedOff ();	
-		}
+	}
 					   
 					   
 	std::cout << "Applying Grayscale Closing by Reconstruction Filter.........: " << std::endl;
 
 	try
-		{
-			RgrayscaleClose->Update();
-		}
+	{
+		RgrayscaleClose->Update();
+	}
 	catch( itk::ExceptionObject & err )
-		{
-			std::cerr << "Exception caught: " << err << std::endl;
-		}
+	{
+		std::cerr << "Exception caught: " << err << std::endl;
+	}
 
-	std::vector<unsigned char> color(3,255);
-    ftk::Image::Pointer filtImg = ftk::Image::New();	 	 
-	filtImg->AppendChannelFromData3D(RgrayscaleClose->GetOutput()->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), myImg->GetImageInfo()->numColumns, myImg->GetImageInfo()->numRows, myImg->GetImageInfo()->numZSlices, "gray", color, true);
-	myImg = filtImg;
-	return myImg;
+	const ftk::Image::Info * info = myImg->GetImageInfo();
+	int bpChunk = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+	memcpy( myImg->GetDataPtr(0,channelNumber), RgrayscaleClose->GetOutput()->GetBufferPointer(), bpChunk );
 
-    }
+}
 
-
-ftk::Image::Pointer ftkPreprocess::MeanFilter(void)
+void ftkPreprocess::MeanFilter(void)
 {
-	 
-	 typedef itk::MeanImageFilter<InpImageType,InpImageType> FilterType;     
-	 FilterType::Pointer mFilter = FilterType::New();
-	 InpImageType::SizeType indexRadius; 
-	 indexRadius[0] = filterParams[0]; // radius along x 
-	 indexRadius[1] = filterParams[1]; // radius along y 
-	 indexRadius[2] = filterParams[2]; // radius along y 
+	typedef itk::MeanImageFilter<InpImageType,InpImageType> FilterType;     
+	FilterType::Pointer mFilter = FilterType::New();
+	InpImageType::SizeType indexRadius; 
+	indexRadius[0] = filterParams[0]; // radius along x 
+	indexRadius[1] = filterParams[1]; // radius along y 
+	indexRadius[2] = filterParams[2]; // radius along y 
 
 	mFilter->SetRadius( indexRadius ); 
-	mFilter->SetInput(myImg->GetItkPtr<InpPixelType>(0,0) );
+	mFilter->SetInput(myImg->GetItkPtr<InpPixelType>(0,channelNumber) );
 	
     std::cout << "Applying Mean Filter.........: " << std::endl;
 	
@@ -561,6 +486,10 @@ ftk::Image::Pointer ftkPreprocess::MeanFilter(void)
 		std::cerr << "Exception caught: " << err << std::endl;
     }
 
+	const ftk::Image::Info * info = myImg->GetImageInfo();
+	int bpChunk = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+	memcpy( myImg->GetDataPtr(0,channelNumber), mFilter->GetOutput()->GetBufferPointer(), bpChunk );
+
 	/* typedef itk::ImageFileWriter<imagetype > WriterType;
 	WriterType::Pointer writer = WriterType::New();
 	std::string fName = this->FN+"_median"+".tif";
@@ -568,148 +497,116 @@ ftk::Image::Pointer ftkPreprocess::MeanFilter(void)
 	writer->SetInput(mfilter->GetOutput());
 	writer->Update();
 	 */	 
-
-	std::vector<unsigned char> color(3,255);
-    ftk::Image::Pointer filtImg = ftk::Image::New();	 	 
-	filtImg->AppendChannelFromData3D(mFilter->GetOutput()->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), myImg->GetImageInfo()->numColumns, myImg->GetImageInfo()->numRows, myImg->GetImageInfo()->numZSlices, "gray", color, true);
-	myImg = filtImg;
-	return myImg;
 }
 
-
-
-
-ftk::Image::Pointer ftkPreprocess::LaplacianFilter(void)
+void ftkPreprocess::LaplacianFilter(void)
 {
-   
+	typedef unsigned char CharPixelType;  //IO
+	typedef double RealPixelType;  //Operations
 
-  typedef unsigned char    CharPixelType;  //IO
-  typedef double          RealPixelType;  //Operations
+	const unsigned int Dimension = 2;
 
-  const    unsigned int    Dimension = 2;
-
-  typedef itk::Image<CharPixelType, Dimension>    CharImageType;
-  typedef itk::Image<RealPixelType, Dimension>    RealImageType;
+	typedef itk::Image<CharPixelType, Dimension> CharImageType;
+	typedef itk::Image<RealPixelType, Dimension> RealImageType;
   
-  typedef itk::ImageFileReader< CharImageType >  ReaderType;
-  typedef itk::ImageFileWriter< CharImageType >  WriterType;
+	typedef itk::ImageFileReader< CharImageType > ReaderType;
+	typedef itk::ImageFileWriter< CharImageType > WriterType;
 
-  typedef itk::CastImageFilter<InpImageType, DoubleImageType> CastToDoubleFilterType;
-  typedef itk::CastImageFilter<DoubleImageType, InpImageType> CastToCharFilterType;
+	typedef itk::CastImageFilter<InpImageType, DoubleImageType> CastToDoubleFilterType;
+	typedef itk::CastImageFilter<DoubleImageType, InpImageType> CastToCharFilterType;
 
-  typedef itk::RescaleIntensityImageFilter<DoubleImageType, DoubleImageType> RescaleFilter;
+	typedef itk::RescaleIntensityImageFilter< DoubleImageType, DoubleImageType > RescaleFilter;
+	typedef itk::LaplacianImageFilter< DoubleImageType, DoubleImageType > LaplacianFilter;
+	typedef itk::ZeroCrossingImageFilter< DoubleImageType, DoubleImageType > ZeroCrossingFilter;
+
+	CastToDoubleFilterType::Pointer toDouble = CastToDoubleFilterType::New();
+	CastToCharFilterType::Pointer toChar = CastToCharFilterType::New();
+	RescaleFilter::Pointer rescale = RescaleFilter::New();
+
+	//Setting the ITK pipeline filter
+	LaplacianFilter::Pointer lapFilter = LaplacianFilter::New();
+	ZeroCrossingFilter::Pointer zeroFilter = ZeroCrossingFilter::New();  
   
-  typedef itk::LaplacianImageFilter< 
-                              DoubleImageType, 
-                              DoubleImageType >    LaplacianFilter;
+	//The output of an edge filter is 0 or 1
+	rescale->SetOutputMinimum(   0 );
+	rescale->SetOutputMaximum( 255 );
 
-  typedef itk::ZeroCrossingImageFilter<
-                              DoubleImageType, 
-                              DoubleImageType>     ZeroCrossingFilter;
+	toDouble->SetInput(myImg->GetItkPtr<InpPixelType>(0,channelNumber));
+	toChar->SetInput( rescale->GetOutput() );
+	//writer->SetInput( toChar->GetOutput() );
 
-  CastToDoubleFilterType::Pointer toDouble = CastToDoubleFilterType::New();
-  CastToCharFilterType::Pointer toChar = CastToCharFilterType::New();
-  RescaleFilter::Pointer rescale = RescaleFilter::New();
+	//Edge Detection by Laplacian Image Filter:
+	lapFilter->SetInput( toDouble->GetOutput() );
+	zeroFilter->SetInput(lapFilter->GetOutput() );
+	rescale->SetInput(zeroFilter->GetOutput() );
 
-  //Setting the ITK pipeline filter
-  
-  LaplacianFilter::Pointer lapFilter = LaplacianFilter::New();
-  ZeroCrossingFilter::Pointer zeroFilter = ZeroCrossingFilter::New();  
-  
-  //The output of an edge filter is 0 or 1
-  rescale->SetOutputMinimum(   0 );
-  rescale->SetOutputMaximum( 255 );
-
-  toDouble->SetInput(myImg->GetItkPtr<InpPixelType>(0,0));
-  toChar->SetInput( rescale->GetOutput() );
-  //writer->SetInput( toChar->GetOutput() );
-
-  //Edge Detection by Laplacian Image Filter:
-
-  lapFilter->SetInput( toDouble->GetOutput() );
-  zeroFilter->SetInput(lapFilter->GetOutput() );
-  rescale->SetInput(zeroFilter->GetOutput() );
-
-  try
+	try
     {
-    rescale->Update();
+		rescale->Update();
     }
-  catch( itk::ExceptionObject & err )
+	catch( itk::ExceptionObject & err )
     { 
-    std::cout << "ExceptionObject caught !" << std::endl; 
-    std::cout << err << std::endl; 
+		std::cout << "ExceptionObject caught !" << std::endl; 
+		std::cout << err << std::endl; 
 	} 
 	
-	std::vector<unsigned char> color(3,255);
-    ftk::Image::Pointer filtImg = ftk::Image::New();	 	 
-	filtImg->AppendChannelFromData3D(rescale->GetOutput()->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), myImg->GetImageInfo()->numColumns, myImg->GetImageInfo()->numRows, myImg->GetImageInfo()->numZSlices, "gray", color, true);
-	myImg = filtImg;
-	return myImg;
+	const ftk::Image::Info * info = myImg->GetImageInfo();
+	int bpChunk = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+	memcpy( myImg->GetDataPtr(0,channelNumber), rescale->GetOutput()->GetBufferPointer(), bpChunk );
 }
 
-
-
-ftk::Image::Pointer ftkPreprocess::ThreeDSmoothingRGFilter(void)
+void ftkPreprocess::ThreeDSmoothingRGFilter(void)
 {
+	typedef itk::RecursiveGaussianImageFilter<FloatImageType,FloatImageType> RGFilterType;     
+	RGFilterType::Pointer RGFilter = RGFilterType::New();
 	 
-	 typedef itk::RecursiveGaussianImageFilter<FloatImageType,FloatImageType> RGFilterType;     
-	 RGFilterType::Pointer RGFilter = RGFilterType::New();
+	RGFilterType::Pointer filterX = RGFilterType::New(); 
+	RGFilterType::Pointer filterY = RGFilterType::New();
+	RGFilterType::Pointer filterZ = RGFilterType::New();
 	 
-	 RGFilterType::Pointer filterX = RGFilterType::New(); 
-	 RGFilterType::Pointer filterY = RGFilterType::New();
-	 RGFilterType::Pointer filterZ = RGFilterType::New();
+	filterX->SetDirection( 0 ); // 0 --> X direction 
+	filterY->SetDirection( 1 ); // 1 --> Y direction 
+	filterZ->SetDirection( 2 ); // 2 --> Z direction 
 	 
-	 filterX->SetDirection( 0 ); // 0 --> X direction 
-	 filterY->SetDirection( 1 ); // 1 --> Y direction 
-	 filterZ->SetDirection( 2 ); // 2 --> Z direction 
-	 
-	 
-	 filterX->SetOrder( RGFilterType::ZeroOrder ); 
-	 filterY->SetOrder( RGFilterType::ZeroOrder ); 
-	 filterZ->SetOrder( RGFilterType::ZeroOrder ); 
-	 
-	 
-	 filterX->SetInput(myImg->GetItkPtr<FloatPixelType>(0,0)); 
-	 filterY->SetInput( filterX->GetOutput() ); 
-	 filterZ->SetInput( filterY->GetOutput() );	
-	 
-	 
-	 filterX->SetSigma( filterParams[0] ); 
-	 filterY->SetSigma( filterParams[0] ); 
-	 filterZ->SetSigma( filterParams[0] ); 
+	filterX->SetOrder( RGFilterType::ZeroOrder ); 
+	filterY->SetOrder( RGFilterType::ZeroOrder ); 
+	filterZ->SetOrder( RGFilterType::ZeroOrder ); 
+	  
+	filterX->SetInput(myImg->GetItkPtr<FloatPixelType>(0,channelNumber)); 
+	filterY->SetInput( filterX->GetOutput() ); 
+	filterZ->SetInput( filterY->GetOutput() );	
+	  
+	filterX->SetSigma( filterParams[0] ); 
+	filterY->SetSigma( filterParams[0] ); 
+	filterZ->SetSigma( filterParams[0] ); 
  
-    if(filterParams[2]){ 
-	 filterX->SetNormalizeAcrossScale( true ); 
-	 filterY->SetNormalizeAcrossScale( true ); 
-	 filterZ->SetNormalizeAcrossScale( true ); 
-						}
-	else{
-	
-	 filterX->SetNormalizeAcrossScale( false ); 
-	 filterY->SetNormalizeAcrossScale( false ); 
-	 filterZ->SetNormalizeAcrossScale( false );	
-	
-		}
+	if(filterParams[2])
+	{ 
+		filterX->SetNormalizeAcrossScale( true ); 
+		filterY->SetNormalizeAcrossScale( true ); 
+		filterZ->SetNormalizeAcrossScale( true ); 
+	}
+	else
+	{
+		filterX->SetNormalizeAcrossScale( false ); 
+		filterY->SetNormalizeAcrossScale( false ); 
+		filterZ->SetNormalizeAcrossScale( false );	
+	}
 
-	 filterX->SetNumberOfThreads (filterParams[1]); 
-	 filterY->SetNumberOfThreads (filterParams[1] ); 
-	 filterZ->SetNumberOfThreads (filterParams[1] );	
+	filterX->SetNumberOfThreads ( filterParams[1] ); 
+	filterY->SetNumberOfThreads ( filterParams[1] ); 
+	filterZ->SetNumberOfThreads ( filterParams[1] );	
  	 
-	std::vector<unsigned char> color(3,255);
-    ftk::Image::Pointer filtImg = ftk::Image::New();	 	 
-	filtImg->AppendChannelFromData3D(filterZ->GetOutput()->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), myImg->GetImageInfo()->numColumns, myImg->GetImageInfo()->numRows, myImg->GetImageInfo()->numZSlices, "gray", color, true);
-	myImg = filtImg;
-	return myImg;
+	const ftk::Image::Info * info = myImg->GetImageInfo();
+	int bpChunk = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+	memcpy( myImg->GetDataPtr(0,channelNumber), filterZ->GetOutput()->GetBufferPointer(), bpChunk );
 }
 
-
-
-ftk::Image::Pointer ftkPreprocess::NormalizeImage(void)
+void ftkPreprocess::NormalizeImage(void)
 {
-	 
-	 typedef itk::NormalizeImageFilter<InpImageType,FloatImageType> FilterType;
-     
-	 FilterType::Pointer nFilter = FilterType::New();
+	typedef itk::NormalizeImageFilter<InpImageType,FloatImageType> FilterType;
+	FilterType::Pointer nFilter = FilterType::New();
+	nFilter->SetInput(myImg->GetItkPtr<InpPixelType>(0,channelNumber) );
 	 	
     std::cout << "Applying Normalizing Filter.........: " << std::endl;
 	
@@ -722,24 +619,19 @@ ftk::Image::Pointer ftkPreprocess::NormalizeImage(void)
 		std::cerr << "Exception caught: " << err << std::endl;
     }
 
-    
-
-	std::vector<unsigned char> color(3,255);
-    ftk::Image::Pointer filtImg = ftk::Image::New();	 	 
-	filtImg->AppendChannelFromData3D(nFilter->GetOutput()->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), myImg->GetImageInfo()->numColumns, myImg->GetImageInfo()->numRows, myImg->GetImageInfo()->numZSlices, "gray", color, true);
-	myImg = filtImg;
-	return myImg;
+	const ftk::Image::Info * info = myImg->GetImageInfo();
+	int bpChunk = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+	memcpy( myImg->GetDataPtr(0,channelNumber), nFilter->GetOutput()->GetBufferPointer(), bpChunk );
 }
 
-
-
-ftk::Image::Pointer ftkPreprocess::ShiftScale(void)
+void ftkPreprocess::ShiftScale(void)
 {	 
-	 typedef itk::ShiftScaleImageFilter<InpImageType,InpImageType> FilterType;
-	 FilterType::Pointer SSFilter = FilterType::New();
-	 std::cout<<filterParams[0]<<std::endl;
-	 SSFilter->SetShift(filterParams[0]);
-	 SSFilter->SetScale(filterParams[1]);
+	typedef itk::ShiftScaleImageFilter<InpImageType,InpImageType> FilterType;
+	FilterType::Pointer SSFilter = FilterType::New();
+	std::cout<<filterParams[0]<<std::endl;
+	SSFilter->SetShift(filterParams[0]);
+	SSFilter->SetScale(filterParams[1]);
+	SSFilter->SetInput(myImg->GetItkPtr<InpPixelType>(0,channelNumber));
 				
     std::cout << "Applying the Shift and Scale Filter.........: " << std::endl;
 	
@@ -752,23 +644,18 @@ ftk::Image::Pointer ftkPreprocess::ShiftScale(void)
 		std::cerr << "Exception caught: " << err << std::endl;
     }
 
-	std::vector<unsigned char> color(3,255);
-    ftk::Image::Pointer filtImg = ftk::Image::New();	 	 
-	filtImg->AppendChannelFromData3D(SSFilter->GetOutput()->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), myImg->GetImageInfo()->numColumns, myImg->GetImageInfo()->numRows, myImg->GetImageInfo()->numZSlices, "gray", color, true);
-	myImg = filtImg;
-	return myImg;
+	const ftk::Image::Info * info = myImg->GetImageInfo();
+	int bpChunk = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+	memcpy( myImg->GetDataPtr(0,channelNumber), SSFilter->GetOutput()->GetBufferPointer(), bpChunk );
 }
 
-
-
-
-ftk::Image::Pointer ftkPreprocess::SobelEdgeDetection(void)
+void ftkPreprocess::SobelEdgeDetection(void)
 {
-	 
-	 typedef itk::SobelEdgeDetectionImageFilter<InpImageType,InpImageType> FilterType;
+	typedef itk::SobelEdgeDetectionImageFilter<InpImageType,InpImageType> FilterType;
      
-	 FilterType::Pointer SEFilter = FilterType::New();
-	 SEFilter->SetNumberOfThreads(filterParams[0]);
+	FilterType::Pointer SEFilter = FilterType::New();
+	SEFilter->SetNumberOfThreads(filterParams[0]);
+	SEFilter->SetInput(myImg->GetItkPtr<InpPixelType>(0,channelNumber));
 
     std::cout << "Applying the Sobel Edge Detetction Filter.........: " << std::endl;
 	
@@ -781,174 +668,147 @@ ftk::Image::Pointer ftkPreprocess::SobelEdgeDetection(void)
 		std::cerr << "Exception caught: " << err << std::endl;
     }
 
-    
+	const ftk::Image::Info * info = myImg->GetImageInfo();
+	int bpChunk = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+	memcpy( myImg->GetDataPtr(0,channelNumber), SEFilter->GetOutput()->GetBufferPointer(), bpChunk );
+}
 
-	std::vector<unsigned char> color(3,255);
-    ftk::Image::Pointer filtImg = ftk::Image::New();	 	 
-	filtImg->AppendChannelFromData3D(SEFilter->GetOutput()->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), myImg->GetImageInfo()->numColumns, myImg->GetImageInfo()->numRows, myImg->GetImageInfo()->numZSlices, "gray", color, true);
-	myImg = filtImg;
-	return myImg;
-	
+void ftkPreprocess::CurvatureFlow(void)
+{
+	typedef itk::CurvatureFlowImageFilter<InpImageType,FloatImageType> FilterType;
+	typedef itk::CastImageFilter<FloatImageType,InpImageType> ReverseCastFilter;	
+	FilterType::Pointer filter = FilterType::New();
+    filter->SetInput(myImg->GetItkPtr<InpPixelType>(0,channelNumber));
+	filter->SetTimeStep(filterParams[0]);
+	filter->SetNumberOfIterations(filterParams[1]);
+		 		
+	std::cout << "Applying Curvature Flow Filter.........: " << std::endl;
+		  
+	try
+	{
+		filter->Update();
+	}
+	catch( itk::ExceptionObject & err )
+	{
+		std::cerr << "Exception caught: " << err << std::endl;
+	}
+ 
+	FloatImageType::Pointer imf = filter->GetOutput();
+	typedef itk::ImageRegionIterator<FloatImageType> IRI;
+	IRI iter(imf,imf->GetLargestPossibleRegion());					
+	for(iter.GoToBegin();!iter.IsAtEnd(); ++iter)
+	{
+		float value = iter.Get();
+		value = ((value < 0)?0:((value>255)?255:value));
+		iter.Set(value);
+	}
+
+	ReverseCastFilter::Pointer rfilter = ReverseCastFilter::New();
+	rfilter->SetInput(filter->GetOutput());
+	rfilter->Update();
+		
+	const ftk::Image::Info * info = myImg->GetImageInfo();
+	int bpChunk = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+	memcpy( myImg->GetDataPtr(0,channelNumber), rfilter->GetOutput()->GetBufferPointer(), bpChunk );								
+																	
+	/* typedef itk::ImageFileWriter<imagetype > WriterType;
+	   WriterType::Pointer writer = WriterType::New();
+	   std::string fName = this->FN+"_median"+".tif";
+	   writer->SetFileName(fName.c_str());
+	   writer->SetInput(mfilter->GetOutput());
+	   writer->Update();
+	 */	 			 
 }
 
 
-
-
-
-ftk::Image::Pointer ftkPreprocess::CurvatureFlow(void)
+void ftkPreprocess::MinMaxCurvatureFlow(void)
 {
-		
-	     typedef itk::CurvatureFlowImageFilter<InpImageType,FloatImageType> FilterType;
-		 typedef itk::CastImageFilter<FloatImageType,InpImageType> ReverseCastFilter;	
-		 FilterType::Pointer filter = FilterType::New();
-         filter->SetInput(myImg->GetItkPtr<InpPixelType>(0,0));
-		 filter->SetTimeStep(filterParams[0]);
-		 filter->SetNumberOfIterations(filterParams[1]);
+	typedef itk::MinMaxCurvatureFlowImageFilter<InpImageType,FloatImageType> FilterType;
+	typedef itk::CastImageFilter<FloatImageType,InpImageType> ReverseCastFilter;	
+	FilterType::Pointer filter = FilterType::New();
+    filter->SetInput(myImg->GetItkPtr<InpPixelType>(0,channelNumber));
+	filter->SetTimeStep(filterParams[0]);
+	filter->SetNumberOfIterations(filterParams[1]);
+	filter->SetStencilRadius(filterParams[2]);
 		 		
-		std::cout << "Applying Curvature Flow Filter.........: " << std::endl;
+	std::cout << "Applying Curvature Flow Filter.........: " << std::endl;
 		  
-		try
-		{
-			filter->Update();
-		}
-		catch( itk::ExceptionObject & err )
-		{
+	try
+	{
+		filter->Update();
+	}
+	catch( itk::ExceptionObject & err )
+	{
 		std::cerr << "Exception caught: " << err << std::endl;
-		}
+	}
  
-		 FloatImageType::Pointer imf = filter->GetOutput();
-		 typedef itk::ImageRegionIterator<FloatImageType> IRI;
-		 IRI iter(imf,imf->GetLargestPossibleRegion());
-						
-		 for(iter.GoToBegin();!iter.IsAtEnd(); ++iter)
-			{
-				float value = iter.Get();
-				value = ((value < 0)?0:((value>255)?255:value));
-				iter.Set(value);
-			}
-
-			ReverseCastFilter::Pointer rfilter = ReverseCastFilter::New();
-			rfilter->SetInput(filter->GetOutput());
-			rfilter->Update();
-		
-		   std::vector<unsigned char> color(3,255);
-		   ftk::Image::Pointer filtImg = ftk::Image::New();	 	 
-		   filtImg->AppendChannelFromData3D(rfilter->GetOutput()->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), myImg->GetImageInfo()->numColumns, myImg->GetImageInfo()->numRows, myImg->GetImageInfo()->numZSlices, "gray", color, true);
-		   myImg = filtImg;			
-		   return myImg;								
-																	
-			/* typedef itk::ImageFileWriter<imagetype > WriterType;
-			   WriterType::Pointer writer = WriterType::New();
-			   std::string fName = this->FN+"_median"+".tif";
-			   writer->SetFileName(fName.c_str());
-			   writer->SetInput(mfilter->GetOutput());
-			   writer->Update();
-	 */	 
-			//QApplication::restoreOverrideCursor();			 
+	FloatImageType::Pointer imf = filter->GetOutput();
+	typedef itk::ImageRegionIterator<FloatImageType> IRI;
+	IRI iter(imf,imf->GetLargestPossibleRegion());				
+	for(iter.GoToBegin();!iter.IsAtEnd(); ++iter)
+	{
+		float value = iter.Get();
+		value = ((value < 0)?0:((value>255)?255:value));
+		iter.Set(value);
 	}
 
-
-ftk::Image::Pointer ftkPreprocess::MinMaxCurvatureFlow(void)
-{
+	ReverseCastFilter::Pointer rfilter = ReverseCastFilter::New();
+	rfilter->SetInput(filter->GetOutput());
+	rfilter->Update();
 		
-	     typedef itk::MinMaxCurvatureFlowImageFilter<InpImageType,FloatImageType> FilterType;
-		 typedef itk::CastImageFilter<FloatImageType,InpImageType> ReverseCastFilter;	
-		 FilterType::Pointer filter = FilterType::New();
-         filter->SetInput(myImg->GetItkPtr<InpPixelType>(0,0));
-		 filter->SetTimeStep(filterParams[0]);
-		 filter->SetNumberOfIterations(filterParams[1]);
-		 filter->SetStencilRadius(filterParams[2]);
-		 		
-		std::cout << "Applying Curvature Flow Filter.........: " << std::endl;
-		  
-		try
-		{
-			filter->Update();
-		}
-		catch( itk::ExceptionObject & err )
-		{
-		std::cerr << "Exception caught: " << err << std::endl;
-		}
- 
-		 FloatImageType::Pointer imf = filter->GetOutput();
-		 typedef itk::ImageRegionIterator<FloatImageType> IRI;
-		 IRI iter(imf,imf->GetLargestPossibleRegion());
-						
-		 for(iter.GoToBegin();!iter.IsAtEnd(); ++iter)
-			{
-				float value = iter.Get();
-				value = ((value < 0)?0:((value>255)?255:value));
-				iter.Set(value);
-			}
-
-			ReverseCastFilter::Pointer rfilter = ReverseCastFilter::New();
-			rfilter->SetInput(filter->GetOutput());
-			rfilter->Update();
-		
-		   std::vector<unsigned char> color(3,255);
-		   ftk::Image::Pointer filtImg = ftk::Image::New();	 	 
-		   filtImg->AppendChannelFromData3D(rfilter->GetOutput()->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), myImg->GetImageInfo()->numColumns, myImg->GetImageInfo()->numRows, myImg->GetImageInfo()->numZSlices, "gray", color, true);
-		   myImg = filtImg;			
-		   return myImg;								
+	const ftk::Image::Info * info = myImg->GetImageInfo();
+	int bpChunk = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+	memcpy( myImg->GetDataPtr(0,channelNumber), rfilter->GetOutput()->GetBufferPointer(), bpChunk );								
 																	
-			/* typedef itk::ImageFileWriter<imagetype > WriterType;
-			   WriterType::Pointer writer = WriterType::New();
-			   std::string fName = this->FN+"_median"+".tif";
-			   writer->SetFileName(fName.c_str());
-			   writer->SetInput(mfilter->GetOutput());
-			   writer->Update();
-	 */	 
-			//QApplication::restoreOverrideCursor();			 
-	}
+	/* typedef itk::ImageFileWriter<imagetype > WriterType;
+	   WriterType::Pointer writer = WriterType::New();
+	   std::string fName = this->FN+"_median"+".tif";
+	   writer->SetFileName(fName.c_str());
+	   writer->SetInput(mfilter->GetOutput());
+	   writer->Update();
+	 */	 	 
+}
 	
-	
-	
-	
-	
-ftk::Image::Pointer ftkPreprocess::VesselFilter(void)
+void ftkPreprocess::VesselFilter(void)
 {
-	    // typedef itk::AnisotropicDiffusionVesselEnhancementFilter<InpImageType,FloatImageType> FilterType;
-		 /* typedef itk::CastImageFilter<FloatImageType,InpImageType> ReverseCastFilter;	
-				  FilterType::Pointer filter = FilterType::New();
-				  filter->SetInput(myImg->GetItkPtr<InpPixelType>(0,0));
-				  filter->SetSigmaMin(filterParams[0]);
-				  filter->SetSigmaMax(filterParams[1]);
-				  filter->SetNumberOfSigmaSteps(filterParams[2]);
-				  filter->SetNumberOfIterations(filterParams[3]);
-
-						 
-				 std::cout << "Applying Anisotropic Diffusion Vessel Enhancement Filter.........: " << std::endl;
+	// typedef itk::AnisotropicDiffusionVesselEnhancementFilter<InpImageType,FloatImageType> FilterType;
+	/* typedef itk::CastImageFilter<FloatImageType,InpImageType> ReverseCastFilter;	
+	FilterType::Pointer filter = FilterType::New();
+	filter->SetInput(myImg->GetItkPtr<InpPixelType>(0,channelNumber));
+	filter->SetSigmaMin(filterParams[0]);
+	filter->SetSigmaMax(filterParams[1]);
+	filter->SetNumberOfSigmaSteps(filterParams[2]);
+	filter->SetNumberOfIterations(filterParams[3]);
+	 
+	std::cout << "Applying Anisotropic Diffusion Vessel Enhancement Filter.........: " << std::endl;
 				   
-				 try
-				 {
-					 filter->Update();
-				 }
-				 catch( itk::ExceptionObject & err )
-				 {
-				 std::cerr << "Exception caught: " << err << std::endl;
-				 }
+	try
+	{
+		filter->Update();
+	}
+	catch( itk::ExceptionObject & err )
+	{
+		std::cerr << "Exception caught: " << err << std::endl;
+	}
 		  
-				  FloatImageType::Pointer imf = filter->GetOutput();
-				  typedef itk::ImageRegionIterator<FloatImageType> IRI;
-				  IRI iter(imf,imf->GetLargestPossibleRegion());
-								 
-				  for(iter.GoToBegin();!iter.IsAtEnd(); ++iter)
-					 {
-						 float value = iter.Get();
-						 value = ((value < 0)?0:((value>255)?255:value));
-						 iter.Set(value);
-					 }
+	FloatImageType::Pointer imf = filter->GetOutput();
+	typedef itk::ImageRegionIterator<FloatImageType> IRI;
+	IRI iter(imf,imf->GetLargestPossibleRegion());			 
+	for(iter.GoToBegin();!iter.IsAtEnd(); ++iter)
+	{
+		float value = iter.Get();
+		value = ((value < 0)?0:((value>255)?255:value));
+		iter.Set(value);
+	}
 
-					 ReverseCastFilter::Pointer rfilter = ReverseCastFilter::New();
-					 rfilter->SetInput(filter->GetOutput());
-					 rfilter->Update();
+	ReverseCastFilter::Pointer rfilter = ReverseCastFilter::New();
+	rfilter->SetInput(filter->GetOutput());
+	rfilter->Update();
 				 
-				    std::vector<unsigned char> color(3,255);
-				    ftk::Image::Pointer filtImg = ftk::Image::New();	 	 
-				    filtImg->AppendChannelFromData3D(rfilter->GetOutput()->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), myImg->GetImageInfo()->numColumns, myImg->GetImageInfo()->numRows, myImg->GetImageInfo()->numZSlices, "gray", color, true);
-				    myImg = filtImg;			
-		  */
-return myImg;
+	const ftk::Image::Info * info = myImg->GetImageInfo();
+	int bpChunk = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+	memcpy( myImg->GetDataPtr(0,channelNumber), rFilter->GetOutput()->GetBufferPointer(), bpChunk );			
+	*/
 }
 	
 

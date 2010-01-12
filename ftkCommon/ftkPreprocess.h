@@ -71,28 +71,29 @@ public:
     typedef itk::Image<FloatPixelType, 3> FloatImageType;
 	typedef itk::Image<DoublePixelType, 3> DoubleImageType;	
 	
-	ftk::Image::Pointer CurvAnisotropicDiffusion(void);
-	ftk::Image::Pointer GrayscaleClose(void);
-	ftk::Image::Pointer GrayscaleOpen(void);
-	ftk::Image::Pointer GrayscaleDilate(void);
-	ftk::Image::Pointer GrayscaleErode(void);
-	ftk::Image::Pointer SigmoidFilter(void);
-	ftk::Image::Pointer MedianFilter(void);
-	ftk::Image::Pointer GADiffusion(void);
-	ftk::Image::Pointer Resample(void);
-	ftk::Image::Pointer OpeningbyReconstruction(void);
-    ftk::Image::Pointer ClosingbyReconstruction(void);	
-	ftk::Image::Pointer MeanFilter(void);
-	ftk::Image::Pointer LaplacianFilter(void);
-	ftk::Image::Pointer ThreeDSmoothingRGFilter(void);
-	ftk::Image::Pointer NormalizeImage(void);
-	ftk::Image::Pointer ShiftScale(void);
-	ftk::Image::Pointer SobelEdgeDetection(void);
-	ftk::Image::Pointer CurvatureFlow(void);
-	ftk::Image::Pointer MinMaxCurvatureFlow(void);
-	ftk::Image::Pointer VesselFilter(void);// 
+	void CurvAnisotropicDiffusion(void);
+	void GrayscaleClose(void);
+	void GrayscaleOpen(void);
+	void GrayscaleDilate(void);
+	void GrayscaleErode(void);
+	void SigmoidFilter(void);
+	void MedianFilter(void);
+	void GADiffusion(void);
+	void Resample(void);
+	void OpeningbyReconstruction(void);
+    void ClosingbyReconstruction(void);	
+	void MeanFilter(void);
+	void LaplacianFilter(void);
+	void ThreeDSmoothingRGFilter(void);
+	void NormalizeImage(void);
+	void ShiftScale(void);
+	void SobelEdgeDetection(void);
+	void CurvatureFlow(void);
+	void MinMaxCurvatureFlow(void);
+	void VesselFilter(void);// 
 	
 	ftk::Image::Pointer myImg;
+	int channelNumber;
 	std::vector <double> filterParams;
 	//private:
 

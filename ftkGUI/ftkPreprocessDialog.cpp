@@ -15,25 +15,23 @@ limitations under the License.
 #include "ftkPreprocessDialog.h"
 #include "ftkPreprocess.h"
 
-
 //******************************************************************************************
 //******************************************************************************************
 // A dialog to get the paramaters file for the preprocessing to use and specify the channel 
 // if image has more than one:
 //******************************************************************************************
-
-ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, std::string id, QWidget *parent)
+ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, std::string id, ftk::Image::Pointer img, QWidget *parent)
 : QDialog(parent)
 {
-
 	InitializeFilters();
 	filtername = id;
+	myImg = img;
 	channelLabel = new QLabel("Choose Channel: ");
 	channelCombo = new QComboBox();
 	
 	for(int v = 0; v<channels.size(); ++v)
 	{
-			channelCombo->addItem(channels.at(v));
+		channelCombo->addItem(channels.at(v));
 	}
 	
 	QGridLayout *layout = new QGridLayout;
@@ -43,8 +41,7 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, std::string 
 	layout->addWidget(channelLabel,0,0);
 	layout->addWidget(channelCombo,0,1);
 
-
-switch(FilterValue[id])
+	switch(FilterValue[id])
 	{
 	//Mean and Median Filter
 	case Filter1:case Filter2:  
@@ -249,123 +246,125 @@ switch(FilterValue[id])
 	break;	
 	} 
 
+	cancelButton = new QPushButton(tr("Cancel"),this);
+	connect(cancelButton, SIGNAL(clicked()), this, SLOT(reject()));
+	layout->addWidget(cancelButton,10,1);
 	okButton = new QPushButton(tr("OK"),this);
 	connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
-	layout->addWidget(okButton,10,1);	
+	layout->addWidget(okButton,10,2);
+
 	Qt::WindowFlags flags = this->windowFlags();
 	flags &= ~Qt::WindowContextHelpButtonHint;
-	this->setWindowFlags(flags);
-			
+	this->setWindowFlags(flags);	
 }
-
-
 
 int ftkPreprocessDialog::getChannelNumber()
 {
 	return channelCombo->currentIndex();
 }
 
+void ftkPreprocessDialog::accept()
+{
+	this->doPreprocess();
+	QDialog::accept();
+}
 
-ftk::Image::Pointer ftkPreprocessDialog::getImage(void) 
+void ftkPreprocessDialog::doPreprocess(void) 
 {		
-		
-		std::vector<double> fParams = this->getParams(filtername); 
-		ftkPreprocess *ftkpp = new ftkPreprocess();
-		ftkpp->myImg = this->myImg;
-		ftkpp->filterParams = fParams;
-		
-		switch(FilterValue[filtername])
-		{
-		case Filter1:
-					myImg = ftkpp->MedianFilter();	
-					break;
-		case Filter2:
-					myImg = ftkpp->MeanFilter();	
-					break;			
-		case Filter3:
-					myImg = ftkpp->GADiffusion();	
-					break;			
-		case Filter4:
-					myImg = ftkpp->CurvAnisotropicDiffusion();	
-					break;
-		case Filter5:
-					myImg = ftkpp->SigmoidFilter();	
-					break;
-		case Filter6:
-					myImg = ftkpp->GrayscaleErode();	
-					break;		
-		case Filter7:
-					myImg = ftkpp->GrayscaleDilate();	
-					break;				
-		case Filter8:
-					myImg = ftkpp->GrayscaleOpen();	
-					break;
-		case Filter9:
-					myImg = ftkpp->GrayscaleClose();	
-					break;
-		case Filter10:
-					myImg = ftkpp->ThreeDSmoothingRGFilter();	
-					break;
-		case Filter11:
-					myImg = ftkpp->OpeningbyReconstruction();	
-					break;				
-		case Filter12:
-					myImg = ftkpp->ClosingbyReconstruction();	
-					break;
-		case Filter13:
-					myImg = ftkpp->NormalizeImage();	
-					break;
-		case Filter14:
-					myImg = ftkpp->ShiftScale();	
-					break;						
-		case Filter15:
-					myImg = ftkpp->SobelEdgeDetection();	
-					break;
-		case Filter16:
-					myImg = ftkpp->CurvatureFlow();	
-					break;
-		case Filter17:
-					myImg = ftkpp->MinMaxCurvatureFlow();	
-					break;
-		case Filter18:
-					myImg = ftkpp->Resample();	
-					break;
-		case Filter19:
-					myImg = ftkpp->LaplacianFilter();	
-					break;			
-		default:
-				    std::cout<<"Something went wrong. Please contact the System Administrator"<<std::endl;
-					break;
-		}									
+	std::vector<double> fParams = this->getParams(filtername); 
 
-		return myImg;
+	ftkPreprocess *ftkpp = new ftkPreprocess();
+	ftkpp->myImg = this->myImg;
+	ftkpp->channelNumber = this->getChannelNumber();
+	ftkpp->filterParams = fParams;
+		
+	switch( FilterValue[filtername] )
+	{
+		case Filter1:
+			ftkpp->MedianFilter();	
+			break;
+		case Filter2:
+			ftkpp->MeanFilter();	
+			break;			
+		case Filter3:
+			ftkpp->GADiffusion();	
+			break;			
+		case Filter4:
+			ftkpp->CurvAnisotropicDiffusion();	
+			break;
+		case Filter5:
+			ftkpp->SigmoidFilter();	
+			break;
+		case Filter6:
+			ftkpp->GrayscaleErode();	
+			break;		
+		case Filter7:
+			ftkpp->GrayscaleDilate();	
+			break;				
+		case Filter8:
+			ftkpp->GrayscaleOpen();	
+			break;
+		case Filter9:
+			ftkpp->GrayscaleClose();	
+			break;
+		case Filter10:
+			ftkpp->ThreeDSmoothingRGFilter();	
+			break;
+		case Filter11:
+			ftkpp->OpeningbyReconstruction();	
+			break;				
+		case Filter12:
+			ftkpp->ClosingbyReconstruction();	
+			break;
+		case Filter13:
+			ftkpp->NormalizeImage();	
+			break;
+		case Filter14:
+			ftkpp->ShiftScale();	
+			break;						
+		case Filter15:
+			ftkpp->SobelEdgeDetection();	
+			break;
+		case Filter16:
+			ftkpp->CurvatureFlow();	
+			break;
+		case Filter17:
+			ftkpp->MinMaxCurvatureFlow();	
+			break;
+		case Filter18:
+			ftkpp->Resample();	
+			break;
+		case Filter19:
+			ftkpp->LaplacianFilter();	
+			break;			
+		default:
+			std::cout<<"Something went wrong. Please contact the System Administrator"<<std::endl;
+			break;
+	}									
 }	
 	
 void ftkPreprocessDialog::InitializeFilters(void) 
-
 {
-FilterValue["Median"] = Filter1;
-FilterValue["Mean"] = Filter2;
-FilterValue["GAnisotropicDiffusion"] = Filter3;
-FilterValue["CAnisotropicDiffusion"] = Filter4;
-FilterValue["Sigmoid"] = Filter5;
-FilterValue["GSErode"] = Filter6;
-FilterValue["GSDilate"] = Filter7;
-FilterValue["GSOpen"] = Filter8;
-FilterValue["GSClose"] = Filter9;
-FilterValue["SRGaussian"] = Filter10;//Needs work
-FilterValue["OpeningbyReconstruction"] = Filter11;
-FilterValue["ClosingbyReconstruction"] = Filter12;
-FilterValue["Normalize"] = Filter13;
-FilterValue["ShiftandScale"] = Filter14;		
-FilterValue["Sobel"] = Filter15;
-FilterValue["CurvatureFlow"] = Filter16;
-FilterValue["MinMax"] = Filter17;
-FilterValue["Resample"] = Filter18;
-FilterValue["Laplacian"] = Filter19;
+	FilterValue["Median"] = Filter1;
+	FilterValue["Mean"] = Filter2;
+	FilterValue["GAnisotropicDiffusion"] = Filter3;
+	FilterValue["CAnisotropicDiffusion"] = Filter4;
+	FilterValue["Sigmoid"] = Filter5;
+	FilterValue["GSErode"] = Filter6;
+	FilterValue["GSDilate"] = Filter7;
+	FilterValue["GSOpen"] = Filter8;
+	FilterValue["GSClose"] = Filter9;
+	FilterValue["SRGaussian"] = Filter10;//Needs work
+	FilterValue["OpeningbyReconstruction"] = Filter11;
+	FilterValue["ClosingbyReconstruction"] = Filter12;
+	FilterValue["Normalize"] = Filter13;
+	FilterValue["ShiftandScale"] = Filter14;		
+	FilterValue["Sobel"] = Filter15;
+	FilterValue["CurvatureFlow"] = Filter16;
+	FilterValue["MinMax"] = Filter17;
+	FilterValue["Resample"] = Filter18;
+	FilterValue["Laplacian"] = Filter19;
 }
-
-
 
 std::vector<double> ftkPreprocessDialog::getParams(std::string id)
 {
@@ -375,7 +374,7 @@ std::vector<double> ftkPreprocessDialog::getParams(std::string id)
 	paramVal4 = 0; 
 	paramVal5 = 0; 
 	
-  switch(FilterValue[id])
+	switch(FilterValue[id])
 	{
 	case Filter1:case Filter2:case Filter3:case Filter4:case Filter10:case Filter11:case Filter12:case Filter17: 
 		paramVal1 =  QTParam1->text().toDouble();
@@ -415,13 +414,11 @@ std::vector<double> ftkPreprocessDialog::getParams(std::string id)
 		parameters.push_back(paramVal2);
 		break;											
 
-  default:
-    break;
-
+	default:
+		break;
 	}
 
-return this->parameters;
-
+	return this->parameters;
 }
 
 

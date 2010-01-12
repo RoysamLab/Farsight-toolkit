@@ -1006,8 +1006,7 @@ void NucleusEditor::closeViews()
 //Call this slot when the table has been modified (new rows or columns) to update the views:
 void NucleusEditor::updateViews()
 {
-	if(segView)
-		segView->update();
+	segView->update();
 
 	for(int p=0; p<(int)tblWin.size(); ++p)
 		tblWin.at(p)->update();
@@ -1468,12 +1467,7 @@ void NucleusEditor::segmentNuclei()
 	if(!myImg) return;
 
 	//Get Channels in current Image:
-	QVector<QString> chs;
-	int numChannels = myImg->GetImageInfo()->numChannels;
-	for (int i=0; i<numChannels; ++i)
-	{
-		chs << QString::number(i) + ". " + QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i));
-	}
+	QVector<QString> chs = getChannelStrings();
 
 	//Get the paramFile and channel to use:
 	QString paramFile = "";
@@ -1491,6 +1485,17 @@ void NucleusEditor::segmentNuclei()
 	projectFiles.nucSegValidated = false;
 
 	startProcess();
+}
+
+QVector<QString> NucleusEditor::getChannelStrings(void)
+{
+	QVector<QString> chs;
+	int numChannels = myImg->GetImageInfo()->numChannels;
+	for (int i=0; i<numChannels; ++i)
+	{
+		chs << QString::number(i) + ". " + QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i));
+	}
+	return chs;
 }
 
 //******************************************************************************************
@@ -1748,7 +1753,7 @@ ParamsFileDialog::ParamsFileDialog(QString lastPth, QVector<QString> channels, Q
 	channelCombo = new QComboBox();
 	for(int v = 0; v<channels.size(); ++v)
 	{
-			channelCombo->addItem(channels.at(v));
+		channelCombo->addItem(channels.at(v));
 	}
 	QHBoxLayout *chLayout = new QHBoxLayout;
 	chLayout->addWidget(channelLabel);
@@ -1841,151 +1846,55 @@ void ParamsFileDialog::ParamBrowse(QString comboSelection)
 //*******************************************************************************************************************************
 //*******************************************************************************************************************************
 //*******************************************************************************************************************************
+void NucleusEditor::MedianFilter()
+{
+	this->preprocess("Median");
+}
 
+void NucleusEditor::AnisotropicDiffusion()
+{
+	this->preprocess("GAnisotropicDiffusion");
+}
 
-void NucleusEditor:: MedianFilter()
- {
-	 	QVector<QString> chs;
-	int numChannels = myImg->GetImageInfo()->numChannels;
-	for (int i=0; i<numChannels; ++i)
-	{
-		chs << QString::number(i) + ". " + QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i));
-	}
-	 ftkPreprocessDialog *dialog = new ftkPreprocessDialog(chs,"Median",this);
-	 dialog->myImg = this->myImg;
- 	if(dialog->exec())
-	 {
-		 this->myImg = 	dialog->getImage(); 	
-		 segView->SetChannelImage(dialog->getImage());
-	 }
- }
+void NucleusEditor::CurvAnisotropicDiffusion()
+{
+	this->preprocess("CAnisotropicDiffusion");
+}
 
+void NucleusEditor::GrayscaleErode()
+{
+	this->preprocess("GSErode");
+}
 
-void NucleusEditor:: AnisotropicDiffusion()
- {
-	 	QVector<QString> chs;
-	int numChannels = myImg->GetImageInfo()->numChannels;
-	for (int i=0; i<numChannels; ++i)
-	{
-		chs << QString::number(i) + ". " + QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i));
-	}
-	 ftkPreprocessDialog *dialog = new ftkPreprocessDialog(chs,"GAnisotropicDiffusion",this);
-	 dialog->myImg = this->myImg;
- 	if(dialog->exec())
-	 {
-		 this->myImg = 	dialog->getImage();	
-		 segView->SetChannelImage(dialog->getImage());
-	 }
- }
+void NucleusEditor::GrayscaleDilate()
+{
+	this->preprocess("GSDilate");
+}
 
+void NucleusEditor::GrayscaleOpen()
+{
+	this->preprocess("GSOpen");
+}
 
-void NucleusEditor:: CurvAnisotropicDiffusion()
- {
-	 	QVector<QString> chs;
-	int numChannels = myImg->GetImageInfo()->numChannels;
-	for (int i=0; i<numChannels; ++i)
-	{
-		chs << QString::number(i) + ". " + QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i));
-	}
-	 ftkPreprocessDialog *dialog = new ftkPreprocessDialog(chs,"CAnisotropicDiffusion",this);
-	 dialog->myImg = this->myImg;
- 	if(dialog->exec())
-	 {
-		 this->myImg = 	dialog->getImage();		
-		 segView->SetChannelImage(dialog->getImage());
-	 }
- }
+void NucleusEditor::GrayscaleClose()
+{
+	this->preprocess("GSClose");
+}
 
+void NucleusEditor::SigmoidFilter()
+{
+	this->preprocess("Sigmoid");
+}
 
+void NucleusEditor::preprocess(QString id)
+{
+	if(!myImg)
+		return;
 
- void NucleusEditor:: GrayscaleErode()
-  {
- 	 	QVector<QString> chs;
- 	int numChannels = myImg->GetImageInfo()->numChannels;
- 	for (int i=0; i<numChannels; ++i)
- 	{
- 		chs << QString::number(i) + ". " + QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i));
- 	}
- 	 ftkPreprocessDialog *dialog = new ftkPreprocessDialog(chs,"GSErode",this);
- 	 dialog->myImg = this->myImg;
+ 	ftkPreprocessDialog *dialog = new ftkPreprocessDialog(this->getChannelStrings(), id.toStdString(), this->myImg, this);
   	if(dialog->exec())
- 	 {
- 		 this->myImg = 	dialog->getImage();	
-		 segView->SetChannelImage(dialog->getImage());
- 	 }
- }
-
-
-
- void NucleusEditor:: GrayscaleDilate()
-  {
- 	 	QVector<QString> chs;
- 	int numChannels = myImg->GetImageInfo()->numChannels;
- 	for (int i=0; i<numChannels; ++i)
  	{
- 		chs << QString::number(i) + ". " + QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i));
+		segView->update();
+		projectFiles.inputSaved = false;
  	}
- 	 ftkPreprocessDialog *dialog = new ftkPreprocessDialog(chs,"GSDilate",this);
- 	 dialog->myImg = this->myImg;
-  	if(dialog->exec())
- 	 {
- 		 this->myImg = 	dialog->getImage();	
-		 segView->SetChannelImage(dialog->getImage());
- 	 }
- }
-
-
-
- void NucleusEditor:: GrayscaleOpen()
-  {
- 	 	QVector<QString> chs;
- 	int numChannels = myImg->GetImageInfo()->numChannels;
- 	for (int i=0; i<numChannels; ++i)
- 	{
- 		chs << QString::number(i) + ". " + QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i));
- 	}
- 	 ftkPreprocessDialog *dialog = new ftkPreprocessDialog(chs,"GSOpen",this);
- 	 dialog->myImg = this->myImg;
-  	if(dialog->exec())
- 	 {
- 		 this->myImg = 	dialog->getImage();		
-		 segView->SetChannelImage(dialog->getImage());
- 	 }
- }
-
-
-
- void NucleusEditor:: GrayscaleClose()
-  {
- 	 	QVector<QString> chs;
- 	int numChannels = myImg->GetImageInfo()->numChannels;
- 	for (int i=0; i<numChannels; ++i)
- 	{
- 		chs << QString::number(i) + ". " + QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i));
- 	}
- 	 ftkPreprocessDialog *dialog = new ftkPreprocessDialog(chs,"GSClose",this);
- 	 dialog->myImg = this->myImg;
-  	if(dialog->exec())
- 	 {
- 		 this->myImg = 	dialog->getImage();		
-		 segView->SetChannelImage(dialog->getImage());
- 	 }
- }
-
-
- void NucleusEditor:: SigmoidFilter()
-  {
- 	 	QVector<QString> chs;
- 	int numChannels = myImg->GetImageInfo()->numChannels;
- 	for (int i=0; i<numChannels; ++i)
- 	{
- 		chs << QString::number(i) + ". " + QString::fromStdString(myImg->GetImageInfo()->channelNames.at(i));
- 	}
- 	 ftkPreprocessDialog *dialog = new ftkPreprocessDialog(chs,"Sigmoid",this);
- 	 dialog->myImg = this->myImg;
-  	if(dialog->exec())
- 	 {
- 		 this->myImg = 	dialog->getImage();
-		 segView->SetChannelImage(dialog->getImage());
- 	 }
- }
+}

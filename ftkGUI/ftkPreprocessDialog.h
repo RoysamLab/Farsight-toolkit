@@ -41,20 +41,26 @@ class ftkPreprocessDialog : public QDialog
 {
 	Q_OBJECT
 public:
-	ftkPreprocessDialog(QVector<QString> chs, std::string id,QWidget *parent = 0);
-	QLabel *channelLabel;
-	ftk::Image::Pointer myImg;
-	enum Filters {Filter1,Filter2,Filter3,Filter4,Filter5,Filter6,Filter7,Filter8,Filter9,Filter10,Filter11,Filter12,Filter13,Filter14,Filter15,Filter16,Filter17,Filter18,Filter19}; // Value-Defintions of the different String values
-	std::map<std::string, Filters> FilterValue;	// Map to associate the strings with the enum values
-	ftk::Image::Pointer getImage(void);
-	std::vector<double> getParams(std::string id); 
-	std::string filtername;
-
-	int getChannelNumber(void);
-	void InitializeFilters(void); 
+	ftkPreprocessDialog(QVector<QString> chs, std::string id, ftk::Image::Pointer img, QWidget *parent = 0);
+	
+public slots:
+	void accept();
 
 private:
+	enum Filters {Filter1,Filter2,Filter3,Filter4,Filter5,Filter6,Filter7,Filter8,Filter9,Filter10,Filter11,Filter12,Filter13,Filter14,Filter15,Filter16,Filter17,Filter18,Filter19}; // Value-Defintions of the different String values
 
+	//functions:
+	std::vector<double> getParams(std::string id); 
+	int getChannelNumber(void);
+	void InitializeFilters(void);
+	void doPreprocess(void);
+
+	//variables:
+	std::string filtername;
+	ftk::Image::Pointer myImg;
+	std::map<std::string, Filters> FilterValue;	// Map to associate the strings with the enum valuesk
+
+	QLabel *channelLabel;
 	QComboBox *channelCombo;
 	QLabel *QTParamLabel1;
 	QLabel *QTParamLabel2;
@@ -70,8 +76,8 @@ private:
 	QCheckBox *QTParam5;	
 	QCheckBox *QTParam6;	
 	
-	QString lastPath;
 	QPushButton *okButton;
+	QPushButton *cancelButton;
 	
 	double paramVal1;
 	double paramVal2;	
@@ -80,6 +86,5 @@ private:
 	double paramVal5;
 	std::vector<double> parameters;
 };
-
 
 #endif
