@@ -61,12 +61,12 @@ template <typename pixelType> pixelType * Image::GetSlicePtr(int T, int CH, int 
 
 template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::GetItkPtr(int T, int CH, PtrMode mode = DEFAULT)
 {
-	if( !IsMatch<pixelType>(m_Info.dataType) )
-		return NULL;
-		
+	if( !IsMatch<pixelType>(m_Info.dataType) ) //Forced to duplicate image because the datatypes are different
+		mode = DEEP_COPY;
+
 	if( T >= m_Info.numTSlices || CH >= m_Info.numChannels )
 		return NULL;
-		
+
 	bool makeCopy;
 	bool itkManageMemory;
 
@@ -85,9 +85,9 @@ template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::
 		makeCopy = false;
 		itkManageMemory = false;
 	}
-	
+
 	int numPixels = m_Info.numColumns * m_Info.numRows * m_Info.numZSlices;
-	int numBytes = m_Info.bytesPerPix * numPixels;
+	int numBytes = sizeof(pixelType) * numPixels;
 	
 	void * mem = NULL;	//This will point to the data I want to create the array from;
 	if(makeCopy)		//Make a copy of the data	
@@ -96,13 +96,23 @@ template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::
 		mem = malloc(numBytes);
 		if(mem == NULL)
 			return NULL;
-		memcpy(mem,imageDataPtrs[T][CH].mem,numBytes);
+		if( !IsMatch<pixelType>(m_Info.dataType) ){		//Datatypes are not the same use C-style cast and copy all pixels
+			pixelType *out_pixel_container = static_cast<pixelType *>(mem);
+			for(int k=0; k<m_Info.numZSlices; ++k)
+				for(int j=0; j<m_Info.numRows; ++j)
+					for(int i=0; i<m_Info.numColumns; ++i){
+						*out_pixel_container = static_cast<pixelType>( GetPixel(T,CH,k,j,i) );
+						++out_pixel_container;
+					}
+		}
+		else											//Datatypes are the same use compiler optimizations to memcpy 
+			memcpy(mem,imageDataPtrs[T][CH].mem,numBytes);
 	}
 	else
 	{
 		mem = imageDataPtrs[T][CH].mem;
 	}
-	
+
 	bool letItkManageMemory = false;			//itk DOES NOT manage the memory (default)
 	if( itkManageMemory )
 	{
@@ -116,17 +126,17 @@ template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::
 			letItkManageMemory = true;	//itk DOES manage the memory
 		}
 	}
-	
+
 	typedef itk::ImportImageContainer<unsigned long, pixelType> ImageContainerType;
 	typename ImageContainerType::Pointer container = ImageContainerType::New();
-	
+
 	container->Initialize();
 	container->Reserve(numPixels);
 	container->SetImportPointer( static_cast<pixelType *>(mem), numPixels, letItkManageMemory );
 
 	typedef itk::Image< pixelType, 3 > OutputImageType;
 	typename OutputImageType::Pointer image = OutputImageType::New();
-	
+
 	typename OutputImageType::PointType origin;
    	origin[0] = 0; 
 	origin[1] = 0;    
@@ -150,10 +160,10 @@ template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::
     spacing[2] = m_Info.spacing.at(2);
     image->SetSpacing(spacing);
 	image->Allocate();
-	
+
 	image->SetPixelContainer(container);
 	image->Update();
-		
+
 	return image;
 }
 
