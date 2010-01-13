@@ -1,5 +1,6 @@
 <Image>
-    <file chname="hema" r="255" g="0" b="0">C:\Documents and Settings\Guest\Desktop\Histopathogy_test\Image_Cube_hematoxylin_Data.tif</file>
-    <file chname="her2" r="0" g="255" b="0">C:\Documents and Settings\Guest\Desktop\Histopathogy_test\Image_Cube_HER2_Data.tif</file>
-    <file chname="ck" r="0" g="0" b="255">C:\Documents and Settings\Guest\Desktop\Histopathogy_test\Image_Cube_CK_Data.tif</file>
+    <file chname="hema" r="255" g="0" b="0">C:\ccrc\DAPI.tif</file>
+    <file chname="cd34" r="0" g="255" b="0">C:\ccrc\CD34.tif</file>
+    <file chname="ca9" r="0" g="0" b="255">C:\ccrc\CA9.tif</file>
+    <file chname="sma" r="0" g="255" b="255">C:\ccrc\SMA.tif</file>
 </Image>

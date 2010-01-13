@@ -1,8 +1,9 @@
-<ProjectDefinition name="histo1">
+<ProjectDefinition name="Project CCRC">
   <Inputs>
-    <channel number="0" name="hematoxalyn" type="NUCLEAR"/>
-    <channel number="1" name="her2" type="MEMBRANE"/>
-    <channel number="2" name="ck" type="CYTOPLASM"/>
+    <channel number="0" name="hema" type="NUCLEAR"/>
+    <channel number="1" name="cd34" type="CD34_MARKER"/>
+    <channel number="2" name="ca9" type="CYTOPLASM"/>
+    <channel number="3" name="sma" type="SMA_MARKER"/>
   </Inputs>
   <Pipeline>
      <step name="NUCLEAR_SEGMENTATION"/>
@@ -31,6 +32,7 @@
     <parameter name="number_of_levels_in_foreground" value="1"/>
   </CytoplasmSegmentationParameters>
   <AssociationRules>
-    <parameter name="CYTOPLASM" value="C:\Documents and Settings\Guest\Desktop\Histopathogy_test\CK_Association_Rules.xml"/>
+    <AssociationRule Name="CA9_TOTAL" SegmentationSource="NUCLEAR" Target_Image="ca9" Outside_Distance="0" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="True" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="TOTAL" />
+    <AssociationRule Name="CD34_AVG" SegmentationSource="NUCLEAR" Target_Image="cd34" Outside_Distance="0" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="True" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="AVERAGE" />
   </AssociationRules>
 </ProjectDefinition>
