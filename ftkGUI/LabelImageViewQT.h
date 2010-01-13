@@ -92,6 +92,7 @@ public slots:
 	void ClearGets(void);
 	void GetBox(void);
 	void Get2Points(void);
+	void GetROI(void);
 	void update(void);
 	void goToSelection(void);
 	int GetCurrentZ(void){ return vSpin->value(); };
@@ -102,6 +103,7 @@ signals:
 	void mouseAt(int x, int y, int z);
 	void boxDrawn(int x1, int y1, int x2, int y2, int z);
 	void pointsClicked(int x1, int y1, int z1, int x2, int y2, int z2);
+	void roiDrawn(std::vector< ftk::Object::Point > points);
 
 protected slots:
 	void refreshBaseImage(void);
@@ -182,7 +184,9 @@ protected:
 
 	//For collecting two points:
 	bool pointsMode;
+	bool roiMode;
 	std::vector<int> origin3;	//a 3D origin for points mode!!
+	std::vector< ftk::Object::Point > roiPoints;
 
 	//For Getting a Box:
 	QPoint origin;

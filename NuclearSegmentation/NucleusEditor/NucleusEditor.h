@@ -86,7 +86,7 @@ public:
 protected:
 	void closeEvent(QCloseEvent *event);
 
-private slots:
+protected slots:
 	void setMouseStatus(int,int,int);
 
 	//Loading:
@@ -172,7 +172,7 @@ private slots:
 
 signals:
 
-private:
+protected:
 	void createMenus();
 	void createStatusBar();
 	void createProcessToolBar();

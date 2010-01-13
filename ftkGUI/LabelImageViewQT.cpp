@@ -51,6 +51,7 @@ LabelImageViewQT::LabelImageViewQT(QWidget *parent)
 	setMouseTracking(true);				//Will emit the current mouse position!
 	rubberBand = NULL;					//For drawing a box!!
 	pointsMode = false;					//For collecting points
+	roiMode = false;					//For drawing Region of Interest (ROI)
 }
 
 void LabelImageViewQT::setupUI(void)
@@ -264,6 +265,10 @@ void LabelImageViewQT::ClearGets(void)
 	pointsMode = false;
 	origin3.clear();
 
+	//stop getting ROI:
+	roiMode = false;
+	roiPoints.clear();
+
 	//stop getting box:
 	if(rubberBand)
 	{
@@ -276,6 +281,7 @@ void LabelImageViewQT::ClearGets(void)
 void LabelImageViewQT::GetBox(void)
 {
 	if(pointsMode) return;
+	if(roiMode) return;
 
 	if(!rubberBand)	
 		rubberBand = new MyRubberBand(this);
@@ -284,8 +290,17 @@ void LabelImageViewQT::GetBox(void)
 void LabelImageViewQT::Get2Points(void)
 {
 	if(rubberBand) return;
+	if(roiMode) return;
 
 	pointsMode = true;
+}
+
+void LabelImageViewQT::GetROI(void)
+{
+	if(rubberBand) return;
+	if(pointsMode) return;
+
+	roiMode = true;
 }
 
 void LabelImageViewQT::SaveDisplayImageToFile()
@@ -520,6 +535,7 @@ void LabelImageViewQT::mousePressEvent(QMouseEvent *event)
 	}
 
 	if(pointsMode) return;
+	if(roiMode) return;
 
 	QPoint v_origin = origin - corner;	// This is a local position (in viewport coordinates)
 
@@ -599,7 +615,7 @@ void LabelImageViewQT::mouseMoveEvent(QMouseEvent *event)
 
 void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 {
-	if(rubberBand || pointsMode)
+	if(rubberBand || pointsMode || roiMode)
 	{
 		QPoint corner = scrollArea->pos();
 		QPoint pos = event->pos() - corner;		// This is a local position (in viewport coordinates)
@@ -616,24 +632,30 @@ void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 			origin = QPoint();
 			emit boxDrawn(x1, y1, x2, y2, vSpin->value());
 		}
-		else //pointsMode
+		else	// pointsMode or roiMode
 		{
-			if( abs(x1-x2) < 5 && abs(y1-y2) < 5 )		//I haven't moved for during this click
+			if( abs(x1-x2) < 5 && abs(y1-y2) < 5 )		//I haven't moved far during this click
 			{
-				if(origin3.size() == 0)
+				if(pointsMode)
 				{
-					origin3.push_back(x2);
-					origin3.push_back(y2);
-					origin3.push_back(vSpin->value());
+					if(origin3.size() == 0)
+					{
+						origin3.push_back(x2);
+						origin3.push_back(y2);
+						origin3.push_back(vSpin->value());
+					}
+					else
+					{
+						x1 = origin3.at(0);
+						y1 = origin3.at(1);
+						int z1 = origin3.at(2);
+						origin3.clear();
+						pointsMode = false;
+						emit pointsClicked(x1,y1,z1,x2,y2,vSpin->value());
+					}
 				}
-				else
+				else //roiMode
 				{
-					x1 = origin3.at(0);
-					y1 = origin3.at(1);
-					int z1 = origin3.at(2);
-					origin3.clear();
-					pointsMode = false;
-					emit pointsClicked(x1,y1,z1,x2,y2,vSpin->value());
 				}
 			}
 		}
