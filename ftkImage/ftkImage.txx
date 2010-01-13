@@ -72,6 +72,9 @@ template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::
 
 	if(mode == RELEASE_CONTROL)
 	{
+		if(imageDataPtrs[T][CH].manager != FTK)	//I can't release control because I don't have it
+			return NULL;
+
 		makeCopy = false;
 		itkManageMemory = true;
 	}
@@ -114,18 +117,11 @@ template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::
 	}
 
 	bool letItkManageMemory = false;			//itk DOES NOT manage the memory (default)
-	if( itkManageMemory )
+	if( itkManageMemory )	//DEEP COPY or RELEASE CONTROL
 	{
-		if( imageDataPtrs[T][CH].manager != FTK )	//I can't manage it because someone else already does
-		{
-			return NULL;
-		}
-		else
-		{
-			if(mode != DEEP_COPY)
-				imageDataPtrs[T][CH].manager = ITK;
-			letItkManageMemory = true;	//itk DOES manage the memory
-		}
+		if(mode == RELEASE_CONTROL)
+			imageDataPtrs[T][CH].manager = ITK;
+		letItkManageMemory = true;	//itk DOES manage the memory
 	}
 
 	typedef itk::ImportImageContainer<unsigned long, pixelType> ImageContainerType;
