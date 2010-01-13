@@ -196,7 +196,7 @@ template <typename newType> void Image::Cast()
 				{
 					for(int i=0; i<x; ++i)
 					{
-						newType pix = static_cast<newType>( this->GetPixel(t,ch,k,j,i) );
+						newType pix = this->GetPixelT<newType>(t,ch,k,j,i);
 						newArray[k*y*x + j*x + i] = pix;
 					}
 				}

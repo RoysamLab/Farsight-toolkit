@@ -914,60 +914,7 @@ void Image::SetPixel(int T, int CH, int Z, int R, int C, double newValue)
 //*****************************************************************************************
 double Image::GetPixel(int T, int CH, int Z, int R, int C)
 {
-	if( T >= m_Info.numTSlices || CH >= m_Info.numChannels || Z >= m_Info.numZSlices \
-		|| R >= m_Info.numRows || C >= m_Info.numColumns )
-		return 0.0;
-
-	if( T < 0 || CH < 0 || Z < 0 || R < 0 || C < 0 )
-		return 0.0;
-
 	return this->GetPixelT<double>(T,CH,Z,R,C);
-
-	/*
-	unsigned int x = m_Info.numColumns;
-	unsigned int y = m_Info.numRows;
-	unsigned int n = m_Info.bytesPerPix;
-	char *p = static_cast<char *>(imageDataPtrs[T][CH].mem) + Z*y*x*n + R*x*n + C*n;	//any 8-bit type works here
-
-	double value = 0; 
-	switch(m_Info.dataType)
-	{
-		case itk::ImageIOBase::CHAR:
-			value = GetPixelValue<char, double>(p);
-		break;
-		case itk::ImageIOBase::UCHAR:
-			value = GetPixelValue<unsigned char, double>(p);
-		break;
-		case itk::ImageIOBase::SHORT:
-			value = GetPixelValue<short, double>(p);
-		break;
-		case itk::ImageIOBase::USHORT:
-			value = GetPixelValue<unsigned short, double>(p);
-		break;
-		case itk::ImageIOBase::INT:
-			value = GetPixelValue<int, double>(p);
-		break;
-		case itk::ImageIOBase::UINT:
-			value = GetPixelValue<unsigned int, double>(p);
-		break;
-		case itk::ImageIOBase::LONG:
-			value = GetPixelValue<long, double>(p);
-		break;
-		case itk::ImageIOBase::ULONG:
-			value = GetPixelValue<unsigned long, double>(p);
-		break;
-		case itk::ImageIOBase::FLOAT:
-			value = GetPixelValue<float, double>(p);
-		break;
-		case itk::ImageIOBase::DOUBLE:
-			value = GetPixelValue<double, double>(p);
-		break;
-		default:
-			//These are not supported!
-		break;
-	}
-	return value;
-	*/
 }
 
 }  // end namespace ftk
