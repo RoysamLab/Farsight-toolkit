@@ -60,10 +60,10 @@ void AssociativeFeatureCalculator::SetInputs(ftk::Image::Pointer inp_labeled_ima
 	typedef itk::CastImageFilter< LabImageType, LabImageType > LabelCastType;
 	typedef itk::CastImageFilter< TargImageType, TargImageType > InputCastType;
 
-	LabImageType::Pointer lab_image = seg_labeled_image->GetItkPtr<unsigned short>(0,seg_channel_number);
-	TargImageType::Pointer inp_image = inp_labeled_image->GetItkPtr<unsigned short>(0,inp_channel_number);
+	lab_im = seg_labeled_image->GetItkPtr<unsigned short>(0,seg_channel_number,ftk::Image::DEEP_COPY);
+	inp_im = inp_labeled_image->GetItkPtr<unsigned short>(0,inp_channel_number,ftk::Image::DEEP_COPY);
 
-	int z = seg_labeled_image->GetImageInfo()->numZSlices;
+	/*int z = seg_labeled_image->GetImageInfo()->numZSlices;
 	int z1 = inp_labeled_image->GetImageInfo()->numZSlices;
 
 	LabelExtractType::Pointer leFilter = LabelExtractType::New();
@@ -94,7 +94,13 @@ void AssociativeFeatureCalculator::SetInputs(ftk::Image::Pointer inp_labeled_ima
 	}
 
 	lab_im = lFilter->GetOutput();
-	inp_im = lFilter1->GetOutput();
+	inp_im = lFilter1->GetOutput();*/
+
+	/*typedef itk::ImageFileWriter< TargImageType > writertype;
+	writertype::Pointer writer = writertype::New();
+	writer->SetInput( inp_im );
+	writer->SetFileName( "cast_image.tif" );
+	writer->Update();*/
 
 	inputs_set = true;
 }

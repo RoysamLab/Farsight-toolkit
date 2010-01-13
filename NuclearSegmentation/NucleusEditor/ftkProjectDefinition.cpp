@@ -176,7 +176,7 @@ void ProjectDefinition::ReadAssociationParameters(TiXmlElement * inputElement)
 
 		ftk::AssociationRule assocRule("");
 
-		if ( strcmp(parameter,"parameter") == 0 ){
+		if ( strcmp(parameter,"AssociationRule") == 0 ){
 			assocRule.SetRuleName(parameterElement->Attribute("Name"));
 
 			assocRule.SetSegmentationFileNmae(parameterElement->Attribute("SegmentationSource"));

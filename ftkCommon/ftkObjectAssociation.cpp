@@ -103,6 +103,7 @@ void ObjectAssociation::AddAssociation(std::string ruleName,std::string targFile
 	default:
 		assocRule->SetAssocType(ASSOC_AVERAGE);
 	}
+	++numOfAssocRules;
 	assocRulesList.push_back(*assocRule);
 	
 }

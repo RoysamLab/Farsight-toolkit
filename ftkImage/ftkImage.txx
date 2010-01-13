@@ -96,7 +96,7 @@ template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::
 		mem = malloc(numBytes);
 		if(mem == NULL)
 			return NULL;
-		if( !IsMatch<pixelType>(m_Info.dataType) ){		//Datatypes are not the same use C-style cast and copy all pixels
+		if( !IsMatch<pixelType>(m_Info.dataType) ){		//Datatypes are not the same; use C-style cast and copy all pixels
 			pixelType *out_pixel_container = static_cast<pixelType *>(mem);
 			for(int k=0; k<m_Info.numZSlices; ++k)
 				for(int j=0; j<m_Info.numRows; ++j)
@@ -105,7 +105,7 @@ template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::
 						++out_pixel_container;
 					}
 		}
-		else											//Datatypes are the same use compiler optimizations to memcpy 
+		else											//Datatypes are the same; use compiler optimizations to memcpy 
 			memcpy(mem,imageDataPtrs[T][CH].mem,numBytes);
 	}
 	else
@@ -122,7 +122,8 @@ template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::
 		}
 		else
 		{
-			imageDataPtrs[T][CH].manager = ITK;
+			if(mode != DEEP_COPY)
+				imageDataPtrs[T][CH].manager = ITK;
 			letItkManageMemory = true;	//itk DOES manage the memory
 		}
 	}
