@@ -921,6 +921,9 @@ double Image::GetPixel(int T, int CH, int Z, int R, int C)
 	if( T < 0 || CH < 0 || Z < 0 || R < 0 || C < 0 )
 		return 0.0;
 
+	return this->GetPixelT<double>(T,CH,Z,R,C);
+
+	/*
 	unsigned int x = m_Info.numColumns;
 	unsigned int y = m_Info.numRows;
 	unsigned int n = m_Info.bytesPerPix;
@@ -964,6 +967,7 @@ double Image::GetPixel(int T, int CH, int Z, int R, int C)
 		break;
 	}
 	return value;
+	*/
 }
 
 }  // end namespace ftk

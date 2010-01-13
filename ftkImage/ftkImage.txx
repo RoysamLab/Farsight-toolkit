@@ -104,7 +104,8 @@ template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::
 			for(int k=0; k<m_Info.numZSlices; ++k)
 				for(int j=0; j<m_Info.numRows; ++j)
 					for(int i=0; i<m_Info.numColumns; ++i){
-						*out_pixel_container = static_cast<pixelType>( GetPixel(T,CH,k,j,i) );
+						//*out_pixel_container = static_cast<pixelType>( this->GetPixel(T,CH,k,j,i) );
+						*out_pixel_container = this->GetPixelT<pixelType>(T,CH,k,j,i);
 						++out_pixel_container;
 					}
 		}
@@ -195,7 +196,7 @@ template <typename newType> void Image::Cast()
 				{
 					for(int i=0; i<x; ++i)
 					{
-						newType pix = static_cast<newType>( GetPixel(t,ch,k,j,i) );
+						newType pix = static_cast<newType>( this->GetPixel(t,ch,k,j,i) );
 						newArray[k*y*x + j*x + i] = pix;
 					}
 				}
@@ -335,6 +336,61 @@ template <typename pType, typename rType> rType Image::GetPixelValue(void * p)
 {
 	pType * pval = static_cast<pType *>(p);
 	return static_cast<rType>(*pval);
+}
+
+//Casts the value to rType and returns it
+template <typename rType> rType Image::GetPixelT(int T, int CH, int Z, int R, int C)
+{
+	if( T >= m_Info.numTSlices || CH >= m_Info.numChannels || Z >= m_Info.numZSlices \
+		|| R >= m_Info.numRows || C >= m_Info.numColumns )
+		return static_cast<rType>(0.0);
+
+	if( T < 0 || CH < 0 || Z < 0 || R < 0 || C < 0 )
+		return static_cast<rType>(0.0);
+
+	unsigned int x = m_Info.numColumns;
+	unsigned int y = m_Info.numRows;
+	unsigned int n = m_Info.bytesPerPix;
+	char *p = static_cast<char *>(imageDataPtrs[T][CH].mem) + Z*y*x*n + R*x*n + C*n;	//any 8-bit type works here
+
+	double value = 0; 
+	switch(m_Info.dataType)
+	{
+		case itk::ImageIOBase::CHAR:
+			value = GetPixelValue<char, rType>(p);
+		break;
+		case itk::ImageIOBase::UCHAR:
+			value = GetPixelValue<unsigned char, rType>(p);
+		break;
+		case itk::ImageIOBase::SHORT:
+			value = GetPixelValue<short, rType>(p);
+		break;
+		case itk::ImageIOBase::USHORT:
+			value = GetPixelValue<unsigned short, rType>(p);
+		break;
+		case itk::ImageIOBase::INT:
+			value = GetPixelValue<int, rType>(p);
+		break;
+		case itk::ImageIOBase::UINT:
+			value = GetPixelValue<unsigned int, rType>(p);
+		break;
+		case itk::ImageIOBase::LONG:
+			value = GetPixelValue<long, rType>(p);
+		break;
+		case itk::ImageIOBase::ULONG:
+			value = GetPixelValue<unsigned long, rType>(p);
+		break;
+		case itk::ImageIOBase::FLOAT:
+			value = GetPixelValue<float, rType>(p);
+		break;
+		case itk::ImageIOBase::DOUBLE:
+			value = GetPixelValue<double, rType>(p);
+		break;
+		default:
+			//These are not supported!
+		break;
+	}
+	return value;
 }
 
 template<typename TComp> void Image::LoadImageITK(std::string fileName, unsigned int numChannels, itkPixelType pixType, bool stacksAreForTime, bool appendChannels)
