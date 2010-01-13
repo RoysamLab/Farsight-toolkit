@@ -243,7 +243,9 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, std::string 
 	 */		
 	case Filter19:
 	//Laplacian	
-	break;	
+	break;
+	case Filter20:
+		break;
 	} 
 
 	cancelButton = new QPushButton(tr("Cancel"),this);
@@ -336,7 +338,10 @@ void ftkPreprocessDialog::doPreprocess(void)
 			break;
 		case Filter19:
 			ftkpp->LaplacianFilter();	
-			break;			
+			break;	
+		case Filter20:
+			ftkpp->InvertIntensity();
+			break;
 		default:
 			std::cout<<"Something went wrong. Please contact the System Administrator"<<std::endl;
 			break;
@@ -364,6 +369,7 @@ void ftkPreprocessDialog::InitializeFilters(void)
 	FilterValue["MinMax"] = Filter17;
 	FilterValue["Resample"] = Filter18;
 	FilterValue["Laplacian"] = Filter19;
+	FilterValue["Invert"] = Filter20;
 }
 
 std::vector<double> ftkPreprocessDialog::getParams(std::string id)

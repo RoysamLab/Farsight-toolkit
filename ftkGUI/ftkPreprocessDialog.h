@@ -47,7 +47,7 @@ public slots:
 	void accept();
 
 private:
-	enum Filters {Filter1,Filter2,Filter3,Filter4,Filter5,Filter6,Filter7,Filter8,Filter9,Filter10,Filter11,Filter12,Filter13,Filter14,Filter15,Filter16,Filter17,Filter18,Filter19}; // Value-Defintions of the different String values
+	enum Filters {Filter1,Filter2,Filter3,Filter4,Filter5,Filter6,Filter7,Filter8,Filter9,Filter10,Filter11,Filter12,Filter13,Filter14,Filter15,Filter16,Filter17,Filter18,Filter19,Filter20}; // Value-Defintions of the different String values
 
 	//functions:
 	std::vector<double> getParams(std::string id); 

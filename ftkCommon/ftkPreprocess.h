@@ -20,6 +20,7 @@ limitations under the License.
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
+// NOTE THAT THIS CLASS IS WRITTEN FOR 8-BIT IMAGE PROCESSING
 
 #include "ftkImage.h"
 #include "itkImage.h"
@@ -55,7 +56,7 @@ limitations under the License.
 #include "itkSobelEdgeDetectionImageFilter.h"
 #include "itkCurvatureFlowImageFilter.h"
 #include "itkMinMaxCurvatureFlowImageFilter.h"
-
+#include "itkInvertIntensityImageFilter.h"
 
 
 class ftkPreprocess
@@ -71,6 +72,7 @@ public:
     typedef itk::Image<FloatPixelType, 3> FloatImageType;
 	typedef itk::Image<DoublePixelType, 3> DoubleImageType;	
 	
+	void InvertIntensity(void);
 	void CurvAnisotropicDiffusion(void);
 	void GrayscaleClose(void);
 	void GrayscaleOpen(void);

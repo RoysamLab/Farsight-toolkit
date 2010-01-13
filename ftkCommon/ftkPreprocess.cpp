@@ -14,13 +14,31 @@ limitations under the License.
 =========================================================================*/
 #include "ftkPreprocess.h"
 
-
-
-
 ftkPreprocess::ftkPreprocess()
 {
 	//std::cout<<"I was here"<<std::endl;
 	channelNumber = 0;
+}
+
+void ftkPreprocess::InvertIntensity(void)
+{
+	typedef itk::InvertIntensityImageFilter<InpImageType,InpImageType> FilterType;
+	FilterType::Pointer filter = FilterType::New();
+	filter->SetInput(myImg->GetItkPtr<InpPixelType>(0,channelNumber));
+	filter->InPlaceOn();
+
+	std::cout << "Applying Invert Intensity Filter.........";
+
+	try
+	{
+		filter->Update();
+	}
+	catch( itk::ExceptionObject & err )
+	{
+		std::cerr << "\nException caught: " << err << std::endl;
+	}
+	
+	std::cout << "done\n";
 }
 
 void ftkPreprocess::GADiffusion(void)

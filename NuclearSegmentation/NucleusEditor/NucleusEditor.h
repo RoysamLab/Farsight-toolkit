@@ -142,17 +142,20 @@ private slots:
 
 	//***************************************************
 	// Preprocessing Menu
-	 void setPreprocessingEnabled(bool val);
-	 void AnisotropicDiffusion(void);
-	 void MedianFilter(void);
-	 void SigmoidFilter(void);
-	 void GrayscaleErode(void);
-	 void GrayscaleDilate(void);
-	 void GrayscaleOpen(void);
-	 void GrayscaleClose(void);
-	 void CurvAnisotropicDiffusion(void);
+	void setPreprocessingEnabled(bool val);
+	void CropToRegion(void);
+	void BlankToRegion(void);
+	void InvertIntensities(void);
+	void AnisotropicDiffusion(void);
+	void MedianFilter(void);
+	void SigmoidFilter(void);
+	void GrayscaleErode(void);
+	void GrayscaleDilate(void);
+	void GrayscaleOpen(void);
+	void GrayscaleClose(void);
+	void CurvAnisotropicDiffusion(void);
 	//void Resample(void);
-	 void preprocess(QString id);
+	void preprocess(QString id);
 	//*****************************************************
 
 	//For Tools menu
@@ -235,6 +238,9 @@ private:
 	//************************************************************************
 	//Preprocess menu
 	QMenu *PreprocessMenu;
+	QAction *cropAction;
+	QAction *blankAction;
+	QAction *invertPixAction;
     QAction *AnisotropicAction;
 	QAction *MedianAction;
 	QAction *SigmoidAction;

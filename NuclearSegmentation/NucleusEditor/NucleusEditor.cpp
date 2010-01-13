@@ -379,42 +379,58 @@ void NucleusEditor::createPreprocessingMenu()
 	//************************************************************************************************
     PreprocessMenu = menuBar()->addMenu(tr("&Preprocessing"));
 
+	cropAction = new QAction(tr("Crop Image"), this);
+	cropAction->setStatusTip(tr("Draw and crop the image to rectangle"));
+	connect(cropAction, SIGNAL(triggered()), this, SLOT(CropToRegion()));
+	//PreprocessMenu->addAction(cropAction);
 
-	    MedianAction = new QAction(tr("Median Filter"), this);
-	   	MedianAction->setStatusTip(tr("Apply Median Filter "));
-	   	connect(MedianAction, SIGNAL(triggered()), this, SLOT(MedianFilter()));
-	   	PreprocessMenu->addAction(MedianAction);
+	blankAction = new QAction(tr("Mask Image"), this);
+	blankAction->setStatusTip(tr("Draw a polygon region, and mask all pixels outside this region"));
+	connect(blankAction, SIGNAL(triggered()), this, SLOT(BlankToRegion()));
+	//PreprocessMenu->addAction(blankAction);
+
+	//PreprocessMenu->addSeparator();
+
+	invertPixAction = new QAction(tr("Invert Intensity Filter"), this);
+	invertPixAction->setStatusTip(tr("Invert intensity value of each pixel"));
+	connect(invertPixAction, SIGNAL(triggered()), this, SLOT(InvertIntensities()));
+	PreprocessMenu->addAction(invertPixAction);
+
+    MedianAction = new QAction(tr("Median Filter"), this);
+   	MedianAction->setStatusTip(tr("Apply Median Filter "));
+   	connect(MedianAction, SIGNAL(triggered()), this, SLOT(MedianFilter()));
+   	PreprocessMenu->addAction(MedianAction);
 
 
-	   	AnisotropicAction = new QAction(tr("Gradient Anisotropic Diffusion Filter"), this);
-		AnisotropicAction->setStatusTip(tr("Apply Gradient Anisotropic Diffusion Filtering "));
-		connect(AnisotropicAction, SIGNAL(triggered()), this, SLOT(AnisotropicDiffusion()));
-		PreprocessMenu->addAction(AnisotropicAction);
+   	AnisotropicAction = new QAction(tr("Gradient Anisotropic Diffusion Filter"), this);
+	AnisotropicAction->setStatusTip(tr("Apply Gradient Anisotropic Diffusion Filtering "));
+	connect(AnisotropicAction, SIGNAL(triggered()), this, SLOT(AnisotropicDiffusion()));
+	PreprocessMenu->addAction(AnisotropicAction);
 
-		CurvAnisotropicAction = new QAction(tr("Curvature Anisotropic Diffusion Filter"), this);
-		CurvAnisotropicAction->setStatusTip(tr("Apply Curvature Anisotropic Diffusion Filtering "));
-		connect(CurvAnisotropicAction, SIGNAL(triggered()), this, SLOT(CurvAnisotropicDiffusion()));
-		PreprocessMenu->addAction(CurvAnisotropicAction);
+	CurvAnisotropicAction = new QAction(tr("Curvature Anisotropic Diffusion Filter"), this);
+	CurvAnisotropicAction->setStatusTip(tr("Apply Curvature Anisotropic Diffusion Filtering "));
+	connect(CurvAnisotropicAction, SIGNAL(triggered()), this, SLOT(CurvAnisotropicDiffusion()));
+	PreprocessMenu->addAction(CurvAnisotropicAction);
 
-		GSErodeAction = new QAction(tr("Grayscale Erosion Filter"), this);
-		GSErodeAction->setStatusTip(tr("Apply Grayscale Erosion"));
-		connect(GSErodeAction, SIGNAL(triggered()), this, SLOT(GrayscaleErode()));
-		PreprocessMenu->addAction(GSErodeAction);
+	GSErodeAction = new QAction(tr("Grayscale Erosion Filter"), this);
+	GSErodeAction->setStatusTip(tr("Apply Grayscale Erosion"));
+	connect(GSErodeAction, SIGNAL(triggered()), this, SLOT(GrayscaleErode()));
+	PreprocessMenu->addAction(GSErodeAction);
 
-		GSDilateAction = new QAction(tr("Grayscale Dilation Filter"), this);
-		GSDilateAction->setStatusTip(tr("Apply Grayscale Dilation"));
-		connect(GSDilateAction, SIGNAL(triggered()), this, SLOT(GrayscaleDilate()));
-		PreprocessMenu->addAction(GSDilateAction);
+	GSDilateAction = new QAction(tr("Grayscale Dilation Filter"), this);
+	GSDilateAction->setStatusTip(tr("Apply Grayscale Dilation"));
+	connect(GSDilateAction, SIGNAL(triggered()), this, SLOT(GrayscaleDilate()));
+	PreprocessMenu->addAction(GSDilateAction);
 
-		GSOpenAction = new QAction(tr("Grayscale Open Filter"), this);
-		GSOpenAction->setStatusTip(tr("Apply Grayscale Opening"));
-		connect(GSOpenAction, SIGNAL(triggered()), this, SLOT(GrayscaleOpen()));
-		PreprocessMenu->addAction(GSOpenAction);
+	GSOpenAction = new QAction(tr("Grayscale Open Filter"), this);
+	GSOpenAction->setStatusTip(tr("Apply Grayscale Opening"));
+	connect(GSOpenAction, SIGNAL(triggered()), this, SLOT(GrayscaleOpen()));
+	PreprocessMenu->addAction(GSOpenAction);
 
-		GSCloseAction = new QAction(tr("Grayscale Close Filter"), this);
-		GSCloseAction->setStatusTip(tr("Apply Grayscale Closing"));
-		connect(GSCloseAction, SIGNAL(triggered()), this, SLOT(GrayscaleClose()));
-		PreprocessMenu->addAction(GSCloseAction);
+	GSCloseAction = new QAction(tr("Grayscale Close Filter"), this);
+	GSCloseAction->setStatusTip(tr("Apply Grayscale Closing"));
+	connect(GSCloseAction, SIGNAL(triggered()), this, SLOT(GrayscaleClose()));
+	PreprocessMenu->addAction(GSCloseAction);
 
 
 	SigmoidAction = new QAction(tr("Sigmoid Filter"), this);
@@ -1176,6 +1192,13 @@ void NucleusEditor::stopEditing(void)
 {
 	setEditsEnabled(false);
 
+	if(splitAction->isChecked())
+	{
+		segView->ClearGets();
+		splitAction->setChecked(false);
+		disconnect(segView, SIGNAL(pointsClicked(int,int,int,int,int,int)), this, SLOT(splitCell(int,int,int,int,int,int)));
+	}
+
 	std::string log_entry = "NUCLEAR_SEGMENTATION_VALIDATED , ";
 	log_entry += ftk::TimeStamp();
 	ftk::AppendTextFile(projectFiles.log, log_entry);
@@ -1879,10 +1902,26 @@ void ParamsFileDialog::ParamBrowse(QString comboSelection)
 //*******************************************************************************************************************************
 //*******************************************************************************************************************************
 //*******************************************************************************************************************************
+// PRE-PROCESSING FUNCTIONS:
 //*******************************************************************************************************************************
 //*******************************************************************************************************************************
 //*******************************************************************************************************************************
 //*******************************************************************************************************************************
+void NucleusEditor::CropToRegion(void)
+{
+
+}
+
+void NucleusEditor::BlankToRegion(void)
+{
+
+}
+
+void NucleusEditor::InvertIntensities(void)
+{
+	this->preprocess("Invert");
+}
+
 void NucleusEditor::MedianFilter()
 {
 	this->preprocess("Median");
