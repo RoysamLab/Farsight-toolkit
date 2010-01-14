@@ -605,11 +605,12 @@ void View3D::CreateLayout()
 	this->fileMenu->addAction(this->saveAction);
 	this->fileMenu->addAction(this->exitAction);
 
-	this->ShowToolBars = this->menuBar()->addMenu(tr("Tool Bars"));
+	//this->ShowToolBars = this->menuBar()->addMenu(tr("Tool Bars"));
 
   this->EditsToolBar = addToolBar(tr("Edit Toolbar"));
   this->EditsToolBar->setToolTip("EditToolBar");
-  this->ShowToolBars->addAction(this->EditsToolBar->toggleViewAction());
+  this->menuBar()->addAction(this->EditsToolBar->toggleViewAction());
+  //this->ShowToolBars->addAction(this->EditsToolBar->toggleViewAction());
   /*this->EditsToolBar->addAction(this->saveAction);
   this->EditsToolBar->addAction(this->exitAction);
   this->EditsToolBar->addSeparator();*/
@@ -628,7 +629,8 @@ void View3D::CreateLayout()
 
   this->BranchToolBar = addToolBar(tr("Branch Toolbar"));
   this->BranchToolBar->setToolTip("Branch Toolbar");
-  this->ShowToolBars->addAction(this->BranchToolBar->toggleViewAction());
+  this->menuBar()->addAction(this->BranchToolBar->toggleViewAction());
+  //this->ShowToolBars->addAction(this->BranchToolBar->toggleViewAction());
   this->BranchToolBar->addAction(this->explodeTree);
   this->BranchToolBar->addAction(this->BranchButton);
   this->BranchToolBar->addAction(this->root);
@@ -654,12 +656,10 @@ void View3D::CreateLayout()
   this->statusBar()->addPermanentWidget(this->DeleteLabel,0);
 
   this->InformationDisplays = new QDockWidget("Edit Log Information", this);
-	//this->LogViewer = new QWidget(this->InformationDisplays);
-  //QGridLayout *EditViewerLayout = new QGridLayout(this->LogViewer);
-  //EditViewerLayout->addWidget(this->EditLogDisplay);
   this->InformationDisplays->setWidget(this->EditLogDisplay);
   this->addDockWidget(Qt::LeftDockWidgetArea, this->InformationDisplays);
-  this->ShowToolBars->addAction(this->InformationDisplays->toggleViewAction());
+  this->menuBar()->addAction(this->InformationDisplays->toggleViewAction());
+  //this->ShowToolBars->addAction(this->InformationDisplays->toggleViewAction());
 }
 
 void View3D::CreateInteractorStyle()
@@ -1014,7 +1014,7 @@ void View3D::SLine()
 
 void View3D::ListSelections()
 {
-	std::vector<int> IDs = this->TreeModel->GetSelecectedIDs();
+	std::vector<TraceLine* > IDs = this->TreeModel->GetSelectedTraces();
 	QMessageBox *selectionInfo = new QMessageBox;
 	QString listText;
 	QString selectedText;
@@ -1032,7 +1032,7 @@ void View3D::ListSelections()
 	listText += QString::number(IDs.size()) + " lines are selected\n";
 	for (unsigned int i = 0; i < IDs.size(); i++)
 	  {
-	  selectedText += QString::number(IDs[i]) + "\n";   
+		  selectedText += QString(IDs[i]->stats().c_str()) + "\n";   
 	  } 
 	}
 	this->statusBar()->showMessage(listText);
@@ -1868,13 +1868,13 @@ void View3D::rayCast(char *raySource)
     }
   std::cout << "Image Read " << std::endl;
 //itk-vtk connector
-  typedef itk::ImageToVTKImageFilter<ImageType> ConnectorType;
+  /*typedef itk::ImageToVTKImageFilter<ImageType> ConnectorType;
   ConnectorType::Pointer connector= ConnectorType::New();
   connector->SetInput( i2spReader->GetOutput() );
   vtkSmartPointer<vtkImageToStructuredPoints> i2sp =
     vtkSmartPointer<vtkImageToStructuredPoints>::New();
   i2sp->SetInput(connector->GetOutput());
-  
+ */ 
   ImageType::SizeType size = i2spReader->GetOutput()->GetLargestPossibleRegion().GetSize();
   vtkSmartPointer<vtkImageData> vtkim = vtkSmartPointer<vtkImageData>::New();
   vtkim->SetScalarTypeToUnsignedChar();
