@@ -76,6 +76,8 @@ public:
     typedef itk::Image<FloatPixelType, 3> FloatImageType;
 	typedef itk::Image<DoublePixelType, 3> DoubleImageType;	
 	
+	void MaskTest(void);
+
 	void MaskImage(std::vector< ftk::Object::Point > roiPoints);
 	void InvertIntensity(void);
 	void CurvAnisotropicDiffusion(void);

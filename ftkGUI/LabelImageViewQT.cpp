@@ -669,7 +669,8 @@ void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 						//Check to see if I've closed the region and should end:
 						if( abs(first.x-last.x) < 5 && abs(first.y-last.y) < 5 )
 						{
-							roiPoints.push_back(first);
+							//Erase last point:
+							roiPoints.erase(roiPoints.end()-1);
 							roiMode = false;
 							emit roiDrawn(roiPoints);
 							roiPoints.clear();
