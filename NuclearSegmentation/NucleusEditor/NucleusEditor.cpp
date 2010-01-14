@@ -387,7 +387,7 @@ void NucleusEditor::createPreprocessingMenu()
 	blankAction = new QAction(tr("Mask Image"), this);
 	blankAction->setStatusTip(tr("Draw a polygon region, and mask all pixels outside this region"));
 	connect(blankAction, SIGNAL(triggered()), this, SLOT(BlankToRegion()));
-	//PreprocessMenu->addAction(blankAction);
+	PreprocessMenu->addAction(blankAction);
 
 	//PreprocessMenu->addSeparator();
 
@@ -518,8 +518,22 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 {
 	this->abortProcess();
 
-	if(!projectFiles.inputSaved || !projectFiles.outputSaved || !projectFiles.definitionSaved || !projectFiles.tableSaved)
-		this->saveProject(projectFilename,false);
+	if(projectFilename != "")
+	{
+		if(!projectFiles.inputSaved || !projectFiles.outputSaved || !projectFiles.definitionSaved || !projectFiles.tableSaved)
+			this->saveProject(projectFilename,false);
+	}
+	else
+	{
+		if(!projectFiles.inputSaved)
+			this->askSaveImage();
+		if(!projectFiles.outputSaved)
+			this->askSaveResult();
+		if(!projectFiles.definitionSaved)
+			this->askSaveProject();
+		if(!projectFiles.tableSaved)
+			this->askSaveTable();
+	}
 
 	//Then Close all other windows
 	foreach (QWidget *widget, qApp->topLevelWidgets())
@@ -1914,7 +1928,22 @@ void NucleusEditor::CropToRegion(void)
 
 void NucleusEditor::BlankToRegion(void)
 {
+	segView->GetROI();
+	connect(segView, SIGNAL(roiDrawn(std::vector< ftk::Object::Point >)), this, SLOT(doMasking(std::vector< ftk::Object::Point >)));
+}
 
+void NucleusEditor::doMasking(std::vector< ftk::Object::Point > roiPoints)
+{
+	segView->ClearGets();
+	disconnect(segView, SIGNAL(roiDrawn(std::vector< ftk::Object::Point >)), this, SLOT(doMasking(std::vector< ftk::Object::Point >)));
+
+	ftkPreprocess *ftkpp = new ftkPreprocess();
+	ftkpp->myImg = this->myImg;
+	ftkpp->MaskImage(roiPoints);
+	delete ftkpp;
+
+	segView->update();
+	projectFiles.inputSaved = false;
 }
 
 void NucleusEditor::InvertIntensities(void)

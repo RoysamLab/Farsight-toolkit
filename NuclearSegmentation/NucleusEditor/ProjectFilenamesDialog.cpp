@@ -121,9 +121,13 @@ ProjectFilenamesDialog::ProjectFilenamesDialog(QString path, ftk::ProjectFiles *
 	masterLayout->addStretch(5);
 
 	QHBoxLayout *okLayout = new QHBoxLayout;
+
+	quitButton = new QPushButton(tr("Cancel"));
+	connect(quitButton, SIGNAL(clicked()), this, SLOT(reject()));
 	okButton = new QPushButton(tr("Done"));
 	connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
 	okLayout->addStretch(20);
+	okLayout->addWidget(quitButton);
 	okLayout->addWidget(okButton);
 	masterLayout->addLayout(okLayout);
 

@@ -82,6 +82,7 @@ private:
 	QLabel *tableFile;
 	QPushButton *tableButton;
 
+	QPushButton *quitButton;
 	QPushButton *okButton;
 };
 

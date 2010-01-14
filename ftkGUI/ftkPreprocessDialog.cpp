@@ -345,7 +345,8 @@ void ftkPreprocessDialog::doPreprocess(void)
 		default:
 			std::cout<<"Something went wrong. Please contact the System Administrator"<<std::endl;
 			break;
-	}									
+	}
+	delete ftkpp;
 }	
 	
 void ftkPreprocessDialog::InitializeFilters(void) 

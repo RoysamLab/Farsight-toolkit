@@ -24,6 +24,7 @@ limitations under the License.
 
 #include "ftkImage.h"
 #include "itkImage.h"
+#include "ftkObject.h"
 #include <vector>
 //ITK Preprocessing includes
 
@@ -57,6 +58,9 @@ limitations under the License.
 #include "itkCurvatureFlowImageFilter.h"
 #include "itkMinMaxCurvatureFlowImageFilter.h"
 #include "itkInvertIntensityImageFilter.h"
+#include "itkPolylineMask2DImageFilter.h"
+#include "itkPolyLineParametricPath.h"
+#include "itkExtractImageFilter.h"
 
 
 class ftkPreprocess
@@ -72,6 +76,7 @@ public:
     typedef itk::Image<FloatPixelType, 3> FloatImageType;
 	typedef itk::Image<DoublePixelType, 3> DoubleImageType;	
 	
+	void MaskImage(std::vector< ftk::Object::Point > roiPoints);
 	void InvertIntensity(void);
 	void CurvAnisotropicDiffusion(void);
 	void GrayscaleClose(void);

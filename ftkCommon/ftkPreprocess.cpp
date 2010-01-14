@@ -13,11 +13,81 @@ See the License for the specific language governing permissions and
 limitations under the License.
 =========================================================================*/
 #include "ftkPreprocess.h"
+#include "itkSimpleFilterWatcher.h"
+#include "ftkUtils.h"
 
 ftkPreprocess::ftkPreprocess()
 {
 	//std::cout<<"I was here"<<std::endl;
 	channelNumber = 0;
+	myImg = NULL;
+}
+
+void ftkPreprocess::MaskImage(std::vector< ftk::Object::Point > roiPoints)
+{
+	if(!myImg)
+		return;
+
+	std::cout << "Applying Mask Filter";
+
+	typedef itk::Image<unsigned char, 2> ImageType2D;
+	typedef itk::ExtractImageFilter< InpImageType, ImageType2D > ExtractFilterType;
+	typedef itk::PolyLineParametricPath<2> PolylineType;
+	typedef itk::PolylineMask2DImageFilter<ImageType2D,PolylineType,ImageType2D> MaskFilterType;
+	typedef PolylineType::VertexType VertexType;
+	
+	//Create itk polyline:
+	PolylineType::Pointer polyline = PolylineType::New();
+	for(int i=0; i<(int)roiPoints.size()-1; i++)
+	{
+		VertexType v;
+		v[0] = roiPoints.at(i).x;
+		v[1] = roiPoints.at(i).y;
+		polyline->AddVertex(v);
+	}
+	
+	for(int ch=0; ch<(int)myImg->GetImageInfo()->numChannels; ++ch)
+	{
+		InpImageType::Pointer inImg3D = myImg->GetItkPtr<InpPixelType>(0,ch);
+		InpImageType::RegionType dRegion = inImg3D->GetLargestPossibleRegion();
+
+		ExtractFilterType::Pointer extractFilter = ExtractFilterType::New();
+		//itk::SimpleFilterWatcher watcher1(extractFilter);
+		extractFilter->SetInput(inImg3D);
+
+		for(int z=0; z<(int)myImg->GetImageInfo()->numZSlices; ++z)
+		{
+			std::cout << ".";	//I am going to extract 2D Slices from the image and apply the polyline mask to each
+			
+			dRegion.SetIndex(2,z);
+			dRegion.SetSize(2,0);
+			extractFilter->SetExtractionRegion(dRegion);
+			MaskFilterType::Pointer maskFilter = MaskFilterType::New();
+			//itk::SimpleFilterWatcher watcher2(maskFilter);
+			maskFilter->SetInput1( extractFilter->GetOutput() );
+			maskFilter->SetInput2( polyline );
+			try
+			{
+				maskFilter->Update();
+			}
+			catch( itk::ExceptionObject & err )
+			{
+				std::cerr << "\nException caught: " << err << std::endl;
+			}
+	
+			//const ftk::Image::Info * info = myImg->GetImageInfo();
+			//int bpChunk = info->numRows * info->numColumns * info->bytesPerPix;
+			//memcpy( myImg->GetSlicePtr<unsigned char>(0,ch,z), maskFilter->GetOutput()->GetBufferPointer(), bpChunk );
+
+			typedef itk::ImageFileWriter< ImageType2D > WriterType;
+			WriterType::Pointer writer = WriterType::New();
+			std::string fName = "masked"+ftk::NumToString(z)+".tif";
+			writer->SetFileName(fName.c_str());
+			writer->SetInput(extractFilter->GetOutput());
+			writer->Update();
+		}
+	}
+	std::cout << "done\n";
 }
 
 void ftkPreprocess::InvertIntensity(void)

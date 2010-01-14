@@ -619,7 +619,7 @@ void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 	{
 		QPoint corner = scrollArea->pos();
 		QPoint pos = event->pos() - corner;		// This is a local position (in viewport coordinates)
-		QPoint org = origin - corner;
+		QPoint org = origin - corner;			// This the last click position
 		int x1 = (org.x() + scrollArea->horizontalScrollBar()->value()) / currentScale;
 		int y1 = (org.y() + scrollArea->verticalScrollBar()->value()) / currentScale;
 		int x2 = (pos.x() + scrollArea->horizontalScrollBar()->value()) / currentScale;
@@ -638,13 +638,14 @@ void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 			{
 				if(pointsMode)
 				{
-					if(origin3.size() == 0)
+					if(origin3.size() == 0)				//This is the first click
 					{
 						origin3.push_back(x2);
 						origin3.push_back(y2);
 						origin3.push_back(vSpin->value());
+						this->repaint();
 					}
-					else
+					else								//Must be the second click
 					{
 						x1 = origin3.at(0);
 						y1 = origin3.at(1);
@@ -656,6 +657,25 @@ void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 				}
 				else //roiMode
 				{
+					ftk::Object::Point last;
+					last.t = hSpin->value();
+					last.x = x2;
+					last.y = y2;
+					last.z = vSpin->value();
+					roiPoints.push_back(last);
+					if(roiPoints.size() >= 4)
+					{
+						ftk::Object::Point first = roiPoints.at(0);
+						//Check to see if I've closed the region and should end:
+						if( abs(first.x-last.x) < 5 && abs(first.y-last.y) < 5 )
+						{
+							roiPoints.push_back(first);
+							roiMode = false;
+							emit roiDrawn(roiPoints);
+							roiPoints.clear();
+						}
+					}
+					this->repaint();
 				}
 			}
 		}
@@ -693,6 +713,26 @@ void LabelImageViewQT::paintEvent(QPaintEvent * event)
 	{
 		painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
 		painter.drawImage(0,0,boundsImage);
+	}
+
+	if(pointsMode)
+	{
+		if(origin3.size() > 0)
+		{
+			if( origin3.at(2) == vSpin->value() )
+			{
+				painter.setPen(Qt::red);
+				painter.drawPoint( origin3.at(0), origin3.at(1) );
+			}
+		}
+	}
+	else if(roiMode)
+	{
+		painter.setPen(Qt::red);
+		for(int p=1; p<(int)roiPoints.size(); ++p)
+		{
+			painter.drawLine( roiPoints.at(p).x, roiPoints.at(p).y, roiPoints.at(p-1).x, roiPoints.at(p-1).y );
+		}
 	}
 
 	//Do zooming:

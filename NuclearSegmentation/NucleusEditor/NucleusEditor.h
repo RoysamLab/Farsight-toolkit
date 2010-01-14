@@ -156,6 +156,7 @@ protected slots:
 	void CurvAnisotropicDiffusion(void);
 	//void Resample(void);
 	void preprocess(QString id);
+	void doMasking(std::vector< ftk::Object::Point > roiPoints);
 	//*****************************************************
 
 	//For Tools menu
