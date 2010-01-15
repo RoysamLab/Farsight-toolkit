@@ -34,7 +34,6 @@
 #include "itkNumericTraits.h"
 #include "itkExtractImageFilter.h"
 #include "itkOtsuMultipleThresholdsCalculator.h"
-#include "itkLabelStatisticsImageFilter.h"
 
 #include "ftkCommon/itkLabelGeometryImageFilter.h"
 #include "NuclearSegmentation/CytoplasmSegmentation/whole_cell.h"
@@ -91,19 +90,17 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 	input_labeled->Update();
 
 	ConstIteratorType pix_buf1( input_lab, input_lab->GetRequestedRegion() );
-	IteratorType iterator ( input_labeled, input_labeled->GetRequestedRegion() );
-	iterator.GoToBegin();
+	IteratorType iterator2 ( input_labeled, input_labeled->GetRequestedRegion() );
+	iterator2.GoToBegin();
 	for ( pix_buf1.GoToBegin(); !pix_buf1.IsAtEnd(); ++pix_buf1 ){
-		iterator.Set( pix_buf1.Get() );
-		++iterator;
+		iterator2.Set( pix_buf1.Get() );
+		++iterator2;
 	}
 
 	std::vector< float > quantified_numbers;
 	std::vector< unsigned short > labelsList;
 
 	typedef itk::LabelGeometryImageFilter< USImageType > GeometryFilterType;
-	typedef itk::LabelStatisticsImageFilter< USImageType,USImageType > StatisticsFilterType;
-	typedef itk::ImageRegionIteratorWithIndex< USImageType > IteratorType;
 	typedef GeometryFilterType::LabelIndicesType labelindicestype;
 
 	//int size1 = input_image->GetLargestPossibleRegion().GetSize()[0];
@@ -111,37 +108,28 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 
 	GeometryFilterType::Pointer geomfilt1 = GeometryFilterType::New();
 
-	StatisticsFilterType::Pointer statsfilt = StatisticsFilterType::New();
-	statsfilt->UseHistogramsOn();
-
 	geomfilt1->SetInput( input_labeled );
 	geomfilt1->SetCalculatePixelIndices( true );
 	geomfilt1->Update();
-
-	statsfilt->SetInput( input_image );
-	statsfilt->SetLabelInput( input_labeled );
-	statsfilt->Update();
 	labelsList = geomfilt1->GetLabels();
+
 	bool zp=false;
 	for( unsigned short i=0; (int)i < labelsList.size(); ++i ){
 		if( labelsList[i] == 0 ){ zp=true; continue; }
 		std::vector<float> quantified_numbers_cell;
 		//assert(quantified_numbers_cell.size() == number_of_rois);
-		for( int j=0; j<number_of_rois; ++j ) quantified_numbers_cell.push_back(0);
-		double centroid_x = (double)(geomfilt1->GetCentroid(i)[0]);
-		double centroid_y = (double)(geomfilt1->GetCentroid(i)[1]);
-		IteratorType iterator ( input_labeled, input_labeled->GetRequestedRegion() );
+		for( int j=0; j<number_of_rois; ++j ) quantified_numbers_cell.push_back((float)0.0);
+		double centroid_x = (double)(geomfilt1->GetCentroid(labelsList[i])[0]);
+		double centroid_y = (double)(geomfilt1->GetCentroid(labelsList[i])[1]);
 		labelindicestype indices1;
 		indices1 = geomfilt1->GetPixelIndices(labelsList[i]);
-		labelindicestype::iterator itPixind = indices1.begin();
-		for( int j=0; j<(int)indices1.size(); ++j, ++itPixind ){
+		for( labelindicestype::iterator itPixind = indices1.begin(); itPixind!=indices1.end(); ++itPixind ){
 			IteratorType iterator1 ( input_image, input_image->GetRequestedRegion() );
 			iterator1.SetIndex( *itPixind );
-			if( thresh >= iterator1.Get() )
+			if( iterator1.Get() < thresh )
 				continue;
-			iterator.SetIndex( *itPixind );
-			double x = (double)(iterator.GetIndex()[0]);
-			double y = (double)(iterator.GetIndex()[1]);
+			double x = (double)(iterator1.GetIndex()[0]);
+			double y = (double)(iterator1.GetIndex()[1]);
 			double angle = atan2((centroid_y-y),fabs(centroid_x-x));
 			if( (centroid_x-x)>0 )
 				angle += MM_PI_2;
@@ -162,7 +150,7 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 	for( int i=0; i<qnum_sz; ++i ){
 		int counter=0;
 		for( int j=0; j<number_of_rois; ++j ){
-			if( quantified_numbers[i*number_of_rois+j] )
+			if( quantified_numbers[(i*number_of_rois+j)] > 1 )
 				++counter;
 		}
 		qfied_num.push_back((float)counter);

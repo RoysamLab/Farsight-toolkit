@@ -321,6 +321,11 @@ void NuclearAssociationRules::Compute()
 	//Get the list of labels
 	labelsList = labGeometryFilter->GetLabels();
 	numOfLabels = (int)labelsList.size();
+	for( int i=0; i<(int)labelsList.size(); ++i )
+		if( labelsList[i] == 0 ){
+			--numOfLabels;
+			labelsList.erase(labelsList.begin()+i);
+		}
 	//int maxLable = labelsList[numOfLabels-1];
 
 	//allocate memory for the features list
@@ -352,14 +357,10 @@ void NuclearAssociationRules::Compute()
 		//cout<<"Computing Features For Association Rule "<<i+1<<": ";
 		if( assocRulesList[i].GetAssocType() == ASSOC_SURROUNDEDNESS ){
 			std::vector<float> ec_feat_vals = compute_ec_features( inpImage, labImage, num_rois, thresh );
-			bool zp=false;
-			for( unsigned short j=0; (int)j < labelsList.size(); ++j )
-				if( labelsList[j] == 0 ) zp=true;
-			int qnum_sz = zp? (int)(labelsList.size()-1) : (int)(labelsList.size());
-			for(int j=0; j<qnum_sz; j++)
+			for(int j=0; j<numOfLabels; ++j)
 				assocMeasurementsList[i][j] = ec_feat_vals[j];
 		} else {
-			for(int j=0; j<numOfLabels; j++)
+			for(int j=0; j<numOfLabels; ++j)
 			{
 				//cout<<j+1;
 				int lbl = labelsList[j];
