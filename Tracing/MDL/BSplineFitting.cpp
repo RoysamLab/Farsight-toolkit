@@ -19,8 +19,8 @@ using std::cerr;
 using std::cout;
 using std::endl;
 
-#define Dimention  3;
-#define FastVersion 0;
+#define Dimention  3
+#define FastVersion 0
 
 struct  VoxelPosition
 {
