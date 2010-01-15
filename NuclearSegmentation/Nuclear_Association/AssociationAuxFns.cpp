@@ -32,25 +32,65 @@
 #include "itkScalarImageToHistogramGenerator.h"
 #include "itkBinaryThresholdImageFilter.h"
 #include "itkNumericTraits.h"
+#include "itkCastImageFilter.h"
+#include "itkExtractImageFilter.h"
 #include "itkOtsuMultipleThresholdsCalculator.h"
 #include "itkLabelStatisticsImageFilter.h"
 
 #include "ftkCommon/itkLabelGeometryImageFilter.h"
+#include "NuclearSegmentation/CytoplasmSegmentation/whole_cell.h"
 
 #define MM_PI		3.14159265358979323846
 #define MM_PI_2		1.57079632679489661923
 
 typedef unsigned short USPixelType;
-typedef itk::Image< USPixelType, 3 > UShortImageType;
+typedef itk::Image< USPixelType, 3 > USImageType;
 
-std::vector<float> compute_ec_features( UShortImageType::Pointer input_image,  UShortImageType::Pointer input_labeled, int number_of_rois ){
+std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USImageType::Pointer inp_labeled, int number_of_rois, unsigned short thresh){
 
-	std::vector<float> quantified_numbers;
+	//Dialate input first
+	WholeCellSeg *dialate_filter = new WholeCellSeg;
+	typedef itk::ExtractImageFilter< USImageType, UShortImageType > LabelExtractType;
+	typedef itk::ExtractImageFilter< UShortImageType, USImageType > LabelExtractType1;
+	LabelExtractType::Pointer deFilter = LabelExtractType::New();
+	USImageType::RegionType dRegion = inp_labeled->GetLargestPossibleRegion();
+	dRegion.SetSize(2,0);
+	deFilter->SetExtractionRegion(dRegion);
+	deFilter->SetInput( inp_labeled );
+	deFilter->Update();
+	try{
+		deFilter->Update();
+	}
+	catch( itk::ExceptionObject & excep ){
+		std::cerr << "Exception caught !" << std::endl;
+		std::cerr << excep << std::endl;
+	}
+	dialate_filter->set_nuc_img( deFilter->GetOutput() );
+	dialate_filter->RunSegmentation();
+	UShortImageType::Pointer input_lab = dialate_filter->getSegPointer();
+	LabelExtractType1::Pointer deFilter1 = LabelExtractType1::New();
+	UShortImageType::RegionType dRegion1 = input_lab->GetLargestPossibleRegion();
+	deFilter1->SetExtractionRegion(dRegion1);
+	deFilter1->SetInput( input_lab );
+	deFilter1->Update();
+	try{
+		deFilter1->Update();
+	}
+	catch( itk::ExceptionObject & excep ){
+		std::cerr << "Exception caught !" << std::endl;
+		std::cerr << excep << std::endl;
+	}
+	delete dialate_filter;
 
-	typedef itk::LabelGeometryImageFilter< UShortImageType > GeometryFilterType;
-	typedef itk::LabelStatisticsImageFilter< UShortImageType,UShortImageType > StatisticsFilterType;
-	typedef itk::CastImageFilter< UShortImageType, UShortImageType > CastUSUSType;
-	typedef itk::ImageRegionIteratorWithIndex< UShortImageType > IteratorType;
+	USImageType::Pointer input_labeled = deFilter1->GetOutput();
+
+	std::vector< float > quantified_numbers;
+	std::vector< unsigned short > labelsList;
+
+	typedef itk::LabelGeometryImageFilter< USImageType > GeometryFilterType;
+	typedef itk::LabelStatisticsImageFilter< USImageType,USImageType > StatisticsFilterType;
+	typedef itk::CastImageFilter< USImageType, USImageType > CastUSUSType;
+	typedef itk::ImageRegionIteratorWithIndex< USImageType > IteratorType;
 	typedef GeometryFilterType::LabelIndicesType labelindicestype;
 
 	//int size1 = input_image->GetLargestPossibleRegion().GetSize()[0];
@@ -62,57 +102,68 @@ std::vector<float> compute_ec_features( UShortImageType::Pointer input_image,  U
 	statsfilt->UseHistogramsOn();
 
 	geomfilt1->SetInput( input_labeled );
+	geomfilt1->SetCalculatePixelIndices( true );
+	geomfilt1->Update();
 
 	statsfilt->SetInput( input_image );
 	statsfilt->SetLabelInput( input_labeled );
 	statsfilt->Update();
+	labelsList = geomfilt1->GetLabels();
 
 	CastUSUSType::Pointer castUSUSfilter = CastUSUSType::New();
 
-	for( unsigned short i=0; (int)i <= statsfilt->GetNumberOfLabels(); ++i ){
+	for( unsigned short i=0; (int)i <= labelsList.size(); ++i ){
 		std::vector<float> quantified_numbers_cell;
 		//assert(quantified_numbers_cell.size() == number_of_rois);
 		for( int j=0; j<number_of_rois; ++j ) quantified_numbers_cell.push_back(0);
-		if( statsfilt->HasLabel(i) ){
-			double centroid_x = (double)(geomfilt1->GetCentroid(i)[0]);
-			double centroid_y = (double)(geomfilt1->GetCentroid(i)[1]);
-			if( !statsfilt->GetSum(i) ){
-				IteratorType iterator ( input_labeled, input_labeled->GetRequestedRegion() );
-				labelindicestype indices1;
-				indices1 = geomfilt1->GetPixelIndices(i);
-				labelindicestype::iterator itPixind = indices1.begin();
-				for( int j=0; j<(int)indices1.size(); ++j, ++itPixind ){
-					iterator.SetIndex( *itPixind );
-					double x = (double)(iterator.GetIndex()[0]);
-					double y = (double)(iterator.GetIndex()[1]);
-					double angle = atan2((centroid_y-y),fabs(centroid_x-x));
-					if( (centroid_x-x)>0 )
-						angle += MM_PI_2;
-					else
-						angle = MM_PI+MM_PI-(angle+MM_PI_2);
-					angle = ((number_of_rois-1)*angle)/(2*MM_PI);
-					double angle_fraction[1];
-					if( modf( angle, angle_fraction ) > 0.5 )
-						angle = ceil( angle );
-					else
-						angle = floor( angle );
-					IteratorType iterator1 ( input_image, input_image->GetRequestedRegion() );
-					iterator1.SetIndex( *itPixind );
-					quantified_numbers_cell[(int)angle] += iterator1.Get();
-				}
+		double centroid_x = (double)(geomfilt1->GetCentroid(i)[0]);
+		double centroid_y = (double)(geomfilt1->GetCentroid(i)[1]);
+		if( !statsfilt->GetSum(labelsList[i]) ){
+			IteratorType iterator ( input_labeled, input_labeled->GetRequestedRegion() );
+			labelindicestype indices1;
+			indices1 = geomfilt1->GetPixelIndices(labelsList[i]);
+			labelindicestype::iterator itPixind = indices1.begin();
+			for( int j=0; j<(int)indices1.size(); ++j, ++itPixind ){
+				IteratorType iterator1 ( input_image, input_image->GetRequestedRegion() );
+				iterator1.SetIndex( *itPixind );
+				if( thresh >= iterator1.Get() )
+					continue;
+				iterator.SetIndex( *itPixind );
+				double x = (double)(iterator.GetIndex()[0]);
+				double y = (double)(iterator.GetIndex()[1]);
+				double angle = atan2((centroid_y-y),fabs(centroid_x-x));
+				if( (centroid_x-x)>0 )
+					angle += MM_PI_2;
+				else
+					angle = MM_PI+MM_PI-(angle+MM_PI_2);
+				angle = ((number_of_rois-1)*angle)/(2*MM_PI);
+				double angle_fraction[1];
+				if( modf( angle, angle_fraction ) > 0.5 )
+					angle = ceil( angle );
+				else
+					angle = floor( angle );
+				quantified_numbers_cell[(int)angle] += iterator1.Get();
 			}
 		}
-		//POP from each quantified_numbers_cell and PUSH to quantified_numbers 
-		for( int j=0; j<number_of_rois; j++ ) quantified_numbers.push_back(quantified_numbers_cell[j]);
+		for( int j=0; j<number_of_rois; ++j ) quantified_numbers.push_back(quantified_numbers_cell[j]);
 	}
-	return quantified_numbers;
+	std::vector< float > qfied_num;
+	for( int i=0; i<(int)(quantified_numbers.size()/number_of_rois); ++i ){
+		int counter=0;
+		for( int j=0; j<number_of_rois; ++j ){
+			if( quantified_numbers[i*number_of_rois+j] )
+				++counter;
+		}
+		qfied_num.push_back((float)counter);
+	}
+	return qfied_num;
 }
 
-unsigned short returnthresh( UShortImageType::Pointer input_image, int num_bin_levs, int num_in_fg ){
+unsigned short returnthresh( USImageType::Pointer input_image, int num_bin_levs, int num_in_fg ){
 //Instantiate the different image and filter types that will be used
-	typedef itk::ImageRegionIteratorWithIndex< UShortImageType > IteratorType;
-	typedef itk::ImageRegionConstIterator< UShortImageType > ConstIteratorType;
-	typedef itk::Statistics::ScalarImageToHistogramGenerator< UShortImageType > ScalarImageToHistogramGeneratorType;
+	typedef itk::ImageRegionIteratorWithIndex< USImageType > IteratorType;
+	typedef itk::ImageRegionConstIterator< USImageType > ConstIteratorType;
+	typedef itk::Statistics::ScalarImageToHistogramGenerator< USImageType > ScalarImageToHistogramGeneratorType;
 	typedef ScalarImageToHistogramGeneratorType::HistogramType HistogramType;
 	typedef itk::OtsuMultipleThresholdsCalculator< HistogramType > CalculatorType;
 

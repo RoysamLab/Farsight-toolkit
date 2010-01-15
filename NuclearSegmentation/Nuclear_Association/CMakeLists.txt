@@ -5,5 +5,5 @@ SET( SRCS
 )
 
 ADD_LIBRARY( Nuclear_Association ${SRCS} )
-TARGET_LINK_LIBRARIES ( Nuclear_Association ftkCommon ITKBasicFilters ITKCommon ITKAlgorithms ITKIO)
+TARGET_LINK_LIBRARIES ( Nuclear_Association CytoplasmSegmentation ftkCommon ITKBasicFilters ITKCommon ITKAlgorithms ITKIO)
 #INSTALL( TARGETS Nuclear_Association DESTINATION . )

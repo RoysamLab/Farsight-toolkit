@@ -46,7 +46,7 @@
 
 typedef itk::Image< unsigned short, 3 > LabImageType;
 typedef itk::Image< unsigned short, 3 > TargImageType;
-std::vector<float> compute_ec_features( TargImageType::Pointer input_image,  LabImageType::Pointer input_labeled, int number_of_rois );
+std::vector<float> compute_ec_features( TargImageType::Pointer input_image,  LabImageType::Pointer input_labeled, int number_of_rois, unsigned short thresh );
 unsigned short returnthresh( TargImageType::Pointer input_image, int num_bin_levs, int num_in_fg );
 
 namespace ftk
@@ -71,7 +71,6 @@ private:
 	bool inputs_set;
 	LabImageType::Pointer lab_im;
 	TargImageType::Pointer inp_im;
-	static const int num_rois=8;
 };
 
 
@@ -120,7 +119,9 @@ private:
 	float FindMin(std::vector<int> LST);
 	float FindMax(std::vector<int> LST);
 	float ComputeTotal(std::vector<int> LST);
-	float ComputeAverage(std::vector<int> LST);	
+	float ComputeAverage(std::vector<int> LST);
+
+	static const int num_rois=8;
 	
 }; // end NuclearAssociation
 }  // end namespace ftk

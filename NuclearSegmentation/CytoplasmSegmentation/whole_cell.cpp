@@ -291,7 +291,7 @@ void WholeCellSeg::BinarizationForRealBounds(){
 void WholeCellSeg::RunSegmentation(){
 	if( draw_real_bounds )
 		this->RealBoundaries();
-	if( draw_synth_bounds && ( radius_of_synth_bounds < 0 ) ){
+	if( draw_synth_bounds && ( radius_of_synth_bounds <= 0 ) ){
 		std::cerr<<"Radius of synthetic boundaries set to zero!\n";
 		return;
 	}

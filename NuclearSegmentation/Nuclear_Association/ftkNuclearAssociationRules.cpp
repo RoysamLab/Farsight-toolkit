@@ -349,16 +349,21 @@ void NuclearAssociationRules::Compute()
 		}
 		else
 			thresh = 0;
-		//****************************************************Add rule for ECs
 		//cout<<"Computing Features For Association Rule "<<i+1<<": ";
-		for(int j=0; j<numOfLabels; j++)
-		{
-			//cout<<j+1;
-			int lbl = labelsList[j];
-			if(lbl == 0) continue;
-			cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<j<<"/"<<numOfLabels-1;
-			assocMeasurementsList[i][j] = ComputeOneAssocMeasurement(inpImage, i, lbl);						
-		}		
+		if( assocRulesList[i].GetAssocType() == ASSOC_SURROUNDEDNESS ){
+			std::vector<float> ec_feat_vals = compute_ec_features( inpImage, labImage, num_rois, thresh );
+			for(int j=0; j<numOfLabels; j++)
+				assocMeasurementsList[i][j] = ec_feat_vals[j];
+		} else {
+			for(int j=0; j<numOfLabels; j++)
+			{
+				//cout<<j+1;
+				int lbl = labelsList[j];
+				if(lbl == 0) continue;
+				cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<j<<"/"<<numOfLabels-1;
+				assocMeasurementsList[i][j] = ComputeOneAssocMeasurement(inpImage, i, lbl);						
+			}
+		}
 		std::cout<<"\tdone"<<std::endl;
 	}	
 	
