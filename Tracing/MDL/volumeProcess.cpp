@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
   bool rawInput = false;
   string inputFileName = argv[1];
   const char *outputFileName;
-  double space[3]={1,1,1};
+  //double space[3]={1,1,1};
   if(inputFileName.rfind(".raw") != string::npos)
     {
     //if so, the user is also required to pass in image dimensions
@@ -107,6 +107,8 @@ int main(int argc, char *argv[])
   int timesDilate;
   int border;
   
+
+  cout << "Volume Processing..." << endl;
 
   //make sure we can write to the output file
   if((outfile=fopen(outputFileName, "wb")) == NULL)
@@ -156,33 +158,16 @@ int main(int argc, char *argv[])
     
 	typedef itk::CastImageFilter<
                ImageType, ImageType >  CastFilterType;
-
     typedef itk::RescaleIntensityImageFilter<
                ImageType, ImageType>  RescaleFilterType;
-
-    //typedef itk::ShiftScaleImageFilter<
-    //           ImageType, ImageType >  ShiftScaleFilterType;
-
-    //typedef itk::NormalizeImageFilter<
-    //           ImageType, ImageType >  NormalizeFilterType;
-
     CastFilterType::Pointer       castFilter       = CastFilterType::New();
     RescaleFilterType::Pointer    rescaleFilter    = RescaleFilterType::New();
-    //ShiftScaleFilterType::Pointer shiftFilter      = ShiftScaleFilterType::New();
-    //NormalizeFilterType::Pointer  normalizeFilter = NormalizeFilterType::New();
-
 	castFilter->SetInput(reader->GetOutput());
-	//shiftFilter->SetInput(      reader->GetOutput() );
     rescaleFilter->SetInput(    reader->GetOutput() );
-    //normalizeFilter->SetInput( reader->GetOutput() );
 	rescaleFilter->SetOutputMinimum(  0 );
     rescaleFilter->SetOutputMaximum( 255 );
-	//shiftFilter->SetScale( 1.2 );
-    //shiftFilter->SetShift( 25 );
     castFilter->Update();
-    //shiftFilter->Update();
     rescaleFilter->Update();
-    //normalizeFilter->Update();
 	inputImage = rescaleFilter->GetOutput();
 	cout << "The Linear Mapping is done\n";
 
@@ -252,8 +237,6 @@ int main(int argc, char *argv[])
   //allocate memory for the output image
   volout = (DATATYPEOUT*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(DATATYPEOUT));
 
-  cout << "Volume Processing..." << endl;
-
   // Pre-Processing 
   // by xiao liang, using 3 sigma theory to estimate threshold;
   double meanValue =0.0, VarianceValue =  0.0;
@@ -272,7 +255,6 @@ int main(int argc, char *argv[])
     }
 
   meanValue = meanValue/(double)(sizeX*sizeY*sizeZ);
-
   // threshold first
   for (k=0; k<sizeZ; k++)
     {
@@ -403,7 +385,6 @@ int main(int argc, char *argv[])
   fprintf (mhdfile,"ElementDataFile = volume_Processed.raw\n");
   fclose(mhdfile);
 
-
   if (rawInput)
 	  fclose(infile);
   fclose(outfile);
@@ -413,7 +394,7 @@ int main(int argc, char *argv[])
   volin=NULL;
   volout=NULL;
 
-  cout << "Done" << endl;
+  //cout << "Done" << endl;
   return 0;
 }
 

@@ -61,12 +61,7 @@ Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexP
 {
 	//struct VoxelPosition *vertexPos;
 	Graph msTree_buffer(num_nodes+1);
-	//int num_edge_MST = 0;
-	//int num_vertex_MST = num_vertices(msTree); 
-	//int num_edge_MST = num_edges(msTree); //not work
-
 	msTree_buffer = msTree; // copy to buffer for next process
-
 	Edge_iter   ei, ei_end;
 	Vertex_iter vi, vend;
 	graph_traits<Graph>::out_edge_iterator  outei, outedge_end;
@@ -162,7 +157,7 @@ Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexP
 		msTree = msTree_buffer;
 	}  // end of prunetimes
 
-    printf("The Graph Pruning is done with respect to the threshold %f",length_Threshold);
+    printf("The Graph Pruning is done with respect to the threshold %f\n",length_Threshold);
 	return msTree;
 
 }

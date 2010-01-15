@@ -1,29 +1,3 @@
-/*=========================================================================
-Copyright 2009 Rensselaer Polytechnic Institute
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. 
-=========================================================================*/
-
-// B-spline fitting code  
-// Input format: .raw  (3D points)
-// Input format: .vtk  (3D skeleton file)
-// Author: Liang XIAO, RPI, According to the Xiaosong's Matlab Code
-// Date: 12/Aug/2009
-
-
-#if defined(_MSC_VER)
-#pragma warning(disable : 4996)
-#endif
-
 #include <cstring>
 #include <iostream>
 #include <vector>
@@ -31,6 +5,12 @@ limitations under the License.
 #include <fstream>
 #include <stdlib.h>
 #include <math.h>
+#include "itkImage.h"
+#include "itkImageFileReader.h"
+#include "itkImageFileWriter.h"
+#include "itkImageRegionIteratorWithIndex.h"
+#include "itkPointSet.h"
+#include "itkBSplineScatteredDataPointSetToImageFilter.h"
 #include <vnl/vnl_matrix.h>
 #include <vnl/vnl_vector.h>
 #include <vnl/algo/vnl_matrix_inverse.h>
@@ -40,6 +20,7 @@ using std::cout;
 using std::endl;
 
 #define Dimention  3;
+#define FastVersion 0;
 
 struct  VoxelPosition
 {
@@ -162,6 +143,7 @@ void SampleNPSpline(int NPointsSample,VoxelPosition *PSample, float P1, float P2
 }
 
 #define DATATYPEIN unsigned char
+
 //------------------------------some sub function-----------------------------//
 
 int round (float number);
@@ -170,6 +152,102 @@ int selffloor(float number);
 void spap2(int PolyNum, int order, int *t_val, VoxelPosition *points,
            VoxelPosition * coef, double *knots);
 double dist2pts(double x1,double y1,double z1,double x2,double y2, double z2);
+
+VoxelPosition xyz_vals[100000];
+float Min_dist2spline[100000];
+int Index_Min_dist2spline [100000];
+  
+int BackboneBSplineFitting(VoxelPosition *Points,int Num, VoxelPosition *SamplePoints,int Num2)
+{
+ 
+  const unsigned int ParametricDimension = 1;
+  const unsigned int DataDimension = 3;
+  typedef double RealType;
+  typedef itk::Vector<RealType, DataDimension> VectorType;
+  typedef itk::Image<VectorType, ParametricDimension> ImageType;  
+  typedef itk::PointSet<VectorType, ParametricDimension> PointSetType;
+  PointSetType::Pointer pointSet = PointSetType::New();  
+  int k=0;
+  double delt = (double) 1.0/(double)Num +0.0000001;
+
+  for ( RealType t = 0.0; t <= 1.0+1e-10; t += delt ) // <= 
+ // for ( RealType t = 0.0; t < 1.0; t += delt )
+    {
+    unsigned long i = pointSet->GetNumberOfPoints();
+    //i=Num;
+    PointSetType::PointType point;
+    point[0] = t;
+    pointSet->SetPoint( i, point );   
+	//pointSet->SetPoint( k, point ); 
+
+    VectorType V;
+	V[0] = Points[k].x;
+    V[1] = Points[k].y;
+    V[2] = Points[k].z;
+    k++;
+    //pointSet->SetPointData( i, V );
+	pointSet->SetPointData( i, V );
+	
+    }
+
+  // Instantiate the filter and set the parameters
+  typedef itk::BSplineScatteredDataPointSetToImageFilter
+     <PointSetType, ImageType>  FilterType;
+  FilterType::Pointer filter = FilterType::New();
+  
+  // Define the parametric domain
+  ImageType::SpacingType spacing;  
+  spacing.Fill( 0.002 ); // 0.001
+  ImageType::SizeType size;  
+  size.Fill( static_cast<unsigned int>( 1.0/spacing[0] ) + 1 );
+  ImageType::PointType origin;  
+  origin.Fill( 0.002 );// 0.0
+
+  filter->SetSize( size );
+  filter->SetOrigin( origin );
+  filter->SetSpacing( spacing );
+  filter->SetInput( pointSet );
+
+  filter->SetSplineOrder( 3 );  
+  FilterType::ArrayType ncps;
+  ncps.Fill( 4 );  
+  filter->SetNumberOfControlPoints( ncps );
+  filter->SetNumberOfLevels( 8);
+  filter->SetGenerateOutputImage( false );
+  
+  delt = (double)1.0/(double)Num2+0.000001;
+  k=0;
+  try 
+    {
+    filter->Update();
+	
+    for ( RealType t = 0.0; t <= 1.0+1e-10; t += delt) // < =
+	// for ( RealType t = 0.0; t < 1.0; t += delt )
+      {
+      PointSetType::PointType point;
+      point[0] = t;
+
+      VectorType V; 
+      filter->Evaluate( point, V );
+	  if(abs(V[0])>0.1 && abs(V[1]) > 0.1 && abs(V[2]) > 0.1)
+	  {
+	  SamplePoints[k].x = V[0];
+      SamplePoints[k].y = V[1];
+	  SamplePoints[k].z = V[2];
+      k++;
+	  }
+      }
+    }
+  catch (...) 
+    {
+    std::cerr << "Test 2: itkBSplineScatteredDataImageFilter exception thrown" << std::endl;
+    return EXIT_FAILURE;
+    }
+  //std::cout<< "I am here!";
+  return EXIT_SUCCESS;
+};
+
+
 
 int main(int argc, char **argv)
 {
@@ -445,25 +523,7 @@ int main(int argc, char **argv)
       }// end if
     }// enf for 
 
-  //--------------------NumPoly = round(NumPoly * 0.05)-----------------------//
-  // for (i = 0; i< NumAllPoints; i++) printf("%f  ",flagOnBackbone[i]);
-
- /* FILE * flagfile;
-  tempfile = filedir + argv[9];
-  cout << "flagbone file name" << tempfile << endl;
-
-  if(( flagfile=fopen(tempfile.c_str(), "w"))==NULL)  // open skeleton file
-    {
-    cerr << "couldn't open flag file " << filedir << " for input" << endl;
-    exit(-1);
-    }
-  */
-  //for (i = 0; i< NumAllPoints; i++) printf("%f  ",flagOnBackbone[i]);
-  //for (i = 0; i< NumAllPoints; i++)
-    //{
-    //fprintf (flagfile,"%f \n",flagOnBackbone[i]);
-    //}
-  //flagOnBackbone[i]=temp1;}
+  
 
   //---------------------NumPoly = round(NumPoly * 0.05)----------------------//
 
@@ -487,12 +547,14 @@ int main(int argc, char **argv)
   int *numBranchpts; // need to further
   numBranchpts = new int[NumBranches+1]; // this is to record the points in each branches;
   float discretePt=1; // sampling rate
-  int NewNumAllPoints = (int) (((double) NumAllPoints)/discretePt)+1; // the number points which to be write in VTK file ;
+  int NewNumAllPoints = (int) (((double) NumAllPoints)/discretePt); // the number points which to be write in VTK file ;
   cout << "the number of total new points  " <<  NewNumAllPoints <<  endl;
   VoxelPosition *pointsVTK; 
   VoxelPosition *posExtraSpines;
   pointsVTK = new VoxelPosition[NewNumAllPoints];
   posExtraSpines = new VoxelPosition[NewNumAllPoints]; 
+  
+ 
 
   for (i=0;i<NumBranches+1;i++)
       numBranchpts[i]=0;
@@ -518,11 +580,13 @@ int main(int argc, char **argv)
   float dis;
   int minIndex;
   float mintemp;
-  int *Index_Min_dist2spline;
-  float  *Min_dist2spline;
   int IsLocalMax;
   int x1,y1,z1;
   int aveInt;
+
+
+  //xyz_vals = new VoxelPosition [NumPoints];
+
   for (k=1;k<=NumBranches;k++)
     {
     //----------------------Note there will a huge loop-----------------------//
@@ -540,15 +604,10 @@ int main(int argc, char **argv)
           //(int) ((flagOnBackbone[i] - selffloor(flagOnBackbone[i])) * 1000 ); 
         tmpindex =
           round((flagOnBackbone[i] - selffloor(flagOnBackbone[i])) * 1000)-1;
-            
-        //cout << "tmpindex" << tmpindex << endl;
-        //tmpindex = (int) indexBBpts;
         // In order to exchange x-coord and y-coord
         points[tmpindex].x = Allpoints[i].x;  
         points[tmpindex].y = Allpoints[i].y; 
         points[tmpindex].z = Allpoints[i].z;
-        //printf("%f %f %f\n", points[tmpindex].x, points[tmpindex].y,
-                 //points[tmpindex].z);
         tmp++;
         }   
       }// end for 
@@ -556,43 +615,32 @@ int main(int argc, char **argv)
     numBranchpts[k] = tmp;
     NumPoints = tmp; 
     //------------------------------------------------------------------------//
-    //for (i=0;i<NumPoints; i++)
-      //{
-      // for test 
-      //printf("%f %f %f\n", points[i].x , points[i].y , points[i].z); 
-      //}
-    // cout << "come to Fit here \n" << endl;
+    NumPoints = (int) (NumPoints / discretePt); 
+   #if FastVersion
+   {
     FitNPSpline(6,NumPoints, points);// B-Spline coeff;  // NB =4
-   
-    //--------------the very important function: Spline sampling--------------//
-    
-    NumPoints = (int) (NumPoints / discretePt); // new sampling points;
-
-    VoxelPosition *xyz_vals;
-    xyz_vals = new VoxelPosition [NumPoints];
-     
-    //-------------------------Call the resampling----------------------------//
-    //cout << "come to Sample here \n" <<endl; 
+    //NumPoints = (int) (NumPoints / discretePt); // new sampling points;
+    //VoxelPosition *xyz_vals;
+    //xyz_vals = new VoxelPosition [NumPoints];
     SampleNPSpline(NumPoints,xyz_vals, 0, 1);
-
-    //for (i=0;i<NumPoints;i++)
-    //  {
-    //  printf("%f %f %f\n",xyz_vals[i].x,xyz_vals[i].y,xyz_vals[i].z);
-    //  }
-    // copy these points which locate at this branch to pointsVTK;
-    // currently there are numVTKpts VTK pts to be write 
-
-    // copy these points which locate at this branch to pointsVTK;
+   }
+   
+  #else
+	BackboneBSplineFitting(points,NumPoints,xyz_vals,NumPoints);
+  #endif 
     for (i=numVTKpts;i<numVTKpts+NumPoints;i++)
       {
       pointsVTK[i].x =xyz_vals[i-numVTKpts].x;
       pointsVTK[i].y =xyz_vals[i-numVTKpts].y;
       pointsVTK[i].z =xyz_vals[i-numVTKpts].z;
-      
+      if(i < numVTKpts+3 || i > numVTKpts+NumPoints-3)
+	  {
+      pointsVTK[i].x =points[i-numVTKpts].x;
+      pointsVTK[i].y =points[i-numVTKpts].y;
+      pointsVTK[i].z =points[i-numVTKpts].z;
+	  }
       //printf("%f %f %f\n",pointsVTK[i].x,pointsVTK[i].y,pointsVTK[i].z);
       }
-  
-
   
     //------------------------------- Compute missing spines from spline function and original 3D points-------------------------------//
        mintemp=points[0].x;
@@ -603,8 +651,8 @@ int main(int argc, char **argv)
 	   }
         
 
-        Min_dist2spline = new float [NumPoints];
-        Index_Min_dist2spline = new int [NumPoints];
+        //Min_dist2spline = new float [NumPoints];
+        //Index_Min_dist2spline = new int [NumPoints];
 
 	    for (i = 0;i<NumPoints-1;i++)
 		{
@@ -630,8 +678,7 @@ int main(int argc, char **argv)
 		  }
         Min_dist2spline[i] = minDist;
         Index_Min_dist2spline[i] = minIndex;
-        // plot3([points(1,i), x_val(minIndex)]+DispBias,  [points(2,i), yz_vals(1,minIndex)]+DispBias,   [points(3,i), yz_vals(2,minIndex)]+DispBias, 'r:'); 
-        
+      
 		}// end for 
 
 	 //----------------------------------- Find all the spines with local max distance---------------------------------------------------//  
@@ -659,9 +706,6 @@ int main(int argc, char **argv)
 		 idx = z1*sz + y1*sizeX +x1;
 
 		 aveInt = (aveInt + volin[idx])/2; 
-
-        // printf("%d \n", aveInt);
-		
       
 		 if ( IsLocalMax == 1 && Min_dist2spline[i]>= 1.3 && aveInt > 20)   // 2, 1.5 - threshold for the detect of missing spines  
 		 {
@@ -680,11 +724,8 @@ int main(int argc, char **argv)
 		 }
         
 		} 
-
+	 
 	 numVTKpts += NumPoints;
-     delete []xyz_vals; // release memory
-	 delete []Index_Min_dist2spline;
-     delete []Min_dist2spline;
      cout << "there are " << numVTKpts << "points on branch " << k << endl;
     } // End of NumBranches of curve fitting //   end of loop
 
@@ -692,7 +733,7 @@ int main(int argc, char **argv)
     {
     delete [] points;
     }
-
+   
   cout << "the loop is over" << endl; 
  
   //-----------------------construct two files to write-----------------------//
@@ -709,7 +750,7 @@ int main(int argc, char **argv)
    }
   //--------------------------------------------------------------------------//
   //------------------Output the extra spines to a vtk file-------------------//
-   fprintf(outExspine, "# vtk DataFile Version 3.0\n");
+  fprintf(outExspine, "# vtk DataFile Version 3.0\n");
   fprintf(outExspine,"MST of skel\n");
   fprintf(outExspine,"ASCII\n");
   fprintf(outExspine,"DATASET POLYDATA\n");
@@ -738,6 +779,7 @@ int main(int argc, char **argv)
   for (i = 0; i<numVTKpts;i++)
     {
     // - pointsVTK[i].y  is just for view
+   if (abs(pointsVTK[i].x) > 0.1 && abs(pointsVTK[i].y) > 0.1  && abs(pointsVTK[i].z) > 0.1 ) 
     fprintf(outbackbone,"%f %f %f\n",pointsVTK[i].x, -pointsVTK[i].y,
             pointsVTK[i].z);
     //printf("%f %f %f\n",pointsVTK[i].x,pointsVTK[i].y,pointsVTK[i].z);
@@ -747,8 +789,6 @@ int main(int argc, char **argv)
 
   int indexPts = 0;
   for (i = 1; i<= NumBranches; i++)
-  //for (k=1;k<=1;k++)
-  //i=2;
     {
     for(j =0; j< numBranchpts[i]-1;j++)
       {
@@ -805,4 +845,18 @@ double dist2pts(double x1,double y1,double z1,double x2,double y2, double z2)
   h=sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2)+(z1-z2)*(z1-z2));
   return h;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

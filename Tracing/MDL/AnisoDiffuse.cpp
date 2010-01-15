@@ -95,10 +95,7 @@ int main(int argc, char *argv[])
   sizeX = atoi(argv[2]);
   sizeY = atoi(argv[3]);
   sizeZ = atoi(argv[4]);
-   // k_factor = atof(argv[6]);
-   // timesDiffuse = atof(argv[7]);//original
-  //timesDiffuse = atoi(argv[7]); // xiao
-  timesDiffuse =3;
+  timesDiffuse =1;
 
   sls = sizeX*sizeY;    // slice size
   sz = sls*sizeZ;
@@ -120,23 +117,11 @@ int main(int argc, char *argv[])
     return -1;
     }
 
-/*  if 0  // read another file if necessary
-  FILE *infile2;
-  unsigned char *volin2;
-  volin2 = (unsigned char*)malloc(sizeX*sizeY*sizeZ*sizeof(unsigned char));
-  if((infile2=fopen("contrast_thres.64x64x32.img","rb"))==NULL)
-      {printf("Input file open error!\n");
-       exit(-1);
-      }
-  fread(volin2,sizeX*sizeY*sizeZ,sizeof(unsigned char), infile2);
-*/
   if (fread(volin, sizeof(DATATYPEIN), sizeX*sizeY*sizeZ, infile) < (unsigned int)(sizeX*sizeY*sizeZ) )
     {
     cerr << "File size is not the same as volume size" << endl;
     return 1;
     }
-
-  //fread(volin,sizeX*sizeY*sizeZ,sizeof(DATATYPEIN), infile);
 
   // define positive half kernel of derivative 
   kernelWeight[0][0] = 1; kernelWeight[0][1] = 2; kernelWeight[0][2] = 1;
@@ -151,7 +136,7 @@ int main(int argc, char *argv[])
   while (timesDiffuse >0 )
     {
 
-    cout << "Volume Processing #" << timesDiffuse << " ..." << endl;
+    cout << "Anisotropic Diffusion #" << timesDiffuse << " ..." << endl;
 
     // Pre-Processing 
     for (idx=0; idx<sz; idx++)

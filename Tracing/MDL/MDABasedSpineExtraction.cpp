@@ -39,7 +39,7 @@ limitations under the License.
 #include <boost/graph/graph_traits.hpp>
 
 
-#define InterMedial 1
+#define InterMedial 0
 #define DATATYPEIN unsigned char
 #define MAX_NUM_EDGE 28885000  //2885000, 85000  //why 90000 causes crash?
 
@@ -193,13 +193,14 @@ int main(int argc, char *argv[])
   }
 
   #if InterMedial
-   
+  {
     FILE *tempfile1;
     if ((tempfile1 = fopen("MST.vtk ", "w")) == NULL)  
      {
      printf("Cannot open MST.vtk for writing\n");
      exit(1);
-     }
+	}
+  }
   #endif
 
   voxelNodeIndex = new int[sizeX*sizeY*sizeZ];
@@ -263,7 +264,8 @@ int main(int argc, char *argv[])
     fprintf(foutSpineCandidate,"DATASET POLYDATA\n");
     fprintf(foutSpineCandidate,"POINTS %d float\n",num_nodes);
 
-	#if InterMedial
+    #if InterMedial
+	{
 	if(times_erosion > 1)
 	{
 	 fprintf(tempfile1,"# vtk DataFile Version 3.0\n");
@@ -271,6 +273,7 @@ int main(int argc, char *argv[])
      fprintf(tempfile1,"ASCII\n");
      fprintf(tempfile1,"DATASET POLYDATA\n");
      fprintf(tempfile1,"POINTS %d float\n",num_nodes);
+	}
 	}
     #endif
    
@@ -293,11 +296,12 @@ int main(int argc, char *argv[])
       // output the node positions to vtk file
       fprintf(fout_Spine,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z);  
       fprintf(foutSpineCandidate,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z); 
-	  #if InterMedial
+      #if InterMedial
+	  {
 	  if(times_erosion > 1){
 		  fprintf(tempfile1,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z);
 	  }
-
+	  }
       #endif
       // Find all neighbor nodes within edgeRange
        for (kk = -edgeRange; kk <= edgeRange; kk++)
@@ -421,7 +425,8 @@ int main(int argc, char *argv[])
  
    Edge_iter   ei, ei_end;
 
- #if InterMedial
+#if InterMedial
+   {
    if(times_erosion > 1)
    {
     line_count = 0;
@@ -437,6 +442,7 @@ int main(int argc, char *argv[])
      }
    fclose (tempfile1);
    } // end if
+   }
  #endif 
 
   times_dilation = times_erosion;
@@ -500,7 +506,7 @@ int main(int argc, char *argv[])
 
   // CONSIDER ALL branches on the BackBone
   num_leaves = 0;
-
+  fprintf(fclass_identify, "ID  meanDensityBranch, length  meanVesselBranch\n");
   // PRUNING short branches on the initial MST under certain threshold (e.g. 5)
 
   msTree = morphGraphPrune(msTree, num_nodes, vertexPos, leaf_length);
@@ -552,7 +558,7 @@ int main(int argc, char *argv[])
         {
         indVert = vertsCurBranch2[0][j];
 		// output the locations 
-		fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
+		//fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
         
 		if (j==0)
           {
@@ -578,7 +584,8 @@ int main(int argc, char *argv[])
         mahalanobis_dist_min = mahalanobis_dist[0];
         mahalanobis_dist_minIndex = 0;
         // output the spine candidate feature sample;  
-		fprintf(fclass_identify, "%d  %f %f %f\n", -num_leaves, meanDensityBranch[0], length_leaf[0], meanVesselBranch[0]);
+		//fprintf(fclass_identify, "%d  %f %f %f\n", -num_leaves, meanDensityBranch[0], length_leaf[0], meanVesselBranch[0]);
+		fprintf(fclass_identify, "%d  %f %f %f\n", num_leaves, meanDensityBranch[0], length_leaf[0], meanVesselBranch[0]);
         
 		if (branchChosen == 1)  
 		{
@@ -623,7 +630,7 @@ int main(int argc, char *argv[])
           {
           indVert = vertsCurBranch2[ind2Brch][j];
 		  // second level feature 
-          fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
+          //fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
          
           if (j==0)
             {
@@ -654,7 +661,8 @@ int main(int argc, char *argv[])
         mahalanobis_dist[ind2Brch]    = mahalanobisDist(aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch], 1);
         mahalanobis_dist_nonSpine[ind2Brch]=mahalanobisDist(aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch], 0);
         // out put 
-		fprintf(fclass_identify, "%d  %f %f %f\n", -num_leaves, aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch]);      
+		//fprintf(fclass_identify, "%d  %f %f %f\n", -num_leaves, aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch]);
+		fprintf(fclass_identify, "%d  %f %f %f\n", num_leaves, aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch]);      
      
 		for (j = 1; j <= vertsCurBr_Index2[ind2Brch]; j++) 
 		{
@@ -753,7 +761,7 @@ int main(int argc, char *argv[])
   } // End of all vertice
   //msTreeBB = msTreeBB_buffer;
  
-   fprintf(fclass_identify, "0 0 0 0 end");
+   //fprintf(fclass_identify, "0 0 0 0 end");
    
   
    // - Spine-Candidate Writer

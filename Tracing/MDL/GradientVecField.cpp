@@ -219,17 +219,8 @@ int main(int argc, char *argv[])
 			
 			//if (fc[idx]==0 || fc[idx]==SURF)   continue;  // not output
 			if (fc[idx]==0)   continue;  // not output
-
-		// Test: generate 2D vector field -- add zero slice above and below for AVS display reason
-		//if (i == 7)  fprintf(fileout,"%f %f %f\n", 0.0, 0.0, 0.0);
-		//if (i == 8)  fprintf(fileout,"%f %f %f\n", 0.0, force[k*sls+j*sizeX+i].yd*5, force[k*sls+j*sizeX+i].zd*5);
-		//if (i == 9)  fprintf(fileout,"%f %f %f\n", 0.0, 0.0, 0.0);
 			fprintf(fileout, "%d %d %d %f %f %f\n", i, j, k, gradVec[idx].xd*s, gradVec[idx].yd*s, gradVec[idx].zd*s);
 	}
-
-
-	//for (int w = 0; w < sizeZ; w++)  //print out one component of force vectors
-	//   printf("%f==",force[w*sls + 7*sizeX + 5].zd);
 
 
    fclose(fileout);
@@ -240,7 +231,7 @@ int main(int argc, char *argv[])
    fc = NULL;
    volin = NULL;
    gradVec = NULL;
-   cout << "End" << endl;
+   cout << "Computing gradient vector field is over!\n" << endl;
 
    return 0;
 }

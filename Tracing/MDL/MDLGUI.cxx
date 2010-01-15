@@ -522,7 +522,7 @@ void MDLGUI::DeleteIntermediaryFiles()
     {
     f6.remove();
     }
-  QFile f7(this->BackboneCandidateFile);
+  /*QFile f7(this->BackboneCandidateFile);
   if(f7.exists())
     {
     f7.remove();
@@ -532,6 +532,7 @@ void MDLGUI::DeleteIntermediaryFiles()
     {
     f8.remove();
     }
+  */
   QFile f9(this->SmoothBackboneFile);
   if(f9.exists())
     {

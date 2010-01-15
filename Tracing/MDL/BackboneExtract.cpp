@@ -292,7 +292,7 @@ int main(int argc, char *argv[])
   // MST algorithm
   kruskal_minimum_spanning_tree(g, back_inserter(spanning_tree));
 
-  printf("MST is finished!\n");
+  printf("kruskal_minimum_spanning_tree(MST) is finished!\n");
   
   // create initial degree_nodes array
   for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
@@ -331,7 +331,7 @@ int main(int argc, char *argv[])
       }
     }
   }
-  printf("Erosion of MST is finished!");
+  printf("Erosion of MST is finished!\n");
   // Dilation the MST by counting up the degree of nodes
   while (num_edge_eroded !=0) {
     //times_dilation--;
