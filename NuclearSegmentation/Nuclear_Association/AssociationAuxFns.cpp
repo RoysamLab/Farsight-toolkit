@@ -32,7 +32,6 @@
 #include "itkScalarImageToHistogramGenerator.h"
 #include "itkBinaryThresholdImageFilter.h"
 #include "itkNumericTraits.h"
-#include "itkCastImageFilter.h"
 #include "itkExtractImageFilter.h"
 #include "itkOtsuMultipleThresholdsCalculator.h"
 #include "itkLabelStatisticsImageFilter.h"
@@ -104,7 +103,6 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 
 	typedef itk::LabelGeometryImageFilter< USImageType > GeometryFilterType;
 	typedef itk::LabelStatisticsImageFilter< USImageType,USImageType > StatisticsFilterType;
-	typedef itk::CastImageFilter< USImageType, USImageType > CastUSUSType;
 	typedef itk::ImageRegionIteratorWithIndex< USImageType > IteratorType;
 	typedef GeometryFilterType::LabelIndicesType labelindicestype;
 
@@ -124,46 +122,45 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 	statsfilt->SetLabelInput( input_labeled );
 	statsfilt->Update();
 	labelsList = geomfilt1->GetLabels();
-
-	CastUSUSType::Pointer castUSUSfilter = CastUSUSType::New();
-
-	for( unsigned short i=0; (int)i <= labelsList.size(); ++i ){
+	bool zp=false;
+	for( unsigned short i=0; (int)i < labelsList.size(); ++i ){
+		if( labelsList[i] == 0 ){ zp=true; continue; }
 		std::vector<float> quantified_numbers_cell;
 		//assert(quantified_numbers_cell.size() == number_of_rois);
 		for( int j=0; j<number_of_rois; ++j ) quantified_numbers_cell.push_back(0);
 		double centroid_x = (double)(geomfilt1->GetCentroid(i)[0]);
 		double centroid_y = (double)(geomfilt1->GetCentroid(i)[1]);
-		if( !statsfilt->GetSum(labelsList[i]) ){
-			IteratorType iterator ( input_labeled, input_labeled->GetRequestedRegion() );
-			labelindicestype indices1;
-			indices1 = geomfilt1->GetPixelIndices(labelsList[i]);
-			labelindicestype::iterator itPixind = indices1.begin();
-			for( int j=0; j<(int)indices1.size(); ++j, ++itPixind ){
-				IteratorType iterator1 ( input_image, input_image->GetRequestedRegion() );
-				iterator1.SetIndex( *itPixind );
-				if( thresh >= iterator1.Get() )
-					continue;
-				iterator.SetIndex( *itPixind );
-				double x = (double)(iterator.GetIndex()[0]);
-				double y = (double)(iterator.GetIndex()[1]);
-				double angle = atan2((centroid_y-y),fabs(centroid_x-x));
-				if( (centroid_x-x)>0 )
-					angle += MM_PI_2;
-				else
-					angle = MM_PI+MM_PI-(angle+MM_PI_2);
-				angle = ((number_of_rois-1)*angle)/(2*MM_PI);
-				double angle_fraction[1];
-				if( modf( angle, angle_fraction ) > 0.5 )
-					angle = ceil( angle );
-				else
-					angle = floor( angle );
-				quantified_numbers_cell[(int)angle] += iterator1.Get();
-			}
+		IteratorType iterator ( input_labeled, input_labeled->GetRequestedRegion() );
+		labelindicestype indices1;
+		indices1 = geomfilt1->GetPixelIndices(labelsList[i]);
+		labelindicestype::iterator itPixind = indices1.begin();
+		for( int j=0; j<(int)indices1.size(); ++j, ++itPixind ){
+			IteratorType iterator1 ( input_image, input_image->GetRequestedRegion() );
+			iterator1.SetIndex( *itPixind );
+			if( thresh >= iterator1.Get() )
+				continue;
+			iterator.SetIndex( *itPixind );
+			double x = (double)(iterator.GetIndex()[0]);
+			double y = (double)(iterator.GetIndex()[1]);
+			double angle = atan2((centroid_y-y),fabs(centroid_x-x));
+			if( (centroid_x-x)>0 )
+				angle += MM_PI_2;
+			else
+				angle = MM_PI+MM_PI-(angle+MM_PI_2);
+			angle = ((number_of_rois-1)*angle)/(2*MM_PI);
+			double angle_fraction[1];
+			if( modf( angle, angle_fraction ) > 0.5 )
+				angle = ceil( angle );
+			else
+				angle = floor( angle );
+			quantified_numbers_cell[(int)angle] += iterator1.Get();
 		}
 		for( int j=0; j<number_of_rois; ++j ) quantified_numbers.push_back(quantified_numbers_cell[j]);
 	}
 	std::vector< float > qfied_num;
-	for( int i=0; i<(int)(quantified_numbers.size()/number_of_rois); ++i ){
+	int qnum_sz = zp? (int)(labelsList.size()-1) : (int)(labelsList.size());
+	for( int i=0; i<qnum_sz; ++i ){
+		if( labelsList[i] == 0 ) continue;
 		int counter=0;
 		for( int j=0; j<number_of_rois; ++j ){
 			if( quantified_numbers[i*number_of_rois+j] )
