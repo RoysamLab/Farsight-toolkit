@@ -10,6 +10,7 @@ ADD_LIBRARY(Trace
   UndoBuffer.h	  UndoBuffer.cxx
   undobuff.h	    undobuff.cxx
   branchPT.h	    BranchPT.cxx
+  ImageActors.h		ImageActors.cxx
   vtkPlotEdges.h	vtkPlotEdges.cxx )
 
 SET( Sources View3D.h View3D.cxx vtkTraceViewerDriver.cxx )

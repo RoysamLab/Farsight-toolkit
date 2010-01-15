@@ -36,6 +36,7 @@ class TraceGap;
 class TraceLine;
 class TraceObject;
 class branchPT;
+class ImageRenderActors;
 
 class vtkActor;
 class vtkCallbackCommand;

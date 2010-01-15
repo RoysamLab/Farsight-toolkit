@@ -79,6 +79,7 @@ limitations under the License.
 #include "branchPT.h"
 #include "TraceModel.h"
 #include "MergeModel.h"
+#include "ImageActors.h"
 #include "View3DHelperClasses.h"
 #include "View3D.h"
 
@@ -139,21 +140,22 @@ View3D::View3D(int argc, char **argv)
       }
     num_loaded++;
     }
-	if (num_loaded < 1)
-	{	
-		this->hide();
 		this->CreateBootLoader();
-		return;
-	}//end load
-	else
-	{		
-		this->show();
-		if (tracesLoaded)
-		{
-			this->ShowTreeData();
-		}
-		this->statusBar()->showMessage(tr("Ready"));
-	}
+	//if (num_loaded < 1)
+	//{	
+	//	this->hide();
+	//	this->CreateBootLoader();
+	//	return;
+	//}//end load
+	//else
+	//{		
+	//	this->show();
+	//	if (tracesLoaded)
+	//	{
+	//		this->ShowTreeData();
+	//	}
+	//	this->statusBar()->showMessage(tr("Ready"));
+	//}
 }
 View3D::View3D(TraceObject *Traces)
 {
