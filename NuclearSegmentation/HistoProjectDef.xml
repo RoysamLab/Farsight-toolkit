@@ -2,19 +2,18 @@
   <Inputs>
     <channel number="0" name="hema" type="NUCLEAR"/>
     <channel number="1" name="cd34" type="CD34_MARKER"/>
-    <channel number="2" name="ca9" type="CYTOPLASM"/>
+    <channel number="2" name="ca9" type="CA9_MARKER"/>
     <channel number="3" name="sma" type="SMA_MARKER"/>
   </Inputs>
   <Pipeline>
      <step name="NUCLEAR_SEGMENTATION"/>
-     <step name="CYTOPLASM_SEGMENTATION"/>
      <step name="RAW_ASSOCIATIONS"/>
   </Pipeline>
   <NuclearSegmentationParameters>
     <parameter name="high_sensitivity" value="0"/>
     <parameter name="LoG_size" value="30"/>
-    <parameter name="min_scale" value="2"/>
-    <parameter name="max_scale" value="8"/>
+    <parameter name="min_scale" value="8"/>
+    <parameter name="max_scale" value="10"/>
     <parameter name="xy_clustering_res" value="3"/>
     <parameter name="z_clustering_res" value="2"/>
     <parameter name="finalize_segmentation" value="1"/>
@@ -32,7 +31,11 @@
     <parameter name="number_of_levels_in_foreground" value="1"/>
   </CytoplasmSegmentationParameters>
   <AssociationRules>
-    <AssociationRule Name="CA9_TOTAL" SegmentationSource="NUCLEAR" Target_Image="ca9" Outside_Distance="0" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="True" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="TOTAL" />
-    <AssociationRule Name="CD34_AVG" SegmentationSource="NUCLEAR" Target_Image="cd34" Outside_Distance="0" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="True" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="AVERAGE" />
+    <AssociationRule Name="CD34_TOTAL" SegmentationSource="NUCLEAR" Target_Image="cd34" Outside_Distance="12" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="TOTAL" />
+    <AssociationRule Name="CD34_AVG" SegmentationSource="NUCLEAR" Target_Image="cd34" Outside_Distance="12" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="AVERAGE" />
+    <AssociationRule Name="CD34_SURR" SegmentationSource="NUCLEAR" Target_Image="cd34" Outside_Distance="0" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="SURROUNDEDNESS" />
+    <AssociationRule Name="SMA_TOTAL" SegmentationSource="NUCLEAR" Target_Image="sma" Outside_Distance="12" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="TOTAL" />
+    <AssociationRule Name="SMA_AVG" SegmentationSource="NUCLEAR" Target_Image="sma" Outside_Distance="12" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="AVERAGE" />
+    <AssociationRule Name="SMA_SURR" SegmentationSource="NUCLEAR" Target_Image="sma" Outside_Distance="0" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="SURROUNDEDNESS" />
   </AssociationRules>
 </ProjectDefinition>
