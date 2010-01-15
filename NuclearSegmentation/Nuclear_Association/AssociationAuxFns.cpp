@@ -160,7 +160,6 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 	std::vector< float > qfied_num;
 	int qnum_sz = zp? (int)(labelsList.size()-1) : (int)(labelsList.size());
 	for( int i=0; i<qnum_sz; ++i ){
-		if( labelsList[i] == 0 ) continue;
 		int counter=0;
 		for( int j=0; j<number_of_rois; ++j ){
 			if( quantified_numbers[i*number_of_rois+j] )
