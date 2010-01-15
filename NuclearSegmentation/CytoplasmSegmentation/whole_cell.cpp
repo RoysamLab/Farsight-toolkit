@@ -186,7 +186,7 @@ void WholeCellSeg::BinarizationForRealBounds(){
 		dum = 0;
 		dum1 = USHRT_MAX;
 
-		unsigned int asd,asd1; asd=0; asd1=0;
+		//unsigned int asd,asd1; asd=0; asd1=0;
 		IteratorType iterator ( intermediate_bin_im_out, intermediate_bin_im_out->GetRequestedRegion() );
 		for(unsigned long int i=0; i < (unsigned long int)(size1*size2); ++i){
 			if( bin_Image[i] )

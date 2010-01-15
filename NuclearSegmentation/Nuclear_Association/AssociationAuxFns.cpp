@@ -51,7 +51,8 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 	//Dialate input first
 	WholeCellSeg *dialate_filter = new WholeCellSeg;
 	typedef itk::ExtractImageFilter< USImageType, UShortImageType > LabelExtractType;
-	typedef itk::ExtractImageFilter< UShortImageType, USImageType > LabelExtractType1;
+	typedef itk::ImageRegionConstIterator< UShortImageType > ConstIteratorType;
+	typedef itk::ImageRegionIteratorWithIndex< USImageType > IteratorType;
 	LabelExtractType::Pointer deFilter = LabelExtractType::New();
 	USImageType::RegionType dRegion = inp_labeled->GetLargestPossibleRegion();
 	dRegion.SetSize(2,0);
@@ -67,21 +68,36 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 	dialate_filter->set_nuc_img( deFilter->GetOutput() );
 	dialate_filter->RunSegmentation();
 	UShortImageType::Pointer input_lab = dialate_filter->getSegPointer();
-	LabelExtractType1::Pointer deFilter1 = LabelExtractType1::New();
-	UShortImageType::RegionType dRegion1 = input_lab->GetLargestPossibleRegion();
-	dRegion1.SetSize(2,0);
-	deFilter1->SetExtractionRegion(dRegion1);
-	deFilter1->SetInput( input_lab );
-	try{
-		deFilter1->Update();
-	}
-	catch( itk::ExceptionObject & excep ){
-		std::cerr << "Exception caught !" << std::endl;
-		std::cerr << excep << std::endl;
-	}
-	delete dialate_filter;
 
-	USImageType::Pointer input_labeled = deFilter1->GetOutput();
+	USImageType::Pointer input_labeled = USImageType::New();
+	USImageType::PointType origint;
+	origint[0] = 0;
+	origint[1] = 0;
+	origint[2] = 0;
+	input_labeled->SetOrigin( origint );
+	USImageType::IndexType startt;
+	startt[0] = 0;  // first index on X
+	startt[1] = 0;  // first index on Y
+	startt[2] = 0;  // first index on Z
+	USImageType::SizeType  sizet;
+	sizet[0] = inp_labeled->GetLargestPossibleRegion().GetSize()[0];  // size along X
+	sizet[1] = inp_labeled->GetLargestPossibleRegion().GetSize()[1];  // size along Y
+	sizet[2] = inp_labeled->GetLargestPossibleRegion().GetSize()[2];  // size along Z
+	USImageType::RegionType regiont;
+	regiont.SetSize( sizet );
+	regiont.SetIndex( startt );
+	input_labeled->SetRegions( regiont );
+	input_labeled->Allocate();
+	input_labeled->FillBuffer(0);
+	input_labeled->Update();
+
+	ConstIteratorType pix_buf1( input_lab, input_lab->GetRequestedRegion() );
+	IteratorType iterator ( input_labeled, input_labeled->GetRequestedRegion() );
+	iterator.GoToBegin();
+	for ( pix_buf1.GoToBegin(); !pix_buf1.IsAtEnd(); ++pix_buf1 ){
+		iterator.Set( pix_buf1.Get() );
+		++iterator;
+	}
 
 	std::vector< float > quantified_numbers;
 	std::vector< unsigned short > labelsList;
