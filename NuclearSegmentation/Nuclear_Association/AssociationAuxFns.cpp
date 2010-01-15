@@ -57,7 +57,6 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 	dRegion.SetSize(2,0);
 	deFilter->SetExtractionRegion(dRegion);
 	deFilter->SetInput( inp_labeled );
-	deFilter->Update();
 	try{
 		deFilter->Update();
 	}
@@ -70,9 +69,9 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 	UShortImageType::Pointer input_lab = dialate_filter->getSegPointer();
 	LabelExtractType1::Pointer deFilter1 = LabelExtractType1::New();
 	UShortImageType::RegionType dRegion1 = input_lab->GetLargestPossibleRegion();
+	dRegion1.SetSize(2,0);
 	deFilter1->SetExtractionRegion(dRegion1);
 	deFilter1->SetInput( input_lab );
-	deFilter1->Update();
 	try{
 		deFilter1->Update();
 	}
