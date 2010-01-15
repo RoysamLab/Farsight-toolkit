@@ -70,8 +70,8 @@ public:
 	std::string GetTargetFileNmae(){ return targFileName; };
 	int GetOutDistance(){ return outsideDistance; };
 	int GetInDistance(){ return insideDistance; };
-	bool IsUseWholeObject() {return subBkground; };
-	bool IsUseBackgroundSubtraction() {return use_multiple_thresh; };
+	bool IsUseWholeObject() {return useWholeObject; };
+	bool IsUseBackgroundSubtraction() {return subBkground; };
 	bool IsUseMultiLevelThresholding() {return use_multiple_thresh; };
 	int GetNumberOfThresholds(){ return num_threshs; };
 	int GetNumberIncludedInForeground(){ return num_in_fg; };
