@@ -62,7 +62,7 @@ void PatternAnalysisWizard::initFeatureGroup(void)
 		if( strcmp(name,columnForTraining) == 0 || strcmp(name,columnForPrediction) == 0 )
 			continue;
 		QCheckBox * check = new QCheckBox(QString(name));
-		check->setChecked(false);
+		check->setChecked(true);
 		featureGroup->addButton(check, c);
 	}
 }

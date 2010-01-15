@@ -33,6 +33,7 @@ namespace ftk
 
 ProjectFiles::ProjectFiles()
 {
+	path = "";
 	name = "";
 
 	//Filenames:
@@ -66,7 +67,7 @@ bool ProjectFiles::Read(std::string filename)
 	if ( strcmp( docname, "ProjectFiles" ) != 0 )
 		return false;
 
-	name = rootElement->Attribute("name");
+	//name = rootElement->Attribute("name");
 
 	TiXmlElement * parentElement = rootElement->FirstChildElement();
 	while (parentElement)
@@ -104,7 +105,7 @@ bool ProjectFiles::Write(std::string filename)
 {
 	TiXmlDocument doc;   
 	TiXmlElement * root = new TiXmlElement( "ProjectFiles" );
-	root->SetAttribute("name", name.c_str());
+	//root->SetAttribute("name", name.c_str());
 	doc.LinkEndChild( root );  
  
 	TiXmlElement * file;

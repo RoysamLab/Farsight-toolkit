@@ -57,7 +57,6 @@ TrainingDialog::TrainingDialog(vtkSmartPointer<vtkTable> table, const char * tra
 	doneButton->setDefault(false);
 	doneButton->setAutoDefault(false);
 	
-
 	QHBoxLayout *endLayout = new QHBoxLayout;
 	endLayout->addStretch(25);
 	endLayout->addWidget(loadButton);
@@ -74,10 +73,11 @@ TrainingDialog::TrainingDialog(vtkSmartPointer<vtkTable> table, const char * tra
 
 	this->setLayout(masterLayout);
 
-	this->addClass();
-
 	m_table = table;
 	columnForTraining = trainColumn;
+
+	//this->addClass();
+	this->tableToInput();
 }
 
 void TrainingDialog::addClass(void)
@@ -268,18 +268,29 @@ void TrainingDialog::Append()
 void TrainingDialog::accept(void)
 {
 	//Update the table:
-	this->parseInputValues();
-	this->updateTable();
+	this->inputToTable();
 
 	//Exit:
 	QDialog::accept();
 }
 
+void TrainingDialog::inputToTable(void)
+{
+	this->parseInputValues();	//inputs to training set
+	this->updateTable();		//training set to table
+}
+
+void TrainingDialog::tableToInput(void)
+{
+	this->parseTableValues();	//table to training set
+	this->updateInputs();		//training set to input boxes
+}
+
+//Takes the values from the input boxes and puts them in the training vector.
 void TrainingDialog::parseInputValues(void)
 {
 	training.clear();
 
-	
 	for(int c=0; c<inputValues.size(); ++c)
 	{
 		std::set<int> ids;
@@ -291,18 +302,42 @@ void TrainingDialog::parseInputValues(void)
 			int v = str.toInt();
 			ids.insert( v );
 		}
-		training.push_back(ids);
+		training[ c+1 ] = ids;
 	}
 }
 
+//Takes the value from the columnForTraining in the table and puts them into the training vector
+void TrainingDialog::parseTableValues(void)
+{
+	training.clear();
+
+	if(!m_table) return;
+
+	vtkAbstractArray * output = m_table->GetColumnByName(columnForTraining);
+	if(output == 0) return;
+
+	//Iterate through table and populate the training vectors
+	for(int row = 0; (int)row < m_table->GetNumberOfRows(); ++row)  
+	{
+		int cls = m_table->GetValueByName(row, columnForTraining).ToInt();
+		int id = m_table->GetValue(row,0).ToInt();
+		if(cls > 0)
+			training[ cls ].insert( id);
+	}
+}
+
+// Go from training set to table;
 void TrainingDialog::updateTable(void)
 {
-	if(training.size() == 0)
-		return;
+	std::map< int, std::set<int> >::iterator it;
+
+	//if(training.size() == 0)
+	//	return;
+
+	if(!m_table) return;
 
 	//If need to create a new column do so now:
 	vtkAbstractArray * output = m_table->GetColumnByName(columnForTraining);
-	
 	if(output == 0)
 	{
 		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
@@ -315,14 +350,62 @@ void TrainingDialog::updateTable(void)
 	for(int row = 0; (int)row < m_table->GetNumberOfRows(); ++row)  
 	{
 		int id = m_table->GetValue(row,0).ToInt();
-		for(int c=0; c<(int)training.size(); ++c)
+		bool idFound = false;
+		for(it=training.begin(); it!=training.end(); ++it)
 		{
-			if( training.at(c).find(id) != training.at(c).end() )
+			int cls = (*it).first;
+			if( (*it).second.find(id) != (*it).second.end() )
 			{
-				m_table->SetValueByName(row, columnForTraining, vtkVariant( c + 1 ));
+				m_table->SetValueByName(row, columnForTraining, vtkVariant( cls ));
+				idFound = true;
 				break;
 			}
 		}
+		if(!idFound)
+			m_table->SetValueByName(row, columnForTraining, vtkVariant( -1 ));
 	}
 	emit changedTable();
+}
+
+//Go from training set to input boxes
+void TrainingDialog::updateInputs(void)
+{
+	std::map< int, std::set<int> >::iterator it;
+
+	//Make sure number of classes matches:
+	int numClassBoxes = (int)inputValues.size();
+	int numClasses = (int)training.size();
+
+	if(numClasses > numClassBoxes)	//Need more boxes
+	{
+		for(int i=numClassBoxes; i<numClasses; ++i)
+		{
+			this->addClass();
+		}
+	}
+	else if(numClassBoxes > numClasses) //Need to remove boxes
+	{
+		for(int i=numClasses; i<numClassBoxes; ++i)
+		{
+			this->remClass();
+		}
+	}
+
+	//Now fill in the boxes:
+	int c=0;
+	for(it=training.begin(); it!=training.end(); ++it)
+	{
+		int cls = (*it).first;
+		std::set<int> ids = (*it).second;
+		std::set<int>::iterator s_it = ids.begin();
+		QString input;
+		for(s_it=ids.begin(); s_it!=ids.end(); ++s_it)
+		{
+			if(s_it != ids.begin())
+				input.append(",");
+			input.append(QString::number(*s_it));
+		}
+		inputValues.at(c)->setText(input);
+		++c;
+	}
 }

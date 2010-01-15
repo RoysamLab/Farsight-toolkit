@@ -47,6 +47,7 @@ public:
 	bool Write(std::string filename);
 
 	//VARIABLES
+	std::string path;
 	std::string name;
 	bool nucSegValidated;	//Nuclear Segmentation is validated
 

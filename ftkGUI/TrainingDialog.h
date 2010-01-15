@@ -38,6 +38,7 @@ limitations under the License.
 #include <iostream>
 #include <vector>
 #include <set>
+#include <map>
 #include <list>
 #include <float.h>
 
@@ -64,8 +65,12 @@ private slots:
 	void saveModel(void);
 	void loadModel(void);
 	void updateTable(void);
+	void updateInputs(void);
 	void parseInputValues(void);
+	void parseTableValues(void);
 	void Append(void);
+	void tableToInput(void);
+	void inputToTable(void);
 	
 
 private:
@@ -81,7 +86,8 @@ private:
 	QPushButton * doneButton;
 	
 	QString lastPath;							//Last path that has been navigated to
-	std::vector< std::set<int> > training;
+	//std::vector< std::set<int> > training;
+	std::map< int, std::set<int> > training;
 	vtkSmartPointer<vtkTable> m_table;
 	vtkSmartPointer<vtkTable> model_table;
 	const char * columnForTraining;
