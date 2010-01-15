@@ -352,7 +352,11 @@ void NuclearAssociationRules::Compute()
 		//cout<<"Computing Features For Association Rule "<<i+1<<": ";
 		if( assocRulesList[i].GetAssocType() == ASSOC_SURROUNDEDNESS ){
 			std::vector<float> ec_feat_vals = compute_ec_features( inpImage, labImage, num_rois, thresh );
-			for(int j=0; j<numOfLabels; j++)
+			bool zp=false;
+			for( unsigned short j=0; (int)j < labelsList.size(); ++j )
+				if( labelsList[j] == 0 ) zp=true;
+			int qnum_sz = zp? (int)(labelsList.size()-1) : (int)(labelsList.size());
+			for(int j=0; j<qnum_sz; j++)
 				assocMeasurementsList[i][j] = ec_feat_vals[j];
 		} else {
 			for(int j=0; j<numOfLabels; j++)
