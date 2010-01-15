@@ -23,6 +23,7 @@ limitations under the License.
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
+#include "itkImageRegionIterator.h"
 
 using std::cerr;
 using std::cout;
