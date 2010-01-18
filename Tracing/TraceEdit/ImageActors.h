@@ -39,8 +39,8 @@ limitations under the License.
 
 
 const unsigned int Dimension = 3;
-typedef unsigned char  PixelType;
-typedef itk::Image< PixelType, Dimension >   ImageType;
+typedef unsigned char  ImageActorPixelType;
+typedef itk::Image< ImageActorPixelType, Dimension >   ImageType;
 typedef itk::ImageFileReader< ImageType >    ReaderType;
 typedef itk::ImageToVTKImageFilter<ImageType> ConnectorType;
 struct imageFileHandle
