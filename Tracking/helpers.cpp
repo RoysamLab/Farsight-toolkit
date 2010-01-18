@@ -565,7 +565,7 @@ double features_diff(FeaturesType &f1, FeaturesType &f2,bool overlap)
 
 void getFeatureVectorsFarsight(LabelImageType::Pointer im, InputImageType::Pointer in_image, std::vector<ftk::IntrinsicFeatures> & feature_vector, int time, int tag)
 {
-	printf("Started feature calculation\n");
+	//printf("Started feature calculation\n");
 	if(im->GetLargestPossibleRegion().GetSize()[2]==1)
 	{
 		//convert it to a 2D Image
@@ -607,9 +607,9 @@ void getFeatureVectorsFarsight(LabelImageType::Pointer im, InputImageType::Point
 		typedef ftk::LabelImageToFeatures<InputImageType::PixelType,LabelImageType::PixelType,3> FeatureCalculatorType;
 		FeatureCalculatorType::Pointer fc = FeatureCalculatorType::New();
 		fc->SetImageInputs(in_image,im);
-		fc->SetLevel(3);
-		fc->ComputeTexturesOn();
-		fc->ComputeHistogramOn();
+		fc->SetLevel(1);
+	//	fc->ComputeTexturesOn();
+	//	fc->ComputeHistogramOn();
 		fc->Update();
 		std::vector<LabelImageType::PixelType> labels = fc->GetLabels();
 		for(unsigned int counter=0; counter< labels.size(); counter++)
@@ -622,7 +622,7 @@ void getFeatureVectorsFarsight(LabelImageType::Pointer im, InputImageType::Point
 			feature_vector.back().time = time;
 		}
 	}
-	printf("Ended feature calculation\n");
+	//printf("Ended feature calculation\n");
 }
 
 
@@ -632,7 +632,6 @@ InputImageType::Pointer getDilated(InputImageType::Pointer im, int n)
 	typedef itk::BinaryBallStructuringElement<InputPixelType,3> StructuringElementType;
 	typedef itk::Neighborhood<InputPixelType,3> NeighborhoodElementType;
 	typedef itk::BinaryDilateImageFilter<InputImageType,InputImageType,NeighborhoodElementType> DilateFilterType;
-
 
 	StructuringElementType selement;
 	NeighborhoodElementType::SizeType size;
@@ -1044,7 +1043,6 @@ Input2DImageType::Pointer get2DEmpty(int s1, int s2)
 	p->SetRegions(region);
 	p->Allocate();
 	return p;
-
 }
 
 Input2DImageType::Pointer get2DBoundary(LabelImageType::Pointer label)
@@ -1938,6 +1936,157 @@ void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::T
 	printf("tfs.size()\n");
 
 
+}
+
+InputImageType::Pointer extract_raw_image(float bbox[6],InputImageType::Pointer r)
+{
+	int bb[6];
+	for(int co = 0; co < 6; co++)
+	{
+		bb[co] = int(bbox[co]+0.5);
+	}
+	InputImageType::Pointer lp = InputImageType::New();
+	InputImageType::IndexType lindex;
+	InputImageType::SizeType lsize;
+	InputImageType::RegionType lregion;
+	lindex.Fill(0);
+	lsize[0] = bb[1]-bb[0]+1;
+	lsize[1] = bb[3]-bb[2]+1;
+	lsize[2] = bb[5]-bb[4]+1;
+	lregion.SetIndex(lindex);
+	lregion.SetSize(lsize);
+	lp->SetRegions(lregion);
+	lp->Allocate();
+	lp->FillBuffer(0);
+	IteratorType lpiter(lp,lp->GetLargestPossibleRegion());
+	lindex[0] = bb[0];
+	lindex[1] = bb[2];
+	lindex[2] = bb[4];
+	lregion.SetIndex(lindex);
+	IteratorType liter(r,lregion);
+	for(;!lpiter.IsAtEnd(); ++lpiter,++liter)
+	{
+		lpiter.Set(liter.Get());
+	}
+	return lp;
+	
+}
+LabelImageType::Pointer extract_label_image(int label, float bbox[6],LabelImageType::Pointer l)
+{
+	int bb[6];
+	for(int co = 0; co < 6; co++)
+	{
+		bb[co] = int(bbox[co]+0.5);
+	}
+	LabelImageType::Pointer lp = LabelImageType::New();
+	LabelImageType::IndexType lindex;
+	LabelImageType::SizeType lsize;
+	LabelImageType::RegionType lregion;
+	lindex.Fill(0);
+	lsize[0] = bb[1]-bb[0]+1;
+	lsize[1] = bb[3]-bb[2]+1;
+	lsize[2] = bb[5]-bb[4]+1;
+	lregion.SetIndex(lindex);
+	lregion.SetSize(lsize);
+	lp->SetRegions(lregion);
+	lp->Allocate();
+	lp->FillBuffer(0);
+	LabelIteratorType lpiter(lp,lp->GetLargestPossibleRegion());
+	lindex[0] = bb[0];
+	lindex[1] = bb[2];
+	lindex[2] = bb[4];
+	lregion.SetIndex(lindex);
+	LabelIteratorType liter(l,lregion);
+	for(;!lpiter.IsAtEnd(); ++lpiter,++liter)
+	{
+		if(liter.Get()==label)
+			lpiter.Set(liter.Get());
+	}
+	return lp;
+}
+void annotateImage(Color2DImageType::Pointer number,Color2DImageType::Pointer orig, int n, int x, int y)
+{
+	typedef itk::ImageRegionConstIterator<Color2DImageType> ConstColor2DIteratorType;
+	typedef itk::ImageRegionIterator<Color2DImageType> Color2DIteratorType;
+
+	Color2DImageType::RegionType region;
+	Color2DImageType::IndexType index;
+	Color2DImageType::SizeType size;
+
+	//printf("n = %d xsize : %d ysize: %d x: %d y = %d\n",n,number->GetLargestPossibleRegion().GetSize()[0],number->GetLargestPossibleRegion().GetSize()[1],x,y);
+	double p;
+	if(n<10)
+		p=3;
+	else if (n<100)
+		p=3.0/2;
+	else 
+		p=1;
+	size[0]=25/p;
+	size[1]=11;
+	index[0] = (int(n/20)*34);
+	index[1] = number->GetLargestPossibleRegion().GetSize()[1]-((n%20)*31.5)-size[1]+1;
+	index[0]= MIN(MAX(index[0],0),number->GetLargestPossibleRegion().GetSize()[0]-size[0]-1);
+	index[1]= MIN(MAX(index[1],0),number->GetLargestPossibleRegion().GetSize()[1]-size[1]-1);
+
+	VectorPixelType white; white[0]=255; white[1]=255; white[2]=255;
+	VectorPixelType blue; blue[0]=0; blue[1]=0; blue[2]=255;
+
+	region.SetSize(size);
+	region.SetIndex(index);
+
+	//printf("index : %d %d\n",index[0],index[1]);
+	ConstColor2DIteratorType numberiter(number,region);
+
+	if(x<size[0]/2)
+		index[0]=0;
+	else
+		index[0] = MIN(MAX(x-size[0]/2,0),orig->GetLargestPossibleRegion().GetSize()[0]-size[0]);
+	if(y<size[1]/2)
+		index[1]=0;
+	else
+		index[1] = MIN(MAX(y-size[1]/2,0),orig->GetLargestPossibleRegion().GetSize()[1]-size[1]);
+	//printf("index : %d %d\n",index[0],index[1]);
+	region.SetIndex(index);
+
+	Color2DIteratorType origiter(orig,region);
+
+
+	for(origiter.GoToBegin(),numberiter.GoToBegin();!origiter.IsAtEnd() && !numberiter.IsAtEnd(); ++numberiter,++origiter)
+	{
+		if(numberiter.Get()!=white)
+			origiter.Set(blue);
+	}
+}
+
+ColorImageType::Pointer getColorImageFromColor2DImages(std::vector<Color2DImageType::Pointer> input)
+{
+	ColorImageType::Pointer col = ColorImageType::New();
+	ColorImageType::SizeType csize;
+	ColorImageType::IndexType cindex;
+	ColorImageType::RegionType cregion;
+	Color2DImageType::SizeType c2dsize = input[0]->GetLargestPossibleRegion().GetSize();
+	csize[0] = c2dsize[0];
+	csize[1] = c2dsize[1];
+	csize[2] = input.size();
+	cindex.Fill(0);
+	cregion.SetSize(csize);
+	cregion.SetIndex(cindex);
+	col->SetRegions(cregion);
+	col->Allocate();
+
+	ColorIteratorType citer(col,col->GetLargestPossibleRegion());
+	citer.GoToBegin();
+	typedef itk::ImageRegionIterator<Color2DImageType> Color2DIteratorType;
+	for(int counter=0; counter< input.size(); counter++)
+	{
+		Color2DIteratorType c2diter(input[counter],input[counter]->GetLargestPossibleRegion());
+		c2diter.GoToBegin();
+		for(;!c2diter.IsAtEnd(); ++c2diter, ++citer)
+		{
+			citer.Set(c2diter.Get());
+		}
+	}
+	return col;
 }
 
 }

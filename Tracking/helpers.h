@@ -199,5 +199,9 @@ void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs);
 void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::TrackFeatures> &tfs);
 FloatImageType::IndexType searchNearestVesselDirection(FloatImageType::Pointer dir_image[3],FloatImageType::IndexType index,InputImageType::Pointer vesselim);
 void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::TrackFeatures> &tfs, int c, int num_t);
+LabelImageType::Pointer extract_label_image(int label, float bbox[6],LabelImageType::Pointer l);
+InputImageType::Pointer extract_raw_image(float bbox[6],InputImageType::Pointer r);
+void annotateImage(Color2DImageType::Pointer number,Color2DImageType::Pointer orig, int n, int x, int y);
+ColorImageType::Pointer getColorImageFromColor2DImages(std::vector<Color2DImageType::Pointer> input);
 }
 #endif

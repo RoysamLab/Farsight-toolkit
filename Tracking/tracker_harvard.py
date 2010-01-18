@@ -12,10 +12,12 @@ def populate_directories(path, dataset_id):
 if __name__ == '__main__':
 
     # default values for all variables defined here
-    data_directory = 'C:\\Users\\Arun\\Research\\piexoto_data\\TSeries-02102009-1455-624-3Dmovies'
+   # data_directory = 'C:\\Users\\Arun\\Research\\piexoto_data\\TSeries-02102009-1455-624-3Dmovies'
+    data_directory = 'C:\\Users\\Arun\\Research\\Tracking\\data\\TSeries-02102009-1455-624-3Dmovies'
     cwd = 'C:\\Users\\Arun\\Research\\Tracking\\harvard'
-    exe_dir = 'C:\\Users\\Arun\\Research\\Farsight_bin\\bin'
-    dataset_id = 'second_'
+    exe_dir = 'C:\\Users\\Arun\\Research\\Farsight\\exe\\bin'
+    dataset_id = 'test'
+    number_of_cores = 9;
     dirList = os.listdir(data_directory)
     list_of_filenames =[]
     channels = []
@@ -52,7 +54,7 @@ if __name__ == '__main__':
     # prefix the filanames with necessary things like
     # unmixed_, labeled_, labeled_tracks_, vessel_binarized_, etc..
 
-    time_points = time_points[0:100] # DEBUG
+    time_points = time_points[0:10] # DEBUG
     #channels = [2,3,4]
     #pdb.set_trace()
     ######################### Delete slices #############################
@@ -114,7 +116,10 @@ if __name__ == '__main__':
     params.append('70,30,5');
     params.append('2,50,5');
 
+    
     channels_to_segment = [2,3,4]
+    popen_objs = [];
+    tpr = int(number_of_cores/len(channels_to_segment));
     # segment all the channels first. Then trace the vessels.
     for t  in time_points:
         for w in channels_to_segment:
@@ -135,8 +140,12 @@ if __name__ == '__main__':
                 temp_fname.append('2') # type of segmentation
                 temp_fname.append(params[0]) # paramerters
                 temp_fname.append(output_filename)
-            
-            subprocess.call(temp_fname)
+            popen_objs.append(subprocess.Popen(temp_fname));
+
+        if t % tpr == 0:
+                for obj in popen_objs:
+                        out = obj.communicate()[0];
+
 
     # vessel tracing
 ##    vessel_w = 4; #vessel channel
@@ -151,39 +160,39 @@ if __name__ == '__main__':
 ##    ############################# Tracking ##############################
 ##
 ##    # track channel 1 and 2 only
-##    channels_to_track = [3,4]
-##    for w in channels_to_track:
-##        temp_fname = [];
-##        temp_fname.append(os.path.join(exe_dir,'tracking'))
-##        for t in time_points:
-##            temp_fname.append(os.path.join(cache_prefix, 'smoothed_' + filenames[(w,t)]))
-##        for t in time_points:
-##            temp_fname.append(os.path.join(cache_prefix, 'labeled_' + filenames[(w,t)]))
-##        for t in time_points:
-##            temp_fname.append(os.path.join(cache_prefix, 'labeled_tracks_' + filenames[(w,t)]))
-##        print temp_fname
-##        subprocess.call(temp_fname);
+    channels_to_track = [3,4]
+    for w in channels_to_track:
+        temp_fname = [];
+        temp_fname.append(os.path.join(exe_dir,'tracking'))
+        for t in time_points:
+            temp_fname.append(os.path.join(cache_prefix, 'smoothed_' + filenames[(w,t)]))
+        for t in time_points:
+            temp_fname.append(os.path.join(cache_prefix, 'labeled_' + filenames[(w,t)]))
+        for t in time_points:
+            temp_fname.append(os.path.join(cache_prefix, 'labeled_tracks_' + filenames[(w,t)]))
+        print temp_fname
+        subprocess.call(temp_fname);
 ##    
 ##    ####################### Feature computation #########################
 ##
 ##    # compute features for channel 1,2 against channel 3,4
-##    for w in channels_to_track:
-##        temp_fname = [];
-##        temp_fname.append(os.path.join(exe_dir,'summary'))
-##        temp_fname.append(str(len(time_points)))
-##        temp_fname.append('1'); # number of associated channels to compute features with
-##        for t in time_points:
-##            temp_fname.append(os.path.join(cache_prefix, 'smoothed_' + filenames[(w,t)]))
-##        for t in time_points:
-##            temp_fname.append(os.path.join(cache_prefix, 'labeled_tracks_' + filenames[(w,t)]))
-##        temp_fname.append('DC') # type of channel
-##        for t in time_points:
-##            temp_fname.append(os.path.join(cache_prefix, 'labeled_' + filenames[(2,t)])) # add DC segmented files too
-####        temp_fname.append('Vessel') # type of channel
-####        temp_fname.append(os.path.join(cache_prefix, 'vessel_trace_' + dataset_id + '_w' + str(vessel_w) + '.tif'))
-##        temp_fname.append(os.path.join(cache_prefix, 'track_summary_' + dataset_id + '_w' + str(w) + '.txt'))
-##        temp_fname.append(os.path.join(cache_prefix, 'track_points_summary_' + dataset_id + '_w' + str(w) + '.txt'))
-##        subprocess.call(temp_fname);
+    for w in channels_to_track:
+        temp_fname = [];
+        temp_fname.append(os.path.join(exe_dir,'summary'))
+        temp_fname.append(str(len(time_points)))
+        temp_fname.append('1'); # number of associated channels to compute features with
+        for t in time_points:
+            temp_fname.append(os.path.join(cache_prefix, 'smoothed_' + filenames[(w,t)]))
+        for t in time_points:
+            temp_fname.append(os.path.join(cache_prefix, 'labeled_tracks_' + filenames[(w,t)]))
+        temp_fname.append('DC') # type of channel
+        for t in time_points:
+            temp_fname.append(os.path.join(cache_prefix, 'labeled_' + filenames[(2,t)])) # add DC segmented files too
+##        temp_fname.append('Vessel') # type of channel
+##        temp_fname.append(os.path.join(cache_prefix, 'vessel_trace_' + dataset_id + '_w' + str(vessel_w) + '.tif'))
+        temp_fname.append(os.path.join(cache_prefix, 'track_summary_' + dataset_id + '_w' + str(w) + '.txt'))
+        temp_fname.append(os.path.join(cache_prefix, 'track_points_summary_' + dataset_id + '_w' + str(w) + '.txt'))
+        subprocess.call(temp_fname);
 
   ####################### Rendering #########################
 ##  temp_fname = [];

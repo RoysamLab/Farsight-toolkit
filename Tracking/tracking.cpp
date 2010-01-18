@@ -520,11 +520,12 @@ void createTrackFeatures(std::vector<FeaturesType> fvector[MAX_TIME][MAX_TAGS], 
 		//PRINTF("Added %d elements to tfs\n",counter);
 	}
 }
-int main(int argc, char **argv)
+int main()//int argc, char **argv)
 {
 	//ST();
-	/*
-	int num_tc = 100;
+	
+	int num_tc = 10;
+	#define BASE "C:\\Users\\arun\\Research\\Tracking\\harvard\\cache\\testTSeries-02102009-1455-624\\"
 	int argc = num_tc*3+1;
 	
 	char ** argv = new char* [argc];
@@ -535,17 +536,17 @@ int main(int argc, char **argv)
 	}
 	for(int counter =1; counter<=num_tc; counter++)
 	{
-		sprintf(argv[counter],"C:\\Users\\Arun\\Research\\Tracking\\harvard\\cache\\second_TSeries-02102009-1455-624\\smoothed_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,ch);
+		sprintf(argv[counter],BASE"smoothed_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,ch);
 	}
 	for(int counter =1; counter<=num_tc; counter++)
 	{
-		sprintf(argv[counter+num_tc],"C:\\Users\\Arun\\Research\\Tracking\\harvard\\cache\\second_TSeries-02102009-1455-624\\labeled_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,ch);
+		sprintf(argv[counter+num_tc],BASE"labeled_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,ch);
 	}
 	for(int counter =1; counter<=num_tc; counter++)
 	{
-		sprintf(argv[counter+num_tc*2],"C:\\Users\\Arun\\Research\\Tracking\\harvard\\cache\\second_TSeries-02102009-1455-624\\labeled_tracks_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,ch);
+		sprintf(argv[counter+num_tc*2],BASE"labeled_tracks_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,ch);
 	}
-*/
+
 	printf("Started\n");
 	/*int num_files = atoi(argv[1]);
 	int c;*/

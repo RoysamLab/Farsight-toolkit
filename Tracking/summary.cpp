@@ -515,11 +515,12 @@ void createTrackFeatures(std::vector<FeaturesType> fvector[MAX_TIME][MAX_TAGS], 
 		//PRINTF("Added %d elements to tfs\n",counter);
 	}
 }
-int main(int argc, char **argv)
+int main()//int argc, char **argv)
 {
 	//ST();
-/*
-	int num_tc = 100;
+
+	int num_tc = 10;
+	#define BASE "C:\\Users\\arun\\Research\\Tracking\\harvard\\cache\\testTSeries-02102009-1455-624\\"
 	int argc = num_tc*3+9;
 	int pp = 1;
 	char ** argv = new char* [argc];
@@ -533,20 +534,20 @@ int main(int argc, char **argv)
 	sprintf(argv[pp++],"1");
 	for(int counter =1; counter<=num_tc; counter++)
 	{
-		sprintf(argv[pp++],"C:\\Users\\Arun\\Research\\Tracking\\harvard\\cache\\second_TSeries-02102009-1455-624\\smoothed_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,ch);
+		sprintf(argv[pp++],BASE"smoothed_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,ch);
 	}
 	for(int counter =1; counter<=num_tc; counter++)
 	{
-		sprintf(argv[pp++],"C:\\Users\\Arun\\Research\\Tracking\\harvard\\cache\\second_TSeries-02102009-1455-624\\labeled_tracks_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,ch);
+		sprintf(argv[pp++],BASE"labeled_tracks_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,ch);
 	}
 	sprintf(argv[pp++],"DC");
 	for(int counter =1; counter<=num_tc; counter++)
 	{
-		sprintf(argv[pp++],"C:\\Users\\Arun\\Research\\Tracking\\harvard\\cache\\second_TSeries-02102009-1455-624\\labeled_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,2);
+		sprintf(argv[pp++],BASE"labeled_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,2);
 	}
-	sprintf(argv[pp++],"C:\\Users\\Arun\\Research\\Tracking\\harvard\\cache\\second_TSeries-02102009-1455-624\\track_summary_second_TSeries-02102009-1455-624_w%d.txt",ch);
-	sprintf(argv[pp++],"C:\\Users\\Arun\\Research\\Tracking\\harvard\\cache\\second_TSeries-02102009-1455-624\\track_points_summary_second_TSeries-02102009-1455-624_w%d.txt",ch);
-*/
+	sprintf(argv[pp++],BASE"track_summary_second_TSeries-02102009-1455-624_w%d.txt",ch);
+	sprintf(argv[pp++],BASE"track_points_summary_second_TSeries-02102009-1455-624_w%d.txt",ch);
+
 	printf("Started\n");
 	int c=1;
 	//int counter = 0;
