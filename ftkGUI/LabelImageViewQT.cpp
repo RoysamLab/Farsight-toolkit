@@ -997,7 +997,7 @@ void LabelImageViewQT::drawObjectCentroids(QPainter *painter)
 			cls = classMap[id];
 
 		QColor myColor = centroidColorTable.at(cls-1);
-		painter->setPen(myColor);
+		painter->setPen(Qt::black);
 		painter->setBrush(myColor);
 
 		ftk::Object::Point point = (*it).second;

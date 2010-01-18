@@ -21,7 +21,7 @@ TrainingDialog::TrainingDialog(vtkSmartPointer<vtkTable> table, const char * tra
 	this->setWindowTitle(tr("Training"));
 	this->setModal(false);
 
-	QLabel *topLabel = new QLabel(tr("Please enter comma separated list of IDs: "));
+	QLabel *topLabel = new QLabel(tr("Please enter a comma separated list of Example Object IDs: "));
 
 	inputsLayout = new QVBoxLayout;
 
@@ -38,12 +38,12 @@ TrainingDialog::TrainingDialog(vtkSmartPointer<vtkTable> table, const char * tra
 	bLayout->addWidget(delButton);
 	bLayout->addStretch(20);
 
-	saveButton = new QPushButton(tr("Save Model"));
+	saveButton = new QPushButton(tr("Save Training Set"));
 	connect(saveButton, SIGNAL(clicked()), this, SLOT(saveModel(void)));
 	saveButton->setDefault(false);
 	saveButton->setAutoDefault(false);
 	
-	loadButton = new QPushButton(tr("Load Model"));
+	loadButton = new QPushButton(tr("Load Training Set"));
 	connect(loadButton, SIGNAL(clicked()), this, SLOT(loadModel()));
 	loadButton->setDefault(false);
 	loadButton->setAutoDefault(false);

@@ -437,7 +437,7 @@ void ScatterView::drawCurves(QPainter *painter)
 
 	const int numColors = 5;
 	//Yellow is reserved for selections!!!!
-	QColor defaultColor[numColors] = {Qt::cyan, Qt::magenta, Qt::green, Qt::red, Qt::blue};
+	QColor defaultColor[numColors] = {Qt::cyan, Qt::yellow, Qt::green, Qt::red, Qt::blue};
 
 	QVector<QRect> rectangles( table->GetNumberOfRows() );
 	for (int row = 0; row < table->GetNumberOfRows(); ++row) 
@@ -448,16 +448,36 @@ void ScatterView::drawCurves(QPainter *painter)
 		QColor myColor = defaultColor[ c % numColors ];
 
 		painter->setPen(Qt::black);
+		//painter->setPen(myColor);
 		if(selection)
 		{
 			if(selection->isSelected( table->GetValue(row,0).ToLong() ) )
 			{
-				myColor = Qt::yellow;
-				painter->setPen(myColor);
+				continue;
 			}
 		}
 		painter->setBrush(QBrush(myColor,Qt::SolidPattern));
 		painter->drawRect(rectangles[row]);
+	}
+	for (int row = 0; row < table->GetNumberOfRows(); ++row) 
+	{
+		QColor myColor = Qt::magenta;//Qt::yellow;
+				painter->setPen(Qt::black);
+				painter->setBrush(QBrush(myColor,Qt::SolidPattern));
+		rectangles[row] = getObjectRect(row);
+
+		//int c = table->GetValue(row,columnNumForColor).ToInt();
+		//QColor myColor = defaultColor[ c % numColors ];
+
+		//painter->setPen(Qt::black);
+		//painter->setPen(myColor);
+		if(selection)
+		{
+			if(selection->isSelected( table->GetValue(row,0).ToLong() ) )
+			{
+				painter->drawRect(rectangles[row]);
+			}
+		}
 	}
 }
 
