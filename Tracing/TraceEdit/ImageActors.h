@@ -15,17 +15,20 @@ limitations under the License.
 #ifndef IMAGEACTORS_H_
 #define IMAGEACTORS_H_
 
-#include "vtkSmartPointer.h"
-#include "vtkContourFilter.h"
 #include "vtkActor.h"
+#include "vtkContourFilter.h"
+#include "vtkColorTransferFunction.h"
 #include "vtkImageData.h"
 #include "vtkImageToStructuredPoints.h"
 #include "vtkLODActor.h"
 #include "vtkOpenGLVolumeTextureMapper3D.h"
+#include "vtkPiecewiseFunction.h"
+#include "vtkPolyData.h"
 #include "vtkPolyDataMapper.h"
+#include "vtkProperty.h"
+#include "vtkSmartPointer.h"
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
-#include "vtkProperty.h"
 
 #include "itkImageFileReader.h"
 #include "itkImageToVTKImageFilter.h"
@@ -33,8 +36,8 @@ limitations under the License.
 #include <stdio.h>
 #include <string>
 #include <vector>
-#include <set>
-#include <QtGui>
+//#include <set>
+//#include <QtGui>
 
 
 
@@ -48,18 +51,27 @@ struct imageFileHandle
 	std::string tag;
 	std::string filename;
 	vtkSmartPointer<vtkImageData> ImageData;
-
+//Contour Filter pointers
+	vtkSmartPointer<vtkContourFilter> ContourFilter;
+	vtkSmartPointer<vtkPolyDataMapper> ContourMapper;
+	vtkSmartPointer<vtkActor> ContourActor;
+//Raycast pointers
+	vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunction;
+	vtkSmartPointer<vtkColorTransferFunction> colorTransferFunction;
+	vtkSmartPointer<vtkVolumeProperty> volumeProperty;
+	vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper;
+	vtkSmartPointer<vtkVolume> volume;
 };
 class  ImageRenderActors
 {
 public:
 	ImageRenderActors();
-	//ImageRenderActors(std::string ImageSource);
 	int loadImage(std::string ImageSource);
-	vtkSmartPointer<vtkActor> ContourActor(vtkImageData *image);
-	//vtkSmartPointer<vtkImageData> ImageReader(std::string ImageSource);
+	vtkSmartPointer<vtkActor> ContourActor(int i);
+	vtkSmartPointer<vtkVolume> RayCastVolume(int i);
+	std::vector<std::string> GetImageList();
 private:
 	std::vector<imageFileHandle*> LoadedImages;
-
+	std::vector<std::string> ImageList;
 };
 #endif

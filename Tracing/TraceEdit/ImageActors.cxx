@@ -24,7 +24,7 @@ int ImageRenderActors::loadImage(std::string ImageSource)
 	{
 		return -1;
 	}
-	imageFileHandle *newImage;
+	imageFileHandle *newImage= new imageFileHandle;
 	newImage->filename = ImageSource;
 	ReaderType::Pointer reader = ReaderType::New();
 	reader->SetFileName( ImageSource );
@@ -43,20 +43,50 @@ int ImageRenderActors::loadImage(std::string ImageSource)
 	connector->SetInput( reader->GetOutput() );
 	newImage->ImageData = connector->GetOutput();
 	this->LoadedImages.push_back(newImage);
-	return true;
+	return (int) this->LoadedImages.size();
 }
-vtkSmartPointer<vtkActor> ImageRenderActors::ContourActor(vtkImageData *image)
+vtkSmartPointer<vtkActor> ImageRenderActors::ContourActor(int i)
 {
-	vtkSmartPointer<vtkContourFilter> ContourFilter = vtkSmartPointer<vtkContourFilter>::New();
-	ContourFilter->SetInput(image);
-	ContourFilter->SetValue(0,10);
-	ContourFilter->Update();
-	vtkSmartPointer<vtkPolyDataMapper> ContourMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	ContourMapper->SetInput(ContourFilter->GetOutput());
-	vtkSmartPointer<vtkActor>ContourActor = vtkSmartPointer<vtkActor>::New();
-	ContourActor->SetMapper(ContourMapper);
-	ContourActor->GetProperty()->SetOpacity(.5);
-	ContourActor->GetProperty()->SetColor(0.5,0.5,0.5);
-	ContourActor->SetPickable(0);
-	return ContourActor;
+	this->LoadedImages[i]->ContourFilter = vtkSmartPointer<vtkContourFilter>::New();
+	this->LoadedImages[i]->ContourFilter->SetInput(this->LoadedImages[i]->ImageData);
+	this->LoadedImages[i]->ContourFilter->SetValue(0,10);
+	this->LoadedImages[i]->ContourFilter->Update();
+	this->LoadedImages[i]->ContourMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	this->LoadedImages[i]->ContourMapper->SetInput(this->LoadedImages[i]->ContourFilter->GetOutput());
+	this->LoadedImages[i]->ContourActor = vtkSmartPointer<vtkActor>::New();
+	this->LoadedImages[i]->ContourActor->SetMapper(this->LoadedImages[i]->ContourMapper);
+	this->LoadedImages[i]->ContourActor->GetProperty()->SetOpacity(.5);
+	this->LoadedImages[i]->ContourActor->GetProperty()->SetColor(0.5,0.5,0.5);
+	this->LoadedImages[i]->ContourActor->SetPickable(0);
+	return this->LoadedImages[i]->ContourActor;
+}
+vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
+{
+	this->LoadedImages[i]->opacityTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
+	this->LoadedImages[i]->opacityTransferFunction->AddPoint(2,0.0);
+	this->LoadedImages[i]->opacityTransferFunction->AddPoint(50,0.1);
+	this->LoadedImages[i]->colorTransferFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
+	this->LoadedImages[i]->colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
+	this->LoadedImages[i]->colorTransferFunction->AddRGBPoint(50.0,1,0,0);
+	this->LoadedImages[i]->volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
+	this->LoadedImages[i]->volumeProperty->SetColor(this->LoadedImages[i]->colorTransferFunction);
+	this->LoadedImages[i]->volumeProperty->SetScalarOpacity(this->LoadedImages[i]->opacityTransferFunction);
+	this->LoadedImages[i]->volumeProperty->SetInterpolationTypeToLinear();
+	this->LoadedImages[i]->volumeMapper = vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
+	this->LoadedImages[i]->volumeMapper->SetSampleDistance(0.5);
+	this->LoadedImages[i]->volumeMapper->SetInput(this->LoadedImages[i]->ImageData);
+	this->LoadedImages[i]->volume = vtkSmartPointer<vtkVolume>::New();
+	this->LoadedImages[i]->volume->SetMapper(this->LoadedImages[i]->volumeMapper);
+	this->LoadedImages[i]->volume->SetProperty(this->LoadedImages[i]->volumeProperty);
+	this->LoadedImages[i]->volume->SetPickable(0);
+	return this->LoadedImages[i]->volume;
+}
+std::vector<std::string> ImageRenderActors::GetImageList()
+{
+	this->ImageList.clear();
+	for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
+	{
+		this->ImageList.push_back( this->LoadedImages[i]->filename);
+	}
+	return this->ImageList;
 }

@@ -1870,13 +1870,13 @@ void View3D::rayCast(char *raySource)
     }
   std::cout << "Image Read " << std::endl;
 //itk-vtk connector
-  /*typedef itk::ImageToVTKImageFilter<ImageType> ConnectorType;
+ typedef itk::ImageToVTKImageFilter<ImageType> ConnectorType;
   ConnectorType::Pointer connector= ConnectorType::New();
   connector->SetInput( i2spReader->GetOutput() );
   vtkSmartPointer<vtkImageToStructuredPoints> i2sp =
     vtkSmartPointer<vtkImageToStructuredPoints>::New();
   i2sp->SetInput(connector->GetOutput());
- */ 
+  /**/ 
   ImageType::SizeType size = i2spReader->GetOutput()->GetLargestPossibleRegion().GetSize();
   vtkSmartPointer<vtkImageData> vtkim = vtkSmartPointer<vtkImageData>::New();
   vtkim->SetScalarTypeToUnsignedChar();
