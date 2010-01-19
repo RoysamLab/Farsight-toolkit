@@ -101,7 +101,11 @@ bool Image::LoadFilesAsMultipleChannels(std::vector<std::string> fnames, std::ve
 
 	for(int i=0; i<count; ++i)
 	{
-		if( !this->LoadStandardImage( fnames.at(i), false, true ) )
+		if( colors.at(i*3+0) == 255 && colors.at(i*3+1) == 255 && colors.at(i*3+2) == 255 ){
+			if( !this->LoadStandardImage( fnames.at(i), false, true, false ) ) //All input colors needed, load as RGB
+				return false;
+		}
+		else if( !this->LoadStandardImage( fnames.at(i), false, true, true ) ) //Not All colors are needed, read as a single channel and scale to desired colorspace
 			return false;
 
 		std::string chname = channelnames.at(i);
@@ -135,7 +139,7 @@ bool Image::LoadFileSeries( std::string arg, int start, int end, int step)
 	std::vector<std::string> names = nameGenerator->GetFileNames();
 	for(int i=0; i<(int)names.size(); ++i)
 	{
-		if( !this->LoadStandardImage( names.at(i), false, false ) )
+		if( !this->LoadStandardImage( names.at(i), false, false, false ) )
 			return false;
 	}
 	this->SetDefaultColors();
@@ -151,7 +155,7 @@ bool Image::LoadFile( std::string fName)
 		return this->LoadLSMImage( fName );
 	else
 	{
-		if(!this->LoadStandardImage( fName, false, false))
+		if(!this->LoadStandardImage( fName, false, false, false))
 			return false;
 		this->SetDefaultColors();
 	}
@@ -168,7 +172,7 @@ bool Image::LoadFileAsTimeSeries( std::string fName)
 		return false;
 	else
 	{
-		if(!this->LoadStandardImage( fName, true, false))
+		if(!this->LoadStandardImage( fName, true, false, false))
 			return false;
 		this->SetDefaultColors();
 	}
@@ -179,7 +183,7 @@ bool Image::LoadFileAsTimeSeries( std::string fName)
 // IF IMAGE HAS MULTIPLE PAGES IT IS ASSUMED THAT THEY REPRESENT A 3D IMAGE, BUT THEY CAN BE FORCED TO BE T
 //
 //***********************************************************************************************************
-bool Image::LoadStandardImage( std::string fileName, bool stacksAreForTime, bool appendChannels )
+bool Image::LoadStandardImage( std::string fileName, bool stacksAreForTime, bool appendChannels, bool readRGBasSingleChannel )
 {
 	// Find out the pixel type of the image in file
 	itk::ImageIOBase::Pointer imageIO = itk::ImageIOFactory::CreateImageIO( fileName.c_str(), itk::ImageIOFactory::ReadMode );
@@ -194,9 +198,15 @@ bool Image::LoadStandardImage( std::string fileName, bool stacksAreForTime, bool
 	imageIO->SetFileName( fileName.c_str() );
 	imageIO->ReadImageInformation();
 
+	int numComponents;
 	itkPixelType pixelType = imageIO->GetPixelType();
+	if( readRGBasSingleChannel && ( pixelType == itk::ImageIOBase::RGB || pixelType == itk::ImageIOBase::RGBA ) ){
+		pixelType = itk::ImageIOBase::SCALAR;
+		numComponents = 1;
+	}
+	else
+		numComponents =  imageIO->GetNumberOfComponents();
 	DataType dataType = imageIO->GetComponentType();
-	int numComponents = imageIO->GetNumberOfComponents();
 	int numDimensions = imageIO->GetNumberOfDimensions();
 	int dim3size = 1;
 

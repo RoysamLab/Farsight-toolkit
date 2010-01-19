@@ -144,7 +144,7 @@ private:
 	std::string GetPath(std::string);
 	std::string itoa(const int x);
 
-	bool LoadStandardImage( std::string fileName, bool stacksAreForTime = false, bool appendChannels = false);
+	bool LoadStandardImage( std::string fileName, bool stacksAreForTime = false, bool appendChannels = false, bool readRGBasSingleChannel = true );
 	void SetDefaultColors(void);
 	bool LoadLSMImage( std::string fileName );
 
