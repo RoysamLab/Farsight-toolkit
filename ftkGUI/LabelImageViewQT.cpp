@@ -970,7 +970,7 @@ void LabelImageViewQT::drawObjectIDs(QPainter *painter)
 	{
 		int id = (*it).first;
 		ftk::Object::Point point = (*it).second;
-		if ( (currentZ == point.z) )
+		//if ( (currentZ == point.z) )
 		if( currentZ >= ((*bBoxMap)[id]).min.z && currentZ <= ((*bBoxMap)[id]).max.z )
 		{
 			painter->setPen(colorForIDs);
