@@ -11,7 +11,7 @@ def populate_directories(path, dataset_id):
 if __name__ == '__main__':
 
     # default values for all variables defined here
-    data_directory = 'C:\\Users\\Arun\\Research\\Tracking\\data\\wF5p120507m1s5'
+    data_directory = 'C:\\Users\\Arun\\Research\\Tracking\\data\wF5p120307m1s9'
     cwd = 'C:\\Users\\Arun\\Research\\Tracking\\berkeley\\'
     exe_dir = 'C:\\Users\\Arun\\Research\\Farsight_bin\\bin'
     dataset_id = ''
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     # prefix the filanames with necessary things like
     # unmixed_, labeled_, labeled_tracks_, vessel_binarized_, etc..
 
-    time_points = time_points[0:15] # DEBUG
+    time_points = time_points[0:2] # DEBUG
     channels = channels;
 ##    ######################### Delete slices #############################
 ##    for w in channels:

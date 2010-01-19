@@ -391,7 +391,7 @@ void renderPolyData(std::vector<SP_PDM> vec,std::vector<vtkSmartPointer<vtkTextA
 	//textact->GetPosition2Coordinate()->SetValue(240+5,200+5,15);
 	//ren->AddActor(textact);
 
-	ren->SetBackground(0,0,0);
+	ren->SetBackground(1,1,1);
 
 	renwin->AddRenderer(ren);
 	renwin->SetSize(700,700);
