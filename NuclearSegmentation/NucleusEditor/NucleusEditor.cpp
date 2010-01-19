@@ -511,6 +511,18 @@ void NucleusEditor::setMouseStatus(int x, int y, int z)
 	(this->statusLabel)->setText(QString::number(x) + ", " + QString::number(y) + ", " + QString::number(z));
 }
 
+//Pop up a message box that asks if you want to save changes 
+bool NucleusEditor::askSaveChanges(QString text)
+{
+	QMessageBox::StandardButtons buttons = QMessageBox::Yes | QMessageBox::No;
+	QMessageBox::StandardButton defaultButton = QMessageBox::Yes;
+	QMessageBox::StandardButton returnButton = QMessageBox::question(this, tr("Save Changes"), text, buttons, defaultButton);
+
+	if(returnButton == QMessageBox::Yes)
+		return true;
+	else
+		return false;
+}
 //******************************************************************************
 //Reimplement closeEvent to also close all other windows in the application
 //******************************************************************************
@@ -521,17 +533,18 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 	if(projectFilename != "")
 	{
 		if(!projectFiles.inputSaved || !projectFiles.outputSaved || !projectFiles.definitionSaved || !projectFiles.tableSaved)
-			this->saveProject(projectFilename,false);
+			if( askSaveChanges(tr("Save changes to the project?")) )
+				this->saveProject(projectFilename,false);
 	}
 	else
 	{
-		if(!projectFiles.inputSaved)
+		if(!projectFiles.inputSaved && askSaveChanges(tr("Save changes to the input image?")) )
 			this->askSaveImage();
-		if(!projectFiles.outputSaved)
+		if(!projectFiles.outputSaved && askSaveChanges(tr("Save changes to the result/label image?")) )
 			this->askSaveResult();
-		if(!projectFiles.definitionSaved)
+		if(!projectFiles.definitionSaved && askSaveChanges(tr("Save changes to the project?")) )
 			this->askSaveProject();
-		if(!projectFiles.tableSaved)
+		if(!projectFiles.tableSaved && askSaveChanges(tr("Save changes to the table?")) )
 			this->askSaveTable();
 	}
 
@@ -825,7 +838,7 @@ void NucleusEditor::askLoadTable()
 
 void NucleusEditor::loadTable(QString fileName)
 {
-	if(!projectFiles.tableSaved)
+	if(!projectFiles.tableSaved && askSaveChanges(tr("Save changes to the current project?")) )
 	{
 		this->saveProject(projectFilename,false);
 	}
@@ -854,7 +867,7 @@ void NucleusEditor::askLoadResult(void)
 
 void NucleusEditor::loadResult(QString fileName)
 {
-	if(!projectFiles.outputSaved)
+	if(!projectFiles.outputSaved && askSaveChanges(tr("Save changes to the result/label image?")) )
 	{
 		this->askSaveResult();
 	}
@@ -892,7 +905,7 @@ void NucleusEditor::askLoadImage()
 
 void NucleusEditor::loadImage(QString fileName)
 {
-	if(!projectFiles.inputSaved)
+	if(!projectFiles.inputSaved && askSaveChanges(tr("Save changes to the input image?")) )
 	{
 		this->askSaveImage();
 	}

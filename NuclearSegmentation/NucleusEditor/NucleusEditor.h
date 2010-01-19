@@ -180,6 +180,7 @@ protected:
 	void createPreprocessingMenu();
 	void updateNucSeg(bool ask = false);
 
+	bool askSaveChanges(QString text);
 	int requestChannel(ftk::Image::Pointer img);	//Request a channel from this image
 	QVector<QString> getChannelStrings(void);
 
