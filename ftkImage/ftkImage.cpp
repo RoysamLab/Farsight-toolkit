@@ -99,25 +99,40 @@ bool Image::LoadFilesAsMultipleChannels(std::vector<std::string> fnames, std::ve
 	m_Info.channelColors.clear();
 	m_Info.channelNames.clear();
 
+	int counter = 0;
 	for(int i=0; i<count; ++i)
 	{
 		if( colors.at(i*3+0) == 255 && colors.at(i*3+1) == 255 && colors.at(i*3+2) == 255 ){
 			if( !this->LoadStandardImage( fnames.at(i), false, true, false ) ) //All input colors needed, load as RGB
 				return false;
 		}
-		else if( !this->LoadStandardImage( fnames.at(i), false, true, true ) ) //Not All colors are needed, read as a single channel and scale to desired colorspace
+		else if( !this->LoadStandardImage( fnames.at(i), false, true, true ) ) //Not All colors are needed, read as a single channel grayscale and scale to desired colorspace
 			return false;
 
 		std::string chname = channelnames.at(i);
 
-		//Parse the color info for the channel
-		std::vector< unsigned char > color(3);
-		color[0] = (unsigned char)( colors.at(i*3 + 0) );
-		color[1] = (unsigned char)( colors.at(i*3 + 1) );
-		color[2] = (unsigned char)( colors.at(i*3 + 2) );
+		if( colors.at(i*3+0) == 255 && colors.at(i*3+1) == 255 && colors.at(i*3+2) == 255 && m_Info.numChannels == (counter+3) ){
+			//If loaded as RGB and display with full colorscale
+			std::vector< unsigned char > color(3);
+			color[0] = (unsigned char)( colors.at(i*3 + 0) ); color[1] = 0;  color[2] = 0; m_Info.channelColors.push_back(color);
+			color[0] = 0; color[1] = (unsigned char)( colors.at(i*3 + 1) );  color[2] = 0; m_Info.channelColors.push_back(color);
+			color[0] = 0; color[1] = 0;  color[2] = (unsigned char)( colors.at(i*3 + 2) ); m_Info.channelColors.push_back(color);
 
-		m_Info.channelColors.push_back(color);	//Use provided color
-		m_Info.channelNames.push_back(chname);	//Use provided name
+			m_Info.channelNames.push_back(chname); m_Info.channelNames.push_back(chname); m_Info.channelNames.push_back(chname);
+
+			counter += 3;
+		} else {
+			//Parse the color info for the scalar channel
+			std::vector< unsigned char > color(3);
+			color[0] = (unsigned char)( colors.at(i*3 + 0) );
+			color[1] = (unsigned char)( colors.at(i*3 + 1) );
+			color[2] = (unsigned char)( colors.at(i*3 + 2) );
+
+			m_Info.channelColors.push_back(color);	//Use provided color
+			m_Info.channelNames.push_back(chname);	//Use provided name
+
+			++counter;
+		}
 	}
 	filenames = fnames;
 	return true;
