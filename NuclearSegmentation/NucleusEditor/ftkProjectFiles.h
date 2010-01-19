@@ -44,11 +44,18 @@ public:
 	ProjectFiles();
 	//FUNCTIONS:
 	bool Read(std::string filename);
-	bool Write(std::string filename);
+	bool Write();
+	std::string GetFullName();
+	std::string GetFullInput();
+	std::string GetFullOutput();
+	std::string GetFullLog();
+	std::string GetFullDef();
+	std::string GetFullTable();
+	void ClearAll();
 
 	//VARIABLES
-	std::string path;
-	std::string name;
+	std::string path;		//Includes last separator character
+	std::string name;		//Name of the project (also used as filename)
 	bool nucSegValidated;	//Nuclear Segmentation is validated
 
 	//Filenames:

@@ -133,7 +133,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 		WriterType::Pointer writer = WriterType::New();
 		writer->SetFileName("bin_test.tif");
 		writer->SetInput( im );
-		writer->Update();
+		//writer->Update();
 		//////////////////////////////////////////////////////////////////////////
 		std::cout<<"Computing distance transform...";
 		dImg = (unsigned short *) malloc(r*c*z*sizeof(unsigned short));
@@ -495,7 +495,7 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 	int cnt = 0;
 	ofstream p;
 //	int max_dist = 0;
-	p.open("checkme.txt");
+	//p.open("checkme.txt");
 	for(int i=1; i<r-1; i++)
     {
         for(int j=1; j<c-1; j++)
@@ -533,7 +533,7 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 			}			
         }
     } 
-	p.close();
+	//p.close();
 	
 	//get the median of the scales(distances)
 	int medianS = computeMedian(scales, cnt);
@@ -660,7 +660,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 	int cnt = 0;
 	ofstream p;
 	//int max_dist = 0;
-	p.open("checkme.txt");
+	//p.open("checkme.txt");
 	for(int i=1; i<r-1; i++)
     {
         for(int j=1; j<c-1; j++)
@@ -698,7 +698,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 			}			
         }
     } 
-	p.close();
+	//p.close();
 	
 	//get the median of the scales(distances)
 	int medianS = computeMedian(scales, cnt);
@@ -945,7 +945,7 @@ int distMap_SliceBySlice(itk::SmartPointer<MyInputImageType> im, int r, int c, i
 		  WriterType::Pointer writer = WriterType::New();
 		  writer->SetFileName("dist_test.tif");
 		  writer->SetInput( potCaster->GetOutput() );
-		  writer->Update();		  
+		  //writer->Update();		  
 	  }
   } 
  

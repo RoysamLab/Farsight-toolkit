@@ -232,7 +232,7 @@ void yousef_nucleus_seg::runSeedDetection()
 	{
 		//Write the automatically estimated parameters into a file
     //cout << "zackdebug: writing parameters to file" << endl;
-		writeParametersToFile();
+		//writeParametersToFile();
 	}
 }
 

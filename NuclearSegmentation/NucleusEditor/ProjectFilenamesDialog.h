@@ -25,6 +25,7 @@ limitations under the License.
 #include <QtGui/QSpacerItem>
 #include <QtGui/QFileDialog>
 #include <QtGui/QInputDialog>
+#include <QtGui/QMessageBox>
 #include <QtCore/QFileInfo>
 
 #include "ftkProjectFiles.h"
@@ -34,16 +35,18 @@ class ProjectFilenamesDialog : public QDialog
     Q_OBJECT;
 
 public:
-	ProjectFilenamesDialog(QString path, ftk::ProjectFiles * files, QString projfile, QWidget * parent = 0);
+	ProjectFilenamesDialog(ftk::ProjectFiles * files, QWidget * parent = 0);
 
 signals:
 
 protected:
 
 public slots:
+	void accept();
 
 private slots:
 	void changeName(void);
+	void changePath(void);
 	void changeInput(void);
 	void changeOutput(void);
 	void changeLog(void);
@@ -61,6 +64,10 @@ private:
 	QLabel *nameLabel;
 	QLabel *nameText;
 	QPushButton *nameButton;
+
+	QLabel *pathLabel;
+	QLabel *inputPath;
+	QPushButton *pathButton;
 
 	QLabel *inputLabel;
 	QLabel *inputFile;

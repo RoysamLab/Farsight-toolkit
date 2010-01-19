@@ -105,8 +105,7 @@ protected slots:
 	void continueProcess(void);
 	void deleteProcess(void);
 	//Saving:
-	bool askSaveProject(void);
-	bool saveProject(QString filename, bool defaults);
+	bool saveProject(void);
 	bool askSaveImage(void);
 	bool saveImage(void);
 	bool askSaveResult(void);
@@ -266,7 +265,6 @@ protected:
 	ObjectSelection * selection;				//object selection list
 	vtkSmartPointer<vtkTable> table;			//table
 	ftk::ProjectFiles projectFiles;				//files in the currently visible project
-	QString projectFilename;					//filename of file that points to all project files (.xml)
 	ftk::ProjectDefinition projectDefinition;	//the project definition currently being used.
 	unsigned char   kplsRun;
 

@@ -33,6 +33,11 @@ namespace ftk
 
 ProjectFiles::ProjectFiles()
 {
+	this->ClearAll();
+}
+
+void ProjectFiles::ClearAll()
+{
 	path = "";
 	name = "";
 
@@ -67,7 +72,8 @@ bool ProjectFiles::Read(std::string filename)
 	if ( strcmp( docname, "ProjectFiles" ) != 0 )
 		return false;
 
-	//name = rootElement->Attribute("name");
+	path = rootElement->Attribute("path");
+	name = rootElement->Attribute("name");
 
 	TiXmlElement * parentElement = rootElement->FirstChildElement();
 	while (parentElement)
@@ -101,11 +107,12 @@ bool ProjectFiles::Read(std::string filename)
 	return true;
 }
 
-bool ProjectFiles::Write(std::string filename)
+bool ProjectFiles::Write()
 {
 	TiXmlDocument doc;   
 	TiXmlElement * root = new TiXmlElement( "ProjectFiles" );
-	//root->SetAttribute("name", name.c_str());
+	root->SetAttribute("path", path.c_str());
+	root->SetAttribute("name", name.c_str());
 	doc.LinkEndChild( root );  
  
 	TiXmlElement * file;
@@ -131,11 +138,48 @@ bool ProjectFiles::Write(std::string filename)
 	file->SetAttribute("file", table.c_str());
 	root->LinkEndChild(file);
 
-	if(doc.SaveFile( filename.c_str() ))
+	if(doc.SaveFile( this->GetFullName().c_str() ))
 		return true;
 	else
 		return false;
 }
+
+std::string ProjectFiles::GetFullName()
+{
+	std::string full = path + name + ".xml";
+	return full;
+}
+
+std::string ProjectFiles::GetFullInput()
+{
+	std::string full = path + input;
+	return full;
+}
+
+std::string ProjectFiles::GetFullOutput()
+{
+	std::string full = path + output;
+	return full;
+}
+
+std::string ProjectFiles::GetFullLog()
+{
+	std::string full = path + log;
+	return full;
+}
+
+std::string ProjectFiles::GetFullDef()
+{
+	std::string full = path + definition;
+	return full;
+}
+
+std::string ProjectFiles::GetFullTable()
+{
+	std::string full = path + table;
+	return full;
+}
+
 //************************************************************************
 //************************************************************************
 //************************************************************************

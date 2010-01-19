@@ -52,7 +52,6 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 							"All Files (*.*)");
 
 	lastPath = ".";
-	projectFilename = "";
 
 	tblWin.clear();
 	pltWin.clear();
@@ -166,12 +165,12 @@ void NucleusEditor::createMenus()
 	loadLabelAction = new QAction(tr("Load Result..."), this);
 	loadLabelAction->setStatusTip(tr("Load a result image into the image browser"));
 	connect(loadLabelAction,SIGNAL(triggered()), this, SLOT(askLoadResult()));
-	fileMenu->addAction(loadLabelAction);
+	//fileMenu->addAction(loadLabelAction);
 
 	loadTableAction = new QAction(tr("Load Table..."), this);
 	loadTableAction->setStatusTip(tr("Load data table from text file"));
 	connect(loadTableAction, SIGNAL(triggered()), this, SLOT(askLoadTable()));
-	fileMenu->addAction(loadTableAction);
+	//fileMenu->addAction(loadTableAction);
 
 	fileMenu->addSeparator();
 
@@ -185,7 +184,7 @@ void NucleusEditor::createMenus()
 	saveProjectAction = new QAction(tr("Save Project.."), this);
 	saveProjectAction->setStatusTip(tr("Save the active project files..."));
 	saveProjectAction->setShortcut(tr("Ctrl+S"));
-	connect(saveProjectAction, SIGNAL(triggered()), this, SLOT(askSaveProject()));
+	connect(saveProjectAction, SIGNAL(triggered()), this, SLOT(saveProject()));
 	fileMenu->addAction(saveProjectAction);
 
 	saveImageAction = new QAction(tr("Save Image..."), this);
@@ -530,22 +529,19 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 {
 	this->abortProcess();
 
-	if(projectFilename != "")
+	if(!projectFiles.inputSaved || !projectFiles.outputSaved || !projectFiles.definitionSaved || !projectFiles.tableSaved)
 	{
-		if(!projectFiles.inputSaved || !projectFiles.outputSaved || !projectFiles.definitionSaved || !projectFiles.tableSaved)
-			if( askSaveChanges(tr("Save changes to the project?")) )
-				this->saveProject(projectFilename,false);
-	}
-	else
-	{
-		if(!projectFiles.inputSaved && askSaveChanges(tr("Save changes to the input image?")) )
-			this->askSaveImage();
-		if(!projectFiles.outputSaved && askSaveChanges(tr("Save changes to the result/label image?")) )
-			this->askSaveResult();
-		if(!projectFiles.definitionSaved && askSaveChanges(tr("Save changes to the project?")) )
-			this->askSaveProject();
-		if(!projectFiles.tableSaved && askSaveChanges(tr("Save changes to the table?")) )
-			this->askSaveTable();
+		if( askSaveChanges(tr("Save changes to the project?")) )
+			this->saveProject();
+		else
+		{
+			if(!projectFiles.inputSaved && askSaveChanges(tr("Save changes to the input image?")) )
+				this->askSaveImage();
+			if(!projectFiles.outputSaved && askSaveChanges(tr("Save changes to the result/label image?")) )
+				this->askSaveResult();
+			if(!projectFiles.tableSaved && askSaveChanges(tr("Save changes to the table?")) )
+				this->askSaveTable();
+		}
 	}
 
 	//Then Close all other windows
@@ -568,47 +564,44 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 // Saving SLOTS:
 //*********************************************************************************
 //*********************************************************************************
-bool NucleusEditor::askSaveProject()
-{
-	QString	filename;
-	if(projectFilename != "")
-		filename = QFileDialog::getSaveFileName(this, tr("Save Project As..."),projectFilename, tr("XML Project File(*.xml)"));
-	else
-		filename = QFileDialog::getSaveFileName(this, tr("Save Project As..."),lastPath, tr("XML Project File(*.xml)"));
-
-	if(filename == "")
-		return false;
-
-	QString path = QFileInfo(filename).absolutePath();
-	QString name = QFileInfo(filename).baseName();
-	lastPath = path;
-	
-	return this->saveProject(filename, false);
-}
-
-bool NucleusEditor::saveProject(QString filename, bool defaults)
+bool NucleusEditor::saveProject()
 {
 
-	if(defaults && (projectFiles.input.size() != 0))
+	if(projectFiles.path == "")
+	{
+		projectFiles.path = lastPath.toStdString();
+	}
+
+	//Make up defaults if needed:
+	if(projectFiles.input.size() != 0)
 	{
 		QString fname = QString::fromStdString(projectFiles.input);
+		QString bname = QFileInfo(fname).baseName();
 
-		QFileInfo inf(QDir(lastPath), QFileInfo(fname).baseName() + "_label.xml");
-		projectFiles.output = inf.absoluteFilePath().toStdString();
+		if(projectFiles.output == "")
+			projectFiles.output = bname.toStdString() + "_label.xml";
 
-		QFileInfo inf2(QDir(lastPath), QFileInfo(fname).baseName() + "_def.xml");
-		projectFiles.definition = inf2.absoluteFilePath().toStdString();
+		if(projectFiles.definition == "")
+			projectFiles.definition = bname.toStdString() + "_def.xml";
 
-		QFileInfo inf3(QDir(lastPath), QFileInfo(fname).baseName() + "_table.txt");
-		projectFiles.table = inf3.absoluteFilePath().toStdString();
+		if(projectFiles.table == "")
+			projectFiles.table = bname.toStdString() + "_table.txt";
 
+		if(projectFiles.log == "")
+			createDefaultLogName();
+	}
+
+	ProjectFilenamesDialog *dialog = new ProjectFilenamesDialog(&projectFiles, this);
+	if(dialog->exec() == QDialog::Rejected)
+		return false;
+
+	if(projectFiles.name != "")
+	{
+		projectFiles.Write();
+		lastPath = QString::fromStdString(projectFiles.path);
 	}
 	else
-	{
-		ProjectFilenamesDialog *dialog = new ProjectFilenamesDialog(lastPath, &projectFiles, filename, this);
-		if(dialog->exec() == QDialog::Rejected)
-			return false;
-	}
+		return false;
 
 	if(projectFiles.input != "" && !projectFiles.inputSaved)
 	{
@@ -623,18 +616,12 @@ bool NucleusEditor::saveProject(QString filename, bool defaults)
 	//}
 	if(projectFiles.definition != "" && !projectFiles.definitionSaved)
 	{
-		if(projectDefinition.Write(projectFiles.definition))
+		if( projectDefinition.Write(projectFiles.GetFullDef()) )
 			projectFiles.definitionSaved = true;
 	}
 	if(projectFiles.table != "" && !projectFiles.tableSaved)
 	{
 		this->saveTable();
-	}
-
-	if(filename != "")
-	{
-		projectFilename = filename;
-		projectFiles.Write(filename.toStdString());
 	}
 
 	return true;
@@ -658,8 +645,9 @@ bool NucleusEditor::askSaveImage()
 	}
 	else
 	{
-		lastPath = QFileInfo(filename).absolutePath();
-		projectFiles.input = filename.toStdString();
+		lastPath = QFileInfo(filename).absolutePath() + QDir::separator();
+		projectFiles.path = lastPath.toStdString();
+		projectFiles.input = QFileInfo(filename).fileName().toStdString();
 	}
 
 	return this->saveImage();
@@ -670,21 +658,18 @@ bool NucleusEditor::saveImage()
 	if(!myImg)
 		return false;
 
-
-	QString filename = QString::fromStdString(projectFiles.input);
-	if(filename == "")
+	if(projectFiles.input == "")
 		return false;
 
-	QString path = QFileInfo(filename).absolutePath();
-	QString name = QFileInfo(filename).baseName();
-	QString ext = QFileInfo(filename).suffix();
+	QString fullname = QString::fromStdString( projectFiles.GetFullInput() );
+	QString fullbase = QFileInfo(fullname).completeBaseName();
+	QString ext = QFileInfo(fullname).suffix();
 
-	QString fullBase = path + "/" + name;
 	bool ok;
 	if(ext == "xml")
-		ok = ftk::SaveXMLImage(filename.toStdString(), myImg);
+		ok = ftk::SaveXMLImage(fullname.toStdString(), myImg);
 	else
-		ok = myImg->SaveChannelAs(0, fullBase.toStdString(), ext.toStdString());
+		ok = myImg->SaveChannelAs(0, fullbase.toStdString(), ext.toStdString());
 
 	projectFiles.inputSaved = ok;
 	return ok;
@@ -708,8 +693,9 @@ bool NucleusEditor::askSaveResult()
 	}
 	else
 	{
-		lastPath = QFileInfo(filename).absolutePath();
-		projectFiles.output = filename.toStdString();
+		lastPath = QFileInfo(filename).absolutePath() + QDir::separator();
+		projectFiles.path = lastPath.toStdString();
+		projectFiles.output = QFileInfo(filename).fileName().toStdString();
 	}
 
 	return this->saveResult();
@@ -720,20 +706,18 @@ bool NucleusEditor::saveResult()
 	if(!labImg)
 		return false;
 
-	QString filename = QString::fromStdString(projectFiles.output);
-	if(filename == "")
+	if(projectFiles.output == "")
 		return false;
 
-	QString path = QFileInfo(filename).absolutePath();
-	QString name = QFileInfo(filename).baseName();
-	QString ext = QFileInfo(filename).suffix();
+	QString fullname = QString::fromStdString( projectFiles.GetFullOutput() );
+	QString fullbase = QFileInfo(fullname).completeBaseName();
+	QString ext = QFileInfo(fullname).suffix();
 
-	QString fullBase = path + "/" + name;
 	bool ok;
 	if(ext == "xml")
-		ok = ftk::SaveXMLImage(filename.toStdString(), labImg);
+		ok = ftk::SaveXMLImage(fullname.toStdString(), labImg);
 	else
-		ok = labImg->SaveChannelAs(0, fullBase.toStdString(), ext.toStdString());
+		ok = labImg->SaveChannelAs(0, fullbase.toStdString(), ext.toStdString());
 
 	projectFiles.outputSaved = ok;
 	return ok;
@@ -748,8 +732,9 @@ bool NucleusEditor::askSaveTable()
 	if(filename == "")
 		return false;
 
-	lastPath = QFileInfo(filename).absolutePath();
-	projectFiles.table = filename.toStdString();
+	lastPath = QFileInfo(filename).absolutePath() + QDir::separator();
+	projectFiles.path = lastPath.toStdString();
+	projectFiles.table = QFileInfo(filename).fileName().toStdString();
 
 	return this->saveTable();
 }
@@ -762,17 +747,16 @@ bool NucleusEditor::saveTable()
 	if(projectFiles.table == "")
 		return false;
 
-	bool ok = ftk::SaveTable(projectFiles.table, table);
+	bool ok = ftk::SaveTable( projectFiles.GetFullTable(), table);
 	projectFiles.tableSaved = ok;
 	return ok;
 }
 
 void NucleusEditor::createDefaultLogName(void)
 {
-	QString filename = QString::fromStdString(projectFiles.input);
+	QString filename = QString::fromStdString( projectFiles.GetFullInput() );
 	QString name = QFileInfo(filename).baseName() + "_log.txt";
-	QFileInfo inf(QDir(lastPath),name);
-	projectFiles.log = inf.absoluteFilePath().toStdString();
+	projectFiles.log = name.toStdString();
 }
 
 //************************************************************************************************
@@ -783,30 +767,27 @@ void NucleusEditor::createDefaultLogName(void)
 //************************************************************************************************
 void NucleusEditor::loadProject()
 {
-
 	QString filename = QFileDialog::getOpenFileName(this, "Open project...", lastPath, tr("XML Project File(*.xml)"));
 	if(filename == "")
 		return;
 
 	QString path = QFileInfo(filename).absolutePath();
-	QString name = QFileInfo(filename).baseName();
+	//QString name = QFileInfo(filename).baseName();
 	lastPath = path;
 
 	projectFiles.Read(filename.toStdString());
 
-	ProjectFilenamesDialog *dialog = new ProjectFilenamesDialog(lastPath, &projectFiles, filename, this);
+	ProjectFilenamesDialog *dialog = new ProjectFilenamesDialog(&projectFiles, this);
 	if(dialog->exec() == QDialog::Rejected)
 		return;
 
-	projectFilename = filename;
-
 	if(projectFiles.input != "")
 	{
-		this->loadImage(QString::fromStdString(projectFiles.input));
+		this->loadImage( QString::fromStdString(projectFiles.GetFullInput()) );
 	}
 	if(projectFiles.output != "")
 	{
-		this->loadResult(QString::fromStdString(projectFiles.output));
+		this->loadResult( QString::fromStdString(projectFiles.GetFullOutput()) );
 	}
 	if(projectFiles.log == "")	//Not opposite boolean here
 	{
@@ -814,12 +795,12 @@ void NucleusEditor::loadProject()
 	}
 	if(projectFiles.definition != "")
 	{
-		projectDefinition.Load(projectFiles.definition);
+		projectDefinition.Load( projectFiles.GetFullDef() );
 		projectFiles.definitionSaved = true;
 	}
 	if(projectFiles.table != "")
 	{
-		this->loadTable(QString::fromStdString(projectFiles.table));
+		this->loadTable( QString::fromStdString(projectFiles.GetFullTable()) );
 	}
 
 	this->startEditing();
@@ -827,6 +808,11 @@ void NucleusEditor::loadProject()
 
 void NucleusEditor::askLoadTable()
 {
+	if(!projectFiles.tableSaved && askSaveChanges(tr("Save changes to the current table?")) )
+	{
+		this->askSaveTable();
+	}
+
 	QString fileName  = QFileDialog::getOpenFileName(this, "Select table file to open", lastPath,
 								tr("TXT Files (*.txt)"));
 
@@ -838,17 +824,13 @@ void NucleusEditor::askLoadTable()
 
 void NucleusEditor::loadTable(QString fileName)
 {
-	if(!projectFiles.tableSaved && askSaveChanges(tr("Save changes to the current project?")) )
-	{
-		this->saveProject(projectFilename,false);
-	}
-
-	lastPath = QFileInfo(fileName).absolutePath();
+	lastPath = QFileInfo(fileName).absolutePath() + QDir::separator();
 
 	table = ftk::LoadTable(fileName.toStdString());
 	if(!table) return;
 
-	projectFiles.table = fileName.toStdString();
+	projectFiles.path = lastPath.toStdString();
+	projectFiles.table = QFileInfo(fileName).fileName().toStdString();
 	projectFiles.tableSaved = true;
 
 	selection->clear();
@@ -859,6 +841,11 @@ void NucleusEditor::loadTable(QString fileName)
 
 void NucleusEditor::askLoadResult(void)
 {
+	if(!projectFiles.outputSaved && askSaveChanges(tr("Save changes to the result/label image?")) )
+	{
+		this->askSaveResult();
+	}
+
 	QString fileName  = QFileDialog::getOpenFileName(this, "Open File", lastPath, standardImageTypes);
 	if(fileName == "") return;
 
@@ -867,12 +854,8 @@ void NucleusEditor::askLoadResult(void)
 
 void NucleusEditor::loadResult(QString fileName)
 {
-	if(!projectFiles.outputSaved && askSaveChanges(tr("Save changes to the result/label image?")) )
-	{
-		this->askSaveResult();
-	}
-
-	lastPath = QFileInfo(fileName).absolutePath();
+	lastPath = QFileInfo(fileName).absolutePath() + QDir::separator();
+	QString name = QFileInfo(fileName).fileName();
 	QString myExt = QFileInfo(fileName).suffix();
 	if(myExt == "xml")
 	{
@@ -888,29 +871,32 @@ void NucleusEditor::loadResult(QString fileName)
 	segView->SetLabelImage(labImg, selection);
 	this->updateNucSeg();
 
-	projectFiles.output = fileName.toStdString();
+	projectFiles.path = lastPath.toStdString();
+	projectFiles.output = name.toStdString();
 	projectFiles.outputSaved = true;
 }
 
 void NucleusEditor::askLoadImage()
-{
-	//Get the filename of the new image
-	QString fileName = QFileDialog::getOpenFileName(this, "Open Image", lastPath, standardImageTypes);
-	//If no filename do nothing
-    if(fileName == "")
-		return;
-
-	this->loadImage(fileName);
-}
-
-void NucleusEditor::loadImage(QString fileName)
 {
 	if(!projectFiles.inputSaved && askSaveChanges(tr("Save changes to the input image?")) )
 	{
 		this->askSaveImage();
 	}
 
-	lastPath = QFileInfo(fileName).absolutePath();
+	//Get the filename of the new image
+	QString fileName = QFileDialog::getOpenFileName(this, "Open Image", lastPath, standardImageTypes);
+	//If no filename do nothing
+    if(fileName == "")
+		return;
+
+	projectFiles.ClearAll();
+	this->loadImage(fileName);
+}
+
+void NucleusEditor::loadImage(QString fileName)
+{
+	lastPath = QFileInfo(fileName).absolutePath() + QDir::separator();
+	QString name = QFileInfo(fileName).fileName();
 	QString myExt = QFileInfo(fileName).suffix();
 	if(myExt == "xml")
 	{
@@ -924,7 +910,8 @@ void NucleusEditor::loadImage(QString fileName)
 	}
 	segView->SetChannelImage(myImg);
 	this->updateNucSeg();
-	projectFiles.input = fileName.toStdString();
+	projectFiles.path = lastPath.toStdString();
+	projectFiles.input = name.toStdString();
 	projectFiles.inputSaved = true;
 }
 //************************************************************************************************
@@ -1147,7 +1134,7 @@ void NucleusEditor::toggleCentroids(void)
 	if(!segView) return;
 
 	if( showCentroidsAction->isChecked() )
-		{
+	{
 		if(kplsRun ==1)
 		{
 		    segView->SetClassMap(table,table->GetNumberOfColumns()-1);
@@ -1155,7 +1142,7 @@ void NucleusEditor::toggleCentroids(void)
 			segView->SetColorMapForCentroids(cTable);
 		}
 		segView->SetCentroidsVisible(true);
-		}
+	}
 	else
 		segView->SetCentroidsVisible(false);
 }
@@ -1209,7 +1196,7 @@ void NucleusEditor::startEditing(void)
 	std::string log_entry = "NUCLEAR_SEGMENTATION , ";
 	log_entry += ftk::NumToString(nucSeg->GetNumberOfObjects()) + " , ";
 	log_entry += ftk::TimeStamp();
-	ftk::AppendTextFile(projectFiles.log, log_entry);
+	ftk::AppendTextFile(projectFiles.GetFullLog(), log_entry);
 
 	projectFiles.nucSegValidated = false;
 	setEditsEnabled(true);
@@ -1228,7 +1215,7 @@ void NucleusEditor::stopEditing(void)
 
 	std::string log_entry = "NUCLEAR_SEGMENTATION_VALIDATED , ";
 	log_entry += ftk::TimeStamp();
-	ftk::AppendTextFile(projectFiles.log, log_entry);
+	ftk::AppendTextFile(projectFiles.GetFullLog(), log_entry);
 	projectFiles.nucSegValidated = true;
 }
 
@@ -1278,7 +1265,7 @@ void NucleusEditor::addCell(int x1, int y1, int x2, int y2, int z)
 		std::string log_entry = "ADD , ";
 		log_entry += ftk::NumToString(id) + " , ";
 		log_entry += ftk::TimeStamp();
-		ftk::AppendTextFile(projectFiles.log, log_entry);
+		ftk::AppendTextFile(projectFiles.GetFullLog(), log_entry);
 	}
 }
 
@@ -1304,7 +1291,7 @@ void NucleusEditor::deleteCells(void)
 			log_entry += " " + ftk::NumToString(ids.at(i));
 		log_entry += " , ";
 		log_entry += ftk::TimeStamp();
-		ftk::AppendTextFile(projectFiles.log, log_entry);
+		ftk::AppendTextFile(projectFiles.GetFullLog(), log_entry);
 	}
 }
 
@@ -1334,7 +1321,7 @@ void NucleusEditor::mergeCells(void)
 			log_entry += ftk::NumToString(new_grps.at(i).at(new_grps.at(i).size()-1));
 			log_entry += " , ";
 			log_entry += ftk::TimeStamp();
-			ftk::AppendTextFile(projectFiles.log, log_entry);
+			ftk::AppendTextFile(projectFiles.GetFullLog(), log_entry);
 		}
 	}
 }
@@ -1382,7 +1369,7 @@ void NucleusEditor::splitCell(int x1, int y1, int z1, int x2, int y2, int z2)
 			log_entry += ftk::NumToString(ret.at(i)) + " ";
 		log_entry += ", ";
 		log_entry += ftk::TimeStamp();
-		ftk::AppendTextFile(projectFiles.log, log_entry);
+		ftk::AppendTextFile(projectFiles.GetFullLog(), log_entry);
 	}
 
 	if(splitAction->isChecked())
@@ -1416,7 +1403,7 @@ void NucleusEditor::splitCellAlongZ(void)
 				log_entry += ftk::NumToString(ret.at(i)) + " ";
 			log_entry += ", ";
 			log_entry += ftk::TimeStamp();
-			ftk::AppendTextFile(projectFiles.log, log_entry);
+			ftk::AppendTextFile(projectFiles.GetFullLog(), log_entry);
 		}
 	}
 	this->updateViews();
@@ -1437,7 +1424,7 @@ void NucleusEditor::fillCells(void)
 		log_entry += ftk::NumToString(ids.at(i)) + " ";
 	log_entry += ", ";
 	log_entry += ftk::TimeStamp();
-	ftk::AppendTextFile(projectFiles.log, log_entry);
+	ftk::AppendTextFile(projectFiles.GetFullLog(), log_entry);
 
 	selection->clear();
 	this->updateViews();
@@ -1476,7 +1463,7 @@ void NucleusEditor::applyExclusionMargin(void)
 		log_entry += ftk::NumToString(t) + " " + ftk::NumToString(b) + " ";
 		log_entry += ftk::NumToString(z1)+ " " + ftk::NumToString(z2)+ " , ";
 		log_entry += ftk::TimeStamp();
-		ftk::AppendTextFile(projectFiles.log, log_entry);
+		ftk::AppendTextFile(projectFiles.GetFullLog(), log_entry);
 	}
 }
 
@@ -1596,15 +1583,16 @@ void NucleusEditor::processProject(void)
                              tr("XML Project Definition (*.xml)\n"
 							    "All Files (*.*)"));
 	if(projectName == "")  return;
-	lastPath = QFileInfo(projectName).absolutePath();
+	lastPath = QFileInfo(projectName).absolutePath() + QDir::separator();
 
 	if(!projectFiles.definitionSaved)
-		this->saveProject(projectFilename,false);
+		this->saveProject();
 
 	//Load up the definition
 	if( !projectDefinition.Load(projectName.toStdString()) ) return;
 
-	projectFiles.definition = projectName.toStdString();
+	projectFiles.path = lastPath.toStdString();
+	projectFiles.definition = QFileInfo(projectName).fileName().toStdString();
 	projectFiles.definitionSaved = true;
 	projectFiles.nucSegValidated = false;
 
@@ -1658,7 +1646,7 @@ void NucleusEditor::process()
 		if(pProc->ReadyToEdit())	//Means I was editing
 		{
 			stopEditing();
-			this->saveProject("",true);	//Will create default filenames and save the files
+			//this->saveProject();	//Will create default filenames and save the files
 		}
 		continueProcessFlag = false;
 	}
