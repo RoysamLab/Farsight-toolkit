@@ -46,18 +46,20 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, std::string 
 	//Mean and Median Filter
 	case Filter1:case Filter2:  
 		QTParamLabel1 = new QLabel("Window Size - X");
-		QTParam1 = new QLineEdit(); 
-		
+		QTParam1 = new QLineEdit();
+		QTParam1->setText(tr("3"));
 		layout->addWidget(QTParamLabel1,1,0);
 		layout->addWidget(QTParam1,1,1);
 		
 		QTParamLabel2 = new QLabel("Window Size - Y");
-		QTParam2 = new QLineEdit(); 
+		QTParam2 = new QLineEdit();
+		QTParam2->setText(tr("3"));
 		layout->addWidget(QTParamLabel2,2,0);
 		layout->addWidget(QTParam2,2,1);
 		
 		QTParamLabel3 = new QLabel("Window Size - Z");
-		QTParam3 = new QLineEdit(); 
+		QTParam3 = new QLineEdit();
+		QTParam3->setText(tr("1"));
 		layout->addWidget(QTParamLabel3,3,0);
 		layout->addWidget(QTParam3,3,1);
 		
@@ -67,17 +69,19 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, std::string 
 	case Filter3:case Filter4: 
 		QTParamLabel1 = new QLabel("TimeStep");
 		QTParam1 = new QLineEdit(); 
-		
+		QTParam1->setText(tr("0.125"));
 		layout->addWidget(QTParamLabel1,1,0);
 		layout->addWidget(QTParam1,1,1);
 		
 		QTParamLabel2 = new QLabel("Number Of Iterations");
-		QTParam2 = new QLineEdit(); 
+		QTParam2 = new QLineEdit();
+		QTParam2->setText(tr("5"));
 		layout->addWidget(QTParamLabel2,2,0);
 		layout->addWidget(QTParam2,2,1);
 		
 		QTParamLabel3 = new QLabel("Conductance");
-		QTParam3 = new QLineEdit(); 
+		QTParam3 = new QLineEdit();
+		QTParam3->setText(tr("2"));
 		layout->addWidget(QTParamLabel3,3,0);
 		layout->addWidget(QTParam3,3,1);
 		
@@ -87,22 +91,25 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, std::string 
 	case Filter5: 
 		QTParamLabel1 = new QLabel("Alpha");
 		QTParam1 = new QLineEdit(); 
-		
+		QTParam1->setText(tr("10"));
 		layout->addWidget(QTParamLabel1,1,0);
 		layout->addWidget(QTParam1,1,1);
 		
 		QTParamLabel2 = new QLabel("Beta");
 		QTParam2 = new QLineEdit(); 
+		QTParam2->setText(tr("150"));
 		layout->addWidget(QTParamLabel2,2,0);
 		layout->addWidget(QTParam2,2,1);
 		
 		QTParamLabel3 = new QLabel("Output Minimum");
-		QTParam3 = new QLineEdit(); 
+		QTParam3 = new QLineEdit();
+		QTParam3->setText(tr("30"));
 		layout->addWidget(QTParamLabel3,3,0);
 		layout->addWidget(QTParam3,3,1);
 		
 		QTParamLabel4 = new QLabel("Output Maximum");
 		QTParam4 = new QLineEdit(); 
+		QTParam4->setText(tr("240"));
 		layout->addWidget(QTParamLabel4,4,0);
 		layout->addWidget(QTParam4,4,1);
 
@@ -111,8 +118,8 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, std::string 
 	//Grayscale Morphological Filters	 
 	case Filter6:case Filter7:case Filter8:case Filter9: 
 		QTParamLabel1 = new QLabel("Radius");
-		QTParam1 = new QLineEdit(); 
-		
+		QTParam1 = new QLineEdit();
+		QTParam1->setText(tr("3"));
 		layout->addWidget(QTParamLabel1,1,0);
 		layout->addWidget(QTParam1,1,1);
 		 
@@ -122,17 +129,20 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, std::string 
 	case Filter10:
 		
 		QTParamLabel1 = new QLabel("Sigma");
-		QTParam1 = new QLineEdit(); 
+		QTParam1 = new QLineEdit();
+		QTParam1->setText(tr("3"));
 		layout->addWidget(QTParamLabel1,1,0);
 		layout->addWidget(QTParam1,1,1);
 		
 		QTParamLabel2 = new QLabel("Number of Threads");
-		QTParam2 = new QLineEdit();  
+		QTParam2 = new QLineEdit();
+		QTParam2->setText(tr("3"));
 		layout->addWidget(QTParamLabel2,2,0);
 		layout->addWidget(QTParam2,2,1);
 		
 		QTParamLabel3 = new QLabel("Normalize across Scale ?");
-		QTParam5 = new QCheckBox();  
+		QTParam5 = new QCheckBox();
+		QTParam5->setText(tr("0"));
 		layout->addWidget(QTParamLabel3,3,0);
 		layout->addWidget(QTParam5,3,1);
 		 break;
@@ -141,17 +151,20 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, std::string 
 	case Filter11:case Filter12:
 		
 		QTParamLabel1 = new QLabel("Radius");
-		QTParam1 = new QLineEdit(); 
+		QTParam1 = new QLineEdit();
+		QTParam1->setText(tr("3"));
 		layout->addWidget(QTParamLabel1,1,0);
 		layout->addWidget(QTParam1,1,1);
 		
 		QTParamLabel3 = new QLabel("Preserve Intensities ?");
 		QTParam5 = new QCheckBox();  
+		QTParam1->setText(tr("0"));
 		layout->addWidget(QTParamLabel2,2,0);
 		layout->addWidget(QTParam2,2,1);
 		
 		QTParamLabel3 = new QLabel("Fully Connected ?");
-		QTParam6 = new QCheckBox();  
+		QTParam6 = new QCheckBox();
+		QTParam1->setText(tr("1"));
 		layout->addWidget(QTParamLabel3,3,0);
 		layout->addWidget(QTParam6,3,1);
 		 break;
@@ -164,12 +177,14 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, std::string 
 	 //Shift and Scale
 	 case Filter14:
 		QTParamLabel1 = new QLabel("Shift Parameter");
-		QTParam1 = new QLineEdit(); 
+		QTParam1 = new QLineEdit();
+		QTParam1->setText(tr("3"));
 		layout->addWidget(QTParamLabel1,1,0);
 		layout->addWidget(QTParam1,1,1);
 		
 		QTParamLabel2 = new QLabel("Scale Parameter");
-		QTParam2 = new QLineEdit();  
+		QTParam2 = new QLineEdit();
+		QTParam2->setText(tr("1"));
 		layout->addWidget(QTParamLabel2,2,0);
 		layout->addWidget(QTParam2,2,1);
 		break;
@@ -177,7 +192,8 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, std::string 
 	//Sobel Edge Detection	
 	case Filter15:	
 		QTParamLabel1 = new QLabel("Number of Threads");
-		QTParam1 = new QLineEdit(); 
+		QTParam1 = new QLineEdit();
+		QTParam1->setText(tr("3"));
 		layout->addWidget(QTParamLabel1,1,0);
 		layout->addWidget(QTParam1,1,1);
 		break;
@@ -185,12 +201,14 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, std::string 
 	//Curvature Flow Filter
 	case Filter16:
 		QTParamLabel1 = new QLabel("TimeStep");
-		QTParam1 = new QLineEdit(); 
+		QTParam1 = new QLineEdit();
+		QTParam1->setText(tr("0.125"));
 		layout->addWidget(QTParamLabel1,1,0);
 		layout->addWidget(QTParam1,1,1);
 		
 		QTParamLabel2 = new QLabel("Number Of Iterations");
-		QTParam2 = new QLineEdit(); 
+		QTParam2 = new QLineEdit();
+		QTParam1->setText(tr("5"));
 		layout->addWidget(QTParamLabel2,2,0);
 		layout->addWidget(QTParam2,2,1);
 		break;
@@ -198,18 +216,21 @@ ftkPreprocessDialog::ftkPreprocessDialog(QVector<QString> channels, std::string 
 	//Min-Max Flow Filter
 	case Filter17:
 		QTParamLabel1 = new QLabel("TimeStep");
-		QTParam1 = new QLineEdit(); 
+		QTParam1 = new QLineEdit();
+		QTParam1->setText(tr("0.125"));
 		layout->addWidget(QTParamLabel1,1,0);
 		layout->addWidget(QTParam1,1,1);
 		
 		QTParamLabel2 = new QLabel("Number Of Iterations");
-		QTParam2 = new QLineEdit(); 
+		QTParam2 = new QLineEdit();
+		QTParam2->setText(tr("5"));
 		layout->addWidget(QTParamLabel2,2,0);
 		layout->addWidget(QTParam2,2,1);
 		break;
 	 
 		QTParamLabel3 = new QLabel("Stencil Radius");
-		QTParam3 = new QLineEdit(); 
+		QTParam3 = new QLineEdit();
+		QTParam3->setText(tr("1"));
 		layout->addWidget(QTParamLabel3,3,0);
 		layout->addWidget(QTParam3,3,1); 
 		 break;
