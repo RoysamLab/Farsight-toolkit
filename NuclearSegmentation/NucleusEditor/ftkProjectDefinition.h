@@ -56,12 +56,15 @@ public:
 	std::vector<Channel> ReadChannels(TiXmlElement * inputElement);
 	std::vector<TaskType> ReadSteps(TiXmlElement * pipelineElement);
 	std::vector<Parameter> ReadParameters(TiXmlElement * inputElement);
-	void ReadAssociationParameters(TiXmlElement * inputElement);
+	std::vector<ftk::AssociationRule> ReadAssociationRules(TiXmlElement * inputElement);
 	std::vector<std::string> ParseText(TiXmlElement * element);
 	TiXmlElement * GetParameterElement( Parameter param );
+	TiXmlElement * GetAssocRuleElement( ftk::AssociationRule rule );
 
 	int FindInputChannel(std::string name);				//Search inputs with this name
 	std::string GetTaskString(TaskType task);
+	std::string GetAssocTypeString(ftk::AssociationType type);
+	std::string GetBoolString(bool b);
 
 	//VARIABLES
 	std::string name;

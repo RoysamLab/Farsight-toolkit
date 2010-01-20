@@ -82,7 +82,7 @@ bool ProjectDefinition::Load(std::string filename)
 		}
 		else if( strcmp( parent, "AssociationRules" ) == 0 )
 		{
-			this->ReadAssociationParameters(parentElement);
+			associationRules = this->ReadAssociationRules(parentElement);
 		}
 		else if( strcmp( parent, "IntrinsicFeatures" ) == 0 )
 		{
@@ -165,26 +165,21 @@ std::vector<ProjectDefinition::Parameter> ProjectDefinition::ReadParameters(TiXm
 	return returnVector;
 }
 
-void ProjectDefinition::ReadAssociationParameters(TiXmlElement * inputElement)
+std::vector<ftk::AssociationRule> ProjectDefinition::ReadAssociationRules(TiXmlElement * inputElement)
 {
-	associationRules.clear();
+	std::vector<ftk::AssociationRule> returnVector;
 
 	TiXmlElement * parameterElement = inputElement->FirstChildElement();
-
-	while (parameterElement){
+	while (parameterElement)
+	{
 		const char * parameter = parameterElement ->Value();
-
 		ftk::AssociationRule assocRule("");
-
-		if ( strcmp(parameter,"AssociationRule") == 0 ){
+		if ( strcmp(parameter,"AssociationRule") == 0 )
+		{
 			assocRule.SetRuleName(parameterElement->Attribute("Name"));
-
 			assocRule.SetSegmentationFileNmae(parameterElement->Attribute("SegmentationSource"));
-
 			assocRule.SetTargetFileNmae(parameterElement->Attribute("Target_Image"));
-
 			assocRule.SetOutDistance(atoi(parameterElement->Attribute("Outside_Distance")));
-
 			assocRule.SetInDistance(atoi(parameterElement->Attribute("Inside_Distance")));
 
 			if(strcmp(parameterElement->Attribute("Use_Whole_Object"),"True")==0)
@@ -219,11 +214,10 @@ void ProjectDefinition::ReadAssociationParameters(TiXmlElement * inputElement)
 			else
 				assocRule.SetAssocType(ASSOC_AVERAGE);
 		}
-
-		associationRules.push_back(assocRule);
-
+		returnVector.push_back(assocRule);
 		parameterElement = parameterElement->NextSiblingElement();
 	}
+	return returnVector;
 }
 
 std::vector<std::string> ProjectDefinition::ParseText(TiXmlElement * element)
@@ -322,46 +316,9 @@ bool ProjectDefinition::Write(std::string filename)
 	if(associationRules.size() > 0)
 	{
 		TiXmlElement * assocElement = new TiXmlElement("AssociationRules");
-		for(int i=1; i<(int)associationRules.size(); ++i){
-			std::string text;
-			std::stringstream out;
-			text += "parameter Name=\"" + associationRules.at(i).GetRuleName() + "\" SegmentationSource=\"" + associationRules.at(i).GetSegmentationFileName() \
-				+ "\" Target_Image=\"" + associationRules.at(i).GetTargetFileNmae() + "\" Outside_Distance=\"";
-			out << associationRules.at(i).GetOutDistance();
-			text += out.str().c_str();
-			text += "\" Inside_Distance=\"";
-			out.clear();
-			out << associationRules.at(i).GetInDistance();
-			text += out.str().c_str();
-			out.clear();
-			if( associationRules.at(i).IsUseWholeObject() )
-				text += "\" Use_Whole_Object=\"True";
-			else
-				text += "\" Use_Whole_Object=\"False";
-			if( associationRules.at(i).IsUseBackgroundSubtraction() )
-				text += "\" Use_Background_Subtraction=\"True";
-			else
-				text += "\" Use_Background_Subtraction=\"False";
-			if( associationRules.at(i).IsUseMultiLevelThresholding() ){
-				out << associationRules.at(i).GetNumberOfThresholds();
-				text += "\" Use_MultiLevel_Thresholding=\"True\" Number_Of_Thresholds=\"";
-				text += out.str().c_str() ;
-				out.clear();
-				out << associationRules.at(i).GetNumberIncludedInForeground();
-				text += "\" Number_Included_In_Foreground=\"";
-				text += out.str().c_str();
-				out.clear();
-			}
-			else
-				text += "\" Use_MultiLevel_Thresholding=\"False\" Number_Of_Thresholds=\"1\" Number_Included_In_Foreground=\"1";
-
-			if( associationRules.at(i).GetAssocType() == ASSOC_MIN ) text += "\" Association_Type=\"MIN\"";
-			else if( associationRules.at(i).GetAssocType() == ASSOC_MAX ) text += "\" Association_Type=\"MAX\"";
-			else if( associationRules.at(i).GetAssocType() == ASSOC_TOTAL ) text += "\" Association_Type=\"TOTAL\"";
-			else if( associationRules.at(i).GetAssocType() == ASSOC_SURROUNDEDNESS ) text += "\" Association_Type=\"SURROUNDEDNESS\"";
-			else if( associationRules.at(i).GetAssocType() == ASSOC_AVERAGE ) text += "\" Association_Type=\"AVERAGE\"";
-
-			assocElement->LinkEndChild( new TiXmlText( text.c_str() ) );
+		for(int i=0; i<(int)associationRules.size(); ++i)
+		{
+			assocElement->LinkEndChild( GetAssocRuleElement(associationRules.at(i)) );
 		}
 		root->LinkEndChild(assocElement);
 	}
@@ -394,6 +351,24 @@ TiXmlElement * ProjectDefinition::GetParameterElement( Parameter param )
 	returnElement->SetAttribute("value", ftk::NumToString(param.value));
 	return returnElement;
 }
+
+TiXmlElement * ProjectDefinition::GetAssocRuleElement( ftk::AssociationRule rule )
+{
+	TiXmlElement * returnElement = new TiXmlElement("AssociationRule");
+	returnElement->SetAttribute("Name", rule.GetRuleName().c_str());
+	returnElement->SetAttribute("SegmentationSource", rule.GetSegmentationFileName().c_str());
+	returnElement->SetAttribute("Target_Image", rule.GetTargetFileNmae().c_str());
+	returnElement->SetAttribute("Outside_Distance", ftk::NumToString(rule.GetOutDistance()).c_str());
+	returnElement->SetAttribute("Inside_Distance", ftk::NumToString(rule.GetInDistance()).c_str());
+	returnElement->SetAttribute("Use_Whole_Object", GetBoolString(rule.IsUseWholeObject()).c_str());
+	returnElement->SetAttribute("Use_Background_Subtraction", GetBoolString(rule.IsUseBackgroundSubtraction()).c_str());
+	returnElement->SetAttribute("use_MultiLevel_Thresholding", GetBoolString(rule.IsUseMultiLevelThresholding()).c_str());
+	returnElement->SetAttribute("Number_Of_Thresholds", ftk::NumToString(rule.GetNumberOfThresholds()).c_str());
+	returnElement->SetAttribute("Number_Included_In_Foreground", ftk::NumToString(rule.GetNumberIncludedInForeground()).c_str());
+	returnElement->SetAttribute("Association_Type", GetAssocTypeString(rule.GetAssocType()).c_str());
+	return returnElement;
+}
+
 //***************************************************************************************
 //***************************************************************************************
 //***************************************************************************************
@@ -459,6 +434,38 @@ std::string ProjectDefinition::GetTaskString(TaskType task)
 		break;
 	}
 	return retText;
+}
+
+std::string ProjectDefinition::GetAssocTypeString(ftk::AssociationType type)
+{
+	std::string retText = "";
+	switch(type)
+	{
+	case ftk::ASSOC_AVERAGE:
+		retText = "AVERAGE";
+		break;
+	case ftk::ASSOC_MAX:
+		retText = "MAX";
+		break;
+	case ftk::ASSOC_MIN:
+		retText = "MIN";
+		break;
+	case ftk::ASSOC_SURROUNDEDNESS:
+		retText = "SURROUNDEDNESS";
+		break;
+	case ftk::ASSOC_TOTAL:
+		retText = "TOTAL";
+		break;
+	}
+	return retText;
+}
+
+std::string ProjectDefinition::GetBoolString(bool b)
+{
+	if(b)
+		return "True";
+	else
+		return "False";
 }
 
 //************************************************************************
