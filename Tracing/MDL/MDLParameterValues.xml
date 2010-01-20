@@ -1,6 +1,0 @@
-<?xml version="1.0"?>
-<parameters>
-<parameter name="Input image" value="MBFsp5.308x512x49.raw"></parameter>
-<parameter name="Intensity threshold" value="2"></parameter>
-<parameter name="Connected components size" value="100"></parameter>
-</parameters>
