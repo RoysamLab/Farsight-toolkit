@@ -635,7 +635,8 @@ private:
 	int add_normal_edges(int tmin, int tmax);
 	void populate_merge_candidates(int t);
 	int add_merge_split_edges(int tmax);
-	void solve_the_graph(void);
+	void solve_lip(void);
+	void solve_qip(void);
 	void prune(int);
 	int compute_normal_utility(FeaturesType f1, FeaturesType f2);
 	void print_stats(void);
@@ -1057,8 +1058,11 @@ int CellTracker::add_merge_split_edges(int tmax)
 	}
 	return msec;
 }
-
-void CellTracker::solve_the_graph()
+void CellTracker::solve_qip()
+{
+	
+}
+void CellTracker::solve_lip()
 {
 	IloEnv env;
 	try{
@@ -1355,7 +1359,7 @@ TIC;		avc += add_appear_vertices(t-1);// TOC("add_appear_vertices()");
 		//PAUSE;
 TIC;		prune(t);//TOC("prune()");
 	}
-	solve_the_graph();
+	solve_lip();
 	print_stats();
 	
 	boost::graph_traits<TGraph>::edge_iterator e_i,e_next,e_end;
@@ -1448,38 +1452,48 @@ void testKPLS()
 	kpls->SetSigma(20);
 
 	int num_rows = 1000;
-	int cols = 1;
+	int num_cols = 1;
 
+	itk::Statistics::NormalVariateGenerator::Pointer nvg1, nvg2;
+	nvg1 = itk::Statistics::NormalVariateGenerator::New();
+	nvg2 = itk::Statistics::NormalVariateGenerator::New();
+
+	nvg1->Initialize(1);
+	nvg2->Initialize(2);
+
+
+	
 
 	MATRIX data = kpls->GetDataPtr(num_rows,num_cols);
 	VECTOR ids = kpls->GetIDPtr();
-	VECTOR training = kpls->GEtTrainingPtr();
+	VECTOR training = kpls->GetTrainingPtr();
 
-	VECTOR correct = 
 
+	int t = 7;
+	
 	for(int r = 0; r< num_rows; r++)
 	{
-		if(r < num_rows/4)
+		if(r < t)
 		{
-			data[r][0] = exp(-pow((rand()*1.0/RAND_MAX-1)/2.0,2.0));
+			data[r][0] = 1.0*rand()/RAND_MAX+2.0;
 			ids[r] = r+1;
 			training[r] = 1;
 		}
-		else if(r < num_rows/2)
+		else if(r < 2*t)
 		{
-			data[r][0] = exp(-pow((rand()*1.0/RAND_MAX-10)/2.0,2.0));
+			data[r][0] = 10.0*rand()/RAND_MAX+3.0;
 			ids[r] = r+1;
 			training[r] = 2;
 		}
-		else if (r < 3*num_rows/4.0)
+		else if (r < (num_rows-2*t)/2+2*t)
 		{
-			data[r][0] = exp(-pow((rand()*1.0/RAND_MAX-1)/2.0,2.0));
+			data[r][0] = 1.0*rand()/RAND_MAX+2.0;
 			ids[r] = r+1;
 			training[r] = -1;
 		}
 		else
 		{
-			data[r][0] = exp(-pow((rand()*1.0/RAND_MAX-10)/2.0,2.0));
+			data[r][0] = 10.0*rand()/RAND_MAX+3.0;
 			ids[r] = r+1;
 			training[r] = -1;
 		}
@@ -1488,10 +1502,29 @@ void testKPLS()
 	kpls->ScaleData();
 	kpls->Train();
 	kpls->Classify();
-
-	VECTOR predictions = kpls->GetPredictions();
-	for(int r = 0; r <
 	
+	VECTOR predictions = kpls->GetPredictions();
+	int cor = 0,ncor = 0;
+	for(int r = 2*t; r < num_rows; r++)
+	{
+		if(r < (num_rows-2*t)/2+2*t)
+		{
+			if(predictions[r] == 1)
+				cor++;
+			else
+				ncor++;
+		}
+		else
+		{
+			if(predictions[r] == 2)
+				cor++;
+			else 
+				ncor++;
+		}
+	}
+	printf("It got cor = %d, ncor =  %d\n",cor, ncor);
+	scanf("%*d");
+	exit(0);
 }
 
 int main()//int argc, char **argv)
