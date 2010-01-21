@@ -625,12 +625,23 @@ void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 		int x2 = (pos.x() + scrollArea->horizontalScrollBar()->value()) / currentScale;
 		int y2 = (pos.y() + scrollArea->verticalScrollBar()->value()) / currentScale;
 
+		const ftk::Image::Info *info;
+		if(channelImg)    info = channelImg->GetImageInfo();	//Get info of new image
+		else if(labelImg) info = labelImg->GetImageInfo();
+		else return;
+		int totalWidth = (*info).numColumns;
+		int totalHeight = (*info).numRows;
+		int currentZ = vSpin->value();
+
+		if(x2 >= totalWidth) x2 = totalWidth-1;
+		if(y2 >= totalHeight) y2 = totalHeight-1;
+
 		if(rubberBand)
 		{
 			delete rubberBand;
 			rubberBand = NULL;
 			origin = QPoint();
-			emit boxDrawn(x1, y1, x2, y2, vSpin->value());
+			emit boxDrawn(x1, y1, x2, y2, currentZ);
 		}
 		else	// pointsMode or roiMode
 		{
@@ -642,7 +653,7 @@ void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 					{
 						origin3.push_back(x2);
 						origin3.push_back(y2);
-						origin3.push_back(vSpin->value());
+						origin3.push_back(currentZ);
 						this->repaint();
 					}
 					else								//Must be the second click
@@ -652,7 +663,7 @@ void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 						int z1 = origin3.at(2);
 						origin3.clear();
 						pointsMode = false;
-						emit pointsClicked(x1,y1,z1,x2,y2,vSpin->value());
+						emit pointsClicked(x1,y1,z1,x2,y2,currentZ);
 					}
 				}
 				else //roiMode
@@ -661,7 +672,7 @@ void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 					last.t = hSpin->value();
 					last.x = x2;
 					last.y = y2;
-					last.z = vSpin->value();
+					last.z = currentZ;
 					roiPoints.push_back(last);
 					if(roiPoints.size() >= 4)
 					{
