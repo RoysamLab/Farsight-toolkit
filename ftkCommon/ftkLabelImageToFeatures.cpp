@@ -25,6 +25,9 @@ IntrinsicFeatureCalculator::IntrinsicFeatureCalculator()
 	labelChannel = 0;
 	fPrefix = "";
 	SetFeaturesOn();
+	this->SetFeatureOn(IntrinsicFeatures::SKEW, false);		//Default is to have these 3 off because histogram computation too costly
+	this->SetFeatureOn(IntrinsicFeatures::ENERGY, false);
+	this->SetFeatureOn(IntrinsicFeatures::ENTROPY, false);
 	useRegion = false;
 	useIDs = false;
 	IDs.clear();
