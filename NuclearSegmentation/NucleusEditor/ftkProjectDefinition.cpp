@@ -362,7 +362,7 @@ TiXmlElement * ProjectDefinition::GetAssocRuleElement( ftk::AssociationRule rule
 	returnElement->SetAttribute("Inside_Distance", ftk::NumToString(rule.GetInDistance()).c_str());
 	returnElement->SetAttribute("Use_Whole_Object", GetBoolString(rule.IsUseWholeObject()).c_str());
 	returnElement->SetAttribute("Use_Background_Subtraction", GetBoolString(rule.IsUseBackgroundSubtraction()).c_str());
-	returnElement->SetAttribute("use_MultiLevel_Thresholding", GetBoolString(rule.IsUseMultiLevelThresholding()).c_str());
+	returnElement->SetAttribute("Use_MultiLevel_Thresholding", GetBoolString(rule.IsUseMultiLevelThresholding()).c_str());
 	returnElement->SetAttribute("Number_Of_Thresholds", ftk::NumToString(rule.GetNumberOfThresholds()).c_str());
 	returnElement->SetAttribute("Number_Included_In_Foreground", ftk::NumToString(rule.GetNumberIncludedInForeground()).c_str());
 	returnElement->SetAttribute("Association_Type", GetAssocTypeString(rule.GetAssocType()).c_str());
