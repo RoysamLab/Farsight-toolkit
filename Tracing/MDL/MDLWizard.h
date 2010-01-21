@@ -42,7 +42,7 @@ public:
   void RenderPolyData(QFileInfo polyDataFile);
   vtkSmartPointer<vtkVolume> ConvertRawToVolume(const char *filename);
   vtkSmartPointer<vtkActor> CreateActorFromPolyDataFile(const char *filename);
-  vtkSmartPointer<vtkVolumeProperty> NewRGBVolumeProperty();
+  vtkSmartPointer<vtkVolumeProperty> NewRGBVolumeProperty(const double range[]);
 
   //properties and their accessors.  Used to control when the next/back/finish
   //buttons are enabled and disabled.

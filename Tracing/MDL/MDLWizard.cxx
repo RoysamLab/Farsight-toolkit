@@ -468,8 +468,11 @@ vtkSmartPointer<vtkVolume> MDLWizard::ConvertRawToVolume(const char *filename)
   vtkSmartPointer<vtkVolume> volume = vtkSmartPointer<vtkVolume>::New();
   volume->SetMapper(mapper);
 
+  double range[2];
+  imageData->GetScalarRange(range);
+
   vtkSmartPointer<vtkVolumeProperty> volumeProperty =
-    this->NewRGBVolumeProperty();
+    this->NewRGBVolumeProperty(range);
   volume->SetProperty(volumeProperty);
 
   delete [] buf;
@@ -496,13 +499,14 @@ vtkSmartPointer<vtkActor> MDLWizard::CreateActorFromPolyDataFile(
 }
 
 //-----------------------------------------------------------------------------
-vtkSmartPointer<vtkVolumeProperty> MDLWizard::NewRGBVolumeProperty()
+vtkSmartPointer<vtkVolumeProperty> MDLWizard::NewRGBVolumeProperty(
+  const double range[])
 {
   // Create transfer mapping scalar value to opacity.
   vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunction =
     vtkSmartPointer<vtkPiecewiseFunction>::New();
-  opacityTransferFunction->AddPoint( 0.0, 0.0);
-  opacityTransferFunction->AddPoint(10.0, 1.0);
+  opacityTransferFunction->AddPoint( range[0], 0.0);
+  opacityTransferFunction->AddPoint(range[1], 1.0);
 
   // Create transfer mapping scalar value to color.
   vtkSmartPointer<vtkColorTransferFunction> colorTransferFunction =
@@ -510,8 +514,8 @@ vtkSmartPointer<vtkVolumeProperty> MDLWizard::NewRGBVolumeProperty()
   colorTransferFunction->SetColorSpaceToRGB();
   //these hardcoded values aren't gonna work in the long run
   //talk to the ParaView folks about how they manage this problem...
-  colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 1.0);
-  colorTransferFunction->AddRGBPoint(10.0, 1.0, 0.0, 0.0);
+  colorTransferFunction->AddRGBPoint(range[0], 0.0, 0.0, 1.0);
+  colorTransferFunction->AddRGBPoint(range[1], 1.0, 0.0, 0.0);
 
   vtkSmartPointer<vtkVolumeProperty> volumeProperty =
     vtkSmartPointer<vtkVolumeProperty>::New();
