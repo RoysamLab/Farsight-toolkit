@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     }
 
   DATATYPEIN *volin1,*volin2;
-  int sizeX, sizeY, sizeZ;
+  unsigned int sizeX, sizeY, sizeZ;
 
   string inputFileName1 = argv[1];
   string inputFileName2 = argv[2];
@@ -55,9 +55,8 @@ int main(int argc, char *argv[])
   Inside = atoi(argv[4]); 
   printf("Inside is %d ",Inside);
 
-  FILE *infile = 0;
   FILE *outfile;
-  int i,j,k;
+  unsigned int i,j,k;
   DATATYPEOUT *volout;
   long idx;
   int sizeExpand = 0;
@@ -101,8 +100,8 @@ int main(int argc, char *argv[])
     sizeY = size1[1];
     sizeZ = size1[2];
 
-	if (sizeX != size2[0]|| sizeY != size2[1]||sizeZ != size2[2])
-	{
+	if (sizeX != size2[0] || sizeY != size2[1] || sizeZ != size2[2])
+	  {
     cerr << "Output file open error!" << endl;
     return EXIT_FAILURE;
     }
