@@ -189,7 +189,7 @@ void yousef_nucleus_seg::runBinarization()
 	typedef itk::ImageFileWriter< InputImageType > WriterType;
 	WriterType::Pointer writer = WriterType::New();
 	writer->SetInput(im);
-	writer->SetFileName("/Users/isaac/IMAGES/input_test.tif");
+	writer->SetFileName("input_test.tif");
 	writer->Update();
 	//******
 	//*******
@@ -579,7 +579,7 @@ int yousef_nucleus_seg::getConnCompImage(unsigned short *IM, int connectivity, i
 	typedef itk::ImageFileWriter< InputImageType > WriterType;
 	WriterType::Pointer writer = WriterType::New();
 	writer->SetInput(im);
-	writer->SetFileName("/Users/isaac/IMAGES/bin_test.tif");
+	writer->SetFileName("bin_test.tif");
 	writer->Update();
 				
 	typedef itk::ConnectedComponentImageFilter< InputImageType, OutputImageType > FilterType;
