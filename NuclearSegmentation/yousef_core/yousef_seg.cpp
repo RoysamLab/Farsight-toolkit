@@ -144,6 +144,56 @@ void yousef_nucleus_seg::runBinarization()
 	clearClustImagePtr();
 	clearMyConnComp();
 	mySeeds.clear();
+	
+	
+	//***************************************************
+	// TEST CODE:
+	typedef unsigned char PixelType;
+	typedef itk::Image< PixelType,  3 >   InputImageType;
+	
+	InputImageType::Pointer im;
+	im = InputImageType::New();
+	InputImageType::PointType origin;
+    origin[0] = 0; 
+    origin[1] = 0;    
+	origin[2] = 0;    
+    im->SetOrigin( origin );
+	
+    InputImageType::IndexType start;
+    start[0] =   0;  // first index on X
+    start[1] =   0;  // first index on Y    
+	start[2] =   0;  // first index on Z    
+    InputImageType::SizeType  size;
+    size[0]  = numColumns;  // size along X
+    size[1]  = numRows;  // size along Y
+	size[2]  = numStacks;  // size along Z
+	
+    InputImageType::RegionType region;
+    region.SetSize( size );
+    region.SetIndex( start );
+    
+    im->SetRegions( region );
+    im->Allocate();
+    im->FillBuffer(0);
+	im->Update();
+	
+	//copy the input image into the ITK image
+	typedef itk::ImageRegionIteratorWithIndex< InputImageType > IteratorType;
+	IteratorType iterator1(im,im->GetRequestedRegion());
+	for(int i=0; i<numRows*numColumns*numStacks; i++)
+	{		
+		iterator1.Set(dataImagePtr[i]);
+		++iterator1;	
+	}
+	
+	typedef itk::ImageFileWriter< InputImageType > WriterType;
+	WriterType::Pointer writer = WriterType::New();
+	writer->SetInput(im);
+	writer->SetFileName("/Users/isaac/IMAGES/input_test.tif");
+	writer->Update();
+	//******
+	//*******
+	//**************
 
 	//By Yousef on 9-3-2009
 	//subtract the gradient image from the input image
@@ -486,12 +536,11 @@ void yousef_nucleus_seg::outputSeeds(void)
 
 int yousef_nucleus_seg::getConnCompImage(unsigned short *IM, int connectivity, int minSize, int r, int c, int z, int runConnComp)
 {
-	typedef    short     InputPixelType;
-	typedef    short     OutputPixelType;
+	typedef unsigned short InputPixelType;
+	typedef unsigned short OutputPixelType;
 	typedef itk::Image< InputPixelType,  3 >   InputImageType;
 	typedef itk::Image< OutputPixelType, 3 >   OutputImageType;
 	
-
 	InputImageType::Pointer im;
 	im = InputImageType::New();
 	InputImageType::PointType origin;
@@ -526,6 +575,12 @@ int yousef_nucleus_seg::getConnCompImage(unsigned short *IM, int connectivity, i
 		iterator1.Set(IM[i]);
 		++iterator1;	
 	}
+	
+	typedef itk::ImageFileWriter< InputImageType > WriterType;
+	WriterType::Pointer writer = WriterType::New();
+	writer->SetInput(im);
+	writer->SetFileName("/Users/isaac/IMAGES/bin_test.tif");
+	writer->Update();
 				
 	typedef itk::ConnectedComponentImageFilter< InputImageType, OutputImageType > FilterType;
 	FilterType::Pointer filter = FilterType::New();
@@ -543,7 +598,7 @@ int yousef_nucleus_seg::getConnCompImage(unsigned short *IM, int connectivity, i
 	else
 	{
 		//use the input image as the input to the relabel component filter 		
-		relabel->SetInput( im );
+		//relabel->SetInput( im );
 	}
 
     //set the minimum object size
@@ -557,6 +612,7 @@ int yousef_nucleus_seg::getConnCompImage(unsigned short *IM, int connectivity, i
     {
 		std::cerr << "Relabel: exception caught !" << std::endl;
 		std::cerr << excep << std::endl;
+		return -1;
     }
 
 	
