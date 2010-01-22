@@ -393,7 +393,7 @@ void View3D::LoadImageData()
 		//this->Renderer->AddActor(this->Volume);
 		//this->AddVolumeSliders();
 		this->Renderer->AddVolume(this->ImageActors->RayCastVolume(-1));
-			this->QVTK->GetRenderWindow()->Render();
+		this->QVTK->GetRenderWindow()->Render();
 		//this->Rerender();
 		this->statusBar()->showMessage("Image File Rendered");
 	}
@@ -409,14 +409,8 @@ void View3D::LoadSomaFile()
 	{
 		this->Renderer->AddActor(this->ImageActors->ContourActor(-1));
 		this->QVTK->GetRenderWindow()->Render();
-		if(this->VolumeActor!=NULL)
-		{
-			this->EditLogDisplay->append("Soma file: \t" + this->SomaFile);
-			
-			//this->Renderer->AddVolume(this->VolumeActor);
-			this->QVTK->GetRenderWindow()->Render();
-			this->statusBar()->showMessage("Somas Rendered");
-		}
+		this->EditLogDisplay->append("Soma file: \t" + this->SomaFile);
+		this->statusBar()->showMessage("Somas Rendered");
 	}
 }
 View3D::~View3D()
@@ -715,8 +709,19 @@ void View3D::CreateActors()
 
   this->UpdateBranchActor();
   this->Renderer->AddActor(this->BranchActor);
- 
-	if(this->Volume!=NULL)
+  for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+  {
+	  if (this->ImageActors->isRayCast(i))
+	  {
+		  this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
+	  }
+	  else
+	  {
+		  this->Renderer->AddActor(this->ImageActors->ContourActor(i));
+	  }
+  }
+  this->QVTK->GetRenderWindow()->Render();
+	/*if(this->Volume!=NULL)
 	{
 		this->Renderer->AddVolume(this->Volume);
 		this->AddVolumeSliders();
@@ -724,7 +729,7 @@ void View3D::CreateActors()
 	if(this->VolumeActor!=NULL)
 	{
 		this->Renderer->AddActor(this->VolumeActor);
-	}
+	}*/
   //sphere is used to mark the picks
   this->CreateSphereActor();
   Renderer->AddActor(this->SphereActor);

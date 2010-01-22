@@ -73,6 +73,8 @@ public:
 	vtkSmartPointer<vtkVolume> RayCastVolume(int i);
 	std::vector<std::string> GetImageList();
 	std::string FileNameOf(int i){ return this->LoadedImages[i]->filename;};
+	unsigned int NumberOfImages() {return this->LoadedImages.size();};
+	bool isRayCast(int i);
 private:
 	std::vector<imageFileHandle*> LoadedImages;
 	std::vector<std::string> ImageList;

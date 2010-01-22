@@ -108,3 +108,14 @@ std::vector<std::string> ImageRenderActors::GetImageList()
 	}
 	return this->ImageList;
 }
+bool ImageRenderActors::isRayCast(int i)
+{
+	if (this->LoadedImages[i]->tag.compare("Image")==0)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
