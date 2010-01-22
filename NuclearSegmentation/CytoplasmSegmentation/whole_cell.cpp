@@ -487,7 +487,7 @@ void WholeCellSeg::RealBoundaries(){
 			pix_bufed33.Set(0);
 		++pix_bufed33;
 	}
-	typedef itk::RescaleIntensityImageFilter< IntImageType, UShortImageType  > RescaleUsIntType;
+	typedef itk::RescaleIntensityImageFilter< IntImageType, UShortImageType  > RescaleIntIOType;
 	RescaleIntIOType::Pointer RescaleIntIO1 = RescaleIntIOType::New();
 	RescaleIntIO1->SetOutputMaximum( USHRT_MAX );
 	RescaleIntIO1->SetOutputMinimum( 0 );
@@ -495,7 +495,7 @@ void WholeCellSeg::RealBoundaries(){
 	RescaleIntIO1->Update();
 	typedef itk::ImageFileWriter< UShortImageType > WriterType;
 	WriterType::Pointer writer = WriterType::New();
-	writer->SetFileName( "bin_info.tif" );
+	writer->SetFileName( "grad_wts.tif" );
 	writer->SetInput( RescaleIntIO1->GetOutput() );//RescaleIntIO1--finalO/P
 	writer->Update();
 */
@@ -621,15 +621,15 @@ void WholeCellSeg::SyntheticBoundaries(){
 	else
 		seg_im_out = castIntUSfilter->GetOutput();
 
-/*
-	IteratorType1 pix_bufed33( image2, image2->GetRequestedRegion() );
+
+/*	IteratorType1 pix_bufed33( image2, image2->GetRequestedRegion() );
 	pix_bufed33.GoToBegin();
 	while( !pix_bufed33.IsAtEnd() ){
 		if( 0 > pix_bufed33.Get() )
 			pix_bufed33.Set(0);
 		++pix_bufed33;
 	}
-	typedef itk::RescaleIntensityImageFilter< IntImageType, UShortImageType  > RescaleUsIntType;
+	typedef itk::RescaleIntensityImageFilter< IntImageType, UShortImageType  > RescaleIntIOType;
 	RescaleIntIOType::Pointer RescaleIntIO1 = RescaleIntIOType::New();
 	RescaleIntIO1->SetOutputMaximum( USHRT_MAX );
 	RescaleIntIO1->SetOutputMinimum( 0 );
@@ -637,7 +637,7 @@ void WholeCellSeg::SyntheticBoundaries(){
 	RescaleIntIO1->Update();
 	typedef itk::ImageFileWriter< UShortImageType > WriterType;
 	WriterType::Pointer writer = WriterType::New();
-	writer->SetFileName( "bin_info.tif" );
+	writer->SetFileName( "dist_map.tif" );
 	writer->SetInput( RescaleIntIO1->GetOutput() );//RescaleIntIO1--finalO/P
 	writer->Update();
 */
