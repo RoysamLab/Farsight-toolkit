@@ -388,10 +388,15 @@ template <typename captype, typename tcaptype, typename flowtype>
 	arcs = (arc*) malloc(2*edge_num_max*sizeof(arc));
 	//int x1 = sizeof(node);
 	//int x2 = sizeof(arc);
+	//std::cout << "Node Size = " << sizeof(node) << std::endl;
+	//std::cout << "Node Num Max = " << node_num_max << std::endl;
+	//std::cout << "Arc Size = " << sizeof(arc) << std::endl;
+	//std::cout << "Edge Num Max = " << edge_num_max << std::endl;
 	
 	if (!nodes || !arcs)
     {
     printf("Error allocating memory for Graph_B\n");
+	//std::cout << "Trying to allocate " << ((node_num_max*sizeof(node))+(2*edge_num_max*sizeof(arc))) << std::endl;
     int unused = scanf("%*d");
     unused++;
     if (error_function)

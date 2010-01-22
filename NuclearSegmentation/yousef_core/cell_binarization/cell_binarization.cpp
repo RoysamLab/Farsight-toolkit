@@ -75,27 +75,47 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	//cout<<"done"<<endl;
 
 	//Modified by Isaac on 1-22-2010: Check memory before choosing divisor, and make smarter block divisions!!
+	//120 bytes are needed for each pixel to create a graph!!!!
 	int block_divisor = 1;
 	if(div)	//means I'm going to try to find best number of blocks
 	{
 		bool done = false;
-		int totalPix = R*C*Z;
-		while(!done)
+		while(!done)		//Make sure my requested size is less than maximum for machine:
 		{
-			//For graph nodes needs #pixels*9*sizeof(int)
-			// and edge needs #pixels*2*3*4*sizeof(int)
-			// for a total of #pixels*(36+96) = 132*#pixels bytes!!!!!!
-			totalPix = totalPix / (block_divisor*block_divisor);
-			unsigned char *tmpp = (unsigned char*)malloc(132*totalPix);
-			if(tmpp)			//Able to allocate
-				done = true;
+			unsigned long totalPix = (unsigned long)(R*C*Z) / ((unsigned long)block_divisor*(unsigned long)block_divisor);
+			//120 bytes are needed for each pixel to create a graph!!!!
+			if( (long long)120*(long long)totalPix > (long long)SIZE_MAX )
+			{
+				std::cerr << "Increasing divisor" << std::endl;
+				block_divisor = block_divisor*2;
+			}
 			else
-				block_divisor*=2;
+			{
+				done = true;
+			}
+		}
+		done = false;
+		while(!done)	//Now make sure I can allocate memory
+		{
+			unsigned long totalPix = (unsigned long)(R*C*Z) / ((unsigned long)block_divisor*(unsigned long)block_divisor);
+			//120 bytes are needed for each pixel to create a graph!!!!
+			unsigned char *tmpp = (unsigned char*)malloc(120*totalPix);
+			if(!tmpp)			//unAble to allocate
+			{
+				std::cerr << "Increasing divisor" << std::endl;
+				block_divisor = block_divisor*2;
+			}
+			else
+			{
+				done = true;
+			}
 
 			free(tmpp); //delete it
 			tmpp = NULL;
 		}
 	}
+	
+	std::cerr << "block_divisor = " << block_divisor << std::endl;
 
 	int *subImgBlock = new int[6];//[x1,y1,z1,x2,y2,z1]	
 	subImgBlock[4] = 0;

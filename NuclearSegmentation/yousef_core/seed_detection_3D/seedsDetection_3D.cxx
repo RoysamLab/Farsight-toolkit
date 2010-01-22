@@ -192,21 +192,39 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	//approximately, we need (20~21)ximage size in bytes
 	//try to allocate memory for an unsigned char* of the 23ximage size
 	int block_divisor = 1;
-
-		bool done = false;
-		int totalPix = r*c*z;
-		while(!done)
+	bool done = false;
+	while(!done)		//Make sure my requested size is less than maximum for machine:
+	{
+		unsigned long totalPix = (unsigned long)(r*c*z) / ((unsigned long)block_divisor*(unsigned long)block_divisor);
+		if( (long long)23*(long long)totalPix > (long long)SIZE_MAX )
 		{
-			totalPix = totalPix / (block_divisor*block_divisor);
-			unsigned char *tmpp = (unsigned char*)malloc(23*totalPix);
-			if(tmpp)			//Able to allocate
-				done = true;
-			else
-				block_divisor*=2;
-
-			free(tmpp); //delete it
-			tmpp = NULL;
+			std::cerr << "Increasing divisor" << std::endl;
+			block_divisor = block_divisor*2;
 		}
+		else
+		{
+			done = true;
+		}
+	}
+	done = false;
+	while(!done)	//Now make sure I can allocate memory
+	{
+		unsigned long totalPix = (unsigned long)(r*c*z) / ((unsigned long)block_divisor*(unsigned long)block_divisor);
+		unsigned char *tmpp = (unsigned char*)malloc(23*totalPix);
+		if(!tmpp)			//unAble to allocate
+		{
+			std::cerr << "Increasing divisor" << std::endl;
+			block_divisor = block_divisor*2;
+		}
+		else
+		{
+			done = true;
+		}
+		
+		free(tmpp); //delete it
+		tmpp = NULL;
+	}
+	
 	
 	int blk = 1;
 	int cntr = 0;
