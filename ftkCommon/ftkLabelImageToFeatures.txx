@@ -498,7 +498,8 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	{
 		*upperBound = 1;
 	}
-	*numBins = *upperBound - *lowerBound - 1;
+	//*numBins = *upperBound - *lowerBound + 1;
+	*numBins = 256;
 }
 
 //****************************************************************************************************
