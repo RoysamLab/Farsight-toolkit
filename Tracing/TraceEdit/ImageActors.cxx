@@ -18,7 +18,7 @@ ImageRenderActors::ImageRenderActors()
 {
 	this->LoadedImages.clear();
 }
-int ImageRenderActors::loadImage(std::string ImageSource)
+int ImageRenderActors::loadImage(std::string ImageSource, std::string tag)
 {
 	if (ImageSource.empty())
 	{
@@ -26,12 +26,22 @@ int ImageRenderActors::loadImage(std::string ImageSource)
 	}
 	imageFileHandle *newImage= new imageFileHandle;
 	newImage->filename = ImageSource;
-	ReaderType::Pointer reader = ReaderType::New();
-	reader->SetFileName( ImageSource );
+	newImage->tag = tag;
+	newImage->colorTransferFunction = 0;
+	newImage->ContourActor = 0;
+	newImage->ContourFilter = 0;
+	newImage->ContourMapper = 0;
+	newImage->ImageData = 0;
+	newImage->opacityTransferFunction = 0;
+	newImage->volume = 0;
+	newImage->volumeMapper = 0;
+	newImage->volumeProperty = 0;
+	newImage->reader = ReaderType::New();
+	newImage->reader->SetFileName( ImageSource );
 	//Test opening and reading the input file
 	try
 	{
-		reader->Update();
+		newImage->reader->Update();
 	}
 	catch( itk::ExceptionObject & exp )
 	{
@@ -39,14 +49,18 @@ int ImageRenderActors::loadImage(std::string ImageSource)
 		std::cerr << exp << std::endl;
 		//return EXIT_FAILURE;
 	}
-	ConnectorType::Pointer connector= ConnectorType::New();
-	connector->SetInput( reader->GetOutput() );
-	newImage->ImageData = connector->GetOutput();
+	newImage->connector= ConnectorType::New();
+	newImage->connector->SetInput( newImage->reader->GetOutput() );
+	newImage->ImageData = newImage->connector->GetOutput();
 	this->LoadedImages.push_back(newImage);
 	return (int) this->LoadedImages.size();
 }
 vtkSmartPointer<vtkActor> ImageRenderActors::ContourActor(int i)
 {
+	if (i == -1)
+	{
+		i = int (this->LoadedImages.size() - 1);
+	}
 	this->LoadedImages[i]->ContourFilter = vtkSmartPointer<vtkContourFilter>::New();
 	this->LoadedImages[i]->ContourFilter->SetInput(this->LoadedImages[i]->ImageData);
 	this->LoadedImages[i]->ContourFilter->SetValue(0,10);
@@ -62,6 +76,10 @@ vtkSmartPointer<vtkActor> ImageRenderActors::ContourActor(int i)
 }
 vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 {
+	if (i == -1)
+	{
+		i = int (this->LoadedImages.size() - 1);
+	}
 	this->LoadedImages[i]->opacityTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
 	this->LoadedImages[i]->opacityTransferFunction->AddPoint(2,0.0);
 	this->LoadedImages[i]->opacityTransferFunction->AddPoint(50,0.1);

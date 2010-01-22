@@ -95,6 +95,7 @@ View3D::View3D(int argc, char **argv)
 	this->TraceFiles.clear();
 	this->SomaFile.clear();
 	this->tempTraceFile.clear();
+	this->ImageActors = new ImageRenderActors();
 	this->EditLogDisplay = new QTextEdit();
 	this->EditLogDisplay->setReadOnly(true);
 	this->EditLogDisplay->append("Farsight Trace Editor Started at: \nDate: \t" + this->Date.currentDate().toString( "ddd MMMM d yy" ) );
@@ -292,6 +293,11 @@ void View3D::OkToBoot()
 		this->bootLoadFiles->close();
 		this->show();
 		//this->statusBar()->showMessage("started at " );//+ this->Time->toString( "mm:ss" )
+std::vector<std::string> LoadedImages = this->ImageActors->GetImageList();
+		for (int i =0; i < LoadedImages.size(); i++)
+		{
+			std::cout << LoadedImages.at(i)<< "\t";
+		}
 	}
 	else
 	{
@@ -308,7 +314,8 @@ QString View3D::getSomaFile()
 	{
 		this->SomaFile = somaFiles;
 		//this->statusBar()->showMessage("Loading Soma Image");
-		this->readImg(somaFiles.toStdString());
+		//this->readImg(somaFiles.toStdString());
+		this->ImageActors->loadImage(somaFiles.toStdString(), "Soma");
 	}
 	return somaFiles.section('/',-1);
 }
@@ -343,7 +350,8 @@ QString View3D::getImageFile()
 	{
 		this->Image = NewImageFile;
 		std::string imageFile = NewImageFile.toStdString();
-		this->rayCast( (char*)imageFile.c_str());
+		this->ImageActors->loadImage(NewImageFile.toStdString(), "Image");
+		//this->rayCast( (char*)imageFile.c_str());
 	}
 	return NewImageFile.section('/',-1);
 }
@@ -382,9 +390,11 @@ void View3D::LoadImageData()
 	{
 		this->statusBar()->showMessage("Loading Image file" + newImage);
 		this->EditLogDisplay->append("Image file: \t" + this->Image);
-		this->Renderer->AddActor(this->Volume);
-		this->AddVolumeSliders();
-		this->Rerender();
+		//this->Renderer->AddActor(this->Volume);
+		//this->AddVolumeSliders();
+		this->Renderer->AddVolume(this->ImageActors->RayCastVolume(-1));
+			this->QVTK->GetRenderWindow()->Render();
+		//this->Rerender();
 		this->statusBar()->showMessage("Image File Rendered");
 	}
 	else
@@ -397,10 +407,13 @@ void View3D::LoadSomaFile()
 	QString somaFile = this->getSomaFile();
 	if(!somaFile.isNull())
 	{
+		this->Renderer->AddActor(this->ImageActors->ContourActor(-1));
+		this->QVTK->GetRenderWindow()->Render();
 		if(this->VolumeActor!=NULL)
 		{
 			this->EditLogDisplay->append("Soma file: \t" + this->SomaFile);
-			this->Renderer->AddVolume(this->VolumeActor);
+			
+			//this->Renderer->AddVolume(this->VolumeActor);
 			this->QVTK->GetRenderWindow()->Render();
 			this->statusBar()->showMessage("Somas Rendered");
 		}

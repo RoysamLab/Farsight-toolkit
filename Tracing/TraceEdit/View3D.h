@@ -60,6 +60,7 @@ class MergeModel;
 class QTableView;
 class ScatterView;
 class TableWindow;
+class ImageRenderActors;
 
 
 class View3D : public QMainWindow 
@@ -239,11 +240,12 @@ private:
 	vtkSmartPointer<vtkSphereSource> Sphere;
 	vtkSmartPointer<vtkPolyDataMapper> SphereMapper;
 	vtkSmartPointer<vtkActor> SphereActor;
-
+	
+	ImageRenderActors *ImageActors;
  //  img reading and contour->3d
+	TraceObject* tobj;
 	vtkSmartPointer<vtkPolyDataMapper> VolumeMapper;
 	vtkSmartPointer<vtkActor> VolumeActor;
-	TraceObject* tobj;
 	vtkSmartPointer<vtkVolume> Volume;
 	vtkSmartPointer<vtkContourFilter> ContourFilter;
 
