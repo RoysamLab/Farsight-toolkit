@@ -15,7 +15,9 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include "ftkNuclearSegmentation.h"
+#include "ftkImage.h"
+#include "ftkLabelImageToFeatures.h"
+#include "ftkUtils.h"
 
 #include <iostream>
 
@@ -32,22 +34,22 @@ int main(int argc, char* argv[])
 	std::string imageName = argv[1];
 	std::string labelName = argv[2];
 	std::string resultsName = argv[3];
-	ftk::NuclearSegmentation *segmentation = new ftk::NuclearSegmentation();	
-
-	//segmentation->LoadFromImages(imageName,labelName);
 	
-	if(argc == 5)
-	{
-		//segmentation->LoadAssociationsFromFile(argv[4]);
-	}
-	if(argc == 6)
-	{
-		//segmentation->LoadClassInfoFromFile(argv[5]);
-	}
+	ftk::Image::Pointer inpImg = ftk::Image::New();
+	if(!inpImg->LoadFile(imageName))
+		return 0;
 
-	//segmentation->SaveChanges(resultsName);	
-	
-	delete segmentation;
+	ftk::Image::Pointer labImg = ftk::Image::New();
+	if(!labImg->LoadFile(labelName))
+		return 0;
+
+	ftk::IntrinsicFeatureCalculator *calc = new ftk::IntrinsicFeatureCalculator();
+	calc->SetInputImages(inpImg, labImg);
+
+	vtkSmartPointer<vtkTable> table = calc->Compute();
+	ftk::SaveTable(resultsName, table);
+
+	delete calc;
 
 	return 1;
 }

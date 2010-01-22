@@ -433,7 +433,7 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		
 		featureVals[label].ScalarFeatures[IntrinsicFeatures::SUM] = (float)labelStatisticsFilter->GetSum( label );
 		featureVals[label].ScalarFeatures[IntrinsicFeatures::MEAN] = (float)labelStatisticsFilter->GetMean( label );
-		featureVals[label].ScalarFeatures[IntrinsicFeatures::MEDIAN] = (float)labelStatisticsFilter->GetMedian( label );
+		featureVals[label].ScalarFeatures[IntrinsicFeatures::MEDIAN] = (float)labelStatisticsFilter->GetMedian( label ); //Should be 0 when no Histogram
 		featureVals[label].ScalarFeatures[IntrinsicFeatures::MINIMUM] = (float)labelStatisticsFilter->GetMinimum( label );
 		featureVals[label].ScalarFeatures[IntrinsicFeatures::MAXIMUM] = (float)labelStatisticsFilter->GetMaximum( label );
 		featureVals[label].ScalarFeatures[IntrinsicFeatures::SIGMA] = (float)labelStatisticsFilter->GetSigma( label );
