@@ -74,6 +74,60 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	//post_binarization(imgOut, 2, 3, R, C, Z);
 	//cout<<"done"<<endl;
 
+	//Modified by Isaac on 1-22-2010: Check memory before choosing divisor, and make smarter block divisions!!
+	int block_divisor = 1;
+	if(div)	//means I'm going to try to find best number of blocks
+	{
+		bool done = false;
+		int totalPix = R*C*Z;
+		while(!done)
+		{
+			//For graph nodes needs #pixels*9*sizeof(int)
+			// and edge needs #pixels*2*3*4*sizeof(int)
+			// for a total of #pixels*(36+96) = 132*#pixels bytes!!!!!!
+			totalPix = totalPix / (block_divisor*block_divisor);
+			unsigned char *tmpp = (unsigned char*)malloc(132*totalPix);
+			if(tmpp)			//Able to allocate
+				done = true;
+			else
+				block_divisor*=2;
+
+			free(tmpp); //delete it
+			tmpp = NULL;
+		}
+	}
+
+	int *subImgBlock = new int[6];//[x1,y1,z1,x2,y2,z1]	
+	subImgBlock[4] = 0;
+	subImgBlock[5] = Z;
+	int blk = 1;
+	int cntr = 0;
+	for(int i=0; i<R; i+=R/block_divisor)
+		for(int j=0; j<C; j+=C/block_divisor)
+			cntr++;
+
+	for(int i=0; i<R; i+=R/block_divisor)
+	{
+		for(int j=0; j<C; j+=C/block_divisor)
+		{			
+			std::cout<<"    Binarizing block "<<blk<<" of "<<cntr<<std::endl;
+			subImgBlock[0] = j;
+			subImgBlock[1] = (int)j+C/block_divisor+1;
+			subImgBlock[2] = i;
+			subImgBlock[3] = (int)i+R/block_divisor+1;
+			if(subImgBlock[1] > C)
+				subImgBlock[1] = C;
+			if(subImgBlock[3] > R)
+				subImgBlock[3] = R;
+
+			Seg_GC_Full_3D_Blocks(imgIn, R, C, Z, alpha_F, alpha_B, P_I, imgOut,subImgBlock);
+			blk++;
+		}
+	}
+			
+	delete [] subImgBlock;
+
+	/* REMOVED BY ISAAC (REPLACED BY CODE ABOVE)
 	//Added by Yousef on 11-18-2008: To save memory, divide the image into Blocks and 
 	//apply GC on each independently	
 	int *subImgBlock = new int[6];//[x1,y1,z1,x2,y2,z1]	
@@ -81,7 +135,9 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	if(div == 0)
 		block_divisor = 1;
 	else
+	{
 		block_divisor = 5;
+	}
 	subImgBlock[4] = 0;
 	subImgBlock[5] = Z;
 	int blk = 1;
@@ -108,12 +164,11 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 			blk++;
 		}
 	}
+	*/
 	//Added By Yousef: May 20, 2008
 	//3-Convert the binary image into a connected component image
 	//int num_objects = getConnCompImage(imgOut, 26, 25, R, C, Z);
 	//num_objects = getConnCompImage(imgOut, 26, 25, R, C, Z);
-		
-	delete [] subImgBlock;
 
 	return 1;//num_objects;	
 }

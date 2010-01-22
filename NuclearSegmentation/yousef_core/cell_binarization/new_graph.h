@@ -391,7 +391,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 	
 	if (!nodes || !arcs)
     {
-    printf("Error allocating memory\n");
+    printf("Error allocating memory for Graph_B\n");
     int unused = scanf("%*d");
     unused++;
     if (error_function)

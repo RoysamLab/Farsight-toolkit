@@ -148,6 +148,7 @@ void yousef_nucleus_seg::runBinarization()
 	
 	//***************************************************
 	// TEST CODE:
+	/*
 	typedef unsigned char PixelType;
 	typedef itk::Image< PixelType,  3 >   InputImageType;
 	
@@ -191,6 +192,7 @@ void yousef_nucleus_seg::runBinarization()
 	writer->SetInput(im);
 	writer->SetFileName("input_test.tif");
 	writer->Update();
+	*/
 	//******
 	//*******
 	//**************
@@ -576,12 +578,14 @@ int yousef_nucleus_seg::getConnCompImage(unsigned short *IM, int connectivity, i
 		++iterator1;	
 	}
 	
+	/*
 	typedef itk::ImageFileWriter< InputImageType > WriterType;
 	WriterType::Pointer writer = WriterType::New();
 	writer->SetInput(im);
 	writer->SetFileName("bin_test.tif");
 	writer->Update();
-				
+	*/
+
 	typedef itk::ConnectedComponentImageFilter< InputImageType, OutputImageType > FilterType;
 	FilterType::Pointer filter = FilterType::New();
 	typedef itk::RelabelComponentImageFilter< OutputImageType, OutputImageType > RelabelType;

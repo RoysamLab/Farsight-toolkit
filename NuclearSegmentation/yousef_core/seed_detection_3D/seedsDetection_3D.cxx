@@ -167,6 +167,10 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	{
 		std::cout<<"Estimating parameters..."<<std::endl;
 		estimateMinMaxScalesV2(im, dImg, &sigma_min, &sigma_max, r, c, z);
+
+		//By Isaac (1/22/2010)
+		if( sigma_min < 1 ) sigma_min = 1;
+
 		scale_xy = sigma_min;
 		if(scale_xy<3)
 			scale_xy = 3; //just avoid very small search boxes
@@ -184,24 +188,38 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	//By Yousef (8/28/2009)
 	//In some situations the image is very larg and we cannot allocate memory for the LoG filter (20xthe size of the image in bytes)
 	//In such cases, we can divide the image into small tiles, process them independently, and them combine the results
-	int block_divisor;	
 	//see if we have enought memory for the LoG step
 	//approximately, we need (20~21)ximage size in bytes
 	//try to allocate memory for an unsigned char* of the 23ximage size
-	unsigned char *tmpp = (unsigned char*) malloc(23*r*c*z*sizeof(unsigned char));
-	if(tmpp)
-		block_divisor = 1;
-	else
-		block_divisor = 2;
-	free(tmpp); //delete it
-	tmpp = NULL;
+	int block_divisor = 1;
+
+		bool done = false;
+		int totalPix = r*c*z;
+		while(!done)
+		{
+			totalPix = totalPix / (block_divisor*block_divisor);
+			unsigned char *tmpp = (unsigned char*)malloc(23*totalPix);
+			if(tmpp)			//Able to allocate
+				done = true;
+			else
+				block_divisor*=2;
+
+			free(tmpp); //delete it
+			tmpp = NULL;
+		}
 	
-	
+	int blk = 1;
+	int cntr = 0;
+	for(int i=0; i<r; i+=r/block_divisor)
+		for(int j=0; j<c; j+=c/block_divisor)
+			cntr++;
+
 	int min_x, min_y, max_x, max_y;
 	for(int i=0; i<r; i+=r/block_divisor)
 	{
 		for(int j=0; j<c; j+=c/block_divisor)
-		{						
+		{
+			std::cout<<"LoG block "<<blk++<<" of "<<cntr<<std::endl;
 			min_x = j; 
 			max_x = 40+(int)j+c/block_divisor; //40 is the size of the overlapping between the two tiles along x
 			min_y = i;
