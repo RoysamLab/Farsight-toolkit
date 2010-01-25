@@ -1,0 +1,37 @@
+<html>
+<head><title>Phase Two Help</title></head>
+<body>
+  <h1>Phase Two Help</h1>
+  <h2>Parameters</h2>
+  <ul>
+    <li><b>Morph Strength</b>: In graph morphological method with iteration
+      of graph erosion and dilation steps, We set the morphology strength as the
+      number of iterations for graph erosion and dilation.  Use higher values to
+      remove longer branches.  Typical values range between 30 and 70.</li>
+    <li><b>Edge Range</b>: If the distance between 2 points is above this 
+      distance, we assume there is no edge between them in the graph structure
+      before generating the IW-MST.  Use larger values for more connected
+      graphs.  Typical values range between 1 and 15.</li>
+    <li><b>Graph Prune Size</b>: Prune the tree structure when the trivial
+      branches are shorter than this length.  Use larger values to remove
+      longer branches.  Typical values range between 1 and 10.</li> 
+    <li><b>Weight Factor</b>: Used to emphasize the function of either model
+      description or the data description (tradeoff between coverage and
+      conciseness).  Use higher values for more connected graphs.  Typical
+      values range between 5 and 15.</li>
+  </ul>
+  <h2>Steps</h2>
+  <ul>
+    <li><b>BackboneExtract</b>: Extract dendrite backbone from a list of 3D
+      points.</li>
+    <li><b>RefiningSkeleton</b>: Form streamlines from saddle points and seed
+      points</li>
+    <li><b>SpineExtraction</b>: Generate graph structure from a list of 3D
+      points.</li>
+    <li><b>Delete Intermediary Files</b>: This button will remove the
+      intermediary files generated during skeletonization.  Your final results
+      will be unaffected.</li>
+  </ul>
+</body>
+</html>
+

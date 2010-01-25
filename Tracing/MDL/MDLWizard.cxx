@@ -76,7 +76,7 @@ MDLWizard::MDLWizard()
   this->setObjectName("SkeletonizationWizard");
   this->setPixmap(QWizard::WatermarkPixmap, QPixmap(":/images/banner.png"));
   this->setWindowTitle(tr("Skeletonization Wizard"));
-
+  
   //initialize this object
   this->Initialize();
 }
@@ -84,8 +84,10 @@ MDLWizard::MDLWizard()
 //-----------------------------------------------------------------------------
 MDLWizard::~MDLWizard()
 {
-  delete this->OutputDisplay;
-  this->OutputDisplay = 0;
+  delete this->OutputWindow;
+  this->OutputWindow = 0;
+  delete this->HelpWindow;
+  this->HelpWindow = 0;
   delete this->RenderWidget;
   this->RenderWidget = 0;
 }
@@ -98,13 +100,24 @@ void MDLWizard::Initialize()
   this->setAttribute(Qt::WA_DeleteOnClose);
   this->move(40, 59);
   this->setWindowTitle(tr("Skeletonization Wizard"));
+
+  //add a help button to display the help window
+  this->setOption(QWizard::HaveHelpButton, true);
+  this->connect(this, SIGNAL(helpRequested()), this, SLOT(showHelp()));
+  this->HelpWindow = new QTextEdit();
+  this->HelpWindow->resize(400, 400);
+  this->HelpWindow->move(839, 504);
+  this->HelpWindow->setWindowTitle("Help");
+  this->HelpWindow->hide();
+
   //set up the output display: a text window that shows the outputs & errors
   //from the various running processes
-  this->OutputDisplay = new QTextEdit();
-  this->OutputDisplay->resize(400, 400);
-  this->OutputDisplay->move(39, 504);
-  this->OutputDisplay->setWindowTitle("Output Display");
-  this->OutputDisplay->show();
+  this->OutputWindow = new QTextEdit();
+  this->OutputWindow->resize(400, 400);
+  this->OutputWindow->move(39, 504);
+  this->OutputWindow->setWindowTitle("Output Display");
+  this->OutputWindow->show();
+
 
   //set up the render widget: a QVTKWidget to show intermediary results
   this->RenderWidget = new QVTKWidget();
@@ -128,33 +141,35 @@ void MDLWizard::Initialize()
 //-----------------------------------------------------------------------------
 void MDLWizard::SetupSignalsAndSlots()
 {
-  this->connect(this->SelectInputButton, SIGNAL(pressed()), this,
-    SLOT(SelectInputImage()));
-  this->connect(this->SelectBackboneButton, SIGNAL(pressed()), this,
-    SLOT(SelectBackboneFile()));
-  this->connect(this->SelectSpinesButton, SIGNAL(pressed()), this,
-    SLOT(SelectSpinesFile()));
-  this->connect(this->DeleteFilesButton, SIGNAL(pressed()), this,
-    SLOT(DeleteIntermediaryFiles()));
+  this->connect(this, SIGNAL(currentIdChanged(int)),
+                this, SLOT(UpdateHelpWindow()));
+  this->connect(this->SelectInputButton, SIGNAL(pressed()),
+                this, SLOT(SelectInputImage()));
+  this->connect(this->SelectBackboneButton, SIGNAL(pressed()),
+                this, SLOT(SelectBackboneFile()));
+  this->connect(this->SelectSpinesButton, SIGNAL(pressed()),
+                this, SLOT(SelectSpinesFile()));
+  this->connect(this->DeleteFilesButton, SIGNAL(pressed()),
+                this, SLOT(DeleteIntermediaryFiles()));
 
   //all these connections are for updating GUI elements that appear on more
   //than one page.
   this->connect(this->EdgeRangeInput1, SIGNAL(textChanged(const QString &)),
-    this, SLOT(UpdateEdgeRangeFrom1()));
+                this, SLOT(UpdateEdgeRangeFrom1()));
   this->connect(this->EdgeRangeInput2, SIGNAL(textChanged(const QString &)),
-    this, SLOT(UpdateEdgeRangeFrom2()));
+                this, SLOT(UpdateEdgeRangeFrom2()));
   this->connect(this->MorphStrengthInput1, SIGNAL(textChanged(const QString &)),
-    this, SLOT(UpdateMorphStrengthFrom1()));
+                this, SLOT(UpdateMorphStrengthFrom1()));
   this->connect(this->MorphStrengthInput2, SIGNAL(textChanged(const QString &)),
-    this, SLOT(UpdateMorphStrengthFrom2()));
+                this, SLOT(UpdateMorphStrengthFrom2()));
   this->connect(this->WeightFactorInput1, SIGNAL(textChanged(const QString &)),
-    this, SLOT(UpdateWeightFactorFrom1()));
+                this, SLOT(UpdateWeightFactorFrom1()));
   this->connect(this->WeightFactorInput2, SIGNAL(textChanged(const QString &)),
-    this, SLOT(UpdateWeightFactorFrom2()));
+                this, SLOT(UpdateWeightFactorFrom2()));
  
   //connect each process to the output display using a signal mapper.
-  connect(this->Mapper, SIGNAL(mapped(QObject *)), this,
-            SLOT(AppendOutputToDisplay(QObject *)));
+  connect(this->Mapper, SIGNAL(mapped(QObject *)),
+          this, SLOT(AppendOutputToDisplay(QObject *)));
   connect(this->VolumeProcess, SIGNAL(readyReadStandardOutput()),
           this->Mapper, SLOT(map()));
   connect(this->VolumeProcess, SIGNAL(readyReadStandardError()),
@@ -382,12 +397,12 @@ void MDLWizard::UpdateWeightFactorFrom2()
 void MDLWizard::AppendOutputToDisplay(QObject *mapped)
 {
   QProcess *process = static_cast<QProcess *>(mapped);
-  if(this->OutputDisplay->isHidden())
+  if(this->OutputWindow->isHidden())
     {
-    this->OutputDisplay->show();
+    this->OutputWindow->show();
     }
-  this->OutputDisplay->append(QString(process->readAllStandardError()));
-  this->OutputDisplay->append(QString(process->readAllStandardOutput()));
+  this->OutputWindow->append(QString(process->readAllStandardError()));
+  this->OutputWindow->append(QString(process->readAllStandardOutput()));
 }
 
 //-----------------------------------------------------------------------------
@@ -533,7 +548,7 @@ vtkSmartPointer<vtkVolumeProperty> MDLWizard::NewRGBVolumeProperty(
 void MDLWizard::RunVolumeProcess()
 {
   this->VolumeProcessButton->setEnabled(false);
-  this->OutputDisplay->clear();
+  this->OutputWindow->clear();
 
   //initialize some variables before we get started
   if(this->InputFile.suffix() == "raw")
@@ -593,7 +608,7 @@ void MDLWizard::RunConnCompntwFldfill()
     {
     //also have to grab image size out of the output
     QRegExp rx("input image size: \\[(\\d+), (\\d+), (\\d+)\\]"); 
-    if(this->OutputDisplay->document()->toPlainText().indexOf(rx) != -1)
+    if(this->OutputWindow->document()->toPlainText().indexOf(rx) != -1)
       {
       QStringList list = rx.capturedTexts();
       this->ImageSizeX = list[1];
@@ -608,7 +623,7 @@ void MDLWizard::RunConnCompntwFldfill()
       msgBox.exec();
       }
     }
-  this->OutputDisplay->clear();
+  this->OutputWindow->clear();
 
   //construct a list of arguments
   this->ComponentsConnectedFile = 
@@ -628,7 +643,7 @@ void MDLWizard::RunAnisoDiffuse()
   this->VolumeProcessButton->setEnabled(false);
   this->ConnCompntButton->setEnabled(false);
   this->AnisoDiffuseButton->setEnabled(false);
-  this->OutputDisplay->clear();
+  this->OutputWindow->clear();
 
   this->AnisoDiffusedFile =
     this->BackboneFile.dir().absolutePath() + "/Aniso_Diffused.raw";
@@ -647,7 +662,7 @@ void MDLWizard::RunGradientVecField()
   this->ConnCompntButton->setEnabled(false);
   this->AnisoDiffuseButton->setEnabled(false);
   this->GradientVecFieldButton->setEnabled(false);
-  this->OutputDisplay->clear();
+  this->OutputWindow->clear();
 
   this->VectorFile = this->BackboneFile.dir().absolutePath() + "/out.vec";
 
@@ -663,7 +678,7 @@ void MDLWizard::RunGradientVecField()
 void MDLWizard::RunIntegratedskel()
 {
   this->IntegratedskelButton->setEnabled(false);
-  this->OutputDisplay->clear();
+  this->OutputWindow->clear();
 
   this->SeedFile = this->BackboneFile.dir().absolutePath() + "/out.seed";
   this->SkeletonFile = this->BackboneFile.dir().absolutePath() + "/out.skel";
@@ -683,7 +698,7 @@ void MDLWizard::RunBackboneExtract1()
 {
   this->IntegratedskelButton->setEnabled(false);
   this->BackboneExtractButton1->setEnabled(false);
-  this->OutputDisplay->clear();
+  this->OutputWindow->clear();
 
   this->BackboneCandidateFile =  this->BackboneFile.dir().absolutePath() +
     "/BackboneCandidate.vtk";
@@ -706,7 +721,7 @@ void MDLWizard::RunMDABasedSpineExtraction1()
   this->IntegratedskelButton->setEnabled(false);
   this->BackboneExtractButton1->setEnabled(false);
   this->SpineExtractionButton1->setEnabled(false);
-  this->OutputDisplay->clear();
+  this->OutputWindow->clear();
 
   this->MDLFeatureFile = this->BackboneFile.dir().absolutePath() +
     "/MDLFeature.txt";
@@ -735,7 +750,7 @@ void MDLWizard::RunBSplineFitting()
   this->BackboneExtractButton1->setEnabled(false);
   this->SpineExtractionButton1->setEnabled(false);
   this->BSplineFittingButton->setEnabled(false);
-  this->OutputDisplay->clear();
+  this->OutputWindow->clear();
 
   this->SmoothBackboneFile = this->BackboneFile.dir().absolutePath() +
     "/SmoothBackbone.vtk";
@@ -759,7 +774,7 @@ void MDLWizard::RunRefiningSkeleton1()
   this->SpineExtractionButton1->setEnabled(false);
   this->BSplineFittingButton->setEnabled(false);
   this->RefiningSkeletonButton1->setEnabled(false);
-  this->OutputDisplay->clear();
+  this->OutputWindow->clear();
 
   this->RefinedSkeletonFile = this->BackboneFile.dir().absolutePath() +
     "/RefinedSkel.skel";
@@ -776,7 +791,7 @@ void MDLWizard::RunRefiningSkeleton1()
 void MDLWizard::RunBackboneExtract2()
 {
   this->BackboneExtractButton2->setEnabled(false);
-  this->OutputDisplay->clear();
+  this->OutputWindow->clear();
 
   this->MorphStrength = this->MorphStrengthInput2->text();
   this->EdgeRange = this->EdgeRangeInput2->text();
@@ -796,7 +811,7 @@ void MDLWizard::RunRefiningSkeleton2()
 {
   this->BackboneExtractButton2->setEnabled(false);
   this->RefiningSkeletonButton2->setEnabled(false);
-  this->OutputDisplay->clear();
+  this->OutputWindow->clear();
 
   QStringList arguments;
   arguments << this->DataDir << this->BackboneFile.fileName() 
@@ -813,7 +828,7 @@ void MDLWizard::RunMDABasedSpineExtraction2()
   this->BackboneExtractButton2->setEnabled(false);
   this->RefiningSkeletonButton2->setEnabled(false);
   this->SpineExtractionButton2->setEnabled(false);
-  this->OutputDisplay->clear();
+  this->OutputWindow->clear();
   
   this->MorphStrength = this->MorphStrengthInput2->text();
   this->EdgeRange = this->EdgeRangeInput2->text();
@@ -1017,13 +1032,71 @@ void MDLWizard::DeleteIntermediaryFiles()
     {
     f11.remove();
     }
-  this->OutputDisplay->append(QString("Intermediary files deleted."));
+  this->OutputWindow->append(QString("Intermediary files deleted."));
+}
+
+//-----------------------------------------------------------------------------
+void MDLWizard::UpdateHelpWindow()
+{
+  if(this->HelpWindow->isVisible())
+    {
+    this->showHelp();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void MDLWizard::showHelp()
+{
+   static QString lastHelpMessage;
+   QString message;
+   QFile file;
+
+   switch (currentId())
+     {
+     enum { Page_Intro, Page_Preprocessing, Page_PhaseOne, Page_PhaseTwo };
+     case Page_Intro:
+       file.setFileName(":/html/intro.html");
+       if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
+         {
+         return;
+         }
+       this->HelpWindow->setHtml(file.readAll());
+       break;
+     case Page_Preprocessing:
+       file.setFileName(":/html/preprocessing.html");
+       if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
+         {
+         return;
+         }
+       this->HelpWindow->setHtml(file.readAll());
+     break;
+     case Page_PhaseOne:
+       file.setFileName(":/html/phaseone.html");
+       if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
+         {
+         return;
+         }
+       this->HelpWindow->setHtml(file.readAll());
+     break;
+     case Page_PhaseTwo:
+       file.setFileName(":/html/phasetwo.html");
+       if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
+         {
+         return;
+         }
+       this->HelpWindow->setHtml(file.readAll());
+     break;
+   default:
+     this->HelpWindow->setText("This help is likely not to be of any help.");
+   }
+   this->HelpWindow->show();
 }
 
 //-----------------------------------------------------------------------------
 void MDLWizard::closeEvent(QCloseEvent *event)
 {
   event->accept();
-  this->OutputDisplay->close();
+  this->OutputWindow->close();
+  this->HelpWindow->close();
 }
 

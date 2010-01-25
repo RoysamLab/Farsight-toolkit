@@ -31,6 +31,8 @@ class MDLWizard : public QWizard, public Ui::SkeletonizationWizard
 
   Q_OBJECT
 
+  enum { Page_Intro, Page_Preprocessing, Page_PhaseOne, Page_PhaseTwo };
+
 public:
 	MDLWizard();
 	~MDLWizard();
@@ -105,6 +107,8 @@ protected slots:
   void RefiningSkeleton2Finished();
   void MDABasedSpineExtraction2Finished();
   void DeleteIntermediaryFiles();
+  void showHelp();
+  void UpdateHelpWindow();
 
 protected:
 	void closeEvent(QCloseEvent *event);
@@ -129,7 +133,8 @@ private:
   QProcess *BackboneExtract2;
   QProcess *RefiningSkeleton2;
   QProcess *MDABasedSpineExtraction2;
-  QTextEdit *OutputDisplay;
+  QTextEdit *OutputWindow;
+  QTextEdit *HelpWindow;
   QVTKWidget *RenderWidget;
   vtkSmartPointer<vtkRenderer> Renderer;
   bool RawInput;
