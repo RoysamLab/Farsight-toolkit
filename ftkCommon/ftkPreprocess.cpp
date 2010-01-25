@@ -154,14 +154,27 @@ void ftkPreprocess::MaskImage(std::vector< ftk::Object::Point > roiPoints)
 	typedef itk::PolyLineParametricPath<2> PolylineType;
 	typedef itk::PolylineMask2DImageFilter<ImageType2D,PolylineType,ImageType2D> MaskFilterType;
 	typedef PolylineType::VertexType VertexType;
+
+	//First need to determine the order of the polygon!! It must be in the clockwise direction in order to work.
+	// NOTE: the clockwise direction looks counter-clockwise visually because positive y is down the screen.
+	// In order to determine this, we find the cross product between 2 adjacent edges:
+	// cross product = ((x1-x0),(y1-y0))x((x2-x1),(y2-y1))
+	//				 = (x1-x0)*(y2-y1)-(y1-y0)*(x2-x1)
+	// If the cross product is positive we have a counter-clockwise polygon (so reverse order of vertex points)
+	int cross = (roiPoints.at(1).x-roiPoints.at(0).x)*(roiPoints.at(2).y-roiPoints.at(1).y) 
+		      - (roiPoints.at(1).y-roiPoints.at(0).y)*(roiPoints.at(2).x-roiPoints.at(1).x);
 	
 	//Create itk polyline:
 	PolylineType::Pointer polyline = PolylineType::New();
 	for(int i=0; i<(int)roiPoints.size(); i++)
 	{
+		int pos = i;
+		if(cross > 0)	//if cross-product is positive, reverse direction
+			pos = (int)roiPoints.size() - i - 1;
+
 		VertexType v;
-		v[0] = roiPoints.at(i).x;
-		v[1] = roiPoints.at(i).y;
+		v[0] = roiPoints.at(pos).x;
+		v[1] = roiPoints.at(pos).y;
 		polyline->AddVertex(v);
 	}
 	
