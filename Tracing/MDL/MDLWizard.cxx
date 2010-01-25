@@ -57,10 +57,16 @@ MDLWizard::MDLWizard()
   //these executables live in a different place depending on OS
   //find their location now
   this->ExecutablePath = ".";
-  if(!QFileInfo(this->ExecutablePath + "/volumeProcess").exists())
+  QString exeName; 
+  #ifdef WIN32
+    exeName = "/volumeProcess.exe";
+  #else
+    exeName = "/volumeProcess";
+  #endif
+  if(!QFileInfo(this->ExecutablePath + exeName).exists())
     {
     this->ExecutablePath = QDir::currentPath() + "/MDLWizard.app/Contents/bin";
-    if(!QFileInfo(this->ExecutablePath + "/volumeProcess").exists())
+    if(!QFileInfo(this->ExecutablePath + exeName).exists())
       {
       QMessageBox msgBox;
       msgBox.setText("BUG: can't find required executables.  This isn't going to work...");
