@@ -29,10 +29,11 @@
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
-#include<stdlib.h>
+#include <stdlib.h>
 #include <iostream>
 #include <algorithm>
 #include <math.h>
+#include <limits.h>
 
 #include "itkImage.h"
 #include "itklaplacianrecursivegaussianimagefilternew.h"

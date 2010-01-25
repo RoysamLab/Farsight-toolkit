@@ -16,6 +16,7 @@
  */
 
 #include "cell_binarization.h"
+#include <limits.h>
 //#include "maxflow.cpp"
 //#include "graph.cpp"
 
