@@ -85,7 +85,9 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 	this->LoadedImages[i]->opacityTransferFunction->AddPoint(50,0.1);
 	this->LoadedImages[i]->colorTransferFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
 	this->LoadedImages[i]->colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
-	this->LoadedImages[i]->colorTransferFunction->AddRGBPoint(50.0,1,0,0);
+	this->LoadedImages[i]->colorTransferFunction->AddRGBPoint(40.0,0,0,.9);
+	this->LoadedImages[i]->colorTransferFunction->AddRGBPoint(90.0,0,.9,0);
+	this->LoadedImages[i]->colorTransferFunction->AddRGBPoint(150.0,.9,0,0);
 	this->LoadedImages[i]->volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
 	this->LoadedImages[i]->volumeProperty->SetColor(this->LoadedImages[i]->colorTransferFunction);
 	this->LoadedImages[i]->volumeProperty->SetScalarOpacity(this->LoadedImages[i]->opacityTransferFunction);

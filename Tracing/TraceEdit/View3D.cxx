@@ -208,8 +208,9 @@ void View3D::ReloadState()
 	this->Image = this->TraceEditSettings.value("lastOpen/Image").toString();
 	if(!this->Image.isEmpty()) 
 	{
-		std::string imageFile = this->Image.toStdString();
-		this->rayCast( (char*) imageFile.c_str() );
+		this->ImageActors->loadImage(this->Image.toStdString(),"Image");
+		/*std::string imageFile = this->Image.toStdString();
+		this->rayCast( (char*) imageFile.c_str() );*/
 	}
 	
 	this->tempTraceFile = this->TraceEditSettings.value("lastOpen/Temp").toString();
@@ -251,7 +252,8 @@ void View3D::ReloadState()
 	this->SomaFile = this->TraceEditSettings.value("lastOpen/Soma").toString();
 	if(!this->SomaFile.isEmpty()) 
 	{
-		this->readImg(this->SomaFile.toStdString());
+		this->ImageActors->loadImage(this->SomaFile.toStdString(), "Soma");
+		/*this->readImg(this->SomaFile.toStdString());*/
 	}
 	this->OkToBoot();
 }
@@ -294,7 +296,7 @@ void View3D::OkToBoot()
 		this->show();
 		//this->statusBar()->showMessage("started at " );//+ this->Time->toString( "mm:ss" )
 std::vector<std::string> LoadedImages = this->ImageActors->GetImageList();
-		for (int i =0; i < LoadedImages.size(); i++)
+		for (unsigned int i =0; i < LoadedImages.size(); i++)
 		{
 			std::cout << LoadedImages.at(i)<< "\t";
 		}
@@ -349,7 +351,7 @@ QString View3D::getImageFile()
 	if (!NewImageFile.isEmpty())
 	{
 		this->Image = NewImageFile;
-		std::string imageFile = NewImageFile.toStdString();
+		//std::string imageFile = NewImageFile.toStdString();
 		this->ImageActors->loadImage(NewImageFile.toStdString(), "Image");
 		//this->rayCast( (char*)imageFile.c_str());
 	}
