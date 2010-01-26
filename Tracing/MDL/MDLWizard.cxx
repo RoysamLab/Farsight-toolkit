@@ -771,12 +771,15 @@ void MDLWizard::RunRefiningSkeleton1()
   this->RefiningSkeletonButton1->setEnabled(false);
   this->OutputWindow->clear();
 
+  this->RefinedSeedFile = this->BackboneFile.dir().absolutePath() +
+    "/RefinedSeed.seed";
   this->RefinedSkeletonFile = this->BackboneFile.dir().absolutePath() +
     "/RefinedSkel.skel";
 
   QStringList arguments;
   arguments << this->DataDir << "SmoothBackbone.vtk" << "SpineCandidate.vtk"
-            << "ExtraSpine.vtk" << "RefinedSkel.skel" << "1";
+            << "ExtraSpine.vtk" << "RefinedSeed.seed" << "RefinedSkel.skel"
+            << "1";
   
   this->RefiningSkeleton1->start(this->ExecutablePath + "/RefiningSkeleton",
                                  arguments);
@@ -810,8 +813,8 @@ void MDLWizard::RunRefiningSkeleton2()
 
   QStringList arguments;
   arguments << this->DataDir << this->BackboneFile.fileName() 
-            << "SpineCandidate.vtk" <<  "ExtraSpine.vtk" << "RefinedSkel.skel"
-            << "0";
+            << "SpineCandidate.vtk" << "ExtraSpine.vtk" << "RefinedSeed.seed"
+            << "RefinedSkel.skel" << "0";
  
   this->RefiningSkeleton2->start(this->ExecutablePath + "/RefiningSkeleton",
                                  arguments);
@@ -1043,10 +1046,15 @@ void MDLWizard::DeleteIntermediaryFiles()
     {
     f10.remove();
     }
-  QFile f11(this->RefinedSkeletonFile);
+  QFile f11(this->RefinedSeedFile);
   if(f11.exists())
     {
     f11.remove();
+    }
+  QFile f12(this->RefinedSkeletonFile);
+  if(f12.exists())
+    {
+    f12.remove();
     }
   this->OutputWindow->append(QString("Intermediary files deleted."));
 }

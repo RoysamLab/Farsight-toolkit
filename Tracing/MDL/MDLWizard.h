@@ -159,6 +159,7 @@ private:
   QString SpineCandidateFile;
   QString SmoothBackboneFile;
   QString ExtraSpineFile;
+  QString RefinedSeedFile;
   QString RefinedSkeletonFile;
   QString ExecutablePath;
 };
