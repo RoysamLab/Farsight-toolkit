@@ -68,10 +68,15 @@ MDLWizard::MDLWizard()
     this->ExecutablePath = QDir::currentPath() + "/MDLWizard.app/Contents/bin";
     if(!QFileInfo(this->ExecutablePath + exeName).exists())
       {
-      QMessageBox msgBox;
-      msgBox.setText("BUG: can't find required executables.  This isn't going to work...");
-      msgBox.setIcon(QMessageBox::Warning);
-      msgBox.exec();
+      this->ExecutablePath = "../../..";
+      if(!QFileInfo(this->ExecutablePath + exeName).exists())
+        {
+        QMessageBox msgBox;
+        msgBox.setText(
+          "BUG: can't find required executables.  This isn't going to work...");
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.exec();
+        }
       }
     }
   //use a signal mapper to connect the many processes to a single output
@@ -450,6 +455,10 @@ vtkSmartPointer<vtkVolume> MDLWizard::ConvertRawToVolume(const char *filename)
   int sizeX = this->ImageSizeX.toInt();
   int sizeY = this->ImageSizeY.toInt();
   int sizeZ = this->ImageSizeZ.toInt();
+  cout << sizeX << ", " << sizeY << ", " << sizeZ << endl;
+  cout << this->ImageSizeX.toStdString() << endl;
+  cout << this->ImageSizeY.toStdString() << endl;
+  cout << this->ImageSizeZ.toStdString() << endl;
 
   unsigned char *buf =
     new unsigned char[sizeX * sizeY * sizeZ];
@@ -609,26 +618,6 @@ void MDLWizard::RunConnCompntwFldfill()
   this->VolumeProcessButton->setEnabled(false);
   this->ConnCompntButton->setEnabled(false);
   this->ConnectedComponentsSize = this->ComponentsSizeInput->text();
-
-  if(!(this->RawInput))
-    {
-    //also have to grab image size out of the output
-    QRegExp rx("input image size: \\[(\\d+), (\\d+), (\\d+)\\]"); 
-    if(this->OutputWindow->document()->toPlainText().indexOf(rx) != -1)
-      {
-      QStringList list = rx.capturedTexts();
-      this->ImageSizeX = list[1];
-      this->ImageSizeY = list[2];
-      this->ImageSizeZ = list[3];
-      }
-    else
-      {
-      QMessageBox msgBox;
-      msgBox.setText("BUG: Didn't find the image size in output...");
-      msgBox.setIcon(QMessageBox::Warning);
-      msgBox.exec();
-      }
-    }
   this->OutputWindow->clear();
 
   //construct a list of arguments
@@ -855,9 +844,30 @@ void MDLWizard::RunMDABasedSpineExtraction2()
 //-----------------------------------------------------------------------------
 void MDLWizard::VolumeProcessFinished()
 {
+  //we have to grab the image size out of the output if our input wasn't a
+  //raw image.
+  if(!(this->RawInput))
+    {
+    QRegExp rx("input image size: \\[(\\d+), (\\d+), (\\d+)\\]"); 
+    if(this->OutputWindow->document()->toPlainText().indexOf(rx) != -1)
+      {
+      QStringList list = rx.capturedTexts();
+      this->ImageSizeX = list[1];
+      this->ImageSizeY = list[2];
+      this->ImageSizeZ = list[3];
+      }
+    else
+      {
+      QMessageBox msgBox;
+      msgBox.setText("BUG: Didn't find the image size in output...");
+      msgBox.setIcon(QMessageBox::Warning);
+      msgBox.exec();
+      }
+    }
   this->VolumeProcessButton->setEnabled(true);
   this->ConnCompntButton->setEnabled(true);
   this->ConnCompntButton->setFocus();
+  cout << "Here's the file I'm about to render: " << this->VolumeProcessedFile.toStdString() << endl;
   this->RenderVolume(QFileInfo(this->VolumeProcessedFile));
 }
 
