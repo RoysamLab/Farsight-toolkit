@@ -21,12 +21,17 @@ using std::endl;
 #include <QAction>
 
 #include "vtkColorTransferFunction.h"
+#include "vtkGlyph3D.h"
+#include "vtkGlyphSource2D.h"
 #include "vtkImageData.h"
 #include "vtkImageActor.h"
 #include "vtkOpenGLVolumeTextureMapper3D.h"
 #include "vtkPiecewiseFunction.h"
+#include "vtkPolyData.h"
 #include "vtkPolyDataMapper.h"
 #include "vtkPolyDataReader.h"
+#include "vtkPoints.h"
+#include "vtkProperty.h"
 #include "vtkRenderer.h"
 #include "vtkRenderWindow.h"
 #include "vtkSmartPointer.h"
@@ -450,15 +455,102 @@ void MDLWizard::RenderPolyData(QFileInfo polyDataFile)
 }
 
 //-----------------------------------------------------------------------------
+void MDLWizard::RenderPoints(QString pointsFileName)
+{
+  //remove all old actors
+  this->Renderer->RemoveAllViewProps();
+
+  //change the window title so the user knows what file is being displayed
+  QFileInfo info(pointsFileName);
+  this->RenderWidget->setWindowTitle(info.fileName());
+
+  vtkSmartPointer<vtkActor> actor =
+    this->CreateActorFromPointsFile(pointsFileName);
+  this->Renderer->AddActor(actor);
+
+  //also render AnisoDiffused.raw so the points have some context
+  vtkSmartPointer<vtkVolume> volume = 
+    this->ConvertRawToVolume(this->AnisoDiffusedFile.toStdString().c_str());
+  this->Renderer->AddVolume(volume);
+
+  this->Renderer->ResetCamera();
+  this->RenderWidget->GetRenderWindow()->Render();
+}
+
+//-----------------------------------------------------------------------------
+vtkSmartPointer<vtkActor> MDLWizard::CreateActorFromPointsFile(
+  QString pointsFileName)
+{
+  //declare our return value
+  vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+
+  //open up the file and see how many lines (points) there are
+  int numPoints = 0;
+  QFile pointsFile(pointsFileName);
+  if (!pointsFile.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+    cerr << "Error opening " << pointsFileName.toStdString() << endl;
+    return actor;
+    }
+  while (!pointsFile.atEnd())
+    {
+    QByteArray notUsed = pointsFile.readLine();
+    notUsed.squeeze();
+    numPoints++;
+    }
+
+  cout << pointsFileName.toStdString() << " has " << numPoints << " lines." << endl;
+
+  if(!pointsFile.seek(0))
+    {
+    cerr << "Error rewinding " << pointsFileName.toStdString() << endl;
+    return actor;
+    }
+
+  //initialize vtkPoints object for visualization
+  vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+  points->Allocate(numPoints);
+
+  //read the points from the file and insert them into the vtkPoints object
+  for(int i = 0; i < numPoints; i++)
+    {
+    QString line(pointsFile.readLine());
+    QStringList list = line.split(" ");
+    double x = list[0].toDouble();
+    double y = list[1].toDouble();
+    double z = list[2].toDouble();
+    points->InsertPoint(i, x, y, z);
+    }
+
+  //finish setting up the actor
+  vtkSmartPointer<vtkPolyData> polyData = vtkSmartPointer<vtkPolyData>::New();
+  polyData->SetPoints(points);
+
+  vtkSmartPointer<vtkGlyph3D> glyph = vtkSmartPointer<vtkGlyph3D>::New();
+  glyph->SetInput(polyData);
+  vtkSmartPointer<vtkGlyphSource2D> glyphSource =
+    vtkSmartPointer<vtkGlyphSource2D>::New();
+  glyphSource->SetGlyphTypeToCross();
+  glyphSource->SetScale(5.0);
+  glyphSource->Update();
+  glyph->SetInputConnection(1, glyphSource->GetOutputPort());
+
+  vtkSmartPointer<vtkPolyDataMapper> mapper =
+    vtkSmartPointer<vtkPolyDataMapper>::New();
+  mapper->SetInput(glyph->GetOutput());
+
+  actor->SetMapper(mapper);
+  actor->GetProperty()->SetColor(1.0, 1.0, 0.0);
+
+  return actor;
+}
+
+//-----------------------------------------------------------------------------
 vtkSmartPointer<vtkVolume> MDLWizard::ConvertRawToVolume(const char *filename)
 {
   int sizeX = this->ImageSizeX.toInt();
   int sizeY = this->ImageSizeY.toInt();
   int sizeZ = this->ImageSizeZ.toInt();
-  cout << sizeX << ", " << sizeY << ", " << sizeZ << endl;
-  cout << this->ImageSizeX.toStdString() << endl;
-  cout << this->ImageSizeY.toStdString() << endl;
-  cout << this->ImageSizeZ.toStdString() << endl;
 
   unsigned char *buf =
     new unsigned char[sizeX * sizeY * sizeZ];
@@ -536,7 +628,7 @@ vtkSmartPointer<vtkVolumeProperty> MDLWizard::NewRGBVolumeProperty(
   vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunction =
     vtkSmartPointer<vtkPiecewiseFunction>::New();
   opacityTransferFunction->AddPoint( range[0], 0.0);
-  opacityTransferFunction->AddPoint(range[1], 1.0);
+  opacityTransferFunction->AddPoint(range[1], 0.5);
 
   // Create transfer mapping scalar value to color.
   vtkSmartPointer<vtkColorTransferFunction> colorTransferFunction =
@@ -870,7 +962,6 @@ void MDLWizard::VolumeProcessFinished()
   this->VolumeProcessButton->setEnabled(true);
   this->ConnCompntButton->setEnabled(true);
   this->ConnCompntButton->setFocus();
-  cout << "Here's the file I'm about to render: " << this->VolumeProcessedFile.toStdString() << endl;
   this->RenderVolume(QFileInfo(this->VolumeProcessedFile));
 }
 
@@ -912,6 +1003,7 @@ void MDLWizard::IntegratedskelFinished()
   this->IntegratedskelButton->setEnabled(true);
   this->BackboneExtractButton1->setEnabled(true);
   this->BackboneExtractButton1->setFocus();
+  this->RenderPoints(this->SeedFile);
 }
 
 //-----------------------------------------------------------------------------
@@ -961,6 +1053,7 @@ void MDLWizard::RefiningSkeleton1Finished()
   this->RefiningSkeletonButton1->setEnabled(true);
   this->PhaseOneDone = true;
   this->PhaseOnePage->CheckIfComplete();
+  this->RenderPoints(this->RefinedSeedFile);
 }
 
 //-----------------------------------------------------------------------------
@@ -979,6 +1072,7 @@ void MDLWizard::RefiningSkeleton2Finished()
   this->RefiningSkeletonButton2->setEnabled(true);
   this->SpineExtractionButton2->setEnabled(true);
   this->SpineExtractionButton2->setFocus();
+  this->RenderPoints(this->RefinedSeedFile);
 }
 
 //-----------------------------------------------------------------------------
@@ -988,9 +1082,9 @@ void MDLWizard::MDABasedSpineExtraction2Finished()
   this->RefiningSkeletonButton2->setEnabled(true);
   this->SpineExtractionButton2->setEnabled(true);
   this->DeleteFilesButton->setEnabled(true);
-  this->RenderPolyData(this->SpinesFile);
   this->PhaseTwoDone = true;
   this->PhaseTwoPage->CheckIfComplete();
+  this->RenderPolyData(this->SpinesFile);
 }
 
 //-----------------------------------------------------------------------------

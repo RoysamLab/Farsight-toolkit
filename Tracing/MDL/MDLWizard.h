@@ -42,8 +42,10 @@ public:
   int Test(int argc, char **argv);
   void RenderVolume(QFileInfo volumeFile);
   void RenderPolyData(QFileInfo polyDataFile);
-  vtkSmartPointer<vtkVolume> ConvertRawToVolume(const char *filename);
+  void RenderPoints(QString pointsFileName);
   vtkSmartPointer<vtkActor> CreateActorFromPolyDataFile(const char *filename);
+  vtkSmartPointer<vtkActor> CreateActorFromPointsFile(QString pointsFileName);
+  vtkSmartPointer<vtkVolume> ConvertRawToVolume(const char *filename);
   vtkSmartPointer<vtkVolumeProperty> NewRGBVolumeProperty(const double range[]);
 
   //properties and their accessors.  Used to control when the next/back/finish
