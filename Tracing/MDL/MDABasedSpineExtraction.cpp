@@ -24,6 +24,7 @@ limitations under the License.
 #endif
 #include "morphGraphPrune.h"
 #include "MinSpanTree.h"
+#include "WeightedMahalsnobisDistance.h"
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/kruskal_min_spanning_tree.hpp>
 #include <boost/graph/graphviz.hpp>
@@ -47,6 +48,7 @@ limitations under the License.
 #define MAX(x,y) (((x) > (y))?(x):(y))
 
 #define MAXNumBranch 10    //Suppose at most MAXNumBranch branches at the 2nd level branch from BB
+#define FeatureNumber  3;
 
 using namespace std;
 
@@ -97,11 +99,11 @@ int main(int argc, char *argv[])
   float densityFactor;
   double meanDensityBranch[MAXNumBranch];   // Suppose at most MAXNumBranch branches at the 2nd level branch from BB
   double meanVesselBranch[MAXNumBranch];
-  float length_leaf[MAXNumBranch];
+  double length_leaf[MAXNumBranch];
 
   double aveDensityBranch[MAXNumBranch];   // Suppose at most MAXNumBranch branches at the 2nd level branch from BB
   double aveVesselBranch[MAXNumBranch];
-  float length_2leaf[MAXNumBranch];  // length of two level branches
+  double length_2leaf[MAXNumBranch];  // length of two level branches
 
   float length_edge, leaf_length;
   int *edge_eroded;
@@ -510,6 +512,14 @@ int main(int argc, char *argv[])
   // PRUNING short branches on the initial MST under certain threshold (e.g. 5)
 
   msTree = morphGraphPrune(msTree, num_nodes, vertexPos, leaf_length);
+
+  MDLClassifier LDA_RealSpine(3);
+  MDLClassifier LDA_NonSpine(3);
+
+  int LDA_t1= LDA_RealSpine.MeanVectorandVarianceMatrix("RealSpinePrior.txt");
+  int LDA_t2= LDA_NonSpine.MeanVectorandVarianceMatrix("NonSpinePrior.txt");
+  double sample[3];
+  
   
   //ONLY run this first!
 
@@ -578,9 +588,31 @@ int main(int argc, char *argv[])
         meanDensityBranch[0] = meanDensityBranch[0]/ (vertsCurBr_Index2[0]+1);
         meanVesselBranch[0] = meanVesselBranch[0] / (vertsCurBr_Index2[0]+1);
 
+        //mahalanobis_dist[0]    =      mahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 1);  
+        //mahalanobis_dist_nonSpine[0] = mahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 0); 
+       
+		sample[0] =  meanDensityBranch[0];
+		sample[1] =  length_leaf[0];
+		sample[2] =  meanVesselBranch[0];
+		if (LDA_t1>0)
+		{
+          mahalanobis_dist[0] = LDA_RealSpine.MahalanobisDist(sample); 
+		}
+		else 
+		{ std::cout << " There is no Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
+          mahalanobis_dist[0] = LDA_RealSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 1);
+		}
+		if (LDA_t2>0)
+		{
+		
+          mahalanobis_dist[0] = LDA_NonSpine.MahalanobisDist(sample);
+		}
+		else 
+		{
+		  std::cout << " There is no Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
+          mahalanobis_dist[0] = LDA_NonSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 0);
+		}
 
-        mahalanobis_dist[0]    =      mahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 1);  
-        mahalanobis_dist_nonSpine[0] = mahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 0); 
         mahalanobis_dist_min = mahalanobis_dist[0];
         mahalanobis_dist_minIndex = 0;
         // output the spine candidate feature sample;  
@@ -597,7 +629,7 @@ int main(int argc, char *argv[])
 		 }
 
       // ## Begin to check the 2nd level of branches located at BB
-       int ind2Brch = 0;
+      int ind2Brch = 0;
 
       // For each 2nd level branch starting from the end of 1st level branch
       for (boost::tie(outei2, outedge_end2) =out_edges(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], msTree),msTree);
@@ -678,7 +710,7 @@ int main(int argc, char *argv[])
       
 
      //----------------------------MDL fitness for spine --------------------------------------//
-
+ 
       MDL_minIndex = -1; // Indicate that empty model set is chosen
       sum_mahalanobis_nonSpine = 0;
       for (i = 0; i<= ind2Brch; i++)
@@ -708,7 +740,7 @@ int main(int argc, char *argv[])
         } //end for
     
       // Adding Spine model - Only add the branches with the minimal MDL
-      if (MDL_minIndex >= 0)
+       if (MDL_minIndex >= 0)
         {
         for (j = 1; j <= vertsCurBr_Index2[0]; j++)
           {
@@ -727,7 +759,7 @@ int main(int argc, char *argv[])
              NumberNodesofRealSpine++;
             } // end for
           }// end if
-        }// end if
+        }// end if(MDL_minIndex >= 0)
 
       // 1. Empty model set is chosen (no branch)
       sum_mahalanobis_nonSpine = 0;
@@ -751,14 +783,14 @@ int main(int argc, char *argv[])
           MDL_minIndex =  i;
         }
       }// end for 
-      fprintf(fout_MDL, "%10d %20f %20f\n", ind2Brch, sum_mahalanobis_nonSpine, MDL_min);
-
-    }    // End of each out edge 
+      fprintf(fout_MDL, "%10d %20f %20f\n", ind2Brch, sum_mahalanobis_nonSpine, MDL_min);  
 	
+    
+   }    // End of each out edge 
+  } // End of all vertice
 
   //----------------------------End MDL fitness for spine --------------------------------------//
 
-  } // End of all vertice
   //msTreeBB = msTreeBB_buffer;
  
    //fprintf(fclass_identify, "0 0 0 0 end");
@@ -830,8 +862,9 @@ int main(int argc, char *argv[])
 
 
 double mahalanobisDist(double meanDensityBranch, double length_leaf, double meanVesselBranch, int spineOne) {
-  double x1, x2, x3;
+    double x1, x2, x3;
     double mahalanobis_dist = 0;
+
   /* For dataset time330
   if (spineOne == 1)  {
         x1 = meanDensityBranch - 58.4550;  // minus mean_feature from matlab 
@@ -882,8 +915,6 @@ double mahalanobisDist(double meanDensityBranch, double length_leaf, double mean
     mahalanobis_dist = x1*x1*0.0101+ 2*x1*x2*(0.0011)+ 2*x1*x3*(-0.0025)+ x2*x2*0.0202+ 2*x2*x3*(-0.0011) +x3*x3*0.0009;
   }
   
-
-
   return mahalanobis_dist;
 }
 
