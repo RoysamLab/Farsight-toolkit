@@ -401,21 +401,21 @@ bool TraceLine::Orient(TraceBit bit)
 std::string TraceLine::stats()
 {
 	std::stringstream thisStats;
-	thisStats << "ID\t";
+	thisStats << "\t";
 	thisStats << this->GetId();
-	thisStats << "\tType\t";
+	thisStats << "\t";
 	thisStats << (int)this->GetType();
-	thisStats << "\tSize\t" ;
+	thisStats << "\t" ;
 	thisStats << this->GetSize();
-	thisStats << "\tLength\t";
+	thisStats << "\t";
 	thisStats << this->GetLength();
-	thisStats << "\tEuclidian Length\t" ;
+	thisStats << "\t" ;
 	thisStats << this->GetEuclidianLength();
-	thisStats << "\tRadii\t" ;
+	thisStats << "\t" ;
 	thisStats << this->GetRadii();
-	thisStats << "\tFragmentation Smoothness\t";
+	thisStats << "\t";
 	thisStats << this->GetFragmentationSmoothness() ;
-	thisStats << "\tParent ID\t";
+	thisStats << "\t";
 	thisStats << this->GetParentID();
 	return thisStats.str();
 }

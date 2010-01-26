@@ -86,11 +86,7 @@ public:
 	void AddPointsAsPoints (std::vector<TraceBit> vec);
 	void AddVolumeSliders();
 	void AddContourThresholdSliders();
-	void AddPlaybackWidget(char*);
-	void readImg(std::string sourceFile);
 	
-	void rayCast(char* raySource);
-
 	static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
 	static void HandleKeyPress(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
 

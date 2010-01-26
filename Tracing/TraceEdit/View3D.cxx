@@ -136,8 +136,8 @@ View3D::View3D(int argc, char **argv)
        strcmp(argv[counter]+len-3, "PIC")==0)
       {
       printf("I detected a 3d image file\n");
-      this->rayCast(argv[counter]);
-      //this->AddVolumeSliders();
+	  this->Image = QString(argv[counter]);
+	  this->ImageActors->loadImage(this->Image.toStdString(), "Image");
       }
     num_loaded++;
     }
@@ -209,8 +209,6 @@ void View3D::ReloadState()
 	if(!this->Image.isEmpty()) 
 	{
 		this->ImageActors->loadImage(this->Image.toStdString(),"Image");
-		/*std::string imageFile = this->Image.toStdString();
-		this->rayCast( (char*) imageFile.c_str() );*/
 	}
 	
 	this->tempTraceFile = this->TraceEditSettings.value("lastOpen/Temp").toString();
@@ -253,7 +251,6 @@ void View3D::ReloadState()
 	if(!this->SomaFile.isEmpty()) 
 	{
 		this->ImageActors->loadImage(this->SomaFile.toStdString(), "Soma");
-		/*this->readImg(this->SomaFile.toStdString());*/
 	}
 	this->OkToBoot();
 }
@@ -294,7 +291,6 @@ void View3D::OkToBoot()
 		this->TraceEditSettings.setValue("boot/pos", this->bootLoadFiles->pos());
 		this->bootLoadFiles->close();
 		this->show();
-		//this->statusBar()->showMessage("started at " );//+ this->Time->toString( "mm:ss" )
 std::vector<std::string> LoadedImages = this->ImageActors->GetImageList();
 		for (unsigned int i =0; i < LoadedImages.size(); i++)
 		{
@@ -315,8 +311,6 @@ QString View3D::getSomaFile()
 	if(!somaFiles.isEmpty())
 	{
 		this->SomaFile = somaFiles;
-		//this->statusBar()->showMessage("Loading Soma Image");
-		//this->readImg(somaFiles.toStdString());
 		this->ImageActors->loadImage(somaFiles.toStdString(), "Soma");
 	}
 	return somaFiles.section('/',-1);
@@ -351,9 +345,7 @@ QString View3D::getImageFile()
 	if (!NewImageFile.isEmpty())
 	{
 		this->Image = NewImageFile;
-		//std::string imageFile = NewImageFile.toStdString();
 		this->ImageActors->loadImage(NewImageFile.toStdString(), "Image");
-		//this->rayCast( (char*)imageFile.c_str());
 	}
 	return NewImageFile.section('/',-1);
 }
@@ -1116,10 +1108,10 @@ void View3D::DeleteTraces()
 	if (traceList.size() >=1)
 	{
 		this->EditLogDisplay->append(tr("Deleted\t") + QString::number(traceList.size()) + tr("\ttraces"));
+		this->EditLogDisplay->append( "\tID\tType\tSize\tLength\tEuclidian Length\tRadii\tFragmentation Smoothness\tParent ID");
 		for (i = 0; i < traceList.size(); i++)
-		{
+		{				
 			this->EditLogDisplay->append( QString(traceList[i]->stats().c_str()));
-			//this->poly_line_data->Modified();
 			this->DeleteTrace(traceList[i]); 
 		}
 		this->numDeleted += (int) traceList.size();
@@ -1639,82 +1631,7 @@ void View3D::AddContourThresholdSliders()
 
 }
 
-void View3D::AddPlaybackWidget(char *filename)
-{
 
-  vtkSubRep *playbackrep = vtkSmartPointer<vtkSubRep>::New();
-  playbackrep->slice_counter=0;
-  playbackrep->GetPositionCoordinate()->SetCoordinateSystemToNormalizedDisplay();
-  playbackrep->GetPositionCoordinate()->SetValue(0.2,0.1);
-  playbackrep->GetPosition2Coordinate()->SetCoordinateSystemToNormalizedDisplay();
-  playbackrep->GetPosition2Coordinate()->SetValue(0.8,0.1);
-  
-
-  vtkSmartPointer<vtkPlaybackWidget> pbwidget = vtkSmartPointer<vtkPlaybackWidget>::New();
-  pbwidget->SetRepresentation(playbackrep);
-  pbwidget->SetInteractor(Interactor);
-
-  const unsigned int Dimension = 3;
-  typedef unsigned char  PixelType;
-  typedef itk::Image< PixelType, Dimension >   ImageType;
-  typedef itk::ImageFileReader< ImageType >    ReaderType;
-  ReaderType::Pointer imreader = ReaderType::New();
-
-  imreader->SetFileName(filename);
-  imreader->Update();
-
-  
-  ImageType::SizeType size = imreader->GetOutput()->GetLargestPossibleRegion().GetSize();
-
-  std::vector<vtkSmartPointer<vtkImageData> > &vtkimarray = playbackrep->im_pointer;
-  vtkimarray.reserve(size[2]-1);
-  printf("About to create vtkimarray contents in a loop\n");
-  for(unsigned int counter=0; counter<size[2]-1; counter++)
-  {
-    vtkimarray.push_back(vtkSmartPointer<vtkImageData>::New());
-    vtkimarray[counter]->SetScalarTypeToUnsignedChar();
-    vtkimarray[counter]->SetDimensions(size[0],size[1],2);
-    vtkimarray[counter]->SetNumberOfScalarComponents(1);
-    vtkimarray[counter]->AllocateScalars();
-    vtkimarray[counter]->SetSpacing(1/2.776,1/2.776,1);
-    memcpy(vtkimarray[counter]->GetScalarPointer(),imreader->GetOutput()->GetBufferPointer()+counter*size[0]*size[1]*sizeof(unsigned char),size[0]*size[1]*2*sizeof(unsigned char));
-  }
-
-  printf("finished memcopy in playback widget\n");
-  vtkPiecewiseFunction *opacityTransferFunction =
-    vtkSmartPointer<vtkPiecewiseFunction>::New();
-  opacityTransferFunction->AddPoint(2,0.0);
-  opacityTransferFunction->AddPoint(20,0.2);
-
-  vtkColorTransferFunction *colorTransferFunction =
-    vtkSmartPointer<vtkColorTransferFunction>::New();
-  colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
-  colorTransferFunction->AddRGBPoint(20.0,1,0,0);
-
-  
-  vtkVolumeProperty *volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
-  volumeProperty->SetColor(colorTransferFunction);
-  volumeProperty->SetScalarOpacity(opacityTransferFunction);
-  volumeProperty->SetInterpolationTypeToLinear();
-
-  vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper =
-    vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
-  volumeMapper->SetSampleDistance(0.5);
-  volumeMapper->SetInput(vtkimarray[playbackrep->slice_counter]);
-  
-  vtkSmartPointer<vtkVolume> volume = vtkSmartPointer<vtkVolume>::New();
-    volume->SetMapper(volumeMapper);
-    volume->SetProperty(volumeProperty);
-  volume->SetPickable(0);
-  Renderer->AddVolume(volume);
-  printf("Added volume in playback widget");
-  this->Volume = volume;
-  playbackrep->vmapper=volumeMapper;
-  /*playbackrep->im_pointer = &vtkimarray;*/
-  playbackrep->Print(std::cout);
-  
-  this->QVTK->GetRenderWindow()->Render();
-}
 void View3D::AddVolumeSliders()
 {
   vtkSliderRepresentation2D *opacitySliderRep =
@@ -1818,132 +1735,6 @@ void View3D::RedoAction()
 	*/
 }
 
-void View3D::readImg(std::string sourceFile)
-{
-  
-  //Set up the itk image reader
-  const unsigned int Dimension = 3;
-  typedef unsigned char  PixelType;
-  typedef itk::Image< PixelType, Dimension >   ImageType;
-  typedef itk::ImageFileReader< ImageType >    ReaderType;
-  ReaderType::Pointer reader = ReaderType::New();
-  reader->SetFileName( sourceFile );
-
-  //Test opening and reading the input file
-  try
-  {
-    reader->Update();
-    }
-  catch( itk::ExceptionObject & exp )
-    {
-    std::cerr << "Exception thrown while reading the input file " << std::endl;
-    std::cerr << exp << std::endl;
-    //return EXIT_FAILURE;
-    }
-  std::cout << "Image Read " << std::endl;
-  //Itk image to vtkImageData connector
-  typedef itk::ImageToVTKImageFilter<ImageType> ConnectorType;
-  ConnectorType::Pointer connector= ConnectorType::New();
-  connector->SetInput( reader->GetOutput() );
-
-  //Route vtkImageData to the contour filter
-  this->ContourFilter = vtkSmartPointer<vtkContourFilter>::New();
-  this->ContourFilter->SetInput(connector->GetOutput());
-  this->ContourFilter->SetValue(0,10);            // this affects render
-
-  this->ContourFilter->Update();
-
-  //Route contour filter output to the mapper
-  this->VolumeMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-  this->VolumeMapper->SetInput(this->ContourFilter->GetOutput());
-
-  //Declare actor and set properties
-  this->VolumeActor = vtkSmartPointer<vtkActor>::New();
-  this->VolumeActor->SetMapper(this->VolumeMapper);
-
-  //this->VolumeActor->GetProperty()->SetRepresentationToWireframe();
-  this->VolumeActor->GetProperty()->SetOpacity(.5);
-  this->VolumeActor->GetProperty()->SetColor(0.5,0.5,0.5);
-  this->VolumeActor->SetPickable(0);
-
-  this->statusBar()->showMessage("Created Contour Image");
-}
-
-
-void View3D::rayCast(char *raySource)
-{
-  const unsigned int Dimension = 3;
-  typedef unsigned char  PixelType;
-  typedef itk::Image< PixelType, Dimension >   ImageType;
-  typedef itk::ImageFileReader< ImageType >    ReaderType;
-  ReaderType::Pointer i2spReader = ReaderType::New();
-  i2spReader->SetFileName( raySource );
-  try
-  {
-    i2spReader->Update();
-    }
-  catch( itk::ExceptionObject & exp )
-    {
-    std::cerr << "Exception thrown while reading the input file " << std::endl;
-    std::cerr << exp << std::endl;
-    //return EXIT_FAILURE;
-    }
-  std::cout << "Image Read " << std::endl;
-//itk-vtk connector
- typedef itk::ImageToVTKImageFilter<ImageType> ConnectorType;
-  ConnectorType::Pointer connector= ConnectorType::New();
-  connector->SetInput( i2spReader->GetOutput() );
-  vtkSmartPointer<vtkImageToStructuredPoints> i2sp =
-    vtkSmartPointer<vtkImageToStructuredPoints>::New();
-  i2sp->SetInput(connector->GetOutput());
-  /**/ 
-  ImageType::SizeType size = i2spReader->GetOutput()->GetLargestPossibleRegion().GetSize();
-  vtkSmartPointer<vtkImageData> vtkim = vtkSmartPointer<vtkImageData>::New();
-  vtkim->SetScalarTypeToUnsignedChar();
-  vtkim->SetDimensions(size[0],size[1],size[2]);
-  vtkim->SetNumberOfScalarComponents(1);
-  vtkim->AllocateScalars();
-
-  memcpy(vtkim->GetScalarPointer(),i2spReader->GetOutput()->GetBufferPointer(),size[0]*size[1]*size[2]*sizeof(unsigned char));
-
-// Create transfer mapping scalar value to opacity
-  vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunction =
-    vtkSmartPointer<vtkPiecewiseFunction>::New();
-
-  opacityTransferFunction->AddPoint(2,0.0);
-  opacityTransferFunction->AddPoint(50,0.1);
- // opacityTransferFunction->AddPoint(40,0.1);
-  // Create transfer mapping scalar value to color
-  // Play around with the values in the following lines to better vizualize data
-  vtkSmartPointer<vtkColorTransferFunction> colorTransferFunction =
-    vtkSmartPointer<vtkColorTransferFunction>::New();
-    colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
-  colorTransferFunction->AddRGBPoint(50.0,1,0,0);
-
-  // The property describes how the data will look
-  vtkSmartPointer<vtkVolumeProperty> volumeProperty =
-    vtkSmartPointer<vtkVolumeProperty>::New();
-    volumeProperty->SetColor(colorTransferFunction);
-    volumeProperty->SetScalarOpacity(opacityTransferFunction);
-  //  volumeProperty->ShadeOn();
-    volumeProperty->SetInterpolationTypeToLinear();
-
-  vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper =
-    vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
-  volumeMapper->SetSampleDistance(0.5);
-  volumeMapper->SetInput(vtkim);
-
-  // The volume holds the mapper and the property and
-  // can be used to position/orient the volume
-  vtkSmartPointer<vtkVolume> volume = vtkSmartPointer<vtkVolume>::New();
-    volume->SetMapper(volumeMapper);
-    volume->SetProperty(volumeProperty);
-  volume->SetPickable(0);
-//  Renderer->AddVolume(volume);
-  this->Volume = volume;
- // this->QVTK->GetRenderWindow()->Render();
-  std::cout << "RayCast generated \n";
-}
 
 void View3D::closeEvent(QCloseEvent *event)
 {	
