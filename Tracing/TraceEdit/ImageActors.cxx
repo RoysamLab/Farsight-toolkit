@@ -112,6 +112,10 @@ std::vector<std::string> ImageRenderActors::GetImageList()
 }
 bool ImageRenderActors::isRayCast(int i)
 {
+	if (i == -1)
+	{
+		i = int (this->LoadedImages.size() - 1);
+	}
 	if (this->LoadedImages[i]->tag.compare("Image")==0)
 	{
 		return true;
@@ -120,4 +124,24 @@ bool ImageRenderActors::isRayCast(int i)
 	{
 		return false;
 	}
+}
+double ImageRenderActors::pointData(int i, int x, int y, int z)
+{
+	if (i == -1)
+	{
+		i = int (this->LoadedImages.size() - 1);
+	}
+	return this->LoadedImages[i]->ImageData->GetScalarComponentAsDouble(x,y,z,0);
+}
+std::vector<double> ImageRenderActors::GetImageSize(int i)
+{
+	if (i == -1)
+	{
+		i = int (this->LoadedImages.size() - 1);
+	}
+	std::vector<double> imgSize;
+	imgSize.push_back((double) this->LoadedImages[i]->volume->GetMaxXBound());
+	imgSize.push_back((double) this->LoadedImages[i]->volume->GetMaxYBound());
+	imgSize.push_back((double) this->LoadedImages[i]->volume->GetMaxZBound());
+	return imgSize;
 }

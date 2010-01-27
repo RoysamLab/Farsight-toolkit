@@ -708,6 +708,12 @@ void View3D::CreateActors()
 	  if (this->ImageActors->isRayCast(i))
 	  {
 		  this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
+		  // test image access functions
+		  std::vector<double>  dimensions = this->ImageActors->GetImageSize(i);
+		  std::cout<< "\nTest of image accessors \nx\t"<< dimensions[0] << "\ty\t"<< dimensions[1]<< "\tz\t"<< dimensions[2]<< "\n";
+		  double intensity = this->ImageActors->pointData(i, 5,5,5);
+		  std::cout<< "x:5 y:5 z:5\t" << intensity<< "\n";
+		  //These functions are not required
 	  }
 	  else
 	  {

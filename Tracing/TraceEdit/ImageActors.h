@@ -53,6 +53,7 @@ struct imageFileHandle
 	vtkSmartPointer<vtkImageData> ImageData;
 	ReaderType::Pointer reader;
 	ConnectorType::Pointer connector;
+	std::vector<double> ImageSize;
 //Contour Filter pointers
 	vtkSmartPointer<vtkContourFilter> ContourFilter;
 	vtkSmartPointer<vtkPolyDataMapper> ContourMapper;
@@ -69,12 +70,16 @@ class  ImageRenderActors
 public:
 	ImageRenderActors();
 	int loadImage(std::string ImageSource, std::string tag);
+//render actors
 	vtkSmartPointer<vtkActor> ContourActor(int i);
 	vtkSmartPointer<vtkVolume> RayCastVolume(int i);
+//file information
 	std::vector<std::string> GetImageList();
 	std::string FileNameOf(int i){ return this->LoadedImages[i]->filename;};
 	unsigned int NumberOfImages() {return this->LoadedImages.size();};
 	bool isRayCast(int i);
+	double pointData(int i, int x, int y, int z);
+	std::vector<double> GetImageSize(int i);
 private:
 	std::vector<imageFileHandle*> LoadedImages;
 	std::vector<std::string> ImageList;
