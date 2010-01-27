@@ -459,6 +459,15 @@ void NucleusEditor::setEditsEnabled(bool val)
 	splitAction->setEnabled(val);
 	classAction->setEnabled(val);
 	exclusionAction->setEnabled(val);
+	toolMenu->setEnabled(val);
+	if( val )
+		editNucleiAction->setEnabled(false);
+	else
+		editNucleiAction->setEnabled(true);
+	if( val )
+		segmentNucleiAction->setEnabled(false);
+	else
+		segmentNucleiAction->setEnabled(true);
 }
 
 void NucleusEditor::setPreprocessingEnabled(bool val)
