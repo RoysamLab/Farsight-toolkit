@@ -1002,6 +1002,10 @@ void NucleusEditor::startKPLS()
 	connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
 	pWizard->show();
 	kplsRun = 1;
+	//Show colored seeds after kPLS has run
+	if( segView->AreCentroidsDisplayed() ){
+		toggleCentroids();toggleCentroids();
+	} else toggleCentroids();
 }
 
 //*********************************************************************************************************

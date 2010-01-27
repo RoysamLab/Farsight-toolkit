@@ -82,6 +82,7 @@ public:
 	void SetColorForBounds(QColor color){ colorForBounds = color; refreshBoundsImage(); };
 	void SetColorForIDs(QColor color){ colorForIDs = color; refreshBoundsImage(); };
 	void SetColorMapForCentroids(QVector<QColor> table){ centroidColorTable = table; refreshBoundsImage(); };
+	bool AreCentroidsDisplayed(void) { return showCentroids; };
 
 public slots:
 	void SaveDisplayImageToFile();
