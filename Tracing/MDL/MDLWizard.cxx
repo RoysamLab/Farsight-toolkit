@@ -844,9 +844,13 @@ void MDLWizard::RunBSplineFitting()
   this->ExtraSpineFile = this->BackboneFile.dir().absolutePath() +
     "/ExtraSpine.vtk";
 
+  this->BSplineOrder = this->OrderInput->text();
+  this->BSplineLevels = this->LevelsInput->text();
+
   QStringList arguments;
   arguments << this->ComponentsConnectedFile << this->BackboneCandidateFile
             << this->ImageSizeX << this->ImageSizeY << this->ImageSizeZ 
+            << this->BSplineOrder << this->BSplineLevels
             << this->SmoothBackboneFile << this->ExtraSpineFile;
 
   this->BSplineFitting->start(this->ExecutablePath + "/BSplineFitting",

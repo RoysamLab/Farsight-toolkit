@@ -157,7 +157,9 @@ VoxelPosition xyz_vals[100000];
 float Min_dist2spline[100000];
 int Index_Min_dist2spline [100000];
   
-int BackboneBSplineFitting(VoxelPosition *Points,int Num, VoxelPosition *SamplePoints,int Num2)
+int BackboneBSplineFitting(VoxelPosition *Points, int Num,
+                           VoxelPosition *SamplePoints, int Num2, int order,
+                           int levels)
 {
  
   const unsigned int ParametricDimension = 1;
@@ -208,11 +210,11 @@ int BackboneBSplineFitting(VoxelPosition *Points,int Num, VoxelPosition *SampleP
   filter->SetSpacing( spacing );
   filter->SetInput( pointSet );
 
-  filter->SetSplineOrder( 3 );  
+  filter->SetSplineOrder( order );  
   FilterType::ArrayType ncps;
   ncps.Fill( 4 );  
   filter->SetNumberOfControlPoints( ncps );
-  filter->SetNumberOfLevels( 8);
+  filter->SetNumberOfLevels( levels );
   filter->SetGenerateOutputImage( false );
   
   delt = (double)1.0/(double)Num2+0.000001;
@@ -269,8 +271,9 @@ int main(int argc, char **argv)
     
   int sizeX,sizeY,sizeZ;         // Sizes in x,y,z dimensions
   int i,j,k;
+  int order, levels;             // BSpline parameters
   
-  if (argc < 7)
+  if (argc < 10)
     {
     if(argc > 1 && strcmp(argv[1], "debug") == 0)
       {
@@ -281,15 +284,16 @@ int main(int argc, char **argv)
       argv[3] = (char *)"512";
       argv[4] = (char *)"512";
       argv[5] = (char *)"18";
-      argv[6] = (char *)"smoothBB.vtk";
-      argv[7] = (char *)"Exspine.vtk";
-      //argv[9]="flag.txt";
+      argv[6] = (char *)"3";
+      argv[7] = (char *)"8";
+      argv[8] = (char *)"smoothBB.vtk";
+      argv[9] = (char *)"Exspine.vtk";
       }
     else
       {
       cerr << "Usage: " << argv[0] << " <3Ddata raw file> <Skeleton file>"
-           << " <xs> <ys> <zs> <out backbonevtk graph> <out spinevtk graph>"
-           << " [measureTimeFlag]" << endl;
+           << " <xs> <ys> <zs> <spline order> <# of spline levesl>"
+           << " <out backbonevtk graph> <out spinevtk graph>" << endl;
       return 1;
       }
     }
@@ -313,6 +317,8 @@ int main(int argc, char **argv)
   sizeY = atoi(argv[4]);
   sizeZ = atoi(argv[5]);
   sz= sizeX*sizeY;
+  order = atoi(argv[6]);
+  levels = atoi(argv[7]);
   
   //----------------------------read volume data-----------------------------//
 
@@ -626,7 +632,7 @@ int main(int argc, char **argv)
    }
    
   #else
-	BackboneBSplineFitting(points,NumPoints,xyz_vals,NumPoints);
+	BackboneBSplineFitting(points, NumPoints, xyz_vals, NumPoints, order, levels);
   #endif 
     for (i=numVTKpts;i<numVTKpts+NumPoints;i++)
       {
@@ -737,15 +743,15 @@ int main(int argc, char **argv)
   cout << "the loop is over" << endl; 
  
   //-----------------------construct two files to write-----------------------//
-  if ((outbackbone = fopen(argv[6], "w")) == NULL)
+  if ((outbackbone = fopen(argv[8], "w")) == NULL)
    {
-   cerr << "Cannot open " << argv[6] << " for writing" << endl;
+   cerr << "Cannot open " << argv[8] << " for writing" << endl;
    return 1;
    }
 
- if ((outExspine = fopen(argv[7], "w")) == NULL)
+ if ((outExspine = fopen(argv[9], "w")) == NULL)
    {
-   cerr << "Cannot open " << argv[7] << " for writing" << endl;
+   cerr << "Cannot open " << argv[9] << " for writing" << endl;
    return 1;
    }
   //--------------------------------------------------------------------------//

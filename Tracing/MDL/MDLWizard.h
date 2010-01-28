@@ -149,6 +149,8 @@ private:
   QString GraphPruneSize;
   QString MorphStrength;
   QString WeightFactor;
+  QString BSplineOrder;
+  QString BSplineLevels;
   QString VolumeProcessedFile;
   QString ComponentsConnectedFile;
   QString AnisoDiffusedFile;

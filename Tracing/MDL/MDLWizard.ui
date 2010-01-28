@@ -252,7 +252,7 @@
      <string>AnisoDiffuse</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label">
+   <widget class="QLabel" name="Step3Label">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -286,7 +286,7 @@
      <string>GradientVecField</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_2">
+   <widget class="QLabel" name="Step4Label">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -419,12 +419,12 @@
      <string>50</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_14">
+   <widget class="QLabel" name="EdgeRangeLabel">
     <property name="geometry">
      <rect>
       <x>300</x>
       <y>130</y>
-      <width>80</width>
+      <width>71</width>
       <height>17</height>
      </rect>
     </property>
@@ -461,7 +461,7 @@
      <string>BackboneExtract</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_6">
+   <widget class="QLabel" name="WeightFactorLabel">
     <property name="geometry">
      <rect>
       <x>130</x>
@@ -547,7 +547,7 @@
      <string>RefiningSkeleton</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_3">
+   <widget class="QLabel" name="Step1Label2">
     <property name="geometry">
      <rect>
       <x>40</x>
@@ -565,7 +565,7 @@
      <string>Step #1</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_4">
+   <widget class="QLabel" name="Step2Label2">
     <property name="geometry">
      <rect>
       <x>40</x>
@@ -583,7 +583,7 @@
      <string>Step #2</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_5">
+   <widget class="QLabel" name="Step3Label2">
     <property name="geometry">
      <rect>
       <x>40</x>
@@ -601,7 +601,7 @@
      <string>Step #3</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_7">
+   <widget class="QLabel" name="Step4Label2">
     <property name="geometry">
      <rect>
       <x>40</x>
@@ -619,7 +619,7 @@
      <string>Step #4</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_9">
+   <widget class="QLabel" name="Step5Label">
     <property name="geometry">
      <rect>
       <x>40</x>
@@ -637,9 +637,85 @@
      <string>Step #5</string>
     </property>
    </widget>
+   <widget class="QLabel" name="OrderLabel">
+    <property name="geometry">
+     <rect>
+      <x>130</x>
+      <y>260</y>
+      <width>85</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>BSpline order</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="OrderInput">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>240</y>
+      <width>40</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>BSpline order</string>
+    </property>
+    <property name="whatsThis">
+     <string>Used to emphasize the function of either model description or the datadescription (tradeoff between coverage and conciseness).  Use higher valuesfor more complex models.  Typical values range between 0.5 and 0.95.</string>
+    </property>
+    <property name="inputMask">
+     <string>09; </string>
+    </property>
+    <property name="text">
+     <string>3</string>
+    </property>
+    <property name="cursorPosition">
+     <number>2</number>
+    </property>
+   </widget>
+   <widget class="QLabel" name="LevelsLabel">
+    <property name="geometry">
+     <rect>
+      <x>280</x>
+      <y>260</y>
+      <width>111</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Number of levels</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="LevelsInput">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>240</y>
+      <width>40</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>Number of levels to use for BSpline fitting</string>
+    </property>
+    <property name="whatsThis">
+     <string>Used to emphasize the function of either model description or the datadescription (tradeoff between coverage and conciseness).  Use higher valuesfor more complex models.  Typical values range between 0.5 and 0.95.</string>
+    </property>
+    <property name="inputMask">
+     <string>09 ; </string>
+    </property>
+    <property name="text">
+     <string>8 </string>
+    </property>
+    <property name="cursorPosition">
+     <number>3</number>
+    </property>
+   </widget>
   </widget>
   <widget class="MDLPhaseTwoPage" name="PhaseTwoPage">
-   <widget class="QLabel" name="label_10">
+   <widget class="QLabel" name="SecondPassLabel">
     <property name="geometry">
      <rect>
       <x>210</x>
@@ -692,7 +768,7 @@
      <string>10</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_19">
+   <widget class="QLabel" name="EdgeRangeLabel2">
     <property name="geometry">
      <rect>
       <x>280</x>
@@ -727,7 +803,7 @@
      <string>50</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_20">
+   <widget class="QLabel" name="MorphStrengthLabel2">
     <property name="geometry">
      <rect>
       <x>100</x>
@@ -816,7 +892,7 @@
      <string>SpineExtraction</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_8">
+   <widget class="QLabel" name="WeightFactorLabel2">
     <property name="geometry">
      <rect>
       <x>280</x>
@@ -829,7 +905,7 @@
      <string>Weight factor</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_23">
+   <widget class="QLabel" name="PruneSizeLabel">
     <property name="geometry">
      <rect>
       <x>90</x>
@@ -864,7 +940,7 @@
      <string>10</string>
     </property>
    </widget>
-   <widget class="QLabel" name="Step2Label_2">
+   <widget class="QLabel" name="Step2Label3">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -882,7 +958,7 @@
      <string>Step #2</string>
     </property>
    </widget>
-   <widget class="QLabel" name="Step1Label_2">
+   <widget class="QLabel" name="Step1Label3">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -900,7 +976,7 @@
      <string>Step #1</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_11">
+   <widget class="QLabel" name="Step3Label3">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -918,7 +994,7 @@
      <string>Step #3</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_12">
+   <widget class="QLabel" name="Step4Label3">
     <property name="geometry">
      <rect>
       <x>20</x>
