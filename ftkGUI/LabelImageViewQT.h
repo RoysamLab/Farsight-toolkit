@@ -77,6 +77,7 @@ public:
 	void SetBoundingBoxMapPointer(std::map<int, ftk::Object::Box> * bMap = NULL);
 	void SetClassMap(vtkSmartPointer<vtkTable> table, int column);
 	QVector<QColor> CreateColorTable(void);
+	QString GetColorNameFromTable( int class_num );
 	void ClearClassMap(void){ classMap.clear(); refreshBoundsImage();};
 	void SetColorForSelections(QColor color){ colorForSelections = color; refreshBoundsImage(); };
 	void SetColorForBounds(QColor color){ colorForBounds = color; refreshBoundsImage(); };

@@ -43,6 +43,7 @@ limitations under the License.
 #include <float.h>
 
 #include "ftkUtils.h"
+#include "ftkGUI/LabelImageViewQT.h"
 
 class TrainingDialog : public QDialog
 {

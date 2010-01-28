@@ -1026,27 +1026,47 @@ QVector<QColor> LabelImageViewQT::CreateColorTable()
 	colorTable.clear();
 	
 	//Colors for 10 classes
-	colorTable.append(Qt::red);
-	colorTable.append(Qt::green);
-	colorTable.append(Qt::blue);
-	colorTable.append(Qt::cyan);
 	colorTable.append(Qt::yellow);
-	colorTable.append(Qt::magenta);
-	colorTable.append(Qt::gray);
 	colorTable.append(Qt::white);
+	colorTable.append(Qt::green);
+	colorTable.append(Qt::cyan);
+	colorTable.append(Qt::magenta);
+	colorTable.append(Qt::red);
+	colorTable.append(Qt::blue);
+	colorTable.append(Qt::gray);
 	colorTable.append(Qt::darkGreen);
 	colorTable.append(Qt::darkBlue);
 	
 	return colorTable;
 }
 
-	
-	
-
-
-
-
-
+QString LabelImageViewQT::GetColorNameFromTable( int class_num ){
+	QString color_name;
+	QVector<QColor> colors;
+	colors = CreateColorTable();
+	if( colors.at( class_num ) == Qt::yellow )
+		color_name = "Yellow";
+	else if( colors.at( class_num ) == Qt::white )
+		color_name = "White";
+	else if( colors.at( class_num ) == Qt::green )
+		color_name = "Green";
+	else if( colors.at( class_num ) == Qt::cyan )
+		color_name = "Cyan";
+	else if( colors.at( class_num ) == Qt::magenta )
+		color_name = "Magenta";
+	else if( colors.at( class_num ) == Qt::red )
+		color_name = "Red";
+	else if( colors.at( class_num ) == Qt::blue )
+		color_name = "Blue";
+	else if( colors.at( class_num ) == Qt::gray )
+		color_name = "Gray";
+	else if( colors.at( class_num ) == Qt::darkGreen )
+		color_name = "DarkGreen";
+	else if( colors.at( class_num ) == Qt::darkBlue )
+		color_name = "DarkBlue";
+	else color_name = "No more colors";
+	return color_name;
+}
 
 /*
 void LabelImageViewQT::refreshFeatures(void)
