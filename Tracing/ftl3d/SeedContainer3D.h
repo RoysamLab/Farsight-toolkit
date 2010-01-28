@@ -48,7 +48,7 @@ public:
 
 
 	SeedPoint3D* getSeed(unsigned int i) {return(SeedContainer[i]);}
-	unsigned int getNumberOfSeeds() {return(SeedContainer.size());}
+	unsigned int getNumberOfSeeds() {return((unsigned int)SeedContainer.size());}
 
 	void Configure(TraceConfig::Pointer);
 	void Detect(ImageType3D::Pointer, ImageType2D::Pointer );

@@ -29,6 +29,7 @@ limitations under the License.
 #include "itkRGBPixel.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
+#include "itkCastImageFilter.h"
 #include "itkImageRegionIterator.h"
 #include "itkMedianImageFilter.h"
 #include "itkStatisticsImageFilter.h"
@@ -109,13 +110,15 @@ int main (int argc, char *argv[])
 		}
 		std::cout << "Image of size " << image3D->GetBufferedRegion().GetSize() << " read successfully " << std::endl;
 
-		ImageDenoise(image3D, m_Config->getHessianFlag());
-		ImageStatistics(image3D);
+		//ImageDenoise(image3D, m_Config->getHessianFlag());
+		ImageStatistics(image3D);	//This inverts the intensities (in most cases)
 
 		try	{
 			SeedContainer3D::Pointer m_Seeds = SeedContainer3D::New();
 			m_Seeds->Configure(m_Config);
-			m_Seeds->Detect(image3D, MIPimage);
+			m_Seeds->Detect(image3D, MIPimage);		//At input: image3D is inverted input image, MIPimage is blank.
+													//At output: image3D is untouched, MIP image is minimum projection
+													//				AND seeds have been detected
 			//WriteSeedImage(MIPimage, m_Seeds , m_Config->getOutputFileName(k));
 
 			Seed2Seg::Pointer m_SS = Seed2Seg::New();
@@ -193,7 +196,28 @@ void ImageDenoise(ImageType3D::Pointer& im3D, int hessianFlag)	{
 	else {
 		im3D = vol;
 	}
+	/*
+	typedef itk::Image<unsigned char, 3> CharImageType3D;
+	typedef itk::CastImageFilter< ImageType3D,CharImageType3D > CastType; 
+	CastType::Pointer cast = CastType::New();
+	cast->SetInput( im3D );
+
+	typedef itk::ImageFileWriter<CharImageType3D> WriterType;
+	WriterType::Pointer writer = WriterType::New();
+	writer->SetInput( cast->GetOutput() );
+	writer->SetFileName( "C:/TestImages/Tracing/test.tif" );
+	try
+	{
+		writer->Update();
+	}	
+	catch( itk::ExceptionObject & exp )
+	{
+		std::cerr << "Exception thrown while writing the file " << std::endl;
+		std::cerr << exp << std::endl;
+	}
+	*/
 }
+
 
 void ImageStatistics(ImageType3D::Pointer & im3D)	{
 	typedef itk::StatisticsImageFilter<ImageType3D>  StatisticsType;
@@ -229,6 +253,26 @@ void ImageStatistics(ImageType3D::Pointer & im3D)	{
 			it.Set(255.0*d);
 		}
 	}
+	/*
+	typedef itk::Image<unsigned char, 3> CharImageType3D;
+	typedef itk::CastImageFilter< ImageType3D,CharImageType3D > CastType; 
+	CastType::Pointer cast = CastType::New();
+	cast->SetInput( im3D );
+
+	typedef itk::ImageFileWriter<CharImageType3D> WriterType;
+	WriterType::Pointer writer = WriterType::New();
+	writer->SetInput( cast->GetOutput() );
+	writer->SetFileName( "test.tif" );
+	try
+	{
+		writer->Update();
+	}	
+	catch( itk::ExceptionObject & exp )
+	{
+		std::cerr << "Exception thrown while writing the file " << std::endl;
+		std::cerr << exp << std::endl;
+	}
+	*/
 }
 
 

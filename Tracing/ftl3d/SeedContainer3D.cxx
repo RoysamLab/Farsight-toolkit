@@ -37,7 +37,7 @@ void SeedContainer3D::Configure(TraceConfig::Pointer m_Config)	{
 
 void SeedContainer3D::Detect(ImageType3D::Pointer im3D, ImageType2D::Pointer im2D)	{
 	//Obtian the MIP
-	MIPGenerator(im3D, im2D);
+	MIPGenerator(im3D, im2D);	//fills im2D with minimum intensity projection (im3D is inverted grayscale image)
 	Detect3Dseeds(im3D);
 	//Detect2Dseeds(im2D);
 	//LocateZPosition(im3D);
@@ -45,12 +45,14 @@ void SeedContainer3D::Detect(ImageType3D::Pointer im3D, ImageType2D::Pointer im2
 
 
 void SeedContainer3D::Detect3Dseeds(ImageType3D::Pointer image) {
-	ImageType3D::IndexType glndx = {{0 , 0 , 0}};
 	ImageType3D::SizeType sz = image->GetBufferedRegion().GetSize();
-	for (glndx[2] = 0; glndx[2] < (int)sz[2]-GridSpacing; glndx[2] += GridSpacing) {
-		for (glndx[1] = 0; glndx[1] < (int)sz[1]-GridSpacing; glndx[1] += GridSpacing) {
-			for (glndx[0] = 0; glndx[0] < (int)sz[0]-GridSpacing; glndx[0] += GridSpacing) {
-
+	ImageType3D::IndexType glndx = {{0 , 0 , 0}};		//This is the start position of each block
+	for (glndx[2] = 0; glndx[2] <= (long)sz[2]; glndx[2] += GridSpacing) 
+	{
+		for (glndx[1] = 0; glndx[1] <= (long)sz[1]; glndx[1] += GridSpacing) 
+		{
+			for (glndx[0] = 0; glndx[0] <= (long)sz[0]; glndx[0] += GridSpacing) 
+			{
 				ImageType3D::IndexType ndx = glndx;
 				ImageType3D::IndexType endx;
 				endx[0] = glndx[0] + GridSpacing;	endx[0] = (endx[0]>(int)sz[0]) ? sz[0] : endx[0];
@@ -58,25 +60,31 @@ void SeedContainer3D::Detect3Dseeds(ImageType3D::Pointer image) {
 				endx[2] = glndx[2] + GridSpacing;	endx[2] = (endx[2]>(int)sz[2]) ? sz[2] : endx[2];
 
 				ImageType3D::PixelType minVal = 255;
-				ImageType3D::IndexType minNdx;
-				for ( ndx[2] = glndx[2] ; ndx[2] < endx[2] ;  ndx[2]++)	{
-					for ( ndx[1] = glndx[1] ; ndx[1] < endx[1] ;  ndx[1]++)	{
-						for ( ndx[0] = glndx[0] ; ndx[0] < endx[0] ;  ndx[0]++)	{
+				ImageType3D::IndexType minNdx = ndx;
+				for ( ndx[2] = glndx[2] ; ndx[2] < endx[2] ;  ndx[2]++)	
+				{
+					for ( ndx[1] = glndx[1] ; ndx[1] < endx[1] ;  ndx[1]++)	
+					{
+						for ( ndx[0] = glndx[0] ; ndx[0] < endx[0] ;  ndx[0]++)	
+						{
 							ImageType3D::PixelType val = image->GetPixel(ndx);
-							if (val<minVal)	{
+							if (val<minVal)	
+							{
 								minVal = val;
 								minNdx = ndx;
-								}
 							}
 						}
 					}
-
-				//store the index, val, and scale  here
-				AddSeedPoint(minNdx, minVal, GridSpacing);
+				}
+				if( minVal < 255 )	//ADDED BY ISAAC ABBOTT 1/28/2010
+				{
+					//store the index, val, and scale  here
+					AddSeedPoint(minNdx, minVal, GridSpacing);
 				}
 			}
 		}
 	}
+}
 
 void SeedContainer3D::Detect2Dseeds(ImageType2D::Pointer image) {
 
@@ -86,8 +94,8 @@ void SeedContainer3D::Detect2Dseeds(ImageType2D::Pointer image) {
 
 	std::cout << "Detecting Seeds ...";
 
-	for ( p[0] = 0; p[0] < (int)size[0] ; p[0]+=GridSpacing)	{
-		for ( p[1] = 0; p[1] < (int)size[1] ; p[1]++)	{
+	for ( p[0] = 0; p[0] < (long)size[0] ; p[0]+=GridSpacing)	{
+		for ( p[1] = 0; p[1] < (long)size[1] ; p[1]++)	{
 
 			val = image->GetPixel(p);
 			if(val < m)	{
@@ -102,8 +110,8 @@ void SeedContainer3D::Detect2Dseeds(ImageType2D::Pointer image) {
 		}
 	}
 
-	for ( p[1] = 0; p[1] < (int)size[1] ; p[1]+=GridSpacing)	{
-			for ( p[0] = 0; p[0] < (int)size[0] ; p[0]++)	{
+	for ( p[1] = 0; p[1] < (long)size[1] ; p[1]+=GridSpacing)	{
+			for ( p[0] = 0; p[0] < (long)size[0] ; p[0]++)	{
 
 			val = image->GetPixel(p);
 			if(val < m)	{
@@ -139,10 +147,10 @@ void SeedContainer3D::MIPGenerator(ImageType3D::Pointer im3D, ImageType2D::Point
 
 
 	ImageType3D::SizeType sz3 = im3D->GetRequestedRegion().GetSize();
-	ImageType2D::SizeType sz2 = {{sz3[0], sz3[1] }};
+	ImageType2D::SizeType sz2 = {{ sz3[0], sz3[1] }};
 
-	//im2D = ImageType2D::New();  // new is already done in
-	im2D->SetRegions(sz2 );
+	//im2D = ImageType2D::New();  // new is already done in main
+	im2D->SetRegions( sz2 );
 	im2D->Allocate();
 
 

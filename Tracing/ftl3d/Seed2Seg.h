@@ -63,7 +63,7 @@ public:
 	void Configure(TraceConfig::Pointer &);
 	void ComuputeStartSegments(SeedContainer3D::Pointer , ImageType3D::Pointer, TraceConfig::Pointer);
 	void SortStartSegments();
-	unsigned int getNumberOfStartSegments() {return SSContainer.size();}
+	unsigned int getNumberOfStartSegments() {return (unsigned int)SSContainer.size();}
 	TVessel* getStartSegment(unsigned int i) {return SSContainer[i];}
 
 
