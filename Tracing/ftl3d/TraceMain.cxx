@@ -110,7 +110,7 @@ int main (int argc, char *argv[])
 		}
 		std::cout << "Image of size " << image3D->GetBufferedRegion().GetSize() << " read successfully " << std::endl;
 
-		//ImageDenoise(image3D, m_Config->getHessianFlag());
+		ImageDenoise(image3D, m_Config->getHessianFlag());
 		ImageStatistics(image3D);	//This inverts the intensities (in most cases)
 
 		try	{
