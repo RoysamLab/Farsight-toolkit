@@ -1019,6 +1019,7 @@ void NucleusEditor::startKPLS()
 	pWizard->show();
 	kplsRun = 1;
 	//Show colored seeds after kPLS has run
+	showCentroidsAction->setChecked(true);
 	if( segView->AreCentroidsDisplayed() ){
 		toggleCentroids();toggleCentroids();
 	} else toggleCentroids();
