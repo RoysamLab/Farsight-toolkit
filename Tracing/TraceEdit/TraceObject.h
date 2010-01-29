@@ -19,6 +19,7 @@ limitations under the License.
 #include <set>
 #include <vtksys/hash_map.hxx> /* Platform independent hashmap */
 #include "vtkSmartPointer.h"
+#include "vtkImageData.h"
 
 class TraceBit;
 class TraceLine;
@@ -65,6 +66,7 @@ public:
 	bool WriteToSWCFile(const char * filename);
 	void WriteToVTKFile(const char * filename);
 	void SetBranchPoints(std::vector<branchPT*> Branches);
+	void ImageIntensity(vtkSmartPointer<vtkImageData> imageData);
 //	operators
 	int getNewLineId();
   int GetMaximumBitId();

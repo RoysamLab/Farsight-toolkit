@@ -25,8 +25,8 @@ class TraceBit
   public:
     TraceBit();
     ~TraceBit();
-    double x,y,z,r;		//
-	unsigned char I;
+    double x,y,z,r, I;		//
+	//unsigned char I;
     int id;
     unsigned int marker;
     void Print(std::ostream &c);

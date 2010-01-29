@@ -145,3 +145,11 @@ std::vector<double> ImageRenderActors::GetImageSize(int i)
 	imgSize.push_back((double) this->LoadedImages[i]->volume->GetMaxZBound());
 	return imgSize;
 }
+vtkSmartPointer<vtkImageData> ImageRenderActors::GetImageData(int i)
+{
+	if (i == -1)
+	{
+		i = int (this->LoadedImages.size() - 1);
+	}
+	return this->LoadedImages[i]->ImageData;
+}

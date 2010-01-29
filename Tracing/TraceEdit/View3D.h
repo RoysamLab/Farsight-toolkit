@@ -97,6 +97,7 @@ public:
 	void setupLinkedSpace();
 	void ShowMergeStats();
 	void CalculateGaps();
+	void TraceBitImageIntensity(int ImgID);
 
 	//todo: make these private with accessors
 	vtkSmartPointer<vtkRenderer> Renderer;
@@ -123,6 +124,7 @@ public slots:
 	void LoadSomaFile();
 	void SetTraceType(int newType);
 	void ReloadState();
+	void SetImgInt();
 
 	void UndoAction();
 	void RedoAction();
@@ -195,6 +197,7 @@ private:
 	QAction *AutomateButton;
 	QAction *explodeTree;
 	QAction *root;
+	QAction *ImageIntensity;
 
 	QAction *UndoButton;
 	QAction *RedoButton;

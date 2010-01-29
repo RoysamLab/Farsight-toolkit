@@ -149,11 +149,11 @@ void TraceObject::LinearTraceLinesRecursive(std::vector<TraceLine*> &allLine, Tr
 {
 	tline->calculateVol();	//this call should go somewhere else in the pipeline
 	if (tline->GetParentID() == -1)
-	{
+	{//if no parent this thile is the root
 		tline->setRoot( tline->GetId(), 0, 0);
 	}
 	else
-	{ 
+	{ //not the root, so +1 from parent
 		TraceLine *parent = tline->GetParent();
 		tline->setRoot(parent->GetRootID(), parent->GetLevel() +1, parent->GetPathLength());
 	}
@@ -162,6 +162,14 @@ void TraceObject::LinearTraceLinesRecursive(std::vector<TraceLine*> &allLine, Tr
 	{
 		this->LinearTraceLinesRecursive(allLine, (*tline->GetBranchPointer())[counter]);
 	}
+}
+void TraceObject::ImageIntensity(vtkSmartPointer<vtkImageData> imageData)
+{
+	std::vector<TraceLine*> allLines = this->GetTraceLines();
+	for (unsigned int i = 0; i < allLines.size(); i++)
+	{
+		allLines[i]->setTraceBitIntensities(imageData);
+	}//end of set
 }
 bool TraceObject::ReadFromFeatureTracksFileForKymograph(char *filename,int type_offset=0)
 {

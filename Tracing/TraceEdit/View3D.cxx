@@ -384,8 +384,7 @@ void View3D::LoadImageData()
 	{
 		this->statusBar()->showMessage("Loading Image file" + newImage);
 		this->EditLogDisplay->append("Image file: \t" + this->Image);
-		//this->Renderer->AddActor(this->Volume);
-		//this->AddVolumeSliders();
+		
 		this->Renderer->AddVolume(this->ImageActors->RayCastVolume(-1));
 		this->QVTK->GetRenderWindow()->Render();
 		//this->Rerender();
@@ -405,6 +404,20 @@ void View3D::LoadSomaFile()
 		this->QVTK->GetRenderWindow()->Render();
 		this->EditLogDisplay->append("Soma file: \t" + this->SomaFile);
 		this->statusBar()->showMessage("Somas Rendered");
+	}
+}
+void View3D::SetImgInt()
+{
+	if (this->ImageActors->NumberOfImages()>=1)
+	{	// image intensity values at each Trace Bit of trace line
+		this->tobj->ImageIntensity(this->ImageActors->GetImageData(-1));
+	}
+}
+void View3D::TraceBitImageIntensity(int ImgID)
+{
+	if (this->ImageActors->NumberOfImages()>=1)
+	{	// image intensity values at each Trace Bit of trace line
+		this->tobj->ImageIntensity(this->ImageActors->GetImageData(ImgID));
 	}
 }
 View3D::~View3D()
@@ -563,6 +576,8 @@ void View3D::CreateGUIObjects()
 	connect(this->UndoButton, SIGNAL(triggered()), this, SLOT(UndoAction()));
   this->RedoButton = new QAction("&Redo", this->CentralWidget);
 	connect(this->RedoButton, SIGNAL(triggered()), this, SLOT(RedoAction()));
+	this->ImageIntensity = new QAction("Intensity", this->CentralWidget);
+	connect(this->ImageIntensity, SIGNAL(triggered()), this, SLOT(SetImgInt()));
   //Setup the tolerance settings editing window
   this->SettingsWidget = new QWidget();
   QIntValidator *intValidator = new QIntValidator(1, 100, this->SettingsWidget);
@@ -637,6 +652,7 @@ void View3D::CreateLayout()
   this->BranchToolBar->addAction(this->explodeTree);
   this->BranchToolBar->addAction(this->BranchButton);
   this->BranchToolBar->addAction(this->root);
+  this->BranchToolBar->addAction(this->ImageIntensity);
 
   QGridLayout *viewerLayout = new QGridLayout(this->CentralWidget);
   viewerLayout->addWidget(this->QVTK, 0, 0);
@@ -662,6 +678,7 @@ void View3D::CreateLayout()
   this->InformationDisplays->setWidget(this->EditLogDisplay);
   this->addDockWidget(Qt::LeftDockWidgetArea, this->InformationDisplays);
   this->menuBar()->addAction(this->InformationDisplays->toggleViewAction());
+  this->InformationDisplays->hide();
   //this->ShowToolBars->addAction(this->InformationDisplays->toggleViewAction());
 }
 
@@ -709,10 +726,14 @@ void View3D::CreateActors()
 	  {
 		  this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
 		  // test image access functions
+		 /* if (!this->TraceFiles.isEmpty())
+		  {
+			  this->tobj->ImageIntensity(this->ImageActors->GetImageData(i));
+		  }*/
 		  std::vector<double>  dimensions = this->ImageActors->GetImageSize(i);
 		  std::cout<< "\nTest of image accessors \nx\t"<< dimensions[0] << "\ty\t"<< dimensions[1]<< "\tz\t"<< dimensions[2]<< "\n";
-		  double intensity = this->ImageActors->pointData(i, 5,5,5);
-		  std::cout<< "x:5 y:5 z:5\t" << intensity<< "\n";
+		  double intensity = this->ImageActors->pointData(i, 646,215,5);
+		  std::cout<< "x:646 y:215 z:5\t" << intensity<< "\n";
 		  //These functions are not required
 	  }
 	  else
@@ -721,15 +742,6 @@ void View3D::CreateActors()
 	  }
   }
   this->QVTK->GetRenderWindow()->Render();
-	/*if(this->Volume!=NULL)
-	{
-		this->Renderer->AddVolume(this->Volume);
-		this->AddVolumeSliders();
-	}
-	if(this->VolumeActor!=NULL)
-	{
-		this->Renderer->AddActor(this->VolumeActor);
-	}*/
   //sphere is used to mark the picks
   this->CreateSphereActor();
   Renderer->AddActor(this->SphereActor);
@@ -1605,7 +1617,6 @@ void View3D::SaveToFile()
 
 
 /*  Soma display stuff  */
-
 void View3D::AddContourThresholdSliders()
 {
   vtkSliderRepresentation2D *sliderRep2 =

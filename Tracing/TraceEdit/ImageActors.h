@@ -80,6 +80,8 @@ public:
 	bool isRayCast(int i);
 	double pointData(int i, int x, int y, int z);
 	std::vector<double> GetImageSize(int i);
+	vtkSmartPointer<vtkImageData> GetImageData(int i);
+
 private:
 	std::vector<imageFileHandle*> LoadedImages;
 	std::vector<std::string> ImageList;

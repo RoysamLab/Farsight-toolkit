@@ -23,6 +23,7 @@ limitations under the License.
 #include <set>
 #include <sstream>
 #include "vtkSmartPointer.h"
+#include "vtkImageData.h"
 
 class TraceBit;
 
@@ -67,6 +68,7 @@ public:
 	void SetId(int lid);
 	int GetId();
 	int GetSize();
+	void setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData);
 	void Print(std::ostream &c,int indent);
 
 	std::vector<unsigned int> * GetMarkers();
