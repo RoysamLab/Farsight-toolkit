@@ -247,7 +247,7 @@ void NucleusEditor::createMenus()
 
 	zoomInAction = new QAction(tr("Zoom In"), this);
 	zoomInAction->setStatusTip(tr("Zoom In On The Displayed Image"));
-	zoomInAction->setShortcut(tr("=/+"));
+	zoomInAction->setShortcut(tr("="));
 	connect(zoomInAction, SIGNAL(triggered()), this, SLOT(zoomIn()));
 	zoomMenu->addAction(zoomInAction);
 
