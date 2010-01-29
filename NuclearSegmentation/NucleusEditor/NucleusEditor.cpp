@@ -243,6 +243,22 @@ void NucleusEditor::createMenus()
 	viewMenu->addAction(showCentroidsAction);
 
 
+	zoomMenu = viewMenu->addMenu(tr("Zoom"));
+
+	zoomInAction = new QAction(tr("Zoom In"), this);
+	zoomInAction->setStatusTip(tr("Zoom In On The Displayed Image"));
+	zoomInAction->setShortcut(tr("=/+"));
+	connect(zoomInAction, SIGNAL(triggered()), this, SLOT(zoomIn()));
+	zoomMenu->addAction(zoomInAction);
+
+	zoomOutAction  = new QAction(tr("Zoom Out"), this);
+	zoomOutAction->setStatusTip(tr("Zoom Out of The Displayed Image"));
+	zoomOutAction->setShortcut(tr("-"));
+	connect(zoomOutAction, SIGNAL(triggered()), this, SLOT(zoomOut()));
+	zoomMenu->addAction(zoomOutAction);
+
+
+
 	viewMenu->addSeparator();
 
 	newTableAction = new QAction(tr("New Table"), this);
@@ -1158,6 +1174,16 @@ void NucleusEditor::toggleCentroids(void)
 	}
 	else
 		segView->SetCentroidsVisible(false);
+}
+
+void NucleusEditor::zoomIn(){
+	QKeyEvent *event = new QKeyEvent ( QEvent::KeyPress, Qt::Key_Equal, 0, 0 );
+	QCoreApplication::postEvent (segView, event);
+}
+
+void NucleusEditor::zoomOut(){
+	QKeyEvent *event = new QKeyEvent ( QEvent::KeyPress, Qt::Key_Minus, 0, 0 );
+	QCoreApplication::postEvent (segView, event);
 }
 
 //******************************************************************************************

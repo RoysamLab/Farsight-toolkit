@@ -118,6 +118,8 @@ protected slots:
 	void toggleBounds();
 	void toggleIDs();
 	void toggleCentroids();
+	void zoomIn();
+	void zoomOut();
 	void CreateNewPlotWindow();
 	void CreateNewTableWindow();
 	void CreateNewHistoWindow();
@@ -206,6 +208,9 @@ protected:
 	QAction *showBoundsAction;
 	QAction *showIDsAction;
 	QAction *showCentroidsAction;
+	QMenu *zoomMenu;
+	QAction *zoomInAction;
+	QAction *zoomOutAction;
 	QAction *newTableAction;
 	QAction *newScatterAction;
 	QAction *newHistoAction;
