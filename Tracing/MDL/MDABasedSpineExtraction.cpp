@@ -511,8 +511,8 @@ int main(int argc, char *argv[])
   MDLClassifier LDA_RealSpine(3);
   MDLClassifier LDA_NonSpine(3);
 
-  int LDA_t1= LDA_RealSpine.MeanVectorandVarianceMatrix("RealSpinePrior.txt");
-  int LDA_t2= LDA_NonSpine.MeanVectorandVarianceMatrix("NonSpinePrior.txt");
+  int LDA_t1= LDA_RealSpine.MeanVectorandVarianceMatrix((char *)"RealSpinePrior.txt");
+  int LDA_t2= LDA_NonSpine.MeanVectorandVarianceMatrix((char *)"NonSpinePrior.txt");
   double sample[3];
   
   
