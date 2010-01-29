@@ -84,6 +84,10 @@ MDLWizard::MDLWizard()
         }
       }
     }
+
+  //don't run automatically by default
+  this->InteractiveExecution = true;
+
   //use a signal mapper to connect the many processes to a single output
   //window
   this->Mapper = new QSignalMapper(this);
@@ -297,7 +301,7 @@ void MDLWizard::SetupSignalsAndSlots()
                 this, SLOT(BackboneExtract1Finished()));
   this->connect(this->MDABasedSpineExtraction1,
                 SIGNAL(finished(int, QProcess::ExitStatus)),
-                this, SLOT(MDABaseSpineExtraction1Finished()));
+                this, SLOT(MDABasedSpineExtraction1Finished()));
   this->connect(this->BSplineFitting,
                 SIGNAL(finished(int, QProcess::ExitStatus)),
                 this, SLOT(BSplineFittingFinished()));
@@ -350,8 +354,44 @@ void MDLWizard::SelectSpinesFile()
 }
 
 //-----------------------------------------------------------------------------
+void MDLWizard::SetInputImage(const char *filename)
+{
+  this->InputFileName = filename;
+  this->InputFile = QFileInfo(this->InputFileName);
+  if(!this->InputFile.exists())
+    {
+    cerr << "ERROR: input file " << filename << " doesn't exist!" << endl;
+    }
+  this->InputImageLabel->setText(this->InputFile.filePath());
+
+  this->IntroPage->CheckIfComplete();
+}
+
+//-----------------------------------------------------------------------------
+void MDLWizard::SetBackboneFile(const char *filename)
+{
+  this->BackboneFileName = filename;
+  this->BackboneFile = QFileInfo(this->BackboneFileName);
+  this->DataDir = this->BackboneFile.dir().absolutePath() + "/";
+  this->BackboneOutputLabel->setText(this->BackboneFile.filePath());
+
+  this->IntroPage->CheckIfComplete();
+}
+
+//-----------------------------------------------------------------------------
+void MDLWizard::SetSpinesFile(const char *filename)
+{
+  this->SpinesFileName = filename;
+  this->SpinesFile = QFileInfo(this->SpinesFileName);
+  this->SpinesOutputLabel->setText(this->SpinesFile.filePath());
+
+  this->IntroPage->CheckIfComplete();
+}
+
+//-----------------------------------------------------------------------------
 void MDLWizard::UpdateEdgeRangeFrom1()
 {
+  cout << "I got called" << endl;
   if(this->EdgeRangeInput1->text() != "")
     {
     this->EdgeRange = this->EdgeRangeInput1->text();
@@ -967,6 +1007,10 @@ void MDLWizard::VolumeProcessFinished()
   this->ConnCompntButton->setEnabled(true);
   this->ConnCompntButton->setFocus();
   this->RenderVolume(QFileInfo(this->VolumeProcessedFile));
+  if(!this->InteractiveExecution)
+    {
+    this->RunConnCompntwFldfill();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -977,6 +1021,10 @@ void MDLWizard::ConnCompntwFldfillFinished()
   this->AnisoDiffuseButton->setEnabled(true);
   this->AnisoDiffuseButton->setFocus();
   this->RenderVolume(QFileInfo(this->ComponentsConnectedFile));
+  if(!this->InteractiveExecution)
+    {
+    this->RunAnisoDiffuse();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -988,6 +1036,10 @@ void MDLWizard::AnisoDiffuseFinished()
   this->GradientVecFieldButton->setEnabled(true);
   this->GradientVecFieldButton->setFocus();
   this->RenderVolume(QFileInfo(this->AnisoDiffusedFile));
+  if(!this->InteractiveExecution)
+    {
+    this->RunGradientVecField();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -999,6 +1051,11 @@ void MDLWizard::GradientVecFieldFinished()
   this->GradientVecFieldButton->setEnabled(true);
   this->PreprocessingDone = true;
   this->PreprocessingPage->CheckIfComplete();
+  if(!this->InteractiveExecution)
+    {
+    this->next();
+    this->RunIntegratedskel();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1008,6 +1065,10 @@ void MDLWizard::IntegratedskelFinished()
   this->BackboneExtractButton1->setEnabled(true);
   this->BackboneExtractButton1->setFocus();
   this->RenderPoints(this->SeedFile);
+  if(!this->InteractiveExecution)
+    {
+    this->RunBackboneExtract1();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1018,10 +1079,14 @@ void MDLWizard::BackboneExtract1Finished()
   this->SpineExtractionButton1->setEnabled(true);
   this->SpineExtractionButton1->setFocus();
   this->RenderPolyData(QFileInfo(this->BackboneCandidateFile));
+  if(!this->InteractiveExecution)
+    {
+    this->RunMDABasedSpineExtraction1();
+    }
 }
 
 //-----------------------------------------------------------------------------
-void MDLWizard::MDABaseSpineExtraction1Finished()
+void MDLWizard::MDABasedSpineExtraction1Finished()
 {
   this->IntegratedskelButton->setEnabled(true);
   this->BackboneExtractButton1->setEnabled(true);
@@ -1029,6 +1094,10 @@ void MDLWizard::MDABaseSpineExtraction1Finished()
   this->BSplineFittingButton->setEnabled(true);
   this->BSplineFittingButton->setFocus();
   this->RenderPolyData(QFileInfo(this->SpineCandidateFile));
+  if(!this->InteractiveExecution)
+    {
+    this->RunBSplineFitting();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1041,6 +1110,10 @@ void MDLWizard::BSplineFittingFinished()
   this->RefiningSkeletonButton1->setEnabled(true);
   this->RefiningSkeletonButton1->setFocus();
   this->RenderPolyData(QFileInfo(this->SmoothBackboneFile));
+  if(!this->InteractiveExecution)
+    {
+    this->RunRefiningSkeleton1();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1058,6 +1131,11 @@ void MDLWizard::RefiningSkeleton1Finished()
   this->PhaseOneDone = true;
   this->PhaseOnePage->CheckIfComplete();
   this->RenderPoints(this->RefinedSeedFile);
+  if(!this->InteractiveExecution)
+    {
+    this->next();
+    this->RunBackboneExtract2();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1067,6 +1145,10 @@ void MDLWizard::BackboneExtract2Finished()
   this->RefiningSkeletonButton2->setEnabled(true);
   this->RefiningSkeletonButton2->setFocus();
   this->RenderPolyData(this->BackboneFile);
+  if(!this->InteractiveExecution)
+    {
+    this->RunRefiningSkeleton2();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1077,6 +1159,10 @@ void MDLWizard::RefiningSkeleton2Finished()
   this->SpineExtractionButton2->setEnabled(true);
   this->SpineExtractionButton2->setFocus();
   this->RenderPoints(this->RefinedSeedFile);
+  if(!this->InteractiveExecution)
+    {
+    this->RunMDABasedSpineExtraction2();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1089,6 +1175,10 @@ void MDLWizard::MDABasedSpineExtraction2Finished()
   this->PhaseTwoDone = true;
   this->PhaseTwoPage->CheckIfComplete();
   this->RenderPolyData(this->SpinesFile);
+  if(!this->InteractiveExecution)
+    {
+    this->DeleteIntermediaryFiles();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1155,6 +1245,10 @@ void MDLWizard::DeleteIntermediaryFiles()
     f12.remove();
     }
   this->OutputWindow->append(QString("Intermediary files deleted."));
+  if(!this->InteractiveExecution)
+    {
+    this->close();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1164,6 +1258,63 @@ void MDLWizard::UpdateHelpWindow()
     {
     this->showHelp();
     }
+}
+
+
+//-----------------------------------------------------------------------------
+void MDLWizard::SetConnectedComponentsSize(const char *s)
+{
+  this->ConnectedComponentsSize = s;
+  this->ComponentsSizeInput->setText(this->ConnectedComponentsSize);
+}
+
+//-----------------------------------------------------------------------------
+void MDLWizard::SetVectorMagnitude(const char *s)
+{
+  this->VectorMagnitude = s;
+  this->VectorMagnitudeInput->setText(this->VectorMagnitude);
+}
+
+//-----------------------------------------------------------------------------
+void MDLWizard::SetEdgeRange(const char *s)
+{
+  this->EdgeRange = s;
+  this->EdgeRangeInput1->setText(this->EdgeRange);
+}
+
+//-----------------------------------------------------------------------------
+void MDLWizard::SetGraphPruneSize(const char *s)
+{
+  this->GraphPruneSize = s;
+  this->GraphPruneSizeInput->setText(this->GraphPruneSize);
+}
+
+//-----------------------------------------------------------------------------
+void MDLWizard::SetMorphStrength(const char *s)
+{
+  this->MorphStrength = s;
+  this->MorphStrengthInput1->setText(this->MorphStrength);
+}
+
+//-----------------------------------------------------------------------------
+void MDLWizard::SetWeightFactor(const char *s)
+{
+  this->WeightFactor = s;
+  this->WeightFactorInput1->setText(this->WeightFactor);
+}
+
+//-----------------------------------------------------------------------------
+void MDLWizard::SetBSplineOrder(const char *s)
+{
+  this->BSplineOrder = s;
+  this->OrderInput->setText(this->BSplineOrder);
+}
+
+//-----------------------------------------------------------------------------
+void MDLWizard::SetBSplineLevels(const char *s)
+{
+  this->BSplineLevels = s;
+  this->LevelsInput->setText(this->BSplineLevels);
 }
 
 //-----------------------------------------------------------------------------

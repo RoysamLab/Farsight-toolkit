@@ -48,8 +48,30 @@ public:
   vtkSmartPointer<vtkVolume> ConvertRawToVolume(const char *filename);
   vtkSmartPointer<vtkVolumeProperty> NewRGBVolumeProperty(const double range[]);
 
+  //accessors
+  void SetInteractiveExecution(bool b) { this->InteractiveExecution = b; }
+  bool GetInteractiveExecution() { return this->InteractiveExecution; }
+  QString GetConnectedComponentsSize()
+    { return this->ConnectedComponentsSize; }
+  void SetConnectedComponentsSize(const char *s);
+  QString GetVectorMagnitude() { return this->VectorMagnitude; }
+  void SetVectorMagnitude(const char *s);
+  QString GetEdgeRange() { return this->EdgeRange; }
+  void SetEdgeRange(const char *s);
+  QString GetGraphPruneSize() { return this->GraphPruneSize; }
+  void SetGraphPruneSize(const char *s);
+  QString GetMorphStrength() { return this->MorphStrength; }
+  void SetMorphStrength(const char *s);
+  QString GetWeightFactor() { return this->WeightFactor; }
+  void SetWeightFactor(const char *s);
+  QString GetBSplineOrder() { return this->BSplineOrder; }
+  void SetBSplineOrder(const char *s);
+  QString GetBSplineLevels() { return this->BSplineLevels; }
+  void SetBSplineLevels(const char *s);
+
   //properties and their accessors.  Used to control when the next/back/finish
-  //buttons are enabled and disabled.
+  //buttons are enabled and disabled.  These are public so the WizardPages can
+  //access them, but in general they shouldn't be accessed by the user
   QString InputFileName;
   void SetInputFileName(QString s) { this->InputFileName = s; }
   QString GetInputFileName() { return this->InputFileName; }
@@ -67,6 +89,9 @@ public slots:
   void SelectInputImage();
   void SelectBackboneFile();
   void SelectSpinesFile();
+  void SetInputImage(const char *filename);
+  void SetBackboneFile(const char *filename);
+  void SetSpinesFile(const char *filename);
   void AppendOutputToDisplay(QObject *mapped);
   void RunVolumeProcess();
   void RunConnCompntwFldfill();
@@ -102,7 +127,7 @@ protected slots:
   void GradientVecFieldFinished();
   void IntegratedskelFinished();
   void BackboneExtract1Finished();
-  void MDABaseSpineExtraction1Finished();
+  void MDABasedSpineExtraction1Finished();
   void BSplineFittingFinished();
   void RefiningSkeleton1Finished();
   void BackboneExtract2Finished();
@@ -166,6 +191,7 @@ private:
   QString RefinedSeedFile;
   QString RefinedSkeletonFile;
   QString ExecutablePath;
+  bool InteractiveExecution;
 };
 #endif
 
