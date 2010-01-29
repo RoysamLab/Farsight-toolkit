@@ -1,6 +1,7 @@
 OPTION( BUILD_MDL "Build MDL Tracing" ON )
 IF( BUILD_MDL )
     SUBDIRS( MDL )
+    SUBDIRS( MDL2 )
 ENDIF()
 
 OPTION( BUILD_ftl2d "Build FTL2D Tracing" OFF )
