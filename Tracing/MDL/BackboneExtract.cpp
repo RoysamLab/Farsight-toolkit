@@ -186,6 +186,7 @@ int main(int argc, char *argv[])
   idx_edge = 0;   // initial
   itr = 0;
   fin >> nodePosition.x >> nodePosition.y >> nodePosition.z >> p;
+  cout << "searching input file for neighboring nodes..." << endl;
   while (!fin.eof() ) 
     {
     itr++;
@@ -262,7 +263,7 @@ int main(int argc, char *argv[])
     fin >> nodePosition.x >> nodePosition.y >> nodePosition.z >> p;
     }
 
-   printf ("nodes reading is finished over!\n"); 
+   cout << "finished reading nodes" << endl; 
    degree_nodes = new int[num_nodes+1];
    degree_nodes_buffer = new int[num_nodes+1];
 
@@ -292,7 +293,7 @@ int main(int argc, char *argv[])
   // MST algorithm
   kruskal_minimum_spanning_tree(g, back_inserter(spanning_tree));
 
-  printf("kruskal_minimum_spanning_tree(MST) is finished!\n");
+  cout << "kruskal_minimum_spanning_tree(MST) is finished!" << endl;
   
   // create initial degree_nodes array
   for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei) {
@@ -331,7 +332,7 @@ int main(int argc, char *argv[])
       }
     }
   }
-  printf("Erosion of MST is finished!\n");
+  cout << "Erosion of MST is finished!" << endl;
   // Dilation the MST by counting up the degree of nodes
   while (num_edge_eroded !=0) {
     //times_dilation--;
@@ -345,7 +346,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  printf("Dilation of MST is finished!\n");
+  cout << "Dilation of MST is finished!" << endl;
 
   num_nodes                 =0;
   // Create a msTree graph for backbone from the MST generated above
@@ -359,7 +360,7 @@ int main(int argc, char *argv[])
       }
     }
  
- printf("Lines generating is finished!\n");
+ cout << "Lines generating is finished!" << endl;
 
  Edge_iter   ei, ei_end; 
  line_count = 0;
@@ -377,7 +378,7 @@ int main(int argc, char *argv[])
 	   fprintf(fout, "2 %ld %ld\n", source(*ei, msTreeBB)-1, target(*ei, msTreeBB)-1);
    }
   
- printf("Sucess!\n");
+ cout << "Sucess!" << endl;
 
   fclose(fout); 
 

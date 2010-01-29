@@ -183,26 +183,24 @@ int main(int argc, char *argv[])
     }
   
   if ((fclass_identify = fopen("CLASSIFIER_TRAINING.txt", "w")) == NULL)  
-  {
-    printf("Cannot open CLASSIFIER_TRAINING.txt for writing\n");
-    exit(1);
-  }
+    {
+    cerr << "Cannot open CLASSIFIER_TRAINING.txt for writing" << endl;
+    return 1;
+    }
 
   if ((foutSpineCandidate = fopen("Spine_Candiate_MedialResult.vtk ", "w")) == NULL)  
-  {
-    printf("Cannot open Spine_Candiate_MedialResult.vtk for writing\n");
-    exit(1);
-  }
+    {
+    cerr << "Cannot open Spine_Candiate_MedialResult.vtk for writing" << endl;
+    return 1;
+    }
 
   #if InterMedial
-  {
     FILE *tempfile1;
     if ((tempfile1 = fopen("MST.vtk ", "w")) == NULL)  
      {
-     printf("Cannot open MST.vtk for writing\n");
-     exit(1);
-	}
-  }
+     cerr << "Cannot open MST.vtk for writing" << endl;
+     return 1;
+     }
   #endif
 
   voxelNodeIndex = new int[sizeX*sizeY*sizeZ];
@@ -254,43 +252,41 @@ int main(int argc, char *argv[])
 
   //print header information in the main output file
  
-    fprintf(fout_Spine, "# vtk DataFile Version 3.0\n");
-    fprintf(fout_Spine,"MST of skel\n");
-    fprintf(fout_Spine,"ASCII\n");
-    fprintf(fout_Spine,"DATASET POLYDATA\n");
-    fprintf(fout_Spine,"POINTS %d float\n",num_nodes);
+  fprintf(fout_Spine, "# vtk DataFile Version 3.0\n");
+  fprintf(fout_Spine,"MST of skel\n");
+  fprintf(fout_Spine,"ASCII\n");
+  fprintf(fout_Spine,"DATASET POLYDATA\n");
+  fprintf(fout_Spine,"POINTS %d float\n",num_nodes);
 
-	fprintf(foutSpineCandidate,"# vtk DataFile Version 3.0\n");
-    fprintf(foutSpineCandidate,"MST of skel\n");
-    fprintf(foutSpineCandidate,"ASCII\n");
-    fprintf(foutSpineCandidate,"DATASET POLYDATA\n");
-    fprintf(foutSpineCandidate,"POINTS %d float\n",num_nodes);
+  fprintf(foutSpineCandidate,"# vtk DataFile Version 3.0\n");
+  fprintf(foutSpineCandidate,"MST of skel\n");
+  fprintf(foutSpineCandidate,"ASCII\n");
+  fprintf(foutSpineCandidate,"DATASET POLYDATA\n");
+  fprintf(foutSpineCandidate,"POINTS %d float\n",num_nodes);
 
-    #if InterMedial
-	{
-	if(times_erosion > 1)
-	{
-	 fprintf(tempfile1,"# vtk DataFile Version 3.0\n");
-     fprintf(tempfile1,"MST of skel\n");
-     fprintf(tempfile1,"ASCII\n");
-     fprintf(tempfile1,"DATASET POLYDATA\n");
-     fprintf(tempfile1,"POINTS %d float\n",num_nodes);
-	}
-	}
-    #endif
+  #if InterMedial
+  if(times_erosion > 1)
+    {
+    fprintf(tempfile1,"# vtk DataFile Version 3.0\n");
+    fprintf(tempfile1,"MST of skel\n");
+    fprintf(tempfile1,"ASCII\n");
+    fprintf(tempfile1,"DATASET POLYDATA\n");
+    fprintf(tempfile1,"POINTS %d float\n",num_nodes);
+    }
+  #endif
    
   //reinitialize the file and variables used to loop through it
-    fin.clear();
-    fin.seekg(0, ios::beg);
-    num_nodes = 0;  // initial
-    idx_edge = 0;   // initial
-    itr = 0;
-    fin >> nodePosition.x >> nodePosition.y >> nodePosition.z >> p;
-    while (!fin.eof() ) 
+  fin.clear();
+  fin.seekg(0, ios::beg);
+  num_nodes = 0;  // initial
+  idx_edge = 0;   // initial
+  itr = 0;
+  fin >> nodePosition.x >> nodePosition.y >> nodePosition.z >> p;
+  while (!fin.eof() ) 
     {
-     itr++;
-     idx = int(nodePosition.z)*slsz + int(nodePosition.y)*sizeX + int(nodePosition.x);
-     if (voxelNodeIndex[idx] == 0)
+    itr++;
+    idx = int(nodePosition.z)*slsz + int(nodePosition.y)*sizeX + int(nodePosition.x);
+    if (voxelNodeIndex[idx] == 0)
       {
       num_nodes++;
       // Save the index of node (vertex) at each voxel position
@@ -299,11 +295,10 @@ int main(int argc, char *argv[])
       fprintf(fout_Spine,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z);  
       fprintf(foutSpineCandidate,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z); 
       #if InterMedial
-	  {
-	  if(times_erosion > 1){
-		  fprintf(tempfile1,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z);
-	  }
-	  }
+      if(times_erosion > 1)
+        {
+        fprintf(tempfile1,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z);
+        }
       #endif
       // Find all neighbor nodes within edgeRange
        for (kk = -edgeRange; kk <= edgeRange; kk++)
@@ -439,7 +434,7 @@ int main(int argc, char *argv[])
     fprintf(tempfile1,"LINES %d %d\n", line_count, line_count*3);
     for (tie(ei, ei_end) = edges(msTree); ei != ei_end; ++ei)
      {
-	   fprintf(tempfile1, "2 %ld %ld\n", source(*ei, msTree) - 1,
+     fprintf(tempfile1, "2 %ld %ld\n", source(*ei, msTree) - 1,
              target(*ei, msTree) - 1);
      }
    fclose (tempfile1);
@@ -454,11 +449,11 @@ int main(int argc, char *argv[])
     times_erosion--;
     for (i=1; i<=num_nodes; i++)   degree_nodes_buffer[i] = degree_nodes[i];
     for (vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei)
-	{
+  {
       if (degree_nodes_buffer[source(*ei, g)]>0 && degree_nodes_buffer[target(*ei, g)]>0) 
-	  {
+    {
               if (degree_nodes_buffer[source(*ei, g)]==1 || degree_nodes_buffer[target(*ei, g)]==1) 
-			  {
+        {
                   degree_nodes[source(*ei, g)] --;
                   degree_nodes[target(*ei, g)] --;
           // Save the edges eroded in a stack-like array. Each edge takes two elements of the array
@@ -479,7 +474,7 @@ int main(int argc, char *argv[])
     edge_source = edge_eroded[num_edge_eroded*2];  // Read the stored eroded edges
     edge_target = edge_eroded[num_edge_eroded*2+1];
       if ((degree_nodes[edge_source]+ degree_nodes[edge_target]) == 1)  
-	  {  // if a branch tip edge
+    {  // if a branch tip edge
            degree_nodes[edge_source] ++;
            degree_nodes[edge_target] ++;
       } // end if
@@ -567,10 +562,10 @@ int main(int argc, char *argv[])
       for (j = 0; j <= vertsCurBr_Index2[0]; j++)
         {
         indVert = vertsCurBranch2[0][j];
-		// output the locations 
-		//fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
+    // output the locations 
+    //fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
         
-		if (j==0)
+    if (j==0)
           {
           indVert_last = indVert;
           }
@@ -591,42 +586,42 @@ int main(int argc, char *argv[])
         //mahalanobis_dist[0]    =      mahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 1);  
         //mahalanobis_dist_nonSpine[0] = mahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 0); 
        
-		sample[0] =  meanDensityBranch[0];
-		sample[1] =  length_leaf[0];
-		sample[2] =  meanVesselBranch[0];
-		if (LDA_t1>0)
-		{
+    sample[0] =  meanDensityBranch[0];
+    sample[1] =  length_leaf[0];
+    sample[2] =  meanVesselBranch[0];
+    if (LDA_t1>0)
+    {
           mahalanobis_dist[0] = LDA_RealSpine.MahalanobisDist(sample); 
-		}
-		else 
-		{ std::cout << " There is no Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
+    }
+    else 
+    { std::cout << " There is no Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
           mahalanobis_dist[0] = LDA_RealSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 1);
-		}
-		if (LDA_t2>0)
-		{
-		
+    }
+    if (LDA_t2>0)
+    {
+    
           mahalanobis_dist[0] = LDA_NonSpine.MahalanobisDist(sample);
-		}
-		else 
-		{
-		  std::cout << " There is no Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
+    }
+    else 
+    {
+      std::cout << " There is no Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
           mahalanobis_dist[0] = LDA_NonSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 0);
-		}
+    }
 
         mahalanobis_dist_min = mahalanobis_dist[0];
         mahalanobis_dist_minIndex = 0;
         // output the spine candidate feature sample;  
-		//fprintf(fclass_identify, "%d  %f %f %f\n", -num_leaves, meanDensityBranch[0], length_leaf[0], meanVesselBranch[0]);
-		fprintf(fclass_identify, "%d  %f %f %f\n", num_leaves, meanDensityBranch[0], length_leaf[0], meanVesselBranch[0]);
+    //fprintf(fclass_identify, "%d  %f %f %f\n", -num_leaves, meanDensityBranch[0], length_leaf[0], meanVesselBranch[0]);
+    fprintf(fclass_identify, "%d  %f %f %f\n", num_leaves, meanDensityBranch[0], length_leaf[0], meanVesselBranch[0]);
         
-		if (branchChosen == 1)  
-		{
-		 for (j = 1; j <= vertsCurBr_Index2[0]; j++) 
-		 {
-			add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeSpineCandidate);   // add branch for the 1nd level
+    if (branchChosen == 1)  
+    {
+     for (j = 1; j <= vertsCurBr_Index2[0]; j++) 
+     {
+      add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeSpineCandidate);   // add branch for the 1nd level
             NumberNodesofSpineCandidate++;
-		  }
-		 }
+      }
+     }
 
       // ## Begin to check the 2nd level of branches located at BB
       int ind2Brch = 0;
@@ -661,7 +656,7 @@ int main(int argc, char *argv[])
         for (j = 0; j <= vertsCurBr_Index2[ind2Brch]; j++)
           {
           indVert = vertsCurBranch2[ind2Brch][j];
-		  // second level feature 
+      // second level feature 
           //fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
          
           if (j==0)
@@ -693,15 +688,15 @@ int main(int argc, char *argv[])
         mahalanobis_dist[ind2Brch]    = mahalanobisDist(aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch], 1);
         mahalanobis_dist_nonSpine[ind2Brch]=mahalanobisDist(aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch], 0);
         // out put 
-		//fprintf(fclass_identify, "%d  %f %f %f\n", -num_leaves, aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch]);
-		fprintf(fclass_identify, "%d  %f %f %f\n", num_leaves, aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch]);      
+    //fprintf(fclass_identify, "%d  %f %f %f\n", -num_leaves, aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch]);
+    fprintf(fclass_identify, "%d  %f %f %f\n", num_leaves, aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch]);      
      
-		for (j = 1; j <= vertsCurBr_Index2[ind2Brch]; j++) 
-		{
-			// test: add any branches to the Spine Candidate
-		add_edge(vertsCurBranch2[ind2Brch][j-1], vertsCurBranch2[ind2Brch][j], msTreeSpineCandidate);   // add branch for the 2nd level
+    for (j = 1; j <= vertsCurBr_Index2[ind2Brch]; j++) 
+    {
+      // test: add any branches to the Spine Candidate
+    add_edge(vertsCurBranch2[ind2Brch][j-1], vertsCurBranch2[ind2Brch][j], msTreeSpineCandidate);   // add branch for the 2nd level
         NumberNodesofSpineCandidate++;
-		}
+    }
 
         } // End of 2nd level branch
 
@@ -745,7 +740,7 @@ int main(int argc, char *argv[])
         for (j = 1; j <= vertsCurBr_Index2[0]; j++)
           {
           //add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeSpineCandidate); 
-		  add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], DetectedSpine); 
+      add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], DetectedSpine); 
           NumberNodesofRealSpine++;
           }
         if (MDL_minIndex >= 1)
@@ -754,7 +749,7 @@ int main(int argc, char *argv[])
             {
              add_edge(vertsCurBranch2[MDL_minIndex][j-1],
                      vertsCurBranch2[MDL_minIndex][j],  DetectedSpine);
-			 //add_edge(vertsCurBranch2[MDL_minIndex][j-1],
+       //add_edge(vertsCurBranch2[MDL_minIndex][j-1],
              //        vertsCurBranch2[MDL_minIndex][j],  msTreeSpineCandidate);
              NumberNodesofRealSpine++;
             } // end for
@@ -764,7 +759,7 @@ int main(int argc, char *argv[])
       // 1. Empty model set is chosen (no branch)
       sum_mahalanobis_nonSpine = 0;
       for (i = 0; i<= ind2Brch; i++) 
-	  {
+    {
         sum_mahalanobis_nonSpine += mahalanobis_dist_nonSpine[i];
       }
 
@@ -775,16 +770,16 @@ int main(int argc, char *argv[])
 
       // 3. Two level branch model set, including 1st level and 2nd level branches
       for (i = 1; i <= ind2Brch; i++) 
-	  {
+    {
         MDL = sum_mahalanobis_nonSpine - mahalanobis_dist_nonSpine[i] + mahalanobis_dist[i];
         if (MDL <  MDL_min) 
-		{
+    {
           MDL_min = MDL;
           MDL_minIndex =  i;
         }
       }// end for 
       fprintf(fout_MDL, "%10d %20f %20f\n", ind2Brch, sum_mahalanobis_nonSpine, MDL_min);  
-	
+  
     
    }    // End of each out edge 
   } // End of all vertice
@@ -828,7 +823,7 @@ int main(int argc, char *argv[])
      {
      // output lines into vtk file
      //fprintf(fout_Spine, "2 %zu %zu\n", source(*ei, msTreeSpineCandidate) - 1,
-	   fprintf(fout_Spine, "2 %ld %ld\n", source(*ei, DetectedSpine) - 1,
+     fprintf(fout_Spine, "2 %ld %ld\n", source(*ei, DetectedSpine) - 1,
              target(*ei, DetectedSpine) - 1);
      }
 
@@ -883,20 +878,20 @@ double mahalanobisDist(double meanDensityBranch, double length_leaf, double mean
   // For dataset Trach6A
 
  // For dataset Trach6A
-	/*
-	if (spineOne == 1)  {
+  /*
+  if (spineOne == 1)  {
         x1 = meanDensityBranch - 44.54;  // minus mean_feature from matlab 
-        x2 = length_leaf - 14.43;             	//if (x2>10)  x2=10; //keep long dendrite 
+        x2 = length_leaf - 14.43;               //if (x2>10)  x2=10; //keep long dendrite 
         x3 = meanVesselBranch - 198.62;
-		mahalanobis_dist = x1*x1*0.0019+ 2*x1*x2*(0.0031)+ 2*x1*x3*(-0.0002)+ x2*x2*0.0252+ 2*x2*x3*0.0002	+x3*x3*0.0004;
-	}
-	else	{
+    mahalanobis_dist = x1*x1*0.0019+ 2*x1*x2*(0.0031)+ 2*x1*x3*(-0.0002)+ x2*x2*0.0252+ 2*x2*x3*0.0002  +x3*x3*0.0004;
+  }
+  else  {
         x1 = meanDensityBranch - 37.52;  // assume non-spine has close-to-zero distribution, but the same variance as spines 
         x2 = length_leaf - 9.42;                             
         x3 = meanVesselBranch - 178.26;
-		mahalanobis_dist = x1*x1*0.0018+ 2*x1*x2*(-0.0002)+ 2*x1*x3*(-0.0003)+ x2*x2*0.0182+ 2*x2*x3*0.0010	+x3*x3*0.0004;
-	}
-	
+    mahalanobis_dist = x1*x1*0.0018+ 2*x1*x2*(-0.0002)+ 2*x1*x3*(-0.0003)+ x2*x2*0.0182+ 2*x2*x3*0.0010 +x3*x3*0.0004;
+  }
+  
 */
   
 
