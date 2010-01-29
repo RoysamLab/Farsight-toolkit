@@ -1018,11 +1018,6 @@ void NucleusEditor::startKPLS()
 	connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
 	pWizard->show();
 	kplsRun = 1;
-	//Show colored seeds after kPLS has run
-	showCentroidsAction->setChecked(true);
-	if( segView->AreCentroidsDisplayed() ){
-		toggleCentroids();toggleCentroids();
-	} else toggleCentroids();
 }
 
 //*********************************************************************************************************
@@ -1086,6 +1081,14 @@ void NucleusEditor::updateViews()
 
 	for(int p=0; p<(int)hisWin.size(); ++p)
 		hisWin.at(p)->update();
+
+	//Show colored seeds after kPLS has run
+	if( kplsRun ){
+		showCentroidsAction->setChecked(true);
+		if( segView->AreCentroidsDisplayed() ){
+			toggleCentroids();toggleCentroids();
+		} else toggleCentroids();
+	}
 }
 //******************************************************************************
 // Create a new Plot window and give it the provided model and selection model
