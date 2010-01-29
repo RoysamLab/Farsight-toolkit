@@ -163,13 +163,13 @@ void MDLWizard::SetupSignalsAndSlots()
 {
   this->connect(this, SIGNAL(currentIdChanged(int)),
                 this, SLOT(UpdateHelpWindow()));
-  this->connect(this->SelectInputButton, SIGNAL(pressed()),
+  this->connect(this->SelectInputButton, SIGNAL(clicked()),
                 this, SLOT(SelectInputImage()));
-  this->connect(this->SelectBackboneButton, SIGNAL(pressed()),
+  this->connect(this->SelectBackboneButton, SIGNAL(clicked()),
                 this, SLOT(SelectBackboneFile()));
-  this->connect(this->SelectSpinesButton, SIGNAL(pressed()),
+  this->connect(this->SelectSpinesButton, SIGNAL(clicked()),
                 this, SLOT(SelectSpinesFile()));
-  this->connect(this->DeleteFilesButton, SIGNAL(pressed()),
+  this->connect(this->DeleteFilesButton, SIGNAL(clicked()),
                 this, SLOT(DeleteIntermediaryFiles()));
 
   //all these connections are for updating GUI elements that appear on more
@@ -254,29 +254,29 @@ void MDLWizard::SetupSignalsAndSlots()
                            this->MDABasedSpineExtraction2);
 
   //connect the processes to their "run" buttons
-  this->connect(this->VolumeProcessButton, SIGNAL(pressed()),
+  this->connect(this->VolumeProcessButton, SIGNAL(clicked()),
                 this, SLOT(RunVolumeProcess()));
-  this->connect(this->ConnCompntButton, SIGNAL(pressed()),
+  this->connect(this->ConnCompntButton, SIGNAL(clicked()),
                 this, SLOT(RunConnCompntwFldfill()));
-  this->connect(this->AnisoDiffuseButton, SIGNAL(pressed()),
+  this->connect(this->AnisoDiffuseButton, SIGNAL(clicked()),
                 this, SLOT(RunAnisoDiffuse()));
-  this->connect(this->GradientVecFieldButton, SIGNAL(pressed()),
+  this->connect(this->GradientVecFieldButton, SIGNAL(clicked()),
                 this, SLOT(RunGradientVecField()));
-  this->connect(this->IntegratedskelButton, SIGNAL(pressed()),
+  this->connect(this->IntegratedskelButton, SIGNAL(clicked()),
                 this, SLOT(RunIntegratedskel()));
-  this->connect(this->BackboneExtractButton1, SIGNAL(pressed()),
+  this->connect(this->BackboneExtractButton1, SIGNAL(clicked()),
                 this, SLOT(RunBackboneExtract1()));
-  this->connect(this->SpineExtractionButton1, SIGNAL(pressed()),
+  this->connect(this->SpineExtractionButton1, SIGNAL(clicked()),
                 this, SLOT(RunMDABasedSpineExtraction1()));
-  this->connect(this->BSplineFittingButton, SIGNAL(pressed()),
+  this->connect(this->BSplineFittingButton, SIGNAL(clicked()),
                 this, SLOT(RunBSplineFitting()));
-  this->connect(this->RefiningSkeletonButton1, SIGNAL(pressed()),
+  this->connect(this->RefiningSkeletonButton1, SIGNAL(clicked()),
                 this, SLOT(RunRefiningSkeleton1()));
-  this->connect(this->BackboneExtractButton2, SIGNAL(pressed()),
+  this->connect(this->BackboneExtractButton2, SIGNAL(clicked()),
                 this, SLOT(RunBackboneExtract2()));
-  this->connect(this->RefiningSkeletonButton2, SIGNAL(pressed()),
+  this->connect(this->RefiningSkeletonButton2, SIGNAL(clicked()),
                 this, SLOT(RunRefiningSkeleton2()));
-  this->connect(this->SpineExtractionButton2, SIGNAL(pressed()),
+  this->connect(this->SpineExtractionButton2, SIGNAL(clicked()),
                 this, SLOT(RunMDABasedSpineExtraction2()));
 
   //when a process finishes, run a method that re-enables the appropriate "run"
