@@ -79,7 +79,7 @@ bool VolumeProcess::Update()
 		MCDFilter->SetNumberOfIterations(numberOfIterations);
 		MCDFilter->SetTimeStep( timeStep );
 		MCDFilter->SetConductanceParameter( conductance );
-		MCDFilter->SetInput( m_inputImage );
+		MCDFilter->SetInput( m_outputImage );
 
 		try
 		{
@@ -94,7 +94,6 @@ bool VolumeProcess::Update()
 			return false;
 		}
 		m_outputImage = MCDFilter->GetOutput();
-
 		
 		if(debug)
 		{
@@ -102,6 +101,7 @@ bool VolumeProcess::Update()
 		}
 	}
 
+	
     double itkThreshold = getItkOtsuThreshold(m_outputImage);
 	if(debug)
 	{
@@ -125,32 +125,35 @@ bool VolumeProcess::Update()
 	}
 	else
 	{
-		threshold = xlThreshold;
+		//threshold = xlThreshold;
+		threshold = itkThreshold / 3.3;
 	}
 
 	if(debug)	
 		std::cerr << "OTSU optimal threshold " << threshold << std::endl;
-
-	//Apply threshold
+	
+	//Apply threshold (any thing below threshold is set to zero
 	itk::ImageRegionIterator< ImageType > itr( m_outputImage, m_outputImage->GetBufferedRegion() );
 	for(itr.GoToBegin(); !itr.IsAtEnd(); ++itr)
 	{
 		if(itr.Get() < threshold) 
         {
-          itr.Set(0);
+			itr.Set(0);
         }
 	}
 
 	//Dilation of the image
 	this->dialateImage(m_outputImage, 1, 3);
 
+	if(debug)
+		std::cerr << "Done" << std::endl;
 
+	std::cin.ignore();
 
-	//cout << "Done" << endl;
 	return true;
 }
 
-VolumeProcess::ImageType::Pointer VolumeProcess::GetOutput()
+ImageType::Pointer VolumeProcess::GetOutput()
 {
 	return m_outputImage;
 }
@@ -321,9 +324,9 @@ void VolumeProcess::dialateImage(ImageType::Pointer img, int iterations, int bor
 	borderRegion.SetIndex(0, fullRegion.GetIndex(0)+border);
 	borderRegion.SetIndex(1, fullRegion.GetIndex(1)+border);
 	borderRegion.SetIndex(2, fullRegion.GetIndex(2)+border);
-	borderRegion.SetSize(0, fullRegion.GetSize(0)-border);
-	borderRegion.SetSize(1, fullRegion.GetSize(1)-border);
-	borderRegion.SetSize(2, fullRegion.GetSize(2)-border);
+	borderRegion.SetSize(0, fullRegion.GetSize(0)-(2*border));
+	borderRegion.SetSize(1, fullRegion.GetSize(1)-(2*border));
+	borderRegion.SetSize(2, fullRegion.GetSize(2)-(2*border));
 	itk::ImageRegionIteratorWithIndex< ImageType > itr( img, borderRegion );
 	while(iterations > 0)
 	{

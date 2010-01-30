@@ -5,3 +5,5 @@ INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} ${Farsight_BINARY_DIR}/Tracing/MDL2 ${
 ADD_LIBRARY(mdlVolumeProcess mdlVolumeProcess.h mdlVolumeProcess.cpp)
 TARGET_LINK_LIBRARIES(mdlVolumeProcess ITKIO ITKStatistics)
 
+ADD_EXECUTABLE(pp main.cpp)
+TARGET_LINK_LIBRARIES(pp mdlVolumeProcess)

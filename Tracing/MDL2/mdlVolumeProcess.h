@@ -25,20 +25,17 @@ limitations under the License.
 #ifndef __mdlVolumeProcess_h
 #define __mdlVolumeProcess_h
 
+#include "mdlTypes.h"
+
 #include <string>
 #include <vector>
 #include <iostream>
 
-#include "itkImage.h"
-//#include "itkImageFileReader.h"
-#include "itkImageFileWriter.h"
+//#include "itkImageFileWriter.h"
 #include "itkOtsuThresholdImageFilter.h" 
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkImageRegionIterator.h"
 #include "itkImageRegionIteratorWithIndex.h"
-//#include "itkShiftScaleImageFilter.h"
-//#include "itkNormalizeImageFilter.h"
-
 #include "itkCurvatureAnisotropicDiffusionImageFilter.h"
 
 namespace mdl
@@ -47,10 +44,6 @@ namespace mdl
 class VolumeProcess
 {
 public:
-	typedef unsigned char PixelType;
-    static const unsigned int Dimension = 3;
-    typedef itk::Image< PixelType, Dimension > ImageType;
-
 	VolumeProcess();
 	void SetUseCAD(bool inp = true){ useCAD = inp; };
 	void SetOverwrite(bool inp = true){ overwriteInput = inp; };
