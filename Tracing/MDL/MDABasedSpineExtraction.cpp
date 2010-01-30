@@ -265,7 +265,7 @@ int main(int argc, char *argv[])
   fprintf(foutSpineCandidate,"POINTS %d float\n",num_nodes);
 
   #if InterMedial
-  if(times_erosion > 1)
+    if(times_erosion > 1)
     {
     fprintf(tempfile1,"# vtk DataFile Version 3.0\n");
     fprintf(tempfile1,"MST of skel\n");
@@ -295,7 +295,7 @@ int main(int argc, char *argv[])
       fprintf(fout_Spine,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z);  
       fprintf(foutSpineCandidate,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z); 
       #if InterMedial
-      if(times_erosion > 1)
+        if(times_erosion > 1)
         {
         fprintf(tempfile1,"%f %f %f\n", nodePosition.x, nodePosition.y, nodePosition.z);
         }
@@ -513,11 +513,26 @@ int main(int argc, char *argv[])
 
   int LDA_t1= LDA_RealSpine.MeanVectorandVarianceMatrix((char *)"RealSpinePrior.txt");
   int LDA_t2= LDA_NonSpine.MeanVectorandVarianceMatrix((char *)"NonSpinePrior.txt");
-  double sample[3];
-  
-  
-  //ONLY run this first!
+  if (LDA_t1 >0)
+  {
+	  std::cout << " There is Real-Spine Feature Sample,We do machine learning based classification" << std::endl;
+  }
+  else 
+  {
 
+	  std::cout << " There is not Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
+  }
+  if (LDA_t2 >0)
+  {
+	  std::cout << " There is Non-Spine Feature Sample,We do machine learning based classification" << std::endl;
+  }
+  else 
+  {
+	  std::cout << " There is Non-Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
+  }
+
+  double sample[3];
+  //ONLY run this first!
   typedef property_map<Graph, vertex_index_t>::type IndexMap;
   IndexMap index = get(vertex_index, msTree);  // get index map of vertices
   
@@ -585,7 +600,7 @@ int main(int argc, char *argv[])
 
         //mahalanobis_dist[0]    =      mahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 1);  
         //mahalanobis_dist_nonSpine[0] = mahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 0); 
-       
+  
     sample[0] =  meanDensityBranch[0];
     sample[1] =  length_leaf[0];
     sample[2] =  meanVesselBranch[0];
@@ -594,20 +609,20 @@ int main(int argc, char *argv[])
           mahalanobis_dist[0] = LDA_RealSpine.MahalanobisDist(sample); 
     }
     else 
-    { std::cout << " There is no Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
+    {     //std::cout << " There is no Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
           mahalanobis_dist[0] = LDA_RealSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 1);
     }
     if (LDA_t2>0)
     {
     
-          mahalanobis_dist[0] = LDA_NonSpine.MahalanobisDist(sample);
+          mahalanobis_dist_nonSpine[0] = LDA_NonSpine.MahalanobisDist(sample);
     }
     else 
     {
-      std::cout << " There is no Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
-          mahalanobis_dist[0] = LDA_NonSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 0);
+          //std::cout << " There is no Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
+          mahalanobis_dist_nonSpine[0] = LDA_NonSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 0);
     }
-
+   
         mahalanobis_dist_min = mahalanobis_dist[0];
         mahalanobis_dist_minIndex = 0;
         // output the spine candidate feature sample;  
@@ -685,9 +700,32 @@ int main(int argc, char *argv[])
         aveVesselBranch[ind2Brch] = aveVesselBranch[ind2Brch] / length_2leaf[ind2Brch];
 
         // mahalanobis distance is based on features of two-level branches
-        mahalanobis_dist[ind2Brch]    = mahalanobisDist(aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch], 1);
-        mahalanobis_dist_nonSpine[ind2Brch]=mahalanobisDist(aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch], 0);
-        // out put 
+        //mahalanobis_dist[ind2Brch]    = mahalanobisDist(aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch], 1);
+        //mahalanobis_dist_nonSpine[ind2Brch]=mahalanobisDist(aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch], 0);
+        
+	sample[0] =  aveDensityBranch[ind2Brch];
+    sample[1] =  length_2leaf[ind2Brch];
+    sample[2] =  aveVesselBranch[ind2Brch];
+    if (LDA_t1>0)
+    {
+          mahalanobis_dist[ind2Brch] = LDA_RealSpine.MahalanobisDist(sample); 
+    }
+    else 
+    {     //std::cout << " There is no Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
+          mahalanobis_dist[ind2Brch] = LDA_RealSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 1);
+    }
+    if (LDA_t2>0)
+    {
+    
+          mahalanobis_dist_nonSpine[ind2Brch] = LDA_NonSpine.MahalanobisDist(sample);
+    }
+    else 
+    {
+          //std::cout << " There is no Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
+          mahalanobis_dist_nonSpine[ind2Brch] = LDA_NonSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 0);
+    }
+
+		// out put 
     //fprintf(fclass_identify, "%d  %f %f %f\n", -num_leaves, aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch]);
     fprintf(fclass_identify, "%d  %f %f %f\n", num_leaves, aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch]);      
      

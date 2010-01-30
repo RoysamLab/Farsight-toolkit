@@ -13,34 +13,17 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
 
-/*  Volume dataset processing
- *  accept a sequence of volumes
- *  Windows version, taken in from Linux version
- *   Author: Xiaosong Yuan, RPI
- *  Modified on Sep. 29, 2005  
-
- *  Input parameters
- *          1. sizeExpand   
- *          2. preproess          */
-
 #if defined(_MSC_VER)
 #pragma warning(disable : 4996)
 #endif
 
-
-# define FAST_RVERSION  1
+# define Curvature_Anistropic_Diffusion  1
 #include <iostream>
-
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkOtsuThresholdImageFilter.h" 
-
-#include "itkCastImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
-#include "itkShiftScaleImageFilter.h"
-#include "itkNormalizeImageFilter.h"
-
 #include "itkCurvatureAnisotropicDiffusionImageFilter.h"
 
 using std::cerr;
@@ -156,24 +139,19 @@ int main(int argc, char *argv[])
       } 
     // ---------------Linear Mapping --------------------//
     
-	typedef itk::CastImageFilter<
-               ImageType, ImageType >  CastFilterType;
     typedef itk::RescaleIntensityImageFilter<
                ImageType, ImageType>  RescaleFilterType;
-    CastFilterType::Pointer       castFilter       = CastFilterType::New();
     RescaleFilterType::Pointer    rescaleFilter    = RescaleFilterType::New();
-	castFilter->SetInput(reader->GetOutput());
     rescaleFilter->SetInput(    reader->GetOutput() );
 	rescaleFilter->SetOutputMinimum(  0 );
     rescaleFilter->SetOutputMaximum( 255 );
-    castFilter->Update();
     rescaleFilter->Update();
 	inputImage = rescaleFilter->GetOutput();
 	cout << "The Linear Mapping is done\n";
 
 	//---------------------------------Curvature based diffusion --------------------//
 	 // CurvatureAnisotropicDiffusionImageFilter
-    # if FAST_RVERSION 
+    # if Curvature_Anistropic_Diffusion 
 	{
      typedef itk::CurvatureAnisotropicDiffusionImageFilter<
                ImageType, ImageType >  MCD_FilterType;
@@ -230,8 +208,6 @@ int main(int argc, char *argv[])
       ++itr;
       ++idx;
       }
-	 
-
     }
 
   //allocate memory for the output image
