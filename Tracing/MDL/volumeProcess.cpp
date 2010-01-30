@@ -100,8 +100,13 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
     }
 
-  //initialize the input image
-  if(rawInput)
+ 
+    typedef float     PixelType;
+    const   unsigned int      Dimension = 3;
+    typedef itk::Image< PixelType, Dimension >    ImageType;
+    ImageType::Pointer inputImage;
+
+   if(rawInput)
     {
     if((infile=fopen(inputFileName.c_str(), "rb"))==NULL)
       {
@@ -116,16 +121,52 @@ int main(int argc, char *argv[])
       cerr << "File size is not the same as volume size" << endl;
       return EXIT_FAILURE;
       }
-    }
-  else
+    
+	inputImage = ImageType::New();
+
+	ImageType::PointType origin;
+    origin[0] = 0.; 
+    origin[1] = 0.;    
+    origin[2] = 0.;    
+	inputImage->SetOrigin( origin );
+
+	ImageType::IndexType start;
+    start[0] =   0;  
+    start[1] =   0;  
+	start[2] =   0;  
+
+	ImageType::SizeType  size;
+    size[0]  = sizeX;  
+    size[1]  = sizeY;  
+	size[2]  = sizeZ;  
+
+    ImageType::RegionType region;
+    region.SetSize( size );
+    region.SetIndex( start );
+    
+    inputImage->SetRegions( region );
+    inputImage->Allocate();
+    inputImage->FillBuffer(0);
+	inputImage->Update();
+	
+	typedef itk::ImageRegionIteratorWithIndex< ImageType > IteratorType;
+	IteratorType iterator1(inputImage,inputImage->GetRequestedRegion());
+	int lng = sizeX*sizeY*sizeZ;
+	
+	for(int i=0; i<lng; i++)
+	{
+	 iterator1.Set((float)volin[i]);
+	 ++iterator1;	
+	}
+  } // end if(rawInput)
+
+   else
     {
-    //use ITK to read all non-raw images
-    typedef float     PixelType;
-    const   unsigned int      Dimension = 3;
-    typedef itk::Image< PixelType, Dimension >    ImageType;
+  
     typedef itk::ImageFileReader< ImageType >  ReaderType;
     ReaderType::Pointer reader = ReaderType::New();
-    ImageType::Pointer inputImage = reader->GetOutput();
+
+    inputImage = reader->GetOutput();
     reader->SetFileName( inputFileName.c_str()  );
     try 
       { 
@@ -137,23 +178,35 @@ int main(int argc, char *argv[])
       cerr << err << endl; 
       return EXIT_FAILURE;
       } 
-    // ---------------Linear Mapping --------------------//
-    
+	} // end of itk image read 
+
+ 
+	 // ---------------Linear Mapping --------------------//
     typedef itk::RescaleIntensityImageFilter<
                ImageType, ImageType>  RescaleFilterType;
     RescaleFilterType::Pointer    rescaleFilter    = RescaleFilterType::New();
-    rescaleFilter->SetInput(    reader->GetOutput() );
+    rescaleFilter->SetInput(inputImage);
 	rescaleFilter->SetOutputMinimum(  0 );
     rescaleFilter->SetOutputMaximum( 255 );
-    rescaleFilter->Update();
+	
+	try 
+      { 
+       rescaleFilter->Update();
+      } 
+    catch( itk::ExceptionObject & err ) 
+      { 
+      cerr << "ExceptionObject caught!" << endl; 
+      cerr << err << endl; 
+      return EXIT_FAILURE;
+      }
+
 	inputImage = rescaleFilter->GetOutput();
 	cout << "The Linear Mapping is done\n";
 
-	//---------------------------------Curvature based diffusion --------------------//
-	 // CurvatureAnisotropicDiffusionImageFilter
     # if Curvature_Anistropic_Diffusion 
 	{
-     typedef itk::CurvatureAnisotropicDiffusionImageFilter<
+     cout << "The Curvature Diffusion is doing\n"; 
+	 typedef itk::CurvatureAnisotropicDiffusionImageFilter<
                ImageType, ImageType >  MCD_FilterType;
 
      MCD_FilterType::Pointer MCDFilter = MCD_FilterType::New();
@@ -166,24 +219,20 @@ int main(int argc, char *argv[])
      MCDFilter->SetTimeStep( timeStep );
      MCDFilter->SetConductanceParameter( conductance );
      MCDFilter->SetInput(inputImage);
-     MCDFilter->Update();
+	 try 
+      { 
+       MCDFilter->Update();
+      } 
+     catch( itk::ExceptionObject & err ) 
+      { 
+      cerr << "ExceptionObject caught!" << endl; 
+      cerr << err << endl; 
+      return EXIT_FAILURE;
+      } 
      inputImage=MCDFilter->GetOutput(); 
      cout << "The Curvature Diffusion is done\n";
 	}
 	#endif
-   //---------------------------------------------------------------------------------//
-    //--------------------otsu--------------------------------------------------------//
-	typedef itk::OtsuThresholdImageFilter<
-               ImageType, ImageType >  OTSUFilterType;
-    OTSUFilterType::Pointer OTSUFilter = OTSUFilterType::New();
-
-    OTSUFilter->SetInput(inputImage);
-	OTSUFilter->SetNumberOfHistogramBins(128);
-	OTSUFilter->Update();
-    itkThreshold = OTSUFilter->GetThreshold();
-    std::cout << "itk Threshold is " << itkThreshold << std::endl;
-	
-    //------------------------------------------------------------------------------//
 
     ImageType::RegionType region = inputImage->GetBufferedRegion();
     ImageType::SizeType  size = region.GetSize();
@@ -191,24 +240,18 @@ int main(int argc, char *argv[])
     sizeX = size[0];
     sizeY = size[1];
     sizeZ = size[2];
-	//ImageType::SpacingType spacing;
-    //const ImageType = SpacingType& sp =inputImage->GetSpacing();
-
-    //manually copy the values from inputImage to volin, which we will use for
-    //the rest of the MDL process
     itk::ImageRegionIterator< ImageType >
       itr( inputImage, inputImage->GetBufferedRegion() );
     itr.GoToBegin();
-    long int idx = 0;
+    idx = 0;
     volin = (DATATYPEIN*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(DATATYPEIN));
-    //tempimage = (float*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(float));
     while( ! itr.IsAtEnd() )
       {
       volin[idx] = itr.Get();
       ++itr;
       ++idx;
       }
-    }
+    //}
 
   //allocate memory for the output image
   volout = (DATATYPEOUT*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(DATATYPEOUT));
@@ -256,11 +299,14 @@ int main(int argc, char *argv[])
     {
     threshold = m_threshold;
     }
-
+  /*
   if (itkThreshold > 0 && itkThreshold <12)
 	  threshold = itkThreshold;
   else  
 	  threshold = itkThreshold /3.3;
+	  */
+  if (itkThreshold > 0)
+  threshold = sqrt(itkThreshold);
   //threshold =7;
   cout << "OTSU optimal threshold " << threshold << endl;
 
