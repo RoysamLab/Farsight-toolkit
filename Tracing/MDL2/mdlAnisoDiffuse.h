@@ -13,14 +13,12 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
 /**************************************************************************  
- *  Volume dataset processing:
- *  Author: Xiaosong Yuan, RPI
- *  Modified on Sep. 29, 2005  
- *  Adapted Jan. 2010 by Isaac Abbott 
- *        
+ *  Volume Density Iso- Anisotropic Diffusion
+ *   Author: Xiaosong Yuan, RPI
+ *  Created on Nov. 16, 2005         
  *************************************************************************/
-#ifndef __mdlVolumeProcess_h
-#define __mdlVolumeProcess_h
+#ifndef __mdlAnisoDiffuse_h
+#define __mdlAnisoDiffuse_h
 
 #include "mdlTypes.h"
 
@@ -28,51 +26,39 @@ limitations under the License.
 #include <vector>
 #include <iostream>
 
-#include "GCBinarization\cell_binarization.h"
-
-//#include "itkImageFileWriter.h"
-#include "itkOtsuThresholdImageFilter.h" 
-#include "itkRescaleIntensityImageFilter.h"
+#include "itkVector.h"
 #include "itkImageRegionIterator.h"
 #include "itkImageRegionIteratorWithIndex.h"
-#include "itkCurvatureAnisotropicDiffusionImageFilter.h"
-#include "itkConnectedComponentImageFilter.h"
-#include "itkRelabelComponentImageFilter.h"
-#include "itkCastImageFilter.h"
+
 
 namespace mdl
 {
 
-class VolumeProcess
+class AnisoDiffuse
 {
 public:
-	VolumeProcess();
-	//Setup:
+	AnisoDiffuse();
 	void SetDebug(bool inp = true){ debug = inp; };
+	void SetOverwrite(bool inp = true){ overwriteInput = inp; };
+	void SetUseIso(bool inp = true){ useIso = inp; };
 	void SetInput(ImageType::Pointer inImage);
-	//Methods:
-	bool RescaleIntensities(int min, int max);
-	bool RunCAD(); //Curvature Anisotropic Diffusion
-	bool RunOtsuDenoising();
-	bool DialateImage(int iterations);
-	bool MaskSmallConnComp(int minObjSize);
-	bool MaskUsingGraphCuts();
-	//Get Result:
+	bool Update();
 	ImageType::Pointer GetOutput();
 
 private:
-	static const unsigned char m_NumberOfHistogramBins = 128;
+	struct mdlVector{float xd; float yd; float zd;};
 
-	//Parameters
-	bool debug;				//If debug is true, process in steps and print stuff
-	
 	//Images
 	ImageType::Pointer m_inputImage;
 	ImageType::Pointer m_outputImage;
 
-	//Functions:
-	double getItkOtsuThreshold(ImageType::Pointer img);
-	double getXiaoLiangOtsuThreshold(ImageType::Pointer img);
+	bool debug;				//If debug is true, process in steps and print stuff
+	bool overwriteInput;	//Replace the original image with processed one
+	bool useIso;			//true Isotropic, false = Anisotropic
+
+	int timesDiffuse;
+
+	bool DoMDLAniso();
 };
 
 }  // end namespace mdl

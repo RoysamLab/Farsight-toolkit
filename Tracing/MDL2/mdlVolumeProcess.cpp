@@ -26,83 +26,229 @@ VolumeProcess::VolumeProcess()
 {
 	m_inputImage = NULL;
 	m_outputImage = NULL;
-	useCAD = true;
-	overwriteInput = true;
 	debug = false;
 }
 
 void VolumeProcess::SetInput(ImageType::Pointer inImage)
 {
 	m_inputImage = inImage;
+
+	//Init the output image to the input image:
+	m_outputImage = ImageType::New();
+	m_outputImage->SetRegions( m_inputImage->GetLargestPossibleRegion() );
+	m_outputImage->Allocate();
+	m_outputImage->FillBuffer(0);
+	itk::ImageRegionIterator< ImageType > itr1( m_inputImage, m_inputImage->GetLargestPossibleRegion() );
+	itk::ImageRegionIterator< ImageType > itr2( m_outputImage, m_outputImage->GetLargestPossibleRegion() );
+	for(itr1.GoToBegin(), itr2.GoToBegin() ; !itr1.IsAtEnd(); ++itr1, ++itr2)
+	{
+		itr2.Set( itr1.Get() );
+	}
 }
 
-bool VolumeProcess::Update()
+ImageType::Pointer VolumeProcess::GetOutput()
 {
-	if(!m_inputImage)
-		return false;
+	return m_outputImage;
+}
 
+bool VolumeProcess::RescaleIntensities(int min, int max)
+{
 	//Rescale the pixel values
     typedef itk::RescaleIntensityImageFilter<ImageType, ImageType>  RescaleFilterType;
     RescaleFilterType::Pointer rescaleFilter = RescaleFilterType::New();
-    rescaleFilter->SetInput( m_inputImage );
-	rescaleFilter->SetOutputMinimum(  0 );
-    rescaleFilter->SetOutputMaximum( 255 );
+    rescaleFilter->SetInput( m_outputImage );
+	rescaleFilter->InPlaceOn();
+	rescaleFilter->SetOutputMinimum( min );
+    rescaleFilter->SetOutputMaximum( max );
 	try
 	{
 		rescaleFilter->Update();
 	}
 	catch( itk::ExceptionObject & err )
 	{
-		if(debug)
-		{
-			std::cerr << "ITK FILTER ERROR: " << err << std::endl ;
-		}
+		std::cerr << "ITK FILTER ERROR: " << err << std::endl ;
 		return false;
 	}
 	m_outputImage = rescaleFilter->GetOutput();
-
 	if(debug)
-	{
-		std::cerr << "The Linear Mapping is done\n" << std::endl;
-	}
+		std::cerr << "Rescale Filter Done" << std::endl;
+	return true;
+}
 
-	//----------------------Curvature based diffusion ---------------//
-    if(useCAD) 
-	{
-		typedef itk::CurvatureAnisotropicDiffusionImageFilter< ImageType, ImageType > MCD_FilterType;
-		MCD_FilterType::Pointer MCDFilter = MCD_FilterType::New();
+bool VolumeProcess::RunCAD()
+{
+	typedef itk::CurvatureAnisotropicDiffusionImageFilter< ImageType, ImageType > CADFilterType;
+	CADFilterType::Pointer cadFilter = CADFilterType::New();
     
-		//Initialnization,  using the paper's optimal parameters
-		const unsigned int numberOfIterations = 5;
-		const double       timeStep = 0.0425;
-		const double       conductance = 3;
-		MCDFilter->SetNumberOfIterations(numberOfIterations);
-		MCDFilter->SetTimeStep( timeStep );
-		MCDFilter->SetConductanceParameter( conductance );
-		MCDFilter->SetInput( m_outputImage );
+	//Initialnization,  using the paper's optimal parameters
+	const unsigned int numberOfIterations = 5;
+	const double       timeStep = 0.0425;
+	const double       conductance = 3;
+	cadFilter->SetNumberOfIterations(numberOfIterations);
+	cadFilter->SetTimeStep( timeStep );
+	cadFilter->SetConductanceParameter( conductance );
+	cadFilter->InPlaceOn();
+	cadFilter->SetInput( m_outputImage );
+	try
+	{
+		cadFilter->Update();
+	}
+	catch( itk::ExceptionObject & err )
+	{
+		std::cerr << "ITK FILTER ERROR: " << err << std::endl ;
+		return false;
+	}
+	m_outputImage = cadFilter->GetOutput();
+	if(debug)
+		std::cerr << "CAD Filter Done" << std::endl;
+	return true;
+}
 
-		try
+bool VolumeProcess::DialateImage(int iterations)
+{
+	int border = 2;
+
+	ImageType::Pointer tempImg = ImageType::New();
+	tempImg->SetRegions( m_outputImage->GetLargestPossibleRegion() );
+	tempImg->Allocate();
+	tempImg->FillBuffer(0);
+
+	ImageType::RegionType fullRegion = m_outputImage->GetBufferedRegion();
+	ImageType::RegionType borderRegion;
+	borderRegion.SetIndex(0, fullRegion.GetIndex(0)+border);
+	borderRegion.SetIndex(1, fullRegion.GetIndex(1)+border);
+	borderRegion.SetIndex(2, fullRegion.GetIndex(2)+border);
+	borderRegion.SetSize(0, fullRegion.GetSize(0)-(2*border));
+	borderRegion.SetSize(1, fullRegion.GetSize(1)-(2*border));
+	borderRegion.SetSize(2, fullRegion.GetSize(2)-(2*border));
+	itk::ImageRegionIteratorWithIndex< ImageType > itr( m_outputImage, borderRegion );
+	while(iterations > 0)
+	{
+		for(itr.GoToBegin(); !itr.IsAtEnd(); ++itr)
 		{
-			MCDFilter->Update();
-		}
-		catch( itk::ExceptionObject & err )
-		{
-			if(debug)
+			double blockMax = itr.Get();
+			for(int k=-1; k<=1; k++)
 			{
-				std::cerr << "ITK FILTER ERROR: " << err << std::endl ;
+				for(int j=-1; j<=1; j++)
+				{
+					for(int i=-1; i<=1; i++)
+					{
+						ImageType::IndexType index = itr.GetIndex();
+						index[0] += i;
+						index[1] += j;
+						index[2] += k;
+						ImageType::PixelType pix = m_outputImage->GetPixel(index);
+						if((double)pix > blockMax) 
+						{
+							blockMax = (double)pix;
+						}
+					}
+				}
 			}
-			return false;
+			// Keep the peak of the original intensity
+			if (blockMax == itr.Get() && blockMax != 0)
+            {
+				blockMax = blockMax + 1;
+            }
+			tempImg->SetPixel(itr.GetIndex(), blockMax);
 		}
-		m_outputImage = MCDFilter->GetOutput();
-		
-		if(debug)
+
+		//Copy temp img back to image for next dialation
+		itk::ImageRegionIterator< ImageType > itr1( tempImg, tempImg->GetLargestPossibleRegion() );
+		itk::ImageRegionIterator< ImageType > itr2( m_outputImage, m_outputImage->GetLargestPossibleRegion() );
+		for(itr1.GoToBegin(), itr2.GoToBegin() ; !itr1.IsAtEnd(); ++itr1, ++itr2)
 		{
-			std::cerr << "The Curvature Diffusion is done\n" << std::endl;
+			itr2.Set( itr1.Get() );
+		}
+
+		iterations--;
+	}
+	
+	if(debug)
+		std::cerr << "Dialation Done" << std::endl;
+	return true;
+}
+
+//This function removes all objects that are <= minObjSize from the foreground.
+//The foreground remains grayscale after this filter
+bool VolumeProcess::MaskSmallConnComp(int minObjSize)
+{
+	typedef itk::Image< unsigned short, Dimension > ShortImageType;
+	typedef itk::ConnectedComponentImageFilter< ImageType, ShortImageType > CCFilterType;
+	typedef itk::RelabelComponentImageFilter< ShortImageType, ShortImageType > RelabelType;
+
+	CCFilterType::Pointer ccfilter = CCFilterType::New();
+	RelabelType::Pointer relabel = RelabelType::New();
+	
+	ccfilter->SetInput (m_outputImage);
+	ccfilter->FullyConnectedOn();
+
+	relabel->SetInput( ccfilter->GetOutput() );
+	relabel->SetMinimumObjectSize( minObjSize );
+	relabel->InPlaceOn();
+
+	try
+    {
+		relabel->Update();
+    }
+    catch( itk::ExceptionObject & excep )
+    {
+		std::cerr << "Relabel: exception caught !" << std::endl;
+		std::cerr << excep << std::endl;
+		return false;
+    }
+	
+	unsigned short numObjects = relabel->GetNumberOfObjects();
+	if(debug)
+		std::cerr << "Connected components = " << numObjects << std::endl;
+
+	ShortImageType::Pointer ccImage = relabel->GetOutput();
+
+	//Use connected component image as a mask:
+	itk::ImageRegionIterator< ShortImageType > itr1( ccImage, ccImage->GetLargestPossibleRegion() );
+	itk::ImageRegionIterator< ImageType > itr2( m_outputImage, m_outputImage->GetLargestPossibleRegion() );
+	for(itr1.GoToBegin(), itr2.GoToBegin() ; !itr1.IsAtEnd(); ++itr1, ++itr2)
+	{
+		if(itr1.Get() == 0)
+		{
+			itr2.Set( 0 );
+		}
+	}
+	return true;
+}
+
+bool VolumeProcess::MaskUsingGraphCuts()
+{
+	ImageType::RegionType region = m_outputImage->GetBufferedRegion();
+	int numRows = region.GetSize(0);
+	int numColumns = region.GetSize(1);
+	int numStacks = region.GetSize(2);
+	long numPix = numStacks*numColumns*numRows;
+
+	unsigned short * binImagePtr = new unsigned short[numPix];
+	unsigned char * dataImagePtr = m_outputImage->GetBufferPointer();
+
+	int ok = Cell_Binarization_3D(dataImagePtr, binImagePtr, numRows, numColumns, numStacks, 0, 1);	//Do Binarization
+	if(!ok)
+		return false;
+
+	//Mask out pixels in the background:
+	for(long i=0; i<numPix; ++i)
+	{
+		if( binImagePtr[i] == 0 )
+		{
+			dataImagePtr[i] = 0;
 		}
 	}
 
-	
-    double itkThreshold = getItkOtsuThreshold(m_outputImage);
+	delete binImagePtr;
+
+	return true;
+}
+
+bool VolumeProcess::RunOtsuDenoising()
+{
+	double itkThreshold = getItkOtsuThreshold(m_outputImage);
 	if(debug)
 	{
 		std::cerr << "itk Threshold is " << itkThreshold << std::endl;
@@ -132,8 +278,8 @@ bool VolumeProcess::Update()
 	if(debug)	
 		std::cerr << "OTSU optimal threshold " << threshold << std::endl;
 	
-	//Apply threshold (any thing below threshold is set to zero
-	itk::ImageRegionIterator< ImageType > itr( m_outputImage, m_outputImage->GetBufferedRegion() );
+	//Apply threshold (any thing below threshold is set to zero)
+	itk::ImageRegionIterator< ImageType > itr( m_outputImage, m_outputImage->GetLargestPossibleRegion() );
 	for(itr.GoToBegin(); !itr.IsAtEnd(); ++itr)
 	{
 		if(itr.Get() < threshold) 
@@ -141,21 +287,9 @@ bool VolumeProcess::Update()
 			itr.Set(0);
         }
 	}
-
-	//Dilation of the image
-	this->dialateImage(m_outputImage, 1, 3);
-
 	if(debug)
-		std::cerr << "Done" << std::endl;
-
-	std::cin.ignore();
-
+		std::cerr << "OTSU Filter Done" << std::endl;
 	return true;
-}
-
-ImageType::Pointer VolumeProcess::GetOutput()
-{
-	return m_outputImage;
 }
 
 double VolumeProcess::getItkOtsuThreshold(ImageType::Pointer img)
@@ -312,61 +446,6 @@ double VolumeProcess::getXiaoLiangOtsuThreshold(ImageType::Pointer img)
 	return threshold; 
 }
 
-void VolumeProcess::dialateImage(ImageType::Pointer img, int iterations, int border )
-{
-	ImageType::Pointer out_img = ImageType::New();
-	out_img->SetRegions( img->GetLargestPossibleRegion() );
-	out_img->Allocate();
-	out_img->FillBuffer(0);
-
-	ImageType::RegionType fullRegion = img->GetBufferedRegion();
-	ImageType::RegionType borderRegion;
-	borderRegion.SetIndex(0, fullRegion.GetIndex(0)+border);
-	borderRegion.SetIndex(1, fullRegion.GetIndex(1)+border);
-	borderRegion.SetIndex(2, fullRegion.GetIndex(2)+border);
-	borderRegion.SetSize(0, fullRegion.GetSize(0)-(2*border));
-	borderRegion.SetSize(1, fullRegion.GetSize(1)-(2*border));
-	borderRegion.SetSize(2, fullRegion.GetSize(2)-(2*border));
-	itk::ImageRegionIteratorWithIndex< ImageType > itr( img, borderRegion );
-	while(iterations > 0)
-	{
-		for(itr.GoToBegin(); !itr.IsAtEnd(); ++itr)
-		{
-			double blockMax = itr.Get();
-			for(int k=-1; k<=1; k++)
-			{
-				for(int j=-1; j<=1; j++)
-				{
-					for(int i=-1; i<=1; i++)
-					{
-						ImageType::IndexType index = itr.GetIndex();
-						index[0] += i;
-						index[1] += j;
-						index[2] += k;
-						ImageType::PixelType pix = img->GetPixel(index);
-						if((double)pix > blockMax) 
-						{
-							blockMax = (double)pix;
-						}
-					}
-				}
-			}
-			// Keep the peak of the original intensity
-			if (blockMax == itr.Get() && blockMax != 0)
-            {
-				blockMax = blockMax + 1;
-            }
-			out_img->SetPixel(itr.GetIndex(), blockMax);
-		}
-		//Copy out_img back to in image for next dialation
-		for(itr.GoToBegin(); !itr.IsAtEnd(); ++itr)
-		{
-			img->SetPixel(itr.GetIndex(), itr.Get());
-		}
-		
-		iterations--;
-	}
-}
 
 
 }

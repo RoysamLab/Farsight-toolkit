@@ -44,11 +44,18 @@ int main(int argc, char *argv[])
 	
 	//******************************************************************
 	// PROCESSING
-	mdl::VolumeProcess *p = new mdl::VolumeProcess();
-	p->SetInput(img);
-	p->SetUseCAD(false);
-	p->SetDebug(true);
-	p->Update();
+	mdl::VolumeProcess *volProc = new mdl::VolumeProcess();
+	volProc->SetInput(img);
+	volProc->SetDebug(true);
+	//volProc->RescaleIntensities(0, 255);
+	//volProc->RunCAD(); //Curvature Anisotropic Diffusion
+	//volProc->RunOtsuDenoising();
+	//volProc->DialateImage(1);
+	volProc->MaskUsingGraphCuts();
+	//volProc->MaskSmallConnComp(50);
+
+
+
 	//******************************************************************
 	//******************************************************************
 	
@@ -57,7 +64,7 @@ int main(int argc, char *argv[])
 	typedef itk::ImageFileWriter< mdl::ImageType > WriterType;
 	WriterType::Pointer writer = WriterType::New();
 	writer->SetFileName("out.tif");
-	writer->SetInput( p->GetOutput() );
+	writer->SetInput( volProc->GetOutput() );
 	try
 	{
 		writer->Update();
