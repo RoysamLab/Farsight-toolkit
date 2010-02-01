@@ -730,10 +730,10 @@ void View3D::CreateActors()
 		  {
 			  this->tobj->ImageIntensity(this->ImageActors->GetImageData(i));
 		  }*/
-		  std::vector<double>  dimensions = this->ImageActors->GetImageSize(i);
+		  /*std::vector<double>  dimensions = this->ImageActors->GetImageSize(i);
 		  std::cout<< "\nTest of image accessors \nx\t"<< dimensions[0] << "\ty\t"<< dimensions[1]<< "\tz\t"<< dimensions[2]<< "\n";
 		  double intensity = this->ImageActors->pointData(i, 646,215,5);
-		  std::cout<< "x:646 y:215 z:5\t" << intensity<< "\n";
+		  std::cout<< "x:646 y:215 z:5\t" << intensity<< "\n";*/
 		  //These functions are not required
 	  }
 	  else
@@ -1766,6 +1766,9 @@ void View3D::closeEvent(QCloseEvent *event)
 	this->TraceEditSettings.setValue("lastOpen/Trace",this->TraceFiles);
 	this->TraceEditSettings.setValue("lastOpen/Soma", this->SomaFile);
 	this->TraceEditSettings.setValue("lastOpen/Temp", this->tempTraceFile);
+	this->TraceEditSettings.setValue("TraceTable/pos", this->FTKTable->pos());
+	this->TraceEditSettings.setValue("TraceTable/size", this->FTKTable->size());
+	this->TraceEditSettings.setValue("TracePlot/pos", this->TreePlot->pos());
 	
 	this->TraceEditSettings.sync();
 

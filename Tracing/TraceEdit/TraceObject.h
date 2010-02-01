@@ -46,7 +46,7 @@ public:
 	TraceObject();
 	TraceObject(const TraceObject &T);
 	~TraceObject();
-	void TraceObject::findingBranchingPoints();
+	void findingBranchingPoints();
 	double getSmallLineColor()
 	{
 		return this->smallLineColor;
