@@ -200,8 +200,9 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	bool done = false;
 	while(!done)		//Make sure my requested size is less than maximum for machine:
 	{
-		unsigned long totalPix = (unsigned long)(r*c*z) / ((unsigned long)block_divisor*(unsigned long)block_divisor);
-		if( (long long)23*(long long)totalPix > (long long)SIZE_MAX )
+		double totalPix = (double)(r*c*z) / ((double)block_divisor*(double)block_divisor);
+		unsigned long max = (unsigned long)SIZE_MAX;
+		if( 23.0*totalPix > (double)max )
 		{
 			std::cerr << "Increasing divisor" << std::endl;
 			block_divisor = block_divisor*2;

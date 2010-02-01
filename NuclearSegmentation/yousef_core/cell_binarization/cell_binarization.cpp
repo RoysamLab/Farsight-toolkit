@@ -88,9 +88,10 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 		bool done = false;
 		while(!done)		//Make sure my requested size is less than maximum for machine:
 		{
-			unsigned long totalPix = (unsigned long)(R*C*Z) / ((unsigned long)block_divisor*(unsigned long)block_divisor);
+			double totalPix = (double)(R*C*Z) / ((double)block_divisor*(double)block_divisor);
 			//120 bytes are needed for each pixel to create a graph!!!!
-			if( (long long)120*(long long)totalPix > (long long)SIZE_MAX )
+			unsigned long max = (unsigned long)SIZE_MAX;
+			if( 120.0*totalPix > (double)max )
 			{
 				std::cerr << "Increasing divisor" << std::endl;
 				block_divisor = block_divisor*2;
