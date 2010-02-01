@@ -31,6 +31,14 @@ class vtkPolyData;
 class vtkCellArray;
 class vtkFloatArray;
 
+typedef struct {
+	TraceBit* theBit;
+	TraceLine* theBitLine;
+	TraceLine* theAnitBitLine;
+	int slope[3];
+	bool Front;
+} EndPointInfo;
+
 /* A Trace object is a list of root TraceLines*/
 class TraceObject
 {
@@ -38,6 +46,7 @@ public:
 	TraceObject();
 	TraceObject(const TraceObject &T);
 	~TraceObject();
+	void TraceObject::findingBranchingPoints();
 	double getSmallLineColor()
 	{
 		return this->smallLineColor;
@@ -127,6 +136,8 @@ private:
   int NextTraceBitID;  
   bool CombineShortVTKLines;
 	std::vector<branchPT*> branchPTsInProgress;
+
+	
 };
 
 #endif

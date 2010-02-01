@@ -107,6 +107,52 @@ void TraceObject::Print(std::ostream &c)
   }
 }
 
+void TraceObject::findingBranchingPoints(){
+	//need to hold all the possible branch_points and closest lines
+	std::vector<EndPointInfo>* PossibleBranches  = new std::vector<EndPointInfo>();
+	EndPointInfo* temp;
+	std::vector<TraceBit*>*  ExtrapolationLines = NULL;
+	for(unsigned int i =0; i < this->trace_lines.size();i++){
+		TraceLine* line = this->trace_lines[i];
+		if(line->GetRootID() == line->GetId()){
+			if(line->isLeaf()){
+				//need to find the closest line to this point.	
+				temp = new EndPointInfo();
+				temp->theBit = &line->GetTraceBitsPointer()->back();
+				temp->theBitLine = line;
+				temp->Front = false;
+				PossibleBranches->push_back(*temp);
+			}
+			temp = new EndPointInfo();
+			temp->theBit = &line->GetTraceBitsPointer()->front();
+			temp->theBitLine = line;
+			temp->Front = true;
+			PossibleBranches->push_back(*temp);
+		}
+	}
+	//now we need to get the points for the slope of the line.
+	for(unsigned int j = 0; j < PossibleBranches->size(); j++){
+		temp = &(*PossibleBranches)[j];
+		ExtrapolationLines = new std::vector<TraceBit*>();
+		if(temp->Front){
+			//we could count time forwards
+			ExtrapolationLines->push_back(temp->theBit);
+			std::list<TraceBit>::iterator it  = temp->theBitLine->GetTraceBitIteratorBegin();
+			it++;
+			for (unsigned int i = 1; it !=  temp->theBitLine->GetTraceBitIteratorEnd() && i != 5; it++,i++)
+					ExtrapolationLines->push_back(&(*it));
+
+		}
+		else{
+			//count time backwards 
+			ExtrapolationLines->insert(ExtrapolationLines->begin(),temp->theBit);
+			std::list<TraceBit>::iterator it  = temp->theBitLine->GetTraceBitIteratorEnd();
+			it++;
+			for (unsigned int i = 4; it !=  temp->theBitLine->GetTraceBitIteratorEnd() && i != 0; it--,i--)
+					ExtrapolationLines->insert(ExtrapolationLines->begin(),&(*it));
+		}
+	}
+}
 double TraceObject::getTraceLUT(unsigned char type)
 {
 	switch( type )
