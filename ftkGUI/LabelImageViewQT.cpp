@@ -454,6 +454,14 @@ void LabelImageViewQT::updateChFlags(bool b)
 	refreshBaseImage();
 }
 
+void LabelImageViewQT::SetStatusofChannels(std::vector<bool> ch_fg){
+	if(!channelWidget) return;
+	channelFlags.clear();
+	for (int ch=0; ch<(int)ch_fg.size(); ++ch){
+		channelFlags.push_back(ch_fg[ch]);
+	}
+	refreshBaseImage();
+}
 //*******************************************************************
 // SLOTS: sliderChange and spinChange
 //

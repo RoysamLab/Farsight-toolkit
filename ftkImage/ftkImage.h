@@ -86,6 +86,7 @@ public:
 	VtkImagePtr GetVtkPtr(int T, int CH, PtrMode mode = DEFAULT);		//Returns vtkSmartPointer of vtkImageData at this T and CH, PtrMode defaults to DEFAULT
 	void SetPixel(int T, int Ch, int Z, int R, int C, double newValue); // Casts from double to image pixel type and sets pixel
 	double GetPixel(int T, int CH, int Z, int R, int C);				// Casts the value to double and returns it
+	std::vector< std::string > GetChannelNames(void){ return m_Info.channelNames; };
 
 	//Also have templated functions
 	template <typename rType> rType GetPixelT(int T, int CH, int Z, int R, int C);	//Casts the value to rType and returns it

@@ -84,6 +84,9 @@ public:
 	void SetColorForIDs(QColor color){ colorForIDs = color; refreshBoundsImage(); };
 	void SetColorMapForCentroids(QVector<QColor> table){ centroidColorTable = table; refreshBoundsImage(); };
 	bool AreCentroidsDisplayed(void) { return showCentroids; };
+	std::vector<std::string> GetNamesofChannels(void){ return channelImg->GetChannelNames(); };
+	std::vector<bool> GetStatusofChannels(void){ return channelFlags; };
+	void SetStatusofChannels(std::vector<bool> ch_fg);
 
 public slots:
 	void SaveDisplayImageToFile();
