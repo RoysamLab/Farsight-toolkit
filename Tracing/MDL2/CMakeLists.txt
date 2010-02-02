@@ -12,8 +12,5 @@ SET( cbin_SRCS
 ADD_LIBRARY(mdlVolumeProcess mdlVolumeProcess.h mdlVolumeProcess.cpp ${cbin_SRCS})
 TARGET_LINK_LIBRARIES(mdlVolumeProcess ITKIO ITKStatistics ITKBasicFilters ITKCommon)
 
-#ADD_LIBRARY(mdlAnisoDiffuse mdlAnisoDiffuse.h mdlAnisoDiffuse.cpp)
-#TARGET_LINK_LIBRARIES(mdlAnisoDiffuse ITKIO ITKStatistics)
-
-ADD_EXECUTABLE(pp main.cpp)
-TARGET_LINK_LIBRARIES(pp mdlVolumeProcess)
+ADD_EXECUTABLE(volumeProcess2 main.cpp)
+TARGET_LINK_LIBRARIES(volumeProcess2 mdlVolumeProcess)

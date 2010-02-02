@@ -446,7 +446,218 @@ double VolumeProcess::getXiaoLiangOtsuThreshold(ImageType::Pointer img)
 	return threshold; 
 }
 
+//This code was written by Xiaosong and modified by Xiao Liang
+bool VolumeProcess::RunAnisotropicDiffusion(int timesDiffuse, bool iso)
+{
+	ImageType::RegionType region = m_outputImage->GetLargestPossibleRegion();
+	int sizeX = region.GetSize(0);
+	int sizeY = region.GetSize(1);
+	int sizeZ = region.GetSize(2);
+	int sls = sizeX*sizeY;		//slice size pixels
+	int sz = sls*sizeZ;			//total number of pixels
+	
+	//Create Gradient vector Image:
+	struct mdlVector{float xd; float yd; float zd;};
+	mdlVector *gradVec;
+	gradVec = (mdlVector *)malloc(sz*sizeof(mdlVector));
 
+	//Get the buffer to the input data:
+	PixelType * volin = (PixelType*)malloc(sz*sizeof(PixelType));
+	PixelType * input = m_outputImage->GetBufferPointer();
+	memcpy(volin,input,sz*sizeof(PixelType));
+
+	//Create buffer of output data:
+	PixelType * volout = (PixelType*)malloc(sz*sizeof(PixelType));
+
+	// define positive half kernel of derivative 
+	double kernelWeight[3][3];
+	kernelWeight[0][0] = 1; kernelWeight[0][1] = 2; kernelWeight[0][2] = 1;
+	kernelWeight[1][0] = 2; kernelWeight[1][1] = 3; kernelWeight[1][2] = 2;
+	kernelWeight[2][0] = 1; kernelWeight[2][1] = 2; kernelWeight[2][2] = 1;
+
+	int border = 1;
+	double AveGradient=0.0 ;  // by xiao liang
+	double tempGradient;
+
+	timesDiffuse = 1;
+	while (timesDiffuse > 0 )
+	{
+		if(debug)
+			std::cerr << "Anisotropic Diffusion #" << timesDiffuse << " ..." << std::endl;
+
+		//initial to zeros
+		for (int idx=0; idx<sz; idx++)
+		{
+			volout[idx] = 0; 
+		}
+
+		// Compute Gradient
+		for (int k = border; k < sizeZ-border; k++)
+		{
+			for (int j = border; j < sizeY-border; j++)
+			{
+				for (int i = border; i < sizeX-border; i++)
+				{
+					if(volin[k*sls + j*sizeX + i]>0) // by xiao
+					{
+						int idx = k*sls	+ j*sizeX + i;
+						gradVec[idx].xd = 0;
+						gradVec[idx].yd = 0;
+						gradVec[idx].zd = 0;
+                
+						for (int d2 = -1; d2 <= 1; d2++)
+						{
+							for (int d1 = -1; d1 <= 1; d1++) 
+							{
+								int iidx1 = (k+d2) *sls + (j+d1) *sizeX + i-1;
+								int iidx2 = (k+d2) *sls + (j+d1) *sizeX + i+1;
+								gradVec[idx].xd = (float) (gradVec[idx].xd + kernelWeight[d2+1][d1+1]*(volin[iidx2] - volin[iidx1]));
+
+								iidx1 = (k+d2) *sls + (j-1) *sizeX + (i+d1);
+								iidx2 = (k+d2) *sls + (j+1) *sizeX + (i+d1);
+								gradVec[idx].yd =(float) (gradVec[idx].yd + kernelWeight[d2+1][d1+1]*(volin[iidx2] - volin[iidx1]));
+
+								iidx1 = (k-1) *sls + (j+d2) *sizeX + (i+d1);
+								iidx2 = (k+1) *sls + (j+d2) *sizeX + (i+d1);
+								gradVec[idx].zd = (float)(gradVec[idx].zd + kernelWeight[d2+1][d1+1]*(volin[iidx2] - volin[iidx1]));
+							}
+						}
+
+						tempGradient = gradVec[idx].xd * gradVec[idx].xd + gradVec[idx].yd *gradVec[idx].yd+ gradVec[idx].zd * gradVec[idx].zd;
+						tempGradient = sqrt(tempGradient);
+						AveGradient += tempGradient;            
+					} //end if
+				} // end for i
+			} // end for j
+		} // end for k
+
+		if(sz>0)
+			AveGradient/=sz;
+		else 
+			AveGradient=400;
+
+		double k_factor = AveGradient;
+		double lamda = 0.02;  // 0.02
+
+		if(!iso)	//Do anisotropic diffusion
+		{
+			for (int k=border; k<sizeZ-border; k++) 
+			{
+				for (int j=border; j<sizeY-border; j++) 
+				{
+					for (int i=border; i<sizeX-border; i++)
+					{
+						if(volin[k*sls + j*sizeX + i]>0) // by xiao
+						{
+							int idx = k*sls + j*sizeX + i;
+							double diverg = 0;
+							int iidx1 = k *sls + j *sizeX + i-1;
+							int iidx2 = k *sls + j *sizeX + i+1;
+							double Dxy1 = exp( -(gradVec[iidx1].xd/k_factor) * (gradVec[iidx1].xd/k_factor) );
+							double Dxy2 = exp( -(gradVec[iidx2].xd/k_factor) * (gradVec[iidx2].xd/k_factor) );
+							diverg = diverg + (Dxy2 * gradVec[iidx2].xd - Dxy1 * gradVec[iidx1].xd);
+				          
+							iidx1 = k *sls + (j-1) *sizeX + i;
+							iidx2 = k *sls + (j+1) *sizeX + i;
+							Dxy1 = exp( -(gradVec[iidx1].yd/k_factor) * (gradVec[iidx1].yd/k_factor) );
+							Dxy2 = exp( -(gradVec[iidx2].yd/k_factor) * (gradVec[iidx2].yd/k_factor) );
+							diverg = diverg + (Dxy2 * gradVec[iidx2].yd - Dxy1 * gradVec[iidx1].yd);
+				          
+							iidx1 = (k-1) *sls + j *sizeX + i;
+							iidx2 = (k+1) *sls + j *sizeX + i;
+							Dxy1 = exp( -(gradVec[iidx1].zd/k_factor) * (gradVec[iidx1].zd/k_factor) );
+							Dxy2 = exp( -(gradVec[iidx2].zd/k_factor) * (gradVec[iidx2].zd/k_factor) );
+							diverg = diverg + (Dxy2 * gradVec[iidx2].zd - Dxy1 * gradVec[iidx1].zd);
+
+							double voxelUpdate = volin[idx] + lamda * diverg;
+							if (voxelUpdate<0)   voxelUpdate=0;
+							if (voxelUpdate>255)   voxelUpdate=255;
+							volout[idx] = (int)(voxelUpdate+0.5);  // rounding to int
+						} // end if
+					} // end for i
+				} // end for j
+			} // end for k
+		}
+		else		//Do Isotropic diffusion
+		{
+			for (int k=border; k<sizeZ-border; k++) 
+			{
+				for (int j=border; j<sizeY-border; j++) 
+				{
+					for (int i=border; i<sizeX-border; i++)
+					{
+						if(volin[k*sls + j*sizeX + i]>0) // by xiao
+						{
+							int idx = k*sls + j*sizeX + i;
+							double diverg = 0;
+							int iidx1 = k *sls + j *sizeX + i-1;
+							int iidx2 = k *sls + j *sizeX + i+1;
+							diverg = diverg + (gradVec[iidx2].xd - gradVec[iidx1].xd);
+							iidx1 = k *sls + (j-1) *sizeX + i;
+							iidx2 = k *sls + (j+1) *sizeX + i;
+							diverg = diverg + (gradVec[iidx2].yd - gradVec[iidx1].yd);
+							iidx1 = (k-1) *sls + j *sizeX + i;
+							iidx2 = (k+1) *sls + j *sizeX + i;
+							diverg = diverg + (gradVec[iidx2].zd - gradVec[iidx1].zd);
+
+							double voxelUpdate = volin[idx] + lamda * diverg;
+							if (voxelUpdate<0)   voxelUpdate=0;
+							if (voxelUpdate>255)   voxelUpdate=255;
+							volout[idx] = (int)(voxelUpdate+0.5);  // rounding to int
+						} //end if
+					} // end for i
+				} // end for j
+			} // end for k
+		} // end if(useIso)
+
+		timesDiffuse--;
+
+		// copy volout back to volin for the next dilation
+		for (int idx=0; idx<sz; idx++) 
+		{
+			volin[idx] = volout[idx];
+		}
+	} // end while(timesDiffuse)
+
+	/* Removed by Xiao Liang
+	// Post-smoothing
+	double blockAve;
+	int ii, jj, kk;
+	for (int k=border; k<sizeZ-border; k++)
+		for (int j=border; j<sizeY-border; j++)
+			for (int i=border; i<sizeX-border; i++)   
+			{
+				blockAve = 0;
+				for (kk=-1; kk<=1; kk++)
+					for (jj=-1; jj<=1; jj++)
+						for (ii=-1; ii<=1; ii++) 
+						{
+							blockAve += volin[(k+kk)*sizeX*sizeY + (j+jj)*sizeX + (i+ii)];
+				}
+				volout[k *sizeX*sizeY + j *sizeX + i] = blockAve / 27;
+	}
+	*/ 
+
+	//Set the output ITK image to the buffer
+	itk::ImageRegionIterator< ImageType > itr( m_outputImage, m_outputImage->GetBufferedRegion() );
+	int idx = 0;
+	for(itr.GoToBegin(); !itr.IsAtEnd(); ++itr)
+	{
+		itr.Set( volout[idx++] );
+	}
+
+	//free memory:
+	free(volin);
+	free(volout);
+	free(gradVec);
+
+	if(debug)
+	{
+		std::cerr << "mdl Anisotropic Diffusion is Done" << std::endl;
+	}
+
+	return true;
+}
 
 }
 

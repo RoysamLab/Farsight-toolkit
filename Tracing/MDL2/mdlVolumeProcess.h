@@ -57,6 +57,7 @@ public:
 	bool DialateImage(int iterations);
 	bool MaskSmallConnComp(int minObjSize);
 	bool MaskUsingGraphCuts();
+	bool RunAnisotropicDiffusion(int timesDiffuse, bool iso = false);	//Run anisotropic diffusion written by Xiaosong
 	//Get Result:
 	ImageType::Pointer GetOutput();
 

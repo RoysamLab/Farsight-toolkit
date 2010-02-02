@@ -20,9 +20,13 @@ int main(int argc, char *argv[])
 {
 	if(argc < 2)
     {
+		std::cerr << "Usage: " << argv[0] << " <inputfilename> <outputfilename> " << std::endl;
 		return EXIT_FAILURE;
     }
 	std::string inputFileName = argv[1];
+	std::string outputFileName = "out.tif";
+	if(argc == 3)
+		outputFileName = argv[2];
 
 	//*****************************************************************
 	// IMAGE READER
@@ -54,8 +58,6 @@ int main(int argc, char *argv[])
 	volProc->MaskUsingGraphCuts();
 	//volProc->MaskSmallConnComp(50);
 
-
-
 	//******************************************************************
 	//******************************************************************
 	
@@ -63,7 +65,7 @@ int main(int argc, char *argv[])
 	// IMAGE WRITER
 	typedef itk::ImageFileWriter< mdl::ImageType > WriterType;
 	WriterType::Pointer writer = WriterType::New();
-	writer->SetFileName("out.tif");
+	writer->SetFileName(outputFileName);
 	writer->SetInput( volProc->GetOutput() );
 	try
 	{
