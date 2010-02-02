@@ -24,7 +24,10 @@ class TraceBit
 {
   public:
     TraceBit();
+	TraceBit(const TraceBit& T);
     ~TraceBit();
+	double GetCoordinateByRef(int asint);
+	void setCoordinateByRef(int asint,double value);
     double x,y,z,r, I;		//
 	//unsigned char I;
     int id;

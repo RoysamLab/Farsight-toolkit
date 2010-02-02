@@ -18,11 +18,37 @@ limitations under the License.
 TraceBit::TraceBit()
 {
 }
+TraceBit::TraceBit(const TraceBit& T)
+{
+	this->x = T.x;
+	this->y = T.y;
+	this->z = T.z;
+	this->r = T.r;
+	this->I = T.I; 		
+	this->id = T.id;
+    this->marker = T.marker;
+}
 
 TraceBit::~TraceBit()
 {
 }
 
+//0 = x, 1 = y , 2 = z
+double TraceBit::GetCoordinateByRef(int asint){
+	switch(asint){
+		case 0: return this->x; break;
+		case 1: return this->y; break;
+		case 2: return this->z; break;
+	}
+	return 0.0;
+}
+void TraceBit::setCoordinateByRef(int asint,double value){
+	switch(asint){
+		case 0: this->x = value; break;
+		case 1:  this->y = value; break;
+		case 2:  this->z = value; break;
+	}
+}
 void TraceBit::Print(std::ostream &c)
 {
   c<<"\t\tTraceBit:"<<std::endl;

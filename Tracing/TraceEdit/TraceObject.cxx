@@ -106,8 +106,40 @@ void TraceObject::Print(std::ostream &c)
     trace_lines[counter]->Print(c,4);
   }
 }
-
-void TraceObject::findingBranchingPoints(){
+void TraceObject::Calculatebranches(){
+std::vector<EndPointInfo>* possibleBranches = findingBranchingPointintercepts(findingBranchingPoints());
+EndPointInfo* temp = NULL;
+std::vector<adjPointLines*>* PiecewiseLine= NULL;
+std::list<TraceBit>::iterator it;
+TraceLine* templine = NULL;
+TraceBit* tempbit = NULL;
+adjPointLines* tempAdjP = NULL;
+for(unsigned int i = 0; i < possibleBranches->size();i++){
+	temp = &(*possibleBranches)[i];
+	std::list<TraceBit>::iterator it = temp->theAnitBitLine->GetTraceBitIteratorBegin(); 
+	templine = temp->theAnitBitLineAdjusted = new TraceLine();
+//This makes a new line in the seperate coordinate system with the end point as (0,0,0)
+	for(; it != temp->theAnitBitLine->GetTraceBitIteratorEnd();it++){
+		tempbit = new TraceBit(*it); 
+		for(unsigned int j =0; j < 3; j++) 
+			tempbit->setCoordinateByRef(j,tempbit->GetCoordinateByRef(j) - temp->theBit->GetCoordinateByRef(j));
+		templine->AddTraceBit(*tempbit);
+	}
+//Now take this new line and calculate the lines between each of the point pairs
+//this can be put with the above for loop
+	it = temp->theAnitBitLine->GetTraceBitIteratorBegin();
+	PiecewiseLine = new std::vector<adjPointLines*>();
+	for(; it != temp->theAnitBitLine->GetTraceBitIteratorEnd();it++){
+		tempbit = &(*it);
+		if((it++) == temp->theAnitBitLine->GetTraceBitIteratorEnd()) continue;
+		tempAdjP = new adjPointLines;
+		tempAdjP->arrayOBits[0] = tempbit;
+		tempAdjP->arrayOBits[1] = &(*(it++));
+		//need to find the line that goes through both points
+	}
+}
+}
+std::vector<EndPointInfo>* TraceObject::findingBranchingPoints(){
 	//need to hold all the possible branch_points and closest lines
 	std::vector<EndPointInfo>* PossibleBranches  = new std::vector<EndPointInfo>();
 	EndPointInfo* temp;
@@ -141,7 +173,8 @@ void TraceObject::findingBranchingPoints(){
 			it++;
 			for (unsigned int i = 1; it !=  temp->theBitLine->GetTraceBitIteratorEnd() && i != 5; it++,i++)
 					ExtrapolationLines->push_back(&(*it));
-
+			leastSquaresThreeDependentVar(temp,ExtrapolationLines); // calculates the normal to the plane 
+			delete  ExtrapolationLines;
 		}
 		else{
 			//count time backwards 
@@ -150,8 +183,23 @@ void TraceObject::findingBranchingPoints(){
 			it++;
 			for (unsigned int i = 4; it !=  temp->theBitLine->GetTraceBitIteratorEnd() && i != 0; it--,i--)
 					ExtrapolationLines->insert(ExtrapolationLines->begin(),&(*it));
+			leastSquaresThreeDependentVar(temp,ExtrapolationLines); // calculates the normal to the plane 
+			delete ExtrapolationLines;
 		}
 	}
+		return PossibleBranches;
+}
+std::vector<EndPointInfo>*  TraceObject::findingBranchingPointintercepts(std::vector<EndPointInfo>* PossibleBranches){
+//TODO
+	return NULL;
+}
+void TraceObject::leastSquaresThreeDependentVar(EndPointInfo* endPoint, std::vector<TraceBit*>*  ExtrapolationLines){
+		double Factor = (ExtrapolationLines->size()*(ExtrapolationLines->size()+1))/2;
+		for (unsigned int i = 0; i < ExtrapolationLines->size(); i++)	
+			for(unsigned int j = 0; j < 3; j++)
+				if (i == 0)endPoint->slope[j]=ExtrapolationLines->at(i)->GetCoordinateByRef(j);
+				else endPoint->slope[j]+=ExtrapolationLines->at(i)->GetCoordinateByRef(j);
+		for(unsigned int j = 0; j < 3; j++) endPoint->slope[j]/= Factor;
 }
 double TraceObject::getTraceLUT(unsigned char type)
 {

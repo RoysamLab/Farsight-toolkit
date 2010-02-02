@@ -35,10 +35,19 @@ typedef struct {
 	TraceBit* theBit;
 	TraceLine* theBitLine;
 	TraceLine* theAnitBitLine;
-	int slope[3];
+	TraceLine* theAnitBitLineAdjusted;
+	double slope[3];
+	//The plane equation is ((slope[0]*x + slope[1]*y)/slope[3])*t def
 	bool Front;
 } EndPointInfo;
-
+typedef struct {
+	TraceBit* arrayOBits[2];
+	double slope[3];
+	double intersect[3];
+	//The plane equation is ((slope[0]*x + slope[1]*y)/slope[3])*t def
+	bool Front;
+} adjPointLines;
+const int timeSize = 20; //this should be user en
 /* A Trace object is a list of root TraceLines*/
 class TraceObject
 {
@@ -46,7 +55,6 @@ public:
 	TraceObject();
 	TraceObject(const TraceObject &T);
 	~TraceObject();
-	void findingBranchingPoints();
 	double getSmallLineColor()
 	{
 		return this->smallLineColor;
@@ -63,6 +71,10 @@ public:
 	{
 		this->mergeLineColor=set;
 	};
+	void leastSquaresThreeDependentVar(EndPointInfo* endPoint, std::vector<TraceBit*>*  ExtrapolationLines);
+	void Calculatebranches();
+	std::vector<EndPointInfo>* findingBranchingPoints();
+	std::vector<EndPointInfo>* findingBranchingPointintercepts(std::vector<EndPointInfo>* PossibleBranches);
 	void setLUT(int num);
 	double getTraceLUT(unsigned char type);
 //	I/O functions
