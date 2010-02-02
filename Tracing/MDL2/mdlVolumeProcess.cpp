@@ -241,7 +241,7 @@ bool VolumeProcess::MaskUsingGraphCuts()
 		}
 	}
 
-	delete binImagePtr;
+	delete [] binImagePtr;
 
 	return true;
 }
