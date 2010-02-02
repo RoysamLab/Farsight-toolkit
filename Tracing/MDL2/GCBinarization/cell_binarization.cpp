@@ -142,6 +142,56 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	return 1;//num_objects;	
 }
 
+int Neuron_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, int C, int Z, int shd, int div) //modifed by Yousef on 5-20-2008.. The first input change from uchar* to int*
+{			
+	float alpha_B, alpha_F, P_I;
+	alpha_B = alpha_F = P_I = 0;		
+	MinErrorThresholding(imgIn, &alpha_B, &alpha_F, &P_I, R, C, Z, shd,imgOut); 	
+	
+	int block_divisor = 1;
+	int tmp1;
+	
+	if (R>128||C>128)
+	{
+       tmp1 = max(R,C);
+	   block_divisor = tmp1/96;
+	}
+         
+	std::cout << "Blocked-Graph cuts segmentation " << std::endl;
+
+	int *subImgBlock = new int[6];//[x1,y1,z1,x2,y2,z1]	
+	subImgBlock[4] = 0;
+	subImgBlock[5] = Z;
+	int blk = 1;
+	int cntr = 0;
+	for(int i=0; i<R; i+=R/block_divisor)
+		for(int j=0; j<C; j+=C/block_divisor)
+			cntr++;
+
+	for(int i=0; i<R; i+=R/block_divisor)
+	{
+		for(int j=0; j<C; j+=C/block_divisor)
+		{			
+			std::cout<<"    Binarizing block "<<blk<<" of "<<cntr<<std::endl;
+			subImgBlock[0] = j;
+			subImgBlock[1] = (int)j+C/block_divisor+1;
+			subImgBlock[2] = i;
+			subImgBlock[3] = (int)i+R/block_divisor+1;
+			if(subImgBlock[1] > C)
+				subImgBlock[1] = C;
+			if(subImgBlock[3] > R)
+				subImgBlock[3] = R;
+
+			Seg_GC_Full_3D_Blocks(imgIn, R, C, Z, alpha_F, alpha_B, P_I, imgOut,subImgBlock);
+			blk++;
+		}
+	}
+			
+	delete [] subImgBlock;
+
+	return 1;//num_objects;	
+}
+
 double compute_poisson_prob(double intensity, double alpha)
 {
     /*this is the equation
