@@ -150,7 +150,8 @@ private:
 	QSettings TraceEditSettings;
 	QDockWidget * InformationDisplays;
 	QTextEdit * EditLogDisplay;
-	QString TraceFiles, Image, SomaFile, tempTraceFile, UserName, LabName, ProjectName;
+	QString UserName, LabName, ProjectName;
+	QStringList TraceFiles, Image, SomaFile, tempTraceFile;
 	QWidget * bootLoadFiles;
 	QPushButton * BootTrace;
 	QPushButton * BootSoma;

@@ -110,19 +110,21 @@ View3D::View3D(int argc, char **argv)
       printf("I detected swc\n");
       this->tobj->ReadFromSWCFile(argv[counter]);
 	  tracesLoaded = true;
-	  this->TraceFiles = QString(argv[counter]);
+	  this->TraceFiles.append( QString(argv[counter]));
 	  //this->TraceFiles
        }
     else if (strcmp(argv[counter]+len-3,"xml")==0)
       {
       printf("I detected xml\n");
       this->tobj->ReadFromRPIXMLFile(argv[counter]);
+	  this->TraceFiles.append( QString(argv[counter]));
 	  tracesLoaded = true;
       }
     else if (strcmp(argv[counter]+len-3,"vtk")==0)
       {
       printf("I detected vtk\n");
       this->tobj->ReadFromVTKFile(argv[counter]);
+	  this->TraceFiles.append( QString(argv[counter]));
 	  tracesLoaded = true;
       }
     else if( strcmp(argv[counter]+len-3,"tks")==0)
@@ -136,8 +138,8 @@ View3D::View3D(int argc, char **argv)
        strcmp(argv[counter]+len-3, "PIC")==0)
       {
       printf("I detected a 3d image file\n");
-	  this->Image = QString(argv[counter]);
-	  this->ImageActors->loadImage(this->Image.toStdString(), "Image");
+	  this->Image.append( QString(argv[counter]));
+	  this->ImageActors->loadImage(QString(argv[counter]).toStdString(), "Image");
       }
     num_loaded++;
     }
@@ -205,13 +207,17 @@ void View3D::CreateBootLoader()
 }
 void View3D::ReloadState()
 {
-	this->Image = this->TraceEditSettings.value("lastOpen/Image").toString();
+	int i;
+	this->Image = this->TraceEditSettings.value("lastOpen/Image").toStringList();
 	if(!this->Image.isEmpty()) 
 	{
-		this->ImageActors->loadImage(this->Image.toStdString(),"Image");
+		for (i = 0; i < this->Image.size(); i ++)
+		{
+			this->ImageActors->loadImage(this->Image.at(i).toStdString(),"Image");
+		}
 	}
 	
-	this->tempTraceFile = this->TraceEditSettings.value("lastOpen/Temp").toString();
+	this->tempTraceFile = this->TraceEditSettings.value("lastOpen/Temp").toStringList();
 	if (!this->tempTraceFile.isEmpty())
 	{	//opens last saved file 
 		this->TraceFiles = this->tempTraceFile;
@@ -229,28 +235,34 @@ void View3D::ReloadState()
 	}
 	else
 	{	//if the last file was never saved open this
-		this->TraceFiles = this->TraceEditSettings.value("lastOpen/Trace").toString();
+		this->TraceFiles = this->TraceEditSettings.value("lastOpen/Trace").toStringList();
 	}
 	if(!this->TraceFiles.isEmpty()) 
 	{		
-		std::string traceFile = this->TraceFiles.toStdString();
-		if(this->TraceFiles.endsWith("swc"))
+		for (i = 0; i < this->TraceFiles.size(); i++)
 		{
-			this->tobj->ReadFromSWCFile((char*)traceFile.c_str());
-		}
-		else if(this->TraceFiles.endsWith("xml"))
-		{
-			this->tobj->ReadFromRPIXMLFile((char*)traceFile.c_str());
-		}
-		else if (this->TraceFiles.endsWith("vtk"))
-		{
-			this->tobj->ReadFromVTKFile((char*)traceFile.c_str());
-		}
-	}
-	this->SomaFile = this->TraceEditSettings.value("lastOpen/Soma").toString();
+			std::string traceFile = this->TraceFiles.at(i).toStdString();
+			if(this->TraceFiles.endsWith("swc"))
+			{
+				this->tobj->ReadFromSWCFile((char*)traceFile.c_str());
+			}
+			else if(this->TraceFiles.endsWith("xml"))
+			{
+				this->tobj->ReadFromRPIXMLFile((char*)traceFile.c_str());
+			}
+			else if (this->TraceFiles.endsWith("vtk"))
+			{
+				this->tobj->ReadFromVTKFile((char*)traceFile.c_str());
+			}
+		}//end of sending trace file to proper reader
+	}// end of trace files
+	this->SomaFile = this->TraceEditSettings.value("lastOpen/Soma").toStringList();
 	if(!this->SomaFile.isEmpty()) 
 	{
-		this->ImageActors->loadImage(this->SomaFile.toStdString(), "Soma");
+		for (i = 0; i < this->SomaFile.size(); i++)
+		{
+			this->ImageActors->loadImage(this->SomaFile.at(i).toStdString(), "Soma");
+		}
 	}
 	this->OkToBoot();
 }
@@ -258,22 +270,35 @@ void View3D::OkToBoot()
 {
 	if(!this->TraceFiles.isEmpty() || !this->Image.isEmpty() || !this->SomaFile.isEmpty())
 	{
+		int i = 0;
 		//this->show();
 		this->uMperVoxel = this->scale->value();
 		this->TraceEditSettings.setValue("boot/scale", this->uMperVoxel);
 		this->Initialize();
 		if (!this->TraceFiles.isEmpty() )
 		{	
-			this->EditLogDisplay->append("Trace file: \t" + this->TraceFiles);
+			this->EditLogDisplay->append("Trace file:");
+			for (i = 0; i < this->TraceFiles.size(); i++)
+			{
+				this->EditLogDisplay->append("\t" + this->TraceFiles.at(i));
+			}
 			this->ShowTreeData();
 		}
 		if (!this->Image.isEmpty())
 		{
-			this->EditLogDisplay->append("Image file: \t" + this->Image);
+			this->EditLogDisplay->append("Image file:");
+			for (i=0; i < this->Image.size(); i++)
+			{
+				this->EditLogDisplay->append("\t" + this->Image.at(i));
+			}
 		}
 		if (!this->SomaFile.isEmpty())
 		{
-			this->EditLogDisplay->append("Soma file: \t" + this->SomaFile);
+			this->EditLogDisplay->append("Soma file: ");
+			for (i=0; i < this->SomaFile.size(); i++)
+			{
+				this->EditLogDisplay->append("\t" + this->SomaFile.at(i));
+			}
 		}
 		this->UserName = this->GetAUserName->currentText();
 		QStringList allUsers = this->TraceEditSettings.value("boot/userName").toStringList();
@@ -310,7 +335,7 @@ QString View3D::getSomaFile()
 	  tr("Image File ( *.tiff *.tif *.pic *.PIC ) "));
 	if(!somaFiles.isEmpty())
 	{
-		this->SomaFile = somaFiles;
+		this->SomaFile.append( somaFiles);
 		this->ImageActors->loadImage(somaFiles.toStdString(), "Soma");
 	}
 	return somaFiles.section('/',-1);
@@ -321,7 +346,7 @@ QString View3D::getTraceFile()
 		tr(" TraceFile ( *.xml *.swc *.vtk " ));
 	if (!trace.isEmpty())
 	{
-		this->TraceFiles = trace;
+		this->TraceFiles.append( trace);
 		traceFile = trace.toStdString();
 		if(trace.endsWith("swc"))
 		{
@@ -344,7 +369,7 @@ QString View3D::getImageFile()
 		tr("Trace Image ( *.tiff *.tif *.pic *.PIC *.mhd" ));
 	if (!NewImageFile.isEmpty())
 	{
-		this->Image = NewImageFile;
+		this->Image.append( NewImageFile);
 		this->ImageActors->loadImage(NewImageFile.toStdString(), "Image");
 	}
 	return NewImageFile.section('/',-1);
@@ -355,7 +380,7 @@ void View3D::LoadTraces()
 	if (!trace.isEmpty())
 	{
 		this->statusBar()->showMessage(tr("Loading Trace") + trace);
-		this->EditLogDisplay->append("Trace file: \t" + this->TraceFiles);
+		this->EditLogDisplay->append("Trace file: \t" + this->TraceFiles.last());
 		if (this->tobj->FeatureHeaders.size() >=1)
 		  {
 			 this->TreeModel = new TraceModel(this->tobj->GetTraceLines(), this->tobj->FeatureHeaders);
@@ -383,7 +408,7 @@ void View3D::LoadImageData()
 	if (!newImage.isEmpty())
 	{
 		this->statusBar()->showMessage("Loading Image file" + newImage);
-		this->EditLogDisplay->append("Image file: \t" + this->Image);
+		this->EditLogDisplay->append("Image file: \t" + this->Image.last());
 		
 		this->Renderer->AddVolume(this->ImageActors->RayCastVolume(-1));
 		this->QVTK->GetRenderWindow()->Render();
@@ -402,7 +427,7 @@ void View3D::LoadSomaFile()
 	{
 		this->Renderer->AddActor(this->ImageActors->ContourActor(-1));
 		this->QVTK->GetRenderWindow()->Render();
-		this->EditLogDisplay->append("Soma file: \t" + this->SomaFile);
+		this->EditLogDisplay->append("Soma file: \t" + this->SomaFile.last());
 		this->statusBar()->showMessage("Somas Rendered");
 	}
 }
@@ -475,7 +500,7 @@ void View3D::Initialize()
 	this->move(this->TraceEditSettings.value("mainWin/pos",QPoint(40, 59)).toPoint());
 	if (!this->TraceFiles.isEmpty())
 	{
-		this->setWindowTitle(tr("Trace Editor: ")+ this->TraceFiles);
+		this->setWindowTitle(tr("Trace Editor: ")+ this->TraceFiles.last().section('/',-1));
 	}
 	else
 	{
@@ -1578,7 +1603,7 @@ void View3D::SaveToFile()
     {
     return;
     }
-  this->tempTraceFile = fileName;
+  this->tempTraceFile.append( fileName);
   //make sure the user supplied an appropriate output file format
   if(!fileName.endsWith(".vtk") && !fileName.endsWith(".swc"))
     {
@@ -1600,7 +1625,7 @@ void View3D::SaveToFile()
   this->EditLogDisplay->append(QString("File saved as: %1  at time: %2").arg(fileName) 
 	   .arg(this->Time.currentTime().toString( "h:m:s ap" )));
 //Edit Log written to file
-  QString logFileName = this->tempTraceFile.section('.',0,-1);
+  QString logFileName = this->tempTraceFile.last().section('.',0,-1);
   logFileName.append("_log.txt");
   QFile logFile(logFileName);
   if (!logFile.open(QIODevice::WriteOnly | QIODevice::Text))
