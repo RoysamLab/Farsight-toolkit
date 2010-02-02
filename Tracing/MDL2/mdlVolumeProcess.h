@@ -28,7 +28,7 @@ limitations under the License.
 #include <vector>
 #include <iostream>
 
-#include "GCBinarization\cell_binarization.h"
+#include "GCBinarization/cell_binarization.h"
 
 //#include "itkImageFileWriter.h"
 #include "itkOtsuThresholdImageFilter.h" 
