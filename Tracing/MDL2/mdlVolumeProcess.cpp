@@ -220,8 +220,8 @@ bool VolumeProcess::MaskSmallConnComp(int minObjSize)
 bool VolumeProcess::MaskUsingGraphCuts()
 {
 	ImageType::RegionType region = m_outputImage->GetBufferedRegion();
-	int numRows = region.GetSize(0);
-	int numColumns = region.GetSize(1);
+	int numColumns = region.GetSize(0);
+	int numRows = region.GetSize(1);
 	int numStacks = region.GetSize(2);
 	long numPix = numStacks*numColumns*numRows;
 
@@ -446,7 +446,7 @@ double VolumeProcess::getXiaoLiangOtsuThreshold(ImageType::Pointer img)
 	return threshold; 
 }
 
-//This code was written by Xiaosong and modified by Xiao Liang
+//This code was written by Xiaosong Yuan and modified by Xiao Liang
 bool VolumeProcess::RunAnisotropicDiffusion(int timesDiffuse, bool iso)
 {
 	ImageType::RegionType region = m_outputImage->GetLargestPossibleRegion();
