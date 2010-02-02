@@ -12,5 +12,11 @@ SET( cbin_SRCS
 ADD_LIBRARY(mdlVolumeProcess mdlVolumeProcess.h mdlVolumeProcess.cpp ${cbin_SRCS})
 TARGET_LINK_LIBRARIES(mdlVolumeProcess ITKIO ITKStatistics ITKBasicFilters ITKCommon)
 
+ADD_LIBRARY(mdlIntegratedSkeleton mdlIntegratedSkeleton.h mdlIntegratedSkeleton.cpp)
+TARGET_LINK_LIBRARIES(mdlVolumeProcess ITKBasicFilters ITKCommon)
+
 ADD_EXECUTABLE(volumeProcess2 main.cpp)
 TARGET_LINK_LIBRARIES(volumeProcess2 mdlVolumeProcess)
+
+ADD_EXECUTABLE(mdlpipe pipeline_main.cpp)
+TARGET_LINK_LIBRARIES(mdlpipe mdlVolumeProcess mdlIntegratedSkeleton)
