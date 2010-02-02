@@ -32,9 +32,9 @@ VolumeProcess::VolumeProcess()
 void VolumeProcess::SetInput(ImageType::Pointer inImage)
 {
 	m_inputImage = inImage;
-
+    m_outputImage = inImage;
 	//Init the output image to the input image:
-	m_outputImage = ImageType::New();
+	/* m_outputImage = ImageType::New();
 	m_outputImage->SetRegions( m_inputImage->GetLargestPossibleRegion() );
 	m_outputImage->Allocate();
 	m_outputImage->FillBuffer(0);
@@ -44,6 +44,7 @@ void VolumeProcess::SetInput(ImageType::Pointer inImage)
 	{
 		itr2.Set( itr1.Get() );
 	}
+	*/
 }
 
 ImageType::Pointer VolumeProcess::GetOutput()
@@ -75,15 +76,15 @@ bool VolumeProcess::RescaleIntensities(int min, int max)
 	return true;
 }
 
-bool VolumeProcess::RunCAD()
+bool VolumeProcess::RunCAD(unsigned int numberOfIterations,double timeStep,double conductance)
 {
 	typedef itk::CurvatureAnisotropicDiffusionImageFilter< ImageType, ImageType > CADFilterType;
 	CADFilterType::Pointer cadFilter = CADFilterType::New();
     
 	//Initialnization,  using the paper's optimal parameters
-	const unsigned int numberOfIterations = 5;
-	const double       timeStep = 0.0425;
-	const double       conductance = 3;
+	//const unsigned int numberOfIterations = 5;
+	//const double       timeStep = 0.0425;
+	//const double       conductance = 3;
 	cadFilter->SetNumberOfIterations(numberOfIterations);
 	cadFilter->SetTimeStep( timeStep );
 	cadFilter->SetConductanceParameter( conductance );
@@ -100,9 +101,10 @@ bool VolumeProcess::RunCAD()
 	}
 	m_outputImage = cadFilter->GetOutput();
 	if(debug)
-		std::cerr << "CAD Filter Done" << std::endl;
+		std::cerr << "Curvature Anisotropic Diffusion Filter Done" << std::endl;
 	return true;
 }
+
 
 bool VolumeProcess::DialateImage(int iterations)
 {
@@ -245,6 +247,8 @@ bool VolumeProcess::MaskUsingGraphCuts()
 
 	return true;
 }
+
+
 
 bool VolumeProcess::RunOtsuDenoising()
 {
@@ -479,7 +483,7 @@ bool VolumeProcess::RunAnisotropicDiffusion(int timesDiffuse, bool iso)
 	double AveGradient=0.0 ;  // by xiao liang
 	double tempGradient;
 
-	timesDiffuse = 1;
+	//timesDiffuse = 1;
 	while (timesDiffuse > 0 )
 	{
 		if(debug)
@@ -640,7 +644,7 @@ bool VolumeProcess::RunAnisotropicDiffusion(int timesDiffuse, bool iso)
 
 	//Set the output ITK image to the buffer
 	itk::ImageRegionIterator< ImageType > itr( m_outputImage, m_outputImage->GetBufferedRegion() );
-	int idx = 0;
+	long idx = 0;
 	for(itr.GoToBegin(); !itr.IsAtEnd(); ++itr)
 	{
 		itr.Set( volout[idx++] );
@@ -659,6 +663,27 @@ bool VolumeProcess::RunAnisotropicDiffusion(int timesDiffuse, bool iso)
 	return true;
 }
 
+
+bool VolumeProcess::RunManualThreshold(int threshold)
+{
+  // this function is corrsponding to the Xiaosong's original MDL code
+	if(debug)
+	{
+		std::cerr << "We excute the Manual Thrsholding by " << threshold << std::endl;
+	}
+    
+	//Apply threshold (any thing below threshold is set to zero)
+	itk::ImageRegionIterator< ImageType > itr( m_outputImage, m_outputImage->GetLargestPossibleRegion() );
+	for(itr.GoToBegin(); !itr.IsAtEnd(); ++itr)
+	{
+		if(itr.Get() < threshold) 
+        {
+			itr.Set(0);
+        }
+	}
+	return true;
+
+}
 }
 
 

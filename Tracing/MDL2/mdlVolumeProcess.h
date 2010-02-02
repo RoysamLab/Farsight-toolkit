@@ -52,12 +52,13 @@ public:
 	void SetInput(ImageType::Pointer inImage);
 	//Methods:
 	bool RescaleIntensities(int min, int max);
-	bool RunCAD(); //Curvature Anisotropic Diffusion
+	bool RunCAD(unsigned int numberOfIterations = 5 ,double timeStep = 0.0425,double conductance =3); //Curvature Anisotropic Diffusion
 	bool RunOtsuDenoising();
 	bool DialateImage(int iterations);
 	bool MaskSmallConnComp(int minObjSize);
 	bool MaskUsingGraphCuts();
-	bool RunAnisotropicDiffusion(int timesDiffuse, bool iso = false);	//Run anisotropic diffusion written by Xiaosong
+	bool RunAnisotropicDiffusion(int timesDiffuse=1, bool iso = false);	//Run anisotropic diffusion written by Xiaosong
+	bool RunManualThreshold(int threshold);
 	//Get Result:
 	ImageType::Pointer GetOutput();
 
