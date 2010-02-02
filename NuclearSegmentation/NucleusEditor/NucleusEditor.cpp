@@ -1194,11 +1194,11 @@ void NucleusEditor::zoomOut(){
 	QCoreApplication::postEvent (segView, event);
 }
 
-void NucleusEditor::DisplayChannelsMenu(){//Change flag checks for no images loaded
+void NucleusEditor::DisplayChannelsMenu(){
+	if( !segView->IsImageLoaded() )
+		return;
 	std::vector<std::string> channel_names = segView->GetNamesofChannels();
 	std::vector<bool> channel_status = segView->GetStatusofChannels();
-	if( channel_names.empty() || channel_status.empty() )
-		return;
 	if( displayChannelActionset ){
 		if( channel_names.size() > 0 ) delete displayChannelAction0;
 		if( channel_names.size() > 1 ) delete displayChannelAction1;

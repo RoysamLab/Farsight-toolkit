@@ -41,7 +41,7 @@ LabelImageViewQT::LabelImageViewQT(QWidget *parent)
 	foregroundOffset = 0;				//Offset to ADD to intensity values.
 
 	channelFlags.clear();				//Is channel visible or not?
-	channelFlags.push_back(true);
+	//channelFlags.push_back(true);
 	channelWidget = NULL;
 
 	classMap.clear();

@@ -87,6 +87,7 @@ public:
 	std::vector<std::string> GetNamesofChannels(void){ return channelImg->GetChannelNames(); };
 	std::vector<bool> GetStatusofChannels(void){ return channelFlags; };
 	void SetStatusofChannels(std::vector<bool> ch_fg);
+	bool IsImageLoaded(){ if( channelFlags.empty() ) return false; else return true; };
 
 public slots:
 	void SaveDisplayImageToFile();
