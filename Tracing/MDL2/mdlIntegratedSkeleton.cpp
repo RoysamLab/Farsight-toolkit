@@ -298,12 +298,12 @@ bool IntegratedSkeleton::computeIsoGraySurfaceCurvature()
 	long numPix = L*M*N;
 
 	//Vectors for partial derivatives:
-	float *Iuu = new float[L*M*N];
-	float *Ivv = new float[L*M*N];
-	float *Iww = new float[L*M*N];
-	float *Iuv = new float[L*M*N];
-	float *Iuw = new float[L*M*N];
-	float *Ivw = new float[L*M*N];
+	float *Iuu = new float[numPix];
+	float *Ivv = new float[numPix];
+	float *Iww = new float[numPix];
+	float *Iuv = new float[numPix];
+	float *Iuw = new float[numPix];
+	float *Ivw = new float[numPix];
 
 	if(!Iuu || !Ivv || !Iww || !Iuv || !Iuw || !Ivw)
 	{
@@ -336,7 +336,7 @@ bool IntegratedSkeleton::computeIsoGraySurfaceCurvature()
 		delete[] curv;
 		curv = NULL;
 	}
-	curv = new float[L*M*N];
+	curv = new float[numPix];
 
 
 	int DisAway = 2;
@@ -370,9 +370,11 @@ bool IntegratedSkeleton::computeIsoGraySurfaceCurvature()
 				double k1 = 0.5*(HessianPrime[1][1]+HessianPrime[2][2]) +
 					0.5*sqrt(pow((Hessian[1][1]-Hessian[2][2]),2) +
 					4*Hessian[1][2]*Hessian[2][1]);
+                /* // the second eignvalue is not used, but please remain this code
 				double k2 = 0.5*(HessianPrime[1][1]+HessianPrime[2][2]) -
 					0.5*sqrt(pow((Hessian[1][1]-Hessian[2][2]),2) +
 					4*Hessian[1][2]*Hessian[2][1]);
+					*/
 				float gLength = sqrt(gradient0.x*gradient0.x + 
 					gradient0.y*gradient0.y +
 					gradient0.z*gradient0.z);
