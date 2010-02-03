@@ -223,6 +223,7 @@ int main (int argc, char *argv[])
     f[idx]=2;
     fin >> x >> y >> z >> vecin.x >> vecin.y >> vecin.z;
     }
+  fin.close();
     
   // make surface point f[]=1
   for (k = 1; k < N-1; k++)
@@ -268,8 +269,23 @@ int main (int argc, char *argv[])
   PartialDerivative1(Iu, Iuv, 2, L, M, N);
   PartialDerivative1(Iu, Iuw, 3, L, M, N);
   PartialDerivative1(Iv, Ivw, 3, L, M, N);
-
-
+/*
+  		FILE *fileout;
+		if ((fileout = fopen("out.deriv","w")) != NULL)
+		{
+			for (int k = 0; k < N; k++) {
+				for (int j = 0; j < M; j++) {
+					for (int i = 0; i < L; i++) 
+					{
+						long idx = k*L*M + j*L + i;
+						//fprintf(fileout, "%4.4f %4.4f %4.4f\n", Iu[idx], Iv[idx], Iw[idx]);
+						fprintf(fileout, "%4.4f %4.4f %4.4f %4.4f %4.4f %4.4f\n", Iuu[idx], Ivv[idx], Iww[idx], Iuv[idx], Iuw[idx], Ivw[idx]);
+					} 
+				} 
+			} //end triple for loops
+			fclose(fileout);
+		}
+*/
   //double maxCurvature = 0;
   int DisAway = 2;
   for (k = DisAway; k < N-DisAway; k++)
@@ -308,6 +324,7 @@ int main (int argc, char *argv[])
         gLength =
           sqrt(gradient0.x*gradient0.x + gradient0.y*gradient0.y +
                gradient0.z*gradient0.z);
+
         if(gLength !=0)
           {
           curv[idx] = (float) -(k1)/gLength;
@@ -340,6 +357,24 @@ int main (int argc, char *argv[])
   delete []Iuv;
   delete []Iuw;
   delete []Ivw;
+
+  		//DEBUGGING OUTPUT
+		FILE *fout2;
+		if ((fout2 = fopen("out.curv","w")) != NULL)
+		{
+			for (int c = 0; c < N; c++) 
+			{
+				for (int b = 0; b < M; b++) 
+				{
+					for (int a = 0; a < L; a++) 
+					{
+						int idx3 = c*L*M + b*L + a;
+						fprintf(fout2, "%d %d %d %f\n", a, b, c, curv[idx3]);
+					}
+				}
+			} //end triple for loops
+			fclose(fout2);
+		}
 
   //------------------------------------------------------------------------//
 
