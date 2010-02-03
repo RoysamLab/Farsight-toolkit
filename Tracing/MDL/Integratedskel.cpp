@@ -125,7 +125,8 @@ int main (int argc, char *argv[])
   int x,y,z;
   int cc;
   int L, M, N;
-  double k1,k2;
+  //double k1,k2;
+  double k1;
   float gLength;
   
   float RotMatrix[3][3];
@@ -299,9 +300,11 @@ int main (int argc, char *argv[])
         k1 = 0.5*(HessianPrime[1][1]+HessianPrime[2][2]) +
              0.5*sqrt(pow((Hessian[1][1]-Hessian[2][2]),2) +
              4*Hessian[1][2]*Hessian[2][1]);
-        k2 = 0.5*(HessianPrime[1][1]+HessianPrime[2][2]) -
+		// the second eignvale is not used 
+        /*k2 = 0.5*(HessianPrime[1][1]+HessianPrime[2][2]) -
              0.5*sqrt(pow((Hessian[1][1]-Hessian[2][2]),2) +
              4*Hessian[1][2]*Hessian[2][1]);
+	    */ 
         gLength =
           sqrt(gradient0.x*gradient0.x + gradient0.y*gradient0.y +
                gradient0.z*gradient0.z);
