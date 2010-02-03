@@ -727,7 +727,7 @@ bool VerifySeedPoint3D2(CPoint* aPoint)
 	int iContrastThresholdMultiplier = gConfig.GetContrastThresholdMultiplier();
 	int iUsedTemplateLength = gConfig.GetMinimumTemplateLength();
 	
-	int threshold = 0;
+	double threshold = 0;
 	if (gf3DStdDev > 3.0)
 		threshold = 3 * 3 * iUsedTemplateLength;
 	else if (gf3DStdDev > 0.0)
@@ -774,15 +774,15 @@ bool VerifySeedPoint3D2(CPoint* aPoint)
 		double width = std::sqrt(Xdiff* Xdiff + Ydiff* Ydiff + Zdiff* Zdiff);
 
 		// the following two lines were added for CANCER images
-		float h_width = BestHLeftPoint.FindDistance(&BestHRightPoint);
-		float v_width = BestVLeftPoint.FindDistance(&BestVRightPoint);
-		gfHWidth += h_width;
-		gfVWidth += v_width;
-		aPoint->m_fHWidth = h_width;
-		aPoint->m_fVWidth = v_width;
+		double h_width = BestHLeftPoint.FindDistance(&BestHRightPoint);
+		double v_width = BestVLeftPoint.FindDistance(&BestVRightPoint);
+		gfHWidth += (float)h_width;
+		gfVWidth += (float)v_width;
+		aPoint->m_fHWidth =(float) h_width;
+		aPoint->m_fVWidth = (float)v_width;
 
 
-		gfWidthSum += width;
+		gfWidthSum +=(float) width;
 		giNumOfWidthSumMembers++;
 	}
 	else
@@ -912,7 +912,7 @@ bool VerifySeedPoint3D3(CPoint* aPoint)
 	BestBackgroundEstimate /= 4;
 
 	int giUsedTemplateLength = gConfig.GetMinimumTemplateLength();
-	int threshold = 0;
+	double threshold = 0;
 	if (gf3DStdDev > 3.0)
 		threshold = 3 * 3 * giUsedTemplateLength;
 	else if (gf3DStdDev > 0.0)

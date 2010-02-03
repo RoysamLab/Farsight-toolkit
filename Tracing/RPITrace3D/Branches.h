@@ -35,7 +35,7 @@ public:
 private:
 	bool ProcessTip(CVessel* CurrentVessel, TopEnd Flag, int VessID);
 	void Calc3DRotMatrix(double d_x, double d_y, double d_z);
-	bool DetectBranch(int lng, int threshold, int VessID, TopEndMiddleNeither Flag, int& targetID);
+	bool DetectBranch(int lng, double threshold, int VessID, TopEndMiddleNeither Flag, int& targetID);
 	CPoint* TipPoint;
 	CPoint* AnchorPoint;
 	CPoint* BrPnt;

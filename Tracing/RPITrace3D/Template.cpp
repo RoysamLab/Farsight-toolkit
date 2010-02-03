@@ -305,7 +305,7 @@ int CTemplate::CalculateMaxResponse(CPoint* aPoint, CPoint* atPoint,
 	int VDir = (int) (m_fVdir / DirectionStep);
 
 	int giUsedTemplateLength = gConfig.GetMinimumTemplateLength();
-	int SmallestAcceptedResponse = gfContrast * 3.0 * giUsedTemplateLength;
+	double SmallestAcceptedResponse = gfContrast * 3.0 * giUsedTemplateLength;
 
 	for (i = 0; i < giUsedTemplateLength; i++)
 	{
