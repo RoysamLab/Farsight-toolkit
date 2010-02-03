@@ -45,6 +45,7 @@ AssociationRule::AssociationRule(std::string name)
 	num_threshs = 1;
 	num_in_fg = 1;
 	assocType = ASSOC_AVERAGE;
+	save_path = ".";
 }
 
 /* From here, we start defining the member functions of the ObjectAssociation class */

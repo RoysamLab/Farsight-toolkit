@@ -27,12 +27,16 @@
 #ifndef __ftkNuclearAssociationRules_h
 #define __ftkNuclearAssociationRules_h
 
+#include <limits.h>
+
 #include <ftkObject.h>
 #include <ftkCommon/ftkObjectAssociation.h>
 #include "ftkImage.h"
 #include "itkLabelGeometryImageFilter.h"
 #include "itkImage.h"
 #include "itkImageFileReader.h"
+#include "itkImageFileWriter.h"
+#include "itkBinaryThresholdImageFilter.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkCastImageFilter.h"
 #include "itkExtractImageFilter.h"
@@ -95,6 +99,8 @@ private:
 	/* Private member variables */
 	typedef itk::Image< double, 3 > DistImageType;
 	typedef itk::ImageFileReader< LabImageType > ReaderType;
+	typedef itk::ImageFileWriter< LabImageType > WriterType;
+	typedef itk::BinaryThresholdImageFilter< LabImageType, LabImageType > BinaryThresholdType;
 	typedef itk::LabelGeometryImageFilter< LabImageType, LabImageType > LabelGeometryType;
 	//typedef itk::ApproximateSignedDistanceMapImageFilter<DistImageType, DistImageType > DTFilter ;
 	typedef itk::SignedDanielssonDistanceMapImageFilter<DistImageType, DistImageType > DTFilter ;

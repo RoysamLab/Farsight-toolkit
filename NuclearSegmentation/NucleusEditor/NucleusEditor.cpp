@@ -628,6 +628,7 @@ bool NucleusEditor::saveProject()
 	{
 		projectFiles.Write();
 		lastPath = QString::fromStdString(projectFiles.path);
+		segView->save_path = lastPath;
 	}
 	else
 		return false;
@@ -677,6 +678,7 @@ bool NucleusEditor::askSaveImage()
 		lastPath = QFileInfo(filename).absolutePath() + QDir::separator();
 		projectFiles.path = lastPath.toStdString();
 		projectFiles.input = QFileInfo(filename).fileName().toStdString();
+		segView->save_path = lastPath;
 	}
 
 	return this->saveImage();
@@ -725,6 +727,7 @@ bool NucleusEditor::askSaveResult()
 		lastPath = QFileInfo(filename).absolutePath() + QDir::separator();
 		projectFiles.path = lastPath.toStdString();
 		projectFiles.output = QFileInfo(filename).fileName().toStdString();
+		segView->save_path = lastPath;
 	}
 
 	return this->saveResult();
@@ -764,6 +767,7 @@ bool NucleusEditor::askSaveTable()
 	lastPath = QFileInfo(filename).absolutePath() + QDir::separator();
 	projectFiles.path = lastPath.toStdString();
 	projectFiles.table = QFileInfo(filename).fileName().toStdString();
+	segView->save_path = lastPath;
 
 	return this->saveTable();
 }
@@ -803,6 +807,7 @@ void NucleusEditor::loadProject()
 	QString path = QFileInfo(filename).absolutePath();
 	//QString name = QFileInfo(filename).baseName();
 	lastPath = path;
+	segView->save_path = lastPath;
 
 	projectFiles.Read(filename.toStdString());
 
@@ -854,6 +859,7 @@ void NucleusEditor::askLoadTable()
 void NucleusEditor::loadTable(QString fileName)
 {
 	lastPath = QFileInfo(fileName).absolutePath() + QDir::separator();
+	segView->save_path = lastPath;
 
 	table = ftk::LoadTable(fileName.toStdString());
 	if(!table) return;
@@ -884,6 +890,7 @@ void NucleusEditor::askLoadResult(void)
 void NucleusEditor::loadResult(QString fileName)
 {
 	lastPath = QFileInfo(fileName).absolutePath() + QDir::separator();
+	segView->save_path = lastPath;
 	QString name = QFileInfo(fileName).fileName();
 	QString myExt = QFileInfo(fileName).suffix();
 	if(myExt == "xml")
@@ -925,6 +932,7 @@ void NucleusEditor::askLoadImage()
 void NucleusEditor::loadImage(QString fileName)
 {
 	lastPath = QFileInfo(fileName).absolutePath() + QDir::separator();
+	segView->save_path = lastPath;
 	QString name = QFileInfo(fileName).fileName();
 	QString myExt = QFileInfo(fileName).suffix();
 	if(myExt == "xml")
@@ -961,6 +969,7 @@ void NucleusEditor::startAssociations()
 		return;
 
 	lastPath = QFileInfo(fileName).absolutePath();
+	segView->save_path = lastPath;
 
 	ftk::AssociativeFeatureCalculator * assocCal = new ftk::AssociativeFeatureCalculator();
 	assocCal->SetInputFile(fileName.toStdString());
@@ -1779,6 +1788,7 @@ void NucleusEditor::processProject(void)
 							    "All Files (*.*)"));
 	if(projectName == "")  return;
 	lastPath = QFileInfo(projectName).absolutePath() + QDir::separator();
+	segView->save_path = lastPath;
 
 	if(!projectFiles.definitionSaved)
 		this->saveProject();
@@ -1804,6 +1814,7 @@ void NucleusEditor::startProcess()
 
 	//Set up a new processor:
 	pProc = new ftk::ProjectProcessor();
+	pProc->SetPath( lastPath.toStdString() );
 	pProc->SetInputImage(myImg);
 	pProc->SetDefinition(&projectDefinition);
 	pProc->Initialize();

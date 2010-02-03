@@ -76,10 +76,13 @@ public:
 	int GetNumberOfThresholds(){ return num_threshs; };
 	int GetNumberIncludedInForeground(){ return num_in_fg; };
 	AssociationType GetAssocType() {return assocType; };
+	void set_path( std::string path ){ save_path = path; };
+	std::string get_path(){ return save_path; };
 private:
 	std::string ruleName;
 	std::string segFileName;
 	std::string targFileName;
+	std::string save_path;
 	UShortImageType3D::Pointer grayImPtr;
 	UShortImageType3D::Pointer segImPtr;
 	int outsideDistance;

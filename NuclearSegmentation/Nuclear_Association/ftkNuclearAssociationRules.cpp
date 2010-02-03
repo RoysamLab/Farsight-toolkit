@@ -351,6 +351,28 @@ void NuclearAssociationRules::Compute()
 					thresh=returnthresh( inpImage, assocRulesList[i].GetNumberOfThresholds(), assocRulesList[i].GetNumberOfThresholds() );
 			else
 				thresh=returnthresh( inpImage, 1, 1 );
+			//Write Binary Mask
+			if( assocRulesList[i].GetAssocType() == ASSOC_SURROUNDEDNESS )
+				std::string out_filename = assocRulesList[i].get_path()+"binary_surroundedness_";
+			if( assocRulesList[i].GetAssocType() == ASSOC_MIN )
+				std::string out_filename = assocRulesList[i].get_path()+"binary_min_";
+			if( assocRulesList[i].GetAssocType() == ASSOC_MAX )
+				std::string out_filename = assocRulesList[i].get_path()+"binary_max_";
+			if( assocRulesList[i].GetAssocType() == ASSOC_TOTAL )
+				std::string out_filename = assocRulesList[i].get_path()+"binary_total_";
+			if( assocRulesList[i].GetAssocType() == ASSOC_AVERAGE )
+				std::string out_filename = assocRulesList[i].get_path()+"binary_average_";
+			std::string out_filename = out_filename + GetSegImgName();
+			BinaryThresholdType::Pointer threshfilt = BinaryThresholdType::New();
+			threshfilt->SetInput( inpImage );
+			threshfilt->SetLowerThreshold(thresh);
+			threshfilt->SetUpperThreshold(USHRT_MAX);
+			threshfilt->SetInsideValue( USHRT_MAX );
+			threshfilt->SetOutsideValue( 0 );
+			WriterType::Pointer writer1 = WriterType::New();
+			writer1->SetInput( threshfilt->GetOutput() );
+			writer1->SetFileName( out_filename.c_str() );
+			writer1->Update();
 		}
 		else
 			thresh = 0;

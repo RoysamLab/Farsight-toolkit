@@ -52,6 +52,8 @@ LabelImageViewQT::LabelImageViewQT(QWidget *parent)
 	rubberBand = NULL;					//For drawing a box!!
 	pointsMode = false;					//For collecting points
 	roiMode = false;					//For drawing Region of Interest (ROI)
+
+	save_path= ".";
 }
 
 void LabelImageViewQT::setupUI(void)
@@ -308,7 +310,7 @@ void LabelImageViewQT::SaveDisplayImageToFile()
 	if(!channelImg && !labelImg)
 		return;
 
-	QString fileName = QFileDialog::getSaveFileName(this, tr("Save Display Image"), ".", tr("Images (*.bmp *gif *.jpg *.png *.tif)"));
+	QString fileName = QFileDialog::getSaveFileName(this, tr("Save Display Image"), save_path, tr("Images (*.bmp *gif *.jpg *.png *.tif)"));
 	if(fileName.size() == 0)
 		return;
 

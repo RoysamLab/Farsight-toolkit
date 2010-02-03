@@ -88,6 +88,7 @@ public:
 	std::vector<bool> GetStatusofChannels(void){ return channelFlags; };
 	void SetStatusofChannels(std::vector<bool> ch_fg);
 	bool IsImageLoaded(){ if( channelFlags.empty() ) return false; else return true; };
+	QString save_path;
 
 public slots:
 	void SaveDisplayImageToFile();

@@ -43,6 +43,7 @@ ProjectProcessor::ProjectProcessor()
 	lastTask = -1;
 	resultIsEditable = false;
 	inputTypeNeeded = 0;
+	save_path = ".";
 }
 
 void ProjectProcessor::Initialize(void)
@@ -263,6 +264,8 @@ bool ProjectProcessor::ComputeAssociations(void){
 			std::cout<<"Unable to access grayscale image while computing associative feature: "<<ascit->GetRuleName()<<std::endl;
 			return false;
 		}
+
+		ascit->set_path( save_path );
 
 		ftk::AssociativeFeatureCalculator * assocCal = new ftk::AssociativeFeatureCalculator();
 		assocCal->SetInputs(inputImage, inp_channel_number, outputImage, seg_channel_number, &(*ascit) );
