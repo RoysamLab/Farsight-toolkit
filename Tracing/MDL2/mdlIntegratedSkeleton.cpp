@@ -31,9 +31,22 @@ IntegratedSkeleton::IntegratedSkeleton()
 	Iv = NULL;
 	Iw = NULL;
 	fc = NULL;
+	curv = NULL;
+	force = NULL;
+
+	curvSeeds.clear();
+	critSeeds.clear();
+	skeletonPoints.clear();
 }
 
 IntegratedSkeleton::~IntegratedSkeleton()
+{
+	this->cleanUpMemory();
+	m_inputImage=NULL;
+	skeletonPoints.clear();
+}
+
+void IntegratedSkeleton::cleanUpMemory()
 {
 	this->clearGradientVectorField();
 	if(curv)
@@ -41,7 +54,18 @@ IntegratedSkeleton::~IntegratedSkeleton()
 		delete[] curv;
 		curv = NULL;
 	}
-	m_inputImage=NULL;
+	if(fc)
+	{
+		delete[] fc;
+		fc = NULL;
+	}
+	if(force)
+	{
+		delete[] force;
+		force = NULL;
+	}
+	curvSeeds.clear();
+	critSeeds.clear();
 }
 
 void IntegratedSkeleton::SetInput(ImageType::Pointer inImage)
@@ -55,7 +79,18 @@ bool IntegratedSkeleton::Update()
 		return false;
 	if(!this->computeIsoGraySurfaceCurvature())
 		return false;
-	return true;
+
+	if(curvSeeds.size() == 0)
+		this->computeSeedsWithMaxCurvature();
+	if(curvSeeds.size() == 0)
+		return false;
+
+	if(!this->convertGradVectorToForceVector())
+		return false;
+
+	this->computeCriticalPointSeeds(); //If fails we are not dead in the water
+
+	return this->computeSkeleton();
 }
 
 int IntegratedSkeleton::sign(float value)
@@ -87,6 +122,9 @@ float IntegratedSkeleton::veclength(Vector3D vecin)
 
 bool IntegratedSkeleton::createGradientVectorField()
 {
+	if(!m_inputImage)
+		return false;
+
 	ImageType::RegionType region = m_inputImage->GetBufferedRegion();
 	int sizeX = region.GetSize(0);
 	int sizeY = region.GetSize(1);
@@ -98,6 +136,8 @@ bool IntegratedSkeleton::createGradientVectorField()
 	Iu = new float[numPix];
 	Iv = new float[numPix];
 	Iw = new float[numPix];
+	if(fc)
+		delete[] fc;
 	fc = new unsigned char[numPix];	//This keeps track of interior/exterior and surface voxels
 	if(!Iu || !Iv || !Iw || !fc)
 	{
@@ -132,6 +172,7 @@ bool IntegratedSkeleton::createGradientVectorField()
 			//consider six face neighbors, 
 			//if anyone is zero, it is a boundary voxel
 			bool flagBound = false;
+			/* 6 connectivity
 			for(int d=0; d<3; ++d)
 			{
 				ImageType::IndexType m_ind = index; //
@@ -146,6 +187,27 @@ bool IntegratedSkeleton::createGradientVectorField()
 					break;
 				}
 			}
+			*/
+			// 18 connectivity
+			for (int kk=-1; kk<=1; kk++)
+            {
+				for (int jj=-1; jj<=1; jj++)
+				{
+					for (int ii=-1; ii<=1; ii++)
+					{
+						ImageType::IndexType ind = index;
+						ind[0] += ii;
+						ind[1] += jj;
+						ind[2] += kk;
+						ImageType::PixelType pix = m_inputImage->GetPixel(ind);
+						if(pix == 0)
+						{
+							flagBound = true;
+							break;
+						}
+					}
+				}
+            }
 
 			if(flagBound)
 			{
@@ -168,7 +230,7 @@ bool IntegratedSkeleton::createGradientVectorField()
 	kernelWeight[0][0] = 1.67; kernelWeight[0][1] = 5.80; kernelWeight[0][2] = 1.67;
 	kernelWeight[1][0] = 5.80; kernelWeight[1][1] = 20.1; kernelWeight[1][2] = 5.80;
 	kernelWeight[2][0] = 1.67; kernelWeight[2][1] = 5.80; kernelWeight[2][2] = 1.67;
-	float s = 0.002; //scale on outputs  0.002
+	double s = 0.002; //scale on outputs  0.002
 
 	//Compute gradient of interior/surface voxels:
 	ImageType::IndexType m_ind;
@@ -248,7 +310,7 @@ bool IntegratedSkeleton::createGradientVectorField()
 					{
 						long idx = k*sizeX*sizeY + j*sizeX + i;
 						if (fc[idx]==0)   continue;  // not output
-						fprintf(fileout, "%d %d %d %f %f %f\n", i, j, k, Iu[idx], Iv[idx], Iw[idx]);
+						fprintf(fileout, "%d %d %d %4.4f %4.4f %4.4f\n", i, j, k, Iu[idx], Iv[idx], Iw[idx]);
 					} 
 				} 
 			} //end triple for loops
@@ -275,11 +337,6 @@ void IntegratedSkeleton::clearGradientVectorField()
 	{
 		delete[] Iw;
 		Iw = NULL;
-	}
-	if(fc)
-	{
-		delete[] fc;
-		fc = NULL;
 	}	
 }
 
@@ -288,7 +345,7 @@ void IntegratedSkeleton::clearGradientVectorField()
 //------------------------------------------------------------------------//
 bool IntegratedSkeleton::computeIsoGraySurfaceCurvature()
 {
-	if(!Iu || !Iv || !Iw || !fc)
+	if(!Iu || !Iv || !Iw || !fc || !m_inputImage)
 		return false;
 
 	ImageType::RegionType region = m_inputImage->GetBufferedRegion();
@@ -337,17 +394,25 @@ bool IntegratedSkeleton::computeIsoGraySurfaceCurvature()
 		curv = NULL;
 	}
 	curv = new float[numPix];
+	if(!curv)
+		return false;
 
+	//Init to zeros
+	for (long k = 0; k < numPix; ++k)
+		curv[k] = 0;
 
-	int DisAway = 2;
-	for (int k = DisAway; k < N-DisAway; k++)
+	//FILE *fileout1 = fopen("out.gr","w");
+
+	int border = 2;	//Why does this need to by 2?
+	for (int k = border; k < N-border; k++)
     {
-		for (int j = DisAway; j < M-DisAway; j++)
+		for (int j = border; j < M-border; j++)
 		{
-			for (int i = DisAway; i < L-DisAway; i++)
+			for (int i = border; i < L-border; i++)
 			{
 				long idx = k*L*M + j*L + i;
-				if (fc[idx] != INTERIOR) continue;
+				if (fc[idx] != INTERIOR)
+					continue;
 
 				gradient0.x = Iu[idx];
 				gradient0.y = Iv[idx];
@@ -379,7 +444,9 @@ bool IntegratedSkeleton::computeIsoGraySurfaceCurvature()
 					gradient0.y*gradient0.y +
 					gradient0.z*gradient0.z);
 
-				if(gLength !=0)
+				//fprintf(fileout1, "%f %f\n", k1, gLength);
+
+				if(gLength !=0 )
 				{
 					curv[idx] = (float) -(k1)/gLength;
 				}
@@ -402,6 +469,7 @@ bool IntegratedSkeleton::computeIsoGraySurfaceCurvature()
 			}
 		}
     }
+	//fclose(fileout1);
 
 	delete[] Iuu;
 	delete[] Ivv;
@@ -409,6 +477,24 @@ bool IntegratedSkeleton::computeIsoGraySurfaceCurvature()
 	delete[] Iuv;
 	delete[] Iuw;
 	delete[] Ivw;
+
+	if(debug)
+	{
+		FILE *fileout;
+		if ((fileout = fopen("out.curv","w")) != NULL)
+		{
+			for (int k = 0; k < N; k++) {
+				for (int j = 0; j < M; j++) {
+					for (int i = 0; i < L; i++) 
+					{
+						long idx = k*L*M + j*L + i;
+						fprintf(fileout, "%d %d %d %f\n", i, j, k, curv[idx]);
+					} 
+				} 
+			} //end triple for loops
+			fclose(fileout);
+		}
+	}
 
 	return true;
 }
@@ -513,8 +599,557 @@ void IntegratedSkeleton::Matrix3Multiply(float Mat[3][3], float Mat1[3][3], floa
   }
 }
 
+bool IntegratedSkeleton::computeSeedsWithMaxCurvature()
+{
+	curvSeeds.clear();;
 
+	if(!curv || !m_inputImage)
+		return false;
+
+	ImageType::RegionType region = m_inputImage->GetBufferedRegion();
+	int L = region.GetSize(0); //x
+	int M = region.GetSize(1); //y
+	int N = region.GetSize(2); //z
+	long slsz = L*M;
+
+	double meanCurvature = this->GetMean(curv, L, M, N);
+
+	//the threshold is a value between [0,10].
+	double highCurvatureThreshold = (meanCurvature>10 ? 10 : meanCurvature);
+
+	if(debug)
+	{
+		std::cerr << "mean = " << meanCurvature << std::endl;
+		std::cerr << "estimated highCurvatureThreshold = " << highCurvatureThreshold << std::endl;
+	}
+
+	//-------------compute seeds with local maiximal curvature----------------//
+	int DisAway = 1;
+	// only select the local maximum voxel of curv[idx] as skeleton
+	for (int k = DisAway; k < N-DisAway; k++)
+    {
+		for (int j = DisAway; j < M-DisAway; j++)
+		{
+			for (int i = DisAway; i < L-DisAway; i++)
+			{
+				long idx = k*slsz + j*L + i;
+				long iidx;
+
+				if (curv[idx] < highCurvatureThreshold )
+				{
+					// thresholding compared with threshold 
+					curv[idx]= 0;
+				}
+
+				//consider the six face neighbors 
+				//(if any are greater break out of loop)
+				iidx = k*slsz + j*L + i-1;
+				if (curv[iidx] > curv[idx])
+				{
+					continue;
+				}
+				iidx = k*slsz + j*L + i+1;
+				if (curv[iidx] > curv[idx])
+				{
+					continue;
+				}
+				iidx = k*slsz + (j-1)*L + i;
+				if (curv[iidx] > curv[idx])
+				{
+					continue;
+				}
+				iidx = k*slsz + (j+1)*L + i;
+				if (curv[iidx] > curv[idx])
+				{
+					continue;
+				}
+				iidx = (k-1)*slsz + j*L + i;
+				if (curv[iidx] > curv[idx])
+				{
+					continue;
+				}
+				iidx = (k+1)*slsz + j*L + i;
+				if (curv[iidx] > curv[idx])
+				{
+					continue;
+				}
+
+				//curv[idx] is bigger than all 6 neighbors:
+				if (curv[idx] != 0)
+				{
+					Vector3D newSeed;
+					newSeed.x =(float)i;
+					newSeed.y =(float)j;
+					newSeed.z =(float)k;
+					curvSeeds.push_back(newSeed);
+				} //end if (add seed)
+			}// end for i
+		}// end for j
+    }// end for k
+
+	if(debug)
+	{
+		std::cerr << "# Seeds with high curvature = " << curvSeeds.size() << std::endl;
+		std::cerr << "Writing curvSeeds out to 'out.seed'" << std::endl;
+		FILE *fileout;
+		if ((fileout = fopen("out.seed","w")) != NULL)
+		{
+			for (int k = 0; k < (int)curvSeeds.size(); k++) 
+			{
+				fprintf(fileout,"%d %d %d\n", curvSeeds.at(k).x, curvSeeds.at(k).y, curvSeeds.at(k).z);
+			}
+			fclose(fileout);
+		}
+	}
+	return true;
+}
+
+double IntegratedSkeleton::GetMean(float *buf, int nx, int ny, int nz)
+{
+	if(!curv)
+		return 0.0;
+
+	double mean=0;
+	for (int k = 0; k < nz; k++)
+    {
+		for (int j = 0; j < ny; j++)
+		{
+			for (int i = 0; i < nx; i++) 
+			{
+				long idx = k*nx*ny + j*nx + i;
+				mean += curv[idx];
+			}
+		}
+    }
+	mean /= (double)(nx*ny*nz); 
+	mean = (mean < 0) ? 0 : mean;
+	return mean;
 }
 
 
+bool IntegratedSkeleton::convertGradVectorToForceVector()
+{
+	if(!Iu || !Iv || !Iw || !m_inputImage)
+		return false;
 
+	ImageType::RegionType region = m_inputImage->GetBufferedRegion();
+	int L = region.GetSize(0); //x
+	int M = region.GetSize(1); //y
+	int N = region.GetSize(2); //z
+	long slsz = L*M;
+
+	if(force)
+		delete[] force;
+	force = new Vector3D[L*M*N];
+	if(!force)
+		return false;
+
+
+	for (int k = 0; k < N; k++)
+    {
+		for (int j = 0; j < M; j++)
+		{
+			for (int i = 0; i < L; i++)
+			{
+				long idx = k*slsz + j*L +i;
+				force[idx].x = Iu[idx];
+				force[idx].y = Iv[idx];
+				force[idx].z = Iw[idx];
+				float length = this->veclength(force[idx]);
+				force[idx].x = force[idx].x / (length+0.0001);
+				force[idx].y = force[idx].y / (length+0.0001);
+				force[idx].z = force[idx].z / (length+0.0001);
+				// this is just a very simple method, 
+				// you can use Xiaosong's method i.e POW(),
+				// and also you can use GDF method
+			}
+		}
+	}
+	//Delete grad vector field (free memory)!!
+	this->clearGradientVectorField();
+	return true;
+}
+
+void IntegratedSkeleton::printProgress(int pos, int tot)
+{
+	if( ( ( (float)pos / float(tot) ) >= 0.25 ) &&
+        ( ( (float)(pos-1) / float(tot) ) < 0.25 ) )
+	{
+		std::cerr << "25% complete" << std::endl;
+	}
+    if( ( ( (float)pos / float(tot) ) >= 0.50 ) &&
+        ( ( (float)(pos-1) / float(tot) ) < 0.50 ) )
+	{
+		std::cerr << "50% complete" << std::endl;
+	}
+    if( ( ( (float)pos / float(tot) ) >= 0.75 ) &&
+        ( ( (float)(pos-1) / float(tot) ) < 0.75 ) )
+	{
+		std::cerr << "75% complete" << std::endl;
+	}
+	if( ( ( (float)pos / float(tot) ) >= 1.00 ) &&
+        ( ( (float)(pos-1) / float(tot) ) < 1.00 ) )
+	{
+		std::cerr << "100% complete" << std::endl;
+	}
+}
+
+// find all critical points: use points with small length of vector
+bool IntegratedSkeleton::computeCriticalPointSeeds()
+{
+	int grid = 10;
+
+	critSeeds.clear();
+
+	if(!force || !m_inputImage)
+		return false;
+
+	ImageType::RegionType region = m_inputImage->GetBufferedRegion();
+	int sizeX = region.GetSize(0); //x
+	int sizeY = region.GetSize(1); //y
+	int sizeZ = region.GetSize(2); //z
+	long slsz = sizeX*sizeY;
+
+	float totalVecLength = 0;
+	double divx,divy,divz,div;
+	long idx;
+
+	for (int k = 1; k < sizeZ-1; k++)
+    {
+		//this loop can take a long time to complete.
+		//provide some feedback to the user on how we're doing
+		if(debug)
+			this->printProgress(k, sizeZ);
+		
+		for (int j = 1; j < sizeY-1; j++)
+		{
+			for (int i = 1; i < sizeX-1; i++)
+			{
+				totalVecLength = 0;
+				divx = 0;  
+				divy = 0;  
+				divz = 0;
+
+				//To check whether the position is near to boundaries, compute
+				//divergence in x,y,z respectively
+				idx = k*slsz + j*sizeX +i;
+				if (fc[idx] == 0) 
+					continue;
+				totalVecLength += veclength(force[idx]);
+				divx -= force[idx].x;
+				divy -= force[idx].y;
+				divz -= force[idx].z;
+
+				idx = k*slsz + j*sizeX  +(i+1);
+				if (fc[idx] == 0) 
+					continue;
+				totalVecLength += veclength(force[idx]);
+				divx += force[idx].x;
+				divy -= force[idx].y;
+				divz -= force[idx].z;
+	
+				idx = k*slsz +(j+1)*sizeX + i;
+				if (fc[idx] == 0)
+					continue;
+				totalVecLength += veclength(force[idx]);
+				divx -= force[idx].x;
+				divy += force[idx].y;
+				divz -= force[idx].z;
+
+				idx = k*slsz +(j+1)*sizeX + (i+1);
+				if (fc[idx] == 0) 
+					continue;
+				totalVecLength += veclength(force[idx]);
+				divx += force[idx].x;
+				divy += force[idx].y;
+				divz -= force[idx].z;
+
+				idx = (k+1)*slsz + j*sizeX  +i;
+				if (fc[idx] == 0) 
+					continue;
+				totalVecLength += veclength(force[idx]);
+				divx -= force[idx].x;
+				divy -= force[idx].y;
+				divz += force[idx].z;
+        
+				idx = (k+1)*slsz + j*sizeX  +(i+1);
+				if (fc[idx] == 0) 
+					continue;
+				totalVecLength += veclength(force[idx]);
+				divx += force[idx].x;
+				divy -= force[idx].y;
+				divz += force[idx].z;
+
+				idx = (k+1)*slsz +(j+1)*sizeX + i;
+				if (fc[idx] == 0) 
+					continue;
+				totalVecLength += veclength(force[idx]);
+				divx -= force[idx].x;
+				divy += force[idx].y;
+				divz += force[idx].z;
+
+				idx = (k+1)*slsz +(j+1)*sizeX + (i+1);
+				if (fc[idx] == 0)
+					continue;
+				totalVecLength += veclength(force[idx]);
+				divx += force[idx].x;
+				divy += force[idx].y;
+				divz += force[idx].z;
+
+				if (totalVecLength < 4)// skip the zero vector areas
+					continue;
+
+				div = divx + divy + divz;
+				if (div > -1)
+				{
+					//skip if the cube possibly contain a repelling point
+					//(divergence is too big)
+					continue;
+				}
+
+				Vector3D OutForce;
+				for (int kk = 0; kk<grid; kk++)
+				{
+					for (int jj = 0; jj<grid; jj++)
+					{
+						for (int ii = 0; ii<grid; ii++)
+						{
+							float fx = i+ii/(float)grid;
+							float fy = j+jj/(float)grid;
+							float fz = k+kk/(float)grid;
+							OutForce = interpolation(fx, fy, fz, sizeX, sizeY, sizeZ, force);
+							if(veclength(OutForce) < vectorMagnitude)
+							{
+								Vector3D newSeed;
+								newSeed.x = fx;
+								newSeed.y = fy;
+								newSeed.z = fz;
+								critSeeds.push_back(newSeed);
+							} //end if less than max vector magnitude
+						}//end for ii
+					} //end for jj
+				}//end for kk
+			}//end for i
+		}//end for j
+    }//end for k
+
+	if(debug)
+	{
+		std::cerr << "Number of critical points is: " << critSeeds.size() << std::endl;
+	}
+	return true;
+}
+
+IntegratedSkeleton::Vector3D IntegratedSkeleton::interpolation(float x, float y, float z, int sizx, int sizy, int sizz, Vector3D *forcevec)
+{
+	//-------by xiao liang:  new implementation
+    Vector3D forceInt;  
+	float alpha, beta, gamma;
+  
+	long slsz;
+    int Intx,Inty,Intz;
+	Intx=int(x);
+	Inty=int(y);
+	Intz=int(z);
+	alpha = x- Intx;   
+	beta = y- Inty;
+	gamma = z-Intz;
+	slsz=sizy*sizx;
+	float a[8];// for interpolation coefficients
+	a[0] = (1-alpha)*(1-beta)*(1-gamma);
+	a[1] = (1-alpha)*(1-beta)*gamma;
+	a[2] = (1-alpha)*beta*(1-gamma);
+	a[3] =  alpha*(1-beta)*(1-gamma); 
+	a[4] =  alpha*(1-beta)*gamma;
+	a[5] =  alpha*beta*(1-gamma);
+	a[6] =  (1-alpha)*beta*gamma;
+	a[7] =  (alpha*beta*gamma);
+
+	long Nei[8]; // considering N8 neighborhood in 3D image
+    Nei[0] = Intz*slsz + Inty*sizx + Intx;
+	Nei[1] =  Nei[0] +slsz;
+	Nei[2] =  Nei[0] +slsz+sizx;
+	Nei[3] =  Nei[0] +1;
+	Nei[4] =  Nei[0] +slsz+1;
+	Nei[5] =  Nei[0] +sizx+1;
+	Nei[6] =  Nei[0] +sizx;
+	Nei[7] =  Nei[0] +slsz+sizx+1;
+
+	//------ compute interpolation ---------------------------------------//
+	forceInt.x=forcevec[ Nei[0]].x*a[0]
+      +forcevec[ Nei[1]].x*a[1]
+      +forcevec[ Nei[2]].x*a[2]
+      +forcevec[ Nei[3]].x*a[3]
+      +forcevec[ Nei[4]].x*a[4]
+      +forcevec[ Nei[5]].x*a[5]
+      +forcevec[ Nei[6]].x*a[6]
+      +forcevec[ Nei[7]].x*a[7];
+
+
+	forceInt.y=forcevec[ Nei[0]].y*a[0]
+      +forcevec[ Nei[1]].y*a[1]
+      +forcevec[ Nei[2]].y*a[2]
+      +forcevec[ Nei[3]].y*a[3]
+      +forcevec[ Nei[4]].y*a[4]
+      +forcevec[ Nei[5]].y*a[5]
+      +forcevec[ Nei[6]].y*a[6]
+      +forcevec[ Nei[7]].y*a[7];
+
+	forceInt.z=forcevec[ Nei[0]].z*a[0]
+      +forcevec[ Nei[1]].z*a[1]
+      +forcevec[ Nei[2]].z*a[2]
+      +forcevec[ Nei[3]].z*a[3]
+      +forcevec[ Nei[4]].z*a[4]
+      +forcevec[ Nei[5]].z*a[5]
+      +forcevec[ Nei[6]].z*a[6]
+      +forcevec[ Nei[7]].z*a[7];
+
+	return(forceInt);
+}
+
+bool IntegratedSkeleton::computeSkeleton()
+{
+	skeletonPoints.clear();
+
+	if(!m_inputImage)
+		return false;
+
+	ImageType::RegionType region = m_inputImage->GetBufferedRegion();
+	int sizeX = region.GetSize(0); //x
+	int sizeY = region.GetSize(1); //y
+	int sizeZ = region.GetSize(2); //z
+	long slsz = sizeX*sizeY;
+	long sz = slsz*sizeZ;
+	
+	//Combine both types of seeds:
+	std::vector<Vector3D> seeds = curvSeeds;
+	seeds.insert(seeds.end(),critSeeds.begin(),critSeeds.end());
+
+	int numSeeds = (int)seeds.size();
+	int idxSeeds = numSeeds-1;			//the current seed index
+
+	VoxelPosition Startpos, Nextpos;
+	int streamSteps=0;
+
+	bool *FlagOnSkeleton = new bool[sz];
+	if(!FlagOnSkeleton)		//couldn't allocate
+		return false;
+	for(int i=0; i<sz; i++)	//init to false
+		FlagOnSkeleton[i] = false;
+
+	while(idxSeeds >= 0)
+	{
+		Startpos.x = seeds[idxSeeds].x; 
+		Startpos.y = seeds[idxSeeds].y; 
+		Startpos.z = seeds[idxSeeds].z;
+		long idx = (int)Startpos.z * slsz + (int)Startpos.y *sizeX + (int)Startpos.x;
+
+		//Check whether the high curv points are within 
+		// D-voxel distance to the existing skeleton
+		int Dvoxel = 2;    // 3 is good for many results
+		if (idxSeeds < numSeeds)
+		{
+			Dvoxel= 2;  //4; 
+			// 10 <- Found too big on April 12, 2006, which cause less spines
+            // 3 is good for tlapse330, 
+			// 6 is good for Trach
+		}
+
+		int FlagWithin = 0;
+		if (idxSeeds < numSeeds) 
+		{
+			for (int kk = -Dvoxel+1; kk <= Dvoxel-1; kk++)
+			{
+				for (int jj = -Dvoxel+1; jj <= Dvoxel-1; jj++)
+				{
+					for (int ii = -Dvoxel+1; ii <= Dvoxel-1; ii++) 
+					{
+						long iidx = idx + kk*slsz + jj*sizeX + ii;
+						if (iidx < 0 || iidx >= sz)  
+							continue;
+						if(FlagOnSkeleton[iidx] == true)  
+							FlagWithin = 1;
+					}//end for ii
+				}//end for jj
+			} //end for kk
+	
+			if(FlagWithin == 1) 
+			{
+				idxSeeds--;
+				continue;
+			}// end if  FlagWithin
+		}// end if (idxSeeds < numSeeds)
+
+		// being able to not show critical point in the streamlines
+		if (idxSeeds >= numSeeds)
+		{
+			std::cerr << "HOW DID I GET HERE" << std::endl;
+			return false;
+		}
+
+		//Add the start pos to the skeleton points
+		VoxelPosition newPos;
+		newPos.x = Startpos.x;
+		newPos.y = Startpos.y;
+		newPos.z = Startpos.z;
+		skeletonPoints.push_back(newPos);
+
+		//-------Line path algorithm------------------------------------------------//
+		FlagOnSkeleton[idx] = true;
+
+		while(streamSteps < 4000) //4000  
+		{
+			rk2(Startpos.x, Startpos.y, Startpos.z, sizeX, sizeY, sizeZ, float(0.8), force, &Nextpos);   //0.2, 0.8, 2     float() added by xiao liang
+			streamSteps++;
+			Startpos.x = Nextpos.x;
+			Startpos.y = Nextpos.y;
+			Startpos.z = Nextpos.z;
+
+			idx = (int)Nextpos.z *slsz + (int)Nextpos.y *sizeX + (int)Nextpos.x;
+			if (FlagOnSkeleton[idx] != true) 
+			{
+				Point3D newPos;
+				newPos.x = Nextpos.x;
+				newPos.y = Nextpos.y;
+				newPos.z = Nextpos.z;
+				skeletonPoints.push_back(newPos);
+	      
+				FlagOnSkeleton[idx] = true;
+			} // end if !FlagOnSkeleton 
+		} // end while steamSteps
+	   
+		streamSteps = 0;
+		idxSeeds--;
+	}	//end while idxSeeds (main while loop)
+
+	delete[] FlagOnSkeleton;
+	seeds.clear();
+
+	this->cleanUpMemory();
+
+	if(debug)	//write out the vector field
+	{
+		FILE *fileout;
+		if ((fileout = fopen("out.skel","w")) != NULL)
+		{
+			for (int k = 0; k < (int)skeletonPoints.size(); k++) 
+			{
+				fprintf(fileout,"%f %f %f %d\n", skeletonPoints.at(k).x, skeletonPoints.at(k).y, skeletonPoints.at(k).z, 1);
+			}
+			fclose(fileout);
+		}
+	}
+
+	return true;
+}
+
+void IntegratedSkeleton::rk2(float x, float y, float z, int sizx, int sizy, int sizz, float steps, Vector3D  *Force_ini, VoxelPosition *nextPos)
+{
+	Vector3D OutForce;
+	OutForce=interpolation(x,y,z,sizx,sizy,sizz,Force_ini);
+	nextPos->x = x + OutForce.x * steps;
+	nextPos->y = y + OutForce.y * steps;
+	nextPos->z = z + OutForce.z * steps;
+}
+
+}

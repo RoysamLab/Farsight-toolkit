@@ -19,6 +19,7 @@ limitations under the License.
 
 namespace mdl
 {
+	typedef struct {float x; float y; float z;} Point3D;
 
 	typedef unsigned char PixelType;
     static const unsigned int Dimension = 3;

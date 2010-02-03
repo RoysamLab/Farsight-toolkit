@@ -30,6 +30,7 @@ limitations under the License.
 #include <vector>
 #include <iostream>
 #include <math.h>
+#include <stdio.h>
 #include <algorithm>
 
 #include "itkImageRegionIterator.h"
@@ -44,8 +45,6 @@ namespace mdl
 class IntegratedSkeleton
 {
 public:
-	struct  Vector3D{float x; float y; float z;};
-
 	IntegratedSkeleton();
 	~IntegratedSkeleton();
 	//Setup:
@@ -56,8 +55,12 @@ public:
 	bool Update();
 
 	//Get Result:
+	std::vector<Point3D> GetOutput(){ return skeletonPoints; };
 
 private:
+	typedef Point3D Vector3D;
+	typedef Point3D VoxelPosition;
+
 	//Parameters
 	bool debug;				//If debug is true, process in steps and print stuff
 	double vectorMagnitude;
@@ -70,23 +73,41 @@ private:
 	float *Iv;
 	float *Iw;
 	unsigned char *fc;	//100 for surface voxel, 200 for interior, 0 else
+	Vector3D *force;
 
 	//Surface Curvature
 	float *curv;		//Iso-gray surface curvature
 
+	//Seeds
+	std::vector<Vector3D> curvSeeds; //Maximum Curvature Seeds
+	std::vector<Vector3D> critSeeds; //Critical Point Seeds
+
+	//Skeleton points (ouput)
+	std::vector<Point3D> skeletonPoints;
+
 	//Key functions:
-	void clearGradientVectorField();
 	bool createGradientVectorField();
-	bool createGradientVectorFieldWithITK(){return false;};
+	//bool createGradientVectorFieldWithITK(){return false;};
 	bool computeIsoGraySurfaceCurvature();
+	bool computeSeedsWithMaxCurvature();
+	bool convertGradVectorToForceVector();
+	bool computeCriticalPointSeeds();
+	bool computeSkeleton();
+	void cleanUpMemory();
 
 	//Internal methods
+	void clearGradientVectorField();
 	void partialDerivative1(float *Is, float *Isd, int direc, int L, int M, int N);
 	void ComputeRotMatrix(float RotateMatrix[3][3], Vector3D v);
 	void RotMatrixFromAngle(float RMatrix[3][3], float cosphi, float sinphi,float costheta, float sintheta, float cospsi,float sinpsi);
 	void Transpose(float MatTransp[3][3], float Mat[3][3]);
 	void Matrix3Multiply(float Mat[3][3], float Mat1[3][3], float Mat2[3][3]);
-	
+	Vector3D interpolation(float x, float y, float z, int sizx, int sizy, int sizz, Vector3D *forcevec);
+	void rk2(float x, float y, float z, int sizx, int sizy, int sizz, float steps, Vector3D  *Force_ini, VoxelPosition *nextPos);
+
+	double GetMean(float *buf, int nx, int ny, int nz);
+	void printProgress(int pos, int tot);
+
 	//useful functions:
 	int sign(float value);
 	int sign1(float value);

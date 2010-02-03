@@ -54,8 +54,11 @@ int main(int argc, char *argv[])
 
 	mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton();
 	skel->SetInput( volProc->GetOutput() );
+	skel->SetVectorMagnitude(.05);
 	skel->SetDebug(true);
 	skel->Update();
+	std::vector<mdl::Point3D> skeleton = skel->GetOutput();
+
 
 
 	//******************************************************************
