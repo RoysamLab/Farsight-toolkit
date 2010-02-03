@@ -1034,7 +1034,7 @@ void ComputeRotMatrix(float RotateMatrix[3][3], Vector3D v) {
    // costheta=costheta; //it is not needed to reseted since them havenot changed
    sintheta=-sintheta;
    //cospsi=1;sinpsi=0;  //it is not needed to reseted since them havenot changed 
-   RotMatrixFromAngle(RotateMatrix1,cosphi,sinphi,costheta,sintheta,cospsi,sinpsi);
+   RotMatrixFromAngle(RotateMatrix,cosphi,sinphi,costheta,sintheta,cospsi,sinpsi);
    //RotMatrixFromAngle(RotateMatrix, -phi, -theta, 0);
 }
 
