@@ -242,15 +242,15 @@ void View3D::ReloadState()
 		for (i = 0; i < this->TraceFiles.size(); i++)
 		{
 			std::string traceFile = this->TraceFiles.at(i).toStdString();
-			if(this->TraceFiles.endsWith("swc"))
+			if(this->TraceFiles.at(i).endsWith("swc"))
 			{
 				this->tobj->ReadFromSWCFile((char*)traceFile.c_str());
 			}
-			else if(this->TraceFiles.endsWith("xml"))
+			else if(this->TraceFiles.at(i).endsWith("xml"))
 			{
 				this->tobj->ReadFromRPIXMLFile((char*)traceFile.c_str());
 			}
-			else if (this->TraceFiles.endsWith("vtk"))
+			else if (this->TraceFiles.at(i).endsWith("vtk"))
 			{
 				this->tobj->ReadFromVTKFile((char*)traceFile.c_str());
 			}
