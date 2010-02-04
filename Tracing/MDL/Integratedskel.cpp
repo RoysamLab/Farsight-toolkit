@@ -683,7 +683,9 @@ int main (int argc, char *argv[])
  cout << "Number of critical points is: " << NumCritPoints << endl;
  cout << "Number of seeds is: " << numSeeds << endl;
 
- int numBoundSeeds =numSeeds;
+ //int numBoundSeeds = numSeeds;  //Changed Isaac 2/04/2010
+ // I figured this out by looking at the old skel_streamline.cpp
+ int numBoundSeeds = (numSeeds-NumCritPoints);
  //fprintf(fout,"%d %d %d %f %f\n", 1, 1, 1, -1.0, -1.0);
 
  // seeds[0..numBoundSeeds-1] = boundary seeds, seeds[numBoundSeeds.. numSeeds-1] = critical points
