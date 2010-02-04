@@ -76,13 +76,13 @@ public:
 	int GetNumberOfThresholds(){ return num_threshs; };
 	int GetNumberIncludedInForeground(){ return num_in_fg; };
 	AssociationType GetAssocType() {return assocType; };
-	void set_path( std::string path ){ save_path = path; };
-	std::string get_path(){ return save_path; };
+	void set_path( std::string path ){ binary_path = path; };
+	std::string get_path(){ return binary_path; };
 private:
 	std::string ruleName;
 	std::string segFileName;
 	std::string targFileName;
-	std::string save_path;
+	std::string binary_path;
 	UShortImageType3D::Pointer grayImPtr;
 	UShortImageType3D::Pointer segImPtr;
 	int outsideDistance;
@@ -110,7 +110,7 @@ public:
 	ObjectAssociation(std::string segImageName, int numOfAssocRules);
 	ObjectAssociation(std::string segImageName, int numOfAssocRules, UShortImageType3D::Pointer Labeled_Image_Pointer);
 	/* Used to add a new association rule to the rules list */
-	void AddAssociation(std::string ruleName,std::string targFileName, int outsideDistance, int insideDistance,	bool useAllObject, bool subBkground, bool use_multiple_thresh, int num_threshs, int num_in_fg, int assocType);
+	void AddAssociation(std::string ruleName,std::string targFileName, int outsideDistance, int insideDistance,	bool useAllObject, bool subBkground, bool use_multiple_thresh, int num_threshs, int num_in_fg, int assocType, std::string append_path);
 	/* I/O	*/
 	void WriteRulesToXML(std::string xmlFname);
 	int ReadRulesFromXML(std::string xmlFname);

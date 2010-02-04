@@ -265,7 +265,7 @@ bool ProjectProcessor::ComputeAssociations(void){
 			return false;
 		}
 
-		ascit->set_path( save_path );
+		(*ascit).set_path( save_path );
 
 		ftk::AssociativeFeatureCalculator * assocCal = new ftk::AssociativeFeatureCalculator();
 		assocCal->SetInputs(inputImage, inp_channel_number, outputImage, seg_channel_number, &(*ascit) );

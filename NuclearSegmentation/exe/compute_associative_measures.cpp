@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
 			cin>>assocType;
 
             //Now having all the parameters of the ith rule defined, add this rule to the list of rules
-			ObjAssoc->AddAssociation(ruleName, targFileName, outsideDistance, insideDistance, useAllObject, subBkground, use_multiple_thresh, num_threshs, num_in_fg, assocType );
+			ObjAssoc->AddAssociation(ruleName, targFileName, outsideDistance, insideDistance, useAllObject, subBkground, use_multiple_thresh, num_threshs, num_in_fg, assocType, "" );
 		}
 
 		//Now, write the association rules into an xml file (can be used at any later time)

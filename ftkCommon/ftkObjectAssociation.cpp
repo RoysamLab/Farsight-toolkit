@@ -45,7 +45,7 @@ AssociationRule::AssociationRule(std::string name)
 	num_threshs = 1;
 	num_in_fg = 1;
 	assocType = ASSOC_AVERAGE;
-	save_path = ".";
+	binary_path = "";
 }
 
 /* From here, we start defining the member functions of the ObjectAssociation class */
@@ -60,7 +60,7 @@ ObjectAssociation::ObjectAssociation(std::string AssocFName, int numOfRules)
 }
 
 /* Add association rules to the list of rules */
-void ObjectAssociation::AddAssociation(std::string ruleName,std::string targFileName, int outsideDistance, int insideDistance,	bool useAllObject, bool subBkground, bool use_multiple_thresh, int num_threshs, int num_in_fg, int assocType)
+void ObjectAssociation::AddAssociation(std::string ruleName,std::string targFileName, int outsideDistance, int insideDistance,	bool useAllObject, bool subBkground, bool use_multiple_thresh, int num_threshs, int num_in_fg, int assocType, std::string append_path)
 {
 	AssociationRule *assocRule = new AssociationRule(ruleName);
 	assocRule->SetSegmentationFileNmae(segImageName);
@@ -104,6 +104,7 @@ void ObjectAssociation::AddAssociation(std::string ruleName,std::string targFile
 	default:
 		assocRule->SetAssocType(ASSOC_AVERAGE);
 	}
+	assocRule->set_path( append_path );
 	++numOfAssocRules;
 	assocRulesList.push_back(*assocRule);
 	

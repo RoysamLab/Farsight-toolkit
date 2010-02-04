@@ -117,7 +117,7 @@ vtkSmartPointer<vtkTable> AssociativeFeatureCalculator::Compute(void)
 	ftk::NuclearAssociationRules *assoc;
 	if( inputs_set ){
 		assoc = new ftk::NuclearAssociationRules("",0,lab_im, inp_im);
-		assoc->AddAssociation( input_association->GetRuleName(), "", input_association->GetOutDistance(), input_association->GetInDistance(),	input_association->IsUseWholeObject(), input_association->IsUseBackgroundSubtraction(), input_association->IsUseMultiLevelThresholding(), input_association->GetNumberOfThresholds(), input_association->GetNumberIncludedInForeground(), input_association->GetAssocType());
+		assoc->AddAssociation( input_association->GetRuleName(), "", input_association->GetOutDistance(), input_association->GetInDistance(),	input_association->IsUseWholeObject(), input_association->IsUseBackgroundSubtraction(), input_association->IsUseMultiLevelThresholding(), input_association->GetNumberOfThresholds(), input_association->GetNumberIncludedInForeground(), input_association->GetAssocType(), input_association->get_path() );
 	}
 	else{
 		assoc = new ftk::NuclearAssociationRules("",0);
@@ -164,7 +164,7 @@ void AssociativeFeatureCalculator::Update(vtkSmartPointer<vtkTable> table)
 	ftk::NuclearAssociationRules *assoc;
 	if( inputs_set ){
 		assoc = new ftk::NuclearAssociationRules("",0,lab_im, inp_im);
-		assoc->AddAssociation( input_association->GetRuleName(), "", input_association->GetOutDistance(), input_association->GetInDistance(),	input_association->IsUseWholeObject(), input_association->IsUseBackgroundSubtraction(), input_association->IsUseMultiLevelThresholding(), input_association->GetNumberOfThresholds(), input_association->GetNumberIncludedInForeground(), input_association->GetAssocType());
+		assoc->AddAssociation( input_association->GetRuleName(), "", input_association->GetOutDistance(), input_association->GetInDistance(),	input_association->IsUseWholeObject(), input_association->IsUseBackgroundSubtraction(), input_association->IsUseMultiLevelThresholding(), input_association->GetNumberOfThresholds(), input_association->GetNumberIncludedInForeground(), input_association->GetAssocType(), input_association->get_path() );
 	}
 	else{
 		assoc = new ftk::NuclearAssociationRules("",0);
@@ -207,7 +207,7 @@ void AssociativeFeatureCalculator::Append(vtkSmartPointer<vtkTable> table)
 	ftk::NuclearAssociationRules *assoc;
 	if( inputs_set ){
 		assoc = new ftk::NuclearAssociationRules("",0,lab_im, inp_im);
-		assoc->AddAssociation( input_association->GetRuleName(), "", input_association->GetOutDistance(), input_association->GetInDistance(),	input_association->IsUseWholeObject(), input_association->IsUseBackgroundSubtraction(), input_association->IsUseMultiLevelThresholding(), input_association->GetNumberOfThresholds(), input_association->GetNumberIncludedInForeground(), input_association->GetAssocType());
+		assoc->AddAssociation( input_association->GetRuleName(), "", input_association->GetOutDistance(), input_association->GetInDistance(),	input_association->IsUseWholeObject(), input_association->IsUseBackgroundSubtraction(), input_association->IsUseMultiLevelThresholding(), input_association->GetNumberOfThresholds(), input_association->GetNumberIncludedInForeground(), input_association->GetAssocType(), input_association->get_path() );
 	}
 	else{
 		assoc = new ftk::NuclearAssociationRules("",0);
@@ -352,23 +352,25 @@ void NuclearAssociationRules::Compute()
 			else
 				thresh=returnthresh( inpImage, 1, 1 );
 			//Write Binary Mask
+			std::string out_filename;
+			out_filename = assocRulesList[i].get_path()+assocRulesList[i].GetRuleName();
 			if( assocRulesList[i].GetAssocType() == ASSOC_SURROUNDEDNESS )
-				std::string out_filename = assocRulesList[i].get_path()+"binary_surroundedness_";
+				out_filename = out_filename + "binary_surroundedness.tif";
 			if( assocRulesList[i].GetAssocType() == ASSOC_MIN )
-				std::string out_filename = assocRulesList[i].get_path()+"binary_min_";
+				out_filename = out_filename + "binary_min.tif";
 			if( assocRulesList[i].GetAssocType() == ASSOC_MAX )
-				std::string out_filename = assocRulesList[i].get_path()+"binary_max_";
+				out_filename = out_filename + "binary_max.tif";
 			if( assocRulesList[i].GetAssocType() == ASSOC_TOTAL )
-				std::string out_filename = assocRulesList[i].get_path()+"binary_total_";
+				out_filename = out_filename + "binary_total.tif";
 			if( assocRulesList[i].GetAssocType() == ASSOC_AVERAGE )
-				std::string out_filename = assocRulesList[i].get_path()+"binary_average_";
-			std::string out_filename = out_filename + GetSegImgName();
+				out_filename = out_filename + "binary_average.tif";
 			BinaryThresholdType::Pointer threshfilt = BinaryThresholdType::New();
 			threshfilt->SetInput( inpImage );
 			threshfilt->SetLowerThreshold(thresh);
 			threshfilt->SetUpperThreshold(USHRT_MAX);
 			threshfilt->SetInsideValue( USHRT_MAX );
 			threshfilt->SetOutsideValue( 0 );
+			threshfilt->Update();
 			WriterType::Pointer writer1 = WriterType::New();
 			writer1->SetInput( threshfilt->GetOutput() );
 			writer1->SetFileName( out_filename.c_str() );
