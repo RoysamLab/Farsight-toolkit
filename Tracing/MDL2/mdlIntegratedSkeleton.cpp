@@ -826,6 +826,7 @@ void IntegratedSkeleton::printProgress(int pos, int tot)
 bool IntegratedSkeleton::computeCriticalPointSeeds()
 {
 	int grid = 10;
+	int maxDiv = -1; //max divergence: 1(good for phantom), 0(better), -1(not always good)
 
 	critSeeds.clear();
 
@@ -924,7 +925,7 @@ bool IntegratedSkeleton::computeCriticalPointSeeds()
 					continue;
 
 				div = divx + divy + divz;
-				if (div > -1)
+				if (div > maxDiv)
 				{
 					//skip if the cube possibly contain a repelling point
 					//(divergence is too big)
@@ -1033,6 +1034,9 @@ IntegratedSkeleton::Vector3D IntegratedSkeleton::interpolation(float x, float y,
 
 bool IntegratedSkeleton::computeSkeleton()
 {
+	//Make an input parameter??
+	float linePathStepSize = 0.8;//0.2, 0.8, 2
+
 	skeletonPoints.clear();
 
 	if(!m_inputImage)
@@ -1046,6 +1050,8 @@ bool IntegratedSkeleton::computeSkeleton()
 	seeds.insert(seeds.end(),critSeeds.begin(),critSeeds.end());
 
 	int numSeeds = (int)seeds.size();
+	int numBoundSeeds = (int)curvSeeds.size();
+
 	int idxSeeds = numSeeds-1;			//the current seed index
 
 	VoxelPosition Startpos, Nextpos;
@@ -1067,7 +1073,7 @@ bool IntegratedSkeleton::computeSkeleton()
 		//Check whether the high curv points are within 
 		// D-voxel distance to the existing skeleton
 		int Dvoxel = 2;    // 3 is good for many results
-		if (idxSeeds < numSeeds)
+		if (idxSeeds < numBoundSeeds)	//These seeds always come first in seeds list
 		{
 			Dvoxel= 2;  //4; 
 			// 10 <- Found too big on April 12, 2006, which cause less spines
@@ -1076,7 +1082,7 @@ bool IntegratedSkeleton::computeSkeleton()
 		}
 
 		int FlagWithin = 0;
-		if (idxSeeds < numSeeds) 
+		if (idxSeeds < numBoundSeeds) 
 		{
 			for (int kk = -Dvoxel+1; kk <= Dvoxel-1; kk++)
 			{
@@ -1100,26 +1106,29 @@ bool IntegratedSkeleton::computeSkeleton()
 			}// end if  FlagWithin
 		}// end if (idxSeeds < numSeeds)
 
-		// being able to not show critical point in the streamlines
-		if (idxSeeds >= numSeeds)
-		{
-			std::cerr << "HOW DID I GET HERE" << std::endl;
-			return false;
-		}
-
 		//Add the start pos to the skeleton points
 		VoxelPosition newPos;
 		newPos.x = Startpos.x;
 		newPos.y = Startpos.y;
 		newPos.z = Startpos.z;
-		skeletonPoints.push_back(newPos);
+
+		// being able to not show critical point in the streamlines
+		if (idxSeeds >= numBoundSeeds)
+		{
+			//Add the start pos to the skeleton points
+			skeletonPoints.push_back(newPos);
+		}
+		else
+		{
+			skeletonPoints.push_back(newPos);
+		}
 
 		//-------Line path algorithm------------------------------------------------//
 		FlagOnSkeleton[idx] = true;
 
 		while(streamSteps < 4000) //4000  
 		{
-			rk2(Startpos.x, Startpos.y, Startpos.z, sizeX, sizeY, sizeZ, float(0.8), force, &Nextpos);   //0.2, 0.8, 2     float() added by xiao liang
+			rk2(Startpos.x, Startpos.y, Startpos.z, sizeX, sizeY, sizeZ, linePathStepSize, force, &Nextpos);
 			streamSteps++;
 			Startpos.x = Nextpos.x;
 			Startpos.y = Nextpos.y;
@@ -1158,7 +1167,10 @@ bool IntegratedSkeleton::computeSkeleton()
 			}
 			fclose(fileout);
 		}
+		std::cerr << "Number of skeleton points = " << (int)skeletonPoints.size() << std::endl;
 	}
+
+	getchar();
 
 	return true;
 }
