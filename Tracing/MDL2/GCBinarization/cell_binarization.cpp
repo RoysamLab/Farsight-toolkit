@@ -172,7 +172,7 @@ int Neuron_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, 
 	{
 		for(int j=0; j<C; j+=C/block_divisor)
 		{			
-			std::cout<<"    Binarizing block "<<blk<<" of "<<cntr<<std::endl;
+			// std::cout<<"    Binarizing block "<<blk<<" of "<<cntr<<std::endl;
 			subImgBlock[0] = j;
 			subImgBlock[1] = (int)j+C/block_divisor+1;
 			subImgBlock[2] = i;
