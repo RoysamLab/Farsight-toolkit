@@ -704,12 +704,12 @@ bool IntegratedSkeleton::computeSeedsWithMaxCurvature()
 	return true;
 }
 
-double IntegratedSkeleton::GetMean(float *buf, int nx, int ny, int nz)
+double IntegratedSkeleton::GetMean(float *curf, int nx, int ny, int nz)
 {
 	if(!curv)
 		return 0.0;
 
-	double mean=0;
+	double mean=0.;
 	for (int k = 0; k < nz; k++)
     {
 		for (int j = 0; j < ny; j++)
