@@ -446,8 +446,12 @@ bool TraceObject::ReadFromSWCFile(char * filename)
       continue;
       }
     sscanf(buff,"%d %d %lf %lf %lf %lf %d",&id,&type,&x,&y,&z,&r,&parent);
-    TraceBit tbit;
-    tbit.x=(double) fabs(x);tbit.y=(double) fabs(y);tbit.z=(double) fabs(z);tbit.id=id;tbit.r =r;
+    TraceBit tbit;	// the fabs is for assumtion of no neg coord
+    tbit.x= x;//(double) fabs(x);
+	tbit.y= y;//(double) fabs(y);
+	tbit.z=z;//(double) fabs(z);
+	tbit.id=id;
+	tbit.r =r;
     data[id] = tbit;
 
     if(parent!=-1)
@@ -479,7 +483,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
   fclose(fp);
   printf("about to create the data structure.. %d\n", (int)criticals.size());
   std::set<int>::iterator iter = criticals.begin();
-  int global_id_number = 1;
+  int global_id_number = this->getNewLineId(); //setting this does not append traces?
   while(iter != criticals.end())
     {
     TraceLine * ttemp = new TraceLine();
@@ -1127,7 +1131,7 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
   TiXmlDocument doc(filename);
   doc.LoadFile();
   TiXmlHandle docHandle( &doc );
-  
+  float IDoffset = (float) this->getNewLineId();
 
   // Read the feature header names
   TiXmlElement* headerElement = docHandle.FirstChild("Trace").FirstChild("FeatureHeaderNames").Element();
@@ -1156,6 +1160,7 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
       cerr << "ERROR: TraceLine has no ID" << endl;
       return false;
     }
+	lineID += IDoffset;
     if(lineElement->QueryIntAttribute("Type", &lineType) != TIXML_SUCCESS)
     {
       lineType = 1;
@@ -1164,6 +1169,10 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
     {
       lineParent = -1;
     }
+	if (lineParent != -1)
+	{
+		lineParent += IDoffset;
+	}
 	
     if(hash_load.count(lineID)>0)
     {
@@ -1189,27 +1198,8 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
 	}
     tline->SetId(lineID);
     tline->SetType(lineType);
-    //tline->setTraceColor(1.0/tline->GetType());
-    //lauren added 11.6.2009
-	tline->setTraceColor( getTraceLUT( tline->GetType() ));   
-	//switch( tline->GetType() )
- //   {
- //   case 1:
- //       tline->setTraceColor(.75);//cyan
- //       break;
- //   case 3:
- //   case 4:
- //   case 5:
- //       tline->setTraceColor(.90);//blue
- //       break;
- //   case 7:
- //   case 0:
- //   default:
- //       tline->setTraceColor(.25); //yellow
- //   }
- //   //end of added code
-    
 
+	tline->setTraceColor( getTraceLUT( tline->GetType() ));   
 
     if(lineParent != -1)
     {
