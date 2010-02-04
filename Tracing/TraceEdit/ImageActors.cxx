@@ -53,7 +53,13 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag)
 	newImage->connector->SetInput( newImage->reader->GetOutput() );
 	newImage->ImageData = newImage->connector->GetOutput();
 	this->LoadedImages.push_back(newImage);
-	return (int) this->LoadedImages.size();
+	return (int) (this->LoadedImages.size() -1);
+}
+void ImageRenderActors::ShiftImage(int i, double x, double y, double z)
+{
+	this->LoadedImages[i]->x = x;
+	this->LoadedImages[i]->y = y;
+	this->LoadedImages[i]->z = z;
 }
 vtkSmartPointer<vtkActor> ImageRenderActors::ContourActor(int i)
 {
@@ -71,6 +77,8 @@ vtkSmartPointer<vtkActor> ImageRenderActors::ContourActor(int i)
 	this->LoadedImages[i]->ContourActor->SetMapper(this->LoadedImages[i]->ContourMapper);
 	this->LoadedImages[i]->ContourActor->GetProperty()->SetOpacity(.5);
 	this->LoadedImages[i]->ContourActor->GetProperty()->SetColor(0.5,0.5,0.5);
+	this->LoadedImages[i]->ContourActor->SetPosition(this->LoadedImages[i]->x, 
+		this->LoadedImages[i]->y,this->LoadedImages[i]->z);
 	this->LoadedImages[i]->ContourActor->SetPickable(0);
 	return this->LoadedImages[i]->ContourActor;
 }
@@ -98,6 +106,8 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 	this->LoadedImages[i]->volume = vtkSmartPointer<vtkVolume>::New();
 	this->LoadedImages[i]->volume->SetMapper(this->LoadedImages[i]->volumeMapper);
 	this->LoadedImages[i]->volume->SetProperty(this->LoadedImages[i]->volumeProperty);
+	this->LoadedImages[i]->volume->SetPosition(this->LoadedImages[i]->x, 
+		this->LoadedImages[i]->y,this->LoadedImages[i]->z);
 	this->LoadedImages[i]->volume->SetPickable(0);
 	return this->LoadedImages[i]->volume;
 }

@@ -54,6 +54,7 @@ struct imageFileHandle
 	ReaderType::Pointer reader;
 	ConnectorType::Pointer connector;
 	std::vector<double> ImageSize;
+	double x,y,z;
 //Contour Filter pointers
 	vtkSmartPointer<vtkContourFilter> ContourFilter;
 	vtkSmartPointer<vtkPolyDataMapper> ContourMapper;
@@ -78,6 +79,7 @@ public:
 	std::string FileNameOf(int i){ return this->LoadedImages[i]->filename;};
 	unsigned int NumberOfImages() {return this->LoadedImages.size();};
 	bool isRayCast(int i);
+	void ShiftImage(int i, double x, double y, double z);
 	double pointData(int i, int x, int y, int z);
 	std::vector<double> GetImageSize(int i);
 	vtkSmartPointer<vtkImageData> GetImageData(int i);

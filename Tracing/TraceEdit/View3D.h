@@ -160,6 +160,9 @@ private:
 	QPushButton * Reload;
 	QDoubleSpinBox *scale;
 	QComboBox * GetAUserName, *GetLab, *GetProject;
+	QGroupBox * ImageListBox;
+	QListView * ImageListView; 
+	bool translateImages;
 	QDate  Date;
 	QTime  Time;
 

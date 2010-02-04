@@ -89,6 +89,7 @@ View3D::View3D(int argc, char **argv)
 	int num_loaded = 0;
 	this->Volume=0;
 	bool tracesLoaded = false;
+	this->translateImages = true;	//this is for testing a switch is needed
 	this->Date.currentDate();
 	this->Time.currentTime();
 	this->Image.clear();
@@ -98,6 +99,7 @@ View3D::View3D(int argc, char **argv)
 	this->ImageActors = new ImageRenderActors();
 	this->EditLogDisplay = new QTextEdit();
 	this->EditLogDisplay->setReadOnly(true);
+	this->EditLogDisplay->setLineWrapMode(QTextEdit::NoWrap);
 	this->EditLogDisplay->append("Farsight Trace Editor Started at: \nDate: \t" + this->Date.currentDate().toString( "ddd MMMM d yy" ) );
 	this->EditLogDisplay->append("Time: \t" + this->Time.currentTime().toString( "h:m:s ap" ) );
 	
@@ -370,7 +372,28 @@ QString View3D::getImageFile()
 	if (!NewImageFile.isEmpty())
 	{
 		this->Image.append( NewImageFile);
-		this->ImageActors->loadImage(NewImageFile.toStdString(), "Image");
+		int imgNum = this->ImageActors->loadImage(NewImageFile.toStdString(), "Image");
+		if (this->translateImages)
+		{
+			//get x
+			bool ok = false;
+			double xx, yy, zz;
+			while (!ok)
+			{
+				xx = QInputDialog::getDouble(this, tr("set x"), tr("Shift x by"), 0, -60000, 60000, 1, &ok);
+			}
+			ok = false;
+			while (!ok)
+			{
+				yy = QInputDialog::getDouble(this, tr("set y"), tr("Shift y by"), 0, -60000, 60000, 1, &ok);
+			}
+			ok = false;
+			while (!ok)
+			{
+				zz = QInputDialog::getDouble(this, tr("set z"), tr("Shift z by"), 0, -60000, 60000, 1, &ok);
+			}
+			this->ImageActors->ShiftImage(imgNum, xx, yy, zz );
+		}
 	}
 	return NewImageFile.section('/',-1);
 }
