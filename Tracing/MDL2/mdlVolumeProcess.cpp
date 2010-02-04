@@ -32,9 +32,10 @@ VolumeProcess::VolumeProcess()
 void VolumeProcess::SetInput(ImageType::Pointer inImage)
 {
 	m_inputImage = inImage;
-    m_outputImage = inImage;
+    //m_outputImage = inImage;	//THIS IS NOT CORRECT IT WILL CAUSE INPUT IMAGE TO CHANGE
+
 	//Init the output image to the input image:
-	/* m_outputImage = ImageType::New();
+	m_outputImage = ImageType::New();
 	m_outputImage->SetRegions( m_inputImage->GetLargestPossibleRegion() );
 	m_outputImage->Allocate();
 	m_outputImage->FillBuffer(0);
@@ -44,7 +45,6 @@ void VolumeProcess::SetInput(ImageType::Pointer inImage)
 	{
 		itr2.Set( itr1.Get() );
 	}
-	*/
 }
 
 ImageType::Pointer VolumeProcess::GetOutput()

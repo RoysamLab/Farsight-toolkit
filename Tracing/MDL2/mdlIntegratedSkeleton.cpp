@@ -22,9 +22,16 @@ namespace mdl
 {
 
 //Constructor
-IntegratedSkeleton::IntegratedSkeleton()
+IntegratedSkeleton::IntegratedSkeleton(ImageType::Pointer inImage)
 {
-	m_inputImage = NULL;
+	m_inputImage = inImage;
+
+	region = m_inputImage->GetBufferedRegion();
+	sizeX = region.GetSize(0);
+	sizeY = region.GetSize(1);
+	sizeZ = region.GetSize(2);
+	numPix = sizeX*sizeY*sizeZ;
+
 	debug = false;
 
 	Iu = NULL;
@@ -66,11 +73,6 @@ void IntegratedSkeleton::cleanUpMemory()
 	}
 	curvSeeds.clear();
 	critSeeds.clear();
-}
-
-void IntegratedSkeleton::SetInput(ImageType::Pointer inImage)
-{
-	m_inputImage = inImage;
 }
 
 bool IntegratedSkeleton::Update()
@@ -124,12 +126,6 @@ bool IntegratedSkeleton::createGradientVectorField()
 {
 	if(!m_inputImage)
 		return false;
-
-	ImageType::RegionType region = m_inputImage->GetBufferedRegion();
-	int sizeX = region.GetSize(0);
-	int sizeY = region.GetSize(1);
-	int sizeZ = region.GetSize(2);
-	long numPix = sizeX*sizeY*sizeZ;
 	
 	//Allocate memory for gradient field:
 	this->clearGradientVectorField();
@@ -145,7 +141,15 @@ bool IntegratedSkeleton::createGradientVectorField()
 		return false;
 	}
 
-	//Init fc
+	//Init variables to zeros:
+	for(int i=0; i<numPix; ++i)
+	{
+		Iu[i] = 0;
+		Iv[i] = 0;
+		Iw[i] = 0;
+		fc[i] = 0;
+	}
+
 	int numBound = 0;
 	itk::ImageRegionIteratorWithIndex< ImageType > itr( m_inputImage, region );
 	for(itr.GoToBegin(); !itr.IsAtEnd(); ++itr)
@@ -348,11 +352,9 @@ bool IntegratedSkeleton::computeIsoGraySurfaceCurvature()
 	if(!Iu || !Iv || !Iw || !fc || !m_inputImage)
 		return false;
 
-	ImageType::RegionType region = m_inputImage->GetBufferedRegion();
-	int L = region.GetSize(0); //x
-	int M = region.GetSize(1); //y
-	int N = region.GetSize(2); //z
-	long numPix = L*M*N;
+	int L = sizeX; //x
+	int M = sizeY; //y
+	int N = sizeZ; //z
 
 	//Vectors for partial derivatives:
 	float *Iuu = new float[numPix];
@@ -367,6 +369,17 @@ bool IntegratedSkeleton::computeIsoGraySurfaceCurvature()
 		if(debug)
 			std::cerr << "Could not allocate memory for iso gray surface" << std::endl;
 		return false;
+	}
+
+	//Init partial derivs to zeros:
+	for(int i=0; i<numPix; ++i)
+	{
+		Iuu[i]=0;
+		Ivv[i]=0;
+		Iww[i]=0;
+		Iuv[i]=0;
+		Iuw[i]=0;
+		Ivw[i]=0;
 	}
 
 	if(debug)
@@ -387,6 +400,19 @@ bool IntegratedSkeleton::computeIsoGraySurfaceCurvature()
 	float HessianPrime1[3][3];
 	Vector3D gradient0;
 
+	//Init temp containers to zeros:
+	for(int i=0; i<3; i++)
+	{
+		for(int j=0; j<3; j++)
+		{
+			RotMatrix[i][j] = 0;
+			RotMatrixTransp[i][j] = 0;
+			Hessian[i][j] = 0;
+			HessianPrime[i][j] = 0;
+			HessianPrime1[i][j] = 0;
+		}
+	}
+
 	//Allocate memory for curvature:
 	if(curv)
 	{
@@ -400,8 +426,6 @@ bool IntegratedSkeleton::computeIsoGraySurfaceCurvature()
 	//Init to zeros
 	for (long k = 0; k < numPix; ++k)
 		curv[k] = 0;
-
-	//FILE *fileout1 = fopen("out.gr","w");
 
 	int border = 2;	//Why does this need to by 2?
 	for (int k = border; k < N-border; k++)
@@ -432,19 +456,21 @@ bool IntegratedSkeleton::computeIsoGraySurfaceCurvature()
 				Matrix3Multiply(HessianPrime1, RotMatrixTransp, Hessian);
 				Matrix3Multiply(HessianPrime, HessianPrime1, RotMatrix);
 
-				double k1 = 0.5*(HessianPrime[1][1]+HessianPrime[2][2]) +
-					0.5*sqrt(pow((Hessian[1][1]-Hessian[2][2]),2) +
-					4*Hessian[1][2]*Hessian[2][1]);
+				double term1 = 0.5*(HessianPrime[1][1]+HessianPrime[2][2]);
+				double pwr = pow( (double)(Hessian[1][1] - Hessian[2][2]), 2.0 );
+				double temp = pwr + 4.0*Hessian[1][2]*Hessian[2][1];
+				double term2 = 0.5*sqrt(temp);
+				double k1 = term1 + term2;
+
                 /* // the second eignvalue is not used, but please remain this code
 				double k2 = 0.5*(HessianPrime[1][1]+HessianPrime[2][2]) -
 					0.5*sqrt(pow((Hessian[1][1]-Hessian[2][2]),2) +
 					4*Hessian[1][2]*Hessian[2][1]);
 					*/
+
 				float gLength = sqrt(gradient0.x*gradient0.x + 
 					gradient0.y*gradient0.y +
 					gradient0.z*gradient0.z);
-
-				//fprintf(fileout1, "%f %f\n", k1, gLength);
 
 				if(gLength !=0 )
 				{
@@ -469,7 +495,6 @@ bool IntegratedSkeleton::computeIsoGraySurfaceCurvature()
 			}
 		}
     }
-	//fclose(fileout1);
 
 	delete[] Iuu;
 	delete[] Ivv;
@@ -550,27 +575,31 @@ void IntegratedSkeleton::ComputeRotMatrix(float RotateMatrix[3][3], Vector3D v)
 	float cosphi,sinphi,cospsi,sinpsi,costheta,sintheta;
 
 	theta = atan2(v.z, v.y);
-	//RotMatrixFromAngle(RotateMatrix1, 0, -theta, 0);
-	cosphi=1;sinphi=0;costheta=cos(theta);sintheta=sin(theta);cospsi=1;sinpsi=0;
+	cosphi=1;
+	sinphi=0;
+	costheta=cos(theta);
+	sintheta=sin(theta);
+	cospsi=1;
+	sinpsi=0;
 	this->RotMatrixFromAngle(RotateMatrix1,cosphi,sinphi,costheta,sintheta,cospsi,sinpsi);
 	vector1.x = RotateMatrix1[0][0]*v.x +RotateMatrix1[0][1]*v.y +RotateMatrix1[0][2]*v.z;
 	vector1.y = RotateMatrix1[1][0]*v.x +RotateMatrix1[1][1]*v.y +RotateMatrix1[1][2]*v.z;
 	vector1.z = RotateMatrix1[2][0]*v.x +RotateMatrix1[2][1]*v.y +RotateMatrix1[2][2]*v.z;
 	phi = atan2(vector1.y, vector1.x);
    
-	cosphi=cos(-phi);sinphi=sin(-phi);
+	cosphi=cos(-phi);
+	sinphi=sin(-phi);
 	// costheta=costheta; //it is not needed to reseted since them havenot changed
 	sintheta=-sintheta;
 	//cospsi=1;sinpsi=0;  //it is not needed to reseted since them havenot changed 
 	RotMatrixFromAngle(RotateMatrix,cosphi,sinphi,costheta,sintheta,cospsi,sinpsi);
-	//RotMatrixFromAngle(RotateMatrix, -phi, -theta, 0);
 }
 
 void IntegratedSkeleton::RotMatrixFromAngle(float RMatrix[3][3], float cosphi, float sinphi, float costheta,float sintheta, float cospsi, float sinpsi) 
 {
   // rotation matrix is      R(0,0) R(0,1) R(0,2)
-  //                 R(1,0) R(1,1) R(1,2)
-  //             R(2,0) R(2,1) R(2,2)
+  //						R(1,0) R(1,1) R(1,2)
+  //						R(2,0) R(2,1) R(2,2)
    RMatrix[0][0] = cosphi*cospsi - costheta*sinphi*sinpsi;
    RMatrix[1][0] = cospsi*sinphi + cosphi*costheta*sinpsi;
    RMatrix[2][0] = sinpsi*sintheta;
@@ -606,10 +635,9 @@ bool IntegratedSkeleton::computeSeedsWithMaxCurvature()
 	if(!curv || !m_inputImage)
 		return false;
 
-	ImageType::RegionType region = m_inputImage->GetBufferedRegion();
-	int L = region.GetSize(0); //x
-	int M = region.GetSize(1); //y
-	int N = region.GetSize(2); //z
+	int L = sizeX; //x
+	int M = sizeY; //y
+	int N = sizeZ; //z
 	long slsz = L*M;
 
 	double meanCurvature = this->GetMean(curv, L, M, N);
@@ -704,9 +732,9 @@ bool IntegratedSkeleton::computeSeedsWithMaxCurvature()
 	return true;
 }
 
-double IntegratedSkeleton::GetMean(float *curf, int nx, int ny, int nz)
+double IntegratedSkeleton::GetMean(float *buf, int nx, int ny, int nz)
 {
-	if(!curv)
+	if(!buf)
 		return 0.0;
 
 	double mean=0.;
@@ -717,7 +745,7 @@ double IntegratedSkeleton::GetMean(float *curf, int nx, int ny, int nz)
 			for (int i = 0; i < nx; i++) 
 			{
 				long idx = k*nx*ny + j*nx + i;
-				mean += curv[idx];
+				mean += buf[idx];
 			}
 		}
     }
@@ -732,10 +760,9 @@ bool IntegratedSkeleton::convertGradVectorToForceVector()
 	if(!Iu || !Iv || !Iw || !m_inputImage)
 		return false;
 
-	ImageType::RegionType region = m_inputImage->GetBufferedRegion();
-	int L = region.GetSize(0); //x
-	int M = region.GetSize(1); //y
-	int N = region.GetSize(2); //z
+	int L = sizeX; //x
+	int M = sizeY; //y
+	int N = sizeZ; //z
 	long slsz = L*M;
 
 	if(force)
@@ -804,10 +831,6 @@ bool IntegratedSkeleton::computeCriticalPointSeeds()
 	if(!force || !m_inputImage)
 		return false;
 
-	ImageType::RegionType region = m_inputImage->GetBufferedRegion();
-	int sizeX = region.GetSize(0); //x
-	int sizeY = region.GetSize(1); //y
-	int sizeZ = region.GetSize(2); //z
 	long slsz = sizeX*sizeY;
 
 	float totalVecLength = 0;
@@ -1014,12 +1037,8 @@ bool IntegratedSkeleton::computeSkeleton()
 	if(!m_inputImage)
 		return false;
 
-	ImageType::RegionType region = m_inputImage->GetBufferedRegion();
-	int sizeX = region.GetSize(0); //x
-	int sizeY = region.GetSize(1); //y
-	int sizeZ = region.GetSize(2); //z
 	long slsz = sizeX*sizeY;
-	long sz = slsz*sizeZ;
+	long sz = numPix;
 	
 	//Combine both types of seeds:
 	std::vector<Vector3D> seeds = curvSeeds;

@@ -52,8 +52,7 @@ int main(int argc, char *argv[])
 	//volProc->MaskUsingGraphCuts();
 	//volProc->MaskSmallConnComp(50);
 
-	mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton();
-	skel->SetInput( volProc->GetOutput() );
+	mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton( volProc->GetOutput() );
 	skel->SetVectorMagnitude(.05);
 	skel->SetDebug(true);
 	skel->Update();

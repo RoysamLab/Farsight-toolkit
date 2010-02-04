@@ -45,12 +45,11 @@ namespace mdl
 class IntegratedSkeleton
 {
 public:
-	IntegratedSkeleton();
+	IntegratedSkeleton(ImageType::Pointer inImage);
 	~IntegratedSkeleton();
 	//Setup:
 	void SetVectorMagnitude(double vM){ vectorMagnitude = vM; };
 	void SetDebug(bool inp = true){ debug = inp; };
-	void SetInput(ImageType::Pointer inImage);
 	//Methods:
 	bool Update();
 
@@ -65,8 +64,13 @@ private:
 	bool debug;				//If debug is true, process in steps and print stuff
 	double vectorMagnitude;
 
-	//Images
+	//Images & size
 	ImageType::Pointer m_inputImage;
+	ImageType::RegionType region;
+	int sizeX;
+	int sizeY;
+	int sizeZ;
+	long numPix;
 
 	//Gradient Vectors:
 	float *Iu;
