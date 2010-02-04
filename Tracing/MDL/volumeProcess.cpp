@@ -25,6 +25,7 @@ limitations under the License.
 #include "itkOtsuThresholdImageFilter.h" 
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkCurvatureAnisotropicDiffusionImageFilter.h"
+#include "GCBinarization/cell_binarization.h"
 
 using std::cerr;
 using std::cout;
@@ -83,16 +84,15 @@ int main(int argc, char *argv[])
   int ii, jj, kk;
   DATATYPEOUT *volout;
   long idx;
-  double threshold; 
+
   double itkThreshold = -9999; 
   int sizeExpand = 0;
   DATATYPEOUT blockMax;
   int timesDilate;
   int border;
-  
+  unsigned short *GraphcutResults;
 
   cout << "Volume Processing..." << endl;
-
   //make sure we can write to the output file
   if((outfile=fopen(outputFileName, "wb")) == NULL)
     {
@@ -251,12 +251,42 @@ int main(int argc, char *argv[])
       ++itr;
       ++idx;
       }
-    //}
-
   //allocate memory for the output image
   volout = (DATATYPEOUT*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(DATATYPEOUT));
+  
+  // one pre-processing  scheme 
+  
+  GraphcutResults = (unsigned short*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(unsigned short));
+  Neuron_Binarization_3D(volin,GraphcutResults,sizeX,sizeY,sizeZ,0,1);
 
-  // Pre-Processing 
+  for (k=0; k<(sizeZ+sizeExpand*2); k++)
+      for (j=0; j<sizeY; j++)
+        for (i=0; i<sizeX; i++) {
+          volout[k *sizeX*sizeY + j *sizeX + i] = 0; 
+        }  //initial to zeros
+   
+   for (k=0; k<sizeZ; k++)
+    {
+    // threshold first
+     for (j=0; j<sizeY; j++)
+       {
+       for (i=0; i<sizeX; i++)
+        {
+        idx = k *sizeX*sizeY + j *sizeX + i;
+        if (GraphcutResults [idx] == 0) 
+          {
+          volin[idx] = 0;
+          }
+        }
+      }
+    }   
+
+  free(GraphcutResults);
+  GraphcutResults=NULL;
+
+  // the secpnd Pre-Processing method, corresponding to the old version MDL 
+  /*
+  double threshold; 
   // by xiao liang, using 3 sigma theory to estimate threshold;
   double meanValue =0.0, VarianceValue =  0.0;
 
@@ -299,14 +329,11 @@ int main(int argc, char *argv[])
     {
     threshold = m_threshold;
     }
-  /*
+  
   if (itkThreshold > 0 && itkThreshold <12)
 	  threshold = itkThreshold;
   else  
 	  threshold = itkThreshold /3.3;
-	  */
-  if (itkThreshold > 0)
-  threshold = sqrt(itkThreshold);
   //threshold =7;
   cout << "OTSU optimal threshold " << threshold << endl;
 
@@ -332,7 +359,7 @@ int main(int argc, char *argv[])
         }
       }
     }   
-
+  */
   // Method 2: Dilation of the object
   timesDilate = 1;
   border = 3;
@@ -383,6 +410,18 @@ int main(int argc, char *argv[])
     timesDilate--;
     }
 
+  //-----  Image write 
+   /*
+    typedef itk::ImageRegionIteratorWithIndex< ImageType > IteratorType;
+	IteratorType iterator1(inputImage,inputImage->GetRequestedRegion());
+	int lng = sizeX*sizeY*sizeZ;
+	
+	for(int i=0; i<lng; i++)
+	{
+	 iterator1.Set((float)volin[i]);
+	 ++iterator1;	
+	}
+   */
   //write the output image and free memory
   fwrite(volout, sizeX*sizeY*sizeZ, sizeof(DATATYPEOUT), outfile);
   FILE *mhdfile;

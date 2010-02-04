@@ -2,6 +2,12 @@ PROJECT(MDL)
 FIND_PACKAGE( Boost REQUIRED )
 INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} ${Farsight_BINARY_DIR}/Tracing/MDL 
                      ${Farsight_SOURCE_DIR}/Tracing/MDL )
+SET( cbin_SRCS
+  GCBinarization/cell_binarization.h
+  GCBinarization/cell_binarization.cpp    
+  GCBinarization/new_graph.h
+  GCBinarization/block_b.h   
+)
 ADD_EXECUTABLE(AnisoDiffuse AnisoDiffuse.cpp)
 ADD_EXECUTABLE(ConnCompntwFldfill ConnCompntwFldfill.cpp)
 ADD_EXECUTABLE(GradientVecField GradientVecField.cpp)
@@ -9,8 +15,8 @@ ADD_EXECUTABLE(MinSpanTree distTransform.cpp MinSpanTree.cpp morphGraphPrune.cpp
 ADD_EXECUTABLE(Integratedskel Integratedskel.cpp)
 ADD_EXECUTABLE(ObjectVolumeProcess ObjectVolumeProcess.cpp)
 TARGET_LINK_LIBRARIES(ObjectVolumeProcess ITKIO ITKStatistics)
-ADD_EXECUTABLE(volumeProcess volumeProcess.cpp)
-TARGET_LINK_LIBRARIES(volumeProcess ITKIO ITKStatistics)
+ADD_EXECUTABLE(volumeProcess volumeProcess.cpp ${cbin_SRCS})
+TARGET_LINK_LIBRARIES(volumeProcess ITKIO ITKStatistics ITKBasicFilters ITKCommon)
 ADD_EXECUTABLE(RefiningSkeleton RefiningSkeleton.cpp)
 ADD_EXECUTABLE(MDABasedSpineExtraction distTransform.cpp MDABasedSpineExtraction.cpp morphGraphPrune.cpp WeightedMahalsnobisDistance.cxx)
 TARGET_LINK_LIBRARIES(MDABasedSpineExtraction  ITKBasicFilters ITKCommon ITKIO ITKStatistics)
