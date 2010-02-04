@@ -1037,10 +1037,10 @@ QVector<QColor> LabelImageViewQT::CreateColorTable()
 	
 	//Colors for 10 classes
 	colorTable.append(Qt::yellow);
-	colorTable.append(Qt::green);
-	colorTable.append(Qt::cyan);
 	colorTable.append(Qt::magenta);
+	colorTable.append(Qt::cyan);
 	colorTable.append(Qt::red);
+	colorTable.append(Qt::green);
 	colorTable.append(Qt::blue);
 	colorTable.append(Qt::white);
 	colorTable.append(Qt::gray);
