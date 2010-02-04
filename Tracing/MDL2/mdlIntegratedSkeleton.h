@@ -83,8 +83,8 @@ private:
 	float *curv;		//Iso-gray surface curvature
 
 	//Seeds
-	std::vector<Vector3D> curvSeeds; //Maximum Curvature Seeds
-	std::vector<Vector3D> critSeeds; //Critical Point Seeds
+	std::vector<Point3D> curvSeeds; //Maximum Curvature Seeds
+	std::vector<Point3D> critSeeds; //Critical Point Seeds
 
 	//Skeleton points (ouput)
 	std::vector<Point3D> skeletonPoints;

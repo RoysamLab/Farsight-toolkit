@@ -705,7 +705,7 @@ bool IntegratedSkeleton::computeSeedsWithMaxCurvature()
 				//curv[idx] is bigger than all 6 neighbors:
 				if (curv[idx] != 0)
 				{
-					Vector3D newSeed;
+					Point3D newSeed;
 					newSeed.x =(float)i;
 					newSeed.y =(float)j;
 					newSeed.z =(float)k;
@@ -724,7 +724,8 @@ bool IntegratedSkeleton::computeSeedsWithMaxCurvature()
 		{
 			for (int k = 0; k < (int)curvSeeds.size(); k++) 
 			{
-				fprintf(fileout,"%d %d %d\n", curvSeeds.at(k).x, curvSeeds.at(k).y, curvSeeds.at(k).z);
+				Point3D s = curvSeeds.at(k);
+				fprintf(fileout,"%d %d %d\n", (int)(s.x), (int)(s.y), (int)(s.z));
 			}
 			fclose(fileout);
 		}
@@ -943,7 +944,7 @@ bool IntegratedSkeleton::computeCriticalPointSeeds()
 							OutForce = interpolation(fx, fy, fz, sizeX, sizeY, sizeZ, force);
 							if(veclength(OutForce) < vectorMagnitude)
 							{
-								Vector3D newSeed;
+								Point3D newSeed;
 								newSeed.x = fx;
 								newSeed.y = fy;
 								newSeed.z = fz;
@@ -1041,7 +1042,7 @@ bool IntegratedSkeleton::computeSkeleton()
 	long sz = numPix;
 	
 	//Combine both types of seeds:
-	std::vector<Vector3D> seeds = curvSeeds;
+	std::vector<Point3D> seeds = curvSeeds;
 	seeds.insert(seeds.end(),critSeeds.begin(),critSeeds.end());
 
 	int numSeeds = (int)seeds.size();
@@ -1153,7 +1154,7 @@ bool IntegratedSkeleton::computeSkeleton()
 		{
 			for (int k = 0; k < (int)skeletonPoints.size(); k++) 
 			{
-				fprintf(fileout,"%f %f %f %d\n", skeletonPoints.at(k).x, skeletonPoints.at(k).y, skeletonPoints.at(k).z, 1);
+				fprintf(fileout,"%1.1f %1.1f %1.1f %d\n", skeletonPoints.at(k).x, skeletonPoints.at(k).y, skeletonPoints.at(k).z, 1);
 			}
 			fclose(fileout);
 		}
