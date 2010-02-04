@@ -49,14 +49,17 @@ int main(int argc, char *argv[])
 	mdl::VolumeProcess *volProc = new mdl::VolumeProcess();
 	volProc->SetInput(img);
 	volProc->SetDebug(true);
-	//volProc->MaskUsingGraphCuts();
-	//volProc->MaskSmallConnComp(50);
+	volProc->MaskUsingGraphCuts();
+	volProc->MaskSmallConnComp(50);
+	mdl::ImageType::Pointer clean_img = volProc->GetOutput();
+	delete volProc;
 
-	mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton( volProc->GetOutput() );
+	mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton( clean_img );
 	skel->SetVectorMagnitude(.05);
 	skel->SetDebug(true);
 	skel->Update();
 	std::vector<mdl::Point3D> skeleton = skel->GetOutput();
+	delete skel;
 
 
 
@@ -81,10 +84,7 @@ int main(int argc, char *argv[])
 	}
 	*/
 	//******************************************************************
-	//******************************************************************
-
-	delete skel;
-	delete volProc;
+	//*****************************************************************
 
 	return EXIT_SUCCESS;
 }

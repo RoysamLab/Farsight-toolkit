@@ -9,11 +9,16 @@ SET( cbin_SRCS
   GCBinarization/block_b.h   
 )
 
+#CHECK TO MAKE SURE ITK LIBRARIES ARE NEEDED FOR THESE:
+
 ADD_LIBRARY(mdlVolumeProcess mdlVolumeProcess.h mdlVolumeProcess.cpp ${cbin_SRCS})
 TARGET_LINK_LIBRARIES(mdlVolumeProcess ITKIO ITKStatistics ITKBasicFilters ITKCommon)
 
 ADD_LIBRARY(mdlIntegratedSkeleton mdlIntegratedSkeleton.h mdlIntegratedSkeleton.cpp)
 TARGET_LINK_LIBRARIES(mdlVolumeProcess ITKBasicFilters ITKCommon)
+
+ADD_LIBRARY(mdlBackboneExtract mdlBackboneExtract.h mdlBackboneExtract.cpp)
+#TARGET_LINK_LIBRARIES(mdlBackboneExtract)
 
 ADD_EXECUTABLE(volumeProcess2 main.cpp)
 TARGET_LINK_LIBRARIES(volumeProcess2 mdlVolumeProcess)

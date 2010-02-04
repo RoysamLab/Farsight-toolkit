@@ -942,6 +942,13 @@ bool IntegratedSkeleton::computeCriticalPointSeeds()
 							float fx = i+ii/(float)grid;
 							float fy = j+jj/(float)grid;
 							float fz = k+kk/(float)grid;
+
+							//Don't add seeds that are outside of image:
+							if( (fx>=sizeX-1) || (fy>=sizeY-1) || (fz>=sizeX-1) )
+								continue;
+							if( (fx<0) || (fy<0) || (fz<0) )
+								continue;
+
 							OutForce = interpolation(fx, fy, fz, sizeX, sizeY, sizeZ, force);
 							if(veclength(OutForce) < vectorMagnitude)
 							{
@@ -967,19 +974,40 @@ bool IntegratedSkeleton::computeCriticalPointSeeds()
 
 IntegratedSkeleton::Vector3D IntegratedSkeleton::interpolation(float x, float y, float z, int sizx, int sizy, int sizz, Vector3D *forcevec)
 {
-	//-------by xiao liang:  new implementation
-    Vector3D forceInt;  
-	float alpha, beta, gamma;
-  
-	long slsz;
-    int Intx,Inty,Intz;
-	Intx=int(x);
-	Inty=int(y);
-	Intz=int(z);
-	alpha = x- Intx;   
-	beta = y- Inty;
-	gamma = z-Intz;
-	slsz=sizy*sizx;
+	//-------by xiao liang:  new implementation  
+	
+
+	//ADDED BY ISAAC 2/04/2010
+	//Need to make sure that none of the Nei locations are outside the image:
+	if(x >= sizx-1)
+	{
+		x = sizx-2;
+	}
+	if(y >= sizy-1)
+	{
+		y = sizy-2;
+	}
+	if(z >= sizz-1)
+	{
+		z = sizz-2;
+	}
+	if(x<0)
+		x=0;
+	if(y<0)
+		y=0;
+	if(z<0)
+		z=0;
+
+	int Intx=int(x);
+	int Inty=int(y);
+	int Intz=int(z);
+	
+	float alpha = x - Intx;   
+	float beta = y - Inty;
+	float gamma = z -Intz;
+	
+	long slsz = sizy*sizx;
+
 	float a[8];// for interpolation coefficients
 	a[0] = (1-alpha)*(1-beta)*(1-gamma);
 	a[1] = (1-alpha)*(1-beta)*gamma;
@@ -992,42 +1020,44 @@ IntegratedSkeleton::Vector3D IntegratedSkeleton::interpolation(float x, float y,
 
 	long Nei[8]; // considering N8 neighborhood in 3D image
     Nei[0] = Intz*slsz + Inty*sizx + Intx;
-	Nei[1] =  Nei[0] +slsz;
-	Nei[2] =  Nei[0] +slsz+sizx;
-	Nei[3] =  Nei[0] +1;
-	Nei[4] =  Nei[0] +slsz+1;
-	Nei[5] =  Nei[0] +sizx+1;
-	Nei[6] =  Nei[0] +sizx;
-	Nei[7] =  Nei[0] +slsz+sizx+1;
+	Nei[1] =  Nei[0] + slsz;
+	Nei[2] =  Nei[0] + slsz + sizx;
+	Nei[3] =  Nei[0] + 1;
+	Nei[4] =  Nei[0] + slsz + 1;
+	Nei[5] =  Nei[0] + sizx + 1;
+	Nei[6] =  Nei[0] + sizx;
+	Nei[7] =  Nei[0] + slsz + sizx + 1;
+
+	Vector3D forceInt;
 
 	//------ compute interpolation ---------------------------------------//
-	forceInt.x=forcevec[ Nei[0]].x*a[0]
-      +forcevec[ Nei[1]].x*a[1]
-      +forcevec[ Nei[2]].x*a[2]
-      +forcevec[ Nei[3]].x*a[3]
-      +forcevec[ Nei[4]].x*a[4]
-      +forcevec[ Nei[5]].x*a[5]
-      +forcevec[ Nei[6]].x*a[6]
-      +forcevec[ Nei[7]].x*a[7];
+	forceInt.x=forcevec[Nei[0]].x*a[0]
+      +forcevec[Nei[1]].x*a[1]
+      +forcevec[Nei[2]].x*a[2]
+      +forcevec[Nei[3]].x*a[3]
+      +forcevec[Nei[4]].x*a[4]
+      +forcevec[Nei[5]].x*a[5]
+      +forcevec[Nei[6]].x*a[6]
+      +forcevec[Nei[7]].x*a[7];
 
 
-	forceInt.y=forcevec[ Nei[0]].y*a[0]
-      +forcevec[ Nei[1]].y*a[1]
-      +forcevec[ Nei[2]].y*a[2]
-      +forcevec[ Nei[3]].y*a[3]
-      +forcevec[ Nei[4]].y*a[4]
-      +forcevec[ Nei[5]].y*a[5]
-      +forcevec[ Nei[6]].y*a[6]
-      +forcevec[ Nei[7]].y*a[7];
+	forceInt.y=forcevec[Nei[0]].y*a[0]
+      +forcevec[Nei[1]].y*a[1]
+      +forcevec[Nei[2]].y*a[2]
+      +forcevec[Nei[3]].y*a[3]
+      +forcevec[Nei[4]].y*a[4]
+      +forcevec[Nei[5]].y*a[5]
+      +forcevec[Nei[6]].y*a[6]
+      +forcevec[Nei[7]].y*a[7];
 
-	forceInt.z=forcevec[ Nei[0]].z*a[0]
-      +forcevec[ Nei[1]].z*a[1]
-      +forcevec[ Nei[2]].z*a[2]
-      +forcevec[ Nei[3]].z*a[3]
-      +forcevec[ Nei[4]].z*a[4]
-      +forcevec[ Nei[5]].z*a[5]
-      +forcevec[ Nei[6]].z*a[6]
-      +forcevec[ Nei[7]].z*a[7];
+	forceInt.z=forcevec[Nei[0]].z*a[0]
+      +forcevec[Nei[1]].z*a[1]
+      +forcevec[Nei[2]].z*a[2]
+      +forcevec[Nei[3]].z*a[3]
+      +forcevec[Nei[4]].z*a[4]
+      +forcevec[Nei[5]].z*a[5]
+      +forcevec[Nei[6]].z*a[6]
+      +forcevec[Nei[7]].z*a[7];
 
 	return(forceInt);
 }
@@ -1106,8 +1136,7 @@ bool IntegratedSkeleton::computeSkeleton()
 			}// end if  FlagWithin
 		}// end if (idxSeeds < numSeeds)
 
-		//Add the start pos to the skeleton points
-		VoxelPosition newPos;
+		VoxelPosition newPos;	//To be added to skeleton points
 		newPos.x = Startpos.x;
 		newPos.y = Startpos.y;
 		newPos.z = Startpos.z;
@@ -1129,6 +1158,13 @@ bool IntegratedSkeleton::computeSkeleton()
 		while(streamSteps < 4000) //4000  
 		{
 			rk2(Startpos.x, Startpos.y, Startpos.z, sizeX, sizeY, sizeZ, linePathStepSize, force, &Nextpos);
+			
+			//If at edge of image get out of loop
+			if(Nextpos.x >= sizeX-1 || Nextpos.y >= sizeY-1 || Nextpos.z >= sizeZ-1)
+				break;
+			if(Nextpos.x < 0 || Nextpos.y < 0 || Nextpos.z < 0)
+				break;
+
 			streamSteps++;
 			Startpos.x = Nextpos.x;
 			Startpos.y = Nextpos.y;
