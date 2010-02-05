@@ -26,7 +26,7 @@ limitations under the License.
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkCurvatureAnisotropicDiffusionImageFilter.h"
 #include "GCBinarization/cell_binarization.h"
-
+#include "distTransform.h"
 using std::cerr;
 using std::cout;
 using std::endl;
@@ -258,13 +258,50 @@ int main(int argc, char *argv[])
   
   GraphcutResults = (unsigned short*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(unsigned short));
   Neuron_Binarization_3D(volin,GraphcutResults,sizeX,sizeY,sizeZ,0,1);
-
+  
   for (k=0; k<(sizeZ+sizeExpand*2); k++)
       for (j=0; j<sizeY; j++)
         for (i=0; i<sizeX; i++) {
           volout[k *sizeX*sizeY + j *sizeX + i] = 0; 
         }  //initial to zeros
    
+  
+  std::cout << "Do you think we need the distance transform to make the centerline of image become bright with higher intensity?";
+  
+  char tmpAnswer = 'n';
+  //tmpAnswer = getchar();
+  if (tmpAnswer =='Y' || tmpAnswer =='y')
+  {
+  unsigned char *GraphcutResultsTmp;
+  GraphcutResultsTmp = (unsigned char*)malloc(sizeX*sizeY*(sizeZ+sizeExpand*2)*sizeof(unsigned char));
+  for (k=0; k<(sizeZ+sizeExpand*2); k++)
+      for (j=0; j<sizeY; j++)
+        for (i=0; i<sizeX; i++) 
+		{
+          GraphcutResultsTmp[k *sizeX*sizeY + j *sizeX + i] = (unsigned char) GraphcutResults[k *sizeX*sizeY + j *sizeX + i]; 
+        }  //initial to zeros
+
+  distTransform(GraphcutResultsTmp,sizeX,sizeY,sizeZ);
+  
+  for (k=0; k<sizeZ; k++)
+    {
+    // threshold first
+     for (j=0; j<sizeY; j++)
+       {
+       for (i=0; i<sizeX; i++)
+        {
+        idx = k *sizeX*sizeY + j *sizeX + i;
+        volin[idx] = GraphcutResultsTmp [idx];
+        } // end for 
+      } // end for 
+    } // end for 
+  
+  free(GraphcutResultsTmp);
+  GraphcutResultsTmp=NULL;
+  } // end if 
+
+  else {
+ 
    for (k=0; k<sizeZ; k++)
     {
     // threshold first
@@ -273,6 +310,7 @@ int main(int argc, char *argv[])
        for (i=0; i<sizeX; i++)
         {
         idx = k *sizeX*sizeY + j *sizeX + i;
+		
         if (GraphcutResults [idx] == 0) 
           {
           volin[idx] = 0;
@@ -281,8 +319,10 @@ int main(int argc, char *argv[])
       }
     }   
 
-  free(GraphcutResults);
-  GraphcutResults=NULL;
+ } // end else
+
+ free(GraphcutResults);
+ GraphcutResults=NULL;
 
   // the secpnd Pre-Processing method, corresponding to the old version MDL 
   /*

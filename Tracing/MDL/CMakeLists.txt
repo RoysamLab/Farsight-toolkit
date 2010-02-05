@@ -15,7 +15,7 @@ ADD_EXECUTABLE(MinSpanTree distTransform.cpp MinSpanTree.cpp morphGraphPrune.cpp
 ADD_EXECUTABLE(Integratedskel Integratedskel.cpp)
 ADD_EXECUTABLE(ObjectVolumeProcess ObjectVolumeProcess.cpp)
 TARGET_LINK_LIBRARIES(ObjectVolumeProcess ITKIO ITKStatistics)
-ADD_EXECUTABLE(volumeProcess volumeProcess.cpp ${cbin_SRCS})
+ADD_EXECUTABLE(volumeProcess distTransform.cpp volumeProcess.cpp ${cbin_SRCS})
 TARGET_LINK_LIBRARIES(volumeProcess ITKIO ITKStatistics ITKBasicFilters ITKCommon)
 ADD_EXECUTABLE(RefiningSkeleton RefiningSkeleton.cpp)
 ADD_EXECUTABLE(MDABasedSpineExtraction distTransform.cpp MDABasedSpineExtraction.cpp morphGraphPrune.cpp WeightedMahalsnobisDistance.cxx)
