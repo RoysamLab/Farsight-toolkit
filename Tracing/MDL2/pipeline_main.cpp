@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 	skel->SetVectorMagnitude(.05);
 	skel->SetDebug(true);
 	skel->Update();
-	std::vector<mdl::Point3D> skeleton = skel->GetOutput();
+	std::vector<mdl::fPoint3D> skeleton = skel->GetOutput();
 	delete skel;
    
 

@@ -705,7 +705,7 @@ bool IntegratedSkeleton::computeSeedsWithMaxCurvature()
 				//curv[idx] is bigger than all 6 neighbors:
 				if (curv[idx] != 0)
 				{
-					Point3D newSeed;
+					fPoint3D newSeed;
 					newSeed.x =(float)i;
 					newSeed.y =(float)j;
 					newSeed.z =(float)k;
@@ -724,7 +724,7 @@ bool IntegratedSkeleton::computeSeedsWithMaxCurvature()
 		{
 			for (int k = 0; k < (int)curvSeeds.size(); k++) 
 			{
-				Point3D s = curvSeeds.at(k);
+				fPoint3D s = curvSeeds.at(k);
 				fprintf(fileout,"%d %d %d\n", (int)(s.x), (int)(s.y), (int)(s.z));
 			}
 			fclose(fileout);
@@ -952,7 +952,7 @@ bool IntegratedSkeleton::computeCriticalPointSeeds()
 							OutForce = interpolation(fx, fy, fz, sizeX, sizeY, sizeZ, force);
 							if(veclength(OutForce) < vectorMagnitude)
 							{
-								Point3D newSeed;
+								fPoint3D newSeed;
 								newSeed.x = fx;
 								newSeed.y = fy;
 								newSeed.z = fz;
@@ -1076,7 +1076,7 @@ bool IntegratedSkeleton::computeSkeleton()
 	long sz = numPix;
 	
 	//Combine both types of seeds:
-	std::vector<Point3D> seeds = curvSeeds;
+	std::vector<fPoint3D> seeds = curvSeeds;
 	seeds.insert(seeds.end(),critSeeds.begin(),critSeeds.end());
 
 	int numSeeds = (int)seeds.size();
@@ -1173,7 +1173,7 @@ bool IntegratedSkeleton::computeSkeleton()
 			idx = (int)Nextpos.z *slsz + (int)Nextpos.y *sizeX + (int)Nextpos.x;
 			if (FlagOnSkeleton[idx] != true) 
 			{
-				Point3D newPos;
+				fPoint3D newPos;
 				newPos.x = Nextpos.x;
 				newPos.y = Nextpos.y;
 				newPos.z = Nextpos.z;

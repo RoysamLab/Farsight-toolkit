@@ -29,7 +29,7 @@ limitations under the License.
 //#include <string>
 #include <vector>
 #include <iostream>
-//#include <math.h>
+#include <math.h>
 //#include <stdio.h>
 //#include <algorithm>
 
@@ -50,18 +50,26 @@ public:
 	~BackboneExtract();
 	//Setup:
 	void SetDebug(bool inp = true){ debug = inp; };
+	void SetEdgeRange(int edge){ edgeRange = edge; };
+	void SetMorphStrength(int morph){ timesErosion = morph; };
+	void SetPower(int p){ power = p; };
 	//Methods:
+	void SetSkeletonPoints(std::vector<fPoint3D> * sp);
 	bool Update();
 
 	//Get Result:
 	//std::vector<Point3D> GetOutput(){ return skeletonPoints; };
 
 private:
+	typedef std::pair<int, int>  E;
 	//typedef Point3D Vector3D;
 	//typedef Point3D VoxelPosition;
 
 	//Parameters
 	bool debug;				//If debug is true, process in steps and print stuff
+	int edgeRange;
+	int timesErosion;		//aka MorphStrength
+	double power;
 
 	//Images & size
 	ImageType::Pointer m_inputImage;
@@ -72,7 +80,16 @@ private:
 	long numPix;
 
 	//Skeleton points (input)
-	std::vector<Point3D> * skeletonPoints;
+	std::vector<fPoint3D> * skeletonPoints;
+
+	//Intermediates:
+	std::vector<Point3D> nodes;
+	std::vector<E> edgeArray;
+	std::vector<float> edgeWeight;
+
+	bool skeletonPointsToNodes();	//step 1
+	bool nodesToEdges();			//step 2
+
 };
 
 }  // end namespace mdl

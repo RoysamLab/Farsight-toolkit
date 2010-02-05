@@ -54,11 +54,11 @@ public:
 	bool Update();
 
 	//Get Result:
-	std::vector<Point3D> GetOutput(){ return skeletonPoints; };
+	std::vector<fPoint3D> GetOutput(){ return skeletonPoints; };
 
 private:
-	typedef Point3D Vector3D;
-	typedef Point3D VoxelPosition;
+	typedef fPoint3D Vector3D;
+	typedef fPoint3D VoxelPosition;
 
 	//Parameters
 	bool debug;				//If debug is true, process in steps and print stuff
@@ -83,11 +83,11 @@ private:
 	float *curv;		//Iso-gray surface curvature
 
 	//Seeds
-	std::vector<Point3D> curvSeeds; //Maximum Curvature Seeds
-	std::vector<Point3D> critSeeds; //Critical Point Seeds
+	std::vector<fPoint3D> curvSeeds; //Maximum Curvature Seeds
+	std::vector<fPoint3D> critSeeds; //Critical Point Seeds
 
 	//Skeleton points (ouput)
-	std::vector<Point3D> skeletonPoints;
+	std::vector<fPoint3D> skeletonPoints;
 
 	//Key functions:
 	bool createGradientVectorField();
