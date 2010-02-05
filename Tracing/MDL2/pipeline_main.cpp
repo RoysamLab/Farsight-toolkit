@@ -52,15 +52,18 @@ int main(int argc, char *argv[])
 	volProc->MaskUsingGraphCuts();
 	volProc->MaskSmallConnComp(50);
 	mdl::ImageType::Pointer clean_img = volProc->GetOutput();
+	//volProc->RunDistanceTransform();
+	//mdl::ImageType::Pointer DT_img = volProc->GetOutput();
 	delete volProc;
 
+	//mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton( clean_img );
 	mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton( clean_img );
 	skel->SetVectorMagnitude(.05);
 	skel->SetDebug(true);
 	skel->Update();
 	std::vector<mdl::Point3D> skeleton = skel->GetOutput();
 	delete skel;
-
+   
 
 
 	//******************************************************************

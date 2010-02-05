@@ -27,6 +27,9 @@ limitations under the License.
 #include <string>
 #include <vector>
 #include <iostream>
+#include <math.h>
+#include <algorithm>
+#include <utility>
 
 #include "GCBinarization/cell_binarization.h"
 
@@ -59,6 +62,8 @@ public:
 	bool MaskUsingGraphCuts();
 	bool RunAnisotropicDiffusion(int timesDiffuse=1, bool iso = false);	//Run anisotropic diffusion written by Xiaosong
 	bool RunManualThreshold(int threshold);
+	bool RunDistanceTransform(void);
+	bool distTransform(unsigned char *f, int L, int M, int N); 
 	//Get Result:
 	ImageType::Pointer GetOutput();
 
@@ -75,6 +80,8 @@ private:
 	//Functions:
 	double getItkOtsuThreshold(ImageType::Pointer img);
 	double getXiaoLiangOtsuThreshold(ImageType::Pointer img);
+	int MIN(int x,int y) {return (((x) < (y))?(x):(y));}
+	int MAX(int x,int y) {return (((x) > (y))?(x):(y));}
 };
 
 }  // end namespace mdl
