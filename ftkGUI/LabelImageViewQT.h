@@ -105,6 +105,8 @@ public slots:
 	int GetCurrentZ(void){ return vSpin->value(); };
 	int GetCurrentT(void){ return hSpin->value(); };
 	void SetColorsToDefaults(void);
+	void zoomIn(){ zoom( ZoomInFactor ); };
+	void zoomOut(){ zoom( ZoomOutFactor ); };
 
 signals:
 	void mouseAt(int x, int y, int z);

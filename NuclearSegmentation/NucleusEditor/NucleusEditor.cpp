@@ -1193,16 +1193,6 @@ void NucleusEditor::toggleCentroids(void)
 		segView->SetCentroidsVisible(false);
 }
 
-void NucleusEditor::zoomIn(){
-	QKeyEvent *event = new QKeyEvent ( QEvent::KeyPress, Qt::Key_Equal, 0, 0 );
-	QCoreApplication::postEvent (segView, event);
-}
-
-void NucleusEditor::zoomOut(){
-	QKeyEvent *event = new QKeyEvent ( QEvent::KeyPress, Qt::Key_Minus, 0, 0 );
-	QCoreApplication::postEvent (segView, event);
-}
-
 void NucleusEditor::DisplayChannelsMenu(){
 	if( !segView->IsImageLoaded() )
 		return;

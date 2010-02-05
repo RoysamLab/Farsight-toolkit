@@ -129,8 +129,6 @@ protected slots:
 	void togglechannel8();
 	void togglechannel9();
 	void togglechannel( int channel_no );
-	void zoomIn();
-	void zoomOut();
 	void DisplayChannelsMenu();
 	void CreateNewPlotWindow();
 	void CreateNewTableWindow();
