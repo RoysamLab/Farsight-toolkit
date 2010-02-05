@@ -249,13 +249,13 @@ void NucleusEditor::createMenus()
 	zoomInAction = new QAction(tr("Zoom In"), this);
 	zoomInAction->setStatusTip(tr("Zoom In On The Displayed Image"));
 	zoomInAction->setShortcut(tr("="));
-	connect(zoomInAction, SIGNAL(triggered()), this, SLOT(zoomIn()));
+	connect(zoomInAction, SIGNAL(triggered()), segView, SLOT(zoomIn()));
 	zoomMenu->addAction(zoomInAction);
 
 	zoomOutAction  = new QAction(tr("Zoom Out"), this);
 	zoomOutAction->setStatusTip(tr("Zoom Out of The Displayed Image"));
 	zoomOutAction->setShortcut(tr("-"));
-	connect(zoomOutAction, SIGNAL(triggered()), this, SLOT(zoomOut()));
+	connect(zoomOutAction, SIGNAL(triggered()), segView, SLOT(zoomOut()));
 	zoomMenu->addAction(zoomOutAction);
 
 
