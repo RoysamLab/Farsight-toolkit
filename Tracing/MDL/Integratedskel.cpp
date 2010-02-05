@@ -747,6 +747,11 @@ int main (int argc, char *argv[])
     Startpos.x = Nextpos.x;
     Startpos.y = Nextpos.y;
     Startpos.z = Nextpos.z;
+	//If at edge of image get out of loop
+	if(Nextpos.x >= sizeX-1 || Nextpos.y >= sizeY-1 || Nextpos.z >= sizeZ-1)
+		break;
+	if(Nextpos.x < 0 || Nextpos.y < 0 || Nextpos.z < 0)
+		break;
 
     idx = (int)Nextpos.z *slsz + (int)Nextpos.y *sizeX + (int)Nextpos.x;
         if (FlagOnSkeleton[idx] != 1) {
@@ -785,11 +790,17 @@ Vector3D interpolation(float x, float y, float z, int sizx, int sizy, int sizz, 
     {
   
   //-------by xiao  new implementation
-    Vector3D forceInt;  
+  Vector3D forceInt;  
   float alpha, beta, gamma;
-  
   long slsz;
-    int Intx,Inty,Intz;
+  int Intx,Inty,Intz;
+  x= (x <0 ? 0:x);
+  y= (y <0 ? 0:y);
+  z= (z <0 ? 0:z);
+  x= (x>=sizx-1 ? sizx-2:x);
+  y= (y>=sizy-1 ? sizy-2:y);
+  z= (z>=sizz-1 ? sizz-2:z);
+
   Intx=int(x);
   Inty=int(y);
   Intz=int(z);
@@ -808,7 +819,8 @@ Vector3D interpolation(float x, float y, float z, int sizx, int sizy, int sizz, 
   a[7] =  (alpha*beta*gamma);
 
   long Nei[8]; // considering N8 neighborhood in 3D image
-    Nei[0] = Intz*slsz + Inty*sizx + Intx;
+  
+  Nei[0] = Intz*slsz + Inty*sizx + Intx;
   Nei[1] =  Nei[0] +slsz;
   Nei[2] =  Nei[0] +slsz+sizx;
   Nei[3] =  Nei[0] +1;
