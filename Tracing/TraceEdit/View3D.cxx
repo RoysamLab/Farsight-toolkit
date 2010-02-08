@@ -80,6 +80,7 @@ limitations under the License.
 #include "TraceModel.h"
 #include "MergeModel.h"
 #include "ImageActors.h"
+#include "TraceProjectManager.h"
 #include "View3DHelperClasses.h"
 #include "View3D.h"
 
@@ -452,6 +453,18 @@ void View3D::LoadSomaFile()
 		this->QVTK->GetRenderWindow()->Render();
 		this->EditLogDisplay->append("Soma file: \t" + this->SomaFile.last());
 		this->statusBar()->showMessage("Somas Rendered");
+	}
+}
+void View3D::LoadProject()
+{
+	QString projectFile= QFileDialog::getOpenFileName(this , "Load Trace Project File", ".",
+		tr("project ( *.xml" ));
+	if (!projectFile.isEmpty())
+	{
+		ProjectManager * project = new ProjectManager((char*)projectFile.toStdString().c_str());
+		for (unsigned int i = 0; i < project->size(); i++)
+		{ 
+		}
 	}
 }
 void View3D::SetImgInt()

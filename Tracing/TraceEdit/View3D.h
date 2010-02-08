@@ -37,6 +37,7 @@ class TraceLine;
 class TraceObject;
 class branchPT;
 class ImageRenderActors;
+class ProjectManager;
 
 class vtkActor;
 class vtkCallbackCommand;
@@ -122,6 +123,7 @@ public slots:
 	void LoadTraces();
 	void LoadImageData();
 	void LoadSomaFile();
+	void LoadProject();
 	void SetTraceType(int newType);
 	void ReloadState();
 	void SetImgInt();

@@ -484,6 +484,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
   printf("about to create the data structure.. %d\n", (int)criticals.size());
   std::set<int>::iterator iter = criticals.begin();
   int global_id_number = this->getNewLineId(); //setting this does not append traces?
+   int pc = trace_lines.size();
   while(iter != criticals.end())
     {
     TraceLine * ttemp = new TraceLine();
@@ -513,7 +514,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
   //printf("Trace_lines size = %d\n",trace_lines.size());
   
   iter = criticals.begin();
-  int pc = 0;
+ 
   while(iter!= criticals.end())
   {
     //printf("trace_lines[%d] = %p\n",pc,trace_lines[pc]);

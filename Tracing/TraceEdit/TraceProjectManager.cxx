@@ -18,6 +18,14 @@ ProjectManager::ProjectManager(char *filename)
 {
 	this->fileInfo.clear();
 	//read in existing project
+	this->readProject(filename);
+}
+ProjectManager::ProjectManager()
+{
+	this->fileInfo.clear();
+}
+void ProjectManager::readProject(char *filename)
+{
 	TiXmlDocument doc(filename);
 	doc.LoadFile();
 	TiXmlHandle docHandle( &doc );
@@ -38,6 +46,16 @@ ProjectManager::ProjectManager(char *filename)
 		this->fileInfo.push_back(currFile);
 		sourceFile = sourceFile->NextSiblingElement();
 	}
+}
+void ProjectManager::addFile(std::string fileName, std::string fileType, double x, double y, double z)
+{
+	FileInfoManager newFile;
+	newFile.fileName = fileName;
+	newFile.fileType = fileType;
+	newFile.tx = x;
+	newFile.ty = y;
+	newFile.tz = z;
+	this->fileInfo.push_back(newFile);
 }
 bool ProjectManager::writeProject(char *filename)
 {
@@ -64,4 +82,8 @@ bool ProjectManager::writeProject(char *filename)
 	{	
 		return false;
 	}
+}
+unsigned int ProjectManager::size()
+{
+	return this->fileInfo.size();
 }

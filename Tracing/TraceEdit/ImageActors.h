@@ -71,6 +71,7 @@ class  ImageRenderActors
 public:
 	ImageRenderActors();
 	int loadImage(std::string ImageSource, std::string tag);
+	int loadImage(std::string ImageSource, std::string tag, double x, double y, double z);
 //render actors
 	vtkSmartPointer<vtkActor> ContourActor(int i);
 	vtkSmartPointer<vtkVolume> RayCastVolume(int i);

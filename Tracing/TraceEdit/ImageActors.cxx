@@ -55,6 +55,46 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag)
 	this->LoadedImages.push_back(newImage);
 	return (int) (this->LoadedImages.size() -1);
 }
+int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, double x, double y, double z)
+{
+	if (ImageSource.empty())
+	{
+		return -1;
+	}
+	imageFileHandle *newImage= new imageFileHandle;
+	newImage->filename = ImageSource;
+	newImage->tag = tag;
+	newImage->colorTransferFunction = 0;
+	newImage->ContourActor = 0;
+	newImage->ContourFilter = 0;
+	newImage->ContourMapper = 0;
+	newImage->ImageData = 0;
+	newImage->opacityTransferFunction = 0;
+	newImage->volume = 0;
+	newImage->volumeMapper = 0;
+	newImage->volumeProperty = 0;
+	newImage->reader = ReaderType::New();
+	newImage->reader->SetFileName( ImageSource );
+	newImage->x = x;
+	newImage->y = y;
+	newImage->z = z;
+	//Test opening and reading the input file
+	try
+	{
+		newImage->reader->Update();
+	}
+	catch( itk::ExceptionObject & exp )
+	{
+		std::cerr << "Exception thrown while reading the input file " << std::endl;
+		std::cerr << exp << std::endl;
+		//return EXIT_FAILURE;
+	}
+	newImage->connector= ConnectorType::New();
+	newImage->connector->SetInput( newImage->reader->GetOutput() );
+	newImage->ImageData = newImage->connector->GetOutput();
+	this->LoadedImages.push_back(newImage);
+	return (int) (this->LoadedImages.size() -1);
+}
 void ImageRenderActors::ShiftImage(int i, double x, double y, double z)
 {
 	this->LoadedImages[i]->x = x;

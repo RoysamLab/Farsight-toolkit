@@ -34,7 +34,11 @@ class ProjectManager
 {
 public:
 	ProjectManager(char * filename);
+	ProjectManager();
+	void addFile(std::string fileName, std::string fileType, double x, double y, double z);
+	void readProject(char * filename);
 	bool writeProject(char* filename);
+	unsigned int size();
 private:
 	std::vector<FileInfoManager> fileInfo;
 };
