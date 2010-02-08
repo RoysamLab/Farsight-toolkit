@@ -318,11 +318,11 @@ void View3D::OkToBoot()
 		this->TraceEditSettings.setValue("boot/pos", this->bootLoadFiles->pos());
 		this->bootLoadFiles->close();
 		this->show();
-std::vector<std::string> LoadedImages = this->ImageActors->GetImageList();
-		for (unsigned int i =0; i < LoadedImages.size(); i++)
-		{
-			std::cout << LoadedImages.at(i)<< "\t";
-		}
+//std::vector<std::string> LoadedImages = this->ImageActors->GetImageList();
+//		for (unsigned int i =0; i < LoadedImages.size(); i++)
+//		{
+//			std::cout << LoadedImages.at(i)<< "\t";
+//		}
 	}
 	else
 	{
