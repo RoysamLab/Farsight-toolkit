@@ -15,7 +15,6 @@ limitations under the License.
 #include "mdlVolumeProcess.h"
 #include "mdlIntegratedSkeleton.h"
 #include "mdlMST.h"
-#include "mdlBackboneExtract.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 

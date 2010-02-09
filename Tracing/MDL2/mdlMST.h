@@ -87,7 +87,7 @@ private:
 	bool skeletonPointsToNodes();	//step 1
 	bool nodesToEdges();			//step 2
 	bool minimumSpanningTree();		//step 3
-	int roundToInt(float v);
+	int roundToInt(double v);
 
 	//output:
 	//MST result

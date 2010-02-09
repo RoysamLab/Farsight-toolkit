@@ -89,9 +89,9 @@ bool MST::CreateGraphAndMST()
 	return true;
 }
 
-int MST::roundToInt(float v)
+int MST::roundToInt(double v)
 {
-	float intpart;
+	double intpart;
 
 	if( modf(v, &intpart) < 0.5 )
 		return (int)floor(v);
