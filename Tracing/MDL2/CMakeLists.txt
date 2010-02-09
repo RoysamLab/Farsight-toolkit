@@ -17,11 +17,10 @@ TARGET_LINK_LIBRARIES(mdlVolumeProcess ITKIO ITKStatistics ITKBasicFilters ITKCo
 ADD_LIBRARY(mdlIntegratedSkeleton mdlIntegratedSkeleton.h mdlIntegratedSkeleton.cpp)
 TARGET_LINK_LIBRARIES(mdlVolumeProcess ITKBasicFilters ITKCommon)
 
-ADD_LIBRARY(mdlBackboneExtract mdlBackboneExtract.h mdlBackboneExtract.cpp)
-#TARGET_LINK_LIBRARIES(mdlBackboneExtract)
+ADD_LIBRARY(mdlMST mdlMST.h mdlMST.cpp)
 
 ADD_EXECUTABLE(volumeProcess2 main.cpp)
 TARGET_LINK_LIBRARIES(volumeProcess2 mdlVolumeProcess)
 
 ADD_EXECUTABLE(mdlpipe pipeline_main.cpp)
-TARGET_LINK_LIBRARIES(mdlpipe mdlVolumeProcess mdlIntegratedSkeleton)
+TARGET_LINK_LIBRARIES(mdlpipe mdlVolumeProcess mdlIntegratedSkeleton mdlMST)

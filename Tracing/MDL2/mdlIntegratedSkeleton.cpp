@@ -1206,7 +1206,7 @@ bool IntegratedSkeleton::computeSkeleton()
 		std::cerr << "Number of skeleton points = " << (int)skeletonPoints.size() << std::endl;
 	}
 
-	getchar();
+	//getchar();
 
 	return true;
 }

@@ -17,6 +17,9 @@ limitations under the License.
 
 #include "itkImage.h"
 
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/kruskal_min_spanning_tree.hpp>
+
 namespace mdl
 {
 	typedef struct {int x; int y; int z;} Point3D;
@@ -25,6 +28,11 @@ namespace mdl
 	typedef unsigned char PixelType;
     static const unsigned int Dimension = 3;
     typedef itk::Image< PixelType, Dimension > ImageType;
+
+	typedef boost::adjacency_list 
+		< boost::vecS, boost::vecS, boost::undirectedS, boost::no_property, 
+		  boost::property <boost::edge_weight_t, float> >  Graph;
+	typedef boost::graph_traits < Graph >::edge_descriptor  Edge;
 
 }  // end namespace mdl
 

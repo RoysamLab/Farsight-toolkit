@@ -14,6 +14,8 @@ limitations under the License.
 =========================================================================*/
 #include "mdlVolumeProcess.h"
 #include "mdlIntegratedSkeleton.h"
+#include "mdlMST.h"
+#include "mdlBackboneExtract.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 
@@ -49,8 +51,8 @@ int main(int argc, char *argv[])
 	mdl::VolumeProcess *volProc = new mdl::VolumeProcess();
 	volProc->SetInput(img);
 	volProc->SetDebug(true);
-	volProc->MaskUsingGraphCuts();
-	volProc->MaskSmallConnComp(50);
+	//volProc->MaskUsingGraphCuts();
+	//volProc->MaskSmallConnComp(50);
 	mdl::ImageType::Pointer clean_img = volProc->GetOutput();
 	//volProc->RunDistanceTransform();
 	//mdl::ImageType::Pointer DT_img = volProc->GetOutput();
@@ -63,8 +65,19 @@ int main(int argc, char *argv[])
 	skel->Update();
 	std::vector<mdl::fPoint3D> skeleton = skel->GetOutput();
 	delete skel;
-   
 
+	mdl::MST *mst = new mdl::MST( clean_img );
+	mst->SetDebug(true);
+	mst->SetEdgeRange(10);
+	mst->SetPower(1);
+	mst->SetSkeletonPoints( &skeleton );
+	mst->CreateGraphAndMST();
+	mst->ErodeAndDialateNodeDegree(50);
+	mst->BackboneExtract();
+
+	delete mst;
+   
+	getchar();
 
 	//******************************************************************
 	//******************************************************************

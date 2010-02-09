@@ -21,8 +21,8 @@ limitations under the License.
  *  Adapted Jan. 2010 by Isaac Abbott 
  *        
  *************************************************************************/
-#ifndef __mdlBackboneExtract_h
-#define __mdlBackboneExtract_h
+#ifndef __mdlMST_h
+#define __mdlMST_h
 
 #include "mdlTypes.h"
 
@@ -40,35 +40,31 @@ limitations under the License.
 namespace mdl
 {
 
-#define MIN(x,y) (((x) < (y))?(x):(y))
-#define MAX(x,y) (((x) > (y))?(x):(y))
-
-class BackboneExtract
+class MST
 {
 public:
-	BackboneExtract(ImageType::Pointer inImage);
-	~BackboneExtract();
+	typedef std::pair<int, int>  E;
+
+	MST(ImageType::Pointer inImage);
+	~MST();
 	//Setup:
 	void SetDebug(bool inp = true){ debug = inp; };
 	void SetEdgeRange(int edge){ edgeRange = edge; };
-	void SetMorphStrength(int morph){ timesErosion = morph; };
 	void SetPower(int p){ power = p; };
 	//Methods:
 	void SetSkeletonPoints(std::vector<fPoint3D> * sp);
-	bool Update();
+	bool CreateGraphAndMST();	//Do first
+	bool ErodeAndDialateNodeDegree(int morphStrength); //Do second
+	std::vector<E> BackboneExtract();
+	
+
 
 	//Get Result:
-	//std::vector<Point3D> GetOutput(){ return skeletonPoints; };
 
 private:
-	typedef std::pair<int, int>  E;
-	//typedef Point3D Vector3D;
-	//typedef Point3D VoxelPosition;
-
 	//Parameters
 	bool debug;				//If debug is true, process in steps and print stuff
 	int edgeRange;
-	int timesErosion;		//aka MorphStrength
 	double power;
 
 	//Images & size
@@ -83,13 +79,21 @@ private:
 	std::vector<fPoint3D> * skeletonPoints;
 
 	//Intermediates:
-	std::vector<Point3D> nodes;
-	std::vector<E> edgeArray;
-	std::vector<float> edgeWeight;
+	E * edge_array;			//for initial edges
+	float * edge_wght;		//for initial edge weights
+	unsigned int num_edges; //number of initial edges
+	Graph * g;				//my full graph at beginning
 
 	bool skeletonPointsToNodes();	//step 1
 	bool nodesToEdges();			//step 2
+	bool minimumSpanningTree();		//step 3
+	int roundToInt(float v);
 
+	//output:
+	//MST result
+	std::vector<Point3D> nodes;
+	std::vector< Edge > spanningTree;
+	std::vector< int > nodeDegree;
 };
 
 }  // end namespace mdl
