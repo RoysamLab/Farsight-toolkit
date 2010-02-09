@@ -30,7 +30,7 @@ limitations under the License.
 #include <vector>
 #include <iostream>
 #include <math.h>
-//#include <stdio.h>
+#include <stdio.h>
 //#include <algorithm>
 
 #include "itkImage.h"
