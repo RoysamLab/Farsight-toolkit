@@ -876,7 +876,29 @@ bool VolumeProcess::RunDistanceTransform(void)
 	return true;
 }
 
-
+bool VolumeProcess::NonlinearMappingSigmoidFilter(double alpha,  double beta, double min, double max)
+{   // this function is a non-linear Mapping, by Xiao L.
+    typedef itk::SigmoidImageFilter<ImageType, ImageType>  SigmoidImageFilterType;
+    SigmoidImageFilterType::Pointer SigmoidImageFilter = SigmoidImageFilterType::New();
+    SigmoidImageFilter->SetInput( m_outputImage );
+	SigmoidImageFilter->SetAlpha(alpha);
+	SigmoidImageFilter->SetBeta(beta);
+	SigmoidImageFilter->SetOutputMinimum( min );
+    SigmoidImageFilter->SetOutputMaximum( max );
+	try
+	{
+		SigmoidImageFilter->Update();
+	}
+	catch( itk::ExceptionObject & err )
+	{
+		std::cerr << "ITK FILTER ERROR: " << err << std::endl ;
+		return false;
+	}
+	m_outputImage = SigmoidImageFilter->GetOutput();
+	if(debug)
+		std::cerr << "Rescale Filter Done" << std::endl;
+	return true;
+}
 
 
 }

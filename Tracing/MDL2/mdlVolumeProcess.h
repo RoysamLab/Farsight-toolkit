@@ -42,6 +42,7 @@ limitations under the License.
 #include "itkConnectedComponentImageFilter.h"
 #include "itkRelabelComponentImageFilter.h"
 #include "itkCastImageFilter.h"
+#include "itkSigmoidImageFilter.h"
 
 namespace mdl
 {
@@ -55,6 +56,7 @@ public:
 	void SetInput(ImageType::Pointer inImage);
 	//Methods:
 	bool RescaleIntensities(int min, int max);
+	bool NonlinearMappingSigmoidFilter(double alpha,  double beta,  double min, double max);
 	bool RunCAD(unsigned int numberOfIterations = 5 ,double timeStep = 0.0425,double conductance =3); //Curvature Anisotropic Diffusion
 	bool RunOtsuDenoising();
 	bool DialateImage(int iterations);
