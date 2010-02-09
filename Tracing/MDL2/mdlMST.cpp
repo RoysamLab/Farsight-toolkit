@@ -157,11 +157,13 @@ bool MST::nodesToEdges()
 	std::vector<E> edgeArray;
 	std::vector<float> edgeWeight;
 
+	//int num_nodes = (int)nodes.size()-1;
 	int num_nodes = (int)nodes.size();
 
 	//Iterate through the nodes and create edges within the specified range.
 	for(int i=0; i<num_nodes; ++i)
 	{
+		//for(int j=1; j<i; ++j)
 		for(int j=0; j<i; ++j)
 		{
 			Point3D n1 = nodes.at(i);
@@ -178,7 +180,7 @@ bool MST::nodesToEdges()
 				continue;
 
 			//If I'm here, then I've found a close enough node
-			edgeArray.push_back( E(i,j) ); //add an edge
+			edgeArray.push_back( E(i+1,j+1) ); //add an edge (count starts at 1 for nodes)
 
 			//Now compute edge weight:
 			float densityFactor = 0;
@@ -324,7 +326,6 @@ bool MST::ErodeAndDialateNodeDegree(int mophStrength)
 	}
 
 	// -- Erosion and Dilation of MST
-	int times_dilation = mophStrength;
 	int times_erosion = mophStrength;
 
 	int * edge_eroded = new int[num_nodes*2];
@@ -417,17 +418,14 @@ std::vector<MST::E> MST::BackboneExtract()
 		return retLines;
 	}
 
-	int num_edges = 0;
-
 	//Create a msTree graph for backbone from the MST generated above
 	//BackBone graph created or Graph for the parts of total skeletons 
-	Graph msTreeBB(num_edges+1);
+	Graph msTreeBB(1);
 	for (std::vector < Edge >::iterator ei = spanningTree.begin(); ei != spanningTree.end(); ++ei)
 	{
-		if (nodeDegree.at(source(*ei, *g))!=0 && nodeDegree.at(target(*ei, *g))!=0)
+		if (nodeDegree.at(source(*ei, *g)-1)!=0 && nodeDegree.at(target(*ei, *g)-1)!=0)
 		{  
 			add_edge(source(*ei, *g), target(*ei, *g), msTreeBB);
-			num_edges++;
 		}
     }
 
@@ -468,7 +466,8 @@ std::vector<MST::E> MST::BackboneExtract()
 
 			for(int i=0; i<num_lines; ++i)
 			{
-				fprintf(fout, "2 %ld %ld\n", retLines.at(i).first, retLines.at(i).second);
+				E e = retLines.at(i);
+				fprintf(fout, "2 %d %d\n", e.first, e.second);
 			}
 
 			fclose(fout);
