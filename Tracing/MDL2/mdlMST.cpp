@@ -154,7 +154,7 @@ bool MST::nodesToEdges()
 	if( (int)nodes.size() == 0)
 		return false;
 
-	std::vector<E> edgeArray;
+	std::vector<pairE> edgeArray;
 	std::vector<float> edgeWeight;
 
 	//int num_nodes = (int)nodes.size()-1;
@@ -180,7 +180,7 @@ bool MST::nodesToEdges()
 				continue;
 
 			//If I'm here, then I've found a close enough node
-			edgeArray.push_back( E(i+1,j+1) ); //add an edge (count starts at 1 for nodes)
+			edgeArray.push_back( pairE(i+1,j+1) ); //add an edge (count starts at 1 for nodes)
 
 			//Now compute edge weight:
 			float densityFactor = 0;
@@ -224,7 +224,7 @@ bool MST::nodesToEdges()
 		delete[] edge_array;
 	if(edge_wght)
 		delete[] edge_wght;
-	edge_array = new E[num_edges];
+	edge_array = new pairE[num_edges];
 	edge_wght = new float[num_edges];
 
 	for(unsigned int i = 0; i<num_edges; ++i)
@@ -277,6 +277,7 @@ bool MST::minimumSpanningTree()
 	if(debug)
 		std::cerr << "kruskal_minimum_spanning_tree(MST) is finished!" << std::endl;
 
+	/*
 	// Create a graph for the initial MST
 	Graph msTree(num_nodes+1);
 	int num_edge_MST = 0;
@@ -285,9 +286,9 @@ bool MST::minimumSpanningTree()
 		add_edge(source(*ei, *g), target(*ei, *g), msTree);
 		num_edge_MST++;
 	}
-
 	if(debug)
 		std::cerr << "MST edges = " << num_edge_MST << std::endl;
+	*/
 
 	return true;
 }
@@ -408,9 +409,9 @@ bool MST::ErodeAndDialateNodeDegree(int mophStrength)
 	return true;
 }
 
-std::vector<MST::E> MST::BackboneExtract()
+std::vector<pairE> MST::BackboneExtract()
 {
-	std::vector<E> retLines;
+	std::vector<pairE> retLines;
 
 	if((int)spanningTree.size() == 0 || !g || (int)nodeDegree.size() == 0)
 	{
@@ -434,7 +435,7 @@ std::vector<MST::E> MST::BackboneExtract()
 	Edge_iter ei, ei_end; 
 	for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei)
 	{
-		E ne( (int)source(*ei, msTreeBB)-1, (int)target(*ei, msTreeBB)-1 );
+		pairE ne( (int)source(*ei, msTreeBB)-1, (int)target(*ei, msTreeBB)-1 );
 		retLines.push_back( ne );
    }
 
@@ -466,7 +467,7 @@ std::vector<MST::E> MST::BackboneExtract()
 
 			for(int i=0; i<num_lines; ++i)
 			{
-				E e = retLines.at(i);
+				pairE e = retLines.at(i);
 				fprintf(fout, "2 %d %d\n", e.first, e.second);
 			}
 
@@ -475,6 +476,43 @@ std::vector<MST::E> MST::BackboneExtract()
 	}
 
 	return retLines;
+}
+
+//MDL based Spine Extraction
+std::vector<pairE> MST::SpineExtract()
+{
+	std::vector<pairE> retLines;
+
+	int num_nodes = (int)nodes.size();
+	if(num_nodes == 0 || (int)spanningTree.size() == 0 || (int)nodeDegree.size() == 0)
+		return retLines;
+
+	// Create a graph for the initial MST
+	Graph msTree(num_nodes+1);
+	int num_edge_MST = 0;
+	for (std::vector < Edge >::iterator ei = spanningTree.begin(); ei != spanningTree.end(); ++ei) 
+	{
+		add_edge(source(*ei, *g), target(*ei, *g), msTree);
+		num_edge_MST++;
+	}
+	if(debug)
+		std::cerr << "MST edges = " << num_edge_MST << std::endl;
+
+	// Create a Backbone vertice flag array
+	bool * vertBackbone = new bool[num_nodes+1];
+	for (int i=0; i<num_nodes; i++)   
+	{
+		if (nodeDegree.at(i) >= 1)  
+			vertBackbone[i] = true;
+		else
+			vertBackbone[i] = false;
+	}
+
+
+	/////
+	//NOT FINISHED YET::
+
+
 }
 
 }

@@ -43,23 +43,25 @@ namespace mdl
 class MST
 {
 public:
-	typedef std::pair<int, int>  E;
-
 	MST(ImageType::Pointer inImage);
 	~MST();
 	//Setup:
 	void SetDebug(bool inp = true){ debug = inp; };
 	void SetEdgeRange(int edge){ edgeRange = edge; };
 	void SetPower(int p){ power = p; };
+	
 	//Methods:
 	void SetSkeletonPoints(std::vector<fPoint3D> * sp);
+	
 	bool CreateGraphAndMST();	//Do first
 	bool ErodeAndDialateNodeDegree(int morphStrength); //Do second
-	std::vector<E> BackboneExtract();
-	
 
+	//The number is the edge are the node numbers (starting at 1)
+	std::vector<pairE> BackboneExtract();
+	std::vector<pairE> SpineExtract();		//MDL based Spine Extraction
 
 	//Get Result:
+	std::vector<Point3D> GetNodes(){ return nodes; };
 
 private:
 	//Parameters
@@ -79,7 +81,7 @@ private:
 	std::vector<fPoint3D> * skeletonPoints;
 
 	//Intermediates:
-	E * edge_array;			//for initial edges
+	pairE * edge_array;			//for initial edges
 	float * edge_wght;		//for initial edge weights
 	unsigned int num_edges; //number of initial edges
 	Graph * g;				//my full graph at beginning
