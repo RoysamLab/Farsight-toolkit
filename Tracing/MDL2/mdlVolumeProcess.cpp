@@ -231,6 +231,7 @@ bool VolumeProcess::MaskUsingGraphCuts()
 	PixelType * dataImagePtr = m_outputImage->GetBufferPointer();
 
 	int ok = Cell_Binarization_3D(dataImagePtr, binImagePtr, numRows, numColumns, numStacks, 0, 1);	//Do Binarization
+    //int ok = Neuron_Binarization_3D(dataImagePtr, binImagePtr, numRows, numColumns, numStacks, 0, 1);
 	if(!ok)
 		return false;
 
@@ -664,7 +665,7 @@ bool VolumeProcess::RunAnisotropicDiffusion(int timesDiffuse, bool iso)
 }
 
 
-bool VolumeProcess::RunManualThreshold(int threshold)
+bool VolumeProcess::RunManualThreshold(double threshold)
 {
   // this function is corrsponding to the Xiaosong's original MDL code
 	if(debug)

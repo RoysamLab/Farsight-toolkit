@@ -63,7 +63,7 @@ public:
 	bool MaskSmallConnComp(int minObjSize);
 	bool MaskUsingGraphCuts();
 	bool RunAnisotropicDiffusion(int timesDiffuse=1, bool iso = false);	//Run anisotropic diffusion written by Xiaosong
-	bool RunManualThreshold(int threshold);
+	bool RunManualThreshold(double threshold);
 	bool RunDistanceTransform(void);
 	bool distTransform(unsigned char *f, int L, int M, int N); 
 	//Get Result:
