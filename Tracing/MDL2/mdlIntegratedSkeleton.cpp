@@ -75,13 +75,20 @@ void IntegratedSkeleton::cleanUpMemory()
 	critSeeds.clear();
 }
 
-bool IntegratedSkeleton::Update()
+bool IntegratedSkeleton::Update(bool XiaoLiangMethod)
 {
 	if(!this->createGradientVectorField())
 		return false;
-	if(!this->computeIsoGraySurfaceCurvature())
+	if (XiaoLiangMethod)
+	{
+	  if(!this->computeIsoGraySurfaceCurvature(XiaoLiangMethod))
 		return false;
-
+	}
+	else 
+	{   
+		if(!this->XiaosongcomputeIsoGraySurfaceCurvature())
+		return false;
+	}
 	if(curvSeeds.size() == 0)
 		this->computeSeedsWithMaxCurvature();
 	if(curvSeeds.size() == 0)
@@ -347,8 +354,11 @@ void IntegratedSkeleton::clearGradientVectorField()
 //------------------------------------------------------------------------//
 //Compute iso-gray surface principle surface curvature    
 //------------------------------------------------------------------------//
-bool IntegratedSkeleton::computeIsoGraySurfaceCurvature()
+bool IntegratedSkeleton::XiaosongcomputeIsoGraySurfaceCurvature()
 {
+	
+	if(debug)
+		std::cout << "This is xiaosong' method!" << std::endl;
 	if(!Iu || !Iv || !Iw || !fc || !m_inputImage)
 		return false;
 
@@ -1218,6 +1228,177 @@ void IntegratedSkeleton::rk2(float x, float y, float z, int sizx, int sizy, int 
 	nextPos->x = x + OutForce.x * steps;
 	nextPos->y = y + OutForce.y * steps;
 	nextPos->z = z + OutForce.z * steps;
+}
+
+
+//------------------------------------------------------------------------//
+// Compute iso-gray surface principle surface curvature using Xiao Liang's 
+// Direct Method without using Matrix Rotation, Transpose,Multiply,etc.
+// The Method: the principle curvature of the isosurface can be computed  
+// directly from the first and second derivatives of the images.
+// According to the Xiaoliang's Direct formula derivation
+//------------------------------------------------------------------------//
+bool IntegratedSkeleton::computeIsoGraySurfaceCurvature(bool XiaoLMethod)
+{ 
+  if (debug && XiaoLMethod)
+	 std::cout << "This is xiaoliang's iso-curvature computation!" << std::endl;
+
+  if(!Iu || !Iv || !Iw || !fc || !m_inputImage)
+		return false;
+
+	int L = sizeX; //x
+	int M = sizeY; //y
+	int N = sizeZ; //z
+
+	//Vectors for partial derivatives:
+	float *Iuu = new float[numPix];
+	float *Ivv = new float[numPix];
+	float *Iww = new float[numPix];
+	float *Iuv = new float[numPix];
+	float *Iuw = new float[numPix];
+	float *Ivw = new float[numPix];
+
+	if(!Iuu || !Ivv || !Iww || !Iuv || !Iuw || !Ivw)
+	{
+		if(debug)
+			std::cerr << "Could not allocate memory for iso gray surface" << std::endl;
+		return false;
+	}
+
+	//Init partial derivs to zeros:
+	for(int i=0; i<numPix; ++i)
+	{
+		Iuu[i]=0;
+		Ivv[i]=0;
+		Iww[i]=0;
+		Iuv[i]=0;
+		Iuw[i]=0;
+		Ivw[i]=0;
+	}
+
+	if(debug)
+		std::cout << "Computing curvature" << std::endl;
+
+	this->partialDerivative1(Iu, Iuu, 1, L, M, N);
+	this->partialDerivative1(Iv, Ivv, 2, L, M, N);
+	this->partialDerivative1(Iw, Iww, 3, L, M, N);
+	this->partialDerivative1(Iu, Iuv, 2, L, M, N);
+	this->partialDerivative1(Iu, Iuw, 3, L, M, N);
+	this->partialDerivative1(Iv, Ivw, 3, L, M, N);
+
+	//Allocate memory for curvature:
+	if(curv)
+	{
+		delete[] curv;
+		curv = NULL;
+	}
+	curv = new float[numPix];
+	if(!curv)
+		return false;
+
+	//Init to zeros
+	for (long k = 0; k < numPix; ++k)
+		curv[k] = 0;
+
+	int border = 2;	//Why does this need to by 2?
+	for (int k = border; k < N-border; k++)
+    {
+		for (int j = border; j < M-border; j++)
+		{
+			for (int i = border; i < L-border; i++)
+			{
+				long idx = k*L*M + j*L + i;
+				if (fc[idx] != INTERIOR)
+					continue;
+                
+				double term1 = Iu[idx]*Iu[idx]*(Ivv[idx]*Iww[idx]-Ivw[idx]*Ivw[idx])
+					+ 2*Iv[idx]*Iw[idx]*(Iuw[idx]*Iuv[idx]-Iuu[idx]*Ivw[idx]);
+
+				double term2 = Iv[idx]*Iv[idx]*(Iuu[idx]*Iww[idx]-Iuw[idx]*Iuw[idx])
+					+ 2*Iu[idx]*Iw[idx]*(Ivw[idx]*Iuv[idx]-Ivv[idx]*Iuw[idx]); 
+
+				double term3 = Iw[idx]*Iw[idx]*(Iuu[idx]*Ivv[idx]-Iuv[idx]*Iuv[idx])
+					+ 2*Iu[idx]*Iv[idx]*(Iuw[idx]*Ivw[idx]-Iww[idx]*Iuv[idx]); 
+				
+				double GaussianCurvature = term1 + term2 + term3;
+
+				double MeanCurevature = Iu[idx]*Iu[idx]*(Ivv[idx]+Iww[idx]) -2*Iv[idx]*Iw[idx]*Ivw[idx]
+				    + Iv[idx]*Iv[idx]*(Iuu[idx]+Iww[idx]) -2*Iu[idx]*Iw[idx]*Iuw[idx]
+					+ Iw[idx]*Iw[idx]*(Iuu[idx]+Ivv[idx]) -2*Iu[idx]*Iv[idx]*Iuv[idx];
+
+				double gLength = (Iu[idx]*Iu[idx] + Iv[idx]*Iv[idx] + Iw[idx]*Iw[idx]);
+
+				if(gLength !=0 )
+				{   GaussianCurvature /= (gLength*gLength);
+				    MeanCurevature /= 2*pow(gLength,1.5);
+			    // Gaussian curveture = k1*k2, is the multiply of the first and second principle curvature
+				// Mean curvature = (k1+k2)/2, is the mean of the  first and second principle curvature
+				// thus, we can compute the first curvature from the Gaussian curveture and  Mean curvature
+
+					double delta = MeanCurevature*MeanCurevature - GaussianCurvature;
+                    if (delta >= 0)// the first principle curvature
+					{    curv[idx] = MeanCurevature + sqrt(delta);
+						 /*double k1 = MeanCurevature + sqrt(delta); 
+						 double k2 = MeanCurevature - sqrt(delta); 
+                         if (abs(k1) > abs(k2))// the first principle curvature
+						   curv[idx] = k1;
+						 else 
+                           curv[idx] = k2;
+                          */
+					}
+					else 
+					{
+						curv[idx] = MeanCurevature;
+						if(debug)
+						  std::cout << " Some Points with Mean curvature are used!" << std::endl;
+					}
+				}
+				else
+				{
+					//set large to be included in skeleton
+					curv[idx]=9999;
+				}
+
+				//case 1: get neg maximum
+				if (curv[idx]>10000)
+				{
+					curv[idx]=10000;
+				}
+				if (curv[idx]< -1 )
+				{
+					// first phase: threshold the curvature value (larger->fewer)
+					curv[idx]= 0; 
+				}
+			}
+		}
+    }
+
+	delete[] Iuu;
+	delete[] Ivv;
+	delete[] Iww;
+	delete[] Iuv;
+	delete[] Iuw;
+	delete[] Ivw;
+
+	if(debug)
+	{
+		FILE *fileout;
+		if ((fileout = fopen("out.curv","w")) != NULL)
+		{
+			for (int k = 0; k < N; k++) {
+				for (int j = 0; j < M; j++) {
+					for (int i = 0; i < L; i++) 
+					{
+						long idx = k*L*M + j*L + i;
+						fprintf(fileout, "%d %d %d %f\n", i, j, k, curv[idx]);
+					} 
+				} 
+			} //end triple for loops
+			fclose(fileout);
+		}
+	}
+
+	return true;
 }
 
 }

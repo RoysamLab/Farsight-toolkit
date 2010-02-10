@@ -51,7 +51,7 @@ public:
 	void SetVectorMagnitude(double vM){ vectorMagnitude = vM; };
 	void SetDebug(bool inp = true){ debug = inp; };
 	//Methods:
-	bool Update();
+	bool Update(bool XiaoLiangMethod = false);
 
 	//Get Result:
 	std::vector<fPoint3D> GetOutput(){ return skeletonPoints; };
@@ -92,7 +92,8 @@ private:
 	//Key functions:
 	bool createGradientVectorField();
 	//bool createGradientVectorFieldWithITK(){return false;};
-	bool computeIsoGraySurfaceCurvature();
+	bool computeIsoGraySurfaceCurvature(bool XiaoLMethod = true);
+	bool XiaosongcomputeIsoGraySurfaceCurvature();
 	bool computeSeedsWithMaxCurvature();
 	bool convertGradVectorToForceVector();
 	bool computeCriticalPointSeeds();
