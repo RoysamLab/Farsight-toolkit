@@ -49,9 +49,10 @@ public:
 	~IntegratedSkeleton();
 	//Setup:
 	void SetVectorMagnitude(double vM){ vectorMagnitude = vM; };
+	void SetUseXiaoLiangMethod(bool inp = true){ useXiaoLiangMethod = inp; };
 	void SetDebug(bool inp = true){ debug = inp; };
 	//Methods:
-	bool Update(bool XiaoLiangMethod = false);
+	bool Update();
 
 	//Get Result:
 	std::vector<fPoint3D> GetOutput(){ return skeletonPoints; };
@@ -63,6 +64,7 @@ private:
 	//Parameters
 	bool debug;				//If debug is true, process in steps and print stuff
 	double vectorMagnitude;
+	bool useXiaoLiangMethod;	//For computing iso-gray surface curvature
 
 	//Images & size
 	ImageType::Pointer m_inputImage;
@@ -92,8 +94,8 @@ private:
 	//Key functions:
 	bool createGradientVectorField();
 	//bool createGradientVectorFieldWithITK(){return false;};
-	bool computeIsoGraySurfaceCurvature(bool XiaoLMethod = true);
-	bool XiaosongcomputeIsoGraySurfaceCurvature();
+	bool XiaoLiangComputeIsoGraySurfaceCurvature();
+	bool XiaosongComputeIsoGraySurfaceCurvature();
 	bool computeSeedsWithMaxCurvature();
 	bool convertGradVectorToForceVector();
 	bool computeCriticalPointSeeds();

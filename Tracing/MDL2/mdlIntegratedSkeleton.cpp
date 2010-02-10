@@ -33,6 +33,7 @@ IntegratedSkeleton::IntegratedSkeleton(ImageType::Pointer inImage)
 	numPix = sizeX*sizeY*sizeZ;
 
 	debug = false;
+	useXiaoLiangMethod = false;
 
 	Iu = NULL;
 	Iv = NULL;
@@ -75,20 +76,22 @@ void IntegratedSkeleton::cleanUpMemory()
 	critSeeds.clear();
 }
 
-bool IntegratedSkeleton::Update(bool XiaoLiangMethod)
+bool IntegratedSkeleton::Update()
 {
 	if(!this->createGradientVectorField())
 		return false;
-	if (XiaoLiangMethod)
+
+	if (useXiaoLiangMethod)
 	{
-	  if(!this->computeIsoGraySurfaceCurvature(XiaoLiangMethod))
-		return false;
+		if(!this->XiaoLiangComputeIsoGraySurfaceCurvature())
+			return false;
 	}
 	else 
 	{   
-		if(!this->XiaosongcomputeIsoGraySurfaceCurvature())
-		return false;
+		if(!this->XiaosongComputeIsoGraySurfaceCurvature())
+			return false;
 	}
+
 	if(curvSeeds.size() == 0)
 		this->computeSeedsWithMaxCurvature();
 	if(curvSeeds.size() == 0)
@@ -354,7 +357,7 @@ void IntegratedSkeleton::clearGradientVectorField()
 //------------------------------------------------------------------------//
 //Compute iso-gray surface principle surface curvature    
 //------------------------------------------------------------------------//
-bool IntegratedSkeleton::XiaosongcomputeIsoGraySurfaceCurvature()
+bool IntegratedSkeleton::XiaosongComputeIsoGraySurfaceCurvature()
 {
 	
 	if(debug)
@@ -1238,9 +1241,9 @@ void IntegratedSkeleton::rk2(float x, float y, float z, int sizx, int sizy, int 
 // directly from the first and second derivatives of the images.
 // According to the Xiaoliang's Direct formula derivation
 //------------------------------------------------------------------------//
-bool IntegratedSkeleton::computeIsoGraySurfaceCurvature(bool XiaoLMethod)
+bool IntegratedSkeleton::XiaoLiangComputeIsoGraySurfaceCurvature()
 { 
-  if (debug && XiaoLMethod)
+  if (debug)
 	 std::cout << "This is xiaoliang's iso-curvature computation!" << std::endl;
 
   if(!Iu || !Iv || !Iw || !fc || !m_inputImage)
