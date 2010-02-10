@@ -657,7 +657,6 @@ bool IntegratedSkeleton::computeSeedsWithMaxCurvature()
 
 	//the threshold is a value between [0,10].
 	double highCurvatureThreshold = (meanCurvature>10 ? 10 : meanCurvature);
-
 	if(debug)
 	{
 		std::cerr << "mean = " << meanCurvature << std::endl;
@@ -752,6 +751,9 @@ double IntegratedSkeleton::GetMean(float *buf, int nx, int ny, int nz)
 		return 0.0;
 
 	double mean=0.;
+	
+	// only considering the pixel which locate on the segmented object
+	long InterVox =1; 
 	for (int k = 0; k < nz; k++)
     {
 		for (int j = 0; j < ny; j++)
@@ -759,11 +761,15 @@ double IntegratedSkeleton::GetMean(float *buf, int nx, int ny, int nz)
 			for (int i = 0; i < nx; i++) 
 			{
 				long idx = k*nx*ny + j*nx + i;
-				mean += buf[idx];
+				if(this->fc[idx]!=0)
+				{  mean += buf[idx];
+				   InterVox++;
+				}
 			}
 		}
     }
-	mean /= (double)(nx*ny*nz); 
+	//mean /= (double)(nx*ny*nz); 
+	mean /= (double)InterVox;
 	mean = (mean < 0) ? 0 : mean;
 	return mean;
 }
@@ -793,13 +799,22 @@ bool IntegratedSkeleton::convertGradVectorToForceVector()
 			for (int i = 0; i < L; i++)
 			{
 				long idx = k*slsz + j*L +i;
-				force[idx].x = Iu[idx];
-				force[idx].y = Iv[idx];
-				force[idx].z = Iw[idx];
-				float length = this->veclength(force[idx]);
-				force[idx].x = force[idx].x / (length+0.0001);
-				force[idx].y = force[idx].y / (length+0.0001);
-				force[idx].z = force[idx].z / (length+0.0001);
+				if (this->fc[idx] == 0)
+				{
+                 force[idx].x = 0;
+				 force[idx].y = 0;
+				 force[idx].z = 0;
+				}
+				else
+				{
+				 force[idx].x = Iu[idx];
+				 force[idx].y = Iv[idx];
+				 force[idx].z = Iw[idx];
+				 float length = this->veclength(force[idx]);
+				 force[idx].x = force[idx].x / (length+0.0001);
+				 force[idx].y = force[idx].y / (length+0.0001);
+				 force[idx].z = force[idx].z / (length+0.0001);
+				}
 				// this is just a very simple method, 
 				// you can use Xiaosong's method i.e POW(),
 				// and also you can use GDF method
@@ -1235,8 +1250,8 @@ void IntegratedSkeleton::rk2(float x, float y, float z, int sizx, int sizy, int 
 
 
 //------------------------------------------------------------------------//
-// Compute iso-gray surface principle surface curvature using Xiao Liang's 
-// Direct Method without using Matrix Rotation, Transpose,Multiply,etc.
+// Compute iso-gray surface principle curvature using Xiao Liang's 
+// Direct Method without using Matrix Rotation, Transpose,Multiplication,etc.
 // The Method: the principle curvature of the isosurface can be computed  
 // directly from the first and second derivatives of the images.
 // According to the Xiaoliang's Direct formula derivation
@@ -1334,20 +1349,20 @@ bool IntegratedSkeleton::XiaoLiangComputeIsoGraySurfaceCurvature()
 				if(gLength !=0 )
 				{   GaussianCurvature /= (gLength*gLength);
 				    MeanCurevature /= 2*pow(gLength,1.5);
-			    // Gaussian curveture = k1*k2, is the multiply of the first and second principle curvature
+			    // Gaussian curveture = k1*k2, is the multiplication of the first and second principle curvature
 				// Mean curvature = (k1+k2)/2, is the mean of the  first and second principle curvature
 				// thus, we can compute the first curvature from the Gaussian curveture and  Mean curvature
 
 					double delta = MeanCurevature*MeanCurevature - GaussianCurvature;
                     if (delta >= 0)// the first principle curvature
-					{    curv[idx] = MeanCurevature + sqrt(delta);
-						 /*double k1 = MeanCurevature + sqrt(delta); 
-						 double k2 = MeanCurevature - sqrt(delta); 
-                         if (abs(k1) > abs(k2))// the first principle curvature
+					{    //curv[idx] = MeanCurevature + sqrt(delta);
+						 double k1 = abs(MeanCurevature + sqrt(delta)); 
+						 double k2 = abs(MeanCurevature - sqrt(delta)); 
+                         if (k1 > k2)// the first principle curvature
 						   curv[idx] = k1;
 						 else 
                            curv[idx] = k2;
-                          */
+                          
 					}
 					else 
 					{
@@ -1358,20 +1373,9 @@ bool IntegratedSkeleton::XiaoLiangComputeIsoGraySurfaceCurvature()
 				}
 				else
 				{
-					//set large to be included in skeleton
-					curv[idx]=9999;
+					curv[idx]=0;
 				}
-
-				//case 1: get neg maximum
-				if (curv[idx]>10000)
-				{
-					curv[idx]=10000;
-				}
-				if (curv[idx]< -1 )
-				{
-					// first phase: threshold the curvature value (larger->fewer)
-					curv[idx]= 0; 
-				}
+               
 			}
 		}
     }
