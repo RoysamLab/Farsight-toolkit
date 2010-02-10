@@ -24,6 +24,7 @@ limitations under the License.
 
 #include <vector>
 #include <iostream>
+#include <map>
 #include <stdio.h>
 
 #include "itkImage.h"
