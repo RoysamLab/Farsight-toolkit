@@ -19,6 +19,7 @@ limitations under the License.
 #include <string>
 #include <vector>
 #include <iostream>
+#include <stdio.h>
 
 namespace mdl
 {
