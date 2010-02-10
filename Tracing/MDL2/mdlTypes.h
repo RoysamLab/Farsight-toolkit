@@ -34,6 +34,8 @@ namespace mdl
 		  boost::property <boost::edge_weight_t, float> >  Graph;
 	typedef boost::graph_traits < Graph >::edge_descriptor  Edge;
 
+	typedef std::pair<int, int>  pairE;
+
 }  // end namespace mdl
 
 #endif
