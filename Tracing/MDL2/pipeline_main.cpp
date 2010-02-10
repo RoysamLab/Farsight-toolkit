@@ -61,7 +61,9 @@ int main(int argc, char *argv[])
 	mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton( clean_img );
 	skel->SetVectorMagnitude(.05);
 	skel->SetDebug(true);
-	skel->Update();
+	// you can use xiaosong's method, just run skel->Update(false)
+	skel->Update(true);
+	// you can use xiaoliang' method, just run  skel->Update(true);
 	std::vector<mdl::fPoint3D> skeleton = skel->GetOutput();
 	delete skel;
 
