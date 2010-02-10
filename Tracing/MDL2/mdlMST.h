@@ -25,17 +25,14 @@ limitations under the License.
 #define __mdlMST_h
 
 #include "mdlTypes.h"
+#include "mdlUtils.h"
 
-//#include <string>
 #include <vector>
 #include <iostream>
 #include <math.h>
 #include <stdio.h>
-//#include <algorithm>
 
 #include "itkImage.h"
-//#include "itkImageRegionIterator.h"
-//#include "itkImageRegionIteratorWithIndex.h"
 
 namespace mdl
 {

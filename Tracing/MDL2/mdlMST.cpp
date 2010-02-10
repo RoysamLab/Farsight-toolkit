@@ -444,35 +444,11 @@ std::vector<pairE> MST::BackboneExtract()
 
 	if(debug)
 	{
-		FILE * fout = fopen("BackboneCandidate.vtk", "w");
-		if (fout != NULL)
-		{
-
-			int num_nodes = (int)nodes.size();
-			int num_lines = (int)retLines.size();
-
-			fprintf(fout, "# vtk DataFile Version 3.0\n");
-			fprintf(fout,"MST of skel\n");
-			fprintf(fout,"ASCII\n");
-			fprintf(fout,"DATASET POLYDATA\n");
-			fprintf(fout,"POINTS %d float\n",num_nodes);
-
-			for(int i=0; i<num_nodes; ++i)
-			{
-				mdl::Point3D nd = nodes.at(i);
-				fprintf(fout,"%f %f %f\n", (float)nd.x, (float)nd.y, (float)nd.z);
-			}
-
-			fprintf(fout,"LINES %d %d\n", num_lines, num_lines*3);
-
-			for(int i=0; i<num_lines; ++i)
-			{
-				pairE e = retLines.at(i);
-				fprintf(fout, "2 %d %d\n", e.first, e.second);
-			}
-
-			fclose(fout);
-		}
+		vtkFileHandler * fhdl = new vtkFileHandler();
+		fhdl->SetNodes(&nodes);
+		fhdl->SetLines(&retLines);
+		fhdl->Write("BackboneCandidate.vtk");
+		delete fhdl;
 	}
 
 	return retLines;

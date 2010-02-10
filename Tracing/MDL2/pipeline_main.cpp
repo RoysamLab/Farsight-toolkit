@@ -15,6 +15,8 @@ limitations under the License.
 #include "mdlVolumeProcess.h"
 #include "mdlIntegratedSkeleton.h"
 #include "mdlMST.h"
+#include "mdlBSplineFitting.h"
+#include "mdlUtils.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 
@@ -57,6 +59,7 @@ int main(int argc, char *argv[])
 	//mdl::ImageType::Pointer DT_img = volProc->GetOutput();
 	delete volProc;
 
+	/*
 	//Integrated Skeleton to create skeleton points:
 	mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton( clean_img );
 	skel->SetVectorMagnitude(.05);
@@ -78,8 +81,30 @@ int main(int argc, char *argv[])
 	//Note: node 1 in bbpairs is index 0 of nodes
 	std::vector<mdl::pairE> bbpairs = mst->BackboneExtract();
 	delete mst;
+	*/
 
+
+	std::vector<mdl::Point3D> nodes;
+	std::vector<mdl::pairE> bbpairs;
+
+	mdl::vtkFileHandler file;
+	file.SetNodes(&nodes);
+	file.SetLines(&bbpairs);
 	
+	if(!file.Read("BackboneCandidate.vtk"))
+	{
+		std::cerr << "READ FAILURE\n";
+		return EXIT_FAILURE;
+	}
+
+	mdl::BSplineFitting *bspline = new mdl::BSplineFitting( clean_img );
+	bspline->SetDebug(true);
+	bspline->SetLevels(8);
+	bspline->SetOrder(3);
+	bspline->SetNodes( &nodes );
+	bspline->SetBBPairs( &bbpairs );
+	bspline->Update();
+	delete bspline;
    
 	getchar();
 
