@@ -93,7 +93,7 @@ private:
 	void detectExtraSpines();
 
 	std::vector<Point3D> BSplineFitting::bbBSplineFitting(
-		std::vector<Point3D> inPts, int numOut, int order, int level);
+		std::vector<Point3D> inPts, int numOut, int order, int levels);
 };
 
 }  // end namespace mdl
