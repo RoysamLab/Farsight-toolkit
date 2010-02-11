@@ -103,6 +103,7 @@ void BSplineFitting::findBranches()
 	}
 
 	branches.clear();
+	branchEnds.clear();
 	int NumBranches = 0;
 
 	for (int i=0; i<num_nodes; i++)		//Iterate through all nodes
@@ -132,12 +133,16 @@ void BSplineFitting::findBranches()
 			} // end while 
 
 			//Moved inside if statement so I loose branch points
-			branches[NumBranches].push_back(nextpoint);
-			if (graphPointInfo.at(nextpoint).deg == 1)
+			//branches[NumBranches].push_back(nextpoint);
+			if(graphPointInfo.at(nextpoint).deg == 1)
 			{
 				//Set degree = 0 so I don't start this trace again!
 				graphPointInfo.at(nextpoint).deg = 0;
-				//branches[NumBranches].push_back(nextpoint);
+				branches[NumBranches].push_back(nextpoint);
+			}
+			else if(graphPointInfo.at(nextpoint).deg >= 2)
+			{
+				branchEnds[NumBranches] = nextpoint;
 			}
 		}// end if
 	}// end for 
@@ -157,6 +162,21 @@ void BSplineFitting::smoothBranches()
 	nodes_out.clear();
 	bbpairs_out.clear();
 
+	//Create a set of branch points
+	std::set<int> bpts;
+	IntMapType::iterator it2;
+	for(it2=branchEnds.begin(); it2!=branchEnds.end(); it2++)
+	{
+		bpts.insert( it2->second );
+	}
+
+	//Add the branch points to the output nodes list:
+	std::set<int>::iterator it3;
+	for(it3=bpts.begin(); it3!=bpts.end(); it3++)
+	{
+		nodes_out.push_back( nodes->at(*it3) );
+	}
+	
 	float discretePt = 1;				//Sampling rate
 
 	//**********************************************
@@ -183,13 +203,32 @@ void BSplineFitting::smoothBranches()
 		std::vector<fPoint3D> newPts;
 		newPts = bbBSplineFitting(points, outNumPts, splineOrder, splineLevels);
 
+		//**************
 		//Update output
 		int startIdx = (int)nodes_out.size();
 		nodes_out.insert(nodes_out.end(),newPts.begin(),newPts.end());
+		int endIdx = (int)nodes_out.size()-1;
 
-		for(int i=startIdx; i<(int)nodes_out.size()-1; i++)
+		for(int i=startIdx; i<endIdx; i++)
 		{
 			bbpairs_out.push_back( pairE(i,i+1) );
+		}
+
+		//See if I have to end at a branch point:
+		if( branchEnds.find(b) != branchEnds.end() )
+		{	//I do need to add the branch point
+			int oldIdx = branchEnds[b];	//The old index, find it in the set
+			int newIdx = 0;				//The placement in the set give me new index
+			std::set<int>::iterator it4;
+			for( it4=bpts.begin(); it4!= bpts.end(); it4++ )
+			{
+				if( (*it4) == oldIdx )
+				{ 
+					bbpairs_out.push_back( pairE(newIdx, endIdx) );
+					break;
+				}
+				newIdx++;
+			}
 		}
 
 	}	//MAIN LOOP END
@@ -210,28 +249,22 @@ std::vector<fPoint3D> BSplineFitting::bbBSplineFitting(
 	PointSetType::Pointer pointSet = PointSetType::New();  
 	
 	int numIn = (int)inPts.size();
-	double delta = (double) 1.0/(double)numIn + 0.0000001;
-	int k=0;	//To move through input points
-	for ( RealType t = 0.0; t <= 1.0+1e-10; t += delta ) 
+	for(int i=0; i<numIn; ++i)
     {
-		unsigned long i = pointSet->GetNumberOfPoints();
+		VectorType V;
+		V[0] = inPts.at(i).x;
+		V[1] = inPts.at(i).y;
+		V[2] = inPts.at(i).z;
+
+		RealType t = (RealType)i / (RealType)(numIn-1);
 		PointSetType::PointType point;
 		point[0] = t;
-		pointSet->SetPoint( i, point );   
-		
-		VectorType V;
-		V[0] = inPts.at(k).x;
-		V[1] = inPts.at(k).y;
-		V[2] = inPts.at(k).z;
-		k++;
-		
+		pointSet->SetPoint( i, point );
 		pointSet->SetPointData( i, V );
     }
 
 	// Instantiate the filter and set the parameters
-	typedef itk::BSplineScatteredDataPointSetToImageFilter
-						<PointSetType, bImageType>  FilterType;
-
+	typedef itk::BSplineScatteredDataPointSetToImageFilter<PointSetType, bImageType>  FilterType;
 	FilterType::Pointer filter = FilterType::New();
   
 	// Define the parametric domain
@@ -263,9 +296,9 @@ std::vector<fPoint3D> BSplineFitting::bbBSplineFitting(
 		return retVect;
     }
   
-	delta = (double)1.0 / (double)numOut + 0.000001;
-	for ( RealType t = 0.0; t <= 1.0+1e-10; t += delta)
+	for(int i=0; i<numOut; ++i)
     {
+		RealType t = (RealType)i / (RealType)(numOut-1);
 		PointSetType::PointType point;
 		point[0] = t;
 

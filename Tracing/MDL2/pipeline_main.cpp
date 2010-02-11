@@ -97,7 +97,6 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 	
-
 	mdl::BSplineFitting *bspline = new mdl::BSplineFitting( clean_img );
 	bspline->SetDebug(true);
 	bspline->SetLevels(8);

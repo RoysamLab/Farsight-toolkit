@@ -60,6 +60,7 @@ private:
 	struct Graphprop{ int deg; std::vector<int> outVert; };
 	typedef std::list<int> ListType;
 	typedef std::map<int, ListType> ListMapType;
+	typedef std::map<int, int> IntMapType;
 
 	bool debug;
 	int splineOrder;
@@ -77,8 +78,9 @@ private:
 	std::vector<fPoint3D> * nodes; //all nodes in skeleton
 	std::vector<pairE> * bbpairs; //all pairs in backbone (initial)
 
-	//Beginning branches
-	ListMapType branches;		//Intermediate: holds branches info
+	//The key is the branch number, the list contains all indexes in that branch
+	ListMapType branches;			//Intermediate: holds branches info
+	IntMapType branchEnds;			//key branch numbers, contines idx of branch point
 
 	//Outputs:
 	std::vector<fPoint3D> nodes_out;
