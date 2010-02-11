@@ -21,10 +21,12 @@ limitations under the License.
 #define __mdlBSplineFitting_h
 
 #include "mdlTypes.h"
+#include "mdlUtils.h"
 
 #include <vector>
 #include <iostream>
 #include <map>
+#include <list>
 #include <stdio.h>
 
 #include "itkImage.h"
@@ -55,8 +57,8 @@ public:
 	//Output:
 
 private:
-	//Graph properties for each node: degree and connectivity
-	struct Graphprop{ int deg; int outVert[8]; };
+	typedef std::list<int> ListType;
+	typedef std::map<int, ListType> ListMapType;
 
 	bool debug;
 	int splineOrder;
@@ -74,12 +76,24 @@ private:
 	std::vector<Point3D> * nodes; //all nodes in skeleton
 	std::vector<pairE> * bbpairs; //all pairs in backbone (initial)
 
+	//Beginning branches
+	ListMapType branches;		//Intermediate: holds branches info
+
+	//Outputs:
+	std::vector<Point3D> nodes_out;
+	std::vector<pairE> bbpairs_out;
+	std::vector<pairE> spine_out;
+
+
 	double dist2pts(Point3D p1, Point3D p2);
 	int round(float number);
 	int selffloor(float number);
-	int BackboneBSplineFitting(Point3D * Points, int Num,
-                           Point3D *SamplePoints, int Num2, 
-						   int order, int levels);
+	void findBranches();
+	void smoothBranches();
+	void detectExtraSpines();
+
+	std::vector<Point3D> BSplineFitting::bbBSplineFitting(
+		std::vector<Point3D> inPts, int numOut, int order, int level);
 };
 
 }  // end namespace mdl
