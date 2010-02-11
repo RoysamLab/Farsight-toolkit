@@ -48,7 +48,7 @@ public:
 	void SetLevels(int levels){ splineLevels = levels; };
 
 	//Input:
-	void SetNodes( std::vector<Point3D> * nds ){ nodes = nds; };
+	void SetNodes( std::vector<fPoint3D> * nds ){ nodes = nds; };
 	void SetBBPairs( std::vector<pairE> * bbp ){ bbpairs = bbp; };
 
 	//Processing:
@@ -73,27 +73,26 @@ private:
 	long numPix;
 
 	//Inputs:
-	std::vector<Point3D> * nodes; //all nodes in skeleton
+	std::vector<fPoint3D> * nodes; //all nodes in skeleton
 	std::vector<pairE> * bbpairs; //all pairs in backbone (initial)
 
 	//Beginning branches
 	ListMapType branches;		//Intermediate: holds branches info
 
 	//Outputs:
-	std::vector<Point3D> nodes_out;
+	std::vector<fPoint3D> nodes_out;
 	std::vector<pairE> bbpairs_out;
 	std::vector<pairE> spine_out;
 
 
-	double dist2pts(Point3D p1, Point3D p2);
+	double dist2pts(fPoint3D p1, fPoint3D p2);
 	int round(float number);
 	int selffloor(float number);
 	void findBranches();
 	void smoothBranches();
 	void detectExtraSpines();
 
-	std::vector<Point3D> BSplineFitting::bbBSplineFitting(
-		std::vector<Point3D> inPts, int numOut, int order, int levels);
+	std::vector<fPoint3D> bbBSplineFitting(std::vector<fPoint3D> inPts, int numOut, int order, int levels);
 };
 
 }  // end namespace mdl

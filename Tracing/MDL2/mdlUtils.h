@@ -28,14 +28,14 @@ class vtkFileHandler
 {
 public:
 	vtkFileHandler();
-	void SetNodes(std::vector<Point3D> * nodes);
+	void SetNodes(std::vector<fPoint3D> * nodes);
 	void SetLines(std::vector<pairE> * lines);
 
 	bool Write(std::string filename);
 	bool Read(std::string filename);
 
 private:
-	std::vector<Point3D> * nodesPtr;
+	std::vector<fPoint3D> * nodesPtr;
 	std::vector<pairE> * linesPtr;
 
 };

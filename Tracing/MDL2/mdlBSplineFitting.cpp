@@ -167,11 +167,11 @@ void BSplineFitting::smoothBranches()
 	for(int b=1; b<=NumBranches; b++)
 	{
 		ListType list = branches[b];	//current points list in this branch
-		std::vector<Point3D> points;	//hold the points in each branch
+		std::vector<fPoint3D> points;	//hold the points in each branch
 		ListType::iterator it;
 		for(it=list.begin(); it!=list.end(); it++)
 		{
-			Point3D point = nodes->at(*it); //Get the point
+			fPoint3D point = nodes->at(*it); //Get the point
 			//point.y *= -1;	//invert y coordinate
 			points.push_back(point);
 		}
@@ -182,7 +182,7 @@ void BSplineFitting::smoothBranches()
 			continue;
 
 		//Do the BSpline Algorithm:
-		std::vector<Point3D> newPts;
+		std::vector<fPoint3D> newPts;
 		bool fastVersion = false;
 		if(fastVersion)
 		{
@@ -205,10 +205,10 @@ void BSplineFitting::smoothBranches()
 	}	//MAIN LOOP END
 }
 
-std::vector<Point3D> BSplineFitting::bbBSplineFitting(
-	std::vector<Point3D> inPts, int numOut, int order, int levels)
+std::vector<fPoint3D> BSplineFitting::bbBSplineFitting(
+		std::vector<fPoint3D> inPts, int numOut, int order, int levels)
 {
-	std::vector<Point3D> retVect;
+	std::vector<fPoint3D> retVect;
 
 	const unsigned int ParametricDimension = 1;
 	const unsigned int DataDimension = 3;
@@ -283,7 +283,7 @@ std::vector<Point3D> BSplineFitting::bbBSplineFitting(
 		filter->Evaluate( point, V );
 		if(abs(V[0])>0.1 && abs(V[1]) > 0.1 && abs(V[2]) > 0.1)
 		{
-			Point3D point;
+			fPoint3D point;
 			point.x = V[0];
 			point.y = V[1];
 			point.z = V[2];
@@ -422,7 +422,7 @@ int BSplineFitting::selffloor(float number)
     }
 }
 
-double BSplineFitting::dist2pts(Point3D p1, Point3D p2)
+double BSplineFitting::dist2pts(fPoint3D p1, fPoint3D p2)
 {
 	double h;
 	double dx = (double)(p1.x - p2.x);

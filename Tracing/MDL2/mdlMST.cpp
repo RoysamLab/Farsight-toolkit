@@ -122,18 +122,18 @@ bool MST::skeletonPointsToNodes()
 	for(int i=0; i<(int)skeletonPoints->size(); ++i)
 	{
 		fPoint3D fnode = skeletonPoints->at(i);
-		Point3D node;
-		node.x = roundToInt(fnode.x);
-		node.y = roundToInt(fnode.y);
-		node.z = roundToInt(fnode.z);
-		long idx = (node.z)*sizeX*sizeY + (node.y)*sizeX + (node.x);
+		int x = roundToInt(fnode.x);
+		int y = roundToInt(fnode.y);
+		int z = roundToInt(fnode.z);
+		long idx = (z)*sizeX*sizeY + (y)*sizeX + (x);
 		if(idx >= numPix)
 			continue;
 
 		if(!nodeAdded[idx])
 		{
 			nodeAdded[idx] = true;
-			nodes.push_back(node);
+			fPoint3D p = {x,y,z};
+			nodes.push_back( p );
 		}
 	}
 
@@ -166,17 +166,17 @@ bool MST::nodesToEdges()
 		//for(int j=1; j<i; ++j)
 		for(int j=0; j<i; ++j)
 		{
-			Point3D n1 = nodes.at(i);
-			Point3D n2 = nodes.at(j);
-			int dx = n1.x - n2.x;
-			int dy = n1.y - n2.y;
-			int dz = n1.z - n2.z;
+			fPoint3D n1 = nodes.at(i);
+			fPoint3D n2 = nodes.at(j);
+			float dx = n1.x - n2.x;
+			float dy = n1.y - n2.y;
+			float dz = n1.z - n2.z;
 
-			if( abs(dx) > edgeRange )
+			if( abs(dx) > (float)edgeRange )
 				continue;
-			if( abs(dy) > edgeRange )
+			if( abs(dy) > (float)edgeRange )
 				continue;
-			if( abs(dz) > edgeRange )
+			if( abs(dz) > (float)edgeRange )
 				continue;
 
 			//If I'm here, then I've found a close enough node
@@ -188,13 +188,13 @@ bool MST::nodesToEdges()
 			{
 				//Get the two intensity values:
 				ImageType::IndexType index1;
-				index1[0] = n1.x;
-				index1[1] = n1.y;
-				index1[2] = n1.z;
+				index1[0] = (int)n1.x;
+				index1[1] = (int)n1.y;
+				index1[2] = (int)n1.z;
 				ImageType::IndexType index2;
-				index2[0] = n2.x;
-				index2[1] = n2.y;
-				index2[2] = n2.z;
+				index2[0] = (int)n2.x;
+				index2[1] = (int)n2.y;
+				index2[2] = (int)n2.z;
 				PixelType pix1 = m_inputImage->GetPixel(index1);
 				PixelType pix2 = m_inputImage->GetPixel(index2);
 
@@ -488,7 +488,7 @@ std::vector<pairE> MST::SpineExtract()
 	/////
 	//NOT FINISHED YET::
 
-
+	return retLines;
 }
 
 }

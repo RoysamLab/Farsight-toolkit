@@ -58,7 +58,7 @@ public:
 	std::vector<pairE> SpineExtract();		//MDL based Spine Extraction
 
 	//Get Result:
-	std::vector<Point3D> GetNodes(){ return nodes; };
+	std::vector<fPoint3D> GetNodes(){ return nodes; };
 
 private:
 	//Parameters
@@ -90,7 +90,7 @@ private:
 
 	//output:
 	//MST result
-	std::vector<Point3D> nodes;
+	std::vector<fPoint3D> nodes;
 	std::vector< Edge > spanningTree;
 	std::vector< int > nodeDegree;
 };

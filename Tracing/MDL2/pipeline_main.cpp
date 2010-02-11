@@ -77,14 +77,14 @@ int main(int argc, char *argv[])
 	mst->SetSkeletonPoints( &skeleton );
 	mst->CreateGraphAndMST();
 	mst->ErodeAndDialateNodeDegree(50);
-	std::vector<mdl::Point3D> nodes = mst->GetNodes();
+	std::vector<mdl::fPoint3D> nodes = mst->GetNodes();
 	//Note: node 0 in bbpairs is index 0 of nodes!!!
 	std::vector<mdl::pairE> bbpairs = mst->BackboneExtract();
 	delete mst;
 	*/
 
 
-	std::vector<mdl::Point3D> nodes;
+	std::vector<mdl::fPoint3D> nodes;
 	std::vector<mdl::pairE> bbpairs;
 
 	mdl::vtkFileHandler file;

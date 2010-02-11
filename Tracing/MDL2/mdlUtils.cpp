@@ -23,7 +23,7 @@ vtkFileHandler::vtkFileHandler()
 	linesPtr = NULL;
 }
 
-void vtkFileHandler::SetNodes(std::vector<Point3D> * nodes)
+void vtkFileHandler::SetNodes(std::vector<fPoint3D> * nodes)
 {
 	nodesPtr = nodes;
 }
@@ -52,7 +52,7 @@ bool vtkFileHandler::Write(std::string filename)
 	fprintf(fout,"POINTS %d float\n",num_nodes);
 	for(int i=0; i<num_nodes; ++i)
 	{
-		mdl::Point3D nd = nodesPtr->at(i);
+		mdl::fPoint3D nd = nodesPtr->at(i);
 		fprintf(fout,"%f %f %f\n", (float)nd.x, (float)nd.y, (float)nd.z);
 	}
 
@@ -104,7 +104,7 @@ bool vtkFileHandler::Read(std::string filename)
 	float temp;
 	for(int i=0; i<num_nodes; i++)
 	{
-		Point3D p;
+		fPoint3D p;
 		if( fscanf (infile,"%f",&temp) == EOF )
 		{
 			std::cerr << "end of file!" << std::endl;
