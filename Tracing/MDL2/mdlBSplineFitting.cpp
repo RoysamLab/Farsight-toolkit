@@ -82,8 +82,7 @@ void BSplineFitting::findBranches()
     {
 		Graphprop p;
 		p.deg = 0;
-		for(int j=0; j<8; ++j)
-			p.outVert[j] = 0;
+		p.outVert.clear();
 		graphPointInfo.push_back(p);
     }
 
@@ -96,13 +95,11 @@ void BSplineFitting::findBranches()
 
 		int tmpdeg = graphPointInfo.at(nodeIndex1).deg;
 		graphPointInfo.at(nodeIndex1).deg = tmpdeg+1;
-		int mod = tmpdeg % 8;
-		graphPointInfo.at(nodeIndex1).outVert[mod] = nodeIndex2;
+		graphPointInfo.at(nodeIndex1).outVert.push_back(nodeIndex2);
 
 		tmpdeg = graphPointInfo.at(nodeIndex2).deg;
 		graphPointInfo.at(nodeIndex2).deg = tmpdeg+1;
-		mod = tmpdeg % 8;
-		graphPointInfo.at(nodeIndex2).outVert[mod] = nodeIndex1;
+		graphPointInfo.at(nodeIndex2).outVert.push_back(nodeIndex1);
 	}
 
 	branches.clear();
@@ -134,11 +131,13 @@ void BSplineFitting::findBranches()
 				}
 			} // end while 
 
+			//Moved inside if statement so I loose branch points
 			branches[NumBranches].push_back(nextpoint);
 			if (graphPointInfo.at(nextpoint).deg == 1)
 			{
 				//Set degree = 0 so I don't start this trace again!
 				graphPointInfo.at(nextpoint).deg = 0;
+				//branches[NumBranches].push_back(nextpoint);
 			}
 		}// end if
 	}// end for 
@@ -182,15 +181,7 @@ void BSplineFitting::smoothBranches()
 
 		//Do the BSpline Algorithm:
 		std::vector<fPoint3D> newPts;
-		bool fastVersion = false;
-		if(fastVersion)
-		{
-		}
-		else
-		{
-			//BackboneBSplineFitting(points, ptsCount, xyz_vals, NumPoints, splineOrder, splineLevels);
-			newPts = bbBSplineFitting(points, outNumPts, splineOrder, splineLevels);
-		}
+		newPts = bbBSplineFitting(points, outNumPts, splineOrder, splineLevels);
 
 		//Update output
 		int startIdx = (int)nodes_out.size();

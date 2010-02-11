@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 	delete mst;
 	*/
 
-
+	
 	std::vector<mdl::fPoint3D> nodes;
 	std::vector<mdl::pairE> bbpairs;
 
@@ -96,6 +96,7 @@ int main(int argc, char *argv[])
 		std::cerr << "READ FAILURE\n";
 		return EXIT_FAILURE;
 	}
+	
 
 	mdl::BSplineFitting *bspline = new mdl::BSplineFitting( clean_img );
 	bspline->SetDebug(true);

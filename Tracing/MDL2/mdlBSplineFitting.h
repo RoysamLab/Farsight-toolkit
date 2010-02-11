@@ -57,7 +57,7 @@ public:
 	//Output:
 
 private:
-	struct Graphprop{ int deg; int outVert[8]; };
+	struct Graphprop{ int deg; std::vector<int> outVert; };
 	typedef std::list<int> ListType;
 	typedef std::map<int, ListType> ListMapType;
 
