@@ -53,21 +53,11 @@ bool BSplineFitting::Update()
 
 	int num_nodes = (int)nodes->size();
 
-	//float * flagOnBackbone = new float[num_nodes]; //for backbone index
 	//Note: indexOnBackbone in format xx.ooo where xx is index of backbone, ooo is order of pts.
+	//Note: branch numbering starts at 1
 	//DUDE: what if more than 1000 points are on a branch????
 	std::vector<float> indexOnBackbone;
-
-	//Graphprop * graphInfPoints = new Graphprop[num_nodes]; //for graph connection
 	std::vector<Graphprop> graphPointInfo;
-
-	/*
-	if(!flagOnBackbone || !graphInfPoints)
-	{
-		std::cerr << "Could not allocate memory for flag and infPoints\n";
-		return false;
-	}
-	*/
 
 	//Initialize the graph containers (for each node):
 	for(int i=0; i<num_nodes; i++)
@@ -78,14 +68,7 @@ bool BSplineFitting::Update()
 			p.outVert[j] = 0;
 		graphPointInfo.push_back(p);
 		indexOnBackbone.push_back( 0.0 );
-		//flagOnBackbone[i]=0.0;
-		//graphInfPoints[i].deg=0;
-		/*for(int j=0;j<8;j++)
-		{
-			graphInfPoints[i].outVert[j]=0;
-		}*/
     }
-
 	//Iterate through bbpairs and populate the graph info
 	//we need the degree of each node and a list of up to 8 connected nodes
 	for(int i=0; i<(int)bbpairs->size(); ++i)
@@ -102,25 +85,11 @@ bool BSplineFitting::Update()
 		graphPointInfo.at(nodeIndex2).deg = tmpdeg+1;
 		mod = tmpdeg % 8;
 		graphPointInfo.at(nodeIndex2).outVert[mod] = nodeIndex1;
-
-		/*
-		// get the corresponding deg of the node;
-		int tmpdeg = graphInfPoints[nodeIndex1].deg;
-		graphInfPoints[nodeIndex1].deg = tmpdeg+1;
-		int mod = tmpdeg % 8;
-		graphInfPoints[nodeIndex1].outVert[mod] = nodeIndex2;
-
-		tmpdeg = graphInfPoints[nodeIndex2].deg;
-		graphInfPoints[nodeIndex2].deg = tmpdeg+1;
-		mod = tmpdeg % 8;
-		graphInfPoints[nodeIndex2].outVert[mod] = nodeIndex1;
-		*/
 	}
 
 	//-----Get rid of junction point so that breaking up backbone segments------//
 	for (int i=0; i<num_nodes; i++)
     {
-		//if (graphInfPoints[i].deg >= 3)
 		if(graphPointInfo.at(i).deg >= 3)	//I am a branch point
 		{
 			//Iterate through each branch
@@ -140,19 +109,9 @@ bool BSplineFitting::Update()
 		} // end if
     }// end for
 
-
-	//---Doing assigning index to backones--------------//
-	/*int NumPoly[200];
-	for (int k=0; k<200; k++)
-	{
-		NumPoly[k] = 0;  
-    }*/
 	//This is the number of points on the branch
 	std::map<int,int> NumPtsOnBranch;
-
-	//int lastpoint, nextpoint;
 	int NumBranches = 0;
-	//float indexBBpts = 1.0;	//Each point in backbone gets an index (start at 1)
 
 	for (int i=0; i<num_nodes; i++)		//Iterate through all nodes
     {
@@ -160,8 +119,9 @@ bool BSplineFitting::Update()
 		{
 			NumBranches++;		//So must be a new branch (increment counter)
 			float indexBBpts = 1.0; //counts points on this branch
-			//flagOnBackbone[i] = NumBranches + indexBBpts/1000;
 			indexOnBackbone.at(i) = NumBranches + indexBBpts/1000;
+			NumPtsOnBranch[NumBranches]++;
+
 			int lastpoint = i;
 			int nextpoint = graphPointInfo.at(i).outVert[0]; // the first is [0]
 			// if not end of branch, keep going.
@@ -169,7 +129,6 @@ bool BSplineFitting::Update()
 			{
 				indexBBpts++;	//new point on branch
 				indexOnBackbone.at(nextpoint) = NumBranches + indexBBpts/1000;
-				//NumPoly[NumBranches] = NumPoly[NumBranches] + 1;
 				NumPtsOnBranch[NumBranches]++;
 
 				if (graphPointInfo.at(nextpoint).outVert[0] == lastpoint)
@@ -190,6 +149,7 @@ bool BSplineFitting::Update()
 				graphPointInfo.at(nextpoint).deg = 0;	//disconnect ??
 				indexBBpts = indexBBpts + 1;
 				indexOnBackbone.at(nextpoint) = NumBranches + indexBBpts/1000;
+				NumPtsOnBranch[NumBranches]++;
 			} // end if
 		}// end if
 	}// end for 
@@ -197,42 +157,17 @@ bool BSplineFitting::Update()
 
 	if(debug)
 		std::cerr << "There are " <<  NumBranches  << " branches" << std::endl; 
-
-	//---NumPtsOnBranch = round(NumPtsOnBranch * 0.05)----------//
-	//Because each point get counted twice in the loop??
-	std::map<int,int>::iterator it;
-	for( it=NumPtsOnBranch.begin(); it!=NumPtsOnBranch.end(); it++)
-	{
-		(*it).second = round( float((*it).second)*0.5 );
-	}
-
-	/*for (int k=0; k<200; k++)
-    {
-		NumPoly[k] =  round( float((NumPoly[k])*0.05) ); 
-		//0.04 , how to set this parameter ?    float 
-    }*/
 	
 	//**********************************************************************
 	//**********************************************************************
 	//BEGIN CURVE FITTING:
-
-	// this is to record the points in each branch:
-	std::map<int,int> NumBranchPts;  //Is the same as NumPtsOnBranch above?
-	for(int i=0; i<NumBranches; ++i)
-		NumBranchPts[i] = 0;
-	/*
-	int * numBranchpts = new int[NumBranches+1];
-	if(!numBranchpts)
-		return false;
-	for(int i=0; i<NumBranches+1; i++)
-		numBranchpts[i] = 0;
-	*/
 
 	//The number points we will downsample to:
 	float discretePt = 1; // sampling rate
 	int NewNumAllPoints = (int)( (float)num_nodes/discretePt ); 
 
 	//This records the new points:
+	//Add 1 for the end of array flag
 	Point3D * pointsVTK = new Point3D[NewNumAllPoints+1];		//New bb points
 	Point3D * posExtraSpines = new Point3D[NewNumAllPoints+1];	//New spine points
 	if(!pointsVTK || !posExtraSpines)
@@ -257,31 +192,30 @@ bool BSplineFitting::Update()
 
 	//**********************************************
 	// MAIN LOOP THROUGH EACH BRANCH
-	for(int b=0; b<NumBranches; b++)
+	for(int b=1; b<=NumBranches; b++)
 	{
 		//This will be used to hold the points in each branch
-		Point3D * points = new Point3D[num_nodes]; //num_nodes is max possible
+		int ptsCount = NumPtsOnBranch[b];
+		Point3D * points = new Point3D[ptsCount]; //num_nodes is max possible
 		if(!points)
 			return false;
 
-		int ptsCount = 0;
 		for(int i=0; i<num_nodes; ++i)
 		{
 			//If this point is on current branch
 			float curIdx = indexOnBackbone.at(i);
 			//If this point is on current branch
-			if( selffloor(curIdx) == b )
+			if( selffloor(curIdx) == b ) 
 			{
 				int tmpindex = round((curIdx - selffloor(curIdx))*1000)-1;
 				// In order to exchange x-coord and y-coord
 				points[tmpindex].x = nodes->at(i).x;
 				points[tmpindex].y = -1*nodes->at(i).y; //FLIP
 				points[tmpindex].z = nodes->at(i).z;
-				ptsCount++;
 			} // end if on backbone
 		} //end for num_nodes
 
-		NumBranchPts[b] = ptsCount;			//points in this branch;
+		//NumBranchPts[b] = ptsCount;			//points in this branch;
 		int NumPoints = ptsCount / discretePt;	//# points I want to end up with
 		
 		Point3D * xyz_vals = new Point3D[NumPoints];
@@ -297,9 +231,8 @@ bool BSplineFitting::Update()
 		}
 		else
 		{
-			BackboneBSplineFitting(points, NumPoints, xyz_vals, NumPoints, splineOrder, splineLevels);
+			BackboneBSplineFitting(points, ptsCount, xyz_vals, NumPoints, splineOrder, splineLevels);
 		}
-
 
 		//Update pointsVTK
 		for (int i=numVTKpts; i < numVTKpts+NumPoints; i++)
@@ -460,11 +393,11 @@ bool BSplineFitting::Update()
 			int indexPts = 0;
 			for (int i = 1; i<= NumBranches; i++)
 			{
-				for(int j =0; j < NumBranchPts[i]-1; j++)
+				for(int j =0; j < NumPtsOnBranch[i]-1; j++)
 				{
 					fprintf(outbackbone, "2 %d %d\n", j+indexPts, j+indexPts+1);
 				}
-				indexPts = indexPts + (int)NumBranchPts[i];
+				indexPts = indexPts + (int)NumPtsOnBranch[i];
 			}
 			fclose(outbackbone);
 		}
@@ -482,6 +415,8 @@ bool BSplineFitting::Update()
 
 	return true;
 }
+
+//std::vector<Point3D> BSplineFitting::bbBSplineFitting(std::vector<Point3D
 
 int BSplineFitting::BackboneBSplineFitting(Point3D * Points, int Num,
                            Point3D *SamplePoints, int Num2, 
