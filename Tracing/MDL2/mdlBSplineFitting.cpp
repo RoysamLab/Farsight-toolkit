@@ -76,7 +76,6 @@ void BSplineFitting::findBranches()
 	int num_nodes = (int)nodes->size();
 
 	//Graph properties for each node: degree and connectivity
-	struct Graphprop{ int deg; int outVert[8]; };
 	std::vector<Graphprop> graphPointInfo;
 	//Initialize the graph containers (for each node):
 	for(int i=0; i<num_nodes; i++)
