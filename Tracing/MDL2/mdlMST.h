@@ -55,6 +55,8 @@ public:
 
 	//The number is the edge are the node numbers (starting at 1)
 	std::vector<pairE> BackboneExtract();
+	Graph CreateInitialmsTree(void);
+	Graph morphGraphPrune(Graph msTree, int num_nodes,  float length_Threshold);
 	std::vector<pairE> SpineExtract();		//MDL based Spine Extraction
 
 	//Get Result:
