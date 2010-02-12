@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 	*/
-	/*
+	
 	mdl::BSplineFitting *bspline = new mdl::BSplineFitting( clean_img );
 	bspline->SetDebug(true);
 	bspline->SetLevels(8);
@@ -106,9 +106,23 @@ int main(int argc, char *argv[])
 	bspline->SetNodes( &nodes );
 	bspline->SetBBPairs( &bbpairs );
 	bspline->Update();
+	nodes = bspline->GetNodes();
+	bbpairs = bspline->GetBBPairs();
 	delete bspline;
-	*/
-   
+
+	mst = new mdl::MST( clean_img );
+	mst->SetDebug(true);
+	mst->SetUseVoxelRounding(false);
+	mst->SetEdgeRange(10);
+	mst->SetPower(1);
+	mst->SetSkeletonPoints( &nodes );
+	mst->CreateGraphAndMST();
+	mst->ErodeAndDialateNodeDegree(50);
+	nodes = mst->GetNodes();
+	bbpairs = mst->BackboneExtract();
+	mst->SpineExtract();
+	delete mst;
+	
 	std::cerr << "PRESS ENTER TO EXIT\n";
 	getchar();
 

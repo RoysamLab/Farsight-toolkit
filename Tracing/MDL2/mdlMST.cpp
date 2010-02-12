@@ -33,6 +33,7 @@ MST::MST(ImageType::Pointer inImage)
 	numPix = sizeX*sizeY*sizeZ;
 
 	debug = false;
+	useVoxelRounding = true;
 	edgeRange = 10;		//Some default values:
 	power = 1;
 
@@ -75,7 +76,7 @@ bool MST::CreateGraphAndMST()
 	if(!m_inputImage || !skeletonPoints)
 		return false;
 
-	this->skeletonPointsToNodes();
+	this->skeletonPointsToNodes(useVoxelRounding);
 	this->nodesToEdges();
 	this->minimumSpanningTree();
 

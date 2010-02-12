@@ -44,6 +44,7 @@ public:
 	~MST();
 	//Setup:
 	void SetDebug(bool inp = true){ debug = inp; };
+	void SetUseVoxelRounding(bool inp = true){useVoxelRounding = inp;};
 	void SetEdgeRange(int edge){ edgeRange = edge; };
 	void SetPower(int p){ power = p; };
 	
@@ -63,6 +64,7 @@ public:
 private:
 	//Parameters
 	bool debug;				//If debug is true, process in steps and print stuff
+	bool useVoxelRounding;  //Round Nodes to nearest integer (or voxel)
 	int edgeRange;
 	double power;
 
