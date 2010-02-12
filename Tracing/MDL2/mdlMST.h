@@ -51,12 +51,10 @@ public:
 	void SetSkeletonPoints(std::vector<fPoint3D> * sp);
 	
 	bool CreateGraphAndMST();	//Do first
-	bool ErodeAndDialateNodeDegree(int morphStrength); //Do second
+	bool ErodeAndDialateNodeDegree(int morphStrength); //Do second (if desired)
 
 	//The number is the edge are the node numbers (starting at 1)
 	std::vector<pairE> BackboneExtract();
-	Graph CreateInitialmsTree(void);
-	Graph morphGraphPrune(Graph msTree, int num_nodes,  float length_Threshold);
 	std::vector<pairE> SpineExtract();		//MDL based Spine Extraction
 
 	//Get Result:
@@ -80,14 +78,16 @@ private:
 	std::vector<fPoint3D> * skeletonPoints;
 
 	//Intermediates:
-	pairE * edge_array;			//for initial edges
-	float * edge_wght;		//for initial edge weights
-	unsigned int num_edges; //number of initial edges
-	Graph * g;				//my full graph at beginning
+	std::vector<pairE> edgeArray;	//for initial edges
+	std::vector<float> edgeWeight;	//for initial edge weights
 
-	bool skeletonPointsToNodes();	//step 1
+	Graph * nodeGraph;			//my full graph of all nodes
+	Graph * mstGraph;			//min spanning tree graph
+
+	bool skeletonPointsToNodes(bool roundToNearestVoxel=true);	//step 1
 	bool nodesToEdges();			//step 2
 	bool minimumSpanningTree();		//step 3
+	Graph morphGraphPrune(Graph *graph, std::vector<fPoint3D> *nodes, float lengthThreshold);
 	int roundToInt(double v);
 
 	//output:

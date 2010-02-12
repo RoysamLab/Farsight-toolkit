@@ -80,6 +80,7 @@ int main(int argc, char *argv[])
 	std::vector<mdl::fPoint3D> nodes = mst->GetNodes();
 	//Note: node 0 in bbpairs is index 0 of nodes!!!
 	std::vector<mdl::pairE> bbpairs = mst->BackboneExtract();
+	mst->SpineExtract();
 	delete mst;
 	
 	/*
@@ -97,6 +98,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 	*/
+	/*
 	mdl::BSplineFitting *bspline = new mdl::BSplineFitting( clean_img );
 	bspline->SetDebug(true);
 	bspline->SetLevels(8);
@@ -105,7 +107,9 @@ int main(int argc, char *argv[])
 	bspline->SetBBPairs( &bbpairs );
 	bspline->Update();
 	delete bspline;
+	*/
    
+	std::cerr << "PRESS ENTER TO EXIT\n";
 	getchar();
 
 	//******************************************************************

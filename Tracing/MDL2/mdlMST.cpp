@@ -38,14 +38,12 @@ MST::MST(ImageType::Pointer inImage)
 
 	//input
 	skeletonPoints = NULL;
+	nodeGraph = NULL;
+	mstGraph = NULL;
 
-	edge_array = NULL;
-	edge_wght = NULL;
-	num_edges = 0;
-	g = NULL;
-
-	//output
 	nodes.clear();
+	edgeArray.clear();
+	edgeWeight.clear();
 	spanningTree.clear();
 	nodeDegree.clear();
 }
@@ -55,20 +53,15 @@ MST::~MST()
 	m_inputImage=NULL;
 	skeletonPoints=NULL;
 
-	if(edge_array)
+	if(nodeGraph)
 	{
-		delete[] edge_array;
-		edge_array = NULL;
+		delete nodeGraph;
+		nodeGraph = NULL;
 	}
-	if(edge_wght)
+	if(mstGraph)
 	{
-		delete[] edge_wght;
-		edge_wght = NULL;
-	}
-	if(g)
-	{
-		delete g;
-		g = NULL;
+		delete mstGraph;
+		mstGraph = NULL;
 	}
 }
 
@@ -102,10 +95,18 @@ int MST::roundToInt(double v)
 //Because the skeleton Points may be float values and may have the same
 // voxel that they are closest to.
 //So I make sure that each voxel is in my list only once!!!
-bool MST::skeletonPointsToNodes()
+bool MST::skeletonPointsToNodes(bool roundToNearestVoxel)
 {
 	if(!skeletonPoints)
 		return false;
+
+	nodes.clear();
+	if(!roundToNearestVoxel)	//Just use the skeleton points
+	{
+		nodes.insert(nodes.begin(), skeletonPoints->begin(), skeletonPoints->end());
+		std::cerr << "Number of Nodes = " << nodes.size() << std::endl;
+		return true;
+	}
 
 	bool * nodeAdded = new bool[numPix];
 	if(!nodeAdded)	//Couldn't allocate memory
@@ -116,8 +117,6 @@ bool MST::skeletonPointsToNodes()
 	{ 
 		nodeAdded[idx] = false;
 	}
-
-	nodes.clear();
 
 	for(int i=0; i<(int)skeletonPoints->size(); ++i)
 	{
@@ -139,10 +138,8 @@ bool MST::skeletonPointsToNodes()
 
 	delete[] nodeAdded;
 
-	int num_nodes = (int)nodes.size();
-
 	if(debug)
-		std::cerr << "Number of Nodes = " << num_nodes << std::endl;
+		std::cerr << "Number of Nodes = " << nodes.size() << std::endl;
 
 	return true;
 }
@@ -154,10 +151,6 @@ bool MST::nodesToEdges()
 	if( (int)nodes.size() == 0)
 		return false;
 
-	std::vector<pairE> edgeArray;
-	std::vector<float> edgeWeight;
-
-	//int num_nodes = (int)nodes.size()-1;
 	int num_nodes = (int)nodes.size();
 
 	//Iterate through the nodes and create edges within the specified range.
@@ -186,15 +179,15 @@ bool MST::nodesToEdges()
 			float densityFactor = 0;
 			if(power >= 0.1)
 			{
-				//Get the two intensity values:
+				//Get the two intensity values (of closest voxel - no interpolation)
 				ImageType::IndexType index1;
-				index1[0] = (int)n1.x;
-				index1[1] = (int)n1.y;
-				index1[2] = (int)n1.z;
+				index1[0] = roundToInt((double)n1.x);
+				index1[1] = roundToInt((double)n1.y);
+				index1[2] = roundToInt((double)n1.z);
 				ImageType::IndexType index2;
-				index2[0] = (int)n2.x;
-				index2[1] = (int)n2.y;
-				index2[2] = (int)n2.z;
+				index2[0] = roundToInt((double)n2.x);
+				index2[1] = roundToInt((double)n2.y);
+				index2[2] = roundToInt((double)n2.z);
 				PixelType pix1 = m_inputImage->GetPixel(index1);
 				PixelType pix2 = m_inputImage->GetPixel(index2);
 
@@ -217,85 +210,100 @@ bool MST::nodesToEdges()
 		}//end for j
 	}//end for i
 
-	//Convert std c++ vector to c array:
-	num_edges = (unsigned int)edgeArray.size();
-	
-	if(edge_array)
-		delete[] edge_array;
-	if(edge_wght)
-		delete[] edge_wght;
-	edge_array = new pairE[num_edges];
-	edge_wght = new float[num_edges];
-
-	for(unsigned int i = 0; i<num_edges; ++i)
-	{
-		edge_array[i] = edgeArray.at(i);
-		edge_wght[i] = edgeWeight.at(i);
-	}
-
-	edgeWeight.clear();
-	edgeArray.clear();
-
 	if(debug)
-		std::cerr << "Finished making edges = " << num_edges << std::endl;
+		std::cerr << "Finished making edges = " << edgeArray.size() << std::endl;
 
 	return true;
 }
 
 bool MST::minimumSpanningTree()
 {
+	int num_edges = (int)edgeArray.size();
+	int num_nodes = (int)nodes.size();
+
 	if( num_edges <= 0 )
 		return false;
 
-	int num_nodes = (int)nodes.size();
-
-	spanningTree.clear();
-
-#if defined(BOOST_MSVC) && BOOST_MSVC <= 1300
-	Graph * g = new Graph(num_nodes);
-	for (size_t j = 0; j < num_edges; ++j) 
-	{
-		Edge e; 
-		bool inserted;
-		tie(e, inserted) = add_edge(edge_array[j].first, edge_array[j].second, *g);
-		weightmap[e] = edge_w[j];
-	}
-#else
-	if(g)
-		delete g;
-	g = new Graph(edge_array, edge_array + num_edges, edge_wght, num_nodes);
-#endif
-
-	if(!g)
+	//Convert std c++ vector to c array:
+	pairE * edge_array = new pairE[num_edges];
+	float * edge_wght = new float[num_edges];
+	if(!edge_array || !edge_wght)
 		return false;
 
-	boost::property_map<Graph, boost::edge_weight_t>::type weight = get(boost::edge_weight, *g);
+	for(int i = 0; i<num_edges; ++i)
+	{
+		edge_array[i] = edgeArray.at(i);
+		edge_wght[i] = edgeWeight.at(i);
+	}
+
+	edgeArray.clear();
+	edgeWeight.clear();
+
+	//Create graph of all nodes:
+	if(nodeGraph) 
+		delete nodeGraph;
+	nodeGraph = new Graph(edge_array, edge_array + num_edges, edge_wght, num_nodes);
+	if(!nodeGraph) 
+		return false;
+
+	delete[] edge_array;
+	delete[] edge_wght;
+
+	//typedef boost::property_map<Graph, boost::edge_weight_t>::type WeightType;
+	//WeightType weight = get(boost::edge_weight, *nodeGraph);
 	
 	// MST algorithm
-	boost::kruskal_minimum_spanning_tree(*g, back_inserter(spanningTree));
+	spanningTree.clear();
+	boost::kruskal_minimum_spanning_tree(*nodeGraph, back_inserter(spanningTree));
 
 	if(debug)
 		std::cerr << "kruskal_minimum_spanning_tree(MST) is finished!" << std::endl;
 
-	/*
 	// Create a graph for the initial MST
-	Graph msTree(num_nodes+1);
+	if(mstGraph)
+		delete mstGraph;
+	mstGraph = new Graph(1);
+	if(!mstGraph)
+		return false;
+
 	int num_edge_MST = 0;
 	for (std::vector < Edge >::iterator ei = spanningTree.begin(); ei != spanningTree.end(); ++ei) 
 	{
-		add_edge(source(*ei, *g), target(*ei, *g), msTree);
+		add_edge(source(*ei, *nodeGraph), target(*ei, *nodeGraph), *mstGraph);
 		num_edge_MST++;
 	}
+
 	if(debug)
 		std::cerr << "MST edges = " << num_edge_MST << std::endl;
-	*/
+
+	if(debug)
+	{
+		std::vector<pairE> mstLines;
+
+		//Get the lines from the mst:
+		typedef boost::graph_traits < Graph >::edge_iterator Edge_iter;
+		Edge_iter ei, ei_end; 
+		for (tie(ei, ei_end) = edges(*mstGraph); ei != ei_end; ++ei)
+		{
+			pairE ne( (int)source(*ei, *mstGraph)-1, (int)target(*ei, *mstGraph)-1 );
+			mstLines.push_back( ne );
+		}
+
+		std::cerr << "Number of mst lines = " << mstLines.size() << std::endl;
+
+		vtkFileHandler * fhdl = new vtkFileHandler();
+		fhdl->SetNodes(&nodes);
+		fhdl->SetLines(&mstLines);
+		fhdl->Write("InitialMST.vtk");
+		delete fhdl;
+	}
 
 	return true;
 }
 
 bool MST::ErodeAndDialateNodeDegree(int mophStrength)
 {
-	if((int)spanningTree.size() == 0 || !g)
+	if((int)spanningTree.size() == 0 || !nodeGraph)
 	{
 		std::cerr << "missing tree or g\n";
 		return false;
@@ -322,8 +330,8 @@ bool MST::ErodeAndDialateNodeDegree(int mophStrength)
 	// create initial degree_nodes array
 	for (std::vector < Edge >::iterator ei = spanningTree.begin(); ei != spanningTree.end(); ++ei) 
 	{
-		degree_nodes[source(*ei, *g)] ++;
-		degree_nodes[target(*ei, *g)] ++;
+		degree_nodes[source(*ei, *nodeGraph)] ++;
+		degree_nodes[target(*ei, *nodeGraph)] ++;
 	}
 
 	// -- Erosion and Dilation of MST
@@ -345,16 +353,16 @@ bool MST::ErodeAndDialateNodeDegree(int mophStrength)
 
 		for (std::vector < Edge >::iterator ei = spanningTree.begin(); ei != spanningTree.end(); ++ei) 
 		{
-			if (degree_nodes_buffer[source(*ei, *g)]>0 && degree_nodes_buffer[target(*ei, *g)]>0)  
+			if (degree_nodes_buffer[source(*ei, *nodeGraph)]>0 && degree_nodes_buffer[target(*ei, *nodeGraph)]>0)  
 			{
-				if (degree_nodes_buffer[source(*ei, *g)]==1 || degree_nodes_buffer[target(*ei, *g)]==1)  
+				if (degree_nodes_buffer[source(*ei, *nodeGraph)]==1 || degree_nodes_buffer[target(*ei, *nodeGraph)]==1)  
 				{
-					degree_nodes[source(*ei, *g)] --;
-					degree_nodes[target(*ei, *g)] --;
+					degree_nodes[source(*ei, *nodeGraph)] --;
+					degree_nodes[target(*ei, *nodeGraph)] --;
           
 					// Save the edges eroded in a stack-like array. Each edge takes two elements of the array
-					edge_eroded[num_edge_eroded*2]  = (int)source(*ei, *g); // Saving of eroded edges
-					edge_eroded[num_edge_eroded*2+1] = (int)target(*ei, *g);
+					edge_eroded[num_edge_eroded*2]  = (int)source(*ei, *nodeGraph); // Saving of eroded edges
+					edge_eroded[num_edge_eroded*2+1] = (int)target(*ei, *nodeGraph);
 					num_edge_eroded ++;
 				}//end if	
 			}// end if
@@ -413,30 +421,24 @@ std::vector<pairE> MST::BackboneExtract()
 {
 	std::vector<pairE> retLines;
 
-	if((int)spanningTree.size() == 0 || !g || (int)nodeDegree.size() == 0)
+	if(!mstGraph || (int)nodeDegree.size() == 0)
 	{
-		std::cerr << "missing tree or g or node degrees\n";
+		std::cerr << "missing tree or mstGraph or node degrees\n";
 		return retLines;
 	}
 
-	//Create a msTree graph for backbone from the MST generated above
-	//BackBone graph created or Graph for the parts of total skeletons 
-	Graph msTreeBB(1);
-	for (std::vector < Edge >::iterator ei = spanningTree.begin(); ei != spanningTree.end(); ++ei)
-	{
-		if (nodeDegree.at(source(*ei, *g)-1)!=0 && nodeDegree.at(target(*ei, *g)-1)!=0)
-		{  
-			add_edge(source(*ei, *g), target(*ei, *g), msTreeBB);
-		}
-    }
-
-	//Get the lines from the backbone mst:
+	//Get the backbone lines from the mst
 	typedef boost::graph_traits < Graph >::edge_iterator Edge_iter;
 	Edge_iter ei, ei_end; 
-	for (tie(ei, ei_end) = edges(msTreeBB); ei != ei_end; ++ei)
+	for (tie(ei, ei_end) = edges(*mstGraph); ei != ei_end; ++ei)
 	{
-		pairE ne( (int)source(*ei, msTreeBB)-1, (int)target(*ei, msTreeBB)-1 );
-		retLines.push_back( ne );
+		int n1 = (int)source(*ei, *mstGraph)-1; //node 1
+		int n2 = (int)target(*ei, *mstGraph)-1;  //node 2
+		if(nodeDegree.at(n1)!=0 && nodeDegree.at(n2)!=0)
+		{
+			pairE ne( n1, n2 );
+			retLines.push_back( ne );
+		}
    }
 
 	if(debug)
@@ -460,19 +462,8 @@ std::vector<pairE> MST::SpineExtract()
 	std::vector<pairE> retLines;
 
 	int num_nodes = (int)nodes.size();
-	if(num_nodes == 0 || (int)spanningTree.size() == 0 || (int)nodeDegree.size() == 0)
+	if(num_nodes == 0 || (int)nodeDegree.size() == 0 || !mstGraph)
 		return retLines;
-
-	// Create a graph for the initial MST
-	Graph msTree(num_nodes+1);
-	int num_edge_MST = 0;
-	for (std::vector < Edge >::iterator ei = spanningTree.begin(); ei != spanningTree.end(); ++ei) 
-	{
-		add_edge(source(*ei, *g), target(*ei, *g), msTree);
-		num_edge_MST++;
-	}
-	if(debug)
-		std::cerr << "MST edges = " << num_edge_MST << std::endl;
 
 	// Create a Backbone vertice flag array
 	bool * vertBackbone = new bool[num_nodes+1];
@@ -484,190 +475,140 @@ std::vector<pairE> MST::SpineExtract()
 			vertBackbone[i] = false;
 	}
 
-
 	/////
 	//NOT FINISHED YET::
+
+	morphGraphPrune(mstGraph, &nodes, 50.0);
 
 	return retLines;
 }
 
-// this function is used to look the Minimum-Spanning Tree of the Skeletons 
-Graph MST::CreateInitialmsTree(void)
-{
-    
-	int num_nodes = (int)nodes.size();
-    Graph msTree(num_nodes+1);
-	if (num_nodes == 0 || (int)spanningTree.size() == 0 || (int)nodeDegree.size() == 0) 
-		return msTree;
-
-   	// Create a graph for the initial MST
-	
-	int num_edge_MST = 0;
-	for (std::vector < Edge >::iterator ei = spanningTree.begin(); ei != spanningTree.end(); ++ei) 
-	{
-		add_edge(source(*ei, *g), target(*ei, *g), msTree);
-		num_edge_MST++;
-	}
-
-    std::vector<pairE> retLines;
-
-	//Get the lines from the backbone mst:
-	typedef boost::graph_traits < Graph >::edge_iterator Edge_iter;
-	Edge_iter ei, ei_end; 
-	for (tie(ei, ei_end) = edges(msTree); ei != ei_end; ++ei)
-	{
-		pairE ne( (int)source(*ei, msTree)-1, (int)target(*ei, msTree)-1 );
-		retLines.push_back( ne );
-   }
-
-	if(debug)
-		std::cerr << "Number of InitialSkeletonTree lines = " << retLines.size() << std::endl;
-
-	if(debug)
-	{
-		vtkFileHandler * fhdl = new vtkFileHandler();
-		fhdl->SetNodes(&nodes);
-		fhdl->SetLines(&retLines);
-		fhdl->Write("InitialMST.vtk");
-		delete fhdl;
-	}
-
-	return msTree;
-
-}
-
-//  this function still has some problem 
-Graph MST::morphGraphPrune(Graph msTree, int num_nodes,  float length_Threshold)
-{
-
-	
-    Graph msTree_buffer(num_nodes+1);
-	msTree_buffer = msTree; 
+// Pruning on graph for trivia branches
+// Removing branches with length below certain threshold
+Graph MST::morphGraphPrune(Graph *graph, std::vector<fPoint3D> *nodes, float lengthThreshold)
+{ 
     typedef boost::graph_traits < Graph >::edge_iterator Edge_iter;
-	Edge_iter   ei, ei_end;
 	typedef boost::graph_traits < Graph >::vertex_iterator Vertex_iter;
-	Vertex_iter vi, vend;
-	
-	boost::graph_traits<Graph>::out_edge_iterator  outei, outedge_end;
+	typedef boost::graph_traits<Graph>::out_edge_iterator Outedge_iter;
 
-	//std::vector<Point3D> vertexPos;
+	//I probably want to create a copy of the graph somehow??
+	Graph ng = *graph;
+
+	Edge_iter   ei, ei_end;
+	Outedge_iter  outei, outedge_end;
 
 	int curBranchVerts[2000];
-
 	int curBrVerts_Index = 0;
+
 	float length_edge = 0; 
 	int indVert, indVert_last;
-	int num_leaves;
     int branchChosen;
 	float length_leaf = 0;
 
 	// Consider all leaves
-	num_leaves = 0;
+	int num_leaves = 0;
 
-	  
     // for all vertex in the graph
-	for(boost::tie(vi, vend) = vertices(msTree); vi != vend; ++vi) 
-	 { 
-			curBrVerts_Index = 0;
-			if (out_degree(*vi, msTree) == 1)  
-			   { // if it is a leaf tip
-				 for (boost::tie(outei, outedge_end) = out_edges(*vi, msTree); outei != outedge_end; ++outei)
-				   {
-					curBranchVerts[curBrVerts_Index] = (int)source(*outei, msTree);
-					curBrVerts_Index++;
-					curBranchVerts[curBrVerts_Index] = (int)target(*outei, msTree);
-				   } // end for
+	Vertex_iter vi, vend;
+	for(boost::tie(vi, vend) = vertices(ng); vi != vend; ++vi) 
+	{ 
+		curBrVerts_Index = 0;
+		if (out_degree(*vi, ng) == 1)  
+		{ // if it is a leaf tip
+			for (boost::tie(outei, outedge_end) = out_edges(*vi, ng); outei != outedge_end; ++outei)
+			{
+				curBranchVerts[curBrVerts_Index] = (int)source(*outei, ng);
+				curBrVerts_Index++;
+				curBranchVerts[curBrVerts_Index] = (int)target(*outei, ng);
+			} // end for
 
-				  while (out_degree(vertex(curBranchVerts[curBrVerts_Index], msTree), msTree) == 2) 
-				   {
-					//curVert = vertex(curBranchVerts[curBrVerts_Index], msTree);
-					for (boost::tie(outei, outedge_end) = out_edges(vertex(curBranchVerts[curBrVerts_Index], msTree), msTree);
-																							outei != outedge_end; ++outei)
-					  {
-						if (target(*outei, msTree) == (unsigned int)curBranchVerts[curBrVerts_Index-1])
-							continue;
-						curBranchVerts[curBrVerts_Index+1] = (int)target(*outei, msTree);
-					  } //end for
-					  curBrVerts_Index++;
-				   } // end while
-				
-				  branchChosen = 1;// Evaluate with MDL if the branch is chosen
-				
-				//if (i == prunetimes-1) num_leaves++;
-                length_leaf = 0;  // must be reset the value,by xiaoliang
-				for (int j = 0; j <= curBrVerts_Index; j++)
+			while (out_degree(vertex(curBranchVerts[curBrVerts_Index], ng), ng) == 2) 
+			{
+				boost::tie(outei, outedge_end) = out_edges(vertex(curBranchVerts[curBrVerts_Index], ng), ng);
+				for ( ; outei != outedge_end; ++outei)
 				{
-					indVert = curBranchVerts[j];
-
-					if (j==0) 
-					 {
-						indVert_last = indVert;
-					 } // end if
-                    
-					Point3D vertexPosStart,vertexPosEnd;
-					vertexPosStart.x = this->nodes.at(indVert).x;
-					vertexPosStart.y = this->nodes.at(indVert).y;
-                    vertexPosStart.z = this->nodes.at(indVert).z;
-					vertexPosEnd.x = this->nodes.at(indVert_last).x;
-                    vertexPosEnd.y = this->nodes.at(indVert_last).y;
-					vertexPosEnd.z = this->nodes.at(indVert_last).z;
-
-                    length_edge = (vertexPosStart.x-vertexPosEnd.x)*(vertexPosStart.x-vertexPosEnd.x);
-					length_edge+= (vertexPosStart.y-vertexPosEnd.y)*(vertexPosStart.y-vertexPosEnd.y);
-					length_edge+= (vertexPosStart.z-vertexPosEnd.z)*(vertexPosStart.z-vertexPosEnd.z);
-					/*
-					length_edge = (vertexPos[indVert].x-vertexPos[indVert_last].x)*(vertexPos[indVert].x-vertexPos[indVert_last].x);
-					length_edge+= (vertexPos[indVert].y-vertexPos[indVert_last].y)*(vertexPos[indVert].y-vertexPos[indVert_last].y);
-					length_edge+= (vertexPos[indVert].z-vertexPos[indVert_last].z)*(vertexPos[indVert].z-vertexPos[indVert_last].z);
-                     */
-					length_edge = sqrt(length_edge);
-					length_leaf += length_edge;
-					indVert_last = indVert;
-					if(debug)
-						std::cout << "length_leaf = " << length_leaf << std::endl;
+					if (target(*outei, ng) == (unsigned int)curBranchVerts[curBrVerts_Index-1])
+							continue;
+					curBranchVerts[curBrVerts_Index+1] = (int)target(*outei, ng);
 				} //end for
-
-				if(debug)
-					std::cout << "I am here" << std::endl;
-				if (length_leaf < length_Threshold)    
-				{  
-					branchChosen = 0;     
+				curBrVerts_Index++;
+			} // end while
+				
+			branchChosen = 1;// Evaluate with MDL if the branch is chosen
+				
+			length_leaf = 0;  // must reset the value, by xiaoliang
+			for (int j = 0; j <= curBrVerts_Index; j++)
+			{
+				indVert = curBranchVerts[j];
+				if(indVert >= (int)nodes->size())
+				{
+					std::cerr << "not a node\n";
+					indVert = indVert_last;
 				}
-				// Remove the branch based on leaf-length critierion
-				if (branchChosen == 0)  {
-					for (int j = 1; j <= curBrVerts_Index; j++) {
-						remove_edge(curBranchVerts[j-1], curBranchVerts[j], msTree_buffer);
-					}
-				}
 
+				if (j==0) 
+				{
+					indVert_last = indVert;
+				} // end if
+                    
+				fPoint3D vertexPosStart,vertexPosEnd;
+				vertexPosStart.x = this->nodes.at(indVert).x;
+				vertexPosStart.y = this->nodes.at(indVert).y;
+                vertexPosStart.z = this->nodes.at(indVert).z;
+				vertexPosEnd.x = this->nodes.at(indVert_last).x;
+                vertexPosEnd.y = this->nodes.at(indVert_last).y;
+				vertexPosEnd.z = this->nodes.at(indVert_last).z;
+
+                length_edge = (vertexPosStart.x-vertexPosEnd.x)*(vertexPosStart.x-vertexPosEnd.x);
+				length_edge+= (vertexPosStart.y-vertexPosEnd.y)*(vertexPosStart.y-vertexPosEnd.y);
+				length_edge+= (vertexPosStart.z-vertexPosEnd.z)*(vertexPosStart.z-vertexPosEnd.z);
+
+				length_edge = sqrt(length_edge);
+				length_leaf += length_edge;
+				indVert_last = indVert;
+				//if(debug)
+					//std::cout << "length_leaf = " << length_leaf << std::endl;
+			} //end for
+
+			//if(debug)
+			//	std::cout << "I am here" << std::endl;
+
+			if (length_leaf < lengthThreshold)    
+			{  
+				branchChosen = 0;     
+			}
+			// Remove the branch based on leaf-length critierion
+			if (branchChosen == 0)  
+			{
+				for (int j = 1; j <= curBrVerts_Index; j++) 
+				{
+					remove_edge(curBranchVerts[j-1], curBranchVerts[j], ng);
+				}
 			}
 		}
-	
-	msTree = msTree_buffer;
+	}
 
 	if (debug)
-		std::cerr<<"The Graph Pruning is done with respect to the threshold= %f\n" << length_Threshold;
-    
+		std::cerr << "The Graph Pruning is done with respect to the threshold = " << lengthThreshold << std::endl;
+
     if (debug)
 	{
-     std::vector<pairE> retLines;
-	 typedef boost::graph_traits < Graph >::edge_iterator Edge_iter;
-	 Edge_iter ei, ei_end; 
-	 for (tie(ei, ei_end) = edges(msTree); ei != ei_end; ++ei)
-	 {
-		pairE ne( (int)source(*ei, msTree)-1, (int)target(*ei, msTree)-1 );
-		retLines.push_back( ne );
-     }
+		std::vector<pairE> retLines;
+		Edge_iter ei, ei_end; 
+		for (tie(ei, ei_end) = edges(ng); ei != ei_end; ++ei)
+		{
+			pairE ne( (int)source(*ei, ng)-1, (int)target(*ei, ng)-1 );
+			retLines.push_back( ne );
+		}
 
-	 vtkFileHandler * fhdl = new vtkFileHandler();
-	 fhdl->SetNodes(&nodes);
-	 fhdl->SetLines(&retLines);
-	 fhdl->Write("PruningMST.vtk");
-	 delete fhdl;
+		vtkFileHandler * fhdl = new vtkFileHandler();
+		fhdl->SetNodes(nodes);
+		fhdl->SetLines(&retLines);
+		fhdl->Write("PrunedGraph.vtk");
+		delete fhdl;
 	}
-	
-	return msTree;
-     
+
+	return ng;
 }
 
 
