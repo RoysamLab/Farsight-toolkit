@@ -86,7 +86,7 @@ void BSplineFitting::findBranches()
 		graphPointInfo.push_back(p);
     }
 
-	//Iterate through bbpairs and populate the graph info
+    //Iterate through bbpairs and populate the graph info
 	//we need the degree of each node and a list of up to 8 connected nodes
 	for(int i=0; i<(int)bbpairs->size(); ++i)
 	{
@@ -101,6 +101,28 @@ void BSplineFitting::findBranches()
 		graphPointInfo.at(nodeIndex2).deg = tmpdeg+1;
 		graphPointInfo.at(nodeIndex2).outVert.push_back(nodeIndex1);
 	}
+   
+    //We need to get rid of junction points so that we can break up backbone intto segments------//
+   for (int i=0;i<num_nodes;i++)
+     {
+     if (graphPointInfo.at(i).deg >=3)
+       {
+       for (int j=0;j<graphPointInfo.at(i).deg;j++)
+         {
+          int outpt = graphPointInfo.at(i).outVert[j];
+          graphPointInfo.at(outpt).deg = graphPointInfo.at(outpt).deg - 1;
+          if ( graphPointInfo.at(outpt).deg ==1)
+           {
+           if (graphPointInfo.at(outpt).outVert[0] == i)
+            {
+            graphPointInfo.at(outpt).outVert[0] = graphPointInfo.at(outpt).outVert[1]; 
+            // Remove junction point from neighbor points
+            }// end if 
+          } // end if 
+        } // end for
+      }// end if 
+    }// end for
+
 
 	branches.clear();
 	branchEnds.clear();
@@ -112,7 +134,6 @@ void BSplineFitting::findBranches()
 		{
 			NumBranches++;		//So must be a new branch (increment counter)
 			branches[NumBranches].push_back(i);
-
 			int lastpoint = i;
 			int nextpoint = graphPointInfo.at(i).outVert[0]; // the first is [0]
 			// if not end of branch, keep going.
@@ -140,10 +161,12 @@ void BSplineFitting::findBranches()
 				graphPointInfo.at(nextpoint).deg = 0;
 				branches[NumBranches].push_back(nextpoint);
 			}
+
 			else if(graphPointInfo.at(nextpoint).deg >= 2)
 			{
 				branchEnds[NumBranches] = nextpoint;
 			}
+			
 		}// end if
 	}// end for 
 
