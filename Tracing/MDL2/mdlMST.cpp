@@ -478,7 +478,13 @@ std::vector<pairE> MST::SpineExtract()
 	/////
 	//NOT FINISHED YET::
 
-	morphGraphPrune(mstGraph, &nodes, 50.0);
+	Graph prunedGraph = morphGraphPrune(mstGraph, &nodes, 50.0);
+
+	//Xiao Liang: you can work on finishing this function by
+	//re-writing the code in MDABasedSplineExtraction.
+	//
+	//Your output is a vector of line-pairs corresponding to node indexes.
+	//
 
 	return retLines;
 }
