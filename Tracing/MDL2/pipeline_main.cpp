@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 	//mdl::ImageType::Pointer DT_img = volProc->GetOutput();
 	delete volProc;
 
-	/*
+	
 	//Integrated Skeleton to create skeleton points:
 	mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton( clean_img );
 	skel->SetVectorMagnitude(.05);
@@ -81,8 +81,8 @@ int main(int argc, char *argv[])
 	//Note: node 0 in bbpairs is index 0 of nodes!!!
 	std::vector<mdl::pairE> bbpairs = mst->BackboneExtract();
 	delete mst;
-	*/
-
+	
+	/*
 	
 	std::vector<mdl::fPoint3D> nodes;
 	std::vector<mdl::pairE> bbpairs;
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 		std::cerr << "READ FAILURE\n";
 		return EXIT_FAILURE;
 	}
-	
+	*/
 	mdl::BSplineFitting *bspline = new mdl::BSplineFitting( clean_img );
 	bspline->SetDebug(true);
 	bspline->SetLevels(8);

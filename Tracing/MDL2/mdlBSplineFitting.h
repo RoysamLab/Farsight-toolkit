@@ -57,10 +57,11 @@ public:
 	//Output:
 
 private:
-	struct Graphprop{ int deg; std::vector<int> outVert; };
+	typedef std::set<int> SetType;
 	typedef std::list<int> ListType;
 	typedef std::map<int, ListType> ListMapType;
 	typedef std::map<int, int> IntMapType;
+	struct Graphprop{ int deg; SetType outVert; };
 
 	bool debug;
 	int splineOrder;
@@ -80,7 +81,7 @@ private:
 
 	//The key is the branch number, the list contains all indexes in that branch
 	ListMapType branches;			//Intermediate: holds branches info
-	IntMapType branchEnds;			//key branch numbers, contines idx of branch point
+	SetType branchPts;				//List of branch point ids (in nodes)
 
 	//Outputs:
 	std::vector<fPoint3D> nodes_out;

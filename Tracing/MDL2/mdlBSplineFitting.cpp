@@ -58,6 +58,7 @@ bool BSplineFitting::Update()
 	//Write out smooth backbone and extra spines files:
 	if(debug)
 	{
+		std::cerr << "DONE\n";
 		vtkFileHandler * fhdl = new vtkFileHandler();
 		fhdl->SetNodes(&nodes_out);
 		fhdl->SetLines(&bbpairs_out);
@@ -95,37 +96,40 @@ void BSplineFitting::findBranches()
 
 		int tmpdeg = graphPointInfo.at(nodeIndex1).deg;
 		graphPointInfo.at(nodeIndex1).deg = tmpdeg+1;
-		graphPointInfo.at(nodeIndex1).outVert.push_back(nodeIndex2);
+		graphPointInfo.at(nodeIndex1).outVert.insert(nodeIndex2);
 
 		tmpdeg = graphPointInfo.at(nodeIndex2).deg;
 		graphPointInfo.at(nodeIndex2).deg = tmpdeg+1;
-		graphPointInfo.at(nodeIndex2).outVert.push_back(nodeIndex1);
+		graphPointInfo.at(nodeIndex2).outVert.insert(nodeIndex1);
 	}
    
-    //We need to get rid of junction points so that we can break up backbone intto segments------//
-   for (int i=0;i<num_nodes;i++)
-     {
-     if (graphPointInfo.at(i).deg >=3)
-       {
-       for (int j=0;j<graphPointInfo.at(i).deg;j++)
-         {
-          int outpt = graphPointInfo.at(i).outVert[j];
-          graphPointInfo.at(outpt).deg = graphPointInfo.at(outpt).deg - 1;
-          if ( graphPointInfo.at(outpt).deg ==1)
-           {
-           if (graphPointInfo.at(outpt).outVert[0] == i)
-            {
-            graphPointInfo.at(outpt).outVert[0] = graphPointInfo.at(outpt).outVert[1]; 
-            // Remove junction point from neighbor points
-            }// end if 
-          } // end if 
-        } // end for
-      }// end if 
-    }// end for
+	//Create a set of branch points
+	branchPts.clear();
+   
+	//We need to get rid of junction points 
+	//so that we can break up backbone into segments
+	//This is important for segments between junction points.
+	//We'll save the removed nodes for later use!
+	for (int i=0;i<num_nodes;i++)
+	{
+		if (graphPointInfo.at(i).deg >=3)
+		{
+			branchPts.insert( i );	//Save the node
+			//iterate through each neighbor
+			SetType::iterator it;
+			SetType bset = graphPointInfo.at(i).outVert;
+			for (it = bset.begin(); it != bset.end(); it++)
+			{
+				int nbrPt = (*it);
+				(graphPointInfo.at(nbrPt).deg)-- ; //decrement the degree
+				//Romove me as a neighbor:
+				graphPointInfo.at(nbrPt).outVert.erase(i);
+			} // end for
+		}// end if 
+	}// end for
 
 
 	branches.clear();
-	branchEnds.clear();
 	int NumBranches = 0;
 
 	for (int i=0; i<num_nodes; i++)		//Iterate through all nodes
@@ -135,21 +139,21 @@ void BSplineFitting::findBranches()
 			NumBranches++;		//So must be a new branch (increment counter)
 			branches[NumBranches].push_back(i);
 			int lastpoint = i;
-			int nextpoint = graphPointInfo.at(i).outVert[0]; // the first is [0]
+			int nextpoint = *graphPointInfo.at(i).outVert.begin();
 			// if not end of branch, keep going.
 			while (graphPointInfo.at(nextpoint).deg == 2) 
 			{
 				branches[NumBranches].push_back(nextpoint);
 
-				if (graphPointInfo.at(nextpoint).outVert[0] == lastpoint)
-				{
+				if (*graphPointInfo.at(nextpoint).outVert.begin() == lastpoint)
+				{	//next point was were I just was, so use other neighbor
 					lastpoint = nextpoint;
-					nextpoint = graphPointInfo.at(nextpoint).outVert[1];
+					nextpoint = *graphPointInfo.at(nextpoint).outVert.rbegin();
 				}
 				else 
 				{
 					lastpoint = nextpoint;
-					nextpoint = graphPointInfo.at(nextpoint).outVert[0]; 
+					nextpoint = *graphPointInfo.at(nextpoint).outVert.begin(); 
 				}
 			} // end while 
 
@@ -161,12 +165,6 @@ void BSplineFitting::findBranches()
 				graphPointInfo.at(nextpoint).deg = 0;
 				branches[NumBranches].push_back(nextpoint);
 			}
-
-			else if(graphPointInfo.at(nextpoint).deg >= 2)
-			{
-				branchEnds[NumBranches] = nextpoint;
-			}
-			
 		}// end if
 	}// end for 
 
@@ -185,17 +183,9 @@ void BSplineFitting::smoothBranches()
 	nodes_out.clear();
 	bbpairs_out.clear();
 
-	//Create a set of branch points
-	std::set<int> bpts;
-	IntMapType::iterator it2;
-	for(it2=branchEnds.begin(); it2!=branchEnds.end(); it2++)
-	{
-		bpts.insert( it2->second );
-	}
-
 	//Add the branch points to the output nodes list:
 	std::set<int>::iterator it3;
-	for(it3=bpts.begin(); it3!=bpts.end(); it3++)
+	for(it3=branchPts.begin(); it3!=branchPts.end(); it3++)
 	{
 		nodes_out.push_back( nodes->at(*it3) );
 	}
@@ -236,24 +226,6 @@ void BSplineFitting::smoothBranches()
 		{
 			bbpairs_out.push_back( pairE(i,i+1) );
 		}
-
-		//See if I have to end at a branch point:
-		if( branchEnds.find(b) != branchEnds.end() )
-		{	//I do need to add the branch point
-			int oldIdx = branchEnds[b];	//The old index, find it in the set
-			int newIdx = 0;				//The placement in the set give me new index
-			std::set<int>::iterator it4;
-			for( it4=bpts.begin(); it4!= bpts.end(); it4++ )
-			{
-				if( (*it4) == oldIdx )
-				{ 
-					bbpairs_out.push_back( pairE(newIdx, endIdx) );
-					break;
-				}
-				newIdx++;
-			}
-		}
-
 	}	//MAIN LOOP END
 }
 
