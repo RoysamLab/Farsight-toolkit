@@ -540,12 +540,12 @@ Graph MST::CreateInitialmsTree(void)
 Graph MST::morphGraphPrune(Graph msTree, int num_nodes,  float length_Threshold)
 {
 
-
+	
     Graph msTree_buffer(num_nodes+1);
 	msTree_buffer = msTree; 
-    
+    typedef boost::graph_traits < Graph >::edge_iterator Edge_iter;
 	Edge_iter   ei, ei_end;
-	
+	typedef boost::graph_traits < Graph >::vertex_iterator Vertex_iter;
 	Vertex_iter vi, vend;
 	
 	boost::graph_traits<Graph>::out_edge_iterator  outei, outedge_end;
@@ -573,9 +573,9 @@ Graph MST::morphGraphPrune(Graph msTree, int num_nodes,  float length_Threshold)
 			   { // if it is a leaf tip
 				 for (boost::tie(outei, outedge_end) = out_edges(*vi, msTree); outei != outedge_end; ++outei)
 				   {
-					curBranchVerts[curBrVerts_Index] = source(*outei, msTree);
+					curBranchVerts[curBrVerts_Index] = (int)source(*outei, msTree);
 					curBrVerts_Index++;
-					curBranchVerts[curBrVerts_Index] = target(*outei, msTree);
+					curBranchVerts[curBrVerts_Index] = (int)target(*outei, msTree);
 				   } // end for
 
 				  while (out_degree(vertex(curBranchVerts[curBrVerts_Index], msTree), msTree) == 2) 
@@ -586,7 +586,7 @@ Graph MST::morphGraphPrune(Graph msTree, int num_nodes,  float length_Threshold)
 					  {
 						if (target(*outei, msTree) == (unsigned int)curBranchVerts[curBrVerts_Index-1])
 							continue;
-						curBranchVerts[curBrVerts_Index+1] = target(*outei, msTree);
+						curBranchVerts[curBrVerts_Index+1] = (int)target(*outei, msTree);
 					  } //end for
 					  curBrVerts_Index++;
 				   } // end while
@@ -665,7 +665,7 @@ Graph MST::morphGraphPrune(Graph msTree, int num_nodes,  float length_Threshold)
 	 fhdl->Write("PruningMST.vtk");
 	 delete fhdl;
 	}
-
+	
 	return msTree;
      
 }
