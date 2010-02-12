@@ -50,11 +50,16 @@ public:
 	//Input:
 	void SetNodes( std::vector<fPoint3D> * nds ){ nodes = nds; };
 	void SetBBPairs( std::vector<pairE> * bbp ){ bbpairs = bbp; };
+	//void SetSpinePairs( std::vector<pairE> *spp ) {spnpairs = spp };
 
 	//Processing:
 	bool Update();
 
 	//Output:
+	std::vector<fPoint3D> GetNodes(){ return nodes_out; };
+	std::vector<pairE> GetBBPairs(){ return bbpairs_out; };
+	//std::vector<pairE> GetSpinePairs(){ return spine_out; };
+
 
 private:
 	typedef std::set<int> SetType;
