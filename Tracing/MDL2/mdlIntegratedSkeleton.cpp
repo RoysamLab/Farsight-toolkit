@@ -244,7 +244,12 @@ bool IntegratedSkeleton::createGradientVectorField()
 	kernelWeight[0][0] = 1.67; kernelWeight[0][1] = 5.80; kernelWeight[0][2] = 1.67;
 	kernelWeight[1][0] = 5.80; kernelWeight[1][1] = 20.1; kernelWeight[1][2] = 5.80;
 	kernelWeight[2][0] = 1.67; kernelWeight[2][1] = 5.80; kernelWeight[2][2] = 1.67;
-	double s = 0.002; //scale on outputs  0.002
+	double s = 0.; 
+	for (int i=0;i<3;i++)
+		for (int j=0;j<3;j++)
+			s += kernelWeight[i][j];
+
+	s= 1/s; // normarized to 1;
 
 	//Compute gradient of interior/surface voxels:
 	ImageType::IndexType m_ind;
