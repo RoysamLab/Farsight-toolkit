@@ -39,6 +39,11 @@ public:
 	void readProject(char * filename);
 	bool writeProject(char* filename);
 	unsigned int size();
+	std::string GetFileName(int i);
+	std::string GetFileType(int i);
+	double GetTranslationX(int i);
+	double GetTranslationY(int i);
+	double GetTranslationZ(int i);
 private:
 	std::vector<FileInfoManager> fileInfo;
 };

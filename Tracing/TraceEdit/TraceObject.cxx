@@ -265,6 +265,12 @@ void TraceObject::ImageIntensity(vtkSmartPointer<vtkImageData> imageData)
 		allLines[i]->setTraceBitIntensities(imageData);
 	}//end of set
 }
+void TraceObject::SetTraceOffset(double ntx, double nty, double ntz)
+{
+	this->tx = ntx;
+	this->ty = nty;
+	this->tz = ntz;
+}
 bool TraceObject::ReadFromFeatureTracksFileForKymograph(char *filename,int type_offset=0)
 {
   FILE * fp = fopen(filename,"r");
@@ -447,10 +453,14 @@ bool TraceObject::ReadFromSWCFile(char * filename)
       }
     sscanf(buff,"%d %d %lf %lf %lf %lf %d",&id,&type,&x,&y,&z,&r,&parent);
     TraceBit tbit;	// the fabs is for assumtion of no neg coord
-    tbit.x= x;//(double) fabs(x);
-	tbit.y= y;//(double) fabs(y);
-	tbit.z=z;//(double) fabs(z);
+	tbit.x = x + this->tx;//(double) fabs(x);
+	tbit.y = y + this->ty;//(double) fabs(y);
+	tbit.z = z + this->tz;//(double) fabs(z);
 	tbit.id=id;
+	if (!(r<=0))
+	{
+		r = 1;
+	}
 	tbit.r =r;
     data[id] = tbit;
 
@@ -785,9 +795,9 @@ void TraceObject::ConvertVTKLineToTrace(int cellID, int parentTraceLineID,
       points->GetPoint(i, point);
       if(i == 0)
         {
-        endBit.x = point[0];
-        endBit.y = point[1];
-        endBit.z = point[2];
+			endBit.x = point[0] + this->tx;
+			endBit.y = point[1] + this->ty;
+			endBit.z = point[2] + this->tz;
         endBit.r = 1;
         endBit.id = this->NextTraceBitID;
         this->NextTraceBitID++;
@@ -796,8 +806,8 @@ void TraceObject::ConvertVTKLineToTrace(int cellID, int parentTraceLineID,
       else
         {
         TraceBit tbit;
-        tbit.x = point[0];
-        tbit.y = point[1];
+        tbit.x = point[0] + this->tx;
+        tbit.y = point[1] + this->ty;
         tbit.z = point[2];
         tbit.r = 1;
         tbit.id = this->NextTraceBitID;
@@ -815,9 +825,9 @@ void TraceObject::ConvertVTKLineToTrace(int cellID, int parentTraceLineID,
       points->GetPoint(i, point);
       if(i == points->GetNumberOfPoints() - 1)
         {
-        endBit.x = point[0];
-        endBit.y = point[1];
-        endBit.z = point[2];
+        endBit.x = point[0] + this->tx;
+        endBit.y = point[1] + this->ty;
+        endBit.z = point[2] + this->tz;
         endBit.r = 1;
         endBit.id = this->NextTraceBitID;
         this->NextTraceBitID++;
@@ -826,9 +836,9 @@ void TraceObject::ConvertVTKLineToTrace(int cellID, int parentTraceLineID,
       else
         {
         TraceBit tbit;
-        tbit.x = point[0];
-        tbit.y = point[1];
-        tbit.z = point[2];
+        tbit.x = point[0] + this->tx;
+        tbit.y = point[1] + this->ty;
+        tbit.z = point[2] + this->tz;
         tbit.r = 1;
         tbit.id = this->NextTraceBitID;
         this->NextTraceBitID++;
@@ -1249,9 +1259,9 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
         return false;
       }
       TraceBit tbit;
-      tbit.x = bitX;
-      tbit.y = bitY;
-      tbit.z = bitZ;
+	  tbit.x = bitX + this->tx;
+	  tbit.y = bitY + this->ty;
+	  tbit.z = bitZ + this->tz;
       tbit.id = bitID;
       tline->AddTraceBit(tbit);
       bitElement = bitElement->NextSiblingElement();

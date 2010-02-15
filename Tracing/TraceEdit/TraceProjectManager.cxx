@@ -87,3 +87,23 @@ unsigned int ProjectManager::size()
 {
 	return this->fileInfo.size();
 }
+std::string ProjectManager::GetFileName(int i)
+{
+	return this->fileInfo.at(i).fileName;
+}
+std::string ProjectManager::GetFileType(int i)
+{
+	return this->fileInfo.at(i).fileType;
+}
+double ProjectManager::GetTranslationX(int i)
+{
+	return this->fileInfo.at(i).tx;
+}
+double ProjectManager::GetTranslationY(int i)
+{
+	return this->fileInfo.at(i).ty;
+}
+double ProjectManager::GetTranslationZ(int i)
+{
+	return this->fileInfo.at(i).tz;
+}

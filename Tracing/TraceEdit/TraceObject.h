@@ -87,6 +87,7 @@ public:
 	bool WriteToSWCFile(const char * filename);
 	void WriteToVTKFile(const char * filename);
 	void SetBranchPoints(std::vector<branchPT*> Branches);
+	void SetTraceOffset(double ntx, double nty, double ntz);
 	void ImageIntensity(vtkSmartPointer<vtkImageData> imageData);
 //	operators
 	int getNewLineId();
@@ -127,6 +128,7 @@ private:
 	std::vector<TraceLine*> trace_lines;
 	vtkSmartPointer<vtkPolyData> PolyTraces;
 	double smallLineColor, mergeLineColor;	
+	double tx,ty,tz;
 	int unsolvedBranches;
 	bool isParent(int id);
   void CollectTraceBitsRecursive(std::vector<TraceBit> &vec,TraceLine *l);

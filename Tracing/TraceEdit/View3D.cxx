@@ -196,6 +196,8 @@ void View3D::CreateBootLoader()
 	connect(this->okBoot, SIGNAL(clicked()), this, SLOT(OkToBoot()));
 	this->Reload = new QPushButton("Reload", this->bootLoadFiles);
 	connect(this->Reload, SIGNAL(clicked()), this, SLOT(ReloadState()));
+	this->BootProject = new QPushButton("Project", this->bootLoadFiles);
+	connect(this->BootProject, SIGNAL(clicked()), this, SLOT(LoadProject()));
 	QFormLayout *LoadLayout = new QFormLayout(this->bootLoadFiles);
 	LoadLayout->addRow(tr("User Name "), this->GetAUserName);
 	LoadLayout->addRow(tr("Lab Name "), this->GetLab);
@@ -205,6 +207,7 @@ void View3D::CreateBootLoader()
 	LoadLayout->addRow(tr("uM Per Voxel"), this->scale);
 	LoadLayout->addRow(tr("Run Trace Editor"), this->okBoot);
 	LoadLayout->addRow(tr("Reload Previous Session"), this->Reload);
+	LoadLayout->addRow(tr("Project"), this->BootProject);
 	this->bootLoadFiles->show();
 	this->bootLoadFiles->move(this->TraceEditSettings.value("boot/pos",QPoint(40, 59)).toPoint());
 }
@@ -464,8 +467,45 @@ void View3D::LoadProject()
 		ProjectManager * project = new ProjectManager((char*)projectFile.toStdString().c_str());
 		for (unsigned int i = 0; i < project->size(); i++)
 		{ 
-		}
-	}
+			std::string FileName = project->GetFileName(i);
+			QString type = QString(project->GetFileType(i).c_str());
+			if ((type == "Image")||(type == "Soma"))
+			{
+				if (type == "Image")
+				{
+					this->Image.append(type);
+				}
+				else {
+					this->SomaFile.append(type);
+				}
+				this->ImageActors->loadImage(FileName, project->GetFileType(i), 
+					project->GetTranslationX(i),project->GetTranslationY(i),project->GetTranslationZ(i));
+
+			}//end type image
+			else if (type == "Trace")
+			{
+				this->tobj->SetTraceOffset(project->GetTranslationX(i),
+					project->GetTranslationY(i),project->GetTranslationZ(i));
+				QString trace = QString(FileName.c_str());
+				if(trace.endsWith("swc"))
+				{
+					this->tobj->ReadFromSWCFile((char*)FileName.c_str());
+				}
+				else if(trace.endsWith("xml"))
+				{
+					this->tobj->ReadFromRPIXMLFile((char*)FileName.c_str());
+				}
+				else if (trace.endsWith("vtk"))
+				{
+					this->tobj->ReadFromVTKFile((char*)FileName.c_str());
+				}
+
+			}//end type trace
+			else if (type == "Log")
+			{
+			}//end type log
+		}//end of for project size
+	}// end of project !empty
 }
 void View3D::SetImgInt()
 {

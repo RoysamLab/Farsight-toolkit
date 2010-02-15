@@ -158,6 +158,7 @@ private:
 	QPushButton * BootTrace;
 	QPushButton * BootSoma;
 	QPushButton * BootImage;
+	QPushButton * BootProject;
 	QPushButton * okBoot;
 	QPushButton * Reload;
 	QDoubleSpinBox *scale;
