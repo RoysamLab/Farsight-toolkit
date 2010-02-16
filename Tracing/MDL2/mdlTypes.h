@@ -19,12 +19,15 @@ limitations under the License.
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/kruskal_min_spanning_tree.hpp>
+#include <boost/config.hpp>
+#include <boost/graph/graph_traits.hpp>
+#include <boost/graph/connected_components.hpp>
 
 namespace mdl
 {
 	typedef struct {int x; int y; int z;} Point3D;
 	typedef struct {float x; float y; float z;} fPoint3D;
-
+	
 	typedef unsigned char PixelType;
     static const unsigned int Dimension = 3;
     typedef itk::Image< PixelType, Dimension > ImageType;
@@ -33,6 +36,9 @@ namespace mdl
 		< boost::vecS, boost::vecS, boost::undirectedS, boost::no_property, 
 		  boost::property <boost::edge_weight_t, float> >  Graph;
 	typedef boost::graph_traits < Graph >::edge_descriptor  Edge;
+
+	typedef boost::graph_traits < Graph >::edge_iterator Edge_iter; 
+	typedef boost::graph_traits < Graph >::vertex_iterator Vertex_iter;
 
 	typedef std::pair<int, int>  pairE;
 

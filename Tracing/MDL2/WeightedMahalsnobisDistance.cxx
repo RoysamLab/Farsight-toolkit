@@ -92,9 +92,7 @@ int MDLClassifier::MeanVectorandVarianceMatrix(char *filename)
   weightedMeanAlgorithm->SetWeights( &weightArray );
   weightedMeanAlgorithm->Update();
 
-  //std::cout << "Sample weighted mean = " 
-  //          << *(weightedMeanAlgorithm->GetOutput()) << std::endl;
-
+  
   typedef itk::Statistics::WeightedCovarianceCalculator< SampleType >
                                               WeightedCovarianceAlgorithmType;
   
@@ -106,52 +104,28 @@ int MDLClassifier::MeanVectorandVarianceMatrix(char *filename)
   weightedCovarianceAlgorithm->SetWeights( &weightArray );
   weightedCovarianceAlgorithm->Update();
 
-  //std::cout << "Sample weighted covariance = " << std::endl ; 
-  //std::cout << *(weightedCovarianceAlgorithm->GetOutput()) << std::endl;
-
+  
   ExampleWeightFunction::Pointer weightFunction = ExampleWeightFunction::New();
 
   weightedMeanAlgorithm->SetWeightFunction( weightFunction );
   weightedMeanAlgorithm->Update();
 
-  //std::cout << "Sample weighted mean = " 
-  //          << *(weightedMeanAlgorithm->GetOutput()) << std::endl;
-
   weightedCovarianceAlgorithm->SetMean( weightedMeanAlgorithm->GetOutput() );
   weightedCovarianceAlgorithm->SetWeightFunction( weightFunction );
   weightedCovarianceAlgorithm->Update();
    
-  
- 
-  // std::cout << "Sample weighted covariance = " << std::endl ; 
-  // std::cout << *(weightedCovarianceAlgorithm->GetOutput()) << std::endl;
 
- 
   weightedCovarianceAlgorithm->SetMean( 0 );
   weightedCovarianceAlgorithm->SetWeightFunction( weightFunction );
   weightedCovarianceAlgorithm->Update();
-  
-  /*
-  std::cout << "Using the one pass algorithm:" << std::endl;
-  std::cout << "Sample weighted covariance = " << std::endl ; 
-  std::cout << *(weightedCovarianceAlgorithm->GetOutput()) << std::endl;
-
-  std::cout << "Sample weighted mean = " 
-            << *(weightedCovarianceAlgorithm->GetMean()) << std::endl;
- */
-
   itk::Statistics::WeightedCovarianceCalculator<SampleType>::MeanType* weighted_mean;
   weighted_mean = weightedCovarianceAlgorithm->GetMean();
-  //std::cout << std::endl <<"Sample weighted mean = " 
-  //          << *(weighted_mean) << std::endl;
-
+  
   std::cout << " The learning Feature Weighted-Mean Discriminal Vector is: " << std::endl;
   for(i=0;i<FeatureNumber; i++)
   {
 	  MeanVector[i] = weighted_mean->GetElement(i);
-	  std::cout<<" " << MeanVector[i];
-      //std::cout<<" " << Mean_Vector[i];
-
+	  
   }
 
   std::cout << std::endl;
@@ -171,7 +145,7 @@ int MDLClassifier::MeanVectorandVarianceMatrix(char *filename)
      IDX= i*FeatureNumber + j;
 	 //InverseCovarianceMatrix[i][j] = weighted_Covariance->GetInverse().get(i,j);
 	 *(InverseCovarianceMatrix+IDX) = weighted_Covariance->GetInverse().get(i,j);
-	 std::cout << *(InverseCovarianceMatrix+IDX) << "  ";
+	 //std::cout << *(InverseCovarianceMatrix+IDX) << "  ";
 	 }
    }
   return 1;
@@ -186,22 +160,12 @@ double  MDLClassifier::MahalanobisDist(double *sample)
    DifferenceVector = new double [this->FeatureNumber];
    VevectorMultiplyCovarianceMatrix = new double [this->FeatureNumber];
    
-
-   /*std::cout << "         Sample" << endl; 
-   for (i=0;i<this->FeatureNumber; i++)
-     std::cout << sample [i] << " " ;
-  
-   std::cout << endl;
-   */
-
    for (i=0;i<this->FeatureNumber;i++)
    {DifferenceVector[i] = (sample[i]-MeanVector[i]);
     VevectorMultiplyCovarianceMatrix[i] = 0.; 
 	// std::cout << DifferenceVector[i] <<std::endl;
    }
    
- 
-
    int IDX; 
    for (i=0;i<this->FeatureNumber;i++)
    {

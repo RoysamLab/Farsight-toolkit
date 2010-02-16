@@ -19,7 +19,7 @@ TARGET_LINK_LIBRARIES(mdlVolumeProcess ITKBasicFilters ITKCommon)
 
 ADD_LIBRARY(mdlUtils mdlUtils.h mdlUtils.cpp)
 
-ADD_LIBRARY(mdlMST mdlMST.h mdlMST.cpp)
+ADD_LIBRARY(mdlMST mdlMST.h mdlMST.cpp WeightedMahalsnobisDistance.cxx)
 TARGET_LINK_LIBRARIES(mdlMST mdlUtils)
 
 ADD_LIBRARY(mdlBSplineFitting mdlBSplineFitting.cpp mdlBSplineFitting.h)
@@ -28,4 +28,4 @@ ADD_EXECUTABLE(volumeProcess2 main.cpp)
 TARGET_LINK_LIBRARIES(volumeProcess2 mdlVolumeProcess)
 
 ADD_EXECUTABLE(mdlpipe pipeline_main.cpp)
-TARGET_LINK_LIBRARIES(mdlpipe mdlVolumeProcess mdlIntegratedSkeleton mdlMST mdlBSplineFitting)
+TARGET_LINK_LIBRARIES(mdlpipe mdlVolumeProcess mdlIntegratedSkeleton mdlMST mdlBSplineFitting  )

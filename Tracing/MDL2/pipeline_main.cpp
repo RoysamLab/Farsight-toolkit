@@ -52,8 +52,10 @@ int main(int argc, char *argv[])
 	mdl::VolumeProcess *volProc = new mdl::VolumeProcess();
 	volProc->SetInput(img);
 	volProc->SetDebug(true);
+	volProc->RescaleIntensities(0,255);
+	volProc->RunCAD();
 	//volProc->MaskUsingGraphCuts();
-	//volProc->MaskSmallConnComp(50);
+	volProc->MaskSmallConnComp(50);
 	mdl::ImageType::Pointer clean_img = volProc->GetOutput();
 	//volProc->RunDistanceTransform();
 	//mdl::ImageType::Pointer DT_img = volProc->GetOutput();
@@ -80,11 +82,11 @@ int main(int argc, char *argv[])
 	std::vector<mdl::fPoint3D> nodes = mst->GetNodes();
 	//Note: node 0 in bbpairs is index 0 of nodes!!!
 	std::vector<mdl::pairE> bbpairs = mst->BackboneExtract();
-	mst->SpineExtract();
+	//mst->SpineExtract();
 	delete mst;
 	
+
 	/*
-	
 	std::vector<mdl::fPoint3D> nodes;
 	std::vector<mdl::pairE> bbpairs;
 
@@ -92,16 +94,16 @@ int main(int argc, char *argv[])
 	file.SetNodes(&nodes);
 	file.SetLines(&bbpairs);
 	
-	if(!file.Read("BackboneCandidate.vtk"))
+	if(!file.Read("BackboneCandidateXiao.vtk"))
 	{
 		std::cerr << "READ FAILURE\n";
 		return EXIT_FAILURE;
 	}
-	*/
+    */
 	
 	mdl::BSplineFitting *bspline = new mdl::BSplineFitting( clean_img );
 	bspline->SetDebug(true);
-	bspline->SetLevels(8);
+	bspline->SetLevels(6);
 	bspline->SetOrder(3);
 	bspline->SetNodes( &nodes );
 	bspline->SetBBPairs( &bbpairs );
@@ -109,20 +111,37 @@ int main(int argc, char *argv[])
 	nodes = bspline->GetNodes();
 	bbpairs = bspline->GetBBPairs();
 	delete bspline;
-
-	mst = new mdl::MST( clean_img );
-	mst->SetDebug(true);
-	mst->SetUseVoxelRounding(false);
-	mst->SetEdgeRange(10);
-	mst->SetPower(1);
-	mst->SetSkeletonPoints( &nodes );
-	mst->CreateGraphAndMST();
-	mst->ErodeAndDialateNodeDegree(50);
-	nodes = mst->GetNodes();
-	bbpairs = mst->BackboneExtract();
-	mst->SpineExtract();
-	delete mst;
+    
+	/*mdl::vtkFileHandler file;
+	file.SetNodes(&nodes);
+	file.SetLines(&bbpairs);
 	
+	if(!file.Read("BBSpline.vtk"))
+	{
+		std::cerr << "READ FAILURE\n";
+		return EXIT_FAILURE;
+	}
+     */
+
+
+
+    mdl::MST *mst1 = new mdl::MST( clean_img );
+	//mst1->SetInputforSpineExtraction(clean_img,(char *)"RealSpinePrior.txt",(char *)"NonSpinePrior.txt");
+	mst1->SetDebug(true);
+	mst1->SetEdgeRange(10);
+	mst1->SetPower(1);
+	mst1->SetSkeletonPoints( &skeleton );
+	mst1->CreateGraphAndMST();
+
+	mst1->ErodeAndDialateNodeDegree(50);
+	mst1->SetVesselMap(clean_img);
+	mst1->SetAlpha(0.7);
+	nodes = mst1->GetNodes();
+	//bbpairs = mst->BackboneExtract();
+	bbpairs = mst1->SpineExtract();
+	delete mst1;
+	
+
 	std::cerr << "PRESS ENTER TO EXIT\n";
 	getchar();
 

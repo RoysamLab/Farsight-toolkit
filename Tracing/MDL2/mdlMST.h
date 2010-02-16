@@ -26,13 +26,14 @@ limitations under the License.
 
 #include "mdlTypes.h"
 #include "mdlUtils.h"
-
+#include "WeightedMahalsnobisDistance.h"
 #include <vector>
 #include <iostream>
 #include <math.h>
 #include <stdio.h>
 
 #include "itkImage.h"
+
 
 namespace mdl
 {
@@ -41,12 +42,19 @@ class MST
 {
 public:
 	MST(ImageType::Pointer inImage);
+	
 	~MST();
 	//Setup:
 	void SetDebug(bool inp = true){ debug = inp; };
 	void SetUseVoxelRounding(bool inp = true){useVoxelRounding = inp;};
 	void SetEdgeRange(int edge){ edgeRange = edge; };
+	void SetAlpha(double alpha){Alpha = alpha;}
 	void SetPower(int p){ power = p; };
+	void SetVesselMap(ImageType::Pointer VesselMap);
+	void SetFileofRealSpineFeature(char *FileofRealSpineFeature){RealSpineFeatureFilename = FileofRealSpineFeature;}
+	void SetFileofNonSpineFeature(char *FileofNonSpineFeature){NonSpineFeatureFilename = FileofNonSpineFeature;}
+
+	//void SetInputforSpineExtraction(ImageType::Pointer VesselMap,char *FileofRealSpineFeature,char *FileofNonSpineFeature);
 	
 	//Methods:
 	void SetSkeletonPoints(std::vector<fPoint3D> * sp);
@@ -67,9 +75,12 @@ private:
 	bool useVoxelRounding;  //Round Nodes to nearest integer (or voxel)
 	int edgeRange;
 	double power;
+	double Alpha;
 
 	//Images & size
-	ImageType::Pointer m_inputImage;
+	ImageType::Pointer m_inputImage; // for the intesity image
+	ImageType::Pointer m_VesselMap; // for the VesselMap
+
 	ImageType::RegionType region;
 	int sizeX;
 	int sizeY;
@@ -78,6 +89,11 @@ private:
 
 	//Skeleton points (input)
 	std::vector<fPoint3D> * skeletonPoints;
+
+	//Feature 
+
+	char* RealSpineFeatureFilename;
+    char* NonSpineFeatureFilename;
 
 	//Intermediates:
 	std::vector<pairE> edgeArray;	//for initial edges
