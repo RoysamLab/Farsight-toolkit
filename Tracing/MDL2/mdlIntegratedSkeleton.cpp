@@ -975,12 +975,20 @@ bool IntegratedSkeleton::computeCriticalPointSeeds()
 							float fx = i+ii/(float)grid;
 							float fy = j+jj/(float)grid;
 							float fz = k+kk/(float)grid;
-
-							//Don't add seeds that are outside of image:
+							
+						//Don't add seeds that are outside of image:
 							if( (fx>=sizeX-1) || (fy>=sizeY-1) || (fz>=sizeX-1) )
 								continue;
 							if( (fx<0) || (fy<0) || (fz<0) )
 								continue;
+                        
+					    // don't add newseeds that are within in a voxel;
+						   fPoint3D dif;
+						   dif.x = fx-i;
+						   dif.y = fy-j;
+						   dif.z = fz-k;
+						   if (veclength(dif)<1)
+							   continue;
 
 							OutForce = interpolation(fx, fy, fz, sizeX, sizeY, sizeZ, force);
 							if(veclength(OutForce) < vectorMagnitude)
@@ -990,7 +998,7 @@ bool IntegratedSkeleton::computeCriticalPointSeeds()
 								newSeed.y = fy;
 								newSeed.z = fz;
 								critSeeds.push_back(newSeed);
-							} //end if less than max vector magnitude
+							} //end if less than max vector  magnitude
 						}//end for ii
 					} //end for jj
 				}//end for kk
