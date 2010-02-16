@@ -473,10 +473,12 @@ void View3D::LoadProject()
 			{
 				if (type == "Image")
 				{
-					this->Image.append(type);
+					this->Image.append(QString(FileName.c_str()));
+		//this->EditLogDisplay->append("Image file: \t" + this->Image.last());
 				}
 				else {
-					this->SomaFile.append(type);
+					this->SomaFile.append(QString(FileName.c_str()));
+		//this->EditLogDisplay->append("Soma file: \t" + this->SomaFile.last());
 				}
 				this->ImageActors->loadImage(FileName, project->GetFileType(i), 
 					project->GetTranslationX(i),project->GetTranslationY(i),project->GetTranslationZ(i));
@@ -499,7 +501,8 @@ void View3D::LoadProject()
 				{
 					this->tobj->ReadFromVTKFile((char*)FileName.c_str());
 				}
-
+				this->TraceFiles.append(QString(FileName.c_str()));
+		//this->EditLogDisplay->append("Trace file: \t" + this->TraceFiles.last());
 			}//end type trace
 			else if (type == "Log")
 			{
@@ -1867,32 +1870,26 @@ void View3D::closeEvent(QCloseEvent *event)
 	this->TraceEditSettings.setValue("lastOpen/Trace",this->TraceFiles);
 	this->TraceEditSettings.setValue("lastOpen/Soma", this->SomaFile);
 	this->TraceEditSettings.setValue("lastOpen/Temp", this->tempTraceFile);
-	this->TraceEditSettings.setValue("TraceTable/pos", this->FTKTable->pos());
-	this->TraceEditSettings.setValue("TraceTable/size", this->FTKTable->size());
-	this->TraceEditSettings.setValue("TracePlot/pos", this->TreePlot->pos());
-	
-	this->TraceEditSettings.sync();
-
+ if(this->FTKTable)
+  {
+	  this->TraceEditSettings.setValue("TraceTable/pos", this->FTKTable->pos());
+	  this->TraceEditSettings.setValue("TraceTable/size", this->FTKTable->size());
+	  this->FTKTable->close();
+  }	
+ if(this->TreePlot)
+  {
+	  this->TraceEditSettings.setValue("TracePlot/pos", this->TreePlot->pos());
+	  this->TreePlot->close();
+  }	
+  this->TraceEditSettings.sync();
   if(this->GapsPlotView)
     {
     this->GapsPlotView->close();
     }
-  //if(this->histo)
-  //  {
-  //  this->histo->close();
-  //  }
   if(this->GapsTableView)
     {
     this->GapsTableView->close();
     }
-  if(this->FTKTable)
-  {
-	  this->FTKTable->close();
-  }
-  if(this->TreePlot)
-  {
-	  this->TreePlot->close();
-  }
   event->accept();
 }
 
