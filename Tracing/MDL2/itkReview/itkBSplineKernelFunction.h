@@ -74,7 +74,7 @@ public:
   inline RealType Evaluate( const RealType & u ) const
     {
     RealType absValue = vnl_math_abs( u );  
-    int which;
+    unsigned int which;
     if ( this->m_SplineOrder % 2 == 0 )
       {
       which = static_cast<unsigned int>( absValue+0.5 );
@@ -98,7 +98,7 @@ public:
   inline RealType EvaluateDerivative( const double & u ) const
     {
     RealType absValue = vnl_math_abs( u );  
-    int which;
+    unsigned int which;
     if ( this->m_SplineOrder % 2 == 0 )
       {
       which = static_cast<unsigned int>( absValue+0.5 );
