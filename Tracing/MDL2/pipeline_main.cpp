@@ -103,8 +103,8 @@ int main(int argc, char *argv[])
 	
 	mdl::BSplineFitting *bspline = new mdl::BSplineFitting( clean_img );
 	bspline->SetDebug(true);
-	bspline->SetLevels(6);
-	bspline->SetOrder(3);
+	bspline->SetLevels(9);
+	bspline->SetOrder(8);
 	bspline->SetNodes( &nodes );
 	bspline->SetBBPairs( &bbpairs );
 	bspline->Update();
@@ -136,7 +136,9 @@ int main(int argc, char *argv[])
 	mst1->ErodeAndDialateNodeDegree(50);
 	mst1->SetVesselMap(clean_img);
 	mst1->SetAlpha(0.7);
+	mst1->SetPruneThreshold(5.0);
 	nodes = mst1->GetNodes();
+	//bbpairs = mst1->SearchFirstandSecondLevelBranch();
 	//bbpairs = mst->BackboneExtract();
 	bbpairs = mst1->SpineExtract();
 	delete mst1;

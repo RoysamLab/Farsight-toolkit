@@ -36,6 +36,7 @@ MST::MST(ImageType::Pointer inImage)
 	useVoxelRounding = true;
 	edgeRange = 10;		//Some default values:
 	power = 1;
+	PruneThreshold = 4.;
 
 	//input
 	skeletonPoints = NULL;
@@ -475,7 +476,156 @@ std::vector<pairE> MST::BackboneExtract()
 	return retLines;
 }
 
-//MDL based Spine Extraction
+//SearchFirst
+std::vector<pairE> MST::SearchFirstandSecondLevelBranch(void)
+{  
+	std::vector<pairE> retLines;
+    int num_nodes = (int)nodes.size();
+
+	if(num_nodes == 0 || (int)nodeDegree.size() == 0 || !mstGraph)
+	{return retLines;
+	}
+
+	// Create a Backbone vertice flag array
+	bool * vertBackbone = new bool[num_nodes+1];
+	for (int i=0; i<num_nodes; i++)   
+	{
+		if (nodeDegree.at(i) >= 1)  
+			vertBackbone[i] = true;
+		else
+			vertBackbone[i] = false;
+	}
+
+    Graph prunedGraph (num_nodes+1);
+	prunedGraph = morphGraphPrune(mstGraph, &nodes, PruneThreshold);
+    
+    typedef boost::graph_traits < Graph >::edge_iterator Edge_iter;
+	typedef boost::graph_traits < Graph >::vertex_iterator Vertex_iter;
+	typedef boost::graph_traits<Graph>::out_edge_iterator Outedge_iter;
+    Outedge_iter  outei, outedge_end;
+	Outedge_iter  outei2, outedge_end2;
+    Outedge_iter  outei3, outedge_end3;
+	Vertex_iter vi, vend;
+
+	// Spine Candidate graph created, is to save the possible spine
+	Graph msTreeSpineCandidate(num_nodes+1);    
+
+    const int MAXNumBranch = 10;
+	//int index_vert;
+    int vertsCurBranch2[MAXNumBranch][2000];  // For the 2nd level branch at BB (at most MAXNumBranch 2nd level branches, at most 2000 vertices)
+    
+	int vertsCurBr_Index2[MAXNumBranch];      // when array at [0], it is the 1st level branch at BB
+    for (int i=0; i<MAXNumBranch; i++)  vertsCurBr_Index2[i]=0;  // Initialize to zeros
+
+	typedef boost::property_map<Graph, boost::vertex_index_t>::type IndexMap;
+    IndexMap index = get(boost::vertex_index, prunedGraph);  // get index map of vertices
+
+  // for all vertex in the graph
+    for(boost::tie(vi, vend) = vertices(prunedGraph); vi != vend; ++vi)
+     { 
+       vertsCurBr_Index2[0] = 0;
+	   // Get index from the graph IndexMap
+       int index_vert = int(index[*vi]); 
+       // if the vertex is not on Backbone, continue
+       if (vertBackbone[index_vert]==0) 
+		   continue;  
+       int outdegree = out_degree(*vi, prunedGraph);
+       int numBranch_on_Backbone = outdegree - nodeDegree.at(index_vert);
+       // if it has at least one branch out of BackBone  
+       if (numBranch_on_Backbone <= 0)  continue;  
+
+       // For each out branch (edge) on the BackBone
+       for (boost::tie(outei, outedge_end) = out_edges(*vi, prunedGraph); outei != outedge_end; outei++)
+        {
+        int targ = target(*outei, prunedGraph);
+	    // the edge is on BackBone, continue
+        if (vertBackbone[targ])  continue;  
+      
+	    vertsCurBranch2[0][vertsCurBr_Index2[0]] = source(*outei, prunedGraph);
+        vertsCurBr_Index2[0]++;
+        vertsCurBranch2[0][vertsCurBr_Index2[0]] = target(*outei, prunedGraph);
+
+        while (out_degree(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], prunedGraph), prunedGraph) == 2)
+         {
+          for (boost::tie(outei2, outedge_end2) =
+              out_edges(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], prunedGraph),prunedGraph);
+              outei2 != outedge_end2; ++outei2)
+            {
+		    	bool tmp;
+		    	tmp = target(*outei2, prunedGraph) == (unsigned int)vertsCurBranch2[0][vertsCurBr_Index2[0]-1];
+                if (tmp)
+                 continue;
+                vertsCurBranch2[0][vertsCurBr_Index2[0]+1] = target(*outei2, prunedGraph);
+            } // end for
+		  vertsCurBr_Index2[0]++; 
+	     } // end while 
+
+        // find the first level branch and add them to msTreeSpineCandidate
+        for (int j = 1; j <= vertsCurBr_Index2[0]; j++) 
+        {
+         add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeSpineCandidate);  
+        } // end for
+
+       // Begin to check the 2nd level of branches located at BB
+       int ind2Brch = 0;
+        // For each 2nd level branch starting from the end of 1st level branch
+       for (boost::tie(outei2, outedge_end2) =out_edges(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], prunedGraph),prunedGraph);
+           outei2 != outedge_end2; ++outei2)
+         {
+          if (target(*outei2, prunedGraph) == (unsigned int)vertsCurBranch2[0][vertsCurBr_Index2[0]-1])
+             continue;  // continue if the out edge belongs to the old branch
+          ind2Brch++;
+          vertsCurBranch2[ind2Brch][0] = vertsCurBranch2[0][vertsCurBr_Index2[0]];
+          vertsCurBr_Index2[ind2Brch] = 1;
+          vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]] = target(*outei2, prunedGraph);
+          // Search for the end of 2nd level branch
+          while (out_degree(vertex(vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]], prunedGraph), prunedGraph) == 2)
+          {
+          //curVert = vertex(vertsCurBranch[vertsCurBr_Index], msTree);
+            for (boost::tie(outei3, outedge_end3) = out_edges(vertex(vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]], prunedGraph), prunedGraph);
+                                                outei3 != outedge_end3; ++outei3) 
+		     {
+               if (target(*outei3, prunedGraph) == (unsigned int)vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]-1])
+                continue;
+               vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]+1] = target(*outei3, prunedGraph);
+             } // end for
+              vertsCurBr_Index2[ind2Brch]++;
+           } // end while 
+     
+        for (int j = 1; j <= vertsCurBr_Index2[ind2Brch]; j++) 
+         {
+          add_edge(vertsCurBranch2[ind2Brch][j-1], vertsCurBranch2[ind2Brch][j], msTreeSpineCandidate);   // add branch for the 2nd level
+         }
+      } // End of 2nd level branch
+	} // // End of each out edge
+  } // End of all vertice
+
+    //Get the spine lines from the Graph DetectedSpine
+	typedef boost::graph_traits < Graph >::edge_iterator Edge_iter;
+	Edge_iter ei, ei_end; 
+	for (tie(ei, ei_end) = edges(msTreeSpineCandidate); ei != ei_end; ++ei)
+	{
+		int n1 = (int)source(*ei, msTreeSpineCandidate)-1; //node 1
+		int n2 = (int)target(*ei, msTreeSpineCandidate)-1;  //node 2
+		pairE ne( n1, n2 );
+	    retLines.push_back( ne );
+    }
+
+	if(debug)
+		std::cerr << "Number of  lines = " << retLines.size() << std::endl;
+
+	if(debug)
+	{
+		vtkFileHandler * fhdl = new vtkFileHandler();
+		fhdl->SetNodes(&nodes);
+		fhdl->SetLines(&retLines);
+		fhdl->Write("FirstandSecondLevelBranch.vtk");
+		delete fhdl;
+	}
+
+    delete []vertBackbone;
+	return retLines;
+}
 
 std::vector<pairE> MST::SpineExtract()
 {
@@ -484,22 +634,22 @@ std::vector<pairE> MST::SpineExtract()
 	const int MAXNumBranch = 10;
     double mahalanobis_dist[MAXNumBranch];
     double mahalanobis_dist_nonSpine[MAXNumBranch];
-    double mahalanobis_dist_min;
-    int mahalanobis_dist_minIndex;
-    double MDL;
-    double MDL_min;
-    int MDL_minIndex;
-    double sum_mahalanobis_nonSpine;
-	int numBranch_on_Backbone;
+    //double mahalanobis_dist_min;
+    //int mahalanobis_dist_minIndex;
+    //double MDL;
+    //double MDL_min;
+    //int MDL_minIndex;
+    //double sum_mahalanobis_nonSpine;
+	//int numBranch_on_Backbone;
 	double meanDensityBranch[MAXNumBranch];   // Suppose at most MAXNumBranch branches at the 2nd level branch from BB
     double meanVesselBranch[MAXNumBranch];
     double length_leaf[MAXNumBranch];
     double aveDensityBranch[MAXNumBranch];   // Suppose at most MAXNumBranch branches at the 2nd level branch from BB
     double aveVesselBranch[MAXNumBranch];
     double length_2leaf[MAXNumBranch];  // length of two level branches
-    float length_edge;
-    bool branchChosen;
-	int index_vert;
+    //float length_edge;
+    //bool branchChosen;
+	//int index_vert;
 	int indVert,indVert_last;
     int slsz = sizeX*sizeY;   // slice size
     int sz = slsz*sizeZ;
@@ -520,24 +670,17 @@ std::vector<pairE> MST::SpineExtract()
 			vertBackbone[i] = false;
 	}
 
-	/////
-	//NOT FINISHED YET::
-    std::cout<< "I am morphGraphPrune!";
-	Graph prunedGraph = morphGraphPrune(mstGraph, &nodes, 50.0);
+	
+	Graph prunedGraph (num_nodes+1);
+	prunedGraph = morphGraphPrune(mstGraph, &nodes, 50.0);
     
-	int num_leaves = 0;
-	 //Edge_iter   ei, ei_end;
-    Vertex_iter vi, vend;
-
-    //typedef boost::graph_traits<Graph>::out_edge_iterator  outei, outedge_end, outei2, outedge_end2, outei3, outedge_end3;
-
     typedef boost::graph_traits < Graph >::edge_iterator Edge_iter;
 	typedef boost::graph_traits < Graph >::vertex_iterator Vertex_iter;
 	typedef boost::graph_traits<Graph>::out_edge_iterator Outedge_iter;
     Outedge_iter  outei, outedge_end;
 	Outedge_iter  outei2, outedge_end2;
     Outedge_iter  outei3, outedge_end3;
-	
+	Vertex_iter vi, vend;
 	// Spine Candidate graph created, is to save the possible spine
 	Graph msTreeSpineCandidate(num_nodes+1);     
     Graph DetectedSpine(num_nodes+1); 
@@ -550,10 +693,9 @@ std::vector<pairE> MST::SpineExtract()
     for (int i=0; i<MAXNumBranch; i++)  vertsCurBr_Index2[i]=0;  // Initialize to zeros
 	
     double sample[3];
-    //ONLY run this first!
+	int num_leaves = 0;
 	typedef boost::property_map<Graph, boost::vertex_index_t>::type IndexMap;
     IndexMap index = get(boost::vertex_index, prunedGraph);  // get index map of vertices
-
 	MDLClassifier LDA_RealSpine(3);
     MDLClassifier LDA_NonSpine(3);
 	int LDA_t1= LDA_RealSpine.MeanVectorandVarianceMatrix((char *)RealSpineFeatureFilename);
@@ -585,7 +727,7 @@ std::vector<pairE> MST::SpineExtract()
     vertsCurBr_Index2[0] = 0;
 	
 	// Get index from the graph IndexMap
-    index_vert = int(index[*vi]); 
+    int index_vert = int(index[*vi]); 
 
     // if the vertex is not on Backbone, continue
     if (vertBackbone[index_vert]==0) 
@@ -593,7 +735,7 @@ std::vector<pairE> MST::SpineExtract()
 
     int outdegree = out_degree(*vi, prunedGraph);
 
-    numBranch_on_Backbone = outdegree - nodeDegree.at(index_vert);
+    int numBranch_on_Backbone = outdegree - nodeDegree.at(index_vert);
 
     // if it has at least one branch out of BackBone  
     if (numBranch_on_Backbone <= 0)  continue;  
@@ -630,7 +772,7 @@ std::vector<pairE> MST::SpineExtract()
 	   } // end while 
 
       // Evaluate with MDL if the branch is chosen
-      branchChosen = 1;
+      bool branchChosen = 1;
       length_leaf[0] = 0;
 
       for (int j = 0; j <= vertsCurBr_Index2[0]; j++)
@@ -653,7 +795,7 @@ std::vector<pairE> MST::SpineExtract()
           vertexPosEnd.y = this->nodes.at(indVert_last).y;
 		  vertexPosEnd.z = this->nodes.at(indVert_last).z;
 
-          length_edge = (vertexPosStart.x-vertexPosEnd.x)*(vertexPosStart.x-vertexPosEnd.x);
+          double length_edge = (vertexPosStart.x-vertexPosEnd.x)*(vertexPosStart.x-vertexPosEnd.x);
 		  length_edge+= (vertexPosStart.y-vertexPosEnd.y)*(vertexPosStart.y-vertexPosEnd.y);
 		  length_edge+= (vertexPosStart.z-vertexPosEnd.z)*(vertexPosStart.z-vertexPosEnd.z);
 
@@ -700,8 +842,8 @@ std::vector<pairE> MST::SpineExtract()
        else 
           mahalanobis_dist_nonSpine[0] = LDA_NonSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 0);
      
-        mahalanobis_dist_min = mahalanobis_dist[0];
-        mahalanobis_dist_minIndex = 0;
+       //double mahalanobis_dist_min = mahalanobis_dist[0];
+       //mahalanobis_dist_minIndex = 0;
         
         //fprintf(fclass_identify, "%d  %f %f %f\n", num_leaves, meanDensityBranch[0], length_leaf[0], meanVesselBranch[0]);
         
@@ -765,7 +907,7 @@ std::vector<pairE> MST::SpineExtract()
             vertexPosEnd.y = this->nodes.at(indVert_last).y;
 			vertexPosEnd.z = this->nodes.at(indVert_last).z;
 
-            length_edge = (vertexPosStart.x-vertexPosEnd.x)*(vertexPosStart.x-vertexPosEnd.x);
+            double length_edge = (vertexPosStart.x-vertexPosEnd.x)*(vertexPosStart.x-vertexPosEnd.x);
 		    length_edge+= (vertexPosStart.y-vertexPosEnd.y)*(vertexPosStart.y-vertexPosEnd.y);
 			length_edge+= (vertexPosStart.z-vertexPosEnd.z)*(vertexPosStart.z-vertexPosEnd.z);
 
@@ -835,15 +977,15 @@ std::vector<pairE> MST::SpineExtract()
     
      //----------------------------MDL fitness for spine --------------------------------------//
  
-      MDL_minIndex = -1; // Indicate that empty model set is chosen
-      sum_mahalanobis_nonSpine = 0;
+      int MDL_minIndex = -1; // Indicate that empty model set is chosen
+      double sum_mahalanobis_nonSpine = 0;
       for (int i = 0; i<= ind2Brch; i++)
         sum_mahalanobis_nonSpine += mahalanobis_dist_nonSpine[i];
       
-	  MDL_min = sum_mahalanobis_nonSpine;
+	  double MDL_min = sum_mahalanobis_nonSpine;
 
       // 2. Only 1st level branch model set
-      MDL = sum_mahalanobis_nonSpine - mahalanobis_dist_nonSpine[0] + mahalanobis_dist[0];
+      double MDL = sum_mahalanobis_nonSpine - mahalanobis_dist_nonSpine[0] + mahalanobis_dist[0];
       MDL = MDL + (1-Alpha)*(1/Alpha)*(-14.0/3.0);      // alpha represents the model description length of one branch
       if (MDL < MDL_min)
         {
@@ -867,9 +1009,7 @@ std::vector<pairE> MST::SpineExtract()
         {
          for (int j = 1; j <= vertsCurBr_Index2[0]; j++)
            {
-           //add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeSpineCandidate); 
             add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], DetectedSpine); 
-            //NumberNodesofRealSpine++;
            }
          if (MDL_minIndex >= 1)
            {
@@ -877,8 +1017,6 @@ std::vector<pairE> MST::SpineExtract()
             {
              add_edge(vertsCurBranch2[MDL_minIndex][j-1],
                      vertsCurBranch2[MDL_minIndex][j],  DetectedSpine);
-       
-            // NumberNodesofRealSpine++;
             } // end for
           }// end if
         }// end if(MDL_minIndex >= 0)
@@ -910,22 +1048,20 @@ std::vector<pairE> MST::SpineExtract()
    }    // End of each out edge 
   } // End of all vertice
 
-  //Get the spine lines from the Graph DetectedSpine
 
+    //Get the spine lines from the Graph DetectedSpine
 	typedef boost::graph_traits < Graph >::edge_iterator Edge_iter;
 	Edge_iter ei, ei_end; 
 	for (tie(ei, ei_end) = edges(DetectedSpine); ei != ei_end; ++ei)
 	{
 		int n1 = (int)source(*ei, DetectedSpine)-1; //node 1
 		int n2 = (int)target(*ei, DetectedSpine)-1;  //node 2
-	    pairE ne( n1, n2 );
-	    retLines.push_back( ne );
-
-   }
+		pairE ne( n1, n2 );
+		retLines.push_back( ne );
+    }
 
 	if(debug)
 		std::cerr << "Number of spine lines = " << retLines.size() << std::endl;
-
 	if(debug)
 	{
 		vtkFileHandler * fhdl = new vtkFileHandler();
@@ -990,7 +1126,7 @@ Graph MST::morphGraphPrune(Graph *graph, std::vector<fPoint3D> *nodes, float len
 				
 			branchChosen = 1;// Evaluate with MDL if the branch is chosen
 				
-			length_leaf = 0;  // must reset the value, by xiaoliang
+			length_leaf = 0;  
 			for (int j = 0; j <= curBrVerts_Index; j++)
 			{
 				indVert = curBranchVerts[j];

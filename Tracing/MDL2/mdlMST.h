@@ -50,6 +50,7 @@ public:
 	void SetEdgeRange(int edge){ edgeRange = edge; };
 	void SetAlpha(double alpha){Alpha = alpha;}
 	void SetPower(int p){ power = p; };
+	void SetPruneThreshold(double p){PruneThreshold = p;}
 	void SetVesselMap(ImageType::Pointer VesselMap);
 	void SetFileofRealSpineFeature(char *FileofRealSpineFeature){RealSpineFeatureFilename = FileofRealSpineFeature;}
 	void SetFileofNonSpineFeature(char *FileofNonSpineFeature){NonSpineFeatureFilename = FileofNonSpineFeature;}
@@ -58,9 +59,10 @@ public:
 	
 	//Methods:
 	void SetSkeletonPoints(std::vector<fPoint3D> * sp);
-	
 	bool CreateGraphAndMST();	//Do first
 	bool ErodeAndDialateNodeDegree(int morphStrength); //Do second (if desired)
+	std::vector<pairE> SearchFirstandSecondLevelBranch(void);
+
 
 	//The number is the edge are the node numbers (starting at 1)
 	std::vector<pairE> BackboneExtract();
@@ -71,11 +73,12 @@ public:
 
 private:
 	//Parameters
-	bool debug;				//If debug is true, process in steps and print stuff
-	bool useVoxelRounding;  //Round Nodes to nearest integer (or voxel)
-	int edgeRange;
+	bool   debug;				//If debug is true, process in steps and print stuff
+	bool   useVoxelRounding;  //Round Nodes to nearest integer (or voxel)
+	int    edgeRange;
 	double power;
 	double Alpha;
+	double PruneThreshold;
 
 	//Images & size
 	ImageType::Pointer m_inputImage; // for the intesity image
