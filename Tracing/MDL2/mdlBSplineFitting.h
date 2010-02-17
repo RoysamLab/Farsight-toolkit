@@ -44,8 +44,19 @@ public:
 
 	//Setup:
 	void SetDebug(bool inp = true){ debug = inp; };
-	void SetOrder(int order){ splineOrder = order; };
-	void SetLevels(int levels){ splineLevels = levels; };
+	void SetOrder(unsigned int order)
+	 {// now the itk B-spline only support the order 0,1,2,3,
+	   splineOrder = order;
+	   if (splineOrder >3) splineOrder = 3;
+	   if (splineOrder <0) splineOrder = 0;
+	 };
+	void SetLevels(unsigned int levels)
+	 { 
+	   // typical value 4,5,6,7,8
+	   splineLevels = levels;
+	   if (splineLevels >8) splineLevels =8;
+	   if (splineLevels <4) splineLevels =4;
+	 };
 
 	//Input:
 	void SetNodes( std::vector<fPoint3D> * nds ){ nodes = nds; };
@@ -69,8 +80,8 @@ private:
 	struct Graphprop{ int deg; SetType outVert; };
 
 	bool debug;
-	int splineOrder;
-	int splineLevels;
+	unsigned int splineOrder;
+	unsigned int splineLevels;
 
 	//Images & size
 	ImageType::Pointer m_inputImage;
@@ -101,7 +112,7 @@ private:
 	void smoothBranches();
 	void detectExtraSpines();
 
-	std::vector<fPoint3D> bbBSplineFitting(std::vector<fPoint3D> inPts, int numOut, int order, int levels);
+	std::vector<fPoint3D> bbBSplineFitting(std::vector<fPoint3D> inPts, int numOut, unsigned int order, unsigned int levels);
 };
 
 }  // end namespace mdl

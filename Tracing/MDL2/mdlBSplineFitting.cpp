@@ -34,7 +34,7 @@ BSplineFitting::BSplineFitting(ImageType::Pointer inImage)
 
 	debug = false;
 	splineOrder = 3;
-	splineLevels = 8;
+	splineLevels = 7;
 
 	//input
 	nodes = NULL;
@@ -230,7 +230,7 @@ void BSplineFitting::smoothBranches()
 }
 
 std::vector<fPoint3D> BSplineFitting::bbBSplineFitting(
-		std::vector<fPoint3D> inPts, int numOut, int order, int levels)
+		std::vector<fPoint3D> inPts, int numOut, unsigned int order, unsigned int levels)
 {
 	std::vector<fPoint3D> retVect;
 
@@ -450,4 +450,6 @@ double BSplineFitting::dist2pts(fPoint3D p1, fPoint3D p2)
 	return h;
 }
 
+
 }
+
