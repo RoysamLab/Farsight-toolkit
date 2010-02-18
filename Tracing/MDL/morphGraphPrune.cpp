@@ -112,6 +112,11 @@ Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexP
 				for (j = 0; j <= curBrVerts_Index; j++)
 				{
 					indVert = curBranchVerts[j];
+					if(indVert > num_nodes)
+				    {
+					 std::cerr << "not a node\n";
+					 indVert = indVert_last;
+				    }
 
 					if (j==0) 
 					 {
