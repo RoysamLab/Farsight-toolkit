@@ -22,46 +22,21 @@ limitations under the License.
 #if defined(_MSC_VER)
 #pragma warning(disable : 4996)
 #endif
-#include "morphGraphPrune.h"
-#include "MinSpanTree.h"
-#include "WeightedMahalsnobisDistance.h"
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/kruskal_min_spanning_tree.hpp>
-#include <boost/graph/graphviz.hpp>
-#include <iostream>
-#include <fstream>
-#include <stdlib.h>
-#include <math.h>
-#include <boost/config.hpp>
-#include <vector>
-#include <algorithm>
-#include <utility>
-#include <boost/graph/connected_components.hpp>
-#include <boost/graph/graph_traits.hpp>
 
+#include "MST.h"
+#include "WeightedMahalsnobisDistance.h"
 
 #define InterMedial 0
 #define DATATYPEIN unsigned char
 #define MAX_NUM_EDGE 28885000  //2885000, 85000  //why 90000 causes crash?
-
 #define MIN(x,y) (((x) < (y))?(x):(y))
 #define MAX(x,y) (((x) > (y))?(x):(y))
-
 #define MAXNumBranch 10    //Suppose at most MAXNumBranch branches at the 2nd level branch from BB
 #define FeatureNumber  3;
-
 using namespace std;
-
-struct  VoxelPosition
-{
-  float x;
-  float y;
-  float z;
-};
 
 
 double mahalanobisDist(double meanDensityBranch, double length_leaf, double meanVesselBranch, int spineOne);
-
 
 int main(int argc, char *argv[])
 {
