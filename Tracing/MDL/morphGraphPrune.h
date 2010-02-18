@@ -18,6 +18,7 @@ limitations under the License.
 // Head file
 
 #include "MinSpanTree.h"
+/*
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/kruskal_min_spanning_tree.hpp>
 #include <boost/graph/graphviz.hpp>
@@ -43,7 +44,13 @@ typedef graph_traits < Graph >::vertex_descriptor  Vertex;
 
 typedef graph_traits < Graph >::edge_iterator Edge_iter; 
 typedef graph_traits < Graph >::vertex_iterator Vertex_iter;
-
+*/
+struct  VoxelPosition
+{
+	float x;
+	float y;
+	float z;
+};
 
 //void morphGraphPrune(int *degree_nodes, Graph msTree, int num_nodes, struct VoxelPosition *vertexPos);
 Graph morphGraphPrune(Graph msTree, int num_nodes, struct VoxelPosition *vertexPos, float length_leaf);
