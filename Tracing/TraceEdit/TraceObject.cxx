@@ -265,6 +265,7 @@ void TraceObject::ImageIntensity(vtkSmartPointer<vtkImageData> imageData)
 		allLines[i]->setTraceBitIntensities(imageData);
 	}//end of set
 }
+/*I/O Functions */
 void TraceObject::SetTraceOffset(double ntx, double nty, double ntz)
 {
 	this->tx = ntx;
@@ -344,6 +345,141 @@ bool TraceObject::ReadFromFeatureTracksFile(char *filename,int type_offset=0)
     curr_line->AddTraceBit(tbit);
   }
   fclose(fp);
+  return true;
+}
+
+bool TraceObject::ReadFromRPIXMLFile(char * filename)
+{
+  cout << "Started reading from " << filename << endl;
+  TiXmlDocument doc(filename);
+  doc.LoadFile();
+  TiXmlHandle docHandle( &doc );
+  float IDoffset = (float) this->getNewLineId();
+
+  // Read the feature header names
+  TiXmlElement* headerElement = docHandle.FirstChild("Trace").FirstChild("FeatureHeaderNames").Element();
+  if (headerElement)
+  {
+	char * text = (char*)headerElement->GetText();
+	//write code to extract header names from text and create std::vector<std:string> in TraceObject
+	char* pch = strtok (text, ",");
+	while (pch != NULL)
+	{
+		this->FeatureHeaders.push_back(pch);
+		pch = strtok(NULL, ",");
+	}//fin populate headers
+  }  
+  TiXmlElement* lineElement =
+    docHandle.FirstChild("Trace").FirstChild("TraceLine").Element();
+  TiXmlElement* bitElement;
+  float lineID;
+  int lineType, lineParent, bitID;
+  double bitX, bitY, bitZ;
+  TraceLine * tline;
+  while(lineElement)
+  {
+    if(lineElement->QueryFloatAttribute("ID", &lineID) != TIXML_SUCCESS)
+    {
+      cerr << "ERROR: TraceLine has no ID" << endl;
+      return false;
+    }
+	lineID += IDoffset;
+    if(lineElement->QueryIntAttribute("Type", &lineType) != TIXML_SUCCESS)
+    {
+      lineType = 1;
+    }
+    if(lineElement->QueryIntAttribute("Parent", &lineParent) != TIXML_SUCCESS)
+    {
+      lineParent = -1;
+    }
+	if (lineParent != -1)
+	{
+		lineParent += IDoffset;
+	}
+	
+    if(hash_load.count(lineID)>0)
+    {
+      tline = reinterpret_cast<TraceLine*>(hash_load[lineID]);
+    }
+    else
+    {
+      tline = new TraceLine();
+      hash_load[lineID] = reinterpret_cast<unsigned long long int>(tline);
+    }
+	if ( this->FeatureHeaders.size() >= 1)
+	{
+		for (unsigned int i = 0; i< this->FeatureHeaders.size(); ++i)
+		{
+			double newFeature;
+			if(lineElement->QueryDoubleAttribute(this->FeatureHeaders[i].c_str(), 
+				&newFeature)!= TIXML_SUCCESS)
+			{
+				newFeature = -1;
+			}
+			tline->Features.push_back(newFeature);
+		}//end of loading features
+	}
+    tline->SetId(lineID);
+    tline->SetType(lineType);
+
+	tline->setTraceColor( getTraceLUT( tline->GetType() ));   
+
+    if(lineParent != -1)
+    {
+      TraceLine *tparent;
+      if(hash_load.count(lineParent)==0)
+      {
+        tparent = new TraceLine();
+        hash_load[lineID] = reinterpret_cast<unsigned long long int>(tparent);
+      }
+      else
+      {
+        tparent = reinterpret_cast<TraceLine*>(hash_load[lineParent]);
+      }
+      tline->SetParent(tparent);
+      tparent->GetBranchPointer()->push_back(tline);
+    }
+    else
+    {
+      trace_lines.push_back(tline);
+    }
+    bitElement = lineElement->FirstChildElement("TraceBit");
+    if(!bitElement)
+    {
+      cerr << "Failed to initialize bitElement" << endl;
+    }
+    while(bitElement)
+    {
+      if(bitElement->QueryIntAttribute("ID", &bitID) != TIXML_SUCCESS)
+      {
+        cerr << "ERROR: TraceBit missing ID" << endl;
+        return false;
+      }
+      if(bitElement->QueryDoubleAttribute("X", &bitX) != TIXML_SUCCESS)
+      {
+        cerr << "ERROR: TraceBit missing X value" << endl;
+        return false;
+      }
+      if(bitElement->QueryDoubleAttribute("Y", &bitY) != TIXML_SUCCESS)
+      {
+        cerr << "ERROR: TraceBit missing Y value" << endl;
+        return false;
+      }
+      if(bitElement->QueryDoubleAttribute("Z", &bitZ) != TIXML_SUCCESS)
+      {
+        cerr << "ERROR: TraceBit missing Z value" << endl;
+        return false;
+      }
+      TraceBit tbit;
+	  tbit.x = bitX + this->tx;
+	  tbit.y = bitY + this->ty;
+	  tbit.z = bitZ + this->tz;
+      tbit.id = bitID;
+      tline->AddTraceBit(tbit);
+      bitElement = bitElement->NextSiblingElement();
+    }
+    lineElement = lineElement->NextSiblingElement();
+  }
   return true;
 }
 
@@ -606,12 +742,12 @@ void TraceObject::ConvertVTKDataToTraceLines()
   //the TraceObject, we'll add them here.
 }
 
+void TraceObject::FindVTKTraceEnds()
+{
 //generate a list of all the vtkLines that only have one neighbor
 //also populate an array so that we can keep track of whether or not
 //each such line has been added to the TraceObject yet.
 //VTKTraceEnds is a vector of pairs: lines and their open end points
-void TraceObject::FindVTKTraceEnds()
-{
   this->VTKTraceEnds.clear();
   for(int cellID = 0; cellID < this->VTKData->GetNumberOfCells(); cellID++)
     {
@@ -649,6 +785,8 @@ void TraceObject::FindVTKTraceEnds()
     }
 }
 
+int TraceObject::VTKLineIsTraceEnd(int rootID)
+{
 //Determine whether or not a vtkLine is connected to other vtkLines on both
 //ends.  vtkLines with less than two neighbors are potential starting points
 //for recursive TraceLine building.
@@ -656,8 +794,6 @@ void TraceObject::FindVTKTraceEnds()
 //is only connected on one end.  It returns -1 if the line has connections on
 //both of its end points.
 ////////////////////////////////////////////////////////////////////////////////
-int TraceObject::VTKLineIsTraceEnd(int rootID)
-{
   bool headNeighborFound = false;
   bool tailNeighborFound = false;
   vtkPolyLine *polyLine = reinterpret_cast<vtkPolyLine *>
@@ -705,11 +841,11 @@ int TraceObject::VTKLineIsTraceEnd(int rootID)
   return -1;
 }
 
+int TraceObject::VTKLineContainsPoint(int cellID, double point[3])
+{
 //returns the index of the point if it is one of the end points of the vtkLine
 //identified by cellID, -1 otherwise
 ////////////////////////////////////////////////////////////////////////////////
-int TraceObject::VTKLineContainsPoint(int cellID, double point[3])
-{
   vtkSmartPointer<vtkPolyLine> line = reinterpret_cast<vtkPolyLine *>
       (this->VTKData->GetCell(cellID));
   vtkSmartPointer<vtkPoints> points = line->GetPoints();
@@ -730,14 +866,14 @@ int TraceObject::VTKLineContainsPoint(int cellID, double point[3])
   return -1;
 }
 
+void TraceObject::ConvertVTKLineToTrace(int cellID, int parentTraceLineID,
+                                        double *endPoint)
+{
 //add the vtkLine represented by cellID to this TraceObject, then recursively
 //calls this function on any lines that connect to its endpoint.
 //endPoint is the end of the line represented by cellID.  In other words, it is
 //the point where all of cellID's children connect to it.
 ////////////////////////////////////////////////////////////////////////////////
-void TraceObject::ConvertVTKLineToTrace(int cellID, int parentTraceLineID,
-                                        double *endPoint)
-{
   //Disconnected.. == 1 means this line is already represented in the
   //TraceObject.  No need to do it again.
   if(this->DisconnectedVTKLines->GetValue(cellID) == -1)
@@ -923,6 +1059,61 @@ void TraceObject::ConvertVTKLineToTrace(int cellID, int parentTraceLineID,
     }
 }
 
+bool TraceObject::WriteToSWCFile(const char *filename)
+{
+  FILE * fp = fopen(filename,"w");
+  vtksys::hash_map<const unsigned long long int, int, hashulli> hash_dump;
+  if(fp == NULL)
+  {
+    printf("Couldn't open %s for writing\n",filename);
+    return false;
+  }
+  int cur_id = 1;
+  std::queue<TraceLine*> q;
+  for(unsigned int counter=0; counter<trace_lines.size(); counter++)
+  {
+    q.push(trace_lines[counter]);
+  }
+  while(!q.empty())
+  {
+    TraceLine *t = q.front();
+    q.pop();
+    TraceLine::TraceBitsType::iterator iter = t->GetTraceBitIteratorBegin();
+    TraceLine::TraceBitsType::iterator iterend = t->GetTraceBitIteratorEnd();
+    hash_dump[reinterpret_cast<unsigned long long int>(t)]=cur_id+t->GetTraceBitsPointer()->size()-1;
+    if(t->GetParent()==NULL)
+    {
+      fprintf(fp,"%d %d %0.2lf %0.2lf %0.2lf %0.2lf %d\n",cur_id++,t->GetType(),iter->x,iter->y,iter->z,iter->r,-1);
+    }
+    else
+    {
+      fprintf(fp,"%d %d %0.2lf %0.2lf %0.2lf %0.2lf %d\n",cur_id++,t->GetType(),iter->x,iter->y,iter->z,iter->r,hash_dump[reinterpret_cast<unsigned long long int>(t->GetParent())]);
+    }
+    iter++;
+    while(iter!=iterend)
+    {
+      fprintf(fp,"%d %d %0.2lf %0.2lf %0.2lf %0.2lf %d\n",cur_id,t->GetType(),iter->x,iter->y,iter->z,iter->r,cur_id-1);
+      cur_id++;
+      iter++;
+    }
+    for(unsigned int counter=0; counter<t->GetBranchPointer()->size(); counter++)
+    {
+      q.push((*t->GetBranchPointer())[counter]);
+    }
+  }
+  fclose(fp);
+  return true;
+}
+
+void TraceObject::WriteToVTKFile(const char *filename)
+{
+  vtkSmartPointer<vtkPolyDataWriter> writer =
+    vtkSmartPointer<vtkPolyDataWriter>::New();
+  writer->SetInput(this->PolyTraces);
+  writer->SetFileName(filename);
+  writer->Update();
+}
+/* end of I/O functions */
 void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkFloatArray> point_scalars, 
                       vtkSmartPointer<vtkPoints> line_points,vtkSmartPointer<vtkCellArray> line_cells)
 {
@@ -1009,82 +1200,7 @@ std::vector<TraceBit> TraceObject::CollectTraceBits()
   return vec;
 }
 
-struct equlli
-{
-  bool operator()(const unsigned long long int l1, const unsigned long long int l2) const
-  {
-    return l1 == l2;
-  }
-};
-//needed because gcc doesn't have a built-in method to hash unsigned long long ints
-struct hashulli
-{
-  size_t operator()(const unsigned long long int __x) const
-  {
-    return __x;
-  }
-  size_t operator()(const unsigned long long int __x, const unsigned long long int __y)
-  {
-    return __x == __y;
-  }
-  const static size_t bucket_size = 4;
-  const static size_t min_buckets = 8;
-};
 
-bool TraceObject::WriteToSWCFile(const char *filename)
-{
-  FILE * fp = fopen(filename,"w");
-  vtksys::hash_map<const unsigned long long int, int, hashulli> hash_dump;
-  if(fp == NULL)
-  {
-    printf("Couldn't open %s for writing\n",filename);
-    return false;
-  }
-  int cur_id = 1;
-  std::queue<TraceLine*> q;
-  for(unsigned int counter=0; counter<trace_lines.size(); counter++)
-  {
-    q.push(trace_lines[counter]);
-  }
-  while(!q.empty())
-  {
-    TraceLine *t = q.front();
-    q.pop();
-    TraceLine::TraceBitsType::iterator iter = t->GetTraceBitIteratorBegin();
-    TraceLine::TraceBitsType::iterator iterend = t->GetTraceBitIteratorEnd();
-    hash_dump[reinterpret_cast<unsigned long long int>(t)]=cur_id+t->GetTraceBitsPointer()->size()-1;
-    if(t->GetParent()==NULL)
-    {
-      fprintf(fp,"%d %d %0.2lf %0.2lf %0.2lf %0.2lf %d\n",cur_id++,t->GetType(),iter->x,iter->y,iter->z,iter->r,-1);
-    }
-    else
-    {
-      fprintf(fp,"%d %d %0.2lf %0.2lf %0.2lf %0.2lf %d\n",cur_id++,t->GetType(),iter->x,iter->y,iter->z,iter->r,hash_dump[reinterpret_cast<unsigned long long int>(t->GetParent())]);
-    }
-    iter++;
-    while(iter!=iterend)
-    {
-      fprintf(fp,"%d %d %0.2lf %0.2lf %0.2lf %0.2lf %d\n",cur_id,t->GetType(),iter->x,iter->y,iter->z,iter->r,cur_id-1);
-      cur_id++;
-      iter++;
-    }
-    for(unsigned int counter=0; counter<t->GetBranchPointer()->size(); counter++)
-    {
-      q.push((*t->GetBranchPointer())[counter]);
-    }
-  }
-  fclose(fp);
-  return true;
-}
-
-void TraceObject::WriteToVTKFile(const char *filename)
-{
-  vtkSmartPointer<vtkPolyDataWriter> writer =
-    vtkSmartPointer<vtkPolyDataWriter>::New();
-  writer->SetInput(this->PolyTraces);
-  writer->SetFileName(filename);
-  writer->Update();
-}
 
 vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
 {
@@ -1113,164 +1229,22 @@ vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
   return this->PolyTraces;
 }
 
-bool TraceObject::ReadFromSuperellipseXML(char * filename)
+
+std::vector<int> TraceObject::GetTreeIDs(TraceLine * root)
 {
-	int currTrace = -1, xmlTraceID = -1;
-	cout << "Started reading from " << filename << endl;
-	TiXmlDocument doc(filename);
-	doc.LoadFile();
-	TiXmlHandle docHandle( &doc );
-	TiXmlElement* currentEllipse = docHandle.FirstChild("Superellipse").Element();
-	currentEllipse->QueryIntAttribute("TraceID", &xmlTraceID);
-	currTrace = xmlTraceID;
-	int lid = this->getNewLineId();
-	while (currentEllipse)
-	  {
-		TraceLine * tline = new TraceLine();
-		tline->SetId(lid);
-		lid++;
-		currentEllipse->QueryIntAttribute("TraceID", &xmlTraceID);
-    //feel free to uncomment when you do something with these variables...
-		//int ptID =0;
-		//double x = -1, y = -1, z = -1, a1 = -1, a2= -1, r = -1;
-	  }//end currentEllipse
-	return true;
+	std::vector<int> ids;
+	this->CollectIdsRecursive(ids, root);
+	return ids;
 }
-bool TraceObject::ReadFromRPIXMLFile(char * filename)
+std::vector<int> TraceObject::GetTreeIDs( std::vector<TraceLine*> roots)
 {
-  cout << "Started reading from " << filename << endl;
-  TiXmlDocument doc(filename);
-  doc.LoadFile();
-  TiXmlHandle docHandle( &doc );
-  float IDoffset = (float) this->getNewLineId();
-
-  // Read the feature header names
-  TiXmlElement* headerElement = docHandle.FirstChild("Trace").FirstChild("FeatureHeaderNames").Element();
-  if (headerElement)
-  {
-	char * text = (char*)headerElement->GetText();
-	//write code to extract header names from text and create std::vector<std:string> in TraceObject
-	char* pch = strtok (text, ",");
-	while (pch != NULL)
+	std::vector<int> ids;
+	for (unsigned int i = 0; i < roots.size(); i++)
 	{
-		this->FeatureHeaders.push_back(pch);
-		pch = strtok(NULL, ",");
-	}//fin populate headers
-  }  
-  TiXmlElement* lineElement =
-    docHandle.FirstChild("Trace").FirstChild("TraceLine").Element();
-  TiXmlElement* bitElement;
-  float lineID;
-  int lineType, lineParent, bitID;
-  double bitX, bitY, bitZ;
-  TraceLine * tline;
-  while(lineElement)
-  {
-    if(lineElement->QueryFloatAttribute("ID", &lineID) != TIXML_SUCCESS)
-    {
-      cerr << "ERROR: TraceLine has no ID" << endl;
-      return false;
-    }
-	lineID += IDoffset;
-    if(lineElement->QueryIntAttribute("Type", &lineType) != TIXML_SUCCESS)
-    {
-      lineType = 1;
-    }
-    if(lineElement->QueryIntAttribute("Parent", &lineParent) != TIXML_SUCCESS)
-    {
-      lineParent = -1;
-    }
-	if (lineParent != -1)
-	{
-		lineParent += IDoffset;
-	}
-	
-    if(hash_load.count(lineID)>0)
-    {
-      tline = reinterpret_cast<TraceLine*>(hash_load[lineID]);
-    }
-    else
-    {
-      tline = new TraceLine();
-      hash_load[lineID] = reinterpret_cast<unsigned long long int>(tline);
-    }
-	if ( this->FeatureHeaders.size() >= 1)
-	{
-		for (unsigned int i = 0; i< this->FeatureHeaders.size(); ++i)
-		{
-			double newFeature;
-			if(lineElement->QueryDoubleAttribute(this->FeatureHeaders[i].c_str(), 
-				&newFeature)!= TIXML_SUCCESS)
-			{
-				newFeature = -1;
-			}
-			tline->Features.push_back(newFeature);
-		}//end of loading features
-	}
-    tline->SetId(lineID);
-    tline->SetType(lineType);
-
-	tline->setTraceColor( getTraceLUT( tline->GetType() ));   
-
-    if(lineParent != -1)
-    {
-      TraceLine *tparent;
-      if(hash_load.count(lineParent)==0)
-      {
-        tparent = new TraceLine();
-        hash_load[lineID] = reinterpret_cast<unsigned long long int>(tparent);
-      }
-      else
-      {
-        tparent = reinterpret_cast<TraceLine*>(hash_load[lineParent]);
-      }
-      tline->SetParent(tparent);
-      tparent->GetBranchPointer()->push_back(tline);
-    }
-    else
-    {
-      trace_lines.push_back(tline);
-    }
-    bitElement = lineElement->FirstChildElement("TraceBit");
-    if(!bitElement)
-    {
-      cerr << "Failed to initialize bitElement" << endl;
-    }
-    while(bitElement)
-    {
-      if(bitElement->QueryIntAttribute("ID", &bitID) != TIXML_SUCCESS)
-      {
-        cerr << "ERROR: TraceBit missing ID" << endl;
-        return false;
-      }
-      if(bitElement->QueryDoubleAttribute("X", &bitX) != TIXML_SUCCESS)
-      {
-        cerr << "ERROR: TraceBit missing X value" << endl;
-        return false;
-      }
-      if(bitElement->QueryDoubleAttribute("Y", &bitY) != TIXML_SUCCESS)
-      {
-        cerr << "ERROR: TraceBit missing Y value" << endl;
-        return false;
-      }
-      if(bitElement->QueryDoubleAttribute("Z", &bitZ) != TIXML_SUCCESS)
-      {
-        cerr << "ERROR: TraceBit missing Z value" << endl;
-        return false;
-      }
-      TraceBit tbit;
-	  tbit.x = bitX + this->tx;
-	  tbit.y = bitY + this->ty;
-	  tbit.z = bitZ + this->tz;
-      tbit.id = bitID;
-      tline->AddTraceBit(tbit);
-      bitElement = bitElement->NextSiblingElement();
-    }
-    lineElement = lineElement->NextSiblingElement();
-  }
-  return true;
+		this->CollectIdsRecursive(ids, roots.at(i));
+	}//end for loop
+	return ids;
 }
-
 void TraceObject::CollectIdsRecursive(std::vector<int> &ids, TraceLine* tline)
 {
   ids.push_back(tline->GetId());

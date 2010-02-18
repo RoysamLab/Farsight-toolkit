@@ -508,6 +508,7 @@ void View3D::LoadProject()
 			{
 			}//end type log
 		}//end of for project size
+		this->OkToBoot();
 	}// end of project !empty
 }
 void View3D::SetImgInt()
@@ -647,6 +648,9 @@ void View3D::CreateGUIObjects()
   this->ClearButton = new QAction("Clear", this->CentralWidget); 
 	connect(this->ClearButton, SIGNAL(triggered()), this, SLOT(ClearSelection()));
 	this->ClearButton->setStatusTip("Clear all selections");
+  this->SelectTreeAction = new QAction("Select Tree", this->CentralWidget); 
+	connect(this->SelectTreeAction, SIGNAL(triggered()), this, SLOT(SelectTrees()));
+	this->SelectTreeAction->setStatusTip("Select the entire tree");
   this->DeleteButton = new QAction("Delete", this->CentralWidget);
 	connect(this->DeleteButton, SIGNAL(triggered()), this, SLOT(DeleteTraces()));
 	this->DeleteButton->setStatusTip("Delete all selected traces");
@@ -739,6 +743,7 @@ void View3D::CreateLayout()
   this->EditsToolBar->addAction(this->AutomateButton);
   this->EditsToolBar->addAction(this->ListButton);
   this->EditsToolBar->addAction(this->ClearButton);
+  this->EditsToolBar->addAction(this->SelectTreeAction);
   this->EditsToolBar->addSeparator();
   this->EditsToolBar->addAction(this->DeleteButton);
   this->EditsToolBar->addAction(this->MergeButton);
@@ -1221,6 +1226,17 @@ void View3D::ClearSelection()
 	cout << this->TreePlot->pos().x() << ", " << this->TreePlot->pos().y() << endl;
 }
 
+void View3D::SelectTrees()
+{
+	std::vector<TraceLine*> roots = this->TreeModel->getRoots();
+	if (roots.size() > 0)
+	{
+		//this->ClearSelection();
+		std::vector<int> ids;
+		ids = this->tobj->GetTreeIDs(roots);
+		this->TreeModel->SelectByIDs(ids);
+	}//end root size
+}
 /*  delete traces functions */
 void View3D::DeleteTraces()
 {

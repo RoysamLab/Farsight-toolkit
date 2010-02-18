@@ -107,6 +107,7 @@ public:
 public slots:
 	void ListSelections();
 	void ClearSelection();
+	void SelectTrees();
 	void DeleteTraces();
 	void SetRoots();
 	void AddNewBranches();
@@ -194,6 +195,7 @@ private:
 	QAction *loadSoma;
 	QAction *ListButton;
 	QAction *ClearButton;
+	QAction *SelectTreeAction;
 	QAction *DeleteButton;
 	QAction *MergeButton;
 	QAction *BranchButton;

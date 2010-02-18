@@ -49,6 +49,27 @@ typedef struct {
 } adjPointLines;
 const int timeSize = 20; //this should be user en
 /* A Trace object is a list of root TraceLines*/
+struct equlli
+{
+  bool operator()(const unsigned long long int l1, const unsigned long long int l2) const
+  {
+    return l1 == l2;
+  }
+};
+//needed because gcc doesn't have a built-in method to hash unsigned long long ints
+struct hashulli
+{
+  size_t operator()(const unsigned long long int __x) const
+  {
+    return __x;
+  }
+  size_t operator()(const unsigned long long int __x, const unsigned long long int __y)
+  {
+    return __x == __y;
+  }
+  const static size_t bucket_size = 4;
+  const static size_t min_buckets = 8;
+};
 class TraceObject
 {
 public:
@@ -80,7 +101,7 @@ public:
 //	I/O functions
 	bool ReadFromSWCFile(char * filename);
 	bool ReadFromRPIXMLFile(char * filename);
-	bool ReadFromSuperellipseXML(char * filename);
+//	bool ReadFromSuperellipseXML(char * filename);//use convert to swc instead
 	void ReadFromVTKFile(char * filename);
 	bool ReadFromFeatureTracksFile(char *filename, int type_offset);
 	bool ReadFromFeatureTracksFileForKymograph(char *filename,int type_offset);
@@ -112,6 +133,8 @@ public:
 	std::vector<TraceLine*>* GetTraceLinesPointer();
 	std::vector<TraceLine*> GetTraceLines();
 	std::vector<TraceBit> CollectTraceBits();
+	std::vector<int> GetTreeIDs( TraceLine* root);
+	std::vector<int> GetTreeIDs( std::vector<TraceLine*> roots);
 	std::set<long int> SmallLines;
 	std::vector<TraceGap*> Gaps;
 	std::vector<branchPT*> BranchPoints;
