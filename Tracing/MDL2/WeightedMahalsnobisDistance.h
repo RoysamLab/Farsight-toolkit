@@ -97,6 +97,13 @@ public:
         CovarianceMatrix =  new double [FeatureNumber*FeatureNumber];
         InverseCovarianceMatrix = new double [FeatureNumber*FeatureNumber];
 		}
+		else 
+		{
+        MeanVector = NULL;
+		CovarianceMatrix = NULL;
+		InverseCovarianceMatrix = NULL;
+		}
+
    }
     int MeanVectorandVarianceMatrix(char *filename);
     double MahalanobisDist(double *sample); 
