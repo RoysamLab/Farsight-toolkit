@@ -551,9 +551,7 @@ std::vector<pairE> MST::SearchFirstandSecondLevelBranch(void)
               out_edges(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], prunedGraph),prunedGraph);
               outei2 != outedge_end2; ++outei2)
             {
-		    	bool tmp;
-		    	tmp = target(*outei2, prunedGraph) == (unsigned int)vertsCurBranch2[0][vertsCurBr_Index2[0]-1];
-                if (tmp)
+                if (target(*outei2, prunedGraph) == (unsigned int)vertsCurBranch2[0][vertsCurBr_Index2[0]-1])
                  continue;
                 vertsCurBranch2[0][vertsCurBr_Index2[0]+1] = target(*outei2, prunedGraph);
             } // end for
@@ -599,6 +597,8 @@ std::vector<pairE> MST::SearchFirstandSecondLevelBranch(void)
       } // End of 2nd level branch
 	} // // End of each out edge
   } // End of all vertice
+    
+    //msTreeSpineCandidate = morphGraphPrune(msTreeSpineCandidate, &nodes, PruneThreshold);
 
     //Get the spine lines from the Graph DetectedSpine
 	typedef boost::graph_traits < Graph >::edge_iterator Edge_iter;
@@ -634,22 +634,12 @@ std::vector<pairE> MST::SpineExtract()
 	const int MAXNumBranch = 10;
     double mahalanobis_dist[MAXNumBranch];
     double mahalanobis_dist_nonSpine[MAXNumBranch];
-    //double mahalanobis_dist_min;
-    //int mahalanobis_dist_minIndex;
-    //double MDL;
-    //double MDL_min;
-    //int MDL_minIndex;
-    //double sum_mahalanobis_nonSpine;
-	//int numBranch_on_Backbone;
 	double meanDensityBranch[MAXNumBranch];   // Suppose at most MAXNumBranch branches at the 2nd level branch from BB
     double meanVesselBranch[MAXNumBranch];
     double length_leaf[MAXNumBranch];
     double aveDensityBranch[MAXNumBranch];   // Suppose at most MAXNumBranch branches at the 2nd level branch from BB
     double aveVesselBranch[MAXNumBranch];
     double length_2leaf[MAXNumBranch];  // length of two level branches
-    //float length_edge;
-    //bool branchChosen;
-	//int index_vert;
 	int indVert,indVert_last;
     int slsz = sizeX*sizeY;   // slice size
     int sz = slsz*sizeZ;
@@ -672,8 +662,8 @@ std::vector<pairE> MST::SpineExtract()
 
 	
 	Graph prunedGraph (num_nodes+1);
-	prunedGraph = morphGraphPrune(mstGraph, &nodes, 50.0);
-    
+	prunedGraph = morphGraphPrune(mstGraph, &nodes, PruneThreshold);
+    //Graph prunedGraph = *mstGraph;
     typedef boost::graph_traits < Graph >::edge_iterator Edge_iter;
 	typedef boost::graph_traits < Graph >::vertex_iterator Vertex_iter;
 	typedef boost::graph_traits<Graph>::out_edge_iterator Outedge_iter;
@@ -725,7 +715,7 @@ std::vector<pairE> MST::SpineExtract()
    for(boost::tie(vi, vend) = vertices(prunedGraph); vi != vend; ++vi)
     { 
     vertsCurBr_Index2[0] = 0;
-	
+
 	// Get index from the graph IndexMap
     int index_vert = int(index[*vi]); 
 
@@ -760,9 +750,7 @@ std::vector<pairE> MST::SpineExtract()
              out_edges(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], prunedGraph),prunedGraph);
              outei2 != outedge_end2; ++outei2)
           {
-			bool tmp;
-			tmp = target(*outei2, prunedGraph) == (unsigned int)vertsCurBranch2[0][vertsCurBr_Index2[0]-1];
-            if (tmp)
+            if (target(*outei2, prunedGraph) == (unsigned int)vertsCurBranch2[0][vertsCurBr_Index2[0]-1])
               continue;
             vertsCurBranch2[0][vertsCurBr_Index2[0]+1] = target(*outei2, prunedGraph);
           } // end for
@@ -782,10 +770,8 @@ std::vector<pairE> MST::SpineExtract()
 	     // output the locations 
          //fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
         
-         if (j==0)
-            {
-             indVert_last = indVert;
-            }
+          if (j==0)indVert_last = indVert;
+          if(indVert >= (int)this->nodes.size())indVert = indVert_last;
 
 		  fPoint3D vertexPosStart,vertexPosEnd;
 		  vertexPosStart.x = this->nodes.at(indVert).x;
@@ -802,8 +788,7 @@ std::vector<pairE> MST::SpineExtract()
 		  length_edge = sqrt(length_edge);
 		  length_leaf[0] += length_edge;
 		  indVert_last = indVert;
-          //long idx =(long) (this->nodes.at(indVert).z *slsz + this->nodes.at(indVert).y *sizeX + this->nodes.at(indVert).x);
-         
+          
           ImageType::IndexType index;
 		  index[0] = roundToInt((double) vertexPosStart.x);
 		  index[1] = roundToInt((double) vertexPosStart.y);
@@ -812,18 +797,6 @@ std::vector<pairE> MST::SpineExtract()
 		  PixelType pix2 = m_VesselMap->GetPixel(index);
 		  meanDensityBranch[0] += pix1;
           meanVesselBranch[0] += pix2;
-				
-         /*
-	     length_edge = (vertexPos[indVert].x-vertexPos[indVert_last].x)*(vertexPos[indVert].x-vertexPos[indVert_last].x);
-         length_edge+= (vertexPos[indVert].y-vertexPos[indVert_last].y)*(vertexPos[indVert].y-vertexPos[indVert_last].y);
-         length_edge+= (vertexPos[indVert].z-vertexPos[indVert_last].z)*(vertexPos[indVert].z-vertexPos[indVert_last].z);
-         length_edge = sqrt(length_edge);
-         length_leaf[0] += length_edge;
-         indVert_last = indVert;
-         idx =(long) (vertexPos[indVert].z *slsz + vertexPos[indVert].y *sizeX + vertexPos[indVert].x); // add long by xiao
-         meanDensityBranch[0] += volin[idx];
-         meanVesselBranch[0] += volvessel[idx];
-		 */
         } // end for 
       
 	    meanDensityBranch[0] = meanDensityBranch[0]/ (vertsCurBr_Index2[0]+1);
@@ -832,6 +805,7 @@ std::vector<pairE> MST::SpineExtract()
         sample[0] =  meanDensityBranch[0];
         sample[1] =  length_leaf[0];
         sample[2] =  meanVesselBranch[0];
+
     
 	   if (LDA_t1>0)
           mahalanobis_dist[0] = LDA_RealSpine.MahalanobisDist(sample); 
@@ -841,22 +815,7 @@ std::vector<pairE> MST::SpineExtract()
           mahalanobis_dist_nonSpine[0] = LDA_NonSpine.MahalanobisDist(sample);
        else 
           mahalanobis_dist_nonSpine[0] = LDA_NonSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 0);
-     
-       //double mahalanobis_dist_min = mahalanobis_dist[0];
-       //mahalanobis_dist_minIndex = 0;
-        
-        //fprintf(fclass_identify, "%d  %f %f %f\n", num_leaves, meanDensityBranch[0], length_leaf[0], meanVesselBranch[0]);
-        
-        if (branchChosen == 1)  
-        {
-          for (int j = 1; j <= vertsCurBr_Index2[0]; j++) 
-         {
-           add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeSpineCandidate);   // add branch for the 1nd level
-           NumberNodesofSpineCandidate++;
-          } // end for
-        } // end if 
 
-       // ## Begin to check the 2nd level of branches located at BB
        int ind2Brch = 0;
 
         // For each 2nd level branch starting from the end of 1st level branch
@@ -896,9 +855,9 @@ std::vector<pairE> MST::SpineExtract()
 		    // second level feature 
             //fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
          
-            if (j==0)
-             indVert_last = indVert;
-
+            if (j==0) indVert_last = indVert;
+			if(indVert >= (int)this->nodes.size())indVert = indVert_last;
+				
             fPoint3D vertexPosStart,vertexPosEnd;
 			vertexPosStart.x = this->nodes.at(indVert).x;
 			vertexPosStart.y = this->nodes.at(indVert).y;
@@ -922,23 +881,7 @@ std::vector<pairE> MST::SpineExtract()
 	        PixelType pix1 = m_inputImage->GetPixel(index);
 		    PixelType pix2 = m_VesselMap->GetPixel(index);
 		    meanDensityBranch[ind2Brch] += pix1;
-            meanVesselBranch[ind2Brch] += pix2;
-           
-			//idx = (long)(vertexPosStart.z *slsz + vertexPos[indVert].y *sizeX + vertexPos[indVert].x);
-
-            /*
-            length_edge = (vertexPos[indVert].x-vertexPos[indVert_last].x)*(vertexPos[indVert].x-vertexPos[indVert_last].x);
-            length_edge+= (vertexPos[indVert].y-vertexPos[indVert_last].y)*(vertexPos[indVert].y-vertexPos[indVert_last].y);
-            length_edge+= (vertexPos[indVert].z-vertexPos[indVert_last].z)*(vertexPos[indVert].z-vertexPos[indVert_last].z);
-            length_edge = sqrt(length_edge);
-            length_leaf[ind2Brch] += length_edge;
-            indVert_last = indVert;
-
-            idx = (long)(vertexPos[indVert].z *slsz + vertexPos[indVert].y *sizeX + vertexPos[indVert].x);
-            meanDensityBranch[ind2Brch] += volin[idx];
-            meanVesselBranch[ind2Brch] += volvessel[idx];
-            */
-
+            meanVesselBranch[ind2Brch] += pix2;   
           } // end for
 
          meanDensityBranch[ind2Brch] = meanDensityBranch[ind2Brch]/ (vertsCurBr_Index2[ind2Brch]+1);
@@ -963,15 +906,7 @@ std::vector<pairE> MST::SpineExtract()
           mahalanobis_dist_nonSpine[ind2Brch] = LDA_NonSpine.MahalanobisDist(sample);
          else 
           mahalanobis_dist_nonSpine[ind2Brch] = LDA_NonSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 0);
-       
-		//fprintf(fclass_identify, "%d  %f %f %f\n", num_leaves, aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch]);      
-     
-        for (int j = 1; j <= vertsCurBr_Index2[ind2Brch]; j++) 
-        {
-      // test: add any branches to the Spine Candidate
-          add_edge(vertsCurBranch2[ind2Brch][j-1], vertsCurBranch2[ind2Brch][j], msTreeSpineCandidate);   // add branch for the 2nd level
-          NumberNodesofSpineCandidate++;
-        }
+
       } // End of 2nd level branch
 
     
@@ -1081,15 +1016,21 @@ Graph MST::morphGraphPrune(Graph *graph, std::vector<fPoint3D> *nodes, float len
 	typedef boost::graph_traits < Graph >::vertex_iterator Vertex_iter;
 	typedef boost::graph_traits<Graph>::out_edge_iterator Outedge_iter;
 
-	//I probably want to create a copy of the graph somehow??
-	Graph ng = *graph;
-
 	Edge_iter   ei, ei_end;
 	Outedge_iter  outei, outedge_end;
+	Vertex_iter vi, vend;
 
+	//I probably want to create a copy of the graph somehow??
+	//Graph ng = *graph;
+    Graph ng = *graph;
+    /*
+    for (tie(ei, ei_end) = edges(*graph); ei != ei_end; ++ei) 
+	{
+		add_edge(source(*ei, *graph), target(*ei, *graph), ng);
+	}
+    */
 	int curBranchVerts[2000];
 	int curBrVerts_Index = 0;
-
 	float length_edge = 0; 
 	int indVert, indVert_last;
     int branchChosen;
@@ -1099,7 +1040,6 @@ Graph MST::morphGraphPrune(Graph *graph, std::vector<fPoint3D> *nodes, float len
 	int num_leaves = 0;
 
     // for all vertex in the graph
-	Vertex_iter vi, vend;
 	for(boost::tie(vi, vend) = vertices(ng); vi != vend; ++vi) 
 	{ 
 		curBrVerts_Index = 0;
@@ -1114,8 +1054,8 @@ Graph MST::morphGraphPrune(Graph *graph, std::vector<fPoint3D> *nodes, float len
 
 			while (out_degree(vertex(curBranchVerts[curBrVerts_Index], ng), ng) == 2) 
 			{
-				boost::tie(outei, outedge_end) = out_edges(vertex(curBranchVerts[curBrVerts_Index], ng), ng);
-				for ( ; outei != outedge_end; ++outei)
+				
+				for (boost::tie(outei, outedge_end) = out_edges(vertex(curBranchVerts[curBrVerts_Index], ng), ng) ; outei != outedge_end; ++outei)
 				{
 					if (target(*outei, ng) == (unsigned int)curBranchVerts[curBrVerts_Index-1])
 							continue;
@@ -1142,12 +1082,12 @@ Graph MST::morphGraphPrune(Graph *graph, std::vector<fPoint3D> *nodes, float len
 				} // end if
                     
 				fPoint3D vertexPosStart,vertexPosEnd;
-				vertexPosStart.x = this->nodes.at(indVert).x;
-				vertexPosStart.y = this->nodes.at(indVert).y;
-                vertexPosStart.z = this->nodes.at(indVert).z;
-				vertexPosEnd.x = this->nodes.at(indVert_last).x;
-                vertexPosEnd.y = this->nodes.at(indVert_last).y;
-				vertexPosEnd.z = this->nodes.at(indVert_last).z;
+				vertexPosStart.x = nodes->at(indVert).x;
+				vertexPosStart.y = nodes->at(indVert).y;
+                vertexPosStart.z = nodes->at(indVert).z;
+				vertexPosEnd.x = nodes->at(indVert_last).x;
+                vertexPosEnd.y = nodes->at(indVert_last).y;
+				vertexPosEnd.z = nodes->at(indVert_last).z;
 
                 length_edge = (vertexPosStart.x-vertexPosEnd.x)*(vertexPosStart.x-vertexPosEnd.x);
 				length_edge+= (vertexPosStart.y-vertexPosEnd.y)*(vertexPosStart.y-vertexPosEnd.y);
