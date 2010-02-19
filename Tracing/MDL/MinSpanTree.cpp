@@ -12,41 +12,26 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
-
-
 // MinSpanTree - Generate graph structure from a list of 3D points
 // Input format: .skel  (3D points)
 // Output format: .vtk  (3D graph format)
 // Author: Xiaosong Yuan, RPI
 // Date: 12/22/2005
 // Status: under modification of MDL
+
+/*
 #if defined(_MSC_VER)
 #pragma warning(disable : 4996)
 #endif
-/*
-#include "morphGraphPrune.h"
-#include "distTransform.h"
-#include "MinSpanTree.h"
 */
 #include "MST.h"
 
 #define DRAW_MDL_CURVE  1           // Output Lm(M) and L(M) values for MDL curve
 #define DISP_ALL_BB2Branch 0          //Output all two levels of branches on backbone
-#define DATATYPEIN unsigned char
-#define MAX_NUM_EDGE 28885000  //2885000, 85000  //why 90000 causes crash?
-#define MIN(x,y) (((x) < (y))?(x):(y))
-#define MAX(x,y) (((x) > (y))?(x):(y))
+// #define DATATYPEIN unsigned char
+// #define MAX_NUM_EDGE 28885000  //2885000, 85000  //why 90000 causes crash?
 #define MAXNumBranch 10    //Suppose at most MAXNumBranch branches at the 2nd level branch from BB
 
-using namespace std;
-/*
-struct  VoxelPosition
-{
-  float x;
-  float y;
-  float z;
-};
-*/
 template <class Graph>
 void gprint(Graph& g) {
   typename Graph::vertex_iterator vi, vend;

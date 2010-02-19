@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
   DATATYPEOUT *volout;
   long idx;
 
-  double itkThreshold = -9999; 
+ 
   int sizeExpand = 0;
   DATATYPEOUT blockMax;
   int timesDilate;
@@ -369,11 +369,7 @@ int main(int argc, char *argv[])
     {
     threshold = m_threshold;
     }
-  
-  if (itkThreshold > 0 && itkThreshold <12)
-	  threshold = itkThreshold;
-  else  
-	  threshold = itkThreshold /3.3;
+
   //threshold =7;
   cout << "OTSU optimal threshold " << threshold << endl;
 

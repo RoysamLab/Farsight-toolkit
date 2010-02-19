@@ -1,3 +1,8 @@
+
+#if defined(_MSC_VER)
+#pragma warning(disable : 4996)
+#endif
+
 #include <iostream>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/kruskal_min_spanning_tree.hpp>
@@ -13,6 +18,13 @@
 #include <utility>
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/graph_traits.hpp>
+
+#define MIN(x,y) (((x) < (y))?(x):(y))
+#define MAX(x,y) (((x) > (y))?(x):(y))
+
+#define DATATYPEIN unsigned char
+#define MAX_NUM_EDGE 28885000  //2885000, 85000  //why 90000 causes crash?
+#define MAXNumBranch 10 
 
 using namespace std;
 using namespace boost;

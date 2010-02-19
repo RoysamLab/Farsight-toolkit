@@ -16,41 +16,10 @@ limitations under the License.
 // BackboneExtract - Extract dendrite bacbone from a list of 3D points
 // Input format:  .skel  (3D points)
 // Output format: .vtk  (3D graph format)
-// Author: Xiao liang, RPI  based on Xiaosong's MST 
+// Author: Xiao liang
 // Date: 12/11/2009
 
-
-#if defined(_MSC_VER)
-#pragma warning(disable : 4996)
-#endif
-
-#include "MinSpanTree.h"
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/kruskal_min_spanning_tree.hpp>
-#include <boost/graph/graphviz.hpp>
-#include <iostream>
-#include <fstream>
-#include <stdlib.h>
-#include <math.h>
-#include <boost/config.hpp>
-#include <vector>
-#include <algorithm>
-#include <utility>
-#include <boost/graph/connected_components.hpp>
-#include <boost/graph/graph_traits.hpp>
-#define DATATYPEIN unsigned char
-#define MAX_NUM_EDGE 28885000  //2885000, 85000  //why 90000 causes crash?
-
-#define MIN(x,y) (((x) < (y))?(x):(y))
-#define MAX(x,y) (((x) > (y))?(x):(y))
-
-using namespace std;
-struct  VoxelPosition
-{
-  float x;
-  float y;
-  float z;
-};
+#include "MST.h"
 
 int main(int argc, char *argv[])
 {

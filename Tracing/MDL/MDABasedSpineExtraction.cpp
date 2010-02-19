@@ -19,22 +19,11 @@ limitations under the License.
 // Date: 19/12/2009
 // Status: under modification of MDL
 
-#if defined(_MSC_VER)
-#pragma warning(disable : 4996)
-#endif
-
 #include "MST.h"
 #include "WeightedMahalsnobisDistance.h"
 
 #define InterMedial 0
-#define DATATYPEIN unsigned char
-#define MAX_NUM_EDGE 28885000  //2885000, 85000  //why 90000 causes crash?
-#define MIN(x,y) (((x) < (y))?(x):(y))
-#define MAX(x,y) (((x) > (y))?(x):(y))
-#define MAXNumBranch 10    //Suppose at most MAXNumBranch branches at the 2nd level branch from BB
 #define FeatureNumber  3;
-using namespace std;
-
 
 double mahalanobisDist(double meanDensityBranch, double length_leaf, double meanVesselBranch, int spineOne);
 
@@ -100,9 +89,6 @@ int main(int argc, char *argv[])
   FILE *fclass_identify;  // this file is used to record the spine candidate' possible feature; 
 
   FILE *foutSpineCandidate; // this file is used to record the spine candidate;
-
-
- 
 
   if (argc < 14)
     {
@@ -555,7 +541,7 @@ int main(int argc, char *argv[])
     // output the locations 
     //fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
         
-    if (j==0)
+       if (j==0)
           {
           indVert_last = indVert;
           }
@@ -576,48 +562,48 @@ int main(int argc, char *argv[])
         //mahalanobis_dist[0]    =      mahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 1);  
         //mahalanobis_dist_nonSpine[0] = mahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 0); 
   
-    sample[0] =  meanDensityBranch[0];
-    sample[1] =  length_leaf[0];
-    sample[2] =  meanVesselBranch[0];
-    if (LDA_t1>0)
-    {
+       sample[0] =  meanDensityBranch[0];
+       sample[1] =  length_leaf[0];
+       sample[2] =  meanVesselBranch[0];
+       if (LDA_t1>0)
+        {
           mahalanobis_dist[0] = LDA_RealSpine.MahalanobisDist(sample); 
-    }
-    else 
-    {     //std::cout << " There is no Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
+        }
+       else 
+        {  //std::cout << " There is no Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
           mahalanobis_dist[0] = LDA_RealSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 1);
-    }
-    if (LDA_t2>0)
-    {
+        }
+       if (LDA_t2>0)
+        {
     
           mahalanobis_dist_nonSpine[0] = LDA_NonSpine.MahalanobisDist(sample);
-    }
-    else 
-    {
+         }
+       else 
+        {
           //std::cout << " There is no Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
           mahalanobis_dist_nonSpine[0] = LDA_NonSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 0);
-    }
+        }
    
         mahalanobis_dist_min = mahalanobis_dist[0];
         mahalanobis_dist_minIndex = 0;
         // output the spine candidate feature sample;  
-    //fprintf(fclass_identify, "%d  %f %f %f\n", -num_leaves, meanDensityBranch[0], length_leaf[0], meanVesselBranch[0]);
-    fprintf(fclass_identify, "%d  %f %f %f\n", num_leaves, meanDensityBranch[0], length_leaf[0], meanVesselBranch[0]);
+        //fprintf(fclass_identify, "%d  %f %f %f\n", -num_leaves, meanDensityBranch[0], length_leaf[0], meanVesselBranch[0]);
+        fprintf(fclass_identify, "%d  %f %f %f\n", num_leaves, meanDensityBranch[0], length_leaf[0], meanVesselBranch[0]);
         
-    if (branchChosen == 1)  
-    {
-     for (j = 1; j <= vertsCurBr_Index2[0]; j++) 
-     {
-      add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeSpineCandidate);   // add branch for the 1nd level
+        if (branchChosen == 1)  
+        {
+         for (j = 1; j <= vertsCurBr_Index2[0]; j++) 
+         {
+           add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], msTreeSpineCandidate);   // add branch for the 1nd level
             NumberNodesofSpineCandidate++;
-      }
-     }
+         }
+        }
 
-      // ## Begin to check the 2nd level of branches located at BB
-      int ind2Brch = 0;
-
-      // For each 2nd level branch starting from the end of 1st level branch
-      for (boost::tie(outei2, outedge_end2) =out_edges(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], msTree),msTree);
+        // ## Begin to check the 2nd level of branches located at BB
+        int ind2Brch = 0;
+ 
+       // For each 2nd level branch starting from the end of 1st level branch
+        for (boost::tie(outei2, outedge_end2) =out_edges(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], msTree),msTree);
            outei2 != outedge_end2; ++outei2)
         {
         if (target(*outei2, msTree) == (unsigned int)vertsCurBranch2[0][vertsCurBr_Index2[0]-1])
@@ -644,9 +630,9 @@ int main(int argc, char *argv[])
         meanVesselBranch[ind2Brch] = 0;
         num_leaves++;  // for training purpose
         for (j = 0; j <= vertsCurBr_Index2[ind2Brch]; j++)
-          {
+         {
           indVert = vertsCurBranch2[ind2Brch][j];
-      // second level feature 
+          // second level feature 
           //fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
          
           if (j==0)
@@ -661,63 +647,61 @@ int main(int argc, char *argv[])
           indVert_last = indVert;
 
           idx = (long)(vertexPos[indVert].z *slsz + vertexPos[indVert].y *sizeX + vertexPos[indVert].x);
-          meanDensityBranch[ind2Brch] += volin[idx];
+           meanDensityBranch[ind2Brch] += volin[idx];
           meanVesselBranch[ind2Brch] += volvessel[idx];
           }
-        meanDensityBranch[ind2Brch] = meanDensityBranch[ind2Brch]/ (vertsCurBr_Index2[ind2Brch]+1);
-        meanVesselBranch[ind2Brch] = meanVesselBranch[ind2Brch] / (vertsCurBr_Index2[ind2Brch]+1);
+          meanDensityBranch[ind2Brch] = meanDensityBranch[ind2Brch]/ (vertsCurBr_Index2[ind2Brch]+1);
+          meanVesselBranch[ind2Brch] = meanVesselBranch[ind2Brch] / (vertsCurBr_Index2[ind2Brch]+1);
 
-        // Compute the average features of two level branches
-        length_2leaf[ind2Brch] = length_leaf[ind2Brch] + length_leaf[0];
-        aveDensityBranch[ind2Brch] = (meanDensityBranch[ind2Brch]*length_leaf[ind2Brch] +  meanDensityBranch[0]*length_leaf[0]);
-        aveDensityBranch[ind2Brch] = aveDensityBranch[ind2Brch] / length_2leaf[ind2Brch];
-        aveVesselBranch[ind2Brch] = (meanVesselBranch[ind2Brch]*length_leaf[ind2Brch] + meanVesselBranch[0]*length_leaf[0]);
-        aveVesselBranch[ind2Brch] = aveVesselBranch[ind2Brch] / length_2leaf[ind2Brch];
+         // Compute the average features of two level branches
+         length_2leaf[ind2Brch] = length_leaf[ind2Brch] + length_leaf[0];
+         aveDensityBranch[ind2Brch] = (meanDensityBranch[ind2Brch]*length_leaf[ind2Brch] +  meanDensityBranch[0]*length_leaf[0]);
+         aveDensityBranch[ind2Brch] = aveDensityBranch[ind2Brch] / length_2leaf[ind2Brch];
+         aveVesselBranch[ind2Brch] = (meanVesselBranch[ind2Brch]*length_leaf[ind2Brch] + meanVesselBranch[0]*length_leaf[0]);
+         aveVesselBranch[ind2Brch] = aveVesselBranch[ind2Brch] / length_2leaf[ind2Brch];
 
-        // mahalanobis distance is based on features of two-level branches
-        //mahalanobis_dist[ind2Brch]    = mahalanobisDist(aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch], 1);
-        //mahalanobis_dist_nonSpine[ind2Brch]=mahalanobisDist(aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch], 0);
+         // mahalanobis distance is based on features of two-level branches
+         //mahalanobis_dist[ind2Brch]    = mahalanobisDist(aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch], 1);
+         //mahalanobis_dist_nonSpine[ind2Brch]=mahalanobisDist(aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch], 0);
         
-	sample[0] =  aveDensityBranch[ind2Brch];
-    sample[1] =  length_2leaf[ind2Brch];
-    sample[2] =  aveVesselBranch[ind2Brch];
-    if (LDA_t1>0)
-    {
+	     sample[0] =  aveDensityBranch[ind2Brch];
+         sample[1] =  length_2leaf[ind2Brch];
+         sample[2] =  aveVesselBranch[ind2Brch];
+         if (LDA_t1>0)
+         {
           mahalanobis_dist[ind2Brch] = LDA_RealSpine.MahalanobisDist(sample); 
-    }
-    else 
-    {     //std::cout << " There is no Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
+          }
+         else 
+         {     //std::cout << " There is no Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
           mahalanobis_dist[ind2Brch] = LDA_RealSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 1);
-    }
-    if (LDA_t2>0)
-    {
+          }
+         if (LDA_t2>0)
+          {
     
           mahalanobis_dist_nonSpine[ind2Brch] = LDA_NonSpine.MahalanobisDist(sample);
-    }
-    else 
-    {
+          }
+         else 
+          {
           //std::cout << " There is no Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
           mahalanobis_dist_nonSpine[ind2Brch] = LDA_NonSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 0);
-    }
+          }
 
 		// out put 
-    //fprintf(fclass_identify, "%d  %f %f %f\n", -num_leaves, aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch]);
-    fprintf(fclass_identify, "%d  %f %f %f\n", num_leaves, aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch]);      
+        //fprintf(fclass_identify, "%d  %f %f %f\n", -num_leaves, aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch]);
+        fprintf(fclass_identify, "%d  %f %f %f\n", num_leaves, aveDensityBranch[ind2Brch], length_2leaf[ind2Brch], aveVesselBranch[ind2Brch]);      
      
-    for (j = 1; j <= vertsCurBr_Index2[ind2Brch]; j++) 
-    {
-      // test: add any branches to the Spine Candidate
-    add_edge(vertsCurBranch2[ind2Brch][j-1], vertsCurBranch2[ind2Brch][j], msTreeSpineCandidate);   // add branch for the 2nd level
-        NumberNodesofSpineCandidate++;
-    }
+        for (j = 1; j <= vertsCurBr_Index2[ind2Brch]; j++) 
+        {
+         // test: add any branches to the Spine Candidate
+         add_edge(vertsCurBranch2[ind2Brch][j-1], vertsCurBranch2[ind2Brch][j], msTreeSpineCandidate);   // add branch for the 2nd level
+         NumberNodesofSpineCandidate++;
+        }
 
-        } // End of 2nd level branch
+       } // End of 2nd level branch
 
       // ** Minimal MDL is solved by looking at each choice
-      // 1. Empty model set is chosen (no branch)
-      
-
-     //----------------------------MDL fitness for spine --------------------------------------//
+      // Empty model set is chosen (no branch) 
+      //----------------------------MDL fitness for spine --------------------------------------//
  
       MDL_minIndex = -1; // Indicate that empty model set is chosen
       sum_mahalanobis_nonSpine = 0;
@@ -772,7 +756,7 @@ int main(int argc, char *argv[])
       // 1. Empty model set is chosen (no branch)
       sum_mahalanobis_nonSpine = 0;
       for (i = 0; i<= ind2Brch; i++) 
-    {
+      {
         sum_mahalanobis_nonSpine += mahalanobis_dist_nonSpine[i];
       }
 
@@ -783,10 +767,10 @@ int main(int argc, char *argv[])
 
       // 3. Two level branch model set, including 1st level and 2nd level branches
       for (i = 1; i <= ind2Brch; i++) 
-    {
+      {
         MDL = sum_mahalanobis_nonSpine - mahalanobis_dist_nonSpine[i] + mahalanobis_dist[i];
         if (MDL <  MDL_min) 
-    {
+        {
           MDL_min = MDL;
           MDL_minIndex =  i;
         }

@@ -126,7 +126,7 @@ typename BSplineKernelFunction<VSplineOrder>::MatrixType
 BSplineKernelFunction<VSplineOrder>
 ::GetShapeFunctionsInZeroToOneInterval()
 {
-  int order = this->m_SplineOrder+1;
+  unsigned int order = this->m_SplineOrder+1;
   unsigned int NumberOfPieces = static_cast<unsigned int>( order );
   MatrixType ShapeFunctions( NumberOfPieces, order );
 
@@ -137,7 +137,7 @@ BSplineKernelFunction<VSplineOrder>
                + static_cast<RealType>( i );
     }			
 
-  for ( int i = 0; i < NumberOfPieces; i++ )
+  for ( unsigned int i = 0; i < NumberOfPieces; i++ )
     {
     PolynomialType poly = this->CoxDeBoor( order, knots, i, order-1 );
     ShapeFunctions.set_row( i, poly.coefficients() );	

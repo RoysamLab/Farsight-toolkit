@@ -25,25 +25,8 @@ limitations under the License.
 // ----
 // $Id: distTransform.cpp 598 2009-05-11 21:27:59Z galbreath $
 
-#include "MinSpanTree.h"
+
 #include "distTransform.h"
-#include <iostream>
-#include <fstream>
-//#include <io.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <algorithm>
-#include <utility>
-
-using namespace std;
-
-#define MIN(x,y) (((x) < (y))?(x):(y))
-#define MAX(x,y) (((x) > (y))?(x):(y))
-
-// Arguments of function:
-// Input as a volume with non-zero as objects;
-// Output to the same volume as distance trasnform 
 
 void distTransform(unsigned char *f, int L, int M, int N) 
 {

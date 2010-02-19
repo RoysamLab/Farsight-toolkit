@@ -35,14 +35,6 @@ using std::string;
 #define DATATYPEIN unsigned char
 #define DATATYPEOUT unsigned char
 
-struct  VoxelPosition
-{
-  float x;
-  float y;
-  float z;
-}; 
-
-
 int main(int argc, char *argv[])
 {
   int sizeX = 0;

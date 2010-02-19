@@ -421,7 +421,7 @@ int main( int argc, char *argv[] )
 
   // Software Guide : BeginCodeSnippet
   smoothing->SetTimeStep( 0.0625 );  //0.125
-  smoothing->SetNumberOfIterations(  8 ); //5
+  smoothing->SetNumberOfIterations(  5 ); //5
   smoothing->SetConductanceParameter( 3 );  //9.0
   // Software Guide : EndCodeSnippet
 
@@ -688,8 +688,8 @@ int main( int argc, char *argv[] )
   //  Software Guide : EndLatex 
 
   //  Software Guide : BeginCodeSnippet
-  shapeDetection->SetMaximumRMSError( 0.02 );
-  shapeDetection->SetNumberOfIterations( 10 ); //800, 30
+  //shapeDetection->SetMaximumRMSError( 0.02 );
+  shapeDetection->SetNumberOfIterations( 0 ); //800, 30
   //  Software Guide : EndCodeSnippet 
 
   
