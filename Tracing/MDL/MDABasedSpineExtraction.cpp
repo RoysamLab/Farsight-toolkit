@@ -442,7 +442,7 @@ int main(int argc, char *argv[])
    } // end while 
 
   // Create a Backbone vertice flag array
-  for (i=1; i<=num_nodes; i++)   {
+  for (i=0; i<=num_nodes; i++)   {
     if (degree_nodes[i] >= 1)  
         vertBackbone[i] = 1;
   }
