@@ -494,7 +494,7 @@ bool IntegratedSkeleton::XiaosongComputeIsoGraySurfaceCurvature()
 				{
 					curv[idx] = (float) -(k1)/gLength;
 				}
-				else
+				/*else
 				{
 					//set large to be included in skeleton
 					curv[idx]=9999;
@@ -504,7 +504,12 @@ bool IntegratedSkeleton::XiaosongComputeIsoGraySurfaceCurvature()
 				if (curv[idx]>10000)
 				{
 					curv[idx]=10000;
+				}*/
+				else
+				{
+					curv[idx]=0;
 				}
+
 				if (curv[idx]< -1 )
 				{
 					// first phase: threshold the curvature value (larger->fewer)
