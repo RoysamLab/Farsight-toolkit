@@ -329,6 +329,11 @@ int main (int argc, char *argv[])
           {
           curv[idx] = (float) -(k1)/gLength;
           }
+		else
+		{
+		   curv[idx]=0;
+		}
+		/*
         else
           {
           //set large to be included in skeleton
@@ -340,11 +345,15 @@ int main (int argc, char *argv[])
           {
           curv[idx]=10000;
           }
+		  
+		
         if (curv[idx]< -1 )
           {
           // first phase: threshold the curvature value (larger->fewer)
           curv[idx]= 0; 
           }
+		  */  // the above is xiaosong's method
+
         }
       }
     }
@@ -381,7 +390,8 @@ int main (int argc, char *argv[])
   //-------use the mean value of the mean curvature as the threshold--------//
 
   double meanCurvature=0;
-  double Tmean = 0; 
+  //double Tmean = 0; 
+  long InterVox =1; 
   for (k = DisAway; k < N-DisAway; k++)
     {
     for (j = DisAway; j < M-DisAway; j++)
@@ -389,18 +399,23 @@ int main (int argc, char *argv[])
       for (i = DisAway; i < L-DisAway; i++) 
         {
         idx = k*slsz + j*L +i;
-        meanCurvature += curv[idx];
-        }
-      }
-    }
+		if (f[idx]!=0)
+		{
+         meanCurvature += curv[idx];
+		 InterVox++;
+        }// end if 
+      }// end for
+	}
+  }
    
-  meanCurvature /=(double)(L*M*N); 
+  //meanCurvature /=(double)(L*M*N); 
+  meanCurvature /=(double)(InterVox); 
  
   meanCurvature = (meanCurvature<0 ? 0:meanCurvature);
 
   //the threshold is a value between [0,10].
   highCurvatureThreshold = (meanCurvature > 10 ? 10 : meanCurvature);
-  cout << "Trimmed mean is " << Tmean << endl;
+  //cout << "Trimmed mean is " << Tmean << endl;
   cout << "mean = " << meanCurvature << "." << endl;
   cout << "The estimated good threshold of highCurvatureThreshold "
        << highCurvatureThreshold << endl;
