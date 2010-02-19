@@ -230,8 +230,8 @@ bool VolumeProcess::MaskUsingGraphCuts()
 	unsigned short * binImagePtr = new unsigned short[numPix];
 	PixelType * dataImagePtr = m_outputImage->GetBufferPointer();
 
-	int ok = Cell_Binarization_3D(dataImagePtr, binImagePtr, numRows, numColumns, numStacks, 0, 1);	//Do Binarization
-    //int ok = Neuron_Binarization_3D(dataImagePtr, binImagePtr, numRows, numColumns, numStacks, 0, 1);
+	//int ok = Cell_Binarization_3D(dataImagePtr, binImagePtr, numRows, numColumns, numStacks, 0, 1);	//Do Binarization
+    int ok = Neuron_Binarization_3D(dataImagePtr, binImagePtr, numRows, numColumns, numStacks, 0, 1);
 	if(!ok)
 		return false;
 

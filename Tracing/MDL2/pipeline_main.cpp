@@ -53,12 +53,15 @@ int main(int argc, char *argv[])
 	volProc->SetInput(img);
 	volProc->SetDebug(true);
 	volProc->RescaleIntensities(0,255);
+	//volProc->RunManualThreshold(1.9);
 	volProc->RunCAD();
-	//volProc->MaskUsingGraphCuts();
-	volProc->MaskSmallConnComp(50);
+	volProc->MaskUsingGraphCuts();
+	volProc->MaskSmallConnComp(10);
 	mdl::ImageType::Pointer clean_img = volProc->GetOutput();
 	//volProc->RunDistanceTransform();
 	//mdl::ImageType::Pointer DT_img = volProc->GetOutput();
+	volProc->RunAnisotropicDiffusion(1,false);
+	mdl::ImageType::Pointer enhance_img = volProc->GetOutput();
 	delete volProc;
 
 	
@@ -66,7 +69,7 @@ int main(int argc, char *argv[])
 	mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton( clean_img );
 	skel->SetVectorMagnitude(.05);
 	skel->SetDebug(true);
-	skel->SetUseXiaoLiangMethod(true);
+	skel->SetUseXiaoLiangMethod(false);
 	skel->Update();
 	std::vector<mdl::fPoint3D> skeleton = skel->GetOutput();
 	delete skel;
@@ -74,7 +77,7 @@ int main(int argc, char *argv[])
 	//Minimum spanning tree to create nodes and backbone node pairs (lines):
 	mdl::MST *mst = new mdl::MST( clean_img );
 	mst->SetDebug(true);
-	mst->SetEdgeRange(10);
+	mst->SetEdgeRange(12);
 	mst->SetPower(1);
 	mst->SetSkeletonPoints( &skeleton );
 	mst->CreateGraphAndMST();
@@ -103,8 +106,8 @@ int main(int argc, char *argv[])
 	
 	mdl::BSplineFitting *bspline = new mdl::BSplineFitting( clean_img );
 	bspline->SetDebug(true);
-	bspline->SetLevels(9);
-	bspline->SetOrder(8);
+	bspline->SetLevels(7);
+	bspline->SetOrder(3);
 	bspline->SetNodes( &nodes );
 	bspline->SetBBPairs( &bbpairs );
 	bspline->Update();
@@ -124,26 +127,28 @@ int main(int argc, char *argv[])
      */
 
 
-
+  
     mdl::MST *mst1 = new mdl::MST( clean_img );
 	//mst1->SetInputforSpineExtraction(clean_img,(char *)"RealSpinePrior.txt",(char *)"NonSpinePrior.txt");
 	mst1->SetDebug(true);
-	mst1->SetEdgeRange(10);
+	mst1->SetEdgeRange(12);
 	mst1->SetPower(1);
+	mst1->SetVesselMap(enhance_img);
+	mst1->SetAlpha(0.7);
+	mst1->SetPruneThreshold(4.0);
+	//mst1->SetFileofRealSpineFeature((char *)"RealSpinePrior.txt");
+	//mst1->SetFileofNonSpineFeature((char *)"NonSpinePrior.txt");
 	mst1->SetSkeletonPoints( &skeleton );
 	mst1->CreateGraphAndMST();
-
 	mst1->ErodeAndDialateNodeDegree(50);
-	mst1->SetVesselMap(clean_img);
-	mst1->SetAlpha(0.7);
-	mst1->SetPruneThreshold(5.0);
+	
 	nodes = mst1->GetNodes();
 	//bbpairs = mst1->SearchFirstandSecondLevelBranch();
+	mst1->SearchFirstandSecondLevelBranch();
 	//bbpairs = mst->BackboneExtract();
 	bbpairs = mst1->SpineExtract();
-	delete mst1;
-	
-
+	delete mst1;	
+  
 	std::cerr << "PRESS ENTER TO EXIT\n";
 	getchar();
 
