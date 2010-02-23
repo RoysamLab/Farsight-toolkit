@@ -1,6 +1,6 @@
  # CMakeList.txt for  Trace3D
 # Author: Amit Mukherjee
-
+PROJECT(TraceSE3D)
 cmake_minimum_required( VERSION 2.6)
 if(COMMAND cmake_policy)
    cmake_policy(SET CMP0003 NEW)
@@ -14,46 +14,36 @@ SET (XML_sources
 	tinystr.h
 	tinyxml.h
 )	
+SET( Sources Trace3dDriver.cxx TraceMain.cxx	TraceMain.h)
+ADD_LIBRARY(TraceSE3DLib
 
-
-
-SET ( Trace3D_sources
-      TraceConfig.cxx
-      TVessel.cxx
-      SegInit.cxx
-      SegFit.cxx
-      SeedPoint3D.cxx
-      SeedContainer3D.cxx	      
-      Trace.cxx
-      Seed2Seg.cxx
-      NodeContainer3D.cxx
-      TraceContainer3D.cxx
-    
-)
-
-SET ( Trace3D_headers 
-      TraceConfig.h
-      TVessel.h
-      SeedContainer3D.h
-      SegInit.h
-      SegFit.h
-      SeedPoint3D.h
-      Trace.h
-      Seed2Seg.h
-      NodeContainer3D.h
-      TraceContainer3D.h
+	TraceConfig.cxx				TraceConfig.h
+	TVessel.cxx					TVessel.h
+	SegInit.cxx					SegInit.h
+	SegFit.cxx					SegFit.h
+	SeedPoint3D.cxx				SeedPoint3D.h
+	SeedContainer3D.cxx			SeedContainer3D.h	      
+	Trace.cxx					Trace.h
+	Seed2Seg.cxx				Seed2Seg.h
+	NodeContainer3D.cxx			NodeContainer3D.h
+	TraceContainer3D.cxx		TraceContainer3D.h
  )      
 
-SET ( Trace3D_libraries
+SET ( Libraries
       ITKCommon
       ITKIO
       ITKNumerics
-      TinyXML   
+      TinyXML 
+      TraceSE3DLib
+    ${QT_LIBRARIES}
 )
+QT4_WRAP_CPP( GUI_MOC_SRCS Trace3dDriver.cxx TraceMain.cxx	TraceMain.h)
 
+ADD_EXECUTABLE (${PROJECT_NAME} ${EXE_TYPE}
+   ${Sources} ${GUI_MOC_SRCS} )
+TARGET_LINK_LIBRARIES(  ${PROJECT_NAME} ${Libraries} )
+SET(CPACK_PACKAGE_EXECUTABLES "${PROJECT_NAME};Trace FL3D")
 
-ADD_EXECUTABLE ( Trace3D ${Trace3D_sources} ${Trace3D_headers}  TraceMain.cxx )
-TARGET_LINK_LIBRARIES( Trace3D  ${Trace3D_libraries})
 
 ADD_EXECUTABLE ( RenderTraces Render.cxx TraceNode.h ${XML_sources})
 TARGET_LINK_LIBRARIES( RenderTraces
@@ -73,7 +63,7 @@ TARGET_LINK_LIBRARIES( RenderTraces
 ADD_EXECUTABLE ( ConvertToSWC ConvertToSWC.cxx TraceNode.h )
 TARGET_LINK_LIBRARIES( ConvertToSWC ITKCommon ITKBasicFilters ITKIO ITKNumerics TinyXML )
 
-INSTALL( TARGETS Trace3D DESTINATION ${INSTALL_BIN_DIR} )
+#INSTALL( TARGETS Trace3D DESTINATION ${INSTALL_BIN_DIR} )
 INSTALL( TARGETS RenderTraces DESTINATION ${INSTALL_BIN_DIR} )
 INSTALL( TARGETS ConvertToSWC DESTINATION ${INSTALL_BIN_DIR} )
 

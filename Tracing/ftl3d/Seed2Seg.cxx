@@ -23,12 +23,14 @@ Seed2Seg::Seed2Seg()	{
 	minL = 3.0;
 }
 
-void Seed2Seg::Configure(TraceConfig::Pointer& config)	{
-	iterations = config->getFitIterations();
-	AS_RATIO = config->getAspectRatio();
-	min_a = config->getMinimumVesselWidth();
-	THRESH = config->getStartThreshold();
-	minL = config->getminContrast();
+void Seed2Seg::Configure(double FitIterations, double AspectRatio, 
+						 double minVesselWidth, double startThresh, double minContrast)	
+{
+	this->iterations = FitIterations;
+	this->AS_RATIO = AspectRatio;
+	this->min_a = minVesselWidth;
+	this->THRESH = startThresh;
+	this->minL = minContrast;
 }
 
 
@@ -39,7 +41,8 @@ Seed2Seg::~Seed2Seg() {
 }
 
 
-void Seed2Seg::ComuputeStartSegments(SeedContainer3D::Pointer seeds, ImageType3D::Pointer im, TraceConfig::Pointer  conf)	{
+void Seed2Seg::ComuputeStartSegments(SeedContainer3D::Pointer seeds, ImageType3D::Pointer im)	
+{
 
 	long int ID = 0;
 	SeedContainerType SeedContainer = seeds->getContainer();
@@ -55,7 +58,7 @@ void Seed2Seg::ComuputeStartSegments(SeedContainer3D::Pointer seeds, ImageType3D
 			segment->ID = ID;
 
 			SegInit *fitter = new SegInit();
-			bool ret = fitter->fitSE(im, *segment, iterations, AS_RATIO, conf->getStartThreshold());
+			bool ret = fitter->fitSE(im, *segment, this->iterations, this->AS_RATIO, this->THRESH);
 
 			if (ret) {
 				if (!HitTestSeg(segment) && IsStartSegmentValid(segment))	{

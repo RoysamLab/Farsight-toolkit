@@ -60,8 +60,9 @@ public:
 	itkNewMacro(Self);
 	typedef vnl_vector_fixed<double,3> Vect3;
 
-	void Configure(TraceConfig::Pointer &);
-	void ComuputeStartSegments(SeedContainer3D::Pointer , ImageType3D::Pointer, TraceConfig::Pointer);
+	void Configure(double FitIterations, double AspectRatio, 
+		double minVesselWidth, double startThresh, double minContrast);
+	void ComuputeStartSegments(SeedContainer3D::Pointer , ImageType3D::Pointer);
 	void SortStartSegments();
 	unsigned int getNumberOfStartSegments() {return (unsigned int)SSContainer.size();}
 	TVessel* getStartSegment(unsigned int i) {return SSContainer[i];}

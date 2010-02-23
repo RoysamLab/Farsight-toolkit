@@ -56,7 +56,8 @@ public:
 	itkNewMacro(Self);
 
 	typedef std::vector<Trace*> TraceContainer;
-	void Configure(TraceConfig::Pointer&);
+	void Configure(double THRESHOLD, double minContrast, double StepRatio,
+								 double AspectRatio, itk::FixedArray<double, 3> Spacing);
 	void ComputeTrace(ImageType3D::Pointer , Seed2Seg::Pointer );
 	void WriteTraceToTxtFile(std::string SegTxtFname);
 	void WriteTraceToXMLFile(std::string);

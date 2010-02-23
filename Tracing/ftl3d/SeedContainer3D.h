@@ -51,6 +51,7 @@ public:
 	unsigned int getNumberOfSeeds() {return((unsigned int)SeedContainer.size());}
 
 	void Configure(TraceConfig::Pointer);
+	void SetGridSpacing (long newGridSpacing);
 	void Detect(ImageType3D::Pointer, ImageType2D::Pointer );
 	SeedContainter3DType getContainer() {return SeedContainer;}
 

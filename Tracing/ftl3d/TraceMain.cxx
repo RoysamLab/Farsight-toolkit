@@ -22,76 +22,201 @@ limitations under the License.
 // Copyright Farsight Toolkit 2009, Rensselaer Polytechnic institute Troy NY 12180.
 
 
-#include <iostream>
-#include <fstream>
-
-#include "itkImage.h"
-#include "itkRGBPixel.h"
-#include "itkImageFileReader.h"
-#include "itkImageFileWriter.h"
-#include "itkCastImageFilter.h"
-#include "itkImageRegionIterator.h"
-#include "itkMedianImageFilter.h"
-#include "itkStatisticsImageFilter.h"
-
-#include "itkArray.h"
-#include "itkCovariantVector.h"
-#include "itkRescaleIntensityImageFilter.h"
-#include "itkImageRegionIterator.h"
-#include "itkHessianRecursiveGaussianImageFilter.h"
-#include "itkSmoothingRecursiveGaussianImageFilter.h"
-#include "itkShapedNeighborhoodIterator.h"
-#include "itkSymmetricEigenAnalysis.h"
-#include "vnl/vnl_math.h"
-#include <vnl/vnl_vector_fixed.h>
-
-#include "TraceConfig.h"
-#include "SeedContainer3D.h"
-#include "Seed2Seg.h"
-#include "TraceContainer3D.h"
+#include "TraceMain.h"
 
 
-
-typedef	 float PixelType ;
-typedef itk::Image< PixelType, 2 >   ImageType2D;
-typedef itk::Image< PixelType, 3 >   ImageType3D;
-//typedef   itk::HessianRecursiveGaussianImageFilter<  ImageType3D > HessianFilterType;
-//typedef   HessianFilterType::OutputImageType            HessianImageType;
-//typedef   HessianImageType::PixelType                   HessianPixelType;
-
-
-typedef vnl_vector_fixed<double,3> Vect3;
-
-void ImageDenoise(ImageType3D::Pointer&, int );
-void UpdateMultiscale( ImageType3D::Pointer& , ImageType3D::Pointer& );
-//void GetFeature( ImageType3D::Pointer&, ImageType3D::Pointer& , const float);
-void GetFeature( ImageType3D::Pointer&, ImageType3D::Pointer&);
-void ImageStatistics(ImageType3D::Pointer & );
-static void WriteSeedImage(ImageType2D::Pointer, SeedContainer3D::Pointer,std::string );
-
-
-int main (int argc, char *argv[])
+TraceSEMain::TraceSEMain()
 {
+	//create main window gui and load files
+	QWidget * mainWidget = new QWidget();
+	this->setCentralWidget(	mainWidget);
+	QHBoxLayout *mainLayout = new QHBoxLayout;
+	//vetical box layout for the main central widget
+	mainWidget->setLayout(mainLayout);
+	//file actions
+	this->createFileActions();
+	mainLayout->addWidget(this->FileActions);
+	//settings
+	this->CreateSettingsLayout();
+	mainLayout->addWidget(this->settingsBox);
+}
+void TraceSEMain::createFileActions()
+{
+	this->FileActions = new QGroupBox("Add a File to Trace");
+	QGridLayout *fileActionLayout = new QGridLayout;
 
-	std::cout << "SuperEllipsoid Trace3D version-2.0\tDec 04, 2009" << std::endl << std::endl;
-	if (argc != 2)	{
-		std::cout << "Usage: "<<argv[0] << " [InputParameterFilename.xml]" <<std::endl;
-		exit(1);
+	this->InputFileNameLine = new QLabel();
+	QPushButton * InFileButton = new QPushButton("Input file",this);
+	connect(InFileButton, SIGNAL(clicked()), this, SLOT(GetInputFileName()));
+	fileActionLayout->addWidget(this->InputFileNameLine, 0,0);
+	fileActionLayout->addWidget(InFileButton, 0,1);
+
+	this->OutputFileNameLine = new QLineEdit();
+	QPushButton * OutFileButton = new QPushButton("Output file",this);
+	connect(OutFileButton, SIGNAL(clicked()), this, SLOT(GetOutputFileName()));
+	fileActionLayout->addWidget(this->OutputFileNameLine, 1,0);
+	fileActionLayout->addWidget(OutFileButton, 1,1);
+	
+	QPushButton * AddButton = new QPushButton("Add new Files",this);
+	connect(AddButton, SIGNAL(clicked()), this, SLOT(addFileToTrace()));
+	fileActionLayout->addWidget(AddButton, 2,1);
+
+	this->FileListWindow = new QTextEdit(this);
+	this->FileListWindow->setReadOnly(true);
+	this->FileListWindow->setLineWrapMode(QTextEdit::NoWrap);
+	fileActionLayout->addWidget(this->FileListWindow, 3,0);
+
+	//run
+	QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
+		| QDialogButtonBox::Close);
+     connect(buttonBox, SIGNAL(accepted()), this, SLOT(runSETracing()));
+     connect(buttonBox, SIGNAL(rejected()), this, SLOT(close()));
+	 fileActionLayout->addWidget(buttonBox,4,0);
+	this->FileActions->setLayout(fileActionLayout);
+}
+void TraceSEMain::GetInputFileName()
+{
+	this->InputFileNameLine->clear();
+	QString NewImageFile = QFileDialog::getOpenFileName(this , "Load Image Data to Trace", ".",
+		tr("Trace Image ( *.tiff *.tif )"));
+	if (!NewImageFile.isEmpty())
+	{
+		this->newInput = NewImageFile;
+		this->InputFileNameLine->setText(NewImageFile);
+		QString temp = NewImageFile.section('.',0,-1);
+		this->OutputFileNameLine->setText(temp.append("_SE.xml"));
+		this->statusBar()->showMessage("filename:\t" + NewImageFile);
 	}
-
-	std::cout << "Reading "<< argv[1] << std::endl;
-	TraceConfig::Pointer m_Config = TraceConfig::New();
-	if ( !m_Config->LoadParameters(argv[1]) ) {
-		std::cout << "Problem encountered in reading "<< argv[1] << std::endl;
-		return EXIT_FAILURE;
+}
+void TraceSEMain::GetOutputFileName()
+{
+	QString NewOutputFile = QFileDialog::getOpenFileName(this , "Change output Trace filename", ".",
+		tr("Trace file ( *.xml )"));
+	if (!NewOutputFile.isEmpty())
+	{
+		this->OutputFileNameLine->setText(NewOutputFile);
 	}
-	std::cout <<  std::endl <<  std::endl<<
-		"Parameter file parsed successfully, " <<m_Config->getNumberOfDataFiles() <<" images in the processing list!!" <<  std::endl<<  std::endl;
+}
+void TraceSEMain::addFileToTrace()
+{
+	this->newOutput = this->OutputFileNameLine->text();
+	if(!(this->newInput.isEmpty()||this->newOutput.isEmpty()))
+	{
+		this->InputFileNames.push_back(this->newInput.toStdString());
+		this->OutputFileNames.push_back(this->newOutput.toStdString());
+		this->FileListWindow->append(this->newInput.section('/',-1) 
+			+ "\t" + this->newOutput.section('/',-1));
+		this->statusBar()->showMessage(QString::number(this->InputFileNames.size()) + " files to trace");
+		this->InputFileNameLine->clear(); //shows nothing 
+		this->OutputFileNameLine->clear();
+	}
+}
+void TraceSEMain::CreateSettingsLayout()
+{
+	//create settings layout for tracing parameters 
+	//to disable a user input comment out the add row
+	this->settingsBox = new QGroupBox("Trace Settings");
+	QFormLayout *settingsLayout = new QFormLayout;
 
+	this->GetGridSpacing = new QSpinBox(this);
+	this->GetGridSpacing->setRange(5,70);
+	this->GetGridSpacing->setValue(15);
+	settingsLayout->addRow("Grid Spacing", this->GetGridSpacing);
 
-	for (int k = 0; k < m_Config->getNumberOfDataFiles(); k++) {
-		std::cout << "Tracing " << k+1 <<" out of " << m_Config->getNumberOfDataFiles()
-			<< " image: " << m_Config->getInputFileName(k) << std::endl<< std::endl;
+	this->GetStepRatio = new QDoubleSpinBox(this);
+	this->GetStepRatio->setRange(0.1,1);
+	this->GetStepRatio->setSingleStep(0.1);
+	this->GetStepRatio->setValue(.5);
+	settingsLayout->addRow("Step Ratio", this->GetStepRatio);
+
+	this->GetAspectRatio= new QDoubleSpinBox(this);
+	this->GetAspectRatio->setRange(1.5,3.0);
+	this->GetAspectRatio->setSingleStep(.1);
+	this->GetAspectRatio->setValue(2.5);
+	settingsLayout->addRow("Max Model Aspect Ratio", this->GetAspectRatio);
+
+	this->GetTHRESHOLD = new QDoubleSpinBox(this);
+	this->GetTHRESHOLD->setRange(0,1);
+	this->GetTHRESHOLD->setSingleStep(.1);
+	this->GetTHRESHOLD->setValue(.5);
+	settingsLayout->addRow("Threshold",this->GetTHRESHOLD);
+
+	this->GetminContrast = new QDoubleSpinBox(this);
+	this->GetminContrast->setRange(1,255);
+	this->GetminContrast->setValue(3);
+	settingsLayout->addRow("Min Contrast", this->GetminContrast);
+
+	this->GetMaximumVesselWidth = new QDoubleSpinBox(this);
+	this->GetMaximumVesselWidth->setRange(10,50);
+	this->GetMaximumVesselWidth->setValue(20);
+	settingsLayout->addRow("Maximum Vessel Width",this->GetMaximumVesselWidth);
+
+	this->GetMinimumVesselLength = new QDoubleSpinBox(this);
+	this->GetMinimumVesselLength->setRange(2,20);
+	this->GetMinimumVesselLength->setValue(3);
+	settingsLayout->addRow("Minimum Vessel Length", this->GetMinimumVesselLength);
+
+	this->GetMinimumVesselWidth = new QDoubleSpinBox(this);
+	this->GetMinimumVesselWidth->setRange(.5,9);
+	this->GetMinimumVesselWidth->setValue(1);
+	settingsLayout->addRow("Minimum Vessel Width", this->GetMinimumVesselWidth);
+
+	this->GetFitIterations = new QSpinBox(this);
+	this->GetFitIterations->setRange(50,150);
+	this->GetFitIterations->setValue(50);
+	settingsLayout->addRow("Fitting Iterations", this->GetFitIterations);
+
+	this->GetStartTHRESHOLD = new QDoubleSpinBox(this);
+	this->GetStartTHRESHOLD->setRange(0,1);
+	this->GetStartTHRESHOLD->setSingleStep(.1);
+	this->GetStartTHRESHOLD->setValue(.7);
+	settingsLayout->addRow("Starting Threshold", this->GetStartTHRESHOLD);
+
+	this->GetUseHessian = new QCheckBox(this);
+	this->GetUseHessian->setText("Use Multi-scale Hessian filtering");
+	settingsLayout->addRow(this->GetUseHessian);
+
+	this->settingsBox->setLayout(settingsLayout);
+}
+
+bool TraceSEMain::runSETracing()
+{
+	this->addFileToTrace();
+	this->numDataFiles = this->InputFileNames.size();
+	if (this->numDataFiles <1)
+	{
+		QMessageBox msgBox;
+		msgBox.setText("There are no files to trace");
+		msgBox.exec();
+		return false;
+	}
+	this->statusBar()->showMessage("Setting Parameters");
+	this->GridSpacing = this->GetGridSpacing->value();
+	this->StepRatio = this->GetStepRatio->value();
+	this->AspectRatio = this->GetAspectRatio->value();
+	this->THRESHOLD = this->GetTHRESHOLD->value();
+	this->minContrast = this->GetminContrast->value();
+	this->MaximumVesselWidth = this->GetMaximumVesselWidth->value();
+	this->MinimumVesselLength = this->GetMinimumVesselLength->value();
+	this->MinimumVesselWidth = this->GetMinimumVesselWidth->value();
+	this->StartTHRESHOLD = this->GetStartTHRESHOLD->value();
+	this->Spacing[0] = 1;
+	this->Spacing[1] = 1;
+	this->Spacing[2] = 1;
+	if (this->GetUseHessian->isChecked())
+	{
+		this->UseHessian = 1;
+	}
+	else
+	{
+		this->UseHessian = 0;
+	}
+	for (unsigned int k = 0; k < this->numDataFiles; k++) 
+	{
+	this->statusBar()->showMessage("Tracing file " + QString::number((int)k) 
+		+ " of " + QString::number(this->numDataFiles));
+		/*std::cout << "Tracing " << k+1 <<" out of " << m_Config->getNumberOfDataFiles()
+			<< " image: " << m_Config->getInputFileName(k) << std::endl<< std::endl;*/
 
 		ImageType3D::Pointer image3D = ImageType3D::New();
 		ImageType2D::Pointer MIPimage = ImageType2D::New();
@@ -99,57 +224,59 @@ int main (int argc, char *argv[])
 		ReaderType::GlobalWarningDisplayOff();
 		ReaderType::Pointer reader = ReaderType::New();
 
-		reader->SetFileName(m_Config->getInputFileName(k));
+		reader->SetFileName(  this->InputFileNames.at(k));
 		image3D = (reader->GetOutput());
-		try {
-			image3D->Update();
-		}
-		catch (itk::ExceptionObject &e)	{
-			std::cout << "Exception caught in opening input image file!!! " << std::endl << e << std::endl;
-			return EXIT_FAILURE;
-		}
-		std::cout << "Image of size " << image3D->GetBufferedRegion().GetSize() << " read successfully " << std::endl;
+		image3D->Update();
+		this->statusBar()->showMessage("Image read");
+		//this->statusBar()->showMessage("Image of size " + QString::number(image3D->GetBufferedRegion().GetSize() )+ " read successfully " );
 
-		ImageDenoise(image3D, m_Config->getHessianFlag());
+		ImageDenoise(image3D, this->UseHessian);
 		ImageStatistics(image3D);	//This inverts the intensities (in most cases)
-
-		try	{
+		this->statusBar()->showMessage("Image Statistics finished");
+		/*try	{*/
 			SeedContainer3D::Pointer m_Seeds = SeedContainer3D::New();
-			m_Seeds->Configure(m_Config);
-			m_Seeds->Detect(image3D, MIPimage);		//At input: image3D is inverted input image, MIPimage is blank.
+			m_Seeds->SetGridSpacing((long) this->GridSpacing );
+			m_Seeds->Detect(image3D, MIPimage);
+		this->statusBar()->showMessage("Seeds ");
+			//At input: image3D is inverted input image, MIPimage is blank.
 													//At output: image3D is untouched, MIP image is minimum projection
 													//				AND seeds have been detected
 			//WriteSeedImage(MIPimage, m_Seeds , m_Config->getOutputFileName(k));
 
 			Seed2Seg::Pointer m_SS = Seed2Seg::New();
-			m_SS->Configure(m_Config);
-			m_SS->ComuputeStartSegments(m_Seeds , image3D, m_Config);
+			m_SS->Configure(this->FitIterations, this->AspectRatio, this->MinimumVesselWidth,
+				this->StartTHRESHOLD, this->minContrast);
+		this->statusBar()->showMessage("Comupute Start Segments ");
+			m_SS->ComuputeStartSegments(m_Seeds , image3D);
+		this->statusBar()->showMessage("sort Start Segments ");
 			m_SS->SortStartSegments();
 
 			TraceContainer3D::Pointer m_Tracer = TraceContainer3D::New();
-			m_Tracer->Configure(m_Config);
+			m_Tracer->Configure(this->THRESHOLD, this->minContrast, this->StepRatio,
+								 this->AspectRatio, this->Spacing);
+		this->statusBar()->showMessage("Compute Trace");
 			m_Tracer->ComputeTrace(image3D, m_SS) ;
 			//m_Tracer->WriteTraceToTxtFile(m_Config->getOutputFileName(k));
-			m_Tracer->WriteTraceToXMLFile(m_Config->getOutputFileName(k));
+		this->statusBar()->showMessage("write to file");
+			m_Tracer->WriteTraceToXMLFile(this->OutputFileNames.at(k));
 
 			m_Seeds = NULL;
 			m_SS = NULL;
 			m_Tracer = NULL;
 			image3D = NULL;
 			MIPimage = NULL;
-		}
-		catch (itk::ExceptionObject & err )	    {
-			std::cout << "ExceptionObject caught !" << std::endl;
-			std::cout << err << std::endl;
-			return EXIT_FAILURE;
-		}
+		//}
+		//catch (itk::ExceptionObject & err )	    {
+		//	std::cout << "ExceptionObject caught !" << std::endl;
+		//	std::cout << err << std::endl;
+		//	return EXIT_FAILURE;
+		//}
 	}
-
-	return EXIT_SUCCESS;
+	this->statusBar()->showMessage("done");
+	return true;
 }
-
 //void ImageDenoise(ImageType3D::Pointer& vol)	{
-void ImageDenoise(ImageType3D::Pointer& im3D, int hessianFlag)	{
+void TraceSEMain::ImageDenoise(ImageType3D::Pointer& im3D, int hessianFlag)	{
 	// use median filtering based denoising to get rid of impulsive noise
 	std::cout << "Denoising Image..." << std::endl;
 	typedef itk::MedianImageFilter<ImageType3D, ImageType3D> MedianFilterType;
@@ -219,7 +346,7 @@ void ImageDenoise(ImageType3D::Pointer& im3D, int hessianFlag)	{
 }
 
 
-void ImageStatistics(ImageType3D::Pointer & im3D)	{
+void TraceSEMain::ImageStatistics(ImageType3D::Pointer & im3D)	{
 	typedef itk::StatisticsImageFilter<ImageType3D>  StatisticsType;
 	typedef itk::ImageRegionIterator<ImageType3D> IteratorType;
 
@@ -277,7 +404,7 @@ void ImageStatistics(ImageType3D::Pointer & im3D)	{
 
 
 
-static void WriteSeedImage(ImageType2D::Pointer im, SeedContainer3D::Pointer seedCnt ,std::string filename)	{
+void TraceSEMain::WriteSeedImage(ImageType2D::Pointer im, SeedContainer3D::Pointer seedCnt ,std::string filename)	{
 
   typedef itk::RGBPixel<unsigned char>   RGBPixelType;
   typedef itk::Image< RGBPixelType,  2 >    RGBImageType;
@@ -350,7 +477,7 @@ static void WriteSeedImage(ImageType2D::Pointer im, SeedContainer3D::Pointer see
 }
 
 
-void UpdateMultiscale( ImageType3D::Pointer& temp, ImageType3D::Pointer& maxF)	{
+void TraceSEMain::UpdateMultiscale( ImageType3D::Pointer& temp, ImageType3D::Pointer& maxF)	{
 	itk::ImageRegionIterator<ImageType3D> itt(temp, temp->GetBufferedRegion());
 	itk::ImageRegionIterator<ImageType3D> itm(maxF, maxF->GetBufferedRegion());
 	for (itt.GoToBegin(), itm.GoToBegin(); !itt.IsAtEnd(); ++itt, ++itm)	{
@@ -359,7 +486,7 @@ void UpdateMultiscale( ImageType3D::Pointer& temp, ImageType3D::Pointer& maxF)	{
 }
 
 
-void GetFeature( ImageType3D::Pointer& temp, ImageType3D::Pointer& svol)	{
+void TraceSEMain::GetFeature( ImageType3D::Pointer& temp, ImageType3D::Pointer& svol)	{
 		// set the diagonal terms in neighborhood iterator
 	itk::Offset<3>
 		xp =  { {2 ,  0 ,   0} },

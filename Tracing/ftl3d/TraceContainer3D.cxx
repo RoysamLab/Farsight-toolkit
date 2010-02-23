@@ -27,18 +27,21 @@ TraceContainer3D::TraceContainer3D() {
 	m_Spacing.Fill(1.0);
 }
 
-void TraceContainer3D::Configure(TraceConfig::Pointer& config)	{
-	m_THRESH = config->getTHRESHOLD();
-	m_minL = config->getminContrast();
-	m_Stepsize = config->getStepRatio();
-	m_AspectRatio = config->getAspectRatio();
-	m_Spacing = config->GetSpacing();
+void TraceContainer3D::Configure(double THRESHOLD, double minContrast, double StepRatio,
+								 double AspectRatio, itk::FixedArray<double, 3> Spacing)	
+{
+	m_THRESH = THRESHOLD;
+	m_minL = minContrast;
+	m_Stepsize = StepRatio;
+	m_AspectRatio = AspectRatio;
+	m_Spacing = Spacing;
 }
 
 TraceContainer3D::~TraceContainer3D() {
 	TraceContainer::iterator it2;
 	std::cout << "Deleting Traces" << std::endl;
-	for (it2 = TraceList.begin(); it2 != TraceList.end(); ++it2)	{
+	for (it2 = TraceList.begin(); it2 != TraceList.end(); ++it2)	
+	{
 		delete (*it2);
 	}
 }
@@ -53,9 +56,11 @@ void TraceContainer3D::ComputeTrace(ImageType3D::Pointer im, Seed2Seg::Pointer s
 
 
 	S("Tracer start...")
-	for (unsigned int i=0; i< sseg->getNumberOfStartSegments(); i++ )	{
+	for (unsigned int i=0; i< sseg->getNumberOfStartSegments(); i++ )	
+	{
 
-		if (NodeList->HitTest(sseg->getStartSegment(i)) > -1)	{
+		if (NodeList->HitTest(sseg->getStartSegment(i)) > -1)	
+		{
 			S("Failed starting HIT  test")
 			continue;
 		}
@@ -78,12 +83,14 @@ void TraceContainer3D::ComputeTrace(ImageType3D::Pointer im, Seed2Seg::Pointer s
 			TVessel *seg1 = tr->Step(seg, im, segID, STEP_FWD, iterations, m_AspectRatio, m_THRESH);
 			
 
-			if (!seg1) {
+			if (!seg1) 
+			{
 				S("seg 1 returned empty")
 				break;
 			}
 
-			if (seg1->IsSegmentValid(seg, m_THRESH, m_minL)==0)	{
+			if (seg1->IsSegmentValid(seg, m_THRESH, m_minL)==0)	
+			{
 				seg1->PrintSelf();
 				S("Seg Valid Violation")
 				break;
@@ -98,13 +105,15 @@ void TraceContainer3D::ComputeTrace(ImageType3D::Pointer im, Seed2Seg::Pointer s
 			//seg1->PrintSelf();	tr->PrintSelf();	//NodeList->PrintSelf();	S("Step done ")
 
 
-			if (NodeList->IsTraceValid(tr, seg1)==0)	{
+			if (NodeList->IsTraceValid(tr, seg1)==0)	
+			{
 				S("Trace Valid Violation")
 				break;
 			}
 
 			long hitSeg = NodeList->HitTest(seg1, tr);
-			if (hitSeg > -1)	{
+			if (hitSeg > -1)	
+			{
 				AddBranchPoint(seg1, NodeList->getSegment(hitSeg));
 				S("Hit segment " << hitSeg)
 				break;

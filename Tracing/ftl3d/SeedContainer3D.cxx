@@ -42,7 +42,10 @@ void SeedContainer3D::Detect(ImageType3D::Pointer im3D, ImageType2D::Pointer im2
 	//Detect2Dseeds(im2D);
 	//LocateZPosition(im3D);
 }
-
+void SeedContainer3D::SetGridSpacing(long newGridSpacing)
+{
+	this->GridSpacing = newGridSpacing;
+}
 
 void SeedContainer3D::Detect3Dseeds(ImageType3D::Pointer image) {
 	ImageType3D::SizeType sz = image->GetBufferedRegion().GetSize();
