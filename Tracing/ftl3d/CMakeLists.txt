@@ -33,31 +33,29 @@ SET ( Libraries
       ITKCommon
       ITKIO
       ITKNumerics
+      ITKBasicFilters
       TinyXML 
       TraceSE3DLib
     ${QT_LIBRARIES}
 )
 QT4_WRAP_CPP( GUI_MOC_SRCS Trace3dDriver.cxx TraceMain.cxx)
 
-ADD_EXECUTABLE (${PROJECT_NAME} ${EXE_TYPE}
-   ${Sources} ${GUI_MOC_SRCS} )
+ADD_EXECUTABLE (${PROJECT_NAME} ${EXE_TYPE} ${Sources} ${GUI_MOC_SRCS} )
 TARGET_LINK_LIBRARIES(  ${PROJECT_NAME} ${Libraries} )
 SET(CPACK_PACKAGE_EXECUTABLES "${PROJECT_NAME};Trace FL3D")
 
 
 ADD_EXECUTABLE ( RenderTraces Render.cxx TraceNode.h ${XML_sources})
 TARGET_LINK_LIBRARIES( RenderTraces
-                       ${Trace3D_libraries}
+                       ${Libraries}
                        tiff
-                       ITKBasicFilters
                        vtkRendering
                        vtkIO 
                        vtkCommon
                        vtksys
                        vtkFiltering
- 		               vtkVolumeRendering 
-					   vtkWidgets 
-					   TinyXML
+ 		       vtkVolumeRendering 
+			vtkWidgets 
                         )
 
 ADD_EXECUTABLE ( ConvertToSWC ConvertToSWC.cxx TraceNode.h )
