@@ -34,12 +34,11 @@ SET ( Libraries
       ITKCommon
       ITKIO
       ITKNumerics
-      TinyXML 
       TraceSE3DLib
 )
 QT4_WRAP_CPP( GUI_MOC_SRCS TraceMain.h)
 
-ADD_EXECUTABLE (${PROJECT_NAME} ${EXE_TYPE} ${Sources} ${GUI_MOC_SRCS} )
+ADD_EXECUTABLE (${PROJECT_NAME} ${EXE_TYPE} ${Sources} ${XML_sources} ${GUI_MOC_SRCS} )
 TARGET_LINK_LIBRARIES(  ${PROJECT_NAME} ${QT_LIBRARIES} ${Libraries} )
 SET(CPACK_PACKAGE_EXECUTABLES "${PROJECT_NAME};Trace FL3D")
 
