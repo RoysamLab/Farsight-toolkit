@@ -15,6 +15,7 @@ SET (XML_sources
 	tinyxml.h
 )	
 SET( Sources Trace3dDriver.cxx TraceMain.cxx	TraceMain.h)
+
 ADD_LIBRARY(TraceSE3DLib
 
 	TraceConfig.cxx				TraceConfig.h
@@ -33,21 +34,20 @@ SET ( Libraries
       ITKCommon
       ITKIO
       ITKNumerics
-      ITKBasicFilters
       TinyXML 
       TraceSE3DLib
-    ${QT_LIBRARIES}
 )
-QT4_WRAP_CPP( GUI_MOC_SRCS Trace3dDriver.cxx TraceMain.cxx)
+QT4_WRAP_CPP( GUI_MOC_SRCS TraceMain.cxx)
 
 ADD_EXECUTABLE (${PROJECT_NAME} ${EXE_TYPE} ${Sources} ${GUI_MOC_SRCS} )
-TARGET_LINK_LIBRARIES(  ${PROJECT_NAME} ${Libraries} )
+TARGET_LINK_LIBRARIES(  ${PROJECT_NAME} ${Libraries} ${QT_LIBRARIES})
 SET(CPACK_PACKAGE_EXECUTABLES "${PROJECT_NAME};Trace FL3D")
 
 
 ADD_EXECUTABLE ( RenderTraces Render.cxx TraceNode.h ${XML_sources})
 TARGET_LINK_LIBRARIES( RenderTraces
                        ${Libraries}
+                       ITKBasicFilters
                        tiff
                        vtkRendering
                        vtkIO 
