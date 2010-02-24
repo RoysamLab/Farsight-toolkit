@@ -37,7 +37,7 @@ SET ( Libraries
       TraceSE3DLib
     ${QT_LIBRARIES}
 )
-QT4_WRAP_CPP( GUI_MOC_SRCS Trace3dDriver.cxx TraceMain.cxx	TraceMain.h)
+QT4_WRAP_CPP( GUI_MOC_SRCS Trace3dDriver.cxx TraceMain.cxx)
 
 ADD_EXECUTABLE (${PROJECT_NAME} ${EXE_TYPE}
    ${Sources} ${GUI_MOC_SRCS} )
