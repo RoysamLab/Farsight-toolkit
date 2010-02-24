@@ -398,7 +398,7 @@ void TrainingDialog::updateInputs(void)
 	int c=0;
 	for(it=training.begin(); it!=training.end(); ++it)
 	{
-		int cls = (*it).first;
+		//int cls = (*it).first;
 		std::set<int> ids = (*it).second;
 		std::set<int>::iterator s_it = ids.begin();
 		QString input;
