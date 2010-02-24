@@ -1716,7 +1716,7 @@ void View3D::SaveToFile()
     {
     this->tobj->WriteToVTKFile(fileName.toStdString().c_str()); 
     }
-  this->statusBar()->showMessage("File saved as:\t" + fileName.section('/',-1));
+  this->statusBar()->showMessage("File saved as:\t" + fileName.section('/',-2));
   this->EditLogDisplay->append(QString("File saved as: %1  at time: %2").arg(fileName) 
 	   .arg(this->Time.currentTime().toString( "h:m:s ap" )));
 //Edit Log written to file

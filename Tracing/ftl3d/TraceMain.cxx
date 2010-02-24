@@ -28,6 +28,7 @@ limitations under the License.
 TraceSEMain::TraceSEMain(QWidget *parent)
 : QMainWindow(parent)
 {
+	this->Project= new ProjectManager();
 	//create main window gui and load files
 	QWidget * mainWidget = new QWidget();
 	this->setCentralWidget(	mainWidget);
@@ -86,7 +87,7 @@ void TraceSEMain::GetInputFileName()
 	{
 		this->newInput = NewImageFile;
 		this->InputFileNameLine->setText(NewImageFile);
-		QString temp = NewImageFile.section('.',0,-1);
+		QString temp = NewImageFile.section('.',0,-2);
 		this->OutputFileNameLine->setText(temp.append("_SE.xml"));
 		this->statusBar()->showMessage("filename:\t" + NewImageFile);
 	}

@@ -39,7 +39,7 @@ limitations under the License.
 #include "vnl/vnl_math.h"
 #include <vnl/vnl_vector_fixed.h>
 
-#include "TraceConfig.h"
+//#include "TraceConfig.h"
 #include "SeedContainer3D.h"
 #include "Seed2Seg.h"
 #include "TraceContainer3D.h"
@@ -51,11 +51,6 @@ limitations under the License.
 #include <QString>
 #include <QObject>
 
-typedef	 float PixelType ;
-typedef itk::Image< PixelType, 2 >   ImageType2D;
-typedef itk::Image< PixelType, 3 >   ImageType3D;
-typedef vnl_vector_fixed<double,3> Vect3;
-typedef vnl_matrix_fixed <double,3,3> Mat33;
 
 class TraceSEMain : public QMainWindow 
 {
@@ -77,6 +72,13 @@ public slots:
 	void GetOutputFileName();
 
 private:
+
+	typedef	 float PixelType ;
+	typedef itk::Image< PixelType, 2 >   ImageType2D;
+	typedef itk::Image< PixelType, 3 >   ImageType3D;
+	typedef vnl_vector_fixed<double,3> Vect3;
+	typedef vnl_matrix_fixed <double,3,3> Mat33;
+
 	QGroupBox * FileActions;
 	void createFileActions();
 	QString newInput, newOutput;
@@ -90,6 +92,7 @@ private:
     std::vector<std::string> OutputFileNames;
 	unsigned int numDataFiles;
 
+	ProjectManager * Project;
     //tracing parameters
 	int GridSpacing;
 	QSpinBox * GetGridSpacing;
