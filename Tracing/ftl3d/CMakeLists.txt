@@ -58,8 +58,8 @@ TARGET_LINK_LIBRARIES( RenderTraces
 			vtkWidgets 
                         )
 
-ADD_EXECUTABLE ( ConvertToSWC ConvertToSWC.cxx TraceNode.h )
-TARGET_LINK_LIBRARIES( ConvertToSWC ITKCommon ITKBasicFilters ITKIO ITKNumerics TinyXML )
+ADD_EXECUTABLE ( ConvertToSWC ConvertToSWC.cxx TraceNode.h ${XML_sources})
+TARGET_LINK_LIBRARIES( ConvertToSWC ITKCommon ITKBasicFilters ITKIO ITKNumerics )
 
 #INSTALL( TARGETS Trace3D DESTINATION ${INSTALL_BIN_DIR} )
 INSTALL( TARGETS RenderTraces DESTINATION ${INSTALL_BIN_DIR} )
