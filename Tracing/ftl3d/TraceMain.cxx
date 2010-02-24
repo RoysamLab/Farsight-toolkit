@@ -25,7 +25,8 @@ limitations under the License.
 #include "TraceMain.h"
 
 
-TraceSEMain::TraceSEMain()
+TraceSEMain::TraceSEMain(QWidget *parent)
+: QMainWindow(parent)
 {
 	//create main window gui and load files
 	QWidget * mainWidget = new QWidget();
@@ -40,6 +41,7 @@ TraceSEMain::TraceSEMain()
 	this->CreateSettingsLayout();
 	mainLayout->addWidget(this->settingsBox);
 }
+
 void TraceSEMain::createFileActions()
 {
 	this->FileActions = new QGroupBox("Add a File to Trace");
@@ -74,6 +76,7 @@ void TraceSEMain::createFileActions()
 	 fileActionLayout->addWidget(buttonBox,4,0);
 	this->FileActions->setLayout(fileActionLayout);
 }
+
 void TraceSEMain::GetInputFileName()
 {
 	this->InputFileNameLine->clear();
@@ -88,6 +91,7 @@ void TraceSEMain::GetInputFileName()
 		this->statusBar()->showMessage("filename:\t" + NewImageFile);
 	}
 }
+
 void TraceSEMain::GetOutputFileName()
 {
 	QString NewOutputFile = QFileDialog::getOpenFileName(this , "Change output Trace filename", ".",
@@ -97,6 +101,7 @@ void TraceSEMain::GetOutputFileName()
 		this->OutputFileNameLine->setText(NewOutputFile);
 	}
 }
+
 void TraceSEMain::addFileToTrace()
 {
 	this->newOutput = this->OutputFileNameLine->text();
@@ -111,6 +116,7 @@ void TraceSEMain::addFileToTrace()
 		this->OutputFileNameLine->clear();
 	}
 }
+
 void TraceSEMain::CreateSettingsLayout()
 {
 	//create settings layout for tracing parameters 
@@ -275,6 +281,7 @@ bool TraceSEMain::runSETracing()
 	this->statusBar()->showMessage("done");
 	return true;
 }
+
 //void ImageDenoise(ImageType3D::Pointer& vol)	{
 void TraceSEMain::ImageDenoise(ImageType3D::Pointer& im3D, int hessianFlag)	{
 	// use median filtering based denoising to get rid of impulsive noise

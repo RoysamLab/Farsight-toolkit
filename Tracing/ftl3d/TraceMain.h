@@ -46,18 +46,23 @@ limitations under the License.
 #include <QAction>
 #include <QtGui>
 #include <QMainWindow>
-
+#include <QWidget>
+#include <QString>
+#include <QObject>
 
 typedef	 float PixelType ;
 typedef itk::Image< PixelType, 2 >   ImageType2D;
 typedef itk::Image< PixelType, 3 >   ImageType3D;
 typedef vnl_vector_fixed<double,3> Vect3;
 typedef vnl_matrix_fixed <double,3,3> Mat33;
-class TraceSEMain: public QMainWindow 
+
+class TraceSEMain : public QMainWindow 
 {
-Q_OBJECT;
+	Q_OBJECT;
+
 public:
-	TraceSEMain();
+	TraceSEMain(QWidget * parent = 0);
+	~TraceSEMain(){};
 	void ImageDenoise(ImageType3D::Pointer&, int );
 	void UpdateMultiscale( ImageType3D::Pointer& , ImageType3D::Pointer& );
 	//void GetFeature( ImageType3D::Pointer&, ImageType3D::Pointer& , const float);
@@ -109,4 +114,5 @@ private:
 	int UseHessian;
 	QCheckBox * GetUseHessian;
 };
+
 #endif

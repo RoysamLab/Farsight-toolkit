@@ -14,7 +14,7 @@ SET (XML_sources
 	tinystr.h
 	tinyxml.h
 )	
-SET( Sources Trace3dDriver.cxx TraceMain.cxx	TraceMain.h)
+SET( Sources Trace3dDriver.cxx TraceMain.cxx TraceMain.h)
 
 ADD_LIBRARY(TraceSE3DLib
 
@@ -37,10 +37,10 @@ SET ( Libraries
       TinyXML 
       TraceSE3DLib
 )
-QT4_WRAP_CPP( GUI_MOC_SRCS TraceMain.cxx)
+QT4_WRAP_CPP( GUI_MOC_SRCS TraceMain.h)
 
 ADD_EXECUTABLE (${PROJECT_NAME} ${EXE_TYPE} ${Sources} ${GUI_MOC_SRCS} )
-TARGET_LINK_LIBRARIES(  ${PROJECT_NAME} ${Libraries} ${QT_LIBRARIES})
+TARGET_LINK_LIBRARIES(  ${PROJECT_NAME} ${QT_LIBRARIES} ${Libraries} )
 SET(CPACK_PACKAGE_EXECUTABLES "${PROJECT_NAME};Trace FL3D")
 
 
