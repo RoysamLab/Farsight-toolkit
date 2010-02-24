@@ -1,5 +1,7 @@
 PROJECT(TraceEdit)
 
+ADD_LIBRARY( TraceProject TraceProjectManager.h TraceProjectManager.cxx )
+
 ADD_LIBRARY(Trace
   TraceBit.h      TraceBit.cxx
   TraceLine.h     TraceLine.cxx
@@ -12,7 +14,7 @@ ADD_LIBRARY(Trace
   branchPT.h	    BranchPT.cxx
   ImageActors.h		ImageActors.cxx
   vtkPlotEdges.h	vtkPlotEdges.cxx 
-  TraceProjectManager.h TraceProjectManager.cxx)
+  )
 
 SET( Sources View3D.h View3D.cxx vtkTraceViewerDriver.cxx )
 
@@ -35,6 +37,7 @@ SET( Libraries
     TinyXML
     ftkGUI
     Trace
+    TraceProject 
     ${QT_LIBRARIES} )
 
 QT4_WRAP_CPP( GUI_MOC_SRCS View3D.h MergeModel.h TraceModel.h)

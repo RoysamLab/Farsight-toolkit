@@ -43,6 +43,7 @@ limitations under the License.
 #include "SeedContainer3D.h"
 #include "Seed2Seg.h"
 #include "TraceContainer3D.h"
+#include <TraceEdit/TraceProjectManager.h>
 #include <QAction>
 #include <QtGui>
 #include <QMainWindow>
