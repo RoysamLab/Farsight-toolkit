@@ -28,6 +28,7 @@ ADD_LIBRARY(TraceSE3DLib
 	Seed2Seg.cxx				Seed2Seg.h
 	NodeContainer3D.cxx			NodeContainer3D.h
 	TraceContainer3D.cxx		TraceContainer3D.h
+								TraceNode.h
  )      
 
 SET ( Libraries
@@ -57,10 +58,10 @@ TARGET_LINK_LIBRARIES( RenderTraces
 			vtkWidgets 
                         )
 
-ADD_EXECUTABLE ( ConvertToSWC ConvertToSWC.cxx TraceNode.h ${XML_sources})
-TARGET_LINK_LIBRARIES( ConvertToSWC ITKCommon ITKBasicFilters ITKIO ITKNumerics )
+#ADD_EXECUTABLE ( ConvertToSWC ConvertToSWC.cxx TraceNode.h ${XML_sources})
+#TARGET_LINK_LIBRARIES( ConvertToSWC ITKCommon ITKBasicFilters ITKIO ITKNumerics )
 
 #INSTALL( TARGETS Trace3D DESTINATION ${INSTALL_BIN_DIR} )
 INSTALL( TARGETS RenderTraces DESTINATION ${INSTALL_BIN_DIR} )
-INSTALL( TARGETS ConvertToSWC DESTINATION ${INSTALL_BIN_DIR} )
+#INSTALL( TARGETS ConvertToSWC DESTINATION ${INSTALL_BIN_DIR} )
 

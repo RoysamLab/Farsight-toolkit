@@ -39,11 +39,15 @@ limitations under the License.
 #include "vnl/vnl_math.h"
 #include <vnl/vnl_vector_fixed.h>
 
-//#include "TraceConfig.h"
+//#include "TraceConfig.h" //no longer used
 #include "SeedContainer3D.h"
 #include "Seed2Seg.h"
 #include "TraceContainer3D.h"
+#include "TraceNode.h"
+
 #include <TraceEdit/TraceProjectManager.h>
+#include "tinyxml/tinyxml.h"
+
 #include <QAction>
 #include <QtGui>
 #include <QMainWindow>
@@ -72,28 +76,34 @@ public slots:
 	void GetOutputFileName();
 
 private:
-
+	
+	bool ReadNodeXMLFile(std::string xmlfname, std::vector<TraceNode*>& NodeContainer);
+	void WriteSWCFile(std::string SWCFilename, const std::vector<TraceNode*>& NodeContainer);
+	void CreateSettingsLayout();
+	void createFileActions();
+//define  structures
 	typedef	 float PixelType ;
 	typedef itk::Image< PixelType, 2 >   ImageType2D;
 	typedef itk::Image< PixelType, 3 >   ImageType3D;
 	typedef vnl_vector_fixed<double,3> Vect3;
 	typedef vnl_matrix_fixed <double,3,3> Mat33;
-
+	ProjectManager * Project;
+//GUI objects
 	QGroupBox * FileActions;
-	void createFileActions();
-	QString newInput, newOutput;
+	QGroupBox * settingsBox;
+
 	QLabel * InputFileNameLine;
 	QLineEdit * OutputFileNameLine;
 	QTextEdit * FileListWindow;
-
-	QGroupBox * settingsBox;
-	void CreateSettingsLayout();
+	unsigned int numDataFiles;
+//file names
+	QString newInput, newOutput, FileSuffix;
 	std::vector<std::string> InputFileNames;
     std::vector<std::string> OutputFileNames;
-	unsigned int numDataFiles;
+    std::vector<std::string> OutputSWCFileNames;
 
-	ProjectManager * Project;
-    //tracing parameters
+
+//tracing parameters and gui object
 	int GridSpacing;
 	QSpinBox * GetGridSpacing;
 	double StepRatio;
@@ -117,6 +127,8 @@ private:
 	itk::FixedArray<double, 3> Spacing;
 	int UseHessian;
 	QCheckBox * GetUseHessian;
+	bool ConvertToSWC;
+	QCheckBox * GetConvertToSWC;
 };
 
 #endif

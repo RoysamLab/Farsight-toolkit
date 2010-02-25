@@ -90,7 +90,7 @@ View3D::View3D(int argc, char **argv)
 	int num_loaded = 0;
 	this->Volume=0;
 	bool tracesLoaded = false;
-	this->translateImages = true;	//this is for testing a switch is needed
+	this->translateImages = false;	//this is for testing a switch is needed
 	this->Date.currentDate();
 	this->Time.currentTime();
 	this->Image.clear();
@@ -205,9 +205,9 @@ void View3D::CreateBootLoader()
 	LoadLayout->addRow(tr("Image File"), this->BootImage);
 	LoadLayout->addRow(tr("Somas File"), this->BootSoma);
 	LoadLayout->addRow(tr("uM Per Voxel"), this->scale);
-	LoadLayout->addRow(tr("Run Trace Editor"), this->okBoot);
 	LoadLayout->addRow(tr("Reload Previous Session"), this->Reload);
 	LoadLayout->addRow(tr("Project"), this->BootProject);
+	LoadLayout->addRow(tr("Run Trace Editor"), this->okBoot);
 	this->bootLoadFiles->show();
 	this->bootLoadFiles->move(this->TraceEditSettings.value("boot/pos",QPoint(40, 59)).toPoint());
 }
