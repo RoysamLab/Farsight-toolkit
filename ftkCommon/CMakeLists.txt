@@ -6,6 +6,7 @@ SET( FTKCOMMON_SRCS
   ftkObject.cpp 
   ftkObjectAssociation.cpp
   ftkPreprocess.cpp
+  ftkMultipleImageHandler.cpp
 )
 
 SET( FTKCOMMON_HDRS
@@ -19,6 +20,7 @@ SET( FTKCOMMON_HDRS
   itkLabelGeometryImageFilter.h
   itkLabelGeometryImageFilter.txx 
   ftkPreprocess.h
+  ftkMultipleImageHandler.h
 )
 
 
@@ -27,9 +29,12 @@ ADD_LIBRARY( ftkCommon
             ${FTKCOMMON_HDRS} 
 )
 
-TARGET_LINK_LIBRARIES( ftkCommon TinyXML
+TARGET_LINK_LIBRARIES( ftkCommon TinyXML ftkImage
                        vtksys vtkCommon vtkFiltering vtkIO
                        ITKCommon ITKBasicFilters ITKIO ITKStatistics )
+
+ADD_EXECUTABLE( block main.cpp )
+TARGET_LINK_LIBRARIES( block ftkCommon )
 
 #INSTALL( TARGETS ftkCommon DESTINATION . )
 

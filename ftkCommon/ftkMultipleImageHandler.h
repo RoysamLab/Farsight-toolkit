@@ -1,0 +1,78 @@
+/*=========================================================================
+Copyright 2009 Rensselaer Polytechnic Institute
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+=========================================================================*/
+#ifndef __ftkMultipleImageHandler_h
+#define __ftkMultipleImageHandler_h
+
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+// NOTE THAT THIS CLASS IS WRITTEN FOR 8-BIT IMAGE PROCESSING
+#include "itkImage.h"
+#include <itkImageIOBase.h>
+#include <itkLightObject.h>
+#include <itkObjectFactory.h>
+#include <itkSmartPointer.h>
+#include "itkRGBPixel.h"
+#include "itkImageSeriesReader.h"
+#include "itkImageFileWriter.h"
+#include "itkImageFileReader.h"
+#include "itkExtractImageFilter.h"
+#include "itkRescaleIntensityImageFilter.h"
+#include "itkNumericSeriesFileNames.h"
+
+#include <vector>
+#include <string>
+
+#include <math.h>
+
+#include "ftkUtils.h"
+
+namespace ftk
+{
+
+class MultipleImageHandler
+{
+	typedef unsigned char   UCharPixelType;
+	typedef unsigned short	UShortPixelType;
+	typedef float			FloatPixelType;
+	typedef double			DoublePixelType;
+	typedef itk::RGBPixel<UCharPixelType> RGBPixelType;
+	
+	typedef itk::Image<UCharPixelType, 2> UCharImageType2D;
+	typedef itk::Image<UCharPixelType, 3> UCharImageType3D;
+	typedef itk::Image<UShortPixelType, 2> UShortImageType2D;
+	typedef itk::Image<UShortPixelType, 3> UShortImageType3D;
+	typedef itk::Image<RGBPixelType, 2> RGBImageType2D;
+	typedef itk::Image<RGBPixelType, 3> RGBImageType3D;
+
+	typedef std::vector<std::string> StrVector;
+	typedef std::pair<int, int> PairType;
+	typedef std::vector< PairType > PairVector;
+
+public:
+	void SeriesToBlocks(std::string seriesFormat, int startIndex, int endIndex, int dx, int dy, int dz);
+	void SeriesToBlocks(StrVector inFiles, int dx, int dy, int dz);
+	
+private:
+	//functions:
+	UCharImageType2D::Pointer ReadImage2D(std::string filename);
+	PairVector CreateOutputRegions(int size, int divs);
+	void ExtractBlock(StrVector inFiles,  PairType xPair, PairType yPair, PairType zPair, std::string fname);	
+};
+
+} // end namespace
+
+#endif
