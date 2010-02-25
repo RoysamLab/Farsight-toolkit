@@ -17,6 +17,7 @@ limitations under the License.
 #endif
 
 #include "mdlMST.h"
+#include "mdlVolumeProcess.h"
 
 namespace mdl
 {
@@ -90,13 +91,33 @@ void MST::SetVesselMap(ImageType::Pointer VesselMap)
 
 
 
-bool MST::CreateGraphAndMST()
+bool MST::CreateGraphAndMST(void)
 {
 	if(!m_inputImage || !skeletonPoints)
 		return false;
 
 	this->skeletonPointsToNodes(useVoxelRounding);
 	this->nodesToEdges();
+	//this->ShapeBasedNodesToEdges();
+	this->minimumSpanningTree();
+
+	return true;
+}
+
+bool MST::CreateGraphAndMST(int Type )
+{
+	if(!m_inputImage || !skeletonPoints)
+		return false;
+
+	this->skeletonPointsToNodes(useVoxelRounding);
+	if(Type == 1)
+	   this->nodesToEdges();
+	if(Type == 2)
+	   this->ShapeBasedNodesToEdges();
+	if(Type == 3)
+	  { 
+		  // to be design new weight
+	  }
 	this->minimumSpanningTree();
 
 	return true;
@@ -225,6 +246,66 @@ bool MST::nodesToEdges()
 
 			float num = (float)sqrt(float(dx*dx + dy*dy + dz*dz));
 			float den = densityFactor*.02 + 1;
+			float weight = num / den;
+			edgeWeight.push_back(weight);
+		}//end for j
+	}//end for i
+
+	if(debug)
+		std::cerr << "Finished making edges = " << edgeArray.size() << std::endl;
+
+	return true;
+}
+
+bool MST::ShapeBasedNodesToEdges()
+{
+	if( (int)nodes.size() == 0)
+		return false;
+
+	int num_nodes = (int)nodes.size();
+
+	mdl::VolumeProcess *volProc = new mdl::VolumeProcess();
+	volProc->SetInput(this->m_inputImage);
+	volProc->RunDistanceTransform();
+    mdl::ImageType::Pointer Dt_Image= volProc->GetOutput();
+	delete volProc;
+
+	//Iterate through the nodes and create edges within the specified range.
+	for(int i=0; i<num_nodes; ++i)
+	{
+		//for(int j=1; j<i; ++j)
+		for(int j=0; j<i; ++j)
+		{
+			fPoint3D n1 = nodes.at(i);
+			fPoint3D n2 = nodes.at(j);
+			float dx = n1.x - n2.x;
+			float dy = n1.y - n2.y;
+			float dz = n1.z - n2.z;
+
+			if( abs(dx) > (float)edgeRange )
+				continue;
+			if( abs(dy) > (float)edgeRange )
+				continue;
+			if( abs(dz) > (float)edgeRange )
+				continue;
+
+			ImageType::IndexType index1;
+			index1[0] = roundToInt((double)n1.x);
+			index1[1] = roundToInt((double)n1.y);
+			index1[2] = roundToInt((double)n1.z);
+			ImageType::IndexType index2;
+			index2[0] = roundToInt((double)n2.x);
+			index2[1] = roundToInt((double)n2.y);
+			index2[2] = roundToInt((double)n2.z);
+	
+			PixelType dti = Dt_Image->GetPixel(index1);
+			PixelType dtj = Dt_Image->GetPixel(index2);
+			
+			edgeArray.push_back( pairE(i+1,j+1) ); //add an edge (count starts at 1 for nodes)
+            float term1 = (float)pow(double(dti+dtj),double(1.05)); 
+			float densityFactor = fabs(term1);
+			float num = (float)sqrt(float(dx*dx + dy*dy + dz*dz));
+			float den = densityFactor + 1;
 			float weight = num / den;
 			edgeWeight.push_back(weight);
 		}//end for j
