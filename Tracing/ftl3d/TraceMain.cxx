@@ -28,6 +28,10 @@ limitations under the License.
 TraceSEMain::TraceSEMain(QWidget *parent)
 : QMainWindow(parent)
 {
+	
+	QAction * ProjectButton = new QAction("Load Trace Project",this);
+	connect(ProjectButton, SIGNAL(triggered()), this, SLOT(LoadFromTraceProject()));
+	this->menuBar()->addAction(ProjectButton);
 	this->Project= new ProjectManager();
 	//this->FileSuffix = new QString();
 	this->FileSuffix = QString("_SE");
@@ -105,6 +109,37 @@ void TraceSEMain::GetOutputFileName()
 	}
 }
 
+void TraceSEMain::LoadFromTraceProject()
+{
+	QString ProjectName = QFileDialog::getOpenFileName(this , "Open Trace Project File", ".",
+		tr("Trace file ( *.xml )"));
+	if (!ProjectName.isEmpty())
+	{
+		this->GetConvertToSWC->setChecked(true);
+		//this->GetConvertToSWC->setCheckable(false);
+		this->Project->readProject((char*)ProjectName.toStdString().c_str());
+		unsigned int projectSize = this->Project->size();
+		for (unsigned int i = 0; i < projectSize; i++)
+		{ 
+			QString type = QString(this->Project->GetFileType(i).c_str());
+			if (type == "Image")
+			{
+				QString FileName = QString(this->Project->GetFileName(i).c_str());
+				QString temp = FileName.section('.',0,-2);
+				QString tempConvert = temp; 
+				temp.append(this->FileSuffix + ".xml");
+				tempConvert.append(this->FileSuffix + ".swc");
+				//three file names for traceing to keep track of
+				this->Project->addOutputTraceFile(i, tempConvert.toStdString());
+				this->InputFileNames.push_back(FileName.toStdString());
+				this->OutputFileNames.push_back(temp.toStdString());
+				this->OutputSWCFileNames.push_back(tempConvert.toStdString());
+				this->FileListWindow->append(FileName.section('/',-1) 
+					+ "\t" + tempConvert.section('/',-1));
+			}
+		}//end for loop
+	}//end if project is empty
+}
 void TraceSEMain::addFileToTrace()
 {
 	this->newOutput = this->OutputFileNameLine->text();

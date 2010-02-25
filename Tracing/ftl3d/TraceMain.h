@@ -74,6 +74,7 @@ public slots:
 	void addFileToTrace();
 	void GetInputFileName();
 	void GetOutputFileName();
+	void LoadFromTraceProject();
 
 private:
 	

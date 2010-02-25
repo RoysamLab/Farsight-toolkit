@@ -57,6 +57,22 @@ void ProjectManager::addFile(std::string fileName, std::string fileType, double 
 	newFile.tz = z;
 	this->fileInfo.push_back(newFile);
 }
+void ProjectManager::addOutputTraceFile(unsigned int i, std::string fileName)
+{
+	//this copies the settings from an existing file and 
+	//adds the output trace file
+	if (i < this->fileInfo.size())
+	{
+		FileInfoManager newFile;
+		newFile.fileName = fileName;
+		newFile.fileType = "Trace";
+		//copy translation coord. 
+		newFile.tx = this->fileInfo.at(i).tx;
+		newFile.ty = this->fileInfo.at(i).ty;
+		newFile.tz = this->fileInfo.at(i).tz;
+		this->fileInfo.push_back(newFile);
+	}
+}
 bool ProjectManager::writeProject(char *filename)
 {
 	TiXmlDocument doc;

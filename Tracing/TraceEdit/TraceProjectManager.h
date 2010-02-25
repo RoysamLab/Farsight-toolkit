@@ -36,6 +36,7 @@ public:
 	ProjectManager(char * filename);
 	ProjectManager();
 	void addFile(std::string fileName, std::string fileType, double x, double y, double z);
+	void addOutputTraceFile(unsigned int i, std::string fileName);
 	void readProject(char * filename);
 	bool writeProject(char* filename);
 	unsigned int size();
