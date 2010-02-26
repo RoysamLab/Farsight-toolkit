@@ -45,7 +45,7 @@ void MultipleImageHandler::SeriesToBlocks(StrVector inFiles, int dx, int dy, int
 	if( !imageIO )
     {
 		std::cerr << "NO IMAGEIO WAS FOUND" << std::endl;
-		return ;
+		return;
     }
 
 	// Now that we found the appropriate ImageIO class, ask it to 
@@ -53,9 +53,17 @@ void MultipleImageHandler::SeriesToBlocks(StrVector inFiles, int dx, int dy, int
 	imageIO->SetFileName( inFiles.at(0) );
 	imageIO->ReadImageInformation();
 
-	int numComponents =  imageIO->GetNumberOfComponents();
-	itk::ImageIOBase::IOComponentType dataType = imageIO->GetComponentType();
 	int numDimensions = imageIO->GetNumberOfDimensions();
+	if(numDimensions > 2)
+		return;
+
+	int numComponents =  imageIO->GetNumberOfComponents();
+	if( numComponents != 3 && numComponents != 1 )
+		return;
+
+	itk::ImageIOBase::IOComponentType dataType = imageIO->GetComponentType();
+	if( dataType != itk::ImageIOBase::UCHAR && dataType != itk::ImageIOBase::USHORT )
+		return;
 
 	int xSize = imageIO->GetDimensions(0);
 	int ySize = imageIO->GetDimensions(1);
@@ -66,6 +74,11 @@ void MultipleImageHandler::SeriesToBlocks(StrVector inFiles, int dx, int dy, int
 	PairVector yPairs = this->CreateOutputRegions(ySize, dy);
 	PairVector zPairs = this->CreateOutputRegions(zSize, dz);
 
+	std::cerr << "SeriesToBlocks..." << std::endl;
+
+	int totalBlocks = dx*dy*dz;
+	int counter = 1;
+
 	for(int zp=0; zp<(int)zPairs.size(); ++zp)
 	{
 		for(int yp=0; yp<(int)yPairs.size(); ++yp)
@@ -74,17 +87,168 @@ void MultipleImageHandler::SeriesToBlocks(StrVector inFiles, int dx, int dy, int
 			{
 				std::string filename;
 				filename = "b" + NumToString(zp) + NumToString(yp) + NumToString(xp) + ".tif";
-				ExtractBlock(inFiles,xPairs.at(xp),yPairs.at(yp),zPairs.at(zp), filename );
+				UCharImageType3D::RegionType region = CreateRegion( xPairs.at(xp), yPairs.at(yp), zPairs.at(zp) );
+
+				std::cerr << "Processing " << counter++ << " of " << totalBlocks << "\r";
+
+				if(numComponents == 3) //must be RGB:
+				{
+					ExtractRegionColor(inFiles, region, filename);
+				}
+				else if(dataType == itk::ImageIOBase::UCHAR)	//1 component 8-bit grayscale
+				{
+					ExtractRegion(inFiles, region, false, filename );
+				}
+				else											//1 component 16-bit grayscale
+				{
+					ExtractRegion(inFiles, region, true, filename );
+				}
 			}
 		}
 	}
+
+	std::cerr << std::endl << "...Done" << std::endl;
+}
+
+MultipleImageHandler::UCharImageType3D::Pointer MultipleImageHandler::ExtractRegion
+	(StrVector inFiles, UCharImageType3D::RegionType region, bool rescale, std::string fname)
+{
+	UCharImageType3D::Pointer img = NULL;
+
+	if(rescale)
+	{
+		typedef itk::ImageSeriesReader< UShortImageType3D > SeriesReaderType;
+		SeriesReaderType::Pointer reader = SeriesReaderType::New();
+		reader->SetFileNames(inFiles);
+
+		typedef itk::ExtractImageFilter< UShortImageType3D, UShortImageType3D > ExtractFilterType;
+		ExtractFilterType::Pointer extract = ExtractFilterType::New();
+		extract->SetInput( reader->GetOutput() );
+		extract->SetExtractionRegion( region );
+
+		typedef itk::RescaleIntensityImageFilter< UShortImageType3D, UCharImageType3D > RescaleType;
+		RescaleType::Pointer rescale = RescaleType::New();
+		rescale->SetInput( extract->GetOutput() );
+		rescale->SetOutputMinimum(0);
+		rescale->SetOutputMaximum(255);
+
+		try
+		{
+			rescale->Update();
+		}
+		catch( itk::ExceptionObject & err )
+		{
+			std::cerr << "EXTRACT FAILED: " << err << std::endl;
+			return NULL;
+		}
+		
+		img = rescale->GetOutput();
+	}
+	else
+	{
+		typedef itk::ImageSeriesReader< UCharImageType3D > SeriesReaderType;
+		SeriesReaderType::Pointer reader = SeriesReaderType::New();
+		reader->SetFileNames(inFiles);
+
+		typedef itk::ExtractImageFilter< UCharImageType3D, UCharImageType3D > ExtractFilterType;
+		ExtractFilterType::Pointer extract = ExtractFilterType::New();
+		extract->SetInput( reader->GetOutput() );
+		extract->SetExtractionRegion( region );
+
+		try
+		{
+			extract->Update();
+		}
+		catch( itk::ExceptionObject & err )
+		{
+			std::cerr << "EXTRACT FAILED: " << err << std::endl;
+			return NULL;
+		}
+
+		img = extract->GetOutput();
+	}
+
+	if(fname != "")
+	{
+		//Setup the writer
+		typedef itk::ImageFileWriter< UCharImageType3D > ImageWriterType;
+		ImageWriterType::Pointer writer = ImageWriterType::New();
+		writer->SetFileName( fname.c_str() );
+		writer->SetInput( img );
+		//This line has no effect
+		//writer->SetNumberOfStreamDivisions( 10 );
+		try
+		{
+			writer->Update();
+		}
+		catch( itk::ExceptionObject & err )
+		{
+			std::cerr << "WRITER FAILED: " << err << std::endl;
+		}
+	}
+
+	return img;
+}
+
+//Extract a region from a series of color images:
+MultipleImageHandler::UCharImageType3D::Pointer MultipleImageHandler::ExtractRegionColor
+	(StrVector inFiles, UCharImageType3D::RegionType region, std::string fname)
+{
+		typedef itk::ImageSeriesReader< RGBImageType3D > SeriesReaderType;
+		SeriesReaderType::Pointer reader = SeriesReaderType::New();
+		reader->SetFileNames(inFiles);
+
+		typedef itk::ExtractImageFilter< RGBImageType3D, RGBImageType3D > ExtractFilterType;
+		ExtractFilterType::Pointer extract = ExtractFilterType::New();
+		extract->SetInput( reader->GetOutput() );
+		extract->SetExtractionRegion( region );
+
+		//I NEED TO REPLACE THIS WITH DOUG HOOVER'S FUNCTION (OR ADD THE OPTION):
+		typedef itk::RGBToLuminanceImageFilter< RGBImageType3D, UCharImageType3D > ConvertFilterType;
+		ConvertFilterType::Pointer convert = ConvertFilterType::New();
+		convert->SetInput( extract->GetOutput() );
+
+		try
+		{
+			convert->Update();
+		}
+		catch( itk::ExceptionObject & err )
+		{
+			std::cerr << "EXTRACT FAILED: " << err << std::endl;
+			return NULL;
+		}
+
+		UCharImageType3D::Pointer img = convert->GetOutput();
+
+	if(fname != "")
+	{
+		//Setup the writer
+		typedef itk::ImageFileWriter< UCharImageType3D > ImageWriterType;
+		ImageWriterType::Pointer writer = ImageWriterType::New();
+		writer->SetFileName( fname.c_str() );
+		writer->SetInput( img );
+		//This line has no effect
+		//writer->SetNumberOfStreamDivisions( 10 );
+		try
+		{
+			writer->Update();
+		}
+		catch( itk::ExceptionObject & err )
+		{
+			std::cerr << "WRITER FAILED: " << err << std::endl;
+		}
+	}
+
+	return img;
+
 }
 
 
-void MultipleImageHandler::ExtractBlock(StrVector inFiles,  PairType xPair, PairType yPair, PairType zPair, std::string fname)
+MultipleImageHandler::UCharImageType3D::RegionType MultipleImageHandler::CreateRegion(PairType xPair, PairType yPair, PairType zPair)
 {
 	//Create output region:
 	UCharImageType3D::RegionType block;
+
 	block.SetIndex( 0, xPair.first );
 	block.SetSize( 0, xPair.second );
 	block.SetIndex( 1, yPair.first );
@@ -92,31 +256,7 @@ void MultipleImageHandler::ExtractBlock(StrVector inFiles,  PairType xPair, Pair
 	block.SetIndex( 2, zPair.first );
 	block.SetSize( 2, zPair.second );
 
-	//Create the output image
-	typedef itk::ImageSeriesReader< UCharImageType3D > SeriesReaderType;
-	SeriesReaderType::Pointer reader = SeriesReaderType::New();
-	reader->SetFileNames(inFiles);
-
-	typedef itk::ExtractImageFilter< UCharImageType3D, UCharImageType3D > ExtractFilterType;
-	ExtractFilterType::Pointer extract = ExtractFilterType::New();
-	extract->SetInput( reader->GetOutput() );
-	extract->SetExtractionRegion( block );
-
-	typedef itk::ImageFileWriter< UCharImageType3D > ImageWriterType;
-	ImageWriterType::Pointer writer = ImageWriterType::New();
-	writer->SetFileName( fname.c_str() );
-	writer->SetInput( extract->GetOutput() );
-
-	//This line has no effect
-	//writer->SetNumberOfStreamDivisions( 10 );
-	try
-	{
-		writer->Update();
-	}
-	catch( itk::ExceptionObject & err )
-	{
-		std::cerr << "WRITER FAILED: " << err << std::endl;
-	}
+	return block;
 }
 
 MultipleImageHandler::PairVector MultipleImageHandler::CreateOutputRegions(int size, int divs)

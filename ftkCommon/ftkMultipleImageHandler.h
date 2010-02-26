@@ -32,6 +32,7 @@ limitations under the License.
 #include "itkExtractImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkNumericSeriesFileNames.h"
+#include "itkRGBToLuminanceImageFilter.h"
 
 #include <vector>
 #include <string>
@@ -63,14 +64,22 @@ class MultipleImageHandler
 	typedef std::vector< PairType > PairVector;
 
 public:
+	//These two functions take in image series and re-partion it into 3D blocks.
 	void SeriesToBlocks(std::string seriesFormat, int startIndex, int endIndex, int dx, int dy, int dz);
 	void SeriesToBlocks(StrVector inFiles, int dx, int dy, int dz);
+
+	//Use these functions to just load a specific region in a 3D image:
+	UCharImageType3D::Pointer ExtractRegion(StrVector inFiles, UCharImageType3D::RegionType region, bool rescale = false, std::string fname = "");
+	UCharImageType3D::Pointer ExtractRegionColor(StrVector inFiles, UCharImageType3D::RegionType region, std::string fname = "");
+
+	//These functions help to divide up the image into a region:
+	UCharImageType3D::RegionType CreateRegion(PairType xPair, PairType yPair, PairType zPair);
+	PairVector CreateOutputRegions(int size, int divs);
 	
 private:
 	//functions:
 	UCharImageType2D::Pointer ReadImage2D(std::string filename);
-	PairVector CreateOutputRegions(int size, int divs);
-	void ExtractBlock(StrVector inFiles,  PairType xPair, PairType yPair, PairType zPair, std::string fname);	
+
 };
 
 } // end namespace
