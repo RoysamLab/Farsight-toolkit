@@ -33,6 +33,7 @@ limitations under the License.
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkNumericSeriesFileNames.h"
 #include "itkRGBToLuminanceImageFilter.h"
+#include "itkMaximumProjectionImageFilter.h"
 
 #include <vector>
 #include <string>
@@ -65,9 +66,16 @@ class MultipleImageHandler
 	typedef std::vector< PairType > PairVector;
 
 public:
+	MultipleImageHandler();
+	void SetOutputDirectory(std::string dir){ outputDirectory = dir; };
+
 	//These two functions take in image series and re-partion it into 3D blocks.
 	void SeriesToBlocks(std::string seriesFormat, int startIndex, int endIndex, int dx, int dy, int dz);
 	void SeriesToBlocks(StrVector inFiles, int dx, int dy, int dz);
+
+	//Take in an image series and create a maximum projection image along the z dimension
+	UCharImageType2D::Pointer SeriesProjection(std::string seriesFormat, int startIndex, int endIndex, std::string outName = "");
+	UCharImageType2D::Pointer SeriesProjection(StrVector inFiles, std::string outName = "");
 
 	//Use these functions to just load a specific region in a 3D image:
 	UCharImageType3D::Pointer ExtractRegion(StrVector inFiles, UCharImageType3D::RegionType region, bool rescale = false, std::string fname = "");
@@ -80,6 +88,8 @@ public:
 private:
 	//functions:
 	UCharImageType2D::Pointer ReadImage2D(std::string filename);
+
+	std::string outputDirectory;
 
 };
 

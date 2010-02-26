@@ -18,6 +18,12 @@ limitations under the License.
 namespace ftk
 {
 
+//constructor
+MultipleImageHandler::MultipleImageHandler()
+{
+	outputDirectory = "";
+}
+
 void MultipleImageHandler::SeriesToBlocks(std::string seriesFormat, int startIndex, int endIndex, int dx, int dy, int dz)
 {
 	typedef itk::NumericSeriesFileNames NameGeneratorType;
@@ -111,7 +117,8 @@ void MultipleImageHandler::SeriesToBlocks(StrVector inFiles, int dx, int dy, int
 		}
 	}
 
-	projF->writeProject("bFiles.xml");
+	std::string outFname = outputDirectory + "bFiles.xml";
+	projF->writeProject(outFname.c_str());
 	delete projF;
 
 	std::cerr << std::endl << "...Done" << std::endl;
@@ -284,6 +291,66 @@ MultipleImageHandler::PairVector MultipleImageHandler::CreateOutputRegions(int s
 
 	return pairs;
 }
+
+MultipleImageHandler::UCharImageType2D::Pointer MultipleImageHandler::SeriesProjection(std::string seriesFormat, int startIndex, int endIndex, std::string outName)
+{
+	typedef itk::NumericSeriesFileNames NameGeneratorType;
+	NameGeneratorType::Pointer nameGenerator = NameGeneratorType::New();
+	nameGenerator->SetSeriesFormat( seriesFormat );
+	nameGenerator->SetStartIndex( startIndex );
+	nameGenerator->SetEndIndex( endIndex );
+	nameGenerator->SetIncrementIndex( 1 );
+
+	return this->SeriesProjection( nameGenerator->GetFileNames(), outName );
+}
+
+MultipleImageHandler::UCharImageType2D::Pointer MultipleImageHandler::SeriesProjection(StrVector inFiles, std::string outName)
+{
+	typedef itk::ImageSeriesReader< UCharImageType3D > SeriesReaderType;
+	SeriesReaderType::Pointer reader = SeriesReaderType::New();
+	reader->SetFileNames(inFiles);
+
+	typedef itk::MaximumProjectionImageFilter< UCharImageType3D, UCharImageType2D > ProjectionType;
+	ProjectionType::Pointer projection = ProjectionType::New();
+	projection->SetInput( reader->GetOutput() );
+	projection->SetProjectionDimension( 2 );
+	projection->SetNumberOfThreads( 4 );
+
+	try
+	{
+		projection->Update();
+	}
+	catch( itk::ExceptionObject & err )
+	{
+		std::cerr << "PROJECTION FAILED: " << err << std::endl;
+		return NULL;
+	}
+
+	UCharImageType2D::Pointer img = projection->GetOutput();
+
+	if(outName != "")
+	{
+		//Setup the writer
+		typedef itk::ImageFileWriter< UCharImageType2D > ImageWriterType;
+		ImageWriterType::Pointer writer = ImageWriterType::New();
+		writer->SetFileName( outName.c_str() );
+		writer->SetInput( img );
+		//This line has no effect for most image types
+		//writer->SetNumberOfStreamDivisions( 10 );
+		try
+		{
+			writer->Update();
+		}
+		catch( itk::ExceptionObject & err )
+		{
+			std::cerr << "WRITER FAILED: " << err << std::endl;
+		}
+	}
+
+	return img;
+}
+
+
 
 MultipleImageHandler::UCharImageType2D::Pointer MultipleImageHandler::ReadImage2D(std::string filename)
 {

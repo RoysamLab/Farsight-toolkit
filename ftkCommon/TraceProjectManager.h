@@ -33,12 +33,12 @@ struct FileInfoManager
 class ProjectManager
 {
 public:
-	ProjectManager(char * filename);
+	ProjectManager(const char * filename);
 	ProjectManager();
 	void addFile(std::string fileName, std::string fileType, double x, double y, double z);
 	void addOutputTraceFile(unsigned int i, std::string fileName);
-	void readProject(char * filename);
-	bool writeProject(char* filename);
+	void readProject(const char * filename);
+	bool writeProject(const char* filename);
 	unsigned int size();
 	std::string GetFileName(int i);
 	std::string GetFileType(int i);

@@ -24,7 +24,8 @@ int main(int argc, char *argv[])
 
 	ftk::MultipleImageHandler * iHandle = new ftk::MultipleImageHandler();
 
-	iHandle->SeriesToBlocks("%d.tif", 1, 60, 2, 2, 1);
+	//iHandle->SeriesToBlocks("%d.tif", 1, 60, 2, 2, 1);
+	iHandle->SeriesProjection("%d.tif", 1, 60, "p.tif");
 
 	delete iHandle;
 

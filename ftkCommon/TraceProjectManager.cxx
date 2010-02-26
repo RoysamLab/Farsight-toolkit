@@ -14,7 +14,7 @@ limitations under the License.
 =========================================================================*/
 #include "TraceProjectManager.h"
 
-ProjectManager::ProjectManager(char *filename)
+ProjectManager::ProjectManager(const char *filename)
 {
 	this->fileInfo.clear();
 	//read in existing project
@@ -24,7 +24,7 @@ ProjectManager::ProjectManager()
 {
 	this->fileInfo.clear();
 }
-void ProjectManager::readProject(char *filename)
+void ProjectManager::readProject(const char *filename)
 {
 	TiXmlDocument doc(filename);
 	doc.LoadFile();
@@ -73,7 +73,7 @@ void ProjectManager::addOutputTraceFile(unsigned int i, std::string fileName)
 		this->fileInfo.push_back(newFile);
 	}
 }
-bool ProjectManager::writeProject(char *filename)
+bool ProjectManager::writeProject(const char *filename)
 {
 	TiXmlDocument doc;
 	TiXmlDeclaration * decl = new TiXmlDeclaration( "1.0", "", "" );
