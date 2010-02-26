@@ -40,6 +40,7 @@ limitations under the License.
 #include <math.h>
 
 #include "ftkUtils.h"
+#include "TraceProjectManager.h"
 
 namespace ftk
 {

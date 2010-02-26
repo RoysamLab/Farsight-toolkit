@@ -76,6 +76,8 @@ void MultipleImageHandler::SeriesToBlocks(StrVector inFiles, int dx, int dy, int
 
 	std::cerr << "SeriesToBlocks..." << std::endl;
 
+	ProjectManager * projF = new ProjectManager();
+
 	int totalBlocks = dx*dy*dz;
 	int counter = 1;
 
@@ -88,6 +90,8 @@ void MultipleImageHandler::SeriesToBlocks(StrVector inFiles, int dx, int dy, int
 				std::string filename;
 				filename = "b" + NumToString(zp) + NumToString(yp) + NumToString(xp) + ".tif";
 				UCharImageType3D::RegionType region = CreateRegion( xPairs.at(xp), yPairs.at(yp), zPairs.at(zp) );
+
+				projF->addFile(filename, "image", region.GetIndex(0), region.GetIndex(1), region.GetIndex(2));
 
 				std::cerr << "Processing " << counter++ << " of " << totalBlocks << "\r";
 
@@ -106,6 +110,9 @@ void MultipleImageHandler::SeriesToBlocks(StrVector inFiles, int dx, int dy, int
 			}
 		}
 	}
+
+	projF->writeProject("bFiles.xml");
+	delete projF;
 
 	std::cerr << std::endl << "...Done" << std::endl;
 }

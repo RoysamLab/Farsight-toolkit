@@ -33,7 +33,7 @@ ADD_LIBRARY( ftkCommon
             ${FTKCOMMON_HDRS} 
 )
 
-TARGET_LINK_LIBRARIES( ftkCommon TinyXML ftkImage
+TARGET_LINK_LIBRARIES( ftkCommon TinyXML ftkImage TraceProject
                        vtksys vtkCommon vtkFiltering vtkIO
                        ITKCommon ITKBasicFilters ITKIO ITKStatistics )
 
