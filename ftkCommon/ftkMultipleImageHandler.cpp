@@ -118,7 +118,8 @@ void MultipleImageHandler::SeriesToBlocks(StrVector inFiles, int dx, int dy, int
 	}
 
 	std::string outFname = outputDirectory + "bFiles.xml";
-	projF->writeProject(outFname.c_str());
+	if( projF->size() > 1 )
+		projF->writeProject(outFname.c_str());
 	delete projF;
 
 	std::cerr << std::endl << "...Done" << std::endl;
@@ -292,6 +293,10 @@ MultipleImageHandler::PairVector MultipleImageHandler::CreateOutputRegions(int s
 	return pairs;
 }
 
+//NOTE: the series projection function does not seem 
+//to use multiple threads and it does not only load up 1 slice at a time.
+//If we need this capability on large images we should re-implement it to 
+//just load up on image at a time and compare it to the output image pixel by pixel
 MultipleImageHandler::UCharImageType2D::Pointer MultipleImageHandler::SeriesProjection(std::string seriesFormat, int startIndex, int endIndex, std::string outName)
 {
 	typedef itk::NumericSeriesFileNames NameGeneratorType;
