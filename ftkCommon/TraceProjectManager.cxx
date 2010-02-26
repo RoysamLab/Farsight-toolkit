@@ -101,7 +101,7 @@ bool ProjectManager::writeProject(char *filename)
 }
 unsigned int ProjectManager::size()
 {
-	return this->fileInfo.size();
+	return (int)this->fileInfo.size();
 }
 std::string ProjectManager::GetFileName(int i)
 {

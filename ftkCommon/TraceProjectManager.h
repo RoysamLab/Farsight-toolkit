@@ -48,4 +48,5 @@ public:
 private:
 	std::vector<FileInfoManager> fileInfo;
 };
-#endif;
+
+#endif
