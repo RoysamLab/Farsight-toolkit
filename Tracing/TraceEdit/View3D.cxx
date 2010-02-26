@@ -80,7 +80,7 @@ limitations under the License.
 #include "TraceModel.h"
 #include "MergeModel.h"
 #include "ImageActors.h"
-#include "TraceProjectManager.h"
+#include "ftkCommon/TraceProjectManager.h"
 #include "View3DHelperClasses.h"
 #include "View3D.h"
 

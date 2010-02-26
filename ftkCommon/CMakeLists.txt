@@ -1,3 +1,8 @@
+
+ADD_LIBRARY( TraceProject TraceProjectManager.h TraceProjectManager.cxx )
+TARGET_LINK_LIBRARIES( TraceProject TinyXML )
+
+
 SET( FTKCOMMON_SRCS
   #ftkSegmentationResult.cpp
   ftkUtils.cpp
@@ -22,7 +27,6 @@ SET( FTKCOMMON_HDRS
   ftkPreprocess.h
   ftkMultipleImageHandler.h
 )
-
 
 ADD_LIBRARY( ftkCommon
             ${FTKCOMMON_SRCS} 

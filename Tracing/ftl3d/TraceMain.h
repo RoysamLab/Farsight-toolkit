@@ -45,7 +45,7 @@ limitations under the License.
 #include "TraceContainer3D.h"
 #include "TraceNode.h"
 
-#include <TraceEdit/TraceProjectManager.h>
+#include <ftkCommon/TraceProjectManager.h>
 #include "tinyxml/tinyxml.h"
 
 #include <QAction>

@@ -1,7 +1,5 @@
 PROJECT(TraceEdit)
 
-ADD_LIBRARY( TraceProject TraceProjectManager.h TraceProjectManager.cxx )
-
 ADD_LIBRARY(Trace
   TraceBit.h      TraceBit.cxx
   TraceLine.h     TraceLine.cxx
@@ -34,7 +32,6 @@ SET( Libraries
     vtkFiltering
     vtkVolumeRendering
     QVTK
-    TinyXML
     ftkGUI
     Trace
     TraceProject 
