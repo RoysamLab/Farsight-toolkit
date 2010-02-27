@@ -47,6 +47,7 @@ TraceSEMain::TraceSEMain(QWidget *parent)
 	//settings
 	this->CreateSettingsLayout();
 	mainLayout->addWidget(this->settingsBox);
+	this->statusBar()->showMessage("Ready");
 }
 
 void TraceSEMain::createFileActions()
@@ -111,13 +112,13 @@ void TraceSEMain::GetOutputFileName()
 
 void TraceSEMain::LoadFromTraceProject()
 {
-	QString ProjectName = QFileDialog::getOpenFileName(this , "Open Trace Project File", ".",
+	this->ProjectName = QFileDialog::getOpenFileName(this , "Open Trace Project File", ".",
 		tr("Trace file ( *.xml )"));
-	if (!ProjectName.isEmpty())
+	if (!this->ProjectName.isEmpty())
 	{
 		this->GetConvertToSWC->setChecked(true);
 		//this->GetConvertToSWC->setCheckable(false);
-		this->Project->readProject((char*)ProjectName.toStdString().c_str());
+		this->Project->readProject((char*)this->ProjectName.toStdString().c_str());
 		unsigned int projectSize = this->Project->size();
 		for (unsigned int i = 0; i < projectSize; i++)
 		{ 
@@ -325,10 +326,16 @@ bool TraceSEMain::runSETracing()
 			this->WriteSWCFile(this->OutputSWCFileNames.at(k), NodeContainer);
 		}
 	}
+	if (!this->ProjectName.isEmpty())
+	{
+		this->Project->writeProject((char*)this->ProjectName.toStdString().c_str());
+		std::cout<<"project xml written"<<std::endl;
+	}
 	this->statusBar()->showMessage("done");
 	QMessageBox msgBoxEnd;
 	msgBoxEnd.setText("Finished Tracing all files");
 	msgBoxEnd.exec();
+	std::cout<<"finish"<<std::endl;
 	return true;
 }
 

@@ -98,7 +98,7 @@ private:
 	QTextEdit * FileListWindow;
 	unsigned int numDataFiles;
 //file names
-	QString newInput, newOutput, FileSuffix;
+	QString newInput, newOutput, FileSuffix, ProjectName;
 	std::vector<std::string> InputFileNames;
     std::vector<std::string> OutputFileNames;
     std::vector<std::string> OutputSWCFileNames;
