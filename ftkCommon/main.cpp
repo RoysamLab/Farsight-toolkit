@@ -16,16 +16,21 @@ limitations under the License.
 
 int main(int argc, char *argv[])
 {
-	if(argc < 1)
+	if(argc != 4)
     {
-		std::cerr << "Usage: " << argv[0] << std::endl;
+		std::cerr << "Usage: " << argv[0] << "pattern(string) start(int) end(int)" << std::endl;
 		return EXIT_FAILURE;
     }
 
 	ftk::MultipleImageHandler * iHandle = new ftk::MultipleImageHandler();
+	
+	std::string inPattern = argv[1];
+	int start = atoi(argv[2]);
+	int end = atoi(argv[3]);
 
-	//iHandle->SeriesToBlocks("%d.tif", 1, 60, 2, 2, 1);
-	iHandle->SeriesProjection("%03d.tif", 001, 110, "p.tif");
+
+	iHandle->SeriesToBlocks(inPattern, start, end, 2, 2, 1);
+	//iHandle->SeriesProjection("%03d.tif", 001, 110, "p.tif");
 
 	delete iHandle;
 
