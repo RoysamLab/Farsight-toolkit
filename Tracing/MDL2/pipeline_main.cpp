@@ -24,10 +24,18 @@ int main(int argc, char *argv[])
 {
 	if(argc < 2)
     {
-		std::cerr << "Usage: " << argv[0] << " <inputfilename>" << std::endl;
+		std::cerr << "Usage: " << argv[0] << " inputfilename <minConnCompSize vectorMagnitude>" << std::endl;
 		return EXIT_FAILURE;
     }
 	std::string inputFileName = argv[1];
+
+	int minConnCompSize = 10;
+	double vectorMagnitude = .1;
+	if(argc == 4)
+	{
+		minConnCompSize = atoi(argv[2]);
+		vectorMagnitude = atof(argv[3]);
+	}
 
 	//*****************************************************************
 	// IMAGE READER
@@ -47,32 +55,59 @@ int main(int argc, char *argv[])
 	//******************************************************************
 	//******************************************************************
 	
+	std::cerr << "Volume Processing\n";
+
 	//******************************************************************
 	// PROCESSING
 	mdl::VolumeProcess *volProc = new mdl::VolumeProcess();
 	volProc->SetInput(img);
 	volProc->SetDebug(true);
-	volProc->RescaleIntensities(0,255);
+	//volProc->RescaleIntensities(0,255);
 	//volProc->RunManualThreshold(1.9);
 	volProc->RunCAD();
 	volProc->MaskUsingGraphCuts();
-	volProc->MaskSmallConnComp(10);
+	volProc->MaskSmallConnComp(minConnCompSize);
 	mdl::ImageType::Pointer clean_img = volProc->GetOutput();
 	//volProc->RunDistanceTransform();
 	//mdl::ImageType::Pointer DT_img = volProc->GetOutput();
-	volProc->RunAnisotropicDiffusion(1,false);
-	mdl::ImageType::Pointer enhance_img = volProc->GetOutput();
+	//volProc->RunAnisotropicDiffusion(1,false);
+	//mdl::ImageType::Pointer enhance_img = volProc->GetOutput();
 	delete volProc;
 
+		
+	//******************************************************************
+	// IMAGE WRITER
+	typedef itk::ImageFileWriter< mdl::ImageType > WriterType;
+	WriterType::Pointer writer = WriterType::New();
+
+	std::string outputFileName = inputFileName;
+	size_t found = outputFileName.find_last_of(".");
+	outputFileName.insert(found,"_clean");
+	writer->SetInput( clean_img );
+
+	writer->SetFileName( outputFileName.c_str() );
+	writer->Update();
+
+	found = outputFileName.find_last_of(".");
+	outputFileName.replace(found+1,3,"mhd");
+	writer->SetFileName( outputFileName.c_str() );
+	writer->Update();
 	
+	//******************************************************************
+	//*****************************************************************
+	
+	std::cerr << "Integrated Skeleton\n";
+
 	//Integrated Skeleton to create skeleton points:
 	mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton( clean_img );
-	skel->SetVectorMagnitude(.05);
+	skel->SetVectorMagnitude(vectorMagnitude);
 	skel->SetDebug(true);
 	skel->SetUseXiaoLiangMethod(false);
 	skel->Update();
 	std::vector<mdl::fPoint3D> skeleton = skel->GetOutput();
 	delete skel;
+
+	std::cerr << "MST 1\n";
 
 	//Minimum spanning tree to create nodes and backbone node pairs (lines):
 	mdl::MST *mst = new mdl::MST( clean_img );
@@ -80,29 +115,14 @@ int main(int argc, char *argv[])
 	mst->SetEdgeRange(12);
 	mst->SetPower(1);
 	mst->SetSkeletonPoints( &skeleton );
-	mst->CreateGraphAndMST();
-	mst->ErodeAndDialateNodeDegree(50);
+	mst->CreateGraphAndMST(2);
+	mst->ErodeAndDialateNodeDegree(10);
 	std::vector<mdl::fPoint3D> nodes = mst->GetNodes();
 	//Note: node 0 in bbpairs is index 0 of nodes!!!
 	std::vector<mdl::pairE> bbpairs = mst->BackboneExtract();
-	//mst->SpineExtract();
 	delete mst;
-	
 
-	/*
-	std::vector<mdl::fPoint3D> nodes;
-	std::vector<mdl::pairE> bbpairs;
-
-	mdl::vtkFileHandler file;
-	file.SetNodes(&nodes);
-	file.SetLines(&bbpairs);
-	
-	if(!file.Read("BackboneCandidateXiao.vtk"))
-	{
-		std::cerr << "READ FAILURE\n";
-		return EXIT_FAILURE;
-	}
-    */
+	std::cerr << "BSPLINE\n";
 	
 	mdl::BSplineFitting *bspline = new mdl::BSplineFitting( clean_img );
 	bspline->SetDebug(true);
@@ -114,66 +134,37 @@ int main(int argc, char *argv[])
 	nodes = bspline->GetNodes();
 	bbpairs = bspline->GetBBPairs();
 	delete bspline;
-    
-	/*mdl::vtkFileHandler file;
-	file.SetNodes(&nodes);
-	file.SetLines(&bbpairs);
-	
-	if(!file.Read("BBSpline.vtk"))
-	{
-		std::cerr << "READ FAILURE\n";
-		return EXIT_FAILURE;
-	}
-     */
 
-
+	std::cerr << "MST 2\n";
   
     mdl::MST *mst1 = new mdl::MST( clean_img );
-	//mst1->SetInputforSpineExtraction(clean_img,(char *)"RealSpinePrior.txt",(char *)"NonSpinePrior.txt");
-	mst1->SetDebug(true);
+	mst1->SetDebug(false);
 	mst1->SetEdgeRange(12);
 	mst1->SetPower(1);
-	mst1->SetVesselMap(enhance_img);
-	mst1->SetAlpha(0.7);
-	mst1->SetPruneThreshold(4.0);
-	//mst1->SetFileofRealSpineFeature((char *)"RealSpinePrior.txt");
-	//mst1->SetFileofNonSpineFeature((char *)"NonSpinePrior.txt");
-	mst1->SetSkeletonPoints( &skeleton );
-	mst1->CreateGraphAndMST();
-	mst1->ErodeAndDialateNodeDegree(50);
+	mst1->SetSkeletonPoints( &nodes );
+	mst1->CreateGraphAndMST(2);
+	mst1->ErodeAndDialateNodeDegree(2);
 	
 	nodes = mst1->GetNodes();
-	//bbpairs = mst1->SearchFirstandSecondLevelBranch();
-	mst1->SearchFirstandSecondLevelBranch();
-	//bbpairs = mst->BackboneExtract();
-	bbpairs = mst1->SpineExtract();
-	delete mst1;	
+	bbpairs = mst1->BackboneExtract();
+	delete mst1;
+
+	std::cerr << "Saving\n";
+
+	mdl::vtkFileHandler * fhdl = new mdl::vtkFileHandler();
+	fhdl->SetNodes(&nodes);
+	fhdl->SetLines(&bbpairs);
+	fhdl->Write("FinalBackbone.vtk");
+	delete fhdl;
+
+	std::cerr << "DONE\n";
   
-	std::cerr << "PRESS ENTER TO EXIT\n";
-	getchar();
+	//std::cerr << "PRESS ENTER TO EXIT\n";
+	//getchar();
 
 	//******************************************************************
 	//******************************************************************
-	
-	//******************************************************************
-	// IMAGE WRITER
-	/*
-	typedef itk::ImageFileWriter< mdl::ImageType > WriterType;
-	WriterType::Pointer writer = WriterType::New();
-	writer->SetFileName("out.tif");
-	writer->SetInput( volProc->GetOutput() );
-	try
-	{
-		writer->Update();
-	}
-	catch( itk::ExceptionObject & err )
-	{
-		std::cerr << "READER FAILED: " << err << std::endl ;
-		return EXIT_FAILURE;
-	}
-	*/
-	//******************************************************************
-	//*****************************************************************
+
 
 	return EXIT_SUCCESS;
 }

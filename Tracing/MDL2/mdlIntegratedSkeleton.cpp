@@ -1252,6 +1252,15 @@ bool IntegratedSkeleton::computeSkeleton()
 		std::cerr << "Number of skeleton points = " << (int)skeletonPoints.size() << std::endl;
 	}
 
+	//Write out skeleton file:
+	if(debug)
+	{
+		vtkFileHandler * fhdl = new vtkFileHandler();
+		fhdl->SetNodes(&skeletonPoints);
+		fhdl->Write("SkeletonPoints.vtk");
+		delete fhdl;
+	}//end if debug
+
 	//getchar();
 
 	return true;

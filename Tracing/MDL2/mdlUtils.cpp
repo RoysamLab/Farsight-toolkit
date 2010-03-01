@@ -45,14 +45,12 @@ bool vtkFileHandler::Write(std::string filename)
 	if (fout == NULL)
 		return false;
 
-	int num_nodes = (int)nodesPtr->size();
-	int num_lines = (int)linesPtr->size();
-
 	fprintf(fout, "# vtk DataFile Version 3.0\n");
 	fprintf(fout,"Tracing Result\n");
 	fprintf(fout,"ASCII\n");
 	fprintf(fout,"DATASET POLYDATA\n");
 
+	int num_nodes = (int)nodesPtr->size();
 	fprintf(fout,"POINTS %d float\n",num_nodes);
 	for(int i=0; i<num_nodes; ++i)
 	{
@@ -62,6 +60,7 @@ bool vtkFileHandler::Write(std::string filename)
 
 	if(linesPtr)
 	{
+		int num_lines = (int)linesPtr->size();
 		fprintf(fout,"LINES %d %d\n", num_lines, num_lines*3);
 		for(int i=0; i<num_lines; ++i)
 		{

@@ -25,6 +25,7 @@ limitations under the License.
 #define __mdlIntegratedSkeleton_h
 
 #include "mdlTypes.h"
+#include "mdlUtils.h"
 
 #include <string>
 #include <vector>
