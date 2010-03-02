@@ -75,9 +75,10 @@ public slots:
 	void GetInputFileName();
 	void GetOutputFileName();
 	void LoadFromTraceProject();
+	void FileSuffixChanged(QString s);
 
 private:
-	
+	QSettings TraceSESettings;
 	bool ReadNodeXMLFile(std::string xmlfname, std::vector<TraceNode*>& NodeContainer);
 	void WriteSWCFile(std::string SWCFilename, const std::vector<TraceNode*>& NodeContainer);
 	void CreateSettingsLayout();
@@ -93,6 +94,7 @@ private:
 	QGroupBox * FileActions;
 	QGroupBox * settingsBox;
 
+	QComboBox * fileSuffixBox;
 	QLabel * InputFileNameLine;
 	QLineEdit * OutputFileNameLine;
 	QTextEdit * FileListWindow;

@@ -29,30 +29,42 @@ TraceSEMain::TraceSEMain(QWidget *parent)
 : QMainWindow(parent)
 {
 	
-	QAction * ProjectButton = new QAction("Load Trace Project",this);
-	connect(ProjectButton, SIGNAL(triggered()), this, SLOT(LoadFromTraceProject()));
-	this->menuBar()->addAction(ProjectButton);
 	this->Project= new ProjectManager();
 	//this->FileSuffix = new QString();
 	this->FileSuffix = QString("_SE");
-	//create main window gui and load files
-	QWidget * mainWidget = new QWidget();
-	this->setCentralWidget(	mainWidget);
-	QHBoxLayout *mainLayout = new QHBoxLayout;
-	//vetical box layout for the main central widget
-	mainWidget->setLayout(mainLayout);
-	//file actions
+
 	this->createFileActions();
-	mainLayout->addWidget(this->FileActions);
 	//settings
 	this->CreateSettingsLayout();
-	mainLayout->addWidget(this->settingsBox);
+	QDockWidget *dockWidget = new QDockWidget(tr("Trace Settings"), this);
+	dockWidget->setAllowedAreas(Qt::LeftDockWidgetArea |
+							 Qt::RightDockWidgetArea);
+	dockWidget->setWidget(this->settingsBox);
+	addDockWidget(Qt::RightDockWidgetArea, dockWidget);
+	//mainLayout->addWidget(this->settingsBox);
 	this->statusBar()->showMessage("Ready");
 }
 
 void TraceSEMain::createFileActions()
 {
-	this->FileActions = new QGroupBox("Add a File to Trace");
+	//create main window gui and load files
+	QWidget * mainWidget = new QWidget();
+	this->setCentralWidget(	mainWidget);
+	QVBoxLayout *mainLayout = new QVBoxLayout;
+	mainWidget->setLayout(mainLayout);
+	QPushButton * ProjectButton = new QPushButton("Load Trace Project",this);
+	connect(ProjectButton, SIGNAL(clicked()), this, SLOT(LoadFromTraceProject()));
+	mainLayout->addWidget(ProjectButton);
+
+	this->fileSuffixBox = new QComboBox(this);
+	this->fileSuffixBox->setEditable(true);
+	this->fileSuffixBox->setInsertPolicy(QComboBox::InsertAtCurrent);
+	this->fileSuffixBox->addItems(this->TraceSESettings.value("Suffix", "_SE.xml").toStringList());
+	connect(this->fileSuffixBox, SIGNAL(editTextChanged(QString)), this, SLOT(FileSuffixChanged( QString)));
+	mainLayout->addWidget(this->fileSuffixBox);
+
+	//file actions
+	this->FileActions = new QGroupBox("Files to Trace");
 	QGridLayout *fileActionLayout = new QGridLayout;
 
 	this->InputFileNameLine = new QLabel();
@@ -70,19 +82,22 @@ void TraceSEMain::createFileActions()
 	QPushButton * AddButton = new QPushButton("Add new Files",this);
 	connect(AddButton, SIGNAL(clicked()), this, SLOT(addFileToTrace()));
 	fileActionLayout->addWidget(AddButton, 2,1);
-
+	this->FileActions->setLayout(fileActionLayout);
+	mainLayout->addWidget(this->FileActions);
+	
+	QLabel * textLabel =  new QLabel("Files Loaded and Steps Complete");
+	mainLayout->addWidget(textLabel); 
 	this->FileListWindow = new QTextEdit(this);
 	this->FileListWindow->setReadOnly(true);
 	this->FileListWindow->setLineWrapMode(QTextEdit::NoWrap);
-	fileActionLayout->addWidget(this->FileListWindow, 3,0);
+	mainLayout->addWidget(this->FileListWindow);
 
 	//run
 	QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
 		| QDialogButtonBox::Close);
      connect(buttonBox, SIGNAL(accepted()), this, SLOT(runSETracing()));
      connect(buttonBox, SIGNAL(rejected()), this, SLOT(close()));
-	 fileActionLayout->addWidget(buttonBox,4,0);
-	this->FileActions->setLayout(fileActionLayout);
+	 mainLayout->addWidget(buttonBox);
 }
 
 void TraceSEMain::GetInputFileName()
@@ -159,6 +174,14 @@ void TraceSEMain::addFileToTrace()
 	}
 }
 
+void TraceSEMain::FileSuffixChanged(QString s)
+{
+	this->FileSuffix = this->fileSuffixBox->currentText();
+	QStringList temp = this->TraceSESettings.value("Suffix", "_SE.xml").toStringList();
+	temp.removeAll(this->FileSuffix);
+	temp.prepend(this->FileSuffix);
+	this->TraceSESettings.setValue("Suffix", temp);
+}
 void TraceSEMain::CreateSettingsLayout()
 {
 	//create settings layout for tracing parameters 
@@ -168,56 +191,56 @@ void TraceSEMain::CreateSettingsLayout()
 
 	this->GetGridSpacing = new QSpinBox(this);
 	this->GetGridSpacing->setRange(5,70);
-	this->GetGridSpacing->setValue(15);
+	this->GetGridSpacing->setValue(this->TraceSESettings.value("Grid",15).toInt());
 	settingsLayout->addRow("Grid Spacing", this->GetGridSpacing);
 
 	this->GetStepRatio = new QDoubleSpinBox(this);
 	this->GetStepRatio->setRange(0.1,1);
 	this->GetStepRatio->setSingleStep(0.1);
-	this->GetStepRatio->setValue(.5);
+	this->GetStepRatio->setValue(this->TraceSESettings.value("StepRatio",.5).toDouble());
 	settingsLayout->addRow("Step Ratio", this->GetStepRatio);
 
 	this->GetAspectRatio= new QDoubleSpinBox(this);
 	this->GetAspectRatio->setRange(1.5,3.0);
 	this->GetAspectRatio->setSingleStep(.1);
-	this->GetAspectRatio->setValue(2.5);
+	this->GetAspectRatio->setValue(this->TraceSESettings.value("AR",2.5).toDouble());
 	settingsLayout->addRow("Max Model Aspect Ratio", this->GetAspectRatio);
 
 	this->GetTHRESHOLD = new QDoubleSpinBox(this);
 	this->GetTHRESHOLD->setRange(0,1);
 	this->GetTHRESHOLD->setSingleStep(.1);
-	this->GetTHRESHOLD->setValue(.5);
+	this->GetTHRESHOLD->setValue(this->TraceSESettings.value("Threshold",.5).toDouble());
 	settingsLayout->addRow("Threshold",this->GetTHRESHOLD);
 
 	this->GetminContrast = new QDoubleSpinBox(this);
 	this->GetminContrast->setRange(1,255);
-	this->GetminContrast->setValue(3);
+	this->GetminContrast->setValue(this->TraceSESettings.value("Contrast",3).toDouble());
 	settingsLayout->addRow("Min Contrast", this->GetminContrast);
 
 	this->GetMaximumVesselWidth = new QDoubleSpinBox(this);
 	this->GetMaximumVesselWidth->setRange(10,50);
-	this->GetMaximumVesselWidth->setValue(20);
+	this->GetMaximumVesselWidth->setValue(this->TraceSESettings.value("MaxW",20).toDouble());
 	settingsLayout->addRow("Maximum Vessel Width",this->GetMaximumVesselWidth);
-
-	this->GetMinimumVesselLength = new QDoubleSpinBox(this);
-	this->GetMinimumVesselLength->setRange(2,20);
-	this->GetMinimumVesselLength->setValue(3);
-	settingsLayout->addRow("Minimum Vessel Length", this->GetMinimumVesselLength);
 
 	this->GetMinimumVesselWidth = new QDoubleSpinBox(this);
 	this->GetMinimumVesselWidth->setRange(.5,9);
-	this->GetMinimumVesselWidth->setValue(1);
+	this->GetMinimumVesselWidth->setValue(this->TraceSESettings.value("MinW",1).toDouble());
 	settingsLayout->addRow("Minimum Vessel Width", this->GetMinimumVesselWidth);
+
+	this->GetMinimumVesselLength = new QDoubleSpinBox(this);
+	this->GetMinimumVesselLength->setRange(2,20);
+	this->GetMinimumVesselLength->setValue(this->TraceSESettings.value("MinL",3).toDouble());
+	settingsLayout->addRow("Minimum Vessel Length", this->GetMinimumVesselLength);
 
 	this->GetFitIterations = new QSpinBox(this);
 	this->GetFitIterations->setRange(50,150);
-	this->GetFitIterations->setValue(50);
+	this->GetFitIterations->setValue(this->TraceSESettings.value("FitItter",50).toDouble());
 	settingsLayout->addRow("Fitting Iterations", this->GetFitIterations);
 
 	this->GetStartTHRESHOLD = new QDoubleSpinBox(this);
 	this->GetStartTHRESHOLD->setRange(0,1);
 	this->GetStartTHRESHOLD->setSingleStep(.1);
-	this->GetStartTHRESHOLD->setValue(.7);
+	this->GetStartTHRESHOLD->setValue(this->TraceSESettings.value("StartThresh",.7).toDouble());
 	settingsLayout->addRow("Starting Threshold", this->GetStartTHRESHOLD);
 
 	this->GetUseHessian = new QCheckBox(this);
@@ -244,14 +267,23 @@ bool TraceSEMain::runSETracing()
 	}
 	this->statusBar()->showMessage("Setting Parameters");
 	this->GridSpacing = this->GetGridSpacing->value();
+	this->TraceSESettings.setValue("Grid",this->GridSpacing);
 	this->StepRatio = this->GetStepRatio->value();
+	this->TraceSESettings.setValue("StepRatio",this->StepRatio);
 	this->AspectRatio = this->GetAspectRatio->value();
+	this->TraceSESettings.setValue("AR",this->AspectRatio);
 	this->THRESHOLD = this->GetTHRESHOLD->value();
+	this->TraceSESettings.setValue("Threshold",this->THRESHOLD);
 	this->minContrast = this->GetminContrast->value();
+	this->TraceSESettings.setValue("Contrast",this->minContrast);
 	this->MaximumVesselWidth = this->GetMaximumVesselWidth->value();
+	this->TraceSESettings.setValue("MaxW",this->MaximumVesselWidth);
 	this->MinimumVesselLength = this->GetMinimumVesselLength->value();
+	this->TraceSESettings.setValue("MinL",this->MinimumVesselLength);
 	this->MinimumVesselWidth = this->GetMinimumVesselWidth->value();
+	this->TraceSESettings.setValue("MinW",this->MinimumVesselWidth);
 	this->StartTHRESHOLD = this->GetStartTHRESHOLD->value();
+	this->TraceSESettings.setValue("StartThresh",this->StartTHRESHOLD);
 	this->Spacing[0] = 1;
 	this->Spacing[1] = 1;
 	this->Spacing[2] = 1;
@@ -264,9 +296,18 @@ bool TraceSEMain::runSETracing()
 		this->UseHessian = 0;
 	}
 	this->ConvertToSWC = this->GetConvertToSWC->isChecked();
+	this->TraceSESettings.sync();
+
+	if (!this->ProjectName.isEmpty())
+	{
+		this->ConvertToSWC = true;
+		this->Project->writeProject((char*)this->ProjectName.toStdString().c_str());
+		this->FileListWindow->append(this->ProjectName + "\tproject xml written");
+	}// moved here incase convert to swc stalled
+
 	for (unsigned int k = 0; k < this->numDataFiles; k++) 
 	{
-		this->statusBar()->showMessage("Tracing file " + QString::number((int)k) 
+		this->FileListWindow->append("Tracing file " + QString::number((int)k +1) 
 			+ " of " + QString::number(this->numDataFiles));
 		/*std::cout << "Tracing " << k+1 <<" out of " << m_Config->getNumberOfDataFiles()
 			<< " image: " << m_Config->getInputFileName(k) << std::endl<< std::endl;*/
@@ -310,7 +351,7 @@ bool TraceSEMain::runSETracing()
 		this->statusBar()->showMessage("Compute Trace");
 			m_Tracer->ComputeTrace(image3D, m_SS) ;
 			//m_Tracer->WriteTraceToTxtFile(m_Config->getOutputFileName(k));
-		this->statusBar()->showMessage("write to file");
+		this->FileListWindow->append("write to file");
 			m_Tracer->WriteTraceToXMLFile(this->OutputFileNames.at(k));
 
 			m_Seeds = NULL;
@@ -320,18 +361,13 @@ bool TraceSEMain::runSETracing()
 			MIPimage = NULL;
 		if (this->ConvertToSWC)
 		{
-			this->statusBar()->showMessage("Convert to swc");
+			this->FileListWindow->append("Convert to swc");
 			std::vector<TraceNode*> NodeContainer;
 			this->ReadNodeXMLFile( this->OutputFileNames.at(k), NodeContainer);
 			this->WriteSWCFile(this->OutputSWCFileNames.at(k), NodeContainer);
 		}
 	}
-	if (!this->ProjectName.isEmpty())
-	{
-		this->Project->writeProject((char*)this->ProjectName.toStdString().c_str());
-		std::cout<<"project xml written"<<std::endl;
-	}
-	this->statusBar()->showMessage("done");
+	this->FileListWindow->append("done");
 	QMessageBox msgBoxEnd;
 	msgBoxEnd.setText("Finished Tracing all files");
 	msgBoxEnd.exec();
