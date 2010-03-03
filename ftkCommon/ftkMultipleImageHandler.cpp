@@ -22,6 +22,7 @@ namespace ftk
 MultipleImageHandler::MultipleImageHandler()
 {
 	outputDirectory = "";
+	outputBaseString = "b";
 }
 
 void MultipleImageHandler::SeriesToBlocks(std::string seriesFormat, int startIndex, int endIndex, int dx, int dy, int dz)
@@ -51,6 +52,7 @@ void MultipleImageHandler::SeriesToBlocks(StrVector inFiles, int dx, int dy, int
 	if( !imageIO )
     {
 		std::cerr << "NO IMAGEIO WAS FOUND" << std::endl;
+		std::cerr << inFiles.at(0) << std::endl;
 		return;
     }
 
@@ -93,8 +95,11 @@ void MultipleImageHandler::SeriesToBlocks(StrVector inFiles, int dx, int dy, int
 		{
 			for(int xp=0; xp<(int)xPairs.size(); ++xp)
 			{
-				std::string filename;
-				filename = "b" + NumToString(zp) + NumToString(yp) + NumToString(xp) + ".tif";
+				std::string filename = outputBaseString;
+				if(totalBlocks > 1)
+					filename += "_" + NumToString(counter);
+				filename += ".tif";
+
 				UCharImageType3D::RegionType region = CreateRegion( xPairs.at(xp), yPairs.at(yp), zPairs.at(zp) );
 
 				projF->addFile(filename, "image", region.GetIndex(0), region.GetIndex(1), region.GetIndex(2));

@@ -68,6 +68,7 @@ class MultipleImageHandler
 public:
 	MultipleImageHandler();
 	void SetOutputDirectory(std::string dir){ outputDirectory = dir; };
+	void SetOutputBase(std::string base){ outputBaseString = base; };
 
 	//These two functions take in image series and re-partion it into 3D blocks.
 	void SeriesToBlocks(std::string seriesFormat, int startIndex, int endIndex, int dx, int dy, int dz);
@@ -90,6 +91,7 @@ private:
 	UCharImageType2D::Pointer ReadImage2D(std::string filename);
 
 	std::string outputDirectory;
+	std::string outputBaseString;
 
 };
 
