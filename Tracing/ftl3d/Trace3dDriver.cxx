@@ -22,8 +22,8 @@ int main (int argc, char *argv[])
 	app.setOrganizationDomain("farsight-toolkit.org");
 	app.setApplicationName("Superellipsoid Trace 3D");
 	TraceSEMain * Trace3D = new TraceSEMain();
-	//Trace3D->show();
-	int retval = 1;//app.exec();
+	Trace3D->show();
+	int retval = app.exec();
 	delete Trace3D;
 	return retval;
 }
