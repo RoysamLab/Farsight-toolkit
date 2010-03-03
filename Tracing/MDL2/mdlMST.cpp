@@ -37,7 +37,7 @@ MST::MST(ImageType::Pointer inImage)
 	useVoxelRounding = true;
 	edgeRange = 10;		//Some default values:
 	power = 1;
-	PruneThreshold = 4.;
+	PruneThreshold = 4.0;
 
 	//input
 	skeletonPoints = NULL;
@@ -610,7 +610,7 @@ std::vector<pairE> MST::SearchFirstandSecondLevelBranch(void)
        // if the vertex is not on Backbone, continue
        if (vertBackbone[index_vert]==0) 
 		   continue;  
-       int outdegree = out_degree(*vi, prunedGraph);
+       int outdegree = (int)out_degree(*vi, prunedGraph);
        int numBranch_on_Backbone = outdegree - nodeDegree.at(index_vert);
        // if it has at least one branch out of BackBone  
        if (numBranch_on_Backbone <= 0)  continue;  
@@ -618,13 +618,13 @@ std::vector<pairE> MST::SearchFirstandSecondLevelBranch(void)
        // For each out branch (edge) on the BackBone
        for (boost::tie(outei, outedge_end) = out_edges(*vi, prunedGraph); outei != outedge_end; outei++)
         {
-        int targ = target(*outei, prunedGraph);
+        int targ = (int)target(*outei, prunedGraph);
 	    // the edge is on BackBone, continue
         if (vertBackbone[targ])  continue;  
       
-	    vertsCurBranch2[0][vertsCurBr_Index2[0]] = source(*outei, prunedGraph);
+	    vertsCurBranch2[0][vertsCurBr_Index2[0]] = (int)source(*outei, prunedGraph);
         vertsCurBr_Index2[0]++;
-        vertsCurBranch2[0][vertsCurBr_Index2[0]] = target(*outei, prunedGraph);
+        vertsCurBranch2[0][vertsCurBr_Index2[0]] = (int)target(*outei, prunedGraph);
 
         while (out_degree(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], prunedGraph), prunedGraph) == 2)
          {
@@ -634,7 +634,7 @@ std::vector<pairE> MST::SearchFirstandSecondLevelBranch(void)
             {
                 if (target(*outei2, prunedGraph) == (unsigned int)vertsCurBranch2[0][vertsCurBr_Index2[0]-1])
                  continue;
-                vertsCurBranch2[0][vertsCurBr_Index2[0]+1] = target(*outei2, prunedGraph);
+                vertsCurBranch2[0][vertsCurBr_Index2[0]+1] = (int)target(*outei2, prunedGraph);
             } // end for
 		  vertsCurBr_Index2[0]++; 
 	     } // end while 
@@ -656,7 +656,7 @@ std::vector<pairE> MST::SearchFirstandSecondLevelBranch(void)
           ind2Brch++;
           vertsCurBranch2[ind2Brch][0] = vertsCurBranch2[0][vertsCurBr_Index2[0]];
           vertsCurBr_Index2[ind2Brch] = 1;
-          vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]] = target(*outei2, prunedGraph);
+          vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]] = (int)target(*outei2, prunedGraph);
           // Search for the end of 2nd level branch
           while (out_degree(vertex(vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]], prunedGraph), prunedGraph) == 2)
           {
@@ -666,7 +666,7 @@ std::vector<pairE> MST::SearchFirstandSecondLevelBranch(void)
 		     {
                if (target(*outei3, prunedGraph) == (unsigned int)vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]-1])
                 continue;
-               vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]+1] = target(*outei3, prunedGraph);
+               vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]+1] = (int)target(*outei3, prunedGraph);
              } // end for
               vertsCurBr_Index2[ind2Brch]++;
            } // end while 
@@ -804,7 +804,7 @@ std::vector<pairE> MST::SpineExtract()
     if (vertBackbone[index_vert]==0) 
 		continue;  
 
-    int outdegree = out_degree(*vi, prunedGraph);
+    int outdegree = (int)out_degree(*vi, prunedGraph);
 
     int numBranch_on_Backbone = outdegree - nodeDegree.at(index_vert);
 
@@ -814,15 +814,15 @@ std::vector<pairE> MST::SpineExtract()
 
     for (boost::tie(outei, outedge_end) = out_edges(*vi, prunedGraph); outei != outedge_end; outei++)
       {
-      int targ = target(*outei, prunedGraph);
+      int targ = (int)target(*outei, prunedGraph);
 
 	  // the edge is on BackBone, continue
       if (vertBackbone[targ])  continue;  
       meanDensityBranch[0] = 0;
       meanVesselBranch[0] = 0;
-      vertsCurBranch2[0][vertsCurBr_Index2[0]] = source(*outei, prunedGraph);
+      vertsCurBranch2[0][vertsCurBr_Index2[0]] = (int)source(*outei, prunedGraph);
       vertsCurBr_Index2[0]++;
-      vertsCurBranch2[0][vertsCurBr_Index2[0]] = target(*outei, prunedGraph);
+      vertsCurBranch2[0][vertsCurBr_Index2[0]] = (int)target(*outei, prunedGraph);
       num_leaves++;
 
       while (out_degree(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], prunedGraph), prunedGraph) == 2)
@@ -833,7 +833,7 @@ std::vector<pairE> MST::SpineExtract()
           {
             if (target(*outei2, prunedGraph) == (unsigned int)vertsCurBranch2[0][vertsCurBr_Index2[0]-1])
               continue;
-            vertsCurBranch2[0][vertsCurBr_Index2[0]+1] = target(*outei2, prunedGraph);
+            vertsCurBranch2[0][vertsCurBr_Index2[0]+1] = (int)target(*outei2, prunedGraph);
           } // end for
         
 		vertsCurBr_Index2[0]++;
@@ -908,7 +908,7 @@ std::vector<pairE> MST::SpineExtract()
           ind2Brch++;
           vertsCurBranch2[ind2Brch][0] = vertsCurBranch2[0][vertsCurBr_Index2[0]];
           vertsCurBr_Index2[ind2Brch] = 1;
-          vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]] = target(*outei2, prunedGraph);
+          vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]] = (int)target(*outei2, prunedGraph);
           // Search for the end of 2nd level branch
           while (out_degree(vertex(vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]], prunedGraph), prunedGraph) == 2)
           {
@@ -918,7 +918,7 @@ std::vector<pairE> MST::SpineExtract()
 		    {
               if (target(*outei3, prunedGraph) == (unsigned int)vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]-1])
                 continue;
-               vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]+1] = target(*outei3, prunedGraph);
+               vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]+1] = (int)target(*outei3, prunedGraph);
             } // end for
               vertsCurBr_Index2[ind2Brch]++;
            } // end while 

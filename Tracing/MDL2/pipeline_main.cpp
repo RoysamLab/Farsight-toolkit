@@ -61,12 +61,13 @@ int main(int argc, char *argv[])
 	// PROCESSING
 	mdl::VolumeProcess *volProc = new mdl::VolumeProcess();
 	volProc->SetInput(img);
-	volProc->SetDebug(true);
+	volProc->SetDebug(false);
 	//volProc->RescaleIntensities(0,255);
 	//volProc->RunManualThreshold(1.9);
-	volProc->RunCAD();
+	//volProc->RunCAD();
 	volProc->MaskUsingGraphCuts();
 	volProc->MaskSmallConnComp(minConnCompSize);
+	//volProc->DialateImage(1);
 	mdl::ImageType::Pointer clean_img = volProc->GetOutput();
 	//volProc->RunDistanceTransform();
 	//mdl::ImageType::Pointer DT_img = volProc->GetOutput();
@@ -84,9 +85,10 @@ int main(int argc, char *argv[])
 	size_t found = outputFileName.find_last_of(".");
 	outputFileName.insert(found,"_clean");
 	writer->SetInput( clean_img );
-
 	writer->SetFileName( outputFileName.c_str() );
 	writer->Update();
+
+	//return EXIT_SUCCESS;
 
 	found = outputFileName.find_last_of(".");
 	outputFileName.replace(found+1,3,"mhd");
@@ -101,7 +103,7 @@ int main(int argc, char *argv[])
 	//Integrated Skeleton to create skeleton points:
 	mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton( clean_img );
 	skel->SetVectorMagnitude(vectorMagnitude);
-	skel->SetDebug(true);
+	skel->SetDebug(false);
 	skel->SetUseXiaoLiangMethod(false);
 	skel->Update();
 	std::vector<mdl::fPoint3D> skeleton = skel->GetOutput();
@@ -111,11 +113,13 @@ int main(int argc, char *argv[])
 
 	//Minimum spanning tree to create nodes and backbone node pairs (lines):
 	mdl::MST *mst = new mdl::MST( clean_img );
-	mst->SetDebug(true);
-	mst->SetEdgeRange(12);
+	mst->SetDebug(false);
+	mst->SetUseVoxelRounding(true);
+	mst->SetEdgeRange(15);
 	mst->SetPower(1);
 	mst->SetSkeletonPoints( &skeleton );
-	mst->CreateGraphAndMST(2);
+	//mst->CreateGraphAndMST(2);
+	mst->CreateGraphAndMST();
 	mst->ErodeAndDialateNodeDegree(10);
 	std::vector<mdl::fPoint3D> nodes = mst->GetNodes();
 	//Note: node 0 in bbpairs is index 0 of nodes!!!
@@ -125,7 +129,7 @@ int main(int argc, char *argv[])
 	std::cerr << "BSPLINE\n";
 	
 	mdl::BSplineFitting *bspline = new mdl::BSplineFitting( clean_img );
-	bspline->SetDebug(true);
+	bspline->SetDebug(false);
 	bspline->SetLevels(7);
 	bspline->SetOrder(3);
 	bspline->SetNodes( &nodes );
@@ -139,10 +143,12 @@ int main(int argc, char *argv[])
   
     mdl::MST *mst1 = new mdl::MST( clean_img );
 	mst1->SetDebug(false);
-	mst1->SetEdgeRange(12);
+	mst1->SetUseVoxelRounding(false);
+	mst1->SetEdgeRange(15);
 	mst1->SetPower(1);
 	mst1->SetSkeletonPoints( &nodes );
-	mst1->CreateGraphAndMST(2);
+	//mst1->CreateGraphAndMST(2);
+	mst1->CreateGraphAndMST();
 	mst1->ErodeAndDialateNodeDegree(2);
 	
 	nodes = mst1->GetNodes();
@@ -156,6 +162,11 @@ int main(int argc, char *argv[])
 	fhdl->SetLines(&bbpairs);
 	fhdl->Write("FinalBackbone.vtk");
 	delete fhdl;
+
+	mdl::vtkFileHandler * fhdl1 = new mdl::vtkFileHandler();
+	fhdl1->SetNodes(&skeleton);
+	fhdl1->Write("Skeleton.vtk");
+	delete fhdl1;
 
 	std::cerr << "DONE\n";
   

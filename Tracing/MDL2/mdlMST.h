@@ -48,7 +48,7 @@ public:
 	void SetDebug(bool inp = true){ debug = inp; };
 	void SetUseVoxelRounding(bool inp = true){useVoxelRounding = inp;};
 	void SetEdgeRange(int edge){ edgeRange = edge; };
-	void SetAlpha(double alpha){Alpha = alpha;}
+	void SetAlpha(double alpha){Alpha = alpha;}	//For spines
 	void SetPower(int p){ power = p; };
 	void SetPruneThreshold(double p){PruneThreshold = p;}
 	void SetVesselMap(ImageType::Pointer VesselMap);

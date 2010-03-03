@@ -68,6 +68,14 @@ bool vtkFileHandler::Write(std::string filename)
 			fprintf(fout, "2 %d %d\n", e.first, e.second);
 		}
 	}
+	else
+	{
+		fprintf(fout,"VERTICES %d %d\n", num_nodes, num_nodes*2);
+		for(int i=0; i<num_nodes; ++i)
+		{
+			fprintf(fout,"%d %d\n", 1, i);
+		}
+	}
 
 	fclose(fout);
 	
