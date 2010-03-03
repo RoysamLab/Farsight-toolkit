@@ -34,6 +34,7 @@ IntegratedSkeleton::IntegratedSkeleton(ImageType::Pointer inImage)
 
 	debug = false;
 	useXiaoLiangMethod = false;
+	linePathStepSize = 0.5;
 
 	Iu = NULL;
 	Iv = NULL;
@@ -1110,9 +1111,6 @@ IntegratedSkeleton::Vector3D IntegratedSkeleton::interpolation(float x, float y,
 
 bool IntegratedSkeleton::computeSkeleton()
 {
-	//Make an input parameter??
-	float linePathStepSize = 0.8;//0.2, 0.8, 2
-
 	skeletonPoints.clear();
 
 	if(!m_inputImage)

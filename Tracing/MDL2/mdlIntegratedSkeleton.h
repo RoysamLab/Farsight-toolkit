@@ -50,6 +50,7 @@ public:
 	~IntegratedSkeleton();
 	//Setup:
 	void SetVectorMagnitude(double vM){ vectorMagnitude = vM; };
+	void SetLinePathStepSize(float v){ linePathStepSize = v; };
 	void SetUseXiaoLiangMethod(bool inp = true){ useXiaoLiangMethod = inp; };
 	void SetDebug(bool inp = true){ debug = inp; };
 	//Methods:
@@ -65,6 +66,7 @@ private:
 	//Parameters
 	bool debug;				//If debug is true, process in steps and print stuff
 	double vectorMagnitude;
+	float linePathStepSize;
 	bool useXiaoLiangMethod;	//For computing iso-gray surface curvature
 
 	//Images & size
