@@ -173,7 +173,7 @@ void BSplineFitting::findBranches()
 		std::cerr << "There are " <<  NumBranches  << " branches" << std::endl;
 		for(int i=1; i<=NumBranches; ++i)
 		{
-			std::cerr << i << ":" << branches[i].size() << " points\n";
+			//std::cerr << i << ":" << branches[i].size() << " points\n";
 		}
 	}
 }

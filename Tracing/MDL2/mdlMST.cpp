@@ -89,35 +89,15 @@ void MST::SetVesselMap(ImageType::Pointer VesselMap)
 	}
 }
 
-
-
-bool MST::CreateGraphAndMST(void)
+bool MST::CreateGraphAndMST(int type )
 {
 	if(!m_inputImage || !skeletonPoints)
 		return false;
 
 	this->skeletonPointsToNodes(useVoxelRounding);
-	this->nodesToEdges();
-	//this->ShapeBasedNodesToEdges();
-	this->minimumSpanningTree();
 
-	return true;
-}
+	this->nodesToEdges( type );
 
-bool MST::CreateGraphAndMST(int Type )
-{
-	if(!m_inputImage || !skeletonPoints)
-		return false;
-
-	this->skeletonPointsToNodes(useVoxelRounding);
-	if(Type == 1)
-	   this->nodesToEdges();
-	if(Type == 2)
-	   this->ShapeBasedNodesToEdges();
-	if(Type == 3)
-	  { 
-		  // to be design new weight
-	  }
 	this->minimumSpanningTree();
 
 	return true;
@@ -187,12 +167,22 @@ bool MST::skeletonPointsToNodes(bool roundToNearestVoxel)
 
 //I'm going to convert the nodes into edges and edge weights.
 //I only make edges between nodes that are within the edgeRange
-bool MST::nodesToEdges()
+bool MST::nodesToEdges(int type)
 {
 	if( (int)nodes.size() == 0)
 		return false;
 
 	int num_nodes = (int)nodes.size();
+
+	ImageType::Pointer dtImage = NULL;
+	if(type == 2)
+	{
+		mdl::VolumeProcess *volProc = new mdl::VolumeProcess();
+		volProc->SetInput(this->m_inputImage);
+		volProc->RunDistanceTransform();
+		dtImage = volProc->GetOutput();
+		delete volProc;
+	}
 
 	//Iterate through the nodes and create edges within the specified range.
 	for(int i=0; i<num_nodes; ++i)
@@ -202,51 +192,34 @@ bool MST::nodesToEdges()
 		{
 			fPoint3D n1 = nodes.at(i);
 			fPoint3D n2 = nodes.at(j);
-			float dx = n1.x - n2.x;
-			float dy = n1.y - n2.y;
-			float dz = n1.z - n2.z;
 
-			if( abs(dx) > (float)edgeRange )
+			if( abs(n1.x - n2.x) > (float)edgeRange )
 				continue;
-			if( abs(dy) > (float)edgeRange )
+			if( abs(n1.y - n2.y) > (float)edgeRange )
 				continue;
-			if( abs(dz) > (float)edgeRange )
+			if( abs(n1.z - n2.z) > (float)edgeRange )
 				continue;
 
 			//If I'm here, then I've found a close enough node
 			edgeArray.push_back( pairE(i+1,j+1) ); //add an edge (count starts at 1 for nodes)
 
-			//Now compute edge weight:
-			float densityFactor = 0;
-			if(power >= 0.1)
+			float weight = 10000;
+			if(type == 1)
 			{
-				//Get the two intensity values (of closest voxel - no interpolation)
-				ImageType::IndexType index1;
-				index1[0] = roundToInt((double)n1.x);
-				index1[1] = roundToInt((double)n1.y);
-				index1[2] = roundToInt((double)n1.z);
-				ImageType::IndexType index2;
-				index2[0] = roundToInt((double)n2.x);
-				index2[1] = roundToInt((double)n2.y);
-				index2[2] = roundToInt((double)n2.z);
-				PixelType pix1 = m_inputImage->GetPixel(index1);
-				PixelType pix2 = m_inputImage->GetPixel(index2);
-
-				//Adjust the intensity values
-				float i1adj = (float)pow(double(pix1)+0.001, power);
-				float i2adj = (float)pow(double(pix2)+0.001, power);
-
-				//Compute the densityFactor:
-				float term1 = (float)pow(double(i1adj+i2adj),double(1.05));
-				// AAAHH THIS IS GROSS AND DOES NOT MAKE SENSE
-				//float term2 = pow(double(voxelNodeIndex[iidxMid1]+voxelNodeIndex[iidxMid2]+1), 0.5));
-				float term2 = 0;
-				densityFactor = fabs(term1 + term2);
+				weight = getXiaosongEdgeWeight(n1, n2, power);
 			}
-
-			float num = (float)sqrt(float(dx*dx + dy*dy + dz*dz));
-			float den = densityFactor*.02 + 1;
-			float weight = num / den;
+			else if(type == 2)
+			{
+				weight = getEdgeWeight(n1, n2, dtImage);
+			}
+			else if(type == 3)
+			{
+				weight = getEdgeWeight(n1, n2, m_inputImage); //(doesn't use power parameter)
+			}
+			else if(type == 4)
+			{
+				weight = getGeodesicEdgeWeight(n1, n2, m_inputImage);
+			}
 			edgeWeight.push_back(weight);
 		}//end for j
 	}//end for i
@@ -257,64 +230,122 @@ bool MST::nodesToEdges()
 	return true;
 }
 
-bool MST::ShapeBasedNodesToEdges()
+float MST::getXiaosongEdgeWeight(fPoint3D n1, fPoint3D n2, double pwr)
 {
-	if( (int)nodes.size() == 0)
-		return false;
+	if(!m_inputImage)
+		return 10000;
 
-	int num_nodes = (int)nodes.size();
-
-	mdl::VolumeProcess *volProc = new mdl::VolumeProcess();
-	volProc->SetInput(this->m_inputImage);
-	volProc->RunDistanceTransform();
-    mdl::ImageType::Pointer Dt_Image= volProc->GetOutput();
-	delete volProc;
-
-	//Iterate through the nodes and create edges within the specified range.
-	for(int i=0; i<num_nodes; ++i)
+	//Now compute edge weight:
+	float densityFactor = 0;
+	if(pwr >= 0.1)
 	{
-		//for(int j=1; j<i; ++j)
-		for(int j=0; j<i; ++j)
-		{
-			fPoint3D n1 = nodes.at(i);
-			fPoint3D n2 = nodes.at(j);
-			float dx = n1.x - n2.x;
-			float dy = n1.y - n2.y;
-			float dz = n1.z - n2.z;
+		//Get the two intensity values (of closest voxel - no interpolation)
+		ImageType::IndexType index1;
+		index1[0] = roundToInt((double)n1.x);
+		index1[1] = roundToInt((double)n1.y);
+		index1[2] = roundToInt((double)n1.z);
+		ImageType::IndexType index2;
+		index2[0] = roundToInt((double)n2.x);
+		index2[1] = roundToInt((double)n2.y);
+		index2[2] = roundToInt((double)n2.z);
+		PixelType pix1 = m_inputImage->GetPixel(index1);
+		PixelType pix2 = m_inputImage->GetPixel(index2);
 
-			if( abs(dx) > (float)edgeRange )
-				continue;
-			if( abs(dy) > (float)edgeRange )
-				continue;
-			if( abs(dz) > (float)edgeRange )
-				continue;
+		//Adjust the intensity values
+		float i1adj = (float)pow(double(pix1)+0.001, pwr);
+		float i2adj = (float)pow(double(pix2)+0.001, pwr);
 
-			ImageType::IndexType index1;
-			index1[0] = roundToInt((double)n1.x);
-			index1[1] = roundToInt((double)n1.y);
-			index1[2] = roundToInt((double)n1.z);
-			ImageType::IndexType index2;
-			index2[0] = roundToInt((double)n2.x);
-			index2[1] = roundToInt((double)n2.y);
-			index2[2] = roundToInt((double)n2.z);
+		//Compute the densityFactor:
+		float term1 = (float)pow(double(i1adj+i2adj),double(1.05));
+		// AAAHH THIS IS GROSS AND DOES NOT MAKE SENSE
+		//float term2 = pow(double(voxelNodeIndex[iidxMid1]+voxelNodeIndex[iidxMid2]+1), 0.5));
+		float term2 = 0;
+		densityFactor = fabs(term1 + term2);
+	}
+
+	float dx = n1.x - n2.x;
+	float dy = n1.y - n2.y;
+	float dz = n1.z - n2.z;
+	float num = (float)sqrt(float(dx*dx + dy*dy + dz*dz));
+	float den = densityFactor*.02 + 1;
+	float weight = num / den;
+	return weight;
+}
+
+//By Xiao Liang (modified by Isaac Abbott):
+float MST::getEdgeWeight(fPoint3D n1, fPoint3D n2, ImageType::Pointer img)
+{
+	if(!img)
+		return 10000;
+
+	ImageType::IndexType index1;
+	index1[0] = roundToInt((double)n1.x);
+	index1[1] = roundToInt((double)n1.y);
+	index1[2] = roundToInt((double)n1.z);
+	ImageType::IndexType index2;
+	index2[0] = roundToInt((double)n2.x);
+	index2[1] = roundToInt((double)n2.y);
+	index2[2] = roundToInt((double)n2.z);
 	
-			PixelType dti = Dt_Image->GetPixel(index1);
-			PixelType dtj = Dt_Image->GetPixel(index2);
+	PixelType dti = img->GetPixel(index1);
+	PixelType dtj = img->GetPixel(index2);
 			
-			edgeArray.push_back( pairE(i+1,j+1) ); //add an edge (count starts at 1 for nodes)
-            float term1 = (float)pow(double(dti+dtj),double(1.05)); 
-			float densityFactor = fabs(term1);
-			float num = (float)sqrt(float(dx*dx + dy*dy + dz*dz));
-			float den = densityFactor + 1;
-			float weight = num / den;
-			edgeWeight.push_back(weight);
-		}//end for j
-	}//end for i
+	float dx = n1.x - n2.x;
+	float dy = n1.y - n2.y;
+	float dz = n1.z - n2.z;
+    //float term1 = (float)pow(double(dti+dtj),double(1.05));
+	float term1 = dti + dtj; 
+	float densityFactor = fabs(term1);
+	float num = (float)sqrt(float(dx*dx + dy*dy + dz*dz));
+	float weight = 2*num / densityFactor;
 
-	if(debug)
-		std::cerr << "Finished making edges = " << edgeArray.size() << std::endl;
+	return weight;
+}
 
-	return true;
+float MST::getGeodesicEdgeWeight(fPoint3D n1, fPoint3D n2, ImageType::Pointer img)
+{
+	if(!img)
+		return 10000;
+
+	float dx = n2.x - n1.x;
+	float dy = n2.y - n1.y;
+	float dz = n2.z - n1.z;
+
+	//Find 5 points along the edge
+	std::vector<fPoint3D> testPoints;
+	for(double t=0.0; t<=1; t+=1.0/4.0)
+	{
+		fPoint3D tPoint;
+		tPoint.x = (dx)*t + n1.x;
+		tPoint.y = (dy)*t + n1.y;
+		tPoint.z = (dz)*t + n1.z;
+		testPoints.push_back(tPoint);
+	}
+
+	double startI = 0;	//intensity of start point
+	double avg=0;		//average intensity of other points
+	double div = testPoints.size()-1;
+	for(int i=0; i<(int)testPoints.size(); ++i)
+	{
+		fPoint3D tP = testPoints.at(i);
+		ImageType::IndexType index1;
+		index1[0] = roundToInt((double)tP.x);
+		index1[1] = roundToInt((double)tP.y);
+		index1[2] = roundToInt((double)tP.z);
+		PixelType val = img->GetPixel(index1);
+		if(i==0)
+			startI = (double)val;
+		else
+			avg += (double)val/div;
+	}
+
+	//Now compute the weight. 
+	//Short distance means small weight
+	//But big difference in intensities means large weight
+	float term1 = 2 * (float)sqrt(float(dx*dx + dy*dy + dz*dz));
+	float term2 = (float)sqrt(float((startI-avg)*(startI-avg)));
+	float weight = term1 + term2;
+	return weight;
 }
 
 bool MST::minimumSpanningTree()

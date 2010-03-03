@@ -113,14 +113,13 @@ int main(int argc, char *argv[])
 
 	//Minimum spanning tree to create nodes and backbone node pairs (lines):
 	mdl::MST *mst = new mdl::MST( clean_img );
-	mst->SetDebug(false);
+	mst->SetDebug(true);
 	mst->SetUseVoxelRounding(true);
 	mst->SetEdgeRange(15);
 	mst->SetPower(1);
 	mst->SetSkeletonPoints( &skeleton );
-	//mst->CreateGraphAndMST(2);
-	mst->CreateGraphAndMST();
-	mst->ErodeAndDialateNodeDegree(10);
+	mst->CreateGraphAndMST(3);
+	mst->ErodeAndDialateNodeDegree(2);
 	std::vector<mdl::fPoint3D> nodes = mst->GetNodes();
 	//Note: node 0 in bbpairs is index 0 of nodes!!!
 	std::vector<mdl::pairE> bbpairs = mst->BackboneExtract();
@@ -129,7 +128,7 @@ int main(int argc, char *argv[])
 	std::cerr << "BSPLINE\n";
 	
 	mdl::BSplineFitting *bspline = new mdl::BSplineFitting( clean_img );
-	bspline->SetDebug(false);
+	bspline->SetDebug(true);
 	bspline->SetLevels(7);
 	bspline->SetOrder(3);
 	bspline->SetNodes( &nodes );
@@ -147,8 +146,7 @@ int main(int argc, char *argv[])
 	mst1->SetEdgeRange(15);
 	mst1->SetPower(1);
 	mst1->SetSkeletonPoints( &nodes );
-	//mst1->CreateGraphAndMST(2);
-	mst1->CreateGraphAndMST();
+	mst1->CreateGraphAndMST(3);
 	mst1->ErodeAndDialateNodeDegree(2);
 	
 	nodes = mst1->GetNodes();
@@ -170,8 +168,8 @@ int main(int argc, char *argv[])
 
 	std::cerr << "DONE\n";
   
-	//std::cerr << "PRESS ENTER TO EXIT\n";
-	//getchar();
+	std::cerr << "PRESS ENTER TO EXIT\n";
+	getchar();
 
 	//******************************************************************
 	//******************************************************************

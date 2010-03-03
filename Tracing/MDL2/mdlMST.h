@@ -59,8 +59,7 @@ public:
 	
 	//Methods:
 	void SetSkeletonPoints(std::vector<fPoint3D> * sp);
-	bool CreateGraphAndMST(void);	//Do first
-	bool CreateGraphAndMST(int Type );
+	bool CreateGraphAndMST(int type = 1 ); //Do first
 	bool ErodeAndDialateNodeDegree(int morphStrength); //Do second (if desired)
 	std::vector<pairE> SearchFirstandSecondLevelBranch(void);
 
@@ -107,8 +106,10 @@ private:
 	Graph * mstGraph;			//min spanning tree graph
 
 	bool skeletonPointsToNodes(bool roundToNearestVoxel=true);	//step 1
-	bool nodesToEdges();			//step 2
-	bool ShapeBasedNodesToEdges();
+	bool nodesToEdges(int type = 1);//step 2
+	float getXiaosongEdgeWeight(fPoint3D n1, fPoint3D n2, double pwr);
+	float getEdgeWeight(fPoint3D n1, fPoint3D n2, ImageType::Pointer img);
+	float getGeodesicEdgeWeight(fPoint3D n1, fPoint3D n2, ImageType::Pointer img);
 	bool minimumSpanningTree();		//step 3
 	Graph morphGraphPrune(Graph *graph, std::vector<fPoint3D> *nodes, float lengthThreshold);
 	int roundToInt(double v);
