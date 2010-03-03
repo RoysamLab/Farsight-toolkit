@@ -1,0 +1,9 @@
+ <!DOCTYPE RCC><RCC version="1.0">
+ <qresource>
+     <file>images/banner.png</file>
+     <file>html/intro.html</file>
+     <file>html/preprocessing.html</file>
+     <file>html/phaseone.html</file>
+     <file>html/phasetwo.html</file>
+ </qresource>
+ </RCC>

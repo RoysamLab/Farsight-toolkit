@@ -1,0 +1,798 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SkeletonizationWizard2</class>
+ <widget class="QWizard" name="SkeletonizationWizard2">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>906</width>
+    <height>418</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Skeletonization Wizard</string>
+  </property>
+  <property name="wizardStyle">
+   <enum>QWizard::ModernStyle</enum>
+  </property>
+  <property name="options">
+   <set>QWizard::NoCancelButton|QWizard::NoDefaultButton</set>
+  </property>
+  <widget class="MDL2IntroPage" name="IntroPage">
+   <widget class="QLabel" name="InputImageLabel">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>100</y>
+      <width>550</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="SelectInputButton">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>70</y>
+      <width>200</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Select input image</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="SelectBackboneButton">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>160</y>
+      <width>200</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Select Backbone Output File</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="BackboneOutputLabel">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>190</y>
+      <width>550</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="SelectSpinesButton">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>250</y>
+      <width>200</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Select Spines Output File</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="Page1Label">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>571</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>18</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Welcome to the FARSIGHT Skeletonization Wizard</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="SpinesOutputLabel">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>280</y>
+      <width>550</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+  </widget>
+  <widget class="MDL2PreprocessingPage" name="PreprocessingPage">
+   <widget class="QLabel" name="VolumeProcessLabel">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>10</y>
+      <width>161</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>18</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Preprocessing</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="Step1Label">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>60</y>
+      <width>61</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Step #1</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="ConnectedComponentsLabel">
+    <property name="geometry">
+     <rect>
+      <x>190</x>
+      <y>160</y>
+      <width>181</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Connected Components Size</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="ComponentsSizeInput">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>140</y>
+      <width>41</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="inputMask">
+     <string>900; </string>
+    </property>
+    <property name="text">
+     <string>10</string>
+    </property>
+    <property name="cursorPosition">
+     <number>2</number>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="MaskUsingGraphCutsButton">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>430</x>
+      <y>60</y>
+      <width>181</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>MaskUsingGraphCuts</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="Step2Label">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>136</y>
+      <width>61</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Step #2</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="MaskSmallConnCompButton">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>430</x>
+      <y>140</y>
+      <width>181</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>MaskSmallConnComp</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="MDL2PhaseOnePage" name="PhaseOnePage">
+   <widget class="QLabel" name="Page5Label">
+    <property name="geometry">
+     <rect>
+      <x>220</x>
+      <y>10</y>
+      <width>101</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>18</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>First Pass</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="IntegratedskelButton">
+    <property name="geometry">
+     <rect>
+      <x>430</x>
+      <y>50</y>
+      <width>150</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string> Integratedskel</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="VectorMagnitudeLabel">
+    <property name="geometry">
+     <rect>
+      <x>200</x>
+      <y>70</y>
+      <width>120</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Vector magnitude</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="VectorMagnitudeInput">
+    <property name="geometry">
+     <rect>
+      <x>230</x>
+      <y>50</y>
+      <width>40</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>When an interpolated vector in the sub-voxel position has magnitude belowthis value, we take it as a critical point.  Use higher values for morecritical points.  Typical values range between 0.04 and 0.15.</string>
+    </property>
+    <property name="whatsThis">
+     <string>When an interpolated vector in the sub-voxel position has magnitude belowthis value, we take it as a critical point.  Use higher values for morecritical points.  Typical values range between 0.04 and 0.15.</string>
+    </property>
+    <property name="inputMask">
+     <string>9.90; </string>
+    </property>
+    <property name="text">
+     <string>0.05</string>
+    </property>
+    <property name="cursorPosition">
+     <number>4</number>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="EdgeRangeInput1">
+    <property name="geometry">
+     <rect>
+      <x>230</x>
+      <y>110</y>
+      <width>40</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>If the distance between 2 points is above this distance, we assume thereis no edge between them in the graph structure before generating the IW-MST.Use higher values for a more connected graph.  Typical values range between 5 and 15.</string>
+    </property>
+    <property name="whatsThis">
+     <string>If the distance between 2 points is above this distance, we assume thereis no edge between them in the graph structure before generating the IW-MST.Use higher values for a more connected graph.  Typical values range between 5 and 15.</string>
+    </property>
+    <property name="inputMask">
+     <string>90; </string>
+    </property>
+    <property name="text">
+     <string>10</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="MorphStrengthInput1">
+    <property name="geometry">
+     <rect>
+      <x>230</x>
+      <y>170</y>
+      <width>40</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>In graph morphological method with iteration of graph erosion and dilationsteps, we set the morphology strength as the number of iterations for grapherosion and dilation.  Use higher values to remove longer branches.  Typical values range between 30 and 70.</string>
+    </property>
+    <property name="whatsThis">
+     <string>In graph morphological method with iteration of graph erosion and dilationsteps, we set the morphology strength as the number of iterations for grapherosion and dilation.  Use higher values to remove longer branches.</string>
+    </property>
+    <property name="inputMask">
+     <string>90; </string>
+    </property>
+    <property name="text">
+     <string>50</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="EdgeRangeLabel">
+    <property name="geometry">
+     <rect>
+      <x>220</x>
+      <y>130</y>
+      <width>71</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Edge range</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="MorphStrengthLabel">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>190</y>
+      <width>111</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Morph strength</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="CreateGraphAndMSTButton1">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>430</x>
+      <y>110</y>
+      <width>151</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>CreateGraphAndMST</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="BSplineFittingButton">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>430</x>
+      <y>290</y>
+      <width>150</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>BSplineFitting</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="BackboneExtractButton">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>430</x>
+      <y>230</y>
+      <width>150</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>BackboneExtract</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="Step1Label2">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>50</y>
+      <width>61</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Step #1</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="Step2Label2">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>110</y>
+      <width>61</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Step #2</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="Step3Label2">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>170</y>
+      <width>61</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Step #3</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="Step4Label2">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>230</y>
+      <width>61</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Step #4</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="Step5Label">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>290</y>
+      <width>61</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Step #5</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="OrderLabel">
+    <property name="geometry">
+     <rect>
+      <x>130</x>
+      <y>310</y>
+      <width>85</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>BSpline order</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="OrderInput">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>290</y>
+      <width>40</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>BSpline order</string>
+    </property>
+    <property name="whatsThis">
+     <string>Used to emphasize the function of either model description or the datadescription (tradeoff between coverage and conciseness).  Use higher valuesfor more complex models.  Typical values range between 0.5 and 0.95.</string>
+    </property>
+    <property name="inputMask">
+     <string>09; </string>
+    </property>
+    <property name="text">
+     <string>3</string>
+    </property>
+    <property name="cursorPosition">
+     <number>2</number>
+    </property>
+   </widget>
+   <widget class="QLabel" name="LevelsLabel">
+    <property name="geometry">
+     <rect>
+      <x>280</x>
+      <y>310</y>
+      <width>111</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Number of levels</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="LevelsInput">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>290</y>
+      <width>40</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>Number of levels to use for BSpline fitting</string>
+    </property>
+    <property name="whatsThis">
+     <string>Used to emphasize the function of either model description or the datadescription (tradeoff between coverage and conciseness).  Use higher valuesfor more complex models.  Typical values range between 0.5 and 0.95.</string>
+    </property>
+    <property name="inputMask">
+     <string>09 ; </string>
+    </property>
+    <property name="text">
+     <string>7 </string>
+    </property>
+    <property name="cursorPosition">
+     <number>3</number>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="ErodeAndDilateButton1">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>430</x>
+      <y>170</y>
+      <width>201</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>ErodeAndDilateNodeDegree</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="MDL2PhaseTwoPage" name="PhaseTwoPage">
+   <widget class="QLabel" name="SecondPassLabel">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>10</y>
+      <width>191</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>18</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Second Pass</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="CreateGraphAndMSTButton2">
+    <property name="geometry">
+     <rect>
+      <x>430</x>
+      <y>50</y>
+      <width>241</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>CreateGraphAndMST</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="EdgeRangeInput2">
+    <property name="geometry">
+     <rect>
+      <x>230</x>
+      <y>50</y>
+      <width>40</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>If the distance between 2 points is above this distance, we assume thereis no edge between them in the graph structure before generating the IW-MST.Use higher values for a more connected graph.  Typical values range between 5 and 15.</string>
+    </property>
+    <property name="whatsThis">
+     <string>If the distance between 2 points is above this distance, we assume thereis no edge between them in the graph structure before generating the IW-MST.Use higher values for a more connected graph.  Typical values range between 5 and 15.</string>
+    </property>
+    <property name="inputMask">
+     <string>90; </string>
+    </property>
+    <property name="text">
+     <string>10</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="EdgeRangeLabel2">
+    <property name="geometry">
+     <rect>
+      <x>220</x>
+      <y>70</y>
+      <width>80</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Edge range</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="MorphStrengthInput2">
+    <property name="geometry">
+     <rect>
+      <x>230</x>
+      <y>130</y>
+      <width>40</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>In graph morphological method with iteration of graph erosion and dilationsteps, we set the morphology strength as the number of iterations for grapherosion and dilation.  Use higher values to remove longer branches.  Typical values range between 30 and 70.</string>
+    </property>
+    <property name="whatsThis">
+     <string>In graph morphological method with iteration of graph erosion and dilationsteps, we set the morphology strength as the number of iterations for grapherosion and dilation.  Use higher values to remove longer branches.</string>
+    </property>
+    <property name="inputMask">
+     <string>90; </string>
+    </property>
+    <property name="text">
+     <string>50</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="MorphStrengthLabel2">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>150</y>
+      <width>111</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Morph strength</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="ErodeAndDilateButton2">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>430</x>
+      <y>130</y>
+      <width>241</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>ErodeAndDilateNodeDegree</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="Step2Label3">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>130</y>
+      <width>61</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Step #2</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="Step1Label3">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>50</y>
+      <width>61</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Step #1</string>
+    </property>
+   </widget>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>MDL2IntroPage</class>
+   <extends>QWizardPage</extends>
+   <header>MDL2IntroPage.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>MDL2PreprocessingPage</class>
+   <extends>QWizardPage</extends>
+   <header>MDL2PreprocessingPage.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>MDL2PhaseOnePage</class>
+   <extends>QWizardPage</extends>
+   <header>MDL2PhaseOnePage.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>MDL2PhaseTwoPage</class>
+   <extends>QWizardPage</extends>
+   <header>MDL2PhaseTwoPage.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
