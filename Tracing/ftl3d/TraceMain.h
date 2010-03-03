@@ -69,6 +69,7 @@ public:
 	void GetFeature( ImageType3D::Pointer&, ImageType3D::Pointer&);
 	void ImageStatistics(ImageType3D::Pointer & );
 	void WriteSeedImage(ImageType2D::Pointer, SeedContainer3D::Pointer,std::string );
+	void SetProjectName(QString projName);
 public slots:
 	bool runSETracing();
 	void addFileToTrace();

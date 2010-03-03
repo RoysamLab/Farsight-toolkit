@@ -125,10 +125,19 @@ void TraceSEMain::GetOutputFileName()
 	}
 }
 
+void TraceSEMain::SetProjectName(QString projName)
+{
+	this->ProjectName = projName;
+}
+
 void TraceSEMain::LoadFromTraceProject()
 {
-	this->ProjectName = QFileDialog::getOpenFileName(this , "Open Trace Project File", ".",
-		tr("Trace file ( *.xml )"));
+	if(this->ProjectName.isEmpty())
+	{
+		this->ProjectName = QFileDialog::getOpenFileName(this , "Open Trace Project File", ".",
+			tr("Trace file ( *.xml )"));
+	}
+
 	if (!this->ProjectName.isEmpty())
 	{
 		this->GetConvertToSWC->setChecked(true);
