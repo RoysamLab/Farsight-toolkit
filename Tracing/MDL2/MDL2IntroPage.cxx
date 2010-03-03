@@ -14,7 +14,7 @@ bool MDL2IntroPage::isComplete() const
   MDL2Wizard *wiz = static_cast<MDL2Wizard*>(this->wizard());
   if(wiz->InputImageLabel->text() != "" &&
      wiz->BackboneOutputLabel->text() != "" &&
-     wiz->SpinesOutputLabel->text() != "")
+     wiz->SkeletonOutputLabel->text() != "")
     {
     return true;
     }

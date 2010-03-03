@@ -42,7 +42,6 @@ public:
 	~MDL2WizardHelper();
   void run();
   vtkImageData* GetImageData() { return this->ITKtoVTK->GetOutput(); }
-  
 
 signals:
   void MaskUsingGraphCutsFinished();
@@ -66,6 +65,8 @@ public slots:
   void RunBSplineFitting(unsigned int order, unsigned int levels);
   void RunCreateGraphAndMST2(int edgeRange);
   void RunErodeAndDilateNodeDegree2(int morphStrength);
+  void WriteBackbone(const char *fileName);
+  void WriteSkeleton(const char *fileName);
 
 private:
   typedef itk::ImageFileReader< mdl::ImageType > ReaderType;
@@ -81,6 +82,8 @@ private:
   mdl::ImageType::Pointer EnhancedImage;
   std::vector<mdl::fPoint3D> Nodes;
   std::vector<mdl::pairE> BackbonePairs;
+  mdl::vtkFileHandler *FileHandler;
 };
+
 #endif
 

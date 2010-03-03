@@ -22,6 +22,7 @@ MDL2WizardHelper::MDL2WizardHelper()
   this->Skel = 0;
   this->MinSpanTree = 0;
   this->BSpline = 0;
+  this->FileHandler = 0;
   this->Reader = ReaderType::New();
   this->ITKtoVTK = ITKtoVTKType::New();
 }
@@ -191,5 +192,30 @@ void MDL2WizardHelper::RunErodeAndDilateNodeDegree2(int morphStrength)
   emit this->ErodeAndDilateNodeDegree2Finished();
 }
 
-//need a save function here too
+//-----------------------------------------------------------------------------
+void MDL2WizardHelper::WriteBackbone(const char *fileName)
+{
+  if(this->FileHandler != 0)
+    {
+    delete this->FileHandler;
+    }
+  this->FileHandler = new mdl::vtkFileHandler();
+	this->FileHandler->SetNodes(& (this->Nodes) );
+	this->FileHandler->SetLines(& (this->BackbonePairs) );
+	this->FileHandler->Write(fileName);
+}
+
+//-----------------------------------------------------------------------------
+void MDL2WizardHelper::WriteSkeleton(const char *fileName)
+{
+  if(this->FileHandler != 0)
+    {
+    delete this->FileHandler;
+    }
+  this->FileHandler = new mdl::vtkFileHandler();
+	this->FileHandler->SetNodes( &(this->SkeletonPoints) );
+	this->FileHandler->Write(fileName);
+}
+
+
 

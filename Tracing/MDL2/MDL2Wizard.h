@@ -53,6 +53,7 @@ public:
   void SetInteractiveExecution(bool b) { this->InteractiveExecution = b; }
   bool GetInteractiveExecution() { return this->InteractiveExecution; }
 
+/*
   QString GetConnectedComponentsSize()
     { return this->ConnectedComponentsSize; }
   void SetConnectedComponentsSize(const char *s);
@@ -66,6 +67,7 @@ public:
   void SetBSplineOrder(const char *s);
   QString GetBSplineLevels() { return this->BSplineLevels; }
   void SetBSplineLevels(const char *s);
+*/
 
   //properties and their accessors.  Used to control when the next/back/finish
   //buttons are enabled and disabled.  These are public so the WizardPages can
@@ -76,9 +78,9 @@ public:
   QString BackboneFileName;
   void SetBackboneFileName(QString s) { this->BackboneFileName = s; }
   QString GetBackboneFileName() { return this->BackboneFileName; }
-  QString SpinesFileName;
-  void SetSpinesFileName(QString s) { this->SpinesFileName = s; }
-  QString GetSpinesFileName() { return this->SpinesFileName; }
+  QString SkeletonFileName;
+  void SetSkeletonFileName(QString s) { this->SkeletonFileName = s; }
+  QString GetSkeletonFileName() { return this->SkeletonFileName; }
   bool PreprocessingDone;
   bool PhaseOneDone;
   bool PhaseTwoDone;
@@ -86,11 +88,10 @@ public:
 public slots:
   void SelectInputImage();
   void SelectBackboneFile();
-  void SelectSpinesFile();
+  void SelectSkeletonFile();
   void SetInputImage(const char *filename);
   void SetBackboneFile(const char *filename);
-  void SetSpinesFile(const char *filename);
-  void AppendOutputToDisplay(QObject *mapped);
+  void SetSkeletonFile(const char *filename);
   void MaskUsingGraphCuts();
   void MaskSmallConnComp();
   void Integratedskel();
@@ -100,6 +101,7 @@ public slots:
   void BSplineFitting();
   void CreateGraphAndMST2();
   void ErodeAndDilateNodeDegree2();
+  void SaveOutput();
 
 signals:
   //signals to tell the helper when to run 
@@ -113,12 +115,10 @@ signals:
   void StartBSplineFitting(unsigned int order, unsigned int levels);
   void StartCreateGraphAndMST2(int edgeRange);
   void StartErodeAndDilateNodeDegree2(int morphStrength);
+  void ReadyToSaveBackbone(const char *fileName);
+  void ReadyToSaveSkeleton(const char *fileName);
 
 protected slots:
-  void UpdateEdgeRangeFrom1();
-  void UpdateEdgeRangeFrom2();
-  void UpdateMorphStrengthFrom1();
-  void UpdateMorphStrengthFrom2();
   void DisplayMaskUsingGraphCutsResults();
   void DisplayMaskSmallConnCompResults();
   void DisplayIntegratedskelResults();
@@ -140,7 +140,7 @@ private:
 	QAction *ExitAction;
   QFileInfo InputFile;
   QFileInfo BackboneFile;
-  QFileInfo SpinesFile;
+  QFileInfo SkeletonFile;
   QTime Time;
   QTextEdit *OutputWindow;
   QTextEdit *HelpWindow;
@@ -148,6 +148,7 @@ private:
   vtkSmartPointer<vtkRenderer> Renderer;
 
   //bool RawInput;
+  /*
   QString ConnectedComponentsSize;
   QString VectorMagnitude;
   QString EdgeRange;
@@ -155,6 +156,7 @@ private:
   QString BSplineOrder;
   QString BSplineLevels;
   QString DataDir;
+  */
   bool InteractiveExecution;
 };
 #endif

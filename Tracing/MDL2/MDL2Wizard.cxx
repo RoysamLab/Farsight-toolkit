@@ -70,6 +70,7 @@ MDL2Wizard::~MDL2Wizard()
   this->HelpWindow = 0;
   delete this->RenderWidget;
   this->RenderWidget = 0;
+  this->Helper->exit();
   delete this->Helper;
   this->Helper = 0;
 }
@@ -129,25 +130,8 @@ void MDL2Wizard::SetupSignalsAndSlots()
                 this, SLOT(SelectInputImage()));
   this->connect(this->SelectBackboneButton, SIGNAL(clicked()),
                 this, SLOT(SelectBackboneFile()));
-  this->connect(this->SelectSpinesButton, SIGNAL(clicked()),
-                this, SLOT(SelectSpinesFile()));
-
-  //all these connections are for updating GUI elements that appear on more
-  //than one page.
-  this->connect(this->EdgeRangeInput1, SIGNAL(textChanged(const QString &)),
-                this, SLOT(UpdateEdgeRangeFrom1()));
-  this->connect(this->EdgeRangeInput2, SIGNAL(textChanged(const QString &)),
-                this, SLOT(UpdateEdgeRangeFrom2()));
-  this->connect(this->MorphStrengthInput1, SIGNAL(textChanged(const QString &)),
-                this, SLOT(UpdateMorphStrengthFrom1()));
-  this->connect(this->MorphStrengthInput2, SIGNAL(textChanged(const QString &)),
-                this, SLOT(UpdateMorphStrengthFrom2()));
-  /*
-  this->connect(this->WeightFactorInput1, SIGNAL(textChanged(const QString &)),
-                this, SLOT(UpdateWeightFactorFrom1()));
-  this->connect(this->WeightFactorInput2, SIGNAL(textChanged(const QString &)),
-                this, SLOT(UpdateWeightFactorFrom2()));
-  */
+  this->connect(this->SelectSkeletonButton, SIGNAL(clicked()),
+                this, SLOT(SelectSkeletonFile()));
 
   //connect the "run" buttons to their associated functions here
   this->connect(this->MaskUsingGraphCutsButton, SIGNAL(clicked()),
@@ -168,6 +152,8 @@ void MDL2Wizard::SetupSignalsAndSlots()
                 this, SLOT(CreateGraphAndMST2()));
   this->connect(this->ErodeAndDilateButton2, SIGNAL(clicked()),
                 this, SLOT(ErodeAndDilateNodeDegree2()));
+  this->connect(this->SaveOutputButton, SIGNAL(clicked()),
+                this, SLOT(SaveOutput()));
 
   //this object emits signals that tell the helper to do the actual work
   this->connect(this, SIGNAL(InputChanged(std::string)),
@@ -190,6 +176,10 @@ void MDL2Wizard::SetupSignalsAndSlots()
                 this->Helper, SLOT(RunCreateGraphAndMST2(int)), Qt::QueuedConnection);
   this->connect(this, SIGNAL(StartErodeAndDilateNodeDegree2(int)),
                 this->Helper, SLOT(RunErodeAndDilateNodeDegree2(int)), Qt::QueuedConnection);
+  this->connect(this, SIGNAL(ReadyToSaveBackbone(const char *)),
+                this->Helper, SLOT(WriteBackbone(const char *)));
+  this->connect(this, SIGNAL(ReadyToSaveSkeleton(const char *)),
+                this->Helper, SLOT(WriteSkeleton(const char *)));
 
   //when a process finishes, run a method that re-enables the appropriate 
   //buttons and displays the results
@@ -232,19 +222,19 @@ void MDL2Wizard::SelectBackboneFile()
   this->BackboneFileName = QFileDialog::getSaveFileName(this,
     tr("Select Backbone File"), "", tr("VTK files (*.vtk)"));
   this->BackboneFile = QFileInfo(this->BackboneFileName);
-  this->DataDir = this->BackboneFile.dir().absolutePath() + "/";
+  //this->DataDir = this->BackboneFile.dir().absolutePath() + "/";
   this->BackboneOutputLabel->setText(this->BackboneFile.filePath());
 
   this->IntroPage->CheckIfComplete();
 }
 
 //-----------------------------------------------------------------------------
-void MDL2Wizard::SelectSpinesFile()
+void MDL2Wizard::SelectSkeletonFile()
 {
-  this->SpinesFileName = QFileDialog::getSaveFileName(this,
-    tr("Select Spines File"), "", tr("VTK files (*.vtk)"));
-  this->SpinesFile = QFileInfo(this->SpinesFileName);
-  this->SpinesOutputLabel->setText(this->SpinesFile.filePath());
+  this->SkeletonFileName = QFileDialog::getSaveFileName(this,
+    tr("Select Skeleton File"), "", tr("VTK files (*.vtk)"));
+  this->SkeletonFile = QFileInfo(this->SkeletonFileName);
+  this->SkeletonOutputLabel->setText(this->SkeletonFile.filePath());
 
   this->IntroPage->CheckIfComplete();
 }
@@ -268,95 +258,20 @@ void MDL2Wizard::SetBackboneFile(const char *filename)
 {
   this->BackboneFileName = filename;
   this->BackboneFile = QFileInfo(this->BackboneFileName);
-  this->DataDir = this->BackboneFile.dir().absolutePath() + "/";
+  //this->DataDir = this->BackboneFile.dir().absolutePath() + "/";
   this->BackboneOutputLabel->setText(this->BackboneFile.filePath());
 
   this->IntroPage->CheckIfComplete();
 }
 
 //-----------------------------------------------------------------------------
-void MDL2Wizard::SetSpinesFile(const char *filename)
+void MDL2Wizard::SetSkeletonFile(const char *filename)
 {
-  this->SpinesFileName = filename;
-  this->SpinesFile = QFileInfo(this->SpinesFileName);
-  this->SpinesOutputLabel->setText(this->SpinesFile.filePath());
+  this->SkeletonFileName = filename;
+  this->SkeletonFile = QFileInfo(this->SkeletonFileName);
+  this->SkeletonOutputLabel->setText(this->SkeletonFile.filePath());
 
   this->IntroPage->CheckIfComplete();
-}
-
-//-----------------------------------------------------------------------------
-void MDL2Wizard::UpdateEdgeRangeFrom1()
-{
-  cout << "I got called" << endl;
-  if(this->EdgeRangeInput1->text() != "")
-    {
-    this->EdgeRange = this->EdgeRangeInput1->text();
-    this->EdgeRangeInput2->setText(this->EdgeRange);
-    }
-}
-
-//-----------------------------------------------------------------------------
-void MDL2Wizard::UpdateEdgeRangeFrom2()
-{
-  if(this->EdgeRangeInput2->text() != "")
-    {
-    this->EdgeRange = this->EdgeRangeInput2->text();
-    this->EdgeRangeInput1->setText(this->EdgeRange);
-    }
-}
-
-//-----------------------------------------------------------------------------
-void MDL2Wizard::UpdateMorphStrengthFrom1()
-{
-  if(this->MorphStrengthInput1->text() != "")
-    {
-    this->MorphStrength = this->MorphStrengthInput1->text();
-    this->MorphStrengthInput2->setText(this->MorphStrength);
-    }
-}
-
-//-----------------------------------------------------------------------------
-void MDL2Wizard::UpdateMorphStrengthFrom2()
-{
-  if(this->MorphStrengthInput2->text() != "")
-    {
-    this->MorphStrength = this->MorphStrengthInput2->text();
-    this->MorphStrengthInput1->setText(this->MorphStrength);
-    }
-}
-
-/*
-//-----------------------------------------------------------------------------
-void MDL2Wizard::UpdateWeightFactorFrom1()
-{
-  if(this->WeightFactorInput1->text() != "")
-    {
-    this->WeightFactor = this->WeightFactorInput1->text();
-    this->WeightFactorInput2->setText(this->WeightFactor);
-    }
-}
-
-//-----------------------------------------------------------------------------
-void MDL2Wizard::UpdateWeightFactorFrom2()
-{
-  if(this->WeightFactorInput2->text() != "")
-    {
-    this->WeightFactor = this->WeightFactorInput2->text();
-    this->WeightFactorInput1->setText(this->WeightFactor);
-    }
-}
-*/
-
-//-----------------------------------------------------------------------------
-void MDL2Wizard::AppendOutputToDisplay(QObject *mapped)
-{
-  QProcess *process = static_cast<QProcess *>(mapped);
-  if(this->OutputWindow->isHidden())
-    {
-    this->OutputWindow->show();
-    }
-  this->OutputWindow->append(QString(process->readAllStandardError()));
-  this->OutputWindow->append(QString(process->readAllStandardOutput()));
 }
 
 //-----------------------------------------------------------------------------
@@ -843,7 +758,25 @@ void MDL2Wizard::DisplayErodeAndDilateNodeDegree2Results()
 {
   this->CreateGraphAndMSTButton2->setEnabled(true);
   this->ErodeAndDilateButton2->setEnabled(true);
+  this->SaveOutputButton->setEnabled(true);
+  this->SaveOutputButton->setFocus();
   //not sure how to display degree.txt...
+  if(!this->InteractiveExecution)
+    {
+    this->SaveOutput();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void MDL2Wizard::SaveOutput()
+{
+  emit this->ReadyToSaveBackbone(
+    this->BackboneFile.absoluteFilePath().toStdString().c_str());
+  emit this->ReadyToSaveSkeleton(
+    this->SkeletonFile.absoluteFilePath().toStdString().c_str());
+  this->OutputWindow->append("Output saved!");
+  this->PhaseTwoDone = true;
+  this->PhaseTwoPage->CheckIfComplete();
   if(!this->InteractiveExecution)
     {
     this->close();
@@ -860,6 +793,7 @@ void MDL2Wizard::UpdateHelpWindow()
 }
 
 
+/*
 //-----------------------------------------------------------------------------
 void MDL2Wizard::SetConnectedComponentsSize(const char *s)
 {
@@ -901,6 +835,7 @@ void MDL2Wizard::SetBSplineLevels(const char *s)
   this->BSplineLevels = s;
   this->LevelsInput->setText(this->BSplineLevels);
 }
+*/
 
 //-----------------------------------------------------------------------------
 void MDL2Wizard::showHelp()

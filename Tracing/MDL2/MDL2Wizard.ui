@@ -43,7 +43,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Select input image</string>
+     <string>Select Input Image</string>
     </property>
    </widget>
    <widget class="QPushButton" name="SelectBackboneButton">
@@ -72,7 +72,7 @@
      <string/>
     </property>
    </widget>
-   <widget class="QPushButton" name="SelectSpinesButton">
+   <widget class="QPushButton" name="SelectSkeletonButton">
     <property name="enabled">
      <bool>true</bool>
     </property>
@@ -85,7 +85,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Select Spines Output File</string>
+     <string>Select Skeleton Output File</string>
     </property>
    </widget>
    <widget class="QLabel" name="Page1Label">
@@ -106,7 +106,7 @@
      <string>Welcome to the FARSIGHT Skeletonization Wizard</string>
     </property>
    </widget>
-   <widget class="QLabel" name="SpinesOutputLabel">
+   <widget class="QLabel" name="SkeletonOutputLabel">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -763,6 +763,40 @@
     </property>
     <property name="text">
      <string>Step #1</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="Step3Label3">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>200</y>
+      <width>61</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Step #3</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="SaveOutputButton">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>430</x>
+      <y>200</y>
+      <width>241</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Save Output</string>
     </property>
    </widget>
   </widget>
