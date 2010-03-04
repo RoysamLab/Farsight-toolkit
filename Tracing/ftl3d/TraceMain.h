@@ -70,6 +70,7 @@ public:
 	void ImageStatistics(ImageType3D::Pointer & );
 	void WriteSeedImage(ImageType2D::Pointer, SeedContainer3D::Pointer,std::string );
 	void SetProjectName(QString projName);
+	void LoadTraceSettingsFile(std::string filename);
 public slots:
 	bool runSETracing();
 	void addFileToTrace();

@@ -30,9 +30,6 @@ TraceSEMain::TraceSEMain(QWidget *parent)
 {
 	
 	this->Project= new ProjectManager();
-	//this->FileSuffix = new QString();
-	this->FileSuffix = QString("_SE");
-
 	this->createFileActions();
 	//settings
 	this->CreateSettingsLayout();
@@ -59,8 +56,10 @@ void TraceSEMain::createFileActions()
 	this->fileSuffixBox = new QComboBox(this);
 	this->fileSuffixBox->setEditable(true);
 	this->fileSuffixBox->setInsertPolicy(QComboBox::InsertAtCurrent);
-	this->fileSuffixBox->addItems(this->TraceSESettings.value("Suffix", "_SE.xml").toStringList());
-	connect(this->fileSuffixBox, SIGNAL(editTextChanged(QString)), this, SLOT(FileSuffixChanged( QString)));
+	this->fileSuffixBox->addItems(this->TraceSESettings.value("Suffix", "_SE").toStringList());
+	this->FileSuffix = this->fileSuffixBox->currentText();
+	//connect(this->fileSuffixBox, SIGNAL(editTextChanged(QString)), this, SLOT(FileSuffixChanged( QString)));
+	connect(this->fileSuffixBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(FileSuffixChanged( QString)));
 	mainLayout->addWidget(this->fileSuffixBox);
 
 	//file actions
@@ -162,8 +161,64 @@ void TraceSEMain::LoadFromTraceProject()
 				this->FileListWindow->append(FileName.section('/',-1) 
 					+ "\t" + tempConvert.section('/',-1));
 			}
+			else if (type == "Settings")
+			{
+				this->LoadTraceSettingsFile(this->Project->GetFileName(i));
+			}
 		}//end for loop
 	}//end if project is empty
+}
+void TraceSEMain::LoadTraceSettingsFile(std::string filename)
+{
+	TiXmlDocument doc(filename);
+	doc.LoadFile();
+	TiXmlHandle docHandle( &doc );
+	TiXmlElement* param = docHandle.FirstChild("Parameter").Element();
+	while (param)
+	{
+		int queryI = 0;
+		double queryD = 0;
+		if (param->QueryIntAttribute("GridSpacing", &queryI) == TIXML_SUCCESS)
+		{
+			this->GetGridSpacing->setValue(queryI);
+		}
+		if (param->QueryIntAttribute("FitIterations", &queryI) == TIXML_SUCCESS)
+		{
+			this->GetFitIterations->setValue(queryI);
+		}
+		if (param->QueryDoubleAttribute("StepRatio", &queryD) == TIXML_SUCCESS)
+		{
+			this->GetStepRatio->setValue(queryD);
+		}
+		if (param->QueryDoubleAttribute("AspectRatio", &queryD) == TIXML_SUCCESS)
+		{
+			this->GetAspectRatio->setValue(queryD);
+		}
+		if (param->QueryDoubleAttribute("THRESHOLD", &queryD) == TIXML_SUCCESS)
+		{
+			this->GetTHRESHOLD->setValue(queryD);
+		}
+		if (param->QueryDoubleAttribute("minContrast", &queryD) == TIXML_SUCCESS)
+		{
+			this->GetminContrast->setValue(queryD);
+		}
+		if (param->QueryDoubleAttribute("MaximumVesselWidth", &queryD) == TIXML_SUCCESS)
+		{
+			this->GetMaximumVesselWidth->setValue(queryD);
+		}
+		if (param->QueryDoubleAttribute("MinimumVesselLength", &queryD) == TIXML_SUCCESS)
+		{
+			this->GetMinimumVesselLength->setValue(queryD);
+		}
+		if (param->QueryDoubleAttribute("MinimumVesselWidth", &queryD) == TIXML_SUCCESS)
+		{
+			this->GetMinimumVesselWidth->setValue(queryD);
+		}
+		if (param->QueryDoubleAttribute("StartTHRESHOLD", &queryD) == TIXML_SUCCESS)
+		{
+			this->GetStartTHRESHOLD->setValue(queryD);
+		}
+	}
 }
 void TraceSEMain::addFileToTrace()
 {
@@ -186,9 +241,20 @@ void TraceSEMain::addFileToTrace()
 void TraceSEMain::FileSuffixChanged(QString s)
 {
 	this->FileSuffix = this->fileSuffixBox->currentText();
-	QStringList temp = this->TraceSESettings.value("Suffix", "_SE.xml").toStringList();
-	temp.removeAll(this->FileSuffix);
-	temp.prepend(this->FileSuffix);
+	QStringList temp = this->TraceSESettings.value("Suffix", "_SE").toStringList();
+	if (!this->FileSuffix.isEmpty())
+	{
+		temp.removeAll(this->FileSuffix);
+		temp.prepend(this->FileSuffix);
+	}
+	else
+	{
+		this->FileSuffix = "_SE";
+		temp.clear();
+		temp.append(this->FileSuffix);
+		this->fileSuffixBox->clear();
+		this->fileSuffixBox->addItems(temp);
+	}
 	this->TraceSESettings.setValue("Suffix", temp);
 }
 void TraceSEMain::CreateSettingsLayout()
