@@ -40,6 +40,15 @@ TraceSEMain::TraceSEMain(QWidget *parent)
 	addDockWidget(Qt::RightDockWidgetArea, dockWidget);
 	//mainLayout->addWidget(this->settingsBox);
 	this->statusBar()->showMessage("Ready");
+
+	QStringList args = QCoreApplication::arguments();
+	if(args.size() == 3)
+	{
+		this->SetProjectName( args.at(1) );
+		this->LoadFromTraceProject();
+		this->LoadTraceSettingsFile( args.at(2).toStdString() );
+		this->runSETracing();
+	}
 }
 
 void TraceSEMain::createFileActions()
