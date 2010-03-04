@@ -30,4 +30,13 @@ limitations under the License.
 namespace ftk
 {
 
+void Parameters::AddParameter(std::string name, Type type, std::string value)
+{
+	Parameter p;
+	p.name = name;
+	p.type = type;
+	p.value = value;
+	m_Parameters.push_back(p);
+}
+
 }  // end namespace ftk

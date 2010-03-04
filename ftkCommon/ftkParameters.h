@@ -25,20 +25,28 @@ limitations under the License.
 #define __ftkParameters_h
 
 #include <tinyxml/tinyxml.h>
-
 #include <string>
-#include <ctime>
-#include <cstdio>
-#include <sstream>
-#include <iomanip>
+#include <vector>
 
 namespace ftk
 {
 
 class Parameters
 {
+	enum Type { STRING, BOOL, INT, DOUBLE };
+	typedef struct { std::string name; Type type; std::string value; } Parameter;
+
 public:
-	Parameters(){};
+	Parameters(){ extension = "prm"; };
+	void LoadFromFile(std::string filename){};
+	void WriteToFile(std::string filename){};
+
+	void AddParameter(std::string name, Type type, std::string value);
+
+private:
+	std::vector<Parameter> m_Parameters;
+	
+	std::string extension;
 };
 
 }  // end namespace ftk
