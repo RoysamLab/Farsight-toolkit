@@ -15,74 +15,107 @@ limitations under the License.
 
 #include "MDL2Wizard.h"
 #include "MDL2WizardHelper.h"
+#include "tinyxml/tinyxml.h"
 #include <QtGui/QApplication>
 
 int main (int argc, char* argv[])
   {
-  QApplication app(argc, argv);
-	MDL2Wizard *wizard = new MDL2Wizard();
-  wizard->show();
-  /*
-
   if(argc < 2)
     {
+    QApplication app(argc, argv);
+    MDL2Wizard *wizard = new MDL2Wizard();
     wizard->show();
+    return app.exec();
     }
-  else
+
+  //otherwise run MDL non-interactively.  Check that we have all the required
+  //parameters.
+  if(argc < 3)
     {
-    //run MDL non-interactively.  Check that we have all the required parameters.
-    if(argc < 4)
-      {
-      cerr << argv[0] << " <input image> <backbone output> <spines output> "
-           << "[connected components size] [vector magnitude] [morph strength] "
-           << "[edge range] [weight factor] [BSpline order] [number of levels] "
-           << "[graph prune size]" << endl;
-      delete wizard;
-      return 1;
-      }
-    else
-      {
-      wizard->SetInteractiveExecution(false);
-      wizard->SetInputImage(argv[1]);
-      wizard->SetBackboneFile(argv[2]);
-      wizard->SetSpinesFile(argv[3]);
-      if(argc > 4)
-        {
-        wizard->SetConnectedComponentsSize(argv[4]);
-        }
-      if(argc > 5)
-        {
-        wizard->SetVectorMagnitude(argv[5]);
-        }
-      if(argc > 6)
-        {
-        wizard->SetMorphStrength(argv[6]);
-        }
-      if(argc > 7)
-        {
-        wizard->SetEdgeRange(argv[7]);
-        }
-      if(argc > 8)
-        {
-        wizard->SetWeightFactor(argv[8]);
-        }
-      if(argc > 9)
-        {
-        wizard->SetBSplineOrder(argv[9]);
-        }
-      if(argc > 10)
-        {
-        wizard->SetBSplineLevels(argv[10]);
-        }
-      if(argc > 11)
-        {
-        wizard->SetGraphPruneSize(argv[11]);
-        }
-      wizard->show();
-      wizard->next();
-      wizard->CAD();
-      }
+    cerr << argv[0] << " <parameters.xml> <image1> [image2 image3...]"
+         << endl;
+    return 1;
     }
-  */
-  return app.exec();
+
+  //make sure the .xml file exists
+  const char *xmlFileName = argv[1];
+  QFileInfo xmlInfo(xmlFileName);
+  if(!xmlInfo.exists())
+    {
+    cerr << "Error opening " << xmlFileName << endl;
+    return 1;
+    }
+
+  //parse parameter values from xml
+  TiXmlDocument doc(xmlFileName);
+  doc.LoadFile();
+  TiXmlHandle docHandle( &doc );
+
+  TiXmlElement* parametersElement = docHandle.FirstChild("parameters").Element();
+  if (!parametersElement)
+    {
+    cerr << "Aborting, no <parameters> tag found in " << xmlFileName << endl;
+    return 1;
+    }
+  TiXmlElement* parameterElement =
+    parametersElement->FirstChildElement("parameter");
+  if(!parameterElement)
+    {
+    cerr << "Aborting, no <parameter> tag found in " << xmlFileName << endl;
+    return 1;
+    }
+  //if we get this far, assume its a legit MDL parameters xml file
+  QString ComponentsSize = QString(parameterElement->Attribute("value"));
+  parameterElement = parameterElement->NextSiblingElement("parameter");
+  QString VectorMagnitude = QString(parameterElement->Attribute("value"));
+  parameterElement = parameterElement->NextSiblingElement("parameter");
+  QString EdgeRange1 = QString(parameterElement->Attribute("value"));
+  parameterElement = parameterElement->NextSiblingElement("parameter");
+  QString MorphStrength1 = QString(parameterElement->Attribute("value"));
+  parameterElement = parameterElement->NextSiblingElement("parameter");
+  QString Order = QString(parameterElement->Attribute("value"));
+  parameterElement = parameterElement->NextSiblingElement("parameter");
+  QString Levels = QString(parameterElement->Attribute("value"));
+  parameterElement = parameterElement->NextSiblingElement("parameter");
+  QString EdgeRange2 = QString(parameterElement->Attribute("value"));
+  parameterElement = parameterElement->NextSiblingElement("parameter");
+  QString MorphStrength2 = QString(parameterElement->Attribute("value"));
+
+  //make sure that this input file exists
+  const char *inputFileName = argv[2];
+  QFileInfo inputInfo(inputFileName);
+  if(!inputInfo.exists())
+    {
+    cerr << "Error opening " << inputFileName << endl;
+    return 1;
+    }
+
+  //initialize the QWizard
+  QApplication app(argc, argv);
+  MDL2Wizard *wizard = new MDL2Wizard();
+  wizard->SetInteractiveExecution(false);
+  wizard->ComponentsSizeInput->setText(ComponentsSize);
+  wizard->VectorMagnitudeInput->setText(VectorMagnitude);
+  wizard->EdgeRangeInput1->setText(EdgeRange1);
+  wizard->MorphStrengthInput1->setText(MorphStrength1);
+  wizard->OrderInput->setText(Order);
+  wizard->LevelsInput->setText(Levels);
+  wizard->EdgeRangeInput2->setText(EdgeRange2);
+  wizard->MorphStrengthInput2->setText(MorphStrength2);
+
+  //use the wizard to process this file
+  cout << "Processing " << inputFileName << endl;
+  wizard->restart();
+  wizard->SetInputImage(inputFileName);
+  QString backboneFileName = inputInfo.absolutePath() + "/" + inputInfo.completeBaseName();
+  backboneFileName += "_backbone.vtk";
+  wizard->SetBackboneFile(backboneFileName.toStdString().c_str());
+  QString skelFileName = inputInfo.absolutePath() + "/" + inputInfo.completeBaseName();
+  skelFileName += "_skel.vtk";
+  wizard->SetSkeletonFile(skelFileName.toStdString().c_str());
+  wizard->show();
+  wizard->next();
+  wizard->MaskUsingGraphCuts();
+  app.exec();
   }
+

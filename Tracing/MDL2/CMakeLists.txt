@@ -55,5 +55,5 @@ SET(MDL2Wizard_SRCS
 ADD_EXECUTABLE(MDL2Wizard ${EXE_TYPE} ${MDL2Wizard_SRCS})
 TARGET_LINK_LIBRARIES(MDL2Wizard ${QT_LIBRARIES} vtkCommon vtkIO vtkRendering
                       vtkVolumeRendering QVTK mdlVolumeProcess
-                      mdlIntegratedSkeleton mdlMST mdlBSplineFitting  )
+                      mdlIntegratedSkeleton mdlMST mdlBSplineFitting TinyXML)
 

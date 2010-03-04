@@ -249,7 +249,7 @@ void MDL2Wizard::SetInputImage(const char *filename)
     cerr << "ERROR: input file " << filename << " doesn't exist!" << endl;
     }
   this->InputImageLabel->setText(this->InputFile.filePath());
-
+  emit InputChanged(this->InputFileName.toStdString());
   this->IntroPage->CheckIfComplete();
 }
 
@@ -660,6 +660,7 @@ void MDL2Wizard::DisplayMaskSmallConnCompResults()
   this->PreprocessingPage->CheckIfComplete();
   if(!this->InteractiveExecution)
     {
+    this->next();
     this->Integratedskel();
     }
 }
@@ -775,6 +776,47 @@ void MDL2Wizard::SaveOutput()
   emit this->ReadyToSaveSkeleton(
     this->SkeletonFile.absoluteFilePath().toStdString().c_str());
   this->OutputWindow->append("Output saved!");
+  this->SaveParameters();
+}
+
+//-----------------------------------------------------------------------------
+void MDL2Wizard::SaveParameters()
+{
+  QFile paramFile("MDLParameters.xml");
+  if(!paramFile.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+    return;
+    }
+  QTextStream out(&paramFile);
+  out << "<?xml version='1.0'?>\n";
+  out << "<parameters>\n";
+  out << "<parameter name='ComponentsSize' value='";
+  out << this->ComponentsSizeInput->text();
+  out << "'></parameter>\n";
+  out << "<parameter name='VectorMagnitude' value='";
+  out << this->VectorMagnitudeInput->text();
+  out << "'></parameter>\n";
+  out << "<parameter name='EdgeRange1' value='";
+  out << this->EdgeRangeInput1->text();
+  out << "'></parameter>\n";
+  out << "<parameter name='MorphStrength1' value='";
+  out << this->MorphStrengthInput1->text();
+  out << "'></parameter>\n";
+  out << "<parameter name='Order' value='";
+  out << this->OrderInput->text();
+  out << "'></parameter>\n";
+  out << "<parameter name='Levels' value='";
+  out << this->LevelsInput->text();
+  out << "'></parameter>\n";
+  out << "<parameter name='EdgeRange2' value='";
+  out << this->EdgeRangeInput2->text();
+  out << "'></parameter>\n";
+  out << "<parameter name='MorphStrength2' value='";
+  out << this->MorphStrengthInput2->text();
+  out << "'></parameter>\n";
+  out << "</parameters>\n";
+  paramFile.close();
+
   this->PhaseTwoDone = true;
   this->PhaseTwoPage->CheckIfComplete();
   if(!this->InteractiveExecution)
@@ -782,6 +824,7 @@ void MDL2Wizard::SaveOutput()
     this->close();
     }
 }
+
 
 //-----------------------------------------------------------------------------
 void MDL2Wizard::UpdateHelpWindow()

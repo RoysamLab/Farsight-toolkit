@@ -132,6 +132,7 @@ protected slots:
   void UpdateHelpWindow();
 
 protected:
+  void SaveParameters();
 	void closeEvent(QCloseEvent *event);
 
 private:
