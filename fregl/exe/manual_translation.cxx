@@ -56,7 +56,7 @@ main( int argc, char* argv[] )
   vul_arg< int > arg_sx  ( 0, "x-dimension of the anchor image" );
   vul_arg< int > arg_sy  ( 0, "y-dimension of the anchor image" );
   vul_arg< int > arg_sz  ( 0, "z-dimension of the anchor image" );
-  vul_arg< vcl_string > arg_output ( "-output", "Name of the xml file containing the transformations. If not set, it is the the anchor imgae name with appended with _joint.xml" );
+  vul_arg< vcl_string > arg_output ( "-output", "Name of the xml file containing the transformations. If not set, it is the the anchor imgae name appended with _joint.xml" );
   vul_arg_parse( argc, argv );
 
   // Set the anchor image if given
