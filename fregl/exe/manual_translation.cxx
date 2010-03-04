@@ -37,6 +37,9 @@ limitations under the License.
 
 #include <vul/vul_arg.h>
 
+#include <iostream>
+#include <fstream>
+
 #include <fregl/fregl_reg_record.h>
 #include <fregl/fregl_util.h>
 #include <fregl/fregl_joint_register.h>
