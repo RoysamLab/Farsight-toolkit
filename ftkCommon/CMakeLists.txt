@@ -7,12 +7,14 @@ SET( FTKCOMMON_SRCS
   ftkUtils.cpp
   ftkPreprocess.cpp
   ftkMultipleImageHandler.cpp
+  ftkParameters.cpp
 )
 
 SET( FTKCOMMON_HDRS
   ftkUtils.h
   ftkPreprocess.h
   ftkMultipleImageHandler.h
+  ftkParameters.h
 )
 
 ADD_LIBRARY( ftkCommon

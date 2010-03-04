@@ -53,7 +53,7 @@
 #include "NuclearSegmentation/ftkNuclearSegmentation.h"
 #include "NuclearSegmentation/CytoplasmSegmentation/CytoplasmSegmentation.h"
 #include "NuclearSegmentation/Nuclear_Association/ftkNuclearAssociationRules.h"
-#include "ftkCommon/ftkLabelImageToFeatures.h"
+#include "ftkFeatures/ftkLabelImageToFeatures.h"
 #include "ftkCommon/ftkUtils.h"
 #include "ftkGUI/TrainingDialog.h"
 #include "ftkGUI/PatternAnalysisWizard.h"

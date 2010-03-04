@@ -31,9 +31,9 @@
 #endif
 
 #include <ftkImage/ftkImage.h>
-#include <ftkCommon/ftkLabelImageToFeatures.h>
+#include <ftkFeatures/ftkLabelImageToFeatures.h>
 #include <ftkCommon/ftkUtils.h>
-#include <ftkCommon/ftkObject.h>
+#include <ftkFeatures/ftkObject.h>
 #include <yousef_core/yousef_seg.h>
 
 #include <vtkSmartPointer.h>

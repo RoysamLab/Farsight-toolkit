@@ -50,7 +50,7 @@ limitations under the License.
 #include <QtCore/QMap>
 
 #include <ftkImage/ftkImage.h>
-#include <ftkCommon/ftkObject.h>
+#include <ftkFeatures/ftkObject.h>
 #include "ObjectSelection.h"
 
 #include "vtkTable.h"

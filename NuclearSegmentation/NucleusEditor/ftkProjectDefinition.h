@@ -28,7 +28,7 @@
 
 #include <tinyxml/tinyxml.h>
 #include <ftkCommon/ftkUtils.h>
-#include <ftkCommon/ftkObjectAssociation.h>
+#include <ftkFeatures/ftkObjectAssociation.h>
 
 #include <vector>
 #include <string>

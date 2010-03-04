@@ -30,7 +30,7 @@
 #include <limits.h>
 
 #include <ftkObject.h>
-#include <ftkCommon/ftkObjectAssociation.h>
+#include <ftkFeatures/ftkObjectAssociation.h>
 #include "ftkImage.h"
 #include "itkLabelGeometryImageFilter.h"
 #include "itkImage.h"

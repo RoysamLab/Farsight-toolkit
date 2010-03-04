@@ -35,7 +35,7 @@
 #include "itkExtractImageFilter.h"
 #include "itkOtsuMultipleThresholdsCalculator.h"
 
-#include "ftkCommon/itkLabelGeometryImageFilter.h"
+#include "ftkFeatures/itkLabelGeometryImageFilter.h"
 #include "NuclearSegmentation/CytoplasmSegmentation/whole_cell.h"
 
 #define MM_PI		3.14159265358979323846

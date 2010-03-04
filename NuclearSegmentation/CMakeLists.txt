@@ -12,7 +12,7 @@ ADD_LIBRARY( NuclearSegmentation
             ${NUCLEARSEGMENTATION_HDRS} 
 )
 
-TARGET_LINK_LIBRARIES( NuclearSegmentation ftkCommon ftkImage Yousef_Nucleus_Seg Nuclear_Association)
+TARGET_LINK_LIBRARIES( NuclearSegmentation ftkCommon ftkFeatures ftkImage Yousef_Nucleus_Seg Nuclear_Association)
 #INSTALL( TARGETS NuclearSegmentation DESTINATION . )
 
 #Remove SegmentationViewer (segren) because it does not compile on Windows 7 machine.
