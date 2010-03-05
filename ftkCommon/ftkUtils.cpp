@@ -244,4 +244,38 @@ bool SaveXMLImage(std::string filename, ftk::Image::Pointer image)
 		return false;
 }
 
+std::string GetExtension(std::string filename)
+{
+	size_t pos = filename.find_last_of(".");
+	std::string ext;
+	if( pos == std::string::npos )
+		ext = "";
+	else
+		ext = filename.substr(pos+1);
+
+	return ext;
+}
+
+std::string SetExtension(std::string filename, std::string ext)
+{
+	std::string rName;
+	size_t pos = filename.find_last_of(".");
+
+	if(ext == "")
+	{
+		if( pos == std::string::npos )
+			rName = filename;
+		else
+			rName = filename.substr(0,pos);
+	}
+	else
+	{
+		if(pos == std::string::npos)
+			rName = filename + "." + ext;
+		else
+			rName = filename.replace(pos+1, 3, ext);
+	}
+	return rName;
+}
+
 }  // end namespace ftk

@@ -25,6 +25,7 @@ limitations under the License.
 #define __ftkParameters_h
 
 #include <tinyxml/tinyxml.h>
+#include <ftkUtils.h>
 #include <string>
 #include <vector>
 
@@ -38,9 +39,9 @@ class Parameters
 
 public:
 	Parameters(){ extension = "prm"; };
-	void LoadFromFile(std::string filename);
+	bool LoadFromFile(std::string filename);
 	void ReadFromTinyXML(TiXmlElement * inputElement);
-	void WriteToFile(std::string filename);
+	bool WriteToFile(std::string filename);
 	void AddToTinyXML(TiXmlElement * rootElement);
 
 	void AddParameter(std::string name, Type type, std::string value);

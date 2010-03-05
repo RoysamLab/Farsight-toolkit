@@ -86,16 +86,20 @@ bool Parameters::GetValueAsBool(int idx)
 		return false;
 }
 
-void Parameters::LoadFromFile(std::string filename)
+bool Parameters::LoadFromFile(std::string filename)
 {
+	if( GetExtension(filename) != this->extension )
+		return false;
+
 	TiXmlDocument doc;
 	if ( !doc.LoadFile( filename.c_str() ) )
-		return;
+		return false;
 
 	TiXmlElement* rootElement = doc.FirstChildElement();
 	docname = rootElement->Value();
 
 	this->ReadFromTinyXML(rootElement);
+	return true;
 }
 
 void Parameters::ReadFromTinyXML(TiXmlElement * inputElement)
@@ -137,8 +141,11 @@ void Parameters::ReadFromTinyXML(TiXmlElement * inputElement)
 	} // end while(parentElement)
 }
 
-void Parameters::WriteToFile(std::string filename)
+bool Parameters::WriteToFile(std::string filename)
 {
+	if( GetExtension(filename) != this->extension )
+		return false;
+
 	TiXmlDocument doc;   
 	TiXmlElement * root = new TiXmlElement( parent.c_str() );
 	
@@ -146,7 +153,7 @@ void Parameters::WriteToFile(std::string filename)
 
 	this->AddToTinyXML(root);
 
-	doc.SaveFile( filename.c_str() );
+	return doc.SaveFile( filename.c_str() );
 
 }
 

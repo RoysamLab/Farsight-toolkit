@@ -51,6 +51,8 @@ std::string NumToString(double d);
 std::string NumToString(int i);
 std::string NumToString(double d, int p);
 std::string TimeStamp();
+std::string GetExtension(std::string filename);
+std::string SetExtension(std::string filename, std::string ext); // if ext = "", remove extension (and .)
 
 }  // end namespace ftk
 
