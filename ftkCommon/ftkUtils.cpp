@@ -266,14 +266,17 @@ std::string SetExtension(std::string filename, std::string ext)
 		if( pos == std::string::npos )
 			rName = filename;
 		else
-			rName = filename.substr(0,pos);
+			rName = filename.substr(0,pos-1);
 	}
 	else
 	{
 		if(pos == std::string::npos)
 			rName = filename + "." + ext;
 		else
-			rName = filename.replace(pos+1, 3, ext);
+		{
+			std::string base = filename.substr(0,pos-1);
+			rName = base + "." + ext;
+		}
 	}
 	return rName;
 }

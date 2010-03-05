@@ -143,7 +143,7 @@ void TraceSEMain::LoadFromTraceProject()
 	if(this->ProjectName.isEmpty())
 	{
 		this->ProjectName = QFileDialog::getOpenFileName(this , "Open Trace Project File", ".",
-			tr("Trace file ( *.xml )"));
+			tr("Trace file ( *.* )"));
 	}
 
 	if (!this->ProjectName.isEmpty())
