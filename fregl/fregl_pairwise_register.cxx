@@ -235,94 +235,53 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
     typedef itk::RegularStepGradientDescentOptimizer    OptimizerType;
     typedef OptimizerType::ScalesType OptimizerScalesType;
 
-    // Exhaustive search is not work yet!!!
-    if ( exhaustive_ ) {
-      std::cout<<"Running exhaustive search"<<std::endl;
-
-      InterpolatorType::Pointer interpolator = InterpolatorType::New();
-      MetricType::Pointer metric = MetricType::New();
-      TransformType::Pointer transform = TransformType::New();
-      metric->SetInterpolator( interpolator );
-     
-      metric->SetFixedImage( to_image_crop );
-      metric->SetMovingImage( from_image_crop );
-      metric->SetFixedImageRegion( to_image_crop->GetRequestedRegion() );
-      //metric->Initialize();
-
-      double value = 0;
-      double min_value = 1000000;
-      int index = 0;
-      bool value_set = false;
-      for( int dx = -10; dx <=10; dx++) {
-        parameters[11] = -t_z + dx;
-        transform->SetParameters( parameters );
-        metric->SetTransform( transform );
-        value = metric->GetValue( parameters );
-        if (!value_set) {
-          value_set = true;
-          min_value = value;
-          index = dx;
-        }
-        else if ( value < min_value) {
-          min_value = value;
-          index = dx;
-        }
-        vcl_cout<<"z_shift = "<<-t_z + dx<<" and value = "<<value<<vcl_endl;
-      }
-      parameters[11] = -t_z + index;
-      if (!transform_) transform_ = TransformType::New();
-      transform_->SetParameters( parameters );
-    }
-    else {
-      InterpolatorType::Pointer interpolator = InterpolatorType::New();
-      MetricType::Pointer metric = MetricType::New();
-      TransformType::Pointer transform = TransformType::New();
-      RegistrationType::Pointer registrator = RegistrationType::New();
-      OptimizerType::Pointer optimizer = OptimizerType::New();
-
-      registrator->SetTransform( transform );
-      registrator->SetOptimizer( optimizer );
-      registrator->SetInterpolator( interpolator );
-      registrator->SetMetric( metric );
-      
-      registrator->SetFixedImage( to_image_crop );
-      registrator->SetMovingImage( from_image_crop );
-      registrator->SetFixedImageRegion(to_image_crop->GetRequestedRegion());
-      registrator->SetInitialTransformParameters( parameters );
-      
-      optimizer->SetMaximumStepLength( 4.0 );
-      optimizer->SetMinimumStepLength( 0.1);
-      optimizer->SetNumberOfIterations( 100 );
-      optimizer->MaximizeOff();
-
-      // set the parameter scale to limit the freedom in affine parts
-      int num_params = 12;    
-      OptimizerScalesType optimizerScales(num_params);
-      for (unsigned int i = 0; i<9; i++) {
-        //affine components
-        optimizerScales[i] = 1.0;
-      }
-      for (unsigned int i = 0; i<3; i++) {
-        //translation components
-        optimizerScales[i+9] = 1.0/1000000;
-      }
-      optimizer->SetScales(optimizerScales);
-      
-      // To add the observer to watch the progress of the registration
-      CommandIteration::Pointer   observer  = CommandIteration::New();
-      optimizer->AddObserver( itk::IterationEvent(), observer );
-      
-      // Now run the registration
-      registrator->StartRegistration();
-
-      // Set the final transform
-      TransformType::ParametersType final_parameters;
-      final_parameters = registrator->GetLastTransformParameters();
-      if (!transform_) transform_ = TransformType::New();
-      transform_->SetParameters( final_parameters );
-      obj_value = 1+optimizer->GetValue(); //NCC is in the range of [-1~0]
-    }
+    InterpolatorType::Pointer interpolator = InterpolatorType::New();
+    MetricType::Pointer metric = MetricType::New();
+    TransformType::Pointer transform = TransformType::New();
+    RegistrationType::Pointer registrator = RegistrationType::New();
+    OptimizerType::Pointer optimizer = OptimizerType::New();
     
+    registrator->SetTransform( transform );
+    registrator->SetOptimizer( optimizer );
+    registrator->SetInterpolator( interpolator );
+    registrator->SetMetric( metric );
+    
+    registrator->SetFixedImage( to_image_crop );
+    registrator->SetMovingImage( from_image_crop );
+    registrator->SetFixedImageRegion(to_image_crop->GetRequestedRegion());
+    registrator->SetInitialTransformParameters( parameters );
+    
+    optimizer->SetMaximumStepLength( 4.0 );
+    optimizer->SetMinimumStepLength( 0.1);
+    optimizer->SetNumberOfIterations( 100 );
+    optimizer->MaximizeOff();
+    
+    // set the parameter scale to limit the freedom in affine parts
+    int num_params = 12;    
+    OptimizerScalesType optimizerScales(num_params);
+    for (unsigned int i = 0; i<9; i++) {
+      //affine components
+      optimizerScales[i] = 1.0;
+    }
+    for (unsigned int i = 0; i<3; i++) {
+      //translation components
+      optimizerScales[i+9] = 1.0/1000000;
+    }
+    optimizer->SetScales(optimizerScales);
+    
+    // To add the observer to watch the progress of the registration
+    CommandIteration::Pointer   observer  = CommandIteration::New();
+    optimizer->AddObserver( itk::IterationEvent(), observer );
+    
+    // Now run the registration
+    registrator->StartRegistration();
+    
+    // Set the final transform
+    TransformType::ParametersType final_parameters;
+    final_parameters = registrator->GetLastTransformParameters();
+    if (!transform_) transform_ = TransformType::New();
+    transform_->SetParameters( final_parameters );
+    obj_value = 1+optimizer->GetValue(); //NCC is in the range of [-1~0]
   }
   catch(itk::ExceptionObject& e) {
     vcl_cout << e << vcl_endl;
@@ -331,6 +290,128 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
 
   return true;
   
+}
+
+bool 
+fregl_pairwise_register::
+run(TransformType::Pointer prior_xform, double& obj_value)
+{
+  // Set the overlap regions of the two images first by using the
+  // translation only.
+  TransformType::ParametersType params = prior_xform->GetParameters();
+  std::cout<<"Prior parameters: "<<params<<std::endl;
+  double tx = params[9];
+  double ty = params[10];
+  
+  InputImageType::SizeType size_from = from_image_->GetRequestedRegion().GetSize();
+  InputImageType::SizeType size_to = to_image_->GetRequestedRegion().GetSize();
+  if (tx > size_to[0] || ty > size_to[1]) return false;
+  if (-tx> size_from[0] || -ty> size_from[1]) return false;
+  InputImageType::IndexType start;
+  InputImageType::SizeType size;
+  InputImageType::RegionType region;
+  
+  // Set the region of interest for the from_image
+  double top_x = tx>=0?0:-tx;
+  double top_y = ty>=0?0:-ty;
+  double bot_x = size_from[0]+tx<=size_to[0]?size_from[0]:size_to[0]-tx;
+  double bot_y = size_from[1]+ty<=size_to[1]?size_from[1]:size_to[1]-ty;
+  start = from_image_->GetRequestedRegion().GetIndex();
+  start[0] = top_x;
+  start[1] = top_y;
+  size = size_from;
+  size[0] = bot_x-top_x;
+  size[1] = bot_y-top_y;
+  region.SetSize( size );
+  region.SetIndex( start );
+  from_image_->SetRequestedRegion( region );
+  
+  // Set the region of interest for the to_image
+  top_x = tx>0?tx:0;
+  top_y = ty>0?ty:0;
+  bot_x = size_from[0]+tx<=size_to[0]?size_from[0]+tx:size_to[0];
+  bot_y = size_from[1]+ty<=size_to[1]?size_from[1]+ty:size_to[1]; 
+  start = to_image_->GetRequestedRegion().GetIndex();
+  start[0] = top_x;
+  start[1] = top_y;
+  size = size_to;
+  size[0] = bot_x-top_x;
+  size[1] = bot_y-top_y;
+  region.SetSize( size );
+  region.SetIndex( start );
+  to_image_->SetRequestedRegion( region );
+  
+  // crop the image
+  InternalImageType:: Pointer from_image_crop, to_image_crop;
+  from_image_crop = crop_image(from_image_);
+  to_image_crop = crop_image(to_image_);
+  
+  // compute refinement
+  std::cout<<"Running 3D intensity-based registration ..."<<std::endl;
+  try {
+    typedef itk::NormalizedCorrelationImageToImageMetric< InternalImageType, InternalImageType > MetricType;
+    typedef itk::LinearInterpolateImageFunction< InternalImageType, double> InterpolatorType;
+    typedef itk::ImageRegistrationMethod< InternalImageType, InternalImageType > RegistrationType;
+    typedef itk::RegularStepGradientDescentOptimizer    OptimizerType;
+    typedef OptimizerType::ScalesType OptimizerScalesType;
+    
+    InterpolatorType::Pointer interpolator = InterpolatorType::New();
+    MetricType::Pointer metric = MetricType::New();
+    TransformType::Pointer transform = TransformType::New();
+    RegistrationType::Pointer registrator = RegistrationType::New();
+    OptimizerType::Pointer optimizer = OptimizerType::New();
+    TransformType::Pointer inv_prior_xform = TransformType::New();
+    prior_xform->GetInverse(inv_prior_xform); //mapping from to_image to from_image for itk framework
+    std::cout<<"Initial parameters: "<<inv_prior_xform->GetParameters()<<std::endl;
+    
+    registrator->SetTransform( prior_xform );
+    registrator->SetOptimizer( optimizer );
+    registrator->SetInterpolator( interpolator );
+    registrator->SetMetric( metric );
+    
+    registrator->SetFixedImage( to_image_crop );
+    registrator->SetMovingImage( from_image_crop );
+    registrator->SetFixedImageRegion(to_image_crop->GetRequestedRegion());
+    registrator->SetInitialTransformParameters( inv_prior_xform->GetParameters());
+    
+    optimizer->SetMaximumStepLength( 4.0 );
+    optimizer->SetMinimumStepLength( 0.1);
+    optimizer->SetNumberOfIterations( 50 );
+    optimizer->MaximizeOff();
+    
+    // set the parameter scale to limit the freedom in affine parts
+    int num_params = 12;    
+    OptimizerScalesType optimizerScales(num_params);
+    for (unsigned int i = 0; i<9; i++) {
+      //affine components
+      optimizerScales[i] = 1.0;
+    }
+    for (unsigned int i = 0; i<3; i++) {
+      //translation components
+      optimizerScales[i+9] = 1.0/1000000;
+    }
+    optimizer->SetScales(optimizerScales);
+    
+    // To add the observer to watch the progress of the registration
+    CommandIteration::Pointer   observer  = CommandIteration::New();
+    optimizer->AddObserver( itk::IterationEvent(), observer );
+    
+    // Now run the registration
+    registrator->StartRegistration();
+    
+    // Set the final transform
+    TransformType::ParametersType final_parameters;
+    final_parameters = registrator->GetLastTransformParameters();
+    if (!transform_) transform_ = TransformType::New();
+    transform_->SetParameters( final_parameters );
+    obj_value = 1+optimizer->GetValue(); //NCC is in the range of [-1~0]
+  }
+  catch(itk::ExceptionObject& e) {
+    vcl_cout << e << vcl_endl;
+    return false;
+  }
+
+  return true;
 }
 
 /************** Private Functions ************************************/

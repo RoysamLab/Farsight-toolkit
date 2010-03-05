@@ -75,7 +75,8 @@ public:
   //: Return the transform of an image pair
   //
   //  If the transform does not exist, a NULL is returned
-  TransformType::Pointer get_transform(int from, int to) const;
+  TransformType::Pointer get_transform(int from_index, int to_index) const;
+  TransformType::Pointer get_transform(std::string from_name, std::string to_name) const;
 
   //: Return the list of image names
   std::vector<std::string> const & image_names() const;

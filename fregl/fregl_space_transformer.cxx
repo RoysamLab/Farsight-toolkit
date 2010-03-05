@@ -75,11 +75,11 @@ set_anchor( std::string const & anchor_name, bool in_anchor, bool overlap_only, 
 
   // Set inverse_xforms_
   for (unsigned int i = 0; i<joint_register_->number_of_images(); i++) {
-    if (overlap_only && !joint_register_->is_overlapped(anchor_, i)) 
+     if (overlap_only && !joint_register_->is_overlapped(anchor_, i)) 
       continue;
 
     image_id_indices_.push_back(i);
-  }
+   }
   weight_images_2D_.resize(image_id_indices_.size(), 0);
   normalized_weight_images_2D_.resize(image_id_indices_.size(), 0);
 

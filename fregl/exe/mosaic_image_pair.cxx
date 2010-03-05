@@ -97,7 +97,8 @@ main(  int argc, char* argv[] )
   //
   fregl_space_transformer space_transformer(joint_register);
   
-  bool overlap_only = true;
+  // bool overlap_only = true;
+  bool overlap_only = false;
   std::cout<<"Transform "<<arg_file_from()<<" to "<<arg_file_to()<<std::endl;
   space_transformer.set_anchor( arg_file_to(), arg_in_anchor(), overlap_only );
 

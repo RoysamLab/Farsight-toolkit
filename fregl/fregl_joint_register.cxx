@@ -139,9 +139,12 @@ initialize(std::vector<fregl_reg_record::Pointer> const & reg_records)
 
     transforms_(from_image_index, to_image_index) = reg_records[i]->transform();
     obj_(from_image_index, to_image_index) = reg_records[i]->obj();
-
+    overlap_(from_image_index, to_image_index) = reg_records[i]->overlap();
+    
+    /*
     if (reg_records[i]->obj()< error_bound_)
       overlap_(from_image_index, to_image_index) = reg_records[i]->overlap();
+    */
     
     /*
     if (reg_records[i]->obj()< error_bound_) {
@@ -221,7 +224,8 @@ build_graph(int anchor, bool mutual_consistency)
   for (unsigned int from = 0; from<transforms_.rows(); from++) {
     overlap_(from, anchor) = fregl_util_overlap(transforms_(from, anchor), image_sizes_[from], image_sizes_[anchor]);
   }
-    
+
+ 
   return true;
 }
 
@@ -230,6 +234,29 @@ fregl_joint_register::
 get_transform(int from, int to) const
 {
   return transforms_(from, to);
+}
+
+fregl_joint_register::TransformType::Pointer
+fregl_joint_register::
+get_transform(std::string from_name, std::string to_name) const
+{
+  int to_index = -1;
+  int from_index = -1;
+  for (unsigned i = 0; i<image_ids_.size(); i++){
+    if (from_name == image_ids_[i]) 
+      from_index = i;
+    if (to_name == image_ids_[i]) 
+      to_index = i;
+  }
+  if (to_index<0) {
+    std::cerr<<"To_image is not found!!!"<<std::endl; 
+    return NULL;
+  }
+  if (from_index<0) {
+    std::cerr<<"From_image is not found!!!"<<std::endl; 
+    return NULL;
+  }
+  return transforms_(from_index, to_index);
 }
 
 double 

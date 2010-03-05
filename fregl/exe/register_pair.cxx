@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
 
-//: Executable program to register a pair of 3D image 
+//: Executable program to register a pair of 3D images 
 // 
 //  The outcome is an xml file of a registration record. The images
 //  can be gray, rgb color or rgba color. The input images are
@@ -30,6 +30,7 @@ limitations under the License.
 //  -channel        The channel to be extracted.
 //  -background     Intensities below -background are ignored.
 //  -smooth         Gaussian smoothing is required
+//  -prior          xml file containing the prior transformation for initialization 
 
 #include <iostream>
 using std::cerr;
@@ -50,6 +51,7 @@ using std::endl;
 #include <vul/vul_timer.h>
 
 #include <fregl/fregl_pairwise_register.h>
+#include <fregl/fregl_joint_register.h>
 #include <fregl/fregl_reg_record.h>
 #include <fregl/fregl_util.h>
 
@@ -108,6 +110,7 @@ main(  int argc, char* argv[] )
   vul_arg< int >         slices         ("-slices","Number of slices to register. Needed when registering large image stacks on PC.",100);
   vul_arg<bool>          remove_2d      ("-remove_2d", "Remove the intermediate 2d stuff", false);
   vul_arg<bool>          scaling_arg    ("-scaling","Substantial scaling is expected.", false);
+  vul_arg< vcl_string >  prior_arg    ("-prior","xml file containing the initial transformation");
   
   vul_arg_parse( argc, argv );
 
@@ -139,11 +142,23 @@ main(  int argc, char* argv[] )
   if (slices.set()) registor.set_stack_size( slices() );
   registor.set_smoothing( smooth() );
 
+  // If initial transformation is required, get the record from the xml file
+  TransformType::Pointer prior_xform;
+  if (prior_arg.set()) {
+    fregl_joint_register::Pointer joint_register = new fregl_joint_register(prior_arg());
+    prior_xform = joint_register->get_transform(arg_file_from(), arg_file_to());
+  }
+  
   double obj_value;
-  bool failed = false;
+  bool succeeded = false;
   vul_timer timer;
   timer.mark();
-  if (registor.run(obj_value, gdbicp(), scaling_arg())) {
+  if (prior_arg.set() && registor.run(prior_xform, obj_value))
+    succeeded = true;
+  else if (registor.run(obj_value, gdbicp(), scaling_arg()))
+    succeeded = true;
+  
+  if (succeeded) {
     std::cout << "Timing: Successful registration in  ";
     timer.print( std::cout );
     std::cout<<std::endl;
@@ -178,13 +193,12 @@ main(  int argc, char* argv[] )
     record->write_xml( xml_file );
   }
   else {
-    failed = true; 
     std::cout<<"Timing: Failed registration in ";
     timer.print( std::cout );
     std::cout<<std::endl;
   }
 
-  if (remove_2d()) {
+  if (!prior_arg.set() && remove_2d()) {
 #if defined(VCL_WIN32) && !defined(__CYGWIN__)
     vcl_system("del xxx_from_image_proj.tif");
     vcl_system("del xxx_to_image_proj.tif");
@@ -205,7 +219,7 @@ main(  int argc, char* argv[] )
 #endif
   }
 
-  if (failed) return 1;
+  if (!succeeded) return 1;
   
   return 0;
 }
