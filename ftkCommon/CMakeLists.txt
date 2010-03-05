@@ -1,13 +1,9 @@
-
-ADD_LIBRARY( TraceProject TraceProjectManager.h TraceProjectManager.cxx )
-TARGET_LINK_LIBRARIES( TraceProject TinyXML )
-
-
 SET( FTKCOMMON_SRCS
   ftkUtils.cpp
   ftkPreprocess.cpp
   ftkMultipleImageHandler.cpp
   ftkParameters.cpp
+  ftkProjectManager.cxx
 )
 
 SET( FTKCOMMON_HDRS
@@ -15,6 +11,7 @@ SET( FTKCOMMON_HDRS
   ftkPreprocess.h
   ftkMultipleImageHandler.h
   ftkParameters.h
+  ftkProjectManager.h
 )
 
 ADD_LIBRARY( ftkCommon
@@ -22,7 +19,7 @@ ADD_LIBRARY( ftkCommon
             ${FTKCOMMON_HDRS} 
 )
 
-TARGET_LINK_LIBRARIES( ftkCommon TinyXML ftkImage TraceProject
+TARGET_LINK_LIBRARIES( ftkCommon TinyXML ftkImage
                        vtksys vtkCommon vtkFiltering vtkIO
                        ITKCommon ITKBasicFilters ITKIO ITKStatistics )
 

@@ -29,7 +29,7 @@ TraceSEMain::TraceSEMain(QWidget *parent)
 : QMainWindow(parent)
 {
 	
-	this->Project= new ProjectManager();
+	this->Project= new ftk::ProjectManager();
 	this->createFileActions();
 	//settings
 	this->CreateSettingsLayout();

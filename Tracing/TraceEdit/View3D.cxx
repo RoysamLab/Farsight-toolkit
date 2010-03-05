@@ -80,7 +80,7 @@ limitations under the License.
 #include "TraceModel.h"
 #include "MergeModel.h"
 #include "ImageActors.h"
-#include "ftkCommon/TraceProjectManager.h"
+#include "ftkCommon/ftkProjectManager.h"
 #include "View3DHelperClasses.h"
 #include "View3D.h"
 
@@ -464,7 +464,7 @@ void View3D::LoadProject()
 		tr("project ( *.xml" ));
 	if (!projectFile.isEmpty())
 	{
-		ProjectManager * project = new ProjectManager((char*)projectFile.toStdString().c_str());
+		ftk::ProjectManager * project = new ftk::ProjectManager((char*)projectFile.toStdString().c_str());
 		for (unsigned int i = 0; i < project->size(); i++)
 		{ 
 			std::string FileName = project->GetFileName(i);

@@ -45,7 +45,7 @@ limitations under the License.
 #include "TraceContainer3D.h"
 #include "TraceNode.h"
 
-#include <ftkCommon/TraceProjectManager.h>
+#include <ftkCommon/ftkProjectManager.h>
 #include <ftkCommon/ftkParameters.h>
 #include "tinyxml/tinyxml.h"
 
@@ -92,7 +92,7 @@ private:
 	typedef itk::Image< PixelType, 3 >   ImageType3D;
 	typedef vnl_vector_fixed<double,3> Vect3;
 	typedef vnl_matrix_fixed <double,3,3> Mat33;
-	ProjectManager * Project;
+	ftk::ProjectManager * Project;
 //GUI objects
 	QGroupBox * FileActions;
 	QGroupBox * settingsBox;

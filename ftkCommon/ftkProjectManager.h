@@ -12,24 +12,29 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
-#ifndef TRACEPROJECTMANAGER_H_
-#define TRACEPROJECTMANAGER_H_
+#ifndef PROJECTMANAGER_H_
+#define PROJECTMANAGER_H_
 
 #include "tinyxml/tinyxml.h"
 #include <string>
 #include <vector>
+
+namespace ftk
+{
 
 #define MY_ENCODING "ISO-8859-1"
 //valid file types are
 //	image:	tiff pic mhd
 //	soma:	tiff pic 
 //	trace:	swc vtk rpi.xml
+
 struct FileInfoManager
 {
 	std::string fileName;
 	std::string fileType;
 	double tx, ty, tz;
 };
+
 class ProjectManager
 {
 public:
@@ -48,5 +53,7 @@ public:
 private:
 	std::vector<FileInfoManager> fileInfo;
 };
+
+} // end namespace ftk
 
 #endif
