@@ -179,55 +179,50 @@ void TraceSEMain::LoadFromTraceProject()
 }
 void TraceSEMain::LoadTraceSettingsFile(std::string filename)
 {
-	TiXmlDocument doc(filename);
-	doc.LoadFile();
-	TiXmlHandle docHandle( &doc );
-	TiXmlElement* param = docHandle.FirstChild("Parameter").Element();
-	while (param)
-	{
-		int queryI = 0;
-		double queryD = 0;
-		if (param->QueryIntAttribute("GridSpacing", &queryI) == TIXML_SUCCESS)
-		{
-			this->GetGridSpacing->setValue(queryI);
-		}
-		if (param->QueryIntAttribute("FitIterations", &queryI) == TIXML_SUCCESS)
-		{
-			this->GetFitIterations->setValue(queryI);
-		}
-		if (param->QueryDoubleAttribute("StepRatio", &queryD) == TIXML_SUCCESS)
-		{
-			this->GetStepRatio->setValue(queryD);
-		}
-		if (param->QueryDoubleAttribute("AspectRatio", &queryD) == TIXML_SUCCESS)
-		{
-			this->GetAspectRatio->setValue(queryD);
-		}
-		if (param->QueryDoubleAttribute("THRESHOLD", &queryD) == TIXML_SUCCESS)
-		{
-			this->GetTHRESHOLD->setValue(queryD);
-		}
-		if (param->QueryDoubleAttribute("minContrast", &queryD) == TIXML_SUCCESS)
-		{
-			this->GetminContrast->setValue(queryD);
-		}
-		if (param->QueryDoubleAttribute("MaximumVesselWidth", &queryD) == TIXML_SUCCESS)
-		{
-			this->GetMaximumVesselWidth->setValue(queryD);
-		}
-		if (param->QueryDoubleAttribute("MinimumVesselLength", &queryD) == TIXML_SUCCESS)
-		{
-			this->GetMinimumVesselLength->setValue(queryD);
-		}
-		if (param->QueryDoubleAttribute("MinimumVesselWidth", &queryD) == TIXML_SUCCESS)
-		{
-			this->GetMinimumVesselWidth->setValue(queryD);
-		}
-		if (param->QueryDoubleAttribute("StartTHRESHOLD", &queryD) == TIXML_SUCCESS)
-		{
-			this->GetStartTHRESHOLD->setValue(queryD);
-		}
-	}
+	ftk::Parameters * p = new ftk::Parameters();
+	p->LoadFromFile(filename);
+
+	int idx = p->QueryParameter("GridSpacing");
+	if( idx>=0 )
+		this->GetGridSpacing->setValue( p->GetValueAsInt(idx) );
+
+	idx = p->QueryParameter("FitIterations");
+	if( idx>=0 )
+		this->GetFitIterations->setValue( p->GetValueAsInt(idx) );
+
+	idx = p->QueryParameter("StepRatio");
+	if( idx>=0 )
+		this->GetStepRatio->setValue(p->GetValueAsDouble(idx));
+
+	idx = p->QueryParameter("AspectRatio");
+	if( idx>=0 )
+		this->GetAspectRatio->setValue(p->GetValueAsDouble(idx));
+
+	idx = p->QueryParameter("THRESHOLD");
+	if( idx>=0 )
+		this->GetTHRESHOLD->setValue(p->GetValueAsDouble(idx));
+
+	idx = p->QueryParameter("minContrast");
+	if( idx>=0 )
+		this->GetminContrast->setValue(p->GetValueAsDouble(idx));
+
+	idx = p->QueryParameter("MaximumVesselWidth");
+	if( idx>=0 )
+		this->GetMaximumVesselWidth->setValue(p->GetValueAsDouble(idx));
+
+	idx = p->QueryParameter("MinimumVesselLength");
+	if( idx>=0 )
+		this->GetMinimumVesselLength->setValue(p->GetValueAsDouble(idx));
+
+	idx = p->QueryParameter("MinimumVesselWidth");
+	if( idx>=0 )
+		this->GetMinimumVesselWidth->setValue(p->GetValueAsDouble(idx));
+
+	idx = p->QueryParameter("StartTHRESHOLD");
+	if( idx>=0 )
+		this->GetStartTHRESHOLD->setValue(p->GetValueAsDouble(idx));
+	
+	delete p;
 }
 void TraceSEMain::addFileToTrace()
 {

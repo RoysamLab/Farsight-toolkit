@@ -38,13 +38,29 @@ class Parameters
 
 public:
 	Parameters(){ extension = "prm"; };
-	void LoadFromFile(std::string filename){};
-	void WriteToFile(std::string filename){};
+	void LoadFromFile(std::string filename);
+	void ReadFromTinyXML(TiXmlElement * inputElement);
+	void WriteToFile(std::string filename);
+	void AddToTinyXML(TiXmlElement * rootElement);
 
 	void AddParameter(std::string name, Type type, std::string value);
 
+	int GetNumberOfParameters(){ return (int)m_Parameters.size(); };
+	int QueryParameter(std::string parameterName);
+
+	Type GetType(int idx);
+	std::string GetValue(int idx);
+	int GetValueAsInt(int idx);
+	double GetValueAsDouble(int idx);
+	bool GetValueAsBool(int idx);
+
+	std::string GetParent(){ return parent; };
+	void SetParent(std::string prnt){ parent = prnt; };
+
 private:
 	std::vector<Parameter> m_Parameters;
+	std::string parent;			//The value of the parent element
+	std::string docname;
 	
 	std::string extension;
 };

@@ -46,6 +46,7 @@ limitations under the License.
 #include "TraceNode.h"
 
 #include <ftkCommon/TraceProjectManager.h>
+#include <ftkCommon/ftkParameters.h>
 #include "tinyxml/tinyxml.h"
 
 #include <QAction>
