@@ -136,6 +136,11 @@ main(  int argc, char* argv[] )
   writer3D->Update();
   */
   
+  std::string from_image_id = vul_file::strip_directory( arg_file_from() );
+  std::string to_image_id = vul_file::strip_directory( arg_file_to() );
+  std::string from_image_id_wo_ext = vul_file::strip_extension( from_image_id );
+  std::string to_image_id_wo_ext = vul_file::strip_extension( to_image_id );
+
   // Perform registration
   //
   fregl_pairwise_register registor(from_image, to_image, background());
@@ -146,15 +151,17 @@ main(  int argc, char* argv[] )
   TransformType::Pointer prior_xform;
   if (prior_arg.set()) {
     fregl_joint_register::Pointer joint_register = new fregl_joint_register(prior_arg());
-    prior_xform = joint_register->get_transform(arg_file_from(), arg_file_to());
+    prior_xform = joint_register->get_transform(from_image_id, to_image_id);
   }
   
   double obj_value;
   bool succeeded = false;
   vul_timer timer;
   timer.mark();
-  if (prior_arg.set() && registor.run(prior_xform, obj_value))
-    succeeded = true;
+  if (prior_arg.set()) {
+    if (registor.run(prior_xform, obj_value))
+      succeeded = true;
+  }
   else if (registor.run(obj_value, gdbicp(), scaling_arg()))
     succeeded = true;
   
@@ -167,10 +174,6 @@ main(  int argc, char* argv[] )
     ImageType3D::SizeType from_image_size = from_image->GetLargestPossibleRegion().GetSize();
     ImageType3D::SizeType to_image_size = to_image->GetLargestPossibleRegion().GetSize();
 
-    std::string from_image_id = vul_file::strip_directory( arg_file_from() );
-    std::string to_image_id = vul_file::strip_directory( arg_file_to() );
-    std::string from_image_id_wo_ext = vul_file::strip_extension( from_image_id );
-    std::string to_image_id_wo_ext = vul_file::strip_extension( to_image_id );
 
     // Invert the transforn, since itk produces xform going from
     // to->from image

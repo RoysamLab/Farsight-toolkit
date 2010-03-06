@@ -1,4 +1,6 @@
-# Python scrip which register all possible pairs
+# Python scrip which register all possible pairs and can be
+# initialized with prior transformations if given in an xml file
+# containing initial transformations
 
 import os, sys, re
 
@@ -43,7 +45,7 @@ def create_pairs(argv):
 def register(pair_list, argv):
     image_dir = argv[0]
     #f=open(sys.argv[1],'r');
-    f_o = open(sys.argv[2]+'.failed_pairs','w')
+    f_o = open(argv[1]+'.failed_pairs','w')
     f_xforms = open('xxx_123.txt','w')
     names=[]
     xforms=[]
@@ -56,7 +58,10 @@ def register(pair_list, argv):
         to_image = s_line[pos+1:]
             
         # perform registration
-        success = os.system('register_pair.exe '+image_dir+from_image+' '+ image_dir+to_image +' -remove_2d');
+        if (len(argv)>2):
+             success = os.system('register_pair.exe '+image_dir+from_image+' '+ image_dir+to_image +' -remove_2d -prior '+argv[2]);
+        else:
+            success = os.system('register_pair.exe '+image_dir+from_image+' '+ image_dir+to_image +' -remove_2d');
         if success == 0:
             # Add the names to the list if not already there. The list
             # keeps potential images which can be the anchor images for
@@ -88,10 +93,7 @@ def register(pair_list, argv):
     f_xforms.close()
     f_o.close();
     print("\nSTART register_joint.exe...")
-    if (len(argv) > 2):
-        os.system('register_joint.exe xxx_123.txt -multiplier '+ argv[2])
-    else: 
-        os.system('register_joint.exe xxx_123.txt')
+    os.system('register_joint.exe xxx_123.txt')
 
         
     print("DONE")
@@ -103,7 +105,7 @@ def register(pair_list, argv):
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
-        print '\nUsage: '+sys.argv[0]+' image_dir image_list_file [scale multiplier] \n'
+        print '\nUsage: '+sys.argv[0]+' image_dir image_list_file [initial xml file]\n '
         sys.exit(1)
     pairs = create_pairs(sys.argv[2:])
     register(pairs,sys.argv[1:])

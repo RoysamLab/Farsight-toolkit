@@ -136,6 +136,7 @@ bool
 fregl_pairwise_register::
 run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
 {
+  std::cout<<"fregl_pairwise_register::run--full registration..."<<std::endl;
   // Read the 3D image and project it to a 2D image using maximum
   // projection for GDBICP. The idea is to run GDBICP on the 2D image
   // to obtain a transformation accurate in x-y plan, since it is
@@ -296,6 +297,7 @@ bool
 fregl_pairwise_register::
 run(TransformType::Pointer prior_xform, double& obj_value)
 {
+  std::cout<<"fregl_pairwise_register::run--initialized registration..."<<std::endl;
   // Set the overlap regions of the two images first by using the
   // translation only.
   TransformType::ParametersType params = prior_xform->GetParameters();
@@ -305,8 +307,11 @@ run(TransformType::Pointer prior_xform, double& obj_value)
   
   InputImageType::SizeType size_from = from_image_->GetRequestedRegion().GetSize();
   InputImageType::SizeType size_to = to_image_->GetRequestedRegion().GetSize();
-  if (tx > size_to[0] || ty > size_to[1]) return false;
-  if (-tx> size_from[0] || -ty> size_from[1]) return false;
+  if (tx > size_to[0] || ty > size_to[1] || -tx> size_from[0] || -ty> size_from[1] ) {
+    std::cout<<"Error: Images do not overlap."<<std::endl;
+    return false;
+  }
+  
   InputImageType::IndexType start;
   InputImageType::SizeType size;
   InputImageType::RegionType region;

@@ -1,6 +1,6 @@
-# Python scrip which automatically pulls out image pairs based on the
-# pattern of the file names using regular expression. Examples are
-# given at the end of the script.
+# Python scrip which automatically pulls out adjacent, overlapping
+# image pairs based on the pattern of the file names using regular
+# expression. Examples are given at the end of the script.
 
 import os, sys, re
 
