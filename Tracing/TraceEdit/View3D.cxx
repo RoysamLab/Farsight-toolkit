@@ -84,7 +84,8 @@ limitations under the License.
 #include "View3DHelperClasses.h"
 #include "View3D.h"
 
-View3D::View3D(int argc, char **argv)
+View3D::View3D(QWidget *parent)
+: QMainWindow(parent)
 {
 	this->tobj = new TraceObject;
 	int num_loaded = 0;
@@ -105,63 +106,48 @@ View3D::View3D(int argc, char **argv)
 	this->EditLogDisplay->append("Time: \t" + this->Time.currentTime().toString( "h:m:s ap" ) );
 	
   // load as many files as possible. Provide offset for differentiating types
-  for(int counter=1; counter<argc; counter++)
-    {
-    int len = strlen(argv[counter]);
-    if(strcmp(argv[counter]+len-3,"swc")==0)
-      {
-      printf("I detected swc\n");
-      this->tobj->ReadFromSWCFile(argv[counter]);
-	  tracesLoaded = true;
-	  this->TraceFiles.append( QString(argv[counter]));
-	  //this->TraceFiles
-       }
-    else if (strcmp(argv[counter]+len-3,"xml")==0)
-      {
-      printf("I detected xml\n");
-      this->tobj->ReadFromRPIXMLFile(argv[counter]);
-	  this->TraceFiles.append( QString(argv[counter]));
-	  tracesLoaded = true;
-      }
-    else if (strcmp(argv[counter]+len-3,"vtk")==0)
-      {
-      printf("I detected vtk\n");
-      this->tobj->ReadFromVTKFile(argv[counter]);
-	  this->TraceFiles.append( QString(argv[counter]));
-	  tracesLoaded = true;
-      }
-    else if( strcmp(argv[counter]+len-3,"tks")==0)
-      {
-      printf("I detected tks\n");
-      this->tobj->ReadFromFeatureTracksFile(argv[counter],num_loaded);
-      }
-    else if( strcmp(argv[counter]+len-3,"tif")==0 ||
-             strcmp(argv[counter]+len-4,"tiff")==0 ||
-       strcmp(argv[counter]+len-3, "pic")==0||
-       strcmp(argv[counter]+len-3, "PIC")==0)
-      {
-      printf("I detected a 3d image file\n");
-	  this->Image.append( QString(argv[counter]));
-	  this->ImageActors->loadImage(QString(argv[counter]).toStdString(), "Image");
-      }
-    num_loaded++;
-    }
-		this->CreateBootLoader();
-	//if (num_loaded < 1)
-	//{	
-	//	this->hide();
-	//	this->CreateBootLoader();
-	//	return;
-	//}//end load
-	//else
-	//{		
-	//	this->show();
-	//	if (tracesLoaded)
-	//	{
-	//		this->ShowTreeData();
-	//	}
-	//	this->statusBar()->showMessage(tr("Ready"));
-	//}
+  //for(int counter=1; counter<argc; counter++)
+  //  {
+  //  int len = strlen(argv[counter]);
+  //  if(strcmp(argv[counter]+len-3,"swc")==0)
+  //    {
+  //    printf("I detected swc\n");
+  //    this->tobj->ReadFromSWCFile(argv[counter]);
+	 // tracesLoaded = true;
+	 // this->TraceFiles.append( QString(argv[counter]));
+	 // //this->TraceFiles
+  //     }
+  //  else if (strcmp(argv[counter]+len-3,"xml")==0)
+  //    {
+  //    printf("I detected xml\n");
+  //    this->tobj->ReadFromRPIXMLFile(argv[counter]);
+	 // this->TraceFiles.append( QString(argv[counter]));
+	 // tracesLoaded = true;
+  //    }
+  //  else if (strcmp(argv[counter]+len-3,"vtk")==0)
+  //    {
+  //    printf("I detected vtk\n");
+  //    this->tobj->ReadFromVTKFile(argv[counter]);
+	 // this->TraceFiles.append( QString(argv[counter]));
+	 // tracesLoaded = true;
+  //    }
+  //  else if( strcmp(argv[counter]+len-3,"tks")==0)
+  //    {
+  //    printf("I detected tks\n");
+  //    this->tobj->ReadFromFeatureTracksFile(argv[counter],num_loaded);
+  //    }
+  //  else if( strcmp(argv[counter]+len-3,"tif")==0 ||
+  //           strcmp(argv[counter]+len-4,"tiff")==0 ||
+  //     strcmp(argv[counter]+len-3, "pic")==0||
+  //     strcmp(argv[counter]+len-3, "PIC")==0)
+  //    {
+  //    printf("I detected a 3d image file\n");
+	 // this->Image.append( QString(argv[counter]));
+	 // this->ImageActors->loadImage(QString(argv[counter]).toStdString(), "Image");
+  //    }
+  //  num_loaded++;
+  //  }
+	this->CreateBootLoader();
 }
 View3D::View3D(TraceObject *Traces)
 {
@@ -189,9 +175,9 @@ void View3D::CreateBootLoader()
 	this->GetLab->setEditable(true);
 	this->GetLab->setInsertPolicy(QComboBox::InsertAtCurrent);
 	this->GetLab->addItems(this->TraceEditSettings.value("boot/LabName", "Roysam Lab").toStringList());
-	this->scale = new QDoubleSpinBox(this->bootLoadFiles);
+	/*this->scale = new QDoubleSpinBox(this->bootLoadFiles);
 	this->scale->setValue(this->TraceEditSettings.value("boot/scale", 1).toDouble());
-	this->scale->setSingleStep(.01);
+	this->scale->setSingleStep(.01);*/
 	this->okBoot = new QPushButton("Start",this->bootLoadFiles);
 	connect(this->okBoot, SIGNAL(clicked()), this, SLOT(OkToBoot()));
 	this->Reload = new QPushButton("Reload", this->bootLoadFiles);
@@ -204,12 +190,17 @@ void View3D::CreateBootLoader()
 	LoadLayout->addRow(tr("Trace File"), this->BootTrace);
 	LoadLayout->addRow(tr("Image File"), this->BootImage);
 	LoadLayout->addRow(tr("Somas File"), this->BootSoma);
-	LoadLayout->addRow(tr("uM Per Voxel"), this->scale);
+	//LoadLayout->addRow(tr("uM Per Voxel"), this->scale);
 	LoadLayout->addRow(tr("Reload Previous Session"), this->Reload);
 	LoadLayout->addRow(tr("Project"), this->BootProject);
 	LoadLayout->addRow(tr("Run Trace Editor"), this->okBoot);
-	this->bootLoadFiles->show();
-	this->bootLoadFiles->move(this->TraceEditSettings.value("boot/pos",QPoint(40, 59)).toPoint());
+	this->BootDock = new QDockWidget(tr("Start Trace Editor"), this);
+	this->BootDock->setAllowedAreas(Qt::LeftDockWidgetArea |
+							 Qt::RightDockWidgetArea);
+	this->BootDock->setWidget(this->bootLoadFiles);
+	addDockWidget(Qt::RightDockWidgetArea, this->BootDock);
+	/*this->bootLoadFiles->show();
+	this->bootLoadFiles->move(this->TraceEditSettings.value("boot/pos",QPoint(40, 59)).toPoint());*/
 }
 void View3D::ReloadState()
 {
@@ -276,10 +267,10 @@ void View3D::OkToBoot()
 {
 	if(!this->TraceFiles.isEmpty() || !this->Image.isEmpty() || !this->SomaFile.isEmpty())
 	{
+		this->BootDock->hide();
 		int i = 0;
-		//this->show();
-		this->uMperVoxel = this->scale->value();
-		this->TraceEditSettings.setValue("boot/scale", this->uMperVoxel);
+		/*this->uMperVoxel = this->scale->value();
+		this->TraceEditSettings.setValue("boot/scale", this->uMperVoxel);*/
 		this->Initialize();
 		if (!this->TraceFiles.isEmpty() )
 		{	
@@ -319,14 +310,6 @@ void View3D::OkToBoot()
 		allLabs.prepend(this->LabName);
 		this->TraceEditSettings.setValue("boot/LabName", allLabs);
 		this->EditLogDisplay->append("Lab: \t" + this->LabName);
-		this->TraceEditSettings.setValue("boot/pos", this->bootLoadFiles->pos());
-		this->bootLoadFiles->close();
-		this->show();
-//std::vector<std::string> LoadedImages = this->ImageActors->GetImageList();
-//		for (unsigned int i =0; i < LoadedImages.size(); i++)
-//		{
-//			std::cout << LoadedImages.at(i)<< "\t";
-//		}
 	}
 	else
 	{

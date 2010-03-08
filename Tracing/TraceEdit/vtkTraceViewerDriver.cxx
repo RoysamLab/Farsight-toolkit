@@ -23,19 +23,15 @@ limitations under the License.
 #include "vtkPolyData.h"
 
 int main (int argc, char* argv[])
-  {
-  //if(argc < 2)
-  //  {
-  //  cerr << argv[0] << " <filename>" << endl;
-  //  return 0;
-  //  }
-  QApplication app(argc, argv);
-  app.setOrganizationName("FARSIGHT Toolkit");
-  app.setOrganizationDomain("farsight-toolkit.org");
-  app.setApplicationName("Trace Editor");
-	View3D *View = new View3D(argc, argv);
-  View->show();
-  int retval = app.exec();
-  delete View;
-  return retval;
-  }
+{
+	//argc will be taken care of in QT app
+	QApplication app(argc, argv);
+	app.setOrganizationName("FARSIGHT Toolkit");
+	app.setOrganizationDomain("farsight-toolkit.org");
+	app.setApplicationName("Trace Editor");
+	View3D *View = new View3D();
+	View->show();
+	int retval = app.exec();
+	delete View;
+	return retval;
+}

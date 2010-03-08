@@ -70,7 +70,7 @@ Q_OBJECT;
 public:
 
 	vtkSmartPointer<vtkPolyData> poly_line_data;
-	View3D(int argc, char **argv);
+	View3D(QWidget * parent = 0);
 	View3D(TraceObject* Traces);
 	~View3D();
 	void Initialize();
@@ -151,7 +151,7 @@ private:
 	//the get____file functions called as renderer is not initalized
 	double uMperVoxel; //0 x, 1 y, 2 z
 	QSettings TraceEditSettings;
-	QDockWidget * InformationDisplays;
+	QDockWidget * InformationDisplays, *BootDock;
 	QTextEdit * EditLogDisplay;
 	QString UserName, LabName, ProjectName;
 	QStringList TraceFiles, Image, SomaFile, tempTraceFile;
