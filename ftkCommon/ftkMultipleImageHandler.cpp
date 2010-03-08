@@ -360,6 +360,51 @@ MultipleImageHandler::UCharImageType2D::Pointer MultipleImageHandler::SeriesProj
 	return img;
 }
 
+MultipleImageHandler::UCharImageType2D::Pointer MultipleImageHandler::ImageProjection(std::string inFile, std::string outName)
+{
+	typedef itk::ImageFileReader< UCharImageType3D > ReaderType;
+	ReaderType::Pointer reader = ReaderType::New();
+	reader->SetFileName(inFile);
+
+	typedef itk::MaximumProjectionImageFilter< UCharImageType3D, UCharImageType2D > ProjectionType;
+	ProjectionType::Pointer projection = ProjectionType::New();
+	projection->SetInput( reader->GetOutput() );
+	projection->SetProjectionDimension( 2 );
+	projection->SetNumberOfThreads( 4 );
+
+	try
+	{
+		projection->Update();
+	}
+	catch( itk::ExceptionObject & err )
+	{
+		std::cerr << "PROJECTION FAILED: " << err << std::endl;
+		return NULL;
+	}
+
+	UCharImageType2D::Pointer img = projection->GetOutput();
+
+	if(outName != "")
+	{
+		//Setup the writer
+		typedef itk::ImageFileWriter< UCharImageType2D > ImageWriterType;
+		ImageWriterType::Pointer writer = ImageWriterType::New();
+		writer->SetFileName( outName.c_str() );
+		writer->SetInput( img );
+		//This line has no effect for most image types
+		//writer->SetNumberOfStreamDivisions( 10 );
+		try
+		{
+			writer->Update();
+		}
+		catch( itk::ExceptionObject & err )
+		{
+			std::cerr << "WRITER FAILED: " << err << std::endl;
+		}
+	}
+
+	return img;
+}
 
 
 MultipleImageHandler::UCharImageType2D::Pointer MultipleImageHandler::ReadImage2D(std::string filename)

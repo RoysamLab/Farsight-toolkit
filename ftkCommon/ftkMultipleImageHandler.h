@@ -77,6 +77,7 @@ public:
 	//Take in an image series and create a maximum projection image along the z dimension
 	UCharImageType2D::Pointer SeriesProjection(std::string seriesFormat, int startIndex, int endIndex, std::string outName = "");
 	UCharImageType2D::Pointer SeriesProjection(StrVector inFiles, std::string outName = "");
+	UCharImageType2D::Pointer ImageProjection(std::string inFile, std::string outName = "");
 
 	//Use these functions to just load a specific region in a 3D image:
 	UCharImageType3D::Pointer ExtractRegion(StrVector inFiles, UCharImageType3D::RegionType region, bool rescale = false, std::string fname = "");
