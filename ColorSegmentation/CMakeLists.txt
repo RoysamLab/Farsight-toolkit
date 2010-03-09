@@ -22,6 +22,7 @@ SET( NSRCS
     dhHistogram.cpp
     
     dhClassifiers.h
+    dhSeedGrid.h
     
     dhEvalState.h
     dhEvalState.cpp

@@ -25,11 +25,15 @@ int main(int argc, char* argv[])
 		std::cerr << excep << std::endl;
 	}
 
-	ColorSegmentation *col_bin = new ColorSegmentation(reader->GetOutput(),1,2,1);
-	col_bin->SetTesting();
-	col_bin->RunInitialBinarization();
+	ColorSegmentation *col_bin = new ColorSegmentation(reader->GetOutput());
+	col_bin->SetTesting(true);
+	col_bin->SetLightBackground(true);
+
+	col_bin->TransformToRLI();
 	col_bin->FindArchetypalColors();
 	col_bin->ComputeClassWeights();
+
+	//col_bin->ComputeBinary(2,1);
 
 	delete col_bin;
 }

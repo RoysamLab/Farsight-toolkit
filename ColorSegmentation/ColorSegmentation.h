@@ -45,46 +45,47 @@ class ColorSegmentation
 {
 public:
 	//Constructor
-	ColorSegmentation(RGBImageType::Pointer input, int fore_ground_dark,int number_bins, int number_in_fg);
+	ColorSegmentation(RGBImageType::Pointer input);
 	//Destructor
 	~ColorSegmentation();
 
-	void SetTesting(bool t = true){ TESTING = t; };
+	void SetTesting(bool t = true){ TESTING = t; };		//default is false
+	void SetRLIMode(bool m = true){ RLI_MODE = m; };	//default is true
+	void SetIgnoreBackground(bool i = true){ IGNORE_BACKGROUND = i; }; //default is false
+	void SetLightBackground(bool d = true){ LIGHT_BACKGROUND = d; }; //default is false
 
 	//Methods:
-	void RunInitialBinarization();	//Run Initial Binarization
+	void TransformToRLI();			//First step
 	void FindArchetypalColors();	//Compute Archetypal Colors
 	void ComputeClassWeights();		//Get Grayscales Based On Distances From Atypes
 
 	//Get Results:
-	UcharImageType::Pointer get_binary();
+	UcharImageType::Pointer ComputeBinary(int num_bins, int num_in_fg, bool fgrnd_dark = false);
 
 	//A few parameters:
 	bool RLI_MODE;
-	bool GEN_PROJ;
+	bool IGNORE_BACKGROUND;
+	bool LIGHT_BACKGROUND;
 	bool TESTING;
+
+	//void RunInitialBinarization();	//MOVED TO BOTTOM OF CPP
 
 protected:
 	//Image Pointers
 	RGBImageType::Pointer rgb_input;
 
-	UcharImageType::Pointer intial_binarization;
 	UcharImageType::Pointer red_image;
 	UcharImageType::Pointer lime_image;
 	UcharImageType::Pointer intensity_image;
+
 	UcharImageType::Pointer red_wts;
 	UcharImageType::Pointer blue_wts;
 
 	//Intermediate values
-	dh::RGBHistogram * hist;
-	//dh::RGB_Atype at;
 	dh::_RGB arch_typ1, arch_typ2, bkgrnd_typ;  // 1->Red-ish  2->Blue-ish
 
-	//Flags
-	int foreground_dark, number_of_bins, number_in_foreground, bin_done;
-
 private:
-	void go_best_dir( dh::_RGB& ma, bool& moved, const dh::_RGB& sa, dh::RGB_Atype at, const int r = 1, int res = 1 );
+	void go_best_dir( dh::RGBHistogram *hist, dh::_RGB& ma, bool& moved, const dh::_RGB& sa, dh::RGB_Atype at, const int r = 1, int res = 1 );
 };
 
 #endif
