@@ -11,6 +11,7 @@ ColorSegmentation::ColorSegmentation(RGBImageType::Pointer input, int fore_groun
 
 	RLI_MODE = true;
 	GEN_PROJ = false;
+	TESTING = false;
 
 	hist = NULL;
 }
@@ -34,6 +35,7 @@ UcharImageType::Pointer ColorSegmentation::get_binary()
 }
 
 //Run Initial Binarization
+//This step creates an initial binarization and the RLI image
 void ColorSegmentation::RunInitialBinarization()
 {
 	typedef itk::ImageRegionIteratorWithIndex< FloatImageType > IteratorType;
@@ -52,35 +54,40 @@ void ColorSegmentation::RunInitialBinarization()
 	FloatImageType::Pointer red_image1 = FloatImageType::New();
 	FloatImageType::Pointer lime_image1 = FloatImageType::New();
 
-	FloatImageType::PointType origin1, origin2, origin3;
-	origin1[0] = 0; origin2[0] = 0; origin3[0] = 0;
-	origin1[1] = 0; origin2[1] = 0; origin3[1] = 0;
-	origin1[2] = 0; origin2[2] = 0; origin3[2] = 0;
-	red_image1->SetOrigin( origin1 ); 
-	lime_image1->SetOrigin( origin2 ); 
-	intensity_image1->SetOrigin( origin3 );
+	FloatImageType::PointType origin;
+	origin[0] = 0;
+	origin[1] = 0;
+	origin[2] = 0;
 
-	FloatImageType::IndexType start1, start2, start3;
-	start1[0] = 0; start2[0] = 0; start3[0] = 0;  // first index on X
-	start1[1] = 0; start2[1] = 0; start3[1] = 0;  // first index on Y
-	start1[2] = 0; start2[2] = 0; start3[2] = 0;  // first index on Z
-	FloatImageType::SizeType  size11, size22, size33;
-	size11[0] = size1; size22[0] = size1; size33[0] = size1;  // size along X
-	size11[1] = size2; size22[1] = size2; size33[1] = size2;  // size along Y
-	size11[2] = size3; size22[2] = size3; size33[2] = size3;  // size along Z
-	FloatImageType::RegionType region1, region2, region3;
-	region1.SetSize( size11 );  region2.SetSize( size22 );  region3.SetSize( size33 );
-	region1.SetIndex( start1 ); region2.SetIndex( start2 ); region3.SetIndex( start3 );
-	red_image1->SetRegions( region1 ); 
-	lime_image1->SetRegions( region2 ); 
-	intensity_image1->SetRegions( region3 );
+	red_image1->SetOrigin( origin ); 
+	lime_image1->SetOrigin( origin ); 
+	intensity_image1->SetOrigin( origin );
+
+	FloatImageType::IndexType start;
+	start[0] = 0; // first index on X
+	start[1] = 0; // first index on Y
+	start[2] = 0; // first index on Z
+	FloatImageType::SizeType  size;
+	size[0] = size1; // size along X
+	size[1] = size2; // size along Y
+	size[2] = size3; // size along Z
+	FloatImageType::RegionType region;
+	region.SetSize( size );
+	region.SetIndex( start );
+
+	red_image1->SetRegions( region ); 
+	lime_image1->SetRegions( region ); 
+	intensity_image1->SetRegions( region );
+
 	red_image1->Allocate();            
 	lime_image1->Allocate();            
 	intensity_image1->Allocate();
+
 	red_image1->FillBuffer(0);         
 	lime_image1->FillBuffer(0);         
 	intensity_image1->FillBuffer(0);
-	red_image1->Update();              
+
+	red_image1->Update();            
 	lime_image1->Update();              
 	intensity_image1->Update();
 
@@ -88,6 +95,7 @@ void ColorSegmentation::RunInitialBinarization()
 	IteratorType iterator2 ( lime_image1,      lime_image1     ->GetRequestedRegion() );
 	IteratorType iterator3 ( intensity_image1, intensity_image1->GetRequestedRegion() );
 
+	//iterate through the image and create an RLI float image:
 	RGBIteratorType pix_buf1( rgb_input, rgb_input->GetRequestedRegion() );
 	iterator1.GoToBegin();
 	iterator2.GoToBegin();
@@ -103,7 +111,7 @@ void ColorSegmentation::RunInitialBinarization()
 		const float green = (float)pix_vals[1];
 		const float blue  = (float)pix_vals[2];
 
-		float red1, lime, intensity;
+		float red1, lime, intensity;		//RLI values
 
 		float total = red + green + blue;
 		//intensity = total / (255*3);
@@ -119,7 +127,9 @@ void ColorSegmentation::RunInitialBinarization()
 		float h = 0.5 * ( (r-g) + (r-b) ) / (sqrt((r-g)*(r-g)+(r-b)*(g-b)) );
 		if(b > g)
 			h = 2*M_PI - h;
+
 		h =  h+1;			//************************************************needed???
+
 		float cr =  cos( h );
 		float cl =  sin( h );
 
@@ -130,6 +140,7 @@ void ColorSegmentation::RunInitialBinarization()
 		iterator2.Set( lime * 127 );
 		iterator3.Set( intensity * 127 );
 	}
+
 	ScalarImageToHistogramGeneratorType::Pointer scalarImageToHistogramGenerator = ScalarImageToHistogramGeneratorType::New();
 	ThreshFilterType::Pointer threshfilter = ThreshFilterType::New();
 	CalculatorType::Pointer calculator = CalculatorType::New();
@@ -141,7 +152,7 @@ void ColorSegmentation::RunInitialBinarization()
 	scalarImageToHistogramGenerator->SetInput( intensity_image1 );
 	scalarImageToHistogramGenerator->Compute();
 	calculator->SetInputHistogram( scalarImageToHistogramGenerator->GetOutput() );
-	threshfilter->SetInput( intensity_image1 );
+	threshfilter->SetInput( intensity_image1 );	//Input is intensity image from RLI computation (float)
 	calculator->Update();
 	const CalculatorType::OutputType &thresholdVector = calculator->GetOutput();
 
@@ -151,13 +162,17 @@ void ColorSegmentation::RunInitialBinarization()
 		return;
 	}
 
-	//testing
-	CalculatorType::OutputType::const_iterator itNum1 = thresholdVector.begin();
-	for( int i=0; i<number_of_bins; ++i ) {
-		std::cout<<(int)static_cast<UcharPixelType>(*itNum1)<<std::endl;
-		++itNum1;
-	}//
+	if(TESTING)
+	{
+		CalculatorType::OutputType::const_iterator itNum1 = thresholdVector.begin();
+		for( int i=0; i<number_of_bins; ++i ) 
+		{
+			std::cout << "b: " << (int)static_cast<UcharPixelType>(*itNum1) << std::endl;
+			++itNum1;
+		}
+	}
 
+	//Estimate Binarization thresholds:
 	if( foreground_dark )
 	{
 		CalculatorType::OutputType::const_iterator itNum = thresholdVector.end();
@@ -177,9 +192,10 @@ void ColorSegmentation::RunInitialBinarization()
 	threshfilter->SetUpperThreshold( upperThreshold );
 	threshfilter->Update();
 
-	intial_binarization = UcharImageType::New();
+	//intial_binarization = UcharImageType::New();
 	intial_binarization = threshfilter->GetOutput();
 
+	//Rescale the RLI images:
 	typedef itk::RescaleIntensityImageFilter< FloatImageType, UcharImageType > RescaleFlUcType;
 	RescaleFlUcType::Pointer RescaleIntIO1 = RescaleFlUcType::New();
 	RescaleIntIO1->SetOutputMaximum( 127 );
@@ -196,42 +212,47 @@ void ColorSegmentation::RunInitialBinarization()
 	RescaleIntIO3->SetOutputMinimum( 0 );
 	RescaleIntIO3->SetInput( red_image1 );
 	RescaleIntIO3->Update();
+
 	red_image = RescaleIntIO3->GetOutput();
 	lime_image = RescaleIntIO2->GetOutput();
 	intensity_image = RescaleIntIO1->GetOutput();
 
-	float max=(float)LLONG_MIN;
-	float min=(float)LLONG_MAX;
-	iterator2.GoToBegin();
-	for ( pix_buf1.GoToBegin();
-	      !iterator2.IsAtEnd();
-	      ++iterator2 ){
-		if( max < iterator2.Get() ) max = iterator2.Get();
-		if( min > iterator2.Get() ) min = iterator2.Get();
-	}
-	std::cout<<"MAX:"<<max<<"\nMIN:"<<min<<std::endl;
-	typedef itk::ImageFileWriter< UcharImageType > WriterType;
-	WriterType::Pointer writer = WriterType::New();
-	writer->SetFileName( "intensity.tif" );
-	writer->SetInput( intensity_image );
-	writer->Update();
-	WriterType::Pointer writer1 = WriterType::New();
-	writer1->SetFileName( "lime.tif" );
-	writer1->SetInput( lime_image );
-	writer1->Update();
-	WriterType::Pointer writer2 = WriterType::New();
-	writer2->SetFileName( "red.tif" );
-	writer2->SetInput( red_image );
-	writer2->Update();
-
 	bin_done = 1;
+
+	if(TESTING)
+	{
+		float max=(float)LLONG_MIN;
+		float min=(float)LLONG_MAX;
+		for ( iterator2.GoToBegin(); !iterator2.IsAtEnd(); ++iterator2 )
+		{
+			if( max < iterator2.Get() ) max = iterator2.Get();
+			if( min > iterator2.Get() ) min = iterator2.Get();
+		}
+		std::cout<<"MAX:"<<max<<"\nMIN:"<<min<<std::endl;
+
+		typedef itk::ImageFileWriter< UcharImageType > WriterType;
+		WriterType::Pointer writer = WriterType::New();
+		writer->SetFileName( "intensity.tif" );
+		writer->SetInput( intensity_image );
+		writer->Update();
+		WriterType::Pointer writer1 = WriterType::New();
+		writer1->SetFileName( "lime.tif" );
+		writer1->SetInput( lime_image );
+		writer1->Update();
+		WriterType::Pointer writer2 = WriterType::New();
+		writer2->SetFileName( "red.tif" );
+		writer2->SetInput( red_image );
+		writer2->Update();
+		WriterType::Pointer writer3 = WriterType::New();
+		writer->SetFileName( "bin.tif" );
+		writer->SetInput( intial_binarization );
+		writer->Update();
+	}
 }
 
 //Run Pixel classification
 void ColorSegmentation::FindArchetypalColors()
 {
-	dh::RGB_Atype at;
-
 	typedef itk::ImageRegionConstIterator< UcharImageType > UcharIteratorType;
 
 	UcharIteratorType pix_buf3( red_image, red_image->GetRequestedRegion() );
@@ -243,12 +264,11 @@ void ColorSegmentation::FindArchetypalColors()
 		delete hist;
 	hist = new dh::RGBHistogram(2);
 
-	pix_buf1.GoToBegin();	pix_buf2.GoToBegin();	pix_buf3.GoToBegin();
-	for ( ;
+	for ( pix_buf1.GoToBegin(), pix_buf2.GoToBegin(), pix_buf3.GoToBegin();
 	      !pix_buf1.IsAtEnd() && !pix_buf2.IsAtEnd() && !pix_buf3.IsAtEnd();
 	      ++pix_buf1, ++pix_buf2, ++pix_buf3 )
 	{
-		dh::_RGB P = dh::_RGB( pix_buf1.Get(), pix_buf2.Get(), pix_buf3.Get() );
+		dh::_RGB P = dh::_RGB( pix_buf1.Get(), pix_buf2.Get(), pix_buf3.Get() );	//Creating a 3D "pixel" (not really RGB)
 		hist->inc( P );
 	}
 
@@ -258,8 +278,6 @@ void ColorSegmentation::FindArchetypalColors()
 
 	std::cout << "Mode \t" << ((int)(hist->mode.R)) * 2 << ", " << ((int)(hist->mode.G)) * 2<< ", " << ((int)(hist->mode.B)) * 2
 		<<" has max frequency " << hist->max_freq<< "." << std::endl;
-
-	//hist->dump();
 
 	//================== Create Histogram Projections ==================
 	std::cout << "Creating histogram images..." << std::endl;
@@ -285,6 +303,7 @@ void ColorSegmentation::FindArchetypalColors()
 
 	//===================================================================
 	// =========== Find Color Archetypes ================================
+	dh::RGB_Atype at;
 	at.bkgrnd = hist->mode;
 
 	const int max_res = 15;   // MAGIC NUMBER !!! 
@@ -316,8 +335,8 @@ void ColorSegmentation::FindArchetypalColors()
 	    { 
 			for ( int iter = 0; iter <= max_res; iter++ )
  			{ 
-				go_best_dir( a1, a1_moved, a2 );
-				go_best_dir( a2, a2_moved, a1 );
+				go_best_dir( a1, a1_moved, a2, at );
+				go_best_dir( a2, a2_moved, a1, at );
 				res[iter] = dh::eval_state ( at.bkgrnd, a1, a2 );
 		    }
 	    } while ( ( a1_moved || a2_moved ) &&
@@ -326,8 +345,8 @@ void ColorSegmentation::FindArchetypalColors()
       
 		int big_jump_size = 8;       // MAGIC NUMBER !!!
 
-		go_best_dir( a1, a1_moved, a2, big_jump_size, 1 );
-		go_best_dir( a2, a2_moved, a1, big_jump_size, 1 );
+		go_best_dir( a1, a1_moved, a2, at, big_jump_size, 1 );
+		go_best_dir( a2, a2_moved, a1, at, big_jump_size, 1 );
 
 	} while ( a1_moved || a2_moved );
 
@@ -361,11 +380,8 @@ void ColorSegmentation::ComputeClassWeights()
 	// Set slide_wt to deal with differing spread
 	//	slide_wt = Y_R_axis_len / ( Y_B_axis_len + Y_R_axis_len );
 
- 	// Enable this line and disable previous to
-			// totally disable slide_wt
-
+ 	// Enable this line and disable previous to totally disable slide_wt
 	float slide_wt = .7;
-	Pixel_Class pixel_class;
 
 	//----------- Find decision planes ---------------
 	dh::XYZ r = atype.red;
@@ -378,15 +394,11 @@ void ColorSegmentation::ComputeClassWeights()
 	dh::XYZ wb = b - w;
 	dh::XYZ wr = r - w;
 	dh::XYZ wd = d - w;
-	//DMP(wb);
-	//DMP(wr);
-	//DMP(wd);
+
 	dh::XYZ p = cross ( cross ( wb , wr ), wd );
-	//DMP(p);
-	//cout << "magp = " << magnitude ( p ) << endl;
+
 	static dh::XYZ decision_plane = p / magnitude ( p );
-	//DMP( RLI_WV_Classifier_2::decision_plane );
-	//cout << RLI_WV_Classifier_2::decision_plane << endl;
+
 	p = dh::cross ( dh::cross ( wb , wr ), wr );
 	static dh::XYZ red_plane = p / magnitude ( p );
 	static double red_sp_dist = dh::dot ( (d - r), red_plane );
@@ -395,12 +407,6 @@ void ColorSegmentation::ComputeClassWeights()
 	static dh::XYZ blue_plane = p / magnitude ( p );
 	static double blue_sp_dist = dh::dot ( (d - b), blue_plane );
 	
-	//DMP( RLI_WV_Classifier_2::decision_plane );
-	//DMP( RLI_WV_Classifier_2::red_plane );
-	//DMP( RLI_WV_Classifier_2::blue_plane );
-	//DMP( RLI_WV_Classifier_2::red_sp_dist );
-	//DMP( RLI_WV_Classifier_2::blue_sp_dist );
-
 	//------------------------------------------------
 
 //**************************************
@@ -414,41 +420,43 @@ void ColorSegmentation::ComputeClassWeights()
 	FloatImageType::Pointer red_weights = FloatImageType::New();
 	FloatImageType::Pointer blue_weights = FloatImageType::New();
 
-	FloatImageType::PointType origin1, origin2;
-	origin1[0] = 0; origin2[0] = 0;
-	origin1[1] = 0; origin2[1] = 0;
-	origin1[2] = 0; origin2[2] = 0;
-	red_weights->SetOrigin( origin1 ); blue_weights->SetOrigin( origin2 );
+	FloatImageType::PointType origin;
+	origin[0] = 0;
+	origin[1] = 0;
+	origin[2] = 0;
+	red_weights->SetOrigin( origin ); 
+	blue_weights->SetOrigin( origin );
 
-	FloatImageType::IndexType start1, start2;
-	start1[0] = 0; start2[0] = 0; // first index on X
-	start1[1] = 0; start2[1] = 0; // first index on Y
-	start1[2] = 0; start2[2] = 0; // first index on Z
-	FloatImageType::SizeType  size11, size22;
-	size11[0] = size1; size22[0] = size1; // size along X
-	size11[1] = size2; size22[1] = size2; // size along Y
-	size11[2] = size3; size22[2] = size3; // size along Z
-	FloatImageType::RegionType region1, region2;
-	region1.SetSize( size11 );  region2.SetSize( size22 );
-	region1.SetIndex( start1 ); region2.SetIndex( start2 );
-	red_weights->SetRegions( region1 ); blue_weights->SetRegions( region2 );
-	red_weights->Allocate();            blue_weights->Allocate();
-	red_weights->FillBuffer(0);         blue_weights->FillBuffer(0);
-	red_weights->Update();              blue_weights->Update();
+	FloatImageType::IndexType start;
+	start[0] = 0; // first index on X
+	start[1] = 0; // first index on Y
+	start[2] = 0; // first index on Z
+	FloatImageType::SizeType  size;
+	size[0] = size1; // size along X
+	size[1] = size2; // size along Y
+	size[2] = size3; // size along Z
+	FloatImageType::RegionType region;
+	region.SetSize( size );
+	region.SetIndex( start );
+	red_weights->SetRegions( region ); 
+	blue_weights->SetRegions( region );
+	red_weights->Allocate();            
+	blue_weights->Allocate();
+	red_weights->FillBuffer(0);         
+	blue_weights->FillBuffer(0);
+	red_weights->Update();              
+	blue_weights->Update();
 
-	IteratorType iterator1 ( red_weights,      red_weights      ->GetRequestedRegion() );
-	IteratorType iterator2 ( blue_weights,     blue_weights     ->GetRequestedRegion() );
-
-	iterator1.GoToBegin();
-	iterator2.GoToBegin();
+	IteratorType iterator1 ( red_weights, red_weights->GetRequestedRegion() );
+	IteratorType iterator2 ( blue_weights, blue_weights->GetRequestedRegion() );
 	
 	UcharIteratorType pix_buf3( red_image, red_image->GetRequestedRegion() );
 	UcharIteratorType pix_buf2( lime_image, lime_image->GetRequestedRegion() );
 	UcharIteratorType pix_buf1( intensity_image, intensity_image->GetRequestedRegion() );
 
 	// ========== Create 3D Histogram =========
-	pix_buf1.GoToBegin();	pix_buf2.GoToBegin();	pix_buf3.GoToBegin();
-	for ( ;
+	
+	for ( pix_buf1.GoToBegin(),	pix_buf2.GoToBegin(), pix_buf3.GoToBegin(), iterator1.GoToBegin(), iterator2.GoToBegin();
 	      !pix_buf1.IsAtEnd() && !pix_buf2.IsAtEnd() && !pix_buf3.IsAtEnd() && !iterator1.IsAtEnd() && !iterator2.IsAtEnd();
 	      ++pix_buf1, ++pix_buf2, ++pix_buf3, ++iterator1, ++iterator2 )
 	{
@@ -456,18 +464,15 @@ void ColorSegmentation::ComputeClassWeights()
 
 		float red_dist = 2.0 * ( 1.0 - slide_wt ) *
 			dh::RGB_Classifier::RGB_euclidean_dist( pixel, atype.red, 1, 1, 1);
-		//DMP(red_dist);
+		
 
 		float blue_dist = 2.0 * slide_wt *
 			dh::RGB_Classifier::RGB_euclidean_dist( pixel, atype.blue, 1, 1, 1);
-		//DMP(blue_dist);
-
+		
 		float bkgrnd_dist = dh::RGB_Classifier::RGB_euclidean_dist( pixel, atype.bkgrnd, 1, 1, 1);
-		//DMP(bkgrnd_dist);
 
-		//Cell_Class pixel_class;
+		Pixel_Class pixel_class;
 		double s_plane_dist;
-
 		float certainty;  	// 1 = certain; 0 = unknown
 
 		s_plane_dist = dot ( ((dh::XYZ)pixel - split_point), decision_plane );
@@ -495,10 +500,8 @@ void ColorSegmentation::ComputeClassWeights()
 				certainty = s_plane_dist / ( s_plane_dist + fabs(b_plane_dist) );
 			 }
 		}
-		//DMP(pixel_class);
 
 		float bkgrnd_wt = 1 - certainty;
-
 
 		if(  ( pixel_class == RED_CELL && (red_dist * (1 - bkgrnd_wt) < bkgrnd_dist * bkgrnd_wt))
 			     ||(pixel_class == BLUE_CELL
@@ -512,12 +515,14 @@ void ColorSegmentation::ComputeClassWeights()
 			iterator1.Set( blue_dist/(blue_dist+red_dist)*certainty );  //Function1
 			iterator2.Set( red_dist/(blue_dist+red_dist) *certainty );  //Function2
 		}
-		else{
+		else
+		{
 			iterator1.Set( (blue_dist+bkgrnd_dist)/(blue_dist+red_dist+bkgrnd_dist)*certainty );  //Function3
 			iterator2.Set( (red_dist+bkgrnd_dist) /(blue_dist+red_dist+bkgrnd_dist)*certainty );  //Function4
 		}
 	}
 
+	//Rescale the weights:
 	typedef itk::RescaleIntensityImageFilter< FloatImageType, UcharImageType > RescaleFlUcType;
 	RescaleFlUcType::Pointer RescaleIntIO1 = RescaleFlUcType::New();
 	RescaleIntIO1->SetOutputMaximum( 255 );
@@ -529,22 +534,26 @@ void ColorSegmentation::ComputeClassWeights()
 	RescaleIntIO2->SetOutputMinimum( 0 );
 	RescaleIntIO2->SetInput( blue_weights );
 	RescaleIntIO2->Update();
+
 	red_wts  = RescaleIntIO1->GetOutput();
 	blue_wts = RescaleIntIO2->GetOutput();
 
-	typedef itk::ImageFileWriter< UcharImageType > WriterType;
-	WriterType::Pointer writer = WriterType::New();
-	writer->SetFileName( "red_wts.tif" );
-	writer->SetInput( red_wts );
-	writer->Update();
-	WriterType::Pointer writer1 = WriterType::New();
-	writer1->SetFileName( "blue_wts.tif" );
-	writer1->SetInput( blue_wts );
-	writer1->Update();
+	if(TESTING)
+	{
+		typedef itk::ImageFileWriter< UcharImageType > WriterType;
+		WriterType::Pointer writer = WriterType::New();
+		writer->SetFileName( "red_wts.tif" );
+		writer->SetInput( red_wts );
+		writer->Update();
+		WriterType::Pointer writer1 = WriterType::New();
+		writer1->SetFileName( "blue_wts.tif" );
+		writer1->SetInput( blue_wts );
+		writer1->Update();
+	}
 }
 
 
-void ColorSegmentation::go_best_dir( dh::_RGB& ma, bool& moved, const dh::_RGB& sa, const int r, int res )
+void ColorSegmentation::go_best_dir( dh::_RGB& ma, bool& moved, const dh::_RGB& sa, dh::RGB_Atype at, const int r, int res )
 {
 	double new_val;
 	double best_val = dh::NEG_HUGE;

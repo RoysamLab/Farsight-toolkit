@@ -26,14 +26,10 @@ int main(int argc, char* argv[])
 	}
 
 	ColorSegmentation *col_bin = new ColorSegmentation(reader->GetOutput(),1,2,1);
-
+	col_bin->SetTesting();
 	col_bin->RunInitialBinarization();
 	col_bin->FindArchetypalColors();
 	col_bin->ComputeClassWeights();
 
-	typedef itk::ImageFileWriter < UcharImageType > WriterType;
-	WriterType::Pointer writer = WriterType::New();
-	writer->SetInput( col_bin->get_binary() );
-	writer->SetFileName( "bin.tif" );
-	writer->Update();
+	delete col_bin;
 }

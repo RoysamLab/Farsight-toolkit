@@ -43,49 +43,48 @@ enum Pixel_Class { UNKNOWN, RED_CELL, BLUE_CELL, BKGD_FIELD };
 
 class ColorSegmentation
 {
-	//Flags
-	int foreground_dark, number_of_bins, number_in_foreground, bin_done;
+public:
+	//Constructor
+	ColorSegmentation(RGBImageType::Pointer input, int fore_ground_dark,int number_bins, int number_in_fg);
+	//Destructor
+	~ColorSegmentation();
 
-	//Archetypal Colors
-	//RGB arch_typ1, arch_typ2, bkgrnd_typ; //1-> Red-ish 2-> Blue-ish
+	void SetTesting(bool t = true){ TESTING = t; };
 
+	//Methods:
+	void RunInitialBinarization();	//Run Initial Binarization
+	void FindArchetypalColors();	//Compute Archetypal Colors
+	void ComputeClassWeights();		//Get Grayscales Based On Distances From Atypes
+
+	//Get Results:
+	UcharImageType::Pointer get_binary();
+
+	//A few parameters:
+	bool RLI_MODE;
+	bool GEN_PROJ;
+	bool TESTING;
+
+protected:
 	//Image Pointers
 	RGBImageType::Pointer rgb_input;
+
 	UcharImageType::Pointer intial_binarization;
 	UcharImageType::Pointer red_image;
 	UcharImageType::Pointer lime_image;
 	UcharImageType::Pointer intensity_image;
 	UcharImageType::Pointer red_wts;
 	UcharImageType::Pointer blue_wts;
-public:
-	//Constructor
-	ColorSegmentation(RGBImageType::Pointer input, int fore_ground_dark,int number_bins, int number_in_fg);
-
-	//Destructor
-	~ColorSegmentation();
-
-	//Run Initial Binarization
-	void RunInitialBinarization();
-	//Get Binary
-	UcharImageType::Pointer get_binary();
 
 	//Intermediate values
 	dh::RGBHistogram * hist;
-	dh::RGB_Atype at;
-	dh::_RGB arch_typ1, arch_typ2, bkgrnd_typ; //1-> Red-ish 2-> Blue-ish
+	//dh::RGB_Atype at;
+	dh::_RGB arch_typ1, arch_typ2, bkgrnd_typ;  // 1->Red-ish  2->Blue-ish
 
-	//Compute Archetypal Colors
-	void FindArchetypalColors();
-
-	//Get Grayscales Based On Distances From Atypes
-	void ComputeClassWeights();
-
-	//A few parameters:
-	bool RLI_MODE;
-	bool GEN_PROJ;
+	//Flags
+	int foreground_dark, number_of_bins, number_in_foreground, bin_done;
 
 private:
-	void go_best_dir( dh::_RGB& ma, bool& moved, const dh::_RGB& sa, const int r = 1, int res = 1 );
+	void go_best_dir( dh::_RGB& ma, bool& moved, const dh::_RGB& sa, dh::RGB_Atype at, const int r = 1, int res = 1 );
 };
 
 #endif
