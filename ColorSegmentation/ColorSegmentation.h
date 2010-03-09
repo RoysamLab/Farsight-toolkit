@@ -46,8 +46,7 @@ class ColorSegmentation
 public:
 	//Constructor
 	ColorSegmentation(RGBImageType::Pointer input);
-	//Destructor
-	~ColorSegmentation();
+	~ColorSegmentation(){};//Destructor
 
 	void SetTesting(bool t = true){ TESTING = t; };		//default is false
 	void SetRLIMode(bool m = true){ RLI_MODE = m; };	//default is true

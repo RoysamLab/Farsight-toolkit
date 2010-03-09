@@ -18,13 +18,11 @@ ColorSegmentation::ColorSegmentation(RGBImageType::Pointer input)
 	TESTING = false;
 }
 
-//Destructor
-ColorSegmentation::~ColorSegmentation()
-{
-}
-
 void ColorSegmentation::TransformToRLI()
 {
+	if(!rgb_input)
+		return;
+
 	int size1 = rgb_input->GetLargestPossibleRegion().GetSize()[0];
 	int size2 = rgb_input->GetLargestPossibleRegion().GetSize()[1];
 	int size3 = rgb_input->GetLargestPossibleRegion().GetSize()[2];
