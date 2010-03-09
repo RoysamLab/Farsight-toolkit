@@ -18,6 +18,8 @@ ColorSegmentation::ColorSegmentation(RGBImageType::Pointer input, int fore_groun
 //Destructor
 ColorSegmentation::~ColorSegmentation()
 {
+	if(hist)
+		delete hist;
 }
 
 UcharImageType::Pointer ColorSegmentation::get_binary()

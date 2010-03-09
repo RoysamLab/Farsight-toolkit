@@ -9,7 +9,7 @@ SET( NSRCS
     Color_Image.h
     Color_Image.cpp
     PPM_Image.h
-    PPM_IMage.cpp
+    PPM_Image.cpp
 	
 	Col_Slice.h
 	RGB_Slice.h

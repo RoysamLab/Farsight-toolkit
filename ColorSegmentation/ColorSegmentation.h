@@ -69,17 +69,13 @@ public:
 	//Get Binary
 	UcharImageType::Pointer get_binary();
 
+	//Intermediate values
 	dh::RGBHistogram * hist;
 	dh::RGB_Atype at;
 	dh::_RGB arch_typ1, arch_typ2, bkgrnd_typ; //1-> Red-ish 2-> Blue-ish
 
 	//Compute Archetypal Colors
 	void FindArchetypalColors();
-
-	//Set Previously computed Atypes
-	//void SetAtypes( RGB a_typ1, RGB a_typ2, RGB bk_typ ){
-	//	arch_typ1 = a_typ1; arch_typ2 = a_typ2; bkgrnd_typ = bk_typ;
-	//}
 
 	//Get Grayscales Based On Distances From Atypes
 	void ComputeClassWeights();
