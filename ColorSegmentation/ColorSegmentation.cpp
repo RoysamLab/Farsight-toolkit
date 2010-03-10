@@ -355,34 +355,33 @@ void ColorSegmentation::ComputeClassWeights()
 	float Y_B_axis_len = dh::RGB_Classifier::RGB_euclidean_dist (atype.bkgrnd, atype.blue );
 	float Y_R_axis_len = dh::RGB_Classifier::RGB_euclidean_dist (atype.bkgrnd, atype.red );
 	
-	float slide_wt = 0.7; //Set to magic number
+	float slide_wt = 0.5;//0.7; //Set to magic number
 	//Set slide_wt to deal with differing spread
 	//slide_wt = Y_R_axis_len / ( Y_B_axis_len + Y_R_axis_len );
 
 	//----------- Find decision planes ---------------
+	// 1. Find D (split point)
 	dh::XYZ r = atype.red;
 	dh::XYZ b = atype.blue;
 	dh::XYZ w = atype.bkgrnd;
 	const double spw = 0.50;
 	dh::XYZ d =  (b *(1-spw)+ r*spw);
-
 	dh::XYZ split_point = d;
 	
+	// 2. Find p (decision plan for 2 colors - represented by normal vector)
 	dh::XYZ wb = b - w;
 	dh::XYZ wr = r - w;
 	dh::XYZ wd = d - w;
-
-	dh::XYZ p = cross ( cross ( wb , wr ), wd );
-
-	dh::XYZ decision_plane = p / magnitude ( p );
+	dh::XYZ p = dh::cross ( dh::cross ( wb , wr ), wd );
+	dh::XYZ decision_plane = p / magnitude ( p );	//decision plane normal vector
 
 	p = dh::cross ( dh::cross ( wb , wr ), wr );
-	dh::XYZ red_plane = p / magnitude ( p );
-	double red_sp_dist = dh::dot ( (d - r), red_plane );
+	dh::XYZ red_plane = p / magnitude ( p );	//red plane normal vector
+	double red_sp_dist = dh::dot ( (d - r), red_plane ); //angular relationship between dr to red plane
 
 	p = dh::cross ( dh::cross ( wb , wr ), wb );
-	dh::XYZ blue_plane = p / magnitude ( p );
-	double blue_sp_dist = dh::dot ( (d - b), blue_plane );
+	dh::XYZ blue_plane = p / magnitude ( p );	//blue plane normal vector
+	double blue_sp_dist = dh::dot ( (d - b), blue_plane );//angular relationship between db to blue plane
 
 	if(TESTING)
 	{ 
@@ -455,18 +454,18 @@ void ColorSegmentation::ComputeClassWeights()
 		dh::_RGB pixel = dh::_RGB( pix_buf1.Get(), pix_buf2.Get(), pix_buf3.Get() );
 
 		float red_dist = 2.0 * ( 1.0 - slide_wt ) *
-			dh::RGB_Classifier::RGB_euclidean_dist( pixel, atype.red, 1, 1, 1);
+			dh::RGB_Classifier::RGB_euclidean_dist( pixel, atype.red, 1, 1, 1);	//Distance to red archtype
 		
 		float blue_dist = 2.0 * slide_wt *
-			dh::RGB_Classifier::RGB_euclidean_dist( pixel, atype.blue, 1, 1, 1);
+			dh::RGB_Classifier::RGB_euclidean_dist( pixel, atype.blue, 1, 1, 1);//Distance to blue archtype
 		
-		float bkgrnd_dist = dh::RGB_Classifier::RGB_euclidean_dist( pixel, atype.bkgrnd, 1, 1, 1);
+		float bkgrnd_dist = dh::RGB_Classifier::RGB_euclidean_dist( pixel, atype.bkgrnd, 1, 1, 1);//Distance to background archtype
 
 		Pixel_Class pixel_class;
-		double s_plane_dist;
 		float certainty;  	// 1 = certain; 0 = unknown
 
-		s_plane_dist = dot ( ((dh::XYZ)pixel - split_point), decision_plane );
+		//Angular relationship between CD and decision plane:
+		double s_plane_dist = dh::dot ( ((dh::XYZ)pixel - split_point), decision_plane );
 
 		if ( s_plane_dist >= 0 ) 
 		{ 
@@ -474,11 +473,11 @@ void ColorSegmentation::ComputeClassWeights()
 			pixel_class = RED_CELL;
 			double r_plane_dist = dh::dot ( ((dh::XYZ)pixel - (dh::XYZ)atype.red), red_plane );
 			// This could be done with signum functions to make it faster...
-			if ( r_plane_dist * red_sp_dist < 0 ) 
+			if ( r_plane_dist * red_sp_dist < 0 )
 			{
 				certainty = 1.0;
 			}
-			else 
+			else
 			{
 				certainty = s_plane_dist / ( s_plane_dist + fabs(r_plane_dist) );
 			}
@@ -526,9 +525,11 @@ void ColorSegmentation::ComputeClassWeights()
 				||(pixel_class == BLUE_CELL && (blue_dist * (1 - bkgrnd_wt) < bkgrnd_dist * bkgrnd_wt))
 				) 
 			{
-				certainty = pow(certainty, 3);
+				//certainty = pow(certainty, 3);
+				certainty = pow(certainty, 1);
 			}
 		}
+
 		/*
 		if( pixel_class != RED_CELL && pixel_class != BLUE_CELL )
 		{
@@ -547,9 +548,11 @@ void ColorSegmentation::ComputeClassWeights()
 			break;
 		case RED_CELL:
 			iterator1.Set((1.0 - certainty)*255);
+			//iterator1.Set(255);
 			break;
 		case BLUE_CELL:
 			iterator2.Set((1.0 - certainty)*255);
+			//iterator2.Set(255);
 			break;
 		default:
 			std::cerr << "INVALID PIXEL CLASS" << std::endl;

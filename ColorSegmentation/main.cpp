@@ -28,6 +28,7 @@ int main(int argc, char* argv[])
 	ColorSegmentation *col_bin = new ColorSegmentation(reader->GetOutput());
 	col_bin->SetTesting(true);
 	col_bin->SetLightBackground(true);
+	col_bin->SetIgnoreBackground(false);
 
 	col_bin->TransformToRLI();
 	col_bin->FindArchetypalColors();
