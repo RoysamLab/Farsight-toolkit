@@ -234,7 +234,7 @@ const float athird = (float)(1.0/3.0);
 const float sqrtthree = (float)sqrt( 3.0 );
 const float sqrt2o3 = (float)sqrt(2.0/3.0);
 
-// OLD HSI CONVERTION (REPLACED BY CORRECT IMPLEMENTATION BELOW)
+// OLD HSI CONVERTION
 _RGB::operator HSI() const
  {
   float total = (float)R + (float)G + (float)B;
@@ -271,7 +271,7 @@ _RGB::operator HSI() const
    }
  }
 
-/*
+/* BETTER IMPLEMENTATION:??
 _RGB::operator HSI() const
  {
   float total = (float)R + (float)G + (float)B;

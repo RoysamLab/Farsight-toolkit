@@ -68,57 +68,6 @@ void ColorSegmentation::TransformToRLI()
 	lime_image->Update();              
 	intensity_image->Update();
 
-	/*
-	FloatImageType::Pointer intensity_image1 = FloatImageType::New();
-	FloatImageType::Pointer red_image1 = FloatImageType::New();
-	FloatImageType::Pointer lime_image1 = FloatImageType::New();
-
-	FloatImageType::PointType origin;
-	origin[0] = 0;
-	origin[1] = 0;
-	origin[2] = 0;
-
-	red_image1->SetOrigin( origin ); 
-	lime_image1->SetOrigin( origin ); 
-	intensity_image1->SetOrigin( origin );
-
-	FloatImageType::IndexType start;
-	start[0] = 0; // first index on X
-	start[1] = 0; // first index on Y
-	start[2] = 0; // first index on Z
-	FloatImageType::SizeType  size;
-	size[0] = size1; // size along X
-	size[1] = size2; // size along Y
-	size[2] = size3; // size along Z
-	FloatImageType::RegionType region;
-	region.SetSize( size );
-	region.SetIndex( start );
-
-	red_image1->SetRegions( region ); 
-	lime_image1->SetRegions( region ); 
-	intensity_image1->SetRegions( region );
-
-	red_image1->Allocate();            
-	lime_image1->Allocate();            
-	intensity_image1->Allocate();
-
-	red_image1->FillBuffer(0);         
-	lime_image1->FillBuffer(0);         
-	intensity_image1->FillBuffer(0);
-
-	red_image1->Update();            
-	lime_image1->Update();              
-	intensity_image1->Update();
-	*/
-
-	//iterate through the image and create an RLI float image:
-	/*
-	typedef itk::ImageRegionIteratorWithIndex< FloatImageType > IteratorType;
-	IteratorType iterator1 ( red_image1, red_image1->GetRequestedRegion() );
-	IteratorType iterator2 ( lime_image1, lime_image1->GetRequestedRegion() );
-	IteratorType iterator3 ( intensity_image1, intensity_image1->GetRequestedRegion() );
-	*/
-
 	typedef itk::ImageRegionIteratorWithIndex< UcharImageType > IteratorType;
 	IteratorType iterator1 ( red_image, red_image->GetRequestedRegion() );
 	IteratorType iterator2 ( lime_image, lime_image->GetRequestedRegion() );
@@ -133,19 +82,13 @@ void ColorSegmentation::TransformToRLI()
 	{ 
 		RGBPixelType pix_vals = pix_buf1.Get();
 
-		//const float red   = (float)pix_vals[0];
-		//const float green = (float)pix_vals[1];
-		//const float blue  = (float)pix_vals[2];
-
-		const char red   = (char)((int)pix_vals[0]-127);
-		const char green = (char)((int)pix_vals[1]-127);
-		const char blue  = (char)((int)pix_vals[2]-127);
+		const UcharPixelType red   = pix_vals[0];
+		const UcharPixelType green = pix_vals[1];
+		const UcharPixelType blue  = pix_vals[2];
 
 		dh::_RGB rgb_pix(red,green,blue);
 		dh::RLI rli_pix = (dh::RLI)rgb_pix;
 		
-		//rgb_pix = rli_pix.mapRLItoRGB();
-
 		iterator1.Set( rli_pix.R );
 		iterator2.Set( rli_pix.L );
 		iterator3.Set( rli_pix.I );
@@ -154,63 +97,7 @@ void ColorSegmentation::TransformToRLI()
 		{
 			pix_vals = pix_vals;
 		}
-
-		/*
-
-		float red1, lime, intensity;		//RLI values
-
-		float total = red + green + blue;
-		//intensity = total / (255*3);
-		//TRY THIS
-		intensity = (0.3*red+0.59*green+0.11*blue)/255;	 
-
-		float r = (float)red   / total;
-		float g = (float)green / total;
-		float b = (float)blue  / total;
-
-		float s = 1 - 3 * ((r<g) ? ((r<b) ? r : b ) : ((g<b) ? g : b ));
-
-		float h = 0.5 * ( (r-g) + (r-b) ) / (sqrt((r-g)*(r-g)+(r-b)*(g-b)) );
-		if(b > g)
-			h = 2*M_PI - h;
-
-		h =  h+1;			//*************************needed???
-
-		float cr =  cos( h );
-		float cl =  sin( h );
-
-		lime = s * cl;
-		red1 = s * cr;
-
-		iterator1.Set( red1 * 127 );
-		iterator2.Set( lime * 127 );
-		iterator3.Set( intensity * 127 );
-		*/
 	}
-
-	/*
-	//Rescale the RLI images:
-	typedef itk::RescaleIntensityImageFilter< FloatImageType, UcharImageType > RescaleFlUcType;
-	RescaleFlUcType::Pointer RescaleIntIO1 = RescaleFlUcType::New();
-	RescaleIntIO1->SetOutputMaximum( 127 );
-	RescaleIntIO1->SetOutputMinimum( 0 );
-	RescaleIntIO1->SetInput( intensity_image1 );
-	RescaleIntIO1->Update();
-	RescaleFlUcType::Pointer RescaleIntIO2 = RescaleFlUcType::New();
-	RescaleIntIO2->SetOutputMaximum( 127 );
-	RescaleIntIO2->SetOutputMinimum( 0 );
-	RescaleIntIO2->SetInput( lime_image1 );
-	RescaleIntIO2->Update();
-	RescaleFlUcType::Pointer RescaleIntIO3 = RescaleFlUcType::New();
-	RescaleIntIO3->SetOutputMaximum( 127 );
-	RescaleIntIO3->SetOutputMinimum( 0 );
-	RescaleIntIO3->SetInput( red_image1 );
-	RescaleIntIO3->Update();
-
-	red_image = RescaleIntIO3->GetOutput();
-	lime_image = RescaleIntIO2->GetOutput();
-	intensity_image = RescaleIntIO1->GetOutput();
-	*/
 
 	if(TESTING)
 	{
@@ -301,9 +188,9 @@ void ColorSegmentation::FindArchetypalColors()
 
 	typedef itk::ImageRegionConstIterator< UcharImageType > UcharIteratorType;
 
-	UcharIteratorType pix_buf3( red_image, red_image->GetRequestedRegion() );
+	UcharIteratorType pix_buf1( red_image, red_image->GetRequestedRegion() );
 	UcharIteratorType pix_buf2( lime_image, lime_image->GetRequestedRegion() );
-	UcharIteratorType pix_buf1( intensity_image, intensity_image->GetRequestedRegion() );
+	UcharIteratorType pix_buf3( intensity_image, intensity_image->GetRequestedRegion() );
 
 	// ========== Create 3D Histogram =========
 	dh::RGBHistogram * hist = new dh::RGBHistogram(2);
@@ -320,8 +207,8 @@ void ColorSegmentation::FindArchetypalColors()
 	hist->smooth();
 	hist->delete_secondary_blobs();
 
-	std::cout << "Mode \t" << ((int)(hist->mode.R)) * 2 << ", " << ((int)(hist->mode.G)) * 2<< ", " << ((int)(hist->mode.B)) * 2
-		<<" has max frequency " << hist->max_freq<< "." << std::endl;
+	std::cout << "Mode " << hist->mode * 2 << " has max frequency " 
+		<< hist->max_freq << "." << std::endl;
 
 	//================== Create Histogram Projections ==================
 	std::cout << "Creating histogram images..." << std::endl;
@@ -355,7 +242,7 @@ void ColorSegmentation::FindArchetypalColors()
 
 	// ======= Find Rough Estimate (initial seeds) ===========	
 
-	const int resolution = 8;	// MAGIC NUMBER !!! ************************ used to be 4
+	const int resolution = 4;	// MAGIC NUMBER !!! ************************ used to be 4
 								// Tune for accuracy (hi) vs. Speed (lo)
 								// Must use > 1.
 
@@ -365,8 +252,8 @@ void ColorSegmentation::FindArchetypalColors()
 
 	seed_grid.find_seeds( a1, a2, dh::eval_state );
 
-	std::cout << "   Seed1 = " << a1.R * 2 << " "<< a1.G * 2 << " " <<  a1.B * 2 << " " << std::endl;
-	std::cout << "   Seed2 = " << a2.R * 2 << " "<< a2.G * 2 << " " <<  a2.B * 2 << " " << std::endl;
+	std::cout << "   Seed1 = " << a1 * 2 << std::endl;
+	std::cout << "   Seed2 = " << a2 * 2 << std::endl;
 
 	std::cout << "Finding most distinct colors..." << std::endl;
 	
