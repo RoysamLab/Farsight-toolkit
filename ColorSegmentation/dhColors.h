@@ -20,7 +20,7 @@ class XYZ;
 #define HSI_GRAY(level) HSI( 0, 0, level )
 
 enum ColorAxis { aR = 0, aG = 1, aB = 2 };
-typedef char IntensityType; //For RGB and RLI space
+typedef unsigned char IntensityType; //For RGB and RLI space
 
 
 //=======================================================================
@@ -46,7 +46,7 @@ public:
 	friend _RGB operator*(const _RGB& c, double scale_factor);
 	friend _RGB operator/(const _RGB& c, double scale_factor);
       
-	//friend ostream &operator<<(ostream &, const RGB &);
+	friend std::ostream &operator<<(std::ostream &, const _RGB &);
 
 	operator HSI() const;
 	operator RLI() const;
@@ -74,7 +74,7 @@ public:
 	friend HSI operator*(const HSI& c, double scale_factor);
 	friend HSI operator/(const HSI& c, double scale_factor);
 		
-	//friend ostream &operator<<(ostream &, const HSI &);
+	friend std::ostream &operator<<(std::ostream &, const HSI &);
    
 	operator _RGB() const;
 	operator RLI() const;
@@ -99,7 +99,7 @@ public:
 	friend HSI operator*(const RLI& c, double scale_factor);
 	friend RLI operator/(const RLI& c, double scale_factor);
 
-    //friend ostream &operator<<(ostream &, const RLI &);
+	friend std::ostream &operator<<(std::ostream &, const RLI &);
    
     operator HSI() const;
 	operator _RGB() const;
@@ -131,7 +131,7 @@ public:
 	friend XYZ operator*(const XYZ& c, const double scale_factor);
 	friend XYZ operator/(const XYZ& c, const double scale_factor);
       
-	//friend ostream &operator<<(ostream &, const RGB &);
+	friend std::ostream &operator<<(std::ostream &, const XYZ &);
       
 	XYZ& operator=(XYZ);
 	XYZ& operator=(_RGB);

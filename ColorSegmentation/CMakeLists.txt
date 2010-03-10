@@ -16,14 +16,8 @@ SET( NSRCS
     dhColors.cpp
     dhImage.h
     dhImage.cpp
-    Color_Image.h
-    Color_Image.cpp
-    PPM_Image.h
-    PPM_Image.cpp
-	
-	Col_Slice.h
-	RGB_Slice.h
-	RLI_Slice.h
+	dhSlice.h
+	dhSlice.cpp
 	
 	RGB_Atype.h
 	RGB_Atype.cpp

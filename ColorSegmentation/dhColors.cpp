@@ -55,13 +55,13 @@ _RGB operator/(const _RGB& c, double scale_factor)
  { return ( c * ( 1 / scale_factor ) ); }
 
 
-/*	
-ostream &operator<<(ostream &output, const RGB &c)
+std::ostream &operator<<(std::ostream &output, const _RGB &c)
  { output << "[RGB: " << (int)c.R << " " << (int)c.G << " " << (int)c.B << "]";
    return output;
  }
 
-istream &operator>>(istream &input, RGB &c)
+/*
+istream &operator>>(istream &input, _RGB &c)
  { Str inbuf;
    input >> inbuf;
 	
@@ -90,7 +90,6 @@ istream &operator>>(istream &input, RGB &c)
  }
 */
 
-
 //=======================================================================
 //===  HSI (Hue - Saturation - Intensity) COLOR CLASS
 //=======================================================================
@@ -114,14 +113,14 @@ HSI operator*(const HSI& c, double scale_factor)
 HSI operator/(const HSI& c, double scale_factor)
  { return ( c * ( 1 / scale_factor ) ); }
 
-/*
-ostream &operator<<(ostream &output, const HSI &c)
+
+std::ostream &operator<<(std::ostream &output, const HSI &c)
  { output << "[HSI: " << (int)((c.H * 180 / M_PI)+.5) << " deg  "
           // using precision(3) here changes the value from 0 to 60 for white!?!
           << c.S << "  " << c.I << "]";
 	return output;
  }
-*/
+
 
 
 //=======================================================================
@@ -150,12 +149,12 @@ RLI operator/(const RLI& c, double scale_factor)
  { return ( c * ( 1 / scale_factor ) ); }
 
 
-/*
-ostream &operator<<(ostream &output, const RLI &c)
+
+std::ostream &operator<<(std::ostream &output, const RLI &c)
  { output << "[RLI: " << (int)c.R << " " << (int)c.L << " " << (int)c.I << "]";
 	return output;
  }
-*/
+
 
 
 //=======================================================================
@@ -196,12 +195,12 @@ XYZ cross (const XYZ& c1, const XYZ& c2)
 
 double magnitude (const XYZ& c)
  { return ( sqrt ( (c.X * c.X) + (c.Y * c.Y) + (c.Z * c.Z) ) ); }
-/*
-ostream &operator<<(ostream &output, const XYZ &c)
+
+std::ostream &operator<<(std::ostream &output, const XYZ &c)
  { output << "[XYZ: " << c.X << " " << c.Y << " " << c.Z << "]";
    return output;
  }
-*/
+
 XYZ& XYZ::operator=(XYZ c)
  { X = c.X;
    Y = c.Y;
@@ -235,6 +234,7 @@ const float athird = (float)(1.0/3.0);
 const float sqrtthree = (float)sqrt( 3.0 );
 const float sqrt2o3 = (float)sqrt(2.0/3.0);
 
+// OLD HSI CONVERTION (REPLACED BY CORRECT IMPLEMENTATION BELOW)
 _RGB::operator HSI() const
  {
   float total = (float)R + (float)G + (float)B;
@@ -264,23 +264,47 @@ _RGB::operator HSI() const
 	  if ( swt < -1 ) swt = -1;
 	  h = acos( swt );
 
-	  /*if ( ( bt / at / sqrt2o3 ) > 1 || ( bt / at / sqrt2o3 ) < -1 )
-	   { cout << " #!#!#!#!#!#!#!#!#!#!#!" << endl
-	 	      << "bt = " << bt << ", at = " << at << ".  Out of range!" << endl
-				<< *this << endl;
-	     cout << "H = " << h << endl;
-	     cout << "S = " << s << endl;
-	     cout << "I = " << i << endl;
-		  h = M_PI;
-
-	   }*/
-
 	  if(b > g)
 	   { h = (float)(2*M_PI - h); }
 
 	  return ( HSI ( h, s, i ) );
    }
  }
+
+/*
+_RGB::operator HSI() const
+ {
+  float total = (float)R + (float)G + (float)B;
+  float i = athird * total / 255;
+	 
+  if ( is_gray(*this) )
+   { 
+	   return( HSI_GRAY(i) );
+   }
+  else
+   {
+ 	  float r = (float)R / total;
+	  float g = (float)G / total;
+	  float b = (float)B / total;
+
+	  float s = 1 - 3 * ((r<g) ? ((r<b) ? r : b ) : ((g<b) ? g : b ));
+
+	  float angle = 0.5 * ( (r-g) + (r-b) ) / (sqrt((r-g)*(r-g)+(r-b)*(g-b)) );
+	
+	  float h;
+	  if(b<=g)
+	  {
+		h = acos(angle);
+	  }
+	  else
+	  {
+		h = 2*M_PI - acos(angle);
+	  }
+
+	  return ( HSI ( h, s, i ) );
+   }
+ }
+ */
 
 _RGB::operator XYZ() const
  { return ( XYZ ( R, G, B ) );
@@ -324,6 +348,7 @@ HSI::operator RLI() const
  {
    float cr = cos ( H );
    float cl = sin ( H );
+
 	float l, r;
 
    #if HSI_CYLINDER

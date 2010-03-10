@@ -27,6 +27,48 @@ void ColorSegmentation::TransformToRLI()
 	int size2 = rgb_input->GetLargestPossibleRegion().GetSize()[1];
 	int size3 = rgb_input->GetLargestPossibleRegion().GetSize()[2];
 
+	red_image = UcharImageType::New();
+	lime_image = UcharImageType::New();
+	intensity_image = UcharImageType::New();
+
+	UcharImageType::PointType origin;
+	origin[0] = 0;
+	origin[1] = 0;
+	origin[2] = 0;
+
+	red_image->SetOrigin( origin ); 
+	lime_image->SetOrigin( origin ); 
+	intensity_image->SetOrigin( origin );
+
+	UcharImageType::IndexType start;
+	start[0] = 0; // first index on X
+	start[1] = 0; // first index on Y
+	start[2] = 0; // first index on Z
+	UcharImageType::SizeType  size;
+	size[0] = size1; // size along X
+	size[1] = size2; // size along Y
+	size[2] = size3; // size along Z
+	UcharImageType::RegionType region;
+	region.SetSize( size );
+	region.SetIndex( start );
+
+	red_image->SetRegions( region ); 
+	lime_image->SetRegions( region ); 
+	intensity_image->SetRegions( region );
+
+	red_image->Allocate();            
+	lime_image->Allocate();            
+	intensity_image->Allocate();
+
+	red_image->FillBuffer(0);         
+	lime_image->FillBuffer(0);         
+	intensity_image->FillBuffer(0);
+
+	red_image->Update();            
+	lime_image->Update();              
+	intensity_image->Update();
+
+	/*
 	FloatImageType::Pointer intensity_image1 = FloatImageType::New();
 	FloatImageType::Pointer red_image1 = FloatImageType::New();
 	FloatImageType::Pointer lime_image1 = FloatImageType::New();
@@ -67,13 +109,20 @@ void ColorSegmentation::TransformToRLI()
 	red_image1->Update();            
 	lime_image1->Update();              
 	intensity_image1->Update();
+	*/
 
 	//iterate through the image and create an RLI float image:
-
+	/*
 	typedef itk::ImageRegionIteratorWithIndex< FloatImageType > IteratorType;
 	IteratorType iterator1 ( red_image1, red_image1->GetRequestedRegion() );
 	IteratorType iterator2 ( lime_image1, lime_image1->GetRequestedRegion() );
 	IteratorType iterator3 ( intensity_image1, intensity_image1->GetRequestedRegion() );
+	*/
+
+	typedef itk::ImageRegionIteratorWithIndex< UcharImageType > IteratorType;
+	IteratorType iterator1 ( red_image, red_image->GetRequestedRegion() );
+	IteratorType iterator2 ( lime_image, lime_image->GetRequestedRegion() );
+	IteratorType iterator3 ( intensity_image, intensity_image->GetRequestedRegion() );
 
 	typedef itk::ImageRegionConstIterator< RGBImageType > RGBIteratorType;
 	RGBIteratorType pix_buf1( rgb_input, rgb_input->GetRequestedRegion() );
@@ -82,12 +131,31 @@ void ColorSegmentation::TransformToRLI()
 	      !pix_buf1.IsAtEnd() && !iterator1.IsAtEnd() && !iterator2.IsAtEnd() && !iterator3.IsAtEnd() ;
 	      ++pix_buf1, ++iterator1, ++iterator2, ++iterator3 )
 	{ 
-		RGBPixelType pix_vals;
-		pix_vals = pix_buf1.Get();
+		RGBPixelType pix_vals = pix_buf1.Get();
 
-		const float red   = (float)pix_vals[0];
-		const float green = (float)pix_vals[1];
-		const float blue  = (float)pix_vals[2];
+		//const float red   = (float)pix_vals[0];
+		//const float green = (float)pix_vals[1];
+		//const float blue  = (float)pix_vals[2];
+
+		const char red   = (char)((int)pix_vals[0]-127);
+		const char green = (char)((int)pix_vals[1]-127);
+		const char blue  = (char)((int)pix_vals[2]-127);
+
+		dh::_RGB rgb_pix(red,green,blue);
+		dh::RLI rli_pix = (dh::RLI)rgb_pix;
+		
+		//rgb_pix = rli_pix.mapRLItoRGB();
+
+		iterator1.Set( rli_pix.R );
+		iterator2.Set( rli_pix.L );
+		iterator3.Set( rli_pix.I );
+
+		if(rli_pix.R < 0 || rli_pix.L < 0 || rli_pix.I < 0)
+		{
+			pix_vals = pix_vals;
+		}
+
+		/*
 
 		float red1, lime, intensity;		//RLI values
 
@@ -106,7 +174,7 @@ void ColorSegmentation::TransformToRLI()
 		if(b > g)
 			h = 2*M_PI - h;
 
-		h =  h+1;			//************************************************needed???
+		h =  h+1;			//*************************needed???
 
 		float cr =  cos( h );
 		float cl =  sin( h );
@@ -117,8 +185,10 @@ void ColorSegmentation::TransformToRLI()
 		iterator1.Set( red1 * 127 );
 		iterator2.Set( lime * 127 );
 		iterator3.Set( intensity * 127 );
+		*/
 	}
 
+	/*
 	//Rescale the RLI images:
 	typedef itk::RescaleIntensityImageFilter< FloatImageType, UcharImageType > RescaleFlUcType;
 	RescaleFlUcType::Pointer RescaleIntIO1 = RescaleFlUcType::New();
@@ -140,6 +210,7 @@ void ColorSegmentation::TransformToRLI()
 	red_image = RescaleIntIO3->GetOutput();
 	lime_image = RescaleIntIO2->GetOutput();
 	intensity_image = RescaleIntIO1->GetOutput();
+	*/
 
 	if(TESTING)
 	{
@@ -372,16 +443,19 @@ void ColorSegmentation::ComputeClassWeights()
 	dh::XYZ wb = b - w;
 	dh::XYZ wr = r - w;
 	dh::XYZ wd = d - w;
-	dh::XYZ p = dh::cross ( dh::cross ( wb , wr ), wd );
+	dh::XYZ wbwr = dh::cross( wb, wr );
+	dh::XYZ p = dh::cross ( wbwr, wd );
 	dh::XYZ decision_plane = p / magnitude ( p );	//decision plane normal vector
 
-	p = dh::cross ( dh::cross ( wb , wr ), wr );
+	p = dh::cross ( wbwr, wr );
 	dh::XYZ red_plane = p / magnitude ( p );	//red plane normal vector
-	double red_sp_dist = dh::dot ( (d - r), red_plane ); //angular relationship between dr to red plane
+	double red_sp_dist = dh::dot ( (d - r), red_plane ); //scalar projection of RD onto red plane unit normal vector
+	//This is the distance between d and the red plane (negative = inside triangle)
 
-	p = dh::cross ( dh::cross ( wb , wr ), wb );
+	p = dh::cross ( wbwr, wb );
 	dh::XYZ blue_plane = p / magnitude ( p );	//blue plane normal vector
-	double blue_sp_dist = dh::dot ( (d - b), blue_plane );//angular relationship between db to blue plane
+	double blue_sp_dist = dh::dot ( (d - b), blue_plane );//scalar projection of BD onto blue plane unit normal vector
+	//Distance between d and the blue plane (positive = inside triangle)
 
 	if(TESTING)
 	{ 
@@ -462,18 +536,22 @@ void ColorSegmentation::ComputeClassWeights()
 		float bkgrnd_dist = dh::RGB_Classifier::RGB_euclidean_dist( pixel, atype.bkgrnd, 1, 1, 1);//Distance to background archtype
 
 		Pixel_Class pixel_class;
+
+		//certainty is a measure of how close to the decision plane the point is
+		//does not take into account how close it may be to the background color
 		float certainty;  	// 1 = certain; 0 = unknown
 
-		//Angular relationship between CD and decision plane:
+		//Distance from pixel to decision plane (pos=red, neg=blue):
 		double s_plane_dist = dh::dot ( ((dh::XYZ)pixel - split_point), decision_plane );
 
 		if ( s_plane_dist >= 0 ) 
 		{ 
 			// Pixel is "red"
 			pixel_class = RED_CELL;
+			//Distance from pixel to red plane (pos=outside, neg=inside)
 			double r_plane_dist = dh::dot ( ((dh::XYZ)pixel - (dh::XYZ)atype.red), red_plane );
 			// This could be done with signum functions to make it faster...
-			if ( r_plane_dist * red_sp_dist < 0 )
+			if ( r_plane_dist * red_sp_dist < 0 ) //If signs are different the point is outside the triangle
 			{
 				certainty = 1.0;
 			}
@@ -525,8 +603,7 @@ void ColorSegmentation::ComputeClassWeights()
 				||(pixel_class == BLUE_CELL && (blue_dist * (1 - bkgrnd_wt) < bkgrnd_dist * bkgrnd_wt))
 				) 
 			{
-				//certainty = pow(certainty, 3);
-				certainty = pow(certainty, 1);
+				certainty = pow(certainty, 3);
 			}
 		}
 

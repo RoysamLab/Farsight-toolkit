@@ -1,35 +1,10 @@
-#ifndef _COL_SLICE_H_
-#define _COL_SLICE_H_
-
-#include "PPM_Image.h"
+#include "dhSlice.h"
+// RLI Slices are currently not scalable.
 
 namespace dh
 {
 
-enum AxSign { POS = 0, NEG = 1 };
-
-const int axis_dir[2] = { 1, -1 };
-const IntensityType axis_min[2] = { 0, 255 };
-const IntensityType axis_max[2] = { 255, 0 };
-
-class Col_Slice : public PPM_Image
-{ 
-public:
-	const int scale;
-	const int size;
-		
-	int overflow_count;
-
-	Col_Slice( int scale_in, _RGB bkgrnd )
-    : PPM_Image( 256*scale_in + 2, 256*scale_in + 2, bkgrnd ),
-			  scale(scale_in), size(256*scale + 2),
-			  overflow_count(0)
-	{
-	}
-		
-	virtual RC_coords color_coords( _RGB clr ) = 0;
-		
-	void plot_point ( _RGB clr, _RGB false_clr = RGB_BLACK )
+	void Col_Slice::plot_point ( _RGB clr, _RGB false_clr )
 	{ 
 		if( false_clr == RGB_BLACK )
 		{ 
@@ -41,8 +16,8 @@ public:
 		}
 	}
 
-	void plot_cross ( _RGB clr, _RGB false_clr = RGB_BLACK, int size = 1, 
-		                  bool border = false, _RGB border_clr = RGB_GRAY(1) )
+	void Col_Slice::plot_cross ( _RGB clr, _RGB false_clr , int size , 
+		                  bool border, _RGB border_clr )
 	{ 
 		RC_coords coords = color_coords( clr );
 		_RGB plot_clr = ( false_clr == RGB_BLACK ) ? clr : false_clr ;
@@ -87,7 +62,7 @@ public:
         }
 	}
 
-	void inc_point( int r, int c, ColorAxis ax, IntensityType cc, int incr )
+	void Col_Slice::inc_point( int r, int c, ColorAxis ax, IntensityType cc, int incr )
 	{ 
 		int newc = (int)cc + incr;
 		if (newc > 255)
@@ -101,7 +76,7 @@ public:
 		}
 	}
 
-	void dec_point( int r, int c, ColorAxis ax, IntensityType cc, int incr )
+	void Col_Slice::dec_point( int r, int c, ColorAxis ax, IntensityType cc, int incr )
 	{ 
 		int newc = (int)cc - incr;
 		if (newc < 0)
@@ -115,7 +90,7 @@ public:
 		}
 	}
 
-	void inc_freq_at ( int r, int c, int incr )
+	void Col_Slice::inc_freq_at ( int r, int c, int incr )
 	{ 
 		_RGB cc = P(r, c);
 			
@@ -171,82 +146,96 @@ public:
 		}
 	}
 
-	void inc_freq( _RGB clr, int incr )
+	void Col_Slice::inc_freq( _RGB clr, int incr )
 	{ 
 		RC_coords coords = color_coords( clr );
 		inc_freq_at ( coords.r, coords.c, incr );
 	}
 
-	_RGB point_color( _RGB clr )
+	_RGB Col_Slice::point_color( _RGB clr )
 	{ 
 		return ( P( color_coords( clr ) ) );
 	}
 		
-	void cut_intensity( float factor, _RGB clr )
+	void Col_Slice::cut_intensity( float factor, _RGB clr )
 	{ 
 		plot_point ( clr, point_color( clr ) / factor );
 	}
 
-	void print_overflow()
+	void Col_Slice::print_overflow()
 	{ 
 		if (overflow_count > 0)
 		{ std::cout << "    White points overflowed "
 			        << overflow_count << " times." << std::endl;
 		}
 	}
-};
 
+	void RGB_Slice::draw_frame()
+	{   
+		int r, c, i, x, y;
+		IntensityType dv;
+		int rcmax = size - 1;
+			
+		set(0, 0, proj_axis, slice_at);
+		set(0, 0, x_axis, axis_min[x_sign]);
+		set(0, 0, y_axis, axis_min[y_sign]);
 
-class Slice3D_Space
-{ 
-public:
-	Col_Slice* s1;
-	Col_Slice* s2;
-	Col_Slice* s3;
-		
-	Slice3D_Space( Col_Slice* s1_in, Col_Slice* s2_in, Col_Slice* s3_in )
-	: s1(s1_in), s2(s2_in), s3(s3_in)
-	{
+		set(0, rcmax, proj_axis, slice_at);
+		set(0, rcmax, x_axis, axis_max[x_sign]);
+		set(0, rcmax, y_axis, axis_min[y_sign]);
+
+		set(rcmax, rcmax, proj_axis, slice_at);
+		set(rcmax, rcmax, x_axis, axis_max[x_sign]);
+		set(rcmax, rcmax, y_axis, axis_max[y_sign]);
+
+		set(rcmax, 0, proj_axis, slice_at);
+		set(rcmax, 0, x_axis, axis_min[x_sign]);
+		set(rcmax, 0, y_axis, axis_max[y_sign]);
+		  
+		dv = axis_min[x_sign];
+		for( c = 0; c < 256; c++ )
+		{ 
+			for ( i = 1; i < scale+1; i++ )
+			{ 
+				y = c*scale+i;
+				set ( 0, y, proj_axis, slice_at );
+				set ( 0, y, x_axis, dv );
+				set ( 0, y, y_axis, axis_min[y_sign] );
+					
+				set ( rcmax, y, proj_axis, slice_at );
+				set ( rcmax, y, x_axis, dv );
+				set ( rcmax, y, y_axis, axis_max[y_sign] );
+
+			}
+			dv = dv + axis_dir[x_sign]; 
+		}
+			
+		dv = axis_min[y_sign];			
+		for( r = 0; r < 256; r++ )
+		{ 
+			for ( i = 1; i < scale+1; i++ )
+			{ 
+				x = r*scale+i;
+				set ( x, 0, proj_axis, slice_at );
+				set ( x, 0, x_axis, axis_min[x_sign] );
+				set ( x, 0, y_axis, dv );
+
+				set ( x, rcmax, proj_axis, slice_at );
+				set ( x, rcmax, x_axis, axis_max[x_sign] );
+				set ( x, rcmax, y_axis, dv );
+			}
+			dv = dv + axis_dir[y_sign]; 
+		}
 	}
-		
-	inline void plot_point( _RGB clr, _RGB false_clr = RGB_BLACK )
+
+	RC_coords RGB_Slice::color_coords( _RGB clr )
 	{ 
-		s1->plot_point (clr, false_clr);
-		s2->plot_point (clr, false_clr);
-		s3->plot_point (clr, false_clr);
-	}
-		 
-	inline void plot_cross ( _RGB clr, _RGB false_clr = RGB_BLACK, int size = 1, 
-							bool border = false, _RGB border_clr = RGB_GRAY(1) )
-	{ 
-		s1->plot_cross (clr, false_clr, size, border, border_clr);
-		s2->plot_cross (clr, false_clr, size, border, border_clr);
-		s3->plot_cross (clr, false_clr, size, border, border_clr);
-	}
-		
-	inline void inc_freq ( _RGB clr, int incr )
-	{ 
-		s1->inc_freq(clr, incr);
-		s2->inc_freq(clr, incr);
-		s3->inc_freq(clr, incr);
-	}
-		
-	inline void cut_intensity( float factor, _RGB clr )
-	{ 
-		s1->cut_intensity(factor, clr);
-		s2->cut_intensity(factor, clr);
-		s3->cut_intensity(factor, clr);
-	}
-		
-	inline void print_overflow()
-	{ 
-		s1->print_overflow();
-		s2->print_overflow();
-		s3->print_overflow();
+		return ( RC_coords (
+							(y_sign == NEG ? 255 - clr.AxisColor(y_axis) :
+			                              clr.AxisColor(y_axis) ) + 1,
+							(x_sign == NEG ? 255 - clr.AxisColor(x_axis) :
+			                              clr.AxisColor(x_axis) ) + 1
+					        ) );
 	}	
-};
 
-
-
-} //end namespace dh
-#endif
+} // end namespace dh

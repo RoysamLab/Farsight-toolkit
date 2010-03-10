@@ -23,8 +23,7 @@
 #include <math.h>
 
 #include "dhEvalState.h"
-#include "RLI_Slice.h"
-#include "dhColors.h"
+#include "dhSlice.h"
 #include "dhHistogram.h"
 #include "RGB_Atype.h"
 #include "dhSeedGrid.h"
