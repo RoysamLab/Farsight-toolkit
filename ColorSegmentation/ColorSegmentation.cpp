@@ -9,8 +9,8 @@ ColorSegmentation::ColorSegmentation(RGBImageType::Pointer input)
 	lime_image = NULL;
 	intensity_image = NULL;
 
-	red_wts = NULL;
-	blue_wts = NULL;
+	red_weights = NULL;
+	blue_weights = NULL;
 
 	IGNORE_BACKGROUND = false;
 	LIGHT_BACKGROUND = false; // normally background is black
@@ -186,6 +186,13 @@ void ColorSegmentation::SetArchetypalColors(dh::RLI r, dh::RLI b, dh::RLI w)
 	archTypBACK = w;
 }
 
+void ColorSegmentation::SetArchetypalColors(dh::_RGB r, dh::_RGB b, dh::_RGB w)
+{
+	archTypRED = (dh::RLI)r;
+	archTypBLUE = (dh::RLI)b;
+	archTypBACK = (dh::RLI)w;
+}
+
 //Run Pixel classification
 void ColorSegmentation::FindArchetypalColors()
 {
@@ -288,6 +295,7 @@ void ColorSegmentation::FindArchetypalColors()
 	
 	archTypBACK = bkgrnd.mapRGBtoRLI()*2;
 
+	std::cout << "FOUND ARCHETYPES: " << std::endl;
 	std::cout << " RED =        " << archTypRED << std::endl;
 	std::cout << " BLUE =       " << archTypBLUE << std::endl;
 	std::cout << " BACKGROUND = " << archTypBACK << std::endl;
@@ -297,6 +305,11 @@ void ColorSegmentation::FindArchetypalColors()
 
 void ColorSegmentation::ComputeClassWeights()
 { 
+	std::cout << "USING ARCHETYPES: " << std::endl;
+	std::cout << " RED =        " << archTypRED << std::endl;
+	std::cout << " BLUE =       " << archTypBLUE << std::endl;
+	std::cout << " BACKGROUND = " << archTypBACK << std::endl;
+
 	//Setup the archtypes (previously computed)
 	//Use an RGB_Atype class (but remember values are RLI)
 	dh::RGB_Atype atype;
@@ -360,32 +373,29 @@ void ColorSegmentation::ComputeClassWeights()
 	//------------------------------------------------
 	// FIND WEIGHTS FOR EACH PIXEL:
 	//**************************************
-	typedef itk::ImageRegionIteratorWithIndex< FloatImageType > IteratorType;
-	typedef itk::ImageRegionConstIterator< UcharImageType > UcharIteratorType;
-
 	int size1 = rgb_input->GetLargestPossibleRegion().GetSize()[0];
 	int size2 = rgb_input->GetLargestPossibleRegion().GetSize()[1];
 	int size3 = rgb_input->GetLargestPossibleRegion().GetSize()[2];
 
-	FloatImageType::Pointer red_weights = FloatImageType::New();
-	FloatImageType::Pointer blue_weights = FloatImageType::New();
+	red_weights = UcharImageType::New();
+	blue_weights = UcharImageType::New();
 
-	FloatImageType::PointType origin;
+	UcharImageType::PointType origin;
 	origin[0] = 0;
 	origin[1] = 0;
 	origin[2] = 0;
 	red_weights->SetOrigin( origin ); 
 	blue_weights->SetOrigin( origin );
 
-	FloatImageType::IndexType start;
+	UcharImageType::IndexType start;
 	start[0] = 0; // first index on X
 	start[1] = 0; // first index on Y
 	start[2] = 0; // first index on Z
-	FloatImageType::SizeType  size;
+	UcharImageType::SizeType  size;
 	size[0] = size1; // size along X
 	size[1] = size2; // size along Y
 	size[2] = size3; // size along Z
-	FloatImageType::RegionType region;
+	UcharImageType::RegionType region;
 	region.SetSize( size );
 	region.SetIndex( start );
 	red_weights->SetRegions( region ); 
@@ -397,12 +407,14 @@ void ColorSegmentation::ComputeClassWeights()
 	red_weights->Update();              
 	blue_weights->Update();
 
-	IteratorType iterator1 ( red_weights, red_weights->GetRequestedRegion() );
-	IteratorType iterator2 ( blue_weights, blue_weights->GetRequestedRegion() );
+	typedef itk::ImageRegionIterator< UcharImageType > UcharIteratorType;
+	UcharIteratorType iterator1 ( red_weights, red_weights->GetRequestedRegion() );
+	UcharIteratorType iterator2 ( blue_weights, blue_weights->GetRequestedRegion() );
 	
-	UcharIteratorType pix_buf1( red_image, red_image->GetRequestedRegion() );
-	UcharIteratorType pix_buf2( lime_image, lime_image->GetRequestedRegion() );
-	UcharIteratorType pix_buf3( intensity_image, intensity_image->GetRequestedRegion() );
+	typedef itk::ImageRegionConstIterator< UcharImageType > UcharIteratorTypeConst;
+	UcharIteratorTypeConst pix_buf1( red_image, red_image->GetRequestedRegion() );
+	UcharIteratorTypeConst pix_buf2( lime_image, lime_image->GetRequestedRegion() );
+	UcharIteratorTypeConst pix_buf3( intensity_image, intensity_image->GetRequestedRegion() );
 	
 	for ( pix_buf1.GoToBegin(),	pix_buf2.GoToBegin(), pix_buf3.GoToBegin(), iterator1.GoToBegin(), iterator2.GoToBegin();
 	      !pix_buf1.IsAtEnd() && !pix_buf2.IsAtEnd() && !pix_buf3.IsAtEnd() && !iterator1.IsAtEnd() && !iterator2.IsAtEnd();
@@ -441,6 +453,7 @@ void ColorSegmentation::ComputeClassWeights()
 			else
 			{
 				certainty = s_plane_dist / ( s_plane_dist + fabs(r_plane_dist) );
+				//certainty = 1.0;
 			}
 		}
 		else
@@ -457,11 +470,13 @@ void ColorSegmentation::ComputeClassWeights()
 			{
 				s_plane_dist = - s_plane_dist;
 				certainty = s_plane_dist / ( s_plane_dist + fabs(b_plane_dist) );
+				//certainty = 1.0;
 			}
 		}
 
 		float bkgrnd_wt = 1 - certainty;
 
+		
 		if(IGNORE_BACKGROUND)
 		{
 			// If pixel is near background color, ignore it
@@ -489,6 +504,7 @@ void ColorSegmentation::ComputeClassWeights()
 				certainty = pow(certainty, 3);
 			}
 		}
+		
 
 		/*
 		if( pixel_class != RED_CELL && pixel_class != BLUE_CELL )
@@ -507,11 +523,11 @@ void ColorSegmentation::ComputeClassWeights()
 		case BKGD_FIELD:
 			break;
 		case RED_CELL:
-			iterator1.Set((1.0 - certainty)*255);
+			iterator1.Set((UcharPixelType)((1-certainty)*255));
 			//iterator1.Set(255);
 			break;
 		case BLUE_CELL:
-			iterator2.Set((1.0 - certainty)*255);
+			iterator2.Set((UcharPixelType)((1-certainty)*255));
 			//iterator2.Set(255);
 			break;
 		default:
@@ -519,32 +535,16 @@ void ColorSegmentation::ComputeClassWeights()
 		}
 	}
 
-	//Rescale the weights:
-	typedef itk::RescaleIntensityImageFilter< FloatImageType, UcharImageType > RescaleFlUcType;
-	RescaleFlUcType::Pointer RescaleIntIO1 = RescaleFlUcType::New();
-	RescaleIntIO1->SetOutputMaximum( 255 );
-	RescaleIntIO1->SetOutputMinimum( 0 );
-	RescaleIntIO1->SetInput( red_weights );
-	RescaleIntIO1->Update();
-	RescaleFlUcType::Pointer RescaleIntIO2 = RescaleFlUcType::New();
-	RescaleIntIO2->SetOutputMaximum( 255 );
-	RescaleIntIO2->SetOutputMinimum( 0 );
-	RescaleIntIO2->SetInput( blue_weights );
-	RescaleIntIO2->Update();
-
-	red_wts  = RescaleIntIO1->GetOutput();
-	blue_wts = RescaleIntIO2->GetOutput();
-
 	if(TESTING)
 	{
 		typedef itk::ImageFileWriter< UcharImageType > WriterType;
 		WriterType::Pointer writer = WriterType::New();
 		writer->SetFileName( "red_wts.tif" );
-		writer->SetInput( red_wts );
+		writer->SetInput( red_weights );
 		writer->Update();
 		WriterType::Pointer writer1 = WriterType::New();
 		writer1->SetFileName( "blue_wts.tif" );
-		writer1->SetInput( blue_wts );
+		writer1->SetInput( blue_weights );
 		writer1->Update();
 	}
 }

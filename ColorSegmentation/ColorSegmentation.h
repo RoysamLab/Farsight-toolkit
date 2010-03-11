@@ -55,6 +55,7 @@ public:
 	void TransformToRLI();			//First step
 	void FindArchetypalColors();	//Compute Archetypal Colors
 	void SetArchetypalColors(dh::RLI r, dh::RLI b, dh::RLI w);
+	void SetArchetypalColors(dh::_RGB r, dh::_RGB b, dh::_RGB w);
 	void ComputeClassWeights();		//Get Grayscales Based On Distances From Atypes
 
 	//Get Results:
@@ -75,8 +76,8 @@ protected:
 	UcharImageType::Pointer lime_image;
 	UcharImageType::Pointer intensity_image;
 
-	UcharImageType::Pointer red_wts;
-	UcharImageType::Pointer blue_wts;
+	UcharImageType::Pointer red_weights;
+	UcharImageType::Pointer blue_weights;
 
 	//Intermediate values
 	// These actually contain RLI values (/2):

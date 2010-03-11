@@ -31,11 +31,14 @@ int main(int argc, char* argv[])
 	col_bin->SetIgnoreBackground(false);
 
 	col_bin->TransformToRLI();
-	col_bin->FindArchetypalColors();
-	//col_bin->SetArchetypalColors(dh::RLI(160,154,78), dh::RLI(100,90,80), dh::RLI(128,122,182));
+	//col_bin->FindArchetypalColors();
+	col_bin->SetArchetypalColors(dh::_RGB(165,60,60), dh::_RGB(45,45,165), dh::_RGB(175,175,175));
 	col_bin->ComputeClassWeights();
 
 	//col_bin->ComputeBinary(2,1);
 
 	delete col_bin;
+
+	std::cerr << "PRESS ENTER TO EXIT\n";
+	getchar();
 }
