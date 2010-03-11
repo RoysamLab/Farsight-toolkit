@@ -18,7 +18,7 @@ limitations under the License.
 
 #include "vtkSmartPointer.h"
 //#include "UndoBuffer.h"
-#include "undobuff.h"
+//#include "undobuff.h"
 #include <stdio.h>
 #include <string>
 #include <set>
@@ -85,8 +85,6 @@ public:
 	void CreateSphereActor();
 	
 	void AddPointsAsPoints (std::vector<TraceBit> vec);
-	void AddVolumeSliders();
-	void AddContourThresholdSliders();
 	
 	static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
 	static void HandleKeyPress(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
@@ -129,8 +127,6 @@ public slots:
 	void ReloadState();
 	void SetImgInt();
 
-	void UndoAction();
-	void RedoAction();
 //these are for bootloadfile
 	QString getTraceFile();
 	QString getImageFile();
@@ -151,7 +147,7 @@ private:
 	//the get____file functions called as renderer is not initalized
 	double uMperVoxel; //0 x, 1 y, 2 z
 	QSettings TraceEditSettings;
-	QDockWidget * InformationDisplays, *BootDock;
+	QDockWidget * InformationDisplays, *BootDock, * settingsDock;
 	QTextEdit * EditLogDisplay;
 	QString UserName, LabName, ProjectName;
 	QStringList TraceFiles, Image, SomaFile, tempTraceFile;
@@ -171,8 +167,8 @@ private:
 	QTime  Time;
 
 	//Declares an undoBuffer
-	typedef undoBuffer<std::pair<std::string, TraceObject> > bufferType;
-	bufferType *undoBuff;
+	//typedef undoBuffer<std::pair<std::string, TraceObject> > bufferType;
+	//bufferType *undoBuff;
 //settings for display
 	int SmallLineLength;
 	float lineWidth;

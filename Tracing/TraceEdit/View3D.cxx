@@ -81,7 +81,6 @@ limitations under the License.
 #include "MergeModel.h"
 #include "ImageActors.h"
 #include "ftkCommon/ftkProjectManager.h"
-#include "View3DHelperClasses.h"
 #include "View3D.h"
 
 View3D::View3D(QWidget *parent)
@@ -527,7 +526,6 @@ View3D::~View3D()
     this->BrightnessSlider->Delete();
     }
   delete this->tobj;
-  delete this->undoBuff;
   //the various Qt objects should be getting deleted by closeEvent and
   //parent/child relationships...
 }
@@ -551,7 +549,6 @@ void View3D::Initialize()
 	this->tobj->setMergeLineColor(.4);
 	this->Ascending = Qt::AscendingOrder;
 
-	this->undoBuff = new bufferType;
 	this->numDeleted = 0;
 	this->numMerged = 0;
 	this->numSplit = 0;
@@ -649,10 +646,10 @@ void View3D::CreateGUIObjects()
   this->FlipButton = new QAction("Flip", this->CentralWidget);
 	connect(this->FlipButton, SIGNAL(triggered()), this, SLOT(FlipTraces()));
 	this->FlipButton->setStatusTip("Flip trace direction");
-  this->SettingsButton = new QAction("Settings", this->CentralWidget);
+  /*this->SettingsButton = new QAction("Settings", this->CentralWidget);
 	connect(this->SettingsButton, SIGNAL(triggered()), this,
-		SLOT(ShowSettingsWindow()));
-	this->SettingsButton->setStatusTip("edit the display and tolerance settings");
+		SLOT(ShowSettingsWindow()));*/
+	//this->SettingsButton->setStatusTip("edit the display and tolerance settings");
   this->AutomateButton = new QAction("Small Lines", this->CentralWidget);
 	connect(this->AutomateButton, SIGNAL(triggered()), this, SLOT(SLine()));
 	this->AutomateButton->setStatusTip("Automatic selection of all small lines");
@@ -662,18 +659,11 @@ void View3D::CreateGUIObjects()
   this->explodeTree = new QAction("Break", this->CentralWidget);
   connect(this->explodeTree, SIGNAL(triggered()), this, SLOT( ExplodeTree()));
   this->explodeTree->setStatusTip("Break tree into segments,aka Explode. Tree can be rebuilt using set root");
-
-  this->UndoButton = new QAction("&Undo", this->CentralWidget);  
-	connect(this->UndoButton, SIGNAL(triggered()), this, SLOT(UndoAction()));
-  this->RedoButton = new QAction("&Redo", this->CentralWidget);
-	connect(this->RedoButton, SIGNAL(triggered()), this, SLOT(RedoAction()));
 	this->ImageIntensity = new QAction("Intensity", this->CentralWidget);
 	connect(this->ImageIntensity, SIGNAL(triggered()), this, SLOT(SetImgInt()));
   //Setup the tolerance settings editing window
   this->SettingsWidget = new QWidget();
   QIntValidator *intValidator = new QIntValidator(1, 100, this->SettingsWidget);
-  //QDoubleValidator *doubleValidator =
-  //  new QDoubleValidator(0, 100, 2, this->SettingsWidget);
   this->MaxGapField = new QLineEdit(this->SettingsWidget);
   this->MaxGapField->setValidator(intValidator);
   this->GapToleranceField = new QLineEdit(this->SettingsWidget);
@@ -687,7 +677,7 @@ void View3D::CreateGUIObjects()
   this->ApplySettingsButton = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
   //this->CancelSettingsButton = new QPushButton("&Cancel", this->SettingsWidget);
   connect(this->ApplySettingsButton, SIGNAL(accepted()), this, SLOT(ApplyNewSettings()));
-  connect(this->ApplySettingsButton, SIGNAL(rejected()), this, SLOT(HideSettingsWindow()));
+  //connect(this->ApplySettingsButton, SIGNAL(rejected()), this, SLOT(HideSettingsWindow()));
 
 	QStringList types;
 	types <<"0 = undefined" << "1 = soma" <<"2 = axon" <<"3 = dendrite" 
@@ -714,7 +704,7 @@ void View3D::CreateLayout()
 	this->fileMenu->addAction(this->saveAction);
 	this->fileMenu->addAction(this->exitAction);
 
-	//this->ShowToolBars = this->menuBar()->addMenu(tr("Tool Bars"));
+	this->ShowToolBars = this->menuBar()->addMenu(tr("Tool Bars"));
 
   this->EditsToolBar = addToolBar(tr("Edit Toolbar"));
   this->EditsToolBar->setToolTip("EditToolBar");
@@ -735,12 +725,12 @@ void View3D::CreateLayout()
   this->EditsToolBar->addWidget(this->typeCombo);
   this->EditsToolBar->addSeparator();
   this->EditsToolBar->addAction(this->loadSoma);
-  this->EditsToolBar->addAction(this->SettingsButton);
+  //this->EditsToolBar->addAction(this->SettingsButton);
 
   this->BranchToolBar = addToolBar(tr("Branch Toolbar"));
   this->BranchToolBar->setToolTip("Branch Toolbar");
-  this->menuBar()->addAction(this->BranchToolBar->toggleViewAction());
-  //this->ShowToolBars->addAction(this->BranchToolBar->toggleViewAction());
+  //this->menuBar()->addAction(this->BranchToolBar->toggleViewAction());
+  this->ShowToolBars->addAction(this->BranchToolBar->toggleViewAction());
   this->BranchToolBar->addAction(this->explodeTree);
   this->BranchToolBar->addAction(this->BranchButton);
   this->BranchToolBar->addAction(this->root);
@@ -757,7 +747,17 @@ void View3D::CreateLayout()
   settingsLayout->addRow(tr("Color value RGB scalar 0 to 1:"),this->ColorValueField);
   settingsLayout->addRow(tr("Line width:"),this->LineWidthField);
   settingsLayout->addRow(this->ApplySettingsButton);
- 
+  this->MaxGapField->setText(QString::number(this->tobj->gapMax));
+  this->GapToleranceField->setText(QString::number(this->tobj->gapTol));
+  this->LineLengthField->setValue(this->SmallLineLength);
+  this->ColorValueField->setValue(this->SelectColor*100);
+  this->LineWidthField->setValue(this->lineWidth);
+  this->settingsDock = new QDockWidget("Settings", this);
+  this->settingsDock->setWidget(this->SettingsWidget);
+  this->addDockWidget(Qt::LeftDockWidgetArea, this->settingsDock);
+  //this->menuBar()->addAction(this->settingsDock->toggleViewAction());
+  this->ShowToolBars->addAction(this->settingsDock->toggleViewAction());
+  this->settingsDock->hide();
 
   this->statusBar()->addPermanentWidget(new QLabel("Statistics: Split: ", this));
   this->statusBar()->addPermanentWidget(this->SplitLabel,0);
@@ -873,14 +873,13 @@ void View3D::ApplyNewSettings()
   this->SmallLineLength = this->LineLengthField->text().toFloat();
   this->SelectColor = this->ColorValueField->text().toDouble()/100;
   this->lineWidth = this->LineWidthField->text().toFloat();
-  //this->Rerender();
-  this->SettingsWidget->hide();
   this->statusBar()->showMessage(tr("Applying new settings"),3000);
 }
 
 void View3D::HideSettingsWindow()
 {
-  this->SettingsWidget->hide();
+  //this->SettingsWidget->hide();
+	this->settingsDock->hide();
 }
 /*  picking */
 void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata)
@@ -1206,7 +1205,7 @@ void View3D::ClearSelection()
 	this->Rerender();
 	this->statusBar()->showMessage("All Clear", 4000);
 
-	cout << this->TreePlot->pos().x() << ", " << this->TreePlot->pos().y() << endl;
+	//cout << this->TreePlot->pos().x() << ", " << this->TreePlot->pos().y() << endl;
 }
 
 void View3D::SelectTrees()
@@ -1716,143 +1715,6 @@ void View3D::SaveToFile()
 	  QTextStream out(&logFile);
 	  out << this->EditLogDisplay->toPlainText();
   }
-}
-
-
-/*  Soma display stuff  */
-void View3D::AddContourThresholdSliders()
-{
-  vtkSliderRepresentation2D *sliderRep2 =
-    vtkSmartPointer<vtkSliderRepresentation2D>::New();
-  sliderRep2->SetValue(0.8);
-  sliderRep2->SetTitleText("Threshold");
-  sliderRep2->GetPoint1Coordinate()->SetCoordinateSystemToNormalizedDisplay();
-  sliderRep2->GetPoint1Coordinate()->SetValue(0.2,0.8);
-  sliderRep2->GetPoint2Coordinate()->SetCoordinateSystemToNormalizedDisplay();
-  sliderRep2->GetPoint2Coordinate()->SetValue(0.8,0.8);
-  sliderRep2->SetSliderLength(0.02);
-  sliderRep2->SetSliderWidth(0.03);
-  sliderRep2->SetEndCapLength(0.01);
-  sliderRep2->SetEndCapWidth(0.03);
-  sliderRep2->SetTubeWidth(0.005);
-  sliderRep2->SetMinimumValue(0.0);
-  sliderRep2->SetMaximumValue(1.0);
-
-  vtkSliderWidget *sliderWidget2 = vtkSmartPointer<vtkSliderWidget>::New();
-  sliderWidget2->SetInteractor(Interactor);
-  sliderWidget2->SetRepresentation(sliderRep2);
-  sliderWidget2->SetAnimationModeToAnimate();
-
-  vtkSlider2DCallbackContourThreshold *callback_contour =
-    vtkSmartPointer<vtkSlider2DCallbackContourThreshold>::New();
-  callback_contour->cfilter = this->ContourFilter;
-  sliderWidget2->AddObserver(vtkCommand::InteractionEvent,callback_contour);
-  sliderWidget2->EnabledOn();
-
-}
-
-
-void View3D::AddVolumeSliders()
-{
-  vtkSliderRepresentation2D *opacitySliderRep =
-    vtkSliderRepresentation2D::New();
-  opacitySliderRep->SetValue(0.1);
-  opacitySliderRep->SetTitleText("Opacity");
-  opacitySliderRep->GetPoint1Coordinate()->
-    SetCoordinateSystemToNormalizedDisplay();
-  opacitySliderRep->GetPoint1Coordinate()->SetValue(0.2,0.1);
-  opacitySliderRep->GetPoint2Coordinate()->
-    SetCoordinateSystemToNormalizedDisplay();
-  opacitySliderRep->GetPoint2Coordinate()->SetValue(0.8,0.1);
-  opacitySliderRep->SetSliderLength(0.02);
-  opacitySliderRep->SetSliderWidth(0.03);
-  opacitySliderRep->SetEndCapLength(0.01);
-  opacitySliderRep->SetEndCapWidth(0.03);
-  opacitySliderRep->SetTubeWidth(0.005);
-  opacitySliderRep->SetMinimumValue(0.0);
-  opacitySliderRep->SetMaximumValue(1.0);
-
-  this->OpacitySlider = vtkSliderWidget::New();
-  this->OpacitySlider->SetInteractor(this->Interactor);
-  this->OpacitySlider->SetRepresentation(opacitySliderRep);
-  this->OpacitySlider->SetAnimationModeToAnimate();
-
-  vtkSlider2DCallbackOpacity *callback_opacity =
-    vtkSlider2DCallbackOpacity::New();
-  callback_opacity->volume = this->Volume;
-  this->OpacitySlider->AddObserver(vtkCommand::InteractionEvent,callback_opacity);
-  this->OpacitySlider->EnabledOn();
-  opacitySliderRep->Delete();
-  callback_opacity->Delete();
-  
-
-// slider 2
-
-  vtkSliderRepresentation2D *brightnessSliderRep =
-    vtkSliderRepresentation2D::New();
-  brightnessSliderRep->SetValue(0.8);
-  brightnessSliderRep->SetTitleText("Brightness");
-  brightnessSliderRep->GetPoint1Coordinate()->
-    SetCoordinateSystemToNormalizedDisplay();
-  brightnessSliderRep->GetPoint1Coordinate()->SetValue(0.2,0.9);
-  brightnessSliderRep->GetPoint2Coordinate()->
-    SetCoordinateSystemToNormalizedDisplay();
-  brightnessSliderRep->GetPoint2Coordinate()->SetValue(0.8,0.9);
-  brightnessSliderRep->SetSliderLength(0.02);
-  brightnessSliderRep->SetSliderWidth(0.03);
-  brightnessSliderRep->SetEndCapLength(0.01);
-  brightnessSliderRep->SetEndCapWidth(0.03);
-  brightnessSliderRep->SetTubeWidth(0.005);
-  brightnessSliderRep->SetMinimumValue(0.0);
-  brightnessSliderRep->SetMaximumValue(1.0);
-
-  this->BrightnessSlider = vtkSliderWidget::New();
-  this->BrightnessSlider->SetInteractor(this->Interactor);
-  this->BrightnessSlider->SetRepresentation(brightnessSliderRep);
-  this->BrightnessSlider->SetAnimationModeToAnimate();
-
-  vtkSlider2DCallbackBrightness *callback_brightness =
-    vtkSlider2DCallbackBrightness::New();
-  callback_brightness->volume = this->Volume;
-  this->BrightnessSlider->AddObserver(vtkCommand::InteractionEvent,callback_brightness);
-  this->BrightnessSlider->EnabledOn();
-  brightnessSliderRep->Delete();
-  callback_brightness->Delete();
-}
- 
-void View3D::UndoAction()
-{
-	
-	if(!(this->undoBuff->UndoOrRedo(0)))
-	{
-		return;
-	}
-	else
-	{
-		std::pair<std::string, TraceObject> undostate = this->undoBuff->getState();
-		TraceObject newstate = undostate.second;
-		*(this->tobj) = newstate;
-		Rerender();
-	}
-	
-}
-
-
-void View3D::RedoAction()
-{
-	/*
-	if(!(this->undoBuff->UndoOrRedo(1)))
-	{
-		return;
-	}
-	else
-	{
-		std::pair<std::string, TraceObject> undostate = this->undoBuff->getState();
-		TraceObject newstate = undostate.second;
-		*(this->tobj) = newstate;
-		Rerender();
-	}
-	*/
 }
 
 
