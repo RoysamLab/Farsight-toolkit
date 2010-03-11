@@ -20,7 +20,7 @@ namespace dh
 // actually go to 256 everywhere alse, and the values are often represent
 // RLI values instead of RGB values.
 
-class RGBHistogram
+class Histogram
 {	
 protected:
 	Array3D histogram_array;
@@ -33,22 +33,29 @@ protected:
 
 public:
 	int max_freq;
-	_RGB mode;
+	//_RGB mode;
+	IntensityType mode[3];
 	const int inc_scale;
 		
 	int rmax, rmin,
 		gmax, gmin,
 		bmax, bmin;
 
-	RGBHistogram(int inc_scale_in = 1) 
-		: mode(RGB_BLACK), max_freq(0), 
+	_RGB modeAsRGB(){return _RGB(mode[0],mode[1],mode[2]);};
+	RLI modeAsRLI(){return RLI(mode[0],mode[1],mode[2]);};
+
+	Histogram(int inc_scale_in = 1) 
+		:   max_freq(0), 
 			inc_scale(inc_scale_in), 
 			rmax(126), rmin(1), 
 			gmax(126), gmin(1), 
 			bmax(126), bmin(1), 
 			histogram_array(128, 128, 128),
 			processing_array(128, 128, 128, 0)
-	{ 
+	{
+		mode[0] = 0;
+		mode[1] = 0;
+		mode[2] = 0;
 		a = histogram_array.a;
 		sa = processing_array.a;
 	}
@@ -114,6 +121,11 @@ public:
 	void inc( _RGB c )
 	{ 
 		inc_element( c.R / 2, c.G / 2, c.B / 2 ); 
+	}
+
+	void inc( RLI c )
+	{
+		inc_element(c.R /2, c.L /2, c.I /2 );
 	}
 		
 	long int RB_proj_at ( char r, char b )

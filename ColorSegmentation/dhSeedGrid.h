@@ -10,7 +10,7 @@ namespace dh
 class SeedGrid
 { 
 public:
-	const RGBHistogram * h;	// Histogram to be used
+	Histogram * h;	// Histogram to be used
 		
 	Array3D grid_array;	// Array of sampled grid points
 	long int*** g;
@@ -21,7 +21,7 @@ public:
 	const int size;
 	const _RGB center;
 
-	SeedGrid( RGBHistogram * h_in, IntensityType sample_dist_in, bool light_bkd = false )
+	SeedGrid( Histogram * h_in, IntensityType sample_dist_in, bool light_bkd = false )
 	: h(h_in), sample_dist(sample_dist_in),
 	  grid_array ( (int)(128/(float)sample_dist_in*2+1),
 		           (int)(128/(float)sample_dist_in*2+1),
@@ -39,20 +39,20 @@ public:
 			
 		for (i=0, ip=-(size-1)/2; i<size; i++, ip++)
 		{ 
-			hi = h->mode.R + ip*sample_dist;
+			hi = h->mode[0] + ip*sample_dist;
 			if ( hi >= h->rmin && hi <= h->rmax )
 			{ 
 				for (j=0, jp=-(size-1)/2; j<size; j++, jp++)
 			    { 
-					hj = h->mode.G + jp*sample_dist;
+					hj = h->mode[1] + jp*sample_dist;
 			        if ( hj >= h->gmin && hj <= h->gmax )
 				    { 
 						for (k=0, kp=-(size-1)/2; k<size; k++, kp++)
 				        { 
-							hk = h->mode.B + kp*sample_dist;
+							hk = h->mode[2] + kp*sample_dist;
 			                if ( hk >= h->bmin && hk <= h->bmax
 								// Point is darker than backgound
-								 && (!light_bkd || hk <= h->mode.B) )
+								 && (!light_bkd || hk <= h->mode[2]) )
 							{ 
 								g[i][j][k] = ( h->v(hi, hj, hk) == 0 ) ? 0 : 1;
 								//if (g[i][j][k] == 1) DMP( RGB(i, j, k));
@@ -125,8 +125,8 @@ public:
 				}
 			}
 		}
-		clr1 = (XYZ)(h->mode) + ((XYZ)(*c1) - (XYZ)center) * sample_dist;
-		clr2 = (XYZ)(h->mode) + ((XYZ)(*c2) - (XYZ)center) * sample_dist;
+		clr1 = (XYZ)(h->modeAsRGB()) + ((XYZ)(*c1) - (XYZ)center) * sample_dist;
+		clr2 = (XYZ)(h->modeAsRGB()) + ((XYZ)(*c2) - (XYZ)center) * sample_dist;
 	}
 };
 		

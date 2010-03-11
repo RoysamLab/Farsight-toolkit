@@ -96,7 +96,7 @@ public:
 	friend int operator==(const RLI& c1, const RLI& c2);
 	friend int operator!=(const RLI& c1, const RLI& c2);
 
-	friend HSI operator*(const RLI& c, double scale_factor);
+	friend RLI operator*(const RLI& c, double scale_factor);
 	friend RLI operator/(const RLI& c, double scale_factor);
 
 	friend std::ostream &operator<<(std::ostream &, const RLI &);
@@ -106,6 +106,13 @@ public:
 
     inline _RGB mapRLItoRGB();
  };
+
+inline _RGB RLI::mapRLItoRGB()
+ { return _RGB( R, L, I ); }
+
+inline RLI _RGB::mapRGBtoRLI()
+ { return RLI( R, G, B ); }
+
 
 inline _RGB::operator RLI() const { return( (RLI)((HSI)(*this)) ); }
 inline RLI::operator _RGB() const { return( (_RGB)((HSI)(*this)) ); }
@@ -146,6 +153,7 @@ const IntensityType BLACK = 0;
 const IntensityType WHITE = (IntensityType)255;
 
 const _RGB RGB_BLACK = RGB_GRAY (0);
+const RLI RLI_BLACK = (RLI)RGB_GRAY(0);
 const _RGB RGB_WHITE = RGB_GRAY ((IntensityType)255);
 const HSI HSI_BLACK = HSI_GRAY (0);
 const HSI HSI_WHITE = HSI_GRAY (1);

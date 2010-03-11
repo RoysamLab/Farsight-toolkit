@@ -26,9 +26,9 @@ double eval_state(const _RGB& p1, const _RGB& p2, const _RGB& p3)
 //////////////////// EVALUATION FUNCTIONS ///////////////////////////
 double min_inv_square_dist_eval( const _RGB& p1, const _RGB& p2, const _RGB& p3 )
 { 
-	double d12 = RGB_Classifier::RGB_euclidean_dist( p1, p2 );
-	double d23 = RGB_Classifier::RGB_euclidean_dist( p2, p3 );
-	double d13 = RGB_Classifier::RGB_euclidean_dist( p1, p3 );
+	double d12 = Classifier::euclidean_dist( p1, p2 );
+	double d23 = Classifier::euclidean_dist( p2, p3 );
+	double d13 = Classifier::euclidean_dist( p1, p3 );
 	if( d12 == 0 || d23 == 0 || d13 == 0 )
 	{ 
 		return NEG_HUGE; 
@@ -44,9 +44,9 @@ double min_inv_square_dist_eval( const _RGB& p1, const _RGB& p2, const _RGB& p3 
 
 double max_perimeter_eval( const _RGB& p1, const _RGB& p2, const _RGB& p3 )
 { 
-	 return (   RGB_Classifier::RGB_euclidean_dist( p1, p2 )
-            + RGB_Classifier::RGB_euclidean_dist( p2, p3 )
-				+ RGB_Classifier::RGB_euclidean_dist( p1, p3 ) );
+	 return (   Classifier::euclidean_dist( p1, p2 )
+            + Classifier::euclidean_dist( p2, p3 )
+				+ Classifier::euclidean_dist( p1, p3 ) );
 }
 
 double area_eval( const _RGB& p1, const _RGB& p2, const _RGB& p3 )

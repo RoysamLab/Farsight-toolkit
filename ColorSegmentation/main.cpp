@@ -32,6 +32,7 @@ int main(int argc, char* argv[])
 
 	col_bin->TransformToRLI();
 	col_bin->FindArchetypalColors();
+	//col_bin->SetArchetypalColors(dh::RLI(160,154,78), dh::RLI(100,90,80), dh::RLI(128,122,182));
 	col_bin->ComputeClassWeights();
 
 	//col_bin->ComputeBinary(2,1);

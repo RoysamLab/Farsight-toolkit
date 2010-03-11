@@ -24,8 +24,6 @@ IntensityType _RGB::AxisColor(ColorAxis ax)
 	return((IntensityType)255);
 }
 
-inline RLI _RGB::mapRGBtoRLI()
- { return RLI( R, G, B ); }
 
 int operator==(const _RGB& c1, const _RGB& c2)
  { return ((c1.R == c2.R && c1.G == c2.G && c1.B == c2.B) ? 1 : 0);}
@@ -126,24 +124,42 @@ std::ostream &operator<<(std::ostream &output, const HSI &c)
 //=======================================================================
 //===  RLI (Red - Lime - Intensity) COLOR CLASS
 //=======================================================================
-inline _RGB RLI::mapRLItoRGB()
- { return _RGB( R, L, I ); }
-
 int operator==(const RLI& c1, const RLI& c2)
  { return (c1.R == c2.R && c1.L == c2.L && c1.I == c2.I);}
 
 int operator!=(const RLI& c1, const RLI& c2)
  { return (c1.R != c2.R || c1.L != c2.L || c1.I != c2.I);}
-		
-HSI operator*(const RLI& c, double scale_factor)
- { int new_I = (int)(scale_factor * c.I);
-	if ( new_I < 0 || new_I > 255 )
+
+/* RLI double should be like RGB double ?
+RLI operator*(const RLI& c, double scale_factor)
+ { 
+	 int new_I = (int)(scale_factor * c.I);
+	if ( 
+		new_I < 0 || new_I > 255 )
 	 { std::cerr<<"RLI::operator*(RLI, double): result out of range.";
 	   return ( RLI( (IntensityType)0, (IntensityType)0, (IntensityType)255 ) );
 	 }
    else
-	 { return ( HSI(c.R, c.L, (float)new_I) ); }
+	 { return ( RLI(c.R, c.L, (float)new_I) ); }
  }
+*/
+RLI operator*(const RLI& c, double scale_factor)
+{ 
+	int new_R = (int)(scale_factor * c.R);
+	int new_L = (int)(scale_factor * c.L);
+	int new_I = (int)(scale_factor * c.I);
+	if (    new_R < 0 || new_R > 255
+	     || new_L < 0 || new_L > 255
+		 || new_I < 0 || new_I > 255 )
+	{ 
+		std::cerr<<"RLI::operator*(RLI, double): result out of range.";
+		return ( RLI( (IntensityType)255, (IntensityType)255, (IntensityType)255 ) );
+	}
+	else
+	{ 
+		return ( RLI(new_R, new_L, new_I) ); 
+	}
+}
 
 RLI operator/(const RLI& c, double scale_factor)
  { return ( c * ( 1 / scale_factor ) ); }
@@ -234,7 +250,7 @@ const float athird = (float)(1.0/3.0);
 const float sqrtthree = (float)sqrt( 3.0 );
 const float sqrt2o3 = (float)sqrt(2.0/3.0);
 
-// OLD HSI CONVERTION
+/* OLD HSI CONVERTION
 _RGB::operator HSI() const
  {
   float total = (float)R + (float)G + (float)B;
@@ -270,8 +286,8 @@ _RGB::operator HSI() const
 	  return ( HSI ( h, s, i ) );
    }
  }
-
-/* BETTER IMPLEMENTATION:??
+*/
+// BETTER IMPLEMENTATION:??
 _RGB::operator HSI() const
  {
   float total = (float)R + (float)G + (float)B;
@@ -304,7 +320,7 @@ _RGB::operator HSI() const
 	  return ( HSI ( h, s, i ) );
    }
  }
- */
+ 
 
 _RGB::operator XYZ() const
  { return ( XYZ ( R, G, B ) );

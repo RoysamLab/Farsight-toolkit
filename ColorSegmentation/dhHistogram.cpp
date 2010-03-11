@@ -3,7 +3,7 @@
 namespace dh
 {
 
-void RGBHistogram::dump()
+void Histogram::dump()
 { 
 	int i, j, k;
 	char inp[20];
@@ -36,7 +36,7 @@ void RGBHistogram::dump()
 	}
 }
 
-void RGBHistogram::smooth()
+void Histogram::smooth()
 { 
 	//std::cout << "Smoothing..." << flush;
 	int sk[3][3][3] =	{ { { 3, 4, 3 }, 
@@ -88,15 +88,19 @@ void RGBHistogram::smooth()
 		 { FOR_AXIS(k)
 			 { a[i][j][k] = sa[i][j][k];
 			   if ( a[i][j][k] > max_freq )
-				 { max_freq = a[i][j][k];
-				   mode = _RGB(i, j, k);
+				 { 
+					 max_freq = a[i][j][k];
+				   //mode = _RGB(i, j, k);
+					 mode[0] = i;
+					 mode[1] = j;
+					 mode[2] = k;
 				 }
 			 }
 		 }
 	 }
 }
  
-void RGBHistogram::find_bounding_box()
+void Histogram::find_bounding_box()
  { 
    std::cout << "Finding bounding box..." << std::endl;
 	
@@ -198,7 +202,7 @@ void RGBHistogram::find_bounding_box()
 	gmax = min( j+1, 126 );
  }
 
-void RGBHistogram::mark_point_and_nbrs(IntensityType x, IntensityType y, IntensityType z)
+void Histogram::mark_point_and_nbrs(IntensityType x, IntensityType y, IntensityType z)
  { if ( sa[x][y][z] == 0 && a[x][y][z] > 0 )
     { sa[x][y][z] = 1;
 	   
@@ -211,7 +215,7 @@ void RGBHistogram::mark_point_and_nbrs(IntensityType x, IntensityType y, Intensi
 	 }
  }
 
-void RGBHistogram::delete_secondary_blobs()
+void Histogram::delete_secondary_blobs()
  { 
    // This will remove all parts of the histogram that are not
 	// 6-connected (in 3-d) with the blob containing the mode.
@@ -219,7 +223,7 @@ void RGBHistogram::delete_secondary_blobs()
 	std::cout << "Removing secondary blobs..." << std::endl;
 	
    processing_array.clear_to(0);
-	mark_point_and_nbrs(mode.R, mode.G, mode.B);
+	mark_point_and_nbrs(mode[0], mode[1], mode[2]);
 
 	int i, j, k;
 	FOR_AXIS(i)

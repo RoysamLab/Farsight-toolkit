@@ -12,7 +12,6 @@ ColorSegmentation::ColorSegmentation(RGBImageType::Pointer input)
 	red_wts = NULL;
 	blue_wts = NULL;
 
-	RLI_MODE = true;
 	IGNORE_BACKGROUND = false;
 	LIGHT_BACKGROUND = false; // normally background is black
 	TESTING = false;
@@ -180,6 +179,13 @@ UcharImageType::Pointer ColorSegmentation::ComputeBinary(int num_bins, int num_i
 	return threshfilter->GetOutput();
 }
 
+void ColorSegmentation::SetArchetypalColors(dh::RLI r, dh::RLI b, dh::RLI w)
+{
+	archTypRED = r;
+	archTypBLUE = b;
+	archTypBACK = w;
+}
+
 //Run Pixel classification
 void ColorSegmentation::FindArchetypalColors()
 {
@@ -193,13 +199,15 @@ void ColorSegmentation::FindArchetypalColors()
 	UcharIteratorType pix_buf3( intensity_image, intensity_image->GetRequestedRegion() );
 
 	// ========== Create 3D Histogram =========
-	dh::RGBHistogram * hist = new dh::RGBHistogram(2);
+
+	//NOTE: the Histogram function only takes
+	dh::Histogram * hist = new dh::Histogram(2);
 
 	for ( pix_buf1.GoToBegin(), pix_buf2.GoToBegin(), pix_buf3.GoToBegin();
 	      !pix_buf1.IsAtEnd() && !pix_buf2.IsAtEnd() && !pix_buf3.IsAtEnd();
 	      ++pix_buf1, ++pix_buf2, ++pix_buf3 )
 	{
-		dh::_RGB P = dh::_RGB( pix_buf1.Get(), pix_buf2.Get(), pix_buf3.Get() );	//Creating a 3D "pixel" (not really RGB)
+		dh::RLI P = dh::RLI( pix_buf1.Get(), pix_buf2.Get(), pix_buf3.Get() );	//Creating a 3D "pixel"
 		hist->inc( P );
 	}
 
@@ -207,35 +215,20 @@ void ColorSegmentation::FindArchetypalColors()
 	hist->smooth();
 	hist->delete_secondary_blobs();
 
-	std::cout << "Mode " << hist->mode * 2 << " has max frequency " 
-		<< hist->max_freq << "." << std::endl;
+	std::cout << "Mode " << hist->modeAsRLI() * 2 <<
+		" has max frequency " << hist->max_freq << std::endl;
 
 	//================== Create Histogram Projections ==================
 	std::cout << "Creating histogram images..." << std::endl;
 
-	dh::Col_Slice* RB_Hist;
-	dh::Col_Slice* RG_Hist;
-	dh::Col_Slice* GB_Hist;
+	dh::Col_Slice* RI_Hist = new dh::RI_Slice();
+	dh::Col_Slice* RL_Hist = new dh::RL_Slice();
+	dh::Col_Slice* LI_Hist = new dh::LI_Slice();
 	
-	if (RLI_MODE)
-	{ 
-		RB_Hist = new dh::RI_Slice();
-		RG_Hist = new dh::RL_Slice();
-		GB_Hist = new dh::LI_Slice();
-	}
-	else
-	{ 
-		dh::RGB_Slice RB_Hist( 1, dh::_RGB(0, 0, 0), dh::aG, 128, dh::aB, dh::POS, dh::aR, dh::POS );
-		dh::RGB_Slice RG_Hist( 1, dh::_RGB(0, 0, 0), dh::aB, 128, dh::aG, dh::NEG, dh::aR, dh::POS );
-		dh::RGB_Slice GB_Hist( 1, dh::_RGB(0, 0, 0), dh::aR, 128, dh::aB, dh::POS, dh::aG, dh::NEG ); 
-	}	
-
-	dh::Slice3D_Space hist_imgs( RB_Hist, RG_Hist, GB_Hist );
+	dh::Slice3D_Space hist_imgs( RI_Hist, RL_Hist, LI_Hist );
 
 	//===================================================================
 	// =========== Find Color Archetypes ================================
-	dh::RGB_Atype at;
-	at.bkgrnd = hist->mode;
 
 	const int max_res = 15;   // MAGIC NUMBER !!! 
 	double res[max_res+1];
@@ -248,12 +241,13 @@ void ColorSegmentation::FindArchetypalColors()
 
 	dh::SeedGrid seed_grid( hist, resolution, LIGHT_BACKGROUND );
 
-	dh::_RGB a1, a2;
+	dh::_RGB a1, a2; //REMEMBER That a1 and a2 are actually RLI values
+	dh::_RGB bkgrnd = hist->modeAsRGB(); 
 
 	seed_grid.find_seeds( a1, a2, dh::eval_state );
 
-	std::cout << "   Seed1 = " << a1 * 2 << std::endl;
-	std::cout << "   Seed2 = " << a2 * 2 << std::endl;
+	std::cout << " Seed1 = " << a1.mapRGBtoRLI() * 2 << std::endl;
+	std::cout << " Seed2 = " << a2.mapRGBtoRLI() * 2 << std::endl;
 
 	std::cout << "Finding most distinct colors..." << std::endl;
 	
@@ -266,9 +260,9 @@ void ColorSegmentation::FindArchetypalColors()
 	    { 
 			for ( int iter = 0; iter <= max_res; iter++ )
  			{ 
-				go_best_dir( hist, a1, a1_moved, a2, at );
-				go_best_dir( hist, a2, a2_moved, a1, at );
-				res[iter] = dh::eval_state ( at.bkgrnd, a1, a2 );
+				go_best_dir( hist, a1, a1_moved, a2, bkgrnd );
+				go_best_dir( hist, a2, a2_moved, a1, bkgrnd );
+				res[iter] = dh::eval_state ( bkgrnd, a1, a2 );
 		    }
 	    } while ( ( a1_moved || a2_moved ) &&
 		           fabs( res[max_res] - res[0] ) >
@@ -276,26 +270,27 @@ void ColorSegmentation::FindArchetypalColors()
       
 		int big_jump_size = 8;       // MAGIC NUMBER !!!
 
-		go_best_dir( hist, a1, a1_moved, a2, at, big_jump_size, 1 );
-		go_best_dir( hist, a2, a2_moved, a1, at, big_jump_size, 1 );
+		go_best_dir( hist, a1, a1_moved, a2, bkgrnd, big_jump_size, 1 );
+		go_best_dir( hist, a2, a2_moved, a1, bkgrnd, big_jump_size, 1 );
 
 	} while ( a1_moved || a2_moved );
 
-	std::cout << "   Color1 = " << a1.R * 2 << " "<< a1.G * 2 << " " <<  a1.B * 2 << " " << std::endl;
-	std::cout << "   Color2 = " << a2.R * 2 << " "<< a2.G * 2 << " " <<  a2.B * 2 << " " << std::endl;
-
 	if( a1.B > a2.B )
 	{
-		arch_typ1= a1; 
-		arch_typ2= a2;
+		archTypRED = a1.mapRGBtoRLI()*2; 
+		archTypBLUE = a2.mapRGBtoRLI()*2;
 	}
 	else
 	{
-		arch_typ1= a2; 
-		arch_typ2= a1;
+		archTypRED = a2.mapRGBtoRLI()*2; 
+		archTypBLUE = a1.mapRGBtoRLI()*2;
 	}
 	
-	bkgrnd_typ = at.bkgrnd;
+	archTypBACK = bkgrnd.mapRGBtoRLI()*2;
+
+	std::cout << " RED =        " << archTypRED << std::endl;
+	std::cout << " BLUE =       " << archTypBLUE << std::endl;
+	std::cout << " BACKGROUND = " << archTypBACK << std::endl;
 
 	delete hist;
 }
@@ -303,17 +298,18 @@ void ColorSegmentation::FindArchetypalColors()
 void ColorSegmentation::ComputeClassWeights()
 { 
 	//Setup the archtypes (previously computed)
+	//Use an RGB_Atype class (but remember values are RLI)
 	dh::RGB_Atype atype;
-	atype.red = arch_typ1;
-	atype.blue = arch_typ2;
-	atype.bkgrnd = bkgrnd_typ;
+	atype.red = archTypRED.mapRLItoRGB();
+	atype.blue = archTypBLUE.mapRLItoRGB();
+	atype.bkgrnd = archTypBACK.mapRLItoRGB();
 
 	//Preliminary computations:
-	float R_B_axis_len = dh::RGB_Classifier::RGB_euclidean_dist (atype.red, atype.blue );
-	float Y_B_axis_len = dh::RGB_Classifier::RGB_euclidean_dist (atype.bkgrnd, atype.blue );
-	float Y_R_axis_len = dh::RGB_Classifier::RGB_euclidean_dist (atype.bkgrnd, atype.red );
+	float R_B_axis_len = dh::Classifier::euclidean_dist (atype.red, atype.blue );
+	float Y_B_axis_len = dh::Classifier::euclidean_dist (atype.bkgrnd, atype.blue );
+	float Y_R_axis_len = dh::Classifier::euclidean_dist (atype.bkgrnd, atype.red );
 	
-	float slide_wt = 0.5;//0.7; //Set to magic number
+	float slide_wt = 0.7;//0.7; //Set to magic number
 	//Set slide_wt to deal with differing spread
 	//slide_wt = Y_R_axis_len / ( Y_B_axis_len + Y_R_axis_len );
 
@@ -404,9 +400,9 @@ void ColorSegmentation::ComputeClassWeights()
 	IteratorType iterator1 ( red_weights, red_weights->GetRequestedRegion() );
 	IteratorType iterator2 ( blue_weights, blue_weights->GetRequestedRegion() );
 	
-	UcharIteratorType pix_buf3( red_image, red_image->GetRequestedRegion() );
+	UcharIteratorType pix_buf1( red_image, red_image->GetRequestedRegion() );
 	UcharIteratorType pix_buf2( lime_image, lime_image->GetRequestedRegion() );
-	UcharIteratorType pix_buf1( intensity_image, intensity_image->GetRequestedRegion() );
+	UcharIteratorType pix_buf3( intensity_image, intensity_image->GetRequestedRegion() );
 	
 	for ( pix_buf1.GoToBegin(),	pix_buf2.GoToBegin(), pix_buf3.GoToBegin(), iterator1.GoToBegin(), iterator2.GoToBegin();
 	      !pix_buf1.IsAtEnd() && !pix_buf2.IsAtEnd() && !pix_buf3.IsAtEnd() && !iterator1.IsAtEnd() && !iterator2.IsAtEnd();
@@ -415,12 +411,12 @@ void ColorSegmentation::ComputeClassWeights()
 		dh::_RGB pixel = dh::_RGB( pix_buf1.Get(), pix_buf2.Get(), pix_buf3.Get() );
 
 		float red_dist = 2.0 * ( 1.0 - slide_wt ) *
-			dh::RGB_Classifier::RGB_euclidean_dist( pixel, atype.red, 1, 1, 1);	//Distance to red archtype
+			dh::Classifier::euclidean_dist( pixel, atype.red );	//Distance to red archtype
 		
 		float blue_dist = 2.0 * slide_wt *
-			dh::RGB_Classifier::RGB_euclidean_dist( pixel, atype.blue, 1, 1, 1);//Distance to blue archtype
+			dh::Classifier::euclidean_dist( pixel, atype.blue );//Distance to blue archtype
 		
-		float bkgrnd_dist = dh::RGB_Classifier::RGB_euclidean_dist( pixel, atype.bkgrnd, 1, 1, 1);//Distance to background archtype
+		float bkgrnd_dist = dh::Classifier::euclidean_dist( pixel, atype.bkgrnd );//Distance to background archtype
 
 		Pixel_Class pixel_class;
 
@@ -554,7 +550,7 @@ void ColorSegmentation::ComputeClassWeights()
 }
 
 
-void ColorSegmentation::go_best_dir( dh::RGBHistogram * hist, dh::_RGB& ma, bool& moved, const dh::_RGB& sa, dh::RGB_Atype at, const int r, int res )
+void ColorSegmentation::go_best_dir( dh::Histogram * hist, dh::_RGB& ma, bool& moved, const dh::_RGB& sa, const dh::_RGB& bkgnd, const int r, int res )
 {
 	double new_val;
 	double best_val = dh::NEG_HUGE;
@@ -588,7 +584,7 @@ void ColorSegmentation::go_best_dir( dh::RGBHistogram * hist, dh::_RGB& ma, bool
 				   )
 			                     
 				{ 
-					new_val = dh::eval_state ( at.bkgrnd, dh::_RGB(ma.R+x, ma.G+y, ma.B+z), sa );
+					new_val = dh::eval_state ( bkgnd, dh::_RGB(ma.R+x, ma.G+y, ma.B+z), sa );
 					if ( new_val > best_val )
 					{ 
 						best_val = new_val;

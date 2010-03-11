@@ -48,20 +48,19 @@ public:
 	~ColorSegmentation(){};//Destructor
 
 	void SetTesting(bool t = true){ TESTING = t; };		//default is false
-	void SetRLIMode(bool m = true){ RLI_MODE = m; };	//default is true
 	void SetIgnoreBackground(bool i = true){ IGNORE_BACKGROUND = i; }; //default is false
 	void SetLightBackground(bool d = true){ LIGHT_BACKGROUND = d; }; //default is false
 
 	//Methods:
 	void TransformToRLI();			//First step
 	void FindArchetypalColors();	//Compute Archetypal Colors
+	void SetArchetypalColors(dh::RLI r, dh::RLI b, dh::RLI w);
 	void ComputeClassWeights();		//Get Grayscales Based On Distances From Atypes
 
 	//Get Results:
 	UcharImageType::Pointer ComputeBinary(int num_bins, int num_in_fg, bool fgrnd_dark = false);
 
 	//A few parameters:
-	bool RLI_MODE;
 	bool IGNORE_BACKGROUND;
 	bool LIGHT_BACKGROUND;
 	bool TESTING;
@@ -80,10 +79,11 @@ protected:
 	UcharImageType::Pointer blue_wts;
 
 	//Intermediate values
-	dh::_RGB arch_typ1, arch_typ2, bkgrnd_typ;  // 1->Red-ish  2->Blue-ish
+	// These actually contain RLI values (/2):
+	dh::RLI archTypRED, archTypBLUE, archTypBACK; //1->Red-ish 2->Blue-ish
 
 private:
-	void go_best_dir( dh::RGBHistogram *hist, dh::_RGB& ma, bool& moved, const dh::_RGB& sa, dh::RGB_Atype at, const int r = 1, int res = 1 );
+	void go_best_dir( dh::Histogram *hist, dh::_RGB& ma, bool& moved, const dh::_RGB& sa, const dh::_RGB& bkgnd, const int r = 1, int res = 1 );
 };
 
 #endif
