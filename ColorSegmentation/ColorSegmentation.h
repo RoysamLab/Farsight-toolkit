@@ -22,21 +22,23 @@
 #include <float.h>
 #include <math.h>
 
-#include "dhEvalState.h"
-#include "dhSlice.h"
+#include "dhColors.h"
 #include "dhHistogram.h"
-#include "RGB_Atype.h"
+//#include "dhEvalState.h"
+//#include "dhSlice.h"
+//#include "dhHistogram.h"
+//#include "RGB_Atype.h"
 #include "dhSeedGrid.h"
 #include "dhClassifiers.h"
 
-typedef unsigned char UcharPixelType;
-typedef unsigned short UshrtPixelType;
 typedef float FloatPixelType;
-typedef itk::RGBPixel< UcharPixelType > RGBPixelType;
+
+typedef itk::RGBPixel< dh::RGBType > RGBPixelType;
+typedef itk::RGBPixel< dh::RLIType > RLIPixelType;
+
 typedef itk::Image< RGBPixelType, 3 > RGBImageType;
-typedef itk::Image< UcharPixelType, 3 > UcharImageType;
-typedef itk::Image< UshrtPixelType, 3 > UshrtImageType;
-typedef itk::Image< FloatPixelType, 3 > FloatImageType;
+typedef itk::Image< RLIPixelType, 3 > RLIImageType;
+typedef itk::Image< unsigned char, 3> UcharImageType;
 
 enum Pixel_Class { UNKNOWN, RED_CELL, BLUE_CELL, BKGD_FIELD };
 
@@ -50,6 +52,7 @@ public:
 	void SetTesting(bool t = true){ TESTING = t; };		//default is false
 	void SetIgnoreBackground(bool i = true){ IGNORE_BACKGROUND = i; }; //default is false
 	void SetLightBackground(bool d = true){ LIGHT_BACKGROUND = d; }; //default is false
+	void SetGenerateProjections(bool d = true){ GEN_PROJ = d; }; //default is false
 
 	//Methods:
 	void TransformToRLI();			//First step
@@ -59,22 +62,20 @@ public:
 	void ComputeClassWeights();		//Get Grayscales Based On Distances From Atypes
 
 	//Get Results:
-	UcharImageType::Pointer ComputeBinary(int num_bins, int num_in_fg, bool fgrnd_dark = false);
+	//UcharImageType::Pointer ComputeBinary(int num_bins, int num_in_fg, bool fgrnd_dark = false);
 
 	//A few parameters:
 	bool IGNORE_BACKGROUND;
 	bool LIGHT_BACKGROUND;
 	bool TESTING;
 
-	//void RunInitialBinarization();	//MOVED TO BOTTOM OF CPP
+	bool GEN_PROJ; //Generate Projection Images:
 
 protected:
 	//Image Pointers
 	RGBImageType::Pointer rgb_input;
 
-	UcharImageType::Pointer red_image;
-	UcharImageType::Pointer lime_image;
-	UcharImageType::Pointer intensity_image;
+	RLIImageType::Pointer rli_image;
 
 	UcharImageType::Pointer red_weights;
 	UcharImageType::Pointer blue_weights;
@@ -84,7 +85,8 @@ protected:
 	dh::RLI archTypRED, archTypBLUE, archTypBACK; //1->Red-ish 2->Blue-ish
 
 private:
-	void go_best_dir( dh::Histogram *hist, dh::_RGB& ma, bool& moved, const dh::_RGB& sa, const dh::_RGB& bkgnd, const int r = 1, int res = 1 );
+	//dh::Slice3D_Space * GenerateProjection(dh::Histogram *hist, dh::SeedGrid *seed_grid);
+	//void super_point( dh::Col_Slice* slice, dh::_RGB clr );
 };
 
 #endif

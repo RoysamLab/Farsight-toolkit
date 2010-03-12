@@ -8,28 +8,20 @@ ELSE(ITK_FOUND)
     MESSAGE(FATAL_ERROR "Cannot build without ITK.  Please set ITK_DIR.")
 ENDIF(ITK_FOUND)
 
-SET( NSRCS
-	extrema.cpp
-	dhArray3D.h
-	
+SET( NSRCS	
     dhColors.h
     dhColors.cpp
-    dhImage.h
-    dhImage.cpp
-	dhSlice.h
-	dhSlice.cpp
-	
-	RGB_Atype.h
-	RGB_Atype.cpp
-	
+
 	dhHistogram.h
     dhHistogram.cpp
     
-    dhClassifiers.h
-    dhSeedGrid.h
-    
     dhEvalState.h
     dhEvalState.cpp
+    
+    dhClassifiers.h
+    
+    dhSeedGrid.h
+    dhSeedGrid.cpp
     
     ColorSegmentation.h
     ColorSegmentation.cpp

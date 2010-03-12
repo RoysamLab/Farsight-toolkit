@@ -7,160 +7,93 @@
 #include <math.h>
 
 #include "dhColors.h"
-#include "dhArray3D.h"
-#include "extrema.cpp"
 
 namespace dh
 {
 
-#define FOR_AXIS(X) for ( X = 0; X < 128; X++ )
+
+
+static const int histSize = 128;
+#define FOR_AXIS(X) for ( X = 0; X < histSize; X++ )
 
 // Note: The histogram is 128 x 128 x 128, but still uses "RGB" classes
 // to store the coordinates.  This is conceptually iffy, since RGB's
 // actually go to 256 everywhere alse, and the values are often represent
 // RLI values instead of RGB values.
 
+class Array3D
+{
+public:
+	int d1, d2, d3;
+	long int*** a;
+
+	Array3D(int d1_in, int d2_in, int d3_in, int init = 1, long int init_value = 0);
+	~Array3D();
+
+	void clear_to(long int val);
+};
+
 class Histogram
 {	
-protected:
-	Array3D histogram_array;
-	long int*** a;
-      
-	Array3D processing_array;
-    long int*** sa;
-
-	void mark_point_and_nbrs(IntensityType x, IntensityType y, IntensityType z);
-
 public:
 	int max_freq;
-	//_RGB mode;
-	IntensityType mode[3];
+	long int mode[3];
 	const int inc_scale;
 		
 	int rmax, rmin,
 		gmax, gmin,
 		bmax, bmin;
 
-	_RGB modeAsRGB(){return _RGB(mode[0],mode[1],mode[2]);};
-	RLI modeAsRLI(){return RLI(mode[0],mode[1],mode[2]);};
+	_RGB modeAsRGB(){return _RGB((RGBType)mode[0],(RGBType)mode[1],(RGBType)mode[2]);};
+	RLI modeAsRLI(){return RLI((RGBType)mode[0],(RGBType)mode[1],(RGBType)mode[2]);};
 
-	Histogram(int inc_scale_in = 1) 
-		:   max_freq(0), 
-			inc_scale(inc_scale_in), 
-			rmax(126), rmin(1), 
-			gmax(126), gmin(1), 
-			bmax(126), bmin(1), 
-			histogram_array(128, 128, 128),
-			processing_array(128, 128, 128, 0)
-	{
-		mode[0] = 0;
-		mode[1] = 0;
-		mode[2] = 0;
-		a = histogram_array.a;
-		sa = processing_array.a;
-	}
+	Histogram(int inc_scale_in = 1);
 
-	void dump();
 	void find_bounding_box();
     void smooth();
 	void delete_secondary_blobs();
+	void dump();
 
-	char v(int r, int g, int b, bool suppress_warning = false ) const
-	{ 
-		if ( r < 0 || r > 127
-		  || g < 0 || g > 127
-		  || b < 0 || b > 127 )
-		{ 
-			if(!suppress_warning)
-			{ 
-				 std::cout << "The histogram coordinates (" << r << ", " << g << ", " << b << ") are invalid!!" << std::endl; 
-			}
-			return 0;
-		}	
-		else
-		{ 
-			return (char)a[r][g][b]; 
-		}
-    }
-		
-	void set(int r, int g, int b, char val)
-	{
-		if ( r < 0 || r > 127
-		  || g < 0 || g > 127
-		  || b < 0 || b > 127 )
-		{ 
-			std::cout << "The histogram coordinates (" << r << ", " << g << ", " << b << ") are invalid!!" << std::endl; 
-		}
-		else
-		{ 
-			a[r][g][b] = val; 
-		}	
-	}
+	long int v(int d1, int d2, int d3, bool suppress_warning = false ) const;	
+	void set(int d1, int d2, int d3, long int val);
+	void inc_element(int d1, int d2, int d3);
 
-	void inc_element(int r, int g, int b)
-	{ 
-		if ( r < 0 || r > 127
-		  || g < 0 || g > 127
-		  || b < 0 || b > 127 )
-		{ 
-			std::cout << "The histogram coordinates (" << r << ", " << g << ", " << b << ") are invalid!!" << std::endl; 
-		}
-		else    
-		{ 
-			if ( a[r][g][b] == 65535 )
-			{ 
-				std::cerr<<"Histogram increment overflow!!!"; 
-			}
-			else
-			{ 
-				a[r][g][b] += inc_scale; 
-			}
-		}
-    }
-
+	long int D1_proj_at(int d2, int d3);
+	long int D2_proj_at(int d1, int d3);
+	long int D3_proj_at(int d1, int d3);
+	
 	void inc( _RGB c )
 	{ 
 		inc_element( c.R / 2, c.G / 2, c.B / 2 ); 
-	}
+	};
 
 	void inc( RLI c )
 	{
-		inc_element(c.R /2, c.L /2, c.I /2 );
-	}
-		
-	long int RB_proj_at ( char r, char b )
-	{
-		int total = 0;
-		char g;
-		FOR_AXIS(g)
-		{ 
-			total += a[r][g][b];
-		}
-		return(total);
-	}
+		inc_element( c.R / 2, c.L / 2, c.I / 2 );
+	};
 
-	long int RG_proj_at ( char r, char g )
-	{
-		int total = 0;
-		char b;
-		FOR_AXIS(b)
-		{ 
-			total += a[r][g][b];
-		}
-		return(total);
-	}
+protected:
+	Array3D histogram_array;
+	long int ***a;	//The main array pointer
+	Array3D processing_array;
+	long int ***sa; //The processing array
 
-	long int GB_proj_at ( char g, char b )
-	{ 
-		int total = 0;
-		char r;
-		FOR_AXIS(r)
-		{ 
-			total += a[r][g][b];
-		}
-		return(total);
-	}
+	bool check_bounds(int d1, int d2, int d3, bool suppress_warning = false) const;
+	void mark_point_and_nbrs(int d1, int d2, int d3);
+
  };
+
+inline int min( int a, int b )
+ { return( ( a <= b ) ? a : b ); }
+ 
+inline int max( int a, int b )
+ { return( ( a >= b ) ? a : b ); }
+
+inline int min( int a, int b, int c )
+ { return( ( a <= b ) ? min( a, c ) : min( b, c ) ); }
+
+inline int max( int a, int b, int c )
+ { return( ( a >= b ) ? max( a, c ) : max( b, c ) ); }
 
 }//end namespace dh
 #endif

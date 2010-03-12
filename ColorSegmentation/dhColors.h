@@ -6,6 +6,8 @@
 
 namespace dh
 {
+
+#define HSI_CYLINDER 1     /* 1: Cylinder, 0: Double Pyramid */
 	
 #ifndef M_PI
 #define M_PI 3.14159265358979
@@ -19,9 +21,10 @@ class XYZ;
 #define RGB_GRAY(level) _RGB( level, level, level )
 #define HSI_GRAY(level) HSI( 0, 0, level )
 
-enum ColorAxis { aR = 0, aG = 1, aB = 2 };
-typedef unsigned char IntensityType; //For RGB and RLI space
-
+typedef unsigned char RGBType; //For RGB
+typedef unsigned char RLIType;
+typedef float HSIType;
+typedef double XYZType; 
 
 //=======================================================================
 //===  RGB (Red - Green - Blue) COLOR CLASS
@@ -29,16 +32,16 @@ typedef unsigned char IntensityType; //For RGB and RLI space
 class _RGB
 { 
 public:
-	IntensityType R;
-	IntensityType G;
-    IntensityType B;
+	RGBType R;
+	RGBType G;
+    RGBType B;
 
-	_RGB(IntensityType r, IntensityType g, IntensityType b) 
+	_RGB(RGBType r, RGBType g, RGBType b) 
 		: R(r), G(g), B(b) {};	
 
 	_RGB() : R(0), G(0), B(0) {};
 		
-	IntensityType AxisColor(ColorAxis ax);
+	RGBType AxisColor(RGBType ax);
 
 	friend int operator==(const _RGB& c1, const _RGB& c2);
 	friend int operator!=(const _RGB& c1, const _RGB& c2);
@@ -61,11 +64,11 @@ public:
 class HSI
 { 
 public:
-    float H;   // Hue: Radians from red, +angle = +frequency
-    float S;   // Scale 0 to 1.0
-    float I;   // Scale 0 to 1.0
+    HSIType H;   // Hue: Radians from red, +angle = +frequency
+    HSIType S;   // Scale 0 to 1.0
+    HSIType I;   // Scale 0 to 1.0
 
-    HSI (float h, float s, float i) : H(h), S(s), I(i) {};
+    HSI (HSIType h, HSIType s, HSIType i) : H(h), S(s), I(i) {};
 	HSI () : H(0), S(0), I(0) {};
 	
 	friend int operator==(const HSI& c1, const HSI& c2);
@@ -86,11 +89,11 @@ public:
 class RLI
 { 
 public:
-    IntensityType R;    // All coordinates are on scale 0 - 255.
-    IntensityType L;
-    IntensityType I;
+    RLIType R;    // All coordinates are on scale 0 - 255.
+    RLIType L;
+    RLIType I;
 
-    RLI (IntensityType r, IntensityType l, IntensityType i) : R(r), L(l), I(i) {};
+    RLI (RLIType r, RLIType l, RLIType i) : R(r), L(l), I(i) {};
     RLI () : R(0), L(0), I(0) {};
 
 	friend int operator==(const RLI& c1, const RLI& c2);
@@ -103,6 +106,7 @@ public:
    
     operator HSI() const;
 	operator _RGB() const;
+	operator XYZ() const;
 
     inline _RGB mapRLItoRGB();
  };
@@ -123,11 +127,11 @@ inline RLI::operator _RGB() const { return( (_RGB)((HSI)(*this)) ); }
 class XYZ
 { 
 public:
-    double X;
-    double Y;
-    double Z;
+    XYZType X;
+    XYZType Y;
+    XYZType Z;
         
-    XYZ (double x, double y, double z) : X(x), Y(y), Z(z) {};	
+    XYZ (XYZType x, XYZType y, XYZType z) : X(x), Y(y), Z(z) {};	
 	XYZ () : X(0), Y(0), Z(0) {};
 		
 	friend int operator==(const XYZ& c1, const XYZ& c2);
@@ -149,12 +153,12 @@ public:
 //=======================================================================
 // Color Constants
 //=======================================================================
-const IntensityType BLACK = 0;
-const IntensityType WHITE = (IntensityType)255;
+const RGBType BLACK = 0;
+const RGBType WHITE = (RGBType)255;
 
 const _RGB RGB_BLACK = RGB_GRAY (0);
 const RLI RLI_BLACK = (RLI)RGB_GRAY(0);
-const _RGB RGB_WHITE = RGB_GRAY ((IntensityType)255);
+const _RGB RGB_WHITE = RGB_GRAY ((RGBType)255);
 const HSI HSI_BLACK = HSI_GRAY (0);
 const HSI HSI_WHITE = HSI_GRAY (1);
 

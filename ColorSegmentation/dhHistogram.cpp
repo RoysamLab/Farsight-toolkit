@@ -1,40 +1,110 @@
-#include "dhHistogram.h"
+ #include "dhHistogram.h"
 
 namespace dh
 {
 
-void Histogram::dump()
-{ 
-	int i, j, k;
-	char inp[20];
-	int planeinc = 1;
-	for ( i = 0; i < 128; i += planeinc )
+Histogram::Histogram(int inc_scale_in) 
+	:max_freq(0), 
+	inc_scale(inc_scale_in), 
+	rmax(126), rmin(1), 
+	gmax(126), gmin(1), 
+	bmax(126), bmin(1), 
+	histogram_array(histSize, histSize, histSize),
+	processing_array(histSize, histSize, histSize, 0)
+{
+		mode[0] = 0;
+		mode[1] = 0;
+		mode[2] = 0;
+		a = histogram_array.a;
+		sa = processing_array.a;
+}
+
+bool Histogram::check_bounds(int d1, int d2, int d3, bool suppress_warning) const
+{
+	if ( d1 < 0 || d1 >= histSize
+		  || d2 < 0 || d2 >= histSize
+		  || d3 < 0 || d3 >= histSize )
 	{ 
-		for ( j = 127; j >= 0; j-- )
+		if(!suppress_warning)
 		{ 
-			std::cout << std::endl;
-			FOR_AXIS(k)
-			{ 
-				if (a[i][j][k] == 0)
-			    { 
-					std::cout << "."; 
-				}
-				else
-				{ 
-					int n = (int)floor( (double)log( (double)a[i][j][k] ) / (double)log((double)2) );
-					if ( n>=0 && n<=9 )
-					{ std::cout << n; }
-					else
-					{ std::cout << '#'; }
-				}
-			}
+			std::cout << "The histogram coordinates (" << d1 << ", " << d2 << ", " << d3 << ") are invalid!!" << std::endl; 
 		}
-		std::cout << std::endl << "PLANE RED = " << i << "  ";
-		std::cin >> inp;
-		if ( strlen(inp) != 0 )
-		{ planeinc = atoi( inp ); }
+		return false;
+	}	
+	else
+	{ 
+		return true; 
 	}
 }
+
+//Get the count at d1,d2,d3
+long int Histogram::v(int d1, int d2, int d3, bool suppress_warning) const
+{ 
+	if(check_bounds(d1,d2,d3,suppress_warning))
+	{ 
+		return a[d1][d2][d3]; 
+	}
+	return 0;
+}
+
+void Histogram::set(int d1, int d2, int d3, long int val)
+{
+	if(check_bounds(d1,d2,d3))
+	{
+		a[d1][d2][d3] = val; 
+	}	
+}
+
+//Increment the count at (d1,d2,d3)
+void Histogram::inc_element(int d1, int d2, int d3)
+{ 
+	if(check_bounds(d1,d2,d3))
+	{
+		if ( a[d1][d2][d3] == 65535 )
+		{ 
+			std::cerr<<"Histogram increment overflow!!!"; 
+		}
+		else
+		{ 
+			a[d1][d2][d3] += inc_scale; 
+		}
+	}
+}
+
+long int Histogram::D1_proj_at(int d2, int d3)
+{
+	long int total = 0;
+	int d1;
+	FOR_AXIS(d1)
+	{ 
+		total += a[d1][d2][d3];
+	}
+	return(total);
+}
+
+long int Histogram::D2_proj_at(int d1, int d3)
+{
+	long int total = 0;
+	int d2;
+	FOR_AXIS(d2)
+	{ 
+		total += a[d1][d2][d3];
+	}
+	return(total);
+}
+
+long int Histogram::D3_proj_at(int d1, int d2)
+{ 
+	long int total = 0;
+	int d3;
+	FOR_AXIS(d3)
+	{ 
+		total += a[d1][d2][d3];
+	}
+	return(total);
+}
+
+
 
 void Histogram::smooth()
 { 
@@ -114,9 +184,9 @@ void Histogram::find_bounding_box()
 	// Do red, then blue, then green.
    //Find rmin
 	int th = 0;
-	for( i = 1; i < 127; i++ )
-	 { for ( j = 1; j < 127; j++ )
-	    { for ( k = 1; k < 127; k++ )
+	for( i = 1; i < histSize-1; i++ )
+	 { for ( j = 1; j < histSize-1; j++ )
+	    { for ( k = 1; k < histSize-1; k++ )
           { if(a[i][j][k])
 			    { th += a[i][j][k];
 				   if( th > minhits1 ) goto rmindone;
@@ -128,9 +198,9 @@ void Histogram::find_bounding_box()
 	rmin = max( i-1, 1 );
 	// Find rmax
 	th = 0;
-	for( i = 126; i > 0; i-- )
-	 { for ( j = 1; j < 127; j++ )
-	    { for ( k = 1; k < 127; k++ )
+	for( i = histSize-2; i > 0; i-- )
+	 { for ( j = 1; j < histSize-1; j++ )
+	    { for ( k = 1; k < histSize-1; k++ )
           { if(a[i][j][k])
 			    { th += a[i][j][k];
 				   if( th > minhits1 ) goto rmaxdone;
@@ -139,13 +209,13 @@ void Histogram::find_bounding_box()
 		 }
 	 }
 	rmaxdone:
-	rmax = min( i+1, 126 );
+	rmax = min( i+1, histSize-2 );
 
 	// Find bmin
 	th = 0;
-	for( k = 1; k < 127; k++ )
+	for( k = 1; k < histSize-1; k++ )
 	 { for ( i = rmin; i <= rmax; i++ )
-	    { for ( j = 1; j < 127; j++ )
+	    { for ( j = 1; j < histSize-1; j++ )
           { if(a[i][j][k])
 			    { th += a[i][j][k];
 				   if( th > minhits2 ) goto bmindone;
@@ -158,9 +228,9 @@ void Histogram::find_bounding_box()
 
 	// Find bmax
 	th = 0;
-	for( k = 126; k > 0; k-- )
+	for( k = histSize-2; k > 0; k-- )
 	 { for ( i = rmin; i <= rmax; i++ )
-	    { for ( j = 1; j < 127; j++ )
+	    { for ( j = 1; j < histSize-1; j++ )
           { if(a[i][j][k])
 			    { th += a[i][j][k];
 				   if( th > minhits2 ) goto bmaxdone;
@@ -169,11 +239,11 @@ void Histogram::find_bounding_box()
 		 }
 	 }
 	bmaxdone:
-	bmax = min( k+1, 126 );
+	bmax = min( k+1, histSize-2 );
 
 	// Find gmin
 	th = 0;
-	for( j = 1; j < 127; j++ )
+	for( j = 1; j < histSize-1; j++ )
 	 { for ( i = rmin; i <= rmax; i++ )
 	    { for ( k = bmin; k <= bmax; k++ )
           { if(a[i][j][k])
@@ -188,7 +258,7 @@ void Histogram::find_bounding_box()
 
 	// Find jmax
 	th = 0;
-	for( j = 126; j > 0; j-- )
+	for( j = histSize-2; j > 0; j-- )
 	 { for ( i = rmin; i <= rmax; i++ )
 	    { for ( k = bmin; k <= bmax; k++ )
           { if(a[i][j][k])
@@ -199,41 +269,143 @@ void Histogram::find_bounding_box()
 		 }
 	 }
 	gmaxdone:
-	gmax = min( j+1, 126 );
+	gmax = min( j+1, histSize-2 );
  }
 
-void Histogram::mark_point_and_nbrs(IntensityType x, IntensityType y, IntensityType z)
- { if ( sa[x][y][z] == 0 && a[x][y][z] > 0 )
-    { sa[x][y][z] = 1;
-	   
-	   mark_point_and_nbrs(x+1, y, z);
-		mark_point_and_nbrs(x-1, y, z);
-		mark_point_and_nbrs(x, y+1, z);
-		mark_point_and_nbrs(x, y-1, z);
-		mark_point_and_nbrs(x, y, z+1);
-		mark_point_and_nbrs(x, y, z-1);
-	 }
- }
+void Histogram::dump()
+{ 
+	int i, j, k;
+	char inp[20];
+	int planeinc = 1;
+	for ( i = 0; i < histSize; i += planeinc )
+	{ 
+		for ( j = histSize-1; j >= 0; j-- )
+		{ 
+			std::cout << std::endl;
+			FOR_AXIS(k)
+			{ 
+				if (a[i][j][k] == 0)
+			    { 
+					std::cout << "."; 
+				}
+				else
+				{ 
+					int n = (int)floor( (double)log( (double)a[i][j][k] ) / (double)log((double)2) );
+					if ( n>=0 && n<=9 )
+					{ std::cout << n; }
+					else
+					{ std::cout << '#'; }
+				}
+			}
+		}
+		std::cout << std::endl << "PLANE RED = " << i << "  ";
+		std::cin >> inp;
+		if ( strlen(inp) != 0 )
+		{ planeinc = atoi( inp ); }
+	}
+}
 
 void Histogram::delete_secondary_blobs()
- { 
-   // This will remove all parts of the histogram that are not
+{ 
+	// This will remove all parts of the histogram that are not
 	// 6-connected (in 3-d) with the blob containing the mode.
 
 	std::cout << "Removing secondary blobs..." << std::endl;
 	
-   processing_array.clear_to(0);
+	processing_array.clear_to(0);	
 	mark_point_and_nbrs(mode[0], mode[1], mode[2]);
 
 	int i, j, k;
 	FOR_AXIS(i)
-	 { FOR_AXIS(j)
-		 { FOR_AXIS(k)
-			 { if (sa[i][j][k] == 0)
-			    { a[i][j][k] = 0; }
+	{ 
+		FOR_AXIS(j)
+		{ 
+			FOR_AXIS(k)
+			{ 
+				if (sa[i][j][k] == 0)
+				{ 
+					a[i][j][k] = 0; 
+				}
 			 }
 		 }
 	 }
  }
+
+void Histogram::mark_point_and_nbrs(int d1, int d2, int d3)
+{ 
+	if ( sa[d1][d2][d3] == 0 && a[d1][d2][d3] > 0 )
+    { 
+		sa[d1][d2][d3] = 1;
+	   
+		mark_point_and_nbrs(d1+1, d2, d3);
+		mark_point_and_nbrs(d1-1, d2, d3);
+		mark_point_and_nbrs(d1, d2+1, d3);
+		mark_point_and_nbrs(d1, d2-1, d3);
+		mark_point_and_nbrs(d1, d2, d3+1);
+		mark_point_and_nbrs(d1, d2, d3-1);
+	}
+}
+	
+//*****************************************************************
+// ARRAY 3D
+
+Array3D::Array3D(int d1_in, int d2_in, int d3_in, int init, long int init_value)
+: d1 (d1_in), d2(d2_in), d3(d3_in)
+	{ 
+		int i, j;
+	   
+		a = new long int**[d1];
+		for ( i=0; i<d1; i++ )
+		{ 
+			a[i] = new long int*[d2];
+		}
+		
+		for ( i=0; i<d1; i++ )
+	    { 
+			for ( j=0; j<d2; j++ )
+		    { 
+				a[i][j] = new long int[d3];
+			}
+		}
+      
+		if ( init )
+		{ 
+			clear_to(init_value);
+		}
+	}
+	
+Array3D::~Array3D()
+	{ 
+		int i, j;
+	   	for ( i=0; i<d1; i++ )
+	    { 
+			for ( j=0; j<d2; j++ )
+		    { 
+				delete[] a[i][j];
+			}
+		 }
+		
+		for ( i=0; i<d1; i++ )
+		{ 
+			delete[] a[i];
+		}
+
+		delete[] a;
+    }
+
+
+void Array3D::clear_to (long int val)
+	{ 
+		for ( int i=0; i<d1; i++ )
+		{ 
+			for ( int j=0; j<d2; j++ )
+		    { 
+				for ( int k=0; k<d3; k++ )
+				{ 
+					 a[i][j][k] = val;
+				}
+			}
+		 }
+	 }
 
 } //end namespace dh

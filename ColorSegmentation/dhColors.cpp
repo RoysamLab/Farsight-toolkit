@@ -3,27 +3,23 @@
 namespace dh
 {
 
-#define HSI_CYLINDER 1     /* 1: Cylinder, 0: Double Pyramid */
-
 //=======================================================================
 //===  RGB (Red - Green - Blue) COLOR CLASS
 //=======================================================================
-IntensityType _RGB::AxisColor(ColorAxis ax)
+RGBType _RGB::AxisColor(RGBType ax)
 {
-
 	switch (ax)
 	{
-		case aR:
+		case 0:
 			return(R);
-		case aG:
+		case 1:
 			return(G);
-		case aB :
+		case 2 :
 			return(B);
 	}
 	std::cerr<<"RGB.axis_color: Invalid Color Axis.";
-	return((IntensityType)255);
+	return((RGBType)255);
 }
-
 
 int operator==(const _RGB& c1, const _RGB& c2)
  { return ((c1.R == c2.R && c1.G == c2.G && c1.B == c2.B) ? 1 : 0);}
@@ -41,11 +37,11 @@ _RGB operator*(const _RGB& c, double scale_factor)
 		 || new_B < 0 || new_B > 255 )
 	{ 
 		std::cerr<<"RGB::operator*(RGB, double): result out of range.";
-		return ( _RGB( (IntensityType)255, (IntensityType)255, (IntensityType)255 ) );
+		return ( _RGB( (RGBType)255, (RGBType)255, (RGBType)255 ) );
 	}
 	else
 	{ 
-		return ( _RGB(new_R, new_G, new_B) ); 
+		return ( _RGB((RGBType)new_R, (RGBType)new_G, (RGBType)new_B) ); 
 	}
 }
 
@@ -153,11 +149,11 @@ RLI operator*(const RLI& c, double scale_factor)
 		 || new_I < 0 || new_I > 255 )
 	{ 
 		std::cerr<<"RLI::operator*(RLI, double): result out of range.";
-		return ( RLI( (IntensityType)255, (IntensityType)255, (IntensityType)255 ) );
+		return ( RLI( (RLIType)255, (RLIType)255, (RLIType)255 ) );
 	}
 	else
 	{ 
-		return ( RLI(new_R, new_L, new_I) ); 
+		return ( RLI((RLIType)new_R, (RLIType)new_L, (RLIType)new_I) ); 
 	}
 }
 
@@ -232,15 +228,19 @@ XYZ& XYZ::operator=(_RGB c)
  }
 
 XYZ::operator _RGB() const
- { if (    X < 0 || X > 255
+{ 
+	if (    X < 0 || X > 255
 	     || Y < 0 || Y > 255
 		  || Z < 0 || Z > 255 )
-	 { std::cerr<<"XYZ::operator RGB(): XYZ value [XYZ " << X << " " << Y << " " << Z << "] is not in range.";
-	   return ( _RGB( (IntensityType)255, (IntensityType)255, (IntensityType)255 ) );
-	 }
-   else
-	 { return ( _RGB( (IntensityType)X, (IntensityType)Y, (IntensityType)Z ) ); }
- }
+	{ 
+		std::cerr<<"XYZ::operator RGB(): XYZ value [XYZ " << X << " " << Y << " " << Z << "] is not in range.";
+		return ( _RGB( (RGBType)255, (RGBType)255, (RGBType)255 ) );
+	}
+	else
+	{ 
+		return ( _RGB( (RGBType)X, (RGBType)Y, (RGBType)Z ) ); 
+	}
+}
 
 //=======================================================================
 //== CONVERSION OPERATORS
@@ -414,5 +414,8 @@ RLI::operator HSI() const
 	#endif
  }
 
+RLI::operator XYZ() const
+ { return ( XYZ ( R, L, I ) );
+ }
 
 } //end namespace dh

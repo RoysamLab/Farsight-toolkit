@@ -31,8 +31,8 @@ int main(int argc, char* argv[])
 	col_bin->SetIgnoreBackground(false);
 
 	col_bin->TransformToRLI();
-	//col_bin->FindArchetypalColors();
-	col_bin->SetArchetypalColors(dh::_RGB(165,60,60), dh::_RGB(45,45,165), dh::_RGB(175,175,175));
+	col_bin->FindArchetypalColors();
+	//col_bin->SetArchetypalColors(dh::_RGB(165,60,60), dh::_RGB(45,45,165), dh::_RGB(175,175,175));
 	col_bin->ComputeClassWeights();
 
 	//col_bin->ComputeBinary(2,1);
