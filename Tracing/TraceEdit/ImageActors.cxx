@@ -27,7 +27,7 @@ ImageRenderActors::ImageRenderActors()
 	this->opacityTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
 	this->opacityTransferFunction->AddPoint(2,0.0);
 	this->opacityTransferFunction->AddPoint(this->opacity1,0.1);
-	this->opacityTransferFunction->AddPoint(this->opacity2,0.5);
+	//this->opacityTransferFunction->AddPoint(this->opacity2,0.5);
 	this->colorTransferFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
 	this->colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
 	this->colorTransferFunction->AddRGBPoint(this->b, 0, 0, .9);//blue
@@ -219,4 +219,33 @@ vtkSmartPointer<vtkImageData> ImageRenderActors::GetImageData(int i)
 		i = int (this->LoadedImages.size() - 1);
 	}
 	return this->LoadedImages[i]->ImageData;
+}
+std::vector<double> ImageRenderActors::getColorValues()
+{
+	std::vector<double> rgb;
+	rgb.push_back(this->r);
+	rgb.push_back(this->g);
+	rgb.push_back(this->b);
+	return rgb;
+}
+void ImageRenderActors::setColorValues(double r, double g, double b)
+{
+	this->r = r;
+	this->g = g;
+	this->b = b;
+}
+void ImageRenderActors::setColorValues(int i, double value)
+{
+	if (i==1)
+	{
+		this->r = value;
+	}
+	else if(i ==2)
+	{
+		this->g = value;
+	}
+	else
+	{
+		this->b = value;
+	}
 }

@@ -84,6 +84,9 @@ public:
 	double pointData(int i, int x, int y, int z);
 	std::vector<double> GetImageSize(int i);
 	vtkSmartPointer<vtkImageData> GetImageData(int i);
+	std::vector<double> getColorValues();
+	void setColorValues(double r, double g, double b);
+	void setColorValues(int i, double value);
 
 private:
 	vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunction;
