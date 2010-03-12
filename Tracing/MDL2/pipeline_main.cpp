@@ -24,17 +24,19 @@ int main(int argc, char *argv[])
 {
 	if(argc < 2)
     {
-		std::cerr << "Usage: " << argv[0] << " inputfilename <minConnCompSize vectorMagnitude>" << std::endl;
+		std::cerr << "Usage: " << argv[0] << " inputfilename < useGraphCuts minConnCompSize vectorMagnitude>" << std::endl;
 		return EXIT_FAILURE;
     }
 	std::string inputFileName = argv[1];
 
+	int useGraphCuts = 0;
 	int minConnCompSize = 10;
 	double vectorMagnitude = .1;
-	if(argc == 4)
+	if(argc == 5)
 	{
-		minConnCompSize = atoi(argv[2]);
-		vectorMagnitude = atof(argv[3]);
+		useGraphCuts = atoi(argv[2]);
+		minConnCompSize = atoi(argv[3]);
+		vectorMagnitude = atof(argv[4]);
 	}
 
 	//*****************************************************************
@@ -61,14 +63,21 @@ int main(int argc, char *argv[])
 	// PROCESSING
 	mdl::VolumeProcess *volProc = new mdl::VolumeProcess();
 	volProc->SetInput(img);
-	volProc->SetDebug(false);
+	volProc->SetDebug(true);
 	//volProc->RescaleIntensities(0,255);
 	//volProc->RunManualThreshold(1.9);
 	//volProc->RunCAD();
-	volProc->MaskUsingGraphCuts();
+	if(useGraphCuts)
+	{
+		volProc->MaskUsingGraphCuts();
+	}
+
 	volProc->MaskSmallConnComp(minConnCompSize);
+
 	//volProc->DialateImage(1);
+
 	mdl::ImageType::Pointer clean_img = volProc->GetOutput();
+
 	//volProc->RunDistanceTransform();
 	//mdl::ImageType::Pointer DT_img = volProc->GetOutput();
 	//volProc->RunAnisotropicDiffusion(1,false);
@@ -103,7 +112,7 @@ int main(int argc, char *argv[])
 	//Integrated Skeleton to create skeleton points:
 	mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton( clean_img );
 	skel->SetVectorMagnitude(vectorMagnitude);
-	skel->SetDebug(false);
+	skel->SetDebug(true);
 	skel->SetUseXiaoLiangMethod(false);
 	skel->Update();
 	std::vector<mdl::fPoint3D> skeleton = skel->GetOutput();
@@ -125,6 +134,7 @@ int main(int argc, char *argv[])
 	std::vector<mdl::pairE> bbpairs = mst->BackboneExtract();
 	delete mst;
 
+	/*
 	std::cerr << "BSPLINE\n";
 	
 	mdl::BSplineFitting *bspline = new mdl::BSplineFitting( clean_img );
@@ -152,13 +162,14 @@ int main(int argc, char *argv[])
 	nodes = mst1->GetNodes();
 	bbpairs = mst1->BackboneExtract();
 	delete mst1;
+	*/
 
 	std::cerr << "Saving\n";
 
 	mdl::vtkFileHandler * fhdl = new mdl::vtkFileHandler();
 	fhdl->SetNodes(&nodes);
 	fhdl->SetLines(&bbpairs);
-	fhdl->Write("FinalBackbone.vtk");
+	fhdl->Write("Backbone.vtk");
 	delete fhdl;
 
 	mdl::vtkFileHandler * fhdl1 = new mdl::vtkFileHandler();
