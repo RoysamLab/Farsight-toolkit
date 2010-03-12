@@ -44,6 +44,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	createProcessToolBar();
 
 	setEditsEnabled(false);
+	setCommonEnabled(true);
 
 	setWindowTitle(tr("FARSIGHT: Nucleus Editing Tool"));
 
@@ -479,7 +480,6 @@ void NucleusEditor::setEditsEnabled(bool val)
 	splitAction->setEnabled(val);
 	classAction->setEnabled(val);
 	exclusionAction->setEnabled(val);
-	toolMenu->setEnabled(val);
 	if( val )
 		editNucleiAction->setEnabled(false);
 	else
@@ -488,6 +488,11 @@ void NucleusEditor::setEditsEnabled(bool val)
 		segmentNucleiAction->setEnabled(false);
 	else
 		segmentNucleiAction->setEnabled(true);
+}
+
+void NucleusEditor::setCommonEnabled(bool val){
+	toolMenu->setEnabled(val);
+	viewMenu->setEnabled(val);
 }
 
 void NucleusEditor::setPreprocessingEnabled(bool val)
@@ -1394,11 +1399,13 @@ void NucleusEditor::startEditing(void)
 
 	projectFiles.nucSegValidated = false;
 	setEditsEnabled(true);
+	setCommonEnabled(true);
 }
 
 void NucleusEditor::stopEditing(void)
 {
 	setEditsEnabled(false);
+	setCommonEnabled(true);
 
 	if(splitAction->isChecked())
 	{

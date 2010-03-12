@@ -138,6 +138,7 @@ protected slots:
 	void closeViews();
 
 	//For Editing Menu
+	void setCommonEnabled(bool val);
 	void setEditsEnabled(bool val);
 	void clearSelections(void);
 	void addCell(int x1, int y1, int x2, int y2, int z);//Once box is drawn we call this to add a cell
