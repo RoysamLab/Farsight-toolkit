@@ -88,7 +88,7 @@ View3D::View3D(QWidget *parent)
 {
 	this->tobj = new TraceObject;
 	int num_loaded = 0;
-	this->Volume=0;
+//	this->Volume=0;
 	bool tracesLoaded = false;
 	this->translateImages = false;	//this is for testing a switch is needed
 	this->Date.currentDate();
@@ -151,7 +151,7 @@ View3D::View3D(QWidget *parent)
 View3D::View3D(TraceObject *Traces)
 {
 	this->tobj = Traces;
-	this->Volume=0;
+//	this->Volume=0;
 	this->Initialize();
 	this->ShowTreeData();
 	this->statusBar()->showMessage(tr("Trace Editor Started"));
@@ -517,14 +517,14 @@ View3D::~View3D()
     {
     delete this->GapsPlotView;
     }
-  if(this->OpacitySlider)
-    {
-    this->OpacitySlider->Delete();
-    }
-  if(this->BrightnessSlider)
-    {
-    this->BrightnessSlider->Delete();
-    }
+  //if(this->OpacitySlider)
+  //  {
+  //  this->OpacitySlider->Delete();
+  //  }
+  //if(this->BrightnessSlider)
+  //  {
+  //  this->BrightnessSlider->Delete();
+  //  }
   delete this->tobj;
   //the various Qt objects should be getting deleted by closeEvent and
   //parent/child relationships...
@@ -533,8 +533,8 @@ View3D::~View3D()
 void View3D::Initialize()
 {
 	this->QVTK = 0;
-	this->OpacitySlider = 0;
-	this->BrightnessSlider = 0;
+//	this->OpacitySlider = 0;
+//	this->BrightnessSlider = 0;
 	this->tobj->gapTol = this->TraceEditSettings.value("mainWin/gapTol", .5).toDouble() ;
 	this->tobj->gapMax = this->TraceEditSettings.value("mainWin/gapMax", 10).toInt();
 	this->SmallLineLength = this->TraceEditSettings.value("mainWin/smallLine", 10).toInt();
@@ -677,7 +677,7 @@ void View3D::CreateGUIObjects()
   this->ApplySettingsButton = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
   //this->CancelSettingsButton = new QPushButton("&Cancel", this->SettingsWidget);
   connect(this->ApplySettingsButton, SIGNAL(accepted()), this, SLOT(ApplyNewSettings()));
-  //connect(this->ApplySettingsButton, SIGNAL(rejected()), this, SLOT(HideSettingsWindow()));
+  connect(this->ApplySettingsButton, SIGNAL(rejected()), this, SLOT(HideSettingsWindow()));
 
 	QStringList types;
 	types <<"0 = undefined" << "1 = soma" <<"2 = axon" <<"3 = dendrite" 
@@ -708,7 +708,7 @@ void View3D::CreateLayout()
 
   this->EditsToolBar = addToolBar(tr("Edit Toolbar"));
   this->EditsToolBar->setToolTip("EditToolBar");
-  this->menuBar()->addAction(this->EditsToolBar->toggleViewAction());
+  this->ShowToolBars->addAction(this->EditsToolBar->toggleViewAction());
   //this->ShowToolBars->addAction(this->EditsToolBar->toggleViewAction());
   /*this->EditsToolBar->addAction(this->saveAction);
   this->EditsToolBar->addAction(this->exitAction);
@@ -769,7 +769,7 @@ void View3D::CreateLayout()
   this->InformationDisplays = new QDockWidget("Edit Log Information", this);
   this->InformationDisplays->setWidget(this->EditLogDisplay);
   this->addDockWidget(Qt::LeftDockWidgetArea, this->InformationDisplays);
-  this->menuBar()->addAction(this->InformationDisplays->toggleViewAction());
+  this->ShowToolBars->addAction(this->InformationDisplays->toggleViewAction());
   this->InformationDisplays->hide();
   //this->ShowToolBars->addAction(this->InformationDisplays->toggleViewAction());
 }

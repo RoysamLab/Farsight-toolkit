@@ -803,8 +803,10 @@ void TraceSEMain::WriteSWCFile(std::string SWCFilename, const std::vector<TraceN
 	
 	reg[node->ID] = ID;
 	swc << ID << " 10 " << node->loc[0] << " " << node->loc[1] << " " << node->loc[2] << " " << node->radius << "  -1" << std::endl;
-
-	while (numDone < numNodes)	{
+	
+	int watchdog = 0;
+	while ((numDone < numNodes) && (watchdog <= 50000))	{
+		watchdog++;
 		unsigned char IsChanged = 0;
 		std::vector<TraceNode*>::const_iterator fit = NodeContainer.begin();
 		for(fit = NodeContainer.begin(); fit < NodeContainer.end(); fit++)	{
@@ -867,6 +869,9 @@ void TraceSEMain::WriteSWCFile(std::string SWCFilename, const std::vector<TraceN
 	}
 	std::cout << std::endl << "Done ... Saving in file " << SWCFilename <<std::endl;
 	swc.close();
+	if (watchdog == 50000)	{
+		std::cout << "Exit due to watchdog " << std::endl;
+	}
 }
 
 bool TraceSEMain::ReadNodeXMLFile(std::string xmlfname, std::vector<TraceNode*>& NodeContainer) {

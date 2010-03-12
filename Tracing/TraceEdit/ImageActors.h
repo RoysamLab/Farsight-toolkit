@@ -86,7 +86,10 @@ public:
 	vtkSmartPointer<vtkImageData> GetImageData(int i);
 
 private:
+	vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunction;
+	vtkSmartPointer<vtkColorTransferFunction> colorTransferFunction;
 	std::vector<imageFileHandle*> LoadedImages;
 	std::vector<std::string> ImageList;
+	double r,g,b, opacity1, opacity2;
 };
 #endif

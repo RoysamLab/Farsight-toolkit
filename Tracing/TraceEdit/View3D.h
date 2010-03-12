@@ -204,8 +204,8 @@ private:
 	QAction *root;
 	QAction *ImageIntensity;
 
-	QAction *UndoButton;
-	QAction *RedoButton;
+	/*QAction *UndoButton;
+	QAction *RedoButton;*/
     //merge info
 	std::vector<TraceGap*> candidateGaps;
 	QString myText;	QString dtext;	QString grayText;
@@ -248,17 +248,17 @@ private:
 	ImageRenderActors *ImageActors;
  //  img reading and contour->3d
 	TraceObject* tobj;
-	vtkSmartPointer<vtkPolyDataMapper> VolumeMapper;
+	/*vtkSmartPointer<vtkPolyDataMapper> VolumeMapper;
 	vtkSmartPointer<vtkActor> VolumeActor;
 	vtkSmartPointer<vtkVolume> Volume;
-	vtkSmartPointer<vtkContourFilter> ContourFilter;
+	vtkSmartPointer<vtkContourFilter> ContourFilter;*/
 
   //raycast
 	vtkSmartPointer<vtkPolyData> poly;
 	vtkSmartPointer<vtkPolyDataMapper> polymap;
 
   //VTK widgets
-  vtkSliderWidget *OpacitySlider;
-  vtkSliderWidget *BrightnessSlider;
+  QSlider *OpacitySlider;
+  QSlider *BrightnessSlider;
 };
 #endif

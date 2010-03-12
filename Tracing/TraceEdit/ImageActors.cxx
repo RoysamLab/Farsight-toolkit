@@ -17,6 +17,22 @@ limitations under the License.
 ImageRenderActors::ImageRenderActors()
 {
 	this->LoadedImages.clear();
+	//define the points of %90 color
+	this->r = 150.0;
+	this->g = 90.0;
+	this->b = 40.0;
+	//opacity values
+	this->opacity1 = 50;
+	this->opacity2 = 100;
+	this->opacityTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
+	this->opacityTransferFunction->AddPoint(2,0.0);
+	this->opacityTransferFunction->AddPoint(this->opacity1,0.1);
+	this->opacityTransferFunction->AddPoint(this->opacity2,0.5);
+	this->colorTransferFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
+	this->colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
+	this->colorTransferFunction->AddRGBPoint(this->b, 0, 0, .9);//blue
+	this->colorTransferFunction->AddRGBPoint(this->g, 0, .9, 0);//green
+	this->colorTransferFunction->AddRGBPoint(this->r, .9, 0, 0);//red
 }
 int ImageRenderActors::loadImage(std::string ImageSource, std::string tag)
 {
@@ -128,17 +144,18 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 	{
 		i = int (this->LoadedImages.size() - 1);
 	}
-	this->LoadedImages[i]->opacityTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
+	/*this->LoadedImages[i]->opacityTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
 	this->LoadedImages[i]->opacityTransferFunction->AddPoint(2,0.0);
 	this->LoadedImages[i]->opacityTransferFunction->AddPoint(50,0.1);
+	this->LoadedImages[i]->opacityTransferFunction->AddPoint(100,0.5);
 	this->LoadedImages[i]->colorTransferFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
 	this->LoadedImages[i]->colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
 	this->LoadedImages[i]->colorTransferFunction->AddRGBPoint(40.0,0,0,.9);
 	this->LoadedImages[i]->colorTransferFunction->AddRGBPoint(90.0,0,.9,0);
-	this->LoadedImages[i]->colorTransferFunction->AddRGBPoint(150.0,.9,0,0);
+	this->LoadedImages[i]->colorTransferFunction->AddRGBPoint(150.0,.9,0,0);*/
 	this->LoadedImages[i]->volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
-	this->LoadedImages[i]->volumeProperty->SetColor(this->LoadedImages[i]->colorTransferFunction);
-	this->LoadedImages[i]->volumeProperty->SetScalarOpacity(this->LoadedImages[i]->opacityTransferFunction);
+	this->LoadedImages[i]->volumeProperty->SetColor(this->colorTransferFunction);
+	this->LoadedImages[i]->volumeProperty->SetScalarOpacity(this->opacityTransferFunction);
 	this->LoadedImages[i]->volumeProperty->SetInterpolationTypeToLinear();
 	this->LoadedImages[i]->volumeMapper = vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
 	this->LoadedImages[i]->volumeMapper->SetSampleDistance(0.5);
