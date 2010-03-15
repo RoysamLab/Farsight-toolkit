@@ -856,29 +856,62 @@ void View3D::CreateSphereActor()
 
 void View3D::createRayCastSliders()
 {
-	//
-	//this->RacastBar->setAllowedAreas(Qt::BottomToolBarArea);
 	this->RacastBar = new QToolBar("RayCast Tools", this);
 	this->RacastBar->setAllowedAreas(Qt::BottomToolBarArea);
 	this->RacastBar->setMovable(false);
 	this->addToolBar(Qt::BottomToolBarArea,this->RacastBar);
 	this->RacastBar->setToolTip("Racaster settings");
+//functions to control raycast opacity 
+	this->OpacitySpin = new QSpinBox(this);
+	this->OpacitySpin->setRange(0,250);
+
 	this->OpacitySlider = new QSlider(Qt::Horizontal);
 	this->OpacitySlider->setRange(0,250);
 	this->OpacitySlider->setSingleStep(1);
 	this->OpacitySlider->setTickInterval(5);
 	this->OpacitySlider->setTickPosition(QSlider::TicksAbove);
+	connect (this->OpacitySlider, SIGNAL(valueChanged(int)), this->OpacitySpin, SLOT(setValue(int)));
 	this->OpacitySlider->setValue((int) this->ImageActors->getOpacity());
-	this->RacastBar->addWidget(new QLabel("Opacity"));
-	this->RacastBar->addWidget(this->OpacitySlider);
+	connect (this->OpacitySpin, SIGNAL(valueChanged(int)), this->OpacitySlider, SLOT(setValue(int)));
+	connect (this->OpacitySpin, SIGNAL(valueChanged(int)), this, SLOT(RayCastOpacityChanged(int)));
+
+//functions to control raycast Brightness
+	this->BrightnessSpin = new QSpinBox(this);
+	this->BrightnessSpin->setRange(0,250);
+
 	this->BrightnessSlider = new QSlider(Qt::Horizontal);
 	this->BrightnessSlider->setRange(0,255);
 	this->BrightnessSlider->setSingleStep(1);
 	this->BrightnessSlider->setTickInterval(5);
 	this->BrightnessSlider->setTickPosition(QSlider::TicksAbove);
+	connect (this->BrightnessSlider, SIGNAL(valueChanged(int)), this->BrightnessSpin, SLOT(setValue(int)));
 	this->BrightnessSlider->setValue(this->ImageActors->getBrightness());
+	connect (this->BrightnessSpin, SIGNAL(valueChanged(int)), this->BrightnessSlider, SLOT(setValue(int)));
+	connect (this->BrightnessSpin, SIGNAL(valueChanged(int)), this , SLOT(RayCastBrightnessChanged(int)));
+//add the widgets to the bar
+	this->RacastBar->addWidget(new QLabel("Opacity"));
+	this->RacastBar->addWidget(this->OpacitySpin);
+	this->RacastBar->addWidget(this->OpacitySlider);
+	this->RacastBar->addSeparator();
 	this->RacastBar->addWidget(new QLabel("Brightness"));
+	this->RacastBar->addWidget(this->BrightnessSpin);
 	this->RacastBar->addWidget(this->BrightnessSlider);
+	this->ShowToolBars->addAction(this->RacastBar->toggleViewAction());
+	if(!this->ImageActors->NumberOfImages() < 0)
+	{
+		this->RacastBar->hide();
+	}
+}
+void View3D::RayCastBrightnessChanged(int value)
+{
+	this->ImageActors->setBrightness(value);
+	this->QVTK->GetRenderWindow()->Render();
+}
+void View3D::RayCastOpacityChanged(int value)
+{
+	this->ImageActors->setOpacity(value);
+	this->QVTK->GetRenderWindow()->Render();
+
 }
 /* update settings */
 void View3D::ShowSettingsWindow()

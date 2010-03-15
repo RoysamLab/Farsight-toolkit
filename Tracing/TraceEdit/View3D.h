@@ -127,6 +127,8 @@ public slots:
 	void ReloadState();
 	void SetImgInt();
 
+	void RayCastOpacityChanged(int value);
+	void RayCastBrightnessChanged(int value);
 //these are for bootloadfile
 	QString getTraceFile();
 	QString getImageFile();
@@ -249,7 +251,9 @@ private:
   //raycast
 	vtkSmartPointer<vtkPolyData> poly;
 	vtkSmartPointer<vtkPolyDataMapper> polymap;
+	
 	void createRayCastSliders();
+	QSpinBox * OpacitySpin, * BrightnessSpin;
   QSlider *OpacitySlider;
   QSlider *BrightnessSlider;
 };

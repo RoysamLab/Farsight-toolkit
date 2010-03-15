@@ -93,6 +93,7 @@ public:
 	int getOpacity();
 private:
 	void syncColorTransfetFunction();
+	void syncOpacityTransfetFunction();
 	vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunction;
 	vtkSmartPointer<vtkColorTransferFunction> colorTransferFunction;
 	std::vector<imageFileHandle*> LoadedImages;

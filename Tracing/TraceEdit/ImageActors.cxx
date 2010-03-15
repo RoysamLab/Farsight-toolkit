@@ -18,7 +18,7 @@ ImageRenderActors::ImageRenderActors()
 {
 	this->LoadedImages.clear();
 	//define the points of %90 color
-	this->r = 100;
+	this->r = 90.0;
 	this->g = 45.0;
 	this->b = 20.0;
 	this->brightness = 150;
@@ -26,9 +26,7 @@ ImageRenderActors::ImageRenderActors()
 	this->opacity1 = 50;
 	this->opacity2 = 100;
 	this->opacityTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
-	this->opacityTransferFunction->AddPoint(2,0.0);
-	this->opacityTransferFunction->AddPoint(this->opacity1,0.1);
-	//this->opacityTransferFunction->AddPoint(this->opacity2,0.5);
+	this->syncOpacityTransfetFunction();
 	this->colorTransferFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
 	this->syncColorTransfetFunction();
 }
@@ -261,6 +259,7 @@ int ImageRenderActors::getBrightness()
 void ImageRenderActors::setOpacity(int value)
 {
 	this->opacity1 = (double ) value;
+	this->syncOpacityTransfetFunction();
 }
 int ImageRenderActors::getOpacity()
 {
@@ -273,4 +272,19 @@ void ImageRenderActors::syncColorTransfetFunction()
 	this->colorTransferFunction->AddRGBPoint((this->b*this->brightness)/100, 0, 0, .9);//blue
 	this->colorTransferFunction->AddRGBPoint((this->g*this->brightness)/100, 0, .9, 0);//green
 	this->colorTransferFunction->AddRGBPoint((this->r*this->brightness)/100, .9, 0, 0);//red
+	for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
+	{
+		this->LoadedImages[i]->volume->Update();
+	}
+}
+void ImageRenderActors::syncOpacityTransfetFunction()
+{
+	this->opacityTransferFunction->RemoveAllPoints();
+	this->opacityTransferFunction->AddPoint(2,0.0);
+	this->opacityTransferFunction->AddPoint(this->opacity1,0.1);
+	//this->opacityTransferFunction->AddPoint(this->opacity2,0.5);
+	for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
+	{
+		this->LoadedImages[i]->volume->Update();
+	}
 }
