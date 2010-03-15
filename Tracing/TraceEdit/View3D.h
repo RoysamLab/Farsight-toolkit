@@ -180,8 +180,7 @@ private:
     QWidget *CentralWidget;
 	QMenu *fileMenu;
 	QMenu *ShowToolBars;
-	QToolBar *EditsToolBar;	
-	QToolBar *BranchToolBar;
+	QToolBar *EditsToolBar, *BranchToolBar, *RacastBar;
 
 	//Qt widgets on the main window
 	QAction *saveAction;
@@ -246,18 +245,11 @@ private:
 	vtkSmartPointer<vtkActor> SphereActor;
 	
 	ImageRenderActors *ImageActors;
- //  img reading and contour->3d
 	TraceObject* tobj;
-	/*vtkSmartPointer<vtkPolyDataMapper> VolumeMapper;
-	vtkSmartPointer<vtkActor> VolumeActor;
-	vtkSmartPointer<vtkVolume> Volume;
-	vtkSmartPointer<vtkContourFilter> ContourFilter;*/
-
   //raycast
 	vtkSmartPointer<vtkPolyData> poly;
 	vtkSmartPointer<vtkPolyDataMapper> polymap;
-
-  //VTK widgets
+	void createRayCastSliders();
   QSlider *OpacitySlider;
   QSlider *BrightnessSlider;
 };

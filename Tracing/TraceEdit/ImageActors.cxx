@@ -18,9 +18,10 @@ ImageRenderActors::ImageRenderActors()
 {
 	this->LoadedImages.clear();
 	//define the points of %90 color
-	this->r = 150.0;
-	this->g = 90.0;
-	this->b = 40.0;
+	this->r = 100;
+	this->g = 45.0;
+	this->b = 20.0;
+	this->brightness = 150;
 	//opacity values
 	this->opacity1 = 50;
 	this->opacity2 = 100;
@@ -29,10 +30,7 @@ ImageRenderActors::ImageRenderActors()
 	this->opacityTransferFunction->AddPoint(this->opacity1,0.1);
 	//this->opacityTransferFunction->AddPoint(this->opacity2,0.5);
 	this->colorTransferFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
-	this->colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
-	this->colorTransferFunction->AddRGBPoint(this->b, 0, 0, .9);//blue
-	this->colorTransferFunction->AddRGBPoint(this->g, 0, .9, 0);//green
-	this->colorTransferFunction->AddRGBPoint(this->r, .9, 0, 0);//red
+	this->syncColorTransfetFunction();
 }
 int ImageRenderActors::loadImage(std::string ImageSource, std::string tag)
 {
@@ -43,12 +41,12 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag)
 	imageFileHandle *newImage= new imageFileHandle;
 	newImage->filename = ImageSource;
 	newImage->tag = tag;
-	newImage->colorTransferFunction = 0;
+	//newImage->colorTransferFunction = 0;
 	newImage->ContourActor = 0;
 	newImage->ContourFilter = 0;
 	newImage->ContourMapper = 0;
 	newImage->ImageData = 0;
-	newImage->opacityTransferFunction = 0;
+	//newImage->opacityTransferFunction = 0;
 	newImage->volume = 0;
 	newImage->volumeMapper = 0;
 	newImage->volumeProperty = 0;
@@ -80,12 +78,12 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 	imageFileHandle *newImage= new imageFileHandle;
 	newImage->filename = ImageSource;
 	newImage->tag = tag;
-	newImage->colorTransferFunction = 0;
+	//newImage->colorTransferFunction = 0;
 	newImage->ContourActor = 0;
 	newImage->ContourFilter = 0;
 	newImage->ContourMapper = 0;
 	newImage->ImageData = 0;
-	newImage->opacityTransferFunction = 0;
+	//newImage->opacityTransferFunction = 0;
 	newImage->volume = 0;
 	newImage->volumeMapper = 0;
 	newImage->volumeProperty = 0;
@@ -233,6 +231,7 @@ void ImageRenderActors::setColorValues(double r, double g, double b)
 	this->r = r;
 	this->g = g;
 	this->b = b;
+	this->syncColorTransfetFunction();
 }
 void ImageRenderActors::setColorValues(int i, double value)
 {
@@ -248,4 +247,30 @@ void ImageRenderActors::setColorValues(int i, double value)
 	{
 		this->b = value;
 	}
+	this->syncColorTransfetFunction();
+}
+void ImageRenderActors::setBrightness(int value)
+{
+	this->brightness = (double)value;
+	this->syncColorTransfetFunction();
+}
+int ImageRenderActors::getBrightness()
+{
+	return (int) this->brightness;
+}
+void ImageRenderActors::setOpacity(int value)
+{
+	this->opacity1 = (double ) value;
+}
+int ImageRenderActors::getOpacity()
+{
+	return (int) this->opacity1;
+}
+void ImageRenderActors::syncColorTransfetFunction()
+{
+	this->colorTransferFunction->RemoveAllPoints();
+	this->colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
+	this->colorTransferFunction->AddRGBPoint((this->b*this->brightness)/100, 0, 0, .9);//blue
+	this->colorTransferFunction->AddRGBPoint((this->g*this->brightness)/100, 0, .9, 0);//green
+	this->colorTransferFunction->AddRGBPoint((this->r*this->brightness)/100, .9, 0, 0);//red
 }

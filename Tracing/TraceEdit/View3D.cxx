@@ -755,7 +755,6 @@ void View3D::CreateLayout()
   this->settingsDock = new QDockWidget("Settings", this);
   this->settingsDock->setWidget(this->SettingsWidget);
   this->addDockWidget(Qt::LeftDockWidgetArea, this->settingsDock);
-  //this->menuBar()->addAction(this->settingsDock->toggleViewAction());
   this->ShowToolBars->addAction(this->settingsDock->toggleViewAction());
   this->settingsDock->hide();
 
@@ -771,7 +770,8 @@ void View3D::CreateLayout()
   this->addDockWidget(Qt::LeftDockWidgetArea, this->InformationDisplays);
   this->ShowToolBars->addAction(this->InformationDisplays->toggleViewAction());
   this->InformationDisplays->hide();
-  //this->ShowToolBars->addAction(this->InformationDisplays->toggleViewAction());
+
+  this->createRayCastSliders();
 }
 
 void View3D::CreateInteractorStyle()
@@ -854,6 +854,32 @@ void View3D::CreateSphereActor()
   this->SphereActor->SetPickable(0);            //dont want to pick the sphere itself
 }
 
+void View3D::createRayCastSliders()
+{
+	//
+	//this->RacastBar->setAllowedAreas(Qt::BottomToolBarArea);
+	this->RacastBar = new QToolBar("RayCast Tools", this);
+	this->RacastBar->setAllowedAreas(Qt::BottomToolBarArea);
+	this->RacastBar->setMovable(false);
+	this->addToolBar(Qt::BottomToolBarArea,this->RacastBar);
+	this->RacastBar->setToolTip("Racaster settings");
+	this->OpacitySlider = new QSlider(Qt::Horizontal);
+	this->OpacitySlider->setRange(0,250);
+	this->OpacitySlider->setSingleStep(1);
+	this->OpacitySlider->setTickInterval(5);
+	this->OpacitySlider->setTickPosition(QSlider::TicksAbove);
+	this->OpacitySlider->setValue((int) this->ImageActors->getOpacity());
+	this->RacastBar->addWidget(new QLabel("Opacity"));
+	this->RacastBar->addWidget(this->OpacitySlider);
+	this->BrightnessSlider = new QSlider(Qt::Horizontal);
+	this->BrightnessSlider->setRange(0,255);
+	this->BrightnessSlider->setSingleStep(1);
+	this->BrightnessSlider->setTickInterval(5);
+	this->BrightnessSlider->setTickPosition(QSlider::TicksAbove);
+	this->BrightnessSlider->setValue(this->ImageActors->getBrightness());
+	this->RacastBar->addWidget(new QLabel("Brightness"));
+	this->RacastBar->addWidget(this->BrightnessSlider);
+}
 /* update settings */
 void View3D::ShowSettingsWindow()
 {
@@ -1102,7 +1128,7 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
       break;
     }
 }
-/*  Actions   */
+/*  Selection Actions   */
 void View3D::SLine()
 {
   int numLines;
@@ -1666,6 +1692,7 @@ void View3D::SetTraceType(int newType)
 		this->statusBar()->showMessage(tr("Nothing Selected"));
 	}
 }
+/* output */
 void View3D::SaveToFile()
 {
   //display a save file dialog

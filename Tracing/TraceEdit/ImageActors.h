@@ -60,8 +60,8 @@ struct imageFileHandle
 	vtkSmartPointer<vtkPolyDataMapper> ContourMapper;
 	vtkSmartPointer<vtkActor> ContourActor;
 //Raycast pointers
-	vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunction;
-	vtkSmartPointer<vtkColorTransferFunction> colorTransferFunction;
+	/*vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunction;
+	vtkSmartPointer<vtkColorTransferFunction> colorTransferFunction;*/
 	vtkSmartPointer<vtkVolumeProperty> volumeProperty;
 	vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper;
 	vtkSmartPointer<vtkVolume> volume;
@@ -87,12 +87,17 @@ public:
 	std::vector<double> getColorValues();
 	void setColorValues(double r, double g, double b);
 	void setColorValues(int i, double value);
-
+	void setBrightness(int value);
+	int getBrightness();
+	void setOpacity(int  value);
+	int getOpacity();
 private:
+	void syncColorTransfetFunction();
 	vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunction;
 	vtkSmartPointer<vtkColorTransferFunction> colorTransferFunction;
 	std::vector<imageFileHandle*> LoadedImages;
 	std::vector<std::string> ImageList;
 	double r,g,b, opacity1, opacity2;
+	double brightness;
 };
 #endif
