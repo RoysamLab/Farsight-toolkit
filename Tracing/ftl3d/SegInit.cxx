@@ -992,7 +992,7 @@ double SegInit::update_FBSimple(ImageType3D::Pointer im, TVessel & vessel )
 			}
 		}
 	}
-
+	
 	vessel.f = getMedian(f_tmp);
 	vessel.b = getMedian(b_tmp);
 
@@ -1367,7 +1367,7 @@ double SegInit::update_FBNew(ImageType3D::Pointer im, TVessel & vessel , int Ini
 //
 //
 //	if( f_count > 0 ){
-//		qsort(f_tmp,f_count,sizeof(double),compare);
+//	;	qsort(f_tmp,f_count,sizeof(double),compare);
 //		if( f_count% 2)
 //			MAD2 = vnl_math_max(MAD2,f_tmp[(int)floor(f_count/2.0)]);
 //		else{
@@ -1418,6 +1418,10 @@ double SegInit::update_FBNew(ImageType3D::Pointer im, TVessel & vessel , int Ini
 
 
 double SegInit::getMedian(std::vector<double> arr)	{
+
+#if USEMEAN == 1
+	return(getMean(arr));
+#else
 	unsigned int r = arr.size();
 
 	if (r == 0)	{
@@ -1438,6 +1442,7 @@ double SegInit::getMedian(std::vector<double> arr)	{
 			return( 0.5 * (arr[r/2] + arr[(r+2)/2]));
 		}
 	}
+#endif
 }
 
 
@@ -1500,7 +1505,7 @@ bool SegInit::fitSE (ImageType3D::Pointer im, TVessel& vessel, double iterations
     memcpy(damp.dt_a, damp.dt_u,sizeof(double)*3);
 
     //if( iterations > 0 )
-    generate_convex_hullq(vessel,19);
+    generate_convex_hullq(vessel,23);
     L = update_FBNew(im,vessel, 1);
     //L = update_FBSimple(im,vessel);
 

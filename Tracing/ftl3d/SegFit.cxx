@@ -68,7 +68,7 @@ bool SegFit::fitSE (ImageType3D::Pointer im, TVessel& vessel, double iterations,
     memcpy(damp.dt_a, damp.dt_u,sizeof(double)*3);
 
     //if( iterations > 0 )
-    generate_convex_hullq(vessel,19);
+    generate_convex_hullq(vessel,23);
     L = update_FBNew(im,vessel, 1);
 
 	TRMatrix R;

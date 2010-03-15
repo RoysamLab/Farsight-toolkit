@@ -42,6 +42,8 @@ limitations under the License.
 #include <algorithm>
 #include <cstdlib>
 
+#define USEMEAN 1
+
 
 #include "TVessel.h"
 
