@@ -5,6 +5,7 @@
 #include "itkImage.h"
 #include "itkRGBPixel.h"
 #include "itkSmoothingRecursiveGaussianImageFilter.h"
+#include "itkRGBToLuminanceImageFilter.h"
 #include "itkImageRegionConstIterator.h"
 #include "itkImageRegionIterator.h"
 #include "itkOtsuMultipleThresholdsCalculator.h"
@@ -24,10 +25,6 @@
 
 #include "dhColors.h"
 #include "dhHistogram.h"
-//#include "dhEvalState.h"
-//#include "dhSlice.h"
-//#include "dhHistogram.h"
-//#include "RGB_Atype.h"
 #include "dhSeedGrid.h"
 #include "dhClassifiers.h"
 
@@ -47,7 +44,7 @@ class ColorSegmentation
 public:
 	//Constructor
 	ColorSegmentation(RGBImageType::Pointer input);
-	~ColorSegmentation(){};//Destructor
+	~ColorSegmentation(){if(hist) delete hist;};//Destructor
 
 	void SetTesting(bool t = true){ TESTING = t; };		//default is false
 	void SetIgnoreBackground(bool i = true){ IGNORE_BACKGROUND = i; }; //default is false
@@ -56,13 +53,11 @@ public:
 
 	//Methods:
 	void TransformToRLI();			//First step
+	void ComputeBinary(int num_bins, int num_in_fg, bool fgrnd_dark = true);
 	void FindArchetypalColors();	//Compute Archetypal Colors
 	void SetArchetypalColors(dh::RLI r, dh::RLI b, dh::RLI w);
 	void SetArchetypalColors(dh::_RGB r, dh::_RGB b, dh::_RGB w);
 	void ComputeClassWeights();		//Get Grayscales Based On Distances From Atypes
-
-	//Get Results:
-	//UcharImageType::Pointer ComputeBinary(int num_bins, int num_in_fg, bool fgrnd_dark = false);
 
 	//A few parameters:
 	bool IGNORE_BACKGROUND;
@@ -74,19 +69,22 @@ public:
 protected:
 	//Image Pointers
 	RGBImageType::Pointer rgb_input;
-
 	RLIImageType::Pointer rli_image;
+	UcharImageType::Pointer bin_image;
+
+	dh::Histogram * hist;
 
 	UcharImageType::Pointer red_weights;
 	UcharImageType::Pointer blue_weights;
 
 	//Intermediate values
-	// These actually contain RLI values (/2):
+	// These actually contain RLI values:
 	dh::RLI archTypRED, archTypBLUE, archTypBACK; //1->Red-ish 2->Blue-ish
 
 private:
-	//dh::Slice3D_Space * GenerateProjection(dh::Histogram *hist, dh::SeedGrid *seed_grid);
-	//void super_point( dh::Col_Slice* slice, dh::_RGB clr );
+	void GenerateProjection(int dir, std::string outFilename);
+	void GenerateATColors(std::string outFilename);
+	void GenerateColors(dh::_RGB c1, dh::_RGB c2, dh::_RGB c3, std::string outFilename);
 };
 
 #endif

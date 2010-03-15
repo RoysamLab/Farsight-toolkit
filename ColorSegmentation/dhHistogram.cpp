@@ -6,9 +6,9 @@ namespace dh
 Histogram::Histogram(int inc_scale_in) 
 	:max_freq(0), 
 	inc_scale(inc_scale_in), 
-	rmax(126), rmin(1), 
-	gmax(126), gmin(1), 
-	bmax(126), bmin(1), 
+	rmax(histSize-2), rmin(1), 
+	gmax(histSize-2), gmin(1), 
+	bmax(histSize-2), bmin(1), 
 	histogram_array(histSize, histSize, histSize),
 	processing_array(histSize, histSize, histSize, 0)
 {
@@ -71,40 +71,49 @@ void Histogram::inc_element(int d1, int d2, int d3)
 	}
 }
 
-long int Histogram::D1_proj_at(int d2, int d3)
+void Histogram::projection_extrema(int dir, long int &max, long int &min)
+{
+	max = 0;
+	min = LONG_MAX;
+	int da,db;
+	FOR_AXIS(da)
+	{ 
+		FOR_AXIS(db)
+		{
+			long int cnt = proj_at(dir,da,db);
+			cnt > max ? max = cnt : max = max;
+			cnt < min ? min = cnt : min = min;
+		}
+	}
+}
+
+long int Histogram::proj_at(int dir, int da, int db)
 {
 	long int total = 0;
-	int d1;
-	FOR_AXIS(d1)
-	{ 
-		total += a[d1][d2][d3];
+	int d;
+	switch(dir)
+	{
+	case 1:
+		FOR_AXIS(d)
+		{ 
+			total += a[d][da][db];
+		}
+		break;
+	case 2:
+		FOR_AXIS(d)
+		{ 
+			total += a[da][d][db];
+		}
+		break;
+	case 3:
+		FOR_AXIS(d)
+		{ 
+			total += a[da][db][d];
+		}
+		break;
 	}
 	return(total);
 }
-
-long int Histogram::D2_proj_at(int d1, int d3)
-{
-	long int total = 0;
-	int d2;
-	FOR_AXIS(d2)
-	{ 
-		total += a[d1][d2][d3];
-	}
-	return(total);
-}
-
-long int Histogram::D3_proj_at(int d1, int d2)
-{ 
-	long int total = 0;
-	int d3;
-	FOR_AXIS(d3)
-	{ 
-		total += a[d1][d2][d3];
-	}
-	return(total);
-}
-
-
 
 void Histogram::smooth()
 { 

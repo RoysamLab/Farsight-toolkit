@@ -28,14 +28,14 @@ int main(int argc, char* argv[])
 	ColorSegmentation *col_bin = new ColorSegmentation(reader->GetOutput());
 	col_bin->SetTesting(true);
 	col_bin->SetLightBackground(true);
-	col_bin->SetIgnoreBackground(false);
+	col_bin->SetIgnoreBackground(true);
+	col_bin->SetGenerateProjections(true);
 
 	col_bin->TransformToRLI();
+	col_bin->ComputeBinary(3,2);
 	col_bin->FindArchetypalColors();
-	//col_bin->SetArchetypalColors(dh::_RGB(165,60,60), dh::_RGB(45,45,165), dh::_RGB(175,175,175));
+	//col_bin->SetArchetypalColors(dh::_RGB(185,110,96), dh::_RGB(45,45,165), dh::_RGB(175,175,175));
 	col_bin->ComputeClassWeights();
-
-	//col_bin->ComputeBinary(2,1);
 
 	delete col_bin;
 

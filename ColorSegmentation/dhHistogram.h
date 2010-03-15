@@ -13,7 +13,7 @@ namespace dh
 
 
 
-static const int histSize = 128;
+static const int histSize = 256;
 #define FOR_AXIS(X) for ( X = 0; X < histSize; X++ )
 
 // Note: The histogram is 128 x 128 x 128, but still uses "RGB" classes
@@ -58,18 +58,17 @@ public:
 	void set(int d1, int d2, int d3, long int val);
 	void inc_element(int d1, int d2, int d3);
 
-	long int D1_proj_at(int d2, int d3);
-	long int D2_proj_at(int d1, int d3);
-	long int D3_proj_at(int d1, int d3);
+	void projection_extrema(int dir, long int &max, long int &min);
+	long int proj_at(int dir, int da, int db);
 	
 	void inc( _RGB c )
 	{ 
-		inc_element( c.R / 2, c.G / 2, c.B / 2 ); 
+		inc_element( c.R, c.G, c.B); 
 	};
 
 	void inc( RLI c )
 	{
-		inc_element( c.R / 2, c.L / 2, c.I / 2 );
+		inc_element( c.R, c.L, c.I );
 	};
 
 protected:

@@ -6,6 +6,9 @@ ColorSegmentation::ColorSegmentation(RGBImageType::Pointer input)
 	rgb_input = input;
 
 	rli_image = NULL;
+	bin_image = NULL;
+
+	hist = NULL;
 
 	red_weights = NULL;
 	blue_weights = NULL;
@@ -88,6 +91,8 @@ void ColorSegmentation::SetArchetypalColors(dh::_RGB r, dh::_RGB b, dh::_RGB w)
 	archTypRED = (dh::RLI)r;
 	archTypBLUE = (dh::RLI)b;
 	archTypBACK = (dh::RLI)w;
+
+	//this->GenerateColors(w, r, b, "inATColors.tif");
 }
 
 //Run Pixel classification
@@ -97,7 +102,9 @@ void ColorSegmentation::FindArchetypalColors()
 		return;
 
 	// ========== Create 3D Histogram =========
-	dh::Histogram * hist = new dh::Histogram(2);
+	if(hist)
+		delete hist;
+	hist = new dh::Histogram(2);
 
 	typedef itk::ImageRegionConstIterator< RLIImageType > IteratorType;
 	IteratorType it( rli_image, rli_image->GetRequestedRegion() );
@@ -112,7 +119,7 @@ void ColorSegmentation::FindArchetypalColors()
 	hist->smooth();
 	hist->delete_secondary_blobs();
 
-	std::cout << "Mode " << hist->modeAsRLI() * 2 << " has max frequency " << hist->max_freq << std::endl;
+	std::cout << "Mode " << hist->modeAsRLI() << " has max frequency " << hist->max_freq << std::endl;
 
 	//===================================================================
 	// =========== Find Color Archetypes ================================
@@ -123,31 +130,29 @@ void ColorSegmentation::FindArchetypalColors()
 
 	seed_grid.find_seeds( a1, a2, bkgrnd );
 
-	std::cout << " Seed1 = " << a1.mapRGBtoRLI() * 2 << std::endl;
-	std::cout << " Seed2 = " << a2.mapRGBtoRLI() * 2 << std::endl;
-	std::cout << " Bgrnd = " << bkgrnd.mapRGBtoRLI() * 2 << std::endl;
+	std::cout << " Seed1 = " << a1.mapRGBtoRLI() << std::endl;
+	std::cout << " Seed2 = " << a2.mapRGBtoRLI() << std::endl;
+	std::cout << " Bgrnd = " << bkgrnd.mapRGBtoRLI() << std::endl;
 
 	seed_grid.find_most_distinct_colors( a1, a2, bkgrnd );
 
 	if( a1.B > a2.B )
 	{
-		archTypRED = a1.mapRGBtoRLI()*2; 
-		archTypBLUE = a2.mapRGBtoRLI()*2;
+		archTypRED = a1.mapRGBtoRLI(); 
+		archTypBLUE = a2.mapRGBtoRLI();
 	}
 	else
 	{
-		archTypRED = a2.mapRGBtoRLI()*2; 
-		archTypBLUE = a1.mapRGBtoRLI()*2;
+		archTypRED = a2.mapRGBtoRLI(); 
+		archTypBLUE = a1.mapRGBtoRLI();
 	}
  
-	archTypBACK = bkgrnd.mapRGBtoRLI()*2;
+	archTypBACK = bkgrnd.mapRGBtoRLI();
 
 	std::cout << "FOUND ARCHETYPES: " << std::endl;
 	std::cout << " RED =        " << archTypRED << std::endl;
 	std::cout << " BLUE =       " << archTypBLUE << std::endl;
 	std::cout << " BACKGROUND = " << archTypBACK << std::endl;
-
-	delete hist;
 }
 
 void ColorSegmentation::ComputeClassWeights()
@@ -156,6 +161,20 @@ void ColorSegmentation::ComputeClassWeights()
 	std::cout << " RED =        " << archTypRED << std::endl;
 	std::cout << " BLUE =       " << archTypBLUE << std::endl;
 	std::cout << " BACKGROUND = " << archTypBACK << std::endl;
+
+	if(TESTING)
+	{
+		this->GenerateColors(archTypBACK.mapRLItoRGB(), archTypRED.mapRLItoRGB(),archTypBLUE.mapRLItoRGB(),"atRLIColors.tif");
+		this->GenerateATColors("atColors.tif");
+	}
+	
+	if(GEN_PROJ)
+	{
+		std::cout << "GENERATING PROJECTION IMAGES" << std::endl;
+		this->GenerateProjection(1, "projLIs.tif");
+		this->GenerateProjection(2, "projRIs.tif");
+		this->GenerateProjection(3, "projRLs.tif");
+	}
 
 	//Preliminary computations:
 	float R_B_axis_len = dh::Classifier::euclidean_dist (archTypRED, archTypBLUE );
@@ -227,17 +246,12 @@ void ColorSegmentation::ComputeClassWeights()
 	red_weights->SetOrigin( origin ); 
 	blue_weights->SetOrigin( origin );
 
-	UcharImageType::IndexType start;
-	start[0] = 0; // first index on X
-	start[1] = 0; // first index on Y
-	start[2] = 0; // first index on Z
-	UcharImageType::SizeType  size;
-	size[0] = size1; // size along X
-	size[1] = size2; // size along Y
-	size[2] = size3; // size along Z
+	UcharImageType::IndexType start = { 0,0,0 };
+	UcharImageType::SizeType  size = { size1, size2, size3 };
 	UcharImageType::RegionType region;
 	region.SetSize( size );
 	region.SetIndex( start );
+
 	red_weights->SetRegions( region ); 
 	blue_weights->SetRegions( region );
 	red_weights->Allocate();            
@@ -247,7 +261,7 @@ void ColorSegmentation::ComputeClassWeights()
 	red_weights->Update();              
 	blue_weights->Update();
 
-	typedef itk::ImageRegionIterator< UcharImageType > UcharIteratorType;
+	typedef itk::ImageRegionIteratorWithIndex< UcharImageType > UcharIteratorType;
 	UcharIteratorType iterator1 ( red_weights, red_weights->GetRequestedRegion() );
 	UcharIteratorType iterator2 ( blue_weights, blue_weights->GetRequestedRegion() );
 	
@@ -315,7 +329,16 @@ void ColorSegmentation::ComputeClassWeights()
 
 		float bkgrnd_wt = 1 - certainty;
 
-		
+		if(IGNORE_BACKGROUND && bin_image)
+		{
+			UcharImageType::IndexType index = iterator1.GetIndex();
+			UcharImageType::PixelType pix = bin_image->GetPixel(index);
+			if(pix == 0)
+			{
+				pixel_class = BKGD_FIELD;
+			}
+		}
+		/*
 		if(IGNORE_BACKGROUND)
 		{
 			// If pixel is near background color, ignore it
@@ -340,9 +363,10 @@ void ColorSegmentation::ComputeClassWeights()
 				||(pixel_class == BLUE_CELL && (blue_dist * (1 - bkgrnd_wt) < bkgrnd_dist * bkgrnd_wt))
 				) 
 			{
-				certainty = pow(certainty, 3);
+				//certainty = pow(certainty, 3);
 			}
 		}
+		*/
 		
 
 		/*
@@ -363,11 +387,11 @@ void ColorSegmentation::ComputeClassWeights()
 		case BKGD_FIELD:
 			break;
 		case RED_CELL:
-			iterator1.Set((unsigned char)((1-certainty)*255));
+			iterator1.Set((unsigned char)((certainty)*255));
 			//iterator1.Set(255);
 			break;
 		case BLUE_CELL:
-			iterator2.Set((unsigned char)((1-certainty)*255));
+			iterator2.Set((unsigned char)((certainty)*255));
 			//iterator2.Set(255);
 			break;
 		default:
@@ -390,124 +414,216 @@ void ColorSegmentation::ComputeClassWeights()
 	
 }
 
-/*
-dh::Slice3D_Space * ColorSegmentation::GenerateProjection(dh::Histogram * hist, dh::SeedGrid *seed_grid)
+void ColorSegmentation::GenerateATColors(std::string outFilename)
 {
-	//================== Create Histogram Projections ==================
-	std::cout << "Creating histogram images..." << std::endl;
-	const int incr = 6;  // Was 3; changed 11/4/97
+	//Convert RLI archetypes back to RGB:
+	dh::_RGB aRed = (dh::_RGB)archTypRED;
+	dh::_RGB aBlu = (dh::_RGB)archTypBLUE;
+	dh::_RGB aBac = (dh::_RGB)archTypBACK;
 
-	dh::Col_Slice* RB_Hist = new dh::RI_Slice();
-	dh::Col_Slice* RG_Hist = new dh::RL_Slice();
-	dh::Col_Slice* GB_Hist = new dh::LI_Slice();
-	
-	dh::Slice3D_Space * hist_imgs = new dh::Slice3D_Space( RB_Hist, RG_Hist, GB_Hist );
+	this->GenerateColors(aBac, aRed, aBlu, outFilename);
+}
 
-	//--- Show bounding box ---
-	dh::_RGB bbox_min(2 * hist->rmin, 2 * hist->gmin, 2 * hist->bmin);
-	dh::_RGB bbox_max(2 * hist->rmax, 2 * hist->gmax, 2 * hist->bmax);
+void ColorSegmentation::GenerateColors(dh::_RGB c1, dh::_RGB c2, dh::_RGB c3, std::string outFilename)
+{
+	int imgSize = 256;
 
-	hist_imgs->plot_cross( bbox_min, dh::RGB_GRAY(30), 2 );
-	hist_imgs->plot_cross( bbox_max, dh::RGB_GRAY(50), 2 );
-	
-	//--- Increment histogram projections ---
-	typedef itk::ImageRegionConstIterator< UcharImageType > UcharIteratorTypeConst;
-	UcharIteratorTypeConst pix_buf1( red_image, red_image->GetRequestedRegion() );
-	UcharIteratorTypeConst pix_buf2( lime_image, lime_image->GetRequestedRegion() );
-	UcharIteratorTypeConst pix_buf3( intensity_image, intensity_image->GetRequestedRegion() );
-	
-	for ( pix_buf1.GoToBegin(),	pix_buf2.GoToBegin(), pix_buf3.GoToBegin();
-	      !pix_buf1.IsAtEnd() && !pix_buf2.IsAtEnd() && !pix_buf3.IsAtEnd();
-	      ++pix_buf1, ++pix_buf2, ++pix_buf3 )
+	//I need to create a projection RGB image of the histogram
+	typedef itk::Image< RGBPixelType, 2 > RGBImageType2D;
+	RGBImageType2D::Pointer colorImage = RGBImageType2D::New();
+
+	RGBImageType2D::PointType origin;
+	origin[0] = 0;
+	origin[1] = 0;
+	colorImage->SetOrigin( origin ); 
+	RGBImageType2D::IndexType start = { 0,0 };
+	RGBImageType2D::SizeType size = { imgSize, imgSize };
+	RGBImageType2D::RegionType region;
+	region.SetSize( size );
+	region.SetIndex( start );
+	colorImage->SetRegions( region );
+	colorImage->Allocate();
+	RGBPixelType p_rgb;
+	p_rgb[0] = 0;
+	p_rgb[1] = 0;
+	p_rgb[2] = 0;
+	colorImage->FillBuffer(p_rgb);         
+	colorImage->Update();
+
+	std::cout << "GENERATING COLORS IMAGE: " << std::endl;
+	std::cout << " RED =        " << c2 << std::endl;
+	std::cout << " BLUE =       " << c3 << std::endl;
+	std::cout << " BACKGROUND = " << c1 << std::endl;
+
+	RGBPixelType red_rgb;
+	red_rgb[0] = c2.R;
+	red_rgb[1] = c2.G;
+	red_rgb[2] = c2.B;
+
+	RGBPixelType blue_rgb;
+	blue_rgb[0] = c3.R;
+	blue_rgb[1] = c3.G;
+	blue_rgb[2] = c3.B;
+
+	RGBPixelType back_rgb;
+	back_rgb[0] = c1.R;
+	back_rgb[1] = c1.G;
+	back_rgb[2] = c1.B;
+
+	typedef itk::ImageRegionIteratorWithIndex< RGBImageType2D > IteratorType;
+	IteratorType iteratorRGB( colorImage, colorImage->GetRequestedRegion() );
+	for( iteratorRGB.GoToBegin(); !iteratorRGB.IsAtEnd(); ++iteratorRGB )
 	{
-		dh::_RGB pixel = dh::_RGB( pix_buf1.Get(), pix_buf2.Get(), pix_buf3.Get() );
-		hist_imgs->inc_freq( pixel, incr );
+		RGBImageType2D::IndexType index = iteratorRGB.GetIndex();
+		int x = index[0];
+		int y = index[1];
+
+		if(x < imgSize / 4)
+		{
+			iteratorRGB.Set(back_rgb);
+		}
+		else
+		{
+			if(y < imgSize / 2)
+			{
+				iteratorRGB.Set(red_rgb);
+			}
+			else
+			{
+				iteratorRGB.Set(blue_rgb);
+			}
+		}
 	}
 
-	hist_imgs->print_overflow();
-
-    //--- Superimpose smoothed histogram ---
-	std::cout << "Superimposing Smoothed Histogram..." << std::endl;
-	
-	int i,j;
-	FOR_AXIS(i)
-	{ 
-		FOR_AXIS(j)
-		{ 
-			if ( hist->RB_proj_at(i, j) > 0 )
-			{ 
-				super_point( RB_Hist, dh::_RGB(2*i, 128, 2*j) );
-	 			super_point( RB_Hist, dh::_RGB(2*i+1, 128, 2*j) );
-	 	 		super_point( RB_Hist, dh::_RGB(2*i, 128, 2*j+1) );
-	 			super_point( RB_Hist, dh::_RGB(2*i+1, 128, 2*j+1) );
-	 		}
-	 	}
-	}
-	
-	FOR_AXIS(i)
-	{ 
-		FOR_AXIS(j)
-		{ 
-			if ( hist->RG_proj_at(i, j) > 0 )
-	 		{ 
-				super_point( RG_Hist, dh::_RGB(2*i, 2*j, 128) );
-	 			super_point( RG_Hist, dh::_RGB(2*i+1, 2*j, 128) );
-	 			super_point( RG_Hist, dh::_RGB(2*i, 2*j+1, 128) );
-	 			super_point( RG_Hist, dh::_RGB(2*i+1, 2*j+1, 128) );
-	 		}
-	 	}
-	}
-
-	FOR_AXIS(i)
-	{ 
-		FOR_AXIS(j)
-		{ 
-			if ( hist->GB_proj_at(i, j) > 0 )
-	 		{ 
-				super_point( GB_Hist, dh::_RGB(128, 2*i, 2*j) );
-	 			super_point( GB_Hist, dh::_RGB(128, 2*i+1, 2*j) );
-	 			super_point( GB_Hist, dh::_RGB(128, 2*i, 2*j+1) );
-	 			super_point( GB_Hist, dh::_RGB(128, 2*i+1, 2*j+1) );
-	 		}
-	 	}
-	}
-
-	//Plot Seeds
-	std::list<dh::_RGB> sds = seed_grid->s;
-	std::list<dh::_RGB>::iterator it;
-	for( it=sds.begin(); it != sds.end(); it++ )
-	{
-		dh::_RGB pcl = *it;
-		dh::_RGB point = ((dh::XYZ)hist->modeAsRGB() 
-			+ ((dh::XYZ)pcl-(dh::XYZ)seed_grid->center)
-			* seed_grid->sample_dist)*2;
-		hist_imgs->plot_point( point, dh::_RGB(252, 200, 252) );
-	}
-	
-	return hist_imgs;
-	
+	typedef itk::ImageFileWriter< RGBImageType2D > WriterType;
+	WriterType::Pointer writer = WriterType::New();
+	writer->SetFileName( outFilename );
+	writer->SetInput( colorImage );
+	writer->Update();
 
 }
-*/
-/*
-void ColorSegmentation::super_point( dh::Col_Slice* slice, dh::_RGB clr )
-{ 
-	if ( slice->point_color( clr ) == dh::RGB_BLACK )
-	{ 
-		slice->plot_point( clr, dh::RGB_GRAY(32) ); 
-	}
-	else
-	{ 
-		slice->cut_intensity( 2, clr ); 
-	}
-}
-*/
-/*
-UcharImageType::Pointer ColorSegmentation::ComputeBinary(int num_bins, int num_in_fg, bool fgrnd_dark)
+
+void ColorSegmentation::GenerateProjection(int dir, std::string outFilename)
 {
-	
-	if(!intensity_image)
-		return NULL;
+	if(!hist)
+		return;
+
+	//I need to create a projection RGB image of the histogram
+	typedef itk::Image< RGBPixelType, 2 > RGBImageType2D;
+	RGBImageType2D::Pointer histImage = RGBImageType2D::New();
+
+	RGBImageType2D::PointType origin;
+	origin[0] = 0;
+	origin[1] = 0;
+	histImage->SetOrigin( origin ); 
+	RGBImageType2D::IndexType start = { 0,0 };
+	RGBImageType2D::SizeType  size = { dh::histSize, dh::histSize };
+	RGBImageType2D::RegionType region;
+	region.SetSize( size );
+	region.SetIndex( start );
+	histImage->SetRegions( region );
+	histImage->Allocate();
+	RGBPixelType p_rgb;
+	p_rgb[0] = 0;
+	p_rgb[1] = 0;
+	p_rgb[2] = 0;
+	histImage->FillBuffer(p_rgb);         
+	histImage->Update();
+
+	long int max, min;
+	hist->projection_extrema(dir, max, min);
+
+	typedef itk::ImageRegionIteratorWithIndex< RGBImageType2D > IteratorType;
+	IteratorType iteratorRGB( histImage, histImage->GetRequestedRegion() );
+	for( iteratorRGB.GoToBegin(); !iteratorRGB.IsAtEnd(); ++iteratorRGB )
+	{
+		RGBImageType2D::IndexType index = iteratorRGB.GetIndex();
+		int x = index[0];
+		int y = index[1];
+
+		long int count = hist->proj_at(dir, x, y);
+
+		if(count > 0)
+		{
+			double diff = (double)(max-min);
+			double factor = (double)(count-min) / diff;
+			
+			RGBPixelType p_rgb;
+			p_rgb[0] = 127 + (unsigned char)(factor * 128);
+			p_rgb[1] = 127 + (unsigned char)(factor * 128);
+			p_rgb[2] = 127 + (unsigned char)(factor * 128);
+			//p_rgb[0] = 255 - (unsigned char)(factor * 255);
+			//p_rgb[1] = 0;// + (unsigned char)(factor * 127);
+			//p_rgb[2] = (unsigned char)(factor * 255);
+
+			iteratorRGB.Set(p_rgb);
+		}
+	}
+
+	//Now put a DOT on each archetype color:
+	RGBPixelType red_rgb;
+	red_rgb[0] = 255;
+	red_rgb[1] = 0;
+	red_rgb[2] = 0;
+
+	RGBPixelType blue_rgb;
+	blue_rgb[0] = 0;
+	blue_rgb[1] = 0;
+	blue_rgb[2] = 255;
+
+	RGBPixelType back_rgb;
+	back_rgb[0] = 0;
+	back_rgb[1] = 255;
+	back_rgb[2] = 0;
+
+	if(dir==3)
+	{
+		RGBImageType2D::IndexType indexR = { archTypRED.R, archTypRED.L };
+		RGBImageType2D::IndexType indexB = { archTypBLUE.R, archTypBLUE.L };
+		RGBImageType2D::IndexType indexW = { archTypBACK.R, archTypBACK.L };
+		histImage->SetPixel(indexR, red_rgb);
+		histImage->SetPixel(indexB, blue_rgb);
+		histImage->SetPixel(indexW, back_rgb);
+	}
+	else if(dir==2)
+	{
+		RGBImageType2D::IndexType indexR = { archTypRED.R, archTypRED.I };
+		RGBImageType2D::IndexType indexB = { archTypBLUE.R, archTypBLUE.I };
+		RGBImageType2D::IndexType indexW = { archTypBACK.R, archTypBACK.I };
+		histImage->SetPixel(indexR, red_rgb);
+		histImage->SetPixel(indexB, blue_rgb);
+		histImage->SetPixel(indexW, back_rgb);
+	}
+	else if(dir==1)
+	{
+		RGBImageType2D::IndexType indexR = { archTypRED.L, archTypRED.I };
+		RGBImageType2D::IndexType indexB = { archTypBLUE.L, archTypBLUE.I };
+		RGBImageType2D::IndexType indexW = { archTypBACK.L, archTypBACK.I };
+		histImage->SetPixel(indexR, red_rgb);
+		histImage->SetPixel(indexB, blue_rgb);
+		histImage->SetPixel(indexW, back_rgb);
+	}
+
+
+	typedef itk::ImageFileWriter< RGBImageType2D > WriterType;
+	WriterType::Pointer writer = WriterType::New();
+	writer->SetFileName( outFilename );
+	writer->SetInput( histImage );
+	writer->Update();
+
+}
+
+void ColorSegmentation::ComputeBinary(int num_bins, int num_in_fg, bool fgrnd_dark)
+{
+	if(!rgb_input)
+		return;
+
+	typedef itk::RGBToLuminanceImageFilter< RGBImageType, UcharImageType > ConvertFilterType;
+	ConvertFilterType::Pointer convert = ConvertFilterType::New();
+	convert->SetInput( rgb_input );
+	convert->Update();
+
+	UcharImageType::Pointer intensity_image = convert->GetOutput();
 
 	//Create histogram:
 	typedef itk::Statistics::ScalarImageToHistogramGenerator< UcharImageType > HistogramGeneratorType;
@@ -533,36 +649,35 @@ UcharImageType::Pointer ColorSegmentation::ComputeBinary(int num_bins, int num_i
 		CalculatorType::OutputType::const_iterator itNum = thresholdVector.end();
  		for( int i=0; i<(num_bins-num_in_fg+1); ++i ) 
 			--itNum;
-		upperThreshold = static_cast<UcharPixelType>(*itNum);
-		lowerThreshold = itk::NumericTraits<UcharPixelType>::min();
+		upperThreshold = static_cast<unsigned char>(*itNum);
+		lowerThreshold = itk::NumericTraits<unsigned char>::min();
 	} 
-	else 
+	else
 	{
 		CalculatorType::OutputType::const_iterator itNum = thresholdVector.begin();
 		for( int i=0; i<(num_bins-num_in_fg); ++i ) 
 			++itNum;
-		lowerThreshold = static_cast<UcharPixelType>(*itNum);
-		upperThreshold = itk::NumericTraits<UcharPixelType>::max();
+		lowerThreshold = static_cast<unsigned char>(*itNum);
+		upperThreshold = itk::NumericTraits<unsigned char>::max();
 	}
 
 	typedef itk::BinaryThresholdImageFilter< UcharImageType, UcharImageType >  ThreshFilterType;
 	ThreshFilterType::Pointer threshfilter = ThreshFilterType::New();
 	threshfilter->SetOutsideValue( 0 );
-	threshfilter->SetInsideValue( (int)itk::NumericTraits<UcharPixelType>::max() );
+	threshfilter->SetInsideValue( (int)itk::NumericTraits<unsigned char>::max() );
 	threshfilter->SetInput( intensity_image );
 	threshfilter->SetLowerThreshold( lowerThreshold );
 	threshfilter->SetUpperThreshold( upperThreshold );
 	threshfilter->Update();
+
+	bin_image = threshfilter->GetOutput();
 
 	if(TESTING)
 	{
 		typedef itk::ImageFileWriter< UcharImageType > WriterType;
 		WriterType::Pointer writer = WriterType::New();
 		writer->SetFileName( "bin.tif" );
-		writer->SetInput( threshfilter->GetOutput() );
+		writer->SetInput( bin_image );
 		writer->Update();
 	}
-
-	return threshfilter->GetOutput();
 }
-*/

@@ -305,9 +305,9 @@ _RGB::operator HSI() const
 
 	  float s = 1 - 3 * ((r<g) ? ((r<b) ? r : b ) : ((g<b) ? g : b ));
 
-	  float angle = 0.5 * ( (r-g) + (r-b) ) / (sqrt((r-g)*(r-g)+(r-b)*(g-b)) );
+	  double angle = 0.5 * ( (r-g) + (r-b) ) / (sqrt((r-g)*(r-g)+(r-b)*(g-b)) );
 	
-	  float h;
+	  double h;
 	  if(b<=g)
 	  {
 		h = acos(angle);
@@ -317,7 +317,7 @@ _RGB::operator HSI() const
 		h = 2*M_PI - acos(angle);
 	  }
 
-	  return ( HSI ( h, s, i ) );
+	  return ( HSI ( (HSIType)h, s, i ) );
    }
  }
  
@@ -327,20 +327,20 @@ _RGB::operator XYZ() const
  }
  
 HSI::operator _RGB() const
- { float r, g, b;
+ { double r, g, b;
 	if ( H > 0 && H <= 2 * M_PI / 3.0 )
 	 {	b = athird * ( 1 - S );
 	   r = athird * ( 1 + ( S * cos(H) ) / cos( M_PI / 3.0 - H ) );
 		g = 1 - (r + b);
 	 }
 	else if ( H > 2 * M_PI / 3.0 && H <= 4 * M_PI / 3.0 )
-	 { float h = H - 2 * M_PI / 3.0;
+	 { double h = H - 2 * M_PI / 3.0;
 	   r = athird * ( 1 - S );
 	   g = athird * ( 1 + ( S * cos(h) ) / cos( M_PI / 3.0 - h ) );
 		b = 1 - (r + g);
 	 }
 	else
-	 { float h = H - 4 * M_PI / 3.0;
+	 { double h = H - 4 * M_PI / 3.0;
 	   g = athird * ( 1 - S );
 	   b = athird * ( 1 + ( S * cos(h) ) / cos( M_PI / 3.0 - h ) );
 		r = 1 - (g + b);
@@ -392,23 +392,27 @@ HSI::operator RLI() const
 	              (int)(I * 255 + .5) ) );
  }
 
-// This stuff doesn't work yet (8/22/97)
 RLI::operator HSI() const
- { 
-   #if HSI_CYLINDER
-	   double nr = ( R - 127 ) / 127.0;
-      double nl = ( L - 127 ) / 127.0;
-		float h;
+{ 
+	#if HSI_CYLINDER
+		double nr = ( R - 127 ) / 127.0;
+		double nl = ( L - 127 ) / 127.0;
+		
+		double h;
 		if ( nr == 0 )  // On l-axis
-		 { h = (nl >= 0) ? M_PI / 2 : 3 * M_PI / 2;
-		 }
+		{ 
+			 h = (nl >= 0) ? M_PI / 2 : 3 * M_PI / 2;
+		}
 		else
-		 { h = (nr >= 0) ?  ((nl >= 0) ? atan( nl / nr ) : atan( nl / nr ) + 2 * M_PI)
+		{ 
+			 h = (nr >= 0) ?  ((nl >= 0) ? atan( nl / nr ) : atan( nl / nr ) + 2 * M_PI)
 		                  : atan( nl / nr ) + M_PI;
-       }
-      return ( HSI( h,
-		              sqrt( nr*nr + nl*nl ),
-						  I / 255.0 ) );
+		}
+
+		HSIType s = (HSIType)sqrt( nr*nr + nl*nl );
+		HSIType i = (HSIType)(I / 255.0);
+      
+		return ( HSI( (HSIType)h, s, i ) );
 	#else
 	   std::cerr<<"The RLI -> HSI transform is not implemented for conical space.";
 	#endif
