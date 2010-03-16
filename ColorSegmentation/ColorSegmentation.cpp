@@ -246,34 +246,35 @@ void ColorSegmentation::ComputeClassWeights()
 	int size2 = rgb_input->GetLargestPossibleRegion().GetSize()[1];
 	int size3 = rgb_input->GetLargestPossibleRegion().GetSize()[2];
 
-	red_weights = UcharImageType::New();
-	blue_weights = UcharImageType::New();
+	typedef itk::Image< float, 3> FloatImageType;
+	FloatImageType::Pointer red_weights_temp = FloatImageType::New();
+	FloatImageType::Pointer blue_weights_temp = FloatImageType::New();
 
-	UcharImageType::PointType origin;
+	FloatImageType::PointType origin;
 	origin[0] = 0;
 	origin[1] = 0;
 	origin[2] = 0;
-	red_weights->SetOrigin( origin ); 
-	blue_weights->SetOrigin( origin );
+	red_weights_temp->SetOrigin( origin ); 
+	blue_weights_temp->SetOrigin( origin );
 
-	UcharImageType::IndexType start = { 0,0,0 };
-	UcharImageType::SizeType  size = { size1, size2, size3 };
-	UcharImageType::RegionType region;
+	FloatImageType::IndexType start = { 0,0,0 };
+	FloatImageType::SizeType  size = { size1, size2, size3 };
+	FloatImageType::RegionType region;
 	region.SetSize( size );
 	region.SetIndex( start );
 
-	red_weights->SetRegions( region ); 
-	blue_weights->SetRegions( region );
-	red_weights->Allocate();            
-	blue_weights->Allocate();
-	red_weights->FillBuffer(0);         
-	blue_weights->FillBuffer(0);
-	red_weights->Update();              
-	blue_weights->Update();
+	red_weights_temp->SetRegions( region ); 
+	blue_weights_temp->SetRegions( region );
+	red_weights_temp->Allocate();            
+	blue_weights_temp->Allocate();
+	red_weights_temp->FillBuffer(0.0);         
+	blue_weights_temp->FillBuffer(0.0);
+	red_weights_temp->Update();              
+	blue_weights_temp->Update();
 
-	typedef itk::ImageRegionIteratorWithIndex< UcharImageType > UcharIteratorType;
-	UcharIteratorType iterator1 ( red_weights, red_weights->GetRequestedRegion() );
-	UcharIteratorType iterator2 ( blue_weights, blue_weights->GetRequestedRegion() );
+	typedef itk::ImageRegionIteratorWithIndex< FloatImageType > FloatIteratorType;
+	FloatIteratorType iterator1 ( red_weights_temp, red_weights_temp->GetRequestedRegion() );
+	FloatIteratorType iterator2 ( blue_weights_temp, blue_weights_temp->GetRequestedRegion() );
 	
 	typedef itk::ImageRegionConstIterator< RLIImageType > rliIteratorTypeConst;
 	rliIteratorTypeConst rli_it( rli_image, rli_image->GetRequestedRegion() );
@@ -306,6 +307,8 @@ void ColorSegmentation::ComputeClassWeights()
 		{ 
 			// Pixel is "red"
 			pixel_class = RED_CELL;
+			certainty = bkgrnd_dist;
+			/*
 			//Distance from pixel to red plane (pos=outside, neg=inside)
 			double r_plane_dist = dh::dot ( ((dh::XYZ)pixel - (dh::XYZ)archTypRED), red_plane );
 			// This could be done with signum functions to make it faster...
@@ -318,11 +321,14 @@ void ColorSegmentation::ComputeClassWeights()
 				certainty = s_plane_dist / ( s_plane_dist + fabs(r_plane_dist) );
 				//certainty = 0.25;
 			}
+			*/
 		}
 		else
 		{ 
 			// Pixel is "blue"
 			pixel_class = BLUE_CELL;
+			certainty = bkgrnd_dist;
+			/*
 			double b_plane_dist = dh::dot ( ((dh::XYZ)pixel - (dh::XYZ)archTypBLUE), blue_plane );
 			// This could be done with signum functions to make it faster...
 			if ( b_plane_dist * blue_sp_dist < 0 )
@@ -335,6 +341,7 @@ void ColorSegmentation::ComputeClassWeights()
 				certainty = s_plane_dist / ( s_plane_dist + fabs(b_plane_dist) );
 				//certainty = 0.0;
 			}
+			*/
 		}
 
 		float bkgrnd_wt = 1 - certainty;
@@ -397,17 +404,35 @@ void ColorSegmentation::ComputeClassWeights()
 		case BKGD_FIELD:
 			break;
 		case RED_CELL:
-			iterator1.Set((unsigned char)((certainty)*255));
+			iterator1.Set(certainty);
 			//iterator1.Set(255);
 			break;
 		case BLUE_CELL:
-			iterator2.Set((unsigned char)((certainty)*255));
+			iterator2.Set(certainty);
 			//iterator2.Set(255);
 			break;
 		default:
 			std::cerr << "  INVALID PIXEL CLASS" << std::endl;
 		}
 	}
+
+	//Rescale weights:
+	typedef itk::RescaleIntensityImageFilter< FloatImageType, UcharImageType > RescaleFlUcType;
+	RescaleFlUcType::Pointer rescaleRed = RescaleFlUcType::New();
+	RescaleFlUcType::Pointer rescaleBlue = RescaleFlUcType::New();
+
+	rescaleRed->SetOutputMaximum( 255 );
+	rescaleRed->SetOutputMinimum( 0 );
+	rescaleBlue->SetOutputMaximum( 255 );
+	rescaleBlue->SetOutputMinimum( 0 );
+
+	rescaleRed->SetInput( red_weights_temp );
+	rescaleRed->Update();
+	red_weights = rescaleRed->GetOutput();
+
+	rescaleBlue->SetInput( blue_weights_temp );
+	rescaleBlue->Update();
+	blue_weights = rescaleBlue->GetOutput();
 
 	if(TESTING)
 	{

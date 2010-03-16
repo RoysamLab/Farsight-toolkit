@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 	col_bin->SetGenerateProjections(true);
 
 	col_bin->TransformToRLI();
-	col_bin->ComputeBinary(3,2);
+	col_bin->ComputeBinary(2,1);
 	col_bin->FindArchetypalColors();
 	//col_bin->SetArchetypalColors(dh::_RGB(185,110,96), dh::_RGB(45,45,165), dh::_RGB(175,175,175));
 	col_bin->ComputeClassWeights();
