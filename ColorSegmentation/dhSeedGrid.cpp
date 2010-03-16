@@ -18,23 +18,23 @@ SeedGrid::SeedGrid( Histogram * h_in, bool light_bkd, int sample_dist_in )
 	g = grid_array.a;
 		
 	// Fill Grid
-	std::cout << "Filling grid..." << std::endl;
+	std::cout << "    Filling grid..." << std::endl;
 	int i, j, k, ip, jp, kp, hi, hj, hk;
 			
 	for (i=0, ip=-(size-1)/2; i<size; i++, ip++)
 	{ 
 		hi = h->mode[0] + ip*sample_dist;
-		if ( hi >= h->rmin && hi <= h->rmax )
+		if ( hi >= h->d1min && hi <= h->d1max )
 		{ 
 			for (j=0, jp=-(size-1)/2; j<size; j++, jp++)
 			   { 
 				hj = h->mode[1] + jp*sample_dist;
-			       if ( hj >= h->gmin && hj <= h->gmax )
+			       if ( hj >= h->d3min && hj <= h->d3max )
 				   { 
 					for (k=0, kp=-(size-1)/2; k<size; k++, kp++)
 				       { 
 						hk = h->mode[2] + kp*sample_dist;
-			               if ( hk >= h->bmin && hk <= h->bmax
+			               if ( hk >= h->d2min && hk <= h->d2max
 							// Point is darker than backgound
 							 && (!light_bkd || hk <= h->mode[2]) )
 						{ 
@@ -47,7 +47,7 @@ SeedGrid::SeedGrid( Histogram * h_in, bool light_bkd, int sample_dist_in )
 		} // end if hi
 	} // end for i
 			
-	std::cout << "Finding Surface..." << std::endl;
+	std::cout << "    Finding Surface..." << std::endl;
 	// Find Surface of sampled blob, fill list
 	//int num_list_points = 0;
 	for (i=1; i<size-1; i++)
@@ -77,10 +77,10 @@ SeedGrid::SeedGrid( Histogram * h_in, bool light_bkd, int sample_dist_in )
 		
 void SeedGrid::find_seeds( _RGB& clr1, _RGB& clr2, _RGB& bkgnd )
 { 
-	std::cout << "Finding seeds..." << std::endl;
+	std::cout << "    Finding seeds..." << std::endl;
 	if (s.empty())
 	{ 
-		std::cerr<<"No surface for seeds!!!!\n";
+		std::cerr<<"    No surface for seeds!!!!\n";
 	}
 
 	double best_val = -1E100;
@@ -115,7 +115,7 @@ void SeedGrid::find_seeds( _RGB& clr1, _RGB& clr2, _RGB& bkgnd )
 //Pass in the seeds and it will change them into most distinct!! 
 void SeedGrid::find_most_distinct_colors(_RGB& a1, _RGB& a2, _RGB& bkgrnd)
 {
-	std::cout << "Finding most distinct colors..." << std::endl;
+	std::cout << "    Finding most distinct colors..." << std::endl;
 
 	const int max_res = 15;   // MAGIC NUMBER !!! 
 	double res[max_res+1];
@@ -157,11 +157,11 @@ void SeedGrid::go_best_dir(_RGB& ma, bool& moved, const _RGB& sa, const _RGB& bk
 	
 	if ( r % res != 0 )
 	{ 
-		std::cerr<<"go_best_dir: r % res != 0 may cause instability!"; 
+		std::cerr<<"    go_best_dir: r % res != 0 may cause instability!" << std::endl; 
 	}
 	if ( r <= 0 || res <=0 || res > r )
 	{ 
-		std::cerr<<"go_best_dir: Invalid parameters: r=" << r << " res=" << res;
+		std::cerr<<"    go_best_dir: Invalid parameters: r=" << r << " res=" << res << std::endl;
 	}
 
 	for ( x = -r; x <= r; x+= res )
@@ -171,7 +171,7 @@ void SeedGrid::go_best_dir(_RGB& ma, bool& moved, const _RGB& sa, const _RGB& bk
 			for ( z = -r; z <= r; z+= res )
 			{
 				if ( // Point is inside blob                 v Blob Edge Threshold
-			        h->v(ma.R+x, ma.G+y, ma.B+z, true ) > 0
+			        h->v(ma.R+x, ma.G+y, ma.B+z) > 0
 					  // and point is darker than background on each axis
 				//	  && ma.R+x < at.bkgrnd.R
 				//	  && ma.G+y < at.bkgrnd.G 
@@ -202,7 +202,7 @@ void SeedGrid::go_best_dir(_RGB& ma, bool& moved, const _RGB& sa, const _RGB& bk
 	}
 	else
 	{ 
-		std::cerr<<"Optimization Algorithm Failure: point is outside blob!!!\n"; 
+		std::cerr<<"    Optimization Algorithm Failure: point is outside blob!!!\n"; 
 	}
 
 	moved = ( best_dR == 0 || best_dG == 0 || best_dB == 0 ) ? false : true;

@@ -4,31 +4,43 @@ namespace dh
 {
 
 Histogram::Histogram(int inc_scale_in) 
-	:max_freq(0), 
-	inc_scale(inc_scale_in), 
-	rmax(histSize-2), rmin(1), 
-	gmax(histSize-2), gmin(1), 
-	bmax(histSize-2), bmin(1), 
-	histogram_array(histSize, histSize, histSize),
-	processing_array(histSize, histSize, histSize, 0)
+: inc_scale(inc_scale_in) 
 {
-		mode[0] = 0;
-		mode[1] = 0;
-		mode[2] = 0;
-		a = histogram_array.a;
-		sa = processing_array.a;
+	mode[0] = 0;
+	mode[1] = 0;
+	mode[2] = 0;
+	max_freq = 0;
+
+	//Used in find bounding box and smoothing:
+	d1min = 1;
+	d2min = 1;
+	d3min = 1;
+	d1max = histSize-2;
+	d2max = histSize-2;
+	d3max = histSize-2;
+
+	histImage = HistImageType::New();
+	HistImageType::PointType origin;
+	origin[0] = 0;
+	origin[1] = 0;
+	origin[2] = 0;
+	histImage->SetOrigin( origin ); 
+
+	HistImageType::IndexType start = { 0,0,0 };
+	HistImageType::SizeType  size = { histSize, histSize, histSize };
+	HistImageType::RegionType region;
+	region.SetSize( size );
+	region.SetIndex( start );
+	histImage->SetRegions( region );           
+	histImage->Allocate();        
+	histImage->FillBuffer(0);             
+	histImage->Update();
 }
 
-bool Histogram::check_bounds(int d1, int d2, int d3, bool suppress_warning) const
+bool Histogram::check_bounds(int d1, int d2, int d3) const
 {
-	if ( d1 < 0 || d1 >= histSize
-		  || d2 < 0 || d2 >= histSize
-		  || d3 < 0 || d3 >= histSize )
+	if ( d1 < 0 || d1 >= histSize || d2 < 0 || d2 >= histSize || d3 < 0 || d3 >= histSize )
 	{ 
-		if(!suppress_warning)
-		{ 
-			std::cout << "The histogram coordinates (" << d1 << ", " << d2 << ", " << d3 << ") are invalid!!" << std::endl; 
-		}
 		return false;
 	}	
 	else
@@ -38,20 +50,24 @@ bool Histogram::check_bounds(int d1, int d2, int d3, bool suppress_warning) cons
 }
 
 //Get the count at d1,d2,d3
-long int Histogram::v(int d1, int d2, int d3, bool suppress_warning) const
+Histogram::PixelType Histogram::v(int d1, int d2, int d3) const
 { 
-	if(check_bounds(d1,d2,d3,suppress_warning))
+	if(check_bounds(d1,d2,d3))
 	{ 
-		return a[d1][d2][d3]; 
+		HistImageType::IndexType index = { d1, d2, d3 };
+		return histImage->GetPixel(index);
+		//return a[d1][d2][d3]; 
 	}
 	return 0;
 }
 
-void Histogram::set(int d1, int d2, int d3, long int val)
+void Histogram::set(int d1, int d2, int d3, PixelType val)
 {
 	if(check_bounds(d1,d2,d3))
 	{
-		a[d1][d2][d3] = val; 
+		HistImageType::IndexType index = { d1, d2, d3 };
+		histImage->SetPixel(index, val);
+		//a[d1][d2][d3] = val; 
 	}	
 }
 
@@ -60,13 +76,17 @@ void Histogram::inc_element(int d1, int d2, int d3)
 { 
 	if(check_bounds(d1,d2,d3))
 	{
-		if ( a[d1][d2][d3] == 65535 )
+		HistImageType::IndexType index = { d1, d2, d3 };
+		PixelType val = histImage->GetPixel(index);
+		//if ( a[d1][d2][d3] >= LONG_MAX )
+		if( val >= LONG_MAX )
 		{ 
 			std::cerr<<"Histogram increment overflow!!!"; 
 		}
 		else
 		{ 
-			a[d1][d2][d3] += inc_scale; 
+			histImage->SetPixel(index, val+inc_scale);
+			//a[d1][d2][d3] += inc_scale; 
 		}
 	}
 }
@@ -75,12 +95,12 @@ void Histogram::projection_extrema(int dir, long int &max, long int &min)
 {
 	max = 0;
 	min = LONG_MAX;
-	int da,db;
-	FOR_AXIS(da)
+	int a, b;
+	FOR_AXIS(a)
 	{ 
-		FOR_AXIS(db)
+		FOR_AXIS(b)
 		{
-			long int cnt = proj_at(dir,da,db);
+			long int cnt = proj_at(dir,a,b);
 			cnt > max ? max = cnt : max = max;
 			cnt < min ? min = cnt : min = min;
 		}
@@ -90,27 +110,36 @@ void Histogram::projection_extrema(int dir, long int &max, long int &min)
 long int Histogram::proj_at(int dir, int da, int db)
 {
 	long int total = 0;
-	int d;
-	switch(dir)
+
+	HistImageType::IndexType start = { 0, 0, 0 };
+	HistImageType::SizeType  size = { 1, 1, 1 };
+	if(dir == 1)
 	{
-	case 1:
-		FOR_AXIS(d)
-		{ 
-			total += a[d][da][db];
-		}
-		break;
-	case 2:
-		FOR_AXIS(d)
-		{ 
-			total += a[da][d][db];
-		}
-		break;
-	case 3:
-		FOR_AXIS(d)
-		{ 
-			total += a[da][db][d];
-		}
-		break;
+		size[0] = histSize;
+		start[1] = da;
+		start[2] = db;
+	}
+	else if(dir == 2)
+	{
+		start[0] = da;
+		size[1] = histSize;
+		start[2] = db;
+	}
+	else if(dir == 3)
+	{
+		start[0] = da;
+		start[1] = db;
+		size[2] = histSize;
+	}
+	HistImageType::RegionType region;
+	region.SetSize( size );
+	region.SetIndex( start );
+
+	typedef itk::ImageRegionIterator< HistImageType > IteratorType;
+	IteratorType iterator( histImage, region );
+	for( iterator.GoToBegin(); !iterator.IsAtEnd(); ++iterator )
+	{
+		total += iterator.Get();
 	}
 	return(total);
 }
@@ -131,199 +160,47 @@ void Histogram::smooth()
 							{ 3, 4, 3 } } };
 
 	const int sk_sum = 120;
-	int i, j, k, x, y, ixp, jyp;
-	long sum;
    
-	processing_array.clear_to(0);
+	std::cerr << "  Smoothing...";
+
+	Array3D processing_array(histSize, histSize, histSize, 1, 0);
+	long int ***sa = processing_array.a;
 
 	//-------------------------------------------------------------------
-	for ( i = rmin; i <= rmax; i++ )
-	 { //std::cout << "." << flush;
-	   for ( j = gmin; j <= gmax; j++ )
-		 { for ( k = bmin; k < bmax; k++ )
-			 { sum = 0;
-			   for ( x = 0; x < 3; x++ )
-				 { ixp = i + x - 1;
-				   for ( y = 0; y < 3; y++ )
-					 { jyp = j + y - 1;
-					   //for ( z = 0; z < 3; z++ )
-						// { sum += sk[x][y][z] *
-						//			 a[ixp][jyp][k+z-1];
-						// }
-						sum +=
-						     sk[x][y][0] * a[ixp][jyp][k-1]
-							+ sk[x][y][1] * a[ixp][jyp][k]
-							+ sk[x][y][2] * a[ixp][jyp][k+1];
-					 }
-				 }
-			   sa[i][j][k] = sum / sk_sum;
-			 }
-		 }
-	 }
-   std::cout << std::endl;
-  
-   FOR_AXIS(i)
-	 { FOR_AXIS(j)
-		 { FOR_AXIS(k)
-			 { a[i][j][k] = sa[i][j][k];
-			   if ( a[i][j][k] > max_freq )
-				 { 
-					 max_freq = a[i][j][k];
-				   //mode = _RGB(i, j, k);
-					 mode[0] = i;
-					 mode[1] = j;
-					 mode[2] = k;
-				 }
-			 }
-		 }
-	 }
-}
- 
-void Histogram::find_bounding_box()
- { 
-   std::cout << "Finding bounding box..." << std::endl;
-	
-	int i, j, k;
-	const int minhits1 = 24;    // MAGIC NUMBER
-	const int minhits2 = 24;    // MAGIC NUMBER
-	const int minhits3 = 16;    // MAGIC NUMBER
-	//-------------------------------------------------------------------
-	// Efficiency trick: find 3-D bounding box for i, j, k such that
-	// there are at least minhits hits in each dimention
-	// Do red, then blue, then green.
-   //Find rmin
-	int th = 0;
-	for( i = 1; i < histSize-1; i++ )
-	 { for ( j = 1; j < histSize-1; j++ )
-	    { for ( k = 1; k < histSize-1; k++ )
-          { if(a[i][j][k])
-			    { th += a[i][j][k];
-				   if( th > minhits1 ) goto rmindone;
-				 }
-			 }
-		 }
-	 }
-	rmindone:
-	rmin = max( i-1, 1 );
-	// Find rmax
-	th = 0;
-	for( i = histSize-2; i > 0; i-- )
-	 { for ( j = 1; j < histSize-1; j++ )
-	    { for ( k = 1; k < histSize-1; k++ )
-          { if(a[i][j][k])
-			    { th += a[i][j][k];
-				   if( th > minhits1 ) goto rmaxdone;
-				 }
-			 }
-		 }
-	 }
-	rmaxdone:
-	rmax = min( i+1, histSize-2 );
-
-	// Find bmin
-	th = 0;
-	for( k = 1; k < histSize-1; k++ )
-	 { for ( i = rmin; i <= rmax; i++ )
-	    { for ( j = 1; j < histSize-1; j++ )
-          { if(a[i][j][k])
-			    { th += a[i][j][k];
-				   if( th > minhits2 ) goto bmindone;
-				 }
-			 }
-		 }
-	 }
-	bmindone:
-	bmin = max( k-1, 1 );
-
-	// Find bmax
-	th = 0;
-	for( k = histSize-2; k > 0; k-- )
-	 { for ( i = rmin; i <= rmax; i++ )
-	    { for ( j = 1; j < histSize-1; j++ )
-          { if(a[i][j][k])
-			    { th += a[i][j][k];
-				   if( th > minhits2 ) goto bmaxdone;
-				 }
-			 }
-		 }
-	 }
-	bmaxdone:
-	bmax = min( k+1, histSize-2 );
-
-	// Find gmin
-	th = 0;
-	for( j = 1; j < histSize-1; j++ )
-	 { for ( i = rmin; i <= rmax; i++ )
-	    { for ( k = bmin; k <= bmax; k++ )
-          { if(a[i][j][k])
-			    { th += a[i][j][k];
-				   if( th > minhits3 ) goto gmindone;
-				 }
-			 }
-		 }
-	 }
-	gmindone:
-	gmin = max( j-1, 1 );
-
-	// Find jmax
-	th = 0;
-	for( j = histSize-2; j > 0; j-- )
-	 { for ( i = rmin; i <= rmax; i++ )
-	    { for ( k = bmin; k <= bmax; k++ )
-          { if(a[i][j][k])
-			    { th += a[i][j][k];
-				   if( th > minhits3 ) goto gmaxdone;
-				 }
-			 }
-		 }
-	 }
-	gmaxdone:
-	gmax = min( j+1, histSize-2 );
- }
-
-void Histogram::dump()
-{ 
-	int i, j, k;
-	char inp[20];
-	int planeinc = 1;
-	for ( i = 0; i < histSize; i += planeinc )
+	for ( int i = d1min; i <= d1max; i++ )
 	{ 
-		for ( j = histSize-1; j >= 0; j-- )
+		//std::cout << "." << flush;
+		for ( int j = d2min; j <= d2max; j++ )
 		{ 
-			std::cout << std::endl;
-			FOR_AXIS(k)
+			for ( int k = d3min; k < d3max; k++ )
 			{ 
-				if (a[i][j][k] == 0)
-			    { 
-					std::cout << "."; 
-				}
-				else
+				//*************
+				long int sum = 0;
+				for ( int x = 0; x < 3; x++ )
 				{ 
-					int n = (int)floor( (double)log( (double)a[i][j][k] ) / (double)log((double)2) );
-					if ( n>=0 && n<=9 )
-					{ std::cout << n; }
-					else
-					{ std::cout << '#'; }
+					int ixp = i + x - 1;
+					for ( int y = 0; y < 3; y++ )
+					{ 
+						int jyp = j + y - 1;
+						for ( int z = 0; z < 3; z++ )
+						{
+							int kzp = k + z - 1;
+							HistImageType::IndexType index = { ixp, jyp, kzp };
+							long int val = histImage->GetPixel(index);
+							sum += sk[x][y][z] * val;
+						}
+						//sum +=
+						//     sk[x][y][0] * a[ixp][jyp][k-1]
+						//	+ sk[x][y][1] * a[ixp][jyp][k]
+						//	+ sk[x][y][2] * a[ixp][jyp][k+1];
+					}
 				}
+				sa[i][j][k] = sum / sk_sum;
+				//***************
 			}
 		}
-		std::cout << std::endl << "PLANE RED = " << i << "  ";
-		std::cin >> inp;
-		if ( strlen(inp) != 0 )
-		{ planeinc = atoi( inp ); }
 	}
-}
-
-void Histogram::delete_secondary_blobs()
-{ 
-	// This will remove all parts of the histogram that are not
-	// 6-connected (in 3-d) with the blob containing the mode.
-
-	std::cout << "Removing secondary blobs..." << std::endl;
 	
-	processing_array.clear_to(0);	
-	mark_point_and_nbrs(mode[0], mode[1], mode[2]);
-
 	int i, j, k;
 	FOR_AXIS(i)
 	{ 
@@ -331,28 +208,201 @@ void Histogram::delete_secondary_blobs()
 		{ 
 			FOR_AXIS(k)
 			{ 
-				if (sa[i][j][k] == 0)
+				HistImageType::IndexType index = { i, j, k };
+				histImage->SetPixel(index, sa[i][j][k]);
+				//a[i][j][k] = sa[i][j][k];
+				if ( sa[i][j][k] > max_freq )
 				{ 
-					a[i][j][k] = 0; 
+					max_freq = sa[i][j][k];
+				   //mode = _RGB(i, j, k);
+					mode[0] = i;
+					mode[1] = j;
+					mode[2] = k;
 				}
+			}
+		}
+	}
+
+	std::cerr << "...Done" << std::endl;
+
+}
+ 
+void Histogram::find_bounding_box()
+{ 
+	std::cout << "  Finding bounding box...";
+	
+	const int minhits1 = 24;    // MAGIC NUMBER (d1)
+	const int minhits2 = 24;    // MAGIC NUMBER (d3)
+	const int minhits3 = 16;    // MAGIC NUMBER (d2)
+
+	//-------------------------------------------------------------------
+	// Efficiency trick: find 3-D bounding box for i, j, k such that
+	// there are at least minhits hits in each dimention
+	// Do red, then blue, then green.
+	
+	//Find d1min
+	int th = 0;
+	int i, j, k;
+	for( i = 1; i < histSize-1; i++ )
+	{ for ( j = 1; j < histSize-1; j++ )
+	  { for ( k = 1; k < histSize-1; k++ )
+        { 
+			HistImageType::IndexType index = { i, j, k };
+			long int val = histImage->GetPixel(index);
+			if(val)
+			{ 
+				th += val;
+				if( th > minhits1 ) 
+					goto d1mindone;
+		    }
+	    }
+	  }
+	}
+	d1mindone:
+	d1min = max( i-1, 1 );
+
+	// Find d1max
+	th = 0;
+	for( i = histSize-2; i > 0; i-- )
+	{ for ( j = 1; j < histSize-1; j++ )
+	  { for ( k = 1; k < histSize-1; k++ )
+        { 
+			HistImageType::IndexType index = { i, j, k };
+			long int val = histImage->GetPixel(index);
+			if(val)
+			{ 
+				th += val;
+				if( th > minhits1 ) 
+					goto d1maxdone;
+			}
+	    }
+	  }
+	}
+	d1maxdone:
+	d1max = min( i+1, histSize-2 );
+
+	// Find d3min
+	th = 0;
+	for( k = 1; k < histSize-1; k++ )
+	{ for ( i = d1min; i <= d1max; i++ )
+	  { for ( j = 1; j < histSize-1; j++ )
+        { 
+			HistImageType::IndexType index = { i, j, k };
+			long int val = histImage->GetPixel(index);
+			if(val)
+			{ 
+				th += val;
+				if( th > minhits2 ) 
+					goto d3mindone;
+			}
+	    }
+	  }
+	}
+	d3mindone:
+	d3min = max( k-1, 1 );
+
+	// Find d3max
+	th = 0;
+	for( k = histSize-2; k > 0; k-- )
+	{ for ( i = d1min; i <= d1max; i++ )
+	  { for ( j = 1; j < histSize-1; j++ )
+        { 
+			HistImageType::IndexType index = { i, j, k };
+			long int val = histImage->GetPixel(index);
+			if(val)
+			{ 
+				th += val;
+				if( th > minhits2 ) 
+					goto d3maxdone;
+			}
+	    }
+	  }
+	}
+	d3maxdone:
+	d3max = min( k+1, histSize-2 );
+
+	// Find d2min
+	th = 0;
+	for( j = 1; j < histSize-1; j++ )
+	{ for ( i = d1min; i <= d1max; i++ )
+	  { for ( k = d3min; k <= d3max; k++ )
+        { 
+			HistImageType::IndexType index = { i, j, k };
+			long int val = histImage->GetPixel(index);
+			if(val)
+			{ 
+				th += val;
+				if( th > minhits3 ) 
+					goto d2mindone;
+			}
+		}
+      }
+	}
+	d2mindone:
+	d2min = max( j-1, 1 );
+
+	// Find d2max
+	th = 0;
+	for( j = histSize-2; j > 0; j-- )
+	{ for ( i = d1min; i <= d1max; i++ )
+	  { for ( k = d3min; k <= d3max; k++ )
+        { 
+			HistImageType::IndexType index = { i, j, k };
+			long int val = histImage->GetPixel(index);
+			if(val)
+			{ 
+				th += val;
+				if( th > minhits3 ) 
+					goto d2maxdone;
+				 }
 			 }
 		 }
 	 }
- }
+	d2maxdone:
+	d2max = min( j+1, histSize-2 );
 
-void Histogram::mark_point_and_nbrs(int d1, int d2, int d3)
+	std::cout << "...Done" << std::endl;
+}
+
+void Histogram::delete_secondary_blobs()
 { 
-	if ( sa[d1][d2][d3] == 0 && a[d1][d2][d3] > 0 )
-    { 
-		sa[d1][d2][d3] = 1;
-	   
-		mark_point_and_nbrs(d1+1, d2, d3);
-		mark_point_and_nbrs(d1-1, d2, d3);
-		mark_point_and_nbrs(d1, d2+1, d3);
-		mark_point_and_nbrs(d1, d2-1, d3);
-		mark_point_and_nbrs(d1, d2, d3+1);
-		mark_point_and_nbrs(d1, d2, d3-1);
+	// This will remove all parts of the histogram that are not
+	// 6-connected (in 3-d) with the blob containing the mode.
+
+	std::cout << "  Removing secondary blobs...";
+	
+	//Find connected component image:
+	typedef itk::ConnectedComponentImageFilter< HistImageType, HistImageType > CCFilterType;
+	CCFilterType::Pointer ccfilter = CCFilterType::New();
+	ccfilter->SetInput(histImage);
+	try
+	{
+		ccfilter->Update();
 	}
+	catch( itk::ExceptionObject & excep )
+    {
+		std::cerr << "    Connected Components: exception caught !" << std::endl;
+		std::cerr << excep << std::endl;
+		return;
+    }
+
+	HistImageType::Pointer ccImage = ccfilter->GetOutput();
+
+	//Get ID of the object containing the mode:
+	HistImageType::IndexType index = { mode[0], mode[1], mode[2] };
+	unsigned char id = ccImage->GetPixel(index);
+
+	//Set the histogram count to 0 for all colors not in the main object:
+	typedef itk::ImageRegionIterator< HistImageType > IteratorType;
+	IteratorType histIterator( histImage, histImage->GetRequestedRegion() );
+	IteratorType ccIterator( ccImage, ccImage->GetRequestedRegion() );
+	for( histIterator.GoToBegin(), ccIterator.GoToBegin(); !histIterator.IsAtEnd(); ++histIterator, ++ccIterator )
+	{
+		if(ccIterator.Get() != id)
+			histIterator.Set(0);
+	}
+
+	std::cout << "...Done" << std::endl;
 }
 	
 //*****************************************************************

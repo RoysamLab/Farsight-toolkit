@@ -24,6 +24,8 @@ void ColorSegmentation::TransformToRLI()
 	if(!rgb_input)
 		return;
 
+	std::cerr << "Transforming to RLI...";
+
 	int size1 = rgb_input->GetLargestPossibleRegion().GetSize()[0];
 	int size2 = rgb_input->GetLargestPossibleRegion().GetSize()[1];
 	int size3 = rgb_input->GetLargestPossibleRegion().GetSize()[2];
@@ -77,6 +79,8 @@ void ColorSegmentation::TransformToRLI()
 		writer->SetInput( rli_image );
 		writer->Update();
 	}
+
+	std::cerr << "...Done" << std::endl;
 }
 
 void ColorSegmentation::SetArchetypalColors(dh::RLI r, dh::RLI b, dh::RLI w)
@@ -101,6 +105,8 @@ void ColorSegmentation::FindArchetypalColors()
 	if(!rli_image)
 		return;
 
+	std::cerr << "Finding Archetypal Colors..." << std::endl;
+
 	// ========== Create 3D Histogram =========
 	if(hist)
 		delete hist;
@@ -119,7 +125,7 @@ void ColorSegmentation::FindArchetypalColors()
 	hist->smooth();
 	hist->delete_secondary_blobs();
 
-	std::cout << "Mode " << hist->modeAsRLI() << " has max frequency " << hist->max_freq << std::endl;
+	std::cout << "  Mode " << hist->modeAsRLI() << " has max frequency " << hist->max_freq << std::endl;
 
 	//===================================================================
 	// =========== Find Color Archetypes ================================
@@ -130,9 +136,9 @@ void ColorSegmentation::FindArchetypalColors()
 
 	seed_grid.find_seeds( a1, a2, bkgrnd );
 
-	std::cout << " Seed1 = " << a1.mapRGBtoRLI() << std::endl;
-	std::cout << " Seed2 = " << a2.mapRGBtoRLI() << std::endl;
-	std::cout << " Bgrnd = " << bkgrnd.mapRGBtoRLI() << std::endl;
+	std::cout << "  Seed1 = " << a1.mapRGBtoRLI() << std::endl;
+	std::cout << "  Seed2 = " << a2.mapRGBtoRLI() << std::endl;
+	std::cout << "  Bgrnd = " << bkgrnd.mapRGBtoRLI() << std::endl;
 
 	seed_grid.find_most_distinct_colors( a1, a2, bkgrnd );
 
@@ -149,18 +155,22 @@ void ColorSegmentation::FindArchetypalColors()
  
 	archTypBACK = bkgrnd.mapRGBtoRLI();
 
-	std::cout << "FOUND ARCHETYPES: " << std::endl;
-	std::cout << " RED =        " << archTypRED << std::endl;
-	std::cout << " BLUE =       " << archTypBLUE << std::endl;
-	std::cout << " BACKGROUND = " << archTypBACK << std::endl;
+	std::cout << "  FOUND ARCHETYPES: " << std::endl;
+	std::cout << "   RED =        " << archTypRED << std::endl;
+	std::cout << "   BLUE =       " << archTypBLUE << std::endl;
+	std::cout << "   BACKGROUND = " << archTypBACK << std::endl;
+
+	std::cerr << "...Done" << std::endl;
 }
 
 void ColorSegmentation::ComputeClassWeights()
 { 
-	std::cout << "USING ARCHETYPES: " << std::endl;
-	std::cout << " RED =        " << archTypRED << std::endl;
-	std::cout << " BLUE =       " << archTypBLUE << std::endl;
-	std::cout << " BACKGROUND = " << archTypBACK << std::endl;
+	std::cerr << "Computing Weight Images..." << std::endl;
+
+	std::cout << "  USING ARCHETYPES: " << std::endl;
+	std::cout << "   RED =        " << archTypRED << std::endl;
+	std::cout << "   BLUE =       " << archTypBLUE << std::endl;
+	std::cout << "   BACKGROUND = " << archTypBACK << std::endl;
 
 	if(TESTING)
 	{
@@ -170,7 +180,7 @@ void ColorSegmentation::ComputeClassWeights()
 	
 	if(GEN_PROJ)
 	{
-		std::cout << "GENERATING PROJECTION IMAGES" << std::endl;
+		std::cout << "  GENERATING PROJECTION IMAGES" << std::endl;
 		this->GenerateProjection(1, "projLIs.tif");
 		this->GenerateProjection(2, "projRIs.tif");
 		this->GenerateProjection(3, "projRLs.tif");
@@ -214,19 +224,19 @@ void ColorSegmentation::ComputeClassWeights()
 
 	if(TESTING)
 	{ 
-		std::cerr << "Distance between red & blue: "
+		std::cerr << "  Distance between red & blue: "
 				  << R_B_axis_len << std::endl
-			      << "Distance between bkgrnd & blue: "
+			      << "  Distance between bkgrnd & blue: "
 				  << Y_B_axis_len << std::endl
-			      << "Distance between bkgrnd & red: "
+			      << "  Distance between bkgrnd & red: "
 				  << Y_R_axis_len << std::endl;
 
 		std::cerr //<< "split_point: " << split_point << std::endl
 				//<< "decision_plane: " << decision_plane << std::endl
-				<< "red_sp_dist: " << red_sp_dist << std::endl
-				<< "blue_sp_dist: " << blue_sp_dist << std::endl;
+				<< "  red_sp_dist: " << red_sp_dist << std::endl
+				<< "  blue_sp_dist: " << blue_sp_dist << std::endl;
   
-		std::cerr << "Using slide_wt: " << slide_wt << std::endl;
+		std::cerr << "  Using slide_wt: " << slide_wt << std::endl;
 	}
 
 	//------------------------------------------------
@@ -306,7 +316,7 @@ void ColorSegmentation::ComputeClassWeights()
 			else
 			{
 				certainty = s_plane_dist / ( s_plane_dist + fabs(r_plane_dist) );
-				//certainty = 1.0;
+				//certainty = 0.25;
 			}
 		}
 		else
@@ -323,7 +333,7 @@ void ColorSegmentation::ComputeClassWeights()
 			{
 				s_plane_dist = - s_plane_dist;
 				certainty = s_plane_dist / ( s_plane_dist + fabs(b_plane_dist) );
-				//certainty = 1.0;
+				//certainty = 0.0;
 			}
 		}
 
@@ -395,7 +405,7 @@ void ColorSegmentation::ComputeClassWeights()
 			//iterator2.Set(255);
 			break;
 		default:
-			std::cerr << "INVALID PIXEL CLASS" << std::endl;
+			std::cerr << "  INVALID PIXEL CLASS" << std::endl;
 		}
 	}
 
@@ -411,6 +421,8 @@ void ColorSegmentation::ComputeClassWeights()
 		writer1->SetInput( blue_weights );
 		writer1->Update();
 	}
+
+	std::cerr << "...Done" << std::endl;
 	
 }
 
@@ -450,10 +462,10 @@ void ColorSegmentation::GenerateColors(dh::_RGB c1, dh::_RGB c2, dh::_RGB c3, st
 	colorImage->FillBuffer(p_rgb);         
 	colorImage->Update();
 
-	std::cout << "GENERATING COLORS IMAGE: " << std::endl;
-	std::cout << " RED =        " << c2 << std::endl;
-	std::cout << " BLUE =       " << c3 << std::endl;
-	std::cout << " BACKGROUND = " << c1 << std::endl;
+	std::cout << "  GENERATING COLORS IMAGE: " << std::endl;
+	std::cout << "   RED =        " << c2 << std::endl;
+	std::cout << "   BLUE =       " << c3 << std::endl;
+	std::cout << "   BACKGROUND = " << c1 << std::endl;
 
 	RGBPixelType red_rgb;
 	red_rgb[0] = c2.R;
@@ -618,6 +630,8 @@ void ColorSegmentation::ComputeBinary(int num_bins, int num_in_fg, bool fgrnd_da
 	if(!rgb_input)
 		return;
 
+	std::cerr << "Creating Binary Image...";
+
 	typedef itk::RGBToLuminanceImageFilter< RGBImageType, UcharImageType > ConvertFilterType;
 	ConvertFilterType::Pointer convert = ConvertFilterType::New();
 	convert->SetInput( rgb_input );
@@ -629,16 +643,35 @@ void ColorSegmentation::ComputeBinary(int num_bins, int num_in_fg, bool fgrnd_da
 	typedef itk::Statistics::ScalarImageToHistogramGenerator< UcharImageType > HistogramGeneratorType;
 	typedef HistogramGeneratorType::HistogramType HistogramType;
 	HistogramGeneratorType::Pointer histoGenerator = HistogramGeneratorType::New();
-	histoGenerator->SetNumberOfBins( 128 );
+	histoGenerator->SetNumberOfBins( 256 );
 	histoGenerator->SetInput( intensity_image );
-	histoGenerator->Compute();
+	try
+	{
+		histoGenerator->Compute();
+	}
+	catch( itk::ExceptionObject & excep )
+    {
+		std::cerr << "    Histogram Computation: exception caught !" << std::endl;
+		std::cerr << excep << std::endl;
+		return;
+    }
+	
 
 	//Estimate thresholds:
 	typedef itk::OtsuMultipleThresholdsCalculator< HistogramType > CalculatorType;
 	CalculatorType::Pointer calculator = CalculatorType::New();
 	calculator->SetNumberOfThresholds( num_bins );
 	calculator->SetInputHistogram( histoGenerator->GetOutput() );
-	calculator->Update();
+	try
+	{
+		calculator->Update();
+	}
+	catch( itk::ExceptionObject & excep )
+    {
+		std::cerr << "    Otsu Computation: exception caught !" << std::endl;
+		std::cerr << excep << std::endl;
+		return;
+    }
 
 	const CalculatorType::OutputType &thresholdVector = calculator->GetOutput();
 
@@ -661,6 +694,8 @@ void ColorSegmentation::ComputeBinary(int num_bins, int num_in_fg, bool fgrnd_da
 		upperThreshold = itk::NumericTraits<unsigned char>::max();
 	}
 
+	std::cerr << "Binarization Thresholds: " << lowerThreshold << "  " << upperThreshold << std::endl;
+
 	typedef itk::BinaryThresholdImageFilter< UcharImageType, UcharImageType >  ThreshFilterType;
 	ThreshFilterType::Pointer threshfilter = ThreshFilterType::New();
 	threshfilter->SetOutsideValue( 0 );
@@ -668,7 +703,16 @@ void ColorSegmentation::ComputeBinary(int num_bins, int num_in_fg, bool fgrnd_da
 	threshfilter->SetInput( intensity_image );
 	threshfilter->SetLowerThreshold( lowerThreshold );
 	threshfilter->SetUpperThreshold( upperThreshold );
-	threshfilter->Update();
+	try
+	{
+		threshfilter->Update();
+	}
+	catch( itk::ExceptionObject & excep )
+    {
+		std::cerr << "    Threshold: exception caught !" << std::endl;
+		std::cerr << excep << std::endl;
+		return;
+    }
 
 	bin_image = threshfilter->GetOutput();
 
@@ -680,4 +724,6 @@ void ColorSegmentation::ComputeBinary(int num_bins, int num_in_fg, bool fgrnd_da
 		writer->SetInput( bin_image );
 		writer->Update();
 	}
+
+	std::cerr << "...Done" << std::endl;
 }

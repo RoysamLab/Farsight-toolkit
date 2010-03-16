@@ -7,12 +7,14 @@
 #include <math.h>
 #include <limits.h>
 
+#include "itkImage.h"
+#include "itkImageRegionIterator.h"
+#include "itkConnectedComponentImageFilter.h"
+
 #include "dhColors.h"
 
 namespace dh
 {
-
-
 
 static const int histSize = 256;
 #define FOR_AXIS(X) for ( X = 0; X < histSize; X++ )
@@ -37,13 +39,14 @@ public:
 class Histogram
 {	
 public:
+	typedef long int PixelType;
+	typedef itk::Image< PixelType, 3> HistImageType;
+
 	int max_freq;
 	long int mode[3];
 	const int inc_scale;
 		
-	int rmax, rmin,
-		gmax, gmin,
-		bmax, bmin;
+	int d1max, d1min, d2max, d2min, d3max, d3min;	//These are the bounding boxes of the histogram (used for convolution)
 
 	_RGB modeAsRGB(){return _RGB((RGBType)mode[0],(RGBType)mode[1],(RGBType)mode[2]);};
 	RLI modeAsRLI(){return RLI((RGBType)mode[0],(RGBType)mode[1],(RGBType)mode[2]);};
@@ -53,9 +56,8 @@ public:
 	void find_bounding_box();
     void smooth();
 	void delete_secondary_blobs();
-	void dump();
 
-	long int v(int d1, int d2, int d3, bool suppress_warning = false ) const;	
+	PixelType v(int d1, int d2, int d3) const;
 	void set(int d1, int d2, int d3, long int val);
 	void inc_element(int d1, int d2, int d3);
 
@@ -73,13 +75,9 @@ public:
 	};
 
 protected:
-	Array3D histogram_array;
-	long int ***a;	//The main array pointer
-	Array3D processing_array;
-	long int ***sa; //The processing array
+	HistImageType::Pointer histImage;
 
-	bool check_bounds(int d1, int d2, int d3, bool suppress_warning = false) const;
-	void mark_point_and_nbrs(int d1, int d2, int d3);
+	bool check_bounds(int d1, int d2, int d3) const;
 
  };
 

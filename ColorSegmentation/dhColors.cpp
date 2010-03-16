@@ -17,7 +17,7 @@ RGBType _RGB::AxisColor(RGBType ax)
 		case 2 :
 			return(B);
 	}
-	std::cerr<<"RGB.axis_color: Invalid Color Axis.";
+	std::cerr<<"RGB.axis_color: Invalid Color Axis." << std::endl;
 	return((RGBType)255);
 }
 
@@ -36,7 +36,7 @@ _RGB operator*(const _RGB& c, double scale_factor)
 	     || new_G < 0 || new_G > 255
 		 || new_B < 0 || new_B > 255 )
 	{ 
-		std::cerr<<"RGB::operator*(RGB, double): result out of range.";
+		std::cerr<<"RGB::operator*(RGB, double): result out of range." << std::endl;
 		return ( _RGB( (RGBType)255, (RGBType)255, (RGBType)255 ) );
 	}
 	else
@@ -97,7 +97,7 @@ int operator!=(const HSI& c1, const HSI& c2)
 HSI operator*(const HSI& c, double scale_factor)
  { float new_I = (float)(scale_factor * c.I);
 	if ( new_I < 0 || new_I > 1.0 )
-	 { std::cerr<<"HSI::operator*(HSI, double): result out of range.";
+	{ std::cerr<<"HSI::operator*(HSI, double): result out of range." << std::endl;
 	   return ( HSI( 0, 0, 1 ) );
 	 }
    else
@@ -148,7 +148,7 @@ RLI operator*(const RLI& c, double scale_factor)
 	     || new_L < 0 || new_L > 255
 		 || new_I < 0 || new_I > 255 )
 	{ 
-		std::cerr<<"RLI::operator*(RLI, double): result out of range.";
+		std::cerr<<"RLI::operator*(RLI, double): result out of range." << std::endl;
 		return ( RLI( (RLIType)255, (RLIType)255, (RLIType)255 ) );
 	}
 	else
@@ -233,7 +233,7 @@ XYZ::operator _RGB() const
 	     || Y < 0 || Y > 255
 		  || Z < 0 || Z > 255 )
 	{ 
-		std::cerr<<"XYZ::operator RGB(): XYZ value [XYZ " << X << " " << Y << " " << Z << "] is not in range.";
+		std::cerr<<"XYZ::operator RGB(): XYZ value [XYZ " << X << " " << Y << " " << Z << "] is not in range." << std::endl;
 		return ( _RGB( (RGBType)255, (RGBType)255, (RGBType)255 ) );
 	}
 	else
@@ -352,7 +352,7 @@ HSI::operator _RGB() const
 	if(   ri < 0   || bi < 0   || gi < 0
 	   || ri > 255 || bi > 255 || gi > 255 )
 	 { std::cout<<"WARNING: HSI::operator RGB(): returned values out of range!!! ["\
-	       << ri << " " << gi << " " << bi << "]";
+			<< ri << " " << gi << " " << bi << "]" << std::endl;
 	   return ( _RGB(  ( ri < 0 ? 0 : ( ri > 255 ? 255 : ri )),
 		               ( gi < 0 ? 0 : ( gi > 255 ? 255 : gi )),
 					      ( bi < 0 ? 0 : ( bi > 255 ? 255 : bi )) ) );
