@@ -43,6 +43,7 @@ limitations under the License.
 #include "itkRelabelComponentImageFilter.h"
 #include "itkCastImageFilter.h"
 #include "itkSigmoidImageFilter.h"
+#include "itkDanielssonDistanceMapImageFilter.h"
 
 namespace mdl
 {
@@ -61,10 +62,12 @@ public:
 	bool RunOtsuDenoising();
 	bool DialateImage(int iterations);
 	bool MaskSmallConnComp(int minObjSize);
+	bool BinaryUsingGraphCuts();
 	bool MaskUsingGraphCuts();
 	bool RunAnisotropicDiffusion(int timesDiffuse=1, bool iso = false);	//Run anisotropic diffusion written by Xiaosong
 	bool RunManualThreshold(double threshold);
 	bool RunDistanceTransform(void);
+	bool RunDanielssonDistanceMap(void);
 	bool distTransform(unsigned char *f, int L, int M, int N); 
 	//Get Result:
 	ImageType::Pointer GetOutput();

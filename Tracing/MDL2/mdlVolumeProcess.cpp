@@ -249,7 +249,37 @@ bool VolumeProcess::MaskUsingGraphCuts()
 	return true;
 }
 
+bool VolumeProcess::BinaryUsingGraphCuts()
+{
+	ImageType::RegionType region = m_outputImage->GetBufferedRegion();
+	int numColumns = region.GetSize(0);
+	int numRows = region.GetSize(1);
+	int numStacks = region.GetSize(2);
+	long numPix = numStacks*numColumns*numRows;
 
+	unsigned short * binImagePtr = new unsigned short[numPix];
+	PixelType * dataImagePtr = m_outputImage->GetBufferPointer();
+
+	//int ok = Cell_Binarization_3D(dataImagePtr, binImagePtr, numRows, numColumns, numStacks, 0, 1);	//Do Binarization
+    int ok = Neuron_Binarization_3D(dataImagePtr, binImagePtr, numRows, numColumns, numStacks, 0, 1);
+	if(!ok)
+		return false;
+
+	//Mask out pixels in the background:
+	for(long i=0; i<numPix; ++i)
+	{
+		if( binImagePtr[i] == 0 )
+		{
+			dataImagePtr[i] = 255;
+		}
+		else 
+            dataImagePtr[i] = 0;
+	}
+
+	delete [] binImagePtr;
+
+	return true;
+}
 
 bool VolumeProcess::RunOtsuDenoising()
 {
@@ -874,6 +904,28 @@ bool VolumeProcess::RunDistanceTransform(void)
 	}
 
 	delete [] binImagePtr;
+	return true;
+}
+
+bool VolumeProcess:: RunDanielssonDistanceMap(void)
+{
+    typedef itk::DanielssonDistanceMapImageFilter<ImageType, ImageType>  DT_Type;
+	DT_Type::Pointer DTfilter = DT_Type::New();
+	DTfilter->SetInput( m_outputImage );
+	//DTfilter->GetDistanceMap();
+	try
+	{
+		DTfilter->Update();
+	}
+	catch( itk::ExceptionObject & err )
+	{
+		std::cerr << "ITK FILTER ERROR: " << err << std::endl ;
+		return false;
+	}
+	m_outputImage = DTfilter->GetDistanceMap();
+	
+	if(debug)
+		std::cerr << "Rescale Filter Done" << std::endl;
 	return true;
 }
 
