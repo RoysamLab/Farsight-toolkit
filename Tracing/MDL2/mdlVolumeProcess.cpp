@@ -265,7 +265,7 @@ bool VolumeProcess::BinaryUsingGraphCuts()
 	if(!ok)
 		return false;
 
-	//Mask out pixels in the background:
+	// background is bright and forground is dark:
 	for(long i=0; i<numPix; ++i)
 	{
 		if( binImagePtr[i] == 0 )
@@ -925,8 +925,99 @@ bool VolumeProcess:: RunDanielssonDistanceMap(void)
 	m_outputImage = DTfilter->GetDistanceMap();
 	
 	if(debug)
-		std::cerr << "Rescale Filter Done" << std::endl;
+		std::cerr << "DanielssonDistanceMap Filter Done" << std::endl;
 	return true;
+}
+
+bool VolumeProcess::RunVotingBinaryHoleFilling(int radiusX, int radiusY, int radiusZ)
+{
+    if (radiusX == 0 && radiusY ==0 && radiusZ ==0)
+		return true;
+
+	typedef itk::VotingBinaryHoleFillingImageFilter<ImageType, ImageType>  VotingBinaryHoleFillingFilterType;
+	VotingBinaryHoleFillingFilterType::Pointer VotingBinaryHoleFillingFilter = VotingBinaryHoleFillingFilterType::New();
+	ImageType::SizeType indexRadius;
+	indexRadius[0] = radiusX; 
+	indexRadius[1] = radiusY;
+    indexRadius[2] = radiusZ;
+	VotingBinaryHoleFillingFilter->SetRadius(indexRadius);
+	VotingBinaryHoleFillingFilter->SetMajorityThreshold(2);
+	VotingBinaryHoleFillingFilter->SetInput(m_outputImage);
+    try
+	{
+		VotingBinaryHoleFillingFilter->Update();
+	}
+	catch( itk::ExceptionObject & err )
+	{
+		std::cerr << "ITK FILTER ERROR: " << err << std::endl ;
+		return false;
+	}
+	m_outputImage = VotingBinaryHoleFillingFilter->GetOutput();
+    if(debug)
+		std::cerr << "RunVotingBinaryHoleFilling Filter Done" << std::endl;
+	return true;
+}
+
+
+bool VolumeProcess::RunVotingBinaryIterativeHoleFilling(int radiusX, int radiusY, int radiusZ, int iterativeNumber)
+{
+    if (radiusX == 0 && radiusY ==0 && radiusZ ==0)
+		return true;
+
+	typedef itk::VotingBinaryIterativeHoleFillingImageFilter<ImageType>  VotingBinaryHoleFillingFilterType;
+	VotingBinaryHoleFillingFilterType::Pointer VotingBinaryHoleFillingFilter = VotingBinaryHoleFillingFilterType::New();
+	ImageType::SizeType indexRadius;
+	indexRadius[0] = radiusX; 
+	indexRadius[1] = radiusY;
+    indexRadius[2] = radiusZ;
+	VotingBinaryHoleFillingFilter->SetRadius(indexRadius);
+	VotingBinaryHoleFillingFilter->SetMajorityThreshold(2);
+	VotingBinaryHoleFillingFilter->SetInput(m_outputImage);
+	VotingBinaryHoleFillingFilter->SetMaximumNumberOfIterations(iterativeNumber);
+    try
+	{
+		VotingBinaryHoleFillingFilter->Update();
+	}
+	catch( itk::ExceptionObject & err )
+	{
+		std::cerr << "ITK FILTER ERROR: " << err << std::endl ;
+		return false;
+	}
+	m_outputImage = VotingBinaryHoleFillingFilter->GetOutput();
+    if(debug)
+		std::cerr << "RunVotingBinaryHoleFilling Filter Done" << std::endl;
+	return true;
+
+}
+
+bool VolumeProcess::RunBinayMedianHoleFilling(int radiusX,int radiusY, int radiusZ)
+{
+
+	if (radiusX == 0 && radiusY ==0 && radiusZ ==0)
+		return true;
+
+	typedef itk::BinaryMedianImageFilter<ImageType, ImageType>  BinaryMedianImageFilterType;
+	BinaryMedianImageFilterType::Pointer BinaryMedianImageFilter = BinaryMedianImageFilterType::New();
+	ImageType::SizeType indexRadius;
+	indexRadius[0] = radiusX; 
+	indexRadius[1] = radiusY;
+    indexRadius[2] = radiusZ;
+	BinaryMedianImageFilter->SetRadius(indexRadius);
+	BinaryMedianImageFilter->SetInput(m_outputImage);
+    try
+	{
+		BinaryMedianImageFilter->Update();
+	}
+	catch( itk::ExceptionObject & err )
+	{
+		std::cerr << "ITK FILTER ERROR: " << err << std::endl ;
+		return false;
+	}
+	m_outputImage = BinaryMedianImageFilter->GetOutput();
+    if(debug)
+		std::cerr << "RunBinaryMedianImageFilter Done" << std::endl;
+	return true;
+
 }
 
 bool VolumeProcess::NonlinearMappingSigmoidFilter(double alpha,  double beta, double min, double max)

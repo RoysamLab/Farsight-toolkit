@@ -44,6 +44,9 @@ limitations under the License.
 #include "itkCastImageFilter.h"
 #include "itkSigmoidImageFilter.h"
 #include "itkDanielssonDistanceMapImageFilter.h"
+#include "itkVotingBinaryHoleFillingImageFilter.h"
+#include "itkVotingBinaryIterativeHoleFillingImageFilter.h"
+#include "itkBinaryMedianImageFilter.h"
 
 namespace mdl
 {
@@ -68,6 +71,9 @@ public:
 	bool RunManualThreshold(double threshold);
 	bool RunDistanceTransform(void);
 	bool RunDanielssonDistanceMap(void);
+	bool RunVotingBinaryHoleFilling(int radiusX,int radiusY, int radiusZ);
+	bool RunVotingBinaryIterativeHoleFilling(int radiusX,int radiusY, int radiusZ,int IterativeNumber);
+	bool RunBinayMedianHoleFilling(int radiusX,int radiusY, int radiusZ);
 	bool distTransform(unsigned char *f, int L, int M, int N); 
 	//Get Result:
 	ImageType::Pointer GetOutput();
