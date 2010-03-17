@@ -37,6 +37,10 @@ limitations under the License.
 #include "itkImageRegionIterator.h"
 #include "itkImageRegionIteratorWithIndex.h"
 
+#include <vnl/vnl_vector.h>
+#include <vnl/vnl_matrix.h>
+#include <vnl/algo/vnl_symmetric_eigensystem.h>
+
 namespace mdl
 {
 
@@ -55,6 +59,7 @@ public:
 	void SetDebug(bool inp = true){ debug = inp; };
 	//Methods:
 	bool Update();
+	bool RunXiaoLSkeletonPoints(void);
 
 	//Get Result:
 	std::vector<fPoint3D> GetOutput(){ return skeletonPoints; };
@@ -94,6 +99,10 @@ private:
 	//Skeleton points (ouput)
 	std::vector<fPoint3D> skeletonPoints;
 
+	// New Skeleton points Computation,  add in March,2010 
+
+	bool IntegratedSkeleton::XiaoLComputeSkeletonPoints(void);
+    
 	//Key functions:
 	bool createGradientVectorField();
 	//bool createGradientVectorFieldWithITK(){return false;};

@@ -106,6 +106,15 @@ bool IntegratedSkeleton::Update()
 	return this->computeSkeleton();
 }
 
+
+bool IntegratedSkeleton::RunXiaoLSkeletonPoints(void)
+{
+	
+	if(!this->createGradientVectorField())
+		return false;
+	return this->XiaoLComputeSkeletonPoints();
+}
+
 int IntegratedSkeleton::sign(float value)
 {
 	if (value > 0)
@@ -1431,6 +1440,162 @@ bool IntegratedSkeleton::XiaoLiangComputeIsoGraySurfaceCurvature()
 	}
 
 	return true;
+}
+
+bool IntegratedSkeleton::XiaoLComputeSkeletonPoints(void)
+{
+    skeletonPoints.clear();
+	if(!Iu || !Iv || !Iw || !fc || !m_inputImage)
+		return false;
+
+	int L = sizeX; //x
+	int M = sizeY; //y
+	int N = sizeZ; //z
+
+	//Vectors for partial derivatives:
+	float *Iuu = new float[numPix];
+	float *Ivv = new float[numPix];
+	float *Iww = new float[numPix];
+	float *Iuv = new float[numPix];
+	float *Iuw = new float[numPix];
+	float *Ivw = new float[numPix];
+
+	if(!Iuu || !Ivv || !Iww || !Iuv || !Iuw || !Ivw)
+	{
+		if(debug)
+			std::cerr << "Could not allocate memory for iso gray surface" << std::endl;
+		return false;
+	}
+
+	//Init partial derivs to zeros:
+	for(int i=0; i<numPix; ++i)
+	{
+		Iuu[i]=0;
+		Ivv[i]=0;
+		Iww[i]=0;
+		Iuv[i]=0;
+		Iuw[i]=0;
+		Ivw[i]=0;
+	}
+
+	if(debug)
+		std::cout << "Computing curvature" << std::endl;
+
+	this->partialDerivative1(Iu, Iuu, 1, L, M, N);
+	this->partialDerivative1(Iv, Ivv, 2, L, M, N);
+	this->partialDerivative1(Iw, Iww, 3, L, M, N);
+	this->partialDerivative1(Iu, Iuv, 2, L, M, N);
+	this->partialDerivative1(Iu, Iuw, 3, L, M, N);
+	this->partialDerivative1(Iv, Ivw, 3, L, M, N);
+
+	int border = 2;	//Why does this need to by 2?
+    //typedef float  Precision;
+	for (int k = border; k < N-border; k++)
+    {
+		for (int j = border; j < M-border; j++)
+		{
+			for (int i = border; i < L-border; i++)
+			{
+				long idx = k*L*M + j*L + i;
+				if (fc[idx] != INTERIOR)
+					continue;
+                
+			    vnl_matrix<float> H(3,3);
+                H(0,0) = Iuu[idx];
+                H(0,1) = H(1,0) = Iuv[idx];
+                H(0,2) = H(2,0) = Iuw[idx];
+                H(1,1) = Ivv[idx];
+                H(1,2) = H(2,1) = Ivw[idx];
+                H(2,2) = Iww[idx];
+                vnl_symmetric_eigensystem <float> ES(H);
+                vnl_vector<float> ev(3);
+                ev[0] = ES.get_eigenvalue(0); 
+                ev[1] = ES.get_eigenvalue(1); 
+                ev[2] = ES.get_eigenvalue(2);
+                int First=0;
+				int Second=1;
+				int Third=2;
+				if ( ev[0] > ev[1]  ) 
+				{
+					std::swap(ev[0], ev[1]);
+					//First =1;Second=0;
+					std::swap(First,Second);
+
+				}
+                if ( ev[1] > ev[2]  ) 
+				{
+					std::swap(ev[1], ev[2]);
+                    //Second=2;Third=1;
+					std::swap(Second,Third);
+				}
+                if ( ev[0] > ev[1]  )
+				{
+	                std::swap(ev[0], ev[1]);
+					//First =1;Second=0;
+					std::swap(First,Second);
+				}		
+				vnl_vector<float> EVecFirst(3);
+                vnl_vector<float> EVecSecond(3);
+				//vnl_vector<float> EVecThird(3);
+
+				EVecFirst = ES.get_eigenvector(First);
+				EVecSecond = ES.get_eigenvector(Second);
+                
+				// using the eigenvalue and eigenvector to select the ridge points
+				if (ev[1] < 0 )
+				{
+				  float SumofInnerProduct1;
+                  float SumofInnerProduct2;
+				  SumofInnerProduct1 = fabs(EVecFirst.get(0)*Iu[idx]+EVecFirst.get(1)*Iv[idx]+EVecFirst.get(2)*Iw[idx]);
+                  SumofInnerProduct2 = fabs(EVecSecond.get(0)*Iu[idx]+EVecSecond.get(1)*Iv[idx]+EVecSecond.get(2)*Iw[idx]);
+				  if (SumofInnerProduct1 < 0.01 && SumofInnerProduct1 < 0.01)
+				  {
+				  fPoint3D newPos;
+				  newPos.x = i;
+				  newPos.y = j;
+				  newPos.z = k;
+				  skeletonPoints.push_back(newPos);
+				 }
+				}
+               
+			}
+		}
+    }
+
+	delete[] Iuu;
+	delete[] Ivv;
+	delete[] Iww;
+	delete[] Iuv;
+	delete[] Iuw;
+	delete[] Ivw;
+
+	if(debug)	//write out the vector field
+	{
+		FILE *fileout;
+		if ((fileout = fopen("out.skel","w")) != NULL)
+		{
+			for (int k = 0; k < (int)skeletonPoints.size(); k++) 
+			{
+				fprintf(fileout,"%1.1f %1.1f %1.1f %d\n", skeletonPoints.at(k).x, skeletonPoints.at(k).y, skeletonPoints.at(k).z, 1);
+			}
+			fclose(fileout);
+		}
+		std::cerr << "Number of skeleton points = " << (int)skeletonPoints.size() << std::endl;
+	}
+
+	//Write out skeleton file:
+	if(debug)
+	{
+		vtkFileHandler * fhdl = new vtkFileHandler();
+		fhdl->SetNodes(&skeletonPoints);
+		fhdl->Write("SkeletonPoints.vtk");
+		delete fhdl;
+	}//end if debug
+
+	//getchar();
+
+	return true;
+
 }
 
 }
