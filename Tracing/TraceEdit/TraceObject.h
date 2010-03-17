@@ -106,6 +106,7 @@ public:
 	bool ReadFromFeatureTracksFile(char *filename, int type_offset);
 	bool ReadFromFeatureTracksFileForKymograph(char *filename,int type_offset);
 	bool WriteToSWCFile(const char * filename);
+	bool WriteToSWCFile(std::vector<TraceLine *> selectedLines, const char * filename);
 	void WriteToVTKFile(const char * filename);
 	void SetBranchPoints(std::vector<branchPT*> Branches);
 	void SetTraceOffset(double ntx, double nty, double ntz);

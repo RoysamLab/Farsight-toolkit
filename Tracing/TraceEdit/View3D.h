@@ -114,6 +114,7 @@ public slots:
 	void SplitTraces();
 	void FlipTraces();
 	void SaveToFile();
+	void SaveSelected();
 	void ShowTreeData();
 	void ShowSettingsWindow();
 	void HideSettingsWindow();
@@ -186,6 +187,7 @@ private:
 
 	//Qt widgets on the main window
 	QAction *saveAction;
+	QAction *saveSelectedAction;
 	QAction *exitAction;
 	QAction *loadTraceAction;
 	QAction *loadTraceImage;

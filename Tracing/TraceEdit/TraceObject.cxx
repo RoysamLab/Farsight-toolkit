@@ -1104,7 +1104,51 @@ bool TraceObject::WriteToSWCFile(const char *filename)
   fclose(fp);
   return true;
 }
-
+bool TraceObject::WriteToSWCFile(std::vector<TraceLine*> selectedLines, const char * filename)
+{
+	FILE * fp = fopen(filename,"w");
+	vtksys::hash_map<const unsigned long long int, int, hashulli> hash_dump;
+	if(fp == NULL)
+	{
+		printf("Couldn't open %s for writing\n",filename);
+		return false;
+	}
+	int cur_id = 1;
+	std::queue<TraceLine*> q;
+	for( unsigned int i = 0; i < selectedLines.size(); i++)
+	{
+		q.push(selectedLines.at(i));
+	}
+	while(!q.empty())
+	{
+		TraceLine *t = q.front();
+		q.pop();
+		TraceLine::TraceBitsType::iterator iter = t->GetTraceBitIteratorBegin();
+		TraceLine::TraceBitsType::iterator iterend = t->GetTraceBitIteratorEnd();
+		hash_dump[reinterpret_cast<unsigned long long int>(t)]=cur_id+t->GetTraceBitsPointer()->size()-1;
+		if(t->GetParent()==NULL)
+		{
+		  fprintf(fp,"%d %d %0.2lf %0.2lf %0.2lf %0.2lf %d\n",cur_id++,t->GetType(),iter->x,iter->y,iter->z,iter->r,-1);
+		}
+		else
+		{
+		  fprintf(fp,"%d %d %0.2lf %0.2lf %0.2lf %0.2lf %d\n",cur_id++,t->GetType(),iter->x,iter->y,iter->z,iter->r,hash_dump[reinterpret_cast<unsigned long long int>(t->GetParent())]);
+		}
+		iter++;
+		while(iter!=iterend)
+		{
+		  fprintf(fp,"%d %d %0.2lf %0.2lf %0.2lf %0.2lf %d\n",cur_id,t->GetType(),iter->x,iter->y,iter->z,iter->r,cur_id-1);
+		  cur_id++;
+		  iter++;
+		}
+		for(unsigned int counter=0; counter<t->GetBranchPointer()->size(); counter++)
+		{
+		  q.push((*t->GetBranchPointer())[counter]);
+		}
+	}
+	fclose(fp);
+	return true;
+}
 void TraceObject::WriteToVTKFile(const char *filename)
 {
   vtkSmartPointer<vtkPolyDataWriter> writer =

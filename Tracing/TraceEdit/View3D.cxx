@@ -608,6 +608,9 @@ void View3D::CreateGUIObjects()
   this->saveAction = new QAction(tr("&Save as..."), this->CentralWidget);
     connect(this->saveAction, SIGNAL(triggered()), this, SLOT(SaveToFile()));
 	this->saveAction->setStatusTip("Save results to file");
+	this->saveSelectedAction = new QAction(tr("&Save Selected Trees"), this->CentralWidget);
+    connect(this->saveSelectedAction, SIGNAL(triggered()), this, SLOT(SaveSelected()));
+	this->saveSelectedAction->setStatusTip("Save Selected tree structures to seperate file");
   this->exitAction = new QAction(tr("&Exit"), this->CentralWidget);
 	connect(this->exitAction, SIGNAL(triggered()), this, SLOT(close()));
 	this->exitAction->setStatusTip("Exit the Trace Editor");
@@ -702,6 +705,7 @@ void View3D::CreateLayout()
 	this->fileMenu->addAction(this->loadTraceImage);
 	this->fileMenu->addAction(this->loadSoma);
 	this->fileMenu->addAction(this->saveAction);
+	this->fileMenu->addAction(this->saveSelectedAction);
 	this->fileMenu->addAction(this->exitAction);
 
 	this->ShowToolBars = this->menuBar()->addMenu(tr("Tool Bars"));
@@ -1777,7 +1781,25 @@ void View3D::SaveToFile()
   }
 }
 
-
+void View3D::SaveSelected()
+{
+	QString fileName = QFileDialog::getSaveFileName(
+    this,
+    tr("Save Selected Trees to File"),
+    "",
+    tr("SWC Images (*.swc)"));
+	if(!fileName.isEmpty())
+	{
+		std::vector<TraceLine*> roots = this->TreeModel->getRoots();
+		if (roots.size() > 0)
+		{
+			this->tobj->WriteToSWCFile(roots, fileName.toStdString().c_str()); 
+			this->EditLogDisplay->append(QString("Selected traces file saved as: %1  at time: %2")
+				.arg(fileName) 
+				.arg(this->Time.currentTime().toString( "h:m:s ap" )));
+		}
+	}
+}
 void View3D::closeEvent(QCloseEvent *event)
 {	
 	this->TraceEditSettings.setValue("mainWin/size", this->size());
