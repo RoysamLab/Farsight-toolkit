@@ -61,6 +61,8 @@ int main(int argc, char *argv[])
 
 	//******************************************************************
 	// PROCESSING
+	// old method
+	/*
 	mdl::VolumeProcess *volProc = new mdl::VolumeProcess();
 	volProc->SetInput(img);
 	volProc->SetDebug(true);
@@ -83,6 +85,23 @@ int main(int argc, char *argv[])
 	//volProc->RunAnisotropicDiffusion(1,false);
 	//mdl::ImageType::Pointer enhance_img = volProc->GetOutput();
 	delete volProc;
+    */
+    
+    //***************************New Test Method ***********************
+    mdl::VolumeProcess *volProc = new mdl::VolumeProcess();
+	volProc->SetInput(img);
+	volProc->SetDebug(true);
+	volProc->RescaleIntensities(0,255);
+	if(useGraphCuts)
+	{
+		volProc->BinaryUsingGraphCuts();
+	}
+	volProc->RunDanielssonDistanceMap();
+	volProc->RescaleIntensities(0,255);
+	volProc->MaskUsingGraphCuts();
+	mdl::ImageType::Pointer clean_img = volProc->GetOutput();
+	delete volProc;
+
 
 		
 	//******************************************************************
@@ -105,16 +124,26 @@ int main(int argc, char *argv[])
 	writer->Update();
 	
 	//******************************************************************
-	//*****************************************************************
+	
 	
 	std::cerr << "Integrated Skeleton\n";
-
+    
+	//**********************Old Method **********************************
 	//Integrated Skeleton to create skeleton points:
+	/*
 	mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton( clean_img );
 	skel->SetVectorMagnitude(vectorMagnitude);
 	skel->SetDebug(true);
 	skel->SetUseXiaoLiangMethod(false);
 	skel->Update();
+	std::vector<mdl::fPoint3D> skeleton = skel->GetOutput();
+	delete skel;
+    */
+
+    //********************** New Method **********************************
+    mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton( clean_img );
+	skel->SetDebug(true);	
+	skel->RunXiaoLSkeletonPoints();
 	std::vector<mdl::fPoint3D> skeleton = skel->GetOutput();
 	delete skel;
 
@@ -124,11 +153,13 @@ int main(int argc, char *argv[])
 	mdl::MST *mst = new mdl::MST( clean_img );
 	mst->SetDebug(true);
 	mst->SetUseVoxelRounding(true);
-	mst->SetEdgeRange(15);
+	mst->SetEdgeRange(25);
 	mst->SetPower(1);
 	mst->SetSkeletonPoints( &skeleton );
-	mst->CreateGraphAndMST(3);
-	mst->ErodeAndDialateNodeDegree(2);
+	// can choose different weight
+	//mst->CreateGraphAndMST(3);
+	mst->CreateGraphAndMST(1);
+	mst->ErodeAndDialateNodeDegree(0);
 	std::vector<mdl::fPoint3D> nodes = mst->GetNodes();
 	//Note: node 0 in bbpairs is index 0 of nodes!!!
 	std::vector<mdl::pairE> bbpairs = mst->BackboneExtract();
