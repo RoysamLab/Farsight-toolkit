@@ -36,6 +36,9 @@ limitations under the License.
 
 #include "itkImageRegionIterator.h"
 #include "itkImageRegionIteratorWithIndex.h"
+#include "itkRecursiveGaussianImageFilter.h" 
+#include "itkImageFileWriter.h" 
+
 
 #include <vnl/vnl_vector.h>
 #include <vnl/vnl_matrix.h>
@@ -101,10 +104,11 @@ private:
 
 	// New Skeleton points Computation,  add in March,2010 
 
-	bool IntegratedSkeleton::XiaoLComputeSkeletonPoints(void);
+	bool XiaoLComputeSkeletonPoints(void);
     
 	//Key functions:
-	bool createGradientVectorField();
+	bool createGradientVectorField(void);
+	bool createGradientVectorField(float sigma);
 	//bool createGradientVectorFieldWithITK(){return false;};
 	bool XiaoLiangComputeIsoGraySurfaceCurvature();
 	bool XiaosongComputeIsoGraySurfaceCurvature();

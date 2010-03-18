@@ -81,6 +81,8 @@ bool IntegratedSkeleton::Update()
 {
 	if(!this->createGradientVectorField())
 		return false;
+    //if(!createGradientVectorField(3))
+	//	return false;
 
 	if (useXiaoLiangMethod)
 	{
@@ -110,7 +112,7 @@ bool IntegratedSkeleton::Update()
 bool IntegratedSkeleton::RunXiaoLSkeletonPoints(void)
 {
 	
-	if(!this->createGradientVectorField())
+	if(!this->createGradientVectorField(0.5))
 		return false;
 	return this->XiaoLComputeSkeletonPoints();
 }
@@ -142,7 +144,7 @@ float IntegratedSkeleton::veclength(Vector3D vecin)
 }
 
 
-bool IntegratedSkeleton::createGradientVectorField()
+bool IntegratedSkeleton::createGradientVectorField(void)
 {
 	if(!m_inputImage)
 		return false;
@@ -1440,6 +1442,103 @@ bool IntegratedSkeleton::XiaoLiangComputeIsoGraySurfaceCurvature()
 	}
 
 	return true;
+}
+
+bool IntegratedSkeleton:: createGradientVectorField(float sigma)
+{
+	if(!m_inputImage)
+		return false;
+	
+	//Allocate memory for gradient field:
+	this->clearGradientVectorField();
+	Iu = new float[numPix];
+	Iv = new float[numPix];
+	Iw = new float[numPix];
+	if(fc)
+		delete[] fc;
+	fc = new unsigned char[numPix];	//This keeps track of interior/exterior and surface voxels
+	if(!Iu || !Iv || !Iw || !fc)
+	{
+		if(debug) std::cerr << "Unable to allocate memory for gradients" << std::endl;
+		return false;
+	}
+
+	//Init variables to zeros:
+	for(int i=0; i<numPix; ++i)
+	{
+		Iu[i] = 0;
+		Iv[i] = 0;
+		Iw[i] = 0;
+		fc[i] = 0;
+	}
+    
+	typedef itk::Image< float, 3 > FImageType;
+	typedef itk::RecursiveGaussianImageFilter<ImageType, FImageType>  GaussianFilterType;
+	GaussianFilterType::Pointer ga = GaussianFilterType::New();
+	GaussianFilterType::Pointer gb = GaussianFilterType::New();
+	GaussianFilterType::Pointer gc = GaussianFilterType::New();
+	ga->SetDirection(0);
+	gb->SetDirection(1);
+	gc->SetDirection(2);
+	ga->SetSigma(sigma);
+	gb->SetSigma(sigma);
+	gc->SetSigma(sigma);
+	ga->SetFirstOrder();
+	gb->SetFirstOrder();
+	gc->SetFirstOrder();
+	ga->SetInput(m_inputImage);
+	gb->SetInput(m_inputImage);
+	gc->SetInput(m_inputImage);
+
+	FImageType::Pointer IuImage;
+	FImageType::Pointer IvImage;
+	FImageType::Pointer IwImage;
+
+	ga->Update();
+	IuImage = ga->GetOutput();
+	gb->Update();
+    IvImage = gb->GetOutput();
+	gc->Update();
+    IwImage = gc->GetOutput();
+
+	if (debug)
+	{	typedef itk::ImageFileWriter<FImageType> WriterType;
+	    WriterType::Pointer writer = WriterType::New();
+		writer->SetInput(IuImage);
+		writer->SetFileName("Iu.mhd");
+		writer->Update();
+        writer->SetInput(IvImage);
+		writer->SetFileName("Iv.mhd");
+		writer->Update();
+		writer->SetInput(IwImage);
+		writer->SetFileName("Iw.mhd");
+		writer->Update();
+	}
+    
+	itk::ImageRegionIterator< FImageType > itr0( IuImage, IuImage->GetLargestPossibleRegion() );
+
+    long idx = 0;
+	for(itr0.GoToBegin(); !itr0.IsAtEnd(); ++itr0)
+	{
+		Iu[idx++]=itr0.Get();
+	}
+    
+	itk::ImageRegionIterator< FImageType > itr1( IvImage, IvImage->GetLargestPossibleRegion() );
+	idx = 0;
+	for(itr1.GoToBegin(); !itr1.IsAtEnd(); ++itr1)
+	{
+		Iv[idx++]=itr1.Get();
+	}
+
+	itk::ImageRegionIterator< FImageType > itr2( IwImage, IwImage->GetLargestPossibleRegion() );
+	idx = 0;
+	for(itr2.GoToBegin(); !itr2.IsAtEnd(); ++itr2)
+	{
+		Iw[idx++]=itr2.Get();
+	}
+
+    return true;
+
 }
 
 bool IntegratedSkeleton::XiaoLComputeSkeletonPoints(void)
