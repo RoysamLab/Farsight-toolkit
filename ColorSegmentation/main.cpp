@@ -29,13 +29,19 @@ int main(int argc, char* argv[])
 	col_bin->SetTesting(true);
 	col_bin->SetLightBackground(true);
 	col_bin->SetIgnoreBackground(true);
-	col_bin->SetGenerateProjections(true);
+	col_bin->SetGenerateProjections(false);
 
-	col_bin->TransformToRLI();
-	col_bin->ComputeBinary(2,1);
-	col_bin->FindArchetypalColors();
-	//col_bin->SetArchetypalColors(dh::_RGB(185,110,96), dh::_RGB(45,45,165), dh::_RGB(175,175,175));
-	col_bin->ComputeClassWeights();
+	//col_bin->InvertInput();
+	//col_bin->SmoothInput();
+	//col_bin->ComputeBinary(3,2);
+	//col_bin->MaskBackgroundFromInput();
+
+	//col_bin->TransformToRLI();
+	
+	//col_bin->FindArchetypalColors();
+	//col_bin->SetArchetypalColors(dh::_RGB(255,0,0), dh::_RGB(0,0,255), dh::_RGB(175,175,175));
+	//col_bin->ComputeClassWeights();
+	//col_bin->VoteBasedOnWeights();
 
 	delete col_bin;
 

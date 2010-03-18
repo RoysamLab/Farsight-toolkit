@@ -37,6 +37,26 @@ Histogram::Histogram(int inc_scale_in)
 	histImage->Update();
 }
 
+void Histogram::save_as(const char * fname)
+{
+	if(!histImage)
+		return;
+
+	typedef itk::Image< unsigned char, 3 > UcharImageType;
+	typedef itk::RescaleIntensityImageFilter< HistImageType, UcharImageType > RescaleFlUcType;
+	RescaleFlUcType::Pointer rescale = RescaleFlUcType::New();
+	rescale->SetOutputMaximum( 255 );
+	rescale->SetOutputMinimum( 0 );
+	rescale->SetInput( histImage );
+	rescale->Update();
+
+	typedef itk::ImageFileWriter< UcharImageType > WriterType;
+	WriterType::Pointer writer = WriterType::New();
+	writer->SetFileName( fname );
+	writer->SetInput( rescale->GetOutput() );
+	writer->Update();
+}
+
 bool Histogram::check_bounds(int d1, int d2, int d3) const
 {
 	if ( d1 < 0 || d1 >= histSize || d2 < 0 || d2 >= histSize || d3 < 0 || d3 >= histSize )

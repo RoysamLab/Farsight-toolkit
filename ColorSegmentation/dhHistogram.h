@@ -9,6 +9,8 @@
 
 #include "itkImage.h"
 #include "itkImageRegionIterator.h"
+#include "itkImageFileWriter.h"
+#include "itkRescaleIntensityImageFilter.h"
 #include "itkConnectedComponentImageFilter.h"
 
 #include "dhColors.h"
@@ -56,6 +58,7 @@ public:
 	void find_bounding_box();
     void smooth();
 	void delete_secondary_blobs();
+	void save_as(const char * fname);
 
 	PixelType v(int d1, int d2, int d3) const;
 	void set(int d1, int d2, int d3, long int val);
