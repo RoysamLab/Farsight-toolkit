@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
 	}
 
 	ColorSegmentation *col_bin = new ColorSegmentation(reader->GetOutput());
-	col_bin->SetTesting(true);
+	col_bin->SetTesting(false);
 	col_bin->SetLightBackground(true);
 	col_bin->SetIgnoreBackground(true);
 	col_bin->SetGenerateProjections(false);
@@ -36,11 +36,10 @@ int main(int argc, char* argv[])
 	//col_bin->ComputeBinary(3,2);
 	//col_bin->MaskBackgroundFromInput();
 
-	//col_bin->TransformToRLI();
-	
-	//col_bin->FindArchetypalColors();
+	col_bin->TransformToRLI();
+	col_bin->FindArchetypalColors();
 	//col_bin->SetArchetypalColors(dh::_RGB(255,0,0), dh::_RGB(0,0,255), dh::_RGB(175,175,175));
-	//col_bin->ComputeClassWeights();
+	col_bin->ComputeClassWeights();
 	//col_bin->VoteBasedOnWeights();
 
 	delete col_bin;
