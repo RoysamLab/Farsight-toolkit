@@ -47,6 +47,8 @@ limitations under the License.
 #include "itkVotingBinaryHoleFillingImageFilter.h"
 #include "itkVotingBinaryIterativeHoleFillingImageFilter.h"
 #include "itkBinaryMedianImageFilter.h"
+#include "itkDiscreteGaussianImageFilter.h"
+#include "itkRecursiveGaussianImageFilter.h"
 
 namespace mdl
 {
@@ -71,6 +73,8 @@ public:
 	bool RunManualThreshold(double threshold);
 	bool RunDistanceTransform(void);
 	bool RunDanielssonDistanceMap(void);
+	bool RunGaussianSmoothing(float GaussianVariance, float maxKernalWidth);
+	bool RunRecursiveGaussianIIRRilter(float sigmaX, float sigmaY, float sigmaZ);
 	bool RunVotingBinaryHoleFilling(int radiusX,int radiusY, int radiusZ);
 	bool RunVotingBinaryIterativeHoleFilling(int radiusX,int radiusY, int radiusZ,int IterativeNumber);
 	bool RunBinayMedianHoleFilling(int radiusX,int radiusY, int radiusZ);

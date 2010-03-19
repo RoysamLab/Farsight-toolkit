@@ -54,7 +54,7 @@ ImageType::Pointer VolumeProcess::GetOutput()
 
 bool VolumeProcess::RescaleIntensities(int min, int max)
 {
-	//Rescale the pixel values
+	//Rescale the pixel values,//by xiao liang
     typedef itk::RescaleIntensityImageFilter<ImageType, ImageType>  RescaleFilterType;
     RescaleFilterType::Pointer rescaleFilter = RescaleFilterType::New();
     rescaleFilter->SetInput( m_outputImage );
@@ -73,6 +73,73 @@ bool VolumeProcess::RescaleIntensities(int min, int max)
 	m_outputImage = rescaleFilter->GetOutput();
 	if(debug)
 		std::cerr << "Rescale Filter Done" << std::endl;
+	return true;
+}
+
+
+bool VolumeProcess::RunGaussianSmoothing(float GaussianVariance, float maxKernalWidth)
+{  //by xiao liang
+   typedef itk::DiscreteGaussianImageFilter< ImageType, ImageType > GaussianFilterType;
+   GaussianFilterType::Pointer GaussianFilter =  GaussianFilterType::New();
+   GaussianFilter->SetInput(m_outputImage);
+   GaussianFilter->SetVariance(GaussianVariance);
+   GaussianFilter->SetMaximumKernelWidth(maxKernalWidth);
+   try
+    {
+		GaussianFilter->Update();
+    }
+   catch( itk::ExceptionObject & err )
+	{
+		std::cerr << "ITK FILTER ERROR: " << err << std::endl ;
+		return false;
+	}
+	m_outputImage = GaussianFilter->GetOutput();
+	if(debug)
+		std::cerr << "GaussianFilter Filter Done" << std::endl;
+	return true;
+}
+
+
+bool VolumeProcess::RunRecursiveGaussianIIRRilter(float sigmaX, float sigmaY, float sigmaZ)
+{  //by xiao liang
+   typedef itk::RecursiveGaussianImageFilter< ImageType, ImageType > RecursiveGaussianFilterType;
+   RecursiveGaussianFilterType::Pointer RecursiveGaussianFilterX =  RecursiveGaussianFilterType::New();
+   RecursiveGaussianFilterType::Pointer RecursiveGaussianFilterY =  RecursiveGaussianFilterType::New();
+   RecursiveGaussianFilterType::Pointer RecursiveGaussianFilterZ =  RecursiveGaussianFilterType::New();
+
+   RecursiveGaussianFilterX->SetDirection(0);
+   RecursiveGaussianFilterY->SetDirection(1);
+   RecursiveGaussianFilterZ->SetDirection(2);
+   
+   RecursiveGaussianFilterX->SetOrder(RecursiveGaussianFilterType::ZeroOrder);
+   RecursiveGaussianFilterY->SetOrder(RecursiveGaussianFilterType::ZeroOrder);
+   RecursiveGaussianFilterZ->SetOrder(RecursiveGaussianFilterType::ZeroOrder);
+
+   RecursiveGaussianFilterX->SetNormalizeAcrossScale(false);
+   RecursiveGaussianFilterY->SetNormalizeAcrossScale(false);
+   RecursiveGaussianFilterZ->SetNormalizeAcrossScale(false);
+
+   RecursiveGaussianFilterX->SetSigma(sigmaX);
+   RecursiveGaussianFilterX->SetSigma(sigmaY);
+   RecursiveGaussianFilterX->SetSigma(sigmaZ);
+
+   RecursiveGaussianFilterX->SetInput(m_outputImage);
+   RecursiveGaussianFilterY->SetInput(RecursiveGaussianFilterX->GetOutput());
+   RecursiveGaussianFilterZ->SetInput(RecursiveGaussianFilterY->GetOutput());
+  
+ 
+   try
+    {
+		RecursiveGaussianFilterZ->Update();
+    }
+   catch( itk::ExceptionObject & err )
+	{
+		std::cerr << "ITK FILTER ERROR: " << err << std::endl ;
+		return false;
+	}
+	m_outputImage = RecursiveGaussianFilterZ->GetOutput();
+	if(debug)
+		std::cerr << " RecursiveGaussianFilter Done" << std::endl;
 	return true;
 }
 
