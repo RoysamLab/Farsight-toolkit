@@ -9,7 +9,6 @@
 #include "itkRGBToLuminanceImageFilter.h"
 #include "itkImageRegionConstIterator.h"
 #include "itkImageRegionIterator.h"
-#include "itkLaplacianRecursiveGaussianImageFilter.h"
 #include "itkOtsuMultipleThresholdsCalculator.h"
 #include "itkScalarImageToHistogramGenerator.h"
 #include "itkBinaryThresholdImageFilter.h"
@@ -54,9 +53,6 @@ public:
 	void SetGenerateProjections(bool d = true){ GEN_PROJ = d; }; //default is false
 
 	//Methods:
-
-	void RunLOG(RGBImageType::Pointer img, int scale, const char * fname = "log.tif", int component = 2, int slice = 0, bool smooth = false);
-
 	void InvertRGBImage(RGBImageType::Pointer img);
 	void SmoothRGBImage(RGBImageType::Pointer img);
 	void MaskBackgroundFromInput();
