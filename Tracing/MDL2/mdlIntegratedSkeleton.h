@@ -62,7 +62,7 @@ public:
 	void SetDebug(bool inp = true){ debug = inp; };
 	//Methods:
 	bool Update();
-	bool RunXiaoLSkeletonPoints(void);
+	bool RunXiaoLSkeletonPoints(float sigma);
 
 	//Get Result:
 	std::vector<fPoint3D> GetOutput(){ return skeletonPoints; };

@@ -109,11 +109,19 @@ bool IntegratedSkeleton::Update()
 }
 
 
-bool IntegratedSkeleton::RunXiaoLSkeletonPoints(void)
+bool IntegratedSkeleton::RunXiaoLSkeletonPoints(float sigma)
 {
-	
-	if(!this->createGradientVectorField(0.5))
+	if (sigma==0)
+	{
+       if(!this->createGradientVectorField()) // have two choice
 		return false;
+	}
+	else 
+	{
+	   if(!this->createGradientVectorField(sigma)) // have two choice
+		return false;
+	}
+
 	return this->XiaoLComputeSkeletonPoints();
 }
 
@@ -1500,7 +1508,7 @@ bool IntegratedSkeleton:: createGradientVectorField(float sigma)
     IvImage = gb->GetOutput();
 	gc->Update();
     IwImage = gc->GetOutput();
-
+    /*
 	if (debug)
 	{	typedef itk::ImageFileWriter<FImageType> WriterType;
 	    WriterType::Pointer writer = WriterType::New();
@@ -1514,7 +1522,8 @@ bool IntegratedSkeleton:: createGradientVectorField(float sigma)
 		writer->SetFileName("Iw.mhd");
 		writer->Update();
 	}
-    
+    */
+
 	itk::ImageRegionIterator< FImageType > itr0( IuImage, IuImage->GetLargestPossibleRegion() );
 
     long idx = 0;
