@@ -5,7 +5,8 @@ function steerableTVbasis = expandVF
 M = 30; %% size of orig vf
 figure(1);
 sig = 0.3;
-Q = computevec([1 0],M,M,sig,sig*0.6);%quiver(real(Q),imag(Q));
+sig2 = sig*0.6;
+Q = computevec([1 0],M,M,sig,sig2);%quiver(real(Q),imag(Q));
   Q = Q';
 figure(50);imagesc(abs(Q));
 

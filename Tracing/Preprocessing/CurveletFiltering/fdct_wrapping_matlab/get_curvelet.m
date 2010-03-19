@@ -28,7 +28,7 @@ noisy_img(1:size(im_temp,1),1:size(im_temp,2)) = im_temp;
 
 [N, M] = size(noisy_img);
 img = noisy_img;
-sigma = 0.05*255;            % noise stdev is 10%
+sigma = 0.10*255;            % noise stdev is 10%
 
 % Tuning parameters
 finest = 1;                 % 1: curvelets at finest scale, 2: wavelets at finest scale
@@ -137,6 +137,9 @@ for xshift = 1:nshifts
             Ccos{j}{l} = 0*C{j}{l};
             Csin{j}{l} = 0*C{j}{l};
         end
+%         if j==1
+%             C{j}{l} = 0*C{j}{l};
+%         end
       end
     end
     
@@ -211,6 +214,8 @@ for xshift = 1:nshifts
     end;
     
     temp_restored = circshift(temp_restored,[-xshift, -yshift]);
+    temp_restored_cos = circshift(temp_restored_cos,[-xshift, -yshift]);
+    temp_restored_sin = circshift(temp_restored_sin,[-xshift, -yshift]);
     restored_img = (n-1)/n*restored_img + 1/n*temp_restored;
     
   end
