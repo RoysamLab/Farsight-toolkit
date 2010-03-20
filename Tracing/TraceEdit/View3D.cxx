@@ -689,6 +689,9 @@ void View3D::CreateGUIObjects()
 	this->typeCombo->addItems(types);
 	connect(this->typeCombo, SIGNAL(activated( int )), this, SLOT(SetTraceType(int )));
 	
+	this->aboutAction = new QAction("About", this->CentralWidget);
+	this->aboutAction->setStatusTip("About Trace Edit");
+	connect(this->aboutAction, SIGNAL(triggered()), this, SLOT(About()));
 // Lables for the status bar to show edit counts
 	this->SplitLabel = new QLabel(this);
 	this->SplitLabel->setText(QString::number(this->numSplit));
@@ -776,6 +779,9 @@ void View3D::CreateLayout()
   this->InformationDisplays->hide();
 
   this->createRayCastSliders();
+  this->menuBar()->addSeparator();
+  this->help = this->menuBar()->addMenu("Help");
+  this->help->addAction(this->aboutAction);
 }
 
 void View3D::CreateInteractorStyle()
@@ -901,7 +907,7 @@ void View3D::createRayCastSliders()
 	this->RacastBar->addWidget(this->BrightnessSpin);
 	this->RacastBar->addWidget(this->BrightnessSlider);
 	this->ShowToolBars->addAction(this->RacastBar->toggleViewAction());
-	if(!this->ImageActors->NumberOfImages() < 0)
+	if(!(this->ImageActors->NumberOfImages() < 0))
 	{
 		this->RacastBar->hide();
 	}
@@ -916,6 +922,28 @@ void View3D::RayCastOpacityChanged(int value)
 	this->ImageActors->setOpacity(value);
 	this->QVTK->GetRenderWindow()->Render();
 
+}
+void View3D::EditHelp()
+{
+	//will write help documentation here
+}
+void View3D::About()
+{
+	QMessageBox::about(this, tr("About Application"),
+             tr("The Farsight Trace Editor is intended to provide validation through editing"
+			 "The linked space provides group editing and helps automate many tasks"
+			 "Copyright 2009 Rensselaer Polytechnic Institute"
+			"Licensed under the Apache License, Version 2.0 (the 'License');"
+			"you may not use this file except in compliance with the License."
+			"You may obtain a copy of the License at"
+
+			"http://www.apache.org/licenses/LICENSE-2.0"
+
+			"Unless required by applicable law or agreed to in writing,"
+			"software distributed under the License is distributed on an 'AS IS' BASIS,"
+			"WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied."
+			"See the License for the specific language governing permissions and"
+			"limitations under the License. "));
 }
 /* update settings */
 void View3D::ShowSettingsWindow()

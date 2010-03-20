@@ -305,7 +305,7 @@ double TraceLine::Euclidian(TraceBit bit1, TraceBit bit2)
 	double distance, x, y, z;
 	x = pow((bit1.x -bit2.x),2);
 	y = pow((bit1.y -bit2.y),2);
-	z = pow((bit1.y -bit2.y),2);
+	z = pow((bit1.z -bit2.z),2);
 	distance = sqrt(x +y +z);
 	return distance;
 

@@ -135,6 +135,8 @@ public slots:
 	QString getImageFile();
 	QString getSomaFile();
 	void OkToBoot();
+	void EditHelp();
+	void About();
 
 protected slots:
 	void updateSelectionHighlights();
@@ -183,6 +185,8 @@ private:
     QWidget *CentralWidget;
 	QMenu *fileMenu;
 	QMenu *ShowToolBars;
+	QMenu *help;
+	QAction *aboutAction;
 	QToolBar *EditsToolBar, *BranchToolBar, *RacastBar;
 
 	//Qt widgets on the main window
