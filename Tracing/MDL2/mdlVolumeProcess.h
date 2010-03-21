@@ -73,7 +73,7 @@ public:
 	bool RunManualThreshold(double threshold);
 	bool RunDistanceTransform(void);
 	bool RunDanielssonDistanceMap(void);
-	bool RunGaussianSmoothing(float GaussianVariance, float maxKernalWidth);
+	bool RunGaussianSmoothing(float GaussianVariance, int maxKernalWidth);
 	bool RunRecursiveGaussianIIRRilter(float sigmaX, float sigmaY, float sigmaZ);
 	bool RunVotingBinaryHoleFilling(int radiusX,int radiusY, int radiusZ);
 	bool RunVotingBinaryIterativeHoleFilling(int radiusX,int radiusY, int radiusZ,int IterativeNumber);

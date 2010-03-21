@@ -77,12 +77,17 @@ bool VolumeProcess::RescaleIntensities(int min, int max)
 }
 
 
-bool VolumeProcess::RunGaussianSmoothing(float GaussianVariance, float maxKernalWidth)
+bool VolumeProcess::RunGaussianSmoothing(float GaussianVariance, int maxKernalWidth)
 {  //by xiao liang
    typedef itk::DiscreteGaussianImageFilter< ImageType, ImageType > GaussianFilterType;
    GaussianFilterType::Pointer GaussianFilter =  GaussianFilterType::New();
    GaussianFilter->SetInput(m_outputImage);
-   GaussianFilter->SetVariance(GaussianVariance);
+   GaussianFilter->SetFilterDimensionality(3);
+   //const itk::FixedArray<double 0>::ValueType v;
+   
+   //v = GaussianVariance;
+   //GaussianFilter->SetVariance(v);
+
    GaussianFilter->SetMaximumKernelWidth(maxKernalWidth);
    try
     {
