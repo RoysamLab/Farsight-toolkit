@@ -106,10 +106,11 @@ bool IntegratedSkeleton::Update()
 	this->computeCriticalPointSeeds(); //If fails we are not dead in the water
 
 	return this->computeSkeleton();
+	//return this->MovingSkeletonPointsAlongGVF(10);
 }
 
 
-bool IntegratedSkeleton::RunXiaoLSkeletonPoints(float sigma)
+bool IntegratedSkeleton::RunXiaoLSkeletonPoints(float sigma, int MoveStep)
 {
 	if (sigma==0)
 	{
@@ -122,7 +123,16 @@ bool IntegratedSkeleton::RunXiaoLSkeletonPoints(float sigma)
 		return false;
 	}
 
-	return this->XiaoLComputeSkeletonPoints();
+	if(!this->XiaoLComputeSkeletonPoints()) // Hessian based Critical points Detection
+		return false;
+	
+	if(!this->convertGradVectorToForceVector()) // normarize the GVF
+		return false;
+    
+	if(!this->MovingSkeletonPointsAlongGVF(MoveStep)) // Move to the centle-line
+		return false;
+    
+	return true;
 }
 
 int IntegratedSkeleton::sign(float value)
@@ -1665,6 +1675,7 @@ bool IntegratedSkeleton::XiaoLComputeSkeletonPoints(void)
 				  skeletonPoints.push_back(newPos);
 				 }
 				}
+
                
 			}
 		}
@@ -1696,7 +1707,7 @@ bool IntegratedSkeleton::XiaoLComputeSkeletonPoints(void)
 	{
 		vtkFileHandler * fhdl = new vtkFileHandler();
 		fhdl->SetNodes(&skeletonPoints);
-		fhdl->Write("SkeletonPoints.vtk");
+		fhdl->Write("CriticalPoints.vtk");
 		delete fhdl;
 	}//end if debug
 
@@ -1704,6 +1715,55 @@ bool IntegratedSkeleton::XiaoLComputeSkeletonPoints(void)
 
 	return true;
 
+}
+
+bool IntegratedSkeleton::MovingSkeletonPointsAlongGVF(int Step)
+{
+  // first we normalize the GVF
+
+  std::vector<fPoint3D> seeds = skeletonPoints;
+
+
+
+  skeletonPoints.clear();
+
+  int SeedsNumber = (int )seeds.size();
+  
+
+  fPoint3D Startpos;
+  long slsz = (this->sizeX)*(this->sizeY);
+
+  int idxSeeds = SeedsNumber-1;
+
+  while(idxSeeds >= 0)
+	{
+		Startpos.x = seeds[idxSeeds].x; 
+		Startpos.y = seeds[idxSeeds].y; 
+		Startpos.z = seeds[idxSeeds].z;
+		
+        for (int i=0;i<Step;i++)
+		{   
+		long idx = (int)Startpos.z * slsz + (int)Startpos.y *sizeX + (int)Startpos.x;
+		Startpos.x = Startpos.x + this->force[idx].x;
+		Startpos.y = Startpos.y + this->force[idx].y;
+        Startpos.z = Startpos.z + this->force[idx].z;
+		}
+
+		skeletonPoints.push_back(Startpos);
+
+		idxSeeds--;
+
+	}
+
+  //Write out skeleton file:
+	if(debug)
+	{
+		vtkFileHandler * fhdl = new vtkFileHandler();
+		fhdl->SetNodes(&skeletonPoints);
+	fhdl->Write("SkeletonPoints.vtk");
+		delete fhdl;
+	}//end if debug
+  return true;
 }
 
 }

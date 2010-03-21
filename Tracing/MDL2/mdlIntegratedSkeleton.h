@@ -62,7 +62,7 @@ public:
 	void SetDebug(bool inp = true){ debug = inp; };
 	//Methods:
 	bool Update();
-	bool RunXiaoLSkeletonPoints(float sigma=0);
+	bool RunXiaoLSkeletonPoints(float sigma=0,int MoveStep =10);
 
 	//Get Result:
 	std::vector<fPoint3D> GetOutput(){ return skeletonPoints; };
@@ -105,6 +105,7 @@ private:
 	// New Skeleton points Computation,  add in March,2010 
 
 	bool XiaoLComputeSkeletonPoints(void);
+	bool MovingSkeletonPointsAlongGVF(int Step);
     
 	//Key functions:
 	bool createGradientVectorField(void);
