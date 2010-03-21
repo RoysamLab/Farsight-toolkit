@@ -30,6 +30,9 @@ TARGET_LINK_LIBRARIES(volumeProcess2 mdlVolumeProcess)
 ADD_EXECUTABLE(mdlpipe pipeline_main.cpp)
 TARGET_LINK_LIBRARIES(mdlpipe mdlVolumeProcess mdlIntegratedSkeleton mdlMST mdlBSplineFitting  )
 
+ADD_EXECUTABLE(mdlpipe2 pipeline_main2.cpp)
+TARGET_LINK_LIBRARIES(mdlpipe2 mdlVolumeProcess mdlIntegratedSkeleton mdlMST mdlBSplineFitting  )
+
 INCLUDE_DIRECTORIES("${Farsight_SOURCE_DIR}/ftkCommon")
 
 QT4_WRAP_UI( Wizard_HDRS MDL2Wizard.ui )
