@@ -1,4 +1,4 @@
-function out = tensor_voting_main(im);
+function out = scalar_voting_main(im);
 % im = imread('sample_from_paper.tif');
  im = double(im);
 % min1 = min(im(:));
@@ -94,15 +94,15 @@ thresh = X(find(N>0.85,1));
 % hold on;
 % [X,Y] = meshgrid(1:size(dircos,2),1:size(dircos,1));
 % quiver(X,Y,dircos.*stickness/max(stickness(:)),-dirsin.*stickness/max(stickness(:)));
- figure(1), imagesc(stickness);
+%  figure(1), imagesc(stickness);
 %  figure, imshow(uint8(128*ballness));
- figure(2), imagesc(orientation*180/pi.*(stickness>thresh));
+%  figure(2), imagesc(orientation*180/pi.*(stickness>thresh));
 
 A0 = Axx + Ayy ;
 A2 = Axx - 2*1i*Axy - Ayy;
 A2n = Axx + 2*1i*Axy - Ayy;
 
-sigma = 20;
+sigma = 25;
 K = double(sigma*4);
 [x,y] = meshgrid(-K:1:K,-K:1:K);
 norm = sqrt(x.^2+y.^2);
@@ -114,6 +114,7 @@ mat(K+1,K+1)=0;
 figure(4);
 for co = 0:2:8
     w{co/2+1} = exp(-(x.^2+y.^2)/2/sigma/sigma).*exp(-1i*mat*co);
+%     w{co/2+1} = (x.^2+y.^2).*exp(1-(x.^2+y.^2)/2/sigma/sigma).*exp(-1i*mat*co);
     subplot(5,2,(co/2)*2+1); imagesc(real(w{co/2+1}));
     subplot(5,2,(co/2)*2+2); imagesc(imag(w{co/2+1}));
 end
@@ -139,10 +140,10 @@ orientnew = mod(0.5*angle(U2n)+pi,pi);
 figure(3)
 subplot(2,2,1); imagesc(orientation*180/pi.*(stickness>thresh));
 subplot(2,2,2); imagesc(gradmag);
-subplot(2,2,3); imagesc(sticknew)
+subplot(2,2,3); imagesc(U0)
 subplot(2,2,4); imagesc(orientnew*180/pi.*(stickness>thresh));
 out = uint8(255*sticknew/max(sticknew(:)));
-writeim(out,'tensor_voting_output.tif');
+writeim(uint8(255*U0./max(U0(:))),'scalar_voting_output.tif');
 writeim(uint8(255*gradmag./max(gradmag(:))),'curvelet_output.tif');
 end
 % subplot(2,2,4); imagesc(ballnew);
