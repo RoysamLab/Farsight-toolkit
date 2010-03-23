@@ -167,7 +167,7 @@ void NucleusEditor::createMenus()
 	loadLabelAction = new QAction(tr("Load Result..."), this);
 	loadLabelAction->setStatusTip(tr("Load a result image into the image browser"));
 	connect(loadLabelAction,SIGNAL(triggered()), this, SLOT(askLoadResult()));
-	//fileMenu->addAction(loadLabelAction);
+	fileMenu->addAction(loadLabelAction);
 
 	loadTableAction = new QAction(tr("Load Table..."), this);
 	loadTableAction->setStatusTip(tr("Load data table from text file"));
