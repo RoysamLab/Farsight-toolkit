@@ -67,8 +67,8 @@ Preprocess::Preprocess(RGBImageType3D::Pointer img, const char color)
 	origin[2] = 0;
 	myImg->SetOrigin( origin );
 
-	ImageType3D::IndexType start = { 0,0,0 };
-	ImageType3D::SizeType  size = { size1, size2, size3 };
+	ImageType3D::IndexType start = {{ 0,0,0 }};
+	ImageType3D::SizeType  size = {{ size1, size2, size3 }};
 	ImageType3D::RegionType region;
 	region.SetSize( size );
 	region.SetIndex( start );
@@ -356,7 +356,7 @@ void Preprocess::RemoveConnectedComponents(int minObjSize)
 		return;
     }
 	
-	unsigned short numObjects = relabel->GetNumberOfObjects();
+	//unsigned short numObjects = relabel->GetNumberOfObjects();
 
 	ShortImageType::Pointer ccImage = relabel->GetOutput();
 
@@ -634,8 +634,8 @@ Preprocess::ImageType2D::Pointer Preprocess::ExtractSlice(ImageType3D::Pointer i
 	if(slice >= size3)
 		return NULL;
 
-	ImageType3D::IndexType extractStart = { 0,0,slice };
-	ImageType3D::SizeType extractSize = { size1, size2, 0 };
+	ImageType3D::IndexType extractStart = {{ 0,0,slice }};
+	ImageType3D::SizeType extractSize = {{ size1, size2, 0 }};
 	ImageType3D::RegionType extractRegion;
 	extractRegion.SetSize( extractSize );
 	extractRegion.SetIndex( extractStart );
@@ -669,8 +669,8 @@ Preprocess::ImageType3D::Pointer Preprocess::SliceTo3D(ImageType2D::Pointer img)
 	origin[2] = 0;
 	nImg->SetOrigin( origin );
 
-	ImageType3D::IndexType index = { 0,0,0 };
-	ImageType3D::SizeType size = { size1, size2, 1 };
+	ImageType3D::IndexType index = {{ 0,0,0 }};
+	ImageType3D::SizeType size = {{ size1, size2, 1 }};
 	ImageType3D::RegionType regions;
 	regions.SetSize( size );
 	regions.SetIndex( index );
