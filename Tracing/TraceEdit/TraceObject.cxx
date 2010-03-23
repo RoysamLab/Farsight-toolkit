@@ -1799,9 +1799,9 @@ int TraceObject::createGapLists(std::vector<TraceLine*> traceList)
       return -1;
       }
 	int id1 = traceList[i]->GetId(), r1= traceList[i]->GetRootID();
-	if (( id1 != r1) && !traceList[i]->isLeaf() )
-	{
-		continue;	//is neither root or leaf cannot merge
+	if ((( id1 != r1) && !traceList[i]->isLeaf() )||(traceList[i]->GetSize() < 3))
+	{//is neither root or leaf, nor large enough: cannot merge
+		continue;	
 	}
     for (j=i+1; j<traceList.size(); j++)
       {
@@ -1813,7 +1813,7 @@ int TraceObject::createGapLists(std::vector<TraceLine*> traceList)
 	  {
 		continue;	//is neither root or leaf cannot merge
 	  }
-	  if (( id1 != r1) &&(id2 != r2))
+	  if ((( id1 != r1) &&(id2 != r2))||(newGap->Trace2->GetSize() < 3))
 	  {/*
 		  if (newGap->Trace1->GetLevel() > newGap->Trace2->GetLevel())
 		  {
