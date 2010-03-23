@@ -198,13 +198,56 @@ TraceLine::TraceBitsType::iterator TraceLine::GetTraceBitIteratorBegin()
 {
   return this->m_trace_bits.begin();
 }
-
+TraceBit TraceLine::GetBitXFromBegin(int x)
+{
+	TraceBit curBit;
+	TraceBitsType::iterator iter = this->m_trace_bits.begin();
+	TraceBitsType::iterator iterend = this->m_trace_bits.end();
+	if (3 > (int)this->m_trace_bits.size())
+	{
+		curBit = * iterend;
+		//return  curBit;
+	}
+	else
+	{
+		int i = 0;
+		while(( i< (int)(this->m_trace_bits.size()-2))&&( i < x ))
+		{
+			++iter;
+			i++;
+		}
+		curBit = *iter;
+	}
+	return curBit;
+}
 ///////////////////////////////////////////////////////////////////////////////
 TraceLine::TraceBitsType::iterator TraceLine::GetTraceBitIteratorEnd()
 {
   return this->m_trace_bits.end();
 }
 
+TraceBit TraceLine::GetBitXFromEnd(int x)
+{
+	TraceBit curBit;
+	TraceBitsType::iterator iter = this->m_trace_bits.begin();
+	TraceBitsType::iterator iterend = this->m_trace_bits.end();
+	if (3 >(int)this->m_trace_bits.size())
+	{
+		curBit = * iter;
+		
+	}
+	else
+	{
+		int i = 0;
+		while(( i<(int)(this->m_trace_bits.size()-2))&&( i < x ))
+		{
+			--iterend;
+			i++;
+		}
+		curBit = *iterend;
+	}
+	return curBit;
+}
 ///////////////////////////////////////////////////////////////////////////////
 TraceLine::TraceBitsType* TraceLine::GetTraceBitsPointer()
 {
@@ -328,6 +371,7 @@ bool TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
   //int center1=this->GetSize()/2, center2=Trace2->GetSize()/2;
   double min, distances[4];
 
+  int Xbits = 10; //small step from end to determine 
   //compute the endpt distances
   distances[0]=Euclidian(m_trace_bits.front(), Trace2->m_trace_bits.front());//0 F-F
   distances[1]=Euclidian(m_trace_bits.front(), Trace2->m_trace_bits.back());//1 F-B
@@ -345,46 +389,56 @@ bool TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
       mark=i;
       }
     } 
-  
-  angle = Angle(m_trace_bits.front(),m_trace_bits.back(), 
-	  Trace2->m_trace_bits.front(),Trace2->m_trace_bits.back());
+// std::cout << mark << "=mark\n";
   // from min determine orientation and return distance
   if (mark ==0)
-    {
+    {//F-F
+		//std::cout <<"FF\n";
 	if (this->m_branches.size() > 0 && Trace2->m_branches.size()> 0)
 		{return false;}
     dist = distances[0];
     dir1= m_trace_bits.front().marker;
-    dir2= Trace2->m_trace_bits.front().marker;
-    angle=PI-angle;
+    dir2= Trace2->m_trace_bits.front().marker; 
+	angle = Angle(m_trace_bits.front(),this->GetBitXFromBegin(Xbits), 
+		Trace2->m_trace_bits.front(),Trace2->GetBitXFromBegin(Xbits));
+    //angle=PI-angle;
     maxdist= distances[3];
     }
   else if (mark ==1)
-    {
+    {//1 F-B
+		//std::cout <<"FB\n";
 	if ((this->GetParentID() != -1)||!Trace2->isLeaf())
 		{return false;}
     dist = distances[1];
     dir1= m_trace_bits.front().marker;
-    dir2= Trace2->m_trace_bits.back().marker;
+    dir2= Trace2->m_trace_bits.back().marker; 
+	angle = Angle(m_trace_bits.front(),this->GetBitXFromBegin(Xbits), 
+		Trace2->GetBitXFromEnd(Xbits),Trace2->m_trace_bits.back());
     maxdist= distances[2];
     }
   else if (mark ==2)
-    {
+    {//2 B-F
+		//std::cout <<"BF\n";
 		if (!this->isLeaf() || (Trace2->GetParentID()!=-1))
 		{return false;}
     dist = distances[2];
     dir1= m_trace_bits.back().marker;
-    dir2= Trace2->m_trace_bits.front().marker;
+    dir2= Trace2->m_trace_bits.front().marker; 
+	angle = Angle(this->GetBitXFromEnd(Xbits),m_trace_bits.back(), 
+		Trace2->m_trace_bits.front(),Trace2->GetBitXFromBegin(Xbits));
     maxdist= distances[1];
     }
   else
-    {
+    {//3 B-B
+		//std::cout <<"BB\n";
 	if (!this->isLeaf() || !Trace2->isLeaf()) 
 		{return false;}
     dist = distances[3];
     dir1= m_trace_bits.back().marker;
     dir2= Trace2->m_trace_bits.back().marker;
-    angle=PI-angle;
+	angle = Angle(this->GetBitXFromEnd(Xbits),m_trace_bits.back(), 
+		Trace2->GetBitXFromEnd(Xbits),Trace2->m_trace_bits.back());
+    //angle=PI-angle;
     maxdist= distances[0];
     }
   return true;

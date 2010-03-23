@@ -62,6 +62,8 @@ public:
 	void SetType(unsigned char t) ;
 	void AddTraceBit(TraceBit tbit);
 	TraceBit removeLastBit();
+	TraceBit GetBitXFromEnd(int x);
+	TraceBit GetBitXFromBegin(int x);
 	TraceBitsType::iterator GetTraceBitIteratorBegin();
 	TraceBitsType::iterator GetTraceBitIteratorEnd();
 	TraceBitsType * GetTraceBitsPointer();

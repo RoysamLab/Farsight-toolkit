@@ -227,10 +227,10 @@ private:
 
 	//Qt widgets for the settings window
 	QWidget *SettingsWidget;
-	QLineEdit *MaxGapField;
-	QLineEdit *GapToleranceField;
+	QSpinBox *MaxGapField;
+	QDoubleSpinBox *GapToleranceField;
 	QSpinBox *LineLengthField;
-	QSpinBox *ColorValueField;
+	QDoubleSpinBox *ColorValueField;
 	QSpinBox *LineWidthField;
 	QDialogButtonBox *ApplySettingsButton;
 	QComboBox *typeCombo;

@@ -666,15 +666,18 @@ void View3D::CreateGUIObjects()
 	connect(this->ImageIntensity, SIGNAL(triggered()), this, SLOT(SetImgInt()));
   //Setup the tolerance settings editing window
   this->SettingsWidget = new QWidget();
-  QIntValidator *intValidator = new QIntValidator(1, 100, this->SettingsWidget);
-  this->MaxGapField = new QLineEdit(this->SettingsWidget);
-  this->MaxGapField->setValidator(intValidator);
-  this->GapToleranceField = new QLineEdit(this->SettingsWidget);
-  this->GapToleranceField->setValidator(intValidator);
+  //QIntValidator *intValidator = new QIntValidator(1, 100, this->SettingsWidget);
+  this->MaxGapField = new QSpinBox(this->SettingsWidget);
+  //this->MaxGapField->setValidator(intValidator);
+  this->GapToleranceField = new QDoubleSpinBox(this->SettingsWidget);
+  this->GapToleranceField->setRange(0,5);
+  this->GapToleranceField->setSingleStep(.1);
+  //this->GapToleranceField->setValidator(intValidator);
   this->LineLengthField = new QSpinBox(this->SettingsWidget);
   this->LineLengthField->setRange(0,100);
-  this->ColorValueField = new QSpinBox(this->SettingsWidget);
-  this->ColorValueField->setRange(0,100);
+  this->ColorValueField = new QDoubleSpinBox(this->SettingsWidget);
+  this->ColorValueField->setRange(0,1);
+  this->ColorValueField->setSingleStep(.01);
   this->LineWidthField = new QSpinBox(this->SettingsWidget);
   this->LineWidthField->setRange(1,5);
   this->ApplySettingsButton = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
@@ -754,10 +757,10 @@ void View3D::CreateLayout()
   settingsLayout->addRow(tr("Color value RGB scalar 0 to 1:"),this->ColorValueField);
   settingsLayout->addRow(tr("Line width:"),this->LineWidthField);
   settingsLayout->addRow(this->ApplySettingsButton);
-  this->MaxGapField->setText(QString::number(this->tobj->gapMax));
-  this->GapToleranceField->setText(QString::number(this->tobj->gapTol));
+	this->MaxGapField->setValue(this->tobj->gapMax);
+	this->GapToleranceField->setValue(this->tobj->gapTol);
   this->LineLengthField->setValue(this->SmallLineLength);
-  this->ColorValueField->setValue(this->SelectColor*100);
+  this->ColorValueField->setValue(this->SelectColor);
   this->LineWidthField->setValue(this->lineWidth);
   this->settingsDock = new QDockWidget("Settings", this);
   this->settingsDock->setWidget(this->SettingsWidget);
@@ -949,22 +952,28 @@ void View3D::About()
 void View3D::ShowSettingsWindow()
 {
   //make sure the values in the input fields are up-to-date
-  this->MaxGapField->setText(QString::number(this->tobj->gapMax));
-  this->GapToleranceField->setText(QString::number(this->tobj->gapTol));
-  this->LineLengthField->setValue(this->SmallLineLength);
-  this->ColorValueField->setValue(this->SelectColor*100);
-  this->LineWidthField->setValue(this->lineWidth);
-  this->SettingsWidget->show();
+	this->MaxGapField->setValue(this->tobj->gapMax);
+	this->GapToleranceField->setValue(this->tobj->gapTol);
+	this->LineLengthField->setValue(this->SmallLineLength);
+	this->ColorValueField->setValue(this->SelectColor);
+	this->LineWidthField->setValue(this->lineWidth);
+	this->SettingsWidget->show();
 }
 
 void View3D::ApplyNewSettings()
 {
   this->tobj->gapMax = this->MaxGapField->text().toInt();
-  this->tobj->gapTol = this->GapToleranceField->text().toDouble();
-  this->SmallLineLength = this->LineLengthField->text().toFloat();
-  this->SelectColor = this->ColorValueField->text().toDouble()/100;
-  this->lineWidth = this->LineWidthField->text().toFloat();
+  this->tobj->gapTol = this->GapToleranceField->value();
+  this->SmallLineLength = (float)this->LineLengthField->value();
+  this->SelectColor = this->ColorValueField->value();
+  this->lineWidth = (float)this->LineWidthField->value();
   this->statusBar()->showMessage(tr("Applying new settings"),3000);
+	this->TraceEditSettings.setValue("mainWin/gapTol", this->tobj->gapTol ) ;
+	this->TraceEditSettings.setValue("mainWin/gapMax", this->tobj->gapMax);
+	this->TraceEditSettings.setValue("mainWin/smallLine", this->SmallLineLength);
+	this->TraceEditSettings.setValue("mainWin/selectColor", this->SelectColor);
+	this->TraceEditSettings.setValue("mainWin/LineWidth", this->lineWidth);
+	this->TraceEditSettings.sync();
 }
 
 void View3D::HideSettingsWindow()
@@ -1832,11 +1841,6 @@ void View3D::closeEvent(QCloseEvent *event)
 {	
 	this->TraceEditSettings.setValue("mainWin/size", this->size());
 	this->TraceEditSettings.setValue("mainWin/pos",	this->pos());
-	this->TraceEditSettings.setValue("mainWin/gapTol", this->tobj->gapTol ) ;
-	this->TraceEditSettings.setValue("mainWin/gapMax", this->tobj->gapMax);
-	this->TraceEditSettings.setValue("mainWin/smallLine", this->SmallLineLength);
-	this->TraceEditSettings.setValue("mainWin/selectColor", this->SelectColor);
-	this->TraceEditSettings.setValue("mainWin/LineWidth", this->lineWidth);
 	this->TraceEditSettings.setValue("lastOpen/Image", this->Image);
 	this->TraceEditSettings.setValue("lastOpen/Trace",this->TraceFiles);
 	this->TraceEditSettings.setValue("lastOpen/Soma", this->SomaFile);
