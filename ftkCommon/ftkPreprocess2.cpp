@@ -551,7 +551,8 @@ void Preprocess::BinaryThinning()
 	myImg = rescale->GetOutput();
 }
 
-void Preprocess::MinErrorThresholding(float *alpha_B, float *alpha_A, float *P_I)
+//void Preprocess::MinErrorThresholding(float *alpha_B, float *alpha_A, float *P_I)
+void Preprocess::MinErrorThresholding(float *alpha_B, float *alpha_A, float *P_I, bool overwrite)
 {
 	//Binarize
 	typedef itk::MinErrorThresholdImageFilter< ImageType3D, ImageType3D >  FilterType;
@@ -571,13 +572,14 @@ void Preprocess::MinErrorThresholding(float *alpha_B, float *alpha_A, float *P_I
 	*alpha_A = (float)filter->GetAlphaRight();
 	*P_I = (float)filter->GetPriorLeft();
 	
-	myImg = filter->GetOutput();
+	if(overwrite)
+		myImg = filter->GetOutput();
 }
 
 void Preprocess::GraphCutBinarize(bool shiftDown)
 {
 	float alpha_B, alpha_F, P_I;
-	MinErrorThresholding(&alpha_B, &alpha_F, &P_I);
+	MinErrorThresholding(&alpha_B, &alpha_F, &P_I, false);
 
 	//Some times you need to shift the means down. The next two lines are optional
 	if(shiftDown)
@@ -633,8 +635,8 @@ void Preprocess::GraphCutBinarize(bool shiftDown)
 	}
 
 	//ADD EDGES:
-	double sig = 30.0;
-	double w = 10.0;
+	double sig = 30.0; //30.0;
+	double w = 10.0; //10.0;
 	for( it.GoToBegin(); !it.IsAtEnd(); ++it )
 	{
 		ImageType3D::IndexType index = it.GetIndex();

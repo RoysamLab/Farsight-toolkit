@@ -50,8 +50,8 @@ limitations under the License.
 #include "itkGradientVectorFlowImageFilter.h"
 #include "itkBinaryThinningImageFilter.h"
 
-#include "GraphCuts\itkMinErrorThresholdImageFilter.h"
-#include "GraphCuts\new_graph.h"
+#include "GraphCuts/itkMinErrorThresholdImageFilter.h"
+#include "GraphCuts/new_graph.h"
 
 namespace ftk
 {
@@ -86,7 +86,7 @@ public:
 
 	//Methods specific to Binary Images:
 	void GraphCutBinarize(bool shiftDown=false);
-	void MinErrorThresholding(float *alpha_B, float *alpha_A, float *P_I);
+	void MinErrorThresholding(float *alpha_B, float *alpha_A, float *P_I, bool overwrite=true);
 	void OtsuBinarize(int num_thresholds=2, int num_in_foreground=1, bool fgrnd_dark=false); //To create the binary
 	void VotingHoleFilling(int radiusX=5, int radiusY=5, int radiusZ=0, int iterations=100); 
 	void MedianHoleFilling(int radiusX=9, int radiusY=9, int radiusZ=0);
