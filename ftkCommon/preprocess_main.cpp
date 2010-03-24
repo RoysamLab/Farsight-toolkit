@@ -254,6 +254,22 @@ void pipeline(std::string pipeName, ftk::Preprocess * prep)
 			prep->GraphCutBinarize();
 			std::cout << "done\n";
 		}
+		else if( strcmp( parent, "OpeningFilter" ) == 0 )
+		{
+			int radius=3;
+			parentElement->QueryIntAttribute("radius",&radius);
+			std::cout << "Starting OpeningFilter...";
+			prep->OpeningFilter(radius);
+			std::cout << "done\n";
+		}
+		else if( strcmp( parent, "ClosingFilter" ) == 0 )
+		{
+			int radius=3;
+			parentElement->QueryIntAttribute("radius",&radius);
+			std::cout << "Starting ClosingFilter...";
+			prep->ClosingFilter(radius);
+			std::cout << "done\n";
+		}
 
 		parentElement = parentElement->NextSiblingElement();
 	} // end while(parentElement)

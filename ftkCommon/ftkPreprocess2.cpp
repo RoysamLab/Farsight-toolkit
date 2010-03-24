@@ -307,6 +307,48 @@ void Preprocess::MedianFilter( int radiusX, int radiusY, int radiusZ)
 	myImg = filter->GetOutput();
 }
 
+void Preprocess::OpeningFilter( int radius )
+{
+	typedef itk::BinaryBallStructuringElement<PixelType,3> StructuringElementType;
+	typedef itk::GrayscaleMorphologicalOpeningImageFilter<ImageType3D, ImageType3D, StructuringElementType > OpenFilterType;
+	OpenFilterType::Pointer grayscaleOpen = OpenFilterType::New();
+	StructuringElementType structuringElement;
+	structuringElement.CreateStructuringElement();
+	structuringElement.SetRadius(radius);
+	grayscaleOpen->SetKernel( structuringElement );	 
+	grayscaleOpen->SetInput(myImg);
+	try
+	{
+		grayscaleOpen->Update();
+	}
+	catch( itk::ExceptionObject & err )
+	{
+		std::cerr << "Exception caught: " << err << std::endl;
+	}
+	myImg = grayscaleOpen->GetOutput();
+}
+
+void Preprocess::ClosingFilter( int radius )
+{
+	typedef itk::BinaryBallStructuringElement<PixelType,3> StructuringElementType;
+	typedef itk::GrayscaleMorphologicalClosingImageFilter<ImageType3D, ImageType3D, StructuringElementType > FilterType;
+	FilterType::Pointer close = FilterType::New();
+	StructuringElementType structuringElement;
+	structuringElement.CreateStructuringElement();
+	structuringElement.SetRadius(radius);
+	close->SetKernel( structuringElement );	 
+	close->SetInput(myImg);
+	try
+	{
+		close->Update();
+	}
+	catch( itk::ExceptionObject & err )
+	{
+		std::cerr << "Exception caught: " << err << std::endl;
+	}
+	myImg = close->GetOutput();
+}
+
 void Preprocess::ManualThreshold( PixelType threshold, bool binary )
 {
 	//Apply threshold (any thing below threshold is set to zero)
@@ -581,7 +623,7 @@ void Preprocess::GraphCutBinarize(bool shiftDown)
 	float alpha_B, alpha_F, P_I;
 	MinErrorThresholding(&alpha_B, &alpha_F, &P_I, false);
 
-	//Some times you need to shift the means down. The next two lines are optional
+	//Some times you need to shift the means down.
 	if(shiftDown)
 	{
 		alpha_F = std::max((alpha_F)/2,((alpha_B)+(alpha_F))/2);
@@ -626,11 +668,11 @@ void Preprocess::GraphCutBinarize(bool shiftDown)
 		double Df = -log( F_H[intst] );  //it was multiplied by .5                              
 		if(Df > 1000.0)
 			Df = 1000;
-		double Db = -log( B_H[intst] );                    
+		double Db = -log( B_H[intst] );                  
 		if(Db > 1000.0)
 			Db=1000;     			
 			        				
-		g->add_node();		
+		g->add_node();
 		g->add_tweights( curr_node, /* capacities */ Df, Db );
 	}
 

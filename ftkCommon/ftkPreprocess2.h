@@ -49,6 +49,9 @@ limitations under the License.
 #include "itkBinaryMedianImageFilter.h"
 #include "itkGradientVectorFlowImageFilter.h"
 #include "itkBinaryThinningImageFilter.h"
+#include "itkBinaryBallStructuringElement.h"
+#include "itkGrayscaleMorphologicalOpeningImageFilter.h"
+#include "itkGrayscaleMorphologicalClosingImageFilter.h"
 
 #include "GraphCuts/itkMinErrorThresholdImageFilter.h"
 #include "GraphCuts/new_graph.h"
@@ -81,6 +84,8 @@ public:
 	void CurvatureAnisotropicDiffusion( double timestep=0.125, double conductance=1.0, int iterations=1 );
 	void GradientAnisotropicDiffusion( double timestep=0.125, double conductance=1.0, int iterations=1 );
 	void MedianFilter( int radiusX=3, int radiusY=3, int radiusZ=0);
+	void OpeningFilter( int radius=3 );
+	void ClosingFilter( int radius=3 );
 	void ManualThreshold( PixelType threshold=128, bool binary=false );
 	void RemoveConnectedComponents(int minObjSize);
 
