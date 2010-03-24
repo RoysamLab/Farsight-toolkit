@@ -1418,13 +1418,26 @@ void View3D::DeleteTrace(TraceLine *tline)
 /*	branching functions	*/
 void View3D::SetRoots()
 {
-	std::vector<int> ids = this->TreeModel->GetSelecectedIDs();
 	this->EditLogDisplay->append("Setting roots");
-	int numToSolve= this->tobj->solveParents(ids);
-	this->tobj->cleanTree();
-	this->Rerender();
-	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
-	this->statusBar()->showMessage(QString::number(numToSolve)+ " Remaining Branches");
+	if (this->tobj->BranchPoints.size()>1)
+	{
+		std::vector<int> ids = this->TreeModel->GetSelecectedIDs();
+		int numToSolve= this->tobj->solveParents(ids);
+		this->tobj->cleanTree();
+		this->Rerender();
+		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+		this->statusBar()->showMessage(QString::number(numToSolve)+ " Remaining Branches");
+	}
+	else
+	{
+		std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
+		for (unsigned int i = 0; i< traceList.size();i++)
+		{
+			this->FlipTree(traceList[i] );
+		}
+		this->ClearSelection();
+		this->statusBar()->showMessage(" set roots");
+	}
   //this->Rerender();
 }
 void View3D::AddNewBranches()
@@ -1726,21 +1739,47 @@ void View3D::SplitTraces()
 
 void View3D::FlipTraces()
 {
+	int numFlipped =0;
 	std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
 	if (traceList.size() >=1)
 	{
-		this->EditLogDisplay->append("Fipped " +  QString::number(traceList.size()) + " Traces");
 		for (unsigned int i = 0; i < traceList.size(); i++)
 		{
-			this->EditLogDisplay->append("\tTrace\t" + QString::number(traceList[i]->GetId()));
-			this->tobj->ReverseSegment(traceList[i]);
+			TraceLine* thisLine = traceList[i];
+			if (thisLine->isFree())
+			{
+				//this->EditLogDisplay->append("\tTrace\t" + QString::number(thisLine->GetId()));
+				this->tobj->ReverseSegment(thisLine);
+				numFlipped++;
+			}
+			else if (thisLine->isLeaf())
+			{
+				this->FlipTree( thisLine);
+				numFlipped++;
+			}
 		}		
 		this->ClearSelection();
+		this->EditLogDisplay->append("Fipped " +  QString::number(numFlipped) + " Traces");
 		this->statusBar()->showMessage(tr("Reversed Selected"));
 	}
 	else
 	{
 		this->statusBar()->showMessage(tr("Nothing Selected"));
+	}
+}
+void View3D::FlipTree(TraceLine *thisLine)
+{
+	if (thisLine->isLeaf())
+	{
+		this->tobj->BranchPoints.clear();
+		this->tobj->explode(this->tobj->findTraceByID( thisLine->GetRootID()));
+		this->Rerender();
+		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+		this->tobj->isParent(thisLine->GetId());
+		this->tobj->cleanTree();
+		this->Rerender();
+		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+		this->statusBar()->showMessage(tr("Reversed Selected Tree"));
 	}
 }
 void View3D::SetTraceType(int newType)

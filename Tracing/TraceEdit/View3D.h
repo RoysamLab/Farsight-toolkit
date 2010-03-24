@@ -96,6 +96,7 @@ public:
 	void setupLinkedSpace();
 	void ShowMergeStats();
 	void CalculateGaps();
+	void FlipTree(TraceLine* thisLine);
 	void TraceBitImageIntensity(int ImgID);
 
 	//todo: make these private with accessors

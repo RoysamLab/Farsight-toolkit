@@ -83,6 +83,28 @@ bool TraceLine::isLeaf()
 		return false;
 	}
 }
+bool TraceLine::isRoot()
+{
+	if (!this->m_parent)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+bool TraceLine::isFree()
+{
+	if (this->isRoot() && this->isLeaf())
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
 void TraceLine::setRoot(int RootID, int traceLevel, double parentPath)
 {
 	this->root = RootID;

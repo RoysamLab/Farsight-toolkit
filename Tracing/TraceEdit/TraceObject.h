@@ -125,12 +125,14 @@ public:
 	void explode(TraceLine* parent);
 	int createGapLists(std::vector<TraceLine*> traceList);
 	int solveParents(std::vector<int> ids);
+	bool isParent(int id);
   void SetCombineShortVTKLines(bool b) { this->CombineShortVTKLines = b; }
 //	public data
 	vtkSmartPointer<vtkPolyData> GetVTKPolyData();
 	vtkSmartPointer<vtkPolyData> generateBranchIllustrator();
 	void Print(std::ostream &c);
 
+	TraceLine* findTraceByID(int id);
 	std::vector<TraceLine*>* GetTraceLinesPointer();
 	std::vector<TraceLine*> GetTraceLines();
 	std::vector<TraceBit> CollectTraceBits();
@@ -154,7 +156,6 @@ private:
 	double smallLineColor, mergeLineColor;	
 	double tx,ty,tz;
 	int unsolvedBranches;
-	bool isParent(int id);
   void CollectTraceBitsRecursive(std::vector<TraceBit> &vec,TraceLine *l);
   void CollectIdsRecursive(std::vector<int> &ids, TraceLine* tline);
   void LinearTraceLinesRecursive(std::vector<TraceLine*> &allLine, TraceLine* tline);

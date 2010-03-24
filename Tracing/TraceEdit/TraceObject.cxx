@@ -228,6 +228,28 @@ double TraceObject::getTraceLUT(unsigned char type)
           return .25; //yellow
       }
 }
+TraceLine* TraceObject::findTraceByID(int id)
+{
+	unsigned int i = 0;
+	bool found = false;
+	while (!found && ( i < this->trace_lines.size()))
+	{
+		if (id == this->trace_lines.at(i)->GetId())
+		{
+			found = true;
+		}
+		else
+		{
+			i++;
+		}
+	}
+	if (found)
+	{
+		return this->trace_lines.at(i);
+	}
+	else
+		return false;
+}
 std::vector<TraceLine*>* TraceObject::GetTraceLinesPointer()
 {
   return &trace_lines;

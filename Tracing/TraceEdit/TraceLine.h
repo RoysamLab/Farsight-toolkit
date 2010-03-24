@@ -58,6 +58,8 @@ public:
 	TraceLine *GetBranch2();
 	void SetBranch2(TraceLine* b1);
 	bool isLeaf();
+	bool isRoot();
+	bool isFree();
 	unsigned char GetType();
 	void SetType(unsigned char t) ;
 	void AddTraceBit(TraceBit tbit);
