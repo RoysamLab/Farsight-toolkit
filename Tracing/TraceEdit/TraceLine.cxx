@@ -190,7 +190,10 @@ void TraceLine::AddTraceBit(TraceBit tbit)
 TraceBit TraceLine::removeLastBit()
 {
 	TraceBit lastBit = this->m_trace_bits.back();
-	this->m_trace_bits.pop_back();
+	if (this->m_trace_bits.size() > 1)
+	{
+		this->m_trace_bits.pop_back();
+	}
 	return lastBit;
 }
 ///////////////////////////////////////////////////////////////////////////////
@@ -355,15 +358,21 @@ double TraceLine::Euclidian(TraceBit bit1, TraceBit bit2)
 }
 double TraceLine::Angle(TraceBit bit1f, TraceBit bit1b, TraceBit bit2f, TraceBit bit2b)
 {
-	double delX1, delX2, delY1, delY2, delZ1, delZ2,  norm1, norm2;
+	double delX1, delX2, delY1, delY2, delZ1, delZ2,  norm1, norm2, angle;
 	//delta x,y,z 
-	delX1=bit1f.x-bit1b.x;	delX2=bit2f.x-bit2b.x;
-	delY1=bit1f.y-bit1b.y;	delY2=bit2f.y-bit2b.y;
-	delZ1=bit1f.z-bit1b.z;	delZ2=bit2f.z-bit2b.z;
+	angle = 0;
+	delX1= fabs (bit1f.x-bit1b.x);	delX2= fabs (bit2f.x-bit2b.x);
+	delY1= fabs (bit1f.y-bit1b.y);	delY2= fabs (bit2f.y-bit2b.y);
+	delZ1= fabs (bit1f.z-bit1b.z);	delZ2= fabs (bit2f.z-bit2b.z);
 	norm1=sqrt(pow((delX1),2)+ pow((delY1),2)+ pow((delZ1),2));
 	norm2=sqrt(pow((delX2),2)+ pow((delY2),2)+ pow((delZ2),2));
-	return acos(((delX1 * delX2) + (delY1 *delY2) + (delZ1 * delZ2)) /
+	angle = acos(((delX1 * delX2) + (delY1 *delY2) + (delZ1 * delZ2)) /
           (norm2 * norm1));
+	if (!(angle >= 0))
+	{//prevent nan rounding errors
+		angle = 0;
+	}
+	return angle;
 }
 bool TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
                           double &maxdist, double &angle) 

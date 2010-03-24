@@ -2007,6 +2007,10 @@ void TraceObject::explode(TraceLine *parent)
 				this->explode(connected.at(i));
 			}
 		}
-		this->BranchPoints.push_back(newPT);
+		this->BranchPoints.push_back(newPT);	
+		if (parent->GetBranchPointer()->size() >0)
+		{
+			parent->GetBranchPointer()->clear();
+		}
 	}
 }
