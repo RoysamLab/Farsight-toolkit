@@ -1,6 +1,9 @@
 OPTION( BUILD_MDL "Build MDL Tracing" ON )
+
+SUBDIRS( Focus )
+
 IF( BUILD_MDL )
-    SUBDIRS( MDL )
+    #SUBDIRS( MDL )
     SUBDIRS( MDL2 )
 ENDIF()
 

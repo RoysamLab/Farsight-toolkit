@@ -90,15 +90,15 @@ int main(int argc, char *argv[])
     //***************************New Test Method ***********************
     mdl::VolumeProcess *volProc = new mdl::VolumeProcess();
 	volProc->SetInput(img);
-	volProc->SetDebug(true);
-	volProc->RescaleIntensities(0,255);
-	if(useGraphCuts)
-	{
-		volProc->BinaryUsingGraphCuts();
-	}
-	volProc->RunDanielssonDistanceMap();
-	volProc->RescaleIntensities(0,255);
-	volProc->MaskUsingGraphCuts();
+	//volProc->SetDebug(true);
+	//volProc->RescaleIntensities(0,255);
+	//if(useGraphCuts)
+	//{
+	//	volProc->BinaryUsingGraphCuts();
+	//}
+	//volProc->RunDanielssonDistanceMap();
+	//volProc->RescaleIntensities(0,255);
+	//volProc->MaskUsingGraphCuts();
 	mdl::ImageType::Pointer clean_img = volProc->GetOutput();
 	delete volProc;
 
@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
     
 	//**********************Old Method **********************************
 	//Integrated Skeleton to create skeleton points:
-	/*
+	
 	mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton( clean_img );
 	skel->SetVectorMagnitude(vectorMagnitude);
 	skel->SetDebug(true);
@@ -138,14 +138,16 @@ int main(int argc, char *argv[])
 	skel->Update();
 	std::vector<mdl::fPoint3D> skeleton = skel->GetOutput();
 	delete skel;
-    */
+    
 
+	/*
     //********************** New Method **********************************
     mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton( clean_img );
 	skel->SetDebug(true);	
-	skel->RunXiaoLSkeletonPoints();
+	//skel->RunXiaoLSkeletonPoints();
 	std::vector<mdl::fPoint3D> skeleton = skel->GetOutput();
 	delete skel;
+	*/
 
 	std::cerr << "MST 1\n";
 
