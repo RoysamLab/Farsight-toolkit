@@ -24,11 +24,13 @@ limitations under the License.
 
 #include <vector>
 #include <iostream>
+#include <limits>
 
 //ITK Preprocessing includes
 #include "itkImage.h"
 #include "itkRGBPixel.h"
 #include "itkExtractImageFilter.h"
+#include "itkNeighborhoodIterator.h"
 #include "itkRGBToLuminanceImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkInvertIntensityImageFilter.h"
@@ -47,6 +49,9 @@ limitations under the License.
 #include "itkBinaryMedianImageFilter.h"
 #include "itkGradientVectorFlowImageFilter.h"
 #include "itkBinaryThinningImageFilter.h"
+
+#include "GraphCuts\itkMinErrorThresholdImageFilter.h"
+#include "GraphCuts\new_graph.h"
 
 namespace ftk
 {
@@ -80,6 +85,8 @@ public:
 	void RemoveConnectedComponents(int minObjSize);
 
 	//Methods specific to Binary Images:
+	void GraphCutBinarize(bool shiftDown=false);
+	void MinErrorThresholding(float *alpha_B, float *alpha_A, float *P_I);
 	void OtsuBinarize(int num_thresholds=2, int num_in_foreground=1, bool fgrnd_dark=false); //To create the binary
 	void VotingHoleFilling(int radiusX=5, int radiusY=5, int radiusZ=0, int iterations=100); 
 	void MedianHoleFilling(int radiusX=9, int radiusY=9, int radiusZ=0);
@@ -97,6 +104,7 @@ protected:
 	ImageType2D::Pointer RescaleFloatToImageType(FloatImageType2D::Pointer img);
 	ImageType3D::Pointer RescaleFloatToImageType(FloatImageType3D::Pointer img, int inMin);
 	ImageType2D::Pointer RescaleFloatToImageType(FloatImageType2D::Pointer img, int inMin);
+	double ComputePoissonProb(double intensity, double alpha);
 
 };
 

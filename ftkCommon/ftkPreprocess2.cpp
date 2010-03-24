@@ -551,6 +551,150 @@ void Preprocess::BinaryThinning()
 	myImg = rescale->GetOutput();
 }
 
+void Preprocess::MinErrorThresholding(float *alpha_B, float *alpha_A, float *P_I)
+{
+	//Binarize
+	typedef itk::MinErrorThresholdImageFilter< ImageType3D, ImageType3D >  FilterType;
+	FilterType::Pointer filter = FilterType::New();
+	filter->SetInput( myImg );
+	filter->SetNumberOfHistogramBins(256);
+	try
+	{
+		filter->Update();
+	}
+	catch( itk::ExceptionObject & err )
+	{
+		std::cerr << "ITK FILTER ERROR: " << err << std::endl;
+	}
+
+	*alpha_B = (float)filter->GetAlphaLeft();
+	*alpha_A = (float)filter->GetAlphaRight();
+	*P_I = (float)filter->GetPriorLeft();
+	
+	myImg = filter->GetOutput();
+}
+
+void Preprocess::GraphCutBinarize(bool shiftDown)
+{
+	float alpha_B, alpha_F, P_I;
+	MinErrorThresholding(&alpha_B, &alpha_F, &P_I);
+
+	//Some times you need to shift the means down. The next two lines are optional
+	if(shiftDown)
+	{
+		alpha_F = std::max((alpha_F)/2,((alpha_B)+(alpha_F))/2);
+		alpha_B = (alpha_B)/1.5;
+	}
+
+	//Compute the poisson probs 
+	double F_H[256], B_H[256];
+	for(int i=0; i<256; i++)
+    {
+		if( i >= alpha_F )
+			F_H[i] = (1-P_I)*ComputePoissonProb((int)alpha_F,alpha_F);
+		else
+			F_H[i] = (1-P_I)*ComputePoissonProb(i,alpha_F);
+
+		if( i <= alpha_B )
+			B_H[i] = P_I*ComputePoissonProb(int(alpha_B),alpha_B);
+		else
+			B_H[i] = P_I*ComputePoissonProb(i,alpha_B);
+    }
+
+	ImageType3D::SizeType size = myImg->GetLargestPossibleRegion().GetSize();
+
+	long num_nodes = size[0]*size[1]*size[2];
+	long num_edges = 3*(size[0]-1)*(size[1]-1)*(size[2]-1);
+
+	//Construct a graph:
+	typedef Graph_B<short,short,short> GraphType;
+	GraphType * g = new GraphType(/*estimated # of nodes*/ num_nodes, /*estimated # of edges*/ num_edges);
+
+	typedef itk::ImageRegionIteratorWithIndex< ImageType3D > IteratorType;
+	IteratorType it( myImg, myImg->GetLargestPossibleRegion() );
+
+	//ADD NODES:
+	for( it.GoToBegin(); !it.IsAtEnd(); ++it )
+	{
+		int intst = (int)it.Get();
+		ImageType3D::IndexType index = it.GetIndex();
+		int curr_node = (index[2]*size[1]*size[0])+(index[1]*size[0])+index[0];
+
+		//First Add Nodes
+		double Df = -log( F_H[intst] );  //it was multiplied by .5                              
+		if(Df > 1000.0)
+			Df = 1000;
+		double Db = -log( B_H[intst] );                    
+		if(Db > 1000.0)
+			Db=1000;     			
+			        				
+		g->add_node();		
+		g->add_tweights( curr_node, /* capacities */ Df, Db );
+	}
+
+	//ADD EDGES:
+	double sig = 30.0;
+	double w = 10.0;
+	for( it.GoToBegin(); !it.IsAtEnd(); ++it )
+	{
+		ImageType3D::IndexType index = it.GetIndex();
+		int curr_node = (index[2]*size[1]*size[0])+(index[1]*size[0])+index[0];
+		int intst = (int)it.Get();
+
+		for(int i=0; i<3; ++i)
+		{
+			ImageType3D::IndexType index2 = index;
+			index[i]++;
+			if((int)index[i] < (int)size[i])
+			{
+				int nbr_node = (index2[2]*size[1]*size[0])+(index2[1]*size[0])+index2[0];
+				int intst2 = myImg->GetPixel(index2);
+				double Dn = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));				
+				g -> add_edge( curr_node, nbr_node,    /* capacities */  Dn, Dn );
+			}
+		}
+	}
+
+	//Compute the maximum flow:
+	g->maxflow();		//Alex DO NOT REMOVE
+
+	//Now Binarize
+	for( it.GoToBegin(); !it.IsAtEnd(); ++it )
+	{
+		ImageType3D::IndexType index = it.GetIndex();
+		int curr_node = (index[2]*size[1]*size[0])+(index[1]*size[0])+index[0];
+
+		if( g->what_segment(curr_node) == GraphType::SOURCE )
+			it.Set(0);
+		else
+			it.Set(255);
+	}
+}
+
+double Preprocess::ComputePoissonProb(double intensity, double alpha)
+{
+    /*this is the equation
+      P = (alpha^intensity)*exp(-alpha)/factorial(intensity);
+      however, since alpha and the intensity could be large, computing P in that
+      way will result in infinity values from (alpha^intensity) and
+      factorial(intensity) as a result of matlab's limitations of the data types*/
+
+    //here is the solution
+    double A, P;
+    A = exp(-alpha);
+    P = 1;
+    for (int i=1; i<= intensity; i++)
+        P = P * (alpha/i);
+    
+    P = P*A;
+
+	if(P < std::numeric_limits<long double>::epsilon())
+		P = std::numeric_limits<long double>::epsilon();
+    
+    return P;
+}
+
+
 void Preprocess::GradientVectorFlow()
 {
 	//typedef itk::GradientVectorFlowImageFilter<ImageType3D, ImageType3D> FilterType;

@@ -241,6 +241,19 @@ void pipeline(std::string pipeName, ftk::Preprocess * prep)
 			prep->MedianFilter(radiusX,radiusY,radiusZ);
 			std::cout << "done\n";
 		}
+		else if( strcmp( parent, "MinErrorThresholding" ) == 0 )
+		{
+			float alpha_B, alpha_F, P_I;
+			std::cout << "Starting MinErrorThresholding...";
+			prep->MinErrorThresholding(&alpha_B, &alpha_F, &P_I);
+			std::cout << "done\n";
+		}
+		else if( strcmp( parent, "GraphCutBinarize" ) == 0 )
+		{
+			std::cout << "Starting GraphCutBinarize...";
+			prep->GraphCutBinarize();
+			std::cout << "done\n";
+		}
 
 		parentElement = parentElement->NextSiblingElement();
 	} // end while(parentElement)
