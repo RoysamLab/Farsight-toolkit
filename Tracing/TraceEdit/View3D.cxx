@@ -1530,14 +1530,40 @@ void View3D::MergeTraces()
       for (i=0;i<this->tobj->Gaps.size(); i++)
       {
         this->tobj->Gaps[i]->compID = i;
-        //this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .25);
-        //this->HighlightSelected(this->tobj->Gaps[i]->Trace2, .25);
       }
       MergeInfo.setText("\nNumber of computed distances:\t" 
         + QString::number(this->tobj->Gaps.size())
         +"\nConflicts resolved:\t" + QString::number(conflict)
         +"\nEdit selection or press merge again");
-      this->ShowMergeStats();
+		 QPushButton *mergeAll = MergeInfo.addButton("Merge All", QMessageBox::YesRole);
+		 QPushButton *EditSelection = MergeInfo.addButton("Edit Selection", QMessageBox::ActionRole);
+		 QPushButton *abortButton = MergeInfo.addButton(QMessageBox::Abort);
+		MergeInfo.exec();   
+	  if(MergeInfo.clickedButton()==EditSelection)
+	  {
+		  this->ShowMergeStats();
+	  }
+	  else if (MergeInfo.clickedButton()==mergeAll)
+	  {
+		  unsigned int num = this->tobj->Gaps.size();
+		  this->numMerged += num;
+		  this->EditLogDisplay->append("Merged " + 
+			  QString::number(num) + " traces");
+		  for (unsigned int i = 0; i < num; i++)
+		  {
+			  tobj->mergeTraces(this->tobj->Gaps[i]->endPT1,this->tobj->Gaps[i]->endPT2);
+		  }
+		  this->ClearSelection();
+		  this->statusBar()->showMessage(tr("Update Tree Plots"));
+		  this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+		  this->statusBar()->showMessage(tr(" Done With Merge"));
+	  }    
+	  else if (MergeInfo.clickedButton()==abortButton)
+	  {
+        this->tobj->Gaps.clear();
+		this->candidateGaps.clear();
+		this->statusBar()->showMessage("Merge Canceled");
+	  }
     }//end if this->tobj->Gaps size > 1
     else 
       {
@@ -1549,10 +1575,9 @@ void View3D::MergeTraces()
 			+ QString::number(this->tobj->Gaps[0]->Trace2->GetId()));*/
 		this->numMerged++;
 		this->ClearSelection();
-        MergeInfo.setText(this->myText + "\nOne Trace merged");
 		this->statusBar()->showMessage(tr("Update Tree Plots"));
 		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
-		this->statusBar()->showMessage(tr("Done With Merge"));
+		this->statusBar()->showMessage(tr("One Trace merged; Done With Merge"));
         }
       else
         {
@@ -1560,7 +1585,6 @@ void View3D::MergeTraces()
         MergeInfo.setText("\nNo merges possible, set higher tolerances\n"); 
         } 
       }   
-    MergeInfo.exec();
     this->myText.clear();
     this->poly_line_data->Modified();
     this->QVTK->GetRenderWindow()->Render();
