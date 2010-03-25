@@ -717,7 +717,7 @@ void Preprocess::MinErrorThresholding(float *alpha_B, float *alpha_A, float *P_I
 		myImg = filter->GetOutput();
 }
 
-void Preprocess::GraphCutBinarize(bool shiftDown)
+void Preprocess::GraphCutBinarize(bool shiftDown, int xyDivs)
 {
 	float alpha_B, alpha_F, P_I;
 	MinErrorThresholding(&alpha_B, &alpha_F, &P_I, false);
@@ -746,72 +746,108 @@ void Preprocess::GraphCutBinarize(bool shiftDown)
 
 	ImageType3D::SizeType size = myImg->GetLargestPossibleRegion().GetSize();
 
-	long num_nodes = size[0]*size[1]*size[2];
-	long num_edges = 3*(size[0]-1)*(size[1]-1)*(size[2]-1);
-
-	//Construct a graph:
-	typedef Graph_B<short,short,short> GraphType;
-	GraphType * g = new GraphType(/*estimated # of nodes*/ num_nodes, /*estimated # of edges*/ num_edges);
-
-	typedef itk::ImageRegionIteratorWithIndex< ImageType3D > IteratorType;
-	IteratorType it( myImg, myImg->GetLargestPossibleRegion() );
-
-	//ADD NODES:
-	for( it.GoToBegin(); !it.IsAtEnd(); ++it )
+	for(int i=0; i<(int)size[0]; i+=(int)size[0]/xyDivs)
 	{
-		int intst = (int)it.Get();
-		ImageType3D::IndexType index = it.GetIndex();
-		int curr_node = (index[2]*size[1]*size[0])+(index[1]*size[0])+index[0];
-
-		//First Add Nodes
-		double Df = -log( F_H[intst] );  //it was multiplied by .5                              
-		if(Df > 1000.0)
-			Df = 1000;
-		double Db = -log( B_H[intst] );                  
-		if(Db > 1000.0)
-			Db=1000;     			
-			        				
-		g->add_node();
-		g->add_tweights( curr_node, /* capacities */ Df, Db );
-	}
-
-	//ADD EDGES:
-	double sig = 30.0; //30.0;
-	double w = 10.0; //10.0;
-	for( it.GoToBegin(); !it.IsAtEnd(); ++it )
-	{
-		ImageType3D::IndexType index = it.GetIndex();
-		int curr_node = (index[2]*size[1]*size[0])+(index[1]*size[0])+index[0];
-		int intst = (int)it.Get();
-
-		for(int i=0; i<3; ++i)
+		for(int j=0; j<(int)size[1]; j+=(int)size[1]/xyDivs)
 		{
-			ImageType3D::IndexType index2 = index;
-			index[i]++;
-			if((int)index[i] < (int)size[i])
+			ImageType3D::IndexType rIndexStart;
+			rIndexStart[0] = i;
+			rIndexStart[1] = j;
+			rIndexStart[2] = 0;
+			ImageType3D::SizeType rIndexEnd;		//Plus 1
+			rIndexEnd[0] = (int)(i + size[0]/xyDivs + 1);
+			rIndexEnd[1] = (int)(j + size[1]/xyDivs + 1);
+			if(rIndexEnd[0] > size[0])
+				rIndexEnd[0] = size[0];
+			if(rIndexEnd[1] > size[1])
+				rIndexEnd[1] = size[1];
+
+			ImageType3D::SizeType rSize;
+			rSize[0] = rIndexEnd[0] - rIndexStart[0];
+			rSize[1] = rIndexEnd[1] - rIndexStart[1];
+			rSize[2] = size[2];
+
+			//long num_nodes = size[0]*size[1]*size[2];
+			//long num_edges = 3*(size[0]-1)*(size[1]-1)*(size[2]-1);
+			long num_nodes = rSize[0]*rSize[1]*rSize[2];
+			long num_edges = 3*(rSize[0]-1)*(rSize[1]-1)*(rSize[2]-1);
+
+			//Construct a graph:
+			typedef Graph_B<short,short,short> GraphType;
+			GraphType * g = new GraphType(/*estimated # of nodes*/ num_nodes, /*estimated # of edges*/ num_edges);
+
+			ImageType3D::RegionType rRegion;
+			rRegion.SetIndex(rIndexStart);
+			rRegion.SetSize(rSize);
+
+			typedef itk::ImageRegionIteratorWithIndex< ImageType3D > IteratorType;
+			IteratorType it( myImg, rRegion );
+
+			//ADD NODES:
+			for( it.GoToBegin(); !it.IsAtEnd(); ++it )
 			{
-				int nbr_node = (index2[2]*size[1]*size[0])+(index2[1]*size[0])+index2[0];
-				int intst2 = myImg->GetPixel(index2);
-				double Dn = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));				
-				g -> add_edge( curr_node, nbr_node,    /* capacities */  Dn, Dn );
+				int intst = (int)it.Get();
+				ImageType3D::IndexType index = it.GetIndex();
+				//int curr_node = (index[2]*size[1]*size[0])+(index[1]*size[0])+index[0];
+				int curr_node = ((index[2]-rIndexStart[2])*rSize[1]*rSize[0])+((index[1]-rIndexStart[1])*rSize[0])+(index[0]-rIndexStart[0]);
+
+				//First Add Nodes
+				double Df = -log( F_H[intst] );  //it was multiplied by .5                              
+				if(Df > 1000.0)
+					Df = 1000;
+				double Db = -log( B_H[intst] );                  
+				if(Db > 1000.0)
+					Db=1000;     			
+					        				
+				g->add_node();
+				g->add_tweights( curr_node, /* capacities */ Df, Db );
 			}
-		}
-	}
 
-	//Compute the maximum flow:
-	g->maxflow();		//Alex DO NOT REMOVE
+			//ADD EDGES:
+			double sig = 30.0; //30.0;
+			double w = 10.0; //10.0;
+			for( it.GoToBegin(); !it.IsAtEnd(); ++it )
+			{
+				ImageType3D::IndexType index = it.GetIndex();
+				//int curr_node = (index[2]*size[1]*size[0])+(index[1]*size[0])+index[0];
+				int curr_node = ((index[2]-rIndexStart[2])*rSize[1]*rSize[0])+((index[1]-rIndexStart[1])*rSize[0])+(index[0]-rIndexStart[0]);
+				int intst = (int)it.Get();
 
-	//Now Binarize
-	for( it.GoToBegin(); !it.IsAtEnd(); ++it )
-	{
-		ImageType3D::IndexType index = it.GetIndex();
-		int curr_node = (index[2]*size[1]*size[0])+(index[1]*size[0])+index[0];
+				for(int i=0; i<3; ++i)
+				{
+					ImageType3D::IndexType index2 = index;
+					index2[i]++;
+					if((int)index2[i] < (int)rSize[i])
+					{
+						//int nbr_node = (index2[2]*size[1]*size[0])+(index2[1]*size[0])+index2[0];
+						int nbr_node = ((index2[2]-rIndexStart[2])*rSize[1]*rSize[0])+((index2[1]-rIndexStart[1])*rSize[0])+(index2[0]-rIndexStart[0]);
+						int intst2 = myImg->GetPixel(index2);
+						double Dn = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));				
+						g -> add_edge( curr_node, nbr_node,    /* capacities */  Dn, Dn );
+					}
+				}
+			}
 
-		if( g->what_segment(curr_node) == GraphType::SOURCE )
-			it.Set(0);
-		else
-			it.Set(255);
-	}
+			//Compute the maximum flow:
+			g->maxflow();		//Alex DO NOT REMOVE
+
+			//Now Binarize
+			for( it.GoToBegin(); !it.IsAtEnd(); ++it )
+			{
+				ImageType3D::IndexType index = it.GetIndex();
+				//int curr_node = (index[2]*size[1]*size[0])+(index[1]*size[0])+index[0];
+				int curr_node = ((index[2]-rIndexStart[2])*rSize[1]*rSize[0])+((index[1]-rIndexStart[1])*rSize[0])+(index[0]-rIndexStart[0]);
+
+				if( g->what_segment(curr_node) == GraphType::SOURCE )
+					it.Set(0);
+				else
+					it.Set(255);
+			}
+
+			delete g;
+
+		}//end for j
+	}//end for i
 }
 
 double Preprocess::ComputePoissonProb(double intensity, double alpha)

@@ -98,7 +98,7 @@ public:
 	void RemoveConnectedComponents(int minObjSize);
 
 	//Methods specific to Binary Images:
-	void GraphCutBinarize(bool shiftDown=false);
+	void GraphCutBinarize(bool shiftDown=false, int xyDivs=1);
 	void MinErrorThresholding(float *alpha_B, float *alpha_A, float *P_I, bool overwrite=true);
 	void OtsuBinarize(int num_thresholds=2, int num_in_foreground=1, bool fgrnd_dark=false); //To create the binary
 	void VotingHoleFilling(int radiusX=5, int radiusY=5, int radiusZ=0, int iterations=100); 

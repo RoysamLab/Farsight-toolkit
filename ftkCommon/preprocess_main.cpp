@@ -250,8 +250,10 @@ void pipeline(std::string pipeName, ftk::Preprocess * prep)
 		}
 		else if( strcmp( parent, "GraphCutBinarize" ) == 0 )
 		{
+			int xyDivs=1, zDivs=1;
+			parentElement->QueryIntAttribute("xyDivs",&xyDivs);
 			std::cout << "Starting GraphCutBinarize...";
-			prep->GraphCutBinarize();
+			prep->GraphCutBinarize(false,xyDivs);
 			std::cout << "done\n";
 		}
 		else if( strcmp( parent, "OpeningFilter" ) == 0 )

@@ -60,8 +60,8 @@ int main(int argc, char *argv[])
 
 	//Minimum spanning tree to create nodes and backbone node pairs (lines):
 	mdl::MST *mst = new mdl::MST( img );
-	mst->SetDebug(true);
-	mst->SetUseVoxelRounding(true);
+	mst->SetDebug(false);
+	mst->SetUseVoxelRounding(false);
 	mst->SetEdgeRange(25);
 	mst->SetPower(1);
 	mst->SetSkeletonPoints( &skeleton );
@@ -77,11 +77,29 @@ int main(int argc, char *argv[])
 
 	std::cerr << "Saving\n";
 
+	//****************************************************************
+	// TREE WRITER
 	mdl::vtkFileHandler * fhd2 = new mdl::vtkFileHandler();
 	fhd2->SetNodes(&nodes);
 	fhd2->SetLines(&bbpairs);
 	fhd2->Write("Backbone.vtk");
 	delete fhd2;
+
+	//*****************************************************************
+	// IMAGE WRITER
+	typedef itk::ImageFileWriter< mdl::ImageType > WriterType;
+	WriterType::Pointer writer = WriterType::New();
+	writer->SetFileName("Backbone.mhd");
+	writer->SetInput( img );
+	try
+	{
+		writer->Update();
+	}
+	catch( itk::ExceptionObject & err )
+	{
+		std::cerr << "WRITER FAILED: " << err << std::endl ;
+	}
+	writer = 0;
 
 	std::cerr << "DONE\n";
   
