@@ -14,18 +14,21 @@ SET( cbin_SRCS
 ADD_LIBRARY(mdlVolumeProcess mdlVolumeProcess.h mdlVolumeProcess.cpp ${cbin_SRCS})
 TARGET_LINK_LIBRARIES(mdlVolumeProcess ITKIO ITKStatistics ITKBasicFilters ITKCommon)
 
+ADD_EXECUTABLE(volumeProcess2 main.cpp)
+TARGET_LINK_LIBRARIES(volumeProcess2 mdlVolumeProcess)
+
 ADD_LIBRARY(mdlIntegratedSkeleton mdlIntegratedSkeleton.h mdlIntegratedSkeleton.cpp)
 TARGET_LINK_LIBRARIES(mdlVolumeProcess ITKBasicFilters ITKCommon)
 
 ADD_LIBRARY(mdlUtils mdlUtils.h mdlUtils.cpp)
 
 ADD_LIBRARY(mdlMST mdlMST.h mdlMST.cpp WeightedMahalsnobisDistance.cxx)
-TARGET_LINK_LIBRARIES(mdlMST mdlUtils)
+TARGET_LINK_LIBRARIES(mdlMST mdlUtils mdlVolumeProcess)
+
+ADD_EXECUTABLE(mst mst_main.cpp)
+TARGET_LINK_LIBRARIES(mst mdlMST ITKCommon ITKIO)
 
 ADD_LIBRARY(mdlBSplineFitting mdlBSplineFitting.cpp mdlBSplineFitting.h)
-
-ADD_EXECUTABLE(volumeProcess2 main.cpp)
-TARGET_LINK_LIBRARIES(volumeProcess2 mdlVolumeProcess)
 
 ADD_EXECUTABLE(mdlpipe pipeline_main.cpp)
 TARGET_LINK_LIBRARIES(mdlpipe mdlVolumeProcess mdlIntegratedSkeleton mdlMST mdlBSplineFitting  )

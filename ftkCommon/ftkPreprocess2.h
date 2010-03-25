@@ -30,7 +30,9 @@ limitations under the License.
 #include "itkImage.h"
 #include "itkRGBPixel.h"
 #include "itkExtractImageFilter.h"
+#include "itkCastImageFilter.h"
 #include "itkNeighborhoodIterator.h"
+#include "itkDiscreteGaussianImageFilter.h"
 #include "itkRGBToLuminanceImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkInvertIntensityImageFilter.h"
@@ -49,9 +51,11 @@ limitations under the License.
 #include "itkBinaryMedianImageFilter.h"
 #include "itkGradientVectorFlowImageFilter.h"
 #include "itkBinaryThinningImageFilter.h"
+#include "itkBinaryThinningImageFilter3D.h"
 #include "itkBinaryBallStructuringElement.h"
 #include "itkGrayscaleMorphologicalOpeningImageFilter.h"
 #include "itkGrayscaleMorphologicalClosingImageFilter.h"
+#include "itkCannyEdgeDetectionImageFilter.h"
 
 #include "GraphCuts/itkMinErrorThresholdImageFilter.h"
 #include "GraphCuts/new_graph.h"
@@ -76,9 +80,12 @@ public:
 
 	ImageType3D::Pointer GetImage(){ return myImg; };
 
+	void SaveVTKPoints(std::string filename, int min=255, int max=255);
+
 	void RunFilter(std::string name, std::vector<double> params);
 
 	void RescaleIntensities(int min = 0, int max = 255);
+	void DiscreteGaussianFilter(float varX=1.0, float varY=1.0, float varZ=1.0, float maxError=0.1);
 	void LaplacianOfGaussian(int sigma=5, int min=0);
 	void InvertIntensity(void);
 	void CurvatureAnisotropicDiffusion( double timestep=0.125, double conductance=1.0, int iterations=1 );
@@ -86,6 +93,7 @@ public:
 	void MedianFilter( int radiusX=3, int radiusY=3, int radiusZ=0);
 	void OpeningFilter( int radius=3 );
 	void ClosingFilter( int radius=3 );
+	void CannyEdgeDetection(float variance=1.0, float upperThreshold=6, float lowerThreshold=3);
 	void ManualThreshold( PixelType threshold=128, bool binary=false );
 	void RemoveConnectedComponents(int minObjSize);
 
@@ -96,7 +104,6 @@ public:
 	void VotingHoleFilling(int radiusX=5, int radiusY=5, int radiusZ=0, int iterations=100); 
 	void MedianHoleFilling(int radiusX=9, int radiusY=9, int radiusZ=0);
 	void DanielssonDistanceMap();
-	void GradientVectorFlow();
 	void BinaryThinning();
 
 	

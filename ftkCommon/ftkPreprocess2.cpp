@@ -160,9 +160,39 @@ void Preprocess::LaplacianOfGaussian(int sigma, int min)
 	}
 }
 
+void Preprocess::DiscreteGaussianFilter(float varX, float varY, float varZ, float maxError)
+{
+	typedef itk::DiscreteGaussianImageFilter<ImageType3D, FloatImageType3D> FilterType;
+	FilterType::Pointer filter = FilterType::New();
+
+	FilterType::ArrayType maxErr;
+    maxErr.Fill(maxError);
+    filter->SetMaximumError( maxErr );
+
+	FilterType::ArrayType variance;
+	variance[0] = varX;
+	variance[1] = varY;
+	variance[2] = varZ;
+	filter->SetVariance(variance);
+
+	filter->SetInput( myImg );
+
+	try
+	{
+		filter->Update();
+	}
+	catch( itk::ExceptionObject & err )
+	{
+		std::cerr << "ITK FILTER ERROR: " << err << std::endl ;
+		return;
+	}
+
+	myImg = RescaleFloatToImageType( filter->GetOutput() );
+   
+}
+
 void Preprocess::InvertIntensity(void)
 {
-	typedef itk::Image< float, 3 > FloatImageType;
 	typedef itk::InvertIntensityImageFilter< ImageType3D, ImageType3D > FilterType;
 	FilterType::Pointer filter = FilterType::New();
 	filter->SetInput( myImg );
@@ -348,6 +378,34 @@ void Preprocess::ClosingFilter( int radius )
 	}
 	myImg = close->GetOutput();
 }
+
+void Preprocess::CannyEdgeDetection(float variance, float upperThreshold, float lowerThreshold)
+{
+	typedef itk::CastImageFilter< ImageType3D, FloatImageType3D > CastFilterType;
+	CastFilterType::Pointer cast = CastFilterType::New();
+	cast->SetInput( myImg );
+
+	typedef itk::CannyEdgeDetectionImageFilter< FloatImageType3D, FloatImageType3D > FilterType;
+	FilterType::Pointer filter = FilterType::New();
+	filter->SetInput( cast->GetOutput() );
+	filter->SetUpperThreshold(upperThreshold);		//Threshold for detected edges = threshold
+	filter->SetLowerThreshold(lowerThreshold);		//Threshold for detected edges = threshold/2
+	//filter->SetThreshold(threshold);		//Lowest allowed value in the output image
+	filter->SetVariance(variance);			//For Gaussian smoothing
+	//filter->SetMaximumError(.01f);		//For Gaussian smoothing
+
+	try
+	{
+		filter->Update();
+	}
+	catch( itk::ExceptionObject & err )
+	{
+		std::cerr << "Exception caught: " << err << std::endl;
+	}
+
+	myImg = RescaleFloatToImageType( filter->GetOutput() );
+}
+
 
 void Preprocess::ManualThreshold( PixelType threshold, bool binary )
 {
@@ -571,7 +629,7 @@ void Preprocess::DanielssonDistanceMap(void)
 
 void Preprocess::BinaryThinning()
 {
-	typedef itk::BinaryThinningImageFilter< ImageType3D, ImageType3D > FilterType;
+	typedef itk::BinaryThinningImageFilter3D< ImageType3D, ImageType3D > FilterType;
 	FilterType::Pointer filter = FilterType::New();
 	filter->SetInput( myImg );
 
@@ -591,6 +649,47 @@ void Preprocess::BinaryThinning()
 	}
 
 	myImg = rescale->GetOutput();
+}
+
+void Preprocess::SaveVTKPoints(std::string filename, int min, int max)
+{
+	std::vector<ImageType3D::IndexType> nodes;
+
+	typedef itk::ImageRegionIteratorWithIndex< ImageType3D > IteratorType;
+	IteratorType it( myImg, myImg->GetLargestPossibleRegion() );
+	for( it.GoToBegin(); !it.IsAtEnd(); ++it )
+	{
+		ImageType3D::PixelType pix = it.Get();
+		if( pix >= min && pix <= max )
+		{
+			nodes.push_back( it.GetIndex() );
+		}
+	}
+
+	FILE * fout = fopen(filename.c_str(), "w");
+	if (fout == NULL)
+		return;
+
+	fprintf(fout, "# vtk DataFile Version 3.0\n");
+	fprintf(fout,"Points between %d and %d\n", min, max);
+	fprintf(fout,"ASCII\n");
+	fprintf(fout,"DATASET POLYDATA\n");
+
+	int num_nodes = (int)nodes.size();
+	fprintf(fout,"POINTS %d float\n",num_nodes);
+	for(int i=0; i<num_nodes; ++i)
+	{
+		ImageType3D::IndexType nd = nodes.at(i);
+		fprintf(fout,"%f %f %f\n", (float)nd[0], (float)nd[1], (float)nd[2]);
+	}
+
+	fprintf(fout,"VERTICES %d %d\n", num_nodes, num_nodes*2);
+	for(int i=0; i<num_nodes; ++i)
+	{
+		fprintf(fout,"%d %d\n", 1, i);
+	}
+
+	fclose(fout);
 }
 
 //void Preprocess::MinErrorThresholding(float *alpha_B, float *alpha_A, float *P_I)
@@ -736,14 +835,6 @@ double Preprocess::ComputePoissonProb(double intensity, double alpha)
 		P = std::numeric_limits<long double>::epsilon();
     
     return P;
-}
-
-
-void Preprocess::GradientVectorFlow()
-{
-	//typedef itk::GradientVectorFlowImageFilter<ImageType3D, ImageType3D> FilterType;
-	//FilterType::Pointer filter = FilterType::New();
-
 }
 
 Preprocess::ImageType3D::Pointer Preprocess::RescaleFloatToImageType(FloatImageType3D::Pointer img, int inMin)

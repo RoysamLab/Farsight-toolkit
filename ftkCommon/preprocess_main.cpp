@@ -270,6 +270,42 @@ void pipeline(std::string pipeName, ftk::Preprocess * prep)
 			prep->ClosingFilter(radius);
 			std::cout << "done\n";
 		}
+		else if( strcmp( parent, "CannyEdgeDetection" ) == 0 )
+		{
+			float variance=2.0;
+			float upperThreshold = 6;
+			float lowerThreshold = 3;
+			parentElement->QueryFloatAttribute("variance",&variance);
+			parentElement->QueryFloatAttribute("upperThreshold",&upperThreshold);
+			parentElement->QueryFloatAttribute("lowerThreshold",&lowerThreshold);
+			std::cout << "Starting CannyEdgeDetection...";
+			prep->CannyEdgeDetection(variance, upperThreshold, lowerThreshold);
+			std::cout << "done\n";
+		}
+		else if( strcmp( parent, "DiscreteGaussian") == 0 )
+		{
+			float varX=1.0, varY=1.0, varZ=1.0, maxError=0.1;
+			parentElement->QueryFloatAttribute("varX",&varX);
+			parentElement->QueryFloatAttribute("varY",&varY);
+			parentElement->QueryFloatAttribute("varZ",&varZ);
+			parentElement->QueryFloatAttribute("maxError",&maxError);
+			std::cout << "Starting DiscreteGaussianFilter...";
+			prep->DiscreteGaussianFilter(varX, varY, varZ, maxError);
+			std::cout << "done\n";
+		}
+		else if( strcmp( parent, "SaveVTKPoints") == 0 )
+		{
+			const char * filename = parentElement->Attribute("filename");
+			int min=255, max=255;
+			parentElement->QueryIntAttribute("min",&min);
+			parentElement->QueryIntAttribute("max",&max);
+			std::cout << "Saving VTK Points...";
+			if(!filename)
+				prep->SaveVTKPoints("points.vtk", min, max);
+			else
+				prep->SaveVTKPoints(filename, min, max);
+			std::cout << "done\n";
+		}
 
 		parentElement = parentElement->NextSiblingElement();
 	} // end while(parentElement)
