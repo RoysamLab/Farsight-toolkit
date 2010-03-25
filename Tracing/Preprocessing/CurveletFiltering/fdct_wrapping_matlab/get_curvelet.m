@@ -28,7 +28,7 @@ noisy_img(1:size(im_temp,1),1:size(im_temp,2)) = im_temp;
 
 [N, M] = size(noisy_img);
 img = noisy_img;
-sigma = 0.10*255;            % noise stdev is 10%
+sigma = 0.40*255;            % noise stdev is 10%
 
 % Tuning parameters
 finest = 1;                 % 1: curvelets at finest scale, 2: wavelets at finest scale

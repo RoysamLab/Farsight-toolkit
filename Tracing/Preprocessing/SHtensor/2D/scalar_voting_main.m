@@ -1,4 +1,4 @@
-function out = scalar_voting_main(im);
+function [out,gradmag] = scalar_voting_main(im);
 % im = imread('sample_from_paper.tif');
  im = double(im);
 % min1 = min(im(:));
@@ -102,7 +102,7 @@ A0 = Axx + Ayy ;
 A2 = Axx - 2*1i*Axy - Ayy;
 A2n = Axx + 2*1i*Axy - Ayy;
 
-sigma = 25;
+sigma = 10;
 K = double(sigma*4);
 [x,y] = meshgrid(-K:1:K,-K:1:K);
 norm = sqrt(x.^2+y.^2);
@@ -142,8 +142,9 @@ subplot(2,2,1); imagesc(orientation*180/pi.*(stickness>thresh));
 subplot(2,2,2); imagesc(gradmag);
 subplot(2,2,3); imagesc(U0)
 subplot(2,2,4); imagesc(orientnew*180/pi.*(stickness>thresh));
-out = uint8(255*sticknew/max(sticknew(:)));
-writeim(uint8(255*U0./max(U0(:))),'scalar_voting_output.tif');
-writeim(uint8(255*gradmag./max(gradmag(:))),'curvelet_output.tif');
+% out = uint8(255*sticknew/max(sticknew(:)));
+out = U0;
+writeim(uint8(255*U0./max(U0(:))),'scalar_voting_output_3.tif');
+writeim(uint8(255*gradmag./max(gradmag(:))),'curvelet_output_3.tif');
 end
 % subplot(2,2,4); imagesc(ballnew);
