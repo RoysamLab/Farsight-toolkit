@@ -84,6 +84,7 @@ public:
 
 	void RunFilter(std::string name, std::vector<double> params);
 
+	void DownSample();
 	void RescaleIntensities(int min = 0, int max = 255);
 	void DiscreteGaussianFilter(float varX=1.0, float varY=1.0, float varZ=1.0, float maxError=0.1);
 	void LaplacianOfGaussian(int sigma=5, int min=0);

@@ -167,8 +167,8 @@ int main(int argc, char *argv[])
 
 	delete prep;
 
-	std::cerr << "PRESS ENTER TO EXIT\n";
-	getchar();
+	//std::cerr << "PRESS ENTER TO EXIT\n";
+	//getchar();
 
 	return EXIT_SUCCESS;
 }
@@ -202,6 +202,12 @@ void pipeline(std::string pipeName, ftk::Preprocess * prep)
 			prep->InvertIntensity();
 			std::cout << "done\n";
 		}
+		else if( strcmp( parent, "DownSample" ) == 0 )
+		{
+			std::cout << "Starting DownSample...";
+			prep->DownSample();
+			std::cout << "done\n";
+		}
 		else if( strcmp( parent, "OtsuBinarize" ) == 0 )
 		{
 			int numThresh = 3, numFore = 2;
@@ -209,6 +215,14 @@ void pipeline(std::string pipeName, ftk::Preprocess * prep)
 			parentElement->QueryIntAttribute("num_in_foreground",&numFore);
 			std::cout << "Starting OtsuBinarize...";
 			prep->OtsuBinarize(numThresh,numFore);
+			std::cout << "done\n";
+		}
+		else if( strcmp( parent, "ManualThreshold" ) == 0 )
+		{
+			int threshold = 128;
+			parentElement->QueryIntAttribute("threshold", &threshold);
+			std::cout << "Starting Manual Threshold of " << threshold << "...";
+			prep->ManualThreshold(threshold);
 			std::cout << "done\n";
 		}
 		else if( strcmp( parent, "RemoveConnectedComponents" ) == 0 )
@@ -222,6 +236,7 @@ void pipeline(std::string pipeName, ftk::Preprocess * prep)
 		else if( strcmp( parent, "BinaryThinning" ) == 0 )
 		{
 			std::cout << "Starting BinaryThinning...";
+
 			prep->BinaryThinning();
 			std::cout << "done\n";
 		}

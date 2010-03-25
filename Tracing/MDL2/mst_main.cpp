@@ -103,8 +103,8 @@ int main(int argc, char *argv[])
 
 	std::cerr << "DONE\n";
   
-	std::cerr << "PRESS ENTER TO EXIT\n";
-	getchar();
+	//std::cerr << "PRESS ENTER TO EXIT\n";
+	//getchar();
 
 	//******************************************************************
 	//******************************************************************

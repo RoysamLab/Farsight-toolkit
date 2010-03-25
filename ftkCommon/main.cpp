@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 {
 	if(argc < 4)
     {
-		std::cerr << "Usage: " << argv[0] << "pattern(string) start(int) end(int) <outputBase(string)> <outputDir(string)> <x(int)> <y(int)> <z(int)>" << std::endl;
+		std::cerr << "Usage: " << argv[0] << "pattern(string) start(int) end(int) <outputBase(string)> <outputDir(string)> <x(int)> <y(int)> <z(int)> <color>" << std::endl;
 		return EXIT_FAILURE;
     }
 
@@ -32,23 +32,25 @@ int main(int argc, char *argv[])
 	int x = 1;
 	int y = 1;
 	int z = 1;
+	int color = 1;
 
-	if(argc == 5)
+	if(argc >= 5)
 		outBase = argv[4];
 
-	if(argc == 6)
+	if(argc >= 6)
 		outDir = argv[5];
-	if(argc == 7)
+	if(argc >= 7)
 		x = atoi(argv[6]);
-	if(argc == 8)
+	if(argc >= 8)
 		y = atoi(argv[7]);
-	if(argc == 9)
+	if(argc >= 9)
 		z = atoi(argv[8]);
-
+	if(argc >= 10)
+		color = atoi(argv[9]);
 
 	iHandle->SetOutputDirectory(outDir);
 	iHandle->SetOutputBase(outBase);
-	iHandle->SeriesToBlocks(inPattern, start, end, x, y, z);
+	iHandle->SeriesToBlocks(inPattern, start, end, x, y, z, color);
 	//iHandle->SeriesProjection("%03d.tif", 001, 110, "p.tif");
 
 	delete iHandle;

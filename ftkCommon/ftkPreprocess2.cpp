@@ -113,6 +113,48 @@ void Preprocess::RescaleIntensities(int min, int max)
 	myImg = rescaleFilter->GetOutput();
 }
 
+//Cuts the size of the image in half!!!
+void Preprocess::DownSample()
+{
+	int size1 = (int)myImg->GetLargestPossibleRegion().GetSize()[0];
+	int size2 = (int)myImg->GetLargestPossibleRegion().GetSize()[1];
+	int size3 = (int)myImg->GetLargestPossibleRegion().GetSize()[2];
+
+	int newSize1 = (int)(size1/2);
+	int newSize2 = (int)(size2/2);
+	int newSize3 = size3;
+
+	ImageType3D::Pointer newImg = ImageType3D::New();
+	ImageType3D::PointType origin;
+	origin[0] = 0;
+	origin[1] = 0;
+	origin[2] = 0;
+	newImg->SetOrigin( origin );
+
+	ImageType3D::IndexType start = {{ 0,0,0 }};
+	ImageType3D::SizeType  size = {{ newSize1, newSize2, newSize3 }};
+	ImageType3D::RegionType region;
+	region.SetSize( size );
+	region.SetIndex( start );
+	newImg->SetRegions( region ); 
+	newImg->Allocate();
+
+	for(int z=0; z<newSize3; ++z)
+	{
+		for(int y=0; y<newSize2; ++y)
+		{
+			for(int x=0; x<newSize1; ++x)
+			{
+				ImageType3D::IndexType newI = {{ x,y,z }};
+				ImageType3D::IndexType oldI = {{ 2*x,2*y,z }};
+				newImg->SetPixel( newI, myImg->GetPixel(oldI) );
+			}
+		}
+	}
+
+	myImg = newImg;
+}
+
 void Preprocess::LaplacianOfGaussian(int sigma, int min)
 {
 	int size3 = myImg->GetLargestPossibleRegion().GetSize()[2];

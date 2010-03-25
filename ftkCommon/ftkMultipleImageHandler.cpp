@@ -25,7 +25,7 @@ MultipleImageHandler::MultipleImageHandler()
 	outputBaseString = "b";
 }
 
-void MultipleImageHandler::SeriesToBlocks(std::string seriesFormat, int startIndex, int endIndex, int dx, int dy, int dz)
+void MultipleImageHandler::SeriesToBlocks(std::string seriesFormat, int startIndex, int endIndex, int dx, int dy, int dz, int color)
 {
 	typedef itk::NumericSeriesFileNames NameGeneratorType;
 	NameGeneratorType::Pointer nameGenerator = NameGeneratorType::New();
@@ -34,14 +34,14 @@ void MultipleImageHandler::SeriesToBlocks(std::string seriesFormat, int startInd
 	nameGenerator->SetEndIndex( endIndex );
 	nameGenerator->SetIncrementIndex( 1 );
 
-	this->SeriesToBlocks( nameGenerator->GetFileNames(), dx, dy, dz );
+	this->SeriesToBlocks( nameGenerator->GetFileNames(), dx, dy, dz, color );
 }
 
 
 //This function will take a list of input files - each 2D, starting with z=0.
 //The ouput is a new set of 3D image files of the image made into blocks
 //dx,dy,dz specify the number of divisions in the x,y,z directions.
-void MultipleImageHandler::SeriesToBlocks(StrVector inFiles, int dx, int dy, int dz)
+void MultipleImageHandler::SeriesToBlocks(StrVector inFiles, int dx, int dy, int dz, int color)
 {
 	int zSize = (int)inFiles.size();
 	if(zSize == 0)
@@ -108,7 +108,7 @@ void MultipleImageHandler::SeriesToBlocks(StrVector inFiles, int dx, int dy, int
 
 				if(numComponents == 3) //must be RGB:
 				{
-					ExtractRegionColor(inFiles, region, filename);
+					ExtractRegionColor(inFiles, region, color, filename);
 				}
 				else if(dataType == itk::ImageIOBase::UCHAR)	//1 component 8-bit grayscale
 				{
@@ -212,7 +212,7 @@ MultipleImageHandler::UCharImageType3D::Pointer MultipleImageHandler::ExtractReg
 
 //Extract a region from a series of color images:
 MultipleImageHandler::UCharImageType3D::Pointer MultipleImageHandler::ExtractRegionColor
-	(StrVector inFiles, UCharImageType3D::RegionType region, std::string fname)
+	(StrVector inFiles, UCharImageType3D::RegionType region, int color, std::string fname)
 {
 		typedef itk::ImageSeriesReader< RGBImageType3D > SeriesReaderType;
 		SeriesReaderType::Pointer reader = SeriesReaderType::New();
@@ -222,15 +222,9 @@ MultipleImageHandler::UCharImageType3D::Pointer MultipleImageHandler::ExtractReg
 		ExtractFilterType::Pointer extract = ExtractFilterType::New();
 		extract->SetInput( reader->GetOutput() );
 		extract->SetExtractionRegion( region );
-
-		//I NEED TO REPLACE THIS WITH DOUG HOOVER'S FUNCTION (OR ADD THE OPTION):
-		typedef itk::RGBToLuminanceImageFilter< RGBImageType3D, UCharImageType3D > ConvertFilterType;
-		ConvertFilterType::Pointer convert = ConvertFilterType::New();
-		convert->SetInput( extract->GetOutput() );
-
 		try
 		{
-			convert->Update();
+			extract->Update();
 		}
 		catch( itk::ExceptionObject & err )
 		{
@@ -238,7 +232,63 @@ MultipleImageHandler::UCharImageType3D::Pointer MultipleImageHandler::ExtractReg
 			return NULL;
 		}
 
-		UCharImageType3D::Pointer img = convert->GetOutput();
+		RGBImageType3D::Pointer extracted = extract->GetOutput();
+		UCharImageType3D::Pointer img;
+
+		if(color==0 || color==1 || color==2)
+		{
+			int size1 = (int)extracted->GetLargestPossibleRegion().GetSize()[0];
+			int size2 = (int)extracted->GetLargestPossibleRegion().GetSize()[1];
+			int size3 = (int)extracted->GetLargestPossibleRegion().GetSize()[2];
+
+			std::cout << "Extracting color " << color << " from Image of size " << size1 << " " << size2 << " " << size3 << std::endl;
+
+			img = UCharImageType3D::New();
+			UCharImageType3D::PointType origin;
+			origin[0] = 0;
+			origin[1] = 0;
+			origin[2] = 0;
+			img->SetOrigin( origin );
+			UCharImageType3D::IndexType start = {{ 0,0,0 }};
+			UCharImageType3D::SizeType  size = {{ size1, size2, size3 }};
+			UCharImageType3D::RegionType region;
+			region.SetSize( size );
+			region.SetIndex( start );
+			img->SetRegions( region ); 
+			img->Allocate();
+
+			typedef itk::ImageRegionIterator< RGBImageType3D > rgbIteratorType;
+			rgbIteratorType iteratorRGB ( extracted, extracted->GetLargestPossibleRegion() );
+
+			typedef itk::ImageRegionIterator< UCharImageType3D > myIteratorType;
+			myIteratorType iteratorIn( img, img->GetLargestPossibleRegion() );
+
+			for( iteratorRGB.GoToBegin(), iteratorIn.GoToBegin();
+				!iteratorRGB.IsAtEnd(), !iteratorIn.IsAtEnd();
+				++iteratorRGB, ++iteratorIn )
+			{ 
+				RGBPixelType p_rgb = iteratorRGB.Get();
+				iteratorIn.Set( p_rgb[color] );
+			}
+
+			std::cout << "Done color extract\n";
+		}
+		else
+		{
+			typedef itk::RGBToLuminanceImageFilter< RGBImageType3D, UCharImageType3D > ConvertFilterType;
+			ConvertFilterType::Pointer convert = ConvertFilterType::New();
+			convert->SetInput( extracted );
+			try
+			{
+				convert->Update();
+			}
+			catch( itk::ExceptionObject & err )
+			{
+				std::cerr << "EXTRACT FAILED: " << err << std::endl;
+				return NULL;
+			}
+			img = convert->GetOutput();
+		}
 
 	if(fname != "")
 	{
@@ -258,6 +308,8 @@ MultipleImageHandler::UCharImageType3D::Pointer MultipleImageHandler::ExtractReg
 			std::cerr << "WRITER FAILED: " << err << std::endl;
 		}
 	}
+
+	std::cout << "Done ExtractRegionColor\n";
 
 	return img;
 
