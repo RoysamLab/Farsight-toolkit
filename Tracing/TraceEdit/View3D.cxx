@@ -103,7 +103,11 @@ View3D::View3D(QWidget *parent)
 	this->EditLogDisplay->setLineWrapMode(QTextEdit::NoWrap);
 	this->EditLogDisplay->append("Farsight Trace Editor Started at: \nDate: \t" + this->Date.currentDate().toString( "ddd MMMM d yy" ) );
 	this->EditLogDisplay->append("Time: \t" + this->Time.currentTime().toString( "h:m:s ap" ) );
-	
+	this->InformationDisplays = new QDockWidget("Edit Log Information", this);
+	this->InformationDisplays->setWidget(this->EditLogDisplay);
+	this->addDockWidget(Qt::LeftDockWidgetArea, this->InformationDisplays);
+	this->CreateGUIObjects();
+	this->CreateLayout();
   // load as many files as possible. Provide offset for differentiating types
   //for(int counter=1; counter<argc; counter++)
   //  {
@@ -267,6 +271,9 @@ void View3D::OkToBoot()
 	if(!this->TraceFiles.isEmpty() || !this->Image.isEmpty() || !this->SomaFile.isEmpty())
 	{
 		this->BootDock->hide();
+		this->InformationDisplays->hide();
+		this->resize(this->TraceEditSettings.value("mainWin/size",QSize(850, 480)).toSize());
+		this->move(this->TraceEditSettings.value("mainWin/pos",QPoint(40, 59)).toPoint());
 		int i = 0;
 		/*this->uMperVoxel = this->scale->value();
 		this->TraceEditSettings.setValue("boot/scale", this->uMperVoxel);*/
@@ -552,12 +559,20 @@ void View3D::Initialize()
 	this->numDeleted = 0;
 	this->numMerged = 0;
 	this->numSplit = 0;
-	this->CreateGUIObjects();
-	this->CreateLayout();
+  //Set up the main window's central widget
+  this->CentralWidget = new QWidget(this);
+  this->setCentralWidget(this->CentralWidget);
+
+  //Set up a QVTK Widget for embedding a VTK render window in Qt.
+  this->QVTK = new QVTKWidget(this->CentralWidget);
+  this->Renderer = vtkSmartPointer<vtkRenderer>::New();
+  this->QVTK->GetRenderWindow()->AddRenderer(this->Renderer);
+  QGridLayout *viewerLayout = new QGridLayout(this->CentralWidget);
+  viewerLayout->addWidget(this->QVTK, 0, 0);
+  //may add a tree view here
+   //layout for the settings window
 	this->CreateInteractorStyle();
 	this->CreateActors();
-	this->resize(this->TraceEditSettings.value("mainWin/size",QSize(850, 480)).toSize());
-	this->move(this->TraceEditSettings.value("mainWin/pos",QPoint(40, 59)).toPoint());
 	if (!this->TraceFiles.isEmpty())
 	{
 		this->setWindowTitle(tr("Trace Editor: ")+ this->TraceFiles.last().section('/',-1));
@@ -594,14 +609,6 @@ void View3D::setupLinkedSpace()
 /*Set up the components of the interface */
 void View3D::CreateGUIObjects()
 {
-  //Set up the main window's central widget
-  this->CentralWidget = new QWidget(this);
-  this->setCentralWidget(this->CentralWidget);
-
-  //Set up a QVTK Widget for embedding a VTK render window in Qt.
-  this->QVTK = new QVTKWidget(this->CentralWidget);
-  this->Renderer = vtkSmartPointer<vtkRenderer>::New();
-  this->QVTK->GetRenderWindow()->AddRenderer(this->Renderer);
 
   //Set up the menu bar
  
@@ -749,10 +756,6 @@ void View3D::CreateLayout()
   this->BranchToolBar->addAction(this->root);
   this->BranchToolBar->addAction(this->ImageIntensity);
 
-  QGridLayout *viewerLayout = new QGridLayout(this->CentralWidget);
-  viewerLayout->addWidget(this->QVTK, 0, 0);
-  //may add a tree view here
-   //layout for the settings window
   QFormLayout *settingsLayout = new QFormLayout(this->SettingsWidget);
   settingsLayout->addRow(tr("Maximum gap length:"), this->MaxGapField);
   settingsLayout->addRow(tr("Gap length tolerance:"),this->GapToleranceField);
@@ -778,11 +781,7 @@ void View3D::CreateLayout()
   this->statusBar()->addPermanentWidget(new QLabel(" Deleted: ", this));
   this->statusBar()->addPermanentWidget(this->DeleteLabel,0);
 
-  this->InformationDisplays = new QDockWidget("Edit Log Information", this);
-  this->InformationDisplays->setWidget(this->EditLogDisplay);
-  this->addDockWidget(Qt::LeftDockWidgetArea, this->InformationDisplays);
   this->ShowToolBars->addAction(this->InformationDisplays->toggleViewAction());
-  this->InformationDisplays->hide();
 
   this->createRayCastSliders();
   this->menuBar()->addSeparator();
@@ -833,26 +832,16 @@ void View3D::CreateActors()
 	  if (this->ImageActors->isRayCast(i))
 	  {
 		  this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
-		  // test image access functions
-		 /* if (!this->TraceFiles.isEmpty())
-		  {
-			  this->tobj->ImageIntensity(this->ImageActors->GetImageData(i));
-		  }*/
-		  /*std::vector<double>  dimensions = this->ImageActors->GetImageSize(i);
-		  std::cout<< "\nTest of image accessors \nx\t"<< dimensions[0] << "\ty\t"<< dimensions[1]<< "\tz\t"<< dimensions[2]<< "\n";
-		  double intensity = this->ImageActors->pointData(i, 646,215,5);
-		  std::cout<< "x:646 y:215 z:5\t" << intensity<< "\n";*/
-		  //These functions are not required
 	  }
 	  else
 	  {
 		  this->Renderer->AddActor(this->ImageActors->ContourActor(i));
 	  }
   }
-  this->QVTK->GetRenderWindow()->Render();
   //sphere is used to mark the picks
   this->CreateSphereActor();
   Renderer->AddActor(this->SphereActor);
+  this->QVTK->GetRenderWindow()->Render();
 }
 
 void View3D::CreateSphereActor()
