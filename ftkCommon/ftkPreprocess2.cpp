@@ -498,7 +498,10 @@ void Preprocess::RemoveConnectedComponents(int minObjSize)
 		return;
     }
 	
-	//unsigned short numObjects = relabel->GetNumberOfObjects();
+	unsigned short initNumObjects = ccfilter->GetObjectCount();
+	unsigned short finalNumObjects = relabel->GetNumberOfObjects();
+	unsigned short removedNumObjects = initNumObjects - finalNumObjects;
+	std::cout << "Removed " << removedNumObjects << " of " << initNumObjects << " objects...";
 
 	ShortImageType::Pointer ccImage = relabel->GetOutput();
 
@@ -693,7 +696,7 @@ void Preprocess::BinaryThinning()
 	myImg = rescale->GetOutput();
 }
 
-void Preprocess::SaveVTKPoints(std::string filename, int min, int max)
+void Preprocess::SaveVTKPoints(std::string filename, float xyFactor, int min, int max)
 {
 	std::vector<ImageType3D::IndexType> nodes;
 
@@ -713,7 +716,7 @@ void Preprocess::SaveVTKPoints(std::string filename, int min, int max)
 		return;
 
 	fprintf(fout, "# vtk DataFile Version 3.0\n");
-	fprintf(fout,"Points between %d and %d\n", min, max);
+	fprintf(fout,"Points between %d and %d, using xyFactor %f\n", min, max, xyFactor);
 	fprintf(fout,"ASCII\n");
 	fprintf(fout,"DATASET POLYDATA\n");
 
@@ -722,7 +725,7 @@ void Preprocess::SaveVTKPoints(std::string filename, int min, int max)
 	for(int i=0; i<num_nodes; ++i)
 	{
 		ImageType3D::IndexType nd = nodes.at(i);
-		fprintf(fout,"%f %f %f\n", (float)nd[0], (float)nd[1], (float)nd[2]);
+		fprintf(fout,"%f %f %f\n", (float)nd[0]*xyFactor, (float)nd[1]*xyFactor, (float)nd[2]);
 	}
 
 	fprintf(fout,"VERTICES %d %d\n", num_nodes, num_nodes*2);

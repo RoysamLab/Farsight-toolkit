@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 	std::string filterName = "";					// Name of the filter to apply
 	std::vector<double> params;						// Params for the filter to apply
 	std::string pipeName = "";						// Filename of pipeline file
-	std::string outputFilename = "prep_out.tif";	// Name of the output image;
+	std::string outputFilename = "";				// Name of the output image;
 	bool useColor = false;
 	char color = 'w';								// Create intensity image from colors
 
@@ -149,21 +149,23 @@ int main(int argc, char *argv[])
 	{
 	}
 
-	//Save Image:
-	typedef itk::ImageFileWriter< ftk::Preprocess::ImageType3D > WriterType;
-	WriterType::Pointer writer = WriterType::New();
-	writer->SetFileName( outputFilename );
-	writer->SetInput( prep->GetImage() );
-	try
-    {
-		writer->Update();
-    }
-	catch( itk::ExceptionObject & err ) 
-    { 
-		std::cout << "ITK Exception caught !" << std::endl; 
-		std::cout << err << std::endl; 
-		return EXIT_FAILURE;
-    }
+	if( outputFilename != "" )
+	{
+		//Save Image:
+		typedef itk::ImageFileWriter< ftk::Preprocess::ImageType3D > WriterType;
+		WriterType::Pointer writer = WriterType::New();
+		writer->SetFileName( outputFilename );
+		writer->SetInput( prep->GetImage() );
+		try
+		{
+			writer->Update();
+		}
+		catch( itk::ExceptionObject & err ) 
+		{ 
+			std::cout << "ITK Exception caught !" << std::endl; 
+			std::cout << err << std::endl; 
+		}
+	}
 
 	delete prep;
 
@@ -313,14 +315,16 @@ void pipeline(std::string pipeName, ftk::Preprocess * prep)
 		else if( strcmp( parent, "SaveVTKPoints") == 0 )
 		{
 			const char * filename = parentElement->Attribute("filename");
+			float xyFactor = 1.0;
 			int min=255, max=255;
+			parentElement->QueryFloatAttribute("xyFactor", &xyFactor);
 			parentElement->QueryIntAttribute("min",&min);
 			parentElement->QueryIntAttribute("max",&max);
 			std::cout << "Saving VTK Points...";
 			if(!filename)
-				prep->SaveVTKPoints("points.vtk", min, max);
+				prep->SaveVTKPoints("points.vtk", xyFactor, min, max);
 			else
-				prep->SaveVTKPoints(filename, min, max);
+				prep->SaveVTKPoints(filename, xyFactor, min, max);
 			std::cout << "done\n";
 		}
 
@@ -335,7 +339,7 @@ void usage(const char *funcName)
 	std::cout << " " << funcName << " -i InputImage\n";
 	//std::cout << "  -f FunctionName param1 param2 param3 ... paramN"
 	std::cout << "  -o outputFile -p pipeFile -c color\n";
-	std::cout << "    Default outputFile is prep_out.tif\n";
+	std::cout << "    If -o is not used the output image will not be saved\n";
 	std::cout << "    Default assumption is grayscale input, unless -c is used:\n";
 	std::cout << "    -c can be 'r','g','b',or'w'\n";
 }

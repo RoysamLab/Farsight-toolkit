@@ -80,7 +80,7 @@ public:
 
 	ImageType3D::Pointer GetImage(){ return myImg; };
 
-	void SaveVTKPoints(std::string filename, int min=255, int max=255);
+	void SaveVTKPoints(std::string filename, float xyFactor=1.0, int min=255, int max=255);
 
 	void RunFilter(std::string name, std::vector<double> params);
 
