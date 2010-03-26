@@ -181,7 +181,24 @@ std::vector<TraceLine*> TraceModel::getRoots()
 	std::vector<TraceLine*> selectedTrace = this->GetSelectedTraces();
 	for (unsigned int i = 0; i < selectedTrace.size(); i++)
 	{
-		IDList.push_back(selectedTrace.at(i)->GetRootID());
+		int newRoot = selectedTrace.at(i)->GetRootID();
+		bool found = false;
+		unsigned int j= 0;
+		while( !found && (j < IDList.size()))
+		{
+			if (IDList.at(j) == newRoot)
+			{
+				found = true;
+			}
+			else
+			{
+				j++;
+			}
+		}
+		if (!found)
+		{
+			IDList.push_back(newRoot);
+		}
 	}
 	for ( unsigned int i = 0; i< IDList.size(); i++)
 	{
