@@ -125,7 +125,8 @@ bool MST::skeletonPointsToNodes(bool roundToNearestVoxel)
 	if(!roundToNearestVoxel)	//Just use the skeleton points
 	{
 		nodes.insert(nodes.begin(), skeletonPoints->begin(), skeletonPoints->end());
-		std::cerr << "Number of Nodes = " << nodes.size() << std::endl;
+		if(debug)
+			std::cerr << "Number of Nodes = " << nodes.size() << std::endl;
 		return true;
 	}
 
