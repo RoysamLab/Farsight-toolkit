@@ -607,16 +607,19 @@ void View3D::CreateGUIObjects()
  
   this->saveAction = new QAction(tr("&Save as..."), this->CentralWidget);
     connect(this->saveAction, SIGNAL(triggered()), this, SLOT(SaveToFile()));
+	this->saveAction->setShortcut(QKeySequence::Save);
 	this->saveAction->setStatusTip("Save results to file");
-	this->saveSelectedAction = new QAction(tr("&Save Selected Trees"), this->CentralWidget);
+  this->saveSelectedAction = new QAction(tr("&Save Selected Trees"), this->CentralWidget);
     connect(this->saveSelectedAction, SIGNAL(triggered()), this, SLOT(SaveSelected()));
 	this->saveSelectedAction->setStatusTip("Save Selected tree structures to seperate file");
   this->exitAction = new QAction(tr("&Exit"), this->CentralWidget);
 	connect(this->exitAction, SIGNAL(triggered()), this, SLOT(close()));
+	this->exitAction->setShortcut(QKeySequence::Close);
 	this->exitAction->setStatusTip("Exit the Trace Editor");
   this->loadTraceAction = new QAction("Load Trace", this->CentralWidget);
     connect(this->loadTraceAction, SIGNAL(triggered()), this, SLOT(LoadTraces()));
     this->loadTraceAction->setStatusTip("Load traces from .xml or .swc file");
+	this->loadTraceAction->setShortcut(QKeySequence::Open);
   this->loadTraceImage = new QAction("Load Image", this->CentralWidget);
 	connect (this->loadTraceImage, SIGNAL(triggered()), this, SLOT(LoadImageData()));
 	this->loadTraceImage->setStatusTip("Load an Image to RayCast Rendering");
@@ -1167,7 +1170,8 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
     break;
 
     case 't':
-      view->ShowSettingsWindow();
+		view->SelectTrees();
+      //view->ShowSettingsWindow();
       break;
 
     case 'a':
