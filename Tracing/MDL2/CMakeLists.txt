@@ -11,22 +11,25 @@ SET( cbin_SRCS
 
 #CHECK TO MAKE SURE ITK LIBRARIES ARE NEEDED FOR THESE:
 
+ADD_LIBRARY(mdlUtils mdlUtils.h mdlUtils.cpp)
+
 ADD_LIBRARY(mdlVolumeProcess mdlVolumeProcess.h mdlVolumeProcess.cpp ${cbin_SRCS})
 TARGET_LINK_LIBRARIES(mdlVolumeProcess ITKIO ITKStatistics ITKBasicFilters ITKCommon)
 
-ADD_EXECUTABLE(volumeProcess2 main.cpp)
+ADD_EXECUTABLE(volumeProcess2 volproc_main.cpp)
 TARGET_LINK_LIBRARIES(volumeProcess2 mdlVolumeProcess)
 
 ADD_LIBRARY(mdlIntegratedSkeleton mdlIntegratedSkeleton.h mdlIntegratedSkeleton.cpp)
-TARGET_LINK_LIBRARIES(mdlVolumeProcess ITKBasicFilters ITKCommon)
+TARGET_LINK_LIBRARIES(mdlIntegratedSkeleton mdlUtils ITKBasicFilters ITKCommon ITKIO ITKStatistics)
 
-ADD_LIBRARY(mdlUtils mdlUtils.h mdlUtils.cpp)
+ADD_EXECUTABLE(skeletonize skeleton_main.cpp)
+TARGET_LINK_LIBRARIES(skeletonize mdlIntegratedSkeleton)
 
 ADD_LIBRARY(mdlMST mdlMST.h mdlMST.cpp WeightedMahalsnobisDistance.cxx)
 TARGET_LINK_LIBRARIES(mdlMST mdlUtils mdlVolumeProcess)
 
 ADD_EXECUTABLE(mst mst_main.cpp)
-TARGET_LINK_LIBRARIES(mst mdlMST ITKCommon ITKIO)
+TARGET_LINK_LIBRARIES(mst mdlMST)
 
 ADD_LIBRARY(mdlBSplineFitting mdlBSplineFitting.cpp mdlBSplineFitting.h)
 

@@ -19,16 +19,36 @@ limitations under the License.
 
 int main(int argc, char *argv[])
 {
-	if(argc < 3)
+	if(argc < 4)
     {
-		std::cerr << "Usage: " << argv[0] << " inputImage inputSkeleton < >" << std::endl;
+		std::cerr << "Usage: " << argv[0] << " inputImage inputSkeleton outFilename < edgeRange >" << std::endl;
+		std::cerr << " Input Image is used in determining edge weights for MST\n";
+		std::cerr << " Input Skeleton must be a .vtk file containing skeleton points\n";
+		std::cerr << " The output file should be .vtk - it is nodes and line-pairs from MST\n";
+		std::cerr << " Parameters:\n";
+		std::cerr << "  edgeRange (25) Maximum Edge Length (euclidean dist - voxels)\n";
+		std::cerr << "  morphStrength (0) Number of iterations in graph erosion/dialation\n";
 		return EXIT_FAILURE;
     }
-	
+
+	std::string inputImageFilename = argv[1];
+	std::string inputSkelFilename = argv[2];
+	std::string outFilename = argv[3];
+
+	int edgeRange = 25;
+	int morphStrength = 0;
+	if(argc == 5)
+	{
+		edgeRange = atoi(argv[4]);
+	}
+	if(argc == 6)
+	{
+		morphStrength = atoi(argv[5]);
+	}
+
+
 	//*****************************************************************
 	// IMAGE READER
-	std::string inputImageFilename = argv[1];
-
 	typedef itk::ImageFileReader< mdl::ImageType > ReaderType;
 	ReaderType::Pointer reader = ReaderType::New();
 	reader->SetFileName(inputImageFilename);
@@ -46,8 +66,6 @@ int main(int argc, char *argv[])
 
 	//****************************************************************
 	// SKELETON POINTS READER
-	std::string inputSkelFilename = argv[2];
-
 	std::vector<mdl::fPoint3D> skeleton;
 	mdl::vtkFileHandler * fhdl = new mdl::vtkFileHandler();
 	fhdl->SetNodes(&skeleton);
@@ -62,13 +80,13 @@ int main(int argc, char *argv[])
 	mdl::MST *mst = new mdl::MST( img );
 	mst->SetDebug(false);
 	mst->SetUseVoxelRounding(false);
-	mst->SetEdgeRange(25);
+	mst->SetEdgeRange(edgeRange);
 	mst->SetPower(1);
 	mst->SetSkeletonPoints( &skeleton );
 	// can choose different weight
 	//mst->CreateGraphAndMST(3);
 	mst->CreateGraphAndMST(1);
-	mst->ErodeAndDialateNodeDegree(0);
+	mst->ErodeAndDialateNodeDegree(morphStrength);
 
 	std::vector<mdl::fPoint3D> nodes = mst->GetNodes();
 	std::vector<mdl::pairE> bbpairs = mst->BackboneExtract();
@@ -82,24 +100,8 @@ int main(int argc, char *argv[])
 	mdl::vtkFileHandler * fhd2 = new mdl::vtkFileHandler();
 	fhd2->SetNodes(&nodes);
 	fhd2->SetLines(&bbpairs);
-	fhd2->Write("Backbone.vtk");
+	fhd2->Write(outFilename);
 	delete fhd2;
-
-	//*****************************************************************
-	// IMAGE WRITER
-	typedef itk::ImageFileWriter< mdl::ImageType > WriterType;
-	WriterType::Pointer writer = WriterType::New();
-	writer->SetFileName("Backbone.mhd");
-	writer->SetInput( img );
-	try
-	{
-		writer->Update();
-	}
-	catch( itk::ExceptionObject & err )
-	{
-		std::cerr << "WRITER FAILED: " << err << std::endl ;
-	}
-	writer = 0;
 
 	std::cerr << "DONE\n";
   
