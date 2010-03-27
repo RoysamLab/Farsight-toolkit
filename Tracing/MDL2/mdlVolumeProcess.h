@@ -67,18 +67,22 @@ public:
 	bool RunOtsuDenoising();
 	bool DialateImage(int iterations);
 	bool MaskSmallConnComp(int minObjSize);
-	bool BinaryUsingGraphCuts();
+	bool RunBinaryForDistanceMapUsingGraphCuts();
 	bool MaskUsingGraphCuts();
+	bool RunFillingZeroOnBouandary(int Bx = 4, int By =4, int Bz=4 );
 	bool RunAnisotropicDiffusion(int timesDiffuse=1, bool iso = false);	//Run anisotropic diffusion written by Xiaosong
 	bool RunManualThreshold(double threshold);
+	bool RunBinaryForDistanceMapUsingManualThreshold(float threshold);
 	bool RunDistanceTransform(void);
 	bool RunDanielssonDistanceMap(void);
-	bool RunGaussianSmoothing(float GaussianVariance, int maxKernalWidth);
+	bool RunGaussianSmoothing(float varX, float varY, float varZ, float maxErr);
+
 	bool RunRecursiveGaussianIIRRilter(float sigmaX, float sigmaY, float sigmaZ);
 	bool RunVotingBinaryHoleFilling(int radiusX,int radiusY, int radiusZ);
 	bool RunVotingBinaryIterativeHoleFilling(int radiusX,int radiusY, int radiusZ,int IterativeNumber);
 	bool RunBinayMedianHoleFilling(int radiusX,int radiusY, int radiusZ);
 	bool distTransform(unsigned char *f, int L, int M, int N); 
+	
 	//Get Result:
 	ImageType::Pointer GetOutput();
 
@@ -95,6 +99,7 @@ private:
 	//Functions:
 	double getItkOtsuThreshold(ImageType::Pointer img);
 	double getXiaoLiangOtsuThreshold(ImageType::Pointer img);
+	ImageType::Pointer RescaleFloatToImageType(FloatImageType3D::Pointer img);
 	int MIN(int x,int y) {return (((x) < (y))?(x):(y));}
 	int MAX(int x,int y) {return (((x) > (y))?(x):(y));}
 };

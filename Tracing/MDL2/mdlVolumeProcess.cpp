@@ -47,6 +47,50 @@ void VolumeProcess::SetInput(ImageType::Pointer inImage)
 	}
 }
 
+bool VolumeProcess:: RunFillingZeroOnBouandary(int Bx,int By,int Bz)
+{
+	ImageType::Pointer tempImg = ImageType::New();
+	tempImg->SetRegions( m_outputImage->GetLargestPossibleRegion() );
+	tempImg->Allocate();
+	tempImg->FillBuffer(0);
+
+	ImageType::RegionType fullRegion = m_outputImage->GetBufferedRegion();
+
+	int numColumns = fullRegion.GetSize(0);
+	int numRows = fullRegion.GetSize(1);
+	int numStacks = fullRegion.GetSize(2);
+	int i, j,k; 
+
+	itk::ImageRegionIteratorWithIndex< ImageType > itr( m_outputImage, fullRegion );
+
+	for(itr.GoToBegin(); !itr.IsAtEnd(); ++itr)
+	{
+		
+		ImageType::IndexType index = itr.GetIndex();
+	    ImageType::PixelType pix = m_outputImage->GetPixel(index);
+        i = index[0];
+		j = index[1];
+		k = index[2];
+		if (i < Bx || i > numColumns -Bx || j < By || j > numRows-By ||k <Bz ||k > numStacks-Bz )
+		    tempImg->SetPixel(itr.GetIndex(), 0);
+		else 
+			tempImg->SetPixel(itr.GetIndex(), pix);
+     }
+		//Copy temp img back to image 
+	itk::ImageRegionIterator< ImageType > itr1( tempImg, tempImg->GetLargestPossibleRegion());
+	itk::ImageRegionIterator< ImageType > itr2( m_outputImage, m_outputImage->GetLargestPossibleRegion());
+	for(itr1.GoToBegin(), itr2.GoToBegin() ; !itr1.IsAtEnd(); ++itr1, ++itr2)
+	{
+	  itr2.Set( itr1.Get() );
+	}
+
+	if(debug)
+		std::cerr << "RunFillingZero Done" << std::endl;
+
+	return true;
+  
+}
+
 ImageType::Pointer VolumeProcess::GetOutput()
 {
 	return m_outputImage;
@@ -76,19 +120,34 @@ bool VolumeProcess::RescaleIntensities(int min, int max)
 	return true;
 }
 
+ImageType::Pointer VolumeProcess::RescaleFloatToImageType(FloatImageType3D::Pointer img)
+{
+	//Rescale weights:
+	typedef itk::RescaleIntensityImageFilter< FloatImageType3D, ImageType> RescaleType;
+	RescaleType::Pointer rescale = RescaleType::New();
+	rescale->SetOutputMaximum( 255 );
+	rescale->SetOutputMinimum( 0 );
+	rescale->SetInput( img );
+	rescale->Update();
+	return rescale->GetOutput();
+}
 
-bool VolumeProcess::RunGaussianSmoothing(float GaussianVariance, int maxKernalWidth)
+bool VolumeProcess::RunGaussianSmoothing(float varX, float varY, float varZ, float maxErr)
 {  //by xiao liang
-   typedef itk::DiscreteGaussianImageFilter< ImageType, ImageType > GaussianFilterType;
+   typedef itk::DiscreteGaussianImageFilter< ImageType, FloatImageType3D > GaussianFilterType;
    GaussianFilterType::Pointer GaussianFilter =  GaussianFilterType::New();
    GaussianFilter->SetInput(m_outputImage);
-   GaussianFilter->SetFilterDimensionality(3);
-   //const itk::FixedArray<double 0>::ValueType v;
-   
-   //v = GaussianVariance;
-   //GaussianFilter->SetVariance(v);
+   //GaussianFilter->SetFilterDimensionality(3);
+   GaussianFilterType::ArrayType maxErrTypeValue;
+   maxErrTypeValue.Fill(maxErr);
+   GaussianFilter->SetMaximumError( maxErrTypeValue );
 
-   GaussianFilter->SetMaximumKernelWidth(maxKernalWidth);
+   GaussianFilterType::ArrayType variance;
+   variance[0] = varX;
+   variance[1] = varY;
+   variance[2] = varZ;
+   GaussianFilter->SetVariance(variance);
+   //GaussianFilter->SetMaximumKernelWidth(maxKernalWidth);
    try
     {
 		GaussianFilter->Update();
@@ -98,7 +157,7 @@ bool VolumeProcess::RunGaussianSmoothing(float GaussianVariance, int maxKernalWi
 		std::cerr << "ITK FILTER ERROR: " << err << std::endl ;
 		return false;
 	}
-	m_outputImage = GaussianFilter->GetOutput();
+	m_outputImage = RescaleFloatToImageType(GaussianFilter->GetOutput());
 	if(debug)
 		std::cerr << "GaussianFilter Filter Done" << std::endl;
 	return true;
@@ -321,7 +380,30 @@ bool VolumeProcess::MaskUsingGraphCuts()
 	return true;
 }
 
-bool VolumeProcess::BinaryUsingGraphCuts()
+bool VolumeProcess::RunBinaryForDistanceMapUsingManualThreshold(float threshold)
+{
+// this function is corrsponding to the Xiaosong's original MDL code
+	if(debug)
+	{
+		std::cerr << "We excute the Manual Thrsholding by " << threshold << std::endl;
+	}
+    
+	//Apply threshold (any thing below threshold is set to zero)
+	itk::ImageRegionIterator< ImageType > itr( m_outputImage, m_outputImage->GetLargestPossibleRegion() );
+	for(itr.GoToBegin(); !itr.IsAtEnd(); ++itr)
+	{
+		if(itr.Get() < threshold) 
+        {
+			itr.Set(255);
+        }
+		else 
+		{
+			itr.Set(0);
+		}
+	}
+	return true;
+}
+bool VolumeProcess::RunBinaryForDistanceMapUsingGraphCuts()
 {
 	ImageType::RegionType region = m_outputImage->GetBufferedRegion();
 	int numColumns = region.GetSize(0);
@@ -981,7 +1063,7 @@ bool VolumeProcess::RunDistanceTransform(void)
 
 bool VolumeProcess:: RunDanielssonDistanceMap(void)
 {
-    typedef itk::DanielssonDistanceMapImageFilter<ImageType, ImageType>  DT_Type;
+    typedef itk::DanielssonDistanceMapImageFilter<ImageType, FloatImageType3D>  DT_Type;
 	DT_Type::Pointer DTfilter = DT_Type::New();
 	DTfilter->SetInput( m_outputImage );
 	//DTfilter->GetDistanceMap();
@@ -994,7 +1076,7 @@ bool VolumeProcess:: RunDanielssonDistanceMap(void)
 		std::cerr << "ITK FILTER ERROR: " << err << std::endl ;
 		return false;
 	}
-	m_outputImage = DTfilter->GetDistanceMap();
+	m_outputImage = RescaleFloatToImageType(DTfilter->GetDistanceMap());
 	
 	if(debug)
 		std::cerr << "DanielssonDistanceMap Filter Done" << std::endl;

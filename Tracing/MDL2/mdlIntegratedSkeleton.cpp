@@ -106,7 +106,7 @@ bool IntegratedSkeleton::Update()
 	this->computeCriticalPointSeeds(); //If fails we are not dead in the water
 
 	return this->computeSkeleton();
-	//return this->MovingSkeletonPointsAlongGVF(10);
+	return this->MovingSkeletonPointsAlongGVF(10);
 }
 
 

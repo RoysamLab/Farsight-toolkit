@@ -66,26 +66,30 @@ int main(int argc, char *argv[])
 	writer->SetFileName("InputImage.mhd");
     writer->Update();
 
+    volProc->RunFillingZeroOnBouandary(4,4,4);
 	volProc->SetDebug(true);
   
 	volProc->RescaleIntensities(0,255);
-	volProc->BinaryUsingGraphCuts();
+
+	volProc->RunBinaryForDistanceMapUsingGraphCuts();
+	//volProc->RunBinaryForDistanceMapUsingManualThreshold(20);
 
 	writer->SetInput(volProc->GetOutput());
-	writer->SetFileName("BinaryUsingGraphCutsResults.mhd");
+	writer->SetFileName("BinaryResults.mhd");
     writer->Update();
 
 	volProc->RunBinayMedianHoleFilling(1,1,1);
     writer->SetInput(volProc->GetOutput());
 	writer->SetFileName("RunBinayMedianHoleFillingResults.mhd");
     writer->Update();
+    
 
 	volProc->RunDanielssonDistanceMap();
 	writer->SetInput(volProc->GetOutput());
 	writer->SetFileName("DanielssonDistanceMapResults.mhd");
     writer->Update();
-
-	// volProc->RunGaussianSmoothing(3,5);
+    
+	volProc->RunGaussianSmoothing(7,7,3,0.1);
 
 	writer->SetInput(volProc->GetOutput());
 	writer->SetFileName("RunGaussianSmoothingResults.mhd");
@@ -93,9 +97,6 @@ int main(int argc, char *argv[])
 	//volProc->RunRecursiveGaussianIIRRilter(7,5,2);
 	//volProc->RunCAD();
 
-	volProc->RescaleIntensities(0,255);
-
-	volProc->MaskUsingGraphCuts();
 	mdl::ImageType::Pointer clean_img = volProc->GetOutput();
 	delete volProc;
   
@@ -104,7 +105,7 @@ int main(int argc, char *argv[])
 	//******************************************************************
 	// IMAGE WRITER
     writer->SetInput(clean_img);
-	writer->SetFileName("MaskUsingGraphCutsDistanceMap.mhd");
+	writer->SetFileName("MaskUsingDistanceMap.mhd");
     writer->Update();
 
 	
@@ -112,27 +113,35 @@ int main(int argc, char *argv[])
 	std::cerr << "Integrated Skeleton\n";
      
     //********************** New Method **********************************
-       
+    /*   
 	mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton( clean_img );
 	skel->SetDebug(true);	
 	skel->RunXiaoLSkeletonPoints(0,4);
 	std::vector<mdl::fPoint3D> skeleton = skel->GetOutput();
 	delete skel;
- 
+     */
+
+	mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton( clean_img );
+	skel->SetVectorMagnitude(0.10);
+	skel->SetDebug(true);
+	skel->SetUseXiaoLiangMethod(false);
+	skel->Update();
+	std::vector<mdl::fPoint3D> skeleton = skel->GetOutput();
+	delete skel;
 
 	std::cerr << "MST 1\n";
 
 	//Minimum spanning tree to create nodes and backbone node pairs (lines):
 	mdl::MST *mst = new mdl::MST( clean_img );
-	mst->SetDebug(true);
+	mst->SetDebug(false);
 	mst->SetUseVoxelRounding(true);
-	mst->SetEdgeRange(20);
+	mst->SetEdgeRange(15);
 	mst->SetPower(1);
 	mst->SetSkeletonPoints( &skeleton );
 	// can choose different weight
 	//mst->CreateGraphAndMST(3);
 	mst->CreateGraphAndMST(1);
-	mst->ErodeAndDialateNodeDegree(0);
+	mst->ErodeAndDialateNodeDegree(20);
 	std::vector<mdl::fPoint3D> nodes = mst->GetNodes();
 	//Note: node 0 in bbpairs is index 0 of nodes!!!
 	std::vector<mdl::pairE> bbpairs = mst->BackboneExtract();
@@ -143,8 +152,8 @@ int main(int argc, char *argv[])
 	std::cerr << "BSPLINE\n";
 	
 	mdl::BSplineFitting *bspline = new mdl::BSplineFitting( clean_img );
-	bspline->SetDebug(true);
-	bspline->SetLevels(7);
+	bspline->SetDebug(false);
+	bspline->SetLevels(6);
 	bspline->SetOrder(3);
 	bspline->SetNodes( &nodes );
 	bspline->SetBBPairs( &bbpairs );
@@ -153,7 +162,7 @@ int main(int argc, char *argv[])
 	bbpairs = bspline->GetBBPairs();
 	delete bspline;
 
-    /*
+ 
 	std::cerr << "MST 2\n";
   
     mdl::MST *mst1 = new mdl::MST( clean_img );
@@ -162,8 +171,8 @@ int main(int argc, char *argv[])
 	mst1->SetEdgeRange(15);
 	mst1->SetPower(1);
 	mst1->SetSkeletonPoints( &nodes );
-	mst1->CreateGraphAndMST(3);
-	mst1->ErodeAndDialateNodeDegree(2);
+	mst1->CreateGraphAndMST(1);
+	mst1->ErodeAndDialateNodeDegree(0);
 	
 	nodes = mst1->GetNodes();
 	bbpairs = mst1->BackboneExtract();
@@ -182,7 +191,7 @@ int main(int argc, char *argv[])
 	fhdl1->SetNodes(&skeleton);
 	fhdl1->Write("Skeleton.vtk");
 	delete fhdl1;
-	*/
+
 	std::cerr << "DONE\n";
   
 	std::cerr << "PRESS ENTER TO EXIT\n";
