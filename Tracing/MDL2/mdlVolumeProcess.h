@@ -88,13 +88,14 @@ public:
 
 private:
 	static const unsigned char m_NumberOfHistogramBins = 128;
-
+    typedef itk::Image< float, 3 > FloatImageType3D;
 	//Parameters
 	bool debug;				//If debug is true, process in steps and print stuff
 	
 	//Images
 	ImageType::Pointer m_inputImage;
 	ImageType::Pointer m_outputImage;
+	
 
 	//Functions:
 	double getItkOtsuThreshold(ImageType::Pointer img);

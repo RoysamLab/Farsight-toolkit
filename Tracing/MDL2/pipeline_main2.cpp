@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
      */
 
 	mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton( clean_img );
-	skel->SetVectorMagnitude(0.10);
+	skel->SetVectorMagnitude(0.002);
 	skel->SetDebug(true);
 	skel->SetUseXiaoLiangMethod(false);
 	skel->Update();
@@ -135,13 +135,13 @@ int main(int argc, char *argv[])
 	mdl::MST *mst = new mdl::MST( clean_img );
 	mst->SetDebug(false);
 	mst->SetUseVoxelRounding(true);
-	mst->SetEdgeRange(15);
+	mst->SetEdgeRange(8);
 	mst->SetPower(1);
 	mst->SetSkeletonPoints( &skeleton );
 	// can choose different weight
 	//mst->CreateGraphAndMST(3);
 	mst->CreateGraphAndMST(1);
-	mst->ErodeAndDialateNodeDegree(20);
+	mst->ErodeAndDialateNodeDegree(50);
 	std::vector<mdl::fPoint3D> nodes = mst->GetNodes();
 	//Note: node 0 in bbpairs is index 0 of nodes!!!
 	std::vector<mdl::pairE> bbpairs = mst->BackboneExtract();
@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
     mdl::MST *mst1 = new mdl::MST( clean_img );
 	mst1->SetDebug(false);
 	mst1->SetUseVoxelRounding(false);
-	mst1->SetEdgeRange(15);
+	mst1->SetEdgeRange(8);
 	mst1->SetPower(1);
 	mst1->SetSkeletonPoints( &nodes );
 	mst1->CreateGraphAndMST(1);
