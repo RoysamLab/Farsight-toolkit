@@ -1,4 +1,29 @@
-function applySHTV(TVmodel,im,cness)
+function [result] = applySHTV(TVmodel,im,cness)
+
+% pad it
+if mod(size(im,1),2) ~= 0
+    pad1 = TVmodel.bsz(1);
+else
+    pad1 = TVmodel.bsz(1)-1;
+end
+if mod(size(im,2),2) ~= 0
+    pad2 = TVmodel.bsz(2);
+else
+    pad2 = TVmodel.bsz(2)-1;
+end
+if mod(size(im,3),2) ~= 0
+    pad3 = TVmodel.bsz(3);
+else
+    pad3 = TVmodel.bsz(3)-1;
+end
+
+imnew =  zeros([size(im,1) + pad1, size(im,2) + pad2, size(im,3)+pad3]);
+imnew(1:size(im,1),1:size(im,2),1:size(im,3)) = im;
+im = imnew;
+
+cnessnew = zeros(size(cness,1),size(cness,2)+pad1,size(cness,3)+pad2,size(cness,4)+pad3);
+cnessnew(:,1:size(cness,2),1:size(cness,3),1:size(cness,4))=cness; 
+cness = cnessnew;
 
 
 L = TVmodel.L;
@@ -86,9 +111,9 @@ tic
 s1 = TVmodel.bsz(1); s2 = TVmodel.bsz(2); s3 = TVmodel.bsz(3); 
 for l = 0:2:L,
     TVbasisCUR = myREAL(zeros(2*(l+1),size(inputimg,1),size(inputimg,2),size(inputimg,3)));
-    p1 = round((size(inputimg,1) - s1)/2);
-    p2 = round((size(inputimg,2) - s2)/2);    
-    p3 = round((size(inputimg,3) - s3)/2);    
+    p1 = round((size(inputimg,1) - s1)/2)+1;
+    p2 = round((size(inputimg,2) - s2)/2)+1;    
+    p3 = round((size(inputimg,3) - s3)/2)+1;    
     TVbasisCUR(:,p1:(p1+s1-1),p2:(p2+s2-1),p3:(p3+s3-1) ) = TVmodel.basis{l/2+1};
     TVbasisCUR = fftshift(fftshift(fftshift(TVbasisCUR,2),3),4);
     TVbasis{l/2+1} = myfftw(TVbasisCUR,[2 3 4],fftwplanner);
@@ -125,7 +150,7 @@ result = myifftw(result,[2 3 4],fftwplanner) / (prod(szinput));
 result = reshape(result(1,:,:,:),szinput);
 toc
 
-
+result = result(1:size(result,1)-pad1,1:size(result,2)-pad2,1:size(result,3)-pad3);
 %result = smooth3(result);
 minr = min(result(:));
 maxr = max(result(:));
@@ -141,9 +166,9 @@ maxr = max(result(:));
  result1 = (result>20).*result;
 figure, h = vol3d('cdata',result1,'texture','3d');
 vol3d(h);
-writeim(result,'result.tif');
+% writeim(result,'result.tif');
 % writeim(im,'input.tif');
-writeim(squeeze(NormD(1,:,:,:)),'normD.tif');
+% writeim(squeeze(NormD(1,:,:,:)),'normD.tif');
 % figure
 1;
 end
