@@ -24,18 +24,29 @@ int main(int argc, char *argv[])
 {
 	if(argc < 2)
     {
-		std::cerr << "Usage: " << argv[0] << " inputfilename < useGraphCuts minConnCompSize vectorMagnitude>" << std::endl;
+		std::cerr << "Usage: " << argv[0] << " inputfilename" << std::endl;
 		return EXIT_FAILURE;
     }
 
 	std::string inputFileName = argv[1];
-    
-	/*
-	if(argc == 5)
+	int edgeRange = 10;
+	int morphStrength =20;
+	float VectorMagnitude =0.10;
+    float threshold = 20;
+	int   boolIntensity = 0;
+
+	if(argc < 8)
 	{
-		useGraphCuts = atoi(argv[2]);
+		threshold = atoi(argv[2]);  
+		VectorMagnitude = atoi(argv[3]);
+		edgeRange = atoi(argv[4]);
+		morphStrength = atoi(argv[5]);   
 	}
-    */
+
+	if (argc==7)
+	{   boolIntensity = atoi(argv[6]);
+	}
+	
 
 	//*****************************************************************
 	// IMAGE READER
@@ -61,19 +72,18 @@ int main(int argc, char *argv[])
    	
 	mdl::VolumeProcess *volProc = new mdl::VolumeProcess();
 	volProc->SetInput(img);
-    
-	writer->SetInput(volProc->GetOutput());
+	volProc->SetDebug(true);
+
+   
+    mdl::ImageType::Pointer PreImage = volProc->GetOutput();
+	
+	writer->SetInput(PreImage);
 	writer->SetFileName("InputImage.mhd");
     writer->Update();
-
+	
     volProc->RunFillingZeroOnBouandary(4,4,4);
-	volProc->SetDebug(true);
-  
 	volProc->RescaleIntensities(0,255);
-
-	volProc->RunBinaryForDistanceMapUsingGraphCuts();
-	//volProc->RunBinaryForDistanceMapUsingManualThreshold(20);
-
+	volProc->RunBinaryForDistanceMapUsingManualThreshold(threshold);
 	writer->SetInput(volProc->GetOutput());
 	writer->SetFileName("BinaryResults.mhd");
     writer->Update();
@@ -94,17 +104,31 @@ int main(int argc, char *argv[])
 	writer->SetInput(volProc->GetOutput());
 	writer->SetFileName("RunGaussianSmoothingResults.mhd");
     writer->Update();
-	//volProc->RunRecursiveGaussianIIRRilter(7,5,2);
-	//volProc->RunCAD();
+   
+	mdl::ImageType::Pointer DT_img = volProc->GetOutput();
+	
+	if(boolIntensity ==0)
+       PreImage = volProc->GetOutput();
 
-	mdl::ImageType::Pointer clean_img = volProc->GetOutput();
+	else
+	{  
+	   reader->SetFileName(inputFileName);
+	   mdl::ImageType::Pointer img1 = reader->GetOutput();
+	   mdl::VolumeProcess *volProc1 = new mdl::VolumeProcess();
+	   volProc1->SetInput(img1);
+	   volProc1->MaskUsingGraphCuts();
+	   volProc1->MaskSmallConnComp(10);
+	   PreImage = volProc1->GetOutput();
+       delete volProc1;
+	}
+    
 	delete volProc;
   
 
 		
 	//******************************************************************
 	// IMAGE WRITER
-    writer->SetInput(clean_img);
+    writer->SetInput(DT_img);
 	writer->SetFileName("MaskUsingDistanceMap.mhd");
     writer->Update();
 
@@ -121,8 +145,9 @@ int main(int argc, char *argv[])
 	delete skel;
      */
 
-	mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton( clean_img );
-	skel->SetVectorMagnitude(0.002);
+   
+    mdl::IntegratedSkeleton *skel = new mdl::IntegratedSkeleton( PreImage );
+	skel->SetVectorMagnitude(VectorMagnitude);
 	skel->SetDebug(true);
 	skel->SetUseXiaoLiangMethod(false);
 	skel->Update();
@@ -132,16 +157,16 @@ int main(int argc, char *argv[])
 	std::cerr << "MST 1\n";
 
 	//Minimum spanning tree to create nodes and backbone node pairs (lines):
-	mdl::MST *mst = new mdl::MST( clean_img );
+	mdl::MST *mst = new mdl::MST( DT_img );
 	mst->SetDebug(false);
 	mst->SetUseVoxelRounding(true);
-	mst->SetEdgeRange(8);
+	mst->SetEdgeRange(edgeRange);
 	mst->SetPower(1);
 	mst->SetSkeletonPoints( &skeleton );
 	// can choose different weight
 	//mst->CreateGraphAndMST(3);
 	mst->CreateGraphAndMST(1);
-	mst->ErodeAndDialateNodeDegree(50);
+	mst->ErodeAndDialateNodeDegree(morphStrength);
 	std::vector<mdl::fPoint3D> nodes = mst->GetNodes();
 	//Note: node 0 in bbpairs is index 0 of nodes!!!
 	std::vector<mdl::pairE> bbpairs = mst->BackboneExtract();
@@ -151,7 +176,7 @@ int main(int argc, char *argv[])
 	
 	std::cerr << "BSPLINE\n";
 	
-	mdl::BSplineFitting *bspline = new mdl::BSplineFitting( clean_img );
+	mdl::BSplineFitting *bspline = new mdl::BSplineFitting( DT_img );
 	bspline->SetDebug(false);
 	bspline->SetLevels(6);
 	bspline->SetOrder(3);
@@ -165,10 +190,10 @@ int main(int argc, char *argv[])
  
 	std::cerr << "MST 2\n";
   
-    mdl::MST *mst1 = new mdl::MST( clean_img );
+    mdl::MST *mst1 = new mdl::MST( DT_img );
 	mst1->SetDebug(false);
 	mst1->SetUseVoxelRounding(false);
-	mst1->SetEdgeRange(8);
+	mst1->SetEdgeRange(edgeRange);
 	mst1->SetPower(1);
 	mst1->SetSkeletonPoints( &nodes );
 	mst1->CreateGraphAndMST(1);
