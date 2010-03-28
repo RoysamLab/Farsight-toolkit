@@ -88,6 +88,9 @@ View3D::View3D(QWidget *parent)
 {
 	this->tobj = new TraceObject;
 	int num_loaded = 0;
+	this->numDeleted = 0;
+	this->numMerged = 0;
+	this->numSplit = 0;
 //	this->Volume=0;
 	bool tracesLoaded = false;
 	this->translateImages = false;	//this is for testing a switch is needed
@@ -556,9 +559,6 @@ void View3D::Initialize()
 	this->tobj->setMergeLineColor(.4);
 	this->Ascending = Qt::AscendingOrder;
 
-	this->numDeleted = 0;
-	this->numMerged = 0;
-	this->numSplit = 0;
   //Set up the main window's central widget
   this->CentralWidget = new QWidget(this);
   this->setCentralWidget(this->CentralWidget);
@@ -832,6 +832,7 @@ void View3D::CreateActors()
 	  if (this->ImageActors->isRayCast(i))
 	  {
 		  this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
+		  this->RacastBar->show();
 	  }
 	  else
 	  {
@@ -902,7 +903,7 @@ void View3D::createRayCastSliders()
 	this->RacastBar->addWidget(this->BrightnessSpin);
 	this->RacastBar->addWidget(this->BrightnessSlider);
 	this->ShowToolBars->addAction(this->RacastBar->toggleViewAction());
-	if(!(this->ImageActors->NumberOfImages() < 0))
+	if(this->ImageActors->NumberOfImages() < 1)
 	{
 		this->RacastBar->hide();
 	}
