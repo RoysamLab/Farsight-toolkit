@@ -109,8 +109,12 @@ View3D::View3D(QWidget *parent)
 	this->InformationDisplays = new QDockWidget("Edit Log Information", this);
 	this->InformationDisplays->setWidget(this->EditLogDisplay);
 	this->addDockWidget(Qt::LeftDockWidgetArea, this->InformationDisplays);
+	//Set up the main window's central widget
+	this->CentralWidget = new QWidget(this);
+	this->setCentralWidget(this->CentralWidget);
 	this->CreateGUIObjects();
 	this->CreateLayout();
+
   // load as many files as possible. Provide offset for differentiating types
   //for(int counter=1; counter<argc; counter++)
   //  {
@@ -559,10 +563,6 @@ void View3D::Initialize()
 	this->tobj->setMergeLineColor(.4);
 	this->Ascending = Qt::AscendingOrder;
 
-  //Set up the main window's central widget
-  this->CentralWidget = new QWidget(this);
-  this->setCentralWidget(this->CentralWidget);
-
   //Set up a QVTK Widget for embedding a VTK render window in Qt.
   this->QVTK = new QVTKWidget(this->CentralWidget);
   this->Renderer = vtkSmartPointer<vtkRenderer>::New();
@@ -581,7 +581,7 @@ void View3D::Initialize()
 	{
 		this->setWindowTitle(tr("Trace Editor"));
 	}
-	this->QVTK->GetRenderWindow()->Render();
+	//this->QVTK->GetRenderWindow()->Render();
 	this->setupLinkedSpace();
 }
 
