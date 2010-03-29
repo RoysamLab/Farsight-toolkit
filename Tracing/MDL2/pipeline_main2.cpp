@@ -173,6 +173,19 @@ int main(int argc, char *argv[])
 	delete mst;
    
 
+	std::string outputFileName0 = inputFileName;
+	size_t found0 = outputFileName0.find_last_of(".");
+	outputFileName0.insert(found0,"Candidate_Backbone");
+	found0 = outputFileName0.find_last_of(".");
+	outputFileName0.replace(found0+1,3,"vtk");
+	
+	mdl::vtkFileHandler * fhd0 = new mdl::vtkFileHandler();
+	fhd0->SetNodes(&nodes);
+	fhd0->SetLines(&bbpairs);
+	fhd0->Write(outputFileName0.c_str());
+	delete fhd0;
+
+
 	
 	std::cerr << "BSPLINE\n";
 	
@@ -205,23 +218,35 @@ int main(int argc, char *argv[])
 
 
 	std::cerr << "Saving\n";
+	
+	std::string outputFileName = inputFileName;
+	size_t found = outputFileName.find_last_of(".");
+	outputFileName.insert(found,"_Backbone");
+	found = outputFileName.find_last_of(".");
+	outputFileName.replace(found+1,3,"vtk");
+	
+
 
 	mdl::vtkFileHandler * fhdl = new mdl::vtkFileHandler();
 	fhdl->SetNodes(&nodes);
 	fhdl->SetLines(&bbpairs);
-	fhdl->Write("Backbone.vtk");
+	fhdl->Write(outputFileName.c_str());
 	delete fhdl;
 
-	mdl::vtkFileHandler * fhdl1 = new mdl::vtkFileHandler();
-	fhdl1->SetNodes(&skeleton);
-	fhdl1->Write("Skeleton.vtk");
-	delete fhdl1;
+	std::string outputFileName1 = inputFileName;
+	size_t found1 = outputFileName1.find_last_of(".");
+	outputFileName1.insert(found1,"_Skeleton");
+	found1 = outputFileName1.find_last_of(".");
+	outputFileName1.replace(found1+1,3,"vtk");
+
+	mdl::vtkFileHandler * fhdl2 = new mdl::vtkFileHandler();
+	fhdl2->SetNodes(&skeleton);
+	fhdl2->SetLines(&bbpairs);
+	fhdl2->Write(outputFileName1.c_str());
+	delete fhdl2;
 
 	std::cerr << "DONE\n";
   
-	std::cerr << "PRESS ENTER TO EXIT\n";
-	getchar();
-
 	//******************************************************************
 	//******************************************************************
 
