@@ -17,14 +17,14 @@ else
     pad3 = TVmodel.bsz(3)-1;
 end
 
-imnew =  zeros([size(im,1) + pad1, size(im,2) + pad2, size(im,3)+pad3]);
+imnew =  zeros([size(im,1) + pad1, size(im,2) + pad2, size(im,3)+pad3],'single');
 imnew(1:size(im,1),1:size(im,2),1:size(im,3)) = im;
 im = imnew;
-
-cnessnew = zeros(size(cness,1),size(cness,2)+pad1,size(cness,3)+pad2,size(cness,4)+pad3);
+clear imnew
+cnessnew = zeros(size(cness,1),size(cness,2)+pad1,size(cness,3)+pad2,size(cness,4)+pad3,'single');
 cnessnew(:,1:size(cness,2),1:size(cness,3),1:size(cness,4))=cness; 
 cness = cnessnew;
-
+clear cnessnew
 
 L = TVmodel.L;
 
@@ -35,7 +35,7 @@ fftwplanner = 1;
 inputimg = (zeros(Q,Q,Q));
 [X Y Z] = ndgrid(-(Q/2-1):(Q/2));
 %inputimg =   (Z < 5*sin(X/Q*2*pi))+ randn(size(inputimg))*0.1;
-inputimg = atan(((X.^2 + Y.^2 + Z.^2) - 5^2)*0.01)+ randn(size(inputimg))*0;
+% inputimg = atan(((X.^2 + Y.^2 + Z.^2) - 5^2)*0.01)+ randn(size(inputimg))*0;
 % inputimg(Q/2:end,Q/2:end,Q/2:end)=0;
 inputimg = im;
 Q = size(im,1);
@@ -51,7 +51,7 @@ q2 = round(Q/2);
 % clf; slice(double(real(inputimg)),q2,q2,q2);
 
 epsi = 0.000000001;
-rs = split2inter(reshape(inputimg,[1 size(inputimg)]),0);
+% rs = split2inter(reshape(inputimg,[1 size(inputimg)]),0);
 % gradimg = single(get_curvelet_in_spherical(inputimg));
 gradimg = single(cness);
 % gradimg = STderivUp(rs);
@@ -61,6 +61,7 @@ NormDs = sqrt(abs(NormDs(1,:,:,:)));
 NormD = split2inter(NormDs,0);
 NormDinv = split2inter(1./(NormDs+epsi),0);
 gradimg = STmultiply(NormDinv,gradimg,1);
+clear NormDs NormDinv cness im
 % figure(10);slice(double(real(squeeze(NormD(1,:,:,:)))),q2,q2,q2);
 % figure(11);slice(double(real(squeeze(gradimg(1,:,:,:)))),q2,q2,q2);
 % figure(12);slice(double(real(squeeze(gradimg(2,:,:,:)))),q2,q2,q2);
@@ -110,13 +111,14 @@ display('padding and ffting of basis images');
 tic
 s1 = TVmodel.bsz(1); s2 = TVmodel.bsz(2); s3 = TVmodel.bsz(3); 
 for l = 0:2:L,
-    TVbasisCUR = myREAL(zeros(2*(l+1),size(inputimg,1),size(inputimg,2),size(inputimg,3)));
+    TVbasisCUR = zeros(2*(l+1),size(inputimg,1),size(inputimg,2),size(inputimg,3),'single');
     p1 = round((size(inputimg,1) - s1)/2)+1;
     p2 = round((size(inputimg,2) - s2)/2)+1;    
     p3 = round((size(inputimg,3) - s3)/2)+1;    
     TVbasisCUR(:,p1:(p1+s1-1),p2:(p2+s2-1),p3:(p3+s3-1) ) = TVmodel.basis{l/2+1};
     TVbasisCUR = fftshift(fftshift(fftshift(TVbasisCUR,2),3),4);
     TVbasis{l/2+1} = myfftw(TVbasisCUR,[2 3 4],fftwplanner);
+    clear TVbasisCUR;
 end;
 toc;
 
