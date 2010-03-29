@@ -32,6 +32,6 @@ int main (int argc, char* argv[])
 	View3D *View = new View3D();
 	View->show();
 	int retval = app.exec();
-	delete View;
+	//delete View;
 	return retval;
 }

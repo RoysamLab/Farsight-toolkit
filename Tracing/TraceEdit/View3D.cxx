@@ -549,11 +549,7 @@ void View3D::Initialize()
 	this->QVTK = 0;
 //	this->OpacitySlider = 0;
 //	this->BrightnessSlider = 0;
-	this->tobj->gapTol = this->TraceEditSettings.value("mainWin/gapTol", .5).toDouble() ;
-	this->tobj->gapMax = this->TraceEditSettings.value("mainWin/gapMax", 10).toInt();
-	this->SmallLineLength = this->TraceEditSettings.value("mainWin/smallLine", 10).toInt();
-	this->SelectColor =this->TraceEditSettings.value("mainWin/selectColor", .1).toDouble();
-	this->lineWidth= this->TraceEditSettings.value("mainWin/LineWidth", 2).toDouble();
+	
 	this->GapsPlotView = NULL;
 	this->TreePlot = NULL;
 	this->FTKTable = NULL;
@@ -763,6 +759,11 @@ void View3D::CreateLayout()
   settingsLayout->addRow(tr("Color value RGB scalar 0 to 1:"),this->ColorValueField);
   settingsLayout->addRow(tr("Line width:"),this->LineWidthField);
   settingsLayout->addRow(this->ApplySettingsButton);
+  this->tobj->gapTol = this->TraceEditSettings.value("mainWin/gapTol", .5).toDouble() ;
+	this->tobj->gapMax = this->TraceEditSettings.value("mainWin/gapMax", 10).toInt();
+	this->SmallLineLength = this->TraceEditSettings.value("mainWin/smallLine", 10).toInt();
+	this->SelectColor =this->TraceEditSettings.value("mainWin/selectColor", .1).toDouble();
+	this->lineWidth= this->TraceEditSettings.value("mainWin/LineWidth", 2).toDouble();
 	this->MaxGapField->setValue(this->tobj->gapMax);
 	this->GapToleranceField->setValue(this->tobj->gapTol);
   this->LineLengthField->setValue(this->SmallLineLength);
@@ -1436,23 +1437,38 @@ void View3D::SetRoots()
 }
 void View3D::AddNewBranches()
 {
+	unsigned int i=0;
 	TraceLine* trunk;
 	std::vector <TraceLine*> newChildren;
 	std::vector <TraceLine*> selected = this->TreeModel->GetSelectedTraces();
-	if (selected.size() > 1)
+	if (selected.size() > 2)
 	{
-		trunk = selected[0];
-		if (trunk->Orient(selected[2]))
+		bool found = false;
+		while( i < selected.size()&&!found)
 		{
-			this->tobj->ReverseSegment(trunk);
+			if (selected[i]->isLeaf()||selected[i]->isFree())
+			{
+				trunk = selected[i];
+				found = true;
+			}
+			else
+				i++;
 		}
-		for (unsigned int i = 1; i < selected.size(); i ++)
+		if (!found)
+		{
+			trunk = selected[0];
+		}
+		for ( i = 1; i < selected.size(); i ++)
 		{
 			if (!selected[i]->Orient(trunk))
 			{
 				this->tobj->ReverseSegment(selected[i]);
 			}
 			newChildren.push_back(selected[i]);
+		}
+		if (trunk->Orient(selected[2]))
+		{
+			this->tobj->ReverseSegment(trunk);
 		}
 		this->AddChildren(trunk, newChildren);
 		this->ClearSelection();

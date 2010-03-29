@@ -1922,7 +1922,15 @@ int TraceObject::createGapLists(std::vector<TraceLine*> traceList)
     }
   return conflict;
 }
-
+int TraceObject::createBranchPtFromList(std::vector<TraceLine*> traceList)
+{
+	if (traceList.size() < 3)
+		return -1;
+	else
+	{
+		//for (unsigned int i 
+	}
+}
 void TraceObject::SetBranchPoints(std::vector<branchPT*> Branches)
 {
 	this->BranchPoints.clear();

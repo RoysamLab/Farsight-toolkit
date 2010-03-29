@@ -124,6 +124,7 @@ public:
 	void cleanTree();
 	void explode(TraceLine* parent);
 	int createGapLists(std::vector<TraceLine*> traceList);
+	int createBranchPtFromList(std::vector<TraceLine*> traceList);
 	int solveParents(std::vector<int> ids);
 	bool isParent(int id);
   void SetCombineShortVTKLines(bool b) { this->CombineShortVTKLines = b; }
