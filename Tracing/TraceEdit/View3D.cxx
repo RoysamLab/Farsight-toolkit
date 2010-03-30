@@ -670,6 +670,8 @@ void View3D::CreateGUIObjects()
   this->explodeTree->setStatusTip("Break tree into segments,aka Explode. Tree can be rebuilt using set root");
 	this->ImageIntensity = new QAction("Intensity", this->CentralWidget);
 	connect(this->ImageIntensity, SIGNAL(triggered()), this, SLOT(SetImgInt()));
+	this->MoveSphere = new QAction("PT", this->CentralWidget);
+	connect(this->MoveSphere, SIGNAL(triggered()), this, SLOT(showPTin3D()));
   //Setup the tolerance settings editing window
   this->SettingsWidget = new QWidget();
   //QIntValidator *intValidator = new QIntValidator(1, 100, this->SettingsWidget);
@@ -751,6 +753,7 @@ void View3D::CreateLayout()
   this->BranchToolBar->addAction(this->BranchButton);
   this->BranchToolBar->addAction(this->root);
   this->BranchToolBar->addAction(this->ImageIntensity);
+  this->BranchToolBar->addAction(this->MoveSphere);
 
   QFormLayout *settingsLayout = new QFormLayout(this->SettingsWidget);
   settingsLayout->addRow(tr("Maximum gap length:"), this->MaxGapField);
@@ -1018,7 +1021,27 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
   }// end if pick
   view->QVTK->GetRenderWindow()->Render();             //update the render window
 }
-
+void View3D::showPTin3D()
+{
+	bool ok = false;
+	double pos[3];
+	while (!ok)
+	{
+		pos[0] = QInputDialog::getDouble(this, tr("set x"), tr("x value"), 0, -60000, 60000, 1, &ok);
+	}
+	ok = false;
+	while (!ok)
+	{
+		pos[1] = QInputDialog::getDouble(this, tr("set y"), tr("y value"), 0, -60000, 60000, 1, &ok);
+	}
+	ok = false;
+	while (!ok)
+	{
+		pos[3] = QInputDialog::getDouble(this, tr("set z"), tr("z value"), 0, -60000, 60000, 1, &ok);
+	}
+	this->SphereActor->SetPosition(pos );
+	this->SphereActor->VisibilityOn();
+}
 void View3D::updateTraceSelectionHighlights()
 {
 	this->UpdateLineActor();
