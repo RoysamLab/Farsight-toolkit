@@ -1347,6 +1347,41 @@ void View3D::DeleteTraces()
 	{
 		this->EditLogDisplay->append(tr("Deleted\t") + QString::number(traceList.size()) + tr("\ttraces"));
 		this->EditLogDisplay->append( "\tID\tType\tSize\tLength\tEuclidian Length\tRadii\tFragmentation Smoothness\tParent ID");
+		for (i=0; i<traceList.size()-1; i++)
+		{			
+			if (traceList[i]->isLeaf())
+			{
+			for (unsigned int j = i +1; j <traceList.size(); j++)
+			{
+				if(traceList[i]->GetParentID() == traceList[j]->GetParentID())
+				{
+					TraceLine * parent = traceList[i]->GetParent();
+					traceList[i]->SetParent(NULL);
+					traceList[j]->SetParent(NULL);
+					if (parent->GetBranchPointer()->size() == 2)
+					{
+						parent->GetBranchPointer()->clear();
+					}else
+					{
+						std::vector<TraceLine*> siblings = *parent->GetBranchPointer();
+						std::vector<TraceLine*>::iterator iter = siblings.begin();
+						std::vector<TraceLine*>::iterator iterend = siblings.end();
+						while(iter != iterend)
+						{
+							if((*iter== traceList[i])||(*iter== traceList[j]))
+							  {
+								  siblings.erase(iter);
+								  break;
+							  }
+							++iter;
+						}
+
+					}
+				}
+				continue;
+			}
+			}
+		}
 		for (i = 0; i < traceList.size(); i++)
 		{				
 			this->EditLogDisplay->append( QString(traceList[i]->stats().c_str()));
