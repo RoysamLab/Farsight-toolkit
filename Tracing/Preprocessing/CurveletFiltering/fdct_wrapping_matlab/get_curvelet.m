@@ -1,5 +1,5 @@
 
-function [out_img,out_cos,out_sin] = get_curvelet(input)
+function [out_img,out_cos,out_sin] = get_curvelet(input,sig1)
 
 % Don't forget that you can choose between diagonal real, diagonal complex
 % and block complex thersholding by uncommenting portions of the code
@@ -28,7 +28,11 @@ noisy_img(1:size(im_temp,1),1:size(im_temp,2)) = im_temp;
 
 [N, M] = size(noisy_img);
 img = noisy_img;
-sigma = 0.40*255;            % noise stdev is 10%
+if(nargin <2)
+    sigma = 0.4*255;            % noise stdev is 10%
+else
+    sigma = sig1;
+end
 
 % Tuning parameters
 finest = 1;                 % 1: curvelets at finest scale, 2: wavelets at finest scale
@@ -51,11 +55,14 @@ tic;
 C = fdct_wrapping(X,is_real,finest,nbscales,nbangles_coarse);
 
 E = cell(size(C));
+E2 = cell(size(C));
 for s=1:length(C)
   E{s} = cell(size(C{s}));
+  E2{s} = cell(size(C{s}));
   for w=1:length(C{s})
     A = C{s}{w};
     E{s}{w} = sqrt(sum(sum(A.*conj(A))) / prod(size(A)));
+    E2{s}{w} = sqrt(A.*conj(A));
   end
 end
 
@@ -117,7 +124,10 @@ for xshift = 1:nshifts
                                                     circshift(modcjl,[1 colshift]).^2 + circshift(modcjl, [-1 -colshift]).^2));
         end;
         testcjl = testcjl ./ sqrt(1+4*neighb_weight*tuning_neighb);
+%         figure,
+%         subplot(2,1,1);imagesc(modcjl);
         modcjl = modcjl .* (testcjl > thresh_jl);
+%         subplot(2,1,2);imagesc(modcjl);
         C{j}{l} = argcjl .* modcjl;
 %         if j == 2
 %            if l == outer_angles
@@ -128,6 +138,9 @@ for xshift = 1:nshifts
 %         else
 %             C{j}{l} = 0*C{j}{l};
 %         end
+%           if j ~= 1
+%               C{j}{l} = 0*C{j}{l};
+%           end
         if j ~=1 
             theta = (pi/4 -2*pi/numel(C{j})/2 -2*pi/numel(C{j})*(l-1) + 2*pi);
             Ccos{j}{l} = cos(mod(theta,pi)*2)*C{j}{l}; %TODO :Fix me

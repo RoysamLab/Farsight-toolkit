@@ -28,14 +28,14 @@ noisy_img(1:size(im_temp,1),1:size(im_temp,2)) = im_temp;
 
 [N, M] = size(noisy_img);
 img = noisy_img;
-sigma = 0.2*255;            % noise stdev is 10%
+sigma = 0.20*255;            % noise stdev is 10%
 
 % Tuning parameters
 finest = 1;                 % 1: curvelets at finest scale, 2: wavelets at finest scale
 nbscales = log2(min(M,N)) - 3;
 nbangles_coarse = 8;
-nsigmas_coarse = 2.2;       % threshold proportional to nsigmas_coarse*sigma at all scales except finest
-nsigmas_fine = 2.5;         % threshold proportional to nsigmas_fine*sigma at finest scale
+nsigmas_coarse = 2.5;       % threshold proportional to nsigmas_coarse*sigma at all scales except finest
+nsigmas_fine = 2.2;         % threshold proportional to nsigmas_fine*sigma at finest scale
 nshifts = 1;                % number of translations (per dimension) considered in the cycle-spinning
 nell1 = 0;                  % number of ell-1 iterations
 neighb_weight = 0.5;        % for group thresholding, weight assigned to neighboring curvelets
@@ -51,11 +51,15 @@ tic;
 C = fdct_wrapping(X,is_real,finest,nbscales,nbangles_coarse);
 
 E = cell(size(C));
+E2 = cell(size(C));
 for s=1:length(C)
   E{s} = cell(size(C{s}));
+  E2{s} = cell(size(C{s}));
   for w=1:length(C{s})
     A = C{s}{w};
     E{s}{w} = sqrt(sum(sum(A.*conj(A))) / prod(size(A)));
+    E2{s}{w} = sqrt(A.*conj(A)) / prod(size(A)));
+    
   end
 end
 
@@ -128,15 +132,21 @@ for xshift = 1:nshifts
 %         else
 %             C{j}{l} = 0*C{j}{l};
 %         end
+%         if j == 1
+%             C{j}{l} = 0*C{j}{l};
+%         end
         if j ~=1 
             theta = (pi/4 -2*pi/numel(C{j})/2 -2*pi/numel(C{j})*(l-1) + 2*pi);
-            Ccos{j}{l} = cos(mod(theta,pi))*C{j}{l}; %TODO :Fix me
+            Ccos{j}{l} = cos(mod(theta,pi)*2)*C{j}{l}; %TODO :Fix me
 %             Ccos{j}{l}  = C{j}{l};
-            Csin{j}{l} = sin(mod(theta,pi))*C{j}{l};
+            Csin{j}{l} = sin(mod(theta,pi)*2)*C{j}{l};
         else
             Ccos{j}{l} = 0*C{j}{l};
             Csin{j}{l} = 0*C{j}{l};
         end
+%         if j==1
+%             C{j}{l} = 0*C{j}{l};
+%         end
       end
     end
     
@@ -211,6 +221,8 @@ for xshift = 1:nshifts
     end;
     
     temp_restored = circshift(temp_restored,[-xshift, -yshift]);
+    temp_restored_cos = circshift(temp_restored_cos,[-xshift, -yshift]);
+    temp_restored_sin = circshift(temp_restored_sin,[-xshift, -yshift]);
     restored_img = (n-1)/n*restored_img + 1/n*temp_restored;
     
   end
@@ -224,10 +236,12 @@ sin_old = temp_restored_sin;
 sum1 = sqrt(temp_restored_cos.^2 + temp_restored_sin.^2)+0.001;
 temp_restored_cos = temp_restored_cos./sum1;
 temp_restored_sin = temp_restored_sin./sum1;
-temp_restored_cos = sign(temp_restored_sin).*sqrt(1+temp_restored_cos)/sqrt(2);
-temp_restored_sin = sqrt(1-temp_restored_cos.^2);
+angles = mod(atan2(sin_old,cos_old)+2*pi,2*pi)/2;
+temp_restored_cos = cos(angles);
+temp_restored_sin = sin(angles);
 
 
+% restored_img = uint8(restored_img/max(restored_img(:))*255.0);
 restored_img = uint8(restored_img);
 % imwrite(restored_img,out_filename,'WriteMode','Append','Compression','None');
 % imwrite(temp_restored_cos,out_filename_cos,'WriteMode','Append','Compression','None');
@@ -243,17 +257,19 @@ restored_img = uint8(restored_img);
 % disp(['PSNR = ',num2str(PSNR)]);
 % disp(['Time elapsed = ',num2str(toc)]);
 
+% 
+% figure(1),imshow(squeeze(restored_img*2));hold on;
+% figure(1),imshow(squeeze(uint8(input/1.2)));hold on;
+% [X,Y] = meshgrid(1:size(restored_img,2),1:size(restored_img,1));
+% quiver(X,Y,double(restored_img)/50.*temp_restored_cos,-double(restored_img)/50.*temp_restored_sin);
 
-figure(1),imshow(squeeze(restored_img*2));hold on;
-[X,Y] = meshgrid(1:size(restored_img,2),1:size(restored_img,1));
-quiver(X,Y,double(restored_img)/50.*temp_restored_cos,double(restored_img)/50.*temp_restored_sin);
-
-figure(2),imshow(squeeze(restored_img*2));hold on;
-[X,Y] = meshgrid(1:size(restored_img,2),1:size(restored_img,1));
-quiver(X,Y,double(restored_img)/50.*cos_old,double(restored_img)/50.*sin_old);
-
-figure(3),imagesc(cos_old);
-figure(4),imagesc(sin_old);
+% figure(2),imshow(squeeze(restored_img*2));hold on;
+% figure(2),imshow(squeeze(input));hold on;
+% [X,Y] = meshgrid(1:size(restored_img,2),1:size(restored_img,1));
+% quiver(X,Y,double(restored_img)/50.*cos_old,-double(restored_img)/50.*sin_old);
+% 
+% figure(3),imagesc(temp_restored_cos);
+% figure(4),imagesc(temp_restored_sin);
 
 
 out_img(:,:,outer_counter)  = restored_img;
