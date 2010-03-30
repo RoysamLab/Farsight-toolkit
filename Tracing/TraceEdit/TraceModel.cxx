@@ -58,6 +58,7 @@ void TraceModel::stdHeaders()
 	this->headers.push_back("Root ID");
 	this->headers.push_back("Level");
 	this->headers.push_back("Path To Root");
+	this->headers.push_back("Is Leaf");
 }
 void TraceModel::SetTraces(std::vector<TraceLine*> trace_lines)
 {
@@ -106,6 +107,7 @@ void TraceModel::SyncModel()
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetRootID());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetLevel());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetPathLength());
+		DataRow->InsertNextValue((int)this->TraceLines.at(i)->isLeaf());
 		for (int j = 0; j < (int)this->TraceLines.at(i)->Features.size(); ++j)
 		{
 			DataRow->InsertNextValue(this->TraceLines.at(i)->Features.at(j));
