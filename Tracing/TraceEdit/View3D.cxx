@@ -292,6 +292,7 @@ void View3D::OkToBoot()
 			{
 				this->EditLogDisplay->append("\t" + this->TraceFiles.at(i));
 			}
+			//this->ShowPlots->setChecked(true);
 			this->ShowTreeData();
 		}
 		if (!this->Image.isEmpty())
@@ -688,7 +689,7 @@ void View3D::CreateGUIObjects()
   this->ColorValueField->setSingleStep(.01);
   this->LineWidthField = new QSpinBox(this->SettingsWidget);
   this->LineWidthField->setRange(1,5);
-  this->ApplySettingsButton = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+  this->ApplySettingsButton = new QDialogButtonBox(QDialogButtonBox::SaveAll | QDialogButtonBox::Close);
   //this->CancelSettingsButton = new QPushButton("&Cancel", this->SettingsWidget);
   connect(this->ApplySettingsButton, SIGNAL(accepted()), this, SLOT(ApplyNewSettings()));
   connect(this->ApplySettingsButton, SIGNAL(rejected()), this, SLOT(HideSettingsWindow()));
@@ -703,6 +704,9 @@ void View3D::CreateGUIObjects()
 	this->aboutAction = new QAction("About", this->CentralWidget);
 	this->aboutAction->setStatusTip("About Trace Edit");
 	connect(this->aboutAction, SIGNAL(triggered()), this, SLOT(About()));
+	this->ShowPlots = new QAction("Show Plots", this);
+	this->ShowPlots->isCheckable();
+	connect (this->ShowPlots, SIGNAL(triggered()), this, SLOT(ShowTreeData()));
 // Lables for the status bar to show edit counts
 	this->SplitLabel = new QLabel(this);
 	this->SplitLabel->setText(QString::number(this->numSplit));
@@ -786,6 +790,7 @@ void View3D::CreateLayout()
   this->statusBar()->addPermanentWidget(this->DeleteLabel,0);
 
   this->ShowToolBars->addAction(this->InformationDisplays->toggleViewAction());
+  this->ShowToolBars->addAction(this->ShowPlots);
 
   this->createRayCastSliders();
   this->menuBar()->addSeparator();
@@ -1283,14 +1288,8 @@ void View3D::ListSelections()
 }
 void View3D::ShowTreeData()
 {
-	if (this->FTKTable)
-	{
-		this->FTKTable->close();
-	}
-	if (this->TreePlot)
-	{
-		this->TreePlot->close();
-	}
+	this->CloseTreePlots();
+
 	this->FTKTable = new TableWindow();
 	this->FTKTable->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
 	this->FTKTable->setWindowTitle("Trace Object Features Table");
@@ -1304,7 +1303,20 @@ void View3D::ShowTreeData()
 	this->TreePlot->move(this->TraceEditSettings.value("TracePlot/pos",QPoint(890, 59)).toPoint());
 	this->TreePlot->show();
 }
-
+void View3D::CloseTreePlots()
+{
+	if (this->FTKTable)
+	{
+	  this->TraceEditSettings.setValue("TraceTable/pos", this->FTKTable->pos());
+	  this->TraceEditSettings.setValue("TraceTable/size", this->FTKTable->size());
+		this->FTKTable->close();
+	}
+	if (this->TreePlot)
+	{
+	  this->TraceEditSettings.setValue("TracePlot/pos", this->TreePlot->pos());
+		this->TreePlot->close();
+	}
+}
 void View3D::ClearSelection()
 {
 	if(this->GapsPlotView)
@@ -1374,14 +1386,22 @@ void View3D::DeleteTraces()
 								  break;
 							  }
 							++iter;
-						}
-
-					}
-				}
+						}//end while
+						if (siblings.size() == 1)
+						{
+							TraceLine *tother1 =siblings[0];
+							TraceLine::TraceBitsType::iterator iter1,iter2;
+							iter1= parent->GetTraceBitIteratorEnd();
+							iter2 = tother1->GetTraceBitIteratorBegin();
+							iter1--;
+							this->tobj->mergeTraces((*iter1).marker,(*iter2).marker);
+						}//end sibling size
+					}//end branch pointer
+				}//end parent id
 				continue;
-			}
-			}
-		}
+			}//end for j < tracelist.size
+			}//end ifLeaf
+		}//end for i < tracelist.size
 		for (i = 0; i < traceList.size(); i++)
 		{				
 			this->EditLogDisplay->append( QString(traceList[i]->stats().c_str()));
@@ -1976,17 +1996,7 @@ void View3D::closeEvent(QCloseEvent *event)
 	this->TraceEditSettings.setValue("lastOpen/Trace",this->TraceFiles);
 	this->TraceEditSettings.setValue("lastOpen/Soma", this->SomaFile);
 	this->TraceEditSettings.setValue("lastOpen/Temp", this->tempTraceFile);
- if(this->FTKTable)
-  {
-	  this->TraceEditSettings.setValue("TraceTable/pos", this->FTKTable->pos());
-	  this->TraceEditSettings.setValue("TraceTable/size", this->FTKTable->size());
-	  this->FTKTable->close();
-  }	
- if(this->TreePlot)
-  {
-	  this->TraceEditSettings.setValue("TracePlot/pos", this->TreePlot->pos());
-	  this->TreePlot->close();
-  }	
+	this->CloseTreePlots();
   this->TraceEditSettings.sync();
   if(this->GapsPlotView)
     {

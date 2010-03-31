@@ -98,6 +98,7 @@ public:
 	void CalculateGaps();
 	void FlipTree(TraceLine* thisLine);
 	void TraceBitImageIntensity(int ImgID);
+	void CloseTreePlots();
 
 	//todo: make these private with accessors
 	vtkSmartPointer<vtkRenderer> Renderer;
@@ -213,6 +214,7 @@ private:
 	QAction *root;
 	QAction *ImageIntensity;
 	QAction *MoveSphere;
+	QAction *ShowPlots;
 
 	/*QAction *UndoButton;
 	QAction *RedoButton;*/
