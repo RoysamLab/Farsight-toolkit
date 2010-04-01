@@ -1361,10 +1361,14 @@ void View3D::DeleteTraces()
 		this->EditLogDisplay->append( "\tID\tType\tSize\tLength\tEuclidian Length\tRadii\tFragmentation Smoothness\tParent ID");
 		for (i=0; i<traceList.size()-1; i++)
 		{			
-			if (traceList[i]->isLeaf())
+			if (traceList[i]->isLeaf()&&!traceList[i]->isRoot())
 			{
 			for (unsigned int j = i +1; j <traceList.size(); j++)
 			{
+				if (traceList[j]->isRoot())
+				{
+					continue;
+				}
 				if(traceList[i]->GetParentID() == traceList[j]->GetParentID())
 				{
 					TraceLine * parent = traceList[i]->GetParent();
