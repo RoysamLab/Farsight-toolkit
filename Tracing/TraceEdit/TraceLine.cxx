@@ -148,9 +148,16 @@ void TraceLine::setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData)
 }
 double TraceLine::GetEuclidianLength()
 {
-	TraceBit front = this->m_trace_bits.front();
-	TraceBit back  = this->m_trace_bits.back();
-	this->EuclidianD = this->Euclidian(front, back);
+	if (this->m_trace_bits.size() <2)
+	{
+		this->EuclidianD =0;
+	}
+	else
+	{
+		TraceBit front = this->m_trace_bits.front();
+		TraceBit back  = this->m_trace_bits.back();
+		this->EuclidianD = this->Euclidian(front, back);
+	}
 	return this->EuclidianD;
 }
 double TraceLine::GetFragmentationSmoothness()
