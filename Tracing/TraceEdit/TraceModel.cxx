@@ -32,7 +32,7 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines, std::vector<std::str
 			this->headers.push_back(FeatureHeaders[i].c_str());
 		}
 	}
-	this->NumFeatures = this->headers.size();
+	this->NumFeatures = (int)this->headers.size();
 	this->SetupHeaders();
 	this->SetTraces(trace_lines);
 }
@@ -41,7 +41,7 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines)
 	this->Selection = new ObjectSelection();
 //standard headers	
 	this->stdHeaders();
-	this->NumFeatures = this->headers.size();
+	this->NumFeatures = (int)this->headers.size();
 	this->SetTraces(trace_lines);
 }
 void TraceModel::stdHeaders()
@@ -57,6 +57,7 @@ void TraceModel::stdHeaders()
 	this->headers.push_back("Parent");	
 	this->headers.push_back("Root ID");
 	this->headers.push_back("Level");
+	this->headers.push_back("D To Parent");
 	this->headers.push_back("Path To Root");
 	this->headers.push_back("Is Leaf");
 }
@@ -68,7 +69,7 @@ void TraceModel::SetTraces(std::vector<TraceLine*> trace_lines)
 }
 void TraceModel::SetupHeaders()
 {	
-	int numHeaders = this->headers.size();
+	int numHeaders = (int)this->headers.size();
 	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
 	for(int i=0; i < numHeaders; ++i)
     {		
@@ -106,6 +107,7 @@ void TraceModel::SyncModel()
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetParentID());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetRootID());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetLevel());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetDistToParent());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetPathLength());
 		DataRow->InsertNextValue((int)this->TraceLines.at(i)->isLeaf());
 		for (int j = 0; j < (int)this->TraceLines.at(i)->Features.size(); ++j)

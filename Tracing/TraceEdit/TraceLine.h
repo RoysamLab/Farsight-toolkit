@@ -48,6 +48,7 @@ public:
 	void calculateVol();
 	double GetLength() {return length;}
 	double GetEuclidianLength();
+	double GetDistToParent();
 	double GetFragmentationSmoothness();
 	double GetRadii(){return radii;}
 	double GetVolume() {return volume;}
@@ -92,7 +93,7 @@ private:
 	double Euclidian(TraceBit bit1, TraceBit bit2);
 	double Angle(TraceBit bit1f, TraceBit bit1b, TraceBit bit2f, TraceBit bit2b);
 
-	double traceColor, radii, length, volume, PathLength, EuclidianD;
+	double traceColor, radii, length, volume, PathLength, EuclidianD, DistToParent;
 	int m_id, root, level;
 	std::vector<unsigned int> m_markers;
 	unsigned char m_type;

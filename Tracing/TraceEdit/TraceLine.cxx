@@ -160,13 +160,32 @@ double TraceLine::GetEuclidianLength()
 	}
 	return this->EuclidianD;
 }
+double TraceLine::GetDistToParent()
+{
+	if (this->m_parent)
+	{
+		this->DistToParent = this->Euclidian(this->m_trace_bits.front(), 
+			this->m_parent->m_trace_bits.back());
+		return this->DistToParent;
+	}
+	else
+	{
+		this->DistToParent = 0;
+		return -1;
+	}
+}
 double TraceLine::GetFragmentationSmoothness()
 {
 	if (!(this->EuclidianD > -1))
 	{
 		this->GetEuclidianLength();
 	}
-	return this->length/this->EuclidianD;
+	double t = -1;
+	if ( this->m_trace_bits.size() > 1)
+	{
+		t = this->length/this->EuclidianD;
+	}
+	return t;
 }
 ///////////////////////////////////////////////////////////////////////////////
 void TraceLine::AddBranch(TraceLine* b)
@@ -298,7 +317,7 @@ int TraceLine::GetId()
 ///////////////////////////////////////////////////////////////////////////////
 int TraceLine::GetSize()
 {
-  return m_trace_bits.size();
+  return (int)m_trace_bits.size();
 };
 
 ///////////////////////////////////////////////////////////////////////////////

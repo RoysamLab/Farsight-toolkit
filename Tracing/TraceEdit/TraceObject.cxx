@@ -274,7 +274,8 @@ void TraceObject::LinearTraceLinesRecursive(std::vector<TraceLine*> &allLine, Tr
 	else
 	{ //not the root, so +1 from parent
 		TraceLine *parent = tline->GetParent();
-		tline->setRoot(parent->GetRootID(), parent->GetLevel() +1, parent->GetPathLength());
+		tline->setRoot(parent->GetRootID(), parent->GetLevel() +1, 
+			parent->GetPathLength()+tline->GetDistToParent());
 	}
 	allLine.push_back(tline);
 	for(unsigned int counter = 0; counter < tline->GetBranchPointer()->size(); counter++)
@@ -655,7 +656,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
   printf("about to create the data structure.. %d\n", (int)criticals.size());
   std::set<int>::iterator iter = criticals.begin();
   int global_id_number = this->getNewLineId(); //setting this does not append traces?
-   int pc = trace_lines.size();
+   int pc = (int)trace_lines.size();
   while(iter != criticals.end())
     {
     TraceLine * ttemp = new TraceLine();
@@ -1331,7 +1332,7 @@ int TraceObject::getNewLineId()
   {
     this->CollectIdsRecursive(ids, trace_lines[counter]);
   }
-  int newId = this->trace_lines.size();
+  int newId = (int)this->trace_lines.size();
   std::sort(ids.begin(),ids.end());
   for(unsigned int counter=0; counter < ids.size(); counter++)
   {
@@ -1812,7 +1813,7 @@ int TraceObject::createGapLists(std::vector<TraceLine*> traceList)
 { 
   unsigned int i,j, exist = 0, conflict = 0;  
   QProgressDialog progress("Searching for traces to merge",
-                            "Cancel", 0, traceList.size() - 1);
+                            "Cancel", 0, (int)traceList.size() - 1);
   progress.setWindowModality(Qt::WindowModal);
   for (i=0;i<traceList.size()-1; i++)
     {
@@ -1930,6 +1931,7 @@ int TraceObject::createBranchPtFromList(std::vector<TraceLine*> traceList)
 	else
 	{
 		//for (unsigned int i 
+		return 0;
 	}
 }
 void TraceObject::SetBranchPoints(std::vector<branchPT*> Branches)
