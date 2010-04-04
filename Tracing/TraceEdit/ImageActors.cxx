@@ -281,7 +281,7 @@ void ImageRenderActors::syncOpacityTransfetFunction()
 {
 	this->opacityTransferFunction->RemoveAllPoints();
 	this->opacityTransferFunction->AddPoint(2,0.0);
-	this->opacityTransferFunction->AddPoint(this->opacity1,0.1);
+	this->opacityTransferFunction->AddPoint(this->opacity1,0.9);
 	//this->opacityTransferFunction->AddPoint(this->opacity2,0.5);
 	for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
 	{

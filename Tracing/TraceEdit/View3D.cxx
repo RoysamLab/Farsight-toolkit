@@ -1085,6 +1085,9 @@ void View3D::Rerender()
   this->SelectedTraceIDs.clear();
   /*this->MergeGaps->GetSelectionModel()->clearSelection();*/
   this->Renderer->RemoveActor(this->BranchActor);
+  this->Renderer->RemoveActor(this->PointsActor);
+  std::vector<TraceBit> vec = this->tobj->CollectTraceBits();
+  this->AddPointsAsPoints(vec);
   this->UpdateLineActor();
   this->UpdateBranchActor();
   this->Renderer->AddActor(this->BranchActor); 
@@ -1110,6 +1113,7 @@ void View3D::UpdateLineActor()
   this->LineActor->GetProperty()->SetColor(0,1,0);
   this->LineActor->GetProperty()->SetPointSize(2);
   this->LineActor->GetProperty()->SetLineWidth(lineWidth);
+
 }
 
 void View3D::UpdateBranchActor()
@@ -1143,15 +1147,164 @@ void View3D::AddPointsAsPoints(std::vector<TraceBit> vec)
   vtkSmartPointer<vtkPolyDataMapper> cubemap = vtkSmartPointer<vtkPolyDataMapper>::New();
   cubemap->SetInput(glyphs->GetOutput());
   cubemap->GlobalImmediateModeRenderingOn();
-  vtkSmartPointer<vtkActor> cubeact = vtkSmartPointer<vtkActor>::New();
-  cubeact->SetMapper(cubemap);
-  cubeact->SetPickable(0);
-  cubeact->GetProperty()->SetPointSize(5);
-  cubeact->GetProperty()->SetOpacity(.5);
-  Renderer->AddActor(cubeact);
+  PointsActor = vtkSmartPointer<vtkActor>::New();
+  PointsActor->SetMapper(cubemap);
+  PointsActor->SetPickable(0);
+  PointsActor->GetProperty()->SetPointSize(5);
+  PointsActor->GetProperty()->SetOpacity(.5);
+  Renderer->AddActor(PointsActor);
 
 }
+void View3D::HandleHippocampalDataset()
+{
+	printf("I came here\n");
+	
+	
+	char buff[1024];
+	sprintf(buff,"C:\\Users\\arun\\Research\\Diadem_testing\\hippocampal_swc\\section_01\\full_image_traces.swc");
+	QString trace = buff;
+	//this->tobj->ReadFromSWCFile((char*)trace.toStdString().c_str());
+	/*this->statusBar()->showMessage(tr("Loading Trace") + trace);
+	this->EditLogDisplay->append("Trace file: \t" + this->TraceFiles.last());
+	if (this->tobj->FeatureHeaders.size() >=1)
+	  {
+		 this->TreeModel = new TraceModel(this->tobj->GetTraceLines(), this->tobj->FeatureHeaders);
+	  }
+	else
+	  {
+		 this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+	  }
+	this->TreeModel->scaleFactor = this->uMperVoxel;
+	this->ShowTreeData();*/
+	//this->UpdateLineActor();
+	//this->UpdateBranchActor();
+	//this->QVTK->GetRenderWindow()->Render();
+	std::vector<TraceLine*> tl = this->tobj->GetTraceLines();
+	std::vector<int> to_del;
+	int z_threshold = 6;
+	for(int counter=0; counter < tl.size(); counter++)
+	{
+		TraceLine::TraceBitsType::iterator iter1,iter2,iter3;
+		
+		iter1 = tl[counter]->GetTraceBitIteratorBegin();
+		iter2 = tl[counter]->GetTraceBitIteratorEnd();
+		std::vector<unsigned int> *vec = tl[counter]->GetMarkers();
+		if(vec->size()<5)
+			continue;
+		
+		int counter1 = vec->size()-1;
+		bool done = false;
 
+		iter3 = iter2;
+		--iter3;
+		--iter3;
+		--iter2;
+		int num = 0;
+		//printf("vec.size = %d\n",(*vec).size());
+		for(;iter2!=iter1; --iter3,--iter2)
+		{
+			//printf("about to check inner loop thing\n");
+			if(abs((*iter2).z - (*iter3).z)>z_threshold)
+			{
+					to_del.push_back((*vec)[counter1]);
+					num++;
+					//done = true; break;
+			}
+			//printf("finished checking inner loop thing\n");
+			counter1--;
+			if(iter3==iter1)
+				break;
+		}
+		if(num>1)
+			printf("num = %d\n",num);
+		if(tl[counter]->GetParent() != NULL)
+		{
+			printf("about to check  parent thing\n");
+			if(abs((*iter1).z - tl[counter]->GetParent()->GetBitXFromEnd(1).z) > z_threshold)
+			{
+					to_del.push_back((*vec)[0]);
+					//done = true;
+			}
+			printf("finished checking parent thing\n");
+		}
+
+	}
+	
+	printf("To delete = %d\n",to_del.size());
+	this->SelectedTraceIDs = to_del;
+	this->SplitTraces();
+
+	int offset = 0;
+	std::vector<TraceLine*> tldel;
+	std::vector<TraceLine*> *tlinepointer = this->tobj->GetTraceLinesPointer();
+	for (int counter = 0; counter < tlinepointer->size(); counter++)
+	{
+		if((*tlinepointer)[counter]->GetSize() < 3 && (*tlinepointer)[counter]->GetBranchPointer()->size() == 0)
+			tldel.push_back((*tlinepointer)[counter]);
+	}
+	printf("current trace_lines size = %d\n",tlinepointer->size());
+	printf("I'm deleting %d traces\n",tldel.size());
+	for(int counter =0; counter < tldel.size(); counter++)
+	{
+		this->DeleteTrace(tldel[counter]);
+	}
+	printf("New trace_lines size = %d\n",tlinepointer->size());
+	this->Rerender();
+
+	// z smoothing
+	int num_points = 15;
+	for(int counter =0; counter < tlinepointer->size(); counter++)
+	{
+		smoothzrecursive((*tlinepointer)[counter],num_points);
+	}
+	this->Rerender();
+	
+	this->tobj->WriteToSWCFile("C:\\Users\\arun\\Research\\Diadem_testing\\hippocampal_swc\\section_01\\postprocessed.swc");
+	//this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+}
+
+void View3D::smoothzrecursive( TraceLine* tline, int n)
+{
+#define MAX(a,b) (((a) > (b))?(a):(b))
+#define MIN(a,b) (((a) < (b))?(a):(b))
+	std::vector<int> vec;
+	vec.reserve(50);
+	bool has_parent = false;
+	if(tline->GetParent()!=NULL)
+	{
+		has_parent = true;
+		vec.push_back(tline->GetParent()->GetBitXFromEnd(1).z);
+	}
+	TraceLine::TraceBitsType::iterator titer1,titer2;
+	titer1 = tline->GetTraceBitIteratorBegin();
+	titer2 = tline->GetTraceBitIteratorEnd();
+	for(;titer1!=titer2;++titer1)
+	{
+		vec.push_back(titer1->z);
+	}
+	titer1 = tline->GetTraceBitIteratorBegin();
+	
+	int counter = 0;
+	if(has_parent)
+		counter++;
+	for(; counter < vec.size(); counter++)
+	{
+		int min1 = MAX(0,counter-n);
+		int max1 = MIN(vec.size()-1,counter+n);
+		int sum = 0;
+		for(int counter1 = min1; counter1<=max1; counter1++)
+		{
+			sum = sum + vec[counter1];
+		}
+		sum = sum / ( max1-min1+1);
+		titer1->z = sum;
+		titer1++;
+	}
+	for(counter = 0; counter < tline->GetBranchPointer()->size(); counter++)
+	{
+		smoothzrecursive((*tline->GetBranchPointer())[counter],n);
+	}
+}
 void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
                             void* clientdata, void* callerdata)
 {
@@ -1220,7 +1373,9 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
 	case 'b':
 		view->AddNewBranches();
 		break;
-
+	case 'z':
+		view->HandleHippocampalDataset();
+		break;
     default:
       break;
     }
@@ -1332,7 +1487,9 @@ void View3D::ClearSelection()
 	this->tobj->BranchPoints.clear();
 	this->myText.clear();
 	this->dtext.clear();
+	printf("About to rerender\n");
 	this->Rerender();
+	printf("Finished rerendering\n");
 	this->statusBar()->showMessage("All Clear", 4000);
 
 	//cout << this->TreePlot->pos().x() << ", " << this->TreePlot->pos().y() << endl;
@@ -1840,12 +1997,19 @@ void View3D::SplitTraces()
     for(unsigned int i = 0; i < this->SelectedTraceIDs.size(); i++)
 	{
 	  this->tobj->splitTrace(this->SelectedTraceIDs[i]);
-	} 
+	}
+
+	//scanf("%*d\n");
+	printf("About to finish up\n");
 	this->numSplit += (int) this->SelectedTraceIDs.size();
+	printf("about to add things to edit log\n");
 	this->EditLogDisplay->append("split " + QString::number(this->SelectedTraceIDs.size()) +" Traces");
+	printf("About to clear selection\n");
 	this->ClearSelection();
+	printf("about to update status bar\n");
 	this->statusBar()->showMessage(tr("Update Tree Plots"));
-	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+	printf("about to set tree model\n");
+	//this->TreeModel->SetTraces(this->tobj->GetTraceLines());
     }
   else
     {

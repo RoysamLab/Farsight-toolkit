@@ -99,7 +99,8 @@ public:
 	void FlipTree(TraceLine* thisLine);
 	void TraceBitImageIntensity(int ImgID);
 	void CloseTreePlots();
-
+	void HandleHippocampalDataset();
+	void smoothzrecursive(TraceLine*,int);
 	//todo: make these private with accessors
 	vtkSmartPointer<vtkRenderer> Renderer;
 	vtkSmartPointer<vtkActor> BranchActor;
@@ -243,6 +244,7 @@ private:
     //general render window variables
 	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;
 	vtkSmartPointer<vtkActor> LineActor;
+	vtkSmartPointer<vtkActor> PointsActor;
 	vtkSmartPointer<vtkPolyDataMapper> LineMapper;
 
     //interactor variables and point picking

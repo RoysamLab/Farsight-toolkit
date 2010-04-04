@@ -683,7 +683,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
     trace_lines.push_back(ttemp);
     iter++;
     }
-  //printf("Trace_lines size = %d\n",trace_lines.size());
+  printf("Trace_lines size = %d\n",trace_lines.size());
   
   iter = criticals.begin();
  
@@ -1190,6 +1190,8 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkF
 {
   //tline->Print(std::cout);
   //scanf("%*c");
+	//printf("Entering recursive call %d\n");
+	//tline->Print(std::cout,0);
   TraceLine::TraceBitsType tbits;
   TraceLine::TraceBitsType::iterator iter=tline->GetTraceBitIteratorBegin();
   double point[3];
@@ -1244,6 +1246,7 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkF
     //printf("I should be having children too! what am I doing here?\n");
     CreatePolyDataRecursive((*tline->GetBranchPointer())[counter],point_scalars,line_points,line_cells);
   }
+  //printf("leaving recursive call\n");
 }
 
 void TraceObject::CollectTraceBitsRecursive(std::vector<TraceBit> &vec,TraceLine *l)
@@ -1275,7 +1278,7 @@ std::vector<TraceBit> TraceObject::CollectTraceBits()
 
 vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
 {
-  
+  //printf("Entering getVTKPolyData\n");
   hashp.clear();
   hashc.clear();
   //printf("Started creating vtkPolyData for rendering purposes ... ");
@@ -1296,8 +1299,9 @@ vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
 
   this->PolyTraces->GetPointData()->SetScalars(point_scalars);
   this->PolyTraces->BuildCells();
-  //printf("Done\n");
+  //printf("Done with getVTKPolyData\n");
   return this->PolyTraces;
+
 }
 
 
@@ -1318,15 +1322,21 @@ std::vector<int> TraceObject::GetTreeIDs( std::vector<TraceLine*> roots)
 }
 void TraceObject::CollectIdsRecursive(std::vector<int> &ids, TraceLine* tline)
 {
+	//printf("tline->id = %d\n",tline->GetId());
   ids.push_back(tline->GetId());
+  //tline->Print(std::cout,0);
+  //printf("branch size = %u\n",tline->GetBranchPointer()->size());
   for(unsigned int counter = 0; counter < tline->GetBranchPointer()->size(); counter++)
   {
+	  //printf("%d ",counter);
     this->CollectIdsRecursive(ids,(*tline->GetBranchPointer())[counter]);
   }
+  //printf("returning\n");
 }
 
 int TraceObject::getNewLineId()
 {
+	//printf("Entered getNewLineId\n");
   std::vector<int> ids;
   for(unsigned int counter=0; counter< trace_lines.size(); counter++)
   {
@@ -1341,6 +1351,7 @@ int TraceObject::getNewLineId()
       newId++; // guarantees uniqueness because of sorted array.
     }
   }
+  //printf("Exiting getNewLineId\n");
   return newId;
 } 
 
@@ -1371,7 +1382,13 @@ int TraceObject::GetMaximumBitId()
 
 void TraceObject::splitTrace(int selectedCellId)
 {
+	//printf("I entered the function\n");
   //get the TraceLine that contains the selected point
+	if(this->hashc.find(selectedCellId)==this->hashc.end())
+	{
+		printf("could not find the selected cell id\n");
+		scanf("%*d\n");
+	}
   TraceLine *selectedLine = 
     reinterpret_cast<TraceLine*>(this->hashc[selectedCellId]);
 
@@ -1382,12 +1399,15 @@ void TraceObject::splitTrace(int selectedCellId)
     return;
   }
 
+  //printf("stage 0\n");
   //initialize the new line that is being created by this split operation
   TraceLine *newLine = new TraceLine();
   newLine->SetType(selectedLine->GetType());
   int newId = this->getNewLineId();
   newLine->SetId(newId);
 
+  //printf("stage 0.5\n");
+  //selectedLine->Print(std::cout,0);
   //find the TraceBit that corresponds to selectedCellId
   std::list<TraceBit>::iterator bitItr =
     selectedLine->GetTraceBitIteratorBegin();
@@ -1402,6 +1422,7 @@ void TraceObject::splitTrace(int selectedCellId)
     bitItr++;
     }
 
+  //printf("stage 1\n");
   //some TraceLines have an equal number of cells and markers, whereas
   //other lines have one extra cell.  We have to treat these cases separately
   //to achieve consistent results.
@@ -1413,13 +1434,19 @@ void TraceObject::splitTrace(int selectedCellId)
   //special case: when splitting on the first node of a child line,
   //we need to remove selectedLine from the parent's vector of children.
   bool deleteSelectedLine = false;
+  bool deleteSelectedLineOnly = false;
   if( bitItr == selectedLine->GetTraceBitIteratorBegin() &&
       selectedLine->GetParent() != NULL )
     {
+		printf("I did come here\n");
     //we want to do the actual removal after the splice, but we need to detect
     //this case before selectedLine->GetTraceBitIteratorBegin() changes
     deleteSelectedLine = true;
     }
+  else if(bitItr == selectedLine->GetTraceBitIteratorBegin())
+  {
+	  deleteSelectedLineOnly = true;
+  }
 
   //move the TraceBits from selectedCellId on to the new TraceLine
   newLine->GetTraceBitsPointer()->splice(
@@ -1428,6 +1455,7 @@ void TraceObject::splitTrace(int selectedCellId)
     bitItr,
     selectedLine->GetTraceBitIteratorEnd());
   
+  //printf("stage 2\n");
   //if the selected line had any branches we have to reassign them to
   //the new line
   if(selectedLine->GetBranchPointer()->size() != 0)
@@ -1443,6 +1471,9 @@ void TraceObject::splitTrace(int selectedCellId)
 
   this->trace_lines.push_back(newLine);
 
+
+ 
+  //printf("stage 3\n");
   if(deleteSelectedLine)
     {
     std::vector<TraceLine*>::iterator tlitr = 
@@ -1452,6 +1483,13 @@ void TraceObject::splitTrace(int selectedCellId)
     selectedLine->GetParent()->GetBranchPointer()->erase(tlitr);
     delete selectedLine;
     }
+  if(deleteSelectedLineOnly)
+  {
+	  std::vector<TraceLine*>::iterator tlitr = find(trace_lines.begin(),trace_lines.end(),selectedLine);
+	  trace_lines.erase(tlitr);
+	  delete selectedLine;
+  }
+  //printf("Leaving\n");
 }
 
 //This function assumes that the TraceLine does not have either parent or
