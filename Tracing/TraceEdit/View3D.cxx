@@ -666,13 +666,17 @@ void View3D::CreateGUIObjects()
   this->root = new QAction("Set Root", this->CentralWidget);
 	connect(this->root, SIGNAL(triggered()), this, SLOT(SetRoots()));
 	this->root->setStatusTip("Solve Branch order by defining Root Trace Lines");
-  this->explodeTree = new QAction("Break", this->CentralWidget);
+	this->BreakButton = new QAction("Break", this->CentralWidget);
+	connect(this->BreakButton, SIGNAL(triggered()), this, SLOT( BreakBranch()));
+	this->BreakButton->setStatusTip("Breaks a branch off of the tree");
+  this->explodeTree = new QAction("Explode", this->CentralWidget);
   connect(this->explodeTree, SIGNAL(triggered()), this, SLOT( ExplodeTree()));
   this->explodeTree->setStatusTip("Break tree into segments,aka Explode. Tree can be rebuilt using set root");
 	this->ImageIntensity = new QAction("Intensity", this->CentralWidget);
 	connect(this->ImageIntensity, SIGNAL(triggered()), this, SLOT(SetImgInt()));
 	this->MoveSphere = new QAction("PT", this->CentralWidget);
 	connect(this->MoveSphere, SIGNAL(triggered()), this, SLOT(showPTin3D()));
+	this->MoveSphere->setStatusTip("moves marker to location");
   //Setup the tolerance settings editing window
   this->SettingsWidget = new QWidget();
   //QIntValidator *intValidator = new QIntValidator(1, 100, this->SettingsWidget);
@@ -753,6 +757,7 @@ void View3D::CreateLayout()
   this->BranchToolBar->setToolTip("Branch Toolbar");
   //this->menuBar()->addAction(this->BranchToolBar->toggleViewAction());
   this->ShowToolBars->addAction(this->BranchToolBar->toggleViewAction());
+  this->BranchToolBar->addAction(this->BreakButton);
   this->BranchToolBar->addAction(this->explodeTree);
   this->BranchToolBar->addAction(this->BranchButton);
   this->BranchToolBar->addAction(this->root);
@@ -1607,7 +1612,7 @@ void View3D::DeleteTrace(TraceLine *tline)
     {
 		if(this->tobj->BreakOffBranch(tline, false))
 		{
-			return;
+			return;		//returns if sibling merged to parent
 		}
     }
   else
@@ -1697,11 +1702,22 @@ void View3D::AddNewBranches()
 }
 void View3D::ExplodeTree()
 {
-	this->tobj->BranchPoints.clear();
 	std::vector<TraceLine*> roots = this->TreeModel->getRoots();
+	this->tobj->BranchPoints.clear();
 	for (unsigned int i = 0; i < roots.size(); i++)
 	{
 		this->tobj->explode(roots.at(i));
+	}
+	//this->tobj->cleanTree();
+	this->Rerender();
+	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+}
+void View3D::BreakBranch()
+{
+	std::vector<TraceLine*> traces = this->TreeModel->GetSelectedTraces();
+	for (unsigned int i = 0; i < traces.size(); i++)
+	{
+		this->tobj->BreakOffBranch(traces.at(i),true);
 	}
 	//this->tobj->cleanTree();
 	this->Rerender();

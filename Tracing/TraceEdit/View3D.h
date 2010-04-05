@@ -113,6 +113,7 @@ public slots:
 	void SetRoots();
 	void AddNewBranches();
 	void ExplodeTree();
+	void BreakBranch();
 	void MergeTraces();
 	void SplitTraces();
 	void FlipTraces();
@@ -211,6 +212,7 @@ private:
 	QAction *WriteButton;
 	QAction *SettingsButton;
 	QAction *AutomateButton;
+	QAction *BreakButton;
 	QAction *explodeTree;
 	QAction *root;
 	QAction *ImageIntensity;

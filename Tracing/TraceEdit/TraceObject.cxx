@@ -2055,8 +2055,15 @@ void TraceObject::cleanTree()
 	this->trace_lines.clear();
 	this->trace_lines = TempTraceLines;
 }
-void TraceObject::Shave(TraceLine *starting)
+void TraceObject::Shave(TraceLine *starting, int smallerThan)
 {
+	if (!starting->isLeaf())
+	{
+	}
+	else if((starting->GetSize() < smallerThan)&&!starting->isRoot())
+	{
+		this->BreakOffBranch(starting, false);
+	}
 }
 bool TraceObject::BreakOffBranch(TraceLine *branch, bool keep)
 {
@@ -2086,8 +2093,10 @@ bool TraceObject::BreakOffBranch(TraceLine *branch, bool keep)
 	  {
 			delete branch;
 	  }
-	  else
-	  {
+	  else if (branch->GetSize()>3)
+	  {//wont keep anything too small to work on
+		  //if 
+		  branch->removeLeadingBit();
 		  this->trace_lines.push_back(branch);
 	  }
       return true;

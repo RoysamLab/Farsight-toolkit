@@ -244,6 +244,34 @@ TraceBit TraceLine::removeLastBit()
 	}
 	return lastBit;
 }
+void TraceLine::removeLeadingBit()
+{
+	if (this->m_trace_bits.size() < 3)
+	{
+		return;
+	}else
+	{		
+		//std::vector<double> dist;// = 0, r = 0;
+		double Leading = 0, dist =0;
+		TraceBit pre, cur;
+		TraceBitsType::iterator it = this->m_trace_bits.begin();
+		pre = *it; 
+		it++;
+		cur = *it;
+		Leading = Euclidian(pre, cur);
+		it++;
+		for (; it != this->m_trace_bits.end(); it++)
+		{
+			cur = *it;
+			dist += this->Euclidian(pre, cur);
+			pre = cur;
+		}
+		if(Leading > (dist/ (this->m_trace_bits.size() -1)))
+		{
+			this->m_trace_bits.pop_front();
+		}
+	}
+}
 ///////////////////////////////////////////////////////////////////////////////
 TraceLine::TraceBitsType::iterator TraceLine::GetTraceBitIteratorBegin()
 {
