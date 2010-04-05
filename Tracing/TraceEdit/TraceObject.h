@@ -122,6 +122,8 @@ public:
 	void CreatePolyDataRecursive(TraceLine* , vtkSmartPointer<vtkFloatArray> , vtkSmartPointer<vtkPoints> ,vtkSmartPointer<vtkCellArray>);
 	void FindMinLines(int smallSize);
 	void cleanTree();
+	void Shave(TraceLine* starting);
+	bool BreakOffBranch(TraceLine* branch, bool keep);
 	void explode(TraceLine* parent);
 	int createGapLists(std::vector<TraceLine*> traceList);
 	int createBranchPtFromList(std::vector<TraceLine*> traceList);

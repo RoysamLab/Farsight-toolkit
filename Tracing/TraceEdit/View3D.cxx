@@ -1157,12 +1157,12 @@ void View3D::AddPointsAsPoints(std::vector<TraceBit> vec)
 }
 void View3D::HandleHippocampalDataset()
 {
-	printf("I came here\n");
+	//printf("I came here\n");
 	
 	
-	char buff[1024];
+	/*char buff[1024];
 	sprintf(buff,"C:\\Users\\arun\\Research\\Diadem_testing\\hippocampal_swc\\section_01\\full_image_traces.swc");
-	QString trace = buff;
+	QString trace = buff;*/
 	//this->tobj->ReadFromSWCFile((char*)trace.toStdString().c_str());
 	/*this->statusBar()->showMessage(tr("Loading Trace") + trace);
 	this->EditLogDisplay->append("Trace file: \t" + this->TraceFiles.last());
@@ -1181,7 +1181,7 @@ void View3D::HandleHippocampalDataset()
 	//this->QVTK->GetRenderWindow()->Render();
 	std::vector<TraceLine*> tl = this->tobj->GetTraceLines();
 	std::vector<int> to_del;
-	int z_threshold = 6;
+	int z_threshold = 4;
 	for(int counter=0; counter < tl.size(); counter++)
 	{
 		TraceLine::TraceBitsType::iterator iter1,iter2,iter3;
@@ -1605,31 +1605,10 @@ void View3D::DeleteTrace(TraceLine *tline)
   std::vector<TraceLine*>* siblings;
   if(tline->GetParent()!=NULL)
     {
-    siblings=tline->GetParent()->GetBranchPointer();
-    if(siblings->size()==2)
-      {
-      // its not a branch point anymore
-      TraceLine *tother1;
-      if(tline==(*siblings)[0])
-        { 
-        tother1 = (*siblings)[1];
-        }
-      else
-        {
-        tother1 = (*siblings)[0];
-        }
-      tother1->SetParent(NULL);
-      siblings->clear();
-      TraceLine::TraceBitsType::iterator iter1,iter2;
-      iter1= tline->GetParent()->GetTraceBitIteratorEnd();
-      iter2 = tother1->GetTraceBitIteratorBegin();
-      iter1--;
-    
-      this->tobj->mergeTraces((*iter1).marker,(*iter2).marker);
-      tline->SetParent(NULL);
-      delete tline;
-      return;
-      }
+		if(this->tobj->BreakOffBranch(tline, false))
+		{
+			return;
+		}
     }
   else
     {

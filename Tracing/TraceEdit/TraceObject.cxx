@@ -1394,8 +1394,8 @@ void TraceObject::splitTrace(int selectedCellId)
 
   if(selectedLine->GetSize() < 2)
   {
-    cerr << "Cannot split a TraceLine that consists of fewer than two points, ";
-    cerr << "Call (d)elete instead." << endl;
+    //cerr << "Cannot split a TraceLine that consists of fewer than two points, ";
+    //cerr << "Call (d)elete instead." << endl;
     return;
   }
 
@@ -2055,6 +2055,46 @@ void TraceObject::cleanTree()
 	this->trace_lines.clear();
 	this->trace_lines = TempTraceLines;
 }
+void TraceObject::Shave(TraceLine *starting)
+{
+}
+bool TraceObject::BreakOffBranch(TraceLine *branch, bool keep)
+{
+	std::vector<TraceLine*>* siblings = branch->GetParent()->GetBranchPointer();
+    if(siblings->size()==2)
+      {
+      // its not a branch point anymore
+      TraceLine *tother1;
+      if(branch==(*siblings)[0])
+        { 
+        tother1 = (*siblings)[1];
+        }
+      else
+        {
+        tother1 = (*siblings)[0];
+        }
+      tother1->SetParent(NULL);
+      siblings->clear();
+      TraceLine::TraceBitsType::iterator iter1,iter2;
+      iter1= branch->GetParent()->GetTraceBitIteratorEnd();
+      iter2 = tother1->GetTraceBitIteratorBegin();
+      iter1--;
+    
+      this->mergeTraces((*iter1).marker,(*iter2).marker);
+      branch->SetParent(NULL);
+	  if (!keep)
+	  {
+			delete branch;
+	  }
+	  else
+	  {
+		  this->trace_lines.push_back(branch);
+	  }
+      return true;
+      }
+	return false;
+}
+
 void TraceObject::explode(TraceLine *parent)
 {
 	std::vector<TraceLine*> connected;
