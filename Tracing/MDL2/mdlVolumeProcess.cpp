@@ -120,6 +120,18 @@ bool VolumeProcess::RescaleIntensities(int min, int max)
 	return true;
 }
 
+bool VolumeProcess:: RunIntensityNormalize()
+{
+	//Rescale weights:
+    typedef itk::NormalizeImageFilter< ImageType, FloatImageType3D> NormalizeImageFilter;
+	NormalizeImageFilter::Pointer Normalize = NormalizeImageFilter::New();
+	Normalize->SetInput(m_outputImage);
+	Normalize->Update();
+	m_outputImage = RescaleFloatToImageType(Normalize->GetOutput());
+	return true;
+
+}
+
 ImageType::Pointer VolumeProcess::RescaleFloatToImageType(FloatImageType3D::Pointer img)
 {
 	//Rescale weights:

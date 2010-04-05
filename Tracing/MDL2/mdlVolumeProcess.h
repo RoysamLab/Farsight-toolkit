@@ -49,6 +49,7 @@ limitations under the License.
 #include "itkBinaryMedianImageFilter.h"
 #include "itkDiscreteGaussianImageFilter.h"
 #include "itkRecursiveGaussianImageFilter.h"
+#include "itkNormalizeImageFilter.h"
 
 namespace mdl
 {
@@ -69,6 +70,7 @@ public:
 	bool MaskSmallConnComp(int minObjSize);
 	bool RunBinaryForDistanceMapUsingGraphCuts();
 	bool MaskUsingGraphCuts();
+	
 	bool RunFillingZeroOnBouandary(int Bx = 4, int By =4, int Bz=4 );
 	bool RunAnisotropicDiffusion(int timesDiffuse=1, bool iso = false);	//Run anisotropic diffusion written by Xiaosong
 	bool RunManualThreshold(double threshold);
@@ -76,7 +78,7 @@ public:
 	bool RunDistanceTransform(void);
 	bool RunDanielssonDistanceMap(void);
 	bool RunGaussianSmoothing(float varX, float varY, float varZ, float maxErr);
-
+    bool RunIntensityNormalize();
 	bool RunRecursiveGaussianIIRRilter(float sigmaX, float sigmaY, float sigmaZ);
 	bool RunVotingBinaryHoleFilling(int radiusX,int radiusY, int radiusZ);
 	bool RunVotingBinaryIterativeHoleFilling(int radiusX,int radiusY, int radiusZ,int IterativeNumber);
@@ -100,6 +102,7 @@ private:
 	//Functions:
 	double getItkOtsuThreshold(ImageType::Pointer img);
 	double getXiaoLiangOtsuThreshold(ImageType::Pointer img);
+	
 	ImageType::Pointer RescaleFloatToImageType(FloatImageType3D::Pointer img);
 	int MIN(int x,int y) {return (((x) < (y))?(x):(y));}
 	int MAX(int x,int y) {return (((x) > (y))?(x):(y));}
