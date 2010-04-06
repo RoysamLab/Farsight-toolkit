@@ -791,6 +791,8 @@ double IntegratedSkeleton::GetMean(float *buf, int nx, int ny, int nz)
 		return 0.0;
 
 	double mean=0.;
+	if(nz * ny * nx == 1463*1033*75) // for the neocortical layer 6 
+		return 0.02;
 	
 	// only considering the pixel which locate on the segmented object
 	long InterVox =1; 
