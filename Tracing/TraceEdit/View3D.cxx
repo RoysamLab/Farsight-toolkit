@@ -644,12 +644,11 @@ void View3D::CreateGUIObjects()
   this->DeleteButton = new QAction("Delete", this->CentralWidget);
 	connect(this->DeleteButton, SIGNAL(triggered()), this, SLOT(DeleteTraces()));
 	this->DeleteButton->setStatusTip("Delete all selected traces");
+	this->DeleteButton->setShortcut(QKeySequence(Qt::Key_D));
   this->MergeButton = new QAction("Merge", this->CentralWidget);
 	connect(this->MergeButton, SIGNAL(triggered()), this, SLOT(MergeTraces()));
 	this->MergeButton->setStatusTip("Start Merge on selected traces");
-  this->BranchButton = new QAction("Branch", this->CentralWidget);
-	connect(this->BranchButton, SIGNAL(triggered()), this, SLOT(AddNewBranches()));
-	this->BranchButton->setStatusTip("Add branches to trunk");
+	this->MergeButton->setShortcut(QKeySequence(Qt::Key_M));
   this->SplitButton = new QAction("Split", this->CentralWidget); 
 	connect(this->SplitButton, SIGNAL(triggered()), this, SLOT(SplitTraces()));
 	this->SplitButton->setStatusTip("Split traces at point where selected");
@@ -666,17 +665,28 @@ void View3D::CreateGUIObjects()
   this->root = new QAction("Set Root", this->CentralWidget);
 	connect(this->root, SIGNAL(triggered()), this, SLOT(SetRoots()));
 	this->root->setStatusTip("Solve Branch order by defining Root Trace Lines");
+	this->root->setShortcut(QKeySequence(Qt::Key_R));
 	this->BreakButton = new QAction("Break", this->CentralWidget);
 	connect(this->BreakButton, SIGNAL(triggered()), this, SLOT( BreakBranch()));
 	this->BreakButton->setStatusTip("Breaks a branch off of the tree");
+	this->BreakButton->setShortcut(QKeySequence(Qt::Key_B));
+	this->BreakButton->setToolTip("B");
   this->explodeTree = new QAction("Explode", this->CentralWidget);
   connect(this->explodeTree, SIGNAL(triggered()), this, SLOT( ExplodeTree()));
   this->explodeTree->setStatusTip("Break tree into segments,aka Explode. Tree can be rebuilt using set root");
+  this->explodeTree->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_B));
+  this->explodeTree->setToolTip("Ctrl + B");
+  this->BranchButton = new QAction("Branch", this->CentralWidget);
+	connect(this->BranchButton, SIGNAL(triggered()), this, SLOT(AddNewBranches()));
+	this->BranchButton->setStatusTip("Add branches to trunk");
+	this->BranchButton->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_B));
+	this->BranchButton->setToolTip("Shift + B");
 	this->ImageIntensity = new QAction("Intensity", this->CentralWidget);
 	connect(this->ImageIntensity, SIGNAL(triggered()), this, SLOT(SetImgInt()));
 	this->MoveSphere = new QAction("PT", this->CentralWidget);
 	connect(this->MoveSphere, SIGNAL(triggered()), this, SLOT(showPTin3D()));
 	this->MoveSphere->setStatusTip("moves marker to location");
+	this->MoveSphere->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_P));
   //Setup the tolerance settings editing window
   this->SettingsWidget = new QWidget();
   //QIntValidator *intValidator = new QIntValidator(1, 100, this->SettingsWidget);
@@ -1500,14 +1510,14 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
       view->ClearSelection();
       break;
 
-    case 'd':
-    //view->tobj->Gaps.clear();
-      view->DeleteTraces();
-      break;
+    //case 'd':
+    ////view->tobj->Gaps.clear();
+    //  view->DeleteTraces();
+    //  break;
     
-    case 'm':
+    /*case 'm':
       view->MergeTraces();
-      break;
+      break;*/
     
     case 's':
       view->SplitTraces();
@@ -1550,9 +1560,9 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
     //    }
     //  break;
 
-	case 'b':
+	/*case 'b':
 		view->AddNewBranches();
-		break;
+		break;*/
 	case 'z':
 		view->HandleHippocampalDataset();
 		break;
