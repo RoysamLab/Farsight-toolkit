@@ -72,10 +72,10 @@ int main(int argc, char *argv[])
 	writer->SetInput(PreImage);
 	writer->SetFileName("InputImage.tif");
     writer->Update();
-	
-    volProc->RunFillingZeroOnBouandary(4,4,4);
-    volProc->RunIntensityNormalize();
-	//volProc->RescaleIntensities(0,255);
+	 volProc->RunIntensityNormalize();
+    //volProc->RunFillingZeroOnBouandary(4,4,4);
+   
+	/*
 	volProc->RunBinaryForDistanceMapUsingManualThreshold(threshold);
 	writer->SetInput(volProc->GetOutput());
 	writer->SetFileName("BinaryResults.tif");
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
     writer->Update();
     
 	volProc->RunGaussianSmoothing(7,7,3,0.1);
-
+    */
 	std::string outputFileName = inputFileName;
 	size_t found = outputFileName.find_last_of(".");
 	outputFileName.insert(found,"_CorrectedDTMAP");
