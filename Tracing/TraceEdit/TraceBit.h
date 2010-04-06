@@ -29,6 +29,7 @@ class TraceBit
 	double GetCoordinateByRef(int asint);
 	void setCoordinateByRef(int asint,double value);
     double x,y,z,r, I;		//
+	float dx,dy,dz;
 	//unsigned char I;
     int id;
     unsigned int marker;

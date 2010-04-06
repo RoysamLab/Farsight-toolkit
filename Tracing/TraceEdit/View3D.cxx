@@ -1160,33 +1160,12 @@ void View3D::AddPointsAsPoints(std::vector<TraceBit> vec)
   Renderer->AddActor(PointsActor);
 
 }
-void View3D::HandleHippocampalDataset()
+std::vector<int> View3D::getHippocampalTraceIDsToDelete(int z_threshold)
 {
-	//printf("I came here\n");
-	
-	
-	/*char buff[1024];
-	sprintf(buff,"C:\\Users\\arun\\Research\\Diadem_testing\\hippocampal_swc\\section_01\\full_image_traces.swc");
-	QString trace = buff;*/
-	//this->tobj->ReadFromSWCFile((char*)trace.toStdString().c_str());
-	/*this->statusBar()->showMessage(tr("Loading Trace") + trace);
-	this->EditLogDisplay->append("Trace file: \t" + this->TraceFiles.last());
-	if (this->tobj->FeatureHeaders.size() >=1)
-	  {
-		 this->TreeModel = new TraceModel(this->tobj->GetTraceLines(), this->tobj->FeatureHeaders);
-	  }
-	else
-	  {
-		 this->TreeModel->SetTraces(this->tobj->GetTraceLines());
-	  }
-	this->TreeModel->scaleFactor = this->uMperVoxel;
-	this->ShowTreeData();*/
-	//this->UpdateLineActor();
-	//this->UpdateBranchActor();
-	//this->QVTK->GetRenderWindow()->Render();
+
 	std::vector<TraceLine*> tl = this->tobj->GetTraceLines();
 	std::vector<int> to_del;
-	int z_threshold = 4;
+	//int z_threshold = 6;
 	for(int counter=0; counter < tl.size(); counter++)
 	{
 		TraceLine::TraceBitsType::iterator iter1,iter2,iter3;
@@ -1224,17 +1203,101 @@ void View3D::HandleHippocampalDataset()
 			printf("num = %d\n",num);
 		if(tl[counter]->GetParent() != NULL)
 		{
-			printf("about to check  parent thing\n");
+			//printf("about to check  parent thing\n");
 			if(abs((*iter1).z - tl[counter]->GetParent()->GetBitXFromEnd(1).z) > z_threshold)
 			{
 					to_del.push_back((*vec)[0]);
 					//done = true;
 			}
-			printf("finished checking parent thing\n");
+			//printf("finished checking parent thing\n");
 		}
 
 	}
+	return to_del;
+}
+float canConnect(TraceBit one,TraceBit two)
+{
+	/*if((one.dx*one.dx+one.dy*one.dy+one.dz*one.dz)>0.001)
+			printf("one dir is correct = %f %f %f\n",one.dx,one.dy,one.dz);
+	if((two.dx*two.dx+two.dy*two.dy+two.dz*two.dz)>0.001)
+			printf("two dir is correct = %f %f %f\n",two.dx,two.dy,two.dz);*/
+	float dist_thresh = 50;
+	float z_thresh = 10;
+	float plane_dist_thresh = 50;
+	//printf("trying...");
+	if(sqrt((one.x-two.x)*(one.x-two.x)+(one.y-two.y)*(one.y-two.y)+(one.z-two.z)*(one.z-two.z))<dist_thresh)
+	{
+		//printf("c1 ");
+		if((one.z-two.z) < z_thresh)
+		{
+			
+			/*if((one.dx*one.dx+one.dy*one.dy+one.dz*one.dz)<0.00001)
+				printf("one dir is wrong = %f %f %f\n",one.dx,one.dy,one.dz);
+			if((two.dx*two.dx+two.dy*two.dy+two.dz*two.dz)<0.00001)
+				printf("two dir is wrong = %f %f %f\n",two.dx,two.dy,two.dz);*/
+			TraceBit p;
+			float lambda = ( (one.x-two.x)*one.dx+(one.y-two.y)*one.dy+(one.z-two.z)*one.dz)/(one.dx*two.dx+one.dy*two.dy+one.dz*two.dz);
+			p.x = two.x + lambda*two.dx;
+			p.y = two.y + lambda*two.dy;
+			p.z = two.z + lambda*two.dz;
+			float dist = sqrt((p.x-one.x)*(p.x-one.x)+(p.y-one.y)*(p.y-one.y)+(p.z-one.z)*(p.z-one.z));
+			if( dist < plane_dist_thresh)
+			{
+				printf("c3\n");
+				return dist;
+			}
+			else
+			{
+				//printf("one = (%lf,%lf,%lf) , two = (%lf,%lf,%lf), onedir = (%f,%f,%f), twodir = (%f,%f,%f)\n",one.x,one.y,one.z,two.x,two.y,two.z,one.dir[0],one.dir[1],one.dir[2],two.dir[0],two.dir[1],two.dir[2]);
+			}
+		}
+	}
+	//printf("\n");
+	return 1e100;
+}
+void dir_check(TraceLine* tline)
+{
+	TraceLine::TraceBitsType::iterator iter1,iter2,iter3;
+	iter1 = tline->GetTraceBitIteratorBegin();
+	iter2 = tline->GetTraceBitIteratorEnd();
+	for(;iter1!=iter2;iter1++)
+	{
+		TraceBit b =*iter1;
+		float sum = sqrt(b.dx*b.dx+b.dy*b.dy+b.dz*b.dz);
+		if(sum<0.00001)
+			printf("check dir wrong : %f %f %f %lf %lf %lf %p\n",iter1->dx,iter1->dy,iter1->dz,b.x,b.y,b.z,&(iter1->dx));
+		else
+			printf("check dir correct %f %f %f\n",b.dx,b.dy,b.dz);
+	}
+
+}
+void View3D::HandleHippocampalDataset()
+{
+	//printf("I came here\n");
 	
+	
+	char buff[1024];
+	sprintf(buff,"C:\\Users\\arun\\Research\\Diadem_testing\\hippocampal_swc\\section_01\\full_image_traces.swc");
+	QString trace = buff;
+	//this->tobj->ReadFromSWCFile((char*)trace.toStdString().c_str());
+	/*this->statusBar()->showMessage(tr("Loading Trace") + trace);
+	this->EditLogDisplay->append("Trace file: \t" + this->TraceFiles.last());
+	if (this->tobj->FeatureHeaders.size() >=1)
+	  {
+		 this->TreeModel = new TraceModel(this->tobj->GetTraceLines(), this->tobj->FeatureHeaders);
+	  }
+	else
+	  {
+		 this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+	  }
+	this->TreeModel->scaleFactor = this->uMperVoxel;
+	this->ShowTreeData();*/
+	//this->UpdateLineActor();
+	//this->UpdateBranchActor();
+	//this->QVTK->GetRenderWindow()->Render();
+	
+	
+	std::vector<int> to_del = getHippocampalTraceIDsToDelete(6);
 	printf("To delete = %d\n",to_del.size());
 	this->SelectedTraceIDs = to_del;
 	this->SplitTraces();
@@ -1244,7 +1307,7 @@ void View3D::HandleHippocampalDataset()
 	std::vector<TraceLine*> *tlinepointer = this->tobj->GetTraceLinesPointer();
 	for (int counter = 0; counter < tlinepointer->size(); counter++)
 	{
-		if((*tlinepointer)[counter]->GetSize() < 3 && (*tlinepointer)[counter]->GetBranchPointer()->size() == 0)
+		if((*tlinepointer)[counter]->GetSize() < 4 && (*tlinepointer)[counter]->GetBranchPointer()->size() == 0)
 			tldel.push_back((*tlinepointer)[counter]);
 	}
 	printf("current trace_lines size = %d\n",tlinepointer->size());
@@ -1257,41 +1320,97 @@ void View3D::HandleHippocampalDataset()
 	this->Rerender();
 
 	// z smoothing
-	int num_points = 15;
+	int num_points = 10;
 	for(int counter =0; counter < tlinepointer->size(); counter++)
 	{
 		smoothzrecursive((*tlinepointer)[counter],num_points);
+		//dir_check((*tlinepointer)[counter]);
 	}
 	this->Rerender();
 	
+	
+	
+	//scanf("%*d\n");
+	//to_del = getHippocampalTraceIDsToDelete(4);
+	//this->SelectedTraceIDs = to_del;
+	//this->SplitTraces();
+
+	printf("going to merge fragments\n");
+	// merge fragments
+	std::vector<TraceLine*> tlines = this->tobj->GetTraceLines();
+	std::vector<TraceBit> cricbits;
+	for(int counter =0; counter < tlines.size(); counter++)
+	{
+		if(tlines[counter]->GetParent() == NULL)
+			cricbits.push_back(tlines[counter]->GetBitXFromBegin(1));
+		if(tlines[counter]->GetBranchPointer()->size()==0)
+			cricbits.push_back(tlines[counter]->GetBitXFromEnd(1));
+	}
+
+
+	//int merge_count = 0;
+	//for(int counter = 0; counter < cricbits.size(); counter++)
+	//{
+	//	float mindist = 1e10;
+	//	float minpos = -1;
+	//	for(int counter1 = 0; counter1 < cricbits.size(); counter1++)
+	//	{
+	//		if(counter!=counter1)
+	//		{
+	//			float dist = canConnect(cricbits[counter],cricbits[counter1]);
+	//			if(dist < mindist)
+	//			{
+	//				dist = mindist;
+	//				minpos = counter1;
+	//			}
+	//		}
+	//	}
+	//	if(minpos!=-1)
+	//	{
+	//		printf("I merged 1 more\n");
+	//		merge_count++;
+	//		this->tobj->mergeTraces(cricbits[counter].marker,cricbits[minpos].marker);
+	//		//this->Rerender();
+	//		//scanf("%*d");
+	//	}
+	//	if(merge_count==100)
+	//		break;
+	//}
+	//
+	this->Rerender();
 	this->tobj->WriteToSWCFile("C:\\Users\\arun\\Research\\Diadem_testing\\hippocampal_swc\\section_01\\postprocessed.swc");
+
 	//this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 }
 
 void View3D::smoothzrecursive( TraceLine* tline, int n)
 {
+
+	
+	
 #define MAX(a,b) (((a) > (b))?(a):(b))
 #define MIN(a,b) (((a) < (b))?(a):(b))
-	std::vector<int> vec;
+	std::vector<TraceBit> vec;
 	vec.reserve(50);
 	bool has_parent = false;
 	if(tline->GetParent()!=NULL)
 	{
 		has_parent = true;
-		vec.push_back(tline->GetParent()->GetBitXFromEnd(1).z);
+		vec.push_back(tline->GetParent()->GetBitXFromEnd(1));
 	}
 	TraceLine::TraceBitsType::iterator titer1,titer2;
 	titer1 = tline->GetTraceBitIteratorBegin();
 	titer2 = tline->GetTraceBitIteratorEnd();
 	for(;titer1!=titer2;++titer1)
 	{
-		vec.push_back(titer1->z);
+		vec.push_back(*titer1);
 	}
 	titer1 = tline->GetTraceBitIteratorBegin();
 	
 	int counter = 0;
 	if(has_parent)
 		counter++;
+
 	for(; counter < vec.size(); counter++)
 	{
 		int min1 = MAX(0,counter-n);
@@ -1299,12 +1418,68 @@ void View3D::smoothzrecursive( TraceLine* tline, int n)
 		int sum = 0;
 		for(int counter1 = min1; counter1<=max1; counter1++)
 		{
-			sum = sum + vec[counter1];
+			sum = sum + vec[counter1].z;
 		}
 		sum = sum / ( max1-min1+1);
 		titer1->z = sum;
 		titer1++;
 	}
+	//compute dir for each TraceBit
+	counter = 0;
+	if(has_parent)
+		counter++;
+	//printf("begin\t");
+	titer1 = tline->GetTraceBitIteratorBegin();
+	for(; counter < vec.size(); counter++)
+	{
+		float dir[3];
+		int min1 = MAX(0,counter-n);
+		int max1 = MIN(vec.size()-1,counter+n);
+		dir[0] = 0;
+		dir[1] = 0;
+		dir[2] = 0;
+		for(int counter1 = min1; counter1<counter; counter1++)
+		{
+		//	printf("hi1");
+			dir[0] = dir[0] + (vec[counter1].x - vec[counter].x);
+			dir[1] = dir[1] + (vec[counter1].y - vec[counter].y);
+			dir[2] = dir[2] + (vec[counter1].z - vec[counter].z);
+		}
+		for(int counter1 = counter+1; counter1<=max1; counter1++)
+		{
+		//	printf("hi2");
+			dir[0] = dir[0] + (vec[counter].x - vec[counter1].x);
+			dir[1] = dir[1] + (vec[counter].y - vec[counter1].y);
+			dir[2] = dir[2] + (vec[counter].z - vec[counter1].z);
+		}
+
+		if(max1-min1>0)
+		{
+			dir[0] = dir[0]/(max1-min1);
+			dir[1] = dir[1]/(max1-min1);
+			dir[2] = dir[2]/(max1-min1);
+		}
+		float sum = sqrt(dir[0]*dir[0]+dir[1]*dir[1]+dir[2]*dir[2]);
+		if(sum<0.00001)
+		{
+		//	printf("dirwrong = %f %f %f min1 %d max1 %d vec.size() %d\t", dir[0],dir[1],dir[2],min1,max1,vec.size());
+			sum=1;
+		}
+		//else
+			//printf("sum = %f\t",sum);
+		titer1->dx = dir[0]/sum;
+		titer1->dy = dir[1]/sum;
+		titer1->dz = dir[2]/sum;
+		//printf("dir %f %f %f %p\n",titer1->dx,titer1->dy,titer1->dz,&(titer1->dx));
+		titer1++;
+
+	}
+	titer1 = tline->GetTraceBitIteratorBegin();
+	titer2 = tline->GetTraceBitIteratorEnd();
+
+	//for(;titer1!=titer2;++titer1)
+	//	printf("dir2 %f %f %f %p\n",titer1->dx,titer1->dy,titer1->dz,&(titer1->dx));
+	//printf("end\n");
 	for(counter = 0; counter < tline->GetBranchPointer()->size(); counter++)
 	{
 		smoothzrecursive((*tline->GetBranchPointer())[counter],n);

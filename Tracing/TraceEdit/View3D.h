@@ -101,6 +101,7 @@ public:
 	void CloseTreePlots();
 	void HandleHippocampalDataset();
 	void smoothzrecursive(TraceLine*,int);
+	std::vector<int> getHippocampalTraceIDsToDelete(int);
 	//todo: make these private with accessors
 	vtkSmartPointer<vtkRenderer> Renderer;
 	vtkSmartPointer<vtkActor> BranchActor;

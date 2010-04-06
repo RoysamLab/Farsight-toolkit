@@ -269,9 +269,9 @@ void ImageRenderActors::syncColorTransfetFunction()
 {
 	this->colorTransferFunction->RemoveAllPoints();
 	this->colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
-	this->colorTransferFunction->AddRGBPoint((this->b*this->brightness)/100, 0, 0, .9);//blue
-	this->colorTransferFunction->AddRGBPoint((this->g*this->brightness)/100, 0, .9, 0);//green
-	this->colorTransferFunction->AddRGBPoint((this->r*this->brightness)/100, .9, 0, 0);//red
+	this->colorTransferFunction->AddRGBPoint((this->b*this->brightness)/100, 0, 0, .5);//blue
+	this->colorTransferFunction->AddRGBPoint((this->g*this->brightness)/100, 0, .5, 0);//green
+	this->colorTransferFunction->AddRGBPoint((this->r*this->brightness)/100, .5, 0, 0);//red
 	for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
 	{
 		this->LoadedImages[i]->volume->Update();
@@ -281,7 +281,7 @@ void ImageRenderActors::syncOpacityTransfetFunction()
 {
 	this->opacityTransferFunction->RemoveAllPoints();
 	this->opacityTransferFunction->AddPoint(2,0.0);
-	this->opacityTransferFunction->AddPoint(this->opacity1,0.9);
+	this->opacityTransferFunction->AddPoint(this->opacity1,0.3);
 	//this->opacityTransferFunction->AddPoint(this->opacity2,0.5);
 	for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
 	{

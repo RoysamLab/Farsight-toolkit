@@ -284,6 +284,7 @@ TraceBit TraceLine::GetBitXFromBegin(int x)
 	TraceBitsType::iterator iterend = this->m_trace_bits.end();
 	if (3 > (int)this->m_trace_bits.size())
 	{
+		--iterend;
 		curBit = * iterend;
 		//return  curBit;
 	}

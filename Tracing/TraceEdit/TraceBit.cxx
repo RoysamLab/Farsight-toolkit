@@ -27,6 +27,9 @@ TraceBit::TraceBit(const TraceBit& T)
 	this->I = T.I; 		
 	this->id = T.id;
     this->marker = T.marker;
+	this->dx = T.dx;
+	this->dy = T.dy;
+	this->dz = T.dz;
 }
 
 TraceBit::~TraceBit()

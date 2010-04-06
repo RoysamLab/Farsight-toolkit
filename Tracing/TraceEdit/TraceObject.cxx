@@ -1438,7 +1438,7 @@ void TraceObject::splitTrace(int selectedCellId)
   if( bitItr == selectedLine->GetTraceBitIteratorBegin() &&
       selectedLine->GetParent() != NULL )
     {
-		printf("I did come here\n");
+		//printf("I did come here\n");
     //we want to do the actual removal after the splice, but we need to detect
     //this case before selectedLine->GetTraceBitIteratorBegin() changes
     deleteSelectedLine = true;
