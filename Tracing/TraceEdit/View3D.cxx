@@ -1388,6 +1388,8 @@ void View3D::HandleHippocampalDataset()
 	//}
 	//
 	this->Rerender();
+	TraceLine * tl1 = reinterpret_cast<TraceLine*>(this->tobj->hashp[(unsigned long long int)12652]);
+	TraceLine * tl2 = reinterpret_cast<TraceLine*>(this->tobj->hashp[(unsigned long long int)2076]);
 	this->tobj->WriteToSWCFile("C:\\Users\\arun\\Research\\Diadem_testing\\hippocampal_swc\\section_01\\postprocessed.swc");
 
 	//this->TreeModel->SetTraces(this->tobj->GetTraceLines());

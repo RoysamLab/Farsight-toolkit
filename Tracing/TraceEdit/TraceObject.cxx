@@ -1562,6 +1562,10 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 {
   TraceLine * tmarker = reinterpret_cast<TraceLine*>(hashp[eMarker]);
   TraceLine * tother = reinterpret_cast<TraceLine*>(hashp[sMarker]);
+  if((tmarker->GetId() == 168 && tother->GetId()==316) || (tmarker->GetId() == 316&&tother->GetId()==168))
+  {
+	  printf("I'm operating on one of them\n");
+  }
   char elocation = -1;
   if(eMarker == tmarker->GetTraceBitsPointer()->front().marker)
   {
@@ -1611,6 +1615,16 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
   }
   else if (slocation == 0 && elocation ==0)
   {
+	  if(tmarker->GetBranchPointer()->size()==0 && tmarker->GetParent()==NULL) 
+	  {
+		  TraceLine *tttemp = tmarker;
+		  tmarker = tother;
+		  tother = tttemp;
+		  //FIXME : should I swap the emarkers too?
+		  unsigned long long int ttemarker = eMarker;
+		  eMarker = sMarker;
+		  sMarker = ttemarker;
+	  }
     ReverseSegment(tother);
     tother->GetTraceBitsPointer()->splice(tother->GetTraceBitIteratorEnd(),*(tmarker->GetTraceBitsPointer()));
     FixPointMarkers(tother);
@@ -1625,6 +1639,16 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
   }
   else if (slocation == 1 && elocation ==1)
   {
+	  if(tmarker->GetBranchPointer()->size()==0 && tmarker->GetParent()==NULL) 
+	  {
+		  TraceLine *tttemp = tmarker;
+		  tmarker = tother;
+		  tother = tttemp;
+		  //FIXME : should I swap the emarkers too?
+		  unsigned long long int ttemarker = eMarker;
+		  eMarker = sMarker;
+		  sMarker = ttemarker;
+	  }
     ReverseSegment(tother);
     tmarker->GetTraceBitsPointer()->splice(tmarker->GetTraceBitIteratorEnd(),*(tother->GetTraceBitsPointer()));
     FixPointMarkers(tmarker);

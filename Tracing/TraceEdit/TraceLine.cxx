@@ -482,6 +482,8 @@ bool TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
 		//std::cout <<"FF\n";
 	if (this->m_branches.size() > 0 && Trace2->m_branches.size()> 0)
 		{return false;}
+	if(this->GetParentID()!=-1 || Trace2->GetParentID()!=-1)
+	{return false;}
     dist = distances[0];
     dir1= m_trace_bits.front().marker;
     dir2= Trace2->m_trace_bits.front().marker; 
