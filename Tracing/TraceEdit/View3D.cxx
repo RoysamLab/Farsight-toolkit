@@ -1171,57 +1171,105 @@ void View3D::AddPointsAsPoints(std::vector<TraceBit> vec)
   Renderer->AddActor(PointsActor);
 
 }
-std::vector<int> View3D::getHippocampalTraceIDsToDelete(int z_threshold)
+std::vector<int> View3D::getHippocampalTraceIDsToDelete(int z_threshold, int look_ahead)
 {
-
+#define MAX(a,b) (((a) > (b))?(a):(b))
+#define MIN(a,b) (((a) < (b))?(a):(b))
 	std::vector<TraceLine*> tl = this->tobj->GetTraceLines();
 	std::vector<int> to_del;
 	//int z_threshold = 6;
 	for(int counter=0; counter < tl.size(); counter++)
 	{
+		std::vector<double> zvals;
+		std::vector<unsigned int> *alltids = tl[counter]->GetMarkers();
+		bool has_parent = false;
+		if(tl[counter]->GetParent()!=NULL)
+		{
+			has_parent = true;
+			zvals.push_back(tl[counter]->GetParent()->GetBitXFromEnd(1).z);
+		}
+
 		TraceLine::TraceBitsType::iterator iter1,iter2,iter3;
 		
 		iter1 = tl[counter]->GetTraceBitIteratorBegin();
 		iter2 = tl[counter]->GetTraceBitIteratorEnd();
-		std::vector<unsigned int> *vec = tl[counter]->GetMarkers();
-		if(vec->size()<5)
-			continue;
-		
-		int counter1 = vec->size()-1;
-		bool done = false;
+		for(;iter1!=iter2;++iter1)
+		{
+			zvals.push_back(iter1->z);
+		}
 
-		iter3 = iter2;
-		--iter3;
-		--iter3;
-		--iter2;
-		int num = 0;
-		//printf("vec.size = %d\n",(*vec).size());
-		for(;iter2!=iter1; --iter3,--iter2)
+		int counter1 = 0;
+		if(has_parent)
+			counter1++;
+
+		std::vector<unsigned int> tids;
+		tids.clear();
+		for(;counter1<zvals.size(); counter1++)
 		{
-			//printf("about to check inner loop thing\n");
-			if(abs((*iter2).z - (*iter3).z)>z_threshold)
+			int min1 = MAX(0,counter1-look_ahead);
+			int max1 = MIN(zvals.size()-1,counter1+look_ahead);
+			if(min1<counter1)
 			{
-					to_del.push_back((*vec)[counter1]);
-					num++;
-					//done = true; break;
+				if(abs(zvals[min1]-zvals[counter1])>z_threshold)
+				{
+					for(int counter2 = min1; counter2 <= counter1; counter2++)
+						tids.push_back((*alltids)[counter2]);
+				}
 			}
-			//printf("finished checking inner loop thing\n");
-			counter1--;
-			if(iter3==iter1)
-				break;
-		}
-		if(num>1)
-			printf("num = %d\n",num);
-		if(tl[counter]->GetParent() != NULL)
-		{
-			//printf("about to check  parent thing\n");
-			if(abs((*iter1).z - tl[counter]->GetParent()->GetBitXFromEnd(1).z) > z_threshold)
+			if(max1>counter1)
 			{
-					to_del.push_back((*vec)[0]);
-					//done = true;
+				if(abs(zvals[max1]-zvals[counter1])>z_threshold)
+				{
+					for(int counter2 = counter1; counter2 < max1; counter2++)
+						tids.push_back((*alltids)[counter2]);
+				}
 			}
-			//printf("finished checking parent thing\n");
 		}
+		std::sort(tids.begin(),tids.end());
+		std::vector<unsigned int>::iterator iter = std::unique(tids.begin(),tids.end());
+		tids.erase(iter,tids.end());
+		
+		for(int counter =0; counter < tids.size(); counter++)
+			to_del.push_back(tids[counter]);
+		//std::vector<unsigned int> *vec = tl[counter]->GetMarkers();
+		//if(vec->size()<3)
+		//	continue;
+		//
+		//int counter1 = vec->size()-1;
+		//bool done = false;
+
+		//iter3 = iter2;
+		//--iter3;
+		//--iter3;
+		//--iter2;
+		//int num = 0;
+		////printf("vec.size = %d\n",(*vec).size());
+		//for(;iter2!=iter1; --iter3,--iter2)
+		//{
+		//	//printf("about to check inner loop thing\n");
+		//	if(abs((*iter2).z - (*iter3).z)>z_threshold)
+		//	{
+		//			to_del.push_back((*vec)[counter1]);
+		//			num++;
+		//			//done = true; break;
+		//	}
+		//	//printf("finished checking inner loop thing\n");
+		//	counter1--;
+		//	if(iter3==iter1)
+		//		break;
+		//}
+		//if(num>1)
+		//	printf("num = %d\n",num);
+		//if(tl[counter]->GetParent() != NULL)
+		//{
+		//	//printf("about to check  parent thing\n");
+		//	if(abs((*iter1).z - tl[counter]->GetParent()->GetBitXFromEnd(1).z) > z_threshold)
+		//	{
+		//			to_del.push_back((*vec)[0]);
+		//			//done = true;
+		//	}
+		//	//printf("finished checking parent thing\n");
+		//}
 
 	}
 	return to_del;
@@ -1270,8 +1318,8 @@ double canConnect(TraceBit one,TraceBit two)
 	printf("one dir is correct = %f %f %f\n",one.dx,one.dy,one.dz);
 	if((two.dx*two.dx+two.dy*two.dy+two.dz*two.dz)>0.001)
 	printf("two dir is correct = %f %f %f\n",two.dx,two.dy,two.dz);*/
-	float dist_sigma = 10;
-	float z_thresh = 10;
+	float dist_sigma = 20;
+	float z_thresh = 15;
 	float initial_offset = 5;
 	one.x = one.x - initial_offset*one.dx;
 	one.y = one.y - initial_offset*one.dy;
@@ -1287,7 +1335,7 @@ double canConnect(TraceBit one,TraceBit two)
 	if( n1dotn2 < 0)
 	{
 		float euc_dist = sqrt((one.x-two.x)*(one.x-two.x)+(one.y-two.y)*(one.y-two.y)+(one.z-two.z)*(one.z-two.z));
-		if(euc_dist < 4*dist_sigma)
+		if(euc_dist < 3*dist_sigma)
 		{
 			//printf("c1 ");
 			if(abs(one.z-two.z) < z_thresh)
@@ -1378,16 +1426,26 @@ void View3D::HandleHippocampalDataset()
 	//this->UpdateBranchActor();
 	//this->QVTK->GetRenderWindow()->Render();
 	
+	std::vector<TraceLine*> *tlinepointer = this->tobj->GetTraceLinesPointer();
 	
-	std::vector<int> to_del = getHippocampalTraceIDsToDelete(6);
+	for(int counter =0; counter < tlinepointer->size(); counter++)
+	{
+		smoothzrecursive((*tlinepointer)[counter],2);
+		//dir_check((*tlinepointer)[counter]);
+	}
+
+	
+	std::vector<int> to_del = getHippocampalTraceIDsToDelete(6,3);
 	printf("To delete = %d\n",to_del.size());
 	this->SelectedTraceIDs = to_del;
 	this->SplitTraces();
 
+	this->Rerender();
+	return;
 	int offset = 0;
 	std::vector<TraceLine*> tldel;
 	tldel.clear();
-	std::vector<TraceLine*> *tlinepointer = this->tobj->GetTraceLinesPointer();
+	tlinepointer = this->tobj->GetTraceLinesPointer();
 	for (int counter = 0; counter < tlinepointer->size(); counter++)
 	{
 		if((*tlinepointer)[counter]->GetSize() < 4 && (*tlinepointer)[counter]->GetBranchPointer()->size() == 0)
@@ -1414,9 +1472,9 @@ void View3D::HandleHippocampalDataset()
 	
 	
 	//scanf("%*d\n");
-	to_del = getHippocampalTraceIDsToDelete(4);
+	/*to_del = getHippocampalTraceIDsToDelete(10);
 	this->SelectedTraceIDs = to_del;
-	this->SplitTraces();
+	this->SplitTraces();*/
 
 	tlinepointer = this->tobj->GetTraceLinesPointer();
 	for (int counter = 0; counter < tlinepointer->size(); counter++)
@@ -1479,13 +1537,13 @@ void View3D::HandleHippocampalDataset()
 				{
 				if(counter1!=minpos )
 				{
-					//fprintf(fp,"%d 4 %0.2lf %0.2lf %0.2lf 1.0 %d\n",line_count,cricbits[counter].x, cricbits[counter].y, cricbits[counter].z, -1);
-					//fprintf(fp,"%d 4 %0.2lf %0.2lf %0.2lf 1.0 %d\n",line_count+1,cricbits[counter1].x, cricbits[counter1].y, cricbits[counter1].z, line_count);
+					fprintf(fp,"%d 4 %0.2lf %0.2lf %0.2lf 1.0 %d\n",line_count,cricbits[counter].x, cricbits[counter].y, cricbits[counter].z, -1);
+					fprintf(fp,"%d 4 %0.2lf %0.2lf %0.2lf 1.0 %d\n",line_count+1,cricbits[counter1].x, cricbits[counter1].y, cricbits[counter1].z, line_count);
 				}
 				else
 				{
-					//fprintf(fp,"%d 1 %0.2lf %0.2lf %0.2lf 1.0 %d\n",line_count,cricbits[counter].x, cricbits[counter].y, cricbits[counter].z, -1);
-					//fprintf(fp,"%d 1 %0.2lf %0.2lf %0.2lf 1.0 %d\n",line_count+1,cricbits[counter1].x, cricbits[counter1].y, cricbits[counter1].z, line_count);
+					fprintf(fp,"%d 1 %0.2lf %0.2lf %0.2lf 1.0 %d\n",line_count,cricbits[counter].x, cricbits[counter].y, cricbits[counter].z, -1);
+					fprintf(fp,"%d 1 %0.2lf %0.2lf %0.2lf 1.0 %d\n",line_count+1,cricbits[counter1].x, cricbits[counter1].y, cricbits[counter1].z, line_count);
 				}
 				line_count = line_count+2;
 				}
@@ -1505,7 +1563,7 @@ void View3D::HandleHippocampalDataset()
 		{
 			gaps_merged ++;//FIXME : need to correctly count the ones not rejected by the mergeTraces.. 
 							//make mergeTraces return a bool to check for error
-			this->tobj->mergeTraces(cricbits[gaps[counter].c1].marker,cricbits[gaps[counter].c2].marker);
+			//this->tobj->mergeTraces(cricbits[gaps[counter].c1].marker,cricbits[gaps[counter].c2].marker);
 			int id1 = this->tobj->hashp[cricbits[gaps[counter].c1].marker];
 			int id2 = this->tobj->hashp[cricbits[gaps[counter].c2].marker];
 			if(id1 == 786 || id1 == 789 || id2 == 786 || id2 == 789)
@@ -1526,12 +1584,12 @@ void View3D::HandleHippocampalDataset()
 	}
 
 	this->Rerender();
-	std::vector<TraceLine*> tlinesc = this->tobj->GetTraceLines();
-	int numprints = 1;
-	for(int counter =0; counter < tlinesc.size(); counter++)
-	{
-		print_directions(fp,numprints,tlinesc[counter]);
-	}
+	//std::vector<TraceLine*> tlinesc = this->tobj->GetTraceLines();
+	//int numprints = 1;
+	//for(int counter =0; counter < tlinesc.size(); counter++)
+	//{
+	//	print_directions(fp,numprints,tlinesc[counter]);
+	//}
 	fclose(fp);
 	TraceObject * tobject = new TraceObject();
 	tobject->ReadFromSWCFile("ftemp.swc");
