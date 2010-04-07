@@ -1212,7 +1212,7 @@ std::vector<int> View3D::getHippocampalTraceIDsToDelete(int z_threshold, int loo
 			{
 				if(abs(zvals[min1]-zvals[counter1])>z_threshold)
 				{
-					for(int counter2 = min1; counter2 <= counter1; counter2++)
+					for(int counter2 = min1; counter2 < counter1; counter2++)
 						tids.push_back((*alltids)[counter2]);
 				}
 			}
@@ -1229,7 +1229,7 @@ std::vector<int> View3D::getHippocampalTraceIDsToDelete(int z_threshold, int loo
 		std::vector<unsigned int>::iterator iter = std::unique(tids.begin(),tids.end());
 		tids.erase(iter,tids.end());
 		
-		for(int counter =0; counter < tids.size(); counter++)
+		for(int counter =tids.size()-1; counter >=0; counter--)
 			to_del.push_back(tids[counter]);
 		//std::vector<unsigned int> *vec = tl[counter]->GetMarkers();
 		//if(vec->size()<3)
@@ -1440,8 +1440,14 @@ void View3D::HandleHippocampalDataset()
 	this->SelectedTraceIDs = to_del;
 	this->SplitTraces();
 
-	this->Rerender();
-	return;
+	tlinepointer = this->tobj->GetTraceLinesPointer();
+	for (int counter = 0; counter < tlinepointer->size(); counter++)
+	{
+		DeleteEmptyLeafNodesRecursive((*tlinepointer)[counter]);
+	}
+
+
+
 	int offset = 0;
 	std::vector<TraceLine*> tldel;
 	tldel.clear();
@@ -1459,7 +1465,7 @@ void View3D::HandleHippocampalDataset()
 	}
 	printf("New trace_lines size = %d\n",tlinepointer->size());
 	this->Rerender();
-
+	
 	// z smoothing
 	int num_points = 10;
 	for(int counter =0; counter < tlinepointer->size(); counter++)
@@ -1476,11 +1482,11 @@ void View3D::HandleHippocampalDataset()
 	this->SelectedTraceIDs = to_del;
 	this->SplitTraces();*/
 
-	tlinepointer = this->tobj->GetTraceLinesPointer();
+	/*tlinepointer = this->tobj->GetTraceLinesPointer();
 	for (int counter = 0; counter < tlinepointer->size(); counter++)
 	{
 		DeleteEmptyLeafNodesRecursive((*tlinepointer)[counter]);
-	}
+	}*/
 
 	printf("going to merge fragments\n");
 	// merge fragments
@@ -1563,7 +1569,7 @@ void View3D::HandleHippocampalDataset()
 		{
 			gaps_merged ++;//FIXME : need to correctly count the ones not rejected by the mergeTraces.. 
 							//make mergeTraces return a bool to check for error
-			//this->tobj->mergeTraces(cricbits[gaps[counter].c1].marker,cricbits[gaps[counter].c2].marker);
+			this->tobj->mergeTraces(cricbits[gaps[counter].c1].marker,cricbits[gaps[counter].c2].marker);
 			int id1 = this->tobj->hashp[cricbits[gaps[counter].c1].marker];
 			int id2 = this->tobj->hashp[cricbits[gaps[counter].c2].marker];
 			if(id1 == 786 || id1 == 789 || id2 == 786 || id2 == 789)
@@ -1591,19 +1597,19 @@ void View3D::HandleHippocampalDataset()
 	//	print_directions(fp,numprints,tlinesc[counter]);
 	//}
 	fclose(fp);
-	TraceObject * tobject = new TraceObject();
-	tobject->ReadFromSWCFile("ftemp.swc");
-	vtkSmartPointer<vtkPolyData> debugpoly = tobject->GetVTKPolyData();
-	vtkSmartPointer<vtkPolyDataMapper> debugpolymap = vtkSmartPointer<vtkPolyDataMapper>::New();
-	vtkSmartPointer<vtkActor> debugactor = vtkSmartPointer<vtkActor>::New();
-	debugpolymap->SetInput(debugpoly);
-	debugactor->SetMapper(debugpolymap);
-	this->Renderer->AddActor(debugactor);
+	//TraceObject * tobject = new TraceObject();
+	//tobject->ReadFromSWCFile("ftemp.swc");
+	//vtkSmartPointer<vtkPolyData> debugpoly = tobject->GetVTKPolyData();
+	//vtkSmartPointer<vtkPolyDataMapper> debugpolymap = vtkSmartPointer<vtkPolyDataMapper>::New();
+	//vtkSmartPointer<vtkActor> debugactor = vtkSmartPointer<vtkActor>::New();
+	//debugpolymap->SetInput(debugpoly);
+	//debugactor->SetMapper(debugpolymap);
+	//this->Renderer->AddActor(debugactor);
 
 	TraceLine * tl1 = reinterpret_cast<TraceLine*>(this->tobj->hashp[(unsigned long long int)12652]);
 	TraceLine * tl2 = reinterpret_cast<TraceLine*>(this->tobj->hashp[(unsigned long long int)2076]);
 	this->tobj->WriteToSWCFile("postprocessed.swc");
-
+return;
 	//this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 }
 void View3D::DeleteEmptyLeafNodesRecursive(TraceLine* tline)
