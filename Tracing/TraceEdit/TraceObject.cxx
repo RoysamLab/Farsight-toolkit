@@ -1562,7 +1562,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 {
   TraceLine * tmarker = reinterpret_cast<TraceLine*>(hashp[eMarker]);
   TraceLine * tother = reinterpret_cast<TraceLine*>(hashp[sMarker]);
-  if((tmarker->GetId() == 168 && tother->GetId()==316) || (tmarker->GetId() == 316&&tother->GetId()==168))
+  if((tmarker->GetId() == 786 && tother->GetId()== 789) || (tmarker->GetId() == 789 && tother->GetId()==786))
   {
 	  printf("I'm operating on one of them\n");
   }
@@ -1625,6 +1625,14 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 		  eMarker = sMarker;
 		  sMarker = ttemarker;
 	  }
+	  else if(tother->GetBranchPointer()->size()==0 && tother->GetParent()==NULL) 
+	  {
+	  }
+	  else
+	  {
+		  printf("Cannot merge two leaf nodes of two trees\n");
+		  return;
+	  }
     ReverseSegment(tother);
     tother->GetTraceBitsPointer()->splice(tother->GetTraceBitIteratorEnd(),*(tmarker->GetTraceBitsPointer()));
     FixPointMarkers(tother);
@@ -1648,6 +1656,14 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 		  unsigned long long int ttemarker = eMarker;
 		  eMarker = sMarker;
 		  sMarker = ttemarker;
+	  }
+	  else if(tother->GetBranchPointer()->size()==0 && tother->GetParent()==NULL) 
+	  {
+	  }
+	  else
+	  {
+		  printf("Cannot merge two leaf nodes of two trees\n");
+		  return;
 	  }
     ReverseSegment(tother);
     tmarker->GetTraceBitsPointer()->splice(tmarker->GetTraceBitIteratorEnd(),*(tother->GetTraceBitsPointer()));

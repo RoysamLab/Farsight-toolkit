@@ -102,6 +102,7 @@ public:
 	void HandleHippocampalDataset();
 	void smoothzrecursive(TraceLine*,int);
 	std::vector<int> getHippocampalTraceIDsToDelete(int);
+	void DeleteEmptyLeafNodesRecursive(TraceLine*);
 	//todo: make these private with accessors
 	vtkSmartPointer<vtkRenderer> Renderer;
 	vtkSmartPointer<vtkActor> BranchActor;
@@ -268,6 +269,8 @@ private:
 	vtkSmartPointer<vtkPolyData> poly;
 	vtkSmartPointer<vtkPolyDataMapper> polymap;
 	
+
+
 	void createRayCastSliders();
 	QSpinBox * OpacitySpin, * BrightnessSpin;
   QSlider *OpacitySlider;

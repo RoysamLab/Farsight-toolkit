@@ -1101,6 +1101,7 @@ void View3D::Rerender()
   /*this->MergeGaps->GetSelectionModel()->clearSelection();*/
   this->Renderer->RemoveActor(this->BranchActor);
   this->Renderer->RemoveActor(this->PointsActor);
+  
   std::vector<TraceBit> vec = this->tobj->CollectTraceBits();
   this->AddPointsAsPoints(vec);
   this->UpdateLineActor();
@@ -1225,46 +1226,104 @@ std::vector<int> View3D::getHippocampalTraceIDsToDelete(int z_threshold)
 	}
 	return to_del;
 }
-float canConnect(TraceBit one,TraceBit two)
+
+struct Triplet{
+	double x, y,z;
+};
+
+Triplet sub(Triplet a, Triplet b)
+{
+	Triplet out;
+	out.x = a.x - b.x;
+	out.y = a.y - b.y;
+	out.z = a.z - b.z;
+	return out;
+}
+double dot(Triplet a, Triplet b)
+{
+	return a.x*b.x+a.y*b.y+a.z*b.z;
+}
+double norm(Triplet a)
+{
+	return sqrt(a.x*a.x+a.y*a.y+a.z*a.z);
+}
+Triplet div(Triplet a, double b)
+{
+	a.x /=b;
+	a.y /=b;
+	a.z /=b;
+	return a;
+}
+
+struct Gaplet{
+	int c1;//counters in the cricbits array
+	int c2;//
+	double cost;
+};
+bool GapSortPredicate(Gaplet &a, Gaplet &b)
+{
+	return a.cost < b.cost;
+}
+double canConnect(TraceBit one,TraceBit two)
 {
 	/*if((one.dx*one.dx+one.dy*one.dy+one.dz*one.dz)>0.001)
-			printf("one dir is correct = %f %f %f\n",one.dx,one.dy,one.dz);
+	printf("one dir is correct = %f %f %f\n",one.dx,one.dy,one.dz);
 	if((two.dx*two.dx+two.dy*two.dy+two.dz*two.dz)>0.001)
-			printf("two dir is correct = %f %f %f\n",two.dx,two.dy,two.dz);*/
-	float dist_thresh = 50;
+	printf("two dir is correct = %f %f %f\n",two.dx,two.dy,two.dz);*/
+	float dist_sigma = 10;
 	float z_thresh = 10;
-	float plane_dist_thresh = 50;
+	float initial_offset = 5;
+	one.x = one.x - initial_offset*one.dx;
+	one.y = one.y - initial_offset*one.dy;
+	one.z = one.z - initial_offset*one.dz;
+
+	Triplet a,b,n1,n2;
+	a.x = one.x; a.y = one.y; a.z = one.z;
+	b.x = two.x; b.y = two.y; b.z = one.z;
+	n1.x = one.dx; n1.y = one.dy; n1.z = one.dz;
+	n2.x = two.dx; n2.y = two.dy; n2.z = two.dz;
 	//printf("trying...");
-	if(sqrt((one.x-two.x)*(one.x-two.x)+(one.y-two.y)*(one.y-two.y)+(one.z-two.z)*(one.z-two.z))<dist_thresh)
+	float n1dotn2  = (one.dx*two.dx+one.dy*two.dy+one.dz*two.dz);
+	if( n1dotn2 < 0)
 	{
-		//printf("c1 ");
-		if((one.z-two.z) < z_thresh)
+		float euc_dist = sqrt((one.x-two.x)*(one.x-two.x)+(one.y-two.y)*(one.y-two.y)+(one.z-two.z)*(one.z-two.z));
+		if(euc_dist < 4*dist_sigma)
 		{
-			
-			/*if((one.dx*one.dx+one.dy*one.dy+one.dz*one.dz)<0.00001)
+			//printf("c1 ");
+			if(abs(one.z-two.z) < z_thresh)
+			{
+				/*if((one.dx*one.dx+one.dy*one.dy+one.dz*one.dz)<0.00001)
 				printf("one dir is wrong = %f %f %f\n",one.dx,one.dy,one.dz);
-			if((two.dx*two.dx+two.dy*two.dy+two.dz*two.dz)<0.00001)
+				if((two.dx*two.dx+two.dy*two.dy+two.dz*two.dz)<0.00001)
 				printf("two dir is wrong = %f %f %f\n",two.dx,two.dy,two.dz);*/
-			TraceBit p;
-			float lambda = ( (one.x-two.x)*one.dx+(one.y-two.y)*one.dy+(one.z-two.z)*one.dz)/(one.dx*two.dx+one.dy*two.dy+one.dz*two.dz);
-			p.x = two.x + lambda*two.dx;
-			p.y = two.y + lambda*two.dy;
-			p.z = two.z + lambda*two.dz;
-			float dist = sqrt((p.x-one.x)*(p.x-one.x)+(p.y-one.y)*(p.y-one.y)+(p.z-one.z)*(p.z-one.z));
-			if( dist < plane_dist_thresh)
-			{
-				printf("c3\n");
-				return dist;
-			}
-			else
-			{
-				//printf("one = (%lf,%lf,%lf) , two = (%lf,%lf,%lf), onedir = (%f,%f,%f), twodir = (%f,%f,%f)\n",one.x,one.y,one.z,two.x,two.y,two.z,one.dir[0],one.dir[1],one.dir[2],two.dir[0],two.dir[1],two.dir[2]);
+				TraceBit p;
+				float lambda = ( (one.x-two.x)*one.dx+(one.y-two.y)*one.dy+(one.z-two.z)*one.dz)/(one.dx*two.dx+one.dy*two.dy+one.dz*two.dz);
+				if(lambda>0)
+				{
+					Triplet bminusa = sub(b,a);
+					bminusa = div(bminusa,norm(bminusa));
+					double cost = dot(bminusa,n1);
+					cost *= cost;
+					cost *= cost;
+					cost *= -dot(bminusa,n2);
+					cost *= exp(-norm(sub(b,a))*norm(sub(b,a))/2/dist_sigma/dist_sigma);
+					if(cost < 0)
+						return 1e10;
+					else
+						return 1-cost;
+				}
+				else
+				{
+					//printf("one = (%lf,%lf,%lf) , two = (%lf,%lf,%lf), onedir = (%f,%f,%f), twodir = (%f,%f,%f)\n",one.x,one.y,one.z,two.x,two.y,two.z,one.dir[0],one.dir[1],one.dir[2],two.dir[0],two.dir[1],two.dir[2]);
+				}
 			}
 		}
 	}
 	//printf("\n");
-	return 1e100;
+	return 1e10;
 }
+
+
 void dir_check(TraceLine* tline)
 {
 	TraceLine::TraceBitsType::iterator iter1,iter2,iter3;
@@ -1278,6 +1337,19 @@ void dir_check(TraceLine* tline)
 			printf("check dir wrong : %f %f %f %lf %lf %lf %p\n",iter1->dx,iter1->dy,iter1->dz,b.x,b.y,b.z,&(iter1->dx));
 		else
 			printf("check dir correct %f %f %f\n",b.dx,b.dy,b.dz);
+	}
+
+}
+void print_directions(FILE *fp,int &n,TraceLine *tline)
+{
+	TraceLine::TraceBitsType::iterator iter1,iter2,iter3;
+	iter1 = tline->GetTraceBitIteratorBegin();
+	iter2 = tline->GetTraceBitIteratorEnd();
+	for(;iter1!=iter2;++iter1)
+	{
+		fprintf(fp,"%d 1 %0.2lf %0.2lf %0.2lf 1.0 %d\n",n,iter1->x,iter1->y,iter1->z,-1);
+		fprintf(fp,"%d 1 %0.2lf %0.2lf %0.2lf 1.0 %d\n",n+1,iter1->x+iter1->dx,iter1->y+iter1->dy,iter1->z+iter1->dz,n);	
+		n = n +2;
 	}
 
 }
@@ -1314,6 +1386,7 @@ void View3D::HandleHippocampalDataset()
 
 	int offset = 0;
 	std::vector<TraceLine*> tldel;
+	tldel.clear();
 	std::vector<TraceLine*> *tlinepointer = this->tobj->GetTraceLinesPointer();
 	for (int counter = 0; counter < tlinepointer->size(); counter++)
 	{
@@ -1341,9 +1414,15 @@ void View3D::HandleHippocampalDataset()
 	
 	
 	//scanf("%*d\n");
-	//to_del = getHippocampalTraceIDsToDelete(4);
-	//this->SelectedTraceIDs = to_del;
-	//this->SplitTraces();
+	to_del = getHippocampalTraceIDsToDelete(4);
+	this->SelectedTraceIDs = to_del;
+	this->SplitTraces();
+
+	tlinepointer = this->tobj->GetTraceLinesPointer();
+	for (int counter = 0; counter < tlinepointer->size(); counter++)
+	{
+		DeleteEmptyLeafNodesRecursive((*tlinepointer)[counter]);
+	}
 
 	printf("going to merge fragments\n");
 	// merge fragments
@@ -1352,49 +1431,145 @@ void View3D::HandleHippocampalDataset()
 	for(int counter =0; counter < tlines.size(); counter++)
 	{
 		if(tlines[counter]->GetParent() == NULL)
-			cricbits.push_back(tlines[counter]->GetBitXFromBegin(1));
+			cricbits.push_back(tlines[counter]->GetBitXFromBegin(0));
 		if(tlines[counter]->GetBranchPointer()->size()==0)
 			cricbits.push_back(tlines[counter]->GetBitXFromEnd(1));
 	}
 
 
-	//int merge_count = 0;
-	//for(int counter = 0; counter < cricbits.size(); counter++)
-	//{
-	//	float mindist = 1e10;
-	//	float minpos = -1;
-	//	for(int counter1 = 0; counter1 < cricbits.size(); counter1++)
-	//	{
-	//		if(counter!=counter1)
-	//		{
-	//			float dist = canConnect(cricbits[counter],cricbits[counter1]);
-	//			if(dist < mindist)
-	//			{
-	//				dist = mindist;
-	//				minpos = counter1;
-	//			}
-	//		}
-	//	}
-	//	if(minpos!=-1)
-	//	{
-	//		printf("I merged 1 more\n");
-	//		merge_count++;
-	//		this->tobj->mergeTraces(cricbits[counter].marker,cricbits[minpos].marker);
-	//		//this->Rerender();
-	//		//scanf("%*d");
-	//	}
-	//	if(merge_count==100)
-	//		break;
-	//}
-	//
+	int merge_count = 0;
+	
+	FILE *fp = fopen("ftemp.swc","w");
+	int line_count = 1;
+	std::vector<Gaplet> gaps;
+	for(int counter = 0; counter < cricbits.size(); counter++)
+	{
+		std::vector<int> validbits(cricbits.size());
+		double mindist = 1e10;
+		float minpos = -1;
+		for(int counter1 = 0; counter1 < cricbits.size(); counter1++)
+		{
+			validbits[counter1] = 0;
+			if(counter!=counter1)
+			{
+				double dist = canConnect(cricbits[counter],cricbits[counter1]);
+				
+				if(dist < 1000)
+				{
+					Gaplet temp;
+					temp.c1 = counter;
+					temp.c2 = counter1;
+					temp.cost = dist;
+					gaps.push_back(temp);
+				}
+				if(dist < mindist)
+				{
+					mindist = dist;
+					minpos = counter1;
+					validbits[counter1] = 1;
+				}
+			}
+		}
+		
+		for(int counter1 = 0; counter1< cricbits.size(); counter1++)
+		{
+			if(counter != counter1)
+			{
+				if(validbits[counter1]!=0)
+				{
+				if(counter1!=minpos )
+				{
+					//fprintf(fp,"%d 4 %0.2lf %0.2lf %0.2lf 1.0 %d\n",line_count,cricbits[counter].x, cricbits[counter].y, cricbits[counter].z, -1);
+					//fprintf(fp,"%d 4 %0.2lf %0.2lf %0.2lf 1.0 %d\n",line_count+1,cricbits[counter1].x, cricbits[counter1].y, cricbits[counter1].z, line_count);
+				}
+				else
+				{
+					//fprintf(fp,"%d 1 %0.2lf %0.2lf %0.2lf 1.0 %d\n",line_count,cricbits[counter].x, cricbits[counter].y, cricbits[counter].z, -1);
+					//fprintf(fp,"%d 1 %0.2lf %0.2lf %0.2lf 1.0 %d\n",line_count+1,cricbits[counter1].x, cricbits[counter1].y, cricbits[counter1].z, line_count);
+				}
+				line_count = line_count+2;
+				}
+			}
+		}
+	}
+	std::sort(gaps.begin(),gaps.end(),GapSortPredicate);
+	std::vector<char> done(cricbits.size());
+	for(int counter = 0; counter < cricbits.size(); counter++)
+	{
+		done[counter] = 0;
+	}
+	int gaps_merged = 0;
+	for(int counter =0; counter < gaps.size(); counter++)
+	{
+		if(done[gaps[counter].c1] ==0 && done[gaps[counter].c2] ==0)
+		{
+			gaps_merged ++;//FIXME : need to correctly count the ones not rejected by the mergeTraces.. 
+							//make mergeTraces return a bool to check for error
+			this->tobj->mergeTraces(cricbits[gaps[counter].c1].marker,cricbits[gaps[counter].c2].marker);
+			int id1 = this->tobj->hashp[cricbits[gaps[counter].c1].marker];
+			int id2 = this->tobj->hashp[cricbits[gaps[counter].c2].marker];
+			if(id1 == 786 || id1 == 789 || id2 == 786 || id2 == 789)
+			{
+				printf("I tried connecting %d and %d \n",id1,id2);
+			}
+			done[gaps[counter].c1] = 1;
+			done[gaps[counter].c2] = 1;
+		}
+	}
+
+	printf(" I merged %d (minus the errors)\n", gaps_merged);
+	
+	tlinepointer = this->tobj->GetTraceLinesPointer();
+	for (int counter = 0; counter < tlinepointer->size(); counter++)
+	{
+		DeleteEmptyLeafNodesRecursive((*tlinepointer)[counter]);
+	}
+
 	this->Rerender();
+	std::vector<TraceLine*> tlinesc = this->tobj->GetTraceLines();
+	int numprints = 1;
+	for(int counter =0; counter < tlinesc.size(); counter++)
+	{
+		print_directions(fp,numprints,tlinesc[counter]);
+	}
+	fclose(fp);
+	TraceObject * tobject = new TraceObject();
+	tobject->ReadFromSWCFile("ftemp.swc");
+	vtkSmartPointer<vtkPolyData> debugpoly = tobject->GetVTKPolyData();
+	vtkSmartPointer<vtkPolyDataMapper> debugpolymap = vtkSmartPointer<vtkPolyDataMapper>::New();
+	vtkSmartPointer<vtkActor> debugactor = vtkSmartPointer<vtkActor>::New();
+	debugpolymap->SetInput(debugpoly);
+	debugactor->SetMapper(debugpolymap);
+	this->Renderer->AddActor(debugactor);
+
 	TraceLine * tl1 = reinterpret_cast<TraceLine*>(this->tobj->hashp[(unsigned long long int)12652]);
 	TraceLine * tl2 = reinterpret_cast<TraceLine*>(this->tobj->hashp[(unsigned long long int)2076]);
-	this->tobj->WriteToSWCFile("C:\\Users\\arun\\Research\\Diadem_testing\\hippocampal_swc\\section_01\\postprocessed.swc");
+	this->tobj->WriteToSWCFile("postprocessed.swc");
 
 	//this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 }
-
+void View3D::DeleteEmptyLeafNodesRecursive(TraceLine* tline)
+{
+	if(tline->GetBranchPointer()->size()==0)
+	{
+		if(tline->GetSize()==0)
+		{
+			this->DeleteTrace(tline);
+		}
+	}
+	else
+	{
+		std::vector<TraceLine*> branchlines;
+		for(int counter =0; counter < tline->GetBranchPointer()->size(); counter++)
+		{
+			branchlines.push_back((*(tline->GetBranchPointer()))[counter]);
+		}
+		for(int counter = 0; counter < branchlines.size(); counter++)
+		{
+			this->DeleteEmptyLeafNodesRecursive(branchlines[counter]);
+		}
+	}
+}
 void View3D::smoothzrecursive( TraceLine* tline, int n)
 {
 
@@ -1445,6 +1620,16 @@ void View3D::smoothzrecursive( TraceLine* tline, int n)
 	for(; counter < vec.size(); counter++)
 	{
 		float dir[3];
+		int location = counter;
+		int size = vec.size();
+		int forward = 1;
+		if(has_parent)
+		{
+			location--;
+			size--;
+		}
+		if(location >= size/2)
+			forward = -1;
 		int min1 = MAX(0,counter-n);
 		int max1 = MIN(vec.size()-1,counter+n);
 		dir[0] = 0;
@@ -1453,16 +1638,16 @@ void View3D::smoothzrecursive( TraceLine* tline, int n)
 		for(int counter1 = min1; counter1<counter; counter1++)
 		{
 		//	printf("hi1");
-			dir[0] = dir[0] + (vec[counter1].x - vec[counter].x);
-			dir[1] = dir[1] + (vec[counter1].y - vec[counter].y);
-			dir[2] = dir[2] + (vec[counter1].z - vec[counter].z);
+			dir[0] = dir[0] + forward*(vec[counter1].x - vec[counter].x);
+			dir[1] = dir[1] + forward*(vec[counter1].y - vec[counter].y);
+			dir[2] = dir[2] + forward*(vec[counter1].z - vec[counter].z);
 		}
 		for(int counter1 = counter+1; counter1<=max1; counter1++)
 		{
 		//	printf("hi2");
-			dir[0] = dir[0] + (vec[counter].x - vec[counter1].x);
-			dir[1] = dir[1] + (vec[counter].y - vec[counter1].y);
-			dir[2] = dir[2] + (vec[counter].z - vec[counter1].z);
+			dir[0] = dir[0] + forward*(vec[counter].x - vec[counter1].x);
+			dir[1] = dir[1] + forward*(vec[counter].y - vec[counter1].y);
+			dir[2] = dir[2] + forward*(vec[counter].z - vec[counter1].z);
 		}
 
 		if(max1-min1>0)
@@ -1772,21 +1957,21 @@ void View3D::DeleteTraces()
 
 void View3D::DeleteTrace(TraceLine *tline)
 {
-  std::vector<unsigned int> * vtk_cell_ids = tline->GetMarkers();
+  //std::vector<unsigned int> * vtk_cell_ids = tline->GetMarkers();
 
-  vtkIdType ncells; vtkIdType *pts;
-  for(unsigned int counter=0; counter<vtk_cell_ids->size(); counter++)
-    {
-    this->poly_line_data->GetCellPoints((vtkIdType)(*vtk_cell_ids)[counter],ncells,pts);
-    pts[1]=pts[0];
-    }
+  //vtkIdType ncells; vtkIdType *pts;
+  //for(unsigned int counter=0; counter<vtk_cell_ids->size(); counter++)
+  //  {
+  //  this->poly_line_data->GetCellPoints((vtkIdType)(*vtk_cell_ids)[counter],ncells,pts);
+  //  pts[1]=pts[0];
+  //  }
   std::vector<TraceLine*> *children = tline->GetBranchPointer();
   if(children->size()!=0)
     {
     for(unsigned int counter=0; counter<children->size(); counter++)
       {
-      this->poly_line_data->GetCellPoints((*(*children)[counter]->GetMarkers())[0],ncells,pts);
-      pts[1]=pts[0];
+      //this->poly_line_data->GetCellPoints((*(*children)[counter]->GetMarkers())[0],ncells,pts);
+      //pts[1]=pts[0];
       this->tobj->GetTraceLinesPointer()->push_back((*children)[counter]);  
       (*children)[counter]->SetParent(NULL);
       }
@@ -1797,10 +1982,11 @@ void View3D::DeleteTrace(TraceLine *tline)
   std::vector<TraceLine*>* siblings;
   if(tline->GetParent()!=NULL)
     {
-		if(this->tobj->BreakOffBranch(tline, false))
+		/*if(this->tobj->BreakOffBranch(tline, false))
 		{
 			return;		//returns if sibling merged to parent
-		}
+		}*/
+		siblings = tline->GetParent()->GetBranchPointer();
     }
   else
     {
