@@ -1578,9 +1578,9 @@ void View3D::HandleHippocampalDataset()
 		{
 			gaps_merged ++;//FIXME : need to correctly count the ones not rejected by the mergeTraces.. 
 							//make mergeTraces return a bool to check for error
-			this->tobj->mergeTraces(cricbits[gaps[counter].c1].marker,cricbits[gaps[counter].c2].marker);
-			//fprintf(fp,"%d 1 %0.2lf %0.2lf %0.2lf 1.0 %d\n",gaps_merged*2-1,cricbits[gaps[counter].c1].x, cricbits[gaps[counter].c1].y, cricbits[gaps[counter].c1].z, -1);
-			//fprintf(fp,"%d 1 %0.2lf %0.2lf %0.2lf 1.0 %d\n",gaps_merged*2,cricbits[gaps[counter].c2].x, cricbits[gaps[counter].c2].y, cricbits[gaps[counter].c2].z,gaps_merged*2-1);
+			//this->tobj->mergeTraces(cricbits[gaps[counter].c1].marker,cricbits[gaps[counter].c2].marker);
+			fprintf(fp,"%d 1 %0.2lf %0.2lf %0.2lf 1.0 %d\n",gaps_merged*2-1,cricbits[gaps[counter].c1].x, cricbits[gaps[counter].c1].y, cricbits[gaps[counter].c1].z, -1);
+			fprintf(fp,"%d 1 %0.2lf %0.2lf %0.2lf 1.0 %d\n",gaps_merged*2,cricbits[gaps[counter].c2].x, cricbits[gaps[counter].c2].y, cricbits[gaps[counter].c2].z,gaps_merged*2-1);
 			int id1 = this->tobj->hashp[cricbits[gaps[counter].c1].marker];
 			int id2 = this->tobj->hashp[cricbits[gaps[counter].c2].marker];
 			if(id1 == 786 || id1 == 789 || id2 == 786 || id2 == 789)
@@ -1608,14 +1608,14 @@ void View3D::HandleHippocampalDataset()
 		print_directions(fp,numprints,tlinesc[counter]);
 	}*/
 	fclose(fp);
-	//TraceObject * tobject = new TraceObject();
-	//tobject->ReadFromSWCFile("ftemp.swc");
-	//vtkSmartPointer<vtkPolyData> debugpoly = tobject->GetVTKPolyData();
-	//vtkSmartPointer<vtkPolyDataMapper> debugpolymap = vtkSmartPointer<vtkPolyDataMapper>::New();
-	//vtkSmartPointer<vtkActor> debugactor = vtkSmartPointer<vtkActor>::New();
-	//debugpolymap->SetInput(debugpoly);
-	//debugactor->SetMapper(debugpolymap);
-	//this->Renderer->AddActor(debugactor);
+	TraceObject * tobject = new TraceObject();
+	tobject->ReadFromSWCFile("ftemp.swc");
+	vtkSmartPointer<vtkPolyData> debugpoly = tobject->GetVTKPolyData();
+	vtkSmartPointer<vtkPolyDataMapper> debugpolymap = vtkSmartPointer<vtkPolyDataMapper>::New();
+	vtkSmartPointer<vtkActor> debugactor = vtkSmartPointer<vtkActor>::New();
+	debugpolymap->SetInput(debugpoly);
+	debugactor->SetMapper(debugpolymap);
+	this->Renderer->AddActor(debugactor);
 
 	TraceLine * tl1 = reinterpret_cast<TraceLine*>(this->tobj->hashp[(unsigned long long int)12652]);
 	TraceLine * tl2 = reinterpret_cast<TraceLine*>(this->tobj->hashp[(unsigned long long int)2076]);
@@ -1629,7 +1629,7 @@ void View3D::DeleteEmptyLeafNodesRecursive(TraceLine* tline)
 	{
 		if(tline->GetSize()==0)
 		{
-			this->DeleteTrace(tline);
+			this->UnSafeDeleteTrace(tline);
 		}
 	}
 	else
