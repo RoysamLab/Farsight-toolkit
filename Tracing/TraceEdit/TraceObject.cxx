@@ -1599,7 +1599,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
     }
     RemoveTraceLine(tother);
     tmarker->setTraceColor(this->mergeLineColor); //tline->setTraceColor(1.0/tline->GetType());
-  }
+  }// f-b
   else if (slocation ==1 && elocation == 0)
   {
     tother->GetTraceBitsPointer()->splice(tother->GetTraceBitIteratorEnd(),*(tmarker->GetTraceBitsPointer()));
@@ -1634,6 +1634,10 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 		  return;
 	  }
     ReverseSegment(tother);
+	/*this->BranchPoints.clear();
+	this->explode(this->findTraceByID( tother->GetRootID()));
+	this->isParent(tother->GetId());
+	this->cleanTree();*/
     tother->GetTraceBitsPointer()->splice(tother->GetTraceBitIteratorEnd(),*(tmarker->GetTraceBitsPointer()));
     FixPointMarkers(tother);
     *(tother->GetBranchPointer())=*(tmarker->GetBranchPointer());
@@ -1901,7 +1905,7 @@ int TraceObject::createGapLists(std::vector<TraceLine*> traceList)
       return -1;
       }
 	int id1 = traceList[i]->GetId(), r1= traceList[i]->GetRootID();
-	if ((( id1 != r1) && !traceList[i]->isLeaf() )||(traceList[i]->GetSize() < 3))
+	if ((!traceList[i]->isRoot()  && !traceList[i]->isLeaf() )||(traceList[i]->GetSize() < 3))
 	{//is neither root or leaf, nor large enough: cannot merge
 		continue;	
 	}
@@ -1911,22 +1915,22 @@ int TraceObject::createGapLists(std::vector<TraceLine*> traceList)
       newGap->Trace1 = traceList[i];
       newGap->Trace2 = traceList[j];
 	  int id2= newGap->Trace2->GetId(), r2=newGap->Trace2->GetRootID() ;
-	  if ((( id2 != r2) && !newGap->Trace2->isLeaf() )||(r1 == r2))
+	  if (( !newGap->Trace2->isRoot()&& !newGap->Trace2->isLeaf() )||(r1 == r2))
 	  {
-		continue;	//is neither root or leaf cannot merge
+		continue;	//is neither root or leaf cannot merge or form loop
 	  }
-	  if ((( id1 != r1) &&(id2 != r2))||(newGap->Trace2->GetSize() < 3))
-	  {/*
-		  if (newGap->Trace1->GetLevel() > newGap->Trace2->GetLevel())
-		  {
-			  this->ReverseSegment(newGap->Trace2);
-		  }
-		  else
-		  {
-			  this->ReverseSegment(newGap->Trace1);
-		  }*/		//remove this comment to reverse tree structure
-		  continue;
-	  }
+	  //if ((( id1 != r1) &&(id2 != r2))||(newGap->Trace2->GetSize() < 3))
+	  //{/*
+		 // if (newGap->Trace1->GetLevel() > newGap->Trace2->GetLevel())
+		 // {
+			//  this->ReverseSegment(newGap->Trace2);
+		 // }
+		 // else
+		 // {
+			//  this->ReverseSegment(newGap->Trace1);
+		 // }*/		//remove this comment to reverse tree structure
+		 // continue;
+	  //}
       if (!newGap->Trace1->EndPtDist(
           newGap->Trace2,newGap->endPT1, newGap->endPT2, 
           newGap->dist, newGap->maxdist, newGap->angle))
