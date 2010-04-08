@@ -127,4 +127,66 @@ double ProjectManager::GetTranslationZ(int i)
 	return this->fileInfo.at(i).tz;
 }
 
+void ProjectManager::ReplaceTranslations(std::string fileName)
+{
+	const int MAXLINESIZE = 1024;	//Numbers could be in scientific notation in this file
+	char line[MAXLINESIZE];
+
+	//Open the file:
+	std::ifstream inFile; 
+	inFile.open( fileName.c_str() );
+	if ( !inFile.is_open() )
+		return;
+
+	//inFile.getline(line, MAXLINESIZE);
+	while ( !inFile.eof() ) //Get all values
+	{
+		inFile.getline(line, MAXLINESIZE);
+	
+		std::string bName;
+		std::vector<double> nT;
+
+		//Read the Image Name
+		char * pch = strtok (line, " ");
+		if( pch != NULL )
+		{
+			std::string iName = pch;
+			size_t found = iName.find_last_of("."); 
+			bName = iName.substr(0,found);
+			//std::cerr << "Base: " << bName << std::endl;
+		}
+
+		//Read the new translation values
+		pch = strtok (NULL, " ");
+		while (pch != NULL)
+		{
+			nT.push_back( atof(pch) );
+			pch = strtok (NULL, " ");
+		}
+
+		if(nT.size() < 3)
+		{
+			std::cerr << "Expected 3 coordinates not " << nT.size() << std::endl;
+			return;
+		}
+
+		//Look for the image in project and replace the values:
+		for (unsigned int i = 0; i < this->fileInfo.size(); i++)
+		{
+			std::string fName = this->fileInfo.at(i).fileName;
+			size_t found = fName.find(bName);
+			if( found != std::string::npos )
+			{
+				this->fileInfo.at(i).tx = nT.at(0);
+				this->fileInfo.at(i).ty = nT.at(1);
+				this->fileInfo.at(i).tz = nT.at(2);
+			}
+		}
+
+		//inFile.getline(line, MAXLINESIZE);
+	}
+	inFile.close();
+}
+
+
 } // end namespace ftk

@@ -18,6 +18,8 @@ limitations under the License.
 #include "tinyxml/tinyxml.h"
 #include <string>
 #include <vector>
+#include <iostream>
+#include <fstream>
 
 namespace ftk
 {
@@ -50,6 +52,9 @@ public:
 	double GetTranslationX(int i);
 	double GetTranslationY(int i);
 	double GetTranslationZ(int i);
+
+	void ReplaceTranslations(std::string fileName);
+
 private:
 	std::vector<FileInfoManager> fileInfo;
 };
