@@ -66,6 +66,7 @@ public:
 	void AddTraceBit(TraceBit tbit);
 	void removeLeadingBit();
 	TraceBit removeLastBit();
+	TraceBit removeFirstBit();
 	TraceBit GetBitXFromEnd(int x);
 	TraceBit GetBitXFromBegin(int x);
 	TraceBitsType::iterator GetTraceBitIteratorBegin();

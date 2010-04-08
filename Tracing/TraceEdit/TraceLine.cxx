@@ -244,6 +244,17 @@ TraceBit TraceLine::removeLastBit()
 	}
 	return lastBit;
 }
+TraceBit TraceLine::removeFirstBit()
+{
+	TraceBit firstBit = this->m_trace_bits.front();
+	if (this->m_trace_bits.size() > 1)
+	{
+		this->m_trace_bits.pop_front();
+	}
+	return firstBit;
+}
+
+//This is an error fix
 void TraceLine::removeLeadingBit()
 {
 	if (this->m_trace_bits.size() < 3)

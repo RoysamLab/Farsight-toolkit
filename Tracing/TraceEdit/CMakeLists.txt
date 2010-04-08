@@ -42,6 +42,9 @@ QT4_WRAP_CPP( GUI_MOC_SRCS View3D.h MergeModel.h TraceModel.h)
 ADD_EXECUTABLE(${PROJECT_NAME} ${EXE_TYPE} ${Sources} ${GUI_MOC_SRCS} )
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${Libraries} )
 
+ADD_EXECUTABLE(merge merge_main.cxx)
+TARGET_LINK_LIBRARIES(merge ${Libraries})
+
 SET(CPACK_PACKAGE_EXECUTABLES "${PROJECT_NAME};Trace Editor")
 
 if(APPLE)
