@@ -91,6 +91,7 @@ public:
 
 	void HighlightSelected(TraceLine* tline, double SelectColor);
 	void DeleteTrace(TraceLine *tline);
+	void UnSafeDeleteTrace(TraceLine *tline);
 	void AddChildren(TraceLine *trunk, std::vector<TraceLine*> childTraces);
 	void MergeSelectedTraces();
 	void setupLinkedSpace();

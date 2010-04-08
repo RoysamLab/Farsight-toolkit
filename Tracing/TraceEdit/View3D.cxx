@@ -2046,10 +2046,10 @@ void View3D::DeleteTrace(TraceLine *tline)
   std::vector<TraceLine*>* siblings;
   if(tline->GetParent()!=NULL)
     {
-		/*if(this->tobj->BreakOffBranch(tline, false))
+		if(this->tobj->BreakOffBranch(tline, false))
 		{
 			return;		//returns if sibling merged to parent
-		}*/
+		}
 		siblings = tline->GetParent()->GetBranchPointer();
     }
   else
@@ -2069,7 +2069,40 @@ void View3D::DeleteTrace(TraceLine *tline)
     }
   tline->SetParent(NULL);
 }
-
+void View3D::UnSafeDeleteTrace(TraceLine *tline)
+{
+  std::vector<TraceLine*> *children = tline->GetBranchPointer();
+  if(children->size()!=0)
+    {
+    for(unsigned int counter=0; counter<children->size(); counter++)
+      {
+      this->tobj->GetTraceLinesPointer()->push_back((*children)[counter]);  
+      (*children)[counter]->SetParent(NULL);
+      }
+    children->clear();
+    }   
+  std::vector<TraceLine*>* siblings;
+  if(tline->GetParent()!=NULL)
+    {
+		siblings = tline->GetParent()->GetBranchPointer();
+    }
+  else
+    {
+    siblings = this->tobj->GetTraceLinesPointer();
+    }
+  std::vector<TraceLine*>::iterator iter = siblings->begin();
+  std::vector<TraceLine*>::iterator iterend = siblings->end();
+  while(iter != iterend)
+    {
+    if(*iter== tline)
+      {
+      siblings->erase(iter);
+      break;
+      }
+    ++iter;
+    }
+  tline->SetParent(NULL);
+}
 /*	branching functions	*/
 void View3D::SetRoots()
 {
@@ -2491,7 +2524,7 @@ void View3D::FlipTree(TraceLine *thisLine)
 		this->tobj->cleanTree();
 		this->Rerender();
 		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
-		this->statusBar()->showMessage(tr("Reversed Selected Tree"));
+		this->EditLogDisplay->append(QString("Reversed Tree New Root is Trace: ")+QString::number(thisLine->GetId()));
 	}
 }
 void View3D::SetTraceType(int newType)
