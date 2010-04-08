@@ -2133,35 +2133,28 @@ void View3D::AddNewBranches()
 	unsigned int i=0;
 	TraceLine* trunk;
 	std::vector <TraceLine*> newChildren;
-	std::vector <TraceLine*> selected = this->TreeModel->GetSelectedTraces();
-	if (selected.size() > 2)
+	//std::vector <TraceLine*> selected; 
+	if (this->SelectedTraceIDs.size() > 2)
 	{
-		bool found = false;
-		while( i < selected.size()&&!found)
+		trunk =  reinterpret_cast<TraceLine*>(this->tobj->hashc[this->SelectedTraceIDs[0]]);
+		for (i=1;i<this->SelectedTraceIDs.size(); i++)
 		{
-			if (selected[i]->isLeaf()||selected[i]->isFree())
+			newChildren.push_back(reinterpret_cast<TraceLine*>(
+				this->tobj->hashc[this->SelectedTraceIDs[i]]));
+		}
+		if (trunk->isFree())
+		{
+			if (trunk->Orient(newChildren[0])||trunk->Orient(newChildren[1]))
 			{
-				trunk = selected[i];
-				found = true;
+				this->tobj->ReverseSegment(trunk);
 			}
-			else
-				i++;
 		}
-		if (!found)
+		for ( i = 0; i < newChildren.size(); i ++)
 		{
-			trunk = selected[0];
-		}
-		for ( i = 1; i < selected.size(); i ++)
-		{
-			if (!selected[i]->Orient(trunk))
+			if (!newChildren[i]->Orient(trunk))
 			{
-				this->tobj->ReverseSegment(selected[i]);
+				this->tobj->ReverseSegment(newChildren[i]);
 			}
-			newChildren.push_back(selected[i]);
-		}
-		if (trunk->Orient(selected[2]))
-		{
-			this->tobj->ReverseSegment(trunk);
 		}
 		this->AddChildren(trunk, newChildren);
 		this->ClearSelection();
