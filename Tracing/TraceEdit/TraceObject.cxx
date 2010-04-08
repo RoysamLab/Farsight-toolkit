@@ -1588,30 +1588,46 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 
   if(slocation ==0 && elocation ==1)
   {
-    TraceLine::TraceBitsType::iterator iter = tother->GetTraceBitIteratorBegin();
-    tmarker->GetTraceBitsPointer()->splice(tmarker->GetTraceBitIteratorEnd(),*(tother->GetTraceBitsPointer()));
-    FixPointMarkers(tmarker);
-    *(tmarker->GetBranchPointer())=*(tother->GetBranchPointer());
-    tother->GetBranchPointer()->clear();
-    for(unsigned int counter=0; counter< tmarker->GetBranchPointer()->size(); counter++)
-    {
-      (*tmarker->GetBranchPointer())[counter]->SetParent(tmarker);
-    }
-    RemoveTraceLine(tother);
-    tmarker->setTraceColor(this->mergeLineColor); //tline->setTraceColor(1.0/tline->GetType());
+	  if((tmarker->isLeaf()||tmarker->isFree()) && (tother->isRoot() ))
+	  {
+		TraceLine::TraceBitsType::iterator iter = tother->GetTraceBitIteratorBegin();
+		tmarker->GetTraceBitsPointer()->splice(tmarker->GetTraceBitIteratorEnd(),*(tother->GetTraceBitsPointer()));
+		FixPointMarkers(tmarker);
+		*(tmarker->GetBranchPointer())=*(tother->GetBranchPointer());
+		for(unsigned int counter=0; counter< tmarker->GetBranchPointer()->size(); counter++)
+		{
+		  (*tmarker->GetBranchPointer())[counter]->SetParent(tmarker);
+		}
+		tother->GetBranchPointer()->clear();
+		RemoveTraceLine(tother);
+		tmarker->setTraceColor(this->mergeLineColor); //tline->setTraceColor(1.0/tline->GetType());
+	  }
+	  else
+	  {
+		  printf("Failed 0,1\n");
+		  return;
+	  }
   }// f-b
   else if (slocation ==1 && elocation == 0)
   {
-    tother->GetTraceBitsPointer()->splice(tother->GetTraceBitIteratorEnd(),*(tmarker->GetTraceBitsPointer()));
-    FixPointMarkers(tother);
-    *(tother->GetBranchPointer())=*(tmarker->GetBranchPointer());
-    tmarker->GetBranchPointer()->clear();
-    for(unsigned int counter=0; counter< tother->GetBranchPointer()->size(); counter++)
-    {
-      (*tother->GetBranchPointer())[counter]->SetParent(tother);
-    }
-    RemoveTraceLine(tmarker);
-    tother->setTraceColor(this->mergeLineColor);
+	  if((tother->isLeaf()||tother->isFree()) && (tmarker->isRoot() ))
+	  {
+		tother->GetTraceBitsPointer()->splice(tother->GetTraceBitIteratorEnd(),*(tmarker->GetTraceBitsPointer()));
+		FixPointMarkers(tother);
+		*(tother->GetBranchPointer())=*(tmarker->GetBranchPointer());
+		for(unsigned int counter=0; counter< tother->GetBranchPointer()->size(); counter++)
+		{
+		  (*tother->GetBranchPointer())[counter]->SetParent(tother);
+		}
+		tmarker->GetBranchPointer()->clear();
+		RemoveTraceLine(tmarker);
+		tother->setTraceColor(this->mergeLineColor);
+	  }
+	  else
+	  {
+		  printf("Failed 1,0\n");
+		  return;
+	  }
   }
   else if (slocation == 0 && elocation ==0)
   {
@@ -1630,22 +1646,18 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 	  }
 	  else
 	  {
-		  printf("Cannot merge two leaf nodes of two trees\n");
+		  printf("Cannot merge two root nodes of two trees\n");
 		  return;
 	  }
     ReverseSegment(tother);
-	/*this->BranchPoints.clear();
-	this->explode(this->findTraceByID( tother->GetRootID()));
-	this->isParent(tother->GetId());
-	this->cleanTree();*/
     tother->GetTraceBitsPointer()->splice(tother->GetTraceBitIteratorEnd(),*(tmarker->GetTraceBitsPointer()));
     FixPointMarkers(tother);
     *(tother->GetBranchPointer())=*(tmarker->GetBranchPointer());
-    tmarker->GetBranchPointer()->clear();
     for(unsigned int counter=0; counter< tother->GetBranchPointer()->size(); counter++)
     {
       (*tother->GetBranchPointer())[counter]->SetParent(tother);
     }
+    tmarker->GetBranchPointer()->clear();
     RemoveTraceLine(tmarker);
     tother->setTraceColor(this->mergeLineColor);//.7/tother->GetType()
   }
@@ -1653,6 +1665,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
   {
 	  if(tmarker->GetBranchPointer()->size()==0 && tmarker->GetParent()==NULL) 
 	  {
+		  ReverseSegment(tmarker);
 		  TraceLine *tttemp = tmarker;
 		  tmarker = tother;
 		  tother = tttemp;
@@ -1663,21 +1676,25 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 	  }
 	  else if(tother->GetBranchPointer()->size()==0 && tother->GetParent()==NULL) 
 	  {
+		  ReverseSegment(tother);
 	  }
 	  else
-	  {
-		  printf("Cannot merge two leaf nodes of two trees\n");
+	  {/*
+			this->BranchPoints.clear();
+			this->explode(this->findTraceByID( tother->GetRootID()));
+			this->isParent(tother->GetId());
+			this->cleanTree();*/
 		  return;
+		  printf("Merge two leaf nodes\n");
 	  }
-    ReverseSegment(tother);
     tmarker->GetTraceBitsPointer()->splice(tmarker->GetTraceBitIteratorEnd(),*(tother->GetTraceBitsPointer()));
     FixPointMarkers(tmarker);
     *(tmarker->GetBranchPointer())=*(tother->GetBranchPointer());
-    tother->GetBranchPointer()->clear();
     for(unsigned int counter=0; counter< tmarker->GetBranchPointer()->size(); counter++)
     {
       (*tmarker->GetBranchPointer())[counter]->SetParent(tmarker);
     }
+    tother->GetBranchPointer()->clear();
     RemoveTraceLine(tother);
     tmarker->setTraceColor(this->mergeLineColor);
   }
@@ -1905,7 +1922,7 @@ int TraceObject::createGapLists(std::vector<TraceLine*> traceList)
       return -1;
       }
 	int id1 = traceList[i]->GetId(), r1= traceList[i]->GetRootID();
-	if ((!traceList[i]->isRoot()  && !traceList[i]->isLeaf() )||(traceList[i]->GetSize() < 3))
+	if ((!traceList[i]->isRoot()  && !traceList[i]->isLeaf() )||(traceList[i]->GetSize() < 2))
 	{//is neither root or leaf, nor large enough: cannot merge
 		continue;	
 	}
