@@ -65,7 +65,7 @@ def register(argv):
     print("\nSTART...")
     cmd_executed = False;
     if (numPairs > 1):
-        if (argv[2] !=''): #multiple channels
+        if (len(argv) > 2): #multiple channels
             fc = open(argv[2],'r');
             fc_o = open(argv[2]+'_123.txt','w')
             channel_count = 0;

@@ -23,6 +23,9 @@ TARGET_LINK_LIBRARIES( lsm_to_tiff ftkImage ITKCommon ITKIO)
 ADD_EXECUTABLE( transform_segmentation_results transform_segmentation_results.cxx)
 TARGET_LINK_LIBRARIES( transform_segmentation_results fregl vnl )
 
+ADD_EXECUTABLE( extract_translations extract_translations.cxx)
+TARGET_LINK_LIBRARIES( extract_translations fregl vnl )
+
 ADD_EXECUTABLE( manual_translation manual_translation.cxx)
 TARGET_LINK_LIBRARIES( manual_translation fregl vul ITKCommon )
 
