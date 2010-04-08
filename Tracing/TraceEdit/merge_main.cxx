@@ -30,11 +30,17 @@ int main(int argc, char *argv[])
 {
 	if(argc < 3)
 	{
-		std::cout << " Usage: " << argv[0] << " InputProject(xml) OutputFile(swc)" << std::endl;
+		std::cout << " Usage: " << argv[0] << " InputProject(xml) OutputFile(swc) <AlternateTranslations(txt)>" << std::endl;
 	}
 
 	char * projFilename = argv[1];
 	char * outFilename = argv[2];
+	char * altTrans = NULL;
+
+	if(argc == 4)
+	{
+		altTrans = argv[3];
+	}
 
 	int len = strlen(projFilename);
 	if( strcmp(projFilename+len-3, "xml" ) != 0)
@@ -44,6 +50,12 @@ int main(int argc, char *argv[])
 
 	TraceObject allTraces;
 	ftk::ProjectManager project(projFilename);
+
+	if(altTrans)
+	{
+		project.ReplaceTranslations(altTrans);
+		//project.writeProject("newTproject.xml");
+	}
 
 	for (unsigned int i = 0; i < project.size(); i++)
 	{ 
@@ -81,6 +93,9 @@ int main(int argc, char *argv[])
 	}
 
 	allTraces.WriteToSWCFile(outFilename);
+
+	//std::cerr << "PRESS ENTER TO EXIT\n";
+	//getchar();
 
 	return EXIT_SUCCESS;
 }
