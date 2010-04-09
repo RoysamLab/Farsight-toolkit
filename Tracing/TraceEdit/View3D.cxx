@@ -35,6 +35,9 @@ limitations under the License.
 
 #include "itkImageFileReader.h"
 #include "itkImageToVTKImageFilter.h"
+#include "vnl/vnl_cost_function.h"
+#include "vnl/algo/vnl_conjugate_gradient.h"
+#include "vnl/algo/vnl_powell.h"
 
 #include <QAction>
 #include <QtGui>
@@ -1171,6 +1174,220 @@ void View3D::AddPointsAsPoints(std::vector<TraceBit> vec)
   Renderer->AddActor(PointsActor);
 
 }
+
+#define SIGN(x) (((x)>0)?1:-1)
+class my_vnl_cost_function: public vnl_cost_function
+{
+public:
+	my_vnl_cost_function(): vnl_cost_function(2){}
+
+
+	double f1(const vnl_vector<double>& x) {
+		double sum = 0;
+		for(int counter = 0; counter < zvals.size(); counter++)
+		{
+			sum = sum + abs( zvals[counter] - x[0] - counter*1.0/(zvals.size()-1)*(x[1]-x[0]));
+		}
+		return sum;
+	}
+	void gradf1(const vnl_vector<double>& x, vnl_vector<double>& g)
+	{
+		g[0] = 0;
+		g[1] = 0;
+		for(int counter = 0; counter < zvals.size(); counter++)
+		{
+			double lambda = counter*1.0/(zvals.size()-1);
+			g[0] = g[0] + (1-lambda)*SIGN( zvals[counter] - x[0] - lambda*(x[1] - x[0]),c);
+			g[1] = g[1] + lambda*SIGN( zvals[counter] - x[0] - lambda*(x[1] - x[0]),c);
+		}
+		//printf("gradf = %lf %lf\n",g[0],g[1]);
+	}
+	double f(const vnl_vector<double>& x) {
+		double sum = 0;
+		for(int counter = 0; counter < zvals.size(); counter++)
+		{
+			sum = sum + tukeysbiweightrho( zvals[counter] - x[0] - counter*1.0/(zvals.size()-1)*(x[1]-x[0]),c);
+		}
+		//printf("f = %lf\n",sum);
+		return sum;
+	}
+
+	void gradf(const vnl_vector<double>& x, vnl_vector<double>& g)
+	{
+		g[0] = 0;
+		g[1] = 0;
+		for(int counter = 0; counter < zvals.size(); counter++)
+		{
+			double lambda = counter*1.0/(zvals.size()-1);
+			g[0] = g[0] + (1-lambda)*tukeysbiweightpsi( zvals[counter] - x[0] - lambda*(x[1] - x[0]),c);
+			g[1] = g[1] + lambda*tukeysbiweightpsi( zvals[counter] - x[0] - lambda*(x[1] - x[0]),c);
+		}
+		//printf("gradf = %lf %lf\n",g[0],g[1]);
+	}
+	double tukeysbiweightrho(double x, double c)
+	{
+		if( abs(x) >c)
+			return c*c/6;
+		else
+		{
+			double val = c*c/6 + (x*x-c*c)/2 - (pow(x,4)-pow(c,4))/2/c/c + (pow(x,6)-pow(c,6))/6/pow(c,4);
+			return val;
+		}
+	}
+	double tukeysbiweightpsi(double x,double c)
+	{
+		if( abs(x) > c)
+		{
+			return 0;
+		}
+		else
+		{
+			return x*(1-x*x/c/c)*(1-x*x/c/c);
+		}
+	}
+
+	std::vector<double> zvals;
+	double c;
+};
+
+void get_best_fit_z(std::vector<double> &zvals,double &z1, double &z2)
+{
+
+	my_vnl_cost_function cf;
+	cf.zvals = zvals;
+	cf.c = 12;
+	vnl_conjugate_gradient cg(cf);
+	vnl_powell po(&cf);
+	vnl_vector<double> x(2);
+	x[0] = z1;
+	x[1] = z2;
+	cg.set_trace(1);
+	cg.set_verbose(1);
+	cg.set_f_tolerance(10);
+	po.minimize(x);
+
+	z1 = x[0];
+	z2 = x[1];
+	std::cout<< "Min at" << x <<std::endl;
+	//po.diagnose_outcome();
+	//cg.minimize(x);
+	//std::cout << "Failure code "<< cg.get_failure_code() <<std::endl;
+	//std::cout << "Min at" << x << std::endl;
+	//cg.diagnose_outcome();
+
+
+
+}
+std::vector<int> View3D::getHippocampalTraceIDsToDelete_v2(int z_threshold, int look_ahead)
+{
+#define MAX(a,b) (((a) > (b))?(a):(b))
+#define MIN(a,b) (((a) < (b))?(a):(b))
+	std::vector<TraceLine*> tl = this->tobj->GetTraceLines();
+	std::vector<int> to_del;
+	//int z_threshold = 6;
+	for(int counter=0; counter < tl.size(); counter++)
+	{
+		std::vector<double> zvals;
+		std::vector<unsigned int> *alltids = tl[counter]->GetMarkers();
+		bool has_parent = false;
+		double zsum = 0;
+		if(tl[counter]->GetParent()!=NULL)
+		{
+			has_parent = true;
+			zvals.push_back(tl[counter]->GetParent()->GetBitXFromEnd(1).z);
+			zsum = zsum + zvals.back();
+		}
+
+		TraceLine::TraceBitsType::iterator iter1,iter2,iter3;
+		
+		iter1 = tl[counter]->GetTraceBitIteratorBegin();
+		iter2 = tl[counter]->GetTraceBitIteratorEnd();
+		for(;iter1!=iter2;++iter1)
+		{
+			zvals.push_back(iter1->z);
+			zsum = zsum + zvals.back();
+		}
+
+		int counter1 = 0;
+		if(has_parent)
+			counter1++;
+
+		std::vector<unsigned int> tids;
+		tids.clear();
+		int gmin = 0;
+		int gmax = alltids->size()-1;
+		if(has_parent)
+		{
+			gmin = MIN(2,zvals.size()-1);
+		}
+		if(tl[counter]->GetBranchPointer()->size()!=0)
+		{
+			gmax = MAX(gmax-2,0);
+		}
+
+
+		double z1,z2;
+		z1 = zsum/zvals.size();
+		z2 = z1;
+		get_best_fit_z(zvals,z1,z2);
+
+		printf("size = %d, has_parent = %d markers.size()= %d\n", zvals.size(), has_parent, alltids->size());
+		iter1 = tl[counter]->GetTraceBitIteratorBegin();
+		for(;counter1<zvals.size(); counter1++)
+		{
+				if(abs(z1+(counter1)*1.0/(zvals.size()-1)*(z2-z1)-zvals[counter1])>z_threshold)
+				{
+					printf("adding counter1 = %d\n",counter1);
+						if(counter1>=gmin && counter1<=gmax)
+							tids.push_back((*alltids)[counter1]);
+						if(counter1-1>=gmin && counter1-1<=gmax)
+							tids.push_back((*alltids)[counter1-1]);
+						/*if(counter1>=gmin && counter1<=gmax)
+							tids.push_back(counter1);
+						if(counter1-1>=gmin && counter1-1<=gmax)
+							tids.push_back(counter1-1);*/
+				}
+				else
+				{
+					iter1->z = z1+(counter1)*1.0/(zvals.size()-1)*(z2-z1);
+				}
+				++iter1;
+
+		}
+		if(iter1!=iter2)
+		{
+			printf("Something is wrong\n");
+			cin.get();
+		}
+		std::sort(tids.begin(),tids.end());
+		std::vector<unsigned int>::iterator iter = std::unique(tids.begin(),tids.end());
+		tids.erase(iter,tids.end());
+		
+
+
+		for(int counter =tids.size()-1; counter >=0; counter--)
+			to_del.push_back(tids[counter]);
+
+		/*if(tids.size()>0)
+		{
+		to_del.push_back((*alltids)[tids[tids.size()-1]]);
+		for(int counter =tids.size()-2; counter >0; counter--)
+		{
+			if(tids[counter+1] != tids[counter]+1)
+			{
+				to_del.push_back((*alltids)[tids[counter]]);
+			}
+			else if(tids[counter-1] != tids[counter]-1)
+			{
+				to_del.push_back((*alltids)[tids[counter]]);
+			}
+		}
+		to_del.push_back((*alltids)[tids[0]]);
+		}*/
+
+	}
+	return to_del;
+}
 std::vector<int> View3D::getHippocampalTraceIDsToDelete(int z_threshold, int look_ahead)
 {
 #define MAX(a,b) (((a) > (b))?(a):(b))
@@ -1337,7 +1554,7 @@ double canConnect(TraceBit one,TraceBit two)
 	printf("two dir is correct = %f %f %f\n",two.dx,two.dy,two.dz);*/
 	float dist_sigma = 20;
 	float z_thresh = 15;
-	float initial_offset = 5;
+	float initial_offset = 0;
 	one.x = one.x - initial_offset*one.dx;
 	one.y = one.y - initial_offset*one.dy;
 	one.z = one.z - initial_offset*one.dz;
@@ -1432,7 +1649,20 @@ void View3D::HandleHippocampalDataset()
 {
 	//printf("I came here\n");
 	
-	
+	// test robust line estimation
+
+	//std::vector<double> ztest;
+	//for(int co = 0; co < 1000; co++)
+	//{
+	//	if(co %4 !=0)
+	//		ztest.push_back(0);
+	//	else
+	//		ztest.push_back(rand()%20);
+	//}
+	//double z1, z2;
+	//get_best_fit_z(ztest,z1,z2);
+
+	//return;
 	char buff[1024];
 	sprintf(buff,"C:\\Users\\arun\\Research\\Diadem_testing\\hippocampal_swc\\section_01\\full_image_traces.swc");
 	QString trace = buff;
@@ -1462,7 +1692,7 @@ void View3D::HandleHippocampalDataset()
 	//}
 
 	
-	std::vector<int> to_del = getHippocampalTraceIDsToDelete(7,4);
+	std::vector<int> to_del = getHippocampalTraceIDsToDelete_v2(7,4);
 	printf("To delete = %d\n",to_del.size());
 	this->SelectedTraceIDs = to_del;
 	this->SplitTraces();
@@ -1481,7 +1711,7 @@ void View3D::HandleHippocampalDataset()
 	tlinepointer = this->tobj->GetTraceLinesPointer();
 	for (int counter = 0; counter < tlinepointer->size(); counter++)
 	{
-		if((*tlinepointer)[counter]->GetSize() < 4 && (*tlinepointer)[counter]->GetBranchPointer()->size() == 0)
+		if((*tlinepointer)[counter]->GetSize() < 2 && (*tlinepointer)[counter]->GetBranchPointer()->size() == 0)
 			tldel.push_back((*tlinepointer)[counter]);
 	}
 	printf("current trace_lines size = %d\n",tlinepointer->size());
@@ -1494,6 +1724,7 @@ void View3D::HandleHippocampalDataset()
 	this->Rerender();
 	
 	printf("Waiting after Zdeleting\n");
+	//return;
 	//std::cin.get();
 
 	//return;
@@ -1507,6 +1738,7 @@ void View3D::HandleHippocampalDataset()
 	this->Rerender();
 	
 	printf("Waiting after smoothzrecursive\n");
+	//return;
 	//std::cin.get();
 	
 	//scanf("%*d\n");
@@ -1514,11 +1746,11 @@ void View3D::HandleHippocampalDataset()
 	this->SelectedTraceIDs = to_del;
 	this->SplitTraces();*/
 
-	/*tlinepointer = this->tobj->GetTraceLinesPointer();
+	tlinepointer = this->tobj->GetTraceLinesPointer();
 	for (int counter = 0; counter < tlinepointer->size(); counter++)
 	{
 		DeleteEmptyLeafNodesRecursive((*tlinepointer)[counter]);
-	}*/
+	}
 	
 	printf("going to merge fragments\n");
 	// merge fragments
@@ -1572,15 +1804,16 @@ void View3D::HandleHippocampalDataset()
 		done[counter] = 0;
 	}
 	int gaps_merged = 0;
+	//return ;
 	for(int counter =0; counter < gaps.size(); counter++)
 	{
 		if(done[gaps[counter].c1] ==0 && done[gaps[counter].c2] ==0)
 		{
 			gaps_merged ++;//FIXME : need to correctly count the ones not rejected by the mergeTraces.. 
 							//make mergeTraces return a bool to check for error
-			//this->tobj->mergeTraces(cricbits[gaps[counter].c1].marker,cricbits[gaps[counter].c2].marker);
-			fprintf(fp,"%d 1 %0.2lf %0.2lf %0.2lf 1.0 %d\n",gaps_merged*2-1,cricbits[gaps[counter].c1].x, cricbits[gaps[counter].c1].y, cricbits[gaps[counter].c1].z, -1);
-			fprintf(fp,"%d 1 %0.2lf %0.2lf %0.2lf 1.0 %d\n",gaps_merged*2,cricbits[gaps[counter].c2].x, cricbits[gaps[counter].c2].y, cricbits[gaps[counter].c2].z,gaps_merged*2-1);
+			 this->tobj->mergeTraces(cricbits[gaps[counter].c1].marker,cricbits[gaps[counter].c2].marker);
+			 //fprintf(fp,"%d 1 %0.2lf %0.2lf %0.2lf 1.0 %d\n",gaps_merged*2-1,cricbits[gaps[counter].c1].x, cricbits[gaps[counter].c1].y, cricbits[gaps[counter].c1].z, -1);
+			 //fprintf(fp,"%d 1 %0.2lf %0.2lf %0.2lf 1.0 %d\n",gaps_merged*2,cricbits[gaps[counter].c2].x, cricbits[gaps[counter].c2].y, cricbits[gaps[counter].c2].z,gaps_merged*2-1);
 			int id1 = this->tobj->hashp[cricbits[gaps[counter].c1].marker];
 			int id2 = this->tobj->hashp[cricbits[gaps[counter].c2].marker];
 			if(id1 == 786 || id1 == 789 || id2 == 786 || id2 == 789)
@@ -1617,8 +1850,8 @@ void View3D::HandleHippocampalDataset()
 	debugactor->SetMapper(debugpolymap);
 	this->Renderer->AddActor(debugactor);
 
-	TraceLine * tl1 = reinterpret_cast<TraceLine*>(this->tobj->hashp[(unsigned long long int)12652]);
-	TraceLine * tl2 = reinterpret_cast<TraceLine*>(this->tobj->hashp[(unsigned long long int)2076]);
+	//TraceLine * tl1 = reinterpret_cast<TraceLine*>(this->tobj->hashp[(unsigned long long int)12652]);
+	//TraceLine * tl2 = reinterpret_cast<TraceLine*>(this->tobj->hashp[(unsigned long long int)2076]);
 	this->tobj->WriteToSWCFile("postprocessed.swc");
 return;
 	//this->TreeModel->SetTraces(this->tobj->GetTraceLines());

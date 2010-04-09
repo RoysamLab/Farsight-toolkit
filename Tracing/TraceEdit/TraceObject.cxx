@@ -1394,8 +1394,8 @@ void TraceObject::splitTrace(int selectedCellId)
 
   if(selectedLine->GetSize() < 2)
   {
-    //cerr << "Cannot split a TraceLine that consists of fewer than two points, ";
-    //cerr << "Call (d)elete instead." << endl;
+    cerr << "Cannot split a TraceLine that consists of fewer than two points, ";
+    cerr << "Call (d)elete instead." << endl;
     return;
   }
 
