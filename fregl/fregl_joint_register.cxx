@@ -137,10 +137,13 @@ initialize(std::vector<fregl_reg_record::Pointer> const & reg_records)
         to_image_index = j;
     }
 
-    transforms_(from_image_index, to_image_index) = reg_records[i]->transform();
+    // Only image pairs with valid xforms are import the xforms to
+    // transforms_
+    if (reg_records[i]->obj()< error_bound_)
+      transforms_(from_image_index, to_image_index) = reg_records[i]->transform();
     obj_(from_image_index, to_image_index) = reg_records[i]->obj();
     overlap_(from_image_index, to_image_index) = reg_records[i]->overlap();
-    
+    //transforms_(from_image_index, to_image_index) = reg_records[i]->transform();
     /*
     if (reg_records[i]->obj()< error_bound_)
       overlap_(from_image_index, to_image_index) = reg_records[i]->overlap();
@@ -330,6 +333,8 @@ is_overlapped(int from, int to) const
   else return false;
 }
 
+// For this connection, exisiting pairwise links are copied over, and
+// missing linkes are inferred from the exisiting pairwise transforms.
 void 
 fregl_joint_register::
 breadth_first_connect( int anchor ) 
@@ -644,8 +649,11 @@ generate_correspondences()
   SizeType size_from, size_to; 
   for (unsigned int from = 0; from<image_ids_.size(); from++) {
     for (unsigned int to = from+1; to<image_ids_.size(); to++) {
-      if ( overlap_[from][to] > 0 ) {
-        // generate the correspondences if two images overlap
+      // generate the correspondences if two images have a valid obj
+      // value
+      if ( obj_(from,to)<error_bound_ ) {
+        //if ( overlap_(from,to) > 0 ) {
+        
         size_from = image_sizes_[from];
         int z_space = vnl_math_min(10, int(size_from[2]/3));
         size_to = image_sizes_[to];
@@ -741,6 +749,7 @@ write_xml(std::string const& filename, bool mutual_consistency, bool gen_temp_st
       fregl_reg_record::Pointer reg_rec = this->get_reg_record(i,j);
       reg_rec->write_xml_node(root_node);
 
+      // dump to the output files for debugging
       if (gen_temp_stuff && i>j) {
         if (reg_rec->obj()< 1) {
           if (reg_rec->obj() < error_bound_)

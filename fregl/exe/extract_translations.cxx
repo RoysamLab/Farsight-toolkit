@@ -59,8 +59,10 @@ main( int argc, char* argv[] )
 
   for (unsigned int img_ind = 0; img_ind<image_names.size(); img_ind++) {
     TransformType::Pointer xform = joint_register->get_transform(image_names[img_ind], arg_file_to().c_str());
-    TransformType::ParametersType params = xform->GetParameters();
-    output<<image_names[img_ind]<<" "<<params[9]-origin[0]<<" "<<params[10]-origin[1]<<" "<<params[11]-origin[2]<<std::endl;
+    if ( xform ) { //there might be no xform for the image pair
+      TransformType::ParametersType params = xform->GetParameters();
+      output<<image_names[img_ind]<<" "<<params[9]-origin[0]<<" "<<params[10]-origin[1]<<" "<<params[11]-origin[2]<<std::endl;
+    }
   }
   
   output.close();
