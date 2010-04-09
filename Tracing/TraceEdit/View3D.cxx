@@ -1663,9 +1663,9 @@ void View3D::HandleHippocampalDataset()
 	//get_best_fit_z(ztest,z1,z2);
 
 	//return;
-	char buff[1024];
-	sprintf(buff,"C:\\Users\\arun\\Research\\Diadem_testing\\hippocampal_swc\\section_01\\full_image_traces.swc");
-	QString trace = buff;
+	//char buff[1024];
+	//sprintf(buff,"C:\\Users\\arun\\Research\\Diadem_testing\\hippocampal_swc\\section_01\\full_image_traces.swc");
+	//QString trace = buff;
 	//this->tobj->ReadFromSWCFile((char*)trace.toStdString().c_str());
 	/*this->statusBar()->showMessage(tr("Loading Trace") + trace);
 	this->EditLogDisplay->append("Trace file: \t" + this->TraceFiles.last());
@@ -1767,7 +1767,7 @@ void View3D::HandleHippocampalDataset()
 
 	int merge_count = 0;
 	
-	FILE *fp = fopen("ftemp.swc","w");
+	//FILE *fp = fopen("ftemp.swc","w");
 	int line_count = 1;
 	std::vector<Gaplet> gaps;
 	for(int counter = 0; counter < cricbits.size(); counter++)
@@ -1840,19 +1840,19 @@ void View3D::HandleHippocampalDataset()
 	{
 		print_directions(fp,numprints,tlinesc[counter]);
 	}*/
-	fclose(fp);
-	TraceObject * tobject = new TraceObject();
+	//fclose(fp);
+	/*TraceObject * tobject = new TraceObject();
 	tobject->ReadFromSWCFile("ftemp.swc");
 	vtkSmartPointer<vtkPolyData> debugpoly = tobject->GetVTKPolyData();
 	vtkSmartPointer<vtkPolyDataMapper> debugpolymap = vtkSmartPointer<vtkPolyDataMapper>::New();
 	vtkSmartPointer<vtkActor> debugactor = vtkSmartPointer<vtkActor>::New();
 	debugpolymap->SetInput(debugpoly);
 	debugactor->SetMapper(debugpolymap);
-	this->Renderer->AddActor(debugactor);
+	this->Renderer->AddActor(debugactor);*/
 
 	//TraceLine * tl1 = reinterpret_cast<TraceLine*>(this->tobj->hashp[(unsigned long long int)12652]);
 	//TraceLine * tl2 = reinterpret_cast<TraceLine*>(this->tobj->hashp[(unsigned long long int)2076]);
-	this->tobj->WriteToSWCFile("postprocessed.swc");
+	//this->tobj->WriteToSWCFile("postprocessed.swc");
 return;
 	//this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 }

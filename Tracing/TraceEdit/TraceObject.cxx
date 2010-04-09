@@ -2167,9 +2167,30 @@ bool TraceObject::BreakOffBranch(TraceLine *branch, bool keep)
 		  //if 
 		  branch->removeLeadingBit();
 		  this->trace_lines.push_back(branch);
-	  }
+	  }//end branch->GetSize()>3
       return true;
-      }
+      }//end siblings->size()==2
+	else if (siblings->size() >2)
+	{
+		std::vector<TraceLine*>::iterator iter = siblings->begin();
+		std::vector<TraceLine*>::iterator iterend = siblings->end();
+		branch->SetParent(NULL);
+		if ((keep)&&(branch->GetSize()>3))
+		{//wont keep anything too small to work on
+		  //if 
+		  branch->removeLeadingBit();
+		  this->trace_lines.push_back(branch);
+		}//end branch->GetSize()>3
+		while(iter != iterend)
+		{
+			if(*iter== branch)
+			  {
+				  siblings->erase(iter);
+				  break;
+			  }
+			++iter;
+		}//end while
+	}
 	return false;
 }
 
