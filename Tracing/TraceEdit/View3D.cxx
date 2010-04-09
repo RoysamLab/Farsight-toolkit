@@ -2447,7 +2447,11 @@ void View3D::BreakBranch()
 	std::vector<TraceLine*> traces = this->TreeModel->GetSelectedTraces();
 	for (unsigned int i = 0; i < traces.size(); i++)
 	{
-		this->tobj->BreakOffBranch(traces.at(i),true);
+		int id = traces.at(i)->GetId();
+		if (this->tobj->BreakOffBranch(traces.at(i),true))
+		{
+			this->EditLogDisplay->append(QString("Freed ")+ QString::number(id) + QString("From Parent"));
+		}
 	}
 	//this->tobj->cleanTree();
 	this->Rerender();
@@ -2457,10 +2461,12 @@ void View3D::AddChildren(TraceLine *trunk, std::vector<TraceLine*> childTraces)
 {
 	for (unsigned int i = 0; i < childTraces.size(); i++)
 	{
+		this->EditLogDisplay->append(QString("Parent to append to: ")+QString::number(trunk->GetId()));
 		if (childTraces[i]->GetParentID() == -1)
 		{
 			childTraces[i]->SetParent(trunk);
 			trunk->AddBranch(childTraces[i]);
+			this->EditLogDisplay->append(QString("child Branches ")+QString::number(childTraces[i]->GetId()));
 		}//end check/make connection 
 	}//end child trace size loop
 }
@@ -2725,15 +2731,15 @@ void View3D::SplitTraces()
 	}
 
 	//scanf("%*d\n");
-	printf("About to finish up\n");
+	//printf("About to finish up\n");
 	this->numSplit += (int) this->SelectedTraceIDs.size();
-	printf("about to add things to edit log\n");
+	//printf("about to add things to edit log\n");
 	this->EditLogDisplay->append("split " + QString::number(this->SelectedTraceIDs.size()) +" Traces");
-	printf("About to clear selection\n");
+	//printf("About to clear selection\n");
 	this->ClearSelection();
-	printf("about to update status bar\n");
+	//printf("about to update status bar\n");
 	this->statusBar()->showMessage(tr("Update Tree Plots"));
-	printf("about to set tree model\n");
+	//printf("about to set tree model\n");
 	//this->TreeModel->SetTraces(this->tobj->GetTraceLines());
     }
   else
@@ -2755,6 +2761,7 @@ void View3D::FlipTraces()
 			{
 				//this->EditLogDisplay->append("\tTrace\t" + QString::number(thisLine->GetId()));
 				this->tobj->ReverseSegment(thisLine);
+				this->dtext += QString("\n") + QString(thisLine->stats().c_str() );
 				numFlipped++;
 			}
 			else if (thisLine->isLeaf())
