@@ -1100,6 +1100,7 @@ void View3D::HighlightSelected(TraceLine* tline, double color)
 void View3D::Rerender()
 {
   this->statusBar()->showMessage(tr("Rerender Image"));
+  this->tobj->cleanTree();
   this->SphereActor->VisibilityOff();
   this->SelectedTraceIDs.clear();
   /*this->MergeGaps->GetSelectionModel()->clearSelection();*/
@@ -2196,9 +2197,9 @@ void View3D::ClearSelection()
 	this->tobj->BranchPoints.clear();
 	this->myText.clear();
 	this->dtext.clear();
-	printf("About to rerender\n");
+	//printf("About to rerender\n");
 	this->Rerender();
-	printf("Finished rerendering\n");
+	//printf("Finished rerendering\n");
 	this->statusBar()->showMessage("All Clear", 4000);
 
 	//cout << this->TreePlot->pos().x() << ", " << this->TreePlot->pos().y() << endl;
@@ -2425,39 +2426,42 @@ void View3D::AddNewBranches()
 			}
 			if (!found)
 			{
-				if (!child->isRoot())
-				{
-					this->FlipTree(child);
-				}
 				newChildren.push_back(child);
 			}
 		}
-		if (trunk->isFree())
+		if (newChildren.size() >1)
 		{
-			if (trunk->Orient(newChildren[0])||trunk->Orient(newChildren[1]))
+			if (trunk->isFree())
 			{
-				this->tobj->ReverseSegment(trunk);
+				if (trunk->Orient(newChildren[0])&&trunk->Orient(newChildren[1]))
+				{
+					this->tobj->ReverseSegment(trunk);
+				}
 			}
-		}
-		else if(!trunk->isLeaf())
-		{
-			return;
-		}
-		for ( i = 0; i < newChildren.size(); i ++)
-		{
-			if (newChildren[i]->isFree())
+			else if(!trunk->isLeaf())
+			{
+				return;
+			}
+			for ( i = 0; i < newChildren.size(); i ++)
 			{
 				if (!newChildren[i]->Orient(trunk))
 				{
-					this->tobj->ReverseSegment(newChildren[i]);
+					if (!newChildren[i]->isFree())
+					{
+						this->FlipTree(newChildren[i]);
+					}
+					else
+					{
+						this->tobj->ReverseSegment(newChildren[i]);
+					}
 				}
 			}
+			this->AddChildren(trunk, newChildren);
+			this->ClearSelection();
+			this->statusBar()->showMessage(tr("Update Tree Plots"));
+			this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+			this->statusBar()->showMessage(tr("Branching complete"));
 		}
-		this->AddChildren(trunk, newChildren);
-		this->ClearSelection();
-		this->statusBar()->showMessage(tr("Update Tree Plots"));
-		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
-		this->statusBar()->showMessage(tr("Branching complete"));
 	}
 }
 void View3D::ExplodeTree()
