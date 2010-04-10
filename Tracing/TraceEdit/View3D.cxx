@@ -700,12 +700,12 @@ void View3D::CreateGUIObjects()
   this->GapToleranceField->setSingleStep(.1);
   //this->GapToleranceField->setValidator(intValidator);
   this->LineLengthField = new QSpinBox(this->SettingsWidget);
-  this->LineLengthField->setRange(0,100);
+  this->LineLengthField->setRange(0,1000);
   this->ColorValueField = new QDoubleSpinBox(this->SettingsWidget);
   this->ColorValueField->setRange(0,1);
   this->ColorValueField->setSingleStep(.01);
   this->LineWidthField = new QSpinBox(this->SettingsWidget);
-  this->LineWidthField->setRange(1,5);
+  this->LineWidthField->setRange(1,100);
   this->ApplySettingsButton = new QDialogButtonBox(QDialogButtonBox::SaveAll | QDialogButtonBox::Close);
   //this->CancelSettingsButton = new QPushButton("&Cancel", this->SettingsWidget);
   connect(this->ApplySettingsButton, SIGNAL(accepted()), this, SLOT(ApplyNewSettings()));
@@ -1060,7 +1060,7 @@ void View3D::showPTin3D()
 	ok = false;
 	while (!ok)
 	{
-		pos[3] = QInputDialog::getDouble(this, tr("set z"), tr("z value"), 0, -60000, 60000, 1, &ok);
+		pos[2] = QInputDialog::getDouble(this, tr("set z"), tr("z value"), 0, -60000, 60000, 1, &ok);
 	}
 	this->SphereActor->SetPosition(pos );
 	this->SphereActor->VisibilityOn();
@@ -1105,8 +1105,8 @@ void View3D::Rerender()
   this->Renderer->RemoveActor(this->BranchActor);
   this->Renderer->RemoveActor(this->PointsActor);
   
-  std::vector<TraceBit> vec = this->tobj->CollectTraceBits();
-  this->AddPointsAsPoints(vec);
+  /*std::vector<TraceBit> vec = this->tobj->CollectTraceBits();
+  this->AddPointsAsPoints(vec);*/
   this->UpdateLineActor();
   this->UpdateBranchActor();
   this->Renderer->AddActor(this->BranchActor); 
@@ -2217,6 +2217,7 @@ void View3D::SelectTrees()
 /*  delete traces functions */
 void View3D::DeleteTraces()
 {
+  this->SelectedTraceIDs.clear();
 	unsigned int i;
 	this->statusBar()->showMessage(tr("Deleting"));
 	std::vector<TraceLine*> traceList = this->TreeModel->GetSelectedTraces();
@@ -2374,6 +2375,7 @@ void View3D::UnSafeDeleteTrace(TraceLine *tline)
 void View3D::SetRoots()
 {
 	this->EditLogDisplay->append("Setting roots");
+	this->SelectedTraceIDs.clear();
 	if (this->tobj->BranchPoints.size()>1)
 	{
 		std::vector<int> ids = this->TreeModel->GetSelecectedIDs();
@@ -2406,8 +2408,28 @@ void View3D::AddNewBranches()
 		trunk =  reinterpret_cast<TraceLine*>(this->tobj->hashc[this->SelectedTraceIDs[0]]);
 		for (i=1;i<this->SelectedTraceIDs.size(); i++)
 		{
-			newChildren.push_back(reinterpret_cast<TraceLine*>(
-				this->tobj->hashc[this->SelectedTraceIDs[i]]));
+			TraceLine* child = reinterpret_cast<TraceLine*>(
+				this->tobj->hashc[this->SelectedTraceIDs[i]]);
+			if (child == trunk)
+			{
+				continue;
+			}
+			bool found = false;
+			for (unsigned int j = 0; j < newChildren.size();j++)
+			{
+				if (newChildren[j]->GetId() == child->GetId())
+				{
+					found = true; 
+				}
+			}
+			if (!found)
+			{
+				if (!child->isRoot())
+				{
+					this->FlipTree(child);
+				}
+				newChildren.push_back(child);
+			}
 		}
 		if (trunk->isFree())
 		{
@@ -2416,11 +2438,18 @@ void View3D::AddNewBranches()
 				this->tobj->ReverseSegment(trunk);
 			}
 		}
+		else if(!trunk->isLeaf())
+		{
+			return;
+		}
 		for ( i = 0; i < newChildren.size(); i ++)
 		{
-			if (!newChildren[i]->Orient(trunk))
+			if (newChildren[i]->isFree())
 			{
-				this->tobj->ReverseSegment(newChildren[i]);
+				if (!newChildren[i]->Orient(trunk))
+				{
+					this->tobj->ReverseSegment(newChildren[i]);
+				}
 			}
 		}
 		this->AddChildren(trunk, newChildren);
@@ -2444,6 +2473,7 @@ void View3D::ExplodeTree()
 }
 void View3D::BreakBranch()
 {
+  this->SelectedTraceIDs.clear();
 	std::vector<TraceLine*> traces = this->TreeModel->GetSelectedTraces();
 	for (unsigned int i = 0; i < traces.size(); i++)
 	{

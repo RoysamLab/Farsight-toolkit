@@ -1718,7 +1718,7 @@ std::cout<<"!-1 -1"<<std::endl;
   {
     std::cout<<"else"<<std::endl;
   }
-
+this->GetTraceLines();
 
   //if(tother->GetParent()!=NULL)
   //{
@@ -2136,6 +2136,10 @@ void TraceObject::Shave(TraceLine *starting, int smallerThan)
 }
 bool TraceObject::BreakOffBranch(TraceLine *branch, bool keep)
 {
+	if (branch->GetParentID() == -1)
+	{
+		return false; 
+	}
 	std::vector<TraceLine*>* siblings = branch->GetParent()->GetBranchPointer();
     if(siblings->size()==2)
       {
@@ -2168,6 +2172,7 @@ bool TraceObject::BreakOffBranch(TraceLine *branch, bool keep)
 		  branch->removeLeadingBit();
 		  this->trace_lines.push_back(branch);
 	  }//end branch->GetSize()>3
+		this->GetTraceLines();
       return true;
       }//end siblings->size()==2
 	else if (siblings->size() >2)
@@ -2190,6 +2195,8 @@ bool TraceObject::BreakOffBranch(TraceLine *branch, bool keep)
 			  }
 			++iter;
 		}//end while
+		this->GetTraceLines();
+		return true;
 	}
 	return false;
 }
@@ -2223,4 +2230,5 @@ void TraceObject::explode(TraceLine *parent)
 			parent->GetBranchPointer()->clear();
 		}
 	}
+	this->GetTraceLines();
 }
