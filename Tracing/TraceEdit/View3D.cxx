@@ -694,9 +694,10 @@ void View3D::CreateGUIObjects()
   this->SettingsWidget = new QWidget();
   //QIntValidator *intValidator = new QIntValidator(1, 100, this->SettingsWidget);
   this->MaxGapField = new QSpinBox(this->SettingsWidget);
+  this->MaxGapField->setRange(0,1000);
   //this->MaxGapField->setValidator(intValidator);
   this->GapToleranceField = new QDoubleSpinBox(this->SettingsWidget);
-  this->GapToleranceField->setRange(0,5);
+  this->GapToleranceField->setRange(0,100);
   this->GapToleranceField->setSingleStep(.1);
   //this->GapToleranceField->setValidator(intValidator);
   this->LineLengthField = new QSpinBox(this->SettingsWidget);
@@ -705,7 +706,7 @@ void View3D::CreateGUIObjects()
   this->ColorValueField->setRange(0,1);
   this->ColorValueField->setSingleStep(.01);
   this->LineWidthField = new QSpinBox(this->SettingsWidget);
-  this->LineWidthField->setRange(1,100);
+  this->LineWidthField->setRange(1,5);
   this->ApplySettingsButton = new QDialogButtonBox(QDialogButtonBox::SaveAll | QDialogButtonBox::Close);
   //this->CancelSettingsButton = new QPushButton("&Cancel", this->SettingsWidget);
   connect(this->ApplySettingsButton, SIGNAL(accepted()), this, SLOT(ApplyNewSettings()));
