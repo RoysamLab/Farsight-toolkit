@@ -1199,8 +1199,8 @@ public:
 		for(int counter = 0; counter < zvals.size(); counter++)
 		{
 			double lambda = counter*1.0/(zvals.size()-1);
-			g[0] = g[0] + (1-lambda)*SIGN( zvals[counter] - x[0] - lambda*(x[1] - x[0]),c);
-			g[1] = g[1] + lambda*SIGN( zvals[counter] - x[0] - lambda*(x[1] - x[0]),c);
+			g[0] = g[0] + (1-lambda)*SIGN( zvals[counter] - x[0] - lambda*(x[1] - x[0]));
+			g[1] = g[1] + lambda*SIGN( zvals[counter] - x[0] - lambda*(x[1] - x[0]));
 		}
 		//printf("gradf = %lf %lf\n",g[0],g[1]);
 	}
@@ -1544,7 +1544,7 @@ struct Gaplet{
 	int c2;//
 	double cost;
 };
-bool GapSortPredicate(Gaplet &a, Gaplet &b)
+bool GapSortPredicate(const Gaplet &a, const Gaplet &b)
 {
 	return a.cost < b.cost;
 }
