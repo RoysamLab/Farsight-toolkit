@@ -178,7 +178,7 @@ ENDIF(BUILD_TESTING)
 ######################################################################################
 SET(CPACK_PACKAGE_VERSION_MAJOR 0)
 SET(CPACK_PACKAGE_VERSION_MINOR 2)
-SET(CPACK_PACKAGE_VERSION_PATCH 1)
+SET(CPACK_PACKAGE_VERSION_PATCH 2)
 SET(CPACK_PACKAGE_VENDOR "Rensselaer Polytechnic Institute")
 SET(CPACK_PACKAGE_DESCRIPTION_FILE "${Farsight_SOURCE_DIR}/farsight-description.txt")
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A toolkit of image analysis methods")
