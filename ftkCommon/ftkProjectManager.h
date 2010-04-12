@@ -53,7 +53,7 @@ public:
 	double GetTranslationY(int i);
 	double GetTranslationZ(int i);
 
-	void ReplaceTranslations(std::string fileName);
+	void ReplaceTranslations(std::string fileName, bool zOnly=false);
 
 private:
 	std::vector<FileInfoManager> fileInfo;

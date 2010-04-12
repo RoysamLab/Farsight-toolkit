@@ -127,7 +127,7 @@ double ProjectManager::GetTranslationZ(int i)
 	return this->fileInfo.at(i).tz;
 }
 
-void ProjectManager::ReplaceTranslations(std::string fileName)
+void ProjectManager::ReplaceTranslations(std::string fileName, bool zOnly)
 {
 	const int MAXLINESIZE = 1024;	//Numbers could be in scientific notation in this file
 	char line[MAXLINESIZE];
@@ -177,8 +177,11 @@ void ProjectManager::ReplaceTranslations(std::string fileName)
 			size_t found = fName.find(bName);
 			if( found != std::string::npos )
 			{
-				this->fileInfo.at(i).tx = nT.at(0);
-				this->fileInfo.at(i).ty = nT.at(1);
+				if(!zOnly)
+				{
+					this->fileInfo.at(i).tx = nT.at(0);
+					this->fileInfo.at(i).ty = nT.at(1);
+				}
 				this->fileInfo.at(i).tz = nT.at(2);
 			}
 		}
