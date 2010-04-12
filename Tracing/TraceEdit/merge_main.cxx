@@ -20,8 +20,8 @@ void MergeBeginEnd(TraceObject *tObj, TraceLine * tLine1, TraceLine * tLine2);
 void MergeEndEnd(TraceObject *tObj, TraceLine * tLine1, TraceLine * tLine2);
 double EuclideanDist(TraceBit b1, TraceBit b2, double z_penalty_factor=1.0);
 
-const double maxDist = 10; //Worked with 8,10 here
-const int minCount = 5;    //And 5 here
+const double maxDist = 10; //Worked with 8,10,15 here
+const int minCount = 3;    //And 3, 5 here
 const double z_penalty_factor = 1.0;
 const int imageX = 1024;
 const int imageY = 1024;
@@ -36,10 +36,15 @@ int main(int argc, char *argv[])
 	char * projFilename = argv[1];
 	char * outFilename = argv[2];
 	char * altTrans = NULL;
+	bool zOnly = false;
 
-	if(argc == 4)
+	if(argc >= 4)
 	{
 		altTrans = argv[3];
+	}
+	if(argc == 5)
+	{
+		zOnly = true;
 	}
 
 	int len = strlen(projFilename);
@@ -53,8 +58,8 @@ int main(int argc, char *argv[])
 
 	if(altTrans)
 	{
-		project.ReplaceTranslations(altTrans);
-		//project.writeProject("newTproject.xml");
+		project.ReplaceTranslations(altTrans, zOnly);
+		project.writeProject("ProjectTranslated.xml");
 	}
 
 	for (unsigned int i = 0; i < project.size(); i++)
@@ -200,6 +205,27 @@ void MergeInRegion(TraceObject *tObj, RegionType region)
 			if(tLine2->isFree() && beg2_ok && end2_ok)
 			{
 				//Fragment so delete??
+				continue;
+			}
+
+			//Check to see if both end of one of the traces are within the bounding box of the other:
+			double x1a = beg1.x < end1.x ? beg1.x : end1.x;
+			double x1b = beg1.x > end1.x ? beg1.x : end1.x;
+			double y1a = beg1.y < end1.y ? beg1.y : end1.y;
+			double y1b = beg1.y > end1.y ? beg1.y : end1.y;
+			double x2a = beg2.x < end2.x ? beg2.x : end2.x;
+			double x2b = beg2.x > end2.x ? beg2.x : end2.x;
+			double y2a = beg2.y < end2.y ? beg2.y : end2.y;
+			double y2b = beg2.y > end2.y ? beg2.y : end2.y;
+
+			if(x1a-1 < x2a && y1a-1 < y2a && x1b+1 > x2b && y1b+1 > y2b)
+			{
+				//Bounding box of line 2 is within bounding box of line 1
+				continue;
+			}
+			if(x1a > x2a-1 && y1a > y2a-1 && x1b < x2b+1 && y1b < y2b+1)
+			{
+				//Bounding box of line 1 is within bounding box of line 2
 				continue;
 			}
 			
