@@ -118,6 +118,7 @@ protected slots:
 	void toggleBounds();
 	void toggleIDs();
 	void toggleCentroids();
+	void toggleCrosshairs();
 	void togglechannel0();
 	void togglechannel1();
 	void togglechannel2();
@@ -219,6 +220,7 @@ protected:
 	QAction *showBoundsAction;
 	QAction *showIDsAction;
 	QAction *showCentroidsAction;
+	QAction *showCrosshairsAction;
 	QMenu *zoomMenu;
 	QAction *zoomInAction;
 	QAction *zoomOutAction;

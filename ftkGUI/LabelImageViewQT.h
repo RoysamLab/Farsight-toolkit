@@ -96,6 +96,7 @@ public slots:
 	void SetBoundsVisible(bool val);
 	void SetIDsVisible(bool val);
 	void SetCentroidsVisible(bool val);
+	void SetCrosshairsVisible(bool val);
 	void ClearGets(void);
 	void GetBox(void);
 	void Get2Points(void);
@@ -120,6 +121,7 @@ protected slots:
 	void drawObjectIDs(QPainter *painter);
 	void drawObjectBoundaries(QPainter *painter);
 	void drawObjectCentroids(QPainter *painter);
+	void drawSelectionCrosshairs(QPainter *painter);
 	void selectionChange(void);
 	void sliderChange(int v);
 	void spinChange(int v);
@@ -190,6 +192,7 @@ protected:
 	bool showBounds;
 	bool showIDs;
 	bool showCentroids;
+	bool showCrosshairs;
 
 	//For collecting two points:
 	bool pointsMode;

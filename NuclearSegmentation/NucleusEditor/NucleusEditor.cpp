@@ -220,6 +220,13 @@ void NucleusEditor::createMenus()
 	//VIEW MENU
 	viewMenu = menuBar()->addMenu(tr("&View"));
 
+	showCrosshairsAction = new QAction(tr("Show Selection Crosshairs"), this);
+	showCrosshairsAction->setCheckable(true);
+	showCrosshairsAction->setChecked(true);
+	showCrosshairsAction->setStatusTip(tr("Show Crosshairs at selected object"));
+	connect(showCrosshairsAction, SIGNAL(triggered()), this, SLOT(toggleCrosshairs()));
+	viewMenu->addAction(showCrosshairsAction);
+
 	showBoundsAction = new QAction(tr("Show &Boundaries"), this);
 	showBoundsAction->setCheckable(true);
 	showBoundsAction->setChecked(true);
@@ -243,7 +250,6 @@ void NucleusEditor::createMenus()
 	//showCentroidsAction->setShortcut(tr(""));
 	connect(showCentroidsAction, SIGNAL(triggered()), this, SLOT(toggleCentroids()));
 	viewMenu->addAction(showCentroidsAction);
-
 
 	zoomMenu = viewMenu->addMenu(tr("Zoom"));
 
@@ -1158,6 +1164,16 @@ void NucleusEditor::clearSelections()
 	{
 		selection->clear();
 	}
+}
+
+void NucleusEditor::toggleCrosshairs(void)
+{
+	if(!segView) return;
+
+	if( showCrosshairsAction->isChecked() )
+		segView->SetCrosshairsVisible(true);
+	else
+		segView->SetCrosshairsVisible(false);
 }
 
 void NucleusEditor::toggleBounds(void)

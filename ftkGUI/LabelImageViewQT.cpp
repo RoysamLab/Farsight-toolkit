@@ -30,6 +30,7 @@ LabelImageViewQT::LabelImageViewQT(QWidget *parent)
 	bBoxMap = NULL;
 
 	showBounds = true;
+	showCrosshairs = true;
 	showIDs = false;
 	showCentroids = false;
 	
@@ -227,6 +228,12 @@ void LabelImageViewQT::SetClassMap(vtkSmartPointer<vtkTable> table, int column)
 		classMap[table->GetValue(i,0).ToInt()] = table->GetValue(i,column).ToInt();
 	}
 
+	refreshBoundsImage();
+}
+
+void LabelImageViewQT::SetCrosshairsVisible(bool val)
+{
+	this->showCrosshairs = val;
 	refreshBoundsImage();
 }
 
@@ -733,7 +740,12 @@ void LabelImageViewQT::paintEvent(QPaintEvent * event)
 	QPainter painter(&displayImage);
 	if(labelImg)
 	{
-		painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+		//painter.setCompositionMode(QPainter::CompositionMode_SourceOver); //Default
+		//painter.setCompositionMode(QPainter::CompositionMode_Overlay); //Only see overlay when color matches (almost none)
+		//painter.setCompositionMode(QPainter::CompositionMode_Plus); // Looked like SourceOver
+		//painter.setCompositionMode(QPainter::CompositionMode_Source); // Only shows source (alpha blending didn't seem to work)
+		//painter.setCompositionMode(QPainter::CompositionMode_DestinationOver); //Don't see overlay at all
+		//painter.setCompositionMode(QPainter::CompositionMode_Clear);  //Everything was white!
 		painter.drawImage(0,0,boundsImage);
 	}
 
@@ -782,7 +794,8 @@ void LabelImageViewQT::refreshBaseImage()
 	int totalWidth = (*info).numColumns;
 	int totalHeight = (*info).numRows;
 
-	baseImage = QImage(totalWidth, totalHeight, QImage::Format_ARGB32);	
+	//baseImage = QImage(totalWidth, totalHeight, QImage::Format_ARGB32);	
+	baseImage = QImage(totalWidth, totalHeight, QImage::Format_ARGB32_Premultiplied);	
 	baseImage.fill(qRgb(0,0,0));
 
 	if(!channelImg)
@@ -907,13 +920,14 @@ void LabelImageViewQT::refreshBoundsImage(void)
 	//int currentZ = vSpin->value();
 	//int currentT = hSpin->value();
 
-	boundsImage = QImage(w, h, QImage::Format_ARGB32);	
+	boundsImage = QImage(w, h, QImage::Format_ARGB32_Premultiplied);	
 	boundsImage.fill(qRgba(0,0,0,0));
 
 	QPainter painter(&boundsImage);
 	this->drawObjectBoundaries(&painter);
 	this->drawObjectIDs(&painter);
 	this->drawObjectCentroids(&painter);
+	this->drawSelectionCrosshairs(&painter);
 	this->repaint();
 }
 
@@ -1028,6 +1042,30 @@ void LabelImageViewQT::drawObjectCentroids(QPainter *painter)
 			painter->drawEllipse(point.x - 2, point.y - 2, 5, 5);
 		}
 	}
+}
+
+void LabelImageViewQT::drawSelectionCrosshairs(QPainter *painter)
+{
+	if(!showCrosshairs) return;
+	if(!centerMap) return;
+
+	const ftk::Image::Info *info;
+	if(channelImg)    info = channelImg->GetImageInfo();	//Get info of image
+	else if(labelImg) info = labelImg->GetImageInfo();
+	else return;
+	int h = (*info).numRows;
+	int w = (*info).numColumns;
+
+	std::set<long> sels = selection->getSelections();
+	if(sels.size() > 0)
+	{
+		int id = *(sels.begin());
+		ftk::Object::Point center = (*centerMap)[id];
+		painter->setPen(Qt::gray);
+		painter->drawLine(center.x, 0, center.x, h-1);
+		painter->drawLine(0, center.y, w-1, center.y);
+	}
+
 }
 
 
