@@ -49,14 +49,14 @@ void TableWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * s
 	{
 		this->selection = sels;
 		if(selAdapter) delete selAdapter;
-		selAdapter = new SelectionAdapter();
+		selAdapter = new SelectionAdapter( this->tableView );
 		selAdapter->SetPair(selection,mod);
 	}
 		
 	//Resize Rows to be as small as possible
 	for (int i=0; i<tableView->model()->rowCount(); i++)
 	{
-		tableView->verticalHeader()->resizeSection(i,18);
+		tableView->verticalHeader()->resizeSection(i,rowHeight);
 	}
 }
 
@@ -92,6 +92,12 @@ void TableWindow::createMenus()
 	filterRowsAction->setStatusTip(tr("Hide/Show rows by applying filters"));
 	connect(filterRowsAction, SIGNAL(triggered()), this, SLOT(showFilters()));
 	viewMenu->addAction(filterRowsAction);
+
+	testAction = new QAction(tr("Test"), this);
+	testAction->setStatusTip(tr("Run Test Function"));
+	connect(testAction, SIGNAL(triggered()), this, SLOT(test()));
+	//viewMenu->addAction(testAction);
+
 }
 
 void TableWindow::closeEvent(QCloseEvent *event)
@@ -112,7 +118,7 @@ void TableWindow::update()
 	//Resize Rows to be as small as possible
 	for (int i=0; i<tableView->model()->rowCount(); i++)
 	{
-		tableView->verticalHeader()->resizeSection(i,18);
+		tableView->verticalHeader()->resizeSection(i,rowHeight);
 	}
 	QWidget::update();
 }
@@ -191,6 +197,30 @@ void TableWindow::changeColumns()
 		this->tableView->setColumnHidden( i, !visible.at(i) );
 	}
 	//this->update();
+}
+
+
+void TableWindow::test()
+{
+	//Are rows hidden?
+	/*
+	for (int i=0; i<tableView->model()->rowCount(); i++)
+	{
+		bool hidden = tableView->isRowHidden(i);
+		std::cerr << i << " " << hidden << std::endl;
+	}
+	*/
+
+	int y = tableView->rowViewportPosition(200);
+	std::cerr << "Row 200 Viewport position is: " << y << std::endl;
+
+	QRegion visRegion = tableView->visibleRegion();
+	std::cerr << "top = " << visRegion.boundingRect().top() << " bottom = " << visRegion.boundingRect().bottom() << std::endl;
+
+	//tableView->scroll(10,10); //This does not have desired effect.
+	tableView->scrollTo( tableView->model()->index(200, 0) ); //This works great!!
+
+
 }
 
 //***************************************************************************************************************
@@ -774,6 +804,15 @@ SelectionAdapter::SelectionAdapter()
 	m_obj = NULL;
 	m_qmod = NULL;
 	okToChange = TRUE;
+	m_tableView = NULL;
+}
+
+SelectionAdapter::SelectionAdapter( QTableView * tableView)
+{
+	m_obj = NULL;
+	m_qmod = NULL;
+	okToChange = TRUE;
+	m_tableView = tableView;
 }
 
 void SelectionAdapter::SetPair(ObjectSelection * obj, QItemSelectionModel * qmod)
@@ -786,6 +825,7 @@ void SelectionAdapter::SetPair(ObjectSelection * obj, QItemSelectionModel * qmod
 			this,SLOT(updateOBJ(const QItemSelection &, const QItemSelection &)));
 }
 
+//This class is when an object gets selected from outside the table - so table needs to reflect the selection
 void SelectionAdapter::updateQMOD(void)
 {
 	if(!okToChange) return;
@@ -806,9 +846,19 @@ void SelectionAdapter::updateQMOD(void)
 		}
     }
 	m_qmod->select(selection, QItemSelectionModel::ClearAndSelect);
+
+	//Make sure first selection is visible
+	if( selection.size() > 0 && m_tableView )
+	{
+		int x = m_tableView->horizontalScrollBar()->value();
+		m_tableView->scrollTo( selection.indexes().at(0) ); //This works great!!
+		m_tableView->horizontalScrollBar()->setValue(x);
+	}
+
 	okToChange = TRUE;
 }
 
+//The class gets called when a row in the table is clicked/selected
 void SelectionAdapter::updateOBJ(const QItemSelection & selected, const QItemSelection & deselected)
 {
 	if(!okToChange) return;

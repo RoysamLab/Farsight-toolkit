@@ -37,6 +37,7 @@ limitations under the License.
 #include <QtGui/QCheckBox>
 #include <QtGui/QButtonGroup>
 #include <QtGui/QScrollArea>
+#include <QtGui/QScrollBar>
 #include <QtGui/QDoubleSpinBox>
 
 #include <QtCore/QMap>
@@ -72,6 +73,7 @@ protected:
 
 public slots:
 	void update();
+	void test();
 
 private slots:
 	void setup();
@@ -90,6 +92,10 @@ private:
 	QAction *visibleColumnsAction;
 	QAction *sortByAction;
 	QAction *filterRowsAction;
+
+	QAction *testAction;
+
+	static const int rowHeight = 18;
 };
 
 
@@ -187,6 +193,7 @@ class SelectionAdapter : QObject
 	Q_OBJECT
 public:
 	SelectionAdapter();
+	SelectionAdapter(QTableView *tableView);
 	void SetPair(ObjectSelection * obj, QItemSelectionModel * qmod);
 
 protected slots:
@@ -194,6 +201,7 @@ protected slots:
 	void updateOBJ(const QItemSelection & selected, const QItemSelection & deselected);
 
 private:
+	QTableView * m_tableView;	//If I have this I will make sure selected row is visible.
 	ObjectSelection * m_obj;
 	QItemSelectionModel * m_qmod;
 	bool okToChange;	//set to false when I am changing so I don't get into recursion
