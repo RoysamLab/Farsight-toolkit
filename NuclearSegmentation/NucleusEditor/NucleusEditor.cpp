@@ -61,6 +61,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 
 	myImg = NULL;
 	labImg = NULL;
+	roiImg = NULL;
 
 	nucSeg = NULL;
 	pProc = NULL;
@@ -265,10 +266,8 @@ void NucleusEditor::createMenus()
 	connect(zoomOutAction, SIGNAL(triggered()), segView, SLOT(zoomOut()));
 	zoomMenu->addAction(zoomOutAction);
 
-
 	displayChannelMenu = viewMenu->addMenu(tr("Display Channel"));
 	connect(displayChannelMenu, SIGNAL(aboutToShow()), this, SLOT(DisplayChannelsMenu()));
-
 
 	viewMenu->addSeparator();
 
@@ -294,6 +293,24 @@ void NucleusEditor::createMenus()
 
 	//TOOL MENU
 	toolMenu = menuBar()->addMenu(tr("Tools"));
+
+	roiMenu = toolMenu->addMenu(tr("Region Of Interest"));
+
+	drawROIAction = new QAction(tr("Draw ROI"), this);
+	connect(drawROIAction, SIGNAL(triggered()), this, SLOT(startROI()));
+	roiMenu->addAction(drawROIAction);
+	
+	clearROIAction = new QAction(tr("Clear ROI"), this);
+	connect(clearROIAction, SIGNAL(triggered()), this, SLOT(clearROI()));
+	roiMenu->addAction(clearROIAction);
+
+	saveROIAction = new QAction(tr("Save ROI Mask..."), this);
+	connect(saveROIAction, SIGNAL(triggered()), this, SLOT(saveROI()));
+	roiMenu->addAction(saveROIAction);
+
+	loadROIAction = new QAction(tr("Load ROI Mask..."), this);
+	connect(loadROIAction, SIGNAL(triggered()), this, SLOT(loadROI()));
+	roiMenu->addAction(loadROIAction);
 
 	segmentNucleiAction = new QAction(tr("Segment Nuclei..."), this);
 	connect(segmentNucleiAction, SIGNAL(triggered()), this, SLOT(segmentNuclei()));
@@ -412,8 +429,8 @@ void NucleusEditor::createPreprocessingMenu()
 
 	blankAction = new QAction(tr("Mask Image"), this);
 	blankAction->setStatusTip(tr("Draw a polygon region, and mask all pixels outside this region"));
-	connect(blankAction, SIGNAL(triggered()), this, SLOT(BlankToRegion()));
-	PreprocessMenu->addAction(blankAction);
+	connect(blankAction, SIGNAL(triggered()), this, SLOT(startROI()));
+	//PreprocessMenu->addAction(blankAction);
 
 	//PreprocessMenu->addSeparator();
 
@@ -962,6 +979,31 @@ void NucleusEditor::loadImage(QString fileName)
 	projectFiles.input = name.toStdString();
 	projectFiles.inputSaved = true;
 }
+
+void NucleusEditor::loadROI(void)
+{
+	QString fileName  = QFileDialog::getOpenFileName(this, tr("Load ROI Mask Image"), lastPath, standardImageTypes);
+	if(fileName == "") return;
+
+	lastPath = QFileInfo(fileName).absolutePath() + QDir::separator();
+	segView->save_path = lastPath;
+	
+	segView->GetROIMaskImage()->load(fileName);
+	segView->SetROIVisible(true);
+
+	updateROIinTable();
+}
+
+void NucleusEditor::saveROI(void)
+{
+	QString filename = QFileDialog::getSaveFileName(this, tr("Save ROI Mask Image As..."),lastPath, standardImageTypes);
+	if(filename == "") return;
+
+	lastPath = QFileInfo(filename).absolutePath() + QDir::separator();
+	segView->save_path = lastPath;
+
+	segView->GetROIMaskImage()->save(filename);
+}
 //************************************************************************************************
 //************************************************************************************************
 //************************************************************************************************
@@ -998,6 +1040,68 @@ void NucleusEditor::startAssociations()
 	delete assocCal;
 }
 */
+
+void NucleusEditor::startROI(void)
+{
+	segView->GetROI();
+	connect(segView, SIGNAL(roiDrawn()), this, SLOT(endROI()));
+}
+
+void NucleusEditor::endROI()
+{
+	segView->ClearGets();
+	disconnect(segView, SIGNAL(roiDrawn()), this, SLOT(endROI()));
+
+	updateROIinTable();
+}
+
+void NucleusEditor::updateROIinTable()
+{
+	if(!table) return;
+	if(!nucSeg) return;
+
+	std::map<int, ftk::Object::Point> * cmap = nucSeg->GetCenterMapPointer();
+	if(!cmap) return;
+
+	QImage * t_img = segView->GetROIMaskImage();
+
+	const char * columnForROI = "roi";
+
+	//If need to create a new column do so now:
+	vtkAbstractArray * output = table->GetColumnByName(columnForROI);
+	if(output == 0)
+	{
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( columnForROI );
+		column->SetNumberOfValues( table->GetNumberOfRows() );
+		table->AddColumn(column);
+	}
+
+	for(int row = 0; (int)row < table->GetNumberOfRows(); ++row)  
+	{
+		int id = table->GetValue(row,0).ToInt();
+		ftk::Object::Point center = (*cmap)[id];
+		int val = t_img->pixelIndex( center.x, center.y );
+		table->SetValueByName( row, columnForROI, vtkVariant(val) );
+	}
+	projectFiles.tableSaved = false;
+	updateViews();
+}
+
+void NucleusEditor::clearROI(void)
+{
+	const char * columnForROI = "roi";
+
+	segView->SetROIVisible(false);
+	segView->GetROIMaskImage()->fill(Qt::white);
+
+	if(table)
+	{
+		table->RemoveColumnByName(columnForROI);
+	}
+	projectFiles.tableSaved = false;
+	updateViews();
+}
 
 //**********************************************************************
 // SLOT: start the pattern analysis widget:
@@ -1656,16 +1760,20 @@ void NucleusEditor::applyExclusionMargin(void)
 	int b = 0;
 	int z1 = 0;
 	int z2 = 0;
-	MarginDialog *dialog = new MarginDialog(this);
-	if( dialog->exec() )
+	ExclusionDialog *dialog = new ExclusionDialog(segView->GetDisplayImage(), this);
+	if( !dialog->exec() )
 	{
-		l = dialog->getMargin(0);
-		r = dialog->getMargin(1);
-		t = dialog->getMargin(2);
-		b = dialog->getMargin(3);
-		z1 = dialog->getMargin(4);
-		z2 = dialog->getMargin(5);
+		delete dialog;
+		return;
 	}
+	
+	l = dialog->getMargin(0);
+	r = dialog->getMargin(1);
+	t = dialog->getMargin(2);
+	b = dialog->getMargin(3);
+	z1 = dialog->getMargin(4);
+	z2 = dialog->getMargin(5);
+
 	delete dialog;
 
 	selection->clear();
@@ -1976,63 +2084,7 @@ void ProcessThread::run()
 		myProc->ProcessNext();
 }
 
-//******************************************************************************************
-//******************************************************************************************
-//******************************************************************************************
-//******************************************************************************************
-// A dialog for changing the exclusion margin used for this image:
-//******************************************************************************************
-MarginDialog::MarginDialog(QWidget *parent)
-: QDialog(parent)
-{
-	layout = new QGridLayout();
-	QLabel * header = new QLabel(tr("Please set parameters for the Brick Rule:"));
-	layout->addWidget(header,0,0,1,3);
-
-	this->addSpin(tr("Left Margin: "),0,10,100,tr("pixels"));
-	this->addSpin(tr("Right Margin: "),0,10,100,tr("pixels"));
-	this->addSpin(tr("Top Margin: "),0,10,100,tr("pixels"));
-	this->addSpin(tr("Bottom Margin: "),0,10,100,tr("pixels"));
-	this->addSpin(tr("Lower Z Margin: "),0,4,10,tr("slices"));
-	this->addSpin(tr("Upper Z Margin: "),0,4,10,tr("slices"));
-
-	okButton = new QPushButton(tr("OK"),this);
-	connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
-	layout->addWidget(okButton,(spins.size()+1), 2, 1, 1);
-
-	this->setLayout(layout);
-	this->setWindowTitle(tr("Apply Exclusion Margin"));
-}
-
-int MarginDialog::getMargin(int x)
-{
-	if( x < (int)spins.size() )
-		return spins.at(x)->value();
-	else
-		return 0;
-}
-
-void MarginDialog::addSpin(QString label, int min, int deflt, int max, QString units)
-{
-	QLabel * mLabel = new QLabel(label);
-	QSpinBox * mSpin = new QSpinBox();
-	mSpin->setMinimum(min);
-	mSpin->setMaximum(max);
-	mSpin->setValue(deflt);
-	QLabel * unitLabel = new QLabel(units);
-
-	spins.push_back(mSpin);
-	int row = spins.size();
-
-	layout->addWidget(mLabel,row,0,1,1);
-	layout->addWidget(mSpin,row,1,1,1);
-	layout->addWidget(unitLabel,row,2,1,1);
-}
-//***********************************************************************************
-//***********************************************************************************
-//***********************************************************************************
-//***********************************************************************************
-
+//***************************************************************************
 //***********************************************************************************
 //***********************************************************************************
 // A dialog to get the paramaters file to use and specify the channel if image has
@@ -2144,26 +2196,6 @@ void ParamsFileDialog::ParamBrowse(QString comboSelection)
 void NucleusEditor::CropToRegion(void)
 {
 
-}
-
-void NucleusEditor::BlankToRegion(void)
-{
-	segView->GetROI();
-	connect(segView, SIGNAL(roiDrawn(std::vector< ftk::Object::Point >)), this, SLOT(doMasking(std::vector< ftk::Object::Point >)));
-}
-
-void NucleusEditor::doMasking(std::vector< ftk::Object::Point > roiPoints)
-{
-	segView->ClearGets();
-	disconnect(segView, SIGNAL(roiDrawn(std::vector< ftk::Object::Point >)), this, SLOT(doMasking(std::vector< ftk::Object::Point >)));
-
-	ftkPreprocess *ftkpp = new ftkPreprocess();
-	ftkpp->myImg = this->myImg;
-	ftkpp->MaskImage(roiPoints);
-	delete ftkpp;
-
-	segView->update();
-	projectFiles.inputSaved = false;
 }
 
 void NucleusEditor::InvertIntensities(void)

@@ -33,6 +33,7 @@ LabelImageViewQT::LabelImageViewQT(QWidget *parent)
 	showCrosshairs = true;
 	showIDs = false;
 	showCentroids = false;
+	showROI = false;
 	
 	currentScale = 1;					//Image scaling and zooming variables:
 	ZoomInFactor = 1.25f;
@@ -141,6 +142,7 @@ void LabelImageViewQT::SetColorsToDefaults(void)
 	colorForSelections = Qt::yellow;	//Color used for boundary of selected object
 	colorForBounds = Qt::cyan;			//Color for unselected boundaries
 	colorForIDs = Qt::green;			//Color for ID numbers
+	colorForROI = Qt::gray;
 
 	centroidColorTable.clear();
 	centroidColorTable.append(Qt::red);
@@ -228,6 +230,18 @@ void LabelImageViewQT::SetClassMap(vtkSmartPointer<vtkTable> table, int column)
 		classMap[table->GetValue(i,0).ToInt()] = table->GetValue(i,column).ToInt();
 	}
 
+	refreshBoundsImage();
+}
+
+void LabelImageViewQT::SetROIMaskImage(QImage img)
+{
+	roiImage = img;
+	this->SetROIVisible(true);
+}
+
+void LabelImageViewQT::SetROIVisible(bool val)
+{
+	this->showROI = val;
 	refreshBoundsImage();
 }
 
@@ -700,8 +714,10 @@ void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 							//Erase last point:
 							roiPoints.erase(roiPoints.end()-1);
 							roiMode = false;
-							emit roiDrawn(roiPoints);
-							roiPoints.clear();
+							
+							createROIMask();	//This will call repaint
+							emit roiDrawn();
+							return;
 						}
 					}
 					this->repaint();
@@ -709,6 +725,35 @@ void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 			}
 		}
 	}
+}
+
+void LabelImageViewQT::createROIMask()
+{
+	roiPoints.push_back( roiPoints[0] );
+	int numPoints = roiPoints.size();
+
+	//Turn my list of points into a path
+	QPainterPath path;
+	path.moveTo(roiPoints[0].x, roiPoints[0].y);
+	for (int i=0; i < numPoints; i++)
+	{
+		path.lineTo(roiPoints[i].x, roiPoints[i].y);
+	}
+	//Draw the path in an image
+	QRect rect = this->displayImage.rect();
+	QImage img(rect.width(),rect.height(),QImage::Format_Mono);
+	img.fill(Qt::black);
+	QPainter painter(&img);
+	painter.setPen(Qt::white);
+	painter.setBrush(Qt::white);
+	painter.drawPath(path);
+
+	roiPoints.clear();
+
+	roiImage = img;
+	this->SetROIVisible(true);
+
+	//img.save(QString("mask_test.png"));
 }
 
 //*****************************************************************************************
@@ -738,8 +783,8 @@ void LabelImageViewQT::paintEvent(QPaintEvent * event)
 
 	displayImage = baseImage;
 	QPainter painter(&displayImage);
-	if(labelImg)
-	{
+	//if(labelImg)
+	//{
 		//painter.setCompositionMode(QPainter::CompositionMode_SourceOver); //Default
 		//painter.setCompositionMode(QPainter::CompositionMode_Overlay); //Only see overlay when color matches (almost none)
 		//painter.setCompositionMode(QPainter::CompositionMode_Plus); // Looked like SourceOver
@@ -747,7 +792,7 @@ void LabelImageViewQT::paintEvent(QPaintEvent * event)
 		//painter.setCompositionMode(QPainter::CompositionMode_DestinationOver); //Don't see overlay at all
 		//painter.setCompositionMode(QPainter::CompositionMode_Clear);  //Everything was white!
 		painter.drawImage(0,0,boundsImage);
-	}
+	//}
 
 	if(pointsMode)
 	{
@@ -907,9 +952,6 @@ void LabelImageViewQT::goToSelection(void)
 
 void LabelImageViewQT::refreshBoundsImage(void)
 {
-	if(!labelImg)
-		return;
-
 	const ftk::Image::Info *info;
 	if(channelImg)    info = channelImg->GetImageInfo();	//Get info of new image
 	else if(labelImg) info = labelImg->GetImageInfo();
@@ -928,6 +970,7 @@ void LabelImageViewQT::refreshBoundsImage(void)
 	this->drawObjectIDs(&painter);
 	this->drawObjectCentroids(&painter);
 	this->drawSelectionCrosshairs(&painter);
+	this->drawROI(&painter);
 	this->repaint();
 }
 
@@ -1068,6 +1111,34 @@ void LabelImageViewQT::drawSelectionCrosshairs(QPainter *painter)
 
 }
 
+void LabelImageViewQT::drawROI(QPainter *painter)
+{
+	if(!showROI) return;
+
+	int h = roiImage.rect().height();
+	int w = roiImage.rect().width();
+	int v, v1, v2, v3, v4;
+
+	for(int i=1; i < w-1; i++)
+	{
+		for(int j=1; j < h-1; j++)
+		{
+			v = roiImage.pixelIndex(i, j);
+			if (v > 0)
+			{
+				v1 = roiImage.pixelIndex(i, j+1);
+				v2 = roiImage.pixelIndex(i+1, j);
+				v3 = roiImage.pixelIndex(i, j-1);
+				v4 = roiImage.pixelIndex(i-1, j);
+				if(v!=v1 || v!=v2 || v!=v3 || v!=v4)
+				{
+					painter->setPen(colorForROI);
+					painter->drawPoint(i,j);
+				}
+			}
+		}
+	}
+}
 
 QVector<QColor> LabelImageViewQT::CreateColorTable()
 {

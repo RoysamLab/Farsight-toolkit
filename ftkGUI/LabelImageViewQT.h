@@ -82,12 +82,16 @@ public:
 	void SetColorForSelections(QColor color){ colorForSelections = color; refreshBoundsImage(); };
 	void SetColorForBounds(QColor color){ colorForBounds = color; refreshBoundsImage(); };
 	void SetColorForIDs(QColor color){ colorForIDs = color; refreshBoundsImage(); };
+	void SetColorForROI(QColor color){ colorForROI = color; refreshBoundsImage(); };
 	void SetColorMapForCentroids(QVector<QColor> table){ centroidColorTable = table; refreshBoundsImage(); };
 	bool AreCentroidsDisplayed(void) { return showCentroids; };
 	std::vector<std::string> GetNamesofChannels(void){ return channelImg->GetChannelNames(); };
 	std::vector<bool> GetStatusofChannels(void){ return channelFlags; };
 	void SetStatusofChannels(std::vector<bool> ch_fg);
 	bool IsImageLoaded(){ if( channelFlags.empty() ) return false; else return true; };
+	QImage * GetDisplayImage(){ return &displayImage; };
+	QImage * GetROIMaskImage(){ return &roiImage; };
+	void SetROIMaskImage( QImage img );
 	QString save_path;
 
 public slots:
@@ -97,6 +101,7 @@ public slots:
 	void SetIDsVisible(bool val);
 	void SetCentroidsVisible(bool val);
 	void SetCrosshairsVisible(bool val);
+	void SetROIVisible(bool val);
 	void ClearGets(void);
 	void GetBox(void);
 	void Get2Points(void);
@@ -113,7 +118,7 @@ signals:
 	void mouseAt(int x, int y, int z);
 	void boxDrawn(int x1, int y1, int x2, int y2, int z);
 	void pointsClicked(int x1, int y1, int z1, int x2, int y2, int z2);
-	void roiDrawn(std::vector< ftk::Object::Point > points);
+	void roiDrawn(void);
 
 protected slots:
 	void refreshBaseImage(void);
@@ -122,6 +127,7 @@ protected slots:
 	void drawObjectBoundaries(QPainter *painter);
 	void drawObjectCentroids(QPainter *painter);
 	void drawSelectionCrosshairs(QPainter *painter);
+	void drawROI(QPainter *painter);
 	void selectionChange(void);
 	void sliderChange(int v);
 	void spinChange(int v);
@@ -130,6 +136,7 @@ protected slots:
 	void updateVSlider(void);
 	void updateHSlider(void);
 	void updateChFlags(bool b);
+	void createROIMask(void);
 
 protected:
 	void moveEvent (QMoveEvent * event);
@@ -154,6 +161,7 @@ protected:
 	QColor colorForSelections;
 	QColor colorForBounds;
 	QColor colorForIDs;
+	QColor colorForROI;
 	QVector<QColor> centroidColorTable;
 
 	//UI Widgets:
@@ -173,7 +181,7 @@ protected:
 
 	QImage displayImage;				//Currently displayed image
 	QImage baseImage;					//The intensity image (2D)
-	QImage boundsImage;					//Image containing boundaries (2D)
+	QImage boundsImage;					//Image containing boundaries and other display items(2D)
 
 	ftk::Image::Pointer labelImg;
 	std::map<int, ftk::Object::Point> *	centerMap;
@@ -193,12 +201,14 @@ protected:
 	bool showIDs;
 	bool showCentroids;
 	bool showCrosshairs;
+	bool showROI;
 
 	//For collecting two points:
 	bool pointsMode;
 	bool roiMode;
 	std::vector<int> origin3;	//a 3D origin for points mode!!
 	std::vector< ftk::Object::Point > roiPoints;
+	QImage roiImage;					//Image containing ROI (2D)
 
 	//For Getting a Box:
 	QPoint origin;

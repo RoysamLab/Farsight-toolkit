@@ -46,6 +46,7 @@
 #include <QtCore/QThread>
 
 #include "ProjectFilenamesDialog.h"
+#include "ExclusionDialog.h"
 #include "ftkProjectProcessor.h"
 #include "ftkProjectFiles.h"
 
@@ -71,7 +72,6 @@
 #include "ftkPreprocess.h"
 
 class ParamsFileDialog;
-class MarginDialog;
 class ProcessThread;
 
 
@@ -157,7 +157,6 @@ protected slots:
 	// Preprocessing Menu
 	void setPreprocessingEnabled(bool val);
 	void CropToRegion(void);
-	void BlankToRegion(void);
 	void InvertIntensities(void);
 	void AnisotropicDiffusion(void);
 	void MedianFilter(void);
@@ -169,10 +168,15 @@ protected slots:
 	void CurvAnisotropicDiffusion(void);
 	//void Resample(void);
 	void preprocess(QString id);
-	void doMasking(std::vector< ftk::Object::Point > roiPoints);
 	//*****************************************************
 
 	//For Tools menu
+	void startROI(void);
+	void endROI(void);
+	void updateROIinTable(void);
+	void loadROI(void);
+	void saveROI(void);
+	void clearROI(void);
 	void segmentNuclei(void);
 	void startEditing(void);
 	void stopEditing(void);
@@ -222,33 +226,38 @@ protected:
 	QAction *showCentroidsAction;
 	QAction *showCrosshairsAction;
 	QMenu *zoomMenu;
-	QAction *zoomInAction;
-	QAction *zoomOutAction;
+		QAction *zoomInAction;
+		QAction *zoomOutAction;
 	QMenu *displayChannelMenu;
-	QAction *displayChannelMenuAction;
-	QAction *displayChannelAction0;
-	QAction *displayChannelAction1;
-	QAction *displayChannelAction2;
-	QAction *displayChannelAction3;
-	QAction *displayChannelAction4;
-	QAction *displayChannelAction5;
-	QAction *displayChannelAction6;
-	QAction *displayChannelAction7;
-	QAction *displayChannelAction8;
-	QAction *displayChannelAction9;
-	bool displayChannelActionset;
+		QAction *displayChannelMenuAction;
+		QAction *displayChannelAction0;
+		QAction *displayChannelAction1;
+		QAction *displayChannelAction2;
+		QAction *displayChannelAction3;
+		QAction *displayChannelAction4;
+		QAction *displayChannelAction5;
+		QAction *displayChannelAction6;
+		QAction *displayChannelAction7;
+		QAction *displayChannelAction8;
+		QAction *displayChannelAction9;
+		bool displayChannelActionset;
 	QAction *newTableAction;
 	QAction *newScatterAction;
 	QAction *newHistoAction;
 	QAction *imageIntensityAction;
 
 	QMenu *toolMenu;
+	QMenu *roiMenu;
+		QAction *drawROIAction;
+		QAction *loadROIAction;
+		QAction *saveROIAction;
+		QAction *clearROIAction;
 	QAction *segmentNucleiAction;
 	QAction *editNucleiAction;
 	QAction *svmAction;		//Start the One-Class SVM outlier detecter
 	QMenu *classifyMenu;
-	QAction *trainAction;	//Train the KPLS Classifier
-	QAction *kplsAction;	//Start the KPLS Classifier
+		QAction *trainAction;	//Train the KPLS Classifier
+		QAction *kplsAction;	//Start the KPLS Classifier
 
 	//For Editing Menu
 	QMenu *editMenu;
@@ -293,11 +302,12 @@ protected:
 	ftk::ProjectProcessor *pProc;				//My project processor
 	ftk::Image::Pointer myImg;					//My currently visible image
 	ftk::Image::Pointer labImg;					//Currently visible label image
+	ftk::Image::Pointer roiImg;					//Mask Image: ROI is 1, else 0
 	ObjectSelection * selection;				//object selection list
 	vtkSmartPointer<vtkTable> table;			//table
 	ftk::ProjectFiles projectFiles;				//files in the currently visible project
 	ftk::ProjectDefinition projectDefinition;	//the project definition currently being used.
-	unsigned char   kplsRun;
+	unsigned char kplsRun;
 
 	//This does not belong here, but is a temporary fix:
 	void CreateDefaultAssociationRules();
@@ -312,7 +322,6 @@ protected:
 	QToolBar * processToolbar;
 	ProcessThread *processThread;
 };
-
 
 class ParamsFileDialog : public QDialog
 {
@@ -330,26 +339,6 @@ private:
 	QRadioButton *fileButton;
 	QComboBox *fileCombo;
 	QString lastPath;
-	QPushButton *okButton;
-};
-
-class MarginDialog : public QDialog
-{
-	Q_OBJECT
-public:
-	MarginDialog(QWidget *parent = 0);
-	int getMargin(int x);
-private:
-	void addSpin(QString label, int min, int deflt, int max, QString units);
-
-	QGridLayout * layout;
-	QVector<QSpinBox *> spins;
-	//QSpinBox * leftSpin;
-	//QSpinBox * rightSpin;
-	//QSpinBox * topSpin;
-	//QSpinBox * bottomSpin;
-	//QSpinBox * z1Spin;
-	//QSpinBox * z2Spin;
 	QPushButton *okButton;
 };
 
