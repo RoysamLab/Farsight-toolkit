@@ -105,6 +105,7 @@ public:
 	std::vector<int> getHippocampalTraceIDsToDelete(int,int);
 	std::vector<int> getHippocampalTraceIDsToDelete_v2(int,int);
 	void DeleteEmptyLeafNodesRecursive(TraceLine*);
+	bool readProject(QString projectFile);
 	//todo: make these private with accessors
 	vtkSmartPointer<vtkRenderer> Renderer;
 	vtkSmartPointer<vtkActor> BranchActor;

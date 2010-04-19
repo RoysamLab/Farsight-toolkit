@@ -99,6 +99,7 @@ View3D::View3D(QWidget *parent)
 	this->translateImages = false;	//this is for testing a switch is needed
 	this->Date.currentDate();
 	this->Time.currentTime();
+	this->ProjectName.clear();
 	this->Image.clear();
 	this->TraceFiles.clear();
 	this->SomaFile.clear();
@@ -218,62 +219,70 @@ void View3D::CreateBootLoader()
 void View3D::ReloadState()
 {
 	int i;
-	this->Image = this->TraceEditSettings.value("lastOpen/Image").toStringList();
-	if(!this->Image.isEmpty()) 
+	this->ProjectName = this->TraceEditSettings.value("lastOpen/Project").toString();
+	if (!this->ProjectName.isEmpty())
 	{
-		for (i = 0; i < this->Image.size(); i ++)
-		{
-			this->ImageActors->loadImage(this->Image.at(i).toStdString(),"Image");
-		}
-	}
-	
-	this->tempTraceFile = this->TraceEditSettings.value("lastOpen/Temp").toStringList();
-	if (!this->tempTraceFile.isEmpty())
-	{	//opens last saved file 
-		this->TraceFiles = this->tempTraceFile;
-		// if saved file find log file
-		QString logFileName = this->TraceEditSettings.value("lastOpen/Log").toString();
-		if (!logFileName.isEmpty())
-		{	//read and add old log file to new one
-			QFile readLog(logFileName);
-			if (readLog.open(QIODevice::ReadOnly | QIODevice::Text))
-			{
-				QTextStream in(&readLog);
-				this->EditLogDisplay->append(in.readAll());
-			}
-		}//end of has log
+		this->readProject(this->ProjectName);
 	}
 	else
-	{	//if the last file was never saved open this
-		this->TraceFiles = this->TraceEditSettings.value("lastOpen/Trace").toStringList();
-	}
-	if(!this->TraceFiles.isEmpty()) 
-	{		
-		for (i = 0; i < this->TraceFiles.size(); i++)
-		{
-			std::string traceFile = this->TraceFiles.at(i).toStdString();
-			if(this->TraceFiles.at(i).endsWith("swc"))
-			{
-				this->tobj->ReadFromSWCFile((char*)traceFile.c_str());
-			}
-			else if(this->TraceFiles.at(i).endsWith("xml"))
-			{
-				this->tobj->ReadFromRPIXMLFile((char*)traceFile.c_str());
-			}
-			else if (this->TraceFiles.at(i).endsWith("vtk"))
-			{
-				this->tobj->ReadFromVTKFile((char*)traceFile.c_str());
-			}
-		}//end of sending trace file to proper reader
-	}// end of trace files
-	this->SomaFile = this->TraceEditSettings.value("lastOpen/Soma").toStringList();
-	if(!this->SomaFile.isEmpty()) 
 	{
-		for (i = 0; i < this->SomaFile.size(); i++)
+		this->Image = this->TraceEditSettings.value("lastOpen/Image").toStringList();
+		if(!this->Image.isEmpty()) 
 		{
-			this->ImageActors->loadImage(this->SomaFile.at(i).toStdString(), "Soma");
+			for (i = 0; i < this->Image.size(); i ++)
+			{
+				this->ImageActors->loadImage(this->Image.at(i).toStdString(),"Image");
+			}
 		}
-	}
+		
+		this->tempTraceFile = this->TraceEditSettings.value("lastOpen/Temp").toStringList();
+		if (!this->tempTraceFile.isEmpty())
+		{	//opens last saved file 
+			this->TraceFiles = this->tempTraceFile;
+			// if saved file find log file
+			QString logFileName = this->TraceEditSettings.value("lastOpen/Log").toString();
+			if (!logFileName.isEmpty())
+			{	//read and add old log file to new one
+				QFile readLog(logFileName);
+				if (readLog.open(QIODevice::ReadOnly | QIODevice::Text))
+				{
+					QTextStream in(&readLog);
+					this->EditLogDisplay->append(in.readAll());
+				}
+			}//end of has log
+		}
+		else
+		{	//if the last file was never saved open this
+			this->TraceFiles = this->TraceEditSettings.value("lastOpen/Trace").toStringList();
+		}
+		if(!this->TraceFiles.isEmpty()) 
+		{		
+			for (i = 0; i < this->TraceFiles.size(); i++)
+			{
+				std::string traceFile = this->TraceFiles.at(i).toStdString();
+				if(this->TraceFiles.at(i).endsWith("swc"))
+				{
+					this->tobj->ReadFromSWCFile((char*)traceFile.c_str());
+				}
+				else if(this->TraceFiles.at(i).endsWith("xml"))
+				{
+					this->tobj->ReadFromRPIXMLFile((char*)traceFile.c_str());
+				}
+				else if (this->TraceFiles.at(i).endsWith("vtk"))
+				{
+					this->tobj->ReadFromVTKFile((char*)traceFile.c_str());
+				}
+			}//end of sending trace file to proper reader
+		}// end of trace files
+		this->SomaFile = this->TraceEditSettings.value("lastOpen/Soma").toStringList();
+		if(!this->SomaFile.isEmpty()) 
+		{
+			for (i = 0; i < this->SomaFile.size(); i++)
+			{
+				this->ImageActors->loadImage(this->SomaFile.at(i).toStdString(), "Soma");
+			}
+		}
+	}//end else projectfile.isempty
 	this->OkToBoot();
 }
 void View3D::OkToBoot()
@@ -288,32 +297,6 @@ void View3D::OkToBoot()
 		/*this->uMperVoxel = this->scale->value();
 		this->TraceEditSettings.setValue("boot/scale", this->uMperVoxel);*/
 		this->Initialize();
-		if (!this->TraceFiles.isEmpty() )
-		{	
-			this->EditLogDisplay->append("Trace file:");
-			for (i = 0; i < this->TraceFiles.size(); i++)
-			{
-				this->EditLogDisplay->append("\t" + this->TraceFiles.at(i));
-			}
-			//this->ShowPlots->setChecked(true);
-			this->ShowTreeData();
-		}
-		if (!this->Image.isEmpty())
-		{
-			this->EditLogDisplay->append("Image file:");
-			for (i=0; i < this->Image.size(); i++)
-			{
-				this->EditLogDisplay->append("\t" + this->Image.at(i));
-			}
-		}
-		if (!this->SomaFile.isEmpty())
-		{
-			this->EditLogDisplay->append("Soma file: ");
-			for (i=0; i < this->SomaFile.size(); i++)
-			{
-				this->EditLogDisplay->append("\t" + this->SomaFile.at(i));
-			}
-		}
 		this->UserName = this->GetAUserName->currentText();
 		QStringList allUsers = this->TraceEditSettings.value("boot/userName").toStringList();
 		allUsers.removeAll(this->UserName);
@@ -327,6 +310,10 @@ void View3D::OkToBoot()
 		allLabs.prepend(this->LabName);
 		this->TraceEditSettings.setValue("boot/LabName", allLabs);
 		this->EditLogDisplay->append("Lab: \t" + this->LabName);
+		if (!this->TraceFiles.isEmpty())
+		{
+			this->ShowTreeData();
+		}
 	}
 	else
 	{
@@ -341,6 +328,7 @@ QString View3D::getSomaFile()
 	  tr("Image File ( *.tiff *.tif *.pic *.PIC ) "));
 	if(!somaFiles.isEmpty())
 	{
+		this->EditLogDisplay->append("Soma file: \t" + somaFiles.section('/',-1));
 		this->SomaFile.append( somaFiles);
 		this->ImageActors->loadImage(somaFiles.toStdString(), "Soma");
 	}
@@ -352,6 +340,7 @@ QString View3D::getTraceFile()
 		tr(" TraceFile ( *.xml *.swc *.vtk " ));
 	if (!trace.isEmpty())
 	{
+		this->EditLogDisplay->append("Trace file: \t" + trace.section('/',-1));
 		this->TraceFiles.append( trace);
 		traceFile = trace.toStdString();
 		if(trace.endsWith("swc"))
@@ -375,6 +364,7 @@ QString View3D::getImageFile()
 		tr("Trace Image ( *.tiff *.tif *.pic *.PIC *.mhd" ));
 	if (!NewImageFile.isEmpty())
 	{
+		this->EditLogDisplay->append("Trace file: \t" + NewImageFile.section('/',-1));
 		this->Image.append( NewImageFile);
 		int imgNum = this->ImageActors->loadImage(NewImageFile.toStdString(), "Image");
 		if (this->translateImages)
@@ -464,8 +454,18 @@ void View3D::LoadProject()
 		tr("project ( *.xml" ));
 	if (!projectFile.isEmpty())
 	{
+		this->readProject(projectFile);
+		this->OkToBoot();
+	}// end of project !empty
+}
+bool View3D::readProject(QString projectFile)
+{	
+	unsigned int i =0;
+	if (!projectFile.isEmpty())
+	{
+		this->ProjectName = projectFile;
 		ftk::ProjectManager * project = new ftk::ProjectManager((char*)projectFile.toStdString().c_str());
-		for (unsigned int i = 0; i < project->size(); i++)
+		for ( i = 0; i < project->size(); i++)
 		{ 
 			std::string FileName = project->GetFileName(i);
 			QString type = QString(project->GetFileType(i).c_str());
@@ -508,8 +508,36 @@ void View3D::LoadProject()
 			{
 			}//end type log
 		}//end of for project size
-		this->OkToBoot();
+		if (!this->TraceFiles.isEmpty() )
+		{	
+			this->EditLogDisplay->append("Trace file:");
+			for (i = 0; i < this->TraceFiles.size(); i++)
+			{
+				this->EditLogDisplay->append("\t" + this->TraceFiles.at(i));
+			}
+		}
+		if (!this->Image.isEmpty())
+		{
+			this->EditLogDisplay->append("Image file:");
+			for (i=0; i < this->Image.size(); i++)
+			{
+				this->EditLogDisplay->append("\t" + this->Image.at(i));
+			}
+		}
+		if (!this->SomaFile.isEmpty())
+		{
+			this->EditLogDisplay->append("Soma file: ");
+			for (i=0; i < this->SomaFile.size(); i++)
+			{
+				this->EditLogDisplay->append("\t" + this->SomaFile.at(i));
+			}
+		}
+		return true;
 	}// end of project !empty
+	else
+	{
+		return false;
+	}
 }
 void View3D::SetImgInt()
 {
@@ -2867,6 +2895,7 @@ void View3D::SaveToFile()
     {
     return;
     }
+  this->tempTraceFile.clear();
   this->tempTraceFile.append( fileName);
   //make sure the user supplied an appropriate output file format
   if(!fileName.endsWith(".vtk") && !fileName.endsWith(".swc"))
@@ -2913,6 +2942,7 @@ void View3D::SaveSelected()
     tr("SWC Images (*.swc)"));
 	if(!fileName.isEmpty())
 	{
+		//this->tempTraceFile.append( fileName);
 		std::vector<TraceLine*> roots = this->TreeModel->getRoots();
 		if (roots.size() > 0)
 		{
@@ -2927,6 +2957,7 @@ void View3D::closeEvent(QCloseEvent *event)
 {	
 	this->TraceEditSettings.setValue("mainWin/size", this->size());
 	this->TraceEditSettings.setValue("mainWin/pos",	this->pos());
+	this->TraceEditSettings.setValue("lastOpen/Project",this->ProjectName);
 	this->TraceEditSettings.setValue("lastOpen/Image", this->Image);
 	this->TraceEditSettings.setValue("lastOpen/Trace",this->TraceFiles);
 	this->TraceEditSettings.setValue("lastOpen/Soma", this->SomaFile);
