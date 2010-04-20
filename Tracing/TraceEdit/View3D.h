@@ -123,6 +123,7 @@ public slots:
 	void SplitTraces();
 	void FlipTraces();
 	void SaveToFile();
+	void SaveProjectFile();
 	void SaveSelected();
 	void ShowTreeData();
 	void ShowSettingsWindow();

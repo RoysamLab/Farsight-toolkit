@@ -337,7 +337,7 @@ QString View3D::getSomaFile()
 QString View3D::getTraceFile()
 {	std::string traceFile;
 	QString trace = QFileDialog::getOpenFileName(this , "Load Trace Data", ".",
-		tr(" TraceFile ( *.xml *.swc *.vtk " ));
+		tr("All Trace Files ( *.xml *.swc *.vtk );;SWC (*.swc);;VTK (*.vtk);; XML ( *.xml )" ));
 	if (!trace.isEmpty())
 	{
 		this->EditLogDisplay->append("Trace file: \t" + trace.section('/',-1));
@@ -511,7 +511,7 @@ bool View3D::readProject(QString projectFile)
 		if (!this->TraceFiles.isEmpty() )
 		{	
 			this->EditLogDisplay->append("Trace file:");
-			for (i = 0; i < this->TraceFiles.size(); i++)
+			for (i = 0; i < (unsigned int) this->TraceFiles.size(); i++)
 			{
 				this->EditLogDisplay->append("\t" + this->TraceFiles.at(i));
 			}
@@ -519,7 +519,7 @@ bool View3D::readProject(QString projectFile)
 		if (!this->Image.isEmpty())
 		{
 			this->EditLogDisplay->append("Image file:");
-			for (i=0; i < this->Image.size(); i++)
+			for (i=0; i < (unsigned int) this->Image.size(); i++)
 			{
 				this->EditLogDisplay->append("\t" + this->Image.at(i));
 			}
@@ -527,7 +527,7 @@ bool View3D::readProject(QString projectFile)
 		if (!this->SomaFile.isEmpty())
 		{
 			this->EditLogDisplay->append("Soma file: ");
-			for (i=0; i < this->SomaFile.size(); i++)
+			for (i=0; i < (unsigned int) this->SomaFile.size(); i++)
 			{
 				this->EditLogDisplay->append("\t" + this->SomaFile.at(i));
 			}
@@ -2895,7 +2895,7 @@ void View3D::SaveToFile()
     {
     return;
     }
-  this->tempTraceFile.clear();
+  this->tempTraceFile.clear();// will make this a buffered state for reload
   this->tempTraceFile.append( fileName);
   //make sure the user supplied an appropriate output file format
   if(!fileName.endsWith(".vtk") && !fileName.endsWith(".swc"))
@@ -2931,8 +2931,42 @@ void View3D::SaveToFile()
 	  QTextStream out(&logFile);
 	  out << this->EditLogDisplay->toPlainText();
   }
+  if (!this->ProjectName.isEmpty())
+  {
+	  this->SaveProjectFile();
+  }
 }
-
+void View3D::SaveProjectFile()
+{
+	QString newProject = QFileDialog::getSaveFileName(
+		this,
+		tr("Save Project File"),
+		"",
+		tr("Project File (*.xml)"));
+	if (!newProject.isEmpty())
+	{
+		ftk::ProjectManager * project = new ftk::ProjectManager();
+		for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+		{
+			std::string name = this->ImageActors->FileNameOf(i);
+			std::string type;
+			if (this->ImageActors->isRayCast(i))
+			{
+				type = "Image";
+			}else
+			{
+				type = "Soma";
+			}
+			std::vector<double> coord = this->ImageActors->GetShiftImage(i);
+			project->addFile(name, type, coord[0], coord[1], coord[2]);
+		}//end adding images
+		if (!this->tempTraceFile.isEmpty())
+		{
+			project->addFile(this->tempTraceFile.last().toStdString(), "Trace", 0,0,0);
+		}
+		project->writeProject((char*)newProject.toStdString().c_str());
+	}
+}
 void View3D::SaveSelected()
 {
 	QString fileName = QFileDialog::getSaveFileName(
