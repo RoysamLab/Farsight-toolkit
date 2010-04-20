@@ -44,9 +44,11 @@
 #include <QtGui/QRadioButton>
 #include <QtCore/QFileInfo>
 #include <QtCore/QThread>
+#include <QtCore/QSettings>
 
 #include "ProjectFilenamesDialog.h"
 #include "ExclusionDialog.h"
+#include "PreferencesDialog.h"
 #include "ftkProjectProcessor.h"
 #include "ftkProjectFiles.h"
 
@@ -97,6 +99,7 @@ protected slots:
 	void askLoadTable(void);
 	void loadTable(QString fileName);
 	void loadProject(void);
+	void saveDisplayImageToFile();
 	//Processing:
 	void processProject(void);
 	void startProcess(void);
@@ -115,6 +118,7 @@ protected slots:
 	void createDefaultLogName(void);
 
 	//Views:
+	void setPreferences();
 	void toggleBounds();
 	void toggleIDs();
 	void toggleCentroids();
@@ -195,6 +199,10 @@ protected:
 	void createStatusBar();
 	void createProcessToolBar();
 	void createPreprocessingMenu();
+
+	void writeSettings();
+	void readSettings();
+
 	void updateNucSeg(bool ask = false);
 
 	bool askSaveChanges(QString text);
@@ -221,6 +229,7 @@ protected:
 	QAction *exitAction;
 
 	QMenu *viewMenu;
+	QAction *setPreferencesAction;
 	QAction *showBoundsAction;
 	QAction *showIDsAction;
 	QAction *showCentroidsAction;
@@ -275,7 +284,6 @@ protected:
 	QMenu *helpMenu;
 	QAction *aboutAction;
 
-
 	//************************************************************************
 	//Preprocess menu
 	QMenu *PreprocessMenu;
@@ -293,10 +301,12 @@ protected:
 	//QAction *ResampleAction;
 
 	//*********************************************************************
-
 	QLabel *statusLabel;						//Shown at bottom of main window
+	QString standardImageTypes;					//Image types that can be opened
+
+	//Settings:
 	QString lastPath;							//Last path that has been navigated to
-	QString standardImageTypes;
+	QMap<QString, QColor> colorItemsMap;		//Colors for specific objects
 
 	ftk::NuclearSegmentation *nucSeg;			//Used for editing a nuclear segmentation
 	ftk::ProjectProcessor *pProc;				//My project processor

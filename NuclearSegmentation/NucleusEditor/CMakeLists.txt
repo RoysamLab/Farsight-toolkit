@@ -1,45 +1,54 @@
-SET( NucluesEditor_SRCS
+SET( NucleusEditor_SRCS
   NucleusEditor.cpp
   ProjectFilenamesDialog.cpp
   ExclusionDialog.cpp
+  PreferencesDialog.cpp
   ftkProjectDefinition.cpp
   ftkProjectProcessor.cpp
   ftkProjectFiles.cpp
 )
 
-SET( NucluesEditor_HDRS
+SET( NucleusEditor_HDRS
   NucleusEditor.h
   ProjectFilenamesDialog.h
   ExclusionDialog.h
+  PreferencesDialog.h
   ftkProjectDefinition.h
   ftkProjectProcessor.h
   ftkProjectFiles.h
 )
 
-SET( NucluesEditor_UIS
+SET( NucleusEditor_MOC_REQD_HDRS
+  NucleusEditor.h 
+  ProjectFilenamesDialog.h 
+  ExclusionDialog.h
+  PreferencesDialog.h
 )
 
-SET( NucluesEditor_RCS
+SET( NucleusEditor_UIS
+)
+
+SET( NucleusEditor_RCS
   icons.qrc
 )
 
 # this command will generate rules that will run rcc on all files from SAMPLE_RCS
 # in result SAMPLE_RC_SRCS variable will contain paths to files produced by rcc
-QT4_ADD_RESOURCES( NucluesEditor_RC_SRCS ${NucluesEditor_RCS} )
+QT4_ADD_RESOURCES( NucleusEditor_RC_SRCS ${NucleusEditor_RCS} )
 
 # this will run uic on .ui files:
-QT4_WRAP_UI( NucluesEditor_UI_HDRS ${NucluesEditor_UIS} )
+QT4_WRAP_UI( NucleusEditor_UI_HDRS ${NucleusEditor_UIS} )
 
 # and finally this will run moc:
-QT4_WRAP_CPP( NucluesEditor_MOC_SRCS NucleusEditor.h ProjectFilenamesDialog.h ExclusionDialog.h )
+QT4_WRAP_CPP( NucleusEditor_MOC_SRCS ${NucleusEditor_MOC_REQD_HDRS} )
 
 ADD_EXECUTABLE( NucleusEditor ${EXE_TYPE}
                 main.cpp
-                ${NucluesEditor_SRCS}
-                ${NucluesEditor_HDRS} 
-                ${NucluesEditor_MOC_SRCS} 
-                ${NucluesEditor_UI_HDRS}
-                ${NucluesEditor_RC_SRCS} )
+                ${NucleusEditor_SRCS}
+                ${NucleusEditor_HDRS} 
+                ${NucleusEditor_MOC_SRCS} 
+                ${NucleusEditor_UI_HDRS}
+                ${NucleusEditor_RC_SRCS} )
 
 TARGET_LINK_LIBRARIES( NucleusEditor ${QT_LIBRARIES} ftkGUI ftkImage ftkCommon ftkFeatures libSVM vtkVolumeRendering QVTK NuclearSegmentation CytoplasmSegmentation )
 

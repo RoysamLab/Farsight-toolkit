@@ -34,7 +34,7 @@
 NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 : QMainWindow(parent,flags)
 {
-	segView = new LabelImageViewQT();
+	segView = new LabelImageViewQT(&colorItemsMap);
 	connect(segView, SIGNAL(mouseAt(int,int,int)), this, SLOT(setMouseStatus(int,int,int)));
 	selection = new ObjectSelection();
 	this->setCentralWidget(segView);
@@ -52,8 +52,6 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 							"XML Image Definition (*.xml)\n"
 							"All Files (*.*)");
 
-	lastPath = ".";
-
 	tblWin.clear();
 	pltWin.clear();
 	hisWin.clear();
@@ -69,9 +67,12 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	table = NULL;
 	displayChannelActionset = false;
 
-	kplsRun = 0;
+	kplsRun = 0;	//This flag gets set after kpls has run to make sure we show the colored centroids!!
 
 	this->resize(800,800);
+
+	this->readSettings();
+
 	//Crashes when this is enabled!
 	//setAttribute ( Qt::WA_DeleteOnClose );
 }
@@ -83,6 +84,34 @@ NucleusEditor::~NucleusEditor()
 	if(pProc) delete pProc;
 
 }
+
+//******************************************************************************
+//Write/read settings functions
+//******************************************************************************
+void NucleusEditor::readSettings()
+{
+	QSettings settings;
+	lastPath = settings.value("lastPath", ".").toString();
+
+	colorItemsMap["Selected Objects"] = settings.value("colorForSelections", Qt::yellow).value<QColor>();
+	colorItemsMap["Object Boundaries"] = settings.value("colorForBounds", Qt::cyan).value<QColor>();
+	colorItemsMap["Object IDs"] = settings.value("colorForIDs", Qt::green).value<QColor>();
+	colorItemsMap["ROI Boundary"] = settings.value("colorForROI", Qt::gray).value<QColor>();
+
+}
+
+void NucleusEditor::writeSettings()
+{
+	QSettings settings;
+	settings.setValue("lastPath", lastPath);
+
+	settings.setValue("colorForSelections", colorItemsMap["Selected Objects"]);
+	settings.setValue("colorForBounds", colorItemsMap["Object Boundaries"]);
+	settings.setValue("colorForIDs", colorItemsMap["Object IDs"]);
+	settings.setValue("colorForROI", colorItemsMap["ROI Boundary"]);
+}
+
+//******************************************************************************
 
 //******************************************************************************
 // Here we just show a message in the status bar when loading
@@ -207,7 +236,7 @@ void NucleusEditor::createMenus()
 
 	saveDisplayAction = new QAction(tr("Save Display Image..."), this);
 	saveDisplayAction->setStatusTip(tr("Save displayed image to file"));
-	connect(saveDisplayAction, SIGNAL(triggered()), segView, SLOT(SaveDisplayImageToFile()));
+	connect(saveDisplayAction, SIGNAL(triggered()), this, SLOT(saveDisplayImageToFile()));
 	fileMenu->addAction(saveDisplayAction);
 
 	fileMenu->addSeparator();
@@ -221,16 +250,22 @@ void NucleusEditor::createMenus()
 	//VIEW MENU
 	viewMenu = menuBar()->addMenu(tr("&View"));
 
+	setPreferencesAction = new QAction(tr("Preferences..."), this);
+	connect(setPreferencesAction, SIGNAL(triggered()), this, SLOT(setPreferences()));
+	viewMenu->addAction(setPreferencesAction);
+
+	viewMenu->addSeparator();
+
 	showCrosshairsAction = new QAction(tr("Show Selection Crosshairs"), this);
 	showCrosshairsAction->setCheckable(true);
-	showCrosshairsAction->setChecked(true);
+	showCrosshairsAction->setChecked( segView->GetCrosshairsVisible() );
 	showCrosshairsAction->setStatusTip(tr("Show Crosshairs at selected object"));
 	connect(showCrosshairsAction, SIGNAL(triggered()), this, SLOT(toggleCrosshairs()));
 	viewMenu->addAction(showCrosshairsAction);
 
 	showBoundsAction = new QAction(tr("Show &Boundaries"), this);
 	showBoundsAction->setCheckable(true);
-	showBoundsAction->setChecked(true);
+	showBoundsAction->setChecked( segView->GetBoundsVisible() );
 	showBoundsAction->setStatusTip(tr("Draw boundaries using a label image"));
 	showBoundsAction->setShortcut(tr("Ctrl+B"));
 	connect(showBoundsAction, SIGNAL(triggered()), this, SLOT(toggleBounds()));
@@ -238,7 +273,7 @@ void NucleusEditor::createMenus()
 
 	showIDsAction = new QAction(tr("Show Object IDs"), this);
 	showIDsAction->setCheckable(true);
-	showIDsAction->setChecked(false);
+	showIDsAction->setChecked( segView->GetIDsVisible() );
 	showIDsAction->setStatusTip(tr("Show IDs of objects"));
 	showIDsAction->setShortcut(tr("Ctrl+I"));
 	connect(showIDsAction, SIGNAL(triggered()), this, SLOT(toggleIDs()));
@@ -246,7 +281,7 @@ void NucleusEditor::createMenus()
 
 	showCentroidsAction = new QAction(tr("Show Object Centroids"), this);
 	showCentroidsAction->setCheckable(true);
-	showCentroidsAction->setChecked(false);
+	showCentroidsAction->setChecked( segView->GetCentroidsVisible() );
 	showCentroidsAction->setStatusTip(tr("Show Centroids of objects"));
 	//showCentroidsAction->setShortcut(tr(""));
 	connect(showCentroidsAction, SIGNAL(triggered()), this, SLOT(toggleCentroids()));
@@ -611,6 +646,7 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 		}
     }
 	//Then close myself
+	this->writeSettings();
 	event->accept();
 }
 
@@ -656,7 +692,6 @@ bool NucleusEditor::saveProject()
 	{
 		projectFiles.Write();
 		lastPath = QString::fromStdString(projectFiles.path);
-		segView->save_path = lastPath;
 	}
 	else
 		return false;
@@ -706,7 +741,6 @@ bool NucleusEditor::askSaveImage()
 		lastPath = QFileInfo(filename).absolutePath() + QDir::separator();
 		projectFiles.path = lastPath.toStdString();
 		projectFiles.input = QFileInfo(filename).fileName().toStdString();
-		segView->save_path = lastPath;
 	}
 
 	return this->saveImage();
@@ -755,7 +789,6 @@ bool NucleusEditor::askSaveResult()
 		lastPath = QFileInfo(filename).absolutePath() + QDir::separator();
 		projectFiles.path = lastPath.toStdString();
 		projectFiles.output = QFileInfo(filename).fileName().toStdString();
-		segView->save_path = lastPath;
 	}
 
 	return this->saveResult();
@@ -795,7 +828,6 @@ bool NucleusEditor::askSaveTable()
 	lastPath = QFileInfo(filename).absolutePath() + QDir::separator();
 	projectFiles.path = lastPath.toStdString();
 	projectFiles.table = QFileInfo(filename).fileName().toStdString();
-	segView->save_path = lastPath;
 
 	return this->saveTable();
 }
@@ -835,7 +867,6 @@ void NucleusEditor::loadProject()
 	QString path = QFileInfo(filename).absolutePath();
 	//QString name = QFileInfo(filename).baseName();
 	lastPath = path;
-	segView->save_path = lastPath;
 
 	projectFiles.Read(filename.toStdString());
 
@@ -887,7 +918,6 @@ void NucleusEditor::askLoadTable()
 void NucleusEditor::loadTable(QString fileName)
 {
 	lastPath = QFileInfo(fileName).absolutePath() + QDir::separator();
-	segView->save_path = lastPath;
 
 	table = ftk::LoadTable(fileName.toStdString());
 	if(!table) return;
@@ -918,7 +948,6 @@ void NucleusEditor::askLoadResult(void)
 void NucleusEditor::loadResult(QString fileName)
 {
 	lastPath = QFileInfo(fileName).absolutePath() + QDir::separator();
-	segView->save_path = lastPath;
 	QString name = QFileInfo(fileName).fileName();
 	QString myExt = QFileInfo(fileName).suffix();
 	if(myExt == "xml")
@@ -960,7 +989,6 @@ void NucleusEditor::askLoadImage()
 void NucleusEditor::loadImage(QString fileName)
 {
 	lastPath = QFileInfo(fileName).absolutePath() + QDir::separator();
-	segView->save_path = lastPath;
 	QString name = QFileInfo(fileName).fileName();
 	QString myExt = QFileInfo(fileName).suffix();
 	if(myExt == "xml")
@@ -980,13 +1008,26 @@ void NucleusEditor::loadImage(QString fileName)
 	projectFiles.inputSaved = true;
 }
 
+void NucleusEditor::saveDisplayImageToFile(void)
+{
+	if(!myImg && !labImg)
+		return;
+
+	QString fileName = QFileDialog::getSaveFileName(this, tr("Save Display Image"), lastPath, standardImageTypes);
+	if(fileName.size() == 0)
+		return;
+
+	lastPath = QFileInfo(fileName).absolutePath() + QDir::separator();
+
+	segView->SaveDisplayImageToFile(fileName);
+}
+
 void NucleusEditor::loadROI(void)
 {
 	QString fileName  = QFileDialog::getOpenFileName(this, tr("Load ROI Mask Image"), lastPath, standardImageTypes);
 	if(fileName == "") return;
 
 	lastPath = QFileInfo(fileName).absolutePath() + QDir::separator();
-	segView->save_path = lastPath;
 	
 	segView->GetROIMaskImage()->load(fileName);
 	segView->SetROIVisible(true);
@@ -1000,7 +1041,6 @@ void NucleusEditor::saveROI(void)
 	if(filename == "") return;
 
 	lastPath = QFileInfo(filename).absolutePath() + QDir::separator();
-	segView->save_path = lastPath;
 
 	segView->GetROIMaskImage()->save(filename);
 }
@@ -1022,7 +1062,6 @@ void NucleusEditor::startAssociations()
 		return;
 
 	lastPath = QFileInfo(fileName).absolutePath();
-	segView->save_path = lastPath;
 
 	ftk::AssociativeFeatureCalculator * assocCal = new ftk::AssociativeFeatureCalculator();
 	assocCal->SetInputFile(fileName.toStdString());
@@ -1199,6 +1238,15 @@ void NucleusEditor::closeViews()
 //Call this slot when the table has been modified (new rows or columns) to update the views:
 void NucleusEditor::updateViews()
 {
+	//Show colored seeds after kPLS has run
+	if( kplsRun )
+	{
+		segView->SetClassMap(table, "prediction");
+		showCentroidsAction->setChecked(true);
+		segView->SetCentroidsVisible(true);
+		kplsRun = 0;
+	}
+
 	segView->update();
 
 	for(int p=0; p<(int)tblWin.size(); ++p)
@@ -1210,13 +1258,7 @@ void NucleusEditor::updateViews()
 	for(int p=0; p<(int)hisWin.size(); ++p)
 		hisWin.at(p)->update();
 
-	//Show colored seeds after kPLS has run
-	if( kplsRun ){
-		showCentroidsAction->setChecked(true);
-		if( segView->AreCentroidsDisplayed() ){
-			toggleCentroids();toggleCentroids();
-		} else toggleCentroids();
-	}
+
 }
 //******************************************************************************
 // Create a new Plot window and give it the provided model and selection model
@@ -1270,6 +1312,16 @@ void NucleusEditor::clearSelections()
 	}
 }
 
+void NucleusEditor::setPreferences()
+{
+	PreferencesDialog dialog(this->colorItemsMap);
+	if(dialog.exec())
+	{
+		this->colorItemsMap = dialog.GetColorItemsMap();
+		segView->update();
+	}
+}
+
 void NucleusEditor::toggleCrosshairs(void)
 {
 	if(!segView) return;
@@ -1305,15 +1357,7 @@ void NucleusEditor::toggleCentroids(void)
 	if(!segView) return;
 
 	if( showCentroidsAction->isChecked() )
-	{
-		if(kplsRun ==1)
-		{
-		    segView->SetClassMap(table,table->GetNumberOfColumns()-1);
-			QVector<QColor> cTable =  segView->CreateColorTable();
-			segView->SetColorMapForCentroids(cTable);
-		}
 		segView->SetCentroidsVisible(true);
-	}
 	else
 		segView->SetCentroidsVisible(false);
 }
@@ -1909,7 +1953,6 @@ void NucleusEditor::processProject(void)
 							    "All Files (*.*)"));
 	if(projectName == "")  return;
 	lastPath = QFileInfo(projectName).absolutePath() + QDir::separator();
-	segView->save_path = lastPath;
 
 	if(!projectFiles.definitionSaved)
 		this->saveProject();

@@ -18,22 +18,23 @@ limitations under the License.
 //*****************************************************************************************
 #include "LabelImageViewQT.h"
 
-LabelImageViewQT::LabelImageViewQT(QWidget *parent) 
+LabelImageViewQT::LabelImageViewQT(QMap<QString, QColor> * new_colorItemsMap, QWidget *parent) 
   : QWidget(parent)
 {
+	this->readSettings();
 	this->setupUI();
-	this->SetColorsToDefaults();
+
+	//Setup all the color needs:
+	centroidColorTable = this->CreateColorTable();
+	if(!new_colorItemsMap)
+		this->SetColorsToDefaults();
+	else
+		this->colorItemsMap = new_colorItemsMap;
 
 	channelImg = NULL;
 	labelImg = NULL;
 	centerMap = NULL;
 	bBoxMap = NULL;
-
-	showBounds = true;
-	showCrosshairs = true;
-	showIDs = false;
-	showCentroids = false;
-	showROI = false;
 	
 	currentScale = 1;					//Image scaling and zooming variables:
 	ZoomInFactor = 1.25f;
@@ -54,8 +55,6 @@ LabelImageViewQT::LabelImageViewQT(QWidget *parent)
 	rubberBand = NULL;					//For drawing a box!!
 	pointsMode = false;					//For collecting points
 	roiMode = false;					//For drawing Region of Interest (ROI)
-
-	save_path= ".";
 }
 
 void LabelImageViewQT::setupUI(void)
@@ -136,17 +135,46 @@ void LabelImageViewQT::setupUI(void)
 	setWindowTitle(tr("Image Browser"));
 }
 
+//******************************************************************************
+//Write/read settings functions
+//******************************************************************************
+void LabelImageViewQT::readSettings()
+{
+	QSettings settings;
+	settings.beginGroup("labelImageViewQT");
+	showBounds = settings.value("showBounds", true).toBool();
+	showCrosshairs = settings.value("showCrosshairs", true).toBool();
+	showIDs = settings.value("showIDs", false).toBool();
+	showCentroids = settings.value("showCentroids", false).toBool();
+	showROI = settings.value("showROI", false).toBool();
+	settings.endGroup();
+}
+
+//Destructor:
+LabelImageViewQT::~LabelImageViewQT()
+{
+	writeSettings();
+}
+
+void LabelImageViewQT::writeSettings()
+{
+	QSettings settings;
+	settings.beginGroup("labelImageViewQT");
+	settings.setValue("showBounds", showBounds);
+	settings.setValue("showCrosshairs", showCrosshairs);
+	settings.setValue("showIDs", showIDs);
+	settings.setValue("showCentroids", showCentroids);
+	//settings.setValue("showROI", showROI);
+	settings.endGroup();
+}
+
 void LabelImageViewQT::SetColorsToDefaults(void)
 {
-	//Default Colors:
-	colorForSelections = Qt::yellow;	//Color used for boundary of selected object
-	colorForBounds = Qt::cyan;			//Color for unselected boundaries
-	colorForIDs = Qt::green;			//Color for ID numbers
-	colorForROI = Qt::gray;
-
-	centroidColorTable.clear();
-	centroidColorTable.append(Qt::red);
-	
+	colorItemsMap = new QMap<QString, QColor>();
+	(*colorItemsMap)["Selected Objects"] = Qt::yellow;		//Color used for boundary of selected object
+	(*colorItemsMap)["Object Boundaries"] = Qt::cyan;		//Color for unselected boundaries
+	(*colorItemsMap)["Object IDs"] = Qt::green;				//Color for ID numbers
+	(*colorItemsMap)["ROI Boundary"] = Qt::gray;	
 }
 //***************************************************************************************
 // This is the original image that the segmentation came from
@@ -218,16 +246,17 @@ void LabelImageViewQT::SetLabelImage(ftk::Image::Pointer img, ObjectSelection * 
 	refreshBoundsImage();
 }
 
-void LabelImageViewQT::SetClassMap(vtkSmartPointer<vtkTable> table, int column)
+void LabelImageViewQT::SetClassMap(vtkSmartPointer<vtkTable> table, const char *column)
 {
 	classMap.clear();
 
-	if(column >= table->GetNumberOfColumns())
-		column = 0;
+	vtkAbstractArray * output = table->GetColumnByName(column);
+	if(output == 0)
+		return;
 
 	for(int i=0; i<table->GetNumberOfRows(); ++i)
 	{
-		classMap[table->GetValue(i,0).ToInt()] = table->GetValue(i,column).ToInt();
+		classMap[table->GetValue(i,0).ToInt()] = table->GetValueByName(i,column).ToInt();
 	}
 
 	refreshBoundsImage();
@@ -326,17 +355,9 @@ void LabelImageViewQT::GetROI(void)
 	roiMode = true;
 }
 
-void LabelImageViewQT::SaveDisplayImageToFile()
+void LabelImageViewQT::SaveDisplayImageToFile(QString fileName)
 {
-	if(!channelImg && !labelImg)
-		return;
-
-	QString fileName = QFileDialog::getSaveFileName(this, tr("Save Display Image"), save_path, tr("Images (*.bmp *gif *.jpg *.png *.tif)"));
-	if(fileName.size() == 0)
-		return;
-
 	bool ok = displayImage.save( fileName );
-
 	if(!ok)
 		QMessageBox::warning(this, tr("Save Failure"), tr("Image Failed to Save"));
 }
@@ -730,7 +751,7 @@ void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 void LabelImageViewQT::createROIMask()
 {
 	roiPoints.push_back( roiPoints[0] );
-	int numPoints = roiPoints.size();
+	int numPoints = (int)roiPoints.size();
 
 	//Turn my list of points into a path
 	QPainterPath path;
@@ -979,10 +1000,8 @@ void LabelImageViewQT::drawObjectBoundaries(QPainter *painter)
 	if(!showBounds) return;
 	if(!labelImg) return;
 
-	const ftk::Image::Info *info;
-	if(channelImg)    info = channelImg->GetImageInfo();	//Get info of new image
-	else if(labelImg) info = labelImg->GetImageInfo();
-	else return;
+	const ftk::Image::Info *info = labelImg->GetImageInfo();
+
 	int chs = (*info).numChannels;
 	int h = (*info).numRows;
 	int w = (*info).numColumns;
@@ -999,7 +1018,7 @@ void LabelImageViewQT::drawObjectBoundaries(QPainter *painter)
 		}
 		else
 		{
-			qcolor = colorForBounds;
+			qcolor = (*colorItemsMap)["Object Boundaries"];
 		}
 
 		int v, v1, v2, v3, v4;
@@ -1021,7 +1040,7 @@ void LabelImageViewQT::drawObjectBoundaries(QPainter *painter)
 						{
 							if(selection->isSelected(v))
 							{
-								painter->setPen(colorForSelections);
+								painter->setPen( (*colorItemsMap)["Selected Objects"] );
 							}
 						}
 						painter->drawPoint(j,i);
@@ -1051,7 +1070,7 @@ void LabelImageViewQT::drawObjectIDs(QPainter *painter)
 		//if ( (currentZ == point.z) )
 		if( currentZ >= ((*bBoxMap)[id]).min.z && currentZ <= ((*bBoxMap)[id]).max.z )
 		{
-			painter->setPen(colorForIDs);
+			painter->setPen( (*colorItemsMap)["Object IDs"] );
 			painter->drawText(point.x + 2, point.y - 2, QString::number(id));
 		}
 	}
@@ -1074,7 +1093,8 @@ void LabelImageViewQT::drawObjectCentroids(QPainter *painter)
 		if(classMap.size() > 0)
 			cls = classMap[id];
 
-		QColor myColor = centroidColorTable.at(cls-1);
+		int numColors = (int)centroidColorTable.size();
+		QColor myColor = centroidColorTable.at( (cls-1)%numColors );
 		painter->setPen(Qt::black);
 		painter->setBrush(myColor);
 
@@ -1132,7 +1152,7 @@ void LabelImageViewQT::drawROI(QPainter *painter)
 				v4 = roiImage.pixelIndex(i-1, j);
 				if(v!=v1 || v!=v2 || v!=v3 || v!=v4)
 				{
-					painter->setPen(colorForROI);
+					painter->setPen( (*colorItemsMap)["ROI Boundary"] );
 					painter->drawPoint(i,j);
 				}
 			}
@@ -1142,12 +1162,12 @@ void LabelImageViewQT::drawROI(QPainter *painter)
 
 QVector<QColor> LabelImageViewQT::CreateColorTable()
 {
-	colorTable.clear();
+	QVector<QColor> colorTable;
 	
 	//Colors for 10 classes
-	colorTable.append(Qt::yellow);
 	colorTable.append(Qt::magenta);
 	colorTable.append(Qt::cyan);
+	colorTable.append(Qt::yellow);
 	colorTable.append(Qt::red);
 	colorTable.append(Qt::green);
 	colorTable.append(Qt::blue);
@@ -1155,36 +1175,8 @@ QVector<QColor> LabelImageViewQT::CreateColorTable()
 	colorTable.append(Qt::gray);
 	colorTable.append(Qt::darkGreen);
 	colorTable.append(Qt::darkBlue);
-	
-	return colorTable;
-}
 
-QString LabelImageViewQT::GetColorNameFromTable( int class_num ){
-	QString color_name;
-	QVector<QColor> colors;
-	colors = CreateColorTable();
-	if( colors.at( class_num ) == Qt::yellow )
-		color_name = "Yellow";
-	else if( colors.at( class_num ) == Qt::white )
-		color_name = "White";
-	else if( colors.at( class_num ) == Qt::green )
-		color_name = "Green";
-	else if( colors.at( class_num ) == Qt::cyan )
-		color_name = "Cyan";
-	else if( colors.at( class_num ) == Qt::magenta )
-		color_name = "Magenta";
-	else if( colors.at( class_num ) == Qt::red )
-		color_name = "Red";
-	else if( colors.at( class_num ) == Qt::blue )
-		color_name = "Blue";
-	else if( colors.at( class_num ) == Qt::gray )
-		color_name = "Gray";
-	else if( colors.at( class_num ) == Qt::darkGreen )
-		color_name = "DarkGreen";
-	else if( colors.at( class_num ) == Qt::darkBlue )
-		color_name = "DarkBlue";
-	else color_name = "No more colors";
-	return color_name;
+	return colorTable;
 }
 
 /*

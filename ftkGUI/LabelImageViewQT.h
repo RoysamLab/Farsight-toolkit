@@ -48,6 +48,7 @@ limitations under the License.
 #include <QtCore/QSize>
 #include <QtCore/QPoint>
 #include <QtCore/QMap>
+#include <QtCore/QSettings>
 
 #include <ftkImage/ftkImage.h>
 #include <ftkFeatures/ftkObject.h>
@@ -68,34 +69,38 @@ class LabelImageViewQT : public QWidget
 	Q_OBJECT
 
 public:
-	LabelImageViewQT(QWidget *parent = 0);
+	LabelImageViewQT(QMap<QString, QColor> * new_colorItemsMap = NULL, QWidget *parent = 0);
+	~LabelImageViewQT();
 	void SetChannelImage(ftk::Image::Pointer img);
 	ftk::Image::Pointer GetChannelImage(){return channelImg;};
 	void SetLabelImage(ftk::Image::Pointer img, ObjectSelection * sels = NULL);
 	ftk::Image::Pointer GetLabelImage(){return labelImg;};
 	void SetCenterMapPointer(std::map<int, ftk::Object::Point> * cMap = NULL);
 	void SetBoundingBoxMapPointer(std::map<int, ftk::Object::Box> * bMap = NULL);
-	void SetClassMap(vtkSmartPointer<vtkTable> table, int column);
-	QVector<QColor> CreateColorTable(void);
-	QString GetColorNameFromTable( int class_num );
+	void SetClassMap(vtkSmartPointer<vtkTable> table, const char * column);
 	void ClearClassMap(void){ classMap.clear(); refreshBoundsImage();};
-	void SetColorForSelections(QColor color){ colorForSelections = color; refreshBoundsImage(); };
-	void SetColorForBounds(QColor color){ colorForBounds = color; refreshBoundsImage(); };
-	void SetColorForIDs(QColor color){ colorForIDs = color; refreshBoundsImage(); };
-	void SetColorForROI(QColor color){ colorForROI = color; refreshBoundsImage(); };
+
+	void SetColorItemsMap(QMap<QString, QColor> * new_colorItemsMap){ colorItemsMap = new_colorItemsMap; refreshBoundsImage(); };
 	void SetColorMapForCentroids(QVector<QColor> table){ centroidColorTable = table; refreshBoundsImage(); };
-	bool AreCentroidsDisplayed(void) { return showCentroids; };
+	QVector<QColor> CreateColorTable(void);
+
 	std::vector<std::string> GetNamesofChannels(void){ return channelImg->GetChannelNames(); };
 	std::vector<bool> GetStatusofChannels(void){ return channelFlags; };
 	void SetStatusofChannels(std::vector<bool> ch_fg);
 	bool IsImageLoaded(){ if( channelFlags.empty() ) return false; else return true; };
+
 	QImage * GetDisplayImage(){ return &displayImage; };
 	QImage * GetROIMaskImage(){ return &roiImage; };
 	void SetROIMaskImage( QImage img );
-	QString save_path;
+
+	bool GetCrosshairsVisible(){ return showCrosshairs; };
+	bool GetBoundsVisible(){ return showBounds; };
+	bool GetIDsVisible(){ return showIDs; };
+	bool GetCentroidsVisible(){ return showCentroids; };
+	bool GetROIVisible(){ return showROI; };
 
 public slots:
-	void SaveDisplayImageToFile();
+	void SaveDisplayImageToFile(QString fileName);
 	void AdjustImageIntensity();
 	void SetBoundsVisible(bool val);
 	void SetIDsVisible(bool val);
@@ -146,7 +151,9 @@ protected:
 	void keyPressEvent( QKeyEvent *event );
 	void paintEvent(QPaintEvent *event);
 
-//private: make protected so we can access from inherited class
+	void writeSettings();
+	void readSettings();
+
 	void setupUI(void);
 	void zoom(double zf);
 
@@ -157,13 +164,10 @@ protected:
 
 	void initGrayscaleColorTable(void);
 	QVector<QRgb> grayscaleColorTable;
-	QVector<QColor> colorTable;
-	QColor colorForSelections;
-	QColor colorForBounds;
-	QColor colorForIDs;
-	QColor colorForROI;
-	QVector<QColor> centroidColorTable;
 
+	QVector<QColor> centroidColorTable;		//Table of colors for centroids
+	QMap<QString, QColor> * colorItemsMap;
+	
 	//UI Widgets:
 	QScrollArea *scrollArea;	//Where the image is displayed
 	QLabel *imageLabel;			//Contains the displayed image
@@ -197,11 +201,12 @@ protected:
 	int backgroundThreshold;						//When adjusting intensities, only change values bigger than this
 	int foregroundOffset;							//Offset to ADD to intensity values.
 
+	//Saved in settings:
 	bool showBounds;
 	bool showIDs;
 	bool showCentroids;
 	bool showCrosshairs;
-	bool showROI;
+	bool showROI;		//always comes up false
 
 	//For collecting two points:
 	bool pointsMode;

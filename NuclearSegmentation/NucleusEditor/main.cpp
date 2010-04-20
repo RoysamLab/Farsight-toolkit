@@ -30,6 +30,10 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
+	QCoreApplication::setOrganizationName("RPI");
+    QCoreApplication::setOrganizationDomain("farsight-toolkit.org");
+    QCoreApplication::setApplicationName("Farsight Nucleus Editor");
+
 	NucleusEditor nucEdit(0,0);
 	nucEdit.show();
 
