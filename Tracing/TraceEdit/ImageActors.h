@@ -78,9 +78,11 @@ public:
 //file information
 	std::vector<std::string> GetImageList();
 	std::string FileNameOf(int i){ return this->LoadedImages[i]->filename;};
-	unsigned int NumberOfImages() {return this->LoadedImages.size();};
+	unsigned int NumberOfImages() {return (unsigned int)this->LoadedImages.size();};
 	bool isRayCast(int i);
 	void ShiftImage(int i, double x, double y, double z);
+	void ShiftImage(int i, std::vector<double> shift);
+	std::vector<double> GetShiftImage(int i);
 	double pointData(int i, int x, int y, int z);
 	std::vector<double> GetImageSize(int i);
 	vtkSmartPointer<vtkImageData> GetImageData(int i);

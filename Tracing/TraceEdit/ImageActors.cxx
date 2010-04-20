@@ -113,6 +113,20 @@ void ImageRenderActors::ShiftImage(int i, double x, double y, double z)
 	this->LoadedImages[i]->y = y;
 	this->LoadedImages[i]->z = z;
 }
+void ImageRenderActors::ShiftImage(int i, std::vector<double> shift)
+{
+	this->LoadedImages[i]->x = shift[0];
+	this->LoadedImages[i]->y = shift[1];
+	this->LoadedImages[i]->z = shift[2];
+}
+std::vector<double> ImageRenderActors::GetShiftImage(int i)
+{
+	std::vector<double> shift;
+	shift.push_back(this->LoadedImages[i]->x);
+	shift.push_back(this->LoadedImages[i]->y);
+	shift.push_back(this->LoadedImages[i]->z);
+	return shift;
+}
 vtkSmartPointer<vtkActor> ImageRenderActors::ContourActor(int i)
 {
 	if (i == -1)
