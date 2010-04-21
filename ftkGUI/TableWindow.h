@@ -41,6 +41,7 @@ limitations under the License.
 #include <QtGui/QDoubleSpinBox>
 
 #include <QtCore/QMap>
+#include <QtCore/QSignalMapper>
 
 #include <vtkTable.h>
 #include <vtkSmartPointer.h>
@@ -139,23 +140,15 @@ private:
 	QGroupBox *groupBox;
 	QPushButton *addButton;
 	QPushButton *delButton;
-	QDoubleSpinBox *minVal1;
-	QDoubleSpinBox *minVal2;
-	QDoubleSpinBox *minVal3;
-	QDoubleSpinBox *maxVal1;
-	QDoubleSpinBox *maxVal2;
-	QDoubleSpinBox *maxVal3;
-	QPushButton *minComp1;
-	QPushButton *minComp2;
-	QPushButton *minComp3;
-	QPushButton *maxComp1;
-	QPushButton *maxComp2;
-	QPushButton *maxComp3;
-	QComboBox *feature1;
-	QComboBox *feature2;
-	QComboBox *feature3;
-	QComboBox *bool1;
-	QComboBox *bool2;
+	
+	static const int tests = 3;
+	QDoubleSpinBox *minVal[tests];
+	QDoubleSpinBox *maxVal[tests];
+	QPushButton *minComp[tests];
+	QPushButton *maxComp[tests];
+	QComboBox *feature[tests];
+	QComboBox *bools[tests-1];
+
 	QPushButton *updateButton;
 
 	int numEquations;
@@ -164,7 +157,7 @@ private:
 	QString bigger;
 
 	QStringList GetVisibleFeatures();
-	QComboBox * NewFeatureCombo();
+	QComboBox * NewFeatureCombo(int n);
 	QComboBox * NewBoolCombo();
 	QPushButton * NewCompButton(int n);
 	int GetColumnFor(QString headerText);
@@ -172,20 +165,18 @@ private:
 
 	ObjectSelection * selection;
 
+	QSignalMapper *buttonSignalMapper;
+	QSignalMapper *featurSignalMapper;
+
 private slots:
 	void DoFilter();
 	void AddEquation();
 	void RemoveEquation();
 	void RemoveWidget(QWidget *widget);
 	void AddWidget(QWidget *widget, int r, int c);
-	void ToggleComp1(){ ToggleComp(1); };
-	void ToggleComp2(){ ToggleComp(2); };
-	void ToggleComp3(){ ToggleComp(3); };
-	void ToggleComp(int n);
+	void ToggleComp(int i);
 	void InitRanges();
-	void SetF1Ranges(QString text);
-	void SetF2Ranges(QString text);
-	void SetF3Ranges(QString text);
+	void SetRanges(int i);
 };
 
 class SelectionAdapter : QObject

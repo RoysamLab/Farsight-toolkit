@@ -45,7 +45,6 @@ LabelImageViewQT::LabelImageViewQT(QMap<QString, QColor> * new_colorItemsMap, QW
 
 	channelFlags.clear();				//Is channel visible or not?
 	//channelFlags.push_back(true);
-	channelWidget = NULL;
 
 	classMap.clear();
 
@@ -184,7 +183,6 @@ void LabelImageViewQT::SetChannelImage(ftk::Image::Pointer img)
 	if(!img)	//If img is NULL then I'm trying to remove the channel image
 	{
 		channelImg = NULL;
-		removeChannelWidget();
 		refreshBaseImage();
 		return;
 	}
@@ -204,7 +202,9 @@ void LabelImageViewQT::SetChannelImage(ftk::Image::Pointer img)
 		updateVSlider();
 		updateHSlider();
 	}
-	createChannelWidget();
+
+	initChannelFlags();
+	refreshBaseImage();
 }
 
 //***************************************************************************************
@@ -224,7 +224,6 @@ void LabelImageViewQT::SetLabelImage(ftk::Image::Pointer img, ObjectSelection * 
 	{
 		if(  labelImg->Size() != channelImg->Size() )
 		{
-			removeChannelWidget();
 			channelImg = NULL;
 			refreshBaseImage();
 		}
@@ -434,76 +433,19 @@ void LabelImageViewQT::updateHSlider(void)
 	}
 }
 
-//***********************************************************************************
-// This creates the channel window (widget) that allows for channels to be turned on 
-// and off
-//***********************************************************************************
-void LabelImageViewQT::createChannelWidget()
+void LabelImageViewQT::initChannelFlags()
 {
-	if(!channelImg) return;
-
-	removeChannelWidget();
-
-	channelWidget = new QWidget(this);
-	channelWidget->setWindowTitle(tr("Channels"));
-	QVBoxLayout *chLayout = new QVBoxLayout;
-
-	const ftk::Image::Info *info = channelImg->GetImageInfo();
-	numChBoxes = (*info).numChannels;
-
-	chBoxes = new QCheckBox * [numChBoxes];
-	for (int ch=0; ch < numChBoxes; ++ch)
-	{
-		std::string chName = (*info).channelNames[ch];
-		chBoxes[ch] = new QCheckBox( tr( chName.c_str() ) );
-		chBoxes[ch]->setChecked(true);
-		connect(chBoxes[ch], SIGNAL(toggled(bool)), this, SLOT(updateChFlags(bool)));
-		chLayout->addWidget(chBoxes[ch]);
-	}
-	chLayout->setSizeConstraint(QLayout::SetFixedSize);
-	channelWidget->setLayout(chLayout);
-	channelWidget->setWindowFlags( Qt::Tool );
-	channelWidget->move(scrollArea->x()+20,scrollArea->y()+20);
-
-	updateChFlags(true);
-	if (numChBoxes > 1 && this->isWindow())
-		channelWidget->show();
-}
-
-void LabelImageViewQT::removeChannelWidget(void)
-{
-	if(channelWidget)
-	{
-		channelWidget->close();
-		channelWidget = NULL;
-		for (int ch=0; ch < numChBoxes; ++ch)
-		{
-			delete chBoxes[ch]; 
-		}
-		delete[] chBoxes;
-		chBoxes = NULL;
-		numChBoxes = 0;
-	}
-}
-
-void LabelImageViewQT::updateChFlags(bool b)
-{
-	if(!channelWidget) return;
-
 	channelFlags.clear();
-	for (int ch=0; ch<numChBoxes; ++ch)
+	std::vector<std::string> channel_names = channelImg->GetChannelNames();
+	for (int ch=0; ch<(int)channel_names.size(); ++ch)
 	{
-		channelFlags.push_back(chBoxes[ch]->isChecked());
+		channelFlags.push_back(true);
 	}
-	refreshBaseImage();
 }
 
-void LabelImageViewQT::SetStatusofChannels(std::vector<bool> ch_fg){
-	if(!channelWidget) return;
-	channelFlags.clear();
-	for (int ch=0; ch<(int)ch_fg.size(); ++ch){
-		channelFlags.push_back(ch_fg[ch]);
-	}
+void LabelImageViewQT::SetChannelFlags(std::vector<bool> ch_fg)
+{
+	channelFlags = ch_fg;
 	refreshBaseImage();
 }
 //*******************************************************************
@@ -541,12 +483,6 @@ void LabelImageViewQT::update()
 void LabelImageViewQT::moveEvent ( QMoveEvent * event )
 {
 	QWidget::moveEvent ( event );
-	if ( channelWidget )
-	{
-		int dx = event->pos().x() - event->oldPos().x();
-		int dy = event->pos().y() - event->oldPos().y();
-		channelWidget->move(channelWidget->x() + dx, channelWidget->y() + dy );
-	}
 }
 
 void LabelImageViewQT::keyPressEvent(QKeyEvent *event)
@@ -563,9 +499,10 @@ void LabelImageViewQT::keyPressEvent(QKeyEvent *event)
 	 else if((key >= Qt::Key_0) && (key <= Qt::Key_9))
 	 {
 		int num = key - 0x30;
-		if(numChBoxes > num)
+		if((int)channelFlags.size() > num)
 		{
-			chBoxes[num]->toggle();
+			channelFlags.at(num) = !channelFlags.at(num);
+			refreshBaseImage();
 		}
 	 }
 	 else

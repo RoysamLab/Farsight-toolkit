@@ -68,7 +68,7 @@ PreferencesDialog::PreferencesDialog(QMap<QString, QColor> colorItemsMap, QWidge
 void PreferencesDialog::chooseColor(const QString & colorItem)
 {
 	QLabel * label = colorLabelsMap.value(colorItem);
-	QColor color = QColorDialog::getColor(label->palette().window().color(), this);
+	QColor color = QColorDialog::getColor(label->palette().window().color(), this, colorItem, QColorDialog::ShowAlphaChannel);
     if (color.isValid())
 	{
         label->setPalette(QPalette(color));

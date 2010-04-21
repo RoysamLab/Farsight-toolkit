@@ -34,6 +34,8 @@
 NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 : QMainWindow(parent,flags)
 {
+	chSignalMapper = NULL;
+
 	segView = new LabelImageViewQT(&colorItemsMap);
 	connect(segView, SIGNAL(mouseAt(int,int,int)), this, SLOT(setMouseStatus(int,int,int)));
 	selection = new ObjectSelection();
@@ -65,7 +67,6 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	pProc = NULL;
 	processThread = NULL;
 	table = NULL;
-	displayChannelActionset = false;
 
 	kplsRun = 0;	//This flag gets set after kpls has run to make sure we show the colored centroids!!
 
@@ -1362,153 +1363,44 @@ void NucleusEditor::toggleCentroids(void)
 		segView->SetCentroidsVisible(false);
 }
 
-void NucleusEditor::DisplayChannelsMenu(){
-	if( !segView->IsImageLoaded() )
+void NucleusEditor::DisplayChannelsMenu()
+{
+	if( !myImg )
 		return;
-	std::vector<std::string> channel_names = segView->GetNamesofChannels();
-	std::vector<bool> channel_status = segView->GetStatusofChannels();
-	if( displayChannelActionset ){
-		if( channel_names.size() > 0 ) delete displayChannelAction0;
-		if( channel_names.size() > 1 ) delete displayChannelAction1;
-		if( channel_names.size() > 2 ) delete displayChannelAction2;
-		if( channel_names.size() > 3 ) delete displayChannelAction3;
-		if( channel_names.size() > 4 ) delete displayChannelAction4;
-		if( channel_names.size() > 5 ) delete displayChannelAction5;
-		if( channel_names.size() > 6 ) delete displayChannelAction6;
-		if( channel_names.size() > 7 ) delete displayChannelAction7;
-		if( channel_names.size() > 8 ) delete displayChannelAction8;
-		if( channel_names.size() > 9 ) delete displayChannelAction9;
+
+	std::vector<std::string> channel_names = myImg->GetChannelNames();
+	std::vector<bool> channel_status = segView->GetChannelFlags();
+
+	//remove all existing actions;
+	for(int i=0; i<(int)displayChannelAction.size(); ++i)
+	{
+		delete displayChannelAction.at(i);
 	}
-	if( channel_names.size() > 0 ){
-		displayChannelAction0 = new QAction(tr(channel_names.at(0).c_str()), this);
-		displayChannelAction0->setCheckable(true);
-		displayChannelAction0->setChecked(channel_status.at(0));
-		displayChannelAction0->setStatusTip(tr("Turn on/off this channel"));
-		displayChannelAction0->setShortcut(tr("0"));
-		connect(displayChannelAction0, SIGNAL(triggered()), this, SLOT(togglechannel0()));
-		displayChannelMenu->addAction(displayChannelAction0);
+	displayChannelMenu->clear();
+	displayChannelAction.clear();
+
+	if(chSignalMapper)
+		delete chSignalMapper;
+	chSignalMapper = new QSignalMapper(this);
+	for(int i=0; i<(int)channel_names.size(); ++i)
+	{
+		QAction * action = new QAction( tr(channel_names.at(i).c_str()), this );
+		action->setCheckable(true);
+		action->setChecked( channel_status.at(i) );
+		action->setStatusTip( tr("Turn on/off this channel") );
+		action->setShortcut( QString::number(i) );
+		connect(action, SIGNAL(triggered()), chSignalMapper, SLOT(map()));
+		chSignalMapper->setMapping( action, i );
+		displayChannelMenu->addAction(action);
 	}
-	if( channel_names.size() > 1 ){
-		displayChannelAction1 = new QAction(tr(channel_names.at(1).c_str()), this);
-		displayChannelAction1->setCheckable(true);
-		displayChannelAction1->setChecked(channel_status.at(1));
-		displayChannelAction1->setStatusTip(tr("Turn on/off this channel"));
-		displayChannelAction1->setShortcut(tr("1"));
-		connect(displayChannelAction1, SIGNAL(triggered()), this, SLOT(togglechannel1()));
-		displayChannelMenu->addAction(displayChannelAction1);
-	}
-	if( channel_names.size() > 2 ){
-		displayChannelAction2 = new QAction(tr(channel_names.at(2).c_str()), this);
-		displayChannelAction2->setCheckable(true);
-		displayChannelAction2->setChecked(channel_status.at(2));
-		displayChannelAction2->setStatusTip(tr("Turn on/off this channel"));
-		displayChannelAction2->setShortcut(tr("2"));
-		connect(displayChannelAction2, SIGNAL(triggered()), this, SLOT(togglechannel2()));
-		displayChannelMenu->addAction(displayChannelAction2);
-	}
-	if( channel_names.size() > 3 ){
-		displayChannelAction3 = new QAction(tr(channel_names.at(3).c_str()), this);
-		displayChannelAction3->setCheckable(true);
-		displayChannelAction3->setChecked(channel_status.at(3));
-		displayChannelAction3->setStatusTip(tr("Turn on/off this channel"));
-		displayChannelAction3->setShortcut(tr("3"));
-		connect(displayChannelAction3, SIGNAL(triggered()), this, SLOT(togglechannel3()));
-		displayChannelMenu->addAction(displayChannelAction3);
-	}
-	if( channel_names.size() > 4 ){
-		displayChannelAction4 = new QAction(tr(channel_names.at(4).c_str()), this);
-		displayChannelAction4->setCheckable(true);
-		displayChannelAction4->setChecked(channel_status.at(4));
-		displayChannelAction4->setStatusTip(tr("Turn on/off this channel"));
-		displayChannelAction4->setShortcut(tr("4"));
-		connect(displayChannelAction4, SIGNAL(triggered()), this, SLOT(togglechannel4()));
-		displayChannelMenu->addAction(displayChannelAction4);
-	}
-	if( channel_names.size() > 5 ){
-		displayChannelAction5 = new QAction(tr(channel_names.at(5).c_str()), this);
-		displayChannelAction5->setCheckable(true);
-		displayChannelAction5->setChecked(channel_status.at(5));
-		displayChannelAction5->setStatusTip(tr("Turn on/off this channel"));
-		displayChannelAction5->setShortcut(tr("5"));
-		connect(displayChannelAction5, SIGNAL(triggered()), this, SLOT(togglechannel5()));
-		displayChannelMenu->addAction(displayChannelAction5);
-	}
-	if( channel_names.size() > 6 ){
-		displayChannelAction6 = new QAction(tr(channel_names.at(6).c_str()), this);
-		displayChannelAction6->setCheckable(true);
-		displayChannelAction6->setChecked(channel_status.at(6));
-		displayChannelAction6->setStatusTip(tr("Turn on/off this channel"));
-		displayChannelAction6->setShortcut(tr("6"));
-		connect(displayChannelAction6, SIGNAL(triggered()), this, SLOT(togglechannel6()));
-		displayChannelMenu->addAction(displayChannelAction6);
-	}
-	if( channel_names.size() > 7 ){
-		displayChannelAction7 = new QAction(tr(channel_names.at(7).c_str()), this);
-		displayChannelAction7->setCheckable(true);
-		displayChannelAction7->setChecked(channel_status.at(0));
-		displayChannelAction7->setStatusTip(tr("Turn on/off this channel"));
-		displayChannelAction7->setShortcut(tr("7"));
-		connect(displayChannelAction7, SIGNAL(triggered()), this, SLOT(togglechannel7()));
-		displayChannelMenu->addAction(displayChannelAction7);
-	}
-	if( channel_names.size() > 8 ){
-		displayChannelAction8 = new QAction(tr(channel_names.at(8).c_str()), this);
-		displayChannelAction8->setCheckable(true);
-		displayChannelAction8->setChecked(channel_status.at(8));
-		displayChannelAction8->setStatusTip(tr("Turn on/off this channel"));
-		displayChannelAction8->setShortcut(tr("8"));
-		connect(displayChannelAction8, SIGNAL(triggered()), this, SLOT(togglechannel8()));
-		displayChannelMenu->addAction(displayChannelAction8);
-	}
-	if( channel_names.size() > 9 ){
-		displayChannelAction9 = new QAction(tr(channel_names.at(9).c_str()), this);
-		displayChannelAction9->setCheckable(true);
-		displayChannelAction9->setChecked(channel_status.at(9));
-		displayChannelAction9->setStatusTip(tr("Turn on/off this channel"));
-		displayChannelAction9->setShortcut(tr("9"));
-		connect(displayChannelAction9, SIGNAL(triggered()), this, SLOT(togglechannel9()));
-		displayChannelMenu->addAction(displayChannelAction9);
-	}
-	displayChannelActionset = true;
-}
-void NucleusEditor::togglechannel0(){
-togglechannel( 0 );
-}
-void NucleusEditor::togglechannel1(){
-togglechannel( 1 );
-}
-void NucleusEditor::togglechannel2(){
-togglechannel( 2 );
-}
-void NucleusEditor::togglechannel3(){
-togglechannel( 3 );
-}
-void NucleusEditor::togglechannel4(){
-togglechannel( 4 );
-}
-void NucleusEditor::togglechannel5(){
-togglechannel( 5 );
-}
-void NucleusEditor::togglechannel6(){
-togglechannel( 6 );
-}
-void NucleusEditor::togglechannel7(){
-togglechannel( 7 );
-}
-void NucleusEditor::togglechannel8(){
-togglechannel( 8 );
-}
-void NucleusEditor::togglechannel9(){
-togglechannel( 9 );
+	connect(chSignalMapper, SIGNAL(mapped(int)), this, SLOT(toggleChannel(int)));
 }
 
-void NucleusEditor::togglechannel( int channel_no ){
-	std::vector<bool> ch_stats = segView->GetStatusofChannels();
-	if( ch_stats[channel_no] )
-		ch_stats[channel_no] = false;
-	else
-		ch_stats[channel_no] = true;
-	segView->SetStatusofChannels( ch_stats );
+void NucleusEditor::toggleChannel( int chNum )
+{
+	std::vector<bool> ch_stats = segView->GetChannelFlags();
+	ch_stats[chNum] = !ch_stats[chNum];
+	segView->SetChannelFlags( ch_stats );
 }
 //******************************************************************************************
 //******************************************************************************************

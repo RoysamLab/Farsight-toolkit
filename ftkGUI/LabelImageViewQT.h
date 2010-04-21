@@ -84,10 +84,8 @@ public:
 	void SetColorMapForCentroids(QVector<QColor> table){ centroidColorTable = table; refreshBoundsImage(); };
 	QVector<QColor> CreateColorTable(void);
 
-	std::vector<std::string> GetNamesofChannels(void){ return channelImg->GetChannelNames(); };
-	std::vector<bool> GetStatusofChannels(void){ return channelFlags; };
-	void SetStatusofChannels(std::vector<bool> ch_fg);
-	bool IsImageLoaded(){ if( channelFlags.empty() ) return false; else return true; };
+	std::vector<bool> GetChannelFlags(void){ return channelFlags; };
+	void SetChannelFlags(std::vector<bool> ch_fg);
 
 	QImage * GetDisplayImage(){ return &displayImage; };
 	QImage * GetROIMaskImage(){ return &roiImage; };
@@ -140,7 +138,7 @@ protected slots:
 	//void refreshFeatures(void);
 	void updateVSlider(void);
 	void updateHSlider(void);
-	void updateChFlags(bool b);
+	void initChannelFlags(void);
 	void createROIMask(void);
 
 protected:
@@ -178,9 +176,6 @@ protected:
 	QSpinBox *hSpin;
 	QLabel *hLabel;
 
-	QWidget *channelWidget;			//pointer to a channelWidget for controlling painted channels
-	QCheckBox ** chBoxes;			//pointers to all my checkboxes
-	int numChBoxes;					//number of checkboxes (number of channels)
 	std::vector<bool> channelFlags;	//is channel is visible or not
 
 	QImage displayImage;				//Currently displayed image

@@ -45,6 +45,7 @@
 #include <QtCore/QFileInfo>
 #include <QtCore/QThread>
 #include <QtCore/QSettings>
+#include <QtCore/QSignalMapper>
 
 #include "ProjectFilenamesDialog.h"
 #include "ExclusionDialog.h"
@@ -123,17 +124,7 @@ protected slots:
 	void toggleIDs();
 	void toggleCentroids();
 	void toggleCrosshairs();
-	void togglechannel0();
-	void togglechannel1();
-	void togglechannel2();
-	void togglechannel3();
-	void togglechannel4();
-	void togglechannel5();
-	void togglechannel6();
-	void togglechannel7();
-	void togglechannel8();
-	void togglechannel9();
-	void togglechannel( int channel_no );
+	void toggleChannel(int chNum );
 	void DisplayChannelsMenu();
 	void CreateNewPlotWindow();
 	void CreateNewTableWindow();
@@ -238,18 +229,8 @@ protected:
 		QAction *zoomInAction;
 		QAction *zoomOutAction;
 	QMenu *displayChannelMenu;
-		QAction *displayChannelMenuAction;
-		QAction *displayChannelAction0;
-		QAction *displayChannelAction1;
-		QAction *displayChannelAction2;
-		QAction *displayChannelAction3;
-		QAction *displayChannelAction4;
-		QAction *displayChannelAction5;
-		QAction *displayChannelAction6;
-		QAction *displayChannelAction7;
-		QAction *displayChannelAction8;
-		QAction *displayChannelAction9;
-		bool displayChannelActionset;
+		QSignalMapper *chSignalMapper;
+		QVector<QAction *> displayChannelAction;
 	QAction *newTableAction;
 	QAction *newScatterAction;
 	QAction *newHistoAction;

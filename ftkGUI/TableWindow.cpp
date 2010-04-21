@@ -133,6 +133,7 @@ void TableWindow::showFilters()
 	delete filters;
 }
 
+//Sort does not work so well with the change to vtkTable. Removed for now!
 void TableWindow::sortBy()
 {
 	if(!this->tableView->model())
@@ -373,37 +374,30 @@ FilterRowsDialog::FilterRowsDialog(QTableView *tableView, ObjectSelection * sel,
 	delButton->setAutoDefault(false);
 	connect(delButton,SIGNAL(clicked()), this, SLOT(RemoveEquation()));
 
-	minVal1 = new QDoubleSpinBox;
-	minVal2 = new QDoubleSpinBox;
-	minVal3 = new QDoubleSpinBox;
-	maxVal1 = new QDoubleSpinBox;
-	maxVal2 = new QDoubleSpinBox;
-	maxVal3 = new QDoubleSpinBox;
-	minComp1 = this->NewCompButton(1);
-	minComp2 = this->NewCompButton(2);
-	minComp3 = this->NewCompButton(3);
-	maxComp1 = this->NewCompButton(1);
-	maxComp2 = this->NewCompButton(2);
-	maxComp3 = this->NewCompButton(3);
-	feature1 = this->NewFeatureCombo();
-	connect(feature1, SIGNAL(currentIndexChanged(QString)), this, SLOT(SetF1Ranges(QString)));
-	feature2 = this->NewFeatureCombo();
-	connect(feature2, SIGNAL(currentIndexChanged(QString)), this, SLOT(SetF2Ranges(QString)));
-	feature3 = this->NewFeatureCombo();
-	connect(feature3, SIGNAL(currentIndexChanged(QString)), this, SLOT(SetF3Ranges(QString)));
+	buttonSignalMapper = new QSignalMapper(this);
+	featurSignalMapper = new QSignalMapper(this);
+	for(int i=0; i<tests; ++i)
+	{
+		minVal[i] = new QDoubleSpinBox;
+		maxVal[i] = new QDoubleSpinBox;
+		minComp[i] = this->NewCompButton(i);
+		maxComp[i] = this->NewCompButton(i);
+		feature[i] = this->NewFeatureCombo(i);
+	}
+	connect(buttonSignalMapper, SIGNAL(mapped(int)), this, SLOT(ToggleComp(int)));
+	connect(featurSignalMapper, SIGNAL(mapped(int)), this, SLOT(SetRanges(int)));
+
 	this->InitRanges();
-	bool1 = this->NewBoolCombo();
-	bool2 = this->NewBoolCombo();
+
+	for(int i=0; i<tests-1; ++i)
+	{
+		bools[i] = this->NewBoolCombo();
+	}
 
 	fLayout = new QGridLayout;
-	fLayout->addWidget(minVal1,0,0);
-	fLayout->addWidget(minComp1,0,1);
-	fLayout->addWidget(feature1,0,2);
-	fLayout->addWidget(maxComp1,0,3);
-	fLayout->addWidget(maxVal1,0,4);
-	fLayout->addWidget(addButton,1,0);
 
-	numEquations = 1;
+	numEquations = 0;
+	AddEquation();
 
 	groupBox = new QGroupBox(tr("Create Filters"));
 	groupBox->setLayout(fLayout);
@@ -428,48 +422,23 @@ FilterRowsDialog::FilterRowsDialog(QTableView *tableView, ObjectSelection * sel,
 //Set initial ranges of the spin boxes from 0 to the highest ID!
 void FilterRowsDialog::InitRanges()
 {
-	SetF1Ranges(feature1->currentText());
-	minVal1->setSingleStep(.01);
-	maxVal1->setSingleStep(.01);
-	SetF2Ranges(feature2->currentText());
-	minVal2->setSingleStep(.01);
-	maxVal2->setSingleStep(.01);
-	SetF3Ranges(feature3->currentText());
-	minVal3->setSingleStep(.01);
-	maxVal3->setSingleStep(.01);
+	for(int i=0; i<tests; ++i)
+	{
+		SetRanges(i);
+	}
 }
 
-void FilterRowsDialog::SetF1Ranges(QString text)
+void FilterRowsDialog::SetRanges(int i)
 {
-	int c = this->GetColumnFor(text);
+	int c = this->GetColumnFor( feature[i]->currentText() );
 	double max, min;
 	this->GetMinMaxFor(c, &min, &max);
-	minVal1->setRange(min,max);
-	minVal1->setValue(min);
-	maxVal1->setRange(min,max);
-	maxVal1->setValue(max);
-}
-
-void FilterRowsDialog::SetF2Ranges(QString text)
-{
-	int c = this->GetColumnFor(text);
-	double max, min;
-	this->GetMinMaxFor(c, &min, &max);
-	minVal2->setRange(min,max);
-	minVal2->setValue(min);
-	maxVal2->setRange(min,max);
-	maxVal2->setValue(max);
-}
-
-void FilterRowsDialog::SetF3Ranges(QString text)
-{
-	int c = this->GetColumnFor(text);
-	double max, min;
-	this->GetMinMaxFor(c, &min, &max);
-	minVal3->setRange(min,max);
-	minVal3->setValue(min);
-	maxVal3->setRange(min,max);
-	maxVal3->setValue(max);
+	minVal[i]->setRange(min,max);
+	minVal[i]->setValue(min);
+	minVal[i]->setSingleStep(.01);
+	maxVal[i]->setRange(min,max);
+	maxVal[i]->setValue(max);
+	maxVal[i]->setSingleStep(.01);
 }
 
 QPushButton * FilterRowsDialog::NewCompButton(int n)
@@ -477,69 +446,33 @@ QPushButton * FilterRowsDialog::NewCompButton(int n)
 	QPushButton *button = new QPushButton(smaller);
 	button->setDefault(false);
 	button->setAutoDefault(false);
-	switch(n)
-	{
-	case 1:
-		connect(button, SIGNAL(clicked()), this, SLOT(ToggleComp1()));
-		break;
-	case 2:
-		connect(button, SIGNAL(clicked()), this, SLOT(ToggleComp2()));
-		break;
-	case 3:
-		connect(button, SIGNAL(clicked()), this, SLOT(ToggleComp3()));
-		break;
-	}
+	connect(button, SIGNAL(clicked()), buttonSignalMapper, SLOT(map()));
+	buttonSignalMapper->setMapping( button, n );
 	return button;
 }
 
-void FilterRowsDialog::ToggleComp(int n)
+void FilterRowsDialog::ToggleComp(int i)
 {
-	switch(n)
+	if( minComp[i]->text() == smaller )
 	{
-	case 1:
-		if( minComp1->text() == smaller )
-		{
-			minComp1->setText(bigger);
-			maxComp1->setText(bigger);
-		}
-		else
-		{
-			minComp1->setText(smaller);
-			maxComp1->setText(smaller);
-		}
-		break;
-	case 2:
-		if( minComp2->text() == smaller )
-		{
-			minComp2->setText(bigger);
-			maxComp2->setText(bigger);
-		}
-		else
-		{
-			minComp2->setText(smaller);
-			maxComp2->setText(smaller);
-		}
-		break;
-	case 3:
-		if( minComp3->text() == smaller )
-		{
-			minComp3->setText(bigger);
-			maxComp3->setText(bigger);
-		}
-		else
-		{
-			minComp3->setText(smaller);
-			maxComp3->setText(smaller);
-		}
-		break;
+		minComp[i]->setText(bigger);
+		maxComp[i]->setText(bigger);
+	}
+	else
+	{
+		minComp[i]->setText(smaller);
+		maxComp[i]->setText(smaller);
 	}
 }
 
-QComboBox * FilterRowsDialog::NewFeatureCombo()
+QComboBox * FilterRowsDialog::NewFeatureCombo(int n)
 {
 	QStringList features = GetVisibleFeatures();
+
 	QComboBox *combo = new QComboBox;
 	combo->addItems(features);
+	connect(combo, SIGNAL(currentIndexChanged(QString)), featurSignalMapper, SLOT(map()));
+	featurSignalMapper->setMapping( combo, n );
 	return combo;
 }
 
@@ -566,68 +499,54 @@ QComboBox * FilterRowsDialog::NewBoolCombo()
 
 void FilterRowsDialog::AddEquation()
 {
-	switch(numEquations)
-	{
-	case 1:
-		numEquations = 2;
+	if(numEquations+1 > tests)
+		return;
+
+	numEquations++;
+
+	if(numEquations > 1)
 		this->RemoveWidget(addButton);
-		this->AddWidget(bool1,0,5);
-		this->AddWidget(minVal2,1,0);
-		this->AddWidget(minComp2,1,1);
-		this->AddWidget(feature2,1,2);
-		this->AddWidget(maxComp2,1,3);
-		this->AddWidget(maxVal2,1,4);
-		this->AddWidget(delButton,1,5);
-		this->AddWidget(addButton,2,0);	
-		break;
-	case 2:
-		numEquations = 3;
+	if(numEquations > 2)
 		this->RemoveWidget(delButton);
-		this->RemoveWidget(addButton);
-		this->AddWidget(bool2,1,5);
-		this->AddWidget(minVal3,2,0);
-		this->AddWidget(minComp3,2,1);
-		this->AddWidget(feature3,2,2);
-		this->AddWidget(maxComp3,2,3);
-		this->AddWidget(maxVal3,2,4);
-		this->AddWidget(delButton,2,5);
-		break;
-	default:
-		break;
-	}
+	if(numEquations > 1)
+		this->AddWidget(bools[numEquations-2], numEquations-2, 5);
+
+	this->AddWidget(minVal[numEquations-1],numEquations-1,0);
+	this->AddWidget(minComp[numEquations-1],numEquations-1,1);
+	this->AddWidget(feature[numEquations-1],numEquations-1,2);
+	this->AddWidget(maxComp[numEquations-1],numEquations-1,3);
+	this->AddWidget(maxVal[numEquations-1],numEquations-1,4);
+
+	if(numEquations > 1)
+		this->AddWidget(delButton,numEquations-1,5);
+	if(numEquations < tests)
+		this->AddWidget(addButton,numEquations,0);
 }
 
 void FilterRowsDialog::RemoveEquation()
 {
-	switch(numEquations)
-	{
-	case 2:
-		numEquations = 1;
-		this->RemoveWidget(delButton);
+	if(numEquations-1 == 0)
+		return;
+
+	numEquations--;
+
+	if(numEquations < tests-1)
 		this->RemoveWidget(addButton);
-		this->RemoveWidget(bool1);
-		this->RemoveWidget(minVal2);
-		this->RemoveWidget(minComp2);
-		this->RemoveWidget(feature2);
-		this->RemoveWidget(maxComp2);
-		this->RemoveWidget(maxVal2);
-		this->AddWidget(addButton,2,0);	
-		break;
-	case 3:
-		numEquations = 2;
-		this->RemoveWidget(delButton);
-		this->RemoveWidget(bool2);
-		this->RemoveWidget(minVal3);
-		this->RemoveWidget(minComp3);
-		this->RemoveWidget(feature3);
-		this->RemoveWidget(maxComp3);
-		this->RemoveWidget(maxVal3);
-		this->AddWidget(delButton,1,5);
-		this->AddWidget(addButton,2,0);
-		break;
-	default:
-		break;
-	}
+
+	this->RemoveWidget(delButton);
+
+	this->RemoveWidget(minVal[numEquations]);
+	this->RemoveWidget(minComp[numEquations]);
+	this->RemoveWidget(feature[numEquations]);
+	this->RemoveWidget(maxComp[numEquations]);
+	this->RemoveWidget(maxVal[numEquations]);
+
+	this->RemoveWidget(bools[numEquations-1]);
+
+	if(numEquations > 0)
+		this->AddWidget(delButton,numEquations-1, 5);
+	
+	this->AddWidget(addButton, numEquations, 0);
 }
 
 void FilterRowsDialog::RemoveWidget(QWidget *widget)
@@ -676,15 +595,9 @@ void FilterRowsDialog::DoFilter(void)
 {
 	//First find out which column numbers I care about!
 	int featureColumns[3];
-	switch(numEquations)
+	for(int i=0; i<numEquations; ++i)
 	{
-	case 3:
-		featureColumns[2] = GetColumnFor( feature3->currentText() );
-	case 2:
-		featureColumns[1] = GetColumnFor( feature2->currentText() );
-	case 1:
-		featureColumns[0] = GetColumnFor( feature1->currentText() );
-		break;
+		featureColumns[i] = GetColumnFor( feature[i]->currentText() );
 	}
 
 	std::set<long int> matchIds;	//Ids that match the filter
@@ -697,60 +610,25 @@ void FilterRowsDialog::DoFilter(void)
 	for( int row=0; row < this->mTable->model()->rowCount(); ++row)
 	{
 		bool ok[3] = {false, false, false};
+
 		for(int c=0; c<numEquations; c++)
 		{
 			QModelIndex index = this->mTable->model()->index(row, featureColumns[c]);
 			double val = this->mTable->model()->data(index).toDouble();
-			if(c==0)
+
+			if( minComp[c]->text() == smaller )	//I want to be inside the range
 			{
-				if( minComp1->text() == smaller )	//I want to be inside the range
-				{
-					if( val >= minVal1->value() && val <= maxVal1->value() )
-						ok[c] = true;
-					else
-						ok[c] = false;
-				}
-				else		// I want to be outside the range
-				{
-					if( val < minVal1->value() || val > maxVal1->value() )
-						ok[c] = true;
-					else
-						ok[c] = false;
-				}
+				if( val >= minVal[c]->value() && val <= maxVal[c]->value() )
+					ok[c] = true;
+				else
+					ok[c] = false;
 			}
-			else if(c==1)
+			else		// I want to be outside the range
 			{
-				if( minComp2->text() == smaller )	//I want to be inside the range
-				{
-					if( val >= minVal2->value() && val <= maxVal2->value() )
-						ok[c] = true;
-					else
-						ok[c] = false;
-				}
-				else		// I want to be outside the range
-				{
-					if( val < minVal2->value() || val > maxVal2->value() )
-						ok[c] = true;
-					else
-						ok[c] = false;
-				}
-			}
-			else if(c==2)
-			{
-				if( minComp3->text() == smaller )	//I want to be inside the range
-				{
-					if( val >= minVal3->value() && val <= maxVal3->value() )
-						ok[c] = true;
-					else
-						ok[c] = false;
-				}
-				else		// I want to be outside the range
-				{
-					if( val < minVal3->value() || val > maxVal3->value() )
-						ok[c] = true;
-					else
-						ok[c] = false;
-				}
+				if( val < minVal[c]->value() || val > maxVal[c]->value() )
+					ok[c] = true;
+				else
+					ok[c] = false;
 			}
 		}
 
@@ -763,24 +641,24 @@ void FilterRowsDialog::DoFilter(void)
 		}
 		else if( numEquations == 2)
 		{
-			if(bool1->currentText() == tr("AND"))
+			if(bools[0]->currentText() == tr("AND"))
 				mOK = ok[0] && ok[1];
-			else if( bool1->currentText() == tr("OR"))
+			else if( bools[0]->currentText() == tr("OR"))
 				mOK = ok[0] || ok[1];
 		}
 		else if( numEquations == 3)
 		{
-			if(bool1->currentText() == tr("AND") && bool2->currentText() == tr("AND"))
+			if(bools[0]->currentText() == tr("AND") && bools[1]->currentText() == tr("AND"))
 				mOK = ok[0] && ok[1] && ok[2];
-			else if(bool1->currentText() == tr("AND") && bool2->currentText() == tr("OR"))
+			else if(bools[0]->currentText() == tr("AND") && bools[1]->currentText() == tr("OR"))
 				mOK = (ok[0] && ok[1]) || ok[2];
-			else if(bool1->currentText() == tr("OR") && bool2->currentText() == tr("AND"))
+			else if(bools[0]->currentText() == tr("OR") && bools[1]->currentText() == tr("AND"))
 				mOK = (ok[0] || ok[1]) && ok[2];
-			else if(bool1->currentText() == tr("OR") && bool2->currentText() == tr("OR"))
+			else if(bools[0]->currentText() == tr("OR") && bools[1]->currentText() == tr("OR"))
 				mOK = ok[0] || ok[1] || ok[2];
 		}
 
-		//this->mTable->setRowHidden(row, !mOK);
+		//this->mTable->setRowHidden(row, !mOK);	//Removed because selection will select hidden rows!
 		if(mOK)
 		{
 			QModelIndex index = this->mTable->model()->index(row, 0);
@@ -868,7 +746,7 @@ void SelectionAdapter::updateOBJ(const QItemSelection & selected, const QItemSel
 	//int rows = model->rowCount();
 	//int columns = model->columnCount();
 	
-	QModelIndexList sels = m_qmod->selectedRows();
+	QModelIndexList sels = m_qmod->selectedRows();	//Gets Indexes for column=0
 	for(int i=0; i<sels.size(); ++i)
 	{
 		QModelIndex index = sels.at(i);
