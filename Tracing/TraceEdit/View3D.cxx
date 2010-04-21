@@ -238,7 +238,17 @@ void View3D::ReloadState()
 		this->tempTraceFile = this->TraceEditSettings.value("lastOpen/Temp").toStringList();
 		if (!this->tempTraceFile.isEmpty())
 		{	//opens last saved file 
-			this->TraceFiles = this->tempTraceFile;
+			bool ok = false; 
+			QString temp = QInputDialog::getItem(this, "Reload Saved Version", "open which saved version?", 
+				this->tempTraceFile, 0, false, &ok);
+			if (ok && !temp.isEmpty())
+			{
+				this->TraceFiles.append(temp);
+			}
+			else
+			{
+				this->TraceFiles.append( this->tempTraceFile.last());
+			}
 			// if saved file find log file
 			QString logFileName = this->TraceEditSettings.value("lastOpen/Log").toString();
 			if (!logFileName.isEmpty())
@@ -661,6 +671,7 @@ void View3D::CreateGUIObjects()
 //Loading soma data
   this->loadSoma = new QAction("Load Somas", this->CentralWidget);
    connect(this->loadSoma, SIGNAL(triggered()), this, SLOT(LoadSomaFile()));
+   this->loadSoma->setStatusTip("Load image file to Contour rendering");
 
  //Set up the buttons that the user will use to interact with this program. 
   this->ListButton = new QAction("List", this->CentralWidget);
@@ -713,6 +724,7 @@ void View3D::CreateGUIObjects()
 	this->BranchButton->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_B));
 	this->BranchButton->setToolTip("Shift + B");
 	this->ImageIntensity = new QAction("Intensity", this->CentralWidget);
+	this->ImageIntensity->setStatusTip("Calculates intensity of trace bits from one image");
 	connect(this->ImageIntensity, SIGNAL(triggered()), this, SLOT(SetImgInt()));
 	this->MoveSphere = new QAction("PT", this->CentralWidget);
 	connect(this->MoveSphere, SIGNAL(triggered()), this, SLOT(showPTin3D()));
@@ -2895,8 +2907,10 @@ void View3D::SaveToFile()
     {
     return;
     }
-  this->tempTraceFile.clear();// will make this a buffered state for reload
+  //this->tempTraceFile.clear();// will make this a buffered state for reload
+  this->tempTraceFile.removeAll(fileName);
   this->tempTraceFile.append( fileName);
+  this->TraceEditSettings.setValue("lastOpen/Temp", this->tempTraceFile);
   //make sure the user supplied an appropriate output file format
   if(!fileName.endsWith(".vtk") && !fileName.endsWith(".swc"))
     {
@@ -2935,6 +2949,8 @@ void View3D::SaveToFile()
   {
 	  this->SaveProjectFile();
   }
+  this->TraceEditSettings.setValue("lastOpen/Project",this->ProjectName);
+  this->TraceEditSettings.sync();
 }
 void View3D::SaveProjectFile()
 {
@@ -2964,7 +2980,10 @@ void View3D::SaveProjectFile()
 		{
 			project->addFile(this->tempTraceFile.last().toStdString(), "Trace", 0,0,0);
 		}
+		this->ProjectName = newProject;
 		project->writeProject((char*)newProject.toStdString().c_str());
+		this->TraceEditSettings.setValue("lastOpen/Project",this->ProjectName);
+		this->TraceEditSettings.sync();
 	}
 }
 void View3D::SaveSelected()
