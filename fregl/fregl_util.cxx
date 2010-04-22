@@ -197,7 +197,7 @@ fregl_util_overlap(TransformType::Pointer transform, itk::Size<3> size_from, itk
   bool is_overlap = true;
   double overlap = 0.0;
   
-  if ( !transform ) return false;
+  if ( !transform ) return 0;
 
   // A quick check to see if the two volumes overlap
   TransformType::ParametersType params = transform->GetParameters();

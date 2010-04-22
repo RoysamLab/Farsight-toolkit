@@ -137,31 +137,18 @@ initialize(std::vector<fregl_reg_record::Pointer> const & reg_records)
         to_image_index = j;
     }
 
-    // Only image pairs with valid xforms are import the xforms to
-    // transforms_
+    // Only image pairs with valid xforms are imported to transforms_
+    // for joint registration. Those transforms define the valid links
+    // in the joint graph. obj_contains the values from pairwise
+    // registration. overlap_ is initialized from pairwise, but later
+    // updated when joint results are available.
     if (reg_records[i]->obj()< error_bound_)
       transforms_(from_image_index, to_image_index) = reg_records[i]->transform();
     obj_(from_image_index, to_image_index) = reg_records[i]->obj();
     overlap_(from_image_index, to_image_index) = reg_records[i]->overlap();
-    //transforms_(from_image_index, to_image_index) = reg_records[i]->transform();
-    /*
-    if (reg_records[i]->obj()< error_bound_)
-      overlap_(from_image_index, to_image_index) = reg_records[i]->overlap();
-    */
-    
-    /*
-    if (reg_records[i]->obj()< error_bound_) {
-      transforms_(from_image_index, to_image_index) = reg_records[i]->transform(); 
-      overlap_(from_image_index, to_image_index) = reg_records[i]->overlap();
-      obj_(from_image_index, to_image_index) = reg_records[i]->obj();
-    }
-    else if (reg_records[i]->obj()< 1) {
+
+    if (reg_records[i]->obj() > error_bound_ && reg_records[i]->obj()< 1)
       std::cout<<"Eliminated pair "<<reg_records[i]->from_image()<<" to "<<reg_records[i]->to_image()<<" with obj="<<reg_records[i]->obj()<<std::endl;
-      transforms_(from_image_index, to_image_index) = reg_records[i]->transform(); 
-      overlap_(from_image_index, to_image_index) = 0; //no corresp will be generated
-      obj_(from_image_index, to_image_index) = reg_records[i]->obj();
-    }
-    */
     
   }
 
@@ -649,11 +636,9 @@ generate_correspondences()
   SizeType size_from, size_to; 
   for (unsigned int from = 0; from<image_ids_.size(); from++) {
     for (unsigned int to = from+1; to<image_ids_.size(); to++) {
-      // generate the correspondences if two images have a valid obj
-      // value
-      if ( obj_(from,to)<error_bound_ ) {
-        //if ( overlap_(from,to) > 0 ) {
-        
+      // generate the correspondences if there is a valid pairwise
+      // xform between two images. 
+      if ( transforms_(from,to) ) {
         size_from = image_sizes_[from];
         int z_space = vnl_math_min(10, int(size_from[2]/3));
         size_to = image_sizes_[to];
@@ -737,9 +722,13 @@ write_xml(std::string const& filename, bool mutual_consistency, bool gen_temp_st
     std::string filename_overlap = filename+"_debug_overlapped.txt";
     std::string filename_debug = filename+"_debug.txt";
     temp_good.open(filename_good.c_str());
+    temp_good<<"from_image"<<"\t"<<"to_image"<<"\t"<<"overlap"<<"\t"<<"objective_value" <<"\n";
     temp_bad.open(filename_bad.c_str());
+    temp_bad<<"from_image"<<"\t"<<"to_image"<<"\t"<<"overlap"<<"\t"<<"objective_value"<<"\n";
     temp_overlap.open(filename_overlap.c_str());
+    temp_overlap<<"from_image"<<"\t"<<"to_image"<<"\t"<<"overlap"<<"\t"<<"objective_value"<<"\n";
     temp_debug.open(filename_debug.c_str());
+    temp_debug<<"from_image"<<"\t"<<"to_image"<<"\t"<<"overlap"<<"\t"<<"objective_value"<<"\n";
   }
   
   for (unsigned int j = 0; j<transforms_.cols(); j++) {
@@ -751,16 +740,17 @@ write_xml(std::string const& filename, bool mutual_consistency, bool gen_temp_st
 
       // dump to the output files for debugging
       if (gen_temp_stuff && i>j) {
-        if (reg_rec->obj()< 1) {
-          if (reg_rec->obj() < error_bound_)
+        if (reg_rec->obj()< 1) { //pairwise suceeded
+          if (reg_rec->obj() < error_bound_) //pairwise accepted
             temp_good<<reg_rec->from_image()<<"\t"<<reg_rec->to_image()<<"\t"<<vnl_math_rnd(reg_rec->overlap()*1000)/1000.0<<"\t"<<vnl_math_rnd(reg_rec->obj()*1000)/1000.0 <<"\n";
-          else temp_bad<<reg_rec->from_image()<<"\t"<<reg_rec->to_image()<<"\t"<<vnl_math_rnd(reg_rec->overlap()*1000)/1000.0<<"\t"<<vnl_math_rnd(reg_rec->obj()*1000)/1000.0 <<"\n";
+          else  //pairwise rejected by joint
+            temp_bad<<reg_rec->from_image()<<"\t"<<reg_rec->to_image()<<"\t"<<vnl_math_rnd(reg_rec->overlap()*1000)/1000.0<<"\t"<<vnl_math_rnd(reg_rec->obj()*1000)/1000.0 <<"\n";
           
-          temp_debug<<vnl_math_rnd(reg_rec->overlap()*1000)/1000.0<<"\t"<<vnl_math_rnd(reg_rec->obj()*1000)/1000.0 <<"\n";
+          temp_debug<<reg_rec->from_image()<<"\t"<<reg_rec->to_image()<<"\t"<<vnl_math_rnd(reg_rec->overlap()*1000)/1000.0<<"\t"<<vnl_math_rnd(reg_rec->obj()*1000)/1000.0 <<"\n";
         }
-        else if (reg_rec->overlap() > 0.01){
+        else if (reg_rec->overlap() > 0.01){ //pairwise failed, but images overlap
           temp_overlap<<reg_rec->from_image()<<"\t"<<reg_rec->to_image()<<"\t"<<vnl_math_rnd(reg_rec->overlap()*1000)/1000.0<<"\t"<<vnl_math_rnd(reg_rec->obj()*1000)/1000.0 <<"\n";
-          temp_debug<<vnl_math_rnd(reg_rec->overlap()*1000)/1000.0<<"\t"<<vnl_math_rnd(reg_rec->obj()*1000)/1000.0 <<"\n";
+          temp_debug<<reg_rec->from_image()<<"\t"<<reg_rec->to_image()<<"\t"<<vnl_math_rnd(reg_rec->overlap()*1000)/1000.0<<"\t"<<vnl_math_rnd(reg_rec->obj()*1000)/1000.0 <<"\n";
         }
       }
     }

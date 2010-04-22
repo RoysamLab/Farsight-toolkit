@@ -21,7 +21,9 @@ limitations under the License.
 // 
 //  This class makes sure there exists one transformation between
 //  every image pair if one image can be transformed to another image
-//  via a series of pairwise transforms.
+//  via a series of pairwise transforms. At the end, only pairs in the
+//  same joint graph have transformations. It is possible that
+//  multiple sub-graph are found in the given dataset.
 //
 #ifndef _fregl_joint_register_
 #define _fregl_joint_register_
@@ -141,8 +143,8 @@ private:
 
 private:
   vbl_array_2d<TransformType::Pointer> transforms_; // (from,to)
-  vbl_array_2d<double> overlap_;
-  vbl_array_2d<double> obj_;
+  vbl_array_2d<double> overlap_; //initially pairwise, finally updated by joint
+  vbl_array_2d<double> obj_; //values from the pairwise registration
   std::vector<std::string> image_ids_;
   std::vector< SizeType > image_sizes_;
   bool corresp_generated_;
