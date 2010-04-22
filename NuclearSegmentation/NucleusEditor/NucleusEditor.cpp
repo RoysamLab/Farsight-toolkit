@@ -1002,8 +1002,17 @@ void NucleusEditor::loadImage(QString fileName)
 		if(!myImg->LoadFile(fileName.toStdString()))
 			myImg = NULL;
 	}
+	
+	//this->updateNucSeg();
+	if(nucSeg)
+	{
+		segView->SetCenterMapPointer( 0 );
+		segView->SetBoundingBoxMapPointer( 0 );
+		delete nucSeg;
+		nucSeg = NULL;
+	}
+
 	segView->SetChannelImage(myImg);
-	this->updateNucSeg();
 	projectFiles.path = lastPath.toStdString();
 	projectFiles.input = name.toStdString();
 	projectFiles.inputSaved = true;
@@ -1805,16 +1814,16 @@ void NucleusEditor::segmentNuclei()
 	ParamsFileDialog *dialog = new ParamsFileDialog(lastPath,chs,this);
 	if( dialog->exec() )
 	{
-		paramFile = dialog->getFileName();
+		//paramFile = dialog->getFileName();
 		nucChannel = dialog->getChannelNumber();
+		projectDefinition.MakeDefaultNucleusSegmentation(nucChannel);
+		projectFiles.definitionSaved = false;
+		projectFiles.nucSegValidated = false;
+
+		startProcess();
 	}
 	delete dialog;
 
-	projectDefinition.MakeDefaultNucleusSegmentation(nucChannel);
-	projectFiles.definitionSaved = false;
-	projectFiles.nucSegValidated = false;
-
-	startProcess();
 }
 
 QVector<QString> NucleusEditor::getChannelStrings(void)
@@ -1926,10 +1935,18 @@ void NucleusEditor::process()
 		projectFiles.definitionSaved = false;
 
 		processAbort->setEnabled(false);
-		processContinue->setEnabled(true);
-		processTaskLabel->setText(tr("  You May Edit Nuclear Segmentation"));
-		processProgress->setRange(0,2);
-		processProgress->setValue(1);
+
+		if(pProc->DoneProcessing())
+		{
+			deleteProcess();
+		}
+		else
+		{
+			processContinue->setEnabled(true);
+			processTaskLabel->setText(tr("  You May Edit Nuclear Segmentation"));
+			processProgress->setRange(0,2);
+			processProgress->setValue(1);
+		}
 
 		this->closeViews();
 		CreateNewTableWindow();
@@ -2040,15 +2057,15 @@ ParamsFileDialog::ParamsFileDialog(QString lastPth, QVector<QString> channels, Q
 	chLayout->addWidget(channelLabel);
 	chLayout->addWidget(channelCombo);
 
-	autoButton = new QRadioButton(tr("Automatic Parameter Selection"),this);
-	autoButton->setChecked(true);
+	//autoButton = new QRadioButton(tr("Automatic Parameter Selection"),this);
+	//autoButton->setChecked(true);
 
-	fileButton = new QRadioButton(tr("Use Parameter File..."),this);
+	//fileButton = new QRadioButton(tr("Use Parameter File..."),this);
 
-	fileCombo = new QComboBox();
-	fileCombo->addItem(tr(""));
-	fileCombo->addItem(tr("Browse..."));
-	connect(fileCombo, SIGNAL(currentIndexChanged(QString)),this,SLOT(ParamBrowse(QString)));
+	//fileCombo = new QComboBox();
+	//fileCombo->addItem(tr(""));
+	//fileCombo->addItem(tr("Browse..."));
+	//connect(fileCombo, SIGNAL(currentIndexChanged(QString)),this,SLOT(ParamBrowse(QString)));
 
 	okButton = new QPushButton(tr("OK"),this);
 	connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
@@ -2058,12 +2075,12 @@ ParamsFileDialog::ParamsFileDialog(QString lastPth, QVector<QString> channels, Q
 
 	QVBoxLayout *layout = new QVBoxLayout;
 	layout->addLayout(chLayout);
-	layout->addWidget(autoButton);
-	layout->addWidget(fileButton);
-	layout->addWidget(fileCombo);
+	//layout->addWidget(autoButton);
+	//layout->addWidget(fileButton);
+	//layout->addWidget(fileCombo);
 	layout->addLayout(bLayout);
 	this->setLayout(layout);
-	this->setWindowTitle(tr("Parameters"));
+	this->setWindowTitle(tr("Channel"));
 
 	Qt::WindowFlags flags = this->windowFlags();
 	flags &= ~Qt::WindowContextHelpButtonHint;

@@ -195,6 +195,7 @@ void LabelImageViewQT::SetChannelImage(ftk::Image::Pointer img)
 			labelImg = NULL;
 			//labelGeometries.clear();
 			selection = NULL;
+			refreshBoundsImage();
 		}
 	}
 	if(!labelImg)
