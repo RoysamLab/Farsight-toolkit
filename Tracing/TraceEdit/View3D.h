@@ -62,6 +62,7 @@ class QTableView;
 class ScatterView;
 class TableWindow;
 class ImageRenderActors;
+class vtkPointWidget;
 
 
 class View3D : public QMainWindow 
@@ -263,6 +264,7 @@ private:
   //ID numbers of the selected traces
 	std::vector<int> SelectedTraceIDs;
 
+	vtkSmartPointer<vtkPointWidget> pointer3d;
 	vtkSmartPointer<vtkSphereSource> Sphere;
 	vtkSmartPointer<vtkPolyDataMapper> SphereMapper;
 	vtkSmartPointer<vtkActor> SphereActor;

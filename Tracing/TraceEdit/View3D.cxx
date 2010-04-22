@@ -74,6 +74,7 @@ limitations under the License.
 #include "vtkSphereSource.h"
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
+#include "vtkPointWidget.h"
 
 #include "TraceBit.h"
 #include "TraceGap.h"
@@ -711,8 +712,8 @@ void View3D::CreateGUIObjects()
 	this->BreakButton = new QAction("Break", this->CentralWidget);
 	connect(this->BreakButton, SIGNAL(triggered()), this, SLOT( BreakBranch()));
 	this->BreakButton->setStatusTip("Breaks a branch off of the tree");
-	this->BreakButton->setShortcut(QKeySequence(Qt::Key_B));
-	this->BreakButton->setToolTip("B");
+	this->BreakButton->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_B));
+	this->BreakButton->setToolTip("Shift + B");
   this->explodeTree = new QAction("Explode", this->CentralWidget);
   connect(this->explodeTree, SIGNAL(triggered()), this, SLOT( ExplodeTree()));
   this->explodeTree->setStatusTip("Break tree into segments,aka Explode. Tree can be rebuilt using set root");
@@ -721,8 +722,8 @@ void View3D::CreateGUIObjects()
   this->BranchButton = new QAction("Branch", this->CentralWidget);
 	connect(this->BranchButton, SIGNAL(triggered()), this, SLOT(AddNewBranches()));
 	this->BranchButton->setStatusTip("Add branches to trunk");
-	this->BranchButton->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_B));
-	this->BranchButton->setToolTip("Shift + B");
+	this->BranchButton->setShortcut(QKeySequence(Qt::Key_B));
+	this->BranchButton->setToolTip("B");
 	this->ImageIntensity = new QAction("Intensity", this->CentralWidget);
 	this->ImageIntensity->setStatusTip("Calculates intensity of trace bits from one image");
 	connect(this->ImageIntensity, SIGNAL(triggered()), this, SLOT(SetImgInt()));
@@ -731,7 +732,7 @@ void View3D::CreateGUIObjects()
 	this->MoveSphere->setStatusTip("moves marker to location");
 	this->MoveSphere->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_P));
   //Setup the tolerance settings editing window
-  this->SettingsWidget = new QWidget();
+  this->SettingsWidget = new QWidget(this);
   //QIntValidator *intValidator = new QIntValidator(1, 100, this->SettingsWidget);
   this->MaxGapField = new QSpinBox(this->SettingsWidget);
   this->MaxGapField->setRange(0,1000);
@@ -926,6 +927,10 @@ void View3D::CreateSphereActor()
   this->SphereActor->GetProperty()->SetOpacity(.3);
   this->SphereActor->VisibilityOff();
   this->SphereActor->SetPickable(0);            //dont want to pick the sphere itself
+  this->pointer3d = vtkSmartPointer<vtkPointWidget>::New();
+  this->pointer3d->PlaceWidget(-6000, 6000,-6000, 6000,-6000, 6000);
+  this->pointer3d->AllOff();
+  this->pointer3d->SetInteractor(this->QVTK->GetInteractor());
 }
 
 void View3D::createRayCastSliders()
@@ -1072,6 +1077,7 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
 		//view->HighlightSelected(tline, view->SelectColor);
 		//tline->Getstats();              //prints the id and end coordinates to the command prompt 
 		view->SphereActor->SetPosition(pickPos);    //sets the selector to new point
+		view->pointer3d->SetPosition(pickPos);
 		view->SphereActor->VisibilityOn();      //deleteTrace can turn it off 
 		view->poly_line_data->Modified();
 	}
@@ -1104,6 +1110,7 @@ void View3D::showPTin3D()
 		pos[2] = QInputDialog::getDouble(this, tr("set z"), tr("z value"), 0, -60000, 60000, 1, &ok);
 	}
 	this->SphereActor->SetPosition(pos );
+	this->pointer3d->SetPosition(pos);
 	this->SphereActor->VisibilityOn();
 }
 void View3D::updateTraceSelectionHighlights()
