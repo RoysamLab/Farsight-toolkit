@@ -66,13 +66,14 @@ public:
   
   //: Construct the connected graph
   //
-  //  Every image is treated as a graph, and a transform is the
+  //  Every image is treated as a node, and a transform is the
   //  edge. The connected graph provides the capability to transform
-  //  every image to any image in the graph
-  bool build_graph(bool mutual_consistency = false);
+  //  every image to any image in the graph. The function returns the
+  //  number of connected sub-graphs.
+  int build_graph();
   
   //: Compute the transformation from every image to the chosen anchor
-  bool build_graph(int i, bool mutual_consistency = false); 
+  bool build_graph(int i); 
   
   //: Return the transform of an image pair
   //
@@ -103,7 +104,7 @@ public:
   void replace_image_name_substr(std::string const & old_str, std::string  const & new_str);
 
   //: Write the result to an xml file
-  void write_xml(std::string const & filename, bool mutual_consistency,
+  void write_xml(std::string const & filename, int sub_graphs_built,
                  bool gen_temp_stuff = false);
 
   //: Read the results from an xml file
@@ -133,7 +134,12 @@ private:
   //
   //  Transformations are propagrated in breadth_first_search manner
   void breadth_first_connect( int anchor );
-
+  
+  //: Mark images which belong to the same sub-graph as the anchor
+  //
+  //  The computation is in breadth_first_search manner
+  void generate_graph_indices( int anchor, int index );
+  
   //: Generate_correspondences
   //
   //  The correspondences are generated assuming that the pairwise
@@ -151,6 +157,7 @@ private:
   double scale_multiplier_;
   double error_bound_;
   vbl_array_2d< CorrespondenceList > pairwise_constraints_;
+  std::vector<int> graph_indices_;
 };
 
 #endif

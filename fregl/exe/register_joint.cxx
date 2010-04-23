@@ -28,7 +28,6 @@ limitations under the License.
 // Optional arguments:
 //  -output         Name of the output xml file. 
 //  -error          Upper bound of the error to be considered as correct pairwise alignment
-//  -mc             Impose mutual consistency
 
 #include <fstream>
 #include <string>
@@ -49,7 +48,7 @@ main(  int argc, char* argv[] )
   
   vul_arg< double > arg_error_bound    ( "-error_bound", "The upper bound for the accepted error in the range of [0,1]. The default is 1 (all pairs are accepted)",1);
 
-  vul_arg< bool > arg_no_mc         ( "-quick", "No mutual consistency is imposed", false);
+  //vul_arg< bool > arg_no_mc         ( "-quick", "No mutual consistency is imposed", false);
 
   vul_arg< vcl_string > arg_roi_file ("-roi", "Text file containing the list of image names in the ROI");
   vul_arg< bool > arg_debug ("-debug","Dump out the statistics to a temp file which has the same name as the xml file with the suffix debug.txt",false);
@@ -114,13 +113,19 @@ main(  int argc, char* argv[] )
     jointer_register = new fregl_joint_register( reg_records, arg_multiplier(), arg_error_bound() );
     
   }
-  
+
+  /*
   bool mutual_consistency = !arg_no_mc();
   if ( arg_no_mc() ) 
     std::cout<<"Joint registration without mutual consistency ..."<<std::endl;
   else 
     std::cout<<"Joint registration mutual consistency ..."<<std::endl;
+  */
 
+  int sub_graphs_built = jointer_register->build_graph();
+  jointer_register->write_xml(arg_xml_file(), sub_graphs_built, arg_debug());
+  
+  /*
   bool graph_build = jointer_register->build_graph(!arg_no_mc());
   if ( !graph_build && !arg_no_mc() ) {
     std::cout<<"Failed to build the graph with mutual consistency. The graph is  now built without mutual consistency."<<vcl_endl;
@@ -128,7 +133,8 @@ main(  int argc, char* argv[] )
     mutual_consistency = false;
   }
   jointer_register->write_xml(arg_xml_file(), mutual_consistency, arg_debug());
-
+  */
+  
   return 0;
 }
 

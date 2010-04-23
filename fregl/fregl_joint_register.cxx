@@ -86,6 +86,7 @@ initialize(std::vector<fregl_reg_record::Pointer> const & reg_records)
   overlap_.fill( 0 );
   obj_.resize(image_ids_.size(), image_ids_.size());
   obj_.fill( 1 );
+  graph_indices_.resize(image_ids_.size(),0);
   
   // If scale_multiplier_ is set, run muse scale estimator to compute
   // the error scale. Set the error_bound_ to be
@@ -180,36 +181,51 @@ initialize(std::vector<fregl_reg_record::Pointer> const & reg_records)
   std::cout<<"End of Initialization"<<std::endl;
 }
 
-bool 
+int
 fregl_joint_register::
-build_graph(bool mutual_consistency)
+build_graph()
 {
   vul_timer timer;
   timer.mark();
+  // build the array which contains the sub_graph indices. Images
+  // belonging to the same subgraph should have the same index
+  int index = 0;
+  for (unsigned int i = 0; i<transforms_.rows(); i++) {
+    if (!graph_indices_[i]) generate_graph_indices(i, ++index);
+  }
+
+  // Now compute the transformations by treating each image as the anchor. 
   for (unsigned int i = 0; i<transforms_.rows(); i++) {
     std::cout<<"Building the graph for image "<<image_ids_[i]<<std::endl;
-    if (!build_graph( i, mutual_consistency )) return false;
+    if (!build_graph(i))
+      std::cerr<<"ERROR: No graph built for image "<<image_ids_[i]<<std::endl;
   }
   std::cout << "Timing: Joint registration in  ";
   timer.print( std::cout );
   std::cout<<std::endl;
   
-  return true;
+  return index;
 }
 
 bool 
 fregl_joint_register::
-build_graph(int anchor, bool mutual_consistency)
+build_graph(int anchor)
 {
   // If mutual consistency not required, simply use breadth first
   // search to propagate the transformation. Otherwise, perform bundle
   // adjustment to impose mutual consistency outside the anchor space.
+
+  if ( !corresp_generated_ ) generate_correspondences();
+  if (!estimate( anchor )) return false; 
+  
+  /*
   if ( mutual_consistency ) {
     if ( !corresp_generated_ ) generate_correspondences();
     if (!estimate( anchor )) return false; 
   }
   else breadth_first_connect( anchor );
-
+  */
+  
   // update overlaps
   for (unsigned int from = 0; from<transforms_.rows(); from++) {
     overlap_(from, anchor) = fregl_util_overlap(transforms_(from, anchor), image_sizes_[from], image_sizes_[anchor]);
@@ -320,6 +336,39 @@ is_overlapped(int from, int to) const
   else return false;
 }
 
+void 
+fregl_joint_register::
+generate_graph_indices( int anchor, int index ) 
+{
+  bool all_explored = false;
+  
+  // This is a breadth-first search 
+  std::vector<bool> explored(transforms_.rows(), false);
+  explored[anchor] =  true;
+  graph_indices_[anchor] = index;
+  std::vector<int> connected; //to keep track of new connections
+  while (!all_explored) {
+    //check for new connections which are not yet explored
+    for (unsigned int i = 0; i<transforms_.rows(); i++) {
+      if ((unsigned int)anchor != i && transforms_(i,anchor) && !explored[i]) {
+        connected.push_back(i);
+      }
+    }
+    
+    if (connected.empty()) {
+      all_explored = true;
+      continue;
+    }
+        // Explore the new connections 
+    while (!connected.empty()) {
+      anchor = connected.back();
+      graph_indices_[anchor] = index;
+      connected.pop_back();
+      explored[anchor] = true;
+    }
+  }
+}
+
 // For this connection, exisiting pairwise links are copied over, and
 // missing linkes are inferred from the exisiting pairwise transforms.
 void 
@@ -367,18 +416,17 @@ breadth_first_connect( int anchor )
           transforms_(i,anchor)->Compose(transforms_(i,from_index), true);
           transforms_(anchor,i) = TransformType::New();
           transforms_(i,anchor)->GetInverse( transforms_(anchor,i) );
-          /*
-          if ( overlapping(i, anchor) )
-            overlap_(i, anchor) = 1;
-	  if ( overlapping( anchor, i) )
-            overlap_(anchor, i) = 1;
-          */
+          
+          //if ( overlapping(i, anchor) )
+          //  overlap_(i, anchor) = 1;
+	  //if ( overlapping( anchor, i) )
+          //  overlap_(anchor, i) = 1;
+          
         }
       }
       explored[from_index] = true;
     }
   }
-
 }
 
 bool 
@@ -434,7 +482,8 @@ estimate(int anchor)
   //  triangle, and the rhs matrix to sum_rhs
   std::vector<int> indices_for_other_images;
   for (int i = 0; i<size;i++)
-    if (i!=anchor) indices_for_other_images.push_back(i);
+    if (i!=anchor && graph_indices_[anchor]==graph_indices_[i])
+      indices_for_other_images.push_back(i);
 
   size = indices_for_other_images.size();
   int dim = size*4;
@@ -689,7 +738,7 @@ get_reg_record(int from, int to) const
 
 void
 fregl_joint_register::
-write_xml(std::string const& filename, bool mutual_consistency, bool gen_temp_stuff)
+write_xml(std::string const& filename, int sub_graphs_built, bool gen_temp_stuff)
 {
   TiXmlDocument doc;       /* document pointer */
   std::string str;
@@ -702,10 +751,8 @@ write_xml(std::string const& filename, bool mutual_consistency, bool gen_temp_st
   str = ToString( transforms_.rows() );
   root_node->SetAttribute("number_of_images", str.c_str());
   
-  if (mutual_consistency)
-    root_node->SetAttribute("mutual_consistency", "yes");
-  else 
-    root_node->SetAttribute("mutual_consistency", "no");
+  str = ToString( sub_graphs_built ); 
+  root_node->SetAttribute("sub_graphs_built", str);
   
   str = ToString( scale_multiplier_ );
   root_node->SetAttribute("error_scale_multiplier",str.c_str() );
@@ -714,6 +761,19 @@ write_xml(std::string const& filename, bool mutual_consistency, bool gen_temp_st
   root_node->SetAttribute("error_bound",str.c_str() );
   doc.LinkEndChild( root_node );
 
+  // dump out the sub-graph information
+  for (int index = 1; index <= sub_graphs_built; index++) {
+    TiXmlElement* graph_node = new TiXmlElement("subgraph");
+    for (unsigned int i = 0; i<image_ids_.size(); i++) {
+      if (graph_indices_[i] == index) {
+        TiXmlElement* node = new TiXmlElement("image_ID");
+        node->LinkEndChild(new TiXmlText(image_ids_[i]));
+        graph_node->LinkEndChild(node);
+      }
+    }
+    root_node->LinkEndChild(graph_node);
+  }
+  
   // Set up the temp file for storing the overlap & errors
   std::ofstream temp_good, temp_bad, temp_overlap, temp_debug;
   if (gen_temp_stuff) {
