@@ -773,6 +773,12 @@ void View3D::CreateGUIObjects()
 	this->MergeLabel->setText(QString::number(this->numMerged));
 	this->DeleteLabel = new QLabel(this);
 	this->DeleteLabel->setText(QString::number(this->numDeleted));
+	this->posX = new QLabel(this);
+	this->posY = new QLabel(this);
+	this->posZ = new QLabel(this);
+	this->posX->setText("0");
+	this->posY->setText("0");
+	this->posZ->setText("0");
 }
 
 void View3D::CreateLayout()
@@ -781,8 +787,10 @@ void View3D::CreateLayout()
 	this->fileMenu->addAction(this->loadTraceAction);
 	this->fileMenu->addAction(this->loadTraceImage);
 	this->fileMenu->addAction(this->loadSoma);
+	this->fileMenu->addSeparator();
 	this->fileMenu->addAction(this->saveAction);
 	this->fileMenu->addAction(this->saveSelectedAction);
+	this->fileMenu->addSeparator();
 	this->fileMenu->addAction(this->exitAction);
 
 	this->ShowToolBars = this->menuBar()->addMenu(tr("Tool Bars"));
@@ -805,7 +813,15 @@ void View3D::CreateLayout()
   this->EditsToolBar->addAction(this->FlipButton);
   this->EditsToolBar->addWidget(this->typeCombo);
   this->EditsToolBar->addSeparator();
-  this->EditsToolBar->addAction(this->loadSoma);
+  this->EditsToolBar->addAction(this->ImageIntensity);
+  this->EditsToolBar->addWidget(new QLabel("Point in 3D: X:", this));
+  this->EditsToolBar->addWidget(this->posX);
+  this->EditsToolBar->addWidget(new QLabel(" Y:", this));
+  this->EditsToolBar->addWidget(this->posY);
+  this->EditsToolBar->addWidget(new QLabel(" Z:", this));
+  this->EditsToolBar->addWidget(this->posZ);
+  this->EditsToolBar->addAction(this->MoveSphere);
+   /*this->EditsToolBar->addAction(this->loadSoma);*/
   //this->EditsToolBar->addAction(this->SettingsButton);
 
   this->BranchToolBar = addToolBar(tr("Branch Toolbar"));
@@ -816,8 +832,6 @@ void View3D::CreateLayout()
   this->BranchToolBar->addAction(this->explodeTree);
   this->BranchToolBar->addAction(this->BranchButton);
   this->BranchToolBar->addAction(this->root);
-  this->BranchToolBar->addAction(this->ImageIntensity);
-  this->BranchToolBar->addAction(this->MoveSphere);
 
   QFormLayout *settingsLayout = new QFormLayout(this->SettingsWidget);
   settingsLayout->addRow(tr("Maximum gap length:"), this->MaxGapField);
@@ -929,8 +943,8 @@ void View3D::CreateSphereActor()
   this->SphereActor->SetPickable(0);            //dont want to pick the sphere itself
   this->pointer3d = vtkSmartPointer<vtkPointWidget>::New();
   this->pointer3d->PlaceWidget(-6000, 6000,-6000, 6000,-6000, 6000);
-  this->pointer3d->AllOff();
   this->pointer3d->SetInteractor(this->QVTK->GetInteractor());
+  this->pointer3d->AllOff();
 }
 
 void View3D::createRayCastSliders()
@@ -1077,7 +1091,7 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
 		//view->HighlightSelected(tline, view->SelectColor);
 		//tline->Getstats();              //prints the id and end coordinates to the command prompt 
 		view->SphereActor->SetPosition(pickPos);    //sets the selector to new point
-		view->pointer3d->SetPosition(pickPos);
+		view->pointer3DLocation(pickPos);
 		view->SphereActor->VisibilityOn();      //deleteTrace can turn it off 
 		view->poly_line_data->Modified();
 	}
@@ -1110,8 +1124,16 @@ void View3D::showPTin3D()
 		pos[2] = QInputDialog::getDouble(this, tr("set z"), tr("z value"), 0, -60000, 60000, 1, &ok);
 	}
 	this->SphereActor->SetPosition(pos );
-	this->pointer3d->SetPosition(pos);
 	this->SphereActor->VisibilityOn();
+	this->pointer3DLocation(pos);
+}
+void View3D::pointer3DLocation(double pos[])
+{
+	this->pointer3d->SetPosition(pos);
+	this->pointer3d->SetEnabled(1);
+	this->posX->setText(QString::number(pos[0]));
+	this->posY->setText(QString::number(pos[1]));
+	this->posZ->setText(QString::number(pos[2]));
 }
 void View3D::updateTraceSelectionHighlights()
 {
@@ -2244,6 +2266,7 @@ void View3D::ClearSelection()
 	this->tobj->BranchPoints.clear();
 	this->myText.clear();
 	this->dtext.clear();
+	this->pointer3d->SetEnabled(0);
 	//printf("About to rerender\n");
 	this->Rerender();
 	//printf("Finished rerendering\n");

@@ -89,6 +89,7 @@ public:
 	
 	static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
 	static void HandleKeyPress(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
+	void pointer3DLocation(double pos[]);
 
 	void HighlightSelected(TraceLine* tline, double SelectColor);
 	void DeleteTrace(TraceLine *tline);
@@ -191,7 +192,7 @@ private:
 	float lineWidth;
 	double SelectColor;
 	int numSplit, numDeleted, numMerged;
-	QLabel *SplitLabel, *DeleteLabel, *MergeLabel;
+	QLabel *SplitLabel, *DeleteLabel, *MergeLabel, *posX, *posY, *posZ;
     //VTK render window embedded in a Qt widget
 	QVTKWidget *QVTK;	
     QWidget *CentralWidget;
