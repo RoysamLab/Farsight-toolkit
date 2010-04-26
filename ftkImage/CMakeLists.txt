@@ -11,6 +11,7 @@ SET( FTKIMAGE_HDRS
 	ftkImage.txx
 )
 
+SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj" )
 
 ADD_LIBRARY( ftkImage
              ${FTKIMAGE_SRCS} 
