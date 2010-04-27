@@ -958,6 +958,12 @@ void View3D::createRayCastSliders()
 	this->OpacitySpin = new QSpinBox(this);
 	this->OpacitySpin->setRange(0,250);
 
+	this->OpacityValueSpin = new QDoubleSpinBox(this);
+	this->OpacityValueSpin->setRange(0,1);
+	this->OpacityValueSpin->setSingleStep(.01);
+	this->OpacityValueSpin->setValue(this->ImageActors->getOpacityValue());
+	connect (this->OpacityValueSpin, SIGNAL(valueChanged(double)), this, SLOT(RayCastOpacityValueChanged(double)));
+
 	this->OpacitySlider = new QSlider(Qt::Horizontal);
 	this->OpacitySlider->setRange(0,250);
 	this->OpacitySlider->setSingleStep(1);
@@ -982,9 +988,11 @@ void View3D::createRayCastSliders()
 	connect (this->BrightnessSpin, SIGNAL(valueChanged(int)), this->BrightnessSlider, SLOT(setValue(int)));
 	connect (this->BrightnessSpin, SIGNAL(valueChanged(int)), this , SLOT(RayCastBrightnessChanged(int)));
 //add the widgets to the bar
-	this->RacastBar->addWidget(new QLabel("Opacity"));
+	this->RacastBar->addWidget(new QLabel("Opacity Threshold"));
 	this->RacastBar->addWidget(this->OpacitySpin);
 	this->RacastBar->addWidget(this->OpacitySlider);
+	this->RacastBar->addWidget(new QLabel("Opacity Value"));
+	this->RacastBar->addWidget(this->OpacityValueSpin);
 	this->RacastBar->addSeparator();
 	this->RacastBar->addWidget(new QLabel("Brightness"));
 	this->RacastBar->addWidget(this->BrightnessSpin);
@@ -1006,6 +1014,11 @@ void View3D::RayCastOpacityChanged(int value)
 	this->QVTK->GetRenderWindow()->Render();
 
 }
+void View3D::RayCastOpacityValueChanged(double value)
+{
+	this->ImageActors->setOpacityValue(value);
+	this->QVTK->GetRenderWindow()->Render();
+}
 void View3D::EditHelp()
 {
 	//will write help documentation here
@@ -1013,20 +1026,20 @@ void View3D::EditHelp()
 void View3D::About()
 {
 	QMessageBox::about(this, tr("About Application"),
-             tr("The Farsight Trace Editor is intended to provide validation through editing"
-			 "The linked space provides group editing and helps automate many tasks"
-			 "Copyright 2009 Rensselaer Polytechnic Institute"
-			"Licensed under the Apache License, Version 2.0 (the 'License');"
-			"you may not use this file except in compliance with the License."
-			"You may obtain a copy of the License at"
+             tr("The Farsight Trace Editor is intended to provide validation through editing\n"
+			 "The linked space provides group editing and helps automate many tasks\n"
+			 "Copyright 2009 Rensselaer Polytechnic Institute\n"
+			"Licensed under the Apache License, Version 2.0 (the 'License');\n"
+			"you may not use this file except in compliance with the License.\n"
+			"You may obtain a copy of the License at\n"
 
 			"http://www.apache.org/licenses/LICENSE-2.0"
 
-			"Unless required by applicable law or agreed to in writing,"
-			"software distributed under the License is distributed on an 'AS IS' BASIS,"
-			"WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied."
-			"See the License for the specific language governing permissions and"
-			"limitations under the License. "));
+			"\nUnless required by applicable law or agreed to in writing,\n"
+			"software distributed under the License is distributed on an 'AS IS' BASIS,\n"
+			"WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n"
+			"See the License for the specific language governing permissions and\n"
+			"limitations under the License. \n"));
 }
 /* update settings */
 void View3D::ShowSettingsWindow()

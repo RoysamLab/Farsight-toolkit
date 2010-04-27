@@ -91,8 +91,14 @@ public:
 	void setColorValues(int i, double value);
 	void setBrightness(int value);
 	int getBrightness();
-	void setOpacity(int  value);
+	void setOpacity(int  value);//this is the threshold
 	int getOpacity();
+	void setOpacityMax(int  value);//this is the threshold
+	int getOpacityMax();
+	void setOpacityValue(double opacity);
+	double getOpacityValue();
+	void setOpacityValueMax(double opacity);
+	double getOpacityValueMax();
 private:
 	void syncColorTransfetFunction();
 	void syncOpacityTransfetFunction();
@@ -100,7 +106,7 @@ private:
 	vtkSmartPointer<vtkColorTransferFunction> colorTransferFunction;
 	std::vector<imageFileHandle*> LoadedImages;
 	std::vector<std::string> ImageList;
-	double r,g,b, opacity1, opacity2;
+	double r,g,b, opacity1, opacity2, opacity1Value, opacity2Value, RaycastSampleDist;
 	double brightness;
 };
 #endif

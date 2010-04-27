@@ -141,6 +141,7 @@ public slots:
 	void SetImgInt();
 
 	void RayCastOpacityChanged(int value);
+	void RayCastOpacityValueChanged(double value);
 	void RayCastBrightnessChanged(int value);
 	void showPTin3D();
 //these are for bootloadfile
@@ -280,7 +281,7 @@ private:
 
 	void createRayCastSliders();
 	QSpinBox * OpacitySpin, * BrightnessSpin;
-  QSlider *OpacitySlider;
-  QSlider *BrightnessSlider;
+	QDoubleSpinBox * OpacityValueSpin;
+	QSlider *OpacitySlider, *BrightnessSlider;
 };
 #endif
