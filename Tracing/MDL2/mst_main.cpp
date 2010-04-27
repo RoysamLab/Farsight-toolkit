@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 {
 	if(argc < 4)
     {
-		std::cerr << "Usage: " << argv[0] << " inputImage inputSkeleton outFilename < edgeRange >" << std::endl;
+		std::cerr << "Usage: " << argv[0] << " inputImage inputSkeleton outFilename < edgeRange > < morphStrength >" << std::endl;
 		std::cerr << " Input Image is used in determining edge weights for MST\n";
 		std::cerr << " Input Skeleton must be a .vtk file containing skeleton points\n";
 		std::cerr << " The output file should be .vtk - it is nodes and line-pairs from MST\n";

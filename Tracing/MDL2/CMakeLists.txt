@@ -33,14 +33,14 @@ TARGET_LINK_LIBRARIES(mst mdlMST)
 
 ADD_LIBRARY(mdlBSplineFitting mdlBSplineFitting.cpp mdlBSplineFitting.h)
 
-ADD_EXECUTABLE(mdlpipe pipeline_main.cpp)
-TARGET_LINK_LIBRARIES(mdlpipe mdlVolumeProcess mdlIntegratedSkeleton mdlMST mdlBSplineFitting  )
+#ADD_EXECUTABLE(mdlpipe pipeline_main.cpp)
+#TARGET_LINK_LIBRARIES(mdlpipe mdlVolumeProcess mdlIntegratedSkeleton mdlMST mdlBSplineFitting  )
 
-ADD_EXECUTABLE(mdlpipe2 pipeline_main2.cpp)
-TARGET_LINK_LIBRARIES(mdlpipe2 mdlVolumeProcess mdlIntegratedSkeleton mdlMST mdlBSplineFitting  )
+#ADD_EXECUTABLE(mdlpipe2 pipeline_main2.cpp)
+#TARGET_LINK_LIBRARIES(mdlpipe2 mdlVolumeProcess mdlIntegratedSkeleton mdlMST mdlBSplineFitting  )
 
-ADD_EXECUTABLE(PreDistanceMAP PredistanceMAP.cpp)
-TARGET_LINK_LIBRARIES(PreDistanceMAP mdlVolumeProcess)
+#ADD_EXECUTABLE(PreDistanceMAP PredistanceMAP.cpp)
+#TARGET_LINK_LIBRARIES(PreDistanceMAP mdlVolumeProcess)
 
 INCLUDE_DIRECTORIES("${Farsight_SOURCE_DIR}/ftkCommon")
 

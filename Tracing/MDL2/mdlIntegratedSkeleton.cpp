@@ -106,7 +106,7 @@ bool IntegratedSkeleton::Update()
 	this->computeCriticalPointSeeds(); //If fails we are not dead in the water
 
 	return this->computeSkeleton();
-	return this->MovingSkeletonPointsAlongGVF(10);
+	//return this->MovingSkeletonPointsAlongGVF(10);
 }
 
 
@@ -1725,8 +1725,6 @@ bool IntegratedSkeleton::MovingSkeletonPointsAlongGVF(int Step)
 
   std::vector<fPoint3D> seeds = skeletonPoints;
 
-
-
   skeletonPoints.clear();
 
   int SeedsNumber = (int )seeds.size();
@@ -1757,15 +1755,16 @@ bool IntegratedSkeleton::MovingSkeletonPointsAlongGVF(int Step)
 
 	}
 
-  //Write out skeleton file:
+  	//Write out skeleton file:
 	if(debug)
 	{
 		vtkFileHandler * fhdl = new vtkFileHandler();
 		fhdl->SetNodes(&skeletonPoints);
-	fhdl->Write("SkeletonPoints.vtk");
+		fhdl->Write("SkeletonPointsMovedByGVF.vtk");
 		delete fhdl;
 	}//end if debug
-  return true;
+
+	return true;
 }
 
 }
