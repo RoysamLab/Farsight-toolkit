@@ -64,8 +64,8 @@ SET_TARGET_PROPERTIES( NucleusEditor PROPERTIES WIN32_EXECUTABLE 0)
 SET(CPACK_PACKAGE_EXECUTABLES "NucleusEditor;Nucleus Editor")
 
 if(APPLE)
-   install(TARGETS NucleusEditor DESTINATION ${FARSIGHT_BUNDLE_LOCATION})
+   install(TARGETS NucleusEditor projproc DESTINATION ${FARSIGHT_BUNDLE_LOCATION})
 else(APPLE)
-   install(TARGETS NucleusEditor DESTINATION bin )
+   install(TARGETS NucleusEditor projproc DESTINATION bin )
 endif(APPLE)
 
