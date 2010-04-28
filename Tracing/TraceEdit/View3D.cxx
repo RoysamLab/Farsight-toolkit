@@ -727,10 +727,13 @@ void View3D::CreateGUIObjects()
 	this->ImageIntensity = new QAction("Intensity", this->CentralWidget);
 	this->ImageIntensity->setStatusTip("Calculates intensity of trace bits from one image");
 	connect(this->ImageIntensity, SIGNAL(triggered()), this, SLOT(SetImgInt()));
-	this->MoveSphere = new QAction("PT", this->CentralWidget);
+	this->MoveSphere = new QAction("Set PT ", this->CentralWidget);
+	this->MoveSphere->setToolTip("Ctrl + p");
 	connect(this->MoveSphere, SIGNAL(triggered()), this, SLOT(showPTin3D()));
 	this->MoveSphere->setStatusTip("moves marker to location");
 	this->MoveSphere->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_P));
+	this->updatePT3D = new QAction("Get PT", this->CentralWidget);
+	connect(this->updatePT3D, SIGNAL(triggered()), this, SLOT(getPosPTin3D()));
   //Setup the tolerance settings editing window
   this->SettingsWidget = new QWidget(this);
   //QIntValidator *intValidator = new QIntValidator(1, 100, this->SettingsWidget);
@@ -821,6 +824,7 @@ void View3D::CreateLayout()
   this->EditsToolBar->addWidget(new QLabel(" Z:", this));
   this->EditsToolBar->addWidget(this->posZ);
   this->EditsToolBar->addAction(this->MoveSphere);
+  this->EditsToolBar->addAction(this->updatePT3D);
    /*this->EditsToolBar->addAction(this->loadSoma);*/
   //this->EditsToolBar->addAction(this->SettingsButton);
 
@@ -1139,6 +1143,14 @@ void View3D::showPTin3D()
 	this->SphereActor->SetPosition(pos );
 	this->SphereActor->VisibilityOn();
 	this->pointer3DLocation(pos);
+}
+void View3D::getPosPTin3D()
+{
+	double newPT[3];
+	this->pointer3d->GetPosition(newPT);
+	this->posX->setText(QString::number(newPT[0]));
+	this->posY->setText(QString::number(newPT[1]));
+	this->posZ->setText(QString::number(newPT[2])); 
 }
 void View3D::pointer3DLocation(double pos[])
 {

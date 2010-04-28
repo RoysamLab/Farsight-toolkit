@@ -144,6 +144,7 @@ public slots:
 	void RayCastOpacityValueChanged(double value);
 	void RayCastBrightnessChanged(int value);
 	void showPTin3D();
+	void getPosPTin3D();
 //these are for bootloadfile
 	QString getTraceFile();
 	QString getImageFile();
@@ -226,6 +227,7 @@ private:
 	QAction *root;
 	QAction *ImageIntensity;
 	QAction *MoveSphere;
+	QAction *updatePT3D;
 	QAction *ShowPlots;
 
 	/*QAction *UndoButton;
