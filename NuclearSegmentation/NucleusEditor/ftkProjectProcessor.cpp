@@ -225,9 +225,13 @@ bool ProjectProcessor::SegmentCytoplasm(int cytChannel, int memChannel)
 	return true;
 }
 
-bool ProjectProcessor::ComputeAssociations(void){
+bool ProjectProcessor::ComputeAssociations(void)
+{
+	if(!inputImage || !outputImage || !table)
+		return false;
 
-	if(definition->associationRules.size() == 0){
+	if(definition->associationRules.size() == 0)
+	{
 		inputTypeNeeded = 3;
 		return false;
 	}

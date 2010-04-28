@@ -1849,7 +1849,7 @@ QVector<QString> NucleusEditor::getChannelStrings(void)
 void NucleusEditor::processProject(void)
 {
 	QString projectName = QFileDialog::getOpenFileName(
-                             this, "Select Defintion File", lastPath,
+                             this, "Select Definition File", lastPath,
                              tr("XML Project Definition (*.xml)\n"
 							    "All Files (*.*)"));
 	if(projectName == "")  return;
@@ -1881,6 +1881,10 @@ void NucleusEditor::startProcess()
 	pProc = new ftk::ProjectProcessor();
 	pProc->SetPath( lastPath.toStdString() );
 	pProc->SetInputImage(myImg);
+	if(labImg)
+		pProc->SetOutputImage(labImg);
+	if(table)
+		pProc->SetTable(table);
 	pProc->SetDefinition(&projectDefinition);
 	pProc->Initialize();
 

@@ -46,7 +46,9 @@ public:
 	ProjectProcessor();
 
 	//Steps to use
-	void SetInputImage(ftk::Image::Pointer img){ inputImage = img; }; 
+	void SetInputImage(ftk::Image::Pointer img){ inputImage = img; };
+	void SetOutputImage(ftk::Image::Pointer img){ outputImage = img; };
+	void SetTable(vtkSmartPointer<vtkTable> tab){ table = tab; };
 	void SetDefinition(ftk::ProjectDefinition * def){ definition = def; };
 	void SetPath( std::string path ){ save_path = path; };
 	void Initialize(void);
