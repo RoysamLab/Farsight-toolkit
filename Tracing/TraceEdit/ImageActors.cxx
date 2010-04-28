@@ -52,6 +52,9 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag)
 	newImage->volumeProperty = 0;
 	newImage->reader = ReaderType::New();
 	newImage->reader->SetFileName( ImageSource );
+	newImage->x = 0;
+	newImage->y = 0;
+	newImage->z = 0;
 	//Test opening and reading the input file
 	try
 	{
