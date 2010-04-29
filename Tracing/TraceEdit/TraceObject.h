@@ -130,6 +130,7 @@ public:
 	int solveParents(std::vector<int> ids);
 	bool isParent(int id);
   void SetCombineShortVTKLines(bool b) { this->CombineShortVTKLines = b; }
+  void createSomaFromPT(double pt[],std::vector<TraceLine*> stems);
 //	public data
 	vtkSmartPointer<vtkPolyData> GetVTKPolyData();
 	vtkSmartPointer<vtkPolyData> generateBranchIllustrator();

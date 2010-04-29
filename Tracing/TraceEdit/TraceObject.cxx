@@ -2232,3 +2232,16 @@ void TraceObject::explode(TraceLine *parent)
 	}
 	this->GetTraceLines();
 }
+void TraceObject::createSomaFromPT(double pt[], std::vector<TraceLine*> stems)
+{
+	TraceLine *newLine = new TraceLine();
+	newLine->SetType(1);
+	int newId = this->getNewLineId();
+	newLine->SetId(newId);
+	TraceBit tbit;
+	tbit.x = pt[0];
+	tbit.y = pt[1];
+	tbit.z = pt[2];
+	tbit.id = 1;
+	newLine->AddTraceBit(tbit);
+}
