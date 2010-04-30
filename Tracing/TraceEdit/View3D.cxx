@@ -734,6 +734,8 @@ void View3D::CreateGUIObjects()
 	this->MoveSphere->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_P));
 	this->updatePT3D = new QAction("Get PT", this->CentralWidget);
 	connect(this->updatePT3D, SIGNAL(triggered()), this, SLOT(getPosPTin3D()));
+	this->setSoma = new QAction("Set PT To soma", this->CentralWidget);
+	connect(this->setSoma, SIGNAL(triggered()), this, SLOT(setPTtoSoma()));
   //Setup the tolerance settings editing window
   this->SettingsWidget = new QWidget(this);
   //QIntValidator *intValidator = new QIntValidator(1, 100, this->SettingsWidget);
@@ -825,6 +827,7 @@ void View3D::CreateLayout()
   this->EditsToolBar->addWidget(this->posZ);
   this->EditsToolBar->addAction(this->MoveSphere);
   this->EditsToolBar->addAction(this->updatePT3D);
+  this->EditsToolBar->addAction(this->setSoma);
    /*this->EditsToolBar->addAction(this->loadSoma);*/
   //this->EditsToolBar->addAction(this->SettingsButton);
 
@@ -1151,6 +1154,7 @@ void View3D::getPosPTin3D()
 	this->posX->setText(QString::number(newPT[0]));
 	this->posY->setText(QString::number(newPT[1]));
 	this->posZ->setText(QString::number(newPT[2])); 
+	//this->pointer3DPos = newPT;
 }
 void View3D::pointer3DLocation(double pos[])
 {
@@ -1159,6 +1163,27 @@ void View3D::pointer3DLocation(double pos[])
 	this->posX->setText(QString::number(pos[0]));
 	this->posY->setText(QString::number(pos[1]));
 	this->posZ->setText(QString::number(pos[2]));
+}
+void View3D::setPTtoSoma()
+{
+	if(this->stems.size() <2)
+	{
+		this->stems = this->TreeModel->GetSelectedTraces();
+		if(this->stems.size() <2)
+		{
+			return;
+		}
+	}
+	if (this->pointer3d->GetEnabled())
+	{	
+		double newPT[3];
+		this->pointer3d->GetPosition(newPT);
+		this->tobj->createSomaFromPT(newPT,this->stems);
+		this->stems.clear();
+		this->ClearSelection();
+		this->Rerender();
+		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+	}
 }
 void View3D::updateTraceSelectionHighlights()
 {
@@ -2915,8 +2940,6 @@ void View3D::FlipTree(TraceLine *thisLine)
 	{
 		this->tobj->BranchPoints.clear();
 		this->tobj->explode(this->tobj->findTraceByID( thisLine->GetRootID()));
-		this->Rerender();
-		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 		this->tobj->isParent(thisLine->GetId());
 		this->tobj->cleanTree();
 		this->Rerender();

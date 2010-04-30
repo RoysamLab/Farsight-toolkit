@@ -2234,14 +2234,36 @@ void TraceObject::explode(TraceLine *parent)
 }
 void TraceObject::createSomaFromPT(double pt[], std::vector<TraceLine*> stems)
 {
-	TraceLine *newLine = new TraceLine();
-	newLine->SetType(1);
+	TraceLine *soma = new TraceLine();
+	soma->SetType(1);
 	int newId = this->getNewLineId();
-	newLine->SetId(newId);
+	soma->SetId(newId);
 	TraceBit tbit;
 	tbit.x = pt[0];
 	tbit.y = pt[1];
 	tbit.z = pt[2];
 	tbit.id = 1;
-	newLine->AddTraceBit(tbit);
+	soma->AddTraceBit(tbit);
+	unsigned int i = 0;
+	for (i = 0;i<stems.size();i++)
+	{
+		if (stems[i]->Orient(tbit))
+		{
+			if (!stems[i]->isFree())
+			{	
+				this->BranchPoints.clear();
+				this->explode(this->findTraceByID( stems[i]->GetRootID()));
+				this->isParent(stems[i]->GetId());
+				this->cleanTree();
+			}
+			else
+			{
+				this->ReverseSegment(stems[i]);
+			}
+		}//end orientation
+		stems[i]->SetParent(soma);
+		soma->AddBranch(stems[i]);
+	}//end loop through stems
+	this->trace_lines.push_back(soma);
+	this->cleanTree();
 }

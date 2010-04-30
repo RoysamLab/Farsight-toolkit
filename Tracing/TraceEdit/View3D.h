@@ -145,6 +145,7 @@ public slots:
 	void RayCastBrightnessChanged(int value);
 	void showPTin3D();
 	void getPosPTin3D();
+	void setPTtoSoma();
 //these are for bootloadfile
 	QString getTraceFile();
 	QString getImageFile();
@@ -228,6 +229,7 @@ private:
 	QAction *ImageIntensity;
 	QAction *MoveSphere;
 	QAction *updatePT3D;
+	QAction *setSoma;
 	QAction *ShowPlots;
 
 	/*QAction *UndoButton;
@@ -272,6 +274,8 @@ private:
 	vtkSmartPointer<vtkSphereSource> Sphere;
 	vtkSmartPointer<vtkPolyDataMapper> SphereMapper;
 	vtkSmartPointer<vtkActor> SphereActor;
+	//double pointer3DPos[3];
+	std::vector<TraceLine*> stems;
 	
 	ImageRenderActors *ImageActors;
 	TraceObject* tobj;
