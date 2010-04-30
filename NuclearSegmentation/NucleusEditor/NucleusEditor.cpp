@@ -61,7 +61,6 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 
 	myImg = NULL;
 	labImg = NULL;
-	roiImg = NULL;
 
 	nucSeg = NULL;
 	pProc = NULL;
@@ -347,6 +346,10 @@ void NucleusEditor::createMenus()
 	loadROIAction = new QAction(tr("Load ROI Mask..."), this);
 	connect(loadROIAction, SIGNAL(triggered()), this, SLOT(loadROI()));
 	roiMenu->addAction(loadROIAction);
+
+	roiStatsAction = new QAction(tr("Compute ROI Statistics"), this);
+	connect(roiStatsAction, SIGNAL(triggered()), this, SLOT(roiStatistics()));
+	toolMenu->addAction(roiStatsAction);
 
 	segmentNucleiAction = new QAction(tr("Segment Nuclei..."), this);
 	connect(segmentNucleiAction, SIGNAL(triggered()), this, SLOT(segmentNuclei()));
@@ -1140,9 +1143,9 @@ void NucleusEditor::updateROIinTable()
 void NucleusEditor::clearROI(void)
 {
 	const char * columnForROI = "roi";
-
-	segView->SetROIVisible(false);
+	
 	segView->GetROIMaskImage()->fill(Qt::white);
+	segView->SetROIVisible(false);
 
 	if(table)
 	{
@@ -1150,6 +1153,71 @@ void NucleusEditor::clearROI(void)
 	}
 	projectFiles.tableSaved = false;
 	updateViews();
+}
+
+void NucleusEditor::roiStatistics(void)
+{
+	QImage * t_img = segView->GetROIMaskImage();
+	if(t_img == NULL)
+		return;
+
+	typedef itk::Image<unsigned char, 3> ImageType;
+	typedef itk::LabelStatisticsImageFilter< ImageType , ImageType > LabelStatisticsType;
+
+	//Change QImage into ITK IMAGE:
+	ImageType::Pointer roiImg = ImageType::New();
+	ImageType::PointType origin;
+   	origin[0] = 0; 
+	origin[1] = 0;
+	origin[2] = 0;
+    roiImg->SetOrigin( origin );
+	ImageType::IndexType start = {{ 0,0,0 }};    
+	ImageType::SizeType size = {{ t_img->width(), t_img->height(), myImg->GetImageInfo()->numZSlices }};
+    ImageType::RegionType region;
+    region.SetSize( size );
+    region.SetIndex( start );
+    roiImg->SetRegions( region );
+	roiImg->Allocate();
+	roiImg->FillBuffer(0);
+	for(int i=0; i<t_img->width(); ++i)
+	{
+		for(int j=0; j<t_img->height(); ++j)
+		{
+			ImageType::IndexType ind = {{ i,j, segView->GetCurrentZ() }};
+			roiImg->SetPixel(ind, t_img->pixelIndex( i, j ) );
+		}
+	}
+
+	//iterate through each channel and compute the statistics
+	for(int c=0; c < myImg->GetImageInfo()->numChannels; ++c)
+	{
+		ImageType::Pointer chImg = myImg->GetItkPtr<unsigned char>(0, c);
+
+		LabelStatisticsType::Pointer labelStatisticsFilter = LabelStatisticsType::New();	//ITK label statistics filter
+		labelStatisticsFilter->SetInput( chImg );
+		labelStatisticsFilter->SetLabelInput( roiImg );
+		labelStatisticsFilter->UseHistogramsOff();
+
+		std::cout << "Calculating Measures for channel # " << c << std::endl;
+		try
+		{
+			labelStatisticsFilter->Update();
+		}
+		catch (itk::ExceptionObject & e) 
+		{
+			std::cerr << "Exception in ITK Label Statistics Filter: " << e << std::endl;
+			continue;
+		}
+		
+		int label = 1;
+		//std::cout << "  sum: " << (float)labelStatisticsFilter->GetSum( label ) << std::endl;
+		std::cout << "  min: " << (float)labelStatisticsFilter->GetMinimum( label ) << std::endl;
+		std::cout << "  max: " << (float)labelStatisticsFilter->GetMaximum( label ) << std::endl;
+		std::cout << "  mean: " << (float)labelStatisticsFilter->GetMean( label ) << std::endl;
+		std::cout << "  sigma: " << (float)labelStatisticsFilter->GetSigma( label ) << std::endl;
+		std::cout << "  variance: " << (float)labelStatisticsFilter->GetVariance( label ) << std::endl;
+
+	}
 }
 
 //**********************************************************************

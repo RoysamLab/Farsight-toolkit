@@ -88,7 +88,7 @@ public:
 	void SetChannelFlags(std::vector<bool> ch_fg);
 
 	QImage * GetDisplayImage(){ return &displayImage; };
-	QImage * GetROIMaskImage(){ return &roiImage; };
+	QImage * GetROIMaskImage();
 	void SetROIMaskImage( QImage img );
 
 	bool GetCrosshairsVisible(){ return showCrosshairs; };

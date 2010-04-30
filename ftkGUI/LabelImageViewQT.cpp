@@ -715,6 +715,14 @@ void LabelImageViewQT::createROIMask()
 	//img.save(QString("mask_test.png"));
 }
 
+QImage * LabelImageViewQT::GetROIMaskImage()
+{ 
+	if(this->showROI)
+		return &roiImage;
+	else
+		return NULL;
+}
+
 //*****************************************************************************************
 // change the currentScale
 //*****************************************************************************************

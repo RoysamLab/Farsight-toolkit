@@ -54,7 +54,7 @@ TARGET_LINK_LIBRARIES( NucleusEditor ${QT_LIBRARIES} ftkGUI ftkImage ftkCommon f
 
 ADD_EXECUTABLE( projproc processor_main.cpp ftkProjectProcessor.cpp ftkProjectDefinition.cpp)
 TARGET_LINK_LIBRARIES( projproc ftkImage ftkCommon ftkFeatures NuclearSegmentation CytoplasmSegmentation )
-
+install(TARGETS projproc DESTINATION bin )
 
 #MAKE A GUI EXECUTABLE, NOT A CONSOLE APPLICATION
 #SET_TARGET_PROPERTIES( NucleusEditor PROPERTIES WIN32_EXECUTABLE 1)
@@ -64,8 +64,8 @@ SET_TARGET_PROPERTIES( NucleusEditor PROPERTIES WIN32_EXECUTABLE 0)
 SET(CPACK_PACKAGE_EXECUTABLES "NucleusEditor;Nucleus Editor")
 
 if(APPLE)
-   install(TARGETS NucleusEditor projproc DESTINATION ${FARSIGHT_BUNDLE_LOCATION})
+   install(TARGETS NucleusEditor DESTINATION ${FARSIGHT_BUNDLE_LOCATION})
 else(APPLE)
-   install(TARGETS NucleusEditor projproc DESTINATION bin )
+   install(TARGETS NucleusEditor DESTINATION bin )
 endif(APPLE)
 

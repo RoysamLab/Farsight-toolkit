@@ -172,6 +172,7 @@ protected slots:
 	void loadROI(void);
 	void saveROI(void);
 	void clearROI(void);
+	void roiStatistics(void);
 	void segmentNuclei(void);
 	void startEditing(void);
 	void stopEditing(void);
@@ -242,6 +243,7 @@ protected:
 		QAction *loadROIAction;
 		QAction *saveROIAction;
 		QAction *clearROIAction;
+	QAction *roiStatsAction;
 	QAction *segmentNucleiAction;
 	QAction *editNucleiAction;
 	QAction *svmAction;		//Start the One-Class SVM outlier detecter
@@ -293,7 +295,6 @@ protected:
 	ftk::ProjectProcessor *pProc;				//My project processor
 	ftk::Image::Pointer myImg;					//My currently visible image
 	ftk::Image::Pointer labImg;					//Currently visible label image
-	ftk::Image::Pointer roiImg;					//Mask Image: ROI is 1, else 0
 	ObjectSelection * selection;				//object selection list
 	vtkSmartPointer<vtkTable> table;			//table
 	ftk::ProjectFiles projectFiles;				//files in the currently visible project

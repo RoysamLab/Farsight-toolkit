@@ -168,7 +168,7 @@ unsigned short returnthresh( USImageType::Pointer input_image, int num_bin_levs,
 
 	ScalarImageToHistogramGeneratorType::Pointer scalarImageToHistogramGenerator = ScalarImageToHistogramGeneratorType::New();
 	CalculatorType::Pointer calculator = CalculatorType::New();
-	scalarImageToHistogramGenerator->SetNumberOfBins( 128 );
+	scalarImageToHistogramGenerator->SetNumberOfBins( 256 );
 	calculator->SetNumberOfThresholds( num_bin_levs );
 	scalarImageToHistogramGenerator->SetInput( input_image);
 	scalarImageToHistogramGenerator->Compute();
