@@ -36,6 +36,7 @@ class TraceGap;
 class TraceLine;
 class TraceObject;
 class branchPT;
+class CellTrace;
 class ImageRenderActors;
 class ProjectManager;
 
@@ -58,6 +59,7 @@ class vtkVolume;
   
 class TraceModel;
 class MergeModel;
+class CellTraceModel;
 class QTableView;
 class ScatterView;
 class TableWindow;

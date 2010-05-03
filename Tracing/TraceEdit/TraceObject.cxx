@@ -41,6 +41,7 @@ limitations under the License.
 #include "TraceObject.h"
 #include "TraceGap.h"
 #include "branchPT.h"
+#include "CellTrace.h"
 #include "vtkPlotEdges.h"
 
 #define VTK_CREATE(type, var) \
@@ -2266,4 +2267,20 @@ void TraceObject::createSomaFromPT(double pt[], std::vector<TraceLine*> stems)
 	}//end loop through stems
 	this->trace_lines.push_back(soma);
 	this->cleanTree();
+}
+std::vector<CellTrace*> TraceObject::CalculateCellFeatures()
+{
+	this->Cells.clear();
+	unsigned int i = 0;
+	for (; i < this->trace_lines.size(); i++)
+	{
+		std::vector<TraceLine*> segments;
+		this->LinearTraceLinesRecursive(segments, this->trace_lines[i]);
+		if (segments.size() >2)
+		{
+			CellTrace* NextCell = new CellTrace(segments);
+			this->Cells.push_back(NextCell);
+		}
+	}
+	return this->Cells;
 }

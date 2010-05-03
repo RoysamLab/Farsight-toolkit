@@ -81,8 +81,10 @@ limitations under the License.
 #include "TraceLine.h"
 #include "TraceObject.h"
 #include "branchPT.h"
+#include "CellTrace.h"
 #include "TraceModel.h"
 #include "MergeModel.h"
+#include "CellTraceModel.h"
 #include "ImageActors.h"
 #include "ftkCommon/ftkProjectManager.h"
 #include "View3D.h"
@@ -325,6 +327,7 @@ void View3D::OkToBoot()
 		{
 			this->ShowTreeData();
 		}
+		this->Rerender();
 	}
 	else
 	{
@@ -1226,8 +1229,8 @@ void View3D::Rerender()
   this->Renderer->RemoveActor(this->BranchActor);
   this->Renderer->RemoveActor(this->PointsActor);
   
-  /*std::vector<TraceBit> vec = this->tobj->CollectTraceBits();
-  this->AddPointsAsPoints(vec);*/
+  std::vector<TraceBit> vec = this->tobj->CollectTraceBits();
+  this->AddPointsAsPoints(vec);
   this->UpdateLineActor();
   this->UpdateBranchActor();
   this->Renderer->AddActor(this->BranchActor); 
@@ -1278,7 +1281,7 @@ void View3D::AddPointsAsPoints(std::vector<TraceBit> vec)
     cells->InsertNextCell(1);
     cells->InsertCellPoint(return_id);
   }
-  printf("About to create poly\n");
+  //printf("About to create poly\n");
   point_poly->SetPoints(points);
   point_poly->SetVerts(cells);
   vtkSmartPointer<vtkGlyph3D> glyphs = vtkSmartPointer<vtkGlyph3D>::New();

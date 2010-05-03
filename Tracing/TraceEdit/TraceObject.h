@@ -25,6 +25,7 @@ class TraceBit;
 class TraceLine;
 class TraceGap;
 class branchPT;
+class CellTrace;
 
 class vtkPoints;
 class vtkPolyData;
@@ -98,6 +99,7 @@ public:
 	std::vector<EndPointInfo>* findingBranchingPointintercepts(std::vector<EndPointInfo>* PossibleBranches);
 	void setLUT(int num);
 	double getTraceLUT(unsigned char type);
+	std::vector<CellTrace*> CalculateCellFeatures();
 //	I/O functions
 	bool ReadFromSWCFile(char * filename);
 	bool ReadFromRPIXMLFile(char * filename);
@@ -156,6 +158,7 @@ public:
 	
 private:
 	std::vector<TraceLine*> trace_lines;
+	std::vector<CellTrace*> Cells;
 	vtkSmartPointer<vtkPolyData> PolyTraces;
 	double smallLineColor, mergeLineColor;	
 	double tx,ty,tz;
