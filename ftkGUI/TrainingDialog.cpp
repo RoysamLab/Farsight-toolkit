@@ -225,19 +225,16 @@ void TrainingDialog::Append()
 				break;
 			}
 		
-		unsigned char maxrow = m_table->GetNumberOfRows();
-		unsigned char maxrow2 = m_table->GetNumberOfRows();
+		int maxrows = m_table->GetNumberOfRows();
+		int maxrowid = m_table->GetValueByName(maxrows-1,"ID").ToInt();
 		
-		std::cout<<maxrow2<<std::endl;
-
 		vtkSmartPointer<vtkVariantArray> model_data = vtkSmartPointer<vtkVariantArray>::New();
 
 		for(int row = 0; (int)row < model_table->GetNumberOfRows(); ++row)  
 			{
 				model_data = model_table->GetRow(row);
 				m_table->InsertNextRow(model_data); 
-				m_table->SetValue(maxrow,0,maxrow+1);
-				maxrow = maxrow + 1;
+				m_table->SetValue(maxrows+row,0,maxrowid+row+1);
 			}
 		
 		//vtkSmartPointer<vtkStringArray> discrim_column = vtkSmartPointer<vtkStringArray>::New();
