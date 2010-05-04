@@ -1248,6 +1248,10 @@ void View3D::Rerender()
 	this->SplitLabel->setText(QString::number(this->numSplit));
 	this->MergeLabel->setText(QString::number(this->numMerged));
 	this->DeleteLabel->setText(QString::number(this->numDeleted));
+	if(this->CellPlot || this->CellTable)
+	{
+		this->ShowCellAnalysis();
+	}//end if has cell calculations
   this->statusBar()->showMessage(tr("Finished Rerendering Image"));
 }
 
@@ -2748,10 +2752,10 @@ void View3D::ShowMergeStats()
 }
 void View3D::ShowCellAnalysis()
 {
+	this->HideCellAnalysis();
 	std::vector<CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
 	if (NewCells.size() > 0)
 	{
-		this->HideCellAnalysis();
 		this->CellModel->setCells(NewCells);
 		this->CellPlot = new PlotWindow();
 		this->CellPlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
@@ -3129,6 +3133,7 @@ void View3D::closeEvent(QCloseEvent *event)
 	this->TraceEditSettings.setValue("lastOpen/Soma", this->SomaFile);
 	this->TraceEditSettings.setValue("lastOpen/Temp", this->tempTraceFile);
 	this->CloseTreePlots();
+	this->HideCellAnalysis();
   this->TraceEditSettings.sync();
   if(this->GapsPlotView)
     {

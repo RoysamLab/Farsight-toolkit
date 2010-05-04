@@ -59,7 +59,7 @@ void CellTrace::clearAll()
 	this->NumSegments = 0;
 	this->stems = 0;
 	this->terminalTips = 0;
-	this->MinTerminalLevel = 0;
+	this->MinTerminalLevel = 100; //something large for initial value
 	this->MaxTerminalLevel = 0;
 	this->TotalEuclidian = 0;
 	this->TotalPathLength = 0;
