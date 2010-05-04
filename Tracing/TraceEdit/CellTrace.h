@@ -19,6 +19,7 @@ limitations under the License.
 #include "vtkDoubleArray.h"
 #include "vtkAbstractArray.h"
 #include "vtkVariantArray.h"
+#include <math.h>
 class TraceBit;
 class TraceLine;
 class CellTrace
@@ -31,8 +32,9 @@ public:
 private:
 	void clearAll();
 	std::vector<TraceLine*>  segments;
-	int NumSegments, stems, terminalTips, MinTerminalLevel, MaxTerminalLevel;
-	double TotalPathLength, TotalVolume, TotalEuclidian, TerminalPathLength; 
+	int NumSegments, stems, branchPoints,terminalTips, MinTerminalLevel, MaxTerminalLevel, SumTerminalLevel;
+	double TotalPathLength, TotalVolume, TotalEuclidianPath, TerminalPathLength;
+	double maxTerminalPathLength, minTerminalPathLength; 
 	//TraceBit rootBit;
 };
 #endif

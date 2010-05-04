@@ -31,26 +31,33 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 	unsigned int i = 0;
 	this->NumSegments = (int) this->segments.size();
 	this->stems = (int) this->segments[0]->GetBranchPointer()->size();
-	//this->rootBit = this->segments[0]->GetTraceBitsPointer()->front();
+	TraceBit rootBit = this->segments[0]->GetTraceBitsPointer()->front();
 	for(i = 0; i < this->segments.size(); i++)
 	{
 		this->TotalPathLength += this->segments[i]->GetLength();
 		this->TotalVolume += this->segments[i]->GetVolume();
-		this->TotalEuclidian += this->segments[i]->GetEuclidianLength();
+		this->TotalEuclidianPath += this->segments[i]->GetEuclidianLength();
 		int tempLevel = this->segments[i]->GetLevel();
 		if (this->segments[i]->isLeaf())
 		{
 			this->terminalTips++;
+			this->SumTerminalLevel += tempLevel;
 			this->TerminalPathLength += this->segments[i]->GetPathLength();
 			if(tempLevel > this->MaxTerminalLevel)
 			{
 				this->MaxTerminalLevel = tempLevel;
+				this->maxTerminalPathLength = this->segments[i]->GetPathLength();
 			}
 			if(tempLevel < this->MinTerminalLevel)
 			{
 				this->MinTerminalLevel = tempLevel;
+				this->minTerminalPathLength = this->segments[i]->GetPathLength();
 			}
 		}//end if leaf
+		else if(!this->segments[i]->isRoot())
+		{
+			this->branchPoints++;
+		}
 	}//end for segment size
 }
 void CellTrace::clearAll()
@@ -58,10 +65,12 @@ void CellTrace::clearAll()
 	this->segments.clear();
 	this->NumSegments = 0;
 	this->stems = 0;
+	this->branchPoints = 0;
 	this->terminalTips = 0;
 	this->MinTerminalLevel = 100; //something large for initial value
 	this->MaxTerminalLevel = 0;
-	this->TotalEuclidian = 0;
+	this->SumTerminalLevel = 0;
+	this->TotalEuclidianPath = 0;
 	this->TotalPathLength = 0;
 	this->TotalVolume = 0;
 	this->TerminalPathLength = 0;
@@ -72,12 +81,17 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->segments[0]->GetId());
 	CellData->InsertNextValue(this->NumSegments);
 	CellData->InsertNextValue(this->stems);
+	CellData->InsertNextValue(this->branchPoints);
 	CellData->InsertNextValue(this->terminalTips);
 	CellData->InsertNextValue(this->MinTerminalLevel);
+	CellData->InsertNextValue(this->minTerminalPathLength);
 	CellData->InsertNextValue(this->MaxTerminalLevel);
-	CellData->InsertNextValue(this->TotalEuclidian);
+	CellData->InsertNextValue(this->maxTerminalPathLength);
+	CellData->InsertNextValue(this->SumTerminalLevel /this->terminalTips);//average terminal level
+	CellData->InsertNextValue(this->TerminalPathLength/this->terminalTips);//now average path to end
+	CellData->InsertNextValue(this->TotalEuclidianPath);
 	CellData->InsertNextValue(this->TotalPathLength);
+	CellData->InsertNextValue(this->TotalPathLength/this->NumSegments);//average segment length
 	CellData->InsertNextValue(this->TotalVolume);
-	CellData->InsertNextValue(this->TerminalPathLength/this->NumSegments);
 	return CellData;
 }

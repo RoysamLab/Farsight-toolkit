@@ -27,6 +27,7 @@ ImageRenderActors::ImageRenderActors()
 	this->opacity1Value = .1;
 	this->opacity2 = 255;
 	this->opacity2Value = 1;
+	this->RaycastSampleDist = .5;
 	this->opacityTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
 	this->syncOpacityTransfetFunction();
 	this->colorTransferFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
@@ -173,7 +174,7 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 	this->LoadedImages[i]->volumeProperty->SetScalarOpacity(this->opacityTransferFunction);
 	this->LoadedImages[i]->volumeProperty->SetInterpolationTypeToLinear();
 	this->LoadedImages[i]->volumeMapper = vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
-	this->LoadedImages[i]->volumeMapper->SetSampleDistance(0.5);
+	this->LoadedImages[i]->volumeMapper->SetSampleDistance((float)this->RaycastSampleDist);
 	this->LoadedImages[i]->volumeMapper->SetInput(this->LoadedImages[i]->ImageData);
 	this->LoadedImages[i]->volume = vtkSmartPointer<vtkVolume>::New();
 	this->LoadedImages[i]->volume->SetMapper(this->LoadedImages[i]->volumeMapper);

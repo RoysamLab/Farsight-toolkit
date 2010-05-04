@@ -40,6 +40,7 @@ public:
 	void setCells(std::vector<CellTrace*> Cells);
 	vtkSmartPointer<vtkTable> getDataTable();
 	ObjectSelection * GetObjectSelection();
+	void SelectByRootTrace(std::vector<TraceLine*> roots);
 	void SelectByIDs(std::vector<int> IDs);
 	std::vector<int> GetSelecectedIDs();
 signals:

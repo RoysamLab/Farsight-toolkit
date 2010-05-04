@@ -42,13 +42,18 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Root Trace");
 	this->headers.push_back("Segments");
 	this->headers.push_back("Stems");
+	this->headers.push_back("Branch Pt");
 	this->headers.push_back("Leaf Nodes");
-	this->headers.push_back("Min Terminal Level");
-	this->headers.push_back("Max Terminal Level");
+	this->headers.push_back("Min Leaf Level");
+	this->headers.push_back("Min Leaf Path Length");
+	this->headers.push_back("Max Leaf Level");
+	this->headers.push_back("Max Leaf Path Length");
+	this->headers.push_back("Ave Leaf Level");
+	this->headers.push_back("Ave Leaf Path Length");
 	this->headers.push_back("Total Euclidian Length");
 	this->headers.push_back("Total Path Length");
+	this->headers.push_back("Average Segment Path Length");
 	this->headers.push_back("Total Volume");
-	this->headers.push_back("ave Terminal Path Length");
 	int numHeaders = (int)this->headers.size();
 	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
 	for(int i=0; i < numHeaders; ++i)
@@ -76,4 +81,8 @@ vtkSmartPointer<vtkTable> CellTraceModel::getDataTable()
 ObjectSelection * CellTraceModel::GetObjectSelection()
 {
 	return this->Selection;
+}
+void CellTraceModel::SelectByRootTrace(std::vector<TraceLine*> roots)
+{
+	unsigned int i = 0;
 }
