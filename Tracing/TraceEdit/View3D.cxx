@@ -599,6 +599,8 @@ void View3D::Initialize()
 	this->GapsPlotView = NULL;
 	this->TreePlot = NULL;
 	this->FTKTable = NULL;
+	this->FL_MeasurePlot = NULL;
+	this->FL_MeasureTable = NULL;
 	this->GapsTableView = NULL;
 
 	this->tobj->setSmallLineColor(.25);
@@ -1248,7 +1250,7 @@ void View3D::Rerender()
 	this->SplitLabel->setText(QString::number(this->numSplit));
 	this->MergeLabel->setText(QString::number(this->numMerged));
 	this->DeleteLabel->setText(QString::number(this->numDeleted));
-	if(this->CellPlot || this->CellTable)
+	if(this->FL_MeasurePlot || this->FL_MeasureTable)
 	{
 		this->ShowCellAnalysis();
 	}//end if has cell calculations
@@ -2757,25 +2759,25 @@ void View3D::ShowCellAnalysis()
 	if (NewCells.size() > 0)
 	{
 		this->CellModel->setCells(NewCells);
-		this->CellPlot = new PlotWindow();
-		this->CellPlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
-		this->CellPlot->setWindowTitle("Computed Features for Cells");
-		this->CellPlot->show();
-		this->CellTable = new TableWindow();
-		this->CellTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
-		this->CellTable->setWindowTitle("Computed Features for Cells");
-		this->CellTable->show();
+		this->FL_MeasurePlot = new PlotWindow();
+		this->FL_MeasurePlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+		this->FL_MeasurePlot->setWindowTitle("Computed Features for Cells");
+		this->FL_MeasurePlot->show();
+		this->FL_MeasureTable = new TableWindow();
+		this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+		this->FL_MeasureTable->setWindowTitle("Computed Features for Cells");
+		this->FL_MeasureTable->show();
 	}
 }
 void View3D::HideCellAnalysis()
 {
-	if (this->CellPlot)
+	if (this->FL_MeasurePlot)
 	{
-		this->CellPlot->close();
+		this->FL_MeasurePlot->close();
 	}
-	if(this->CellTable)
+	if(this->FL_MeasureTable)
 	{
-		this->CellTable->close();
+		this->FL_MeasureTable->close();
 	}
 }
 void View3D::updateSelectionHighlights()

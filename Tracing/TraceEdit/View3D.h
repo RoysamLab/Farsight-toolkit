@@ -251,8 +251,8 @@ private:
 	PlotWindow *TreePlot;
 	PlotWindow *GapsPlotView;
 	TableWindow *GapsTableView;
-	TableWindow * CellTable;
-	PlotWindow *CellPlot;
+	TableWindow * FL_MeasureTable;
+	PlotWindow *FL_MeasurePlot;
 
 	//Qt widgets for the settings window
 	QWidget *SettingsWidget;
