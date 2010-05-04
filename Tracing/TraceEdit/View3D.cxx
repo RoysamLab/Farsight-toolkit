@@ -645,7 +645,9 @@ void View3D::setupLinkedSpace()
 	  this,SLOT(updateSelectionHighlights()));
   this->connect(this->TreeModel->GetObjectSelection(), SIGNAL(changed()), 
 	  this, SLOT(updateTraceSelectionHighlights()));
-
+  this->CellModel = new CellTraceModel();
+  this->CellModel->setParent(this);
+//todo link Cell Model to other linked spaces
 }
 
 /*Set up the components of the interface */
@@ -774,6 +776,8 @@ void View3D::CreateGUIObjects()
 	this->ShowPlots = new QAction("Show Plots", this);
 	this->ShowPlots->isCheckable();
 	connect (this->ShowPlots, SIGNAL(triggered()), this, SLOT(ShowTreeData()));
+	this->CellAnalysis = new QAction("Cell Analysis", this->CentralWidget);
+	connect (this->CellAnalysis, SIGNAL(triggered()), this, SLOT(ShowCellAnalysis()));
 // Lables for the status bar to show edit counts
 	this->SplitLabel = new QLabel(this);
 	this->SplitLabel->setText(QString::number(this->numSplit));
@@ -875,6 +879,7 @@ void View3D::CreateLayout()
 
   this->ShowToolBars->addAction(this->InformationDisplays->toggleViewAction());
   this->ShowToolBars->addAction(this->ShowPlots);
+  this->ShowToolBars->addAction(this->CellAnalysis);
 
   this->createRayCastSliders();
   this->menuBar()->addSeparator();
@@ -2741,7 +2746,34 @@ void View3D::ShowMergeStats()
   this->GapsPlotView->setWindowTitle("Computed Features for Merge");
   this->GapsPlotView->show();
 }
-
+void View3D::ShowCellAnalysis()
+{
+	std::vector<CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
+	if (NewCells.size() > 0)
+	{
+		this->HideCellAnalysis();
+		this->CellModel->setCells(NewCells);
+		this->CellPlot = new PlotWindow();
+		this->CellPlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+		this->CellPlot->setWindowTitle("Computed Features for Cells");
+		this->CellPlot->show();
+		this->CellTable = new TableWindow();
+		this->CellTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+		this->CellTable->setWindowTitle("Computed Features for Cells");
+		this->CellTable->show();
+	}
+}
+void View3D::HideCellAnalysis()
+{
+	if (this->CellPlot)
+	{
+		this->CellPlot->close();
+	}
+	if(this->CellTable)
+	{
+		this->CellTable->close();
+	}
+}
 void View3D::updateSelectionHighlights()
 {
   bool selected = false;

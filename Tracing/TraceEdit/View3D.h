@@ -130,8 +130,10 @@ public slots:
 	void SaveProjectFile();
 	void SaveSelected();
 	void ShowTreeData();
+	void ShowCellAnalysis();
 	void ShowSettingsWindow();
 	void HideSettingsWindow();
+	void HideCellAnalysis();
 	void ApplyNewSettings();
 	void SLine();
 	void LoadTraces();
@@ -233,6 +235,7 @@ private:
 	QAction *updatePT3D;
 	QAction *setSoma;
 	QAction *ShowPlots;
+	QAction *CellAnalysis;
 
 	/*QAction *UndoButton;
 	QAction *RedoButton;*/
@@ -243,10 +246,13 @@ private:
 	Qt::SortOrder Ascending;
 	TraceModel *TreeModel;
 	MergeModel *MergeGaps;
+	CellTraceModel *CellModel;
 	TableWindow * FTKTable;
 	PlotWindow *TreePlot;
 	PlotWindow *GapsPlotView;
 	TableWindow *GapsTableView;
+	TableWindow * CellTable;
+	PlotWindow *CellPlot;
 
 	//Qt widgets for the settings window
 	QWidget *SettingsWidget;

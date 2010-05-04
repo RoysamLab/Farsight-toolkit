@@ -61,4 +61,23 @@ void CellTrace::clearAll()
 	this->terminalTips = 0;
 	this->MinTerminalLevel = 0;
 	this->MaxTerminalLevel = 0;
+	this->TotalEuclidian = 0;
+	this->TotalPathLength = 0;
+	this->TotalVolume = 0;
+	this->TerminalPathLength = 0;
+}
+vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
+{
+	vtkSmartPointer<vtkVariantArray> CellData = vtkSmartPointer<vtkVariantArray>::New();
+	CellData->InsertNextValue(this->segments[0]->GetId());
+	CellData->InsertNextValue(this->NumSegments);
+	CellData->InsertNextValue(this->stems);
+	CellData->InsertNextValue(this->terminalTips);
+	CellData->InsertNextValue(this->MinTerminalLevel);
+	CellData->InsertNextValue(this->MaxTerminalLevel);
+	CellData->InsertNextValue(this->TotalEuclidian);
+	CellData->InsertNextValue(this->TotalPathLength);
+	CellData->InsertNextValue(this->TotalVolume);
+	CellData->InsertNextValue(this->TerminalPathLength/this->NumSegments);
+	return CellData;
 }

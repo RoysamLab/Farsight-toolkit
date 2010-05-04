@@ -32,6 +32,25 @@ class TraceLine;
 class CellTrace;
 class CellTraceModel : public QObject
 {
+	Q_OBJECT
+
+public:
+	CellTraceModel();
+	CellTraceModel(std::vector<CellTrace*> Cells);
+	void setCells(std::vector<CellTrace*> Cells);
+	vtkSmartPointer<vtkTable> getDataTable();
+	ObjectSelection * GetObjectSelection();
+	void SelectByIDs(std::vector<int> IDs);
+	std::vector<int> GetSelecectedIDs();
+signals:
+	void selectionChanged(void);
+private:
+	std::vector<CellTrace*> Cells;
+	std::vector<QString> headers;
+	void SetupHeaders();
+	void SyncModel();
+	vtkSmartPointer<vtkTable> DataTable;
+	ObjectSelection * Selection;
 };
 
 #endif
