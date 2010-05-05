@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <vector>
 #include <string>
+#include <set>
 //QT INCLUDES
 #include <QtCore>
 #include <QtGui>
@@ -42,7 +43,7 @@ public:
 	ObjectSelection * GetObjectSelection();
 	void SelectByRootTrace(std::vector<TraceLine*> roots);
 	void SelectByIDs(std::vector<int> IDs);
-	std::vector<int> GetSelecectedIDs();
+	std::set<long int> GetSelecectedIDs();
 signals:
 	void selectionChanged(void);
 private:

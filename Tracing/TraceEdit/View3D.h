@@ -159,6 +159,7 @@ public slots:
 	void About();
 
 protected slots:
+	void updateSelectionFromCell();
 	void updateSelectionHighlights();
 	void updateTraceSelectionHighlights();
 

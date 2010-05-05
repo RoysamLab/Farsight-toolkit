@@ -15,6 +15,7 @@ limitations under the License.
 #ifndef __CELLTRACE_H
 #define __CELLTRACE_H
 #include <vector>
+#include <set>
 #include "vtkSmartPointer.h"
 #include "vtkDoubleArray.h"
 #include "vtkAbstractArray.h"
@@ -29,12 +30,15 @@ public:
 	CellTrace(std::vector<TraceLine*> Segments);
 	void setTraces(std::vector<TraceLine*> Segments);
 	vtkSmartPointer<vtkVariantArray> DataRow();
+	std::set<long int> TraceIDsInCell();
+	int rootID();
 private:
 	void clearAll();
 	std::vector<TraceLine*>  segments;
 	int NumSegments, stems, branchPoints,terminalTips, MinTerminalLevel, MaxTerminalLevel, SumTerminalLevel;
 	double TotalPathLength, TotalVolume, TotalEuclidianPath, TerminalPathLength;
 	double maxTerminalPathLength, minTerminalPathLength; 
+	std::set<long int> IDs;
 	//TraceBit rootBit;
 };
 #endif

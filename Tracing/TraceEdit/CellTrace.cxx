@@ -34,6 +34,7 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 	TraceBit rootBit = this->segments[0]->GetTraceBitsPointer()->front();
 	for(i = 0; i < this->segments.size(); i++)
 	{
+		this->IDs.insert(this->segments[i]->GetId());
 		this->TotalPathLength += this->segments[i]->GetLength();
 		this->TotalVolume += this->segments[i]->GetVolume();
 		this->TotalEuclidianPath += this->segments[i]->GetEuclidianLength();
@@ -94,4 +95,12 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->TotalPathLength/this->NumSegments);//average segment length
 	CellData->InsertNextValue(this->TotalVolume);
 	return CellData;
+}
+std::set<long int> CellTrace::TraceIDsInCell()
+{
+	return this->IDs;
+}
+int CellTrace::rootID()
+{
+	return this->segments[0]->GetId();
 }

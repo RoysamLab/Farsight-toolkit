@@ -649,7 +649,8 @@ void View3D::setupLinkedSpace()
 	  this, SLOT(updateTraceSelectionHighlights()));
   this->CellModel = new CellTraceModel();
   this->CellModel->setParent(this);
-//todo link Cell Model to other linked spaces
+  this->connect(this->CellModel->GetObjectSelection(), SIGNAL(changed()), 
+	  this, SLOT(updateSelectionFromCell()));
 }
 
 /*Set up the components of the interface */
@@ -2346,9 +2347,14 @@ void View3D::SelectTrees()
 	{
 		//this->ClearSelection();
 		std::vector<int> ids;
+		this->CellModel->SelectByRootTrace(roots);
 		ids = this->tobj->GetTreeIDs(roots);
 		this->TreeModel->SelectByIDs(ids);
 	}//end root size
+}
+void View3D::updateSelectionFromCell()
+{
+	this->TreeModel->SelectByIDs(this->CellModel->GetSelecectedIDs());
 }
 /*  delete traces functions */
 void View3D::DeleteTraces()

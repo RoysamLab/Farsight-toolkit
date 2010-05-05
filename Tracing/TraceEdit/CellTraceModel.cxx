@@ -84,5 +84,42 @@ ObjectSelection * CellTraceModel::GetObjectSelection()
 }
 void CellTraceModel::SelectByRootTrace(std::vector<TraceLine*> roots)
 {
+	this->Selection->clear();
+	std::set<long int> ID;
 	unsigned int i = 0;
+	for (i = 0; i < roots.size(); i++)
+	{
+		ID.insert((long)roots.at(i)->GetId());
+		//std::cout<< "root" << roots.at(i)->GetId()<< " at" <<i<< std::endl;
+	}
+	this->Selection->select(ID);
+}
+std::set<long int> CellTraceModel::GetSelecectedIDs()
+{
+	std::set<long int> allSelectedIDs, nextIDs;
+	std::set<long> selected = this->Selection->getSelections();
+	std::set<long>::iterator it;
+	for (it = selected.begin(); it != selected.end(); ++it)
+	{
+		int id = (int) *it;
+		bool found = false;
+		unsigned int j = 0;
+		while(!found&&(j<this->Cells.size()))
+		{
+			if (id == this->Cells.at(j)->rootID())
+			{
+				nextIDs = this->Cells.at(j)->TraceIDsInCell();
+				std::set<long>::iterator k;
+				for (k = nextIDs.begin(); k != nextIDs.end(); k++)
+				{
+					allSelectedIDs.insert(*k);
+				}
+				found = true;
+			}else
+			{
+				j++;
+			}
+		}//end while !found
+	}//end for selected
+	return allSelectedIDs;
 }
