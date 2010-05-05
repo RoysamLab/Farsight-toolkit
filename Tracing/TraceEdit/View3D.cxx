@@ -2354,6 +2354,7 @@ void View3D::SelectTrees()
 }
 void View3D::updateSelectionFromCell()
 {
+	this->TreeModel->GetObjectSelection()->clear();
 	this->TreeModel->SelectByIDs(this->CellModel->GetSelecectedIDs());
 }
 /*  delete traces functions */
@@ -2768,10 +2769,13 @@ void View3D::ShowCellAnalysis()
 		this->FL_MeasurePlot = new PlotWindow();
 		this->FL_MeasurePlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
 		this->FL_MeasurePlot->setWindowTitle("Computed Features for Cells");
+		this->FL_MeasurePlot->move(this->TraceEditSettings.value("FLMeasurePlot/pos",QPoint(32, 561)).toPoint());
 		this->FL_MeasurePlot->show();
 		this->FL_MeasureTable = new TableWindow();
 		this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
 		this->FL_MeasureTable->setWindowTitle("Computed Features for Cells");
+		this->FL_MeasureTable->move(this->TraceEditSettings.value("FLMeasureTable/pos",QPoint(32, 561)).toPoint());
+		this->FL_MeasureTable->resize(this->TraceEditSettings.value("FLMeasureTable/size",QSize(600, 480)).toSize());
 		this->FL_MeasureTable->show();
 	}
 }
@@ -2779,12 +2783,16 @@ void View3D::HideCellAnalysis()
 {
 	if (this->FL_MeasurePlot)
 	{
+		this->TraceEditSettings.setValue("FLMeasurePlot/pos", this->FL_MeasurePlot->pos());
 		this->FL_MeasurePlot->close();
 	}
 	if(this->FL_MeasureTable)
 	{
+		this->TraceEditSettings.setValue("FLMeasureTable/pos", this->FL_MeasureTable->pos());
+		this->TraceEditSettings.setValue("FLMeasureTable/size", this->FL_MeasureTable->size());
 		this->FL_MeasureTable->close();
 	}
+	this->TraceEditSettings.sync();
 }
 void View3D::updateSelectionHighlights()
 {
