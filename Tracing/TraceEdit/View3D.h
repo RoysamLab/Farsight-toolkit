@@ -150,6 +150,7 @@ public slots:
 	void showPTin3D();
 	void getPosPTin3D();
 	void setPTtoSoma();
+	void setUsePointer(int i);
 //these are for bootloadfile
 	QString getTraceFile();
 	QString getImageFile();
@@ -234,6 +235,7 @@ private:
 	QAction *ImageIntensity;
 	QAction *MoveSphere;
 	QAction *updatePT3D;
+	QCheckBox *ShowPointer;
 	QAction *setSoma;
 	QAction *ShowPlots;
 	QAction *CellAnalysis;
@@ -280,6 +282,7 @@ private:
 	std::vector<int> SelectedTraceIDs;
 
 	vtkSmartPointer<vtkPointWidget> pointer3d;
+	bool ShowPointer3DDefault;
 	vtkSmartPointer<vtkSphereSource> Sphere;
 	vtkSmartPointer<vtkPolyDataMapper> SphereMapper;
 	vtkSmartPointer<vtkActor> SphereActor;

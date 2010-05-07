@@ -744,6 +744,11 @@ void View3D::CreateGUIObjects()
 	connect(this->updatePT3D, SIGNAL(triggered()), this, SLOT(getPosPTin3D()));
 	this->setSoma = new QAction("Set PT To soma", this->CentralWidget);
 	connect(this->setSoma, SIGNAL(triggered()), this, SLOT(setPTtoSoma()));
+	this->ShowPointer = new QCheckBox("Show PT", this->CentralWidget);
+	this->ShowPointer->setStatusTip("Show Pointer Automatically?");
+	this->ShowPointer3DDefault = true;
+	this->ShowPointer->setChecked(this->ShowPointer3DDefault);
+	connect(this->ShowPointer, SIGNAL(stateChanged(int)), this, SLOT(setUsePointer(int)));
   //Setup the tolerance settings editing window
   this->SettingsWidget = new QWidget(this);
   //QIntValidator *intValidator = new QIntValidator(1, 100, this->SettingsWidget);
@@ -838,6 +843,7 @@ void View3D::CreateLayout()
   this->EditsToolBar->addAction(this->MoveSphere);
   this->EditsToolBar->addAction(this->updatePT3D);
   this->EditsToolBar->addAction(this->setSoma);
+  this->EditsToolBar->addWidget(this->ShowPointer);
    /*this->EditsToolBar->addAction(this->loadSoma);*/
   //this->EditsToolBar->addAction(this->SettingsButton);
 
@@ -1122,7 +1128,10 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
 		//view->HighlightSelected(tline, view->SelectColor);
 		//tline->Getstats();              //prints the id and end coordinates to the command prompt 
 		view->SphereActor->SetPosition(pickPos);    //sets the selector to new point
-		view->pointer3DLocation(pickPos);
+		if (view->ShowPointer3DDefault)
+		{
+			view->pointer3DLocation(pickPos);
+		}
 		view->SphereActor->VisibilityOn();      //deleteTrace can turn it off 
 		view->poly_line_data->Modified();
 	}
@@ -1196,6 +1205,19 @@ void View3D::setPTtoSoma()
 		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 	}
 }
+void View3D::setUsePointer(int i)
+{
+	if (this->ShowPointer->isChecked())
+	{
+		this->ShowPointer3DDefault = true;
+	}
+	else
+	{
+		this->ShowPointer3DDefault = false;
+		this->pointer3d->SetEnabled(0);
+	}
+}
+/*Selections*/
 void View3D::updateTraceSelectionHighlights()
 {
 	this->UpdateLineActor();
