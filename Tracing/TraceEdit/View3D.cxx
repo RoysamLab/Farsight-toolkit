@@ -799,6 +799,8 @@ void View3D::CreateGUIObjects()
 	this->posX->setText("0");
 	this->posY->setText("0");
 	this->posZ->setText("0");
+	this->BranchesLabel = new QLabel(this);
+	this->BranchesLabel->setText("0");
 }
 
 void View3D::CreateLayout()
@@ -855,6 +857,8 @@ void View3D::CreateLayout()
   this->BranchToolBar->addAction(this->explodeTree);
   this->BranchToolBar->addAction(this->BranchButton);
   this->BranchToolBar->addAction(this->root);
+  this->BranchToolBar->addWidget(new QLabel("Unsolved Branches: "));
+  this->BranchToolBar->addWidget(this->BranchesLabel);
 
   QFormLayout *settingsLayout = new QFormLayout(this->SettingsWidget);
   settingsLayout->addRow(tr("Maximum gap length:"), this->MaxGapField);
@@ -1273,6 +1277,7 @@ void View3D::Rerender()
 	this->SplitLabel->setText(QString::number(this->numSplit));
 	this->MergeLabel->setText(QString::number(this->numMerged));
 	this->DeleteLabel->setText(QString::number(this->numDeleted));
+	this->BranchesLabel->setText(QString::number(this->tobj->BranchPoints.size()));
 	if(this->FL_MeasurePlot || this->FL_MeasureTable)
 	{
 		this->ShowCellAnalysis();
@@ -2549,6 +2554,7 @@ void View3D::SetRoots()
 		this->Rerender();
 		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 		this->statusBar()->showMessage(QString::number(numToSolve)+ " Remaining Branches");
+		this->BranchesLabel->setText(QString::number(numToSolve));
 	}
 	else
 	{

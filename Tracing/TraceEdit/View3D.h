@@ -201,7 +201,7 @@ private:
 	float lineWidth;
 	double SelectColor;
 	int numSplit, numDeleted, numMerged;
-	QLabel *SplitLabel, *DeleteLabel, *MergeLabel, *posX, *posY, *posZ;
+	QLabel *SplitLabel, *DeleteLabel, *MergeLabel, *posX, *posY, *posZ, *BranchesLabel;
     //VTK render window embedded in a Qt widget
 	QVTKWidget *QVTK;	
     QWidget *CentralWidget;
