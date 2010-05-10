@@ -1,4 +1,5 @@
 INCLUDE_DIRECTORIES("${Farsight_SOURCE_DIR}/ftkCommon")
+INCLUDE_DIRECTORIES( ${Farsight_BINARY_DIR}/Tracing/MDL2/wizard ${Farsight_SOURCE_DIR}/Tracing/MDL2/wizard )
 
 QT4_WRAP_UI( Wizard_HDRS MDL2Wizard.ui )
 
