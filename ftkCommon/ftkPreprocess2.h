@@ -25,6 +25,9 @@ limitations under the License.
 #include <vector>
 #include <iostream>
 #include <limits>
+#include <string.h>
+
+#include <tinyxml/tinyxml.h>
 
 //ITK Preprocessing includes
 #include "itkImage.h"
@@ -83,6 +86,7 @@ public:
 	void SaveVTKPoints(std::string filename, float xyFactor=1.0, int min=255, int max=255);
 
 	void RunFilter(std::string name, std::vector<double> params);
+	void RunPipe(std::string filename);
 
 	void DownSample();
 	void RescaleIntensities(int min = 0, int max = 255);

@@ -15,11 +15,8 @@ limitations under the License.
 #include "ftkPreprocess2.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-#include <string.h>
-#include <tinyxml/tinyxml.h>
 
 void usage(const char *funcName);
-void pipeline(std::string pipeName, ftk::Preprocess * prep);
 
 int main(int argc, char *argv[])
 {
@@ -143,7 +140,7 @@ int main(int argc, char *argv[])
 
 	if(pipeName != "")
 	{
-		pipeline(pipeName, prep);
+		prep->RunPipe(pipeName);
 	}
 	else if( filterName != "" )
 	{
@@ -173,164 +170,6 @@ int main(int argc, char *argv[])
 	//getchar();
 
 	return EXIT_SUCCESS;
-}
-
-void pipeline(std::string pipeName, ftk::Preprocess * prep)
-{
-	TiXmlDocument doc;
-	if ( !doc.LoadFile( pipeName.c_str() ) )
-		return;
-
-	TiXmlElement* rootElement = doc.FirstChildElement();
-	const char* docname = rootElement->Value();
-	if ( strcmp( docname, "Preprocess" ) != 0 )
-		return;
-
-	TiXmlElement* parentElement = rootElement->FirstChildElement();
-	while (parentElement)
-	{
-		const char * parent = parentElement->Value();
-		if ( strcmp( parent, "LaplacianOfGaussian" ) == 0 )
-		{
-			int sigma = 10;
-			parentElement->QueryIntAttribute("sigma",&sigma);
-			std::cout << "Starting LOG...";
-			prep->LaplacianOfGaussian(sigma);
-			std::cout << "done\n";
-		}
-		else if( strcmp( parent, "InvertIntensity" ) == 0 )
-		{
-			std::cout << "Starting InvertIntensity...";
-			prep->InvertIntensity();
-			std::cout << "done\n";
-		}
-		else if( strcmp( parent, "DownSample" ) == 0 )
-		{
-			std::cout << "Starting DownSample...";
-			prep->DownSample();
-			std::cout << "done\n";
-		}
-		else if( strcmp( parent, "OtsuBinarize" ) == 0 )
-		{
-			int numThresh = 3, numFore = 2;
-			parentElement->QueryIntAttribute("num_thresholds",&numThresh);
-			parentElement->QueryIntAttribute("num_in_foreground",&numFore);
-			std::cout << "Starting OtsuBinarize...";
-			prep->OtsuBinarize(numThresh,numFore);
-			std::cout << "done\n";
-		}
-		else if( strcmp( parent, "ManualThreshold" ) == 0 )
-		{
-			int threshold = 128;
-			parentElement->QueryIntAttribute("threshold", &threshold);
-			std::cout << "Starting Manual Threshold of " << threshold << "...";
-			prep->ManualThreshold(threshold);
-			std::cout << "done\n";
-		}
-		else if( strcmp( parent, "RemoveConnectedComponents" ) == 0 )
-		{
-			int minObjSize = 1000;
-			parentElement->QueryIntAttribute("minObjSize", &minObjSize);
-			std::cout << "Starting RemoveCC...";
-			prep->RemoveConnectedComponents(minObjSize);
-			std::cout << "done\n";
-		}
-		else if( strcmp( parent, "BinaryThinning" ) == 0 )
-		{
-			std::cout << "Starting BinaryThinning...";
-
-			prep->BinaryThinning();
-			std::cout << "done\n";
-		}
-		else if( strcmp( parent, "DanielssonDistanceMap" ) == 0 )
-		{
-			std::cout << "Starting DanielssonDistanceMap...";
-			prep->DanielssonDistanceMap();
-			std::cout << "done\n";
-		}
-		else if( strcmp( parent, "MedianFilter" ) == 0 )
-		{
-			int radiusX=2, radiusY=3, radiusZ=0;
-			parentElement->QueryIntAttribute("radiusX",&radiusX);
-			parentElement->QueryIntAttribute("radiusY",&radiusY);
-			parentElement->QueryIntAttribute("radiusZ",&radiusZ);
-			std::cout << "Starting MedianFilter...";
-			prep->MedianFilter(radiusX,radiusY,radiusZ);
-			std::cout << "done\n";
-		}
-		else if( strcmp( parent, "MinErrorThresholding" ) == 0 )
-		{
-			float alpha_B, alpha_F, P_I;
-			std::cout << "Starting MinErrorThresholding...";
-			prep->MinErrorThresholding(&alpha_B, &alpha_F, &P_I);
-			std::cout << "done\n";
-		}
-		else if( strcmp( parent, "GraphCutBinarize" ) == 0 )
-		{
-			int xyDivs=1, zDivs=1;
-			parentElement->QueryIntAttribute("xyDivs",&xyDivs);
-			std::cout << "Starting GraphCutBinarize...";
-			prep->GraphCutBinarize(false,xyDivs);
-			std::cout << "done\n";
-		}
-		else if( strcmp( parent, "OpeningFilter" ) == 0 )
-		{
-			int radius=3;
-			parentElement->QueryIntAttribute("radius",&radius);
-			std::cout << "Starting OpeningFilter...";
-			prep->OpeningFilter(radius);
-			std::cout << "done\n";
-		}
-		else if( strcmp( parent, "ClosingFilter" ) == 0 )
-		{
-			int radius=3;
-			parentElement->QueryIntAttribute("radius",&radius);
-			std::cout << "Starting ClosingFilter...";
-			prep->ClosingFilter(radius);
-			std::cout << "done\n";
-		}
-		else if( strcmp( parent, "CannyEdgeDetection" ) == 0 )
-		{
-			float variance=2.0;
-			float upperThreshold = 6;
-			float lowerThreshold = 3;
-			parentElement->QueryFloatAttribute("variance",&variance);
-			parentElement->QueryFloatAttribute("upperThreshold",&upperThreshold);
-			parentElement->QueryFloatAttribute("lowerThreshold",&lowerThreshold);
-			std::cout << "Starting CannyEdgeDetection...";
-			prep->CannyEdgeDetection(variance, upperThreshold, lowerThreshold);
-			std::cout << "done\n";
-		}
-		else if( strcmp( parent, "DiscreteGaussian") == 0 )
-		{
-			float varX=1.0, varY=1.0, varZ=1.0, maxError=0.1;
-			parentElement->QueryFloatAttribute("varX",&varX);
-			parentElement->QueryFloatAttribute("varY",&varY);
-			parentElement->QueryFloatAttribute("varZ",&varZ);
-			parentElement->QueryFloatAttribute("maxError",&maxError);
-			std::cout << "Starting DiscreteGaussianFilter...";
-			prep->DiscreteGaussianFilter(varX, varY, varZ, maxError);
-			std::cout << "done\n";
-		}
-		else if( strcmp( parent, "SaveVTKPoints") == 0 )
-		{
-			const char * filename = parentElement->Attribute("filename");
-			float xyFactor = 1.0;
-			int min=255, max=255;
-			parentElement->QueryFloatAttribute("xyFactor", &xyFactor);
-			parentElement->QueryIntAttribute("min",&min);
-			parentElement->QueryIntAttribute("max",&max);
-			std::cout << "Saving VTK Points...";
-			if(!filename)
-				prep->SaveVTKPoints("points.vtk", xyFactor, min, max);
-			else
-				prep->SaveVTKPoints(filename, xyFactor, min, max);
-			std::cout << "done\n";
-		}
-
-		parentElement = parentElement->NextSiblingElement();
-	} // end while(parentElement)
-	//doc.close();
 }
 
 void usage(const char *funcName)

@@ -91,6 +91,164 @@ Preprocess::Preprocess(RGBImageType3D::Pointer img, const char color)
 	}
 }
 
+void Preprocess::RunPipe(std::string filename)
+{
+	TiXmlDocument doc;
+	if ( !doc.LoadFile( filename.c_str() ) )
+		return;
+
+	TiXmlElement* rootElement = doc.FirstChildElement();
+	const char* docname = rootElement->Value();
+	if ( strcmp( docname, "Preprocess" ) != 0 )
+		return;
+
+	TiXmlElement* parentElement = rootElement->FirstChildElement();
+	while (parentElement)
+	{
+		const char * parent = parentElement->Value();
+		if ( strcmp( parent, "LaplacianOfGaussian" ) == 0 )
+		{
+			int sigma = 10;
+			parentElement->QueryIntAttribute("sigma",&sigma);
+			std::cout << "Starting LOG...";
+			this->LaplacianOfGaussian(sigma);
+			std::cout << "done\n";
+		}
+		else if( strcmp( parent, "InvertIntensity" ) == 0 )
+		{
+			std::cout << "Starting InvertIntensity...";
+			this->InvertIntensity();
+			std::cout << "done\n";
+		}
+		else if( strcmp( parent, "DownSample" ) == 0 )
+		{
+			std::cout << "Starting DownSample...";
+			this->DownSample();
+			std::cout << "done\n";
+		}
+		else if( strcmp( parent, "OtsuBinarize" ) == 0 )
+		{
+			int numThresh = 3, numFore = 2;
+			parentElement->QueryIntAttribute("num_thresholds",&numThresh);
+			parentElement->QueryIntAttribute("num_in_foreground",&numFore);
+			std::cout << "Starting OtsuBinarize...";
+			this->OtsuBinarize(numThresh,numFore);
+			std::cout << "done\n";
+		}
+		else if( strcmp( parent, "ManualThreshold" ) == 0 )
+		{
+			int threshold = 128;
+			parentElement->QueryIntAttribute("threshold", &threshold);
+			std::cout << "Starting Manual Threshold of " << threshold << "...";
+			this->ManualThreshold(threshold);
+			std::cout << "done\n";
+		}
+		else if( strcmp( parent, "RemoveConnectedComponents" ) == 0 )
+		{
+			int minObjSize = 1000;
+			parentElement->QueryIntAttribute("minObjSize", &minObjSize);
+			std::cout << "Starting RemoveCC...";
+			this->RemoveConnectedComponents(minObjSize);
+			std::cout << "done\n";
+		}
+		else if( strcmp( parent, "BinaryThinning" ) == 0 )
+		{
+			std::cout << "Starting BinaryThinning...";
+
+			this->BinaryThinning();
+			std::cout << "done\n";
+		}
+		else if( strcmp( parent, "DanielssonDistanceMap" ) == 0 )
+		{
+			std::cout << "Starting DanielssonDistanceMap...";
+			this->DanielssonDistanceMap();
+			std::cout << "done\n";
+		}
+		else if( strcmp( parent, "MedianFilter" ) == 0 )
+		{
+			int radiusX=2, radiusY=3, radiusZ=0;
+			parentElement->QueryIntAttribute("radiusX",&radiusX);
+			parentElement->QueryIntAttribute("radiusY",&radiusY);
+			parentElement->QueryIntAttribute("radiusZ",&radiusZ);
+			std::cout << "Starting MedianFilter...";
+			this->MedianFilter(radiusX,radiusY,radiusZ);
+			std::cout << "done\n";
+		}
+		else if( strcmp( parent, "MinErrorThresholding" ) == 0 )
+		{
+			float alpha_B, alpha_F, P_I;
+			std::cout << "Starting MinErrorThresholding...";
+			this->MinErrorThresholding(&alpha_B, &alpha_F, &P_I);
+			std::cout << "done\n";
+		}
+		else if( strcmp( parent, "GraphCutBinarize" ) == 0 )
+		{
+			int xyDivs=1, zDivs=1;
+			parentElement->QueryIntAttribute("xyDivs",&xyDivs);
+			std::cout << "Starting GraphCutBinarize...";
+			this->GraphCutBinarize(false,xyDivs);
+			std::cout << "done\n";
+		}
+		else if( strcmp( parent, "OpeningFilter" ) == 0 )
+		{
+			int radius=3;
+			parentElement->QueryIntAttribute("radius",&radius);
+			std::cout << "Starting OpeningFilter...";
+			this->OpeningFilter(radius);
+			std::cout << "done\n";
+		}
+		else if( strcmp( parent, "ClosingFilter" ) == 0 )
+		{
+			int radius=3;
+			parentElement->QueryIntAttribute("radius",&radius);
+			std::cout << "Starting ClosingFilter...";
+			this->ClosingFilter(radius);
+			std::cout << "done\n";
+		}
+		else if( strcmp( parent, "CannyEdgeDetection" ) == 0 )
+		{
+			float variance=2.0;
+			float upperThreshold = 6;
+			float lowerThreshold = 3;
+			parentElement->QueryFloatAttribute("variance",&variance);
+			parentElement->QueryFloatAttribute("upperThreshold",&upperThreshold);
+			parentElement->QueryFloatAttribute("lowerThreshold",&lowerThreshold);
+			std::cout << "Starting CannyEdgeDetection...";
+			this->CannyEdgeDetection(variance, upperThreshold, lowerThreshold);
+			std::cout << "done\n";
+		}
+		else if( strcmp( parent, "DiscreteGaussian") == 0 )
+		{
+			float varX=1.0, varY=1.0, varZ=1.0, maxError=0.1;
+			parentElement->QueryFloatAttribute("varX",&varX);
+			parentElement->QueryFloatAttribute("varY",&varY);
+			parentElement->QueryFloatAttribute("varZ",&varZ);
+			parentElement->QueryFloatAttribute("maxError",&maxError);
+			std::cout << "Starting DiscreteGaussianFilter...";
+			this->DiscreteGaussianFilter(varX, varY, varZ, maxError);
+			std::cout << "done\n";
+		}
+		else if( strcmp( parent, "SaveVTKPoints") == 0 )
+		{
+			const char * filename = parentElement->Attribute("filename");
+			float xyFactor = 1.0;
+			int min=255, max=255;
+			parentElement->QueryFloatAttribute("xyFactor", &xyFactor);
+			parentElement->QueryIntAttribute("min",&min);
+			parentElement->QueryIntAttribute("max",&max);
+			std::cout << "Saving VTK Points...";
+			if(!filename)
+				this->SaveVTKPoints("points.vtk", xyFactor, min, max);
+			else
+				this->SaveVTKPoints(filename, xyFactor, min, max);
+			std::cout << "done\n";
+		}
+
+		parentElement = parentElement->NextSiblingElement();
+	} // end while(parentElement)
+	//doc.close();
+}
+
 void Preprocess::RescaleIntensities(int min, int max)
 {
 	//Rescale the pixel values
