@@ -121,49 +121,35 @@ View3D::View3D(QWidget *parent)
 	this->setCentralWidget(this->CentralWidget);
 	this->CreateGUIObjects();
 	this->CreateLayout();
-
+	QStringList args = QCoreApplication::arguments();
   // load as many files as possible. Provide offset for differentiating types
-  //for(int counter=1; counter<argc; counter++)
-  //  {
-  //  int len = strlen(argv[counter]);
-  //  if(strcmp(argv[counter]+len-3,"swc")==0)
-  //    {
-  //    printf("I detected swc\n");
-  //    this->tobj->ReadFromSWCFile(argv[counter]);
-	 // tracesLoaded = true;
-	 // this->TraceFiles.append( QString(argv[counter]));
-	 // //this->TraceFiles
-  //     }
-  //  else if (strcmp(argv[counter]+len-3,"xml")==0)
-  //    {
-  //    printf("I detected xml\n");
-  //    this->tobj->ReadFromRPIXMLFile(argv[counter]);
-	 // this->TraceFiles.append( QString(argv[counter]));
-	 // tracesLoaded = true;
-  //    }
-  //  else if (strcmp(argv[counter]+len-3,"vtk")==0)
-  //    {
-  //    printf("I detected vtk\n");
-  //    this->tobj->ReadFromVTKFile(argv[counter]);
-	 // this->TraceFiles.append( QString(argv[counter]));
-	 // tracesLoaded = true;
-  //    }
-  //  else if( strcmp(argv[counter]+len-3,"tks")==0)
-  //    {
-  //    printf("I detected tks\n");
-  //    this->tobj->ReadFromFeatureTracksFile(argv[counter],num_loaded);
-  //    }
-  //  else if( strcmp(argv[counter]+len-3,"tif")==0 ||
-  //           strcmp(argv[counter]+len-4,"tiff")==0 ||
-  //     strcmp(argv[counter]+len-3, "pic")==0||
-  //     strcmp(argv[counter]+len-3, "PIC")==0)
-  //    {
-  //    printf("I detected a 3d image file\n");
-	 // this->Image.append( QString(argv[counter]));
-	 // this->ImageActors->loadImage(QString(argv[counter]).toStdString(), "Image");
-  //    }
-  //  num_loaded++;
-  //  }
+	for(int counter=1; counter<args.size(); counter++)
+    {
+		QString nextFile = args[counter];
+		if (nextFile.endsWith("swc"))
+		{
+			this->tobj->ReadFromSWCFile((char*)nextFile.toStdString().c_str());
+		}
+		else if(nextFile.endsWith("xml"))
+		{
+			this->tobj->ReadFromRPIXMLFile((char*)nextFile.toStdString().c_str());
+		}
+		else if (nextFile.endsWith("vtk"))
+		{
+			this->tobj->ReadFromVTKFile((char*)nextFile.toStdString().c_str());
+		}
+
+ //   else if( strcmp(args[counter]+len-3,"tif")==0 ||
+ //            strcmp(args[counter]+len-4,"tiff")==0 ||
+ //      strcmp(args[counter]+len-3, "pic")==0||
+ //      strcmp(args[counter]+len-3, "PIC")==0)
+ //     {
+ //     printf("I detected a 3d image file\n");
+	//  this->Image.append( QString(args[counter]));
+	//  this->ImageActors->loadImage(QString(args[counter]).toStdString(), "Image");
+ //     }
+ //   num_loaded++;
+    }
 	this->CreateBootLoader();
 }
 View3D::View3D(TraceObject *Traces)
@@ -657,119 +643,150 @@ void View3D::setupLinkedSpace()
 void View3D::CreateGUIObjects()
 {
 
-  //Set up the menu bar
+//Set up the menu bar
  
-  this->saveAction = new QAction(tr("&Save as..."), this->CentralWidget);
-    connect(this->saveAction, SIGNAL(triggered()), this, SLOT(SaveToFile()));
+	this->saveAction = new QAction(tr("&Save as..."), this->CentralWidget);
+	connect(this->saveAction, SIGNAL(triggered()), this, SLOT(SaveToFile()));
 	this->saveAction->setShortcut(QKeySequence::Save);
 	this->saveAction->setStatusTip("Save results to file");
-  this->saveSelectedAction = new QAction(tr("&Save Selected Trees"), this->CentralWidget);
-    connect(this->saveSelectedAction, SIGNAL(triggered()), this, SLOT(SaveSelected()));
+
+	this->saveSelectedAction = new QAction(tr("&Save Selected Trees"), this->CentralWidget);
+	connect(this->saveSelectedAction, SIGNAL(triggered()), this, SLOT(SaveSelected()));
 	this->saveSelectedAction->setStatusTip("Save Selected tree structures to seperate file");
-  this->exitAction = new QAction(tr("&Exit"), this->CentralWidget);
+
+	this->exitAction = new QAction(tr("&Exit"), this->CentralWidget);
 	connect(this->exitAction, SIGNAL(triggered()), this, SLOT(close()));
 	this->exitAction->setShortcut(QKeySequence::Close);
 	this->exitAction->setStatusTip("Exit the Trace Editor");
-  this->loadTraceAction = new QAction("Load Trace", this->CentralWidget);
-    connect(this->loadTraceAction, SIGNAL(triggered()), this, SLOT(LoadTraces()));
-    this->loadTraceAction->setStatusTip("Load traces from .xml or .swc file");
+
+	this->loadTraceAction = new QAction("Load Trace", this->CentralWidget);
+	connect(this->loadTraceAction, SIGNAL(triggered()), this, SLOT(LoadTraces()));
+	this->loadTraceAction->setStatusTip("Load traces from .xml or .swc file");
 	this->loadTraceAction->setShortcut(QKeySequence::Open);
-  this->loadTraceImage = new QAction("Load Image", this->CentralWidget);
+
+	this->loadTraceImage = new QAction("Load Image", this->CentralWidget);
 	connect (this->loadTraceImage, SIGNAL(triggered()), this, SLOT(LoadImageData()));
 	this->loadTraceImage->setStatusTip("Load an Image to RayCast Rendering");
-//Loading soma data
-  this->loadSoma = new QAction("Load Somas", this->CentralWidget);
-   connect(this->loadSoma, SIGNAL(triggered()), this, SLOT(LoadSomaFile()));
-   this->loadSoma->setStatusTip("Load image file to Contour rendering");
 
- //Set up the buttons that the user will use to interact with this program. 
-  this->ListButton = new QAction("List", this->CentralWidget);
+	this->loadSoma = new QAction("Load Somas", this->CentralWidget);
+	connect(this->loadSoma, SIGNAL(triggered()), this, SLOT(LoadSomaFile()));
+	this->loadSoma->setStatusTip("Load image file to Contour rendering");
+
+//Set up the buttons that the user will use to interact with this program. 
+	this->ListButton = new QAction("List", this->CentralWidget);
 	connect(this->ListButton, SIGNAL(triggered()), this, SLOT(ListSelections()));
 	this->ListButton->setStatusTip("List all selections");
-  this->ClearButton = new QAction("Clear", this->CentralWidget); 
+
+	this->ClearButton = new QAction("Clear", this->CentralWidget); 
 	connect(this->ClearButton, SIGNAL(triggered()), this, SLOT(ClearSelection()));
 	this->ClearButton->setStatusTip("Clear all selections");
-  this->SelectTreeAction = new QAction("Select Tree", this->CentralWidget); 
+
+	this->SelectTreeAction = new QAction("Select Tree", this->CentralWidget); 
 	connect(this->SelectTreeAction, SIGNAL(triggered()), this, SLOT(SelectTrees()));
 	this->SelectTreeAction->setStatusTip("Select the entire tree");
-  this->DeleteButton = new QAction("Delete", this->CentralWidget);
+
+	this->DeleteButton = new QAction("Delete", this->CentralWidget);
 	connect(this->DeleteButton, SIGNAL(triggered()), this, SLOT(DeleteTraces()));
 	this->DeleteButton->setStatusTip("Delete all selected traces");
 	this->DeleteButton->setShortcut(QKeySequence(Qt::Key_D));
-  this->MergeButton = new QAction("Merge", this->CentralWidget);
+
+	this->MergeButton = new QAction("Merge", this->CentralWidget);
 	connect(this->MergeButton, SIGNAL(triggered()), this, SLOT(MergeTraces()));
 	this->MergeButton->setStatusTip("Start Merge on selected traces");
 	this->MergeButton->setShortcut(QKeySequence(Qt::Key_M));
-  this->SplitButton = new QAction("Split", this->CentralWidget); 
+
+	this->SplitButton = new QAction("Split", this->CentralWidget); 
 	connect(this->SplitButton, SIGNAL(triggered()), this, SLOT(SplitTraces()));
 	this->SplitButton->setStatusTip("Split traces at point where selected");
-  this->FlipButton = new QAction("Flip", this->CentralWidget);
+
+	this->FlipButton = new QAction("Flip", this->CentralWidget);
 	connect(this->FlipButton, SIGNAL(triggered()), this, SLOT(FlipTraces()));
 	this->FlipButton->setStatusTip("Flip trace direction");
-  /*this->SettingsButton = new QAction("Settings", this->CentralWidget);
-	connect(this->SettingsButton, SIGNAL(triggered()), this,
-		SLOT(ShowSettingsWindow()));*/
-	//this->SettingsButton->setStatusTip("edit the display and tolerance settings");
-  this->AutomateButton = new QAction("Small Lines", this->CentralWidget);
+
+	this->AutomateButton = new QAction("Small Lines", this->CentralWidget);
 	connect(this->AutomateButton, SIGNAL(triggered()), this, SLOT(SLine()));
 	this->AutomateButton->setStatusTip("Automatic selection of all small lines");
-  this->root = new QAction("Set Root", this->CentralWidget);
+//Branching tools
+	this->root = new QAction("Set Root", this->CentralWidget);
 	connect(this->root, SIGNAL(triggered()), this, SLOT(SetRoots()));
 	this->root->setStatusTip("Solve Branch order by defining Root Trace Lines");
 	this->root->setShortcut(QKeySequence(Qt::Key_R));
+
 	this->BreakButton = new QAction("Break", this->CentralWidget);
 	connect(this->BreakButton, SIGNAL(triggered()), this, SLOT( BreakBranch()));
 	this->BreakButton->setStatusTip("Breaks a branch off of the tree");
 	this->BreakButton->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_B));
 	this->BreakButton->setToolTip("Shift + B");
-  this->explodeTree = new QAction("Explode", this->CentralWidget);
-  connect(this->explodeTree, SIGNAL(triggered()), this, SLOT( ExplodeTree()));
-  this->explodeTree->setStatusTip("Break tree into segments,aka Explode. Tree can be rebuilt using set root");
-  this->explodeTree->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_B));
-  this->explodeTree->setToolTip("Ctrl + B");
-  this->BranchButton = new QAction("Branch", this->CentralWidget);
+
+	this->explodeTree = new QAction("Explode", this->CentralWidget);
+	connect(this->explodeTree, SIGNAL(triggered()), this, SLOT( ExplodeTree()));
+	this->explodeTree->setStatusTip("Break tree into segments,aka Explode. Tree can be rebuilt using set root");
+	this->explodeTree->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_B));
+	this->explodeTree->setToolTip("Ctrl + B");
+
+	this->BranchButton = new QAction("Branch", this->CentralWidget);
 	connect(this->BranchButton, SIGNAL(triggered()), this, SLOT(AddNewBranches()));
 	this->BranchButton->setStatusTip("Add branches to trunk");
 	this->BranchButton->setShortcut(QKeySequence(Qt::Key_B));
 	this->BranchButton->setToolTip("B");
+
+	this->BranchesLabel = new QLabel(this);
+	this->BranchesLabel->setText("0");
+//intensity 
 	this->ImageIntensity = new QAction("Intensity", this->CentralWidget);
 	this->ImageIntensity->setStatusTip("Calculates intensity of trace bits from one image");
 	connect(this->ImageIntensity, SIGNAL(triggered()), this, SLOT(SetImgInt()));
+// 3d cursor actions 
+	this->CursorActionsWidget = new QWidget(this);
 	this->MoveSphere = new QAction("Set PT ", this->CentralWidget);
 	this->MoveSphere->setToolTip("Ctrl + p");
 	connect(this->MoveSphere, SIGNAL(triggered()), this, SLOT(showPTin3D()));
 	this->MoveSphere->setStatusTip("moves marker to location");
 	this->MoveSphere->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_P));
+
 	this->updatePT3D = new QAction("Get PT", this->CentralWidget);
 	connect(this->updatePT3D, SIGNAL(triggered()), this, SLOT(getPosPTin3D()));
+
 	this->setSoma = new QAction("Set PT To soma", this->CentralWidget);
 	connect(this->setSoma, SIGNAL(triggered()), this, SLOT(setPTtoSoma()));
+
 	this->ShowPointer = new QCheckBox("Show PT", this->CentralWidget);
 	this->ShowPointer->setStatusTip("Show Pointer Automatically?");
 	this->ShowPointer3DDefault = true;
 	this->ShowPointer->setChecked(this->ShowPointer3DDefault);
 	connect(this->ShowPointer, SIGNAL(stateChanged(int)), this, SLOT(setUsePointer(int)));
-  //Setup the tolerance settings editing window
-  this->SettingsWidget = new QWidget(this);
-  //QIntValidator *intValidator = new QIntValidator(1, 100, this->SettingsWidget);
-  this->MaxGapField = new QSpinBox(this->SettingsWidget);
-  this->MaxGapField->setRange(0,1000);
-  //this->MaxGapField->setValidator(intValidator);
-  this->GapToleranceField = new QDoubleSpinBox(this->SettingsWidget);
-  this->GapToleranceField->setRange(0,100);
-  this->GapToleranceField->setSingleStep(.1);
-  //this->GapToleranceField->setValidator(intValidator);
-  this->LineLengthField = new QSpinBox(this->SettingsWidget);
-  this->LineLengthField->setRange(0,1000);
-  this->ColorValueField = new QDoubleSpinBox(this->SettingsWidget);
-  this->ColorValueField->setRange(0,1);
-  this->ColorValueField->setSingleStep(.01);
-  this->LineWidthField = new QSpinBox(this->SettingsWidget);
-  this->LineWidthField->setRange(1,5);
-  this->ApplySettingsButton = new QDialogButtonBox(QDialogButtonBox::SaveAll | QDialogButtonBox::Close);
-  //this->CancelSettingsButton = new QPushButton("&Cancel", this->SettingsWidget);
-  connect(this->ApplySettingsButton, SIGNAL(accepted()), this, SLOT(ApplyNewSettings()));
-  connect(this->ApplySettingsButton, SIGNAL(rejected()), this, SLOT(HideSettingsWindow()));
+
+	this->posX = new QLabel(this);
+	this->posX->setText("0");
+
+	this->posY = new QLabel(this);
+	this->posY->setText("0");
+
+	this->posZ = new QLabel(this);
+	this->posZ->setText("0");
+
+//Setup the settings editing window
+	this->SettingsWidget = new QWidget(this);
+	this->MaxGapField = new QSpinBox(this->SettingsWidget);
+	this->MaxGapField->setRange(0,1000);
+
+	this->GapToleranceField = new QDoubleSpinBox(this->SettingsWidget);
+	this->GapToleranceField->setRange(0,100);
+	this->GapToleranceField->setSingleStep(.1);
+
+	this->LineLengthField = new QSpinBox(this->SettingsWidget);
+	this->LineLengthField->setRange(0,1000);
+
+	this->ColorValueField = new QDoubleSpinBox(this->SettingsWidget);
+	this->ColorValueField->setRange(0,1);
+	this->ColorValueField->setSingleStep(.01);
+
+	this->LineWidthField = new QSpinBox(this->SettingsWidget);
+	this->LineWidthField->setRange(1,5);
+
+	this->ApplySettingsButton = new QDialogButtonBox(QDialogButtonBox::SaveAll | QDialogButtonBox::Close);
+	connect(this->ApplySettingsButton, SIGNAL(accepted()), this, SLOT(ApplyNewSettings()));
+	connect(this->ApplySettingsButton, SIGNAL(rejected()), this, SLOT(HideSettingsWindow()));
 
 	QStringList types;
 	types <<"0 = undefined" << "1 = soma" <<"2 = axon" <<"3 = dendrite" 
@@ -781,26 +798,22 @@ void View3D::CreateGUIObjects()
 	this->aboutAction = new QAction("About", this->CentralWidget);
 	this->aboutAction->setStatusTip("About Trace Edit");
 	connect(this->aboutAction, SIGNAL(triggered()), this, SLOT(About()));
+
 	this->ShowPlots = new QAction("Show Plots", this);
 	this->ShowPlots->isCheckable();
 	connect (this->ShowPlots, SIGNAL(triggered()), this, SLOT(ShowTreeData()));
+
 	this->CellAnalysis = new QAction("Cell Analysis", this->CentralWidget);
 	connect (this->CellAnalysis, SIGNAL(triggered()), this, SLOT(ShowCellAnalysis()));
 // Lables for the status bar to show edit counts
 	this->SplitLabel = new QLabel(this);
 	this->SplitLabel->setText(QString::number(this->numSplit));
+
 	this->MergeLabel = new QLabel(this);
 	this->MergeLabel->setText(QString::number(this->numMerged));
+
 	this->DeleteLabel = new QLabel(this);
 	this->DeleteLabel->setText(QString::number(this->numDeleted));
-	this->posX = new QLabel(this);
-	this->posY = new QLabel(this);
-	this->posZ = new QLabel(this);
-	this->posX->setText("0");
-	this->posY->setText("0");
-	this->posZ->setText("0");
-	this->BranchesLabel = new QLabel(this);
-	this->BranchesLabel->setText("0");
 }
 
 void View3D::CreateLayout()
@@ -836,18 +849,32 @@ void View3D::CreateLayout()
   this->EditsToolBar->addWidget(this->typeCombo);
   this->EditsToolBar->addSeparator();
   this->EditsToolBar->addAction(this->ImageIntensity);
-  this->EditsToolBar->addWidget(new QLabel("Point in 3D: X:", this));
+  this->EditsToolBar->addAction(this->MoveSphere);
+  this->EditsToolBar->addAction(this->updatePT3D);
+  this->EditsToolBar->addAction(this->setSoma);
+
+  this->cursor3DDock = new QDockWidget("3D Cursor",this);
+  QVBoxLayout * CursorToolsLayout = new QVBoxLayout();
+  QGroupBox * CursorLocationBox = new QGroupBox("Cursor Location");
+  QFormLayout *CursorLocationLayout = new QFormLayout();
+  CursorLocationLayout->addRow("X",this->posX);
+  CursorLocationLayout->addRow("Y",this->posY);
+  CursorLocationLayout->addRow("Z",this->posZ);
+  CursorLocationBox->setLayout(CursorLocationLayout);
+  CursorToolsLayout->addWidget(CursorLocationBox);
+  CursorToolsLayout->addWidget(this->ShowPointer);
+  CursorToolsLayout->addStretch();
+  this->CursorActionsWidget->setLayout(CursorToolsLayout);
+  this->cursor3DDock->setWidget(this->CursorActionsWidget);
+  this->addDockWidget(Qt::LeftDockWidgetArea, this->cursor3DDock);
+  this->ShowToolBars->addAction(this->cursor3DDock->toggleViewAction());
+  /*this->EditsToolBar->addWidget(new QLabel("Point in 3D: X:", this));
   this->EditsToolBar->addWidget(this->posX);
   this->EditsToolBar->addWidget(new QLabel(" Y:", this));
   this->EditsToolBar->addWidget(this->posY);
   this->EditsToolBar->addWidget(new QLabel(" Z:", this));
   this->EditsToolBar->addWidget(this->posZ);
-  this->EditsToolBar->addAction(this->MoveSphere);
-  this->EditsToolBar->addAction(this->updatePT3D);
-  this->EditsToolBar->addAction(this->setSoma);
-  this->EditsToolBar->addWidget(this->ShowPointer);
-   /*this->EditsToolBar->addAction(this->loadSoma);*/
-  //this->EditsToolBar->addAction(this->SettingsButton);
+  this->EditsToolBar->addWidget(this->ShowPointer);*/
 
   this->BranchToolBar = addToolBar(tr("Branch Toolbar"));
   this->BranchToolBar->setToolTip("Branch Toolbar");
@@ -860,23 +887,40 @@ void View3D::CreateLayout()
   this->BranchToolBar->addWidget(new QLabel("Unsolved Branches: "));
   this->BranchToolBar->addWidget(this->BranchesLabel);
 
-  QFormLayout *settingsLayout = new QFormLayout(this->SettingsWidget);
-  settingsLayout->addRow(tr("Maximum gap length:"), this->MaxGapField);
-  settingsLayout->addRow(tr("Gap length tolerance:"),this->GapToleranceField);
-  settingsLayout->addRow(tr("Small line length:"),this->LineLengthField);
-  settingsLayout->addRow(tr("Color value RGB scalar 0 to 1:"),this->ColorValueField);
-  settingsLayout->addRow(tr("Line width:"),this->LineWidthField);
-  settingsLayout->addRow(this->ApplySettingsButton);
-  this->tobj->gapTol = this->TraceEditSettings.value("mainWin/gapTol", .5).toDouble() ;
+//settings widget layout
+	QVBoxLayout * SettingsBox = new QVBoxLayout(this->SettingsWidget);
+	QGroupBox *selectionSettings = new QGroupBox("Selection Settings");
+	QFormLayout *settingsLayout = new QFormLayout(selectionSettings);
+	settingsLayout->addRow(tr("Maximum gap length:"), this->MaxGapField);
+	settingsLayout->addRow(tr("Gap length tolerance:"),this->GapToleranceField);
+	settingsLayout->addRow(tr("Small line length:"),this->LineLengthField);
+	//selectionSettings->setLayout(settingsLayout);
+	SettingsBox->addWidget(selectionSettings);
+
+	QGroupBox *displaySettings = new QGroupBox("Display Settings");
+	QFormLayout *DisplayLayout = new QFormLayout(displaySettings);
+	DisplayLayout->addRow(tr("Color value RGB scalar 0 to 1:"),this->ColorValueField);
+	DisplayLayout->addRow(tr("Line width:"),this->LineWidthField);
+	//displaySettings->setLayout(DisplayLayout);
+
+	SettingsBox->addWidget(displaySettings);
+	SettingsBox->addWidget(this->ApplySettingsButton);
+	SettingsBox->addStretch();
+
+	//this->SettingsWidget->setLayout(SettingsBox);
+	this->SettingsWidget->setMaximumSize(256,256);
+
+	this->tobj->gapTol = this->TraceEditSettings.value("mainWin/gapTol", .5).toDouble() ;
 	this->tobj->gapMax = this->TraceEditSettings.value("mainWin/gapMax", 10).toInt();
 	this->SmallLineLength = this->TraceEditSettings.value("mainWin/smallLine", 10).toInt();
 	this->SelectColor =this->TraceEditSettings.value("mainWin/selectColor", .1).toDouble();
 	this->lineWidth= this->TraceEditSettings.value("mainWin/LineWidth", 2).toDouble();
 	this->MaxGapField->setValue(this->tobj->gapMax);
 	this->GapToleranceField->setValue(this->tobj->gapTol);
-  this->LineLengthField->setValue(this->SmallLineLength);
-  this->ColorValueField->setValue(this->SelectColor);
-  this->LineWidthField->setValue(this->lineWidth);
+	this->LineLengthField->setValue(this->SmallLineLength);
+	this->ColorValueField->setValue(this->SelectColor);
+	this->LineWidthField->setValue(this->lineWidth);
+
   this->settingsDock = new QDockWidget("Settings", this);
   this->settingsDock->setWidget(this->SettingsWidget);
   this->addDockWidget(Qt::LeftDockWidgetArea, this->settingsDock);

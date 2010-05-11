@@ -174,7 +174,7 @@ private:
 	//the get____file functions called as renderer is not initalized
 	double uMperVoxel; //0 x, 1 y, 2 z
 	QSettings TraceEditSettings;
-	QDockWidget * InformationDisplays, *BootDock, * settingsDock;
+	QDockWidget * InformationDisplays, *BootDock, * settingsDock, *cursor3DDock;
 	QTextEdit * EditLogDisplay;
 	QString UserName, LabName, ProjectName;
 	QStringList TraceFiles, Image, SomaFile, tempTraceFile;
@@ -274,6 +274,7 @@ private:
 	vtkSmartPointer<vtkPolyDataMapper> LineMapper;
 
     //interactor variables and point picking
+	QWidget * CursorActionsWidget;
 	vtkSmartPointer<vtkCallbackCommand> isPicked;
 	vtkSmartPointer<vtkCallbackCommand> keyPress;
 	vtkSmartPointer<vtkCellPicker> CellPicker;
