@@ -748,19 +748,19 @@ void View3D::CreateGUIObjects()
 	connect(this->ImageIntensity, SIGNAL(triggered()), this, SLOT(SetImgInt()));
 // 3d cursor actions 
 	this->CursorActionsWidget = new QWidget(this);
-	this->MoveSphere = new QAction("Set PT ", this->CentralWidget);
+	this->MoveSphere = new QPushButton("Move Cursor", this->CentralWidget);
 	this->MoveSphere->setToolTip("Ctrl + p");
-	connect(this->MoveSphere, SIGNAL(triggered()), this, SLOT(showPTin3D()));
+	connect(this->MoveSphere, SIGNAL(clicked()), this, SLOT(showPTin3D()));
 	this->MoveSphere->setStatusTip("moves marker to location");
 	this->MoveSphere->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_P));
 
-	this->updatePT3D = new QAction("Get PT", this->CentralWidget);
-	connect(this->updatePT3D, SIGNAL(triggered()), this, SLOT(getPosPTin3D()));
+	this->updatePT3D = new QPushButton("Update Location", this->CentralWidget);
+	connect(this->updatePT3D, SIGNAL(clicked()), this, SLOT(getPosPTin3D()));
 
-	this->setSoma = new QAction("Set PT To soma", this->CentralWidget);
-	connect(this->setSoma, SIGNAL(triggered()), this, SLOT(setPTtoSoma()));
+	this->setSoma = new QPushButton("Create Soma", this->CentralWidget);
+	connect(this->setSoma, SIGNAL(clicked()), this, SLOT(setPTtoSoma()));
 
-	this->ShowPointer = new QCheckBox("Show PT", this->CentralWidget);
+	this->ShowPointer = new QCheckBox("Use 3D Cursor", this->CentralWidget);
 	this->ShowPointer->setStatusTip("Show Pointer Automatically?");
 	this->ShowPointer3DDefault = true;
 	this->ShowPointer->setChecked(this->ShowPointer3DDefault);
@@ -859,12 +859,12 @@ void View3D::CreateLayout()
   this->EditsToolBar->addWidget(this->typeCombo);
   this->EditsToolBar->addSeparator();
   this->EditsToolBar->addAction(this->ImageIntensity);
-  this->EditsToolBar->addAction(this->MoveSphere);
+  /*this->EditsToolBar->addAction(this->MoveSphere);
   this->EditsToolBar->addAction(this->updatePT3D);
-  this->EditsToolBar->addAction(this->setSoma);
+  this->EditsToolBar->addAction(this->setSoma);*/
 
   this->cursor3DDock = new QDockWidget("3D Cursor",this);
-  QVBoxLayout * CursorToolsLayout = new QVBoxLayout();
+  QVBoxLayout * CursorToolsLayout = new QVBoxLayout(this->CursorActionsWidget);
   QGroupBox * CursorLocationBox = new QGroupBox("Cursor Location");
   QFormLayout *CursorLocationLayout = new QFormLayout();
   CursorLocationLayout->addRow("X",this->posX);
@@ -873,11 +873,16 @@ void View3D::CreateLayout()
   CursorLocationBox->setLayout(CursorLocationLayout);
   CursorToolsLayout->addWidget(CursorLocationBox);
   CursorToolsLayout->addWidget(this->ShowPointer);
+  CursorToolsLayout->addWidget(this->MoveSphere);
+  CursorToolsLayout->addWidget(this->updatePT3D);
+  CursorToolsLayout->addWidget(this->setSoma);
   CursorToolsLayout->addStretch();
-  this->CursorActionsWidget->setLayout(CursorToolsLayout);
+
+  //this->CursorActionsWidget->setLayout(CursorToolsLayout);
   this->cursor3DDock->setWidget(this->CursorActionsWidget);
   this->addDockWidget(Qt::LeftDockWidgetArea, this->cursor3DDock);
   this->ShowToolBars->addAction(this->cursor3DDock->toggleViewAction());
+  this->cursor3DDock->hide();
 
   this->BranchToolBar = addToolBar(tr("Branch Toolbar"));
   this->BranchToolBar->setToolTip("Branch Toolbar");

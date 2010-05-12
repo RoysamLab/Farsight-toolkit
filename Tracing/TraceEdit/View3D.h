@@ -233,10 +233,10 @@ private:
 	QAction *explodeTree;
 	QAction *root;
 	QAction *ImageIntensity;
-	QAction *MoveSphere;
-	QAction *updatePT3D;
+	QPushButton *MoveSphere;
+	QPushButton *updatePT3D;
 	QCheckBox *ShowPointer;
-	QAction *setSoma;
+	QPushButton *setSoma;
 	QAction *ShowPlots;
 	QAction *CellAnalysis;
 
