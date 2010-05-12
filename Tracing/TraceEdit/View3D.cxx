@@ -92,6 +92,14 @@ limitations under the License.
 View3D::View3D(QWidget *parent)
 : QMainWindow(parent)
 {
+	this->QVTK = 0;
+	this->GapsPlotView = NULL;
+	this->TreePlot = NULL;
+	this->FTKTable = NULL;
+	this->FL_MeasurePlot = NULL;
+	this->FL_MeasureTable = NULL;
+	this->GapsTableView = NULL;
+
 	this->tobj = new TraceObject;
 	int num_loaded = 0;
 	this->numDeleted = 0;
@@ -152,14 +160,24 @@ View3D::View3D(QWidget *parent)
     }
 	this->CreateBootLoader();
 }
+
 View3D::View3D(TraceObject *Traces)
 {
+	this->QVTK = 0;
+	this->GapsPlotView = NULL;
+	this->TreePlot = NULL;
+	this->FTKTable = NULL;
+	this->FL_MeasurePlot = NULL;
+	this->FL_MeasureTable = NULL;
+	this->GapsTableView = NULL;
+
 	this->tobj = Traces;
 //	this->Volume=0;
 	this->Initialize();
 	this->ShowTreeData();
 	this->statusBar()->showMessage(tr("Trace Editor Started"));
 }
+
 void View3D::CreateBootLoader()
 {
 	// Create a window that allows files to be loaded
@@ -578,17 +596,9 @@ View3D::~View3D()
 
 void View3D::Initialize()
 {
-	this->QVTK = 0;
 //	this->OpacitySlider = 0;
 //	this->BrightnessSlider = 0;
 	
-	this->GapsPlotView = NULL;
-	this->TreePlot = NULL;
-	this->FTKTable = NULL;
-	this->FL_MeasurePlot = NULL;
-	this->FL_MeasureTable = NULL;
-	this->GapsTableView = NULL;
-
 	this->tobj->setSmallLineColor(.25);
 	this->tobj->setMergeLineColor(.4);
 	this->Ascending = Qt::AscendingOrder;
