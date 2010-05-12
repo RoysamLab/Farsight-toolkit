@@ -91,6 +91,31 @@ Preprocess::Preprocess(RGBImageType3D::Pointer img, const char color)
 	}
 }
 
+std::map<std::string, std::string> Preprocess::filterMap = Preprocess::CreateFilterMap();
+std::map<std::string, std::string> Preprocess::CreateFilterMap()
+{
+	std::map<std::string, std::string> tempMap;
+
+	tempMap["LaplacianOfGaussian"] = "<LaplacianOfGaussian sigma=\"10\" min=\"0\" />\n";
+	tempMap["InvertIntensity"] = "<InvertIntensity />\n";
+	tempMap["DownSample"] = "<DownSample />\n";
+	tempMap["OtsuBinarize"] = "<OtsuBinarize num_thresholds=\"2\" num_in_foreground=\"1\" fgrnd_dark=\"0\" />\n";
+	tempMap["ManualThreshold"] =  "<ManualThreshold threshold=\"22\" binary=\"0\" />\n";
+	tempMap["RemoveConnectedComponents"] = "<RemoveConnectedComponents minObjSize=\"10\" />\n";
+	tempMap["BinaryThinning"] = "<BinaryThinning />\n";
+	tempMap["DanielssonDistanceMap"] = "<DanielssonDistanceMap />\n";
+	tempMap["MedianFilter"] = "<MedianFilter radiusX=\"3\" radiusY=\"3\" radiusZ=\"0\" />\n";
+	tempMap["MinErrorThresholding"] = "<MinErrorThresholding />\n";
+	tempMap["GraphCutBinarize"] = "<GraphCutBinarize zyDivs=\"1\" />\n";
+	tempMap["OpeningFilter"] = "<OpeningFilter radius=\"3\" />\n";
+	tempMap["ClosingFilter"] = "<ClosingFilter radius=\"3\" />\n";
+	tempMap["CannyEdgeDetection"] = "<CannyEdgeDetection variance=\"1.0\" upperThreshold=\"6\" lowerThreshold=\"3\" />\n";
+	tempMap["DiscreteGaussian"] = "<DiscreteGaussian varX=\"1.0\" varY=\"1.0\" varZ=\"1.0\" maxError=\"0.1\" />\n";
+	tempMap["SaveVTKPoints"] = "<SaveVTKPoints filename=\"points.vtk\" xyFactor=\"1\" min=\"255\" max=\"255\" />\n";
+
+	return tempMap;
+}
+
 void Preprocess::RunPipe(std::string filename)
 {
 	TiXmlDocument doc;
@@ -109,9 +134,11 @@ void Preprocess::RunPipe(std::string filename)
 		if ( strcmp( parent, "LaplacianOfGaussian" ) == 0 )
 		{
 			int sigma = 10;
-			parentElement->QueryIntAttribute("sigma",&sigma);
+			int min = 0;
+			parentElement->QueryIntAttribute("sigma", &sigma);
+			parentElement->QueryIntAttribute("min", &min);
 			std::cout << "Starting LOG...";
-			this->LaplacianOfGaussian(sigma);
+			this->LaplacianOfGaussian(sigma, min);
 			std::cout << "done\n";
 		}
 		else if( strcmp( parent, "InvertIntensity" ) == 0 )
@@ -128,19 +155,23 @@ void Preprocess::RunPipe(std::string filename)
 		}
 		else if( strcmp( parent, "OtsuBinarize" ) == 0 )
 		{
-			int numThresh = 3, numFore = 2;
+			int numThresh = 2, numFore = 1;
+			int fgrndDark = 0;
 			parentElement->QueryIntAttribute("num_thresholds",&numThresh);
 			parentElement->QueryIntAttribute("num_in_foreground",&numFore);
+			parentElement->QueryIntAttribute("fgrnd_dark", &fgrndDark);
 			std::cout << "Starting OtsuBinarize...";
-			this->OtsuBinarize(numThresh,numFore);
+			this->OtsuBinarize(numThresh,numFore, (bool)fgrndDark);
 			std::cout << "done\n";
 		}
 		else if( strcmp( parent, "ManualThreshold" ) == 0 )
 		{
 			int threshold = 128;
+			int binary = 0;
 			parentElement->QueryIntAttribute("threshold", &threshold);
+			parentElement->QueryIntAttribute("binary", &binary);
 			std::cout << "Starting Manual Threshold of " << threshold << "...";
-			this->ManualThreshold(threshold);
+			this->ManualThreshold(threshold, (bool)binary);
 			std::cout << "done\n";
 		}
 		else if( strcmp( parent, "RemoveConnectedComponents" ) == 0 )
@@ -154,7 +185,6 @@ void Preprocess::RunPipe(std::string filename)
 		else if( strcmp( parent, "BinaryThinning" ) == 0 )
 		{
 			std::cout << "Starting BinaryThinning...";
-
 			this->BinaryThinning();
 			std::cout << "done\n";
 		}
@@ -207,7 +237,7 @@ void Preprocess::RunPipe(std::string filename)
 		}
 		else if( strcmp( parent, "CannyEdgeDetection" ) == 0 )
 		{
-			float variance=2.0;
+			float variance=1.0;
 			float upperThreshold = 6;
 			float lowerThreshold = 3;
 			parentElement->QueryFloatAttribute("variance",&variance);

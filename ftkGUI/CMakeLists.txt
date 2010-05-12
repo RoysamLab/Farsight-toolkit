@@ -9,6 +9,7 @@ SET( GUI_SRCS
     	LabelImageViewQT.cpp
     	TrainingDialog.cpp
 	ftkPreprocessDialog.cpp
+	PreprocessDialog.cpp
 )
 
 SET( GUI_HDRS
@@ -22,6 +23,7 @@ SET( GUI_HDRS
     	LabelImageViewQT.h
     	TrainingDialog.h
 	ftkPreprocessDialog.h
+	PreprocessDialog.h
 )
 
 SET( GUI_UIS
@@ -50,7 +52,7 @@ ADD_LIBRARY( ftkGUI STATIC
              ${GUI_RC_SRCS}
 )
 
-TARGET_LINK_LIBRARIES( ftkGUI ${QT_LIBRARIES} QVTK ftkImage TinyXML libSVM vtkVolumeRendering)
+TARGET_LINK_LIBRARIES( ftkGUI ${QT_LIBRARIES} QVTK ftkImage ftkPreprocess TinyXML libSVM vtkVolumeRendering)
 
 IF(USE_KPLS)
   TARGET_LINK_LIBRARIES( ftkGUI libKPLS )

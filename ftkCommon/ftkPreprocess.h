@@ -78,19 +78,19 @@ public:
 	
 	void MaskTest(void);
 
-	void MaskImage(std::vector< ftk::Object::Point > roiPoints);
-	void InvertIntensity(void);
-	void CurvAnisotropicDiffusion(void);
-	void GrayscaleClose(void);
-	void GrayscaleOpen(void);
+	void MaskImage(std::vector< ftk::Object::Point > roiPoints); //skip
+	void InvertIntensity(void); //done
+	void CurvAnisotropicDiffusion(void); //done
+	void GrayscaleClose(void); //done
+	void GrayscaleOpen(void);  //done
 	void GrayscaleDilate(void);
 	void GrayscaleErode(void);
-	void SigmoidFilter(void);
-	void MedianFilter(void);
-	void GADiffusion(void);
-	void Resample(void);
-	void OpeningbyReconstruction(void);
-    void ClosingbyReconstruction(void);	
+	void SigmoidFilter(void); 
+	void MedianFilter(void);   //done
+	void GADiffusion(void);		//done
+	void Resample(void);		//skip
+	void OpeningbyReconstruction(void); //skip
+    void ClosingbyReconstruction(void);	//skip
 	void MeanFilter(void);
 	void LaplacianFilter(void);
 	void ThreeDSmoothingRGFilter(void);

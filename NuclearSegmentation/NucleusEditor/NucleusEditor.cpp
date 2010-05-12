@@ -351,6 +351,10 @@ void NucleusEditor::createMenus()
 	connect(roiStatsAction, SIGNAL(triggered()), this, SLOT(roiStatistics()));
 	toolMenu->addAction(roiStatsAction);
 
+	preprocessAction = new QAction(tr("Preprocess Image..."), this);
+	connect(preprocessAction, SIGNAL(triggered()), this, SLOT(preprocessImage()));
+	toolMenu->addAction(preprocessAction);
+
 	segmentNucleiAction = new QAction(tr("Segment Nuclei..."), this);
 	connect(segmentNucleiAction, SIGNAL(triggered()), this, SLOT(segmentNuclei()));
 	toolMenu->addAction(segmentNucleiAction);
@@ -2217,6 +2221,37 @@ void ParamsFileDialog::ParamBrowse(QString comboSelection)
 //*******************************************************************************************************************************
 //*******************************************************************************************************************************
 //*******************************************************************************************************************************
+void NucleusEditor::preprocessImage(void)
+{
+	if(!myImg)
+		return;
+
+	int nucChannel = 0;
+	if(myImg->GetImageInfo()->numChannels > 1)
+		nucChannel = this->requestChannel(myImg);
+
+	PreprocessDialog * dialog = new PreprocessDialog(lastPath,this);
+	dialog->SetImage( myImg->GetItkPtr<unsigned char>(0,nucChannel) );
+
+	if(dialog->exec())
+	{
+		const ftk::Image::Info * info = myImg->GetImageInfo();
+		int bpChunk1 = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+
+		ftk::Preprocess::ImageType3D::Pointer img = dialog->GetImage();
+		ftk::Preprocess::ImageType3D::SizeType size = img->GetLargestPossibleRegion().GetSize();
+		int bpChunk2 = size[2] * size[1] * size[0];
+
+		if( bpChunk1 == bpChunk2 )	//Can't handle resizing in the GUI quite yet.
+		{
+		memcpy( myImg->GetDataPtr(0,nucChannel), dialog->GetImage()->GetBufferPointer(), bpChunk2 );
+		segView->update();
+		projectFiles.inputSaved = false;
+		}
+	}
+
+	delete dialog;
+}
 void NucleusEditor::CropToRegion(void)
 {
 

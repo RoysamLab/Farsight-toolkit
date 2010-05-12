@@ -66,6 +66,7 @@
 #include "ftkGUI/ImageBrowser5D.h"
 #include "ftkGUI/HistoWindow.h"
 #include "ftkGUI/LabelImageViewQT.h"
+#include "ftkGUI/PreprocessDialog.h"
 
 //VTK includes:
 #include "vtkQtTableView.h"
@@ -173,6 +174,7 @@ protected slots:
 	void saveROI(void);
 	void clearROI(void);
 	void roiStatistics(void);
+	void preprocessImage(void);
 	void segmentNuclei(void);
 	void startEditing(void);
 	void stopEditing(void);
@@ -244,6 +246,7 @@ protected:
 		QAction *saveROIAction;
 		QAction *clearROIAction;
 	QAction *roiStatsAction;
+	QAction *preprocessAction;
 	QAction *segmentNucleiAction;
 	QAction *editNucleiAction;
 	QAction *svmAction;		//Start the One-Class SVM outlier detecter

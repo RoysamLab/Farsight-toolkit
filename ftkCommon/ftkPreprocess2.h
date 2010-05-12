@@ -25,6 +25,7 @@ limitations under the License.
 #include <vector>
 #include <iostream>
 #include <limits>
+#include <map>
 #include <string.h>
 
 #include <tinyxml/tinyxml.h>
@@ -66,6 +67,8 @@ limitations under the License.
 namespace ftk
 {
 
+static std::map<std::string, std::string> filterMap;
+
 class Preprocess
 {
 public:
@@ -77,16 +80,18 @@ public:
 	typedef itk::Image< float, 2 > FloatImageType2D;
 	typedef itk::Image< float, 3 > FloatImageType3D;
 
+	static std::map<std::string, std::string> filterMap;
+	static std::map<std::string, std::string> CreateFilterMap();
+
 	Preprocess(ImageType3D::Pointer img);
 	Preprocess(RGBImageType3D::Pointer img);
 	Preprocess(RGBImageType3D::Pointer img, char color);
 
+	void RunPipe(std::string filename);
+
 	ImageType3D::Pointer GetImage(){ return myImg; };
 
 	void SaveVTKPoints(std::string filename, float xyFactor=1.0, int min=255, int max=255);
-
-	void RunFilter(std::string name, std::vector<double> params);
-	void RunPipe(std::string filename);
 
 	void DownSample();
 	void RescaleIntensities(int min = 0, int max = 255);

@@ -39,6 +39,7 @@ void TableWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * s
 		delete this->modAdapter;	
 	this->modAdapter = new vtkQtTableModelAdapter();
 	this->modAdapter->setTable(  table );
+	//this->modAdapter->SetKeyColumn(0);	//Key column is used as the row headers
 	this->tableView->setModel( modAdapter );
 
 	QItemSelectionModel *mod = new QItemSelectionModel(modAdapter);
@@ -58,6 +59,8 @@ void TableWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * s
 	{
 		tableView->verticalHeader()->resizeSection(i,rowHeight);
 	}
+
+
 }
 
 void TableWindow::setup()
@@ -197,7 +200,6 @@ void TableWindow::changeColumns()
 	{	
 		this->tableView->setColumnHidden( i, !visible.at(i) );
 	}
-	//this->update();
 }
 
 
@@ -212,6 +214,7 @@ void TableWindow::test()
 	}
 	*/
 
+	/*
 	int y = tableView->rowViewportPosition(200);
 	std::cerr << "Row 200 Viewport position is: " << y << std::endl;
 
@@ -220,8 +223,9 @@ void TableWindow::test()
 
 	//tableView->scroll(10,10); //This does not have desired effect.
 	tableView->scrollTo( tableView->model()->index(200, 0) ); //This works great!!
+	*/
 
-
+	//tableView->verticalHeader()->hide();
 }
 
 //***************************************************************************************************************
