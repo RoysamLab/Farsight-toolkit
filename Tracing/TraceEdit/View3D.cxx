@@ -878,13 +878,6 @@ void View3D::CreateLayout()
   this->cursor3DDock->setWidget(this->CursorActionsWidget);
   this->addDockWidget(Qt::LeftDockWidgetArea, this->cursor3DDock);
   this->ShowToolBars->addAction(this->cursor3DDock->toggleViewAction());
-  /*this->EditsToolBar->addWidget(new QLabel("Point in 3D: X:", this));
-  this->EditsToolBar->addWidget(this->posX);
-  this->EditsToolBar->addWidget(new QLabel(" Y:", this));
-  this->EditsToolBar->addWidget(this->posY);
-  this->EditsToolBar->addWidget(new QLabel(" Z:", this));
-  this->EditsToolBar->addWidget(this->posZ);
-  this->EditsToolBar->addWidget(this->ShowPointer);*/
 
   this->BranchToolBar = addToolBar(tr("Branch Toolbar"));
   this->BranchToolBar->setToolTip("Branch Toolbar");
@@ -1401,7 +1394,7 @@ public:
 
 	double f1(const vnl_vector<double>& x) {
 		double sum = 0;
-		for(int counter = 0; counter < zvals.size(); counter++)
+		for(unsigned int counter = 0; counter < zvals.size(); counter++)
 		{
 			sum = sum + abs( zvals[counter] - x[0] - counter*1.0/(zvals.size()-1)*(x[1]-x[0]));
 		}
@@ -1411,7 +1404,7 @@ public:
 	{
 		g[0] = 0;
 		g[1] = 0;
-		for(int counter = 0; counter < zvals.size(); counter++)
+		for(unsigned int counter = 0; counter < zvals.size(); counter++)
 		{
 			double lambda = counter*1.0/(zvals.size()-1);
 			g[0] = g[0] + (1-lambda)*SIGN( zvals[counter] - x[0] - lambda*(x[1] - x[0]));
@@ -1421,7 +1414,7 @@ public:
 	}
 	double f(const vnl_vector<double>& x) {
 		double sum = 0;
-		for(int counter = 0; counter < zvals.size(); counter++)
+		for(unsigned int counter = 0; counter < zvals.size(); counter++)
 		{
 			sum = sum + tukeysbiweightrho( zvals[counter] - x[0] - counter*1.0/(zvals.size()-1)*(x[1]-x[0]),c);
 		}
@@ -1433,7 +1426,7 @@ public:
 	{
 		g[0] = 0;
 		g[1] = 0;
-		for(int counter = 0; counter < zvals.size(); counter++)
+		for(unsigned int counter = 0; counter < zvals.size(); counter++)
 		{
 			double lambda = counter*1.0/(zvals.size()-1);
 			g[0] = g[0] + (1-lambda)*tukeysbiweightpsi( zvals[counter] - x[0] - lambda*(x[1] - x[0]),c);
@@ -1502,7 +1495,7 @@ std::vector<int> View3D::getHippocampalTraceIDsToDelete_v2(int z_threshold, int 
 	std::vector<TraceLine*> tl = this->tobj->GetTraceLines();
 	std::vector<int> to_del;
 	//int z_threshold = 6;
-	for(int counter=0; counter < tl.size(); counter++)
+	for(unsigned int counter=0; counter < tl.size(); counter++)
 	{
 		std::vector<double> zvals;
 		std::vector<unsigned int> *alltids = tl[counter]->GetMarkers();
@@ -1525,14 +1518,14 @@ std::vector<int> View3D::getHippocampalTraceIDsToDelete_v2(int z_threshold, int 
 			zsum = zsum + zvals.back();
 		}
 
-		int counter1 = 0;
+		unsigned int counter1 = 0;
 		if(has_parent)
 			counter1++;
 
 		std::vector<unsigned int> tids;
 		tids.clear();
-		int gmin = 0;
-		int gmax = alltids->size()-1;
+		unsigned int gmin = 0;
+		unsigned int gmax = alltids->size()-1;
 		if(has_parent)
 		{
 			gmin = MIN(2,zvals.size()-1);
@@ -1612,7 +1605,7 @@ std::vector<int> View3D::getHippocampalTraceIDsToDelete(int z_threshold, int loo
 	std::vector<TraceLine*> tl = this->tobj->GetTraceLines();
 	std::vector<int> to_del;
 	//int z_threshold = 6;
-	for(int counter=0; counter < tl.size(); counter++)
+	for(unsigned int counter=0; counter < tl.size(); counter++)
 	{
 		std::vector<double> zvals;
 		std::vector<unsigned int> *alltids = tl[counter]->GetMarkers();
@@ -1632,14 +1625,14 @@ std::vector<int> View3D::getHippocampalTraceIDsToDelete(int z_threshold, int loo
 			zvals.push_back(iter1->z);
 		}
 
-		int counter1 = 0;
+		unsigned int counter1 = 0;
 		if(has_parent)
 			counter1++;
 
 		std::vector<unsigned int> tids;
 		tids.clear();
-		int gmin = 0;
-		int gmax = zvals.size()-1;
+		unsigned int gmin = 0;
+		unsigned int gmax = zvals.size()-1;
 		if(has_parent)
 		{
 			gmin = MIN(2,zvals.size()-1);
@@ -1651,13 +1644,13 @@ std::vector<int> View3D::getHippocampalTraceIDsToDelete(int z_threshold, int loo
 
 		for(;counter1<zvals.size(); counter1++)
 		{
-			int min1 = MAX(0,counter1-look_ahead);
-			int max1 = MIN(zvals.size()-1,counter1+look_ahead);
+			unsigned int min1 = MAX(0,counter1-look_ahead);
+			unsigned int max1 = MIN(zvals.size()-1,counter1+look_ahead);
 			if(min1<counter1)
 			{
 				if(abs(zvals[min1]-zvals[counter1])>z_threshold)
 				{
-					for(int counter2 = min1; counter2 < counter1; counter2++)
+					for(unsigned int counter2 = min1; counter2 < counter1; counter2++)
 					{
 						if(counter2>=gmin && counter2<=gmax)
 							tids.push_back((*alltids)[counter2]);
@@ -1668,7 +1661,7 @@ std::vector<int> View3D::getHippocampalTraceIDsToDelete(int z_threshold, int loo
 			{
 				if(abs(zvals[max1]-zvals[counter1])>z_threshold)
 				{
-					for(int counter2 = counter1; counter2 < max1; counter2++)
+					for(unsigned int counter2 = counter1; counter2 < max1; counter2++)
 					{
 						if(counter2>=gmin && counter2<=gmax)
 							tids.push_back((*alltids)[counter2]);
@@ -1915,7 +1908,7 @@ void View3D::HandleHippocampalDataset()
 	this->SplitTraces();
 
 	tlinepointer = this->tobj->GetTraceLinesPointer();
-	for (int counter = 0; counter < tlinepointer->size(); counter++)
+	for (unsigned int counter = 0; counter < tlinepointer->size(); counter++)
 	{
 		DeleteEmptyLeafNodesRecursive((*tlinepointer)[counter]);
 	}
@@ -1926,14 +1919,14 @@ void View3D::HandleHippocampalDataset()
 	std::vector<TraceLine*> tldel;
 	tldel.clear();
 	tlinepointer = this->tobj->GetTraceLinesPointer();
-	for (int counter = 0; counter < tlinepointer->size(); counter++)
+	for (unsigned int counter = 0; counter < tlinepointer->size(); counter++)
 	{
 		if((*tlinepointer)[counter]->GetSize() < 2 && (*tlinepointer)[counter]->GetBranchPointer()->size() == 0)
 			tldel.push_back((*tlinepointer)[counter]);
 	}
 	printf("current trace_lines size = %d\n",tlinepointer->size());
 	printf("I'm deleting %d traces\n",tldel.size());
-	for(int counter =0; counter < tldel.size(); counter++)
+	for(unsigned int counter =0; counter < tldel.size(); counter++)
 	{
 		this->DeleteTrace(tldel[counter]);
 	}
@@ -1947,7 +1940,7 @@ void View3D::HandleHippocampalDataset()
 	//return;
 	// z smoothing
 	int num_points = 10;
-	for(int counter =0; counter < tlinepointer->size(); counter++)
+	for(unsigned int counter =0; counter < tlinepointer->size(); counter++)
 	{
 		smoothzrecursive((*tlinepointer)[counter],num_points);
 		//dir_check((*tlinepointer)[counter]);
@@ -1964,7 +1957,7 @@ void View3D::HandleHippocampalDataset()
 	this->SplitTraces();*/
 
 	tlinepointer = this->tobj->GetTraceLinesPointer();
-	for (int counter = 0; counter < tlinepointer->size(); counter++)
+	for (unsigned int counter = 0; counter < tlinepointer->size(); counter++)
 	{
 		DeleteEmptyLeafNodesRecursive((*tlinepointer)[counter]);
 	}
@@ -1973,7 +1966,7 @@ void View3D::HandleHippocampalDataset()
 	// merge fragments
 	std::vector<TraceLine*> tlines = this->tobj->GetTraceLines();
 	std::vector<TraceBit> cricbits;
-	for(int counter =0; counter < tlines.size(); counter++)
+	for(unsigned int counter =0; counter < tlines.size(); counter++)
 	{
 		if(tlines[counter]->GetParent() == NULL)
 			cricbits.push_back(tlines[counter]->GetTraceBitsPointer()->front());
@@ -1987,12 +1980,12 @@ void View3D::HandleHippocampalDataset()
 	//FILE *fp = fopen("ftemp.swc","w");
 	int line_count = 1;
 	std::vector<Gaplet> gaps;
-	for(int counter = 0; counter < cricbits.size(); counter++)
+	for(unsigned int counter = 0; counter < cricbits.size(); counter++)
 	{
 		std::vector<int> validbits(cricbits.size());
 		double mindist = 1e10;
 		float minpos = -1;
-		for(int counter1 = 0; counter1 < cricbits.size(); counter1++)
+		for(unsigned int counter1 = 0; counter1 < cricbits.size(); counter1++)
 		{
 			validbits[counter1] = 0;
 			if(counter!=counter1)
@@ -2016,13 +2009,13 @@ void View3D::HandleHippocampalDataset()
 	}
 	std::sort(gaps.begin(),gaps.end(),GapSortPredicate);
 	std::vector<char> done(cricbits.size());
-	for(int counter = 0; counter < cricbits.size(); counter++)
+	for(unsigned int counter = 0; counter < cricbits.size(); counter++)
 	{
 		done[counter] = 0;
 	}
 	int gaps_merged = 0;
 	//return ;
-	for(int counter =0; counter < gaps.size(); counter++)
+	for(unsigned int counter =0; counter < gaps.size(); counter++)
 	{
 		if(done[gaps[counter].c1] ==0 && done[gaps[counter].c2] ==0)
 		{
@@ -2045,7 +2038,7 @@ void View3D::HandleHippocampalDataset()
 	printf(" I merged %d (minus the errors)\n", gaps_merged);
 	
 	tlinepointer = this->tobj->GetTraceLinesPointer();
-	for (int counter = 0; counter < tlinepointer->size(); counter++)
+	for (unsigned int counter = 0; counter < tlinepointer->size(); counter++)
 	{
 		DeleteEmptyLeafNodesRecursive((*tlinepointer)[counter]);
 	}
@@ -2085,11 +2078,11 @@ void View3D::DeleteEmptyLeafNodesRecursive(TraceLine* tline)
 	else
 	{
 		std::vector<TraceLine*> branchlines;
-		for(int counter =0; counter < tline->GetBranchPointer()->size(); counter++)
+		for(unsigned int counter =0; counter < tline->GetBranchPointer()->size(); counter++)
 		{
 			branchlines.push_back((*(tline->GetBranchPointer()))[counter]);
 		}
-		for(int counter = 0; counter < branchlines.size(); counter++)
+		for(unsigned int counter = 0; counter < branchlines.size(); counter++)
 		{
 			this->DeleteEmptyLeafNodesRecursive(branchlines[counter]);
 		}
@@ -2119,16 +2112,16 @@ void View3D::smoothzrecursive( TraceLine* tline, int n)
 	}
 	titer1 = tline->GetTraceBitIteratorBegin();
 	
-	int counter = 0;
+	unsigned int counter = 0;
 	if(has_parent)
 		counter++;
 
 	for(; counter < vec.size(); counter++)
 	{
-		int min1 = MAX(0,counter-n);
-		int max1 = MIN(vec.size()-1,counter+n);
+		unsigned int min1 = MAX(0,counter-n);
+		unsigned int max1 = MIN(vec.size()-1,counter+n);
 		double sum_z = 0;
-		for(int counter1 = min1; counter1<=max1; counter1++)
+		for(unsigned int counter1 = min1; counter1<=max1; counter1++)
 		{
 			sum_z = sum_z + vec[counter1].z;
 		}
@@ -2137,7 +2130,7 @@ void View3D::smoothzrecursive( TraceLine* tline, int n)
 		max1 = MIN(vec.size()-1,counter+n/4);
 		double sum_x = 0;
 		double sum_y = 0;
-		for(int counter1 = min1; counter1<=max1; counter1++)
+		for(unsigned int counter1 = min1; counter1<=max1; counter1++)
 		{
 			sum_x = sum_x + vec[counter1].x;
 			sum_y = sum_y + vec[counter1].y;
@@ -2178,19 +2171,19 @@ void View3D::smoothzrecursive( TraceLine* tline, int n)
 		}
 		if(location >= size/2)
 			forward = -1;
-		int min1 = MAX(0,counter-n);
-		int max1 = MIN(vec.size()-1,counter+n);
+		unsigned int min1 = MAX(0,counter-n);
+		unsigned int max1 = MIN(vec.size()-1,counter+n);
 		dir[0] = 0;
 		dir[1] = 0;
 		dir[2] = 0;
-		for(int counter1 = min1; counter1<counter; counter1++)
+		for(unsigned int counter1 = min1; counter1<counter; counter1++)
 		{
 		//	printf("hi1");
 			dir[0] = dir[0] + forward*(vec[counter1].x - vec[counter].x);
 			dir[1] = dir[1] + forward*(vec[counter1].y - vec[counter].y);
 			dir[2] = dir[2] + forward*(vec[counter1].z - vec[counter].z);
 		}
-		for(int counter1 = counter+1; counter1<=max1; counter1++)
+		for(unsigned int counter1 = counter+1; counter1<=max1; counter1++)
 		{
 		//	printf("hi2");
 			dir[0] = dir[0] + forward*(vec[counter].x - vec[counter1].x);
