@@ -78,6 +78,7 @@ public:
 	void SetCenterMapPointer(std::map<int, ftk::Object::Point> * cMap = NULL);
 	void SetBoundingBoxMapPointer(std::map<int, ftk::Object::Box> * bMap = NULL);
 	void SetClassMap(vtkSmartPointer<vtkTable> table, const char * column);
+	QString GetColorNameFromTable( int class_num );
 	void ClearClassMap(void){ classMap.clear(); refreshBoundsImage();};
 
 	void SetColorItemsMap(QMap<QString, QColor> * new_colorItemsMap){ colorItemsMap = new_colorItemsMap; refreshBoundsImage(); };
