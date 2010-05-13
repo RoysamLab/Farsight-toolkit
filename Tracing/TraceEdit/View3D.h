@@ -147,7 +147,7 @@ public slots:
 	void RayCastOpacityChanged(int value);
 	void RayCastOpacityValueChanged(double value);
 	void RayCastBrightnessChanged(int value);
-	void showPTin3D();
+	void showPTin3D(double value);
 	void getPosPTin3D();
 	void setPTtoSoma();
 	void setUsePointer(int i);
@@ -201,7 +201,8 @@ private:
 	float lineWidth;
 	double SelectColor;
 	int numSplit, numDeleted, numMerged;
-	QLabel *SplitLabel, *DeleteLabel, *MergeLabel, *posX, *posY, *posZ, *BranchesLabel;
+	QLabel *SplitLabel, *DeleteLabel, *MergeLabel, *BranchesLabel;
+	QDoubleSpinBox *posX, *posY, *posZ;
     //VTK render window embedded in a Qt widget
 	QVTKWidget *QVTK;	
     QWidget *CentralWidget;

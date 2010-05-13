@@ -748,11 +748,11 @@ void View3D::CreateGUIObjects()
 	connect(this->ImageIntensity, SIGNAL(triggered()), this, SLOT(SetImgInt()));
 // 3d cursor actions 
 	this->CursorActionsWidget = new QWidget(this);
-	this->MoveSphere = new QPushButton("Move Cursor", this->CentralWidget);
+	/*this->MoveSphere = new QPushButton("Move Cursor", this->CentralWidget);
 	this->MoveSphere->setToolTip("Ctrl + p");
 	connect(this->MoveSphere, SIGNAL(clicked()), this, SLOT(showPTin3D()));
 	this->MoveSphere->setStatusTip("moves marker to location");
-	this->MoveSphere->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_P));
+	this->MoveSphere->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_P));*/
 
 	this->updatePT3D = new QPushButton("Update Location", this->CentralWidget);
 	connect(this->updatePT3D, SIGNAL(clicked()), this, SLOT(getPosPTin3D()));
@@ -766,14 +766,20 @@ void View3D::CreateGUIObjects()
 	this->ShowPointer->setChecked(this->ShowPointer3DDefault);
 	connect(this->ShowPointer, SIGNAL(stateChanged(int)), this, SLOT(setUsePointer(int)));
 
-	this->posX = new QLabel(this);
-	this->posX->setText("0");
+	this->posX = new QDoubleSpinBox(this);
+	this->posX->setValue(0);
+	this->posX->setRange(-60000, 60000);
+	connect(this->posX, SIGNAL(valueChanged(double)), this, SLOT(showPTin3D(double)));
 
-	this->posY = new QLabel(this);
-	this->posY->setText("0");
+	this->posY = new QDoubleSpinBox(this);
+	this->posY->setValue(0);
+	this->posY->setRange(-60000, 60000);
+	connect(this->posY, SIGNAL(valueChanged(double)), this, SLOT(showPTin3D(double)));
 
-	this->posZ = new QLabel(this);
-	this->posZ->setText("0");
+	this->posZ = new QDoubleSpinBox(this);
+	this->posZ->setValue(0);
+	this->posZ->setRange(-60000, 60000);
+	connect(this->posZ, SIGNAL(valueChanged(double)), this, SLOT(showPTin3D(double)));
 
 //Setup the settings editing window
 	this->SettingsWidget = new QWidget(this);
@@ -868,7 +874,7 @@ void View3D::CreateLayout()
   CursorLocationBox->setLayout(CursorLocationLayout);
   CursorToolsLayout->addWidget(CursorLocationBox);
   CursorToolsLayout->addWidget(this->ShowPointer);
-  CursorToolsLayout->addWidget(this->MoveSphere);
+  //CursorToolsLayout->addWidget(this->MoveSphere);
   CursorToolsLayout->addWidget(this->updatePT3D);
   CursorToolsLayout->addWidget(this->setSoma);
   CursorToolsLayout->addStretch();
@@ -1142,6 +1148,8 @@ void View3D::ApplyNewSettings()
 	this->TraceEditSettings.setValue("mainWin/selectColor", this->SelectColor);
 	this->TraceEditSettings.setValue("mainWin/LineWidth", this->lineWidth);
 	this->TraceEditSettings.sync();
+	this->poly_line_data->Modified();
+	this->QVTK->GetRenderWindow()->Render();  
 }
 
 void View3D::HideSettingsWindow()
@@ -1179,10 +1187,7 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
 		//view->HighlightSelected(tline, view->SelectColor);
 		//tline->Getstats();              //prints the id and end coordinates to the command prompt 
 		view->SphereActor->SetPosition(pickPos);    //sets the selector to new point
-		if (view->ShowPointer3DDefault)
-		{
-			view->pointer3DLocation(pickPos);
-		}
+		view->pointer3DLocation(pickPos);
 		view->SphereActor->VisibilityOn();      //deleteTrace can turn it off 
 		view->poly_line_data->Modified();
 	}
@@ -1196,11 +1201,11 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
   }// end if pick
   view->QVTK->GetRenderWindow()->Render();             //update the render window
 }
-void View3D::showPTin3D()
+void View3D::showPTin3D(double value)
 {
 	bool ok = false;
 	double pos[3];
-	while (!ok)
+	/*while (!ok)
 	{
 		pos[0] = QInputDialog::getDouble(this, tr("set x"), tr("x value"), 0, -60000, 60000, 1, &ok);
 	}
@@ -1213,27 +1218,34 @@ void View3D::showPTin3D()
 	while (!ok)
 	{
 		pos[2] = QInputDialog::getDouble(this, tr("set z"), tr("z value"), 0, -60000, 60000, 1, &ok);
-	}
+	}*/
+	pos[0] = this->posX->value();
+	pos[1] = this->posY->value();
+	pos[2] = this->posZ->value();
 	this->SphereActor->SetPosition(pos );
 	this->SphereActor->VisibilityOn();
 	this->pointer3DLocation(pos);
+	this->QVTK->GetRenderWindow()->Render();
 }
 void View3D::getPosPTin3D()
 {
 	double newPT[3];
 	this->pointer3d->GetPosition(newPT);
-	this->posX->setText(QString::number(newPT[0]));
-	this->posY->setText(QString::number(newPT[1]));
-	this->posZ->setText(QString::number(newPT[2])); 
+	this->posX->setValue(newPT[0]);
+	this->posY->setValue(newPT[1]);
+	this->posZ->setValue(newPT[2]);
 	//this->pointer3DPos = newPT;
 }
 void View3D::pointer3DLocation(double pos[])
 {
-	this->pointer3d->SetPosition(pos);
-	this->pointer3d->SetEnabled(1);
-	this->posX->setText(QString::number(pos[0]));
-	this->posY->setText(QString::number(pos[1]));
-	this->posZ->setText(QString::number(pos[2]));
+	if (this->ShowPointer3DDefault)
+	{
+		this->pointer3d->SetPosition(pos);
+		this->pointer3d->SetEnabled(1);
+	}
+	this->posX->setValue(pos[0]);
+	this->posY->setValue(pos[1]);
+	this->posZ->setValue(pos[2]);
 }
 void View3D::setPTtoSoma()
 {
