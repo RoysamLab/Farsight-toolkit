@@ -1595,7 +1595,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 		tmarker->GetTraceBitsPointer()->splice(tmarker->GetTraceBitIteratorEnd(),*(tother->GetTraceBitsPointer()));
 		FixPointMarkers(tmarker);
 		//*(tmarker->GetBranchPointer())=*(tother->GetBranchPointer());
-		for(int counter =0; counter < tother->GetBranchPointer()->size(); counter++)
+		for(unsigned int counter =0; counter < tother->GetBranchPointer()->size(); counter++)
 		{
 			tmarker->GetBranchPointer()->push_back((*(tother->GetBranchPointer()))[counter]);
 		}
@@ -1620,7 +1620,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 		tother->GetTraceBitsPointer()->splice(tother->GetTraceBitIteratorEnd(),*(tmarker->GetTraceBitsPointer()));
 		FixPointMarkers(tother);
 		//*(tother->GetBranchPointer())=*(tmarker->GetBranchPointer());
-		for(int counter =0; counter < tmarker->GetBranchPointer()->size(); counter++)
+		for(unsigned int counter =0; counter < tmarker->GetBranchPointer()->size(); counter++)
 		{
 			tother->GetBranchPointer()->push_back((*(tmarker->GetBranchPointer()))[counter]);
 		}

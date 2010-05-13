@@ -843,10 +843,7 @@ void View3D::CreateLayout()
   this->EditsToolBar = addToolBar(tr("Edit Toolbar"));
   this->EditsToolBar->setToolTip("EditToolBar");
   this->ShowToolBars->addAction(this->EditsToolBar->toggleViewAction());
-  //this->ShowToolBars->addAction(this->EditsToolBar->toggleViewAction());
-  /*this->EditsToolBar->addAction(this->saveAction);
-  this->EditsToolBar->addAction(this->exitAction);
-  this->EditsToolBar->addSeparator();*/
+
   this->EditsToolBar->addAction(this->AutomateButton);
   this->EditsToolBar->addAction(this->ListButton);
   this->EditsToolBar->addAction(this->ClearButton);
@@ -856,13 +853,11 @@ void View3D::CreateLayout()
   this->EditsToolBar->addAction(this->MergeButton);
   this->EditsToolBar->addAction(this->SplitButton);
   this->EditsToolBar->addAction(this->FlipButton);
-  this->EditsToolBar->addWidget(this->typeCombo);
   this->EditsToolBar->addSeparator();
+  this->EditsToolBar->addWidget(this->typeCombo);
   this->EditsToolBar->addAction(this->ImageIntensity);
-  /*this->EditsToolBar->addAction(this->MoveSphere);
-  this->EditsToolBar->addAction(this->updatePT3D);
-  this->EditsToolBar->addAction(this->setSoma);*/
 
+// 3d cursor dock 
   this->cursor3DDock = new QDockWidget("3D Cursor",this);
   QVBoxLayout * CursorToolsLayout = new QVBoxLayout(this->CursorActionsWidget);
   QGroupBox * CursorLocationBox = new QGroupBox("Cursor Location");
@@ -878,12 +873,13 @@ void View3D::CreateLayout()
   CursorToolsLayout->addWidget(this->setSoma);
   CursorToolsLayout->addStretch();
 
-  //this->CursorActionsWidget->setLayout(CursorToolsLayout);
+  this->CursorActionsWidget->setMaximumSize(256,256);
   this->cursor3DDock->setWidget(this->CursorActionsWidget);
   this->addDockWidget(Qt::LeftDockWidgetArea, this->cursor3DDock);
   this->ShowToolBars->addAction(this->cursor3DDock->toggleViewAction());
   this->cursor3DDock->hide();
 
+// branching toolbars
   this->BranchToolBar = addToolBar(tr("Branch Toolbar"));
   this->BranchToolBar->setToolTip("Branch Toolbar");
   //this->menuBar()->addAction(this->BranchToolBar->toggleViewAction());
@@ -915,7 +911,6 @@ void View3D::CreateLayout()
 	SettingsBox->addWidget(this->ApplySettingsButton);
 	SettingsBox->addStretch();
 
-	//this->SettingsWidget->setLayout(SettingsBox);
 	this->SettingsWidget->setMaximumSize(256,256);
 
 	this->tobj->gapTol = this->TraceEditSettings.value("mainWin/gapTol", .5).toDouble() ;
