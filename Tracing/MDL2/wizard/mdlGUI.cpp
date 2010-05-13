@@ -74,7 +74,7 @@ mdlGUI::mdlGUI(QWidget * parent)
 	vectMagLabel = new QLabel(tr("Vector Magnitude: "));
 	skelLayout->addWidget(vectMagLabel);
 	vectMagEdit = new QLineEdit();
-	vectMagEdit->setText("0.05");
+	vectMagEdit->setText("0.04");
 	vectMagEdit->setMaximumWidth(30);
 	skelLayout->addWidget(vectMagEdit);
 	skelLayout->addStretch(10);
@@ -91,13 +91,13 @@ mdlGUI::mdlGUI(QWidget * parent)
 	edgeLabel = new QLabel(tr("Edge Range: "));
 	bbLayout->addWidget(edgeLabel);
 	edgeRangeEdit = new QLineEdit();
-	edgeRangeEdit->setText("10");
+	edgeRangeEdit->setText("5");
 	edgeRangeEdit->setMaximumWidth(30);
 	bbLayout->addWidget(edgeRangeEdit);
 	morphLabel = new QLabel(tr("Prune Iterations: "));
 	bbLayout->addWidget(morphLabel);
 	morphStrengthEdit = new QLineEdit();
-	morphStrengthEdit->setText("50");
+	morphStrengthEdit->setText("10");
 	morphStrengthEdit->setMaximumWidth(30);
 	bbLayout->addWidget(morphStrengthEdit);
 	bbLayout->addStretch(10);
@@ -184,6 +184,8 @@ void mdlGUI::loadImage()
 	//Render the loaded image:
 	this->Renderer->RemoveAllViewProps(); //Remove previous image
 	this->RenderImage( this->reader->GetOutput(), "Input Image" );
+	this->Renderer->ResetCamera();
+	this->RenderWidget->GetRenderWindow()->Render();
 }
 
 void mdlGUI::preprocess()
@@ -229,7 +231,7 @@ void mdlGUI::integratedSkeleton()
 			delete this->Skel;
 		}
 		this->Skel = new mdl::IntegratedSkeleton( this->PrepImage );
-		this->Skel->SetDebug(true);
+		this->Skel->SetDebug(false);
 		this->Skel->SetUseXiaoLiangMethod(false);
 		this->Skel->SetVectorMagnitude(vectorMagnitude);
 		this->Skel->Update();
@@ -240,6 +242,7 @@ void mdlGUI::integratedSkeleton()
 	this->Renderer->RemoveAllViewProps(); //Remove previous image
 	this->RenderImage( this->PrepImage, "Preprocessed Image" );
 	this->RenderPoints( this->SkeletonPoints, "Skeleton Points" );
+	this->RenderWidget->GetRenderWindow()->Render();
 
 	this->bbButton->setEnabled(true);
 	this->bbButton->setFocus();
@@ -256,7 +259,7 @@ void mdlGUI::mstBB()
 		delete this->MinSpanTree;
     }
 	this->MinSpanTree = new mdl::MST( this->PrepImage );
-	this->MinSpanTree->SetDebug(true);
+	this->MinSpanTree->SetDebug(false);
 	this->MinSpanTree->SetUseVoxelRounding(false);
 	this->MinSpanTree->SetEdgeRange(edgeRange);
 	this->MinSpanTree->SetPower(1);
@@ -266,10 +269,17 @@ void mdlGUI::mstBB()
 	this->Nodes = this->MinSpanTree->GetNodes();
 	this->BackbonePairs = this->MinSpanTree->BackboneExtract();
 
+	mdl::vtkFileHandler * FileHandler = new mdl::vtkFileHandler();
+	FileHandler->SetNodes( &(this->Nodes) );
+	FileHandler->SetLines( &(this->BackbonePairs) );
+	FileHandler->Write( lastPath.toStdString() + "BackboneCandidate.vtk" );
+	delete FileHandler;
+
 	//Render the Backbone:
 	this->Renderer->RemoveAllViewProps(); //Remove previous image
 	this->RenderImage( this->PrepImage, "Preprocessed Image" );
-	this->RenderPolyData( "BackboneCandidate.vtk", "Backbone" );
+	this->RenderPolyData( lastPath.toStdString() + "BackboneCandidate.vtk", "Backbone" );
+	this->RenderWidget->GetRenderWindow()->Render();
 
 	this->saveButton->setEnabled(true);
 	this->saveButton->setFocus();
@@ -317,8 +327,8 @@ void mdlGUI::RenderImage(mdl::ImageType::Pointer image, const char *windowName)
 	volume->SetProperty(volumeProperty);
 
 	this->Renderer->AddVolume(volume);
-	this->Renderer->ResetCamera();
-	this->RenderWidget->GetRenderWindow()->Render();
+	//this->Renderer->ResetCamera();
+	//this->RenderWidget->GetRenderWindow()->Render();
 }
 
 
@@ -361,8 +371,8 @@ void mdlGUI::RenderPoints(std::vector<mdl::fPoint3D> points, const char *windowN
   vtkSmartPointer<vtkActor> actor = this->CreateActorFromPoints(points);
 
   this->Renderer->AddActor(actor);
-  this->Renderer->ResetCamera();
-  this->RenderWidget->GetRenderWindow()->Render();
+  //this->Renderer->ResetCamera();
+  //this->RenderWidget->GetRenderWindow()->Render();
 }
 
 //-----------------------------------------------------------------------------
@@ -389,7 +399,7 @@ vtkSmartPointer<vtkActor> mdlGUI::CreateActorFromPoints(std::vector<mdl::fPoint3
 	glyph->SetInput(polyData);
 	vtkSmartPointer<vtkGlyphSource2D> glyphSource = vtkSmartPointer<vtkGlyphSource2D>::New();
 	glyphSource->SetGlyphTypeToCross();
-	glyphSource->SetScale(5.0);
+	glyphSource->SetScale(1.0);
 	glyphSource->Update();
 	glyph->SetInputConnection(1, glyphSource->GetOutputPort());
 
@@ -403,7 +413,7 @@ vtkSmartPointer<vtkActor> mdlGUI::CreateActorFromPoints(std::vector<mdl::fPoint3
 }
 
 //-----------------------------------------------------------------------------
-void mdlGUI::RenderPolyData(const char *filename, const char *windowName)
+void mdlGUI::RenderPolyData(std::string filename, const char *windowName)
 {
   //remove all old actors
   //this->Renderer->RemoveAllViewProps();
@@ -411,11 +421,11 @@ void mdlGUI::RenderPolyData(const char *filename, const char *windowName)
   //change the window title so the user knows what file is being displayed
   this->RenderWidget->setWindowTitle(windowName);
 
-  vtkSmartPointer<vtkActor> actor = this->CreateActorFromPolyDataFile(filename);
+  vtkSmartPointer<vtkActor> actor = this->CreateActorFromPolyDataFile(filename.c_str());
 
   this->Renderer->AddActor(actor);
-  this->Renderer->ResetCamera();
-  this->RenderWidget->GetRenderWindow()->Render();
+  //this->Renderer->ResetCamera();
+  //this->RenderWidget->GetRenderWindow()->Render();
 }
 
 //-----------------------------------------------------------------------------

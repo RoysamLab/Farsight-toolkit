@@ -69,7 +69,7 @@ public:
 	void RenderPoints(std::vector<mdl::fPoint3D> points, const char *windowName);
 	vtkSmartPointer<vtkActor> CreateActorFromPoints(std::vector<mdl::fPoint3D> points);
 
-	void RenderPolyData(const char *filename, const char *windowName);
+	void RenderPolyData(std::string filename, const char *windowName);
 	vtkSmartPointer<vtkActor> CreateActorFromPolyDataFile(const char *filename);
 
 signals:

@@ -111,7 +111,7 @@ void PreprocessDialog::loadPipe()
 
 void PreprocessDialog::savePipe()
 {
-	QString fname = QFileDialog::getSaveFileName(this, tr("Save As..."),filename, tr("All Files (*.*)"));
+	QString fname = QFileDialog::getSaveFileName(this, tr("Save As..."),lpath, tr("All Files (*.*)"));
 	if(fname == "")  return;
 
 	filename = fname;
