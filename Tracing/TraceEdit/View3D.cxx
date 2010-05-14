@@ -776,7 +776,7 @@ void View3D::CreateGUIObjects()
 	this->posY->setRange(-60000, 60000);
 	connect(this->posY, SIGNAL(valueChanged(double)), this, SLOT(showPTin3D(double)));
 
-	this->posZ = new QDoubleSpinBox(this);
+	this->posZ = new QDoubleSpinBox(this->CentralWidget);
 	this->posZ->setValue(0);
 	this->posZ->setRange(-60000, 60000);
 	connect(this->posZ, SIGNAL(valueChanged(double)), this, SLOT(showPTin3D(double)));
@@ -930,7 +930,7 @@ void View3D::CreateLayout()
 	this->ColorValueField->setValue(this->SelectColor);
 	this->LineWidthField->setValue(this->lineWidth);
 
-  this->settingsDock = new QDockWidget("Settings", this);
+  this->settingsDock = new QDockWidget("Editor Settings", this);
   this->settingsDock->setWidget(this->SettingsWidget);
   this->addDockWidget(Qt::LeftDockWidgetArea, this->settingsDock);
   this->ShowToolBars->addAction(this->settingsDock->toggleViewAction());
