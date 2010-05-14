@@ -131,8 +131,11 @@ public:
 	int createBranchPtFromList(std::vector<TraceLine*> traceList);
 	int solveParents(std::vector<int> ids);
 	bool isParent(int id);
-  void SetCombineShortVTKLines(bool b) { this->CombineShortVTKLines = b; }
-  void createSomaFromPT(double pt[],std::vector<TraceLine*> stems);
+	void SetCombineShortVTKLines(bool b) { this->CombineShortVTKLines = b; }
+//manual tracing tools
+	void createSomaFromPT(double pt[],std::vector<TraceLine*> stems);
+	TraceBit CreateBitAtCoord(double pt[]);
+	TraceLine* CreateTraceFromBit(TraceBit firstBit);
 //	public data
 	vtkSmartPointer<vtkPolyData> GetVTKPolyData();
 	vtkSmartPointer<vtkPolyData> generateBranchIllustrator();
