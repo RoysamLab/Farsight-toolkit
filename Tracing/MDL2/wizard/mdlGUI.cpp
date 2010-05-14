@@ -129,19 +129,19 @@ mdlGUI::mdlGUI(QWidget * parent)
 	this->setCentralWidget(masterWidget);
 
 	this->setWindowTitle(tr("MDL GUI"));
-
-	this->reader = ReaderType::New();
-
+	//this->move(10,10);
+	
 	//set up the render widget: a QVTKWidget to show intermediary results
 	this->RenderWidget = new QVTKWidget();
 	this->Renderer = vtkSmartPointer<vtkRenderer>::New();
 	this->Renderer->SetBackground(0.33, 0.35, 0.43);
 	this->RenderWidget->GetRenderWindow()->AddRenderer(this->Renderer);
-	this->RenderWidget->resize(400, 400);
-	//this->RenderWidget->move(439, 504);
+	this->RenderWidget->resize(500, 500);
+	//this->RenderWidget->move( this->frameGeometry().bottomLeft() );
 	this->RenderWidget->setWindowTitle("Render Window");
 	this->RenderWidget->show();
 
+	this->reader = ReaderType::New();
 	this->ITKtoVTK = ITKtoVTKType::New();
 
 	PrepImage = NULL;

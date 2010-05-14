@@ -52,6 +52,7 @@ limitations under the License.
 #include "vtkProperty.h"
 #include "vtkRenderer.h"
 #include "vtkRenderWindow.h"
+#include "vtkRendererCollection.h"
 #include "vtkSmartPointer.h"
 #include "vtkVolumeProperty.h"
 
