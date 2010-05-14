@@ -62,6 +62,7 @@ class TableWindow : public QMainWindow
 
 public:
 	TableWindow(QWidget * parent = 0);
+	~TableWindow();
 	void setQtModels(QItemSelectionModel *mod);
 	void setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels = NULL);
 

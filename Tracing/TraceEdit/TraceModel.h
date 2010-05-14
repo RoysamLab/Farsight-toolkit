@@ -37,6 +37,7 @@ class TraceModel : public QObject
 public:
 	TraceModel(std::vector<TraceLine*> trace_lines, std::vector<std::string> FeatureHeaders);
 	TraceModel(std::vector<TraceLine*> trace_lines);
+	~TraceModel();
 
 	int RowForID(int id);
 	int GetNumFeatures()

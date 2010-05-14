@@ -36,6 +36,7 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines, std::vector<std::str
 	this->SetupHeaders();
 	this->SetTraces(trace_lines);
 }
+
 TraceModel::TraceModel(std::vector<TraceLine*> trace_lines)
 {	this->DataTable = vtkSmartPointer<vtkTable>::New();	
 	this->Selection = new ObjectSelection();
@@ -44,6 +45,12 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines)
 	this->NumFeatures = (int)this->headers.size();
 	this->SetTraces(trace_lines);
 }
+
+TraceModel::~TraceModel()
+{
+  delete this->Selection;
+}
+
 void TraceModel::stdHeaders()
 {
 	this->headers.push_back("ID");

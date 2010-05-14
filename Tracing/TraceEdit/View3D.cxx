@@ -99,6 +99,7 @@ View3D::View3D(QWidget *parent)
 	this->FL_MeasurePlot = NULL;
 	this->FL_MeasureTable = NULL;
 	this->GapsTableView = NULL;
+  this->TreeModel = NULL;
 
 	this->tobj = new TraceObject;
 	int num_loaded = 0;
@@ -581,17 +582,28 @@ View3D::~View3D()
     {
     delete this->GapsPlotView;
     }
-  //if(this->OpacitySlider)
-  //  {
-  //  this->OpacitySlider->Delete();
-  //  }
-  //if(this->BrightnessSlider)
-  //  {
-  //  this->BrightnessSlider->Delete();
-  //  }
+  if(this->FTKTable)
+    {
+    delete this->FTKTable;
+    }
+  if(this->TreePlot)
+    {
+    delete this->TreePlot;
+    }
+  if(this->FL_MeasurePlot)
+    {
+    delete this->FL_MeasurePlot;
+    }
+  if(this->FL_MeasureTable)
+    {
+    delete this->FL_MeasureTable;
+    }
+  if(this->GapsTableView)
+    {
+    delete this->GapsTableView;
+    }
   delete this->tobj;
-  //the various Qt objects should be getting deleted by closeEvent and
-  //parent/child relationships...
+	delete this->ImageActors;
 }
 
 void View3D::Initialize()
@@ -3226,6 +3238,7 @@ void View3D::SaveSelected()
 		}
 	}
 }
+
 void View3D::closeEvent(QCloseEvent *event)
 {	
 	this->TraceEditSettings.setValue("mainWin/size", this->size());

@@ -22,7 +22,17 @@ limitations under the License.
 TableWindow::TableWindow(QWidget * parent)
 : QMainWindow(parent)
 {
+  this->modAdapter = NULL;
 	this->setup();
+}
+
+//Destructor
+TableWindow::~TableWindow()
+{
+  if(this->modAdapter)
+    {
+    delete this->modAdapter;
+    }
 }
 
 void TableWindow::setQtModels(QItemSelectionModel * mod)

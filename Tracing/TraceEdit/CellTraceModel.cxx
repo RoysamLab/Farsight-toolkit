@@ -30,6 +30,9 @@ CellTraceModel::CellTraceModel(std::vector<CellTrace*> Cells)
 	this->Selection = new ObjectSelection();
 	this->setCells(Cells);
 }
+CellTraceModel::~CellTraceModel()
+{	
+}
 void CellTraceModel::setCells(std::vector<CellTrace*> Cells)
 {
 	this->Cells.clear();

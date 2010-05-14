@@ -38,6 +38,7 @@ class CellTraceModel : public QObject
 public:
 	CellTraceModel();
 	CellTraceModel(std::vector<CellTrace*> Cells);
+	~CellTraceModel();
 	void setCells(std::vector<CellTrace*> Cells);
 	vtkSmartPointer<vtkTable> getDataTable();
 	ObjectSelection * GetObjectSelection();
