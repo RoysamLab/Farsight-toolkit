@@ -2241,11 +2241,6 @@ void TraceObject::createSomaFromPT(double pt[], std::vector<TraceLine*> stems)
 	soma->SetId(newId);
 	this->trace_lines.push_back(soma);*/
 	TraceBit tbit= this->CreateBitAtCoord(pt);
-		/*tbit;
-	tbit.x = pt[0];
-	tbit.y = pt[1];
-	tbit.z = pt[2];
-	tbit.id = 1;*/
 	TraceLine *soma = this->CreateTraceFromBit(tbit);
 	soma->SetType(1); //makes it a soma type
 	unsigned int i = 0;
@@ -2290,6 +2285,11 @@ TraceLine* TraceObject::CreateTraceFromBit(TraceBit firstBit)
 	myNewTrace->SetType(0);	//undefined type
 	this->trace_lines.push_back(myNewTrace);
 	return myNewTrace;
+}
+void TraceObject::ExtendTraceTo(TraceLine *tline, double pt[])
+{
+	TraceBit NewTBit = this->CreateBitAtCoord(pt);
+	tline->ExtendTrace(NewTBit);
 }
 std::vector<CellTrace*> TraceObject::CalculateCellFeatures()
 {

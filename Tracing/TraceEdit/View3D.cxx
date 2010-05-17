@@ -1292,6 +1292,36 @@ void View3D::setUsePointer(int i)
 		this->pointer3d->SetEnabled(0);
 	}
 }
+void View3D::createNewTraceBit()
+{
+	if (this->pointer3d->GetEnabled())
+	{
+		double newPT[3];
+		this->pointer3d->GetPosition(newPT);
+		if(this->stems.size() <1)
+		{
+			this->stems = this->TreeModel->GetSelectedTraces();
+		}//check for selected traces
+		this->ClearSelection();
+		if (this->stems.size() <1)
+		{
+			TraceBit tbit= this->tobj->CreateBitAtCoord(newPT);
+			TraceLine *TraceCreated = this->tobj->CreateTraceFromBit(tbit);
+			this->stems.push_back(TraceCreated);
+		}
+		else if(this->stems.size() == 1)
+		{
+			this->tobj->ExtendTraceTo(this->stems.at(0), newPT);
+		}//end extend trace
+		else if(this->stems.size() > 1)
+		{
+			this->setPTtoSoma();
+		}//end create soma
+		//this->Rerender();
+		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+		//this->TreeModel->s
+	}
+}
 /*Selections*/
 void View3D::updateTraceSelectionHighlights()
 {
@@ -1409,6 +1439,7 @@ void View3D::AddPointsAsPoints(std::vector<TraceBit> vec)
 
 }
 
+/*Hippocampal datasets functions*/
 #define SIGN(x) (((x)>0)?1:-1)
 class my_vnl_cost_function: public vnl_cost_function
 {

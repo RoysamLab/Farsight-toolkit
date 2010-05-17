@@ -235,6 +235,22 @@ void TraceLine::AddTraceBit(TraceBit tbit)
 {
   this->m_trace_bits.push_back(tbit);
 }
+void TraceLine::ExtendTrace(TraceBit tbit)
+{
+	bool front = false;
+	if (this->m_trace_bits.size()>1)
+	{
+		if (!this->Orient(tbit))
+		{
+			this->m_trace_bits.push_front(tbit);
+			front = true;
+		}
+	}
+	if (!front)
+	{
+		this->m_trace_bits.push_back(tbit);
+	}
+}
 TraceBit TraceLine::removeLastBit()
 {
 	TraceBit lastBit = this->m_trace_bits.back();

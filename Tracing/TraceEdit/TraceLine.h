@@ -64,6 +64,7 @@ public:
 	unsigned char GetType();
 	void SetType(unsigned char t) ;
 	void AddTraceBit(TraceBit tbit);
+	void ExtendTrace(TraceBit tbit);
 	void removeLeadingBit();
 	TraceBit removeLastBit();
 	TraceBit removeFirstBit();

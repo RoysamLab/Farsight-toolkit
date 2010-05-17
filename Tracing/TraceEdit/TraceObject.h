@@ -136,6 +136,7 @@ public:
 	void createSomaFromPT(double pt[],std::vector<TraceLine*> stems);
 	TraceBit CreateBitAtCoord(double pt[]);
 	TraceLine* CreateTraceFromBit(TraceBit firstBit);
+	void ExtendTraceTo(TraceLine* tline, double pt[]);
 //	public data
 	vtkSmartPointer<vtkPolyData> GetVTKPolyData();
 	vtkSmartPointer<vtkPolyData> generateBranchIllustrator();

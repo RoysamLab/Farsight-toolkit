@@ -151,6 +151,7 @@ public slots:
 	void getPosPTin3D();
 	void setPTtoSoma();
 	void setUsePointer(int i);
+	void createNewTraceBit();
 //these are for bootloadfile
 	QString getTraceFile();
 	QString getImageFile();
