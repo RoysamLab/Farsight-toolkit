@@ -239,6 +239,7 @@ private:
 	QPushButton *updatePT3D;
 	QCheckBox *ShowPointer;
 	QPushButton *setSoma;
+	QPushButton *createNewBitButton;
 	QAction *ShowPlots;
 	QAction *CellAnalysis;
 

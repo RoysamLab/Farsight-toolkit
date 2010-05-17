@@ -772,6 +772,9 @@ void View3D::CreateGUIObjects()
 	this->setSoma = new QPushButton("Create Soma", this->CentralWidget);
 	connect(this->setSoma, SIGNAL(clicked()), this, SLOT(setPTtoSoma()));
 
+	this->createNewBitButton = new QPushButton("Create New TraceBit", this->CentralWidget);
+	connect(this->createNewBitButton, SIGNAL(clicked()), this, SLOT(createNewTraceBit()));
+
 	this->ShowPointer = new QCheckBox("Use 3D Cursor", this->CentralWidget);
 	this->ShowPointer->setStatusTip("Show Pointer Automatically?");
 	this->ShowPointer3DDefault = true;
@@ -889,6 +892,7 @@ void View3D::CreateLayout()
   //CursorToolsLayout->addWidget(this->MoveSphere);
   CursorToolsLayout->addWidget(this->updatePT3D);
   CursorToolsLayout->addWidget(this->setSoma);
+  CursorToolsLayout->addWidget(this->createNewBitButton);
   CursorToolsLayout->addStretch();
 
   this->CursorActionsWidget->setMaximumSize(256,256);
@@ -1317,7 +1321,7 @@ void View3D::createNewTraceBit()
 		{
 			this->setPTtoSoma();
 		}//end create soma
-		//this->Rerender();
+		this->Rerender();
 		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 		//this->TreeModel->s
 	}
