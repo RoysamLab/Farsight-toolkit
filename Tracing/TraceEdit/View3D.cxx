@@ -1289,6 +1289,7 @@ void View3D::setUsePointer(int i)
 	if (this->ShowPointer->isChecked())
 	{
 		this->ShowPointer3DDefault = true;
+		this->pointer3d->SetEnabled(1);
 	}
 	else
 	{
@@ -1302,6 +1303,7 @@ void View3D::createNewTraceBit()
 	{
 		double newPT[3];
 		this->pointer3d->GetPosition(newPT);
+		//this->stems = this->TreeModel->GetSelectedTraces();
 		if(this->stems.size() <1)
 		{
 			this->stems = this->TreeModel->GetSelectedTraces();
@@ -1320,10 +1322,35 @@ void View3D::createNewTraceBit()
 		else if(this->stems.size() > 1)
 		{
 			this->setPTtoSoma();
+			this->stems.clear();
 		}//end create soma
 		this->Rerender();
 		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 		//this->TreeModel->s
+		if(this->stems.size() == 1)
+		{
+			this->TreeModel->SelectByIDs(this->stems.at(0)->GetId());
+			QMessageBox Myquestion;
+			Myquestion.setText("Selected line:  " 
+			+ QString::number(this->stems.at(0)->GetId()));
+			Myquestion.setInformativeText("Continue extending this line?" );
+			Myquestion.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
+			Myquestion.setDefaultButton(QMessageBox::Yes);
+			int ret = Myquestion.exec();
+			switch (ret) 
+			{ 
+				case QMessageBox::Yes:
+				{
+					this->pointer3d->SetEnabled(1);
+				}
+				break;
+				case QMessageBox::No:
+				{
+					this->stems.clear();
+				}
+			break;
+			}
+		}//end stems size = 1
 	}
 }
 /*Selections*/
