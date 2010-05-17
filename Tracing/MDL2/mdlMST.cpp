@@ -38,6 +38,7 @@ MST::MST(ImageType::Pointer inImage)
 	edgeRange = 10;		//Some default values:
 	power = 1;
 	PruneThreshold = 4.0;
+	Alpha = 0.5;
 
 	//input
 	skeletonPoints = NULL;

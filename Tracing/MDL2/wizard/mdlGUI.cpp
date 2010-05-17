@@ -78,7 +78,7 @@ mdlGUI::mdlGUI(QWidget * parent)
 	vectMagEdit->setMaximumWidth(30);
 	skelLayout->addWidget(vectMagEdit);
 	skelLayout->addStretch(10);
-	skelCheckbox = new QCheckBox(tr("Use VTK"));
+	skelCheckbox = new QCheckBox(tr("Use ITK"));
 	skelCheckbox->setChecked(false);
 	skelLayout->addWidget(skelCheckbox);
 	skelButton = new QPushButton(tr("Skeletonize"));
@@ -106,19 +106,47 @@ mdlGUI::mdlGUI(QWidget * parent)
 	connect(bbButton, SIGNAL(clicked()), this, SLOT(mstBB()));
 	bbLayout->addWidget(bbButton);
 
+	spineBox = new QGroupBox(tr("Spines"));
+	spineLayout = new QHBoxLayout(spineBox);
+	pruneLabel = new QLabel(tr("Prune Threshold: "));
+	spineLayout->addWidget(pruneLabel);
+	pruneEdit = new QLineEdit();
+	pruneEdit->setText("4");
+	pruneEdit->setMaximumWidth(30);
+	spineLayout->addWidget(pruneEdit);
+	alphaLabel = new QLabel(tr("Alpha: "));
+	spineLayout->addWidget(alphaLabel);
+	alphaEdit = new QLineEdit();
+	alphaEdit->setText("0.5");
+	alphaEdit->setMaximumWidth(30);
+	spineLayout->addWidget(alphaEdit);
+	spineLayout->addStretch(10);
+	spineButton = new QPushButton(tr("Spine Extract"));
+	spineButton->setEnabled(false);
+	connect(spineButton, SIGNAL(clicked()), this, SLOT(mstSpine()));
+	spineLayout->addWidget(spineButton);
+
 	saveLayout = new QHBoxLayout();
 	saveButton = new QPushButton(tr("Save Result..."));
 	saveButton->setEnabled(false);
 	connect(saveButton, SIGNAL(clicked()), this, SLOT(saveBB()));
 	saveLayout->addWidget(saveButton);
 
+	showRenderLayout = new QHBoxLayout();
+	showRenderButton = new QPushButton(tr("Show Render Window"));
+	connect(showRenderButton, SIGNAL(clicked()), this, SLOT(showRenderWindow()));
+	showRenderLayout->addStretch(10);
+	showRenderLayout->addWidget(showRenderButton);
+
 	stepsLayout = new QVBoxLayout();
 	stepsLayout->addLayout(loadLayout);
 	stepsLayout->addLayout(prepLayout);
 	stepsLayout->addWidget(skelBox);
 	stepsLayout->addWidget(bbBox);
+	stepsLayout->addWidget(spineBox);
 	stepsLayout->addLayout(saveLayout);
 	stepsLayout->addStretch(10);
+	stepsLayout->addLayout(showRenderLayout);
 
 	masterLayout = new QHBoxLayout();
 	masterLayout->addWidget(bannerLabel);
@@ -180,6 +208,7 @@ void mdlGUI::loadImage()
 	this->skelButton->setEnabled(false);
 	this->bbButton->setEnabled(false);
 	this->saveButton->setEnabled(false);
+	this->spineButton->setEnabled(false);
 
 	//Render the loaded image:
 	this->Renderer->RemoveAllViewProps(); //Remove previous image
@@ -204,6 +233,7 @@ void mdlGUI::preprocess()
 		this->skelButton->setFocus();
 		this->bbButton->setEnabled(false);
 		this->saveButton->setEnabled(false);
+		this->spineButton->setEnabled(false);
 	}
 	delete dialog;
 }
@@ -247,6 +277,7 @@ void mdlGUI::integratedSkeleton()
 	this->bbButton->setEnabled(true);
 	this->bbButton->setFocus();
 	this->saveButton->setEnabled(false);
+	this->spineButton->setEnabled(false);
 }
 
 void mdlGUI::mstBB()
@@ -283,6 +314,34 @@ void mdlGUI::mstBB()
 
 	this->saveButton->setEnabled(true);
 	this->saveButton->setFocus();
+	this->spineButton->setEnabled(true);
+}
+
+void mdlGUI::mstSpine()
+{
+	if(!this->MinSpanTree)
+		return;
+
+	double pruneThreshold = this->pruneEdit->text().toDouble();
+	double alpha = this->alphaEdit->text().toDouble();
+
+	this->SpinePairs = this->MinSpanTree->SpineExtract();
+
+	mdl::vtkFileHandler * FileHandler = new mdl::vtkFileHandler();
+	FileHandler->SetNodes( &(this->Nodes) );
+	FileHandler->SetLines( &(this->SpinePairs) );
+	FileHandler->Write( lastPath.toStdString() + "SpineCandidate.vtk" );
+	delete FileHandler;
+
+	//Render the Backbone:
+	this->Renderer->RemoveAllViewProps(); //Remove previous image
+	this->RenderImage( this->PrepImage, "Preprocessed Image" );
+	this->RenderPolyData( lastPath.toStdString() + "BackboneCandidate.vtk", "Backbone" );
+	this->RenderPolyData( lastPath.toStdString() + "SpineCandidate.vtk", "Spine" );
+	this->RenderWidget->GetRenderWindow()->Render();
+
+	this->saveButton->setFocus();
+
 }
 
 void mdlGUI::saveBB()
@@ -298,6 +357,11 @@ void mdlGUI::saveBB()
 	FileHandler->SetLines( &(this->BackbonePairs) );
 	FileHandler->Write(filename.toStdString());
 	delete FileHandler;
+}
+
+void mdlGUI::showRenderWindow()
+{
+	this->RenderWidget->show();
 }
 
 //-----------------------------------------------------------------------------

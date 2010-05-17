@@ -56,12 +56,16 @@ public:
 	IntegratedSkeleton(ImageType::Pointer inImage);
 	~IntegratedSkeleton();
 	//Setup:
+	void SetDebug(bool inp = true){ debug = inp; };
 	void SetVectorMagnitude(double vM){ vectorMagnitude = vM; };
 	void SetLinePathStepSize(float v){ linePathStepSize = v; };
-	void SetUseXiaoLiangMethod(bool inp = true){ useXiaoLiangMethod = inp; };
-	void SetDebug(bool inp = true){ debug = inp; };
-	//Methods:
+
+		//Methods:
 	bool Update();
+
+	//Optionally use Xiao Liang's method to compute surface curvature:
+	void SetUseXiaoLiangMethod(bool inp = true){ useXiaoLiangMethod = inp; };
+	//A TEST METHOD BY XIAO LIANG:
 	bool RunXiaoLSkeletonPoints(float sigma=0,int MoveStep =10);
 
 	//Get Result:
@@ -103,7 +107,6 @@ private:
 	std::vector<fPoint3D> skeletonPoints;
 
 	// New Skeleton points Computation,  add in March,2010 
-
 	bool XiaoLComputeSkeletonPoints(void);
 	bool MovingSkeletonPointsAlongGVF(int Step);
     

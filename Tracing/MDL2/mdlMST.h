@@ -51,6 +51,8 @@ public:
 	void SetAlpha(double alpha){Alpha = alpha;}	//For spines
 	void SetPower(int p){ power = p; };
 	void SetPruneThreshold(double p){PruneThreshold = p;}
+
+	//Added by Xiao Liang:
 	void SetVesselMap(ImageType::Pointer VesselMap);
 	void SetFileofRealSpineFeature(char *FileofRealSpineFeature){RealSpineFeatureFilename = FileofRealSpineFeature;}
 	void SetFileofNonSpineFeature(char *FileofNonSpineFeature){NonSpineFeatureFilename = FileofNonSpineFeature;}
@@ -61,8 +63,9 @@ public:
 	void SetSkeletonPoints(std::vector<fPoint3D> * sp);
 	bool CreateGraphAndMST(int type = 1 ); //Do first
 	bool ErodeAndDialateNodeDegree(int morphStrength); //Do second (if desired)
-	std::vector<pairE> SearchFirstandSecondLevelBranch(void);
 
+
+	std::vector<pairE> SearchFirstandSecondLevelBranch(void);
 
 	//The number is the edge are the node numbers (starting at 1)
 	std::vector<pairE> BackboneExtract();

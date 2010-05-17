@@ -86,6 +86,8 @@ private slots:
 	void integratedSkeleton();
 	void mstBB();
 	void saveBB();
+	void mstSpine();
+	void showRenderWindow();
     
 private:
 	QString lastPath;
@@ -116,8 +118,19 @@ private:
 	QLineEdit * morphStrengthEdit;
 	QPushButton * bbButton;
 
+	QGroupBox * spineBox;
+	QHBoxLayout * spineLayout;
+	QLabel * pruneLabel;
+	QLineEdit * pruneEdit;
+	QLabel * alphaLabel;
+	QLineEdit * alphaEdit;
+	QPushButton * spineButton;
+
 	QHBoxLayout * saveLayout;
 	QPushButton * saveButton;
+
+	QHBoxLayout * showRenderLayout;
+	QPushButton * showRenderButton;
 
 	QVBoxLayout * stepsLayout;
 	
@@ -141,6 +154,7 @@ private:
 	mdl::MST *MinSpanTree;
 	std::vector<mdl::fPoint3D> Nodes;
 	std::vector<mdl::pairE> BackbonePairs;
+	std::vector<mdl::pairE> SpinePairs;
 
 };
 
