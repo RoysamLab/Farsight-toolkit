@@ -7,6 +7,11 @@ IF( BUILD_MDL )
     SUBDIRS( MDL2 )
 ENDIF()
 
+OPTION( BUILD_MDL_XL "Build MDL_XL" OFF )
+IF( BUILD_MDL_XL )
+    SUBDIRS( MDL_XL )
+ENDIF()
+
 OPTION( BUILD_ftl2d "Build FTL2D Tracing" OFF )
 IF( BUILD_ftl2d )
   SUBDIRS( ftl2d )

@@ -13,7 +13,7 @@ SET( cbin_SRCS
 
 SET( xl_srcs
   ${cbin_SRCS}
-  mdlTypes.h PredistanceMAP.cpp
+  mdlTypes.h 
   mdlUtils.h mdlUtils.cpp
   mdlVolumeProcess.h mdlVolumeProcess.cpp
   mdlIntegratedSkeleton.h mdlIntegratedSkeleton.cpp
@@ -22,6 +22,6 @@ SET( xl_srcs
   pipeline_main2.cpp
 )
 
-ADD_EXECUTABLE(mdl_pipe xl_srcs)
-TARGET_LINK_LIBRARIES(mdl_pipe ITKIO ITKStatistics ITKBasicFilters ITKCommon)
+ADD_EXECUTABLE(mdl_XL_pipe ${xl_srcs} )
+TARGET_LINK_LIBRARIES(mdl_XL_pipe ITKIO ITKStatistics ITKBasicFilters ITKCommon)
 
