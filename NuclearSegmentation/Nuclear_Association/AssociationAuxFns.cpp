@@ -159,20 +159,66 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 }
 
 unsigned short returnthresh( USImageType::Pointer input_image, int num_bin_levs, int num_in_fg ){
-//Instantiate the different image and filter types that will be used
-	typedef itk::ImageRegionIteratorWithIndex< USImageType > IteratorType;
+	//Instantiate the different image and filter types that will be used
 	typedef itk::ImageRegionConstIterator< USImageType > ConstIteratorType;
-	typedef itk::Statistics::ScalarImageToHistogramGenerator< USImageType > ScalarImageToHistogramGeneratorType;
-	typedef ScalarImageToHistogramGeneratorType::HistogramType HistogramType;
+	//typedef itk::Statistics::ScalarImageToHistogramGenerator< USImageType > ScalarImageToHistogramGeneratorType;
+	//typedef ScalarImageToHistogramGeneratorType::HistogramType HistogramType;
+	typedef itk::Statistics::Histogram<> HistogramType;
 	typedef itk::OtsuMultipleThresholdsCalculator< HistogramType > CalculatorType;
 
-	ScalarImageToHistogramGeneratorType::Pointer scalarImageToHistogramGenerator = ScalarImageToHistogramGeneratorType::New();
+	//Create a temporary histogram container:
+	const int numBins = 256;
+	unsigned long tempHist[numBins];
+	for(int i=0; i<numBins; ++i)
+	{
+		tempHist[i] = 0;
+	}
+
+	//Populate the histogram (assume pixel type is actually uchar):
+	ConstIteratorType it( input_image, input_image->GetRequestedRegion() );
+	for ( it.GoToBegin(); !it.IsAtEnd(); ++it )
+	{
+		USPixelType pix = it.Get();
+		if(pix <= 255 && pix >= 0)
+		{
+			tempHist[pix]++;
+		}
+	}
+	
+	//Find max value in the histogram
+	unsigned long floatIntegerMax = 16777216;
+	unsigned long max = 0;
+	for(int i=0; i<numBins; ++i)
+	{
+		if( tempHist[i] > max )
+			max = tempHist[i];
+	}
+
+	float scaleFactor = 1;
+	if(max >= floatIntegerMax)
+	{
+		scaleFactor = (float)floatIntegerMax / (float)max;
+	}
+
+	HistogramType::Pointer histogram = HistogramType::New();
+	HistogramType::SizeType size;
+	size.Fill(numBins);
+	histogram->Initialize(size);
+
+	for(int i=0; i<numBins; ++i)
+	{
+		int norm_freq = int((float)tempHist[i] * scaleFactor);
+		histogram->SetFrequency(i, norm_freq);
+	}
+
+	//ScalarImageToHistogramGeneratorType::Pointer scalarImageToHistogramGenerator = ScalarImageToHistogramGeneratorType::New();
+	//scalarImageToHistogramGenerator->SetNumberOfBins( 256 );
+	//scalarImageToHistogramGenerator->SetInput( input_image);
+	//scalarImageToHistogramGenerator->Compute();
 	CalculatorType::Pointer calculator = CalculatorType::New();
-	scalarImageToHistogramGenerator->SetNumberOfBins( 256 );
 	calculator->SetNumberOfThresholds( num_bin_levs );
-	scalarImageToHistogramGenerator->SetInput( input_image);
-	scalarImageToHistogramGenerator->Compute();
-	calculator->SetInputHistogram( scalarImageToHistogramGenerator->GetOutput() );
+	//calculator->SetInputHistogram( scalarImageToHistogramGenerator->GetOutput() );
+	calculator->SetInputHistogram( histogram );
 	calculator->Update();
 	const CalculatorType::OutputType &thresholdVector = calculator->GetOutput(); 
 	CalculatorType::OutputType::const_iterator itNum = thresholdVector.begin();
