@@ -1402,10 +1402,16 @@ void View3D::Rerender()
   this->Renderer->AddActor(this->BranchActor); 
   this->TreeModel->SetTraces(this->tobj->GetTraceLines()); 
   this->QVTK->GetRenderWindow()->Render();
-  this->FTKTable->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
-  this->FTKTable->update();
-  this->TreePlot->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
-  this->TreePlot->update();
+	if (this->FTKTable)
+	{
+	  this->FTKTable->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
+	  this->FTKTable->update();
+	}
+	if (this->TreePlot)
+	{
+	  this->TreePlot->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
+	  this->TreePlot->update();
+	}
 	this->SplitLabel->setText(QString::number(this->numSplit));
 	this->MergeLabel->setText(QString::number(this->numMerged));
 	this->DeleteLabel->setText(QString::number(this->numDeleted));
