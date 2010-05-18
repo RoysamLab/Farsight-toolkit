@@ -179,7 +179,7 @@ unsigned short returnthresh( USImageType::Pointer input_image, int num_bin_levs,
 	for ( it.GoToBegin(); !it.IsAtEnd(); ++it )
 	{
 		USPixelType pix = it.Get();
-		if(pix <= 255 && pix >= 0)
+		if(pix <= 255)
 		{
 			tempHist[pix]++;
 		}
