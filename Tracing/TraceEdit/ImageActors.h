@@ -22,6 +22,7 @@ limitations under the License.
 #include "vtkImageToStructuredPoints.h"
 #include "vtkLODActor.h"
 #include "vtkOpenGLVolumeTextureMapper3D.h"
+#include <vtkGPUVolumeRayCastMapper.h>
 #include "vtkPiecewiseFunction.h"
 #include "vtkPolyData.h"
 #include "vtkPolyDataMapper.h"
@@ -63,7 +64,8 @@ struct imageFileHandle
 	/*vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunction;
 	vtkSmartPointer<vtkColorTransferFunction> colorTransferFunction;*/
 	vtkSmartPointer<vtkVolumeProperty> volumeProperty;
-	vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper;
+	//vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper;
+	vtkSmartPointer<vtkGPUVolumeRayCastMapper> volumeMapperGPU;
 	vtkSmartPointer<vtkVolume> volume;
 };
 class  ImageRenderActors

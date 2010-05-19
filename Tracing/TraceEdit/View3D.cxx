@@ -331,6 +331,7 @@ void View3D::OkToBoot()
 		if (!this->TraceFiles.isEmpty())
 		{
 			this->ShowTreeData();
+			this->cursor3DDock->show();
 		}
 		this->Rerender();
 	}
@@ -768,12 +769,14 @@ void View3D::CreateGUIObjects()
 
 	this->updatePT3D = new QPushButton("Update Location", this->CentralWidget);
 	connect(this->updatePT3D, SIGNAL(clicked()), this, SLOT(getPosPTin3D()));
+	this->updatePT3D->setShortcut(QKeySequence(Qt::Key_U));
 
 	this->setSoma = new QPushButton("Create Soma", this->CentralWidget);
 	connect(this->setSoma, SIGNAL(clicked()), this, SLOT(setPTtoSoma()));
 
 	this->createNewBitButton = new QPushButton("Create New TraceBit", this->CentralWidget);
 	connect(this->createNewBitButton, SIGNAL(clicked()), this, SLOT(createNewTraceBit()));
+	this->createNewBitButton->setShortcut(QKeySequence(Qt::Key_P));
 
 	this->ShowPointer = new QCheckBox("Use 3D Cursor", this->CentralWidget);
 	this->ShowPointer->setStatusTip("Show Pointer Automatically?");
@@ -1245,6 +1248,8 @@ void View3D::showPTin3D(double value)
 }
 void View3D::getPosPTin3D()
 {
+	//this->cursor3DDock->show();
+	this->pointer3d->SetEnabled(1);//if not shown
 	double newPT[3];
 	this->pointer3d->GetPosition(newPT);
 	this->posX->setValue(newPT[0]);

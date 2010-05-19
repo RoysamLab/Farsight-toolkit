@@ -49,7 +49,8 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag)
 	newImage->ImageData = 0;
 	//newImage->opacityTransferFunction = 0;
 	newImage->volume = 0;
-	newImage->volumeMapper = 0;
+	//newImage->volumeMapper = 0;
+	newImage->volumeMapperGPU = 0;
 	newImage->volumeProperty = 0;
 	newImage->reader = ReaderType::New();
 	newImage->reader->SetFileName( ImageSource );
@@ -89,7 +90,8 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 	newImage->ImageData = 0;
 	//newImage->opacityTransferFunction = 0;
 	newImage->volume = 0;
-	newImage->volumeMapper = 0;
+	//newImage->volumeMapper = 0;
+	newImage->volumeMapperGPU = 0;
 	newImage->volumeProperty = 0;
 	newImage->reader = ReaderType::New();
 	newImage->reader->SetFileName( ImageSource );
@@ -173,11 +175,15 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 	this->LoadedImages[i]->volumeProperty->SetColor(this->colorTransferFunction);
 	this->LoadedImages[i]->volumeProperty->SetScalarOpacity(this->opacityTransferFunction);
 	this->LoadedImages[i]->volumeProperty->SetInterpolationTypeToLinear();
-	this->LoadedImages[i]->volumeMapper = vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
-	this->LoadedImages[i]->volumeMapper->SetSampleDistance((float)this->RaycastSampleDist);
-	this->LoadedImages[i]->volumeMapper->SetInput(this->LoadedImages[i]->ImageData);
+	//this->LoadedImages[i]->volumeMapper = vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
+	this->LoadedImages[i]->volumeMapperGPU = vtkSmartPointer<vtkGPUVolumeRayCastMapper>::New();
+	//this->LoadedImages[i]->volumeMapper->SetSampleDistance((float)this->RaycastSampleDist);
+	this->LoadedImages[i]->volumeMapperGPU->SetSampleDistance((float)this->RaycastSampleDist);
+	//this->LoadedImages[i]->volumeMapper->SetInput(this->LoadedImages[i]->ImageData);
+	this->LoadedImages[i]->volumeMapperGPU->SetInput(this->LoadedImages[i]->ImageData);
 	this->LoadedImages[i]->volume = vtkSmartPointer<vtkVolume>::New();
-	this->LoadedImages[i]->volume->SetMapper(this->LoadedImages[i]->volumeMapper);
+	//this->LoadedImages[i]->volume->SetMapper(this->LoadedImages[i]->volumeMapper);
+	this->LoadedImages[i]->volume->SetMapper(this->LoadedImages[i]->volumeMapperGPU);
 	this->LoadedImages[i]->volume->SetProperty(this->LoadedImages[i]->volumeProperty);
 	this->LoadedImages[i]->volume->SetPosition(this->LoadedImages[i]->x, 
 		this->LoadedImages[i]->y,this->LoadedImages[i]->z);
