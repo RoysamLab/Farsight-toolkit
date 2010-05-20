@@ -26,6 +26,7 @@ ADD_LIBRARY(trackingHelpers helpers.cpp helpers.h)
 ADD_LIBRARY(ftkTrackFeatures ftkTrackFeatures.h ftkTrackFeatures.cpp)
 
 ADD_EXECUTABLE(unmix unmix.cpp helpers.h)
+ADD_EXECUTABLE(unmixt unmix_threshold.cpp helpers.h)
 ADD_EXECUTABLE(segmentation segmentation.cpp helpers.h)
 ADD_EXECUTABLE(tracking tracking.cpp helpers.h ftkTrackFeatures.h)
 #IF(CPLEX_FOUND)
@@ -41,6 +42,7 @@ ADD_EXECUTABLE(anisodiff anisodiff.cpp helpers.h)
 ADD_EXECUTABLE(render_tracks render_tracks.cpp helpers.h)
 
 TARGET_LINK_LIBRARIES(unmix ITKCommon ITKIO Yousef_Nucleus_Seg ITKStatistics trackingHelpers)
+TARGET_LINK_LIBRARIES(unmixt ITKCommon ITKIO Yousef_Nucleus_Seg ITKStatistics trackingHelpers)
 TARGET_LINK_LIBRARIES(segmentation ITKCommon ITKIO Yousef_Nucleus_Seg ITKStatistics trackingHelpers)
 TARGET_LINK_LIBRARIES(tracking ITKCommon ITKIO Yousef_Nucleus_Seg ITKStatistics trackingHelpers)
 #IF(CPLEX_FOUND)
@@ -57,6 +59,7 @@ TARGET_LINK_LIBRARIES(render_tracks ITKCommon ITKIO ITKStatistics ITKBasicFilter
 
 
 INSTALL(TARGETS unmix RUNTIME DESTINATION bin)
+INSTALL(TARGETS unmixt RUNTIME DESTINATION bin)
 INSTALL(TARGETS segmentation RUNTIME DESTINATION bin)
 INSTALL(TARGETS tracking RUNTIME DESTINATION bin)
 #IF(CPLEX_FOUND)
