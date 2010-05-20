@@ -129,19 +129,19 @@ void unmix_threshold(InputImageType::Pointer im[],InputImageType::Pointer om[],i
 	
 	printf("Binarizing the Autofluoroscence Channel\n");
 	ThresholdFilterType::Pointer tfilter = ThresholdFilterType::New();
-	tfilter->SetInput(om[2]);
+	tfilter->SetInput(om[AF_channel]);
 	tfilter->SetLowerThreshold(thresh);
 	tfilter->SetUpperThreshold(255);
 	tfilter->SetInsideValue(255);
 	tfilter->SetOutsideValue(0);
-	om[2] = tfilter->GetOutput();
+	om[AF_channel] = tfilter->GetOutput();
 	tfilter->Update();
 	
 	//int total_voxels = size[0]*size[1]*size[2];
 	int num_processed = 0;
 	
 	//Removing Small components
-	om[2] = getLargeComponents(om[2],3);
+	om[AF_channel] = getLargeComponents(om[AF_channel],thresh);
 
 	printf("\tComputing foreground in AF channel ... ");
 	for(;!iterator[0].IsAtEnd();)
@@ -150,8 +150,8 @@ void unmix_threshold(InputImageType::Pointer im[],InputImageType::Pointer om[],i
 		unsigned char temp = iterator[2].Value();///max_values[co];
 		if(temp > 0)
 			{
-				iterator[1].Set(0);
-				iterator[0].Set(0);
+				iterator[GFP_channel].Set(0);
+				//iterator[0].Set(0);
 			}
 		
 		for(int co = 0; co<n; co++)
@@ -787,7 +787,7 @@ int main(int argc, char **argv)
 		{
 			im[c-1] = readImage<InputImageType>(argv[c]);
 		}
-
+		//Parameters 
 		unmix_threshold(im,om,num_channels,1,2,atoi(argv[argc-1]));
 		for(int c=1;c<=num_channels; c++)
 		{
