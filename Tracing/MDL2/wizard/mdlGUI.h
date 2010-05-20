@@ -64,13 +64,13 @@ public:
 	mdlGUI(QWidget * parent = 0);
 	~mdlGUI();
 
-	void RenderImage(mdl::ImageType::Pointer image, const char *windowName);
+	void RenderImage(mdl::ImageType::Pointer image);
 	vtkSmartPointer<vtkVolumeProperty> NewRGBVolumeProperty(const double range[]);
 
-	void RenderPoints(std::vector<mdl::fPoint3D> points, const char *windowName);
+	void RenderPoints(std::vector<mdl::fPoint3D> points, double r=0.0, double g=0.0, double b=0.0);
 	vtkSmartPointer<vtkActor> CreateActorFromPoints(std::vector<mdl::fPoint3D> points);
 
-	void RenderPolyData(std::string filename, const char *windowName);
+	void RenderPolyData(std::string filename, double r=0.0, double g=0.0, double b=0.0);
 	vtkSmartPointer<vtkActor> CreateActorFromPolyDataFile(const char *filename);
 
 signals:
@@ -85,8 +85,8 @@ private slots:
 	void preprocess();
 	void integratedSkeleton();
 	void mstBB();
-	void saveBB();
 	void mstSpine();
+	void saveAll();
 	void showRenderWindow();
     
 private:

@@ -129,7 +129,7 @@ mdlGUI::mdlGUI(QWidget * parent)
 	saveLayout = new QHBoxLayout();
 	saveButton = new QPushButton(tr("Save Result..."));
 	saveButton->setEnabled(false);
-	connect(saveButton, SIGNAL(clicked()), this, SLOT(saveBB()));
+	connect(saveButton, SIGNAL(clicked()), this, SLOT(saveAll()));
 	saveLayout->addWidget(saveButton);
 
 	showRenderLayout = new QHBoxLayout();
@@ -212,8 +212,9 @@ void mdlGUI::loadImage()
 
 	//Render the loaded image:
 	this->Renderer->RemoveAllViewProps(); //Remove previous image
-	this->RenderImage( this->reader->GetOutput(), "Input Image" );
+	this->RenderImage( this->reader->GetOutput() );
 	this->Renderer->ResetCamera();
+	this->RenderWidget->setWindowTitle("Input Image");
 	this->RenderWidget->GetRenderWindow()->Render();
 }
 
@@ -227,7 +228,9 @@ void mdlGUI::preprocess()
 		this->PrepImage = dialog->GetImage();
 
 		this->Renderer->RemoveAllViewProps(); //Remove previous image
-		this->RenderImage( this->PrepImage, "Preprocessed Image" );
+		this->RenderImage( this->PrepImage );
+		this->RenderWidget->setWindowTitle("Preprocessed Image");
+		this->RenderWidget->GetRenderWindow()->Render();
 
 		this->skelButton->setEnabled(true);
 		this->skelButton->setFocus();
@@ -270,8 +273,9 @@ void mdlGUI::integratedSkeleton()
 
 	//Render the points:
 	this->Renderer->RemoveAllViewProps(); //Remove previous image
-	this->RenderImage( this->PrepImage, "Preprocessed Image" );
-	this->RenderPoints( this->SkeletonPoints, "Skeleton Points" );
+	this->RenderImage( this->PrepImage );
+	this->RenderPoints( this->SkeletonPoints, 1.0, 1.0, 0.0 );
+	this->RenderWidget->setWindowTitle("Skeleton Points");
 	this->RenderWidget->GetRenderWindow()->Render();
 
 	this->bbButton->setEnabled(true);
@@ -308,8 +312,9 @@ void mdlGUI::mstBB()
 
 	//Render the Backbone:
 	this->Renderer->RemoveAllViewProps(); //Remove previous image
-	this->RenderImage( this->PrepImage, "Preprocessed Image" );
-	this->RenderPolyData( lastPath.toStdString() + "BackboneCandidate.vtk", "Backbone" );
+	this->RenderImage( this->PrepImage );
+	this->RenderPolyData( lastPath.toStdString() + "BackboneCandidate.vtk", 1.0, 1.0, 1.0 );
+	this->RenderWidget->setWindowTitle("Backbone");
 	this->RenderWidget->GetRenderWindow()->Render();
 
 	this->saveButton->setEnabled(true);
@@ -335,26 +340,31 @@ void mdlGUI::mstSpine()
 
 	//Render the Backbone:
 	this->Renderer->RemoveAllViewProps(); //Remove previous image
-	this->RenderImage( this->PrepImage, "Preprocessed Image" );
-	this->RenderPolyData( lastPath.toStdString() + "BackboneCandidate.vtk", "Backbone" );
-	this->RenderPolyData( lastPath.toStdString() + "SpineCandidate.vtk", "Spine" );
+	this->RenderImage( this->PrepImage );
+	this->RenderPolyData( lastPath.toStdString() + "BackboneCandidate.vtk", 1.0, 1.0, 1.0 );
+	this->RenderPolyData( lastPath.toStdString() + "SpineCandidate.vtk", 0.0, 1.0, 0.0 );
+	this->RenderWidget->setWindowTitle("Backbone + Spine");
 	this->RenderWidget->GetRenderWindow()->Render();
 
 	this->saveButton->setFocus();
 
 }
 
-void mdlGUI::saveBB()
+void mdlGUI::saveAll()
 {
-	QString filename = QFileDialog::getSaveFileName(this, tr("Save Backbone As"), lastPath, tr("VTK Files (*.vtk*)"));
+	QString filename = QFileDialog::getSaveFileName(this, tr("Save Results As"), lastPath, tr("VTK Files (*.vtk*)"));
 	if(filename == "")
 		return;
 
 	lastPath = QFileInfo(filename).absolutePath() + QDir::separator();
 
+	//Combine both Backbone and Spine:
+	std::vector<mdl::pairE> allPairs = this->BackbonePairs;
+	allPairs.insert( allPairs.end(), SpinePairs.begin(), SpinePairs.end() );
+
 	mdl::vtkFileHandler * FileHandler = new mdl::vtkFileHandler();
 	FileHandler->SetNodes( &(this->Nodes) );
-	FileHandler->SetLines( &(this->BackbonePairs) );
+	FileHandler->SetLines( &(allPairs) );
 	FileHandler->Write(filename.toStdString());
 	delete FileHandler;
 }
@@ -365,7 +375,7 @@ void mdlGUI::showRenderWindow()
 }
 
 //-----------------------------------------------------------------------------
-void mdlGUI::RenderImage(mdl::ImageType::Pointer image, const char *windowName)
+void mdlGUI::RenderImage(mdl::ImageType::Pointer image)
 {
 	this->ITKtoVTK->SetInput( image );
 	this->ITKtoVTK->Update();
@@ -373,9 +383,8 @@ void mdlGUI::RenderImage(mdl::ImageType::Pointer image, const char *windowName)
 
 	//remove all old actors
 	//this->Renderer->RemoveAllViewProps();
-  
 	//change the window title so the user knows what file is being displayed
-	this->RenderWidget->setWindowTitle(windowName);
+	//this->RenderWidget->setWindowTitle(windowName);
 
 	//create a volume from the specified image
 	vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> mapper = vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
@@ -421,20 +430,19 @@ vtkSmartPointer<vtkVolumeProperty> mdlGUI::NewRGBVolumeProperty(const double ran
 }
 
 //-----------------------------------------------------------------------------
-void mdlGUI::RenderPoints(std::vector<mdl::fPoint3D> points, const char *windowName)
+void mdlGUI::RenderPoints(std::vector<mdl::fPoint3D> points, double r, double g, double b)
 {
-  //remove all old actors
+  //Remove all old actors
   //this->Renderer->RemoveAllViewProps();
-
-  //render the clean image so that the points have some context
+  //Render the clean image so that the points have some context
   //this->RenderImage(this->Helper->GetImageData(), "anisotropic diffusion");
+  //Change the window title so the user knows what file is being displayed
+  //this->RenderWidget->setWindowTitle(windowName);
 
-  //change the window title so the user knows what file is being displayed
-  this->RenderWidget->setWindowTitle(windowName);
+	vtkSmartPointer<vtkActor> actor = this->CreateActorFromPoints(points);
+	actor->GetProperty()->SetColor(r, g, b);
+	this->Renderer->AddActor(actor);
 
-  vtkSmartPointer<vtkActor> actor = this->CreateActorFromPoints(points);
-
-  this->Renderer->AddActor(actor);
   //this->Renderer->ResetCamera();
   //this->RenderWidget->GetRenderWindow()->Render();
 }
@@ -471,23 +479,20 @@ vtkSmartPointer<vtkActor> mdlGUI::CreateActorFromPoints(std::vector<mdl::fPoint3
 	mapper->SetInput(glyph->GetOutput());
 
 	actor->SetMapper(mapper);
-	actor->GetProperty()->SetColor(1.0, 1.0, 0.0);
-
 	return actor;
 }
 
 //-----------------------------------------------------------------------------
-void mdlGUI::RenderPolyData(std::string filename, const char *windowName)
+void mdlGUI::RenderPolyData(std::string filename, double r, double g, double b)
 {
   //remove all old actors
   //this->Renderer->RemoveAllViewProps();
-
   //change the window title so the user knows what file is being displayed
-  this->RenderWidget->setWindowTitle(windowName);
+  //this->RenderWidget->setWindowTitle(windowName);
 
-  vtkSmartPointer<vtkActor> actor = this->CreateActorFromPolyDataFile(filename.c_str());
-
-  this->Renderer->AddActor(actor);
+	vtkSmartPointer<vtkActor> actor = this->CreateActorFromPolyDataFile(filename.c_str());
+	actor->GetProperty()->SetColor(r, g, b);
+	this->Renderer->AddActor(actor);
   //this->Renderer->ResetCamera();
   //this->RenderWidget->GetRenderWindow()->Render();
 }

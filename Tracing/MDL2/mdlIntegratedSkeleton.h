@@ -66,7 +66,7 @@ public:
 	//Optionally use Xiao Liang's method to compute surface curvature:
 	void SetUseXiaoLiangMethod(bool inp = true){ useXiaoLiangMethod = inp; };
 	//A TEST METHOD BY XIAO LIANG:
-	bool RunXiaoLSkeletonPoints(float sigma=0,int MoveStep =10);
+	//bool RunXiaoLSkeletonPoints(float sigma=0,int MoveStep =10);
 
 	//Get Result:
 	std::vector<fPoint3D> GetOutput(){ return skeletonPoints; };
@@ -107,8 +107,8 @@ private:
 	std::vector<fPoint3D> skeletonPoints;
 
 	// New Skeleton points Computation,  add in March,2010 
-	bool XiaoLComputeSkeletonPoints(void);
-	bool MovingSkeletonPointsAlongGVF(int Step);
+	//bool XiaoLComputeSkeletonPoints(void);
+	//bool MovingSkeletonPointsAlongGVF(int Step);
     
 	//Key functions:
 	bool createGradientVectorField(void);

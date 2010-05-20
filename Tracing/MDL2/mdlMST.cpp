@@ -50,6 +50,10 @@ MST::MST(ImageType::Pointer inImage)
 	edgeWeight.clear();
 	spanningTree.clear();
 	nodeDegree.clear();
+
+	m_VesselMap = m_inputImage;
+	RealSpineFeatureFilename = NULL;
+	NonSpineFeatureFilename = NULL;
 }
 
 
@@ -761,7 +765,8 @@ std::vector<pairE> MST::SpineExtract()
 	int num_nodes = (int)nodes.size();
 
 	if(num_nodes == 0 || (int)nodeDegree.size() == 0 || !mstGraph)
-	{return retLines;
+	{
+		return retLines;
 	}
 
 	// Create a Backbone vertice flag array
@@ -802,301 +807,319 @@ std::vector<pairE> MST::SpineExtract()
     IndexMap index = get(boost::vertex_index, prunedGraph);  // get index map of vertices
 	MDLClassifier LDA_RealSpine(3);
     MDLClassifier LDA_NonSpine(3);
-	int LDA_t1= LDA_RealSpine.MeanVectorandVarianceMatrix((char *)RealSpineFeatureFilename);
-	int LDA_t2= LDA_NonSpine.MeanVectorandVarianceMatrix((char *)NonSpineFeatureFilename);
+
+	int LDA_t1 = 0;
+	if(RealSpineFeatureFilename)
+		LDA_t1= LDA_RealSpine.MeanVectorandVarianceMatrix((char *)RealSpineFeatureFilename);
+	int LDA_t2 = 0;
+	if(NonSpineFeatureFilename)
+		LDA_t2 = LDA_NonSpine.MeanVectorandVarianceMatrix((char *)NonSpineFeatureFilename);
+
 	if (debug)
 	{
       if (LDA_t1 >0)
       {
-	   std::cout << " There is Real-Spine Feature Sample,We do machine learning based classification" << std::endl;
+		std::cout << " There is Real-Spine Feature Sample,We do machine learning based classification" << std::endl;
       }
       else 
       {
-	  std::cout << " There is not Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
+		std::cout << " There is not Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
       }
       if (LDA_t2 >0)
       {
-	  std::cout << " There is Non-Spine Feature Sample,We do machine learning based classification" << std::endl;
+		std::cout << " There is Non-Spine Feature Sample,We do machine learning based classification" << std::endl;
       }
       else 
       {
-	   std::cout << " There is Non-Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
+		std::cout << " There is Non-Spine Feature file for Machine Learning, thus we do the default classification" << std::endl;
       }
 	}
- 
 
-  // for all vertex in the graph
-   for(boost::tie(vi, vend) = vertices(prunedGraph); vi != vend; ++vi)
+	// for all vertex in the graph
+	for(boost::tie(vi, vend) = vertices(prunedGraph); vi != vend; ++vi)
     { 
-    vertsCurBr_Index2[0] = 0;
+		vertsCurBr_Index2[0] = 0;
 
-	// Get index from the graph IndexMap
-    int index_vert = int(index[*vi]); 
+		// Get index from the graph IndexMap
+		int index_vert = int(index[*vi]); 
+		if( index_vert == 0 || index_vert > (int)nodeDegree.size() )
+			continue;
 
-    // if the vertex is not on Backbone, continue
-    if (vertBackbone[index_vert]==0) 
-		continue;  
+		// if the vertex is not on Backbone, continue
+		if (vertBackbone[index_vert]==0) 
+			continue;  
 
-    int outdegree = (int)out_degree(*vi, prunedGraph);
+		int outdegree = (int)out_degree(*vi, prunedGraph);
 
-    int numBranch_on_Backbone = outdegree - nodeDegree.at(index_vert);
+		int numBranch_on_Backbone = outdegree - nodeDegree.at(index_vert-1);
 
-    // if it has at least one branch out of BackBone  
-    if (numBranch_on_Backbone <= 0)  continue;  
-    // For each out branch (edge) on the BackBone
+		// if it has at least one branch out of BackBone  
+		if (numBranch_on_Backbone <= 0)  
+			continue;  
+		
+		// For each out branch (edge) on the BackBone
+		for (boost::tie(outei, outedge_end) = out_edges(*vi, prunedGraph); outei != outedge_end; outei++)
+		{
+			int targ = (int)target(*outei, prunedGraph);
 
-    for (boost::tie(outei, outedge_end) = out_edges(*vi, prunedGraph); outei != outedge_end; outei++)
-      {
-      int targ = (int)target(*outei, prunedGraph);
-
-	  // the edge is on BackBone, continue
-      if (vertBackbone[targ])  continue;  
-      meanDensityBranch[0] = 0;
-      meanVesselBranch[0] = 0;
-      vertsCurBranch2[0][vertsCurBr_Index2[0]] = (int)source(*outei, prunedGraph);
-      vertsCurBr_Index2[0]++;
-      vertsCurBranch2[0][vertsCurBr_Index2[0]] = (int)target(*outei, prunedGraph);
-      num_leaves++;
-
-      while (out_degree(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], prunedGraph), prunedGraph) == 2)
-       {
-        for (boost::tie(outei2, outedge_end2) =
-             out_edges(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], prunedGraph),prunedGraph);
-             outei2 != outedge_end2; ++outei2)
-          {
-            if (target(*outei2, prunedGraph) == (unsigned int)vertsCurBranch2[0][vertsCurBr_Index2[0]-1])
-              continue;
-            vertsCurBranch2[0][vertsCurBr_Index2[0]+1] = (int)target(*outei2, prunedGraph);
-          } // end for
-        
-		vertsCurBr_Index2[0]++;
-        
-	   } // end while 
-
-      // Evaluate with MDL if the branch is chosen
-      bool branchChosen = 1;
-      length_leaf[0] = 0;
-
-      for (int j = 0; j <= vertsCurBr_Index2[0]; j++)
-        {
-         indVert = vertsCurBranch2[0][j];
-     
-	     // output the locations 
-         //fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
-        
-          if (j==0)indVert_last = indVert;
-          if(indVert >= (int)this->nodes.size())indVert = indVert_last;
-
-		  fPoint3D vertexPosStart,vertexPosEnd;
-		  vertexPosStart.x = this->nodes.at(indVert).x;
-		  vertexPosStart.y = this->nodes.at(indVert).y;
-          vertexPosStart.z = this->nodes.at(indVert).z;
-		  vertexPosEnd.x = this->nodes.at(indVert_last).x;
-          vertexPosEnd.y = this->nodes.at(indVert_last).y;
-		  vertexPosEnd.z = this->nodes.at(indVert_last).z;
-
-          double length_edge = (vertexPosStart.x-vertexPosEnd.x)*(vertexPosStart.x-vertexPosEnd.x);
-		  length_edge+= (vertexPosStart.y-vertexPosEnd.y)*(vertexPosStart.y-vertexPosEnd.y);
-		  length_edge+= (vertexPosStart.z-vertexPosEnd.z)*(vertexPosStart.z-vertexPosEnd.z);
-
-		  length_edge = sqrt(length_edge);
-		  length_leaf[0] += length_edge;
-		  indVert_last = indVert;
-          
-          ImageType::IndexType index;
-		  index[0] = roundToInt((double) vertexPosStart.x);
-		  index[1] = roundToInt((double) vertexPosStart.y);
-		  index[2] = roundToInt((double) vertexPosStart.z);
-	      PixelType pix1 = m_inputImage->GetPixel(index);
-		  PixelType pix2 = m_VesselMap->GetPixel(index);
-		  meanDensityBranch[0] += pix1;
-          meanVesselBranch[0] += pix2;
-        } // end for 
+			// the edge is on BackBone, continue
+			if (vertBackbone[targ])  
+				continue;  
       
-	    meanDensityBranch[0] = meanDensityBranch[0]/ (vertsCurBr_Index2[0]+1);
-        meanVesselBranch[0] = meanVesselBranch[0] / (vertsCurBr_Index2[0]+1);
+			meanDensityBranch[0] = 0;
+			meanVesselBranch[0] = 0;
+			vertsCurBranch2[0][vertsCurBr_Index2[0]] = (int)source(*outei, prunedGraph);
+			vertsCurBr_Index2[0]++;
+			vertsCurBranch2[0][vertsCurBr_Index2[0]] = (int)target(*outei, prunedGraph);
+			num_leaves++;
 
-        sample[0] =  meanDensityBranch[0];
-        sample[1] =  length_leaf[0];
-        sample[2] =  meanVesselBranch[0];
+			while (out_degree(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], prunedGraph), prunedGraph) == 2)
+			{
+				for (boost::tie(outei2, outedge_end2) =
+					out_edges(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], prunedGraph),prunedGraph);
+					outei2 != outedge_end2; ++outei2
+					)
+				{
+					if (target(*outei2, prunedGraph) == (unsigned int)vertsCurBranch2[0][vertsCurBr_Index2[0]-1])
+						continue;
+					vertsCurBranch2[0][vertsCurBr_Index2[0]+1] = (int)target(*outei2, prunedGraph);
+				} // end for
+        
+				vertsCurBr_Index2[0]++;
+        
+			} // end while 
+
+			// Evaluate with MDL if the branch is chosen
+			bool branchChosen = 1;
+			length_leaf[0] = 0;
+
+			for (int j = 0; j <= vertsCurBr_Index2[0]; j++)
+			{
+				indVert = vertsCurBranch2[0][j];
+     
+				// output the locations 
+				//fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
+        
+				if (j==0)
+					indVert_last = indVert;
+				if(indVert >= (int)this->nodes.size())
+					indVert = indVert_last;
+
+				fPoint3D vertexPosStart,vertexPosEnd;
+				vertexPosStart.x = this->nodes.at(indVert).x;
+				vertexPosStart.y = this->nodes.at(indVert).y;
+				vertexPosStart.z = this->nodes.at(indVert).z;
+				vertexPosEnd.x = this->nodes.at(indVert_last).x;
+				vertexPosEnd.y = this->nodes.at(indVert_last).y;
+				vertexPosEnd.z = this->nodes.at(indVert_last).z;
+
+				double length_edge = (vertexPosStart.x-vertexPosEnd.x)*(vertexPosStart.x-vertexPosEnd.x);
+				length_edge+= (vertexPosStart.y-vertexPosEnd.y)*(vertexPosStart.y-vertexPosEnd.y);
+				length_edge+= (vertexPosStart.z-vertexPosEnd.z)*(vertexPosStart.z-vertexPosEnd.z);
+
+				length_edge = sqrt(length_edge);
+				length_leaf[0] += length_edge;
+				indVert_last = indVert;
+          
+				ImageType::IndexType index;
+				index[0] = roundToInt((double) vertexPosStart.x);
+				index[1] = roundToInt((double) vertexPosStart.y);
+				index[2] = roundToInt((double) vertexPosStart.z);
+				PixelType pix1 = m_inputImage->GetPixel(index);
+				PixelType pix2 = m_VesselMap->GetPixel(index);
+				meanDensityBranch[0] += pix1;
+				meanVesselBranch[0] += pix2;
+			} // end for 
+      
+			meanDensityBranch[0] = meanDensityBranch[0]/ (vertsCurBr_Index2[0]+1);
+			meanVesselBranch[0] = meanVesselBranch[0] / (vertsCurBr_Index2[0]+1);
+
+			sample[0] =  meanDensityBranch[0];
+			sample[1] =  length_leaf[0];
+			sample[2] =  meanVesselBranch[0];
 
     
-	   if (LDA_t1>0)
-          mahalanobis_dist[0] = LDA_RealSpine.MahalanobisDist(sample); 
-       else 
-          mahalanobis_dist[0] = LDA_RealSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 1);
-       if (LDA_t2>0)
-          mahalanobis_dist_nonSpine[0] = LDA_NonSpine.MahalanobisDist(sample);
-       else 
-          mahalanobis_dist_nonSpine[0] = LDA_NonSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 0);
+			if (LDA_t1>0)
+				mahalanobis_dist[0] = LDA_RealSpine.MahalanobisDist(sample); 
+			else 
+				mahalanobis_dist[0] = LDA_RealSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 1);
+			if (LDA_t2>0)
+				mahalanobis_dist_nonSpine[0] = LDA_NonSpine.MahalanobisDist(sample);
+			else 
+				mahalanobis_dist_nonSpine[0] = LDA_NonSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 0);
 
-       int ind2Brch = 0;
+			int ind2Brch = 0;
 
-        // For each 2nd level branch starting from the end of 1st level branch
-       for (boost::tie(outei2, outedge_end2) =out_edges(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], prunedGraph),prunedGraph);
-           outei2 != outedge_end2; ++outei2)
-         {
-          if (target(*outei2, prunedGraph) == (unsigned int)vertsCurBranch2[0][vertsCurBr_Index2[0]-1])
-             continue;  // continue if the out edge belongs to the old branch
-          ind2Brch++;
-          vertsCurBranch2[ind2Brch][0] = vertsCurBranch2[0][vertsCurBr_Index2[0]];
-          vertsCurBr_Index2[ind2Brch] = 1;
-          vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]] = (int)target(*outei2, prunedGraph);
-          // Search for the end of 2nd level branch
-          while (out_degree(vertex(vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]], prunedGraph), prunedGraph) == 2)
-          {
-          //curVert = vertex(vertsCurBranch[vertsCurBr_Index], msTree);
-            for (boost::tie(outei3, outedge_end3) = out_edges(vertex(vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]], prunedGraph), prunedGraph);
-                                                outei3 != outedge_end3; ++outei3) 
-		    {
-              if (target(*outei3, prunedGraph) == (unsigned int)vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]-1])
-                continue;
-               vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]+1] = (int)target(*outei3, prunedGraph);
-            } // end for
-              vertsCurBr_Index2[ind2Brch]++;
-           } // end while 
+			// For each 2nd level branch starting from the end of 1st level branch
+			for (boost::tie(outei2, outedge_end2) = out_edges(vertex(vertsCurBranch2[0][vertsCurBr_Index2[0]], prunedGraph),prunedGraph);
+				outei2 != outedge_end2; ++outei2)
+			{
+				if (target(*outei2, prunedGraph) == (unsigned int)vertsCurBranch2[0][vertsCurBr_Index2[0]-1])
+					continue;  // continue if the out edge belongs to the old branch
 
-        // Compute the feature-based description length for the 2nd level branch
-          length_leaf[ind2Brch] = 0;
-          meanDensityBranch[ind2Brch] = 0;
-          meanVesselBranch[ind2Brch] = 0;
-          num_leaves++;  // for training purpose
-          
-		  for (int j = 0; j <= vertsCurBr_Index2[ind2Brch]; j++)
-          {
-            indVert = vertsCurBranch2[ind2Brch][j];
-          
-		    // second level feature 
-            //fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
-         
-            if (j==0) indVert_last = indVert;
-			if(indVert >= (int)this->nodes.size())indVert = indVert_last;
+				ind2Brch++;
+				vertsCurBranch2[ind2Brch][0] = vertsCurBranch2[0][vertsCurBr_Index2[0]];
+				vertsCurBr_Index2[ind2Brch] = 1;
+				vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]] = (int)target(*outei2, prunedGraph);
 				
-            fPoint3D vertexPosStart,vertexPosEnd;
-			vertexPosStart.x = this->nodes.at(indVert).x;
-			vertexPosStart.y = this->nodes.at(indVert).y;
-            vertexPosStart.z = this->nodes.at(indVert).z;
-			vertexPosEnd.x = this->nodes.at(indVert_last).x;
-            vertexPosEnd.y = this->nodes.at(indVert_last).y;
-			vertexPosEnd.z = this->nodes.at(indVert_last).z;
+				// Search for the end of 2nd level branch
+				while (out_degree(vertex(vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]], prunedGraph), prunedGraph) == 2)
+				{
+					//curVert = vertex(vertsCurBranch[vertsCurBr_Index], msTree);
+					for (boost::tie(outei3, outedge_end3) = out_edges(vertex(vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]], prunedGraph), prunedGraph);
+                                                outei3 != outedge_end3; ++outei3) 
+					{
+						if (target(*outei3, prunedGraph) == (unsigned int)vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]-1])
+							continue;
+						vertsCurBranch2[ind2Brch][vertsCurBr_Index2[ind2Brch]+1] = (int)target(*outei3, prunedGraph);
+					} // end for
+					vertsCurBr_Index2[ind2Brch]++;
+				} // end while 
 
-            double length_edge = (vertexPosStart.x-vertexPosEnd.x)*(vertexPosStart.x-vertexPosEnd.x);
-		    length_edge+= (vertexPosStart.y-vertexPosEnd.y)*(vertexPosStart.y-vertexPosEnd.y);
-			length_edge+= (vertexPosStart.z-vertexPosEnd.z)*(vertexPosStart.z-vertexPosEnd.z);
+				// Compute the feature-based description length for the 2nd level branch
+				length_leaf[ind2Brch] = 0;
+				meanDensityBranch[ind2Brch] = 0;
+				meanVesselBranch[ind2Brch] = 0;
+				num_leaves++;  // for training purpose
+          
+				for (int j = 0; j <= vertsCurBr_Index2[ind2Brch]; j++)
+				{
+					indVert = vertsCurBranch2[ind2Brch][j];
+          
+					// second level feature 
+					//fprintf(fclass_identify, "%d  %6.2f %6.2f %6.2f\n", num_leaves, vertexPos[indVert].x, vertexPos[indVert].y, vertexPos[indVert].z);
+         
+					if (j==0) 
+						indVert_last = indVert;
+					if(indVert >= (int)this->nodes.size())
+						indVert = indVert_last;
+				
+					fPoint3D vertexPosStart,vertexPosEnd;
+					vertexPosStart.x = this->nodes.at(indVert).x;
+					vertexPosStart.y = this->nodes.at(indVert).y;
+					vertexPosStart.z = this->nodes.at(indVert).z;
+					vertexPosEnd.x = this->nodes.at(indVert_last).x;
+					vertexPosEnd.y = this->nodes.at(indVert_last).y;
+					vertexPosEnd.z = this->nodes.at(indVert_last).z;
 
-			length_edge = sqrt(length_edge);
-			length_leaf[ind2Brch] += length_edge;
-			indVert_last = indVert;
-			ImageType::IndexType index;
+					double length_edge = (vertexPosStart.x-vertexPosEnd.x)*(vertexPosStart.x-vertexPosEnd.x);
+					length_edge+= (vertexPosStart.y-vertexPosEnd.y)*(vertexPosStart.y-vertexPosEnd.y);
+					length_edge+= (vertexPosStart.z-vertexPosEnd.z)*(vertexPosStart.z-vertexPosEnd.z);
 
-		    index[0] = roundToInt((double) vertexPosStart.x);
-		    index[1] = roundToInt((double) vertexPosStart.y);
-		    index[2] = roundToInt((double) vertexPosStart.z);
-	        PixelType pix1 = m_inputImage->GetPixel(index);
-		    PixelType pix2 = m_VesselMap->GetPixel(index);
-		    meanDensityBranch[ind2Brch] += pix1;
-            meanVesselBranch[ind2Brch] += pix2;   
-          } // end for
+					length_edge = sqrt(length_edge);
+					length_leaf[ind2Brch] += length_edge;
+					indVert_last = indVert;
+					ImageType::IndexType index;
 
-         meanDensityBranch[ind2Brch] = meanDensityBranch[ind2Brch]/ (vertsCurBr_Index2[ind2Brch]+1);
-         meanVesselBranch[ind2Brch] = meanVesselBranch[ind2Brch] / (vertsCurBr_Index2[ind2Brch]+1);
+					index[0] = roundToInt((double) vertexPosStart.x);
+					index[1] = roundToInt((double) vertexPosStart.y);
+					index[2] = roundToInt((double) vertexPosStart.z);
+					PixelType pix1 = m_inputImage->GetPixel(index);
+					PixelType pix2 = m_VesselMap->GetPixel(index);
+					meanDensityBranch[ind2Brch] += pix1;
+					meanVesselBranch[ind2Brch] += pix2;   
+				} // end for
 
-         // Compute the average features of two level branches
-         length_2leaf[ind2Brch] = length_leaf[ind2Brch] + length_leaf[0];
-         aveDensityBranch[ind2Brch] = (meanDensityBranch[ind2Brch]*length_leaf[ind2Brch] +  meanDensityBranch[0]*length_leaf[0]);
-         aveDensityBranch[ind2Brch] = aveDensityBranch[ind2Brch] / length_2leaf[ind2Brch];
-         aveVesselBranch[ind2Brch] = (meanVesselBranch[ind2Brch]*length_leaf[ind2Brch] + meanVesselBranch[0]*length_leaf[0]);
-         aveVesselBranch[ind2Brch] = aveVesselBranch[ind2Brch] / length_2leaf[ind2Brch];
-	     sample[0] =  aveDensityBranch[ind2Brch];
-         sample[1] =  length_2leaf[ind2Brch];
-         sample[2] =  aveVesselBranch[ind2Brch];
+				meanDensityBranch[ind2Brch] = meanDensityBranch[ind2Brch]/ (vertsCurBr_Index2[ind2Brch]+1);
+				meanVesselBranch[ind2Brch] = meanVesselBranch[ind2Brch] / (vertsCurBr_Index2[ind2Brch]+1);
+
+				// Compute the average features of two level branches
+				length_2leaf[ind2Brch] = length_leaf[ind2Brch] + length_leaf[0];
+				aveDensityBranch[ind2Brch] = (meanDensityBranch[ind2Brch]*length_leaf[ind2Brch] +  meanDensityBranch[0]*length_leaf[0]);
+				aveDensityBranch[ind2Brch] = aveDensityBranch[ind2Brch] / length_2leaf[ind2Brch];
+				aveVesselBranch[ind2Brch] = (meanVesselBranch[ind2Brch]*length_leaf[ind2Brch] + meanVesselBranch[0]*length_leaf[0]);
+				aveVesselBranch[ind2Brch] = aveVesselBranch[ind2Brch] / length_2leaf[ind2Brch];
+				sample[0] =  aveDensityBranch[ind2Brch];
+				sample[1] =  length_2leaf[ind2Brch];
+				sample[2] =  aveVesselBranch[ind2Brch];
         
 	
-		 if (LDA_t1>0)
-          mahalanobis_dist[ind2Brch] = LDA_RealSpine.MahalanobisDist(sample); 
-         else 
-          mahalanobis_dist[ind2Brch] = LDA_RealSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 1);
-         if (LDA_t2>0)
-          mahalanobis_dist_nonSpine[ind2Brch] = LDA_NonSpine.MahalanobisDist(sample);
-         else 
-          mahalanobis_dist_nonSpine[ind2Brch] = LDA_NonSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 0);
+				if (LDA_t1>0)
+					mahalanobis_dist[ind2Brch] = LDA_RealSpine.MahalanobisDist(sample); 
+				else 
+					mahalanobis_dist[ind2Brch] = LDA_RealSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 1);
+				if (LDA_t2>0)
+					mahalanobis_dist_nonSpine[ind2Brch] = LDA_NonSpine.MahalanobisDist(sample);
+				else 
+					mahalanobis_dist_nonSpine[ind2Brch] = LDA_NonSpine.MahalanobisDist(meanDensityBranch[0], length_leaf[0], meanVesselBranch[0], 0);
 
-      } // End of 2nd level branch
+			} // End of 2nd level branch
 
-    
-     //----------------------------MDL fitness for spine --------------------------------------//
+			//----------------------------MDL fitness for spine --------------------------------------//
  
-      int MDL_minIndex = -1; // Indicate that empty model set is chosen
-      double sum_mahalanobis_nonSpine = 0;
-      for (int i = 0; i<= ind2Brch; i++)
-        sum_mahalanobis_nonSpine += mahalanobis_dist_nonSpine[i];
+			int MDL_minIndex = -1; // Indicate that empty model set is chosen
+			double sum_mahalanobis_nonSpine = 0;
+			for (int i = 0; i<= ind2Brch; i++)
+				sum_mahalanobis_nonSpine += mahalanobis_dist_nonSpine[i];
       
-	  double MDL_min = sum_mahalanobis_nonSpine;
+			double MDL_min = sum_mahalanobis_nonSpine;
 
-      // 2. Only 1st level branch model set
-      double MDL = sum_mahalanobis_nonSpine - mahalanobis_dist_nonSpine[0] + mahalanobis_dist[0];
-      MDL = MDL + (1-Alpha)*(1/Alpha)*(-14.0/3.0);      // alpha represents the model description length of one branch
-      if (MDL < MDL_min)
-        {
-        MDL_min = MDL;
-        MDL_minIndex = 0;  
-        }
-      // 3. Two level branch model set, including 1st level and 2nd level branches
-      for (int i = 1; i <= ind2Brch; i++)
-        {
-        MDL = sum_mahalanobis_nonSpine - mahalanobis_dist_nonSpine[i] + mahalanobis_dist[i];
-        MDL = MDL + (1-Alpha)*(1/Alpha)*(-14.0/3.0);
-        if (MDL <  MDL_min)
-          {
-          MDL_min = MDL;
-          MDL_minIndex =  i;
-          }
-        } //end for
+			// 2. Only 1st level branch model set
+			double MDL = sum_mahalanobis_nonSpine - mahalanobis_dist_nonSpine[0] + mahalanobis_dist[0];
+			MDL = MDL + (1-Alpha)*(1/Alpha)*(-14.0/3.0);      // alpha represents the model description length of one branch
+			if (MDL < MDL_min)
+			{
+				MDL_min = MDL;
+				MDL_minIndex = 0;  
+			}
+      
+			// 3. Two level branch model set, including 1st level and 2nd level branches
+			for (int i = 1; i <= ind2Brch; i++)
+			{
+				MDL = sum_mahalanobis_nonSpine - mahalanobis_dist_nonSpine[i] + mahalanobis_dist[i];
+				MDL = MDL + (1-Alpha)*(1/Alpha)*(-14.0/3.0);
+				if (MDL <  MDL_min)
+				{
+					MDL_min = MDL;
+					MDL_minIndex =  i;
+				}
+			} //end for
     
-      // Adding Spine model - Only add the branches with the minimal MDL
-       if (MDL_minIndex >= 0)
-        {
-         for (int j = 1; j <= vertsCurBr_Index2[0]; j++)
-           {
-            add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], DetectedSpine); 
-           }
-         if (MDL_minIndex >= 1)
-           {
-           for (int j = 1; j <= vertsCurBr_Index2[MDL_minIndex]; j++)
-            {
-             add_edge(vertsCurBranch2[MDL_minIndex][j-1],
-                     vertsCurBranch2[MDL_minIndex][j],  DetectedSpine);
-            } // end for
-          }// end if
-        }// end if(MDL_minIndex >= 0)
+			// Adding Spine model - Only add the branches with the minimal MDL
+			if (MDL_minIndex >= 0)
+			{
+				for (int j = 1; j <= vertsCurBr_Index2[0]; j++)
+				{
+					add_edge(vertsCurBranch2[0][j-1], vertsCurBranch2[0][j], DetectedSpine); 
+				}
+				if (MDL_minIndex >= 1)
+				{
+					for (int j = 1; j <= vertsCurBr_Index2[MDL_minIndex]; j++)
+					{
+						add_edge(vertsCurBranch2[MDL_minIndex][j-1],
+							vertsCurBranch2[MDL_minIndex][j],  DetectedSpine);
+					} // end for
+				}// end if
+			}// end if(MDL_minIndex >= 0)
 
-      // 1. Empty model set is chosen (no branch)
-       sum_mahalanobis_nonSpine = 0;
-       for (int i = 0; i<= ind2Brch; i++) 
-       {
-        sum_mahalanobis_nonSpine += mahalanobis_dist_nonSpine[i];
-       }
+			// 1. Empty model set is chosen (no branch)
+			sum_mahalanobis_nonSpine = 0;
+			for (int i = 0; i<= ind2Brch; i++) 
+			{
+				sum_mahalanobis_nonSpine += mahalanobis_dist_nonSpine[i];
+			}
 
-      // 2. Only 1st level branch model set
-       MDL = sum_mahalanobis_nonSpine - mahalanobis_dist_nonSpine[0] + mahalanobis_dist[0];
-       MDL_minIndex = 0; // Indicate that first level branch model set is chosen
-       MDL_min = MDL;
+			// 2. Only 1st level branch model set
+			MDL = sum_mahalanobis_nonSpine - mahalanobis_dist_nonSpine[0] + mahalanobis_dist[0];
+			MDL_minIndex = 0; // Indicate that first level branch model set is chosen
+			MDL_min = MDL;
 
-      // 3. Two level branch model set, including 1st level and 2nd level branches
-       for (int i = 1; i <= ind2Brch; i++) 
-       {
-         MDL = sum_mahalanobis_nonSpine - mahalanobis_dist_nonSpine[i] + mahalanobis_dist[i];
-         if (MDL <  MDL_min) 
-         {
-          MDL_min = MDL;
-          MDL_minIndex =  i;
-         }
-       }// end for 
-     
-	   //fprintf(fout_MDL, "%10d %20f %20f\n", ind2Brch, sum_mahalanobis_nonSpine, MDL_min);     
-   }    // End of each out edge 
-  } // End of all vertice
+			// 3. Two level branch model set, including 1st level and 2nd level branches
+			for (int i = 1; i <= ind2Brch; i++) 
+			{
+				MDL = sum_mahalanobis_nonSpine - mahalanobis_dist_nonSpine[i] + mahalanobis_dist[i];
+				if (MDL <  MDL_min) 
+				{
+					MDL_min = MDL;
+					MDL_minIndex =  i;
+				}
+			}// end for
 
+			//fprintf(fout_MDL, "%10d %20f %20f\n", ind2Brch, sum_mahalanobis_nonSpine, MDL_min); 
+
+		} // End of each out edge
+
+	} // End of all vertice
 
     //Get the spine lines from the Graph DetectedSpine
 	typedef boost::graph_traits < Graph >::edge_iterator Edge_iter;
@@ -1116,7 +1139,7 @@ std::vector<pairE> MST::SpineExtract()
 		vtkFileHandler * fhdl = new vtkFileHandler();
 		fhdl->SetNodes(&nodes);
 		fhdl->SetLines(&retLines);
-		fhdl->Write("MDLSpine.vtk");
+		fhdl->Write("SpineCandidate.vtk");
 		delete fhdl;
 	}
 	return retLines;

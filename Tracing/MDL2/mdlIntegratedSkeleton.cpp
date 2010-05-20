@@ -106,10 +106,9 @@ bool IntegratedSkeleton::Update()
 	this->computeCriticalPointSeeds(); //If fails we are not dead in the water
 
 	return this->computeSkeleton();
-	//return this->MovingSkeletonPointsAlongGVF(10);
 }
 
-
+/*
 bool IntegratedSkeleton::RunXiaoLSkeletonPoints(float sigma, int MoveStep)
 {
 	if (sigma==0)
@@ -134,6 +133,7 @@ bool IntegratedSkeleton::RunXiaoLSkeletonPoints(float sigma, int MoveStep)
     
 	return true;
 }
+*/
 
 int IntegratedSkeleton::sign(float value)
 {
@@ -1562,6 +1562,7 @@ bool IntegratedSkeleton:: createGradientVectorField(float sigma)
 
 }
 
+/*
 bool IntegratedSkeleton::XiaoLComputeSkeletonPoints(void)
 {
     skeletonPoints.clear();
@@ -1718,7 +1719,8 @@ bool IntegratedSkeleton::XiaoLComputeSkeletonPoints(void)
 	return true;
 
 }
-
+*/
+/*
 bool IntegratedSkeleton::MovingSkeletonPointsAlongGVF(int Step)
 {
   // first we normalize the GVF
@@ -1766,5 +1768,6 @@ bool IntegratedSkeleton::MovingSkeletonPointsAlongGVF(int Step)
 
 	return true;
 }
+*/
 
 }
