@@ -86,7 +86,12 @@ public:
   
   //: Return the name of image i
   std::string const & image_name(int i) const;
-
+  
+  //: Return the index of the image name
+  //
+  //  If the image is not there, it returns -1
+  int image_index(std::string name) const;
+  
   //: Return the list of image sizes
   std::vector<SizeType> const & image_sizes() const;
 
@@ -123,6 +128,9 @@ public:
 
   //: Get the error bound
   double get_error_bound() const;
+
+  //: Get the list of adjacent images that overlap with the anchor image
+  void get_adjacent_images(std::string anchor_image, std::vector<std::string>& adjacent_images) const; 
 
 private: 
   void initialize(std::vector<fregl_reg_record::Pointer> const & reg_records);

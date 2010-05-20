@@ -277,11 +277,36 @@ fregl_joint_register::get_error_bound() const
   return error_bound_;
 }
 
+void
+fregl_joint_register::get_adjacent_images(std::string anchor_image, std::vector<std::string>& adjacent_images) const
+{
+  int index = image_index(anchor_image);
+  assert(index >= 0);
+
+  for (unsigned int i = 0; i<image_ids_.size(); i++) {
+    if (overlap_[index][i] > 0 && index != i) {
+      adjacent_images.push_back(image_ids_[i]);
+    }
+  }
+}
+
+
 std::vector<std::string> const &
 fregl_joint_register::
 image_names() const
 {
   return image_ids_;
+}
+
+int
+fregl_joint_register::
+image_index(std::string name) const
+{
+  for (unsigned int i = 0; i<image_ids_.size(); i++)
+    if (name == image_ids_[i]) {
+      return i;
+    }
+  return -1;
 }
 
 std::vector<fregl_joint_register::SizeType> const &
@@ -777,6 +802,7 @@ write_xml(std::string const& filename, int sub_graphs_built, bool gen_temp_stuff
   // Set up the temp file for storing the overlap & errors
   std::ofstream temp_good, temp_bad, temp_overlap, temp_debug;
   if (gen_temp_stuff) {
+    
     std::string filename_good = filename+"_debug_good.txt";
     std::string filename_bad = filename+"_debug_bad.txt";
     std::string filename_overlap = filename+"_debug_overlapped.txt";
@@ -819,6 +845,21 @@ write_xml(std::string const& filename, int sub_graphs_built, bool gen_temp_stuff
     temp_good.close();
     temp_bad.close();
     temp_overlap.close();
+  }
+  // Do the adjacency output if debug set
+  if (gen_temp_stuff) {
+    std::string filename_adjacency = filename+"_debug_adjacency.txt";
+    std::ofstream temp_adjacency(filename_adjacency.c_str());
+    for (unsigned int i = 0; i<image_ids_.size(); i++) {
+      temp_adjacency<<image_ids_[i]<<":\t";
+      std::vector<std::string> neighbors;
+      get_adjacent_images(image_ids_[i],neighbors);
+      for (unsigned int j = 0; j<neighbors.size(); j++) {
+        temp_adjacency<<neighbors[j]<<"\t";
+      }
+      temp_adjacency<<"\n";
+    }
+    temp_adjacency.close();
   }
   
   /* 
