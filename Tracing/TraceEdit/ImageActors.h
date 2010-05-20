@@ -64,7 +64,7 @@ struct imageFileHandle
 	/*vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunction;
 	vtkSmartPointer<vtkColorTransferFunction> colorTransferFunction;*/
 	vtkSmartPointer<vtkVolumeProperty> volumeProperty;
-	//vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper;
+	vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper;
 	vtkSmartPointer<vtkGPUVolumeRayCastMapper> volumeMapperGPU;
 	vtkSmartPointer<vtkVolume> volume;
 };
@@ -102,6 +102,7 @@ public:
 	void setOpacityValueMax(double opacity);
 	double getOpacityValueMax();
 private:
+	bool useGPURendering;
 	void syncColorTransfetFunction();
 	void syncOpacityTransfetFunction();
 	vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunction;

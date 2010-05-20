@@ -37,6 +37,10 @@ ADD_LIBRARY(Trace
   View3D.h          View3D.cxx 
   ${GUI_MOC_SRCS} 
   )
+OPTION( USE_GPUREN "Use GPU for Rendering" OFF )
+IF(USE_GPUREN)
+	ADD_DEFINITIONS(-DUSE_GPUREN)
+ENDIF(USE_GPUREN)
 
 TARGET_LINK_LIBRARIES(Trace ${Libraries})
 
