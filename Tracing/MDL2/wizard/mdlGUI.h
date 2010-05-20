@@ -138,11 +138,12 @@ private:
 	QWidget * masterWidget;
 
 	//*****
-	typedef itk::ImageFileReader< mdl::ImageType > ReaderType;
-	ReaderType::Pointer reader;
+
+	mdl::ImageType::Pointer OrigImage;
 
 	QVTKWidget * RenderWidget;
 	vtkSmartPointer<vtkRenderer> Renderer;
+
 	typedef itk::ImageToVTKImageFilter< mdl::ImageType > ITKtoVTKType;
 	ITKtoVTKType::Pointer ITKtoVTK;
 

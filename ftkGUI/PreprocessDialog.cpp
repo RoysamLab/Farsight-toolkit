@@ -14,11 +14,12 @@ limitations under the License.
 =========================================================================*/
 #include "PreprocessDialog.h"
 
-//******************************************************************************************
-//******************************************************************************************
-// A dialog to get the paramaters file for the preprocessing to use and specify the channel 
-// if image has more than one:
-//******************************************************************************************
+PreprocessDialog::~PreprocessDialog()
+{
+	if(prep)
+		delete prep;
+}
+
 PreprocessDialog::PreprocessDialog(QString lastPath, QWidget *parent)
 : QDialog(parent)
 {

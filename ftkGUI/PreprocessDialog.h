@@ -42,6 +42,7 @@ class PreprocessDialog : public QDialog
 	Q_OBJECT
 public:
 	PreprocessDialog(QString lastPath = "", QWidget *parent = 0);
+	~PreprocessDialog();
 	void SetImage(ftk::Preprocess::ImageType3D::Pointer im);
 	ftk::Preprocess::ImageType3D::Pointer GetImage();
 	

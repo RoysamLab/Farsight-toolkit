@@ -60,6 +60,7 @@ limitations under the License.
 #include "itkGrayscaleMorphologicalOpeningImageFilter.h"
 #include "itkGrayscaleMorphologicalClosingImageFilter.h"
 #include "itkCannyEdgeDetectionImageFilter.h"
+#include "itkImageDuplicator.h"
 
 #include "GraphCuts/itkMinErrorThresholdImageFilter.h"
 #include "GraphCuts/new_graph.h"

@@ -19,7 +19,11 @@ namespace ftk
 
 Preprocess::Preprocess(ImageType3D::Pointer img)
 {
-	myImg = img;
+	typedef itk::ImageDuplicator< ImageType3D > DuplicatorType; 
+	DuplicatorType::Pointer duplicator = DuplicatorType::New(); 
+	duplicator->SetInputImage(img); 
+	duplicator->Update(); 
+	myImg = duplicator->GetOutput();
 }
 
 Preprocess::Preprocess(RGBImageType3D::Pointer img)

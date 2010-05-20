@@ -169,9 +169,8 @@ mdlGUI::mdlGUI(QWidget * parent)
 	this->RenderWidget->setWindowTitle("Render Window");
 	this->RenderWidget->show();
 
-	this->reader = ReaderType::New();
+	OrigImage = NULL;
 	this->ITKtoVTK = ITKtoVTKType::New();
-
 	PrepImage = NULL;
 	this->Skel = 0;
 	this->MinSpanTree = 0;
@@ -188,10 +187,15 @@ void mdlGUI::loadImage()
 
 	lastPath = QFileInfo(filename).absolutePath() + QDir::separator();
 
-	this->reader->SetFileName(filename.toStdString());
+	//Put the filename in the label:
+	this->imageLabel->setText(filename);
+
+	typedef itk::ImageFileReader< mdl::ImageType > ReaderType;
+	ReaderType::Pointer reader = ReaderType::New();
+	reader->SetFileName(filename.toStdString());
 	try
 	{
-		this->reader->Update();
+		reader->Update();
     }
 	catch( itk::ExceptionObject & err )
 	{
@@ -200,8 +204,14 @@ void mdlGUI::loadImage()
 		return;
     }
 
-	//Put the filename in the label:
-	this->imageLabel->setText(filename);
+	this->OrigImage = reader->GetOutput();
+
+	//Render the loaded image:
+	this->Renderer->RemoveAllViewProps(); //Remove previous image
+	this->RenderImage( this->OrigImage );
+	this->Renderer->ResetCamera();
+	this->RenderWidget->setWindowTitle("Input Image");
+	this->RenderWidget->GetRenderWindow()->Render();
 
 	this->prepButton->setEnabled(true);
 	this->prepButton->setFocus();
@@ -209,36 +219,32 @@ void mdlGUI::loadImage()
 	this->bbButton->setEnabled(false);
 	this->saveButton->setEnabled(false);
 	this->spineButton->setEnabled(false);
-
-	//Render the loaded image:
-	this->Renderer->RemoveAllViewProps(); //Remove previous image
-	this->RenderImage( this->reader->GetOutput() );
-	this->Renderer->ResetCamera();
-	this->RenderWidget->setWindowTitle("Input Image");
-	this->RenderWidget->GetRenderWindow()->Render();
 }
 
 void mdlGUI::preprocess()
 {
 	PreprocessDialog * dialog = new PreprocessDialog(lastPath, this);
-	dialog->SetImage( this->reader->GetOutput() );
+	dialog->SetImage( this->OrigImage );
 
-	if(dialog->exec())
+	if(!dialog->exec())
 	{
-		this->PrepImage = dialog->GetImage();
-
-		this->Renderer->RemoveAllViewProps(); //Remove previous image
-		this->RenderImage( this->PrepImage );
-		this->RenderWidget->setWindowTitle("Preprocessed Image");
-		this->RenderWidget->GetRenderWindow()->Render();
-
-		this->skelButton->setEnabled(true);
-		this->skelButton->setFocus();
-		this->bbButton->setEnabled(false);
-		this->saveButton->setEnabled(false);
-		this->spineButton->setEnabled(false);
+		delete dialog;
+		return;
 	}
+
+	this->PrepImage = dialog->GetImage();
 	delete dialog;
+
+	this->Renderer->RemoveAllViewProps(); //Remove previous image
+	this->RenderImage( this->PrepImage );
+	this->RenderWidget->setWindowTitle("Preprocessed Image");
+	this->RenderWidget->GetRenderWindow()->Render();
+
+	this->skelButton->setEnabled(true);
+	this->skelButton->setFocus();
+	this->bbButton->setEnabled(false);
+	this->saveButton->setEnabled(false);
+	this->spineButton->setEnabled(false);
 }
 
 void mdlGUI::integratedSkeleton()
@@ -379,7 +385,7 @@ void mdlGUI::RenderImage(mdl::ImageType::Pointer image)
 {
 	this->ITKtoVTK->SetInput( image );
 	this->ITKtoVTK->Update();
-	vtkImageData * vtk_image = this->ITKtoVTK->GetOutput();
+	vtkSmartPointer<vtkImageData> vtk_image = this->ITKtoVTK->GetOutput();
 
 	//remove all old actors
 	//this->Renderer->RemoveAllViewProps();
