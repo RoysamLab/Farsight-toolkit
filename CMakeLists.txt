@@ -76,6 +76,9 @@ SUBDIRS( ColorSegmentation )
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkCommon )
 SUBDIRS( ftkCommon )
 
+INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkPreprocess )
+SUBDIRS( ftkPreprocess )
+
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkFeatures )
 SUBDIRS( ftkFeatures )
 
