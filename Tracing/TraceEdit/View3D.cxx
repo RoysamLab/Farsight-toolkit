@@ -2450,12 +2450,16 @@ void View3D::ListSelections()
 	else
 	{
 	listText += QString::number(IDs.size()) + " lines are selected\n";
+	selectedText += QString(IDs[0]->statHeaders().c_str()) + "\n";
 	for (unsigned int i = 0; i < IDs.size(); i++)
 	  {
 		  selectedText += QString(IDs[i]->stats().c_str()) + "\n";   
 	  } 
 	}
 	this->statusBar()->showMessage(listText);
+	selectionInfo->setWindowTitle("List of all Trace Editor Selections");
+	selectionInfo->setIcon(QMessageBox::Information);
+	//selectionInfo->setMinimumWidth(512);
 	selectionInfo->setText(listText);
 	selectionInfo->setDetailedText(selectedText);
 	selectionInfo->show();
@@ -2542,7 +2546,8 @@ void View3D::DeleteTraces()
 	if (traceList.size() >=1)
 	{
 		this->EditLogDisplay->append(tr("Deleted\t") + QString::number(traceList.size()) + tr("\ttraces"));
-		this->EditLogDisplay->append( "\tID\tType\tSize\tLength\tEuclidian Length\tRadii\tFragmentation Smoothness\tParent ID");
+		this->EditLogDisplay->append(traceList[0]->statHeaders().c_str());
+		//this->EditLogDisplay->append( "\tID\tType\tSize\tLength\tEuclidian Length\tRadii\tFragmentation Smoothness\tParent ID");
 		for (i=0; i<traceList.size()-1; i++)
 		{			
 			if (traceList[i]->isLeaf()&&!traceList[i]->isRoot())

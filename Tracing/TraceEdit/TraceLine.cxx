@@ -160,6 +160,11 @@ double TraceLine::GetEuclidianLength()
 	}
 	return this->EuclidianD;
 }
+double TraceLine::GetBitDensity()
+{
+	this->BitDensity = this->GetSize() / this->GetLength();
+	return this->BitDensity;
+}
 double TraceLine::GetDistToParent()
 {
 	if (this->m_parent)
@@ -604,4 +609,16 @@ std::string TraceLine::stats()
 	thisStats << this->GetParentID();
 	return thisStats.str();
 }
-
+std::string TraceLine::statHeaders()
+{
+	std::stringstream thisStatsHeaders; 
+	thisStatsHeaders << "\tID"
+		<<"\tType"
+		<<"\tSize"
+		<<"\tLength"
+		<<"\tEuclidian Length"
+		<<"\tRadii"
+		<<"\tFragmentation Smoothness"
+		<<"\tParent ID";
+	return thisStatsHeaders.str();
+}
