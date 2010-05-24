@@ -169,8 +169,19 @@ double TraceLine::GetDistToParent()
 {
 	if (this->m_parent)
 	{
+		double Leading = 0, dist =0;
+		TraceBit pre, cur;
+		TraceBitsType::iterator it = this->m_trace_bits.begin();
+		pre = *it; 
+		it++;
+		cur = *it;
+		Leading = Euclidian(pre, cur);
 		this->DistToParent = this->Euclidian(this->m_trace_bits.front(), 
 			this->m_parent->m_trace_bits.back());
+		if (Leading > 2*this->DistToParent)
+		{
+			this->DistToParent = Leading;
+		}
 		return this->DistToParent;
 	}
 	else
@@ -276,11 +287,11 @@ TraceBit TraceLine::removeFirstBit()
 }
 
 //This is an error fix
-void TraceLine::removeLeadingBit()
+bool TraceLine::removeLeadingBit()
 {
 	if (this->m_trace_bits.size() < 3)
 	{
-		return;
+		return false;
 	}else
 	{		
 		//std::vector<double> dist;// = 0, r = 0;
@@ -297,12 +308,14 @@ void TraceLine::removeLeadingBit()
 			cur = *it;
 			dist += this->Euclidian(pre, cur);
 			pre = cur;
-		}
+		}//end for
 		if(Leading > (dist/ (this->m_trace_bits.size() -1)))
 		{
 			this->m_trace_bits.pop_front();
-		}
-	}
+			return true;
+		}//end dist
+		return false;
+	}//end else size
 }
 ///////////////////////////////////////////////////////////////////////////////
 TraceLine::TraceBitsType::iterator TraceLine::GetTraceBitIteratorBegin()
@@ -591,7 +604,6 @@ bool TraceLine::Orient(TraceBit bit)
 std::string TraceLine::stats()
 {
 	std::stringstream thisStats;
-	thisStats << "\t";
 	thisStats << this->GetId();
 	thisStats << "\t";
 	thisStats << (int)this->GetType();
@@ -612,13 +624,13 @@ std::string TraceLine::stats()
 std::string TraceLine::statHeaders()
 {
 	std::stringstream thisStatsHeaders; 
-	thisStatsHeaders << "\tID"
+	thisStatsHeaders <<"ID"
 		<<"\tType"
 		<<"\tSize"
 		<<"\tLength"
-		<<"\tEuclidian Length"
+		<<"\tEuclidian L"
 		<<"\tRadii"
-		<<"\tFragmentation Smoothness"
+		<<"\tContraction"
 		<<"\tParent ID";
 	return thisStatsHeaders.str();
 }

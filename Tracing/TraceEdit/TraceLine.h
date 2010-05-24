@@ -66,7 +66,7 @@ public:
 	void SetType(unsigned char t) ;
 	void AddTraceBit(TraceBit tbit);
 	void ExtendTrace(TraceBit tbit);
-	void removeLeadingBit();
+	bool removeLeadingBit();
 	TraceBit removeLastBit();
 	TraceBit removeFirstBit();
 	TraceBit GetBitXFromEnd(int x);
