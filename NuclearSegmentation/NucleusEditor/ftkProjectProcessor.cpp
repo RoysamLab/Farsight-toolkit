@@ -71,6 +71,8 @@ void ProjectProcessor::Initialize(void)
 			break;
 		case ProjectDefinition::ANALYTE_MEASUREMENTS:
 			break;
+		case ProjectDefinition::PIXEL_ANALYSIS:
+			break;
 		}
 		t.done = false;
 		tasks.push_back(t);
@@ -103,6 +105,8 @@ void ProjectProcessor::ProcessNext(void)
 	case ProjectDefinition::CLASSIFY:
 		taskDone = false;
 		break;
+	case ProjectDefinition::PIXEL_ANALYSIS:
+		taskDone = PixLevAnalysis();
 	}
 	
 	if(taskDone)
@@ -281,6 +285,32 @@ bool ProjectProcessor::ComputeAssociations(void)
 
 	resultIsEditable = false;
 	std::cout << "Done Associations\n";
+	return true;
+}
+
+bool ProjectProcessor::PixLevAnalysis(void){
+	if( !inputImage )
+		return false;
+
+	if( !definition->pixelLevelRules.size() )
+		return false;
+
+	for(std::vector<ftk::PixelAnalysisDefinitions>::iterator pait=definition->pixelLevelRules.begin(); pait!=definition->pixelLevelRules.end(); ++pait ){
+		ftk::PixelLevelAnalysis *PAn = new ftk::PixelLevelAnalysis();
+		if( (*pait).mode == 1 ){
+			PAn->SetInputs( (*pait).regionChannelName, (*pait).targetChannelName, (*pait).outputFilename, 0 );
+			bool success_run = PAn->RunAnalysis1();
+		}
+		else if( (*pait).mode == 2 ){
+			PAn->SetInputs( (*pait).regionChannelName, (*pait).targetChannelName, (*pait).outputFilename, (*pait).radius );
+			bool success_run = PAn->RunAnalysis2();
+		}
+		else{
+			std::cerr<<"ERROR: Check Pixel Anaysis Mode\n";
+		}
+		delete PAn;
+	}
+
 	return true;
 }
 

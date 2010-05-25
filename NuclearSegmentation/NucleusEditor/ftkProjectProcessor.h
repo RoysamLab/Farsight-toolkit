@@ -35,6 +35,7 @@
 #include <ftkUtils.h>
 #include "itkCastImageFilter.h"
 #include "itkExtractImageFilter.h"
+#include "PixelAnalysis/ftkPixelLevelAnalysis.h"
 
 namespace ftk
 {
@@ -65,7 +66,8 @@ protected:
 	//Tasks I can do:
 	bool SegmentNuclei(int nucChannel);						//Segment nucChannel as Nuclei & Compute Intrinsic Features
 	bool SegmentCytoplasm(int cytChannel, int memChannel);	//Segment Cytoplasm Channel & Compute Intrinsic Features
-	bool ComputeAssociations(void);						//Compute Associative Measures
+	bool ComputeAssociations(void);							//Compute Associative Measures
+	bool PixLevAnalysis(void);							//If you must with all this nice object level machinery available
 	void Classify(void);									//Classify Cells
 	void ComputeAnalyteMeasures(void);						//Compute Analyte Measures by Class
 

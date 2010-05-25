@@ -29,6 +29,7 @@
 #include <tinyxml/tinyxml.h>
 #include <ftkCommon/ftkUtils.h>
 #include <ftkFeatures/ftkObjectAssociation.h>
+#include <PixelAnalysis/ftkPixelLevelAnalysis.h>
 
 #include <vector>
 #include <string>
@@ -43,7 +44,7 @@ class ProjectDefinition
 {
 public:
 	//ENUMS & STRUCTS:
-	enum TaskType { NUCLEAR_SEGMENTATION, CYTOPLASM_SEGMENTATION, RAW_ASSOCIATIONS, CLASSIFY, ANALYTE_MEASUREMENTS };
+	enum TaskType { NUCLEAR_SEGMENTATION, CYTOPLASM_SEGMENTATION, RAW_ASSOCIATIONS, CLASSIFY, ANALYTE_MEASUREMENTS, PIXEL_ANALYSIS };
 	typedef struct { int number; std::string name; std::string type; } Channel;
 	typedef struct { std::string name; double value; } Parameter;
 
@@ -58,6 +59,7 @@ public:
 	std::vector<Parameter> ReadParameters(TiXmlElement * inputElement);
 	std::vector<ftk::AssociationRule> ReadAssociationRules(TiXmlElement * inputElement);
 	std::vector<std::string> ParseText(TiXmlElement * element);
+	std::vector<ftk::PixelAnalysisDefinitions> ReadPixelLevelRules(TiXmlElement * element);
 	TiXmlElement * GetParameterElement( Parameter param );
 	TiXmlElement * GetAssocRuleElement( ftk::AssociationRule rule );
 
@@ -77,6 +79,7 @@ public:
 	std::vector<Parameter> classificationParameters;
 
 	std::vector<ftk::AssociationRule> associationRules;
+	std::vector<ftk::PixelAnalysisDefinitions> pixelLevelRules;
 	std::vector<std::string> intrinsicFeatures;
 	std::vector<std::string> analyteMeasures;
 

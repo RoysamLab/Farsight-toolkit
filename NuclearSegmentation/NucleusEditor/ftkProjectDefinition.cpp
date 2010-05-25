@@ -91,6 +91,11 @@ bool ProjectDefinition::Load(std::string filename)
 		else if( strcmp( parent, "AnalyteMeasures" ) == 0 )
 		{
 		}
+		else if( strcmp( parent, "PixelLevelAnalysis" ) == 0 )
+		{
+			pixelLevelRules = this->ReadPixelLevelRules(parentElement);
+		}
+
 		parentElement = parentElement->NextSiblingElement();
 	} // end while(parentElement)
 	//doc.close();
@@ -139,6 +144,8 @@ std::vector<ProjectDefinition::TaskType> ProjectDefinition::ReadSteps(TiXmlEleme
 				returnVector.push_back(CLASSIFY);
 			else if(step == "ANALYTE_MEASUREMENTS")
 				returnVector.push_back(ANALYTE_MEASUREMENTS);
+			else if(step == "PIXEL_ANALYSIS")
+				returnVector.push_back(PIXEL_ANALYSIS);
 		}
 		stepElement = stepElement->NextSiblingElement();
 	} // end while(stepElement)
@@ -219,6 +226,31 @@ std::vector<ftk::AssociationRule> ProjectDefinition::ReadAssociationRules(TiXmlE
 	}
 	return returnVector;
 }
+
+std::vector<ftk::PixelAnalysisDefinitions> ProjectDefinition::ReadPixelLevelRules(TiXmlElement * inputElement)
+{
+
+	std::vector<ftk::PixelAnalysisDefinitions> returnVector;
+
+	TiXmlElement * parameterElement = inputElement->FirstChildElement();
+	while (parameterElement)
+	{
+		const char * parameter = parameterElement ->Value();
+		ftk::PixelAnalysisDefinitions pixRule;
+		if ( strcmp(parameter,"PixelLevelRule") == 0 ){
+			pixRule.regionChannelName = parameterElement->Attribute("RoiImage");
+			pixRule.targetChannelName = parameterElement->Attribute("TargetImage");
+			pixRule.mode = atoi(parameterElement->Attribute("Mode"));
+			pixRule.outputFilename = parameterElement->Attribute("OutputFilename");
+			pixRule.radius = atoi(parameterElement->Attribute("Radius"));
+		}
+		returnVector.push_back(pixRule);
+		parameterElement = parameterElement->NextSiblingElement();
+	}
+	return returnVector;
+}
+
+
 
 std::vector<std::string> ProjectDefinition::ParseText(TiXmlElement * element)
 {
@@ -431,6 +463,8 @@ std::string ProjectDefinition::GetTaskString(TaskType task)
 		break;
 	case ANALYTE_MEASUREMENTS:
 		retText = "ANALYTE_MEASUREMENTS";
+	case PIXEL_ANALYSIS:
+		retText = "PIXEL_ANALYSIS";
 		break;
 	}
 	return retText;

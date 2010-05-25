@@ -50,10 +50,10 @@ ADD_EXECUTABLE( NucleusEditor ${EXE_TYPE}
                 ${NucleusEditor_UI_HDRS}
                 ${NucleusEditor_RC_SRCS} )
 
-TARGET_LINK_LIBRARIES( NucleusEditor ${QT_LIBRARIES} ftkGUI ftkImage ftkCommon ftkFeatures libSVM vtkVolumeRendering QVTK NuclearSegmentation CytoplasmSegmentation )
+TARGET_LINK_LIBRARIES( NucleusEditor ${QT_LIBRARIES} ftkGUI ftkImage ftkCommon ftkFeatures libSVM vtkVolumeRendering QVTK NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis )
 
 ADD_EXECUTABLE( projproc processor_main.cpp ftkProjectProcessor.cpp ftkProjectDefinition.cpp)
-TARGET_LINK_LIBRARIES( projproc ftkImage ftkCommon ftkFeatures NuclearSegmentation CytoplasmSegmentation )
+TARGET_LINK_LIBRARIES( projproc ftkImage ftkCommon ftkFeatures NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis )
 install(TARGETS projproc DESTINATION bin )
 
 #MAKE A GUI EXECUTABLE, NOT A CONSOLE APPLICATION
