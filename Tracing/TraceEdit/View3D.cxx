@@ -1266,11 +1266,17 @@ void View3D::pointer3DLocation(double pos[])
 		this->pointer3d->SetPosition(pos);
 		this->pointer3d->SetEnabled(1);
 	}
-	this->blockSignals(1);
+	this->posX->blockSignals(1);
+	this->posY->blockSignals(1);
+	this->posZ->blockSignals(1);
+
 	this->posX->setValue(pos[0]);
 	this->posY->setValue(pos[1]);
 	this->posZ->setValue(pos[2]);
-	this->blockSignals(0);
+
+	this->posX->blockSignals(0);
+	this->posY->blockSignals(0);
+	this->posZ->blockSignals(0);
 }
 void View3D::setPTtoSoma()
 {
