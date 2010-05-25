@@ -1252,11 +1252,16 @@ void View3D::getPosPTin3D()
 	this->pointer3d->SetEnabled(1);//if not shown
 	double newPT[3];
 	this->pointer3d->GetPosition(newPT);
-	this->blockSignals(true);
+	this->posX->blockSignals(1);
+	this->posY->blockSignals(1);
+	this->posZ->blockSignals(1);
 	this->posX->setValue(newPT[0]);
 	this->posY->setValue(newPT[1]);
 	this->posZ->setValue(newPT[2]);
-	this->blockSignals(false);
+
+	this->posX->blockSignals(0);
+	this->posY->blockSignals(0);
+	this->posZ->blockSignals(0);
 	//this->pointer3DPos = newPT;
 }
 void View3D::pointer3DLocation(double pos[])

@@ -50,7 +50,11 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag)
 	//newImage->opacityTransferFunction = 0;
 	newImage->volume = 0;
 	newImage->volumeMapper = 0;
-	newImage->volumeMapperGPU = 0;
+	#ifdef USE_GPUREN
+	{
+		newImage->volumeMapperGPU = 0;
+	}
+	#endif
 	newImage->volumeProperty = 0;
 	newImage->reader = ReaderType::New();
 	newImage->reader->SetFileName( ImageSource );
@@ -91,7 +95,11 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 	//newImage->opacityTransferFunction = 0;
 	newImage->volume = 0;
 	newImage->volumeMapper = 0;
-	newImage->volumeMapperGPU = 0;
+	#ifdef USE_GPUREN
+	{
+		newImage->volumeMapperGPU = 0;
+	}
+#endif
 	newImage->volumeProperty = 0;
 	newImage->reader = ReaderType::New();
 	newImage->reader->SetFileName( ImageSource );
