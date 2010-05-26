@@ -200,7 +200,7 @@ private:
 //settings for display
 	int SmallLineLength;
 	float lineWidth;
-	double SelectColor;
+	double SelectColor, backColorR, backColorG, backColorB;
 	int numSplit, numDeleted, numMerged;
 	QLabel *SplitLabel, *DeleteLabel, *MergeLabel, *BranchesLabel;
 	QDoubleSpinBox *posX, *posY, *posZ;
@@ -267,6 +267,7 @@ private:
 	QSpinBox *LineLengthField;
 	QDoubleSpinBox *ColorValueField;
 	QSpinBox *LineWidthField;
+	QDoubleSpinBox *BackgroundRBox,*BackgroundGBox,*BackgroundBBox;
 	QDialogButtonBox *ApplySettingsButton;
 	QComboBox *typeCombo;
 	//stuff for tol and selection

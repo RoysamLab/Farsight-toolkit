@@ -617,9 +617,13 @@ void View3D::Initialize()
 	this->Ascending = Qt::AscendingOrder;
 
   //Set up a QVTK Widget for embedding a VTK render window in Qt.
-  this->QVTK = new QVTKWidget(this->CentralWidget);
-  this->Renderer = vtkSmartPointer<vtkRenderer>::New();
-  this->QVTK->GetRenderWindow()->AddRenderer(this->Renderer);
+	this->QVTK = new QVTKWidget(this->CentralWidget);
+	this->Renderer = vtkSmartPointer<vtkRenderer>::New();
+	this->backColorR = this->TraceEditSettings.value("mainWin/ColorR", .6).toDouble() ;
+	this->backColorG = this->TraceEditSettings.value("mainWin/ColorG", .6).toDouble() ;
+	this->backColorB = this->TraceEditSettings.value("mainWin/ColorB", .6).toDouble() ;
+	this->Renderer->SetBackground(this->backColorR,this->backColorG,this->backColorB);
+	this->QVTK->GetRenderWindow()->AddRenderer(this->Renderer);
   QGridLayout *viewerLayout = new QGridLayout(this->CentralWidget);
   viewerLayout->addWidget(this->QVTK, 0, 0);
   //may add a tree view here
@@ -818,9 +822,35 @@ void View3D::CreateGUIObjects()
 	this->LineWidthField = new QSpinBox(this->SettingsWidget);
 	this->LineWidthField->setRange(1,5);
 
+	this->BackgroundRBox = new QDoubleSpinBox(this->SettingsWidget);
+	this->BackgroundRBox->setRange(0,1);
+	this->BackgroundRBox->setSingleStep(.01);
+
+	this->BackgroundGBox = new QDoubleSpinBox(this->SettingsWidget);
+	this->BackgroundGBox->setRange(0,1);
+	this->BackgroundGBox->setSingleStep(.01);
+
+	this->BackgroundBBox = new QDoubleSpinBox(this->SettingsWidget);
+	this->BackgroundBBox->setRange(0,1);
+	this->BackgroundBBox->setSingleStep(.01);
+
 	this->ApplySettingsButton = new QDialogButtonBox(QDialogButtonBox::SaveAll | QDialogButtonBox::Close);
 	connect(this->ApplySettingsButton, SIGNAL(accepted()), this, SLOT(ApplyNewSettings()));
 	connect(this->ApplySettingsButton, SIGNAL(rejected()), this, SLOT(HideSettingsWindow()));
+	
+	this->tobj->gapTol = this->TraceEditSettings.value("mainWin/gapTol", .5).toDouble() ;
+	this->tobj->gapMax = this->TraceEditSettings.value("mainWin/gapMax", 10).toInt();
+	this->SmallLineLength = this->TraceEditSettings.value("mainWin/smallLine", 10).toInt();
+	this->SelectColor =this->TraceEditSettings.value("mainWin/selectColor", .1).toDouble();
+	this->lineWidth= this->TraceEditSettings.value("mainWin/LineWidth", 2).toDouble();
+	this->MaxGapField->setValue(this->tobj->gapMax);
+	this->GapToleranceField->setValue(this->tobj->gapTol);
+	this->LineLengthField->setValue(this->SmallLineLength);
+	this->ColorValueField->setValue(this->SelectColor);
+	this->LineWidthField->setValue(this->lineWidth);
+	this->BackgroundRBox->setValue(this->backColorR);
+	this->BackgroundGBox->setValue(this->backColorG);
+	this->BackgroundBBox->setValue(this->backColorB);
 
 	QStringList types;
 	types <<"0 = undefined" << "1 = soma" <<"2 = axon" <<"3 = dendrite" 
@@ -928,26 +958,21 @@ void View3D::CreateLayout()
 
 	QGroupBox *displaySettings = new QGroupBox("Display Settings");
 	QFormLayout *DisplayLayout = new QFormLayout(displaySettings);
-	DisplayLayout->addRow(tr("Color value RGB scalar 0 to 1:"),this->ColorValueField);
+	DisplayLayout->addRow(tr("Line Color RGB 0 to 1:"),this->ColorValueField);
 	DisplayLayout->addRow(tr("Line width:"),this->LineWidthField);
-	//displaySettings->setLayout(DisplayLayout);
-
 	SettingsBox->addWidget(displaySettings);
+
+	QGroupBox *BackgroundSettings = new QGroupBox(("Background RGB Color"));
+	QFormLayout *BackgroundLayout = new QFormLayout(BackgroundSettings);
+	BackgroundLayout->addRow(tr("Value Red: "), this->BackgroundRBox);
+	BackgroundLayout->addRow(tr("Value Blue: "),this->BackgroundGBox);
+	BackgroundLayout->addRow(tr("Value Green: "),this->BackgroundBBox);
+	SettingsBox->addWidget(BackgroundSettings);
+
 	SettingsBox->addWidget(this->ApplySettingsButton);
 	SettingsBox->addStretch();
 
-	this->SettingsWidget->setMaximumSize(256,256);
-
-	this->tobj->gapTol = this->TraceEditSettings.value("mainWin/gapTol", .5).toDouble() ;
-	this->tobj->gapMax = this->TraceEditSettings.value("mainWin/gapMax", 10).toInt();
-	this->SmallLineLength = this->TraceEditSettings.value("mainWin/smallLine", 10).toInt();
-	this->SelectColor =this->TraceEditSettings.value("mainWin/selectColor", .1).toDouble();
-	this->lineWidth= this->TraceEditSettings.value("mainWin/LineWidth", 2).toDouble();
-	this->MaxGapField->setValue(this->tobj->gapMax);
-	this->GapToleranceField->setValue(this->tobj->gapTol);
-	this->LineLengthField->setValue(this->SmallLineLength);
-	this->ColorValueField->setValue(this->SelectColor);
-	this->LineWidthField->setValue(this->lineWidth);
+	this->SettingsWidget->setMaximumSize(256,512);
 
   this->settingsDock = new QDockWidget("Editor Settings", this);
   this->settingsDock->setWidget(this->SettingsWidget);
@@ -1150,22 +1175,32 @@ void View3D::ShowSettingsWindow()
 	this->LineLengthField->setValue(this->SmallLineLength);
 	this->ColorValueField->setValue(this->SelectColor);
 	this->LineWidthField->setValue(this->lineWidth);
+	this->BackgroundRBox->setValue(this->backColorR);
+	this->BackgroundGBox->setValue(this->backColorG);
+	this->BackgroundBBox->setValue(this->backColorB);
 	this->SettingsWidget->show();
 }
 
 void View3D::ApplyNewSettings()
 {
-  this->tobj->gapMax = this->MaxGapField->text().toInt();
-  this->tobj->gapTol = this->GapToleranceField->value();
-  this->SmallLineLength = (float)this->LineLengthField->value();
-  this->SelectColor = this->ColorValueField->value();
-  this->lineWidth = (float)this->LineWidthField->value();
-  this->statusBar()->showMessage(tr("Applying new settings"),3000);
+	this->tobj->gapMax = this->MaxGapField->text().toInt();
+	this->tobj->gapTol = this->GapToleranceField->value();
+	this->SmallLineLength = (float)this->LineLengthField->value();
+	this->SelectColor = this->ColorValueField->value();
+	this->lineWidth = (float)this->LineWidthField->value();
+	this->backColorR = this->BackgroundRBox->value();
+	this->backColorG = this->BackgroundGBox->value();
+	this->backColorB = this->BackgroundBBox->value();
+	this->Renderer->SetBackground(this->backColorR,this->backColorG,this->backColorB);
+	this->statusBar()->showMessage(tr("Applying new settings"),3000);
 	this->TraceEditSettings.setValue("mainWin/gapTol", this->tobj->gapTol ) ;
 	this->TraceEditSettings.setValue("mainWin/gapMax", this->tobj->gapMax);
 	this->TraceEditSettings.setValue("mainWin/smallLine", this->SmallLineLength);
 	this->TraceEditSettings.setValue("mainWin/selectColor", this->SelectColor);
 	this->TraceEditSettings.setValue("mainWin/LineWidth", this->lineWidth);
+	this->TraceEditSettings.setValue("mainWin/ColorR", this->backColorR);
+	this->TraceEditSettings.setValue("mainWin/ColorG", this->backColorG);
+	this->TraceEditSettings.setValue("mainWin/ColorB", this->backColorB);
 	this->TraceEditSettings.sync();
 	this->poly_line_data->Modified();
 	this->QVTK->GetRenderWindow()->Render();  
