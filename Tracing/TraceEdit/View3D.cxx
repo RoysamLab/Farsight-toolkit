@@ -116,6 +116,9 @@ View3D::View3D(QWidget *parent)
 	this->TraceFiles.clear();
 	this->SomaFile.clear();
 	this->tempTraceFile.clear();
+	this->backColorR = this->TraceEditSettings.value("mainWin/ColorR", .6).toDouble() ;
+	this->backColorG = this->TraceEditSettings.value("mainWin/ColorG", .6).toDouble() ;
+	this->backColorB = this->TraceEditSettings.value("mainWin/ColorB", .6).toDouble() ;
 	this->ImageActors = new ImageRenderActors();
 	this->EditLogDisplay = new QTextEdit();
 	this->EditLogDisplay->setReadOnly(true);
@@ -619,9 +622,6 @@ void View3D::Initialize()
   //Set up a QVTK Widget for embedding a VTK render window in Qt.
 	this->QVTK = new QVTKWidget(this->CentralWidget);
 	this->Renderer = vtkSmartPointer<vtkRenderer>::New();
-	this->backColorR = this->TraceEditSettings.value("mainWin/ColorR", .6).toDouble() ;
-	this->backColorG = this->TraceEditSettings.value("mainWin/ColorG", .6).toDouble() ;
-	this->backColorB = this->TraceEditSettings.value("mainWin/ColorB", .6).toDouble() ;
 	this->Renderer->SetBackground(this->backColorR,this->backColorG,this->backColorB);
 	this->QVTK->GetRenderWindow()->AddRenderer(this->Renderer);
   QGridLayout *viewerLayout = new QGridLayout(this->CentralWidget);
