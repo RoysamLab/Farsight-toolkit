@@ -43,6 +43,7 @@
 #include "itkBinaryDilateImageFilter.h"
 #include "itkBinaryBallStructuringElement.h"
 #include "itkOtsuThresholdImageFilter.h"
+#include "itkRescaleIntensityImageFilter.h"
 
 namespace ftk
 {

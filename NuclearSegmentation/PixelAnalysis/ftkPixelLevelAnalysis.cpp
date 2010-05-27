@@ -50,8 +50,24 @@ void ftk::PixelLevelAnalysis::SetInputs( std::string ROIImageNames, std::string 
 	ROIReader   ->Update();
 	TargetReader->Update();
 
-	ROIImagePtr   = ROIReader   ->GetOutput();
-	TargetImagePtr = TargetReader->GetOutput();
+	unsigned short uns_zero, uns_max;
+	uns_zero = 0;
+	uns_max  = itk::NumericTraits<unsigned short>::max();
+/*
+	typedef itk::RescaleIntensityImageFilter< UShortImageType, UShortImageType > RescaleUSUSType;
+	RescaleUSUSType::Pointer RescaleUSUS1 = RescaleUSUSType::New();
+	RescaleUSUSType::Pointer RescaleUSUS2 = RescaleUSUSType::New();
+	RescaleUSUS1->SetOutputMaximum( uns_max  );
+	RescaleUSUS2->SetOutputMaximum( uns_max  );
+	RescaleUSUS1->SetOutputMinimum( uns_zero );
+	RescaleUSUS2->SetOutputMinimum( uns_zero );
+	RescaleUSUS1->SetInput( ROIReader   ->GetOutput() );
+	RescaleUSUS2->SetInput( TargetReader->GetOutput() );
+	RescaleUSUS1->Update();
+	RescaleUSUS2->Update();
+*/
+	ROIImagePtr    = ROIReader->GetOutput(); //RescaleUSUS1
+	TargetImagePtr = TargetReader->GetOutput(); //RescaleUSUS2
 
 	if( ROIImagePtr   ->GetLargestPossibleRegion().GetSize()[0] !=
 		TargetImagePtr->GetLargestPossibleRegion().GetSize()[0] ||
@@ -90,12 +106,18 @@ void ftk::PixelLevelAnalysis::WriteInitialOutputs(){
 }
 
 void ftk::PixelLevelAnalysis::WriteOutputImage(std::string OutName, UShortImageType::Pointer OutPtr){
-
+	typedef itk::ImageFileWriter< UShortImageType > WriterType;
+	WriterType::Pointer writer = WriterType::New();
+	writer->SetFileName( OutName.c_str() );
+	writer->SetInput( OutPtr );
+	writer->Update();
 }
 
 bool ftk::PixelLevelAnalysis::RunAnalysis1(){
 	this->WriteInitialOutputs();
 	unsigned short thresh_roi, thresh_target;
+	//this->WriteOutputImage( ROIBinImageName,    ROIImagePtr   );
+	//this->WriteOutputImage( TargetBinImageName, TargetImagePtr);
 	thresh_roi    = returnthresh( ROIImagePtr,    1, 1 );
 	thresh_target = returnthresh( TargetImagePtr, 1, 1 );
 
