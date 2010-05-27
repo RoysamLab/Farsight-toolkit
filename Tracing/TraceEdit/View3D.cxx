@@ -1086,6 +1086,7 @@ void View3D::createRayCastSliders()
 	this->OpacityValueSpin = new QDoubleSpinBox(this);
 	this->OpacityValueSpin->setRange(0,1);
 	this->OpacityValueSpin->setSingleStep(.01);
+	this->ImageActors->setOpacityValue(this->TraceEditSettings.value("RayCast/OpacityValue", .1).toDouble() );
 	this->OpacityValueSpin->setValue(this->ImageActors->getOpacityValue());
 	connect (this->OpacityValueSpin, SIGNAL(valueChanged(double)), this, SLOT(RayCastOpacityValueChanged(double)));
 
@@ -1095,6 +1096,7 @@ void View3D::createRayCastSliders()
 	this->OpacitySlider->setTickInterval(5);
 	this->OpacitySlider->setTickPosition(QSlider::TicksAbove);
 	connect (this->OpacitySlider, SIGNAL(valueChanged(int)), this->OpacitySpin, SLOT(setValue(int)));
+	this->ImageActors->setOpacity(this->TraceEditSettings.value("RayCast/Opacity", 50).toInt() );
 	this->OpacitySlider->setValue((int) this->ImageActors->getOpacity());
 	connect (this->OpacitySpin, SIGNAL(valueChanged(int)), this->OpacitySlider, SLOT(setValue(int)));
 	connect (this->OpacitySpin, SIGNAL(valueChanged(int)), this, SLOT(RayCastOpacityChanged(int)));
@@ -1109,6 +1111,7 @@ void View3D::createRayCastSliders()
 	this->BrightnessSlider->setTickInterval(5);
 	this->BrightnessSlider->setTickPosition(QSlider::TicksAbove);
 	connect (this->BrightnessSlider, SIGNAL(valueChanged(int)), this->BrightnessSpin, SLOT(setValue(int)));
+	this->ImageActors->setBrightness(this->TraceEditSettings.value("RayCast/Brightness", 150).toInt() );
 	this->BrightnessSlider->setValue(this->ImageActors->getBrightness());
 	connect (this->BrightnessSpin, SIGNAL(valueChanged(int)), this->BrightnessSlider, SLOT(setValue(int)));
 	connect (this->BrightnessSpin, SIGNAL(valueChanged(int)), this , SLOT(RayCastBrightnessChanged(int)));
@@ -1131,17 +1134,20 @@ void View3D::createRayCastSliders()
 void View3D::RayCastBrightnessChanged(int value)
 {
 	this->ImageActors->setBrightness(value);
+	this->TraceEditSettings.setValue("RayCast/Brightness", value);
 	this->QVTK->GetRenderWindow()->Render();
 }
 void View3D::RayCastOpacityChanged(int value)
 {
 	this->ImageActors->setOpacity(value);
+	this->TraceEditSettings.setValue("RayCast/Opacity", value);
 	this->QVTK->GetRenderWindow()->Render();
 
 }
 void View3D::RayCastOpacityValueChanged(double value)
 {
 	this->ImageActors->setOpacityValue(value);
+	this->TraceEditSettings.setValue("RayCast/OpacityValue", value);
 	this->QVTK->GetRenderWindow()->Render();
 }
 void View3D::EditHelp()
@@ -1203,6 +1209,7 @@ void View3D::ApplyNewSettings()
 	this->TraceEditSettings.setValue("mainWin/ColorB", this->backColorB);
 	this->TraceEditSettings.sync();
 	this->poly_line_data->Modified();
+	this->updateTraceSelectionHighlights();
 	this->QVTK->GetRenderWindow()->Render();  
 }
 
