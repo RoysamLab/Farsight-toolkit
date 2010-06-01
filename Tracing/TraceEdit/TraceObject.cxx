@@ -2163,16 +2163,25 @@ bool TraceObject::BreakOffBranch(TraceLine *branch, bool keep)
     
       this->mergeTraces((*iter1).marker,(*iter2).marker);
       branch->SetParent(NULL);
-	  if (!keep)
-	  {
-			delete branch;
-	  }
-	  else if (branch->GetSize()>3)
+	  if ((keep)&&(branch->GetSize()>3))
 	  {//wont keep anything too small to work on
 		  //if 
 		  branch->removeLeadingBit();
 		  this->trace_lines.push_back(branch);
-	  }//end branch->GetSize()>3
+	  }//end branch->GetSize()>3  
+	  else 
+	  {
+		  if (branch->GetBranchPointer()->size() >1)
+		  {
+			  std::vector<TraceLine*> children = (*branch->GetBranchPointer());
+			  for (unsigned int k = 0; k < children.size(); k++)
+			  {
+				  children[k]->SetParent(NULL);
+				  this->trace_lines.push_back(children[k]);
+			  }
+		  }
+		  delete branch;
+	  }//end else children
 		this->GetTraceLines();
       return true;
       }//end siblings->size()==2
@@ -2186,7 +2195,20 @@ bool TraceObject::BreakOffBranch(TraceLine *branch, bool keep)
 		  //if 
 		  branch->removeLeadingBit();
 		  this->trace_lines.push_back(branch);
-		}//end branch->GetSize()>3
+		}//end branch->GetSize()>3	  
+		else 
+		  {
+			  if (branch->GetBranchPointer()->size() >1)
+			  {
+				  std::vector<TraceLine*> children = (*branch->GetBranchPointer());
+				  for (unsigned int k = 0; k < children.size(); k++)
+				  {
+					  children[k]->SetParent(NULL);
+					  this->trace_lines.push_back(children[k]);
+				  }
+			  }
+			  delete branch;
+		  }//end else children
 		while(iter != iterend)
 		{
 			if(*iter== branch)
