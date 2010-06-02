@@ -2550,6 +2550,7 @@ void View3D::CloseTreePlots()
 }
 void View3D::ClearSelection()
 {
+	QMessageBox::StandardButton clearMessageBox;
 	if(this->GapsPlotView)
 	{
 	  this->GapsPlotView->close();
@@ -2559,8 +2560,17 @@ void View3D::ClearSelection()
 	  this->GapsTableView->close();
 	}
 	this->tobj->Gaps.clear();
-	this->candidateGaps.clear();	
-	this->tobj->BranchPoints.clear();
+	this->candidateGaps.clear();
+	if (this->tobj->BranchPoints.size() >0)
+	{
+		clearMessageBox = QMessageBox::warning(this, tr("Clear selections"), 
+			"This action will clear unsolved branching. \nDo you want to Discard or Save unsolved branch points", 
+			QMessageBox::Save | QMessageBox::Discard, QMessageBox::Save);
+		if (clearMessageBox == QMessageBox::Discard)
+		{
+			this->tobj->BranchPoints.clear();
+		}
+	}
 	this->myText.clear();
 	this->dtext.clear();
 	this->pointer3d->SetEnabled(0);
