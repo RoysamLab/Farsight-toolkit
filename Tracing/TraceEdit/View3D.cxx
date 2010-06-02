@@ -748,8 +748,8 @@ void View3D::CreateGUIObjects()
 	this->explodeTree = new QAction("Explode", this->CentralWidget);
 	connect(this->explodeTree, SIGNAL(triggered()), this, SLOT( ExplodeTree()));
 	this->explodeTree->setStatusTip("Break tree into segments,aka Explode. Tree can be rebuilt using set root");
-	this->explodeTree->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_B));
-	this->explodeTree->setToolTip("Ctrl + B");
+	this->explodeTree->setShortcut(QKeySequence(Qt::Key_E));
+	this->explodeTree->setToolTip("E");
 
 	this->BranchButton = new QAction("Branch", this->CentralWidget);
 	connect(this->BranchButton, SIGNAL(triggered()), this, SLOT(AddNewBranches()));
@@ -2769,6 +2769,10 @@ void View3D::SetRoots()
 		this->tobj->cleanTree();
 		this->Rerender();
 		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
+		if (numToSolve ==0)
+		{
+			this->tobj->BranchPoints.clear();
+		}
 		this->statusBar()->showMessage(QString::number(numToSolve)+ " Remaining Branches");
 		this->BranchesLabel->setText(QString::number(numToSolve));
 	}
@@ -2779,6 +2783,7 @@ void View3D::SetRoots()
 		{
 			this->FlipTree(traceList[i] );
 		}
+		this->tobj->BranchPoints.clear();
 		this->ClearSelection();
 		this->statusBar()->showMessage(" set roots");
 	}
