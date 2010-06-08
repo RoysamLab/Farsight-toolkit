@@ -33,8 +33,17 @@ public:
 
 	bool Write(std::string filename);
 	bool Read(std::string filename);
+	
+	bool GetNodesandLinesFromVtkfile(std::string filename);
+
+    std::vector<fPoint3D>getNodes();
+    std::vector<pairE>getLines();
 
 private:
+
+	std::vector<fPoint3D> Nodes;
+	std::vector<pairE> Lines;	
+
 	std::vector<fPoint3D> * nodesPtr;
 	std::vector<pairE> * linesPtr;
 
@@ -43,3 +52,4 @@ private:
 }  // end namespace mdl
 
 #endif
+

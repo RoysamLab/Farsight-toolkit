@@ -191,4 +191,120 @@ bool vtkFileHandler::Read(std::string filename)
 }
 
 
+bool vtkFileHandler::GetNodesandLinesFromVtkfile(std::string filename)
+{
+
+	FILE * infile = fopen(filename.c_str(),"rb");
+	if(infile == NULL)
+		return false;
+
+	//FIND NUMBER OF POINTS IN FILE:
+	char str[200];
+	int num_nodes = 0;
+	while(num_nodes == 0)
+    {
+		if( fscanf(infile,"%s",str) == EOF )
+		{
+			std::cerr << "end of file!" << std::endl;
+			return false;
+		}
+		if( strcmp(str, "POINTS") == 0) //found POINTS
+		{
+			fscanf(infile,"%s",str);	//get next string (number)
+			num_nodes = atoi(str);
+			fscanf(infile,"%s",str);	//get last string ( type )
+		}
+    }
+
+	//Get the points
+	Nodes.clear();
+
+	float temp;
+	for(int i=0; i<num_nodes; i++)
+	{
+		fPoint3D p;
+		if( fscanf (infile,"%f",&temp) == EOF )
+		{
+			std::cerr << "end of file!" << std::endl;
+			return false;
+		}
+		p.x = temp;
+		if( fscanf (infile,"%f",&temp) == EOF )
+		{
+			std::cerr << "end of file!" << std::endl;
+			return false;
+		}
+		p.y = temp;
+		if( fscanf (infile,"%f",&temp) == EOF )
+		{
+			std::cerr << "end of file!" << std::endl;
+			return false;
+		}
+		p.z = temp;
+		Nodes.push_back(p);
+		
+	}
+
+	//FIND NUMBER OF LINES IN FILE:
+	int num_lines = 0;
+	while(num_lines == 0)
+    {
+		if( fscanf(infile,"%s",str) == EOF )
+		{
+			std::cerr << "end of file!" << std::endl;
+			return true;
+		}
+		if( strcmp(str, "LINES") == 0) //found LINES
+		{
+			fscanf(infile,"%s",str);	//get next string (number)
+			num_lines = atoi(str);
+			fscanf(infile,"%s",str);	//get last string ( type )
+		}
+    }
+
+	//Get the lines
+	Lines.clear();
+
+	int tmp;
+	for(int i=0; i<num_lines; i++)
+	{
+		pairE p;
+		if( fscanf (infile,"%d",&tmp) == EOF )
+		{
+			std::cerr << "end of file!" << std::endl;
+			return true;
+		}
+		if( fscanf (infile,"%d",&tmp) == EOF )
+		{
+			std::cerr << "end of file!" << std::endl;
+			return true;
+		}
+		p.first = tmp;
+		if( fscanf (infile,"%d",&tmp) == EOF )
+		{
+			std::cerr << "end of file!" << std::endl;
+			return true;
+		}
+		p.second = tmp;
+		Lines.push_back(p);
+	}
+	
+	fclose(infile);
+
+	return true;
+}
+
+std::vector<fPoint3D> vtkFileHandler::getNodes()
+{
+	
+    return  this->Nodes;
+}
+
+
+std::vector<pairE> vtkFileHandler::getLines()
+{
+    return  this->Lines;
+}
+
+
 }  // end namespace mdl
