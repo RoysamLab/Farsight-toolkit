@@ -7,6 +7,19 @@
 #endif
 extern int rank, npes;
 
+#define DEBUG
+#ifdef DEBUG
+#define SHORT(x) (strrchr(x,'\\') ? strrchr(x,'\\')+1: x)
+#define _TRACE {printf("In-%s:%d:%s:\n",SHORT(__FILE__),__LINE__,__FUNCTION__);}
+#define _ETRACE {printf("Entering-%s:%d:%s:\n",SHORT(__FILE__),__LINE__,__FUNCTION__);}
+#define _LTRACE {printf("Leaving-%s:%d:%s:\n",SHORT(__FILE__),__LINE__,__FUNCTION__);}
+#else
+#define _TRACE
+#define _ETRACE
+#define _LTRACE
+#endif
+
+
 namespace helpers{
 Color2DImageType::Pointer getColorFromGrayScale(Input2DImageType::Pointer im)
 {
@@ -2089,4 +2102,273 @@ ColorImageType::Pointer getColorImageFromColor2DImages(std::vector<Color2DImageT
 	return col;
 }
 
+void drawLine(ColorImageType::Pointer input, VectorPixelType color1, VectorPixelType color2, int x1, int y1, int z1, int x2, int y2, int z2)
+{
+	//z1 has to be = z2
+	int upscale = 2;
+	ColorImageType::IndexType index1, index2;
+	ColorImageType::SizeType size = input->GetLargestPossibleRegion().GetSize();
+	index1[0] = MAX(MIN(upscale*x1,size[0]-1),0);
+	index1[1] = MAX(MIN(upscale*y1,size[1]-1),0);
+	index1[2] = MAX(MIN(z1,size[2]-1),0);
+	index2[0] = MAX(MIN(upscale*x2,size[0]-1),0);
+	index2[1] = MAX(MIN(upscale*y2,size[1]-1),0);
+	index2[2] = MAX(MIN(z2,size[2]-1),0);
+
+	//printf("drawing line...");
+	typedef itk::LineIterator<ColorImageType> LineIteratorType;
+	LineIteratorType li(input,index1,index2);
+	
+	li.GoToBegin();
+	int pc=0,pc1 = 0;
+	for(;!li.IsAtEnd(); ++li)
+	{
+		pc++;
+	}
+
+	for(li.GoToBegin();!li.IsAtEnd();++li)
+	{
+		float weight = pc1*1.0/pc;
+		VectorPixelType color;
+		color[0] = weight*color1[0] + (1-weight)*color2[0];
+		color[1] = weight*color1[1] + (1-weight)*color2[1];
+		color[2] = weight*color2[2] + (1-weight)*color2[2];
+		//printf("#");
+		li.Set(color);
+		pc1++;
+	}
+	//printf("\n");
+}
+
+std::vector<FeaturesType> get_all_connected_components(LabelImageType::Pointer labelim,FeaturesType f)
+{
+	int id = f.num;
+	std::vector<FeaturesType> comps;
+	LabelImageType::RegionType lregion;
+	LabelImageType::IndexType index;
+	index[0] = f.BoundingBox[0];
+	index[1] = f.BoundingBox[2];
+	index[2] = f.BoundingBox[4];
+	LabelImageType::SizeType size;
+	size[0] = f.BoundingBox[1] - f.BoundingBox[0] + 1;
+	size[1] = f.BoundingBox[3] - f.BoundingBox[2] + 1;
+	size[2] = f.BoundingBox[5] - f.BoundingBox[4] + 1;
+	lregion.SetSize(size);
+
+	InputImageType::Pointer im = InputImageType::New();
+	LabelImageType::IndexType empty;
+	empty.Fill(0);
+	lregion.SetIndex(empty);
+	im->SetRegions(lregion);
+	im->Allocate();
+	im->FillBuffer(0);
+
+	lregion.SetIndex(index);
+	LabelIteratorType liter(labelim,lregion);
+	IteratorType iter(im,im->GetLargestPossibleRegion());
+	for(iter.GoToBegin(),liter.GoToBegin();!liter.IsAtEnd();++iter,++liter)
+	{
+		if(liter.Get()==id)
+			iter.Set(id);
+	}
+	ConnectedFilterType::Pointer cfilter = ConnectedFilterType::New();
+	cfilter->SetInput(im);
+	cfilter->Update();
+
+	getFeatureVectorsFarsight(cfilter->GetOutput(),im,comps,1,1);
+	for(int counter=0; counter < comps.size(); counter++)
+	{
+		comps[counter].Centroid[0] += index[0];
+		comps[counter].Centroid[1] += index[1];
+		comps[counter].Centroid[2] += index[2];
+	}
+	return comps;
+
+}
+
+void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,FeaturesType fin, FeatureVariances fvar,std::vector<LabelImageType::Pointer> &lout,std::vector<InputImageType::Pointer> &rout,std::vector<FeaturesType> &fvecout)
+{
+	printf("In SplitCell:\n");
+	float c1[3],c2[3];
+	c1[0] = fin.Centroid[0]-3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[0];
+	c1[1] = fin.Centroid[1]-3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[2];
+	c1[2] = fin.Centroid[2]-3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[4];
+	c2[0] = fin.Centroid[0]+3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[0];
+	c2[1] = fin.Centroid[1]+3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[2];
+	c2[2] = fin.Centroid[2]+3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[4];
+
+	bool converged = false;
+	LabelImageType::Pointer lcopy = LabelImageType::New();
+	lcopy->SetRegions(lin->GetLargestPossibleRegion());
+	lcopy->Allocate();
+	lcopy->FillBuffer(0);
+	while(!converged)
+	{
+		printf("In loop\t");
+		int num1 =0, num2 = 0;
+		LabelImageType::IndexType index1, index2;
+		index1.Fill(0);index2.Fill(0);
+		typedef itk::ImageRegionIteratorWithIndex<LabelImageType> LabelIteratorWithIndex;
+		LabelIteratorWithIndex liter(lin,lin->GetLargestPossibleRegion());
+		LabelIteratorType lcopyiter(lcopy,lcopy->GetLargestPossibleRegion());
+		for(lcopyiter.GoToBegin(),liter.GoToBegin();!liter.IsAtEnd();++liter,++lcopyiter)
+		{
+			if(liter.Get()!=0)
+			{
+				LabelImageType::IndexType index = liter.GetIndex();
+				float dist1, dist2;
+				dist1 = sqrt((fvar.spacing[0]*(index[0]-c1[0]))*(fvar.spacing[0]*(index[0]-c1[0]))+(fvar.spacing[1]*(index[1]-c1[1]))*(fvar.spacing[1]*(index[1]-c1[1]))+(fvar.spacing[2]*(index[2]-c1[2]))*(fvar.spacing[2]*(index[2]-c1[2])));
+				dist2 = sqrt((fvar.spacing[0]*(index[0]-c2[0]))*(fvar.spacing[0]*(index[0]-c2[0]))+(fvar.spacing[1]*(index[1]-c2[1]))*(fvar.spacing[1]*(index[1]-c2[1]))+(fvar.spacing[2]*(index[2]-c2[2]))*(fvar.spacing[2]*(index[2]-c2[2])));
+				if(dist1< dist2)
+				{
+					lcopyiter.Set(1);
+					index1[0] = index1[0] + index[0];
+					index1[1] = index1[1] + index[1];
+					index1[2] = index1[2] + index[2];
+					num1++;
+				}
+				else
+				{
+					lcopyiter.Set(2);
+					index2[0] = index2[0] + index[0];
+					index2[1] = index2[1] + index[1];
+					index2[2] = index2[2] + index[2];
+					num2++;
+				}
+			}
+		}
+		LabelImageType::SizeType lsize1 = lin->GetLargestPossibleRegion().GetSize();
+		if(num1+num2 == lsize1[0]*lsize1[1]*lsize1[2])
+		{
+			printf("num1 = %d num2 = %d volume = %d\n",num1,num2,lsize1[0]*lsize1[1]*lsize1[2]);
+			scanf("%*d");
+		}
+		if(num1==0 || num2 == 0)
+		{
+			
+			c1[0] = fin.Centroid[0]-3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[0];
+			c1[1] = fin.Centroid[1]-3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[2];
+			c1[2] = fin.Centroid[2]-3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[4];
+			c2[0] = fin.Centroid[0]+3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[0];
+			c2[1] = fin.Centroid[1]+3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[2];
+			c2[2] = fin.Centroid[2]+3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[4];
+			continue;
+		}
+
+		float change = sqrt((c1[0] - index1[0]*1.0/num1)*(c1[0] - index1[0]*1.0/num1)+(c1[1] - index1[1]*1.0/num1)*(c1[1] - index1[1]*1.0/num1)+(c1[2] - index1[2]*1.0/num1)*(c1[2] - index1[2]*1.0/num1));
+
+		printf("change = %f\n", change);
+		if(change < 0.02)
+		{
+			converged = true;			
+
+			std::vector<FeaturesType> ftemp;
+			_TRACE;
+			getFeatureVectorsFarsight(lcopy,imin,ftemp,fin.time,0);
+			_TRACE;
+			printf("ftemp.size() = %d\n",ftemp.size());
+			LabelImageType::Pointer l1,l2;
+			l1 = LabelImageType::New();
+			l2 = LabelImageType::New();
+			LabelImageType::RegionType lregion;
+			LabelImageType::SizeType lsize;
+			LabelImageType::IndexType lindex;
+			lindex.Fill(0);
+			lsize[0] = ftemp[0].BoundingBox[1]-ftemp[0].BoundingBox[0]+1;
+			lsize[1] = ftemp[0].BoundingBox[3]-ftemp[0].BoundingBox[2]+1;
+			lsize[2] = ftemp[0].BoundingBox[5]-ftemp[0].BoundingBox[4]+1;
+			lregion.SetSize(lsize);
+			lregion.SetIndex(lindex);
+			l1->SetRegions(lregion);
+			
+			l1->Allocate();
+			l1->FillBuffer(0);
+			LabelIteratorType loutiter(l1,l1->GetLargestPossibleRegion());
+			
+			lindex[0] = ftemp[0].BoundingBox[0];
+			lindex[1] = ftemp[0].BoundingBox[2];
+			lindex[2] = ftemp[0].BoundingBox[4];
+			
+			lregion.SetIndex(lindex);
+			
+			lcopy->Print(std::cout);
+			lregion.Print(std::cout);
+			LabelIteratorType liniter(lcopy,lregion);
+			
+			for(loutiter.GoToBegin(),liniter.GoToBegin();!liniter.IsAtEnd();++liniter,++loutiter)
+			{
+				if(liniter.Get()==1)
+					loutiter.Set(255);
+			}
+			
+
+			lindex.Fill(0);
+			lsize[0] = ftemp[1].BoundingBox[1]-ftemp[1].BoundingBox[0]+1;
+			lsize[1] = ftemp[1].BoundingBox[3]-ftemp[1].BoundingBox[2]+1;
+			lsize[2] = ftemp[1].BoundingBox[5]-ftemp[1].BoundingBox[4]+1;
+			lregion.SetSize(lsize);
+			lregion.SetIndex(lindex);
+			l2->SetRegions(lregion);
+			
+			l2->Allocate();
+			l2->FillBuffer(0);
+
+			loutiter = LabelIteratorType(l2,l2->GetLargestPossibleRegion());
+			
+			lindex[0] = ftemp[1].BoundingBox[0];
+			lindex[1] = ftemp[1].BoundingBox[2];
+			lindex[2] = ftemp[1].BoundingBox[4];
+			lregion.SetIndex(lindex);
+			
+			lcopy->Print(std::cout);
+			lregion.Print(std::cout);
+			liniter = LabelIteratorType(lcopy,lregion);
+_TRACE;
+			for(loutiter.GoToBegin(),liniter.GoToBegin();!liniter.IsAtEnd();++liniter,++loutiter)
+			{
+				if(liniter.Get()==2)
+					loutiter.Set(255);
+			}
+			
+
+			//add lower bounds to centroid and bounding box and extract two images based on bounding box TODO
+
+			for(int counter = 0; counter < 2; counter++)
+			{
+				ftemp[counter].BoundingBox[0]+=fin.BoundingBox[0];
+				ftemp[counter].BoundingBox[1]+=fin.BoundingBox[0];
+				ftemp[counter].BoundingBox[2]+=fin.BoundingBox[2];
+				ftemp[counter].BoundingBox[3]+=fin.BoundingBox[2];
+				ftemp[counter].BoundingBox[4]+=fin.BoundingBox[4];
+				ftemp[counter].BoundingBox[5]+=fin.BoundingBox[4];
+				ftemp[counter].Centroid[0] +=fin.BoundingBox[0];
+				ftemp[counter].Centroid[1] +=fin.BoundingBox[2];
+				ftemp[counter].Centroid[2] +=fin.BoundingBox[4];
+			}
+			
+			lout.push_back(l1);
+			lout.push_back(l2);
+			InputImageType::Pointer r1,r2;
+			r1 = InputImageType::New();
+			r2 = InputImageType::New();
+			rout.push_back(r1);
+			rout.push_back(r2);
+			fvecout.push_back(ftemp[0]);
+			fvecout.push_back(ftemp[1]);
+			return;
+		}
+		c1[0] = index1[0]*1.0/num1;
+		c1[1] = index1[1]*1.0/num1;
+		c1[2] = index1[2]*1.0/num1;
+
+		c2[0] = index2[0]*1.0/num2;
+		c2[1] = index2[1]*1.0/num2;
+		c2[2] = index2[2]*1.0/num2;
+	}
+
+
+
+
+
+}
 }

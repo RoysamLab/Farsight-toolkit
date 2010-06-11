@@ -11,6 +11,7 @@
 #include <itkImageSliceConstIteratorWithIndex.h>
 #include <itkImageLinearIteratorWithIndex.h>
 #include <itkConstNeighborhoodIterator.h>
+#include <itkLineIterator.h>
 #include <itkMedianImageFilter.h>
 #include <vector>
 #include <algorithm>
@@ -150,7 +151,28 @@ struct Vec3f{
 	}
 };
 
+struct FeatureVariances{
+	enum ScalarTypes
+	{
+		VOLUME, INTEGRATED_INTENSITY, ECCENTRICITY, ELONGATION, ORIENTATION, BBOX_VOLUME, \
+		SUM, MEAN, MEDIAN, MINIMUM, MAXIMUM, SIGMA, VARIANCE, \
+		SURFACE_GRADIENT, INTERIOR_GRADIENT, SURFACE_INTENSITY, INTERIOR_INTENSITY, \
+		INTENSITY_RATIO, RADIUS_VARIATION, SURFACE_AREA, SHAPE, SHARED_BOUNDARY, \
+		SKEW, ENERGY, ENTROPY,
+		T_ENERGY, T_ENTROPY, INVERSE_DIFFERENCE_MOMENT, INERTIA, CLUSTER_SHADE, CLUSTER_PROMINENCE,
 
+	};	//FEATURES WILL GET ASSIGNED INT 0,1,...N-1
+
+	static const int N = CLUSTER_PROMINENCE + 1;
+	float variances[N];
+	int Dimensions;
+
+	float BoundingBox[6]; // start_x end_x start_y end_y start_z end_z
+	float distVariance;
+	float spacing[3];
+	float timeVariance;
+	float overlapVariance;
+};
 // all header declarations
 //
 //
@@ -203,5 +225,8 @@ LabelImageType::Pointer extract_label_image(int label, float bbox[6],LabelImageT
 InputImageType::Pointer extract_raw_image(float bbox[6],InputImageType::Pointer r);
 void annotateImage(Color2DImageType::Pointer number,Color2DImageType::Pointer orig, int n, int x, int y);
 ColorImageType::Pointer getColorImageFromColor2DImages(std::vector<Color2DImageType::Pointer> input);
+void drawLine(ColorImageType::Pointer input, VectorPixelType color1, VectorPixelType color2, int x1, int y1, int z1, int x2, int y2, int z2);
+std::vector<FeaturesType> get_all_connected_components(LabelImageType::Pointer,FeaturesType);
+void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,FeaturesType fin, FeatureVariances fvar,std::vector<LabelImageType::Pointer> &lout,std::vector<InputImageType::Pointer> &rout,std::vector<FeaturesType> &fvecout);
 }
 #endif

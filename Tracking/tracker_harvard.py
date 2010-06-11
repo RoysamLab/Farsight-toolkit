@@ -146,7 +146,7 @@ if __name__ == '__main__':
                 for obj in popen_objs:
                         out = obj.communicate()[0];
 
-
+    pdb.set_trace()
     # vessel tracing
 ##    vessel_w = 4; #vessel channel
 ##    temp_fname = [];
