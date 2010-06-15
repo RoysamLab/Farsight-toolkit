@@ -169,18 +169,21 @@ double TraceLine::GetDistToParent()
 {
 	if (this->m_parent)
 	{
-		double Leading = 0, dist =0;
-		TraceBit pre, cur;
-		TraceBitsType::iterator it = this->m_trace_bits.begin();
-		pre = *it; 
-		it++;
-		cur = *it;
-		Leading = Euclidian(pre, cur);
 		this->DistToParent = this->Euclidian(this->m_trace_bits.front(), 
 			this->m_parent->m_trace_bits.back());
-		if (Leading > 2*this->DistToParent)
+		if (this->m_trace_bits.size()>1)
 		{
-			this->DistToParent = Leading;
+			double Leading = 0, dist =0;
+			TraceBit pre, cur;
+			TraceBitsType::iterator it = this->m_trace_bits.begin();
+			pre = *it; 
+			it++;
+			cur = *it;
+			Leading = Euclidian(pre, cur);
+			if (Leading > 2*this->DistToParent)
+			{
+				this->DistToParent = Leading;
+			}
 		}
 		return this->DistToParent;
 	}
