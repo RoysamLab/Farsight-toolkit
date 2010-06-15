@@ -34,6 +34,21 @@ CONFIGURE_FILE (
   ${PROJECT_SOURCE_DIR}/FarsightConfig.h.in
   ${PROJECT_BINARY_DIR}/FarsightConfig.h
 )
+
+
+SET (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/exe CACHE PATH
+  "Single Directory for all executables"
+  )
+	
+SET (CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/libs CACHE PATH
+ "Single Directory for all static Libraries"
+ )
+
+
+SET (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/dlibs CACHE PATH
+"Single Directory for all dynamic Libraries"
+ )
+
 ################################################################################
 ################################################################################
 # FARSIGHT DEPENDS UPON A NUMBER OF OUTSIDE LIBRARIES
