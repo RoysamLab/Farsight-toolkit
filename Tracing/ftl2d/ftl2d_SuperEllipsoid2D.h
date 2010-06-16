@@ -22,9 +22,9 @@ limitations under the License.
 #include <itkImageRegionIteratorWithIndex.h>
 #include <itkImageLinearConstIteratorWithIndex.h>
 
-#include <vnl\vnl_math.h>
-#include <vnl\vnl_matrix_fixed.h>
-#include <vnl\vnl_vector_fixed.h>
+#include <vnl/vnl_math.h>
+#include <vnl/vnl_matrix_fixed.h>
+#include <vnl/vnl_vector_fixed.h>
 #include <string>
 
 typedef itk::Image< float, 2 >   ImageType;

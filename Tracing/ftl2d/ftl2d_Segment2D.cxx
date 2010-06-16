@@ -14,7 +14,7 @@ limitations under the License.
 =========================================================================*/
 
 #include "ftl2d_Segment2D.h"
-#include <vnl\vnl_math.h>
+#include <vnl/vnl_math.h>
 #define DEBUG 0
 
 Segment2D::Segment2D(TraceConfig *config) {

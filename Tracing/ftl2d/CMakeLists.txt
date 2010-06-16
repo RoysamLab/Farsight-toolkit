@@ -10,7 +10,7 @@ ELSE(ITK_FOUND)
              "Cannot build SETracing without ITK.  Please set ITK_DIR.")
 ENDIF(ITK_FOUND)
 
-FIND_PACKAGE(LIBXML2)
+FIND_PACKAGE(LibXml2)
 IF(LIBXML2_FOUND)
              INCLUDE_DIRECTORIES(${LIBXML2_INCLUDE_DIR})
 ELSE(LIBXML2_FOUND)
@@ -44,4 +44,9 @@ SET ( ftl2d_SETracing_headers
 
 
 ADD_EXECUTABLE ( ftl2d_SETracing ${ftl2d_SETracing_sources} ${ftl2d_SETracing_headers} )
-TARGET_LINK_LIBRARIES( ftl2d_SETracing ITKCommon ITKIO ITKNumerics )
+TARGET_LINK_LIBRARIES( ftl2d_SETracing 
+  ITKCommon 
+  ITKIO 
+  ITKNumerics 
+  ${LIBXML2_LIBRARIES}
+)
