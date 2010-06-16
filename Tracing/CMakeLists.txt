@@ -37,10 +37,11 @@ IF( BUILD_SpineRing )
   SUBDIRS( SpineRing )
 ENDIF()
 
-OPTION( BUILD_TrackEdit "Build Track Editor" OFF )
-IF( BUILD_TrackEdit )
-  SUBDIRS( NewTrackEdit )
-ENDIF()
+#NewTrackEdit is not ready for the use yet.
+#OPTION( BUILD_TrackEdit "Build Track Editor" OFF )
+#IF( BUILD_TrackEdit )
+#  SUBDIRS( NewTrackEdit )
+#ENDIF()
 
 OPTION( BUILD_Rendering "Build 5-Label Result Renderer" ON )
 IF( BUILD_Rendering )
