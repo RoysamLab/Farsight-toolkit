@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <vector>
 #include "TrackingDataModel.h"
-#include "QApplication.h"
-#include "QTableView.h"
+#include <QApplication>
+#include <QTableView>
 
 std::vector<std::string> getLabelFileNames(int n)
 {

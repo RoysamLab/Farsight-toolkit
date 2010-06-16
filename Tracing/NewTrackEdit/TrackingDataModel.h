@@ -3,8 +3,8 @@
 
 #include "helpers.h"
 #include "ftkObject.h"
-#include "ftkCommon/ftkLabelImageToFeatures.h"
-#include "QStandardItemModel.h"
+#include "ftkLabelImageToFeatures.h"
+#include <QStandardItemModel>
 #include <QObject>
 #include <QMap>
 
