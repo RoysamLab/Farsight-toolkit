@@ -6,6 +6,8 @@
 #include "fdct_wrapping.hpp"
 #include "fdct_wrapping_inline.hpp"
 
+#include <stdlib.h>
+#include <time.h>
 using namespace std;
 using namespace fdct_wrapping_ns;
 
@@ -53,11 +55,11 @@ int main(int argc, char** argv)
   mi = opts.find("-ac"); assert(mi!=opts.end());
   { istringstream ss((*mi).second); ss>>ac; }
   
-  srand48( (long)time(NULL) );
+  srand( (long)time(NULL) );
   CpxNumMat x(m,n);
   for(int i=0; i<m; i++)
 	 for(int j=0; j<n; j++)
-		x(i,j) = cpx(drand48(), drand48());
+		x(i,j) = cpx(rand(), rand());
   
   ck0 = clock();
   
