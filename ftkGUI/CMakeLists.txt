@@ -10,6 +10,8 @@ SET( GUI_SRCS
     	TrainingDialog.cpp
 	ftkPreprocessDialog.cpp
 	PreprocessDialog.cpp
+	StatisticsToolbar.cpp
+	
 )
 
 SET( GUI_HDRS
@@ -24,6 +26,7 @@ SET( GUI_HDRS
     	TrainingDialog.h
 	ftkPreprocessDialog.h
 	PreprocessDialog.h
+	StatisticsToolbar.h
 )
 
 SET( GUI_UIS

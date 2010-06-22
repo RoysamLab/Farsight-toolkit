@@ -15,6 +15,8 @@ limitations under the License.
 
 #include "SampleEditor.h"
 
+
+
 //*******************************************************************************
 // SampleEditor
 //********************************************************************************
@@ -38,7 +40,7 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 
 	setCentralWidget(table);
 	setWindowTitle(tr("Sample Editor"));
-
+    
 	this->resize(500,500);
 }
 
@@ -111,6 +113,9 @@ void SampleEditor::createMenus()
 	removeRowsAction->setStatusTip(tr("Remove selected rows from the table"));
 	connect(removeRowsAction, SIGNAL(triggered()), this, SLOT(removeRows()));
 	editMenu->addAction(removeRowsAction);
+	showStatisticsAction = new QAction(tr("Show Statistics Toolbar"), this);
+	connect(showStatisticsAction,SIGNAL(triggered()), this, SLOT(showStatistics()));
+	editMenu->addAction(showStatisticsAction);
 
 	addBlankRowAction = new QAction(tr("Add Blank Row"), this);
 	addBlankRowAction->setStatusTip(tr("Add blank row to bottom of table"));
@@ -148,7 +153,9 @@ void SampleEditor::loadFile()
 
 	plot->setModels(data,selection);
 	plot->show();
-
+	/*SampleEditor::statisticsToolbar->setTable(data);
+	
+	statisticsToolbar->show();*/
 }
 
 
@@ -206,6 +213,7 @@ void SampleEditor::ReadFiles(std::string hname, std::string dname)
 		featureFile.getline(line, MAXLINESIZE);
 	}
 	featureFile.close();
+	
 }
 
 //***********************************************************************************
@@ -236,6 +244,7 @@ void SampleEditor::removeRows(void)
 	selection->clear();
 	table->update();
 	plot->update();
+	SampleEditor::statisticsToolbar->update();
 }
 
 void SampleEditor::addBlankRow(void)
@@ -263,9 +272,23 @@ void SampleEditor::addBlankRow(void)
 	//update views:
 	table->update();
 	plot->update();
+	SampleEditor::statisticsToolbar->update();
 
 }
 
 void SampleEditor::changeRowData(void)
 {
+}
+
+void SampleEditor::showStatistics(void)
+{
+	QDockWidget *statisticsDockWidget = new QDockWidget();
+	this->statisticsToolbar = new StatisticsToolbar(statisticsDockWidget);
+	
+	statisticsDockWidget->setWidget(statisticsToolbar->statisticsDockWidget);
+	statisticsDockWidget->setAllowedAreas(Qt::BottomDockWidgetArea);
+	addDockWidget(Qt::BottomDockWidgetArea, statisticsToolbar->statisticsDockWidget);
+
+	SampleEditor::statisticsToolbar->setTable(data);
+		
 }

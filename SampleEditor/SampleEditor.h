@@ -30,6 +30,7 @@ limitations under the License.
 #include <QtGui/QMessageBox>
 #include <QtGui/QFileDialog>
 #include <QtGui/QTableView>
+#include <QtGui/QDockWidget>
 #include <QtCore/QFileInfo>
 
 //VTK Includes:
@@ -43,6 +44,7 @@ limitations under the License.
 #include "ftkGUI/PlotWindow.h"
 //#include "ftkGUI/HistoWindow.h"
 #include "ftkGUI/ObjectSelection.h"
+#include "ftkGUI/StatisticsToolbar.h"
 
 #include <vector>
 #include <string>
@@ -62,6 +64,7 @@ private slots:
 	void removeRows(void);
 	void addBlankRow(void);
 	void changeRowData(void);
+	void showStatistics(void);
 
 signals:
     
@@ -76,7 +79,9 @@ private:
 	QAction *removeRowsAction;
 	QAction *addBlankRowAction;
 	QAction *changeRowDataAction;
-
+	QAction *showStatisticsAction;
+	StatisticsToolbar * statisticsToolbar;
+	
 	TableWindow *table;
 	PlotWindow *plot;
 	//HistoWindow *histo;
