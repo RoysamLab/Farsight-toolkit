@@ -244,7 +244,7 @@ void SampleEditor::removeRows(void)
 	selection->clear();
 	table->update();
 	plot->update();
-	SampleEditor::statisticsToolbar->update();
+
 }
 
 void SampleEditor::addBlankRow(void)
@@ -272,7 +272,7 @@ void SampleEditor::addBlankRow(void)
 	//update views:
 	table->update();
 	plot->update();
-	SampleEditor::statisticsToolbar->update();
+	
 
 }
 
