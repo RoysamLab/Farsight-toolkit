@@ -39,12 +39,13 @@ StatisticsToolbar::~StatisticsToolbar()
 void StatisticsToolbar::setTable(vtkSmartPointer<vtkTable> dataTable)
 {
 	SetUpHeaders(dataTable);
+	int rows = dataTable->GetNumberOfRows();
 	std::vector<double> columnStatistics;
 	
 	for(int i = 0; i< dataTable->GetNumberOfColumns(); ++i)
 	{	//compute statistics
 		vtkAbstractArray *Column = dataTable->GetColumn(i);
-		columnStatistics = ComputeStatistics(Column);	
+		columnStatistics = ComputeStatistics(Column, rows);	
 
 		
 	
@@ -62,15 +63,18 @@ void StatisticsToolbar::setTable(vtkSmartPointer<vtkTable> dataTable)
 
 
 
-std::vector<double> StatisticsToolbar::ComputeStatistics(vtkAbstractArray *Column)
+std::vector<double> StatisticsToolbar::ComputeStatistics(vtkAbstractArray *Column, int rows)
 {
-	double average = this->Average(Column);
-	double stDeviation = this->StDeviation(Column, average);
-	QList <double> dataList = this->SortColumn(Column);
-	double min = dataList.front();
+	
+	double average = this->Average(Column, rows);
+	double stDeviation = this->StDeviation(Column, average, rows);
+	QList<double> dataList = this->SortColumn(Column, rows);
+    double min = dataList.at(0);
 	double max = dataList.back();
-	double median = dataList.at((dataList.size()/2)-1);
+	double median = floor(dataList.at(dataList.size()/2));
 	double mode = Mode(dataList);
+
+	std::cout<< average<< "\t" << stDeviation << "\t" << min << "\t" << max << "\t" << median << "\t" << mode<< endl;
 	
 	
 	//put stats into a vector
@@ -88,24 +92,24 @@ std::vector<double> StatisticsToolbar::ComputeStatistics(vtkAbstractArray *Colum
 
 
 
-double StatisticsToolbar::Average(vtkAbstractArray *Column)
+double StatisticsToolbar::Average(vtkAbstractArray *Column, int rows )
 {
 	double sum = 0;
 	int j;
-	for(j = 0; j< Column->GetSize()-1; ++j)
+	for(j = 0; j< rows; j++)
 	{
 		sum = (Column->GetVariantValue(j).ToDouble()) + sum;
 	}
-	double average = (sum/j);
+	double average = (sum/rows);
 	return average;
 }
 
 
 
-double StatisticsToolbar::StDeviation(vtkAbstractArray *Column, double average)
+double StatisticsToolbar::StDeviation(vtkAbstractArray *Column, double average, int rows)
 {
 	double difference = 0;
-	for(int j = 0; j< Column->GetSize()-1; ++j)
+	for(int j = 0; j< rows-1; ++j)
 	{
 		difference = (((Column->GetVariantValue(j).ToDouble() - average)*(Column->GetVariantValue(j).ToDouble() - average)) + difference); 
 	}
@@ -115,16 +119,21 @@ double StatisticsToolbar::StDeviation(vtkAbstractArray *Column, double average)
 
 
 
-QList<double> StatisticsToolbar::SortColumn(vtkAbstractArray *Column)
+QList<double> StatisticsToolbar::SortColumn(vtkAbstractArray *Column, int rows)
 {
 	this->myList = new QList<double>;
 	this->myList->push_front(Column->GetVariantValue(0).ToDouble());
-	for(int j = 1; j<Column->GetSize(); ++j)
+	for(int j = 1; j<rows; j++)
 	{
+		
 		double newValue = Column->GetVariantValue(j).ToDouble();
+		if(!(newValue >= 0))
+			newValue = 0;
+				
 		if(newValue >= (this->myList->back()))//greater than last item
 		{
 			this->myList->push_back(newValue);
+
 			
 		}
 		else if(newValue <(this->myList->front()))//less than first item
@@ -149,6 +158,7 @@ QList<double> StatisticsToolbar::SortColumn(vtkAbstractArray *Column)
 			}
 			int size = this->myList->size();
 		}
+		
 		
 	}
 	return *myList;
@@ -195,15 +205,15 @@ void StatisticsToolbar::SetUpHeaders(vtkSmartPointer<vtkTable> dataTable)
 	this->rowHeaders.push_back("Mode");
 	
 
-	int numColHeaders = this->colHeaders.size();
-	int numRowHeaders = this->rowHeaders.size();
+    unsigned int numColHeaders = this->colHeaders.size();
+	unsigned int numRowHeaders = this->rowHeaders.size();
 	this->StatisticsModel->setColumnCount(numColHeaders);
 	this->StatisticsModel->setRowCount(numRowHeaders);
 
-	for(int i = 0; i < numColHeaders; i++)
+	for(unsigned int i = 0; i < numColHeaders; i++)
 	{
 		this->StatisticsModel->setHeaderData(i,Qt::Horizontal,this->colHeaders.at(i));
-		for(int j = 0; j < numRowHeaders; j++)
+		for(unsigned int j = 0; j < numRowHeaders; j++)
 		{
 			this->StatisticsModel->setHeaderData(j,Qt::Vertical, this->rowHeaders.at(j));
 	    }

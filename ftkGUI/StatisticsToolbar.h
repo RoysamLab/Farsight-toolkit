@@ -53,11 +53,11 @@ private:
 	  QTableView * StatisticsTable;
 	
     
-	double Average(vtkAbstractArray *Column);
-	double StDeviation(vtkAbstractArray *Column, double average);
-	QList<double> SortColumn(vtkAbstractArray *Column);
+	double Average(vtkAbstractArray *Column, int rows);
+	double StDeviation(vtkAbstractArray *Column, double average, int rows);
+	QList<double> SortColumn(vtkAbstractArray *Column, int rows);
 	void SetUpHeaders(vtkSmartPointer<vtkTable> dataTable);
-	std::vector<double> ComputeStatistics(vtkAbstractArray *Column);
+	std::vector<double> ComputeStatistics(vtkAbstractArray *Column, int rows);
 	double Mode(QList<double> dataList);
 	
 	
