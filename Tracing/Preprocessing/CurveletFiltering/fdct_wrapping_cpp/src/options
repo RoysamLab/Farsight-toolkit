@@ -1,5 +1,6 @@
--m 512
--n 512
--nbscales 6
 -nbangles_coarse 8
--ac 0
+-nsigmas_coarse 2.2
+-nsigmas_fine 2.5
+-neighb_weight 0.5
+-tuning_neighb 0.6
+-sigma1_ratio 0.2
