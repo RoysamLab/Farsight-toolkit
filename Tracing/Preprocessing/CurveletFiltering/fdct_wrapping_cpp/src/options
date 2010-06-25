@@ -4,3 +4,4 @@
 -neighb_weight 0.5
 -tuning_neighb 0.6
 -sigma1_ratio 0.2
+-num_threads 8
