@@ -600,6 +600,12 @@ int main(int argc, char** argv)
 	{ istringstream ss((*mi).second); ss>>sigma_ratio; }
 	else
 	{ sigma_ratio = 0.2; printf("Chose sigma_ratio = 0.2 as default \n"); }
+	int numt;
+	mi = opts.find("-num_threads"); 
+	if(mi!=opts.end())
+	{ istringstream ss((*mi).second); ss>>numt; }
+	else
+	{ numt = 8; printf("Chose num_threads = 8 as default \n"); }
 
 	InputImageType::Pointer inputim = readImage<InputImageType>(argv[1]);
 
@@ -615,9 +621,9 @@ int main(int argc, char** argv)
 	sinim->Allocate();
 
 
-#pragma omp parallel shared(outputim,inputim,cosim,sinim)  num_threads(8)
+#pragma omp parallel shared(outputim,inputim,cosim,sinim) num_threads(numt)
 	{
-#pragma omp for schedule(dynamic) nowait
+#pragma omp for
 		for(int counter = 0; counter < slices; counter++)
 		{
 			Input2DImageType::Pointer im2d = getSlice(inputim,counter);
