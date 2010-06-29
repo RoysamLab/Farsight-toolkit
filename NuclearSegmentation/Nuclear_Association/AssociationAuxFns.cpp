@@ -245,7 +245,7 @@ unsigned short returnthresh( USImageType::Pointer input_image, int num_bin_levs,
 
 	std::cout<<"Threshold computed: "<<thresh<<std::endl;
 
-	return (USPixelType)thresh;
+	return (USPixelType)(thresh+0.5);
 
 }
 
