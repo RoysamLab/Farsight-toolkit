@@ -27,8 +27,9 @@ int main (int argc, char* argv[])
 	//argc will be taken care of in QT app
 	QApplication app(argc, argv);
 	app.setOrganizationName("FARSIGHT Toolkit");
-	app.setOrganizationDomain("farsight-toolkit.org");
+	app.setOrganizationDomain("www.farsight-toolkit.org");
 	app.setApplicationName("Trace Editor");
+	app.setApplicationVersion("V1.0");
 	View3D *View = new View3D();
 	View->show();
 	int retval = app.exec();

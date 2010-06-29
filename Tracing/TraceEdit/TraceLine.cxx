@@ -35,6 +35,8 @@ TraceLine::TraceLine()
   this->m_id = -(1<<30);
   this->m_branches.clear();
   this->EuclidianD = -1;
+  this->BurkTaper = 0;
+  this->HillmanTaper = 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -113,11 +115,15 @@ void TraceLine::setRoot(int RootID, int traceLevel, double parentPath)
 }
 void TraceLine::calculateVol()
 {
-	double dist = 0, r = 0;
+	if (this->m_trace_bits.size() >1)
+	{
+	double dist = 0, r = 0, Df = 0, Dl = 0;
 	TraceBit pre, cur;
 	TraceBitsType::iterator it = this->m_trace_bits.begin();
 	pre = *it; 
 	it++;
+	Df = 2*this->m_trace_bits.front().r;
+	Dl = 2*this->m_trace_bits.back().r;
 	r = pre.r;
 	for (; it != this->m_trace_bits.end(); it++)
 	{
@@ -126,9 +132,28 @@ void TraceLine::calculateVol()
 		dist += Euclidian(pre, cur);
 		pre = cur;
 	}
+	if (Df !=Dl)
+	{
+		this->BurkTaper = (Df - Dl)/dist;
+		this->HillmanTaper = Dl/Df;
+	}
+	else
+	{
+		this->BurkTaper = 0;
+		this->HillmanTaper = 0;
+	}
 	this->length = dist;
 	this->radii = r / this->m_trace_bits.size(); //ave radii
-	this->volume = pow((this->radii),2)*this->length;
+	this->volume = PI*pow((this->radii),2)*this->length;
+	}
+	else
+	{
+		this->length = 0;
+		this->radii = this->m_trace_bits.front().r; 
+		this->volume = 0;
+		this->BurkTaper = 0;
+		this->HillmanTaper = 0;
+	}
 }
 void TraceLine::setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData)
 {

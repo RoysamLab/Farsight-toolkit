@@ -53,6 +53,8 @@ public:
 	double GetFragmentationSmoothness();
 	double GetRadii(){return radii;}
 	double GetVolume() {return volume;}
+	double GetBurkTaper() {return BurkTaper;}
+	double GetHillmanTaper() {return HillmanTaper;}
 	void setRoot(int RootID, int traceLevel, double parentPath);
 	void AddBranch(TraceLine* b);
 	TraceLine *GetBranch1();
@@ -98,7 +100,7 @@ private:
 	double Euclidian(TraceBit bit1, TraceBit bit2);
 	double Angle(TraceBit bit1f, TraceBit bit1b, TraceBit bit2f, TraceBit bit2b);
 
-	double traceColor, radii, length, volume, PathLength, EuclidianD, DistToParent, BitDensity;
+	double traceColor, radii, length, volume, PathLength, EuclidianD, DistToParent, BitDensity, BurkTaper, HillmanTaper;
 	int m_id, root, level;
 	std::vector<unsigned int> m_markers;
 	unsigned char m_type;

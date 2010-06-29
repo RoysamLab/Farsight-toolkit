@@ -1157,7 +1157,11 @@ void View3D::EditHelp()
 void View3D::About()
 {
 	QMessageBox::about(this, tr("About Application"),
-             tr("The Farsight Trace Editor is intended to provide validation through editing\n"
+		QCoreApplication::organizationName() + "\n" + 
+		QCoreApplication::organizationDomain() + "\n" + 
+		QCoreApplication::applicationName() + "\n Version:\t" + 
+		QCoreApplication::applicationVersion()+
+             "\nThe Farsight Trace Editor is intended to provide validation through editing\n"
 			 "The linked space provides group editing and helps automate many tasks\n"
 			 "Copyright 2009 Rensselaer Polytechnic Institute\n"
 			"Licensed under the Apache License, Version 2.0 (the 'License');\n"
@@ -1170,7 +1174,7 @@ void View3D::About()
 			"software distributed under the License is distributed on an 'AS IS' BASIS,\n"
 			"WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n"
 			"See the License for the specific language governing permissions and\n"
-			"limitations under the License. \n"));
+			"limitations under the License. \n");
 }
 /* update settings */
 void View3D::ShowSettingsWindow()

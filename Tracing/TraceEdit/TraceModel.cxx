@@ -61,6 +61,8 @@ void TraceModel::stdHeaders()
 	this->headers.push_back("Tortuosity");
 	this->headers.push_back("Radius");
 	this->headers.push_back("Volume");
+	this->headers.push_back("BurkTaper");
+	this->headers.push_back("HillmanTaper");
 	this->headers.push_back("Type");
 	this->headers.push_back("Parent");	
 	this->headers.push_back("Root ID");
@@ -113,6 +115,8 @@ void TraceModel::SyncModel()
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetFragmentationSmoothness());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetRadii());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetVolume());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBurkTaper());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetHillmanTaper());
 		DataRow->InsertNextValue((int)this->TraceLines.at(i)->GetType());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetParentID());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetRootID());
