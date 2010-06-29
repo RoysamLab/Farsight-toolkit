@@ -649,8 +649,8 @@ float NuclearAssociationRules::ComputeTotal(std::vector<int> LST)
 //compute average
 float NuclearAssociationRules::ComputeAverage(std::vector<int> LST)
 {
-	float av = 0;
-	float lst_sz = (float)LST.size();
+	double av = 0;
+	double lst_sz = (double)LST.size();
 	for(unsigned int i=0; i<LST.size(); i++)
 	{
 		if( LST[i] >= thresh )
@@ -658,9 +658,10 @@ float NuclearAssociationRules::ComputeAverage(std::vector<int> LST)
 		else
 			--lst_sz;
 	}
-	if( lst_sz )
+	if( lst_sz > 0 && av > 0 ){
 		av/=lst_sz;
-	return av;
+		return (float)av;
+	} else return 0;
 }
 
 } //end namespace ftk
