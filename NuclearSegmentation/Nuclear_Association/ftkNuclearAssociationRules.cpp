@@ -340,7 +340,16 @@ void NuclearAssociationRules::Compute()
 			ReaderType::Pointer reader2 = ReaderType::New();
 			reader2->SetFileName(assocRulesList[i].GetTargetFileNmae());
 			reader2->Update();
-			inpImage = reader2->GetOutput();
+
+			//Scale so that there is always uniform scaling of association computation when comparing across uchar and ushort images
+			typedef itk::RescaleIntensityImageFilter< LabImageType, LabImageType > RescaleUsUsType;
+			RescaleUsUsType::Pointer rescaleususfilter = RescaleUsUsType::New();
+			rescaleususfilter->SetInput( reader2->GetOutput() );
+			rescaleususfilter->SetOutputMaximum( itk::NumericTraits<unsigned char>::max() );
+			rescaleususfilter->SetOutputMinimum( 0 );
+			rescaleususfilter->Update();
+
+			inpImage = rescaleususfilter->GetOutput();
 		}
 
 		if( assocRulesList[i].IsUseBackgroundSubtraction() ){

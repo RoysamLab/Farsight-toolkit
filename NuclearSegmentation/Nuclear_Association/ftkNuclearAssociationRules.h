@@ -40,6 +40,7 @@
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkCastImageFilter.h"
 #include "itkExtractImageFilter.h"
+#include "itkRescaleIntensityImageFilter.h"
 #include <itkSignedDanielssonDistanceMapImageFilter.h>
 
 #include <vtkSmartPointer.h>

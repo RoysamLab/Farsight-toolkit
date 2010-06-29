@@ -43,6 +43,8 @@
 
 typedef unsigned short USPixelType;
 typedef itk::Image< USPixelType, 3 > USImageType;
+typedef float FloatPixelType;
+typedef itk::Image< FloatPixelType, 3 > FloatImageType;
 
 std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USImageType::Pointer inp_labeled, int number_of_rois, unsigned short thresh){
 
@@ -163,12 +165,14 @@ unsigned short returnthresh( USImageType::Pointer input_image, int num_bin_levs,
 	typedef itk::ImageRegionConstIterator< USImageType > ConstIteratorType;
 	//typedef itk::Statistics::ScalarImageToHistogramGenerator< USImageType > ScalarImageToHistogramGeneratorType;
 	//typedef ScalarImageToHistogramGeneratorType::HistogramType HistogramType;
-	typedef itk::Statistics::Histogram<> HistogramType;
+	typedef itk::Statistics::Histogram< FloatPixelType, 1 > HistogramType;
 	typedef itk::OtsuMultipleThresholdsCalculator< HistogramType > CalculatorType;
+
+	std::cout<<"Starting threshold computation\n";
 
 	//Create a temporary histogram container:
 	const int numBins = 256;
-	unsigned long tempHist[numBins];
+	double tempHist[numBins];
 	for(int i=0; i<numBins; ++i)
 	{
 		tempHist[i] = 0;
@@ -181,35 +185,46 @@ unsigned short returnthresh( USImageType::Pointer input_image, int num_bin_levs,
 		USPixelType pix = it.Get();
 		if(pix <= 255)
 		{
-			tempHist[pix]++;
+			++tempHist[pix];
 		}
 	}
 	
 	//Find max value in the histogram
-	unsigned long floatIntegerMax = 16777216;
-	unsigned long max = 0;
+	double floatIntegerMax = itk::NumericTraits<unsigned short>::max();
+	double max = 0.0;
 	for(int i=0; i<numBins; ++i)
 	{
 		if( tempHist[i] > max )
 			max = tempHist[i];
 	}
 
-	float scaleFactor = 1;
+	double scaleFactor = 1;
 	if(max >= floatIntegerMax)
 	{
-		scaleFactor = (float)floatIntegerMax / (float)max;
+		scaleFactor = floatIntegerMax / max;
 	}
 
-	HistogramType::Pointer histogram = HistogramType::New();
+	HistogramType::Pointer histogram = HistogramType::New() ;
+	// initialize histogram
 	HistogramType::SizeType size;
-	size.Fill(numBins);
-	histogram->Initialize(size);
+	HistogramType::MeasurementVectorType lowerBound ;
+	HistogramType::MeasurementVectorType upperBound ;
 
-	for(int i=0; i<numBins; ++i)
+	lowerBound[0] = 0.0;
+	upperBound[0] = (float)255.0;
+	size.Fill(numBins);
+
+	histogram->Initialize(size, lowerBound, upperBound ) ;
+
+	int i=0;
+	for (HistogramType::Iterator iter = histogram->Begin(); iter != histogram->End(); ++iter )
 	{
-		int norm_freq = int((float)tempHist[i] * scaleFactor);
-		histogram->SetFrequency(i, norm_freq);
+		float norm_freq = (float)(tempHist[i] * scaleFactor);
+		iter.SetFrequency(norm_freq);
+		++i;
 	}
+
+	std::cout<<"Histogram computed\n";
 
 	//ScalarImageToHistogramGeneratorType::Pointer scalarImageToHistogramGenerator = ScalarImageToHistogramGeneratorType::New();
 	//scalarImageToHistogramGenerator->SetNumberOfBins( 256 );
@@ -223,12 +238,14 @@ unsigned short returnthresh( USImageType::Pointer input_image, int num_bin_levs,
 	const CalculatorType::OutputType &thresholdVector = calculator->GetOutput(); 
 	CalculatorType::OutputType::const_iterator itNum = thresholdVector.begin();
 
-	USPixelType thresh;
+	FloatPixelType thresh;
 
 	for(int i=0; i < num_in_fg; ++itNum, ++i)
-		thresh = (static_cast<USPixelType>(*itNum));
+		thresh = (static_cast<FloatPixelType>(*itNum));
 
-	return thresh;
+	std::cout<<"Threshold computed: "<<thresh<<std::endl;
+
+	return (USPixelType)thresh;
 
 }
 
