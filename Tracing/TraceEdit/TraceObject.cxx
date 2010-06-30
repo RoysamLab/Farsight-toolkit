@@ -620,7 +620,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 	tbit.y = y + this->ty;//(double) fabs(y);
 	tbit.z = z + this->tz;//(double) fabs(z);
 	tbit.id=id;
-	if (!(r<=0))
+	if (!(r>0))
 	{
 		r = 1;
 	}

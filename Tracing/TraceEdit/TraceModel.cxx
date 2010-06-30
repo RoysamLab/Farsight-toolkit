@@ -60,7 +60,9 @@ void TraceModel::stdHeaders()
 	this->headers.push_back("Trace Density");
 	this->headers.push_back("Tortuosity");
 	this->headers.push_back("Radius");
+	this->headers.push_back("Section Area");
 	this->headers.push_back("Volume");
+	this->headers.push_back("Surface Area");
 	this->headers.push_back("BurkTaper");
 	this->headers.push_back("HillmanTaper");
 	this->headers.push_back("Type");
@@ -114,7 +116,9 @@ void TraceModel::SyncModel()
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBitDensity());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetFragmentationSmoothness());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetRadii());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetSectionArea());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetVolume());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetSurfaceArea());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBurkTaper());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetHillmanTaper());
 		DataRow->InsertNextValue((int)this->TraceLines.at(i)->GetType());
