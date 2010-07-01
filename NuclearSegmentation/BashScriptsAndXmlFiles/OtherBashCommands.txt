@@ -1,0 +1,8 @@
+#Remove File Types
+find . -name "libBooger*" -exec rm -f {} \;
+
+#Removing Spaces from filenames in one folder
+for file in *; do mv "$file" `echo $file | tr ' ' '_'` ; done
+
+#chmod
+chmod u+x script_file.sh
