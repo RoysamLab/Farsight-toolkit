@@ -49,7 +49,7 @@ void StatisticsToolbar::setTable(vtkSmartPointer<vtkTable> dataTable)
 
 		
 	
-		for(int row = 0; row<rowHeaders.size(); ++row)
+		for(int row = 0; row < (int)rowHeaders.size(); ++row)
 		{
 			this->StatisticsModel->setData(this->StatisticsModel->index(row, i), columnStatistics.at(row));
 		}
@@ -156,7 +156,7 @@ QList<double> StatisticsToolbar::SortColumn(vtkAbstractArray *Column, int rows)
 				else
 				    nextValue = this->myList->at(n+1);
 			}
-			int size = this->myList->size();
+			//int size = this->myList->size();
 		}
 		
 		
