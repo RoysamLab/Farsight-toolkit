@@ -71,8 +71,8 @@ void ColorSegmentation::SmoothRGBImage(RGBImageType::Pointer img)
 	c2_image->SetOrigin( origin );
 	c3_image->SetOrigin( origin );
 
-	UcharImageType::IndexType start = { 0,0,0 };
-	UcharImageType::SizeType  size = { size1, size2, size3 };
+	UcharImageType::IndexType start = { { 0,0,0 } };
+	UcharImageType::SizeType  size = { { size1, size2, size3 } };
 	UcharImageType::RegionType region;
 	region.SetSize( size );
 	region.SetIndex( start );
@@ -218,8 +218,8 @@ void ColorSegmentation::TransformToRLI()
 	origin[2] = 0;
 	rli_image->SetOrigin( origin );
 
-	RLIImageType::IndexType start = { 0,0,0 };
-	RLIImageType::SizeType  size = { size1, size2, size3 };
+	RLIImageType::IndexType start = { { 0,0,0 } };
+	RLIImageType::SizeType  size = { { size1, size2, size3 } };
 	RLIImageType::RegionType region;
 	region.SetSize( size );
 	region.SetIndex( start );
@@ -375,9 +375,9 @@ void ColorSegmentation::ComputeClassWeights2()
 	}
 
 	//Preliminary computations:
-	float R_B_axis_len = dh::Classifier::euclidean_dist (archTypRED, archTypBLUE );
-	float Y_B_axis_len = dh::Classifier::euclidean_dist (archTypBACK, archTypBLUE );
-	float Y_R_axis_len = dh::Classifier::euclidean_dist (archTypBACK, archTypRED );
+	//float R_B_axis_len = dh::Classifier::euclidean_dist (archTypRED, archTypBLUE );
+	//float Y_B_axis_len = dh::Classifier::euclidean_dist (archTypBACK, archTypBLUE );
+	//float Y_R_axis_len = dh::Classifier::euclidean_dist (archTypBACK, archTypRED );
 
 	//----------- Find decision planes ---------------
 	// 1. Find D (split point) - This is a point half way between RED and BLUE archetypes
@@ -417,9 +417,9 @@ void ColorSegmentation::ComputeClassWeights2()
 		RLIPixelType p_rli = rli_it.Get();
 		dh::RLI pixel = dh::RLI( p_rli[0], p_rli[1], p_rli[2] );	//Creating a 3D "pixel"
 
-		float red_dist = dh::Classifier::euclidean_dist( pixel, archTypRED );	//Distance to red archtype
-		float blue_dist = dh::Classifier::euclidean_dist( pixel, archTypBLUE );	//Distance to blue archtype
-		float bkgrnd_dist = dh::Classifier::euclidean_dist( pixel, archTypBACK );//Distance to background archtype
+		//float red_dist = dh::Classifier::euclidean_dist( pixel, archTypRED );	//Distance to red archtype
+		//float blue_dist = dh::Classifier::euclidean_dist( pixel, archTypBLUE );	//Distance to blue archtype
+		//float bkgrnd_dist = dh::Classifier::euclidean_dist( pixel, archTypBACK );//Distance to background archtype
 
 		//Distance from pixel to decision plane (pos=red, neg=blue):
 		double s_plane_dist = dh::dot ( ((dh::XYZ)pixel - split_point), decision_plane );
@@ -591,8 +591,8 @@ void ColorSegmentation::ComputeClassWeights()
 	red_weights_temp->SetOrigin( origin ); 
 	blue_weights_temp->SetOrigin( origin );
 
-	FloatImageType::IndexType start = { 0,0,0 };
-	FloatImageType::SizeType  size = { size1, size2, size3 };
+	FloatImageType::IndexType start = { { 0,0,0 } };
+	FloatImageType::SizeType  size = { { size1, size2, size3 } };
 	FloatImageType::RegionType region;
 	region.SetSize( size );
 	region.SetIndex( start );
@@ -815,8 +815,8 @@ void ColorSegmentation::GenerateColors(dh::_RGB c1, dh::_RGB c2, dh::_RGB c3, st
 	origin[0] = 0;
 	origin[1] = 0;
 	colorImage->SetOrigin( origin ); 
-	RGBImageType2D::IndexType start = { 0,0 };
-	RGBImageType2D::SizeType size = { imgSize, imgSize };
+	RGBImageType2D::IndexType start = { { 0,0 } };
+	RGBImageType2D::SizeType size = { { imgSize, imgSize } };
 	RGBImageType2D::RegionType region;
 	region.SetSize( size );
 	region.SetIndex( start );
@@ -895,8 +895,8 @@ void ColorSegmentation::GenerateProjection(int dir, std::string outFilename)
 	origin[0] = 0;
 	origin[1] = 0;
 	histImage->SetOrigin( origin ); 
-	RGBImageType2D::IndexType start = { 0,0 };
-	RGBImageType2D::SizeType  size = { dh::histSize, dh::histSize };
+	RGBImageType2D::IndexType start = { { 0,0 } };
+	RGBImageType2D::SizeType  size = { { dh::histSize, dh::histSize } };
 	RGBImageType2D::RegionType region;
 	region.SetSize( size );
 	region.SetIndex( start );
@@ -957,27 +957,27 @@ void ColorSegmentation::GenerateProjection(int dir, std::string outFilename)
 
 	if(dir==3)
 	{
-		RGBImageType2D::IndexType indexR = { archTypRED.R, archTypRED.L };
-		RGBImageType2D::IndexType indexB = { archTypBLUE.R, archTypBLUE.L };
-		RGBImageType2D::IndexType indexW = { archTypBACK.R, archTypBACK.L };
+		RGBImageType2D::IndexType indexR = { { archTypRED.R, archTypRED.L } };
+		RGBImageType2D::IndexType indexB = { { archTypBLUE.R, archTypBLUE.L } };
+		RGBImageType2D::IndexType indexW = { { archTypBACK.R, archTypBACK.L } };
 		histImage->SetPixel(indexR, red_rgb);
 		histImage->SetPixel(indexB, blue_rgb);
 		histImage->SetPixel(indexW, back_rgb);
 	}
 	else if(dir==2)
 	{
-		RGBImageType2D::IndexType indexR = { archTypRED.R, archTypRED.I };
-		RGBImageType2D::IndexType indexB = { archTypBLUE.R, archTypBLUE.I };
-		RGBImageType2D::IndexType indexW = { archTypBACK.R, archTypBACK.I };
+		RGBImageType2D::IndexType indexR = { { archTypRED.R, archTypRED.I } };
+		RGBImageType2D::IndexType indexB = { { archTypBLUE.R, archTypBLUE.I } };
+		RGBImageType2D::IndexType indexW = { { archTypBACK.R, archTypBACK.I } };
 		histImage->SetPixel(indexR, red_rgb);
 		histImage->SetPixel(indexB, blue_rgb);
 		histImage->SetPixel(indexW, back_rgb);
 	}
 	else if(dir==1)
 	{
-		RGBImageType2D::IndexType indexR = { archTypRED.L, archTypRED.I };
-		RGBImageType2D::IndexType indexB = { archTypBLUE.L, archTypBLUE.I };
-		RGBImageType2D::IndexType indexW = { archTypBACK.L, archTypBACK.I };
+		RGBImageType2D::IndexType indexR = { { archTypRED.L, archTypRED.I } };
+		RGBImageType2D::IndexType indexB = { { archTypBLUE.L, archTypBLUE.I } };
+		RGBImageType2D::IndexType indexW = { { archTypBACK.L, archTypBACK.I } };
 		histImage->SetPixel(indexR, red_rgb);
 		histImage->SetPixel(indexB, blue_rgb);
 		histImage->SetPixel(indexW, back_rgb);

@@ -63,7 +63,7 @@ double area_eval( const _RGB& p1, const _RGB& p2, const _RGB& p3 )
 	
 	XYZ d = a + ( ac * ( dot ( ac, ab ) / dot ( ac, ac ) ) );
    
-	double t = dot ( ac, ab ) / dot ( ac, ac );
+	//double t = dot ( ac, ab ) / dot ( ac, ac );
 
 	double area = .5 * magnitude ( ac ) * magnitude ( d - b );
 	
