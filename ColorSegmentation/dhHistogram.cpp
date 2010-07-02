@@ -26,8 +26,8 @@ Histogram::Histogram(int inc_scale_in)
 	origin[2] = 0;
 	histImage->SetOrigin( origin ); 
 
-	HistImageType::IndexType start = { 0,0,0 };
-	HistImageType::SizeType  size = { histSize, histSize, histSize };
+	HistImageType::IndexType start = { { 0,0,0 } };
+	HistImageType::SizeType  size = { { histSize, histSize, histSize } };
 	HistImageType::RegionType region;
 	region.SetSize( size );
 	region.SetIndex( start );
@@ -85,7 +85,7 @@ void Histogram::set(int d1, int d2, int d3, PixelType val)
 {
 	if(check_bounds(d1,d2,d3))
 	{
-		HistImageType::IndexType index = { d1, d2, d3 };
+		HistImageType::IndexType index = { { d1, d2, d3 } };
 		histImage->SetPixel(index, val);
 		//a[d1][d2][d3] = val; 
 	}	
@@ -96,7 +96,7 @@ void Histogram::inc_element(int d1, int d2, int d3)
 { 
 	if(check_bounds(d1,d2,d3))
 	{
-		HistImageType::IndexType index = { d1, d2, d3 };
+		HistImageType::IndexType index = { { d1, d2, d3 } };
 		PixelType val = histImage->GetPixel(index);
 		//if ( a[d1][d2][d3] >= LONG_MAX )
 		if( val >= LONG_MAX )
@@ -131,8 +131,8 @@ long int Histogram::proj_at(int dir, int da, int db)
 {
 	long int total = 0;
 
-	HistImageType::IndexType start = { 0, 0, 0 };
-	HistImageType::SizeType  size = { 1, 1, 1 };
+	HistImageType::IndexType start = { { 0, 0, 0 } };
+	HistImageType::SizeType  size = { { 1, 1, 1 } };
 	if(dir == 1)
 	{
 		size[0] = histSize;
@@ -205,7 +205,7 @@ void Histogram::smooth()
 						for ( int z = 0; z < 3; z++ )
 						{
 							int kzp = k + z - 1;
-							HistImageType::IndexType index = { ixp, jyp, kzp };
+							HistImageType::IndexType index = { { ixp, jyp, kzp } };
 							long int val = histImage->GetPixel(index);
 							sum += sk[x][y][z] * val;
 						}
@@ -228,7 +228,7 @@ void Histogram::smooth()
 		{ 
 			FOR_AXIS(k)
 			{ 
-				HistImageType::IndexType index = { i, j, k };
+				HistImageType::IndexType index = { { i, j, k } };
 				histImage->SetPixel(index, sa[i][j][k]);
 				//a[i][j][k] = sa[i][j][k];
 				if ( sa[i][j][k] > max_freq )
@@ -267,7 +267,7 @@ void Histogram::find_bounding_box()
 	{ for ( j = 1; j < histSize-1; j++ )
 	  { for ( k = 1; k < histSize-1; k++ )
         { 
-			HistImageType::IndexType index = { i, j, k };
+			HistImageType::IndexType index = { { i, j, k } };
 			long int val = histImage->GetPixel(index);
 			if(val)
 			{ 
@@ -307,7 +307,7 @@ void Histogram::find_bounding_box()
 	{ for ( i = d1min; i <= d1max; i++ )
 	  { for ( j = 1; j < histSize-1; j++ )
         { 
-			HistImageType::IndexType index = { i, j, k };
+			HistImageType::IndexType index = { { i, j, k } };
 			long int val = histImage->GetPixel(index);
 			if(val)
 			{ 
@@ -327,7 +327,7 @@ void Histogram::find_bounding_box()
 	{ for ( i = d1min; i <= d1max; i++ )
 	  { for ( j = 1; j < histSize-1; j++ )
         { 
-			HistImageType::IndexType index = { i, j, k };
+			HistImageType::IndexType index = { { i, j, k } };
 			long int val = histImage->GetPixel(index);
 			if(val)
 			{ 
@@ -347,7 +347,7 @@ void Histogram::find_bounding_box()
 	{ for ( i = d1min; i <= d1max; i++ )
 	  { for ( k = d3min; k <= d3max; k++ )
         { 
-			HistImageType::IndexType index = { i, j, k };
+			HistImageType::IndexType index = { { i, j, k } };
 			long int val = histImage->GetPixel(index);
 			if(val)
 			{ 
@@ -367,7 +367,7 @@ void Histogram::find_bounding_box()
 	{ for ( i = d1min; i <= d1max; i++ )
 	  { for ( k = d3min; k <= d3max; k++ )
         { 
-			HistImageType::IndexType index = { i, j, k };
+			HistImageType::IndexType index = { { i, j, k } };
 			long int val = histImage->GetPixel(index);
 			if(val)
 			{ 
@@ -409,7 +409,7 @@ void Histogram::delete_secondary_blobs()
 	HistImageType::Pointer ccImage = ccfilter->GetOutput();
 
 	//Get ID of the object containing the mode:
-	HistImageType::IndexType index = { mode[0], mode[1], mode[2] };
+	HistImageType::IndexType index = { { mode[0], mode[1], mode[2] } };
 	unsigned char id = ccImage->GetPixel(index);
 
 	//Set the histogram count to 0 for all colors not in the main object:
