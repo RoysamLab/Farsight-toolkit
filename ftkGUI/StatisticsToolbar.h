@@ -48,7 +48,7 @@ private:
 	QItemSelectionModel * StatisticsSelectionModel;
 	std::vector<QString> colHeaders;
 	std::vector<QString> rowHeaders;
-	std::vector< std::vector<double>> statistics;
+	std::vector< std::vector<double> > statistics;
 	QList<double> *myList;
 	  QTableView * StatisticsTable;
 	
