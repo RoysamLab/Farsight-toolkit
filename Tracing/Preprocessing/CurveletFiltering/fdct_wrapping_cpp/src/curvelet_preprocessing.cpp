@@ -1,7 +1,7 @@
 /*
-   Copyright (C) 2004 Caltech
-   Written by Lexing Ying
-   */
+Copyright (C) 2004 Caltech
+Written by Lexing Ying
+*/
 
 #include "fdct_wrapping.hpp"
 #include "fdct_wrapping_inline.hpp"
@@ -28,6 +28,9 @@ typedef itk::Image<float,3> FloatImageType;
 typedef itk::Image<float,2> Float2DImageType;
 
 
+#define MIN(a,b) (((a) > (b))? (b) : (a))
+#define MAX(a,b) (((a) < (b))? (b) : (a))
+
 int nbangles_coarse;
 int ac;
 int nshifts;
@@ -40,7 +43,7 @@ float sigma_ratio;
 
 //function definitions
 
-	template<typename T>
+template<typename T>
 void circshift(T input, int shiftx, int shifty, T &output)
 {
 	int m,n;
@@ -69,44 +72,44 @@ template <typename T>
 typename T::Pointer readImage(const char *filename)
 {
 	printf("Reading %s ... \n",filename);
-		typedef typename itk::ImageFileReader<T> ReaderType;
-		typename ReaderType::Pointer reader = ReaderType::New();
-		
-		ReaderType::GlobalWarningDisplayOff();
-		reader->SetFileName(filename);
-		try
-		{
-			reader->Update();
-		}
+	typedef typename itk::ImageFileReader<T> ReaderType;
+	typename ReaderType::Pointer reader = ReaderType::New();
+
+	ReaderType::GlobalWarningDisplayOff();
+	reader->SetFileName(filename);
+	try
+	{
+		reader->Update();
+	}
 	catch(itk::ExceptionObject &err)
 	{
 		std::cerr << "ExceptionObject caught!" <<std::endl;
-			std::cerr << err << std::endl;
-			_exit(0);
-			//return EXIT_FAILURE;
+		std::cerr << err << std::endl;
+		_exit(0);
+		//return EXIT_FAILURE;
 	}
 	printf("Done\n");
-		return reader->GetOutput();
-		
+	return reader->GetOutput();
+
 }
 template <typename T>
 int writeImage(typename T::Pointer im, const char* filename)
 {
 	printf("Writing %s ... \n",filename);
-		typedef typename itk::ImageFileWriter<T> WriterType;
-		
-		typename WriterType::Pointer writer = WriterType::New();
-		writer->SetFileName(filename);
-		writer->SetInput(im);
-		try
-		{
-			writer->Update();
-		}
+	typedef typename itk::ImageFileWriter<T> WriterType;
+
+	typename WriterType::Pointer writer = WriterType::New();
+	writer->SetFileName(filename);
+	writer->SetInput(im);
+	try
+	{
+		writer->Update();
+	}
 	catch(itk::ExceptionObject &err)
 	{
 		std::cerr << "ExceptionObject caught!" <<std::endl;
-			std::cerr << err << std::endl;
-			return EXIT_FAILURE;
+		std::cerr << err << std::endl;
+		return EXIT_FAILURE;
 	}
 	return EXIT_SUCCESS;
 }
@@ -127,12 +130,15 @@ Input2DImageType::Pointer getSlice(InputImageType::Pointer im, int slice)
 	region.SetIndex(index);
 	out->SetRegions(region);
 	out->Allocate();
+	if(out->GetBufferPointer()==NULL)
+		printf("Could not allocate memory -1 ... I'm going to crash any moment now.. \n");
 	memcpy(out->GetBufferPointer(),im->GetBufferPointer()+slice*size[0]*size[1],size[0]*size[1]*sizeof(unsigned char));
 	return out;
 }
-	template <typename PixelType>
+template <typename PixelType>
 void copyslice(typename itk::Image<PixelType,2>::Pointer im1, typename itk::Image<PixelType,3>::Pointer im2, int slice)
 {
+	printf("Copying slice\n");
 	PixelType* inpointer  = im1->GetBufferPointer();
 	PixelType* outpointer = im2->GetBufferPointer();
 	typename itk::Image<PixelType,2>::SizeType size = im1->GetLargestPossibleRegion().GetSize();
@@ -173,7 +179,7 @@ void getCurveletsForOneSlice(Input2DImageType::Pointer im,Input2DImageType::Poin
 	//m = int(pow(2,ceil(log(float(imsize[1]))/log(2.0)))+0.5);
 	//n = int(pow(2,ceil(log(float(imsize[0]))/log(2.0)))+0.5);
 
-	CpxNumMat input(m,n);
+
 
 	int nbscales;
 	if(m < n )
@@ -197,20 +203,9 @@ void getCurveletsForOneSlice(Input2DImageType::Pointer im,Input2DImageType::Poin
 	ac = 1;
 
 
-	typedef itk::ImageRegionIteratorWithIndex<Input2DImageType> IterType1;
-
-	IterType1 iter1(im,im->GetLargestPossibleRegion());
-	std::complex<double> cpxtemp;
-	for(iter1.GoToBegin(); !iter1.IsAtEnd(); ++iter1)
-	{
-		Input2DImageType::IndexType index;
-		index = iter1.GetIndex();
-		cpxtemp = std::complex<double>(iter1.Get(),0);
-		input(index[1],index[0])=cpxtemp;
-	}
 
 	//compute the fdct wrapping for the F
-
+	cpx cpxtemp;
 	CpxNumMat F(m,n);
 	cpxtemp = std::complex<double>(sqrt(float(n*m)),0);
 	F(m/2,n/2) = cpxtemp;
@@ -220,7 +215,21 @@ void getCurveletsForOneSlice(Input2DImageType::Pointer im,Input2DImageType::Poin
 	//fdct_wrapping_
 	vector< vector<CpxNumMat> > c;  //vector<int> extra;
 	fdct_wrapping(m, n, nbscales, nbangles_coarse, ac, F, c);
+	F.resize(0,0);
 
+	printf("Done\n");
+	CpxNumMat input(m,n);
+	typedef itk::ImageRegionIteratorWithIndex<Input2DImageType> IterType1;
+
+	IterType1 iter1(im,im->GetLargestPossibleRegion());
+
+	for(iter1.GoToBegin(); !iter1.IsAtEnd(); ++iter1)
+	{
+		Input2DImageType::IndexType index;
+		index = iter1.GetIndex();
+		cpxtemp = cpx(iter1.Get(),0);
+		input(index[1],index[0])=cpxtemp;
+	}
 
 
 	vector< vector<double> > sx, sy;
@@ -228,7 +237,7 @@ void getCurveletsForOneSlice(Input2DImageType::Pointer im,Input2DImageType::Poin
 	vector< vector<int> > nx, ny;
 	fdct_wrapping_param(m, n, nbscales, nbangles_coarse, ac, sx, sy, fx, fy, nx, ny);
 	/*
-	   printf("M = %d N= %d nbscales = %d\n",m,n,nbscales);
+	printf("M = %d N= %d nbscales = %d\n",m,n,nbscales);
 	//scanf("%*d");
 	printf("SX: ");
 	for(int co1 = 0; co1 < sx.size(); co1++)
@@ -318,6 +327,7 @@ void getCurveletsForOneSlice(Input2DImageType::Pointer im,Input2DImageType::Poin
 		}
 		E.push_back(row);
 	}
+
 
 	printf("Done creating E\n");
 
@@ -503,6 +513,10 @@ void getCurveletsForOneSlice(Input2DImageType::Pointer im,Input2DImageType::Poin
 	cosim->SetRegions(region); cosim->Allocate();
 	sinim->SetRegions(region); sinim->Allocate();
 
+	if(om->GetBufferPointer()==NULL || cosim->GetBufferPointer() == NULL || sinim->GetBufferPointer()==NULL)
+	{
+		printf("Couldn't allocate memory - 2.. going to crash now...\n");
+	}
 	om->FillBuffer(0);
 	cosim->FillBuffer(0);
 	sinim->FillBuffer(0);
@@ -607,6 +621,23 @@ int main(int argc, char** argv)
 	else
 	{ numt = 8; printf("Chose num_threads = 8 as default \n"); }
 
+	int tile_size;
+	mi = opts.find("-tile_size"); 
+	if(mi!=opts.end())
+	{ istringstream ss((*mi).second); ss>>tile_size; }
+	else
+	{ tile_size = 1024; printf("Chose tile_size = 1024 as default \n"); }
+
+	
+	int border;
+	mi = opts.find("-border"); 
+	if(mi!=opts.end())
+	{ istringstream ss((*mi).second); ss>>border; }
+	else
+	{ border = 100; printf("Chose border = 100 as default \n"); }
+
+
+
 	InputImageType::Pointer inputim = readImage<InputImageType>(argv[1]);
 
 	int slices = inputim->GetLargestPossibleRegion().GetSize()[2];
@@ -620,23 +651,169 @@ int main(int argc, char** argv)
 	sinim->SetRegions(inputim->GetLargestPossibleRegion());
 	sinim->Allocate();
 
-
-#pragma omp parallel shared(outputim,inputim,cosim,sinim) num_threads(numt)
+	if(outputim->GetBufferPointer() == NULL || cosim->GetBufferPointer() == NULL || sinim->GetBufferPointer() == NULL)
 	{
-#pragma omp for
-		for(int counter = 0; counter < slices; counter++)
+		printf("Couldnt' allocate memory - 3.. going to crash now\n");
+	}
+	int max_dim = tile_size;
+
+
+	int xsize = inputim->GetLargestPossibleRegion().GetSize()[0];
+	int ysize = inputim->GetLargestPossibleRegion().GetSize()[1];
+
+	int kx = 0;int ky = 0;
+
+
+	kx = xsize /(max_dim-border);
+	ky = ysize /(max_dim-border);
+
+	int remx = xsize % (max_dim-border);
+	int remy = ysize % (max_dim-border);
+
+	if ( remx > 0 )
+		kx ++;
+	if ( remy > 0 )
+		ky ++;
+
+	for(int xco = 0; xco < kx; xco++)
+	{
+		for(int yco = 0; yco < ky; yco++)
 		{
-			Input2DImageType::Pointer im2d = getSlice(inputim,counter);
-			Input2DImageType::Pointer om2d;
-			Float2DImageType::Pointer cosim2d,sinim2d;
-			//call single slice 2-d curvelets function
-			getCurveletsForOneSlice(im2d,om2d,cosim2d,sinim2d);
-			copyslice<InputPixelType>(om2d,outputim,counter);
-			copyslice<float>(cosim2d,cosim,counter);
-			copyslice<float>(sinim2d,sinim,counter);
+
+			InputImageType::SizeType imsize = inputim->GetLargestPossibleRegion().GetSize();
+			InputImageType::IndexType index;
+			InputImageType::SizeType size;
+			InputImageType::RegionType region;
+
+			index.Fill(0);
+			size[0] =  MIN((xco)*(max_dim-border)+max_dim-1,imsize[0]-1) -  xco * (max_dim-border) +1;
+			size[1] =  MIN((yco)*(max_dim-border)+max_dim-1,imsize[1]-1) -  yco * (max_dim-border) +1;
+			size[2] = imsize[2];
+
+			InputImageType::Pointer imtile = InputImageType::New();
+			region.SetIndex(index);
+			region.SetSize(size);
+			imtile->SetRegions(region);
+			imtile->Allocate();
+			if(imtile->GetBufferPointer()==NULL)
+				printf("Couldn't allocate memory - 4 .. going to crash now\n");
+			InputImageType::RegionType region1;
+			index[0] = xco *(max_dim-border);
+			index[1] = yco *(max_dim-border);
+			index[2] = 0;
+			region1.SetIndex(index);
+			region1.SetSize(size);
+
+			typedef itk::ImageRegionIterator<InputImageType> IteratorType;
+			IteratorType iter1(inputim,region1);
+			IteratorType iter2(imtile,region);
+
+
+			printf("xco = %d yco = %d :\n",xco,yco);
+			region1.Print(std::cout);
+			region.Print(std::cout);
+
+			iter1.GoToBegin();
+			iter2.GoToBegin();
+			for(;!iter1.IsAtEnd();++iter1,++iter2)
+			{
+				iter2.Set(iter1.Get());
+			}
+
+
+			InputImageType::Pointer outputtile = InputImageType::New();
+			outputtile->SetRegions(imtile->GetLargestPossibleRegion());
+			outputtile->Allocate();
+			FloatImageType::Pointer cosimtile = FloatImageType::New();
+			cosimtile->SetRegions(imtile->GetLargestPossibleRegion());
+			cosimtile->Allocate();
+			FloatImageType::Pointer sinimtile = FloatImageType::New();
+			sinimtile->SetRegions(imtile->GetLargestPossibleRegion());
+			sinimtile->Allocate();
+			if(outputtile->GetBufferPointer() == NULL || cosimtile->GetBufferPointer()==NULL || sinimtile->GetBufferPointer() == NULL )
+			{
+				printf("Couldn't allocate memory - 5 .. going to crash now ..\n");
+			}
+
+			{
+#pragma omp parallel for shared(cosimtile,imtile,sinimtile,outputtile)  num_threads(numt)
+				for(int counter = 0; counter < slices; counter++)
+				{
+					printf("Counter = %d\n",counter);
+					Input2DImageType::Pointer im2d = getSlice(imtile,counter);
+					Input2DImageType::Pointer om2d;
+					Float2DImageType::Pointer cosim2d,sinim2d;
+					//call single slice 2-d curvelets function
+					getCurveletsForOneSlice(im2d,om2d,cosim2d,sinim2d);
+					copyslice<InputPixelType>(om2d,outputtile,counter);
+					copyslice<float>(cosim2d,cosimtile,counter);
+					copyslice<float>(sinim2d,sinimtile,counter);
+				}
+			}
+			
+			printf("copying the tile\n");
+			if(xco != 0)
+			{
+				size[0] = size[0] - border/2;
+				index[0] = border/2;
+			}
+			if(xco != kx-1)
+			{
+				size[0] = size[0] - border/2;
+			}
+
+			if(yco != 0)
+			{
+				size[1] = size[1] - border/2;
+				index[1] = border/2;
+			}
+			if(yco != ky-1)
+			{
+				size[1] = size[1] - border/2;
+			}
+			size[2] = slices;
+			index[2] = 0;
+
+
+			region.SetIndex(index);
+			region.SetSize(size);
+			
+			if(xco!=0)
+			{
+				index[0] = xco *(max_dim-border)+border/2;
+			}
+			if(yco!=0)
+			{
+				index[1] = yco *(max_dim-border)+border/2;
+			}
+			
+			
+			index[2] = 0;
+			region1.SetSize(size);
+			region1.SetIndex(index);
+
+			iter1 = IteratorType(outputim,region1);
+			iter2 = IteratorType(outputtile,region);
+			typedef itk::ImageRegionIterator<FloatImageType> FIteratorType;
+			FIteratorType iter3(cosim,region1);
+			FIteratorType iter4(cosimtile,region);
+			FIteratorType iter5(sinim,region1);
+			FIteratorType iter6(sinimtile, region);
+
+			iter1.GoToBegin();iter2.GoToBegin();
+			iter3.GoToBegin();iter4.GoToBegin();
+			iter5.GoToBegin();iter6.GoToBegin();
+
+			for(;!iter1.IsAtEnd();++iter1,++iter2,++iter3,++iter4,++iter5,++iter6)
+			{
+				iter1.Set(iter2.Get());
+				iter3.Set(iter4.Get());
+				iter5.Set(iter6.Get());
+			}
+			printf("Done with copying the tile to full image\n");
 		}
 	}
-
+	printf("writing the image to disk...\n");
 	char buffer[1024];
 	argv[1][strlen(argv[1])-4] = 0;
 	sprintf(buffer, "%s_out.tif",argv[1]);

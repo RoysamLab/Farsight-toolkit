@@ -110,9 +110,16 @@ int ifdct_wrapping(int N1, int N2, int nbscales, int nbangles_coarse, int allcur
   //------------------------------------------------------------
   CpxNumMat T(N1,N2);
   fdct_wrapping_ifftshift(O, T);
-  fftwnd_plan p = fftw2d_create_plan(N2, N1, FFTW_BACKWARD, FFTW_ESTIMATE | FFTW_IN_PLACE);
+  fftwnd_plan p;
+#pragma omp critical
+  {
+   p  = fftw2d_create_plan(N2, N1, FFTW_BACKWARD, FFTW_THREADSAFE|FFTW_ESTIMATE | FFTW_IN_PLACE);
+  }
   fftwnd_one(p, (fftw_complex*)T.data(), NULL);
-  fftwnd_destroy_plan(p);
+ #pragma omp critical
+  {
+	fftwnd_destroy_plan(p);
+  }
   double sqrtprod = sqrt(double(N1*N2)); //scale
   for(int i=0; i<N1; i++)	 for(int j=0; j<N2; j++)	 T(i,j) /= sqrtprod;
 
@@ -186,7 +193,10 @@ int fdct_wrapping_invsepangle(double XL1, double XL2, int nbangle, vector<CpxNum
 		  if(mit!=planmap.end()) {
 			 p = (*mit).second;
 		  } else {
-			 p = fftw2d_create_plan(yn, xn, FFTW_FORWARD, FFTW_ESTIMATE | FFTW_IN_PLACE);
+#pragma omp critical
+			  {
+			 p = fftw2d_create_plan(yn, xn, FFTW_FORWARD, FFTW_THREADSAFE|FFTW_ESTIMATE | FFTW_IN_PLACE);
+			  }
 			 planmap[ intpair(xn, yn) ] = p;
 		  }
 		  fftwnd_one(p, (fftw_complex*)tpdata.data(), NULL);
@@ -233,7 +243,10 @@ int fdct_wrapping_invsepangle(double XL1, double XL2, int nbangle, vector<CpxNum
   
   for(map<intpair, fftwnd_plan>::iterator mit=planmap.begin(); mit!=planmap.end(); mit++) {
 	 fftwnd_plan p = (*mit).second;
+	#pragma omp critical
+	 {
 	 fftwnd_destroy_plan(p);
+	 }
   }
   return 0;
 }
@@ -246,10 +259,17 @@ int fdct_wrapping_invwavelet(vector<CpxNumMat>& csc, CpxOffMat& Xhgh)
   int N1 = C.m();  int N2 = C.n();
   
   CpxNumMat T(C);  //CpxNumMat T(N1, N2);  fdct_wrapping_ifftshift(N1, N2, F1, F2, C, T);
-  
-  fftwnd_plan p = fftw2d_create_plan(N2, N1, FFTW_FORWARD, FFTW_ESTIMATE | FFTW_IN_PLACE);
+	
+  fftwnd_plan p;
+  #pragma omp critical
+  {
+	p = fftw2d_create_plan(N2, N1, FFTW_FORWARD, FFTW_THREADSAFE|FFTW_ESTIMATE | FFTW_IN_PLACE);
+  }
   fftwnd_one(p, (fftw_complex*)T.data(), NULL);
+	#pragma omp critical
+  {
   fftwnd_destroy_plan(p);
+  }
   double sqrtprod = sqrt(double(N1*N2));
   for(int j=0; j<N2; j++)
 	 for(int i=0; i<N1; i++)

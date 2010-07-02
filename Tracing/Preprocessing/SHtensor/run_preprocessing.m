@@ -1,4 +1,5 @@
 %run_preprocessing
+tic
 farsight_trunk = 'C:\Users\arun\Research\Farsight\src\trunk';
 addpath([ farsight_trunk '\Tracing\Preprocessing\SHtensor\2D']);
 addpath([ farsight_trunk '\Tracing\Preprocessing\SHtensor\3D']);
@@ -7,13 +8,13 @@ addpath('C:\Users\arun\Research\TensorVoting\homomorphic_filtering');
 addpath('C:\Users\arun\Research\TensorVoting\focus_detection');
 
 f0 = 'C:\Users\arun\Research\TensorVoting\SHtensor\Diadem\';
-f1 = 'hippocampal_part2_full';
-% im = readim([f0 f1 '.tif']);
+f1 = 'hippocampal_part2_cropped';
+im = readim([f0 f1 '.tif']);
 
-% [focussed, depthmap] = focus_detect(im);
-% writeim(focussed,['best_focus_' f1 '.tif']);
-% writeim(depthmap,['depthmap_' f1 '.tif']);
-% return
+[focussed, depthmap] = focus_detect(im);
+writeim(focussed,['new_best_focus_' f1 '.tif']);
+writeim_norescale(depthmap,['new_depthmap_' f1 '.tif']);
+return
 focussed = imread(['best_focus_' f1 '.tif']);
 h = fspecial('gaussian',150,60);
 im2 = filter2(h,(focussed));
@@ -32,7 +33,7 @@ writeim(focussed,['corrected_focussed_' f1 '.tif']);
 % pause
 padding_width = 40;
 focussed = add_padding(focussed, padding_width);
-varim = add_padding(varim,padding_width);
+% varim = add_padding(varim,padding_width);
 imshow(uint8(focussed));
 drawnow
 [out1,gradmag1] = scalar_voting_main((focussed),5,0.35*255,8);
@@ -85,5 +86,5 @@ writeim(vesselness_grad,['vesselness_curvelets_' f1 '.tif']);
 writeim(gradmag,['curvelet_output_' f1 '.tif']);
 writeim(out,['scalar_voting_output_' f1 '.tif']);
 
-
+toc
 1;

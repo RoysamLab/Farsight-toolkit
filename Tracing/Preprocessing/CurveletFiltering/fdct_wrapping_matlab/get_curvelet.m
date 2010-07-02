@@ -21,7 +21,7 @@ for outer_angles = 1:1
 for outer_counter = 1:size(input,3)
     ['counter = ' int2str(outer_counter)]
     
-im_temp = squeeze(input(:,:,outer_counter))+1;
+im_temp = squeeze(input(:,:,outer_counter));
 noisy_img = zeros(2^ceil(log2(size(im_temp,1))),2^ceil(log2(size(im_temp,2))));
 noisy_img(1:size(im_temp,1),1:size(im_temp,2)) = im_temp;
 % noisy_img = double(imread(filename,40));
@@ -51,7 +51,7 @@ is_real = 0;
 F = ones(N,M); 
 X = fftshift(ifft2(F)) * sqrt(prod(size(F)));
 disp('Computing L^2 norms ...');
-tic;
+%tic;
 C = fdct_wrapping(X,is_real,finest,nbscales,nbangles_coarse);
 
 E = cell(size(C));
@@ -115,11 +115,15 @@ for xshift = 1:nshifts
         if evenquad,
           if (j == 1)|(finest==2 & j==nbscales), fcolsjl = 1; else fcolsjl = F_cols{j}{l}; end;
           rowshift = - round(F_rows{j}{l}/fcolsjl * rowstep);
+          %[rowshift j l]
+          %pause;
           testcjl = sqrt(modcjl.^2 + neighb_weight*(circshift(modcjl,[1 0]).^2 + circshift(modcjl,[-1 0]).^2 + ...
                                                     circshift(modcjl,[rowshift 1]).^2 + circshift(modcjl, [-rowshift -1]).^2));
         else
           if (j == 1)|(finest==2 & j==nbscales), frowsjl = 1; else frowsjl = F_rows{j}{l}; end;
           colshift = - round(F_cols{j}{l}/frowsjl * colstep);
+          %[colshift j l]
+          %pause;
           testcjl = sqrt(modcjl.^2 + neighb_weight*(circshift(modcjl,[0 1]).^2 + circshift(modcjl,[0 -1]).^2 + ...
                                                     circshift(modcjl,[1 colshift]).^2 + circshift(modcjl, [-1 -colshift]).^2));
         end;
