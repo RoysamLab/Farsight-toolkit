@@ -123,9 +123,11 @@ ENDIF(USE_KPLS)
 ####################################################################################
 # NOW WE CAN INCLUDE THE MODULES ACCORDING TO THE OPTIONS SELECTED ABOVE:
 ####################################################################################
-
+#Note IF A USER WANTS TO ADD AN EXECUTABLE TO AN INSTALLER, ALL OPTIONS
+#USED TO BUILD SAID EXECUTABLE HAVE TO BE TURNED ON 
 IF(BUILD_TRACING)
   INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Tracing )
+  SET(CPACK_PACKAGE_EXECUTABLES "TraceEditor;TraceEditor")
   SUBDIRS(Tracing)
 ENDIF(BUILD_TRACING)
 
