@@ -20,7 +20,6 @@ limitations under the License.
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#ifdef USE_KPLS
 
 typedef double *EMB_PFLOAT;
 typedef EMB_PFLOAT VECTOR;
@@ -92,7 +91,5 @@ private:
 	MATRIX bbmatrixx;			//kernel: weights for each class for each row
 	MATRIX tClassScalers;		//HOLDS avg and std devs of each class
 };
-
-#endif
 
 #endif

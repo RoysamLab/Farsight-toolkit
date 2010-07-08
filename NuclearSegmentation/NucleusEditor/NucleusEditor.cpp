@@ -68,6 +68,8 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	table = NULL;
 
 	kplsRun = 0;	//This flag gets set after kpls has run to make sure we show the colored centroids!!
+	trainName = 0;
+	predictName = 0;
 
 	this->resize(800,800);
 
@@ -1263,7 +1265,36 @@ void NucleusEditor::startKPLS()
 	{
 		delete pWizard;
 	}
-	pWizard = new PatternAnalysisWizard( table, PatternAnalysisWizard::_KPLS, "train", "prediction", this);
+	training_names.clear();
+	for( int i=0; i<table->GetNumberOfColumns(); ++i ){
+		std::string current_column;
+		current_column = table->GetColumnName(i);
+		if( current_column.find("train") != std::string::npos ){
+			training_names.push_back( current_column );
+			std::string::iterator it;
+			it=current_column.begin();
+			current_column.erase ( current_column.begin(), current_column.begin()+6 );
+			class_names.push_back( current_column );
+		}
+	}
+	if( training_names.empty() ) return;
+	trainName = 0;
+	if( training_names.size() > 1 ){
+		QVector<QString> qtraining_names;
+		for (int i=0; i<(int)training_names.size(); ++i){
+			qtraining_names << QString::fromStdString(class_names.at(i));
+		}
+		PredictionDialog *pred_dial = new PredictionDialog(qtraining_names,this);
+		pred_dial->show();
+		if( pred_dial->exec() ){
+			trainName = pred_dial->getTrainNumber();
+		}
+		delete pred_dial;
+	}
+	std::string p_name;
+	p_name = "prediction_" + class_names.at(trainName);
+	prediction_names.push_back( p_name );
+	pWizard = new PatternAnalysisWizard( table, PatternAnalysisWizard::_KPLS, training_names.at(trainName).c_str(), prediction_names.at((prediction_names.size()-1)).c_str(), this);
 	connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
 	pWizard->show();
 	kplsRun = 1;
@@ -1323,7 +1354,7 @@ void NucleusEditor::updateViews()
 	//Show colored seeds after kPLS has run
 	if( kplsRun )
 	{
-		segView->SetClassMap(table, "prediction");
+		segView->SetClassMap(table, prediction_names.at((prediction_names.size()-1)).c_str());
 		showCentroidsAction->setChecked(true);
 		segView->SetCentroidsVisible(true);
 		kplsRun = 0;
@@ -2313,4 +2344,44 @@ void NucleusEditor::preprocess(QString id)
 		segView->update();
 		projectFiles.inputSaved = false;
  	}
+}
+
+
+//*******************************************************************************************************************************
+//*******************************************************************************************************************************
+//*******************************************************************************************************************************
+//*******************************************************************************************************************************
+// KPLS Prediction Dialog:
+//*******************************************************************************************************************************
+//*******************************************************************************************************************************
+//*******************************************************************************************************************************
+//*******************************************************************************************************************************
+//A dialog if there are more than one training columns to choose from
+PredictionDialog::PredictionDialog(QVector<QString> training_fields, QWidget *parent)
+: QDialog(parent){
+	channelLabel = new QLabel("Choose Training Set: ");
+	channelCombo = new QComboBox();
+	
+	for(int v = 0; v<training_fields.size(); ++v){
+		channelCombo->addItem(training_fields.at(v));
+	}
+	
+	QGridLayout *layout = new QGridLayout;
+	this->setLayout(layout);
+	this->setWindowTitle(tr("Select Classifier"));
+
+	layout->addWidget(channelLabel,0,0);
+	layout->addWidget(channelCombo,0,1);
+
+	cancelButton = new QPushButton(tr("Cancel"),this);
+	connect(cancelButton, SIGNAL(clicked()), this, SLOT(reject()));
+	layout->addWidget(cancelButton,10,1);
+	okButton = new QPushButton(tr("OK"),this);
+	connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
+	layout->addWidget(okButton,10,2);
+}
+
+int PredictionDialog::getTrainNumber()
+{
+	return channelCombo->currentIndex();
 }

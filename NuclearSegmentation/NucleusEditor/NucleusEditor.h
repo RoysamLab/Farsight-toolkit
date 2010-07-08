@@ -46,6 +46,12 @@
 #include <QtCore/QThread>
 #include <QtCore/QSettings>
 #include <QtCore/QSignalMapper>
+#include <QtGui/QGridLayout>
+#include <QtGui/QLineEdit>
+#include <QtGui/QCheckBox>
+#include <QtGui/QLabel>
+#include <QtGui/QComboBox>
+#include <QtGui/QPushButton>
 
 #include "ProjectFilenamesDialog.h"
 #include "ExclusionDialog.h"
@@ -316,6 +322,13 @@ protected:
 	QProgressBar * processProgress;
 	QToolBar * processToolbar;
 	ProcessThread *processThread;
+
+	//KPLS training and prediction
+	std::vector<std::string> training_names;
+	std::vector<std::string> prediction_names;
+	std::vector<std::string> class_names;
+	int trainName;
+	int predictName;
 };
 
 class ParamsFileDialog : public QDialog
@@ -346,5 +359,21 @@ private:
 	ftk::ProjectProcessor *myProc;
 };
 
+class PredictionDialog : public QDialog
+{
+	Q_OBJECT
+public:
+	PredictionDialog(QVector<QString> training_fields, QWidget *parent = 0);
+	
+public:
+	int getTrainNumber();
+
+private:
+	QLabel *channelLabel;
+	QComboBox *channelCombo;
+	
+	QPushButton *okButton;
+	QPushButton *cancelButton;
+};
 
 #endif

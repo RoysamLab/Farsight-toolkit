@@ -206,7 +206,7 @@ void TrainingDialog::saveModel(void){
 	}
 
 	//Add only the rows which have been selected by the user and do not repeat ids
-	for( int j=0; j<training_names.size(); ++j ){
+	for( int j=0; j<(int)training_names.size(); ++j ){
 		for(int row = 0; row < (int)m_table_cpy->GetNumberOfRows(); ++row){
 			vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
 			if(m_table_cpy->GetValueByName(row, training_names.at(j).c_str())!=-1){
@@ -250,7 +250,7 @@ void TrainingDialog::loadModel(void){
 //Update the features in this table whose names match (sets doFeat)
 //Will creat new rows if necessary:
 void TrainingDialog::Append(){
-	for( int i=0; i<training_names.size(); ++i ){
+	for( int i=0; i<(int)training_names.size(); ++i ){
 		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
 		column->SetName( training_names.at(i).c_str() );
 		column->SetNumberOfValues( m_table->GetNumberOfRows() );
@@ -476,7 +476,7 @@ QHBoxLayout *TrainingDialog::createFirstExclusiveGroup(){
 		className = new QLineEdit();
 		className->setMinimumWidth(100);
 		className->setFocusPolicy(Qt::StrongFocus);
-		QHBoxLayout *layout = new QHBoxLayout;
+		//QHBoxLayout *layout = new QHBoxLayout;
 		vbox->addWidget( className );
 		vbox->addStretch(1);
 	}
