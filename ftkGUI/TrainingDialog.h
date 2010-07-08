@@ -50,7 +50,8 @@ class TrainingDialog : public QDialog
     Q_OBJECT;
 
 public:
-  TrainingDialog(vtkSmartPointer<vtkTable> table, const char * trainColumn, QWidget *parent = 0);
+	TrainingDialog(vtkSmartPointer<vtkTable> table);
+	TrainingDialog(vtkSmartPointer<vtkTable> table, const char * trainColumn, QWidget *parent = 0);
 
 public slots:
 	  void accept();
@@ -72,26 +73,42 @@ private slots:
 	void Append(void);
 	void tableToInput(void);
 	void inputToTable(void);
-	
+	void class_1_selected(void);
+	void class_2_selected(void);
+	void class_3_selected(void);
+	void class_4_selected(void);
 
 private:
 	QVBoxLayout * inputsLayout;
+	QVBoxLayout * classesLayout;
 	QVector<QHBoxLayout *> iLayouts;
 	QVector<QLabel *> inputLabels;
 	QVector<QLineEdit *> inputValues;
+	QLineEdit *className;
 	QPushButton * addButton;
 	QPushButton * delButton;
 	QPushButton * saveButton;
 	QPushButton * loadButton;
 	QPushButton * quitButton;
 	QPushButton * doneButton;
+	QRadioButton *radio1;
+	QRadioButton *radio2;
+	QRadioButton *radio3;
+	QRadioButton *radio4;
+	void GetTrainingNames(vtkSmartPointer<vtkTable> table);
+	QHBoxLayout *createFirstExclusiveGroup();
 	
 	QString lastPath;							//Last path that has been navigated to
 	//std::vector< std::set<int> > training;
 	std::map< int, std::set<int> > training;
+	std::vector< std::string > class_names;
+	std::vector< std::string > training_names;
 	vtkSmartPointer<vtkTable> m_table;
 	vtkSmartPointer<vtkTable> model_table;
 	const char * columnForTraining;
+	void differentclassselected(int selected_class);
+	bool use_train_gui;
+	std::string default_training_name,new_class_name;
 };
 
 #endif
