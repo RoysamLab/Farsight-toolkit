@@ -138,17 +138,21 @@ View3D::View3D(QWidget *parent)
 	for(int counter=1; counter<args.size(); counter++)
     {
 		QString nextFile = args[counter];
-		if (nextFile.endsWith("swc"))
+		QFileInfo nextFileInfo(nextFile);
+		if( nextFileInfo.exists())
 		{
-			this->tobj->ReadFromSWCFile((char*)nextFile.toStdString().c_str());
-		}
-		else if(nextFile.endsWith("xml"))
-		{
-			this->tobj->ReadFromRPIXMLFile((char*)nextFile.toStdString().c_str());
-		}
-		else if (nextFile.endsWith("vtk"))
-		{
-			this->tobj->ReadFromVTKFile((char*)nextFile.toStdString().c_str());
+			if (nextFile.endsWith("swc"))
+			{
+				this->tobj->ReadFromSWCFile((char*)nextFile.toStdString().c_str());
+			}
+			else if(nextFile.endsWith("xml"))
+			{
+				this->tobj->ReadFromRPIXMLFile((char*)nextFile.toStdString().c_str());
+			}
+			else if (nextFile.endsWith("vtk"))
+			{
+				this->tobj->ReadFromVTKFile((char*)nextFile.toStdString().c_str());
+			}
 		}
 
  //   else if( strcmp(args[counter]+len-3,"tif")==0 ||
@@ -254,7 +258,16 @@ void View3D::ReloadState()
 				this->tempTraceFile, 0, false, &ok);
 			if (ok && !temp.isEmpty())
 			{
+				QFileInfo tempInfo(temp);
+				if (tempInfo.exists())
+				{
 				this->TraceFiles.append(temp);
+				}
+				else
+				{
+					QMessageBox::warning(this, "Error Reading File", QString("Could not open file %1 for reading").arg(temp),QMessageBox::Ok, QMessageBox::Ok);
+					//error could not open
+				}
 			}
 			else
 			{
@@ -483,53 +496,82 @@ void View3D::LoadProject()
 }
 bool View3D::readProject(QString projectFile)
 {	
+	QString RelativeProjectPath = NULL;
 	unsigned int i =0;
 	if (!projectFile.isEmpty())
 	{
 		this->ProjectName = projectFile;
+		QFileInfo ProjectFileInfo(projectFile);
+		if (!ProjectFileInfo.exists())
+		{
+			return false;
+		}
+		RelativeProjectPath = ProjectFileInfo.absolutePath();
 		ftk::ProjectManager * project = new ftk::ProjectManager((char*)projectFile.toStdString().c_str());
 		for ( i = 0; i < project->size(); i++)
 		{ 
+			bool found = false;
 			std::string FileName = project->GetFileName(i);
-			QString type = QString(project->GetFileType(i).c_str());
-			if ((type == "Image")||(type == "Soma"))
+			QFileInfo  NewFileInfo(QString(FileName.c_str()));
+			if (!NewFileInfo.exists())
 			{
-				if (type == "Image")
+				
+					std::cout << "file not found " << FileName << std::endl;
+				QFileInfo testFile(QString(RelativeProjectPath + "/" +  NewFileInfo.fileName()));
+				if (testFile.exists())
 				{
-					this->Image.append(QString(FileName.c_str()));
-		//this->EditLogDisplay->append("Image file: \t" + this->Image.last());
+					FileName = testFile.absoluteFilePath().toStdString();
+					std::cout << "found " << FileName << std::endl;
+					found = true;
 				}
-				else {
-					this->SomaFile.append(QString(FileName.c_str()));
-		//this->EditLogDisplay->append("Soma file: \t" + this->SomaFile.last());
-				}
-				this->ImageActors->loadImage(FileName, project->GetFileType(i), 
-					project->GetTranslationX(i),project->GetTranslationY(i),project->GetTranslationZ(i));
+			}
+			else
+			{
+				found = true;
+			}
+			if (found)
+			{
+				QString type = QString(project->GetFileType(i).c_str());
+				if ((type == "Image")||(type == "Soma"))
+				{
+					if (type == "Image")
+					{
+						this->Image.append(QString(FileName.c_str()));
+			//this->EditLogDisplay->append("Image file: \t" + this->Image.last());
+					}
+					else {
+						this->SomaFile.append(QString(FileName.c_str()));
+			//this->EditLogDisplay->append("Soma file: \t" + this->SomaFile.last());
+					}
+					this->ImageActors->loadImage(FileName, project->GetFileType(i), 
+						project->GetTranslationX(i),project->GetTranslationY(i),project->GetTranslationZ(i));
 
-			}//end type image
-			else if (type == "Trace")
-			{
-				this->tobj->SetTraceOffset(project->GetTranslationX(i),
-					project->GetTranslationY(i),project->GetTranslationZ(i));
-				QString trace = QString(FileName.c_str());
-				if(trace.endsWith("swc"))
+				}//end type image
+				else if (type == "Trace")
 				{
-					this->tobj->ReadFromSWCFile((char*)FileName.c_str());
-				}
-				else if(trace.endsWith("xml"))
+					this->tobj->SetTraceOffset(project->GetTranslationX(i),
+						project->GetTranslationY(i),project->GetTranslationZ(i));
+					QString trace = QString(FileName.c_str());
+					if(trace.endsWith("swc"))
+					{
+						this->tobj->ReadFromSWCFile((char*)FileName.c_str());
+					}
+					else if(trace.endsWith("xml"))
+					{
+						this->tobj->ReadFromRPIXMLFile((char*)FileName.c_str());
+					}
+					else if (trace.endsWith("vtk"))
+					{
+						this->tobj->ReadFromVTKFile((char*)FileName.c_str());
+					}
+					this->TraceFiles.append(QString(FileName.c_str()));
+			//this->EditLogDisplay->append("Trace file: \t" + this->TraceFiles.last());
+				}//end type trace
+				else if (type == "Log")
 				{
-					this->tobj->ReadFromRPIXMLFile((char*)FileName.c_str());
-				}
-				else if (trace.endsWith("vtk"))
-				{
-					this->tobj->ReadFromVTKFile((char*)FileName.c_str());
-				}
-				this->TraceFiles.append(QString(FileName.c_str()));
-		//this->EditLogDisplay->append("Trace file: \t" + this->TraceFiles.last());
-			}//end type trace
-			else if (type == "Log")
-			{
-			}//end type log
+					//the log file reader should be a function and called from here
+				}//end type log
+			} //end if newFileInfo exists
 		}//end of for project size
 		if (!this->TraceFiles.isEmpty() )
 		{	
