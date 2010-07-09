@@ -759,7 +759,7 @@ std::vector<pairE> MST::SpineExtract()
     double aveVesselBranch[MAXNumBranch];
     double length_2leaf[MAXNumBranch];  // length of two level branches
 	int indVert,indVert_last;
-    int slsz = sizeX*sizeY;   // slice size
+    //int slsz = sizeX*sizeY;   // slice size
     //int sz = slsz*sizeZ;
 	
 	int num_nodes = (int)nodes.size();
