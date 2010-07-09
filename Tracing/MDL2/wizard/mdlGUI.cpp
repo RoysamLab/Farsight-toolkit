@@ -333,8 +333,8 @@ void mdlGUI::mstSpine()
 	if(!this->MinSpanTree)
 		return;
 
-	double pruneThreshold = this->pruneEdit->text().toDouble();
-	double alpha = this->alphaEdit->text().toDouble();
+	//double pruneThreshold = this->pruneEdit->text().toDouble();
+	//double alpha = this->alphaEdit->text().toDouble();
 
 	this->SpinePairs = this->MinSpanTree->SpineExtract();
 

@@ -1042,7 +1042,7 @@ bool VolumeProcess::RunDistanceTransform(void)
 	int numStacks = region.GetSize(2);
 	long numPix = numStacks*numColumns*numRows;
 
-	PixelType * dataImagePtr = m_outputImage->GetBufferPointer();
+	//PixelType * dataImagePtr = m_outputImage->GetBufferPointer();
 	unsigned char * binImagePtr = new unsigned char[numPix];
 
 	itk::ImageRegionIterator< ImageType > itr( m_outputImage, m_outputImage->GetLargestPossibleRegion() );

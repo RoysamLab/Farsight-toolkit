@@ -217,7 +217,7 @@ void Preprocess::RunPipe(std::string filename)
 		}
 		else if( strcmp( parent, "GraphCutBinarize" ) == 0 )
 		{
-			int xyDivs=1, zDivs=1;
+			int xyDivs=1;//, zDivs=1;
 			parentElement->QueryIntAttribute("xyDivs",&xyDivs);
 			std::cout << "Starting GraphCutBinarize...";
 			this->GraphCutBinarize(false,xyDivs);

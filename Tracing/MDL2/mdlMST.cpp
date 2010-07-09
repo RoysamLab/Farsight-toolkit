@@ -88,7 +88,7 @@ void MST::SetVesselMap(ImageType::Pointer VesselMap)
     m_VesselMap =  VesselMap;
 	ImageType::RegionType Vesselregion;
 	Vesselregion =  VesselMap->GetBufferedRegion();
-    if (sizeX != Vesselregion.GetSize(0) || sizeY != Vesselregion.GetSize(1) || sizeZ != Vesselregion.GetSize(2))
+    if (sizeX != (int)(Vesselregion.GetSize(0)) || sizeY != (int)(Vesselregion.GetSize(1)) || sizeZ != (int)(Vesselregion.GetSize(2)) )
 	{
 		m_VesselMap = m_inputImage;
 	}
@@ -760,7 +760,7 @@ std::vector<pairE> MST::SpineExtract()
     double length_2leaf[MAXNumBranch];  // length of two level branches
 	int indVert,indVert_last;
     int slsz = sizeX*sizeY;   // slice size
-    int sz = slsz*sizeZ;
+    //int sz = slsz*sizeZ;
 	
 	int num_nodes = (int)nodes.size();
 
@@ -793,8 +793,8 @@ std::vector<pairE> MST::SpineExtract()
 	// Spine Candidate graph created, is to save the possible spine
 	Graph msTreeSpineCandidate(num_nodes+1);     
     Graph DetectedSpine(num_nodes+1); 
-	int NumberNodesofSpineCandidate=0;
-    int NumberNodesofRealSpine=0;
+	//int NumberNodesofSpineCandidate=0;
+    //int NumberNodesofRealSpine=0;
     
     int vertsCurBranch2[MAXNumBranch][2000];  // For the 2nd level branch at BB (at most MAXNumBranch 2nd level branches, at most 2000 vertices)
     int vertsCurBr_Index2[MAXNumBranch];      // when array at [0], it is the 1st level branch at BB
@@ -890,7 +890,7 @@ std::vector<pairE> MST::SpineExtract()
 			} // end while 
 
 			// Evaluate with MDL if the branch is chosen
-			bool branchChosen = 1;
+			//bool branchChosen = 1;
 			length_leaf[0] = 0;
 
 			for (int j = 0; j <= vertsCurBr_Index2[0]; j++)
@@ -1174,7 +1174,7 @@ Graph MST::morphGraphPrune(Graph *graph, std::vector<fPoint3D> *nodes, float len
 	float length_leaf = 0;
 
 	// Consider all leaves
-	int num_leaves = 0;
+	//int num_leaves = 0;
 
     // for all vertex in the graph
 	for(boost::tie(vi, vend) = vertices(ng); vi != vend; ++vi) 

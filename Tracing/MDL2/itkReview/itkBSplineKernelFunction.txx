@@ -137,7 +137,7 @@ BSplineKernelFunction<VSplineOrder>
                + static_cast<RealType>( i );
     }			
 
-  for ( int i = 0; i < NumberOfPieces; i++ )
+  for ( int i = 0; i < (int) NumberOfPieces; i++ )
     {
     PolynomialType poly = this->CoxDeBoor( order, knots, i, order-1 );
     ShapeFunctions.set_row( i, poly.coefficients() );	

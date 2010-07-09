@@ -284,7 +284,7 @@ fregl_joint_register::get_adjacent_images(std::string anchor_image, std::vector<
   assert(index >= 0);
 
   for (unsigned int i = 0; i<image_ids_.size(); i++) {
-    if (overlap_[index][i] > 0 && index != i) {
+    if (overlap_[index][i] > 0 && index != (int)i) {
       adjacent_images.push_back(image_ids_[i]);
     }
   }

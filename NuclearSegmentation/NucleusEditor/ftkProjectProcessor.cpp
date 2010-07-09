@@ -299,11 +299,11 @@ bool ProjectProcessor::PixLevAnalysis(void){
 		ftk::PixelLevelAnalysis *PAn = new ftk::PixelLevelAnalysis();
 		if( (*pait).mode == 1 ){
 			PAn->SetInputs( (*pait).regionChannelName, (*pait).targetChannelName, (*pait).outputFilename, 0 );
-			bool success_run = PAn->RunAnalysis1();
+			//bool success_run = PAn->RunAnalysis1();
 		}
 		else if( (*pait).mode == 2 ){
 			PAn->SetInputs( (*pait).regionChannelName, (*pait).targetChannelName, (*pait).outputFilename, (*pait).radius );
-			bool success_run = PAn->RunAnalysis2();
+			//bool success_run = PAn->RunAnalysis2();
 		}
 		else{
 			std::cerr<<"ERROR: Check Pixel Anaysis Mode\n";
