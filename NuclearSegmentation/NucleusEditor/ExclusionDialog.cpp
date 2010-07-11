@@ -93,7 +93,7 @@ void ExclusionDialog::addSpin(QString label, int min, int deflt, int max, QStrin
 	QLabel * unitLabel = new QLabel(units);
 
 	spins.push_back(mSpin);
-	int row = spins.size();
+	//int row = spins.size();
 
 	hLayout->addWidget(mLabel);
 	hLayout->addWidget(mSpin);

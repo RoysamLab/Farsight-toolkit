@@ -246,17 +246,15 @@ void LabelImageViewQT::SetLabelImage(ftk::Image::Pointer img, ObjectSelection * 
 	refreshBoundsImage();
 }
 
-void LabelImageViewQT::SetClassMap(vtkSmartPointer<vtkTable> table, const char *column)
-{
+void LabelImageViewQT::SetClassMap(vtkSmartPointer<vtkTable> table, std::vector<std::string> columns){
 	classMap.clear();
 
-	vtkAbstractArray * output = table->GetColumnByName(column);
+	vtkAbstractArray * output = table->GetColumnByName(columns.at(columns.size()-1).c_str());
 	if(output == 0)
 		return;
 
-	for(int i=0; i<table->GetNumberOfRows(); ++i)
-	{
-		classMap[table->GetValue(i,0).ToInt()] = table->GetValueByName(i,column).ToInt();
+	for(int i=0; i<table->GetNumberOfRows(); ++i){
+		classMap[table->GetValue(i,0).ToInt()] = table->GetValueByName(i,columns.at(columns.size()-1).c_str()).ToInt();
 	}
 
 	refreshBoundsImage();

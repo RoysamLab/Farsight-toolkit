@@ -1293,7 +1293,12 @@ void NucleusEditor::startKPLS()
 	}
 	std::string p_name;
 	p_name = "prediction_" + class_names.at(trainName);
-	prediction_names.push_back( p_name );
+	std::vector<std::string>::iterator str_it;
+	for( str_it = prediction_names.begin(); str_it != prediction_names.end(); ++str_it )
+		if( (*str_it).find( p_name.c_str() ) != std::string::npos )
+			break;
+	if( str_it == prediction_names.end() )
+		prediction_names.push_back( p_name );
 	pWizard = new PatternAnalysisWizard( table, PatternAnalysisWizard::_KPLS, training_names.at(trainName).c_str(), prediction_names.at((prediction_names.size()-1)).c_str(), this);
 	connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
 	pWizard->show();
@@ -1354,7 +1359,7 @@ void NucleusEditor::updateViews()
 	//Show colored seeds after kPLS has run
 	if( kplsRun )
 	{
-		segView->SetClassMap(table, prediction_names.at((prediction_names.size()-1)).c_str());
+		segView->SetClassMap(table, prediction_names);
 		showCentroidsAction->setChecked(true);
 		segView->SetCentroidsVisible(true);
 		kplsRun = 0;

@@ -59,7 +59,8 @@ void PatternAnalysisWizard::initFeatureGroup(void)
 	for (int c=1; c<m_table->GetNumberOfColumns(); ++c)
 	{
 		const char * name = m_table->GetColumnName(c);
-		if( strcmp(name,columnForTraining) == 0 || strcmp(name,columnForPrediction) == 0 )
+		std::string current_name = name;
+		if( current_name.find("train")!=std::string::npos || current_name.find("prediction")!=std::string::npos )
 			continue;
 		QCheckBox * check = new QCheckBox(QString(name));
 		check->setChecked(true);
