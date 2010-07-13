@@ -684,7 +684,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
     trace_lines.push_back(ttemp);
     iter++;
     }
-  printf("Trace_lines size = %d\n",trace_lines.size());
+  printf("Trace_lines size = %d\n",(int)trace_lines.size());
   
   iter = criticals.begin();
  

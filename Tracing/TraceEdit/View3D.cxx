@@ -1741,7 +1741,7 @@ std::vector<int> View3D::getHippocampalTraceIDsToDelete_v2(int z_threshold, int 
 		z2 = z1;
 		get_best_fit_z(zvals,z1,z2);
 
-		printf("size = %d, has_parent = %d markers.size()= %d\n", zvals.size(), has_parent, alltids->size());
+		printf("size = %d, has_parent = %d markers.size()= %d\n", (int)zvals.size(), (int)has_parent, (int)alltids->size());
 		iter1 = tl[counter]->GetTraceBitIteratorBegin();
 		for(;counter1<zvals.size(); counter1++)
 		{
@@ -2103,7 +2103,7 @@ void View3D::HandleHippocampalDataset()
 
 	
 	std::vector<int> to_del = getHippocampalTraceIDsToDelete_v2(7,4);
-	printf("To delete = %d\n",to_del.size());
+	printf("To delete = %d\n",(int)to_del.size());
 	this->SelectedTraceIDs = to_del;
 	this->SplitTraces();
 
@@ -2124,13 +2124,13 @@ void View3D::HandleHippocampalDataset()
 		if((*tlinepointer)[counter]->GetSize() < 2 && (*tlinepointer)[counter]->GetBranchPointer()->size() == 0)
 			tldel.push_back((*tlinepointer)[counter]);
 	}
-	printf("current trace_lines size = %d\n",tlinepointer->size());
-	printf("I'm deleting %d traces\n",tldel.size());
+	printf("current trace_lines size = %d\n",(int)tlinepointer->size());
+	printf("I'm deleting %d traces\n",(int)tldel.size());
 	for(unsigned int counter =0; counter < tldel.size(); counter++)
 	{
 		this->DeleteTrace(tldel[counter]);
 	}
-	printf("New trace_lines size = %d\n",tlinepointer->size());
+	printf("New trace_lines size = %d\n",(int)tlinepointer->size());
 	this->Rerender();
 	
 	printf("Waiting after Zdeleting\n");
