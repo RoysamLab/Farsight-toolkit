@@ -1085,14 +1085,17 @@ void LabelImageViewQT::drawObjectCentroids(QPainter *painter)
 		if ( (currentZ == point.z) )
 		{
 			if(classMap4.size() > 3){
+				myColor4 = centroidColorTable.at( (cls4-1)%numColors );
 				painter->setBrush(myColor4);
 				painter->drawEllipse(point.x - 2, point.y - 2, 17, 17);
 			}
 			if(classMap3.size() > 2){
+				myColor3 = centroidColorTable.at( (cls3-1)%numColors );
 				painter->setBrush(myColor3);
 				painter->drawEllipse(point.x - 2, point.y - 2, 13, 13);
 			}
 			if(classMap2.size() > 1){
+				myColor2 = centroidColorTable.at( (cls2-1)%numColors );
 				painter->setBrush(myColor2);
 				painter->drawEllipse(point.x - 2, point.y - 2, 9, 9);
 				painter->setBrush(myColor1);
