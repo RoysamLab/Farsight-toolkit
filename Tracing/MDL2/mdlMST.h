@@ -33,7 +33,11 @@ limitations under the License.
 #include <stdio.h>
 
 #include "itkImage.h"
-
+#include "itkFastMarchingImageFilter.h"
+#include "itkLineIterator.h"
+#include "itkListSample.h"
+#include "itkKdTree.h"
+#include "itkKdTreeGenerator.h"
 
 namespace mdl
 {
@@ -113,6 +117,8 @@ private:
 	float getXiaosongEdgeWeight(fPoint3D n1, fPoint3D n2, double pwr);
 	float getEdgeWeight(fPoint3D n1, fPoint3D n2, ImageType::Pointer img);
 	float getGeodesicEdgeWeight(fPoint3D n1, fPoint3D n2, ImageType::Pointer img);
+	float getFastMarchingEdgeWeight(fPoint3D n1, fPoint3D n2, ImageType::Pointer img);//Added by Arun
+	std::vector<float> getFastMarchingEdgeWeightVector(fPoint3D n1, std::vector<fPoint3D> n2, ImageType::Pointer img);//Added by Arun
 	bool minimumSpanningTree();		//step 3
 	Graph morphGraphPrune(Graph *graph, std::vector<fPoint3D> *nodes, float lengthThreshold);
 	int roundToInt(double v);

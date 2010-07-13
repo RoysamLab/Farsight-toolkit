@@ -171,6 +171,50 @@ bool MST::skeletonPointsToNodes(bool roundToNearestVoxel)
 	return true;
 }
 
+void drawLine(itk::Image< itk::Vector<unsigned char, 3> , 3>::Pointer input, itk::Vector<unsigned char, 3> color1, itk::Vector<unsigned char, 3> color2, int x1, int y1, int z1, int x2, int y2, int z2)
+{
+	//z1 has to be = z2
+	int upscale = 1;	
+	
+	typedef itk::Vector< unsigned char, 3> VectorPixelType;
+	typedef itk::Image< VectorPixelType, 3> ColorImageType;
+
+#define MIN(a,b) (((a) > (b))? (b) : (a))
+#define MAX(a,b) (((a) < (b))? (b) : (a))
+	ColorImageType::IndexType index1, index2;
+	ColorImageType::SizeType size = input->GetLargestPossibleRegion().GetSize();
+	index1[0] = MAX(MIN(upscale*x1,size[0]-1),0);
+	index1[1] = MAX(MIN(upscale*y1,size[1]-1),0);
+	index1[2] = MAX(MIN(z1,size[2]-1),0);
+	index2[0] = MAX(MIN(upscale*x2,size[0]-1),0);
+	index2[1] = MAX(MIN(upscale*y2,size[1]-1),0);
+	index2[2] = MAX(MIN(z2,size[2]-1),0);
+
+	//printf("drawing line...");
+	typedef itk::LineIterator<ColorImageType> LineIteratorType;
+	LineIteratorType li(input,index1,index2);
+	
+	li.GoToBegin();
+	int pc=0,pc1 = 0;
+	for(;!li.IsAtEnd(); ++li)
+	{
+		pc++;
+	}
+
+	for(li.GoToBegin();!li.IsAtEnd();++li)
+	{
+		float weight = pc1*1.0/pc;
+		VectorPixelType color;
+		color[0] = weight*color1[0] + (1-weight)*color2[0];
+		color[1] = weight*color1[1] + (1-weight)*color2[1];
+		color[2] = weight*color2[2] + (1-weight)*color2[2];
+		//printf("#");
+		li.Set(color);
+		pc1++;
+	}
+	//printf("\n");
+}
+
 //I'm going to convert the nodes into edges and edge weights.
 //I only make edges between nodes that are within the edgeRange
 bool MST::nodesToEdges(int type)
@@ -180,6 +224,13 @@ bool MST::nodesToEdges(int type)
 
 	int num_nodes = (int)nodes.size();
 
+	//begin for debug
+	typedef itk::Vector< unsigned char, 3> VectorPixelType;
+	typedef itk::Image< VectorPixelType, 3> ColorImageType;
+	ColorImageType::Pointer cimage = ColorImageType::New();
+	cimage->SetRegions(m_inputImage->GetLargestPossibleRegion());
+	cimage->Allocate();
+	//end for debug
 	ImageType::Pointer dtImage = NULL;
 	if(type == 2)
 	{
@@ -190,9 +241,107 @@ bool MST::nodesToEdges(int type)
 		delete volProc;
 	}
 
+	if(type == 5)
+	{
+		typedef itk::Vector< float , 3> MeasurementVectorType;
+		typedef itk::Statistics::ListSample< MeasurementVectorType> SampleType;
+		SampleType::Pointer sample = SampleType::New();
+		sample->SetMeasurementVectorSize( 3);
+
+		MeasurementVectorType mv;
+		for(int i = 0; i < num_nodes; ++i)
+		{
+			mv[0] = nodes.at(i).x;
+			mv[1] = nodes.at(i).y;
+			mv[2] = nodes.at(i).z;
+			sample->PushBack(mv);
+		}
+		typedef itk::Statistics::KdTreeGenerator< SampleType > TreeGeneratorType;
+		TreeGeneratorType::Pointer treeGenerator = TreeGeneratorType::New();
+		treeGenerator->SetSample(sample);
+		treeGenerator->SetBucketSize(16);
+		treeGenerator->Update();
+
+	
+		typedef TreeGeneratorType::KdTreeType TreeType;
+		typedef TreeType::NearestNeighbors NeighborsType;
+		typedef TreeType::KdTreeNodeType NodeType;
+
+		TreeType::Pointer tree = treeGenerator->GetOutput();
+		unsigned int num_neighbors = 20;
+		TreeType::InstanceIdentifierVectorType neighbors;
+		std::vector <int> * neighbors_array = new std::vector<int>[num_nodes];
+		
+		int repeated_edge = 0;
+		fPoint3D n1;
+		std::vector < fPoint3D > points;
+		for(int i = 0;  i < num_nodes; ++i)
+		{
+			printf("completed: %d/%d\n",i+1,num_nodes);
+			points.clear();
+			n1 = nodes.at(i);
+			MeasurementVectorType queryPoint;
+			queryPoint[0] = nodes.at(i).x;
+			queryPoint[1] = nodes.at(i).y;
+			queryPoint[2] = nodes.at(i).z;
+			tree->Search(queryPoint, num_neighbors, neighbors);
+			std::vector < unsigned long int> act_neighbors;
+			for(int j = 1; j < neighbors.size(); j++) // j = 0 is always going to be the point itself
+			{
+
+				bool done = false;
+				/*
+				for(int counter = 0; counter < neighbors_array[neighbors[j]].size(); counter++)
+				{
+					if(neighbors_array[neighbors[j]][counter] == i)
+					{
+						done = true;
+						break;
+					}
+				}*/
+				
+				if( find(neighbors_array[neighbors[j]].begin(),neighbors_array[neighbors[j]].end(),i) == neighbors_array[neighbors[j]].end())
+				{
+					//printf("In !done\n");
+					act_neighbors.push_back(neighbors[j]);
+					points.push_back(nodes[neighbors[j]]);
+					neighbors_array[neighbors[j]].push_back(i);
+					neighbors_array[i].push_back(neighbors[j]);
+				}
+				else
+				{
+					repeated_edge++;
+				}
+			}
+			//printf("Calling FastMarchingEdgeWeightVector()\n");
+			std::vector<float> weights = getFastMarchingEdgeWeightVector(n1, points,m_inputImage);
+			//printf("Returned\n");
+			for( int counter = 0; counter < act_neighbors.size(); counter++)
+			{
+				edgeArray.push_back(pairE(i+1,act_neighbors[counter]+1));
+				edgeWeight.push_back(weights[counter]);
+				VectorPixelType c1,c2;
+				fPoint3D n2 = nodes[act_neighbors[counter]];
+				float val = MIN(weights[counter],255);
+				c1[0] = val; c1[1] = val; c1[2] = val;
+				c2[0] = val; c2[1] = val; c2[2] = val;
+				drawLine(cimage,c1,c2,n1.x,n1.y,n1.z,n2.x,n2.y,n2.z);
+			}
+			printf("Edges: %d\n",edgeWeight.size());
+		}
+		typedef itk::ImageFileWriter<ColorImageType> WriterType;
+		WriterType::Pointer writer = WriterType::New();
+		writer->SetFileName("C:/Users/arun/Research/Farsight/exe/bin/debug_cimage.tif");
+		writer->SetInput(cimage);
+		writer->Update();
+		printf("Number of repeated edges = %d\n",repeated_edge);
+		return true;
+	}
+
 	//Iterate through the nodes and create edges within the specified range.
 	for(int i=0; i<num_nodes; ++i)
 	{
+		
 		//for(int j=1; j<i; ++j)
 		for(int j=0; j<i; ++j)
 		{
@@ -208,7 +357,7 @@ bool MST::nodesToEdges(int type)
 
 			//If I'm here, then I've found a close enough node
 			edgeArray.push_back( pairE(i+1,j+1) ); //add an edge (count starts at 1 for nodes)
-
+			
 			float weight = 10000;
 			if(type == 1)
 			{
@@ -226,9 +375,16 @@ bool MST::nodesToEdges(int type)
 			{
 				weight = getGeodesicEdgeWeight(n1, n2, m_inputImage);
 			}
+			else if(type == 5)
+			{
+				weight = getFastMarchingEdgeWeight(n1,n2, m_inputImage);
+			}
 			edgeWeight.push_back(weight);
 		}//end for j
+		
 	}//end for i
+
+	
 
 	if(debug)
 		std::cerr << "Finished making edges = " << edgeArray.size() << std::endl;
@@ -354,6 +510,240 @@ float MST::getGeodesicEdgeWeight(fPoint3D n1, fPoint3D n2, ImageType::Pointer im
 	return weight;
 }
 
+
+std::vector<float> MST::getFastMarchingEdgeWeightVector(fPoint3D n1, std::vector<fPoint3D> n2, ImageType::Pointer img)
+{
+	typedef itk::Image<float,3> FloatImageType;
+	typedef itk::FastMarchingImageFilter<FloatImageType> FMFilterType;
+	FMFilterType::Pointer fmfilt = FMFilterType::New();
+
+//	#define MIN(a,b) (((a) < (b))?(a):(b))
+//	#define MAX(a,b) (((a) > (b))?(a):(b))
+
+	FloatImageType::Pointer fim = FloatImageType::New();
+
+	FloatImageType::IndexType index1,index2,indexcopy;
+	FloatImageType::SizeType size; 
+	FloatImageType::RegionType region;
+
+	index1.Fill(1000000);
+	index2.Fill(0);
+	for(int counter = 0; counter < n2.size(); counter++)
+	{
+		index1[0] = MIN(n2[counter].x,index1[0]);
+		index1[1] = MIN(n2[counter].y,index1[1]);
+		index1[2] = MIN(n2[counter].z,index1[2]);
+
+		index2[0] = MAX(n2[counter].x,index2[0]);
+		index2[1] = MAX(n2[counter].y,index2[1]);
+		index2[2] = MAX(n2[counter].z,index2[2]);
+	}
+	
+	index1[0] = MIN(MAX(index1[0],0),sizeX-1);
+	index1[1] = MIN(MAX(index1[1],0),sizeY-1);
+	index1[2] = MIN(MAX(index1[2],0),sizeZ-1);
+	
+
+	index2[0] = MIN(MAX(index2[0],0),sizeX-1);
+	index2[1] = MIN(MAX(index2[1],0),sizeY-1);
+	index2[2] = MIN(MAX(index2[2],0),sizeZ-1);
+	
+	//std::cout<<index1;
+	//std::cout<<index2;
+
+	size[0] = index2[0]-index1[0]+1;
+	size[1] = index2[1]-index1[1]+1;
+	size[2] = index2[2]-index1[2]+1;
+	
+	region.SetIndex(index1);
+	region.SetSize(size);
+	
+	indexcopy = index1;
+	typedef itk::ImageRegionIterator<ImageType> IteratorType;
+	IteratorType iter(img,region);
+	
+	index1.Fill(0);
+	region.SetIndex(index1);
+	typedef itk::ImageRegionIterator<FloatImageType> FloatIteratorType;
+	fim->SetRegions(region);
+	fim->Allocate();
+	fim->FillBuffer(0);
+
+	FloatIteratorType fiter(fim,region);
+	fiter.GoToBegin();
+	iter.GoToBegin();
+
+	for(;!iter.IsAtEnd();++iter,++fiter)
+	{
+		if(iter.Get() < 0)
+			fiter.Set(0);
+		else
+			fiter.Set(iter.Get()/255.0);
+	}
+	//printf("Copied input\n");
+	fmfilt->SetInput(fim);
+
+	typedef FMFilterType::NodeContainer NodeContainer;
+	typedef FMFilterType::NodeType NodeType;
+
+	NodeContainer::Pointer seeds = NodeContainer::New();
+
+	NodeType node;
+	node.SetValue(0.0);
+	ImageType::IndexType index;
+	index[0] = n1.x-indexcopy[0];
+	index[1] = n1.y-indexcopy[1];
+	index[2] = n1.z-indexcopy[2];
+	node.SetIndex(index);
+	seeds->Initialize();
+	seeds->InsertElement(0, node);
+	fmfilt->SetTrialPoints(seeds);
+	fmfilt->SetOutputSize(fim->GetLargestPossibleRegion().GetSize());
+	fmfilt->SetStoppingValue(10000);
+	fmfilt->Update();
+	//printf("Updated the filter...\n");
+	
+
+	// write image for debugging
+	ImageType::Pointer imdebug = ImageType::New();
+	imdebug->SetRegions(fim->GetLargestPossibleRegion());
+	imdebug->Allocate();
+
+	IteratorType it1(imdebug, imdebug->GetLargestPossibleRegion());
+	FloatIteratorType it2(fmfilt->GetOutput(),fmfilt->GetOutput()->GetLargestPossibleRegion());
+	for(it1.GoToBegin(),it2.GoToBegin();!it1.IsAtEnd();++it1,++it2)
+	{
+		it1.Set(MIN(it2.Get(),255));
+	}
+
+	/*typedef itk::ImageFileWriter<ImageType> FileWriterType;
+	FileWriterType::Pointer writer = FileWriterType::New();
+	writer->SetInput(imdebug);
+	writer->SetFileName("C:/Users/arun/Research/Farsight/exe/bin/debug_fmfilt.tif");*/
+	//writer->Update();
+
+	//
+
+
+	FloatImageType::Pointer outim = fmfilt->GetOutput();
+	std::vector<float> weights;
+	for(int counter = 0; counter < n2.size(); counter++)
+	{
+		index[0] = n2[counter].x-indexcopy[0]; index[1] = n2[counter].y-indexcopy[1]; index[2] = n2[counter].z-indexcopy[2];
+		float weight = outim->GetPixel(index);
+		weights.push_back(weight);
+	}
+	//printf("Weight: from(%0.2f, %0.2f, %0.2f) to (%0.2f, %0.2f, %0.2f) = %0.2f\n",n1.x,n1.y,n1.z,n2.x,n2.y,n2.z,weight);
+		//scanf("%*d");
+	return weights;
+
+
+}
+float MST::getFastMarchingEdgeWeight(fPoint3D n1, fPoint3D n2, ImageType::Pointer img)
+{
+	typedef itk::Image<float,3> FloatImageType;
+	typedef itk::FastMarchingImageFilter<FloatImageType> FMFilterType;
+	FMFilterType::Pointer fmfilt = FMFilterType::New();
+
+	//#define MIN(a,b) (((a) < (b))?(a):(b))
+	//#define MAX(a,b) (((a) > (b))?(a):(b))
+
+	FloatImageType::Pointer fim = FloatImageType::New();
+
+	FloatImageType::IndexType index1,index2,indexcopy;
+	FloatImageType::SizeType size; 
+	FloatImageType::RegionType region;
+
+	index1[0] = MIN(MAX(n1.x-edgeRange,0),sizeX-1);
+	index1[1] = MIN(MAX(n1.y-edgeRange,0),sizeY-1);
+	index1[2] = MIN(MAX(n1.z-edgeRange,0),sizeZ-1);
+	indexcopy = index1;
+
+	index2[0] = MIN(MAX(n1.x+edgeRange,0),sizeX-1);
+	index2[1] = MIN(MAX(n1.y+edgeRange,0),sizeY-1);
+	index2[2] = MIN(MAX(n1.z+edgeRange,0),sizeZ-1);
+
+	size[0] = index2[0]-index1[0]+1;
+	size[1] = index2[1]-index1[1]+1;
+	size[2] = index2[2]-index1[2]+1;
+	
+	region.SetIndex(index1);
+	region.SetSize(size);
+	
+
+	typedef itk::ImageRegionIterator<ImageType> IteratorType;
+	IteratorType iter(img,region);
+	
+	index1.Fill(0);
+	region.SetIndex(index1);
+	typedef itk::ImageRegionIterator<FloatImageType> FloatIteratorType;
+	fim->SetRegions(region);
+	fim->Allocate();
+	fim->FillBuffer(0);
+
+	FloatIteratorType fiter(fim,region);
+	fiter.GoToBegin();
+	iter.GoToBegin();
+
+	for(;!iter.IsAtEnd();++iter,++fiter)
+	{
+		if(iter.Get() < 10)
+			fiter.Set(0);
+		else
+			fiter.Set(iter.Get()/255.0);
+	}
+	fmfilt->SetInput(fim);
+
+	typedef FMFilterType::NodeContainer NodeContainer;
+	typedef FMFilterType::NodeType NodeType;
+
+	NodeContainer::Pointer seeds = NodeContainer::New();
+
+	NodeType node;
+	node.SetValue(0.0);
+	ImageType::IndexType index;
+	index[0] = n1.x-indexcopy[0];
+	index[1] = n1.y-indexcopy[1];
+	index[2] = n1.z-indexcopy[2];
+	node.SetIndex(index);
+	seeds->Initialize();
+	seeds->InsertElement(0, node);
+	fmfilt->SetTrialPoints(seeds);
+	fmfilt->SetOutputSize(fim->GetLargestPossibleRegion().GetSize());
+	fmfilt->SetStoppingValue(edgeRange);
+	fmfilt->Update();
+	//printf("Updated the filter...\n");
+	
+
+	// write image for debugging
+	ImageType::Pointer imdebug = ImageType::New();
+	imdebug->SetRegions(fim->GetLargestPossibleRegion());
+	imdebug->Allocate();
+
+	IteratorType it1(imdebug, imdebug->GetLargestPossibleRegion());
+	FloatIteratorType it2(fmfilt->GetOutput(),fmfilt->GetOutput()->GetLargestPossibleRegion());
+	for(it1.GoToBegin(),it2.GoToBegin();!it1.IsAtEnd();++it1,++it2)
+	{
+		it1.Set(MIN(it2.Get(),255));
+	}
+
+	typedef itk::ImageFileWriter<ImageType> FileWriterType;
+	FileWriterType::Pointer writer = FileWriterType::New();
+	writer->SetInput(imdebug);
+	writer->SetFileName("C:/Users/arun/Research/Farsight/exe/bin/debug_fmfilt.tif");
+	//writer->Update();
+
+	//
+
+	FloatImageType::Pointer outim = fmfilt->GetOutput();
+	index[0] = n2.x-indexcopy[0]; index[1] = n2.y-indexcopy[1]; index[2] = n2.z-indexcopy[2];
+
+	float weight = outim->GetPixel(index);
+	//printf("Weight: from(%0.2f, %0.2f, %0.2f) to (%0.2f, %0.2f, %0.2f) = %0.2f\n",n1.x,n1.y,n1.z,n2.x,n2.y,n2.z,weight);
+		//scanf("%*d");
+	return weight;
+
+}
 bool MST::minimumSpanningTree()
 {
 	int num_edges = (int)edgeArray.size();

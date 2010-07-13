@@ -20,7 +20,7 @@ TARGET_LINK_LIBRARIES(mdlVolumeProcess ITKIO ITKStatistics ITKBasicFilters ITKCo
 #TARGET_LINK_LIBRARIES(volumeProcess2 mdlVolumeProcess)
 
 ADD_LIBRARY(mdlIntegratedSkeleton mdlIntegratedSkeleton.h mdlIntegratedSkeleton.cpp)
-TARGET_LINK_LIBRARIES(mdlIntegratedSkeleton mdlUtils ITKBasicFilters ITKCommon ITKIO ITKStatistics)
+TARGET_LINK_LIBRARIES(mdlIntegratedSkeleton mdlUtils ITKBasicFilters ITKCommon ITKIO ITKStatistics )
 
 ADD_EXECUTABLE(mdl_skeletonize skeleton_main.cpp)
 TARGET_LINK_LIBRARIES(mdl_skeletonize mdlIntegratedSkeleton)
@@ -30,6 +30,9 @@ TARGET_LINK_LIBRARIES(mdlMST mdlUtils mdlVolumeProcess)
 
 ADD_EXECUTABLE(mdl_mst mst_main.cpp)
 TARGET_LINK_LIBRARIES(mdl_mst mdlMST)
+
+ADD_EXECUTABLE(new_mst_try new_mst_try.cpp)
+TARGET_LINK_LIBRARIES(new_mst_try mdlMST)
 
 ADD_LIBRARY(mdlBSplineFitting mdlBSplineFitting.cpp mdlBSplineFitting.h)
 
