@@ -183,12 +183,12 @@ void drawLine(itk::Image< itk::Vector<unsigned char, 3> , 3>::Pointer input, itk
 #define MAX(a,b) (((a) < (b))? (b) : (a))
 	ColorImageType::IndexType index1, index2;
 	ColorImageType::SizeType size = input->GetLargestPossibleRegion().GetSize();
-	index1[0] = MAX(MIN(upscale*x1,size[0]-1),0);
-	index1[1] = MAX(MIN(upscale*y1,size[1]-1),0);
-	index1[2] = MAX(MIN(z1,size[2]-1),0);
-	index2[0] = MAX(MIN(upscale*x2,size[0]-1),0);
-	index2[1] = MAX(MIN(upscale*y2,size[1]-1),0);
-	index2[2] = MAX(MIN(z2,size[2]-1),0);
+	index1[0] = MAX(MIN(upscale*x1,(int)size[0]-1),0);
+	index1[1] = MAX(MIN(upscale*y1,(int)size[1]-1),0);
+	index1[2] = MAX(MIN(z1,(int)size[2]-1),0);
+	index2[0] = MAX(MIN(upscale*x2,(int)size[0]-1),0);
+	index2[1] = MAX(MIN(upscale*y2,(int)size[1]-1),0);
+	index2[2] = MAX(MIN(z2,(int)size[2]-1),0);
 
 	//printf("drawing line...");
 	typedef itk::LineIterator<ColorImageType> LineIteratorType;
@@ -286,11 +286,11 @@ bool MST::nodesToEdges(int type)
 			queryPoint[2] = nodes.at(i).z;
 			tree->Search(queryPoint, num_neighbors, neighbors);
 			std::vector < unsigned long int> act_neighbors;
-			for(int j = 1; j < neighbors.size(); j++) // j = 0 is always going to be the point itself
+			for(int j = 1; j < (int)neighbors.size(); j++) // j = 0 is always going to be the point itself
 			{
 
-				bool done = false;
-				/*
+				/*bool done = false;
+				
 				for(int counter = 0; counter < neighbors_array[neighbors[j]].size(); counter++)
 				{
 					if(neighbors_array[neighbors[j]][counter] == i)
@@ -316,7 +316,7 @@ bool MST::nodesToEdges(int type)
 			//printf("Calling FastMarchingEdgeWeightVector()\n");
 			std::vector<float> weights = getFastMarchingEdgeWeightVector(n1, points,m_inputImage);
 			//printf("Returned\n");
-			for( int counter = 0; counter < act_neighbors.size(); counter++)
+			for( int counter = 0; counter < (int)act_neighbors.size(); counter++)
 			{
 				edgeArray.push_back(pairE(i+1,act_neighbors[counter]+1));
 				edgeWeight.push_back(weights[counter]);
@@ -528,7 +528,7 @@ std::vector<float> MST::getFastMarchingEdgeWeightVector(fPoint3D n1, std::vector
 
 	index1.Fill(1000000);
 	index2.Fill(0);
-	for(int counter = 0; counter < n2.size(); counter++)
+	for(int counter = 0; counter < (int)n2.size(); counter++)
 	{
 		index1[0] = MIN(n2[counter].x,index1[0]);
 		index1[1] = MIN(n2[counter].y,index1[1]);
@@ -627,7 +627,7 @@ std::vector<float> MST::getFastMarchingEdgeWeightVector(fPoint3D n1, std::vector
 
 	FloatImageType::Pointer outim = fmfilt->GetOutput();
 	std::vector<float> weights;
-	for(int counter = 0; counter < n2.size(); counter++)
+	for(int counter = 0; counter < (int)n2.size(); counter++)
 	{
 		index[0] = n2[counter].x-indexcopy[0]; index[1] = n2[counter].y-indexcopy[1]; index[2] = n2[counter].z-indexcopy[2];
 		float weight = outim->GetPixel(index);
