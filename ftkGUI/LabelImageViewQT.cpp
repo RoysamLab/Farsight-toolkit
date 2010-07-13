@@ -46,7 +46,10 @@ LabelImageViewQT::LabelImageViewQT(QMap<QString, QColor> * new_colorItemsMap, QW
 	channelFlags.clear();				//Is channel visible or not?
 	//channelFlags.push_back(true);
 
-	classMap.clear();
+	classMap1.clear();
+	classMap2.clear();
+	classMap3.clear();
+	classMap4.clear();
 
 	selection = NULL;					//pointer to ObjectSelections class
 
@@ -247,14 +250,42 @@ void LabelImageViewQT::SetLabelImage(ftk::Image::Pointer img, ObjectSelection * 
 }
 
 void LabelImageViewQT::SetClassMap(vtkSmartPointer<vtkTable> table, std::vector<std::string> columns){
-	classMap.clear();
+	classMap1.clear();
+	classMap2.clear();
+	classMap3.clear();
+	classMap4.clear();
 
-	vtkAbstractArray * output = table->GetColumnByName(columns.at(columns.size()-1).c_str());
-	if(output == 0)
+	vtkAbstractArray *output1,*output2,*output3,*output4;
+	output1 = table->GetColumnByName(columns.at(columns.size()-1).c_str());
+	if(output1 == 0)
 		return;
+	if( columns.size() > 1 ){
+		output2 = table->GetColumnByName(columns.at(columns.size()-2).c_str());
+		if(output2 == 0)
+			return;
+	}
+	if( columns.size() > 2 ){
+		output3 = table->GetColumnByName(columns.at(columns.size()-3).c_str());
+		if(output3 == 0)
+			return;
+	}
+	if( columns.size() > 3 ){
+		output4 = table->GetColumnByName(columns.at(columns.size()-4).c_str());
+		if(output4 == 0)
+			return;
+	}
 
 	for(int i=0; i<table->GetNumberOfRows(); ++i){
-		classMap[table->GetValue(i,0).ToInt()] = table->GetValueByName(i,columns.at(columns.size()-1).c_str()).ToInt();
+		classMap1[table->GetValue(i,0).ToInt()] = table->GetValueByName(i,columns.at(columns.size()-1).c_str()).ToInt();
+		if( columns.size() > 1 ){
+			classMap2[table->GetValue(i,0).ToInt()] = table->GetValueByName(i,columns.at(columns.size()-2).c_str()).ToInt();
+		}
+		if( columns.size() > 2 ){
+			classMap3[table->GetValue(i,0).ToInt()] = table->GetValueByName(i,columns.at(columns.size()-3).c_str()).ToInt();
+		}
+		if( columns.size() > 3 ){
+			classMap4[table->GetValue(i,0).ToInt()] = table->GetValueByName(i,columns.at(columns.size()-4).c_str()).ToInt();
+		}
 	}
 
 	refreshBoundsImage();
@@ -1033,18 +1064,39 @@ void LabelImageViewQT::drawObjectCentroids(QPainter *painter)
 	for ( it = centerMap->begin() ; it != centerMap->end(); ++it )
 	{
 		int id = (*it).first;
-		int cls = 1;
-		if(classMap.size() > 0)
-			cls = classMap[id];
+		int cls1 = 1;
+		int cls2, cls3, cls4;
+		if(classMap1.size() > 0)
+			cls1 = classMap1[id];
+		if(classMap2.size() > 1)
+			cls2 = classMap2[id];
+		if(classMap3.size() > 2)
+			cls3 = classMap3[id];
+		if(classMap4.size() > 3)
+			cls4 = classMap4[id];
 
 		int numColors = (int)centroidColorTable.size();
-		QColor myColor = centroidColorTable.at( (cls-1)%numColors );
+		QColor myColor1 = centroidColorTable.at( (cls1-1)%numColors );
+		QColor myColor2, myColor3, myColor4;
 		painter->setPen(Qt::black);
-		painter->setBrush(myColor);
+		painter->setBrush(myColor1);
 
 		ftk::Object::Point point = (*it).second;
 		if ( (currentZ == point.z) )
 		{
+			if(classMap4.size() > 3){
+				painter->setBrush(myColor4);
+				painter->drawEllipse(point.x - 2, point.y - 2, 17, 17);
+			}
+			if(classMap3.size() > 2){
+				painter->setBrush(myColor3);
+				painter->drawEllipse(point.x - 2, point.y - 2, 13, 13);
+			}
+			if(classMap2.size() > 1){
+				painter->setBrush(myColor2);
+				painter->drawEllipse(point.x - 2, point.y - 2, 9, 9);
+				painter->setBrush(myColor1);
+			}
 			//painter->drawRect(point.x - 2, point.y - 2, 5, 5);
 			painter->drawEllipse(point.x - 2, point.y - 2, 5, 5);
 		}

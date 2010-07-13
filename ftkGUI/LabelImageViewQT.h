@@ -79,7 +79,7 @@ public:
 	void SetBoundingBoxMapPointer(std::map<int, ftk::Object::Box> * bMap = NULL);
 	void SetClassMap(vtkSmartPointer<vtkTable> table, std::vector<std::string> columns);
 	QString GetColorNameFromTable( int class_num );
-	void ClearClassMap(void){ classMap.clear(); refreshBoundsImage();};
+	void ClearClassMap(void){ classMap1.clear(); classMap2.clear(); classMap3.clear(); refreshBoundsImage();};
 
 	void SetColorItemsMap(QMap<QString, QColor> * new_colorItemsMap){ colorItemsMap = new_colorItemsMap; refreshBoundsImage(); };
 	void SetColorMapForCentroids(QVector<QColor> table){ centroidColorTable = table; refreshBoundsImage(); };
@@ -186,7 +186,10 @@ protected:
 	ftk::Image::Pointer labelImg;
 	std::map<int, ftk::Object::Point> *	centerMap;
 	std::map<int, ftk::Object::Box> * bBoxMap;
-	std::map<int, int> classMap;
+	std::map<int, int> classMap1;
+	std::map<int, int> classMap2;
+	std::map<int, int> classMap3;
+	std::map<int, int> classMap4;
 
 	ftk::Image::Pointer channelImg;
 	ObjectSelection * selection;
