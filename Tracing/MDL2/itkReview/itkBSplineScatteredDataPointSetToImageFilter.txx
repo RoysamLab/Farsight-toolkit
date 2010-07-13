@@ -389,7 +389,7 @@ BSplineScatteredDataPointSetToImageFilter<TInputPointSet, TOutputImage>
         }
       }
     
-    for ( unsigned int i = 0; i < ( 2 << ImageDimension-1 ); i++ )
+    for ( unsigned int i = 0; i < ( 2 << (ImageDimension-1) ); i++ )
       {
 
       PointDataType sum( 0.0 );
