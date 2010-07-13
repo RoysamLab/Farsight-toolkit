@@ -60,8 +60,8 @@ void Focus::MakeVarianceImage()
 	for(int z = 0; z < size3; ++z)
 	{
 		std::cout << ".";
-		UCharImageType::IndexType index = { 0,0,z };
-		UCharImageType::SizeType size = { size1, size2, 0 };
+		UCharImageType::IndexType index = { {0,0,z} };
+		UCharImageType::SizeType size = { {size1, size2, 0} };
 		UCharImageType::RegionType region;
 		region.SetSize(size);
 		region.SetIndex(index);

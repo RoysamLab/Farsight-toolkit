@@ -214,7 +214,7 @@ double TraceLine::GetDistToParent()
 			this->m_parent->m_trace_bits.back());
 		if (this->m_trace_bits.size()>1)
 		{
-			double Leading = 0, dist =0;
+			double Leading = 0;//, dist =0;
 			TraceBit pre, cur;
 			TraceBitsType::iterator it = this->m_trace_bits.begin();
 			pre = *it; 

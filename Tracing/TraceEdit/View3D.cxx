@@ -102,12 +102,12 @@ View3D::View3D(QWidget *parent)
   this->TreeModel = NULL;
 
 	this->tobj = new TraceObject;
-	int num_loaded = 0;
+	//int num_loaded = 0;
 	this->numDeleted = 0;
 	this->numMerged = 0;
 	this->numSplit = 0;
-//	this->Volume=0;
-	bool tracesLoaded = false;
+	//this->Volume=0;
+	//bool tracesLoaded = false;
 	this->translateImages = false;	//this is for testing a switch is needed
 	this->Date.currentDate();
 	this->Time.currentTime();
@@ -327,7 +327,7 @@ void View3D::OkToBoot()
 		this->InformationDisplays->hide();
 		this->resize(this->TraceEditSettings.value("mainWin/size",QSize(850, 480)).toSize());
 		this->move(this->TraceEditSettings.value("mainWin/pos",QPoint(40, 59)).toPoint());
-		int i = 0;
+		//int i = 0;
 		/*this->uMperVoxel = this->scale->value();
 		this->TraceEditSettings.setValue("boot/scale", this->uMperVoxel);*/
 		this->Initialize();
@@ -1310,7 +1310,7 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
 }
 void View3D::showPTin3D(double value)
 {
-	bool ok = false;
+	//bool ok = false;
 	double pos[3];
 	/*while (!ok)
 	{
@@ -2115,7 +2115,7 @@ void View3D::HandleHippocampalDataset()
 
 
 
-	int offset = 0;
+	//int offset = 0;
 	std::vector<TraceLine*> tldel;
 	tldel.clear();
 	tlinepointer = this->tobj->GetTraceLinesPointer();
@@ -2175,7 +2175,7 @@ void View3D::HandleHippocampalDataset()
 	}
 
 
-	int merge_count = 0;
+	//int merge_count = 0;
 	
 	//FILE *fp = fopen("ftemp.swc","w");
 	int line_count = 1;
@@ -2183,8 +2183,8 @@ void View3D::HandleHippocampalDataset()
 	for(unsigned int counter = 0; counter < cricbits.size(); counter++)
 	{
 		std::vector<int> validbits(cricbits.size());
-		double mindist = 1e10;
-		float minpos = -1;
+		//double mindist = 1e10;
+		//float minpos = -1;
 		for(unsigned int counter1 = 0; counter1 < cricbits.size(); counter1++)
 		{
 			validbits[counter1] = 0;
