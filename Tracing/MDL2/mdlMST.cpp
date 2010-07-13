@@ -327,7 +327,7 @@ bool MST::nodesToEdges(int type)
 				c2[0] = val; c2[1] = val; c2[2] = val;
 				drawLine(cimage,c1,c2,n1.x,n1.y,n1.z,n2.x,n2.y,n2.z);
 			}
-			printf("Edges: %d\n",edgeWeight.size());
+			printf("Edges: %d\n",(int)edgeWeight.size());
 		}
 		typedef itk::ImageFileWriter<ColorImageType> WriterType;
 		WriterType::Pointer writer = WriterType::New();
