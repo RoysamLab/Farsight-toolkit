@@ -42,7 +42,7 @@ limitations under the License.
 //Farsight Includes:
 #include "ftkGUI/TableWindow.h"
 #include "ftkGUI/PlotWindow.h"
-//#include "ftkGUI/HistoWindow.h"
+#include "ftkGUI/HistoWindow.h"
 #include "ftkGUI/ObjectSelection.h"
 #include "ftkGUI/StatisticsToolbar.h"
 
@@ -65,14 +65,15 @@ private slots:
 	void addBlankRow(void);
 	void changeRowData(void);
 	void showStatistics(void);
+	void updateStatistics(void);
 
 signals:
-    
+    void selectionChanged(void);
 private:
 	void createMenus();
 	void createStatusBar();
 	void ReadFiles(std::string hname, std::string dname);
-
+    QDockWidget *statisticsDockWidget;
 	QMenu *fileMenu;
 	QAction *loadAction;
 	QMenu *editMenu;
@@ -80,11 +81,12 @@ private:
 	QAction *addBlankRowAction;
 	QAction *changeRowDataAction;
 	QAction *showStatisticsAction;
+	QAction *updateStatisticsAction;
 	StatisticsToolbar * statisticsToolbar;
-	
 	TableWindow *table;
 	PlotWindow *plot;
-	//HistoWindow *histo;
+	HistoWindow *histo;
+	int flag;
 
 	vtkSmartPointer<vtkTable> data;
 	ObjectSelection *selection;

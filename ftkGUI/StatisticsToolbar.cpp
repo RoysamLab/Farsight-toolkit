@@ -18,12 +18,16 @@ StatisticsToolbar::StatisticsToolbar(QWidget *parent)
 	:QWidget(parent)
 {
 	
-
+     
 	this->inputDataTable = vtkSmartPointer<vtkTable>::New();
+	this->dataTable = vtkSmartPointer<vtkTable>::New();
+	this->selectionTable = vtkSmartPointer<vtkTable>::New();
 	this->StatisticsTable = new QTableView();
 	this->StatisticsModel = new QStandardItemModel(this);
 	this->StatisticsSelectionModel = new QItemSelectionModel(this->StatisticsModel, this);	
     this->statisticsDockWidget = new QDockWidget(tr("Statistics Toolbar"));
+	this->Selection = new ObjectSelection();
+	std::vector<int> selectedRowNumbers;
 	
 	
 
@@ -36,27 +40,58 @@ StatisticsToolbar::~StatisticsToolbar()
 
 
 
-void StatisticsToolbar::setTable(vtkSmartPointer<vtkTable> dataTable)
-{
-	SetUpHeaders(dataTable);
-	int rows = dataTable->GetNumberOfRows();
-	std::vector<double> columnStatistics;
-	
-	for(int i = 0; i< dataTable->GetNumberOfColumns(); ++i)
-	{	//compute statistics
-		vtkAbstractArray *Column = dataTable->GetColumn(i);
-		columnStatistics = ComputeStatistics(Column, rows);	
+void StatisticsToolbar::setTable(vtkSmartPointer<vtkTable> inputDataTable, ObjectSelection * Selection)
+{ 
+	dataTable = NULL;
+	SetUpHeaders(inputDataTable);
+	this->Selection = Selection;
+	std::vector<double> selectedData;
+	std::vector<int> IDList = this->GetSelectedIDs();
+	this->selectedRowNumbers.clear();
+	bool found;	
 
+	if(IDList.size() > 0)
+	{
 		
-	
-		for(int row = 0; row < (int)rowHeaders.size(); ++row)
+		for(unsigned int i = 0; i < IDList.size(); i++)
 		{
-			this->StatisticsModel->setData(this->StatisticsModel->index(row, i), columnStatistics.at(row));
+			bool found = false;
+			unsigned int j = 0;
+			while ((!found) && (j< inputDataTable->GetNumberOfRows()) )
+			{
+				if(IDList[i] == inputDataTable->GetValue(j,0).ToInt())
+				{
+				this->selectedRowNumbers.push_back(j);//inserted row number corresponding to selected row of input table
+				found = true;
+				}
+				else
+				{
+					j++;
+				}
+			}
 		}
 	}
 	
+	dataTable = inputDataTable;	
+	
+
+	int rows = dataTable->GetNumberOfRows();
+	std::cout << rows << endl;
+	std::vector<double> columnStatistics;
+	
+	for(int i = 1; i< dataTable->GetNumberOfColumns(); ++i)
+	{	//compute statistics
+		vtkAbstractArray *Column = dataTable->GetColumn(i);
+		columnStatistics = ComputeStatistics(Column, rows);	
+		
+		for(int row = 0; row < (int)rowHeaders.size(); ++row)
+		{
+			this->StatisticsModel->setData(this->StatisticsModel->index(row, i-1), columnStatistics.at(row));
+		}
+	}
 	this->StatisticsTable->setModel(StatisticsModel);
 	statisticsDockWidget->setWidget(StatisticsTable);
+	
 	this->resize(500, 250);
 	
 }
@@ -66,6 +101,8 @@ void StatisticsToolbar::setTable(vtkSmartPointer<vtkTable> dataTable)
 std::vector<double> StatisticsToolbar::ComputeStatistics(vtkAbstractArray *Column, int rows)
 {
 	
+		
+
 	double average = this->Average(Column, rows);
 	double stDeviation = this->StDeviation(Column, average, rows);
 	QList<double> dataList = this->SortColumn(Column, rows);
@@ -74,9 +111,8 @@ std::vector<double> StatisticsToolbar::ComputeStatistics(vtkAbstractArray *Colum
 	double median = floor(dataList.at(dataList.size()/2));
 	double mode = Mode(dataList);
 
-	std::cout<< average<< "\t" << stDeviation << "\t" << min << "\t" << max << "\t" << median << "\t" << mode<< endl;
 	
-	
+		
 	//put stats into a vector
 
 	std::vector<double> row;
@@ -94,13 +130,32 @@ std::vector<double> StatisticsToolbar::ComputeStatistics(vtkAbstractArray *Colum
 
 double StatisticsToolbar::Average(vtkAbstractArray *Column, int rows )
 {
+	
 	double sum = 0;
-	int j;
+	unsigned int j=0;
+	double average;
+	
+	if(this->selectedRowNumbers.size() > 0)
+	{
+		for(unsigned int i=0; i< this->selectedRowNumbers.size(); i++)
+		{
+			j = this->selectedRowNumbers.at(i);//set row #
+			sum = (Column->GetVariantValue(j).ToDouble()) + sum;
+		}
+		average = (sum/(selectedRowNumbers.size()));
+	}
+
+	else
+	{
+	
+
 	for(j = 0; j< rows; j++)
 	{
 		sum = (Column->GetVariantValue(j).ToDouble()) + sum;
 	}
-	double average = (sum/rows);
+	average = (sum/rows);
+	}
+
 	return average;
 }
 
@@ -109,62 +164,130 @@ double StatisticsToolbar::Average(vtkAbstractArray *Column, int rows )
 double StatisticsToolbar::StDeviation(vtkAbstractArray *Column, double average, int rows)
 {
 	double difference = 0;
-	for(int j = 0; j< rows-1; ++j)
+    double stDeviation = 0;
+	unsigned int j = 0;
+
+	if(this->selectedRowNumbers.size() > 0)
 	{
-		difference = (((Column->GetVariantValue(j).ToDouble() - average)*(Column->GetVariantValue(j).ToDouble() - average)) + difference); 
+		for(unsigned int i=0; i< this->selectedRowNumbers.size(); i++)
+		{
+			j = this->selectedRowNumbers.at(i);//set row #
+			difference = (((Column->GetVariantValue(j).ToDouble() -average) * (Column->GetVariantValue(j).ToDouble() - average)) + difference);
+			
+		}
+		stDeviation = sqrt( difference / (selectedRowNumbers.size()-1) );
 	}
-	double stDeviation =sqrt( difference / average );
+	else
+	{
+		for(j = 0; j< rows; ++j)
+		{
+			difference = (((Column->GetVariantValue(j).ToDouble() - average)*(Column->GetVariantValue(j).ToDouble() - average)) + difference); 
+			
+		}
+		stDeviation = sqrt( difference / (rows-1) );
+	}
+	
 	return stDeviation;
 }
-
 
 
 QList<double> StatisticsToolbar::SortColumn(vtkAbstractArray *Column, int rows)
 {
 	this->myList = new QList<double>;
-	this->myList->push_front(Column->GetVariantValue(0).ToDouble());
-	for(int j = 1; j<rows; j++)
+	double newValue;
+	unsigned int j = 0;
+	
+	if(this->selectedRowNumbers.size() > 0)
 	{
-		
-		double newValue = Column->GetVariantValue(j).ToDouble();
-		if(!(newValue >= 0))
-			newValue = 0;
-				
-		if(newValue >= (this->myList->back()))//greater than last item
+		j = this->selectedRowNumbers.at(0);//set row #
+		newValue = Column->GetVariantValue(j).ToDouble();
+		this->myList->push_back(newValue);
+
+		for(unsigned int i=1; i< this->selectedRowNumbers.size(); i++)
 		{
-			this->myList->push_back(newValue);
+			j = this->selectedRowNumbers.at(i);//set row #
+			newValue = Column->GetVariantValue(j).ToDouble();
+			if(!(newValue >= 0))
+				newValue = 0;
+				
+			if(newValue >= (this->myList->back()))//greater than last item
+			{
+				this->myList->push_back(newValue);
 
 			
-		}
-		else if(newValue <(this->myList->front()))//less than first item
-		{
-			this->myList->push_front(newValue);
-		}	
-		else 
-		{
-			this->myList->push_front(newValue);//insert at beginning
-			double nextValue = this->myList->at(1);
-			int n = 0;//current index of new item in list
-			while(newValue > nextValue) //while new number is larger than next in list..
-			{
-				this->myList->replace(n, nextValue);
-                
-				this->myList->replace((n+1), newValue);
-				n = n+1;
-				if(n+1 == 3)
-					break;
-				else
-				    nextValue = this->myList->at(n+1);
 			}
-			//int size = this->myList->size();
+			else if(newValue <(this->myList->front()))//less than first item
+			{
+				this->myList->push_front(newValue);
+			}	
+			else 
+			{
+				this->myList->push_front(newValue);//insert at beginning
+				double nextValue = this->myList->at(1);
+				int n = 0;//current index of new item in list
+				while(newValue > nextValue) //while new number is larger than next in list..
+				{
+					this->myList->replace(n, nextValue);
+                
+					this->myList->replace((n+1), newValue);
+					n = n+1;
+					if(n+1 == 3)
+						break;
+					else
+						nextValue = this->myList->at(n+1);
+				}
+				//int size = this->myList->size();
+			}
+		
+		
 		}
+
+	}
+
+	else//nothing selected, compute on whole table
+	{
+		this->myList->push_front(Column->GetVariantValue(0).ToDouble());
+		for(j = 1; j<rows; j++)
+		{
+		
+			newValue = Column->GetVariantValue(j).ToDouble();
+			if(!(newValue >= 0))
+				newValue = 0;
+				
+			if(newValue >= (this->myList->back()))//greater than last item
+			{
+				this->myList->push_back(newValue);
+
+			
+			}
+			else if(newValue <(this->myList->front()))//less than first item
+			{
+				this->myList->push_front(newValue);
+			}	
+			else 
+			{
+				this->myList->push_front(newValue);//insert at beginning
+				double nextValue = this->myList->at(1);
+				int n = 0;//current index of new item in list
+				while(newValue > nextValue) //while new number is larger than next in list..
+				{
+					this->myList->replace(n, nextValue);
+                
+					this->myList->replace((n+1), newValue);
+					n = n+1;
+					if(n+1 == 3)
+						break;
+					else
+						nextValue = this->myList->at(n+1);
+				}
+				//int size = this->myList->size();
+			}
 		
 		
+		}
 	}
 	return *myList;
-
 }
-
 double StatisticsToolbar::Mode(QList<double> dataList)
 {
 	int maxCount = 1;
@@ -190,19 +313,18 @@ void StatisticsToolbar::SetUpHeaders(vtkSmartPointer<vtkTable> dataTable)
 {
 	
 
-	for (int col = 0; col< dataTable->GetNumberOfColumns(); col++)
+	for (int col = 1; col< dataTable->GetNumberOfColumns(); col++)//start at 1 so id column is not included
 	{
 		this->colHeaders.push_back(dataTable->GetColumnName(col));
 	}
-	/*this->colHeaders.push_back("First");
-	this->colHeaders.push_back("Second");
-	this->colHeaders.push_back("Third");*/
+	
 	this->rowHeaders.push_back("Average");
 	this->rowHeaders.push_back("Standard Deviation");
 	this->rowHeaders.push_back("Minimum");
 	this->rowHeaders.push_back("Maximum");
 	this->rowHeaders.push_back("Median");
 	this->rowHeaders.push_back("Mode");
+	
 	
 
     unsigned int numColHeaders = this->colHeaders.size();
@@ -220,6 +342,62 @@ void StatisticsToolbar::SetUpHeaders(vtkSmartPointer<vtkTable> dataTable)
 	}
 	
 }
+
+
+std::vector<int> StatisticsToolbar::GetSelectedIDs()
+{   
+	std::vector<int> SelectedIDs;
+	std::set<long> selected = this->Selection->getSelections();
+	std::set<long>::iterator it;
+	for (it = selected.begin(); it != selected.end(); ++it)
+	{	
+		SelectedIDs.push_back(*it);
+	}
+	
+	return SelectedIDs;
+	
+	
+}
+
+//void StatisticsToolbar::makeTable(vtkSmartPointer<vtkTable> inputDataTable)
+//{
+//	std::vector<double> selectedData;
+//	std::vector<int> IDList = this->GetSelectedIDs();
+//	this->selectedRowNumbers.clear();
+//	bool found;	
+//
+//	if(IDList.size() > 0)
+//	{
+//		
+//		for(unsigned int i = 0; i < IDList.size(); i++)
+//		{
+//			bool found = false;
+//			unsigned int j = 0;
+//			while ((!found) && (j< inputDataTable->GetNumberOfRows()) )
+//			{
+//				if(IDList[i] == inputDataTable->GetValue(j,0).ToInt())
+//				{
+//				this->selectedRowNumbers.push_back(j);//inserted row number corresponding to selected row of input table
+//				found = true;
+//				}
+//				else
+//				{
+//					j++;
+//				}
+//			}
+//		}
+//	}
+//	
+//	this->dataTable = inputDataTable;	
+//	
+//}
+
+
+
+
+
+
+
 
 
 

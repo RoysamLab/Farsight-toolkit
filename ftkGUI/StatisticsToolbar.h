@@ -27,6 +27,8 @@ limitations under the License.
 #include <vector>
 #include <string>
 
+#include <ObjectSelection.h>
+
 
 
 class QStandardItemModel;
@@ -35,14 +37,25 @@ class QItemSelectionModel;
 class StatisticsToolbar : public QWidget
 {
 	Q_OBJECT
+		
 public:
 	StatisticsToolbar(QWidget *parent );
 	~StatisticsToolbar();
-	void setTable(vtkSmartPointer<vtkTable> dataTable);
-    QDockWidget *statisticsDockWidget;
+	void setTable(vtkSmartPointer<vtkTable> dataTable, ObjectSelection * Selection);
+	QDockWidget *statisticsDockWidget;
+	std::vector<int> GetSelectedIDs();
+
+//private slots:
+	//void updateStatistics(void);
+	
+signals:
+     void selectionChanged(void);
 
 private:
 	vtkSmartPointer<vtkTable> inputDataTable;
+	vtkSmartPointer<vtkTable> dataTable;
+	vtkSmartPointer<vtkTable> selectionTable;
+	std::vector<int> selectedRowNumbers;
 	
 	QStandardItemModel * StatisticsModel;
 	QItemSelectionModel * StatisticsSelectionModel;
@@ -50,15 +63,18 @@ private:
 	std::vector<QString> rowHeaders;
 	std::vector< std::vector<double> > statistics;
 	QList<double> *myList;
-	  QTableView * StatisticsTable;
-	
-    
+	QTableView * StatisticsTable;
+	ObjectSelection * Selection;
+	vtkVariantArray *rowData;
+   
 	double Average(vtkAbstractArray *Column, int rows);
 	double StDeviation(vtkAbstractArray *Column, double average, int rows);
 	QList<double> SortColumn(vtkAbstractArray *Column, int rows);
-	void SetUpHeaders(vtkSmartPointer<vtkTable> dataTable);
+	void SetUpHeaders(vtkSmartPointer<vtkTable> dataTableIn);
 	std::vector<double> ComputeStatistics(vtkAbstractArray *Column, int rows);
 	double Mode(QList<double> dataList);
+	
+
 	
 	
 };

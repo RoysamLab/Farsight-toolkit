@@ -26,7 +26,8 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 {
 	table = new TableWindow();
 	plot = new PlotWindow(this);
-	//histo = NULL;
+	histo = new HistoWindow(this);
+
 
 	data = NULL;
 	data = vtkSmartPointer<vtkTable>::New();		//Start with a new table
@@ -34,12 +35,15 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 	selection = new ObjectSelection();
 
 	lastPath = ".";
+	
 
 	createMenus();
 	createStatusBar();
+	this->flag = 0;
 
 	setCentralWidget(table);
 	setWindowTitle(tr("Sample Editor"));
+	connect(selection, SIGNAL(changed()), this, SLOT(updateStatistics()));
     
 	this->resize(500,500);
 }
@@ -113,9 +117,15 @@ void SampleEditor::createMenus()
 	removeRowsAction->setStatusTip(tr("Remove selected rows from the table"));
 	connect(removeRowsAction, SIGNAL(triggered()), this, SLOT(removeRows()));
 	editMenu->addAction(removeRowsAction);
+
 	showStatisticsAction = new QAction(tr("Show Statistics Toolbar"), this);
 	connect(showStatisticsAction,SIGNAL(triggered()), this, SLOT(showStatistics()));
 	editMenu->addAction(showStatisticsAction);
+
+	updateStatisticsAction = new QAction(tr("Update Statistics"), this);
+	connect(updateStatisticsAction, SIGNAL(triggered()), this, SLOT(updateStatistics()));
+	//connect((this->selection), SIGNAL(selectionChanged()), this, SLOT(updateStatistics()));
+	editMenu->addAction(updateStatisticsAction);
 
 	addBlankRowAction = new QAction(tr("Add Blank Row"), this);
 	addBlankRowAction->setStatusTip(tr("Add blank row to bottom of table"));
@@ -126,6 +136,8 @@ void SampleEditor::createMenus()
 	changeRowDataAction->setStatusTip(tr("Change data for selected row"));
 	connect(changeRowDataAction, SIGNAL(triggered()), this, SLOT(changeRowData()));
 	editMenu->addAction(changeRowDataAction);
+
+	
 }
 
 //********************************************************************************
@@ -153,9 +165,8 @@ void SampleEditor::loadFile()
 
 	plot->setModels(data,selection);
 	plot->show();
-	/*SampleEditor::statisticsToolbar->setTable(data);
-	
-	statisticsToolbar->show();*/
+	this->histo->setModels(data, selection);
+	this->histo->show();
 }
 
 
@@ -244,6 +255,7 @@ void SampleEditor::removeRows(void)
 	selection->clear();
 	table->update();
 	plot->update();
+	
 
 }
 
@@ -282,13 +294,24 @@ void SampleEditor::changeRowData(void)
 
 void SampleEditor::showStatistics(void)
 {
-	QDockWidget *statisticsDockWidget = new QDockWidget();
+	this->statisticsDockWidget = new QDockWidget();
 	this->statisticsToolbar = new StatisticsToolbar(statisticsDockWidget);
 	
 	statisticsDockWidget->setWidget(statisticsToolbar->statisticsDockWidget);
 	statisticsDockWidget->setAllowedAreas(Qt::BottomDockWidgetArea);
 	addDockWidget(Qt::BottomDockWidgetArea, statisticsToolbar->statisticsDockWidget);
 
-	SampleEditor::statisticsToolbar->setTable(data);
+	SampleEditor::statisticsToolbar->setTable(data, selection);
+	this->flag = 1;	
+}
+
+void SampleEditor::updateStatistics(void)
+{
+	if (this->flag == 1)
+	{
+		std::cout<< "updattteeeee" << std::endl;
+		statisticsToolbar->statisticsDockWidget->close();
+		showStatistics();
+	}
 		
 }
