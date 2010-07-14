@@ -350,6 +350,12 @@ void View3D::OkToBoot()
 			this->cursor3DDock->show();
 		}
 		this->Rerender();
+		if (this->tobj->BranchPoints.size() >1)
+		{
+			QMessageBox::critical(this,"Branching Incomplete" ,
+				"You have traces without defined roots. \nPlease Use the 'Set Root' command",
+				QMessageBox::Ok, QMessageBox::Ok);
+		}
 	}
 	else
 	{
@@ -389,6 +395,19 @@ QString View3D::getTraceFile()
 		}
 		else if (trace.endsWith("vtk"))
 		{
+			QMessageBox::StandardButton reply;
+			reply = QMessageBox::critical(this, "Branching Warning", 
+				"Warning .VTK files does not include connectivity order."
+				"\nThe Root Tracess must be set BEFORE other edit operations. \n Should The Trace Editor Guess at the Root nodes?",
+				QMessageBox::Yes |QMessageBox::No, QMessageBox::No);
+			if (reply == QMessageBox::Yes)
+			{
+				this->tobj->AutoSolveBranchOrder = true;
+			}
+			else
+			{
+				this->tobj->AutoSolveBranchOrder = false;
+			}
 			this->tobj->ReadFromVTKFile((char*)traceFile.c_str());
 		}
 	}

@@ -156,6 +156,7 @@ public:
 
 	double gapTol;
 	int gapMax;
+	bool AutoSolveBranchOrder;
 
 	vtksys::hash_map< unsigned int, unsigned long long int > hashp;
 	vtksys::hash_map< unsigned int, unsigned long long int > hashc;

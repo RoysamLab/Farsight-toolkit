@@ -56,6 +56,7 @@ TraceObject::TraceObject()
   this->PolyTraces = vtkSmartPointer<vtkPolyData>::New();
   this->NextTraceBitID = -1;
   this->CombineShortVTKLines = true;
+  this->AutoSolveBranchOrder = false;
   this->tx = 0;
   this->ty = 0;
   this->tz = 0;
@@ -917,27 +918,33 @@ void TraceObject::ConvertVTKLineToTrace(int cellID, int parentTraceLineID,
   tline->SetType(3);
 	tline->setTraceColor( this->getTraceLUT( tline->GetType() ));   
 
-/*  if(parentTraceLineID != -1)
-    {
-    TraceLine *tparent;
-    if(this->hash_load.count(parentTraceLineID)==0)
-      {
-      tparent = new TraceLine();
-      this->hash_load[parentTraceLineID] =
-        reinterpret_cast<unsigned long long int>(tparent);
-      }
-    else
-      {
-      tparent = reinterpret_cast<TraceLine*>(this->hash_load[parentTraceLineID]);
-      }
-    tline->SetParent(tparent);
-    tparent->GetBranchPointer()->push_back(tline);
-    }
-  else
-    {
-    this->trace_lines.push_back(tline);
-    }*/
-	this->trace_lines.push_back(tline);
+	if (this->AutoSolveBranchOrder)
+	{
+	  if(parentTraceLineID != -1)
+		{
+		TraceLine *tparent;
+		if(this->hash_load.count(parentTraceLineID)==0)
+		  {
+		  tparent = new TraceLine();
+		  this->hash_load[parentTraceLineID] =
+			reinterpret_cast<unsigned long long int>(tparent);
+		  }
+		else
+		  {
+		  tparent = reinterpret_cast<TraceLine*>(this->hash_load[parentTraceLineID]);
+		  }
+		tline->SetParent(tparent);
+		tparent->GetBranchPointer()->push_back(tline);
+		}
+	  else
+		{
+		this->trace_lines.push_back(tline);
+		}
+	}//end if autosolve
+	else
+	{
+		this->trace_lines.push_back(tline);
+	}
   //add all of this new line's points as TraceBits
   vtkSmartPointer<vtkPolyLine> line = reinterpret_cast<vtkPolyLine *>
       (this->VTKData->GetCell(cellID));
