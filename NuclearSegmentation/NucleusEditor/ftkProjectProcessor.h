@@ -35,6 +35,7 @@
 #include <ftkUtils.h>
 #include "itkCastImageFilter.h"
 #include "itkExtractImageFilter.h"
+#include "ftkGUI/TrainingDialog.h"
 #include "PixelAnalysis/ftkPixelLevelAnalysis.h"
 
 namespace ftk
@@ -68,7 +69,7 @@ protected:
 	bool SegmentCytoplasm(int cytChannel, int memChannel);	//Segment Cytoplasm Channel & Compute Intrinsic Features
 	bool ComputeAssociations(void);							//Compute Associative Measures
 	bool PixLevAnalysis(void);							//If you must with all this nice object level machinery available
-	void Classify(void);									//Classify Cells
+	bool Classify(void);									//Classify Cells
 	void ComputeAnalyteMeasures(void);						//Compute Analyte Measures by Class
 
 	std::set<int> GetOnIntrinsicFeatures(void);				//Return the list of intrinsic features to calculate

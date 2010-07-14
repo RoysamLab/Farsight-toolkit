@@ -332,6 +332,13 @@ std::set<int> ProjectProcessor::GetOnIntrinsicFeatures(void)
 	return retSet;
 }
 
+bool ProjectProcessor::Classify(void){
+	if(!table)
+		return false;
+	TrainingDialog *d = new TrainingDialog(table);
+	d->loadModelFromFile(definition->classificationTrainingData);
+	return true;
+}
 //************************************************************************
 //************************************************************************
 //************************************************************************

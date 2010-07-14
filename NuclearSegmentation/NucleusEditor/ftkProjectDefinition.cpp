@@ -78,7 +78,7 @@ bool ProjectDefinition::Load(std::string filename)
 		}
 		else if( strcmp( parent, "ClassificationParameters" ) == 0 )
 		{
-			classificationParameters = this->ReadParameters(parentElement);
+			classificationParameters = this->ReadClassificationParameters(parentElement);
 		}
 		else if( strcmp( parent, "AssociationRules" ) == 0 )
 		{
@@ -227,6 +227,35 @@ std::vector<ftk::AssociationRule> ProjectDefinition::ReadAssociationRules(TiXmlE
 	return returnVector;
 }
 
+std::vector<ProjectDefinition::ClassParam> ProjectDefinition::ReadClassificationParameters(TiXmlElement * inputElement){
+	std::vector<ProjectDefinition::ClassParam> returnVector;
+	TiXmlElement * parameterElement = inputElement->FirstChildElement();
+
+	while (parameterElement){
+		const char * parameter = parameterElement ->Value();
+		if ( strcmp(parameter,"ClassificationParameter") == 0 ){
+			ClassParam current_classification_parameter;
+			current_classification_parameter.TrainingColumn = parameterElement->Attribute("TrainingColumn");
+			std::string ClassColNames;
+			ClassColNames = parameterElement->Attribute("ClassificationColumns");
+			//Split by ","
+			QString QClassColNames;
+			QClassColNames = QString::fromStdString(ClassColNames);
+			QStringList values = QClassColNames.split(",");
+			for(int i=0; i<values.size(); ++i)
+				current_classification_parameter.ClassificationColumns.push_back( values.at(i).toStdString() );
+
+			returnVector.push_back(current_classification_parameter);
+		}
+		else if ( strcmp(parameter,"TrainingFile") == 0 ){
+			classificationTrainingData = parameterElement->Attribute("Name");
+		}
+		parameterElement = parameterElement->NextSiblingElement();
+	}
+	return returnVector;
+}
+
+
 std::vector<ftk::PixelAnalysisDefinitions> ProjectDefinition::ReadPixelLevelRules(TiXmlElement * inputElement)
 {
 
@@ -323,50 +352,45 @@ bool ProjectDefinition::Write(std::string filename)
 	}
 
 	//CytoplasmSegmentationParameters:
-	if(cytoplasmParameters.size() > 0)
-	{
+	if(cytoplasmParameters.size() > 0){
 		TiXmlElement * paramsElement = new TiXmlElement("CytoplasmSegmentationParameters");
-		for(int i=0; i<(int)cytoplasmParameters.size(); ++i)
-		{
+		for(int i=0; i<(int)cytoplasmParameters.size(); ++i){
 			paramsElement->LinkEndChild( GetParameterElement(cytoplasmParameters.at(i)) );
 		}
 		root->LinkEndChild(paramsElement);
 	}
 
-	//ClassificationParameters:
-	if(classificationParameters.size() > 0)
-	{
-		TiXmlElement * paramsElement = new TiXmlElement("ClassificationParameters");
-		for(int i=0; i<(int)classificationParameters.size(); ++i)
-		{
-			paramsElement->LinkEndChild( GetParameterElement(classificationParameters.at(i)) );
-		}
-		root->LinkEndChild(paramsElement);
-	}
-
-	//AssociationRules:
-	if(associationRules.size() > 0)
-	{
-		TiXmlElement * assocElement = new TiXmlElement("AssociationRules");
-		for(int i=0; i<(int)associationRules.size(); ++i)
-		{
-			assocElement->LinkEndChild( GetAssocRuleElement(associationRules.at(i)) );
-		}
-		root->LinkEndChild(assocElement);
-	}
-
 	//IntrinsicFeatures:
-	if(intrinsicFeatures.size() > 0)
-	{
+	if(intrinsicFeatures.size() > 0){
 		TiXmlElement * featuresElement = new TiXmlElement("IntrinsicFeatures");
 		std::string text = intrinsicFeatures.at(0);
-		for(int i=1; i<(int)intrinsicFeatures.size(); ++i)
-		{
+		for(int i=1; i<(int)intrinsicFeatures.size(); ++i){
 			text += "," + intrinsicFeatures.at(i);
 		}
 		featuresElement->LinkEndChild( new TiXmlText( text.c_str() ) );
 		root->LinkEndChild(featuresElement);
 	}
+
+	//AssociationRules:
+	if(associationRules.size() > 0){
+		TiXmlElement * assocElement = new TiXmlElement("AssociationRules");
+		for(int i=0; i<(int)associationRules.size(); ++i){
+			assocElement->LinkEndChild( GetAssocRuleElement(associationRules.at(i)) );
+		}
+		root->LinkEndChild(assocElement);
+	}
+
+	//ClassificationParameters:
+	if(classificationParameters.size() > 0){
+		TiXmlElement * paramsElement = new TiXmlElement("ClassificationParameters");
+		if( !classificationTrainingData.empty() )
+			paramsElement->LinkEndChild(GetTrainingFileElement(classificationTrainingData));
+		for(int i=0; i<(int)classificationParameters.size(); ++i)
+			paramsElement->LinkEndChild(GetClassificationElement(classificationParameters.at(i)));
+		root->LinkEndChild(paramsElement);
+	}
+
+	//ADD PIXEL DEFINITIONS
 
 	//AnalyteMeasures:
 
@@ -401,6 +425,21 @@ TiXmlElement * ProjectDefinition::GetAssocRuleElement( ftk::AssociationRule rule
 	return returnElement;
 }
 
+TiXmlElement * ProjectDefinition::GetTrainingFileElement( std::string file_name ){
+	TiXmlElement * returnElement = new TiXmlElement("TrainingFile");
+	returnElement->SetAttribute("Name", file_name.c_str());
+	return returnElement;
+}
+TiXmlElement * ProjectDefinition::GetClassificationElement( ProjectDefinition::ClassParam ClassParameter ){
+	TiXmlElement * returnElement = new TiXmlElement("ClassificationParameter");
+	returnElement->SetAttribute("TrainingColumn", ClassParameter.TrainingColumn.c_str());
+	std::string class_columns;
+	class_columns = ClassParameter.ClassificationColumns.at(0);
+	for(int i=1; i<ClassParameter.ClassificationColumns.size(); ++i)
+		class_columns = class_columns+","+ClassParameter.ClassificationColumns.at(i);
+	returnElement->SetAttribute("ClassificationColumns", class_columns.c_str());
+	return returnElement;
+}
 //***************************************************************************************
 //***************************************************************************************
 //***************************************************************************************

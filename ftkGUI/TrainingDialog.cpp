@@ -236,15 +236,20 @@ void TrainingDialog::loadModel(void){
 	if(fileName == "")
 		return;
 	lastPath = QFileInfo(fileName).absolutePath();
-	model_table = ftk::LoadTable(fileName.toStdString());
+
+	this->loadModelFromFile(fileName.toStdString());
+
+	//Exit:
+	QDialog::accept();
+}
+
+void TrainingDialog::loadModelFromFile( std::string file_name ){
+	model_table = ftk::LoadTable(file_name);
 	if(!model_table) return;
 	//Append the data to the current table
 	this->GetTrainingNames( model_table );
 	this->Append();
-	
-	//Exit:
-	if( use_train_gui ) QDialog::accept();
-	else return;
+	return;
 }
 
 //Update the features in this table whose names match (sets doFeat)

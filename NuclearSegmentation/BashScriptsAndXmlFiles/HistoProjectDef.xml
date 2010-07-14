@@ -33,9 +33,17 @@
   <AssociationRules>
     <AssociationRule Name="CD34_TOTAL" SegmentationSource="NUCLEAR" Target_Image="cd34" Outside_Distance="12" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="TOTAL" />
     <AssociationRule Name="CD34_AVG" SegmentationSource="NUCLEAR" Target_Image="cd34" Outside_Distance="12" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="AVERAGE" />
-    <AssociationRule Name="CD34_SURR" SegmentationSource="NUCLEAR" Target_Image="cd34" Outside_Distance="0" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="SURROUNDEDNESS" />
+    <AssociationRule Name="CD34_SURR" SegmentationSource="NUCLEAR" Target_Image="cd34" Outside_Distance="12" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="SURROUNDEDNESS" />
     <AssociationRule Name="SMA_TOTAL" SegmentationSource="NUCLEAR" Target_Image="sma" Outside_Distance="12" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="TOTAL" />
     <AssociationRule Name="SMA_AVG" SegmentationSource="NUCLEAR" Target_Image="sma" Outside_Distance="12" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="AVERAGE" />
-    <AssociationRule Name="SMA_SURR" SegmentationSource="NUCLEAR" Target_Image="sma" Outside_Distance="0" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="SURROUNDEDNESS" />
+    <AssociationRule Name="SMA_SURR" SegmentationSource="NUCLEAR" Target_Image="sma" Outside_Distance="12" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="SURROUNDEDNESS" />
+    <AssociationRule Name="CA9_TOTAL" SegmentationSource="NUCLEAR" Target_Image="ca9" Outside_Distance="12" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="TOTAL" />
+    <AssociationRule Name="CA9_AVG" SegmentationSource="NUCLEAR" Target_Image="ca9" Outside_Distance="12" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="AVERAGE" />
+    <AssociationRule Name="CA9_SURR" SegmentationSource="NUCLEAR" Target_Image="ca9" Outside_Distance="12" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="SURROUNDEDNESS" />
   </AssociationRules>
+  <ClassificationParameters>
+    <TrainingFile Name="C:\Kedar\ccrc\trainingfile1.xml" />
+    <ClassificationParameter TrainingColumn="train_EC" ClassificationColumns="CD34_TOTAL,CD34_AVG,CD34_SURR,SMA_TOTAL,SMA_AVG,SMA_SURR" />
+    <ClassificationParameter TrainingColumn="train_Tumor" ClassificationColumns="CA9_TOTAL,CA9_AVG,CA9_SURR" />
+  </ClassificationParameters>
 </ProjectDefinition>

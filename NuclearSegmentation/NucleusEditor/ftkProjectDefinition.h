@@ -26,6 +26,9 @@
 #ifndef __ftkProjectDefinition_h
 #define __ftkProjectDefinition_h
 
+#include <QtCore/qstring.h>
+#include <QtCore/QStringList>
+
 #include <tinyxml/tinyxml.h>
 #include <ftkCommon/ftkUtils.h>
 #include <ftkFeatures/ftkObjectAssociation.h>
@@ -47,6 +50,7 @@ public:
 	enum TaskType { NUCLEAR_SEGMENTATION, CYTOPLASM_SEGMENTATION, RAW_ASSOCIATIONS, CLASSIFY, ANALYTE_MEASUREMENTS, PIXEL_ANALYSIS };
 	typedef struct { int number; std::string name; std::string type; } Channel;
 	typedef struct { std::string name; double value; } Parameter;
+	typedef struct { std::string TrainingColumn; std::vector<std::string> ClassificationColumns; } ClassParam;
 
 	//FUNCTIONS:
 	ProjectDefinition();
@@ -59,9 +63,12 @@ public:
 	std::vector<Parameter> ReadParameters(TiXmlElement * inputElement);
 	std::vector<ftk::AssociationRule> ReadAssociationRules(TiXmlElement * inputElement);
 	std::vector<std::string> ParseText(TiXmlElement * element);
+	std::vector<ProjectDefinition::ClassParam> ReadClassificationParameters(TiXmlElement * inputElement);
 	std::vector<ftk::PixelAnalysisDefinitions> ReadPixelLevelRules(TiXmlElement * element);
 	TiXmlElement * GetParameterElement( Parameter param );
 	TiXmlElement * GetAssocRuleElement( ftk::AssociationRule rule );
+	TiXmlElement * GetClassificationElement( ProjectDefinition::ClassParam ClassParameter );
+	TiXmlElement * GetTrainingFileElement( std::string file_name );
 
 	int FindInputChannel(std::string name);				//Search inputs with this name
 	std::string GetTaskString(TaskType task);
@@ -76,14 +83,14 @@ public:
 
 	std::vector<Parameter> nuclearParameters;
 	std::vector<Parameter> cytoplasmParameters;
-	std::vector<Parameter> classificationParameters;
+	std::vector<ClassParam> classificationParameters;
 
 	std::vector<ftk::AssociationRule> associationRules;
 	std::vector<ftk::PixelAnalysisDefinitions> pixelLevelRules;
 	std::vector<std::string> intrinsicFeatures;
 	std::vector<std::string> analyteMeasures;
 
-	std::vector<std::string> classificationTrainingData;
+	std::string classificationTrainingData;	//Training Data File
 
 protected:
 private:
