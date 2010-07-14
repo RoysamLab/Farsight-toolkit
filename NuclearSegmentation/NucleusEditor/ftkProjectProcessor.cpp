@@ -337,6 +337,29 @@ bool ProjectProcessor::Classify(void){
 		return false;
 	TrainingDialog *d = new TrainingDialog(table);
 	d->loadModelFromFile(definition->classificationTrainingData);
+	for(int j=0; j<definition->classificationParameters.size(); ++j){
+		bool training_col_found = false;
+		std::vector<int> PKLsColumnsToUse;
+		std::string output_col_name;
+		for( int i=0; i<table->GetNumberOfColumns(); ++i ){
+			std::string current_column;
+			current_column = table->GetColumnName(i);
+			if( strcmp (current_column.c_str(),definition->classificationParameters.at(j).TrainingColumn.c_str()) == 0 ){
+				std::string::iterator it;
+				it=current_column.begin();
+				current_column.erase ( current_column.begin(), current_column.begin()+6 );
+				output_col_name = "prediction_" + current_column;
+			}
+			else{
+				for( int i=0; i<definition->classificationParameters.at(j).ClassificationColumns.size(); ++i ){
+					if( strcmp (current_column.c_str(),definition->classificationParameters.at(j).ClassificationColumns.at(i).c_str()) == 0 ){
+						PKLsColumnsToUse.push_back( i );
+					}
+				}
+			}
+		}
+		//PatternAnalysisWizard *p = new PatternAnalysisWizard;
+	}
 	return true;
 }
 //************************************************************************

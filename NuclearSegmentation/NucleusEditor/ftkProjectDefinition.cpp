@@ -435,7 +435,7 @@ TiXmlElement * ProjectDefinition::GetClassificationElement( ProjectDefinition::C
 	returnElement->SetAttribute("TrainingColumn", ClassParameter.TrainingColumn.c_str());
 	std::string class_columns;
 	class_columns = ClassParameter.ClassificationColumns.at(0);
-	for(int i=1; i<ClassParameter.ClassificationColumns.size(); ++i)
+	for(int i=1; i<(int)ClassParameter.ClassificationColumns.size(); ++i)
 		class_columns = class_columns+","+ClassParameter.ClassificationColumns.at(i);
 	returnElement->SetAttribute("ClassificationColumns", class_columns.c_str());
 	return returnElement;

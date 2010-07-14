@@ -36,6 +36,7 @@
 #include "itkCastImageFilter.h"
 #include "itkExtractImageFilter.h"
 #include "ftkGUI/TrainingDialog.h"
+#include "ftkGUI/PatternAnalysisWizard.h"
 #include "PixelAnalysis/ftkPixelLevelAnalysis.h"
 
 namespace ftk

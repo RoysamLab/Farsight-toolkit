@@ -53,6 +53,8 @@ public:
   PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, Module mod,
                         const char * trainColumn, const char * resultColumn,
                         QWidget *parent = 0);
+  PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, Module mod,
+                        const char * trainColumn, const char * resultColumn);
 
 protected:
 	//void initializePage(int id);
@@ -62,6 +64,7 @@ protected:
 
 	void runSVM();
 	void runKPLS();
+	void KPLSrun(std::vector<int> columnsToUse);
 
 signals:
 	void changedTable(void);

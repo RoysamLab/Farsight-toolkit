@@ -51,6 +51,13 @@ PatternAnalysisWizard::PatternAnalysisWizard(
 	this->setWindowTitle(tr("Pattern Analysis Wizard"));
  }
 
+PatternAnalysisWizard::PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, Module mod, const char * trainColumn, const char * resultColumn){
+	this->m_table = table;
+	this->columnForTraining = trainColumn;
+	this->columnForPrediction = resultColumn;
+	this->m_module = mod;
+}
+
 void PatternAnalysisWizard::initFeatureGroup(void)
 {
 	if(!m_table) return;
@@ -491,6 +498,15 @@ void PatternAnalysisWizard::runKPLS()
 	if(columnsToUse.size() <= 0)
 		return;
 
+	this->KPLSrun(columnsToUse);
+
+	emit changedTable();
+#else
+	QMessageBox::information(this, tr("MESSAGE"), tr("FARSIGHT was not compiled with KPLS library"));
+#endif
+}
+
+void PatternAnalysisWizard::KPLSrun(std::vector<int> columnsToUse){
 	//Setup up the kpls:
 	KPLS *kpls = new KPLS();
 	kpls->SetLatentVars(5);
@@ -545,10 +561,5 @@ void PatternAnalysisWizard::runKPLS()
 		m_table->SetValueByName(row, columnForPrediction, vtkVariant(predictions[row]));
 	}
 
-	emit changedTable();
-
 	delete kpls;
-#else
-	QMessageBox::information(this, tr("MESSAGE"), tr("FARSIGHT was not compiled with KPLS library"));
-#endif
 }
