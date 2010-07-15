@@ -152,7 +152,7 @@ void TrainingDialog::saveModel(void){
 		return;
 	lastPath = QFileInfo(filename).absolutePath();
 
-	this->accept();
+	//this->accept();
 
 	if(training.size()<2){
 		QMessageBox::critical(this, tr("Oops"), tr("Please enter ids for atleast 2 classes to save the model"));
