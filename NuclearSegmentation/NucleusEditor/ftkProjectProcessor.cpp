@@ -79,6 +79,7 @@ void ProjectProcessor::Initialize(void)
 	}
 
 	numTasks = (int)tasks.size();
+	std::cout<<"Number of tasks to be done:"<<numTasks<<std::endl;
 	lastTask = -1;
 }
 
@@ -100,10 +101,10 @@ void ProjectProcessor::ProcessNext(void)
 		taskDone = ComputeAssociations();
 		break;
 	case ProjectDefinition::ANALYTE_MEASUREMENTS:
-		taskDone = Classify();
+		taskDone = false;
 		break;
 	case ProjectDefinition::CLASSIFY:
-		taskDone = false;
+		taskDone = Classify();
 		break;
 	case ProjectDefinition::PIXEL_ANALYSIS:
 		taskDone = PixLevAnalysis();
@@ -333,11 +334,14 @@ std::set<int> ProjectProcessor::GetOnIntrinsicFeatures(void)
 }
 
 bool ProjectProcessor::Classify(void){
+	std::cout<<"Entered Classification step\n";
 	if(!table)
 		return false;
+	std::cout<<"Table present strating classification\n";
 	TrainingDialog *d = new TrainingDialog(table);
 	d->loadModelFromFile(definition->classificationTrainingData);
 	delete d;
+	std::cout<<"Model Loaded\n";
 	for(int j=0; j<(int)definition->classificationParameters.size(); ++j){
 		bool training_col_found = false;
 		std::vector<int> KPLsColumnsToUse;
@@ -360,6 +364,7 @@ bool ProjectProcessor::Classify(void){
 				}
 			}
 		}
+		std::cout<<"Running classifier:"<<j<<"\n";
 		if( training_col_found && !KPLsColumnsToUse.empty() ){
 			PatternAnalysisWizard *p = new PatternAnalysisWizard(this->table,definition->classificationParameters.at(j).TrainingColumn.c_str(), output_col_name.c_str() );
 			p->KPLSrun(KPLsColumnsToUse);
