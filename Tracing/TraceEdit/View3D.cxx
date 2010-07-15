@@ -409,6 +409,10 @@ QString View3D::getTraceFile()
 				this->tobj->AutoSolveBranchOrder = false;
 			}
 			this->tobj->ReadFromVTKFile((char*)traceFile.c_str());
+			if (this->tobj->AutoSolveBranchOrder)
+			{
+				this->tobj->BranchPoints.clear();
+			}
 		}
 	}
 	return trace.section('/',-1);
