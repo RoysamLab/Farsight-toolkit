@@ -51,12 +51,6 @@ PatternAnalysisWizard::PatternAnalysisWizard(
 	this->setWindowTitle(tr("Pattern Analysis Wizard"));
  }
 
-PatternAnalysisWizard::PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, const char * trainColumn, const char * resultColumn){
-	this->m_table = table;
-	this->columnForTraining = trainColumn;
-	this->columnForPrediction = resultColumn;
-}
-
 void PatternAnalysisWizard::initFeatureGroup(void)
 {
 	if(!m_table) return;
@@ -566,3 +560,72 @@ void PatternAnalysisWizard::KPLSrun(std::vector<int> columnsToUse){
 	std::cerr<<"Compiled without the KPLS library"<<std::endl;
 #endif
 }
+
+PatternAnalysisWizardNoGUI::PatternAnalysisWizardNoGUI(vtkSmartPointer<vtkTable> table, const char * trainColumn, const char * resultColumn){
+	this->m_table = table;
+	this->columnForTraining = trainColumn;
+	this->columnForPrediction = resultColumn;
+}
+
+void PatternAnalysisWizardNoGUI::KPLSrun1(std::vector<int> columnsToUse){
+#ifdef USE_KPLS
+	//Setup up the kpls:
+	KPLS *kpls = new KPLS();
+	kpls->SetLatentVars(5);
+	kpls->SetSigma(20);
+
+	int num_rows = m_table->GetNumberOfRows();
+	int num_cols = (int)columnsToUse.size();
+
+	MATRIX data = kpls->GetDataPtr(num_rows, num_cols);
+	VECTOR ids = kpls->GetIDPtr();
+	VECTOR training = kpls->GetTrainingPtr();
+
+	std::set<int> outcomes;
+	//extract data from the table:
+	for(int r=0; r<num_rows; ++r)
+	{
+		ids[r] = m_table->GetValue(r,0).ToDouble();
+		for(int c=0; c<num_cols; ++c)
+		{
+			double val = m_table->GetValue(r, columnsToUse.at(c)).ToDouble();
+			data[r][c] = val;
+		}
+		training[r] = m_table->GetValueByName(r,columnForTraining).ToDouble();
+		outcomes.insert(int(training[r]));
+	}
+
+	if(outcomes.size() <= 1)
+	{
+		delete kpls;
+		return;
+	}
+
+	kpls->InitVariables();
+	kpls->ScaleData();
+	kpls->Train();
+	kpls->Classify();
+
+	VECTOR predictions = kpls->GetPredictions();
+
+	//If need to create a new column do so now:
+	vtkAbstractArray * output = m_table->GetColumnByName(columnForPrediction);
+	if(output == 0)
+	{
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( columnForPrediction );
+		column->SetNumberOfValues( m_table->GetNumberOfRows() );
+		m_table->AddColumn(column);
+	}
+
+	for(int row = 0; (int)row < m_table->GetNumberOfRows(); ++row)  
+	{
+		m_table->SetValueByName(row, columnForPrediction, vtkVariant(predictions[row]));
+	}
+
+	delete kpls;
+#else
+	std::cerr<<"Compiled without the KPLS library"<<std::endl;
+#endif
+}
+

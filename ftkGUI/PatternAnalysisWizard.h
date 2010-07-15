@@ -53,7 +53,6 @@ public:
 	PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, Module mod,
                         const char * trainColumn, const char * resultColumn,
                         QWidget *parent = 0);
-	PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, const char * trainColumn, const char * resultColumn);
 	void KPLSrun(std::vector<int> columnsToUse);
 
 protected:
@@ -105,6 +104,15 @@ private slots:
 	void selectAll();
 };
 
+class PatternAnalysisWizardNoGUI{
+public:
+	PatternAnalysisWizardNoGUI(vtkSmartPointer<vtkTable> table, const char * trainColumn, const char * resultColumn);
+	void KPLSrun1(std::vector<int> columnsToUse);
+private:
+	vtkSmartPointer<vtkTable> m_table;
+	const char * columnForTraining;
+	const char * columnForPrediction;
+};
 /*
 class TrainingPage : public QWizardPage
 {

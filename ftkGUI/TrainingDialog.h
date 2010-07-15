@@ -50,7 +50,6 @@ class TrainingDialog : public QDialog
     Q_OBJECT;
 
 public:
-	TrainingDialog(vtkSmartPointer<vtkTable> table);
 	TrainingDialog(vtkSmartPointer<vtkTable> table, const char * trainColumn, QWidget *parent = 0);
 	void loadModelFromFile(std::string file_name);
 
@@ -112,4 +111,18 @@ private:
 	std::string default_training_name,new_class_name;
 };
 
+class TrainingDialogNoGUI{
+public:
+	TrainingDialogNoGUI(vtkSmartPointer<vtkTable> table);
+	void loadModelFromFile1(std::string file_name);
+private:
+	void Append1(void);
+	void GetTrainingNames1(vtkSmartPointer<vtkTable> table);
+
+	std::vector< std::string > class_names;
+	std::vector< std::string > training_names;
+	vtkSmartPointer<vtkTable> m_table;
+	vtkSmartPointer<vtkTable> model_table;
+	
+};
 #endif

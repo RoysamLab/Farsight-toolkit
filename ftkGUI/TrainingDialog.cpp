@@ -15,12 +15,6 @@ limitations under the License.
 
 #include "TrainingDialog.h"
 
-TrainingDialog::TrainingDialog(vtkSmartPointer<vtkTable> table){
-	//This method has been created for batch processing mode and should be avoided when you expect a trainingdialog box
-	m_table = table;
-	use_train_gui = false;
-}
-
 TrainingDialog::TrainingDialog(vtkSmartPointer<vtkTable> table, const char * trainColumn, QWidget *parent)
 	: QDialog(parent){
 
@@ -547,4 +541,59 @@ void TrainingDialog::differentclassselected(int selected_class){
 	}
 	this->tableToInput();
 	return;
+}
+TrainingDialogNoGUI::TrainingDialogNoGUI(vtkSmartPointer<vtkTable> table){
+	//This method has been created for batch processing mode and should be avoided when you expect a trainingdialog box
+	m_table = table;
+}
+
+void TrainingDialogNoGUI::loadModelFromFile1( std::string file_name ){
+	model_table = ftk::LoadTable(file_name);
+	if(!model_table) return;
+	//Append the data to the current table
+	this->GetTrainingNames1( model_table );
+	this->Append1();
+	return;
+}
+
+//Update the features in this table whose names match (sets doFeat)
+//Will creat new rows if necessary:
+void TrainingDialogNoGUI::Append1(){
+	for( int i=0; i<(int)training_names.size(); ++i ){
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( training_names.at(i).c_str() );
+		column->SetNumberOfValues( m_table->GetNumberOfRows() );
+		column->FillComponent( 0,-1 );
+		m_table->AddColumn(column);
+	}
+
+	int maxrows = m_table->GetNumberOfRows();
+	int maxrowid = m_table->GetValueByName(maxrows-1,"ID").ToInt();
+
+	vtkSmartPointer<vtkVariantArray> model_data = vtkSmartPointer<vtkVariantArray>::New();
+
+	for(int row = 0; (int)row < model_table->GetNumberOfRows(); ++row){
+		model_data = model_table->GetRow(row);
+		m_table->InsertNextRow(model_data); 
+		m_table->SetValue(maxrows+row,0,maxrowid+row+1);
+	}
+
+	return;
+}
+
+void TrainingDialogNoGUI::GetTrainingNames1( vtkSmartPointer<vtkTable> table ){
+	//getcoulmn names for m_table and look for strings starting with train_
+	training_names.clear();
+	class_names.clear();
+	for( int i=0; i<table->GetNumberOfColumns(); ++i ){
+		std::string current_column;
+		current_column = table->GetColumnName(i);
+		if( current_column.find("train") != std::string::npos ){
+			training_names.push_back( current_column );
+			std::string::iterator it;
+			it=current_column.begin();
+			current_column.erase ( current_column.begin(), current_column.begin()+6 );
+			class_names.push_back( current_column );
+		}
+	}
 }

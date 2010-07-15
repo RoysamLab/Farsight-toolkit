@@ -338,8 +338,8 @@ bool ProjectProcessor::Classify(void){
 	if(!table)
 		return false;
 	std::cout<<"Table present strating classification\n";
-	TrainingDialog *d = new TrainingDialog(table);
-	d->loadModelFromFile(definition->classificationTrainingData);
+	TrainingDialogNoGUI *d = new TrainingDialogNoGUI(table);
+	d->loadModelFromFile1(definition->classificationTrainingData);
 	delete d;
 	std::cout<<"Model Loaded\n";
 	for(int j=0; j<(int)definition->classificationParameters.size(); ++j){
@@ -364,10 +364,10 @@ bool ProjectProcessor::Classify(void){
 				}
 			}
 		}
-		std::cout<<"Running classifier:"<<j<<"\n";
+		std::cout<<"Running classifier:"<<j+1<<"\n";
 		if( training_col_found && !KPLsColumnsToUse.empty() ){
-			PatternAnalysisWizard *p = new PatternAnalysisWizard(this->table,definition->classificationParameters.at(j).TrainingColumn.c_str(), output_col_name.c_str() );
-			p->KPLSrun(KPLsColumnsToUse);
+			PatternAnalysisWizardNoGUI *p = new PatternAnalysisWizardNoGUI(this->table,definition->classificationParameters.at(j).TrainingColumn.c_str(), output_col_name.c_str() );
+			p->KPLSrun1(KPLsColumnsToUse);
 			delete p;
 		}
 		else{
