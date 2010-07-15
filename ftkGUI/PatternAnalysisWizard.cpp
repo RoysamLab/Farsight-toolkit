@@ -506,6 +506,7 @@ void PatternAnalysisWizard::runKPLS()
 }
 
 void PatternAnalysisWizard::KPLSrun(std::vector<int> columnsToUse){
+#ifdef USE_KPLS
 	//Setup up the kpls:
 	KPLS *kpls = new KPLS();
 	kpls->SetLatentVars(5);
@@ -561,4 +562,7 @@ void PatternAnalysisWizard::KPLSrun(std::vector<int> columnsToUse){
 	}
 
 	delete kpls;
+#else
+	std::cerr<<"Compiled without the KPLS library"<<std::endl;
+#endif
 }
