@@ -50,11 +50,11 @@ public:
 	enum { Page_Start, Page_Features, Page_Training, Page_Parameters, Page_Execute };
 	typedef enum { _SVM, _KPLS } Module;
 
-  PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, Module mod,
+	PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, Module mod,
                         const char * trainColumn, const char * resultColumn,
                         QWidget *parent = 0);
-  PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, Module mod,
-                        const char * trainColumn, const char * resultColumn);
+	PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, const char * trainColumn, const char * resultColumn);
+	void KPLSrun(std::vector<int> columnsToUse);
 
 protected:
 	//void initializePage(int id);
@@ -64,7 +64,6 @@ protected:
 
 	void runSVM();
 	void runKPLS();
-	void KPLSrun(std::vector<int> columnsToUse);
 
 signals:
 	void changedTable(void);

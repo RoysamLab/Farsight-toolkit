@@ -51,11 +51,10 @@ PatternAnalysisWizard::PatternAnalysisWizard(
 	this->setWindowTitle(tr("Pattern Analysis Wizard"));
  }
 
-PatternAnalysisWizard::PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, Module mod, const char * trainColumn, const char * resultColumn){
+PatternAnalysisWizard::PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, const char * trainColumn, const char * resultColumn){
 	this->m_table = table;
 	this->columnForTraining = trainColumn;
 	this->columnForPrediction = resultColumn;
-	this->m_module = mod;
 }
 
 void PatternAnalysisWizard::initFeatureGroup(void)

@@ -100,7 +100,7 @@ void ProjectProcessor::ProcessNext(void)
 		taskDone = ComputeAssociations();
 		break;
 	case ProjectDefinition::ANALYTE_MEASUREMENTS:
-		taskDone = false;
+		taskDone = Classify();
 		break;
 	case ProjectDefinition::CLASSIFY:
 		taskDone = false;
@@ -337,9 +337,10 @@ bool ProjectProcessor::Classify(void){
 		return false;
 	TrainingDialog *d = new TrainingDialog(table);
 	d->loadModelFromFile(definition->classificationTrainingData);
-	for(int j=0; j<definition->classificationParameters.size(); ++j){
+	delete d;
+	for(int j=0; j<(int)definition->classificationParameters.size(); ++j){
 		bool training_col_found = false;
-		std::vector<int> PKLsColumnsToUse;
+		std::vector<int> KPLsColumnsToUse;
 		std::string output_col_name;
 		for( int i=0; i<table->GetNumberOfColumns(); ++i ){
 			std::string current_column;
@@ -349,16 +350,24 @@ bool ProjectProcessor::Classify(void){
 				it=current_column.begin();
 				current_column.erase ( current_column.begin(), current_column.begin()+6 );
 				output_col_name = "prediction_" + current_column;
+				training_col_found = true;
 			}
 			else{
-				for( int i=0; i<definition->classificationParameters.at(j).ClassificationColumns.size(); ++i ){
+				for( int i=0; i<(int)definition->classificationParameters.at(j).ClassificationColumns.size(); ++i ){
 					if( strcmp (current_column.c_str(),definition->classificationParameters.at(j).ClassificationColumns.at(i).c_str()) == 0 ){
-						PKLsColumnsToUse.push_back( i );
+						KPLsColumnsToUse.push_back( i );
 					}
 				}
 			}
 		}
-		//PatternAnalysisWizard *p = new PatternAnalysisWizard;
+		if( training_col_found && !KPLsColumnsToUse.empty() ){
+			PatternAnalysisWizard *p = new PatternAnalysisWizard(this->table,definition->classificationParameters.at(j).TrainingColumn.c_str(), output_col_name.c_str() );
+			p->KPLSrun(KPLsColumnsToUse);
+			delete p;
+		}
+		else{
+			std::cerr<<"Check classification parameter:"<<j<<std::endl;
+		}
 	}
 	return true;
 }
