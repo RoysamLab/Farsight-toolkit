@@ -144,6 +144,7 @@ public slots:
 	void ReloadState();
 	void SetImgInt();
 
+	void chooseInteractorStyle(int iren);
 	void RayCastOpacityChanged(int value);
 	void RayCastOpacityValueChanged(double value);
 	void RayCastBrightnessChanged(int value);
@@ -269,7 +270,7 @@ private:
 	QSpinBox *LineWidthField;
 	QDoubleSpinBox *BackgroundRBox,*BackgroundGBox,*BackgroundBBox;
 	QDialogButtonBox *ApplySettingsButton;
-	QComboBox *typeCombo;
+	QComboBox *typeCombo, *StyleCombo;
 	//stuff for tol and selection
     //general render window variables
 	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;

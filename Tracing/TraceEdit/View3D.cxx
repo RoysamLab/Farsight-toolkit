@@ -56,6 +56,8 @@ limitations under the License.
 #include "vtkImageData.h"
 #include "vtkImageToStructuredPoints.h"
 #include "vtkInteractorStyleTrackballCamera.h"
+#include "vtkInteractorStyleRubberBandZoom.h"
+#include "vtkInteractorStyleImage.h"
 #include "vtkLODActor.h"
 #include "vtkOpenGLVolumeTextureMapper3D.h"
 #include "vtkPiecewiseFunction.h"
@@ -923,6 +925,12 @@ void View3D::CreateGUIObjects()
 	this->typeCombo = new QComboBox;
 	this->typeCombo->addItems(types);
 	connect(this->typeCombo, SIGNAL(activated( int )), this, SLOT(SetTraceType(int )));
+
+	QStringList styles;
+	styles<< "Track Ball" << "Image" << "RubberBandZoom" ;
+	this->StyleCombo = new QComboBox;
+	this->StyleCombo->addItems(styles);
+	connect(this->StyleCombo, SIGNAL(activated(int)), this, SLOT(chooseInteractorStyle(int)));
 	
 	this->aboutAction = new QAction("About", this->CentralWidget);
 	this->aboutAction->setStatusTip("About Trace Edit");
@@ -1025,6 +1033,7 @@ void View3D::CreateLayout()
 	QFormLayout *DisplayLayout = new QFormLayout(displaySettings);
 	DisplayLayout->addRow(tr("Line Color RGB 0 to 1:"),this->ColorValueField);
 	DisplayLayout->addRow(tr("Line width:"),this->LineWidthField);
+	DisplayLayout->addRow(tr("Interactor style:"),this->StyleCombo);
 	SettingsBox->addWidget(displaySettings);
 
 	QGroupBox *BackgroundSettings = new QGroupBox(("Background RGB Color"));
@@ -1076,9 +1085,7 @@ void View3D::CreateInteractorStyle()
   this->Interactor->AddObserver(vtkCommand::KeyPressEvent, this->keyPress);
 
   //use trackball control for mouse commands
-  vtkSmartPointer<vtkInteractorStyleTrackballCamera> style =
-    vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
-  this->Interactor->SetInteractorStyle(style);
+  this->chooseInteractorStyle(0);
   this->CellPicker = vtkSmartPointer<vtkCellPicker>::New();
   this->CellPicker->SetTolerance(0.004);
   this->Interactor->SetPicker(this->CellPicker);
@@ -1088,6 +1095,25 @@ void View3D::CreateInteractorStyle()
   //isPicked caller allows observer to intepret click 
   this->isPicked->SetClientData(this);            
   this->Interactor->AddObserver(vtkCommand::RightButtonPressEvent,isPicked);
+}
+void View3D::chooseInteractorStyle(int iren)
+{
+	if (iren== 1)
+	{
+		vtkSmartPointer<vtkInteractorStyleImage> style =
+			vtkSmartPointer<vtkInteractorStyleImage>::New();
+		this->Interactor->SetInteractorStyle(style);
+	}else if (iren== 2)
+	{
+		vtkSmartPointer<vtkInteractorStyleRubberBandZoom> style =
+			vtkSmartPointer<vtkInteractorStyleRubberBandZoom>::New();
+		this->Interactor->SetInteractorStyle(style);
+	}else 
+	{
+		vtkSmartPointer<vtkInteractorStyleTrackballCamera> style =
+			vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
+		this->Interactor->SetInteractorStyle(style);
+	}
 }
 
 void View3D::CreateActors()
