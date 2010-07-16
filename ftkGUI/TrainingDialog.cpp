@@ -152,7 +152,7 @@ void TrainingDialog::saveModel(void){
 		return;
 	lastPath = QFileInfo(filename).absolutePath();
 
-	//this->accept();
+	this->accept();
 
 	if(training.size()<2){
 		QMessageBox::critical(this, tr("Oops"), tr("Please enter ids for atleast 2 classes to save the model"));
@@ -191,7 +191,7 @@ void TrainingDialog::saveModel(void){
 	//Add columns to the model table
 	vtkSmartPointer<vtkVariantArray> model_data2 = vtkSmartPointer<vtkVariantArray>::New();
 	model_data2 = m_table_cpy->GetRow(1);
-	for(int i =0;i<model_data->GetNumberOfValues();++i){
+	for(int i =0;i<model_data2->GetNumberOfValues();++i){
 		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
 		std::string current_column;
 		current_column = m_table_cpy->GetColumnName(i);
