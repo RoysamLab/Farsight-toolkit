@@ -42,6 +42,7 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag)
 	imageFileHandle *newImage= new imageFileHandle;
 	newImage->filename = ImageSource;
 	newImage->tag = tag;
+	newImage->renderStatus = false;
 	//newImage->colorTransferFunction = 0;
 	newImage->ContourActor = 0;
 	newImage->ContourFilter = 0;
@@ -87,6 +88,7 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 	imageFileHandle *newImage= new imageFileHandle;
 	newImage->filename = ImageSource;
 	newImage->tag = tag;
+	newImage->renderStatus = false;
 	//newImage->colorTransferFunction = 0;
 	newImage->ContourActor = 0;
 	newImage->ContourFilter = 0;
@@ -164,6 +166,14 @@ vtkSmartPointer<vtkActor> ImageRenderActors::ContourActor(int i)
 	this->LoadedImages[i]->ContourActor->SetPickable(0);
 	return this->LoadedImages[i]->ContourActor;
 }
+vtkSmartPointer<vtkActor> ImageRenderActors::GetContourActor(int i)
+{
+	if (i == -1)
+	{
+		i = int (this->LoadedImages.size() - 1);
+	}
+	return this->LoadedImages[i]->ContourActor;
+}
 vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 {
 	if (i == -1)
@@ -205,6 +215,30 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 		this->LoadedImages[i]->y,this->LoadedImages[i]->z);
 	this->LoadedImages[i]->volume->SetPickable(0);
 	return this->LoadedImages[i]->volume;
+}
+vtkSmartPointer<vtkVolume> ImageRenderActors::GetRayCastVolume(int i)
+{
+	if (i == -1)
+	{
+		i = int (this->LoadedImages.size() - 1);
+	}
+	return this->LoadedImages[i]->volume;
+}
+bool ImageRenderActors::getRenderStatus(int i)
+{
+	if (i == -1)
+	{
+		i = int (this->LoadedImages.size() - 1);
+	}
+	return this->LoadedImages[i]->renderStatus;
+}
+void ImageRenderActors::setRenderStatus(int i, bool setStatus)
+{
+	if (i == -1)
+	{
+		i = int (this->LoadedImages.size() - 1);
+	}
+	this->LoadedImages[i]->renderStatus = setStatus;
 }
 std::vector<std::string> ImageRenderActors::GetImageList()
 {

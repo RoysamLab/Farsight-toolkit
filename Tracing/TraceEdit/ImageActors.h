@@ -53,6 +53,7 @@ struct imageFileHandle
 {
 	std::string tag;
 	std::string filename;
+	bool renderStatus;
 	vtkSmartPointer<vtkImageData> ImageData;
 	ReaderType::Pointer reader;
 	ConnectorType::Pointer connector;
@@ -80,7 +81,11 @@ public:
 	int loadImage(std::string ImageSource, std::string tag, double x, double y, double z);
 //render actors
 	vtkSmartPointer<vtkActor> ContourActor(int i);
+	vtkSmartPointer<vtkActor> GetContourActor(int i);
 	vtkSmartPointer<vtkVolume> RayCastVolume(int i);
+	vtkSmartPointer<vtkVolume> GetRayCastVolume(int i);
+	bool getRenderStatus(int i);
+	void setRenderStatus(int i, bool setStatus);
 //file information
 	std::vector<std::string> GetImageList();
 	std::string FileNameOf(int i){ return this->LoadedImages[i]->filename;};

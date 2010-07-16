@@ -71,6 +71,7 @@ limitations under the License.
 #include "vtkRenderer.h"
 #include "vtkRendererCollection.h"
 #include "vtkRenderWindow.h"
+#include "vtkCamera.h"
 #include "vtkSliderRepresentation2D.h"
 #include "vtkSliderWidget.h"
 #include "vtkSphereSource.h"
@@ -493,6 +494,7 @@ void View3D::LoadImageData()
 		this->EditLogDisplay->append("Image file: \t" + this->Image.last());
 		
 		this->Renderer->AddVolume(this->ImageActors->RayCastVolume(-1));
+		this->ImageActors->setRenderStatus(-1, true);
 		this->QVTK->GetRenderWindow()->Render();
 		//this->Rerender();
 		this->statusBar()->showMessage("Image File Rendered");
@@ -508,6 +510,7 @@ void View3D::LoadSomaFile()
 	if(!somaFile.isNull())
 	{
 		this->Renderer->AddActor(this->ImageActors->ContourActor(-1));
+		this->ImageActors->setRenderStatus(-1, true);
 		this->QVTK->GetRenderWindow()->Render();
 		this->EditLogDisplay->append("Soma file: \t" + this->SomaFile.last());
 		this->statusBar()->showMessage("Somas Rendered");
@@ -766,6 +769,10 @@ void View3D::CreateGUIObjects()
 	connect (this->loadTraceImage, SIGNAL(triggered()), this, SLOT(LoadImageData()));
 	this->loadTraceImage->setStatusTip("Load an Image to RayCast Rendering");
 
+	this->CloseAllImage = new QAction("Remove Image Actors", this->CentralWidget);
+	connect (this->CloseAllImage, SIGNAL(triggered()), this, SLOT(removeImageActors()));
+	this->CloseAllImage->setStatusTip("remove images from rendering");
+
 	this->loadSoma = new QAction("Load Somas", this->CentralWidget);
 	connect(this->loadSoma, SIGNAL(triggered()), this, SLOT(LoadSomaFile()));
 	this->loadSoma->setStatusTip("Load image file to Contour rendering");
@@ -967,6 +974,7 @@ void View3D::CreateLayout()
 	this->fileMenu->addAction(this->saveAction);
 	this->fileMenu->addAction(this->saveSelectedAction);
 	this->fileMenu->addSeparator();
+	this->fileMenu->addAction(this->CloseAllImage);
 	this->fileMenu->addAction(this->exitAction);
 
 	this->ShowToolBars = this->menuBar()->addMenu(tr("Tool Bars"));
@@ -1107,9 +1115,17 @@ void View3D::chooseInteractorStyle(int iren)
 {
 	if (iren== 1)
 	{
+		vtkCamera *cam = this->Renderer->GetActiveCamera();
+		cam->SetFocalPoint(0,0,0);
+		cam->SetPosition(1,1,1);
+		cam->ComputeViewPlaneNormal();
+		cam->SetViewUp(1,0,0);
+		cam->OrthogonalizeViewUp();
 		vtkSmartPointer<vtkInteractorStyleImage> style =
 			vtkSmartPointer<vtkInteractorStyleImage>::New();
 		this->Interactor->SetInteractorStyle(style);
+		this->Renderer->ResetCamera();
+		this->QVTK->GetRenderWindow()->Render();
 	}else if (iren== 2)
 	{
 		vtkSmartPointer<vtkInteractorStyleRubberBandZoom> style =
@@ -1138,17 +1154,44 @@ void View3D::CreateActors()
 	  if (this->ImageActors->isRayCast(i))
 	  {
 		  this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
+		  this->ImageActors->setRenderStatus(i, true);
 		  this->RacastBar->show();
 	  }
 	  else
 	  {
 		  this->Renderer->AddActor(this->ImageActors->ContourActor(i));
+		  this->ImageActors->setRenderStatus(i, true);
 	  }
   }
   //sphere is used to mark the picks
   this->CreateSphereActor();
   Renderer->AddActor(this->SphereActor);
   this->QVTK->GetRenderWindow()->Render();
+}
+void View3D::removeImageActors()
+{
+	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+	{  
+		if (!this->ImageActors->getRenderStatus(i))
+		{
+			continue;
+		}
+		if (this->ImageActors->isRayCast(i))
+		{
+		  this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
+		  this->ImageActors->setRenderStatus(i, false);
+		}
+		else
+		{
+		  this->Renderer->RemoveActor(this->ImageActors->GetContourActor(i));
+		  this->ImageActors->setRenderStatus(i, false);
+		}
+	}//end num images
+	if (this->RacastBar->isVisible())
+	{
+	  this->RacastBar->hide();
+	}
+	this->QVTK->GetRenderWindow()->Render();
 }
 
 void View3D::CreateSphereActor()

@@ -145,6 +145,7 @@ public slots:
 	void SetImgInt();
 
 	void chooseInteractorStyle(int iren);
+	void removeImageActors();
 	void RayCastOpacityChanged(int value);
 	void RayCastOpacityValueChanged(double value);
 	void RayCastBrightnessChanged(int value);
@@ -220,6 +221,7 @@ private:
 	QAction *exitAction;
 	QAction *loadTraceAction;
 	QAction *loadTraceImage;
+	QAction *CloseAllImage;
 	QAction *loadSoma;
 	QAction *ListButton;
 	QAction *ClearButton;
@@ -300,6 +302,8 @@ private:
   //raycast
 	vtkSmartPointer<vtkPolyData> poly;
 	vtkSmartPointer<vtkPolyDataMapper> polymap;
+	typedef vtkSmartPointer<vtkVolume> VolumePointerType;
+	std::vector<VolumePointerType> m_volumes;
 	
 
 
