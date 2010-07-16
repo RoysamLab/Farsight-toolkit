@@ -327,6 +327,10 @@ void View3D::OkToBoot()
 	{
 		this->BootDock->hide();
 		this->InformationDisplays->hide();
+		this->menuBar()->show();
+		this->EditsToolBar->show();
+		this->BranchToolBar->show();
+
 		this->resize(this->TraceEditSettings.value("mainWin/size",QSize(850, 480)).toSize());
 		this->move(this->TraceEditSettings.value("mainWin/pos",QPoint(40, 59)).toPoint());
 		//int i = 0;
@@ -983,6 +987,7 @@ void View3D::CreateLayout()
   this->EditsToolBar->addSeparator();
   this->EditsToolBar->addWidget(this->typeCombo);
   this->EditsToolBar->addAction(this->ImageIntensity);
+  this->EditsToolBar->hide();
 
 // 3d cursor dock 
   this->cursor3DDock = new QDockWidget("3D Cursor",this);
@@ -1018,6 +1023,7 @@ void View3D::CreateLayout()
   this->BranchToolBar->addAction(this->root);
   this->BranchToolBar->addWidget(new QLabel("Unsolved Branches: "));
   this->BranchToolBar->addWidget(this->BranchesLabel);
+  this->BranchToolBar->hide();
 
 //settings widget layout
 	QVBoxLayout * SettingsBox = new QVBoxLayout(this->SettingsWidget);
@@ -1069,6 +1075,7 @@ void View3D::CreateLayout()
   this->menuBar()->addSeparator();
   this->help = this->menuBar()->addMenu("Help");
   this->help->addAction(this->aboutAction);
+  this->menuBar()->hide();
 }
 
 void View3D::CreateInteractorStyle()
