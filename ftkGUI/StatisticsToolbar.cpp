@@ -48,7 +48,7 @@ void StatisticsToolbar::setTable(vtkSmartPointer<vtkTable> inputDataTable, Objec
 	std::vector<double> selectedData;
 	std::vector<int> IDList = this->GetSelectedIDs();
 	this->selectedRowNumbers.clear();
-	bool found;	
+	//bool found;	
 
 	if(IDList.size() > 0)
 	{
@@ -149,7 +149,7 @@ double StatisticsToolbar::Average(vtkAbstractArray *Column, int rows )
 	{
 	
 
-	for(j = 0; j< rows; j++)
+	for(j = 0; (int)j< rows; j++)
 	{
 		sum = (Column->GetVariantValue(j).ToDouble()) + sum;
 	}
@@ -179,7 +179,7 @@ double StatisticsToolbar::StDeviation(vtkAbstractArray *Column, double average, 
 	}
 	else
 	{
-		for(j = 0; j< rows; ++j)
+		for(j = 0; (int)j< rows; ++j)
 		{
 			difference = (((Column->GetVariantValue(j).ToDouble() - average)*(Column->GetVariantValue(j).ToDouble() - average)) + difference); 
 			
@@ -203,7 +203,7 @@ QList<double> StatisticsToolbar::SortColumn(vtkAbstractArray *Column, int rows)
 		newValue = Column->GetVariantValue(j).ToDouble();
 		this->myList->push_back(newValue);
 
-		for(unsigned int i=1; i< this->selectedRowNumbers.size(); i++)
+		for(unsigned int i=1; (int)i< this->selectedRowNumbers.size(); i++)
 		{
 			j = this->selectedRowNumbers.at(i);//set row #
 			newValue = Column->GetVariantValue(j).ToDouble();
