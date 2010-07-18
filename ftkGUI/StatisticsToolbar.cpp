@@ -247,7 +247,7 @@ QList<double> StatisticsToolbar::SortColumn(vtkAbstractArray *Column, int rows)
 	else//nothing selected, compute on whole table
 	{
 		this->myList->push_front(Column->GetVariantValue(0).ToDouble());
-		for(j = 1; j<rows; j++)
+		for(j = 1; (int)j<rows; j++)
 		{
 		
 			newValue = Column->GetVariantValue(j).ToDouble();
