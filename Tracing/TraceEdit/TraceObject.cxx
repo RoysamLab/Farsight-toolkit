@@ -2164,11 +2164,20 @@ bool TraceObject::BreakOffBranch(TraceLine *branch, bool keep)
       tother1->SetParent(NULL);
       siblings->clear();
       TraceLine::TraceBitsType::iterator iter1,iter2;
-      iter1= branch->GetParent()->GetTraceBitIteratorEnd();
-      iter2 = tother1->GetTraceBitIteratorBegin();
-      iter1--;
-    
-      this->mergeTraces((*iter1).marker,(*iter2).marker);
+	  if (branch->GetParent()->GetSize() != 1)
+	  {
+		  iter1= branch->GetParent()->GetTraceBitIteratorEnd();
+		  iter1--;
+		  iter2 = tother1->GetTraceBitIteratorBegin();
+	    
+		  this->mergeTraces((*iter1).marker,(*iter2).marker);
+	  }
+	  else
+	  {
+		  this->trace_lines.push_back(tother1);
+		  std::cout<< "failed to merge parent/child\n";
+	  }
+
       branch->SetParent(NULL);
 	  if ((keep)&&(branch->GetSize()>3))
 	  {//wont keep anything too small to work on
