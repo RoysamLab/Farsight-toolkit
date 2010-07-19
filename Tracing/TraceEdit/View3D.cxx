@@ -1117,10 +1117,11 @@ void View3D::chooseInteractorStyle(int iren)
 	{
 		vtkCamera *cam = this->Renderer->GetActiveCamera();
 		cam->SetFocalPoint(0,0,0);
-		cam->SetPosition(1,1,1);
+		cam->SetPosition(0,0,1);
 		cam->ComputeViewPlaneNormal();
-		cam->SetViewUp(1,0,0);
+		cam->SetViewUp(0,1,0);
 		cam->OrthogonalizeViewUp();
+		cam->ParallelProjectionOn();
 		vtkSmartPointer<vtkInteractorStyleImage> style =
 			vtkSmartPointer<vtkInteractorStyleImage>::New();
 		this->Interactor->SetInteractorStyle(style);
