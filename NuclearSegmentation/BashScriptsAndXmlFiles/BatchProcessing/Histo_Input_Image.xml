@@ -1,0 +1,8 @@
+<Image>
+    <file chname="hema" r="255" g="0" b="0">full_path/NuclearH.tif</file>
+    <file chname="cd34" r="0" g="255" b="0">full_path/CD34.tif</file>
+    <file chname="ca9" r="0" g="255" b="255">full_path/CA9.tif</file>
+    <file chname="sma" r="255" g="255" b="0">full_path/SMA.tif</file>
+    <file chname="ki67" r="255" g="0" b="255">full_path/Ki67.tif</file>
+    <file chname="bf" r="255" g="255" b="255">full_path/RGB.tif</file>
+</Image>
