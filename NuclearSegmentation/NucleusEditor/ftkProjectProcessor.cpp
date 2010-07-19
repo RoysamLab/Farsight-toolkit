@@ -298,13 +298,17 @@ bool ProjectProcessor::PixLevAnalysis(void){
 
 	for(std::vector<ftk::PixelAnalysisDefinitions>::iterator pait=definition->pixelLevelRules.begin(); pait!=definition->pixelLevelRules.end(); ++pait ){
 		ftk::PixelLevelAnalysis *PAn = new ftk::PixelLevelAnalysis();
+		bool success_run;
 		if( (*pait).mode == 1 ){
 			PAn->SetInputs( (*pait).regionChannelName, (*pait).targetChannelName, (*pait).outputFilename, 0 );
-			//bool success_run = PAn->RunAnalysis1();
+			success_run = PAn->RunAnalysis1();
 		}
 		else if( (*pait).mode == 2 ){
 			PAn->SetInputs( (*pait).regionChannelName, (*pait).targetChannelName, (*pait).outputFilename, (*pait).radius );
-			//bool success_run = PAn->RunAnalysis2();
+			success_run = PAn->RunAnalysis2();
+		}
+		else if( !success_run ){
+			std::cerr<<"ERROR: Run Failed, Check Definitions\n";
 		}
 		else{
 			std::cerr<<"ERROR: Check Pixel Anaysis Mode\n";
