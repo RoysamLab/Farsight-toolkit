@@ -43,6 +43,8 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag)
 	newImage->filename = ImageSource;
 	newImage->tag = tag;
 	newImage->renderStatus = false;
+	newImage->ren2d = false;
+	newImage->sliceActor = 0;
 	//newImage->colorTransferFunction = 0;
 	newImage->ContourActor = 0;
 	newImage->ContourFilter = 0;
@@ -89,6 +91,8 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 	newImage->filename = ImageSource;
 	newImage->tag = tag;
 	newImage->renderStatus = false;
+	newImage->ren2d = false;
+	newImage->sliceActor = 0;
 	//newImage->colorTransferFunction = 0;
 	newImage->ContourActor = 0;
 	newImage->ContourFilter = 0;
@@ -232,6 +236,22 @@ bool ImageRenderActors::getRenderStatus(int i)
 	}
 	return this->LoadedImages[i]->renderStatus;
 }
+bool ImageRenderActors::is2D(int i)
+{
+	if (i == -1)
+	{
+		i = int (this->LoadedImages.size() - 1);
+	}
+	return this->LoadedImages[i]->ren2d;
+}
+void ImageRenderActors::setIs2D(int i, bool Set2D)
+{
+	if (i == -1)
+	{
+		i = int (this->LoadedImages.size() - 1);
+	}
+	this->LoadedImages[i]->ren2d = Set2D;
+}
 void ImageRenderActors::setRenderStatus(int i, bool setStatus)
 {
 	if (i == -1)
@@ -372,4 +392,30 @@ void ImageRenderActors::syncOpacityTransfetFunction()
 	{
 		this->LoadedImages[i]->volume->Update();
 	}
+}
+
+vtkSmartPointer<vtkImageActor> ImageRenderActors::CreateSliceActor(int i)
+{
+	if (i == -1)
+	{
+		i = int (this->LoadedImages.size() - 1);
+	}
+	vtkImageData * newimage = this->LoadedImages[i]->ImageData;
+	this->LoadedImages[i]->sliceActor = vtkSmartPointer<vtkImageActor>::New();
+	this->LoadedImages[i]->sliceActor->SetInput(newimage);
+	this->LoadedImages[i]->sliceActor->SetZSlice(0);
+	this->LoadedImages[i]->sliceActor->SetPosition(this->LoadedImages[i]->x, 
+		this->LoadedImages[i]->y,this->LoadedImages[i]->z);
+	this->LoadedImages[i]->sliceActor->SetPickable(0);
+
+	return this->LoadedImages[i]->sliceActor;
+
+}
+vtkSmartPointer<vtkImageActor> ImageRenderActors::GetSliceActor(int i)
+{
+	if (i == -1)
+	{
+		i = int (this->LoadedImages.size() - 1);
+	}
+	return this->LoadedImages[i]->sliceActor;
 }

@@ -112,6 +112,7 @@ View3D::View3D(QWidget *parent)
 	//this->Volume=0;
 	//bool tracesLoaded = false;
 	this->translateImages = false;	//this is for testing a switch is needed
+	this->viewIn2D = false;
 	this->Date.currentDate();
 	this->Time.currentTime();
 	this->ProjectName.clear();
@@ -216,11 +217,14 @@ void View3D::CreateBootLoader()
 	connect(this->Reload, SIGNAL(clicked()), this, SLOT(ReloadState()));
 	this->BootProject = new QPushButton("Project", this->bootLoadFiles);
 	connect(this->BootProject, SIGNAL(clicked()), this, SLOT(LoadProject()));
+	this->Use2DSlicer = new QCheckBox;
+	this->Use2DSlicer->setChecked(this->viewIn2D);
 	QFormLayout *LoadLayout = new QFormLayout(this->bootLoadFiles);
 	LoadLayout->addRow(tr("User Name "), this->GetAUserName);
 	LoadLayout->addRow(tr("Lab Name "), this->GetLab);
 	LoadLayout->addRow(tr("Trace File"), this->BootTrace);
 	LoadLayout->addRow(tr("Image File"), this->BootImage);
+	LoadLayout->addRow(tr("Default Use Slicer"), this->Use2DSlicer);
 	LoadLayout->addRow(tr("Somas File"), this->BootSoma);
 	//LoadLayout->addRow(tr("uM Per Voxel"), this->scale);
 	LoadLayout->addRow(tr("Reload Previous Session"), this->Reload);
@@ -331,6 +335,7 @@ void View3D::OkToBoot()
 		this->menuBar()->show();
 		this->EditsToolBar->show();
 		this->BranchToolBar->show();
+		this->viewIn2D = this->Use2DSlicer->isChecked();
 
 		this->resize(this->TraceEditSettings.value("mainWin/size",QSize(850, 480)).toSize());
 		this->move(this->TraceEditSettings.value("mainWin/pos",QPoint(40, 59)).toPoint());
@@ -493,9 +498,24 @@ void View3D::LoadImageData()
 		this->statusBar()->showMessage("Loading Image file" + newImage);
 		this->EditLogDisplay->append("Image file: \t" + this->Image.last());
 		
-		this->Renderer->AddVolume(this->ImageActors->RayCastVolume(-1));
-		this->ImageActors->setRenderStatus(-1, true);
-		this->QVTK->GetRenderWindow()->Render();
+		//QMessageBox::StandardButton reply;
+		//reply = QMessageBox::critical(this, "Render Type", 
+		//	"Option to use slicer"
+		//	"Do you want to use the slicer view?",
+		//	QMessageBox::Yes |QMessageBox::No, QMessageBox::No);
+		//if (reply == QMessageBox::No)
+		if (!this->viewIn2D)
+		{
+			this->Renderer->AddVolume(this->ImageActors->RayCastVolume(-1));
+			this->ImageActors->setRenderStatus(-1, true);
+			this->QVTK->GetRenderWindow()->Render();
+		}
+		else
+		{
+			this->Renderer->AddActor(this->ImageActors->CreateSliceActor(-1));
+			this->ImageActors->setIs2D(-1, true);
+			this->chooseInteractorStyle(1);//set to image interactor
+		}
 		//this->Rerender();
 		this->statusBar()->showMessage("Image File Rendered");
 	}
@@ -841,6 +861,8 @@ void View3D::CreateGUIObjects()
 	this->ImageIntensity = new QAction("Intensity", this->CentralWidget);
 	this->ImageIntensity->setStatusTip("Calculates intensity of trace bits from one image");
 	connect(this->ImageIntensity, SIGNAL(triggered()), this, SLOT(SetImgInt()));
+	this->SetRaycastToSlicer = new QAction("Raycast To Slicer", this->CentralWidget);
+	connect(this->SetRaycastToSlicer, SIGNAL(triggered()), this, SLOT(raycastToSlicer()));
 // 3d cursor actions 
 	this->CursorActionsWidget = new QWidget(this);
 	/*this->MoveSphere = new QPushButton("Move Cursor", this->CentralWidget);
@@ -1078,6 +1100,7 @@ void View3D::CreateLayout()
   this->ShowToolBars->addAction(this->InformationDisplays->toggleViewAction());
   this->ShowToolBars->addAction(this->ShowPlots);
   this->ShowToolBars->addAction(this->CellAnalysis);
+  this->ShowToolBars->addAction(this->SetRaycastToSlicer);
 
   this->createRayCastSliders();
   this->menuBar()->addSeparator();
@@ -1100,7 +1123,8 @@ void View3D::CreateInteractorStyle()
   this->Interactor->AddObserver(vtkCommand::KeyPressEvent, this->keyPress);
 
   //use trackball control for mouse commands
-  this->chooseInteractorStyle(0);
+
+	this->chooseInteractorStyle(0);
   this->CellPicker = vtkSmartPointer<vtkCellPicker>::New();
   this->CellPicker->SetTolerance(0.004);
   this->Interactor->SetPicker(this->CellPicker);
@@ -1150,13 +1174,21 @@ void View3D::CreateActors()
 
   this->UpdateBranchActor();
   this->Renderer->AddActor(this->BranchActor);
+  this->QVTK->GetRenderWindow()->Render();
   for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
   {
 	  if (this->ImageActors->isRayCast(i))
 	  {
-		  this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
-		  this->ImageActors->setRenderStatus(i, true);
-		  this->RacastBar->show();
+		  if (!this->viewIn2D)
+		  {
+			  this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
+			  this->ImageActors->setRenderStatus(i, true);
+			  this->RacastBar->show();
+		  }else
+		  {
+			  this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
+			  this->ImageActors->setIs2D(i, true);
+		  }
 	  }
 	  else
 	  {
@@ -1175,13 +1207,18 @@ void View3D::removeImageActors()
 	{  
 		if (!this->ImageActors->getRenderStatus(i))
 		{
+			if(this->ImageActors->is2D(i))
+			{
+				this->Renderer->RemoveActor(this->ImageActors->GetSliceActor(i));
+				this->ImageActors->setIs2D(i, false);
+			}
 			continue;
 		}
 		if (this->ImageActors->isRayCast(i))
 		{
 		  this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
 		  this->ImageActors->setRenderStatus(i, false);
-		}
+		} 
 		else
 		{
 		  this->Renderer->RemoveActor(this->ImageActors->GetContourActor(i));
@@ -1195,6 +1232,29 @@ void View3D::removeImageActors()
 	this->QVTK->GetRenderWindow()->Render();
 }
 
+void View3D::raycastToSlicer()
+{
+	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+	{  
+		if ((this->ImageActors->getRenderStatus(i))&&(this->ImageActors->isRayCast(i)))
+		{
+		  this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
+		  this->ImageActors->setIs2D(i, true);
+		  this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
+		  this->ImageActors->setRenderStatus(i, false);
+		}
+	}//end num images
+	if (this->RacastBar->isVisible())
+	{
+	  this->RacastBar->hide();
+	}
+	//this->QVTK->GetRenderWindow()->Render();
+	this->chooseInteractorStyle(1);
+	this->viewIn2D = true;
+}
+void View3D::setSlicerZValue(int value)
+{
+}
 void View3D::CreateSphereActor()
 {
   this->Sphere = vtkSmartPointer<vtkSphereSource>::New();

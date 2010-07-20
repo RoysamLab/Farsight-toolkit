@@ -146,6 +146,8 @@ public slots:
 
 	void chooseInteractorStyle(int iren);
 	void removeImageActors();
+	void raycastToSlicer();
+	void setSlicerZValue(int value);
 	void RayCastOpacityChanged(int value);
 	void RayCastOpacityValueChanged(double value);
 	void RayCastBrightnessChanged(int value);
@@ -192,6 +194,7 @@ private:
 	QComboBox * GetAUserName, *GetLab, *GetProject;
 	QGroupBox * ImageListBox;
 	QListView * ImageListView; 
+	QCheckBox * Use2DSlicer;
 	bool translateImages;
 	QDate  Date;
 	QTime  Time;
@@ -222,6 +225,7 @@ private:
 	QAction *loadTraceAction;
 	QAction *loadTraceImage;
 	QAction *CloseAllImage;
+	QAction *SetRaycastToSlicer;
 	QAction *loadSoma;
 	QAction *ListButton;
 	QAction *ClearButton;
@@ -304,7 +308,7 @@ private:
 	vtkSmartPointer<vtkPolyDataMapper> polymap;
 	typedef vtkSmartPointer<vtkVolume> VolumePointerType;
 	std::vector<VolumePointerType> m_volumes;
-	
+	bool viewIn2D;
 
 
 	void createRayCastSliders();

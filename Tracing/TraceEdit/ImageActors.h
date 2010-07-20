@@ -20,6 +20,7 @@ limitations under the License.
 #include "vtkColorTransferFunction.h"
 #include "vtkImageData.h"
 #include "vtkImageToStructuredPoints.h"
+#include "vtkImageActor.h"
 #include "vtkLODActor.h"
 #include "vtkOpenGLVolumeTextureMapper3D.h"
 #ifdef USE_GPUREN
@@ -54,6 +55,7 @@ struct imageFileHandle
 	std::string tag;
 	std::string filename;
 	bool renderStatus;
+	bool ren2d;
 	vtkSmartPointer<vtkImageData> ImageData;
 	ReaderType::Pointer reader;
 	ConnectorType::Pointer connector;
@@ -64,10 +66,10 @@ struct imageFileHandle
 	vtkSmartPointer<vtkPolyDataMapper> ContourMapper;
 	vtkSmartPointer<vtkActor> ContourActor;
 //Raycast pointers
-	/*vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunction;
-	vtkSmartPointer<vtkColorTransferFunction> colorTransferFunction;*/
 	vtkSmartPointer<vtkVolumeProperty> volumeProperty;
 	vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper;
+//image slicer
+	vtkSmartPointer<vtkImageActor> sliceActor;
 #ifdef USE_GPUREN
 	vtkSmartPointer<vtkGPUVolumeRayCastMapper> volumeMapperGPU;
 #endif
@@ -82,6 +84,8 @@ public:
 //render actors
 	vtkSmartPointer<vtkActor> ContourActor(int i);
 	vtkSmartPointer<vtkActor> GetContourActor(int i);
+	vtkSmartPointer<vtkImageActor> CreateSliceActor(int i);
+	vtkSmartPointer<vtkImageActor> GetSliceActor(int i);
 	vtkSmartPointer<vtkVolume> RayCastVolume(int i);
 	vtkSmartPointer<vtkVolume> GetRayCastVolume(int i);
 	bool getRenderStatus(int i);
@@ -91,6 +95,8 @@ public:
 	std::string FileNameOf(int i){ return this->LoadedImages[i]->filename;};
 	unsigned int NumberOfImages() {return (unsigned int)this->LoadedImages.size();};
 	bool isRayCast(int i);
+	bool is2D(int i);
+	void setIs2D(int i, bool Set2D);
 	void ShiftImage(int i, double x, double y, double z);
 	void ShiftImage(int i, std::vector<double> shift);
 	std::vector<double> GetShiftImage(int i);
