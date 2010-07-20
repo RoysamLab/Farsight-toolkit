@@ -281,4 +281,16 @@ std::string SetExtension(std::string filename, std::string ext)
 	return rName;
 }
 
+std::vector<std::string> GetColumsWithString( std::string colName, vtkSmartPointer<vtkTable> table ){
+	std::vector<std::string> retVect;
+	for( int i=0; i<table->GetNumberOfColumns(); ++i ){
+		std::string current_column;
+		current_column = table->GetColumnName(i);
+		if( current_column.find(colName.c_str()) != std::string::npos ){
+			retVect.push_back( current_column );
+		}
+	}
+	return retVect;	
+}
+
 }  // end namespace ftk

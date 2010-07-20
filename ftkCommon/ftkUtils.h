@@ -53,9 +53,9 @@ std::string NumToString(double d, int p);
 std::string TimeStamp();
 std::string GetExtension(std::string filename);
 std::string SetExtension(std::string filename, std::string ext); // if ext = "", remove extension (and .)
+std::vector<std::string> GetColumsWithString( std::string colName, vtkSmartPointer<vtkTable> table );
 typedef struct { std::string regionChannelName; std::string targetChannelName; int mode;
 				 std::string outputFilename; int radius; } PixelAnalysisDefinitions;
-
 }  // end namespace ftk
 
 #endif	// end __ftkUtils_h

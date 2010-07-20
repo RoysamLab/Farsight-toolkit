@@ -940,6 +940,17 @@ void NucleusEditor::loadTable(QString fileName)
 
 	this->closeViews();
 	this->CreateNewTableWindow();
+
+	//Get prediction colums, if any, for center map coloring
+	prediction_names.clear();
+	prediction_names = ftk::GetColumsWithString( "prediction" , table );
+
+	if( !prediction_names.empty() ){
+		kplsRun = 1;
+		this->updateViews();
+	}
+	else
+		kplsRun = 0;
 }
 
 void NucleusEditor::askLoadResult(void)

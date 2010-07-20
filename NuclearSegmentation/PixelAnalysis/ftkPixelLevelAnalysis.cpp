@@ -91,8 +91,8 @@ void ftk::PixelLevelAnalysis::WriteInitialOutputs(){
     	std::cerr << "No file extension";
     	return;
 	}
-	ROIBinImageName    = ROIImageName.substr(0,idx1)    + "_bin" +    ROIImageName.substr(idx1);
-	TargetBinImageName = TargetImageName.substr(0,idx2) + "_bin" + TargetImageName.substr(idx2);
+	ROIBinImageName    = ROIImageName.substr(0,idx1)    + "_bin.tif";
+	TargetBinImageName = TargetImageName.substr(0,idx2) + "_bin.tif";
 
 	std::ofstream output_txt_file( OutputFilename.c_str() , ios::app );
 	output_txt_file	<< std::endl;
