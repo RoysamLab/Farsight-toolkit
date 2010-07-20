@@ -296,9 +296,9 @@ bool ProjectProcessor::PixLevAnalysis(void){
 	if( !definition->pixelLevelRules.size() )
 		return false;
 
+	bool success_run;
 	for(std::vector<ftk::PixelAnalysisDefinitions>::iterator pait=definition->pixelLevelRules.begin(); pait!=definition->pixelLevelRules.end(); ++pait ){
 		ftk::PixelLevelAnalysis *PAn = new ftk::PixelLevelAnalysis();
-		bool success_run;
 		if( (*pait).mode == 1 ){
 			PAn->SetInputs( (*pait).regionChannelName, (*pait).targetChannelName, (*pait).outputFilename, 0 );
 			success_run = PAn->RunAnalysis1();
@@ -315,8 +315,7 @@ bool ProjectProcessor::PixLevAnalysis(void){
 		}
 		delete PAn;
 	}
-
-	return true;
+	return success_run;
 }
 
 std::set<int> ProjectProcessor::GetOnIntrinsicFeatures(void)
