@@ -816,11 +816,11 @@ int main(int argc, char** argv)
 	printf("writing the image to disk...\n");
 	char buffer[1024];
 	argv[1][strlen(argv[1])-4] = 0;
-	sprintf(buffer, "%s_out.tif",argv[1]);
+	sprintf(buffer, "%s_CV.tif",argv[1]);
 	writeImage<InputImageType>(outputim,buffer);	
-	sprintf(buffer, "%s_cos.mhd",argv[1]);
+	sprintf(buffer, "%s_CV_cos.mhd",argv[1]);
 	writeImage<FloatImageType>(cosim,buffer);
-	sprintf(buffer, "%s_sin.mhd",argv[1]);
+	sprintf(buffer, "%s_CV_sin.mhd",argv[1]);
 	writeImage<FloatImageType>(sinim,buffer);
 
 	ck1 = clock();  cout<<"Curvelet preprocessing takes "<<double(ck1-ck0)/CLOCKS_PER_SEC<<" seconds"<<endl;  ck0 = ck1;
