@@ -326,6 +326,7 @@ protected:
 	//KPLS training and prediction
 	std::vector<std::string> training_names;
 	std::vector<std::string> prediction_names;
+	std::string p_name;
 	std::vector<std::string> class_names;
 	int trainName;
 	int predictName;

@@ -360,8 +360,8 @@ bool ProjectProcessor::Classify(void){
 				training_col_found = true;
 			}
 			else{
-				for( int i=0; i<(int)definition->classificationParameters.at(j).ClassificationColumns.size(); ++i ){
-					if( strcmp (current_column.c_str(),definition->classificationParameters.at(j).ClassificationColumns.at(i).c_str()) == 0 ){
+				for( int k=0; k<(int)definition->classificationParameters.at(j).ClassificationColumns.size(); ++k ){
+					if( strcmp (current_column.c_str(),definition->classificationParameters.at(j).ClassificationColumns.at(k).c_str()) == 0 ){
 						KPLsColumnsToUse.push_back( i );
 					}
 				}

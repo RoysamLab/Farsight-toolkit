@@ -204,7 +204,7 @@ void NucleusEditor::createMenus()
 	loadTableAction = new QAction(tr("Load Table..."), this);
 	loadTableAction->setStatusTip(tr("Load data table from text file"));
 	connect(loadTableAction, SIGNAL(triggered()), this, SLOT(askLoadTable()));
-	//fileMenu->addAction(loadTableAction);
+	fileMenu->addAction(loadTableAction);
 
 	fileMenu->addSeparator();
 
@@ -1302,7 +1302,7 @@ void NucleusEditor::startKPLS()
 		}
 		delete pred_dial;
 	}
-	std::string p_name;
+	p_name.clear();
 	p_name = "prediction_" + class_names.at(trainName);
 	std::vector<std::string>::iterator str_it;
 	for( str_it = prediction_names.begin(); str_it != prediction_names.end(); ++str_it )
@@ -1310,7 +1310,7 @@ void NucleusEditor::startKPLS()
 			break;
 	if( str_it == prediction_names.end() )
 		prediction_names.push_back( p_name );
-	pWizard = new PatternAnalysisWizard( table, PatternAnalysisWizard::_KPLS, training_names.at(trainName).c_str(), prediction_names.at((prediction_names.size()-1)).c_str(), this);
+	pWizard = new PatternAnalysisWizard( table, PatternAnalysisWizard::_KPLS, training_names.at(trainName).c_str(), p_name.c_str(), this);
 	connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
 	pWizard->show();
 	kplsRun = 1;
