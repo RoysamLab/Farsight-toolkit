@@ -266,7 +266,7 @@ std::string SetExtension(std::string filename, std::string ext)
 		if( pos == std::string::npos )
 			rName = filename;
 		else
-			rName = filename.substr(0,pos-1);
+			rName = filename.substr(0,pos);
 	}
 	else
 	{
@@ -274,7 +274,7 @@ std::string SetExtension(std::string filename, std::string ext)
 			rName = filename + "." + ext;
 		else
 		{
-			std::string base = filename.substr(0,pos-1);
+			std::string base = filename.substr(0,pos);
 			rName = base + "." + ext;
 		}
 	}
