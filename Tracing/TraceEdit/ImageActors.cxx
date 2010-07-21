@@ -419,3 +419,40 @@ vtkSmartPointer<vtkImageActor> ImageRenderActors::GetSliceActor(int i)
 	}
 	return this->LoadedImages[i]->sliceActor;
 }
+std::vector<int> ImageRenderActors::MinCurrentMaxSlices(int i)
+{
+	if (i == -1)
+	{
+		i = int (this->LoadedImages.size() - 1);
+	}
+	std::vector<int> slices;
+	slices.push_back(this->LoadedImages[i]->sliceActor->GetSliceNumberMin());
+	slices.push_back(this->LoadedImages[i]->sliceActor->GetSliceNumber());
+	slices.push_back(this->LoadedImages[i]->sliceActor->GetSliceNumberMax());
+	return slices;
+}
+void ImageRenderActors::SetSliceNumber(int i, int num)
+{
+	if (i == -1)
+	{
+		i = int (this->LoadedImages.size() - 1);
+	}
+	if (!this->LoadedImages[i]->ren2d)
+	{
+		return;
+	}
+	std::vector<int> slices;
+	slices = this->MinCurrentMaxSlices(i);
+	if (slices[2] < num)
+	{
+		this->LoadedImages[i]->sliceActor->SetZSlice(slices[2]);
+	}
+	else if (slices[0] > num)
+	{
+		this->LoadedImages[i]->sliceActor->SetZSlice(slices[0]);
+	}
+	else
+	{
+		this->LoadedImages[i]->sliceActor->SetZSlice(num);
+	}
+}

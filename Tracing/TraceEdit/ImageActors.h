@@ -102,6 +102,8 @@ public:
 	std::vector<double> GetShiftImage(int i);
 	double pointData(int i, int x, int y, int z);
 	std::vector<double> GetImageSize(int i);
+	std::vector<int> MinCurrentMaxSlices(int i);
+	void SetSliceNumber(int i, int num);
 	vtkSmartPointer<vtkImageData> GetImageData(int i);
 	std::vector<double> getColorValues();
 	void setColorValues(double r, double g, double b);
