@@ -1106,9 +1106,12 @@ void View3D::CreateLayout()
   this->menuBar()->addSeparator();
   this->help = this->menuBar()->addMenu("Help");
   this->help->addAction(this->aboutAction);
+
+  this->createSlicerSlider();
   this->menuBar()->hide();
 }
 
+/* create interactors*/
 void View3D::CreateInteractorStyle()
 {
   this->Interactor = this->QVTK->GetRenderWindow()->GetInteractor();
@@ -1188,6 +1191,7 @@ void View3D::CreateActors()
 		  {
 			  this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
 			  this->ImageActors->setIs2D(i, true);
+			  this->SlicerBar->show();
 		  }
 	  }
 	  else
@@ -1229,6 +1233,10 @@ void View3D::removeImageActors()
 	{
 	  this->RacastBar->hide();
 	}
+	if (this->SlicerBar->isVisible())
+	{
+		this->SlicerBar->hide();
+	}
 	this->QVTK->GetRenderWindow()->Render();
 }
 
@@ -1248,12 +1256,45 @@ void View3D::raycastToSlicer()
 	{
 	  this->RacastBar->hide();
 	}
+	this->SlicerBar->show();
 	//this->QVTK->GetRenderWindow()->Render();
 	this->chooseInteractorStyle(1);
 	this->viewIn2D = true;
 }
+void View3D::createSlicerSlider()
+{
+	this->SlicerBar =  new QToolBar("Slicer", this);
+	this->SlicerBar->setAllowedAreas(Qt::RightToolBarArea | Qt::LeftToolBarArea);
+	this->addToolBar(Qt::RightToolBarArea, this->SlicerBar);
+
+	this->SliceSpinBox = new QSpinBox(this);
+	this->SliceSpinBox->setRange(0,100);
+
+	this->SliceSlider = new QSlider(Qt::Vertical);
+	this->SliceSlider->setSingleStep(1);
+	this->SliceSlider->setRange(0,100);
+	this->SliceSlider->setTickInterval(5);
+	this->SliceSlider->setTickPosition(QSlider::TicksRight);
+	connect(this->SliceSlider, SIGNAL(valueChanged(int)), this->SliceSpinBox, SLOT(setValue(int)));
+	this->SliceSlider->setValue(0);
+	connect(this->SliceSpinBox, SIGNAL(valueChanged(int)), this->SliceSlider, SLOT(setValue(int)));
+	connect (this->SliceSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setSlicerZValue(int)));
+	this->SlicerBar->addWidget(this->SliceSpinBox);
+	this->SlicerBar->addWidget(this->SliceSlider);
+	this->SlicerBar->hide();
+}
 void View3D::setSlicerZValue(int value)
 {
+	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+	{
+		if(this->ImageActors->is2D(i))
+		{
+			this->Renderer->RemoveActor(this->ImageActors->GetSliceActor(i));
+			this->ImageActors->SetSliceNumber(i , value);
+			this->Renderer->AddActor(this->ImageActors->GetSliceActor(i));
+		}
+	}
+	this->QVTK->GetRenderWindow()->Render();
 }
 void View3D::CreateSphereActor()
 {
@@ -1684,7 +1725,7 @@ void View3D::Rerender()
 	this->MergeLabel->setText(QString::number(this->numMerged));
 	this->DeleteLabel->setText(QString::number(this->numDeleted));
 	this->BranchesLabel->setText(QString::number(this->tobj->BranchPoints.size()));
-	if(this->FL_MeasurePlot || this->FL_MeasureTable)
+	if(this->FL_MeasurePlot && this->FL_MeasureTable)
 	{
 		this->ShowCellAnalysis();
 	}//end if has cell calculations

@@ -443,6 +443,7 @@ void ImageRenderActors::SetSliceNumber(int i, int num)
 	}
 	std::vector<int> slices;
 	slices = this->MinCurrentMaxSlices(i);
+	std::cout << num << " min " << slices[0] << " current " << slices[1] << " max " << slices[2] << std::endl;
 	if (slices[2] < num)
 	{
 		this->LoadedImages[i]->sliceActor->SetZSlice(slices[2]);

@@ -216,7 +216,7 @@ private:
 	QMenu *ShowToolBars;
 	QMenu *help;
 	QAction *aboutAction;
-	QToolBar *EditsToolBar, *BranchToolBar, *RacastBar;
+	QToolBar *EditsToolBar, *BranchToolBar, *RacastBar, *SlicerBar;
 
 	//Qt widgets on the main window
 	QAction *saveAction;
@@ -308,8 +308,12 @@ private:
 	vtkSmartPointer<vtkPolyDataMapper> polymap;
 	typedef vtkSmartPointer<vtkVolume> VolumePointerType;
 	std::vector<VolumePointerType> m_volumes;
-	bool viewIn2D;
 
+	bool viewIn2D;
+	void createSlicerSlider();
+	void setSlicerBarValues(int i);
+	QSpinBox * SliceSpinBox;
+	QSlider * SliceSlider;
 
 	void createRayCastSliders();
 	QSpinBox * OpacitySpin, * BrightnessSpin;
