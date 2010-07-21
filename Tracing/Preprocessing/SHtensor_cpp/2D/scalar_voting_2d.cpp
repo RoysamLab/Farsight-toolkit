@@ -82,8 +82,8 @@ int optionsCreate(const char* optfile, map<string,string>& options)
 	fin.close();
 	return 0;
 }
-template <typename T1, typename T2>
-typename itk::Image< T1,2>::Pointer vnlmat_to_itkimage(vnl_matrix< typename T2 > mat,float scale = 1.0)
+/*template <typename T1, typename T2>
+itk::Image<T1,2>::Pointer vnlmat_to_itkimage(vnl_matrix<T2> mat,float scale = 1.0)
 {
 	typedef typename itk::Image<T1,2> ImageType;
 	ImageType::SizeType size;
@@ -108,7 +108,7 @@ typename itk::Image< T1,2>::Pointer vnlmat_to_itkimage(vnl_matrix< typename T2 >
 	}
 	return im;
 
-}
+}*/
 
 vnl_matrix<float> cpx_to_abs(vnl_matrix< std::complex< float> > mat)
 {
@@ -202,7 +202,7 @@ template <typename T1, typename T2>
 typename T1::Pointer castImage(typename T2::Pointer im)
 {
 	typedef typename itk::CastImageFilter<T2,T1> CastImageFilter;
-	CastImageFilter::Pointer castf = CastImageFilter::New();
+	typename CastImageFilter::Pointer castf = CastImageFilter::New();
 	castf->SetInput(im);
 	castf->Update();
 	return castf->GetOutput();
@@ -214,13 +214,13 @@ typename itk::Image<PixelType, 2>::Pointer getSlice(typename itk::Image<PixelTyp
 {
 	typedef typename itk::Image<PixelType,2> ImageType2D;
 	typedef typename itk::Image<PixelType,2> ImageType3D;
-	ImageType2D::Pointer out = ImageType3D::New();
-	ImageType2D::SizeType size;
+	typename ImageType2D::Pointer out = ImageType3D::New();
+	typename ImageType2D::SizeType size;
 	size[0] = im->GetLargestPossibleRegion().GetSize()[0];
 	size[1] = im->GetLargestPossibleRegion().GetSize()[1];
-	Input2DImageType::IndexType index;
+	typename Input2DImageType::IndexType index;
 	index.Fill(0);
-	ImageType2D::RegionType region;
+	typename ImageType2D::RegionType region;
 	region.SetSize(size);
 	region.SetIndex(index);
 	out->SetRegions(region);

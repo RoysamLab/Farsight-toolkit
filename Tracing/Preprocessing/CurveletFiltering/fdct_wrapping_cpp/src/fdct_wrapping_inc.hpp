@@ -24,6 +24,8 @@
 #include <queue>
 #include <utility>
 #include <algorithm>
+
+#include <string.h>
 //using namespace std;
 
 //FFT stuff

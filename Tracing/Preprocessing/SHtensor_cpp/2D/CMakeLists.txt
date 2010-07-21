@@ -6,7 +6,7 @@ link_directories(${FFTW3_LINK_DIRECTORIES})
 IF(WIN32)
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /openmp")
 ELSE(WIN32)
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -omp")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 ENDIF(WIN32)
 
 add_executable(scalar_voting_2d scalar_voting_2d.cpp)
