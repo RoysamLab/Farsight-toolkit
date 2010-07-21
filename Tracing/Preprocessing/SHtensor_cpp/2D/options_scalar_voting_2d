@@ -1,0 +1,3 @@
+-sigma 4
+-order 3
+-num_threads 8
