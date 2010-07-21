@@ -358,14 +358,16 @@ void TrainingDialog::updateTable(void){
 
 	if(!m_table) return;
 
-	if( radio4->isChecked() ){
-		new_class_name.clear();
-		QString input_string = className->displayText();
-		std::string class_name_prefix;
-		class_name_prefix = input_string.toStdString();
-		if( !class_name_prefix.empty() ){
-			new_class_name = "train_" + class_name_prefix;
-			columnForTraining = new_class_name.c_str();
+	if( class_names.size() < 3 ){
+		if( radio4->isChecked() ){
+			new_class_name.clear();
+			QString input_string = className->displayText();
+			std::string class_name_prefix;
+			class_name_prefix = input_string.toStdString();
+			if( !class_name_prefix.empty() ){
+				new_class_name = "train_" + class_name_prefix;
+				columnForTraining = new_class_name.c_str();
+			}
 		}
 	}
 
