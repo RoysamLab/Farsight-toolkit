@@ -25,16 +25,16 @@ ENDIF(FFTW_INCLUDE_PATH)
 
 
 FIND_LIBRARY(FFTW_LIB_SEARCH 
-	NAMES libfftw215 
+	NAMES libfftw215 libfftw fftw 
 	PATHS ${FFTW_LIB_SEARCH_PATH})
 
 
 FIND_LIBRARY(RFFTW_LIB_SEARCH 
-	NAMES librfftw215
+	NAMES librfftw215 libfftw fftw
 	PATHS ${FFTW_LIB_SEARCH_PATH})
 
 FIND_LIBRARY(FFTW_THREADS_LIB_SEARCH 
-	NAMES libfftw215_threads
+	NAMES libfftw215_threads fftw_threads libfftw_threads
 	PATHS ${FFTW_LIB_SEARCH_PATH})
 
 

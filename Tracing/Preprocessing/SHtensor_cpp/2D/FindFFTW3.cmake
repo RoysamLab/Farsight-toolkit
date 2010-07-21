@@ -25,15 +25,15 @@ ENDIF(FFTW3_INCLUDE_PATH)
 
 
 FIND_LIBRARY(FFTW3_LIB_SEARCH 
-	NAMES fftw3 libfftw libfftw3 libfftw3-3
+	NAMES fftw3 libfftw3 libfftw3-3
 	PATHS ${FFTW3_LIB_SEARCH_PATH})
 
 FIND_LIBRARY(FFTW3F_LIB_SEARCH 
-	NAMES fftwf3 libfftwf libfftw3f libfftw3f-3
+	NAMES fftw3f libfftw3f libfftw3f-3
 	PATHS ${FFTW3_LIB_SEARCH_PATH})
 
 FIND_LIBRARY(FFTW3L_LIB_SEARCH 
-	NAMES fftwl3 libfftwl libfftw3f libfftw3l-3
+	NAMES fftw3l libfftw3f libfftw3l-3
 	PATHS ${FFTW3_LIB_SEARCH_PATH})
 
 
