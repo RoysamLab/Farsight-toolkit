@@ -427,7 +427,7 @@ std::vector<int> ImageRenderActors::MinCurrentMaxSlices(int i)
 	}
 	std::vector<int> slices;
 	slices.push_back(this->LoadedImages[i]->sliceActor->GetSliceNumberMin());
-	slices.push_back(this->LoadedImages[i]->sliceActor->GetSliceNumber());
+	slices.push_back(this->LoadedImages[i]->sliceActor->GetZSlice());
 	slices.push_back(this->LoadedImages[i]->sliceActor->GetSliceNumberMax());
 	return slices;
 }

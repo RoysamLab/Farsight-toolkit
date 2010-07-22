@@ -1295,9 +1295,9 @@ void View3D::setSlicerZValue(int value)
 	{
 		if(this->ImageActors->is2D(i))
 		{
-			this->Renderer->RemoveActor(this->ImageActors->GetSliceActor(i));
+			//this->Renderer->RemoveActor(this->ImageActors->GetSliceActor(i));
 			this->ImageActors->SetSliceNumber(i , value);
-			this->Renderer->AddActor(this->ImageActors->GetSliceActor(i));
+			//this->Renderer->AddActor(this->ImageActors->GetSliceActor(i));
 		}
 	}
 	this->QVTK->GetRenderWindow()->Render();
