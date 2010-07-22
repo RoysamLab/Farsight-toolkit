@@ -375,6 +375,12 @@ void View3D::OkToBoot()
 		bootFailed->setText("There are no files to open. Please select a file to continue.");
 		bootFailed->show();
 	}
+	if (viewIn2D == true)
+	{
+		
+		this->RacastBar->toggleViewAction()->setDisabled(1);
+		this->chooseInteractorStyle(1);
+	}
 }
 QString View3D::getSomaFile()
 {
