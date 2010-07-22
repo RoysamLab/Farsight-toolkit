@@ -56,6 +56,7 @@ class vtkRenderWindowInteractor;
 class vtkSliderWidget;
 class vtkSphereSource;
 class vtkVolume;
+class vtkImagePlaneWidget;
   
 class TraceModel;
 class MergeModel;

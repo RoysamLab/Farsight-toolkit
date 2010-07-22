@@ -58,6 +58,7 @@ limitations under the License.
 #include "vtkInteractorStyleTrackballCamera.h"
 #include "vtkInteractorStyleRubberBandZoom.h"
 #include "vtkInteractorStyleImage.h"
+#include <vtkImagePlaneWidget.h>
 #include "vtkLODActor.h"
 #include "vtkOpenGLVolumeTextureMapper3D.h"
 #include "vtkPiecewiseFunction.h"
@@ -1248,24 +1249,47 @@ void View3D::removeImageActors()
 
 void View3D::raycastToSlicer()
 {
-	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
-	{  
-		if ((this->ImageActors->getRenderStatus(i))&&(this->ImageActors->isRayCast(i)))
-		{
-		  this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
-		  this->ImageActors->setIs2D(i, true);
-		  this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
-		  this->ImageActors->setRenderStatus(i, false);
-		}
-	}//end num images
-	if (this->RacastBar->isVisible())
+	if (!this->viewIn2D)
 	{
-	  this->RacastBar->hide();
-	}
-	this->SlicerBar->show();
-	//this->QVTK->GetRenderWindow()->Render();
-	this->chooseInteractorStyle(1);
-	this->viewIn2D = true;
+		for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+		{  
+			if ((this->ImageActors->getRenderStatus(i))&&(this->ImageActors->isRayCast(i)))
+			{
+			  this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
+			  this->ImageActors->setIs2D(i, true);
+			  this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
+			  this->ImageActors->setRenderStatus(i, false);
+			}
+		}//end num images
+		if (this->RacastBar->isVisible())
+		{
+		  this->RacastBar->hide();
+		}
+		this->SlicerBar->show();
+		//this->QVTK->GetRenderWindow()->Render();
+		this->chooseInteractorStyle(1);
+		this->viewIn2D = true;
+	}//end if 3d to 2d
+	else
+	{
+		for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+		{  
+			if (this->ImageActors->is2D(i))
+			{
+				this->Renderer->RemoveActor(this->ImageActors->GetSliceActor(i));
+				this->ImageActors->setIs2D(i, false);
+				this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
+				this->ImageActors->setRenderStatus(i, true);
+			}
+		}
+		if (this->SlicerBar->isVisible())
+		{
+			this->SlicerBar->hide();
+		}
+		this->RacastBar->show();
+		this->chooseInteractorStyle(0);
+		this->viewIn2D = false;
+	}//end else 2d to 3d
 }
 void View3D::createSlicerSlider()
 {
