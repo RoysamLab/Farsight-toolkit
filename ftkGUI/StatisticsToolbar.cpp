@@ -49,6 +49,7 @@ void StatisticsToolbar::setTable(vtkSmartPointer<vtkTable> inputDataTable, Objec
 	std::vector<int> IDList = this->GetSelectedIDs();
 	this->selectedRowNumbers.clear();
 	//bool found;	
+    dataTable = inputDataTable;
 
 	if(IDList.size() > 0)
 	{
@@ -72,7 +73,7 @@ void StatisticsToolbar::setTable(vtkSmartPointer<vtkTable> inputDataTable, Objec
 		}
 	}
 	
-	dataTable = inputDataTable;	
+	
 	
 
 	int rows = dataTable->GetNumberOfRows();
@@ -220,7 +221,7 @@ QList<double> StatisticsToolbar::SortColumn(vtkAbstractArray *Column, int rows)
 			{
 				this->myList->push_front(newValue);
 			}	
-			else 
+			else //in middle?
 			{
 				this->myList->push_front(newValue);//insert at beginning
 				double nextValue = this->myList->at(1);
