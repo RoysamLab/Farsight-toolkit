@@ -565,6 +565,9 @@ int main(int argc, char** argv)
 {
 	clock_t ck0, ck1;
 	ck0 = clock();
+	time_t t1,t2;
+
+	time(&t1);
 	if(argc < 2 || argc > 3)
 	{
 		printf("Usage : curvelets.exe input_file [options_file]");
@@ -823,6 +826,9 @@ int main(int argc, char** argv)
 	sprintf(buffer, "%s_CV_sin.mhd",argv[1]);
 	writeImage<FloatImageType>(sinim,buffer);
 
+
+	time(&t2);
+	std::cout<<"Curvelet preprocessing takes "<< t2-t1 << " seconds (time_t calculation)\n";
 	ck1 = clock();  cout<<"Curvelet preprocessing takes "<<double(ck1-ck0)/CLOCKS_PER_SEC<<" seconds"<<endl;  ck0 = ck1;
 	//scanf("%*d");
 	return 0;

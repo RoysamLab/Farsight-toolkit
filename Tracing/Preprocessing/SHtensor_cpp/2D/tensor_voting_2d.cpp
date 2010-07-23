@@ -559,7 +559,7 @@ int main(int argc, char**argv)
 	sprintf(buffer,"%s_TV2D.tif",argv[1]);
 	writeImage<InputImageType>(realout,buffer);
 	time(&t2);
-	std::cout<<"scalar_voting_2d preprocessing takes "<< t2-t1 << " seconds (time_t calculation)\n";
+	std::cout<<"tensor_voting_2d preprocessing takes "<< t2-t1 << " seconds (time_t calculation)\n";
 	//ck1 = clock();  cout<<"tensor_voting_2d preprocessing takes "<<double(ck1-ck0)/CLOCKS_PER_SEC<<" seconds"<<endl;  ck0 = ck1;
 	return 0;
 }
