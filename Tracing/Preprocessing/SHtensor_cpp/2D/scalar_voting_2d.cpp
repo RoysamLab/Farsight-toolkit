@@ -545,6 +545,8 @@ int main(int argc, char**argv)
 	char buffer[1024];
 	sprintf(buffer,"%s_SV2D.tif",argv[1]);
 	writeImage<InputImageType>(realout,buffer);
+
+	ck1 = clock();  cout<<"scalar_voting_2d preprocessing takes "<<double(ck1-ck0)/CLOCKS_PER_SEC<<" seconds"<<endl;  ck0 = ck1;
 	return 0;
 }
 
