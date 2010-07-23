@@ -249,6 +249,8 @@ int main(int argc, char**argv)
 	float sigma;
 	float order;
 	clock_t ck0, ck1;
+	time_t t1,t2;
+	time(&t1);
 	ck0 = clock();
 	if(argc < 2 || argc > 5)
 	{
@@ -546,7 +548,9 @@ int main(int argc, char**argv)
 	sprintf(buffer,"%s_SV2D.tif",argv[1]);
 	writeImage<InputImageType>(realout,buffer);
 
-	ck1 = clock();  cout<<"scalar_voting_2d preprocessing takes "<<double(ck1-ck0)/CLOCKS_PER_SEC<<" seconds"<<endl;  ck0 = ck1;
+	time(&t2);
+	std::cout<<"scalar_voting_2d preprocessing takes "<< t2-t1 << " seconds (time_t calculation)\n";
+	//ck1 = clock();  cout<<"scalar_voting_2d preprocessing takes "<<double(ck1-ck0)/CLOCKS_PER_SEC<<" seconds"<<endl;  ck0 = ck1;
 	return 0;
 }
 

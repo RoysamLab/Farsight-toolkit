@@ -252,8 +252,10 @@ int main(int argc, char**argv)
 {
 	float sigma;
 	float order;
+	time_t t1,t2;
 	clock_t ck0, ck1;
 	ck0 = clock();
+	time(&t1);
 	if(argc < 2 || argc > 5)
 	{
 		printf("Usage : tensor_voting_2d.exe gradmag_file dircos_file dirsin_file [options_file]");
@@ -556,8 +558,9 @@ int main(int argc, char**argv)
 	char buffer[1024];
 	sprintf(buffer,"%s_TV2D.tif",argv[1]);
 	writeImage<InputImageType>(realout,buffer);
-
-	ck1 = clock();  cout<<"tensor_voting_2d preprocessing takes "<<double(ck1-ck0)/CLOCKS_PER_SEC<<" seconds"<<endl;  ck0 = ck1;
+	time(&t2);
+	std::cout<<"scalar_voting_2d preprocessing takes "<< t2-t1 << " seconds (time_t calculation)\n";
+	//ck1 = clock();  cout<<"tensor_voting_2d preprocessing takes "<<double(ck1-ck0)/CLOCKS_PER_SEC<<" seconds"<<endl;  ck0 = ck1;
 	return 0;
 }
 
