@@ -8,13 +8,13 @@ import re
 print "Hello, World!"
 
 rootPath = os.getcwd()
-rootPath = rootPath + '/'
+rootPath = rootPath + '\\'
 patternN    = '*Nuclear*' # Can include any UNIX shell-style wildcards
 patternCD34 = '*CD34.tif'
 patternCA9  = '*CA9.tif'
 patternSMA  = '*SMA.tif'
 patternKI   = '*Ki67.tif'
-patternRGB  = '*RGB.tif'
+patternRGB  = '*QB_RGB.tif'
 
 ppatternN    = 'full_path/NuclearH.tif' # Can include any UNIX shell-style wildcards
 ppatternCD34 = 'full_path/CD34.tif'
@@ -23,12 +23,15 @@ ppatternSMA  = 'full_path/SMA.tif'
 ppatternKI   = 'full_path/Ki67.tif'
 ppatternRGB  = 'full_path/RGB.tif'
 
-inpu_xml_img = 'Histo_Input_Image.xml'
+pppattern = 'full_path'
+
+inpu_xml_img     = 'Histo_Input_Image.xml'
 replace_pattern1 = 'full_path/'
-lab_im = 'Labeled_Nuclei.tif'
-tab_le = 'Output_table.txt'
-proc_def_xml = 'HistoProjectDef.xml'
-pp = './../../../../../../farsight_bin/fs_bin/exe/projproc'
+lab_im           = 'Histo_Input_Image_label.xml'
+tab_le           = 'Histo_Input_Image_table.xml'
+proc_def_xml     = 'HistoProjectDef.xml'
+op_proj          = 'ccrc.xml'
+pp = 'C:\\farsight_program\\bin\\projproc'
 
 for root, dirs, files in os.walk(rootPath):
 	count_file = 0
@@ -75,7 +78,8 @@ for root, dirs, files in os.walk(rootPath):
 			#print replace_pattern
 		print os.path.join(root,'')
 		print count_file
-		if count_file == 7:
+		if count_file == 6:
+			#Write image file
 			o = open(os.path.join(root,inpu_xml_img),"w")
 			data = open(rootPath+inpu_xml_img).read()
 			data = re.sub(ppatternN,newN,data)
@@ -84,6 +88,13 @@ for root, dirs, files in os.walk(rootPath):
 			data = re.sub(ppatternSMA,newSMA,data)
 			data = re.sub(ppatternKI,newKI,data)
 			data = re.sub(ppatternRGB,newRGB,data)
+			o.write( data )
+			o.close()
+			#Write output project file
+			o = open(os.path.join(root,op_proj),"w")
+			data = open(rootPath+inpu_xml_img).read()
+			newPPP = os.path.join(root,inpu_xml_img)
+	 		data = re.sub(pppattern,newPPP,data)
 			o.write( data )
 			o.close()
 			#shutil.copy2( rootPath+inpu_xml_img, os.path.join(root,inpu_xml_img))

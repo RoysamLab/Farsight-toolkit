@@ -11,6 +11,7 @@
         <step name="NUCLEAR_SEGMENTATION" />
         <step name="RAW_ASSOCIATIONS" />
         <step name="CLASSIFY" />
+        <step name="PIXEL_ANALYSIS" />
     </Pipeline>
     <NuclearSegmentationParameters>
         <parameter name="high_sensitivity" value="0.00" />
@@ -42,14 +43,15 @@
         <AssociationRule Name="SMA_SURR" SegmentationSource="NUCLEAR" Target_Image="sma" Outside_Distance="0" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="SURROUNDEDNESS" />
         <AssociationRule Name="CA9_TOTAL" SegmentationSource="NUCLEAR" Target_Image="ca9" Outside_Distance="12" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="TOTAL" />
         <AssociationRule Name="CA9_AVG" SegmentationSource="NUCLEAR" Target_Image="ca9" Outside_Distance="12" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="AVERAGE" />
-        <AssociationRule Name="CA9_SURR" SegmentationSource="NUCLEAR" Target_Image="ca9" Outside_Distance="12" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="SURROUNDEDNESS" />
         <AssociationRule Name="KI67_TOTAL" SegmentationSource="NUCLEAR" Target_Image="ki67" Outside_Distance="0" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="TOTAL" />
         <AssociationRule Name="KI67_AVG" SegmentationSource="NUCLEAR" Target_Image="ki67" Outside_Distance="0" Inside_Distance="0" Use_Whole_Object="True" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="AVERAGE" />
     </AssociationRules>
     <ClassificationParameters>
-        <TrainingFile Name="/home/gramak/dataset_leelab/data_set1/ki67/training_ki67.txt" />
-        <ClassificationParameter TrainingColumn="train_EC" ClassificationColumns="CD34_TOTAL,CD34_AVG,CD34_SURR,SMA_TOTAL,SMA_AVG,SMA_SURR,CA9_TOTAL,CA9_AVG,CA9_SURR" />
-        <ClassificationParameter TrainingColumn="train_TUMOR" ClassificationColumns="CA9_TOTAL,CA9_AVG,CA9_SURR" />
-        <ClassificationParameter TrainingColumn="train_KI67" ClassificationColumns="KI67_TOTAL,KI67_AVG" />
+        <TrainingFile Name="/home/gramak/dataset_leelab/data_set1/ki67/TrainingSet.xml" />
+        <ClassificationParameter TrainingColumn="train_Endothelial" ClassificationColumns="CD34_TOTAL,CD34_AVG,CD34_SURR,SMA_TOTAL,SMA_AVG,SMA_SURR,CA9_TOTAL,CA9_AVG" />
+        <ClassificationParameter TrainingColumn="train_Tumor" ClassificationColumns="CA9_TOTAL,CA9_AVG" />
     </ClassificationParameters>
+    <PixelLevelAnalysis>
+        <PixelLevelRule RoiImage="/home/gramak/dataset_leelab/data_set1/ki67/09-15271_1_qDot 655 (305).jpg" TargetImage="/home/gramak/dataset_leelab/data_set1/ki67/09-15271_1_qDot 605 (304).jpg" Mode="1" OutputFilename="/home/gramak/dataset_leelab/data_set1/ki67/Pixel_Analysis_Output.txt" Radius="0" />
+    </PixelLevelAnalysis>
 </ProjectDefinition>
