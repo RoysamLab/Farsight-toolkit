@@ -1196,9 +1196,10 @@ void View3D::CreateActors()
 			  this->RacastBar->show();
 		  }else
 		  {
-			  this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
+			  //this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
+			  this->Renderer->AddActor(this->ImageActors->createProjection(i));
 			  this->ImageActors->setIs2D(i, true);
-			  this->SlicerBar->show();
+			  //this->SlicerBar->show();
 		  }
 	  }
 	  else
@@ -1255,7 +1256,8 @@ void View3D::raycastToSlicer()
 		{  
 			if ((this->ImageActors->getRenderStatus(i))&&(this->ImageActors->isRayCast(i)))
 			{
-			  this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
+			  //this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
+				this->Renderer->AddActor(this->ImageActors->createProjection(i));
 			  this->ImageActors->setIs2D(i, true);
 			  this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
 			  this->ImageActors->setRenderStatus(i, false);
@@ -1265,7 +1267,7 @@ void View3D::raycastToSlicer()
 		{
 		  this->RacastBar->hide();
 		}
-		this->SlicerBar->show();
+		//this->SlicerBar->show();
 		//this->QVTK->GetRenderWindow()->Render();
 		this->chooseInteractorStyle(1);
 		this->viewIn2D = true;
@@ -1276,7 +1278,8 @@ void View3D::raycastToSlicer()
 		{  
 			if (this->ImageActors->is2D(i))
 			{
-				this->Renderer->RemoveActor(this->ImageActors->GetSliceActor(i));
+				//this->Renderer->RemoveActor(this->ImageActors->GetSliceActor(i));
+				this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(i));
 				this->ImageActors->setIs2D(i, false);
 				this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
 				this->ImageActors->setRenderStatus(i, true);

@@ -457,3 +457,25 @@ void ImageRenderActors::SetSliceNumber(int i, int num)
 		this->LoadedImages[i]->sliceActor->SetZSlice(num);
 	}
 }
+vtkSmartPointer<vtkImageActor> ImageRenderActors::createProjection(int i)
+{
+	if (i == -1)
+	{
+		i = int (this->LoadedImages.size() - 1);
+	}
+	this->LoadedImages[i]->ProjectionActor = vtkSmartPointer<vtkImageActor>::New();
+	this->LoadedImages[i]->MaxProjection = ProjectionType::New();
+	this->LoadedImages[i]->MaxProjection->SetInput(this->LoadedImages[i]->reader->GetOutput());
+	this->LoadedImages[i]->connector->SetInput(this->LoadedImages[i]->MaxProjection->GetOutput());
+	this->LoadedImages[i]->ProjectionActor->SetInput(this->LoadedImages[i]->connector->GetOutput());
+
+	return this->LoadedImages[i]->ProjectionActor;
+}
+vtkSmartPointer<vtkImageActor> ImageRenderActors::GetProjectionImage(int i)
+{
+	if (i == -1)
+	{
+		i = int (this->LoadedImages.size() - 1);
+	}
+	return this->LoadedImages[i]->ProjectionActor;
+}
