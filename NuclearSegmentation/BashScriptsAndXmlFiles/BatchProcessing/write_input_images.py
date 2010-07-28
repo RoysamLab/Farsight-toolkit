@@ -13,7 +13,7 @@ patternN    = '*Nuclear*' # Can include any UNIX shell-style wildcards
 patternCD34 = '*CD34.tif'
 patternCA9  = '*CA9.tif'
 patternSMA  = '*SMA.tif'
-patternKI   = '*Ki67.tif'
+patternKI   = '*pERK.tif'
 patternRGB  = '*QB_RGB.tif'
 
 ppatternN    = 'full_path/NuclearH.tif' # Can include any UNIX shell-style wildcards
@@ -23,12 +23,10 @@ ppatternSMA  = 'full_path/SMA.tif'
 ppatternKI   = 'full_path/Ki67.tif'
 ppatternRGB  = 'full_path/RGB.tif'
 
-pppattern = 'full_path'
-
 inpu_xml_img     = 'Histo_Input_Image.xml'
 replace_pattern1 = 'full_path/'
 lab_im           = 'Histo_Input_Image_label.xml'
-tab_le           = 'Histo_Input_Image_table.xml'
+tab_le           = 'Histo_Input_Image_table.txt'
 proc_def_xml     = 'HistoProjectDef.xml'
 op_proj          = 'ccrc.xml'
 pp = 'C:\\farsight_program\\bin\\projproc'
@@ -91,17 +89,17 @@ for root, dirs, files in os.walk(rootPath):
 			o.write( data )
 			o.close()
 			#Write output project file
-			o = open(os.path.join(root,op_proj),"w")
-			data = open(rootPath+inpu_xml_img).read()
-			newPPP = os.path.join(root,inpu_xml_img)
-	 		data = re.sub(pppattern,newPPP,data)
-			o.write( data )
-			o.close()
+			o1 = open(os.path.join(root,op_proj),"w")
+			data1 = open(rootPath+op_proj).read()
+			newPPP = os.path.join(root,op_proj)
+	 		data1 = re.sub(replace_pattern1,newPPP,data1)
+			o1.write( data1 )
+			o1.close()
 			#shutil.copy2( rootPath+inpu_xml_img, os.path.join(root,inpu_xml_img))
 			labim1 = os.path.join(root,lab_im)
 			tab1 = os.path.join(root,tab_le)
 			os.chdir( os.path.join(root,'') )
-			com_to_exec = pp + ' ' + os.path.join(root,inpu_xml_img) + ' ' + labim1 + ' ' + tab1 + ' ' + rootPath + proc_def_xml
+			com_to_exec = pp + ' \"' + os.path.join(root,inpu_xml_img) + '\" \"' + labim1 + '\" \"' + tab1 + '\" \"' + rootPath + proc_def_xml + '\"'
 			os.system( com_to_exec )
 			os.chdir(rootPath)
 			print com_to_exec
