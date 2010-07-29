@@ -17,5 +17,5 @@ ENDIF()
 INCLUDE_DIRECTORIES(Common)
 
 SUBDIRS(Segmentation)
-#SUBDIRS(Visualization)
-#SUBDIRS(Centerline)
+SUBDIRS(Visualization)
+SUBDIRS(Centerline)
