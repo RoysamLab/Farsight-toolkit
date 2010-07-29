@@ -284,6 +284,24 @@ void WriteTraceToPLY(char *filename_trace, char*filename_write)
 	
 
 }
+
+void WriteSWCToPLY(char *filename_trace, char*filename_write)
+{
+	TraceObject *tobj = new TraceObject();
+	tobj->ReadFromSWCFile(filename_trace);
+	//tobj->Print(std::cout);
+	vtkSmartPointer<vtkPolyData> poly = tobj->GetVTKPolyData();
+	poly->GetPointData()->SetScalars(NULL);
+	vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
+	writer->SetFileName(filename_write);
+	writer->SetFileTypeToBinary();
+	writer->SetInput(poly);
+	writer->Write();
+	delete tobj;
+	
+
+}
+
 void Binarize(InputImageType::Pointer im)
 {
 	IteratorType iter(im,im->GetLargestPossibleRegion());
@@ -477,6 +495,7 @@ void render_stl_file_new(char filename[][256], int n, double colors[500][3], boo
 		if(mask[counter]==0)
 			continue;
 		{
+		//vtkSmartPointer<vtkPLYReader> reader=vtkSmartPointer<vtkPLYReader>::New();
 		vtkSmartPointer<vtkPolyDataReader> reader=vtkSmartPointer<vtkPolyDataReader>::New();
 	//	printf("strlen = %d\n",strlen(filename[counter]));
 /*
@@ -499,6 +518,7 @@ void render_stl_file_new(char filename[][256], int n, double colors[500][3], boo
 		mapper->ImmediateModeRenderingOff();
 
 		mapper->Update();
+
 		vtkSmartPointer<vtkActor> actor=vtkSmartPointer<vtkActor>::New();
 		actor->SetMapper(mapper);
 		//actor->SetColor(0,1,0);
@@ -855,7 +875,7 @@ vtkSmartPointer<vtkPolyData> getVTKPolyDataPrecise(LabelImageType::Pointer label
 	cubecoord* carray = new cubecoord[max1+1];
 	for(int counter=0; counter<=max1; counter++)
 	{
-		carray[counter].sx=6000;carray[counter].sy=6000;carray[counter].sz=6000;
+		carray[counter].sx=60000; carray[counter].sy=60000;carray[counter].sz=60000;
 		carray[counter].ex=0;carray[counter].ey=0;carray[counter].ez=0;
 	}
 
@@ -929,8 +949,12 @@ InputImageType::Pointer t = getEmpty(wx,wy,wz);
 
 		
 			
-		//	printf("Maximum tiny image size I need is [%d %d %d]\n",wx,wy,wz);
+			//printf("Maximum tiny image size I need is [%d %d %d]\n",wx,wy,wz);
 
+			if(carray[counter].sx > 59999)
+				continue;
+			printf("Working..\n");
+	//		scanf("%*d");
 			InputImageType::SizeType size;
 			InputImageType::RegionType region;
 			index.Fill(1);
@@ -998,7 +1022,7 @@ InputImageType::Pointer t = getEmpty(wx,wy,wz);
 	appendfilter->Update();
 	vtkSmartPointer<vtkDecimatePro> decimate = vtkSmartPointer<vtkDecimatePro>::New();
 	decimate->SetInput(appendfilter->GetOutput());
-	decimate->SetTargetReduction(0.75);
+	decimate->SetTargetReduction(0.1);
 	//decimate->SetNumberOfDivisions(32,32,32);
 	printf("Decimating the contours...");
 	decimate->Update();
@@ -1097,10 +1121,13 @@ int main(int argc, char**argv)
 	bool mask[500];
 	int counter=0;
 	float scale[3];
-	if( fscanf(fp,"%f %f %f\n",scale, scale+1,scale+2) == EOF )
+	char bufff[1024];
+	fgets(bufff,1023,fp);
+	if( sscanf(bufff,"%f %f %f",scale, scale+1,scale+2) == EOF )
     {
     cerr << "End of file reached within fscanf" << endl;
     }
+	printf("scale = %f %f %f\n",scale[0],scale[1],scale[2]);
 	while(fgets(buff,1000,fp)!=NULL)
 	{
 		char filename[1024];
@@ -1111,15 +1138,22 @@ int main(int argc, char**argv)
 		{
 			//trace
 			strcpy(input_filenames[counter],filename);
-			sprintf(stl_filenames[counter],"cache/cache_%s.ply",filename);
+			sprintf(stl_filenames[counter],"cache/cache_%s.vtk",filename);
 			if(!file_exists(stl_filenames[counter]))
 				WriteTraceToPLY(input_filenames[counter],stl_filenames[counter]);
+		}
+		else if(strcmp(&filename[strlen(filename)-4],".swc")==0)
+		{
+			strcpy(input_filenames[counter],filename);
+			sprintf(stl_filenames[counter],"cache/cache_%s.vtk",filename);
+			if(!file_exists(stl_filenames[counter]))
+				WriteSWCToPLY(input_filenames[counter],stl_filenames[counter]);
 		}
 		else
 		{
 			//image
 			strcpy(input_filenames[counter],filename);
-			sprintf(stl_filenames[counter],"cache/cache_%s.ply",filename);
+			sprintf(stl_filenames[counter],"cache/cache_%s.vtk",filename);
 			if(!file_exists(stl_filenames[counter]))
 				generate_stl_from_tif(input_filenames[counter],stl_filenames[counter]);
 		}
