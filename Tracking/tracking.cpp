@@ -36,6 +36,7 @@ typename T::Pointer readImage(const char *filename)
 	{
 		std::cerr << "ExceptionObject caught!" <<std::endl;
 		std::cerr << err << std::endl;
+		scanf("%*d");
 		//return EXIT_FAILURE;
 	}
 	printf("Done\n");
@@ -520,11 +521,11 @@ void createTrackFeatures(std::vector<FeaturesType> fvector[MAX_TIME][MAX_TAGS], 
 		//PRINTF("Added %d elements to tfs\n",counter);
 	}
 }
-int main()//int argc, char **argv)
+int main(int argc, char **argv)
 {
 	//ST();
 	
-	int num_tc = 10;
+	/*int num_tc = 10;
 	#define BASE "C:\\Users\\arun\\Research\\Tracking\\harvard\\cache\\testTSeries-02102009-1455-624\\"
 	int argc = num_tc*3+1;
 	
@@ -546,10 +547,10 @@ int main()//int argc, char **argv)
 	{
 		sprintf(argv[counter+num_tc*2],BASE"labeled_tracks_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,ch);
 	}
-
+*/
 	printf("Started\n");
-	/*int num_files = atoi(argv[1]);
-	int c;*/
+	//int num_files = atoi(argv[1]);
+	//int c;
 	//int counter = 0;
   printf(" I got argc = %d\n",argc);
 	int num_t = (argc-1)/3;

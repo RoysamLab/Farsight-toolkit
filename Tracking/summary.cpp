@@ -35,6 +35,7 @@ typename T::Pointer readImage(const char *filename)
 	{
 		std::cerr << "ExceptionObject caught!" <<std::endl;
 		std::cerr << err << std::endl;
+		scanf("%*d");
 		//return EXIT_FAILURE;
 	}
 	printf("Done\n");
@@ -515,10 +516,10 @@ void createTrackFeatures(std::vector<FeaturesType> fvector[MAX_TIME][MAX_TAGS], 
 		//PRINTF("Added %d elements to tfs\n",counter);
 	}
 }
-int main()//int argc, char **argv)
+int main(int argc, char **argv)
 {
 	//ST();
-
+/*
 	int num_tc = 10;
 	#define BASE "C:\\Users\\arun\\Research\\Tracking\\harvard\\cache\\testTSeries-02102009-1455-624\\"
 	int argc = num_tc*3+9;
@@ -547,7 +548,7 @@ int main()//int argc, char **argv)
 	}
 	sprintf(argv[pp++],BASE"track_summary_second_TSeries-02102009-1455-624_w%d.txt",ch);
 	sprintf(argv[pp++],BASE"track_points_summary_second_TSeries-02102009-1455-624_w%d.txt",ch);
-
+*/
 	printf("Started\n");
 	int c=1;
 	//int counter = 0;
