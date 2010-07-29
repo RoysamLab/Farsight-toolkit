@@ -85,7 +85,7 @@ struct return_data{
 };
 void ParseArguments(int argc, char **argv)
 {
-	for (int counter=2; counter<argc; counter++)
+	for (int counter=3; counter<argc; counter++)
 	{
 		istringstream s(argv[counter]);
 		//char name[100];
@@ -141,7 +141,7 @@ int main(int argc, char**argv)
 
 	printf("%d\n",argc);
 	//if(argc >2)
-	//	ParseArguments(argc,argv);
+	ParseArguments(argc,argv);
 	//char picfile[1024];// dont segfault me plz!
 	//printf("%s\n",argv[1]);
 	char filenamebuff[1024];//="vessel.pic";
@@ -429,8 +429,8 @@ int main(int argc, char**argv)
 
 						// a small threshold fixed to accelerate the program. Anything with a median of less than 2 is ignored for DEBUG
 
-					//	if(t[2]<prune)
-					//		continue;
+						if(t[2]<prune)
+							continue;
 						double a,b,c;
 						//printf("I did come here\n");
 						// now for the alternate hypothesis
