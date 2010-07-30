@@ -474,6 +474,9 @@ vtkSmartPointer<vtkImageActor> ImageRenderActors::createProjection(int i)
 	this->LoadedImages[i]->MaxProjection->SetInput(this->LoadedImages[i]->reader->GetOutput());
 	this->LoadedImages[i]->projectionConnector->SetInput(this->LoadedImages[i]->MaxProjection->GetOutput());
 	this->LoadedImages[i]->ProjectionActor->SetInput(this->LoadedImages[i]->projectionConnector->GetOutput());
+	this->LoadedImages[i]->ProjectionActor->SetPosition(this->LoadedImages[i]->x, 
+		this->LoadedImages[i]->y,this->LoadedImages[i]->z);
+	this->LoadedImages[i]->ProjectionActor->SetPickable(0);
 
 	return this->LoadedImages[i]->ProjectionActor;
 }
