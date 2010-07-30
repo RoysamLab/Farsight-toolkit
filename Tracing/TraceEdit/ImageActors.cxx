@@ -463,16 +463,31 @@ void ImageRenderActors::SetSliceNumber(int i, int num)
 		this->LoadedImages[i]->sliceActor->SetZSlice(num);
 	}
 }
-vtkSmartPointer<vtkImageActor> ImageRenderActors::createProjection(int i)
+vtkSmartPointer<vtkImageActor> ImageRenderActors::createProjection(int i, int method)
 {
 	if (i == -1)
 	{
 		i = int (this->LoadedImages.size() - 1);
 	}
 	this->LoadedImages[i]->ProjectionActor = vtkSmartPointer<vtkImageActor>::New();
-	this->LoadedImages[i]->MaxProjection = ProjectionType::New();
-	this->LoadedImages[i]->MaxProjection->SetInput(this->LoadedImages[i]->reader->GetOutput());
-	this->LoadedImages[i]->projectionConnector->SetInput(this->LoadedImages[i]->MaxProjection->GetOutput());
+	if (method ==2)
+	{
+		this->LoadedImages[i]->MinProjection = MinProjectionType::New();
+		this->LoadedImages[i]->MinProjection->SetInput(this->LoadedImages[i]->reader->GetOutput());
+		this->LoadedImages[i]->projectionConnector->SetInput(this->LoadedImages[i]->MinProjection->GetOutput());
+	}
+	else if (method == 1)
+	{
+		this->LoadedImages[i]->MeanProjection = MeanProjectionType::New();
+		this->LoadedImages[i]->MeanProjection->SetInput(this->LoadedImages[i]->reader->GetOutput());
+		this->LoadedImages[i]->projectionConnector->SetInput(this->LoadedImages[i]->MeanProjection->GetOutput());
+	}
+	else
+	{
+		this->LoadedImages[i]->MaxProjection = MaxProjectionType::New();
+		this->LoadedImages[i]->MaxProjection->SetInput(this->LoadedImages[i]->reader->GetOutput());
+		this->LoadedImages[i]->projectionConnector->SetInput(this->LoadedImages[i]->MaxProjection->GetOutput());
+	}
 	this->LoadedImages[i]->ProjectionActor->SetInput(this->LoadedImages[i]->projectionConnector->GetOutput());
 	this->LoadedImages[i]->ProjectionActor->SetPosition(this->LoadedImages[i]->x, 
 		this->LoadedImages[i]->y,this->LoadedImages[i]->z);

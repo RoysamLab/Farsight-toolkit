@@ -114,6 +114,7 @@ View3D::View3D(QWidget *parent)
 	//bool tracesLoaded = false;
 	this->translateImages = false;	//this is for testing a switch is needed
 	this->viewIn2D = false;
+	this->projectionStyle = 0;	//should me maximum projection
 	this->Date.currentDate();
 	this->Time.currentTime();
 	this->ProjectName.clear();
@@ -966,11 +967,17 @@ void View3D::CreateGUIObjects()
 	this->typeCombo->addItems(types);
 	connect(this->typeCombo, SIGNAL(activated( int )), this, SLOT(SetTraceType(int )));
 
-	QStringList styles;
-	styles<< "Track Ball" << "Image" << "RubberBandZoom" ;
+	QStringList ZoomStyles;
+	ZoomStyles<< "Track Ball" << "Image" << "RubberBandZoom" ;
 	this->StyleCombo = new QComboBox;
-	this->StyleCombo->addItems(styles);
+	this->StyleCombo->addItems(ZoomStyles);
 	connect(this->StyleCombo, SIGNAL(activated(int)), this, SLOT(chooseInteractorStyle(int)));
+
+	QStringList ProjectionStyles;
+	ProjectionStyles<< "Maximum" << "Mean" << "Minimum";
+	this->ProjectionCombo = new QComboBox;
+	this->ProjectionCombo->addItems(ProjectionStyles);
+	connect(this->ProjectionCombo, SIGNAL(activated(int)), this, SLOT(SetProjectionMethod(int)));
 	
 	this->aboutAction = new QAction("About", this->CentralWidget);
 	this->aboutAction->setStatusTip("About Trace Edit");
@@ -1077,6 +1084,7 @@ void View3D::CreateLayout()
 	DisplayLayout->addRow(tr("Line Color RGB 0 to 1:"),this->ColorValueField);
 	DisplayLayout->addRow(tr("Line width:"),this->LineWidthField);
 	DisplayLayout->addRow(tr("Interactor style:"),this->StyleCombo);
+	DisplayLayout->addRow(tr("Projection style:"),this->ProjectionCombo);
 	SettingsBox->addWidget(displaySettings);
 
 	QGroupBox *BackgroundSettings = new QGroupBox(("Background RGB Color"));
@@ -1173,6 +1181,19 @@ void View3D::chooseInteractorStyle(int iren)
 		this->Interactor->SetInteractorStyle(style);
 	}
 }
+void View3D::SetProjectionMethod(int style)
+{
+	this->projectionStyle = style;
+	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+	{
+		if (this->ImageActors->is2D(i))
+		{
+			this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(i));
+			this->Renderer->AddActor(this->ImageActors->createProjection(i,this->projectionStyle));
+		}
+	}//end for num images
+	this->QVTK->GetRenderWindow()->Render();
+}
 
 void View3D::CreateActors()
 {
@@ -1197,7 +1218,7 @@ void View3D::CreateActors()
 		  }else
 		  {
 			  //this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
-			  this->Renderer->AddActor(this->ImageActors->createProjection(i));
+			  this->Renderer->AddActor(this->ImageActors->createProjection(i, this->projectionStyle));
 			  this->ImageActors->setIs2D(i, true);
 			  //this->SlicerBar->show();
 		  }
@@ -1257,7 +1278,7 @@ void View3D::raycastToSlicer()
 			if ((this->ImageActors->getRenderStatus(i))&&(this->ImageActors->isRayCast(i)))
 			{
 			  //this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
-				this->Renderer->AddActor(this->ImageActors->createProjection(i));
+				this->Renderer->AddActor(this->ImageActors->createProjection(i,this->projectionStyle));
 			  this->ImageActors->setIs2D(i, true);
 			  this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
 			  this->ImageActors->setRenderStatus(i, false);

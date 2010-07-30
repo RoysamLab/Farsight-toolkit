@@ -146,6 +146,7 @@ public slots:
 	void SetImgInt();
 
 	void chooseInteractorStyle(int iren);
+	void SetProjectionMethod(int style);
 	void removeImageActors();
 	void raycastToSlicer();
 	void setSlicerZValue(int value);
@@ -277,7 +278,7 @@ private:
 	QSpinBox *LineWidthField;
 	QDoubleSpinBox *BackgroundRBox,*BackgroundGBox,*BackgroundBBox;
 	QDialogButtonBox *ApplySettingsButton;
-	QComboBox *typeCombo, *StyleCombo;
+	QComboBox *typeCombo, *StyleCombo, *ProjectionCombo;
 	//stuff for tol and selection
     //general render window variables
 	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;
@@ -311,6 +312,7 @@ private:
 	std::vector<VolumePointerType> m_volumes;
 
 	bool viewIn2D;
+	int projectionStyle;
 	void createSlicerSlider();
 	void setSlicerBarValues(int i);
 	QSpinBox * SliceSpinBox;

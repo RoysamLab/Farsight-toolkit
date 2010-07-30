@@ -23,7 +23,9 @@ limitations under the License.
 #include "vtkImageActor.h"
 #include "vtkLODActor.h"
 #include "vtkOpenGLVolumeTextureMapper3D.h"
-#include <itkMaximumProjectionImageFilter.h>
+#include "itkMaximumProjectionImageFilter.h"
+#include "itkMinimumProjectionImageFilter.h"
+#include "itkMeanProjectionImageFilter.h"
 #ifdef USE_GPUREN
 #include <vtkGPUVolumeRayCastMapper.h>
 #endif
@@ -51,7 +53,9 @@ typedef unsigned char  ImageActorPixelType;
 typedef itk::Image< ImageActorPixelType, Dimension >   ImageType;
 typedef itk::ImageFileReader< ImageType >    ReaderType;
 typedef itk::ImageToVTKImageFilter<ImageType> ConnectorType;
-typedef itk::MaximumProjectionImageFilter < ImageType, ImageType> ProjectionType;
+typedef itk::MaximumProjectionImageFilter < ImageType, ImageType> MaxProjectionType;
+typedef itk::MinimumProjectionImageFilter < ImageType, ImageType> MinProjectionType;
+typedef itk::MeanProjectionImageFilter < ImageType, ImageType> MeanProjectionType;
 
 struct imageFileHandle
 {
@@ -63,7 +67,9 @@ struct imageFileHandle
 	ReaderType::Pointer reader;
 	ConnectorType::Pointer connector;;
 	ConnectorType::Pointer projectionConnector;
-	ProjectionType::Pointer MaxProjection;
+	MaxProjectionType::Pointer MaxProjection;
+	MeanProjectionType::Pointer MeanProjection;
+	MinProjectionType::Pointer MinProjection;
 	std::vector<double> ImageSize;
 	double x,y,z;
 //Contour Filter pointers
@@ -92,7 +98,7 @@ public:
 	vtkSmartPointer<vtkActor> GetContourActor(int i);
 	vtkSmartPointer<vtkImageActor> CreateSliceActor(int i);
 	vtkSmartPointer<vtkImageActor> GetSliceActor(int i);
-	vtkSmartPointer<vtkImageActor> createProjection(int i);
+	vtkSmartPointer<vtkImageActor> createProjection(int i, int method);
 	vtkSmartPointer<vtkImageActor> GetProjectionImage(int i);
 	vtkSmartPointer<vtkVolume> RayCastVolume(int i);
 	vtkSmartPointer<vtkVolume> GetRayCastVolume(int i);
