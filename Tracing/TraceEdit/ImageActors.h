@@ -61,7 +61,8 @@ struct imageFileHandle
 	bool ren2d;
 	vtkSmartPointer<vtkImageData> ImageData;
 	ReaderType::Pointer reader;
-	ConnectorType::Pointer connector;
+	ConnectorType::Pointer connector;;
+	ConnectorType::Pointer projectionConnector;
 	ProjectionType::Pointer MaxProjection;
 	std::vector<double> ImageSize;
 	double x,y,z;

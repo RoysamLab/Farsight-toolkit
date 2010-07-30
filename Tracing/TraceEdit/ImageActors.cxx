@@ -77,6 +77,9 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag)
 	}
 	newImage->connector= ConnectorType::New();
 	newImage->connector->SetInput( newImage->reader->GetOutput() );
+	newImage->projectionConnector = ConnectorType::New();
+	newImage->projectionConnector->SetInput( newImage->reader->GetOutput() );
+
 	newImage->ImageData = newImage->connector->GetOutput();
 	this->LoadedImages.push_back(newImage);
 	return (int) (this->LoadedImages.size() -1);
@@ -126,6 +129,9 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 	newImage->connector= ConnectorType::New();
 	newImage->connector->SetInput( newImage->reader->GetOutput() );
 	newImage->ImageData = newImage->connector->GetOutput();
+	newImage->projectionConnector = ConnectorType::New();
+	newImage->projectionConnector->SetInput( newImage->reader->GetOutput() );
+
 	this->LoadedImages.push_back(newImage);
 	return (int) (this->LoadedImages.size() -1);
 }
@@ -466,8 +472,8 @@ vtkSmartPointer<vtkImageActor> ImageRenderActors::createProjection(int i)
 	this->LoadedImages[i]->ProjectionActor = vtkSmartPointer<vtkImageActor>::New();
 	this->LoadedImages[i]->MaxProjection = ProjectionType::New();
 	this->LoadedImages[i]->MaxProjection->SetInput(this->LoadedImages[i]->reader->GetOutput());
-	this->LoadedImages[i]->connector->SetInput(this->LoadedImages[i]->MaxProjection->GetOutput());
-	this->LoadedImages[i]->ProjectionActor->SetInput(this->LoadedImages[i]->connector->GetOutput());
+	this->LoadedImages[i]->projectionConnector->SetInput(this->LoadedImages[i]->MaxProjection->GetOutput());
+	this->LoadedImages[i]->ProjectionActor->SetInput(this->LoadedImages[i]->projectionConnector->GetOutput());
 
 	return this->LoadedImages[i]->ProjectionActor;
 }

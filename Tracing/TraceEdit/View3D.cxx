@@ -1263,6 +1263,7 @@ void View3D::raycastToSlicer()
 			  this->ImageActors->setRenderStatus(i, false);
 			}
 		}//end num images
+		this->RacastBar->toggleViewAction()->setDisabled(1);
 		if (this->RacastBar->isVisible())
 		{
 		  this->RacastBar->hide();
@@ -1285,6 +1286,7 @@ void View3D::raycastToSlicer()
 				this->ImageActors->setRenderStatus(i, true);
 			}
 		}
+		this->RacastBar->toggleViewAction()->setDisabled(0);
 		if (this->SlicerBar->isVisible())
 		{
 			this->SlicerBar->hide();
