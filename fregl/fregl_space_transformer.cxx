@@ -112,8 +112,9 @@ set_anchor( std::string const & anchor_name, bool in_anchor, bool overlap_only, 
       continue;
 
     TransformType::Pointer xform = joint_register_->get_transform(i, anchor_);
+    // Only images which can be transformed to the anchor space will
+    // be considered
     if ( !xform ) continue;
-    //xform->Print(std::cout,0);
     SizeType size = image_sizes[i];
     for (unsigned int sx = 0; sx < size[0]; sx+= size[0]-1)
       for (unsigned int sy = 0; sy < size[1]; sy+= size[1]-1)

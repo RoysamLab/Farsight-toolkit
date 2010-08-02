@@ -384,13 +384,22 @@ generate_graph_indices( int anchor, int index )
       all_explored = true;
       continue;
     }
-        // Explore the new connections 
+    else {
+      anchor = connected.back();
+      graph_indices_[anchor] = index;
+      connected.pop_back();
+      explored[anchor] = true;
+    }
+    
+    // Explore the new connections
+    /*
     while (!connected.empty()) {
       anchor = connected.back();
       graph_indices_[anchor] = index;
       connected.pop_back();
       explored[anchor] = true;
     }
+    */
   }
 }
 
@@ -458,18 +467,25 @@ bool
 fregl_joint_register::
 estimate(int anchor)
 {
+  std::vector<int> indices_for_other_images;
+  indices_for_other_images.reserve(image_ids_.size());
+  for (unsigned int i = 0; i<image_ids_.size();i++)
+    if (i!=anchor && graph_indices_[anchor]==graph_indices_[i])
+      indices_for_other_images.push_back(i);
+  
   //get the size of X_D (direct constraints) and X_I (indirect constraints)
   //
+  unsigned int size = indices_for_other_images.size();
   int X_D_dim = 0, X_I_dim = 0;
-  for (unsigned int i = 0; i<image_ids_.size(); i++) {
+  for (unsigned int i = 0; i<size; i++) {
     if (i == (unsigned int)anchor) continue;
 
-    if (pairwise_constraints_[i][anchor].size() > 0)
-      X_D_dim += pairwise_constraints_[i][anchor].size();
-    for (unsigned int j = i+1; j<image_ids_.size(); j++) {
+    if (pairwise_constraints_[indices_for_other_images[i]][anchor].size() > 0)
+      X_D_dim += pairwise_constraints_[indices_for_other_images[i]][anchor].size();
+    for (unsigned int j = i+1; j<size; j++) {
       if (j == (unsigned int)anchor) continue;
-      if (pairwise_constraints_[i][j].size() > 0)
-	X_I_dim += pairwise_constraints_[i][j].size();
+      if (pairwise_constraints_[indices_for_other_images[i]][indices_for_other_images[j]].size() > 0)
+	X_I_dim += pairwise_constraints_[indices_for_other_images[i]][indices_for_other_images[j]].size();
     }
   }
   if ( X_D_dim == 0 ) {
@@ -481,41 +497,49 @@ estimate(int anchor)
   // 1.  Center the data. Please note that the points are not centered
   // along the z-dimension since the z-dimension is often smaller than
   // 120.
-  int size = image_ids_.size();
-  std::vector<vnl_vector_fixed<double, 3> > centers(size); 
-  for (int i = 0; i<size; i++) {
+ 
+  std::vector<vnl_vector_fixed<double, 3> > centers(size);
+  vnl_vector_fixed<double, 3> anchor_center;
+  double  to_xc = 0, to_yc = 0, to_zc = 0, to_sum = 0;
+  for (unsigned int i = 0; i<size; i++) {
     double xc = 0, yc = 0, zc = 0, sum = 0;
-    for (int j = 0; j<size; j++) {
-      if (pairwise_constraints_[i][j].size() == 0) continue;
+    for (unsigned int j = 0; j<image_ids_.size(); j++) {
+      if (pairwise_constraints_[indices_for_other_images[i]][j].size() == 0) continue;
+      CorrespondenceList const& corresps = pairwise_constraints_[indices_for_other_images[i]][j];
+        for (unsigned int k = 0; k<corresps.size(); k++) {
+          correspondence const & corresp = corresps[k];
+          xc += corresp.from_[0];
+          yc += corresp.from_[1];
+          zc += corresp.from_[2];
+        }
+        sum += corresps.size();
 
-      CorrespondenceList const& corresps = pairwise_constraints_[i][j];
-      for (unsigned int k = 0; k<corresps.size(); k++) {
-      	correspondence const & corresp = corresps[k];
-        xc += corresp.from_[0];
-        yc += corresp.from_[1];
-        zc += corresp.from_[2];
-      }
-      sum += corresps.size();
-
+        if (j == anchor) {
+          for (unsigned int k = 0; k<corresps.size(); k++) {
+            correspondence const & corresp = corresps[k];
+            to_xc += corresp.to_[0];
+            to_yc += corresp.to_[1];
+            to_zc += corresp.to_[2];
+          }
+          to_sum += corresps.size();
+        }
     }
     centers[i][0] = xc/double(sum);
     centers[i][1] = yc/double(sum);
     centers[i][2] = 0; //zc/double(sum);
   }
-
+  anchor_center[0] = to_xc/to_sum;
+  anchor_center[1] = to_yc/to_sum;
+  anchor_center[1] = 0;
+  
   // 2. Convert X_D and W_D to sum_prod, but only compute the upper
   //  triangle, and the rhs matrix to sum_rhs
-  std::vector<int> indices_for_other_images;
-  for (int i = 0; i<size;i++)
-    if (i!=anchor && graph_indices_[anchor]==graph_indices_[i])
-      indices_for_other_images.push_back(i);
 
-  size = indices_for_other_images.size();
   int dim = size*4;
   vnl_matrix<double> sum_prod(dim, dim, 0.0), sum_rhs(dim, 3, 0.0);
   vnl_vector<double> cstr(4), cstr2(4);
 
-  for (int i = 0; i<size;i++)
+  for (unsigned int i = 0; i<size;i++)
     if (pairwise_constraints_[indices_for_other_images[i]][anchor].size()>0) {
       int start_row = 4*i;
       CorrespondenceList const& corresps = pairwise_constraints_[indices_for_other_images[i]][anchor];
@@ -526,9 +550,9 @@ estimate(int anchor)
         //double s = scales_[indices_in_graph[i]][anchor];
       	//double w = corresps[k]->weight()/(s*s);
       	
-      	double  px = p[0] - centers[indices_for_other_images[i]][0];
-      	double  py = p[1] - centers[indices_for_other_images[i]][1];
-        double  pz = p[2] - centers[indices_for_other_images[i]][2];
+      	double  px = p[0] - centers[i][0];
+      	double  py = p[1] - centers[i][1];
+        double  pz = p[2] - centers[i][2];
       	cstr[0] = 1.0;
       	cstr[1] = px;
       	cstr[2] = py;
@@ -543,9 +567,9 @@ estimate(int anchor)
       	    sum_prod(g + start_row,h + start_row) += cstr[g] * cstr[h];
       	
       	//rhs matrix
-      	double  qx = q[0] - centers[anchor][0];
-      	double  qy = q[1] - centers[anchor][1];
-        double  qz = q[2] - centers[anchor][2];
+      	double  qx = q[0] - anchor_center[0];
+      	double  qy = q[1] - anchor_center[1];
+        double  qz = q[2] - anchor_center[2];
 
       	sum_rhs(start_row, 0) += cstr[0] * qx;
       	sum_rhs(start_row+1, 0) += cstr[1] * qx;
@@ -566,8 +590,8 @@ estimate(int anchor)
   //compute X_I & W_I if indirect constraints exist
   //
   if ( X_I_dim > 0){
-    for (int i = 0; i<size-1;i++)
-      for (int j = i+1; j<size; j++) 
+    for (unsigned int i = 0; i<size-1;i++)
+      for (unsigned int j = i+1; j<size; j++) 
       	if (pairwise_constraints_[indices_for_other_images[i]][indices_for_other_images[j]].size()>0) {
       	  CorrespondenceList const& corresps = pairwise_constraints_[indices_for_other_images[i]][indices_for_other_images[j]];
       	  int i_start = 4*i, j_start = 4*j;
@@ -577,9 +601,9 @@ estimate(int anchor)
             //double s = scales_[indices_in_graph[i]][indices_in_graph[j]];
       	    //double w = corresps[k]->weight()/(s*s);
 
-      	    double  px = p[0] - centers[indices_for_other_images[i]][0];
-      	    double  py = p[1] - centers[indices_for_other_images[i]][1];
-            double  pz = p[2] - centers[indices_for_other_images[i]][2];
+      	    double  px = p[0] - centers[i][0];
+      	    double  py = p[1] - centers[i][1];
+            double  pz = p[2] - centers[i][2];
 
       	    cstr[0] = 1.0;
       	    cstr[1] = px;
@@ -590,9 +614,9 @@ estimate(int anchor)
       	      for (int h = g; h < 4; h++)
                 sum_prod(g + i_start,h + i_start) += cstr[g] * cstr[h];
       	    
-      	    double  qx = q[0] - centers[indices_for_other_images[j]][0];
-      	    double  qy = q[1] - centers[indices_for_other_images[j]][1];
-            double  qz = q[2] - centers[indices_for_other_images[j]][2];
+      	    double  qx = q[0] - centers[j][0];
+      	    double  qy = q[1] - centers[j][1];
+            double  qz = q[2] - centers[j][2];
 
       	    cstr2[0] = -1 * 1.0;
       	    cstr2[1] = -1 * qx;
@@ -620,7 +644,7 @@ estimate(int anchor)
   // might not be necessary since our transformation is only linear
   std::vector< double > scales(dim,0.0);
   double factor0 = 0, factor1 = 0, scale;
-  for (int i = 0; i< size; i++) {
+  for (unsigned int i = 0; i< size; i++) {
     int start_row = i*4;
     if ( sum_prod(start_row,start_row) > factor0 )
       factor0 = sum_prod(start_row,start_row);
@@ -629,7 +653,7 @@ estimate(int anchor)
     if ( max2 > factor1 ) factor1 = max2;
   }
   scale = sqrt(factor1 / factor0);   // neither should be 0
-  for (int i = 0; i<size; i++) {    
+  for (unsigned int i = 0; i<size; i++) {    
     int start_row = i*4;
     scales[start_row] = scale; 
     scales[start_row+1] = scales[start_row+2] = scales[start_row+3] = 1;
@@ -645,7 +669,7 @@ estimate(int anchor)
 
   // 4. Estimate the transformation
   //
-  vnl_svd<double> svd(sum_prod,1e-6);
+  vnl_svd<double> svd(sum_prod,1e-10);
   if ( svd.rank() < (unsigned int)dim ) {
     std::cerr<< "fregl_joint_register::estimate --- ERROR \n"
              << "    sum_prod not full rank"<<std::endl;
@@ -666,7 +690,7 @@ estimate(int anchor)
   
   // 6. Uncenter the xforms and covariance matrix 
   //   
-  for (int i = 0; i<size; i++) {
+  for (unsigned int i = 0; i<size; i++) {
     //vnl_matrix<double> c_params = thetas.extract(4,3,i*4,0);
     //vnl_matrix<double> theta(4,3,0.0);
     //vnl_matrix<double> A(4,4,0.0);
@@ -675,7 +699,7 @@ estimate(int anchor)
     vnl_matrix<double> theta= thetas.extract(4,3,i*4,0);
     vnl_matrix<double> A = theta.extract(3,3,1,0).transpose();
     vnl_vector<double> t = theta.get_row(0);
-    vnl_vector<double> uncentered_trans = t-A*centers[indices_for_other_images[i]]+centers[anchor];
+    vnl_vector<double> uncentered_trans = t-A*centers[i]+anchor_center;
     transforms_[indices_for_other_images[i]][anchor] = TransformType::New();
     TransformType::ParametersType params(12);
     params[0] = A(0,0);
