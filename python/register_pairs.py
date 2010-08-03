@@ -18,7 +18,7 @@ if platform.system() == 'Windows':
     much = '../bin/multi_channels_2D.exe'
 else:
     regp = '../bin/register_pair'
-    regp = '../bin/register_joint'
+    regj = '../bin/register_joint'
     moim = '../bin/mosaic_images'
     much = '../bin/multi_channels_2D'
 
