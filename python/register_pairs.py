@@ -1,7 +1,24 @@
 #python script to register pairs specified in a file, which contains a pair of
 #image names per line.
 
-import os, sys
+import os, sys, platform
+
+#initialize executables for platform
+regp = ''
+regj = ''
+moim = ''
+much = ''
+
+if platform.system() == 'Windows':
+    regp = '../bin/register_pair.exe'
+    regj = '../bin/register_joint.exe'
+    moim = '../bin/mosaic_images.exe'
+    much = '../bin/multi_channels_2D.exe'
+else
+    regp = '../bin/register_pair'
+    regp = '../bin/register_joint'
+    moim = '../bin/mosaic_images'
+    much = '../bin/multi_channels_2D'
 
 # the main function
 def register(argv):
@@ -25,7 +42,7 @@ def register(argv):
         to_image = s_line[pos+1:]
             
         # perform registration
-        success = os.system('register_pair.exe '+argv[0]+from_image+' '+ argv[0]+to_image +' -remove_2d');
+        success = os.system(regp+' '+argv[0]+from_image+' '+ argv[0]+to_image +' -remove_2d');
         if success == 0:
             # Add the names to the list if not already there. The list
             # keeps potential images which can be the anchor iamge for
@@ -56,8 +73,8 @@ def register(argv):
     # temporary file and remove it after joint registration
     f_xforms.close()
     f_o.close()
-    print("\nSTART register_joint.exe...")
-    os.system('register_joint.exe xxx_123.txt -multiplier 4')
+    print("\nSTART register_joint...")
+    os.system(regj + ' xxx_123.txt -multiplier 4')
     print("DONE")
     #os.system('rm xxx_123.txt')    #not cross platform!!
 
@@ -72,17 +89,17 @@ def register(argv):
             for line in fc:
                 dot_pos = names[0].find('.');
                 name_no_ext = names[0][:dot_pos]
-                os.system('mosaic_images.exe joint_transforms.xml '+names[0]+ ' -3d -path ' + argv[0]+' -channel '+str(channel_count)+' -output montage_'+name_no_ext+'_Ch'+str(channel_count));
+                os.system(moim + ' joint_transforms.xml '+names[0]+ ' -3d -path ' + argv[0]+' -channel '+str(channel_count)+' -output montage_'+name_no_ext+'_Ch'+str(channel_count));
                 fc_o.write('montage_'+name_no_ext+'_Ch'+str(channel_count)+'_2d_proj.png '+ line)
                 channel_count += 1
             fc_o.close()
-            os.system('multi_channels_2D.exe '+argv[2]+'_123.txt '+'montage_'+name_no_ext+'_color_2d_proj.png')
+            os.system(much + ' '+argv[2]+'_123.txt '+'montage_'+name_no_ext+'_color_2d_proj.png')
             os.remove(argv[2]+'_123.txt')
             cmd_executed = True;
         else :
-            cmd = "mosaic_images.exe joint_transforms.xml -3d " + names[0] + " -path " + argv[0]
-    else : # just for one image pair, so call mosaic_image_pair.exe
-        cmd = "mosaic_image_pair.exe joint_transforms.xml " + names[0] +" "+ names[1] + " -path " + argv[0]
+            cmd = moim + " joint_transforms.xml -3d " + names[0] + " -path " + argv[0]
+    else : # just for one image pair, so call mosaic_image_pair
+        cmd = moim + " joint_transforms.xml " + names[0] +" "+ names[1] + " -path " + argv[0]
     if ( not cmd_executed):
         os.system(cmd)
         
