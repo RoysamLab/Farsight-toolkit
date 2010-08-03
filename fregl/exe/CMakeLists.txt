@@ -69,6 +69,9 @@ TARGET_LINK_LIBRARIES( extract_stack_interfaces fregl vul ITKCommon ITKIO )
    TARGET_LINK_LIBRARIES( mosaic_images fregl ITKCommon
    ITKIO )
 
+   ADD_EXECUTABLE( initialized_register_pair initialized_register_pair.cxx)
+   TARGET_LINK_LIBRARIES( initialized_register_pair fregl ITKCommon ITKIO )
+
    #ADD_EXECUTABLE( update_result_sets update_result_sets.cxx)
    #TARGET_LINK_LIBRARIES( update_result_sets fregl )
 

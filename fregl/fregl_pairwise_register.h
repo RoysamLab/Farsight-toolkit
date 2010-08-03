@@ -79,8 +79,11 @@ public:
   //: Trigger the registration
   bool run(double& obj_value, const vcl_string & gdbicp_exe_path = "", bool scaling = false);
   
-  //: Trigger the registration with an initial transformation
+  //: Trigger the registration with an initial 3D transformation
   bool run(TransformType::Pointer prior_xform, double& obj_value);
+  
+  //: Trigger the registration with an x-y displacement
+  bool run(double init_x, double init_y, double& obj_value);
   
   //: Set the from_image
   void set_from_image(InputImageType::Pointer from_image);

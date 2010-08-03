@@ -208,6 +208,146 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
     double t_z = compute_z_shift (xform_2d, from_image_, to_image_, 
                                   from_image_2d, to_image_2d, background_);
     
+     // Image type of float are needed for intensity-based
+     // registration. Crop only the overlap volume and release the
+     // original images.
+     InternalImageType:: Pointer from_image_crop, to_image_crop;
+     from_image_crop = crop_image(from_image_);
+     to_image_crop = crop_image(to_image_);
+    
+
+     // Force early release of images that are not needed anymore.
+     from_image_2d = 0;
+     to_image_2d = 0;
+     std::cout<<"End of cropping"<<std::endl;
+
+     TransformType::ParametersType parameters(12);
+     convert_rgrl_to_itk_xform( xform_2d, -t_z, parameters);
+    
+     // Now perform intensity-based registration on the cropped 3D
+     // volume
+     //
+
+     std::cout<<"Running 3D intensity-based registration ..."<<std::endl;
+     //typedef itk::MeanSquaresImageToImageMetric< InternalImageType, InternalImageType > MetricType;
+     typedef itk::NormalizedCorrelationImageToImageMetric< InternalImageType, InternalImageType > MetricType;
+     typedef itk::LinearInterpolateImageFunction< InternalImageType, double> InterpolatorType;
+     typedef itk::ImageRegistrationMethod< InternalImageType, InternalImageType > RegistrationType;
+     typedef itk::RegularStepGradientDescentOptimizer    OptimizerType;
+     typedef OptimizerType::ScalesType OptimizerScalesType;
+
+     InterpolatorType::Pointer interpolator = InterpolatorType::New();
+     MetricType::Pointer metric = MetricType::New();
+     TransformType::Pointer transform = TransformType::New();
+     RegistrationType::Pointer registrator = RegistrationType::New();
+     OptimizerType::Pointer optimizer = OptimizerType::New();
+    
+     registrator->SetTransform( transform );
+     registrator->SetOptimizer( optimizer );
+     registrator->SetInterpolator( interpolator );
+     registrator->SetMetric( metric );
+    
+     registrator->SetFixedImage( to_image_crop );
+     registrator->SetMovingImage( from_image_crop );
+     registrator->SetFixedImageRegion(to_image_crop->GetRequestedRegion());
+     registrator->SetInitialTransformParameters( parameters );
+    
+     optimizer->SetMaximumStepLength( 4.0 );
+     optimizer->SetMinimumStepLength( 0.1);
+     optimizer->SetNumberOfIterations( 100 );
+     optimizer->MaximizeOff();
+    
+     // set the parameter scale to limit the freedom in affine parts
+     int num_params = 12;    
+     OptimizerScalesType optimizerScales(num_params);
+     for (unsigned int i = 0; i<9; i++) {
+       //affine components
+       optimizerScales[i] = 1.0;
+     }
+     for (unsigned int i = 0; i<3; i++) {
+       //translation components
+       optimizerScales[i+9] = 1.0/1000000;
+     }
+     optimizer->SetScales(optimizerScales);
+    
+     // To add the observer to watch the progress of the registration
+     CommandIteration::Pointer   observer  = CommandIteration::New();
+     optimizer->AddObserver( itk::IterationEvent(), observer );
+    
+     // Now run the registration
+     registrator->StartRegistration();
+    
+     // Set the final transform
+     TransformType::ParametersType final_parameters;
+     final_parameters = registrator->GetLastTransformParameters();
+     if (!transform_) transform_ = TransformType::New();
+     transform_->SetParameters( final_parameters );
+     obj_value = 1+optimizer->GetValue(); //NCC is in the range of [-1~0]
+   }
+   catch(itk::ExceptionObject& e) {
+     vcl_cout << e << vcl_endl;
+     return false;
+   }
+  
+  return true;
+}
+
+bool 
+fregl_pairwise_register::
+run(double init_x, double init_y, double& obj_value)
+{
+    std::cout<<"fregl_pairwise_register::run--x-y initialized registration..."<<std::endl;
+  // Read the 3D image and project it to a 2D image using maximum
+  // projection for GDBICP. The idea is to run GDBICP on the 2D image
+  // to obtain a transformation accurate in x-y plan, since it is
+  // where the major motion is. The shift in the z-stack is taken care
+  // of later by the coarse-to-fine refinement in 3D
+
+  ImageType2D::Pointer from_image_2d =fregl_util_max_projection(from_image_);
+  vcl_cout << "Projecting the from_image ....\n";
+  ImageType2D::Pointer to_image_2d = fregl_util_max_projection(to_image_);
+  vcl_cout << "Projecting the to_image ....\n";
+
+  // output max projected images to files and read them back as vxl
+  // images. This might not be a very neat approach, but it is much
+  // easier this way, since rrl_gdbicp_info takes image filenames.
+
+  vcl_string from_2dfilename = vcl_string("xxx_from_image_proj.tif");
+  vcl_string to_2dfilename = vcl_string("xxx_to_image_proj.tif");
+
+  typedef itk::ImageFileWriter< ImageType2D >  WriterType2D;
+
+  try {
+    WriterType2D::Pointer writer2D = WriterType2D::New();
+    writer2D->SetFileName( from_2dfilename );
+    writer2D->SetInput( from_image_2d );
+    writer2D->Update();
+    
+    writer2D->SetFileName( to_2dfilename );
+    writer2D->SetInput( to_image_2d );
+    writer2D->Update();
+  }
+  catch(itk::ExceptionObject& e) {
+    vcl_cout << e << vcl_endl;
+    return 1;
+  }
+  
+  try {
+    vnl_vector<double> t(2,0.0);
+    t(0) = init_x;
+    t(1) = init_y;
+    
+    rgrl_transformation_sptr xform_2d =
+      new rgrl_trans_similarity(vnl_matrix<double>(2,2,vnl_matrix_identity),
+                                t,
+                                vnl_matrix<double>(6,6,0.0));
+    
+    // Now work out the center of mass in z-direction in the overlap
+    // volume estimated by the x-y shift.
+    //
+    double t_z = compute_z_shift (xform_2d, from_image_, to_image_, 
+                                  from_image_2d, to_image_2d, background_);
+    
     // Image type of float are needed for intensity-based
     // registration. Crop only the overlap volume and release the
     // original images.
@@ -293,6 +433,10 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
   
 }
 
+
+
+
+    
 bool 
 fregl_pairwise_register::
 run(TransformType::Pointer prior_xform, double& obj_value)
