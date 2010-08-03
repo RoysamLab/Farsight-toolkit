@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 #python script to register pairs specified in a file, which contains a pair of
 #image names per line.
 
@@ -14,7 +16,7 @@ if platform.system() == 'Windows':
     regj = '../bin/register_joint.exe'
     moim = '../bin/mosaic_images.exe'
     much = '../bin/multi_channels_2D.exe'
-else
+else:
     regp = '../bin/register_pair'
     regp = '../bin/register_joint'
     moim = '../bin/mosaic_images'
