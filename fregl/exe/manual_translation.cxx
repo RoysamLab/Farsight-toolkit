@@ -108,8 +108,8 @@ main( int argc, char* argv[] )
   
   // Run joint-registration without mutual consistency
   fregl_joint_register::Pointer joint_register = new fregl_joint_register( reg_records, 0, 1 );
-  joint_register->build_graph();
-
+  joint_register->infer_graph();
+    
   // Output to xml file
   std::string output_file;
   if (!arg_output.set()) output_file = anchor_image+std::string("_joint.xml");

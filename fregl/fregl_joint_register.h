@@ -73,7 +73,13 @@ public:
   int build_graph();
   
   //: Compute the transformation from every image to the chosen anchor
-  bool build_graph(int i); 
+  bool build_graph(int i);
+  
+  //: Construct the graph without mutual consistency
+  //
+  //  exisiting pairwise links are copied over, and
+  //  missing linkes are inferred from the exisiting pairwise transforms.
+  void infer_graph();
   
   //: Return the transform of an image pair
   //

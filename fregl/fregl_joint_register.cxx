@@ -235,6 +235,17 @@ build_graph(int anchor)
   return true;
 }
 
+void
+fregl_joint_register::
+infer_graph()
+{
+  //  Compute the transformations by treating each image as the anchor.
+  for (unsigned int i = 0; i<transforms_.rows(); i++) {
+    std::cout<<"Infer the transformations to image "<<image_ids_[i]<<std::endl;
+    breadth_first_connect( i );
+  }
+}
+
 fregl_joint_register::TransformType::Pointer 
 fregl_joint_register::
 get_transform(int from, int to) const
