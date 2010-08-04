@@ -75,8 +75,10 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag)
 		std::cerr << exp << std::endl;
 		//return EXIT_FAILURE;
 	}
+	newImage->Rescale = IntensityRescaleType::New();
+	newImage->Rescale->SetInput( newImage->reader->GetOutput() );
 	newImage->connector= ConnectorType::New();
-	newImage->connector->SetInput( newImage->reader->GetOutput() );
+	newImage->connector->SetInput( newImage->Rescale->GetOutput() );
 	newImage->projectionConnector = ConnectorType::New();
 	newImage->projectionConnector->SetInput( newImage->reader->GetOutput() );
 
@@ -126,8 +128,10 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 		std::cerr << exp << std::endl;
 		//return EXIT_FAILURE;
 	}
+	newImage->Rescale = IntensityRescaleType::New();
+	newImage->Rescale->SetInput( newImage->reader->GetOutput() );
 	newImage->connector= ConnectorType::New();
-	newImage->connector->SetInput( newImage->reader->GetOutput() );
+	newImage->connector->SetInput( newImage->Rescale->GetOutput() );
 	newImage->ImageData = newImage->connector->GetOutput();
 	newImage->projectionConnector = ConnectorType::New();
 	newImage->projectionConnector->SetInput( newImage->reader->GetOutput() );
@@ -473,19 +477,19 @@ vtkSmartPointer<vtkImageActor> ImageRenderActors::createProjection(int i, int me
 	if (method ==2)
 	{
 		this->LoadedImages[i]->MinProjection = MinProjectionType::New();
-		this->LoadedImages[i]->MinProjection->SetInput(this->LoadedImages[i]->reader->GetOutput());
+		this->LoadedImages[i]->MinProjection->SetInput(this->LoadedImages[i]->Rescale->GetOutput());
 		this->LoadedImages[i]->projectionConnector->SetInput(this->LoadedImages[i]->MinProjection->GetOutput());
 	}
 	else if (method == 1)
 	{
 		this->LoadedImages[i]->MeanProjection = MeanProjectionType::New();
-		this->LoadedImages[i]->MeanProjection->SetInput(this->LoadedImages[i]->reader->GetOutput());
+		this->LoadedImages[i]->MeanProjection->SetInput(this->LoadedImages[i]->Rescale->GetOutput());
 		this->LoadedImages[i]->projectionConnector->SetInput(this->LoadedImages[i]->MeanProjection->GetOutput());
 	}
 	else
 	{
 		this->LoadedImages[i]->MaxProjection = MaxProjectionType::New();
-		this->LoadedImages[i]->MaxProjection->SetInput(this->LoadedImages[i]->reader->GetOutput());
+		this->LoadedImages[i]->MaxProjection->SetInput(this->LoadedImages[i]->Rescale->GetOutput());
 		this->LoadedImages[i]->projectionConnector->SetInput(this->LoadedImages[i]->MaxProjection->GetOutput());
 	}
 	this->LoadedImages[i]->ProjectionActor->SetInput(this->LoadedImages[i]->projectionConnector->GetOutput());

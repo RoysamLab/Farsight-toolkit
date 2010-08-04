@@ -39,6 +39,7 @@ limitations under the License.
 
 #include "itkImageFileReader.h"
 #include "itkImageToVTKImageFilter.h"
+#include "itkRescaleIntensityImageFilter.h"
 
 #include <stdio.h>
 #include <string>
@@ -56,6 +57,7 @@ typedef itk::ImageToVTKImageFilter<ImageType> ConnectorType;
 typedef itk::MaximumProjectionImageFilter < ImageType, ImageType> MaxProjectionType;
 typedef itk::MinimumProjectionImageFilter < ImageType, ImageType> MinProjectionType;
 typedef itk::MeanProjectionImageFilter < ImageType, ImageType> MeanProjectionType;
+typedef itk::RescaleIntensityImageFilter< ImageType, ImageType> IntensityRescaleType;
 
 struct imageFileHandle
 {
@@ -70,6 +72,7 @@ struct imageFileHandle
 	MaxProjectionType::Pointer MaxProjection;
 	MeanProjectionType::Pointer MeanProjection;
 	MinProjectionType::Pointer MinProjection;
+	IntensityRescaleType::Pointer Rescale;
 	std::vector<double> ImageSize;
 	double x,y,z;
 //Contour Filter pointers
