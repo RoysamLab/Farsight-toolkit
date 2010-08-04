@@ -338,9 +338,9 @@ run(double init_x, double init_y, double& obj_value)
     t(1) = init_y;
     
     rgrl_transformation_sptr xform_2d =
-      new rgrl_trans_similarity(vnl_matrix<double>(2,2,vnl_matrix_identity),
-                                t,
-                                vnl_matrix<double>(6,6,0.0));
+      new rgrl_trans_affine(vnl_matrix<double>(2,2,vnl_matrix_identity),
+                            t,
+                            vnl_matrix<double>(6,6,0.0));
     
     // Now work out the center of mass in z-direction in the overlap
     // volume estimated by the x-y shift.
