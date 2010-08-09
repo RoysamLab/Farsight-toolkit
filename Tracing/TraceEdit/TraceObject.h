@@ -93,6 +93,10 @@ public:
 	{
 		this->mergeLineColor=set;
 	};
+	void setFalseLineColor(double set)
+	{
+		this->falseLineColor=set;
+	};
 	void leastSquaresThreeDependentVar(EndPointInfo* endPoint, std::vector<TraceBit*>*  ExtrapolationLines);
 	void Calculatebranches();
 	std::vector<EndPointInfo>* findingBranchingPoints();
@@ -123,6 +127,7 @@ public:
 	void mergeTraces(unsigned long long int eMarker, unsigned long long int sMarker);
 	void CreatePolyDataRecursive(TraceLine* , vtkSmartPointer<vtkFloatArray> , vtkSmartPointer<vtkPoints> ,vtkSmartPointer<vtkCellArray>);
 	void FindMinLines(int smallSize);
+	void FindFalseSpines(int maxBit, int maxLength);
 	void cleanTree();
 	void Shave(TraceLine* starting, int smallerThan);
 	bool BreakOffBranch(TraceLine* branch, bool keep);
@@ -149,6 +154,7 @@ public:
 	std::vector<int> GetTreeIDs( TraceLine* root);
 	std::vector<int> GetTreeIDs( std::vector<TraceLine*> roots);
 	std::set<long int> SmallLines;
+	std::set<long int> FalseSpines;
 	std::vector<TraceGap*> Gaps;
 	std::vector<branchPT*> BranchPoints;
 	std::vector<std::string> FeatureHeaders;
@@ -165,7 +171,7 @@ private:
 	std::vector<TraceLine*> trace_lines;
 	std::vector<CellTrace*> Cells;
 	vtkSmartPointer<vtkPolyData> PolyTraces;
-	double smallLineColor, mergeLineColor;	
+	double smallLineColor, mergeLineColor, falseLineColor;	
 	double tx,ty,tz;
 	int unsolvedBranches;
   void CollectTraceBitsRecursive(std::vector<TraceBit> &vec,TraceLine *l);

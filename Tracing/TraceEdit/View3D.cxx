@@ -718,6 +718,7 @@ void View3D::Initialize()
 //	this->BrightnessSlider = 0;
 	
 	this->tobj->setSmallLineColor(.25);
+	this->tobj->setFalseLineColor(.25);
 	this->tobj->setMergeLineColor(.4);
 	this->Ascending = Qt::AscendingOrder;
 
@@ -2723,6 +2724,7 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
 
     case 'a':
       view->SLine();
+	  view->FakeSpines();
       break;
 
     case 'q':
@@ -2786,6 +2788,40 @@ void View3D::SLine()
   }
   this->Rerender();
 }
+
+void View3D::FakeSpines()
+{
+	int numLines;
+	this->maxNumBits = 4;//hard coded variables for now
+	this->maxPathLength = 3;
+	this->tobj->FindFalseSpines(this->maxNumBits, this->maxPathLength);
+	numLines= this->tobj->FalseSpines.size();
+  this->TreeModel->SelectByIDs(this->tobj->FalseSpines);
+  QMessageBox Myquestion;
+  Myquestion.setText("Number of selected False Spines:  " 
+    + QString::number(numLines));
+  Myquestion.setInformativeText("Delete these small lines?" );
+  Myquestion.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
+  Myquestion.setDefaultButton(QMessageBox::Yes);
+  int ret = Myquestion.exec();
+  switch (ret) 
+  { 
+  case QMessageBox::Yes:
+  {
+	this->DeleteTraces();
+    this->tobj->FalseSpines.clear();
+  }
+  break;
+  case QMessageBox::No:
+   {
+     this->tobj->FalseSpines.clear();
+	 this->TreeModel->GetObjectSelection()->clear();
+   }
+   break;
+  }
+  this->Rerender();
+}
+
 
 
 void View3D::ListSelections()

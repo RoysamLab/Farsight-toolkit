@@ -73,6 +73,7 @@ TraceObject::TraceObject(const TraceObject &T)
   //this->SmallLines = T.SmallLines; FIXME: is  'SmallLines' storing some redundant information? we need to take care of it in the copy constructor.
   this->smallLineColor = T.smallLineColor;
   this->mergeLineColor = T.mergeLineColor;
+  
 }
 
 TraceObject::~TraceObject()
@@ -1916,13 +1917,36 @@ void TraceObject::FindMinLines(int smallSize)
   {
     tline=*iter;
 	if((smallSize >= tline->GetSize())&& (tline->GetBranchPointer()->size()==0))
-    {
+	{
       tline->setTraceColor(this->smallLineColor);
 	  this->SmallLines.insert( (long) tline->GetId());
     }
     ++iter;
   }
 }
+
+void TraceObject::FindFalseSpines(int maxBit, int maxLength)
+{
+	TraceLine *tline;
+	
+	this->FalseSpines.clear();
+	std::vector<TraceLine*>::iterator iter = this->trace_lines.begin();//lineList.begin();
+    this->trace_lines.size();
+	while(iter!=this->trace_lines.end())
+  {
+    tline=*iter;
+	if((maxBit >= tline->GetSize())&& (maxLength >= tline->GetLength()) && (tline->isLeaf() == 1))
+	{
+		tline->setTraceColor(this->falseLineColor);
+	    this->FalseSpines.insert( (long) tline->GetId());
+		
+    }
+    ++iter;
+  }
+}
+	
+
+
 
 int TraceObject::createGapLists(std::vector<TraceLine*> traceList)
 { 

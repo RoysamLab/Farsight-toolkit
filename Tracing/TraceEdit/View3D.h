@@ -137,6 +137,7 @@ public slots:
 	void HideCellAnalysis();
 	void ApplyNewSettings();
 	void SLine();
+	void FakeSpines();
 	void LoadTraces();
 	void LoadImageData();
 	void LoadSomaFile();
@@ -205,7 +206,7 @@ private:
 	//typedef undoBuffer<std::pair<std::string, TraceObject> > bufferType;
 	//bufferType *undoBuff;
 //settings for display
-	int SmallLineLength;
+	int SmallLineLength, maxNumBits, maxPathLength;
 	float lineWidth;
 	double SelectColor, backColorR, backColorG, backColorB;
 	int numSplit, numDeleted, numMerged;
