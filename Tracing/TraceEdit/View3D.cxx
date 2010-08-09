@@ -2723,7 +2723,7 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
       break;
 
     case 'a':
-      view->SLine();
+      //view->SLine();
 	  view->FakeSpines();
       break;
 
@@ -2792,8 +2792,8 @@ void View3D::SLine()
 void View3D::FakeSpines()
 {
 	int numLines;
-	this->maxNumBits = 4;//hard coded variables for now
-	this->maxPathLength = 3;
+	this->maxNumBits = 10;//hard coded variables for now
+	this->maxPathLength = 10;
 	this->tobj->FindFalseSpines(this->maxNumBits, this->maxPathLength);
 	numLines= this->tobj->FalseSpines.size();
   this->TreeModel->SelectByIDs(this->tobj->FalseSpines);

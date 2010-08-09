@@ -1930,19 +1930,22 @@ void TraceObject::FindFalseSpines(int maxBit, int maxLength)
 	TraceLine *tline;
 	
 	this->FalseSpines.clear();
-	std::vector<TraceLine*>::iterator iter = this->trace_lines.begin();//lineList.begin();
-    this->trace_lines.size();
-	while(iter!=this->trace_lines.end())
-  {
-    tline=*iter;
-	if((maxBit >= tline->GetSize())&& (maxLength >= tline->GetLength()) && (tline->isLeaf() == 1))
+	std::vector<TraceLine *> allLines;
+	allLines = this->GetTraceLines();
+	//std::vector<TraceLine*>::iterator iter = this->trace_lines.begin();//lineList.begin();
+ //   this->trace_lines.size();
+	//while(iter!=this->trace_lines.end())
+	for (unsigned int i = 0; i < allLines.size(); i++)
 	{
-		tline->setTraceColor(this->falseLineColor);
-	    this->FalseSpines.insert( (long) tline->GetId());
-		
-    }
-    ++iter;
-  }
+    //tline=*iter;
+		tline= allLines.at(i);
+		if((maxBit >= tline->GetSize())&& (maxLength >= tline->GetLength()) && (tline->isLeaf() == 1))
+		{
+			tline->setTraceColor(this->falseLineColor);
+			this->FalseSpines.insert( (long) tline->GetId());			
+		}
+    //++iter;
+	}
 }
 	
 
