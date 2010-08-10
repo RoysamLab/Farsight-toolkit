@@ -78,6 +78,12 @@ initialize(std::vector<fregl_reg_record::Pointer> const & reg_records)
     }
   }
 
+  // debugging:
+  std::cout<<"Total number of images = "<<image_ids_.size()<<std::endl;
+  for (unsigned int i = 0; i< image_ids_.size(); i++) {
+    std::cout<<"Image "<<image_ids_[i]<<std::endl;
+  }
+  
   // Get the transformations. element (i,j) is mapping from image i to
   // image j
   transforms_.resize(image_ids_.size(), image_ids_.size());
@@ -143,7 +149,7 @@ initialize(std::vector<fregl_reg_record::Pointer> const & reg_records)
     // in the joint graph. obj_contains the values from pairwise
     // registration. overlap_ is initialized from pairwise, but later
     // updated when joint results are available.
-    if (reg_records[i]->obj()< error_bound_)
+    if (reg_records[i]->obj()<= error_bound_)
       transforms_(from_image_index, to_image_index) = reg_records[i]->transform();
     obj_(from_image_index, to_image_index) = reg_records[i]->obj();
     overlap_(from_image_index, to_image_index) = reg_records[i]->overlap();
@@ -925,26 +931,38 @@ read_xml(std::string const & filename)
     return;
   }
 
+  /*
   if (strcmp(docname, "Joint_Registration") ==0) {
     // get the error bound
     scale_multiplier_ = atoi(root_element->Attribute("error_scale_multiplier"));
     // get the scale_multiplier
     std::stringstream(root_element->Attribute("error_bound")) >> error_bound_;
   }
+  */
   
   // number of images
   int num_images;
   num_images = atoi(root_element->Attribute("number_of_images"));
 
+  // Reading the subgraphs
+  TiXmlElement* cur_node = root_element->FirstChildElement();
+  
+  int num_graphs;
+  num_graphs = atoi(root_element->Attribute("sub_graphs_built"));
+  std::cout<<"number of subgraphs = "<<num_graphs;
+  for (int i = 0; i<num_graphs; i++)
+    cur_node = cur_node->NextSiblingElement();
+
+  
+  
   // Reading the records
   std::vector<fregl_reg_record::Pointer> reg_records;
-  TiXmlElement* cur_node = root_element->FirstChildElement();
   for (; cur_node; cur_node = cur_node->NextSiblingElement() ) {
     fregl_reg_record::Pointer reg_rec = new fregl_reg_record();
     reg_rec->read_xml_node(cur_node);
     reg_records.push_back( reg_rec );
   }
-  
+
   initialize( reg_records );
   //build_graph();
   

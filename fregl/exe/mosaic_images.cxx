@@ -19,8 +19,7 @@ limitations under the License.
 //  registration result or a set of transformations from joint
 //  registration. The images can be gray, rgb color or rgba color. The
 //  input images are assumed TIF images. The output montage is a gray
-//  image if "-color". It is for debugging purpose to see images
-//  montaged to different channels. The usage is
+//  image. The usage is
 //  
 //  mosaic_images xml_file 
 //
@@ -33,7 +32,7 @@ limitations under the License.
 //    -old_str      The old substr in the image names to be replaced
 //    -new_str      The replacement of the old substr
 //    -output       The output image name.
-//    -channel      Needed if the input image is rgb or rgba
+
 
 #include <iostream>
 using std::cerr;
