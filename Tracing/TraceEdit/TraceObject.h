@@ -128,6 +128,7 @@ public:
 	void CreatePolyDataRecursive(TraceLine* , vtkSmartPointer<vtkFloatArray> , vtkSmartPointer<vtkPoints> ,vtkSmartPointer<vtkCellArray>);
 	void FindMinLines(int smallSize);
 	void FindFalseSpines(int maxBit, int maxLength);
+	void FindFalseBridges(int maxBit);
 	void cleanTree();
 	void Shave(TraceLine* starting, int smallerThan);
 	bool BreakOffBranch(TraceLine* branch, bool keep);
@@ -155,6 +156,7 @@ public:
 	std::vector<int> GetTreeIDs( std::vector<TraceLine*> roots);
 	std::set<long int> SmallLines;
 	std::set<long int> FalseSpines;
+	std::set<long int> FalseBridges;
 	std::vector<TraceGap*> Gaps;
 	std::vector<branchPT*> BranchPoints;
 	std::vector<std::string> FeatureHeaders;

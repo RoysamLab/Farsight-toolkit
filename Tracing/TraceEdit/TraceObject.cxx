@@ -1947,6 +1947,29 @@ void TraceObject::FindFalseSpines(int maxBit, int maxLength)
     //++iter;
 	}
 }
+
+void TraceObject::FindFalseBridges(int maxBit)
+{
+	TraceLine *tline;
+	
+	this->FalseBridges.clear();
+	std::vector<TraceLine *> allLines;
+	allLines = this->GetTraceLines();
+	//std::vector<TraceLine*>::iterator iter = this->trace_lines.begin();//lineList.begin();
+ //   this->trace_lines.size();
+	//while(iter!=this->trace_lines.end())
+	for (unsigned int i = 0; i < allLines.size(); i++)
+	{
+    //tline=*iter;
+		tline= allLines.at(i);
+		if((maxBit >= tline->GetSize())&& (tline->GetBitDensity() <= 1) && (tline->isLeaf() == 0))
+		{
+			tline->setTraceColor(this->falseLineColor);
+			this->FalseBridges.insert( (long) tline->GetId());			
+		}
+    //++iter;
+	}
+}
 	
 
 

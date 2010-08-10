@@ -2725,6 +2725,7 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
     case 'a':
       //view->SLine();
 	  view->FakeSpines();
+	  view->FakeBridges();
       break;
 
     case 'q':
@@ -2792,15 +2793,15 @@ void View3D::SLine()
 void View3D::FakeSpines()
 {
 	int numLines;
-	this->maxNumBits = 10;//hard coded variables for now
-	this->maxPathLength = 10;
+	this->maxNumBits = 4;//hard coded variables for now
+	this->maxPathLength = 3;
 	this->tobj->FindFalseSpines(this->maxNumBits, this->maxPathLength);
 	numLines= this->tobj->FalseSpines.size();
   this->TreeModel->SelectByIDs(this->tobj->FalseSpines);
   QMessageBox Myquestion;
   Myquestion.setText("Number of selected False Spines:  " 
     + QString::number(numLines));
-  Myquestion.setInformativeText("Delete these small lines?" );
+  Myquestion.setInformativeText("Delete these spines?" );
   Myquestion.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
   Myquestion.setDefaultButton(QMessageBox::Yes);
   int ret = Myquestion.exec();
@@ -2821,7 +2822,38 @@ void View3D::FakeSpines()
   }
   this->Rerender();
 }
-
+void View3D::FakeBridges()
+{
+	int numLines;
+	this->maxNumBits = 4;//hard coded variables for now
+	
+	this->tobj->FindFalseBridges(this->maxNumBits);
+	numLines= this->tobj->FalseSpines.size();
+  this->TreeModel->SelectByIDs(this->tobj->FalseBridges);
+  QMessageBox Myquestion;
+  Myquestion.setText("Number of selected Bridges:  " 
+    + QString::number(numLines));
+  Myquestion.setInformativeText("Delete these bridges?" );
+  Myquestion.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
+  Myquestion.setDefaultButton(QMessageBox::Yes);
+  int ret = Myquestion.exec();
+  switch (ret) 
+  { 
+  case QMessageBox::Yes:
+  {
+	this->DeleteTraces();
+    this->tobj->FalseBridges.clear();
+  }
+  break;
+  case QMessageBox::No:
+   {
+     this->tobj->FalseBridges.clear();
+	 this->TreeModel->GetObjectSelection()->clear();
+   }
+   break;
+  }
+  this->Rerender();
+}
 
 
 void View3D::ListSelections()

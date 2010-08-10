@@ -138,6 +138,7 @@ public slots:
 	void ApplyNewSettings();
 	void SLine();
 	void FakeSpines();
+	void FakeBridges();
 	void LoadTraces();
 	void LoadImageData();
 	void LoadSomaFile();
