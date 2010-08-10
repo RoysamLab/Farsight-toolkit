@@ -136,6 +136,7 @@ public slots:
 	void HideSettingsWindow();
 	void HideCellAnalysis();
 	void ApplyNewSettings();
+	void AutomaticEdits();
 	void SLine();
 	void FakeSpines();
 	void FakeBridges();

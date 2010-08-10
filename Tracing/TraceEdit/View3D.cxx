@@ -837,8 +837,8 @@ void View3D::CreateGUIObjects()
 	connect(this->FlipButton, SIGNAL(triggered()), this, SLOT(FlipTraces()));
 	this->FlipButton->setStatusTip("Flip trace direction");
 
-	this->AutomateButton = new QAction("Small Lines", this->CentralWidget);
-	connect(this->AutomateButton, SIGNAL(triggered()), this, SLOT(SLine()));
+	this->AutomateButton = new QAction("Automatic Edits", this->CentralWidget);
+	connect(this->AutomateButton, SIGNAL(triggered()), this, SLOT(AutomaticEdits()));
 	this->AutomateButton->setStatusTip("Automatic selection of all small lines");
 //Branching tools
 	this->root = new QAction("Set Root", this->CentralWidget);
@@ -2723,9 +2723,8 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
       break;
 
     case 'a':
-      //view->SLine();
-	  view->FakeSpines();
-	  view->FakeBridges();
+		view->AutomaticEdits();
+	  
       break;
 
     case 'q':
@@ -2759,9 +2758,18 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
     }
 }
 /*  Selection Actions   */
+void View3D::AutomaticEdits()
+{
+	this->SLine();
+	this->FakeSpines();
+	this->FakeBridges();
+
+}
+
 void View3D::SLine()
 {
   int numLines;
+  this->TreeModel->GetObjectSelection()->clear();
   this->tobj->FindMinLines(this->SmallLineLength);
   numLines= this->tobj->SmallLines.size();
   this->TreeModel->SelectByIDs(this->tobj->SmallLines);
@@ -2793,6 +2801,7 @@ void View3D::SLine()
 void View3D::FakeSpines()
 {
 	int numLines;
+	this->TreeModel->GetObjectSelection()->clear();
 	this->maxNumBits = 4;//hard coded variables for now
 	this->maxPathLength = 3;
 	this->tobj->FindFalseSpines(this->maxNumBits, this->maxPathLength);
@@ -2811,6 +2820,7 @@ void View3D::FakeSpines()
   {
 	this->DeleteTraces();
     this->tobj->FalseSpines.clear();
+	this->TreeModel->GetObjectSelection()->clear();//in the case that selected lines were not deleted
   }
   break;
   case QMessageBox::No:
@@ -2826,14 +2836,14 @@ void View3D::FakeBridges()
 {
 	int numLines;
 	this->maxNumBits = 4;//hard coded variables for now
-	
+	this->TreeModel->GetObjectSelection()->clear();	
 	this->tobj->FindFalseBridges(this->maxNumBits);
 	numLines= this->tobj->FalseSpines.size();
   this->TreeModel->SelectByIDs(this->tobj->FalseBridges);
   QMessageBox Myquestion;
   Myquestion.setText("Number of selected Bridges:  " 
     + QString::number(numLines));
-  Myquestion.setInformativeText("Delete these bridges?" );
+  Myquestion.setInformativeText("Split these bridges?" );
   Myquestion.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
   Myquestion.setDefaultButton(QMessageBox::Yes);
   int ret = Myquestion.exec();
@@ -2841,8 +2851,9 @@ void View3D::FakeBridges()
   { 
   case QMessageBox::Yes:
   {
-	this->DeleteTraces();
+	  this->SplitTraces();
     this->tobj->FalseBridges.clear();
+	this->TreeModel->GetObjectSelection()->clear();//in case selected lines could not be split
   }
   break;
   case QMessageBox::No:
