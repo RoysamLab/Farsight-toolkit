@@ -1918,7 +1918,7 @@ void TraceObject::FindMinLines(int smallSize)
     tline=*iter;
 	if((smallSize >= tline->GetSize())&& (tline->GetBranchPointer()->size()==0))
 	{
-      tline->setTraceColor(this->smallLineColor);
+     // tline->setTraceColor(this->smallLineColor);
 	  this->SmallLines.insert( (long) tline->GetId());
     }
     ++iter;
@@ -1941,7 +1941,7 @@ void TraceObject::FindFalseSpines(int maxBit, int maxLength)
 		tline= allLines.at(i);
 		if((maxBit >= tline->GetSize())&& (maxLength >= tline->GetLength()) && (tline->isLeaf() == 1))
 		{
-			tline->setTraceColor(this->falseLineColor);
+			//tline->setTraceColor(this->falseLineColor);
 			this->FalseSpines.insert( (long) tline->GetId());			
 		}
     //++iter;
@@ -1964,7 +1964,7 @@ void TraceObject::FindFalseBridges(int maxBit)
 		tline= allLines.at(i);
 		if((maxBit >= tline->GetSize())&& (tline->GetBitDensity() <= 1) && (tline->isLeaf() == 0))
 		{
-			tline->setTraceColor(this->falseLineColor);
+			//tline->setTraceColor(this->falseLineColor);
 			this->FalseBridges.insert( (long) tline->GetId());			
 		}
     //++iter;

@@ -2838,12 +2838,12 @@ void View3D::FakeBridges()
 	this->maxNumBits = 4;//hard coded variables for now
 	this->TreeModel->GetObjectSelection()->clear();	
 	this->tobj->FindFalseBridges(this->maxNumBits);
-	numLines= this->tobj->FalseSpines.size();
+	numLines= this->tobj->FalseBridges.size();
   this->TreeModel->SelectByIDs(this->tobj->FalseBridges);
   QMessageBox Myquestion;
   Myquestion.setText("Number of selected Bridges:  " 
     + QString::number(numLines));
-  Myquestion.setInformativeText("Split these bridges?" );
+  Myquestion.setInformativeText("Break these bridges?" );
   Myquestion.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
   Myquestion.setDefaultButton(QMessageBox::Yes);
   int ret = Myquestion.exec();
@@ -2851,13 +2851,14 @@ void View3D::FakeBridges()
   { 
   case QMessageBox::Yes:
   {
-	  this->SplitTraces();
+	  this->BreakBranch();
     this->tobj->FalseBridges.clear();
 	this->TreeModel->GetObjectSelection()->clear();//in case selected lines could not be split
   }
   break;
   case QMessageBox::No:
    {
+	   
      this->tobj->FalseBridges.clear();
 	 this->TreeModel->GetObjectSelection()->clear();
    }
