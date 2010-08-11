@@ -32,12 +32,13 @@ limitations under the License.
 #include "ftkGUI/PlotWindow.h"
 //#include "ftkGUI/HistoWindow.h"
 #include "ftkGUI/TableWindow.h"
-
+#include"ftkGUI/StatisticsToolbar.h"
 #include "itkImageFileReader.h"
 #include "itkImageToVTKImageFilter.h"
 #include "vnl/vnl_cost_function.h"
 #include "vnl/algo/vnl_conjugate_gradient.h"
 #include "vnl/algo/vnl_powell.h"
+
 
 #include <QAction>
 #include <QtGui>
@@ -992,6 +993,8 @@ void View3D::CreateGUIObjects()
 	this->ShowPlots->isCheckable();
 	connect (this->ShowPlots, SIGNAL(triggered()), this, SLOT(ShowTreeData()));
 
+	
+
 	this->CellAnalysis = new QAction("Cell Analysis", this->CentralWidget);
 	connect (this->CellAnalysis, SIGNAL(triggered()), this, SLOT(ShowCellAnalysis()));
 // Lables for the status bar to show edit counts
@@ -1110,6 +1113,14 @@ void View3D::CreateLayout()
   this->ShowToolBars->addAction(this->settingsDock->toggleViewAction());
   this->settingsDock->hide();
 
+  showStatisticsAction = new QAction(tr("Show Statistics Toolbar"), this);
+  connect(showStatisticsAction,SIGNAL(triggered()), this, SLOT(showStatistics()));
+  updateStatisticsAction = new QAction(tr("Update Statistics"), this);
+  connect(updateStatisticsAction, SIGNAL(triggered()), this, SLOT(updateStatistics()));
+  //connect((this->selection), SIGNAL(selectionChanged()), this, SLOT(updateStatistics()));
+  
+	
+
   this->statusBar()->addPermanentWidget(new QLabel("Statistics: Split: ", this));
   this->statusBar()->addPermanentWidget(this->SplitLabel,0);
   this->statusBar()->addPermanentWidget(new QLabel(" Merged: ", this));
@@ -1119,6 +1130,8 @@ void View3D::CreateLayout()
 
   this->ShowToolBars->addAction(this->InformationDisplays->toggleViewAction());
   this->ShowToolBars->addAction(this->ShowPlots);
+  this->ShowToolBars->addAction(this->showStatisticsAction);
+  this->ShowToolBars->addAction(this->updateStatisticsAction);
   this->ShowToolBars->addAction(this->CellAnalysis);
   this->ShowToolBars->addAction(this->SetRaycastToSlicer);
 
@@ -2960,6 +2973,31 @@ void View3D::ShowTreeData()
 	this->TreePlot->move(this->TraceEditSettings.value("TracePlot/pos",QPoint(890, 59)).toPoint());
 	this->TreePlot->show();
 }
+
+void View3D::showStatistics(void)
+{
+	this->statisticsDockWidget = new QDockWidget();
+	this->statisticsToolbar = new StatisticsToolbar(statisticsDockWidget);
+	
+	statisticsDockWidget->setWidget(statisticsToolbar->statisticsDockWidget);
+	statisticsDockWidget->setAllowedAreas(Qt::BottomDockWidgetArea);
+	addDockWidget(Qt::BottomDockWidgetArea, statisticsToolbar->statisticsDockWidget);
+
+	View3D::statisticsToolbar->setTable(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
+	this->flag = 1;	
+}
+
+void View3D::updateStatistics(void)
+{
+	if (this->flag == 1)
+	{
+		std::cout<< "updattteeeee" << std::endl;
+		View3D::statisticsToolbar->statisticsDockWidget->close();
+		showStatistics();
+	}
+		
+}
+
 void View3D::CloseTreePlots()
 {
 	if (this->FTKTable)

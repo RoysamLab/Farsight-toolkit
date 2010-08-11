@@ -39,6 +39,7 @@ class branchPT;
 class CellTrace;
 class ImageRenderActors;
 class ProjectManager;
+class StatisticsToolbar;
 
 class vtkActor;
 class vtkCallbackCommand;
@@ -169,6 +170,8 @@ public slots:
 	void OkToBoot();
 	void EditHelp();
 	void About();
+	void showStatistics(void);
+	void updateStatistics(void);
 
 protected slots:
 	void updateSelectionFromCell();
@@ -204,7 +207,9 @@ private:
 	bool translateImages;
 	QDate  Date;
 	QTime  Time;
-
+	QDockWidget *statisticsDockWidget;
+	int flag;
+	
 	//Declares an undoBuffer
 	//typedef undoBuffer<std::pair<std::string, TraceObject> > bufferType;
 	//bufferType *undoBuff;
@@ -255,6 +260,8 @@ private:
 	QPushButton *createNewBitButton;
 	QAction *ShowPlots;
 	QAction *CellAnalysis;
+	QAction *showStatisticsAction;
+	QAction *updateStatisticsAction;
 
 	/*QAction *UndoButton;
 	QAction *RedoButton;*/
@@ -272,6 +279,7 @@ private:
 	TableWindow *GapsTableView;
 	TableWindow * FL_MeasureTable;
 	PlotWindow *FL_MeasurePlot;
+	StatisticsToolbar * statisticsToolbar;
 
 	//Qt widgets for the settings window
 	QWidget *SettingsWidget;
