@@ -58,6 +58,7 @@ typedef itk::MaximumProjectionImageFilter < ImageType, ImageType> MaxProjectionT
 typedef itk::MinimumProjectionImageFilter < ImageType, ImageType> MinProjectionType;
 typedef itk::MeanProjectionImageFilter < ImageType, ImageType> MeanProjectionType;
 typedef itk::RescaleIntensityImageFilter< ImageType, ImageType> IntensityRescaleType;
+typedef vtkSmartPointer<vtkImageActor> ImageActorPointerType;
 
 struct imageFileHandle
 {
@@ -83,7 +84,7 @@ struct imageFileHandle
 	vtkSmartPointer<vtkVolumeProperty> volumeProperty;
 	vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper;
 //image slicer
-	vtkSmartPointer<vtkImageActor> sliceActor;
+	ImageActorPointerType sliceActor;
 	vtkSmartPointer<vtkImageActor> ProjectionActor;
 #ifdef USE_GPUREN
 	vtkSmartPointer<vtkGPUVolumeRayCastMapper> volumeMapperGPU;
@@ -99,8 +100,8 @@ public:
 //render actors
 	vtkSmartPointer<vtkActor> ContourActor(int i);
 	vtkSmartPointer<vtkActor> GetContourActor(int i);
-	vtkSmartPointer<vtkImageActor> CreateSliceActor(int i);
-	vtkSmartPointer<vtkImageActor> GetSliceActor(int i);
+	ImageActorPointerType CreateSliceActor(int i);
+	ImageActorPointerType GetSliceActor(int i);
 	vtkSmartPointer<vtkImageActor> createProjection(int i, int method);
 	vtkSmartPointer<vtkImageActor> GetProjectionImage(int i);
 	vtkSmartPointer<vtkVolume> RayCastVolume(int i);

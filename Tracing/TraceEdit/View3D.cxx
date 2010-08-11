@@ -383,6 +383,10 @@ void View3D::OkToBoot()
 		this->RacastBar->toggleViewAction()->setDisabled(1);
 		this->chooseInteractorStyle(1);
 	}
+	else
+	{
+		this->chooseInteractorStyle(0);
+	}
 }
 QString View3D::getSomaFile()
 {
@@ -1180,6 +1184,8 @@ void View3D::chooseInteractorStyle(int iren)
 		vtkSmartPointer<vtkInteractorStyleTrackballCamera> style =
 			vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
 		this->Interactor->SetInteractorStyle(style);
+		this->Renderer->ResetCamera();
+		this->QVTK->GetRenderWindow()->Render();
 	}
 }
 void View3D::SetProjectionMethod(int style)

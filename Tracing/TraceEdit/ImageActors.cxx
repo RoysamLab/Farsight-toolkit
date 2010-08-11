@@ -404,14 +404,14 @@ void ImageRenderActors::syncOpacityTransfetFunction()
 	}
 }
 
-vtkSmartPointer<vtkImageActor> ImageRenderActors::CreateSliceActor(int i)
+ImageActorPointerType ImageRenderActors::CreateSliceActor(int i)
 {
 	if (i == -1)
 	{
 		i = int (this->LoadedImages.size() - 1);
 	}
 	vtkImageData * newimage = this->LoadedImages[i]->ImageData;
-	this->LoadedImages[i]->sliceActor = vtkSmartPointer<vtkImageActor>::New();
+	this->LoadedImages[i]->sliceActor = ImageActorPointerType::New();
 	this->LoadedImages[i]->sliceActor->SetInput(newimage);
 	this->LoadedImages[i]->sliceActor->SetZSlice(0);
 	this->LoadedImages[i]->sliceActor->SetPosition(this->LoadedImages[i]->x, 
@@ -421,7 +421,7 @@ vtkSmartPointer<vtkImageActor> ImageRenderActors::CreateSliceActor(int i)
 	return this->LoadedImages[i]->sliceActor;
 
 }
-vtkSmartPointer<vtkImageActor> ImageRenderActors::GetSliceActor(int i)
+ImageActorPointerType ImageRenderActors::GetSliceActor(int i)
 {
 	if (i == -1)
 	{
