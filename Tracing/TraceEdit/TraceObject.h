@@ -129,6 +129,7 @@ public:
 	void FindMinLines(int smallSize);
 	void FindFalseSpines(int maxBit, int maxLength);
 	void FindFalseBridges(int maxBit);
+	void FindHalfBridges(int maxBit, int DtoParent);
 	void cleanTree();
 	void Shave(TraceLine* starting, int smallerThan);
 	bool BreakOffBranch(TraceLine* branch, bool keep);
@@ -157,6 +158,7 @@ public:
 	std::set<long int> SmallLines;
 	std::set<long int> FalseSpines;
 	std::set<long int> FalseBridges;
+	std::set<long int> HalfBridges;
 	std::vector<TraceGap*> Gaps;
 	std::vector<branchPT*> BranchPoints;
 	std::vector<std::string> FeatureHeaders;

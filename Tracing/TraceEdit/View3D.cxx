@@ -2769,6 +2769,7 @@ void View3D::AutomaticEdits()
 	this->SLine();
 	this->FakeSpines();
 	this->FakeBridges();
+	this->HalfBridges();
 
 }
 
@@ -2866,6 +2867,42 @@ void View3D::FakeBridges()
    {
 	   
      this->tobj->FalseBridges.clear();
+	 this->TreeModel->GetObjectSelection()->clear();
+   }
+   break;
+  }
+  this->Rerender();
+}
+
+void View3D::HalfBridges()
+{
+	int numLines;
+	this->maxNumBits = 10;//hard coded variables for now
+	this->minDistToParent = 6;
+	this->TreeModel->GetObjectSelection()->clear();	
+	this->tobj->FindHalfBridges(this->maxNumBits, this->minDistToParent);
+	numLines= this->tobj->HalfBridges.size();
+  this->TreeModel->SelectByIDs(this->tobj->HalfBridges);
+  QMessageBox Myquestion;
+  Myquestion.setText("Number of selected half bridges:  " 
+    + QString::number(numLines));
+  Myquestion.setInformativeText("Break these bridges?" );
+  Myquestion.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
+  Myquestion.setDefaultButton(QMessageBox::Yes);
+  int ret = Myquestion.exec();
+  switch (ret) 
+  { 
+  case QMessageBox::Yes:
+  {
+	  this->BreakBranch();
+    this->tobj->HalfBridges.clear();
+	this->TreeModel->GetObjectSelection()->clear();//in case selected lines could not be split
+  }
+  break;
+  case QMessageBox::No:
+   {
+	   
+     this->tobj->HalfBridges.clear();
 	 this->TreeModel->GetObjectSelection()->clear();
    }
    break;

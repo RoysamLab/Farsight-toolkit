@@ -1970,6 +1970,31 @@ void TraceObject::FindFalseBridges(int maxBit)
     //++iter;
 	}
 }
+
+
+
+void TraceObject::FindHalfBridges(int maxBit, int DtoParent)
+{
+	TraceLine *tline;
+	
+	this->HalfBridges.clear();
+	std::vector<TraceLine *> allLines;
+	allLines = this->GetTraceLines();
+	//std::vector<TraceLine*>::iterator iter = this->trace_lines.begin();//lineList.begin();
+ //   this->trace_lines.size();
+	//while(iter!=this->trace_lines.end())
+	for (unsigned int i = 0; i < allLines.size(); i++)
+	{
+    //tline=*iter;
+		tline= allLines.at(i);
+		if((maxBit >= tline->GetSize())&& (DtoParent <= tline->GetDistToParent()) && (tline->isLeaf() == 1))
+		{
+			//tline->setTraceColor(this->falseLineColor);
+			this->HalfBridges.insert( (long) tline->GetId());			
+		}
+    //++iter;
+	}
+}
 	
 
 
