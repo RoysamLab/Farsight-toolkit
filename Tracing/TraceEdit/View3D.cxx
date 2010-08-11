@@ -140,40 +140,37 @@ View3D::View3D(QWidget *parent)
 	this->setCentralWidget(this->CentralWidget);
 	this->CreateGUIObjects();
 	this->CreateLayout();
+	this->CreateBootLoader();
 	QStringList args = QCoreApplication::arguments();
   // load as many files as possible. Provide offset for differentiating types
 	for(int counter=1; counter<args.size(); counter++)
     {
 		QString nextFile = args[counter];
-		QFileInfo nextFileInfo(nextFile);
-		if( nextFileInfo.exists())
+		if (nextFile.endsWith("swc"))
 		{
-			if (nextFile.endsWith("swc"))
-			{
-				this->tobj->ReadFromSWCFile((char*)nextFile.toStdString().c_str());
-			}
-			else if(nextFile.endsWith("xml"))
-			{
-				this->tobj->ReadFromRPIXMLFile((char*)nextFile.toStdString().c_str());
-			}
-			else if (nextFile.endsWith("vtk"))
-			{
-				this->tobj->ReadFromVTKFile((char*)nextFile.toStdString().c_str());
-			}
+			this->TraceFiles.append( nextFile);
+			this->EditLogDisplay->append("Trace file: \t" + nextFile);
+			this->tobj->ReadFromSWCFile((char*)nextFile.toStdString().c_str());
 		}
-
- //   else if( strcmp(args[counter]+len-3,"tif")==0 ||
- //            strcmp(args[counter]+len-4,"tiff")==0 ||
- //      strcmp(args[counter]+len-3, "pic")==0||
- //      strcmp(args[counter]+len-3, "PIC")==0)
- //     {
- //     printf("I detected a 3d image file\n");
-	//  this->Image.append( QString(args[counter]));
-	//  this->ImageActors->loadImage(QString(args[counter]).toStdString(), "Image");
- //     }
- //   num_loaded++;
-    }
-	this->CreateBootLoader();
+		else if(nextFile.endsWith("xml",Qt::CaseInsensitive))
+		{
+			this->EditLogDisplay->append("Trace file: \t" + nextFile);
+			this->TraceFiles.append( nextFile);
+			this->tobj->ReadFromRPIXMLFile((char*)nextFile.toStdString().c_str());
+		}
+		else if (nextFile.endsWith("vtk"))
+		{
+			this->EditLogDisplay->append("Trace file: \t" + nextFile);
+			this->TraceFiles.append( nextFile);
+			this->tobj->ReadFromVTKFile((char*)nextFile.toStdString().c_str());
+		}
+		else if (nextFile.endsWith("tiff")||nextFile.endsWith("tif")||nextFile.endsWith("pic",Qt::CaseInsensitive))
+		{
+			this->Image.append( nextFile);
+			this->EditLogDisplay->append("Image file: \t" + nextFile);
+			this->ImageActors->loadImage(nextFile.toStdString(), "Image");
+		}
+    }//end of arg 
 }
 
 View3D::View3D(TraceObject *Traces)
