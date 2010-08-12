@@ -839,9 +839,9 @@ void View3D::CreateGUIObjects()
 	connect(this->FlipButton, SIGNAL(triggered()), this, SLOT(FlipTraces()));
 	this->FlipButton->setStatusTip("Flip trace direction");
 
-	this->AutomateButton = new QAction("Automatic Edits", this->CentralWidget);
+	/*this->AutomateButton = new QAction("Automatic Edits", this->CentralWidget);
 	connect(this->AutomateButton, SIGNAL(triggered()), this, SLOT(AutomaticEdits()));
-	this->AutomateButton->setStatusTip("Automatic selection of all small lines");
+	this->AutomateButton->setStatusTip("Automatic selection of all small lines");*/
 //Branching tools
 	this->root = new QAction("Set Root", this->CentralWidget);
 	connect(this->root, SIGNAL(triggered()), this, SLOT(SetRoots()));
@@ -1056,12 +1056,14 @@ void View3D::CreateLayout()
 	this->fileMenu->addAction(this->exitAction);
 
 	this->ShowToolBars = this->menuBar()->addMenu(tr("Tool Bars"));
+	this->DataViews = this->menuBar()->addMenu(tr("Visualization"));
+	this->analysisViews = this->menuBar()->addMenu(tr("Analysis"));
 
   this->EditsToolBar = addToolBar(tr("Edit Toolbar"));
   this->EditsToolBar->setToolTip("EditToolBar");
   this->ShowToolBars->addAction(this->EditsToolBar->toggleViewAction());
 
-  this->EditsToolBar->addAction(this->AutomateButton);
+  //this->EditsToolBar->addAction(this->AutomateButton);
   this->EditsToolBar->addAction(this->ListButton);
   this->EditsToolBar->addAction(this->ClearButton);
   this->EditsToolBar->addAction(this->SelectTreeAction);
@@ -1144,7 +1146,7 @@ void View3D::CreateLayout()
   this->settingsDock = new QDockWidget("Editor Settings", this);
   this->settingsDock->setWidget(this->SettingsWidget);
   this->addDockWidget(Qt::LeftDockWidgetArea, this->settingsDock);
-  this->ShowToolBars->addAction(this->settingsDock->toggleViewAction());
+  this->DataViews->addAction(this->settingsDock->toggleViewAction());
   this->settingsDock->hide();
 
   showStatisticsAction = new QAction(tr("Show Statistics Toolbar"), this);
@@ -1203,12 +1205,13 @@ void View3D::CreateLayout()
   this->statusBar()->addPermanentWidget(new QLabel(" Deleted: ", this));
   this->statusBar()->addPermanentWidget(this->DeleteLabel,0);
 
-  this->ShowToolBars->addAction(this->InformationDisplays->toggleViewAction());
-  this->ShowToolBars->addAction(this->ShowPlots);
-  this->ShowToolBars->addAction(this->showStatisticsAction);
-  this->ShowToolBars->addAction(this->updateStatisticsAction);
-  this->ShowToolBars->addAction(this->CellAnalysis);
-  this->ShowToolBars->addAction(this->SetRaycastToSlicer);
+  this->analysisViews->addAction(this->InformationDisplays->toggleViewAction());
+  this->analysisViews->addAction(this->ShowPlots);
+  this->analysisViews->addAction(this->showStatisticsAction);
+  this->analysisViews->addAction(this->updateStatisticsAction);
+  this->analysisViews->addAction(this->CellAnalysis);
+  //this->ShowToolBars->addSeparator();
+  this->DataViews->addAction(this->SetRaycastToSlicer);
 
   this->createRayCastSliders();
   this->menuBar()->addSeparator();
@@ -1545,7 +1548,7 @@ void View3D::createRayCastSliders()
 	this->RacastBar->addWidget(new QLabel("Brightness"));
 	this->RacastBar->addWidget(this->BrightnessSpin);
 	this->RacastBar->addWidget(this->BrightnessSlider);
-	this->ShowToolBars->addAction(this->RacastBar->toggleViewAction());
+	this->DataViews->addAction(this->RacastBar->toggleViewAction());
 	if(this->ImageActors->NumberOfImages() < 1)
 	{
 		this->RacastBar->hide();

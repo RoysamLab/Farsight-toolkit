@@ -228,6 +228,8 @@ private:
     QWidget *CentralWidget;
 	QMenu *fileMenu;
 	QMenu *ShowToolBars;
+	QMenu *DataViews;
+	QMenu *analysisViews;
 	QMenu *help;
 	QAction *aboutAction;
 	QToolBar *EditsToolBar, *BranchToolBar, *RacastBar, *SlicerBar;
