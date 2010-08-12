@@ -138,10 +138,13 @@ public slots:
 	void HideCellAnalysis();
 	void ApplyNewSettings();
 	void AutomaticEdits();
-	void SLine();
-	void FakeSpines();
-	void FakeBridges();
-	void HalfBridges();
+	void ShowAutomatedEdits();
+
+	void SLine(double d);
+	void FakeSpines(double d);
+	void FakeBridges(double d);
+	void HalfBridges(double d);
+
 	void LoadTraces();
 	void LoadImageData();
 	void LoadSomaFile();
@@ -188,7 +191,7 @@ private:
 	//the get____file functions called as renderer is not initalized
 	double uMperVoxel; //0 x, 1 y, 2 z
 	QSettings TraceEditSettings;
-	QDockWidget * InformationDisplays, *BootDock, * settingsDock, *cursor3DDock;
+	QDockWidget * InformationDisplays, *BootDock, * settingsDock, *cursor3DDock, *AutomationDock;
 	QTextEdit * EditLogDisplay;
 	QString UserName, LabName, ProjectName;
 	QStringList TraceFiles, Image, SomaFile, tempTraceFile;
@@ -285,12 +288,19 @@ private:
 	QWidget *SettingsWidget;
 	QSpinBox *MaxGapField;
 	QDoubleSpinBox *GapToleranceField;
-	QSpinBox *LineLengthField;
+	//QSpinBox *LineLengthField;
 	QDoubleSpinBox *ColorValueField;
 	QSpinBox *LineWidthField;
 	QDoubleSpinBox *BackgroundRBox,*BackgroundGBox,*BackgroundBBox;
 	QDialogButtonBox *ApplySettingsButton;
 	QComboBox *typeCombo, *StyleCombo, *ProjectionCombo;
+
+	//Automation widgets
+	QWidget * AutomationWidget;
+	//QSpinBox *MaxSpineBit, *MaxBridgeBits, *MaxHalfBridgeBits;
+	QDoubleSpinBox *MaxSpinePathLength, * MinDistanceToParent, *MaxSpineBit, *MaxBridgeBits, *MaxHalfBridgeBits, *LineLengthField;
+	QRadioButton *SmallLinesButton, *FalseSpinesButton, *FalseBridgesButton, *HalfBridgesButton;
+	QGroupBox *SmallLinesGroup, *FakeSpinesGroup, *FakeBridgeGroup, *HalfBridgeGroup;
 	//stuff for tol and selection
     //general render window variables
 	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;

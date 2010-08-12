@@ -923,9 +923,6 @@ void View3D::CreateGUIObjects()
 	this->GapToleranceField->setRange(0,100);
 	this->GapToleranceField->setSingleStep(.1);
 
-	this->LineLengthField = new QSpinBox(this->SettingsWidget);
-	this->LineLengthField->setRange(0,1000);
-
 	this->ColorValueField = new QDoubleSpinBox(this->SettingsWidget);
 	this->ColorValueField->setRange(0,1);
 	this->ColorValueField->setSingleStep(.01);
@@ -951,12 +948,11 @@ void View3D::CreateGUIObjects()
 	
 	this->tobj->gapTol = this->TraceEditSettings.value("mainWin/gapTol", .5).toDouble() ;
 	this->tobj->gapMax = this->TraceEditSettings.value("mainWin/gapMax", 10).toInt();
-	this->SmallLineLength = this->TraceEditSettings.value("mainWin/smallLine", 10).toInt();
+	this->SmallLineLength = this->TraceEditSettings.value("mainWin/smallLine", 10).toDouble();
 	this->SelectColor =this->TraceEditSettings.value("mainWin/selectColor", .1).toDouble();
 	this->lineWidth= this->TraceEditSettings.value("mainWin/LineWidth", 2).toDouble();
 	this->MaxGapField->setValue(this->tobj->gapMax);
 	this->GapToleranceField->setValue(this->tobj->gapTol);
-	this->LineLengthField->setValue(this->SmallLineLength);
 	this->ColorValueField->setValue(this->SelectColor);
 	this->LineWidthField->setValue(this->lineWidth);
 	this->BackgroundRBox->setValue(this->backColorR);
@@ -988,9 +984,50 @@ void View3D::CreateGUIObjects()
 
 	this->ShowPlots = new QAction("Show Plots", this);
 	this->ShowPlots->isCheckable();
-	connect (this->ShowPlots, SIGNAL(triggered()), this, SLOT(ShowTreeData()));
+	connect (this->ShowPlots, SIGNAL(triggered()), this, SLOT(ShowTreeData()));	  
+//Automation widget setup
+	this->AutomationWidget = new QWidget(this);
 
-	
+	this->SmallLinesButton = new QRadioButton(tr("Small Lines"));
+	connect(this->SmallLinesButton, SIGNAL(clicked()), this, SLOT(ShowAutomatedEdits()));
+	this->FalseSpinesButton = new QRadioButton(tr("False Spines"));
+	connect(this->FalseSpinesButton, SIGNAL(clicked()), this, SLOT(ShowAutomatedEdits()));
+	this->FalseBridgesButton = new QRadioButton(tr("Bridges"));
+	connect(this->FalseBridgesButton, SIGNAL(clicked()), this, SLOT(ShowAutomatedEdits()));
+	this->HalfBridgesButton = new QRadioButton(tr("Half Bridges"));
+	connect(this->HalfBridgesButton, SIGNAL(clicked()), this, SLOT(ShowAutomatedEdits()));
+
+	this->LineLengthField = new QDoubleSpinBox(this->SettingsWidget);
+	this->LineLengthField->setRange(0,1000);
+	this->LineLengthField->setValue(this->SmallLineLength);
+	connect(this->LineLengthField, SIGNAL(valueChanged(double)), this, SLOT( SLine(double)));
+
+	this->MaxSpineBit = new QDoubleSpinBox(this->AutomationWidget);
+	this->MaxSpineBit->setRange(1,20);
+	this->MaxSpineBit->setValue(4);
+	connect(this->MaxSpineBit, SIGNAL(valueChanged(double)), this, SLOT( FakeSpines(double)));
+
+	this->MaxBridgeBits =  new QDoubleSpinBox(this->AutomationWidget);
+	this->MaxBridgeBits->setRange(1,20);
+	this->MaxBridgeBits->setValue(3);
+	connect(this->MaxBridgeBits, SIGNAL(valueChanged(double)), this, SLOT( FakeBridges(double)));
+
+	this->MaxHalfBridgeBits =  new QDoubleSpinBox(this->AutomationWidget);
+	this->MaxHalfBridgeBits->setRange(1,20);
+	this->MaxHalfBridgeBits->setValue(10);
+	connect(this->MaxHalfBridgeBits, SIGNAL(valueChanged(double)), this, SLOT( HalfBridges(double)));
+
+	this->MaxSpinePathLength = new QDoubleSpinBox(this->AutomationWidget);
+	this->MaxSpinePathLength->setRange(1,30);
+	this->MaxSpinePathLength->setSingleStep(.01);
+	this->MaxSpinePathLength->setValue(3);
+	connect(this->MaxSpinePathLength, SIGNAL(valueChanged(double)), this, SLOT( FakeSpines(double)));
+
+	this->MinDistanceToParent = new QDoubleSpinBox(this->AutomationWidget);
+	this->MinDistanceToParent->setRange(1,40);
+	this->MinDistanceToParent->setSingleStep(.01);
+	this->MinDistanceToParent->setValue(6);
+	connect(this->MinDistanceToParent, SIGNAL(valueChanged(double)), this, SLOT( HalfBridges(double)));
 
 	this->CellAnalysis = new QAction("Cell Analysis", this->CentralWidget);
 	connect (this->CellAnalysis, SIGNAL(triggered()), this, SLOT(ShowCellAnalysis()));
@@ -1080,7 +1117,7 @@ void View3D::CreateLayout()
 	QFormLayout *settingsLayout = new QFormLayout(selectionSettings);
 	settingsLayout->addRow(tr("Maximum gap length:"), this->MaxGapField);
 	settingsLayout->addRow(tr("Gap length tolerance:"),this->GapToleranceField);
-	settingsLayout->addRow(tr("Small line length:"),this->LineLengthField);
+	//settingsLayout->addRow(tr("Small line length:"),this->LineLengthField);
 	//selectionSettings->setLayout(settingsLayout);
 	SettingsBox->addWidget(selectionSettings);
 
@@ -1115,8 +1152,49 @@ void View3D::CreateLayout()
   updateStatisticsAction = new QAction(tr("Update Statistics"), this);
   connect(updateStatisticsAction, SIGNAL(triggered()), this, SLOT(updateStatistics()));
   //connect((this->selection), SIGNAL(selectionChanged()), this, SLOT(updateStatistics()));
-  
-	
+
+  this->AutomationDock = new QDockWidget("Automated Edits", this);
+  QVBoxLayout * AutomationDockLayout = new QVBoxLayout(this->AutomationWidget);
+
+  QGroupBox *SelectedErrorGroup = new QGroupBox("Select Error Type");
+  QGridLayout * SelectedErrorLayout = new QGridLayout(SelectedErrorGroup);
+  SelectedErrorLayout->addWidget( this->SmallLinesButton, 0, 0);
+  SelectedErrorLayout->addWidget( this->FalseSpinesButton, 0, 1);
+  SelectedErrorLayout->addWidget( this->FalseBridgesButton, 1, 0);
+  SelectedErrorLayout->addWidget( this->HalfBridgesButton, 1, 1);
+  AutomationDockLayout->addWidget(SelectedErrorGroup);
+
+  this->SmallLinesGroup = new QGroupBox("Detect Small Lines");
+  this->SmallLinesGroup->setEnabled(0);
+  QFormLayout * SmallLineLayout = new QFormLayout(this->SmallLinesGroup);
+  SmallLineLayout->addRow("Size", this->LineLengthField);
+  AutomationDockLayout->addWidget(this->SmallLinesGroup);
+
+  this->FakeSpinesGroup = new QGroupBox("Detect Fake Spines");
+  this->FakeSpinesGroup->setEnabled(0);
+  QFormLayout * FakeSpinesLayout = new QFormLayout(this->FakeSpinesGroup);
+  FakeSpinesLayout->addRow("Size", this->MaxSpineBit);
+  FakeSpinesLayout->addRow("Path Length", this->MaxSpinePathLength);
+  AutomationDockLayout->addWidget(this->FakeSpinesGroup);
+
+  this->FakeBridgeGroup = new QGroupBox("Detect Bridges");
+  this->FakeBridgeGroup->setEnabled(0);
+  QFormLayout * FakeBridgesLayout = new QFormLayout(this->FakeBridgeGroup);
+  FakeBridgesLayout->addRow("Size", this->MaxBridgeBits);
+  AutomationDockLayout->addWidget(this->FakeBridgeGroup);
+
+  this->HalfBridgeGroup = new QGroupBox("Detect Half Bridges");
+  this->HalfBridgeGroup->setEnabled(0);
+  QFormLayout * HalfBridgesLayout = new QFormLayout(this->HalfBridgeGroup);
+  HalfBridgesLayout->addRow("Size", this->MaxHalfBridgeBits);
+  HalfBridgesLayout->addRow("Distance From Parent", this->MinDistanceToParent);
+  AutomationDockLayout->addWidget(this->HalfBridgeGroup);
+  AutomationDockLayout->addStretch();
+
+  this->AutomationDock->setWidget(this->AutomationWidget);
+  this->addDockWidget(Qt::RightDockWidgetArea, this->AutomationDock);
+  this->ShowToolBars->addAction(this->AutomationDock->toggleViewAction());
+  this->AutomationDock->hide();
 
   this->statusBar()->addPermanentWidget(new QLabel("Statistics: Split: ", this));
   this->statusBar()->addPermanentWidget(this->SplitLabel,0);
@@ -1140,7 +1218,33 @@ void View3D::CreateLayout()
   this->createSlicerSlider();
   this->menuBar()->hide();
 }
-
+void View3D::ShowAutomatedEdits()
+{
+	this->SmallLinesGroup->setEnabled(0);
+	this->FakeSpinesGroup->setEnabled(0);
+	this->FakeBridgeGroup->setEnabled(0);
+	this->HalfBridgeGroup->setEnabled(0);
+	if (this->SmallLinesButton->isChecked())
+	{
+		this->SmallLinesGroup->setEnabled(1);
+		this->SLine(1);
+	}
+	else if (this->FalseSpinesButton->isChecked())
+	{
+		this->FakeSpinesGroup->setEnabled(1);
+		this->FakeSpines(1);
+	}
+	else if (this->FalseBridgesButton->isChecked())
+	{
+		this->FakeBridgeGroup->setEnabled(1);
+		this->FakeBridges(1);
+	}
+	else if (this->HalfBridgesButton->isChecked())
+	{
+		this->HalfBridgeGroup->setEnabled(1);
+		this->HalfBridges(1);
+	}
+}
 /* create interactors*/
 void View3D::CreateInteractorStyle()
 {
@@ -2736,12 +2840,12 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
     case 't':
 		view->SelectTrees();
       //view->ShowSettingsWindow();
-      break;
+      break;/*
 
     case 'a':
 		view->AutomaticEdits();
 	  
-      break;
+      break;*/
 
     case 'q':
       view->updateSelectionHighlights();
@@ -2776,21 +2880,21 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
 /*  Selection Actions   */
 void View3D::AutomaticEdits()
 {
-	this->SLine();
-	this->FakeSpines();
-	this->FakeBridges();
-	this->HalfBridges();
+	/*this->SLine(double d);
+	this->FakeSpines(double d);
+	this->FakeBridges(double d);
+	this->HalfBridges(double d);*/
 
 }
 
-void View3D::SLine()
+void View3D::SLine(double d)
 {
   int numLines;
   this->TreeModel->GetObjectSelection()->clear();
-  this->tobj->FindMinLines(this->SmallLineLength);
+  this->tobj->FindMinLines((int) this->LineLengthField->value());
   numLines= this->tobj->SmallLines.size();
   this->TreeModel->SelectByIDs(this->tobj->SmallLines);
-  QMessageBox Myquestion;
+  /*QMessageBox Myquestion;
   Myquestion.setText("Number of selected small lines:  " 
     + QString::number(numLines));
   Myquestion.setInformativeText("Delete these small lines?" );
@@ -2812,112 +2916,112 @@ void View3D::SLine()
    }
    break;
   }
-  this->Rerender();
+  this->Rerender();*/
 }
 
-void View3D::FakeSpines()
+void View3D::FakeSpines(double d)
 {
 	int numLines;
 	this->TreeModel->GetObjectSelection()->clear();
 	this->maxNumBits = 4;//hard coded variables for now
 	this->maxPathLength = 3;
-	this->tobj->FindFalseSpines(this->maxNumBits, this->maxPathLength);
+	this->tobj->FindFalseSpines((int) this->MaxSpineBit->value(), (int) this->MaxSpinePathLength->value());
 	numLines= this->tobj->FalseSpines.size();
   this->TreeModel->SelectByIDs(this->tobj->FalseSpines);
-  QMessageBox Myquestion;
-  Myquestion.setText("Number of selected False Spines:  " 
-    + QString::number(numLines));
-  Myquestion.setInformativeText("Delete these spines?" );
-  Myquestion.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
-  Myquestion.setDefaultButton(QMessageBox::Yes);
-  int ret = Myquestion.exec();
-  switch (ret) 
-  { 
-  case QMessageBox::Yes:
-  {
-	this->DeleteTraces();
-    this->tobj->FalseSpines.clear();
-	this->TreeModel->GetObjectSelection()->clear();//in the case that selected lines were not deleted
-  }
-  break;
-  case QMessageBox::No:
-   {
-     this->tobj->FalseSpines.clear();
-	 this->TreeModel->GetObjectSelection()->clear();
-   }
-   break;
-  }
-  this->Rerender();
+ // QMessageBox Myquestion;
+ // Myquestion.setText("Number of selected False Spines:  " 
+ //   + QString::number(numLines));
+ // Myquestion.setInformativeText("Delete these spines?" );
+ // Myquestion.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
+ // Myquestion.setDefaultButton(QMessageBox::Yes);
+ // int ret = Myquestion.exec();
+ // switch (ret) 
+ // { 
+ // case QMessageBox::Yes:
+ // {
+	//this->DeleteTraces();
+ //   this->tobj->FalseSpines.clear();
+	//this->TreeModel->GetObjectSelection()->clear();//in the case that selected lines were not deleted
+ // }
+ // break;
+ // case QMessageBox::No:
+ //  {
+ //    this->tobj->FalseSpines.clear();
+	// this->TreeModel->GetObjectSelection()->clear();
+ //  }
+ //  break;
+ // }
+ // this->Rerender();
 }
-void View3D::FakeBridges()
+void View3D::FakeBridges(double d)
 {
 	int numLines;
 	this->maxNumBits = 4;//hard coded variables for now
 	this->TreeModel->GetObjectSelection()->clear();	
-	this->tobj->FindFalseBridges(this->maxNumBits);
+	this->tobj->FindFalseBridges((int) this->MaxBridgeBits->value());
 	numLines= this->tobj->FalseBridges.size();
   this->TreeModel->SelectByIDs(this->tobj->FalseBridges);
-  QMessageBox Myquestion;
-  Myquestion.setText("Number of selected Bridges:  " 
-    + QString::number(numLines));
-  Myquestion.setInformativeText("Break these bridges?" );
-  Myquestion.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
-  Myquestion.setDefaultButton(QMessageBox::Yes);
-  int ret = Myquestion.exec();
-  switch (ret) 
-  { 
-  case QMessageBox::Yes:
-  {
-	  this->BreakBranch();
-    this->tobj->FalseBridges.clear();
-	this->TreeModel->GetObjectSelection()->clear();//in case selected lines could not be split
-  }
-  break;
-  case QMessageBox::No:
-   {
-	   
-     this->tobj->FalseBridges.clear();
-	 this->TreeModel->GetObjectSelection()->clear();
-   }
-   break;
-  }
-  this->Rerender();
+ // QMessageBox Myquestion;
+ // Myquestion.setText("Number of selected Bridges:  " 
+ //   + QString::number(numLines));
+ // Myquestion.setInformativeText("Break these bridges?" );
+ // Myquestion.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
+ // Myquestion.setDefaultButton(QMessageBox::Yes);
+ // int ret = Myquestion.exec();
+ // switch (ret) 
+ // { 
+ // case QMessageBox::Yes:
+ // {
+	//  this->BreakBranch();
+ //   this->tobj->FalseBridges.clear();
+	//this->TreeModel->GetObjectSelection()->clear();//in case selected lines could not be split
+ // }
+ // break;
+ // case QMessageBox::No:
+ //  {
+	//   
+ //    this->tobj->FalseBridges.clear();
+	// this->TreeModel->GetObjectSelection()->clear();
+ //  }
+ //  break;
+ // }
+ // this->Rerender();
 }
 
-void View3D::HalfBridges()
+void View3D::HalfBridges(double d)
 {
 	int numLines;
 	this->maxNumBits = 10;//hard coded variables for now
 	this->minDistToParent = 6;
 	this->TreeModel->GetObjectSelection()->clear();	
-	this->tobj->FindHalfBridges(this->maxNumBits, this->minDistToParent);
+	this->tobj->FindHalfBridges((int) this->MaxHalfBridgeBits->value(), (int) this->MinDistanceToParent->value());
 	numLines= this->tobj->HalfBridges.size();
   this->TreeModel->SelectByIDs(this->tobj->HalfBridges);
-  QMessageBox Myquestion;
-  Myquestion.setText("Number of selected half bridges:  " 
-    + QString::number(numLines));
-  Myquestion.setInformativeText("Break these bridges?" );
-  Myquestion.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
-  Myquestion.setDefaultButton(QMessageBox::Yes);
-  int ret = Myquestion.exec();
-  switch (ret) 
-  { 
-  case QMessageBox::Yes:
-  {
-	  this->BreakBranch();
-    this->tobj->HalfBridges.clear();
-	this->TreeModel->GetObjectSelection()->clear();//in case selected lines could not be split
-  }
-  break;
-  case QMessageBox::No:
-   {
-	   
-     this->tobj->HalfBridges.clear();
-	 this->TreeModel->GetObjectSelection()->clear();
-   }
-   break;
-  }
-  this->Rerender();
+ // QMessageBox Myquestion;
+ // Myquestion.setText("Number of selected half bridges:  " 
+ //   + QString::number(numLines));
+ // Myquestion.setInformativeText("Break these bridges?" );
+ // Myquestion.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
+ // Myquestion.setDefaultButton(QMessageBox::Yes);
+ // int ret = Myquestion.exec();
+ // switch (ret) 
+ // { 
+ // case QMessageBox::Yes:
+ // {
+	//  this->BreakBranch();
+ //   this->tobj->HalfBridges.clear();
+	//this->TreeModel->GetObjectSelection()->clear();//in case selected lines could not be split
+ // }
+ // break;
+ // case QMessageBox::No:
+ //  {
+	//   
+ //    this->tobj->HalfBridges.clear();
+	// this->TreeModel->GetObjectSelection()->clear();
+ //  }
+ //  break;
+ // }
+ // this->Rerender();
 }
 
 
