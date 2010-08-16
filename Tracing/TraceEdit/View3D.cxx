@@ -769,6 +769,8 @@ void View3D::setupLinkedSpace()
   this->CellModel->setParent(this);
   this->connect(this->CellModel->GetObjectSelection(), SIGNAL(changed()), 
 	  this, SLOT(updateSelectionFromCell()));
+  this->connect(this->TreeModel->GetObjectSelection(), SIGNAL(changed()), 
+	  this,SLOT(updateStatistics()));
 }
 
 /*Set up the components of the interface */
@@ -1148,12 +1150,21 @@ void View3D::CreateLayout()
   this->addDockWidget(Qt::LeftDockWidgetArea, this->settingsDock);
   this->DataViews->addAction(this->settingsDock->toggleViewAction());
   this->settingsDock->hide();
-
-  showStatisticsAction = new QAction(tr("Show Statistics Toolbar"), this);
-  connect(showStatisticsAction,SIGNAL(triggered()), this, SLOT(showStatistics()));
-  updateStatisticsAction = new QAction(tr("Update Statistics"), this);
-  connect(updateStatisticsAction, SIGNAL(triggered()), this, SLOT(updateStatistics()));
-  //connect((this->selection), SIGNAL(selectionChanged()), this, SLOT(updateStatistics()));
+  
+  /*this->statisticsDockWidget = new QDockWidget();
+  this->statisticsToolbar = new StatisticsToolbar(statisticsDockWidget);
+  
+  this->statisticsDockWidget->setWidget(statisticsToolbar->statisticsDockWidget);
+  this->statisticsDockWidget->setAllowedAreas(Qt::BottomDockWidgetArea);
+  this->addDockWidget(Qt::BottomDockWidgetArea, statisticsToolbar->statisticsDockWidget);*/
+  this->showStatisticsAction = new QAction(tr("Show Statistics Toolbar"), this);
+  
+  //this->statisticsToolbar->hide();
+  this->connect(showStatisticsAction,SIGNAL(triggered()), this, SLOT(showStatistics()));
+  //updateStatisticsAction = new QAction(tr("Update Statistics"), this);
+  //connect(updateStatisticsAction, SIGNAL(triggered()), this, SLOT(updateStatistics()));
+  //this->connect(this->TreeModel->GetObjectSelection(), SIGNAL(changed()), 
+	//  this,SLOT(updateStatistics()));
 
   this->AutomationDock = new QDockWidget("Automated Edits", this);
   QVBoxLayout * AutomationDockLayout = new QVBoxLayout(this->AutomationWidget);
@@ -1212,7 +1223,7 @@ void View3D::CreateLayout()
   this->analysisViews->addAction(this->CellAnalysis);
   //this->ShowToolBars->addSeparator();
   this->DataViews->addAction(this->SetRaycastToSlicer);
-
+  
   this->createRayCastSliders();
   this->menuBar()->addSeparator();
   this->help = this->menuBar()->addMenu("Help");
@@ -3087,17 +3098,19 @@ void View3D::showStatistics(void)
 	statisticsDockWidget->setAllowedAreas(Qt::BottomDockWidgetArea);
 	addDockWidget(Qt::BottomDockWidgetArea, statisticsToolbar->statisticsDockWidget);
 
-	View3D::statisticsToolbar->setTable(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
+	this->statisticsToolbar->setTable(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
+	this->statisticsToolbar->statisticsDockWidget->show();
 	this->flag = 1;	
 }
 
 void View3D::updateStatistics(void)
 {
-	if (this->flag == 1)
+	if (this->statisticsToolbar->isVisible())//if its not hidden
 	{
-		std::cout<< "updattteeeee" << std::endl;
-		View3D::statisticsToolbar->statisticsDockWidget->close();
-		showStatistics();
+		//std::cout<< "updattteeeee" << std::endl;
+		this->statisticsToolbar->statisticsDockWidget->close();
+		this->statisticsToolbar->setTable(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
+	    showStatistics();
 	}
 		
 }
