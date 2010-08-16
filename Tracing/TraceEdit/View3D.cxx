@@ -171,6 +171,10 @@ View3D::View3D(QWidget *parent)
 			this->ImageActors->loadImage(nextFile.toStdString(), "Image");
 		}
     }//end of arg 
+	if(!this->TraceFiles.isEmpty() || !this->Image.isEmpty() || !this->SomaFile.isEmpty())
+	{
+		this->OkToBoot();
+	}
 }
 
 View3D::View3D(TraceObject *Traces)
@@ -1219,7 +1223,7 @@ void View3D::CreateLayout()
   this->analysisViews->addAction(this->InformationDisplays->toggleViewAction());
   this->analysisViews->addAction(this->ShowPlots);
   this->analysisViews->addAction(this->showStatisticsAction);
-  this->analysisViews->addAction(this->updateStatisticsAction);
+ // this->analysisViews->addAction(this->updateStatisticsAction);
   this->analysisViews->addAction(this->CellAnalysis);
   //this->ShowToolBars->addSeparator();
   this->DataViews->addAction(this->SetRaycastToSlicer);
@@ -3100,17 +3104,17 @@ void View3D::showStatistics(void)
 
 	this->statisticsToolbar->setTable(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
 	this->statisticsToolbar->statisticsDockWidget->show();
-	this->flag = 1;	
+	this->statFlag = true;	
 }
 
 void View3D::updateStatistics(void)
 {
-	if (this->statisticsToolbar->isVisible())//if its not hidden
+	if (!this->statisticsDockWidget->isHidden())//if its not hidden
 	{
 		//std::cout<< "updattteeeee" << std::endl;
-		this->statisticsToolbar->statisticsDockWidget->close();
+		//this->statisticsToolbar->statisticsDockWidget->close();
 		this->statisticsToolbar->setTable(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
-	    showStatistics();
+	    //showStatistics();
 	}
 		
 }
