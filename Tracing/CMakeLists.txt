@@ -54,3 +54,8 @@ OPTION( BUILD_Rendering "Build 5-Label Result Renderer" ON )
 IF( BUILD_Rendering )
   SUBDIRS( Rendering )
 ENDIF()
+
+OPTION( BUILD_ExtractSomas "Build Soma Extraction executables" OFF )
+IF( BUILD_ExtractSomas )
+  SUBDIRS( ExtractSomas )
+ENDIF()
