@@ -774,6 +774,7 @@ void View3D::setupLinkedSpace()
   this->CellModel->setParent(this);
   this->connect(this->CellModel->GetObjectSelection(), SIGNAL(changed()), 
 	  this, SLOT(updateSelectionFromCell()));
+  this->connect(this->TreeModel->GetObjectSelection(), SIGNAL(changed()), this, SLOT(updateStatistics()));
 }
 
 /*Set up the components of the interface */
@@ -1158,7 +1159,7 @@ void View3D::CreateLayout()
   connect(showStatisticsAction,SIGNAL(triggered()), this, SLOT(showStatistics()));
   updateStatisticsAction = new QAction(tr("Update Statistics"), this);
   connect(updateStatisticsAction, SIGNAL(triggered()), this, SLOT(updateStatistics()));
-  //connect((this->selection), SIGNAL(selectionChanged()), this, SLOT(updateStatistics()));
+ 
 
   this->AutomationDock = new QDockWidget("Automated Edits", this);
   QVBoxLayout * AutomationDockLayout = new QVBoxLayout(this->AutomationWidget);
@@ -1234,21 +1235,25 @@ void View3D::ShowAutomatedEdits()
 	this->HalfBridgeGroup->setEnabled(0);
 	if (this->SmallLinesButton->isChecked())
 	{
+		//this->TreeModel->GetObjectSelection()->clear();
 		this->SmallLinesGroup->setEnabled(1);
 		this->SLine(1);
 	}
 	else if (this->FalseSpinesButton->isChecked())
 	{
+		//this->TreeModel->GetObjectSelection()->clear();
 		this->FakeSpinesGroup->setEnabled(1);
 		this->FakeSpines(1);
 	}
 	else if (this->FalseBridgesButton->isChecked())
 	{
+		//this->TreeModel->GetObjectSelection()->clear();
 		this->FakeBridgeGroup->setEnabled(1);
 		this->FakeBridges(1);
 	}
 	else if (this->HalfBridgesButton->isChecked())
 	{
+		//this->TreeModel->GetObjectSelection()->clear();
 		this->HalfBridgeGroup->setEnabled(1);
 		this->HalfBridges(1);
 	}
@@ -2898,138 +2903,44 @@ void View3D::AutomaticEdits()
 void View3D::SLine(double d)
 {
   int numLines;
+  this->flag=0;//statistics wont update after clear
   this->TreeModel->GetObjectSelection()->clear();
   this->tobj->FindMinLines((int) this->LineLengthField->value());
   numLines= this->tobj->SmallLines.size();
+  this->flag=1;//now statistics will update
   this->TreeModel->SelectByIDs(this->tobj->SmallLines);
-  /*QMessageBox Myquestion;
-  Myquestion.setText("Number of selected small lines:  " 
-    + QString::number(numLines));
-  Myquestion.setInformativeText("Delete these small lines?" );
-  Myquestion.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
-  Myquestion.setDefaultButton(QMessageBox::Yes);
-  int ret = Myquestion.exec();
-  switch (ret) 
-  { 
-  case QMessageBox::Yes:
-  {
-	this->DeleteTraces();
-    this->tobj->SmallLines.clear();
-  }
-  break;
-  case QMessageBox::No:
-   {
-     this->tobj->SmallLines.clear();
-	 this->TreeModel->GetObjectSelection()->clear();
-   }
-   break;
-  }
-  this->Rerender();*/
 }
 
 void View3D::FakeSpines(double d)
 {
 	int numLines;
+	this->flag=0;
 	this->TreeModel->GetObjectSelection()->clear();
-	this->maxNumBits = 4;//hard coded variables for now
-	this->maxPathLength = 3;
 	this->tobj->FindFalseSpines((int) this->MaxSpineBit->value(), (int) this->MaxSpinePathLength->value());
 	numLines= this->tobj->FalseSpines.size();
+	this->flag=1;
   this->TreeModel->SelectByIDs(this->tobj->FalseSpines);
- // QMessageBox Myquestion;
- // Myquestion.setText("Number of selected False Spines:  " 
- //   + QString::number(numLines));
- // Myquestion.setInformativeText("Delete these spines?" );
- // Myquestion.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
- // Myquestion.setDefaultButton(QMessageBox::Yes);
- // int ret = Myquestion.exec();
- // switch (ret) 
- // { 
- // case QMessageBox::Yes:
- // {
-	//this->DeleteTraces();
- //   this->tobj->FalseSpines.clear();
-	//this->TreeModel->GetObjectSelection()->clear();//in the case that selected lines were not deleted
- // }
- // break;
- // case QMessageBox::No:
- //  {
- //    this->tobj->FalseSpines.clear();
-	// this->TreeModel->GetObjectSelection()->clear();
- //  }
- //  break;
- // }
- // this->Rerender();
 }
 void View3D::FakeBridges(double d)
 {
 	int numLines;
-	this->maxNumBits = 4;//hard coded variables for now
+	this->flag=0;
 	this->TreeModel->GetObjectSelection()->clear();	
 	this->tobj->FindFalseBridges((int) this->MaxBridgeBits->value());
 	numLines= this->tobj->FalseBridges.size();
+	this->flag=1;
   this->TreeModel->SelectByIDs(this->tobj->FalseBridges);
- // QMessageBox Myquestion;
- // Myquestion.setText("Number of selected Bridges:  " 
- //   + QString::number(numLines));
- // Myquestion.setInformativeText("Break these bridges?" );
- // Myquestion.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
- // Myquestion.setDefaultButton(QMessageBox::Yes);
- // int ret = Myquestion.exec();
- // switch (ret) 
- // { 
- // case QMessageBox::Yes:
- // {
-	//  this->BreakBranch();
- //   this->tobj->FalseBridges.clear();
-	//this->TreeModel->GetObjectSelection()->clear();//in case selected lines could not be split
- // }
- // break;
- // case QMessageBox::No:
- //  {
-	//   
- //    this->tobj->FalseBridges.clear();
-	// this->TreeModel->GetObjectSelection()->clear();
- //  }
- //  break;
- // }
- // this->Rerender();
 }
 
 void View3D::HalfBridges(double d)
 {
 	int numLines;
-	this->maxNumBits = 10;//hard coded variables for now
-	this->minDistToParent = 6;
+	this->flag=0;
 	this->TreeModel->GetObjectSelection()->clear();	
 	this->tobj->FindHalfBridges((int) this->MaxHalfBridgeBits->value(), (int) this->MinDistanceToParent->value());
 	numLines= this->tobj->HalfBridges.size();
+	this->flag=1;
   this->TreeModel->SelectByIDs(this->tobj->HalfBridges);
- // QMessageBox Myquestion;
- // Myquestion.setText("Number of selected half bridges:  " 
- //   + QString::number(numLines));
- // Myquestion.setInformativeText("Break these bridges?" );
- // Myquestion.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
- // Myquestion.setDefaultButton(QMessageBox::Yes);
- // int ret = Myquestion.exec();
- // switch (ret) 
- // { 
- // case QMessageBox::Yes:
- // {
-	//  this->BreakBranch();
- //   this->tobj->HalfBridges.clear();
-	//this->TreeModel->GetObjectSelection()->clear();//in case selected lines could not be split
- // }
- // break;
- // case QMessageBox::No:
- //  {
-	//   
- //    this->tobj->HalfBridges.clear();
-	// this->TreeModel->GetObjectSelection()->clear();
- //  }
- //  break;
- // }
- // this->Rerender();
 }
 
 
@@ -3105,8 +3016,8 @@ void View3D::updateStatistics(void)
 	if (this->flag == 1)
 	{
 		//std::cout<< "updattteeeee" << std::endl;
-		this->statisticsToolbar->statisticsDockWidget->close();
-		this->flag = 0;
+		//this->statisticsToolbar->statisticsDockWidget->close();
+		//this->flag = 0;
 		showStatistics();
 	}
 		
