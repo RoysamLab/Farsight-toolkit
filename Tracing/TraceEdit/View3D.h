@@ -211,7 +211,7 @@ private:
 	QDate  Date;
 	QTime  Time;
 	QDockWidget *statisticsDockWidget;
-	bool statFlag;
+	int flag;
 	
 	//Declares an undoBuffer
 	//typedef undoBuffer<std::pair<std::string, TraceObject> > bufferType;
