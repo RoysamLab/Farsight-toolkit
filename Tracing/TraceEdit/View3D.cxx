@@ -2903,43 +2903,83 @@ void View3D::AutomaticEdits()
 void View3D::SLine(double d)
 {
   int numLines;
-  this->flag=0;//statistics wont update after clear
-  this->TreeModel->GetObjectSelection()->clear();
-  this->tobj->FindMinLines((int) this->LineLengthField->value());
-  numLines= this->tobj->SmallLines.size();
-  this->flag=1;//now statistics will update
+  if(this->flag==1)//if statistics toolbar in use
+  {
+	this->flag=0;//statistics wont update after clear
+	this->TreeModel->GetObjectSelection()->clear();
+	this->tobj->FindMinLines((int) this->LineLengthField->value());
+	numLines= this->tobj->SmallLines.size();
+	this->flag=1;//now statistics will update
+ ;
+  }
+
+  else
+  {
+	this->TreeModel->GetObjectSelection()->clear();
+	this->tobj->FindMinLines((int) this->LineLengthField->value());
+	numLines= this->tobj->SmallLines.size();
+  }
   this->TreeModel->SelectByIDs(this->tobj->SmallLines);
 }
 
 void View3D::FakeSpines(double d)
 {
 	int numLines;
-	this->flag=0;
-	this->TreeModel->GetObjectSelection()->clear();
-	this->tobj->FindFalseSpines((int) this->MaxSpineBit->value(), (int) this->MaxSpinePathLength->value());
-	numLines= this->tobj->FalseSpines.size();
-	this->flag=1;
+	if(this->flag==1)
+	{
+		this->flag=0;
+		this->TreeModel->GetObjectSelection()->clear();
+		this->tobj->FindFalseSpines((int) this->MaxSpineBit->value(), (int) this->MaxSpinePathLength->value());
+		numLines= this->tobj->FalseSpines.size();
+		this->flag=1;
+	}
+
+	else
+	{
+		this->TreeModel->GetObjectSelection()->clear();
+		this->tobj->FindFalseSpines((int) this->MaxSpineBit->value(), (int) this->MaxSpinePathLength->value());
+		numLines= this->tobj->FalseSpines.size();
+	}
   this->TreeModel->SelectByIDs(this->tobj->FalseSpines);
 }
 void View3D::FakeBridges(double d)
 {
 	int numLines;
-	this->flag=0;
-	this->TreeModel->GetObjectSelection()->clear();	
-	this->tobj->FindFalseBridges((int) this->MaxBridgeBits->value());
-	numLines= this->tobj->FalseBridges.size();
-	this->flag=1;
+	if(this->flag==1)
+	{
+		this->flag=0;
+		this->TreeModel->GetObjectSelection()->clear();	
+		this->tobj->FindFalseBridges((int) this->MaxBridgeBits->value());
+		numLines= this->tobj->FalseBridges.size();
+		this->flag=1;
+    }
+	else
+	{
+		this->TreeModel->GetObjectSelection()->clear();	
+		this->tobj->FindFalseBridges((int) this->MaxBridgeBits->value());
+		numLines= this->tobj->FalseBridges.size();
+	}
   this->TreeModel->SelectByIDs(this->tobj->FalseBridges);
 }
 
 void View3D::HalfBridges(double d)
 {
 	int numLines;
-	this->flag=0;
-	this->TreeModel->GetObjectSelection()->clear();	
-	this->tobj->FindHalfBridges((int) this->MaxHalfBridgeBits->value(), (int) this->MinDistanceToParent->value());
-	numLines= this->tobj->HalfBridges.size();
-	this->flag=1;
+	if(this->flag==1)
+	{
+		this->flag=0;
+		this->TreeModel->GetObjectSelection()->clear();	
+		this->tobj->FindHalfBridges((int) this->MaxHalfBridgeBits->value(), (int) this->MinDistanceToParent->value());
+		numLines= this->tobj->HalfBridges.size();
+		this->flag=1;
+	}
+
+	else
+	{
+		this->TreeModel->GetObjectSelection()->clear();	
+	    this->tobj->FindHalfBridges((int) this->MaxHalfBridgeBits->value(), (int) this->MinDistanceToParent->value());
+	    numLines= this->tobj->HalfBridges.size();
+	}
   this->TreeModel->SelectByIDs(this->tobj->HalfBridges);
 }
 
