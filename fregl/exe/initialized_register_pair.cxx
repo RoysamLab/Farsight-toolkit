@@ -32,6 +32,7 @@ limitations under the License.
 //  -smooth         Gaussian smoothing is required
 //  -x              x-shift
 //  -y              y-shift
+//  -z              z-shift
 
 #include <iostream>
 using std::cerr;
@@ -105,12 +106,18 @@ main(  int argc, char* argv[] )
   vul_arg< int >       channel         ("-channel", "The color channel (0-red, 1-green, 2-blue), or the image channel if the original image is a lsm image.",0);
   vul_arg< float >     background      ("-bg", "threshold value for the background", 30);
   vul_arg< double >      smooth        ("-smooth", "If smoothing is performed", 0.5);
-  vul_arg<bool>          scaling_arg    ("-scaling","Substantial scaling is expected.", false);
-  vul_arg< float >  init_x_arg    ("-x","x-shift");
-  vul_arg< float >  init_y_arg    ("-y","y-shift");
+  vul_arg<bool>          scaling_arg   ("-scaling","Substantial scaling is expected.", false);
+  vul_arg< float >  init_x_arg    ("-x","x-shift",0);
+  vul_arg< float >  init_y_arg    ("-y","y-shift",0);
+  vul_arg< float >  init_z_arg    ("-z","z-shift",0);
   
   vul_arg_parse( argc, argv );
 
+  if ( !(init_x_arg.set() && init_y_arg.set()) ) {
+    std::cerr<<"ERROR: Both x-shift and y-shift are required"<<std::endl;
+    return 1;
+  }
+  
   ImageType3D::Pointer from_image, to_image;
 
   // Read the image
@@ -147,7 +154,23 @@ main(  int argc, char* argv[] )
   bool succeeded = false;
   vul_timer timer;
   timer.mark();
-  if (registor.run(init_x_arg(), init_y_arg(), obj_value))
+  if (init_z_arg.set()){
+    TransformType::ParametersType params(12);
+    for (unsigned i = 0; i<9; i++)
+      params[i] = 0;
+    params[0] = 1;
+    params[4] = 1;
+    params[8] = 1;
+    params[9] = init_x_arg();
+    params[10] = init_y_arg();
+    params[11] = init_z_arg();
+
+    TransformType::Pointer prior_xform = TransformType::New();
+    prior_xform->SetParameters(params);
+    if (registor.run(prior_xform, obj_value))
+      succeeded = true;
+  }
+  else if (registor.run(init_x_arg(), init_y_arg(), obj_value))
     succeeded = true;
   
   /*

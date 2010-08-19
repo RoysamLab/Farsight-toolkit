@@ -140,7 +140,7 @@ private:
 
   //: Read the xform from the transformation file dumped by gdbicp
   rgrl_transformation_sptr read_2d_xform( vcl_istream& reg_info );
-
+  
   //: A utility function to remove the white spaces at the beginning and end of a string.
   vcl_string string_trim (const vcl_string& source, const vcl_string& pat);
 

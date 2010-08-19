@@ -432,10 +432,6 @@ run(double init_x, double init_y, double& obj_value)
   return true;
   
 }
-
-
-
-
     
 bool 
 fregl_pairwise_register::
