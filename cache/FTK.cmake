@@ -33,3 +33,6 @@ set(BUILD_ftl3d OFF CACHE BOOL "Set to OFF for FARSIGHT")
 
 #set(USE_KPLS ON CACHE BOOL "Compile with proprietary KPLS library")
 set(USE_KPLS OFF CACHE BOOL "Compile without proprietary KPLS library")
+
+# force generation of 32-bit code on Mac OS X
+#set(CMAKE_OSX_ARCHITECTURES "i386" CACHE STRING "Do 32-bit on Mac OS X")
