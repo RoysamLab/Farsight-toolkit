@@ -97,6 +97,8 @@ limitations under the License.
 View3D::View3D(QWidget *parent)
 : QMainWindow(parent)
 {
+	this->debug_actor = NULL;//Added by Arun
+	this->debug_object = NULL;//Added by Arun
 	this->QVTK = 0;
 	this->GapsPlotView = NULL;
 	this->TreePlot = NULL;
@@ -104,7 +106,7 @@ View3D::View3D(QWidget *parent)
 	this->FL_MeasurePlot = NULL;
 	this->FL_MeasureTable = NULL;
 	this->GapsTableView = NULL;
-  this->TreeModel = NULL;
+	this->TreeModel = NULL;
 
 	this->tobj = new TraceObject;
 	//int num_loaded = 0;
@@ -1894,8 +1896,20 @@ void View3D::Rerender()
   this->Renderer->RemoveActor(this->BranchActor);
   this->Renderer->RemoveActor(this->PointsActor);
   
+  if(this->debug_actor != NULL)
+	  this->Renderer->RemoveActor(this->debug_actor);
+  if(debug_object!=NULL)
+  {
+  vtkSmartPointer<vtkPolyDataMapper> polymap = vtkSmartPointer<vtkPolyDataMapper>::New();
+  polymap->SetInput(this->debug_object->GetVTKPolyData());
+  this->debug_actor = vtkSmartPointer<vtkActor>::New();
+  this->debug_actor->SetMapper(polymap);
+  this->Renderer->AddActor(this->debug_actor);
+  }
+
   std::vector<TraceBit> vec = this->tobj->CollectTraceBits();
   this->AddPointsAsPoints(vec);
+  this->AddDebugPoints(this->tobj->debug_points);
   this->UpdateLineActor();
   this->UpdateBranchActor();
   this->Renderer->AddActor(this->BranchActor); 
@@ -1974,6 +1988,41 @@ void View3D::AddPointsAsPoints(std::vector<TraceBit> vec)
   Renderer->AddActor(PointsActor);
 
 }
+
+void View3D::AddDebugPoints(std::vector<TraceBit> vec)
+{
+	if(vec.size() ==0)
+		return;
+  vtkSmartPointer<vtkCubeSource> cube_src = vtkSmartPointer<vtkCubeSource>::New();
+  cube_src->SetBounds(-1,1,-1,1,-1,1);
+  vtkSmartPointer<vtkPolyData> point_poly = vtkSmartPointer<vtkPolyData>::New();
+  vtkSmartPointer<vtkPoints> points=vtkSmartPointer<vtkPoints>::New();
+  vtkSmartPointer<vtkCellArray> cells=vtkSmartPointer<vtkCellArray>::New();
+  for(unsigned int counter=0; counter<vec.size(); counter++)
+  {
+    int return_id = points->InsertNextPoint(vec[counter].x,vec[counter].y,vec[counter].z);
+    cells->InsertNextCell(1);
+    cells->InsertCellPoint(return_id);
+  }
+  //printf("About to create poly\n");
+  point_poly->SetPoints(points);
+  point_poly->SetVerts(cells);
+  vtkSmartPointer<vtkGlyph3D> glyphs = vtkSmartPointer<vtkGlyph3D>::New();
+  glyphs->SetSource(cube_src->GetOutput());
+  glyphs->SetInput(point_poly);
+  vtkSmartPointer<vtkPolyDataMapper> cubemap = vtkSmartPointer<vtkPolyDataMapper>::New();
+  cubemap->SetInput(glyphs->GetOutput());
+  cubemap->GlobalImmediateModeRenderingOn();
+  PointsActor = vtkSmartPointer<vtkActor>::New();
+  PointsActor->SetMapper(cubemap);
+  PointsActor->SetPickable(0);
+  PointsActor->GetProperty()->SetPointSize(5);
+  PointsActor->GetProperty()->SetOpacity(.5);
+  PointsActor->GetProperty()->SetColor(1,1,0);
+  Renderer->AddActor(PointsActor);
+
+}
+
 
 /*Hippocampal datasets functions*/
 #define SIGN(x) (((x)>0)?1:-1)
@@ -2109,14 +2158,14 @@ std::vector<int> View3D::getHippocampalTraceIDsToDelete_v2(int z_threshold, int 
 			zsum = zsum + zvals.back();
 		}
 
-		unsigned int counter1 = 0;
+		int counter1 = 0;
 		if(has_parent)
 			counter1++;
 
 		std::vector<unsigned int> tids;
 		tids.clear();
-		unsigned int gmin = 0;
-		unsigned int gmax = alltids->size()-1;
+		int gmin = 0;
+		int gmax = alltids->size()-1;
 		if(has_parent)
 		{
 			gmin = MIN(2,zvals.size()-1);
@@ -2125,7 +2174,7 @@ std::vector<int> View3D::getHippocampalTraceIDsToDelete_v2(int z_threshold, int 
 		{
 			gmax = MAX(gmax-2,0);
 		}
-
+		
 
 		double z1,z2;
 		z1 = zsum/zvals.size();
@@ -2139,14 +2188,26 @@ std::vector<int> View3D::getHippocampalTraceIDsToDelete_v2(int z_threshold, int 
 				if(abs(z1+(counter1)*1.0/(zvals.size()-1)*(z2-z1)-zvals[counter1])>z_threshold)
 				{
 					printf("adding counter1 = %d\n",counter1);
+					if(has_parent)
+					{
 						if(counter1>=gmin && counter1<=gmax)
 							tids.push_back((*alltids)[counter1]);
 						if(counter1-1>=gmin && counter1-1<=gmax)
 							tids.push_back((*alltids)[counter1-1]);
+					}
+					else
+					{
+						if(counter1>=gmin && counter1<=gmax)
+							tids.push_back((*alltids)[counter1]);
+						if(counter1+1>=gmin && counter1+1<=gmax)
+							tids.push_back((*alltids)[counter1+1]);
+					}
 						/*if(counter1>=gmin && counter1<=gmax)
 							tids.push_back(counter1);
 						if(counter1-1>=gmin && counter1-1<=gmax)
 							tids.push_back(counter1-1);*/
+					
+						
 				}
 				else
 				{
@@ -2485,13 +2546,17 @@ void View3D::HandleHippocampalDataset()
 	//this->QVTK->GetRenderWindow()->Render();
 	
 	std::vector<TraceLine*> *tlinepointer = this->tobj->GetTraceLinesPointer();
-	
+	//for (unsigned int counter = 0; counter < tlinepointer->size(); counter++)
+	//{
+	//	DeleteEmptyLeafNodesRecursive((*tlinepointer)[counter]);
+	//}
 	//for(int counter =0; counter < tlinepointer->size(); counter++)
 	//{
 	//	smoothzrecursive((*tlinepointer)[counter],2);
 	//	//dir_check((*tlinepointer)[counter]);
 	//}
 
+	//this->tobj->debug_points = this->tobj->CollectTraceBits();
 	
 	std::vector<int> to_del = getHippocampalTraceIDsToDelete_v2(7,4);
 	printf("To delete = %d\n",(int)to_del.size());
@@ -2530,7 +2595,7 @@ void View3D::HandleHippocampalDataset()
 
 	//return;
 	// z smoothing
-	int num_points = 10;
+	int num_points = 4;
 	for(unsigned int counter =0; counter < tlinepointer->size(); counter++)
 	{
 		smoothzrecursive((*tlinepointer)[counter],num_points);
@@ -2541,7 +2606,7 @@ void View3D::HandleHippocampalDataset()
 	printf("Waiting after smoothzrecursive\n");
 	//return;
 	//std::cin.get();
-	
+	//return;
 	//scanf("%*d\n");
 	/*to_del = getHippocampalTraceIDsToDelete(10);
 	this->SelectedTraceIDs = to_del;
@@ -2571,6 +2636,11 @@ void View3D::HandleHippocampalDataset()
 	//FILE *fp = fopen("ftemp.swc","w");
 	int line_count = 1;
 	std::vector<Gaplet> gaps;
+	if(debug_object!=NULL)
+		delete debug_object;
+
+	debug_object = new TraceObject();
+
 	for(unsigned int counter = 0; counter < cricbits.size(); counter++)
 	{
 		std::vector<int> validbits(cricbits.size());
@@ -2581,6 +2651,8 @@ void View3D::HandleHippocampalDataset()
 			validbits[counter1] = 0;
 			if(counter!=counter1)
 			{
+
+
 				double dist = canConnect(cricbits[counter],cricbits[counter1]);
 				
 				if(dist < 1000)
@@ -2593,6 +2665,13 @@ void View3D::HandleHippocampalDataset()
 					//fprintf(fp,"%d 4 %0.2lf %0.2lf %0.2lf 1.0 %d\n",line_count,cricbits[counter].x, cricbits[counter].y, cricbits[counter].z, -1);
 					//fprintf(fp,"%d 4 %0.2lf %0.2lf %0.2lf 1.0 %d\n",line_count+1,cricbits[counter1].x, cricbits[counter1].y, cricbits[counter1].z, line_count);
 					line_count = line_count+2;
+					//TraceLine * tt = new TraceLine();
+					//tt->AddTraceBit(cricbits[temp.c1]);
+					//tt->AddTraceBit(cricbits[temp.c2]);
+					//tt->SetParent(NULL);
+					//debug_object->GetTraceLinesPointer()->push_back(tt);
+					//debug stuff
+					/**/
 				}
 				
 			}
@@ -2605,6 +2684,8 @@ void View3D::HandleHippocampalDataset()
 		done[counter] = 0;
 	}
 	int gaps_merged = 0;
+
+	
 	//return ;
 	for(unsigned int counter =0; counter < gaps.size(); counter++)
 	{
@@ -2625,6 +2706,19 @@ void View3D::HandleHippocampalDataset()
 			done[gaps[counter].c2] = 1;
 		}
 	}
+
+	//debugging
+	//for(unsigned int counter =0; counter < gaps.size(); counter++)
+	//{
+	//	if(done[gaps[counter].c1] ==0 && done[gaps[counter].c2]==0 ) 
+	//	{
+	//				TraceLine * tt = new TraceLine();
+	//				tt->AddTraceBit(cricbits[gaps[counter].c1]);
+	//				tt->AddTraceBit(cricbits[gaps[counter].c2]);
+	//				tt->SetParent(NULL);
+	//				debug_object->GetTraceLinesPointer()->push_back(tt);
+	//	}	
+	//}
 
 	printf(" I merged %d (minus the errors)\n", gaps_merged);
 	
@@ -2703,7 +2797,7 @@ void View3D::smoothzrecursive( TraceLine* tline, int n)
 	}
 	titer1 = tline->GetTraceBitIteratorBegin();
 	
-	unsigned int counter = 0;
+	int counter = 0;
 	if(has_parent)
 		counter++;
 
@@ -2728,7 +2822,7 @@ void View3D::smoothzrecursive( TraceLine* tline, int n)
 		}
 		sum_x = sum_x/(max1-min1+1);
 		sum_y = sum_y/(max1-min1+1);
-		titer1->z = sum_z;
+		//titer1->z = sum_z;
 		//titer1->x = sum_x;
 		//titer1->y = sum_y;
 		titer1++;

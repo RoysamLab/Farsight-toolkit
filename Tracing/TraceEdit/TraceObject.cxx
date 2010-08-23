@@ -60,6 +60,7 @@ TraceObject::TraceObject()
   this->tx = 0;
   this->ty = 0;
   this->tz = 0;
+
 }
 
 TraceObject::TraceObject(const TraceObject &T)
@@ -1405,6 +1406,17 @@ void TraceObject::splitTrace(int selectedCellId)
   {
     cerr << "Cannot split a TraceLine that consists of fewer than two points, ";
     cerr << "Call (d)elete instead." << endl;
+	if(selectedLine->GetSize()!=0)
+	{
+		TraceBit temp;
+		temp = *(selectedLine->GetTraceBitIteratorBegin());
+		debug_points.push_back(temp);
+		printf("Pushed to debug points\n");
+	}
+	else
+	{
+		printf("Line of size 0\n");
+	}
     return;
   }
 

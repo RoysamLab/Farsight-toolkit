@@ -190,5 +190,20 @@ bool vtkFileHandler::Read(std::string filename)
 	return true;
 }
 
+/*
+	void SetNodes(std::vector<fPoint3D> * nodes);
+	void SetLines(std::vector<pairE> * lines);
+	bool Write(std::string filename);
+	*/
+
+void SWCFileWriter::SetNodes(std::vector<fPoint3D> *nodes)
+{
+	nodesPtr = nodes;
+}
+
+void SWCFileWriter::SetLines(std::vector<pairE> *lines)
+{
+	linesPtr = lines;
+}
 
 }  // end namespace mdl

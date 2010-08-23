@@ -90,6 +90,7 @@ public:
 	void CreateSphereActor();
 	
 	void AddPointsAsPoints (std::vector<TraceBit> vec);
+	void AddDebugPoints(std::vector<TraceBit> vec);// shown as big yellow cubes
 	
 	static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
 	static void HandleKeyPress(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
@@ -346,5 +347,8 @@ private:
 	QSpinBox * OpacitySpin, * BrightnessSpin;
 	QDoubleSpinBox * OpacityValueSpin;
 	QSlider *OpacitySlider, *BrightnessSlider;
+
+	TraceObject * debug_object;
+	vtkSmartPointer<vtkActor> debug_actor;
 };
 #endif

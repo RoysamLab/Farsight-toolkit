@@ -170,6 +170,7 @@ public:
 
 	vtksys::hash_map< unsigned int, unsigned long long int > hashp;
 	vtksys::hash_map< unsigned int, unsigned long long int > hashc;
+	std::vector<TraceBit> debug_points;// ADDED BY ARUN ON 22nd August 2010 for debugging
 	
 private:
 	std::vector<TraceLine*> trace_lines;
@@ -197,6 +198,9 @@ private:
   int NextTraceBitID;  
   bool CombineShortVTKLines;
 	std::vector<branchPT*> branchPTsInProgress;
+
+	
+	
 
 	
 };

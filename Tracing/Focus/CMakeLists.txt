@@ -16,5 +16,7 @@ SET( NSRCS
 )
 
 ADD_Executable( focus ${NSRCS} )
+ADD_Executable( focus_grayscale Focus.h Focus.cpp main_grayscale.cpp)
 
 TARGET_LINK_LIBRARIES( focus ITKCommon ITKBasicFilters ITKAlgorithms ITKIO )
+TARGET_LINK_LIBRARIES( focus_grayscale ITKCommon ITKBasicFilters ITKAlgorithms ITKIO )

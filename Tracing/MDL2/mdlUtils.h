@@ -40,6 +40,21 @@ private:
 
 };
 
+
+
+class SWCFileWriter
+{
+	SWCFileWriter();
+	void SetNodes(std::vector<fPoint3D> * nodes);
+	void SetLines(std::vector<pairE> * lines);
+	bool Write(std::string filename);
+
+private:
+	std::vector<fPoint3D> * nodesPtr;
+	std::vector<pairE> * linesPtr;
+
+};
+
 }  // end namespace mdl
 
 #endif

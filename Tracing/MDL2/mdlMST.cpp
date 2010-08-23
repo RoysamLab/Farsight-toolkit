@@ -268,7 +268,7 @@ bool MST::nodesToEdges(int type)
 		typedef TreeType::KdTreeNodeType NodeType;
 
 		TreeType::Pointer tree = treeGenerator->GetOutput();
-		unsigned int num_neighbors = 20;
+		unsigned int num_neighbors = 6;
 		TreeType::InstanceIdentifierVectorType neighbors;
 		std::vector <int> * neighbors_array = new std::vector<int>[num_nodes];
 		
@@ -318,11 +318,13 @@ bool MST::nodesToEdges(int type)
 			//printf("Returned\n");
 			for( int counter = 0; counter < (int)act_neighbors.size(); counter++)
 			{
+				if(weights[counter] > 512)
+					continue;
 				edgeArray.push_back(pairE(i+1,act_neighbors[counter]+1));
 				edgeWeight.push_back(weights[counter]);
 				VectorPixelType c1,c2;
 				fPoint3D n2 = nodes[act_neighbors[counter]];
-				float val = MIN(weights[counter],255);
+				float val = MIN(weights[counter]/2,255);
 				c1[0] = val; c1[1] = val; c1[2] = val;
 				c2[0] = val; c2[1] = val; c2[2] = val;
 				drawLine(cimage,c1,c2,n1.x,n1.y,n1.z,n2.x,n2.y,n2.z);
@@ -513,6 +515,18 @@ float MST::getGeodesicEdgeWeight(fPoint3D n1, fPoint3D n2, ImageType::Pointer im
 
 std::vector<float> MST::getFastMarchingEdgeWeightVector(fPoint3D n1, std::vector<fPoint3D> n2, ImageType::Pointer img)
 {
+	/*printf("Entered weight computation\n");
+	printf("n1 = %f %f %f\n",n1.x,n1.y,n1.z);
+
+	for(int counter = 0; counter < n2.size(); counter++)
+	{
+		printf("n2[%d] = %f %f %f\n",counter,n2[counter].x,n2[counter].y,n2[counter].z);
+	}*/
+	if(n2.size()==0)
+	{
+		std::vector<float> weights;
+		return weights;
+	}
 	typedef itk::Image<float,3> FloatImageType;
 	typedef itk::FastMarchingImageFilter<FloatImageType> FMFilterType;
 	FMFilterType::Pointer fmfilt = FMFilterType::New();
@@ -588,12 +602,13 @@ std::vector<float> MST::getFastMarchingEdgeWeightVector(fPoint3D n1, std::vector
 
 	NodeContainer::Pointer seeds = NodeContainer::New();
 
+	FloatImageType::SizeType sz = fim->GetLargestPossibleRegion().GetSize();
 	NodeType node;
 	node.SetValue(0.0);
 	ImageType::IndexType index;
-	index[0] = n1.x-indexcopy[0];
-	index[1] = n1.y-indexcopy[1];
-	index[2] = n1.z-indexcopy[2];
+	index[0] = MIN(MAX(n1.x-indexcopy[0],0),sz[0]-1);
+	index[1] = MIN(MAX(n1.y-indexcopy[1],0),sz[1]-1);
+	index[2] = MIN(MAX(n1.z-indexcopy[2],0),sz[2]-1);
 	node.SetIndex(index);
 	seeds->Initialize();
 	seeds->InsertElement(0, node);
@@ -601,7 +616,7 @@ std::vector<float> MST::getFastMarchingEdgeWeightVector(fPoint3D n1, std::vector
 	fmfilt->SetOutputSize(fim->GetLargestPossibleRegion().GetSize());
 	fmfilt->SetStoppingValue(10000);
 	fmfilt->Update();
-	//printf("Updated the filter...\n");
+	printf("Updated the filter...\n");
 	
 
 	// write image for debugging
@@ -609,12 +624,13 @@ std::vector<float> MST::getFastMarchingEdgeWeightVector(fPoint3D n1, std::vector
 	imdebug->SetRegions(fim->GetLargestPossibleRegion());
 	imdebug->Allocate();
 
+	/*
 	IteratorType it1(imdebug, imdebug->GetLargestPossibleRegion());
 	FloatIteratorType it2(fmfilt->GetOutput(),fmfilt->GetOutput()->GetLargestPossibleRegion());
 	for(it1.GoToBegin(),it2.GoToBegin();!it1.IsAtEnd();++it1,++it2)
 	{
 		it1.Set(MIN(it2.Get(),255));
-	}
+	}*/
 
 	/*typedef itk::ImageFileWriter<ImageType> FileWriterType;
 	FileWriterType::Pointer writer = FileWriterType::New();
@@ -626,10 +642,11 @@ std::vector<float> MST::getFastMarchingEdgeWeightVector(fPoint3D n1, std::vector
 
 
 	FloatImageType::Pointer outim = fmfilt->GetOutput();
+	
 	std::vector<float> weights;
 	for(int counter = 0; counter < (int)n2.size(); counter++)
 	{
-		index[0] = n2[counter].x-indexcopy[0]; index[1] = n2[counter].y-indexcopy[1]; index[2] = n2[counter].z-indexcopy[2];
+		index[0] = MIN(MAX(n2[counter].x-indexcopy[0],0),sz[0]-1); index[1] = MIN(MAX(n2[counter].y-indexcopy[1],0),sz[1]-1); index[2] = MIN(MAX(n2[counter].z-indexcopy[2],0),sz[2]-1);
 		float weight = outim->GetPixel(index);
 		weights.push_back(weight);
 	}

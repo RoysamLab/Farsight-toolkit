@@ -829,7 +829,7 @@ int main(int argc, char** argv)
 
 	time(&t2);
 	std::cout<<"Curvelet preprocessing takes "<< t2-t1 << " seconds (time_t calculation)\n";
-	ck1 = clock();  cout<<"Curvelet preprocessing takes "<<double(ck1-ck0)/CLOCKS_PER_SEC<<" seconds"<<endl;  ck0 = ck1;
+	//ck1 = clock();  cout<<"Curvelet preprocessing takes "<<double(ck1-ck0)/CLOCKS_PER_SEC<<" seconds"<<endl;  ck0 = ck1;
 	//scanf("%*d");
 	return 0;
 }
