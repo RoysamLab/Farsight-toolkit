@@ -1378,7 +1378,7 @@ void View3D::removeImageActors()
 		{
 			if(this->ImageActors->is2D(i))
 			{
-				this->Renderer->RemoveActor(this->ImageActors->GetSliceActor(i));
+				this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(i));
 				this->ImageActors->setIs2D(i, false);
 			}
 			continue;
@@ -1502,7 +1502,7 @@ void View3D::CreateSphereActor()
   this->SphereActor->VisibilityOff();
   this->SphereActor->SetPickable(0);            //dont want to pick the sphere itself
   this->pointer3d = vtkSmartPointer<vtkPointWidget>::New();
-  this->pointer3d->PlaceWidget(-6000, 6000,-6000, 6000,-6000, 6000);
+  this->pointer3d->PlaceWidget(-60000, 60000,-60000, 60000,-60000, 60000);
   this->pointer3d->SetInteractor(this->QVTK->GetInteractor());
   this->pointer3d->AllOff();
 }
