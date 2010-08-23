@@ -8,3 +8,4 @@ TARGET_LINK_LIBRARIES( ftkPreprocess ITKCommon ITKBasicFilters ITKIO ITKStatisti
 ADD_EXECUTABLE( prep preprocess_main.cpp )
 TARGET_LINK_LIBRARIES( prep ftkPreprocess )
 
+INSTALL(TARGETS prep RUNTIME DESTINATION bin)
