@@ -9,6 +9,9 @@
      <step name="NUCLEAR_SEGMENTATION"/>
      <step name="RAW_ASSOCIATIONS"/>
   </Pipeline>
+  <PreprocessingParameters>
+     <PreprocessingStep Name="" Channel="" Parameter1="" Value1="" Parameter2="" Value2="">
+  </PreprocessingParameters>
   <NuclearSegmentationParameters>
     <parameter name="high_sensitivity" value="0"/>
     <parameter name="LoG_size" value="30"/>

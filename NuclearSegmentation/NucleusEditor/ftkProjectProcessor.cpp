@@ -91,6 +91,9 @@ void ProjectProcessor::ProcessNext(void)
 	bool taskDone = false;
 	switch(tasks.at(thisTask).type)
 	{
+	case ProjectDefinition::PREPROCESSING:
+		taskDone = PreprocessImage();
+		break;
 	case ProjectDefinition::NUCLEAR_SEGMENTATION:
 		taskDone = SegmentNuclei(tasks.at(thisTask).inputChannel1);
 		break;
@@ -109,12 +112,34 @@ void ProjectProcessor::ProcessNext(void)
 	case ProjectDefinition::PIXEL_ANALYSIS:
 		taskDone = PixLevAnalysis();
 	}
-	
+
 	if(taskDone)
 	{
 		tasks.at(thisTask).done = true;
 		lastTask++;
 	}
+}
+
+bool ProjectProcessor::PreprocessImage(){
+
+	if(!inputImage)
+		return false;
+
+	if(definition->preprocessingParameters.size() == 0)
+	{
+		inputTypeNeeded = 3;
+		return false;
+	}
+
+	for(std::vector<ftk::ProjectDefinition::preprocessParam>::iterator ppit=definition->preprocessingParameters.begin(); ppit!=definition->preprocessingParameters.end(); ++ppit ){
+		int chNum = definition->FindInputChannel( ppit->channelName );
+		if( chNum == -1 ){
+			std::cerr<<"ERROR: Cannot find the channel "<<ppit->channelName<<" for preprocessing\n";
+			continue;
+		}
+
+	}
+	return true;
 }
 
 bool ProjectProcessor::SegmentNuclei(int nucChannel)

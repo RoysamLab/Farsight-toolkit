@@ -47,10 +47,12 @@ class ProjectDefinition
 {
 public:
 	//ENUMS & STRUCTS:
-	enum TaskType { NUCLEAR_SEGMENTATION, CYTOPLASM_SEGMENTATION, RAW_ASSOCIATIONS, CLASSIFY, ANALYTE_MEASUREMENTS, PIXEL_ANALYSIS };
+	enum TaskType { PREPROCESSING, NUCLEAR_SEGMENTATION, CYTOPLASM_SEGMENTATION, RAW_ASSOCIATIONS, CLASSIFY, ANALYTE_MEASUREMENTS, PIXEL_ANALYSIS };
 	typedef struct { int number; std::string name; std::string type; } Channel;
 	typedef struct { std::string name; double value; } Parameter;
 	typedef struct { std::string TrainingColumn; std::vector<std::string> ClassificationColumns; } ClassParam;
+	typedef struct { std::string filterName; std::string channelName; std::string paramenter1; double value1; std::string paramenter2; double value2; std::string paramenter3; double value3; std::string paramenter4; double value4;
+					 std::string paramenter5; double value5; std::string paramenter6; double value6; } preprocessParam;
 
 	//FUNCTIONS:
 	ProjectDefinition();
@@ -60,11 +62,13 @@ public:
 	void Clear(void);
 	std::vector<Channel> ReadChannels(TiXmlElement * inputElement);
 	std::vector<TaskType> ReadSteps(TiXmlElement * pipelineElement);
+	std::vector<preprocessParam> ReadPreprocessingParameters(TiXmlElement * inputElement);
 	std::vector<Parameter> ReadParameters(TiXmlElement * inputElement);
 	std::vector<ftk::AssociationRule> ReadAssociationRules(TiXmlElement * inputElement);
 	std::vector<std::string> ParseText(TiXmlElement * element);
-	std::vector<ProjectDefinition::ClassParam> ReadClassificationParameters(TiXmlElement * inputElement);
+	std::vector<ClassParam> ReadClassificationParameters(TiXmlElement * inputElement);
 	std::vector<ftk::PixelAnalysisDefinitions> ReadPixelLevelRules(TiXmlElement * element);
+	TiXmlElement * GetPreprocessingElement( preprocessParam param );
 	TiXmlElement * GetParameterElement( Parameter param );
 	TiXmlElement * GetAssocRuleElement( ftk::AssociationRule rule );
 	TiXmlElement * GetClassificationElement( ProjectDefinition::ClassParam ClassParameter );
@@ -81,6 +85,7 @@ public:
 	std::vector<Channel> inputs;
 	std::vector<TaskType> pipeline;
 
+	std::vector<preprocessParam> preprocessingParameters;
 	std::vector<Parameter> nuclearParameters;
 	std::vector<Parameter> cytoplasmParameters;
 	std::vector<ClassParam> classificationParameters;

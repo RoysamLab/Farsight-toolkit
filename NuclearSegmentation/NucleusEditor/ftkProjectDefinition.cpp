@@ -68,6 +68,10 @@ bool ProjectDefinition::Load(std::string filename)
 		{
 			pipeline = this->ReadSteps(parentElement);
 		}
+		else if( strcmp( parent, "PreprocessingParameters" ) == 0 )
+		{
+			preprocessingParameters = this->ReadPreprocessingParameters(parentElement);
+		}
 		else if( strcmp( parent, "NuclearSegmentationParameters" ) == 0 )
 		{
 			nuclearParameters = this->ReadParameters(parentElement);
@@ -134,7 +138,9 @@ std::vector<ProjectDefinition::TaskType> ProjectDefinition::ReadSteps(TiXmlEleme
 		if ( strcmp( parent, "step" ) == 0 )
 		{
 			std::string step = stepElement->Attribute("name");
-			if( step == "NUCLEAR_SEGMENTATION")
+			if( step == "PREPROCESSING")
+				returnVector.push_back(PREPROCESSING);
+			else if( step == "NUCLEAR_SEGMENTATION")
 				returnVector.push_back(NUCLEAR_SEGMENTATION);
 			else if(step == "CYTOPLASM_SEGMENTATION")
 				returnVector.push_back(CYTOPLASM_SEGMENTATION);
@@ -149,6 +155,38 @@ std::vector<ProjectDefinition::TaskType> ProjectDefinition::ReadSteps(TiXmlEleme
 		}
 		stepElement = stepElement->NextSiblingElement();
 	} // end while(stepElement)
+	return returnVector;
+}
+
+std::vector<ProjectDefinition::preprocessParam > ProjectDefinition::ReadPreprocessingParameters(TiXmlElement * inputElement){
+
+	std::vector<ProjectDefinition::preprocessParam> returnVector;
+
+	TiXmlElement * parameterElement = inputElement->FirstChildElement();
+	while (parameterElement)
+	{
+		const char * parameter = parameterElement ->Value();
+		ProjectDefinition::preprocessParam prepStep;
+		if ( strcmp(parameter,"PreprocessingStep") == 0 )
+		{
+			prepStep.filterName = parameterElement->Attribute("Name");
+			prepStep.channelName = parameterElement->Attribute("Channel");
+			prepStep.paramenter1 = parameterElement->Attribute("Parameter1");
+			prepStep.value1 = atoi(parameterElement->Attribute("Value1"));
+			prepStep.paramenter2 = parameterElement->Attribute("Parameter2");
+			prepStep.value2 = atoi(parameterElement->Attribute("Value3"));
+			prepStep.paramenter3 = parameterElement->Attribute("Parameter3");
+			prepStep.value3 = atoi(parameterElement->Attribute("Value3"));
+			prepStep.paramenter4 = parameterElement->Attribute("Parameter4");
+			prepStep.value4 = atoi(parameterElement->Attribute("Value4"));
+			prepStep.paramenter5 = parameterElement->Attribute("Parameter5");
+			prepStep.value5 = atoi(parameterElement->Attribute("Value5"));
+			prepStep.paramenter6 = parameterElement->Attribute("Parameter6");
+			prepStep.value6 = atoi(parameterElement->Attribute("Value6"));
+		}
+		returnVector.push_back(prepStep);
+		parameterElement = parameterElement->NextSiblingElement();
+	}
 	return returnVector;
 }
 
@@ -340,6 +378,15 @@ bool ProjectDefinition::Write(std::string filename)
 		root->LinkEndChild(pipelineElement);
 	}
 
+	//PreprocessParameters
+	if(preprocessingParameters.size() > 0){
+		TiXmlElement * paramElement = new TiXmlElement("PreprocessingParameters");
+		for(int i=0; i<(int)preprocessingParameters.size(); ++i){
+			paramElement->LinkEndChild( GetPreprocessingElement(preprocessingParameters.at(i)) );
+		}
+		root->LinkEndChild(paramElement);
+	}
+
 	//NuclearSegmentationParameters:
 	if(nuclearParameters.size() > 0)
 	{
@@ -398,6 +445,38 @@ bool ProjectDefinition::Write(std::string filename)
 		return true;
 	else
 		return false;
+}
+
+TiXmlElement * ProjectDefinition::GetPreprocessingElement( preprocessParam param )
+{
+	TiXmlElement * returnElement = new TiXmlElement("parameter");
+	returnElement->SetAttribute("Name", param.filterName );
+	returnElement->SetAttribute("Channel", param.channelName );
+	if( !param.paramenter1.empty() ){
+		returnElement->SetAttribute("Parameter1", param.paramenter1 );
+		returnElement->SetAttribute("Value1", ftk::NumToString(param.value1));
+	}
+	if( !param.paramenter2.empty() ){
+		returnElement->SetAttribute("Parameter2", param.paramenter2 );
+		returnElement->SetAttribute("Value2", ftk::NumToString(param.value2));
+	}
+	if( !param.paramenter3.empty() ){
+		returnElement->SetAttribute("Parameter3", param.paramenter3 );
+		returnElement->SetAttribute("Value3", ftk::NumToString(param.value3));
+	}
+	if( !param.paramenter4.empty() ){
+		returnElement->SetAttribute("Parameter4", param.paramenter4 );
+		returnElement->SetAttribute("Value4", ftk::NumToString(param.value4));
+	}
+	if( !param.paramenter5.empty() ){
+		returnElement->SetAttribute("Parameter5", param.paramenter5 );
+		returnElement->SetAttribute("Value5", ftk::NumToString(param.value5));
+	}
+	if( !param.paramenter6.empty() ){
+		returnElement->SetAttribute("Parameter6", param.paramenter6 );
+		returnElement->SetAttribute("Value6", ftk::NumToString(param.value6));
+	}
+	return returnElement;
 }
 
 TiXmlElement * ProjectDefinition::GetParameterElement( Parameter param )
@@ -549,6 +628,7 @@ void ProjectDefinition::Clear(void)
 	name.clear();
 	inputs.clear();
 	pipeline.clear();
+	preprocessingParameters.clear();
 	nuclearParameters.clear();
 	cytoplasmParameters.clear();
 	classificationParameters.clear();
