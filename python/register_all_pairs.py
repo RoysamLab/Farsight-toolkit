@@ -2,7 +2,27 @@
 # initialized with prior transformations if given in an xml file
 # containing initial transformations
 
-import os, sys, re
+import os, sys, re, platform
+
+#initialize executables for platform
+regp = ''
+regj = ''
+moim = ''
+moimp = ''
+much = ''
+
+if platform.system() == 'Windows':
+    regp = 'register_pair.exe'
+    regj = 'register_joint.exe'
+    moim = 'mosaic_images.exe'
+    moimp = 'mosaic_image_pair.exe'
+    much = 'multi_channels_2D.exe'
+else:
+    regp = 'register_pair'
+    regj = 'register_joint'
+    moim = 'mosaic_images'
+    moimp = 'mosaic_image_pair'
+    much = 'multi_channels_2D'
 
 # A function to convert a string to a number of base 26. The input is
 # assumed to be a string of character
@@ -59,9 +79,9 @@ def register(pair_list, argv):
             
         # perform registration
         if (len(argv)>2):
-             success = os.system('register_pair.exe '+image_dir+from_image+' '+ image_dir+to_image +' -remove_2d -prior '+argv[2]);
+             success = os.system(regp+' '+image_dir+from_image+' '+ image_dir+to_image +' -remove_2d');
         else:
-            success = os.system('register_pair.exe '+image_dir+from_image+' '+ image_dir+to_image +' -remove_2d');
+            success = os.system(regp+' '+image_dir+from_image+' '+ image_dir+to_image +' -remove_2d');
         if success == 0:
             # Add the names to the list if not already there. The list
             # keeps potential images which can be the anchor images for
@@ -93,8 +113,35 @@ def register(pair_list, argv):
     f_xforms.close()
     f_o.close();
     print("\nSTART register_joint.exe...")
-    os.system('register_joint.exe xxx_123.txt')
+    os.system(regj+' xxx_123.txt -multiplier 4')
+    
+    print("DONE")
 
+    # perform montaging using the first image as the anchor
+    print("\nSTART mosaic_images ...")
+    cmd_executed = False;
+    numPairs = len(pair_list);
+    if (numPairs > 1):
+        if (len(argv) > 2): #multiple channels
+            fc = open(argv[2],'r');
+            fc_o = open(argv[2]+'_123.txt','w')
+            channel_count = 0;
+            for line in fc:
+                dot_pos = names[0].find('.');
+                name_no_ext = names[0][:dot_pos]
+                os.system(moim + ' joint_transforms.xml '+names[0]+ ' -3d -path ' + argv[0]+' -channel '+str(channel_count)+' -output montage_'+name_no_ext+'_Ch'+str(channel_count));
+                fc_o.write('montage_'+name_no_ext+'_Ch'+str(channel_count)+'_2d_proj.png '+ line)
+                channel_count += 1
+            fc_o.close()
+            os.system(much + ' '+argv[2]+'_123.txt '+'montage_'+name_no_ext+'_color_2d_proj.png')
+            os.remove(argv[2]+'_123.txt')
+            cmd_executed = True;
+        else :
+            cmd = moim + " joint_transforms.xml -3d " + names[0] + " -path " + argv[0]
+    else : # just for one image pair, so call mosaic_image_pair
+        cmd = moimp + " joint_transforms.xml " + names[0] +" "+ names[1] + " -path " + argv[0]
+    if ( not cmd_executed):
+        os.system(cmd)
         
     print("DONE")
     
@@ -105,7 +152,7 @@ def register(pair_list, argv):
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
-        print '\nUsage: '+sys.argv[0]+' image_dir image_list_file [initial xml file]\n '
+        print '\nUsage: '+sys.argv[0]+' image_dir image_list_file [channel_color_file]\n '
         sys.exit(1)
     pairs = create_pairs(sys.argv[2:])
     register(pairs,sys.argv[1:])

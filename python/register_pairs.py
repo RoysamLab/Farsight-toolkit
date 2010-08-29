@@ -9,18 +9,21 @@ import os, sys, platform
 regp = ''
 regj = ''
 moim = ''
+moimp = ''
 much = ''
 
 if platform.system() == 'Windows':
-    regp = '../bin/register_pair.exe'
-    regj = '../bin/register_joint.exe'
-    moim = '../bin/mosaic_images.exe'
-    much = '../bin/multi_channels_2D.exe'
+    regp = 'register_pair.exe'
+    regj = 'register_joint.exe'
+    moim = 'mosaic_images.exe'
+    moimp = 'mosaic_image_pair.exe'
+    much = 'multi_channels_2D.exe'
 else:
-    regp = '../bin/register_pair'
-    regj = '../bin/register_joint'
-    moim = '../bin/mosaic_images'
-    much = '../bin/multi_channels_2D'
+    regp = 'register_pair'
+    regj = 'register_joint'
+    moim = 'mosaic_images'
+    moimp = 'mosaic_image_pair'
+    much = 'multi_channels_2D'
 
 # the main function
 def register(argv):
@@ -101,7 +104,7 @@ def register(argv):
         else :
             cmd = moim + " joint_transforms.xml -3d " + names[0] + " -path " + argv[0]
     else : # just for one image pair, so call mosaic_image_pair
-        cmd = moim + " joint_transforms.xml " + names[0] +" "+ names[1] + " -path " + argv[0]
+        cmd = moimp + " joint_transforms.xml " + names[0] +" "+ names[1] + " -path " + argv[0]
     if ( not cmd_executed):
         os.system(cmd)
         

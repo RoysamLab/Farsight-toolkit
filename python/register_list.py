@@ -2,8 +2,28 @@
 # image pairs based on the pattern of the file names using regular
 # expression. Examples are given at the end of the script.
 
-import os, sys, re
+import os, sys, re, platform
 
+#initialize executables for platform
+regp = ''
+regj = ''
+moim = ''
+moimp = ''
+much = ''
+
+if platform.system() == 'Windows':
+    regp = 'register_pair.exe'
+    regj = 'register_joint.exe'
+    moim = 'mosaic_images.exe'
+    moimp = 'mosaic_image_pair.exe'
+    much = 'multi_channels_2D.exe'
+else:
+    regp = 'register_pair'
+    regj = 'register_joint'
+    moim = 'mosaic_images'
+    moimp = 'mosaic_image_pair'
+    much = 'multi_channels_2D'
+    
 # A function to convert a string to a number of base 26. The input is
 # assumed to be a string of character
 def char_to_num(index):
@@ -101,7 +121,7 @@ def register(pair_list, argv):
         to_image = s_line[pos+1:]
             
         # perform registration
-        success = os.system('register_pair.exe '+image_dir+from_image+' '+ image_dir+to_image +' -remove_2d');
+        success = os.system(regp+' '+image_dir+from_image+' '+ image_dir+to_image +' -remove_2d');
         if success == 0:
             # Add the names to the list if not already there. The list
             # keeps potential images which can be the anchor images for
@@ -133,9 +153,8 @@ def register(pair_list, argv):
     f_xforms.close()
     f_o.close();
     print("\nSTART register_joint.exe...")
-    os.system('register_joint.exe xxx_123.txt -multiplier 4')
+    os.system(regj + ' xxx_123.txt -multiplier 4')
     print("DONE")
-    #os.system('rm xxx_123.txt')
 
     # perform montaging using the first image as the anchor
     print("\nSTART...")
@@ -148,16 +167,16 @@ def register(pair_list, argv):
             for line in fc:
                 dot_pos = names[0].find('.');
                 name_no_ext = names[0][:dot_pos]
-                os.system('mosaic_images.exe joint_transforms.xml '+names[0]+ ' -3d -path ' + image_dir+' -channel '+str(channel_count)+' -output montage_'+name_no_ext+'_Ch'+str(channel_count));
+                os.system(moim + ' joint_transforms.xml '+names[0]+ ' -3d -path ' + image_dir+' -channel '+str(channel_count)+' -output montage_'+name_no_ext+'_Ch'+str(channel_count));
                 fc_o.write('montage_'+name_no_ext+'_Ch'+str(channel_count)+'_2d_proj.png '+ line)
                 channel_count += 1
             fc_o.close()
-            os.system('multi_channels_2D.exe '+color_list+'_123.txt '+'montage_'+name_no_ext+'_color_2d_proj.png')
+            os.system(much + ' ' +color_list+'_123.txt '+'montage_'+name_no_ext+'_color_2d_proj.png')
             os.remove(color_list+'_123.txt')
         else:
-            os.system('mosaic_images.exe joint_transforms.xml '+names[0]+ " -3d -path " + image_dir);
+            os.system(moim + ' joint_transforms.xml '+names[0]+ " -3d -path " + image_dir);
     else:
-        os.system('mosaic_image_pair.exe joint_transforms.xml '+names[0]+" "+names[1]+ " -path " + image_dir);
+        os.system(moimp + ' joint_transforms.xml '+names[0]+" "+names[1]+ " -path " + image_dir);
         
     print("DONE")
     
