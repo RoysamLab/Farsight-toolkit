@@ -53,6 +53,8 @@ std::string NumToString(double d, int p);
 std::string TimeStamp();
 std::string GetExtension(std::string filename);
 std::string SetExtension(std::string filename, std::string ext); // if ext = "", remove extension (and .)
+std::string GetFilenameFromFullPath(std::string f);
+std::string GetFilePath(std::string f);
 std::vector<std::string> GetColumsWithString( std::string colName, vtkSmartPointer<vtkTable> table );
 typedef struct { std::string regionChannelName; std::string targetChannelName; int mode;
 				 std::string outputFilename; int radius; } PixelAnalysisDefinitions;

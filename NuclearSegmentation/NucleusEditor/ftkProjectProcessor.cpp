@@ -137,7 +137,45 @@ bool ProjectProcessor::PreprocessImage(){
 			std::cerr<<"ERROR: Cannot find the channel "<<ppit->channelName<<" for preprocessing\n";
 			continue;
 		}
-
+		ftk::Preprocess *prep = new ftk::Preprocess( inputImage->GetItkPtr<unsigned char>(0,chNum) );
+		TiXmlDocument tempXML;   
+		TiXmlElement *genericName = new TiXmlElement( "Preprocess" );
+		tempXML.LinkEndChild( genericName );
+		//Write Filter:
+		TiXmlElement * filterElement = new TiXmlElement(ppit->filterName.c_str());
+		if( !ppit->paramenter1.empty() ){
+			filterElement->SetAttribute( ppit->paramenter1.c_str(), ppit->value1 );
+			genericName->LinkEndChild(filterElement);
+		}
+		if( !ppit->paramenter2.empty() ){
+			filterElement->SetAttribute( ppit->paramenter2.c_str(), ppit->value2 );
+			genericName->LinkEndChild(filterElement);
+		}
+		if( !ppit->paramenter3.empty() ){
+			filterElement->SetAttribute( ppit->paramenter3.c_str(), ppit->value3 );
+			genericName->LinkEndChild(filterElement);
+		}
+		if( !ppit->paramenter4.empty() ){
+			filterElement->SetAttribute( ppit->paramenter4.c_str(), ppit->value4 );
+			genericName->LinkEndChild(filterElement);
+		}
+		if( !ppit->paramenter5.empty() ){
+			filterElement->SetAttribute( ppit->paramenter5.c_str(), ppit->value5 );
+			genericName->LinkEndChild(filterElement);
+		}
+		if( !ppit->paramenter6.empty() ){
+			filterElement->SetAttribute( ppit->paramenter6.c_str(), ppit->value6 );
+			genericName->LinkEndChild(filterElement);
+		}
+		std::string tempFilename;
+		tempFilename = save_path + ppit->channelName + ppit->filterName;
+		tempFilename.append( ".xml" );
+		tempXML.SaveFile( tempFilename.c_str() );
+		prep->RunPipe( tempFilename );
+		const ftk::Image::Info * Iinfo = inputImage->GetImageInfo();
+		int byte_to_cpy = Iinfo->numZSlices * Iinfo->numRows * Iinfo->numColumns * Iinfo->bytesPerPix;
+		memcpy( inputImage->GetDataPtr(0,chNum), prep->GetImage()->GetBufferPointer(), byte_to_cpy );
+		delete prep;
 	}
 	return true;
 }

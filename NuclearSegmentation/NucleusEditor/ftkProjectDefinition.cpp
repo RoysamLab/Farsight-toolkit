@@ -449,7 +449,7 @@ bool ProjectDefinition::Write(std::string filename)
 
 TiXmlElement * ProjectDefinition::GetPreprocessingElement( preprocessParam param )
 {
-	TiXmlElement * returnElement = new TiXmlElement("parameter");
+	TiXmlElement * returnElement = new TiXmlElement("PreprocessingStep");
 	returnElement->SetAttribute("Name", param.filterName );
 	returnElement->SetAttribute("Channel", param.channelName );
 	if( !param.paramenter1.empty() ){

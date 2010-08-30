@@ -93,6 +93,7 @@ int main(int argc, char *argv[])
 	//Do processing:
 	ftk::ProjectProcessor * pProc = new ftk::ProjectProcessor();
 	pProc->SetInputImage(myImg);
+	pProc->SetPath( ftk::GetFilePath(inputFilename) );
 	if(labImg)
 		pProc->SetOutputImage(labImg);
 	if(table)

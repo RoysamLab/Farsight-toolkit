@@ -281,6 +281,24 @@ std::string SetExtension(std::string filename, std::string ext)
 	return rName;
 }
 
+std::string GetFilePath(std::string f)
+{
+	std::string ext;
+	size_t found;
+	found = f.find_last_of("/\\");
+	ext = f.substr(0,found);
+	return ext;
+}
+
+std::string GetFilenameFromFullPath(std::string f)
+{
+	std::string ext;
+	size_t found;
+	found = f.find_last_of("/\\");
+	ext = f.substr(found + 1);
+	return ext;
+}
+
 std::vector<std::string> GetColumsWithString( std::string colName, vtkSmartPointer<vtkTable> table ){
 	std::vector<std::string> retVect;
 	for( int i=0; i<table->GetNumberOfColumns(); ++i ){
