@@ -47,13 +47,13 @@ class ProjectDefinition
 {
 public:
 	//ENUMS & STRUCTS:
-	enum TaskType { PREPROCESSING, NUCLEAR_SEGMENTATION, CYTOPLASM_SEGMENTATION, RAW_ASSOCIATIONS, CLASSIFY, ANALYTE_MEASUREMENTS, PIXEL_ANALYSIS };
+	enum TaskType { PREPROCESSING, NUCLEAR_SEGMENTATION, CYTOPLASM_SEGMENTATION, RAW_ASSOCIATIONS, CLASSIFY, ANALYTE_MEASUREMENTS, PIXEL_ANALYSIS, QUERY };
 	typedef struct { int number; std::string name; std::string type; } Channel;
 	typedef struct { std::string name; double value; } Parameter;
 	typedef struct { std::string TrainingColumn; std::vector<std::string> ClassificationColumns; } ClassParam;
 	typedef struct { std::string filterName; std::string channelName; std::string paramenter1; double value1; std::string paramenter2; double value2; std::string paramenter3; double value3; std::string paramenter4; double value4;
 					 std::string paramenter5; double value5; std::string paramenter6; double value6; } preprocessParam;
-
+	typedef struct { std::string name; std::string value; } QueryParameter;
 	//FUNCTIONS:
 	ProjectDefinition();
 	bool Load(std::string filename);
@@ -69,6 +69,7 @@ public:
 	std::vector<ClassParam> ReadClassificationParameters(TiXmlElement * inputElement);
 	std::vector<ftk::PixelAnalysisDefinitions> ReadPixelLevelRules(TiXmlElement * element);
 	TiXmlElement * GetPreprocessingElement( preprocessParam param );
+	std::vector<QueryParameter> ReadQueryParameters(TiXmlElement * inputElement);
 	TiXmlElement * GetParameterElement( Parameter param );
 	TiXmlElement * GetAssocRuleElement( ftk::AssociationRule rule );
 	TiXmlElement * GetClassificationElement( ProjectDefinition::ClassParam ClassParameter );
@@ -94,6 +95,7 @@ public:
 	std::vector<ftk::PixelAnalysisDefinitions> pixelLevelRules;
 	std::vector<std::string> intrinsicFeatures;
 	std::vector<std::string> analyteMeasures;
+	std::vector<ftk::ProjectDefinition::QueryParameter> queryParameters;
 
 	std::string classificationTrainingData;	//Training Data File
 

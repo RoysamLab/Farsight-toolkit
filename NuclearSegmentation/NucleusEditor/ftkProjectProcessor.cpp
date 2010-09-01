@@ -73,6 +73,8 @@ void ProjectProcessor::Initialize(void)
 			break;
 		case ProjectDefinition::PIXEL_ANALYSIS:
 			break;
+		case ProjectDefinition::QUERY:
+			break;
 		}
 		t.done = false;
 		tasks.push_back(t);
@@ -111,6 +113,10 @@ void ProjectProcessor::ProcessNext(void)
 		break;
 	case ProjectDefinition::PIXEL_ANALYSIS:
 		taskDone = PixLevAnalysis();
+		break;
+	case ProjectDefinition::QUERY:
+		taskDone = RunQuery();
+		break;
 	}
 
 	if(taskDone)
@@ -442,6 +448,87 @@ bool ProjectProcessor::Classify(void){
 	}
 	return true;
 }
+
+
+/*void ProjectProcessor::sqliteCloseConnection(sqlite3 *dbConn)
+{   
+	//  sqlite3_close() routine is the destructor for the sqlite3 object. 
+	//  Calls to sqlite3_close() return SQLITE_OK if the sqlite3 object is successfullly destroyed 
+	//  and all associated resources are deallocated.
+	
+	sqlite3_close(dbConn);
+	fprintf(stderr,"Execution complete!\n");
+
+}
+*/
+
+bool ProjectProcessor::RunQuery(void)
+{
+	for(int j=0; j<(int)definition->queryParameters.size(); ++j){
+		sqlite3 *dbConn;
+	
+		//  This sql string can be passed to this function from any UI module in Farsight.
+		//  1) Open connection
+		//  2) Execute query
+		//  3) Dynamic binding od results to UI
+		//  4) Close connection.
+
+		char * sql;
+    
+		//   int sqlite3_open(
+		//   const char *filename,  Database filename (UTF-8) 
+		//   sqlite3 **ppDb         OUT: SQLite db handle )
+	
+		dbConn = ftk::sqliteOpenConnection();
+		std::vector<std::string> column_names;
+		std::string temp1,temp2;
+		temp1 = "IMG_ID"; temp2 = "CELL_ID";
+		column_names.push_back( temp1 );
+		column_names.push_back( temp2 );
+		for (int col = 1; col< table->GetNumberOfColumns(); ++col){
+			std::string temp3=table->GetColumnName(col);
+			column_names.push_back(temp3);
+		}
+		ftk::checkForUpdate( dbConn, "IMAGE_TEST", column_names );
+		std::cout<<definition->queryParameters.at(0).value<<"---this is my query" <<std::endl;
+		std::string image_name;
+		image_name = save_path.substr(save_path.find_last_of("/\\"),(save_path.size()-1));
+		char *im_nm_cstr = new char [image_name.size()+1];
+		strcpy (im_nm_cstr, image_name.c_str());
+		char *path_nm_cstr = new char [save_path.size()+1];
+		strcpy (path_nm_cstr, save_path.c_str());
+		std::vector< double > table_array;
+		for (int row = 0; row< table->GetNumberOfRows(); ++row){
+			for (int col = 1; col< table->GetNumberOfColumns(); ++col){
+				table_array.push_back(table->GetValue(row,col).ToDouble());
+			}
+		}
+		int sql_db_img_id = ftk::GenericInsert( dbConn, im_nm_cstr, "IMAGE_TEST", path_nm_cstr, table_array,table->GetNumberOfColumns(), table->GetNumberOfRows(), column_names );	
+
+		//sql = "select * from IMAGE;";
+		//sql = "select * from IMAGE_TEST where IMG_ID = 1;";
+		//sql = "select * from IMAGE where IMG_ID = 1;";
+		//sql = "select * from IMAGE_TEST where IMG_ID = 1 and CELL_ID = 2;";
+		//sql = "select * from IMAGE where IMG_ID = 2 and cell_id = 3 and eccentricity = 2.24 ;";
+
+		if( definition->queryParameters.at(j).name.c_str(), "count"  == 0 ){
+			std::string temp = "count * from ( " + definition->queryParameters.at(j).value + "where IMG_ID = " + ftk::NumToString(sql_db_img_id) + ";";
+			sql = new char [temp.size()+1];
+			strcpy (sql, temp.c_str());
+		}
+		else
+			strcpy (sql, definition->queryParameters.at(j).value.c_str());
+
+		//Generic API.Can be called from any module
+		ftk::sqliteExecuteQuery2(dbConn,sql,save_path,j+1);
+
+		//Close the connetion.Free allocated resources
+		ftk::sqliteCloseConnection(dbConn);
+	}
+	return true;
+}
+
+
 //************************************************************************
 //************************************************************************
 //************************************************************************

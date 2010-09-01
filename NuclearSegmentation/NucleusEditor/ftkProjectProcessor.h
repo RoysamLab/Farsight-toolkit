@@ -39,6 +39,7 @@
 #include "ftkGUI/PatternAnalysisWizard.h"
 #include "ftkPreprocess2.h"
 #include "PixelAnalysis/ftkPixelLevelAnalysis.h"
+#include "SQLite/NESqlite/NESqliteFactory.h"
 
 namespace ftk
 {
@@ -64,16 +65,17 @@ public:
 	//Outputs
 	ftk::Image::Pointer GetOutputImage(void){ return outputImage; };
 	vtkSmartPointer<vtkTable> GetTable(void){ return table; };
-	
+
 protected:
 	//Tasks I can do:
 	bool PreprocessImage( void );
 	bool SegmentNuclei(int nucChannel);						//Segment nucChannel as Nuclei & Compute Intrinsic Features
 	bool SegmentCytoplasm(int cytChannel, int memChannel);	//Segment Cytoplasm Channel & Compute Intrinsic Features
 	bool ComputeAssociations(void);							//Compute Associative Measures
-	bool PixLevAnalysis(void);							//If you must with all this nice object level machinery available
+	bool PixLevAnalysis(void);								//If you must with all this nice object level machinery available
 	bool Classify(void);									//Classify Cells
 	void ComputeAnalyteMeasures(void);						//Compute Analyte Measures by Class
+	bool RunQuery(void);									//Run SQL Query
 
 	std::set<int> GetOnIntrinsicFeatures(void);				//Return the list of intrinsic features to calculate
 

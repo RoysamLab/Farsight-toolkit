@@ -23,6 +23,7 @@ OPTION( BUILD_SAMPLE_EDITOR "Build Sample Editor" ON )
 OPTION( BUILD_TISSUENETS "Build TissueNets" OFF )
 OPTION( BUILD_TRACKER "Build Cell Tracker" OFF )
 OPTION( USE_KPLS "Use KPLS module for classification" OFF )
+OPTION( USE_SQLITE_DATABASE "Use SQLite database libraries" OFF )
 OPTION( WRAP_PYTHON "Wrap Farsight in Python" OFF )
 OPTION( BUILD_EMBREX "Build Mark Embrecht's KPLS module" OFF )
 MARK_AS_ADVANCED(BUILD_EMBREX)
@@ -122,6 +123,15 @@ IF( NOT BUILD_EMBREX )
   ENDIF(WIN32)
 ENDIF( NOT BUILD_EMBREX )
 ENDIF(USE_KPLS)
+
+IF( USE_SQLITE_DATABASE )
+  INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/SQLite )
+  SUBDIRS( SQLite )
+
+  INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/SQLite/NESqlite )
+  SUBDIRS( SQLite/NESqlite )
+ENDIF( USE_SQLITE_DATABASE )
+
 
 ####################################################################################
 ####################################################################################

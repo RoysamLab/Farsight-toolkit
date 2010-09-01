@@ -99,6 +99,10 @@ bool ProjectDefinition::Load(std::string filename)
 		{
 			pixelLevelRules = this->ReadPixelLevelRules(parentElement);
 		}
+		else if( strcmp( parent, "SqlQueryParameters" ) == 0 )
+		{
+			queryParameters = this->ReadQueryParameters(parentElement);
+		}
 
 		parentElement = parentElement->NextSiblingElement();
 	} // end while(parentElement)
@@ -152,6 +156,8 @@ std::vector<ProjectDefinition::TaskType> ProjectDefinition::ReadSteps(TiXmlEleme
 				returnVector.push_back(ANALYTE_MEASUREMENTS);
 			else if(step == "PIXEL_ANALYSIS")
 				returnVector.push_back(PIXEL_ANALYSIS);
+			else if(step == "QUERY")
+				returnVector.push_back(QUERY);
 		}
 		stepElement = stepElement->NextSiblingElement();
 	} // end while(stepElement)
@@ -174,7 +180,7 @@ std::vector<ProjectDefinition::preprocessParam > ProjectDefinition::ReadPreproce
 			prepStep.paramenter1 = parameterElement->Attribute("Parameter1");
 			prepStep.value1 = atoi(parameterElement->Attribute("Value1"));
 			prepStep.paramenter2 = parameterElement->Attribute("Parameter2");
-			prepStep.value2 = atoi(parameterElement->Attribute("Value3"));
+			prepStep.value2 = atoi(parameterElement->Attribute("Value2"));
 			prepStep.paramenter3 = parameterElement->Attribute("Parameter3");
 			prepStep.value3 = atoi(parameterElement->Attribute("Value3"));
 			prepStep.paramenter4 = parameterElement->Attribute("Parameter4");
@@ -203,6 +209,26 @@ std::vector<ProjectDefinition::Parameter> ProjectDefinition::ReadParameters(TiXm
 			Parameter parameter;
 			parameter.name = parameterElement->Attribute("name");
 			parameter.value = atoi(parameterElement->Attribute("value"));
+			returnVector.push_back(parameter);
+		}
+		parameterElement = parameterElement->NextSiblingElement();
+	} // end while(parentElement)
+	return returnVector;
+}
+
+std::vector<ftk::ProjectDefinition::QueryParameter> ProjectDefinition::ReadQueryParameters(TiXmlElement * inputElement)
+{
+	std::vector<ftk::ProjectDefinition::QueryParameter> returnVector;
+
+	TiXmlElement * parameterElement = inputElement->FirstChildElement();
+	while (parameterElement)
+	{
+		const char * parent = parameterElement->Value();
+		if ( strcmp( parent, "SqlQuery" ) == 0 )
+		{
+			ftk::ProjectDefinition::QueryParameter parameter;
+			parameter.name = parameterElement->Attribute("name");
+			parameter.value = (parameterElement->Attribute("value"));
 			returnVector.push_back(parameter);
 		}
 		parameterElement = parameterElement->NextSiblingElement();
@@ -437,7 +463,7 @@ bool ProjectDefinition::Write(std::string filename)
 		root->LinkEndChild(paramsElement);
 	}
 
-	//ADD PIXEL DEFINITIONS
+	//ADD PIXEL DEFINITIONS & SQLQUERY
 
 	//AnalyteMeasures:
 
