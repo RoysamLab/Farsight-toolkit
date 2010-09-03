@@ -177,18 +177,24 @@ std::vector<ProjectDefinition::preprocessParam > ProjectDefinition::ReadPreproce
 		{
 			prepStep.filterName = parameterElement->Attribute("Name");
 			prepStep.channelName = parameterElement->Attribute("Channel");
-			prepStep.paramenter1 = parameterElement->Attribute("Parameter1");
-			prepStep.value1 = atoi(parameterElement->Attribute("Value1"));
-			prepStep.paramenter2 = parameterElement->Attribute("Parameter2");
-			prepStep.value2 = atoi(parameterElement->Attribute("Value2"));
-			prepStep.paramenter3 = parameterElement->Attribute("Parameter3");
-			prepStep.value3 = atoi(parameterElement->Attribute("Value3"));
-			prepStep.paramenter4 = parameterElement->Attribute("Parameter4");
-			prepStep.value4 = atoi(parameterElement->Attribute("Value4"));
-			prepStep.paramenter5 = parameterElement->Attribute("Parameter5");
-			prepStep.value5 = atoi(parameterElement->Attribute("Value5"));
-			prepStep.paramenter6 = parameterElement->Attribute("Parameter6");
-			prepStep.value6 = atoi(parameterElement->Attribute("Value6"));
+			if( parameterElement->Attribute("Parameter1") != NULL ){
+				prepStep.paramenter1 = parameterElement->Attribute("Parameter1");
+				prepStep.value1 = atof(parameterElement->Attribute("Value1"));}
+			if( parameterElement->Attribute("Parameter2") != NULL ){
+				prepStep.paramenter2 = parameterElement->Attribute("Parameter2");
+				prepStep.value2 = atof(parameterElement->Attribute("Value2"));}
+			if( parameterElement->Attribute("Parameter3") != NULL ){
+				prepStep.paramenter3 = parameterElement->Attribute("Parameter3");
+				prepStep.value3 = atof(parameterElement->Attribute("Value3"));}
+			if( parameterElement->Attribute("Parameter4") != NULL ){
+				prepStep.paramenter4 = parameterElement->Attribute("Parameter4");
+				prepStep.value4 = atof(parameterElement->Attribute("Value4"));}
+			if( parameterElement->Attribute("Parameter5") != NULL ){
+				prepStep.paramenter5 = parameterElement->Attribute("Parameter5");
+				prepStep.value5 = atof(parameterElement->Attribute("Value5"));}
+			if( parameterElement->Attribute("Parameter6") != NULL ){
+				prepStep.paramenter6 = parameterElement->Attribute("Parameter6");
+				prepStep.value6 = atof(parameterElement->Attribute("Value6"));}
 		}
 		returnVector.push_back(prepStep);
 		parameterElement = parameterElement->NextSiblingElement();

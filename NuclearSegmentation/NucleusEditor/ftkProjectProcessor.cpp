@@ -150,29 +150,24 @@ bool ProjectProcessor::PreprocessImage(){
 		//Write Filter:
 		TiXmlElement * filterElement = new TiXmlElement(ppit->filterName.c_str());
 		if( !ppit->paramenter1.empty() ){
-			filterElement->SetAttribute( ppit->paramenter1.c_str(), ppit->value1 );
-			genericName->LinkEndChild(filterElement);
+			filterElement->SetAttribute( ppit->paramenter1.c_str(), ftk::NumToString( ppit->value1 ) );
 		}
 		if( !ppit->paramenter2.empty() ){
-			filterElement->SetAttribute( ppit->paramenter2.c_str(), ppit->value2 );
-			genericName->LinkEndChild(filterElement);
+			filterElement->SetAttribute( ppit->paramenter2.c_str(), ftk::NumToString( ppit->value2 ) );
 		}
 		if( !ppit->paramenter3.empty() ){
-			filterElement->SetAttribute( ppit->paramenter3.c_str(), ppit->value3 );
-			genericName->LinkEndChild(filterElement);
+			filterElement->SetAttribute( ppit->paramenter3.c_str(), ftk::NumToString( ppit->value3 ) );
 		}
 		if( !ppit->paramenter4.empty() ){
-			filterElement->SetAttribute( ppit->paramenter4.c_str(), ppit->value4 );
-			genericName->LinkEndChild(filterElement);
+			filterElement->SetAttribute( ppit->paramenter4.c_str(), ftk::NumToString( ppit->value4 ) );
 		}
 		if( !ppit->paramenter5.empty() ){
-			filterElement->SetAttribute( ppit->paramenter5.c_str(), ppit->value5 );
-			genericName->LinkEndChild(filterElement);
+			filterElement->SetAttribute( ppit->paramenter5.c_str(), ftk::NumToString( ppit->value5 ) );
 		}
 		if( !ppit->paramenter6.empty() ){
-			filterElement->SetAttribute( ppit->paramenter6.c_str(), ppit->value6 );
-			genericName->LinkEndChild(filterElement);
+			filterElement->SetAttribute( ppit->paramenter6.c_str(), ftk::NumToString( ppit->value6 ) );
 		}
+		genericName->LinkEndChild(filterElement);
 		std::string tempFilename;
 		tempFilename = save_path + ppit->channelName + ppit->filterName;
 		tempFilename.append( ".xml" );
