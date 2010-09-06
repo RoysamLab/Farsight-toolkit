@@ -475,9 +475,12 @@ LabelImageType::Pointer getLargeLabels(LabelImageType::Pointer im, int n)
 	cfilter->Update();
 
 	LabelIteratorType it(cfilter->GetOutput(),cfilter->GetOutput()->GetLargestPossibleRegion());
-	for(it.GoToBegin();!it.IsAtEnd(); ++it)
+	LabelIteratorType it1(im,im->GetLargestPossibleRegion());
+	for(it.GoToBegin(),it1.GoToBegin();!it.IsAtEnd(); ++it,++it1)
 	{
 		if(it.Get()==1)
+			it.Set(0);
+		if(it1.Get()==0)
 			it.Set(0);
 	}
 //	cfilter->SetBackgroundValue(0);
@@ -2019,6 +2022,7 @@ LabelImageType::Pointer extract_label_image(int label, float bbox[6],LabelImageT
 }
 void annotateImage(Color2DImageType::Pointer number,Color2DImageType::Pointer orig, int n, int x, int y)
 {
+	//printf("annotateImage called with n = %d x = %d y = %d ... ", n,x,y);
 	typedef itk::ImageRegionConstIterator<Color2DImageType> ConstColor2DIteratorType;
 	typedef itk::ImageRegionIterator<Color2DImageType> Color2DIteratorType;
 
@@ -2069,6 +2073,7 @@ void annotateImage(Color2DImageType::Pointer number,Color2DImageType::Pointer or
 		if(numberiter.Get()!=white)
 			origiter.Set(blue);
 	}
+	printf("Done\n");
 }
 
 ColorImageType::Pointer getColorImageFromColor2DImages(std::vector<Color2DImageType::Pointer> input)
@@ -2371,4 +2376,30 @@ _TRACE;
 
 
 }
+
+
+
+//LabelImageType::Pointer removeHoles(LabelImageType::Pointer im,int size)
+//{
+//	LabelImageType::Pointer out = LabelImageType::New();
+//	out->SetRegions(im,im->GetLargestPossibleRegion());
+//	out->Allocate();
+//
+//	LabelIteratorType iter1(im,im->GetLargestPossibleRegion());
+//	LabelIteratorType iter2(out,out->GetLargestPossibleRegion());
+//
+//	for(iter1.GoToBegin(),iter2.GoToBegin();!iter1.IsAtEnd(); ++iter1,++iter2)
+//	{
+//		if(iter1.Get()==0)
+//			iter2.Set(255);
+//	}
+//
+//	out = getLargeLabels(out,size);
+//	iter2 = LabelIteratorType(out,out->GetLargestPossibleRegion());
+//	for(iter1.GoToBegin(),iter2.GoToBegin();!iter1.IsAtEnd();++iter1,++iter2)
+//	{
+//		
+//		iter2.Set(
+//	}
+//}
 }

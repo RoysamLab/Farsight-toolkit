@@ -1872,7 +1872,7 @@ void CellTracker::run()
 			printf("problem here:");
 			print_vertex(vert1,0);
 			print_vertex(vert2,0);
-			scanf("%*d");
+			//scanf("%*d");
 		}
 	}
 
@@ -1886,7 +1886,7 @@ void CellTracker::run()
 		{
 			printf("problem here2:");
 			print_vertex(*v_i,0);
-			scanf("%*d");
+			//scanf("%*d");
 		}
 	}
 int loopc = 0;
@@ -1983,7 +1983,7 @@ int loopc = 0;
 				printf("checking v1, v2:\n");
 				print_vertex(v1,1);
 				print_vertex(v2,1);
-				scanf("%*d");
+				//scanf("%*d");
 				float util[4];
 				util[0] = compute_LRUtility(fvector[g[vin1].t][g[vin1].findex],fvector[g[v1].t][g[v1].findex],fvector[g[vout1].t][g[vout1].findex]) + compute_LRUtility(fvector[g[vin2].t][g[vin2].findex],fvector[g[v2].t][g[v2].findex],fvector[g[vout2].t][g[vout2].findex]);
 				util[1] = compute_LRUtility(fvector[g[vin1].t][g[vin1].findex],fvector[g[v1].t][g[v1].findex],fvector[g[vout2].t][g[vout2].findex]) + compute_LRUtility(fvector[g[vin2].t][g[vin2].findex],fvector[g[v2].t][g[v2].findex],fvector[g[vout1].t][g[vout1].findex]);
@@ -2040,14 +2040,14 @@ int loopc = 0;
 				else
 				{
 					printf("?? %f %f %f %f\n",util[0],util[1],util[2],util[3]);
-					scanf("%*d");
+					//scanf("%*d");
 				}
 				//scanf("%*d");
 				printf("checking 2:\n");
 				print_vertex(v1,1);
 				print_vertex(v2,1);
 				printf("End checking2\n");
-				scanf("%*d");
+				//scanf("%*d");
 				break;
 			}
 			else if(out_degree(*v_i,g)==1)
@@ -2071,7 +2071,7 @@ int loopc = 0;
 		{
 			printf("problem here3:");
 			print_vertex(*v_i,0);
-			scanf("%*d");
+			//scanf("%*d");
 		}
 	}
 
@@ -2097,13 +2097,13 @@ int loopc = 0;
 				if(abs(x-233) < 10 && abs(y-119)<10)
 				{
 					print_vertex(v1,1);
-					scanf("%*d");
+					//scanf("%*d");
 				}
 			}
 			if(g[v1].findex == 0 && g[v1].t == 4)
 			{
 				printf("The edge is still there.. g[v1].special = %d \n",g[v1].special);
-				scanf("%*d");
+				//scanf("%*d");
 			}
 			TGraph::edge_descriptor e;
 			bool added;
@@ -2412,16 +2412,16 @@ void testKPLS()
 		}
 	}
 	printf("It got cor = %d, ncor =  %d\n",cor, ncor);
-	scanf("%*d");
+	//scanf("%*d");
 	exit(0);
 }
 
-int main()//int argc, char **argv)
+int main(int argc, char **argv)
 {
 	//ST();
 	// testKPLS();
-	int num_tc = 10;
-#define BASE "C:\\Users\\arun\\Research\\Tracking\\harvard\\cache\\forvisit_TSeries-02102009-1455-624\\"
+	/*int num_tc = 10;
+	#define BASE "C:\\Users\\arun\\Research\\Tracking\\harvard\\cache\\forvisit_TSeries-02102009-1455-624\\"
 	int argc = num_tc*3+1;
 
 	char ** argv = new char* [argc];
@@ -2441,14 +2441,41 @@ int main()//int argc, char **argv)
 	for(int counter =1; counter<=num_tc; counter++)
 	{
 		sprintf(argv[counter+num_tc*2],BASE"labeled_tracks_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,ch);
-	}
+	}*/
+
+	std::vector<std::string> imfilenames,labelfilenames,outputfilenames;
+
+
 
 	printf("Started\n");
 	/*int num_files = atoi(argv[1]);
 	int c;*/
 	//int counter = 0;
 	printf(" I got argc = %d\n",argc);
-	int num_t = (argc-1)/3;
+	int num_t = (argc-4)/3;
+
+	for(int counter = 0; counter < num_t; counter++)
+	{
+		std::string tbuff = std::string(argv[1]) + std::string("/") + std::string(argv[2+counter]);
+		imfilenames.push_back(tbuff);
+	}
+	for(int counter = 0; counter < num_t; counter++)
+	{
+		std::string tbuff = std::string(argv[2+num_t]) + std::string("/") +std::string(argv[3+num_t+counter]);
+		labelfilenames.push_back(tbuff);
+	}
+	for(int counter = 0; counter < num_t; counter++)
+	{
+		std::string tbuff = std::string(argv[3+2*num_t]) + std::string("/") +std::string(argv[4+2*num_t+counter]);
+		outputfilenames.push_back(tbuff);
+	}
+	int ch = 4;
+
+	/*for(int counter=0; counter < num_t; counter++)
+	{
+		printf("---t = %d %s %s %s----\n", counter, imfilenames[counter].c_str(),labelfilenames[counter].c_str(), outputfilenames[counter].c_str());
+	}*/
+	//scanf("%*d");
 	/*
 	char file_name[100][1024];
 	char str[1024];
@@ -2489,7 +2516,7 @@ int main()//int argc, char **argv)
 	bool fexists = true;
 	for(int counter=0; counter<num_t; counter++)
 	{
-		if(!file_exists(argv[counter+1+2*num_t]))
+		if(!file_exists((char*)outputfilenames[counter].c_str()))
 		{
 			fexists = false;
 			break;
@@ -2506,9 +2533,9 @@ int main()//int argc, char **argv)
 		Color2DImageType::Pointer number = readImage<Color2DImageType>(filename_number);
 		for(int t =0; t<num_t; t++)
 		{
-			tempimage = readImage<InputImageType>(argv[t+1]);	
-			tempsegmented = readImage<LabelImageType>(argv[(t+1)+num_t]);
-			tempsegmented = getLargeLabels(tempsegmented,100);
+			tempimage = readImage<InputImageType>(imfilenames[t].c_str());	
+			tempsegmented = readImage<LabelImageType>(labelfilenames[t].c_str());
+			//tempsegmented = getLargeLabels(tempsegmented,100);
 			Color2DImageType::Pointer cimp = getColor2DImage(tempsegmented,2);
 			std::vector<FeaturesType> f;
 			std::vector<LabelImageType::Pointer> li;
@@ -2561,11 +2588,12 @@ int main()//int argc, char **argv)
 		debugcol->Allocate();
 		ct.set_debug_image(debugcol);
 		ct.run();
-		ct.writeGraphViz("C:\\Users\\arun\\Research\\Tracking\\harvard\\graphviz_testSeries.dot");
-		ct.writeGraphML("C:\\Users\\arun\\Research\\Tracking\\harvard\\graphviz_testSeries.graphml");
+		//ct.writeGraphViz("C:\\Users\\arun\\Research\\Tracking\\harvard\\graphviz_testSeries.dot");
+		//ct.writeGraphML("C:\\Users\\arun\\Research\\Tracking\\harvard\\graphviz_testSeries.graphml");
 		//PAUSE;
 		for(int t = 0; t< num_t; t++)
 		{
+			printf("In final loop t = %d\n",t);
 			//tempsegmented = readImage<LabelImageType>(argv[(t+1)+num_t]);
 			//tempsegmented = getLargeLabels(tempsegmented,100);
 			//LabelImageType::Pointer track = LabelImageType::New();
@@ -2596,6 +2624,7 @@ int main()//int argc, char **argv)
 			Color2DImageType::Pointer cimp = getColor2DImage(track,2);
 			std::vector<FeaturesType> f;
 			getFeatureVectorsFarsight(track,tempimage,f,t,c);
+			printf("About to begin annotate loop\n");
 			for(int counter=0; counter< f.size(); counter++)
 			{
 				std::vector<FeaturesType> conncomp = get_all_connected_components(track,f[counter]);
@@ -2605,10 +2634,12 @@ int main()//int argc, char **argv)
 					annotateImage(number,cimp,f[counter].num, MAX(conncomp[counter1].Centroid[0],0),MAX(conncomp[counter1].Centroid[1],0));
 				}
 			}
+			printf("Finished annotate loop\n");
 			output.push_back(cimp);
 			//std::cout<<"could not find :" ;
 			//copy(s.begin(), s.end(), std::ostream_iterator<int>(std::cout, " "));
-			writeImage<LabelImageType>(track,argv[(t+1)+2*num_t]);
+			printf("About to call writeImage\n");
+			writeImage<LabelImageType>(track,outputfilenames[t].c_str());
 		}
 		ColorImageType::Pointer colin = getColorImageFromColor2DImages(input);
 		ColorImageType::Pointer colout = getColorImageFromColor2DImages(output);

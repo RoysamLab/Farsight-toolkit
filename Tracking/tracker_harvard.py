@@ -70,9 +70,14 @@ if __name__ == '__main__':
 
 
     ######################### Smooth ####################################
-    for w in channels:
-        for t in time_points:
+
+    popen_objs = [];
+    for t in time_points:
+        for w in channels:
             temp_fname = []
+            output_filename =  os.path.join(cache_prefix, 'smoothed_' + filenames[(w,t)])
+            if os.path.exists(output_filename):
+                continue
             # for anisodiff
             # temp_fname.append(os.path.join(exe_dir,'anisodiff'))
             # for medianfilter
@@ -83,7 +88,14 @@ if __name__ == '__main__':
             #for medianfilter
             temp_fname.append('2,2,1')
             temp_fname.append(os.path.join(cache_prefix, 'smoothed_' + filenames[(w,t)]))
-            subprocess.call(temp_fname)
+            popen_objs.append(subprocess.Popen(temp_fname))
+##            subprocess.call(temp_fname)
+            if len(popen_objs) == number_of_cores:
+                for obj in popen_objs:
+                    out = obj.communicate()[0]    
+                popen_objs = []
+    for obj in popen_objs:
+        out = obj.communicate()[0] 
     #####################################################################
     ######################### Background Subraction #####################
 ##    for w in channels:
@@ -119,7 +131,7 @@ if __name__ == '__main__':
     
     channels_to_segment = [2,3,4]
     popen_objs = [];
-    tpr = int(number_of_cores/len(channels_to_segment));
+##    tpr = int(number_of_cores/len(channels_to_segment));
     # segment all the channels first. Then trace the vessels.
     for t  in time_points:
         for w in channels_to_segment:
@@ -141,12 +153,13 @@ if __name__ == '__main__':
                 temp_fname.append(params[0]) # paramerters
                 temp_fname.append(output_filename)
             popen_objs.append(subprocess.Popen(temp_fname));
-
-        if t % tpr == 0:
+            if len(popen_objs) == number_of_cores:
                 for obj in popen_objs:
                         out = obj.communicate()[0];
-
-    pdb.set_trace()
+                popen_objs = []
+    for obj in popen_objs:
+        out = obj.communicate()[0];
+    #pdb.set_trace()
     # vessel tracing
 ##    vessel_w = 4; #vessel channel
 ##    temp_fname = [];
@@ -155,21 +168,43 @@ if __name__ == '__main__':
 ##        temp_fname.append(os.path.join(cache_prefix, 'labeled_' + filenames[(vessel_w,t)]))
 ##    temp_fname.append(os.path.join(cache_prefix, 'vessel_binarized_' + dataset_id + '_w' + str(vessel_w) + '.tif'))
 ##    temp_fname.append(os.path.join(cache_prefix, 'vessel_trace_'+ dataset_id + '_w' + str(vessel_w) + '.tif'))
-##    subprocess.call(temp_fname) 
+##    subprocess.call(temp_fname)
+      ############################# Clean up segmentation ################
+
+    for t in time_points:
+        for w in channels_to_segment:
+            temp_fname = []
+            output_filename = os.path.join(cache_prefix, 'clabeled_' + filenames[(w,t)])
+            if os.path.exists(output_filename):
+                continue;
+            temp_fname.append(os.path.join(exe_dir,'remove_small_components'))
+            temp_fname.append(os.path.join(cache_prefix, 'labeled_' + filenames[(w,t)]))
+            temp_fname.append(os.path.join(cache_prefix, '100'))
+            temp_fname.append(os.path.join(cache_prefix, 'clabeled_' + filenames[(w,t)]))
+            popen_objs.append(subprocess.Popen(temp_fname))
+            if len(popen_objs) == number_of_cores :
+                for obj in popen_objs:
+                    out = obj.communicate()[0]
+                popen_objs = []
+    for obj in popen_objs:
+        out = obj.communicate()[0]        
 
 ##    ############################# Tracking ##############################
 ##
 ##    # track channel 1 and 2 only
-    channels_to_track = [3,4]
+    channels_to_track = [3]
     for w in channels_to_track:
         temp_fname = [];
-        temp_fname.append(os.path.join(exe_dir,'tracking'))
+        temp_fname.append(os.path.join(exe_dir,'tracking_multiframe'))
+        temp_fname.append(cache_prefix)
         for t in time_points:
-            temp_fname.append(os.path.join(cache_prefix, 'smoothed_' + filenames[(w,t)]))
+            temp_fname.append('smoothed_' + filenames[(w,t)])
+        temp_fname.append(cache_prefix)
         for t in time_points:
-            temp_fname.append(os.path.join(cache_prefix, 'labeled_' + filenames[(w,t)]))
+            temp_fname.append('clabeled_' + filenames[(w,t)])
+        temp_fname.append(cache_prefix)
         for t in time_points:
-            temp_fname.append(os.path.join(cache_prefix, 'labeled_tracks_' + filenames[(w,t)]))
+            temp_fname.append('labeled_tracks_' + filenames[(w,t)])
         print temp_fname
         subprocess.call(temp_fname);
 ##    
@@ -187,12 +222,12 @@ if __name__ == '__main__':
             temp_fname.append(os.path.join(cache_prefix, 'labeled_tracks_' + filenames[(w,t)]))
         temp_fname.append('DC') # type of channel
         for t in time_points:
-            temp_fname.append(os.path.join(cache_prefix, 'labeled_' + filenames[(2,t)])) # add DC segmented files too
+            temp_fname.append(os.path.join(cache_prefix, 'clabeled_' + filenames[(2,t)])) # add DC segmented files too
 ##        temp_fname.append('Vessel') # type of channel
 ##        temp_fname.append(os.path.join(cache_prefix, 'vessel_trace_' + dataset_id + '_w' + str(vessel_w) + '.tif'))
         temp_fname.append(os.path.join(cache_prefix, 'track_summary_' + dataset_id + '_w' + str(w) + '.txt'))
         temp_fname.append(os.path.join(cache_prefix, 'track_points_summary_' + dataset_id + '_w' + str(w) + '.txt'))
-        subprocess.call(temp_fname);
+        #subprocess.call(temp_fname);
 
   ####################### Rendering #########################
 ##  temp_fname = [];
