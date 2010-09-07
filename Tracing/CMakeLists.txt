@@ -55,7 +55,7 @@ IF( BUILD_Rendering )
   SUBDIRS( Rendering )
 ENDIF()
 
-OPTION( BUILD_ExtractSomas "Build Soma Extraction executables" OFF )
+OPTION( BUILD_ExtractSomas "Build Soma Extraction executables" ${ITK_USE_REVIEW} )
 IF( BUILD_ExtractSomas )
   SUBDIRS( ExtractSomas )
 ENDIF()
