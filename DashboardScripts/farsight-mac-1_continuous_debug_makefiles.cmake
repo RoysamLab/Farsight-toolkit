@@ -27,7 +27,8 @@ ITK_DIR:PATH=/projects/Dashboards/ITK-3.16.0-static
 VTK_DIR:PATH=/projects/Dashboards/VTK-5.4.2-static
 CMAKE_OSX_ARCHITECTURES:STRING=i386
 QT_QMAKE_EXECUTABLE:FILEPATH=/usr/local/Qt4.6.0-universal/bin/qmake
+FARSIGHT_DATA_ROOT:PATH=/projects/Dashboards/farsight-data
 ")
 
 SET(CTEST_CVS_COMMAND "/usr/bin/svn")
-
+SET(CTEST_EXTRA_UPDATES_1 "/projects/Dashboards/farsight-data" "--non-interactive")

@@ -28,4 +28,4 @@ FARSIGHT_DATA_ROOT:PATH=/Dashboards/farsight-data
 ")
 
 SET(CTEST_CVS_COMMAND "/usr/bin/svn")
-
+SET(CTEST_EXTRA_UPDATES_1 "/Dashboards/farsight-data" "--non-interactive")
