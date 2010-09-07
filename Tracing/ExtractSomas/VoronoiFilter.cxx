@@ -30,28 +30,25 @@ int main( int argc, char * argv[] )
     }
 
   const unsigned int      ImageDimension = 3;
-  typedef unsigned char   InputPixelType;
-  typedef double          OutputPixelType;
+  typedef unsigned char   PixelType;
 
-  typedef itk::Image<InputPixelType,  ImageDimension>  InputImageType;
-  typedef itk::Image<OutputPixelType, ImageDimension>  OutputImageType;
+  typedef itk::Image<PixelType,  ImageDimension>  ImageType;
 
-  typedef itk::ImageFileReader<InputImageType>    ReaderType;
-  typedef itk::ImageFileWriter<OutputImageType>   WriterType;
-  typedef InputImageType::SizeType                InputSizeType;
+  typedef itk::ImageFileReader<ImageType>    ReaderType;
+  typedef itk::ImageFileWriter<ImageType>   WriterType;
 
   ReaderType::Pointer reader = ReaderType::New();
   reader->SetFileName(argv[1]);
   reader->Update();  
 
   typedef itk::DanielssonDistanceMapImageFilter
-     <InputImageType, OutputImageType>  FilterType;
+     <ImageType, ImageType>  FilterType;
 
   FilterType::Pointer filter = FilterType::New();
   filter->SetInput( reader->GetOutput() );
   filter->SetSquaredDistance( false );
   filter->SetUseImageSpacing( true );
-  filter->SetInputIsBinary( true );
+  filter->InputIsBinaryOn();
   filter->Update();
 
   WriterType::Pointer writer = WriterType::New();

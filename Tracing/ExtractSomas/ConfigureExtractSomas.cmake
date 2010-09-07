@@ -1,0 +1,3 @@
+CONFIGURE_FILE(
+  ${PROJECT_SOURCE_DIR}/ExtractSomas.py.in
+  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ExtractSomas.py)

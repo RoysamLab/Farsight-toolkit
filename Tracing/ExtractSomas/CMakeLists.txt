@@ -1,84 +1,88 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.4)
-IF(COMMAND CMAKE_POLICY)
-  CMAKE_POLICY(SET CMP0003 NEW)
-ENDIF(COMMAND CMAKE_POLICY)
+cmake_minimum_required(VERSION 2.6)
+
+project(ExtractSomas)
+
+find_package(ITK REQUIRED)
+include(${ITK_USE_FILE})
+
+if(NOT ITK_USE_REVIEW)
+  message(FATAL_ERROR "ExtractSomas requires ITK to be built with ITK_USE_REVIEW turned on.  Please reconfigure ITK if you'd like to use ExtractSoma")
+endif()
+
+if(APPLE)
+  set(INSTALL_DEST ${FARSIGHT_BUNDLE_LOCATION}/bin)
+else(APPLE)
+  set(INSTALL_DEST bin)
+endif(APPLE)
 
 
-PROJECT(ExtractSomas)
+add_executable(MedianImageFilter MedianImageFilter.cxx)
+target_link_libraries(MedianImageFilter ITKIO ITKStatistics)
+install(TARGETS MedianImageFilter DESTINATION ${INSTALL_DEST} )
 
-FIND_PACKAGE(ITK REQUIRED)
-INCLUDE(${ITK_USE_FILE})
+add_executable(RobustAutomaticThresholdImageFilterTest RobustAutomaticThresholdImageFilterTest.cxx)
+target_link_libraries(RobustAutomaticThresholdImageFilterTest ITKIO ITKStatistics)
+install(TARGETS RobustAutomaticThresholdImageFilterTest DESTINATION ${INSTALL_DEST} )
 
-INCLUDE(CTest)
+add_executable(PadImage PadImage.cxx)
+target_link_libraries(PadImage ITKIO ITKStatistics)
+install(TARGETS PadImage DESTINATION ${INSTALL_DEST} )
 
-ADD_EXECUTABLE(ImageHistogram2  ImageHistogram2.cxx)
-ADD_EXECUTABLE(KappaSigmaThresholdImageFilterTest KappaSigmaThresholdImageFilterTest.cxx)
-ADD_EXECUTABLE(RobustAutomaticThresholdImageFilterTest RobustAutomaticThresholdImageFilterTest.cxx)
-ADD_EXECUTABLE(RobustAutomaticThresholdImageFilterTest2D RobustAutomaticThresholdImageFilterTest2D.cxx)
-ADD_EXECUTABLE(MorphologyGrayscaleFilters MorphologyGrayscaleFilters.cxx)
-ADD_EXECUTABLE(ImageReadWrite ImageReadWrite.cxx)
-ADD_EXECUTABLE(MedianImageFilter MedianImageFilter.cxx)
-ADD_EXECUTABLE(PadImage PadImage.cxx)
-ADD_EXECUTABLE(PadDistanceMap PadDistanceMap.cxx)
-ADD_EXECUTABLE(HoleFillingFilterTest HoleFillingFilterTest.cxx)
-ADD_EXECUTABLE(ExtractImageFromPadding ExtractImageFromPadding.cxx)
-ADD_EXECUTABLE(DistanceMapFilter DistanceMapFilter.cxx)
-ADD_EXECUTABLE(BinaryThresholdImageFilter BinaryThresholdImageFilter.cxx)
-ADD_EXECUTABLE(DownwardFrontPropagation DownwardFrontPropagation.cxx)
-ADD_EXECUTABLE(VoronoiFilter VoronoiFilter.cxx)
+add_executable(HoleFillingFilterTest HoleFillingFilterTest.cxx)
+target_link_libraries(HoleFillingFilterTest ITKIO ITKStatistics)
+install(TARGETS HoleFillingFilterTest DESTINATION ${INSTALL_DEST} )
 
-TARGET_LINK_LIBRARIES(ImageHistogram2 ITKIO ITKStatistics)
-TARGET_LINK_LIBRARIES(KappaSigmaThresholdImageFilterTest ITKIO ITKStatistics)
-TARGET_LINK_LIBRARIES(RobustAutomaticThresholdImageFilterTest ITKIO ITKStatistics)
-TARGET_LINK_LIBRARIES(RobustAutomaticThresholdImageFilterTest2D ITKIO ITKStatistics)
-TARGET_LINK_LIBRARIES(MorphologyGrayscaleFilters ITKIO ITKStatistics)
-TARGET_LINK_LIBRARIES(ImageReadWrite ITKIO ITKStatistics)
-TARGET_LINK_LIBRARIES(MedianImageFilter ITKIO ITKStatistics)
-TARGET_LINK_LIBRARIES(PadImage ITKIO ITKStatistics)
-TARGET_LINK_LIBRARIES(PadDistanceMap ITKIO ITKStatistics)
-TARGET_LINK_LIBRARIES(HoleFillingFilterTest ITKIO ITKStatistics)
-TARGET_LINK_LIBRARIES(ExtractImageFromPadding ITKIO ITKStatistics)
-TARGET_LINK_LIBRARIES(DistanceMapFilter ITKIO ITKStatistics)
-TARGET_LINK_LIBRARIES(BinaryThresholdImageFilter ITKIO ITKStatistics)
-TARGET_LINK_LIBRARIES(DownwardFrontPropagation ITKIO ITKStatistics)
-TARGET_LINK_LIBRARIES(VoronoiFilter ITKIO ITKStatistics)
+add_executable(ExtractImageFromPadding ExtractImageFromPadding.cxx)
+target_link_libraries(ExtractImageFromPadding ITKIO ITKStatistics)
+install(TARGETS ExtractImageFromPadding DESTINATION ${INSTALL_DEST} )
 
-ADD_TEST(Read ImageReadWrite /path/to/image.tif input.tif )
-ADD_TEST(Median MedianImageFilter input.tif median.tif)
-    SET_TESTS_PROPERTIES ( Median PROPERTIES DEPENDS Read )
-ADD_TEST(Robust RobustAutomaticThresholdImageFilterTest median.tif robust.tif 2 10.0)
-    SET_TESTS_PROPERTIES ( Robust PROPERTIES DEPENDS Median )
-ADD_TEST(Pad1 PadImage robust.tif padded.tif)
-    SET_TESTS_PROPERTIES ( Pad1 PROPERTIES DEPENDS Robust )
-ADD_TEST(HoleFilling HoleFillingFilterTest padded.tif filled_padded.tif 1000 1 )
-    SET_TESTS_PROPERTIES ( HoleFilling PROPERTIES DEPENDS Pad1 )
-ADD_TEST(Depad1 ExtractImageFromPadding filled_padded.tif filled.tif)
-    SET_TESTS_PROPERTIES ( Depad1 PROPERTIES DEPENDS HoleFilling )
-ADD_TEST(Distance DistanceMapFilter filled.tif distance.mhd)
-    SET_TESTS_PROPERTIES ( Distance PROPERTIES DEPENDS Depad1 )
+add_executable(DistanceMapFilter DistanceMapFilter.cxx)
+target_link_libraries(DistanceMapFilter ITKIO ITKStatistics)
+install(TARGETS DistanceMapFilter DESTINATION ${INSTALL_DEST} )
 
-ADD_TEST(Threshold BinaryThresholdImageFilter distance.mhd distanceThreshold.tif 
-  5.0  # 80% of expected blob size
-  )
-    SET_TESTS_PROPERTIES ( Threshold PROPERTIES DEPENDS Distance )
+add_executable(BinaryThresholdImageFilter BinaryThresholdImageFilter.cxx)
+target_link_libraries(BinaryThresholdImageFilter ITKIO ITKStatistics)
+install(TARGETS BinaryThresholdImageFilter DESTINATION ${INSTALL_DEST} )
 
-ADD_TEST(Pad2 PadImage distanceThreshold.tif distanceThreshold_padded.tif)
-    SET_TESTS_PROPERTIES ( Pad2 PROPERTIES DEPENDS Threshold )
+add_executable(PadDistanceMap PadDistanceMap.cxx)
+target_link_libraries(PadDistanceMap ITKIO ITKStatistics)
+install(TARGETS PadDistanceMap DESTINATION ${INSTALL_DEST} )
 
-ADD_TEST(PadDistanceMap PadDistanceMap distance.mhd distance_padded.mhd)
-    SET_TESTS_PROPERTIES ( PadDistanceMap PROPERTIES DEPENDS Pad2 )
+add_executable(DownwardFrontPropagation DownwardFrontPropagation.cxx)
+target_link_libraries(DownwardFrontPropagation ITKIO ITKStatistics)
+install(TARGETS DownwardFrontPropagation DESTINATION ${INSTALL_DEST} )
 
-ADD_TEST(Propagation DownwardFrontPropagation 
-  distanceThreshold_padded.tif 
-  distance_padded.mhd
-  output_somas_padded.tif
-  1000
-  4.0  # expected radius of tubes
-  )
-    SET_TESTS_PROPERTIES ( Propagation PROPERTIES DEPENDS PadDistanceMap )
+add_executable(IsolateCentroids IsolateCentroids.cxx)
+target_link_libraries(IsolateCentroids ITKIO ITKStatistics)
+install(TARGETS IsolateCentroids DESTINATION ${INSTALL_DEST} )
 
-ADD_TEST(Depad2 ExtractImageFromPadding output_somas_padded.tif output_somas.tif)
-    SET_TESTS_PROPERTIES ( Depad2 PROPERTIES DEPENDS Propagation )
+add_executable(VoronoiFilter VoronoiFilter.cxx)
+target_link_libraries(VoronoiFilter ITKIO ITKStatistics)
+install(TARGETS VoronoiFilter DESTINATION ${INSTALL_DEST} )
 
-#ADD_TEST(Voronoi1 VoronoiFilter somas.tif voronoi.mhd)
-#    SET_TESTS_PROPERTIES ( Voronoi1 PROPERTIES DEPENDS Propagation )
+include(CTest)
+
+add_custom_command(
+  TARGET VoronoiFilter
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND}
+  ARGS -D CMAKE_EXECUTABLE_SUFFIX:STRING=${CMAKE_EXECUTABLE_SUFFIX}
+       -D PROJECT_SOURCE_DIR:STRING=${PROJECT_SOURCE_DIR}
+       -D PROJECT_BINARY_DIR:STRING=${PROJECT_BINARY_DIR}
+       -D CMAKE_RUNTIME_OUTPUT_DIRECTORY:STRING=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+       -P ${PROJECT_SOURCE_DIR}/ConfigureExtractSomas.cmake)
+install(FILES ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ExtractSomas.py DESTINATION ${INSTALL_DEST})
+
+if(BUILD_TESTING AND FARSIGHT_DATA_ROOT)
+  find_package(PythonInterp)
+  if( PYTHON_EXECUTABLE)
+    add_test(ExtractSomas
+      ${PYTHON_EXECUTABLE}
+      ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ExtractSomas.py
+      ${FARSIGHT_DATA_ROOT}/TraceData/Iba1.tif
+      Iba1_somas.tif)
+    set_tests_properties(ExtractSomas PROPERTIES
+      PASS_REGULAR_EXPRESSION "I count 89 distinct somas."
+      TIMEOUT 1800) #30 minutes
+  endif()
+endif()
