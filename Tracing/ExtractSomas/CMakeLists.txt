@@ -83,6 +83,6 @@ if(BUILD_TESTING AND FARSIGHT_DATA_ROOT)
       Iba1_somas.tif)
     set_tests_properties(ExtractSomas PROPERTIES
       PASS_REGULAR_EXPRESSION "I count 89 distinct somas."
-      TIMEOUT 1800) #30 minutes
+      TIMEOUT 2700) #45 minutes
   endif()
 endif()
