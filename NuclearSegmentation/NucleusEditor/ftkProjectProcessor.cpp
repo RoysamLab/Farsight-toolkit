@@ -510,12 +510,12 @@ bool ProjectProcessor::RunQuery(void)
 		}
 
 		if( strcmp( definition->queryParameters.at(j).name.c_str(), "count" ) == 0 ){
-			std::string temp = "SELECT COUNT IMG_ID FROM ( " + definition->queryParameters.at(j).value + " AND IMG_ID = " + ftk::NumToString(sql_db_img_id) + ";";
+			std::string temp = "SELECT COUNT IMG_ID FROM ( " + definition->queryParameters.at(j).value + " AND IMG_ID = " + ftk::NumToString(sql_db_img_id) + ");";
 			sql = new char [temp.size()+1];
 			strcpy (sql, temp.c_str());
 		}
 		else{
-			std::string temp = definition->queryParameters.at(j).value + " AND IMG_ID = " + ftk::NumToString(sql_db_img_id) + " );";
+			std::string temp = definition->queryParameters.at(j).value + " AND IMG_ID = " + ftk::NumToString(sql_db_img_id) + ";";
 			sql = new char [temp.size()+1];
 			strcpy (sql, temp.c_str());
 		}

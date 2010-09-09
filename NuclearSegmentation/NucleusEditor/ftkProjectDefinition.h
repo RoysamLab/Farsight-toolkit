@@ -71,6 +71,7 @@ public:
 	TiXmlElement * GetPreprocessingElement( preprocessParam param );
 	std::vector<QueryParameter> ReadQueryParameters(TiXmlElement * inputElement);
 	TiXmlElement * GetParameterElement( Parameter param );
+	TiXmlElement * GetQueryParameterElement( QueryParameter param );
 	TiXmlElement * GetAssocRuleElement( ftk::AssociationRule rule );
 	TiXmlElement * GetClassificationElement( ProjectDefinition::ClassParam ClassParameter );
 	TiXmlElement * GetTrainingFileElement( std::string file_name );

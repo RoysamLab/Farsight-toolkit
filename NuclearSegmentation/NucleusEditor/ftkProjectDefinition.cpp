@@ -469,9 +469,18 @@ bool ProjectDefinition::Write(std::string filename)
 		root->LinkEndChild(paramsElement);
 	}
 
-	//ADD PIXEL DEFINITIONS & SQLQUERY
+	if(queryParameters.size() > 0)
+	{
+		TiXmlElement * paramsElement = new TiXmlElement("SqlQueryParameters");
+		for(int i=0; i<(int)queryParameters.size(); ++i)
+		{
+			paramsElement->LinkEndChild( GetQueryParameterElement(queryParameters.at(i)) );
+		}
+		root->LinkEndChild(paramsElement);
+	}
 
 	//AnalyteMeasures:
+	//ADD PIXEL DEFINITIONS
 
 	if(doc.SaveFile( filename.c_str() ))
 		return true;
@@ -516,6 +525,13 @@ TiXmlElement * ProjectDefinition::GetParameterElement( Parameter param )
 	TiXmlElement * returnElement = new TiXmlElement("parameter");
 	returnElement->SetAttribute("name", param.name);
 	returnElement->SetAttribute("value", ftk::NumToString(param.value));
+	return returnElement;
+}
+TiXmlElement * ProjectDefinition::GetQueryParameterElement( ftk::ProjectDefinition::QueryParameter param )
+{
+	TiXmlElement * returnElement = new TiXmlElement("SqlQuery");
+	returnElement->SetAttribute("name", param.name);
+	returnElement->SetAttribute("value", param.value);
 	return returnElement;
 }
 

@@ -537,14 +537,14 @@ void sqliteExecuteQuery2(sqlite3 *db,const char * sql, std::string path, int qnu
 		std::cerr << "Farsight Sql Error :Incorrect Sql Query: " << sqlite3_errmsg(db) << std::endl;
 	else{
 		std::cerr << "Number of row: "<< nrow <<" and Columns: " << ncol << std::endl;
-	 for(int i=0; i <= nrow; i++) 
-	 {
-	  for(int j=0; j < ncol; j++) 
-	  {fprintf(stdout, "%s ", result[(i)*ncol + j]);
-	   fprintf(stdout, ",");
-	  }
-	  fprintf(stdout, "\n \n");
-     }
+	 //for(int i=0; i <= nrow; i++) 
+	 //{
+	 //for(int j=0; j < ncol; j++) 
+	 //{fprintf(stdout, "%s ", result[(i)*ncol + j]);
+	 //fprintf(stdout, ",");
+	 //}
+	 //fprintf(stdout, "\n \n");
+     //}
 	}
 	path = path + "FarsightData" + ftk::NumToString(qnum).c_str() + ".csv";
 	FILE * fp = fopen(path.c_str(),"w");
