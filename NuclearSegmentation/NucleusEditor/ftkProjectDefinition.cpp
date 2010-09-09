@@ -599,6 +599,9 @@ std::string ProjectDefinition::GetTaskString(TaskType task)
 	std::string retText = "";
 	switch(task)
 	{
+	case PREPROCESSING:
+		retText = "PREPROCESSING";
+		break;
 	case NUCLEAR_SEGMENTATION:
 		retText = "NUCLEAR_SEGMENTATION";
 		break;
@@ -613,9 +616,12 @@ std::string ProjectDefinition::GetTaskString(TaskType task)
 		break;
 	case ANALYTE_MEASUREMENTS:
 		retText = "ANALYTE_MEASUREMENTS";
+		break;
 	case PIXEL_ANALYSIS:
 		retText = "PIXEL_ANALYSIS";
 		break;
+	case QUERY:
+		retText = "QUERY";
 	}
 	return retText;
 }
