@@ -311,4 +311,13 @@ std::vector<std::string> GetColumsWithString( std::string colName, vtkSmartPoint
 	return retVect;	
 }
 
+std::string GetStringInCaps( std::string in_string ){
+	if( !in_string.size() )
+		return NULL;
+	std::string out_string;
+	out_string = in_string;
+	std::transform(out_string.begin(), out_string.end(),out_string.begin(), ::toupper);
+	return out_string;
+}
+
 }  // end namespace ftk

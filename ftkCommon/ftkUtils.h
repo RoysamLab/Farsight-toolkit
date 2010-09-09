@@ -56,6 +56,7 @@ std::string SetExtension(std::string filename, std::string ext); // if ext = "",
 std::string GetFilenameFromFullPath(std::string f);
 std::string GetFilePath(std::string f);
 std::vector<std::string> GetColumsWithString( std::string colName, vtkSmartPointer<vtkTable> table );
+std::string GetStringInCaps( std::string in_srting );
 typedef struct { std::string regionChannelName; std::string targetChannelName; int mode;
 				 std::string outputFilename; int radius; } PixelAnalysisDefinitions;
 }  // end namespace ftk

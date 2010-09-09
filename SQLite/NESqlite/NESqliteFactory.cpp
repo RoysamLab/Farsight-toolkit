@@ -1,5 +1,6 @@
 #if defined(_MSC_VER)
 #pragma warning(disable : 4996)
+#define strcasecmp _stricmp
 #endif
 
 #include "NESqliteFactory.h"
@@ -205,25 +206,24 @@ void GenericSearch(sqlite3 *db,const char * sql)
 	return dbConn;
 }
 
-void AlterTable(sqlite3 *dbConn,char * table ,char *column)
+ void AlterTable(sqlite3 *dbConn, std::string table , std::string column)
 {  	char *zErr; 
-	int  exeStatus ;
-	char *pSQL;
+	int  exeStatus;
+	std::string pSQL;
     
 	//strcat( pSQL, "Alter table" );
-	pSQL = "Alter table";
-	strcat( pSQL, table );
-	strcat( pSQL, "add column" );
-	strcat( pSQL, column );
-	strcat( pSQL, "FLOAT DEFAULT '0.0'" );
+	pSQL = "ALTER TABLE " + table + " ADD COLUMN " + column + " FLOAT DEFAULT '0.0'";
+
+	char *pSQL_cstr = new char [pSQL.size()+1];
+	strcpy(pSQL_cstr, pSQL.c_str());
 	
-    exeStatus = sqlite3_exec(dbConn, pSQL, 0, 0, &zErr);
-    if( exeStatus!=SQLITE_OK )
-	{ fprintf(stderr, "SQL error: %s\n", zErr);
-      sqlite3_free(zErr);
+    exeStatus = sqlite3_exec(dbConn, pSQL_cstr, 0, 0, &zErr);
+    if( exeStatus != SQLITE_OK && exeStatus != SQLITE_DONE ){
+		std::cerr<<"SQL error: "<< zErr << std::endl;
+		sqlite3_free(zErr);
     }
  
-	sqlite3_close(dbConn);
+	//sqlite3_close(dbConn);
 }
 
  void checkForUpdate(sqlite3 *dbConn,char * project_name,std::vector<std::string> column_names)
@@ -231,17 +231,19 @@ void AlterTable(sqlite3 *dbConn,char * table ,char *column)
 	int  nrow;       /* Number of result rows written here */
 	int  ncol;       /* Number of result columns written here */
 	char *zErr;      /* Error msg written here */
+	std::string MasterTableName1;
 	char *MasterTableName;
     int  exeStatus;
 	char **result;
 	
 	/*strcat( MasterTableName, project_name );
 	strcat( MasterTableName, "_MASTER");*/
-	MasterTableName="IMAGE";
-	//strcat( MasterTableName, "IMAGE" );
-	strcat( MasterTableName, "_TEST");
+	MasterTableName1="IMAGE_TEST";
+	MasterTableName = new char[MasterTableName1.length() + 1];
+	strcpy( MasterTableName, MasterTableName1.c_str() );
 
-	char * CheckforUpdateQuery;
+	char *CheckforUpdateQuery;
+	std::string CheckforUpdateQuery1;
     /*
 	 1) Master table for each project must have format "Projectname_MASTER"
 	 2) They must have the column names IMG_ID corresponding to IMAGE
@@ -249,29 +251,39 @@ void AlterTable(sqlite3 *dbConn,char * table ,char *column)
 	*/
 
 	//strcat( CheckforUpdateQuery, "Select * from" );
-	CheckforUpdateQuery = "Select * from";
-	strcat( CheckforUpdateQuery, MasterTableName );
-	strcat( CheckforUpdateQuery, "where IMG_ID =1");
+	CheckforUpdateQuery1 = "PRAGMA table_info(" + MasterTableName1 + ");";
+	CheckforUpdateQuery = new char[CheckforUpdateQuery1.length() + 1];
+	strcpy( CheckforUpdateQuery, CheckforUpdateQuery1.c_str() );
        
     exeStatus = sqlite3_get_table(dbConn, CheckforUpdateQuery, &result, &nrow, &ncol, &zErr);
 
 	if( exeStatus != SQLITE_OK )
-		fprintf(stderr, "Farsight Sql Error :Incorrect Sql Query: %s\n", sqlite3_errmsg(dbConn));
+		std::cerr<<"Farsight Sql Error :Incorrect Sql Query: "<<sqlite3_errmsg(dbConn)<<std::endl;
 
-	for(std::vector<std::string>::iterator theit=column_names.begin()+1; theit!=column_names.end(); ++theit ){
+	int ind = 7;
+	std::cout<<"The column headers in the seleted table on the database are:\n";
+	for( int i=0; i<nrow; ++i ){
+		std::string colname;
+		colname = result[ind+i*6];
+		std::cout<< colname << "\t";
+	}
+
+	for(std::vector<std::string>::iterator theit=column_names.begin(); theit!=column_names.end(); ++theit ){
 		bool header_found = false;
-		for( int i=0; i<ncol; ++i ){
-			if( strcmp( (*theit).c_str() , result[i] ) == 0 ){
+		for( int i=0; i<nrow; ++i ){
+			if( strcasecmp( (*theit).c_str() , result[ind+i*6] ) == 0 ){
 				header_found = true;
 				break;
 			}
 		}
 		if( !header_found ){
-			char *cstr = new char [(*theit).size()+1];
-			strcpy (cstr, (*theit).c_str());
-			AlterTable( dbConn, MasterTableName , cstr );
+			//char *cstr = new char [(*theit).size()+1];
+			//strcpy (cstr,(ftk::GetStringInCaps(*theit)).c_str());
+			//cstr = toupper(cstr);
+			AlterTable( dbConn, MasterTableName1 , ftk::GetStringInCaps(*theit) );
 		}
 	}
+
    /*  
      1) The first 'ncol' values in 'result' are column names 
 	 2) We can compare them to 'columnArray'array passed in this function.
@@ -279,8 +291,7 @@ void AlterTable(sqlite3 *dbConn,char * table ,char *column)
 	    Note that we call this function each time for one column found
     */
 
-	sqlite3_close(dbConn);
-	fprintf(stderr,"Execution complete!\n");
+	std::cerr << "Headers checked\n";
 
 }
 
@@ -289,41 +300,80 @@ void AlterTable(sqlite3 *dbConn,char * table ,char *column)
 { 
 	sqlite3_stmt *ppStmt;
 	std::string queryStr,queryStrPart1 ,queryStrPart2 = "?",table_name;
-	char  *img_name;
+	//char  *img_name;
 	int   exeStatus,img_id;
 	const char *tail;
+	int  qnrow=0;       // Number of result rows written here
+	int  qncol=0;       // Number of result columns written here 
+	char *zErr;      // Error msg written here 
+	char **result;
 //	char  *zErrMsg,*name;
     //---------------------------------------------------------------------------------------------------------
     /*PART1)Every Project will have this generic table called IMAGE 
 	        which hold image name and autogenerted IMG_ID*/
-	queryStr = "insert into IMAGE (IMG_NAME, IMG_LOCATION)"
-		       "values (:IMG_NAME, :IMG_LOCATION)";
-	
-	//Location variable not decided
-	sqlite3_prepare(db, queryStr.c_str(), queryStr.size(), &ppStmt, &tail);
-	sqlite3_bind_text( ppStmt,sqlite3_bind_parameter_index(ppStmt,":IMG_NAME"),Img_name,strlen(Img_name),SQLITE_TRANSIENT );
-	sqlite3_bind_text( ppStmt,sqlite3_bind_parameter_index(ppStmt,":IMG_LOCATION"),path,strlen(path),SQLITE_TRANSIENT );
-	exeStatus = sqlite3_step(ppStmt);
-	sqlite3_finalize(ppStmt);
+	//Check if image already exists in the list
+	std::string check_str;
+	check_str = "SELECT * FROM IMAGE WHERE IMG_LOCATION='";
+	char *check_str_cstr = new char [check_str.size()+strlen(path)+1];
+	strcpy (check_str_cstr, check_str.c_str());
+	strcat( check_str_cstr, path );
+	strcat( check_str_cstr, "'" );
+	exeStatus = sqlite3_get_table(db, check_str_cstr, &result, &qnrow, &qncol, &zErr);
+	if( qnrow ){
+		img_id = atoi( result[qnrow*qncol] );
+		check_str.clear();
+		check_str = "DELETE FROM IMAGE_TEST WHERE IMG_ID="+ftk::NumToString(img_id);
+		sqlite3_prepare(db, check_str.c_str(), check_str.size(), &ppStmt, &tail);
+		exeStatus = sqlite3_step(ppStmt);
+		if( exeStatus != SQLITE_OK && exeStatus != SQLITE_DONE ){
+			std::cerr<<"Sqlite3_prepare error:"<<sqlite3_errmsg(db)<<std::endl;
+			return -1;
+		}
+	}
+	else{
+		queryStr = "insert into IMAGE (IMG_NAME, IMG_LOCATION)"
+			       "values (:IMG_NAME, :IMG_LOCATION)";
+		//Location variable not decided
+		sqlite3_prepare(db, queryStr.c_str(), queryStr.size(), &ppStmt, &tail);
+		sqlite3_bind_text( ppStmt,sqlite3_bind_parameter_index(ppStmt,":IMG_NAME"),Img_name,strlen(Img_name),SQLITE_TRANSIENT );
+		sqlite3_bind_text( ppStmt,sqlite3_bind_parameter_index(ppStmt,":IMG_LOCATION"),path,strlen(path),SQLITE_TRANSIENT );
+		exeStatus = sqlite3_step(ppStmt);
+		sqlite3_finalize(ppStmt);
+		if( exeStatus != SQLITE_OK && exeStatus != SQLITE_DONE ){
+			std::cerr<<"Sqlite3_prepare error:"<<sqlite3_errmsg(db)<<std::endl;
+			return -1;
+		}
+		exeStatus = sqlite3_get_table(db, check_str_cstr, &result, &qnrow, &qncol, &zErr);
+		if( exeStatus != SQLITE_OK && exeStatus != SQLITE_DONE ){
+			std::cerr<<"Sqlite3_prepare error:"<<sqlite3_errmsg(db)<<std::endl;
+			return -1;
+		}
+		img_id = atoi( result[qnrow*qncol] );
+	}
+
+
     //---------------------------------------------------------------------------------------------------------
 	/*PART2) Then we retrive the autogenerted IMG_ID and insert the data corresponding to that
 	        id in master data table in Part3*/
 	
-	queryStr = "select IMG_ID,IMG_NAME from IMAGE where IMG_NAME = :IMG_NAME";         
-	exeStatus = sqlite3_prepare(db, queryStr.c_str(), queryStr.size(), &ppStmt, &tail);
-	if( exeStatus != SQLITE_OK )
-		std::cerr<<"Sqlite3_prepare error:"<<sqlite3_errmsg(db)<<std::endl;
-	else
-	{	sqlite3_bind_text(ppStmt,sqlite3_bind_parameter_index(ppStmt,":IMG_NAME"),Img_name,strlen(Img_name),SQLITE_TRANSIENT );
-		exeStatus = sqlite3_step(ppStmt);
-		while(exeStatus == SQLITE_ROW) 
-		{ img_id   = sqlite3_column_int(ppStmt, 0);
-		  img_name = (char*)sqlite3_column_text(ppStmt,1);
-		  exeStatus = sqlite3_step(ppStmt);
-		  std::cerr<<"img_id="<<img_id<<std::endl;
-		}
-		sqlite3_finalize(ppStmt);
-	}
+	//queryStr = "select IMG_ID from IMAGE where IMG_LOCATION = :IMG_LOCATION";         
+	//exeStatus = sqlite3_prepare(db, queryStr.c_str(), queryStr.size(), &ppStmt, &tail);
+	//if( exeStatus != SQLITE_OK ){
+	//	std::cerr<<"Sqlite3_prepare error:"<<sqlite3_errmsg(db)<<std::endl;
+	//	return -1;
+	//}
+	//else{
+	//	sqlite3_bind_text(ppStmt,sqlite3_bind_parameter_index(ppStmt,":IMG_NAME"),path,strlen(path),SQLITE_TRANSIENT );
+	//	exeStatus = sqlite3_step(ppStmt);
+	//	while(exeStatus == SQLITE_ROW){
+	//		img_id   = sqlite3_column_int(ppStmt, 0);
+	//		img_name = (char*)sqlite3_column_text(ppStmt,1);
+	//		exeStatus = sqlite3_step(ppStmt);
+	//		std::cerr<<"img_id="<<img_id<<std::endl;
+	//	}
+	//	sqlite3_finalize(ppStmt);
+	//}
+
     //---------------------------------------------------------------------------------------------------------
 	/*PART3) 1)Now we will insert the data in master data table
 	         2) For this we generate parameterised queryStr  
@@ -335,12 +385,13 @@ void AlterTable(sqlite3 *dbConn,char * table ,char *column)
 	table_name = "IMAGE_TEST";
 	
 	queryStrPart1 = "insert into "+table_name+"(IMG_ID, CELL_ID";//+" values";
-	for( int i=1; i<colNames.size(); ++i )
-		queryStrPart1 = queryStrPart1 + ", " + colNames.at(i);
-	queryStrPart1 = queryStrPart1+")values(";
-	for( int i=1; i<colNames.size(); ++i )
-		queryStrPart1 = queryStrPart1 + ",:" + colNames.at(i);
+	for( int i=0; i<colNames.size(); ++i )
+		queryStrPart1 = queryStrPart1 + ", " + ftk::GetStringInCaps( colNames.at(i) );
+	queryStrPart1 = queryStrPart1+")values(:IMG_ID, :CELL_ID";
+	for( int i=0; i<colNames.size(); ++i )
+		queryStrPart1 = queryStrPart1 + ", :" + ftk::GetStringInCaps( colNames.at(i) );
 	queryStrPart1 = queryStrPart1 + ")";
+	//std::cout<<queryStrPart1<<std::endl;
 
 
     //Save the ncols for the table in varibale when calling 'checkForUpdate'
@@ -351,22 +402,21 @@ void AlterTable(sqlite3 *dbConn,char * table ,char *column)
 	queryStr = queryStrPart1;//+"("+queryStrPart2+")";
 	
 	exeStatus = sqlite3_prepare(db, queryStr.c_str(), queryStr.size(), &ppStmt, &tail);
-	if( exeStatus != SQLITE_OK )
+	if( exeStatus != SQLITE_OK && exeStatus != SQLITE_DONE )
 		std::cerr<<"IMAGE_TEST:Error during sqlite3_prepare: "<<sqlite3_errmsg(db)<<std::endl;
 	else
 	{
 		//int cell_id = 1;img_id
-
-		for(int i=0; i<=nrow; ++i){
+		for(int i=0; i<nrow; ++i){
 			sqlite3_bind_double( ppStmt,sqlite3_bind_parameter_index(ppStmt,":IMG_ID"), img_id);
 			sqlite3_bind_double( ppStmt,sqlite3_bind_parameter_index(ppStmt, ":CELL_ID"), ProcessedImgRowArray[i*ncol] );
-			for (int j=1; j<=ncol; ++j){
+			for (int j=1; j<ncol; ++j){
 				std::string col_nm;
-				col_nm = ":" + colNames[j];
+				col_nm = ":" + ftk::GetStringInCaps( colNames.at(j-1) );
 				sqlite3_bind_double( ppStmt,sqlite3_bind_parameter_index(ppStmt, col_nm.c_str() ), ProcessedImgRowArray[i*ncol+j] );
 			}
 			exeStatus =sqlite3_step(ppStmt);
-			if( exeStatus != SQLITE_OK )
+			if( exeStatus != SQLITE_OK && exeStatus != SQLITE_DONE )
 				std::cerr<<"IMAGE_TEST:Error during sqlite3_step(ppStmt: "<<sqlite3_errmsg(db)<<std::endl;
 			sqlite3_reset(ppStmt);
 		}
@@ -449,17 +499,16 @@ sqlite3 * sqliteOpenConnection()
 	sqlite3 *dbConn; 
 
 	exeStatus = sqlite3_open("C:\\NE.s3db",&dbConn);
-	
+
  	// int sqlite3_open(
     //    const char *filename,  Database filename (UTF-8) 
     //     sqlite3 **ppDb         OUT: SQLite db handle 
     // )
 	
 	if( exeStatus!=SQLITE_OK )
-	  fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(dbConn));
+		std::cerr << "Can't open database: " << sqlite3_errmsg(dbConn) << std::endl;
 	else if(exeStatus == SQLITE_OK )
-	  fprintf(stderr, "Open database successfully\n");
-
+		std::cerr << "Open database successfully\n";
 	return dbConn;
 }
 
@@ -485,9 +534,9 @@ void sqliteExecuteQuery2(sqlite3 *db,const char * sql, std::string path, int qnu
 	  
 
 	if( exeStatus != SQLITE_OK )
-		fprintf(stderr, "Farsight Sql Error :Incorrect Sql Query: %s\n", sqlite3_errmsg(db));
-	else
-	{ fprintf(stderr, "Number of row:%i  and Columns:%i\n \n",nrow,ncol);
+		std::cerr << "Farsight Sql Error :Incorrect Sql Query: " << sqlite3_errmsg(db) << std::endl;
+	else{
+		std::cerr << "Number of row: "<< nrow <<" and Columns: " << ncol << std::endl;
 	 for(int i=0; i <= nrow; i++) 
 	 {
 	  for(int j=0; j < ncol; j++) 
