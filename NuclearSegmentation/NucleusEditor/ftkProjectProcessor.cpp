@@ -459,6 +459,7 @@ bool ProjectProcessor::Classify(void){
 
 bool ProjectProcessor::RunQuery(void)
 {
+	int sql_db_img_id=-1;
 	for(int j=0; j<(int)definition->queryParameters.size(); ++j){
 		sqlite3 *dbConn;
 	
@@ -475,44 +476,46 @@ bool ProjectProcessor::RunQuery(void)
 		//   sqlite3 **ppDb         OUT: SQLite db handle )
 	
 		dbConn = ftk::sqliteOpenConnection();
-		std::vector<std::string> column_names;
-		//std::string temp1,temp2;
-		//temp1 = "IMG_ID"; temp2 = "CELL_ID";
-		//column_names.push_back( temp1 );
-		//column_names.push_back( temp2 );
-		for (int col = 1; col< table->GetNumberOfColumns(); ++col){
-			std::string temp3=table->GetColumnName(col);
-			column_names.push_back(temp3);
-		}
-		ftk::checkForUpdate( dbConn, "IMAGE_TEST", column_names );
-
-		std::string image_name;
-		image_name = save_path + definition->name;
-		char *im_nm_cstr = new char [image_name.size()+1];
-		strcpy (im_nm_cstr, image_name.c_str());
-		char *path_nm_cstr = new char [save_path.size()+1];
-		strcpy (path_nm_cstr, save_path.c_str());
-		std::vector< double > table_array;
-		for (int row = 0; row< table->GetNumberOfRows(); ++row){
-			for (int col = 0; col< table->GetNumberOfColumns(); ++col){
-				table_array.push_back(table->GetValue(row,col).ToDouble());
+		if(j==0){
+			std::vector<std::string> column_names;
+			//std::string temp1,temp2;
+			//temp1 = "IMG_ID"; temp2 = "CELL_ID";
+			//column_names.push_back( temp1 );
+			//column_names.push_back( temp2 );
+			for (int col = 1; col< table->GetNumberOfColumns(); ++col){
+				std::string temp3=table->GetColumnName(col);
+				column_names.push_back(temp3);
 			}
-		}
-		int sql_db_img_id = ftk::GenericInsert( dbConn, im_nm_cstr, "IMAGE_TEST", path_nm_cstr, table_array,table->GetNumberOfColumns(), table->GetNumberOfRows(), column_names );	
+			ftk::checkForUpdate( dbConn, "IMAGE_TEST", column_names );
 
-		//sql = "select * from IMAGE;";
-		//sql = "select * from IMAGE_TEST where IMG_ID = 1;";
-		//sql = "select * from IMAGE where IMG_ID = 1;";
-		//sql = "select * from IMAGE_TEST where IMG_ID = 1 and CELL_ID = 2;";
-		//sql = "select * from IMAGE where IMG_ID = 2 and cell_id = 3 and eccentricity = 2.24 ;";
+			std::string image_name;
+			image_name = save_path + definition->name;
+			char *im_nm_cstr = new char [image_name.size()+1];
+			strcpy (im_nm_cstr, image_name.c_str());
+			char *path_nm_cstr = new char [save_path.size()+1];
+			strcpy (path_nm_cstr, save_path.c_str());
+			std::vector< double > table_array;
+			for (int row = 0; row< table->GetNumberOfRows(); ++row){
+				for (int col = 0; col< table->GetNumberOfColumns(); ++col){
+					table_array.push_back(table->GetValue(row,col).ToDouble());
+				}
+			}
+			sql_db_img_id = ftk::GenericInsert( dbConn, im_nm_cstr, "IMAGE_TEST", path_nm_cstr, table_array,table->GetNumberOfColumns(), table->GetNumberOfRows(), column_names );	
+
+			//sql = "select * from IMAGE;";
+			//sql = "select * from IMAGE_TEST where IMG_ID = 1;";
+			//sql = "select * from IMAGE where IMG_ID = 1;";
+			//sql = "select * from IMAGE_TEST where IMG_ID = 1 and CELL_ID = 2;";
+			//sql = "select * from IMAGE where IMG_ID = 2 and cell_id = 3 and eccentricity = 2.24 ;";
+		}
 
 		if( strcmp( definition->queryParameters.at(j).name.c_str(), "count" ) == 0 ){
-			std::string temp = "count * from ( " + definition->queryParameters.at(j).value + ") where IMG_ID = " + ftk::NumToString(sql_db_img_id) + ";";
+			std::string temp = "SELECT COUNT IMG_ID FROM ( " + definition->queryParameters.at(j).value + " AND IMG_ID = " + ftk::NumToString(sql_db_img_id) + ";";
 			sql = new char [temp.size()+1];
 			strcpy (sql, temp.c_str());
 		}
 		else{
-			std::string temp = definition->queryParameters.at(j).value + " AND IMG_ID = " + ftk::NumToString(sql_db_img_id) + ";";
+			std::string temp = definition->queryParameters.at(j).value + " AND IMG_ID = " + ftk::NumToString(sql_db_img_id) + " );";
 			sql = new char [temp.size()+1];
 			strcpy (sql, temp.c_str());
 		}
