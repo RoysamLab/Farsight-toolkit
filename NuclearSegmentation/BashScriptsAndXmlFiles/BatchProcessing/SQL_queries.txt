@@ -1,0 +1,21 @@
+.mode list
+
+.separator ,
+
+.output test_file_1.csv
+
+.header on
+
+select * from IMAGE where IMG_LOCATION like 'C:\CCRC\Ki67\HS 09 24337 1C Ki67%';
+
+select IMG_ID,count(*) as"TOTAL_CELLS" from IMAGE_TEST where IMG_ID in ( select IMG_ID from IMAGE where IMG_LOCATION like 'C:\CCRC\Ki67\HS 09 24337 1C Ki67%' ) group by IMG_ID;
+
+select IMG_ID,count(*) as"ENDOTHELIAL_CELLS" from (select * from IMAGE_TEST where IMG_ID in ( select IMG_ID from IMAGE where IMG_LOCATION like 'C:\CCRC\Ki67\HS 09 24337 1C Ki67%' ) and PREDICTION_ENDOTHELIAL=1) group by IMG_ID;
+
+select IMG_ID,count(*) as"ENDOTHELIAL_POSITIVE_CELLS" from (select * from IMAGE_TEST where IMG_ID in ( select IMG_ID from IMAGE where IMG_LOCATION like 'C:\CCRC\Ki67\HS 09 24337 1C Ki67%' ) and PREDICTION_ENDOTHELIAL=1 and PREDICTION_KI67=1) group by IMG_ID;
+
+select IMG_ID,count(*) as"TUMOR_CELLS" from (select * from IMAGE_TEST where IMG_ID in ( select IMG_ID from IMAGE where IMG_LOCATION like 'C:\CCRC\Ki67\HS 09 24337 1C Ki67%' ) and PREDICTION_TUMOR=1) group by IMG_ID;
+
+select IMG_ID,count(*) as"TUMOR_POSITIVE_CELLS" from (select * from IMAGE_TEST where IMG_ID in ( select IMG_ID from IMAGE where IMG_LOCATION like 'C:\CCRC\Ki67\HS 09 24337 1C Ki67%' ) and PREDICTION_TUMOR=1 and PREDICTION_KI67=1) group by IMG_ID;
+
+.exit
