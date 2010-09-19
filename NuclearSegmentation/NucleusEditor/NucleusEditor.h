@@ -185,6 +185,7 @@ protected slots:
 	void startEditing(void);
 	void stopEditing(void);
 	void startSVM();
+	void updateDatabase();
 	void startTraining();
 	void startKPLS();
 
@@ -256,6 +257,7 @@ protected:
 	QAction *segmentNucleiAction;
 	QAction *editNucleiAction;
 	QAction *svmAction;		//Start the One-Class SVM outlier detecter
+	QAction *databaseAction;
 	QMenu *classifyMenu;
 		QAction *trainAction;	//Train the KPLS Classifier
 		QAction *kplsAction;	//Start the KPLS Classifier
