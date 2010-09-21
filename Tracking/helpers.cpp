@@ -425,6 +425,7 @@ InputImageType::Pointer getLargeComponents(InputImageType::Pointer im, int n)
 	typedef itk::RelabelComponentImageFilter<LabelImageType,LabelImageType> RelabelFilterType;
 
 	ConnectedFilterType::Pointer cfilter = ConnectedFilterType::New();
+	cfilter->SetFullyConnected(1);
 	cfilter->SetInput(im);
 	cfilter->Update();
 
@@ -471,6 +472,7 @@ LabelImageType::Pointer getLargeLabels(LabelImageType::Pointer im, int n)
 
 	ConnectedFilterType::Pointer cfilter = ConnectedFilterType::New();
 	cfilter->SetInput(im);
+	cfilter->SetFullyConnected(1);
 	cfilter->SetDistanceThreshold(0);
 	cfilter->Update();
 
@@ -719,6 +721,7 @@ LabelImageType::Pointer getLabelled(InputImageType::Pointer im_input,int thresho
 
 
 	ConnectedFilterType::Pointer cfilter = ConnectedFilterType::New();
+	cfilter->SetFullyConnected(1);
 	cfilter->SetInput(threshVessel);
 	cfilter->Update();
 
@@ -860,6 +863,7 @@ void getClassified(DistanceImageType::Pointer dist, InputImageType::Pointer micr
 	typedef itk::RelabelComponentImageFilter<LabelImageType,LabelImageType> RelabelFilterType;
 
 	ConnectedFilterType::Pointer cfilter = ConnectedFilterType::New();
+	cfilter->SetFullyConnected(1);
 	cfilter->SetInput(micro);
 	cfilter->Update();
 
@@ -2022,7 +2026,7 @@ LabelImageType::Pointer extract_label_image(int label, float bbox[6],LabelImageT
 }
 void annotateImage(Color2DImageType::Pointer number,Color2DImageType::Pointer orig, int n, int x, int y)
 {
-	//printf("annotateImage called with n = %d x = %d y = %d ... ", n,x,y);
+	printf("annotateImage called with n = %d x = %d y = %d ... ", n,x,y);
 	typedef itk::ImageRegionConstIterator<Color2DImageType> ConstColor2DIteratorType;
 	typedef itk::ImageRegionIterator<Color2DImageType> Color2DIteratorType;
 
@@ -2073,7 +2077,7 @@ void annotateImage(Color2DImageType::Pointer number,Color2DImageType::Pointer or
 		if(numberiter.Get()!=white)
 			origiter.Set(blue);
 	}
-	printf("Done\n");
+	//printf("Done\n");
 }
 
 ColorImageType::Pointer getColorImageFromColor2DImages(std::vector<Color2DImageType::Pointer> input)
@@ -2177,6 +2181,7 @@ std::vector<FeaturesType> get_all_connected_components(LabelImageType::Pointer l
 			iter.Set(id);
 	}
 	ConnectedFilterType::Pointer cfilter = ConnectedFilterType::New();
+	cfilter->SetFullyConnected(1);
 	cfilter->SetInput(im);
 	cfilter->Update();
 
@@ -2296,8 +2301,8 @@ void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,Feature
 			
 			lregion.SetIndex(lindex);
 			
-			lcopy->Print(std::cout);
-			lregion.Print(std::cout);
+			//lcopy->Print(std::cout);
+			//lregion.Print(std::cout);
 			LabelIteratorType liniter(lcopy,lregion);
 			
 			for(loutiter.GoToBegin(),liniter.GoToBegin();!liniter.IsAtEnd();++liniter,++loutiter)
@@ -2325,8 +2330,8 @@ void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,Feature
 			lindex[2] = ftemp[1].BoundingBox[4];
 			lregion.SetIndex(lindex);
 			
-			lcopy->Print(std::cout);
-			lregion.Print(std::cout);
+			//lcopy->Print(std::cout);
+			//lregion.Print(std::cout);
 			liniter = LabelIteratorType(lcopy,lregion);
 _TRACE;
 			for(loutiter.GoToBegin(),liniter.GoToBegin();!liniter.IsAtEnd();++liniter,++loutiter)

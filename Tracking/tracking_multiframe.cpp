@@ -14,6 +14,7 @@
 #include <boost/property_map/dynamic_property_map.hpp>
 #include <boost/property_map/property_map.hpp>
 #include <boost/graph/connected_components.hpp>
+#include "itkRegionOfInterestImageFilter.h"
 #include <ilcplex/ilocplex.h>
 ILOSTLBEGIN
 
@@ -603,11 +604,11 @@ public:
 	void writeGraphViz(char * filename);
 	void writeGraphML (char * filename);
 	std::vector<std::map<int,int>> old_to_new;
-		void set_debug_image(ColorImageType::Pointer in)
+	void set_debug_image(ColorImageType::Pointer in)
 	{
 		debugimage = in;
 	}
-		LabelImageType::Pointer getOutputAtTime(int t);
+	LabelImageType::Pointer getOutputAtTime(int t);
 private:
 	enum EDGE_TYPE {SPLIT,MERGE,APPEAR,DISAPPEAR,TRANSLATION};
 	float overlap(float bb1[6],float bb2[6]);
@@ -633,8 +634,17 @@ private:
 	std::pair<TGraph::edge_descriptor,bool> my_add_edge(TGraph::vertex_descriptor v1, TGraph::vertex_descriptor v2, int utility, bool coupled, bool fixed, bool selected, unsigned char type);
 	void draw_line_for_edge(TGraph::edge_descriptor e,VectorPixelType col1,VectorPixelType col2,int);
 	void print_vertex(TGraph::vertex_descriptor v,int);
+	bool is_merge_node(TGraph::vertex_descriptor vd);
+	bool is_split_node(TGraph::vertex_descriptor vd);
+	bool is_simple_node(TGraph::vertex_descriptor vd);
+	TGraph::vertex_descriptor get_parent(TGraph::vertex_descriptor);// no error check implemented TODO
+	TGraph::vertex_descriptor get_child(TGraph::vertex_descriptor);// no error check implemented TODO
+	bool is_separate(CellTracker::TGraph::vertex_descriptor v1, CellTracker::TGraph::vertex_descriptor v2);
+	float get_LRUtility(std::vector< TGraph::vertex_descriptor > desc);
+
+
 	//variables
-		
+
 	TGraph g; 
 	VVF fvector; 
 	VVL limages;
@@ -648,7 +658,7 @@ private:
 
 	ColorImageType::Pointer debugimage;
 
-	
+
 	struct LREdge{
 		TGraph::edge_descriptor ef,eb;
 	};
@@ -701,7 +711,7 @@ int CellTracker::compute_normal_utility(FeaturesType f1, FeaturesType f2)
 	{
 		utility += (f1.ScalarFeatures[counter]-f2.ScalarFeatures[counter])*(f1.ScalarFeatures[counter]-f2.ScalarFeatures[counter])/fvar.variances[counter];
 	}
-	
+
 	float dist = get_distance(f1.Centroid,f2.Centroid);
 	utility += dist*dist/fvar.distVariance;
 	utility += (abs(f1.time-f2.time)-1)*(abs(f1.time-f2.time)-1)/fvar.timeVariance;
@@ -837,6 +847,8 @@ int CellTracker::add_normal_edges(int tmin, int tmax)
 					if(dist < 4.0*sqrt(fvar.distVariance))
 					{
 						//add the edge
+						if(dist>100)
+							printf("distance is greater than 100\n");
 						tie(e,added) = add_edge(rmap[t][counter1],v,g);
 						if(added)
 						{
@@ -1016,7 +1028,7 @@ int CellTracker::add_merge_split_edges(int tmax)
 				{
 					FeaturesType lc1 = fvector[tcounter][i1];
 					FeaturesType lc2 = fvector[tcounter][i2];
-					
+
 					lc1.ScalarFeatures[FeaturesType::VOLUME] = lc1.ScalarFeatures[FeaturesType::VOLUME] + lc2.ScalarFeatures[FeaturesType::VOLUME];
 					lc2.ScalarFeatures[FeaturesType::VOLUME] = lc1.ScalarFeatures[FeaturesType::VOLUME];
 
@@ -1060,7 +1072,7 @@ int CellTracker::add_merge_split_edges(int tmax)
 				{
 					FeaturesType lc1 = fvector[tmax][i1];
 					FeaturesType lc2 = fvector[tmax][i2];
-					
+
 					lc1.ScalarFeatures[FeaturesType::VOLUME] = lc1.ScalarFeatures[FeaturesType::VOLUME] + lc2.ScalarFeatures[FeaturesType::VOLUME];
 					lc2.ScalarFeatures[FeaturesType::VOLUME] = lc1.ScalarFeatures[FeaturesType::VOLUME];
 
@@ -1090,12 +1102,12 @@ int CellTracker::add_merge_split_edges(int tmax)
 	return msec;
 }
 /*
-	struct TrackEdge{
-		int utility;
-		bool coupled;
-		bool fixed;
-		bool selected;
-	};
+struct TrackEdge{
+int utility;
+bool coupled;
+bool fixed;
+bool selected;
+};
 */
 int CellTracker::get_edge_type(TGraph::edge_descriptor ei)
 {
@@ -1144,13 +1156,13 @@ float CellTracker::compute_LRUtility(FeaturesType f1, FeaturesType f2, FeaturesT
 	utility += compute_normal_utility(f1,f2);
 	utility += compute_normal_utility(f2,f3);
 
-	
+
 	float factor;
 	float dist1 = get_distance(f1.Centroid,f2.Centroid);
 	float dist2 = get_distance(f2.Centroid,f3.Centroid);
 	float radius1 = pow(3.0/4.0/3.141*f1.ScalarFeatures[FeaturesType::VOLUME],1/3.0);
 	float radius2 = pow(3.0/4.0/3.141*f2.ScalarFeatures[FeaturesType::VOLUME],1/3.0);
-	
+
 	if(dist1<radius1 || dist2 < radius2)
 	{
 		return utility;
@@ -1176,7 +1188,7 @@ float CellTracker::compute_LRUtility(FeaturesType f1, FeaturesType f2, FeaturesT
 		dir2[0] /=sum2;
 		dir2[1] /=sum2;
 		dir2[2] /=sum2;
-		
+
 		float proj = (1+dir1[0]*dir2[0]+dir1[1]*dir2[1]+dir1[2]*dir2[2]);
 
 		utility = MIN(dist1,dist2)/MAX(dist1,dist2)*proj;
@@ -1201,7 +1213,7 @@ float CellTracker::compute_LRUtility(TGraph::edge_descriptor e1,TGraph::edge_des
 	float dist2 = get_distance(f2.Centroid,f3.Centroid);
 	float radius1 = pow(3.0/4.0/3.141*f1.ScalarFeatures[FeaturesType::VOLUME],1/3.0);
 	float radius2 = pow(3.0/4.0/3.141*f2.ScalarFeatures[FeaturesType::VOLUME],1/3.0);
-	
+
 	if(dist1<radius1 || dist2 < radius2)
 	{
 		return utility;
@@ -1215,7 +1227,7 @@ float CellTracker::compute_LRUtility(TGraph::edge_descriptor e1,TGraph::edge_des
 		dir2[0] = f3.Centroid[0]-f2.Centroid[0];
 		dir2[1] = f3.Centroid[1]-f2.Centroid[1];
 		dir2[2] = f3.Centroid[2]-f2.Centroid[2];
-		
+
 		float proj = dir1[0]*dir2[0]+dir1[1]*dir2[1]+dir1[2]*dir2[2];
 
 		utility = MIN(dist1,dist2)/MAX(dist1,dist2)*proj;
@@ -1233,31 +1245,31 @@ void CellTracker::draw_line_for_edge(TGraph::edge_descriptor e,VectorPixelType c
 	v2 = target(e,g);
 	if(g[e].selected==1)
 	{
-	if(g[v1].special ==0 && g[v2].special ==0)
-	{
-		FeaturesType f1 = fvector[g[v1].t][g[v1].findex];
-		FeaturesType f2 = fvector[g[v2].t][g[v2].findex];
-		//if(g[v1].findex==0 && g[v1].t==4)
-		//{
-		//	printf("This edge is still there %d %d %d %d\n",g[v1].t,g[v1].findex,g[v2].t,g[v2].findex);
-		//	scanf("%*d");
-		//}
-		if(get_distance(f1.Centroid,f2.Centroid)>100)
+		if(g[v1].special ==0 && g[v2].special ==0)
 		{
-			printf("source\n");
-			print_vertex(v1,1);
-			printf("target\n");
-			print_vertex(v2,1);
-			scanf("%*d");
+			FeaturesType f1 = fvector[g[v1].t][g[v1].findex];
+			FeaturesType f2 = fvector[g[v2].t][g[v2].findex];
+			//if(g[v1].findex==0 && g[v1].t==4)
+			//{
+			//	printf("This edge is still there %d %d %d %d\n",g[v1].t,g[v1].findex,g[v2].t,g[v2].findex);
+			//	scanf("%*d");
+			//}
+			if(get_distance(f1.Centroid,f2.Centroid)>100)
+			{
+				printf("source\n");
+				print_vertex(v1,1);
+				printf("target\n");
+				print_vertex(v2,1);
+				scanf("%*d");
+			}
+			drawLine(debugimage,col1,col2,f1.Centroid[0]+shift,f1.Centroid[1],f1.time,f2.Centroid[0]+shift,f2.Centroid[1],f1.time);
+			//drawLine(debugimage,col2,f1.Centroid[0]+shift,f1.Centroid[1],f2.time,f2.Centroid[0]+shift,f2.Centroid[1],f2.time);
 		}
-		drawLine(debugimage,col1,col2,f1.Centroid[0]+shift,f1.Centroid[1],f1.time,f2.Centroid[0]+shift,f2.Centroid[1],f1.time);
-		//drawLine(debugimage,col2,f1.Centroid[0]+shift,f1.Centroid[1],f2.time,f2.Centroid[0]+shift,f2.Centroid[1],f2.time);
-	}
 	}
 }
 void CellTracker::solve_higher_order()
 {
-	
+
 	VectorPixelType col1,col2,col3,col4;
 	col1[0] = 255;col1[1] = 0;col1[2] = 0;
 	col2[0] = 255;col2[1] = 255;col2[2] = 0;
@@ -1305,9 +1317,9 @@ void CellTracker::solve_higher_order()
 					g[*ei].selected = 1;
 					if(g[*ei].coupled == 1)
 					{
-						var_index[coupled_map[*ei]] = varc;
-						inv_index[varc] = coupled_map[*ei];
-						g[coupled_map[*ei]].selected = 1;
+					var_index[coupled_map[*ei]] = varc;
+					inv_index[varc] = coupled_map[*ei];
+					g[coupled_map[*ei]].selected = 1;
 					}
 					utility.push_back(g[*ei].utility);
 					varc++;
@@ -1467,7 +1479,7 @@ std::pair<CellTracker::TGraph::edge_descriptor,bool> CellTracker::my_add_edge(TG
 	g[e].utility = utility;
 	g[e].coupled = coupled;
 	g[e].fixed = fixed;
-	g[e].selected = 1;
+	g[e].selected = selected;
 	g[e].type = type;
 	std::pair<TGraph::edge_descriptor,bool> pair1;
 	pair1.first = e;
@@ -1790,11 +1802,343 @@ void CellTracker::enforce_overlap()
 	}
 
 }
+
+
+bool CellTracker::is_merge_node(CellTracker::TGraph::vertex_descriptor vd)
+{
+	bool yes = false;
+	TGraph::in_edge_iterator in_e, in_end;
+	tie(in_e,in_end) = in_edges(vd,g);
+	int in_count = 0;
+	for(;in_e!=in_end; ++in_e,++in_count);
+	if(in_count == 2)
+	{
+		yes = true;
+	}
+	return yes;
+}
+
+bool CellTracker::is_split_node(CellTracker::TGraph::vertex_descriptor vd)
+{
+
+	bool yes = false;
+	TGraph::out_edge_iterator out_e, out_end;
+	tie(out_e,out_end) = out_edges(vd,g);
+	int out_count = 0;
+	for(;out_e!=out_end; ++out_e,++out_count);
+	if(out_count == 2)
+	{
+		yes = true;
+	}
+	return yes;
+}
+
+bool CellTracker::is_simple_node(CellTracker::TGraph::vertex_descriptor vd)
+{
+	if(in_degree(vd,g) == 1 && out_degree(vd,g) == 1)
+		return true;
+	return false;
+}
+
+CellTracker::TGraph::vertex_descriptor CellTracker::get_parent(CellTracker::TGraph::vertex_descriptor vd)
+{
+	if(in_degree(vd,g)>1)
+	{
+		printf("Something wrong: Request for parent when there are more than one...\n");
+		PAUSE;
+	}
+	TGraph::in_edge_iterator in_e, in_end;
+	tie(in_e,in_end) = in_edges(vd,g);
+	if(in_e == in_end)
+		return -1;
+	return source(*in_e,g);
+}
+
+CellTracker::TGraph::vertex_descriptor CellTracker::get_child(CellTracker::TGraph::vertex_descriptor vd)
+{
+	if(out_degree(vd,g)>1)
+	{
+		printf("Something wrong: Request for child when there are more than one...\n");
+		PAUSE;
+	}
+	TGraph::out_edge_iterator out_e, out_end;
+	tie(out_e,out_end) = out_edges(vd,g);
+	if(out_e == out_end)
+		return -1;
+	return target(*out_e,g);
+}
+bool CellTracker::is_separate(CellTracker::TGraph::vertex_descriptor v1, CellTracker::TGraph::vertex_descriptor v2)
+{
+	// assuming not special vertices or sth like that
+
+	int t1 = g[v1].t;
+	int t2 = g[v2].t;
+	int i1 = g[v1].findex;
+	int i2 = g[v2].findex;
+	LabelImageType::Pointer p1,p2;
+	p1 = limages[t1][i1];
+	p2 = limages[t2][i2];
+
+
+
+	LabelImageType::SizeType ls;
+
+	int lbounds[6];
+
+	lbounds[0] = MIN(fvector[t1][i1].BoundingBox[0],fvector[t2][i2].BoundingBox[0]);
+	lbounds[2] = MIN(fvector[t1][i1].BoundingBox[2],fvector[t2][i2].BoundingBox[2]);
+	lbounds[4] = MIN(fvector[t1][i1].BoundingBox[4],fvector[t2][i2].BoundingBox[4]);
+	lbounds[1] = MAX(fvector[t1][i1].BoundingBox[1],fvector[t2][i2].BoundingBox[1]);
+	lbounds[3] = MAX(fvector[t1][i1].BoundingBox[3],fvector[t2][i2].BoundingBox[3]);
+	lbounds[5] = MAX(fvector[t1][i1].BoundingBox[5],fvector[t2][i2].BoundingBox[5]);
+
+	ls[0] = lbounds[1]-lbounds[0]+1;
+	ls[1] = lbounds[3]-lbounds[2]+1;
+	ls[2] = lbounds[5]-lbounds[4]+1;
+
+	LabelImageType::Pointer p = LabelImageType::New();
+	LabelImageType::IndexType lindex;
+	lindex.Fill(0);
+	LabelImageType::RegionType lregion;
+	lregion.SetIndex(lindex);
+	lregion.SetSize(ls);
+	p->SetRegions(lregion);
+	p->Allocate();
+	p->FillBuffer(0);
+	LabelIteratorType liter1(p1,p1->GetLargestPossibleRegion());
+
+
+	lindex[0] = fvector[t1][i1].BoundingBox[0]-lbounds[0];
+	lindex[1] = fvector[t1][i1].BoundingBox[2]-lbounds[2];
+	lindex[2] = fvector[t1][i1].BoundingBox[4]-lbounds[4];
+
+	lregion.SetSize(p1->GetLargestPossibleRegion().GetSize());
+	lregion.SetIndex(lindex);
+
+	LabelIteratorType liter(p,lregion);
+	for(liter1.GoToBegin(),liter.GoToBegin();!liter1.IsAtEnd(); ++liter1,++liter)
+	{
+		if(liter1.Get()==fvector[t1][i1].num)
+			liter.Set(fvector[t1][i1].num);
+	}
+
+	LabelIteratorType liter2(p2,p2->GetLargestPossibleRegion());
+
+	lindex[0] = fvector[t2][i2].BoundingBox[0]-lbounds[0];
+	lindex[1] = fvector[t2][i2].BoundingBox[2]-lbounds[2];
+	lindex[2] = fvector[t2][i2].BoundingBox[4]-lbounds[4];
+	lregion.SetIndex(lindex);
+	lregion.SetSize(p2->GetLargestPossibleRegion().GetSize());
+
+	liter = LabelIteratorType(p,lregion);
+
+	for(liter2.GoToBegin(),liter.GoToBegin();!liter2.IsAtEnd(); ++liter2,++liter)
+	{
+		if(liter2.Get()==fvector[t2][i2].num)
+			liter.Set(fvector[t2][i2].num);
+	}
+
+	typedef itk::ConstNeighborhoodIterator< LabelImageType > ConstNeighType;
+	typedef itk::NeighborhoodIterator < LabelImageType > NeighborhoodType;
+	typedef itk::NeighborhoodAlgorithm::ImageBoundaryFacesCalculator < LabelImageType > FaceCalculatorType;
+
+	ConstNeighType::RadiusType rad;
+	float radius = 1;
+	rad.Fill(radius);
+
+	FaceCalculatorType facecalc;
+	FaceCalculatorType::FaceListType facelist;
+
+
+	facelist = facecalc(p,p->GetLargestPossibleRegion(),rad);
+
+	ConstNeighType nit1,nit2;
+	FaceCalculatorType::FaceListType::iterator fit;
+
+	int found = 0;
+	int val1 = fvector[t1][i1].num;
+	int val2 = fvector[t2][i2].num;
+
+	for(fit = facelist.begin(); fit!=facelist.end(); ++fit)
+	{
+		nit1 = ConstNeighType(rad,p,*fit);
+
+		for(nit1.GoToBegin(); !nit1.IsAtEnd(); ++nit1)
+		{
+			if(nit1.GetCenterPixel()!=0)
+			{
+				unsigned short value = nit1.GetCenterPixel();
+				unsigned short other = val1+val2-value;
+				found = (nit1.GetPrevious(0)==other) + (nit1.GetNext(0)==other) + (nit1.GetPrevious(1)==other) + (nit1.GetNext(1)==other) + (nit1.GetPrevious(2)==other) + (nit1.GetNext(2)==other);
+				if(found>0)
+					break;
+			}
+		}
+		if(found>0)
+			break;
+	}
+
+	if(found>0)
+	{
+		//yay!
+		return false;
+	}
+	return true;
+	/*FeaturesType f1,f2;
+	f1 = fvector[g[v1].t][g[v1].findex];
+	f2 = fvector[g[v2].t][g[v2].findex];
+
+	float min[3];
+	float max[3];
+	min[0] = MAX(f1.BoundingBox[0],f2.BoundingBox[0]);
+	min[1] = MAX(f1.BoundingBox[2],f2.BoundingBox[2]);
+	min[2] = MAX(f1.BoundingBox[4],f2.BoundingBox[4]);
+
+	max[0] = MIN(f1.BoundingBox[1],f2.BoundingBox[1]);
+	max[1] = MIN(f1.BoundingBox[3],f2.BoundingBox[3]);
+	max[2] = MIN(f1.BoundingBox[5],f2.BoundingBox[5]);
+
+	LabelImageType::Pointer lim1,lim2;
+	lim1 = limages[g[v1].t][g[v1].findex];
+	lim2 = limages[g[v2].t][g[v2].findex];
+
+
+	LabelImageType::IndexType ind1,ind2;
+	LabelImageType::SizeType size1,size2;
+	LabelImageType::RegionType region1,region2;
+
+	ind1[0] = min[0] - f1.BoundingBox[0];
+	ind1[1] = min[1] - f1.BoundingBox[2];
+	ind1[2] = min[2] - f1.BoundingBox[4];
+
+	ind2[0] = min[0] - f2.BoundingBox[0];
+	ind2[1] = min[1] - f2.BoundingBox[2];
+	ind2[2] = min[2] - f2.BoundingBox[4];
+
+	size1[0] = max[0] - min[0] + 1;
+	size1[1] = max[1] - min[1] + 1;
+	size1[2] = max[2] - min[2] + 1;
+
+	size2 = size1;
+
+	region1.SetIndex(ind1);region1.SetSize(size1);
+	region2.SetIndex(ind2);region2.SetSize(size2);
+
+
+	typedef itk::ConstNeighborhoodIterator< LabelImageType > ConstNeighType;
+	typedef itk::NeighborhoodIterator < LabelImageType > NeighborhoodType;
+	typedef itk::NeighborhoodAlgorithm::ImageBoundaryFacesCalculator < LabelImageType > FaceCalculatorType;
+
+	ConstNeighType::RadiusType rad;
+	float radius = 1;
+	rad.Fill(radius);
+
+	FaceCalculatorType facecalc1;
+	FaceCalculatorType::FaceListType facelist1;
+	FaceCalculatorType facecalc2;
+	FaceCalculatorType::FaceListType facelist2;
+
+	LabelImageType::Pointer lom1,lom2;
+	typedef itk::RegionOfInterestImageFilter<LabelImageType,LabelImageType> ExtractFilterType;
+
+	region1.Print(std::cout);
+	region2.Print(std::cout);
+	ExtractFilterType::Pointer ext1 = ExtractFilterType::New();
+	ext1->SetInput(lim1);
+	ext1->SetRegionOfInterest(region1);
+	ext1->Update();
+	lom1 = ext1->GetOutput();
+
+	ExtractFilterType::Pointer ext2 = ExtractFilterType::New();
+	ext2->SetInput(lim2);
+	ext2->SetRegionOfInterest(region2);
+	ext2->Update();
+	lom2 = ext2->GetOutput();
+
+	LabelImageType::RegionType region;
+	LabelImageType::IndexType ind;
+	LabelImageType::SizeType size;
+	ind.Fill(0);
+	size = region1.GetSize();
+	region.SetIndex(ind);
+	region.SetSize(size);
+
+
+	facelist1 = facecalc1(lom1,region,rad);
+	facelist2 = facecalc2(lom2,region,rad);
+
+	ConstNeighType nit1,nit2;
+	FaceCalculatorType::FaceListType::iterator fit1,fit2;
+
+	int found = 0;
+	for(fit1 = facelist1.begin(),fit2 = facelist2.begin(); fit1!=facelist1.end(); ++fit2,++fit1)
+	{
+	nit1 = ConstNeighType(rad,lim1,*fit1);
+	nit2 = ConstNeighType(rad,lim2,*fit2);
+
+	for(nit1.GoToBegin(),nit2.GoToBegin(); !nit1.IsAtEnd(); ++nit1,++nit2)
+	{
+	if(nit1.GetCenterPixel()!=0)
+	{
+	found = (nit2.GetPrevious(0)!=0) + (nit2.GetNext(0)!=0) + (nit2.GetPrevious(1)!=0) + (nit2.GetNext(1)!=0) + (nit2.GetPrevious(2)!=0) + (nit2.GetNext(2)!=0);
+	if(found>0)
+	break;
+	}
+	}
+	if(found>0)
+	break;
+	}
+
+	if(found>0)
+	{
+	//yay!
+	return false;
+	}
+	return true;*/
+}
+
+std::vector<std::vector<bool> >  generate_all_binary_strings(int n)
+{
+	std::vector<std::vector<bool> > out;
+
+	int max = 1;
+	int ncopy = n;
+	while(ncopy--)
+	{
+		max <<= 1;
+	}
+	for(int counter = 0; counter < max; counter++)
+	{
+		std::vector<bool> row;
+		int co = counter;
+		ncopy = n;
+		while(ncopy--)
+		{
+			row.push_back(co&1);
+			co >>=1;
+		}
+		out.push_back(row);
+	}
+
+	/*for(int co1 = 0; co1< out.size(); co1++)
+	{
+	for(int co2 = 0; co2 < out[co1].size(); co2++)
+	{
+	printf("%d ",int(out[co1][co2]));
+	}
+	printf("\n");
+	}*/
+	return out;
+}
+
+float CellTracker::get_LRUtility(std::vector< CellTracker::TGraph::vertex_descriptor > desc)
+{
+	return  rand()%1000;
+}
 void CellTracker::run()
 {
 
 	TGraph::vertex_descriptor vt1 = TGraph::null_vertex();
-
 	std::vector< TGraph::vertex_descriptor > vv;
 	for(int counter=0; counter< fvector.size(); counter++)
 	{
@@ -1839,10 +2183,10 @@ void CellTracker::run()
 		}
 		//printf("T = %d\n",t);
 		TIC		populate_merge_candidates(t);//TOC("populate_merge_candidates");
-		TIC;		nec += add_normal_edges(tmin,t);// TOC("add_normal_edges()");
-		TIC;		msec+= add_merge_split_edges(t);// TOC("add_merge_split_edges()");
-		TIC;		dvc += add_disappear_vertices(t);// TOC("add_disappear_vertices()");
-		TIC;		avc += add_appear_vertices(t-1);// TOC("add_appear_vertices()");
+		TIC;		nec += this->add_normal_edges(tmin,t);// TOC("add_normal_edges()");
+		TIC;		msec+= this->add_merge_split_edges(t);// TOC("add_merge_split_edges()");
+		TIC;		dvc += this->add_disappear_vertices(t);// TOC("add_disappear_vertices()");
+		TIC;		avc += this->add_appear_vertices(t-1);// TOC("add_appear_vertices()");
 		printf("total edges = %d+%d+%d+%d = %d\n",nec,dvc,avc,msec,nec+dvc+avc+msec);
 		//PAUSE;
 		TIC;		prune(t);//TOC("prune()");
@@ -1876,8 +2220,8 @@ void CellTracker::run()
 		}
 	}
 
-	
-	
+
+
 	boost::graph_traits<TGraph>::vertex_iterator v_i,v_next,v_end,v_temp;
 
 	for(tie(v_i,v_end) = vertices(g);v_i!=v_end; ++v_i)
@@ -1889,182 +2233,589 @@ void CellTracker::run()
 			//scanf("%*d");
 		}
 	}
-int loopc = 0;
+
+	std::vector< std::vector < boost::graph_traits<TGraph>::vertex_descriptor > > to_resolve;
+
+
+	while(1)
+	{
+		to_resolve.clear();
+		std::map< TGraph::vertex_descriptor, char> tr_map;
+		for(tie(v_i,v_end) = vertices(g);v_i!=v_end; v_i = v_next)
+		{
+			v_next = v_i;
+			++v_next;
+			TGraph::vertex_descriptor vd;
+			vd = *v_i;
+			bool issplit = is_split_node(vd);
+			bool ismerge = is_merge_node(vd);
+			if(issplit || ismerge)
+			{
+				if(tr_map.find(*v_i)==tr_map.end())// if already added to to_resolve, dont redo it
+				{
+					std::vector< TGraph::vertex_descriptor > vvd;
+					TGraph::vertex_descriptor vdt = vd;
+					vvd.push_back(vdt);
+					tr_map[vdt] = true;
+					do
+					{
+						if(issplit && in_degree(vdt,g) == 1)
+							vdt = get_parent(vdt);
+						else if( ismerge && out_degree(vdt,g) == 1)
+							vdt = get_child(vdt);
+						else
+							break;
+						if(vdt == -1)
+							break;
+						vvd.push_back(vdt);
+						tr_map[vdt] = true;
+					}while(is_simple_node(vdt));
+					if(issplit)
+						std::reverse(vvd.begin(),vvd.end());
+					to_resolve.push_back(vvd);
+				}
+			}
+		}
+
+
+		for(int counter =0; counter < to_resolve.size(); counter++)
+		{
+			printf("START --- \n");
+			for(int counter1 = 0; counter1 < to_resolve[counter].size(); counter1++)
+			{
+				print_vertex(to_resolve[counter][counter1],0);
+			}
+			printf("\nEND --- \n");
+		}
+
+
+		//is_separate check
+
+		printf("is_separate tests follows:\n");
+		printf("Is_separate? : %d\n", int(is_separate(rmap[3][11],rmap[3][15])));
+		printf("Is_separate? : %d\n", int(is_separate(rmap[3][6],rmap[3][8])));
+		printf("Is_separate? : %d\n", int(is_separate(rmap[3][3],rmap[3][4])));
+		printf("Is_separate? : %d\n", int(is_separate(rmap[3][10],rmap[3][17])));
+		//PAUSE;
+
+		bool change_made = false;
+		for(int counter = 0; counter < to_resolve.size(); counter++)
+		{
+			// steps:
+			// go backward from the first one 
+			// go forward from the last one
+			// find evidence to split
+			// otherwise merge the remaining
+			bool got_evidence = false;
+			TGraph::vertex_descriptor vd = to_resolve[counter][0];
+			std::vector < std::pair < TGraph::vertex_descriptor,TGraph::vertex_descriptor  > > before;
+			std::vector < std::pair < TGraph::vertex_descriptor, TGraph::vertex_descriptor> > after;
+			if(is_merge_node(vd))
+			{
+				TGraph::edge_descriptor e1,e2;
+				TGraph::in_edge_iterator in_e, in_end;
+				tie(in_e,in_end) = in_edges(vd,g);
+				e1 = *in_e;
+				++in_e;
+				e2 = *in_e;                                                                                                                                                                                                             
+				TGraph::vertex_descriptor v1,v2;
+				v1 = source(e1,g);
+				v2 = source(e2,g);
+				printf("Node vd \n");
+				print_vertex(vd,0);
+				do{
+					printf("Checking v1,v2...\n");
+					print_vertex(v1,0);
+					print_vertex(v2,0);
+					//printf("Done\n");
+					if(is_separate(v1,v2))
+					{
+						printf("YaY! I got evidence now\n");
+						got_evidence = true;
+						//break;
+					}
+					std::pair < TGraph::vertex_descriptor,TGraph::vertex_descriptor> pair1;
+					pair1.first = v1;
+					pair1.second = v2;
+					before.push_back(pair1);
+					if( is_simple_node(v1) && is_simple_node(v2))
+					{
+						v1 = get_parent(v1);
+						v2 = get_parent(v2);
+						if(g[v1].special == 1 || g[v2].special == 1)
+							break;
+					}
+					else
+					{
+						printf("Node v1 is simple? %d\n", is_simple_node(v1));
+						printf("Node v2 is simple? %d\n", is_simple_node(v2));
+						break;
+					}
+				}while(1);
+			}
+			std::reverse(before.begin(),before.end());
+			//if(!got_evidence)
+			{
+				vd = to_resolve[counter][to_resolve[counter].size()-1];
+				if(is_split_node(vd))
+				{
+					TGraph::edge_descriptor e1,e2;
+					TGraph::out_edge_iterator out_e, out_end;
+					tie(out_e,out_end) = out_edges(vd,g);
+					e1 = *out_e;
+					++out_e;
+					e2 = *out_e;
+					TGraph::vertex_descriptor v1,v2;
+					v1 = target(e1,g);
+					v2 = target(e2,g);
+					printf("Node vd \n");
+					print_vertex(vd,0);
+					do{
+						printf("Checking v1,v2...\n");
+						print_vertex(v1,0);
+						print_vertex(v2,0);
+						//printf("Done\n");
+						if(is_separate(v1,v2))
+						{
+							printf("YaY! I got evidence now\n");
+							got_evidence = true;
+							//break;
+						}
+						std::pair < TGraph::vertex_descriptor,TGraph::vertex_descriptor> pair1;
+						pair1.first = v1;
+						pair1.second = v2;
+						after.push_back(pair1);
+						if( is_simple_node(v1) && is_simple_node(v2))
+						{
+							v1 = get_child(v1);
+							v2 = get_child(v2);
+							if(g[v1].special == 1 || g[v2].special == 1)
+								break;
+						}
+						else
+						{
+							printf("Node v1 is simple? %d\n", is_simple_node(v1));
+							printf("Node v2 is simple? %d\n", is_simple_node(v2));
+							break;
+						}
+					}while(1);
+				}
+			}
+
+			if(got_evidence == true)
+			{
+				change_made = true;	
+				std::vector < TGraph::vertex_descriptor > sp = to_resolve[counter];
+				std::vector < std::pair < TGraph::vertex_descriptor, TGraph::vertex_descriptor > > spvertices;
+				for(int cosp =0; cosp < sp.size(); cosp++)
+				{
+					TGraph::vertex_descriptor vd = sp[cosp];
+
+					std::vector<LabelImageType::Pointer> lout;
+					std::vector<InputImageType::Pointer> rout;
+					std::vector<FeaturesType> fvecout;
+					_TRACE;
+					SplitCell(limages[g[vd].t][g[vd].findex],rimages[g[vd].t][g[vd].findex],fvector[g[vd].t][g[vd].findex],fvar,lout,rout,fvecout);
+					_TRACE;
+
+					limages[g[vd].t].push_back(lout[0]);
+					limages[g[vd].t].push_back(lout[1]);
+
+					rimages[g[vd].t].push_back(rout[0]);
+					rimages[g[vd].t].push_back(rout[1]);
+
+					fvector[g[vd].t].push_back(fvecout[0]);
+					fvector[g[vd].t].push_back(fvecout[1]);
+
+					TGraph::vertex_descriptor v1, v2 ;
+					v1 = add_vertex(g);
+					v2 = add_vertex(g);
+
+					g[v1].special = 0;
+					g[v1].t = g[vd].t;
+					g[v1].findex = fvector[g[vd].t].size()-2;
+
+					g[v2].special = 0;
+					g[v2].t = g[vd].t;
+					g[v2].findex = fvector[g[vd].t].size()-1;
+
+					std::pair < TGraph::vertex_descriptor, TGraph::vertex_descriptor> pair1;
+					pair1.first = v1;
+					pair1.second = v2;
+					spvertices.push_back(pair1);
+				}
+
+				// I have before, spvertices and after;
+				int permsize = spvertices.size()-1;
+				if(after.size()!=0)
+					permsize++;
+				if(before.size()!=0)
+					permsize++;
+				std::vector<std::vector<bool>> permutations = generate_all_binary_strings(permsize);
+				float utilmax = -1;
+				float utilpos = -1;
+				_TRACE;
+				int permpc = 0;
+				for(int cop = 0; cop < permutations.size(); cop++)
+				{
+					permpc = 0;
+					std::vector<TGraph::vertex_descriptor> desc;
+					if(before.size()!=0)
+					{
+						for(int co1 = 0; co1 < before.size(); co1++)
+							desc.push_back(before[co1].first);
+						if(permutations[cop][permpc++] == 0)
+							desc.push_back(spvertices[0].first);
+						else
+							desc.push_back(spvertices[0].second);
+					}
+					else
+					{
+						desc.push_back(spvertices[0].first);
+					}
+					for(int co1 = 1; co1 < spvertices.size(); co1++)
+					{
+						if(permutations[cop][permpc++] == 0)
+							desc.push_back(spvertices[co1].first);
+						else
+							desc.push_back(spvertices[co1].second);
+					}
+					if(after.size()!=0)
+					{
+						if(permutations[cop][permpc++] == 0)
+						{
+							desc.push_back(after[0].first);
+							for(int co1 = 1; co1 < after.size(); co1++)
+								desc.push_back(after[co1].first);
+						}
+						else
+						{
+							desc.push_back(after[0].second);
+							for(int co1 = 1; co1 < after.size(); co1++)
+								desc.push_back(after[co1].second);
+						}
+					}
+
+					float util = get_LRUtility(desc);
+					desc.clear();
+					permpc = 0;
+					if(before.size()!=0)
+					{
+						for(int co1 = 0; co1 < before.size(); co1++)
+							desc.push_back(before[co1].second);
+						if(permutations[cop][permpc++] == 0)
+							desc.push_back(spvertices[0].second);
+						else
+							desc.push_back(spvertices[0].first);
+					}
+					else
+					{
+						desc.push_back(spvertices[0].first);
+					}
+					for(int co1 = 1; co1 < spvertices.size(); co1++)
+					{
+						if(permutations[cop][permpc++] == 0)
+							desc.push_back(spvertices[co1].second);
+						else
+							desc.push_back(spvertices[co1].first);
+					}
+					if(after.size()!=0)
+					{
+						if(permutations[cop][permpc++] == 0)
+						{
+							desc.push_back(after[0].second);
+							for(int co1 = 1; co1 < after.size(); co1++)
+								desc.push_back(after[co1].second);
+						}
+						else
+						{
+							desc.push_back(after[0].first);
+							for(int co1 = 1; co1 < after.size(); co1++)
+								desc.push_back(after[co1].first);
+						}
+					}
+					util += get_LRUtility(desc);
+					if(util > utilmax)
+					{
+						utilmax = util;
+						utilpos = cop;
+					}
+				}
+				_TRACE;
+				//yay! I have utilpos. All I have to do is to connect them with the right edges. first clear all original vertices. Dont delete the vertices now.
+				for(int co1 = 0; co1 < to_resolve[counter].size(); co1++)
+				{
+					clear_vertex(to_resolve[counter][co1],g);
+				}
+				TGraph::edge_descriptor e1,e2;
+				bool added = false;
+				permpc = 0;
+				if(before.size()!=0)
+				{
+					if(permutations[utilpos][permpc++] == 0)
+					{
+						tie(e1,added) = my_add_edge(before[before.size()-1].first,spvertices[0].first,1/*dummy utility*/,0,1,1,TRANSLATION);
+						tie(e2,added) = my_add_edge(before[before.size()-1].second,spvertices[0].second,1/*dummy utility*/,0,1,1,TRANSLATION);	
+					}
+					else
+					{
+						tie(e1,added) = my_add_edge(before[before.size()-1].first,spvertices[0].second,1/*dummy utility*/,0,1,1,TRANSLATION);
+						tie(e2,added) = my_add_edge(before[before.size()-1].second,spvertices[0].first,1/*dummy utility*/,0,1,1,TRANSLATION);
+					}
+				}
+				for(int co1 = 0; co1 < spvertices.size()-1; co1++)
+				{
+					if(permutations[utilpos][permpc++] == 0)
+					{
+						tie(e1,added) = my_add_edge(spvertices[co1].first,spvertices[co1+1].first,1/*dummy utility*/,0,1,1,TRANSLATION);
+						tie(e2,added) = my_add_edge(spvertices[co1].second,spvertices[co1+1].second,1/*dummy utility*/,0,1,1,TRANSLATION);	
+					}
+					else
+					{
+						tie(e1,added) = my_add_edge(spvertices[co1].first,spvertices[co1+1].second,1/*dummy utility*/,0,1,1,TRANSLATION);
+						tie(e2,added) = my_add_edge(spvertices[co1].second,spvertices[co1+1].first,1/*dummy utility*/,0,1,1,TRANSLATION);	
+					}
+				}
+				if(after.size()!=0)
+				{
+					if(permutations[utilpos][permpc++] == 0)
+					{
+						tie(e1,added) = my_add_edge(spvertices[spvertices.size()-1].first,after[0].first,1/*dummy utility*/,0,1,1,TRANSLATION);
+						tie(e1,added) = my_add_edge(spvertices[spvertices.size()-1].second,after[0].second,1/*dummy utility*/,0,1,1,TRANSLATION);
+					}
+					else
+					{
+						tie(e1,added) = my_add_edge(spvertices[spvertices.size()-1].first,after[0].second,1/*dummy utility*/,0,1,1,TRANSLATION);
+						tie(e1,added) = my_add_edge(spvertices[spvertices.size()-1].second,after[0].first,1/*dummy utility*/,0,1,1,TRANSLATION);
+					}
+				}
+				_TRACE;
+				///PAUSE;
+			}
+			else
+			{
+				;
+			}
+			//PAUSE;
+		}
+
+
+		//
+		_TRACE;
+		if(change_made == false)
+			break;
+	}
+	TGraph::vertex_iterator del,del_end,del_next,del_tmp;
+	tie(del,del_end) = vertices(g);
+	for(; del!=del_end; del = del_next)
+	{
+		del_next = del;
+		++del_next;
+		if(in_degree(*del,g) == 0 && out_degree(*del,g)==0)
+			remove_vertex(*del,g);
+		tie(del_tmp,del_end) = vertices(g);
+	}
+	/*
+
+	int loopc = 0;
 	for(tie(v_i,v_end) = vertices(g);v_i!=v_end; v_i = v_next)
 	{
-		tie(v_temp,v_end) = vertices(g);
-		if(v_i==v_end)
-		{
-			break;
-		}
-		loopc++;
-		printf("loopc = %d\r",loopc);
-		v_next = v_i;
-		_TRACE;
-		++v_next;
-		_TRACE;
-		if(1)
-		{
-		if(in_degree(*v_i,g)==2)
-		{
-			if(out_degree(*v_i,g)==2)
-			{
-
-				//case 1
-
-				//split the cell into two 
-				//remove 4 edges 
-				//remove the vertex 
-				//add two new entries in limages[t]
-				//add two new entries in rimages[t] TODO
-				//compute features and add it to fvector[t]
-				//add two new vertices to the graph
-				//add 4 new edges
-				
-				TGraph::vertex_descriptor vd = *v_i;
-				std::vector<LabelImageType::Pointer> lout;
-				std::vector<InputImageType::Pointer> rout;
-				std::vector<FeaturesType> fvecout;
-				_TRACE;
-				SplitCell(limages[g[vd].t][g[vd].findex],rimages[g[vd].t][g[vd].findex],fvector[g[vd].t][g[vd].findex],fvar,lout,rout,fvecout);
-				_TRACE;
-				limages[g[vd].t].push_back(lout[0]);
-				limages[g[vd].t].push_back(lout[1]);
-
-				rimages[g[vd].t].push_back(rout[0]);
-				rimages[g[vd].t].push_back(rout[1]);
-				
-				fvector[g[vd].t].push_back(fvecout[0]);
-				fvector[g[vd].t].push_back(fvecout[1]);
-
-				int cur_t = g[vd].t;
-
-				TGraph::in_edge_iterator it,itend;
-				tie(it,itend) = in_edges(*v_i,g);
-
-				TGraph::edge_descriptor e1,e2,e3,e4;
-				e1 = *it;++it;
-				e2 = *it;
-				TGraph::out_edge_iterator ot,otend;
-				tie(ot,otend) = out_edges(*v_i,g);
-				e3 = *ot;++ot;
-				e4 = *ot;
-				_TRACE;
-				TGraph::vertex_descriptor vin1, vin2, vout1, vout2, vcur;
-				vin1 = source(e1,g);
-				vin2 = source(e2,g);
-				vout1 = target(e3,g);
-				vout2 = target(e4,g);
-
-				printf("At t=%d vin1=%d vin2=%d vout1=%d vout2=%d v_i.findex = %d\n",cur_t,fvector[cur_t][g[vin1].findex].num,fvector[cur_t][g[vin2].findex].num,fvector[cur_t][g[vout1].findex].num,fvector[cur_t][g[vout2].findex].num,g[*v_i].findex);
-				//scanf("%*d");
-				vcur = *v_i;
-				
-				//remove_edge(e1,g);
-				//remove_edge(e2,g);
-				//remove_edge(e3,g);
-				//remove_edge(e4,g);
-
-
-				fvector[cur_t][g[vcur].findex].Centroid[0]+=50;
-				clear_vertex(vcur,g);
-				remove_vertex(vcur,g);
-				TGraph::vertex_descriptor v1, v2;
-				v1 = add_vertex(g);
-				v2 = add_vertex(g);
-				g[v1].findex = fvector[cur_t].size()-2;
-				g[v2].findex = fvector[cur_t].size()-1;
-				 
-				g[v1].special = 0;
-				g[v2].special = 0;
-				g[v1].t = cur_t;
-				g[v2].t = cur_t;
-
-				printf("checking v1, v2:\n");
-				print_vertex(v1,1);
-				print_vertex(v2,1);
-				//scanf("%*d");
-				float util[4];
-				util[0] = compute_LRUtility(fvector[g[vin1].t][g[vin1].findex],fvector[g[v1].t][g[v1].findex],fvector[g[vout1].t][g[vout1].findex]) + compute_LRUtility(fvector[g[vin2].t][g[vin2].findex],fvector[g[v2].t][g[v2].findex],fvector[g[vout2].t][g[vout2].findex]);
-				util[1] = compute_LRUtility(fvector[g[vin1].t][g[vin1].findex],fvector[g[v1].t][g[v1].findex],fvector[g[vout2].t][g[vout2].findex]) + compute_LRUtility(fvector[g[vin2].t][g[vin2].findex],fvector[g[v2].t][g[v2].findex],fvector[g[vout1].t][g[vout1].findex]);
-				util[2] = compute_LRUtility(fvector[g[vin1].t][g[vin1].findex],fvector[g[v2].t][g[v2].findex],fvector[g[vout1].t][g[vout1].findex]) + compute_LRUtility(fvector[g[vin2].t][g[vin2].findex],fvector[g[v1].t][g[v1].findex],fvector[g[vout2].t][g[vout2].findex]);
-				util[3] = compute_LRUtility(fvector[g[vin1].t][g[vin1].findex],fvector[g[v2].t][g[v2].findex],fvector[g[vout2].t][g[vout2].findex]) + compute_LRUtility(fvector[g[vin2].t][g[vin2].findex],fvector[g[v1].t][g[v1].findex],fvector[g[vout1].t][g[vout1].findex]);
-				int max1 = -1;
-				int maxpos1 = -1;
-				for(int counter= 0; counter < 4; counter++)
-				{
-					if(max1 < util[counter])
-					{
-						max1 = util[counter];
-						maxpos1 = counter;
-					}
-				}
-				bool added = false;
-				if(maxpos1 !=-1)
-				{
-					switch(maxpos1)
-					{
-					case 0:
-						printf("Case 0\n");
-						tie(e1,added) = my_add_edge(vin1,v1,util[0]/4,0,0,1,TRANSLATION);
-						tie(e2,added) = my_add_edge(vin2,v2,util[0]/4,0,0,1,TRANSLATION);
-						tie(e3,added) = my_add_edge(v1,vout1,util[0]/4,0,0,1,TRANSLATION);
-						tie(e4,added) = my_add_edge(v2,vout2,util[0]/4,0,0,1,TRANSLATION);
-						break;
-					case 1:
-						printf("Case 1\n");
-						tie(e1,added) = my_add_edge(vin1,v1,util[1]/4,0,0,1,TRANSLATION);
-						tie(e2,added) = my_add_edge(vin2,v2,util[1]/4,0,0,1,TRANSLATION);
-						tie(e3,added) = my_add_edge(v1,vout2,util[1]/4,0,0,1,TRANSLATION);
-						tie(e4,added) = my_add_edge(v2,vout1,util[1]/4,0,0,1,TRANSLATION);
-						break;
-					case 2:
-						printf("Case 2\n");
-						tie(e1,added) = my_add_edge(vin2,v1,util[2]/4,0,0,1,TRANSLATION);
-						tie(e2,added) = my_add_edge(vin1,v2,util[2]/4,0,0,1,TRANSLATION);
-						tie(e3,added) = my_add_edge(v1,vout2,util[2]/4,0,0,1,TRANSLATION);
-						tie(e4,added) = my_add_edge(v2,vout1,util[2]/4,0,0,1,TRANSLATION);
-						break;
-					case 3:
-						printf("Case 3\n");
-						tie(e1,added) = my_add_edge(vin1,v2,util[3]/4,0,0,1,TRANSLATION);
-						tie(e2,added) = my_add_edge(vin2,v1,util[3]/4,0,0,1,TRANSLATION);
-						tie(e3,added) = my_add_edge(v1,vout1,util[3]/4,0,0,1,TRANSLATION);
-						tie(e4,added) = my_add_edge(v2,vout2,util[3]/4,0,0,1,TRANSLATION);
-						break;
-					default:
-						printf("Cannot come to this default case in the switch. Check\n");
-						break;
-					}
-				}
-				else
-				{
-					printf("?? %f %f %f %f\n",util[0],util[1],util[2],util[3]);
-					//scanf("%*d");
-				}
-				//scanf("%*d");
-				printf("checking 2:\n");
-				print_vertex(v1,1);
-				print_vertex(v2,1);
-				printf("End checking2\n");
-				//scanf("%*d");
-				break;
-			}
-			else if(out_degree(*v_i,g)==1)
-			{
-				TGraph::out_edge_iterator et,etend;
-				tie(et,etend) = out_edges(*v_i,g);
-				TGraph::vertex_descriptor vnext;
-				vnext = target(*et,g);
-				if(out_degree(vnext,g)==2)
-				{
-					//case 2
-				}
-			}
-		}
-		}
+	tie(v_temp,v_end) = vertices(g);
+	if(v_i==v_end)
+	{
+	break;
 	}
+	loopc++;
+	printf("loopc = %d\r",loopc);
+	v_next = v_i;
+	_TRACE;
+	++v_next;
+	_TRACE;
+	if(1)
+	{
+	if(in_degree(*v_i,g)==2)
+	{
+	if(out_degree(*v_i,g)==2)
+	{
 
+	//case 1
+
+	//split the cell into two 
+	//remove 4 edges 
+	//remove the vertex 
+	//add two new entries in limages[t]
+	//add two new entries in rimages[t] TODO
+	//compute features and add it to fvector[t]
+	//add two new vertices to the graph
+	//add 4 new edges
+
+	TGraph::vertex_descriptor vd = *v_i;
+
+	FeaturesType ft = fvector[g[vd].t][g[vd].findex];
+	if(g[vd].t == 4 && ft.num == 3)
+	{
+	printf("FT : num = %d X = %0.0f Y = %0.0f Z = %0.0f\n",ft.num,ft.Centroid[0],ft.Centroid[1],ft.Centroid[2]);
+	}
+	std::vector<LabelImageType::Pointer> lout;
+	std::vector<InputImageType::Pointer> rout;
+	std::vector<FeaturesType> fvecout;
+	_TRACE;
+	SplitCell(limages[g[vd].t][g[vd].findex],rimages[g[vd].t][g[vd].findex],fvector[g[vd].t][g[vd].findex],fvar,lout,rout,fvecout);
+	_TRACE;
+	limages[g[vd].t].push_back(lout[0]);
+	limages[g[vd].t].push_back(lout[1]);
+
+	rimages[g[vd].t].push_back(rout[0]);
+	rimages[g[vd].t].push_back(rout[1]);
+
+	fvector[g[vd].t].push_back(fvecout[0]);
+	fvector[g[vd].t].push_back(fvecout[1]);
+
+	int cur_t = g[vd].t;
+
+	TGraph::in_edge_iterator it,itend;
+	tie(it,itend) = in_edges(*v_i,g);
+
+	TGraph::edge_descriptor e1,e2,e3,e4;
+	e1 = *it;++it;
+	e2 = *it;
+	TGraph::out_edge_iterator ot,otend;
+	tie(ot,otend) = out_edges(*v_i,g);
+	e3 = *ot;++ot;
+	e4 = *ot;
+	_TRACE;
+	TGraph::vertex_descriptor vin1, vin2, vout1, vout2, vcur;
+	vin1 = source(e1,g);
+	vin2 = source(e2,g);
+	vout1 = target(e3,g);
+	vout2 = target(e4,g);
+
+	printf("At t=%d vin1=%d vin2=%d vout1=%d vout2=%d v_i.findex = %d\n",cur_t,fvector[cur_t][g[vin1].findex].num,fvector[cur_t][g[vin2].findex].num,fvector[cur_t][g[vout1].findex].num,fvector[cur_t][g[vout2].findex].num,g[*v_i].findex);
+	//scanf("%*d");
+	vcur = *v_i;
+
+	print_vertex(vin1,0);
+	print_vertex(vin2,0);
+	print_vertex(vout1,0);
+	print_vertex(vout2,0);
+
+	//remove_edge(e1,g);
+	//remove_edge(e2,g);
+	//remove_edge(e3,g);
+	//remove_edge(e4,g);
+
+
+	fvector[cur_t][g[vcur].findex].Centroid[0]+=50;
+
+	TGraph::vertex_descriptor v1, v2;
+	v1 = add_vertex(g);
+	v2 = add_vertex(g);
+	g[v1].findex = fvector[cur_t].size()-2;
+	g[v2].findex = fvector[cur_t].size()-1;
+
+	g[v1].special = 0;
+	g[v2].special = 0;
+	g[v1].t = cur_t;
+	g[v2].t = cur_t;
+
+	printf("checking v1, v2:\n");
+	print_vertex(v1,1);
+	print_vertex(v2,1);
+	//scanf("%*d");
+	float util[4];
+	util[0] = compute_LRUtility(fvector[g[vin1].t][g[vin1].findex],fvector[g[v1].t][g[v1].findex],fvector[g[vout1].t][g[vout1].findex]) + compute_LRUtility(fvector[g[vin2].t][g[vin2].findex],fvector[g[v2].t][g[v2].findex],fvector[g[vout2].t][g[vout2].findex]);
+	util[1] = compute_LRUtility(fvector[g[vin1].t][g[vin1].findex],fvector[g[v1].t][g[v1].findex],fvector[g[vout2].t][g[vout2].findex]) + compute_LRUtility(fvector[g[vin2].t][g[vin2].findex],fvector[g[v2].t][g[v2].findex],fvector[g[vout1].t][g[vout1].findex]);
+	util[2] = compute_LRUtility(fvector[g[vin1].t][g[vin1].findex],fvector[g[v2].t][g[v2].findex],fvector[g[vout1].t][g[vout1].findex]) + compute_LRUtility(fvector[g[vin2].t][g[vin2].findex],fvector[g[v1].t][g[v1].findex],fvector[g[vout2].t][g[vout2].findex]);
+	util[3] = compute_LRUtility(fvector[g[vin1].t][g[vin1].findex],fvector[g[v2].t][g[v2].findex],fvector[g[vout2].t][g[vout2].findex]) + compute_LRUtility(fvector[g[vin2].t][g[vin2].findex],fvector[g[v1].t][g[v1].findex],fvector[g[vout1].t][g[vout1].findex]);
+	int max1 = -1;
+	int maxpos1 = -1;
+	for(int counter= 0; counter < 4; counter++)
+	{
+	if(max1 < util[counter])
+	{
+	max1 = util[counter];
+	maxpos1 = counter;
+	}
+	}
+	bool added = false;
+	if(maxpos1 !=-1)
+	{
+	switch(maxpos1)
+	{
+	case 0:
+	printf("Case 0\n");
+	tie(e1,added) = my_add_edge(vin1,v1,util[0]/4,0,0,1,TRANSLATION);
+	tie(e2,added) = my_add_edge(vin2,v2,util[0]/4,0,0,1,TRANSLATION);
+	tie(e3,added) = my_add_edge(v1,vout1,util[0]/4,0,0,1,TRANSLATION);
+	tie(e4,added) = my_add_edge(v2,vout2,util[0]/4,0,0,1,TRANSLATION);
+	break;
+	case 1:
+	printf("Case 1\n");
+	tie(e1,added) = my_add_edge(vin1,v1,util[1]/4,0,0,1,TRANSLATION);
+	tie(e2,added) = my_add_edge(vin2,v2,util[1]/4,0,0,1,TRANSLATION);
+	tie(e3,added) = my_add_edge(v1,vout2,util[1]/4,0,0,1,TRANSLATION);
+	tie(e4,added) = my_add_edge(v2,vout1,util[1]/4,0,0,1,TRANSLATION);
+	break;
+	case 2:
+	printf("Case 2\n");
+	tie(e1,added) = my_add_edge(vin2,v1,util[2]/4,0,0,1,TRANSLATION);
+	tie(e2,added) = my_add_edge(vin1,v2,util[2]/4,0,0,1,TRANSLATION);
+	tie(e3,added) = my_add_edge(v1,vout2,util[2]/4,0,0,1,TRANSLATION);
+	tie(e4,added) = my_add_edge(v2,vout1,util[2]/4,0,0,1,TRANSLATION);
+	break;
+	case 3:
+	printf("Case 3\n");
+	tie(e1,added) = my_add_edge(vin1,v2,util[3]/4,0,0,1,TRANSLATION);
+	tie(e2,added) = my_add_edge(vin2,v1,util[3]/4,0,0,1,TRANSLATION);
+	tie(e3,added) = my_add_edge(v1,vout1,util[3]/4,0,0,1,TRANSLATION);
+	tie(e4,added) = my_add_edge(v2,vout2,util[3]/4,0,0,1,TRANSLATION);
+	break;
+	default:
+	printf("Cannot come to this default case in the switch. Check\n");
+	break;
+	}
+	}
+	else
+	{
+	printf("?? %f %f %f %f\n",util[0],util[1],util[2],util[3]);
+	//scanf("%*d");
+	}
+	//scanf("%*d");
+	printf("checking 2:\n");
+	print_vertex(v1,1);
+	print_vertex(v2,1);
+	printf("End checking2\n");
+	print_vertex(vin1,0);
+	print_vertex(vin2,0);
+	print_vertex(vout1,0);
+	print_vertex(vout2,0);
+
+	clear_vertex(vcur,g);
+	remove_vertex(vcur,g);
+
+	//print_vertex(vin1,0);
+	//print_vertex(vin2,0);
+	//print_vertex(vout1,0);
+	//print_vertex(vout2,0);
+
+	//scanf("%*d");
+	break;
+	}
+	else if(out_degree(*v_i,g)==1)
+	{
+	TGraph::out_edge_iterator et,etend;
+	tie(et,etend) = out_edges(*v_i,g);
+	TGraph::vertex_descriptor vnext;
+	vnext = target(*et,g);
+	if(out_degree(vnext,g)==2)
+	{
+	//case 2
+	}
+	}
+	}
+	}
+	}
+	*/
 	for(tie(v_i,v_end) = vertices(g);v_i!=v_end; ++v_i)
 	{
 		if(in_degree(*v_i,g) >2 || out_degree(*v_i,g) >2)
@@ -2075,7 +2826,10 @@ int loopc = 0;
 		}
 	}
 
-		VectorPixelType col1,col2,col3,col4;
+
+
+
+	VectorPixelType col1,col2,col3,col4;
 	col1[0] = 255;col1[1] = 0;col1[2] = 0;
 	col2[0] = 255;col2[1] = 255;col2[2] = 0;
 	col3[0] = 255;col3[1] = 255;col3[2] = 255;
@@ -2086,7 +2840,7 @@ int loopc = 0;
 
 		if(g[*e_i].selected == 1)
 		{
-			
+
 			TGraph::vertex_descriptor v1,v2;
 			v1 = source(*e_i,g);
 			v2 = target(*e_i,g);
@@ -2119,7 +2873,7 @@ int loopc = 0;
 			{
 				if(g[v1].special == 0 && g[v2].special == 0)
 				{
-					
+
 					FeaturesType f1 = fvector[g[v1].t][g[v1].findex];
 					FeaturesType f2 = fvector[g[v2].t][g[v2].findex];
 					printf("v1 = %0.0f v2 = %0.0f\n",f1.ScalarFeatures[FeaturesType::VOLUME],f2.ScalarFeatures[FeaturesType::VOLUME]);
@@ -2147,7 +2901,7 @@ int loopc = 0;
 			remove_edge(*e_i,g);
 		}
 	}
-	
+
 
 
 	std::vector<int> vertex_count(num);
@@ -2160,12 +2914,12 @@ int loopc = 0;
 		out_vertices_count[counter] = 0;
 	}
 
-	
+
 	boost::property_map<TGraph, boost::vertex_index_t>::type index;
 	index = get(boost::vertex_index,g);
-	
 
-	
+
+
 	for(tie(v_i,v_end) = vertices(g);v_i!=v_end; ++v_i)
 	{
 		vertex_count[component[index[*v_i]]]++;
@@ -2185,7 +2939,7 @@ int loopc = 0;
 			}
 		}
 	}
-	
+
 	tie(v_i,v_end) = vertices(g);
 	for(;v_i!=v_end; ++v_i)
 	{
@@ -2210,7 +2964,7 @@ int loopc = 0;
 			max1 = MAX(max1,component[index[*v_i]]+1);
 		}
 	}
-	
+
 
 
 	printf("number of connected components = %d reduced = %d maxcomp = %d\n",num,tempnum,max1);
@@ -2220,7 +2974,7 @@ int loopc = 0;
 
 void CellTracker::print_vertex(TGraph::vertex_descriptor v, int depth)
 {
-	
+
 	if(g[v].special == 0)
 	{
 		FeaturesType f = fvector[g[v].t][g[v].findex];
@@ -2231,29 +2985,29 @@ void CellTracker::print_vertex(TGraph::vertex_descriptor v, int depth)
 		printf("special = 1");
 	}
 	printf(" in_degree = %d out_degree = %d\n",in_degree(v,g),out_degree(v,g));
-	
-	
+
+
 	if(depth > 0)
 	{
-	TGraph::in_edge_iterator e_i,e_end;
-	for(tie(e_i,e_end) = in_edges(v,g); e_i!=e_end; ++e_i)
-	{
-		printf("in\t");
-		print_vertex(source(*e_i,g),depth-1);
+		TGraph::in_edge_iterator e_i,e_end;
+		for(tie(e_i,e_end) = in_edges(v,g); e_i!=e_end; ++e_i)
+		{
+			printf("in\t");
+			print_vertex(source(*e_i,g),depth-1);
+		}
+		TGraph::out_edge_iterator e_o,e_end2;
+		for(tie(e_o,e_end2) = out_edges(v,g); e_o!=e_end2; ++e_o)
+		{
+			printf("out\t");
+			print_vertex(target(*e_o,g),depth-1);
+		}
 	}
-	TGraph::out_edge_iterator e_o,e_end2;
-	for(tie(e_o,e_end2) = out_edges(v,g); e_o!=e_end2; ++e_o)
-	{
-		printf("out\t");
-		print_vertex(target(*e_o,g),depth-1);
-	}
-	}
-	
+
 
 }
 LabelImageType::Pointer CellTracker::getOutputAtTime(int t)
 {
-	
+
 	LabelImageType::Pointer lim = LabelImageType::New();
 
 	LabelImageType::SizeType lsize;
@@ -2269,7 +3023,7 @@ LabelImageType::Pointer CellTracker::getOutputAtTime(int t)
 
 	lim->SetRegions(lregion);
 	lim->Allocate();
-	
+
 	TGraph::vertex_iterator v_i,v_end;
 	for(tie(v_i,v_end) = vertices(g); v_i!=v_end; ++v_i)
 	{
@@ -2286,27 +3040,27 @@ LabelImageType::Pointer CellTracker::getOutputAtTime(int t)
 			lindex.Fill(0);
 			lregion.SetSize(lsize);
 			lregion.SetIndex(lindex);
-			
-			
+
+
 			//limages[t][find]->GetLargestPossibleRegion().Print(std::cout);
 			LabelIteratorType liter1(limages[t][find],lregion);
-			
+
 			lindex[0] = fvector[t][find].BoundingBox[0];
 			lindex[1] = fvector[t][find].BoundingBox[2];
 			lindex[2] = fvector[t][find].BoundingBox[4];
 			lregion.SetIndex(lindex);
 
 			LabelIteratorType liter2(lim,lregion);
-			
+
 			for(liter1.GoToBegin(),liter2.GoToBegin();!liter1.IsAtEnd();++liter1,++liter2)
 			{
 				if(liter1.Get()!=0)
 					liter2.Set(g[*v_i].new_label);
 			}
-			
+
 		}
 	}
-	
+
 	return lim;
 }
 
@@ -2416,32 +3170,37 @@ void testKPLS()
 	exit(0);
 }
 
-int main(int argc, char **argv)
+int main()//int argc, char **argv)
 {
 	//ST();
 	// testKPLS();
-	/*int num_tc = 10;
-	#define BASE "C:\\Users\\arun\\Research\\Tracking\\harvard\\cache\\forvisit_TSeries-02102009-1455-624\\"
-	int argc = num_tc*3+1;
+	int num_tc = 30;
+#define BASE "C:\\Users\\arun\\Research\\Tracking\\harvard\\cache\\testTSeries-02102009-1455-624"
+	int argc = num_tc*3+1+3;
 
 	char ** argv = new char* [argc];
-	int ch = 4;
+	int ch = 3;
 	for(int counter=1; counter <argc; counter++)
 	{
 		argv[counter] = new char [1024];
 	}
+	sprintf(argv[1],BASE);
 	for(int counter =1; counter<=num_tc; counter++)
 	{
-		sprintf(argv[counter],BASE"smoothed_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,ch);
+		sprintf(argv[1+counter],"smoothed_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,ch);
 	}
+	sprintf(argv[num_tc+2],BASE);
 	for(int counter =1; counter<=num_tc; counter++)
 	{
-		sprintf(argv[counter+num_tc],BASE"labeled_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,ch);
+		sprintf(argv[counter+num_tc+2],"clabeled_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,ch);
 	}
+	sprintf(argv[2*num_tc+3],BASE);
 	for(int counter =1; counter<=num_tc; counter++)
 	{
-		sprintf(argv[counter+num_tc*2],BASE"labeled_tracks_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,ch);
-	}*/
+		sprintf(argv[counter+num_tc*2+3],"labeled_tracks_TSeries-02102009-1455-624_Cycle%03d_CurrentSettings_Ch%d.tif",counter,ch);
+	}
+
+	//END DEBUG
 
 	std::vector<std::string> imfilenames,labelfilenames,outputfilenames;
 
@@ -2469,11 +3228,11 @@ int main(int argc, char **argv)
 		std::string tbuff = std::string(argv[3+2*num_t]) + std::string("/") +std::string(argv[4+2*num_t+counter]);
 		outputfilenames.push_back(tbuff);
 	}
-	int ch = 4;
+
 
 	/*for(int counter=0; counter < num_t; counter++)
 	{
-		printf("---t = %d %s %s %s----\n", counter, imfilenames[counter].c_str(),labelfilenames[counter].c_str(), outputfilenames[counter].c_str());
+	printf("---t = %d %s %s %s----\n", counter, imfilenames[counter].c_str(),labelfilenames[counter].c_str(), outputfilenames[counter].c_str());
 	}*/
 	//scanf("%*d");
 	/*
@@ -2634,6 +3393,7 @@ int main(int argc, char **argv)
 					annotateImage(number,cimp,f[counter].num, MAX(conncomp[counter1].Centroid[0],0),MAX(conncomp[counter1].Centroid[1],0));
 				}
 			}
+			//PAUSE;
 			printf("Finished annotate loop\n");
 			output.push_back(cimp);
 			//std::cout<<"could not find :" ;

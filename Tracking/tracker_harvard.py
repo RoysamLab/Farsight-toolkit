@@ -54,7 +54,7 @@ if __name__ == '__main__':
     # prefix the filanames with necessary things like
     # unmixed_, labeled_, labeled_tracks_, vessel_binarized_, etc..
 
-    time_points = time_points[0:10] # DEBUG
+    time_points = time_points[0:30] # DEBUG
     #channels = [2,3,4]
     #pdb.set_trace()
     ######################### Delete slices #############################
