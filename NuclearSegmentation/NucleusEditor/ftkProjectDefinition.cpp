@@ -480,7 +480,15 @@ bool ProjectDefinition::Write(std::string filename)
 	}
 
 	//AnalyteMeasures:
-	//ADD PIXEL DEFINITIONS
+	if(pixelLevelRules.size() > 0)
+	{
+		TiXmlElement * paramsElement = new TiXmlElement("PixelLevelAnalysis");
+		for(int i=0; i<(int)pixelLevelRules.size(); ++i)
+		{
+			paramsElement->LinkEndChild( GetPixelLevelParameterElement(pixelLevelRules.at(i)) );
+		}
+		root->LinkEndChild(paramsElement);
+	}
 
 	if(doc.SaveFile( filename.c_str() ))
 		return true;
@@ -565,6 +573,16 @@ TiXmlElement * ProjectDefinition::GetClassificationElement( ProjectDefinition::C
 	for(int i=1; i<(int)ClassParameter.ClassificationColumns.size(); ++i)
 		class_columns = class_columns+","+ClassParameter.ClassificationColumns.at(i);
 	returnElement->SetAttribute("ClassificationColumns", class_columns.c_str());
+	return returnElement;
+}
+
+TiXmlElement * ProjectDefinition::GetPixelLevelParameterElement( ftk::PixelAnalysisDefinitions PixParameter ){
+	TiXmlElement * returnElement = new TiXmlElement("PixelLevelRule");
+	returnElement->SetAttribute("RoiImage", PixParameter.regionChannelName.c_str());
+	returnElement->SetAttribute("TargetImage", PixParameter.regionChannelName.c_str());
+	returnElement->SetAttribute("Mode", ftk::NumToString(PixParameter.mode).c_str());
+	returnElement->SetAttribute("OutputFilename", PixParameter.outputFilename.c_str());
+	returnElement->SetAttribute("Radius", ftk::NumToString(PixParameter.radius).c_str());
 	return returnElement;
 }
 //***************************************************************************************

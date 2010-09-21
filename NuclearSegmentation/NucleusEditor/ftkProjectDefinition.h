@@ -75,6 +75,7 @@ public:
 	TiXmlElement * GetAssocRuleElement( ftk::AssociationRule rule );
 	TiXmlElement * GetClassificationElement( ProjectDefinition::ClassParam ClassParameter );
 	TiXmlElement * GetTrainingFileElement( std::string file_name );
+	TiXmlElement * GetPixelLevelParameterElement( ftk::PixelAnalysisDefinitions PixParameter );
 
 	int FindInputChannel(std::string name);				//Search inputs with this name
 	std::string GetTaskString(TaskType task);
