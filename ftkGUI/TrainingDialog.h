@@ -77,6 +77,8 @@ private slots:
 	void class_2_selected(void);
 	void class_3_selected(void);
 	void class_4_selected(void);
+	void class_5_selected(void);
+	void class_6_selected(void);
 
 private:
 	QVBoxLayout * inputsLayout;
@@ -95,6 +97,8 @@ private:
 	QRadioButton *radio2;
 	QRadioButton *radio3;
 	QRadioButton *radio4;
+	QRadioButton *radio5;
+	QRadioButton *radio6;
 	void GetTrainingNames(vtkSmartPointer<vtkTable> table);
 	QHBoxLayout *createFirstExclusiveGroup();
 	

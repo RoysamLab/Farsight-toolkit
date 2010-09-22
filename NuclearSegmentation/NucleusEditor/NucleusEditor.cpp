@@ -947,7 +947,7 @@ void NucleusEditor::loadTable(QString fileName)
 
 	//Get prediction colums, if any, for center map coloring
 	prediction_names.clear();
-	prediction_names = ftk::GetColumsWithString( "prediction" , table );
+	prediction_names = ftk::GetColumsWithString( "Prediction" , table );
 
 	if( !prediction_names.empty() ){
 		kplsRun = 1;
@@ -1263,12 +1263,11 @@ void NucleusEditor::updateDatabase()
 	sqlite3 *dbConn;
 
 	if(table){
+		dbConn = ftk::sqliteOpenConnection();
 		for (int col = 1; col< table->GetNumberOfColumns(); ++col){
 			std::string temp3=table->GetColumnName(col);
 			col_names.push_back(temp3);
 		}
-		ftk::checkForUpdate( dbConn, "IMAGE_TEST", col_names );
-
 		ftk::checkForUpdate( dbConn, "IMAGE_TEST", col_names );
 
 		std::string image_name;

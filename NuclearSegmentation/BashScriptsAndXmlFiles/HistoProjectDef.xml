@@ -49,4 +49,10 @@
     <ClassificationParameter TrainingColumn="train_EC" ClassificationColumns="CD34_TOTAL,CD34_AVG,CD34_SURR,SMA_TOTAL,SMA_AVG,SMA_SURR" />
     <ClassificationParameter TrainingColumn="train_Tumor" ClassificationColumns="CA9_TOTAL,CA9_AVG,CA9_SURR" />
   </ClassificationParameters>
+  <PixelLevelAnalysis>
+     <PixelLevelRule RoiImage="full_path/SMA.tif" TargetImage="full_path/CD34.tif" Mode="1" OutputFilename="PixelAnalysisOut.txt" Radius="0" />
+  </PixelLevelAnalysis>
+  <SqlQueryParameters>
+     <SqlQuery name="write" value="SELECT * FROM IMAGE_TEST WHERE PREDICTION_EC=1" />
+  </SqlQueryParameters>
 </ProjectDefinition>

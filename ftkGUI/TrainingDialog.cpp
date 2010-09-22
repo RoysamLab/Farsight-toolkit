@@ -86,7 +86,7 @@ TrainingDialog::TrainingDialog(vtkSmartPointer<vtkTable> table, const char * tra
 
 	//this->addClass();
 	if( class_names.empty() )
-		this->differentclassselected(4);
+		this->differentclassselected(6);
 	else
 		this->differentclassselected(1);
 
@@ -358,8 +358,8 @@ void TrainingDialog::updateTable(void){
 
 	if(!m_table) return;
 
-	if( class_names.size() < 3 ){
-		if( radio4->isChecked() ){
+	if( class_names.size() < 5 ){
+		if( radio6->isChecked() ){
 			new_class_name.clear();
 			QString input_string = className->displayText();
 			std::string class_name_prefix;
@@ -467,13 +467,23 @@ QHBoxLayout *TrainingDialog::createFirstExclusiveGroup(){
 				radio3 = new QRadioButton(tr( class_names.at(2).c_str() ));
 				connect(radio3, SIGNAL( pressed() ), this, SLOT(class_3_selected()));
 				vbox->addWidget(radio3);
+				if( class_names.size() > 3 ){
+					radio4 = new QRadioButton(tr( class_names.at(3).c_str() ));
+					connect(radio4, SIGNAL( pressed() ), this, SLOT(class_4_selected()));
+					vbox->addWidget(radio4);
+					if( class_names.size() > 4 ){
+						radio5 = new QRadioButton(tr( class_names.at(4).c_str() ));
+						connect(radio5, SIGNAL( pressed() ), this, SLOT(class_5_selected()));
+						vbox->addWidget(radio5);
+					}
+				}
 			}
 		}
 	}
-	if( class_names.empty() || class_names.size() < 3 ){
-		radio4 = new QRadioButton(tr( "New Classifier:" ));
-		connect(radio4, SIGNAL( pressed() ), this, SLOT(class_4_selected()));
-		vbox->addWidget(radio4);
+	if( class_names.empty() || class_names.size() < 5 ){
+		radio6 = new QRadioButton(tr( "New Classifier:" ));
+		connect(radio6, SIGNAL( pressed() ), this, SLOT(class_6_selected()));
+		vbox->addWidget(radio6);
 		className = new QLineEdit();
 		className->setMinimumWidth(100);
 		className->setFocusPolicy(Qt::StrongFocus);
@@ -502,6 +512,14 @@ void TrainingDialog::class_4_selected(void){
 	this->differentclassselected( 4 );
 }
 
+void TrainingDialog::class_5_selected(void){
+	this->differentclassselected( 5 );
+}
+
+void TrainingDialog::class_6_selected(void){
+	this->differentclassselected( 6 );
+}
+
 void TrainingDialog::differentclassselected(int selected_class){
 	if( !class_names.empty() ){
 		if( selected_class==1 && !radio1->isChecked() ){
@@ -523,22 +541,40 @@ void TrainingDialog::differentclassselected(int selected_class){
 					radio3->setChecked(true);
 				}
 		}
+		if( class_names.size() > 3 ){
+				if( selected_class==4 && !radio4->isChecked() ){
+					selected_class = 4; //Set training mode to this one
+					columnForTraining = training_names.at(3).c_str();
+					radio4->setChecked(true);
+				}
+		}
+		if( class_names.size() > 4 ){
+				if( selected_class==5 && !radio3->isChecked() ){
+					selected_class = 5; //Set training mode to this one
+					columnForTraining = training_names.at(4).c_str();
+					radio5->setChecked(true);
+				}
+		}
 	}
-	if( class_names.empty() || class_names.size() < 3 ){
-		if( selected_class==4 && !radio4->isChecked() ){
-			selected_class = 4; //Set training mode to this one
+	if( class_names.empty() || class_names.size() < 5 ){
+		if( selected_class==6 && !radio6->isChecked() ){
+			selected_class = 6; //Set training mode to this one
 			std::ostringstream StrStream;
 			if( class_names.empty() )
 					StrStream << 1;
 				else if( class_names.size()==1 )
 					StrStream << 2;
-				else
+				else if( class_names.size()==2 )
 					StrStream << 3;
+				else if( class_names.size()==3 )
+					StrStream << 4;
+				else if( class_names.size()==4 )
+					StrStream << 5;
 			default_training_name.clear();
 			default_training_name = "train_default";
 			default_training_name.append( StrStream.str() );
 			columnForTraining = default_training_name.c_str();
-			radio4->setChecked(true);
+			radio6->setChecked(true);
 		}
 	}
 	this->tableToInput();

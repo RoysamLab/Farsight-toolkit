@@ -519,7 +519,7 @@ bool ProjectProcessor::RunQuery(void)
 			sql = new char [temp.size()+1];
 			strcpy (sql, temp.c_str());
 		}
-		
+
 		std::cout<<sql<<"\t---this is my query" <<std::endl;
 
 		//Generic API.Can be called from any module
