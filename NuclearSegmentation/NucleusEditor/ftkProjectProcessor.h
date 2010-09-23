@@ -57,6 +57,7 @@ public:
 	void SetDefinition(ftk::ProjectDefinition * def){ definition = def; };
 	void SetPath( std::string path ){ save_path = path; };
 	void Initialize(void);
+	void SetExecPath( std::string inp_str ){ executable_path = inp_str; };
 	void ProcessNext(void);						//Keep calling this until DoneProcessing is true;
 	bool DoneProcessing(void){ return (lastTask == numTasks-1); };
 	bool ReadyToEdit(void){ return resultIsEditable; };
@@ -91,6 +92,7 @@ private:
 	bool resultIsEditable;  //Only true when done nucleus segmentation!!
 	int inputTypeNeeded;
 	std::string save_path;
+	std::string executable_path;
 };
 
 }  // end namespace ftk

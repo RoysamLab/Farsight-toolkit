@@ -1264,26 +1264,28 @@ void NucleusEditor::updateDatabase()
 
 	if(table){
 		dbConn = ftk::sqliteOpenConnection();
-		for (int col = 1; col< table->GetNumberOfColumns(); ++col){
-			std::string temp3=table->GetColumnName(col);
-			col_names.push_back(temp3);
-		}
-		ftk::checkForUpdate( dbConn, "IMAGE_TEST", col_names );
-
-		std::string image_name;
-		image_name = lastPath.toStdString() + "Nucleus_Editor_Image";
-		char *im_nm_cstr = new char [image_name.size()+1];
-		strcpy (im_nm_cstr, image_name.c_str());
-		char *path_nm_cstr = new char [lastPath.toStdString().size()+1];
-		strcpy (path_nm_cstr, lastPath.toStdString().c_str());
-		std::vector< double > table_array;
-		for (int row = 0; row< table->GetNumberOfRows(); ++row){
-			for (int col = 0; col< table->GetNumberOfColumns(); ++col){
-				table_array.push_back(table->GetValue(row,col).ToDouble());
+		if( dbConn ){
+			for (int col = 1; col< table->GetNumberOfColumns(); ++col){
+				std::string temp3=table->GetColumnName(col);
+				col_names.push_back(temp3);
 			}
+			ftk::checkForUpdate( dbConn, "IMAGE_TEST", col_names );
+
+			std::string image_name;
+			image_name = lastPath.toStdString() + "Nucleus_Editor_Image";
+			char *im_nm_cstr = new char [image_name.size()+1];
+			strcpy (im_nm_cstr, image_name.c_str());
+			char *path_nm_cstr = new char [lastPath.toStdString().size()+1];
+			strcpy (path_nm_cstr, lastPath.toStdString().c_str());
+			std::vector< double > table_array;
+			for (int row = 0; row< table->GetNumberOfRows(); ++row){
+				for (int col = 0; col< table->GetNumberOfColumns(); ++col){
+					table_array.push_back(table->GetValue(row,col).ToDouble());
+				}
+			}
+			int sql_db_img_id = ftk::GenericInsert( dbConn, im_nm_cstr, "IMAGE_TEST", path_nm_cstr, table_array,table->GetNumberOfColumns(), table->GetNumberOfRows(), col_names );
+			std::cout << "The image ID on the database is: " << sql_db_img_id << std::endl;
 		}
-		int sql_db_img_id = ftk::GenericInsert( dbConn, im_nm_cstr, "IMAGE_TEST", path_nm_cstr, table_array,table->GetNumberOfColumns(), table->GetNumberOfRows(), col_names );
-		std::cout << "The image number on the database is: " << sql_db_img_id << std::endl;
 	}
 }
 

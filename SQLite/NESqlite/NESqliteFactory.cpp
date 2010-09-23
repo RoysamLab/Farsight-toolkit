@@ -498,7 +498,7 @@ sqlite3 * sqliteOpenConnection()
 	int  exeStatus ;
 	sqlite3 *dbConn; 
 
-	exeStatus = sqlite3_open("C:\\farsight_program\\NE.s3db",&dbConn);
+	exeStatus = sqlite3_open("./NE.s3db",&dbConn);
 
  	// int sqlite3_open(
     //    const char *filename,  Database filename (UTF-8) 

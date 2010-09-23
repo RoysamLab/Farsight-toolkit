@@ -286,7 +286,10 @@ std::string GetFilePath(std::string f)
 	std::string ext;
 	size_t found;
 	found = f.find_last_of("/\\");
-	ext = f.substr(0,found);
+	if( found != std::string::npos )
+		ext = f.substr(0,found);
+	else
+		ext = "./";
 	return ext;
 }
 

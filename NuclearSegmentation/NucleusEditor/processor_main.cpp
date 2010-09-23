@@ -27,7 +27,8 @@ int main(int argc, char *argv[])
 		getchar();
 		return EXIT_FAILURE;
 	}
-	
+
+	std::string MyName        = argv[0];					//In case the CWD is not the path of the executable
 	std::string inputFilename = argv[1];					// Name of the input image;
 	std::string labelFilename = argv[2];					// Name of the label image to apply
 	std::string tableFilename = argv[3];					// Name of the table file;
@@ -92,6 +93,7 @@ int main(int argc, char *argv[])
 
 	//Do processing:
 	ftk::ProjectProcessor * pProc = new ftk::ProjectProcessor();
+	pProc->SetExecPath( ftk::GetFilePath( MyName ) );
 	pProc->SetInputImage(myImg);
 	pProc->SetPath( ftk::GetFilePath(inputFilename) );
 	if(labImg)
