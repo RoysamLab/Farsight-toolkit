@@ -282,9 +282,9 @@ vtkSmartPointer<vtkPolyData> getVTKPolyDataPrecise(LabelImageType::Pointer label
 	return out;
 }
 
-std::vector<vtkSmartPointer<vtkTextActor>> getTextActors(std::vector<FeaturesType> f[][MAX_TAGS],const int current_time)
+std::vector<vtkSmartPointer<vtkTextActor> > getTextActors(std::vector<FeaturesType> f[][MAX_TAGS],const int current_time)
 {
-	std::vector<vtkSmartPointer<vtkTextActor>> avec;
+	std::vector<vtkSmartPointer<vtkTextActor> > avec;
 	char buff[100];
 	//FIXME
 	for(int tag_counter =1; tag_counter<=2; tag_counter++)
@@ -343,7 +343,7 @@ bool compare(FeaturesType a, FeaturesType b)
 
 
 typedef vtkSmartPointer<vtkPolyData> SP_PDM;
-void renderPolyData(std::vector<SP_PDM> vec,std::vector<vtkSmartPointer<vtkTextActor>> text_actors,int timenum)
+void renderPolyData(std::vector<SP_PDM> vec,std::vector<vtkSmartPointer<vtkTextActor> > text_actors,int timenum)
 {
 	printf("Entered renderPolyData\n");
 	vtkSmartPointer<vtkRenderer> ren = vtkSmartPointer<vtkRenderer>::New();
