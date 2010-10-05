@@ -12,6 +12,10 @@
 #include <float.h>
 #include <limits.h>
 
+#include <iostream>
+using std::ofstream;
+using std::endl;
+
 int main( int argc, char ** argv )
 {
   // Verify the number of parameters in the command line
@@ -79,13 +83,18 @@ int main( int argc, char ** argv )
   unsigned long minSize = ULONG_MAX;
   unsigned long maxSize = 0;
   unsigned long avgSize = 0;
+  ofstream outfile("soma-centroids.txt");
+  outfile.precision(1);
   for(unsigned int label=1; label<= numSomas; ++label)
     {
     const LabelObjectType * labelObject = Somas->GetLabelObject(label);
+    const LabelObjectType::CentroidType centroid = labelObject->GetCentroid();
     
     ImageType::IndexType pixelIndex;
-    reader->GetOutput()->TransformPhysicalPointToIndex( labelObject->GetCentroid(), pixelIndex );
+    reader->GetOutput()->TransformPhysicalPointToIndex( centroid, pixelIndex );
     centroidImage->SetPixel(pixelIndex, 255);
+    
+    outfile << std::fixed << pixelIndex[0] << " " << pixelIndex[1] << " " << pixelIndex[2] << endl;
 
     double elongation = labelObject->GetBinaryElongation();
     if(elongation < minElongation)
@@ -132,6 +141,7 @@ int main( int argc, char ** argv )
     avgRadius += radius;
     avgSize += size;
     }
+  outfile.close();
   avgElongation /= numSomas;
   avgFlatness /= numSomas;
   avgRadius /= numSomas;
