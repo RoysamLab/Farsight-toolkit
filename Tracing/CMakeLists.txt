@@ -43,13 +43,6 @@ IF( BUILD_Preprocessing )
   SUBDIRS( Preprocessing/SHtensor_cpp/2D )
 ENDIF()
 
-
-#NewTrackEdit is not ready for the use yet.
-#OPTION( BUILD_TrackEdit "Build Track Editor" OFF )
-#IF( BUILD_TrackEdit )
-#  SUBDIRS( NewTrackEdit )
-#ENDIF()
-
 OPTION( BUILD_Rendering "Build 5-Label Result Renderer" ON )
 IF( BUILD_Rendering )
   SUBDIRS( Rendering )
@@ -58,4 +51,9 @@ ENDIF()
 OPTION( BUILD_ExtractSomas "Build Soma Extraction executables" ${ITK_USE_REVIEW} )
 IF( BUILD_ExtractSomas )
   SUBDIRS( ExtractSomas )
+ENDIF()
+
+OPTION( BUILD_MultipleNeuronTracer "Build Multiple Neuron Tracer" ON )
+IF( BUILD_MultipleNeuronTracer )
+  SUBDIRS( MultipleNeuronTracer )
 ENDIF()
