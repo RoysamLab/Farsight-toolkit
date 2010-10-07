@@ -68,7 +68,7 @@ struct imageFileHandle
 	bool ren2d;
 	vtkSmartPointer<vtkImageData> ImageData;
 	ReaderType::Pointer reader;
-	ConnectorType::Pointer connector;;
+	ConnectorType::Pointer connector;
 	ConnectorType::Pointer projectionConnector;
 	MaxProjectionType::Pointer MaxProjection;
 	MeanProjectionType::Pointer MeanProjection;
@@ -95,6 +95,7 @@ class  ImageRenderActors
 {
 public:
 	ImageRenderActors();
+	~ImageRenderActors();
 	int loadImage(std::string ImageSource, std::string tag);
 	int loadImage(std::string ImageSource, std::string tag, double x, double y, double z);
 //render actors

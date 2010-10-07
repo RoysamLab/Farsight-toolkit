@@ -33,6 +33,16 @@ ImageRenderActors::ImageRenderActors()
 	this->colorTransferFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
 	this->syncColorTransfetFunction();
 }
+
+ImageRenderActors::~ImageRenderActors()
+{
+  while(!this->LoadedImages.empty())
+    {
+    delete this->LoadedImages.back();
+    this->LoadedImages.pop_back();
+    }
+}
+
 int ImageRenderActors::loadImage(std::string ImageSource, std::string tag)
 {
 	if (ImageSource.empty())
