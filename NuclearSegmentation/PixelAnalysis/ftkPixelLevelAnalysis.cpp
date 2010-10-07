@@ -377,7 +377,7 @@ bool ftk::PixelLevelAnalysis::RunAnalysis3(){
 	roi_bin   ->Update();
 	target_bin->Update();
 
-	double roi_count, target_count;
+	double roi_count, target_count, independent_target_count;
 	roi_count = 0, target_count = 0, independent_target_count = 0;
 
 	typedef itk::ImageRegionConstIterator< UShortImageType > ConstIteratorType;
