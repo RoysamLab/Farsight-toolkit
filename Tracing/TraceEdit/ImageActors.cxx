@@ -400,7 +400,10 @@ void ImageRenderActors::syncOpacityTransfetFunction()
 	//this->opacityTransferFunction->AddPoint(this->opacity2,this->opacity2Value);
 	for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
 	{
-		this->LoadedImages[i]->volume->Update();
+    if(this->LoadedImages[i]->volume)
+      {
+      this->LoadedImages[i]->volume->Update();
+      }
 	}
 }
 
