@@ -25,6 +25,7 @@ int main (int argc, char* argv[])
 	View->show();
   View->close();
 	app.quit();
+  delete View;
 	return 0;
 }
 
