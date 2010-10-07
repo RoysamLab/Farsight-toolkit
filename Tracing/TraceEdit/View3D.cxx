@@ -245,6 +245,7 @@ void View3D::CreateBootLoader()
 	/*this->bootLoadFiles->show();
 	this->bootLoadFiles->move(this->TraceEditSettings.value("boot/pos",QPoint(40, 59)).toPoint());*/
 }
+
 void View3D::ReloadState()
 {
 	int i;
@@ -333,6 +334,7 @@ void View3D::ReloadState()
 	}//end else projectfile.isempty
 	this->OkToBoot();
 }
+
 void View3D::OkToBoot()
 {
 	if(!this->TraceFiles.isEmpty() || !this->Image.isEmpty() || !this->SomaFile.isEmpty())
@@ -393,25 +395,34 @@ void View3D::OkToBoot()
 		this->chooseInteractorStyle(0);
 	}
 }
+
 QString View3D::getSomaFile()
 {
-	QString somaFiles = QFileDialog::getOpenFileName(this , "Choose a Soma file to load", ".", 
+  QString somaDir = this->TraceEditSettings.value("somaDir", ".").toString();
+	QString somaFiles = QFileDialog::getOpenFileName(this , "Choose a Soma file to load", somaDir, 
 	  tr("Image File ( *.tiff *.tif *.pic *.PIC ) "));
 	if(!somaFiles.isEmpty())
 	{
+    somaDir = QFileInfo(somaFiles).absolutePath();
+    this->TraceEditSettings.setValue("somaDir", somaDir);
 		this->EditLogDisplay->append("Soma file: \t" + somaFiles.section('/',-1));
 		this->SomaFile.append( somaFiles);
 		this->ImageActors->loadImage(somaFiles.toStdString(), "Soma");
 	}
 	return somaFiles.section('/',-1);
 }
+
 QString View3D::getTraceFile()
-{	std::string traceFile;
-	QString trace = QFileDialog::getOpenFileName(this , "Load Trace Data", ".",
+{
+  std::string traceFile;
+  QString traceDir = this->TraceEditSettings.value("traceDir", ".").toString();
+	QString trace = QFileDialog::getOpenFileName(this , "Load Trace Data", traceDir,
 		tr("All Trace Files ( *.xml *.swc *.vtk );;SWC (*.swc);;VTK (*.vtk);; XML ( *.xml )" ));
 	if (!trace.isEmpty())
 	{
 		this->EditLogDisplay->append("Trace file: \t" + trace.section('/',-1));
+    traceDir = QFileInfo(trace).absolutePath();
+    this->TraceEditSettings.setValue("traceDir", traceDir);
 		this->TraceFiles.append( trace);
 		traceFile = trace.toStdString();
 		if(trace.endsWith("swc"))
@@ -446,12 +457,16 @@ QString View3D::getTraceFile()
 	}
 	return trace.section('/',-1);
 }
+
 QString View3D::getImageFile()
 {
-	QString NewImageFile = QFileDialog::getOpenFileName(this , "Load Trace Image Data", ".",
+  QString imageDir = this->TraceEditSettings.value("imageDir", ".").toString();
+	QString NewImageFile = QFileDialog::getOpenFileName(this , "Load Trace Image Data", imageDir,
 		tr("Trace Image ( *.tiff *.tif *.pic *.PIC *.mhd" ));
 	if (!NewImageFile.isEmpty())
 	{
+    imageDir = QFileInfo(NewImageFile).absolutePath();
+    this->TraceEditSettings.setValue("imageDir", imageDir);
 		this->EditLogDisplay->append("Trace file: \t" + NewImageFile.section('/',-1));
 		this->Image.append( NewImageFile);
 		int imgNum = this->ImageActors->loadImage(NewImageFile.toStdString(), "Image");
@@ -541,6 +556,7 @@ void View3D::LoadImageData()
 		this->statusBar()->showMessage("Please select an Image file");
 	}
 }
+
 void View3D::LoadSomaFile()
 {
 	QString somaFile = this->getSomaFile();
@@ -553,16 +569,22 @@ void View3D::LoadSomaFile()
 		this->statusBar()->showMessage("Somas Rendered");
 	}
 }
+
+
 void View3D::LoadProject()
 {
-	QString projectFile= QFileDialog::getOpenFileName(this , "Load Trace Project File", ".",
+  QString projectDir = this->TraceEditSettings.value("projectDir", ".").toString();
+	QString projectFile= QFileDialog::getOpenFileName(this , "Load Trace Project File", projectDir,
 		tr("project ( *.xml" ));
 	if (!projectFile.isEmpty())
 	{
+    projectDir = QFileInfo(projectFile).absolutePath();
+    this->TraceEditSettings.setValue("projectDir", projectDir);
 		this->readProject(projectFile);
 		this->OkToBoot();
 	}// end of project !empty
 }
+
 bool View3D::readProject(QString projectFile)
 {	
 	QString RelativeProjectPath = NULL;
@@ -673,6 +695,7 @@ bool View3D::readProject(QString projectFile)
 		return false;
 	}
 }
+
 void View3D::SetImgInt()
 {
 	if (this->ImageActors->NumberOfImages()>=1)
@@ -680,6 +703,7 @@ void View3D::SetImgInt()
 		this->tobj->ImageIntensity(this->ImageActors->GetImageData(-1));
 	}
 }
+
 void View3D::TraceBitImageIntensity(int ImgID)
 {
 	if (this->ImageActors->NumberOfImages()>=1)
@@ -687,6 +711,7 @@ void View3D::TraceBitImageIntensity(int ImgID)
 		this->tobj->ImageIntensity(this->ImageActors->GetImageData(ImgID));
 	}
 }
+
 View3D::~View3D()
 {
   if(this->QVTK)
@@ -1229,6 +1254,7 @@ void View3D::CreateLayout()
   this->createSlicerSlider();
   this->menuBar()->hide();
 }
+
 void View3D::ShowAutomatedEdits()
 {
 	this->SmallLinesGroup->setEnabled(0);
@@ -1260,6 +1286,7 @@ void View3D::ShowAutomatedEdits()
 		this->HalfBridges(1);
 	}
 }
+
 /* create interactors*/
 void View3D::CreateInteractorStyle()
 {
@@ -1287,6 +1314,7 @@ void View3D::CreateInteractorStyle()
   this->isPicked->SetClientData(this);            
   this->Interactor->AddObserver(vtkCommand::RightButtonPressEvent,isPicked);
 }
+
 void View3D::chooseInteractorStyle(int iren)
 {
 	if (iren== 1)
@@ -1317,6 +1345,7 @@ void View3D::chooseInteractorStyle(int iren)
 		this->QVTK->GetRenderWindow()->Render();
 	}
 }
+
 void View3D::SetProjectionMethod(int style)
 {
 	this->projectionStyle = style;
@@ -1370,6 +1399,7 @@ void View3D::CreateActors()
   Renderer->AddActor(this->SphereActor);
   this->QVTK->GetRenderWindow()->Render();
 }
+
 void View3D::removeImageActors()
 {
 	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
@@ -1453,6 +1483,7 @@ void View3D::raycastToSlicer()
 		this->viewIn2D = false;
 	}//end else 2d to 3d
 }
+
 void View3D::createSlicerSlider()
 {
 	this->SlicerBar =  new QToolBar("Slicer", this);
@@ -1475,6 +1506,7 @@ void View3D::createSlicerSlider()
 	this->SlicerBar->addWidget(this->SliceSlider);
 	this->SlicerBar->hide();
 }
+
 void View3D::setSlicerZValue(int value)
 {
 	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
@@ -1488,6 +1520,7 @@ void View3D::setSlicerZValue(int value)
 	}
 	this->QVTK->GetRenderWindow()->Render();
 }
+
 void View3D::CreateSphereActor()
 {
   this->Sphere = vtkSmartPointer<vtkSphereSource>::New();
@@ -1566,12 +1599,14 @@ void View3D::createRayCastSliders()
 		this->RacastBar->hide();
 	}
 }
+
 void View3D::RayCastBrightnessChanged(int value)
 {
 	this->ImageActors->setBrightness(value);
 	this->TraceEditSettings.setValue("RayCast/Brightness", value);
 	this->QVTK->GetRenderWindow()->Render();
 }
+
 void View3D::RayCastOpacityChanged(int value)
 {
 	this->ImageActors->setOpacity(value);
@@ -1579,16 +1614,19 @@ void View3D::RayCastOpacityChanged(int value)
 	this->QVTK->GetRenderWindow()->Render();
 
 }
+
 void View3D::RayCastOpacityValueChanged(double value)
 {
 	this->ImageActors->setOpacityValue(value);
 	this->TraceEditSettings.setValue("RayCast/OpacityValue", value);
 	this->QVTK->GetRenderWindow()->Render();
 }
+
 void View3D::EditHelp()
 {
 	//will write help documentation here
 }
+
 void View3D::About()
 {
 	QMessageBox::about(this, tr("About Application"),
@@ -1611,6 +1649,7 @@ void View3D::About()
 			"See the License for the specific language governing permissions and\n"
 			"limitations under the License. \n");
 }
+
 /* update settings */
 void View3D::ShowSettingsWindow()
 {
@@ -1657,6 +1696,7 @@ void View3D::HideSettingsWindow()
   //this->SettingsWidget->hide();
 	this->settingsDock->hide();
 }
+
 /*  picking */
 void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata)
 { /*  PickPoint allows fot the point id and coordinates to be returned 
@@ -1701,6 +1741,7 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
   }// end if pick
   view->QVTK->GetRenderWindow()->Render();             //update the render window
 }
+
 void View3D::showPTin3D(double value)
 {
 	//bool ok = false;
@@ -1727,6 +1768,7 @@ void View3D::showPTin3D(double value)
 	this->pointer3DLocation(pos);
 	this->QVTK->GetRenderWindow()->Render();
 }
+
 void View3D::getPosPTin3D()
 {
 	//this->cursor3DDock->show();
@@ -1745,6 +1787,7 @@ void View3D::getPosPTin3D()
 	this->posZ->blockSignals(0);
 	//this->pointer3DPos = newPT;
 }
+
 void View3D::pointer3DLocation(double pos[])
 {
 	if (this->ShowPointer3DDefault)
@@ -1764,6 +1807,7 @@ void View3D::pointer3DLocation(double pos[])
 	this->posY->blockSignals(0);
 	this->posZ->blockSignals(0);
 }
+
 void View3D::setPTtoSoma()
 {
 	if(this->stems.size() <2)
@@ -1785,6 +1829,7 @@ void View3D::setPTtoSoma()
 		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 	}
 }
+
 void View3D::setUsePointer(int i)
 {
 	if (this->ShowPointer->isChecked())
@@ -1798,6 +1843,7 @@ void View3D::setUsePointer(int i)
 		this->pointer3d->SetEnabled(0);
 	}
 }
+
 void View3D::createNewTraceBit()
 {
 	if (this->pointer3d->GetEnabled())
@@ -1854,6 +1900,7 @@ void View3D::createNewTraceBit()
 		}//end stems size = 1
 	}
 }
+
 /*Selections*/
 void View3D::updateTraceSelectionHighlights()
 {
@@ -1868,6 +1915,7 @@ void View3D::updateTraceSelectionHighlights()
 	this->statusBar()->showMessage(tr("Selected\t")
 		+ QString::number(Selections.size()) +tr("\ttraces"));
 }
+
 void View3D::HighlightSelected(TraceLine* tline, double color)
 {
   TraceLine::TraceBitsType::iterator iter = tline->GetTraceBitIteratorBegin();
@@ -1882,8 +1930,6 @@ void View3D::HighlightSelected(TraceLine* tline, double color)
     poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,color);
     ++iter;
   }
-  
-
 }
 
 void View3D::Rerender()
@@ -1958,6 +2004,7 @@ void View3D::UpdateBranchActor()
   this->BranchActor->SetMapper(this->polymap);
   this->BranchActor->SetPickable(0);
 }
+
 void View3D::AddPointsAsPoints(std::vector<TraceBit> vec)
 {
   vtkSmartPointer<vtkCubeSource> cube_src = vtkSmartPointer<vtkCubeSource>::New();
@@ -1986,7 +2033,6 @@ void View3D::AddPointsAsPoints(std::vector<TraceBit> vec)
   PointsActor->GetProperty()->SetPointSize(5);
   PointsActor->GetProperty()->SetOpacity(.5);
   Renderer->AddActor(PointsActor);
-
 }
 
 void View3D::AddDebugPoints(std::vector<TraceBit> vec)
@@ -2020,9 +2066,7 @@ void View3D::AddDebugPoints(std::vector<TraceBit> vec)
   PointsActor->GetProperty()->SetOpacity(.5);
   PointsActor->GetProperty()->SetColor(1,1,0);
   Renderer->AddActor(PointsActor);
-
 }
-
 
 /*Hippocampal datasets functions*/
 #define SIGN(x) (((x)>0)?1:-1)
@@ -2102,7 +2146,6 @@ public:
 
 void get_best_fit_z(std::vector<double> &zvals,double &z1, double &z2)
 {
-
 	my_vnl_cost_function cf;
 	cf.zvals = zvals;
 	cf.c = 12;
@@ -2124,10 +2167,8 @@ void get_best_fit_z(std::vector<double> &zvals,double &z1, double &z2)
 	//std::cout << "Failure code "<< cg.get_failure_code() <<std::endl;
 	//std::cout << "Min at" << x << std::endl;
 	//cg.diagnose_outcome();
-
-
-
 }
+
 std::vector<int> View3D::getHippocampalTraceIDsToDelete_v2(int z_threshold, int look_ahead)
 {
 #define MAX(a,b) (((a) > (b))?(a):(b))
@@ -2250,6 +2291,7 @@ std::vector<int> View3D::getHippocampalTraceIDsToDelete_v2(int z_threshold, int 
 	}
 	return to_del;
 }
+
 std::vector<int> View3D::getHippocampalTraceIDsToDelete(int z_threshold, int look_ahead)
 {
 #define MAX(a,b) (((a) > (b))?(a):(b))
