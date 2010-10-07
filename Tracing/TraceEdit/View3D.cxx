@@ -2183,7 +2183,7 @@ std::vector<int> View3D::getHippocampalTraceIDsToDelete_v2(int z_threshold, int 
 
 		printf("size = %d, has_parent = %d markers.size()= %d\n", (int)zvals.size(), (int)has_parent, (int)alltids->size());
 		iter1 = tl[counter]->GetTraceBitIteratorBegin();
-		for(;counter1<zvals.size(); counter1++)
+		for(; (unsigned int)counter1 < zvals.size(); counter1++)
 		{
 				if(abs(z1+(counter1)*1.0/(zvals.size()-1)*(z2-z1)-zvals[counter1])>z_threshold)
 				{
@@ -2797,7 +2797,7 @@ void View3D::smoothzrecursive( TraceLine* tline, int n)
 	}
 	titer1 = tline->GetTraceBitIteratorBegin();
 	
-	int counter = 0;
+	unsigned int counter = 0;
 	if(has_parent)
 		counter++;
 
