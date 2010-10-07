@@ -332,5 +332,115 @@ bool ftk::PixelLevelAnalysis::RunAnalysis2(){
 	return true;
 }
 
+bool ftk::PixelLevelAnalysis::RunAnalysis3(){
+	this->WriteInitialOutputs();
+	unsigned short thresh_roi, thresh_target;
+	//this->WriteOutputImage( ROIBinImageName,    ROIImagePtr   );
+	//this->WriteOutputImage( TargetBinImageName, TargetImagePtr);
+	thresh_roi    = returnthresh( ROIImagePtr,    1, 1 );
+	thresh_target = returnthresh( TargetImagePtr, 1, 1 );
+
+	//Create an image with the atoms set as bright pixels
+	UShortImageType::Pointer roi_bin    = UShortImageType::New();
+	UShortImageType::Pointer target_bin = UShortImageType::New();
+	UShortImageType::PointType origin1;
+	origin1[0] = 0;
+	origin1[1] = 0;
+	origin1[2] = 0;
+	roi_bin    ->SetOrigin(origin1);
+	target_bin ->SetOrigin(origin1);
+
+	UShortImageType::SizeType size1,size2; 
+	size1[0] = ROIImagePtr   ->GetLargestPossibleRegion().GetSize()[0];
+	size1[1] = ROIImagePtr   ->GetLargestPossibleRegion().GetSize()[1];
+	size1[2] = ROIImagePtr   ->GetLargestPossibleRegion().GetSize()[2];
+	size2[0] = TargetImagePtr->GetLargestPossibleRegion().GetSize()[0];
+	size2[1] = TargetImagePtr->GetLargestPossibleRegion().GetSize()[1];
+	size2[2] = TargetImagePtr->GetLargestPossibleRegion().GetSize()[2];
+
+	UShortImageType::IndexType start;
+	start[0] = 0; // first index on X
+	start[1] = 0; // first index on Y
+	start[2] = 0; // first index on Z
+	UShortImageType::RegionType region1,region2;
+	region1.SetSize(size1);
+	region1.SetIndex(start);
+	region2.SetSize(size2);
+	region2.SetIndex(start);
+
+	roi_bin   ->SetRegions(region1);
+	target_bin->SetRegions(region2);
+	roi_bin   ->Allocate();
+	target_bin->Allocate();
+	roi_bin   ->FillBuffer(0);
+	target_bin->FillBuffer(0);
+	roi_bin   ->Update();
+	target_bin->Update();
+
+	double roi_count, target_count;
+	roi_count = 0, target_count = 0, independent_target_count = 0;
+
+	typedef itk::ImageRegionConstIterator< UShortImageType > ConstIteratorType;
+	typedef itk::ImageRegionIteratorWithIndex< UShortImageType > IteratorType;
+	IteratorType	  pix_buf_roi_bin( roi_bin,               roi_bin->GetRequestedRegion() );
+	IteratorType	  pix_buf_tar_bin( target_bin,         target_bin->GetRequestedRegion() );
+	ConstIteratorType pix_buf_roi_im ( ROIImagePtr,       ROIImagePtr->GetRequestedRegion() );
+	ConstIteratorType pix_buf_tar_im ( TargetImagePtr, TargetImagePtr->GetRequestedRegion() );
+	pix_buf_roi_bin.GoToBegin(); pix_buf_tar_bin.GoToBegin(); pix_buf_roi_im.GoToBegin(); pix_buf_tar_im.GoToBegin();
+	unsigned short uns_zero, uns_max;
+	uns_zero = 0;
+	uns_max  = itk::NumericTraits<unsigned short>::max();
+	for ( ; !(pix_buf_roi_bin.IsAtEnd() || pix_buf_tar_bin.IsAtEnd() || pix_buf_roi_im.IsAtEnd() || pix_buf_tar_im.IsAtEnd());
+			++pix_buf_roi_bin, ++pix_buf_tar_bin, ++pix_buf_roi_im, ++pix_buf_tar_im ){
+		if( pix_buf_roi_im.Get() >= thresh_roi ){
+			++roi_count;
+			if( pix_buf_tar_im.Get() >= thresh_target ){
+				++target_count;
+				pix_buf_roi_bin.Set( uns_max );
+				pix_buf_tar_bin.Set( uns_max );
+			}
+			else{
+				pix_buf_roi_bin.Set( uns_max );
+				pix_buf_tar_bin.Set( uns_zero);
+			}
+		} else {
+			if( pix_buf_tar_im.Get() >= thresh_target ){
+				pix_buf_roi_bin.Set( uns_zero);
+				pix_buf_tar_bin.Set( uns_max );
+			}
+			else{
+				pix_buf_roi_bin.Set( uns_zero);
+				pix_buf_tar_bin.Set( uns_zero);
+			}
+		}
+		if( pix_buf_tar_im.Get() >= thresh_target )
+			++independent_target_count;
+	}
+
+	std::ofstream output_txt_file( OutputFilename.c_str(), ios::app );
+	output_txt_file	<< std::endl;
+	long double percentage_of_pixels;
+	output_txt_file	<< "The percentage of pixels that are positive in the ROI image is:\n";
+	percentage_of_pixels = 100.0 * (long double)roi_count / ( (long double)size1[0] * (long double)size1[1] * (long double)size1[2] );
+	output_txt_file	<< setprecision (5);
+	output_txt_file	<< percentage_of_pixels << std::endl;
+
+	output_txt_file	<< "The percentage of pixels that are positive in the Target image is:\n";
+	percentage_of_pixels = 100.0 * (long double)independent_target_count / ( (long double)size1[0] * (long double)size1[1] * (long double)size1[2] );
+	output_txt_file	<< setprecision (5);
+	output_txt_file	<< percentage_of_pixels << std::endl;
+
+	output_txt_file	<< "The percentage of pixels that are positive in the ROI image\nthat are also positive in the target image is:\n";
+	percentage_of_pixels = 100.0 * (long double)target_count / (long double)roi_count;
+	output_txt_file	<< setprecision (5);
+	output_txt_file	<< percentage_of_pixels << std::endl;
+	output_txt_file.close();
+
+	WriteOutputImage(ROIBinImageName, roi_bin);
+	WriteOutputImage(TargetBinImageName, target_bin);
+
+	return true;
+}
+
 
 #endif

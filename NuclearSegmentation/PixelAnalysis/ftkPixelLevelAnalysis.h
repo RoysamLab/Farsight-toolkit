@@ -60,6 +60,7 @@ class PixelLevelAnalysis{
 		void SetInputs( std::string ROIImageName, std::string TargetImageName, std::string output_filenames, int radius );
 		bool RunAnalysis1();
 		bool RunAnalysis2();
+		bool RunAnalysis3();
 
 	private:
 		std::string       ROIImageName;

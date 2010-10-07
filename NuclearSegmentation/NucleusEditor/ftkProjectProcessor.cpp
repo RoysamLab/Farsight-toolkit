@@ -371,6 +371,10 @@ bool ProjectProcessor::PixLevAnalysis(void){
 			PAn->SetInputs( (*pait).regionChannelName, (*pait).targetChannelName, (*pait).outputFilename, (*pait).radius );
 			success_run = PAn->RunAnalysis2();
 		}
+		else if( (*pait).mode == 3 ){
+			PAn->SetInputs( (*pait).regionChannelName, (*pait).targetChannelName, (*pait).outputFilename, (*pait).radius );
+			success_run = PAn->RunAnalysis3();
+		}
 		else if( !success_run ){
 			std::cerr<<"ERROR: Run Failed, Check Definitions\n";
 		}
