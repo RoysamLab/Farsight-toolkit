@@ -37,7 +37,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	chSignalMapper = NULL;
 
 	segView = new LabelImageViewQT(&colorItemsMap);
-	connect(segView, SIGNAL(mouseAt(int,int,int)), this, SLOT(setMouseStatus(int,int,int)));
+	connect(segView, SIGNAL(mouseAt(int,int,int, int, int)), this, SLOT(setMouseStatus(int,int,int, int, int)));
 	selection = new ObjectSelection();
 	this->setCentralWidget(segView);
 
@@ -74,7 +74,8 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	this->resize(800,800);
 
 	this->readSettings();
-
+  raise();
+  activateWindow();
 	//Crashes when this is enabled!
 	//setAttribute ( Qt::WA_DeleteOnClose );
 }
@@ -193,6 +194,7 @@ void NucleusEditor::createMenus()
 
 	loadImageAction = new QAction(tr("Load Image..."), this);
 	loadImageAction->setStatusTip(tr("Load an image into the 5D image browser"));
+	loadImageAction->setShortcut(tr("Ctrl+O"));
 	connect(loadImageAction, SIGNAL(triggered()), this, SLOT(askLoadImage()));
 	fileMenu->addAction(loadImageAction);
 
@@ -611,9 +613,9 @@ void NucleusEditor::about()
 //******************************************************************************
 // SLOT: changes the status bar to say the mouse coordinates
 //******************************************************************************
-void NucleusEditor::setMouseStatus(int x, int y, int z)
+void NucleusEditor::setMouseStatus(int x, int y, int z, int t, int v)
 {
-	(this->statusLabel)->setText(QString::number(x) + ", " + QString::number(y) + ", " + QString::number(z));
+	(this->statusLabel)->setText("X: " + QString::number(x) + ", Y: " + QString::number(y) + ", Z: " + QString::number(z) + ", T: " + QString::number(t) + ", Value: " + QString::number(v));
 }
 
 //Pop up a message box that asks if you want to save changes 
