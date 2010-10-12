@@ -16,18 +16,48 @@ if len(sys.argv) < 3:
 input = sys.argv[1]
 output = sys.argv[2] 
 
-subprocess.call(["./MedianImageFilter${CMAKE_EXECUTABLE_SUFFIX}", input, "median.tif"])
-subprocess.call(["./RobustAutomaticThresholdImageFilterTest${CMAKE_EXECUTABLE_SUFFIX}", "median.tif", "robust.tif", "2", "2.0"])
-subprocess.call(["./PadImage${CMAKE_EXECUTABLE_SUFFIX}", "robust.tif", "padded.tif"])
-subprocess.call(["./HoleFillingFilterTest${CMAKE_EXECUTABLE_SUFFIX}", "padded.tif", "filled_padded.tif", "1000", "1"])
-subprocess.call(["./ExtractImageFromPadding${CMAKE_EXECUTABLE_SUFFIX}", "filled_padded.tif", "filled.tif"])
-subprocess.call(["./DistanceMapFilter${CMAKE_EXECUTABLE_SUFFIX}", "filled.tif", "distance.mhd"])
+outputDir = os.path.dirname(output)
+
+subprocess.call([
+  "./MedianImageFilter${CMAKE_EXECUTABLE_SUFFIX}",
+  input, outputDir + "/median.tif"])
+subprocess.call([
+  "./RobustAutomaticThresholdImageFilterTest${CMAKE_EXECUTABLE_SUFFIX}",
+  outputDir + "/median.tif", outputDir + "/robust.tif", "2", "2.0"])
+subprocess.call([
+  "./PadImage${CMAKE_EXECUTABLE_SUFFIX}",
+  outputDir + "/robust.tif", outputDir + "/padded.tif"])
+subprocess.call([
+  "./HoleFillingFilterTest${CMAKE_EXECUTABLE_SUFFIX}",
+  outputDir + "/padded.tif", outputDir + "/filled_padded.tif", "1000", "1"])
+subprocess.call([
+  "./ExtractImageFromPadding${CMAKE_EXECUTABLE_SUFFIX}",
+  outputDir + "/filled_padded.tif", outputDir + "/filled.tif"])
+subprocess.call([
+  "./DistanceMapFilter${CMAKE_EXECUTABLE_SUFFIX}",
+  outputDir + "/filled.tif", outputDir + "/distance.mhd"])
 #somas get bigger as the last parameter to BinaryThresholdImageFilter gets smaller
-subprocess.call(["./BinaryThresholdImageFilter${CMAKE_EXECUTABLE_SUFFIX}", "distance.mhd", "distanceThreshold.tif", "1.0"])
-subprocess.call(["./PadImage${CMAKE_EXECUTABLE_SUFFIX}", "distanceThreshold.tif", "distanceThreshold_padded.tif"])
-subprocess.call(["./PadDistanceMap${CMAKE_EXECUTABLE_SUFFIX}", "distance.mhd", "distance_padded.mhd"])
+subprocess.call([
+  "./BinaryThresholdImageFilter${CMAKE_EXECUTABLE_SUFFIX}",
+  outputDir + "/distance.mhd", outputDir + "/distanceThreshold.tif", "1.0"])
+subprocess.call([
+  "./PadImage${CMAKE_EXECUTABLE_SUFFIX}",
+  outputDir + "/distanceThreshold.tif",
+  outputDir + "/distanceThreshold_padded.tif"])
+subprocess.call([
+  "./PadDistanceMap${CMAKE_EXECUTABLE_SUFFIX}",
+  outputDir + "/distance.mhd", outputDir + "/distance_padded.mhd"])
 #last parameter of DownwardFrontPropagation should be expected radius of tubes
-subprocess.call(["./DownwardFrontPropagation${CMAKE_EXECUTABLE_SUFFIX}", "distanceThreshold_padded.tif", "distance_padded.mhd","output_somas_padded.tif", "1000", "1.0"])
-subprocess.call(["./ExtractImageFromPadding${CMAKE_EXECUTABLE_SUFFIX}", "output_somas_padded.tif", output])
-subprocess.call(["./IsolateCentroids${CMAKE_EXECUTABLE_SUFFIX}", output])
-subprocess.call(["./VoronoiFilter${CMAKE_EXECUTABLE_SUFFIX}", "centroids.tif", "voronoi.mhd"])
+subprocess.call([
+  "./DownwardFrontPropagation${CMAKE_EXECUTABLE_SUFFIX}",
+  outputDir + "/distanceThreshold_padded.tif",
+  outputDir + "/distance_padded.mhd", outputDir + "/output_somas_padded.tif",
+  "1000", "1.0"])
+subprocess.call([
+  "./ExtractImageFromPadding${CMAKE_EXECUTABLE_SUFFIX}",
+  outputDir + "/output_somas_padded.tif", output])
+subprocess.call([
+  "./IsolateCentroids${CMAKE_EXECUTABLE_SUFFIX}",
+  output, outputDir + "/centroids.tif", outputDir + "/soma-centroids.txt"])
+subprocess.call(["./VoronoiFilter${CMAKE_EXECUTABLE_SUFFIX}",
+  outputDir + "/centroids.tif", outputDir + "/voronoi.mhd"])

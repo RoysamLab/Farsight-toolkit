@@ -19,10 +19,10 @@ using std::endl;
 int main( int argc, char ** argv )
 {
   // Verify the number of parameters in the command line
-  if( argc < 2 )
+  if( argc < 4 )
     {
     std::cerr << "Usage: " << std::endl;
-    std::cerr << argv[0] << " binarySomaImageInput " << std::endl;
+    std::cerr << argv[0] << " binarySomaImageInput centroidsImageOutput centroidsTextOutput" << std::endl;
     return EXIT_FAILURE;
     }
 
@@ -39,10 +39,14 @@ int main( int argc, char ** argv )
 
   ReaderType::Pointer reader = ReaderType::New();
   WriterType::Pointer writer = WriterType::New();
-  writer->SetFileName("centroids.tif");
 
   const char * inputFilename  = argv[1];
+  const char * imageOutputFilename = argv[2];
+  const char * textOutputFilename = argv[3];
+
   reader->SetFileName( inputFilename  );
+  writer->SetFileName(imageOutputFilename);
+
 
   //we use a BinaryImageToShapeLabelMapFilter to convert the binary
   //input image into a collection of objects
@@ -83,7 +87,8 @@ int main( int argc, char ** argv )
   unsigned long minSize = ULONG_MAX;
   unsigned long maxSize = 0;
   unsigned long avgSize = 0;
-  ofstream outfile("soma-centroids.txt");
+
+  ofstream outfile(textOutputFilename);
   outfile.precision(1);
   for(unsigned int label=1; label<= numSomas; ++label)
     {
