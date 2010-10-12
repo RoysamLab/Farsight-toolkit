@@ -80,7 +80,7 @@ if(BUILD_TESTING AND FARSIGHT_DATA_ROOT)
       ${PYTHON_EXECUTABLE}
       ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ExtractSomas.py
       ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop.tif
-      C1-1unmixed-crop-somas.tif)
+      ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/C1-1unmixed-crop-somas.tif)
     set_tests_properties(ExtractSomas PROPERTIES
       PASS_REGULAR_EXPRESSION "I count 1 distinct somas."
       TIMEOUT 900) #15 minutes
