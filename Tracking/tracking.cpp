@@ -597,7 +597,7 @@ int main(int argc, char **argv)
           break;
         }
     }
-	if(!fexists)
+	if(1)
 	{
     for(int t =0; t<num_t; t++)
 	  {

@@ -597,7 +597,7 @@ public:
 		limages = l; // copy only pointers
 		rimages = r;
 		UTILITY_MAX = 1<<16;
-		K = 1;
+		K = 2;
 	}
 
 	void run();
@@ -700,8 +700,17 @@ float CellTracker::get_boundary_dist(float x[3])
 
 int CellTracker::compute_boundary_utility(float x[3])
 {
+
+
 	float dist = get_boundary_dist(x)+3*sqrt(fvar.distVariance);
-	return UTILITY_MAX*(exp(-dist*dist/2.0/fvar.distVariance));
+	int retval = UTILITY_MAX*(exp(-dist*dist/2.0/fvar.distVariance));
+	float test[3] = { 182,299,15};
+	if(get_distance(x,test) < 30)
+	{
+		printf("retval = %d x = %0.0f y = %0.0f z = %0.0f\n", retval,x[0],x[1],x[2]);
+		PAUSE;
+	}
+	return retval;
 }
 
 int CellTracker::compute_normal_utility(FeaturesType f1, FeaturesType f2)
@@ -844,7 +853,7 @@ int CellTracker::add_normal_edges(int tmin, int tmax)
 				{
 					tried2++;
 					float dist = get_distance(fvector[t][counter1].Centroid,fvector[tmax][counter].Centroid);
-					if(dist < 4.0*sqrt(fvar.distVariance))
+					if(dist < 4.0*sqrt(fvar.distVariance)*(abs(t-tmax)))
 					{
 						//add the edge
 						if(dist>100)
@@ -1155,7 +1164,11 @@ float CellTracker::compute_LRUtility(FeaturesType f1, FeaturesType f2, FeaturesT
 	float utility = 0;
 	utility += compute_normal_utility(f1,f2);
 	utility += compute_normal_utility(f2,f3);
-
+		float test[3] = { 260.0,195.0,8.0};
+		if(get_distance(test, f1.Centroid) < 30)
+		{
+			_TRACE;
+		}
 
 	float factor;
 	float dist1 = get_distance(f1.Centroid,f2.Centroid);
@@ -1169,6 +1182,7 @@ float CellTracker::compute_LRUtility(FeaturesType f1, FeaturesType f2, FeaturesT
 	}
 	else
 	{
+
 		float dir1[3],dir2[3];
 		dir1[0] = f2.Centroid[0]-f1.Centroid[0];
 		dir1[1] = f2.Centroid[1]-f1.Centroid[1];
@@ -1189,10 +1203,10 @@ float CellTracker::compute_LRUtility(FeaturesType f1, FeaturesType f2, FeaturesT
 		dir2[1] /=sum2;
 		dir2[2] /=sum2;
 
-		float proj = (1+dir1[0]*dir2[0]+dir1[1]*dir2[1]+dir1[2]*dir2[2]);
+		float proj = (1+dir1[0]*dir2[0]+dir1[1]*dir2[1]+dir1[2]*dir2[2])/2;
 
-		utility = MIN(dist1,dist2)/MAX(dist1,dist2)*proj;
-		return utility;
+		float utility1 = utility * MIN(dist1,dist2)/MAX(dist1,dist2)*proj;
+		return utility1;
 	}
 
 }
@@ -1228,9 +1242,9 @@ float CellTracker::compute_LRUtility(TGraph::edge_descriptor e1,TGraph::edge_des
 		dir2[1] = f3.Centroid[1]-f2.Centroid[1];
 		dir2[2] = f3.Centroid[2]-f2.Centroid[2];
 
-		float proj = dir1[0]*dir2[0]+dir1[1]*dir2[1]+dir1[2]*dir2[2];
+		float proj = (1+dir1[0]*dir2[0]+dir1[1]*dir2[1]+dir1[2]*dir2[2])/2;
 
-		utility = MIN(dist1,dist2)/MAX(dist1,dist2)*proj;
+		utility = utility * MIN(dist1,dist2)/MAX(dist1,dist2)*proj;
 		return utility;
 	}
 
@@ -2133,7 +2147,33 @@ std::vector<std::vector<bool> >  generate_all_binary_strings(int n)
 
 float CellTracker::get_LRUtility(std::vector< CellTracker::TGraph::vertex_descriptor > desc)
 {
-	return  rand()%1000;
+	float util = 0;
+	printf("called get_LRUtility \n");
+
+	for(int counter =0; counter < desc.size()-2; counter++)
+	{
+		if(g[desc[counter]].special==1 || g[desc[counter+2]].special == 1)
+		{
+			;
+		}
+		else
+		{
+			//printf("[1]");
+			//print_vertex(desc[counter],0);
+			//printf("[2]");
+			//print_vertex(desc[counter+1],0);
+			//printf("[3]");
+			//print_vertex(desc[counter+2],0);
+			FeaturesType f1,f2,f3;
+			f1 = fvector[g[desc[counter]].t][g[desc[counter]].findex];
+			f2 = fvector[g[desc[counter+1]].t][g[desc[counter+1]].findex];
+			f3 = fvector[g[desc[counter+2]].t][g[desc[counter+2]].findex];
+			util = util + compute_LRUtility(f1,f2,f3);
+		}
+	}
+	
+
+	return  util;
 }
 void CellTracker::run()
 {
@@ -2510,7 +2550,7 @@ void CellTracker::run()
 					}
 					else
 					{
-						desc.push_back(spvertices[0].first);
+						desc.push_back(spvertices[0].second);
 					}
 					for(int co1 = 1; co1 < spvertices.size(); co1++)
 					{
@@ -3328,7 +3368,7 @@ int main()//int argc, char **argv)
 		fvar.spacing[0] = 0.965;
 		fvar.spacing[1] = 0.965;
 		fvar.spacing[2] = 4.0;
-		fvar.timeVariance = 0.1;
+		fvar.timeVariance = 0.3;
 		fvar.overlapVariance = 1;
 		fvar.variances[FeatureVariances::VOLUME] = 40000;
 

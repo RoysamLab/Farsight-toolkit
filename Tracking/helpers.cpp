@@ -2026,7 +2026,7 @@ LabelImageType::Pointer extract_label_image(int label, float bbox[6],LabelImageT
 }
 void annotateImage(Color2DImageType::Pointer number,Color2DImageType::Pointer orig, int n, int x, int y)
 {
-	printf("annotateImage called with n = %d x = %d y = %d ... ", n,x,y);
+	//printf("annotateImage called with n = %d x = %d y = %d ... ", n,x,y);
 	typedef itk::ImageRegionConstIterator<Color2DImageType> ConstColor2DIteratorType;
 	typedef itk::ImageRegionIterator<Color2DImageType> Color2DIteratorType;
 
