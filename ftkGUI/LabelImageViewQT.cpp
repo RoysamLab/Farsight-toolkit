@@ -629,23 +629,23 @@ void LabelImageViewQT::mouseMoveEvent(QMouseEvent *event)
 	int currentZ = vSpin->value();
   int currentT = hSpin->value();
   int numChannels = (*info).numChannels; 
-  int pixelVal = 0;
+  list<int> pixelValues;
+  //pixelValues.resize(numChannels);
 
   for(int ch=0; ch < numChannels; ++ch)
   {
     if(labelImg)
     {
-      pixelVal += (int)labelImg->GetPixel(currentT,ch,currentZ,int(yy),int(xx));
+      pixelValues.push_back((int)labelImg->GetPixel(currentT,ch,currentZ,int(yy),int(xx)));
     }
     else if(channelImg)
     {
-      pixelVal += (int)channelImg->GetPixel(currentT,ch,currentZ,int(yy),int(xx));
+      pixelValues.push_back((int)channelImg->GetPixel(currentT,ch,currentZ,int(yy),int(xx)));
     }
-    if(pixelVal != 0) break;
   }
 
 	if( xx>=0 && xx<totalWidth && yy>=0 && yy<totalHeight )
-		emit mouseAt(xx, yy, currentZ, currentT, pixelVal);
+		emit mouseAt(xx, yy, currentZ, currentT, pixelValues);
 }
 
 void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)

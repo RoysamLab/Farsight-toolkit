@@ -56,9 +56,10 @@ limitations under the License.
 
 #include "vtkTable.h"
 #include "vtkSmartPointer.h"
-
 #include <iostream>
+#include <list>
 #include <map>
+using namespace std;
 
 class MyRubberBand;
 class IntensityDialog;
@@ -119,7 +120,7 @@ public slots:
 	void zoomOut(){ zoom( ZoomOutFactor ); };
 
 signals:
-	void mouseAt(int x, int y, int z, int t, int v);
+	void mouseAt(int x, int y, int z, int t, list<int> v);
 	void boxDrawn(int x1, int y1, int x2, int y2, int z);
 	void pointsClicked(int x1, int y1, int z1, int x2, int y2, int z2);
 	void roiDrawn(void);

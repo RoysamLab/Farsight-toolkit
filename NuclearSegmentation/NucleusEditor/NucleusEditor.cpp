@@ -37,7 +37,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	chSignalMapper = NULL;
 
 	segView = new LabelImageViewQT(&colorItemsMap);
-	connect(segView, SIGNAL(mouseAt(int,int,int, int, int)), this, SLOT(setMouseStatus(int,int,int, int, int)));
+	connect(segView, SIGNAL(mouseAt(int,int,int, int,list<int>)), this, SLOT(setMouseStatus(int,int,int, int, list<int>)));
 	selection = new ObjectSelection();
 	this->setCentralWidget(segView);
 
@@ -613,9 +613,17 @@ void NucleusEditor::about()
 //******************************************************************************
 // SLOT: changes the status bar to say the mouse coordinates
 //******************************************************************************
-void NucleusEditor::setMouseStatus(int x, int y, int z, int t, int v)
+void NucleusEditor::setMouseStatus(int x, int y, int z, int t, list<int> v)
 {
-	(this->statusLabel)->setText("X: " + QString::number(x) + ", Y: " + QString::number(y) + ", Z: " + QString::number(z) + ", T: " + QString::number(t) + ", Value: " + QString::number(v));
+	QString statusMsg("X: " + QString::number(x) + ", Y: " + QString::number(y) + ", Z: " + QString::number(z) + ", T: " + QString::number(t));
+  
+  int i = 1;
+  for(list<int>::iterator it = v.begin(); it != v.end(); it++) {
+   statusMsg.append(", Value " + QString::number(i)  + ": " + QString::number(*it));
+   ++i;
+  }
+
+  (this->statusLabel)->setText(statusMsg);
 }
 
 //Pop up a message box that asks if you want to save changes 

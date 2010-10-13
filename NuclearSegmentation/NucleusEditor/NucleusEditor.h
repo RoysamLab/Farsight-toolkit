@@ -97,7 +97,7 @@ protected:
 	void closeEvent(QCloseEvent *event);
 
 protected slots:
-	void setMouseStatus(int,int,int,int,int);
+	void setMouseStatus(int,int,int,int,list<int>);
 
 	//Loading:
 	void askLoadImage(void);
