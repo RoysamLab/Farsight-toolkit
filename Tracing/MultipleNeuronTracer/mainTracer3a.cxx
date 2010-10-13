@@ -609,7 +609,10 @@ void Decimate() {
           n->IsActive = false;
           n = n->parent;
         }
-        par->IsBranch = false;
+        if(par != NULL)
+          {
+          par->IsBranch = false;
+          }
       }
     }
   }
