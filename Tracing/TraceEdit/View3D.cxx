@@ -229,7 +229,7 @@ void View3D::CreateBootLoader()
 	QFormLayout *LoadLayout = new QFormLayout(this->bootLoadFiles);
 	LoadLayout->addRow(tr("User Name "), this->GetAUserName);
 	LoadLayout->addRow(tr("Lab Name "), this->GetLab);
-	LoadLayout->addRow(tr("Trace File"), this->BootTrace);
+	LoadLayout->addRow(tr("Trace Files"), this->BootTrace);
 	LoadLayout->addRow(tr("Image File"), this->BootImage);
 	LoadLayout->addRow(tr("Default Use Slicer"), this->Use2DSlicer);
 	LoadLayout->addRow(tr("Somas File"), this->BootSoma);
@@ -417,45 +417,50 @@ QString View3D::getTraceFile()
 {
   std::string traceFile;
   QString traceDir = this->TraceEditSettings.value("traceDir", ".").toString();
-	QString trace = QFileDialog::getOpenFileName(this , "Load Trace Data", traceDir,
+	QStringList traces = QFileDialog::getOpenFileNames(this , "Load Trace Data", traceDir,
 		tr("All Trace Files ( *.xml *.swc *.vtk );;SWC (*.swc);;VTK (*.vtk);; XML ( *.xml )" ));
-	if (!trace.isEmpty())
-	{
-		this->EditLogDisplay->append("Trace file: \t" + trace.section('/',-1));
-    traceDir = QFileInfo(trace).absolutePath();
-    this->TraceEditSettings.setValue("traceDir", traceDir);
-		this->TraceFiles.append( trace);
-		traceFile = trace.toStdString();
-		if(trace.endsWith("swc"))
-		{
-			this->tobj->ReadFromSWCFile((char*)traceFile.c_str());
-		}
-		else if(trace.endsWith("xml"))
-		{
-			this->tobj->ReadFromRPIXMLFile((char*)traceFile.c_str());
-		}
-		else if (trace.endsWith("vtk"))
-		{
-			QMessageBox::StandardButton reply;
-			reply = QMessageBox::critical(this, "Branching Warning", 
-				"Warning .VTK files does not include connectivity order."
-				"\nThe Root Tracess must be set BEFORE other edit operations. \n Should The Trace Editor Guess at the Root nodes?",
-				QMessageBox::Yes |QMessageBox::No, QMessageBox::No);
-			if (reply == QMessageBox::Yes)
-			{
-				this->tobj->AutoSolveBranchOrder = true;
-			}
-			else
-			{
-				this->tobj->AutoSolveBranchOrder = false;
-			}
-			this->tobj->ReadFromVTKFile((char*)traceFile.c_str());
-			if (this->tobj->AutoSolveBranchOrder)
-			{
-				this->tobj->BranchPoints.clear();
-			}
-		}
-	}
+  QString trace;
+  for (int i = 0; i < traces.size(); ++i)
+    {
+    trace = traces.at(i);
+    if (!trace.isEmpty())
+      {
+      this->EditLogDisplay->append("Trace file: \t" + trace.section('/',-1));
+      traceDir = QFileInfo(trace).absolutePath();
+      this->TraceEditSettings.setValue("traceDir", traceDir);
+      this->TraceFiles.append( trace);
+      traceFile = trace.toStdString();
+      if(trace.endsWith("swc"))
+        {
+        this->tobj->ReadFromSWCFile((char*)traceFile.c_str());
+        }
+      else if(trace.endsWith("xml"))
+        {
+        this->tobj->ReadFromRPIXMLFile((char*)traceFile.c_str());
+        }
+      else if (trace.endsWith("vtk"))
+        {
+        QMessageBox::StandardButton reply;
+        reply = QMessageBox::critical(this, "Branching Warning", 
+          "Warning .VTK files does not include connectivity order."
+          "\nThe Root Tracess must be set BEFORE other edit operations. \n Should The Trace Editor Guess at the Root nodes?",
+          QMessageBox::Yes |QMessageBox::No, QMessageBox::No);
+        if (reply == QMessageBox::Yes)
+          {
+          this->tobj->AutoSolveBranchOrder = true;
+          }
+        else
+          {
+          this->tobj->AutoSolveBranchOrder = false;
+          }
+        this->tobj->ReadFromVTKFile((char*)traceFile.c_str());
+        if (this->tobj->AutoSolveBranchOrder)
+          {
+          this->tobj->BranchPoints.clear();
+          }
+        }
+      }
+    }
 	return trace.section('/',-1);
 }
 
@@ -825,7 +830,7 @@ void View3D::CreateGUIObjects()
 	this->exitAction->setShortcut(QKeySequence::Close);
 	this->exitAction->setStatusTip("Exit the Trace Editor");
 
-	this->loadTraceAction = new QAction("Load Trace", this->CentralWidget);
+	this->loadTraceAction = new QAction("Load Traces", this->CentralWidget);
 	connect(this->loadTraceAction, SIGNAL(triggered()), this, SLOT(LoadTraces()));
 	this->loadTraceAction->setStatusTip("Load traces from .xml or .swc file");
 	this->loadTraceAction->setShortcut(QKeySequence::Open);
