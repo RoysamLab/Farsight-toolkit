@@ -383,6 +383,7 @@ void View3D::OkToBoot()
 		QMessageBox *bootFailed = new QMessageBox;
 		bootFailed->setText("There are no files to open. Please select a file to continue.");
 		bootFailed->show();
+    return;
 	}
 	if (viewIn2D == true)
 	{
