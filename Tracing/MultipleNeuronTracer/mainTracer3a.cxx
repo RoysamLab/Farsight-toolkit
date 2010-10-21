@@ -99,6 +99,7 @@ SWCNode* TBack(itk::Index<3>& ndx, std::vector<IndexType>&  );
 void Interpolate(PixelType);
 void Decimate();
 void RemoveIntraSomaNodes(const char *somaFileName);
+float getRadius(itk::Vector<float,3>& pos);
 
 class HeapNode {
 public:
@@ -1191,9 +1192,12 @@ void WriteMultipleSWCFiles(std::string fname, unsigned int padz) {
           pid = rootID;
           }
 
+        //get radius estimate for this node
+        float radius = getRadius((*sit)->pos);
+
         ofile << id << " " << type << " " << SCALE*(*sit)->pos[0] << " "
               << SCALE*(*sit)->pos[1] << " " << SCALE*(*sit)->pos[2]-padz
-              << " " <<  " 2.00 " << pid << std::endl;
+              << " " <<  " " << radius << " " << pid << std::endl;
       }
     }
     ofile.close();
@@ -1325,3 +1329,59 @@ void RemoveIntraSomaNodes(const char *somaFileName)
             << " nodes (" << originalSize << " to " << newSize << ")"
             << std::endl;
 }
+
+float getRadius(itk::Vector<float,3>& pos) {
+	float r = 2.0f;
+	itk::Vector<float,3> m1, m2, m;
+	itk::Index<3> ndx;
+
+	for (int iter = 0; iter < 20; ++iter) {
+		for( int i = 0; i<3; i++) {
+			m1[i] = pos[i] - vnl_math_max(2.0f*r, 5.0f);
+			m2[i] = pos[i] + vnl_math_max(2.0f*r, 5.0f);
+		}
+
+		std::vector<float> c;
+		c.reserve(4*4*int(r*r));
+		float i1 = 0.0f, i2 = 0.0f, i1s = 0.0f, i2s = 0.0f;
+		for (m[2] = m1[2]; m[2] <= m2[2]; m[2]++) {
+			for (m[1] = m1[1]; m[1] <= m2[1]; m[1]++) {
+				for (m[0] = m1[0]; m[0] <= m2[0]; m[0]++) {
+					ndx.CopyWithRound(m);
+
+					itk::Vector<float,3> mm = pos - m;
+					float d = mm.GetNorm();
+					if (vol->GetBufferedRegion().IsInside(ndx)) {
+						float val = vol->GetPixel(ndx);
+						if (d < r) {
+							i1 += val;
+							++i1s;
+						}
+						else {
+							i2 += val;
+							++i2s;
+						}
+
+						if (vnl_math_abs(d - r) < 0.7f) {
+							c.push_back(val);
+						}
+					}
+				}
+			}
+		}
+		i1 /= i1s;
+		i2 /= i2s;
+		float dr = 0.0f;
+		for (std::vector<float>::iterator it = c.begin(); it < c.end(); ++it) {
+			dr += vnl_math_abs((*it) - i1) - vnl_math_abs((*it) - i2);
+		}
+		dr *= 1.0f / float(c.size()); //rate
+		dr = vnl_math_max(dr , -1.0f);
+		dr = vnl_math_min(dr , 1.0f);
+		r -= dr;
+		r = vnl_math_max(r , 1.0f) ; 
+		std::cout << "radius : " << r << "Contour :" << c.size() << std::endl;
+	}
+	return r;
+}
+
