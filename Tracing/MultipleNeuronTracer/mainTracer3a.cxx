@@ -167,7 +167,7 @@ int main (int argc, char * argv[])  {
   }
 
   PixelType CostThreshold = 1000.0f;
-  if (argc == 4) {
+  if (argc >= 4) {
     CostThreshold = atoi(argv[3]);
     std::cout << "Cost threshold is set at :" << CostThreshold << std::endl;
   }
@@ -1162,6 +1162,7 @@ void WriteMultipleSWCFiles(std::string fname, unsigned int padz) {
     //make the LookUp table
     std::map<long, long> NodeIDToSWCIDMap;
     long ID = 1;
+    long rootID = 1;
     for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) {
       if ((*sit)->TreeID == i+1) {
         NodeIDToSWCIDMap[(*sit)->ID] = ID++;
@@ -1173,16 +1174,22 @@ void WriteMultipleSWCFiles(std::string fname, unsigned int padz) {
     for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) {
       if ((*sit)->TreeID == i+1) {
         long id = NodeIDToSWCIDMap[(*sit)->ID];
-        //long id = IDLookUp[(*sit)->ID - 1];
         long pid = -1;
         long type = 3;
         if ((*sit)->PID > 0) {
           pid = NodeIDToSWCIDMap[(*sit)->PID];
-          //pid = IDLookUp[(*sit)->PID - 1];
         }
         if(pid == -1) {
           type = 1;
+          rootID = NodeIDToSWCIDMap[(*sit)->ID];
         }
+
+        //hack for when your parent was deleted but you didn't get assigned as
+        //a child of the root
+        if(pid == 0)
+          {
+          pid = rootID;
+          }
 
         ofile << id << " " << type << " " << SCALE*(*sit)->pos[0] << " "
               << SCALE*(*sit)->pos[1] << " " << SCALE*(*sit)->pos[2]-padz
