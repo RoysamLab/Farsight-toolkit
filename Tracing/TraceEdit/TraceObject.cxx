@@ -60,7 +60,7 @@ TraceObject::TraceObject()
   this->tx = 0;
   this->ty = 0;
   this->tz = 0;
-
+	this->ColorByTrees = false;
 }
 
 TraceObject::TraceObject(const TraceObject &T)
@@ -208,7 +208,21 @@ void TraceObject::leastSquaresThreeDependentVar(EndPointInfo* endPoint, std::vec
 				else endPoint->slope[j]+=ExtrapolationLines->at(i)->GetCoordinateByRef(j);
 		for(unsigned int j = 0; j < 3; j++) endPoint->slope[j]/= Factor;
 }
-double TraceObject::getTraceLUT(unsigned char type)
+
+double TraceObject::GetTraceLUT(TraceLine *line)
+{
+  if(this->ColorByTrees)
+    {
+    int whichTree = this->RootToTree[line->GetRootID()];
+    return this->GetTreeLUT(whichTree);
+    }
+  else
+    {
+    return this->GetNodeTypeLUT(line->GetType());
+    }
+}
+
+double TraceObject::GetNodeTypeLUT(unsigned char type)
 {
 	switch( type )
       {
@@ -232,6 +246,13 @@ double TraceObject::getTraceLUT(unsigned char type)
           return .25; //yellow
       }
 }
+
+double TraceObject::GetTreeLUT(int whichTree)
+{
+  double numTrees = (double)this->RootToTree.size();
+  return ((double)whichTree / numTrees); 
+}
+
 TraceLine* TraceObject::findTraceByID(int id)
 {
 	unsigned int i = 0;
@@ -452,7 +473,7 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
     tline->SetId(lineID);
     tline->SetType(lineType);
 
-	tline->setTraceColor( getTraceLUT( tline->GetType() ));   
+	tline->setTraceColor( GetTraceLUT( tline ));   
 
     if(lineParent != -1)
     {
@@ -666,8 +687,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
     TraceLine * ttemp = new TraceLine();
     ttemp->SetId(global_id_number++);
     ttemp->SetType(hash_type[*iter]);
-    //ttemp->setTraceColor(1.0/ttemp->GetType());
-    ttemp->setTraceColor( getTraceLUT( ttemp->GetType() ));
+    ttemp->setTraceColor( GetTraceLUT( ttemp ));
     ttemp->AddTraceBit(data[*iter]);
     int id_counter = *iter;
     while(child_count[id_counter]==1)
@@ -918,7 +938,7 @@ void TraceObject::ConvertVTKLineToTrace(int cellID, int parentTraceLineID,
   this->hash_load[newLineID] = reinterpret_cast<unsigned long long int>(tline);
   tline->SetId(newLineID);
   tline->SetType(3);
-	tline->setTraceColor( this->getTraceLUT( tline->GetType() ));   
+	tline->setTraceColor( this->GetTraceLUT( tline ));   
 
 	if (this->AutoSolveBranchOrder)
 	{
@@ -1216,7 +1236,15 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkF
   return_id = line_points->InsertNextPoint(point);
   hashp[return_id]=(unsigned long long int)tline;
   iter->marker = return_id;
-  point_scalars->InsertNextTuple1(.5-tline->getTraceColor());
+
+	if(this->ColorByTrees)
+    {
+    point_scalars->InsertNextTuple1(tline->getTraceColor());
+    }
+  else
+    {
+    point_scalars->InsertNextTuple1(.5-tline->getTraceColor());
+    }
 
   //To add a line between parent line's last point and the first point in the current line
   if(tline->GetParent() != NULL)
@@ -1288,22 +1316,17 @@ std::vector<TraceBit> TraceObject::CollectTraceBits()
 
 vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
 {
-  //printf("Entering getVTKPolyData\n");
   hashp.clear();
   hashc.clear();
-  //printf("Started creating vtkPolyData for rendering purposes ... ");
   vtkSmartPointer<vtkFloatArray> point_scalars=vtkSmartPointer<vtkFloatArray>::New();
   point_scalars->SetNumberOfComponents(1);
   vtkSmartPointer<vtkPoints> line_points=vtkSmartPointer<vtkPoints>::New();
   line_points->SetDataTypeToDouble();
   vtkSmartPointer<vtkCellArray> line_cells=vtkSmartPointer<vtkCellArray>::New();
-  //printf("Starting CreatePolyDataRecursive\n");
   for(unsigned int counter=0; counter<trace_lines.size(); counter++)
   {
-    //printf("Calling CreatePolyDataRecursive %dth time\n",counter+1);
     CreatePolyDataRecursive(trace_lines[counter],point_scalars,line_points,line_cells);
   }
-  //printf("Finished CreatePolyDataRecursive\n");
   this->PolyTraces->SetPoints(line_points);
   this->PolyTraces->SetLines(line_cells);
 
@@ -1583,10 +1606,6 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 {
   TraceLine * tmarker = reinterpret_cast<TraceLine*>(hashp[eMarker]);
   TraceLine * tother = reinterpret_cast<TraceLine*>(hashp[sMarker]);
-  if((tmarker->GetId() == 786 && tother->GetId()== 789) || (tmarker->GetId() == 789 && tother->GetId()==786))
-  {
-	  printf("I'm operating on one of them\n");
-  }
   char elocation = -1;
   if(eMarker == tmarker->GetTraceBitsPointer()->front().marker)
   {
@@ -1625,7 +1644,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 		}
 		tother->GetBranchPointer()->clear();
 		RemoveTraceLine(tother);
-		tmarker->setTraceColor(this->mergeLineColor); //tline->setTraceColor(1.0/tline->GetType());
+		tmarker->setTraceColor(this->mergeLineColor);
 	  }
 	  else
 	  {
@@ -1688,7 +1707,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
     }
     tmarker->GetBranchPointer()->clear();
     RemoveTraceLine(tmarker);
-    tother->setTraceColor(this->mergeLineColor);//.7/tother->GetType()
+    tother->setTraceColor(this->mergeLineColor);
   }
   else if (slocation == 1 && elocation ==1)
   {
@@ -1930,7 +1949,6 @@ void TraceObject::FindMinLines(int smallSize)
     tline=*iter;
 	if((smallSize >= tline->GetSize())&& (tline->GetBranchPointer()->size()==0))
 	{
-     // tline->setTraceColor(this->smallLineColor);
 	  this->SmallLines.insert( (long) tline->GetId());
     }
     ++iter;
@@ -1953,7 +1971,6 @@ void TraceObject::FindFalseSpines(int maxBit, int maxLength)
 		tline= allLines.at(i);
 		if((maxBit >= tline->GetSize())&& (maxLength >= tline->GetLength()) && (tline->isLeaf() == 1))
 		{
-			//tline->setTraceColor(this->falseLineColor);
 			this->FalseSpines.insert( (long) tline->GetId());			
 		}
     //++iter;
@@ -1976,7 +1993,6 @@ void TraceObject::FindFalseBridges(int maxBit)
 		tline= allLines.at(i);
 		if((maxBit >= tline->GetSize())&& (tline->GetBitDensity() <= 1) && (tline->isLeaf() == 0))
 		{
-			//tline->setTraceColor(this->falseLineColor);
 			this->FalseBridges.insert( (long) tline->GetId());			
 		}
     //++iter;
@@ -2001,7 +2017,6 @@ void TraceObject::FindHalfBridges(int maxBit, int DtoParent)
 		tline= allLines.at(i);
 		if((maxBit >= tline->GetSize())&& (DtoParent <= tline->GetDistToParent()) && (tline->isLeaf() == 1))
 		{
-			//tline->setTraceColor(this->falseLineColor);
 			this->HalfBridges.insert( (long) tline->GetId());			
 		}
     //++iter;
@@ -2432,3 +2447,77 @@ std::vector<CellTrace*> TraceObject::CalculateCellFeatures()
 	}
 	return this->Cells;
 }
+
+std::vector<TraceLine*> TraceObject::GetAllRoots()
+{
+	std::vector<TraceLine*> roots;
+	std::vector<int> IDList;
+	for (unsigned int i = 0; i < this->trace_lines.size(); i++)
+	{
+		int newRoot = this->trace_lines.at(i)->GetRootID();
+		bool found = false;
+		unsigned int j= 0;
+		while( !found && (j < IDList.size()))
+		{
+			if (IDList.at(j) == newRoot)
+			{
+				found = true;
+			}
+			else
+			{
+				j++;
+			}
+		}
+		if (!found)
+		{
+			IDList.push_back(newRoot);
+		}
+	}
+	for ( unsigned int i = 0; i< IDList.size(); i++)
+	{
+		bool found = false; 
+		unsigned int j = 0;
+		while ((!found )&&(j < this->trace_lines.size()))
+		{
+			if (this->trace_lines[j]->GetId()==IDList[i])
+			{
+				roots.push_back(this->trace_lines[j]);
+				found= true;
+			}
+			else
+			{
+				j++;
+			}
+		}//end search for trace
+	}//finished with id search
+	return roots;
+}
+
+void TraceObject::UpdateRootToTree()
+{
+  std::vector<TraceLine *> roots = this->GetAllRoots();
+  for(unsigned int i = 0; i < roots.size(); ++i)
+    {
+    TraceLine *line = roots[i];
+    this->RootToTree[line->GetId()] = i;
+    }
+}
+
+void TraceObject::RecolorTraces()
+{
+	for (unsigned int i = 0; i < this->trace_lines.size(); i++)
+	  {
+    this->RecolorTrace(this->trace_lines[i]);
+    }
+}
+
+void TraceObject::RecolorTrace(TraceLine *line)
+{
+  line->setTraceColor( this->GetTraceLUT( line ) );
+  std::vector<TraceLine*> *branches = line->GetBranchPointer();
+  for(unsigned int i = 0; i < branches->size(); ++i)
+    {
+    this->RecolorTrace(branches->at(i));
+    }
+}
+

@@ -158,6 +158,7 @@ public slots:
 	void SetProjectionMethod(int style);
 	void removeImageActors();
 	void raycastToSlicer();
+	void ToggleColorByTrees();
 	void setSlicerZValue(int value);
 	void RayCastOpacityChanged(int value);
 	void RayCastOpacityValueChanged(double value);
@@ -243,6 +244,7 @@ private:
 	QAction *loadTraceImage;
 	QAction *CloseAllImage;
 	QAction *SetRaycastToSlicer;
+	QAction *ColorByTreesAction;
 	QAction *loadSoma;
 	QAction *ListButton;
 	QAction *ClearButton;

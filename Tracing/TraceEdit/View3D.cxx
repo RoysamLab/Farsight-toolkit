@@ -913,13 +913,12 @@ void View3D::CreateGUIObjects()
 	connect(this->ImageIntensity, SIGNAL(triggered()), this, SLOT(SetImgInt()));
 	this->SetRaycastToSlicer = new QAction("Raycast To Slicer", this->CentralWidget);
 	connect(this->SetRaycastToSlicer, SIGNAL(triggered()), this, SLOT(raycastToSlicer()));
+  this->ColorByTreesAction = new QAction("Color By Trees", this->CentralWidget);
+  this->ColorByTreesAction->setCheckable(true);
+  this->ColorByTreesAction->setChecked(false);
+	connect(this->ColorByTreesAction, SIGNAL(triggered()), this, SLOT(ToggleColorByTrees()));
 // 3d cursor actions 
 	this->CursorActionsWidget = new QWidget(this);
-	/*this->MoveSphere = new QPushButton("Move Cursor", this->CentralWidget);
-	this->MoveSphere->setToolTip("Ctrl + p");
-	connect(this->MoveSphere, SIGNAL(clicked()), this, SLOT(showPTin3D()));
-	this->MoveSphere->setStatusTip("moves marker to location");
-	this->MoveSphere->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_P));*/
 
 	this->updatePT3D = new QPushButton("Update Location", this->CentralWidget);
 	connect(this->updatePT3D, SIGNAL(clicked()), this, SLOT(getPosPTin3D()));
@@ -1251,6 +1250,7 @@ void View3D::CreateLayout()
   this->analysisViews->addAction(this->CellAnalysis);
   //this->ShowToolBars->addSeparator();
   this->DataViews->addAction(this->SetRaycastToSlicer);
+  this->DataViews->addAction(this->ColorByTreesAction);
   
   this->createRayCastSliders();
   this->menuBar()->addSeparator();
@@ -1525,6 +1525,20 @@ void View3D::setSlicerZValue(int value)
 		}
 	}
 	this->QVTK->GetRenderWindow()->Render();
+}
+
+void View3D::ToggleColorByTrees()
+{
+  bool colorByTrees = !this->tobj->GetColorByTrees();
+  this->tobj->SetColorByTrees(colorByTrees);
+  this->ColorByTreesAction->setChecked(colorByTrees);
+  if(colorByTrees)
+    {
+    this->tobj->UpdateRootToTree();
+    }
+  this->tobj->RecolorTraces();
+  this->UpdateLineActor();
+  this->Rerender();
 }
 
 void View3D::CreateSphereActor()
@@ -1990,7 +2004,6 @@ void View3D::Rerender()
 
 void View3D::UpdateLineActor()
 {
-	
   this->poly_line_data = this->tobj->GetVTKPolyData();
   this->poly_line_data->Modified();
   this->LineMapper->SetInput(this->poly_line_data);
@@ -1998,7 +2011,6 @@ void View3D::UpdateLineActor()
   this->LineActor->GetProperty()->SetColor(0,1,0);
   this->LineActor->GetProperty()->SetPointSize(2);
   this->LineActor->GetProperty()->SetLineWidth(lineWidth);
-
 }
 
 void View3D::UpdateBranchActor()
@@ -2746,10 +2758,6 @@ void View3D::HandleHippocampalDataset()
 			 //fprintf(fp,"%d 1 %0.2lf %0.2lf %0.2lf 1.0 %d\n",gaps_merged*2,cricbits[gaps[counter].c2].x, cricbits[gaps[counter].c2].y, cricbits[gaps[counter].c2].z,gaps_merged*2-1);
 			int id1 = this->tobj->hashp[cricbits[gaps[counter].c1].marker];
 			int id2 = this->tobj->hashp[cricbits[gaps[counter].c2].marker];
-			if(id1 == 786 || id1 == 789 || id2 == 786 || id2 == 789)
-			{
-				printf("I tried connecting %d and %d \n",id1,id2);
-			}
 			done[gaps[counter].c1] = 1;
 			done[gaps[counter].c2] = 1;
 		}
@@ -3255,7 +3263,7 @@ void View3D::ClearSelection()
 
 void View3D::SelectTrees()
 {
-	std::vector<TraceLine*> roots = this->TreeModel->getRoots();
+	std::vector<TraceLine*> roots = this->TreeModel->GetSelectedRoots();
 	if (roots.size() > 0)
 	{
 		//this->ClearSelection();
@@ -3527,7 +3535,7 @@ void View3D::AddNewBranches()
 }
 void View3D::ExplodeTree()
 {
-	std::vector<TraceLine*> roots = this->TreeModel->getRoots();
+	std::vector<TraceLine*> roots = this->TreeModel->GetSelectedRoots();
 	this->tobj->BranchPoints.clear();
 	for (unsigned int i = 0; i < roots.size(); i++)
 	{
@@ -3734,7 +3742,7 @@ void View3D::updateSelectionHighlights()
       {
         j++;
       }
-    }//end gapids size j
+    }//end while
     if (selected == true)
     {
       this->HighlightSelected(this->tobj->Gaps[i]->Trace1, .05);
@@ -3933,7 +3941,7 @@ void View3D::SetTraceType(int newType)
 		{
 			this->EditLogDisplay->append( "\tTrace\t" + QString::number(traceList[i]->GetId()));
 			traceList[i]->SetType((unsigned char) newType);
-			traceList[i]->setTraceColor(this->tobj->getTraceLUT((unsigned char) newType));
+			traceList[i]->setTraceColor(this->tobj->GetTraceLUT(traceList[i]));
 		}
 		this->ClearSelection();
 		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
@@ -4049,7 +4057,7 @@ void View3D::SaveSelected()
 	if(!fileName.isEmpty())
 	{
 		//this->tempTraceFile.append( fileName);
-		std::vector<TraceLine*> roots = this->TreeModel->getRoots();
+		std::vector<TraceLine*> roots = this->TreeModel->GetSelectedRoots();
 		if (roots.size() > 0)
 		{
 			this->tobj->WriteToSWCFile(roots, fileName.toStdString().c_str()); 

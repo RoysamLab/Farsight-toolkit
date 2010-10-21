@@ -197,7 +197,7 @@ std::vector<TraceLine*> TraceModel::GetSelectedTraces()
 	}//finished with id search
 	return selectedTrace;
 }
-std::vector<TraceLine*> TraceModel::getRoots()
+std::vector<TraceLine*> TraceModel::GetSelectedRoots()
 {
 	std::vector<TraceLine*> roots;
 	std::vector<int> IDList;
@@ -242,3 +242,4 @@ std::vector<TraceLine*> TraceModel::getRoots()
 	}//finished with id search
 	return roots;
 }
+
