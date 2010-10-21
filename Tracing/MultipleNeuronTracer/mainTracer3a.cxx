@@ -1380,7 +1380,6 @@ float getRadius(itk::Vector<float,3>& pos) {
 		dr = vnl_math_min(dr , 1.0f);
 		r -= dr;
 		r = vnl_math_max(r , 1.0f) ; 
-		std::cout << "radius : " << r << "Contour :" << c.size() << std::endl;
 	}
 	return r;
 }
