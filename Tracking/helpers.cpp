@@ -2202,10 +2202,10 @@ void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,Feature
 	float c1[3],c2[3];
 	c1[0] = fin.Centroid[0]-3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[0];
 	c1[1] = fin.Centroid[1]-3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[2];
-	c1[2] = fin.Centroid[2]-3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[4];
+	c1[2] = fin.Centroid[2]-0*(1.0*rand()/RAND_MAX)-fin.BoundingBox[4];
 	c2[0] = fin.Centroid[0]+3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[0];
 	c2[1] = fin.Centroid[1]+3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[2];
-	c2[2] = fin.Centroid[2]+3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[4];
+	c2[2] = fin.Centroid[2]+0*(1.0*rand()/RAND_MAX)-fin.BoundingBox[4];
 
 	bool converged = false;
 	LabelImageType::Pointer lcopy = LabelImageType::New();
@@ -2258,10 +2258,10 @@ void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,Feature
 			
 			c1[0] = fin.Centroid[0]-3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[0];
 			c1[1] = fin.Centroid[1]-3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[2];
-			c1[2] = fin.Centroid[2]-3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[4];
+			c1[2] = fin.Centroid[2]-0*(1.0*rand()/RAND_MAX)-fin.BoundingBox[4];
 			c2[0] = fin.Centroid[0]+3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[0];
 			c2[1] = fin.Centroid[1]+3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[2];
-			c2[2] = fin.Centroid[2]+3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[4];
+			c2[2] = fin.Centroid[2]+0*(1.0*rand()/RAND_MAX)-fin.BoundingBox[4];
 			continue;
 		}
 
