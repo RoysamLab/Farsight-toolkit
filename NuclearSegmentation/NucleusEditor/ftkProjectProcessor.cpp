@@ -58,6 +58,8 @@ void ProjectProcessor::Initialize(void)
 		t.type = definition->pipeline.at(i);
 		switch(t.type)
 		{
+		case ProjectDefinition::PREPROCESSING:
+			break;
 		case ProjectDefinition::NUCLEAR_SEGMENTATION:
 			t.inputChannel1 = definition->FindInputChannel("NUCLEAR");
 			break;
@@ -360,7 +362,7 @@ bool ProjectProcessor::PixLevAnalysis(void){
 	if( !definition->pixelLevelRules.size() )
 		return false;
 
-	bool success_run;
+	bool success_run=false;
 	for(std::vector<ftk::PixelAnalysisDefinitions>::iterator pait=definition->pixelLevelRules.begin(); pait!=definition->pixelLevelRules.end(); ++pait ){
 		ftk::PixelLevelAnalysis *PAn = new ftk::PixelLevelAnalysis();
 		if( (*pait).mode == 1 ){
@@ -492,7 +494,11 @@ bool ProjectProcessor::RunQuery(void)
 					std::string temp3=table->GetColumnName(col);
 					column_names.push_back(temp3);
 				}
-				ftk::checkForUpdate( dbConn, "IMAGE_TEST", column_names );
+				std::string table_name_str;
+				table_name_str = "IMAGE_TEST";
+				char table_name[table_name_str.length()];
+				strcpy( table_name, table_name_str.c_str() );
+				ftk::checkForUpdate( dbConn, table_name, column_names );
 
 				std::string image_name;
 				image_name = save_path + definition->name;
@@ -506,7 +512,7 @@ bool ProjectProcessor::RunQuery(void)
 						table_array.push_back(table->GetValue(row,col).ToDouble());
 					}
 				}
-				sql_db_img_id = ftk::GenericInsert( dbConn, im_nm_cstr, "IMAGE_TEST", path_nm_cstr, table_array,table->GetNumberOfColumns(), table->GetNumberOfRows(), column_names );	
+				sql_db_img_id = ftk::GenericInsert( dbConn, im_nm_cstr, table_name, path_nm_cstr, table_array,table->GetNumberOfColumns(), table->GetNumberOfRows(), column_names );	
 
 				//sql = "select * from IMAGE;";
 				//sql = "select * from IMAGE_TEST where IMG_ID = 1;";
@@ -534,9 +540,8 @@ bool ProjectProcessor::RunQuery(void)
 			ftk::sqliteCloseConnection(dbConn);
 			return true;
 		}
-		else
-			return false;
 	}
+	return false;
 }
 
 

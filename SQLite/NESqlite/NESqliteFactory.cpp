@@ -385,10 +385,10 @@ void GenericSearch(sqlite3 *db,const char * sql)
 	table_name = "IMAGE_TEST";
 	
 	queryStrPart1 = "insert into "+table_name+"(IMG_ID, CELL_ID";//+" values";
-	for( int i=0; i<colNames.size(); ++i )
+	for( int i=0; i<(int)colNames.size(); ++i )
 		queryStrPart1 = queryStrPart1 + ", " + ftk::GetStringInCaps( colNames.at(i) );
 	queryStrPart1 = queryStrPart1+")values(:IMG_ID, :CELL_ID";
-	for( int i=0; i<colNames.size(); ++i )
+	for( int i=0; i<(int)colNames.size(); ++i )
 		queryStrPart1 = queryStrPart1 + ", :" + ftk::GetStringInCaps( colNames.at(i) );
 	queryStrPart1 = queryStrPart1 + ")";
 	//std::cout<<queryStrPart1<<std::endl;
