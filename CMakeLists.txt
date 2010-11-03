@@ -26,6 +26,7 @@ OPTION( USE_KPLS "Use KPLS module for classification" OFF )
 OPTION( USE_SQLITE_DATABASE "Use SQLite database libraries" ON )
 OPTION( WRAP_PYTHON "Wrap Farsight in Python" OFF )
 OPTION( BUILD_EMBREX "Build Mark Embrecht's KPLS module" OFF )
+OPTION( BUILD_UNMIXING "Build Unmixing module" OFF )
 MARK_AS_ADVANCED(BUILD_EMBREX)
 MARK_AS_ADVANCED(WRAP_PYTHON)
 
@@ -182,6 +183,9 @@ IF(BUILD_TISSUENETS OR BUILD_MDL)
   MARK_AS_ADVANCED(CLEAR Boost_INCLUDE_DIR)
 ENDIF(BUILD_TISSUENETS OR BUILD_MDL)
 
+IF(BUILD_UNMIXING)
+	SUBDIRS(Unmixing)
+ENDIF(BUILD_UNMIXING)
 
 #####################################################################################
 # Optionally find Farsight's data directory, used for testing and installers
@@ -286,7 +290,7 @@ endif(APPLE)
 #the top-level CMakeLists.txt file whenever you want to include a new sample
 #data set in the installers
 IF(FARSIGHT_DATA_ROOT)
-  SUBDIRS( ${FARSIGHT_DATA_ROOT} )
+	#  SUBDIRS( ${FARSIGHT_DATA_ROOT} )
 ENDIF(FARSIGHT_DATA_ROOT)
 
 INCLUDE(InstallRequiredSystemLibraries)
