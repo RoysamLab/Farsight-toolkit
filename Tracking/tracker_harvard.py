@@ -192,7 +192,7 @@ if __name__ == '__main__':
 ##    ############################# Tracking ##############################
 ##
 ##    # track channel 1 and 2 only
-    channels_to_track = [3]
+    channels_to_track = [4]
     for w in channels_to_track:
         temp_fname = [];
         temp_fname.append(os.path.join(exe_dir,'tracking_multiframe'))

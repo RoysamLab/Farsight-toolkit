@@ -7,8 +7,11 @@
 #include <map>
 #include <set>
 #include <limits>
+
+#include <boost/config.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/tuple/tuple.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/graphml.hpp>
 #include <boost/property_map/dynamic_property_map.hpp>
@@ -24,12 +27,13 @@ ILOSTLBEGIN
 #endif 
 
 using namespace helpers;
+using namespace boost;
 #if defined(_MSC_VER)
 #pragma warning(disable: 4996)
 #endif
 clock_t start_t,end_t,first_t;
 
-#define DEBUG
+//#define DEBUG
 #ifdef DEBUG
 #define SHORT(x) (strrchr(x,'\\') ? strrchr(x,'\\')+1: x)
 #define _TRACE {printf("In-%s:%d:%s:\n",SHORT(__FILE__),__LINE__,__FUNCTION__);}
@@ -665,7 +669,14 @@ private:
 
 };
 
-
+void printFeatures(FeaturesType f)
+{
+	printf("\nIntrinsicFeatures:\n");
+	printf("\t\n");
+	printf("\t X = %d Y = %d Z = %d\n", int(f.Centroid[0]+0.5), int(f.Centroid[1]+0.5), int(f.Centroid[2]+0.5));
+	printf("\t Num = %d time = %d\n", f.num, f.time);
+	printf("\t Volume = %d\n\n", int(f.ScalarFeatures[FeaturesType::VOLUME]));
+}
 
 float CellTracker::overlap(float bb1[6],float bb2[6])
 {
@@ -704,12 +715,12 @@ int CellTracker::compute_boundary_utility(float x[3])
 
 	float dist = get_boundary_dist(x)+3*sqrt(fvar.distVariance);
 	int retval = UTILITY_MAX*(exp(-dist*dist/2.0/fvar.distVariance));
-	float test[3] = { 182,299,15};
-	if(get_distance(x,test) < 30)
-	{
-		//printf("retval = %d x = %0.0f y = %0.0f z = %0.0f\n", retval,x[0],x[1],x[2]);
-		//PAUSE;
-	}
+
+	//if(get_distance(x,test) < 30 || get_distance(x,test1) <30)
+	//{
+	//	printf("retval = %d x = %0.0f y = %0.0f z = %0.0f\n", retval,x[0],x[1],x[2]);
+	//	PAUSE;
+	//}
 	return retval;
 }
 
@@ -757,7 +768,7 @@ int CellTracker::add_disappear_vertices(int t)
 	vertex_iter vi, vend;
 	bool added;
 	int ret_count = 0;
-	for(tie(vi,vend) = vertices(g); vi != vend; ++vi)
+	for(boost::tie(vi,vend) = vertices(g); vi != vend; ++vi)
 	{
 		//printf("hi t = %d\n",t);
 		if(g[*vi].t == t-1)
@@ -779,6 +790,13 @@ int CellTracker::add_disappear_vertices(int t)
 						g[e].selected = 0;
 						g[e].utility = compute_boundary_utility(fvector[t-1][g[*vi].findex].Centroid);
 						ret_count ++;
+					}
+					float test[3] = { 182,299,6};
+					float test1[3] = { 170, 285, 6};
+					if( get_distance(test1,fvector[t-1][g[*vi].findex].Centroid) < 30 && t==20)
+					{
+						printFeatures(fvector[t-1][g[*vi].findex]);
+						printf("Utility for disappearing = %d\n",g[e].utility);
 					}
 				}
 			}
@@ -822,6 +840,13 @@ int CellTracker::add_appear_vertices(int t)
 						g[e].utility = compute_boundary_utility(fvector[t+1][g[*vi].findex].Centroid);
 						ret_count ++;
 					}
+					float test[3] = { 182,299,6};
+					float test1[3] = { 170, 285, 6};
+					if( get_distance(test,fvector[t+1][g[*vi].findex].Centroid) < 30 && t==20)
+					{
+						printFeatures(fvector[t+1][g[*vi].findex]);
+						printf("Utility for appearing = %d\n",g[e].utility);
+					}
 					_TRACE;
 				}
 			}
@@ -853,27 +878,38 @@ int CellTracker::add_normal_edges(int tmin, int tmax)
 				{
 					tried2++;
 					float dist = get_distance(fvector[t][counter1].Centroid,fvector[tmax][counter].Centroid);
+
 					if(dist < 4.0*sqrt(fvar.distVariance)*(abs(t-tmax)))
 					{
+					
+						
 						//add the edge
-						if(dist>100)
-							printf("distance is greater than 100\n");
+						//if(dist>100)
+						//	printf("distance is greater than 100\n");
 						tie(e,added) = add_edge(rmap[t][counter1],v,g);
 						if(added)
 						{
 							g[e].coupled = 0;
 							g[e].fixed = 0;
 							g[e].selected = 0;
+							float test[]={182,297,6};
+							if(tmax==21 && t==19 && get_distance(fvector[tmax][counter].Centroid,test)<30)
+							{
+							printFeatures(fvector[t][counter1]);
+							printFeatures(fvector[tmax][counter]);
+							printf("g[e].utility = %d\n", g[e].utility);
+							PAUSE;
+							}
 							g[e].utility = compute_normal_utility(fvector[t][counter1],fvector[tmax][counter]);
 							nec++;
 						}
+
 					}
 				}
 			}
 		}
 	}
-	_LTRACE;
-	printf("add_normal_edges: I tried %d %d\n",tried1, tried2);
+	//printf("add_normal_edges: I tried %d %d\n",tried1, tried2);
 	return nec;
 }
 
@@ -1191,14 +1227,7 @@ int CellTracker::get_edge_type(TGraph::edge_descriptor ei)
 	}
 }
 
-void printFeatures(FeaturesType f)
-{
-	printf("\nIntrinsicFeatures:\n");
-	printf("\t\n");
-	printf("\t X = %d Y = %d Z = %d\n", int(f.Centroid[0]+0.5), int(f.Centroid[1]+0.5), int(f.Centroid[2]+0.5));
-	printf("\t Num = %d time = %d\n", f.num, f.time);
-	printf("\t Volume = %d\n\n", int(f.ScalarFeatures[FeaturesType::VOLUME]));
-}
+
 
 
 float CellTracker::compute_LRUtility(FeaturesType f1, FeaturesType f2, FeaturesType f3)
@@ -1305,7 +1334,7 @@ void CellTracker::draw_line_for_edge(TGraph::edge_descriptor e,VectorPixelType c
 	TGraph::vertex_descriptor v1,v2;
 	v1 = source(e,g);
 	v2 = target(e,g);
-	if(g[e].selected==1)
+	if(1)//g[e].selected==1)
 	{
 		if(g[v1].special ==0 && g[v2].special ==0)
 		{
@@ -1912,7 +1941,7 @@ CellTracker::TGraph::vertex_descriptor CellTracker::get_parent(CellTracker::TGra
 	TGraph::in_edge_iterator in_e, in_end;
 	tie(in_e,in_end) = in_edges(vd,g);
 	if(in_e == in_end)
-		return -1;
+		return TGraph::null_vertex();
 	return source(*in_e,g);
 }
 
@@ -1926,7 +1955,7 @@ CellTracker::TGraph::vertex_descriptor CellTracker::get_child(CellTracker::TGrap
 	TGraph::out_edge_iterator out_e, out_end;
 	tie(out_e,out_end) = out_edges(vd,g);
 	if(out_e == out_end)
-		return -1;
+		return TGraph::null_vertex();
 	return target(*out_e,g);
 }
 bool CellTracker::is_separate(CellTracker::TGraph::vertex_descriptor v1, CellTracker::TGraph::vertex_descriptor v2)
@@ -2286,12 +2315,34 @@ void CellTracker::run()
 	}
 	enforce_overlap();
 
+
+		VectorPixelType col1,col2,col3,col4;
+	col1[0] = 255;col1[1] = 0;col1[2] = 0;
+	col2[0] = 255;col2[1] = 255;col2[2] = 0;
+	col3[0] = 255;col3[1] = 255;col3[2] = 255;
+	col4[0] = 255;col4[1] = 0;col4[2] = 255;
+
+	boost::graph_traits<TGraph>::edge_iterator e_i,e_next,e_end;
+	for(tie(e_i,e_end) = edges(g); e_i!= e_end ; ++e_i)
+	{
+		TGraph::vertex_descriptor vert1 = source(*e_i,g),vert2 = target(*e_i,g);
+		if(g[vert1].t >= g[vert2].t)
+		{
+			printf("problem here:");
+			print_vertex(vert1,0);
+			print_vertex(vert2,0);
+			//scanf("%*d");
+		}
+		draw_line_for_edge(*e_i,col1,col2,0);
+	}
+
+
 	print_debug_info();
 	solve_higher_order();
 	solve_lip();
 	print_stats();
 
-	boost::graph_traits<TGraph>::edge_iterator e_i,e_next,e_end;
+
 	for(tie(e_i,e_end) = edges(g); e_i!= e_end ; e_i = e_next)
 	{
 		e_next = e_i;
@@ -2303,17 +2354,8 @@ void CellTracker::run()
 		}
 	}
 
-	for(tie(e_i,e_end) = edges(g); e_i!= e_end ; ++e_i)
-	{
-		TGraph::vertex_descriptor vert1 = source(*e_i,g),vert2 = target(*e_i,g);
-		if(g[vert1].t >= g[vert2].t)
-		{
-			printf("problem here:");
-			print_vertex(vert1,0);
-			print_vertex(vert2,0);
-			//scanf("%*d");
-		}
-	}
+
+
 
 
 
@@ -2360,7 +2402,7 @@ void CellTracker::run()
 							vdt = get_child(vdt);
 						else
 							break;
-						if(vdt == -1)
+						if(vdt == TGraph::null_vertex())
 							break;
 						vvd.push_back(vdt);
 						tr_map[vdt] = true;
@@ -2752,7 +2794,10 @@ void CellTracker::run()
 		del_next = del;
 		++del_next;
 		if(in_degree(*del,g) == 0 && out_degree(*del,g)==0)
+		{
+			clear_vertex(*del,g);
 			remove_vertex(*del,g);
+		}
 		tie(del_tmp,del_end) = vertices(g);
 	}
 	
@@ -2769,15 +2814,21 @@ void CellTracker::run()
 
 
 
-	VectorPixelType col1,col2,col3,col4;
-	col1[0] = 255;col1[1] = 0;col1[2] = 0;
-	col2[0] = 255;col2[1] = 255;col2[2] = 0;
-	col3[0] = 255;col3[1] = 255;col3[2] = 255;
-	col4[0] = 255;col4[1] = 0; col4[2] = 255;
+	
 
+	
 	for(tie(e_i,e_end) = edges(g); e_i!=e_end; ++e_i)
 	{
-
+		if(g[*e_i].selected == 0)
+			printf("There are still some unselected edges\n");
+	}
+	
+	for(tie(e_i,e_end) = edges(g); e_i!=e_end; e_i = e_next)
+	{
+		e_next = e_i;
+		++e_next;
+		TGraph::edge_iterator e_temp;
+		tie(e_temp,e_end) = edges(g);
 		if(g[*e_i].selected == 1)
 		{
 
@@ -2818,19 +2869,50 @@ void CellTracker::run()
 					FeaturesType f2 = fvector[g[v2].t][g[v2].findex];
 					printf("v1 = %0.0f v2 = %0.0f\n",f1.ScalarFeatures[FeaturesType::VOLUME],f2.ScalarFeatures[FeaturesType::VOLUME]);
 				}
-				draw_line_for_edge(*e_i,col1,col2,-2);
+				//draw_line_for_edge(*e_i,col1,col2,-2);
 			}
 			else
 			{
-				draw_line_for_edge(*e_i,col3,col4,2);
+				//draw_line_for_edge(*e_i,col3,col4,2);
 			}
 		}
 	}
 
+
+	while(1)
+	{
+	int vertex_removed_count = 0;
+	for(tie(v_i,v_end)=vertices(g);v_i!=v_end; v_i = v_next)
+	{
+		v_next = v_i;
+		++v_next;
+		
+		if(in_degree(*v_i,g) == 0 && out_degree(*v_i,g)==0)
+		{
+			clear_vertex(*v_i,g);
+			remove_vertex(*v_i,g);
+			vertex_removed_count ++;
+		}
+		tie(v_temp,v_end) = vertices(g);
+	}
+	
+	printf(" I removed %d vertices\n", vertex_removed_count);
+	if(vertex_removed_count==0)
+		break;
+	}
+
+	//PAUSE;
+
+
+
+
+
+
 	std::vector<int> component(num_vertices(g));
 	int num = connected_components(g,&component[0]);
 	int tempnum = num;
-
+	printf("tempnum = %d num_vertices(g) = %d\n",tempnum,num_vertices(g));
+	//PAUSE;
 	for(tie(e_i,e_end) = edges(g); e_i!= e_end ; e_i = e_next)
 	{
 		e_next = e_i;
@@ -2858,8 +2940,6 @@ void CellTracker::run()
 	boost::property_map<TGraph, boost::vertex_index_t>::type index;
 	index = get(boost::vertex_index,g);
 
-
-
 	for(tie(v_i,v_end) = vertices(g);v_i!=v_end; ++v_i)
 	{
 		vertex_count[component[index[*v_i]]]++;
@@ -2874,24 +2954,38 @@ void CellTracker::run()
 		{
 			if(!(in_vertices_count[counter]==1 && out_vertices_count[counter] == 1))
 			{
-				if(in_vertices_count[counter]!=out_vertices_count[counter])
-					printf("component+1 = %d in_count = %d out_count = %d\n",component[counter]+1,in_vertices_count[counter],out_vertices_count[counter]);
+				//if(in_vertices_count[counter]!=out_vertices_count[counter])
+				//	printf("component+1 = %d in_count = %d out_count = %d\n",component[counter]+1,in_vertices_count[counter],out_vertices_count[counter]);
 			}
 		}
+		else
+		{
+			printf("Has only one vertex in the component\n");
+		}
 	}
+	//PAUSE;
 
 	tie(v_i,v_end) = vertices(g);
 	for(;v_i!=v_end; ++v_i)
 	{
-		if(vertex_count[component[index[*v_i]]]==1 && g[*v_i].special == 1)
+		if(vertex_count[component[index[*v_i]]]==1)
 		{
-			tempnum--;
+			//if(g[*v_i].special ==0)
+			{
+				printf("here is a vertex : \n", *v_i);
+				print_vertex(*v_i,1);
+			}
+			
 		}
 		else
 		{
 			//printf("%d ",component[index[*v_i]]);
 		}
 	}
+
+
+
+	//PAUSE;
 	tie(v_i,v_end) = vertices(g);
 
 	int max1 = -1;
@@ -3119,7 +3213,7 @@ int main()//int argc, char **argv)
 	int argc = num_tc*3+1+3;
 
 	char ** argv = new char* [argc];
-	int ch = 3;
+	int ch = 4;
 	for(int counter=1; counter <argc; counter++)
 	{
 		argv[counter] = new char [1024];
@@ -3245,6 +3339,12 @@ int main()//int argc, char **argv)
 				li.push_back(extract_label_image(f[counter].num,f[counter].BoundingBox,tempsegmented));
 				ri.push_back(extract_raw_image(f[counter].BoundingBox,tempimage));
 				annotateImage(number,cimp,f[counter].num,MAX(f[counter].Centroid[0],0),MAX(f[counter].Centroid[1],0));
+				if(f[counter].ScalarFeatures[FeaturesType::VOLUME]<5)
+				{
+					printf("A cell has a volume of %f\n",f[counter].ScalarFeatures[FeaturesType::VOLUME]);
+					printFeatures(f[counter]);
+					PAUSE;
+				}
 			}
 			input.push_back(cimp);
 			fvector.push_back(f);
@@ -3268,7 +3368,7 @@ int main()//int argc, char **argv)
 		fvar.spacing[0] = 0.965;
 		fvar.spacing[1] = 0.965;
 		fvar.spacing[2] = 4.0;
-		fvar.timeVariance = 0.3;
+		fvar.timeVariance = 1;
 		fvar.overlapVariance = 1;
 		fvar.variances[FeatureVariances::VOLUME] = 160000;
 

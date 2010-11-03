@@ -2382,6 +2382,77 @@ _TRACE;
 
 }
 
+LabelImageType::Pointer fillHoles(LabelImageType::Pointer im, int n)
+{
+	//InputImageType::Pointer bin = InputImageType::New();
+	//bin->SetRegions(im->GetLargestPossibleRegion());
+	//bin->Allocate();
+	//bin->FillBuffer(0);
+
+	//IteratorType iter(bin,bin->GetLargestPossibleRegion());
+	LabelIteratorType liter(im,im->GetLargestPossibleRegion());
+	//
+	//for(iter.GoToBegin(),liter.GoToBegin();!iter.IsAtEnd();++iter,++liter)
+	//{
+	//	if(liter.Get()==0)
+	//	{
+	//		iter.Set(255);
+	//	}
+	//}
+
+	//bin = getLargeComponents(bin,n);
+
+	typedef itk::BinaryBallStructuringElement<InputPixelType,3> StructuringElementType;
+	typedef itk::Neighborhood<InputPixelType,3> NeighborhoodElementType;
+	typedef itk::GrayscaleDilateImageFilter<LabelImageType,LabelImageType,NeighborhoodElementType> DilateFilterType;
+	typedef itk::GrayscaleErodeImageFilter<LabelImageType,LabelImageType,NeighborhoodElementType> ErodeFilterType;
+
+	StructuringElementType selement;
+	NeighborhoodElementType::SizeType size;
+	size[0]=n;
+	size[1]=n;
+	size[2]=1;//FIXME
+	selement.SetRadius(size);
+	selement.CreateStructuringElement();
+	DilateFilterType::Pointer dfilter = DilateFilterType::New();
+	dfilter->SetKernel(selement);
+	dfilter->SetInput(im);
+	dfilter->Update();
+
+
+	ErodeFilterType::Pointer efilter = ErodeFilterType::New();
+	efilter->SetKernel(selement);
+	efilter->SetInput(dfilter->GetOutput());
+	efilter->Update();
+
+	
+	LabelImageType::Pointer dilated = efilter->GetOutput();
+	
+	LabelImageType::Pointer out = LabelImageType::New();
+	out->SetRegions(im->GetLargestPossibleRegion());
+	out->Allocate();
+	out->FillBuffer(0);
+
+	LabelIteratorType liter1(out,out->GetLargestPossibleRegion());
+	LabelIteratorType liter2(dilated, dilated->GetLargestPossibleRegion());
+	liter.GoToBegin();
+	liter1.GoToBegin();
+	liter2.GoToBegin();
+
+	//IteratorType iter1(bin,bin->GetLargestPossibleRegion());
+	//iter1.GoToBegin();
+	for(;!liter.IsAtEnd(); ++liter,++liter1,++liter2)
+	{
+		if(liter.Get()!=0)
+			liter1.Set(liter.Get());
+		else
+			liter1.Set(liter2.Get());
+	}
+
+	return out;
+
+}
+
 
 
 //LabelImageType::Pointer removeHoles(LabelImageType::Pointer im,int size)

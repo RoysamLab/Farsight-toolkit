@@ -57,6 +57,7 @@ int main(int argc, char**argv)
 	}
 
 	LabelImageType::Pointer tempsegmented = readImage<LabelImageType>(argv[1]);
+	tempsegmented = fillHoles(tempsegmented,2);
 	tempsegmented = getLargeLabels(tempsegmented,atoi(argv[2]));
 	writeImage<LabelImageType>(tempsegmented,argv[3]);
 	printf("Done\n");

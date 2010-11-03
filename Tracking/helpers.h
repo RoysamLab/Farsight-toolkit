@@ -24,6 +24,8 @@
 #include <itkRelabelComponentImageFilter.h>
 #include <itkBinaryErodeImageFilter.h>
 #include <itkBinaryDilateImageFilter.h>
+#include <itkGrayscaleDilateImageFilter.h>
+#include <itkGrayscaleErodeImageFilter.h>
 #include <itkBinaryBallStructuringElement.h>
 #include <itkDanielssonDistanceMapImageFilter.h>
 #include <itkVector.h>
@@ -228,5 +230,6 @@ ColorImageType::Pointer getColorImageFromColor2DImages(std::vector<Color2DImageT
 void drawLine(ColorImageType::Pointer input, VectorPixelType color1, VectorPixelType color2, int x1, int y1, int z1, int x2, int y2, int z2);
 std::vector<FeaturesType> get_all_connected_components(LabelImageType::Pointer,FeaturesType);
 void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,FeaturesType fin, FeatureVariances fvar,std::vector<LabelImageType::Pointer> &lout,std::vector<InputImageType::Pointer> &rout,std::vector<FeaturesType> &fvecout);
+LabelImageType::Pointer fillHoles(LabelImageType::Pointer im, int n);
 }
 #endif
