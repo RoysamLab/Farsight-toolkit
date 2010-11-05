@@ -464,7 +464,7 @@ template< typename TComp> void Image::LoadImageITK(std::string fileName, unsigne
 template< typename TComp, unsigned int channels > void Image::LoadImageITK(std::string fileName, bool stacksAreForTime, bool appendChannels)
 {
 	typedef itk::FixedArray<TComp,channels>		PixelType;
-	typedef itk::Image< PixelType, 3 >			ImageType;
+	typedef itk::Image< PixelType, 5 >			ImageType;
 	typedef typename ImageType::Pointer			ImagePointer;		
 	typedef itk::ImageFileReader< ImageType >   ReaderType;
 	typedef typename ReaderType::Pointer        ReaderPointer;
@@ -482,7 +482,7 @@ template< typename TComp, unsigned int channels > void Image::LoadImageITK(std::
 	nInfo.numColumns = size[0] - start[0];				//x-dimension
 	nInfo.numRows = size[1] - start[1];					//y-dimension
 	nInfo.numZSlices = size[2] - start[2];				//z-dimension
-	nInfo.numTSlices = 1;								//t-dimension
+	nInfo.numTSlices = size[3] - start[3];		  	//t-dimension
 	nInfo.bytesPerPix = sizeof(TComp);					//Already know bytes per pixel by component type
 	nInfo.dataType = m_Info.dataType;					//Preserve (set earlier)
 	nInfo.numChannels = channels;						//Part of template definition
@@ -490,8 +490,9 @@ template< typename TComp, unsigned int channels > void Image::LoadImageITK(std::
 
 	if(stacksAreForTime)	//Switch the Z and T numbers:
 	{
+    int tmp = nInfo.numTSlices;
 		nInfo.numTSlices = nInfo.numZSlices;
-		nInfo.numZSlices  = 1;
+		nInfo.numZSlices  = tmp;
 	}
 
 	unsigned short startingCH = 0;
