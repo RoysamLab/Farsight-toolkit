@@ -17,7 +17,7 @@ if __name__ == '__main__':
     cwd = 'C:\\Users\\Arun\\Research\\Tracking\\harvard'
     exe_dir = 'C:\\Users\\Arun\\Research\\Farsight\\exe\\bin'
     dataset_id = 'test'
-    number_of_cores = 9;
+    number_of_cores = 7;
     dirList = os.listdir(data_directory)
     list_of_filenames =[]
     channels = []
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     # prefix the filanames with necessary things like
     # unmixed_, labeled_, labeled_tracks_, vessel_binarized_, etc..
 
-    time_points = time_points[0:30] # DEBUG
+    time_points = time_points[0:180] # DEBUG
     #channels = [2,3,4]
     #pdb.set_trace()
     ######################### Delete slices #############################
@@ -144,7 +144,7 @@ if __name__ == '__main__':
                 temp_fname.append(os.path.join(exe_dir,'segment_nuclei'))
                 temp_fname.append(os.path.join(cache_prefix, 'smoothed_' + filenames[(w,t)]))
                 temp_fname.append(output_filename)
-                #temp_fname.append(nuclei_segmentation_cfg)# parameters filename
+                temp_fname.append(nuclei_segmentation_cfg)# parameters filename
             else:
                 # call simple binary morphological operators based segmentation
                 temp_fname.append(os.path.join(exe_dir,'segmentation'))
@@ -179,8 +179,9 @@ if __name__ == '__main__':
                 continue;
             temp_fname.append(os.path.join(exe_dir,'remove_small_components'))
             temp_fname.append(os.path.join(cache_prefix, 'labeled_' + filenames[(w,t)]))
-            temp_fname.append(os.path.join(cache_prefix, '100'))
+            temp_fname.append('100')
             temp_fname.append(os.path.join(cache_prefix, 'clabeled_' + filenames[(w,t)]))
+            #pdb.set_trace()
             popen_objs.append(subprocess.Popen(temp_fname))
             if len(popen_objs) == number_of_cores :
                 for obj in popen_objs:
@@ -206,7 +207,7 @@ if __name__ == '__main__':
         for t in time_points:
             temp_fname.append('labeled_tracks_' + filenames[(w,t)])
         print temp_fname
-        subprocess.call(temp_fname);
+        #subprocess.call(temp_fname);
 ##    
 ##    ####################### Feature computation #########################
 ##

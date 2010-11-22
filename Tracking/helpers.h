@@ -69,6 +69,7 @@
 
 #define MAX(a,b) (((a) > (b))?(a):(b))
 #define MIN(a,b) (((a) < (b))?(a):(b))
+#define SIGN(a)  (((a)>=0)?1:-1)
 
 //typedefs
 namespace helpers{
@@ -171,9 +172,14 @@ struct FeatureVariances{
 
 	float BoundingBox[6]; // start_x end_x start_y end_y start_z end_z
 	float distVariance;
+	float distMean;
 	float spacing[3];
 	float timeVariance;
 	float overlapVariance;
+
+	float MS_prior;
+	float AD_prior;
+	float T_prior;
 };
 // all header declarations
 //

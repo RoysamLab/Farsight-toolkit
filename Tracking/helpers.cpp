@@ -2114,7 +2114,7 @@ ColorImageType::Pointer getColorImageFromColor2DImages(std::vector<Color2DImageT
 void drawLine(ColorImageType::Pointer input, VectorPixelType color1, VectorPixelType color2, int x1, int y1, int z1, int x2, int y2, int z2)
 {
 	//z1 has to be = z2
-	int upscale = 2;
+	int upscale = 1;
 	ColorImageType::IndexType index1, index2;
 	ColorImageType::SizeType size = input->GetLargestPossibleRegion().GetSize();
 	index1[0] = MAX(MIN(upscale*x1,size[0]-1),0);
@@ -2139,13 +2139,18 @@ void drawLine(ColorImageType::Pointer input, VectorPixelType color1, VectorPixel
 	{
 		float weight = pc1*1.0/pc;
 		VectorPixelType color;
-		color[0] = weight*color1[0] + (1-weight)*color2[0];
-		color[1] = weight*color1[1] + (1-weight)*color2[1];
-		color[2] = weight*color2[2] + (1-weight)*color2[2];
-		//printf("#");
+		color[0] = weight*float(color1[0]) + (1-weight)*float(color2[0]);
+		color[1] = weight*float(color1[1]) + (1-weight)*float(color2[1]);
+		color[2] = weight*float(color2[2]) + (1-weight)*float(color2[2]);
+		//printf("color = [%d %d %d] \n",color[0],color[1],color[2]);
+		VectorPixelType getcolor = li.Get();
+		color[0] = MAX(getcolor[0],color[0]);
+		color[1] = MAX(getcolor[1],color[1]);
+		color[2] = MAX(getcolor[2],color[2]);
 		li.Set(color);
 		pc1++;
 	}
+	//scanf("%*d");
 	//printf("\n");
 }
 
@@ -2365,6 +2370,7 @@ _TRACE;
 			rout.push_back(r2);
 			fvecout.push_back(ftemp[0]);
 			fvecout.push_back(ftemp[1]);
+			_TRACE;
 			return;
 		}
 		c1[0] = index1[0]*1.0/num1;
@@ -2377,7 +2383,7 @@ _TRACE;
 	}
 
 
-
+_TRACE;
 
 
 }
@@ -2391,7 +2397,7 @@ LabelImageType::Pointer fillHoles(LabelImageType::Pointer im, int n)
 
 	//IteratorType iter(bin,bin->GetLargestPossibleRegion());
 	LabelIteratorType liter(im,im->GetLargestPossibleRegion());
-	//
+	
 	//for(iter.GoToBegin(),liter.GoToBegin();!iter.IsAtEnd();++iter,++liter)
 	//{
 	//	if(liter.Get()==0)
@@ -2407,25 +2413,24 @@ LabelImageType::Pointer fillHoles(LabelImageType::Pointer im, int n)
 	typedef itk::GrayscaleDilateImageFilter<LabelImageType,LabelImageType,NeighborhoodElementType> DilateFilterType;
 	typedef itk::GrayscaleErodeImageFilter<LabelImageType,LabelImageType,NeighborhoodElementType> ErodeFilterType;
 
-	StructuringElementType selement;
+	StructuringElementType selement1,selement2;
 	NeighborhoodElementType::SizeType size;
 	size[0]=n;
 	size[1]=n;
 	size[2]=1;//FIXME
-	selement.SetRadius(size);
-	selement.CreateStructuringElement();
+	selement1.SetRadius(size);
+	selement1.CreateStructuringElement();
+	selement2.SetRadius(size);
+	selement2.CreateStructuringElement();
 	DilateFilterType::Pointer dfilter = DilateFilterType::New();
-	dfilter->SetKernel(selement);
+	dfilter->SetKernel(selement1);
 	dfilter->SetInput(im);
 	dfilter->Update();
-
-
 	ErodeFilterType::Pointer efilter = ErodeFilterType::New();
-	efilter->SetKernel(selement);
+	efilter->SetKernel(selement2);
 	efilter->SetInput(dfilter->GetOutput());
 	efilter->Update();
 
-	
 	LabelImageType::Pointer dilated = efilter->GetOutput();
 	
 	LabelImageType::Pointer out = LabelImageType::New();
@@ -2434,7 +2439,7 @@ LabelImageType::Pointer fillHoles(LabelImageType::Pointer im, int n)
 	out->FillBuffer(0);
 
 	LabelIteratorType liter1(out,out->GetLargestPossibleRegion());
-	LabelIteratorType liter2(dilated, dilated->GetLargestPossibleRegion());
+	LabelIteratorType liter2(dilated,dilated->GetLargestPossibleRegion());
 	liter.GoToBegin();
 	liter1.GoToBegin();
 	liter2.GoToBegin();
