@@ -2259,8 +2259,7 @@ void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,Feature
 			scanf("%*d");
 		}
 		if(num1==0 || num2 == 0)
-		{
-			
+		{			
 			c1[0] = fin.Centroid[0]-3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[0];
 			c1[1] = fin.Centroid[1]-3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[2];
 			c1[2] = fin.Centroid[2]-0*(1.0*rand()/RAND_MAX)-fin.BoundingBox[4];

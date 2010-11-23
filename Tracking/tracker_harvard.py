@@ -14,7 +14,8 @@ if __name__ == '__main__':
     # default values for all variables defined here
    # data_directory = 'C:\\Users\\Arun\\Research\\piexoto_data\\TSeries-02102009-1455-624-3Dmovies'
     data_directory = 'C:\\Users\\Arun\\Research\\Tracking\\data\\TSeries-02102009-1455-624-3Dmovies'
-    cwd = 'C:\\Users\\Arun\\Research\\Tracking\\harvard'
+    #cwd = 'C:\\Users\\Arun\\Research\\Tracking\\harvard'
+    cwd = 'L:\\Tracking\\'
     exe_dir = 'C:\\Users\\Arun\\Research\\Farsight\\exe\\bin'
     dataset_id = 'test'
     number_of_cores = 7;
@@ -193,7 +194,7 @@ if __name__ == '__main__':
 ##    ############################# Tracking ##############################
 ##
 ##    # track channel 1 and 2 only
-    channels_to_track = [4]
+    channels_to_track = [3,4]
     for w in channels_to_track:
         temp_fname = [];
         temp_fname.append(os.path.join(exe_dir,'tracking_multiframe'))
@@ -207,7 +208,16 @@ if __name__ == '__main__':
         for t in time_points:
             temp_fname.append('labeled_tracks_' + filenames[(w,t)])
         print temp_fname
-        #subprocess.call(temp_fname);
+        f = open(os.path.join(cache_prefix,'tracking_parameters.txt'),'w')
+        for x in temp_fname[1:]:
+            f.write(x)
+            f.write('\r\n')
+        f.close()
+        temp_fname1 = [];
+        temp_fname1.append(os.path.join(exe_dir,'tracking_multiframe'))
+        temp_fname1.append(os.path.join(cache_prefix,'tracking_parameters.txt'))
+        #subprocess.call(temp_fname1);
+        subprocess.call(temp_fname1);
 ##    
 ##    ####################### Feature computation #########################
 ##

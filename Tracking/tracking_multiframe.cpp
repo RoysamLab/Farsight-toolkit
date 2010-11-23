@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <map>
 #include <set>
+//#include <hash_map>
 #include <limits>
 
 #include <boost/config.hpp>
@@ -569,6 +570,7 @@ class CellTracker{
 		int t;
 		int findex;
 		int new_label;
+		std::vector<int> vertlre;
 	};
 
 	struct TrackEdge{
@@ -577,6 +579,8 @@ class CellTracker{
 		bool fixed;
 		bool selected;
 		unsigned char type;
+		std::vector<int> frontlre;
+		std::vector<int> backlre;
 	};
 
 
@@ -601,7 +605,7 @@ public:
 		limages = l; // copy only pointers
 		rimages = r;
 		UTILITY_MAX = 1<<16;
-		K = 2;
+		K = 1;
 	}
 
 	void run();
@@ -1750,9 +1754,13 @@ void CellTracker::solve_higher_order()
 					//printf("-");
 					utility.push_back(compute_LRUtility(lre.back,lre.front));
 					//printf("|");
-					frontmap.insert(EdgeMapType(*i2,lredges.size()-1));
-					backmap.insert(EdgeMapType(*i1,lredges.size()-1));
-					vertmap.insert(VertexMapType(*vi,lredges.size()-1));
+					g[*i2].frontlre.push_back(lredges.size()-1);
+					g[*i1].backlre.push_back(lredges.size()-1);
+					g[*vi].vertlre.push_back(lredges.size()-1);
+
+					//frontmap.insert(EdgeMapType(*i2,lredges.size()-1));
+					//backmap.insert(EdgeMapType(*i1,lredges.size()-1));
+					//vertmap.insert(VertexMapType(*vi,lredges.size()-1));
 				}
 			}	
 		}
@@ -1772,16 +1780,17 @@ void CellTracker::solve_higher_order()
 				printf("Utility for 638 is %d\n", utility[counter]);
 			//	PAUSE;
 			}
-			if(utility[counter]==0)
+			/*if(utility[counter]==0)
 			{
 			//	printf("Utility is zero : %d\n",counter);
 				if(!(get_edge_type(lredges[counter].front)==DISAPPEAR && get_edge_type(lredges[counter].back)==APPEAR))
 				{
-					printf("vertex index = %d\n", index[source(lredges[counter].front,g)]);
+					;
+					//printf("vertex index = %d\n", index[source(lredges[counter].front,g)]);
 				//	PAUSE;
 				}
 				
-			}
+			}*/
 			
 			//printf("utility[%d] = %d\n",counter,utility[counter]);
 		}
@@ -1789,23 +1798,33 @@ void CellTracker::solve_higher_order()
 		int vcount = -1;
 		for(tie(vi,vend) = vertices(g); vi != vend; ++vi)
 		{
-			if(vertmap.count(*vi)!=0)
+			if(g[*vi].vertlre.size()>0)
 			{
 				vcount++;
-				c.add(IloRange(env,0,1));
-				typedef std::multimap<TGraph::vertex_descriptor,int>::iterator Type1;
+				c.add(IloRange(env,1,1));
+				for(int colre = 0; colre< g[*vi].vertlre.size(); colre++)
+				{
+					c[vcount].setLinearCoef(x[g[*vi].vertlre[colre]],1);
+				}
+			}
+			/*if(vertmap.count(*vi)!=0)
+			{
+				vcount++;
+				c.add(IloRange(env,1,1));
+				typedef std::multimap<TGraph::vertex_descriptor,int>::const_iterator Type1;
 				std::pair<Type1, Type1> itrange = vertmap.equal_range(*vi);
 				for(;itrange.first!=itrange.second; ++itrange.first)
 				{
 					Type1 it1 = itrange.first;
 					c[vcount].setLinearCoef(x[it1->second],1.0);
 				}
-			}
+			}*/
 		}
-		for(int counter = 0; counter < varc; counter++)
-		{
-			x[counter].setBounds(0,1);
-		}
+		printf("Done adding vertex constraints\n");
+		//for(int counter = 0; counter < varc; counter++)
+		//{
+		//	x[counter].setBounds(0,1);
+		//}
 
 		
 		for(tie(ei,eend) = edges(g); ei!=eend; ++ei)
@@ -1816,7 +1835,8 @@ void CellTracker::solve_higher_order()
 			{
 				if(frontmap.count(*ei)>0 || frontmap.count(coupled_map[*ei]
 			}*/
-			if(frontmap.count(*ei)>0 && backmap.count(*ei) >0)
+			//if(frontmap.count(*ei)>0 && backmap.count(*ei) >0)
+			if(g[*ei].frontlre.size()>0 && g[*ei].backlre.size()>0)
 			{
 				int forward_coeff = 1;
 				int backward_coeff = 1;
@@ -1827,7 +1847,32 @@ void CellTracker::solve_higher_order()
 					forward_coeff = 2;
 				vcount++;
 				c.add(IloRange(env,0,0));
-				typedef std::multimap<TGraph::edge_descriptor,int>::iterator Type1;
+				for(int colre = 0; colre<g[*ei].frontlre.size(); colre++)
+				{
+					c[vcount].setLinearCoef(x[g[*ei].frontlre[colre]],-backward_coeff);
+				}
+				if(type==MERGE)
+				{
+					TGraph::edge_descriptor ecoupled = coupled_map[*ei];
+					for(int colre = 0; colre<g[ecoupled].frontlre.size(); colre++)
+					{
+						c[vcount].setLinearCoef(x[g[ecoupled].frontlre[colre]],-backward_coeff);
+					}
+				}
+				for(int colre = 0; colre<g[*ei].backlre.size(); colre++)
+				{
+					c[vcount].setLinearCoef(x[g[*ei].backlre[colre]],forward_coeff);
+				}
+				if(type==SPLIT)
+				{
+					TGraph::edge_descriptor ecoupled = coupled_map[*ei];
+					for(int colre = 0; colre<g[ecoupled].backlre.size(); colre++)
+					{
+						c[vcount].setLinearCoef(x[g[ecoupled].backlre[colre]],forward_coeff);
+					}
+				}
+
+				/*typedef std::multimap<TGraph::edge_descriptor,int>::iterator Type1;
 				std::pair<Type1,Type1> itrange = frontmap.equal_range(*ei);
 				for(;itrange.first!=itrange.second; ++itrange.first)
 				{
@@ -1857,13 +1902,13 @@ void CellTracker::solve_higher_order()
 						Type1 it1 = itrange.first;
 						c[vcount].setLinearCoef(x[it1->second],forward_coeff);
 					}	
-				}
+				}*/
 
 			}
 		}
-		
+		printf("Done adding edge constraints\n");
 
-		//printf("vcount = %d\n",vcount);
+		printf("vcount = %d\n",vcount);
 		////scanf("%*d");
 		IloModel model(env);
 		model.add(obj);
@@ -1927,7 +1972,7 @@ void CellTracker::solve_higher_order()
 		//		printf("wrong @ %d\n",counter);
 		//	}
 		//}
-		PAUSE;
+		//PAUSE;
 		//_exit(0);
 	}
 	catch(IloException &e)
@@ -2750,8 +2795,8 @@ void CellTracker::resolve_merges_and_splits()
 		bool change_made = false;
 		for(int counter = 0; counter < to_resolve.size(); counter++)
 		{
-			if(to_resolve[counter].size()>6)
-				continue;
+			//if(to_resolve[counter].size()>10)
+			//	continue;
 			// steps:
 			// go backward from the first one 
 			// go forward from the last one
@@ -2855,6 +2900,7 @@ void CellTracker::resolve_merges_and_splits()
 
 			if(got_evidence == true)
 			{
+				printf("started got_evidence\n");
 				change_made = true;	
 				std::vector < TGraph::vertex_descriptor > sp = to_resolve[counter];
 				std::vector < std::pair < TGraph::vertex_descriptor, TGraph::vertex_descriptor > > spvertices;
@@ -2865,6 +2911,10 @@ void CellTracker::resolve_merges_and_splits()
 					std::vector<LabelImageType::Pointer> lout;
 					std::vector<InputImageType::Pointer> rout;
 					std::vector<FeaturesType> fvecout;
+					printf("I'm trying to split:\n");
+					printf("g[vd].t = %d g[vd].findex = %d g[vd].special = %d\n",g[vd].t, g[vd].findex,g[vd].special);
+				
+				//	printFeatures(fvector[g[vd].t][g[vd].findex]);
 					_TRACE;
 					SplitCell(limages[g[vd].t][g[vd].findex],rimages[g[vd].t][g[vd].findex],fvector[g[vd].t][g[vd].findex],fvar,lout,rout,fvecout);
 					_TRACE;
@@ -3356,7 +3406,7 @@ void CellTracker::run()
 	writeXGMML("C:\\Users\\arun\\Research\\Tracking\\harvard\\ch4_new.xgmml");
 	boost::property_map<TGraph, boost::vertex_index_t>::type index_v;
 	index_v = get(boost::vertex_index,g);
-	while(1)
+	/*while(1)
 	{
 		int v1;
 		cin>>v1;
@@ -3371,12 +3421,17 @@ void CellTracker::run()
 				break;
 			}
 		}
-	}
+	}*/
+	
 	for(tie(e_i,e_end) = edges(g); e_i!= e_end ; e_i = e_next)
 	{
 		e_next = e_i;
 		++e_next;
 		if(g[*e_i].selected == 0)
+		{
+			remove_edge(*e_i,g);
+		}
+		else if(get_edge_type(*e_i) == APPEAR || get_edge_type(*e_i) == DISAPPEAR )
 		{
 			remove_edge(*e_i,g);
 		}
@@ -3540,7 +3595,7 @@ void CellTracker::run()
 		if(out_degree(*v_i,g)==0)
 			out_vertices_count[component[index[*v_i]]]++;
 	}
-	PAUSE;
+	//PAUSE;
 	for(int counter =0; counter < num; counter++)
 	{
 		if(vertex_count[counter]>1)
@@ -3754,7 +3809,6 @@ void CellTracker::writeXGMML(char *filename)
 			fprintf(fp,"\t\t<att type=\"real\" name=\"z\" value=\"%0.2f\"/>\n",f1.Centroid[2]);
 			fprintf(fp,"\t\t<att type=\"integer\" name=\"volume\" value=\"%d\"/>\n",int(f1.ScalarFeatures[FeaturesType::VOLUME]));
 			fprintf(fp,"\t\t<att type=\"integer\" name=\"index\" value=\"%d\"/>\n",index[*vi]);
-
 		}
 		fprintf(fp,"\t\t<att type=\"real\" name=\"special\" value=\"%d\"/>\n",g[*vi].special);
 		printf("%d\n",index[*vi]);
@@ -3900,16 +3954,48 @@ void testKPLS()
 	exit(0);
 }
 
-int main()//int argc, char **argv)
+int main(int argc1, char **argv1)
 {
-	//ST();
+	
+	if(argc1!=2)
+		exit(0);
+
+	char buff_ar[1024];
+
+	std::ifstream ff;
+	ff.open(argv1[1],std::ios::in);
+	int num_lines_count = 0;
+	int argc = 1;
+	char **argv = new char *[10000];
+	argv[0] = new char[1];
+	while(!ff.eof())
+	{
+		std::string ffbuf;
+		ff>>ffbuf;
+		if(ffbuf.size()==0)
+			break;
+		argv[argc] = new char [1024];
+		strcpy(argv[argc],ffbuf.c_str());
+//		printf("|%s|\n",argv[argc]);
+		argc++;
+		
+	}
+
+	ff.close();
+	printf("argc = %d",argc);
+	//scanf("%*d");
+//	return 0;
+
+	
+	/*//ST();
 	// testKPLS();
-	int num_tc = 30;
-#define BASE "C:\\Users\\arun\\Research\\Tracking\\harvard\\cache\\testTSeries-02102009-1455-624"
+	int num_tc = 10;
+//#define BASE "C:\\Users\\arun\\Research\\Tracking\\harvard\\cache\\testTSeries-02102009-1455-624"
+#define BASE "L:\\Tracking\\cache\\testTSeries-02102009-1455-624"
 	int argc = num_tc*3+1+3;
 
 	char ** argv = new char* [argc];
-	int ch = 4;
+	int ch = 3;
 	for(int counter=1; counter <argc; counter++)
 	{
 		argv[counter] = new char [1024];
@@ -3931,7 +4017,7 @@ int main()//int argc, char **argv)
 	}
 
 	//END DEBUG
-
+*/
 	std::vector<std::string> imfilenames,labelfilenames,outputfilenames;
 
 
