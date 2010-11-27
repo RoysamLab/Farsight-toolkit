@@ -1498,7 +1498,7 @@ FloatImageType::IndexType searchNearestVesselDirection(FloatImageType::Pointer d
 	return tindex;
 }
 
-void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs)
+void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs, float spacing[3])
 {
 	for(unsigned int tcounter=0; tcounter < tfs.size(); tcounter++)
 	{
@@ -1511,9 +1511,9 @@ void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs)
 		}
 		printf("I'm working on a track of size %d\n",(int)tfs[tcounter].intrinsic_features.size());
 		ftk::TrackFeatures t = tfs[tcounter];
-		std::vector<float> spacing(3);
-		spacing[0] = spacing[1] = 0.357;
-		spacing[2] = 2.0;
+		//std::vector<float> spacing(3);
+		//spacing[0] = spacing[1] = 0.357;
+		//spacing[2] = 2.0;
 		typedef ftk::TrackPointFeatures TPF;
 		typedef ftk::TrackFeatures TF;
 
@@ -1579,7 +1579,7 @@ void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs)
 
 	}
 }
-void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::TrackFeatures> &tfs)
+void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::TrackFeatures> &tfs,float spacing[3])
 {
 	InputImageType::SizeType clinesize = cline->GetLargestPossibleRegion().GetSize();
 	DistanceMapFilterType::Pointer distfilt = getDistanceMap(cline);
@@ -1706,9 +1706,9 @@ void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::Tr
 		}
 		printf("I'm working on a track of size %d\n",(int)tfs[tcounter].intrinsic_features.size());
 		ftk::TrackFeatures t = tfs[tcounter];
-	std::vector<float> spacing(3);
-	spacing[0] = spacing[1] = 0.357;
-	spacing[2] = 2.0;
+	//std::vector<float> spacing(3);
+	//spacing[0] = spacing[1] = 0.357;
+	//spacing[2] = 2.0;
 		typedef ftk::TrackPointFeatures TPF;
 		typedef ftk::TrackFeatures TF;
 		for(unsigned int counter=0; counter< t.intrinsic_features.size(); counter++)
@@ -1824,7 +1824,7 @@ InputImageType::Pointer getMaxImage(InputImageType::Pointer im1, InputImageType:
 }
 
 
-void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::TrackFeatures> &tfs, int c, int num_t)
+void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::TrackFeatures> &tfs, int c, int num_t, float spacing[3])
 {
 	//int min_voxels = 1000;
 	//float perc = 5.0f;
@@ -1838,9 +1838,9 @@ void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::T
 			typedef ftk::TrackPointFeatures TPF;
 		typedef ftk::TrackFeatures TF;
 	std::vector<int> distances(10000);
-	std::vector<float> spacing(3);
-	spacing[0] = spacing[1] = 0.357;
-	spacing[2] = 2.0;
+	//std::vector<float> spacing(3);
+	//spacing[0] = spacing[1] = 0.357;
+	//spacing[2] = 2.0;
 	for(unsigned int tc=0; tc < tfs.size(); tc++)
 	{
 	//	printf("running for track :%d\n",tc);
@@ -2219,7 +2219,7 @@ void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,Feature
 	lcopy->FillBuffer(0);
 	while(!converged)
 	{
-		printf("In loop\t");
+	//	printf("In loop\t");
 		int num1 =0, num2 = 0;
 		LabelImageType::IndexType index1, index2;
 		index1.Fill(0);index2.Fill(0);
@@ -2271,7 +2271,7 @@ void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,Feature
 
 		float change = sqrt((c1[0] - index1[0]*1.0/num1)*(c1[0] - index1[0]*1.0/num1)+(c1[1] - index1[1]*1.0/num1)*(c1[1] - index1[1]*1.0/num1)+(c1[2] - index1[2]*1.0/num1)*(c1[2] - index1[2]*1.0/num1));
 
-		printf("change = %f\n", change);
+	//	printf("change = %f\n", change);
 		if(change < 0.02)
 		{
 			converged = true;			

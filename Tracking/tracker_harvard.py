@@ -55,7 +55,7 @@ if __name__ == '__main__':
     # prefix the filanames with necessary things like
     # unmixed_, labeled_, labeled_tracks_, vessel_binarized_, etc..
 
-    time_points = time_points[0:180] # DEBUG
+    time_points = time_points[0:10] # DEBUG
     #channels = [2,3,4]
     #pdb.set_trace()
     ######################### Delete slices #############################
@@ -198,6 +198,7 @@ if __name__ == '__main__':
     for w in channels_to_track:
         temp_fname = [];
         temp_fname.append(os.path.join(exe_dir,'tracking_multiframe'))
+        temp_fname.append('0.96 0.96 4.0');
         temp_fname.append(cache_prefix)
         for t in time_points:
             temp_fname.append('smoothed_' + filenames[(w,t)])
@@ -225,6 +226,7 @@ if __name__ == '__main__':
     for w in channels_to_track:
         temp_fname = [];
         temp_fname.append(os.path.join(exe_dir,'summary'))
+        temp_fname.append('0.96 0.96 4.0')
         temp_fname.append(str(len(time_points)))
         temp_fname.append('1'); # number of associated channels to compute features with
         for t in time_points:
@@ -238,7 +240,15 @@ if __name__ == '__main__':
 ##        temp_fname.append(os.path.join(cache_prefix, 'vessel_trace_' + dataset_id + '_w' + str(vessel_w) + '.tif'))
         temp_fname.append(os.path.join(cache_prefix, 'track_summary_' + dataset_id + '_w' + str(w) + '.txt'))
         temp_fname.append(os.path.join(cache_prefix, 'track_points_summary_' + dataset_id + '_w' + str(w) + '.txt'))
-        #subprocess.call(temp_fname);
+        f = open(os.path.join(cache_prefix,'summary_parameters.txt'),'w')
+        for x in temp_fname[1:]:
+            f.write(x)
+            f.write('\r\n')
+        f.close()
+        temp_fname1 = [];
+        temp_fname1.append(os.path.join(exe_dir,'summary'))
+        temp_fname1.append(os.path.join(cache_prefix,'summary_parameters.txt'))
+        subprocess.call(temp_fname1);
 
   ####################### Rendering #########################
 ##  temp_fname = [];

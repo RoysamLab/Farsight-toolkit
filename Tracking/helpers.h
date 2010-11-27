@@ -168,6 +168,7 @@ struct FeatureVariances{
 
 	static const int N = CLUSTER_PROMINENCE + 1;
 	float variances[N];
+	float means[N];
 	int Dimensions;
 
 	float BoundingBox[6]; // start_x end_x start_y end_y start_z end_z
@@ -175,7 +176,9 @@ struct FeatureVariances{
 	float distMean;
 	float spacing[3];
 	float timeVariance;
+	float timeMean;
 	float overlapVariance;
+	float overlapMean;
 
 	float MS_prior;
 	float AD_prior;
@@ -225,10 +228,10 @@ void getFeatureVectorsFarsight(LabelImageType::Pointer im, InputImageType::Point
 InputImageType::Pointer getLabelToBinary(LabelImageType::Pointer l);
 InputImageType::Pointer getMaxImage(InputImageType::Pointer,InputImageType::Pointer);
 std::vector<float> traverseCenterline(itk::ImageRegionIteratorWithIndex<InputImageType> iter,InputImageType::Pointer im,char neighbors[26][3],int n);
-void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs);
-void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::TrackFeatures> &tfs);
+void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs, float spacing[3]);
+void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::TrackFeatures> &tfs, float spacing[3]);
 FloatImageType::IndexType searchNearestVesselDirection(FloatImageType::Pointer dir_image[3],FloatImageType::IndexType index,InputImageType::Pointer vesselim);
-void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::TrackFeatures> &tfs, int c, int num_t);
+void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::TrackFeatures> &tfs, int c, int num_t, float spacing[3]);
 LabelImageType::Pointer extract_label_image(int label, float bbox[6],LabelImageType::Pointer l);
 InputImageType::Pointer extract_raw_image(float bbox[6],InputImageType::Pointer r);
 void annotateImage(Color2DImageType::Pointer number,Color2DImageType::Pointer orig, int n, int x, int y);

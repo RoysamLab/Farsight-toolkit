@@ -516,7 +516,7 @@ void createTrackFeatures(std::vector<FeaturesType> fvector[MAX_TIME][MAX_TAGS], 
 		//PRINTF("Added %d elements to tfs\n",counter);
 	}
 }
-int main(int argc, char **argv)
+int main(int argc1, char**argv1)//int argc, char **argv)
 {
 	//ST();
 /*
@@ -549,6 +549,48 @@ int main(int argc, char **argv)
 	sprintf(argv[pp++],BASE"track_summary_second_TSeries-02102009-1455-624_w%d.txt",ch);
 	sprintf(argv[pp++],BASE"track_points_summary_second_TSeries-02102009-1455-624_w%d.txt",ch);
 */
+	if(argc1!=2)
+		exit(0);
+
+	char buff_ar[1024];
+
+	std::ifstream ff;
+	ff.open(argv1[1],std::ios::in);
+	int num_lines_count = 0;
+	int argc = 1;
+	char **argv = new char *[10000];
+	argv[0] = new char[1];
+	std::string ffbuf;
+	char ffbuffer[1024];
+	ff.getline(ffbuffer,1024);
+	float spac[3];
+	if(ffbuffer[0]!='\0')
+	{
+		sscanf(ffbuffer,"%f %f %f",spac,spac+1,spac+2);
+		printf("I got spacing = %f %f %f\n", spac[0],spac[1],spac[2]);
+	//	scanf("%*d");
+	}
+	while(!ff.eof())
+	{
+		
+		//ff.getline(ffbuffer,1024);
+		ff.getline(ffbuffer,1024);
+		//ff>>ffbuf;
+		if(ff.gcount()==0)
+			break;
+		if(ffbuffer[strlen(ffbuffer)-1]=='\r')
+			ffbuffer[strlen(ffbuffer)-1]=0;
+		argv[argc] = new char [1024];
+		strcpy(argv[argc],ffbuffer);
+		//printf("|%s|\n",argv[argc]);
+		argc++;
+		
+	}
+
+	ff.close();
+	printf("argc = %d",argc);
+
+	
 	printf("Started\n");
 	int c=1;
 	//int counter = 0;
@@ -624,16 +666,16 @@ int main(int argc, char **argv)
   printf("tfs.size() = %d first\n",(int)tfs.size());
 
   //first calcualte time based features
-  AnalyzeTimeFeatures(tfs);
+  AnalyzeTimeFeatures(tfs,spac);
 
   if(compute_vessel_features == true)
     {
-    AnalyzeVesselCenterlines(vessel_trace,tfs);
+    AnalyzeVesselCenterlines(vessel_trace,tfs,spac);
     }
   
   if(compute_dc_contact == true)
     {
-    AnalyzeDCContact(segmented,tfs,dc_channel,num_t);
+    AnalyzeDCContact(segmented,tfs,dc_channel,num_t,spac);
     }
   printf("tfs.size = %d\n", (int)tfs.size());
   FILE*fp1 = fopen(argv[pc++],"w");

@@ -34,7 +34,7 @@ using namespace boost;
 #endif
 clock_t start_t,end_t,first_t;
 
-//#define DEBUG
+#define DEBUG
 #ifdef DEBUG
 #define SHORT(x) (strrchr(x,'\\') ? strrchr(x,'\\')+1: x)
 #define _TRACE {printf("In-%s:%d:%s:\n",SHORT(__FILE__),__LINE__,__FUNCTION__);}
@@ -605,7 +605,7 @@ public:
 		limages = l; // copy only pointers
 		rimages = r;
 		UTILITY_MAX = 1<<16;
-		K = 1;
+		K = 2;
 	}
 
 	void run();
@@ -619,6 +619,10 @@ public:
 		debugimage2 = in2;
 	}
 	LabelImageType::Pointer getOutputAtTime(int t);
+	FeatureVariances get_computed_variances()
+	{
+		return fvarnew;
+	}
 private:
 	enum EDGE_TYPE {SPLIT,MERGE,APPEAR,DISAPPEAR,TRANSLATION};
 	float overlap(float bb1[6],float bb2[6]);
@@ -657,6 +661,7 @@ private:
 	void resolve_merges_and_splits(void);
 	int my_connected_components(std::vector<int> &component);
 	void print_all_LRUtilities(TGraph::vertex_descriptor v);
+	void compute_feature_variances();
 	//variables
 
 	TGraph g; 
@@ -668,6 +673,7 @@ private:
 	std::map<TGraph::edge_descriptor, TGraph::edge_descriptor> coupled_map;
 	int UTILITY_MAX;
 	FeatureVariances fvar;
+	FeatureVariances fvarnew;
 	int K;
 
 	ColorImageType::Pointer debugimage1;
@@ -1801,7 +1807,7 @@ void CellTracker::solve_higher_order()
 			if(g[*vi].vertlre.size()>0)
 			{
 				vcount++;
-				c.add(IloRange(env,1,1));
+				c.add(IloRange(env,0,1));
 				for(int colre = 0; colre< g[*vi].vertlre.size(); colre++)
 				{
 					c[vcount].setLinearCoef(x[g[*vi].vertlre[colre]],1);
@@ -1984,6 +1990,9 @@ void CellTracker::solve_higher_order()
 
 std::pair<CellTracker::TGraph::edge_descriptor,bool> CellTracker::my_add_edge(TGraph::vertex_descriptor v1, TGraph::vertex_descriptor v2, int utility, bool coupled, bool fixed, bool selected, unsigned char type)
 {
+	printf("in my_add_edge\n");
+	printf("v1-\n");print_vertex(v1,1);
+	printf("v2-\n");print_vertex(v2,1);
 	TGraph::edge_descriptor e;
 	bool added;
 	tie(e,added) = add_edge(v1,v2,g);
@@ -2961,7 +2970,7 @@ void CellTracker::resolve_merges_and_splits()
 					permsize++;
 				std::vector<std::vector<bool>> permutations = generate_all_binary_strings(permsize);
 				float utilmax = -1;
-				float utilpos = -1;
+				int utilpos = -1;
 				_TRACE;
 				int permpc = 0;
 				for(int cop = 0; cop < permutations.size(); cop++)
@@ -3057,6 +3066,8 @@ void CellTracker::resolve_merges_and_splits()
 						}
 					}
 					float util = util1+util2;
+						printf("utils: %0.2f %0.2f\n", util1, util2);
+					printf("util = %f\n", util);
 					if(util > utilmax)
 					{
 						utilmax = util;
@@ -3074,6 +3085,7 @@ void CellTracker::resolve_merges_and_splits()
 				permpc = 0;
 				bool flipped = false;
 				TGraph::vertex_descriptor prev1,prev2;
+				printf("before.size() = %d after.size() = %d utilpos = %d\n",before.size(),after.size(),utilpos);
 				if(before.size()!=0)
 				{
 					if(permutations[utilpos][permpc++] == 0)
@@ -3096,6 +3108,8 @@ void CellTracker::resolve_merges_and_splits()
 					prev1 = spvertices[0].first;
 					prev2 = spvertices[0].second;
 				}
+				_TRACE;
+
 				for(int co1 = 0; co1 < spvertices.size()-1; co1++)
 				{
 					if(permutations[utilpos][permpc++] == 0)
@@ -3117,19 +3131,40 @@ void CellTracker::resolve_merges_and_splits()
 						prev2 = spvertices[co1+1].first;
 					}
 				}
+				_TRACE;
+			//	printf("prev1\n");print_vertex(prev1,1);
+		//		printf("prev2\n");print_vertex(prev2,1);
+			//	printf("after[0].first\n");print_vertex(after[0].first,1);
+			//	printf("after[0].second\n");print_vertex(after[0].second,1);
+		//		printf("utilpos = %d, permc = %d, permutation.size() = %d [0].size = %d\n",utilpos, permpc, permutations.size(), permutations[0].size());
 				if(after.size()!=0)
-				{
-					if(permutations[utilpos][permpc++] == 0)
+				{//_TRACE;
+					//for(int co_ = 0; co_ < permutations.size(); co_++)
+				//	{
+				//		for(int co1_ = 0; co1_ < permutations[co_].size(); co1_++)
+				//		{
+			//				printf("permutations[%d][%d] = %d\n",co_,co1_,int(permutations[co_][co1_]));
+				//		}
+			//		}
+					//_TRACE;
+				//	printf("permutations[0][0] = %d\n", int(permutations[0][0]));
+					if(int(permutations[utilpos][permpc]) == 0)
 					{
+						_TRACE;
 						tie(e1,added) = my_add_edge(prev1,after[0].first,1/*dummy utility*/,0,1,1,TRANSLATION);
+						_TRACE;
 						tie(e1,added) = my_add_edge(prev2,after[0].second,1/*dummy utility*/,0,1,1,TRANSLATION);
 					}
 					else
 					{
+						_TRACE;
 						tie(e1,added) = my_add_edge(prev1,after[0].second,1/*dummy utility*/,0,1,1,TRANSLATION);
+						_TRACE;
 						tie(e1,added) = my_add_edge(prev2,after[0].first,1/*dummy utility*/,0,1,1,TRANSLATION);
 					}
+					permpc++;
 				}
+				_TRACE;
 				if(permpc != permutations[0].size())
 				{
 					printf("Something is wrong with permpc\n");
@@ -3370,6 +3405,17 @@ void CellTracker::run()
 
 	boost::graph_traits<TGraph>::edge_iterator e_i,e_next,e_end;
 
+	for(tie(e_i,e_end) = edges(g); e_i!= e_end ; e_i = e_next)
+	{
+		e_next = e_i;
+		++e_next;
+		if(g[*e_i].utility <0 )
+		{
+			remove_edge(*e_i,g);
+		}
+	}
+
+
 	for(tie(e_i,e_end) = edges(g); e_i!= e_end ; ++e_i)
 	{
 		g[*e_i].selected = 0;
@@ -3431,15 +3477,23 @@ void CellTracker::run()
 		{
 			remove_edge(*e_i,g);
 		}
-		else if(get_edge_type(*e_i) == APPEAR || get_edge_type(*e_i) == DISAPPEAR )
+	}
+
+	compute_feature_variances();
+
+	for(tie(e_i,e_end) = edges(g); e_i!= e_end ; e_i = e_next)
+	{
+		e_next = e_i;
+		++e_next;
+		if(get_edge_type(*e_i) == APPEAR || get_edge_type(*e_i) == DISAPPEAR )
 		{
 			remove_edge(*e_i,g);
 		}
 	}
-
+	//scanf("%*d");
 	resolve_merges_and_splits();
 
-
+	
 
 	
 	/*TGraph::vertex_iterator del,del_end,del_next,del_tmp;
@@ -3954,6 +4008,97 @@ void testKPLS()
 	exit(0);
 }
 
+
+
+void CellTracker::compute_feature_variances()
+{
+	TGraph::edge_iterator ei,eend;
+	fvarnew =fvar;
+	for(int counter = 0; counter < FeatureVariances::N; counter++)
+	{
+		fvarnew.variances[counter] = 0;
+		fvarnew.means[counter] = 0;
+	}
+	fvarnew.distMean = 0;
+	fvarnew.distVariance = 0;
+	fvarnew.timeMean = 0;
+	fvarnew.timeVariance = 0;
+	fvarnew.overlapVariance = 0;
+	fvarnew.overlapMean = 0;
+	fvarnew.MS_prior = 0;
+	fvarnew.AD_prior = 0;
+	fvarnew.T_prior = 0;
+	int num_samples = 0;
+	for(tie(ei,eend)= edges(g); ei!=eend; ++ei)
+	{
+		int type = get_edge_type(*ei);
+		num_samples++;
+		switch(type)
+		{
+		case APPEAR: 
+		case DISAPPEAR: fvarnew.AD_prior++;
+			break;
+		case SPLIT: 
+		case MERGE: fvarnew.MS_prior++;
+		case TRANSLATION: 
+			FeaturesType f1,f2;
+			f1 = fvector[g[source(*ei,g)].t][g[source(*ei,g)].findex];
+			f2 = fvector[g[target(*ei,g)].t][g[target(*ei,g)].findex];
+			float dist = get_distance(f1.Centroid,f2.Centroid); 
+			fvarnew.distMean += dist;
+			fvarnew.distVariance += dist*dist;
+			fvarnew.timeMean += f2.time - f1.time;
+			fvarnew.timeVariance += (f2.time - f1.time)*(f2.time - f1.time);
+			float ovlap = 1-overlap(f1.BoundingBox,f2.BoundingBox)/MIN(f1.ScalarFeatures[FeaturesType::BBOX_VOLUME],f2.ScalarFeatures[FeaturesType::BBOX_VOLUME]);
+			fvarnew.overlapMean += ovlap;
+			fvarnew.overlapVariance +=ovlap*ovlap;
+			for(int counter = 0; counter < FeatureVariances::N; counter++)
+			{
+				fvarnew.means[counter] += f2.ScalarFeatures[counter] - f1.ScalarFeatures[counter];
+				fvarnew.variances[counter] += (f2.ScalarFeatures[counter] - f1.ScalarFeatures[counter])*(f2.ScalarFeatures[counter] - f1.ScalarFeatures[counter]);
+			}
+			if(type==TRANSLATION)
+			{
+				fvarnew.T_prior++;
+			}
+			break;
+		}
+	}
+	for(int counter = 0; counter < FeatureVariances::N; counter++)
+	{
+		fvarnew.means[counter] /= num_samples;
+		fvarnew.variances[counter] /=num_samples;
+		fvarnew.variances[counter] -= fvarnew.means[counter]*fvarnew.means[counter];
+	}
+	fvarnew.distMean /=num_samples;
+	fvarnew.distVariance /=num_samples;
+	fvarnew.distVariance -= fvarnew.distMean*fvarnew.distMean;
+	fvarnew.timeMean /= num_samples;
+	fvarnew.timeVariance /= num_samples;
+	fvarnew.timeVariance -= fvarnew.timeMean * fvarnew.timeMean;
+	fvarnew.overlapMean /= num_samples;
+	fvarnew.overlapVariance /= num_samples;
+	fvarnew.overlapVariance -= fvarnew.overlapMean*fvarnew.overlapMean;
+	fvarnew.MS_prior /= num_samples;
+	fvarnew.AD_prior -=100;
+	fvarnew.AD_prior /= num_samples;
+	fvarnew.T_prior /= num_samples;
+	float sum = fvarnew.T_prior + fvarnew.MS_prior + fvarnew.AD_prior;
+	fvarnew.MS_prior /=sum;
+	fvarnew.AD_prior /=sum;
+	fvarnew.T_prior /=sum;
+	
+
+	printf("compute feature variances are : num_samples = %d\n", num_samples);
+	for(int counter = 0; counter < FeatureVariances::N; counter++)
+	{
+		printf("ScalarFeatures[%d]. mean = %0.3f .variance = %0.3f\n",counter,fvarnew.means[counter],fvarnew.variances[counter]);
+	}
+	printf("distMean = %0.3f distVariance = %0.3f\n",fvarnew.distMean, fvarnew.distVariance);
+	printf("timeMean = %0.3f timeVariance = %0.3f\n",fvarnew.timeMean, fvarnew.timeVariance);
+	printf("overlapMean = %0.3f overlapVariance = %0.3f\n", fvarnew.overlapMean, fvarnew.overlapVariance);
+	printf("MS_prior = %0.3f AD_prior = %0.3f T_prior = %0.3f\n", fvarnew.MS_prior, fvarnew.AD_prior, fvarnew.T_prior);
+}
 int main(int argc1, char **argv1)
 {
 	
@@ -3968,15 +4113,28 @@ int main(int argc1, char **argv1)
 	int argc = 1;
 	char **argv = new char *[10000];
 	argv[0] = new char[1];
-	while(!ff.eof())
+	std::string ffbuf;
+	char ffbuffer[1024];
+	ff.getline(ffbuffer,1024);
+	float spac[3];
+	if(ffbuffer[0]!='\0')
 	{
-		std::string ffbuf;
-		ff>>ffbuf;
-		if(ffbuf.size()==0)
+		sscanf(ffbuffer,"%f %f %f",spac,spac+1,spac+2);
+		printf("I got spacing = %f %f %f\n", spac[0],spac[1],spac[2]);
+	//	scanf("%*d");
+	}
+	while(!ff.eof())
+	{	
+		//ff.getline(ffbuffer,1024);
+		ff.getline(ffbuffer,1024);
+		//ff>>ffbuf;
+		if(ff.gcount()==0)
 			break;
+		if(ffbuffer[strlen(ffbuffer)-1]=='\r')
+			ffbuffer[strlen(ffbuffer)-1]=0;
 		argv[argc] = new char [1024];
-		strcpy(argv[argc],ffbuf.c_str());
-//		printf("|%s|\n",argv[argc]);
+		strcpy(argv[argc],ffbuffer);
+		//printf("|%s|\n",argv[argc]);
 		argc++;
 		
 	}
@@ -4146,15 +4304,16 @@ int main(int argc1, char **argv1)
 		fvar.BoundingBox[1] = imsize[0]-1;
 		fvar.BoundingBox[3] = imsize[1]-1;
 		fvar.BoundingBox[5] = imsize[2]-1;
-		fvar.distVariance = 50;
-		fvar.distMean = 5;
-		fvar.spacing[0] = 0.965;
-		fvar.spacing[1] = 0.965;
-		fvar.spacing[2] = 4.0;
-		fvar.timeVariance = 1;
-		fvar.overlapVariance = 1;
-		fvar.variances[FeatureVariances::VOLUME] = 90000;
-		fvar.MS_prior = 0.4;
+		fvar.distVariance = 50;//8.77;//50
+		fvar.distMean = 5;//3.3;//5
+		fvar.spacing[0] = spac[0];
+		fvar.spacing[1] = spac[1];
+		fvar.spacing[2] = spac[2];
+		fvar.timeVariance = 1;//.119//1;
+		fvar.overlapVariance = 1;//0.034;//1;
+		fvar.overlapMean = 0;//0.2;//0;
+		fvar.variances[FeatureVariances::VOLUME] = 90000;//44000;//90000;
+		fvar.MS_prior = 0.4;//
 		fvar.AD_prior = 0.01;
 		fvar.T_prior = 1;
 
@@ -4176,9 +4335,19 @@ int main(int argc1, char **argv1)
 		debugcol2->Allocate();
 		ct.set_debug_images(debugcol1,debugcol2);
 		ct.run();
+		printf("Rerunning with computed variances\n");
+		FeatureVariances fvarnew(ct.get_computed_variances());
+		fvarnew.MS_prior = 0.4;
+		fvarnew.AD_prior = 0.01;
+		fvarnew.T_prior = 1;
+		fvarnew.timeVariance = 1;
+		fvarnew.overlapVariance = 1;
+		//CellTracker ct1(fvector,fvarnew,limages,rimages);
+		//ct1.set_debug_images(debugcol1,debugcol2);
 		//ct.writeGraphViz("C:\\Users\\arun\\Research\\Tracking\\harvard\\graphviz_testSeries.dot");
 		//ct.writeGraphML("C:\\Users\\arun\\Research\\Tracking\\harvard\\graphviz_testSeries.graphml");
 		//PAUSE;
+		//ct1.run();
 		for(int t = 0; t< num_t; t++)
 		{
 			printf("In final loop t = %d\n",t);
