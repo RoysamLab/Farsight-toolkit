@@ -20,10 +20,6 @@ add_executable(MedianImageFilter MedianImageFilter.cxx)
 target_link_libraries(MedianImageFilter ITKIO ITKStatistics)
 install(TARGETS MedianImageFilter DESTINATION ${INSTALL_DEST} )
 
-add_executable(LaplacianSharpeningImageFilter LaplacianSharpeningImageFilter.cxx)
-target_link_libraries(LaplacianSharpeningImageFilter ITKIO ITKStatistics)
-install(TARGETS LaplacianSharpeningImageFilter DESTINATION ${INSTALL_DEST} )
-
 add_executable(RobustAutomaticThresholdImageFilterTest RobustAutomaticThresholdImageFilterTest.cxx)
 target_link_libraries(RobustAutomaticThresholdImageFilterTest ITKIO ITKStatistics)
 install(TARGETS RobustAutomaticThresholdImageFilterTest DESTINATION ${INSTALL_DEST} )
