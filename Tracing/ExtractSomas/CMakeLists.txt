@@ -20,6 +20,10 @@ add_executable(MedianImageFilter MedianImageFilter.cxx)
 target_link_libraries(MedianImageFilter ITKIO ITKStatistics)
 install(TARGETS MedianImageFilter DESTINATION ${INSTALL_DEST} )
 
+add_executable(LaplacianSharpeningImageFilter LaplacianSharpeningImageFilter.cxx)
+target_link_libraries(LaplacianSharpeningImageFilter ITKIO ITKStatistics)
+install(TARGETS LaplacianSharpeningImageFilter DESTINATION ${INSTALL_DEST} )
+
 add_executable(RobustAutomaticThresholdImageFilterTest RobustAutomaticThresholdImageFilterTest.cxx)
 target_link_libraries(RobustAutomaticThresholdImageFilterTest ITKIO ITKStatistics)
 install(TARGETS RobustAutomaticThresholdImageFilterTest DESTINATION ${INSTALL_DEST} )
@@ -56,20 +60,21 @@ add_executable(IsolateCentroids IsolateCentroids.cxx)
 target_link_libraries(IsolateCentroids ITKIO ITKStatistics)
 install(TARGETS IsolateCentroids DESTINATION ${INSTALL_DEST} )
 
-add_executable(VoronoiFilter VoronoiFilter.cxx)
-target_link_libraries(VoronoiFilter ITKIO ITKStatistics)
-install(TARGETS VoronoiFilter DESTINATION ${INSTALL_DEST} )
+#add_executable(VoronoiFilter VoronoiFilter.cxx)
+#target_link_libraries(VoronoiFilter ITKIO ITKStatistics)
+#install(TARGETS VoronoiFilter DESTINATION ${INSTALL_DEST} )
 
 include(CTest)
 
 add_custom_command(
-  TARGET VoronoiFilter
+  TARGET IsolateCentroids
   POST_BUILD
   COMMAND ${CMAKE_COMMAND}
   ARGS -D CMAKE_EXECUTABLE_SUFFIX:STRING=${CMAKE_EXECUTABLE_SUFFIX}
        -D PROJECT_SOURCE_DIR:STRING=${PROJECT_SOURCE_DIR}
        -D PROJECT_BINARY_DIR:STRING=${PROJECT_BINARY_DIR}
        -D CMAKE_RUNTIME_OUTPUT_DIRECTORY:STRING=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+       -D CMAKE_CFG_INTDIR:STRING=${CMAKE_CFG_INTDIR}
        -P ${PROJECT_SOURCE_DIR}/ConfigureExtractSomas.cmake)
 install(FILES ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ExtractSomas.py DESTINATION ${INSTALL_DEST})
 
