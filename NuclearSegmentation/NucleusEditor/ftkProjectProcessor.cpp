@@ -494,11 +494,9 @@ bool ProjectProcessor::RunQuery(void)
 					std::string temp3=table->GetColumnName(col);
 					column_names.push_back(temp3);
 				}
-				std::string table_name_str;
-				table_name_str = "IMAGE_TEST";
-				char table_name[table_name_str.length()];
-				strcpy( table_name, table_name_str.c_str() );
-				ftk::checkForUpdate( dbConn, table_name, column_names );
+				std::string table_name;
+				table_name = "IMAGE_TEST";
+				ftk::checkForUpdate( dbConn, column_names );
 
 				std::string image_name;
 				image_name = save_path + definition->name;
@@ -512,7 +510,7 @@ bool ProjectProcessor::RunQuery(void)
 						table_array.push_back(table->GetValue(row,col).ToDouble());
 					}
 				}
-				sql_db_img_id = ftk::GenericInsert( dbConn, im_nm_cstr, table_name, path_nm_cstr, table_array,table->GetNumberOfColumns(), table->GetNumberOfRows(), column_names );	
+				sql_db_img_id = ftk::GenericInsert( dbConn, im_nm_cstr, table_name.c_str(), path_nm_cstr, table_array,table->GetNumberOfColumns(), table->GetNumberOfRows(), column_names );	
 
 				//sql = "select * from IMAGE;";
 				//sql = "select * from IMAGE_TEST where IMG_ID = 1;";

@@ -1279,11 +1279,8 @@ void NucleusEditor::updateDatabase()
 				std::string temp3=table->GetColumnName(col);
 				col_names.push_back(temp3);
 			}
-			std::string table_name_str;
-			table_name_str = "IMAGE_TEST";
-			char table_name[table_name_str.length()];
-			strcpy( table_name, table_name_str.c_str() );
-			ftk::checkForUpdate( dbConn, table_name, col_names );
+			std::string table_name = "IMAGE_TEST";
+			ftk::checkForUpdate( dbConn, col_names );
 
 			std::string image_name;
 			image_name = lastPath.toStdString() + "Nucleus_Editor_Image";
@@ -1297,7 +1294,7 @@ void NucleusEditor::updateDatabase()
 					table_array.push_back(table->GetValue(row,col).ToDouble());
 				}
 			}
-			int sql_db_img_id = ftk::GenericInsert( dbConn, im_nm_cstr, table_name, path_nm_cstr, table_array,table->GetNumberOfColumns(), table->GetNumberOfRows(), col_names );
+			int sql_db_img_id = ftk::GenericInsert( dbConn, im_nm_cstr, table_name.c_str(), path_nm_cstr, table_array,table->GetNumberOfColumns(), table->GetNumberOfRows(), col_names );
 			std::cout << "The image ID on the database is: " << sql_db_img_id << std::endl;
 		}
 	}

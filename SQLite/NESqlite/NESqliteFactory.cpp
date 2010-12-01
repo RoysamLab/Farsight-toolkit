@@ -226,7 +226,7 @@ void GenericSearch(sqlite3 *db,const char * sql)
 	//sqlite3_close(dbConn);
 }
 
- void checkForUpdate(sqlite3 *dbConn,char * project_name,std::vector<std::string> column_names)
+ void checkForUpdate(sqlite3 *dbConn, std::vector<std::string> column_names)
 {   
 	int  nrow;       /* Number of result rows written here */
 	int  ncol;       /* Number of result columns written here */
@@ -296,7 +296,9 @@ void GenericSearch(sqlite3 *db,const char * sql)
 }
 
 
- int GenericInsert( sqlite3 *db, char * Img_name, char * project_name, char *path, std::vector<double> ProcessedImgRowArray, int ncol, int nrow, std::vector<std::string> colNames )
+ int GenericInsert( sqlite3 *db, char * Img_name, const char * project_name,
+	                char *path, std::vector<double> ProcessedImgRowArray,
+					int ncol, int nrow, std::vector<std::string> colNames )
 { 
 	sqlite3_stmt *ppStmt;
 	std::string queryStr,queryStrPart1 ,queryStrPart2 = "?",table_name;
