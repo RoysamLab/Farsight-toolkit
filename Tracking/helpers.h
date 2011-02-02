@@ -177,6 +177,7 @@ struct FeatureVariances{
 	float spacing[3];
 	float timeVariance;
 	float timeMean;
+	int time_last;
 	float overlapVariance;
 	float overlapMean;
 
@@ -239,6 +240,7 @@ ColorImageType::Pointer getColorImageFromColor2DImages(std::vector<Color2DImageT
 void drawLine(ColorImageType::Pointer input, VectorPixelType color1, VectorPixelType color2, int x1, int y1, int z1, int x2, int y2, int z2);
 std::vector<FeaturesType> get_all_connected_components(LabelImageType::Pointer,FeaturesType);
 void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,FeaturesType fin, FeatureVariances fvar,std::vector<LabelImageType::Pointer> &lout,std::vector<InputImageType::Pointer> &rout,std::vector<FeaturesType> &fvecout);
+void MergeCells(std::vector<LabelImageType::Pointer> lin, std::vector<InputImageType::Pointer> imin, std::vector<FeaturesType> fin, FeatureVariances fvar, LabelImageType::Pointer &lout, InputImageType::Pointer &rout, FeaturesType &fout);
 LabelImageType::Pointer fillHoles(LabelImageType::Pointer im, int n);
 }
 #endif

@@ -31,7 +31,8 @@
 #include <vnl/vnl_matrix.h>
 #include <vnl/vnl_hungarian_algorithm.h>
 #include <vnl/algo/vnl_qr.h>
-
+#include <ilcplex/ilocplex.h>
+ILOSTLBEGIN
 
 #define MAX(a,b) (((a) > (b))?(a):(b))
 #define MIN(a,b) (((a) < (b))?(a):(b))
@@ -349,6 +350,37 @@ Input2DImageType::Pointer getGalleryView(InputImageType::Pointer im[], int rows,
 
 vnl_matrix<double> getFingerPrintMatrix()
 {
+	FILE *fp = fopen("L:\\unmixing\\SinglePositives\\spectral\\estimated_matrix.txt","r");
+	int nrows = 15;
+	int ncols = 6;
+	
+	//int arr[] = {0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0};
+	int arr[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+	//int arr[] = {0, 1, 0, 1, 1, 1};
+	int sum = 0;
+	for(int co = 0; co < nrows; co++)
+	{
+		sum = sum + arr[co];
+	}
+	vnl_matrix<double> start(sum,ncols);
+	for(int coy = 0; coy < ncols; coy ++)
+	{
+		int pc = 0;
+		for(int cox =0; cox < nrows; cox ++)
+		{
+			double temp;
+			fscanf(fp,"%lf",&temp);
+			if(arr[cox] == 1)
+			{
+				start[pc++][coy] = temp;
+			}
+		}
+	}
+	fclose(fp);
+	return start;
+}
+vnl_matrix<double> getFingerPrintMatrix_defunct()
+{
 #define BASE_FOLDER  "C:\\Users\\arun\\Research\\unmixing_work\\data\\"
 	
 	vnl_matrix<double> mat(16,4);
@@ -636,10 +668,36 @@ void unmix_cluster_from_matrix_v2(vnl_matrix<double> mixed, vnl_matrix<double> &
 #define DO_FILTERING 0
 //#define NO_SATURATED_PIXELS_IN_UNMIXIMG
 #define MAX_CHANNELS 50
-#define NUM_ELEMENTS_FOR_UNMIXING 500000
-#define MIN_NORM 15
-//#define UNMIX_CLUSTERING_PIXEL_CLASSIFICATION
-#define NORMALIZE_OUTPUT_ROWS 
+#define NUM_ELEMENTS_FOR_UNMIXING 1000000
+#define MIN_NORM 30
+#define UNMIX_CLUSTERING_PIXEL_CLASSIFICATION
+//#define UNMIX_METHOD3 
+//#define NORMALIZE_OUTPUT_ROWS 
+//#define UNMIX_METHOD4
+//#define GENERATE_FINGERPRINT_MODE
+
+void my_normalize_rows(vnl_matrix<double> &mat)
+{
+	for(int co = 0; co < mat.rows(); co++)
+	{
+		vnl_vector<double> r = mat.get_row(co);
+		double sum = r.one_norm();
+		r = r/sum;
+		mat.set_row(co,r);
+	}
+}
+
+void my_normalize_columns(vnl_matrix<double> &mat)
+{
+	for(int co = 0; co < mat.columns(); co++)
+	{
+		vnl_vector<double> r = mat.get_column(co);
+		double sum = r.one_norm();
+		r = r/sum;
+		mat.set_column(co,r);
+	}
+}
+
 void unmix_clustering(InputImageType::Pointer im[],InputImageType::Pointer om[],int n, int m)
 {
 
@@ -673,7 +731,7 @@ void unmix_clustering(InputImageType::Pointer im[],InputImageType::Pointer om[],
 		{
 				radius[0]=1;
 	radius[1]=1;
-	radius[2]=1;
+	radius[2]=0;
 		printf("\tPerforming median filtering on channel %d ...",counter+1);
 		filt[counter]=MedianFilterType::New();
 		filt[counter]->SetRadius(radius);
@@ -716,6 +774,12 @@ void unmix_clustering(InputImageType::Pointer im[],InputImageType::Pointer om[],
 
 	for(int counter = 0; counter < n; counter++)
 	{
+		char buff1[1024];
+		sprintf(buff1, "C:\\Users\\arun\\Research\\unmixing_work\\build\\release\\debug_ch%d.tif",counter+1);
+		//writeImage<InputImageType>(im[counter],buff1);
+	}
+	for(int counter = 0; counter < n; counter++)
+	{
 		mean_values[counter] = 0;///=mean_values_count;
 		printf("mean_values[%d] = %lf\n",counter,mean_values[counter]);
 	}
@@ -738,11 +802,12 @@ void unmix_clustering(InputImageType::Pointer im[],InputImageType::Pointer om[],
 		if(rand()*1.0/RAND_MAX< 2*NUM_ELEMENTS_FOR_UNMIXING*1.0/total_voxels)
 		{
 			double norm = 0;
-
+			double inf_norm = 0;
 			int counter;
 			for(counter=0; counter<n; counter++)
 			{
 				norm += iterator[counter].Get()*1.0*iterator[counter].Get();
+				inf_norm = MAX(inf_norm,iterator[counter].Get());
 #ifdef NO_SATURATED_PIXELS_IN_UNMIXIMG
 				if(iterator[counter].Get()==255)
 					break;
@@ -757,7 +822,8 @@ void unmix_clustering(InputImageType::Pointer im[],InputImageType::Pointer om[],
 				continue;
 			}
 			norm = sqrt(norm);
-			if(norm < MIN_NORM)
+			//if(norm < MIN_NORM)
+			if(inf_norm < MIN_NORM)
 			{
 				for(int counter1=0; counter1< n; counter1++)
 				{
@@ -810,6 +876,21 @@ void unmix_clustering(InputImageType::Pointer im[],InputImageType::Pointer om[],
 	vnl_vector <unsigned char> indices(mixed.rows()); 
 	// takes a matrix and an initial estimate of eigenvectors in start. Returns the final eigenvectors in start
 	//unmix_cluster_from_matrix_v2(mixed,start,indices);
+#ifdef GENERATE_FINGERPRINT_MODE
+	//FILE *fpp = fopen("L:\\unmixing\\SinglePositives\\Spectral\\spectral_fingerprints.txt","a+");
+	FILE *fpp = fopen("L:\\unmixing\\SinglePositives\\multitrack\\spectral_fingerprints.txt","a+");
+	for(int counter = 0; counter < start.columns(); counter++)
+	{
+		for(int counter1 = 0; counter1 < start.rows(); counter1++)
+		{
+			fprintf(fpp,"%lf ",start[counter1][counter]);
+		}
+		fprintf(fpp,"\n");
+	}
+	fclose(fpp);
+
+	_exit(0);
+#endif
 	start = getFingerPrintMatrix();
 	IteratorType oiter[20];
 
@@ -832,6 +913,7 @@ void unmix_clustering(InputImageType::Pointer im[],InputImageType::Pointer om[],
 
 	printf("Performing unmixing...\n");
 	start.print(std::cout);
+	//scanf("%*d");
 
 	/*for(int counter = 0; counter < start.rows(); counter++)
 	{
@@ -844,6 +926,7 @@ void unmix_clustering(InputImageType::Pointer im[],InputImageType::Pointer om[],
 				maxpos = counter1;
 				maxval = start[counter][counter1];
 			}
+		}
 			if(maxpos != counter)
 			{
 				vnl_vector<double> vclvec1 = start.get_column(maxpos);
@@ -851,16 +934,19 @@ void unmix_clustering(InputImageType::Pointer im[],InputImageType::Pointer om[],
 				start.set_column(maxpos,vclvec2);
 				start.set_column(counter,vclvec1);
 			}
-		}
 	}*/
-
+printf("\n");
+start.normalize_columns();
+//my_normalize_columns(start);
+	start.print(std::cout);
 	int final_counter=0;
-	vnl_matrix<double> inveigen = vnl_matrix_inverse<double>(start).pinverse(4);
+	vnl_matrix<double> inveigen = vnl_matrix_inverse<double>(start).pinverse(6);
 	//inveigen.normalize_columns();
 	inveigen.print(std::cout);
 #ifdef NORMALIZE_OUTPUT_ROWS 
 	printf("after normalizing rows..\n");
 	inveigen.normalize_rows();
+	//my_normalize_rows(inveigen);
 	inveigen.print(std::cout);
 #endif
 	vnl_qr<double> qrdecomp(start);
@@ -873,9 +959,21 @@ void unmix_clustering(InputImageType::Pointer im[],InputImageType::Pointer om[],
 	for(int counter =0; counter < m; counter++)
 		min_values[counter] = 1000000.0f;
 
+	
 	for(int counter = 0; counter <n ; counter++)
 	{
-		iterator[counter] = IteratorType(im[counter],im[counter]->GetLargestPossibleRegion());
+		if(DO_FILTERING == 0)
+		{
+			iterator[counter] = IteratorType(im[counter],im[counter]->GetLargestPossibleRegion());
+		}
+		else if (DO_FILTERING == 1)
+		{
+			iterator[counter] = IteratorType(filt[counter]->GetOutput(),filt[counter]->GetOutput()->GetLargestPossibleRegion());
+		}
+		else
+		{
+			iterator[counter] = IteratorType(filt1[counter]->GetOutput(),filt1[counter]->GetOutput()->GetLargestPossibleRegion());
+		}
 		iterator[counter].GoToBegin();
 	}
 	int negcount = 0;
@@ -885,7 +983,7 @@ void unmix_clustering(InputImageType::Pointer im[],InputImageType::Pointer om[],
 
 		double max_proj = -123213;
 		int maxpos = -1;
-#ifdef UNMIX_CLUSTERING_PIXEL_CLASSIFICATION
+#if defined(UNMIX_CLUSTERING_PIXEL_CLASSIFICATION) //|| defined(UNMIX_METHOD3)
 		for(int co = 0; co < m; co++)
 		{
 			double proj_sum = 0;
@@ -927,18 +1025,43 @@ void unmix_clustering(InputImageType::Pointer im[],InputImageType::Pointer om[],
 		iterator[counter].GoToBegin();
 	for(int counter = 0; counter < m; counter++)
 		printf("min_values[%d] = %lf\n",counter, min_values[counter]);
-		//BinaryMedianFilterType::Pointer binmedfilt = BinaryMedianFilterType::New();
-		//binmedfilt->SetInput(assignment_image);
-		//binmedfilt->SetBackgroundValue(0);
-		//binmedfilt->SetForegroundValue(1);
-		//radius[0] = 1;
-		//radius[1] = 1;
-		//radius[2] = 1;
-		//binmedfilt->SetRadius(radius);
-		//binmedfilt->Update();
-		//assignment_image = binmedfilt->GetOutput();
-		//assignment_iter = IteratorType(assignment_image,assignment_image->GetLargestPossibleRegion());
+#ifdef UNMIX_CLUSTERING_PIXEL_CLASSIFICATION
+	typedef itk::MedianImageFilter<InputImageType,InputImageType> GrayScaleMedianFilterType;
+		GrayScaleMedianFilterType::Pointer binmedfilt = GrayScaleMedianFilterType::New();
+		binmedfilt->SetInput(assignment_image);
+		radius[0] = 1;
+		radius[1] = 1;
+		radius[2] = 0;
+		binmedfilt->SetRadius(radius);
+		binmedfilt->Update();
+		assignment_image = binmedfilt->GetOutput();
+		assignment_iter = IteratorType(assignment_image,assignment_image->GetLargestPossibleRegion());
 		assignment_iter.GoToBegin();
+		//writeImage<InputImageType>(assignment_image,"C:\\Users\\arun\\Research\\unmixing_work\\build\\release\\debug_assign_image.tif");
+#endif
+
+#ifdef UNMIX_METHOD4
+/*	IloEnv env;
+	IloObjective obj = IloMaximize(env);
+	IloNumVarArray x(env,m,0,255);
+	IloRangeArray c(env);
+	for(int counter = 0; counter < n; counter++)
+	{
+		c.add(IloRange(env,0,1));
+		for(int counter1 = 0; counter1 < m; counter1++)
+		{
+			c[counter].setLinearCoef(x[counter1],start[counter][counter1]);
+		}
+	}
+	IloModel model(env);
+	model.add(obj);
+	model.add(c);
+	IloNumArray vals(env);*/
+		inveigen = start.transpose()*vnl_matrix_inverse<double>(start*start.transpose());
+		inveigen.print(std::cout);
+		//inveigen.normalize_rows();
+#endif
+	vnl_vector<int> class_count(m,0);
 	for(;!oiter[0].IsAtEnd();)
 	{
 		/*
@@ -947,20 +1070,20 @@ void unmix_clustering(InputImageType::Pointer im[],InputImageType::Pointer om[],
 		   */
 		//		if(100.0/total_voxels*num_processed> 100)
 		//			break;
-		double max_proj = -133434;
-		int maxpos = -1;
+		
 		final_counter++;
 		if(final_counter%1000000==0)
 			printf("%.2lf\r",final_counter*100.0/total_voxels);
 
-#ifdef UNMIX_CLUSTERING_PIXEL_CLASSIFICATION
-		
+#if defined(UNMIX_CLUSTERING_PIXEL_CLASSIFICATION)
+		double max_proj = -133434;
+		int maxpos = -1;
 		double proj_sum = 0;
 		for(int co1 = 0; co1 < n; co1++)
 		{
 			proj_sum += start[co1][assignment_iter.Get()]*iterator[co1].Get();
 		}
-		
+		;
 		//printf("loop 1 complete\n");
 		maxpos = assignment_iter.Get();
 		//if(maxpos!=0)
@@ -980,17 +1103,124 @@ void unmix_clustering(InputImageType::Pointer im[],InputImageType::Pointer om[],
 					oiter[co].Set(255);
 			}
 		}
-		assignment_iter++;
+		
+		++assignment_iter;
+#elif defined(UNMIX_METHOD3)
+		
+		vnl_vector<double> b(n);
+		vnl_vector<int> marker(m,0);
+		for(int co_n = 0; co_n < n; co_n++)
+		{
+			b[co_n] = iterator[co_n].Get();
+		}
+		for(int co_n = 0; co_n < n; co_n++)
+		{
+			int max_proj_co = -1;
+			double max_proj_sum = 1;
+			for(int co_m = 0; co_m < m ; co_m++)
+			{
+				double proj_sum = 0;
+
+				for(int co1 = 0; co1 < n; co1++)
+				{
+					proj_sum += start[co1][co_m]*b[co1];
+				}
+				if(proj_sum > max_proj_sum)
+				{
+					max_proj_sum = proj_sum;
+					max_proj_co = co_m;
+				}
+			}
+			if(max_proj_co >=0)
+			{
+				//if(marker[max_proj_co]==0)
+				{
+					oiter[max_proj_co].Set(MAX(MIN(255,max_proj_sum),0));
+					++class_count[max_proj_co];
+					marker[max_proj_co] = 1;
+					b = b - max_proj_sum*start.get_column(max_proj_co);
+				}
+				/*
+				else
+				{
+					printf("Why am I setting it again?\n");
+				}*/
+			}
+			else
+				break;
+		}
+#elif defined(UNMIX_METHOD4)
+
+		vnl_vector<double> b(n);
+		for(int co =0; co<n; co++)
+		{
+			b[co] = iterator[co].Get()-mean_values[co];
+		}
+		int max_proj_co = -1;
+		double max_proj_sum = 1;
+		for(int co_m = 0; co_m < m ; co_m++)
+		{
+			double proj_sum = 0;
+			for(int co1 = 0; co1 < n; co1++)
+			{
+				proj_sum += start[co1][co_m]*b[co1];
+			}
+			if(proj_sum > max_proj_sum)
+			{
+				max_proj_sum = proj_sum;
+				max_proj_co = co_m;
+			}
+		}
+		if(max_proj_co!=-1)
+		{
+			vnl_vector<double> sol(m,0);
+			vnl_vector<double> solold(m,0);
+			sol[max_proj_co] = b.two_norm();
+
+			bool converged = false;
+			vnl_vector<double> r(n,0);
+			vnl_vector<double> d(m,0);
+			int iterations;
+			for(iterations = 0; iterations < 200; iterations++)
+			{
+				//printf("hi\n");
+				r = b - start*sol;
+				//printf("hi1\n");
+				d = inveigen*r;
+				//printf("hi2\n");
+				
+				sol = sol + d;
+				//std::cout<<sol<<std::endl;
+				//printf("hi3\n");
+				for(int counter = 0; counter < sol.size(); counter++)
+				{
+					if(sol[counter]<0)
+						sol[counter]=0;
+				}
+				if((sol-solold).inf_norm()<1)
+				{
+					//printf("hi4\n");
+					break;
+				}
+				solold = sol;
+				//printf("hi5\n");
+			}
+		//	if(iterations == 100)
+		//		printf("hit limit %d\n",rand());
+			//printf("finished\n");
+			for(int co_m = 0; co_m < m; co_m++)
+				oiter[co_m].Set(MAX(MIN(sol[co_m]/3,255),0));
+		}
 #else
 		for(int co =0; co<n; co++)
 		{
 			inputmixed[co] = iterator[co].Get()-mean_values[co];
 		}
-		//vnl_vector<double> outputmixed = inveigen*inputmixed;
-		vnl_vector<double> outputmixed = qrdecomp.solve(inputmixed);
+		vnl_vector<double> outputmixed = inveigen*inputmixed;
+		//vnl_vector<double> outputmixed = qrdecomp.solve(inputmixed);
 		double negflag = false;
 		for(int co = 0; co < m; co++)
-		{
+		{	
 			if(outputmixed[co]<0)
 				negflag = true;
 			oiter[co].Set(MAX(MIN((outputmixed[co]),255),0));
@@ -1008,6 +1238,20 @@ void unmix_clustering(InputImageType::Pointer im[],InputImageType::Pointer om[],
 			++oiter[co];
 		}
 	}
+
+	for(int count = 0; count < m; count ++)
+	{
+		printf("class_count[%d] = %d\n", count,class_count[count]);
+	}
+
+	/*InputImageType::Pointer processed[MAX_CHANNELS];
+	for(int counter =0; counter < n; counter++)
+	{
+		processed[counter] = filt[counter]->GetOutput();
+	}*/
+	//Output2DImageType::Pointer strip1 = getGalleryView(processed,1,MAX(n,m));
+	
+	//writeImage<Output2DImageType>(strip1,"InputProcessedGallery.bmp");
 
 	printf("negcount = %d\n",negcount);
 	printf(" Done.\n");

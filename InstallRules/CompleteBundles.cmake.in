@@ -22,65 +22,19 @@ if(COMMAND CMAKE_POLICY)
   endif(POLICY CMP0011)
 endif(COMMAND CMAKE_POLICY)
 
-
-# gp_item_default_embedded_path_override item default_embedded_path_var
-#
-# Return the path that others should refer to the item by when the item
-# is embedded inside a bundle.
-#
-# This is a project-specific override of BundleUtilities.cmake's
-# gp_item_default_embedded_path
-#
-function(gp_item_default_embedded_path_override item default_embedded_path_var)
-
-  # By default, embed items as set by gp_item_default_embedded_path:
-  #
-  set(path "${${default_embedded_path_var}}")
-
-  # But for ParaView...
-  #
-  # ...embed *.dylib in the Libraries folder:
-  #
-  if(item MATCHES "\\.dylib$")
-    set(path "@executable_path/../Libraries")
-  endif(item MATCHES "\\.dylib$")
-
-  # ...embed *Plugin.dylib in the Plugins folder:
-  #
-  if(item MATCHES "Plugin\\.dylib$")
-    set(path "@executable_path/../Plugins")
-  endif(item MATCHES "Plugin\\.dylib$")
-
-  # ...embed *.so in the Plugins folder:
-  #
-  if(item MATCHES "\\.so$")
-    set(path "@executable_path/../Plugins")
-  endif(item MATCHES "\\.so$")
-
-  # ...embed *Python.so in the Libraries folder:
-  #
-  if(item MATCHES "Python\\.so$")
-    set(path "@executable_path/../Libraries")
-  endif(item MATCHES "Python\\.so$")
-
-  set(${default_embedded_path_var} "${path}" PARENT_SCOPE)
-endfunction(gp_item_default_embedded_path_override)
-
-
 # Fixup the .app bundle in the install tree:
 #
 include(BundleUtilities)
 
-
 fixup_bundle(
   "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/TraceEdit.app"
   ""
-  "@EXECUTABLE_OUTPUT_PATH@/@CMAKE_CFG_INTDIR@"
+  "@LIB_DIR@"
   )
 
 fixup_bundle(
   "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/NucleusEditor.app"
   ""
-  "@EXECUTABLE_OUTPUT_PATH@/@CMAKE_CFG_INTDIR@"
+  "@LIB_DIR@"
   )
 

@@ -605,12 +605,12 @@ int main(int argc, char **argv)
           InputImageType::SizeType radius;
           radius[0]=3;radius[1]=3;radius[2]=1;
           binary = getBinaryMedianFiltered(binary,radius);
-		  writeImage<InputImageType>(binary,"C:\\Users\\arun\\Research\\Tracking\\harvard\\cache\\testross\\vessel_test1.tif");
+		//  writeImage<InputImageType>(binary,"C:\\Users\\arun\\Research\\Tracking\\harvard\\cache\\testross\\vessel_test1.tif");
           binary = getDilated(binary,3);
-		  writeImage<InputImageType>(binary,"C:\\Users\\arun\\Research\\Tracking\\harvard\\cache\\testross\\vessel_test2.tif");
+		//  writeImage<InputImageType>(binary,"C:\\Users\\arun\\Research\\Tracking\\harvard\\cache\\testross\\vessel_test2.tif");
           radius[0]=5;radius[1]=5;radius[2]=1;
           binary = getBinaryMedianFiltered(binary,radius);
-		  writeImage<InputImageType>(binary,"C:\\Users\\arun\\Research\\Tracking\\harvard\\cache\\testross\\vessel_test3.tif");
+		//  writeImage<InputImageType>(binary,"C:\\Users\\arun\\Research\\Tracking\\harvard\\cache\\testross\\vessel_test3.tif");
 		  //writeImage<InputImageType>(binary,vessel_cache);
         if(t==0)
           {
@@ -636,6 +636,6 @@ int main(int argc, char **argv)
     writeImage<InputImageType>(vessel_trace,argv[argc-1]);
   }
 
-	scanf("%*d");
+	//scanf("%*d");
   return 0;
 }

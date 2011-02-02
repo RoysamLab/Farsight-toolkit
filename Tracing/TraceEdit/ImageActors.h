@@ -22,7 +22,7 @@ limitations under the License.
 #include "vtkImageToStructuredPoints.h"
 #include "vtkImageActor.h"
 #include "vtkLODActor.h"
-#include "vtkOpenGLVolumeTextureMapper3D.h"
+#include "vtkFixedPointVolumeRayCastMapper.h"
 #include "itkMaximumProjectionImageFilter.h"
 #include "itkMinimumProjectionImageFilter.h"
 #include "itkMeanProjectionImageFilter.h"
@@ -82,7 +82,7 @@ struct imageFileHandle
 	vtkSmartPointer<vtkActor> ContourActor;
 //Raycast pointers
 	vtkSmartPointer<vtkVolumeProperty> volumeProperty;
-	vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper;
+	vtkSmartPointer<vtkFixedPointVolumeRayCastMapper> volumeMapper;
 //image slicer
 	ImageActorPointerType sliceActor;
 	vtkSmartPointer<vtkImageActor> ProjectionActor;

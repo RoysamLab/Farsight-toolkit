@@ -1504,7 +1504,7 @@ void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs, float spacing[3])
 	{
 		printf("Beginning to read track no: %d/%d\n",tcounter+1, (int)tfs.size());
 		//std::vector<TrackPoint> track = total_tracks[tcounter];
-		if(tfs[tcounter].intrinsic_features.size()<3)
+		if(tfs[tcounter].intrinsic_features.size()<2)
 		{
 			printf("Ignored a tiny track of size %d track.size()\n",(int)tfs[tcounter].intrinsic_features.size());
 			continue;
@@ -2201,6 +2201,108 @@ std::vector<FeaturesType> get_all_connected_components(LabelImageType::Pointer l
 
 }
 
+void MergeCells(std::vector<LabelImageType::Pointer> lin, std::vector<InputImageType::Pointer> imin, std::vector<FeaturesType> fin, FeatureVariances fvar, LabelImageType::Pointer &lout, InputImageType::Pointer &rout, FeaturesType &fout)
+{
+	printf("In MergeCell\n");
+	LabelImageType::Pointer p1,p2;
+	InputImageType::Pointer r1,r2;
+	p1 = lin[0];
+	p2 = lin[1];
+	r1 = imin[0];
+	r2 = imin[1];
+
+
+	LabelImageType::SizeType ls;
+
+	int lbounds[6];
+
+	lbounds[0] = MIN(fin[0].BoundingBox[0],fin[1].BoundingBox[0]);
+	lbounds[2] = MIN(fin[0].BoundingBox[2],fin[1].BoundingBox[2]);
+	lbounds[4] = MIN(fin[0].BoundingBox[4],fin[1].BoundingBox[4]);
+	lbounds[1] = MAX(fin[0].BoundingBox[1],fin[1].BoundingBox[1]);
+	lbounds[3] = MAX(fin[0].BoundingBox[3],fin[1].BoundingBox[3]);
+	lbounds[5] = MAX(fin[0].BoundingBox[5],fin[1].BoundingBox[5]);
+
+	ls[0] = lbounds[1]-lbounds[0]+1;
+	ls[1] = lbounds[3]-lbounds[2]+1;
+	ls[2] = lbounds[5]-lbounds[4]+1;
+
+	LabelImageType::Pointer p = LabelImageType::New();
+	InputImageType::Pointer r = InputImageType::New();
+	LabelImageType::IndexType lindex;
+	lindex.Fill(0);
+	LabelImageType::RegionType lregion;
+	lregion.SetIndex(lindex);
+	lregion.SetSize(ls);
+	p->SetRegions(lregion);
+	p->Allocate();
+	p->FillBuffer(0);
+	r->SetRegions(lregion);
+	r->Allocate();
+	r->FillBuffer(0);
+	LabelIteratorType liter1(p1,p1->GetLargestPossibleRegion());
+	IteratorType riter1(r1,r1->GetLargestPossibleRegion());
+
+
+	lindex[0] = fin[0].BoundingBox[0]-lbounds[0];
+	lindex[1] = fin[0].BoundingBox[2]-lbounds[2];
+	lindex[2] = fin[0].BoundingBox[4]-lbounds[4];
+
+	lregion.SetSize(p1->GetLargestPossibleRegion().GetSize());
+	lregion.SetIndex(lindex);
+
+	LabelIteratorType liter(p,lregion);
+	IteratorType riter(r,lregion);
+	for(liter1.GoToBegin(),riter1.GoToBegin(),liter.GoToBegin(),riter.GoToBegin();!liter1.IsAtEnd(); ++liter1,++riter1,++liter,++riter)
+	{
+		if(liter1.Get()==fin[0].num)
+			liter.Set(255);
+		riter.Set(riter1.Get());
+	}
+
+	LabelIteratorType liter2(p2,p2->GetLargestPossibleRegion());
+	IteratorType riter2(r2,r2->GetLargestPossibleRegion());
+
+	lindex[0] = fin[1].BoundingBox[0]-lbounds[0];
+	lindex[1] = fin[1].BoundingBox[2]-lbounds[2];
+	lindex[2] = fin[1].BoundingBox[4]-lbounds[4];
+	lregion.SetIndex(lindex);
+	lregion.SetSize(p2->GetLargestPossibleRegion().GetSize());
+
+	liter = LabelIteratorType(p,lregion);
+	riter = IteratorType(r,lregion);
+
+	for(liter2.GoToBegin(),riter2.GoToBegin(),liter.GoToBegin(),riter.GoToBegin();!liter2.IsAtEnd(); ++liter2,++liter,++riter,++riter2)
+	{
+		if(liter2.Get()==fin[1].num)
+			liter.Set(255);
+		riter.Set(riter2.Get());
+	}
+
+
+	std::vector<FeaturesType> f1;
+	getFeatureVectorsFarsight(p,r,f1,fin[0].time,fin[0].tag);
+
+	FeaturesType f = f1[0];
+	f.Centroid[0]+=lbounds[0];
+	f.Centroid[1]+=lbounds[2];
+	f.Centroid[2]+=lbounds[4];
+	f.WeightedCentroid[0]+=lbounds[0];
+	f.WeightedCentroid[2]+=lbounds[2];
+	f.WeightedCentroid[4]+=lbounds[4];
+	f.BoundingBox[0]+=lbounds[0];
+	f.BoundingBox[1]+=lbounds[0];
+	f.BoundingBox[2]+=lbounds[2];
+	f.BoundingBox[3]+=lbounds[2];
+	f.BoundingBox[4]+=lbounds[4];
+	f.BoundingBox[5]+=lbounds[5];
+	lout = p;
+	rout = r;
+	fout = f;
+	//return f;
+	printf("End mergecell\n");
+}
+
 void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,FeaturesType fin, FeatureVariances fvar,std::vector<LabelImageType::Pointer> &lout,std::vector<InputImageType::Pointer> &rout,std::vector<FeaturesType> &fvecout)
 {
 	printf("In SplitCell:\n");
@@ -2365,6 +2467,10 @@ _TRACE;
 			InputImageType::Pointer r1,r2;
 			r1 = InputImageType::New();
 			r2 = InputImageType::New();
+			r1->SetRegions(l1->GetLargestPossibleRegion());
+			r2->SetRegions(l2->GetLargestPossibleRegion());
+			r1->Allocate();
+			r2->Allocate();
 			rout.push_back(r1);
 			rout.push_back(r2);
 			fvecout.push_back(ftemp[0]);

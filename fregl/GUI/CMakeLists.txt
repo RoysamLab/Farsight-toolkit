@@ -30,7 +30,7 @@ QT4_WRAP_UI( MY_UI_HDRS ${MY_UIS} )
 # and finally this will run moc:
 QT4_WRAP_CPP( MY_MOC_SRCS ${MY_GUI_HDRS} )
 
-ADD_LIBRARY( fregl_gui STATIC 
+ADD_LIBRARY( fregl_gui
              ${MY_GUI_SRCS}
 	     ${MY_GUI_HDRS}	 
              ${MY_MOC_SRCS} 

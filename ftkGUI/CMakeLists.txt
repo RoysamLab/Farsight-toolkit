@@ -47,7 +47,7 @@ QT4_WRAP_UI( GUI_UI_HDRS ${GUI_UIS} )
 # and finally this will run moc:
 QT4_WRAP_CPP( GUI_MOC_SRCS ${GUI_HDRS} )
 
-ADD_LIBRARY( ftkGUI STATIC
+ADD_LIBRARY( ftkGUI
              ${GUI_SRCS}
              ${GUI_HDRS}
              ${GUI_MOC_SRCS}
@@ -55,7 +55,9 @@ ADD_LIBRARY( ftkGUI STATIC
              ${GUI_RC_SRCS}
 )
 
-TARGET_LINK_LIBRARIES( ftkGUI ${QT_LIBRARIES} QVTK ftkImage ftkPreprocess TinyXML libSVM vtkVolumeRendering)
+TARGET_LINK_LIBRARIES( ftkGUI
+  ${QT_LIBRARIES} QVTK ftkCommon ftkPreprocess ftkImage TinyXML libSVM vtkVolumeRendering
+) 
 
 IF(USE_KPLS)
   TARGET_LINK_LIBRARIES( ftkGUI libKPLS )

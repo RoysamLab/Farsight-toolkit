@@ -55,7 +55,7 @@ if __name__ == '__main__':
     # prefix the filanames with necessary things like
     # unmixed_, labeled_, labeled_tracks_, vessel_binarized_, etc..
 
-    time_points = time_points[0:10] # DEBUG
+    time_points = time_points[0:30] # DEBUG
     #channels = [2,3,4]
     #pdb.set_trace()
     ######################### Delete slices #############################
@@ -142,7 +142,7 @@ if __name__ == '__main__':
                 continue;
             if w == 3 or w == 4:
                 # call yousef segmentation
-                temp_fname.append(os.path.join(exe_dir,'segment_nuclei'))
+                temp_fname.append(os.path.join(exe_dir,'segment_nuclei_harvard'))
                 temp_fname.append(os.path.join(cache_prefix, 'smoothed_' + filenames[(w,t)]))
                 temp_fname.append(output_filename)
                 temp_fname.append(nuclei_segmentation_cfg)# parameters filename
@@ -194,11 +194,9 @@ if __name__ == '__main__':
 ##    ############################# Tracking ##############################
 ##
 ##    # track channel 1 and 2 only
-    channels_to_track = [3,4]
+    channels_to_track = [4]
     for w in channels_to_track:
         temp_fname = [];
-        temp_fname.append(os.path.join(exe_dir,'tracking_multiframe'))
-        temp_fname.append('0.96 0.96 4.0');
         temp_fname.append(cache_prefix)
         for t in time_points:
             temp_fname.append('smoothed_' + filenames[(w,t)])
@@ -209,14 +207,15 @@ if __name__ == '__main__':
         for t in time_points:
             temp_fname.append('labeled_tracks_' + filenames[(w,t)])
         print temp_fname
-        f = open(os.path.join(cache_prefix,'tracking_parameters.txt'),'w')
-        for x in temp_fname[1:]:
+        f = open(os.path.join(cache_prefix,'tracking_harvard_filenames.txt'),'w')
+        for x in temp_fname:
             f.write(x)
             f.write('\r\n')
         f.close()
         temp_fname1 = [];
         temp_fname1.append(os.path.join(exe_dir,'tracking_multiframe'))
-        temp_fname1.append(os.path.join(cache_prefix,'tracking_parameters.txt'))
+        temp_fname1.append(os.path.join(cache_prefix,'tracking_harvard_filenames.txt'))
+        temp_fname1.append(os.path.join(cwd,'Tracking_harvard_parameters.txt'))
         #subprocess.call(temp_fname1);
         subprocess.call(temp_fname1);
 ##    
@@ -225,7 +224,6 @@ if __name__ == '__main__':
 ##    # compute features for channel 1,2 against channel 3,4
     for w in channels_to_track:
         temp_fname = [];
-        temp_fname.append(os.path.join(exe_dir,'summary'))
         temp_fname.append('0.96 0.96 4.0')
         temp_fname.append(str(len(time_points)))
         temp_fname.append('1'); # number of associated channels to compute features with
@@ -240,15 +238,15 @@ if __name__ == '__main__':
 ##        temp_fname.append(os.path.join(cache_prefix, 'vessel_trace_' + dataset_id + '_w' + str(vessel_w) + '.tif'))
         temp_fname.append(os.path.join(cache_prefix, 'track_summary_' + dataset_id + '_w' + str(w) + '.txt'))
         temp_fname.append(os.path.join(cache_prefix, 'track_points_summary_' + dataset_id + '_w' + str(w) + '.txt'))
-        f = open(os.path.join(cache_prefix,'summary_parameters.txt'),'w')
-        for x in temp_fname[1:]:
+        f = open(os.path.join(cache_prefix,'summary_harvard_filenames.txt'),'w')
+        for x in temp_fname:
             f.write(x)
             f.write('\r\n')
         f.close()
         temp_fname1 = [];
         temp_fname1.append(os.path.join(exe_dir,'summary'))
-        temp_fname1.append(os.path.join(cache_prefix,'summary_parameters.txt'))
-        subprocess.call(temp_fname1);
+        temp_fname1.append(os.path.join(cache_prefix,'summary_harvard_filenames.txt'))
+        #subprocess.call(temp_fname1);
 
   ####################### Rendering #########################
 ##  temp_fname = [];

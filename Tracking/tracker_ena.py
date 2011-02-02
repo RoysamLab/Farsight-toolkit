@@ -11,10 +11,11 @@ def populate_directories(path, dataset_id):
 if __name__ == '__main__':
 
     # default values for all variables defined here
-    data_directory = 'C:\\Users\\Arun\\Research\\Tracking\\data\wF5p120307m1s9'
-    cwd = 'C:\\Users\\Arun\\Research\\Tracking\\berkeley\\'
-    exe_dir = 'C:\\Users\\Arun\\Research\\Farsight_bin\\bin'
-    dataset_id = ''
+    data_directory = 'L:\\\Tracking\\\data\\wF5p120307m1s7'
+    cwd = 'L:\\Tracking'
+    exe_dir = 'C:\\Users\\Arun\\Research\\Farsight\\exe\\bin'
+    dataset_id = 'Trial1'
+    number_of_cores = 7;
     dirList = os.listdir(data_directory)
     list_of_filenames =[]
     channels = []
@@ -50,7 +51,7 @@ if __name__ == '__main__':
     # prefix the filanames with necessary things like
     # unmixed_, labeled_, labeled_tracks_, vessel_binarized_, etc..
 
-    time_points = time_points[0:2] # DEBUG
+    time_points = time_points # DEBUG
     channels = channels;
 ##    ######################### Delete slices #############################
 ##    for w in channels:
@@ -85,27 +86,37 @@ if __name__ == '__main__':
 ##        subprocess.call(temp_fname)
 
     ######################### Unmixing ##################################
+    popen_objs = [];
     for t in time_points:
         temp_fname = [];
-        temp_fname.append(os.path.join(exe_dir,'unmix'))
+        temp_fname.append(os.path.join(exe_dir,'unmix_spectral_berkeley'))
         
         #first add input filenames then add output filenames
+        temp_fname.append(str(len(channels)))
+        temp_fname.append(str(len(channels)))
         for w in channels:
            temp_fname.append(os.path.join(data_directory,filenames[(w,t)]))
         for w in channels:
             temp_fname.append(os.path.join(cache_prefix,'unmixed_' + filenames[(w,t)]))
+        popen_objs.append(subprocess.Popen(temp_fname))
+        if len(popen_objs) == number_of_cores:
+                for obj in popen_objs:
+                    out = obj.communicate()[0]    
+                popen_objs = []
+    for obj in popen_objs:
+        out = obj.communicate()[0]       
         
-        # call the unmix executable
-        subprocess.call(temp_fname)
-
     ######################## Segmentation ###############################
 
-    nuclei_segmentation_cfg = 'CellSegmentation.ini'
+    nuclei_segmentation_cfg = 'Berkeley_CellSegmentation.ini'
     params = [];
     params.append('15,50,10');
     params.append('2,50,5');
 
+    vessel_w = 4;
+    dc_w = 3;
     channels_to_segment = [1,2,3,4]
+    popen_objs = [];
     # segment all the channels first. Then trace the vessels.
     for t  in time_points:
         for w in channels_to_segment:
@@ -115,7 +126,7 @@ if __name__ == '__main__':
                 continue;
             if w == 1 or w == 2:
                 # call yousef segmentation
-                temp_fname.append(os.path.join(exe_dir,'segment_nuclei'))
+                temp_fname.append(os.path.join(exe_dir,'segment_nuclei_harvard'))
                 temp_fname.append(os.path.join(cache_prefix, 'unmixed_' + filenames[(w,t)]))
                 temp_fname.append(output_filename)
                 temp_fname.append(nuclei_segmentation_cfg)# parameters filename
@@ -126,11 +137,16 @@ if __name__ == '__main__':
                 temp_fname.append('2') # type of segmentation
                 temp_fname.append(params[int(w)-3]) # paramerters
                 temp_fname.append(output_filename)
-            
-            subprocess.call(temp_fname)
+            popen_objs.append(subprocess.Popen(temp_fname));
+            if len(popen_objs) == number_of_cores:
+                for obj in popen_objs:
+                        out = obj.communicate()[0];
+                popen_objs = []
+    for obj in popen_objs:
+        out = obj.communicate()[0];
 
     # vessel tracing
-    vessel_w = 4; #vessel channel
+     #vessel channel
     temp_fname = [];
     temp_fname.append(os.path.join(exe_dir,'vessel_thinning'))
     for t in time_points:
@@ -139,38 +155,79 @@ if __name__ == '__main__':
     temp_fname.append(os.path.join(cache_prefix, 'vessel_trace_'+ dataset_id + '_w' + str(vessel_w) + '.tif'))
     subprocess.call(temp_fname) 
 
+      ############################# Clean up segmentation ################
+
+    for t in time_points:
+        for w in channels_to_segment:
+            temp_fname = []
+            output_filename = os.path.join(cache_prefix, 'clabeled_' + filenames[(w,t)])
+            if os.path.exists(output_filename):
+                continue;
+            temp_fname.append(os.path.join(exe_dir,'remove_small_components'))
+            temp_fname.append(os.path.join(cache_prefix, 'labeled_' + filenames[(w,t)]))
+            temp_fname.append('100')
+            temp_fname.append(os.path.join(cache_prefix, 'clabeled_' + filenames[(w,t)]))
+            #pdb.set_trace()
+            popen_objs.append(subprocess.Popen(temp_fname))
+            if len(popen_objs) == number_of_cores :
+                for obj in popen_objs:
+                    out = obj.communicate()[0]
+                popen_objs = []
+    for obj in popen_objs:
+        out = obj.communicate()[0]   
     ############################# Tracking ##############################
 
     # track channel 1 and 2 only
     channels_to_track = [1,2]
     for w in channels_to_track:
         temp_fname = [];
-        temp_fname.append(os.path.join(exe_dir,'tracking'))
+        temp_fname.append(cache_prefix)
         for t in time_points:
-            temp_fname.append(os.path.join(cache_prefix, 'unmixed_' + filenames[(w,t)]))
+            temp_fname.append('unmixed_' + filenames[(w,t)])
+        temp_fname.append(cache_prefix)
         for t in time_points:
-            temp_fname.append(os.path.join(cache_prefix, 'labeled_' + filenames[(w,t)]))
+            temp_fname.append('clabeled_' + filenames[(w,t)])
+        temp_fname.append(cache_prefix)
         for t in time_points:
-            temp_fname.append(os.path.join(cache_prefix, 'labeled_tracks_' + filenames[(w,t)]))
-        subprocess.call(temp_fname);
+            temp_fname.append('labeled_tracks_' + filenames[(w,t)])
+        print temp_fname
+        f = open(os.path.join(cache_prefix,'tracking_berkeley_filenames.txt'),'w')
+        for x in temp_fname:
+            f.write(x)
+            f.write('\r\n')
+        f.close()
+        temp_fname1 = [];
+        temp_fname1.append(os.path.join(exe_dir,'tracking_multiframe'))
+        temp_fname1.append(os.path.join(cache_prefix,'tracking_berkeley_filenames.txt'))
+        temp_fname1.append(os.path.join(cwd,'tracking_berkeley_parameters.txt'))
+        #subprocess.call(temp_fname1);
+        subprocess.call(temp_fname1);
     
     ####################### Feature computation #########################
 
-    # compute features for channel 1,2 against channel 3,4
     for w in channels_to_track:
         temp_fname = [];
-        temp_fname.append(os.path.join(exe_dir,'summary'))
+        #temp_fname.append(os.path.join(exe_dir,'summary'))
+        temp_fname.append('0.36 0.36 2.0')
         temp_fname.append(str(len(time_points)))
-        temp_fname.append('2'); # number of associated channels to compute features with
+        temp_fname.append('1'); # number of associated channels to compute features with
         for t in time_points:
             temp_fname.append(os.path.join(cache_prefix, 'unmixed_' + filenames[(w,t)]))
         for t in time_points:
             temp_fname.append(os.path.join(cache_prefix, 'labeled_tracks_' + filenames[(w,t)]))
         temp_fname.append('DC') # type of channel
-	for t in time_points:
-            temp_fname.append(os.path.join(cache_prefix, 'labeled_' + filenames[(3,t)])) # add DC segmented files too
-        temp_fname.append('Vessel') # type of channel
-	temp_fname.append(os.path.join(cache_prefix, 'vessel_trace_' + dataset_id + '_w' + str(vessel_w) + '.tif'))
+        for t in time_points:
+            temp_fname.append(os.path.join(cache_prefix, 'clabeled_' + filenames[(dc_w,t)])) # add DC segmented files too
+        #temp_fname.append('Vessel') # type of channel
+        #temp_fname.append(os.path.join(cache_prefix, 'vessel_trace_' + dataset_id + '_w' + str(vessel_w) + '.tif'))
         temp_fname.append(os.path.join(cache_prefix, 'track_summary_' + dataset_id + '_w' + str(w) + '.txt'))
         temp_fname.append(os.path.join(cache_prefix, 'track_points_summary_' + dataset_id + '_w' + str(w) + '.txt'))
-        subprocess.call(temp_fname);
+        f = open(os.path.join(cache_prefix,'summary_berkeley_filenames.txt'),'w')
+        for x in temp_fname:
+            f.write(x)
+            f.write('\r\n')
+        f.close()
+        temp_fname1 = [];
+        temp_fname1.append(os.path.join(exe_dir,'summary'))
+        temp_fname1.append(os.path.join(cache_prefix,'summary_berkeley_filenames.txt'))
+        subprocess.call(temp_fname1);

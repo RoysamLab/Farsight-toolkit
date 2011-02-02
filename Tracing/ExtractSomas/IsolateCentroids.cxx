@@ -93,6 +93,12 @@ int main( int argc, char ** argv )
   for(unsigned int label=1; label<= numSomas; ++label)
     {
     const LabelObjectType * labelObject = Somas->GetLabelObject(label);
+    if(labelObject->GetPhysicalSize() < 100)
+      {
+      //skip small blobs: they probably aren't real somas
+      continue;
+      }
+
     const LabelObjectType::CentroidType centroid = labelObject->GetCentroid();
     
     ImageType::IndexType pixelIndex;

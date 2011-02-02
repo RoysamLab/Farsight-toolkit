@@ -1,12 +1,13 @@
 SET( NSRCS
 	yousef_seg.h
 	yousef_seg.cpp
+  gvc/gvc.h
+  gvc/gvc.cpp
 )
 
 ################################################################################
 #      Here we add all sub-directories that are involved with this program       #
 ################################################################################
-
 
 SET( sd3d_SRCS
 	seed_detection_3D/seedsDetection_3D.cxx
@@ -22,7 +23,6 @@ SET( sd2d_SRCS
 
 SET( mcgl3d_SRCS
 	graphColLearn_3D/Multi_Color_Graph_Learning_3D.h
-	graphColLearn_3D/gvc.h
 	graphColLearn_3D/Multi_Color_Graph_Learning_3D.cpp
 	graphColLearn_3D/sequential_coloring.cpp
 )
@@ -62,24 +62,13 @@ SET( cb3_SRCS
 	alpha_expansion/GCoptimization.cpp	
 	alpha_expansion/LinkedBlockList.h
 	alpha_expansion/LinkedBlockList.cpp
-	#alpha_expansion/GraphCut3dConstr.cpp	
-	#alpha_expansion/GraphCutConstr.cpp	
-	#alpha_expansion/GraphCutMex.cpp
-	#alpha_expansion/GraphCut.cpp
 	alpha_expansion/graph.cpp
 	alpha_expansion/maxflow.cpp
 	alpha_expansion/block.h
 	alpha_expansion/graph.h
 	alpha_expansion/GraphCut.h
-	alpha_expansion/gvc.h
-	alpha_expansion/gvc.cpp
 	alpha_expansion/Multi_Color_Graph_Learning_2D.h
 	alpha_expansion/Multi_Color_Graph_Learning_2d.cpp
-)
-
-SET( gwd_SRCS
-	#gradient_weighted_distance_2D/gradientweighteddistancemap.h
-	#gradient_weighted_distance_2D/gradientweighteddistancemap.cpp
 )
 
 SET( prepr_SRCS
@@ -87,7 +76,8 @@ SET( prepr_SRCS
 	preprocessing/GrAnisDiff.cpp
 )
 
+INCLUDE_DIRECTORIES(gvc)
 
-ADD_LIBRARY( Yousef_Nucleus_Seg ${NSRCS} ${sd3d_SRCS} ${sd2d_SRCS} ${mcgl3d_SRCS} ${emgmm_SRCS} ${clust_SRCS} ${clust2d_SRCS} ${border_SRCS} ${cbin_SRCS} ${cb3_SRCS} ${gwd_SRCS} ${prepr_SRCS})
+ADD_LIBRARY( Yousef_Nucleus_Seg ${NSRCS} ${sd3d_SRCS} ${sd2d_SRCS} ${mcgl3d_SRCS} ${emgmm_SRCS} ${clust_SRCS} ${clust2d_SRCS} ${border_SRCS} ${cbin_SRCS} ${cb3_SRCS} ${prepr_SRCS})
 
 TARGET_LINK_LIBRARIES ( Yousef_Nucleus_Seg ITKBasicFilters ITKCommon ITKIO)

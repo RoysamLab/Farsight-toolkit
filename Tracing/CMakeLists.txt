@@ -40,7 +40,7 @@ ENDIF()
 OPTION( BUILD_Preprocessing "Build image preprocessing applications(only curvelets works as of now)" OFF )
 IF( BUILD_Preprocessing )
   SUBDIRS( Preprocessing/CurveletFiltering/fdct_wrapping_cpp/src )
-  SUBDIRS( Preprocessing/SHtensor_cpp/2D )
+  #SUBDIRS( Preprocessing/SHtensor_cpp/2D )
 ENDIF()
 
 OPTION( BUILD_Rendering "Build 5-Label Result Renderer" ON )

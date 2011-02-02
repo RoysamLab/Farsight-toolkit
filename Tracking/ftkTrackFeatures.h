@@ -41,7 +41,7 @@ class TrackFeatures{
 		void Fprintf(FILE* fp1 = stdout,FILE *fp2 = stdout)
 		{
 		//	fprintf(fp,"TrackFeatures at each time point:\n");
-			if(intrinsic_features.size()>2)
+			if(intrinsic_features.size()>0)
 			{
 			for(unsigned int counter=0; counter< ((intrinsic_features.size()<tfeatures.size())?(intrinsic_features.size()):(tfeatures.size())); counter++)
 			{
