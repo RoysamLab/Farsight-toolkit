@@ -549,7 +549,7 @@ void TrainingDialog::differentclassselected(int selected_class){
 				}
 		}
 		if( class_names.size() > 4 ){
-				if( selected_class==5 && !radio3->isChecked() ){
+				if( selected_class==5 && !radio5->isChecked() ){
 					selected_class = 5; //Set training mode to this one
 					columnForTraining = training_names.at(4).c_str();
 					radio5->setChecked(true);

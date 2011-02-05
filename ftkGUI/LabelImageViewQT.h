@@ -51,6 +51,7 @@ limitations under the License.
 #include <QtCore/QSettings>
 
 #include <ftkImage/ftkImage.h>
+#include <ftkCommon/ftkUtils.h>
 #include <ftkFeatures/ftkObject.h>
 #include "ObjectSelection.h"
 
@@ -101,6 +102,7 @@ public:
 
 public slots:
 	void SaveDisplayImageToFile(QString fileName);
+	void SaveCompositeImageToFile(QString fileName);
 	void AdjustImageIntensity();
 	void SetBoundsVisible(bool val);
 	void SetIDsVisible(bool val);

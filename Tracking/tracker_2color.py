@@ -11,7 +11,7 @@ def populate_directories(path, dataset_id):
 if __name__ == '__main__':
 
     # default values for all variables defined here
-    data_directory = 'L:\\\Tracking\\\data\\P14neg\\movie5c\\'
+    data_directory = 'L:\\\Tracking\\\data\\p14neg\\movie5c\\'
     cwd = 'L:\\Tracking'
     exe_dir = 'C:\\Users\\Arun\\Research\\Farsight\\exe\\bin'
     dataset_id = 'p14neg'
@@ -230,3 +230,34 @@ if __name__ == '__main__':
         temp_fname1.append(os.path.join(exe_dir,'summary'))
         temp_fname1.append(os.path.join(cache_prefix,'summary_berkeley_filenames.txt'))
         subprocess.call(temp_fname1);
+
+    ######################## Segmentation feature computation ##############
+
+
+    for w in channels_to_track:
+        temp_fname = [];
+        #temp_fname.append(os.path.join(exe_dir,'summary'))
+        temp_fname.append('0.64 0.64 2.0')
+        temp_fname.append(str(len(time_points)))
+        temp_fname.append('1'); # number of associated channels to compute features with
+        for t in time_points:
+            temp_fname.append(os.path.join(cache_prefix, 'unmixed_' + filenames[(w,t)]))
+        for t in time_points:
+            temp_fname.append(os.path.join(cache_prefix, 'clabeled_' + filenames[(w,t)]))
+        temp_fname.append('DC') # type of channel
+        for t in time_points:
+            temp_fname.append(os.path.join(cache_prefix, 'clabeled_' + filenames[(dc_w,t)])) # add DC segmented files too
+        #temp_fname.append('Vessel') # type of channel
+        #temp_fname.append(os.path.join(cache_prefix, 'vessel_trace_' + dataset_id + '_w' + str(vessel_w) + '.tif'))
+        temp_fname.append(os.path.join(cache_prefix, 'segmentation_summary_' + dataset_id + '_w' + str(w) + '.txt'))
+        temp_fname.append(os.path.join(cache_prefix, 'segmentation_points_summary_' + dataset_id + '_w' + str(w) + '.txt'))
+        f = open(os.path.join(cache_prefix,'summary_berkeley_filenames.txt'),'w')
+        for x in temp_fname:
+            f.write(x)
+            f.write('\r\n')
+        f.close()
+        temp_fname1 = [];
+        temp_fname1.append(os.path.join(exe_dir,'summary'))
+        temp_fname1.append(os.path.join(cache_prefix,'summary_berkeley_filenames.txt'))
+        subprocess.call(temp_fname1);
+        

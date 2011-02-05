@@ -1804,13 +1804,13 @@ float CellTracker::compute_LRUtility_product(TGraph::edge_descriptor e1,TGraph::
 				if(get_edge_type(e2)==MERGE)
 					utility = g[e2].utility/2; //compute_normal_utility(f2,f3)/fvar.T_prior*fvar.MS_prior;
 				else
-					utility = compute_normal_utility(f2,f3);
+					utility = g[e2].utility;
 			}
 
-			float dist = get_boundary_dist(f1.Centroid)-fvar.spacing[2];
+			float dist = get_boundary_dist(f1.Centroid)-fvar.boundDistMean;
 			if(dist <0)
 			{
-				utility *= (1-exp(-dist*dist/2/fvar.distVariance))*compute_normal_utility(f1,f2)/fvar.T_prior*fvar.AD_prior;
+				utility *= (1-exp(-dist*dist/2/fvar.boundDistVariance))*compute_normal_utility(f1,f2)/fvar.T_prior*fvar.AD_prior;
 			}
 			else
 			{
@@ -1853,11 +1853,11 @@ float CellTracker::compute_LRUtility_product(TGraph::edge_descriptor e1,TGraph::
 				else
 					utility = compute_normal_utility(f1,f2);
 			}
-			float dist = get_boundary_dist(f3.Centroid)-fvar.spacing[2];
+			float dist = get_boundary_dist(f3.Centroid)-fvar.boundDistMean;
 
 			if(dist<0)
 			{
-					utility *= (1-exp(-dist*dist/2/fvar.distVariance))*compute_normal_utility(f2,f3)/fvar.T_prior*fvar.AD_prior;
+					utility *= (1-exp(-dist*dist/2/fvar.boundDistVariance))*compute_normal_utility(f2,f3)/fvar.T_prior*fvar.AD_prior;
 			}
 			else
 			{
@@ -2423,6 +2423,7 @@ void CellTracker::solve_higher_order()
 	catch(IloException &e)
 	{
 		std::cerr << e << std::endl;
+		PAUSE;
 	}
 	env.end();
 }
@@ -3404,15 +3405,16 @@ void CellTracker::resolve_merges_and_splits()
 						int nbefore = 2;
 						int nafter = 2;
 						std::vector<TGraph::vertex_descriptor> option1,option2;
-						for(int counter1 = 0; counter1 < MIN(nbefore,after.size()); counter1++)
-						{
-							option1.push_back(after[counter1].first);
-							option2.push_back(after[counter1].second);
-						}
+						
 						for(int counter1 = to_resolve[counter].size()-nafter; counter1 < to_resolve[counter].size(); counter1++)
 						{
 							option1.push_back(to_resolve[counter][counter1]);
 							option2.push_back(to_resolve[counter][counter1]);
+						}
+						for(int counter1 = 0; counter1 < MIN(nbefore,after.size()); counter1++)
+						{
+							option1.push_back(after[counter1].first);
+							option2.push_back(after[counter1].second);
 						}
 						float option1util = get_LRUtility(option1);
 						float option2util = get_LRUtility(option2);
@@ -3890,7 +3892,7 @@ void CellTracker::run()
 	}
 	
 	populate_merge_candidates(0);
-	avc += add_appear_vertices(-1);
+//	avc += add_appear_vertices(-1);
 
 	_TRACE;
 	first_t = clock();
@@ -3915,7 +3917,7 @@ void CellTracker::run()
 		//PAUSE;
 		TIC;		prune(t);//TOC("prune()");
 	}
-	dvc += this->add_disappear_vertices(fvector.size());
+	//dvc += this->add_disappear_vertices(fvector.size());
 
 	//enforce_overlap();
 	
@@ -4826,6 +4828,10 @@ int main(int argc1, char **argv1)
 	fvar.MS_prior = 0.4;//
 	fvar.AD_prior = 0.01;
 	fvar.T_prior = 1;
+	fvar.boundDistMean = 4;
+	fvar.boundDistVariance = 50;
+
+	std::string debugprefix = "harvard";
 
 	if(argc1==3)
 	{
@@ -4834,49 +4840,61 @@ int main(int argc1, char **argv1)
 		//get input data
 		map<string,string>::iterator mi;
 		mi = opts.find("x_spacing"); 
-		{ istringstream ss((*mi).second); ss>>fvar.spacing[0]; }
+		if(mi!=opts.end()){ istringstream ss((*mi).second); ss>>fvar.spacing[0]; }
 
 		mi = opts.find("y_spacing");
-		{ istringstream ss((*mi).second); ss>>fvar.spacing[1]; }
+		if(mi!=opts.end()){ istringstream ss((*mi).second); ss>>fvar.spacing[1]; }
 		
 		mi = opts.find("z_spacing"); 
-		{ istringstream ss((*mi).second); ss>>fvar.spacing[2]; }
+		if(mi!=opts.end()){ istringstream ss((*mi).second); ss>>fvar.spacing[2]; }
 		
 		mi = opts.find("distVariance");
-		{ istringstream ss((*mi).second); ss>>fvar.distVariance; }
+		if(mi!=opts.end()){ istringstream ss((*mi).second); ss>>fvar.distVariance; }
 
 		mi = opts.find("distMean"); 
+		if(mi!=opts.end())
 		{ istringstream ss((*mi).second); ss>>fvar.distMean; }
 
+		mi = opts.find("boundaryDistVariance");
+		if(mi!=opts.end()){ istringstream ss((*mi).second); ss>>fvar.boundDistVariance; }
+
+		mi = opts.find("boundaryDistMean"); 
+		if(mi!=opts.end()){ istringstream ss((*mi).second); ss>>fvar.boundDistMean; }
+
 		mi = opts.find("timeVariance"); 
-		{ istringstream ss((*mi).second); ss>>fvar.timeVariance; }
+		if(mi!=opts.end()){ istringstream ss((*mi).second); ss>>fvar.timeVariance; }
 
 		mi = opts.find("timeMean"); 
-		{ istringstream ss((*mi).second); ss>>fvar.timeMean; }
+		if(mi!=opts.end()){ istringstream ss((*mi).second); ss>>fvar.timeMean; }
 
 		mi = opts.find("overlapVariance"); 
-		{ istringstream ss((*mi).second); ss>>fvar.overlapVariance; }
+		if(mi!=opts.end()){ istringstream ss((*mi).second); ss>>fvar.overlapVariance; }
 
 		mi = opts.find("overlapMean"); 
-		{ istringstream ss((*mi).second); ss>>fvar.overlapMean; }
+		if(mi!=opts.end()){ istringstream ss((*mi).second); ss>>fvar.overlapMean; }
 
 		mi = opts.find("volumeVariance");
-		{ istringstream ss((*mi).second); ss>>fvar.variances[FeatureVariances::VOLUME]; }
+		if(mi!=opts.end()){ istringstream ss((*mi).second); ss>>fvar.variances[FeatureVariances::VOLUME]; }
 
 		mi = opts.find("merge_split_prior"); 
-		{ istringstream ss((*mi).second); ss>>fvar.MS_prior; }
+		if(mi!=opts.end()){ istringstream ss((*mi).second); ss>>fvar.MS_prior; }
 
 		mi = opts.find("appear_disappear_prior"); 
-		{ istringstream ss((*mi).second); ss>>fvar.AD_prior; }
+		if(mi!=opts.end()){ istringstream ss((*mi).second); ss>>fvar.AD_prior; }
 
 		mi = opts.find("translation_prior"); 
-		{ istringstream ss((*mi).second); ss>>fvar.T_prior; }
+		if(mi!=opts.end()){ istringstream ss((*mi).second); ss>>fvar.T_prior; }
+
+		mi = opts.find("debugprefix"); 
+		if(mi!=opts.end()){ istringstream ss((*mi).second); ss>>debugprefix; }
 
 		printf("fvar.spacing[0] = %f\n",fvar.spacing[0]);
 		printf("fvar.spacing[1] = %f\n",fvar.spacing[1]);
 		printf("fvar.spacing[2] = %f\n",fvar.spacing[2]);
 		printf("fvar.distVariance = %f\n",fvar.distVariance);
 		printf("fvar.distMean = %f\n",fvar.distMean);
+		printf("fvar.boundDistVariance = %f\n",fvar.boundDistVariance);
+		printf("fvar.boundDistMean = %f\n",fvar.boundDistMean);
 		printf("fvar.timeVariance = %f\n", fvar.timeVariance);
 		printf("fvar.timeMean = %f\n", fvar.timeMean);
 		printf("fvar.overlapVariance = %f\n", fvar.overlapVariance);
@@ -4885,6 +4903,7 @@ int main(int argc1, char **argv1)
 		printf("fvar.MS_prior = %f\n", fvar.MS_prior);
 		printf("fvar.AD_prior = %f\n", fvar.AD_prior);
 		printf("fvar.T_prior = %f\n", fvar.T_prior);
+		printf("debugprefix = %s\n",debugprefix.c_str());
 		//scanf("%*d");
 
 	}
@@ -5084,8 +5103,11 @@ int main(int argc1, char **argv1)
 		}
 
 		ColorImageType::Pointer colin = getColorImageFromColor2DImages(input);
-		writeImage<ColorImageType>(colin,"C:\\Users\\arun\\Research\\Tracking\\harvard\\debug\\input.tif");
-		
+		//writeImage<ColorImageType>(colin,"C:\\Users\\arun\\Research\\Tracking\\harvard\\debug\\input.tif");
+		std::string debugfolder = "C:\\Users\\arun\\Research\\Tracking\\harvard\\debug\\";
+		std::string debugstring = debugfolder + debugprefix + "_input.tif";
+		writeImage<ColorImageType>(colin,debugstring.c_str());
+
 		InputImageType::SizeType imsize = tempimage->GetLargestPossibleRegion().GetSize();
 		fvar.BoundingBox[0] = 0;
 		fvar.BoundingBox[2] = 0;
@@ -5182,10 +5204,14 @@ int main(int argc1, char **argv1)
 		}
 		
 		ColorImageType::Pointer colout = getColorImageFromColor2DImages(output);
-		writeImage<ColorImageType>(debugcol1,"C:\\Users\\arun\\Research\\Tracking\\harvard\\debug\\debugcol1.tif");
-		writeImage<ColorImageType>(debugcol2,"C:\\Users\\arun\\Research\\Tracking\\harvard\\debug\\debugcol2.tif");
-		writeImage<ColorImageType>(debugcol3,"C:\\Users\\arun\\Research\\Tracking\\harvard\\debug\\debugcol3.tif");
-		writeImage<ColorImageType>(colout,"C:\\Users\\arun\\Research\\Tracking\\harvard\\debug\\output.tif");
+		debugstring = debugfolder + debugprefix + "_debugcol1.tif";
+		writeImage<ColorImageType>(debugcol1,debugstring.c_str());
+		debugstring = debugfolder + debugprefix + "_debugcol2.tif";
+		writeImage<ColorImageType>(debugcol2,debugstring.c_str());
+		debugstring = debugfolder + debugprefix + "_debugcol3.tif";
+		writeImage<ColorImageType>(debugcol3,debugstring.c_str());
+		debugstring = debugfolder + debugprefix + "_output.tif";
+		writeImage<ColorImageType>(colout,debugstring.c_str());
 		
 
 	}

@@ -108,6 +108,7 @@ protected slots:
 	void loadTable(QString fileName);
 	void loadProject(void);
 	void saveDisplayImageToFile();
+	void saveCompositeImageToFile();
 	//Processing:
 	void processProject(void);
 	void startProcess(void);
@@ -227,6 +228,7 @@ protected:
 	QAction *saveLabelAction;
 	QAction *saveTableAction;
 	QAction *saveDisplayAction;
+	QAction *saveCompositeAction;
 	QAction *exitAction;
 
 	QMenu *viewMenu;

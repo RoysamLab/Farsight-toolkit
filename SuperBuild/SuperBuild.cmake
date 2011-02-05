@@ -5,7 +5,11 @@ set_property(DIRECTORY PROPERTY EP_BASE ${base})
 
 set(install_dir "${base}/Install")
 
-set(shared ON) # setting to use for BUILD_SHARED_LIBS on all subsequent projects
+option(BUILD_SHARED_LIBS "Should Farsight be built with shared libraries? (Not possible on Windows)" OFF)
+if(WIN32)
+  set(BUILD_SHARED_LIBS OFF CACHE BOOL "Farsight cannot built with shared libraries on Windows" FORCE)
+endif()
+set(shared ${BUILD_SHARED_LIBS}) # setting to use for BUILD_SHARED_LIBS on all subsequent projects
 set(testing OFF) # setting to use for BUILD_TESTING on all subsequent projects
 
 find_package(Qt4)

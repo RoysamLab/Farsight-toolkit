@@ -650,9 +650,20 @@ void Decimate() {
       else {
         while (par->IsActive == false){
           par = par->parent;
+          if(par == NULL)
+            break;
         }
-        PID = IDLookUp(par->ID - 1);
-        par = NewContainer[PID-1];
+        if(par == NULL)
+        {
+          PID = -1;
+        }
+        else
+        {
+          PID = IDLookUp(par->ID - 1);
+          if(PID < 1 || (unsigned int)PID > NewContainer.size())
+            continue;
+          par = NewContainer[PID-1];
+        }
       }
 
       SWCNode* s = new SWCNode();

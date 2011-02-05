@@ -391,6 +391,65 @@ void LabelImageViewQT::SaveDisplayImageToFile(QString fileName)
 		QMessageBox::warning(this, tr("Save Failure"), tr("Image Failed to Save"));
 }
 
+void LabelImageViewQT::SaveCompositeImageToFile(QString fileName)
+{
+	if(!channelImg)
+		return;
+
+	const ftk::Image::Info *info;
+
+	info = channelImg->GetImageInfo();
+
+	int totalWidth = (*info).numColumns;
+	int totalHeight = (*info).numRows;
+
+	int currentT = hSpin->value();
+
+	std::string file_model = fileName.toStdString();
+	std::string ext_ension = ftk::GetExtension( file_model );
+	file_model.resize( file_model.size()-(ext_ension.size()+1) );
+
+	for ( int j=0; j<(int)((*info).numZSlices); ++j )
+	{
+		QImage writtenImage;
+		writtenImage = QImage(totalWidth, totalHeight, QImage::Format_ARGB32_Premultiplied);	
+		writtenImage.fill(qRgb(0,0,0));
+
+		QPainter painter(&writtenImage);
+		painter.setCompositionMode(QPainter::CompositionMode_Plus);
+
+		for (int i=0; i < (*info).numChannels; ++i)
+		{
+			QImage gray((*info).numColumns, (*info).numRows, QImage::Format_ARGB32_Premultiplied);
+			std::vector<unsigned char> color = (*info).channelColors[i];
+			gray.fill(qRgb(color[0],color[1],color[2]));
+			unsigned char * p = channelImg->GetSlicePtr<unsigned char>( currentT, i, j );
+			if(p)
+			{
+				//Get the image:
+				QImage img(p, (*info).numColumns, (*info).numRows, (*info).numColumns, QImage::Format_Indexed8);
+				if(foregroundOffset == 0)
+				{
+					gray.setAlphaChannel(img);	//Set it to the alpha channel
+				}
+				else
+				{
+					QImage img2 = img.copy();
+					scaleIntensity( &img2, backgroundThreshold, foregroundOffset );
+					gray.setAlphaChannel( img2 );	//Set it to the alpha channel
+				}
+			}
+			painter.drawImage(0,0,gray);
+		}
+		std::stringstream num_ss;
+		num_ss << std::setw( 3 ) << setfill( '0' ) << j;
+		std::string file_Str = file_model + num_ss.str() + "." + ext_ension;
+		QString file_QStr = QString::fromStdString(file_Str);
+		writtenImage.save( file_QStr );
+	}
+
+}
+
 void LabelImageViewQT::updateVSlider(void)
 {
 	const ftk::Image::Info *info;

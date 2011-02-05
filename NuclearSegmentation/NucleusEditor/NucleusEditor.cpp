@@ -243,6 +243,11 @@ void NucleusEditor::createMenus()
 	connect(saveDisplayAction, SIGNAL(triggered()), this, SLOT(saveDisplayImageToFile()));
 	fileMenu->addAction(saveDisplayAction);
 
+	saveCompositeAction = new QAction(tr("Save Composite Image..."), this);
+	saveCompositeAction->setStatusTip(tr("Save displayed composite image to file"));
+	connect(saveCompositeAction, SIGNAL(triggered()), this, SLOT(saveCompositeImageToFile()));
+	fileMenu->addAction(saveCompositeAction);
+
 	fileMenu->addSeparator();
 
     exitAction = new QAction(tr("Exit"), this);
@@ -957,7 +962,7 @@ void NucleusEditor::loadTable(QString fileName)
 
 	//Get prediction colums, if any, for center map coloring
 	prediction_names.clear();
-	prediction_names = ftk::GetColumsWithString( "Prediction" , table );
+	prediction_names = ftk::GetColumsWithString( "prediction" , table );
 
 	if( !prediction_names.empty() ){
 		kplsRun = 1;
@@ -1064,6 +1069,20 @@ void NucleusEditor::saveDisplayImageToFile(void)
 	lastPath = QFileInfo(fileName).absolutePath() + QDir::separator();
 
 	segView->SaveDisplayImageToFile(fileName);
+}
+
+void NucleusEditor::saveCompositeImageToFile(void)
+{
+	if(!myImg)
+		return;
+
+	QString fileName = QFileDialog::getSaveFileName(this, tr("Save Composite Image"), lastPath, standardImageTypes);
+	if(fileName.size() == 0)
+		return;
+
+	lastPath = QFileInfo(fileName).absolutePath() + QDir::separator();
+
+	segView->SaveCompositeImageToFile(fileName);
 }
 
 void NucleusEditor::loadROI(void)
@@ -1531,6 +1550,9 @@ void NucleusEditor::toggleIDs(void)
 void NucleusEditor::toggleCentroids(void)
 {
 	if(!segView) return;
+
+	if( prediction_names.size() )
+		segView->SetClassMap(table, prediction_names);
 
 	if( showCentroidsAction->isChecked() )
 		segView->SetCentroidsVisible(true);

@@ -174,6 +174,8 @@ struct FeatureVariances{
 	float BoundingBox[6]; // start_x end_x start_y end_y start_z end_z
 	float distVariance;
 	float distMean;
+	float boundDistVariance;
+	float boundDistMean;
 	float spacing[3];
 	float timeVariance;
 	float timeMean;
