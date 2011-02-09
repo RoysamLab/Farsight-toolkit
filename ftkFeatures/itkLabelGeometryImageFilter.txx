@@ -282,9 +282,9 @@ LabelGeometryImageFilter<TLabelImage, TIntensityImage>
     (*mapIt).second.m_AxesLength = axesLength;
 
     // The following three features are currently only defined in 2D.
-    (*mapIt).second.m_Eccentricity = std::sqrt((eigenvalues[1] - eigenvalues[0])/eigenvalues[1]);
+    (*mapIt).second.m_Eccentricity = std::sqrt((eigenvalues[2] - eigenvalues[1])/eigenvalues[2]);
     (*mapIt).second.m_Elongation = axesLength[1]/axesLength[0];
-    (*mapIt).second.m_Orientation = atan2( eig.get_eigenvector(1)[1], eig.get_eigenvector(1)[0]);
+    (*mapIt).second.m_Orientation = atan2( eig.get_eigenvector(2)[1], eig.get_eigenvector(2)[0]);
 
     if( m_CalculateOrientedBoundingBox == true ) 
       {
