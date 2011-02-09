@@ -90,6 +90,7 @@ class WholeCellSeg{
 public:
 	//Function to set parameters
 	void set_parameters ( int *parameters );
+	void WholeCellSeg::set_radius ( int parameter );
 
 	//Set the input images, they have to be 16-bit grayscale images passed as ITK smart pointers
 	void set_nuc_img( UShortImageType::Pointer nuc_im_16 ){

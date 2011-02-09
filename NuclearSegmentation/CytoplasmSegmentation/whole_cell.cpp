@@ -86,6 +86,10 @@ void WholeCellSeg::set_parameters ( int *parameters ){
 	}
 }
 
+void WholeCellSeg::set_radius ( int parameter ){
+	radius_of_synth_bounds = parameter;
+}
+
 void WholeCellSeg::RunBinarization(){
 	if( (draw_real_bounds || remove_small_objs) && cyt_im_set )
 		this->BinarizationForRealBounds();
