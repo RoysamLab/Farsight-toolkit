@@ -63,6 +63,9 @@ void ProjectProcessor::Initialize(void)
 		case ProjectDefinition::NUCLEAR_SEGMENTATION:
 			t.inputChannel1 = definition->FindInputChannel("NUCLEAR");
 			break;
+		case ProjectDefinition::FEATURE_COMPUTATION:
+			t.inputChannel1 = definition->FindInputChannel("NUCLEAR");
+			break;
 		case ProjectDefinition::CYTOPLASM_SEGMENTATION:
 			t.inputChannel2 = definition->FindInputChannel("CYTOPLASM");
 			t.inputChannel3 = definition->FindInputChannel("MEMBRANE");
@@ -100,6 +103,9 @@ void ProjectProcessor::ProcessNext(void)
 		break;
 	case ProjectDefinition::NUCLEAR_SEGMENTATION:
 		taskDone = SegmentNuclei(tasks.at(thisTask).inputChannel1);
+		break;
+	case ProjectDefinition::FEATURE_COMPUTATION:
+		taskDone = ComputeFeatures(tasks.at(thisTask).inputChannel1);
 		break;
 	case ProjectDefinition::CYTOPLASM_SEGMENTATION:
 		taskDone = SegmentCytoplasm(tasks.at(thisTask).inputChannel2, tasks.at(thisTask).inputChannel3);
@@ -247,6 +253,23 @@ bool ProjectProcessor::SegmentNuclei(int nucChannel)
 	resultIsEditable = true;
 	return true;
 }
+
+
+
+bool ProjectProcessor::ComputeFeatures(int nucChannel)
+{
+	ftk::IntrinsicFeatureCalculator *iCalc = new ftk::IntrinsicFeatureCalculator();
+	iCalc->SetInputImages(inputImage,outputImage,nucChannel,0);
+	if(definition->intrinsicFeatures.size() > 0)
+		iCalc->SetFeaturesOn( GetOnIntrinsicFeatures() );
+	//iCalc->SetFeaturePrefix("nuc_");
+	table = iCalc->Compute();									//Create a new table
+	delete iCalc;
+	std::cout << "Done: Instrinsic Nuclear Features\n";
+	resultIsEditable = true;
+	return true;
+}
+
 
 bool ProjectProcessor::SegmentCytoplasm(int cytChannel, int memChannel)
 {
