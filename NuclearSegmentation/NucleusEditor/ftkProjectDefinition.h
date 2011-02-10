@@ -47,7 +47,7 @@ class ProjectDefinition
 {
 public:
 	//ENUMS & STRUCTS:
-	enum TaskType { PREPROCESSING, NUCLEAR_SEGMENTATION, CYTOPLASM_SEGMENTATION, RAW_ASSOCIATIONS, CLASSIFY, ANALYTE_MEASUREMENTS, PIXEL_ANALYSIS, QUERY };
+	enum TaskType { PREPROCESSING, NUCLEAR_SEGMENTATION, FEATURE_COMPUTATION, CYTOPLASM_SEGMENTATION, RAW_ASSOCIATIONS, CLASSIFY, ANALYTE_MEASUREMENTS, PIXEL_ANALYSIS, QUERY };
 	typedef struct { int number; std::string name; std::string type; } Channel;
 	typedef struct { std::string name; double value; } Parameter;
 	typedef struct { std::string TrainingColumn; std::vector<std::string> ClassificationColumns; } ClassParam;
