@@ -146,6 +146,8 @@ std::vector<ProjectDefinition::TaskType> ProjectDefinition::ReadSteps(TiXmlEleme
 				returnVector.push_back(PREPROCESSING);
 			else if( step == "NUCLEAR_SEGMENTATION")
 				returnVector.push_back(NUCLEAR_SEGMENTATION);
+			else if( step == "FEATURE_COMPUTATION")
+				returnVector.push_back(FEATURE_COMPUTATION);
 			else if(step == "CYTOPLASM_SEGMENTATION")
 				returnVector.push_back(CYTOPLASM_SEGMENTATION);
 			else if(step == "RAW_ASSOCIATIONS")
@@ -638,6 +640,9 @@ std::string ProjectDefinition::GetTaskString(TaskType task)
 		break;
 	case NUCLEAR_SEGMENTATION:
 		retText = "NUCLEAR_SEGMENTATION";
+		break;
+	case FEATURE_COMPUTATION:
+		retText = "FEATURE_COMPUTATION";
 		break;
 	case CYTOPLASM_SEGMENTATION:
 		retText = "CYTOPLASM_SEGMENTATION";
