@@ -19,7 +19,7 @@
 void usage(const char *funcName);
 
 int main(int argc, char *argv[])
-{
+{ 
 	if( argc < 5 )
 	{
 		usage(argv[0]);
@@ -28,17 +28,20 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
+
+	std::string tableFilename = "";
 	std::string MyName        = argv[0];					//In case the CWD is not the path of the executable
 	std::string inputFilename = argv[1];					// Name of the input image;
 	std::string labelFilename = argv[2];					// Name of the label image to apply
-	std::string tableFilename = argv[3];					// Name of the table file;
-	std::string definitionFilename = argv[4];				// Name of the process definition file
+	std::string definitionFilename = argv[3];				// Name of the process definition file	
+	tableFilename = argv[4];					// Name of the table file;
+	
 
 	
 	//Try to load the input image:
 	ftk::Image::Pointer myImg = NULL;
 	if( ftk::GetExtension(inputFilename) == "xml" )
-	{
+	{			
 		myImg = ftk::LoadXMLImage(inputFilename);
 	}
 	else
