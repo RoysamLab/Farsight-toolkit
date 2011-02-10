@@ -50,7 +50,7 @@
     <ClassificationParameter TrainingColumn="train_Tumor" ClassificationColumns="CA9_TOTAL,CA9_AVG,CA9_SURR" />
   </ClassificationParameters>
   <PixelLevelAnalysis>
-     <PixelLevelRule RoiImage="full_path/SMA.tif" TargetImage="full_path/CD34.tif" Mode="1" OutputFilename="PixelAnalysisOut.txt" Radius="0" />
+     <PixelLevelRule RoiImage="full_path/SMA.tif" TargetImage="full_path/CD34.tif" Mode="1" OutputFilename="PixelAnalysisOut.txt" Radius="0" Number_of_thresholds="1" Number_in_foreground="1"/>
   </PixelLevelAnalysis>
   <SqlQueryParameters>
      <SqlQuery name="write" value="SELECT * FROM IMAGE_TEST WHERE PREDICTION_EC=1" />

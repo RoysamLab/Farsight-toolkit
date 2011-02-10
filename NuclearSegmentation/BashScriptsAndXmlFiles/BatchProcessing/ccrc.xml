@@ -1,4 +1,4 @@
-<ProjectFiles path="full_path" name="ccrc">
+<ProjectFiles path="full_path name="ccrc">
     <input file="Histo_Input_Image.xml" />
     <output file="Histo_Input_Image_label.xml" />
     <log file="Histo_Input_Image_log.txt" validated="0" />
