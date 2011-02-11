@@ -48,8 +48,46 @@ PatternAnalysisWizard::PatternAnalysisWizard(
 	//setPixmap(QWizard::LogoPixmap, QPixmap(":/images/logo.png"));
 	//connect(this, SIGNAL(helpRequested()), this, SLOT(showHelp()));
 
-	this->setWindowTitle(tr("Pattern Analysis Wizard"));
+	
  }
+//******************************************************************************************
+PatternAnalysisWizard::PatternAnalysisWizard(
+  vtkSmartPointer<vtkTable> table, vtkSmartPointer<vtkTable> model_table , Module mod, const char * trainColumn,
+  const char * resultColumn, QWidget *parent)
+	: QWizard(parent)
+{
+	this->m_table = table;
+	this->mod_table = model_table;
+
+	this->columnForTraining = trainColumn;
+	this->columnForPrediction = resultColumn;
+	this->m_module = mod;
+
+	optionGroup = new QButtonGroup;
+	initOptionGroup();
+
+	featureGroup = new QButtonGroup;
+	disabledFeatureGroup();
+
+	this->setPage(Page_Start, new StartPage(optionGroup));
+	this->setPage(Page_Features, new FeaturesPage(featureGroup,1));
+	//this->setPage(Page_Execute, new ExecutePage();
+
+	this->setStartId(Page_Features);
+	this->setModal(false);
+
+	//this->setOption(QWizard::HaveCustomButton1);
+	//this->setButtonText(QWizard::CustomButton1,"Execute");
+	//connect(this, SIGNAL(customButtonClicked(int)), this, SLOT(executeNextStep(int)));
+
+	this->setOption(QWizard::NoBackButtonOnStartPage,true);
+	//setOption(HaveHelpButton, true);
+	//setPixmap(QWizard::LogoPixmap, QPixmap(":/images/logo.png"));
+	//connect(this, SIGNAL(helpRequested()), this, SLOT(showHelp()));
+
+	
+ }
+//*****************************************************************************************
 
 void PatternAnalysisWizard::initFeatureGroup(void)
 {
@@ -68,18 +106,61 @@ void PatternAnalysisWizard::initFeatureGroup(void)
 	}
 }
 
+void PatternAnalysisWizard::disabledFeatureGroup(void)
+{
+	if(!m_table) return;
+
+	featureGroup->setExclusive(false);
+	for (int c=1; c<m_table->GetNumberOfColumns(); ++c)
+	{
+		const char * name = m_table->GetColumnName(c);
+		std::string current_name = name;
+		if( current_name.find("train")!=std::string::npos || current_name.find("prediction")!=std::string::npos )
+			continue;
+		QCheckBox * check = new QCheckBox(QString(name));
+		for (int d=0; d<mod_table->GetNumberOfColumns(); ++d)
+	    {
+		    const char * mod_name = mod_table->GetColumnName(d);
+		    std::string model_name = mod_name;
+		    if(current_name == model_name)
+			{
+			   check->setCheckable(false);  
+			   featureGroup->addButton(check, c);
+		       break;
+			}
+		}
+	}
+}
+
 void PatternAnalysisWizard::initOptionGroup(void)
 {
 	optionGroup->setExclusive(true);
 	QRadioButton *outlierButton = new QRadioButton(tr("Detect Outliers (using SVM)"));
 	QRadioButton *classifyButton = new QRadioButton(tr("Classify (using KPLS)"));
+	QRadioButton *createTrainButton = new QRadioButton(tr("Create Training Model... (using SEGMODEL)"));
+	QRadioButton *appendTrainButton = new QRadioButton(tr("Append Training Model... (using APPENDMODEL)"));
+
 	optionGroup->addButton(outlierButton, 0);
 	optionGroup->addButton(classifyButton, 1);
+	optionGroup->addButton(createTrainButton, 2);
+	optionGroup->addButton(appendTrainButton, 3);
+
+	switch(m_module)
+		{
+		    case _SVM: 
+				outlierButton->setChecked(true);
+				break;
+			case _KPLS:
+			    classifyButton->setChecked(true);
+		        break;
+			case _SEGMODEL:
+				createTrainButton->setChecked(true);
+				break;
+			case _APPENDMODEL:
+				appendTrainButton->setChecked(true);
+				break;
+		}
 	
-	if(m_module == _SVM)
-		outlierButton->setChecked(true);
-	else
-		classifyButton->setChecked(true);
 }
 
 /*
@@ -126,10 +207,21 @@ bool PatternAnalysisWizard::validateCurrentPage()
 		// Run the desired module upon exiting the wizard:
 		case Page_Features:
 			int id = optionGroup->checkedId();
-			if(id == 0)
-				runSVM();
-			else if(id == 1)
-				runKPLS();
+			switch(id)
+			{
+			    case 0: 
+					runSVM();
+					break;
+				case 1:
+				    runKPLS();
+			        break;
+				case 2:
+					saveModel();
+					break;
+				case 3:
+					appendModel(mod_table);
+					break;
+			}
 			return true;
 		break;
 		//********************************************************************
@@ -167,16 +259,27 @@ StartPage::StartPage(QButtonGroup *oGroup, QWidget *parent)
 //****************************************************************************
 // FeaturesPage
 //****************************************************************************
-FeaturesPage::FeaturesPage(QButtonGroup *fGroup, QWidget *parent)
+FeaturesPage::FeaturesPage(QButtonGroup *fGroup, int caller, QWidget *parent)
 	: QWizardPage(parent)
 {
-	setTitle(tr("Choose Features"));
+	if(caller == 0)
+		setTitle(tr("Choose Features"));
+	else
+        setTitle(tr("Selected Features"));
 
 	QVBoxLayout *layout = new QVBoxLayout;
 	layout->addWidget( initFeatureBox(fGroup) );
 	setLayout(layout);
 }
-
+//selectedFeaturesPage::selectedFeaturesPage(QButtonGroup *fGroup, QWidget *parent)
+//	: QWizardPage(parent)
+//{
+//	setTitle(tr("Selected Features"));
+//
+//	QVBoxLayout *layout = new QVBoxLayout;
+//	layout->addWidget( initFeatureBox(fGroup) );
+//	setLayout(layout);
+//}
 QGroupBox * FeaturesPage::initFeatureBox(QButtonGroup *fGroup)
 {
 	featureGroup = fGroup;
@@ -629,3 +732,143 @@ void PatternAnalysisWizardNoGUI::KPLSrun1(std::vector<int> columnsToUse){
 #endif
 }
 
+//****************************************************************************
+// Save Segmentation Model
+//****************************************************************************
+void PatternAnalysisWizard::saveModel(void)
+{
+    //Selected Features
+	std::vector<int> columnsToUse;
+	QList<QAbstractButton *> buttons = featureGroup->buttons();
+	for(int b = 0; b<buttons.size(); ++b)
+    //for(int b = 0; b<10; ++b)
+	{
+		//buttons.at(b)->setCheckable(false);
+		if( buttons.at(b)->isChecked() )
+		{
+			columnsToUse.push_back( featureGroup->id(buttons.at(b)) );
+		}
+	}	
+	if(columnsToUse.size() <= 0)
+		return;
+
+
+	//Save Dialog
+	QString filename = QFileDialog::getSaveFileName(this, tr("Save Training Model As..."),lastPath, tr("TEXT(*.txt)"));
+	if(filename == "")
+		return;
+	lastPath = QFileInfo(filename).absolutePath();
+	
+	//Load the model into a new table 
+    vtkSmartPointer<vtkTable> new_table = vtkSmartPointer<vtkTable>::New();
+	new_table->Initialize();
+   
+	for(int c=0; c<(int)columnsToUse.size(); ++c)
+	{
+	    vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( m_table->GetColumnName(columnsToUse.at(c)) );
+		new_table->AddColumn(column);
+	}
+	for(int row = 0; row < (int)m_table->GetNumberOfRows(); ++row)
+	{		
+		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+		for(int c =0;c<(int)columnsToUse.size();++c)
+			model_data1->InsertNextValue(m_table->GetValue(row,columnsToUse.at(c)));
+		new_table->InsertNextRow(model_data1);
+	}
+	//*********************************************************************
+	//Save Model
+	std::string Filename = filename.toStdString();
+	
+	//This function writes the features to a text file
+	ofstream outFile; 
+	outFile.open(Filename.c_str(), ios::out | ios::trunc );
+	if ( !outFile.is_open() )
+	{
+		std::cerr << "Failed to Load Document: " << outFile << std::endl;
+		return;
+	}
+	//Write the headers:
+	for(int c=0; c<new_table->GetNumberOfColumns(); ++c)
+	{
+		outFile << new_table->GetColumnName(c) << "\t\t\t";
+	}
+	outFile << "\n";
+	//Write out the features:
+	for(int row = 0; row < new_table->GetNumberOfRows(); ++row)
+	{
+		for(int c=0; c < new_table->GetNumberOfColumns(); ++c)
+		{
+			std::stringstream out;
+	        out << std::setprecision(3) << std::fixed << new_table->GetValue(row,c).ToFloat();
+	        outFile << out.str() << "\t\t\t";
+		}
+		outFile << "\n";
+	}
+	outFile.close();
+    //******************************************************************************************
+}
+
+//****************************************************************************
+// Append Segmentation Model
+//****************************************************************************
+void PatternAnalysisWizard::appendModel(vtkSmartPointer<vtkTable> mod_table)
+{
+    //Save Dialog
+	QString filename = QFileDialog::getSaveFileName(this, tr("Save Training Model As..."),lastPath, tr("TEXT(*.txt)"));
+	if(filename == "")
+		return;
+	lastPath = QFileInfo(filename).absolutePath();
+	
+	for(int c=0; c<(int)m_table->GetNumberOfColumns(); ++c)
+	{
+	    std::string m_column = m_table->GetColumnName(c);
+		for(int d=0; d<(int)mod_table->GetNumberOfColumns(); ++d)
+		{
+			std::string mod_column = mod_table->GetColumnName(d);
+			if( m_column == mod_column)
+				break;
+		}
+		m_table->RemoveColumnByName( m_column.c_str() );
+	}
+	for(int row = 0; row < (int)m_table->GetNumberOfRows(); ++row)
+	{		
+		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+		for(int c =0;c<(int)mod_table->GetNumberOfColumns();++c)
+			model_data1->InsertNextValue(m_table->GetValue(row,c));
+		mod_table->InsertNextRow(model_data1);
+	}
+	//*********************************************************************
+	//Save Model
+	std::string Filename = filename.toStdString();
+	
+	//This function writes the features to a text file
+	ofstream outFile; 
+	outFile.open(Filename.c_str(), ios::out | ios::trunc );
+	if ( !outFile.is_open() )
+	{
+		std::cerr << "Failed to Load Document: " << outFile << std::endl;
+		return;
+	}
+	//Write the headers:
+	for(int c=0; c<mod_table->GetNumberOfColumns(); ++c)
+	{
+		outFile << mod_table->GetColumnName(c) << "\t\t\t";
+	}
+	outFile << "\n";
+	//Write out the features:
+	for(int row = 0; row < mod_table->GetNumberOfRows(); ++row)
+	{
+		for(int c=0; c < mod_table->GetNumberOfColumns(); ++c)
+		{
+			std::stringstream out;
+	        out << std::setprecision(3) << std::fixed << mod_table->GetValue(row,c).ToFloat();
+	        outFile << out.str() << "\t\t\t";
+		}
+		outFile << "\n";
+	}
+	outFile.close();
+    //******************************************************************************************
+
+}
+    

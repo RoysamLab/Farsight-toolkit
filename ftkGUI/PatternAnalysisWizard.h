@@ -27,20 +27,27 @@ limitations under the License.
 #include <QtGui/QCheckBox>
 #include <QtGui/QScrollArea>
 #include <QtGui/QMessageBox>
+#include <QtGui/QFileDialog>
+#include <QtGui/QDialog>
 
 //VTK INCLUDES
 #include <vtkTable.h>
 #include <vtkSmartPointer.h>
 #include <vtkDoubleArray.h>
+#include <vtkStringArray.h>
+#include <vtkVariantArray.h>
 
-//OTHER FARSIGHT INCLUDES
+#include <iostream>
+#include <sstream>
+#include <vector>
+#include <set>
+#include <map>
+#include <list>
+#include <float.h>
+
 #include <PatternAnalysis/libsvm/svm.h>
 #include <PatternAnalysis/embrex/kpls.h>
 
-#include <iostream>
-#include <vector>
-#include <float.h>
-#include <set>
 
 class PatternAnalysisWizard : public QWizard
 {
@@ -48,12 +55,16 @@ class PatternAnalysisWizard : public QWizard
 
 public:
 	enum { Page_Start, Page_Features, Page_Training, Page_Parameters, Page_Execute };
-	typedef enum { _SVM, _KPLS } Module;
+	typedef enum { _SVM, _KPLS, _SEGMODEL, _APPENDMODEL } Module;
 
 	PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, Module mod,
                         const char * trainColumn, const char * resultColumn,
                         QWidget *parent = 0);
+	PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, vtkSmartPointer<vtkTable> model_table, Module mod,
+                        const char * trainColumn, const char * resultColumn,
+                        QWidget *parent = 0);
 	void KPLSrun(std::vector<int> columnsToUse);
+	vtkSmartPointer<vtkTable> mod_table;
 
 protected:
 	//void initializePage(int id);
@@ -63,16 +74,21 @@ protected:
 
 	void runSVM();
 	void runKPLS();
+	void saveModel(void);
+	void appendModel(vtkSmartPointer<vtkTable>);
+
 
 signals:
 	void changedTable(void);
 
 private:
 	void initFeatureGroup(void);
+	void disabledFeatureGroup(void);
 	QButtonGroup *featureGroup;
 
 	void initOptionGroup(void);
 	QButtonGroup *optionGroup;
+	QString lastPath;
 
 	vtkSmartPointer<vtkTable> m_table;
 	const char * columnForTraining;
@@ -94,7 +110,7 @@ class FeaturesPage : public QWizardPage
 	Q_OBJECT;
 
 public:
-	FeaturesPage(QButtonGroup *fGroup, QWidget *parent = 0);
+	FeaturesPage(QButtonGroup *fGroup, int caller = 0, QWidget *parent = 0);
 	bool isComplete() const;
 private:
 	QGroupBox * initFeatureBox(QButtonGroup *fGroup);
