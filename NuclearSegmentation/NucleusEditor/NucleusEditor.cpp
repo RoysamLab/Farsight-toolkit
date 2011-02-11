@@ -462,6 +462,17 @@ void NucleusEditor::createMenus()
 	// PRE-PROCESSING:
 	createPreprocessingMenu();
 
+	// MODELS MENU
+	modelsMenu = menuBar()->addMenu(tr("&Models"));
+    
+    createTrainingAction = new QAction(tr("Create Training Model..."), this);
+    connect(createTrainingAction, SIGNAL(triggered()), this, SLOT(createTrainer()));
+    modelsMenu->addAction(createTrainingAction);
+    
+    appendTrainingAction = new QAction(tr("Append Training Model..."), this);
+    connect(appendTrainingAction, SIGNAL(triggered()), this, SLOT(appendTrainer()));
+    modelsMenu->addAction(appendTrainingAction);
+
 	//HELP MENU
 	helpMenu = menuBar()->addMenu(tr("Help"));
 	aboutAction = new QAction(tr("About"),this);
@@ -549,6 +560,7 @@ void NucleusEditor::createPreprocessingMenu()
 void NucleusEditor::setEditsEnabled(bool val)
 {
 	editMenu->setEnabled(val);
+	modelsMenu->setEnabled(val);
 	clearSelectAction->setEnabled(val);
 	visitAction->setEnabled(val);
 	addAction->setEnabled(val);
@@ -1283,6 +1295,7 @@ void NucleusEditor::startSVM()
 	}
 	pWizard = new PatternAnalysisWizard( table, PatternAnalysisWizard::_SVM, "", "outlier?", this);
 	connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
+	pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
 	pWizard->show();
 }
 
@@ -1337,7 +1350,7 @@ void NucleusEditor::startTraining()
 void NucleusEditor::startKPLS()
 {
 	if(!table) return;
-
+    
 	if(pWizard)
 	{
 		delete pWizard;
@@ -1378,8 +1391,130 @@ void NucleusEditor::startKPLS()
 		prediction_names.push_back( p_name );
 	pWizard = new PatternAnalysisWizard( table, PatternAnalysisWizard::_KPLS, training_names.at(trainName).c_str(), p_name.c_str(), this);
 	connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
+	pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
 	pWizard->show();
 	kplsRun = 1;
+    
+}
+
+//**********************************************************************
+// SLOT: start the create trainer widget:
+//**********************************************************************
+void NucleusEditor::createTrainer()
+{
+	if(!table) return;
+
+	if(pWizard)
+	{
+		delete pWizard;
+	}
+	training_names.clear();
+	for( int i=0; i<table->GetNumberOfColumns(); ++i ){
+		std::string current_column;
+		current_column = table->GetColumnName(i);
+		if( current_column.find("train") != std::string::npos ){
+			training_names.push_back( current_column );
+			std::string::iterator it;
+			it=current_column.begin();
+			current_column.erase ( current_column.begin(), current_column.begin()+6 );
+			class_names.push_back( current_column );
+		}
+	}
+	if( training_names.empty() ) return;
+	trainName = 0;
+	if( training_names.size() > 1 ){
+		QVector<QString> qtraining_names;
+		for (int i=0; i<(int)training_names.size(); ++i){
+			qtraining_names << QString::fromStdString(class_names.at(i));
+		}
+		PredictionDialog *pred_dial = new PredictionDialog(qtraining_names,this);
+		pred_dial->show();
+		if( pred_dial->exec() ){
+			trainName = pred_dial->getTrainNumber();
+		}
+		delete pred_dial;
+	}
+	p_name.clear();
+	p_name = "prediction_" + class_names.at(trainName);
+	std::vector<std::string>::iterator str_it;
+	for( str_it = prediction_names.begin(); str_it != prediction_names.end(); ++str_it )
+		if( (*str_it).find( p_name.c_str() ) != std::string::npos )
+			break;
+	if( str_it == prediction_names.end() )
+		prediction_names.push_back( p_name );
+	pWizard = new PatternAnalysisWizard( table, PatternAnalysisWizard::_SEGMODEL,"","", this);
+	connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
+	pWizard->setWindowTitle(tr("Select Training Features"));
+	pWizard->show();
+	kplsRun = 1;
+}
+
+//**********************************************************************
+// SLOT: start the append trainer widget:
+//**********************************************************************
+void NucleusEditor::appendTrainer()
+{
+	QString fileName  = QFileDialog::getOpenFileName(this, "Select training model to open", lastPath,
+									tr("TXT Files (*.txt)"));
+	if(fileName == "")
+		return;
+	lastPath = QFileInfo(fileName).absolutePath();
+
+	this->loadModelFromFile(fileName.toStdString());
+
+	//open pattern analysis wizard	
+	if(!table) return;
+	if(pWizard)
+	{
+		delete pWizard;
+	}
+	training_names.clear();
+	for( int i=0; i<table->GetNumberOfColumns(); ++i ){
+		std::string current_column;
+		current_column = table->GetColumnName(i);
+		if( current_column.find("train") != std::string::npos ){
+			training_names.push_back( current_column );
+			std::string::iterator it;
+			it=current_column.begin();
+			current_column.erase ( current_column.begin(), current_column.begin()+6 );
+			class_names.push_back( current_column );
+		}
+	}
+	if( training_names.empty() ) return;
+	trainName = 0;
+	if( training_names.size() > 1 ){
+		QVector<QString> qtraining_names;
+		for (int i=0; i<(int)training_names.size(); ++i){
+			qtraining_names << QString::fromStdString(class_names.at(i));
+		}
+		PredictionDialog *pred_dial = new PredictionDialog(qtraining_names,this);
+		pred_dial->show();
+		if( pred_dial->exec() ){
+			trainName = pred_dial->getTrainNumber();
+		}
+		delete pred_dial;
+	}
+	p_name.clear();
+	p_name = "prediction_" + class_names.at(trainName);
+	std::vector<std::string>::iterator str_it;
+	for( str_it = prediction_names.begin(); str_it != prediction_names.end(); ++str_it )
+		if( (*str_it).find( p_name.c_str() ) != std::string::npos )
+			break;
+	if( str_it == prediction_names.end() )
+		prediction_names.push_back( p_name );
+	pWizard = new PatternAnalysisWizard( table, model_table, PatternAnalysisWizard::_APPENDMODEL,"","", this);
+	connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
+	pWizard->show();
+	kplsRun = 1;
+}
+
+void NucleusEditor::loadModelFromFile( std::string file_name ){
+	model_table = ftk::LoadTable(file_name);
+	if(!model_table) return;
+	//Append the data to the current table
+	//this->GetTrainingNames( model_table );
+	//this->Append();
+	return;
 }
 
 //*********************************************************************************************************
@@ -2007,8 +2142,10 @@ void NucleusEditor::segmentNuclei()
 		projectDefinition.MakeDefaultNucleusSegmentation(nucChannel);
 		projectFiles.definitionSaved = false;
 		projectFiles.nucSegValidated = false;
-
+        
 		startProcess();
+		;
+		
 	}
 	delete dialog;
 

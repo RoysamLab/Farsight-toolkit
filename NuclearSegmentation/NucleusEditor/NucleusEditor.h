@@ -92,6 +92,7 @@ class NucleusEditor : public QMainWindow
 public:
 	NucleusEditor(QWidget * parent = 0, Qt::WindowFlags flags = 0);
 	~NucleusEditor();
+	void loadModelFromFile(std::string file_name);
 
 protected:
 	void closeEvent(QCloseEvent *event);
@@ -171,6 +172,12 @@ protected slots:
 	void CurvAnisotropicDiffusion(void);
 	//void Resample(void);
 	void preprocess(QString id);
+
+	//***************************************************
+	// Models Menu
+	void createTrainer(void);
+	void appendTrainer(void);
+
 	//*****************************************************
 
 	//For Tools menu
@@ -230,6 +237,7 @@ protected:
 	QAction *saveDisplayAction;
 	QAction *saveCompositeAction;
 	QAction *exitAction;
+	vtkSmartPointer<vtkTable> model_table;
 
 	QMenu *viewMenu;
 	QAction *setPreferencesAction;
@@ -279,6 +287,11 @@ protected:
 
 	QMenu *helpMenu;
 	QAction *aboutAction;
+
+    //For Models Menu
+	QMenu *modelsMenu;
+    QAction *createTrainingAction;
+    QAction *appendTrainingAction;
 
 	//************************************************************************
 	//Preprocess menu
