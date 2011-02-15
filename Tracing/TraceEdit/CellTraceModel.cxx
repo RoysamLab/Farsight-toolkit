@@ -57,11 +57,12 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Total Path Length");
 	this->headers.push_back("Average Segment Path Length");
 	this->headers.push_back("Total Volume");
+	this->headers.push_back("Trace File");
 	int numHeaders = (int)this->headers.size();
-	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+	vtkSmartPointer<vtkVariantArray> column = vtkSmartPointer<vtkVariantArray>::New();
 	for(int i=0; i < numHeaders; ++i)
     {		
-		column = vtkSmartPointer<vtkDoubleArray>::New();
+		column = vtkSmartPointer<vtkVariantArray>::New();
 		column->SetName( this->headers.at(i).toStdString().c_str() );
 		this->DataTable->AddColumn(column);
     }

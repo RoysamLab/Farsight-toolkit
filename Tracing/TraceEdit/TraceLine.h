@@ -94,6 +94,8 @@ public:
                  double &maxdist, double &angle);
 	bool Orient(TraceLine * Trunk);
 	bool Orient(TraceBit bit);
+	void SetFileName(char * newFileName);
+	char * GetFileName();
 	std::string stats();	
 	std::string statHeaders();
 
@@ -104,6 +106,7 @@ private:
 
 	double traceColor, radii, sectionArea, length, volume, surfaceArea, PathLength, EuclidianD, DistToParent;
 	double BitDensity, BurkTaper, HillmanTaper;
+	char * FileName; 
 	int m_id, root, level;
 	std::vector<unsigned int> m_markers;
 	unsigned char m_type;

@@ -32,6 +32,8 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 	this->NumSegments = (int) this->segments.size();
 	this->stems = (int) this->segments[0]->GetBranchPointer()->size();
 	TraceBit rootBit = this->segments[0]->GetTraceBitsPointer()->front();
+	std::cout << this->segments[0]->GetFileName()<< std::endl;
+	this->FileName = this->segments[0]->GetFileName();
 	for(i = 0; i < this->segments.size(); i++)
 	{
 		this->IDs.insert(this->segments[i]->GetId());
@@ -75,6 +77,7 @@ void CellTrace::clearAll()
 	this->TotalPathLength = 0;
 	this->TotalVolume = 0;
 	this->TerminalPathLength = 0;
+	this->FileName = "file";
 }
 vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 {
@@ -94,6 +97,8 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->TotalPathLength);
 	CellData->InsertNextValue(this->TotalPathLength/this->NumSegments);//average segment length
 	CellData->InsertNextValue(this->TotalVolume);
+	CellData->InsertNextValue((this->FileName));
+	//std::cout << this->FileName << std::endl;
 	return CellData;
 }
 std::set<long int> CellTrace::TraceIDsInCell()

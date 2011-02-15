@@ -80,6 +80,8 @@ limitations under the License.
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
 #include "vtkPointWidget.h"
+#include "vtkWindowToImageFilter.h"
+#include "vtkJPEGWriter.h"
 
 #include "TraceBit.h"
 #include "TraceGap.h"
@@ -784,7 +786,24 @@ void View3D::Initialize()
 	//this->QVTK->GetRenderWindow()->Render();
 	this->setupLinkedSpace();
 }
-
+void View3D::saveRenderWindow(const char *filename)
+{
+	this->WindowToImage = vtkSmartPointer<vtkWindowToImageFilter>::New();
+	this->WindowToImage->SetInput(this->QVTK->GetRenderWindow());
+	this->JPEGWriter = vtkSmartPointer<vtkJPEGWriter>::New();
+	this->JPEGWriter->SetInput(this->WindowToImage->GetOutput());
+	this->JPEGWriter->SetFileName(filename);
+	this->JPEGWriter->Write();
+}
+void View3D::SaveScreenShot()
+{
+	QString imageDir = this->TraceEditSettings.value("imageDir", ".").toString();
+	QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"),imageDir, tr("SWC Images (*.jpg *.jpeg)"));
+	if (!fileName.isEmpty())
+	{
+		this->saveRenderWindow(fileName.toStdString().c_str());
+	}
+}
 void View3D::setupLinkedSpace()
 {  
   this->tobj->Gaps.clear();
@@ -846,6 +865,9 @@ void View3D::CreateGUIObjects()
 	this->loadSoma = new QAction("Load Somas", this->CentralWidget);
 	connect(this->loadSoma, SIGNAL(triggered()), this, SLOT(LoadSomaFile()));
 	this->loadSoma->setStatusTip("Load image file to Contour rendering");
+
+	this->ScreenshotAction = new QAction("Screen Shot", this->CentralWidget);
+	connect(this->ScreenshotAction, SIGNAL(triggered()), this, SLOT(SaveScreenShot()));
 
 //Set up the buttons that the user will use to interact with this program. 
 	this->ListButton = new QAction("List", this->CentralWidget);
@@ -1092,6 +1114,7 @@ void View3D::CreateLayout()
 	this->fileMenu->addSeparator();
 	this->fileMenu->addAction(this->CloseAllImage);
 	this->fileMenu->addAction(this->exitAction);
+	this->fileMenu->addAction(this->ScreenshotAction);
 
 	this->ShowToolBars = this->menuBar()->addMenu(tr("Tool Bars"));
 	this->DataViews = this->menuBar()->addMenu(tr("Visualization"));

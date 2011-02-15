@@ -42,6 +42,7 @@ TraceLine::TraceLine()
 	this->volume = 0;
 	this->BurkTaper = 0;
 	this->HillmanTaper = 0;
+	this->FileName = "default";
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -493,6 +494,7 @@ double TraceLine::getTraceColor()
     *temp = *t.m_branches[counter];
   }
   this->m_trace_bits = t.m_trace_bits;
+  this->FileName = t.FileName;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -645,6 +647,16 @@ bool TraceLine::Orient(TraceBit bit)
 	return false;		//needs to be flipped
 }
 ///////////////////////////////////////////////////////////////////////////////
+void TraceLine::SetFileName(char *newFileName)
+{
+	this->FileName = newFileName;
+	//std::cout<< "traceline set filename " << this->FileName << std::endl;
+}
+char * TraceLine::GetFileName()
+{
+	return this->FileName;
+	//std::cout<< "traceline get filename " << this->FileName << std::endl;
+}
 std::string TraceLine::stats()
 {
 	std::stringstream thisStats;

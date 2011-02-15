@@ -38,6 +38,7 @@ private:
 	int NumSegments, stems, branchPoints,terminalTips, MinTerminalLevel, MaxTerminalLevel, SumTerminalLevel;
 	double TotalPathLength, TotalVolume, TotalEuclidianPath, TerminalPathLength;
 	double maxTerminalPathLength, minTerminalPathLength; 
+	char * FileName;
 	std::set<long int> IDs;
 	//TraceBit rootBit;
 };

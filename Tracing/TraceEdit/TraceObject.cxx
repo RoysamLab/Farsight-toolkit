@@ -61,6 +61,7 @@ TraceObject::TraceObject()
   this->ty = 0;
   this->tz = 0;
 	this->ColorByTrees = false;
+	this->ParsedName = "Names";
 }
 
 TraceObject::TraceObject(const TraceObject &T)
@@ -537,6 +538,7 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
 bool TraceObject::ReadFromSWCFile(char * filename)
 {
   FILE * fp = fopen(filename, "r");
+  this->ParseFileName(filename);
   if(fp==NULL)
   {
     printf("Couldn't open file %s for parsing\n",filename);
@@ -689,6 +691,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
     ttemp->SetType(hash_type[*iter]);
     ttemp->setTraceColor( GetTraceLUT( ttemp ));
     ttemp->AddTraceBit(data[*iter]);
+	ttemp->SetFileName(this->ParsedName);
     int id_counter = *iter;
     while(child_count[id_counter]==1)
       {
@@ -719,6 +722,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
       //printf("hash_parent %d *iter %d hash_load %p\n",hash_parent[*iter],*iter,reinterpret_cast<void*>(hash_load[hash_parent[*iter]]));
       TraceLine * t = reinterpret_cast<TraceLine*>(hash_load[hash_parent[*iter]]);
       trace_lines[pc]->SetParent(t);
+	  t->SetFileName(this->ParsedName);
       
       //t->AddBranch(trace_lines[pc]);
       t->GetBranchPointer()->push_back(trace_lines[pc]);
@@ -748,7 +752,20 @@ bool TraceObject::ReadFromSWCFile(char * filename)
   free(child_id);
   return true;
 }
-
+void TraceObject::ParseFileName(char * fullName)
+{
+	std::vector<char * > parsedFileName;
+	char * pch;
+	pch = strtok (fullName,"\\ . / ");
+	while (pch != NULL)
+	{
+		//std::cout<<pch<< std::endl;
+		parsedFileName.push_back(pch);
+		pch = strtok (NULL,"\\ . / ");
+	}
+	this->ParsedName = parsedFileName[parsedFileName.size() -2];
+	std::cout<<	this->ParsedName << std::endl;
+}
 void TraceObject::ReadFromVTKFile(char * filename)
 {
   VTK_CREATE(vtkPolyDataReader, polyReader);

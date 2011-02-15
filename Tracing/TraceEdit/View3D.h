@@ -58,6 +58,8 @@ class vtkSliderWidget;
 class vtkSphereSource;
 class vtkVolume;
 class vtkImagePlaneWidget;
+class vtkWindowToImageFilter;
+class vtkJPEGWriter;
   
 class TraceModel;
 class MergeModel;
@@ -95,6 +97,7 @@ public:
 	static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
 	static void HandleKeyPress(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
 	void pointer3DLocation(double pos[]);
+	void saveRenderWindow(const char *filename);
 
 	void HighlightSelected(TraceLine* tline, double SelectColor);
 	void DeleteTrace(TraceLine *tline);
@@ -153,6 +156,7 @@ public slots:
 	void SetTraceType(int newType);
 	void ReloadState();
 	void SetImgInt();
+	void SaveScreenShot();
 
 	void chooseInteractorStyle(int iren);
 	void SetProjectionMethod(int style);
@@ -255,6 +259,7 @@ private:
 	QAction *SplitButton;
 	QAction *FlipButton;
 	QAction *WriteButton;
+	QAction *ScreenshotAction;
 	QAction *SettingsButton;
 	QAction *AutomateButton;
 	QAction *BreakButton;
@@ -312,6 +317,10 @@ private:
 	vtkSmartPointer<vtkActor> LineActor;
 	vtkSmartPointer<vtkActor> PointsActor;
 	vtkSmartPointer<vtkPolyDataMapper> LineMapper;
+
+	// save screenshots
+	vtkSmartPointer<vtkWindowToImageFilter> WindowToImage;
+	vtkSmartPointer<vtkJPEGWriter> JPEGWriter;
 
     //interactor variables and point picking
 	QWidget * CursorActionsWidget;
