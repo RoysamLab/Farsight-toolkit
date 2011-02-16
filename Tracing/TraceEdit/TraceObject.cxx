@@ -61,7 +61,7 @@ TraceObject::TraceObject()
   this->ty = 0;
   this->tz = 0;
 	this->ColorByTrees = false;
-	this->ParsedName = "Names";
+	this->ParsedName.clear();
 }
 
 TraceObject::TraceObject(const TraceObject &T)
@@ -680,7 +680,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
       }
     }
   fclose(fp);
-  printf("about to create the data structure.. %d\n", (int)criticals.size());
+  //printf("about to create the data structure.. %d\n", (int)criticals.size());
   std::set<int>::iterator iter = criticals.begin();
   int global_id_number = this->getNewLineId(); //setting this does not append traces?
    int pc = (int)trace_lines.size();
@@ -691,7 +691,6 @@ bool TraceObject::ReadFromSWCFile(char * filename)
     ttemp->SetType(hash_type[*iter]);
     ttemp->setTraceColor( GetTraceLUT( ttemp ));
     ttemp->AddTraceBit(data[*iter]);
-	ttemp->SetFileName(this->ParsedName);
     int id_counter = *iter;
     while(child_count[id_counter]==1)
       {
@@ -710,7 +709,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
     trace_lines.push_back(ttemp);
     iter++;
     }
-  printf("Trace_lines size = %d\n",(int)trace_lines.size());
+  //printf("Trace_lines size = %d\n",(int)trace_lines.size());
   
   iter = criticals.begin();
  
@@ -722,8 +721,6 @@ bool TraceObject::ReadFromSWCFile(char * filename)
       //printf("hash_parent %d *iter %d hash_load %p\n",hash_parent[*iter],*iter,reinterpret_cast<void*>(hash_load[hash_parent[*iter]]));
       TraceLine * t = reinterpret_cast<TraceLine*>(hash_load[hash_parent[*iter]]);
       trace_lines[pc]->SetParent(t);
-	  t->SetFileName(this->ParsedName);
-      
       //t->AddBranch(trace_lines[pc]);
       t->GetBranchPointer()->push_back(trace_lines[pc]);
       //if(t->GetBranchPointer()->size()>2)
@@ -745,7 +742,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
     if((*cleaniter)->GetParent()!=NULL)
       cleaniter=trace_lines.erase(cleaniter);
   }
-  printf("Finished loading\n");
+  //printf("Finished loading\n");
   //Print(std::cout);
 //  delete [] child_id;
   free(child_count);
@@ -756,15 +753,16 @@ void TraceObject::ParseFileName(char * fullName)
 {
 	std::vector<char * > parsedFileName;
 	char * pch;
-	pch = strtok (fullName,"\\ . / ");
+	pch = strtok (fullName," \\ . / ");
 	while (pch != NULL)
 	{
 		//std::cout<<pch<< std::endl;
 		parsedFileName.push_back(pch);
-		pch = strtok (NULL,"\\ . / ");
+		pch = strtok (NULL," \\ . / ");
 	}
-	this->ParsedName = parsedFileName[parsedFileName.size() -2];
-	std::cout<<	this->ParsedName << std::endl;
+	std::string newName = parsedFileName[parsedFileName.size() -2];
+	this->ParsedName.push_back(newName);
+	//std::cout<< this->ParsedName.back() << " at "<<this->ParsedName.size() << std::endl;
 }
 void TraceObject::ReadFromVTKFile(char * filename)
 {
@@ -2456,10 +2454,20 @@ std::vector<CellTrace*> TraceObject::CalculateCellFeatures()
 	{
 		std::vector<TraceLine*> segments;
 		this->LinearTraceLinesRecursive(segments, this->trace_lines[i]);
-		if (segments.size() >2)
+		if (segments.size() >0)
 		{
 			CellTrace* NextCell = new CellTrace(segments);
 			this->Cells.push_back(NextCell);
+		}
+	}
+	//std::cout<<this->Cells.size()<< "cells to names " <<this->ParsedName.size() << std::endl;
+	if(this->Cells.size() == this->ParsedName.size())
+	{
+		//std::cout<< "matched Cells to Files\n";
+		for (int j = 0; j< this->Cells.size(); j++)
+		{
+			this->Cells[j]->setFileName(this->ParsedName[j]);
+			//std::cout<<j<< "cells name " <<this->ParsedName[j] << std::endl;
 		}
 	}
 	return this->Cells;

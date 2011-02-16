@@ -32,13 +32,15 @@ public:
 	vtkSmartPointer<vtkVariantArray> DataRow();
 	std::set<long int> TraceIDsInCell();
 	int rootID();
+	void setFileName(std::string newFileName);
 private:
 	void clearAll();
 	std::vector<TraceLine*>  segments;
 	int NumSegments, stems, branchPoints,terminalTips, MinTerminalLevel, MaxTerminalLevel, SumTerminalLevel;
 	double TotalPathLength, TotalVolume, TotalEuclidianPath, TerminalPathLength;
-	double maxTerminalPathLength, minTerminalPathLength; 
-	char * FileName;
+	double maxTerminalPathLength, minTerminalPathLength;
+	float somaX, somaY, somaZ, maxX, maxY, maxZ, minX, minY, minZ; 
+	std::string FileName;
 	std::set<long int> IDs;
 	//TraceBit rootBit;
 };

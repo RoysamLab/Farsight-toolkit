@@ -32,8 +32,18 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 	this->NumSegments = (int) this->segments.size();
 	this->stems = (int) this->segments[0]->GetBranchPointer()->size();
 	TraceBit rootBit = this->segments[0]->GetTraceBitsPointer()->front();
-	std::cout << this->segments[0]->GetFileName()<< std::endl;
-	this->FileName = this->segments[0]->GetFileName();
+	//set the soma point and intitial bounds
+	this->somaX = rootBit.x;
+	this->somaY = rootBit.y;
+	this->somaZ = rootBit.z;
+	this->maxX = rootBit.x;
+	this->maxY = rootBit.y;
+	this->maxZ = rootBit.z;
+	this->minX = rootBit.x;
+	this->minY = rootBit.y;
+	this->minZ = rootBit.z;
+	//std::cout << this->segments[0]->GetFileName()<< std::endl;
+	//this->FileName = this->segments[0]->GetFileName();
 	for(i = 0; i < this->segments.size(); i++)
 	{
 		this->IDs.insert(this->segments[i]->GetId());
@@ -43,6 +53,35 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 		int tempLevel = this->segments[i]->GetLevel();
 		if (this->segments[i]->isLeaf())
 		{
+			TraceBit leafBit = this->segments[i]->GetTraceBitsPointer()->back();
+			float lx = leafBit.x;
+			float ly = leafBit.y;
+			float lz = leafBit.z;
+
+			if (lx > this->maxX)
+			{
+				this->maxX = lx;
+			}else if ( lx < this->minX)
+			{
+				this->minX = lx;
+			}
+
+			if (ly > this->maxY)
+			{
+				this->maxY = ly;
+			}else if ( ly < this->minY)
+			{
+				this->minY = ly;
+			}
+
+			if (lz > this->maxZ)
+			{
+				this->maxZ = lz;
+			}else if ( lz < this->minZ)
+			{
+				this->minZ = lz;
+			}
+
 			this->terminalTips++;
 			this->SumTerminalLevel += tempLevel;
 			this->TerminalPathLength += this->segments[i]->GetPathLength();
@@ -63,6 +102,10 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 		}
 	}//end for segment size
 }
+void CellTrace::setFileName(std::string newFileName)
+{
+	this->FileName = newFileName;
+}
 void CellTrace::clearAll()
 {
 	this->segments.clear();
@@ -78,6 +121,15 @@ void CellTrace::clearAll()
 	this->TotalVolume = 0;
 	this->TerminalPathLength = 0;
 	this->FileName = "file";
+	this->somaX = 0;
+	this->somaY = 0;
+	this->somaZ = 0;
+	this->maxX = 0;
+	this->maxY = 0;
+	this->maxZ = 0;
+	this->minX = 0;
+	this->minY = 0;
+	this->minZ = 0;
 }
 vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 {
@@ -97,7 +149,10 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->TotalPathLength);
 	CellData->InsertNextValue(this->TotalPathLength/this->NumSegments);//average segment length
 	CellData->InsertNextValue(this->TotalVolume);
-	CellData->InsertNextValue((this->FileName));
+	CellData->InsertNextValue(this->somaX);
+	CellData->InsertNextValue(this->somaY);
+	CellData->InsertNextValue(this->somaZ);
+	CellData->InsertNextValue(this->FileName.c_str());
 	//std::cout << this->FileName << std::endl;
 	return CellData;
 }

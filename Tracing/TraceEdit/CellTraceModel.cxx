@@ -57,6 +57,9 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Total Path Length");
 	this->headers.push_back("Average Segment Path Length");
 	this->headers.push_back("Total Volume");
+	this->headers.push_back("Soma X");
+	this->headers.push_back("Soma Y");
+	this->headers.push_back("Soma Z");
 	this->headers.push_back("Trace File");
 	int numHeaders = (int)this->headers.size();
 	vtkSmartPointer<vtkVariantArray> column = vtkSmartPointer<vtkVariantArray>::New();
