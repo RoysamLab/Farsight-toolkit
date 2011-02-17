@@ -33,6 +33,8 @@ public:
 	std::set<long int> TraceIDsInCell();
 	int rootID();
 	void setFileName(std::string newFileName);
+	void getSomaCoord(double xyz[]);
+	void getCellBounds(double bounds[]);
 private:
 	void clearAll();
 	std::vector<TraceLine*>  segments;

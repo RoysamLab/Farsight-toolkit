@@ -130,3 +130,27 @@ std::set<long int> CellTraceModel::GetSelecectedIDs()
 	}//end for selected
 	return allSelectedIDs;
 }
+std::vector<CellTrace*> CellTraceModel::GetSelecectedCells()
+{
+	std::vector<CellTrace*> selectedCell;
+	std::set<long> selected = this->Selection->getSelections();
+	std::set<long>::iterator it;
+	for (it = selected.begin(); it != selected.end(); ++it)
+	{
+		int id = (int) *it;
+		bool found = false;
+		unsigned int j = 0;
+		while(!found&&(j<this->Cells.size()))
+		{
+			if (id == this->Cells.at(j)->rootID())
+			{
+				selectedCell.push_back(this->Cells.at(j));
+				found = true;
+			}else
+			{
+				j++;
+			}
+		}//end while !found
+	}//end for selected
+	return selectedCell;
+}

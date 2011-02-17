@@ -32,7 +32,7 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 	this->NumSegments = (int) this->segments.size();
 	this->stems = (int) this->segments[0]->GetBranchPointer()->size();
 	TraceBit rootBit = this->segments[0]->GetTraceBitsPointer()->front();
-	//set the soma point and intitial bounds
+	//set the soma point as the intital bounds
 	this->somaX = rootBit.x;
 	this->somaY = rootBit.y;
 	this->somaZ = rootBit.z;
@@ -105,6 +105,21 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 void CellTrace::setFileName(std::string newFileName)
 {
 	this->FileName = newFileName;
+}
+void CellTrace::getSomaCoord(double xyz[])
+{
+	xyz[0] = this->somaX;
+	xyz[1] = this->somaY;
+	xyz[2] = this->somaZ;
+}
+void CellTrace::getCellBounds(double bounds[])
+{//min then max of x, y, z
+	bounds[0] = this->minX;
+	bounds[1] = this->maxX;
+	bounds[2] = this->minY;
+	bounds[3] = this->maxY;
+	bounds[4] = this->minZ;
+	bounds[5] = this->maxZ;
 }
 void CellTrace::clearAll()
 {

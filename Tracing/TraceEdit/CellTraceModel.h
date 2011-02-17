@@ -45,6 +45,7 @@ public:
 	void SelectByRootTrace(std::vector<TraceLine*> roots);
 	void SelectByIDs(std::vector<int> IDs);
 	std::set<long int> GetSelecectedIDs();
+	std::vector<CellTrace*> GetSelecectedCells();
 signals:
 	void selectionChanged(void);
 private:

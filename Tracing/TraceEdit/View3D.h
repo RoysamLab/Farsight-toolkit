@@ -172,6 +172,8 @@ public slots:
 	void setPTtoSoma();
 	void setUsePointer(int i);
 	void createNewTraceBit();
+	void focusOn();
+	void setRenderFocus(double renderBounds[]);
 //these are for bootloadfile
 	QString getTraceFile();
 	QString getImageFile();
@@ -271,6 +273,7 @@ private:
 	QCheckBox *ShowPointer;
 	QPushButton *setSoma;
 	QPushButton *createNewBitButton;
+	QAction *FocusAction;
 	QAction *ShowPlots;
 	QAction *CellAnalysis;
 	QAction *showStatisticsAction;

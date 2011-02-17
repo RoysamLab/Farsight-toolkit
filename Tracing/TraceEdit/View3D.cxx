@@ -786,24 +786,6 @@ void View3D::Initialize()
 	//this->QVTK->GetRenderWindow()->Render();
 	this->setupLinkedSpace();
 }
-void View3D::saveRenderWindow(const char *filename)
-{
-	this->WindowToImage = vtkSmartPointer<vtkWindowToImageFilter>::New();
-	this->WindowToImage->SetInput(this->QVTK->GetRenderWindow());
-	this->JPEGWriter = vtkSmartPointer<vtkJPEGWriter>::New();
-	this->JPEGWriter->SetInput(this->WindowToImage->GetOutput());
-	this->JPEGWriter->SetFileName(filename);
-	this->JPEGWriter->Write();
-}
-void View3D::SaveScreenShot()
-{
-	QString imageDir = this->TraceEditSettings.value("imageDir", ".").toString();
-	QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"),imageDir, tr("SWC Images (*.jpg *.jpeg)"));
-	if (!fileName.isEmpty())
-	{
-		this->saveRenderWindow(fileName.toStdString().c_str());
-	}
-}
 void View3D::setupLinkedSpace()
 {  
   this->tobj->Gaps.clear();
@@ -973,6 +955,9 @@ void View3D::CreateGUIObjects()
 	this->posZ->setValue(0);
 	this->posZ->setRange(-60000, 60000);
 	connect(this->posZ, SIGNAL(valueChanged(double)), this, SLOT(showPTin3D(double)));
+//advanced render actions	
+	this->FocusAction = new QAction("Render Focus", this->CentralWidget); 
+	connect(this->FocusAction, SIGNAL(triggered()), this, SLOT(focusOn()));
 
 //Setup the settings editing window
 	this->SettingsWidget = new QWidget(this);
@@ -1136,6 +1121,7 @@ void View3D::CreateLayout()
   this->EditsToolBar->addSeparator();
   this->EditsToolBar->addWidget(this->typeCombo);
   this->EditsToolBar->addAction(this->ImageIntensity);
+  this->EditsToolBar->addAction(this->FocusAction);
   this->EditsToolBar->hide();
 
 // 3d cursor dock 
@@ -1512,7 +1498,31 @@ void View3D::raycastToSlicer()
 		this->viewIn2D = false;
 	}//end else 2d to 3d
 }
-
+void View3D::focusOn()
+{
+	std::vector<CellTrace*> cellsSelected = this->CellModel->GetSelecectedCells();
+	if (cellsSelected.size() >=1)
+	{
+		double somaCoord[3];
+		cellsSelected.back()->getSomaCoord(somaCoord);
+		this->pointer3DLocation(somaCoord);
+		// render after move curser
+		double cellBounds[6];
+		cellsSelected.back()->getCellBounds(cellBounds);
+		this->setRenderFocus(cellBounds);
+	}
+	else
+	{
+		double test [6] = {100,10,100,10,100,10};
+		this->setRenderFocus(test);
+		std::cout <<" test set render focus \n";
+	}
+}
+void View3D::setRenderFocus(double renderBounds[])
+{	
+	this->Renderer->ResetCamera(renderBounds);
+	this->QVTK->GetRenderWindow()->Render();
+}
 void View3D::createSlicerSlider()
 {
 	this->SlicerBar =  new QToolBar("Slicer", this);
@@ -4090,7 +4100,24 @@ void View3D::SaveSelected()
 		}
 	}
 }
-
+void View3D::saveRenderWindow(const char *filename)
+{
+	this->WindowToImage = vtkSmartPointer<vtkWindowToImageFilter>::New();
+	this->WindowToImage->SetInput(this->QVTK->GetRenderWindow());
+	this->JPEGWriter = vtkSmartPointer<vtkJPEGWriter>::New();
+	this->JPEGWriter->SetInput(this->WindowToImage->GetOutput());
+	this->JPEGWriter->SetFileName(filename);
+	this->JPEGWriter->Write();
+}
+void View3D::SaveScreenShot()
+{
+	QString imageDir = this->TraceEditSettings.value("imageDir", ".").toString();
+	QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"),imageDir, tr("SWC Images (*.jpg *.jpeg)"));
+	if (!fileName.isEmpty())
+	{
+		this->saveRenderWindow(fileName.toStdString().c_str());
+	}
+}
 void View3D::closeEvent(QCloseEvent *event)
 {	
 	this->TraceEditSettings.setValue("mainWin/size", this->size());
