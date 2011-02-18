@@ -60,11 +60,12 @@ public:
 	PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, Module mod,
                         const char * trainColumn, const char * resultColumn,
                         QWidget *parent = 0);
-	PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, vtkSmartPointer<vtkTable> model_table, Module mod,
+	PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, vtkSmartPointer<vtkTable> model_table, QString fileName, Module mod,
                         const char * trainColumn, const char * resultColumn,
                         QWidget *parent = 0);
 	void KPLSrun(std::vector<int> columnsToUse);
 	vtkSmartPointer<vtkTable> mod_table;
+	QString filename;
 
 protected:
 	//void initializePage(int id);
@@ -75,7 +76,7 @@ protected:
 	void runSVM();
 	void runKPLS();
 	void saveModel(void);
-	void appendModel(vtkSmartPointer<vtkTable>);
+	void appendModel(vtkSmartPointer<vtkTable>, QString);
 
 
 signals:

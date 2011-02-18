@@ -52,12 +52,13 @@ PatternAnalysisWizard::PatternAnalysisWizard(
  }
 //******************************************************************************************
 PatternAnalysisWizard::PatternAnalysisWizard(
-  vtkSmartPointer<vtkTable> table, vtkSmartPointer<vtkTable> model_table , Module mod, const char * trainColumn,
+  vtkSmartPointer<vtkTable> table, vtkSmartPointer<vtkTable> model_table , QString fileName, Module mod, const char * trainColumn,
   const char * resultColumn, QWidget *parent)
 	: QWizard(parent)
 {
 	this->m_table = table;
 	this->mod_table = model_table;
+	this->filename = fileName;
 
 	this->columnForTraining = trainColumn;
 	this->columnForPrediction = resultColumn;
@@ -219,7 +220,7 @@ bool PatternAnalysisWizard::validateCurrentPage()
 					saveModel();
 					break;
 				case 3:
-					appendModel(mod_table);
+					appendModel(mod_table, filename);
 					break;
 			}
 			return true;
@@ -812,30 +813,25 @@ void PatternAnalysisWizard::saveModel(void)
 //****************************************************************************
 // Append Segmentation Model
 //****************************************************************************
-void PatternAnalysisWizard::appendModel(vtkSmartPointer<vtkTable> mod_table)
+void PatternAnalysisWizard::appendModel(vtkSmartPointer<vtkTable> mod_table, QString filename)
 {
-    //Save Dialog
-	QString filename = QFileDialog::getSaveFileName(this, tr("Save Training Model As..."),lastPath, tr("TEXT(*.txt)"));
-	if(filename == "")
-		return;
-	lastPath = QFileInfo(filename).absolutePath();
 	
-	for(int c=0; c<(int)m_table->GetNumberOfColumns(); ++c)
-	{
-	    std::string m_column = m_table->GetColumnName(c);
-		for(int d=0; d<(int)mod_table->GetNumberOfColumns(); ++d)
-		{
-			std::string mod_column = mod_table->GetColumnName(d);
-			if( m_column == mod_column)
-				break;
-		}
-		m_table->RemoveColumnByName( m_column.c_str() );
-	}
-	for(int row = 0; row < (int)m_table->GetNumberOfRows(); ++row)
+   	for(int row = 0; row < (int)m_table->GetNumberOfRows(); ++row)
 	{		
 		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
-		for(int c =0;c<(int)mod_table->GetNumberOfColumns();++c)
-			model_data1->InsertNextValue(m_table->GetValue(row,c));
+		for(int c = 0;c<(int)m_table->GetNumberOfColumns();++c)
+		{
+			 std::string m_column = m_table->GetColumnName(c);
+		     for(int d=0; d<(int)mod_table->GetNumberOfColumns(); ++d)
+		     {
+			      std::string mod_column = mod_table->GetColumnName(d);
+			      if( m_column.compare(mod_column) == 0)
+				  {
+					  model_data1->InsertNextValue(m_table->GetValue(row,c));
+				      break;
+				  }
+		     }            		
+		}
 		mod_table->InsertNextRow(model_data1);
 	}
 	//*********************************************************************
@@ -871,4 +867,3 @@ void PatternAnalysisWizard::appendModel(vtkSmartPointer<vtkTable> mod_table)
     //******************************************************************************************
 
 }
-    
