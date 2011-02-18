@@ -91,6 +91,8 @@ TrainingDialog::TrainingDialog(vtkSmartPointer<vtkTable> table, const char * tra
 		this->differentclassselected(1);
 
 	use_train_gui = true;
+
+	this->addClass();
 }
 
 void TrainingDialog::addClass(void)
