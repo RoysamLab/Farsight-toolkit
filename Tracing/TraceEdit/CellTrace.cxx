@@ -106,6 +106,19 @@ void CellTrace::setFileName(std::string newFileName)
 {
 	this->FileName = newFileName;
 }
+std::string CellTrace::GetFileName()
+{
+	std::string outputFileName;
+	if (this->FileName != "file")
+	{
+		outputFileName = this->FileName;
+	}
+	else
+	{
+		outputFileName = "cell" + this->segments[0]->GetId();
+	}
+	return outputFileName;
+}
 void CellTrace::getSomaCoord(double xyz[])
 {
 	xyz[0] = this->somaX;

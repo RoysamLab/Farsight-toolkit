@@ -174,6 +174,7 @@ public slots:
 	void createNewTraceBit();
 	void focusOn();
 	void setRenderFocus(double renderBounds[]);
+	void FocusOnCell(CellTrace* SelectedCell);
 //these are for bootloadfile
 	QString getTraceFile();
 	QString getImageFile();

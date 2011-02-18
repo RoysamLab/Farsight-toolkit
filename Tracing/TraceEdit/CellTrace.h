@@ -33,6 +33,7 @@ public:
 	std::set<long int> TraceIDsInCell();
 	int rootID();
 	void setFileName(std::string newFileName);
+	std::string GetFileName();
 	void getSomaCoord(double xyz[]);
 	void getCellBounds(double bounds[]);
 private:

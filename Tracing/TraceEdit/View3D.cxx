@@ -1503,20 +1503,24 @@ void View3D::focusOn()
 	std::vector<CellTrace*> cellsSelected = this->CellModel->GetSelecectedCells();
 	if (cellsSelected.size() >=1)
 	{
-		double somaCoord[3];
-		cellsSelected.back()->getSomaCoord(somaCoord);
-		this->pointer3DLocation(somaCoord);
-		// render after move curser
-		double cellBounds[6];
-		cellsSelected.back()->getCellBounds(cellBounds);
-		this->setRenderFocus(cellBounds);
+		this->FocusOnCell(cellsSelected.back());
 	}
 	else
 	{
-		double test [6] = {100,10,100,10,100,10};
+		double test [6] = {0,100,0,100,0,100};
 		this->setRenderFocus(test);
 		std::cout <<" test set render focus \n";
 	}
+}
+void View3D::FocusOnCell(CellTrace* SelectedCell)
+{
+	double somaCoord[3];
+	SelectedCell->getSomaCoord(somaCoord);
+	this->pointer3DLocation(somaCoord);
+	// render after move curser
+	double cellBounds[6];
+	SelectedCell->getCellBounds(cellBounds);
+	this->setRenderFocus(cellBounds);
 }
 void View3D::setRenderFocus(double renderBounds[])
 {	
