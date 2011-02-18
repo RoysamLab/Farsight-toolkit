@@ -1502,7 +1502,7 @@ void NucleusEditor::appendTrainer()
 			break;
 	if( str_it == prediction_names.end() )
 		prediction_names.push_back( p_name );
-	pWizard = new PatternAnalysisWizard( table, model_table, PatternAnalysisWizard::_APPENDMODEL,"","", this);
+	pWizard = new PatternAnalysisWizard( table, model_table, fileName, PatternAnalysisWizard::_APPENDMODEL,"","", this);
 	connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
 	pWizard->show();
 	kplsRun = 1;
