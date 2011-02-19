@@ -713,6 +713,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 	ofstream p;
 	//int max_dist = 0;
 	//p.open("checkme.txt");
+#pragma omp parallel for private(min_r, min_c, min_z, max_r, max_c, max_z)
 	for(int i=1; i<r-1; i++)
     {
         for(int j=1; j<c-1; j++)
@@ -738,14 +739,17 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 					mx = mx/140;							
 					//add the selected scale to the list of scales
 					std::vector <unsigned short> lst;
-					lst.push_back(mx);
-					lst.push_back(i);
-					lst.push_back(j);
-					lst.push_back(k);
-					p<<j<<" "<<i<<" "<<k<<" "<<mx<<std::endl;
-					scales.push_back(lst);
-					//mean +=mx;
-					cnt++;										
+					#pragma omp critical
+					{
+						lst.push_back(mx);
+						lst.push_back(i);
+						lst.push_back(j);
+						lst.push_back(k);
+						p<<j<<" "<<i<<" "<<k<<" "<<mx<<std::endl;
+						scales.push_back(lst);
+						//mean +=mx;
+						cnt++;
+					}									
 				}				
 			}			
         }
