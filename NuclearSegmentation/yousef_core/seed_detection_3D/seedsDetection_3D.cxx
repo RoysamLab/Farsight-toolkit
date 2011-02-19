@@ -196,8 +196,8 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	//see if we have enought memory for the LoG step
 	//approximately, we need (20~21)ximage size in bytes
 	//try to allocate memory for an unsigned char* of the 23ximage size
-	int block_divisor = 1;
-	bool done = false;
+	int block_divisor = 1; //Assumes you will not overflow RAM (according to Yousef above, you need 24 * image size of RAM, otherwise performance suffers)
+	/*bool done = false;
 	while(!done)		//Make sure my requested size is less than maximum for machine:
 	{
 		double totalPix = (double)(r*c*z) / ((double)block_divisor*(double)block_divisor);
@@ -229,16 +229,21 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 		
 		free(tmpp); //delete it
 		tmpp = NULL;
-	}
+	}*/
 	
 	
 	int blk = 1;
 	int cntr = 0;
-	for(int i=0; i<r; i+=r/block_divisor)
+	
+	cntr = (r % block_divisor ? block_divisor + 1 : block_divisor) * (c % block_divisor ? block_divisor + 1 : block_divisor);
+	//Naive implementation removed and replaced by above -Ho (2/19/2011)
+	/*for(int i=0; i<r; i+=r/block_divisor)
 		for(int j=0; j<c; j+=c/block_divisor)
-			cntr++;
+			cntr++;*/
 
 	int min_x, min_y, max_x, max_y;
+	
+#pragma omp parallel for private(min_x, min_y, max_x, max_y)
 	for(int i=0; i<r; i+=r/block_divisor)
 	{
 		for(int j=0; j<c; j+=c/block_divisor)
@@ -442,7 +447,8 @@ float get_maximum_3D(float* A, int r1, int r2, int c1, int c2, int z1, int z2,in
 {
 	
    	float mx = A[(z1*R*C)+(r1*C)+c1];
-    for(int i=r1; i<=r2; i++)
+    
+	for(int i=r1; i<=r2; i++)
     {
         for(int j=c1; j<=c2; j++)
         {
@@ -486,7 +492,9 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
 	int II = 0;
   int itr = 0;
   //std::cout << "In Detect_Local_MaximaPoints_3D, about to plunge in the loop" << std::endl;
-    for(int i=0; i<r; i++)
+
+#pragma omp parallel for private(II, min_r, min_c, min_z, max_r, max_c, max_z)
+	for(int i=0; i<r; i++)
     {
         for(int j=0; j<c; j++)
         {				
@@ -498,11 +506,14 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
 				max_r = (int)min((double)r-1,i+scale_xy);
 				max_c = (int)min((double)c-1,j+scale_xy);                         
 				max_z = (int)min((double)z-1,k+scale_z);                         
-        if(itr % 1000 == 0)
-          {
-          //std::cout << ".";
-          std::cout.flush();
-          }
+				/*#pragma omp critical
+				{
+					if(itr++ % 1000 == 0)
+					{
+						//std::cout << ".";
+						std::cout.flush();
+					}
+				}*/
 				float mx = get_maximum_3D(im_vals, min_r, max_r, min_c, max_c, min_z, max_z,r,c);
 				II = (k*r*c)+(i*c)+j;
 				if(im_vals[II] == mx)    
@@ -515,7 +526,6 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
 				}
 				else
 					out1[(k*r*c)+(i*c)+j]=0;
-      itr++;
 			}			
         }
     }  
