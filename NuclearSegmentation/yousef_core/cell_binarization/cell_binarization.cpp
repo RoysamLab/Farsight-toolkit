@@ -88,6 +88,8 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	//Modified by Isaac on 1-22-2010: Check memory before choosing divisor, and make smarter block divisions!!
 	//120 bytes are needed for each pixel to create a graph!!!!
 	int block_divisor = 1;
+
+	//Removed by Ho (2/19/2011) -- Poor memory management
 	/*if(div)	//means I'm going to try to find best number of blocks
 	{
 		bool done = false;
