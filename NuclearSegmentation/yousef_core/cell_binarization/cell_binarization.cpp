@@ -17,6 +17,11 @@
 
 #include "cell_binarization.h"
 #include <limits.h>
+#include <math.h>
+
+#ifdef _OPENMP
+#include "omp.h"
+#endif
 
 #ifndef SIZE_MAX
 #define SIZE_MAX ((size_t)-1)
@@ -83,7 +88,7 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	//Modified by Isaac on 1-22-2010: Check memory before choosing divisor, and make smarter block divisions!!
 	//120 bytes are needed for each pixel to create a graph!!!!
 	int block_divisor = 1;
-	if(div)	//means I'm going to try to find best number of blocks
+	/*if(div)	//means I'm going to try to find best number of blocks
 	{
 		bool done = false;
 		while(!done)		//Make sure my requested size is less than maximum for machine:
@@ -120,7 +125,7 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 			free(tmpp); //delete it
 			tmpp = NULL;
 		}
-	}
+	}*/
 	
 	std::cerr << "block_divisor = " << block_divisor << std::endl;
 
