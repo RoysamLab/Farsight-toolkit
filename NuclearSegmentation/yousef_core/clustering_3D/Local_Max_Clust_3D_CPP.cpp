@@ -57,7 +57,8 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
     
 	//create max_nghbr_im and initialize it with its index (node) value
 	max_nghbr_im = (int ***) malloc(r*sizeof(int**)); 
-    for(int i=0; i<r; i++)
+    
+	for(int i=0; i<r; i++)
     {        
         max_nghbr_im[i] = (int **) malloc(c*sizeof(int*));
         for(int j=0; j<c; j++)
@@ -74,7 +75,8 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 
 	//In this loop we look in a local region around each point and find the maximum value in the LoG image
 	//Set the value to the index of the local maximum, (so if I am a seed point do nothing).
-    for(int i=0; i<r; i++)
+#pragma omp parallel for private(min_r, min_c, min_z, max_r, max_c, max_z)    
+	for(int i=0; i<r; i++)
     {
         for(int j=0; j<c; j++)
         {
