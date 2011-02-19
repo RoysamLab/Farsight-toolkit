@@ -85,9 +85,10 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	//post_binarization(imgOut, 2, 3, R, C, Z);
 	//cout<<"done"<<endl;
 
-	//Modified by Isaac on 1-22-2010: Check memory before choosing divisor, and make smarter block divisions!!
-	//120 bytes are needed for each pixel to create a graph!!!!
-	int block_divisor = 1;
+	//Modified by Ho (2/19/2011) -- NEEDS CODE TO CORRECTLY SELECT DIVISOR (Note: Binarization Accuracy vs Multicore Usage vs Memory Capacity tradeoffs)
+	//int block_divisor = ceil(pow(omp_get_num_procs(), 0.5));
+	int block_divisor = omp_get_num_procs();
+	//int block_divisor = 1;
 
 	//Removed by Ho (2/19/2011) -- Poor memory management
 	/*if(div)	//means I'm going to try to find best number of blocks
@@ -131,20 +132,32 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	
 	std::cerr << "block_divisor = " << block_divisor << std::endl;
 
-	int *subImgBlock = new int[6];//[x1,y1,z1,x2,y2,z1]	
-	subImgBlock[4] = 0;
-	subImgBlock[5] = Z;
-	int blk = 1;
-	int cntr = 0;
-	for(int i=0; i<R; i+=R/block_divisor)
-		for(int j=0; j<C; j+=C/block_divisor)
-			cntr++;
+	/*	If block_divisor divides evently into R or C, then that term is block_divisor,
+		Otherwise, that term is block_divisor+1
+		Finally, multiply both terms together	-Ho (2/18/2011) */
+	int cntr = (R % block_divisor ? block_divisor + 1 : block_divisor) * (C % block_divisor ? block_divisor + 1 : block_divisor);
 
+	// REMOVED BY HO (2/19/2011) REPLACED BY CODE ABOVE
+	/*for(int i=0; i<R; i+=R/block_divisor)
+		for(int j=0; j<C; j+=C/block_divisor)
+			cntr++;*/	
+
+//May make sense to trade some accuracy for speed if we have enough memory (parallelize each subimage) -Ho (2/18/2011)	
+	std::cout<<"Total Blocks: "<<cntr<<std::endl;	
+
+		int blk = 0;
+#pragma omp parallel for
 	for(int i=0; i<R; i+=R/block_divisor)
 	{
 		for(int j=0; j<C; j+=C/block_divisor)
 		{			
-			std::cout<<"    Binarizing block "<<blk<<" of "<<cntr<<std::endl;
+			#pragma omp critical
+			{
+				std::cout<<"    Binarizing block " << ++blk <<" of "<<cntr<<std::endl;
+			}		
+			int *subImgBlock = new int[6];//[x1,y1,z1,x2,y2,z2]	
+			subImgBlock[4] = 0;
+			subImgBlock[5] = Z;
 			subImgBlock[0] = j;
 			subImgBlock[1] = (int)j+C/block_divisor+1;
 			subImgBlock[2] = i;
@@ -154,12 +167,11 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 			if(subImgBlock[3] > R)
 				subImgBlock[3] = R;
 
-			Seg_GC_Full_3D_Blocks(imgIn, R, C, Z, alpha_F, alpha_B, P_I, imgOut,subImgBlock);
-			blk++;
+			Seg_GC_Full_3D_Blocks(imgIn, R, C, Z, alpha_F, alpha_B, P_I, imgOut, subImgBlock);
+			
+			delete [] subImgBlock;
 		}
 	}
-			
-	delete [] subImgBlock;
 
 	/* REMOVED BY ISAAC (REPLACED BY CODE ABOVE)
 	//Added by Yousef on 11-18-2008: To save memory, divide the image into Blocks and 
