@@ -302,3 +302,7 @@ INCLUDE(InstallRequiredSystemLibraries)
 # script steps are run.
 add_subdirectory(InstallRules)
 
+if (MSVC)
+    set(CMAKE_C_FLAGS "/openmp")
+    set(CMAKE_CXX_FLAGS "/openmp")
+endif (MSVC)
