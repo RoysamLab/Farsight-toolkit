@@ -35,6 +35,10 @@
 #include <math.h>
 #include <limits.h>
 
+#ifdef _OPENMP
+#include "omp.h"
+#endif
+
 #ifndef SIZE_MAX
 #define SIZE_MAX ((size_t)-1)
 #endif
@@ -243,7 +247,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 
 	int min_x, min_y, max_x, max_y;
 	
-#pragma omp parallel for private(min_x, min_y, max_x, max_y)
+	#pragma omp parallel for private(min_x, min_y, max_x, max_y)
 	for(int i=0; i<r; i+=r/block_divisor)
 	{
 		for(int j=0; j<c; j+=c/block_divisor)
@@ -355,92 +359,100 @@ int detect_seeds(itk::SmartPointer<MyInputImageType> im, int r, int c, int z,con
 int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, int rmin, int rmax, int cmin, int cmax, int zmin, int zmax,const double sigma_min, double sigma_max, float* IMG, int sampl_ratio, int unsigned short* dImg, int* minIMout, int UseDistMap)
 {
   
-  //  Types should be selected on the desired input and output pixel types.
-  typedef    float     OutputPixelType;
-  //  The input and output image types are instantiated using the pixel types.
-  typedef itk::Image< OutputPixelType, 3 >   OutputImageType;
+	//  Types should be selected on the desired input and output pixel types.
+	typedef    float     OutputPixelType;
+	//  The input and output image types are instantiated using the pixel types.
+	typedef itk::Image< OutputPixelType, 3 >   OutputImageType;
+	bool failed = false;
 
-
-  for(int sigma=sigma_min; sigma<=sigma_max; sigma++)
-  {
-    std::cout<<"Processing scale "<<sigma<<"...";
-	//  The filter type is now instantiated using both the input image and the
-	//  output image types.
-	typedef itk::LaplacianRecursiveGaussianImageFilterNew<MyInputImageType, OutputImageType >  FilterType;
-	FilterType::Pointer laplacian = FilterType::New();
-	//  The option for normalizing across scale space can also be selected in this filter.
-	laplacian->SetNormalizeAcrossScale( true );
-
-	//  The input image can be obtained from the output of another
-	//  filter. Here the image comming from the calling function is used as the source
-	laplacian->SetInput( im);
-  
-	//  It is now time to select the $\sigma$ of the Gaussian used to smooth the
-	//  data.  Note that $\sigma$ must be passed to both filters and that sigma
-	//  is considered to be in millimeters. That is, at the moment of applying
-	//  the smoothing process, the filter will take into account the spacing
-	//  values defined in the image.
-	//
-	laplacian->SetSigma(sigma);
- 
-	//  Finally the pipeline is executed by invoking the \code{Update()} method.
-	//
-	try
+	#pragma omp parallel for firstprivate(im) ordered
+	for(int i = sigma_max - sigma_min; i >= 0; i--)
 	{
-		laplacian->Update();
-    }
-	catch( itk::ExceptionObject & err ) 
-    { 
-		std::cout << "ExceptionObject caught !" << std::endl; 
-		std::cout << err << std::endl; 
-		return EXIT_FAILURE;
-    } 
+		int sigma = sigma_max - i;
+	
+		std::cout<<"Processing scale "<<sigma<<"...";
+		//  The filter type is now instantiated using both the input image and the
+		//  output image types.
+		typedef itk::LaplacianRecursiveGaussianImageFilterNew<MyInputImageType, OutputImageType >  FilterType;
+		FilterType::Pointer laplacian = FilterType::New();
+		//  The option for normalizing across scale space can also be selected in this filter.
+		laplacian->SetNormalizeAcrossScale( true );
+
+		//  The input image can be obtained from the output of another
+		//  filter. Here the image comming from the calling function is used as the source
+		laplacian->SetInput(im);
+	  
+		//  It is now time to select the $\sigma$ of the Gaussian used to smooth the
+		//  data.  Note that $\sigma$ must be passed to both filters and that sigma
+		//  is considered to be in millimeters. That is, at the moment of applying
+		//  the smoothing process, the filter will take into account the spacing
+		//  values defined in the image.
+		//
+		laplacian->SetSigma(sigma);
+	 
+		//  Finally the pipeline is executed by invoking the \code{Update()} method.
+		//
+		try
+		{
+			laplacian->Update();
+		}
+		catch( itk::ExceptionObject & err ) 
+		{ 
+			std::cout << "ExceptionObject caught !" << std::endl; 
+			std::cout << err << std::endl; 
+			failed = true;
+		} 
  
-	//   Copy the resulting image into the input array
-	//long int i = 0;
-	typedef itk::ImageRegionIteratorWithIndex< OutputImageType > IteratorType;
-	IteratorType iterate(laplacian->GetOutput(),laplacian->GetOutput()->GetRequestedRegion());
-	long int II;
-	for(int k1=zmin; k1<=zmax; k1++)
-	{
-		for(int i1=rmin; i1<=rmax; i1++)	
-		{			
-			for(int j1=cmin; j1<=cmax; j1++)
+		//   Copy the resulting image into the input array
+		typedef itk::ImageRegionIteratorWithIndex< OutputImageType > IteratorType;
+		IteratorType iterate(laplacian->GetOutput(),laplacian->GetOutput()->GetRequestedRegion());
+		
+		long int II;
+		#pragma omp ordered
+		{
+			for(int k1=zmin; k1<=zmax; k1++)
 			{
-				II = (k1*r*c)+(i1*c)+j1;
-				float lgrsp = iterate.Get();
-				//lgrsp /= sqrt((double)sigma);
-				if(sigma==sigma_min)
-				{
-					IMG[II] = lgrsp;			
-				}
-				else
-				{					
-					if(UseDistMap == 1)
+				for(int i1=rmin; i1<=rmax; i1++)	
+				{			
+					for(int j1=cmin; j1<=cmax; j1++)
 					{
-						if(sigma<=dImg[II]/100)
+						II = (k1*r*c)+(i1*c)+j1;
+						float lgrsp = iterate.Get();
+						//lgrsp /= sqrt((double)sigma);
+						if(sigma==sigma_min)
 						{
-							IMG[II] = (IMG[II]>=lgrsp)? IMG[II] : lgrsp;				
-							if(IMG[II]<minIMout[0])
-								minIMout[0] = IMG[II];
+							IMG[II] = lgrsp;			
 						}
+						else
+						{					
+							if(UseDistMap == 1)
+							{
+								if(sigma<=dImg[II]/100)
+								{
+									IMG[II] = (IMG[II]>=lgrsp)? IMG[II] : lgrsp;				
+									if(IMG[II]<minIMout[0])
+										minIMout[0] = IMG[II];
+								}
+							}
+							else
+							{
+								IMG[II] = (IMG[II]>=lgrsp)? IMG[II] : lgrsp;				
+								if(IMG[II]<minIMout[0])
+									minIMout[0] = IMG[II];
+							}
+						}				
+						++iterate;		
 					}
-					else
-					{
-						IMG[II] = (IMG[II]>=lgrsp)? IMG[II] : lgrsp;				
-						if(IMG[II]<minIMout[0])
-							minIMout[0] = IMG[II];
-					}
-				}				
-				++iterate;		
+				}
 			}
 		}
-	}	
 
-	std::cout<<"done"<<std::endl;
-  }
-	
-  return EXIT_SUCCESS;
+		std::cout<<"Scale " << sigma << " done"<<std::endl;
+	}
+	if (failed)
+		return EXIT_FAILURE;
+	else
+		return EXIT_SUCCESS;
 }
 
 float get_maximum_3D(float* A, int r1, int r2, int c1, int c2, int z1, int z2,int R, int C)
@@ -493,7 +505,7 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
   int itr = 0;
   //std::cout << "In Detect_Local_MaximaPoints_3D, about to plunge in the loop" << std::endl;
 
-#pragma omp parallel for private(II, min_r, min_c, min_z, max_r, max_c, max_z)
+	#pragma omp parallel for private(II, min_r, min_c, min_z, max_r, max_c, max_z)
 	for(int i=0; i<r; i++)
     {
         for(int j=0; j<c; j++)
@@ -713,7 +725,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 	ofstream p;
 	//int max_dist = 0;
 	//p.open("checkme.txt");
-#pragma omp parallel for private(min_r, min_c, min_z, max_r, max_c, max_z)
+	#pragma omp parallel for private(min_r, min_c, min_z, max_r, max_c, max_z)
 	for(int i=1; i<r-1; i++)
     {
         for(int j=1; j<c-1; j++)
@@ -739,7 +751,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 					mx = mx/140;							
 					//add the selected scale to the list of scales
 					std::vector <unsigned short> lst;
-					#pragma omp critical
+					#pragma omp critical(minMaxArrayPushBack)
 					{
 						lst.push_back(mx);
 						lst.push_back(i);

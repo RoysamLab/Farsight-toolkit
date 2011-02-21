@@ -146,15 +146,14 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	std::cout<<"Total Blocks: "<<cntr<<std::endl;	
 
 		int blk = 0;
-#pragma omp parallel for
+	#pragma omp parallel for ordered
 	for(int i=0; i<R; i+=R/block_divisor)
 	{
 		for(int j=0; j<C; j+=C/block_divisor)
 		{			
-			#pragma omp critical
-			{
-				std::cout<<"    Binarizing block " << ++blk <<" of "<<cntr<<std::endl;
-			}		
+			#pragma omp atomic
+				blk++;
+			std::cout<<"    Binarizing block " << blk <<" of "<<cntr<<std::endl;
 			int *subImgBlock = new int[6];//[x1,y1,z1,x2,y2,z2]	
 			subImgBlock[4] = 0;
 			subImgBlock[5] = Z;
@@ -166,9 +165,10 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 				subImgBlock[1] = C;
 			if(subImgBlock[3] > R)
 				subImgBlock[3] = R;
+		
+			#pragma omp ordered
+				Seg_GC_Full_3D_Blocks(imgIn, R, C, Z, alpha_F, alpha_B, P_I, imgOut, subImgBlock);
 
-			Seg_GC_Full_3D_Blocks(imgIn, R, C, Z, alpha_F, alpha_B, P_I, imgOut, subImgBlock);
-			
 			delete [] subImgBlock;
 		}
 	}
@@ -762,6 +762,7 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
     num_edges = (imBlock[1]-imBlock[0]-1)*(imBlock[3]-imBlock[2]-1)*(imBlock[5]-imBlock[4]-1)*3;   
         
     //Before entering the loop, compute the poisson probs    
+	#pragma omp parallel for
 	for(int i=0; i<256; i++)
     {
 		if(i>=alpha_F)
@@ -782,17 +783,24 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 
 	//Here is the main loop.. 
     //For each point, compute the terminal and neighbor edge weights
-	int IND = -1;
+	
+	//std::cout << imBlock[5] - imBlock[4] << " " << imBlock[3] - imBlock[2] << " " << imBlock[1] - imBlock[0] << std::endl;
 	for(int k=imBlock[4]; k<imBlock[5]; k++)
-    {		
-        for(int j=imBlock[2]; j<imBlock[3]; j++)
+    {		       
+		/*if (omp_get_thread_num() == 0)
+			std::cout << "k-loop iteration " << k << " created " << omp_get_num_threads() << " threads to run" << std::endl;*/
+		for(int j=imBlock[2]; j<imBlock[3]; j++)
         {			
+			
+			#pragma omp parallel for private(Df, Db, curr_node) ordered
 			for(int i=imBlock[0]; i<imBlock[1]; i++)
 			{
-				IND++;
+				int IND = (i - imBlock[0] + (imBlock[1] - imBlock[0]) * (j - imBlock[2]) + (imBlock[1] - imBlock[0]) * (imBlock[3] - imBlock[2]) * (k - imBlock[4]));
+				/*if (omp_get_thread_num() == 0)
+					std::cout << "i-loop iteration " << i << " created " << omp_get_num_threads() << " threads to run" << std::endl;*/
 				/*Get the terminal edges capacities and write them to a file
 				These capacities represent penalties of assigning each point to
-				either the fg or the bg. Now, I am using the distance of the point
+				either the fg or the bg. Now, I am using 6the distance of the point
 				to the fg and bg. Then a short distance between a point and a class (fg or bg)
 				means the penalty of the assignement is low and vice versa*/ 
 								
@@ -803,6 +811,7 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 				
 				//CHANGE BY ISAAC 4/17/08
 				//curr_node = (k*r*c)+(i*c)+j; 
+
 				curr_node = (k*r*c)+(j*c)+i;
 
 				int intst = (int) IM[curr_node];	//Changed 5/9/08
@@ -810,18 +819,25 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 
 				//Added by Yousef on jan 17, 2008
 				//check if this is a seed point
-				        
-					Df = -log(F_H[(int)intst]);  //it was multiplied by .5                              
-					if(Df>1000.0)
-						Df = 1000;
-					Db = -log(B_H[(int)intst]);                    
-					if(Db>1000.0)
-						Db=1000;     			
-			        				
 
-				g -> add_node();
 				
-				g -> add_tweights( IND,   /* capacities */ Df,Db);                         
+				//std::cout << intst << std::endl;
+				Df = -log(F_H[(int)intst]);  //it was multiplied by .5                              	
+				if(Df>1000.0)
+					Df = 1000;
+
+				Db = -log(B_H[(int)intst]);
+				if(Db>1000.0)
+					Db=1000;
+
+				//std::cout << "i, j, k = " << i << " " << j << " " << k << " ";
+				//std::cout << "Thread " << omp_get_thread_num() << " about to enter critical section" << endl;
+				#pragma omp ordered
+				{	
+					//std::cout << "Thread " << omp_get_thread_num() << " in enter critical section" << endl;
+					g -> add_node();
+					g -> add_tweights(IND++,   /* capacities */ Df,Db);
+				}
 			}
 		}
 	}
@@ -830,14 +846,20 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 	
 	sig = 50.0;
 	w=10.0;
-	IND = -1;
+	
+
 	for(int k=imBlock[4]; k<imBlock[5]; k++)
     {		
-        for(int j=imBlock[2]; j<imBlock[3]; j++)
+		for(int j=imBlock[2]; j<imBlock[3]; j++)
         {			
+			#pragma omp parallel for private (intst, intst2, nbr_node, curr_node, Dn) ordered
 			for(int i=imBlock[0]; i<imBlock[1]; i++)
 			{
-				IND++;
+				int IND = (i - imBlock[0] + (imBlock[1] - imBlock[0]) * (j - imBlock[2]) + (imBlock[1] - imBlock[0]) * (imBlock[3] - imBlock[2]) * (k - imBlock[4])); //needed for threading correctness
+				
+				/*if (IND != local_index)
+					std::cout << "incorrect index" << std::endl;*/
+				
 				/*get the neighbor edges capacities and write them to a file.
 				Now, each edge capacity between two neighbors p and q represent
 				the penalty for discontinuety. Since I am using the difference in
@@ -857,30 +879,36 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 				//	Dn = 0;
 				//else
 				//{
-					intst2 = (int) IM[nbr_node];
-					Dn = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));				
+				intst2 = (int) IM[nbr_node];
+				Dn = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));				
 				//}
-				g -> add_edge( IND, IND+1,    /* capacities */  Dn, Dn );
+				
 				//2.				
 				nbr_node = (k*r*c)+((j+1)*c)+i;
 				//if(Seg_out[nbr_node] == Seg_out[nbr_node])
 				//	Dn = 0;
 				//else
 				//{
-					intst2 = (int) IM[nbr_node];
-					Dn = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));				
+				intst2 = (int) IM[nbr_node];
+				int Dn2 = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));				
 				//}												
-				g -> add_edge( IND, IND+(imBlock[1]-imBlock[0]),    /* capacities */  Dn, Dn );
+				
 				//3.				
 				nbr_node = ((k+1)*r*c)+(j*c)+i;
 				//if(Seg_out[nbr_node] == Seg_out[nbr_node])
 				//	Dn = 0;
 				//else
 				//{
-					intst2 = (int) IM[nbr_node];
-					Dn = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));				
+				intst2 = (int) IM[nbr_node];
+				int Dn3 = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));				
 				//}												
-				g -> add_edge( IND, IND+(imBlock[1]-imBlock[0])*(imBlock[3]-imBlock[2]),    /* capacities */  Dn, Dn );
+				
+				#pragma omp ordered
+				{
+					g -> add_edge( IND, IND+1,    /* capacities */  Dn, Dn );
+					g -> add_edge( IND, IND+(imBlock[1]-imBlock[0]),    /* capacities */  Dn2, Dn2 );
+					g -> add_edge( IND, IND+(imBlock[1]-imBlock[0])*(imBlock[3]-imBlock[2]),    /* capacities */  Dn3, Dn3 );
+				}
 			}
 		}
 	}    
@@ -890,14 +918,14 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 	//Compute the maximum flow:
 	g->maxflow();		//Alex DO NOT REMOVE
 	
-	IND = -1;
 	for(int k=imBlock[4]; k<imBlock[5]; k++)
     {		
         for(int j=imBlock[2]; j<imBlock[3]; j++)
         {			
 			for(int i=imBlock[0]; i<imBlock[1]; i++)
 			{
-				IND++;
+				int IND = (i - imBlock[0] + (imBlock[1] - imBlock[0]) * (j - imBlock[2]) + (imBlock[1] - imBlock[0]) * (imBlock[3] - imBlock[2]) * (k - imBlock[4])); ; //needed for threading correctness
+				
 				if(g->what_segment(IND) == GraphType::SOURCE)
 					Seg_out[(k*r*c)+(j*c)+i]=0;
 				else
@@ -905,6 +933,8 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 			}
 		}
 	}
+	
+	//std::cout << "Third Loop Complete" << std::endl;
 
 	delete g;
 }

@@ -19,6 +19,10 @@
 #include "local_max_clust_3D.h"
 #include<math.h>
 
+#ifdef _OPENMP
+#include "omp.h"
+#endif
+
 using namespace std;
 
 void get_maximum(float* A, int r1, int r2, int c1, int c2, int z1, int z2, int* rx, int* cx, int* zx, int R, int C, int Z)
@@ -75,11 +79,12 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 
 	//In this loop we look in a local region around each point and find the maximum value in the LoG image
 	//Set the value to the index of the local maximum, (so if I am a seed point do nothing).
-#pragma omp parallel for private(min_r, min_c, min_z, max_r, max_c, max_z)    
+	   
 	for(int i=0; i<r; i++)
     {
         for(int j=0; j<c; j++)
         {
+			#pragma omp parallel for private(min_r, min_c, min_z, max_r, max_c, max_z) ordered
 			for(int k=0; k<z; k++)
 			{        				
 				min_r = (int) max((double)(0.0),(double)(i-scale_xy));
@@ -102,7 +107,9 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 					//r,c,z are the image dimensions.
 
 					//Do not comment this line again please... I resoved the warning issue
-					get_maximum(im_vals, min_r, max_r, min_c, max_c, min_z, max_z, &R, &C, &Z, r, c, z);                                              
+					#pragma omp ordered
+					{
+						get_maximum(im_vals, min_r, max_r, min_c, max_c, min_z, max_z, &R, &C, &Z, r, c, z);                                              
                                                                                  
 					/*double ind;
             
@@ -113,7 +120,8 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
             
 					max_nghbr_im[i][j][k] = ind;*/	
 					
-					max_nghbr_im[i][j][k] = max_nghbr_im[R][C][Z];
+						max_nghbr_im[i][j][k] = max_nghbr_im[R][C][Z];
+					}
 				}
 			}
         }		
@@ -133,6 +141,7 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 			break;		
         change=0;
 		
+		#pragma omp parallel for private(LM)
         for(int i=0; i<r; i++)
         {
             for(int j=0; j<c; j++)
@@ -155,7 +164,8 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 						continue;
 					else
 					{
-						change=change+1;
+						#pragma omp atomic
+							change++;
 						max_nghbr_im[i][j][k]=max_nghbr_im[R][C][Z];
 					}
 				}
