@@ -31,18 +31,23 @@ void get_maximum(float* A, int r1, int r2, int c1, int c2, int z1, int z2, int* 
     rx[0] = r1;
     cx[0] = c1;
 	zx[0] = z1;
-    for(int i=r1; i<=r2; i++)
+    
+	#pragma omp parallel for
+	for(int i=r1; i<=r2; i++)
     {
         for(int j=c1; j<=c2; j++)
         {
 			for(int k=z1; k<=z2; k++)
 			{
-				if(A[(k*R*C)+(i*C)+j]>=mx)
+				#pragma omp critical
 				{
-					mx = A[(k*R*C)+(i*C)+j];//A[i][j][k];
-					cx[0] = j;
-					rx[0] = i;
-					zx[0] = k;
+					if(A[(k*R*C)+(i*C)+j]>=mx)
+					{
+						mx = A[(k*R*C)+(i*C)+j];//A[i][j][k];
+						cx[0] = j;
+						rx[0] = i;
+						zx[0] = k;
+					}
 				}
             }
         }
@@ -166,6 +171,7 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 					{
 						#pragma omp atomic
 							change++;
+
 						max_nghbr_im[i][j][k]=max_nghbr_im[R][C][Z];
 					}
 				}

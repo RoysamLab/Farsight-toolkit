@@ -145,15 +145,18 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 //May make sense to trade some accuracy for speed if we have enough memory (parallelize each subimage) -Ho (2/18/2011)	
 	std::cout<<"Total Blocks: "<<cntr<<std::endl;	
 
-		int blk = 0;
-	#pragma omp parallel for ordered
+		int blk = 1;
+	
 	for(int i=0; i<R; i+=R/block_divisor)
 	{
+		#pragma omp parallel for ordered
 		for(int j=0; j<C; j+=C/block_divisor)
 		{			
-			#pragma omp atomic
-				blk++;
-			std::cout<<"    Binarizing block " << blk <<" of "<<cntr<<std::endl;
+			#pragma omp critical
+			{
+				std::cout<<"    Binarizing block " << blk++ <<" of "<<cntr<<std::endl;
+			}
+			
 			int *subImgBlock = new int[6];//[x1,y1,z1,x2,y2,z2]	
 			subImgBlock[4] = 0;
 			subImgBlock[5] = Z;
@@ -167,8 +170,9 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 				subImgBlock[3] = R;
 		
 			#pragma omp ordered
+			{
 				Seg_GC_Full_3D_Blocks(imgIn, R, C, Z, alpha_F, alpha_B, P_I, imgOut, subImgBlock);
-
+			}
 			delete [] subImgBlock;
 		}
 	}
