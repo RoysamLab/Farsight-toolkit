@@ -327,8 +327,9 @@ void yousef_nucleus_seg::runClustering()
 	else
 	{
 		std::cerr << "Starting Initial Clustering" << std::endl;
-		local_max_clust_3D(logImagePtr/*LoG*/, seedImagePtr/*local max vals*/, binImagePtr/*binary mask*/,clustImagePtr/*output*/,\
-			numRows, numColumns, numStacks, regionXY, regionZ);		
+		std::cerr << "scale_xy = " << regionXY << std::endl;
+		std::cerr << "scale_z = " << regionZ << std::endl;
+		local_max_clust_3D(logImagePtr/*LoG*/, seedImagePtr/*local max vals*/, binImagePtr/*binary mask*/,clustImagePtr/*output*/,numRows, numColumns, numStacks, regionXY, regionZ);		
 	}	
 }
 

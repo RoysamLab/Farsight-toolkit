@@ -87,8 +87,9 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 
 	//Modified by Ho (2/19/2011) -- NEEDS CODE TO CORRECTLY SELECT DIVISOR (Note: Binarization Accuracy vs Multicore Usage vs Memory Capacity tradeoffs)
 	//int block_divisor = ceil(pow(omp_get_num_procs(), 0.5));
-	int block_divisor = omp_get_num_procs();
+	//int block_divisor = omp_get_num_procs();
 	//int block_divisor = 1;
+	int block_divisor = 8;
 
 	//Removed by Ho (2/19/2011) -- Poor memory management
 	/*if(div)	//means I'm going to try to find best number of blocks
@@ -804,7 +805,7 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 					std::cout << "i-loop iteration " << i << " created " << omp_get_num_threads() << " threads to run" << std::endl;*/
 				/*Get the terminal edges capacities and write them to a file
 				These capacities represent penalties of assigning each point to
-				either the fg or the bg. Now, I am using 6the distance of the point
+				either the fg or the bg. Now, I am using the distance of the point
 				to the fg and bg. Then a short distance between a point and a class (fg or bg)
 				means the penalty of the assignement is low and vice versa*/ 
 								
@@ -922,6 +923,7 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 	//Compute the maximum flow:
 	g->maxflow();		//Alex DO NOT REMOVE
 	
+	#pragma omp parallel for
 	for(int k=imBlock[4]; k<imBlock[5]; k++)
     {		
         for(int j=imBlock[2]; j<imBlock[3]; j++)

@@ -67,6 +67,7 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 	//create max_nghbr_im and initialize it with its index (node) value
 	max_nghbr_im = (int ***) malloc(r*sizeof(int**)); 
     
+	#pragma omp parallel for
 	for(int i=0; i<r; i++)
     {        
         max_nghbr_im[i] = (int **) malloc(c*sizeof(int*));
@@ -84,7 +85,7 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 
 	//In this loop we look in a local region around each point and find the maximum value in the LoG image
 	//Set the value to the index of the local maximum, (so if I am a seed point do nothing).
-	   
+	
 	for(int i=0; i<r; i++)
     {
         for(int j=0; j<c; j++)
@@ -111,9 +112,8 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 					//R,C,Z will contain the coordinates of this local maximum value. 
 					//r,c,z are the image dimensions.
 
-					//Do not comment this line again please... I resoved the warning issue
-					#pragma omp ordered
-					{
+					
+					
 						get_maximum(im_vals, min_r, max_r, min_c, max_c, min_z, max_z, &R, &C, &Z, r, c, z);                                              
                                                                                  
 					/*double ind;
@@ -125,6 +125,8 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
             
 					max_nghbr_im[i][j][k] = ind;*/	
 					
+					#pragma omp ordered
+					{	
 						max_nghbr_im[i][j][k] = max_nghbr_im[R][C][Z];
 					}
 				}
@@ -169,8 +171,10 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 						continue;
 					else
 					{
-						#pragma omp atomic
+						#pragma omp critical
+						{
 							change++;
+						}
 
 						max_nghbr_im[i][j][k]=max_nghbr_im[R][C][Z];
 					}
