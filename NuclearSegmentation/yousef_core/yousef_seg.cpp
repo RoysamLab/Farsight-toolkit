@@ -201,7 +201,7 @@ void yousef_nucleus_seg::runBinarization()
 	//subtract the gradient image from the input image
 	//subtractGradientImage(dataImagePtr, numRows, numColumns, numStacks, sampling_ratio_XY_to_Z);
 	//allocate space for the binary image
-	binImagePtr = new unsigned short[numStacks*numRows*numColumns];	
+/*	binImagePtr = new unsigned short[numStacks*numRows*numColumns];	
 
 	std::cout<<"Start Binarization ..."<<std::endl;
 	int ok = 0;
@@ -270,7 +270,7 @@ void yousef_nucleus_seg::runBinarization()
 	writer->SetFileName("binImage.tif");
 	writer->Update();
 
-	std::cout << "Bin Image written to binImage.tif" << endl;
+	std::cout << "Bin Image written to binImage.tif" << endl;*/
 }
 
 void yousef_nucleus_seg::runSeedDetection()
