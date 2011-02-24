@@ -18,6 +18,7 @@
 #include "cell_binarization.h"
 #include <limits.h>
 #include <math.h>
+#include <time.h>
 
 #ifdef _OPENMP
 #include "omp.h"
@@ -69,6 +70,7 @@ int Cell_Binarization_2D(unsigned char* imgIn, unsigned short *imgOut, int R, in
 //Main function for 3-D binarization
 int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, int C, int Z, int shd, int div) //modifed by Yousef on 5-20-2008.. The first input change from uchar* to int*
 {			
+	clock_t start_time = clock();
 	//Now, to do the binarization, follow these steps:
 	//1- Assuming that the histogram of the image is modeled by a mixture of two 
 	//poisson distributions, estimate the parameters of the mixture model 
@@ -136,47 +138,94 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	/*	If block_divisor divides evently into R or C, then that term is block_divisor,
 		Otherwise, that term is block_divisor+1
 		Finally, multiply both terms together	-Ho (2/18/2011) */
-	int cntr = (R % block_divisor ? block_divisor + 1 : block_divisor) * (C % block_divisor ? block_divisor + 1 : block_divisor);
+	//int cntr = (R % block_divisor ? block_divisor + 1 : block_divisor) * (C % block_divisor ? block_divisor + 1 : block_divisor);
 
 	// REMOVED BY HO (2/19/2011) REPLACED BY CODE ABOVE
-	/*for(int i=0; i<R; i+=R/block_divisor)
+	int cntr = 0;
+	for(int i=0; i<R; i+=R/block_divisor)
 		for(int j=0; j<C; j+=C/block_divisor)
-			cntr++;*/	
+			cntr++;	
 
 //May make sense to trade some accuracy for speed if we have enough memory (parallelize each subimage) -Ho (2/18/2011)	
 	std::cout<<"Total Blocks: "<<cntr<<std::endl;	
 
-		int blk = 1;
+	int blk = 1;
 	
-	for(int i=0; i<R; i+=R/block_divisor)
+	int ***subImgBlockArray = (int ***) malloc(R * sizeof(int **));
+
+	#ifdef _OPENMP
+		omp_set_nested(1);
+	#endif
+	
+	#pragma omp parallel for
+	for (int i = 0; i < R; i+=R/block_divisor)
 	{
-		#pragma omp parallel for ordered
+		subImgBlockArray[i] = (int **) malloc(C * sizeof(int *));
+		#pragma omp parallel for
+		for (int j = 0; j < C; j+=C/block_divisor) 
+			subImgBlockArray[i][j] = (int *) malloc(6 * sizeof(int));
+	}
+	
+
+	
+	#pragma omp parallel for
+	for(int i=0; i<R; i+=R/block_divisor)
+	{			
+		#pragma omp parallel for
 		for(int j=0; j<C; j+=C/block_divisor)
 		{			
-			#pragma omp critical
-			{
-				std::cout<<"    Binarizing block " << blk++ <<" of "<<cntr<<std::endl;
-			}
-			
-			int *subImgBlock = new int[6];//[x1,y1,z1,x2,y2,z2]	
-			subImgBlock[4] = 0;
-			subImgBlock[5] = Z;
-			subImgBlock[0] = j;
-			subImgBlock[1] = (int)j+C/block_divisor+1;
-			subImgBlock[2] = i;
-			subImgBlock[3] = (int)i+R/block_divisor+1;
-			if(subImgBlock[1] > C)
-				subImgBlock[1] = C;
-			if(subImgBlock[3] > R)
-				subImgBlock[3] = R;
-		
-			#pragma omp ordered
-			{
-				Seg_GC_Full_3D_Blocks(imgIn, R, C, Z, alpha_F, alpha_B, P_I, imgOut, subImgBlock);
-			}
-			delete [] subImgBlock;
+			subImgBlockArray[i][j][4] = 0;
+			subImgBlockArray[i][j][5] = Z;
+			subImgBlockArray[i][j][0] = j;
+			subImgBlockArray[i][j][1] = (int)j+C/block_divisor+1;
+			subImgBlockArray[i][j][2] = i;
+			subImgBlockArray[i][j][3] = (int)i+R/block_divisor+1;
+			if(subImgBlockArray[i][j][1] > C)
+				subImgBlockArray[i][j][1] = C;
+			if(subImgBlockArray[i][j][3] > R)
+				subImgBlockArray[i][j][3] = R;
 		}
 	}
+
+	#ifdef _OPENMP
+		omp_set_nested(0);
+	#endif
+	
+	for(int i=0; i<R; i+=R/block_divisor)
+	{			
+		#pragma omp parallel for ordered
+		for(int j=0; j<C; j+=C/block_divisor)
+		{
+			#pragma omp ordered
+			{
+				std::cout<<"    Binarizing block " << blk++ <<" of "<<cntr<<std::endl;	
+				Seg_GC_Full_3D_Blocks(imgIn, R, C, Z, alpha_F, alpha_B, P_I, imgOut, subImgBlockArray[i][j]); //imgIn is dataImagePtr, imgOut is binImagePtr
+			}
+		}
+	}
+
+	#ifdef _OPENMP
+		omp_set_nested(1);
+	#endif
+	
+	#pragma omp parallel for
+	for(int i=0; i<R; i+=R/block_divisor)
+	{			
+		#pragma omp parallel for
+		for(int j=0; j<C; j+=C/block_divisor)
+		{
+			free(subImgBlockArray[i][j]);
+		}
+		free(subImgBlockArray[i]);
+	}
+	free(subImgBlockArray);
+
+	subImgBlockArray = NULL;
+
+	#ifdef _OPENMP
+		omp_set_nested(0);
+	#endif
+
 
 	/* REMOVED BY ISAAC (REPLACED BY CODE ABOVE)
 	//Added by Yousef on 11-18-2008: To save memory, divide the image into Blocks and 
@@ -221,6 +270,7 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	//int num_objects = getConnCompImage(imgOut, 26, 25, R, C, Z);
 	//num_objects = getConnCompImage(imgOut, 26, 25, R, C, Z);
 
+	cout << "Cell Binarization took " << (clock() - start_time)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 	return 1;//num_objects;	
 }
 
@@ -841,7 +891,7 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 				{	
 					//std::cout << "Thread " << omp_get_thread_num() << " in enter critical section" << endl;
 					g -> add_node();
-					g -> add_tweights(IND++,   /* capacities */ Df,Db);
+					g -> add_tweights(IND,   /* capacities */ Df,Db);
 				}
 			}
 		}

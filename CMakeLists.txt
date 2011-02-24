@@ -27,6 +27,7 @@ OPTION( USE_SQLITE_DATABASE "Use SQLite database libraries" ON )
 OPTION( WRAP_PYTHON "Wrap Farsight in Python" OFF )
 OPTION( BUILD_EMBREX "Build Mark Embrecht's KPLS module" OFF )
 OPTION( BUILD_UNMIXING "Build Unmixing module" OFF )
+OPTION( BUILD_OPENMP "Build with OpenMP support (Note that only VS2008 Pro and VS2008 Team System supports OpenMP)" OFF)
 MARK_AS_ADVANCED(BUILD_EMBREX)
 MARK_AS_ADVANCED(WRAP_PYTHON)
 
@@ -188,6 +189,18 @@ IF(BUILD_UNMIXING)
 	SUBDIRS(Unmixing)
 ENDIF(BUILD_UNMIXING)
 
+IF (BUILD_OPENMP)
+    IF (MSVC)
+        set(CMAKE_C_FLAGS "/openmp")
+        set(CMAKE_CXX_FLAGS "/openmp")
+    elseif(GCC)
+    
+        set(CMAKE_C_FLAGS "-fopenmp")
+        set(CMAKE_CXX_FLAGS "-fopenmp")
+    
+endif (MSVC)
+ENDIF(BUILD_OPENMP)
+
 #####################################################################################
 # Optionally find Farsight's data directory, used for testing and installers
 # You can check out the data directory from subversion like so:
@@ -301,11 +314,3 @@ INCLUDE(InstallRequiredSystemLibraries)
 # bundles and any files inside of them are already run before these
 # script steps are run.
 add_subdirectory(InstallRules)
-
-if (MSVC)
-    set(CMAKE_C_FLAGS "/openmp")
-    set(CMAKE_CXX_FLAGS "/openmp")
-elseif(GCC)
-    set(CMAKE_C_FLAGS "-fopenmp")
-    set(CMAKE_CXX_FLAGS "-fopenmp")
-endif (MSVC)

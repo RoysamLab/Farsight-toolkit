@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <math.h>
 #include <limits.h>
+#include <time.h>
 
 #ifdef _OPENMP
 #include "omp.h"
@@ -81,6 +82,8 @@ int computeWeightedMedian(std::vector< std::vector<float> > scales, int cntr);
 
 int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int r, int c, int z, double *sigma_min_in, double *sigma_max_in, double *scale_xy_in, double *scale_z_in, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout, bool paramEstimation)
 {	
+	clock_t start_time = clock();
+	
 	//get this inputs
 	double sigma_min = sigma_min_in[0];
 	double sigma_max = sigma_max_in[0];
@@ -247,6 +250,9 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 
 	int min_x, min_y, max_x, max_y;
 	
+	#ifdef _OPENMP
+		omp_set_nested(1);
+	#endif
 	#pragma omp parallel for private(min_x, min_y, max_x, max_y)
 	for(int i=0; i<r; i+=r/block_divisor)
 	{
@@ -270,7 +276,9 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 			//
 		}
 	}
-	
+	#ifdef _OPENMP
+		omp_set_nested(0);
+	#endif
 		
 	free(dImg);
    
@@ -291,7 +299,10 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	Detect_Local_MaximaPoints_3D(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0], bImg);	
   std::cout << "done detecting seeds" << std::endl;
 	
+  cout << "Seed detection took " << (clock() - start_time)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 	return 1;
+
+	
 }
 
 
@@ -369,9 +380,11 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 	for(int i = sigma_max - sigma_min; i >= 0; i--)
 	{
 		int sigma = sigma_max - i;
-	
-		std::cout<<"Processing scale "<<sigma<<"...";
-		//  The filter type is now instantiated using both the input image and the
+		#pragma omp critical (ProcessingScaleCout)
+		{
+			std::cout<<"Processing scale "<<sigma<<endl;
+		}
+		//  The filter type is now instantiated using both the input image and the 
 		//  output image types.
 		typedef itk::LaplacianRecursiveGaussianImageFilterNew<MyInputImageType, OutputImageType >  FilterType;
 		FilterType::Pointer laplacian = FilterType::New();
@@ -751,17 +764,19 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 					mx = mx/140;							
 					//add the selected scale to the list of scales
 					std::vector <unsigned short> lst;
-					#pragma omp critical(minMaxArrayPushBack)
+
+					lst.push_back(mx);
+					lst.push_back(i);
+					lst.push_back(j);
+					lst.push_back(k);
+					p<<j<<" "<<i<<" "<<k<<" "<<mx<<std::endl;
+					#pragma omp critical(scalesCS)
 					{
-						lst.push_back(mx);
-						lst.push_back(i);
-						lst.push_back(j);
-						lst.push_back(k);
-						p<<j<<" "<<i<<" "<<k<<" "<<mx<<std::endl;
 						scales.push_back(lst);
-						//mean +=mx;
+					
+					//mean +=mx;
 						cnt++;
-					}									
+					}
 				}				
 			}			
         }

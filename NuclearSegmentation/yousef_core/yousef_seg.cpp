@@ -226,6 +226,51 @@ void yousef_nucleus_seg::runBinarization()
 	{
 		cerr << "Binarization Failed!!" << endl;
 	}
+	
+	typedef unsigned short PixelType;
+	typedef itk::Image< PixelType,  3 >   InputImageType;
+	
+	InputImageType::Pointer im;
+	im = InputImageType::New();
+	InputImageType::PointType origin;
+    origin[0] = 0; 
+    origin[1] = 0;    
+	origin[2] = 0;    
+    im->SetOrigin( origin );
+	
+    InputImageType::IndexType start;
+    start[0] =   0;  // first index on X
+    start[1] =   0;  // first in dex on Y    
+	start[2] =   0;  // first index on Z    
+    InputImageType::SizeType  size;
+    size[0]  = numColumns;  // size along X
+    size[1]  = numRows;  // size along Y
+	size[2]  = numStacks;  // size along Z
+	
+    InputImageType::RegionType region;
+    region.SetSize( size );
+    region.SetIndex( start );
+    
+    im->SetRegions( region );
+    im->Allocate();
+    im->FillBuffer(0);
+	im->Update();
+	
+	typedef itk::ImageRegionIteratorWithIndex< InputImageType > IteratorType;
+	IteratorType iterator1(im,im->GetRequestedRegion());
+	for(int i=0; i<numRows*numColumns*numStacks; i++)
+	{		
+		iterator1.Set(binImagePtr[i] * 5000);
+		++iterator1;	
+	}
+	
+	typedef itk::ImageFileWriter< InputImageType > WriterType;
+	WriterType::Pointer writer = WriterType::New();
+	writer->SetInput(im);
+	writer->SetFileName("binImage.tif");
+	writer->Update();
+
+	std::cout << "Bin Image written to binImage.tif" << endl;
 }
 
 void yousef_nucleus_seg::runSeedDetection()
