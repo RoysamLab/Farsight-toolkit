@@ -20,6 +20,7 @@
 #include <math.h>
 #include <time.h>
 
+
 #ifdef _OPENMP
 #include "omp.h"
 #endif
@@ -70,7 +71,6 @@ int Cell_Binarization_2D(unsigned char* imgIn, unsigned short *imgOut, int R, in
 //Main function for 3-D binarization
 int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, int C, int Z, int shd, int div) //modifed by Yousef on 5-20-2008.. The first input change from uchar* to int*
 {			
-	clock_t start_time = clock();
 	//Now, to do the binarization, follow these steps:
 	//1- Assuming that the histogram of the image is modeled by a mixture of two 
 	//poisson distributions, estimate the parameters of the mixture model 
@@ -140,7 +140,6 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 		Finally, multiply both terms together	-Ho (2/18/2011) */
 	//int cntr = (R % block_divisor ? block_divisor + 1 : block_divisor) * (C % block_divisor ? block_divisor + 1 : block_divisor);
 
-	// REMOVED BY HO (2/19/2011) REPLACED BY CODE ABOVE
 	int cntr = 0;
 	for(int i=0; i<R; i+=R/block_divisor)
 		for(int j=0; j<C; j+=C/block_divisor)
@@ -151,6 +150,7 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 
 	int blk = 1;
 	
+	clock_t start_time_cell_bin_alpha_exp = clock();
 	int ***subImgBlockArray = (int ***) malloc(R * sizeof(int **));
 
 	#ifdef _OPENMP
@@ -222,9 +222,13 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 
 	subImgBlockArray = NULL;
 
+	
+
 	#ifdef _OPENMP
 		omp_set_nested(0);
 	#endif
+
+	cout << "Cell Binarization refinement by alpha expansion took " << (clock() - start_time_cell_bin_alpha_exp)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 
 
 	/* REMOVED BY ISAAC (REPLACED BY CODE ABOVE)
@@ -270,7 +274,6 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	//int num_objects = getConnCompImage(imgOut, 26, 25, R, C, Z);
 	//num_objects = getConnCompImage(imgOut, 26, 25, R, C, Z);
 
-	cout << "Cell Binarization took " << (clock() - start_time)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 	return 1;//num_objects;	
 }
 

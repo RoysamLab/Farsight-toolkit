@@ -20,6 +20,7 @@
 #include<math.h>
 #include <time.h>
 
+
 #ifdef _OPENMP
 #include "omp.h"
 #endif
@@ -56,7 +57,6 @@ void get_maximum(float* A, int r1, int r2, int c1, int c2, int z1, int z2, int* 
 
 void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned short* bImg, unsigned short* out1, int r, int c, int z, int scale_xy, int scale_z)
 {  
-	clock_t start_time = clock();
 	//im_vals is the Laplacian of Gaussian
 	//local_max_vals is the seed points (local maximum) with foreground seeds assigned an id > 0 and background seeds id == -1
 	// out1 will contain the clustering output
@@ -92,6 +92,8 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 	cerr << "sizeof(int) = " << sizeof(int) << endl;
 	cerr << "Total size of array = " << (r * c * z * 3 * sizeof(int) + r * c * z * sizeof(int *) + r * c * sizeof(int **) + r * sizeof(int ***) + sizeof (int ****)) / (1024 * 1024) << " MB" << endl; //Probably incorrect */
 
+	clock_t start_time_init_max_nghbr_im = clock();
+	
 	int ****max_response = (int ****) malloc(r * sizeof(int ***));
 
 	#pragma omp parallel for
@@ -104,8 +106,6 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 			for (int k = 0; k < z; k++)
 			{
 				max_response[i][j][k] = (int *) malloc(3 * sizeof(int));
-				for (int l = 0; l < 3; l++)
-					max_response[i][j][k][l] = 0;
 			}
 		}
 	}
@@ -174,7 +174,8 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 	}
 	free(max_response);
 	max_response = NULL;
-    
+
+	cout << "Initial max_nghbr_im took " << (clock() - start_time_init_max_nghbr_im)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 	
     int change = 1;
     double LM;
@@ -263,7 +264,5 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 		free(max_nghbr_im[i]);
     }
 	free(max_nghbr_im);
-
-	cout << "Clustering took " << (clock() - start_time)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 }
  

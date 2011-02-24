@@ -81,9 +81,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 int computeWeightedMedian(std::vector< std::vector<float> > scales, int cntr);
 
 int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int r, int c, int z, double *sigma_min_in, double *sigma_max_in, double *scale_xy_in, double *scale_z_in, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout, bool paramEstimation)
-{	
-	clock_t start_time = clock();
-	
+{		
 	//get this inputs
 	double sigma_min = sigma_min_in[0];
 	double sigma_max = sigma_max_in[0];
@@ -178,8 +176,9 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	if(UseDistMap == 1 && paramEstimation)
 	{
 		std::cout<<"Estimating parameters..."<<std::endl;
+		clock_t start_time_est_params = clock();
 		estimateMinMaxScalesV2(im, dImg, &sigma_min, &sigma_max, r, c, z);
-
+		cout << "Estimating parameters took " << (clock() - start_time_est_params)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 		//By Isaac (1/22/2010)
 		if( sigma_min < 1 ) sigma_min = 1;
 
@@ -204,55 +203,22 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	//approximately, we need (20~21)ximage size in bytes
 	//try to allocate memory for an unsigned char* of the 23ximage size
 	int block_divisor = 1; //Assumes you will not overflow RAM (according to Yousef above, you need 24 * image size of RAM, otherwise performance suffers)
-	/*bool done = false;
-	while(!done)		//Make sure my requested size is less than maximum for machine:
-	{
-		double totalPix = (double)(r*c*z) / ((double)block_divisor*(double)block_divisor);
-		unsigned long max = (unsigned long)SIZE_MAX;
-		if( 23.0*totalPix > (double)max )
-		{
-			std::cerr << "Increasing divisor" << std::endl;
-			block_divisor = block_divisor*2;
-		}
-		else
-		{
-			done = true;
-		}
-	}
-	done = false;
-	while(!done)	//Now make sure I can allocate memory
-	{
-		unsigned long totalPix = (unsigned long)(r*c*z) / ((unsigned long)block_divisor*(unsigned long)block_divisor);
-		unsigned char *tmpp = (unsigned char*)malloc(23*totalPix);
-		if(!tmpp)			//unAble to allocate
-		{
-			std::cerr << "Increasing divisor" << std::endl;
-			block_divisor = block_divisor*2;
-		}
-		else
-		{
-			done = true;
-		}
-		
-		free(tmpp); //delete it
-		tmpp = NULL;
-	}*/
-	
 	
 	int blk = 1;
 	int cntr = 0;
 	
-	cntr = (r % block_divisor ? block_divisor + 1 : block_divisor) * (c % block_divisor ? block_divisor + 1 : block_divisor);
-	//Naive implementation removed and replaced by above -Ho (2/19/2011)
-	/*for(int i=0; i<r; i+=r/block_divisor)
+	for(int i=0; i<r; i+=r/block_divisor)
 		for(int j=0; j<c; j+=c/block_divisor)
-			cntr++;*/
+			cntr++;
 
 	int min_x, min_y, max_x, max_y;
 	
+	clock_t start_time_multiscale_log = clock();
+
 	#ifdef _OPENMP
 		omp_set_nested(1);
 	#endif
+	
 	#pragma omp parallel for private(min_x, min_y, max_x, max_y)
 	for(int i=0; i<r; i+=r/block_divisor)
 	{
@@ -276,9 +242,12 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 			//
 		}
 	}
+	
 	#ifdef _OPENMP
 		omp_set_nested(0);
 	#endif
+
+	cout << "Multiscale Log took " << (clock() - start_time_multiscale_log)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 		
 	free(dImg);
    
@@ -296,10 +265,12 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	std::cout<<"Detecting Seeds"<<std::endl;
 	IM_bin[0] = new unsigned short[r*c*z];
   //std::cout << "about to call Detect_Local_MaximaPoints_3D" << std::endl;
+	clock_t start_time_local_maxima = clock();
 	Detect_Local_MaximaPoints_3D(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0], bImg);	
-  std::cout << "done detecting seeds" << std::endl;
+	cout << "Local maxima point detection took " << (clock() - start_time_local_maxima)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 	
-  cout << "Seed detection took " << (clock() - start_time)/(float)CLOCKS_PER_SEC << " seconds" << endl;
+	std::cout << "done detecting seeds" << std::endl;
+	
 	return 1;
 
 	

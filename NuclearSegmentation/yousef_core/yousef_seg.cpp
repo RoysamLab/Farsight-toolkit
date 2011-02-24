@@ -201,7 +201,7 @@ void yousef_nucleus_seg::runBinarization()
 	//subtract the gradient image from the input image
 	//subtractGradientImage(dataImagePtr, numRows, numColumns, numStacks, sampling_ratio_XY_to_Z);
 	//allocate space for the binary image
-/*	binImagePtr = new unsigned short[numStacks*numRows*numColumns];	
+	binImagePtr = new unsigned short[numStacks*numRows*numColumns];	
 
 	std::cout<<"Start Binarization ..."<<std::endl;
 	int ok = 0;
@@ -227,7 +227,7 @@ void yousef_nucleus_seg::runBinarization()
 		cerr << "Binarization Failed!!" << endl;
 	}
 	
-	typedef unsigned short PixelType;
+	/*typedef unsigned short PixelType;
 	typedef itk::Image< PixelType,  3 >   InputImageType;
 	
 	InputImageType::Pointer im;
