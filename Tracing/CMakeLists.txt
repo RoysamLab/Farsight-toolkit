@@ -1,4 +1,4 @@
-OPTION( BUILD_MDL "Build MDL Tracing" ON )
+OPTION( BUILD_MDL "Build MDL Tracing" OFF )
 
 SUBDIRS( Focus )
 
@@ -22,17 +22,17 @@ IF( BUILD_TraceEdit )
   SUBDIRS( TraceEdit )
 ENDIF()
 
-OPTION( BUILD_ftl3d "Build FTL3D Tracing" ON )
+OPTION( BUILD_ftl3d "Build FTL3D Tracing" OFF )
 IF( BUILD_ftl3d )
     SUBDIRS( ftl3d )
 ENDIF()
 
-OPTION( BUILD_RPITrace3D "Build RPI Trace3D" ON )
+OPTION( BUILD_RPITrace3D "Build RPI Trace3D" OFF )
 IF( BUILD_RPITrace3D )
   SUBDIRS( RPITrace3D )
 ENDIF()
 
-OPTION( BUILD_SpineRing "Build Spine Ring" ON )
+OPTION( BUILD_SpineRing "Build Spine Ring" OFF )
 IF( BUILD_SpineRing )
   SUBDIRS( SpineRing )
 ENDIF()

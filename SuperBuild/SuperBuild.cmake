@@ -42,8 +42,10 @@ if(CMAKE_BUILD_TYPE)
 endif()
 
 # Maybe make an option for this, but force developers to see their leaks for now...
-set(vtk_debug_leaks ON)
-
+option(DEBUG_LEAKS "SHOW VTK DEBUG LEAKS" OFF)
+if (DEBUG_LEAKS)
+  set(vtk_debug_leaks ON)
+endif()
 set(mac_args)
 if(APPLE)
   set(mac_args
