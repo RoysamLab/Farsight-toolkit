@@ -91,8 +91,9 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	//int block_divisor = ceil(pow(omp_get_num_procs(), 0.5));
 	//int block_divisor = omp_get_num_procs();
 	//int block_divisor = 1;
-	int block_divisor = 8;
-
+	
+	int block_divisor;
+	#ifdef _OPENMP			block_divisor = omp_get_num_procs();	#else		block_divisor = 1;	#endif
 	//Removed by Ho (2/19/2011) -- Poor memory management
 	/*if(div)	//means I'm going to try to find best number of blocks
 	{

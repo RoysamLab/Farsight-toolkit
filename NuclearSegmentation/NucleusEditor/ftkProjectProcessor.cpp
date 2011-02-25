@@ -28,6 +28,8 @@
 #endif
 #include "ftkProjectProcessor.h"
 
+#include <time.h>
+
 namespace ftk
 {
 
@@ -191,6 +193,7 @@ bool ProjectProcessor::PreprocessImage(){
 
 bool ProjectProcessor::SegmentNuclei(int nucChannel)
 {
+	clock_t start_time = clock();
 	if(!inputImage)
 		return false;
 
@@ -251,6 +254,7 @@ bool ProjectProcessor::SegmentNuclei(int nucChannel)
 	std::cout << "Done: Instrinsic Nuclear Features\n";
 
 	resultIsEditable = true;
+	cout << "Total time to segmentation is : " << (clock() - start_time)/(float) CLOCKS_PER_SEC << endl;
 	return true;
 }
 
