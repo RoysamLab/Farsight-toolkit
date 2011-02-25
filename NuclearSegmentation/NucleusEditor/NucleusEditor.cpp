@@ -56,7 +56,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 
 	tblWin.clear();
 	pltWin.clear();
-	hisWin.clear();
+//	hisWin.clear();
 	pWizard=NULL;
 
 	myImg = NULL;
@@ -325,10 +325,10 @@ void NucleusEditor::createMenus()
 	connect(newScatterAction,SIGNAL(triggered()),this,SLOT(CreateNewPlotWindow()));
 	viewMenu->addAction(newScatterAction);
 
-	newHistoAction = new QAction(tr("New Histogram"),this);
+	/*newHistoAction = new QAction(tr("New Histogram"),this);
 	newHistoAction->setStatusTip(tr("Open a new Histogram Window"));
 	connect(newHistoAction,SIGNAL(triggered()),this,SLOT(CreateNewHistoWindow()));
-	viewMenu->addAction(newHistoAction);
+	viewMenu->addAction(newHistoAction);*/
 
 	imageIntensityAction = new QAction(tr("Adjust Image Intensity"), this);
 	imageIntensityAction->setStatusTip(tr("Allows modification of image intensity"));
@@ -1542,15 +1542,15 @@ void NucleusEditor::viewClosing(QWidget * view)
 		}
 	}
 
-	std::vector<HistoWindow *>::iterator hist_it;
-	for ( hist_it = hisWin.begin(); hist_it < hisWin.end(); hist_it++ )
-	{
-		if( *hist_it == view )
-		{
-			hisWin.erase(hist_it);
-			return;
-		}
-	}
+	//std::vector<HistoWindow *>::iterator hist_it;
+	//for ( hist_it = hisWin.begin(); hist_it < hisWin.end(); hist_it++ )
+	//{
+	//	if( *hist_it == view )
+	//	{
+	//		hisWin.erase(hist_it);
+	//		return;
+	//	}
+	//}
 }
 
 void NucleusEditor::closeViews()
@@ -1561,8 +1561,8 @@ void NucleusEditor::closeViews()
 	for(int p=0; p<(int)pltWin.size(); ++p)
 		pltWin.at(p)->close();
 
-	for(int p=0; p<(int)hisWin.size(); ++p)
-		hisWin.at(p)->close();
+	//for(int p=0; p<(int)hisWin.size(); ++p)
+	//	hisWin.at(p)->close();
 }
 
 //Call this slot when the table has been modified (new rows or columns) to update the views:
@@ -1585,8 +1585,8 @@ void NucleusEditor::updateViews()
 	for(int p=0; p<(int)pltWin.size(); ++p)
 		pltWin.at(p)->update();
 
-	for(int p=0; p<(int)hisWin.size(); ++p)
-		hisWin.at(p)->update();
+	//for(int p=0; p<(int)hisWin.size(); ++p)
+	//	hisWin.at(p)->update();
 
 
 }
@@ -1624,15 +1624,15 @@ void NucleusEditor::CreateNewTableWindow(void)
 //*******************************************************************************
 // Create new Histogram Window
 //*******************************************************************************
-void NucleusEditor::CreateNewHistoWindow(void)
-{
-	if(!table) return;
-
-	hisWin.push_back(new HistoWindow());
-	connect(hisWin.back(), SIGNAL(closing(QWidget *)), this, SLOT(viewClosing(QWidget *)));
-	hisWin.back()->setModels(table,selection);
-	hisWin.back()->show();
-}
+//void NucleusEditor::CreateNewHistoWindow(void)
+//{
+//	if(!table) return;
+//
+//	hisWin.push_back(new HistoWindow());
+//	connect(hisWin.back(), SIGNAL(closing(QWidget *)), this, SLOT(viewClosing(QWidget *)));
+//	hisWin.back()->setModels(table,selection);
+//	hisWin.back()->show();
+//}
 
 void NucleusEditor::clearSelections()
 {

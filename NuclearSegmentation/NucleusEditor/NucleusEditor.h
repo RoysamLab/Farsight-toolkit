@@ -70,7 +70,7 @@
 #include "ftkGUI/TableWindow.h"
 #include "ftkGUI/PlotWindow.h"
 #include "ftkGUI/ImageBrowser5D.h"
-#include "ftkGUI/HistoWindow.h"
+//#include "ftkGUI/HistoWindow.h"
 #include "ftkGUI/LabelImageViewQT.h"
 #include "ftkGUI/PreprocessDialog.h"
 
@@ -137,7 +137,7 @@ protected slots:
 	void DisplayChannelsMenu();
 	void CreateNewPlotWindow();
 	void CreateNewTableWindow();
-	void CreateNewHistoWindow();
+	//void CreateNewHistoWindow();
 	void updateViews();
 	void viewClosing(QWidget * view);
 	void closeViews();
@@ -221,7 +221,7 @@ protected:
 	LabelImageViewQT *segView;
 	std::vector<PlotWindow *> pltWin;
 	std::vector<TableWindow *> tblWin;
-	std::vector<HistoWindow *> hisWin;
+	//std::vector<HistoWindow *> hisWin;
 	PatternAnalysisWizard *pWizard;
 
 	QMenu *fileMenu;
