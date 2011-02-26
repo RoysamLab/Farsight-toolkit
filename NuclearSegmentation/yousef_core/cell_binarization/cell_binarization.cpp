@@ -93,11 +93,13 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	//int block_divisor = 1;
 	
 	int block_divisor;
+	
 	#ifdef _OPENMP			
 		block_divisor = omp_get_num_procs();	
 	#else		
 		block_divisor = 1;	
 	#endif
+
 	//Removed by Ho (2/19/2011) -- Poor memory management
 	/*if(div)	//means I'm going to try to find best number of blocks
 	{
@@ -192,26 +194,23 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 		}
 	}
 
-	#ifdef _OPENMP
-		omp_set_nested(0);
-	#endif
-	
+	#pragma omp parallel for
 	for(int i=0; i<R; i+=R/block_divisor)
 	{			
-		#pragma omp parallel for ordered
+		#pragma omp parallel for
 		for(int j=0; j<C; j+=C/block_divisor)
 		{
-			#pragma omp ordered
+			#pragma omp critical
 			{
 				std::cout<<"    Binarizing block " << blk++ <<" of "<<cntr<<std::endl;	
-				Seg_GC_Full_3D_Blocks(imgIn, R, C, Z, alpha_F, alpha_B, P_I, imgOut, subImgBlockArray[i][j]); //imgIn is dataImagePtr, imgOut is binImagePtr
 			}
+			Seg_GC_Full_3D_Blocks(imgIn, R, C, Z, alpha_F, alpha_B, P_I, imgOut, subImgBlockArray[i][j]); //imgIn is dataImagePtr, imgOut is binImagePtr
 		}
 	}
 
-	#ifdef _OPENMP
+	/*#ifdef _OPENMP
 		omp_set_nested(1);
-	#endif
+	#endif*/
 	
 	#pragma omp parallel for
 	for(int i=0; i<R; i+=R/block_divisor)
@@ -841,6 +840,7 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
     
 	//Construct the graph
 	GraphType *g = new GraphType(/*estimated # of nodes*/ num_nodes, /*estimated # of edges*/ num_edges); 
+	
 
 	//std::cerr << "Graph Memory Allocated" << std::endl;
 
@@ -854,8 +854,6 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 			std::cout << "k-loop iteration " << k << " created " << omp_get_num_threads() << " threads to run" << std::endl;*/
 		for(int j=imBlock[2]; j<imBlock[3]; j++)
         {			
-			
-			#pragma omp parallel for private(Df, Db, curr_node) ordered
 			for(int i=imBlock[0]; i<imBlock[1]; i++)
 			{
 				int IND = (i - imBlock[0] + (imBlock[1] - imBlock[0]) * (j - imBlock[2]) + (imBlock[1] - imBlock[0]) * (imBlock[3] - imBlock[2]) * (k - imBlock[4]));
@@ -895,12 +893,10 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 
 				//std::cout << "i, j, k = " << i << " " << j << " " << k << " ";
 				//std::cout << "Thread " << omp_get_thread_num() << " about to enter critical section" << endl;
-				#pragma omp ordered
-				{	
+
 					//std::cout << "Thread " << omp_get_thread_num() << " in enter critical section" << endl;
-					g -> add_node();
-					g -> add_tweights(IND,   /* capacities */ Df,Db);
-				}
+				g -> add_node();
+				g -> add_tweights(IND,   /* capacities */ Df,Db);
 			}
 		}
 	}
@@ -915,7 +911,7 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
     {		
 		for(int j=imBlock[2]; j<imBlock[3]; j++)
         {			
-			#pragma omp parallel for private (intst, intst2, nbr_node, curr_node, Dn) ordered
+			//#pragma omp parallel for private (intst, intst2, nbr_node, curr_node, Dn) ordered
 			for(int i=imBlock[0]; i<imBlock[1]; i++)
 			{
 				int IND = (i - imBlock[0] + (imBlock[1] - imBlock[0]) * (j - imBlock[2]) + (imBlock[1] - imBlock[0]) * (imBlock[3] - imBlock[2]) * (k - imBlock[4])); //needed for threading correctness
@@ -966,12 +962,9 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 				int Dn3 = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));				
 				//}												
 				
-				#pragma omp ordered
-				{
-					g -> add_edge( IND, IND+1,    /* capacities */  Dn, Dn );
-					g -> add_edge( IND, IND+(imBlock[1]-imBlock[0]),    /* capacities */  Dn2, Dn2 );
-					g -> add_edge( IND, IND+(imBlock[1]-imBlock[0])*(imBlock[3]-imBlock[2]),    /* capacities */  Dn3, Dn3 );
-				}
+				g -> add_edge( IND, IND+1,    /* capacities */  Dn, Dn );
+				g -> add_edge( IND, IND+(imBlock[1]-imBlock[0]),    /* capacities */  Dn2, Dn2 );
+				g -> add_edge( IND, IND+(imBlock[1]-imBlock[0])*(imBlock[3]-imBlock[2]),    /* capacities */  Dn3, Dn3 );
 			}
 		}
 	}    
