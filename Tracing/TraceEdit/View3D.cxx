@@ -80,6 +80,8 @@ limitations under the License.
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
 #include "vtkPointWidget.h"
+#include "vtkOrientationMarkerWidget.h"
+#include "vtkAxesActor.h"
 #include "vtkWindowToImageFilter.h"
 #include "vtkJPEGWriter.h"
 
@@ -1412,6 +1414,14 @@ void View3D::CreateActors()
   //sphere is used to mark the picks
   this->CreateSphereActor();
   Renderer->AddActor(this->SphereActor);
+  this->axes = vtkSmartPointer<vtkAxesActor>::New();
+  this->UCSMarker = vtkSmartPointer<vtkOrientationMarkerWidget>::New();
+  this->UCSMarker->SetOutlineColor(0.9300, 0.5700, 0.1300 );
+  this->UCSMarker->SetOrientationMarker(this->axes);
+  this->UCSMarker->SetInteractor(this->Interactor);
+  this->UCSMarker->SetViewport(0,0,.1,.1);
+  this->UCSMarker->SetEnabled(1);
+  this->UCSMarker->InteractiveOn();
   this->QVTK->GetRenderWindow()->Render();
 }
 

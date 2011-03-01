@@ -69,7 +69,8 @@ class ScatterView;
 class TableWindow;
 class ImageRenderActors;
 class vtkPointWidget;
-
+class vtkOrientationMarkerWidget;
+class vtkAxesActor;
 
 class View3D : public QMainWindow 
 {
@@ -342,6 +343,8 @@ private:
 	vtkSmartPointer<vtkActor> SphereActor;
 	//double pointer3DPos[3];
 	std::vector<TraceLine*> stems;
+	vtkSmartPointer<vtkAxesActor> axes;
+	vtkSmartPointer<vtkOrientationMarkerWidget> UCSMarker;
 	
 	ImageRenderActors *ImageActors;
 	TraceObject* tobj;
