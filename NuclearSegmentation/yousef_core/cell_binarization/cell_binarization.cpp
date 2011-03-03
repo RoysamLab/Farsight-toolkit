@@ -197,7 +197,7 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	#pragma omp parallel for
 	for(int i=0; i<R; i+=R/block_divisor)
 	{			
-		#pragma omp parallel for
+		//#pragma omp parallel for
 		for(int j=0; j<C; j+=C/block_divisor)
 		{
 			#pragma omp critical
