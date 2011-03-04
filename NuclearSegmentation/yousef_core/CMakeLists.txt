@@ -81,3 +81,17 @@ INCLUDE_DIRECTORIES(gvc)
 ADD_LIBRARY( Yousef_Nucleus_Seg ${NSRCS} ${sd3d_SRCS} ${sd2d_SRCS} ${mcgl3d_SRCS} ${emgmm_SRCS} ${clust_SRCS} ${clust2d_SRCS} ${border_SRCS} ${cbin_SRCS} ${cb3_SRCS} ${prepr_SRCS})
 
 TARGET_LINK_LIBRARIES ( Yousef_Nucleus_Seg ITKBasicFilters ITKCommon ITKIO)
+
+
+IF (BUILD_OPENCL)
+    IF (MSVC)
+        INCLUDE_DIRECTORIES( $ENV{NVSDKCOMPUTE_ROOT}/OpenCL/common/inc/ )
+	INCLUDE_DIRECTORIES( $ENV{NVSDKCOMPUTE_ROOT}/shared/inc )
+	LINK_DIRECTORIES( $ENV{NVSDKCOMPUTE_ROOT}/OpenCL/common/lib )
+	LINK_DIRECTORIES( $ENV{NVSDKCOMPUTE_ROOT}/OpenCL/common/lib/x64 )
+	LINK_DIRECTORIES( $ENV{NVSDKCOMPUTE_ROOT}/shared/lib )
+	TARGET_LINK_LIBRARIES(Yousef_Nucleus_Seg debug oclUtils64D.lib optimized oclUtils64.lib )
+	TARGET_LINK_LIBRARIES(Yousef_Nucleus_Seg debug shrUtils64D.lib optimized shrUtils64.lib )
+	TARGET_LINK_LIBRARIES(Yousef_Nucleus_Seg OpenCL.lib)
+    ENDIF(MSVC)
+ENDIF(BUILD_OPENCL)

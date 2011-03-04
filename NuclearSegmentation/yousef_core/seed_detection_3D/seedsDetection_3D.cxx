@@ -36,8 +36,16 @@
 #include <limits.h>
 #include <time.h>
 
+//_OPENMP is automatically defined by any OpenMP compiler that is building with OpenMP support (-fopenmp for GCC or /openmp for MSVC)
 #ifdef _OPENMP
 #include "omp.h"
+#endif
+
+//OpenCL support
+//#define OpenCL
+#ifdef OpenCL
+#include "CL\cl.h"
+#include "oclUtils.h"
 #endif
 
 #ifndef SIZE_MAX
@@ -81,7 +89,40 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 int computeWeightedMedian(std::vector< std::vector<float> > scales, int cntr);
 
 int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int r, int c, int z, double *sigma_min_in, double *sigma_max_in, double *scale_xy_in, double *scale_z_in, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout, bool paramEstimation)
-{		
+{	
+#ifdef OPENCL
+	cl_int error = 0;
+	cl_platform_id platform;
+	cl_context context;
+	cl_command_queue queue;
+	cl_device_id device;
+
+	// Platform
+	error = oclGetPlatformID(&platform);
+	if (error != CL_SUCCESS) {
+	   cout << "Error getting platform id: " << error << endl;
+	   exit(error);
+	}
+	// Device
+	error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
+	if (error != CL_SUCCESS) {
+	   cout << "Error getting device ids: " << error << endl;
+	   exit(error);
+	}
+	// Context
+	context = clCreateContext(0, 1, &device, NULL, NULL, &error);
+	if (error != CL_SUCCESS) {
+	   cout << "Error creating context: " << error << endl;
+	   exit(error);
+	}
+	// Command-queue
+	queue = clCreateCommandQueue(context, device, 0, &error);
+	if (error != CL_SUCCESS) {
+	   cout << "Error creating command queue: " << error << endl;
+	   exit(error);
+	}
+#endif
+
 	//get this inputs
 	double sigma_min = sigma_min_in[0];
 	double sigma_max = sigma_max_in[0];
@@ -510,6 +551,7 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
 						std::cout.flush();
 					}
 				}*/
+				
 				float mx = get_maximum_3D(im_vals, min_r, max_r, min_c, max_c, min_z, max_z,r,c);
 				II = (k*r*c)+(i*c)+j;
 				if(im_vals[II] == mx)    

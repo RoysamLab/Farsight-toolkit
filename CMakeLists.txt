@@ -28,6 +28,7 @@ OPTION( WRAP_PYTHON "Wrap Farsight in Python" OFF )
 OPTION( BUILD_EMBREX "Build Mark Embrecht's KPLS module" OFF )
 OPTION( BUILD_UNMIXING "Build Unmixing module" OFF )
 OPTION( BUILD_OPENMP "Build with OpenMP support (Note that only VS2008 Pro and VS2008 Team System supports OpenMP)" OFF)
+OPTION( BUILD_OPENCL "Build with OpenCL support (VS 2008 only at the moment)" OFF)
 MARK_AS_ADVANCED(BUILD_EMBREX)
 MARK_AS_ADVANCED(WRAP_PYTHON)
 
@@ -182,7 +183,7 @@ ENDIF(BUILD_TISSUENETS)
 
 IF(BUILD_TISSUENETS OR BUILD_MDL)
   FIND_PACKAGE(Boost)
-  MARK_AS_ADVANCED(CLEAR Boost_INCLUDE_DIR)
+  MARK_AS_ADVANCED(CLEAR Boost_INCLUDE_DIR)                                                                                                  
 ENDIF(BUILD_TISSUENETS OR BUILD_MDL)
 
 IF(BUILD_UNMIXING)
@@ -200,6 +201,7 @@ IF (BUILD_OPENMP)
     
 endif (MSVC)
 ENDIF(BUILD_OPENMP)
+
 
 #####################################################################################
 # Optionally find Farsight's data directory, used for testing and installers
