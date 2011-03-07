@@ -42,7 +42,7 @@
 #endif
 
 //OpenCL support
-#define OpenCL
+//#define OpenCL
 #ifdef OpenCL
 #include "CL\cl.h"
 #include "CL\cl_ext.h"
