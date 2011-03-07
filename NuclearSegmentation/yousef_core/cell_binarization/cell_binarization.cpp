@@ -86,59 +86,15 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	//cout<<"Finalizing Binarization..";
 	//post_binarization(imgOut, 2, 3, R, C, Z);
 	//cout<<"done"<<endl;
-
-	//Modified by Ho (2/19/2011) -- NEEDS CODE TO CORRECTLY SELECT DIVISOR (Note: Binarization Accuracy vs Multicore Usage vs Memory Capacity tradeoffs)
-	//int block_divisor = ceil(pow(omp_get_num_procs(), 0.5));
-	//int block_divisor = omp_get_num_procs();
-	//int block_divisor = 1;
 	
 	int block_divisor;
 	
 	#ifdef _OPENMP			
-		block_divisor = omp_get_num_procs();	
+		block_divisor = 8;	
 	#else		
 		block_divisor = 1;	
 	#endif
 
-	//Removed by Ho (2/19/2011) -- Poor memory management
-	/*if(div)	//means I'm going to try to find best number of blocks
-	{
-		bool done = false;
-		while(!done)		//Make sure my requested size is less than maximum for machine:
-		{
-			double totalPix = (double)(R*C*Z) / ((double)block_divisor*(double)block_divisor);
-			//120 bytes are needed for each pixel to create a graph!!!!
-			unsigned long max = (unsigned long)SIZE_MAX;
-			if( 120.0*totalPix > (double)max )
-			{
-				std::cerr << "Increasing divisor" << std::endl;
-				block_divisor = block_divisor*2;
-			}
-			else
-			{
-				done = true;
-			}
-		}
-		done = false;
-		while(!done)	//Now make sure I can allocate memory
-		{
-			unsigned long totalPix = (unsigned long)(R*C*Z) / ((unsigned long)block_divisor*(unsigned long)block_divisor);
-			//120 bytes are needed for each pixel to create a graph!!!!
-			unsigned char *tmpp = (unsigned char*)malloc(120*totalPix);
-			if(!tmpp)			//unAble to allocate
-			{
-				std::cerr << "Increasing divisor" << std::endl;
-				block_divisor = block_divisor*2;
-			}
-			else
-			{
-				done = true;
-			}
-
-			free(tmpp); //delete it
-			tmpp = NULL;
-		}
-	}*/
 	
 	std::cerr << "block_divisor = " << block_divisor << std::endl;
 
@@ -194,7 +150,7 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 		}
 	}
 
-	#pragma omp parallel for
+	//#pragma omp parallel for
 	for(int i=0; i<R; i+=R/block_divisor)
 	{			
 		//#pragma omp parallel for
@@ -228,55 +184,11 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 
 	
 
-	#ifdef _OPENMP
+	/*#ifdef _OPENMP
 		omp_set_nested(0);
-	#endif
+	#endif*/
 
 	cout << "Cell Binarization refinement by alpha expansion took " << (clock() - start_time_cell_bin_alpha_exp)/(float)CLOCKS_PER_SEC << " seconds" << endl;
-
-
-	/* REMOVED BY ISAAC (REPLACED BY CODE ABOVE)
-	//Added by Yousef on 11-18-2008: To save memory, divide the image into Blocks and 
-	//apply GC on each independently	
-	int *subImgBlock = new int[6];//[x1,y1,z1,x2,y2,z1]	
-	int block_divisor;
-	if(div == 0)
-		block_divisor = 1;
-	else
-	{
-		block_divisor = 5;
-	}
-	subImgBlock[4] = 0;
-	subImgBlock[5] = Z;
-	int blk = 1;
-	int cntr = 0;
-	for(int i=0; i<R; i+=R/block_divisor)
-		for(int j=0; j<C; j+=C/block_divisor)
-			cntr++;
-
-	for(int i=0; i<R; i+=R/block_divisor)
-	{
-		for(int j=0; j<C; j+=C/block_divisor)
-		{			
-			std::cout<<"    Binarizing block "<<blk<<" of "<<cntr<<std::endl;
-			subImgBlock[0] = j;
-			subImgBlock[1] = (int)j+C/block_divisor;
-			subImgBlock[2] = i;
-			subImgBlock[3] = (int)i+R/block_divisor;
-			if(subImgBlock[1] > C)
-				subImgBlock[1] = C;
-			if(subImgBlock[3] > R)
-				subImgBlock[3] = R;
-
-			Seg_GC_Full_3D_Blocks(imgIn, R, C, Z, alpha_F, alpha_B, P_I, imgOut,subImgBlock);
-			blk++;
-		}
-	}
-	*/
-	//Added By Yousef: May 20, 2008
-	//3-Convert the binary image into a connected component image
-	//int num_objects = getConnCompImage(imgOut, 26, 25, R, C, Z);
-	//num_objects = getConnCompImage(imgOut, 26, 25, R, C, Z);
 
 	return 1;//num_objects;	
 }
@@ -811,10 +723,9 @@ void MinErrorThresholding(unsigned char* img, float* alpha_B, float* alpha_A, fl
 
 void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_F, double alpha_B, double P_I, unsigned short* Seg_out, int* imBlock)
 {   
-    int curr_node, nbr_node;
-    double Df, Db, Dn, sig, w;
+    int nbr_node;
+    double Dn, sig, w;
     double F_H[256], B_H[256];
-	double intst, intst2;
     unsigned long int num_nodes, num_edges;
 	typedef Graph_B<short,short,short> GraphType;  
       
@@ -857,8 +768,7 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 			for(int i=imBlock[0]; i<imBlock[1]; i++)
 			{
 				int IND = (i - imBlock[0] + (imBlock[1] - imBlock[0]) * (j - imBlock[2]) + (imBlock[1] - imBlock[0]) * (imBlock[3] - imBlock[2]) * (k - imBlock[4]));
-				/*if (omp_get_thread_num() == 0)
-					std::cout << "i-loop iteration " << i << " created " << omp_get_num_threads() << " threads to run" << std::endl;*/
+				
 				/*Get the terminal edges capacities and write them to a file
 				These capacities represent penalties of assigning each point to
 				either the fg or the bg. Now, I am using the distance of the point
@@ -873,9 +783,9 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 				//CHANGE BY ISAAC 4/17/08
 				//curr_node = (k*r*c)+(i*c)+j; 
 
-				curr_node = (k*r*c)+(j*c)+i;
+				int curr_node = (k*r*c)+(j*c)+i;
 
-				int intst = (int) IM[curr_node];	//Changed 5/9/08
+				double intst = (int) IM[curr_node];	//Changed 5/9/08
 
 
 				//Added by Yousef on jan 17, 2008
@@ -883,18 +793,14 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 
 				
 				//std::cout << intst << std::endl;
-				Df = -log(F_H[(int)intst]);  //it was multiplied by .5                              	
+				double Df = -log(F_H[(int)intst]);  //it was multiplied by .5                              	
 				if(Df>1000.0)
 					Df = 1000;
 
-				Db = -log(B_H[(int)intst]);
+				double Db = -log(B_H[(int)intst]);
 				if(Db>1000.0)
 					Db=1000;
 
-				//std::cout << "i, j, k = " << i << " " << j << " " << k << " ";
-				//std::cout << "Thread " << omp_get_thread_num() << " about to enter critical section" << endl;
-
-					//std::cout << "Thread " << omp_get_thread_num() << " in enter critical section" << endl;
 				g -> add_node();
 				g -> add_tweights(IND,   /* capacities */ Df,Db);
 			}
@@ -911,13 +817,10 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
     {		
 		for(int j=imBlock[2]; j<imBlock[3]; j++)
         {			
-			//#pragma omp parallel for private (intst, intst2, nbr_node, curr_node, Dn) ordered
+			//#pragma omp parallel for ordered
 			for(int i=imBlock[0]; i<imBlock[1]; i++)
 			{
 				int IND = (i - imBlock[0] + (imBlock[1] - imBlock[0]) * (j - imBlock[2]) + (imBlock[1] - imBlock[0]) * (imBlock[3] - imBlock[2]) * (k - imBlock[4])); //needed for threading correctness
-				
-				/*if (IND != local_index)
-					std::cout << "incorrect index" << std::endl;*/
 				
 				/*get the neighbor edges capacities and write them to a file.
 				Now, each edge capacity between two neighbors p and q represent
@@ -929,38 +832,27 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 					continue;
 
 				//Try this: Just define 3 edges to the neigbors				
-				curr_node = (k*r*c)+(j*c)+i;
-				intst = (int) IM[curr_node];
+				int curr_node = (k*r*c)+(j*c)+i;
+				double intst = (int) IM[curr_node];
 				
 				//1.
-				nbr_node = (k*r*c)+(j*c)+(i+1);				
-				//if(Seg_out[nbr_node] == Seg_out[nbr_node])
-				//	Dn = 0;
-				//else
-				//{
-				intst2 = (int) IM[nbr_node];
-				Dn = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));				
-				//}
+				int nbr_node = (k*r*c)+(j*c)+(i+1);				
+
+				double intst2 = (int) IM[nbr_node];
+				double Dn = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));				
 				
 				//2.				
 				nbr_node = (k*r*c)+((j+1)*c)+i;
-				//if(Seg_out[nbr_node] == Seg_out[nbr_node])
-				//	Dn = 0;
-				//else
-				//{
+
 				intst2 = (int) IM[nbr_node];
-				int Dn2 = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));				
-				//}												
+				double Dn2 = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));														
 				
 				//3.				
 				nbr_node = ((k+1)*r*c)+(j*c)+i;
-				//if(Seg_out[nbr_node] == Seg_out[nbr_node])
-				//	Dn = 0;
-				//else
-				//{
+
 				intst2 = (int) IM[nbr_node];
-				int Dn3 = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));				
-				//}												
+				double Dn3 = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));				
+										
 				
 				g -> add_edge( IND, IND+1,    /* capacities */  Dn, Dn );
 				g -> add_edge( IND, IND+(imBlock[1]-imBlock[0]),    /* capacities */  Dn2, Dn2 );
@@ -981,12 +873,13 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
         {			
 			for(int i=imBlock[0]; i<imBlock[1]; i++)
 			{
-				int IND = (i - imBlock[0] + (imBlock[1] - imBlock[0]) * (j - imBlock[2]) + (imBlock[1] - imBlock[0]) * (imBlock[3] - imBlock[2]) * (k - imBlock[4])); ; //needed for threading correctness
+				int IND = (i - imBlock[0] + (imBlock[1] - imBlock[0]) * (j - imBlock[2]) + (imBlock[1] - imBlock[0]) * (imBlock[3] - imBlock[2]) * (k - imBlock[4])); //needed for threading correctness
 				
 				if(g->what_segment(IND) == GraphType::SOURCE)
 					Seg_out[(k*r*c)+(j*c)+i]=0;
 				else
-					Seg_out[(k*r*c)+(j*c)+i]=255;
+					Seg_out[(k*r*c)+(j*c)+i]=255; //seems incorrect, if Seg_out is unsigned short* then max value should be 65535?
+					//Seg_out[(k*r*c)+(j*c)+i]=65535;
 			}
 		}
 	}

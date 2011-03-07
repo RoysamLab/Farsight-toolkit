@@ -42,10 +42,10 @@
 #endif
 
 //OpenCL support
-//#define OpenCL
+#define OpenCL
 #ifdef OpenCL
 #include "CL\cl.h"
-#include "oclUtils.h"
+#include "CL\cl_ext.h"
 #endif
 
 #ifndef SIZE_MAX
@@ -87,42 +87,13 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 int computeMedian(std::vector< std::vector<unsigned short> > scales, int cntr);
 void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned short* distIm, double* minScale, double* maxScale, int r, int c, int z);
 int computeWeightedMedian(std::vector< std::vector<float> > scales, int cntr);
+void queryOpenCLProperties();
 
 int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int r, int c, int z, double *sigma_min_in, double *sigma_max_in, double *scale_xy_in, double *scale_z_in, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout, bool paramEstimation)
 {	
-#ifdef OPENCL
-	cl_int error = 0;
-	cl_platform_id platform;
-	cl_context context;
-	cl_command_queue queue;
-	cl_device_id device;
-
-	// Platform
-	error = oclGetPlatformID(&platform);
-	if (error != CL_SUCCESS) {
-	   cout << "Error getting platform id: " << error << endl;
-	   exit(error);
-	}
-	// Device
-	error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
-	if (error != CL_SUCCESS) {
-	   cout << "Error getting device ids: " << error << endl;
-	   exit(error);
-	}
-	// Context
-	context = clCreateContext(0, 1, &device, NULL, NULL, &error);
-	if (error != CL_SUCCESS) {
-	   cout << "Error creating context: " << error << endl;
-	   exit(error);
-	}
-	// Command-queue
-	queue = clCreateCommandQueue(context, device, 0, &error);
-	if (error != CL_SUCCESS) {
-	   cout << "Error creating command queue: " << error << endl;
-	   exit(error);
-	}
+#ifdef OpenCL
+	queryOpenCLProperties(); //odd that the OpenCL code will crash the program if it is not part of a function and manually inlined here instead...
 #endif
-
 	//get this inputs
 	double sigma_min = sigma_min_in[0];
 	double sigma_max = sigma_max_in[0];
@@ -202,6 +173,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	float multp = 1.0;
 	for(int i=0; i<r*c*z; i++)
 	{
+		
 		if(UseDistMap == 1)
 			multp = 1+((float) dImg[i]/(2*max_dist));
 		if(bImg[i] > 0)
@@ -211,7 +183,8 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 		
 		++iterator1;
 	}
-
+	
+	cout << "About to enter Estimating parameters" << endl;
 	//By Yousef (8/29/2009)
 	//Estimate the segmentation parameters
 	if(UseDistMap == 1 && paramEstimation)
@@ -1204,5 +1177,147 @@ int computeWeightedMedian(std::vector< std::vector<float> > scales, int cntr)
 	delete [] srtList;
 	delete [] wgtList;
 	return mdn;
+}
+
+void queryOpenCLProperties()
+{
+	cout << endl;
+
+	cl_platform_id platforms[10];
+	cl_uint num_platforms;
+	cl_device_id device[10];
+	cl_uint num_devices;
+	cl_context context;
+	cl_command_queue queue;
+	
+	
+	char platform_profile[1024], platform_version[1024], platform_name[1024], platform_vendor[1024], platform_extensions[1024];
+
+	// Platform
+	clGetPlatformIDs(10, platforms, &num_platforms);
+	cout << "Number of OpenCL platforms:\t" << num_platforms << endl;
+	
+	for (int i = 0; i < num_platforms; i++)
+	{
+		cout << "Platform " << i+1 << endl;
+		clGetPlatformInfo(platforms[i], CL_PLATFORM_PROFILE, sizeof(platform_profile), platform_profile, NULL);
+		clGetPlatformInfo(platforms[i], CL_PLATFORM_VERSION, sizeof(platform_version), platform_version, NULL);
+		clGetPlatformInfo(platforms[i], CL_PLATFORM_NAME, sizeof(platform_name), platform_name, NULL);
+		clGetPlatformInfo(platforms[i], CL_PLATFORM_VENDOR, sizeof(platform_vendor), platform_vendor, NULL);
+		clGetPlatformInfo(platforms[i], CL_PLATFORM_EXTENSIONS, sizeof(platform_extensions), platform_extensions, NULL);
+	
+		cout << "OpenCL Profile:\t\t\t" << platform_profile << endl;
+		cout << "OpenCL Platform Version:\t" << platform_version << endl;
+		cout << "OpenCL Platform Name:\t\t" << platform_name << endl;
+		cout << "OpenCL Platform Vendor:\t\t" << platform_vendor << endl;
+		cout << "OpenCL Platform Extensions:\t" << platform_extensions << endl;
+
+		clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, 10, device, &num_devices);
+
+		cout << "Number of devices: " << num_devices << endl << endl;
+
+		for (int j = 0; j < num_devices; j++)
+		{
+			cl_uint device_address_bits, device_global_mem_cacheline_size[1024], device_max_clock_frequency, device_max_compute_units, device_max_constant_args, device_max_read_image_args, device_max_samplers, device_max_work_item_dimensions, \
+				device_max_write_image_args, device_mem_base_addr_align, device_min_data_type_align_size, device_preferred_vendor_width_char, device_preferred_vendor_width_short, device_preferred_vendor_width_int, device_preferred_vendor_width_long, \
+				device_preferred_vendor_width_float, device_preferred_vendor_width_double, device_vendor_id;
+
+			cl_bool device_available, device_compiler_available, device_endian_little, device_ecc_support, device_image_support;
+			
+			cl_device_fp_config device_double_fp_config, device_half_fp_config, device_single_fp_config;
+			
+			cl_device_exec_capabilities device_exec_capabilities;
+			
+			char device_extensions[1024], device_name[1024], device_profile[1024], device_vendor_2[1024], device_version[1024], driver_version[1024];
+
+			cl_ulong device_global_mem_cache_size, device_global_mem_size, device_local_mem_size, device_max_constant_buffer_size, device_max_mem_alloc_size;
+			
+			cl_device_mem_cache_type device_global_mem_cache_type;
+			
+			size_t device_image2d_max_height, device_image2d_max_width, device_image3d_max_depth, device_image3d_max_height, device_image3d_max_width, device_max_parameter_size, device_max_work_group_size, device_profiling_timer_resolution;
+			
+			size_t device_max_work_item_sizes[1024];
+			
+			cl_device_local_mem_type device_local_mem_type;
+			
+			cl_platform_id device_platform;
+			
+			cl_command_queue_properties device_queue_properties;
+			
+			cl_device_type device_type;
+			
+			clGetDeviceInfo(device[j], CL_DEVICE_ADDRESS_BITS,					1024, &device_address_bits,					NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_AVAILABLE,						1024, &device_available,					NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_COMPILER_AVAILABLE,			1024, &device_compiler_available,			NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_DOUBLE_FP_CONFIG,				1024, &device_double_fp_config,				NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_ENDIAN_LITTLE,					1024, &device_endian_little,				NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_ERROR_CORRECTION_SUPPORT,		1024, &device_ecc_support,					NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_EXECUTION_CAPABILITIES,		1024, &device_exec_capabilities,			NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_EXTENSIONS,					1024, &device_extensions,					NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_GLOBAL_MEM_CACHE_SIZE,			1024, &device_global_mem_cache_size,		NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_GLOBAL_MEM_CACHE_TYPE,			1024, &device_global_mem_cache_type,		NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE,		1024, &device_global_mem_cacheline_size,	NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_GLOBAL_MEM_SIZE,				1024, &device_global_mem_size,				NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_HALF_FP_CONFIG,				1024, &device_half_fp_config,				NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_IMAGE_SUPPORT,					1024, &device_image_support,				NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_IMAGE2D_MAX_HEIGHT,			1024, &device_image2d_max_height,			NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_IMAGE2D_MAX_WIDTH,				1024, &device_image2d_max_width,			NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_IMAGE3D_MAX_DEPTH,				1024, &device_image3d_max_depth,			NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_IMAGE3D_MAX_HEIGHT,			1024, &device_image3d_max_height,			NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_IMAGE3D_MAX_WIDTH,				1024, &device_image3d_max_width,			NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_LOCAL_MEM_SIZE,				1024, &device_local_mem_size,				NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_MAX_CLOCK_FREQUENCY,			1024, &device_max_clock_frequency,			NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_MAX_COMPUTE_UNITS,				1024, &device_max_compute_units,			NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_MAX_CONSTANT_ARGS,				1024, &device_max_constant_args,			NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE,		1024, &device_max_constant_buffer_size,		NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_MAX_MEM_ALLOC_SIZE,			1024, &device_max_mem_alloc_size,			NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_MAX_PARAMETER_SIZE,			1024, &device_max_parameter_size,			NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_MAX_READ_IMAGE_ARGS,			1024, &device_max_read_image_args,			NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_MAX_SAMPLERS,					1024, &device_max_samplers,					NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_MAX_WORK_GROUP_SIZE,			1024, &device_max_work_group_size,			NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS,		1024, &device_max_work_item_dimensions,		NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_MAX_WORK_ITEM_SIZES,			1024, &device_max_work_item_sizes,			NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_MAX_WRITE_IMAGE_ARGS,			1024, &device_max_write_image_args,			NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_MEM_BASE_ADDR_ALIGN,			1024, &device_mem_base_addr_align,			NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE,		1024, &device_min_data_type_align_size,		NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_NAME,							1024, &device_name,							NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_PLATFORM,						1024, &device_platform,						NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR,	1024, &device_preferred_vendor_width_char,	NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_PREFERRED_VECTOR_WIDTH_SHORT,	1024, &device_preferred_vendor_width_short,	NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_PREFERRED_VECTOR_WIDTH_INT,	1024, &device_preferred_vendor_width_int,	NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_PREFERRED_VECTOR_WIDTH_LONG,	1024, &device_preferred_vendor_width_long,	NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT,	1024, &device_preferred_vendor_width_float,	NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_PREFERRED_VECTOR_WIDTH_DOUBLE, 1024, &device_preferred_vendor_width_double,NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_PROFILE,						1024, &device_profile,						NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_PROFILING_TIMER_RESOLUTION,	1024, &device_profiling_timer_resolution,	NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_QUEUE_PROPERTIES,				1024, &device_queue_properties,				NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_SINGLE_FP_CONFIG,				1024, &device_single_fp_config,				NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_TYPE,							1024, &device_type,							NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_VENDOR,						1024, &device_vendor_2,						NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_VENDOR_ID,						1024, &device_vendor_id,					NULL);
+			clGetDeviceInfo(device[j], CL_DEVICE_VERSION,						1024, &device_version,						NULL);
+			clGetDeviceInfo(device[j], CL_DRIVER_VERSION,						1024, &driver_version,						NULL);
+
+			cout << "Device Name:\t\t\t" << device_name << endl;
+			cout << "Device Version:\t\t\t" << device_version << endl;
+			cout << "Driver Version:\t\t\t" << driver_version << endl;
+			cout << "Device Address Bits:\t\t" << device_address_bits << endl;
+			cout << "Device ECC Support:\t\t" << device_ecc_support << endl;
+			cout << "Device Max Clock Frequency:\t" << device_max_clock_frequency << endl;
+			cout << "Device Max Compute Units:\t" << device_max_compute_units << endl;
+			cout << "Device Global Memory:\t\t" << device_global_mem_size / (1024*1024) << " MB" << endl;
+			cout << "Device Local Memory:\t\t" << device_local_mem_size / 1024 << " KB" << endl;
+			cout << "Timer Resolution:\t\t" << device_profiling_timer_resolution << " ns" << endl;
+
+			cout << endl;
+		}
+
+		context = clCreateContext(0, num_devices, device, NULL, NULL, NULL);
+		clCreateCommandQueue(context, device[0], 0, NULL);
+
+		cout << endl;
+	}
+
+	cout << endl;
 }
 
