@@ -91,9 +91,8 @@ void queryOpenCLProperties();
 
 int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int r, int c, int z, double *sigma_min_in, double *sigma_max_in, double *scale_xy_in, double *scale_z_in, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout, bool paramEstimation)
 {	
-#ifdef OpenCL
 	queryOpenCLProperties(); //odd that the OpenCL code will crash the program if it is not part of a function and manually inlined here instead...
-#endif
+
 	//get this inputs
 	double sigma_min = sigma_min_in[0];
 	double sigma_max = sigma_max_in[0];
@@ -1181,8 +1180,8 @@ int computeWeightedMedian(std::vector< std::vector<float> > scales, int cntr)
 
 void queryOpenCLProperties()
 {
+#ifdef OpenCL
 	cout << endl;
-
 	cl_platform_id platforms[10];
 	cl_uint num_platforms;
 	cl_device_id device[10];
@@ -1319,5 +1318,6 @@ void queryOpenCLProperties()
 	}
 
 	cout << endl;
+#endif
 }
 
