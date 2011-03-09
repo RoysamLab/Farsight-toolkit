@@ -87,11 +87,11 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 int computeMedian(std::vector< std::vector<unsigned short> > scales, int cntr);
 void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned short* distIm, double* minScale, double* maxScale, int r, int c, int z);
 int computeWeightedMedian(std::vector< std::vector<float> > scales, int cntr);
-void queryOpenCLProperties();
+void queryOpenCLProperties(float* IM, int r, int c, int z);
 
 int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int r, int c, int z, double *sigma_min_in, double *sigma_max_in, double *scale_xy_in, double *scale_z_in, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout, bool paramEstimation)
 {	
-	queryOpenCLProperties(); //odd that the OpenCL code will crash the program if it is not part of a function and manually inlined here instead...
+	queryOpenCLProperties(IM, r, c, z); //odd that the OpenCL code will crash the program if it is not part of a function and manually inlined here instead...
 
 	//get this inputs
 	double sigma_min = sigma_min_in[0];
@@ -264,19 +264,19 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 		
 	free(dImg);
    
-	IM_out[0] = new float[r*c*z];
-	if(!IM_out[0])
+	*IM_out = new float[r*c*z];
+	if(!*IM_out)
 	{
 		std::cerr<<"could not allocate memory for the LoG response image"<<std::endl;
 		return 0;
 	}
 	for(int i=0; i<r*c*z; i++)
 	{
-		IM_out[0][i] = IM[i];
+		(*IM_out)[i] = IM[i];
 	}
 	//Detect the seed points (which are also the local maxima points)	
 	std::cout<<"Detecting Seeds"<<std::endl;
-	IM_bin[0] = new unsigned short[r*c*z];
+	*IM_bin = new unsigned short[r*c*z];
   //std::cout << "about to call Detect_Local_MaximaPoints_3D" << std::endl;
 	clock_t start_time_local_maxima = clock();
 	Detect_Local_MaximaPoints_3D(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0], bImg);	
@@ -1178,7 +1178,7 @@ int computeWeightedMedian(std::vector< std::vector<float> > scales, int cntr)
 	return mdn;
 }
 
-void queryOpenCLProperties()
+void queryOpenCLProperties(float* IM, int r, int c, int z)
 {
 #ifdef OpenCL
 	cout << endl;
@@ -1312,7 +1312,29 @@ void queryOpenCLProperties()
 		}
 
 		context = clCreateContext(0, num_devices, device, NULL, NULL, NULL);
-		clCreateCommandQueue(context, device[0], 0, NULL);
+		queue = clCreateCommandQueue(context, device[0], 0, NULL);
+		
+		int ***testArray = new int**[1024];
+		for (int i = 0; i < 1024; i++)
+		{
+			testArray[i] = new int* [1024];
+			for (int j = 0; j < 1024; j++)
+			{
+				testArray[i][j] = new int[1024];
+				for (int k = 0; k < 1024; k++)
+					testArray[i][j][k] = k + 1024 * j + 1024 * 1024 * i;
+			}	
+		}
+
+		cout << "Size of array element = " << sizeof(***testArray) << endl;
+		cout << "Allocating " << (sizeof(***testArray) * 1024 * 1024 * 1024)/(double)(1024 * 1024) << " MB of memory for image" << endl;
+		
+		cl_mem deviceMem = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(***testArray) * 1024 * 1024 * 1024, NULL, NULL);
+
+		if (deviceMem == NULL)
+			cout << "Failed to allocate buffer memory" << endl;
+		else
+			cout << "Memory allocation sucessful" << endl;
 
 		cout << endl;
 	}
