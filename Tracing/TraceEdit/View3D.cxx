@@ -121,7 +121,8 @@ View3D::View3D(QWidget *parent)
 	//this->Volume=0;
 	//bool tracesLoaded = false;
 	this->translateImages = false;	//this is for testing a switch is needed
-	this->viewIn2D = false;
+	this->viewIn2D = this->TraceEditSettings.value("mainWin/use2d",false).toBool();
+	this->renderTraceBits = false;
 	this->projectionStyle = 0;	//should me maximum projection
 	this->Date.currentDate();
 	this->Time.currentTime();
@@ -977,6 +978,9 @@ void View3D::CreateGUIObjects()
 	this->LineWidthField = new QSpinBox(this->SettingsWidget);
 	this->LineWidthField->setRange(1,5);
 
+	this->markTraceBits = new QCheckBox("Mark all traced Points",this->SettingsWidget);
+	this->markTraceBits->setChecked(this->renderTraceBits);
+
 	this->BackgroundRBox = new QDoubleSpinBox(this->SettingsWidget);
 	this->BackgroundRBox->setRange(0,1);
 	this->BackgroundRBox->setSingleStep(.01);
@@ -1178,6 +1182,7 @@ void View3D::CreateLayout()
 	DisplayLayout->addRow(tr("Line width:"),this->LineWidthField);
 	DisplayLayout->addRow(tr("Interactor style:"),this->StyleCombo);
 	DisplayLayout->addRow(tr("Projection style:"),this->ProjectionCombo);
+	DisplayLayout->addRow(this->markTraceBits);
 	SettingsBox->addWidget(displaySettings);
 
 	QGroupBox *BackgroundSettings = new QGroupBox(("Background RGB Color"));
@@ -1421,7 +1426,7 @@ void View3D::CreateActors()
   this->UCSMarker->SetInteractor(this->Interactor);
   this->UCSMarker->SetViewport(0,0,.1,.1);
   this->UCSMarker->SetEnabled(1);
-  this->UCSMarker->InteractiveOn();
+  //this->UCSMarker->InteractiveOn();
   this->QVTK->GetRenderWindow()->Render();
 }
 
@@ -1696,14 +1701,18 @@ void View3D::EditHelp()
 
 void View3D::About()
 {
+	QString version = QString::number(CPACK_PACKAGE_VERSION_MAJOR);
+	version += ".";
+	version += QString::number(CPACK_PACKAGE_VERSION_MINOR);
+	version += ".";
+	version += QString::number(CPACK_PACKAGE_VERSION_PATCH);
 	QMessageBox::about(this, tr("About Application"),
 		QCoreApplication::organizationName() + "\n" + 
 		QCoreApplication::organizationDomain() + "\n" + 
 		QCoreApplication::applicationName() + "\n Version:\t" + 
-		QCoreApplication::applicationVersion()+
+		version+
              "\nThe Farsight Trace Editor is intended to provide validation through editing\n"
 			 "The linked space provides group editing and helps automate many tasks\n"
-			 "Copyright 2009 Rensselaer Polytechnic Institute\n"
 			"Licensed under the Apache License, Version 2.0 (the 'License');\n"
 			"you may not use this file except in compliance with the License.\n"
 			"You may obtain a copy of the License at\n"
@@ -1729,6 +1738,7 @@ void View3D::ShowSettingsWindow()
 	this->BackgroundRBox->setValue(this->backColorR);
 	this->BackgroundGBox->setValue(this->backColorG);
 	this->BackgroundBBox->setValue(this->backColorB);
+	this->markTraceBits->setChecked(this->renderTraceBits);
 	this->SettingsWidget->show();
 }
 
@@ -1753,6 +1763,7 @@ void View3D::ApplyNewSettings()
 	this->TraceEditSettings.setValue("mainWin/ColorG", this->backColorG);
 	this->TraceEditSettings.setValue("mainWin/ColorB", this->backColorB);
 	this->TraceEditSettings.sync();
+	this->renderTraceBits = this->markTraceBits->isChecked();
 	this->poly_line_data->Modified();
 	this->updateTraceSelectionHighlights();
 	this->QVTK->GetRenderWindow()->Render();  
@@ -2021,7 +2032,10 @@ void View3D::Rerender()
   }
 
   std::vector<TraceBit> vec = this->tobj->CollectTraceBits();
-  this->AddPointsAsPoints(vec);
+  if (this->renderTraceBits)
+  {
+	  this->AddPointsAsPoints(vec);
+  }
   this->AddDebugPoints(this->tobj->debug_points);
   this->UpdateLineActor();
   this->UpdateBranchActor();
@@ -2042,10 +2056,20 @@ void View3D::Rerender()
 	this->MergeLabel->setText(QString::number(this->numMerged));
 	this->DeleteLabel->setText(QString::number(this->numDeleted));
 	this->BranchesLabel->setText(QString::number(this->tobj->BranchPoints.size()));
-	if(this->FL_MeasurePlot && this->FL_MeasureTable)
+	//if(this->FL_MeasurePlot && this->FL_MeasureTable)
+	//{
+	//	this->ShowCellAnalysis();
+	//}//end if has cell calculations
+	if(this->FL_MeasurePlot)
 	{
-		this->ShowCellAnalysis();
-	}//end if has cell calculations
+		this->FL_MeasurePlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+		this->FL_MeasurePlot->update();
+	}
+	if (this->FL_MeasureTable)
+	{
+		this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+		this->FL_MeasureTable->update();
+	}
   this->statusBar()->showMessage(tr("Finished Rerendering Image"));
 }
 
@@ -4136,6 +4160,7 @@ void View3D::closeEvent(QCloseEvent *event)
 {	
 	this->TraceEditSettings.setValue("mainWin/size", this->size());
 	this->TraceEditSettings.setValue("mainWin/pos",	this->pos());
+	this->TraceEditSettings.setValue("mainWin/use2d", this->viewIn2D);
 	this->TraceEditSettings.setValue("lastOpen/Project",this->ProjectName);
 	this->TraceEditSettings.setValue("lastOpen/Image", this->Image);
 	this->TraceEditSettings.setValue("lastOpen/Trace",this->TraceFiles);

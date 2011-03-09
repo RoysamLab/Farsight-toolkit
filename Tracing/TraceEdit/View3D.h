@@ -306,6 +306,8 @@ private:
 	//QSpinBox *LineLengthField;
 	QDoubleSpinBox *ColorValueField;
 	QSpinBox *LineWidthField;
+	QCheckBox * markTraceBits;
+	bool renderTraceBits;
 	QDoubleSpinBox *BackgroundRBox,*BackgroundGBox,*BackgroundBBox;
 	QDialogButtonBox *ApplySettingsButton;
 	QComboBox *typeCombo, *StyleCombo, *ProjectionCombo;
