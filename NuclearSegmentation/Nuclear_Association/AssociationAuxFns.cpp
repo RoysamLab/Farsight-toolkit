@@ -46,7 +46,7 @@ typedef itk::Image< USPixelType, 3 > USImageType;
 typedef float FloatPixelType;
 typedef itk::Image< FloatPixelType, 3 > FloatImageType;
 
-std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USImageType::Pointer inp_labeled, int number_of_rois, unsigned short thresh){
+std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USImageType::Pointer inp_labeled, int number_of_rois, unsigned short thresh, int surr_dist){
 
 	//Dialate input first
 	WholeCellSeg *dialate_filter = new WholeCellSeg;
@@ -66,6 +66,7 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 		std::cerr << excep << std::endl;
 	}
 	dialate_filter->set_nuc_img( deFilter->GetOutput() );
+	dialate_filter->set_radius( surr_dist );
 	dialate_filter->RunSegmentation();
 	UShortImageType::Pointer input_lab = dialate_filter->getSegPointer();
 
