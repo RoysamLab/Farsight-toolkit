@@ -4,15 +4,13 @@
 
 MSTRINGIFY(
 
-__kernel void fibonacci(__global float* out)
+__kernel void fibonacci(__global unsigned long* out)
 {
 	int iGID = get_global_id(0);
 	
-	//float phi = (1 + native_sqrt(5)) / 2;
-
-	//out[iGID] = (pow(phi, iGID) - pow((-1 / phi), iGID)) / native_sqrt(5);
-
-	out[iGID] = iGID;
+	float phi = (1 + sqrt(5.0)) / 2.0;
+	
+	out[iGID] = round(native_powr(phi,iGID+1) / sqrt(5.0)); 
 }
 
 );

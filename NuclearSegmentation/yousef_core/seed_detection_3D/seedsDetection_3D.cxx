@@ -42,7 +42,7 @@
 #endif
 
 //OpenCL support
-#ifdef OpenCL
+#ifdef OPENCL
 	#include "CL\cl.h"
 	#include "CL\cl_ext.h"
 	#ifndef MSTRINGIFY
@@ -94,6 +94,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 int computeWeightedMedian(std::vector< std::vector<float> > scales, int cntr);
 void queryOpenCLProperties(float* IM, int r, int c, int z);
 string fileToString(string fileName);
+void pfn_notify(const char *errinfo, const void *private_info, size_t cb, void *user_data);
 
 int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int r, int c, int z, double *sigma_min_in, double *sigma_max_in, double *scale_xy_in, double *scale_z_in, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout, bool paramEstimation)
 {	
@@ -1186,7 +1187,7 @@ int computeWeightedMedian(std::vector< std::vector<float> > scales, int cntr)
 
 void queryOpenCLProperties(float* IM, int r, int c, int z)
 {
-#ifdef OpenCL
+#ifdef OPENCL
 	cout << endl;
 	cl_platform_id platforms[10];
 	cl_uint num_platforms;
@@ -1205,7 +1206,7 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 	clGetPlatformIDs(10, platforms, &num_platforms);
 	cout << "Number of OpenCL platforms:\t" << num_platforms << endl;
 	
-	for (int i = 0; i < num_platforms; i++)
+	for (unsigned int i = 0; i < num_platforms; i++)
 	{
 		cout << "Platform " << i+1 << endl;
 		clGetPlatformInfo(platforms[i], CL_PLATFORM_PROFILE, sizeof(platform_profile), platform_profile, NULL);
@@ -1220,11 +1221,11 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 		cout << "OpenCL Platform Vendor:\t\t" << platform_vendor << endl;
 		cout << "OpenCL Platform Extensions:\t" << platform_extensions << endl;
 
-		clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, 10, device, &num_devices);
+		clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_GPU, 10, device, &num_devices);
 
 		cout << "Number of devices: " << num_devices << endl << endl;
 
-		for (int j = 0; j < num_devices; j++)
+		for (unsigned int j = 0; j < num_devices; j++)
 		{
 			cl_uint device_address_bits, device_global_mem_cacheline_size[1024], device_max_clock_frequency, device_max_compute_units, device_max_constant_args, device_max_read_image_args, device_max_samplers, device_max_work_item_dimensions, \
 				device_max_write_image_args, device_mem_base_addr_align, device_min_data_type_align_size, device_preferred_vendor_width_char, device_preferred_vendor_width_short, device_preferred_vendor_width_int, device_preferred_vendor_width_long, \
@@ -1320,26 +1321,23 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 			cout << endl;
 		}
 
-		context = clCreateContext(0, num_devices, device, NULL, NULL, NULL);
+		context = clCreateContext(0, 1, device, &pfn_notify, NULL, NULL);
 		queue = clCreateCommandQueue(context, device[0], 0, NULL);
 		fibo_program = clCreateProgramWithSource(context, 1, (const char **) &stringifiedKernel, 0, &errorcode);
-		cout << "Create Program From Source Error Code: " << errorcode << endl;
 		errorcode = clBuildProgram(fibo_program, 0, 0, 0, 0, 0);
-		cout << "Build Program Error Code: " << errorcode << endl;
 		fibo_kernel = clCreateKernel(fibo_program, "fibonacci", &errorcode);
-		cout << "Create Kernel Error Code: " << errorcode << endl;
 		
+		size_t cnDimension = 512;
 
-		
+		unsigned long long* testArray = new unsigned long long[cnDimension];
 
-		const unsigned int cnDimension = 1024;
-
-		float* testArray = new float[cnDimension];
+		for (int i = 0; i < cnDimension; i++)
+			testArray[i] = 0;
 		
 		cout << "Size of array element = " << sizeof(*testArray) << endl;
 		cout << "Allocating " << (sizeof(*testArray) * cnDimension)/(double)(1024) << " KB of memory for matrix" << endl;
 		
-		cl_mem deviceMem = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(cl_float) * cnDimension, NULL, NULL);
+		cl_mem deviceMem = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(cl_ulong) * cnDimension, NULL, NULL);
 
 		if (deviceMem == NULL)
 			cout << "Failed to allocate buffer memory" << endl; 
@@ -1348,24 +1346,36 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 
 		
 		
-		cout << "Setting Kernel Arguments" << endl;
 		clSetKernelArg(fibo_kernel, 0, sizeof(cl_mem), (void *) &deviceMem);
 		
-		cout << "Enqueuing ND Range" << endl;
 		clEnqueueNDRangeKernel(queue, fibo_kernel, 1, 0, (const size_t *) &cnDimension, 0, 0, 0, 0);
 		
-		cout << "Reading from GPU memory" << endl;
-		clEnqueueReadBuffer(queue, deviceMem, CL_TRUE, 0, sizeof(cl_float) * cnDimension, testArray, NULL, NULL, NULL);
-		
+		errorcode = clEnqueueReadBuffer(queue, deviceMem, CL_TRUE, 0, sizeof(cl_ulong) * cnDimension, testArray, NULL, NULL, NULL);
+
+		errorcode = clFinish(queue);
+
 		cout << "Results" << endl;
 		for (int i = 0; i < cnDimension; i++)
 			cout << testArray[i] << " ";
 		
 		cout << endl;
+
+		delete[] testArray;
+		clReleaseKernel(fibo_kernel);
+		clReleaseProgram(fibo_program);
+		clReleaseMemObject(deviceMem);
+		clReleaseCommandQueue(queue);
+		clReleaseContext(context);
+
 	}
 	
 	cout << endl;
 #endif
+}
+
+void pfn_notify(const char *errinfo, const void *private_info, size_t cb, void *user_data)
+{
+	cout << errinfo << endl;
 }
 
 
