@@ -1,7 +1,7 @@
 SET( SRCS
 	seedsDetection_3D.cxx
 	seedsdetection_3D.h
-	itklaplacianrecursivegaussianimagefilternew.txx
+ itklaplacianrecursivegaussianimagefilternew.txx
 	itklaplacianrecursivegaussianimagefilternew.h
 )
 

@@ -42,11 +42,16 @@
 #endif
 
 //OpenCL support
-//#define OpenCL
 #ifdef OpenCL
-#include "CL\cl.h"
-#include "CL\cl_ext.h"
+	#include "CL\cl.h"
+	#include "CL\cl_ext.h"
+	#ifndef MSTRINGIFY
+		#define MSTRINGIFY(A) #A
+		char* stringifiedKernel =
+		#include "TestKernel.cl"
+	#endif
 #endif
+
 
 #ifndef SIZE_MAX
 #define SIZE_MAX ((size_t)-1)
@@ -88,6 +93,7 @@ int computeMedian(std::vector< std::vector<unsigned short> > scales, int cntr);
 void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned short* distIm, double* minScale, double* maxScale, int r, int c, int z);
 int computeWeightedMedian(std::vector< std::vector<float> > scales, int cntr);
 void queryOpenCLProperties(float* IM, int r, int c, int z);
+string fileToString(string fileName);
 
 int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int r, int c, int z, double *sigma_min_in, double *sigma_max_in, double *scale_xy_in, double *scale_z_in, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout, bool paramEstimation)
 {	
@@ -1188,6 +1194,9 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 	cl_uint num_devices;
 	cl_context context;
 	cl_command_queue queue;
+	cl_program fibo_program;
+	cl_kernel fibo_kernel;
+	cl_int errorcode;
 	
 	
 	char platform_profile[1024], platform_version[1024], platform_name[1024], platform_vendor[1024], platform_extensions[1024];
@@ -1313,33 +1322,50 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 
 		context = clCreateContext(0, num_devices, device, NULL, NULL, NULL);
 		queue = clCreateCommandQueue(context, device[0], 0, NULL);
+		fibo_program = clCreateProgramWithSource(context, 1, (const char **) &stringifiedKernel, 0, &errorcode);
+		cout << "Create Program From Source Error Code: " << errorcode << endl;
+		errorcode = clBuildProgram(fibo_program, 0, 0, 0, 0, 0);
+		cout << "Build Program Error Code: " << errorcode << endl;
+		fibo_kernel = clCreateKernel(fibo_program, "fibonacci", &errorcode);
+		cout << "Create Kernel Error Code: " << errorcode << endl;
 		
-		int ***testArray = new int**[1024];
-		for (int i = 0; i < 1024; i++)
-		{
-			testArray[i] = new int* [1024];
-			for (int j = 0; j < 1024; j++)
-			{
-				testArray[i][j] = new int[1024];
-				for (int k = 0; k < 1024; k++)
-					testArray[i][j][k] = k + 1024 * j + 1024 * 1024 * i;
-			}	
-		}
 
-		cout << "Size of array element = " << sizeof(***testArray) << endl;
-		cout << "Allocating " << (sizeof(***testArray) * 1024 * 1024 * 1024)/(double)(1024 * 1024) << " MB of memory for image" << endl;
 		
-		cl_mem deviceMem = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(***testArray) * 1024 * 1024 * 1024, NULL, NULL);
+
+		const unsigned int cnDimension = 1024;
+
+		float* testArray = new float[cnDimension];
+		
+		cout << "Size of array element = " << sizeof(*testArray) << endl;
+		cout << "Allocating " << (sizeof(*testArray) * cnDimension)/(double)(1024) << " KB of memory for matrix" << endl;
+		
+		cl_mem deviceMem = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(cl_float) * cnDimension, NULL, NULL);
 
 		if (deviceMem == NULL)
-			cout << "Failed to allocate buffer memory" << endl;
+			cout << "Failed to allocate buffer memory" << endl; 
 		else
 			cout << "Memory allocation sucessful" << endl;
 
+		
+		
+		cout << "Setting Kernel Arguments" << endl;
+		clSetKernelArg(fibo_kernel, 0, sizeof(cl_mem), (void *) &deviceMem);
+		
+		cout << "Enqueuing ND Range" << endl;
+		clEnqueueNDRangeKernel(queue, fibo_kernel, 1, 0, (const size_t *) &cnDimension, 0, 0, 0, 0);
+		
+		cout << "Reading from GPU memory" << endl;
+		clEnqueueReadBuffer(queue, deviceMem, CL_TRUE, 0, sizeof(cl_float) * cnDimension, testArray, NULL, NULL, NULL);
+		
+		cout << "Results" << endl;
+		for (int i = 0; i < cnDimension; i++)
+			cout << testArray[i] << " ";
+		
 		cout << endl;
 	}
-
+	
 	cout << endl;
 #endif
 }
+
 

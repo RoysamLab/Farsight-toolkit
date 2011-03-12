@@ -203,6 +203,14 @@ endif (MSVC)
 ENDIF(BUILD_OPENMP)
 
 
+IF (BUILD_OPENCL)
+    IF (MSVC)
+        set(CMAKE_C_FLAGS "-D OPENCL")
+        set(CMAKE_CXX_FLAGS "-D OPENCL")
+    
+endif (MSVC)
+ENDIF(BUILD_OPENCL)
+
 #####################################################################################
 # Optionally find Farsight's data directory, used for testing and installers
 # You can check out the data directory from subversion like so:
