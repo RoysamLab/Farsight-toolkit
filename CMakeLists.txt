@@ -192,12 +192,12 @@ ENDIF(BUILD_UNMIXING)
 
 IF (BUILD_OPENMP)
     IF (MSVC)
-        set(CMAKE_C_FLAGS "/openmp")
-        set(CMAKE_CXX_FLAGS "/openmp")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /openmp")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /openmp")
     elseif(GCC)
     
-        set(CMAKE_C_FLAGS "-fopenmp")
-        set(CMAKE_CXX_FLAGS "-fopenmp")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
     
 endif (MSVC)
 ENDIF(BUILD_OPENMP)
@@ -205,8 +205,8 @@ ENDIF(BUILD_OPENMP)
 
 IF (BUILD_OPENCL)
     IF (MSVC)
-        set(CMAKE_C_FLAGS "-D OPENCL")
-        set(CMAKE_CXX_FLAGS "-D OPENCL")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D OPENCL")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D OPENCL")
     
 endif (MSVC)
 ENDIF(BUILD_OPENCL)
