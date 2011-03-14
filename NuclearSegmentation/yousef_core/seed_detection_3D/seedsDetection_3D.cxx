@@ -1196,11 +1196,11 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 	cl_context context;
 	cl_command_queue queue;
 	cl_program fibo_program;
-	cl_kernel fibo_kernel;
+	cl_kernel kernel;
 	cl_int errorcode;
 	
 	
-	char platform_profile[1024], platform_version[1024], platform_name[1024], platform_vendor[1024], platform_extensions[1024];
+	char platform_profile[1024], platform_version[1024], platform_name[1024], platform_vendor[1024], platform_extensions[10240];
 
 	// Platform
 	clGetPlatformIDs(10, platforms, &num_platforms);
@@ -1316,25 +1316,41 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 			cout << "Device Max Compute Units:\t" << device_max_compute_units << endl;
 			cout << "Device Global Memory:\t\t" << device_global_mem_size / (1024*1024) << " MB" << endl;
 			cout << "Device Local Memory:\t\t" << device_local_mem_size / 1024 << " KB" << endl;
+			cout << "Device Extensions:\t\t" << device_extensions << endl;
 			cout << "Timer Resolution:\t\t" << device_profiling_timer_resolution << " ns" << endl;
 
 			cout << endl;
 		}
 
+		cout << stringifiedKernel << endl << endl;
+
 		context = clCreateContext(0, 1, device, &pfn_notify, NULL, NULL);
 		queue = clCreateCommandQueue(context, device[0], 0, NULL);
 		fibo_program = clCreateProgramWithSource(context, 1, (const char **) &stringifiedKernel, 0, &errorcode);
-		errorcode = clBuildProgram(fibo_program, 0, 0, 0, 0, 0);
-		fibo_kernel = clCreateKernel(fibo_program, "fibonacci", &errorcode);
 		
-		size_t cnDimension = 512;
+		cout << "clCreateProgramWithSource Error code: " << errorcode << endl;
+		
+		errorcode = clBuildProgram(fibo_program, 0, 0, 0, 0, 0);
+
+		char build_log[1000];
+		
+		clGetProgramBuildInfo(fibo_program, device[0], CL_PROGRAM_BUILD_LOG, sizeof(build_log), build_log, NULL);
+		
+		cout << "Build Log:" << endl << build_log << endl;
+
+		kernel = clCreateKernel(fibo_program, "fibonacci", &errorcode);
+		
+		cout << "clCreateKernel Error code: " << errorcode << endl;
+
+		size_t cnDimension = 128;
 
 		unsigned long long* testArray = new unsigned long long[cnDimension];
 
 		for (int i = 0; i < cnDimension; i++)
-			testArray[i] = 0;
+			testArray[i] = 1;
 		
 		cout << "Size of array element = " << sizeof(*testArray) << endl;
+		cout << "Size of cl_double = " << sizeof(cl_double) << endl;
 		cout << "Allocating " << (sizeof(*testArray) * cnDimension)/(double)(1024) << " KB of memory for matrix" << endl;
 		
 		cl_mem deviceMem = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(cl_ulong) * cnDimension, NULL, NULL);
@@ -1342,26 +1358,24 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 		if (deviceMem == NULL)
 			cout << "Failed to allocate buffer memory" << endl; 
 		else
-			cout << "Memory allocation sucessful" << endl;
+			cout << "Memory allocation sucessful" << endl;		
+		
+		clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *) &deviceMem);
+		
+		clEnqueueNDRangeKernel(queue, kernel, 1, 0, (const size_t *) &cnDimension, 0, 0, 0, 0);
+		
+		clEnqueueReadBuffer(queue, deviceMem, CL_TRUE, 0, sizeof(cl_ulong) * cnDimension, testArray, NULL, NULL, NULL);
 
-		
-		
-		clSetKernelArg(fibo_kernel, 0, sizeof(cl_mem), (void *) &deviceMem);
-		
-		clEnqueueNDRangeKernel(queue, fibo_kernel, 1, 0, (const size_t *) &cnDimension, 0, 0, 0, 0);
-		
-		errorcode = clEnqueueReadBuffer(queue, deviceMem, CL_TRUE, 0, sizeof(cl_ulong) * cnDimension, testArray, NULL, NULL, NULL);
-
-		errorcode = clFinish(queue);
+		clFinish(queue);
 
 		cout << "Results" << endl;
 		for (int i = 0; i < cnDimension; i++)
-			cout << testArray[i] << " ";
+			cout << testArray[i] << endl;
 		
 		cout << endl;
 
 		delete[] testArray;
-		clReleaseKernel(fibo_kernel);
+		clReleaseKernel(kernel);
 		clReleaseProgram(fibo_program);
 		clReleaseMemObject(deviceMem);
 		clReleaseCommandQueue(queue);
@@ -1375,7 +1389,7 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 
 void pfn_notify(const char *errinfo, const void *private_info, size_t cb, void *user_data)
 {
-	cout << errinfo << endl;
+	cerr << errinfo << endl;
 }
 
 
