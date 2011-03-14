@@ -770,11 +770,19 @@ void PatternAnalysisWizard::saveModel(void)
 		column->SetName( m_table->GetColumnName(columnsToUse.at(c)) );
 		new_table->AddColumn(column);
 	}
-	for(int row = 0; row < (int)m_table->GetNumberOfRows(); ++row)
+	vtkSmartPointer<vtkDoubleArray> column1 = vtkSmartPointer<vtkDoubleArray>::New();
+	column1->SetName( "Class" );
+	new_table->AddColumn(column1);
+	vtkSmartPointer<vtkDoubleArray> column2 = vtkSmartPointer<vtkDoubleArray>::New();
+	column2->SetName( "ID" );
+	new_table->AddColumn(column2);
+   	for(int row = 0; row < (int)m_table->GetNumberOfRows(); ++row)
 	{		
 		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
 		for(int c =0;c<(int)columnsToUse.size();++c)
 			model_data1->InsertNextValue(m_table->GetValue(row,columnsToUse.at(c)));
+		model_data1->InsertNextValue(m_table->GetValueByName(row, "prediction_default1"));
+		model_data1->InsertNextValue(m_table->GetValueByName(row, "ID"));
 		new_table->InsertNextRow(model_data1);
 	}
 	//*********************************************************************
@@ -796,12 +804,17 @@ void PatternAnalysisWizard::saveModel(void)
 	}
 	outFile << "\n";
 	//Write out the features:
+	std::string current_column;
 	for(int row = 0; row < new_table->GetNumberOfRows(); ++row)
 	{
 		for(int c=0; c < new_table->GetNumberOfColumns(); ++c)
 		{
 			std::stringstream out;
-	        out << std::setprecision(3) << std::fixed << new_table->GetValue(row,c).ToFloat();
+			current_column = new_table->GetColumnName(c);
+			if((current_column.compare("ID") == 0) || (current_column.compare("Class") == 0))
+				out << std::fixed << new_table->GetValue(row,c).ToInt();
+			else
+	            out << std::setprecision(3) << std::fixed << new_table->GetValue(row,c).ToFloat();
 	        outFile << out.str() << "\t\t\t";
 		}
 		outFile << "\n";
@@ -815,22 +828,33 @@ void PatternAnalysisWizard::saveModel(void)
 //****************************************************************************
 void PatternAnalysisWizard::appendModel(vtkSmartPointer<vtkTable> mod_table, QString filename)
 {
-	
+	int r = mod_table->GetNumberOfRows();
    	for(int row = 0; row < (int)m_table->GetNumberOfRows(); ++row)
 	{		
 		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
-		for(int c = 0;c<(int)m_table->GetNumberOfColumns();++c)
+		for(int c = 0;c<(int)mod_table->GetNumberOfColumns();++c)
 		{
-			 std::string m_column = m_table->GetColumnName(c);
-		     for(int d=0; d<(int)mod_table->GetNumberOfColumns(); ++d)
-		     {
-			      std::string mod_column = mod_table->GetColumnName(d);
-			      if( m_column.compare(mod_column) == 0)
-				  {
-					  model_data1->InsertNextValue(m_table->GetValue(row,c));
-				      break;
-				  }
-		     }            		
+			 std::string mod_column = mod_table->GetColumnName(c);
+			 if(mod_column.compare("Class") == 0)
+				 model_data1->InsertNextValue(m_table->GetValueByName(row,"prediction_default1"));
+			 else
+			 {
+		        for(int d=0; d<(int)m_table->GetNumberOfColumns(); ++d)
+		        {
+			         std::string m_column = m_table->GetColumnName(d);
+			         if( m_column.compare(mod_column) == 0)
+				     {
+					     if(mod_column.compare("ID") == 0)
+						 {
+							 int id = r + m_table->GetValue(row,d).ToInt();
+							 model_data1->InsertNextValue(vtkVariant(id));
+						 }
+						 else
+							 model_data1->InsertNextValue(m_table->GetValue(row,d));
+				         break;
+				     }
+		         }
+			 }
 		}
 		mod_table->InsertNextRow(model_data1);
 	}
@@ -853,12 +877,17 @@ void PatternAnalysisWizard::appendModel(vtkSmartPointer<vtkTable> mod_table, QSt
 	}
 	outFile << "\n";
 	//Write out the features:
+	std::string current_column;
 	for(int row = 0; row < mod_table->GetNumberOfRows(); ++row)
 	{
 		for(int c=0; c < mod_table->GetNumberOfColumns(); ++c)
 		{
 			std::stringstream out;
-	        out << std::setprecision(3) << std::fixed << mod_table->GetValue(row,c).ToFloat();
+			current_column = mod_table->GetColumnName(c);
+			if((current_column.compare("ID") == 0) || (current_column.compare("Class") == 0))
+				out << std::fixed << mod_table->GetValue(row,c).ToInt();
+			else
+	            out << std::setprecision(3) << std::fixed << mod_table->GetValue(row,c).ToFloat();
 	        outFile << out.str() << "\t\t\t";
 		}
 		outFile << "\n";
