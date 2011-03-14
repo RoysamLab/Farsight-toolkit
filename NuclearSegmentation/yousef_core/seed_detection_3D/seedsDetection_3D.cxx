@@ -49,6 +49,8 @@
 		#define MSTRINGIFY(A) #A
 		char* stringifiedKernel =
 		#include "TestKernel.cl"
+		char* LocalMaximaKernel =
+		#include "LocalMaximaKernel.cl"
 	#endif
 #endif
 
@@ -95,10 +97,11 @@ int computeWeightedMedian(std::vector< std::vector<float> > scales, int cntr);
 void queryOpenCLProperties(float* IM, int r, int c, int z);
 string fileToString(string fileName);
 void pfn_notify(const char *errinfo, const void *private_info, size_t cb, void *user_data);
+void Detect_Local_MaximaPoints_3D_ocl(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, unsigned short* out1);
 
 int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int r, int c, int z, double *sigma_min_in, double *sigma_max_in, double *scale_xy_in, double *scale_z_in, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout, bool paramEstimation)
 {	
-	queryOpenCLProperties(IM, r, c, z); //odd that the OpenCL code will crash the program if it is not part of a function and manually inlined here instead...
+	//queryOpenCLProperties(IM, r, c, z); //odd that the OpenCL code will crash the program if it is not part of a function and manually inlined here instead...
 
 	//get this inputs
 	double sigma_min = sigma_min_in[0];
@@ -286,7 +289,11 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	*IM_bin = new unsigned short[r*c*z];
   //std::cout << "about to call Detect_Local_MaximaPoints_3D" << std::endl;
 	clock_t start_time_local_maxima = clock();
-	Detect_Local_MaximaPoints_3D(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0], bImg);	
+	#ifdef OPENCL	
+		Detect_Local_MaximaPoints_3D(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0], bImg);
+	#else	
+		Detect_Local_MaximaPoints_3D_ocl(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0]);
+	#endif OPENCL
 	cout << "Local maxima point detection took " << (clock() - start_time_local_maxima)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 	
 	std::cout << "done detecting seeds" << std::endl;
@@ -516,31 +523,21 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
         {				
 			for(int k=0; k<z; k++)
 			{									
+				//calculate bounds
 				min_r = (int) max(0.0,i-scale_xy);
 				min_c = (int) max(0.0,j-scale_xy);
 				min_z = (int) max(0.0,k-scale_z);
 				max_r = (int)min((double)r-1,i+scale_xy);
 				max_c = (int)min((double)c-1,j+scale_xy);                         
 				max_z = (int)min((double)z-1,k+scale_z);                         
-				/*#pragma omp critical
-				{
-					if(itr++ % 1000 == 0)
-					{
-						//std::cout << ".";
-						std::cout.flush();
-					}
-				}*/
 				
+				//get the intensity maximum of the bounded im_vals
 				float mx = get_maximum_3D(im_vals, min_r, max_r, min_c, max_c, min_z, max_z,r,c);
+				
+				//if the current pixel is at the maximum intensity, set it to 255 in out1 (seedImagePtr), else set it to 0
 				II = (k*r*c)+(i*c)+j;
 				if(im_vals[II] == mx)    
-				{
-					//IND = IND+1;
-					//if(bImg[II] > 0)
-						out1[II]=255;                 
-					//else
-					//	out1[II] = -1;
-				}
+					out1[II]=255;
 				else
 					out1[(k*r*c)+(i*c)+j]=0;
 			}			
@@ -549,6 +546,99 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
   //std::cout << std::endl << "made it out of the loop" << std::endl;
 }
 
+void Detect_Local_MaximaPoints_3D_ocl(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, unsigned short* out1)
+{
+#ifdef OPENCL
+	
+	// START OPENCL BOILERPLATE ----------------------------------------------------------------------------------------------------------------
+	cl_platform_id platforms[10];
+	cl_uint num_platforms;
+	cl_device_id device[10];
+	cl_uint num_devices;
+	cl_context context;
+	cl_command_queue queue;
+	cl_program program;
+	cl_kernel kernel;
+	cl_int errorcode;
+
+	// Platform
+	clGetPlatformIDs(10, platforms, &num_platforms); //Get OpenCL Platforms
+	clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_GPU, 10, device, &num_devices); //Get the first platform and get a list of devices
+	context = clCreateContext(0, 1, device, &pfn_notify, NULL, NULL); //Create context from first device
+	queue = clCreateCommandQueue(context, device[0], 0, NULL); //Create a command queue for the first device
+	
+	//cout << endl << LocalMaximaKernel << endl << endl; //print out strinfified kernel
+	
+	program = clCreateProgramWithSource(context, 1, (const char **) &LocalMaximaKernel, 0, &errorcode); //Read in kernel and create a program
+	
+	if (errorcode != CL_SUCCESS)
+		cout << "clCreateProgramWithSource Error code: " << errorcode << endl;
+	
+	errorcode = clBuildProgram(program, 0, 0, 0, 0, 0); //Build the program
+
+	if (errorcode != CL_SUCCESS) //If there was a build error, print out build_info
+	{
+		cout << "clBuildProgram Error Code: " << errorcode << endl;
+		char build_log[1024*1024];
+		errorcode = clGetProgramBuildInfo(program, device[0], CL_PROGRAM_BUILD_LOG, sizeof(build_log), build_log, NULL); //Get the build log
+		if (errorcode == CL_SUCCESS)
+			cout << "Build Log:" << endl << build_log << endl;
+		else
+			cout << "clGetProgramBuildInfo Error Code: " << errorcode << endl;
+	}
+
+	kernel = clCreateKernel(program, "LocalMaximaKernel", &errorcode); //Create the kernel from the source code
+	
+	if (errorcode != CL_SUCCESS)
+		cout << "clCreateKernel Error code: " << errorcode << endl;
+
+	//END OPENCL BOILERPLATE ---------------------------------------------------------------------------------------------------------------------
+
+	size_t cnDimension = r * c * z; //array size
+	
+	cout << "Allocating " << (sizeof(*im_vals) * cnDimension)/(double)(1024) << " KB of memory on GPU for im_vals" << endl;
+	cout << "Allocating " << (sizeof(*out1) * cnDimension)/(double)(1024) << " KB of memory on GPU for out1" << endl;
+	
+	//Allocate device memory
+	cl_mem device_mem_im_vals = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(cl_float) * cnDimension, NULL, NULL);
+	cl_mem device_mem_out1 = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(cl_ushort) * cnDimension, NULL, NULL);
+
+	if (device_mem_im_vals == NULL || device_mem_out1 == NULL)
+		cout << "Failed to allocate buffer memory on GPU" << endl; 
+	
+	//Write memory from host to device
+	clEnqueueWriteBuffer(queue, device_mem_im_vals, CL_TRUE, 0, sizeof(cl_float) * cnDimension, im_vals, NULL, NULL, NULL);
+
+	//Set kernel arguments
+	clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *) &device_mem_im_vals);
+	clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *) &device_mem_out1);
+	clSetKernelArg(kernel, 2, sizeof(int), &r);
+	clSetKernelArg(kernel, 3, sizeof(int), &c);
+	clSetKernelArg(kernel, 4, sizeof(int), &z);
+	clSetKernelArg(kernel, 5, sizeof(double), &scale_xy);
+	clSetKernelArg(kernel, 6, sizeof(double), &scale_z);	
+
+	//Execute the kernel
+	clEnqueueNDRangeKernel(queue, kernel, 1, 0, (const size_t *) &cnDimension, 0, 0, 0, 0);
+	
+	//Read the output from the device back into host memory
+	clEnqueueReadBuffer(queue, device_mem_out1, CL_TRUE, 0, sizeof(cl_ushort) * cnDimension, out1, NULL, NULL, NULL);
+
+	//Block till all commands are complete
+	clFinish(queue);
+
+	cout << endl;
+
+	clReleaseKernel(kernel);
+	clReleaseProgram(program);
+	clReleaseMemObject(device_mem_im_vals);
+	clReleaseMemObject(device_mem_out1);
+	clReleaseCommandQueue(queue);
+	clReleaseContext(context);
+
+	cout << endl;
+#endif
+}
 //added by Yousef on 8/29/2009
 //Estimate the min and max scales based on the local maxima points of the distance map
 void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short* distIm, double* minScale, double* maxScale, int r, int c, int z)
@@ -1195,7 +1285,7 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 	cl_uint num_devices;
 	cl_context context;
 	cl_command_queue queue;
-	cl_program fibo_program;
+	cl_program program;
 	cl_kernel kernel;
 	cl_int errorcode;
 	
@@ -1316,6 +1406,8 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 			cout << "Device Max Compute Units:\t" << device_max_compute_units << endl;
 			cout << "Device Global Memory:\t\t" << device_global_mem_size / (1024*1024) << " MB" << endl;
 			cout << "Device Local Memory:\t\t" << device_local_mem_size / 1024 << " KB" << endl;
+			cout << "Device Max Mem Alloc:\t\t" << device_max_mem_alloc_size  / (1024 * 1024) << " MB" << endl;
+			cout << "Device Max Constant Mem:\t" << device_max_constant_buffer_size / 1024 << " KB" << endl;
 			cout << "Device Extensions:\t\t" << device_extensions << endl;
 			cout << "Timer Resolution:\t\t" << device_profiling_timer_resolution << " ns" << endl;
 
@@ -1326,19 +1418,19 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 
 		context = clCreateContext(0, 1, device, &pfn_notify, NULL, NULL);
 		queue = clCreateCommandQueue(context, device[0], 0, NULL);
-		fibo_program = clCreateProgramWithSource(context, 1, (const char **) &stringifiedKernel, 0, &errorcode);
+		program = clCreateProgramWithSource(context, 1, (const char **) &stringifiedKernel, 0, &errorcode);
 		
 		cout << "clCreateProgramWithSource Error code: " << errorcode << endl;
 		
-		errorcode = clBuildProgram(fibo_program, 0, 0, 0, 0, 0);
+		errorcode = clBuildProgram(program, 0, 0, 0, 0, 0);
 
 		char build_log[1000];
 		
-		clGetProgramBuildInfo(fibo_program, device[0], CL_PROGRAM_BUILD_LOG, sizeof(build_log), build_log, NULL);
+		clGetProgramBuildInfo(program, device[0], CL_PROGRAM_BUILD_LOG, sizeof(build_log), build_log, NULL);
 		
 		cout << "Build Log:" << endl << build_log << endl;
 
-		kernel = clCreateKernel(fibo_program, "fibonacci", &errorcode);
+		kernel = clCreateKernel(program, "fibonacci", &errorcode);
 		
 		cout << "clCreateKernel Error code: " << errorcode << endl;
 
@@ -1376,7 +1468,7 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 
 		delete[] testArray;
 		clReleaseKernel(kernel);
-		clReleaseProgram(fibo_program);
+		clReleaseProgram(program);
 		clReleaseMemObject(deviceMem);
 		clReleaseCommandQueue(queue);
 		clReleaseContext(context);
