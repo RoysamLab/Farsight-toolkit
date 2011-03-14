@@ -17,7 +17,7 @@ ENDIF ("${Farsight_BINARY_DIR}" MATCHES "^${Farsight_SOURCE_DIR}$")
 #########################################
 OPTION( BUILD_TRACING "Build Tracing Tools" ON )
 OPTION( BUILD_NUCLEI "Build Nuclear Segmentation" ON )
-OPTION( BUILD_VESSEL "Build Vessel Surface Segmentation" ON )
+OPTION( BUILD_VESSEL "Build Vessel Surface Segmentation" OFF )
 OPTION( BUILD_REGISTRATION "Build Image Registration (fregl)" ON )
 OPTION( BUILD_SAMPLE_EDITOR "Build Sample Editor" ON )
 OPTION( BUILD_TISSUENETS "Build TissueNets" OFF )

@@ -57,3 +57,9 @@ OPTION( BUILD_MultipleNeuronTracer "Build Multiple Neuron Tracer" ON )
 IF( BUILD_MultipleNeuronTracer )
   SUBDIRS( MultipleNeuronTracer )
 ENDIF()
+
+
+OPTION( BUILD_OPEN_SNAKE_TRACING "Build Open Snake Tracing System" ON )
+IF(BUILD_OPEN_SNAKE_TRACING)
+  SUBDIRS( OpenSnakeTracingSystem )
+ENDIF()
