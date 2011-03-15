@@ -3042,6 +3042,10 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
   char key = view->Interactor->GetKeyCode();
   switch (key)
     {
+	case 'a':
+	  view->AutomationDock->toggleViewAction();
+	  break;
+
     case 'l':
       view->ListSelections();
       break;
@@ -3620,15 +3624,24 @@ void View3D::BreakBranch()
 {
   this->SelectedTraceIDs.clear();
 	std::vector<TraceLine*> traces = this->TreeModel->GetSelectedTraces();
+	int count = 0;
+	QString breakText;
 	for (unsigned int i = 0; i < traces.size(); i++)
 	{
 		int id = traces.at(i)->GetId();
+		int parentID = traces.at(i)->GetParentID();
+		int dparent = (int) traces.at(i)->GetDistToParent();
 		if (this->tobj->BreakOffBranch(traces.at(i),true))
 		{
-			this->EditLogDisplay->append(QString("Freed ")+ QString::number(id) + QString("From Parent"));
+			count++;
+			breakText.append(QString("\n%1\t%2\t%3").arg(id).arg(parentID).arg(dparent));
+			//this->EditLogDisplay->append(QString("Freed ")+ QString::number(id) + QString(" From Parent"));
 		}
 	}
 	//this->tobj->cleanTree();
+	this->EditLogDisplay->append(QString("Removed ")+ QString::number(count) + QString(" Traces From Parents"));
+	this->EditLogDisplay->append(QString("Trace\tFrom\tDistance Of\t"));
+	this->EditLogDisplay->append(breakText);
 	this->Rerender();
 	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 }
@@ -3705,7 +3718,8 @@ void View3D::MergeTraces()
 		  this->EditLogDisplay->append("Merged " + 
 			  QString::number(num) + " traces");
 		  for (unsigned int i = 0; i < num; i++)
-		  {
+		  {			  
+				this->EditLogDisplay->append( QString(this->tobj->Gaps[i]->stats().c_str()));
 			  tobj->mergeTraces(this->tobj->Gaps[i]->endPT1,this->tobj->Gaps[i]->endPT2);
 		  }
 		  this->ClearSelection();
