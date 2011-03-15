@@ -93,9 +93,9 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	int block_divisor;
 	
 	#ifdef _OPENMP			
-		block_divisor = 2;	
+		block_divisor = 8;	
 	#else		
-		block_divisor = 2;	
+		block_divisor = 8;	
 	#endif
 
 	
