@@ -1,3 +1,5 @@
+
+
 /* 
  * Copyright 2009 Rensselaer Polytechnic Institute
  * This program is free software; you can redistribute it and/or modify 
@@ -14,6 +16,7 @@
  * with this program; if not, write to the Free Software Foundation, Inc., 
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
+
 
 #include "cell_binarization.h"
 #include <limits.h>
@@ -90,9 +93,9 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	int block_divisor;
 	
 	#ifdef _OPENMP			
-		block_divisor = 8;	
+		block_divisor = 2;	
 	#else		
-		block_divisor = 1;	
+		block_divisor = 2;	
 	#endif
 
 	
@@ -158,7 +161,7 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 		{
 			#pragma omp critical
 			{
-				std::cout<<"    Binarizing block " << blk++ <<" of "<<cntr<<std::endl;	
+				//std::cout<<"    Binarizing block " << blk++ <<" of "<<cntr<<std::endl;	
 			}
 			Seg_GC_Full_3D_Blocks(imgIn, R, C, Z, alpha_F, alpha_B, P_I, imgOut, subImgBlockArray[i][j]); //imgIn is dataImagePtr, imgOut is binImagePtr
 		}

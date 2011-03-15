@@ -157,15 +157,24 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 
 	size_t cnDimension = r * c * z; //array size
 	
+	cl_ulong device_max_mem_alloc_size, device_global_mem_size;
+	clGetDeviceInfo(device[0], CL_DEVICE_MAX_MEM_ALLOC_SIZE, 1024, &device_max_mem_alloc_size,	NULL);
+	clGetDeviceInfo(device[0], CL_DEVICE_GLOBAL_MEM_SIZE, 1024, &device_global_mem_size,	NULL);
+	cout << "Maximum memory allocation size: " << device_max_mem_alloc_size / (double)(1024*1024) << " MB" << endl;
+	cout << "Maximum global memory allocation size: " << device_global_mem_size / (double)(1024*1024) << " MB" << endl;
+
 	cout << "Allocating " << (sizeof(*im_vals) * cnDimension)/(double)(1024*1024) << " MB of memory on GPU for im_vals" << endl;
 	cout << "Allocating " << (sizeof(*local_max_vals) * cnDimension)/(double)(1024*1024) << " MB of memory on GPU for local_max_vals" << endl;
 	cout << "Allocating " << (sizeof(*max_response) * cnDimension * 3)/(double)(1024*1024) << " MB of memory on GPU for max_response" << endl;
 	
+	
 	//Allocate device memory
 	cl_mem device_mem_im_vals = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(cl_float) * cnDimension, NULL, NULL);
 	cl_mem device_mem_local_max_vals = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(cl_ushort) * cnDimension, NULL, NULL);
-	cl_mem device_mem_max_response = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(cl_int) * cnDimension * 3, NULL, NULL);
-
+	//cl_mem device_mem_max_response = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(cl_int) * cnDimension * 3, NULL, NULL);
+	cl_mem device_mem_max_response = clCreateBuffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_WRITE_ONLY, sizeof(int) * cnDimension * 3, NULL, NULL);
+	
+	
 	if (device_mem_im_vals == NULL || device_mem_max_response == NULL || device_mem_local_max_vals == NULL)
 		cout << "Failed to allocate buffer memory on GPU" << endl; 
 	
