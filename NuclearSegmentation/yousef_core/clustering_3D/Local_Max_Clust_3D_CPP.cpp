@@ -25,6 +25,17 @@
 #include "omp.h"
 #endif
 
+//OpenCL support
+#ifdef OPENCL
+	#include "CL\cl.h"
+	#include "CL\cl_ext.h"
+	#ifndef MSTRINGIFY
+		#define MSTRINGIFY(A) #A
+		char* InitialClusteringKernel =
+		#include "InitialClusteringKernel.cl"
+	#endif
+#endif
+
 using namespace std;
 
 void get_maximum(float* A, int r1, int r2, int c1, int c2, int z1, int z2, int* rx, int* cx, int* zx, int R, int C, int Z)
@@ -110,6 +121,59 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 		}
 	}
 
+#undef OPENCL
+#ifdef OPENCL
+	// START OPENCL BOILERPLATE ----------------------------------------------------------------------------------------------------------------
+	cl_platform_id platforms[10];
+	cl_uint num_platforms;
+	cl_device_id device[10];
+	cl_uint num_devices;
+	cl_context context;
+	cl_command_queue queue;
+	cl_program program;
+	cl_kernel kernel;
+	cl_int errorcode;
+
+	// Platform
+	clGetPlatformIDs(10, platforms, &num_platforms); //Get OpenCL Platforms
+	clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_GPU, 10, device, &num_devices); //Get the first platform and get a list of devices
+	context = clCreateContext(0, 1, device, &pfn_notify, NULL, NULL); //Create context from first device
+	queue = clCreateCommandQueue(context, device[0], 0, NULL); //Create a command queue for the first device
+	
+	//cout << endl << LocalMaximaKernel << endl << endl; //print out strinfified kernel
+	
+	program = clCreateProgramWithSource(context, 1, (const char **) &InitialClusteringKernel, 0, &errorcode); //Read in kernel and create a program
+	
+	if (errorcode != CL_SUCCESS)
+		cout << "clCreateProgramWithSource Error code: " << errorcode << endl;
+	
+	errorcode = clBuildProgram(program, 0, 0, 0, 0, 0); //Build the program
+
+	if (errorcode != CL_SUCCESS) //If there was a build error, print out build_info
+	{
+		cout << "clBuildProgram Error Code: " << errorcode << endl;
+		char build_log[1024*1024];
+		errorcode = clGetProgramBuildInfo(program, device[0], CL_PROGRAM_BUILD_LOG, sizeof(build_log), build_log, NULL); //Get the build log
+		if (errorcode == CL_SUCCESS)
+			cout << "Build Log:" << endl << build_log << endl;
+		else
+			cout << "clGetProgramBuildInfo Error Code: " << errorcode << endl;
+	}
+
+	kernel = clCreateKernel(program, "InitialClusteringKernel", &errorcode); //Create the kernel from the source code
+	
+	if (errorcode != CL_SUCCESS)
+		cout << "clCreateKernel Error code: " << errorcode << endl;
+
+	//END OPENCL BOILERPLATE ---------------------------------------------------------------------------------------------------------------------
+
+	size_t cnDimension = r * c * z; //array size
+	
+	cout << "Allocating " << (sizeof(*im_vals) * cnDimension)/(double)(1024) << " KB of memory on GPU for im_vals" << endl;
+	cout << "Allocating " << (sizeof(****max_response) * cnDimension)/(double)(1024) << " KB of memory on GPU for out1" << endl;
+	
+
+#else
 	#pragma omp parallel for private(min_r, min_c, min_z, max_r, max_c, max_z)
 	for(int i=0; i<r; i++)
     {
@@ -153,6 +217,9 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 			}
         }		
     }
+#endif OPENCL
+#define OPENCL
+
 	std::cout << "Max_response array done" << endl;
 	for(int i=0; i<r; i++)
     {

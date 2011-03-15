@@ -290,9 +290,9 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
   //std::cout << "about to call Detect_Local_MaximaPoints_3D" << std::endl;
 	clock_t start_time_local_maxima = clock();
 	#ifdef OPENCL	
-		Detect_Local_MaximaPoints_3D(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0], bImg);
-	#else	
 		Detect_Local_MaximaPoints_3D_ocl(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0]);
+	#else	
+		Detect_Local_MaximaPoints_3D(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0], bImg);
 	#endif OPENCL
 	cout << "Local maxima point detection took " << (clock() - start_time_local_maxima)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 	
@@ -596,8 +596,8 @@ void Detect_Local_MaximaPoints_3D_ocl(float* im_vals, int r, int c, int z, doubl
 
 	size_t cnDimension = r * c * z; //array size
 	
-	cout << "Allocating " << (sizeof(*im_vals) * cnDimension)/(double)(1024) << " KB of memory on GPU for im_vals" << endl;
-	cout << "Allocating " << (sizeof(*out1) * cnDimension)/(double)(1024) << " KB of memory on GPU for out1" << endl;
+	cout << "Allocating " << (sizeof(*im_vals) * cnDimension)/(double)(1024*1024) << " MB of memory on GPU for im_vals" << endl;
+	cout << "Allocating " << (sizeof(*out1) * cnDimension)/(double)(1024*1024) << " MB of memory on GPU for out1" << endl;
 	
 	//Allocate device memory
 	cl_mem device_mem_im_vals = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(cl_float) * cnDimension, NULL, NULL);
