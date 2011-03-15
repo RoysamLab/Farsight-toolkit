@@ -73,6 +73,9 @@ ExternalProject_Add(VXL
     -DBUILD_OXL:BOOL=OFF
     -DBUILD_PRIP:BOOL=OFF
     -DBUILD_TBL:BOOL=OFF
+	-DBUILD_RPL:BOOL= On
+	-DBUILD_RPL_RGTL:BOOL= ON
+	-DBUILD_RPL_RTVL:BOOL= ON
     -DBUILD_TESTING:BOOL=${testing}
     ${mac_args}
 )
@@ -80,7 +83,7 @@ set(VXL_DIR ${base}/Build/VXL)
 
 ExternalProject_Add(VTK
   GIT_REPOSITORY git://vtk.org/VTK.git
-  GIT_TAG v5.6.0
+  GIT_TAG v5.6.1
   CMAKE_GENERATOR ${gen}
   CMAKE_ARGS
     -DCMAKE_INSTALL_PREFIX:PATH=${install_dir}

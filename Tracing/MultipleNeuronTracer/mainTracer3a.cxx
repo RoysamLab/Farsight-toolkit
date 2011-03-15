@@ -242,8 +242,8 @@ int main (int argc, char * argv[])  {
 
     if ((eCounter <= 0) || (KeyValue > CostThreshold)) {
       if (showMessage == true) {
-        std::cout << "NOTE: Exiting the search at cost " << CostThreshold << " However, " << (100*eCounter)/TotalePoints << "%% of the image is still not covered, change cost if necessary!!" << std::endl;
-        std::cout << "Cleaning Heap size: " << PQ.size() << std::endl;
+        std::cout << "NOTE: Exiting the search at cost " << CostThreshold << " However, " << (100*eCounter)/TotalePoints << "%% of the image is still not covered, change cost if necessary!!\r"; //<< std::endl;
+        //std::cout << "Cleaning Heap size: " << PQ.size() << std::endl;
         showMessage = false;
       }
       SWCNode* t  = SWC->GetPixel(ndx);
@@ -290,7 +290,7 @@ int main (int argc, char * argv[])  {
                 SWC->SetPixel((*cit),s);
                 SWCNodeContainer.push_back(s);
                 par->children.push_back(s);
-                std::cout<<"SWC Node @ " << (*cit) << "(" << s->ID << ") with parent " << par->ID << "  Cost: " << val << "  " << (100*eCounter)/TotalePoints << "% Remaining." << std::endl;
+                std::cout<<"SWC Node @ " << (*cit) << "(" << s->ID << ") with parent " << par->ID << "  Cost: " << val << "  " << (100*eCounter)/TotalePoints << "% Remaining.\r";// << std::endl;
                 par = s;
                 HeapNode *h = new HeapNode((*cit), val);
                 PQ.push(h);
@@ -331,7 +331,8 @@ int main (int argc, char * argv[])  {
     const char *somaFileName = argv[4];
     RemoveIntraSomaNodes(somaFileName);
     }
-  WriteMultipleSWCFiles(SWCFilename, padz) ;
+  //WriteMultipleSWCFiles(SWCFilename, padz) ;
+  WriteSWCFile(SWCFilename, padz) ;
   timer.Stop();
   std::cout << "Mean time elapsed : " << timer.GetMeanTime() << std::endl;
   return EXIT_SUCCESS;
