@@ -96,7 +96,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 int computeWeightedMedian(std::vector< std::vector<float> > scales, int cntr);
 void queryOpenCLProperties(float* IM, int r, int c, int z);
 string fileToString(string fileName);
-void pfn_notify(const char *errinfo, const void *private_info, size_t cb, void *user_data);
+void seed_pfn_notify(const char *errinfo, const void *private_info, size_t cb, void *user_data);
 void Detect_Local_MaximaPoints_3D_ocl(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, unsigned short* out1);
 
 int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int r, int c, int z, double *sigma_min_in, double *sigma_max_in, double *scale_xy_in, double *scale_z_in, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout, bool paramEstimation)
@@ -564,7 +564,7 @@ void Detect_Local_MaximaPoints_3D_ocl(float* im_vals, int r, int c, int z, doubl
 	// Platform
 	clGetPlatformIDs(10, platforms, &num_platforms); //Get OpenCL Platforms
 	clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_GPU, 10, device, &num_devices); //Get the first platform and get a list of devices
-	context = clCreateContext(0, 1, device, &pfn_notify, NULL, NULL); //Create context from first device
+	context = clCreateContext(0, 1, device, &seed_pfn_notify, NULL, NULL); //Create context from first device
 	queue = clCreateCommandQueue(context, device[0], 0, NULL); //Create a command queue for the first device
 	
 	//cout << endl << LocalMaximaKernel << endl << endl; //print out strinfified kernel
@@ -1416,7 +1416,7 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 
 		cout << stringifiedKernel << endl << endl;
 
-		context = clCreateContext(0, 1, device, &pfn_notify, NULL, NULL);
+		context = clCreateContext(0, 1, device, &seed_pfn_notify, NULL, NULL);
 		queue = clCreateCommandQueue(context, device[0], 0, NULL);
 		program = clCreateProgramWithSource(context, 1, (const char **) &stringifiedKernel, 0, &errorcode);
 		
@@ -1479,7 +1479,7 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 #endif
 }
 
-void pfn_notify(const char *errinfo, const void *private_info, size_t cb, void *user_data)
+void seed_pfn_notify(const char *errinfo, const void *private_info, size_t cb, void *user_data)
 {
 	cerr << errinfo << endl;
 }
