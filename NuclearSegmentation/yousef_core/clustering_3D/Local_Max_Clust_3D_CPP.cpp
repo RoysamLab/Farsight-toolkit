@@ -168,14 +168,17 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 	cout << "Allocating " << (sizeof(*max_response_z) * cnDimension)/(double)(1024*1024) << " MB of memory on GPU for max_response_z" << endl;
 		
 	//Allocate device memory
-	cl_mem device_mem_im_vals = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(cl_float) * cnDimension, NULL, NULL);
-	cl_mem device_mem_local_max_vals = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(cl_ushort) * cnDimension, NULL, NULL);
-	cl_mem device_mem_max_response_r = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(cl_ushort) * cnDimension, NULL, NULL);
-	cl_mem device_mem_max_response_c = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(cl_ushort) * cnDimension, NULL, NULL);
-	cl_mem device_mem_max_response_z = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(cl_ushort) * cnDimension, NULL, NULL);
+	cl_int errorcode1, errorcode2, errorcode3, errorcode4, errorcode5;	
+	cl_mem device_mem_im_vals = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(cl_float) * cnDimension, NULL, &errorcode1);
+	cl_mem device_mem_local_max_vals = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(cl_ushort) * cnDimension, NULL, &errorcode2);
+	cl_mem device_mem_max_response_r = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(cl_ushort) * cnDimension, NULL, &errorcode3);
+	cl_mem device_mem_max_response_c = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(cl_ushort) * cnDimension, NULL, &errorcode4);
+	cl_mem device_mem_max_response_z = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(cl_ushort) * cnDimension, NULL, &errorcode5);
 	
-	if (device_mem_im_vals == NULL || device_mem_max_response_r == NULL || device_mem_local_max_vals == NULL || device_mem_max_response_c == NULL || device_mem_max_response_z == NULL)
+	if (errorcode1 || errorcode2 || errorcode3 || errorcode4 || errorcode5)
+	{
 		cout << "Failed to allocate buffer memory on GPU" << endl; 
+	}	
 	
 	//Write memory from host to device
 	clEnqueueWriteBuffer(queue, device_mem_im_vals, CL_TRUE, 0, sizeof(cl_float) * cnDimension, im_vals, NULL, NULL, NULL);
@@ -223,7 +226,8 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 
 
 #else
-	
+	int min_r, min_c, min_z, max_r, max_c, max_z;
+
 	#pragma omp parallel for private(min_r, min_c, min_z, max_r, max_c, max_z)
 	for(int i=0; i<r; i++)
     {
@@ -261,6 +265,7 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 		
 	
 	std::cout << "Max_response array done" << endl;
+	cout << "GPU Initial max_nghbr_im took " << (clock() - start_time_init_max_nghbr_im)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 
 	for(int i=0; i<r; i++)
     {

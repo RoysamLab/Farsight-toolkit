@@ -25,7 +25,6 @@
 #define ITK_LEAN_AND_MEAN
 #endif
 
-
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
