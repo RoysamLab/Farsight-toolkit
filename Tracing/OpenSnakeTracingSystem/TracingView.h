@@ -26,7 +26,7 @@ limitations under the License.
 #define TRACINGVIEW_H
 
 #include <QtGui>
-#include "ObjectSelection.h"
+#include "New_ObjectSelection.h"
 #include "OpenSnakeTracer.h"
 
 struct EditValidation
