@@ -34,7 +34,7 @@ limitations under the License.
 #include "dialogs_montage.h"
 #include "time.h"
 
-#include "Rendering\New_ImageActors.h"
+#include "Rendering\ImageActors.h"
 #include "vtkWindowToImageFilter.h"
 #include "vtkPNGWriter.h"
 

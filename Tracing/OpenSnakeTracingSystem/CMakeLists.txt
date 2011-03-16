@@ -38,11 +38,11 @@ ADD_EXECUTABLE(TracingSystem
       dialogs_montage.cpp
       TracingGUI.cpp
       TracingView.cpp  
-      New_ObjectSelection.cpp
+      ObjectSelection.cpp
       OpenSnakeTracer.cpp
 
-      Rendering/New_ImageActors.h
-      Rendering/New_ImageActors.cxx
+      Rendering/ImageActors.h
+      Rendering/ImageActors.cxx
       Rendering/itkImageToVTKImageFilter.h
       Rendering/itkImageToVTKImageFilter.txx
 
