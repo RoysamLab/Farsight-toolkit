@@ -34,6 +34,7 @@ ImageOperation::ImageOperation()
   u1 = 100;
   u2 = 0;
   sigma1 = sigma2 = 100;
+  num_soma = 0;
 }
 
 void ImageOperation::ImComputeBackgroundModel()

@@ -761,8 +761,6 @@ void QtTracer::draw3DTraces()
 	this->Renderer->RemoveActor(this->seed_actor);
   }
 
-
-
   //delete previous actors
   if( tube_actors.size() != 0 )
   {
@@ -798,8 +796,6 @@ void QtTracer::draw3DTraces()
 	}
 	boundary_actors.clear();
   }
-
-
 
   Vector3D temp;
         float unit_length = general_para2->getPtDistance();
@@ -1046,7 +1042,6 @@ void QtTracer::draw3DTraces()
      vtkSmartPointer<vtkActor> line_actor = vtkSmartPointer<vtkActor>::New();
      line_actor->SetMapper(polymap);
 
-
 	 if( slider->getColorDisplay() )
 	 {
 	    /*if( i%6 == 0 )
@@ -1083,7 +1078,6 @@ void QtTracer::draw3DTraces()
 	 line_actors.push_back(line_actor);
   }
  
-
   //draw the tips
   /*PolyPoints->SetPoints(line_tips);
   PolyPoints->SetVerts(point_cells);
@@ -1213,6 +1207,7 @@ void QtTracer::draw3DTraces()
 	}
    }
   }
+
   if( slider->getRadiusDisplay() == 1 || slider->getRadiusDisplay() == 3  )
   {
    int sample = 1;
