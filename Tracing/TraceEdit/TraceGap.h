@@ -29,6 +29,7 @@ public:
   TraceGap();
   ~TraceGap();
   std::string stats();
+  std::string GapStatHeaders();
 	int compID;
 	TraceLine *Trace1;
 	TraceLine *Trace2;

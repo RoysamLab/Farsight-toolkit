@@ -3717,6 +3717,7 @@ void View3D::MergeTraces()
 		  this->numMerged += num;
 		  this->EditLogDisplay->append("Merged " + 
 			  QString::number(num) + " traces");
+		  this->EditLogDisplay->append(QString(this->tobj->Gaps[0]->GapStatHeaders().c_str()));
 		  for (unsigned int i = 0; i < num; i++)
 		  {			  
 				this->EditLogDisplay->append( QString(this->tobj->Gaps[i]->stats().c_str()));
@@ -3739,8 +3740,9 @@ void View3D::MergeTraces()
       if (this->tobj->Gaps.size() ==1)
         {   
         tobj->mergeTraces(this->tobj->Gaps[0]->endPT1,this->tobj->Gaps[0]->endPT2);
-		this->EditLogDisplay->append("Merged Trace:\t"  + QString(this->tobj->Gaps[0]->stats().c_str()));/*
-			+ QString::number(this->tobj->Gaps[0]->Trace1->GetId()) + "\tto\t" 
+		this->EditLogDisplay->append("Merged Trace:\t"  + QString(this->tobj->Gaps[0]->GapStatHeaders().c_str()) 
+			+ QString(this->tobj->Gaps[0]->stats().c_str()));
+		/*	+ QString::number(this->tobj->Gaps[0]->Trace1->GetId()) + "\tto\t" 
 			+ QString::number(this->tobj->Gaps[0]->Trace2->GetId()));*/
 		this->numMerged++;
 		this->ClearSelection();

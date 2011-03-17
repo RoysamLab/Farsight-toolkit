@@ -26,10 +26,13 @@ TraceGap::~TraceGap()
 std::string TraceGap::stats()
 {
 	std::stringstream thisStats;
-	thisStats << "Gap:\t" << this->compID << "\tTrace:\t" << this->Trace1->GetId()
-		<< "\tto:\t" << this->Trace2->GetId() << "\tAngle:\t" << this->angle  
-		<< "\tDistance:\t" << this->dist << "\tMaximum Distance:\t" << this->maxdist
-		<< "\tLength:\t" << this->length << "\tSmoothness:\t" << this->smoothness
-		<<"\tcost\t" << this->cost;
+	thisStats << this->compID << "\t" << this->Trace1->GetId()
+		<< "\t" << this->Trace2->GetId() << "\t" << this->angle  
+		<< "\t" << this->dist << "\t" << this->maxdist
+		<< "\t" << this->length << "\t" << this->smoothness	<<"\t" << this->cost;
 	return thisStats.str();
+}
+std::string TraceGap::GapStatHeaders()
+{
+	return std::string( "Gap:\t Trace:\t to:\t Angle:\t Distance:\t Maximum Distance:\t Length:\t Smoothness:\t cost\t");
 }

@@ -228,7 +228,7 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 	}
 #else
 	{
-		this->LoadedImages[i]->volumeMapper = vtkSmartPointer<vtkFixedPointVolumeRayCastMapper>::New();
+		this->LoadedImages[i]->volumeMapper = vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
 		this->LoadedImages[i]->volumeMapper->SetSampleDistance((float)this->RaycastSampleDist);
 		this->LoadedImages[i]->volumeMapper->SetInput(this->LoadedImages[i]->ImageData);
 		this->LoadedImages[i]->volume->SetMapper(this->LoadedImages[i]->volumeMapper);
