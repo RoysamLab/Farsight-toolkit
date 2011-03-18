@@ -226,8 +226,6 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 
 
 #else
-	int min_r, min_c, min_z, max_r, max_c, max_z;
-
 	int min_r, min_c, min_z, max_r, max_c, max_z;	
 
 	#pragma omp parallel for private(min_r, min_c, min_z, max_r, max_c, max_z)
