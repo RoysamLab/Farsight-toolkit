@@ -1,0 +1,71 @@
+
+
+
+#ifndef _ftkgnt_H_
+#define _ftkgnt_H_
+
+
+
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/properties.hpp>
+#include <boost/graph/graph_traits.hpp>
+#include <boost/property_map/property_map.hpp>
+#include <set>
+#include <vnl/vnl_vector_fixed.h>
+#include <vcl_vector.h>
+#include <ftkFeatures/ftkLabelImageToFeatures.h>
+#include "itkImage.h"
+using namespace boost;
+
+
+		struct VP {
+		std::string label;
+ 		std::set<int> RPS;
+		std::vector<double> scores;
+			 };
+	
+
+class ftkgnt
+{
+public:
+
+  typedef itk::Image< unsigned char, 3> InputImageType;
+  typedef itk::Image< unsigned short, 3> OutputImageType;
+  typedef ftk::LabelImageToFeatures< unsigned char,  unsigned short, 3 > FeatureCalcType;
+  // Graph typedefs
+  typedef property<vertex_name_t, std::string > VertexProperties;
+  typedef adjacency_list <vecS, vecS, undirectedS,VertexProperties> RAGraph;
+  typedef adjacency_list <vecS, vecS, undirectedS,VP> MTreeType;	
+  typedef graph_traits<RAGraph>::vertex_descriptor node;
+  typedef graph_traits<RAGraph>::edge_descriptor Edge;
+  typedef property_map<RAGraph, vertex_name_t>::type node_name;  
+  typedef boost::graph_traits<RAGraph>::adjacency_iterator AdjVertIt;
+  typedef property_map<MTreeType,vertex_name_t>::type nodes_new; 
+  typedef graph_traits<MTreeType>::vertex_descriptor node_mt;
+
+
+    //: constructor
+	ftkgnt(InputImageType::Pointer input,OutputImageType::Pointer output);
+ 	//: destructor
+	~ftkgnt();
+  	
+RAGraph RAG;
+RAGraph BuildRAG(unsigned short id);
+int GetNodeIndex(unsigned short id,RAGraph graph1);	
+MTreeType BuildMergeTreeDcon(RAGraph R1, unsigned short id,std::vector< std::set<int> > hypothesis);
+std::string convert2string(unsigned short id);
+void ftkgnt::Initialize(unsigned short id);
+
+std::vector< std::set<int> > hypotheses;
+inline std::vector< std::set<int> > getHypothesis() {return hypotheses;};
+FeatureCalcType::Pointer labelFilter;
+
+
+private:
+
+	
+
+};
+
+
+#endif
