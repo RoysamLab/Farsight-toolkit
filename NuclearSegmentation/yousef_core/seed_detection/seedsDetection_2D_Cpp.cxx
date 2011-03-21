@@ -125,6 +125,19 @@ int detectSeeds2D( float* IM, float* IM_out, unsigned short* IM_bin, int r, int 
 		std::cout<<"    Minimum scale = "<<sigma_min<<std::endl;
 		std::cout<<"    Maximum scale = "<<sigma_max<<std::endl;
 		std::cout<<"    Clustering Resolution = "<<scale<<std::endl;
+	
+		// FOR THE MODEL BASED NUCLEUS MERGING,I SHATTER SMALL NUCLEI
+		// TYPICALLY, THE IMAGE ROWS AND COLUMNS ARE LESS THAN 100 PIXELS
+		// USE THIS HEURISTIC TO SET MAX AND MAX SCALES TO 3 AND 4
+		// INSERTED BY RAGHAV 
+
+		if(r <100 || c<100)
+		{
+			sigma_min = 3;
+			sigma_max = 4;
+		}
+
+		
 		//write out the parameters
 		sigma_min_in[0] = sigma_min;
 		sigma_max_in[0] = sigma_max;
