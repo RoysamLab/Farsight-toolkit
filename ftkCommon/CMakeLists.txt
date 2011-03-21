@@ -26,6 +26,12 @@ SET(GnT_HDRS
 ftkgnt.h
 )
 
+
+FIND_PACKAGE(Boost)
+
+LINK_DIRECTORIES ( ${Boost_LIBRARY_DIRS})
+INCLUDE_DIRECTORIES ( ${Boost_INCLUDE_DIRS})
+
 ADD_LIBRARY( ftkCommon
             ${FTKCOMMON_SRCS} 
             ${FTKCOMMON_HDRS} 
