@@ -265,7 +265,7 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 		
 	
 	std::cout << "Max_response array done" << endl;
-	cout << "GPU Initial max_nghbr_im took " << (clock() - start_time_init_max_nghbr_im)/(float)CLOCKS_PER_SEC << " seconds" << endl;
+	cout << "GPU computation of initial max_nghbr_im took " << (clock() - start_time_init_max_nghbr_im)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 
 	for(int i=0; i<r; i++)
     {

@@ -57,7 +57,7 @@ SET (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LIB_DIR})
 
 ################################################################################
 # FARSIGHT DEPENDS UPON A NUMBER OF OUTSIDE LIBRARIES
-# THESE ARE ITK, VTK, VXL, and QT
+# THESE ARE ITK, VTK, VXL, QT, and CUDA
 # WE MAKE SURE THEY ARE PRESENT HERE
 ################################################################################
 FIND_PACKAGE(ITK)
@@ -82,6 +82,19 @@ IF(QT4_FOUND)
 ELSE(QT4_FOUND)
     MESSAGE(FATAL_ERROR "Cannot build without Qt4")
 ENDIF(QT4_FOUND)
+
+
+FIND_PACKAGE(CUDA)
+IF (CUDA_FOUND)
+    IF (MSVC)
+        #SET (CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE OFF)
+	SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D CUDA")
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D CUDA")
+	SET (CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -arch=sm_13)
+	INCLUDE_DIRECTORIES( $ENV{CUDA_INC_PATH} )
+    ENDIF(MSVC)
+ENDIF (CUDA_FOUND)
+
 ################################################################################
 ################################################################################
 # FARSIGHT ALSO HAS A NUMBER OF COMMON LIBRARIES THAT ARE INTERNAL TO
@@ -324,3 +337,8 @@ INCLUDE(InstallRequiredSystemLibraries)
 # bundles and any files inside of them are already run before these
 # script steps are run.
 add_subdirectory(InstallRules)
+
+
+if (MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D GLUT_BUILDING_LIB")
+endif(MSVC)

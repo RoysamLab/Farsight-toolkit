@@ -35,6 +35,10 @@
 #include <limits.h>
 #include <time.h>
 
+#ifdef CUDA
+	#include <cuda.h>
+#endif
+
 //_OPENMP is automatically defined by any OpenMP compiler that is building with OpenMP support (-fopenmp for GCC or /openmp for MSVC)
 #ifdef _OPENMP
 #include "omp.h"
@@ -97,6 +101,10 @@ void queryOpenCLProperties(float* IM, int r, int c, int z);
 string fileToString(string fileName);
 void seed_pfn_notify(const char *errinfo, const void *private_info, size_t cb, void *user_data);
 void Detect_Local_MaximaPoints_3D_ocl(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, unsigned short* out1);
+
+//external functions
+extern "C" void Detect_Local_MaximaPoints_3D_CUDA(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, unsigned short* out1);
+
 
 int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int r, int c, int z, double *sigma_min_in, double *sigma_max_in, double *scale_xy_in, double *scale_z_in, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout, bool paramEstimation)
 {	
@@ -290,7 +298,9 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	clock_t start_time_local_maxima = clock();
 	#ifdef OPENCL	
 		Detect_Local_MaximaPoints_3D_ocl(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0]);
-	#else	
+	#elif CUDA
+		Detect_Local_MaximaPoints_3D_CUDA(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0]);
+    #else
 		Detect_Local_MaximaPoints_3D(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0], bImg);
 	#endif OPENCL
 	cout << "Local maxima point detection took " << (clock() - start_time_local_maxima)/(float)CLOCKS_PER_SEC << " seconds" << endl;
@@ -638,6 +648,7 @@ void Detect_Local_MaximaPoints_3D_ocl(float* im_vals, int r, int c, int z, doubl
 	cout << endl;
 #endif
 }
+
 //added by Yousef on 8/29/2009
 //Estimate the min and max scales based on the local maxima points of the distance map
 void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short* distIm, double* minScale, double* maxScale, int r, int c, int z)
@@ -912,7 +923,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 		int sz_z = (max_z-min_z+1);
 		int ind_i = sub_z*sz_r*sz_c+sub_r*sz_c+sub_c;
 																	
-		MyInputImageType::Pointer im_Small = extract3DImageRegion(im, sz_c, sz_r, sz_z, min_c, min_r, min_z);															
+		MyInputImageType::Pointer im_Small = extract3DImageRegion(im, sz_c, sz_r, sz_z, min_c, min_r, min_z);
 		float* IMG = new float[sz_c*sz_r*sz_z];
 		float max_resp = -100000.0;	
 		int best_scale = 0.0;

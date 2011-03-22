@@ -212,5 +212,5 @@ int main(int argc, char* argv[])
 	
 	std::cout<<"Time elapsed is: "<<(((double)clock() - startTimer) / CLOCKS_PER_SEC)<<" seconds"<<std::endl;
       
-	return 1;
+	return 0;
 }

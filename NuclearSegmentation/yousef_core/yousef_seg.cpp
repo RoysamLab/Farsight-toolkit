@@ -207,14 +207,14 @@ void yousef_nucleus_seg::runBinarization()
 	int ok = 0;
 	if (numStacks == 0)
 	{}
-	else if (numStacks == 1)
+	/*else if (numStacks == 1)
 	{
 		ok = Cell_Binarization_2D(dataImagePtr,binImagePtr, numRows, numColumns, shift); //Do Binarization		
 	}
 	else
-	{
+	{*/
 		ok = Cell_Binarization_3D(dataImagePtr,binImagePtr, numRows, numColumns, numStacks, shift, 1);		//Do Binarization		
-	}
+	//}
 
 	if(ok)
 	{
@@ -305,17 +305,17 @@ void yousef_nucleus_seg::runSeedDetection()
 	
 	//Now do seed detection
 	int ok = 0;
-	if (numStacks == 1)
+	/*if (numStacks == 1)
 	{		
 		seedImagePtr = new unsigned short[numStacks*numRows*numColumns];		
 		logImagePtr = new float[numStacks*numRows*numColumns];
 		ok = detectSeeds2D( imgPtr, logImagePtr, seedImagePtr, numRows, numColumns, &scaleMin, &scaleMax, &regionXY, binImagePtr, autoParamEstimation );		
 	}
 	else
-	{	
+	{*/	
 		minLoGImg = 10000;
 		ok = Seeds_Detection_3D( imgPtr, &logImagePtr, &seedImagePtr, numRows, numColumns, numStacks, &scaleMin, &scaleMax, &regionXY, &regionZ, getSamplingRatio(), binImagePtr, useDistMap, &minLoGImg, autoParamEstimation );						
-	}		
+	//}		
 	delete [] imgPtr;	//cleanup
 	if(!ok)
 		cerr << "Seed detection Failed!!" << endl;
@@ -352,7 +352,7 @@ void yousef_nucleus_seg::runClustering()
 	//Allocate space
 	clustImagePtr = new unsigned short[numStacks*numRows*numColumns];
 
-	if (numStacks == 1)
+	/*if (numStacks == 1)
 	{
 		std::cout << "Starting Initial Clustering" << std::endl;
 		//ExtractSeeds();
@@ -370,12 +370,12 @@ void yousef_nucleus_seg::runClustering()
 		free( seed_ymclust );
 	}
 	else
-	{
+	{*/
 		std::cerr << "Starting Initial Clustering" << std::endl;
 		std::cerr << "scale_xy = " << regionXY << std::endl;
 		std::cerr << "scale_z = " << regionZ << std::endl;
 		local_max_clust_3D(logImagePtr/*LoG*/, seedImagePtr/*local max vals*/, binImagePtr/*binary mask*/,clustImagePtr/*output*/,numRows, numColumns, numStacks, regionXY, regionZ);		
-	}	
+	//}	
 }
 
 //added by Yousef on 09/06/2009
