@@ -187,9 +187,9 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 
 	
 
-	/*#ifdef _OPENMP
+	#ifdef _OPENMP
 		omp_set_nested(0);
-	#endif*/
+	#endif
 
 	cout << "Cell Binarization refinement by alpha expansion took " << (clock() - start_time_cell_bin_alpha_exp)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 
@@ -738,7 +738,7 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
     num_edges = (imBlock[1]-imBlock[0]-1)*(imBlock[3]-imBlock[2]-1)*(imBlock[5]-imBlock[4]-1)*3;   
         
     //Before entering the loop, compute the poisson probs    
-	#pragma omp parallel for
+	//#pragma omp parallel for
 	for(int i=0; i<256; i++)
     {
 		if(i>=alpha_F)
@@ -871,7 +871,7 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 	
 	//cout << imBlock[0] << " " << imBlock[1] << " " << imBlock[2] << " " << imBlock[3] << " " << imBlock[4] << " " << imBlock[5] << endl;
 
-	#pragma omp parallel for
+	//#pragma omp parallel for
 	for(int k=imBlock[4]; k<imBlock[5]; k++)
     {		
         for(int j=imBlock[2]; j<imBlock[3]; j++)

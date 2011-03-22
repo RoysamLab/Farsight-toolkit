@@ -73,11 +73,11 @@ void initialClustering_CUDA (float* im_vals, unsigned short* local_max_vals, uns
 	cout << "Allocating " << (sizeof(*max_response_z) * r * c * z)/(double)(1024*1024) << " MB of memory on GPU for max_response_z" << endl;
 	
 	//Allocate memory on device
-	errorcode = cudaHostAlloc((void**) &dev_im_vals, r * c * z * sizeof(*im_vals), cudaHostAllocWriteCombined | cudaHostAllocMapped);
-	errorcode = cudaHostAlloc((void**) &dev_local_max_vals, r * c * z * sizeof(*local_max_vals), cudaHostAllocWriteCombined | cudaHostAllocMapped);
-	errorcode = cudaHostAlloc((void**) &dev_max_response_r, r * c * z * sizeof(*dev_max_response_r), cudaHostAllocMapped);
-	errorcode = cudaHostAlloc((void**) &dev_max_response_c, r * c * z * sizeof(*dev_max_response_c), cudaHostAllocMapped);
-	errorcode = cudaHostAlloc((void**) &dev_max_response_z, r * c * z * sizeof(*dev_max_response_z), cudaHostAllocMapped);
+	errorcode = cudaMalloc((void**) &dev_im_vals, r * c * z * sizeof(*im_vals));
+	errorcode = cudaMalloc((void**) &dev_local_max_vals, r * c * z * sizeof(*local_max_vals));
+	errorcode = cudaMalloc((void**) &dev_max_response_r, r * c * z * sizeof(*dev_max_response_r));
+	errorcode = cudaMalloc((void**) &dev_max_response_c, r * c * z * sizeof(*dev_max_response_c));
+	errorcode = cudaMalloc((void**) &dev_max_response_z, r * c * z * sizeof(*dev_max_response_z));
 
 	//cout << errorcode << endl;
 
