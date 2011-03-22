@@ -85,7 +85,9 @@ INCLUDE_DIRECTORIES(gvc)
 
 
 if (CUDA_FOUND)
-    SET ( sd3d_SRCS ${sd3d_SRCS} seed_detection_3D/LocalMaxima3D.cu )
+    SET ( sd3d_SRCS ${sd3d_SRCS} seed_detection_3D/LocalMaxima3D.cu  )
+    SET( clust_SRCS ${clust_SRCS} clustering_3D/Local_Max_Clust_3D.cu )
+
     CUDA_ADD_LIBRARY( Yousef_Nucleus_Seg ${NSRCS} ${sd3d_SRCS} ${sd2d_SRCS} ${mcgl3d_SRCS} ${emgmm_SRCS} ${clust_SRCS} ${clust2d_SRCS} ${border_SRCS} ${cbin_SRCS} ${cb3_SRCS} ${prepr_SRCS})
 else (CUDA_FOUND)
     ADD_LIBRARY( Yousef_Nucleus_Seg ${NSRCS} ${sd3d_SRCS} ${sd2d_SRCS} ${mcgl3d_SRCS} ${emgmm_SRCS} ${clust_SRCS} ${clust2d_SRCS} ${border_SRCS} ${cbin_SRCS} ${cb3_SRCS} ${prepr_SRCS})

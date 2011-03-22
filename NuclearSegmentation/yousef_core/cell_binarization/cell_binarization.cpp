@@ -141,25 +141,25 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 		for(int j=0; j<C; j+=C/block_divisor)
 		{			
 			subImgBlockArray[i][j][4] = 0;
-			subImgBlockArray[i][j][5] = Z;
+			subImgBlockArray[i][j][5] = Z - 1;
 			subImgBlockArray[i][j][0] = j;
-			subImgBlockArray[i][j][1] = (int)j+C/block_divisor+1;
+			subImgBlockArray[i][j][1] = (int)j+C/block_divisor-1;
 			subImgBlockArray[i][j][2] = i;
-			subImgBlockArray[i][j][3] = (int)i+R/block_divisor+1;
-			if(subImgBlockArray[i][j][1] > C)
-				subImgBlockArray[i][j][1] = C;
-			if(subImgBlockArray[i][j][3] > R)
-				subImgBlockArray[i][j][3] = R;
+			subImgBlockArray[i][j][3] = (int)i+R/block_divisor-1;
+			if(subImgBlockArray[i][j][1] > C - 1)
+				subImgBlockArray[i][j][1] = C - 1;
+			if(subImgBlockArray[i][j][3] > R - 1)
+				subImgBlockArray[i][j][3] = R - 1;
 		}
 	}
 
-	//#pragma omp parallel for
+	#pragma omp parallel for
 	for(int i=0; i<R; i+=R/block_divisor)
 	{			
-		//#pragma omp parallel for
+		#pragma omp parallel for
 		for(int j=0; j<C; j+=C/block_divisor)
 		{
-			#pragma omp critical
+			//#pragma omp critical
 			{
 				//std::cout<<"    Binarizing block " << blk++ <<" of "<<cntr<<std::endl;	
 			}
@@ -869,6 +869,8 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, int r, int c, int z, double alpha_
 	//Compute the maximum flow:
 	g->maxflow();		//Alex DO NOT REMOVE
 	
+	//cout << imBlock[0] << " " << imBlock[1] << " " << imBlock[2] << " " << imBlock[3] << " " << imBlock[4] << " " << imBlock[5] << endl;
+
 	#pragma omp parallel for
 	for(int k=imBlock[4]; k<imBlock[5]; k++)
     {		

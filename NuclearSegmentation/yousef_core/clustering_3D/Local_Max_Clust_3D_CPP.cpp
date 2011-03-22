@@ -39,6 +39,8 @@
 using namespace std;
 
 void clustering_pfn_notify(const char *errinfo, const void *private_info, size_t cb, void *user_data);
+extern "C" void initialClustering_CUDA (float* im_vals, unsigned short* local_max_vals, unsigned short* max_response_r, unsigned short* max_response_c, unsigned short* max_response_z , int r, int c, int z, int scale_xy, int scale_z);
+
 
 void get_maximum(float* A, int r1, int r2, int c1, int c2, int z1, int z2, int* rx, int* cx, int* zx, int R, int C, int Z)
 {
@@ -224,7 +226,8 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 
 	cout << endl;
 
-
+#elif CUDA
+    initialClustering_CUDA(im_vals, local_max_vals, max_response_r, max_response_c, max_response_z, r, c, z, scale_xy, scale_z);
 #else
 	int min_r, min_c, min_z, max_r, max_c, max_z;	
 
@@ -265,7 +268,6 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 		
 	
 	std::cout << "Max_response array done" << endl;
-	cout << "GPU computation of initial max_nghbr_im took " << (clock() - start_time_init_max_nghbr_im)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 
 	for(int i=0; i<r; i++)
     {

@@ -35,10 +35,6 @@
 #include <limits.h>
 #include <time.h>
 
-#ifdef CUDA
-	#include <cuda.h>
-#endif
-
 //_OPENMP is automatically defined by any OpenMP compiler that is building with OpenMP support (-fopenmp for GCC or /openmp for MSVC)
 #ifdef _OPENMP
 #include "omp.h"
