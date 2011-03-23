@@ -800,7 +800,7 @@ void PatternAnalysisWizard::saveModel(void)
 	//Write the headers:
 	for(int c=0; c<new_table->GetNumberOfColumns(); ++c)
 	{
-		outFile << new_table->GetColumnName(c) << "\t\t\t";
+		outFile << new_table->GetColumnName(c) << "\t";
 	}
 	outFile << "\n";
 	//Write out the features:
@@ -815,7 +815,7 @@ void PatternAnalysisWizard::saveModel(void)
 				out << std::fixed << new_table->GetValue(row,c).ToInt();
 			else
 	            out << std::setprecision(3) << std::fixed << new_table->GetValue(row,c).ToFloat();
-	        outFile << out.str() << "\t\t\t";
+	        outFile << out.str() << "\t";
 		}
 		outFile << "\n";
 	}
@@ -828,7 +828,7 @@ void PatternAnalysisWizard::saveModel(void)
 //****************************************************************************
 void PatternAnalysisWizard::appendModel(vtkSmartPointer<vtkTable> mod_table, QString filename)
 {
-	int r = mod_table->GetNumberOfRows();
+	int r = mod_table->GetValue((int)mod_table->GetNumberOfRows()-1, (int)mod_table->GetNumberOfColumns()-1).ToInt();
    	for(int row = 0; row < (int)m_table->GetNumberOfRows(); ++row)
 	{		
 		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
@@ -873,7 +873,7 @@ void PatternAnalysisWizard::appendModel(vtkSmartPointer<vtkTable> mod_table, QSt
 	//Write the headers:
 	for(int c=0; c<mod_table->GetNumberOfColumns(); ++c)
 	{
-		outFile << mod_table->GetColumnName(c) << "\t\t\t";
+		outFile << mod_table->GetColumnName(c) << "\t";
 	}
 	outFile << "\n";
 	//Write out the features:
@@ -888,7 +888,7 @@ void PatternAnalysisWizard::appendModel(vtkSmartPointer<vtkTable> mod_table, QSt
 				out << std::fixed << mod_table->GetValue(row,c).ToInt();
 			else
 	            out << std::setprecision(3) << std::fixed << mod_table->GetValue(row,c).ToFloat();
-	        outFile << out.str() << "\t\t\t";
+	        outFile << out.str() << "\t";
 		}
 		outFile << "\n";
 	}
