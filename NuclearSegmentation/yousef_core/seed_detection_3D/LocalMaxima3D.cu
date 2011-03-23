@@ -66,7 +66,6 @@ void Detect_Local_MaximaPoints_3D_CUDA(float* im_vals, int r, int c, int z, doub
 	//cout << errorcode << endl;
 	
 	//Prefer 48KB L1 cache
-	//errorcode = cudaFuncSetCacheConfig("LocalMaximaKernel_CUDA(float*, unsigned short*, int, int, int, double, double, int)", cudaFuncCachePreferL1);
 	CUresult drivererrorcode = cuCtxSetCacheConfig(CU_FUNC_CACHE_PREFER_L1);
 	//cout << drivererrorcode << endl;
 

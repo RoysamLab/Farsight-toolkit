@@ -101,11 +101,6 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	
 	std::cerr << "block_divisor = " << block_divisor << std::endl;
 
-	/*	If block_divisor divides evently into R or C, then that term is block_divisor,
-		Otherwise, that term is block_divisor+1
-		Finally, multiply both terms together	-Ho (2/18/2011) */
-	//int cntr = (R % block_divisor ? block_divisor + 1 : block_divisor) * (C % block_divisor ? block_divisor + 1 : block_divisor);
-
 	int cntr = 0;
 	for(int i=0; i<R; i+=R/block_divisor)
 		for(int j=0; j<C; j+=C/block_divisor)

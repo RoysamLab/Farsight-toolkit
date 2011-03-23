@@ -891,6 +891,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 	int numSmall = 0;
 	int numLarge = 0;
 
+	//#pragma omp parallel for private(min_r, min_c, min_z, max_r, max_c, max_z)
 	for(int ind=0; ind<cnt; ind++)
 	{
 		int mx = scales[ind][0];
@@ -952,13 +953,19 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 
 		if(mx<=medianS)
 		{	
-			numSmall++;		
-			smallScales.push_back(pp);
+			#pragma omp critical (smallScalesPushBack)
+			{
+				numSmall++;		
+				smallScales.push_back(pp);
+			}
 		}
 		else
 		{
-			numLarge++;		
-			largeScales.push_back(pp);
+			#pragma omp critical (largeScalesPushBack)	
+			{	
+				numLarge++;		
+				largeScales.push_back(pp);
+			}
 		}
 
 		//p3<<j<<" "<<i<<" "<<k<<" "<<mx<<" "<<best_scale<<" "<<max_resp<<std::endl;
@@ -1192,13 +1199,14 @@ int computeMedian(std::vector< std::vector<unsigned short> > scales, int cntr)
 		srtList[i] = scales[i][0];
 
 	//sort the distances
+	unsigned short tmp;
 	for(int i=0; i<cntr-1; i++)
 	{
 		for(int j=i+1; j<cntr; j++)
 		{
 			if(srtList[j]<srtList[i])
 			{
-				unsigned short tmp = srtList[i];
+				tmp = srtList[i];
 				srtList[i] = srtList[j];
 				srtList[j] = tmp;
 			}

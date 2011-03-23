@@ -22,32 +22,42 @@ __global__ void InitialClusteringKernel_CUDA (float* im_vals, unsigned short* ma
 	int max_c = (int) min((float)(c-1),(float)(j1+scale_xy));                         
 	int max_z = (int) min((float)(z-1),(float)(k1+scale_z));
 
-	//if(local_max_vals[(k1*r*c)+(i1*c)+j1] == 0) //if current pixel is not a seed point //If we are running on the GPU, it makes no sense to load this big array just to save one computation since seed point should be the maximum anyways		
-	{
+	//If we are running on the GPU, it makes no sense to load this big array just to save computation since seed point should be the maximum anyways
+	//if(local_max_vals[(k1*r*c)+(i1*c)+j1] == 0) //if current pixel is not a seed point		
+	//{
 		float mx = im_vals[(min_z*r*c)+(min_r*c)+min_c];//A[r1][c1][z1];
 		
-		max_response_r[i1 * (c * z) + j1 * z + k1] = min_r;
-		max_response_r[i1 * (c * z) + j1 * z + k1] = min_c;
-		max_response_r[i1 * (c * z) + j1 * z + k1] = min_z;
-	    
+		//Do not access arrays in a hot loop if you can just just do all the updates at the end, much faster to use registers
+		int r_temp = min_r;
+		int c_temp = min_c;
+		int z_temp = min_z;	    
+
+		float im_vals_temp;
+		
 		for(int i= min_r; i<= max_r; i++)
 		{
 			for(int j= min_c; j <= max_c; j++)
 			{
 				for(int k = min_z; k <= max_z; k++)
 				{
-					if(im_vals[(k*r*c)+(i*c)+j] >= mx)
-					{
-						mx = im_vals[(k*r*c)+(i*c)+j];//A[i][j][k];
+					im_vals_temp = im_vals[(k*r*c)+(i*c)+j];
 
-						max_response_r[i1 * (c * z) + j1 * z + k1] = i;
-						max_response_c[i1 * (c * z) + j1 * z + k1] = j;
-						max_response_z[i1 * (c * z) + j1 * z + k1] = k;
+					if( im_vals_temp >= mx)
+					{
+						mx = im_vals_temp;
+
+						r_temp = i;
+						c_temp = j;
+						z_temp = k;
 					}
 				}
 			}
-		}                                          
-	}
+		} 
+
+		max_response_r[i1 * (c * z) + j1 * z + k1] = r_temp;
+		max_response_c[i1 * (c * z) + j1 * z + k1] = c_temp;
+		max_response_z[i1 * (c * z) + j1 * z + k1] = z_temp;
+	//}
 }
 
 
