@@ -239,7 +239,7 @@ bool ProjectProcessor::SegmentNuclei(int nucChannel)
 	}
 
 	delete nucSeg;
-
+	cout << "Total time to segmentation is : " << (clock() - start_time)/(float) CLOCKS_PER_SEC << endl;
 	std::cout << "Done Nucleus Segmentation\nComputing intrisic features for the nuclei\n";
 
 	//Calc Features:
@@ -254,7 +254,7 @@ bool ProjectProcessor::SegmentNuclei(int nucChannel)
 	std::cout << "Done: Instrinsic Nuclear Features\n";
 
 	resultIsEditable = true;
-	cout << "Total time to segmentation is : " << (clock() - start_time)/(float) CLOCKS_PER_SEC << endl;
+	
 	return true;
 }
 

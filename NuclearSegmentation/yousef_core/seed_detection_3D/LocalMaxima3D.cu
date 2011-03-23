@@ -3,11 +3,11 @@
 
 using namespace std;
 
-__global__ void LocalMaximaKernel (float* im_vals, unsigned short* out1, int r, int c, int z, double scale_xy, double scale_z, int offset)
+__global__ void LocalMaximaKernel_CUDA(float* im_vals, unsigned short* out1, int r, int c, int z, double scale_xy, double scale_z, int offset)
 {
 	int iGID = blockIdx.x * blockDim.x + threadIdx.x + offset; //global index
 
-	if (iGID > r * c * z)
+	if (iGID >= r * c * z)
 		return;
 		
 	//calculate r, c, z indices as i, j, k from global index
@@ -20,9 +20,9 @@ __global__ void LocalMaximaKernel (float* im_vals, unsigned short* out1, int r, 
 	int min_r = (int) max(0.0,i-scale_xy);
 	int min_c = (int) max(0.0,j-scale_xy);
 	int min_z = (int) max(0.0,k-scale_z);
-	int max_r = (int)min((double)r-1,i+scale_xy);
-	int max_c = (int)min((double)c-1,j+scale_xy);                         
-	int max_z = (int)min((double)z-1,k+scale_z);                         
+	int max_r = (int)min((float)r-1,i+scale_xy);
+	int max_c = (int)min((float)c-1,j+scale_xy);                         
+	int max_z = (int)min((float)z-1,k+scale_z);                         
 	
 	//get the intensity maximum of the bounded im_vals
 	float mx = im_vals[(min_z*r*c)+(min_r*c)+min_c];
@@ -63,7 +63,13 @@ void Detect_Local_MaximaPoints_3D_CUDA(float* im_vals, int r, int c, int z, doub
 	
 	//Copy im_vals content into device space
 	errorcode = cudaMemcpy(dev_im_vals, im_vals, r * c * z * sizeof(*im_vals), cudaMemcpyHostToDevice);
+	//cout << errorcode << endl;
 	
+	//Prefer 48KB L1 cache
+	//errorcode = cudaFuncSetCacheConfig("LocalMaximaKernel_CUDA(float*, unsigned short*, int, int, int, double, double, int)", cudaFuncCachePreferL1);
+	CUresult drivererrorcode = cuCtxSetCacheConfig(CU_FUNC_CACHE_PREFER_L1);
+	//cout << drivererrorcode << endl;
+
 	int device;
 	cudaDeviceProp device_prop;
 
@@ -74,11 +80,13 @@ void Detect_Local_MaximaPoints_3D_CUDA(float* im_vals, int r, int c, int z, doub
 	cout << device_prop.maxThreadsDim[0] << endl;*/
 
 	int threadsPerBlock = device_prop.maxThreadsDim[0];
-	int numBlocks = 16;
-	
+	//int threadsPerBlock = 32;
+	int numBlocks = device_prop.multiProcessorCount;
+	//int numBlocks = device_prop.maxGridSize[0];
+
 	for (int k = 0; k < r * c * z; k+= numBlocks * threadsPerBlock) //Run kernel on 16K pixels at a time
 	{
-		LocalMaximaKernel<<< numBlocks , threadsPerBlock >>>(dev_im_vals, dev_out1, r, c, z, scale_xy, scale_z, k);
+		LocalMaximaKernel_CUDA<<< numBlocks , threadsPerBlock >>>(dev_im_vals, dev_out1, r, c, z, scale_xy, scale_z, k);
 	}
 	errorcode = cudaMemcpy(out1, dev_out1, r * c * z * sizeof(*out1), cudaMemcpyDeviceToHost);
 	
@@ -90,9 +98,7 @@ void Detect_Local_MaximaPoints_3D_CUDA(float* im_vals, int r, int c, int z, doub
 	cudaFree(dev_im_vals);
 	cudaFree(dev_out1);
 
-	cudaThreadExit();
-
-	//cout << cudaGetErrorString(cudaGetLastError()) << endl;
+	cout << cudaGetErrorString(cudaGetLastError()) << endl;
 
 	cout << "CUDA done" << endl;
 }
