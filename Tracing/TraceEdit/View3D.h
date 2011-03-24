@@ -174,7 +174,7 @@ public slots:
 	void setUsePointer(int i);
 	void createNewTraceBit();
 	void focusOn();
-	void setRenderFocus(double renderBounds[]);
+	void setRenderFocus(double renderBounds[], int size);
 	void FocusOnCell(CellTrace* SelectedCell);
 //these are for bootloadfile
 	QString getTraceFile();
@@ -265,7 +265,7 @@ private:
 	QAction *WriteButton;
 	QAction *ScreenshotAction;
 	QAction *SettingsButton;
-	QAction *AutomateButton;
+	QPushButton *AutomateButton;
 	QAction *BreakButton;
 	QAction *explodeTree;
 	QAction *root;

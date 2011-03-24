@@ -1080,6 +1080,10 @@ void View3D::CreateGUIObjects()
 	this->MinDistanceToParent->setValue(6);
 	connect(this->MinDistanceToParent, SIGNAL(valueChanged(double)), this, SLOT( HalfBridges(double)));
 
+	this->AutomateButton = new QPushButton("Automate Correction",this->AutomationWidget);
+	connect(this->AutomateButton, SIGNAL(clicked()), this, SLOT(AutomaticEdits()));
+	this->AutomateButton->setShortcut(QKeySequence(Qt::Key_A));
+
 	this->CellAnalysis = new QAction("Cell Analysis", this->CentralWidget);
 	connect (this->CellAnalysis, SIGNAL(triggered()), this, SLOT(ShowCellAnalysis()));
 // Lables for the status bar to show edit counts
@@ -1245,6 +1249,7 @@ void View3D::CreateLayout()
   HalfBridgesLayout->addRow("Size", this->MaxHalfBridgeBits);
   HalfBridgesLayout->addRow("Distance From Parent", this->MinDistanceToParent);
   AutomationDockLayout->addWidget(this->HalfBridgeGroup);
+  AutomationDockLayout->addWidget(this->AutomateButton);
   AutomationDockLayout->addStretch();
 
   this->AutomationDock->setWidget(this->AutomationWidget);
@@ -1520,10 +1525,16 @@ void View3D::focusOn()
 	{
 		this->FocusOnCell(cellsSelected.back());
 	}
+	else if (this->pointer3d->GetEnabled())
+	{		
+		double newPT[3];
+		this->pointer3d->GetPosition(newPT);
+		this->setRenderFocus(newPT, 3);
+	}
 	else
 	{
 		double test [6] = {0,100,0,100,0,100};
-		this->setRenderFocus(test);
+		this->setRenderFocus(test, 6);
 		std::cout <<" test set render focus \n";
 	}
 }
@@ -1535,11 +1546,25 @@ void View3D::FocusOnCell(CellTrace* SelectedCell)
 	// render after move curser
 	double cellBounds[6];
 	SelectedCell->getCellBounds(cellBounds);
-	this->setRenderFocus(cellBounds);
+	if ((cellBounds[1]-cellBounds[0]) > 3)
+	{
+		this->setRenderFocus(cellBounds, 6);
+	}//zoom to entire cell
+	else
+	{
+		this->setRenderFocus(somaCoord, 3);
+	}//focus on soma coord 
 }
-void View3D::setRenderFocus(double renderBounds[])
+void View3D::setRenderFocus(double renderBounds[], int size)
 {	
-	this->Renderer->ResetCamera(renderBounds);
+	if (size <= 3)
+	{
+		this->Renderer->GetActiveCamera()->SetFocalPoint(renderBounds);
+	}
+	else
+	{
+		this->Renderer->ResetCamera(renderBounds);
+	}
 	this->QVTK->GetRenderWindow()->Render();
 }
 void View3D::createSlicerSlider()
@@ -3115,13 +3140,17 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
       break;
     }
 }
-/*  Selection Actions   */
+/*  Automated Selection Actions   */
 void View3D::AutomaticEdits()
 {
-	/*this->SLine(double d);
-	this->FakeSpines(double d);
-	this->FakeBridges(double d);
-	this->HalfBridges(double d);*/
+	this->HalfBridges(1);
+	this->BreakBranch();
+	this->FakeBridges(1);
+	this->DeleteTraces();
+	this->FakeSpines(1);
+	this->DeleteTraces();
+	this->SLine(1);
+	this->DeleteTraces();
 
 }
 
@@ -3207,7 +3236,7 @@ void View3D::HalfBridges(double d)
 	}
   this->TreeModel->SelectByIDs(this->tobj->HalfBridges);
 }
-
+/*	Statistics	*/
 
 void View3D::ListSelections()
 {

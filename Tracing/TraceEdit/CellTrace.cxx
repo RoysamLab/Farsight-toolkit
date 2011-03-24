@@ -115,7 +115,9 @@ std::string CellTrace::GetFileName()
 	}
 	else
 	{
-		outputFileName = "cell" + this->segments[0]->GetId();
+		std::stringstream newCellName; 
+		newCellName<<"cell" << this->segments[0]->GetId();
+		outputFileName = newCellName.str();
 	}
 	return outputFileName;
 }
@@ -180,7 +182,7 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->somaX);
 	CellData->InsertNextValue(this->somaY);
 	CellData->InsertNextValue(this->somaZ);
-	CellData->InsertNextValue(this->FileName.c_str());
+	CellData->InsertNextValue(this->GetFileName().c_str());
 	//std::cout << this->FileName << std::endl;
 	return CellData;
 }
