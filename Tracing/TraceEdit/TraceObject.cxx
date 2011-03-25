@@ -2030,7 +2030,8 @@ void TraceObject::FindHalfBridges(int maxBit, int DtoParent)
 	{
     //tline=*iter;
 		tline= allLines.at(i);
-		if((maxBit >= tline->GetSize())&& (DtoParent <= tline->GetDistToParent()) && (tline->isLeaf() == 1))
+		//if((maxBit >= tline->GetSize())&& (DtoParent <= tline->GetDistToParent()) && (tline->isLeaf() == 1))
+		if((maxBit >= tline->GetSize())&& (DtoParent <= tline->GetDistToParent()))
 		{
 			this->HalfBridges.insert( (long) tline->GetId());			
 		}

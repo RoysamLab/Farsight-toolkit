@@ -46,6 +46,8 @@ public:
 	void SelectByIDs(std::vector<int> IDs);
 	std::set<long int> GetSelecectedIDs();
 	std::vector<CellTrace*> GetSelecectedCells();
+	int getCellCount();
+	CellTrace * GetCellAt( int i);
 signals:
 	void selectionChanged(void);
 private:

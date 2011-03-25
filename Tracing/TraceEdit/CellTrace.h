@@ -32,6 +32,7 @@ public:
 	vtkSmartPointer<vtkVariantArray> DataRow();
 	std::set<long int> TraceIDsInCell();
 	int rootID();
+	TraceLine * getRootTrace();
 	void setFileName(std::string newFileName);
 	std::string GetFileName();
 	void getSomaCoord(double xyz[]);

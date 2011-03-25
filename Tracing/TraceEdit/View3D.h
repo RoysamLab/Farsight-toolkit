@@ -158,6 +158,7 @@ public slots:
 	void ReloadState();
 	void SetImgInt();
 	void SaveScreenShot();
+	void AutoCellExport();
 
 	void chooseInteractorStyle(int iren);
 	void SetProjectionMethod(int style);
@@ -276,6 +277,7 @@ private:
 	QPushButton *setSoma;
 	QPushButton *createNewBitButton;
 	QAction *FocusAction;
+	QAction *AutoCellExportAction;
 	QAction *ShowPlots;
 	QAction *CellAnalysis;
 	QAction *showStatisticsAction;

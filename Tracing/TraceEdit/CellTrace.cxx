@@ -194,3 +194,8 @@ int CellTrace::rootID()
 {
 	return this->segments[0]->GetId();
 }
+
+TraceLine * CellTrace::getRootTrace()
+{
+	return this->segments.front();
+}

@@ -154,3 +154,21 @@ std::vector<CellTrace*> CellTraceModel::GetSelecectedCells()
 	}//end for selected
 	return selectedCell;
 }
+int CellTraceModel::getCellCount()
+{
+	return this->Cells.size();
+}
+CellTrace * CellTraceModel::GetCellAt( int i)
+{
+	CellTrace* currentCell;
+	if (i < this->Cells.size())
+	{
+		currentCell = this->Cells.at(i);
+	}
+	else
+	{
+		currentCell = this->Cells.back();
+	}
+	this->Selection->select(currentCell->rootID());
+	return currentCell;
+}

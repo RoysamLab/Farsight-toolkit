@@ -854,6 +854,9 @@ void View3D::CreateGUIObjects()
 	this->ScreenshotAction = new QAction("Screen Shot", this->CentralWidget);
 	connect(this->ScreenshotAction, SIGNAL(triggered()), this, SLOT(SaveScreenShot()));
 
+	this->AutoCellExportAction = new QAction("Export Cells", this->CentralWidget);
+	connect(this->AutoCellExportAction, SIGNAL(triggered()), this, SLOT(AutoCellExport()));
+
 //Set up the buttons that the user will use to interact with this program. 
 	this->ListButton = new QAction("List", this->CentralWidget);
 	connect(this->ListButton, SIGNAL(triggered()), this, SLOT(ListSelections()));
@@ -1107,9 +1110,11 @@ void View3D::CreateLayout()
 	this->fileMenu->addAction(this->saveAction);
 	this->fileMenu->addAction(this->saveSelectedAction);
 	this->fileMenu->addSeparator();
+	this->fileMenu->addAction(this->ScreenshotAction);
+	this->fileMenu->addAction(this->AutoCellExportAction);
+	this->fileMenu->addSeparator();
 	this->fileMenu->addAction(this->CloseAllImage);
 	this->fileMenu->addAction(this->exitAction);
-	this->fileMenu->addAction(this->ScreenshotAction);
 
 	this->ShowToolBars = this->menuBar()->addMenu(tr("Tool Bars"));
 	this->DataViews = this->menuBar()->addMenu(tr("Visualization"));
@@ -1560,6 +1565,12 @@ void View3D::setRenderFocus(double renderBounds[], int size)
 	if (size <= 3)
 	{
 		this->Renderer->GetActiveCamera()->SetFocalPoint(renderBounds);
+		this->Renderer->GetActiveCamera()->SetPosition(0,0,1);
+		this->Renderer->GetActiveCamera()->ComputeViewPlaneNormal();
+		this->Renderer->GetActiveCamera()->SetViewUp(0,1,0);
+		this->Renderer->GetActiveCamera()->OrthogonalizeViewUp();
+		this->Renderer->GetActiveCamera()->ParallelProjectionOn();
+		//this->Renderer->ResetCamera();
 	}
 	else
 	{
@@ -4073,10 +4084,12 @@ void View3D::SetTraceType(int newType)
 void View3D::SaveToFile()
 {
   //display a save file dialog
+	
+  QString traceDir = this->TraceEditSettings.value("traceDir", ".").toString();
   QString fileName = QFileDialog::getSaveFileName(
     this,
     tr("Save File"),
-    "",
+    traceDir,
     tr("SWC Images (*.swc);;VTK files (*.vtk)"));
 
   //if the user pressed cancel, bail out now.
@@ -4131,10 +4144,11 @@ void View3D::SaveToFile()
 }
 void View3D::SaveProjectFile()
 {
+	QString projectDir = this->TraceEditSettings.value("projectDir", ".").toString();
 	QString newProject = QFileDialog::getSaveFileName(
 		this,
 		tr("Save Project File"),
-		"",
+		projectDir,
 		tr("Project File (*.xml)"));
 	if (!newProject.isEmpty())
 	{
@@ -4165,10 +4179,11 @@ void View3D::SaveProjectFile()
 }
 void View3D::SaveSelected()
 {
+	QString traceDir = this->TraceEditSettings.value("traceDir", ".").toString();
 	QString fileName = QFileDialog::getSaveFileName(
     this,
     tr("Save Selected Trees to File"),
-    "",
+    traceDir,
     tr("SWC Images (*.swc)"));
 	if(!fileName.isEmpty())
 	{
@@ -4195,10 +4210,32 @@ void View3D::saveRenderWindow(const char *filename)
 void View3D::SaveScreenShot()
 {
 	QString imageDir = this->TraceEditSettings.value("imageDir", ".").toString();
-	QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"),imageDir, tr("SWC Images (*.jpg *.jpeg)"));
+	QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"),imageDir, tr("Image (*.jpg *.jpeg)"));
 	if (!fileName.isEmpty())
 	{
 		this->saveRenderWindow(fileName.toStdString().c_str());
+	}
+}
+void View3D::AutoCellExport()
+{
+	int cellCount= this->CellModel->getCellCount();
+	if (cellCount >= 1)
+	{
+		QProgressDialog progress("Finding Cells", "Abort", 0, cellCount, this);
+		progress.setWindowModality(Qt::WindowModal);
+		QString traceDir = this->TraceEditSettings.value("traceDir", ".").toString();
+		for (int i = 0; i < cellCount; i++)
+		{
+			progress.setValue(i);
+			if (progress.wasCanceled())
+			{
+				break;
+			}
+			CellTrace* currCell = this->CellModel->GetCellAt( i);
+			this->FocusOnCell(currCell);
+			QString cellName = traceDir + QString(currCell->GetFileName().c_str());
+		}
+		progress.setValue(cellCount);
 	}
 }
 void View3D::closeEvent(QCloseEvent *event)
