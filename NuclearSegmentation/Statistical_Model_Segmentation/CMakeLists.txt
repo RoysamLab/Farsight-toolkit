@@ -20,19 +20,10 @@ SET( GLPK_HDRS
 )
 
 
-SET( PCA_HDRS
-  pcaclass.h
-  itkListSample2.h
-  itkMeanSampleFilter.h			 
-  itkCovarianceSampleFilter.h
-)
-
-
 ADD_LIBRARY( ModelSeg
                 ${MODELSEGMENTATION_SRCS}
 		${GLPK_HDRS}
-		${PCA_HDRS}
-                ${MODELSEGMENTATION_HDRS} 
+		${MODELSEGMENTATION_HDRS} 
 	      )
 
 
