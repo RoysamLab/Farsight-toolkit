@@ -1557,7 +1557,9 @@ void View3D::FocusOnCell(CellTrace* SelectedCell)
 	}//zoom to entire cell
 	else
 	{
-		this->setRenderFocus(somaCoord, 3);
+		//this->setRenderFocus(somaCoord, 3);
+		this->ImageActors->getImageBounds(cellBounds);
+		this->setRenderFocus(cellBounds,6);
 	}//focus on soma coord 
 }
 void View3D::setRenderFocus(double renderBounds[], int size)
@@ -1565,7 +1567,7 @@ void View3D::setRenderFocus(double renderBounds[], int size)
 	if (size <= 3)
 	{
 		this->Renderer->GetActiveCamera()->SetFocalPoint(renderBounds);
-		this->Renderer->GetActiveCamera()->SetPosition(0,0,1);
+		//this->Renderer->GetActiveCamera()->SetPosition(0,0,1);
 		this->Renderer->GetActiveCamera()->ComputeViewPlaneNormal();
 		this->Renderer->GetActiveCamera()->SetViewUp(0,1,0);
 		this->Renderer->GetActiveCamera()->OrthogonalizeViewUp();
@@ -4218,6 +4220,7 @@ void View3D::SaveScreenShot()
 }
 void View3D::AutoCellExport()
 {
+	bool reNameCell= false;
 	int cellCount= this->CellModel->getCellCount();
 	if (cellCount >= 1)
 	{
@@ -4233,9 +4236,22 @@ void View3D::AutoCellExport()
 			}
 			CellTrace* currCell = this->CellModel->GetCellAt( i);
 			this->FocusOnCell(currCell);
-			QString cellName = traceDir + QString(currCell->GetFileName().c_str());
+			QString cellName = QString(currCell->GetFileName().c_str());
+
+			std::vector<TraceLine*> roots;
+			roots.push_back(currCell->getRootTrace());
+			QString swcFileName = traceDir % "/" % cellName % QString(".swc");
+			QString ScreenShotFileName = traceDir % "/" % cellName % QString(".jpg");
+			this->tobj->WriteToSWCFile(roots, swcFileName.toStdString().c_str());
+			this->saveRenderWindow(ScreenShotFileName.toStdString().c_str());
 		}
 		progress.setValue(cellCount);
+	}
+	else
+	{
+		QMessageBox AutoExportInfo;
+		AutoExportInfo.setText("No Cells Identified/nRun Cell Analysis");
+		AutoExportInfo.exec();
 	}
 }
 void View3D::closeEvent(QCloseEvent *event)

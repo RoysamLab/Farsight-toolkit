@@ -32,6 +32,11 @@ ImageRenderActors::ImageRenderActors()
 	this->syncOpacityTransfetFunction();
 	this->colorTransferFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
 	this->syncColorTransfetFunction();
+	this->TotalImageSize.clear();
+	for (int i = 0; i <6; i++)
+	{
+		this->TotalImageSize.push_back(0);
+	}
 }
 
 ImageRenderActors::~ImageRenderActors()
@@ -45,56 +50,57 @@ ImageRenderActors::~ImageRenderActors()
 
 int ImageRenderActors::loadImage(std::string ImageSource, std::string tag)
 {
-	if (ImageSource.empty())
-	{
-		return -1;
-	}
-	imageFileHandle *newImage= new imageFileHandle;
-	newImage->filename = ImageSource;
-	newImage->tag = tag;
-	newImage->renderStatus = false;
-	newImage->ren2d = false;
-	newImage->sliceActor = 0;
-	//newImage->colorTransferFunction = 0;
-	newImage->ContourActor = 0;
-	newImage->ContourFilter = 0;
-	newImage->ContourMapper = 0;
-	newImage->ImageData = 0;
-	//newImage->opacityTransferFunction = 0;
-	newImage->volume = 0;
-	newImage->volumeMapper = 0;
-	#ifdef USE_GPUREN
-	{
-		newImage->volumeMapperGPU = 0;
-	}
-	#endif
-	newImage->volumeProperty = 0;
-	newImage->reader = ReaderType::New();
-	newImage->reader->SetFileName( ImageSource );
-	newImage->x = 0;
-	newImage->y = 0;
-	newImage->z = 0;
-	//Test opening and reading the input file
-	try
-	{
-		newImage->reader->Update();
-	}
-	catch( itk::ExceptionObject & exp )
-	{
-		std::cerr << "Exception thrown while reading the input file " << std::endl;
-		std::cerr << exp << std::endl;
-		//return EXIT_FAILURE;
-	}
-	newImage->Rescale = IntensityRescaleType::New();
-	newImage->Rescale->SetInput( newImage->reader->GetOutput() );
-	newImage->connector= ConnectorType::New();
-	newImage->connector->SetInput( newImage->Rescale->GetOutput() );
-	newImage->projectionConnector = ConnectorType::New();
-	newImage->projectionConnector->SetInput( newImage->reader->GetOutput() );
+	//if (ImageSource.empty())
+	//{
+	//	return -1;
+	//}
+	//imageFileHandle *newImage= new imageFileHandle;
+	//newImage->filename = ImageSource;
+	//newImage->tag = tag;
+	//newImage->renderStatus = false;
+	//newImage->ren2d = false;
+	//newImage->sliceActor = 0;
+	////newImage->colorTransferFunction = 0;
+	//newImage->ContourActor = 0;
+	//newImage->ContourFilter = 0;
+	//newImage->ContourMapper = 0;
+	//newImage->ImageData = 0;
+	////newImage->opacityTransferFunction = 0;
+	//newImage->volume = 0;
+	//newImage->volumeMapper = 0;
+	//#ifdef USE_GPUREN
+	//{
+	//	newImage->volumeMapperGPU = 0;
+	//}
+	//#endif
+	//newImage->volumeProperty = 0;
+	//newImage->reader = ReaderType::New();
+	//newImage->reader->SetFileName( ImageSource );
+	//newImage->x = 0;
+	//newImage->y = 0;
+	//newImage->z = 0;
+	////Test opening and reading the input file
+	//try
+	//{
+	//	newImage->reader->Update();
+	//}
+	//catch( itk::ExceptionObject & exp )
+	//{
+	//	std::cerr << "Exception thrown while reading the input file " << std::endl;
+	//	std::cerr << exp << std::endl;
+	//	//return EXIT_FAILURE;
+	//}
+	//newImage->Rescale = IntensityRescaleType::New();
+	//newImage->Rescale->SetInput( newImage->reader->GetOutput() );
+	//newImage->connector= ConnectorType::New();
+	//newImage->connector->SetInput( newImage->Rescale->GetOutput() );
+	//newImage->projectionConnector = ConnectorType::New();
+	//newImage->projectionConnector->SetInput( newImage->reader->GetOutput() );
 
-	newImage->ImageData = newImage->connector->GetOutput();
-	this->LoadedImages.push_back(newImage);
-	return (int) (this->LoadedImages.size() -1);
+	//newImage->ImageData = newImage->connector->GetOutput();
+	//this->LoadedImages.push_back(newImage);
+	//return (int) (this->LoadedImages.size() -1);
+	return this->loadImage(ImageSource,tag, 0,0,0);
 }
 int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, double x, double y, double z)
 {
@@ -123,6 +129,7 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 #endif
 	newImage->volumeProperty = 0;
 	newImage->reader = ReaderType::New();
+	newImage->reader->SetNumberOfThreads(16);
 	newImage->reader->SetFileName( ImageSource );
 	newImage->x = x;
 	newImage->y = y;
@@ -138,14 +145,17 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 		std::cerr << exp << std::endl;
 		//return EXIT_FAILURE;
 	}
+	double bounds[6];
 	newImage->Rescale = IntensityRescaleType::New();
 	newImage->Rescale->SetInput( newImage->reader->GetOutput() );
 	newImage->connector= ConnectorType::New();
 	newImage->connector->SetInput( newImage->Rescale->GetOutput() );
 	newImage->ImageData = newImage->connector->GetOutput();
+	newImage->ImageData->GetBounds(bounds);
 	newImage->projectionConnector = ConnectorType::New();
 	newImage->projectionConnector->SetInput( newImage->reader->GetOutput() );
 
+	this->setImageBounds(bounds);
 	this->LoadedImages.push_back(newImage);
 	return (int) (this->LoadedImages.size() -1);
 }
@@ -220,7 +230,7 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 	this->LoadedImages[i]->volume = vtkSmartPointer<vtkVolume>::New();
 #ifdef USE_GPUREN
 	{
-		this->LoadedImages[i]->volumeMapperGPU = vtkSmartPointer<vtkGPUVolumeRayCastMapper>::New();
+		this->LoadedImages[i]->volumeMapperGPU = vtkSmartPointer<vtkVolumeTextureMapper3D>::New();
 		this->LoadedImages[i]->volumeMapperGPU->SetInput(this->LoadedImages[i]->ImageData);
 		this->LoadedImages[i]->volumeMapperGPU->SetSampleDistance((float)this->RaycastSampleDist);
 		this->LoadedImages[i]->volumeMapperGPU->SetBlendModeToComposite();
@@ -519,4 +529,38 @@ vtkSmartPointer<vtkImageActor> ImageRenderActors::GetProjectionImage(int i)
 		i = int (this->LoadedImages.size() - 1);
 	}
 	return this->LoadedImages[i]->ProjectionActor;
+}
+void ImageRenderActors::setImageBounds(double bounds[])
+{
+	if (this->TotalImageSize[0] < bounds[0])
+	{
+		this->TotalImageSize[0] = bounds[0];
+	}
+	if (this->TotalImageSize[1] > bounds[1])
+	{
+		this->TotalImageSize[1] = bounds[1];
+	}
+	if (this->TotalImageSize[2] < bounds[2])
+	{
+		this->TotalImageSize[2] = bounds[2];
+	}
+	if (this->TotalImageSize[3] > bounds[3])
+	{
+		this->TotalImageSize[3] = bounds[3];
+	}
+	if (this->TotalImageSize[4] < bounds[4])
+	{
+		this->TotalImageSize[4] = bounds[4];
+	}
+	if (this->TotalImageSize[5] > bounds[5])
+	{
+		this->TotalImageSize[5] = bounds[5];
+	}
+}
+void ImageRenderActors::getImageBounds(double bounds[])
+{
+	for (int i = 0; i <6; i++)
+	{
+		bounds[i] = this->TotalImageSize.at(i);
+	}
 }

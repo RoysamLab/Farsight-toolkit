@@ -27,7 +27,7 @@ limitations under the License.
 #include "itkMinimumProjectionImageFilter.h"
 #include "itkMeanProjectionImageFilter.h"
 #ifdef USE_GPUREN
-#include <vtkGPUVolumeRayCastMapper.h>
+#include <vtkVolumeTextureMapper3D.h>
 #endif
 #include "vtkPiecewiseFunction.h"
 #include "vtkPolyData.h"
@@ -73,8 +73,7 @@ struct imageFileHandle
 	MaxProjectionType::Pointer MaxProjection;
 	MeanProjectionType::Pointer MeanProjection;
 	MinProjectionType::Pointer MinProjection;
-	IntensityRescaleType::Pointer Rescale;
-	std::vector<double> ImageSize;
+	IntensityRescaleType::Pointer Rescale;	
 	double x,y,z;
 //Contour Filter pointers
 	vtkSmartPointer<vtkContourFilter> ContourFilter;
@@ -87,7 +86,7 @@ struct imageFileHandle
 	ImageActorPointerType sliceActor;
 	vtkSmartPointer<vtkImageActor> ProjectionActor;
 #ifdef USE_GPUREN
-	vtkSmartPointer<vtkGPUVolumeRayCastMapper> volumeMapperGPU;
+	vtkSmartPointer<vtkVolumeTextureMapper3D> volumeMapperGPU;
 #endif
 	vtkSmartPointer<vtkVolume> volume;
 };
@@ -137,6 +136,8 @@ public:
 	double getOpacityValue();
 	void setOpacityValueMax(double opacity);
 	double getOpacityValueMax();
+	void getImageBounds(double bounds[]);
+	void setImageBounds(double bounds[]);
 private:
 	bool useGPURendering;
 	void syncColorTransfetFunction();
@@ -145,6 +146,7 @@ private:
 	vtkSmartPointer<vtkColorTransferFunction> colorTransferFunction;
 	std::vector<imageFileHandle*> LoadedImages;
 	std::vector<std::string> ImageList;
+	std::vector<double> TotalImageSize;
 	double r,g,b, opacity1, opacity2, opacity1Value, opacity2Value, RaycastSampleDist;
 	double brightness;
 };
