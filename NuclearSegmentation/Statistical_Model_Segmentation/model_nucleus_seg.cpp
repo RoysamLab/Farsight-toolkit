@@ -113,7 +113,7 @@ model_nucleus_seg::model_nucleus_seg()
 	hypothesis.clear();
 	eigenvecs.clear();
 	imgindex.clear();
-
+	AssocFeat.clear();
 	Feats.clear();
 	normFeats.clear();
 	
@@ -122,6 +122,7 @@ model_nucleus_seg::model_nucleus_seg()
 	WC_DEFAULT = 5.; //WC_DEFAULT is used in calc scores: libagf parameter
 	globalcount = 0;
 	splitflag = 0;
+	maxL = 0;
 }
 
 
@@ -134,17 +135,6 @@ void model_nucleus_seg::SetRawImage(char* fname)
 
 }		
 
-///////////////////////
-// SET THE LABEL IMAGE
-///////////////////////
-void model_nucleus_seg::SetLabelImage(char* fname)
-{
-	bImage = readImage<OutputImageType>(fname);
-}		
-
-///////////////////////
-// SET THE LABEL IMAGE
-///////////////////////
 void model_nucleus_seg::SetAssocFeatNumber(int nFeat)
 {
 	NUM_ASSOC_FEAT = nFeat;
@@ -277,27 +267,24 @@ void model_nucleus_seg::getFeatureNames(char* fname)
 	}
 }
 
-std::vector< std::vector< double> > model_nucleus_seg::Associations(char* xmlImage,char* projDef )
+
+void model_nucleus_seg::Associations(char* xmlImage,char* projDef )
 {	
 	allFeat.clear();
 	labelIndex.clear();
-
+	
 	labFilter = FeatureCalcType::New();
-	if(this->splitflag==0)
-		labFilter->SetImageInputs( inputImage, bImage );
-	else
-		labFilter->SetImageInputs( inputImage, bImage2 );
-
+	labFilter->SetImageInputs( inputImage, bImage );
 	labFilter->SetLevel(3);
 	labFilter->ComputeHistogramOn();
 	labFilter->Update();
 	labels = labFilter->GetLabels();
 	
-	if(this->splitflag==0)
-		getFeatureVectorsFarsight(bImage,inputImage,allFeat);
-	else
-		getFeatureVectorsFarsight(bImage2,inputImage,allFeat);
+	//Any Id greater than maxL has been split !
+	maxL = labels.size()-1;
 
+	getFeatureVectorsFarsight(bImage,inputImage,allFeat);
+	
 	labelIndex.resize(allFeat.size());	
 	
 	for(int counter=0; counter < allFeat.size(); counter++)
@@ -308,9 +295,15 @@ std::vector< std::vector< double> > model_nucleus_seg::Associations(char* xmlIma
 	myFtkImage = ftk::LoadXMLImage(xmlImage);
 	LoadAssoc(projDef);
 	AssocFeat = ComputeAssociations();
-	return AssocFeat;
 }
 
+
+
+void model_nucleus_seg::splitAssociations()
+{	
+	AssocFeat.clear();
+	AssocFeat = ComputeAssociations();
+}
 
 
 ///////////////////////
@@ -323,7 +316,6 @@ void model_nucleus_seg::SetSplitImage(OutputImageType::Pointer img1)
 }	
 
 
-
 std::vector<unsigned short> model_nucleus_seg::Detect_undersegmented_cells()
 {
 	/////////////////////////////////////////////////////////////////////////////////////////////////////	
@@ -334,9 +326,7 @@ std::vector<unsigned short> model_nucleus_seg::Detect_undersegmented_cells()
 	relabel->Update();
 	bImage = relabel->GetOutput();
 	//////////////////////////////////////////////////////////////////////////////////////////////////////	
-	numLabels = labels.size()-1;
-	//Any Id greater than maxL has been split !
-	maxL = numLabels;
+	
 	//////////////////////////////////////////////////////////////////////////////////////////////////////	
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////	
@@ -348,7 +338,7 @@ std::vector<unsigned short> model_nucleus_seg::Detect_undersegmented_cells()
 }	
 
 std::vector<unsigned short> model_nucleus_seg::getListofIds()
-{
+{	
 	return boolMergeTree;
 }
 
@@ -535,29 +525,19 @@ void model_nucleus_seg::GetFeatsnImages()
 	// NEED TO CALCULATE THE FEATURES OF THE NEW SPLIT IMAGE WITH A NEW FILTER 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////	
 	labFilter = FeatureCalcType::New();
-	if(this->splitflag==0)
-		labFilter->SetImageInputs( inputImage, bImage);
-	else
-		labFilter->SetImageInputs( inputImage, bImage2);
-
+	labFilter->SetImageInputs( inputImage, bImage);
 	labFilter->SetLevel(3);
 	labFilter->ComputeHistogramOn();
 	labFilter->Update();
 	labels = labFilter->GetLabels();
 
-	if(this->splitflag==0)
-		getFeatureVectorsFarsight(bImage,inputImage,allFeat);
-	else
-		getFeatureVectorsFarsight(bImage2,inputImage,allFeat);
+	getFeatureVectorsFarsight(bImage,inputImage,allFeat);
 	
 	
 	labelIndex.resize(allFeat.size());	
 	for(int counter=0; counter < allFeat.size(); counter++)
 	{	
-		if(this->splitflag==0)
-			li.push_back(model_nucleus_seg::extract_label_image(allFeat[counter].num,allFeat[counter].BoundingBox,bImage));
-		else
-			li.push_back(model_nucleus_seg::extract_label_image(allFeat[counter].num,allFeat[counter].BoundingBox,bImage2));
+		li.push_back(model_nucleus_seg::extract_label_image(allFeat[counter].num,allFeat[counter].BoundingBox,bImage));
 		ri.push_back(model_nucleus_seg::extract_raw_image(allFeat[counter].BoundingBox,inputImage));		 
 		labelIndex[counter] =  allFeat[counter].num;
 	}	
@@ -713,9 +693,7 @@ vnl_matrix <double> model_nucleus_seg::getTrSet(char* train_fname,int inputdDime
 	}
 
 	vnl_matrix <double> FeatsMatrix(myrows,mycols+2);
-	
 	double **trVecs = (double **) malloc(myrows*sizeof(double *));
-
 
 	//extract data from the model and get min/max values:
 	for(unsigned int r=0; r < myrows ; ++r)
@@ -727,9 +705,7 @@ vnl_matrix <double> model_nucleus_seg::getTrSet(char* train_fname,int inputdDime
 			fscanf(fpin, "%lf", &val);
 			trVecs[r][c] = val;
 			FeatsMatrix.put(r,c,val);
-//			std::cout<<val<<"   ";
 		}
-//		std::cout<<""<<std::endl;
 		fscanf(fpin, "%lf", &val);
 		FeatsMatrix.put(r,inputdDimensions,val);
 		fscanf(fpin, "%lf", &val);
@@ -804,9 +780,6 @@ vnl_matrix <double> model_nucleus_seg::normTrSet(char* train_fname,int inputdDim
 			normMatrix.put(r,c,(trVecs[r][c]-trMean[c])/(trSTD[c]));
 		}		
 	}
-
-	//vcl_cout<<normMatrix<<vcl_endl;
-	
 
 	return normMatrix;
 }
@@ -963,13 +936,10 @@ void model_nucleus_seg::labelChange(unsigned short id1,unsigned short id2)
 	lsfilterChange->Update();
 	region1 = lsfilterChange->GetRegion(id2);
 	IteratorType regioniterator(clonedImage,region1);
-	IteratorType regioniterator2;
 
-	if(this->splitflag==0)
-		IteratorType regioniterator2(bImage,region1);
-	else
-		IteratorType regioniterator2(bImage2,region1);
 
+	IteratorType regioniterator2(bImage,region1);
+	
 	for(regioniterator.GoToBegin(),regioniterator2.GoToBegin(); !regioniterator.IsAtEnd(),!regioniterator2.IsAtEnd();++regioniterator,++regioniterator2)
 	{
 		if(regioniterator2.Value() == id2) 
@@ -1071,19 +1041,12 @@ std::vector<double>  model_nucleus_seg::get_merged_assoc_features(set<int> currR
 
 	std::vector<double> assocMerge;
 	std::vector<double> aMval;
-	assocMerge.resize(AssocFeat.size());
-
 
 	std::vector<int> channelnumb;
 
 	std::vector<int> idvec;
 	idvec.resize(currRPS.size());
 
-	for(unsigned int i=0; i<AssocFeat.size() ;++i)
-	{
-		assocMerge[i] = 0; 
-	}
-	
 	//	
 	int pos =0;
 	// Put all the labels in idvec before feeding it to ComputeOneAssoc 
@@ -1146,16 +1109,11 @@ void model_nucleus_seg::PerformMerges(char* x)
 	////Create a clone of the original output. Will perform merges on this image	
 	typedef itk::ImageDuplicator< OutputImageType > DuplicatorType; 
 	DuplicatorType::Pointer duplicator1 = DuplicatorType::New(); 
-	if(this->splitflag==0)
-		duplicator1->SetInputImage(bImage); 
-	else
-		duplicator1->SetInputImage(bImage2); 
-
+	duplicator1->SetInputImage(bImage); 
 	duplicator1->Update();
 	clonedImage = duplicator1->GetOutput();	
 
 	std::cout<<"No.of valid hypotheses:"<<mergeindices.size()<<std::endl;
-
 
 	for(int i =0 ; i< mergeindices.size() ; ++i)
 	{
@@ -1181,6 +1139,63 @@ void model_nucleus_seg::PerformMerges(char* x)
 	writeImage<OutputImageType>(clonedImage,x);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+// SHATTERS NUCLEI 
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+int model_nucleus_seg::GetYousefSeg()
+{
+	RegionType region1;	
+	InputImageType::SizeType size = inputImage->GetLargestPossibleRegion().GetSize();
+	//Allocate Memory for Images
+	OutputImageType::IndexType start;
+	start.Fill(0);
+	region1.SetSize(size);
+	region1.SetIndex( start );
+	bImage = OutputImageType::New();
+	bImage->SetRegions( region1 );
+	bImage->Allocate();
+
+	unsigned char *in_Image;
+	in_Image = (unsigned char *) malloc (size[0]*size[1]*size[2]);
+	//in_Image = (unsigned char *) malloc (size[0]*size[1]*size[2]);
+
+	if( in_Image == NULL )
+	{
+		std::cout<<"Memory allocation for image failed\n";
+		return 0;
+	}
+	memset(in_Image/*destination*/,0/*value*/,size[0]*size[1]*size[2]*sizeof(unsigned char)/*num bytes to move*/);
+
+	IIteratorType pix_buf(inputImage,inputImage->GetRequestedRegion());
+	int ind=0;
+	for ( pix_buf.GoToBegin(); !pix_buf.IsAtEnd(); ++pix_buf, ++ind )
+		in_Image[ind]=(pix_buf.Get());
+
+	yousef_nucleus_seg *NucleusSeg = new yousef_nucleus_seg();
+	NucleusSeg->readParametersFromFile("");
+	NucleusSeg->setDataImage(in_Image,size[0],size[1],size[2],"");
+
+	// We need the new fragments to have unique Ids which do not
+	// correspond to any existing ids. So, get the max label id in 
+	// the segmented image and add this label to all the new fragments
+
+	unsigned short *output_img;
+	//segmentation steps
+	//1-Binarization
+	NucleusSeg->runBinarization();
+	NucleusSeg->runSeedDetection();
+	NucleusSeg->runClustering();
+	NucleusSeg->runAlphaExpansion();
+	output_img=NucleusSeg->getSegImage();
+
+	IteratorType biterator(bImage,bImage->GetRequestedRegion());
+	for(unsigned int i=0; i<size[0]*size[1]*size[2]; i++)
+	{		
+		biterator.Set(output_img[i]);
+		++biterator;	
+	}
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1420,8 +1435,6 @@ std::vector<double> model_nucleus_seg::GetOriginalScores()
 		counter = counter +1;	
 	}
 
-	//Update the boolmerge tree with all the new fragments.
-	UpdateBoolMerge();
 
 	// display the scores for reference on the command prompt.
 	DispScores(myscore);
@@ -1459,7 +1472,7 @@ void model_nucleus_seg::DispScores(std::vector<double> scores)
 	{	
 		unsigned short numval = allFeat[id].num; 
 		originalScores[id] =  scores[id];
-		std::cout<<numval<<"-"<<originalScores[id]<<std::endl;
+		//std::cout<<numval<<"-"<<originalScores[id]<<std::endl;
 	}	
 }
 
@@ -1821,7 +1834,7 @@ model_nucleus_seg::OutputImageType::Pointer model_nucleus_seg::Shatter_Nuclei(In
 	unsigned short maxlabel = lsfilter->GetNumberOfLabels()-1 + numSplit;
 
 	maxlabel = maxlabel+numSplit;
-	numSplit = numSplit+10;
+	numSplit = numSplit+5;
 
 	unsigned short *output_img;
 	//segmentation steps
@@ -1987,14 +2000,8 @@ void model_nucleus_seg::SelectHypothesis()
 		glp_set_row_bnds(lp, i+1, GLP_UP, 0.0, 1.0);
 	}
 
-
-	std::cout<<"hahahaha"<<std::endl;
-
 	glp_add_cols(lp, hypoMatrix.size());
-
-
-	std::cout<<"hahahaha"<<std::endl;
-
+	
 	//Setting the co-eff of the objective function
 	for(unsigned int i=0 ; i < hypoMatrix.size(); ++i)
 	{
@@ -2016,8 +2023,7 @@ void model_nucleus_seg::SelectHypothesis()
 
 	}
 																				
-	std::cout<<"hahahaha"<<std::endl;
-
+	
 	unsigned int ctr = 1;
 
 	//Coefficients of the constrains ... B' matrix
@@ -2044,13 +2050,13 @@ void model_nucleus_seg::SelectHypothesis()
 		if(glp_mip_col_val(lp,i+1) == 1)
 		{
 			mergeindices.push_back(i);
-			std::vector<double> row = hypoBMatrix[i];
+			//std::vector<double> row = hypoBMatrix[i];
 
-			for (unsigned int j =0; j< row.size() ; ++j)
-			{
-				std::cout<< row[j] << "  " ;
-			}
-			std::cout<<i<<std::endl;
+			//for (unsigned int j =0; j< row.size() ; ++j)
+			//{
+			//	std::cout<< row[j] << "  " ;
+			//}
+			//std::cout<<i<<std::endl;
 		}
 	}
 
@@ -2091,8 +2097,6 @@ bool model_nucleus_seg::LoadAssoc(std::string filename)
 	//doc.close();
 	return true;
 }
-
-
 
 
 ////Loads the Parameters file 
@@ -2148,91 +2152,26 @@ bool model_nucleus_seg::LoadSegParams(std::string filename)
 }
 
 
-
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-////READ THE ASSOCIATION RULES 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-//std::vector<ftk::AssociationRule> model_nucleus_seg::ReadAssociationRules(TiXmlElement * inputElement)
-//{
-//	std::vector<ftk::AssociationRuledup> returnVector;
-//	
-//	TiXmlElement * parameterElement = inputElement->FirstChildElement();
-//	while (parameterElement)
-//	{
-//		const char * parameter = parameterElement ->Value();
-//		
-//		ftk::AssociationRuledup assocRule("");
-//		if ( strcmp(parameter,"AssociationRule") == 0 )
-//		{
-//			assocRule.SetRuleName(parameterElement->Attribute("Name"));
-//			assocRule.SetSegmentationFileNmae(parameterElement->Attribute("SegmentationSource"));
-//			assocRule.SetTargetFileNmae(parameterElement->Attribute("Target_Image"));
-//			assocRule.SetOutDistance(atoi(parameterElement->Attribute("Outside_Distance")));
-//			assocRule.SetInDistance(atoi(parameterElement->Attribute("Inside_Distance")));
-//			
-//			if(strcmp(parameterElement->Attribute("Use_Whole_Object"),"True")==0)
-//				assocRule.SetUseWholeObject(true);
-//			else
-//				assocRule.SetUseWholeObject(false);
-//			
-//			if(strcmp(parameterElement->Attribute("Use_Background_Subtraction"),"True")==0)
-//				assocRule.SetUseBackgroundSubtraction(true);
-//			else
-//				assocRule.SetUseBackgroundSubtraction(false);
-//			
-//			if(strcmp(parameterElement->Attribute("Use_MultiLevel_Thresholding"),"True")==0){
-//				assocRule.SetUseMultiLevelThresholding(true);
-//				assocRule.SetNumberOfThresholds(atoi(parameterElement->Attribute("Number_Of_Thresholds")));
-//				assocRule.SetNumberIncludedInForeground(atoi(parameterElement->Attribute("Number_Included_In_Foreground")));
-//			}
-//			else{
-//				assocRule.SetUseMultiLevelThresholding(false);
-//				assocRule.SetNumberOfThresholds(1);
-//				assocRule.SetNumberIncludedInForeground(1);
-//			}
-//			
-//			if(strcmp(parameterElement->Attribute("Association_Type"),"MIN")==0)
-//				assocRule.SetAssocType(ftk::ASSOC_MIN);
-//			else if(strcmp(parameterElement->Attribute("Association_Type"),"MAX")==0)
-//				assocRule.SetAssocType(ftk::ASSOC_MAX);
-//			else if(strcmp(parameterElement->Attribute("Association_Type"),"TOTAL")==0)
-//				assocRule.SetAssocType(ftk::ASSOC_TOTAL);
-//			else if(strcmp(parameterElement->Attribute("Association_Type"),"SURROUNDEDNESS")==0)
-//				assocRule.SetAssocType(ftk::ASSOC_SURROUNDEDNESS);
-//			else
-//				assocRule.SetAssocType(ftk::ASSOC_AVERAGE);
-//		}
-//		returnVector.push_back(assocRule);
-//		parameterElement = parameterElement->NextSiblingElement();
-//	}
-//	return returnVector;
-//}
-
-
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 //COMPUTE THE ASSOCIATIONS (CHANGES MADE TO THE ORIGINAL )
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 std::vector < std::vector<double> > model_nucleus_seg::ComputeAssociations(void)
 {
 	std::vector < double > vals;
-
 	std::vector<std::vector < double > > afeats;
 	afeats.resize(allFeat.size());
 
 	int count = 0;
 	for(std::vector<ftk::AssociationRule>::iterator ascit=associationRules.begin(); ascit!=associationRules.end(); ++ascit )
 	{
-
 		int seg_channel_number=-1;
 		unsigned short inp_channel_number=-1;
-		if( strcmp( ascit->GetSegmentationFileName().c_str(), "NUCLEAR" ) == 0 ){
+		if( strcmp( ascit->GetSegmentationFileName().c_str(), "NUCLEAR" ) == 0 )
+		{
 			seg_channel_number = 0;
-
 		} 
-		else{
+		else
+		{
 			std::cout<<"Please check region type for associative feature computation\n";
 		}
 
@@ -2247,11 +2186,7 @@ std::vector < std::vector<double> > model_nucleus_seg::ComputeAssociations(void)
 			OutputImageType::Pointer inp_im  = OutputImageType::New();	
 			inp_im = myFtkImage->GetItkPtr<unsigned short>(0,inp_channel_number,ftk::Image::DEEP_COPY);
 			
-			if(this->splitflag==0)
-				assoc = new ftk::NuclearAssociationRules("",0,bImage, inp_im);
-			else
-				assoc = new ftk::NuclearAssociationRules("",0,bImage2, inp_im);
-
+			assoc = new ftk::NuclearAssociationRules("",0,bImage, inp_im);
 			assoc->AddAssociation( (*ascit).GetRuleName(), "", (*ascit).GetOutDistance(), (*ascit).GetInDistance(),	(*ascit).IsUseWholeObject(), (*ascit).IsUseBackgroundSubtraction(), (*ascit).IsUseMultiLevelThresholding(),(*ascit).GetNumberOfThresholds(), (*ascit).GetNumberIncludedInForeground(), (*ascit).GetAssocType(), (*ascit).get_path() );		
 
 			//I have modified ComputeoneAssoc method to include multiple labels in getmergedfeaturestest.
@@ -2385,19 +2320,9 @@ std::vector<double> model_nucleus_seg::ComputeOneAssocMeasurement(itk::SmartPoin
 	OutputImageType::RegionType region2;
 	region2.SetSize( size );
 	region2.SetIndex( start2 );
-	if(this->splitflag==0)
-		bImage->SetRequestedRegion(region2);
-	else	
-		bImage2->SetRequestedRegion(region2);
-
+	bImage->SetRequestedRegion(region2);
 	trgIm->SetRequestedRegion(region2);
-	IteratorType iterator1;
-
-	if(this->splitflag==0)
-		IteratorType iterator1(bImage, bImage->GetRequestedRegion());
-	else
-		IteratorType iterator1(bImage2, bImage2->GetRequestedRegion());
-
+	IteratorType iterator1(bImage, bImage->GetRequestedRegion());
 	DIteratorType iterator2(subSegImg, subSegImg->GetRequestedRegion());
 
 	//in the sub-segmentation image, we need to mask out any pixel from another object	
