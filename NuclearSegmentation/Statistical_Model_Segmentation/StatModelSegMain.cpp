@@ -75,13 +75,15 @@ int main ( int argc ,  char** argv)
 
 	std::cout<<"reading input image...";
 	
-	argv[1] = "C:/Data/S 99 5276 pAKT F02/S 99 5276_pAKT_CD34 AF488 CA9 AF647 SMA Cy3_IP8_F02_40XQB_Nuclear(H).tif";
-	argv[2] = "C:/Data/S 99 5276 pAKT F02/S 99 5276_pAKT_CD34 AF488 CA9 AF647 SMA Cy3_IP8_F02_40XQB_Nuclear(H)_label_nuc.tif";
-	argv[3] = "4";
-	argv[4] = "C:/Data/S 99 5276 pAKT F02/training3.txt";
-	argv[5] = "C:/Data/S 99 5276 pAKT F02/Histo_Input_Image.xml";
-	argv[6] = "C:/Data/S 99 5276 pAKT F02/HistoProjectDef3.xml";
-	argv[7] = "C:/Data/S 99 5276 pAKT F02/finalseg.tif";	
+
+	argv[1] = "C:/Data/S_06_3423_1C_pERK_F04/S 06-3423 1C_pERK_CD34 AF488 CA9 AF647 SMA Cy3_IP8_F04_40XQB_Nuclear(H).tif";
+	argv[2] = "C:/Data/S_06_3423_1C_pERK_F04/S 06-3423 1C_pERK_CD34 AF488 CA9 AF647 SMA Cy3_IP8_F04_40XQB_Nuclear(H)_label_nuc.tif";
+	argv[3] = "C:/Data/Phantom/SegParams.ini";
+	argv[4] = "C:/Data/S_06_3423_1C_pERK_F04/training3.txt";
+	argv[5] = "C:/Data/S_06_3423_1C_pERK_F04/Histo_Input_Image.xml";
+	argv[6] = "C:/Data/S_06_3423_1C_pERK_F04/HistoProjectDef3.xml";
+	argv[7] = "C:/Data/S_06_3423_1C_pERK_F04/finalseg.tif";	
+	
 
 	typedef itk::Image< unsigned char,3>InputImageType;
 	typedef itk::Image< unsigned short,3> OutputImageType;
@@ -89,28 +91,23 @@ int main ( int argc ,  char** argv)
 	model_nucleus_seg *MNS = new model_nucleus_seg();
 	MNS->SetRawImage(argv[1]);
 	MNS->SetLabelImage((argv[2]));
-	MNS->SetAssocFeatNumber(atoi(argv[3]));
-
-	int numfeat = MNS->getNumFeat();
-	MNS->SetTrainingFile(argv[4],numfeat+atoi(argv[3]));
-	MNS->getFeatureNames(argv[4]);
+	MNS->LoadSegParams(argv[3]);
+	MNS->SetTrainingFile(argv[4]);
 	
 
-	////Compute the associations
-	MNS->Associations(argv[5],argv[6]);
+	////Compute the associations if associative features provided
+	if(MNS->getasscofeatnumb()>0)
+		MNS->Associations(argv[5],argv[6]);
+	
 	std::vector<unsigned short> US_Cell_ids = MNS->Detect_undersegmented_cells();
+	
+	if(US_Cell_ids.size()>0)
+	{
+		MNS->bImage2 = MNS->SplitImage(US_Cell_ids,MNS->inputImage,MNS->bImage);
+		MNS->splitflag = 1;
+	}
 
-	//if(US_Cell_ids.size()>0)
-	//{
-	//	typedef itk::Image< unsigned short, 3 > OutputImageType;
-	//	OutputImageType::Pointer  newLabelImage;
-
-	//	newLabelImage = MNS->SplitImage(US_Cell_ids,MNS->inputImage,MNS->bImage);
-	//	//Reset the Label Image after splitting
-	//	MNS->SetSplitImage(newLabelImage);
-	//}
-
-
+	
 	typedef ftk::LabelImageToFeatures< unsigned char,  unsigned short, 3 > FeatureCalcType;
 	typedef ftk::IntrinsicFeatures FeaturesType;
 
@@ -120,40 +117,69 @@ int main ( int argc ,  char** argv)
 	MNS->GetFeatsnImages();
 
 
-//	//Compute the associations after the split 
-	//MNS->Associations(argv[5],argv[6]);
+//	//Compute the associations after the split
+	if(MNS->splitflag==1)
+		MNS->Associations(argv[5],argv[6]);
 
 
-	std::cout<<"Computing Scores"<<std::endl;
-
-//	//Iniscores contains the inital scores of all the fragments
+	//Iniscores contains the inital scores of all the fragments
 	std::vector<double> IniScores = MNS->GetOriginalScores();
+	//Writing this image is necessary
+	
+
+
+
 
 ////	 idlist will contain the list of all the ids for which the 
 ////	 MergeTrees have to be built and analyzed.
+	
 	std::vector<unsigned short> idList = MNS->getListofIds(); 	
 	std::vector< unsigned short > labelIndex = MNS->getLabelIndex();
 	std::vector<FeaturesType> allFeat = MNS->getFeats();
-	
+	seg_graphs *sg1;
   //Loop through the list of ids and build graphs.
-	seg_graphs *sg1 = new seg_graphs();
-	InputImageType::Pointer im = MNS->getRawImage();
-	OutputImageType::Pointer om = MNS->getLabImage();
-	sg1->runLabFilter(im,om);
+	if(MNS->splitflag==0)
+		seg_graphs *sg1 = new seg_graphs(MNS->inputImage,MNS->bImage);
+	else
+		seg_graphs *sg1 = new seg_graphs(MNS->inputImage,MNS->bImage2);
+	//sg1->runLabFilter();
 	sg1->setFeats(allFeat,labelIndex);
 
+
+	if(MNS->splitflag==0)
+		writeImage<OutputImageType>(MNS->bImage,argv[7]);
+	else
+		writeImage<OutputImageType>(MNS->bImage2,argv[7]);
+
+
+	// 1e5 is the default volume I choose. With this
+	// default value, the size of the tree is controlled 
+	// only by the depth value and volume has no effect
+	// If this limit is specified in the parameters file 
+	// that value takes precedence
+
+	if(MNS->MAX_VOL!=1e5)
+		sg1->setmaxVol(MNS->MAX_VOL);
 	
+	// 6 is the default depth I choose. If specidied differently 
+	// in the parameters file, then use that value
+	if(MNS->MAX_DEPTH!=6)
+		sg1->setmaxDepth(MNS->MAX_DEPTH);
+	
+		
 
 	for (unsigned short r = 0;r < idList.size();r++)
 	{		
 		FeatureCalcType::LabelPixelType id = idList[r]; 
+		cout<<"\rEvaluating Hypothesis for id "<<id;
 		sg1->RAG = sg1->BuildRAG(id); 
 		//std::vector< std::set<int> > hypothesis = sg1->getHypothesis();
 		//Build the Merge Tree from the RAG and root information
 		seg_graphs::MTreeType mTree =  sg1->BuildMergeTreeDcon(sg1->RAG,id,sg1->hypotheses);	
 		MNS->GetScoresfromKPLS(mTree);	
 	}
-
+	
+	std::cout<<""<<std::endl;
 	MNS->SelectHypothesis();
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////

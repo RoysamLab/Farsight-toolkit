@@ -45,7 +45,7 @@ public:
   typedef ftk::IntrinsicFeatures FeaturesType;	
 
     //: constructor
-	seg_graphs();
+	seg_graphs(InputImageType::Pointer x, OutputImageType::Pointer y);
  	//: destructor
 	~seg_graphs();
   	
@@ -56,17 +56,23 @@ int GetNodeIndex(unsigned short id,RAGraph graph1);
 MTreeType BuildMergeTreeDcon(RAGraph R1, unsigned short id,std::vector< std::set<int> > hypothesis);
 std::string convert2string(unsigned short id);
 void Initialize(unsigned short id);
-void runLabFilter(InputImageType::Pointer input,OutputImageType::Pointer output);
+//void runLabFilter(InputImageType::Pointer input,OutputImageType::Pointer output);
 std::vector< std::set<int> > hypotheses;
 //inline std::vector< std::set<int> > getHypothesis() {return hypotheses;};
 FeatureCalcType::Pointer labelFilter;
 std::vector<FeaturesType> allFeat;
 std::vector< unsigned short > labelIndex;
 void setFeats(std::vector<FeaturesType> allFeat,std::vector< unsigned short > labelIndex);
+
+void setmaxVol(double vol);
+void setmaxDepth(int depth);
+
+
 private:
 
+	double MAX_VOL;
+	int MAX_DEPTH;
 	
-
 };
 
 

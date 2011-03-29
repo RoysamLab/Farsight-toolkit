@@ -9,25 +9,46 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-seg_graphs::seg_graphs()
+seg_graphs::seg_graphs(InputImageType::Pointer input,OutputImageType::Pointer output)
 {
 	hypotheses.clear();
+	MAX_VOL = 1e5;
+	MAX_DEPTH = 6;
 
- }
-
-
-void seg_graphs::runLabFilter(InputImageType::Pointer input,OutputImageType::Pointer output)
-{
-	///////////////////////////////////////////////////////////////////////////////////////////////////////
+		///////////////////////////////////////////////////////////////////////////////////////////////////////
 	// NEED TO CALCULATE THE NEIGHBORHOOD INFORMATION FOR ALL IDs
 	///////////////////////////////////////////////////////////////////////////////////////////////////////	
 	labelFilter = FeatureCalcType::New();
 	labelFilter->SetImageInputs( input, output );
-	std::cout<<input->GetLargestPossibleRegion().GetSize()<<std::endl;
-	std::cout<<output->GetLargestPossibleRegion().GetSize()<<std::endl;
 	labelFilter->SetLevel(3);
 	labelFilter->ComputeHistogramOn();
 	labelFilter->Update();
+
+ }
+
+
+//void seg_graphs::runLabFilter(InputImageType::Pointer input,OutputImageType::Pointer output)
+//{
+//	///////////////////////////////////////////////////////////////////////////////////////////////////////
+//	// NEED TO CALCULATE THE NEIGHBORHOOD INFORMATION FOR ALL IDs
+//	///////////////////////////////////////////////////////////////////////////////////////////////////////	
+//	labelFilter = FeatureCalcType::New();
+//	labelFilter->SetImageInputs( input, output );
+//	labelFilter->SetLevel(3);
+//	labelFilter->ComputeHistogramOn();
+//	labelFilter->Update();
+//	
+//}
+
+void seg_graphs::setmaxVol(double vol)
+{
+	this->MAX_VOL = vol;
+
+}
+
+void seg_graphs::setmaxDepth(int depth)
+{
+	this->MAX_DEPTH = depth;
 }
 
 
@@ -253,7 +274,7 @@ seg_graphs::MTreeType seg_graphs::BuildMergeTreeDcon(seg_graphs::RAGraph R1, uns
 					// If not update the 	   
 					else
 					{
-						bool dcon = (depth<6);
+						bool dcon = (depth<MAX_DEPTH);
 						if(dcon)
 						{
 								curr_depth_RPS.clear();
@@ -284,7 +305,7 @@ seg_graphs::MTreeType seg_graphs::BuildMergeTreeDcon(seg_graphs::RAGraph R1, uns
 					
 					//Check for the volume condition 
 					//Prevents unnecessary extension of tree branches in clusters   
-					bool vol_cond = (vol<2000);
+					bool vol_cond = (vol<MAX_VOL);
 
 					if(hypo_cond && vol_cond)
 					{

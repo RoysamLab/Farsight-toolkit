@@ -90,7 +90,8 @@ model_nucleus_seg::model_nucleus_seg()
 {
 
 	inputImage = NULL;
-	bImage =NULL;
+	bImage  = NULL;
+	bImage2 = NULL;
 	duplicator = NULL; 
 	bImagetemp= NULL;  
 	clonedImage = NULL;
@@ -115,23 +116,12 @@ model_nucleus_seg::model_nucleus_seg()
 
 	Feats.clear();
 	normFeats.clear();
-
-	volLimit.resize(3);
-
-	//number of Princi Comps
-	NUM_CLASS = 3;
-	NUM_COMP = 5;
-	NUM_FEAT = 7;
-	NUM_ASSOC_FEAT = 0;
 	
-
-	prior.resize(3);
-
-	prior[0] = 0.1;
-	prior[1] = 0.1;
-	prior[2] = 0.8;
-
+	MAX_VOL = 1e5;
+	MAX_DEPTH = 6;
+	WC_DEFAULT = 5.; //WC_DEFAULT is used in calc scores: libagf parameter
 	globalcount = 0;
+	splitflag = 0;
 }
 
 
@@ -166,16 +156,17 @@ void model_nucleus_seg::SetAssocFeatNumber(int nFeat)
 ///////////////////////
 // SET THE TRAINING FILE
 ///////////////////////
-void model_nucleus_seg::SetTrainingFile(char* fname, int inputDimensions)
+void model_nucleus_seg::SetTrainingFile(char* fname)
 {	
-	Feats	=	this->getTrSet(fname,inputDimensions); //Samples * Feats+2 matrix
+
+	int inputDimensions = this->NUM_FEAT+this->NUM_ASSOC_FEAT;
+
+	Feats = this->getTrSet(fname,inputDimensions); //Samples * Feats+2 matrix
 	
 	// Calculate the (Avg Volume - 1*Std of vol ) for each class
 	//This will be useful for constructing trees.
 	calcvolLimits(Feats);
-	
 	normFeats = this->normTrSet(fname,inputDimensions); 
-
 	vnl_matrix<double> normFeats_tr = normFeats.transpose();// Feats * Samples matrix
 	vnl_matrix<double> covMat = normFeats_tr*normFeats/(normFeats.rows()); // Feats * Feats matrix
 	
@@ -199,15 +190,16 @@ void model_nucleus_seg::SetTrainingFile(char* fname, int inputDimensions)
 		for(int j = 0; j < inputDimensions; j++)
 		{	
 			currvec[j] = currvec[j]/sqrt(den);
-			std::cout<< currvec[j] << " " ;
+			//std::cout<< currvec[j] << " " ;
 		}
-		std::cout<<eig.D(i,i)<<std::endl;
+		//std::cout<<eig.D(i,i)<<std::endl;
 		eigenvecs[i] = currvec;
 		currvec.clear();
 		currvec.resize(inputDimensions);
 	}
 
 	Tset2EigenSpace(normFeats,Feats);
+	getFeatureNames(fname); //get the feature names used in this model
 	//GetIndices();
 }		
 
@@ -287,19 +279,25 @@ void model_nucleus_seg::getFeatureNames(char* fname)
 
 std::vector< std::vector< double> > model_nucleus_seg::Associations(char* xmlImage,char* projDef )
 {	
-
 	allFeat.clear();
 	labelIndex.clear();
 
 	labFilter = FeatureCalcType::New();
-	labFilter->SetImageInputs( inputImage, bImage );
+	if(this->splitflag==0)
+		labFilter->SetImageInputs( inputImage, bImage );
+	else
+		labFilter->SetImageInputs( inputImage, bImage2 );
+
 	labFilter->SetLevel(3);
 	labFilter->ComputeHistogramOn();
 	labFilter->Update();
 	labels = labFilter->GetLabels();
-
 	
-	getFeatureVectorsFarsight(bImage,inputImage,allFeat);
+	if(this->splitflag==0)
+		getFeatureVectorsFarsight(bImage,inputImage,allFeat);
+	else
+		getFeatureVectorsFarsight(bImage2,inputImage,allFeat);
+
 	labelIndex.resize(allFeat.size());	
 	
 	for(int counter=0; counter < allFeat.size(); counter++)
@@ -319,7 +317,8 @@ std::vector< std::vector< double> > model_nucleus_seg::Associations(char* xmlIma
 // SET SPLIT IMAGE
 ///////////////////////
 void model_nucleus_seg::SetSplitImage(OutputImageType::Pointer img1)
-{
+{	
+	this->bImage  = NULL;
 	this->bImage = img1;
 }	
 
@@ -335,17 +334,6 @@ std::vector<unsigned short> model_nucleus_seg::Detect_undersegmented_cells()
 	relabel->Update();
 	bImage = relabel->GetOutput();
 	//////////////////////////////////////////////////////////////////////////////////////////////////////	
-
-
-	//////////////////////////////////////////////////////////////////////////////////////////////////////	
-	// COMPUTE THE FEATURES 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////	
-	FeatureCalcType::Pointer labFilter1 = FeatureCalcType::New();
-	labFilter1->SetImageInputs(inputImage,bImage);
-	labFilter1->SetLevel(3);
-	labFilter1->ComputeHistogramOn();
-	labFilter1->Update();
-	labels = labFilter1->GetLabels();
 	numLabels = labels.size()-1;
 	//Any Id greater than maxL has been split !
 	maxL = numLabels;
@@ -354,7 +342,7 @@ std::vector<unsigned short> model_nucleus_seg::Detect_undersegmented_cells()
 	///////////////////////////////////////////////////////////////////////////////////////////////////////	
 	// Run SVM : DETECT THE OBJECTS THAT ARE UNDERSEGMENTED
 	//////////////////////////////////////////////////////////////////////////////////////////////////////
-	std::vector<unsigned short> outliers = runSVM(this->gettrainFeats(),labFilter1);
+	std::vector<unsigned short> outliers = runSVM(this->gettrainFeats(),labFilter);
 	std::cout<< outliers.size() <<" ---- cells are undersegmented " <<std::endl;
 	return outliers;
 }	
@@ -452,16 +440,16 @@ model_nucleus_seg::FeaturesType model_nucleus_seg::get_merged_features(set<int> 
 	std::vector<int> currlabs;
 	currlabs.resize(currRPS.size());
 
-	std::cout<<"Merged ---> " << std::endl;
+	//std::cout<<"Merged ---> " << std::endl;
 	RPSIterator = currRPS.begin();
 	for(; RPSIterator != currRPS.end(); ++RPSIterator)
 	{
 		vector<unsigned short>::iterator posn1 = find(labelIndex.begin(), labelIndex.end(), *RPSIterator);		
 		currlabs[ctr1] = allFeat[posn1 - labelIndex.begin()].num;
-		std::cout<<currlabs[ctr1]<<" ";
+	//	std::cout<<currlabs[ctr1]<<" ";
 		ctr1++;
 	}
-	std::cout<<std::endl;
+	//std::cout<<std::endl;
 
 	RPSIterator = currRPS.begin();
 
@@ -547,17 +535,29 @@ void model_nucleus_seg::GetFeatsnImages()
 	// NEED TO CALCULATE THE FEATURES OF THE NEW SPLIT IMAGE WITH A NEW FILTER 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////	
 	labFilter = FeatureCalcType::New();
-	labFilter->SetImageInputs( inputImage, bImage );
+	if(this->splitflag==0)
+		labFilter->SetImageInputs( inputImage, bImage);
+	else
+		labFilter->SetImageInputs( inputImage, bImage2);
+
 	labFilter->SetLevel(3);
 	labFilter->ComputeHistogramOn();
 	labFilter->Update();
 	labels = labFilter->GetLabels();
 
-	getFeatureVectorsFarsight(bImage,inputImage,allFeat);
+	if(this->splitflag==0)
+		getFeatureVectorsFarsight(bImage,inputImage,allFeat);
+	else
+		getFeatureVectorsFarsight(bImage2,inputImage,allFeat);
+	
+	
 	labelIndex.resize(allFeat.size());	
 	for(int counter=0; counter < allFeat.size(); counter++)
-	{
-		li.push_back(model_nucleus_seg::extract_label_image(allFeat[counter].num,allFeat[counter].BoundingBox,bImage));
+	{	
+		if(this->splitflag==0)
+			li.push_back(model_nucleus_seg::extract_label_image(allFeat[counter].num,allFeat[counter].BoundingBox,bImage));
+		else
+			li.push_back(model_nucleus_seg::extract_label_image(allFeat[counter].num,allFeat[counter].BoundingBox,bImage2));
 		ri.push_back(model_nucleus_seg::extract_raw_image(allFeat[counter].BoundingBox,inputImage));		 
 		labelIndex[counter] =  allFeat[counter].num;
 	}	
@@ -930,6 +930,14 @@ std::vector<double> model_nucleus_seg::populateVector(ftk::IntrinsicFeatures *f)
 			if(this->featureNames[k] ==  f->Info[i].name)
 			{
 				filtered_features[ctr] = f->ScalarFeatures[i];
+				if(this->featureNames[k] == "convexity")
+				{
+					//Make sure convexity is not INF ( happens for really small fragments)
+					if(filtered_features[ctr] > 10000000)
+					{
+						filtered_features[ctr] = 1;
+					}
+				}
 				++ctr;
 			}
 		}
@@ -955,7 +963,13 @@ void model_nucleus_seg::labelChange(unsigned short id1,unsigned short id2)
 	lsfilterChange->Update();
 	region1 = lsfilterChange->GetRegion(id2);
 	IteratorType regioniterator(clonedImage,region1);
-	IteratorType regioniterator2(bImage,region1);
+	IteratorType regioniterator2;
+
+	if(this->splitflag==0)
+		IteratorType regioniterator2(bImage,region1);
+	else
+		IteratorType regioniterator2(bImage2,region1);
+
 	for(regioniterator.GoToBegin(),regioniterator2.GoToBegin(); !regioniterator.IsAtEnd(),!regioniterator2.IsAtEnd();++regioniterator,++regioniterator2)
 	{
 		if(regioniterator2.Value() == id2) 
@@ -996,7 +1010,6 @@ void model_nucleus_seg::GetScoresfromKPLS(seg_graphs::MTreeType mTree)
 				filtered_features = populateVector(&f);
 				//Get the score for this ID
 				score = GetScoreforId(filtered_features);
-				std::cout<<score<<std::endl;
 			}
 			else
 			{
@@ -1020,8 +1033,6 @@ void model_nucleus_seg::GetScoresfromKPLS(seg_graphs::MTreeType mTree)
 
 				//Get the score for this ID	
 				score = GetScoreforId(filtered_features);
-				std::cout<<score<<std::endl;
-
 			}
 
 			for(RPSIterator = currRPS.begin(); RPSIterator != currRPS.end(); ++RPSIterator)
@@ -1043,7 +1054,7 @@ void model_nucleus_seg::GetScoresfromKPLS(seg_graphs::MTreeType mTree)
 			mhmBRows.clear();	
 			mhmRows.resize(allFeat.size());		 
 			mhmBRows.resize(allFeat.size());
-
+			//cout<<"\rEvaluating Hypothesis "<<hypoMatrix.size();
 		}
 		counter = counter +1;
 	}
@@ -1135,15 +1146,16 @@ void model_nucleus_seg::PerformMerges(char* x)
 	////Create a clone of the original output. Will perform merges on this image	
 	typedef itk::ImageDuplicator< OutputImageType > DuplicatorType; 
 	DuplicatorType::Pointer duplicator1 = DuplicatorType::New(); 
-	duplicator1->SetInputImage(bImage); 
+	if(this->splitflag==0)
+		duplicator1->SetInputImage(bImage); 
+	else
+		duplicator1->SetInputImage(bImage2); 
+
 	duplicator1->Update();
 	clonedImage = duplicator1->GetOutput();	
 
-	std::cout<<hypoMatrix.size()<<std::endl;
-	std::cout<<mergeindices.size()<<std::endl;
-	std::cout<<totalCount<<std::endl;
+	std::cout<<"No.of valid hypotheses:"<<mergeindices.size()<<std::endl;
 
-	getch();
 
 	for(int i =0 ; i< mergeindices.size() ; ++i)
 	{
@@ -1343,12 +1355,7 @@ std::vector<double> model_nucleus_seg::GetOriginalScores()
 		double currVol = allFeat[g].ScalarFeatures[ftk::IntrinsicFeatures::VOLUME];
 		double eccen = allFeat[g].ScalarFeatures[ftk::IntrinsicFeatures::ECCENTRICITY];
 		double sb = allFeat[g].ScalarFeatures[ftk::IntrinsicFeatures::SHARED_BOUNDARY];
-		
-		//Convexity is not INF 
-		if(filtered_features2[convexityIndex] > 10000000)
-		{
-			filtered_features2[convexityIndex] = 1;
-		}
+	
 
 		if(!NUM_ASSOC_FEAT)
 		{
@@ -1596,7 +1603,9 @@ std::vector<unsigned short> model_nucleus_seg::runSVM(vnl_matrix<double> feats,m
 	}
 
 
-	//Then get the Associative Features here
+	//Then get the Associative Features here if present
+	if(this->NUM_ASSOC_FEAT>0)
+	{
 		for (unsigned long r = 1; r<labels.size();++r)
 		{
 			std::vector<double> assoc = this->AssocFeat[r-1];
@@ -1607,7 +1616,7 @@ std::vector<unsigned short> model_nucleus_seg::runSVM(vnl_matrix<double> feats,m
 					objfeaturesNN.at(r-1).push_back(val);
 				}
 		}
-
+	}
 
 	//getch();
 
@@ -1955,7 +1964,8 @@ std::vector<double **> model_nucleus_seg::PrepareDataforScores(double **Data,int
 
 void model_nucleus_seg::SelectHypothesis()
 {
-
+	
+	std::cout<<"hahahaha2"<<std::endl;
 	glp_prob *lp;
 	lp = glp_create_prob();
 	glp_set_prob_name(lp, "Sel_Hypo");
@@ -1963,11 +1973,12 @@ void model_nucleus_seg::SelectHypothesis()
 	glp_add_rows(lp, allFeat.size());	
 
 	long p1 = hypoMatrix.size()*allFeat.size()+1;
-
+	
 	int *ia = (int *)malloc(p1*sizeof(int));
 	int *ja = (int *)malloc(p1*sizeof(int));
 	double *ar = (double *)malloc(p1*sizeof(double));
 
+	
 
 	//Setting the upper and lower bounds of the variables
 
@@ -1976,7 +1987,13 @@ void model_nucleus_seg::SelectHypothesis()
 		glp_set_row_bnds(lp, i+1, GLP_UP, 0.0, 1.0);
 	}
 
+
+	std::cout<<"hahahaha"<<std::endl;
+
 	glp_add_cols(lp, hypoMatrix.size());
+
+
+	std::cout<<"hahahaha"<<std::endl;
 
 	//Setting the co-eff of the objective function
 	for(unsigned int i=0 ; i < hypoMatrix.size(); ++i)
@@ -1998,6 +2015,8 @@ void model_nucleus_seg::SelectHypothesis()
 		glp_set_obj_coef(lp,range,sum);
 
 	}
+																				
+	std::cout<<"hahahaha"<<std::endl;
 
 	unsigned int ctr = 1;
 
@@ -2072,6 +2091,64 @@ bool model_nucleus_seg::LoadAssoc(std::string filename)
 	//doc.close();
 	return true;
 }
+
+
+
+
+////Loads the Parameters file 
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+//LOAD THE SEGMENTATION PARAMETERS FILE
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+bool model_nucleus_seg::LoadSegParams(std::string filename)
+{
+	TiXmlDocument doc;
+	if ( !doc.LoadFile( filename.c_str() ) )
+		return false;
+
+	TiXmlElement* rootElement = doc.FirstChildElement();
+	const char* docname = rootElement->Value();
+	if ( strcmp( docname, "SegmentationDefinition" ) != 0 )
+		return false;
+
+	std::string name = rootElement->Attribute("name");//default
+
+	TiXmlElement * parentElement = rootElement->FirstChildElement();
+	const char * parent = parentElement->Value();
+		if ( strcmp(parent,"SegParameters") == 0 )
+		{
+			TiXmlElement * parameterElement = parentElement->FirstChildElement();
+			const char * parameter = parameterElement ->Value();
+			this->NUM_CLASS = atoi(parameterElement->Attribute("NUM_CLASS"));
+			this->NUM_COMP = atoi(parameterElement->Attribute("NUM_COMP"));
+			this->NUM_FEAT = atoi(parameterElement->Attribute("NUM_FEAT"));
+			this->NUM_ASSOC_FEAT = atoi(parameterElement->Attribute("NUM_ASSOC_FEAT"));
+			
+			if(parameterElement->Attribute("MAX_VOL"))
+				this->MAX_VOL = static_cast<double>(atoi(parameterElement->Attribute("MAX_VOL")));
+			if(parameterElement->Attribute("MAX_DEPTH"))
+				this->MAX_DEPTH =  atoi(parameterElement->Attribute("MAX_DEPTH"));
+			if(parameterElement->Attribute("WC_DEFAULT"))
+				this->WC_DEFAULT = static_cast<double>(atoi(parameterElement->Attribute("WC_DEFAULT")));
+			
+			this->prior.resize(this->NUM_CLASS);
+			this->volLimit.resize(this->NUM_CLASS);		
+			//Assign Prior Probabilities
+			for(unsigned long i=1; i<=this->NUM_CLASS;++i)
+			{
+				string Prior = "PRIOR"+convert2string(i);
+				this->prior[i-1] = strtod((parameterElement->Attribute(Prior))->c_str(),NULL);			
+			}
+		}
+		else 
+		{
+			printf("Wrong Format for Parameter File\n");
+		}
+
+	return true;
+}
+
+
+
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2169,8 +2246,12 @@ std::vector < std::vector<double> > model_nucleus_seg::ComputeAssociations(void)
 			}
 			OutputImageType::Pointer inp_im  = OutputImageType::New();	
 			inp_im = myFtkImage->GetItkPtr<unsigned short>(0,inp_channel_number,ftk::Image::DEEP_COPY);
-			//inp_im = img->GetItkPtr<unsigned short>(0,inp_channel_number);
-			assoc = new ftk::NuclearAssociationRules("",0,bImage, inp_im);
+			
+			if(this->splitflag==0)
+				assoc = new ftk::NuclearAssociationRules("",0,bImage, inp_im);
+			else
+				assoc = new ftk::NuclearAssociationRules("",0,bImage2, inp_im);
+
 			assoc->AddAssociation( (*ascit).GetRuleName(), "", (*ascit).GetOutDistance(), (*ascit).GetInDistance(),	(*ascit).IsUseWholeObject(), (*ascit).IsUseBackgroundSubtraction(), (*ascit).IsUseMultiLevelThresholding(),(*ascit).GetNumberOfThresholds(), (*ascit).GetNumberIncludedInForeground(), (*ascit).GetAssocType(), (*ascit).get_path() );		
 
 			//I have modified ComputeoneAssoc method to include multiple labels in getmergedfeaturestest.
@@ -2304,10 +2385,19 @@ std::vector<double> model_nucleus_seg::ComputeOneAssocMeasurement(itk::SmartPoin
 	OutputImageType::RegionType region2;
 	region2.SetSize( size );
 	region2.SetIndex( start2 );
-	bImage->SetRequestedRegion(region2);
-	trgIm->SetRequestedRegion(region2);
+	if(this->splitflag==0)
+		bImage->SetRequestedRegion(region2);
+	else	
+		bImage2->SetRequestedRegion(region2);
 
-	IteratorType iterator1(bImage, bImage->GetRequestedRegion());
+	trgIm->SetRequestedRegion(region2);
+	IteratorType iterator1;
+
+	if(this->splitflag==0)
+		IteratorType iterator1(bImage, bImage->GetRequestedRegion());
+	else
+		IteratorType iterator1(bImage2, bImage2->GetRequestedRegion());
+
 	DIteratorType iterator2(subSegImg, subSegImg->GetRequestedRegion());
 
 	//in the sub-segmentation image, we need to mask out any pixel from another object	

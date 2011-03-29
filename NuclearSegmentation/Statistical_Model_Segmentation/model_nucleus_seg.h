@@ -53,7 +53,7 @@
 
 #include <iostream>
 #include <cmath>
-#include "itkListSample2.h"
+//#include "itkListSample2.h"
 #include "itkFixedArray.h"
 
 #include <vnl/algo/vnl_real_eigensystem.h>
@@ -83,7 +83,7 @@
 # include "seg_graphs.h"
 
 #include <PatternAnalysis/agf/agf.h>
-#include "pcaclass.h"
+//#include "pcaclass.h"
 
 #include "itkOtsuMultipleThresholdsCalculator.h"
 
@@ -93,7 +93,6 @@ using namespace std;
 using namespace boost;
 
 
-#define WC_DEFAULT 5.
 #define MM_PI		3.14159265358979323846
 #define MM_PI_2		1.57079632679489661923
 
@@ -130,7 +129,9 @@ public:
   typedef struct { int number; std::string name; std::string type; } Channel;	
 	
   InputImageType::Pointer inputImage;
-  OutputImageType::Pointer bImage ;	
+  OutputImageType::Pointer bImage;	
+  OutputImageType::Pointer bImage2;
+
    int featureNumb; 
 	//: constructor
 	model_nucleus_seg();
@@ -164,10 +165,10 @@ public:
 	void SetAssocFeatNumber(int nFeat);
 	void PerformPCA();
 	void model_nucleus_seg::Tset2EigenSpace(vnl_matrix<double> nFeats,vnl_matrix<double> Feats);
+	inline int getasscofeatnumb() { return NUM_ASSOC_FEAT;};
 
-
-	std::vector< std::vector< double> > Associations(char* xmlImage,char* projDef );
-	std::vector < std::vector<double> > model_nucleus_seg::ComputeAssociations(void);
+	std::vector< std::vector< double> > Associations(char* xmlImage,char* projDef);
+	std::vector < std::vector<double> > ComputeAssociations(void);
 	OutputImageType::Pointer Shatter_Nuclei(InputImageType::Pointer roiImage);
 	
 	void SelectHypothesis();
@@ -210,8 +211,14 @@ public:
 	void calcvolLimits(vnl_matrix<double> feats);
 	std::vector<double> calcStats(std::vector<double> classVol);
 	unsigned short model_nucleus_seg::returnthresh( OutputImageType::Pointer input_image, int num_bin_levs, int num_in_fg );
-	//double model_nucleus_seg::ComputeSurroundedness(InputImageType::Pointer input_image,OutputImageType::Pointer inp_labeled, int number_of_rois, unsigned short thresh, int surr_dist,std::vector<int>objID);
-	//void GetIndices();
+	bool LoadSegParams(std::string filename);
+
+
+	double MAX_VOL;
+	int MAX_DEPTH;
+	double WC_DEFAULT;
+
+	int splitflag;
 	
 private:	
 	
