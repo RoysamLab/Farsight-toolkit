@@ -28,7 +28,12 @@ OPTION( WRAP_PYTHON "Wrap Farsight in Python" OFF )
 OPTION( BUILD_EMBREX "Build Mark Embrecht's KPLS module" OFF )
 OPTION( BUILD_UNMIXING "Build Unmixing module" OFF )
 OPTION( BUILD_OPENMP "Build with OpenMP support (Note that only VS2008 Pro and VS2008 Team System supports OpenMP)" OFF)
-OPTION( BUILD_OPENCL "Build with OpenCL support (VS 2008 only at the moment)" OFF)
+
+#Make sure OPENCL AND CUDA ARE NOT BOTH ENABLED
+OPTION( BUILD_OPENCL "Build with OpenCL support (VS 2008 only at the moment)" OFF) 
+OPTION(	BUILD_CUDA "Build with CUDA support" OFF)
+
+
 MARK_AS_ADVANCED(BUILD_EMBREX)
 MARK_AS_ADVANCED(WRAP_PYTHON)
 
@@ -82,18 +87,6 @@ IF(QT4_FOUND)
 ELSE(QT4_FOUND)
     MESSAGE(FATAL_ERROR "Cannot build without Qt4")
 ENDIF(QT4_FOUND)
-
-
-FIND_PACKAGE(CUDA)
-IF (CUDA_FOUND)
-    IF (MSVC)
-        #SET (CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE OFF)
-	SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D CUDA")
-        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D CUDA")
-	SET (CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -arch=sm_20)
-	INCLUDE_DIRECTORIES( $ENV{CUDA_INC_PATH} )
-    ENDIF(MSVC)
-ENDIF (CUDA_FOUND)
 
 ################################################################################
 ################################################################################
@@ -223,6 +216,19 @@ IF (BUILD_OPENCL)
     
 endif (MSVC)
 ENDIF(BUILD_OPENCL)
+
+IF (BUILD_CUDA)
+    FIND_PACKAGE(CUDA)
+        IF (CUDA_FOUND)
+    	    IF (MSVC)
+       	        #SET (CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE OFF)
+	        SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D CUDA")
+ 	        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D CUDA")
+	        SET (CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -arch=sm_20)
+	    INCLUDE_DIRECTORIES( $ENV{CUDA_INC_PATH} )
+        ENDIF(MSVC)
+    ENDIF (CUDA_FOUND)
+ENDIF(BUILD_CUDA)
 
 #####################################################################################
 # Optionally find Farsight's data directory, used for testing and installers

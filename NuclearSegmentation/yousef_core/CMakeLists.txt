@@ -84,13 +84,13 @@ INCLUDE_DIRECTORIES(gvc)
 #######################################
 
 
-if (CUDA_FOUND)
+if (BUILD_CUDA)
     SET ( sd3d_SRCS ${sd3d_SRCS} seed_detection_3D/LocalMaxima3D.cu  )
     SET( clust_SRCS ${clust_SRCS} clustering_3D/Local_Max_Clust_3D.cu )
 
     CUDA_ADD_LIBRARY( Yousef_Nucleus_Seg ${NSRCS} ${sd3d_SRCS} ${sd2d_SRCS} ${mcgl3d_SRCS} ${emgmm_SRCS} ${clust_SRCS} ${clust2d_SRCS} ${border_SRCS} ${cbin_SRCS} ${cb3_SRCS} ${prepr_SRCS})
-else (CUDA_FOUND)
+else (BUILD_CUDA)
     ADD_LIBRARY( Yousef_Nucleus_Seg ${NSRCS} ${sd3d_SRCS} ${sd2d_SRCS} ${mcgl3d_SRCS} ${emgmm_SRCS} ${clust_SRCS} ${clust2d_SRCS} ${border_SRCS} ${cbin_SRCS} ${cb3_SRCS} ${prepr_SRCS})
-endif (CUDA_FOUND)
+endif (BUILD_CUDA)
 
 TARGET_LINK_LIBRARIES ( Yousef_Nucleus_Seg ITKBasicFilters ITKCommon ITKIO)

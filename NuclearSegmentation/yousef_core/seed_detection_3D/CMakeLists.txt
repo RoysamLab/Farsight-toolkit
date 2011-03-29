@@ -8,14 +8,14 @@ SET( SRCS
 If CUDA is found, then add CUDA file and add to library
 ###########################
 
-if (CUDA_FOUND)
+if (BUILD_CUDA)
     SET (SRCS ${SRCS} LocalMaxima3D.cu )
     CUDA_ADD_LIBRARY( seedsDetection_3D ${SRCS} )
 
-else (CUDA_FOUND)
+else (BUILD_CUDA)
     ADD_LIBRARY( seedsDetection_3D ${SRCS} )
 
-endif (CUDA_FOUND)
+endif (BUILD_CUDA)
 
 TARGET_LINK_LIBRARIES ( seedsDetection_3D ITKBasicFilters ITKCommon ITKIO)
 
