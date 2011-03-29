@@ -21,8 +21,10 @@ limitations under the License.
 #include <itkConstantBoundaryCondition.h>
 #include <itkRescaleIntensityImageFilter.h>
 #include <itkExtractImageFilter.h>
+#include<conio.h>
 
-//#include <math.h>
+
+#include <math.h>
 
 //******************************************************************************
 // LabelImageToFeatures.h/cpp is a class similar to an ITK Filter.
@@ -97,7 +99,6 @@ LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	this->computationLevel = 2;
 	this->computeHistogram = false;					
 	this->computeTextures = false;
-						
 }
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
@@ -127,6 +128,7 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		intensityImage = intImgIn;		//Use Full Image
 	} 
 	
+	
 	if( lblRegion != lblImgIn->GetBufferedRegion() )
 	{
 		//Crop Image to Requestedd Region
@@ -141,9 +143,64 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	{
 		labelImage = lblImgIn;
 	}
-
+	
 	return true;
 }
+
+
+
+
+template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
+bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
+::SetCompleteImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn )
+{
+	typename LabelImageType::RegionType lblRegion = lblImgIn->GetLargestPossibleRegion();
+	typename IntensityImageType::RegionType intRegion = intImgIn->GetLargestPossibleRegion();
+
+	//Need to check size
+	if( lblRegion != intRegion )
+		return false;
+		
+	//Need to check regions:
+	if( intRegion != intImgIn->GetBufferedRegion() )
+	{
+		//Crop Image to Requested Region
+		typedef itk::ExtractImageFilter< IntensityImageType, IntensityImageType > CropFilterType;
+		typename CropFilterType::Pointer cropFilter = CropFilterType::New();
+		cropFilter->SetInput(intImgIn);
+		cropFilter->SetExtractionRegion(intRegion);
+		cropFilter->Update();
+		intensityImage = cropFilter->GetOutput();
+	}
+	else
+	{
+		intensityImage = intImgIn;		//Use Full Image
+	} 
+	
+	
+	if( lblRegion != lblImgIn->GetBufferedRegion() )
+	{
+		//Crop Image to Requestedd Region
+		typedef itk::ExtractImageFilter< LabelImageType, LabelImageType > CropFilterType;
+		typename CropFilterType::Pointer cropFilter = CropFilterType::New();
+		cropFilter->SetInput(lblImgIn);
+		cropFilter->SetExtractionRegion(lblRegion);
+		cropFilter->Update();
+		labelImage = cropFilter->GetOutput();
+	}
+	else
+	{
+		labelImage = lblImgIn;
+	}
+	
+	return true;
+}
+
+
+
+
+
+
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
 bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
@@ -241,7 +298,8 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
 void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 ::Update()
-{
+{	
+
 	if(!intensityImage || !labelImage)
 	{
 		std::cerr << " Please Set Input Images " << std::endl;
@@ -272,6 +330,7 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
     {
 		if(!this->RunTextureFilter()) return;		//Should throw exception
     }
+    
 }
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
@@ -676,6 +735,64 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 			if      (dist < max_bound_dist)  min_bound_dist = dist;
 			else if (dist > max_bound_dist)  max_bound_dist = dist;
 		}
+
+
+
+	//Added by Raghav : Convex Hull calculation.
+		int ctr =0;
+		int flag = 0;
+		
+		for (int i=0; i<(int)boundaryPix.at(LtoIMap[currentLabel]).size(); ++i)
+		{
+			++ctr;
+			flag =1;
+		}
+		
+		int myDimension = VImageDimension;
+		
+		// Need to correct for dimension for QHull to work correctly.
+		if(labelImage->GetLargestPossibleRegion().GetSize()[2]==1)
+		{
+			myDimension = 2;
+		}
+		
+		int dim= myDimension;             /* dimension of points */
+		int numpoints;            /* number of points */
+		boolT ismalloc= True;    /* True if qhull should free points in qh_freeqhull() or reallocation */
+		char flags[250] = "qhull file.txt";          /* option flags for qhull, see qh_opt.htm */
+		FILE *outfile= NULL;    /* output from qh_produce_output() use NULL to skip qh_produce_output() */
+		FILE *errfile= fopen("qhull file.txt","w+");    /* error messages from qhull code */
+		int exitcode;             /* 0 if no error from qhull */
+		facetT *facet;            /* set by FORALLfacets */
+		int curlong, totlong;     /* memory remaining after qh_memfreeshort */
+		int i;
+			
+		if(flag==1)
+		{
+		coordT *points = new coordT[(dim+1)*ctr];
+		coordT *pointz;	
+		ctr = 0;
+		
+		for (int i=0; i<(int)boundaryPix.at(LtoIMap[currentLabel]).size(); ++i)
+		{		
+				point = boundaryPix.at(LtoIMap[currentLabel])[i];
+				pointz = points + ctr*myDimension;
+				for(int i=myDimension; i-- ; )
+				{	
+					pointz[i] = static_cast<double>(point[i]);
+				}
+				ctr++;
+			
+		} 
+		
+		int cvHull = qh_new_qhull(myDimension, ctr, points, ismalloc,flags, outfile, errfile);
+		qh_memfreeshort (&curlong, &totlong);
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::CONVEXITY] = (featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::VOLUME])/cvHull;
+		delete [] points;
+		}
+		
+	fclose(errfile);
+
 
 		//Get interior pixel information for this label
 		for (int i=0; i<(int)interiorPix.at(LtoIMap[currentLabel]).size(); ++i)
