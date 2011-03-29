@@ -144,7 +144,6 @@ public:
 	vnl_matrix <double> getTrSet(char* train_fname,int inputdDimensions);
 
 	void SetRawImage(char* fname);	
-	void SetLabelImage(char* fname);
 	void SetSplitImage(OutputImageType::Pointer img1);
 	OutputImageType::Pointer SplitImage(std::vector<unsigned short> outliers,InputImageType::Pointer rimage, OutputImageType::Pointer limage);
 	void SetTrainingFile(char* fname, int inputDimensions);				
@@ -167,8 +166,9 @@ public:
 	void model_nucleus_seg::Tset2EigenSpace(vnl_matrix<double> nFeats,vnl_matrix<double> Feats);
 	inline int getasscofeatnumb() { return NUM_ASSOC_FEAT;};
 
-	std::vector< std::vector< double> > Associations(char* xmlImage,char* projDef);
+	void Associations(char* xmlImage,char* projDef);
 	std::vector < std::vector<double> > ComputeAssociations(void);
+	void splitAssociations();
 	OutputImageType::Pointer Shatter_Nuclei(InputImageType::Pointer roiImage);
 	
 	void SelectHypothesis();
@@ -212,7 +212,7 @@ public:
 	std::vector<double> calcStats(std::vector<double> classVol);
 	unsigned short model_nucleus_seg::returnthresh( OutputImageType::Pointer input_image, int num_bin_levs, int num_in_fg );
 	bool LoadSegParams(std::string filename);
-
+	int GetYousefSeg();
 
 	double MAX_VOL;
 	int MAX_DEPTH;
@@ -221,10 +221,8 @@ public:
 	int splitflag;
 	
 private:	
-	
 
 	std::vector<Channel> inputs;	
-	
 	////Setup up the kpls:
 	KPLS *kpls;
 	KPLS *kplsdup;
@@ -304,10 +302,8 @@ private:
   OutputImageType::IndexType pixelIndex;
   OutputImageType::Pointer clonedImage;
   OutputImageType::Pointer finalImage;
-
   ftk::Image::Pointer myFtkImage;
   char * myfilename;
-
   std::vector<unsigned short> imgindex;
 
 };
