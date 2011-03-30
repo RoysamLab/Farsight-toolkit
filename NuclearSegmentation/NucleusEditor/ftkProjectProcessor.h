@@ -37,9 +37,11 @@
 #include "itkExtractImageFilter.h"
 #include "ftkGUI/TrainingDialog.h"
 #include "ftkGUI/PatternAnalysisWizard.h"
+#include "ftkGraphs/FTKgraph.h"
 #include "ftkPreprocess2.h"
 #include "PixelAnalysis/ftkPixelLevelAnalysis.h"
 #include "SQLite/NESqlite/NESqliteFactory.h"
+
 
 namespace ftk
 {
