@@ -13,14 +13,21 @@ SET( FTKFEATURES_HDRS
   ftkObjectAssociation.h
   itkLabelGeometryImageFilter.h
   itkLabelGeometryImageFilter.txx 
+	
 )
+
 
 ADD_LIBRARY( ftkFeatures
             ${FTKFEATURES_SRCS}
             ${FTKFEATURES_HDRS}
 )
 
+
+
+SUBDIRS(Qhull)
+
+
 TARGET_LINK_LIBRARIES( ftkFeatures TinyXML ftkImage
                        vtksys vtkCommon vtkFiltering vtkIO
-                       ITKCommon ITKBasicFilters ITKIO ITKStatistics )
+                       ITKCommon ITKBasicFilters ITKIO ITKStatistics QHULL)
 
