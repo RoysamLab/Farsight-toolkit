@@ -17,13 +17,14 @@ ftkgnt::ftkgnt()
  }
 
 
-void ftkgnt::runLabFilter(InputImageType::Pointer input,OutputImageType::Pointer output)
+void ftkgnt::runLabFilter(InputImageType::Pointer input, OutputImageType::Pointer output, bool CytoImage)
 {
 	///////////////////////////////////////////////////////////////////////////////////////////////////////
 	// NEED TO CALCULATE THE NEIGHBORHOOD INFORMATION FOR ALL IDs
 	///////////////////////////////////////////////////////////////////////////////////////////////////////	
+	cyto_image = CytoImage;
 	labelFilter = FeatureCalcType::New();
-	labelFilter->SetCompleteImageInputs( input, output );
+	labelFilter->SetCompleteImageInputs( input, output, cyto_image );
 	labelFilter->SetLevel(3);
 	labelFilter->ComputeHistogramOn();
 	labelFilter->Update();
