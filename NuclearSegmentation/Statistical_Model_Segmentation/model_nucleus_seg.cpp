@@ -131,6 +131,12 @@ void model_nucleus_seg::SetRawImage(char* fname)
 {
 	inputImage = readImage<InputImageType>(fname);
 
+	//Get gradient image from cytoplasm image
+	GaussianFilterType::Pointer  gaussianfilter = GaussianFilterType::New();
+	gaussianfilter->SetSigma( 2 );
+	gaussianfilter->SetInput( inputImage );
+	gaussianfilter->Update();
+	inputImage = gaussianfilter->GetOutput();
 }		
 
 void model_nucleus_seg::SetAssocFeatNumber(int nFeat)
@@ -1102,7 +1108,7 @@ std::vector<double>  model_nucleus_seg::get_merged_assoc_features(set<int> currR
 // PERFORM THE FINAL MERGES 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void model_nucleus_seg::PerformMerges(char* x)
+void model_nucleus_seg::PerformMerges(const char* x)
 {
 	////Create a clone of the original output. Will perform merges on this image	
 	typedef itk::ImageDuplicator< OutputImageType > DuplicatorType; 
@@ -1174,7 +1180,6 @@ int model_nucleus_seg::GetYousefSeg()
 	NucleusSeg->readParametersFromFile("");
 	NucleusSeg->setDataImage(in_Image,size[0],size[1],size[2],"");
 
-	// We need the new fragments to have unique Ids which do not
 	// correspond to any existing ids. So, get the max label id in 
 	// the segmented image and add this label to all the new fragments
 
@@ -1193,6 +1198,7 @@ int model_nucleus_seg::GetYousefSeg()
 		biterator.Set(output_img[i]);
 		++biterator;	
 	}
+	return 1;
 }
 
 
@@ -1975,8 +1981,6 @@ std::vector<double **> model_nucleus_seg::PrepareDataforScores(double **Data,int
 
 void model_nucleus_seg::SelectHypothesis()
 {
-	
-	std::cout<<"hahahaha2"<<std::endl;
 	glp_prob *lp;
 	lp = glp_create_prob();
 	glp_set_prob_name(lp, "Sel_Hypo");
@@ -2087,7 +2091,7 @@ bool model_nucleus_seg::LoadAssoc(std::string filename)
 		}
 		else if( strcmp( parent, "AssociationRules" ) == 0 )
 		{
-			associationRules = ftk::ReadAssociationRules(parentElement);
+			associationRules = ReadAssociationRules(parentElement);
 		}
 
 		parentElement = parentElement->NextSiblingElement();
@@ -2095,6 +2099,64 @@ bool model_nucleus_seg::LoadAssoc(std::string filename)
 	//doc.close();
 	return true;
 }
+
+
+
+std::vector<ftk::AssociationRule> model_nucleus_seg::ReadAssociationRules(TiXmlElement * inputElement)
+{
+	std::vector<ftk::AssociationRule> returnVector;
+
+	TiXmlElement * parameterElement = inputElement->FirstChildElement();
+	while (parameterElement)
+	{
+		const char * parameter = parameterElement ->Value();
+		ftk::AssociationRule assocRule("");
+		if ( strcmp(parameter,"AssociationRule") == 0 )
+		{
+			assocRule.SetRuleName(parameterElement->Attribute("Name"));
+			assocRule.SetSegmentationFileNmae(parameterElement->Attribute("SegmentationSource"));
+			assocRule.SetTargetFileNmae(parameterElement->Attribute("Target_Image"));
+			assocRule.SetOutDistance(atoi(parameterElement->Attribute("Outside_Distance")));
+			assocRule.SetInDistance(atoi(parameterElement->Attribute("Inside_Distance")));
+
+			if(strcmp(parameterElement->Attribute("Use_Whole_Object"),"True")==0)
+				assocRule.SetUseWholeObject(true);
+			else
+				assocRule.SetUseWholeObject(false);
+
+			if(strcmp(parameterElement->Attribute("Use_Background_Subtraction"),"True")==0)
+				assocRule.SetUseBackgroundSubtraction(true);
+			else
+				assocRule.SetUseBackgroundSubtraction(false);
+
+			if(strcmp(parameterElement->Attribute("Use_MultiLevel_Thresholding"),"True")==0){
+				assocRule.SetUseMultiLevelThresholding(true);
+				assocRule.SetNumberOfThresholds(atoi(parameterElement->Attribute("Number_Of_Thresholds")));
+				assocRule.SetNumberIncludedInForeground(atoi(parameterElement->Attribute("Number_Included_In_Foreground")));
+			}
+			else{
+				assocRule.SetUseMultiLevelThresholding(false);
+				assocRule.SetNumberOfThresholds(1);
+				assocRule.SetNumberIncludedInForeground(1);
+			}
+
+			if(strcmp(parameterElement->Attribute("Association_Type"),"MIN")==0)
+				assocRule.SetAssocType(ftk::ASSOC_MIN);
+			else if(strcmp(parameterElement->Attribute("Association_Type"),"MAX")==0)
+				assocRule.SetAssocType(ftk::ASSOC_MAX);
+			else if(strcmp(parameterElement->Attribute("Association_Type"),"TOTAL")==0)
+				assocRule.SetAssocType(ftk::ASSOC_TOTAL);
+			else if(strcmp(parameterElement->Attribute("Association_Type"),"SURROUNDEDNESS")==0)
+				assocRule.SetAssocType(ftk::ASSOC_SURROUNDEDNESS);
+			else
+				assocRule.SetAssocType(ftk::ASSOC_AVERAGE);
+		}
+		returnVector.push_back(assocRule);
+		parameterElement = parameterElement->NextSiblingElement();
+	}
+	return returnVector;
+}
+
 
 
 ////Loads the Parameters file 
