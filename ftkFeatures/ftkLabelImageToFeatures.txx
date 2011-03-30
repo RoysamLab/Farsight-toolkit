@@ -154,8 +154,9 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
 bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
-::SetCompleteImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn )
+::SetCompleteImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn, bool CytoImage )
 {
+	cyto_image = CytoImage;
 		
 	typename LabelImageType::RegionType lblRegion = lblImgIn->GetLargestPossibleRegion();
 	typename IntensityImageType::RegionType intRegion = intImgIn->GetLargestPossibleRegion();
