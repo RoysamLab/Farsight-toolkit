@@ -89,7 +89,7 @@ protected:
 	ftk::Image::Pointer outputImage;
 	ftk::ProjectDefinition * definition;
 	std::vector<Task> tasks;
-	vtkSmartPointer<vtkTable> table;\
+	vtkSmartPointer<vtkTable> table;
 	vtkSmartPointer<vtkTable> NucAdjTable;
 	vtkSmartPointer<vtkTable> CellAdjTable;
 
