@@ -7,14 +7,6 @@ SET( MODELSEGMENTATION_HDRS
 )
 
 
-SET( GRAPHS_SRCS
-  seg_graphs.cpp
-)
-
-SET( GRAPHS_HDRS
-  seg_graphs.h
-)
-
 SET( GLPK_HDRS
   glpk.h	
 )
@@ -28,15 +20,9 @@ ADD_LIBRARY( ModelSeg
 
 
 
-ADD_LIBRARY( GraphsnTrees
-                ${GRAPHS_SRCS} 
-                ${GRAPHS_HDRS}
-	      )
-
-	
-TARGET_LINK_LIBRARIES( ModelSeg GraphsnTrees ftkGUI ftkImage ftkCommon ftkFeatures libSVM NuclearSegmentation Nuclear_Association ITKBasicFilters ITKCommon ITKIO libagf GLPKLib CytoplasmSegmentation )
+TARGET_LINK_LIBRARIES( ModelSeg ftkGUI ftkImage ftkCommon ftkFeatures libSVM NuclearSegmentation Nuclear_Association ITKBasicFilters ITKCommon ITKIO libagf GLPKLib CytoplasmSegmentation )
 
 
 ADD_EXECUTABLE(modelSegExe StatModelSegMain.cpp)
-TARGET_LINK_LIBRARIES(modelSegExe ModelSeg GraphsnTrees)  
+TARGET_LINK_LIBRARIES(modelSegExe ModelSeg )  
 
