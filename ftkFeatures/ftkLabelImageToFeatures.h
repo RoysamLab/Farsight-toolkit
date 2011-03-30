@@ -136,7 +136,7 @@ public:
 
 	bool SetImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn, bool CytoImage = false );
 	bool SetImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn, TLPixel index[VImageDimension], TLPixel size[VImageDimension], bool CytoImage = false );
-	bool SetCompleteImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn );
+	bool SetCompleteImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn, bool CytoImage = false );
 
 	void Update();
 	LabelPixelType GetMaxLabel();
