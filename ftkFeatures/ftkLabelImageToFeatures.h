@@ -40,6 +40,20 @@ limitations under the License.
 #include <vtkVariantArray.h>
 #include <vtkTable.h>
 
+
+#include "ftkFeatures/libqhull.h"
+#include "ftkFeatures/user.h"
+#include "ftkFeatures/stat.h"
+#include "ftkFeatures/io.h"
+#include "ftkFeatures/merge.h"
+#include "ftkFeatures/geom.h"
+#include "ftkFeatures/poly.h"
+#include "ftkFeatures/qset.h"
+#include "ftkFeatures/mem.h"
+#include "ftkFeatures/random.h"
+#include "ftkFeatures/qhull_a.h"
+#include "ftkFeatures/qhull.h"
+
 #include "ftkIntrinsicFeatures.h"
 #include "ftkObject.h"
 #include "ftkImage/ftkImage.h"
@@ -121,6 +135,8 @@ public:
 
 	bool SetImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn );
 	bool SetImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn, TLPixel index[VImageDimension], TLPixel size[VImageDimension] );
+	bool SetCompleteImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn );
+
 	void Update();
 	LabelPixelType GetMaxLabel();
 	float GetPercentSharedBoundary(TLPixel focusLabel, TLPixel neighborLabel);
