@@ -61,7 +61,7 @@ std::string GetFilePath(std::string f);
 std::vector<std::string> GetColumsWithString( std::string colName, vtkSmartPointer<vtkTable> table );
 std::string GetStringInCaps( std::string in_srting );
 bool Load(std::string filename);
-std::vector<ftk::AssociationRule> ReadAssociationRules(TiXmlElement * inputElement);
+//std::vector<ftk::AssociationRule> ReadAssociationRules(TiXmlElement * inputElement);
 
 typedef struct { std::string regionChannelName; std::string targetChannelName; int mode;
 				 std::string outputFilename; int radius; } PixelAnalysisDefinitions;
