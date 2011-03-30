@@ -21,6 +21,7 @@ limitations under the License.
 #endif
 
 #ifdef USE_KPLS
+#include <vcl_vector.h>
 
 typedef double *EMB_PFLOAT;
 typedef EMB_PFLOAT VECTOR;
@@ -38,20 +39,30 @@ public:
 	VECTOR GetTrainingPtr(void);
 	void InitVariables(void);
 
+	MATRIX myData_dup;
+	int num_classes;	//Number of Classes
+	VECTOR myKnownClass;	//If we load data for which we know the class it goes here
+
 	//USE THESE FUNCTIONS TO LOAD FROM A FILE
 	void LoadFromMetaNeuralFormat(char * train_fname, char * test_fname);
+    void LoadData(char * train_fname,int sz);
+	void LoadNodeFeatures(std::vector<double> in_features );
+	void LoadAllFeatures(std::vector< std::vector< double > > infeatures );
+
 
 	//SETUP PARAMETERS:
 	void SetLatentVars(int n) { latent_vars = n; };
 	void SetSigma(int n) { sigma = n; };
 
-	//PROCESS:
+	//PROCESS:	
 	void ScaleData();
+	void ScaleData2(double ** myData);
 	void Train();
 	void Classify();
 	void Statistics();
 	void SaveResults();
 	void SaveLatents();
+	std::vector< std::vector<double> > Classify2();
 
 	//GET RESULTS:
 	VECTOR GetPredictions(void);
@@ -66,6 +77,7 @@ private:
 	void DeScaleMatrix(MATRIX data, MATRIX scalers, int rows, int columns);
 	//void Predict(VECTOR ids, MATRIX targets, MATRIX predictions, int size);
 	void Predict(MATRIX predictions);
+	std::vector< std::vector<double> > Predict2(MATRIX predictions);
 
 	int latent_vars;	//default to 5
 	int sigma;			//default to 20
@@ -76,13 +88,13 @@ private:
 	VECTOR myTraining;		//Training Class membership (-1 for not-assigned)
 	MATRIX myResponses;		//Provides Responses for each object to each class.
 	VECTOR myPredictions;	//Predicted class membership
-	VECTOR myKnownClass;	//If we load data for which we know the class it goes here
+	//VECTOR myKnownClass;	//If we load data for which we know the class it goes here
 							//This is used for Checking our classification for accuracy
 	MATRIX myFeatScalers;	//HOLDS avg and std devs of each feature
 
 	int num_data;		//Number of Data points
 	int num_feats;      //Number of Features (does not count IDs or Class)
-	int num_classes;	//Number of Classes
+	//int num_classes;	//Number of Classes
 	int num_train_data; //Number of Data used in training
 
 	//INTERMEDIATE VARIABLES (variables I need to keep around for classification):
