@@ -31,6 +31,7 @@ limitations under the License.
 
 #include "ftkImage/ftkImage.h"
 #include <tinyxml/tinyxml.h>
+#include <ftkFeatures/ftkObjectAssociation.h>
 
 #include <string>
 #include <ctime>
@@ -41,6 +42,8 @@ limitations under the License.
 namespace ftk
 {
 
+typedef struct { int number; std::string name; std::string type; } Channel;
+std::vector<Channel> ReadChannels(TiXmlElement * inputElement);
 bool FileExists(std::string filename);
 bool AppendTextFile(std::string filename, std::string text);			//Add new line to the file with the given text
 bool SaveTable(std::string filename, vtkSmartPointer<vtkTable> table);
@@ -57,6 +60,9 @@ std::string GetFilenameFromFullPath(std::string f);
 std::string GetFilePath(std::string f);
 std::vector<std::string> GetColumsWithString( std::string colName, vtkSmartPointer<vtkTable> table );
 std::string GetStringInCaps( std::string in_srting );
+bool Load(std::string filename);
+std::vector<ftk::AssociationRule> ReadAssociationRules(TiXmlElement * inputElement);
+
 typedef struct { std::string regionChannelName; std::string targetChannelName; int mode;
 				 std::string outputFilename; int radius; } PixelAnalysisDefinitions;
 }  // end namespace ftk

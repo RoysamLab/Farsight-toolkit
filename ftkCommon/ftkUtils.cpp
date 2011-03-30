@@ -244,6 +244,89 @@ bool SaveXMLImage(std::string filename, ftk::Image::Pointer image)
 		return false;
 }
 
+
+
+std::vector<Channel> ReadChannels(TiXmlElement * inputElement)
+{
+	std::vector<Channel> returnVector;
+
+	TiXmlElement * channelElement = inputElement->FirstChildElement();
+	while (channelElement)
+	{
+		const char * parent = channelElement->Value();
+		if ( strcmp( parent, "channel" ) == 0 )
+		{
+			Channel channel;
+			channel.number = atoi(channelElement->Attribute("number"));
+			channel.name = channelElement->Attribute("name");
+			channel.type = channelElement->Attribute("type");
+			returnVector.push_back(channel);
+		}
+		channelElement = channelElement->NextSiblingElement();
+	} // end while(channelElement)
+	return returnVector;
+}
+
+
+
+std::vector<ftk::AssociationRule> ReadAssociationRules(TiXmlElement * inputElement)
+{
+	std::vector<ftk::AssociationRule> returnVector;
+
+	TiXmlElement * parameterElement = inputElement->FirstChildElement();
+	while (parameterElement)
+	{
+		const char * parameter = parameterElement ->Value();
+		ftk::AssociationRule assocRule("");
+		if ( strcmp(parameter,"AssociationRule") == 0 )
+		{
+			assocRule.SetRuleName(parameterElement->Attribute("Name"));
+			assocRule.SetSegmentationFileNmae(parameterElement->Attribute("SegmentationSource"));
+			assocRule.SetTargetFileNmae(parameterElement->Attribute("Target_Image"));
+			assocRule.SetOutDistance(atoi(parameterElement->Attribute("Outside_Distance")));
+			assocRule.SetInDistance(atoi(parameterElement->Attribute("Inside_Distance")));
+
+			if(strcmp(parameterElement->Attribute("Use_Whole_Object"),"True")==0)
+				assocRule.SetUseWholeObject(true);
+			else
+				assocRule.SetUseWholeObject(false);
+
+			if(strcmp(parameterElement->Attribute("Use_Background_Subtraction"),"True")==0)
+				assocRule.SetUseBackgroundSubtraction(true);
+			else
+				assocRule.SetUseBackgroundSubtraction(false);
+
+			if(strcmp(parameterElement->Attribute("Use_MultiLevel_Thresholding"),"True")==0){
+				assocRule.SetUseMultiLevelThresholding(true);
+				assocRule.SetNumberOfThresholds(atoi(parameterElement->Attribute("Number_Of_Thresholds")));
+				assocRule.SetNumberIncludedInForeground(atoi(parameterElement->Attribute("Number_Included_In_Foreground")));
+			}
+			else{
+				assocRule.SetUseMultiLevelThresholding(false);
+				assocRule.SetNumberOfThresholds(1);
+				assocRule.SetNumberIncludedInForeground(1);
+			}
+
+			if(strcmp(parameterElement->Attribute("Association_Type"),"MIN")==0)
+				assocRule.SetAssocType(ASSOC_MIN);
+			else if(strcmp(parameterElement->Attribute("Association_Type"),"MAX")==0)
+				assocRule.SetAssocType(ASSOC_MAX);
+			else if(strcmp(parameterElement->Attribute("Association_Type"),"TOTAL")==0)
+				assocRule.SetAssocType(ASSOC_TOTAL);
+			else if(strcmp(parameterElement->Attribute("Association_Type"),"SURROUNDEDNESS")==0)
+				assocRule.SetAssocType(ASSOC_SURROUNDEDNESS);
+			else
+				assocRule.SetAssocType(ASSOC_AVERAGE);
+		}
+		returnVector.push_back(assocRule);
+		parameterElement = parameterElement->NextSiblingElement();
+	}
+	return returnVector;
+}
+
+
+
+
 std::string GetExtension(std::string filename)
 {
 	size_t pos = filename.find_last_of(".");
