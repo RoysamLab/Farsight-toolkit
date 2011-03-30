@@ -9,6 +9,11 @@ ADD_EXECUTABLE( graph_coloring_on_output graph_coloring_on_output.cpp )
 
 ADD_EXECUTABLE( convert_dat_to_label convert_dat_to_label.cpp )
 
+ADD_EXECUTABLE(MBSeg StatModelSegMain.cpp)
+
+TARGET_LINK_LIBRARIES(MBSeg ModelSeg) 
+
+
 TARGET_LINK_LIBRARIES( segment_nuclei  Yousef_Nucleus_Seg)# ITKBasicFilters ITKCommon ITKIO)
 
 
@@ -32,6 +37,7 @@ IF (BUILD_OPENCL)
     ENDIF(MSVC)
 ENDIF(BUILD_OPENCL)
 
+
 INSTALL( TARGETS segment_nuclei DESTINATION ${INSTALL_BIN_DIR} )
 
 INSTALL( TARGETS compute_nuclei_features DESTINATION ${INSTALL_BIN_DIR} )
@@ -41,6 +47,8 @@ INSTALL( TARGETS compute_associative_measures DESTINATION ${INSTALL_BIN_DIR} )
 INSTALL( TARGETS classify_nuclei DESTINATION ${INSTALL_BIN_DIR} )
 
 INSTALL( TARGETS convert_dat_to_label DESTINATION ${INSTALL_BIN_DIR} )
+
+INSTALL( TARGETS MBSeg DESTINATION ${INSTALL_BIN_DIR} )
 
 
 #ADD_EXECUTABLE( nucseg2 extended_main.cpp )
