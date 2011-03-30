@@ -1,14 +1,6 @@
-#include "model_nucleus_seg.h"
-#include "seg_graphs.h"
-#include "ftkLabelImageToFeatures.h"
-#include "ftkIntrinsicFeatures.h"
 
-#include "itkBinaryErodeImageFilter.h"
-#include "itkBinaryDilateImageFilter.h"
-#include "itkBinaryBallStructuringElement.h"
-#include <itkGrayscaleDilateImageFilter.h>
-#include <itkGrayscaleErodeImageFilter.h>
-#include <itkMedianImageFilter.h>
+
+#include "model_nucleus_seg.h"
 
 
 template <typename T>
@@ -61,6 +53,7 @@ int writeImage(typename T::Pointer im, const char* filename)
 
 
 
+
 int main ( int argc ,  char** argv)
 {	
 	argc = 6;
@@ -71,8 +64,8 @@ int main ( int argc ,  char** argv)
 		std::cout<<"Usage2: segment_nuclei <InputImageFileName> <OutputImageFileName> <ParametersFileName>\n";
 		return 0;
 	}
-	clock_t startTimer = clock();
 
+	clock_t startTimer = clock();
 	std::cout<<"reading input image...";
 	
 
@@ -81,7 +74,7 @@ int main ( int argc ,  char** argv)
 	argv[3] = "C:/Data/S_06_3423_1C_pERK_F04/training3.txt";
 	argv[4] = "C:/Data/S_06_3423_1C_pERK_F04/Histo_Input_Image.xml";
 	argv[5] = "C:/Data/S_06_3423_1C_pERK_F04/HistoProjectDef3.xml";
-	argv[6] = "C:/Data/S_06_3423_1C_pERK_F04/finalseg.tif";	
+
 	
 
 	typedef itk::Image< unsigned char,3>InputImageType;
@@ -132,7 +125,7 @@ int main ( int argc ,  char** argv)
 	
 	
 	//Loop through the list of ids and build graphs.
-	seg_graphs *sg1 = new seg_graphs();
+	ftkgnt *sg1 = new ftkgnt();
 	sg1->runLabFilter(MNS->inputImage,MNS->bImage);
 	sg1->setFeats(allFeat,labelIndex);
 
@@ -158,98 +151,16 @@ int main ( int argc ,  char** argv)
 		cout<<"\rEvaluating Hypothesis for id "<<id;
 		sg1->RAG = sg1->BuildRAG(id); 
 		//Build the Merge Tree from the RAG and root information
-		seg_graphs::MTreeType mTree =  sg1->BuildMergeTreeDcon(sg1->RAG,id,sg1->hypotheses);	
+		ftkgnt::MTreeType mTree =  sg1->BuildMergeTreeDcon(sg1->RAG,id,sg1->hypotheses);	
 		MNS->GetScoresfromKPLS(mTree);
 		//std::cout<<"\rr"<<r;
 	}
 
 	 std::cout<<""<<std::endl;
 	 MNS->SelectHypothesis();
-
+	
 /////////////////////////////////////////////////////////////////////////////////////////////////////
  //PERFORM MERGES 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 	MNS->PerformMerges(argv[6]);
 }	
-
-
-
-//  typedef itk::Image< unsigned char, 3 >InputImageType;
-//    typedef itk::Image< unsigned short, 3 > OutputImageType;
-//	typedef OutputImageType::RegionType RegionType;
-//	typedef itk::ImageRegionIterator< InputImageType > IIteratorType;
-//	typedef itk::ImageRegionIterator< OutputImageType> IteratorType;
-//	typedef itk::BinaryBallStructuringElement<unsigned char,3 > StructuringElementType;	
-//	typedef itk::GrayscaleErodeImageFilter<OutputImageType,OutputImageType,StructuringElementType > ErodeFilterType;
-//	typedef itk::GrayscaleDilateImageFilter<OutputImageType,OutputImageType,StructuringElementType > DilateFilterType;
-//	typedef itk::MedianImageFilter<InputImageType,InputImageType> MedianFilterType;
-//
-//	InputImageType::Pointer im;
-//	MedianFilterType::Pointer filt = MedianFilterType::New();
-//	InputImageType::SizeType radius;
-//	radius[0] = 5;
-//	radius[1] = 5;
-//	radius[1] = 3;
-//	filt->SetRadius(radius);
-//	
-//	InputImageType::Pointer om;
-//	OutputImageType::Pointer bImagetemp = OutputImageType::New();
-//	
-//	im = readImage<InputImageType>("C:/R2080_6wk_site.tif");
-//	filt->SetInput(im);
-//	InputImageType::SizeType size = im->GetLargestPossibleRegion().GetSize();
-//	filt->Update();
-//	im = filt->GetOutput();
-//
-//	RegionType region1;	
-//	//Allocate Memory for Images
-//	OutputImageType::IndexType start;
-//	start.Fill(0);
-//	region1.SetSize(size);
-//	region1.SetIndex( start );
-//	bImagetemp->SetRegions( region1 );
-//	bImagetemp->Allocate();
-//
-//	unsigned char *in_Image;
-//	in_Image = (unsigned char *) malloc (size[0]*size[1]*size[2]);
-//	//in_Image = (unsigned char *) malloc (size[0]*size[1]*size[2]);
-//	memset(in_Image/*destination*/,0/*value*/,size[0]*size[1]*size[2]*sizeof(unsigned char)/*num bytes to move*/);
-//	
-//	IIteratorType pix_buf(im,im->GetRequestedRegion());
-//	int ind=0;
-//	for ( pix_buf.GoToBegin(); !pix_buf.IsAtEnd(); ++pix_buf, ++ind )
-//		in_Image[ind]=(pix_buf.Get());
-//
-//
-//	yousef_nucleus_seg *NucleusSeg = new yousef_nucleus_seg();
-//	NucleusSeg->readParametersFromFile("");
-//	NucleusSeg->setDataImage(in_Image,size[0],size[1],size[2],"");
-//	
-//
-//	NucleusSeg->runBinarization();
-//
-//	unsigned short *output_img;
-//	output_img = NucleusSeg->getBinImage();
-//
-//	IteratorType biterator(bImagetemp,bImagetemp->GetRequestedRegion());
-//
-//	for(unsigned int i=0; i<size[0]*size[1]*size[2]; i++)
-//	{		
-//		biterator.Set(output_img[i]);
-//		++biterator;	
-//	}
-//
-//	ErodeFilterType::Pointer erode_filter = ErodeFilterType::New();
-//	DilateFilterType::Pointer dilate_filter = DilateFilterType::New();
-//	StructuringElementType structuringElement;
-//	structuringElement.SetRadius( 5 );
-//	structuringElement.CreateStructuringElement();
-//	erode_filter->SetKernel( structuringElement );
-//	dilate_filter->SetKernel( structuringElement );
-//	//Morphological opening of the resultant image
-//	erode_filter->SetInput(bImagetemp);
-//	dilate_filter->SetInput(erode_filter->GetOutput());
-//	writeImage<OutputImageType>(erode_filter->GetOutput(),"C:/R2080_6wk_site_openedbinary.tif");
-//	
-//
-//}

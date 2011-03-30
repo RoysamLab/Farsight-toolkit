@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include <time.h>
 #include <float.h>
-#include "itkImageMomentsCalculator.h"
-#include <vpdl/vpdl_distribution.h>
 #include <conio.h>
 
 
@@ -954,7 +952,7 @@ void model_nucleus_seg::labelChange(unsigned short id1,unsigned short id2)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // GET THE SCORES FOR ALL THE POSSIBLE MERGES IN A MERGETREE
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
-void model_nucleus_seg::GetScoresfromKPLS(seg_graphs::MTreeType mTree)
+void model_nucleus_seg::GetScoresfromKPLS(ftkgnt::MTreeType mTree)
 { 
 	unsigned int counter = 0; 
 	set<int> currRPS;	

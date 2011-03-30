@@ -9,36 +9,26 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-seg_graphs::seg_graphs(InputImageType::Pointer input,OutputImageType::Pointer output)
+seg_graphs::seg_graphs()
 {
 	hypotheses.clear();
 	MAX_VOL = 1e5;
 	MAX_DEPTH = 6;
+ }
 
-		///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void seg_graphs::runLabFilter(InputImageType::Pointer input,OutputImageType::Pointer output)
+{
+	///////////////////////////////////////////////////////////////////////////////////////////////////////
 	// NEED TO CALCULATE THE NEIGHBORHOOD INFORMATION FOR ALL IDs
 	///////////////////////////////////////////////////////////////////////////////////////////////////////	
 	labelFilter = FeatureCalcType::New();
-	labelFilter->SetImageInputs( input, output );
+	labelFilter->SetCompleteImageInputs( input, output );
 	labelFilter->SetLevel(3);
 	labelFilter->ComputeHistogramOn();
 	labelFilter->Update();
 
- }
-
-
-//void seg_graphs::runLabFilter(InputImageType::Pointer input,OutputImageType::Pointer output)
-//{
-//	///////////////////////////////////////////////////////////////////////////////////////////////////////
-//	// NEED TO CALCULATE THE NEIGHBORHOOD INFORMATION FOR ALL IDs
-//	///////////////////////////////////////////////////////////////////////////////////////////////////////	
-//	labelFilter = FeatureCalcType::New();
-//	labelFilter->SetImageInputs( input, output );
-//	labelFilter->SetLevel(3);
-//	labelFilter->ComputeHistogramOn();
-//	labelFilter->Update();
-//	
-//}
+}
 
 void seg_graphs::setmaxVol(double vol)
 {
@@ -89,7 +79,6 @@ seg_graphs::RAGraph seg_graphs::BuildRAG(unsigned short id)
 		}
 		counter = counter + 1 ;
 	} 
-
 	return this->RAG;
 }
 

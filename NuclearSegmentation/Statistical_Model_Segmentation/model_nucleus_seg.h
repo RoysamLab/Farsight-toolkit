@@ -44,7 +44,8 @@
 #include <vcl_iostream.h>
 #include <vcl_fstream.h>
 #include <ftkFeatures/ftkLabelImageToFeatures.h>
-
+#include <ftkCommon/ftkgnt.h>
+#include "ftkIntrinsicFeatures.h"
 
 #include <PatternAnalysis/embrex/kpls.h>
 #include <PatternAnalysis/libsvm/svm.h>
@@ -79,8 +80,6 @@
 #include <vtkVariantArray.h>
 #include <vtkTable.h>
 
-
-# include "seg_graphs.h"
 
 #include <PatternAnalysis/agf/agf.h>
 //#include "pcaclass.h"
@@ -160,7 +159,7 @@ public:
 	std::vector<OutputImageType> getIndLabelImages(){ };
 	std::vector<InputImageType> getIndRawImages(){ };
 	void GetFeatsnImages();
-	void GetScoresfromKPLS(seg_graphs::MTreeType mTree,KPLS *kpls);
+	void GetScoresfromKPLS(ftkgnt::MTreeType mTree,KPLS *kpls);
 	void SetAssocFeatNumber(int nFeat);
 	void PerformPCA();
 	void model_nucleus_seg::Tset2EigenSpace(vnl_matrix<double> nFeats,vnl_matrix<double> Feats);
@@ -204,8 +203,8 @@ public:
 	void SetTrainingFile(char* fname);
 	double ComputeTotal(std::vector<int> LST);
 	double ComputeAverage(std::vector<int> LST);
-	//seg_graphs::MTreeType BuildMergeTreeDcon(seg_graphs::RAGraph,unsigned short id,std::vector< std::set<int> > hypothesis);
-	void GetScoresfromKPLS(seg_graphs::MTreeType mTree);
+	//ftkgnt::MTreeType BuildMergeTreeDcon(ftkgnt::RAGraph,unsigned short id,std::vector< std::set<int> > hypothesis);
+	void GetScoresfromKPLS(ftkgnt::MTreeType mTree);
 	void getFeatureNames(char* fname);
 	std::vector<double> populateVector(ftk::IntrinsicFeatures *f);
 	void calcvolLimits(vnl_matrix<double> feats);
