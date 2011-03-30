@@ -9,21 +9,38 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-ftkgnt::ftkgnt(InputImageType::Pointer input,OutputImageType::Pointer output)
+ftkgnt::ftkgnt()
 {
 	hypotheses.clear();
+	MAX_VOL = 1e5;
+	MAX_DEPTH = 6;
+ }
 
+
+void ftkgnt::runLabFilter(InputImageType::Pointer input,OutputImageType::Pointer output)
+{
 	///////////////////////////////////////////////////////////////////////////////////////////////////////
 	// NEED TO CALCULATE THE NEIGHBORHOOD INFORMATION FOR ALL IDs
 	///////////////////////////////////////////////////////////////////////////////////////////////////////	
-
 	labelFilter = FeatureCalcType::New();
-	labelFilter->SetImageInputs( input, output );
+	labelFilter->SetCompleteImageInputs( input, output );
 	labelFilter->SetLevel(3);
 	labelFilter->ComputeHistogramOn();
 	labelFilter->Update();
-	
- }
+
+}
+
+void ftkgnt::setmaxVol(double vol)
+{
+	this->MAX_VOL = vol;
+
+}
+
+void ftkgnt::setmaxDepth(int depth)
+{
+	this->MAX_DEPTH = depth;
+}
+
 
 ftkgnt::RAGraph ftkgnt::BuildRAG(unsigned short id)
 {
@@ -62,7 +79,6 @@ ftkgnt::RAGraph ftkgnt::BuildRAG(unsigned short id)
 		}
 		counter = counter + 1 ;
 	} 
-
 	return this->RAG;
 }
 
@@ -133,6 +149,11 @@ int ftkgnt::GetNodeIndex(unsigned short id,ftkgnt::RAGraph graph1)
 }
 
 
+void ftkgnt::setFeats(std::vector<FeaturesType> allFeat,std::vector< unsigned short > labelIndex)
+{
+	this->allFeat = allFeat;
+	this->labelIndex = labelIndex;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // BUILD THE MERGE TREE FOR THE REGION ADJACENY graph1 WITH "id" AS THE ROOT
@@ -179,6 +200,7 @@ ftkgnt::MTreeType ftkgnt::BuildMergeTreeDcon(ftkgnt::RAGraph R1, unsigned short 
 	ftkgnt::AdjVertIt avi, avinext, av_end;
 	std::set<int>::iterator it;
 	std::set<int>::iterator RPSIterator;
+	std::set<int>::iterator volIterator;
 	std::set<int>::iterator nRPSIterator;
 	std::set<int>::iterator RPSIterator2;
 	property_map<ftkgnt::RAGraph,vertex_name_t>::type nodes = get(vertex_name, R1);
@@ -205,7 +227,6 @@ ftkgnt::MTreeType ftkgnt::BuildMergeTreeDcon(ftkgnt::RAGraph R1, unsigned short 
 			
 			for (avi=avi; avi < av_end ; ++avi)
 			{
-				
 				nextRPS = currRPS;	   
 				ftkgnt::node X = *avi;
 				int neighbor = atoi(nodes[X].c_str());
@@ -228,7 +249,6 @@ ftkgnt::MTreeType ftkgnt::BuildMergeTreeDcon(ftkgnt::RAGraph R1, unsigned short 
 				
 				if(it==currRPS.end() && depth_cond)
 				{
-					
 					//This condition checks if the current node is not @  
 					// a new level/depth in the tree in the tree
 					if(depth <= depth_map.size()-1) 
@@ -243,8 +263,7 @@ ftkgnt::MTreeType ftkgnt::BuildMergeTreeDcon(ftkgnt::RAGraph R1, unsigned short 
 					// If not update the 	   
 					else
 					{
-						
-						bool dcon = (depth<4);
+						bool dcon = (depth<MAX_DEPTH);
 						if(dcon)
 						{
 								curr_depth_RPS.clear();
@@ -259,10 +278,25 @@ ftkgnt::MTreeType ftkgnt::BuildMergeTreeDcon(ftkgnt::RAGraph R1, unsigned short 
 						
 					}
 					
+					//Check if this hypothesis has been checked previously i.e. if this combination of nodes occured 
+					// in a previous merge tree 
 					bool hypo_cond;
-					hypo_cond = (hypothesis.end() == find(hypothesis.begin(), hypothesis.end(), nextRPS));				
+					hypo_cond = (hypothesis.end() == find(hypothesis.begin(), hypothesis.end(), nextRPS));
+						
+					double vol = 0;	
+					for(volIterator = nextRPS.begin(); volIterator != nextRPS.end(); volIterator++)
+					{	
+						std::vector<unsigned short>::iterator posn1 = find(labelIndex.begin(), labelIndex.end(), *volIterator);
+						ftk::IntrinsicFeatures  features  =	allFeat[posn1 - labelIndex.begin()];
+						vol+= features.ScalarFeatures[ftk::IntrinsicFeatures::VOLUME];
+					}
+
 					
-					if(hypo_cond)
+					//Check for the volume condition 
+					//Prevents unnecessary extension of tree branches in clusters   
+					bool vol_cond = (vol<MAX_VOL);
+
+					if(hypo_cond && vol_cond)
 					{
 						ftkgnt::node_mt V;
 						V = add_vertex(mTree);
