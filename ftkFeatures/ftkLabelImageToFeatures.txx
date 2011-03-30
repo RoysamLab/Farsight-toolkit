@@ -103,8 +103,10 @@ LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
 bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
-::SetImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn )
+::SetImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn, bool CytoImage )
 {
+	cyto_image = CytoImage;
+
 	typename LabelImageType::RegionType lblRegion = lblImgIn->GetRequestedRegion();
 	typename IntensityImageType::RegionType intRegion = intImgIn->GetRequestedRegion();
 
@@ -154,6 +156,7 @@ template< typename TIPixel, typename TLPixel, unsigned int VImageDimension >
 bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 ::SetCompleteImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn )
 {
+		
 	typename LabelImageType::RegionType lblRegion = lblImgIn->GetLargestPossibleRegion();
 	typename IntensityImageType::RegionType intRegion = intImgIn->GetLargestPossibleRegion();
 
@@ -204,8 +207,10 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
 bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
-::SetImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn, TLPixel index[VImageDimension], TLPixel size[VImageDimension])
+::SetImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn, TLPixel index[VImageDimension], TLPixel size[VImageDimension], bool CytoImage)
 {
+	cyto_image = CytoImage;
+	
 	typename IntensityImageType::RegionType intRegion;
 	typename IntensityImageType::IndexType intIndex;
 	typename IntensityImageType::SizeType intSize;
@@ -580,21 +585,34 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	typedef itk::ConstNeighborhoodIterator<LabelImageType, boundaryConditionType > NeighborhoodIteratorType;
 
 	// The offsets for the neighboring pixels for 4-connectivity
-	std::vector< typename NeighborhoodIteratorType::OffsetType > offsets(2*VImageDimension);
-	for (unsigned int i=0; i<(2*VImageDimension); ++i)
+	unsigned int dim;
+	if ( cyto_image == true)
+		dim = 4*VImageDimension;
+	else
+		dim = 2*VImageDimension;
+		
+	std::vector< typename NeighborhoodIteratorType::OffsetType > offsets(dim);
+	for (unsigned int i=0; i<(dim); ++i)
 	{
 		offsets[i].Fill(0);
 	}
 	unsigned int p = 0, o = 0;
 	while ( p < VImageDimension )
 	{
+		if ( cyto_image == true)
+			offsets[o++][p] = -2;
 		offsets[o++][p] = -1;
 		offsets[o++][p] = 1;
+		if ( cyto_image == true)
+			offsets[o++][p] = 2;
 		p++;
 	}
 	
 	typename NeighborhoodIteratorType::RadiusType radius;
-	radius.Fill(1);
+	if ( cyto_image == true)
+		radius.Fill(2);
+	else
+		radius.Fill(1);	
 
 	boundaryPix.clear();
 	interiorPix.clear();
@@ -613,7 +631,7 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		if ( v <= 0 ) continue;
 
 		bool allSame = true;
-		for (unsigned int i=0; i<2*VImageDimension; ++i)
+		for (unsigned int i=0; i<dim; ++i)
 		{
 			TLPixel p = it.GetPixel( offsets[i] );
 			
