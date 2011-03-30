@@ -143,6 +143,9 @@ IF( USE_SQLITE_DATABASE )
 ENDIF( USE_SQLITE_DATABASE )
 
 
+LINK_DIRECTORIES( ${PROJECT_SOURCE_DIR}/PatternAnalysis/glpk)
+
+
 ####################################################################################
 ####################################################################################
 # NOW WE CAN INCLUDE THE MODULES ACCORDING TO THE OPTIONS SELECTED ABOVE:
