@@ -79,11 +79,8 @@
 #include <vtkDoubleArray.h>
 #include <vtkVariantArray.h>
 #include <vtkTable.h>
-
-
+#include "itkSmoothingRecursiveGaussianImageFilter.h"
 #include <PatternAnalysis/agf/agf.h>
-//#include "pcaclass.h"
-
 #include "itkOtsuMultipleThresholdsCalculator.h"
 
 #include <map>
@@ -121,6 +118,8 @@ public:
   typedef itk::ImageRegionIterator< OutputImageType> IteratorType;
   typedef itk::ImageRegionIterator< DistImageType> DIteratorType;
   typedef itk::ConstNeighborhoodIterator< OutputImageType > NeighborhoodIteratorType;
+
+  typedef itk::SmoothingRecursiveGaussianImageFilter< InputImageType, InputImageType > GaussianFilterType;
 
 
   typedef itk::BoundingBox<unsigned short, myDimension, double> BB; 
@@ -185,12 +184,15 @@ public:
 	void labelChange(unsigned short id1,unsigned short id2) ;
 	std::vector< std::vector<double> > GetFeaturesOriginal();
 	std::vector<double>  get_merged_assoc_features(set<int> currRPS,float* bbox);
-	void PerformMerges(char* x);
+	void PerformMerges(const char* x);
 	double GetScoreforId(std::vector<double> filtered_features);
 	std::vector<double> GetOriginalScores();
 	void UpdateBoolMerge();
 	void DispScores(std::vector<double> scores);
 	
+
+
+	std::vector<ftk::AssociationRule> ReadAssociationRules(TiXmlElement * inputElement);
 	std::vector<double> ComputeOneAssocMeasurement(itk::SmartPointer<OutputImageType> trgIm, int ruleID, std::vector<int>objID,float* b1);
 	bool sorthelp (double i,double j); 
 	bool uniquehelp (unsigned short i, unsigned short j);
