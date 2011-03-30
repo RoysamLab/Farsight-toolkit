@@ -34,8 +34,9 @@ IntrinsicFeatureCalculator::IntrinsicFeatureCalculator()
 	IDs.clear();
 }
 
-bool IntrinsicFeatureCalculator::SetInputImages(ftk::Image::Pointer intImg, ftk::Image::Pointer labImg, int intChannel, int labChannel)
+bool IntrinsicFeatureCalculator::SetInputImages(ftk::Image::Pointer intImg, ftk::Image::Pointer labImg, int intChannel, int labChannel, bool CytoImage)
 {
+	cyto_image = CytoImage;
 	if(intImg->GetImageInfo()->dataType != itk::ImageIOBase::UCHAR)
 		return false;
 	if(labImg->GetImageInfo()->dataType != itk::ImageIOBase::USHORT)
@@ -336,11 +337,11 @@ void IntrinsicFeatureCalculator::Append(vtkSmartPointer<vtkTable> table)
 	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
 	if(useRegion)
 	{
-		labFilter->SetImageInputs( intensityImage->GetItkPtr<IPixelT>(0,intensityChannel), labelImage->GetItkPtr<LPixelT>(0,labelChannel), regionIndex, regionSize );
+		labFilter->SetImageInputs( intensityImage->GetItkPtr<IPixelT>(0,intensityChannel), labelImage->GetItkPtr<LPixelT>(0,labelChannel), regionIndex, regionSize, cyto_image );
 	}
 	else
 	{
-		labFilter->SetImageInputs( intensityImage->GetItkPtr<IPixelT>(0,intensityChannel), labelImage->GetItkPtr<LPixelT>(0,labelChannel) );
+		labFilter->SetImageInputs( intensityImage->GetItkPtr<IPixelT>(0,intensityChannel), labelImage->GetItkPtr<LPixelT>(0,labelChannel), cyto_image );
 	}
 	labFilter->SetLevel( needLevel() );
 	if( needHistogram() )
