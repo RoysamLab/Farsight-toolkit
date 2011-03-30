@@ -72,7 +72,7 @@ public:
 	typedef unsigned short LPixelT;
 
 	IntrinsicFeatureCalculator();
-	bool SetInputImages(ftk::Image::Pointer intImg, ftk::Image::Pointer labImg, int intChannel=0, int labChannel=0);
+	bool SetInputImages(ftk::Image::Pointer intImg, ftk::Image::Pointer labImg, int intChannel=0, int labChannel=0, bool CytoImage = false);
 	void SetFeaturesOn(void);							//Turn on all features
 	void SetFeaturesOn(std::set<int> onFeats);			//Turn on only these features
 	void SetFeatureOn(int feat, bool v = true);			//Set the value of this feature
@@ -95,6 +95,7 @@ private:
 	std::string fPrefix;
 	bool doFeat[IntrinsicFeatures::N];
 
+	bool cyto_image;
 	bool useRegion;
 	LPixelT regionIndex[3];
 	LPixelT regionSize[3];
@@ -133,8 +134,8 @@ public:
 	
 	itkTypeMacro(LabelImageToFeatures, LightObject);
 
-	bool SetImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn );
-	bool SetImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn, TLPixel index[VImageDimension], TLPixel size[VImageDimension] );
+	bool SetImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn, bool CytoImage = false );
+	bool SetImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn, TLPixel index[VImageDimension], TLPixel size[VImageDimension], bool CytoImage = false );
 	bool SetCompleteImageInputs( IntensityImagePointer intImgIn, LabelImagePointer lblImgIn );
 
 	void Update();
@@ -170,6 +171,7 @@ private:
 	//Internal Variables:
 	IntensityImagePointer intensityImage;	//Input intensity image;
 	LabelImagePointer labelImage;			//Input label image;
+	bool cyto_image;
 
 	std::vector< std::vector< typename LabelImageType::IndexType > > boundaryPix;	//boundary pixels for each label
 	std::vector< std::vector< typename LabelImageType::IndexType > > interiorPix;	//interior pixels for each label
