@@ -37,6 +37,7 @@ FeatureInfoType IntrinsicFeatures::Info[N] = {
 	{ "surface_intensity", "units", "description" },
 	{ "interior_intensity", "units", "description" },
 	{ "intensity_ratio", "units", "description" },
+	{ "convexity", "units", "description" },
 	{ "radius_variation", "units", "description" },
 	{ "surface_area", "units", "description" },
 	{ "shape", "units", "description" },
@@ -50,6 +51,7 @@ FeatureInfoType IntrinsicFeatures::Info[N] = {
 	{ "inertia", "units", "description" },
 	{ "cluster_shade", "units", "description" },
 	{ "cluster_prominence", "units", "description" },
+
 };
 
 void IntrinsicFeatures::Print()
