@@ -41,6 +41,8 @@ ProjectProcessor::ProjectProcessor()
 	definition = NULL;
 	tasks.clear();
 	table = NULL;
+	NucAdjTable = NULL;
+	CellAdjTable = NULL;
 	numTasks = 0;
 	lastTask = -1;
 	resultIsEditable = false;
@@ -251,6 +253,9 @@ bool ProjectProcessor::SegmentNuclei(int nucChannel)
 	table = iCalc->Compute();									//Create a new table
 	delete iCalc;
 
+	FTKgraph* NucRAG = new FTKgraph();
+	NucAdjTable = NucRAG->AdjacencyGraph_All(inputImage->GetItkPtr<IPixelT>(0,nucChannel), outputImage->GetItkPtr<LPixelT>(0,0));
+
 	std::cout << "Done: Instrinsic Nuclear Features\n";
 
 	resultIsEditable = true;
@@ -316,6 +321,10 @@ bool ProjectProcessor::SegmentCytoplasm(int cytChannel, int memChannel)
 		iCalc->Append(table); //Append features to the table
 		delete iCalc;
 	}
+
+	FTKgraph* CellRAG = new FTKgraph();
+	CellAdjTable = CellRAG->AdjacencyGraph_All(inputImage->GetItkPtr<IPixelT>(0,cytChannel), outputImage->GetItkPtr<LPixelT>(0,1), true);
+
 
 	std::cout << "Done: Intrisic features for the whole cell\n";
 
