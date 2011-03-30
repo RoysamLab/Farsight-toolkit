@@ -49,6 +49,10 @@ namespace ftk
 class ProjectProcessor
 {
 public:
+
+	typedef unsigned char IPixelT;
+	typedef unsigned short LPixelT;
+
 	typedef struct { ftk::ProjectDefinition::TaskType type; int inputChannel1; int inputChannel2; int inputChannel3; bool done; } Task;
 	ProjectProcessor();
 
