@@ -66,6 +66,8 @@ public:
 	//Outputs
 	ftk::Image::Pointer GetOutputImage(void){ return outputImage; };
 	vtkSmartPointer<vtkTable> GetTable(void){ return table; };
+	vtkSmartPointer<vtkTable> GetNucAdjTable(void){ return NucAdjTable; }; 
+	vtkSmartPointer<vtkTable> GetCellAdjTable(void){ return CellAdjTable; }; 
 
 protected:
 	//Tasks I can do:
@@ -85,7 +87,9 @@ protected:
 	ftk::Image::Pointer outputImage;
 	ftk::ProjectDefinition * definition;
 	std::vector<Task> tasks;
-	vtkSmartPointer<vtkTable> table;
+	vtkSmartPointer<vtkTable> table;\
+	vtkSmartPointer<vtkTable> NucAdjTable;
+	vtkSmartPointer<vtkTable> CellAdjTable;
 
 private:
 	int numTasks;
