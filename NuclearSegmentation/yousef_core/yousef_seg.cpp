@@ -305,17 +305,17 @@ void yousef_nucleus_seg::runSeedDetection()
 	
 	//Now do seed detection
 	int ok = 0;
-	/*if (numStacks == 1)
+	if (numStacks == 1)
 	{		
 		seedImagePtr = new unsigned short[numStacks*numRows*numColumns];		
 		logImagePtr = new float[numStacks*numRows*numColumns];
 		ok = detectSeeds2D( imgPtr, logImagePtr, seedImagePtr, numRows, numColumns, &scaleMin, &scaleMax, &regionXY, binImagePtr, autoParamEstimation );		
 	}
 	else
-	{*/	
+	{	
 		minLoGImg = 10000;
 		ok = Seeds_Detection_3D( imgPtr, &logImagePtr, &seedImagePtr, numRows, numColumns, numStacks, &scaleMin, &scaleMax, &regionXY, &regionZ, getSamplingRatio(), binImagePtr, useDistMap, &minLoGImg, autoParamEstimation );						
-	//}		
+	}		
 	delete [] imgPtr;	//cleanup
 	if(!ok)
 		cerr << "Seed detection Failed!!" << endl;
