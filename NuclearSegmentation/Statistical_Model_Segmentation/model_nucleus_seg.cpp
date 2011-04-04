@@ -132,11 +132,15 @@ void model_nucleus_seg::SetRawImage(char* fname)
 	inputImage = readImage<InputImageType>(fname);
 
 	//Get gradient image from cytoplasm image
-	GaussianFilterType::Pointer  gaussianfilter = GaussianFilterType::New();
-	gaussianfilter->SetSigma( 2 );
-	gaussianfilter->SetInput( inputImage );
-	gaussianfilter->Update();
-	inputImage = gaussianfilter->GetOutput();
+	MedianFilterType::Pointer  mfilter = MedianFilterType::New();
+	InputImageType::SizeType radius; 
+	radius[0] = 2; // radius along x 
+	radius[1] = 2; // radius along y 
+	radius[2] = 1; // radius along y 
+	mfilter->SetRadius(radius);
+	mfilter->SetInput( inputImage );
+	mfilter->Update();
+	inputImage = mfilter->GetOutput();
 }		
 
 void model_nucleus_seg::SetAssocFeatNumber(int nFeat)
@@ -487,7 +491,7 @@ model_nucleus_seg::FeaturesType model_nucleus_seg::get_merged_features(set<int> 
 
 	std::vector<FeaturesType> f1;
 	model_nucleus_seg::getFeatureVectorsFarsight_merge_test(p,r,f1);
-
+	
 	FeaturesType f = f1[0];
 	f.Centroid[0]+=lbounds[0];
 	f.Centroid[1]+=lbounds[2];
@@ -529,7 +533,7 @@ void model_nucleus_seg::GetFeatsnImages()
 	// NEED TO CALCULATE THE FEATURES OF THE NEW SPLIT IMAGE WITH A NEW FILTER 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////	
 	labFilter = FeatureCalcType::New();
-	labFilter->SetImageInputs( inputImage, bImage);
+	labFilter->SetCompleteImageInputs( inputImage, bImage);
 	labFilter->SetLevel(3);
 	labFilter->ComputeHistogramOn();
 	labFilter->Update();
@@ -1716,7 +1720,9 @@ model_nucleus_seg::OutputImageType::Pointer model_nucleus_seg::SplitImage(std::v
 	lsfilter->SetInput(rimage);
 	lsfilter->SetLabelInput(limage); 
 	lsfilter->Update();	
-	unsigned short maxlabel = lsfilter->GetNumberOfLabels()-1;
+	
+	unsigned long maxLabel=0;
+
 
 	std::vector<unsigned short>::iterator otIterator;
 	for(otIterator = outliers.begin(); otIterator != outliers.end(); otIterator++)
@@ -1754,10 +1760,10 @@ model_nucleus_seg::OutputImageType::Pointer model_nucleus_seg::SplitImage(std::v
 		} 
 
 		OutputImageType::Pointer pasteImage  = OutputImageType::New();
-
+		
 		// This function shatters the neculei into small fragments
 		// which can later be merged.
-		pasteImage = Shatter_Nuclei(roiImage);
+		pasteImage = Shatter_Nuclei(roiImage,&maxLabel);
 
 		IteratorType piterator(pasteImage,pasteImage->GetRequestedRegion());
 
@@ -1782,7 +1788,7 @@ model_nucleus_seg::OutputImageType::Pointer model_nucleus_seg::SplitImage(std::v
 		pfilter->Update();
 		limage = pfilter->GetOutput();
 	}		
-
+	
 	return limage;
 }
 
@@ -1792,7 +1798,7 @@ model_nucleus_seg::OutputImageType::Pointer model_nucleus_seg::SplitImage(std::v
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // SHATTERS NUCLEI 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
-model_nucleus_seg::OutputImageType::Pointer model_nucleus_seg::Shatter_Nuclei(InputImageType::Pointer roiImage)
+model_nucleus_seg::OutputImageType::Pointer model_nucleus_seg::Shatter_Nuclei(InputImageType::Pointer roiImage,unsigned long * maxLabel)
 {
 	RegionType region1;	
 	InputImageType::SizeType size = roiImage->GetLargestPossibleRegion().GetSize();
@@ -1821,6 +1827,17 @@ model_nucleus_seg::OutputImageType::Pointer model_nucleus_seg::Shatter_Nuclei(In
 	int ind=0;
 	for ( pix_buf.GoToBegin(); !pix_buf.IsAtEnd(); ++pix_buf, ++ind )
 		in_Image[ind]=(pix_buf.Get());
+	
+	
+	if(*maxLabel==0)
+	{
+	//Define a filter to access all the ids
+	LabelStatsFilterType::Pointer lsfilter = LabelStatsFilterType::New();
+	lsfilter->SetInput(inputImage);
+	lsfilter->SetLabelInput(bImage); 
+	lsfilter->Update();	
+	*maxLabel = lsfilter->GetNumberOfLabels()-1;
+	}
 
 	yousef_nucleus_seg *NucleusSeg = new yousef_nucleus_seg();
 	NucleusSeg->readParametersFromFile("");
@@ -1829,16 +1846,6 @@ model_nucleus_seg::OutputImageType::Pointer model_nucleus_seg::Shatter_Nuclei(In
 	// We need the new fragments to have unique Ids which do not
 	// correspond to any existing ids. So, get the max label id in 
 	// the segmented image and add this label to all the new fragments
-
-	//Define a filter to access all the ids
-	LabelStatsFilterType::Pointer lsfilter = LabelStatsFilterType::New();
-	lsfilter->SetInput(inputImage);
-	lsfilter->SetLabelInput(bImage); 
-	lsfilter->Update();	
-	unsigned short maxlabel = lsfilter->GetNumberOfLabels()-1 + numSplit;
-
-	maxlabel = maxlabel+numSplit;
-	numSplit = numSplit+5;
 
 	unsigned short *output_img;
 	//segmentation steps
@@ -1850,23 +1857,25 @@ model_nucleus_seg::OutputImageType::Pointer model_nucleus_seg::Shatter_Nuclei(In
 	output_img=NucleusSeg->getSegImage();
 
 	IteratorType biterator(bImagetemp,bImagetemp->GetRequestedRegion());
-	unsigned short maxlabel2;
-	maxlabel2=maxlabel;
+	
+	unsigned long maxlocalID = 0;
+
 	for(unsigned int i=0; i<size[0]*size[1]*size[2]; i++)
 	{		
 		if(output_img[i]==0)
 			biterator.Set(output_img[i]);
 		else
 		{
-			biterator.Set(output_img[i]+maxlabel2);	//Add maxlabel to aall new fragments
-			if(output_img[i]+maxlabel2 > maxlabel)
-				maxlabel++;
+			biterator.Set(output_img[i]+*maxLabel);
+			if(output_img[i]+*maxLabel > maxlocalID)
+				maxlocalID = output_img[i]+*maxLabel;
 		}
 		++biterator;	
 	}
+	
+	*maxLabel = maxlocalID;
 	return bImagetemp;  		
 }
-
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2315,7 +2324,7 @@ std::vector < std::vector<double> > model_nucleus_seg::ComputeAssociations(void)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 std::vector<double> model_nucleus_seg::ComputeOneAssocMeasurement(itk::SmartPointer<OutputImageType> trgIm, int ruleID, std::vector<int>objID,float* b1)
 {	
-	//writeImage<OutputImageType>(trgIm,"C:/Data/S 99 5276 Ki67 F02/haha.tif" ); 
+	//
 	//fisrt, get the bounding box around the object
 	//The bounding box is defined by the area around the object such that the object+outerdistance are included	
 	int imBounds[6] = {0,x_Size,0,y_Size,0,z_Size};	
