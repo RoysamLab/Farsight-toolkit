@@ -79,7 +79,7 @@
 #include <vtkDoubleArray.h>
 #include <vtkVariantArray.h>
 #include <vtkTable.h>
-#include "itkSmoothingRecursiveGaussianImageFilter.h"
+#include <itkMedianImageFilter.h>
 #include <PatternAnalysis/agf/agf.h>
 #include "itkOtsuMultipleThresholdsCalculator.h"
 
@@ -119,7 +119,7 @@ public:
   typedef itk::ImageRegionIterator< DistImageType> DIteratorType;
   typedef itk::ConstNeighborhoodIterator< OutputImageType > NeighborhoodIteratorType;
 
-  typedef itk::SmoothingRecursiveGaussianImageFilter< InputImageType, InputImageType > GaussianFilterType;
+  typedef itk::MedianImageFilter< InputImageType, InputImageType > MedianFilterType;
 
 
   typedef itk::BoundingBox<unsigned short, myDimension, double> BB; 
@@ -167,7 +167,7 @@ public:
 	void Associations(char* xmlImage,char* projDef);
 	std::vector < std::vector<double> > ComputeAssociations(void);
 	void splitAssociations();
-	OutputImageType::Pointer Shatter_Nuclei(InputImageType::Pointer roiImage);
+	OutputImageType::Pointer Shatter_Nuclei(InputImageType::Pointer roiImage,unsigned long * maxLabel);
 	
 	void SelectHypothesis();
 	double CalcGenModelScore(double** train, long ntrain,long nvar,long ntest,double **test);
