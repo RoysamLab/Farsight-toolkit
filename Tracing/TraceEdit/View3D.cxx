@@ -1538,9 +1538,10 @@ void View3D::focusOn()
 	}
 	else
 	{
-		double test [6] = {0,100,0,100,0,100};
+		double test [6];
+		this->Renderer->ComputeVisiblePropBounds(test);
 		this->setRenderFocus(test, 6);
-		std::cout <<" test set render focus \n";
+		//std::cout <<" test set render focus \n";
 	}
 }
 void View3D::FocusOnCell(CellTrace* SelectedCell)
@@ -1557,9 +1558,11 @@ void View3D::FocusOnCell(CellTrace* SelectedCell)
 	}//zoom to entire cell
 	else
 	{
+		double sceneBounds[6];
 		//this->setRenderFocus(somaCoord, 3);
-		this->ImageActors->getImageBounds(cellBounds);
-		this->setRenderFocus(cellBounds,6);
+		//this->ImageActors->getImageBounds(cellBounds);
+		this->Renderer->ComputeVisiblePropBounds(sceneBounds);
+		this->setRenderFocus(sceneBounds,6);
 	}//focus on soma coord 
 }
 void View3D::setRenderFocus(double renderBounds[], int size)
@@ -1645,7 +1648,10 @@ void View3D::CreateSphereActor()
   this->SphereActor->VisibilityOff();
   this->SphereActor->SetPickable(0);            //dont want to pick the sphere itself
   this->pointer3d = vtkSmartPointer<vtkPointWidget>::New();
-  this->pointer3d->PlaceWidget(-60000, 60000,-60000, 60000,-60000, 60000);
+  double sceneBounds[6];
+  this->Renderer->ComputeVisiblePropBounds(sceneBounds);
+  this->pointer3d->PlaceWidget(sceneBounds);
+  //this->pointer3d->PlaceWidget(-60000, 60000,-60000, 60000,-60000, 60000);
   this->pointer3d->SetInteractor(this->QVTK->GetInteractor());
   this->pointer3d->AllOff();
 }
