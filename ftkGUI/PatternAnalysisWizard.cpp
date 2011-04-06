@@ -598,6 +598,7 @@ void PatternAnalysisWizard::runKPLS()
 	this->KPLSrun(columnsToUse);
 
 	emit changedTable();
+	emit enableModels();
 #else
 	QMessageBox::information(this, tr("MESSAGE"), tr("FARSIGHT was not compiled with KPLS library"));
 #endif
