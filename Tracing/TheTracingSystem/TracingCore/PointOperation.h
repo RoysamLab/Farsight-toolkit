@@ -147,6 +147,7 @@ public:
 
 	void curveinterp_3D(float unit_dist);
 	vnl_vector<float> curveinterp_4D(float unit_dist, vnl_vector<float> Ru);
+	std::vector<float> curveinterp_4D(float unit_dist, std::vector<float> Ru);
 	void curveinterp_3D(int new_np);
 	vnl_vector<float> Interp1(vnl_vector<float> X, vnl_vector<float> Y, int Ns);
 	float CubicNPSpline(float t, int n);

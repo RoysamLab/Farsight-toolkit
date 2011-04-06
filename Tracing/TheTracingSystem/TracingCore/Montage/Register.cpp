@@ -291,7 +291,7 @@ void Register::eliminate_repeating(SnakeListClass *SnakeList, int tile_num, int 
   for( int i = 0; i < SnakeList->NSnakes; i++ )
   {
 
-	  if( SnakeList->valid_list(i) == 0 )
+	  if( SnakeList->valid_list[i] == 0 )
 		  continue;
 
       int idx = 0;
@@ -383,7 +383,7 @@ void Register::eliminate_repeating(SnakeListClass *SnakeList, int tile_num, int 
     
 	  //remove invalid snakes
 	  if( SnakeList->Snakes[i].Cu.GetLength() <= min_length || SnakeList->Snakes[i].Cu.NP < 3 )
-		  SnakeList->valid_list(i) = 0;
+		  SnakeList->valid_list[i] = 0;
   }
 }
 

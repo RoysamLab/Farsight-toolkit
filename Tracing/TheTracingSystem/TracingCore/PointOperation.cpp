@@ -778,6 +778,60 @@ vnl_vector<float> PointList3D::curveinterp_4D(float unit_dist, vnl_vector<float>
   return Ri;
 }
 
+std::vector<float> PointList3D::curveinterp_4D(float unit_dist, std::vector<float> Ru)
+{
+  int N = ceil(GetLength()/unit_dist);
+  vnl_vector<float> Ru1(Ru.size());
+  vnl_vector<float> Ru2;
+  for( int i = 0; i < Ru.size(); i++ )
+	  Ru1(i) = Ru[i];
+
+  Ru2 = Ru1;
+
+  if( N > 1000 )
+  {
+    N = 1000;
+  }
+
+  if( N > 3 )
+  {
+    vnl_vector<float> d;
+    d = GetCumLength();
+    vnl_vector<float> Xi;
+    vnl_vector<float> Yi;
+    vnl_vector<float> Zi;
+	vnl_vector<float> X(NP);
+	vnl_vector<float> Y(NP);
+	vnl_vector<float> Z(NP);
+    
+	for(int i=0; i<NP; i++)
+	{
+	  X(i) = Pt[i].x;
+	  Y(i) = Pt[i].y;
+	  Z(i) = Pt[i].z;
+	}
+
+    Xi = Interp1(d, X, N);
+    Yi = Interp1(d, Y, N);  
+	Zi = Interp1(d, Z, N);
+	Ru2 = Interp1(d, Ru1, N);
+
+	RemoveAllPts();
+
+	for(int k =0; k<N; k++)
+    {
+     AddPt(Xi(k),Yi(k),Zi(k));
+    }
+  }
+
+  Ru.clear();
+  for( int i = 0; i < Ru2.size(); i++ )
+	  Ru.push_back(Ru2(i));
+
+  return Ru;
+}
+
+
 
 void PointList3D::curveinterp_3D(float unit_dist)
 {

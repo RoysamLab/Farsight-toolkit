@@ -47,6 +47,8 @@ General_Parameters::General_Parameters(const QString &title,
    remove_slice_box->setValue(0);
    remove_slice_box->setSingleStep(1);
    remove_slice_box->setMaximum(20);
+   remove_slice_label->setVisible(false);
+   remove_slice_box->setVisible(false);
 
    sf_label = new QLabel("Scale Factor");
    sf_box = new QSpinBox;
@@ -86,13 +88,18 @@ General_Parameters::General_Parameters(const QString &title,
    stackImageButton = new QPushButton("Stack Image");
    loadButton = new QPushButton("Load Image");
    loadDisplayButton = new QPushButton("Load Display");
+   loadDisplayButton->setVisible(false);
+
    reloadButton = new QPushButton("Reload Image");
    autoButton = new QPushButton("Automated Process");
    autoButton->setToolTip("Automated processing without clicking the next button");
-   batchButtonI = new QPushButton("Batch Process I");
+   batchButtonI = new QPushButton("Batch Process");
    batchButtonI->setToolTip(tr("Batch process all images within the specified input folder and store all swcs in specified output folder "));
+
    batchButtonII = new QPushButton("Batch Process II");
    batchButtonII->setToolTip(tr("Batch process tiles using registration information"));
+   batchButtonII->setVisible(false);
+
    montageButton = new QPushButton("Montage");
    montageButton->setToolTip("Automated montage with the name of folder storing the tiles and a txt file containing the coordinates of tiles as input");
 
@@ -294,24 +301,16 @@ General_Parameters11::General_Parameters11(const QString &title,
      : QGroupBox(title, parent)
 {
    QBoxLayout *layout = new QVBoxLayout;
-   //computeVessel = new QPushButton("Vesselness");
-   vesselCut = new QPushButton("Vessel-Cut");
    detectSeeds = new QPushButton("Seed Detection");
-   //layout->addWidget(computeVessel);
-   layout->addWidget(vesselCut);
    layout->addWidget(detectSeeds);
    setLayout(layout);
 }
 void General_Parameters11::disableSetting()
 {
-   //computeVessel->setEnabled(false);
-   vesselCut->setEnabled(false);
    detectSeeds->setEnabled(false);
 }
 void General_Parameters11::enableSetting()
 {
-   //computeVessel->setEnabled(true);
-   vesselCut->setEnabled(true);
    detectSeeds->setEnabled(true);
 }
 
@@ -371,6 +370,8 @@ General_Parameters12::General_Parameters12(const QString &title,
    num_iteration_box->setSingleStep(1);
 
    use_multi_scale = new QCheckBox("multi-scale preprocessing", this);
+   use_multi_scale->setVisible(false);
+
    //noise_reduction = new QCheckBox("noise reduction", this);
    hole_filling = new QCheckBox("hole filling", this);
    hole_filling->setVisible(false);
@@ -385,7 +386,7 @@ General_Parameters12::General_Parameters12(const QString &title,
 
    seed_adjustment_box->setMaximum(500);
    seed_adjustment_box->setMinimum(0);
-   seed_adjustment_box->setValue(10);
+   seed_adjustment_box->setValue(0);
    seed_adjustment_box->setSingleStep(10);
 
    seed_radius_box->setMaximum(50);
@@ -442,9 +443,6 @@ General_Parameters12::General_Parameters12(const QString &title,
    connect(reprocessingButton,SIGNAL(clicked()), this, SLOT(reprocessing_slot()));
    reprocessing = false;
    connect(clean_skeleton,SIGNAL(stateChanged(int)), this, SLOT(clean_skeleton_slot()));
-
-   //connect(general_para11->computeVessel,SIGNAL(clicked()), this, SLOT(vessel_slot()));
-   connect(general_para11->vesselCut,SIGNAL(clicked()), this, SLOT(cut_slot()));
    connect(general_para11->detectSeeds,SIGNAL(clicked()), this, SLOT(seed_slot()));
 
    seed_detection_methods = new QComboBox;
@@ -453,16 +451,18 @@ General_Parameters12::General_Parameters12(const QString &title,
    seed_detection_methods->addItem(tr("Local Maxima Seeds"));
 
    gpu_acceleration = new QComboBox;
-   gpu_acceleration->addItem(tr("CPU Acceleration"));
-   //gpu_acceleration->addItem(tr("GPU Implementation"));
-   //gpu_acceleration->addItem(tr("Compare GPU&CPU"));
-   //gpu_acceleration->setCurrentIndex(0); 
+   gpu_acceleration->addItem(tr("GPU Acceleration"));
+   gpu_acceleration->addItem(tr("CPU Implementation"));
+   gpu_acceleration->addItem(tr("Compare GPU&CPU"));
+   gpu_acceleration->setCurrentIndex(1); 
+   gpu_acceleration->setVisible(false);
 
    segmentation_methods = new QComboBox;
    segmentation_methods->addItem(tr("Fast Vessel Cut"));
    //segmentation_methods->addItem(tr("Vessel Cut"));
    segmentation_methods->addItem(tr("Fast Graph Cut"));
    //segmentation_methods->addItem(tr("Graph Cut"));
+   segmentation_methods->setVisible(false);
 
    layout1->addWidget(gpu_acceleration);
    layout1->addWidget(seed_detection_methods);
@@ -502,15 +502,9 @@ void General_Parameters12::vessel_slot()
 {
    //emit reprocess(2);
 }
-
-void General_Parameters12::cut_slot()
-{ 
-   emit reprocess(3);
-}
-
 void General_Parameters12::seed_slot()
 {
-   emit reprocess(4);
+   emit reprocess(3);
 }
 
 void General_Parameters12::use_multi_scale_slot()
@@ -580,6 +574,8 @@ void General_Parameters12::disableSetting()
    //noise_reduction->setEnabled(false);
    hole_filling->setEnabled(false);
    reprocessingButton->setEnabled(false);
+   preprocessButton->setEnabled(false);
+   outputSeeds->setEnabled(false);
 }
 void General_Parameters12::enableSetting()
 {
@@ -601,6 +597,8 @@ void General_Parameters12::enableSetting()
    //noise_reduction->setEnabled(true);
    hole_filling->setEnabled(true);
    reprocessingButton->setEnabled(true);
+   preprocessButton->setEnabled(true);
+   outputSeeds->setEnabled(true);
 }
 void General_Parameters12::setCurveletBatchEnabled(bool in)
 { 
@@ -902,22 +900,26 @@ General_Parameters2::General_Parameters2(const QString &title,
    QBoxLayout *para_layout7 = new QHBoxLayout;
    QBoxLayout *para_layout8 = new QHBoxLayout;
    QBoxLayout *para_layout9 = new QHBoxLayout;
+   QBoxLayout *para_layout10 = new QHBoxLayout;
 
    tracing_models = new QComboBox;
    tracing_models->addItem(tr("3-D Open-Curve Snake"));
-   //tracing_models->addItem(tr("4-D Open Snake(Gradient)"));
-   //tracing_models->addItem(tr("4-D Open Snake(Region)"));
-  // tracing_models->addItem(tr("4-D Open Snake(Gradient+Region)"));
+   tracing_models->addItem(tr("4-D Open Snake(Region)"));
 
    seed_expansion_methods = new QComboBox;
    //seed_expansion_methods->addItem(tr("Skeleton Expansion"));
    seed_expansion_methods->addItem(tr("Hessian Expansion"));
+   seed_expansion_methods->setVisible(false);
 
    stretching_force = new QComboBox;
    stretching_force->addItem(tr("EigenVector Stretch Force"));
    stretching_force->addItem(tr("Momentum Stretch Force"));
    stretching_force->addItem(tr("Combined Stretch Force"));
    stretching_force->setCurrentIndex(1);
+
+   image_coding = new QComboBox;
+   image_coding->addItem(tr("Centerline Coding"));
+   image_coding->addItem(tr("Vessel Tube Coding"));
 
    //stretching_force->addItem(tr("Curvelet Stretch Force"));
 
@@ -938,16 +940,29 @@ General_Parameters2::General_Parameters2(const QString &title,
 
    remove_seed_range_label = new QLabel("remove seed");
    remove_seed_range_box = new QSpinBox;
+
+   k_sigma_label = new QLabel("sigma ratio");
+   k_sigma_box = new QDoubleSpinBox;
+
    deformation_iter_label = new QLabel("deform iteration");
    deformation_iter_box = new QSpinBox;
+   deformation_iter_label->setVisible(false);
+   deformation_iter_box->setVisible(false);
 
    repeat_ratio_label = new QLabel("repeat ratio");
    repeat_ratio_box = new QDoubleSpinBox;
    repeat_dist_label = new QLabel("repeat distance");
    repeat_dist_box = new QSpinBox;
+   repeat_ratio_label->setVisible(false);
+   repeat_ratio_box->setVisible(false);
+   repeat_dist_label->setVisible(false);
+   repeat_dist_box->setVisible(false);
 
    freeze_body = new QCheckBox("freeze body", this);
    use_automatic_merging = new QCheckBox("automatic merging", this);
+   multi_threads = new QCheckBox("multi-threads", this);
+   multi_threads->setVisible(false);
+
    //use_jumping_gaps = new QCheckBox("jumping gaps", this);
    //use_jumping_crossover = new QCheckBox("crossover", this);
   
@@ -993,6 +1008,11 @@ General_Parameters2::General_Parameters2(const QString &title,
    remove_seed_range_box->setValue(5);
    remove_seed_range_box->setSingleStep(1);
 
+   k_sigma_box->setMaximum(10);
+   k_sigma_box->setMinimum(1);
+   k_sigma_box->setValue(1);
+   k_sigma_box->setSingleStep(0.5);
+
    deformation_iter_box->setMaximum(20);
    deformation_iter_box->setMinimum(0);
    deformation_iter_box->setValue(0);
@@ -1028,23 +1048,29 @@ General_Parameters2::General_Parameters2(const QString &title,
    para_layout9->addWidget(repeat_dist_label);
    para_layout9->addWidget(repeat_dist_box);
 
+   para_layout10->addWidget(k_sigma_label);
+   para_layout10->addWidget(k_sigma_box);
+
    tracingButton = new QPushButton("Tracing");
 
    layout->addWidget(tracing_models);
    layout->addWidget(seed_expansion_methods);
    layout->addWidget(stretching_force);
+   layout->addWidget(image_coding);
    layout->addLayout(para_layout1);
    layout->addLayout(para_layout2);
    layout->addLayout(para_layout3);
    layout->addLayout(para_layout4);
    layout->addLayout(para_layout5);
    layout->addLayout(para_layout6);
+   layout->addLayout(para_layout10);
    layout->addLayout(para_layout7);
    layout->addLayout(para_layout8);
    layout->addLayout(para_layout9);
 
    layout->addWidget(freeze_body);
    layout->addWidget(use_automatic_merging);
+   layout->addWidget(multi_threads);
    layout->addWidget(general_para21);
    //layout->addWidget(use_jumping_gaps);
    //layout->addWidget(general_para22);
@@ -1078,6 +1104,17 @@ void General_Parameters2::setAutomaticMerging(int in)
 	 use_automatic_merging->setCheckState(Qt::Checked);
     else
 	 use_automatic_merging->setCheckState(Qt::Unchecked);
+}
+bool General_Parameters2::getMultiThreads()
+{
+   return multi_threads->isChecked();
+}
+void General_Parameters2::setMultiThreads(int in)
+{	
+	if(in == 1)
+	 multi_threads->setCheckState(Qt::Checked);
+    else
+	 multi_threads->setCheckState(Qt::Unchecked);
 }
 /*
 bool General_Parameters2::getJumpingGaps()
@@ -1128,6 +1165,14 @@ void General_Parameters2::setCurrentForce(int in)
 {
 	stretching_force->setCurrentIndex(in);
 }
+int General_Parameters2::getCurrentCoding()
+{
+   return image_coding->currentIndex();
+}
+void General_Parameters2::setCurrentCoding(int in)
+{
+	image_coding->setCurrentIndex(in);
+}
 void General_Parameters2::use_automatic_merging_slot()
 {
    if( use_automatic_merging->isChecked() )
@@ -1163,6 +1208,7 @@ void General_Parameters2::disableSetting()
    collision_dist_box->setEnabled(false);
    
    remove_seed_range_box->setEnabled(false);
+   k_sigma_box->setEnabled(false);
    deformation_iter_box->setEnabled(false);
    repeat_ratio_box->setEnabled(false);
    repeat_dist_box->setEnabled(false);
@@ -1177,6 +1223,7 @@ void General_Parameters2::disableSetting()
    seed_expansion_methods->setEnabled(false);
    tracing_models->setEnabled(false);
    stretching_force->setEnabled(false);
+   image_coding->setEnabled(false);
 }
 void General_Parameters2::enableSetting()
 {
@@ -1188,6 +1235,7 @@ void General_Parameters2::enableSetting()
    collision_dist_box->setEnabled(true);
 
    remove_seed_range_box->setEnabled(true);
+   k_sigma_box->setEnabled(true);
    deformation_iter_box->setEnabled(true);
    repeat_ratio_box->setEnabled(true);
    repeat_dist_box->setEnabled(true);
@@ -1202,6 +1250,7 @@ void General_Parameters2::enableSetting()
    tracing_models->setEnabled(true);
    seed_expansion_methods->setEnabled(true);
    stretching_force->setEnabled(true);
+   image_coding->setEnabled(true);
 }
 int General_Parameters2::getStretchRatio()
 {
@@ -1253,6 +1302,14 @@ int General_Parameters2::getRemoveSeedRange()
 void General_Parameters2::setRemoveSeedRange(int in)
 {
     remove_seed_range_box->setValue(in);
+}
+float General_Parameters2::getSigmaRatio()
+{
+	 return k_sigma_box->value();
+}
+void General_Parameters2::setSigmaRatio(float in)
+{
+    k_sigma_box->setValue(in);
 }
 int General_Parameters2::getDeformationITER()
 {

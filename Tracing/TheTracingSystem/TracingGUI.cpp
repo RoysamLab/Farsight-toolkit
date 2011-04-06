@@ -36,6 +36,10 @@ QtTracer::QtTracer(QWidget * parent, Qt::WindowFlags flags) : QMainWindow(parent
 	current_idx = -1; //current index of image in the batch processing I
 	current_lvl = 1;
 
+	thread_finished = 0;
+
+	original_seed_num = 0;
+
 	seeding = false;
 	tracing_started = false;
 	automated_process = false;
@@ -80,8 +84,7 @@ QtTracer::QtTracer(QWidget * parent, Qt::WindowFlags flags) : QMainWindow(parent
 
 	setWindowTitle("Open-Snake Tracing System");
 	setWindowIcon(QIcon(":/icons/banner.bmp"));
-    setGeometry(QRect(200,200,600,400));
-
+    setGeometry(QRect(200,200,500,400));
 }
 
 
@@ -294,19 +297,22 @@ void QtTracer::createMainGUI()
 	qRegisterMetaType<SnakeListClass>("SnakeListClass");
 
 	connect(Tracer->tracing_thread,SIGNAL(stretched(SnakeClass)), tracingViewer, SLOT(setTracingSnake(SnakeClass)));
-    //connect(Tracer->tracing_thread,SIGNAL(stretched(SnakeClass)), this, SLOT(draw3DTracing(SnakeClass)));
+    connect(Tracer->tracing_thread,SIGNAL(stretched(SnakeClass)), this, SLOT(draw3DTracing(SnakeClass)));
     //connect(Tracer->tracing_thread,SIGNAL(snakeTraced()), tracingViewer, SLOT(SnakesChanged()));
+
 	connect(Tracer->tracing_thread,SIGNAL(snakeTraced()), this, SLOT(SnakesChangedSlot()));
+    connect(Tracer->tracing_thread1,SIGNAL(snakeTraced()), this, SLOT(SnakesChangedSlot()));
+	connect(Tracer->tracing_thread2,SIGNAL(snakeTraced()), this, SLOT(SnakesChangedSlot()));
+	connect(Tracer->tracing_thread3,SIGNAL(snakeTraced()), this, SLOT(SnakesChangedSlot()));
+    connect(Tracer->tracing_thread4,SIGNAL(snakeTraced()), this, SLOT(SnakesChangedSlot()));
+	connect(Tracer->tracing_thread5,SIGNAL(snakeTraced()), this, SLOT(SnakesChangedSlot()));
+
     connect(Tracer->tracing_thread,SIGNAL(snakeTraced_manual_seed(float)), this, SLOT(SnakesChangedSlot()));
     connect(Tracer->tracing_thread,SIGNAL(snakeTraced_manual_seed(float)), this, SLOT(updateFN(float)));
 
 	qRegisterMetaType<Point3D>("Point3D");
 	//connect(tracingViewer,SIGNAL(result_drawed()), this, SLOT(Tracing()));
     connect(tracingViewer,SIGNAL(manual_seed(PointList3D)), this, SLOT(Manual_Seed_Tracing(PointList3D)));
-    //connect(tracingViewer,SIGNAL(manual_path(PointList3D)), this, SLOT(Manual_Seed_TracingI(PointList3D)));
-
-    //connect(tracingViewer,SIGNAL(manual_path(PointList3D)), this, SLOT(Minimal_Path_Correction(PointList3D)));
-
 	connect(tracingViewer,SIGNAL(point_clicked(Point3D)), this, SLOT(PointClickedSlot(Point3D)));
 	//connect(tracingViewer,SIGNAL(result_drawed1()), Tracer->tracing_thread, SLOT(resume()));
     
@@ -468,12 +474,11 @@ void QtTracer::createActions()
    SegmentI->setToolTip("2-Label Segmentation");
    connect(SegmentI,SIGNAL(triggered()), this, SLOT(SegmentationI()));
 
-   SegmentII = new QAction(tr("Post-segmentation II"), this);
-   connect(SegmentII,SIGNAL(triggered()), this, SLOT(SegmentationII()));
-   SegmentII->setToolTip("Multi-Label Segmentation");
-
    Remove_Isolated = new QAction(tr("Remove Isolated Traces"), this);
    connect(Remove_Isolated,SIGNAL(triggered()), this, SLOT(removeIsolated()));
+
+   Break_Branches = new QAction(tr("Break Branches"), this);
+   connect(Break_Branches,SIGNAL(triggered()), this, SLOT(breakBranches()));
 
 
    Estimate_Radius = new QAction(tr("Radius Estimation"), this);
@@ -525,7 +530,36 @@ void QtTracer::createMenus()
    fileMenu->addSeparator();
    fileMenu->addAction(exitAct);
  
-   editMenu = menuBar()->addMenu(tr("&Edit"));
+   SeedMenu = menuBar()->addMenu(tr("&Seeds"));
+   SeedMenu->addAction(Pick_Seed);
+   SeedMenu->addAction(Delete_Seed);
+   SeedMenu->addAction(Invert_Selection);
+
+   SnakeMenu = menuBar()->addMenu(tr("&Snakes"));
+   SnakeMenu->addAction(Delete_Snake);
+   SnakeMenu->addAction(Split_Snake);
+   SnakeMenu->addAction(Merge_Snake);
+
+   BranchMenu = menuBar()->addMenu(tr("&Branches"));
+   BranchMenu->addAction(Create_Branch);
+   BranchMenu->addAction(Break_Branches);
+
+   TreeMenu = menuBar()->addMenu(tr("&Tree"));
+   TreeMenu->addAction(Set_Root);
+   TreeMenu->addAction(Clear_Tree);
+
+   SomaMenu = menuBar()->addMenu(tr("&Soma"));
+   SomaMenu->addAction(Save_Soma);
+   SomaMenu->addAction(Pick_Soma_Seeds);
+   SomaMenu->addAction(Remove_Soma);
+   SomaMenu->addAction(Segment_Soma);
+   SomaMenu->addAction(Clear_Segmentation);
+
+   PostSegMenu = menuBar()->addMenu(tr("&Segmentation"));
+   PostSegMenu->addAction(SegmentI);
+
+   OutlierMenu = menuBar()->addMenu(tr("&Outlier Removal"));
+   OutlierMenu->addAction(Remove_Isolated);
 
    viewMenu = menuBar()->addMenu(tr("&View"));
    viewMenu->addAction(zoomInAct);
@@ -550,19 +584,20 @@ void QtTracer::createToolBar()
    Tool->addWidget(Progress);
 
    Tool_Misc = this->addToolBar(tr("Operations"));
-   Tool_Misc->addAction(Pick_Seed);
-   Tool_Misc->addAction(Delete_Seed);
-   Tool_Misc->addAction(Invert_Selection);
+   //Tool_Misc->addAction(Pick_Seed);
+   //Tool_Misc->addAction(Delete_Seed);
+   //Tool_Misc->addAction(Invert_Selection);
    Tool_Misc->addSeparator();
-   Tool_Misc->addAction(Delete_Snake);
-   Tool_Misc->addAction(Split_Snake);
-   Tool_Misc->addAction(Merge_Snake);
-   Tool_Misc->addSeparator();
+   //Tool_Misc->addAction(Delete_Snake);
+   //Tool_Misc->addAction(Split_Snake);
+   //Tool_Misc->addAction(Merge_Snake);
+   //Tool_Misc->addSeparator();
    Tool_Misc->addAction(Set_Root);
    Tool_Misc->addAction(Clear_Tree);
    Tool_Misc->addSeparator();
-   Tool_Misc->addAction(Refine_Branch);
+   //Tool_Misc->addAction(Refine_Branch);
    Tool_Misc->addAction(Create_Branch);
+   Tool_Misc->addAction(Break_Branches);
    Tool_Misc->addSeparator();
    Tool_Misc->addAction(Save_Soma);
    Tool_Misc->addAction(Pick_Soma_Seeds);
@@ -571,7 +606,7 @@ void QtTracer::createToolBar()
    Tool_Misc->addAction(Clear_Segmentation);
    Tool_Misc->addSeparator();
    Tool_Misc->addAction(SegmentI);
-   Tool_Misc->addAction(SegmentII);
+   Tool_Misc->addSeparator();
    Tool_Misc->addAction(Remove_Isolated);
    //Tool_Misc->addAction(Estimate_Radius);
 }
@@ -748,7 +783,7 @@ void QtTracer::draw3DTraces()
     seed_polymap->SetInput(seed_PolyPoints);
     this->seed_actor = vtkSmartPointer<vtkActor>::New();
     this->seed_actor->SetMapper(seed_polymap);
-    this->seed_actor->GetProperty()->SetColor(0,1,0);
+    this->seed_actor->GetProperty()->SetColor(0,0,1);
 
 
     this->seed_actor->GetProperty()->SetPointSize(3);
@@ -760,6 +795,7 @@ void QtTracer::draw3DTraces()
   {
 	this->Renderer->RemoveActor(this->seed_actor);
   }
+
 
   //delete previous actors
   if( tube_actors.size() != 0 )
@@ -811,7 +847,7 @@ void QtTracer::draw3DTraces()
    {
      for( int i = 0; i < Tracer->SnakeList.NSnakes; i++ )
      {   
-       if( Tracer->SnakeList.valid_list(i) == 0)
+       if( Tracer->SnakeList.valid_list[i] == 0)
          continue;
 	   for( int j = 0; j <Tracer->SnakeList.Snakes[i].Cu.NP-1; j++ )
 	   {   
@@ -899,7 +935,7 @@ void QtTracer::draw3DTraces()
   for( int i = 0; i < Tracer->SnakeList.NSnakes; i++ )
   {
 	  
-   if( Tracer->SnakeList.valid_list(i) == 0)
+   if( Tracer->SnakeList.valid_list[i] == 0)
          continue;
 
    bool selected = false;
@@ -974,8 +1010,8 @@ void QtTracer::draw3DTraces()
 
     for( int j = 0; j <Tracer->SnakeList.Snakes[i].Cu.NP; j++ )
     {
-     line_points->InsertPoint(j, Tracer->SnakeList.Snakes[i].Cu.Pt[j].x, 
-		                         Tracer->SnakeList.Snakes[i].Cu.Pt[j].y,
+     line_points->InsertPoint(j, Tracer->SnakeList.Snakes[i].Cu.Pt[j].x * general_para->getSh(), 
+		                         Tracer->SnakeList.Snakes[i].Cu.Pt[j].y * general_para->getSh(),
 								 Tracer->SnakeList.Snakes[i].Cu.Pt[j].z);
     }
  
@@ -1005,7 +1041,7 @@ void QtTracer::draw3DTraces()
        for (int j=0 ;j<Tracer->SnakeList.Snakes[i].Cu.NP ; j++)
        {
         //tubeRadius->SetTuple1(j,Tracer->SnakeList.Snakes[i].Ru[j] * sqrt((double)2));
-		tubeRadius->SetTuple1(j,Tracer->SnakeList.Snakes[i].Ru[j]);
+		tubeRadius->SetTuple1(j,Tracer->SnakeList.Snakes[i].Ru[j] * general_para->getSh());
 		colors->InsertTuple3(j,int(1 * 255),int(1 * 255),int(0 * 255));
        }
 
@@ -1041,6 +1077,7 @@ void QtTracer::draw3DTraces()
   
      vtkSmartPointer<vtkActor> line_actor = vtkSmartPointer<vtkActor>::New();
      line_actor->SetMapper(polymap);
+
 
 	 if( slider->getColorDisplay() )
 	 {
@@ -1078,6 +1115,7 @@ void QtTracer::draw3DTraces()
 	 line_actors.push_back(line_actor);
   }
  
+
   //draw the tips
   /*PolyPoints->SetPoints(line_tips);
   PolyPoints->SetVerts(point_cells);
@@ -1092,11 +1130,35 @@ void QtTracer::draw3DTraces()
   this->Renderer->AddActor(this->point_actor);*/
 
   //draw branch points
+  for( int i = 0; i < Tracer->SnakeList.branch_points.NP; i++ )
+  {
+      vtkSmartPointer<vtkSphereSource> sphereSource = 
+      vtkSmartPointer<vtkSphereSource>::New();
+      sphereSource->SetCenter(Tracer->SnakeList.branch_points.Pt[i].x * general_para->getSh() ,
+		                      Tracer->SnakeList.branch_points.Pt[i].y * general_para->getSh(),
+							 Tracer->SnakeList.branch_points.Pt[i].z);
+      sphereSource->SetRadius(2);
+ 
+      //Create a mapper and actor
+      vtkSmartPointer<vtkPolyDataMapper> branch_mapper = 
+      vtkSmartPointer<vtkPolyDataMapper>::New();
+      branch_mapper->SetInputConnection(sphereSource->GetOutputPort());
+ 
+      vtkSmartPointer<vtkActor> branch_actor = 
+      vtkSmartPointer<vtkActor>::New();
+      branch_actor->SetMapper(branch_mapper);
+	  branch_actor->GetProperty()->SetOpacity(0.6);
+      branch_actors.push_back(branch_actor);
+
+	  this->Renderer->AddActor(branch_actor);
+  
+  }
+
   for( int i = 0; i < Tracer->SnakeList.NSnakes; i++ )
   {
-	if( Tracer->SnakeList.valid_list(i) == 0)
+	if( Tracer->SnakeList.valid_list[i] == 0)
          continue;
-	for( int j = 0; j < Tracer->SnakeList.Snakes[i].BranchPt.NP; j++ )
+	/*for( int j = 0; j < Tracer->SnakeList.Snakes[i].BranchPt.NP; j++ )
 	{
 	  //Create a sphere
       vtkSmartPointer<vtkSphereSource> sphereSource = 
@@ -1117,7 +1179,7 @@ void QtTracer::draw3DTraces()
       branch_actors.push_back(branch_actor);
 
 	  this->Renderer->AddActor(branch_actor);
-	}
+	}*/
 
 	//draw root points
 	for( int j = 0; j < Tracer->SnakeList.Snakes[i].RootPt.NP; j++ )
@@ -1156,7 +1218,7 @@ void QtTracer::draw3DTraces()
    int sample = 1;
    for( int i = 0; i < Tracer->SnakeList.NSnakes; i++ )
    {
-	if( Tracer->SnakeList.valid_list(i) == 0)
+	if( Tracer->SnakeList.valid_list[i] == 0)
          continue;
 	for( int j = 0; j < Tracer->SnakeList.Snakes[i].Ru.size(); j += sample )
 	{
@@ -1184,7 +1246,7 @@ void QtTracer::draw3DTraces()
      polygonSource->SetNumberOfSides(20);
 	 polygonSource->SetGeneratePolygon(0);
      //polygonSource->SetRadius(Tracer->SnakeList.Snakes[i].Ru[j] * sqrt((double)2));
-	 polygonSource->SetRadius(Tracer->SnakeList.Snakes[i].Ru[j]);
+	 polygonSource->SetRadius(Tracer->SnakeList.Snakes[i].Ru[j] * general_para->getSh());
      polygonSource->SetCenter(Tracer->SnakeList.Snakes[i].Cu.Pt[j].x * general_para->getSh() ,
 		                      Tracer->SnakeList.Snakes[i].Cu.Pt[j].y * general_para->getSh(),
 							  Tracer->SnakeList.Snakes[i].Cu.Pt[j].z);
@@ -1207,13 +1269,12 @@ void QtTracer::draw3DTraces()
 	}
    }
   }
-
   if( slider->getRadiusDisplay() == 1 || slider->getRadiusDisplay() == 3  )
   {
    int sample = 1;
    for( int i = 0; i < Tracer->SnakeList.NSnakes; i++ )
    {
-	if( Tracer->SnakeList.valid_list(i) == 0)
+	if( Tracer->SnakeList.valid_list[i] == 0)
          continue;
 	for( int j = 1; j < Tracer->SnakeList.Snakes[i].Ru.size()-1; j += sample )
 	{
@@ -1224,7 +1285,7 @@ void QtTracer::draw3DTraces()
 		                      Tracer->SnakeList.Snakes[i].Cu.Pt[j].y * general_para->getSh(),
 							  Tracer->SnakeList.Snakes[i].Cu.Pt[j].z);
 	  //sphereSource->SetRadius(Tracer->SnakeList.Snakes[i].Ru[j] * sqrt((double)2));
-      sphereSource->SetRadius(Tracer->SnakeList.Snakes[i].Ru[j]);
+      sphereSource->SetRadius(Tracer->SnakeList.Snakes[i].Ru[j] * general_para->getSh());
 
       //Create a mapper and actor
       vtkSmartPointer<vtkPolyDataMapper> boundary_mapper = 
@@ -1305,7 +1366,7 @@ void QtTracer::draw3DTraces_Global()
   vnl_vector<int> selected_snake_id =tracingViewer->getSelectedSnakes();
   for( int i = 0; i < GSnakeList.NSnakes; i++ )
   {
-   if( GSnakeList.valid_list(i) == 0)
+   if( GSnakeList.valid_list[i] == 0)
          continue;
 
    bool selected = false;
@@ -1532,6 +1593,9 @@ void QtTracer::draw3DTracing(SnakeClass s)
   vup[2] = v1.z;
   Renderer->GetActiveCamera()->SetViewUp(vup);*/
 
+  if( !slider->getDynamicDisplay() )
+    return;
+
   //delete previous actors
   if( tube_actors.size() != 0 )
   {
@@ -1557,9 +1621,9 @@ void QtTracer::draw3DTracing(SnakeClass s)
 
     for( int j = 0; j <s.Cu.NP; j++ )
     {
-     line_points->InsertPoint(j, s.Cu.Pt[j].x, 
-		                         s.Cu.Pt[j].y,
-								 s.Cu.Pt[j].z);
+     line_points->InsertPoint(j, s.Cu.Pt[j].x * general_para->getSh(), 
+		                         s.Cu.Pt[j].y * general_para->getSh(),
+								 s.Cu.Pt[j].z * general_para->getSh());
     }
  
     line_cells->InsertNextCell(s.Cu.NP);
@@ -1588,7 +1652,7 @@ void QtTracer::draw3DTracing(SnakeClass s)
        for (int j=0 ;j<s.Cu.NP ; j++)
        {
         //tubeRadius->SetTuple1(j,Tracer->SnakeList.Snakes[i].Ru[j] * sqrt((double)2));
-		tubeRadius->SetTuple1(j,s.Ru[j]);
+		tubeRadius->SetTuple1(j,s.Ru[j] * general_para->getSh());
 		colors->InsertTuple3(j,int(1 * 255),int(1 * 255),int(0 * 255));
        }
 
@@ -1691,7 +1755,7 @@ void QtTracer::surfaceRendering(bool rand_color, ImagePointer ID)
 	     if( rand_color )
           actor->GetProperty()->SetColor((double)(rand()%10)/(double)10,(double)(rand()%10)/(double)10,(double)(rand()%10)/(double)10);
 		 else
-		  actor->GetProperty()->SetColor(1,1,0);
+		  actor->GetProperty()->SetColor(double(72)/255,double(118)/255,1);
 		 actor->SetScale(general_para->getSh(),general_para->getSh(),1);
 	   /*if( i%6 == 0 )
 	     actor->GetProperty()->SetColor(1,0,0);
@@ -1771,7 +1835,7 @@ void QtTracer::surfaceRendering(bool rand_color)
 	     if( rand_color )
           actor->GetProperty()->SetColor((double)(rand()%10)/(double)10,(double)(rand()%10)/(double)10,(double)(rand()%10)/(double)10);
 		 else
-		  actor->GetProperty()->SetColor(1,1,0);
+		  actor->GetProperty()->SetColor(double(72)/255,double(118)/255,1);
 		 actor->SetScale(general_para->getSh(),general_para->getSh(),1);
 	   /*if( i%6 == 0 )
 	     actor->GetProperty()->SetColor(1,0,0);
@@ -1816,6 +1880,20 @@ void QtTracer::SnakesChangedSlot()
   }
   else
   {
+   if( Tracer->use_multi_threads )
+   {
+     thread_finished++;
+     if( thread_finished < 6 )
+	   return;
+     else
+     {
+       thread_finished = 0;
+	   //tracingViewer->SnakesChanged();
+       //draw3DTraces();
+       //tracing_suspend();
+	 }
+   }
+
    Tracer->tracing = false;
    Tracing();
    //tracingViewer->setSnakes(&Tracer->SnakeList);
@@ -1850,7 +1928,7 @@ void QtTracer::PointClickedSlot(Point3D click_point)
 	   MSG.append(" Intensity: ");
 	   MSG.append(I_NUM);
    }
-   else if ( slider->State == 2 && click_point.z != -1 )
+   else if( slider->State == 2 && click_point.z != -1 )
    {
 	   ImageType::IndexType idx;
 	   idx[0] = click_point.x;
@@ -1861,42 +1939,6 @@ void QtTracer::PointClickedSlot(Point3D click_point)
 	   I_NUM.setNum(intensity);
 	   MSG.append(" Intensity: ");
 	   MSG.append(I_NUM);
-   }
-   else if ( slider->State == 3 && click_point.z != -1 )
-   {
-	   ImageType::IndexType idx;
-	   idx[0] = click_point.x;
-	   idx[1] = click_point.y;
-	   idx[2] = click_point.z;
-	   int intensity = IM->VBW->GetPixel(idx);
-	   QString I_NUM;
-	   I_NUM.setNum(intensity);
-	   MSG.append(" Intensity: ");
-	   MSG.append(I_NUM);
-   }
-   else if ( slider->State == 4 && click_point.z != -1 )
-   {
-	   ImageType::IndexType idx;
-	   idx[0] = click_point.x;
-	   idx[1] = click_point.y;
-	   idx[2] = click_point.z;
-	   int intensity = IM->VBW->GetPixel(idx);
-	   QString I_NUM;
-	   I_NUM.setNum(intensity);
-	   MSG.append(" Intensity: ");
-	   MSG.append(I_NUM);
-   }
-   else if ( slider->State == 5 && click_point.z != -1 )
-   {
-	   /*ImageType::IndexType idx;
-	   idx[0] = click_point.x;
-	   idx[1] = click_point.y;
-	   idx[2] = click_point.z;
-	   int intensity = IM->DBW->GetPixel(idx);
-	   QString I_NUM;
-	   I_NUM.setNum(intensity);
-	   MSG.append(" Intensity: ");
-	   MSG.append(I_NUM);*/
    }
 
   if( click_point.z != -1 )
@@ -1961,25 +2003,6 @@ void QtTracer::set_cross_section_view(int in)
 	    yz_slice = convertITK2QT(IM->extract_one_slice_yz(IM->ImRescale(IM->IVessel),x), false);
 	    xz_slice = convertITK2QT(IM->extract_one_slice_xz(IM->ImRescale(IM->IVessel),y), false);
      }
-     else if(in==3)
-     {
-	    xy_slice = convertITK2QT(IM->extract_one_slice(IM->ImRescale(IM->VBW),z), false);
-	    yz_slice = convertITK2QT(IM->extract_one_slice_yz(IM->ImRescale(IM->VBW),x), false);
-	    xz_slice = convertITK2QT(IM->extract_one_slice_xz(IM->ImRescale(IM->VBW),y), false);
-     }
-     else if(in== 4)
-     {
-	    xy_slice = convertITK2QT(IM->extract_one_slice(IM->ImRescale(IM->VBW),z), false);
-	    yz_slice = convertITK2QT(IM->extract_one_slice_yz(IM->ImRescale(IM->VBW),x), false);
-	    xz_slice = convertITK2QT(IM->extract_one_slice_xz(IM->ImRescale(IM->VBW),y), false);
-     }
-     else if(in == 5)
-     {
-	   /* xy_slice = convertITK2QT(IM->extract_one_slice(IM->ImRescale(IM->DBW),z), false);
-	    yz_slice = convertITK2QT(IM->extract_one_slice_yz(IM->ImRescale(IM->DBW),x), false);
-	    xz_slice = convertITK2QT(IM->extract_one_slice_xz(IM->ImRescale(IM->DBW),y), false); */
-	 }
-
 
   	 QPainter painter1(&xy_slice); //painter for painting on the image
 	 painter1.setCompositionMode(QPainter::CompositionMode_SourceOver);
@@ -2312,6 +2335,7 @@ void QtTracer::batchProcessingI()
 	 startButtonII->setVisible(false);
    }
 }
+
 
 void QtTracer::batchTracingI()
 {
@@ -2784,7 +2808,7 @@ void QtTracer::batchTracingII()
 	 int num_pt = 0;
 	 for( int k = 0; k < GSnakeList.NSnakes; k++ )
 	 {
-		 if(GSnakeList.valid_list(k) == 1)
+		 if(GSnakeList.valid_list[k] == 1)
 			 num_pt += GSnakeList.Snakes[k].Cu.NP;
 			 //std::cout<<k<<"th of "<<GSnakeList.NSnakes<<"Snakes:"<<GSnakeList.Snakes[k].Cu.NP<<std::endl;
 	 }
@@ -2892,7 +2916,7 @@ void QtTracer::addGlobalSnake()
 
     for( int i = 0; i < Tracer->SnakeList.NSnakes; i++ )
     {
-		if( Tracer->SnakeList.valid_list(i) == 0 )
+		if( Tracer->SnakeList.valid_list[i] == 0 )
 			continue;
 
 		temp_snake = Tracer->SnakeList.Snakes[i];
@@ -3002,7 +3026,7 @@ void QtTracer::addGlobalSnake()
 	//add snakes to global snake list and do automatic linking based on overlapping cues
 	for( int i = 0; i < temp_snake_list.NSnakes; i++ )
 	{
-		if( temp_snake_list.valid_list(i) == 1 )
+		if( temp_snake_list.valid_list[i] == 1 )
 		{
 		  //temp_snake = temp_snake_list.GetSnake(i);
 		  //GSnakeList.AddSnake( reg.convert_global_snake( temp_snake, current_idx, general_para->getSh() * general_para->getSf() ) );
@@ -3055,7 +3079,7 @@ void QtTracer::addGlobalSnake()
 			  int idx = overlapping.arg_max();
 
 			  //avoid second merging
-			  if( merging_label[reg.seed_snake_label[idx]] == 0 && GSnakeList.valid_list(reg.seed_snake_label[idx]) == 1 )
+			  if( merging_label[reg.seed_snake_label[idx]] == 0 && GSnakeList.valid_list[reg.seed_snake_label[idx]] == 1 )
 			  //if( merging_label[reg.seed_snake_label[idx]] == 0 && GSnakeList.valid_list(reg.seed_snake_label[idx]) == 1 && dist_to_seed_snake(idx) == dist_to_seed_snake.min_value() )
 			  {
 			   merging_label[reg.seed_snake_label[idx]] = 1;
@@ -3098,8 +3122,8 @@ void QtTracer::addGlobalSnake()
     {
 	 //std::cout<<"GSnakeList.Snakes[j].Cu:"<<GSnakeList.Snakes[j].Cu.GetSize()<<std::endl;
      if( GSnakeList.Snakes[j].Cu.NP < 3 )
-	   GSnakeList.valid_list(j) = 0;
-     if( GSnakeList.valid_list(j) == 0 )
+	   GSnakeList.valid_list[j] = 0;
+     if( GSnakeList.valid_list[j] == 0 )
       continue;
 
 	 QPointF *SP= new QPointF[GSnakeList.Snakes[j].Cu.GetSize()];
@@ -3129,8 +3153,8 @@ void QtTracer::addGlobalSnake()
 	for( int j = 0; j < reg.Seed_Snakes.NSnakes; j++ )
 	{
      if( reg.Seed_Snakes.Snakes[j].Cu.NP < 3 )
-	   reg.Seed_Snakes.valid_list(j) = 0;
-     if( reg.Seed_Snakes.valid_list(j) == 0 )
+	   reg.Seed_Snakes.valid_list[j] = 0;
+     if( reg.Seed_Snakes.valid_list[j] == 0 )
       continue;
 
 	 QPointF *SP= new QPointF[reg.Seed_Snakes.Snakes[j].Cu.GetSize()];
@@ -3172,7 +3196,7 @@ void QtTracer::Process()
 
 	  Preprocess_Stage = 1;
 	  Progress->setMinimum(0);
-      Progress->setMaximum(5);
+      Progress->setMaximum(4);
       Progress->setValue(0);
 
 	  nextButton->setEnabled(false);
@@ -3191,8 +3215,13 @@ void QtTracer::Process()
 
 	  if( automated_process || batch_processI || batch_processII )
 	  {
-		 Preprocess();
+	    if( automated_process && IM->SeedPt.NP != 0 )
+			nextStep();
+		else
+		{
+         Preprocess();  
 		 nextStep();
+		}
 	  }
 
 	  break;
@@ -3251,7 +3280,10 @@ void QtTracer::Process()
       nextButton->setEnabled(false);
 
 	  if( automated_process )
+	  {
 		  automated_process = false;
+		  //automated_process = true;
+	  }
       if( batch_processI )
 	  {
 	     //output the tracing result
@@ -3297,18 +3329,6 @@ void QtTracer::changeSlice(int in)
    {
      tracingViewer->setDisplayImage(convertITK2QT(IM->extract_one_slice(IM->ImRescale(IM->IVessel),in), false));	
    }
-   else if(slider->State == 3)
-   {
-     tracingViewer->setDisplayImage(convertITK2QT(IM->extract_one_slice(IM->ImRescale(IM->VBW),in), false));
-   }
-   else if(slider->State == 4)
-   {
-     tracingViewer->setDisplayImage(convertITK2QT(IM->extract_one_slice(IM->ImRescale(IM->VBW),in), false));
-   }
-   else if(slider->State == 5)
-   {
-     //tracingViewer->setDisplayImage(convertITK2QT(IM->extract_one_slice(IM->ImRescale(IM->DBW),in), false));
-   }
 }
 
 void QtTracer::changeDisplay(int in)
@@ -3333,23 +3353,15 @@ void QtTracer::changeDisplay(int in)
     {
       tracingViewer->setDisplayImage(convertITK2QT(IM->ImMaxProjection(IM->ImRescale(IM->IVessel)), false));	
     }
-    else if(in==3)
-    {
-      tracingViewer->setDisplayImage(convertITK2QT(IM->ImMaxProjection(IM->ImRescale(IM->VBW)), false));
-    }
-    else if(in== 4)
-    {
-      tracingViewer->setDisplayImage(convertITK2QT(IM->ImMaxProjection(IM->ImRescale(IM->VBW)), false));
-    }
-    else if(in == 5)
-    {
-      //tracingViewer->setDisplayImage(convertITK2QT(IM->ImMaxProjection(IM->ImRescale(IM->DBW)), false));
-	}
    }
 }
 
 void QtTracer::Init_Tracing()
 {
+	//compute the background and foreground models for 4-D region snake
+	IM->ImComputeInitBackgroundModel();
+    IM->ImComputeInitForegroundModel();
+
    //in case the user hit twice the start tracing button
    std::cout<<"--------------Tracing--------------"<<std::endl;
 
@@ -3359,11 +3371,11 @@ void QtTracer::Init_Tracing()
 	   return;
 
    //if Tracer is still tracing with last setting, wait for tracing to finish
-   //if( Tracer->tracing && !batch_processI && !batch_processII ) 
-   //{
-   //    QMessageBox::information(this, tr("Warning"), tr("Please wait for current tracing to finish"));
-   //	   return;
-   //}
+   if( Tracer->tracing && !batch_processI && !batch_processII ) 
+   {
+       QMessageBox::information(this, tr("Warning"), tr("Please wait for current tracing to finish"));
+   	   return;
+   }
 
    //clear edits
     edits->TP = 0.0;
@@ -3404,6 +3416,7 @@ void QtTracer::Init_Tracing()
    IM->ImRefresh_LabelImage();
 
    Tracer->SetImage(IM);
+   Tracer->use_multi_threads = general_para2->getMultiThreads();
    Tracer->Init();
 
    tracingViewer->setSnakes(&Tracer->SnakeList);
@@ -3432,8 +3445,8 @@ void QtTracer::Init_Tracing()
 		  seed_snakes.AddSnake(temp_snake);
 		}
        
-		seed_snakes.valid_list.set_size(seed_snakes.NSnakes);
-		seed_snakes.valid_list.fill(1);
+		//seed_snakes.valid_list.set_size(seed_snakes.NSnakes);
+		//seed_snakes.valid_list.fill(1);
 
 		//estimate shift in Z dimension
 		Z_shift = estimateZShift();
@@ -3466,10 +3479,10 @@ void QtTracer::Seed_Snake_Tracing()
 
     for( int i = 0; i < seed_snakes.NSnakes; i++ )
 	{
-	   if( seed_snakes.valid_list(i) != 0 )
+	   if( seed_snakes.valid_list[i] != 0 )
 	   {
 	    m_seed = seed_snakes.Snakes[i].Cu;
-        seed_snakes.valid_list(i) = 0;
+        seed_snakes.valid_list[i] = 0;
 	    Tracing();
 	    break;
 	   }
@@ -3536,9 +3549,11 @@ void QtTracer::Tracing()
            general_para2->getStretchRatio(), general_para2->getMinimumLength(), 
 		   general_para2->getCollisionDist(), general_para2->getRemoveSeedRange(),
 		   general_para2->getDeformationITER(), general_para2->getAutomaticMerging(),
-		   general_para2->general_para21->getMaxAngle(), general_para2->getCurrentIndex(),
-		   general_para2->getFreezeBody(),general_para2->getCurrentForce(), general_para2->getRepeatRatio(),
-		   general_para2->getRepeatDistance(), general_para2->getCurrentTracing(),false);
+		   general_para2->general_para21->getMaxAngle(),general_para2->getFreezeBody(),
+		   general_para2->getCurrentForce(), general_para2->getRepeatRatio(),
+		   general_para2->getRepeatDistance(), general_para2->getCurrentTracing(),
+		   false, general_para2->getCurrentCoding(), general_para2->getSigmaRatio());
+	 IM->SetCodingMethod(general_para2->getCurrentCoding());
 
      //IM->ImRefresh_TracingImage();
 
@@ -3555,11 +3570,13 @@ void QtTracer::Tracing()
 	 m_seed.RemoveAllPts();
 
 	 //check if there is any seed snake lest
-	 if( seed_snakes.NSnakes == 0 || seed_snakes.valid_list.sum() == 0 )
+	 int sum = 0;
+	 for ( std::vector<int>::iterator it=seed_snakes.valid_list.begin() ; it < seed_snakes.valid_list.end(); it++ )
+		 sum += *it;
+	 if( seed_snakes.NSnakes == 0 || sum == 0 )
 	 {
 	   seeding = false;
 	 }
-
 	 return;
    }
 
@@ -3576,10 +3593,11 @@ void QtTracer::Tracing()
            general_para2->getStretchRatio(), general_para2->getMinimumLength(), 
 		   general_para2->getCollisionDist(), general_para2->getRemoveSeedRange(),
 		   general_para2->getDeformationITER(), general_para2->getAutomaticMerging(),
-		   general_para2->general_para21->getMaxAngle(), general_para2->getCurrentIndex(),
-		   general_para2->getFreezeBody(),general_para2->getCurrentForce(), general_para2->getRepeatRatio(),
-		   general_para2->getRepeatDistance(), general_para2->getCurrentTracing(),false);
-
+		   general_para2->general_para21->getMaxAngle(), general_para2->getFreezeBody(),
+		   general_para2->getCurrentForce(), general_para2->getRepeatRatio(),
+		   general_para2->getRepeatDistance(), general_para2->getCurrentTracing(),
+		   false,general_para2->getCurrentCoding(),general_para2->getSigmaRatio());
+    IM->SetCodingMethod(general_para2->getCurrentCoding());
 	this->statusBar()->clearMessage();
 	QString MSG("Number of Snakes: ");
     QString MSG_Num;
@@ -3607,7 +3625,7 @@ void QtTracer::Tracing()
      //updates information for editing
 	 for(int i = 0; i < Tracer->SnakeList.NSnakes; i++ )
 	 {
-		 if( Tracer->SnakeList.valid_list(i) == 0 )
+		 if( Tracer->SnakeList.valid_list[i] == 0 )
 			 continue;
 		 edits->TP += Tracer->SnakeList.Snakes[i].Cu.GetLength();
 	 }
@@ -3639,86 +3657,20 @@ void QtTracer::Tracing()
    }
 }
 
-void QtTracer::Minimal_Path_Correction(PointList3D seed)
-{
-   /*std::cout<<"minimal path correction"<<std::endl;
-   PointList3D temp  = IM->MinimalPathCorrection(seed);
-   if( temp.NP != 0 )
-   {
-	temp.curveinterp_3D(general_para2->getPtDistance());
-	Tracer->SnakeList.Snakes[Tracer->SnakeList.NSnakes].Cu = temp;
-    Tracer->SnakeList.NSnakes++;
-    tracingViewer->SnakesChanged();
-   }*/
-}
-
 void QtTracer::SegmentationI()
 {
-  std::cout<<"..........Segmentation/3D Surface Reconstruction.........."<<std::endl;
-	PointList3D fast_seeds;
-    for(int i = 0; i < Tracer->SnakeList.NSnakes; i++)
-	{
-	  if( Tracer->SnakeList.valid_list(i) == 1 )
-	  {
-		fast_seeds.AddPtList(Tracer->SnakeList.Snakes[i].Cu);
-	  }
-	}
-     IM->ImFastMarchingI(fast_seeds);
-  std::cout<<"..........Segmentation/3D Surface Reconstruction Finished.........."<<std::endl;
-  surfaceRendering(false);
-
-  /*int j = 0;
-  for( int i = 0; i < 72; i += 1 )
-  {
-      this->Camera->Azimuth(5);
-
-	  IM->ImFastMarchingAnimation(i);
-      surfaceRendering(false);
-      j++;
-      QString temp;
-      temp.setNum(j);
-      temp.append(".png");
-      writeRendering(Renderer->GetRenderWindow(), temp.toStdString().c_str());
-  } */
-
-  /*int j = 0;
-  for(double i = 0; i < 40; i +=0.5 )
-  {
-   IM->ImFastMarchingAnimation(i);
-   surfaceRendering(false);
-   j++;
-   QString temp;
-   temp.setNum(j);
-   temp.append(".png");
-   writeRendering(Renderer->GetRenderWindow(), temp.toStdString().c_str());
-  } */
 }
 
-void QtTracer::SegmentationII()
-{
-  std::cout<<"..........Segmentation/3D Surface Reconstruction.........."<<std::endl;
- 	int idx = 0;
-    for(int i = 0; i < Tracer->SnakeList.NSnakes; i++)
-	{
-	  if( Tracer->SnakeList.valid_list(i) == 1 )
-	  {
-		idx++;
-		IM->ImFastMarchingII(Tracer->SnakeList.Snakes[i].Cu, idx);
-	  }
-	}
-  std::cout<<"..........Segmentation/3D Surface Reconstruction Finished.........."<<std::endl;
-  surfaceRendering(true);
-   
-}
 
 void QtTracer::removeIsolated()
 {
   std::cout<<"..........Remove Isolated Traces.........."<<std::endl;
   for(int i = 0; i < Tracer->SnakeList.NSnakes; i++)
   {
-	  if( Tracer->SnakeList.valid_list(i) == 1 )
+	  if( Tracer->SnakeList.valid_list[i] == 1 )
 	  {
-		  if( Tracer->SnakeList.Snakes[i].BranchPt.NP == 0 && Tracer->SnakeList.Snakes[i].RootPt.NP == 0)
+		  //if( Tracer->SnakeList.Snakes[i].BranchPt.NP == 0 && Tracer->SnakeList.Snakes[i].RootPt.NP == 0)
+		  if( Tracer->SnakeList.Snakes[i].BranchPt.NP == 0)
 		  {
 			  Tracer->SnakeList.RemoveSnake(i);
 		  }
@@ -3726,7 +3678,40 @@ void QtTracer::removeIsolated()
   }
 	  
   tracingViewer->SnakesChanged();
+
   draw3DTraces(); 
+}
+
+void QtTracer::breakBranches()
+{
+	Point3D p;
+	std::cout<<"..........Breaking The Branches.........."<<std::endl;
+	for(int i = 0; i < Tracer->SnakeList.branch_points.NP; i++)
+	{
+	    p = Tracer->SnakeList.branch_points.Pt[i];
+		for( int j = 0; j < Tracer->SnakeList.NSnakes; j++ )
+		{
+			if( Tracer->SnakeList.valid_list[j] == 0)
+				continue;
+
+		  bool found_split = false;
+		   for( int k = 0; k < Tracer->SnakeList.Snakes[j].Cu.NP; k++ )
+		   { 
+			   float dist = p.GetDistTo(Tracer->SnakeList.Snakes[j].Cu.Pt[k]);
+			   int length1 = Tracer->SnakeList.Snakes[j].Cu.GetPartLength(k,0);
+			   int length2 = Tracer->SnakeList.Snakes[j].Cu.GetPartLength(k,1);
+			  if( dist <= 1 && length1 >= general_para2->getMinimumLength() && length2 >= general_para2->getMinimumLength() )
+			  {
+				  Tracer->SnakeList.SplitSnake(j,k+1);	
+				  found_split = true;
+				  break;
+			  }
+		   }
+		   if( found_split )
+			   break;
+		}
+	}
+	std::cout<<"..........Branches Breaked.........."<<std::endl;
 }
 
 void QtTracer::Radius_Estimation()
@@ -3734,7 +3719,7 @@ void QtTracer::Radius_Estimation()
 	std::cout<<"..........Radius Estimation.........."<<std::endl;
 	for(int i = 0; i < Tracer->SnakeList.NSnakes; i++)
 	{
-		if(Tracer->SnakeList.valid_list(i) == 0)
+		if(Tracer->SnakeList.valid_list[i] == 0)
 			continue;
 		Tracer->SnakeList.Snakes[i].Estimate_Radius();
 	}
@@ -3759,139 +3744,10 @@ void QtTracer::refineBranch()
 
 void QtTracer::saveSoma()
 {
-     QString save_file = QFileDialog::getSaveFileName(this, "Save Current Image", ".",
-		tr("Image ( *.mhd *.tif )"));
-	 this->statusBar()->showMessage(save_file);
-
-	 if( !save_file.isEmpty() )
-	 {
-	  std::string file_name = save_file.toStdString();
-      const char *file_name_ITK = file_name.c_str();
- 
-	  IM->ImWrite_Soma(file_name_ITK);
-	  this->statusBar()->showMessage("Image Saved");
-	 }
 }
 
 void QtTracer::removeSoma()
 {
-	if( tracingViewer->getContour().NP != 0 && !IM->IMask)
-	{
-     IM->ImMasking( tracingViewer->getContour() );
-  	 tracingViewer->setDisplayImage(convertITK2QT(IM->ImMaxProjection(IM->ImRescale(IM->VBW)), false));
-	}
-	else
-	{
-	  if( !IM->IMask )
-	  {
-	    QString file_mask = QFileDialog::getOpenFileName(this, "Load Soma Mask Image", ".",
-		tr("Mask Image ( *.tiff *.tif )"));
-	    this->statusBar()->showMessage("filename:\t" + file_mask);
-	    std::cout<<"Image:"<< file.toStdString()<<std::endl;
-
-	    if (!file_mask.isEmpty())
-	    {
-	     std::string file_name = file_mask.toStdString();
-		 const char *file_name_ITK = file_name.c_str();
-
-		 IM->ImMasking(file_name_ITK, general_para->getSh());
-         tracingViewer->setDisplayImage(convertITK2QT(IM->ImMaxProjection(IM->I), false));	 
-	     this->statusBar()->showMessage("Image Masked");
-		 //nextButton->setEnabled(true);
-		 slider->setImageState(1);
-		}
-		else
-		{
-		  return;
-		}
-	 }
-	 else
-	 {
-	  std::cout<<"..........Masking.........."<<std::endl;
-	  IM->ImMasking(general_para->getSh());
-      tracingViewer->setDisplayImage(convertITK2QT(IM->ImMaxProjection(IM->I), false));	 
-	  this->statusBar()->showMessage("Image Masked");
-	  slider->setImageState(1);
-	  std::cout<<"..........Masking Finished.........."<<std::endl;
-	  
-	  //3D Surface Rendering
-      if( mesh_actors.size() != 0 )
-      {
-       for( int i = 0; i < mesh_actors.size(); i++ )
-	   {
-	    this->Renderer->RemoveActor(mesh_actors[i]);
-	   }
-	    mesh_actors.clear();
-      }
-
-	 }
-
-     //3D Surface Rendering
-      if( soma_mesh_actors.size() != 0 )
-      {
-       for( int i = 0; i < soma_mesh_actors.size(); i++ )
-	   {
-		this->Renderer->RemoveActor(soma_mesh_actors[i]);
-	   }
-	   soma_mesh_actors.clear();
-	  }
-
-		 typedef itk::ConnectedComponentImageFilter< ImageType, itk::Image<short int, 3> > ConnectedComponentType;
-         ConnectedComponentType::Pointer connectedComponentFilter = ConnectedComponentType::New();
-         connectedComponentFilter->SetInput( IM->IMask );
-         connectedComponentFilter->Update();
-
-		 
-         typedef itk::CastImageFilter<LabelImageType, itk::Image<short int, 3>> CasterType;
-         CasterType::Pointer caster = CasterType::New();
-         caster->SetInput(IM->ISoma);
-         caster->Update();
-
-		 std::vector<vtkSmartPointer<vtkPolyData>> aa = getVTKPolyDataPrecise(caster->GetOutput());
-		 //std::cout<<"check point 2"<<std::endl;
-
-		 vnl_matrix<double> temp_color(IM->num_soma,3);
-		 soma_color = temp_color;
-
-       for( int i = 0; i <aa.size(); i++ )
-	   {
-		 vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-         mapper->SetInput(aa[i]);
-		 mapper->ImmediateModeRenderingOff();
-		 mapper->Update();
-
-		 vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
-         actor->SetMapper(mapper);
-
-		 double color[3];
-		 color[0] = (double)(rand()%10)/(double)10;
-		 color[1] = (double)(rand()%10)/(double)10;
-		 color[2] = (double)(rand()%10)/(double)10;
-
-		 soma_color(i,0) = color[0];
-         soma_color(i,1) = color[1];
-		 soma_color(i,2) = color[2];
-
-         actor->GetProperty()->SetColor(soma_color(i,0), soma_color(i,1), soma_color(i,2));
-	   /*if( i%6 == 0 )
-	     actor->GetProperty()->SetColor(1,0,0);
-		else if( i%6 == 1 )
-		 actor->GetProperty()->SetColor(0,1,0);
-		else if( i%6 == 2 )
-		 actor->GetProperty()->SetColor(0,0,1);
-		else if( i%6 == 3 )
-		 actor->GetProperty()->SetColor(1,1,0);
-		else if( i%6 == 4 )
-		 actor->GetProperty()->SetColor(1,0,1);
-		else if( i%6 == 5 )
-		 actor->GetProperty()->SetColor(0,1,1);*/
-  
-		this->Renderer->AddActor(actor);
-
-		soma_mesh_actors.push_back(actor);
-	   }
-		 this->QVTK->GetRenderWindow()->Render();
-	}
 }
 
 void QtTracer::pickSomaSeeds()
@@ -3901,81 +3757,7 @@ void QtTracer::pickSomaSeeds()
 
 void QtTracer::segmentSoma()
 {
-   soma_seeding = false;
-
-   if( picked_pts.NP != 0 )
-   {  
-	std::cout<<"..........Segment Soma.........."<<std::endl;
-    IM->ImFastMarching_Soma(picked_pts);
-    std::cout<<"..........Segment Soma Finished.........."<<std::endl;
-
-    surfaceRendering(false, IM->IMask);
-	
-	//remove the picked points and spheres
-	vtk_removePoint();
-	picked_pts.RemoveAllPts();
-   }
-
-
-	/*//Masking
-    std::cout<<"..........Masking.........."<<std::endl;
-	IM->ImMasking(general_para->getSh());
-    std::cout<<"..........Masking Finished.........."<<std::endl;*/
-
-	//3D Surface Rendering
-	/* if( soma_mesh_actors.size() != 0 )
-     {
-       for( int i = 0; i < soma_mesh_actors.size(); i++ )
-	   {
-		this->Renderer->RemoveActor(soma_mesh_actors[i]);
-	   }
-	   soma_mesh_actors.clear();
-	 }
-
-		 typedef itk::ConnectedComponentImageFilter< ImageType, itk::Image<short int, 3> > ConnectedComponentType;
-         ConnectedComponentType::Pointer connectedComponentFilter = ConnectedComponentType::New();
-         connectedComponentFilter->SetInput( IM->IMask );
-         connectedComponentFilter->Update();
-
-		 
-         typedef itk::CastImageFilter<LabelImageType, itk::Image<short int, 3>> CasterType;
-         CasterType::Pointer caster = CasterType::New();
-         caster->SetInput(IM->ISoma);
-         caster->Update();
-
-		 std::vector<vtkSmartPointer<vtkPolyData>> aa = getVTKPolyDataPrecise(caster->GetOutput());
-		 //std::cout<<"check point 2"<<std::endl;
-
-		 vnl_matrix<double> temp_color(IM->num_soma,3);
-		 soma_color = temp_color;
-
-      for( int i = 0; i <aa.size(); i++ )
-	  {
-		 vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-         mapper->SetInput(aa[i]);
-		 mapper->ImmediateModeRenderingOff();
-		 mapper->Update();
-
-		 vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
-         actor->SetMapper(mapper);
-
-		 double color[3];
-		 color[0] = (double)(rand()%10)/(double)10;
-		 color[1] = (double)(rand()%10)/(double)10;
-		 color[2] = (double)(rand()%10)/(double)10;
-
-		 soma_color(i,0) = color[0];
-         soma_color(i,1) = color[1];
-		 soma_color(i,2) = color[2];
-
-         actor->GetProperty()->SetColor(soma_color(i,0), soma_color(i,1), soma_color(i,2));
-  
-		this->Renderer->AddActor(actor);
-
-		soma_mesh_actors.push_back(actor);
-	  }
-		 this->QVTK->GetRenderWindow()->Render();
-   } */
+   
 }
 
 void QtTracer::clearSegmentation()
@@ -4109,20 +3891,6 @@ void QtTracer::Preprocess()
    {
      curvelet_scalar_voting();
    }
-
-   if( general_para12->getMultiScale() )
-   {
-	Progress->setMinimum(0);
-    Progress->setMaximum(6);
-    Progress->setValue(0);
-
-    std::cout<<"Multi-Scale Vesselness Enhancement..."<<std::endl;
-	this->statusBar()->showMessage("Multi-Scale Vesselness Enhancement");
-	IM->ComputeMultiVesselness(general_para12->general_para1->getMinSigma(), general_para12->general_para1->getMaxSigma(), general_para12->general_para1->getSigmaStep());
-	tracingViewer->setDisplayImage(convertITK2QT(IM->ImMaxProjection(IM->ImRescale(IM->I)), false));	
-    progress++;
-    Progress->setValue(progress);
-   }
    
    general_para12->disableSetting();
 
@@ -4130,167 +3898,72 @@ void QtTracer::Preprocess()
 	float gvf_cpu_time = 0.0;
 	float vessel_gpu_time = 0.0;
 	float vessel_cpu_time = 0.0;
-   //without break for each case
-   switch(Preprocess_Stage)
-   {
+
+ //without break for each case
+ switch(Preprocess_Stage)
+ {
    case 1:
-	   {
-    std::cout<<"Compute Gradient Vector Flow..."<<std::endl;
-    this->statusBar()->showMessage("Compute Gradient Vector Flow");
+   {
+        std::cout<<"Compute Gradient Vector Flow..."<<std::endl;
+        this->statusBar()->showMessage("Compute Gradient Vector Flow");
 
-
-    if( general_para12->getCurrentGPUIndex() == 1 )
-	{
-	  clock_t init_time2 = clock(); 
-      IM->computeGVF_C(general_para12->getNoiseLevel(),general_para12->getNumIteration(),true,general_para12->getSmoothingScale());
-      clock_t end_time2 = clock(); 
-      std::cout << end_time2-init_time2 << " GPU: "  
-             << (float)(end_time2-init_time2)/CLOCKS_PER_SEC << " seconds." << std::endl; 
-	}
-	else if( general_para12->getCurrentGPUIndex() == 0 )
-	{
-	  clock_t init_time1 = clock(); 
-      IM->computeGVF(1000,general_para12->getNumIteration(),general_para12->getSmoothingScale());
-      clock_t end_time1 = clock(); 
-      std::cout << end_time1-init_time1 << " CPU ITK: "  
+	    clock_t init_time1 = clock(); 
+        IM->computeGVF(1000,general_para12->getNumIteration(),general_para12->getSmoothingScale());
+        clock_t end_time1 = clock(); 
+        std::cout << end_time1-init_time1 << " CPU ITK: "  
              << (float)(end_time1-init_time1)/CLOCKS_PER_SEC << " seconds." << std::endl;
-	}
-	else
-	{
-	  clock_t init_time2 = clock(); 
-      IM->computeGVF_C(general_para12->getNoiseLevel(),general_para12->getNumIteration(),true,general_para12->getSmoothingScale());
-      clock_t end_time2 = clock(); 
-      std::cout << end_time2-init_time2 << " GPU: "  
-             << (float)(end_time2-init_time2)/CLOCKS_PER_SEC << " seconds." << std::endl; 
-	  gvf_gpu_time = (end_time2-init_time2)/CLOCKS_PER_SEC;
- 
-	  clock_t init_time3 = clock(); 
-      IM->computeGVF_C(general_para12->getNoiseLevel(),general_para12->getNumIteration(),false,general_para12->getSmoothingScale());
-      clock_t end_time3 = clock(); 
-      std::cout << end_time3-init_time3 << " CPU C: "  
-             << (float)(end_time3-init_time3)/CLOCKS_PER_SEC << " seconds." << std::endl;
-	  gvf_cpu_time = (end_time3-init_time3)/CLOCKS_PER_SEC;
-	}
 
-    progress++;
-    Progress->setValue(progress);
-	   }
+        progress++;
+        Progress->setValue(progress);
+   }
    case 2:
-	   {
+   {
 
-	    if( general_para12->getCurrentGPUIndex() == 1 )
-	    {
-	     std::cout<<"Compute Vesselness (GPU)..."<<std::endl;
-         this->statusBar()->showMessage("Compute Vesselness (GPU)");
-	     clock_t init_time = clock(); 
-         IM->ComputeGVFVesselness_CUDA();
-	     clock_t end_time = clock(); 
-	     std::cout << end_time-init_time << " GPU: "  
-             << (float)(end_time-init_time)/CLOCKS_PER_SEC << " seconds." << std::endl;
-		}
-		else if( general_para12->getCurrentGPUIndex() == 0 )
-		{
-	     std::cout<<"Compute Vesselness (CPU)..."<<std::endl;
-         this->statusBar()->showMessage("Compute Vesselness (CPU)");
-	     clock_t init_time1 = clock(); 
-         IM->ComputeGVFVesselness();
-	     clock_t end_time1 = clock(); 
-	     std::cout << end_time1-init_time1 << " CPU: "  
-             << (float)(end_time1-init_time1)/CLOCKS_PER_SEC << " seconds." << std::endl; 
-		
-		}
-		else
-		{
-		 std::cout<<"Compute Vesselness (GPU)..."<<std::endl;
-         this->statusBar()->showMessage("Compute Vesselness (GPU)");
-	     clock_t init_time = clock(); 
-         IM->ComputeGVFVesselness_CUDA();
-	     clock_t end_time = clock(); 
-	     std::cout << end_time-init_time << " GPU: "  
-             << (float)(end_time-init_time)/CLOCKS_PER_SEC << " seconds." << std::endl;
-         vessel_gpu_time = (float)(end_time-init_time)/CLOCKS_PER_SEC;
+	    std::cout<<"Compute Vesselness (CPU)..."<<std::endl;
+        this->statusBar()->showMessage("Compute Vesselness (CPU)");
+	    clock_t init_time1 = clock(); 
+        IM->ComputeGVFVesselness();
+	    clock_t end_time1 = clock(); 
 
-		 std::cout<<"Compute Vesselness (CPU)..."<<std::endl;
-         this->statusBar()->showMessage("Compute Vesselness (CPU)");
-	     clock_t init_time1 = clock(); 
-         IM->ComputeGVFVesselness();
-	     clock_t end_time1 = clock(); 
-	     std::cout << end_time1-init_time1 << " CPU: "  
-             << (float)(end_time1-init_time1)/CLOCKS_PER_SEC << " seconds." << std::endl; 
-		 vessel_cpu_time = (float)(end_time1-init_time1)/CLOCKS_PER_SEC;
+        tracingViewer->setDisplayImage(convertITK2QT(IM->ImMaxProjection(IM->ImRescale(IM->IVessel)), false));
+        slider->setCheckable(2);
+        slider->setImageState(2);
 
-		 std::cout<<"Total Time (GPU - CPU):"<< (gvf_gpu_time + vessel_gpu_time) <<" - "<<gvf_cpu_time + vessel_cpu_time<<std::endl; 
-		 //std::cout<<"GVF Speedup:"<<(float)gvf_cpu_time/(float)gvf_gpu_time<<std::endl;
-		 //std::cout<<"Total Speedup:"<<(gvf_cpu_time + vessel_cpu_time)/(gvf_gpu_time + vessel_gpu_time)<<std::endl;
-		}
-
-    
-       tracingViewer->setDisplayImage(convertITK2QT(IM->ImMaxProjection(IM->ImRescale(IM->IVessel)), false));
-       slider->setCheckable(2);
-       slider->setImageState(2);
-
-	   if( Preprocess_Stage != 1 )
-		progress = Preprocess_Stage;
+	    if( Preprocess_Stage != 1 )
+	     	progress = Preprocess_Stage;
 
          progress++;
          Progress->setValue(progress);
-	   }
-
-   case 3:
-	   {
-    std::cout<<"Vessel-Cut..."<<std::endl;
-    this->statusBar()->showMessage("Vessel-Cut");
-
-	IM->ImGraphCut(general_para12->getThreshold(), general_para12->getHoleFilling(), 
-	            	general_para12->getCleanSkeleton(), general_para12->getMinLength(), general_para12->getCurrentSegIndex());
-	//IM->ImBW(general_para12->getThreshold());
-	//IM->ImLevelSet(general_para12->getThreshold(), general_para12->getHoleFilling(), general_para12->getCleanSkeleton(), general_para12->getMinLength(), general_para12->getSeedRadius());
-
-	//IM->ISeg = IM->VBW;
-    //surfaceRendering(false);
-
-	//compute the background model for 4-D region snake
-	IM->ImComputeBackgroundModel();
-
-    tracingViewer->setDisplayImage(convertITK2QT(IM->ImMaxProjection(IM->ImRescale(IM->VBW)), false));	
-    slider->setCheckable(5);
-    slider->setImageState(3);
-
-    if( Preprocess_Stage == 3 )
-		progress = 3;
-
-    progress++;
-    Progress->setValue(progress);
-	   }
-
-   case 4:
-	   {
-    std::cout<<"Detect Seed Points..."<<std::endl;
-    this->statusBar()->showMessage("Detect Seed Points");
-    IM->SeedDetection(general_para12->getThreshold(),general_para12->getCurrentSeedIndex(),general_para12->getSeedRadius());
-
-	if( Preprocess_Stage == 4 )
-		progress = 4;
-    progress++;
-    Progress->setValue(progress);
-
-    std::cout<<"Adjust Seed Points..."<<std::endl;
-    this->statusBar()->showMessage("Adjust Seed Points");
-    IM->SeedAdjustment(general_para12->getSeedAdjustment());
-
-	std::cout<<"Preprocessing Finished..."<<std::endl;
-    //send IM to tracing viewer
-    tracingViewer->setImage(IM);
-
-	if( Preprocess_Stage == 5 )
-	    progress = 5;
-
-	progress++;
-    Progress->setValue(progress);
-	   }
-   default:;
    }
+   case 3:
+	{
+        std::cout<<"Detect Seed Points..."<<std::endl;
+        this->statusBar()->showMessage("Detect Seed Points");
+        IM->SeedDetection(general_para12->getThreshold(),general_para12->getCurrentSeedIndex(),general_para12->getSeedRadius());
 
+	    if( Preprocess_Stage == 3 )
+		  progress = 3;
+        progress++;
+        Progress->setValue(progress);
+
+        std::cout<<"Adjust Seed Points..."<<std::endl;
+        this->statusBar()->showMessage("Adjust Seed Points");
+        IM->SeedAdjustment(general_para12->getSeedAdjustment());
+	    original_seed_num = IM->SeedPt.NP; //for seed testing
+
+	    std::cout<<"Preprocessing Finished..."<<std::endl;
+        //send IM to tracing viewer
+        tracingViewer->setImage(IM);
+
+	    if( Preprocess_Stage == 4 )
+	       progress = 4;
+
+	    progress++;
+        Progress->setValue(progress);
+	}
+   default:;
+ }
+   
    End_t = time(NULL);
    preprocessing_time = difftime(End_t, Start_t);
    QString MSG("Time Elapsed for Preprocessing: ");
@@ -4512,8 +4185,8 @@ void QtTracer::stackImage()
 		 }
 		 else if( general_para->getBatchIIProcessing() )
 	     {
-           int NSpace = 4000;
-	       GSnakeList.SetNSpace(NSpace);
+           //int NSpace = 4000;
+	       //GSnakeList.SetNSpace(NSpace);
            string_array = new QString[images_dir.count()];
 		   std::string *std_string_array = new std::string[images_dir.count()]; 
   
@@ -4937,7 +4610,7 @@ void QtTracer::convertSnakeTree()
    for( int i = 0; i < Tracer->SnakeList.NSnakes; i++ )
    {
 	   //ignore invalid snakes
-	   if( Tracer->SnakeList.valid_list(i) == 0 )
+	   if( Tracer->SnakeList.valid_list[i] == 0 )
 	   {
 	    dist( i * 2 ) = 1000000;
 		dist( i* 2 + 1 ) = 1000000;
@@ -5005,7 +4678,7 @@ void QtTracer::outputSWC()
 	  *out_txt<<snake_tree->points.Pt[i].y * ratio + offset_y<<"\t";
 	  *out_txt<<snake_tree->points.Pt[i].z + offset_z<<"\t";
 	  //*out_txt<<snake_tree->Ru[i] * sqrt((double)2)<<"\t";
-	  *out_txt<<snake_tree->Ru[i]<<"\t";
+	  *out_txt<<snake_tree->Ru[i] * ratio<<"\t";
 	  //*out_txt<<"0"<<"\t";
       *out_txt<<snake_tree->parent_list[i];
 	  if( i != snake_tree->points.GetSize() - 1 )
@@ -5110,7 +4783,7 @@ void QtTracer::outputSWC_Raw_MT()
  
     if( snake_visit_label[0](i) == 1 )
 		continue;
-    if( GSnakeList.valid_list(i) == 0 )
+    if( GSnakeList.valid_list[i] == 0 )
 	    continue;
 
 	wrote_pt.RemoveAllPts();
@@ -5155,7 +4828,7 @@ void QtTracer::findBranch_Raw_MT(int snake_label, int root_label, Point3D root_p
 
      if( snake_visit_label[0](j) == 1 )
 		 continue;
-	 if( GSnakeList.valid_list(j) == 0 )
+	 if( GSnakeList.valid_list[j] == 0 )
 	     continue;
 
 	 vnl_vector<float> temp_dist(GSnakeList.Snakes[j].Cu.GetSize());
@@ -5189,7 +4862,7 @@ void QtTracer::findBranch_Raw_MT(int snake_label, int root_label, Point3D root_p
              //GSnakeList.Snakes[j].Cu.NP = pt_id + 1;
 			 GSnakeList.Snakes[j].Cu.Resize(pt_id+1);
 
-			 //GSnakeList.valid_list(j) = 0;
+			 //GSnakeList.valid_list[j] = 0;
 			 //SnakeClass temp;
 			 //for( int k = 0; k < pt_id; k++ )
 	         //{
@@ -5211,7 +4884,7 @@ void QtTracer::findBranch_Raw_MT(int snake_label, int root_label, Point3D root_p
 			    GSnakeList.Snakes[snake_label].Cu.AddTailPt(GSnakeList.Snakes[j].Cu.Pt[im]);
 			 }
 			 //delete the snake
-			 GSnakeList.valid_list(j) = 0;
+			 GSnakeList.valid_list[j] = 0;
 
 			 GSnakeList.Snakes[snake_label].Cu.Flip();
 		 }
@@ -5225,14 +4898,14 @@ void QtTracer::findBranch_Raw_MT(int snake_label, int root_label, Point3D root_p
 			    GSnakeList.Snakes[snake_label].Cu.AddTailPt(GSnakeList.Snakes[j].Cu.Pt[im]);
 			 }
 			 //delete the snake
-			 GSnakeList.valid_list(j) = 0;
+			 GSnakeList.valid_list[j] = 0;
 
 			 GSnakeList.Snakes[snake_label].Cu.Flip();
 		 }
 		 else
 		 {
 		     //delete the snake
-			 GSnakeList.valid_list(j) = 0;
+			 GSnakeList.valid_list[j] = 0;
 		 }
 		}
 		else if( pt_id == 0 )
@@ -5243,7 +4916,7 @@ void QtTracer::findBranch_Raw_MT(int snake_label, int root_label, Point3D root_p
 			{
 			    GSnakeList.Snakes[snake_label].Cu.AddTailPt(GSnakeList.Snakes[j].Cu.Pt[im]);
 			}
-			GSnakeList.valid_list(j) = 0;
+			GSnakeList.valid_list[j] = 0;
 
 			GSnakeList.Snakes[snake_label].Cu.Flip();
 		}
@@ -5255,7 +4928,7 @@ void QtTracer::findBranch_Raw_MT(int snake_label, int root_label, Point3D root_p
 			{
 			    GSnakeList.Snakes[snake_label].Cu.AddTailPt(GSnakeList.Snakes[j].Cu.Pt[im]);
 			}
-			GSnakeList.valid_list(j) = 0;
+			GSnakeList.valid_list[j] = 0;
 
 			GSnakeList.Snakes[snake_label].Cu.Flip();
 		}
@@ -5278,7 +4951,7 @@ void QtTracer::findBranch_Raw_MT(int snake_label, int root_label, Point3D root_p
 
      if( snake_visit_label[0](j) == 1 )
 		 continue;
-	 if( GSnakeList.valid_list(j) == 0 )
+	 if( GSnakeList.valid_list[j] == 0 )
 	     continue;
 
 	 vnl_vector<float> temp_dist(GSnakeList.Snakes[j].Cu.GetSize());
@@ -5309,7 +4982,7 @@ void QtTracer::findBranch_Raw_MT(int snake_label, int root_label, Point3D root_p
              //GSnakeList.Snakes[j].Cu.NP = pt_id + 1;
               GSnakeList.Snakes[j].Cu.Resize(pt_id+1);
               GSnakeList.Snakes[j].Ru.resize(pt_id+1);
-			 //Tracer->SnakeList.valid_list(j) = 0;
+			 //Tracer->SnakeList.valid_list[j] = 0;
 			 //SnakeClass temp;
 			 //for( int k = 0; k < pt_id; k++ )
 	         //{
@@ -5327,7 +5000,7 @@ void QtTracer::findBranch_Raw_MT(int snake_label, int root_label, Point3D root_p
 			    GSnakeList.Snakes[snake_label].Cu.AddPt(GSnakeList.Snakes[j].Cu.Pt[im]);
 			 }
 			 //delete the snake
-			 GSnakeList.valid_list(j) = 0;
+			 GSnakeList.valid_list[j] = 0;
 
 			 check_merging = true;
 		 }
@@ -5339,14 +5012,14 @@ void QtTracer::findBranch_Raw_MT(int snake_label, int root_label, Point3D root_p
 			    GSnakeList.Snakes[snake_label].Cu.AddPt(GSnakeList.Snakes[j].Cu.Pt[im]);
 			 }
 			 //delete the snake
-			 GSnakeList.valid_list(j) = 0;
+			 GSnakeList.valid_list[j] = 0;
 
 			 check_merging = true;
 		 }
 		 else
 		 {
 		     //delete the snake
-			 GSnakeList.valid_list(j) = 0;
+			 GSnakeList.valid_list[j] = 0;
 		 }
 		}
 		else if( pt_id == 0 )
@@ -5355,7 +5028,7 @@ void QtTracer::findBranch_Raw_MT(int snake_label, int root_label, Point3D root_p
 			{
 			    GSnakeList.Snakes[snake_label].Cu.AddPt(GSnakeList.Snakes[j].Cu.Pt[im]);
 			}
-			GSnakeList.valid_list(j) = 0;
+			GSnakeList.valid_list[j] = 0;
 
 			check_merging = true;
 		}
@@ -5365,7 +5038,7 @@ void QtTracer::findBranch_Raw_MT(int snake_label, int root_label, Point3D root_p
 			{
 			    GSnakeList.Snakes[snake_label].Cu.AddPt(GSnakeList.Snakes[j].Cu.Pt[im]);
 			}
-			GSnakeList.valid_list(j) = 0;
+			GSnakeList.valid_list[j] = 0;
 
 			check_merging = true;
 		}
@@ -5462,7 +5135,7 @@ void QtTracer::findBranch_Raw_MT(int snake_label, int root_label, Point3D root_p
    {
    	 if( snake_visit_label[0](j) == 1 )
 		continue;
-     if( GSnakeList.valid_list(j) == 0 )
+     if( GSnakeList.valid_list[j] == 0 )
 		continue;
 
 	 vnl_vector<float> tail_dist( GSnakeList.Snakes[snake_label].Cu.GetSize() );
@@ -5514,19 +5187,24 @@ void QtTracer::outputSWC_Raw()
   float offset_z = general_para3->getZ();
 
   QString fileName;
-  if( !batch_processI && !batch_processII )
+  if( !batch_processI && !batch_processII && !automated_process )
   {
    fileName = QFileDialog::getSaveFileName(this, tr("Save Snakes to swc file"),
                             "snake_tracing.swc",
                             tr("Text File(*.swc)"));
   }
-  else
+  else if( !automated_process )
   {
  	 fileName = images_dir[current_idx];
 	 fileName.replace(QString("tiff"), QString("swc"));
 	 fileName.replace(QString("tif"), QString("swc"));
 	 fileName.prepend("/");
 	 fileName.prepend(swcs_path);
+  }
+  else
+  {
+	 fileName.setNum(IM->SeedPt.NP);
+	 fileName.append(".swc");
   }
 
   QFile swc_file(fileName);
@@ -5553,7 +5231,7 @@ void QtTracer::outputSWC_Raw()
    {
     if( snake_visit_label[0](i) == 1 )
 		continue;
-    if( Tracer->SnakeList.valid_list(i) == 0 )
+    if( Tracer->SnakeList.valid_list[i] == 0 )
 	    continue;
 
 	wrote_pt.RemoveAllPts();
@@ -5621,7 +5299,7 @@ void QtTracer::findBranch_Raw(int snake_label, int root_label, Point3D root_poin
 
      if( snake_visit_label[0](j) == 1 )
 		 continue;
-	 if( Tracer->SnakeList.valid_list(j) == 0 )
+	 if( Tracer->SnakeList.valid_list[j] == 0 )
 	     continue;
 
 	 vnl_vector<float> temp_dist(Tracer->SnakeList.Snakes[j].Cu.GetSize());
@@ -5655,7 +5333,7 @@ void QtTracer::findBranch_Raw(int snake_label, int root_label, Point3D root_poin
              //Tracer->SnakeList.Snakes[j].Cu.NP = pt_id + 1;
 			 Tracer->SnakeList.Snakes[j].Cu.Resize(pt_id+1);
 
-			 //Tracer->SnakeList.valid_list(j) = 0;
+			 //Tracer->SnakeList.valid_list[j] = 0;
 			 //SnakeClass temp;
 			 //for( int k = 0; k < pt_id; k++ )
 	         //{
@@ -5677,7 +5355,7 @@ void QtTracer::findBranch_Raw(int snake_label, int root_label, Point3D root_poin
 			    Tracer->SnakeList.Snakes[snake_label].Cu.AddTailPt(Tracer->SnakeList.Snakes[j].Cu.Pt[im]);
 			 }
 			 //delete the snake
-			 Tracer->SnakeList.valid_list(j) = 0;
+			 Tracer->SnakeList.valid_list[j] = 0;
 
 			 Tracer->SnakeList.Snakes[snake_label].Cu.Flip();
 		 }
@@ -5691,14 +5369,14 @@ void QtTracer::findBranch_Raw(int snake_label, int root_label, Point3D root_poin
 			    Tracer->SnakeList.Snakes[snake_label].Cu.AddTailPt(Tracer->SnakeList.Snakes[j].Cu.Pt[im]);
 			 }
 			 //delete the snake
-			 Tracer->SnakeList.valid_list(j) = 0;
+			 Tracer->SnakeList.valid_list[j] = 0;
 
 			 Tracer->SnakeList.Snakes[snake_label].Cu.Flip();
 		 }
 		 else
 		 {
 		     //delete the snake
-			 Tracer->SnakeList.valid_list(j) = 0;
+			 Tracer->SnakeList.valid_list[j] = 0;
 		 }
 		}
 		else if( pt_id == 0 )
@@ -5709,7 +5387,7 @@ void QtTracer::findBranch_Raw(int snake_label, int root_label, Point3D root_poin
 			{
 			    Tracer->SnakeList.Snakes[snake_label].Cu.AddTailPt(Tracer->SnakeList.Snakes[j].Cu.Pt[im]);
 			}
-			Tracer->SnakeList.valid_list(j) = 0;
+			Tracer->SnakeList.valid_list[j] = 0;
 
 			Tracer->SnakeList.Snakes[snake_label].Cu.Flip();
 		}
@@ -5721,7 +5399,7 @@ void QtTracer::findBranch_Raw(int snake_label, int root_label, Point3D root_poin
 			{
 			    Tracer->SnakeList.Snakes[snake_label].Cu.AddTailPt(Tracer->SnakeList.Snakes[j].Cu.Pt[im]);
 			}
-			Tracer->SnakeList.valid_list(j) = 0;
+			Tracer->SnakeList.valid_list[j] = 0;
 
 			Tracer->SnakeList.Snakes[snake_label].Cu.Flip();
 		}
@@ -5742,7 +5420,7 @@ void QtTracer::findBranch_Raw(int snake_label, int root_label, Point3D root_poin
    {
      if( snake_visit_label[0](j) == 1 )
 		 continue;
-	 if( Tracer->SnakeList.valid_list(j) == 0 )
+	 if( Tracer->SnakeList.valid_list[j] == 0 )
 	     continue;
 
 	 vnl_vector<float> temp_dist(Tracer->SnakeList.Snakes[j].Cu.GetSize());
@@ -5765,6 +5443,7 @@ void QtTracer::findBranch_Raw(int snake_label, int root_label, Point3D root_poin
 		 if( L1 >= min_length && L2 >= min_length )
 		 {
 			 Tracer->SnakeList.Snakes[snake_label].Cu.RemovePt(); //remove the last point
+			 Tracer->SnakeList.Snakes[snake_label].Ru.pop_back();
              //add points to current snake
 		   	 for( int im = pt_id; im < Tracer->SnakeList.Snakes[j].Cu.GetSize(); im++ )
 			 {
@@ -5775,7 +5454,7 @@ void QtTracer::findBranch_Raw(int snake_label, int root_label, Point3D root_poin
              //Tracer->SnakeList.Snakes[j].Cu.NP = pt_id + 1;
 			 Tracer->SnakeList.Snakes[j].Cu.Resize(pt_id+1);
              Tracer->SnakeList.Snakes[j].Ru.resize(pt_id+1);
-			 //Tracer->SnakeList.valid_list(j) = 0;
+			 //Tracer->SnakeList.valid_list[j] = 0;
 			 //SnakeClass temp;
 			 //for( int k = 0; k < pt_id; k++ )
 	         //{
@@ -5788,6 +5467,7 @@ void QtTracer::findBranch_Raw(int snake_label, int root_label, Point3D root_poin
 		 else if( L1 < min_length && L2 >= min_length )
 		 {
 			 Tracer->SnakeList.Snakes[snake_label].Cu.RemovePt(); //remove the last point
+			 Tracer->SnakeList.Snakes[snake_label].Ru.pop_back();
 			 //add points to current snake
 		   	 for( int im = pt_id; im < Tracer->SnakeList.Snakes[j].Cu.GetSize(); im++ )
 			 {
@@ -5795,13 +5475,14 @@ void QtTracer::findBranch_Raw(int snake_label, int root_label, Point3D root_poin
 				Tracer->SnakeList.Snakes[snake_label].Ru.push_back(Tracer->SnakeList.Snakes[j].Ru[im]);
 			 }
 			 //delete the snake
-			 Tracer->SnakeList.valid_list(j) = 0;
+			 Tracer->SnakeList.valid_list[j] = 0;
 
 			 check_merging = true;
 		 }
 		 else if( L2 < min_length && L1 >= min_length )
 		 {
 			 Tracer->SnakeList.Snakes[snake_label].Cu.RemovePt(); //remove the last point
+			 Tracer->SnakeList.Snakes[snake_label].Ru.pop_back();
 		     //add points to current snake
 		   	 for( int im = pt_id; im > 0; im-- )
 			 {
@@ -5809,43 +5490,45 @@ void QtTracer::findBranch_Raw(int snake_label, int root_label, Point3D root_poin
 				Tracer->SnakeList.Snakes[snake_label].Ru.push_back(Tracer->SnakeList.Snakes[j].Ru[im]);
 			 }
 			 //delete the snake
-			 Tracer->SnakeList.valid_list(j) = 0;
+			 Tracer->SnakeList.valid_list[j] = 0;
 
 			 check_merging = true;
 		 }
 		 else
 		 {
 		     //delete the snake
-			 Tracer->SnakeList.valid_list(j) = 0;
+			 Tracer->SnakeList.valid_list[j] = 0;
 		 }
 		}
 		else if( pt_id == 0 )
 		{
 			Tracer->SnakeList.Snakes[snake_label].Cu.RemovePt(); //remove the last point
+			Tracer->SnakeList.Snakes[snake_label].Ru.pop_back();
 		    for( int im = 0; im < Tracer->SnakeList.Snakes[j].Cu.GetSize(); im++ )
 			{
 			    Tracer->SnakeList.Snakes[snake_label].Cu.AddPt(Tracer->SnakeList.Snakes[j].Cu.Pt[im]);
 				Tracer->SnakeList.Snakes[snake_label].Ru.push_back(Tracer->SnakeList.Snakes[j].Ru[im]);
 			}
-			Tracer->SnakeList.valid_list(j) = 0;
+			Tracer->SnakeList.valid_list[j] = 0;
 
             check_merging = true;
 		}
 		else if( pt_id == Tracer->SnakeList.Snakes[j].Cu.GetSize() - 1 )
 		{
 			Tracer->SnakeList.Snakes[snake_label].Cu.RemovePt(); //remove the last point
+			Tracer->SnakeList.Snakes[snake_label].Ru.pop_back();
 		    for( int im = Tracer->SnakeList.Snakes[j].Cu.GetSize() - 1; im >= 0; im-- )
 			{
 			    Tracer->SnakeList.Snakes[snake_label].Cu.AddPt(Tracer->SnakeList.Snakes[j].Cu.Pt[im]);
 				Tracer->SnakeList.Snakes[snake_label].Ru.push_back(Tracer->SnakeList.Snakes[j].Ru[im]);
 			}
-			Tracer->SnakeList.valid_list(j) = 0;
+			Tracer->SnakeList.valid_list[j] = 0;
 
 			check_merging = true;
 		}
 
       //change the label image for snake selection
-	  IM->ImCoding( Tracer->SnakeList.Snakes[snake_label].Cu, snake_label + 1, false );
+	  IM->ImCoding( Tracer->SnakeList.Snakes[snake_label].Cu, Tracer->SnakeList.Snakes[snake_label].Ru, snake_label + 1, false );
 	  break;
 	 }
    }
@@ -5881,7 +5564,7 @@ void QtTracer::findBranch_Raw(int snake_label, int root_label, Point3D root_poin
 	   *out_txt<<Tracer->SnakeList.Snakes[snake_label].Cu.Pt[i].z<<"\t";
        
        //*out_txt<<"0"<<"\t";
-       *out_txt<<Tracer->SnakeList.Snakes[snake_label].Ru[i]<<"\t";
+       *out_txt<<Tracer->SnakeList.Snakes[snake_label].Ru[i] * ratio<<"\t";
 
 	   *out_txt<<point_id[0]-1<<"\n";
 	   wrote_pt->AddPt(Tracer->SnakeList.Snakes[snake_label].Cu.Pt[i].x, Tracer->SnakeList.Snakes[snake_label].Cu.Pt[i].y, Tracer->SnakeList.Snakes[snake_label].Cu.Pt[i].z);
@@ -5920,7 +5603,7 @@ void QtTracer::findBranch_Raw(int snake_label, int root_label, Point3D root_poin
 	    *out_txt<<Tracer->SnakeList.Snakes[snake_label].Cu.Pt[i].z<<"\t";
 	    //*out_txt<<"0"<<"\t";
 		//*out_txt<<Tracer->SnakeList.Snakes[snake_label].Ru[i] * sqrt((double)2)<<"\t";
-        *out_txt<<Tracer->SnakeList.Snakes[snake_label].Ru[i]<<"\t";
+        *out_txt<<Tracer->SnakeList.Snakes[snake_label].Ru[i] * ratio<<"\t";
 
 		wrote_pt->AddPt(Tracer->SnakeList.Snakes[snake_label].Cu.Pt[i].x, Tracer->SnakeList.Snakes[snake_label].Cu.Pt[i].y, Tracer->SnakeList.Snakes[snake_label].Cu.Pt[i].z);
 		all_pt->AddPt(Tracer->SnakeList.Snakes[snake_label].Cu.Pt[i].x, Tracer->SnakeList.Snakes[snake_label].Cu.Pt[i].y, Tracer->SnakeList.Snakes[snake_label].Cu.Pt[i].z);
@@ -5941,7 +5624,7 @@ void QtTracer::findBranch_Raw(int snake_label, int root_label, Point3D root_poin
    {
    	 if( snake_visit_label[0](j) == 1 )
 		continue;
-     if( Tracer->SnakeList.valid_list(j) == 0 )
+     if( Tracer->SnakeList.valid_list[j] == 0 )
 		continue;
 
 	 vnl_vector<float> tail_dist( Tracer->SnakeList.Snakes[snake_label].Cu.GetSize() );
@@ -6003,7 +5686,7 @@ void QtTracer::findBranch(int snake_label, int root_label, Point3D root_point, v
    {
      if( snake_visit_label[0](j) == 1 )
 		 continue;
-	 if( Tracer->SnakeList.valid_list(j) == 0 )
+	 if( Tracer->SnakeList.valid_list[j] == 0 )
 	     continue;
 
 	 vnl_vector<float> temp_dist(Tracer->SnakeList.Snakes[j].Cu.GetSize());
@@ -6027,6 +5710,7 @@ void QtTracer::findBranch(int snake_label, int root_label, Point3D root_point, v
 		 {
 
 	        Tracer->SnakeList.Snakes[snake_label].Cu.RemovePt(); //remove the last point
+			Tracer->SnakeList.Snakes[snake_label].Ru.pop_back();
              //add points to current snake
 		   	 for( int im = pt_id; im < Tracer->SnakeList.Snakes[j].Cu.GetSize(); im++ )
 			 {
@@ -6038,7 +5722,7 @@ void QtTracer::findBranch(int snake_label, int root_label, Point3D root_point, v
              Tracer->SnakeList.Snakes[j].Cu.Resize(pt_id+1);
 			 Tracer->SnakeList.Snakes[j].Ru.resize(pt_id+1);
 
-			 //Tracer->SnakeList.valid_list(j) = 0;
+			 //Tracer->SnakeList.valid_list[j] = 0;
 			 //SnakeClass temp;
 			 //for( int k = 0; k < pt_id; k++ )
 	         //{
@@ -6051,6 +5735,7 @@ void QtTracer::findBranch(int snake_label, int root_label, Point3D root_point, v
 		 else if( L1 < min_length && L2 >= min_length )
 		 {
 			 Tracer->SnakeList.Snakes[snake_label].Cu.RemovePt(); //remove the last point
+			 Tracer->SnakeList.Snakes[snake_label].Ru.pop_back();
 			 //add points to current snake
 		   	 for( int im = pt_id; im < Tracer->SnakeList.Snakes[j].Cu.GetSize(); im++ )
 			 {
@@ -6058,13 +5743,14 @@ void QtTracer::findBranch(int snake_label, int root_label, Point3D root_point, v
 				Tracer->SnakeList.Snakes[snake_label].Ru.push_back(Tracer->SnakeList.Snakes[j].Ru[im]);
 			 }
 			 //delete the snake
-			 Tracer->SnakeList.valid_list(j) = 0;
+			 Tracer->SnakeList.valid_list[j] = 0;
 
 			 check_merging = true;
 		 }
 		 else if( L2 < min_length && L1 >= min_length )
 		 {
 			 Tracer->SnakeList.Snakes[snake_label].Cu.RemovePt(); //remove the last point
+			 Tracer->SnakeList.Snakes[snake_label].Ru.pop_back();
 		     //add points to current snake
 		   	 for( int im = pt_id; im > 0; im-- )
 			 {
@@ -6072,43 +5758,45 @@ void QtTracer::findBranch(int snake_label, int root_label, Point3D root_point, v
 				Tracer->SnakeList.Snakes[snake_label].Ru.push_back(Tracer->SnakeList.Snakes[j].Ru[im]);
 			 }
 			 //delete the snake
-			 Tracer->SnakeList.valid_list(j) = 0;
+			 Tracer->SnakeList.valid_list[j] = 0;
 
 			 check_merging = true;
 		 }
 		 else
 		 {
 		     //delete the snake
-			 Tracer->SnakeList.valid_list(j) = 0;
+			 Tracer->SnakeList.valid_list[j] = 0;
 		 }
 		}
 		else if( pt_id == 0 )
 		{
 			Tracer->SnakeList.Snakes[snake_label].Cu.RemovePt(); //remove the last point
+			Tracer->SnakeList.Snakes[snake_label].Ru.pop_back();
 		    for( int im = 0; im < Tracer->SnakeList.Snakes[j].Cu.GetSize(); im++ )
 			{
 			    Tracer->SnakeList.Snakes[snake_label].Cu.AddPt(Tracer->SnakeList.Snakes[j].Cu.Pt[im]);
 				Tracer->SnakeList.Snakes[snake_label].Ru.push_back(Tracer->SnakeList.Snakes[j].Ru[im]);
 			}
-			Tracer->SnakeList.valid_list(j) = 0;
+			Tracer->SnakeList.valid_list[j] = 0;
 
             check_merging = true;
 		}
 		else if( pt_id == Tracer->SnakeList.Snakes[j].Cu.GetSize() - 1 )
 		{
 			Tracer->SnakeList.Snakes[snake_label].Cu.RemovePt(); //remove the last point
+			Tracer->SnakeList.Snakes[snake_label].Ru.pop_back();
 		    for( int im = Tracer->SnakeList.Snakes[j].Cu.GetSize() - 1; im >= 0; im-- )
 			{
 			    Tracer->SnakeList.Snakes[snake_label].Cu.AddPt(Tracer->SnakeList.Snakes[j].Cu.Pt[im]);
 				Tracer->SnakeList.Snakes[snake_label].Ru.push_back(Tracer->SnakeList.Snakes[j].Ru[im]);
 			}
-			Tracer->SnakeList.valid_list(j) = 0;
+			Tracer->SnakeList.valid_list[j] = 0;
 
 			check_merging = true;
 		}
 
       //change the label image for snake selection
-	  IM->ImCoding( Tracer->SnakeList.Snakes[snake_label].Cu, snake_label + 1, false );
+	  IM->ImCoding( Tracer->SnakeList.Snakes[snake_label].Cu, Tracer->SnakeList.Snakes[snake_label].Ru, snake_label + 1, false );
 	  break;
 	 }
    }
@@ -6180,7 +5868,7 @@ void QtTracer::findBranch(int snake_label, int root_label, Point3D root_point, v
    {
    	 if( snake_visit_label[0](j) == 1 )
 		continue;
-     if( Tracer->SnakeList.valid_list(j) == 0 )
+     if( Tracer->SnakeList.valid_list[j] == 0 )
 		continue;
 
 	 vnl_vector<float> tail_dist( Tracer->SnakeList.Snakes[snake_label].Cu.GetSize() );
@@ -6228,7 +5916,7 @@ void QtTracer::findBranch(int snake_label, int root_label, Point3D root_point, v
 	  {
 	    if( snake_visit_label[0](j) == 1 )
 			continue;
-		if( Tracer->SnakeList.valid_list(j) == 0 )
+		if( Tracer->SnakeList.valid_list[j] == 0 )
 			continue;
 
 		float head_dist = Tracer->SnakeList.Snakes[snake_label].Cu.Pt[i].GetDistTo(Tracer->SnakeList.Snakes[j].Cu.GetLastPt());

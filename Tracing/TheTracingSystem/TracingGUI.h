@@ -33,7 +33,7 @@ limitations under the License.
 #include "dialogs.h"
 #include "dialogs_montage.h"
 #include "time.h"
-
+#include <vnl/vnl_random.h> 
 #include "Rendering\ImageActors.h"
 #include "vtkWindowToImageFilter.h"
 #include "vtkPNGWriter.h"
@@ -97,12 +97,8 @@ public slots:
     void Manual_Seed_Tracing(PointList3D seeds);
     void Manual_Seed_TracingI(PointList3D seeds);
     void SegmentationI();
-	void SegmentationII();
 	void Radius_Estimation();
 	void removeIsolated();
-
-	void Minimal_Path_Correction(PointList3D seed);
-
 	void enable_manual_seeding();
 
 	void Process();
@@ -157,6 +153,7 @@ public slots:
 	void splitSnake();
 	void branchSnake();
 	void updateFN(float fn);
+	void breakBranches();
 
 	//slots for vtk events
 	void vtk_right_pick(vtkObject * obj);
@@ -208,8 +205,14 @@ private:
 	QToolBar *Tool;
 	QToolBar *Tool_Misc;
 	QMenu *fileMenu;
-	QMenu *editMenu;
-	QMenu *viewMenu;
+	QMenu *SeedMenu;
+	QMenu *SnakeMenu;
+	QMenu *BranchMenu;
+	QMenu *TreeMenu;
+	QMenu *SomaMenu;
+	QMenu *PostSegMenu;
+	QMenu *OutlierMenu;
+ 	QMenu *viewMenu;
 	QMenu *aboutMenu;
     
 	QAction *zoomInAct;
@@ -245,6 +248,7 @@ private:
 	QAction *Save_Image;
 	QAction *Save_Setting;
 	QAction *Load_Setting;
+	QAction *Break_Branches;
 
 	ImageOperation *IM;
     OpenSnakeTracer *Tracer; 
@@ -277,6 +281,9 @@ private:
 	bool using_stacked_image;
 
 	bool outside_preprocess;
+  
+	int thread_finished;
+
 	QString outside_preprocessor_path;
 
 	PointList3D m_seed;
@@ -292,6 +299,8 @@ private:
 	QDir images_dir;
 	QString swcs_path;
 	int current_idx;
+
+	int original_seed_num;
 
 	QString *string_array; //the names of all images in the folder
     QString txt_fileName; //the txt file containing coordinates

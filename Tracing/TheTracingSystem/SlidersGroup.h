@@ -39,6 +39,7 @@
 	 bool getColorDisplay();
 	 int getRadiusDisplay();
 	 bool getTubeDisplay();
+	 bool getDynamicDisplay();
 	 int State;
 
  signals:
@@ -62,9 +63,6 @@
 	 void processChangeM1();
 	 void processChange1();
 	 void processChange2();
-	 void processChange3();
-     void processChange4();
-	 void processChange5();
 
 	 void displaySeedChange();
 	 void displaySnakeChange();
@@ -80,9 +78,6 @@
 	 QCheckBox *RawImage;
 	 QCheckBox *OriginalImage;
 	 QCheckBox *VesselImage;
-	 QCheckBox *BinaryImage;
-	 QCheckBox *SkeletonImage;
-	 QCheckBox *DepthImage;
 
 	 QCheckBox *displaySeeds;
 	 QCheckBox *displaySnakes;
@@ -90,6 +85,7 @@
 	 QCheckBox *radiusSphere;
 	 QCheckBox *radiusCircle;
 	 QCheckBox *radiusTube;
+	 QCheckBox *dynamicDisplay;
 	 QSpinBox *frame_box;
 	 QLabel *slice;
 

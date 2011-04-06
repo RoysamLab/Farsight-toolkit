@@ -93,6 +93,8 @@ void SnakeClass::Branch_Adjustment()
    GradientInterpolatorType::Pointer interpolator = GradientInterpolatorType::New();
    interpolator->SetInputImage(IM->IGVF);
 
+   Point3D temp_pt;
+
    for( int i = 0; i < BranchPt.GetSize(); i++ )
    {
 	 int j = 0;
@@ -116,267 +118,6 @@ void SnakeClass::Branch_Adjustment()
  
 }
 
-void SnakeClass::Skeleton_Expansion()
-{
-   if( Cu.NP != 1 )
-	   return;
-	   
-   int SM = IM->I->GetLargestPossibleRegion().GetSize()[0];
-   int SN = IM->I->GetLargestPossibleRegion().GetSize()[1];
-   int SZ = IM->I->GetLargestPossibleRegion().GetSize()[2];
-
-   typedef itk::ImageRegionIteratorWithIndex< ImageType > IteratorType;
-   typedef itk::NeighborhoodIterator< ImageType > NeighborhoodIteratorType;
-   typedef itk::NeighborhoodIterator< LabelImageType > NeighborhoodIteratorType_Label;
-
-
-   NeighborhoodIteratorType::RadiusType radius;
-   NeighborhoodIteratorType_Label::RadiusType radius_label;
-   radius.Fill(1);
-   radius_label.Fill(1);
-   NeighborhoodIteratorType it(radius, IM->VBW, IM->VBW->GetRequestedRegion());
-   NeighborhoodIteratorType_Label it_label(radius_label, IM->IL, IM->IL->GetRequestedRegion());
-   NeighborhoodIteratorType_Label it_label_t(radius_label, IM->IL_Tracing, IM->IL_Tracing->GetRequestedRegion());
- 
-   ImageType::IndexType index;
-   index[0] = Cu.Pt[0].x;
-   index[1] = Cu.Pt[0].y;
-   index[2] = Cu.Pt[0].z;
-   it.SetLocation(index);
-   it_label.SetLocation(index);
-   it_label_t.SetLocation(index);
-
-   //if current seed point is not in skeleton, move it to nearby skeleton point
-   NeighborhoodIteratorType::OffsetType nextMove;
-   nextMove.Fill(0);
-
-   if( it.GetCenterPixel() == 0 )
-   {
-      for( unsigned int i = 0; i < it.Size(); i++ )
-	  {
-	    if( it.GetPixel(i) == 1 && it_label.GetPixel(i) == 0 )
-		{
-		  index[0] = it.GetIndex(i)[0];
-		  index[1] = it.GetIndex(i)[1];
-		  index[2] = it.GetIndex(i)[2];
-		  it.SetLocation(index);
-		  it_label.SetLocation(index);
-          it_label_t.SetLocation(index);
-		  break;
- 		}
-	  }
-   }
-
-   ImageType::IndexType start_idx = it.GetIndex(13);
-   //check the validity of start_idx
-   if( start_idx[0] < 0 || start_idx[1] < 0 || start_idx[2] < 0 || 
-	   start_idx[0] >= SM || start_idx[1] >= SN || start_idx[2] >= SZ )
-   {
-     Expand_Seed_Point(3);
-	 return;
-   }
-
-   //if cannot find nearby skeleton point, use normal seed exapnsion instead
-   if( it.GetCenterPixel() == 0 )
-   {
-      Expand_Seed_Point(3);
-	  return;
-   }
-
-   //if current point has more than three neighbor skeleton points, use normal seed exapnsion instead
-   int skeleton_neighbor = 0;
-   for( unsigned int i = 0; i < it.Size(); i++ )
-   {
-        if( i == 13 )
-			continue;
-
-	    if( it.GetPixel(i) == 1 && it_label.GetPixel(i) == 0 )
-		{
-		  skeleton_neighbor++;
- 		}
-	}
-
-   if( skeleton_neighbor >= 3 || skeleton_neighbor == 0 )
-   {
-      Expand_Seed_Point(3);
-	  return;
-   }
-
-   skeleton_neighbor = 1;
-
-   //trace along one direction first
-   while( skeleton_neighbor == 1 )
-   {
-      nextMove.Fill(0);
-      for( unsigned int i = 0; i < it.Size(); i++ )
-	  {
-	    if( i == 13 )
-			continue;
-	    if( it.GetPixel(i) == 1 && it_label.GetPixel(i) == 0 && it_label_t.GetPixel(i) != 1 )
-		{
-			nextMove = it.GetOffset(i);
-			it_label_t.SetCenterPixel( 1 ); 
-
-			//add points
-			ImageType::IndexType idx = it.GetIndex(13);
-			temp_pt.x = idx[0];
-			temp_pt.y = idx[1];
-			temp_pt.z = idx[2];
-			Cu.AddPt(temp_pt);
-			//Cu.Pt[Cu.NP].x = idx[0];
-            //Cu.Pt[Cu.NP].y = idx[1];
-			//Cu.Pt[Cu.NP].z = idx[2];
-			if( Cu.Pt[Cu.NP-1].check_out_of_range_3D(SM,SN,SZ) )
-			{ 
-			  Cu.RemovePt();
-		      return;
-			}
-			//else
-			//{
-            //  Cu.NP++;
-			//}
-
-			it += nextMove;
-			it_label += nextMove;
-			it_label_t += nextMove;	
-
-			break;
-		}
-	  }
-
-	  if( nextMove[0] == 0 && nextMove[1] == 0 && nextMove[2] == 0 )
-	  {
-	      return;
-	  }
-
-		//find skeleton neighbors for current index
-       skeleton_neighbor = 0;
-	   for( unsigned int i = 0; i < it.Size(); i++ )
-	   {
-	    if( i == 13 )
-			continue;
-	    if( it.GetPixel(i) == 1 && it_label.GetPixel(i) == 0 && it_label_t.GetPixel(i) != 1 )
-		{
-			skeleton_neighbor++;
-		}
-	   }
-	   //add end point before tracing ends
-	   if( skeleton_neighbor == 0)
-	   {   
-		    //add points
-		    ImageType::IndexType idx = it.GetIndex(13);
-			temp_pt.x = idx[0];
-			temp_pt.y = idx[1];
-			temp_pt.z = idx[2];
-			Cu.AddPt(temp_pt);
-			//Cu.Pt[Cu.NP].x = idx[0];
-            //Cu.Pt[Cu.NP].y = idx[1];
-			//Cu.Pt[Cu.NP].z = idx[2];
-			if( Cu.Pt[Cu.NP-1].check_out_of_range_3D(SM,SN,SZ) )
-			{ 
-			  Cu.RemovePt();
-		      return;
-			}
-			//else
-			//{
-            //  Cu.NP++;
-			//}
-	   }
-   }
-
-   //trace along the other (if exists) direction
-   Cu.Flip();
-
-   it.SetLocation(start_idx);
-   it_label.SetLocation(start_idx);
-   it_label_t.SetLocation(start_idx);
-
-   skeleton_neighbor = 1;
-   while( skeleton_neighbor == 1 )
-   {
-       nextMove.Fill(0);
-      for( unsigned int i = 0; i < it.Size(); i++ )
-	  {
-	    if( i == 13 )
-			continue;
-	    if( it.GetPixel(i) == 1 && it_label.GetPixel(i) == 0 && it_label_t.GetPixel(i) != 1 )
-		{
-			nextMove = it.GetOffset(i);
-			
-			//add points
-		   if( it_label_t.GetCenterPixel() != 1 )
-		   {
-			ImageType::IndexType idx = it.GetIndex(13);
-			temp_pt.x = idx[0];
-			temp_pt.y = idx[1];
-			temp_pt.z = idx[2];
-			Cu.AddPt(temp_pt);
-			//Cu.Pt[Cu.NP].x = idx[0];
-            //Cu.Pt[Cu.NP].y = idx[1];
-			//Cu.Pt[Cu.NP].z = idx[2];
-			if( Cu.Pt[Cu.NP-1].check_out_of_range_3D(SM,SN,SZ) )
-			{ 
-			  Cu.RemovePt();
-		      return;
-			}
-			//else
-			//{
-            //  Cu.NP++;
-			//}
-		   }
-
-			it_label_t.SetCenterPixel( 1 ); 
-
-			it += nextMove;
-			it_label += nextMove;
-			it_label_t += nextMove;	
-
-			break;
-		}
-	  }
-
-	  if( nextMove[0] == 0 && nextMove[1] == 0 && nextMove[2] == 0 )
-	  {
-	      return;
-	  }
-
-	   //find skeleton neighbors for current index
-       skeleton_neighbor = 0;
-	   for( unsigned int i = 0; i < it.Size(); i++ )
-	   {
-	    if( i == 13 )
-			continue;
-	    if( it.GetPixel(i) == 1 && it_label.GetPixel(i) == 0 && it_label_t.GetPixel(i) != 1 )
-		{
-			skeleton_neighbor++;
-		}
-	   }
-	   //add end point before tracing ends
-	   if( skeleton_neighbor == 0)
-	   {   
-		    //add points
-		    ImageType::IndexType idx = it.GetIndex(13);
-			temp_pt.x = idx[0];
-			temp_pt.y = idx[1];
-			temp_pt.z = idx[2];
-			Cu.AddPt(temp_pt);
-			//Cu.Pt[Cu.NP].x = idx[0];
-            //Cu.Pt[Cu.NP].y = idx[1];
-			//Cu.Pt[Cu.NP].z = idx[2];
-			if( Cu.Pt[Cu.NP-1].check_out_of_range_3D(SM,SN,SZ) )
-			{ 
-			  Cu.RemovePt();
-		      return;
-			}
-			//else
-			//{
-            //  Cu.NP++;
-			//}
-	   }
-   }
-
-}
-
 void SnakeClass::Expand_Seed_Point(int expand_distance)
 {
    int SM = IM->V1->GetLargestPossibleRegion().GetSize()[0];
@@ -384,6 +125,8 @@ void SnakeClass::Expand_Seed_Point(int expand_distance)
    int SZ = IM->V1->GetLargestPossibleRegion().GetSize()[2];
    //int expand_distance = 5;
    GradientImageType::IndexType index; 
+
+   Point3D temp_pt;
 
   if( Cu.NP == 1 )
   {
@@ -437,444 +180,6 @@ void SnakeClass::Expand_Seed_Point(int expand_distance)
   //}
 }
 
-bool SnakeClass::Jump_Over_Gap(int dist, int angle, int step, int ratio, int ht)
-{
-	bool jump_gap = false;
-
-	int SM = IM->SM;
-    int SN = IM->SN;
-    int SZ = IM->SZ;
-
-	//Cu_Backup.NP = 0;
-	Cu_Backup.RemoveAllPts();
-
-	int pi = 3.14159265;
-	float x,y,z,temp_x,temp_y,temp_z;
-    GradientImageType::IndexType index1,index2;
-	GradientPixelType v1,v2;
-
-   if( ht == 0 )
-   {
-	index1[0] = Cu.Pt[0].x;
-	index1[1] = Cu.Pt[0].y;
-	index1[2] = Cu.Pt[0].z;
-	v1 = IM->V1->GetPixel(index1);
-
-	x = Cu.Pt[0].x - Cu.Pt[1].x;
-    y = Cu.Pt[0].y - Cu.Pt[1].y;
-	z = Cu.Pt[0].z - Cu.Pt[1].z;
-    float theta = acos(z/sqrt(pow(x,2) + pow(y,2) + pow(z,2)));
-
-	float phi = atan2(y,x);
-
-	int k = 0;
-
-	int step_size = 2*angle/step;
-
-	vnl_vector<float> weight(10000);
-	weight.fill(0);
-
-	for( int j = 1; j <= dist; j++ )
-	{
-      for( int i = -angle; i <= angle; i += step_size)
-	  {
-	    for( int z = -angle/ratio; z <= angle/ratio; z += (step_size/ratio))
-		{
-		 temp_x = j * sin(theta + (float)z * pi/180) * cos(phi + (float)i * pi/180);
-	     temp_y = j * sin(theta + (float)z * pi/180) * sin(phi + (float)i * pi/180);
-	     temp_z = j * cos(theta + (float)z * pi/180);
-	     //Cu_Backup.Pt[k].x = Cu.Pt[0].x + temp_x;
-         //Cu_Backup.Pt[k].y = Cu.Pt[0].y + temp_y;
-	     //Cu_Backup.Pt[k].z = Cu.Pt[0].z + temp_z;
-         temp_pt.x = Cu.Pt[0].x + temp_x;
-		 temp_pt.y = Cu.Pt[0].y + temp_y;
-		 temp_pt.z = Cu.Pt[0].z + temp_z;
-		 Cu_Backup.AddPt(temp_pt);
-
-		 bool boundary_label = Cu_Backup.Pt[k].check_out_of_range_3D(SM,SN,SZ);
-
-		 index2[0] = Cu_Backup.Pt[k].x;
-	     index2[1] = Cu_Backup.Pt[k].y;
-	     index2[2] = Cu_Backup.Pt[k].z;
-	     v2 = IM->V1->GetPixel(index2);
-
-		 if( boundary_label )
-		 {
-		    weight(k) = 0;
-		 } 
-		 else
-		 {
-		   if( IM->VBW->GetPixel(index2) == 0 || IM->IL_Tracing->GetPixel(index2) != 0 || IM->IL->GetPixel(index2) != 0 )
-		   {
-		     weight(k) = 0;
-		   }
-		   else
-		   {
-		    int v_angle;
-            v_angle = acos(v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2])/(v1.GetNorm() * v2.GetNorm()) * 180/pi;
-		    if( v_angle > 90 )
-			   v_angle = 180 - v_angle;
-			weight(k) = exp( (float)(90 - v_angle)/60 );
-		   }
-		   
-		 }
-	     k++;
-		}
-	  } 
-	}
-
-	//find maximal point and replace tail
-	if( weight.max_value() != 0 )
-	{
-		int idx = weight.arg_max();
-	    Cu.Pt[0] = Cu_Backup.Pt[idx];
-		jump_gap = true;
-	}
-	   
-   }
-   else if( ht == 1 )
-   {
- 	index1[0] = Cu.Pt[Cu.NP-1].x;
-	index1[1] = Cu.Pt[Cu.NP-1].y;
-	index1[2] = Cu.Pt[Cu.NP-1].z;
-	v1 = IM->V1->GetPixel(index1);
-
-	x = Cu.Pt[Cu.NP-1].x - Cu.Pt[Cu.NP-2].x;
-    y = Cu.Pt[Cu.NP-1].y - Cu.Pt[Cu.NP-2].y;
-	z = Cu.Pt[Cu.NP-1].z - Cu.Pt[Cu.NP-2].z;
-    float theta = acos(z/sqrt(pow(x,2) + pow(y,2) + pow(z,2)));
-
-	float phi = atan2(y,x);
-
-	int k = 0;
-
-	int step_size = 2*angle/step;
-
-	vnl_vector<float> weight(10000);
-	weight.fill(0);
-
-	for( int j = 1; j <= dist; j++ )
-	{
-      for( int i = -angle; i <= angle; i += step_size)
-	  {
-	    for( int z = -angle/ratio; z <= angle/ratio; z += (step_size/ratio))
-		{
-		 temp_x = j * sin(theta + (float)z * pi/180) * cos(phi + (float)i * pi/180);
-	     temp_y = j * sin(theta + (float)z * pi/180) * sin(phi + (float)i * pi/180);
-	     temp_z = j * cos(theta + (float)z * pi/180);
-	     //Cu_Backup.Pt[k].x = Cu.Pt[Cu.NP-1].x + temp_x;
-         //Cu_Backup.Pt[k].y = Cu.Pt[Cu.NP-1].y + temp_y;
-	     //Cu_Backup.Pt[k].z = Cu.Pt[Cu.NP-1].z + temp_z;
-		 temp_pt.x = Cu.Pt[Cu.NP-1].x + temp_x;
-		 temp_pt.y = Cu.Pt[Cu.NP-1].y + temp_y;
-		 temp_pt.z = Cu.Pt[Cu.NP-1].z + temp_z;
-		 Cu_Backup.AddPt(temp_pt);
-
-		 bool boundary_label = Cu_Backup.Pt[k].check_out_of_range_3D(SM,SN,SZ);
-
-		 index2[0] = Cu_Backup.Pt[k].x;
-	     index2[1] = Cu_Backup.Pt[k].y;
-	     index2[2] = Cu_Backup.Pt[k].z;
-	     v2 = IM->V1->GetPixel(index2);
-
-		 if( boundary_label )
-		 {
-		    weight(k) = 0;
-		 } 
-		 else
-		 {
-		   if( IM->VBW->GetPixel(index2) == 0 || IM->IL_Tracing->GetPixel(index2) != 0 || IM->IL->GetPixel(index2) != 0 )
-		   {
-		     weight(k) = 0;
-		   }
-		   else
-		   {
-		    int v_angle;
-            v_angle = acos(v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2])/(v1.GetNorm() * v2.GetNorm()) * 180/pi;
-		    if( v_angle > 90 )
-			   v_angle = 180 - v_angle;
-			weight(k) = exp( (float)(90 - v_angle)/60 );
-		   }
-		   
-		 }
-	     k++;
-		}
-	  } 
-	}
-
-	//find maximal point and replace head
-	if( weight.max_value() != 0 )
-	{
-		int idx = weight.arg_max();
-	    Cu.Pt[Cu.NP-1] = Cu_Backup.Pt[idx];
-		jump_gap = true;
-	}
-   }
-  return jump_gap;
-}
-
-bool SnakeClass::Jump_Over_Crossover_New(int dist, int collision)
-{
-
-    bool jump_crossover = false;
-	int crossover_dist = dist;
-    int angle_th = 120;
-
-	//find nearby tip point of existing snake
-	if( collision == 1 || collision == 3 )
-	{
-	  for( int i = 0; i < SnakeList->NSnakes; i++ )
-	  {
-		  //if( SnakeList->valid_list(i) == 0 || i == tail_collision_snake_id )
-		  if( SnakeList->valid_list(i) == 0 )
-			  continue;
-
-		  float dist_head = Cu.GetFirstPt().GetDistTo( SnakeList->Snakes[i].Cu.GetLastPt() );
-		  float dist_tail = Cu.GetFirstPt().GetDistTo( SnakeList->Snakes[i].Cu.GetFirstPt() );
-		  //tail-head merging
-		  if( dist_head < dist_tail && dist_head < crossover_dist )
-		  {
-		    int pt_idx = SnakeList->Snakes[i].Cu.GetSize() - 1;
-		  	 //transfer points
-			 Cu_Backup = Cu;
-            for( int j = pt_idx; j >= 0; j-- )
-	        {
-		      Cu.AddTailPt( SnakeList->Snakes[i].Cu.Pt[j] );
-	        }
-		    if( Cu.check_for_sharp_turn(angle_th) )
-			{
-			  Cu = Cu_Backup;
-			}
-			else
-			{
-			 SnakeList->RemoveSnake(i);
-			 jump_crossover = true;
-			}
-			//return jump_crossover;
-		  }
-		  //tail-tail merging
-		  else if( dist_tail < dist_head && dist_tail < crossover_dist )
-		  {
-		    int pt_idx = 0;
-		  	//transfer points
-			 Cu_Backup = Cu;
-            for( int j = pt_idx; j < SnakeList->Snakes[i].Cu.GetSize(); j++ )
-	        {
-		      Cu.AddTailPt( SnakeList->Snakes[i].Cu.Pt[j] );
-	        }
-		    if( Cu.check_for_sharp_turn(angle_th) )
-			{
-			  Cu = Cu_Backup;
-			}
-			else
-			{
-			 SnakeList->RemoveSnake(i);
-			 jump_crossover = true;
-			}
-			//return jump_crossover;
-		  }
-	  }
-	}
-
-	if( collision == 2 || collision == 3 )
-	{
-	  for( int i = 0; i < SnakeList->NSnakes; i++ )
-	  {
-		  //if( SnakeList->valid_list(i) == 0 || i == head_collision_snake_id )
-		  if( SnakeList->valid_list(i) == 0 )
-			  continue;
-
-		  float dist_head = Cu.GetLastPt().GetDistTo( SnakeList->Snakes[i].Cu.GetLastPt() );
-		  float dist_tail = Cu.GetLastPt().GetDistTo( SnakeList->Snakes[i].Cu.GetFirstPt() );
-		  //head-head merging
-		  if( dist_head < dist_tail && dist_head < crossover_dist)
-		  {
-		    int pt_idx = SnakeList->Snakes[i].Cu.GetSize() - 1;
-		  	 //transfer points
-			 Cu_Backup = Cu;
-            for( int j = pt_idx; j >= 0; j-- )
-	        {
-		      Cu.AddPt( SnakeList->Snakes[i].Cu.Pt[j] );
-	        }
-		    if( Cu.check_for_sharp_turn(angle_th) )
-			{
-			  Cu = Cu_Backup;
-			}
-			else
-			{
-			 SnakeList->RemoveSnake(i);
-			 jump_crossover = true;
-			}
-			//return jump_crossover;
-		  }
-		  //head-tail merging
-		  else if( dist_tail < dist_head && dist_tail < crossover_dist )
-		  {
-		    int pt_idx = 0;
-		  	//transfer points
-            Cu_Backup = Cu;
-            for( int j = pt_idx; j < SnakeList->Snakes[i].Cu.GetSize(); j++ )
-	        {
-		      Cu.AddPt( SnakeList->Snakes[i].Cu.Pt[j] );
-	        }
-		    if( Cu.check_for_sharp_turn(angle_th) )
-			{
-			  Cu = Cu_Backup;
-			}
-			else
-			{
-			 SnakeList->RemoveSnake(i);
-			 jump_crossover = true;
-			}
-			//return jump_crossover;
-		  }
-	  }
-	}
-	return jump_crossover;
-}
-
-bool SnakeClass::Jump_Over_Crossover(int dist, int angle, int step, int ratio, int collision)
-{
-	bool jump_crossover = false;
-
-	int SM = IM->SM;
-    int SN = IM->SN;
-    int SZ = IM->SZ;
-
-	//Cu_Backup.NP = 0;
-	Cu_Backup.RemoveAllPts();
-
-	int pi = 3.14159265;
-	float x,y,z,temp_x,temp_y,temp_z;
-    GradientImageType::IndexType index1,index2;
-	GradientPixelType v1,v2;
-
-   if( collision == 1 )
-   {
-	index1[0] = Cu.Pt[0].x;
-	index1[1] = Cu.Pt[0].y;
-	index1[2] = Cu.Pt[0].z;
-	v1 = IM->V1->GetPixel(index1);
-
-	x = Cu.Pt[0].x - Cu.Pt[1].x;
-    y = Cu.Pt[0].y - Cu.Pt[1].y;
-	z = Cu.Pt[0].z - Cu.Pt[1].z;
-    float theta = acos(z/sqrt(pow(x,2) + pow(y,2) + pow(z,2)));
-
-	float phi = atan2(y,x);
-
-	int k = 0;
-
-	int step_size = 2*angle/step;
-
-	vnl_vector<float> weight(10000);
-	weight.fill(0);
-
-	for( int j = dist; j <= dist * 2; j++ )
-	{
-      for( int i = -angle; i <= angle; i += step_size)
-	  {
-	    for( int z = -angle/ratio; z <= angle/ratio; z += (step_size/ratio))
-		{
-		 temp_x = j * sin(theta + (float)z * pi/180) * cos(phi + (float)i * pi/180);
-	     temp_y = j * sin(theta + (float)z * pi/180) * sin(phi + (float)i * pi/180);
-	     temp_z = j * cos(theta + (float)z * pi/180);
-	     //Cu_Backup.Pt[k].x = Cu.Pt[0].x + temp_x;
-         //Cu_Backup.Pt[k].y = Cu.Pt[0].y + temp_y;
-	     //Cu_Backup.Pt[k].z = Cu.Pt[0].z + temp_z;
-		 temp_pt.x = Cu.Pt[0].x + temp_x;
-		 temp_pt.y = Cu.Pt[0].y + temp_y;
-		 temp_pt.z = Cu.Pt[0].z + temp_z;
-		 Cu_Backup.AddPt(temp_pt);
-
-		 bool boundary_label = Cu_Backup.Pt[k].check_out_of_range_3D(SM,SN,SZ);
-
-		 index2[0] = Cu_Backup.Pt[k].x;
-	     index2[1] = Cu_Backup.Pt[k].y;
-	     index2[2] = Cu_Backup.Pt[k].z;
-	     v2 = IM->V1->GetPixel(index2);
-
-			 if( !boundary_label && IM->VBW->GetPixel(index2) != 0 && IM->IL_Tracing->GetPixel(index2) == 0 && IM->IL->GetPixel(index2) == 0 )
-			 {
-			   int v_angle;
-			   v_angle = acos(v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2])/(v1.GetNorm() * v2.GetNorm()) * 180/pi;
-               Cu.Pt[0] = Cu_Backup.Pt[k];
-			   jump_crossover = true;
-			   return jump_crossover;
-			 }
-		 
-	     k++;
-	     //Cu_Backup.NP++;
-		}
-	  } 
-	}
-
-   }
-   else if( collision == 2 )
-   {
- 	index1[0] = Cu.Pt[Cu.NP-1].x;
-	index1[1] = Cu.Pt[Cu.NP-1].y;
-	index1[2] = Cu.Pt[Cu.NP-1].z;
-	v1 = IM->V1->GetPixel(index1);
-
-	x = Cu.Pt[Cu.NP-1].x - Cu.Pt[Cu.NP-2].x;
-    y = Cu.Pt[Cu.NP-1].y - Cu.Pt[Cu.NP-2].y;
-	z = Cu.Pt[Cu.NP-1].z - Cu.Pt[Cu.NP-2].z;
-    float theta = acos(z/sqrt(pow(x,2) + pow(y,2) + pow(z,2)));
-
-	float phi = atan2(y,x);
-
-	int k = 0;
-
-	int step_size = 2*angle/step;
-
-	vnl_vector<float> weight(10000);
-	weight.fill(0);
-
-	for( int j = 1; j <= dist; j++ )
-	{
-      for( int i = -angle; i <= angle; i += step_size)
-	  {
-	    for( int z = -angle/ratio; z <= angle/ratio; z += (step_size/ratio))
-		{
-		 temp_x = j * sin(theta + (float)z * pi/180) * cos(phi + (float)i * pi/180);
-	     temp_y = j * sin(theta + (float)z * pi/180) * sin(phi + (float)i * pi/180);
-	     temp_z = j * cos(theta + (float)z * pi/180);
-	     //Cu_Backup.Pt[k].x = Cu.Pt[Cu.NP-1].x + temp_x;
-         //Cu_Backup.Pt[k].y = Cu.Pt[Cu.NP-1].y + temp_y;
-	     //Cu_Backup.Pt[k].z = Cu.Pt[Cu.NP-1].z + temp_z;
-		 temp_pt.x = Cu.Pt[Cu.NP-1].x + temp_x;
-		 temp_pt.y = Cu.Pt[Cu.NP-1].y + temp_y;
-		 temp_pt.z = Cu.Pt[Cu.NP-1].z + temp_z;
-		 Cu_Backup.AddPt(temp_pt);
-
-		 bool boundary_label = Cu_Backup.Pt[k].check_out_of_range_3D(SM,SN,SZ);
-
-		 index2[0] = Cu_Backup.Pt[k].x;
-	     index2[1] = Cu_Backup.Pt[k].y;
-	     index2[2] = Cu_Backup.Pt[k].z;
-	     v2 = IM->V1->GetPixel(index2);
-
-			 if( !boundary_label && IM->VBW->GetPixel(index2) != 0 && IM->IL_Tracing->GetPixel(index2) == 0 && IM->IL->GetPixel(index2) == 0 )
-			 {
-			   int v_angle;
-			   v_angle = acos(v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2])/(v1.GetNorm() * v2.GetNorm()) * 180/pi;
-               Cu.Pt[Cu.NP-1] = Cu_Backup.Pt[k];
-			   jump_crossover = true;
-			   return jump_crossover;
-			 }
-
-	     k++;
-	     //Cu_Backup.NP++;
-		}
-	  } 
-	}
-   }
-
-  return jump_crossover;
-}
-
-
 bool SnakeClass::Check_Validity(float minimum_length, float repeat_ratio, int repeat_dist, int snake_id)
 {
    int SM = IM->SM;
@@ -882,6 +187,7 @@ bool SnakeClass::Check_Validity(float minimum_length, float repeat_ratio, int re
    int SZ = IM->SZ;
 
    bool valid = true;
+   Point3D temp_pt;
 
    //float repeat_ratio = 0.3;
    //int repeat_dist = 3;
@@ -891,7 +197,7 @@ bool SnakeClass::Check_Validity(float minimum_length, float repeat_ratio, int re
    //Point3D temp_pt;
    
    //check repeat tracing
-   int label_tail = 0;
+  int label_tail = 0;
    int label_head = 0;
 
    int overlap_pt = 0;
@@ -942,14 +248,14 @@ bool SnakeClass::Check_Validity(float minimum_length, float repeat_ratio, int re
    }
 
 
-   if( label_tail != 0 && label_head != 0 && label_tail != label_head )
+   /*if( label_tail != 0 && label_head != 0 && label_tail != label_head )
    {
 	    valid = true;
 		return valid;
-   }
+   }*/
 
   //check self intersect
-  if( Cu.NP > 6 )
+  /* if( Cu.NP > 6 )
   {
    for( int i = 5; i < Cu.NP; i++ )
    {
@@ -969,7 +275,7 @@ bool SnakeClass::Check_Validity(float minimum_length, float repeat_ratio, int re
 	   return valid;
 	 }
    }
-  }
+  } */
 
    //check length
    //if( Cu.GetLength() <= minimum_length && label_tail == 0 && label_head == 0)
@@ -981,8 +287,8 @@ bool SnakeClass::Check_Validity(float minimum_length, float repeat_ratio, int re
    }
 
    //check for repeating and loop
-   //if( (float)overlap_pt/(float)Cu.GetSize() > repeat_ratio  || (label_tail == label_head && label_tail != 0) )
-   if( (float)overlap_pt/(float)Cu.GetSize() > repeat_ratio )
+   if( (float)overlap_pt/(float)Cu.GetSize() > repeat_ratio  || (label_tail == label_head && label_tail != 0) )
+   //if( (float)overlap_pt/(float)Cu.GetSize() > repeat_ratio )
    {
 	  std::cout<<"repeating tracing"<<std::endl;
       valid = false;
@@ -1030,7 +336,7 @@ bool SnakeClass::Check_Head_Collision(ImageType::IndexType index, int collision_
    int SZ = IM->I->GetLargestPossibleRegion().GetSize()[2];
  
    bool overlap = false;
-   //Point3D temp_pt;
+   Point3D temp_pt;
    //Point3D head_pt(index[0],index[1],index[2]);
    head_pt.x = index[0];
    head_pt.y = index[1];
@@ -1104,7 +410,10 @@ bool SnakeClass::Check_Head_Collision(ImageType::IndexType index, int collision_
 			  {
 
 			     Cu.Pt[Cu.NP-1] = SnakeList->Snakes[id-1].Cu.Pt[pt_id];
+				 Ru[Cu.NP-1] = SnakeList->Snakes[id-1].Ru[pt_id];
+				 //Ru[Cu.NP-1] = 0;
 			     BranchPt.AddPt(Cu.Pt[Cu.NP-1]);
+				 SnakeList->Snakes[id-1].BranchPt.AddPt(Cu.Pt[Cu.NP-1]);
 			     std::cout<<"head collision, branch point detected..."<<std::endl;
 				 if( collision == 1 )
 				  collision = 3;
@@ -1133,7 +442,10 @@ bool SnakeClass::Check_Head_Collision(ImageType::IndexType index, int collision_
 				   Ru = Ru_Backup;
 
 				   Cu.Pt[Cu.NP-1] = SnakeList->Snakes[id-1].Cu.Pt[pt_id];
+				   Ru[Cu.NP-1] = SnakeList->Snakes[id-1].Ru[pt_id];
+                   //Ru[Cu.NP-1] = 0;
 			       BranchPt.AddPt(Cu.Pt[Cu.NP-1]);
+				   SnakeList->Snakes[id-1].BranchPt.AddPt(Cu.Pt[Cu.NP-1]);
 			       std::cout<<"head collision, branch point detected..."<<std::endl;
 				   if( collision == 1 )
 				    collision = 3;
@@ -1170,7 +482,10 @@ bool SnakeClass::Check_Head_Collision(ImageType::IndexType index, int collision_
 				   Ru = Ru_Backup;
 
 				   Cu.Pt[Cu.NP-1] = SnakeList->Snakes[id-1].Cu.Pt[pt_id];
+				   Ru[Cu.NP-1] = SnakeList->Snakes[id-1].Ru[pt_id];
+				   //Ru[Cu.NP-1] = 0;
 			       BranchPt.AddPt(Cu.Pt[Cu.NP-1]);
+				   SnakeList->Snakes[id-1].BranchPt.AddPt(Cu.Pt[Cu.NP-1]);
 			       std::cout<<"head collision, branch point detected..."<<std::endl;
 				   if( collision == 1 )
 				    collision = 3;
@@ -1209,7 +524,10 @@ bool SnakeClass::Check_Head_Collision(ImageType::IndexType index, int collision_
 				   Ru = Ru_Backup;
 
 				   Cu.Pt[Cu.NP-1] = SnakeList->Snakes[id-1].Cu.Pt[pt_id];
+				   Ru[Cu.NP-1] = SnakeList->Snakes[id-1].Ru[pt_id];
+				   //Ru[Cu.NP-1] = 0;
 			       BranchPt.AddPt(Cu.Pt[Cu.NP-1]);
+				   SnakeList->Snakes[id-1].BranchPt.AddPt(Cu.Pt[Cu.NP-1]);
 			       std::cout<<"head collision, branch point detected..."<<std::endl;
 				   if( collision == 1 )
 				    collision = 3;
@@ -1250,7 +568,10 @@ bool SnakeClass::Check_Head_Collision(ImageType::IndexType index, int collision_
 				   SnakeList->Snakes[id-1].Cu.Flip();
 
 				   Cu.Pt[Cu.NP-1] = SnakeList->Snakes[id-1].Cu.Pt[pt_id];
+				   Ru[Cu.NP-1] = SnakeList->Snakes[id-1].Ru[pt_id];
+				   //Ru[Cu.NP-1] = 0;
 			       BranchPt.AddPt(Cu.Pt[Cu.NP-1]);
+				   SnakeList->Snakes[id-1].BranchPt.AddPt(Cu.Pt[Cu.NP-1]);
 			       std::cout<<"head collision, branch point detected..."<<std::endl;
 				   if( collision == 1 )
 				    collision = 3;
@@ -1272,8 +593,10 @@ bool SnakeClass::Check_Head_Collision(ImageType::IndexType index, int collision_
 			else
 			{
               Cu.Pt[Cu.NP-1] = SnakeList->Snakes[id-1].Cu.Pt[pt_id];
+			  Ru[Cu.NP-1] = SnakeList->Snakes[id-1].Ru[pt_id];
+			  //Ru[Cu.NP-1] = 0;
 			  BranchPt.AddPt(Cu.Pt[Cu.NP-1]);
-              //SnakeList->Snakes[id-1].BranchPt.AddPt(Cu.Pt[Cu.NP-1]);
+              SnakeList->Snakes[id-1].BranchPt.AddPt(Cu.Pt[Cu.NP-1]);
 			  merging = false;
 			  std::cout<<"head collision, branch point detected..."<<std::endl;
 			  if( collision == 1 )
@@ -1303,7 +626,7 @@ bool SnakeClass::Check_Tail_Collision(ImageType::IndexType index, int collision_
    int SZ = IM->I->GetLargestPossibleRegion().GetSize()[2];
  
    bool overlap = false;
-   //Point3D temp_pt;
+   Point3D temp_pt;
    //Point3D tail_pt(index[0],index[1],index[2]);
    tail_pt.x = index[0];
    tail_pt.y = index[1];
@@ -1356,7 +679,7 @@ bool SnakeClass::Check_Tail_Collision(ImageType::IndexType index, int collision_
 			//find nearest point at the traced snake
 			vnl_vector<float> dist_temp(SnakeList->Snakes[id-1].Cu.GetSize());
             //check if snake is removed
-			if( SnakeList->valid_list(id-1) == 0 )
+			if( SnakeList->valid_list[id-1] == 0 )
                  continue;
 
 			overlap = true;
@@ -1379,7 +702,10 @@ bool SnakeClass::Check_Tail_Collision(ImageType::IndexType index, int collision_
 			  {
 	
 			     Cu.Pt[0] = SnakeList->Snakes[id-1].Cu.Pt[pt_id];
+				 Ru[0] = SnakeList->Snakes[id-1].Ru[pt_id];
+				 //Ru[0] = 0;
 			     BranchPt.AddPt(Cu.Pt[0]);
+				 SnakeList->Snakes[id-1].BranchPt.AddPt(Cu.Pt[0]);
 			     std::cout<<"tail collision, branch point detected..."<<std::endl;
 				 if( collision == 2 )
 				  collision = 3;
@@ -1414,7 +740,10 @@ bool SnakeClass::Check_Tail_Collision(ImageType::IndexType index, int collision_
 				   SnakeList->Snakes[id-1].Cu.Flip();
 
 				   Cu.Pt[0] = SnakeList->Snakes[id-1].Cu.Pt[pt_id];
+				   Ru[0] = SnakeList->Snakes[id-1].Ru[pt_id];
+				   //Ru[0] = 0;
 			       BranchPt.AddPt(Cu.Pt[0]);
+				   SnakeList->Snakes[id-1].BranchPt.AddPt(Cu.Pt[0]);
 			       std::cout<<"tail collision, branch point detected..."<<std::endl;
 				   if( collision == 2 )
 				    collision = 3;
@@ -1451,9 +780,11 @@ bool SnakeClass::Check_Tail_Collision(ImageType::IndexType index, int collision_
 				   Ru = Ru_Backup;
 
 				   Cu.Pt[0] = SnakeList->Snakes[id-1].Cu.Pt[pt_id];
-
-				   BranchPt.RemoveAllPts();
+                   Ru[0] = SnakeList->Snakes[id-1].Ru[pt_id];
+				   //Ru[0] = 0;
+				   //BranchPt.RemoveAllPts();
 			       BranchPt.AddPt(Cu.Pt[0]);
+				   SnakeList->Snakes[id-1].BranchPt.AddPt(Cu.Pt[0]);
 			       std::cout<<"tail collision, branch point detected..."<<std::endl;
 				   if( collision == 2 )
 				    collision = 3;
@@ -1496,8 +827,10 @@ bool SnakeClass::Check_Tail_Collision(ImageType::IndexType index, int collision_
 				   SnakeList->Snakes[id-1].Cu.Flip();
 
 				   Cu.Pt[0] = SnakeList->Snakes[id-1].Cu.Pt[pt_id];
-
+                   Ru[0] = SnakeList->Snakes[id-1].Ru[pt_id];
+				   //Ru[0] = 0;
 			       BranchPt.AddPt(Cu.Pt[0]);
+				   SnakeList->Snakes[id-1].BranchPt.AddPt(Cu.Pt[0]);
 			       std::cout<<"tail collision, branch point detected..."<<std::endl;
 				   if( collision == 2 )
 				    collision = 3;
@@ -1534,8 +867,10 @@ bool SnakeClass::Check_Tail_Collision(ImageType::IndexType index, int collision_
 				   Ru = Ru_Backup;
 
 				   Cu.Pt[0] = SnakeList->Snakes[id-1].Cu.Pt[pt_id];
-
+                   Ru[0] = SnakeList->Snakes[id-1].Ru[pt_id];
+				   //Ru[0] = 0;
 			       BranchPt.AddPt(Cu.Pt[0]);
+				   SnakeList->Snakes[id-1].BranchPt.AddPt(Cu.Pt[0]);
 			       std::cout<<"tail collision, branch point detected..."<<std::endl;
 				   if( collision == 2 )
 				    collision = 3;
@@ -1555,8 +890,10 @@ bool SnakeClass::Check_Tail_Collision(ImageType::IndexType index, int collision_
 			else
 			{
               Cu.Pt[0] = SnakeList->Snakes[id-1].Cu.Pt[pt_id];
+			  Ru[0] = SnakeList->Snakes[id-1].Ru[pt_id];
+			  //Ru[0] = 0;
 			  BranchPt.AddPt(Cu.Pt[0]);
-              // SnakeList->Snakes[id-1].BranchPt.AddPt(Cu.Pt[0]);
+              SnakeList->Snakes[id-1].BranchPt.AddPt(Cu.Pt[0]);
 			  merging = false;
 			  std::cout<<"tail collision, branch point detected..."<<std::endl;
 			   if( collision == 2 )
@@ -1575,6 +912,7 @@ bool SnakeClass::Check_Tail_Collision(ImageType::IndexType index, int collision_
 
 bool SnakeClass::Check_Head_Leakage(ImageType::IndexType head_index)
 {
+	Point3D temp_pt;
 	 bool leakage = true;
 	 for( int ix = -1; ix <= 1; ix++ )
 	 {
@@ -1597,7 +935,7 @@ bool SnakeClass::Check_Head_Leakage(ImageType::IndexType head_index)
 				            (Cu.Pt[end-1].y - Cu.Pt[end-2].y) * (idx_temp[1]- Cu.Pt[end-1].y) +
 							(Cu.Pt[end-1].z - Cu.Pt[end-2].z) * (idx_temp[2]- Cu.Pt[end-1].z);
 
-			if( IM->VBW->GetPixel(idx_temp) != 0 && IM->IL_Tracing->GetPixel(idx_temp) == 0 && d_product > 0 )
+			if( IM->IL_Tracing->GetPixel(idx_temp) == 0 && d_product > 0 )
 			{  
                 Cu.Pt[Cu.NP-1].x = idx_temp[0];
                 Cu.Pt[Cu.NP-1].y = idx_temp[1];
@@ -1615,6 +953,7 @@ bool SnakeClass::Check_Head_Leakage(ImageType::IndexType head_index)
 bool SnakeClass::Check_Tail_Leakage(ImageType::IndexType tail_index)
 {
 	 bool leakage = true;
+	 Point3D temp_pt;
 	 for( int ix = -1; ix <= 1; ix++ )
 	 {
       for( int iy = -1; iy <= 1; iy++ )
@@ -1634,7 +973,7 @@ bool SnakeClass::Check_Tail_Leakage(ImageType::IndexType tail_index)
 				            (Cu.Pt[1].y - Cu.Pt[2].y) * (idx_temp[1]- Cu.Pt[1].y) +
 							(Cu.Pt[1].z - Cu.Pt[2].z) * (idx_temp[2]- Cu.Pt[1].z);
 
-			if( IM->VBW->GetPixel(idx_temp) != 0 && IM->IL_Tracing->GetPixel(idx_temp) == 0 && d_product > 0 )
+			if( IM->IL_Tracing->GetPixel(idx_temp) == 0 && d_product > 0 )
 			{  
                 Cu.Pt[0].x = idx_temp[0];
                 Cu.Pt[0].y = idx_temp[1];
@@ -1874,21 +1213,191 @@ bool SnakeClass::Compute_Seed_Force(int head_tail, int distance)
    return seed_force;
 }
 
-void SnakeClass::OpenSnakeStretch_4D(float alpha, int ITER, int pt_distance, float beta, float kappa, float gamma, 
-                                float stretchingRatio, int collision_dist, int minimum_length, 
-								bool automatic_merging, int max_angle, bool freeze_body, int s_force, int snake_id, int tracing_model)
+void SnakeClass::OpenSnake_Init_4D(float alpha, int ITER, float beta, float kappa, float gamma, int pt_distance)
 {
+  //deform the 3 starting point and roughly estimate the radii
+  float pi = 3.1415926;
+  int m = 8;
 
+   typedef itk::NearestNeighborInterpolateImageFunction< 
+                       ImageType, float>  InterpolatorType1;
+
+   InterpolatorType1::Pointer I_interpolator = InterpolatorType1::New();
+   I_interpolator->SetInputImage(IM->I);
+
+   int SM = IM->SM;
+   int SN = IM->SN;
+   int SZ = IM->SZ;
+  
+   int N = Cu.GetSize();
+   vnl_matrix<float> A = makeOpenA(alpha, beta, N);
+   vnl_matrix<float> I(N,N);
+   I.set_identity();
+   vnl_matrix<float> invAI = vnl_matrix_inverse<float>( A + I * gamma);
+
+   vnl_vector<float> vnl_Ru(N);
+   vnl_Ru.fill(0);
+   for( int j = 0; j < N; j++ )
+   {
+     vnl_Ru(j) = Ru[j];
+   }
+
+  for( int iter = 0; iter < ITER; iter++ )
+  {
+	 vnl_vector<float> mfx(N);
+	 vnl_vector<float> mfy(N);
+	 vnl_vector<float> mfz(N);
+	 vnl_vector<float> mfr(N);
+     mfx.fill(0);
+     mfy.fill(0);
+	 mfz.fill(0);
+	 mfr.fill(0);
+
+	 vnl_vector<float> x(N);
+     vnl_vector<float> y(N);
+	 vnl_vector<float> z(N);
+
+	 Vector3D v1,v2,v3, vtemp;
+	 Point3D temp_r_pt;
+	 vnl_matrix<float> H(3,3);
+	 H.fill(0);
+
+	 for( int j = 0; j < Cu.GetSize(); j++ )
+	 {
+		x(j) = Cu.GetPt(j).x;
+		y(j) = Cu.GetPt(j).y;
+        z(j) = Cu.GetPt(j).z;
+
+        GradientImageType::IndexType index; 
+        index[0] = (x(j));
+		index[1] = (y(j));
+		index[2] = (z(j));
+
+	   //compute the radius force
+	   if( j == 0 )
+	   {
+	      v1.x = Cu.Pt[0].x - Cu.Pt[1].x;
+          v1.y = Cu.Pt[0].y - Cu.Pt[1].y;
+          v1.z = Cu.Pt[0].z - Cu.Pt[1].z;
+          v1.ConvertUnit();
+	   }
+	   else
+	   {
+	   	  v1.x = Cu.Pt[j].x - Cu.Pt[j-1].x;
+          v1.y = Cu.Pt[j].y - Cu.Pt[j-1].y;
+          v1.z = Cu.Pt[j].z - Cu.Pt[j-1].z;
+          v1.ConvertUnit();
+	   }
+
+       v2.x = -v1.z;
+       v2.y = 0;
+       v2.z = v1.x;
+       v2.ConvertUnit();
+       v3.x = 1;
+       v3.y = -(pow(v1.x,2) + pow(v1.z,2))/(v1.x*v1.y + std::numeric_limits<float>::epsilon());
+       v3.z = v1.z/(v1.x + std::numeric_limits<float>::epsilon());
+       v3.ConvertUnit();
+
+	   float force_r = 0;
+	   vnl_vector<float> force(3);
+	   force.fill(0);
+      
+	   float force_r_region = 0;
+	   vnl_vector<float> force_region(3);
+	   force_region.fill(0);
+
+	    for( int k = 0; k < m; k++ )
+	    {
+	      float theta = (2 * pi * k)/m;
+	      vtemp.x = v2.x * cos(theta) + v3.x * sin(theta);
+	      vtemp.y = v2.y * cos(theta) + v3.y * sin(theta);
+		  vtemp.z = v2.z * cos(theta) + v3.z * sin(theta);
+		  vtemp.ConvertUnit();
+
+		  vnl_vector<float> oj(3);
+		  oj(0) = vtemp.x;
+		  oj(1) = vtemp.y;
+		  oj(2) = vtemp.z;
+
+		  temp_r_pt.x = x(j) + vnl_Ru(j) * vtemp.x;
+		  temp_r_pt.y = y(j) + vnl_Ru(j) * vtemp.y;
+		  temp_r_pt.z = z(j) + vnl_Ru(j) * vtemp.z;
+
+          if( isinf( temp_r_pt.x ) || isinf( temp_r_pt.y ) || isinf( temp_r_pt.z ) )
+		  {
+		    continue;
+		  }
+		
+		  if( temp_r_pt.check_out_of_range_3D(IM->SM,IM->SN,IM->SZ) )
+			continue;
+
+          ProbImageType::IndexType temp_index; 
+          temp_index[0] = temp_r_pt.x;
+          temp_index[1] = temp_r_pt.y;
+		  temp_index[2] = temp_r_pt.z;
+
+           float Ic = I_interpolator->EvaluateAtIndex(temp_index);
+		   //force_region += oj * log(fabs(Ic - IM->u1)/(fabs(Ic - IM->u2)+std::numeric_limits<float>::epsilon()) + std::numeric_limits<float>::epsilon());
+		   //force_r_region += log(fabs(Ic - IM->u1)/(fabs(Ic - IM->u2)+std::numeric_limits<float>::epsilon()) + std::numeric_limits<float>::epsilon());
+           float prob1 = norm_density(Ic, IM->u1, IM->sigma1);
+		   float prob2 = norm_density(Ic, IM->u2, IM->sigma2);
+		   float sum_prob = prob1 + prob2;
+		   prob1 /= sum_prob;
+		   prob2 /= sum_prob;
+		   float eps = std::numeric_limits<float>::epsilon();
+		   force_region += oj * log(MAX(prob1/MAX(prob2,eps),eps)) * -1;
+		   force_r_region += log(MAX(prob1/MAX(prob2,eps),eps)) * -1;
+		}
+        
+		float mag2 = MAX(sqrt(pow(force_region[0],2) + pow(force_region[1],2) + pow(force_region[2],2) + pow(force_r_region,2)),std::numeric_limits<float>::epsilon());
+	    force_region /= mag2;
+        force_r_region /= mag2;
+
+		mfx(j) = force_region(0);
+		mfy(j) = force_region(1);
+		mfz(j) = force_region(2);
+		mfr(j) = force_r_region;
+	 }
+
+    x = (invAI * ( x * gamma - mfx));
+    y = (invAI * ( y * gamma - mfy));
+    z = (invAI * ( z * gamma - mfz));
+	vnl_Ru = (invAI * ( vnl_Ru * gamma  - mfr));
+
+    for( unsigned int k = 0; k < x.size(); k++ )
+	{
+	    Cu.Pt[k].x = x(k);
+        Cu.Pt[k].y = y(k);
+		Cu.Pt[k].z = z(k);
+		Cu.Pt[k].check_out_of_range_3D(SM,SN,SZ);
+	}
+  }
+   
+  //resampling
+   vnl_Ru = Cu.curveinterp_4D((float)pt_distance, vnl_Ru);
+   Ru.clear();
+   for( int i = 0; i < vnl_Ru.size(); i++ )
+   {
+     if( vnl_Ru(i) < 0)
+	 	 vnl_Ru(i) = 0;
+
+     Ru.push_back(vnl_Ru(i));
+   }
 }
 
 
 void SnakeClass::OpenSnakeStretch(float alpha, int ITER, int pt_distance, float beta, float kappa, float gamma, 
-                                float stretchingRatio, int collision_dist, int N_Active, int minimum_length, 
-								bool automatic_merging, int max_angle, bool freeze_body, int s_force, int snake_id)
+                                float stretchingRatio, int collision_dist, int minimum_length, 
+								bool automatic_merging, int max_angle, bool freeze_body, int s_force, int snake_id, 
+								int tracing_model, int coding_method, float sigma_ratio)
 {
 
    int hit_boundary_dist = 0;
-   int crossover_dist = 10;
+
+   float pi = 3.1415926;
+   int m = 8;
+
+   int band_width = 0;
 
    //when collision happened for both tail and head, stop stretching
    if( collision == 3)
@@ -1901,19 +1410,33 @@ void SnakeClass::OpenSnakeStretch(float alpha, int ITER, int pt_distance, float 
    GradientInterpolatorType::Pointer interpolator_V1 = GradientInterpolatorType::New();
    interpolator_V1->SetInputImage(IM->V1);
 
+   typedef itk::LinearInterpolateImageFunction< 
+                       ProbImageType, float>  InterpolatorType;
+
+   typedef itk::LinearInterpolateImageFunction< 
+                       ImageType, float>  InterpolatorType1;
+
+   typedef itk::LinearInterpolateImageFunction< 
+                       LabelImageType, float>  InterpolatorType2;
+
+   InterpolatorType1::Pointer I_interpolator = InterpolatorType1::New();
+   I_interpolator->SetInputImage(IM->I);
+
+   InterpolatorType2::Pointer IL_interpolator = InterpolatorType2::New();
+   IL_interpolator->SetInputImage(IM->IL);
+
    int SM = IM->SM;
    int SN = IM->SN;
    int SZ = IM->SZ;
-  
-   //int N_Active = 3;
-
+ 
    int N = Cu.GetSize();
    vnl_matrix<float> A = makeOpenA(alpha, beta, N);
    vnl_matrix<float> I(N,N);
    I.set_identity();
    vnl_matrix<float> invAI = vnl_matrix_inverse<float>( A + I * gamma);
 
-   for( int i = 0; i < ITER; i++ )
+   //evolve 4D snake
+   for( int iter = 0; iter < ITER; iter++ )
    {
      vnl_vector<float> vfx(N);
      vnl_vector<float> vfy(N);
@@ -1924,6 +1447,12 @@ void SnakeClass::OpenSnakeStretch(float alpha, int ITER, int pt_distance, float 
      vnl_vector<float> x(N);
      vnl_vector<float> y(N);
 	 vnl_vector<float> z(N);
+	 
+	 vnl_vector<float> mfx(N);
+	 vnl_vector<float> mfy(N);
+	 vnl_vector<float> mfz(N);
+	 vnl_vector<float> mfr(N);
+
 	 vfx.fill(0);
 	 vfy.fill(0);
 	 vfz.fill(0);
@@ -1931,17 +1460,25 @@ void SnakeClass::OpenSnakeStretch(float alpha, int ITER, int pt_distance, float 
 	 evfy.fill(0);
 	 evfz.fill(0);
 
-	 GradientImageType::IndexType head_index; 
-	 GradientImageType::IndexType tail_index; 
+	 //GradientImageType::IndexType head_index; 
+	 //GradientImageType::IndexType tail_index; 
+	 GradientInterpolatorType::ContinuousIndexType head_index;
+     GradientInterpolatorType::ContinuousIndexType tail_index;
+
+	 Vector3D v1,v2,v3, vtemp;
+	 Point3D temp_r_pt;
+	 vnl_matrix<float> H(3,3);
+	 H.fill(0);
 
 	 for( int j = 0; j < Cu.GetSize(); j++ )
 	 {
-
 		x(j) = Cu.GetPt(j).x;
 		y(j) = Cu.GetPt(j).y;
         z(j) = Cu.GetPt(j).z;
 
-        GradientImageType::IndexType index; 
+
+        //GradientImageType::IndexType index; 
+		GradientInterpolatorType::ContinuousIndexType index;
         index[0] = (x(j));
 		index[1] = (y(j));
 		index[2] = (z(j));
@@ -1952,10 +1489,10 @@ void SnakeClass::OpenSnakeStretch(float alpha, int ITER, int pt_distance, float 
 		 tail_index[1] = Cu.GetPt(j).y;
 		 tail_index[2] = Cu.GetPt(j).z;
 
-	  	 GradientPixelType v1 = interpolator_V1->EvaluateAtIndex(tail_index);
-		 evfx(j) = v1[0];
-         evfy(j) = v1[1];
-		 evfz(j) = v1[2];
+	  	 GradientPixelType vv = interpolator_V1->EvaluateAtContinuousIndex(tail_index);
+		 evfx(j) = vv[0];
+         evfy(j) = vv[1];
+		 evfz(j) = vv[2];
 
 		 /*//project field flow to the normal plane
 		 GradientPixelType gvf = interpolator->EvaluateAtIndex(index);
@@ -1971,10 +1508,10 @@ void SnakeClass::OpenSnakeStretch(float alpha, int ITER, int pt_distance, float 
 		 head_index[1] = Cu.GetPt(j).y;
 		 head_index[2] = Cu.GetPt(j).z;
 
-		 GradientPixelType v1 = interpolator_V1->EvaluateAtIndex(head_index);
-		 evfx(j) = v1[0];
-         evfy(j) = v1[1];
-		 evfz(j) = v1[2];
+		 GradientPixelType vv = interpolator_V1->EvaluateAtContinuousIndex(head_index);
+		 evfx(j) = vv[0];
+         evfy(j) = vv[1];
+		 evfz(j) = vv[2];
 
 		 /*//project field flow to the normal plane
 		 GradientPixelType gvf = interpolator->EvaluateAtIndex(index);
@@ -1985,12 +1522,13 @@ void SnakeClass::OpenSnakeStretch(float alpha, int ITER, int pt_distance, float 
          continue;*/
 	   }
 
-
-	   if( freeze_body )
+	   //if( freeze_body )
+	   if( tracing_model == 1 ) 
 	   {
-	   	if( j >= Cu.GetSize() - N_Active || j <= N_Active ) 
+	   	//if( j >= Cu.GetSize() - N_Active || j <= N_Active ) 
+	    if( j == 0 || j == Cu.GetSize()-1 )
 	    {
-		 GradientPixelType gvf = interpolator->EvaluateAtIndex(index);
+		 GradientPixelType gvf = interpolator->EvaluateAtContinuousIndex(index);
          vfx(j) = gvf[0];
          vfy(j) = gvf[1];
 	 	 vfz(j) = gvf[2];
@@ -1998,32 +1536,12 @@ void SnakeClass::OpenSnakeStretch(float alpha, int ITER, int pt_distance, float 
 	   }
 	   else
 	   {
-	     GradientPixelType gvf = interpolator->EvaluateAtIndex(index);
+	     GradientPixelType gvf = interpolator->EvaluateAtContinuousIndex(index);
          vfx(j) = gvf[0];
          vfy(j) = gvf[1];
 	 	 vfz(j) = gvf[2];
 	   }
 
-	 }
-
-	 //freeze tail or head part when collision happens
-	 if( collision == 1 )
-  	 {
-		for( int k = 0; k < 1; k++ )
-		{
-		   vfx(k) = 0;
-		   vfy(k) = 0;
-		   vfz(k) = 0;
-		}
-	 }
-	 else if( collision == 2 )
-	 {
-	 	for( int k = N-1; k < N; k++ )
-		{
-		   vfx(k) = 0;
-		   vfy(k) = 0;
-		   vfz(k) = 0;
-		}
 	 }
 
 	 Vector3D tailForce( (x(0) - x(2)), (y(0) - y(2)), (z(0) - z(2)) );
@@ -2040,8 +1558,8 @@ void SnakeClass::OpenSnakeStretch(float alpha, int ITER, int pt_distance, float 
        tForce = tailForce;
 	else if( s_force == 2 )
 	{
+	   tailForce1.ConvertUnit();
        tForce = (tailForce + tailForce1)/2;
-	   tForce.ConvertUnit();
 	}
 
 	 int end = x.size() - 1;
@@ -2060,32 +1578,51 @@ void SnakeClass::OpenSnakeStretch(float alpha, int ITER, int pt_distance, float 
        hForce = headForce;
 	else if( s_force == 2 )
 	{
+	   headForce1.ConvertUnit();
        hForce = (headForce + headForce1)/2;
-	   hForce.ConvertUnit();
 	}
 
 	 //check for tail leakage and self-intersection
-	 if( IM->IL_Tracing->GetPixel(tail_index) == 1 )
+	LabelImageType::IndexType tail_index_temp;
+	tail_index_temp[0] = tail_index[0];
+    tail_index_temp[1] = tail_index[1];
+	tail_index_temp[2] = tail_index[2];
+	if( IM->IL_Tracing->GetPixel(tail_index_temp) == 1 )
 	 {
 	     tForce.x = 0;
 		 tForce.y = 0;
 		 tForce.z = 0;
 	 }
-	 //if( IM->VBW->GetPixel(tail_index) != snake_id )
-	 if( IM->VBW->GetPixel(tail_index) == 0 )
-	 {	    
-		 tForce.x = 0;
+
+	 //if( tracing_model == 2 || tracing_model == 3 )
+     if( 1 )
+	 {
+	    float IT =  I_interpolator->EvaluateAtContinuousIndex(tail_index);
+
+		bool leakage = false;
+		if( IM->u2 + sigma_ratio * IM->sigma2 >  IM->u1 )
+		{
+           leakage =  norm_density(IT, IM->u1, IM->sigma1) < norm_density(IT, IM->u2, IM->sigma2);
+		}
+		else
+		{   
+		   leakage = IT <= IM->u2 + sigma_ratio * IM->sigma2;
+		}
+		if( leakage)
+		{
+	     tForce.x = 0;
 		 tForce.y = 0;
 		 tForce.z = 0;
+		}
 	 }
 
      //check for tail collision
 	 int draw_force_tail = 1;
 	
-	 bool tail_merging = Check_Tail_Collision(tail_index,collision_dist,minimum_length,automatic_merging,max_angle,snake_id);
+	 bool tail_merging = Check_Tail_Collision(tail_index_temp,collision_dist,minimum_length,automatic_merging,max_angle,snake_id);
 
 	 if( tail_merging )
-		break;
+		return;
 
 	 if( collision == 1 || collision == 3 )
 	 {
@@ -2108,29 +1645,49 @@ void SnakeClass::OpenSnakeStretch(float alpha, int ITER, int pt_distance, float 
 	 }
 
      //check for head leakage and self_intersection
-	 if( IM->IL_Tracing->GetPixel(head_index) == 1 )
+	 LabelImageType::IndexType head_index_temp;
+	 head_index_temp[0] = head_index[0];
+     head_index_temp[1] = head_index[1];
+	 head_index_temp[2] = head_index[2];
+	 if( IM->IL_Tracing->GetPixel(head_index_temp) == 1)
 	 {
 	 	hForce.x = 0;
 		hForce.y = 0;
 		hForce.z = 0;
 	 }
 
-	 //if( IM->VBW->GetPixel(head_index) != snake_id )
-	 if( IM->VBW->GetPixel(head_index) == 0 )
+	 //if( tracing_model == 2 || tracing_model == 3 )
+	 if( 1 )
 	 {
-	   //bool head_leakage = Check_Head_Leakage(head_index);
-	    hForce.x = 0;
-		hForce.y = 0;
-		hForce.z = 0;
+	    float IH =  I_interpolator->EvaluateAtContinuousIndex(head_index);
+
+		bool leakage = false;
+		if( IM->u2 + sigma_ratio * IM->sigma2 >  IM->u1 )
+		{
+           leakage =  norm_density(IH, IM->u1, IM->sigma1) < norm_density(IH, IM->u2, IM->sigma2);
+		}
+		else
+		{   
+		   leakage = IH <= IM->u2 + sigma_ratio * IM->sigma2;
+		}
+		if( leakage)
+		{
+		 hForce.x = 0;
+		 hForce.y = 0;
+		 hForce.z = 0;
+		 //vfx(end) = 0;
+		 //vfy(end) = 0;
+	     //vfz(end) = 0;
+		}
 	 }
 
 	 //check for head collision
 	 int draw_force_head = 1;
 
-     bool head_merging = Check_Head_Collision(head_index,collision_dist,minimum_length,automatic_merging,max_angle,snake_id);
+     bool head_merging = Check_Head_Collision(head_index_temp,collision_dist,minimum_length,automatic_merging,max_angle,snake_id);
 
 	 if( head_merging )
-		break;
+		return;
 
 	 if( collision == 2 || collision == 3 )
 	 {
@@ -2152,86 +1709,28 @@ void SnakeClass::OpenSnakeStretch(float alpha, int ITER, int pt_distance, float 
 	    boundary_head = 1;
 	 }
 
-	//check for crossover
-   /*if( jumping_crossover )
-   {
-	  bool jump_crossover_label = false;
-	  //bool jump_crossover_label = Jump_Over_Crossover(crossover_dist, 45, jumping_step, jumping_ratio, collision);
-     if( !jump_crossover_label )
-	    jump_crossover_label = Jump_Over_Crossover_New(crossover_dist, collision);
-    
-     if( jump_crossover_label )
-	 {
-		 std::cout<<"crossover detected"<<std::endl;
-		 //BranchPt.NP = 0;
-		 BranchPt.RemoveAllPts();
-		 collision = 0;
-		 return;
-	 }
-
-	//bool jump_crossover_label = Jump_Over_Crossover(5, 30, 5, 2, collision);
-	if( collision == 1 && jump_crossover_label )
-	{
-		  std::cout<<"tail jumping over crossover"<<std::endl;
-          x(0) = Cu.Pt[0].x;
-		  y(0) = Cu.Pt[0].y;
-		  z(0) = Cu.Pt[0].z;
-		  tail_index[0] = x(0);
-		  tail_index[1] = y(0);
-		  tail_index[2] = z(0);
-		  
-		  GradientPixelType gvf = interpolator->EvaluateAtIndex(tail_index);
-          vfx(0) = gvf[0];
-          vfy(0) = gvf[1];
-		  vfz(0) = gvf[2];
-
-		  BranchPt.NP = 0;
-		  collision = 0;
-	}
-	else if( collision == 2 && jump_crossover_label )
-	{
-		  std::cout<<"head jumping over crossover"<<std::endl;
-          x(end) = Cu.Pt[end].x;
-		  y(end) = Cu.Pt[end].y;
-		  z(end) = Cu.Pt[end].z;
-		  head_index[0] = x(end);
-		  head_index[1] = y(end);
-		  head_index[2] = z(end);
-		  
-		  GradientPixelType gvf = interpolator->EvaluateAtIndex(head_index);
-          vfx(end) = gvf[0];
-          vfy(end) = gvf[1];
-		  vfz(end) = gvf[2];
-
-		  BranchPt.NP = 0;
-		  collision = 0;
-	}
-   }*/
-
     vfx(0) = (vfx(0) + stretchingRatio * tForce.x) * draw_force_tail;
     vfy(0) = (vfy(0) + stretchingRatio * tForce.y) * draw_force_tail;
     vfz(0) = (vfz(0) + stretchingRatio * tForce.z) * draw_force_tail;  
+
    
     vfx(end) = (vfx(end) + stretchingRatio * hForce.x) * draw_force_head;
     vfy(end) = (vfy(end) + stretchingRatio * hForce.y) * draw_force_head;
     vfz(end) = (vfz(end) + stretchingRatio * hForce.z) * draw_force_head;
 
 
-    x = (invAI * ( x * gamma +  vfx * kappa));
-    y = (invAI * ( y * gamma +  vfy * kappa));
-    z = (invAI * ( z * gamma +  vfz * kappa));
+    x = (invAI * ( x * gamma +  vfx ));
+    y = (invAI * ( y * gamma +  vfy ));
+    z = (invAI * ( z * gamma +  vfz ));
 
-    if( collision == 1 || collision == 3 )
+	if(collision == 1 || collision == 3)
 	{
-		//std::cout<<"tail collision:"<<x(0)<<","<<y(0)<<","<<z(0)<<std::endl;
 	   x(0) = tail_index[0];
 	   y(0) = tail_index[1];
 	   z(0) = tail_index[2];
 	}
-
-	if( collision == 2 || collision == 3 )
+	else if( collision == 2 || collision == 3)
 	{
-		//std::cout<<"head collision:"<<x(end)<<","<<y(end)<<","<<z(end)<<std::endl;
 	   x(end) = head_index[0];
 	   y(end) = head_index[1];
 	   z(end) = head_index[2];
@@ -2239,6 +1738,15 @@ void SnakeClass::OpenSnakeStretch(float alpha, int ITER, int pt_distance, float 
 	
 	for( unsigned int k = 0; k < x.size(); k++ )
 	{
+		//freeze tail or head part when collision happens
+	  if( freeze_body )
+	  {
+	   if( collision == 1 && k < N/2 )
+		   continue;
+	   if( collision == 2 && k > N/2 )
+		   continue;
+	  }
+
 	    Cu.Pt[k].x = x(k);
         Cu.Pt[k].y = y(k);
 		Cu.Pt[k].z = z(k);
@@ -2251,8 +1759,7 @@ void SnakeClass::OpenSnakeStretch(float alpha, int ITER, int pt_distance, float 
 	   break;
 	 }
   
-
-   }
+  } 
    
    //check for NaN
    for( int i = 0; i < Cu.GetSize(); i++ )
@@ -2260,28 +1767,12 @@ void SnakeClass::OpenSnakeStretch(float alpha, int ITER, int pt_distance, float 
      if( isnan(Cu.Pt[i].x) || isnan(Cu.Pt[i].y) || isnan(Cu.Pt[i].z) )
 		 return;
    }
-
    //resampling
-   //Cu.curveinterp_3D((float)pt_distance);
-   //resampling
-   vnl_vector<float> vnl_Ru(Ru.size());
-   for( int i = 0; i < Ru.size(); i++ )
-   {
-     vnl_Ru(i) = Ru[i];
-   }
-   vnl_Ru = Cu.curveinterp_4D((float)pt_distance, vnl_Ru);
-   Ru.clear();
-   for( int i = 0; i < vnl_Ru.size(); i++ )
-   {
-     Ru.push_back(vnl_Ru(i));
-   }
-
+   Ru = Cu.curveinterp_4D((float)pt_distance, Ru);
 
 }
 
-
-
-void SnakeClass::OpenSnakeDeform(float alpha, int ITER, int pt_distance, float beta, float kappa, float gamma, int N_Active, bool freeze_body)
+void SnakeClass::OpenSnakeDeform(float alpha, int ITER, int pt_distance, float beta, float kappa, float gamma, bool freeze_body)
 {
 
    if( ITER == 0 )
@@ -2337,7 +1828,7 @@ void SnakeClass::OpenSnakeDeform(float alpha, int ITER, int pt_distance, float b
         
        if( freeze_body )
 	   {
-	   	if( j >= Cu.GetSize() - N_Active || j <= N_Active ) 
+	   	if( j >= Cu.GetSize() - 3 || j <= 3 ) 
 	    {
 		 GradientPixelType gvf = interpolator->EvaluateAtIndex(index);
          vfx(j) = gvf[0];
@@ -2525,17 +2016,21 @@ SnakeListClass::SnakeListClass(void)
 {
      NSnakes = 0;
 	 //only supports 1024 snakes
-	 Snakes = new SnakeClass[4000];
-	 valid_list.set_size(4000);
-	 valid_list.fill(1);
+	 //Snakes = new SnakeClass[4000];
+	 //valid_list.set_size(4000);
+	 //valid_list.fill(1);
 }
 
 void SnakeListClass::SetNSpace(int N)
 {
      NSnakes = 0;
-	 Snakes = new SnakeClass[N];
-	 valid_list.set_size(N);
-	 valid_list.fill(1);
+	 //Snakes = new SnakeClass[N];
+	 Snakes.resize(N);
+	 //valid_list.set_size(N);
+	 //valid_list.fill(1);
+	 valid_list.resize(N);
+	 for(int i = 0; i < valid_list.size(); i++)
+	    valid_list[i] = 1;
 }
 
 SnakeListClass SnakeListClass::operator=(SnakeListClass SnakeList)
@@ -2547,31 +2042,53 @@ SnakeListClass SnakeListClass::operator=(SnakeListClass SnakeList)
 	 }
 	 
 	 valid_list = SnakeList.valid_list;
-
+     branch_points = SnakeList.branch_points;
 	 return *this;
 }
 
 void SnakeListClass::RemoveSnake(int idx)
 {
-	 valid_list(idx) = 0;
-     IM->ImCoding( Snakes[idx].Cu, 0, false );
+	 valid_list[idx] = 0;
+     IM->ImCoding( Snakes[idx].Cu, Snakes[idx].Ru, 0, false );
+	 //also remove the branch point from the list
+	 if( Snakes[idx].BranchPt.NP != 0 )
+	 {
+	   for( int i = 0; i < branch_points.NP; i++ )
+	   {
+	     for( int j = 0; j < Snakes[idx].BranchPt.NP; j++ )
+		 {
+		   if( branch_points.Pt[i].x == Snakes[idx].BranchPt.Pt[j].x && branch_points.Pt[i].y == Snakes[idx].BranchPt.Pt[j].y && branch_points.Pt[i].z == Snakes[idx].BranchPt.Pt[j].z)
+		   {
+			   branch_points.RemovePt(i);
+			   break;
+		   }
+		 }
+	   }
+	 }
+}
+
+void SnakeListClass::RemoveAllSnakes()
+{
+	 Snakes.clear();
+     valid_list.clear();
+	 NSnakes = 0;
 }
 
 void SnakeListClass::SplitSnake(int idx_snake, int idx_pt)
 {
      SnakeClass temp;
 
- 	 for( int i = idx_pt + 1; i < Snakes[idx_snake].Cu.GetSize(); i++ )
+ 	 for( int i = idx_pt-1; i < Snakes[idx_snake].Cu.GetSize(); i++ )
 	 {
 	 	temp.Cu.AddPt( Snakes[idx_snake].Cu.Pt[i] );
 		temp.Ru.push_back( Snakes[idx_snake].Ru[i] );
 	 }
 
-     IM->ImCoding( temp.Cu, NSnakes+1, false );
+     //IM->ImCoding( temp.Cu, temp.Ru, NSnakes+1, false );
 	 
 	 if( temp.Cu.NP >= 2 )
 	 {
-	  AddSnake(temp);
+	  AddSnake_Coding(temp);
 	 }
 
 	 //Snakes[idx_snake].Cu.NP = idx_pt;
@@ -2582,7 +2099,7 @@ void SnakeListClass::SplitSnake(int idx_snake, int idx_pt)
 	 Snakes[idx_snake].BranchPt.RemoveAllPts();
 	 
 	 if( Snakes[idx_snake].Cu.NP < 2 )
-		valid_list(idx_snake) = 0;
+		valid_list[idx_snake] = 0;
 	 
 }
 
@@ -2652,6 +2169,38 @@ void SnakeListClass::MergeSnake(int idx1, int idx2, bool im_coding)
 
 	 //Snakes[idx1].BranchPt.NP = 0;
 	 //Snakes[idx2].BranchPt.NP = 0;
+	
+	 //also remove the branch point from the list
+	 if( Snakes[idx1].BranchPt.NP != 0 )
+	 {
+	   for( int i = 0; i < branch_points.NP; i++ )
+	   {
+	     for( int j = 0; j < Snakes[idx1].BranchPt.NP; j++ )
+		 {
+		   if( branch_points.Pt[i].x == Snakes[idx1].BranchPt.Pt[j].x && branch_points.Pt[i].y == Snakes[idx1].BranchPt.Pt[j].y && branch_points.Pt[i].z == Snakes[idx1].BranchPt.Pt[j].z)
+		   {
+			   branch_points.RemovePt(i);
+			   break;
+		   }
+		 }
+	   }
+	 }
+	//also remove the branch point from the list
+	 if( Snakes[idx2].BranchPt.NP != 0 )
+	 {
+	   for( int i = 0; i < branch_points.NP; i++ )
+	   {
+	     for( int j = 0; j < Snakes[idx2].BranchPt.NP; j++ )
+		 {
+		   if( branch_points.Pt[i].x == Snakes[idx2].BranchPt.Pt[j].x && branch_points.Pt[i].y == Snakes[idx2].BranchPt.Pt[j].y && branch_points.Pt[i].z == Snakes[idx2].BranchPt.Pt[j].z)
+		   {
+			   branch_points.RemovePt(i);
+			   break;
+		   }
+		 }
+	   }
+	 }
+
 	 Snakes[idx1].BranchPt.RemoveAllPts();
 	 Snakes[idx2].BranchPt.RemoveAllPts();
 
@@ -2661,8 +2210,6 @@ void SnakeListClass::MergeSnake(int idx1, int idx2, bool im_coding)
 	 dist_temp(3) = Snakes[idx1].Cu.GetFirstPt().GetDistTo( Snakes[idx2].Cu.GetFirstPt() );
 
 	 int idx = dist_temp.arg_min();
-
-	 
 
      if( idx == 0 )
 	 {
@@ -2676,6 +2223,7 @@ void SnakeListClass::MergeSnake(int idx1, int idx2, bool im_coding)
 	   int pt_idx = dist_temp1.arg_min();
 	   
 	   Snakes[idx1].Cu.RemovePt(); //remove the last point
+	   Snakes[idx1].Ru.pop_back();
 
 	   //transfer points
 	   for( int i = pt_idx; i >= 0; i-- )
@@ -2696,6 +2244,7 @@ void SnakeListClass::MergeSnake(int idx1, int idx2, bool im_coding)
 	   int pt_idx = dist_temp1.arg_min();
 	   
 	   Snakes[idx1].Cu.RemovePt(); //remove the last point
+	   Snakes[idx1].Ru.pop_back();
 
 	   //transfer points
        for( int i = pt_idx; i < Snakes[idx2].Cu.GetSize(); i++ )
@@ -2718,6 +2267,7 @@ void SnakeListClass::MergeSnake(int idx1, int idx2, bool im_coding)
 	   Snakes[idx1].Cu.Flip();
 	   Snakes[idx1].Cu.RemovePt(); //remove the last point
        Snakes[idx1].Cu.Flip();
+	   Snakes[idx1].Ru.erase(Snakes[idx1].Ru.begin());
 
 	   //transfer points
        for( int i = pt_idx; i >= 0; i-- )
@@ -2743,6 +2293,7 @@ void SnakeListClass::MergeSnake(int idx1, int idx2, bool im_coding)
 	   Snakes[idx1].Cu.Flip();
 	   Snakes[idx1].Cu.RemovePt(); //remove the last point
        Snakes[idx1].Cu.Flip();
+       Snakes[idx1].Ru.erase(Snakes[idx1].Ru.begin());
 
 	   //transfer points
        for( int i = pt_idx; i < Snakes[idx2].Cu.GetSize(); i++ )
@@ -2755,18 +2306,17 @@ void SnakeListClass::MergeSnake(int idx1, int idx2, bool im_coding)
 	   }
 	 }
 
-	 valid_list(idx2) = 0;
+	 valid_list[idx2] = 0;
 
 	 if( im_coding )
 	 {
-	  IM->ImCoding( Snakes[idx1].Cu, idx1+1, false );
+	  IM->ImCoding( Snakes[idx1].Cu, Snakes[idx1].Ru, idx1+1, false );
 	 }
 
 	  //for( int i = 0; i < Snakes[idx1].Cu.GetSize(); i++ )
 	  // {
 	  //   std::cout<<"Snakes[idx1].Cu:"<<Snakes[idx1].Cu.Pt[i].x<<","<<Snakes[idx1].Cu.Pt[i].y<<","<<Snakes[idx1].Cu.Pt[i].z<<std::endl;
 	  //}
-
 }
 
 SnakeClass SnakeListClass::GetSnake(int idx)
@@ -2776,9 +2326,24 @@ SnakeClass SnakeListClass::GetSnake(int idx)
 
 void SnakeListClass::AddSnake(SnakeClass snake)
 {
-     Snakes[NSnakes] = snake;
-	 Snakes[NSnakes].SetImage(IM);
-	 NSnakes++;
+     //Snakes[NSnakes] = snake;
+	 //Snakes[NSnakes].SetImage(IM);
+	 //NSnakes++;
+	Snakes.push_back(snake);
+	valid_list.push_back(1);
+	NSnakes = Snakes.size();
+	
+}
+void SnakeListClass::AddSnake_Coding(SnakeClass snake)
+{
+     //Snakes[NSnakes] = snake;
+	 //Snakes[NSnakes].SetImage(IM);
+	 //NSnakes++;
+    IM->ImCoding( snake.Cu, snake.Ru, NSnakes+1, false );
+	Snakes.push_back(snake);
+	valid_list.push_back(1);
+	NSnakes = Snakes.size();
+	
 }
 
 void SnakeListClass::SetImage(ImageOperation *I_Input)
@@ -2795,12 +2360,4 @@ bool isinf( float x )
 {
     return std::numeric_limits<float>::has_infinity &&
            x == std::numeric_limits<float>::infinity() ;
-}
-
-float norm_density(float x, float mu, float sigma)
-{
-   float pi = 3.1415926;
-   float p;
-   p = 1/MAX(sigma * sqrt(2*pi),std::numeric_limits<float>::epsilon()) * exp( -pow(x-mu,2)/MAX(2*pow(sigma,2),std::numeric_limits<float>::epsilon()));
-   return p;
 }

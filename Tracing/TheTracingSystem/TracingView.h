@@ -181,6 +181,7 @@ private:
 
 	bool montage_view;
 	int radius_state;
+	//int iteration_num;
 };
 
 #endif

@@ -132,7 +132,6 @@ class General_Parameters11 : public QGroupBox
                   QWidget *parent = 0);
 	 
      //QPushButton *computeVessel;
-	 QPushButton *vesselCut;
 	 QPushButton *detectSeeds;
 	 void disableSetting();
 	 void enableSetting();
@@ -195,7 +194,6 @@ class General_Parameters12 : public QGroupBox
 
  public slots:
      void vessel_slot();
-	 void cut_slot();
 	 void seed_slot();
      void use_multi_scale_slot();
 	 void reprocessing_slot();
@@ -330,6 +328,10 @@ class General_Parameters2 : public QGroupBox
 
 	 int getRemoveSeedRange();
 	 void setRemoveSeedRange(int in);
+
+	 float getSigmaRatio();
+	 void setSigmaRatio(float in);
+
 	 int getDeformationITER();
 	 void setDeformationITER(int in);
 
@@ -343,6 +345,8 @@ class General_Parameters2 : public QGroupBox
 	 void setFreezeBody(int in);
 	 bool getAutomaticMerging();
 	 void setAutomaticMerging(int in);
+	 bool getMultiThreads();
+	 void setMultiThreads(int in);
 	 /*bool getJumpingGaps();
 	 void setJumpingGaps(int in);
 	 bool getJumpingCrossover();
@@ -354,6 +358,8 @@ class General_Parameters2 : public QGroupBox
 	 void setCurrentIndex(int in);
 	 int getCurrentForce();
 	 void setCurrentForce(int in);
+	 int getCurrentCoding();
+	 void setCurrentCoding(int in);
 
 	 void disableSetting();
 	 void enableSetting();
@@ -375,6 +381,7 @@ class General_Parameters2 : public QGroupBox
 	 QComboBox *tracing_models;
 	 QComboBox *seed_expansion_methods;
 	 QComboBox *stretching_force;
+	 QComboBox *image_coding;
 
 	 QLabel *stretch_ratio_label;
 	 QSpinBox *stretch_ratio_box;
@@ -394,6 +401,9 @@ class General_Parameters2 : public QGroupBox
 	 QLabel *remove_seed_range_label;
 	 QSpinBox *remove_seed_range_box;
 
+	 QLabel *k_sigma_label;
+	 QDoubleSpinBox *k_sigma_box;
+
 	 QLabel *deformation_iter_label;
 	 QSpinBox *deformation_iter_box;
 
@@ -405,6 +415,7 @@ class General_Parameters2 : public QGroupBox
 
 	 QCheckBox *freeze_body;
 	 QCheckBox *use_automatic_merging;
+	 QCheckBox *multi_threads;
 	 //QCheckBox *use_jumping_gaps;
 	 //QCheckBox *use_jumping_crossover;
 	 

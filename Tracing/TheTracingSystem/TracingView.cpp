@@ -63,6 +63,8 @@ TracingView::TracingView(QWidget *parent)
 	selMode = 0;
 	pathMode = 0;
 
+	//iteration_num = 1;
+
 	connect(snake_sels, SIGNAL(changed()), this, SLOT(repaint()));
 }
 
@@ -300,7 +302,7 @@ bool TracingView::rootSnakeSelected()
 
      int idx_snake = snake_id[0];
 	 
-	 if( SnakeList->valid_list(idx_snake) == 0 )
+	 if( SnakeList->valid_list[idx_snake] == 0 )
 		 return root_set;
 
 	 float dist_head = click_point.GetDistTo( SnakeList->Snakes[idx_snake].Cu.GetLastPt() );
@@ -359,7 +361,7 @@ void TracingView::mergeSnake(EditValidation *edits)
 		 snake_id.push_back(*it);
 	 }
 
-	   if( SnakeList->valid_list(snake_id[0]) == 0 || SnakeList->valid_list(snake_id[1]) == 0 )
+	   if( SnakeList->valid_list[snake_id[0]] == 0 || SnakeList->valid_list[snake_id[1]] == 0 )
 		 return;
 
 	  SnakeList->MergeSnake(snake_id[0],snake_id[1], true);
@@ -384,7 +386,7 @@ void TracingView::createBranch(EditValidation *edits)
 		 snake_id.push_back(*it);
 	 }
 
-	   if( SnakeList->valid_list(snake_id[0]) == 0 || SnakeList->valid_list(snake_id[1]) == 0 )
+	   if( SnakeList->valid_list[snake_id[0]] == 0 || SnakeList->valid_list[snake_id[1]] == 0 )
 		 return;
 
 	   SnakeList->CreateBranch(snake_id[0],snake_id[1]);
@@ -413,7 +415,7 @@ void TracingView::splitSnake(EditValidation *edits)
 
      idx_snake = snake_id[0];
 	 
-	 if( SnakeList->valid_list(idx_snake) == 0 )
+	 if( SnakeList->valid_list[idx_snake] == 0 )
 		 return;
 
 	 vnl_vector<float> dist_temp( SnakeList->Snakes[idx_snake].Cu.GetSize() );
@@ -483,7 +485,7 @@ void TracingView::vtk_mousePress(double *picked_point, bool ctrl_pressed)
 		std::vector<float> z_all;
 		for( int j = 0; j < SnakeList->NSnakes; j++ )
 		{
-		  if( SnakeList->valid_list(j) == 0 )
+		  if( SnakeList->valid_list[j] == 0 )
 		  {
 		    dist_all.push_back(10000);
 			id_all.push_back(j);
@@ -595,7 +597,7 @@ void TracingView::mousePressEvent(QMouseEvent *event)
 		std::vector<float> z_all;
 		for( int j = 0; j < SnakeList->NSnakes; j++ )
 		{
-		  if( SnakeList->valid_list(j) == 0 )
+		  if( SnakeList->valid_list[j] == 0 )
 		  {
 		    dist_all.push_back(10000);
 			id_all.push_back(j);
@@ -675,7 +677,7 @@ void TracingView::mouseDoubleClickEvent(QMouseEvent *event)
    
 	 for( int j = 0; j < SnakeList->NSnakes; j++ )
      {
-      if( SnakeList->valid_list(j) == 0 )
+      if( SnakeList->valid_list[j] == 0 )
 	    continue;
       if( snake_sels->isSelected(j) )
       {
@@ -693,7 +695,7 @@ void TracingView::mouseDoubleClickEvent(QMouseEvent *event)
 		    points.AddPtList(SnakeList->Snakes[j].Cu);
 		  }
 
-		  //SnakeList->valid_list(j) = 0;
+		  //SnakeList->valid_list[j] = 0;
 		  SnakeList->RemoveSnake(j);
 		  emit manual_seed(points);
           points.RemoveAllPts();
@@ -882,9 +884,17 @@ void TracingView::paintEvent(QPaintEvent *event)
 	 drawClickedPoint(&painter);
 
 	 painter_main.drawImage(0,0,new_image);
+
+	 /*QString save_image_name;
+	 save_image_name.setNum(iteration_num);
+	 save_image_name.append(".tif");
+	 iteration_num += 5;
+	 new_image.save(save_image_name);*/
+
 	 emit result_drawed1();
   }
 
+ 
 	//QImage new_image;
 	//QSize size = zoom * display_image.size();
 	//new_image = display_image.scaled(size, Qt::KeepAspectRatio);
@@ -1050,7 +1060,7 @@ vnl_vector<int> TracingView:: getSelectedSnakes()
 
   for( int j = 0; j < SnakeList->NSnakes; j++ )
   {
-   if( SnakeList->valid_list(j) == 0 )
+   if( SnakeList->valid_list[j] == 0 )
 	 continue;
    if( snake_sels->isSelected(j) )
    {
@@ -1066,7 +1076,7 @@ void TracingView::drawSelectedSnakes(QPainter *painter)
 
   for( int j = 0; j < SnakeList->NSnakes; j++ )
   {
-   if( SnakeList->valid_list(j) == 0 )
+   if( SnakeList->valid_list[j] == 0 )
 	 continue;
    if( !snake_sels->isSelected(j) )
 	 continue;
@@ -1096,7 +1106,7 @@ void TracingView::drawSnakes(QPainter *painter)
 
   for( int j = 0; j < SnakeList->NSnakes; j++ )
   {
-   if( SnakeList->valid_list(j) == 0 )
+   if( SnakeList->valid_list[j] == 0 )
      continue;
 
    if( snake_sels->isSelected(j) )
@@ -1202,7 +1212,7 @@ void TracingView::drawSnakes(QPainter *painter)
   }
   else
   {
-   //if( SnakeList->valid_list(j) != 0 )
+   //if( SnakeList->valid_list[j] != 0 )
    //{
      QPen pen0(Qt::green, line_width);
 	 painter->setPen(pen0); 
@@ -1219,8 +1229,12 @@ void TracingView::drawSnakes(QPainter *painter)
 
    if( radius_state == 2 || radius_state == 3)
    {
-     QPen pen1(Qt::red, 2);
+     QPen pen1(Qt::blue, 2);
      painter->setPen(pen1);
+	 painter->drawPolyline(SP,SnakeList->Snakes[j].Cu.GetSize());
+	 QPen pen2(Qt::red, 2);
+	 painter->setPen(pen2);
+	 painter->drawPoints(SP,SnakeList->Snakes[j].Cu.GetSize());
      painter->drawPolyline(LB,SnakeList->Snakes[j].Cu.GetSize());
      painter->drawPolyline(RB,SnakeList->Snakes[j].Cu.GetSize());
    }
@@ -1245,13 +1259,23 @@ void TracingView::drawSnakes(QPainter *painter)
    	   diameter, diameter));
 
    //draw branch point 
-   for( int i = 0; i < SnakeList->Snakes[j].BranchPt.GetSize(); i++ )
-   {
     painter->setPen(Qt::yellow);
+   /*for( int i = 0; i < SnakeList->Snakes[j].BranchPt.GetSize(); i++ )
+   {
+   
 	painter->fillRect(QRect(SnakeList->Snakes[j].BranchPt.Pt[i].x * zoom-diameter / 2.0, SnakeList->Snakes[j].BranchPt.Pt[i].y * zoom-diameter / 2.0,
                                            diameter, diameter),Qt::yellow);
-   }
+   }*/
   }
+
+   int diameter = line_width * 2;
+   painter->setPen(Qt::yellow);
+   //std::cout<<"SnakeList->branch_points.NP:"<<SnakeList->branch_points.NP<<std::endl;
+   for( int i = 0; i < SnakeList->branch_points.NP; i++ )
+   {
+     painter->fillRect(QRect(SnakeList->branch_points.Pt[i].x * zoom-diameter / 2.0, SnakeList->branch_points.Pt[i].y * zoom-diameter / 2.0,
+                                           diameter, diameter),Qt::yellow);
+   }
 }
 
 void TracingView::drawSeedSnakes(QPainter *painter)
@@ -1331,14 +1355,16 @@ void TracingView::drawTracingSnakes(QPainter *painter)
       //centerline
    QPointF *SP= new QPointF[snake.Cu.GetSize()];
    //boundary
-   //QPointF *LB = new QPointF[snake.Cu.GetSize()];
-   //QPointF *RB = new QPointF[snake.Cu.GetSize()];
+   QPointF *LB = new QPointF[snake.Cu.GetSize()];
+   QPointF *RB = new QPointF[snake.Cu.GetSize()];
 
    for(int i = 0; i < snake.Cu.GetSize(); i++)
    {
      SP[i].setX(snake.Cu.GetPt(i).x * zoom);
 	 SP[i].setY(snake.Cu.GetPt(i).y * zoom);
-	/* if( i == 0 )
+    if( radius_state == 2 || radius_state == 3 )
+	{
+	 if( i == 0 )
 	 {
 	  float v2x = snake.Cu.GetPt(1).y - snake.Cu.GetPt(2).y;
 	  float v2y = snake.Cu.GetPt(2).x - snake.Cu.GetPt(1).x;
@@ -1361,10 +1387,11 @@ void TracingView::drawTracingSnakes(QPainter *painter)
 	  LB[i].setY( (snake.Cu.GetPt(i).y + snake.Ru[i] * v2y) * zoom );
 	  RB[i].setX( (snake.Cu.GetPt(i).x - snake.Ru[i] * v2x) * zoom );
 	  RB[i].setY( (snake.Cu.GetPt(i).y - snake.Ru[i] * v2y) * zoom );
-	 } */
+	 } 
+	}
    }
 
-  /* QPen pen0(Qt::blue, 2); 
+   /*QPen pen0(Qt::blue, 2); 
    painter->setPen(pen0);
    painter->drawPolyline(SP,snake.Cu.GetSize());
    QPen pen1(Qt::white, 2); 
@@ -1375,9 +1402,23 @@ void TracingView::drawTracingSnakes(QPainter *painter)
    painter->drawPolyline(LB,snake.Cu.GetSize());
    painter->drawPolyline(RB,snake.Cu.GetSize());*/
 
-   QPen pen0(Qt::blue, 2); 
-   painter->setPen(pen0);
-   painter->drawPolyline(SP,snake.Cu.GetSize());
+   if( radius_state == 2 || radius_state == 3 )
+   {
+     QPen pen1(Qt::blue, 2);
+     painter->setPen(pen1);
+	 painter->drawPolyline(SP,snake.Cu.GetSize());
+	 QPen pen2(Qt::red, 2);
+	 painter->setPen(pen2);
+	 painter->drawPoints(SP,snake.Cu.GetSize());
+     painter->drawPolyline(LB,snake.Cu.GetSize());
+     painter->drawPolyline(RB,snake.Cu.GetSize());
+   }
+   else
+   {
+     QPen pen0(Qt::blue, 2); 
+     painter->setPen(pen0);
+     painter->drawPolyline(SP,snake.Cu.GetSize());
+   }
 
 
    //draw head

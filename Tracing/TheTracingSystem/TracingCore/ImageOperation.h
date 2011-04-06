@@ -65,12 +65,6 @@ limitations under the License.
 #include "itkImageDuplicator.h"
 #include "itkShrinkImageFilter.h" 
 
-#include "Vesselness/itkAnisotropicDiffusionVesselEnhancementImageFilter.h"
-#include "Vesselness/itkMultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter.h"
-#include "Vesselness/itkVesselEnhancingDiffusion3DImageFilter.h"
-#include "itkHessian3DToVesselnessMeasureImageFilter.h"
-#include "Vesselness/itkMultiScaleHessianBasedMeasureImageFilter.h"
-
 #include "itkGradientVectorFlowImageFilter.h"
 #include "itkGradientImageFilter.h"
 #include "itkCovariantVector.h"
@@ -91,9 +85,6 @@ limitations under the License.
 
 #include "itkPermuteAxesImageFilter.h"
 
-#include "GCv2p2/GCoptimization.h"
-#include "GCv2p2/graph.h"
-
 #include "PointOperation.h"
 
 #include "itkRescaleIntensityImageFilter.h"
@@ -113,13 +104,10 @@ limitations under the License.
 #include "itkBinaryDilateImageFilter.h"
 #include "itkBinaryBallStructuringElement.h"
 
-//#include "itkArrivalFunctionToPathFilter.h"
-//#include "itkSpeedFunctionToPathFilter.h"
-//#include "itkPathIterator.h"
-//#include "itkGradientDescentOptimizer.h"
-//#include "itkRegularStepGradientDescentOptimizer.h"
-
 #include "itkVectorContainer.h"
+
+#include "itkVesselTubeSpatialObject.h"
+#include "itkVesselTubeSpatialObjectPoint.h"
 
 #include <vnl/vnl_matrix.h>
 #include <vnl/vnl_vector.h>
@@ -180,19 +168,7 @@ typedef itk::Vector< float, 3 > SeedType;
 typedef itk::Statistics::ListSample< SeedType > SampleType;
 typedef SampleType::Pointer SamplePointer;
 
-
-//GPU functions for vesselness and gvf
-//extern "C"
-//void do_eigen_decomp(float *Dxx, float *Dxy, float *Dxz,
-//                     float *Dyy, float *Dyz, float *Dzz, int N, float *vesselness, float *vx1, float *vy1, float *vz1);
-//extern "C"
-//void gvf_iteration(float *u, float *v, float *o, float *f, float mu, int ITER, int YN, int XN, int ZN);
-
-//extern "C"
-//void gradient(float *u, float *v, float *o, float *f, int YN, int XN, int ZN);
-
-//extern "C"
-//void Hessian(float *Dxx, float *Dxy, float *Dxz, float *Dyy, float *Dyz, float *Dzz, float *u, float *v, float *o, int YN, int XN, int ZN);
+float norm_density(float x, float mu, float sigma);
 
 //functions for eig3volume
 static void tred2(double V[3][3], double d[3], double e[3]);
@@ -206,17 +182,9 @@ double absd(double val);
 PGfloat ***pgDmatrix(int M, int N, int K);
 PGvoid pgFreeDmatrix(PGfloat ***Image, int M, int N, int K);
 
-void GVFC(int XN, int YN, int ZN, float *f, float *ou, float *ov, float *oo, 
-	  float mu, int ITER);
-void GVFC_CUDA(int XN, int YN, int ZN, float *f, float *ou, float *ov, float *oo, 
-	  float mu, int ITER);
-
-
-
 ProbImagePointer extract_one_component(int index, GradientImagePointer IG);
 //PointList3D extract_local_maximum(ProbImagePointer V_saliency, int rad, double th, ImagePointer BW, bool local_maxima);
 class VectorPixelAccessor;
-
 
 class ImageOperation
 {
@@ -232,22 +200,17 @@ public:
 	bool display_set; 
 	float *u, *v, *o;
 
+	int coding_method;
+
 	float u1,u2,sigma1,sigma2; //intensity models
 	std::vector<float> I_cu;
 
 	//IOImagePointer IIO;
 
 	ImagePointer I;
-
 	//RGBImagePointer2D IRGB;
 	ImagePointer IDisplay;
-
-	//ImagePointer2D I2D;
 	ImagePointer IMask;//Soma Mask;
-	ImagePointer VBW;//Binary Image
-	//ImagePointer DBW;//Depth Image
-	ProbImagePointer IGMag;
-	//ProbImagePointer IDist;
 	ImagePointer ISeg;//Segmentation Image/Reconstruction
 	
 	LabelImagePointer IL;
@@ -259,38 +222,27 @@ public:
     PointList3D Centroid;
 
 	ProbImagePointer IVessel;
-	ProbImagePointer IBranch;
-
-	ProbImagePointer Dxx;
-	ProbImagePointer Dxy;
-	ProbImagePointer Dxz;
-	ProbImagePointer Dyy;
-	ProbImagePointer Dyz;
-	ProbImagePointer Dzz;
-
+	ProbImagePointer IGMag;
     GradientImagePointer IGVF;
-	GradientImagePointer IG;
-	
     GradientImagePointer V1;
 
     PointList3D SeedPt;
 
-
 	int current_seed_idx;
     vnl_vector<int> visit_label;
 
+	void ImMasking(int shrink_factor);
+
+	void SetCodingMethod(int in);  //set image coding method (centerline coding or vessel tube coding)
     //intensity models for 4-D region based open-curve snake
-	void ImComputeBackgroundModel();
+	void ImComputeInitBackgroundModel();
+	void ImComputeInitForegroundModel();
 	void ImComputeForegroundModel(PointList3D Cu, std::vector<float> Ru);
 
     void ConvertReadImage();
     void ConvertWriteImage();
 	//void ConvertWriteLabelImage();
 	void ImRemoveSlice(int in);
-    void ImBW(int Threshold);
-    void ImOrdFilt2();
-    void ImHoleFill2D();
-    void ImHoleFill3D();
 	IOImagePointer ImBkSub(IOImagePointer In);
 	void ImSeriesReadWrite(std::vector< std::string > filenames, const char *save_name, int shrink_factor, bool sixteen_bit);
 	void ImRead(const char *filename);
@@ -299,36 +251,22 @@ public:
     void ImWrite(const char *filename, int image_id);
 	void ImWrite_Soma(const char *filename);
 	ImagePointer ImCopy();
-	void ImMasking(PointList3D contour); //manual masking
-	void ImMasking(const char *filename, int shrink_factor);
-	void ImMasking(int shrink_factor);
 	IOImagePointer ImInvert(IOImagePointer In);
-	void ImSub(ImagePointer BG);
 	void ImShrink(int shrink_factor);
 	IOImagePointer ImShrink(IOImagePointer In, int shrink_factor);
-    void ImThinning(bool clean_skeleton, int min_length);
-	void ImMedian(int radius);
 
 	void ImGraphCut(double th, bool hole_filling, bool clean_skeleton, int min_length, int segmentation_method);
 	//void ImGraphCut1(double th, bool hole_filling, bool clean_skeleton, int min_length, int segmentation_method);
 	void ImFastMarchingAnimation(int threshold);
 
 	void clear_IMask();
-	void ImFastMarching_Soma(PointList3D seg_seeds);//segment single soma
-	void ImFastMarchingI(PointList3D seg_seeds);
-	void ImFastMarchingI_New(PointList3D seg_seeds); //automatic threshold selecting
-    void ImFastMarchingII(PointList3D seg_seeds, int idx);
     void ImLevelSet(int th, bool hole_filling, bool clean_skeleton, int min_length, int seed_radius);
 
-    void ImCoding(PointList3D Cu, int id, bool tracing);
-    void ImRefresh_LabelImage();
+    void ImCoding(PointList3D Cu, std::vector<float> Ru, int id, bool tracing);
+    void ImRemove_RedSeeds(PointList3D Cu, std::vector<float> Ru);
 	void ImRefresh_TracingImage();
+	void ImRefresh_LabelImage();
     void ImSmoothing(int smoothing_scale);
-
-
-	void BinaryToDepth();
-
-	void MinimalPathCorrection(PointList3D path);
 
     ProbImagePointer ImGaussian(ProbImagePointer I_In, int sigma);
 	ImagePointer ImGaussian(ImagePointer I_In, int sigma);
@@ -345,15 +283,10 @@ public:
 	RGBImagePointer2D ImMaxProjection(RGBImagePointer IInput);
 	RGBImagePointer2D ImMaxProjection1(ImagePointer IInput);
 
-	void ComputeMultiVesselness(double sigma_min, double sigma_max, int sigma_step);
 	void ComputeGVFVesselness();
-	void ComputeGVFVesselness_CUDA();
-	void ComputeGVFVesselness_CUDA_New(float *vesselness, float *vx1, float *vy1, float *vz1);
     void ComputeBranchiness();
 
-	void VesselEnhancing(int sigma_min, int sigma_max, int sigma_step);
     void normalizeGVF();
-    void computeGVF_C(int noise_level, int num_iteration, bool cuda, int smooth_scale);
 	void computeGVF(int mu, int ITER, int smoothing_scale);
 
 	void SeedDetection(float th, int detection_method, int radius);

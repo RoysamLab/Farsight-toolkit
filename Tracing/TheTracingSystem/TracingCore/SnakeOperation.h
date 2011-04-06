@@ -30,7 +30,7 @@ limitations under the License.
 
 bool isinf(float x);
 bool isnan(float x);
-float norm_density(float x, float mu, float sigma);
+//float norm_density(float x, float mu, float sigma);
 
 class SnakeListClass;
 
@@ -50,8 +50,6 @@ public:
 	std::vector<float> Ru;
 
 	//PointList3D Probe;
-
-	Point3D temp_pt;
 	Point3D head_pt;
 	Point3D tail_pt;
 
@@ -66,11 +64,6 @@ public:
 
 	void Branch_Adjustment();
 	void Nail_Branch();
-
-	bool Jump_Over_Gap(int dist, int angle, int step, int ratio, int ht);
-	bool Jump_Over_Crossover(int dist, int angle, int step, int ratio, int collision);
-	bool Jump_Over_Crossover_New(int dist, int collision);
-
 	void SetTracedSnakes(SnakeListClass *S);
 	void SetImage(ImageOperation *I_Input);
 	void Set_Seed_Point(PointList3D seeds);
@@ -80,14 +73,16 @@ public:
 	void Expand_Seed_Point(int expand_distance);
 
     void Grow_Snake_Point();
-	void OpenSnakeDeform(float alpha, int ITER, int pt_distance, float beta, float kappa, float gamma, int N_Active, bool freeze_body);
+	void OpenSnakeDeform(float alpha, int ITER, int pt_distance, float beta, float kappa, float gamma, bool freeze_body);
+    
+    //void OpenSnakeStretch_4D(float alpha, int ITER, int pt_distance, float beta, float kappa, float gamma, 
+	//	    float stretchingRatio, int collision_dist, int N_Active, int minimum_length, bool automatic_merging, 
+	//		int max_angle, bool freeze_body, int s_force, int snake_id);
+	void OpenSnake_Init_4D(float alpha, int ITER, float beta, float kappa, float gamma, int pt_distance);
 	void OpenSnakeStretch(float alpha, int ITER, int pt_distance, float beta, float kappa, float gamma, 
-		    float stretchingRatio, int collision_dist, int N_Active, int minimum_length, bool automatic_merging, 
-			int max_angle, bool freeze_body, int s_force, int snake_id);
-   
-	void OpenSnakeStretch_4D(float alpha, int ITER, int pt_distance, float beta, float kappa, float gamma, 
                                 float stretchingRatio, int collision_dist, int minimum_length, 
-								bool automatic_merging, int max_angle, bool freeze_body, int s_force, int snake_id, int tracing_model);
+								bool automatic_merging, int max_angle, bool freeze_body, int s_force, 
+								int snake_id, int tracing_model, int coding_method, float sigma_ratio);
 
 	bool Check_Validity(float minimum_length, float repeat_ratio, int repeat_dist, int snake_id);
 	bool Check_Head_Collision(ImageType::IndexType in, int collision_dist, int minimum_length, bool automatic_merging, int max_angle, int snake_id);
@@ -108,13 +103,18 @@ public:
 	SnakeListClass operator= (SnakeListClass SnakeList);
     
     int NSnakes;
-	SnakeClass *Snakes;
-	vnl_vector<int> valid_list;
+	//SnakeClass *Snakes;
+	std::vector<SnakeClass> Snakes;
+	std::vector<int> valid_list;
+
+	PointList3D branch_points;
     
 	ImageOperation *IM;
 
 	void AddSnake(SnakeClass snake);
+	void AddSnake_Coding(SnakeClass snake);
 	void RemoveSnake(int idx);
+	void RemoveAllSnakes();
 	void SplitSnake(int idx_snake, int idx_pt);
 	void MergeSnake(int idx1, int idx2, bool im_coding);
 	void CreateBranch(int idx1, int idx2);
