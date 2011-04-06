@@ -31,7 +31,9 @@ public:
 	bool isSelected(long int id);		
 	bool add(long int id);
 	bool add(std::set<long int> ids);
+	void addToMerge(long int id);
 	bool select(long int id);
+	void selectToMerge(long int id);
 	bool select(std::set<long int> ids);
 	bool remove(long int id);
 	bool remove(std::set<long int> ids);
