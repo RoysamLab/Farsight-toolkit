@@ -51,6 +51,7 @@ public:
 	std::string GetFullLog();
 	std::string GetFullDef();
 	std::string GetFullTable();
+	std::string GetFullAdjTables();
 	void ClearAll();
 
 	//VARIABLES
@@ -64,12 +65,14 @@ public:
 	std::string log;
 	std::string definition;
 	std::string table;
+	std::string adjTables;
 
 	bool inputSaved;
 	bool outputSaved;
 	//bool logSaved; //Log is continuously saved
 	bool definitionSaved;
 	bool tableSaved;
+	bool adjTablesSaved;
 
 protected:
 private:
