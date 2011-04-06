@@ -52,6 +52,7 @@ private slots:
 	void changeLog(void);
 	void changeDefinition(void);
 	void changeTable(void);
+	void changeAdjTables(void);
 	void setupDefaults(void);
     
 private:
@@ -88,6 +89,10 @@ private:
 	QLabel *tableLabel;
 	QLabel *tableFile;
 	QPushButton *tableButton;
+
+	QLabel *adjTablesLabel;
+	QLabel *adjTablesFile;
+	QPushButton *adjTablesButton;
 
 	QPushButton *quitButton;
 	QPushButton *okButton;
