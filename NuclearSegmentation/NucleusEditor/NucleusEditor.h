@@ -99,6 +99,7 @@ protected:
 
 protected slots:
 	void setMouseStatus(int,int,int,int,list<int>);
+	void EnableModels() {modelsMenu->setEnabled(true);};
 
 	//Loading:
 	void askLoadImage(void);
@@ -107,6 +108,7 @@ protected slots:
 	void loadResult(QString fileName);
 	void askLoadTable(void);
 	void loadTable(QString fileName);
+	void loadAdjTables(QString fileName);
 	void loadProject(void);
 	void saveDisplayImageToFile();
 	void saveCompositeImageToFile();
@@ -125,19 +127,25 @@ protected slots:
 	bool saveResult(void);
 	bool askSaveTable(void);
 	bool saveTable(void);
+	bool askSaveAdjTables(void);
+	bool saveAdjTables(void);
 	void createDefaultLogName(void);
-
+	
 	//Views:
 	void setPreferences();
 	void toggleBounds();
 	void toggleIDs();
 	void toggleCentroids();
 	void toggleCrosshairs();
+	void toggleNucAdjacency();
+	void toggleCellAdjacency();
 	void toggleChannel(int chNum );
 	void DisplayChannelsMenu();
 	void CreateNewPlotWindow();
 	void CreateNewTableWindow();
 	//void CreateNewHistoWindow();
+	void CreateNewNucRAG();
+	void CreateNewCellRAG();
 	void updateViews();
 	void viewClosing(QWidget * view);
 	void closeViews();
@@ -245,6 +253,9 @@ protected:
 	QAction *showIDsAction;
 	QAction *showCentroidsAction;
 	QAction *showCrosshairsAction;
+	QMenu *adjacencyMenu;
+		QAction *showNucAdjAction;
+		QAction *showCellAdjAction;
 	QMenu *zoomMenu;
 		QAction *zoomInAction;
 		QAction *zoomOutAction;
@@ -254,6 +265,9 @@ protected:
 	QAction *newTableAction;
 	QAction *newScatterAction;
 	QAction *newHistoAction;
+	QMenu *ragMenu;
+		QAction *nucRagAction;
+		QAction *cellRagAction;
 	QAction *imageIntensityAction;
 
 	QMenu *toolMenu;
@@ -323,9 +337,11 @@ protected:
 	ftk::Image::Pointer labImg;					//Currently visible label image
 	ObjectSelection * selection;				//object selection list
 	vtkSmartPointer<vtkTable> table;			//table
+	vtkSmartPointer<vtkTable> NucAdjTable;		//Nuclear Adjacency Table
+	vtkSmartPointer<vtkTable> CellAdjTable;		//Cellular Adjacency Table
 	ftk::ProjectFiles projectFiles;				//files in the currently visible project
 	ftk::ProjectDefinition projectDefinition;	//the project definition currently being used.
-	unsigned char kplsRun;
+	unsigned int kplsRun;
 
 	//This does not belong here, but is a temporary fix:
 	void CreateDefaultAssociationRules();
