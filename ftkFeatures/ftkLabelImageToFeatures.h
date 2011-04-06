@@ -84,7 +84,7 @@ public:
 
 	vtkSmartPointer<vtkTable> Compute(void);			//Compute features that are ON and return table with values (for all objects)
 	//void Update(vtkSmartPointer<vtkTable> table);		//Update the features in this table whose names match (sets doFeat)
-	void Update(vtkSmartPointer<vtkTable> table, std::map<int, ftk::Object::Point> * cc = NULL, std::map<int, ftk::Object::Box> * bbox = NULL);
+	void Update(vtkSmartPointer<vtkTable> table, std::map<int, ftk::Object::Point> * cc = NULL, std::map<int, ftk::Object::Box> * bbox = NULL, vtkSmartPointer<vtkTable> NucAdjTable = NULL);
 	void Append(vtkSmartPointer<vtkTable> table);		//Compute features that are ON and append them to the existing table (makes more columns)
 
 private:
@@ -151,6 +151,7 @@ public:
 	void ComputeTexturesOff(){ this->computeTextures = false; };
 	void SetLevel(short int newLevel);
 	short int GetLevel(){ return computationLevel; };
+	void GetAdjacency();
 
 protected:
 	LabelImageToFeatures();
