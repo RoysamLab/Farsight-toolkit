@@ -53,6 +53,11 @@ bool ObjectSelection::add(long int id)
 		return false;
 }
 
+void ObjectSelection::addToMerge(long int id)
+{
+	selections.insert(id);	
+}
+
 bool ObjectSelection::add(std::set<long int> ids)
 {
 	selections.insert(ids.begin(),ids.end());
@@ -95,6 +100,12 @@ bool ObjectSelection::select(long int id)
 	selections.insert(id);
 	emit changed();
 	return true;
+}
+
+void ObjectSelection::selectToMerge(long int id)
+{
+	selections.clear();
+	selections.insert(id);
 }
 
 bool ObjectSelection::select(std::set<long int> ids)
