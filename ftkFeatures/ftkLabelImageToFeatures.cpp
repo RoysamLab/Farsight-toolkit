@@ -208,7 +208,7 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 
 //Update the features in this table whose names match (sets doFeat)
 //Will create new rows if necessary:
-void IntrinsicFeatureCalculator::Update(vtkSmartPointer<vtkTable> table, std::map<int, ftk::Object::Point> * cc, std::map<int, ftk::Object::Box> * bbox)
+void IntrinsicFeatureCalculator::Update(vtkSmartPointer<vtkTable> table, std::map<int, ftk::Object::Point> * cc, std::map<int, ftk::Object::Box> * bbox, vtkSmartPointer<vtkTable> NucAdjTable)
 {
 	if(!intensityImage || !labelImage)
 		return;
@@ -256,6 +256,29 @@ void IntrinsicFeatureCalculator::Update(vtkSmartPointer<vtkTable> table, std::ma
 
 	labFilter->Update();
 
+	//Update the Nuclear Adjacency Table
+	if(NucAdjTable)
+	{
+		FeatureCalcType::Pointer AdjFilter = FeatureCalcType::New();
+		AdjFilter->SetImageInputs( intensityImage->GetItkPtr<IPixelT>(0,intensityChannel), labelImage->GetItkPtr<LPixelT>(0,labelChannel) );
+		AdjFilter->GetAdjacency();
+		std::set<unsigned short>::iterator it;
+		for(it=IDs.begin(); it!=IDs.end(); ++it)
+		{
+			std::vector<unsigned short> conIDs = AdjFilter->GetContactNeighbors(*it);
+			if(conIDs.size()>0)
+			{
+				for(unsigned int i=0 ; i<conIDs.size() ; ++i)
+				{
+					if(conIDs[i] == 0) continue;
+					vtkSmartPointer<vtkVariantArray> nextrow = vtkSmartPointer<vtkVariantArray>::New();
+					nextrow->InsertNextValue(*it);
+					nextrow->InsertNextValue(conIDs[i]);
+					NucAdjTable->InsertNextRow(nextrow);
+				}
+			}
+		}
+	}
 	//Now update the table:
 	std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
 	for (int i=0; i<(int)labels.size(); ++i)
