@@ -815,7 +815,7 @@ ftk::Object::Box NuclearSegmentation::ExtremaBox(std::vector<int> ids)
 //**********************************************************************************************************
 // EDITING FUNCTIONS:
 //**********************************************************************************************************
-std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object::Point P2, vtkSmartPointer<vtkTable> table)
+std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object::Point P2, vtkSmartPointer<vtkTable> table, vtkSmartPointer<vtkTable> NucAdjTable)
 {
 	std::vector<int> ret_ids;
 
@@ -836,6 +836,16 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 	}
 		
 	int objID = id1;		//The ID of the object I am splitting!!
+
+	//Remove the corresponding rows from the Nuclear Adjacency table
+	for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
+	{
+		if((NucAdjTable->GetValue(row,0).ToInt()==objID)||(NucAdjTable->GetValue(row,1).ToInt()==objID))
+		{
+			NucAdjTable->RemoveRow(row);
+			--row;
+		}
+	}
 	
 	//Update the segmentation image
 	//Now get the bounding box around the object
@@ -969,7 +979,7 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 	add_ids.insert((unsigned short)newID1);
 	add_ids.insert((unsigned short)newID2);
 	//Add features for the two new objects
-	this->addObjectsToMaps(add_ids, region.min.x, region.min.y, region.min.z, region.max.x, region.max.y, region.max.z, table);
+	this->addObjectsToMaps(add_ids, region.min.x, region.min.y, region.min.z, region.max.x, region.max.y, region.max.z, table, NucAdjTable);
 	this->removeObjectFromMaps(objID, table);
 	EditsNotSaved = true;
 
@@ -1040,7 +1050,7 @@ std::vector< int > NuclearSegmentation::SplitAlongZ(int objID, int cutSlice, vtk
 	return ret_ids;
 }
 
-std::vector< std::vector<int> > NuclearSegmentation::GroupMerge(std::vector<int> ids, vtkSmartPointer<vtkTable> table)
+std::vector< std::vector<int> > NuclearSegmentation::GroupMerge(std::vector<int> ids, vtkSmartPointer<vtkTable> table, vtkSmartPointer<vtkTable> NucAdjTable)
 {
 	if(!labelImage || !dataImage)
 	{
@@ -1126,14 +1136,14 @@ std::vector< std::vector<int> > NuclearSegmentation::GroupMerge(std::vector<int>
 	//Iterate though groups and merge them together
 	for(int i=0; i<(int)groups.size(); ++i)
 	{
-		int newID = Merge(groups.at(i), table);
+		int newID = Merge(groups.at(i), table, NucAdjTable);
 		groups.at(i).push_back(newID);	//Put the new id at the end of the group
 	}
 	return groups;
 
 }
 
-int NuclearSegmentation::Merge(vector<int> ids, vtkSmartPointer<vtkTable> table)
+int NuclearSegmentation::Merge(vector<int> ids, vtkSmartPointer<vtkTable> table, vtkSmartPointer<vtkTable> NucAdjTable)
 {
 	if(!labelImage || !dataImage)
 	{
@@ -1142,6 +1152,27 @@ int NuclearSegmentation::Merge(vector<int> ids, vtkSmartPointer<vtkTable> table)
 	}
 
 	int newID = maxID() + 1;
+	for(int j=0; j<(int)ids.size(); ++j)
+	{
+		int OldID = ids.at(j);
+		for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
+		{
+			for(int col=0; col<(int)NucAdjTable->GetNumberOfRows(); ++col)
+			{
+				if(NucAdjTable->GetValue(row,col).ToInt() == OldID)
+					NucAdjTable->SetValue(row,col,newID);
+			}
+		}
+	}
+	for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
+	{
+		if((NucAdjTable->GetValue(row,0).ToInt()) == (NucAdjTable->GetValue(row,1).ToInt()))
+		{
+			NucAdjTable->RemoveRow(row);
+			--row;
+		}
+	}
+
 	ReassignLabels(ids, newID);					//Assign all old labels to this new label
 	ftk::Object::Box region = ExtremaBox(ids);
 	this->addObjectToMaps(newID, region.min.x, region.min.y, region.min.z, region.max.x, region.max.y, region.max.z, table);
@@ -1503,13 +1534,13 @@ bool NuclearSegmentation::addObjectToMaps(int ID, int x1, int y1, int z1, int x2
 	return addObjectsToMaps(ids,x1,y1,z1,x2,y2,z2,table);
 }
 
-bool NuclearSegmentation::addObjectsToMaps(std::set<unsigned short> IDs, int x1, int y1, int z1, int x2, int y2, int z2, vtkSmartPointer<vtkTable> table)
+bool NuclearSegmentation::addObjectsToMaps(std::set<unsigned short> IDs, int x1, int y1, int z1, int x2, int y2, int z2, vtkSmartPointer<vtkTable> table, vtkSmartPointer<vtkTable> NucAdjTable)
 {
 	IntrinsicFeatureCalculator * calc = new IntrinsicFeatureCalculator();
 	calc->SetInputImages(dataImage, labelImage);
 	calc->SetRegion(x1,y1,z1,x2,y2,z2);
 	calc->SetIDs(IDs);
-	calc->Update(table, &centerMap, &bBoxMap);
+	calc->Update(table, &centerMap, &bBoxMap, NucAdjTable);
 	delete calc;
 
 	/*
