@@ -60,6 +60,8 @@ limitations under the License.
 #include <iostream>
 #include <list>
 #include <map>
+#include "math.h"
+#include "float.h"
 using namespace std;
 
 class MyRubberBand;
@@ -99,7 +101,13 @@ public:
 	bool GetIDsVisible(){ return showIDs; };
 	bool GetCentroidsVisible(){ return showCentroids; };
 	bool GetROIVisible(){ return showROI; };
-
+	bool GetNucAdjVisible(){ return showNucAdj; };
+	bool GetCellAdjVisible(){ return showCellAdj; };
+	void SetNucAdjTable(vtkSmartPointer<vtkTable> NucAdjTable){ NucTable = NucAdjTable; refreshBoundsImage();};
+	void SetCellAdjTable(vtkSmartPointer<vtkTable> CellAdjTable){ CellTable = CellAdjTable; refreshBoundsImage();};
+	void DoubleClicksOff(void){ enableDoubleClicks = false;};
+	void DoubleClicksOn(void){ enableDoubleClicks = true;};
+		
 public slots:
 	void SaveDisplayImageToFile(QString fileName);
 	void SaveCompositeImageToFile(QString fileName);
@@ -108,12 +116,14 @@ public slots:
 	void SetIDsVisible(bool val);
 	void SetCentroidsVisible(bool val);
 	void SetCrosshairsVisible(bool val);
+	void SetNucAdjVisible(bool val);
+	void SetCellAdjVisible(bool val);
 	void SetROIVisible(bool val);
 	void ClearGets(void);
 	void GetBox(void);
 	void Get2Points(void);
 	void GetROI(void);
-	void update(void);
+	void update();
 	void goToSelection(void);
 	int GetCurrentZ(void){ return vSpin->value(); };
 	int GetCurrentT(void){ return hSpin->value(); };
@@ -126,6 +136,7 @@ signals:
 	void boxDrawn(int x1, int y1, int x2, int y2, int z);
 	void pointsClicked(int x1, int y1, int z1, int x2, int y2, int z2);
 	void roiDrawn(void);
+	void autoMerge(void);
 
 protected slots:
 	void refreshBaseImage(void);
@@ -134,6 +145,8 @@ protected slots:
 	void drawObjectBoundaries(QPainter *painter);
 	void drawObjectCentroids(QPainter *painter);
 	void drawSelectionCrosshairs(QPainter *painter);
+	void drawNucAdjacency(QPainter *painter);
+	void drawCellAdjacency(QPainter *painter);
 	void drawROI(QPainter *painter);
 	void selectionChange(void);
 	void sliderChange(int v);
@@ -150,6 +163,7 @@ protected:
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
 	void mouseReleaseEvent(QMouseEvent *event);
+	void mouseDoubleClickEvent(QMouseEvent *event);
 	void keyPressEvent( QKeyEvent *event );
 	void paintEvent(QPaintEvent *event);
 
@@ -163,6 +177,9 @@ protected:
 	void removeChannelWidget(void);
 
 	void scaleIntensity(QImage *img, int threshold, int offset);
+
+	float Distance(int x1, int y1, int x2, int y2);
+	float perpDist(int x1, int y1, int x2, int y2, int x3, int y3);
 
 	void initGrayscaleColorTable(void);
 	QVector<QRgb> grayscaleColorTable;
@@ -193,6 +210,8 @@ protected:
 	std::map<int, int> classMap2;
 	std::map<int, int> classMap3;
 	std::map<int, int> classMap4;
+	vtkSmartPointer<vtkTable> NucTable;
+	vtkSmartPointer<vtkTable> CellTable;
 
 	ftk::Image::Pointer channelImg;
 	ObjectSelection * selection;
@@ -209,6 +228,9 @@ protected:
 	bool showCentroids;
 	bool showCrosshairs;
 	bool showROI;		//always comes up false
+	bool showNucAdj;
+	bool showCellAdj;
+	bool enableDoubleClicks;
 
 	//For collecting two points:
 	bool pointsMode;
