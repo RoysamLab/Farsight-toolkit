@@ -53,6 +53,7 @@ void ProjectFiles::ClearAll()
 	//logSaved = true;
 	definitionSaved = true;
 	tableSaved = true;
+	adjTablesSaved = true;
 }
 
 //************************************************************************
@@ -100,6 +101,10 @@ bool ProjectFiles::Read(std::string filename)
 		{
 			table = parentElement->Attribute("file");
 		}
+		else if( strcmp( parent, "adjTables" ) == 0 )
+		{
+			adjTables = parentElement->Attribute("file");
+		}
 
 		parentElement = parentElement->NextSiblingElement();
 	} // end while(parentElement)
@@ -136,6 +141,10 @@ bool ProjectFiles::Write()
 
 	file = new TiXmlElement("table");
 	file->SetAttribute("file", table.c_str());
+	root->LinkEndChild(file);
+
+	file = new TiXmlElement("adjTables");
+	file->SetAttribute("file", adjTables.c_str());
 	root->LinkEndChild(file);
 
 	if(doc.SaveFile( this->GetFullName().c_str() ))
@@ -180,6 +189,11 @@ std::string ProjectFiles::GetFullTable()
 	return full;
 }
 
+std::string ProjectFiles::GetFullAdjTables()
+{
+	std::string full = path + adjTables;
+	return full;
+}
 //************************************************************************
 //************************************************************************
 //************************************************************************
