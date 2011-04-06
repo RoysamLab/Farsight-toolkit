@@ -38,6 +38,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 
 	segView = new LabelImageViewQT(&colorItemsMap);
 	connect(segView, SIGNAL(mouseAt(int,int,int, int,list<int>)), this, SLOT(setMouseStatus(int,int,int, int, list<int>)));
+	connect(segView, SIGNAL(autoMerge()), this, SLOT(mergeCells()));
 	selection = new ObjectSelection();
 	this->setCentralWidget(segView);
 
@@ -47,6 +48,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 
 	setEditsEnabled(false);
 	setCommonEnabled(true);
+	modelsMenu->setEnabled(false);
 
 	setWindowTitle(tr("FARSIGHT: Nucleus Editing Tool"));
 
@@ -66,7 +68,9 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	pProc = NULL;
 	processThread = NULL;
 	table = NULL;
-
+	NucAdjTable = NULL;
+	CellAdjTable = NULL;
+	
 	kplsRun = 0;	//This flag gets set after kpls has run to make sure we show the colored centroids!!
 	trainName = 0;
 	predictName = 0;
@@ -296,6 +300,24 @@ void NucleusEditor::createMenus()
 	connect(showCentroidsAction, SIGNAL(triggered()), this, SLOT(toggleCentroids()));
 	viewMenu->addAction(showCentroidsAction);
 
+	adjacencyMenu = viewMenu->addMenu(tr("Show Adjacency"));
+
+	showNucAdjAction = new QAction(tr("Nuclear"), this);
+	showNucAdjAction->setCheckable(true);
+	showNucAdjAction->setChecked( segView->GetNucAdjVisible() );
+	showNucAdjAction->setStatusTip(tr("Show adjacency of nuclei"));
+	showNucAdjAction->setShortcut(tr("Shift+N"));
+	connect(showNucAdjAction, SIGNAL(triggered()), this, SLOT(toggleNucAdjacency()));
+	adjacencyMenu->addAction(showNucAdjAction);
+
+	showCellAdjAction = new QAction(tr("Cellular"), this);
+	showCellAdjAction->setCheckable(true);
+	showCellAdjAction->setChecked( segView->GetCellAdjVisible() );
+	showCellAdjAction->setStatusTip(tr("Show adjacency of cells"));
+	showCellAdjAction->setShortcut(tr("Shift+C"));
+	connect(showCellAdjAction, SIGNAL(triggered()), this, SLOT(toggleCellAdjacency()));
+	adjacencyMenu->addAction(showCellAdjAction);
+
 	zoomMenu = viewMenu->addMenu(tr("Zoom"));
 
 	zoomInAction = new QAction(tr("Zoom In"), this);
@@ -329,6 +351,16 @@ void NucleusEditor::createMenus()
 	newHistoAction->setStatusTip(tr("Open a new Histogram Window"));
 	connect(newHistoAction,SIGNAL(triggered()),this,SLOT(CreateNewHistoWindow()));
 	viewMenu->addAction(newHistoAction);*/
+
+	ragMenu = viewMenu->addMenu(tr("New Region Adjacency Graph"));
+
+	nucRagAction = new QAction(tr("Nuclear Adjacency Graph"), this);	
+	connect(nucRagAction, SIGNAL(triggered()), this, SLOT(CreateNewNucRAG()));
+	ragMenu->addAction(nucRagAction);
+
+	cellRagAction = new QAction(tr("Cellular Adjacency Graph"), this);
+	connect(cellRagAction, SIGNAL(triggered()), this, SLOT(CreateNewCellRAG()));
+	ragMenu->addAction(cellRagAction);
 
 	imageIntensityAction = new QAction(tr("Adjust Image Intensity"), this);
 	imageIntensityAction->setStatusTip(tr("Allows modification of image intensity"));
@@ -560,7 +592,6 @@ void NucleusEditor::createPreprocessingMenu()
 void NucleusEditor::setEditsEnabled(bool val)
 {
 	editMenu->setEnabled(val);
-	modelsMenu->setEnabled(val);
 	clearSelectAction->setEnabled(val);
 	visitAction->setEnabled(val);
 	addAction->setEnabled(val);
@@ -662,7 +693,7 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 {
 	this->abortProcess();
 
-	if(!projectFiles.inputSaved || !projectFiles.outputSaved || !projectFiles.definitionSaved || !projectFiles.tableSaved)
+	if(!projectFiles.inputSaved || !projectFiles.outputSaved || !projectFiles.definitionSaved || !projectFiles.tableSaved || !projectFiles.adjTablesSaved)
 	{
 		if( askSaveChanges(tr("Save changes to the project?")) )
 			this->saveProject();
@@ -674,6 +705,8 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 				this->askSaveResult();
 			if(!projectFiles.tableSaved && askSaveChanges(tr("Save changes to the table?")) )
 				this->askSaveTable();
+			if(!projectFiles.adjTablesSaved && askSaveChanges(tr("Save changes to the adjacency tables?")) )
+				this->askSaveAdjTables();
 		}
 	}
 
@@ -721,6 +754,9 @@ bool NucleusEditor::saveProject()
 		if(projectFiles.table == "")
 			projectFiles.table = bname.toStdString() + "_table.txt";
 
+		if(projectFiles.adjTables == "")
+			projectFiles.adjTables = bname.toStdString() + "_adjTables.txt";
+
 		if(projectFiles.log == "")
 			createDefaultLogName();
 	}
@@ -756,6 +792,10 @@ bool NucleusEditor::saveProject()
 	if(projectFiles.table != "" && !projectFiles.tableSaved)
 	{
 		this->saveTable();
+	}
+	if(projectFiles.adjTables != "" && !projectFiles.adjTablesSaved)
+	{
+		this->saveAdjTables();
 	}
 
 	return true;
@@ -886,6 +926,56 @@ bool NucleusEditor::saveTable()
 	return ok;
 }
 
+bool NucleusEditor::askSaveAdjTables()
+{
+	if(!NucAdjTable)
+		return false;
+
+	QString filename = QFileDialog::getSaveFileName(this, tr("Save Adj_Tables As..."),lastPath, tr("TEXT(*.txt)"));
+	if(filename == "")
+		return false;
+
+	lastPath = QFileInfo(filename).absolutePath() + QDir::separator();
+	projectFiles.path = lastPath.toStdString();
+	projectFiles.adjTables = QFileInfo(filename).fileName().toStdString();
+
+	return this->saveAdjTables();
+}
+
+bool NucleusEditor::saveAdjTables()
+{
+	if(!NucAdjTable)
+		return false;
+
+	if(projectFiles.adjTables == "")
+		return false;
+
+	vtkSmartPointer<vtkTable> adjTables = vtkSmartPointer<vtkTable>::New();
+	adjTables->Initialize();
+	for(int c=0; c<(int)NucAdjTable->GetNumberOfColumns(); ++c)
+	{
+	    vtkSmartPointer<vtkStringArray> column = vtkSmartPointer<vtkStringArray>::New();
+		column->SetName( NucAdjTable->GetColumnName(c) );
+		adjTables->AddColumn(column);
+	}
+	for(int row1=0; row1<(int)NucAdjTable->GetNumberOfRows(); ++row1)
+		adjTables->InsertNextRow(NucAdjTable->GetRow(row1));
+		
+	if(CellAdjTable)
+	{
+		vtkSmartPointer<vtkVariantArray> blankRow = vtkSmartPointer<vtkVariantArray>::New();
+		blankRow->InsertNextValue(0);
+		blankRow->InsertNextValue(0);
+		adjTables->InsertNextRow(blankRow);
+		for(int row2=0; row2<(int)CellAdjTable->GetNumberOfRows(); ++row2)
+			adjTables->InsertNextRow(CellAdjTable->GetRow(row2));		
+	}
+
+	bool ok = ftk::SaveTable( projectFiles.GetFullAdjTables(), adjTables);
+	projectFiles.adjTablesSaved = ok;
+	return ok;
+}
+
 void NucleusEditor::createDefaultLogName(void)
 {
 	QString filename = QString::fromStdString( projectFiles.GetFullInput() );
@@ -936,6 +1026,10 @@ void NucleusEditor::loadProject()
 	{
 		this->loadTable( QString::fromStdString(projectFiles.GetFullTable()) );
 	}
+	if(projectFiles.adjTables != "")
+	{
+		this->loadAdjTables( QString::fromStdString(projectFiles.GetFullAdjTables()) );
+	}
 
 	this->startEditing();
 }
@@ -982,6 +1076,63 @@ void NucleusEditor::loadTable(QString fileName)
 	}
 	else
 		kplsRun = 0;
+}
+
+void NucleusEditor::loadAdjTables(QString fileName)
+{
+	lastPath = QFileInfo(fileName).absolutePath() + QDir::separator();
+
+	vtkSmartPointer<vtkTable> adjTables = vtkSmartPointer<vtkTable>::New();
+	adjTables = ftk::LoadTable(fileName.toStdString());
+	if(!adjTables) return;
+
+	projectFiles.path = lastPath.toStdString();
+	projectFiles.adjTables = QFileInfo(fileName).fileName().toStdString();
+	projectFiles.adjTablesSaved = true;
+
+	int row = 0;
+	int flag = 0; 
+	vtkSmartPointer<vtkTable> NuclearTable = vtkSmartPointer<vtkTable>::New();
+	NuclearTable->Initialize();
+	for(int c=0; c<(int)adjTables->GetNumberOfColumns(); ++c)
+	{
+	    vtkSmartPointer<vtkStringArray> column = vtkSmartPointer<vtkStringArray>::New();
+		column->SetName( adjTables->GetColumnName(c) );
+		NuclearTable->AddColumn(column);
+	}
+	while((adjTables->GetValue(row,0).ToInt() != 0) && (adjTables->GetValue(row,1).ToInt() != 0))
+	{
+		NuclearTable->InsertNextRow(adjTables->GetRow(row));
+		adjTables->RemoveRow(row);
+		if((int)adjTables->GetNumberOfRows() == 0)
+		{
+			flag = 1;
+			break;
+		}
+	}
+	NucAdjTable = NuclearTable;
+	segView->SetNucAdjTable(NucAdjTable);
+	
+	if(flag == 0)
+	{
+		adjTables->RemoveRow(row);
+
+		vtkSmartPointer<vtkTable> CellularTable = vtkSmartPointer<vtkTable>::New();
+		CellularTable->Initialize();
+		for(int c=0; c<(int)adjTables->GetNumberOfColumns(); ++c)
+		{
+		    vtkSmartPointer<vtkStringArray> column = vtkSmartPointer<vtkStringArray>::New();
+			column->SetName( adjTables->GetColumnName(c) );
+			CellularTable->AddColumn(column);
+		}
+		while((int)adjTables->GetNumberOfRows() != 0)
+		{
+			CellularTable->InsertNextRow(adjTables->GetRow(row));
+			adjTables->RemoveRow(row);
+		}
+		CellAdjTable = CellularTable;
+		segView->SetCellAdjTable(CellAdjTable);
+	}
 }
 
 void NucleusEditor::askLoadResult(void)
@@ -1391,6 +1542,7 @@ void NucleusEditor::startKPLS()
 		prediction_names.push_back( p_name );
 	pWizard = new PatternAnalysisWizard( table, PatternAnalysisWizard::_KPLS, training_names.at(trainName).c_str(), p_name.c_str(), this);
 	connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
+	connect(pWizard, SIGNAL(enableModels()), this, SLOT(EnableModels()));
 	pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
 	pWizard->show();
 	kplsRun = 1;
@@ -1408,45 +1560,11 @@ void NucleusEditor::createTrainer()
 	{
 		delete pWizard;
 	}
-	training_names.clear();
-	for( int i=0; i<table->GetNumberOfColumns(); ++i ){
-		std::string current_column;
-		current_column = table->GetColumnName(i);
-		if( current_column.find("train") != std::string::npos ){
-			training_names.push_back( current_column );
-			std::string::iterator it;
-			it=current_column.begin();
-			current_column.erase ( current_column.begin(), current_column.begin()+6 );
-			class_names.push_back( current_column );
-		}
-	}
-	if( training_names.empty() ) return;
-	trainName = 0;
-	if( training_names.size() > 1 ){
-		QVector<QString> qtraining_names;
-		for (int i=0; i<(int)training_names.size(); ++i){
-			qtraining_names << QString::fromStdString(class_names.at(i));
-		}
-		PredictionDialog *pred_dial = new PredictionDialog(qtraining_names,this);
-		pred_dial->show();
-		if( pred_dial->exec() ){
-			trainName = pred_dial->getTrainNumber();
-		}
-		delete pred_dial;
-	}
-	p_name.clear();
-	p_name = "prediction_" + class_names.at(trainName);
-	std::vector<std::string>::iterator str_it;
-	for( str_it = prediction_names.begin(); str_it != prediction_names.end(); ++str_it )
-		if( (*str_it).find( p_name.c_str() ) != std::string::npos )
-			break;
-	if( str_it == prediction_names.end() )
-		prediction_names.push_back( p_name );
+
 	pWizard = new PatternAnalysisWizard( table, PatternAnalysisWizard::_SEGMODEL,"","", this);
-	connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
 	pWizard->setWindowTitle(tr("Select Training Features"));
 	pWizard->show();
-	kplsRun = 1;
+	
 }
 
 //**********************************************************************
@@ -1454,6 +1572,14 @@ void NucleusEditor::createTrainer()
 //**********************************************************************
 void NucleusEditor::appendTrainer()
 {
+
+	//open pattern analysis wizard	
+	if(!table) return;
+	if(pWizard)
+	{
+		delete pWizard;
+	}
+
 	QString fileName  = QFileDialog::getOpenFileName(this, "Select training model to open", lastPath,
 									tr("TXT Files (*.txt)"));
 	if(fileName == "")
@@ -1462,50 +1588,9 @@ void NucleusEditor::appendTrainer()
 
 	this->loadModelFromFile(fileName.toStdString());
 
-	//open pattern analysis wizard	
-	if(!table) return;
-	if(pWizard)
-	{
-		delete pWizard;
-	}
-	training_names.clear();
-	for( int i=0; i<table->GetNumberOfColumns(); ++i ){
-		std::string current_column;
-		current_column = table->GetColumnName(i);
-		if( current_column.find("train") != std::string::npos ){
-			training_names.push_back( current_column );
-			std::string::iterator it;
-			it=current_column.begin();
-			current_column.erase ( current_column.begin(), current_column.begin()+6 );
-			class_names.push_back( current_column );
-		}
-	}
-	if( training_names.empty() ) return;
-	trainName = 0;
-	if( training_names.size() > 1 ){
-		QVector<QString> qtraining_names;
-		for (int i=0; i<(int)training_names.size(); ++i){
-			qtraining_names << QString::fromStdString(class_names.at(i));
-		}
-		PredictionDialog *pred_dial = new PredictionDialog(qtraining_names,this);
-		pred_dial->show();
-		if( pred_dial->exec() ){
-			trainName = pred_dial->getTrainNumber();
-		}
-		delete pred_dial;
-	}
-	p_name.clear();
-	p_name = "prediction_" + class_names.at(trainName);
-	std::vector<std::string>::iterator str_it;
-	for( str_it = prediction_names.begin(); str_it != prediction_names.end(); ++str_it )
-		if( (*str_it).find( p_name.c_str() ) != std::string::npos )
-			break;
-	if( str_it == prediction_names.end() )
-		prediction_names.push_back( p_name );
 	pWizard = new PatternAnalysisWizard( table, model_table, fileName, PatternAnalysisWizard::_APPENDMODEL,"","", this);
-	connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
 	pWizard->show();
-	kplsRun = 1;
+	
 }
 
 void NucleusEditor::loadModelFromFile( std::string file_name ){
@@ -1566,7 +1651,7 @@ void NucleusEditor::closeViews()
 }
 
 //Call this slot when the table has been modified (new rows or columns) to update the views:
-void NucleusEditor::updateViews()
+void NucleusEditor::updateViews(void)
 {
 	//Show colored seeds after kPLS has run
 	if( kplsRun )
@@ -1634,6 +1719,23 @@ void NucleusEditor::CreateNewTableWindow(void)
 //	hisWin.back()->show();
 //}
 
+//******************************************************************************
+// Create Region Adjacency Graphs
+//******************************************************************************
+void NucleusEditor::CreateNewNucRAG(void)
+{
+	FTKgraph* NucRAG = new FTKgraph();	
+	NucRAG->DisplayGraph(NucAdjTable);
+}
+
+void NucleusEditor::CreateNewCellRAG(void)
+{
+	FTKgraph* CellRAG = new FTKgraph();
+	CellRAG->DisplayGraph(CellAdjTable);
+}
+
+//******************************************************************************
+
 void NucleusEditor::clearSelections()
 {
 	if(selection)
@@ -1693,6 +1795,26 @@ void NucleusEditor::toggleCentroids(void)
 		segView->SetCentroidsVisible(true);
 	else
 		segView->SetCentroidsVisible(false);
+}
+
+void NucleusEditor::toggleNucAdjacency(void)
+{
+	if(!segView) return;
+
+	if( showNucAdjAction->isChecked() )
+		segView->SetNucAdjVisible(true);
+	else
+		segView->SetNucAdjVisible(false);
+}
+
+void NucleusEditor::toggleCellAdjacency(void)
+{
+	if(!segView) return;
+
+	if( showCellAdjAction->isChecked() )
+		segView->SetCellAdjVisible(true);
+	else
+		segView->SetCellAdjVisible(false);
 }
 
 void NucleusEditor::DisplayChannelsMenu()
@@ -1794,7 +1916,7 @@ void NucleusEditor::stopEditing(void)
 {
 	setEditsEnabled(false);
 	setCommonEnabled(true);
-
+	
 	if(splitAction->isChecked())
 	{
 		segView->ClearGets();
@@ -1848,6 +1970,7 @@ void NucleusEditor::addCell(int x1, int y1, int x2, int y2, int z)
 	{
 		projectFiles.outputSaved = false;
 		projectFiles.tableSaved = false;
+		projectFiles.adjTablesSaved = false;
 		this->updateViews();
 		selection->select(id);
 
@@ -1872,8 +1995,22 @@ void NucleusEditor::deleteCells(void)
 	{
 		projectFiles.outputSaved = false;
 		projectFiles.tableSaved = false;
+		projectFiles.adjTablesSaved = false;
 		selection->clear();
 		this->updateViews();
+		for(int j=0; j<(int)ids.size(); ++j)
+		{
+			int ID = ids.at(j);
+			for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
+			{
+				if((NucAdjTable->GetValue(row,0).ToInt() == ID) || (NucAdjTable->GetValue(row,1).ToInt() == ID))
+				{
+					NucAdjTable->RemoveRow(row);
+					--row;
+				}
+			}
+		}
+		segView->SetNucAdjTable(NucAdjTable);
 
 		std::string log_entry = "DELETE , ";
 		for(int i=0; i<(int)ids.size(); ++i)
@@ -1891,13 +2028,15 @@ void NucleusEditor::mergeCells(void)
 	std::set<long int> sels = selection->getSelections();
 	std::vector<int> ids(sels.begin(), sels.end());
 	//int newObj = nucSeg->Merge(ids, table);
-	std::vector< std::vector<int> > new_grps = nucSeg->GroupMerge(ids, table);
+	std::vector< std::vector<int> > new_grps = nucSeg->GroupMerge(ids, table, NucAdjTable);
 	if(new_grps.size() != 0)
 	{
 		projectFiles.outputSaved = false;
 		projectFiles.tableSaved = false;
+		projectFiles.adjTablesSaved = false;
 		selection->clear();
 		this->updateViews();
+		segView->SetNucAdjTable(NucAdjTable);
 
 		for(int i=0; i<(int)new_grps.size(); ++i)
 		{
@@ -1915,17 +2054,20 @@ void NucleusEditor::mergeCells(void)
 	}
 }
 
+
 void NucleusEditor::splitCells(void)
 {
 	if(splitAction->isChecked())
 	{
 		segView->Get2Points();
+		segView->DoubleClicksOff();
 		connect(segView, SIGNAL(pointsClicked(int,int,int,int,int,int)), this, SLOT(splitCell(int,int,int,int,int,int)));
 	}
 	else
 	{
 		segView->ClearGets();
-		disconnect(segView, SIGNAL(pointsClicked(int,int,int,int,int,int)), this, SLOT(splitCell(int,int,int,int,int,int)));
+		segView->DoubleClicksOn();
+		disconnect(segView, SIGNAL(pointsClicked(int,int,int,int,int,int)), this, SLOT(splitCell(int,int,int,int,int,int)));	
 	}
 }
 
@@ -1944,11 +2086,12 @@ void NucleusEditor::splitCell(int x1, int y1, int z1, int x2, int y2, int z2)
 	P2.y=y2;
 	P2.z=z2;
 
-	std::vector<int> ret = nucSeg->Split(P1, P2, table);
+	std::vector<int> ret = nucSeg->Split(P1, P2, table, NucAdjTable);
 	if(ret.size() != 0)
 	{
 		projectFiles.outputSaved = false;
 		projectFiles.tableSaved = false;
+		projectFiles.adjTablesSaved = false;
 		selection->clear();
 		this->updateViews();
 
@@ -1985,6 +2128,7 @@ void NucleusEditor::splitCellAlongZ(void)
 		{
 			projectFiles.outputSaved = false;
 			projectFiles.tableSaved = false;
+			projectFiles.adjTablesSaved = false;
 
 			std::string log_entry = "SPLIT , ";
 			log_entry += ftk::NumToString(ret.at(0)) + " , ";
@@ -2049,6 +2193,7 @@ void NucleusEditor::applyExclusionMargin(void)
 	{
 		projectFiles.outputSaved = false;
 		projectFiles.tableSaved = false;
+		projectFiles.adjTablesSaved = false;
 		this->updateViews();
 
 		std::string log_entry = "EXCLUSION_MARGIN, ";
@@ -2259,14 +2404,21 @@ void NucleusEditor::process()
 		segView->SetLabelImage(labImg,selection);
 		this->updateNucSeg();
 		table = pProc->GetTable();
+		NucAdjTable = pProc->GetNucAdjTable();
+		segView->SetNucAdjTable(NucAdjTable);
 		projectFiles.outputSaved = false;
 		projectFiles.tableSaved = false;
+		projectFiles.adjTablesSaved = false;
 		projectFiles.definitionSaved = false;
 
 		processAbort->setEnabled(false);
 
 		if(pProc->DoneProcessing())
 		{
+			NucAdjTable = pProc->GetNucAdjTable();
+			segView->SetNucAdjTable(NucAdjTable);
+			CellAdjTable = pProc->GetCellAdjTable();
+			segView->SetCellAdjTable(CellAdjTable);
 			deleteProcess();
 		}
 		else
@@ -2287,7 +2439,12 @@ void NucleusEditor::process()
 		selection->clear();
 		projectFiles.outputSaved = false;
 		projectFiles.tableSaved = false;
+		projectFiles.adjTablesSaved = false;
 		projectFiles.definitionSaved = false;
+		NucAdjTable = pProc->GetNucAdjTable();
+		segView->SetNucAdjTable(NucAdjTable);
+		CellAdjTable = pProc->GetCellAdjTable();
+		segView->SetCellAdjTable(CellAdjTable);
 
 		deleteProcess();
 		this->updateNucSeg();
