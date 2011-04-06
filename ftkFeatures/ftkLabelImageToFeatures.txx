@@ -340,6 +340,14 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 }
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
+void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
+::GetAdjacency()
+{
+	RunLabelGeometryFilter();
+	LabelImageScan();
+}
+
+template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
 TLPixel LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 ::GetMaxLabel()
 {
