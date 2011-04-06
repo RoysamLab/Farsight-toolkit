@@ -139,6 +139,20 @@ ProjectFilenamesDialog::ProjectFilenamesDialog(ftk::ProjectFiles * files, QWidge
 	tLayout->addWidget(tableButton);
 	masterLayout->addLayout(tLayout);
 
+	QHBoxLayout *a_tLayout = new QHBoxLayout;
+	adjTablesLabel = new QLabel(tr("Adj_Tables: "));
+	adjTablesLabel->setFixedWidth(labelWidths);
+	adjTablesFile = new QLabel(QString::fromStdString(files->adjTables));
+	adjTablesFile->setFrameShadow(QFrame::Sunken);
+	adjTablesFile->setFrameShape(QFrame::StyledPanel);
+	adjTablesButton = new QPushButton(buttonText);
+	adjTablesButton->setVisible(false);
+	connect(adjTablesButton, SIGNAL(clicked()), this, SLOT(changeAdjTables()));
+	a_tLayout->addWidget(adjTablesLabel);
+	a_tLayout->addWidget(adjTablesFile);
+	a_tLayout->addWidget(adjTablesButton);
+	masterLayout->addLayout(a_tLayout);
+
 	masterLayout->addStretch(5);
 
 	QHBoxLayout *okLayout = new QHBoxLayout;
@@ -193,6 +207,7 @@ void ProjectFilenamesDialog::changePath(void)
 		pFiles->outputSaved = false;
 		pFiles->definitionSaved = false;
 		pFiles->tableSaved = false;
+		pFiles->adjTablesSaved = false;
 	}
 }
 
@@ -232,6 +247,7 @@ void ProjectFilenamesDialog::changeInput(void)
 		pFiles->outputSaved = false;
 		pFiles->definitionSaved = false;
 		pFiles->tableSaved = false;
+		pFiles->adjTablesSaved = false;
 	}
 }
 
@@ -259,6 +275,7 @@ void ProjectFilenamesDialog::changeOutput(void)
 		pFiles->outputSaved = false;
 		pFiles->definitionSaved = false;
 		pFiles->tableSaved = false;
+		pFiles->adjTablesSaved = false;
 	}
 }
 void ProjectFilenamesDialog::changeLog(void)
@@ -285,6 +302,7 @@ void ProjectFilenamesDialog::changeLog(void)
 		pFiles->outputSaved = false;
 		pFiles->definitionSaved = false;
 		pFiles->tableSaved = false;
+		pFiles->adjTablesSaved = false;
 	}
 }
 void ProjectFilenamesDialog::changeDefinition(void)
@@ -311,6 +329,7 @@ void ProjectFilenamesDialog::changeDefinition(void)
 		pFiles->outputSaved = false;
 		pFiles->definitionSaved = false;
 		pFiles->tableSaved = false;
+		pFiles->adjTablesSaved = false;
 	}
 }
 void ProjectFilenamesDialog::changeTable(void)
@@ -337,5 +356,34 @@ void ProjectFilenamesDialog::changeTable(void)
 		pFiles->outputSaved = false;
 		pFiles->definitionSaved = false;
 		pFiles->tableSaved = false;
+		pFiles->adjTablesSaved = false;
+	}
+}
+
+void ProjectFilenamesDialog::changeAdjTables(void)
+{
+	QString	filename = QFileDialog::getSaveFileName(this, tr("Save As..."),QString::fromStdString(pFiles->path), tr("Adj_Tables File(*.txt)"));
+	
+	if(filename == "")
+		return;
+
+	QString path = QFileInfo(filename).absolutePath() + QDir::separator();
+	QString name = QFileInfo(filename).fileName();
+
+	if(name != adjTablesFile->text())
+	{
+		inputFile->setText(name);
+		pFiles->input = name.toStdString();
+		pFiles->inputSaved = false;
+	}
+	if(path != inputPath->text())
+	{
+		inputPath->setText(path);
+		pFiles->path = path.toStdString();
+		pFiles->inputSaved = false;
+		pFiles->outputSaved = false;
+		pFiles->definitionSaved = false;
+		pFiles->tableSaved = false;
+		pFiles->adjTablesSaved = false;
 	}
 }
