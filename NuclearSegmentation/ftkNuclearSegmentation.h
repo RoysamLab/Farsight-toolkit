@@ -80,10 +80,10 @@ public:
 	//bool SaveLabelByClass();									//Will save a different label image for each class
 	
 	//Editing Functions 
-	std::vector< int > Split(ftk::Object::Point P1, ftk::Object::Point P2, vtkSmartPointer<vtkTable> table = NULL);
+	std::vector< int > Split(ftk::Object::Point P1, ftk::Object::Point P2, vtkSmartPointer<vtkTable> table = NULL, vtkSmartPointer<vtkTable> NucAdjTable = NULL);
 	std::vector< int > SplitAlongZ(int objID, int cutSlice, vtkSmartPointer<vtkTable> table = NULL);
-	std::vector< std::vector< int > > GroupMerge(vector<int> ids, vtkSmartPointer<vtkTable> table = NULL);
-	int Merge(vector<int> ids, vtkSmartPointer<vtkTable> table = NULL);
+	std::vector< std::vector< int > > GroupMerge(vector<int> ids, vtkSmartPointer<vtkTable> table = NULL, vtkSmartPointer<vtkTable> NucAdjTable = NULL);
+	int Merge(vector<int> ids, vtkSmartPointer<vtkTable> table = NULL, vtkSmartPointer<vtkTable> NucAdjTable = NULL);
 	bool Delete(vector<int> ids, vtkSmartPointer<vtkTable> table = NULL);
 	bool Exclude(int l, int r, int t, int b, int z1, int z2, vtkSmartPointer<vtkTable> table = NULL);
 	int AddObject(int x1, int y1, int z1, int x2, int y2, int z2, vtkSmartPointer<vtkTable> table = NULL);
@@ -143,7 +143,7 @@ protected:
 	//Editing Utilities:
 	long int maxID(void);										//Get the maximum ID in the table!
 	bool addObjectToMaps(int ID, int x1, int y1, int z1, int x2, int y2, int z2, vtkSmartPointer<vtkTable> table = NULL);
-	bool addObjectsToMaps(std::set<unsigned short> IDs, int x1, int y1, int z1, int x2, int y2, int z2, vtkSmartPointer<vtkTable> table = NULL);
+	bool addObjectsToMaps(std::set<unsigned short> IDs, int x1, int y1, int z1, int x2, int y2, int z2, vtkSmartPointer<vtkTable> table = NULL, vtkSmartPointer<vtkTable> NucAdjTable = NULL);
 	void removeObjectFromMaps(int ID, vtkSmartPointer<vtkTable> table);
 	//FeatureCalcType::Pointer computeGeometries(int x1, int y1, int z1, int x2, int y2, int z2);
 	void ReassignLabels(std::vector<int> fromIds, int toId);
