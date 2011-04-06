@@ -35,6 +35,8 @@ LabelImageViewQT::LabelImageViewQT(QMap<QString, QColor> * new_colorItemsMap, QW
 	labelImg = NULL;
 	centerMap = NULL;
 	bBoxMap = NULL;
+	NucTable = NULL;
+	CellTable = NULL;
 	
 	currentScale = 1;					//Image scaling and zooming variables:
 	ZoomInFactor = 1.25f;
@@ -57,6 +59,9 @@ LabelImageViewQT::LabelImageViewQT(QMap<QString, QColor> * new_colorItemsMap, QW
 	rubberBand = NULL;					//For drawing a box!!
 	pointsMode = false;					//For collecting points
 	roiMode = false;					//For drawing Region of Interest (ROI)
+	showNucAdj = false;
+	showCellAdj = false;
+	enableDoubleClicks = true;
 }
 
 void LabelImageViewQT::setupUI(void)
@@ -327,6 +332,18 @@ void LabelImageViewQT::SetCentroidsVisible(bool val)
 	refreshBoundsImage();
 }
 
+void LabelImageViewQT::SetNucAdjVisible(bool val)
+{
+	this->showNucAdj = val;
+	refreshBoundsImage();
+}
+
+void LabelImageViewQT::SetCellAdjVisible(bool val)
+{
+	this->showCellAdj = val;
+	refreshBoundsImage();
+}
+
 
 void LabelImageViewQT::SetCenterMapPointer(std::map<int, ftk::Object::Point> * cMap)
 {
@@ -558,7 +575,7 @@ void LabelImageViewQT::spinChange(int v)
 	refreshBoundsImage();
 }
 
-void LabelImageViewQT::update()
+void LabelImageViewQT::update(void)
 {
 	refreshBaseImage();
 	refreshBoundsImage();
@@ -659,6 +676,83 @@ void LabelImageViewQT::mousePressEvent(QMouseEvent *event)
 	{
 		//This shows the tooltip at the global position (screen coordinates)
 		QToolTip::showText(event->globalPos(), QString("ID: ") + QString::number(labelval) );
+	}
+}
+
+void LabelImageViewQT::mouseDoubleClickEvent(QMouseEvent *event)
+{
+	if(!enableDoubleClicks) return;
+	if(!showNucAdj) return;
+	if(!centerMap) return;
+	if(CellTable) return;
+	if(showCellAdj) return;
+
+	QPoint corner = scrollArea->pos();
+	origin = event->pos();				// This is this position in the whole widget
+
+	if(pointsMode) return;
+	if(roiMode) return;
+
+	selection->clear();
+
+	QPoint v_origin = origin - corner;	// This is a local position (in viewport coordinates)
+
+	const ftk::Image::Info *info;
+	if(channelImg)    info = channelImg->GetImageInfo();
+	else if(labelImg) info = labelImg->GetImageInfo();
+	else return;
+	int totalWidth = (*info).numColumns;
+	int totalHeight = (*info).numRows;
+	int numChannels = (*info).numChannels;
+	int currentT = hSpin->value();
+	int currentZ = vSpin->value();
+
+	//Compute value in image coordinates and make sure we click within the image:
+	int xx = (v_origin.x() + scrollArea->horizontalScrollBar()->value()) / currentScale;
+	int yy = (v_origin.y() + scrollArea->verticalScrollBar()->value()) / currentScale;
+	if( xx < 0 || yy < 0 || xx >= totalWidth || yy >= totalHeight )
+		return;
+
+	if(!labelImg) return;
+	int labelval = 0;
+	for(int ch=0; ch < numChannels; ++ch)
+	{
+		labelval = (int)labelImg->GetPixel(currentT, ch, currentZ, int(yy), int(xx));
+		if(labelval != 0) break;
+	}
+	if(labelval == 0) return;
+
+	Qt::MouseButton button = event->button();
+	Qt::KeyboardModifiers modifiers = event->modifiers();
+	if(button == Qt::LeftButton && modifiers == Qt::NoModifier)
+	{
+		int j = 0;
+		float ad[20]; ad[j] = 1e10;
+		for(int row=0; row<(int)NucTable->GetNumberOfRows(); ++row)
+		{
+			if((labelval==NucTable->GetValue(row,0).ToInt())||(labelval==NucTable->GetValue(row,1).ToInt()))
+			{
+				++j;
+				int adjval = NucTable->GetValue(row,1).ToInt();
+				if(labelval==NucTable->GetValue(row,1).ToInt())
+					adjval = NucTable->GetValue(row,0).ToInt();	
+				ftk::Object::Point src = (*centerMap)[labelval];
+				ftk::Object::Point trg = (*centerMap)[adjval];
+				ad[j] = perpDist(int(xx), int(yy), src.x, src.y, trg.x, trg.y);
+				std::cout<<ad[j]<<std::endl;
+				if(ad[j-1] < ad[j])
+					ad[j] = ad[j-1];
+				else 
+					selection->selectToMerge(adjval);
+			}
+		}
+		if(ad[j]<5.0)
+		{
+			selection->addToMerge(labelval);
+			emit autoMerge();
+		}
+		else
+			selection->clear();
 	}
 }
 
@@ -1042,6 +1136,8 @@ void LabelImageViewQT::refreshBoundsImage(void)
 	this->drawObjectCentroids(&painter);
 	this->drawSelectionCrosshairs(&painter);
 	this->drawROI(&painter);
+	this->drawNucAdjacency(&painter);
+	this->drawCellAdjacency(&painter);
 	this->repaint();
 }
 
@@ -1155,7 +1251,7 @@ void LabelImageViewQT::drawObjectCentroids(QPainter *painter)
 		QColor myColor2, myColor3, myColor4;
 		painter->setPen(Qt::black);
 		painter->setBrush(myColor1);
-
+		
 		ftk::Object::Point point = (*it).second;
 		if ( (currentZ == point.z) )
 		{
@@ -1203,6 +1299,42 @@ void LabelImageViewQT::drawSelectionCrosshairs(QPainter *painter)
 		painter->drawLine(0, center.y, w-1, center.y);
 	}
 
+}
+
+void LabelImageViewQT::drawNucAdjacency(QPainter *painter)
+{
+	if(!showNucAdj) return;
+	if(!NucTable) return;
+	if(!centerMap) return;
+		
+	std::map<int,ftk::Object::Point>::iterator src_it, trg_it;
+	for(int i=0; i<(int)NucTable->GetNumberOfRows(); ++i )
+	{
+		int src_id = NucTable->GetValue(i,0).ToInt();
+		int trg_id = NucTable->GetValue(i,1).ToInt();
+		ftk::Object::Point source = (*centerMap)[src_id];
+		ftk::Object::Point target = (*centerMap)[trg_id];
+		painter->setPen(Qt::green);
+		painter->drawLine(source.x, source.y, target.x, target.y);
+	}
+}
+
+void LabelImageViewQT::drawCellAdjacency(QPainter *painter)
+{
+	if(!showCellAdj) return;
+	if(!CellTable) return;
+	if(!centerMap) return;
+	
+	std::map<int,ftk::Object::Point>::iterator it;
+	for(int j=0; j<(int)CellTable->GetNumberOfRows(); ++j )
+	{
+		int src_id = CellTable->GetValue(j,0).ToInt();
+		int trg_id = CellTable->GetValue(j,1).ToInt();
+		ftk::Object::Point source = (*centerMap)[src_id];
+		ftk::Object::Point target = (*centerMap)[trg_id];
+		painter->setPen(Qt::green);
+		painter->drawLine(source.x, source.y, target.x, target.y);		
+	}
 }
 
 void LabelImageViewQT::drawROI(QPainter *painter)
@@ -1280,6 +1412,30 @@ QString LabelImageViewQT::GetColorNameFromTable( int class_num ){
 	else color_name = "No more colors";
 	return color_name;
 }
+
+float LabelImageViewQT::Distance(int x1, int y1, int x2, int y2)
+{  
+    int diffx = x1 - x2;
+    int diffy = y1 - y2;
+    int diffx_sqr = diffx * diffx;
+    int diffy_sqr = diffy * diffy;
+	int diff = diffx_sqr + diffy_sqr;
+    float distance = sqrt (static_cast<float>(diff) );
+	return distance;
+}
+
+float LabelImageViewQT::perpDist(int x1, int y1, int x2, int y2, int x3, int y3)
+{
+	float vs = Distance(x1, y1, x2, y2);
+	float vt = Distance(x1, y1, x3, y3);
+	float v = Distance(x2, y2, x3, y3);
+	if((vs>v)||(vt>v))
+		return 1e5;
+	float s = (vs+vt+v)/2;
+	float dist = (2/v) * sqrt(s*(s-vs)*(s-vt)*(s-v));
+	return dist;
+}
+
 
 /*
 void LabelImageViewQT::refreshFeatures(void)
