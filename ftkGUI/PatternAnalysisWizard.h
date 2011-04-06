@@ -81,6 +81,7 @@ protected:
 
 signals:
 	void changedTable(void);
+	void enableModels(void);
 
 private:
 	void initFeatureGroup(void);
