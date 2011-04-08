@@ -1,8 +1,4 @@
-include(${QT_USE_FILE})
-INCLUDE(${ITK_USE_FILE})
-INCLUDE(${VTK_USE_FILE})
-
-SET( Libraries
+SET( TracingSysLibraries
     ITKCommon
     ITKNumerics
     ITKStatistics
