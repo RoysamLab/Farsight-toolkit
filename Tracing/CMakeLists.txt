@@ -61,5 +61,5 @@ ENDIF()
 
 OPTION( BUILD_OPEN_SNAKE_TRACING "Build Open Snake Tracing System" ON )
 IF(BUILD_OPEN_SNAKE_TRACING)
-  SUBDIRS( OpenSnakeTracingSystem )
+  SUBDIRS( TheTracingSystem )
 ENDIF()
