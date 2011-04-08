@@ -904,7 +904,7 @@ General_Parameters2::General_Parameters2(const QString &title,
 
    tracing_models = new QComboBox;
    tracing_models->addItem(tr("3-D Open-Curve Snake"));
-   tracing_models->addItem(tr("4-D Open Snake(Region)"));
+   //tracing_models->addItem(tr("4-D Open Snake(Region)"));
 
    seed_expansion_methods = new QComboBox;
    //seed_expansion_methods->addItem(tr("Skeleton Expansion"));
