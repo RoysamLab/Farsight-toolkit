@@ -85,6 +85,37 @@ vtkSmartPointer<vtkTable> CellTraceModel::getDataTable()
 {
 	return this->DataTable;
 }
+
+vtkSmartPointer<vtkTable> CellTraceModel::getCellBoundsTable()
+{
+	vtkSmartPointer<vtkTable> CellBoundsTable = vtkSmartPointer<vtkTable>::New();
+	CellBoundsTable->Initialize();
+	std::vector<QString> BoundsHeaders;
+	BoundsHeaders.clear();
+	BoundsHeaders.push_back("Cell ID");
+	BoundsHeaders.push_back("Soma X");
+	BoundsHeaders.push_back("Soma Y");
+	BoundsHeaders.push_back("Soma Z");
+	BoundsHeaders.push_back("Min X");
+	BoundsHeaders.push_back("Max X");
+	BoundsHeaders.push_back("Min Y");
+	BoundsHeaders.push_back("Max Y");
+	BoundsHeaders.push_back("Min Z");
+	BoundsHeaders.push_back("Max Z");
+	int numHeaders = (int)BoundsHeaders.size();
+	vtkSmartPointer<vtkVariantArray> column = vtkSmartPointer<vtkVariantArray>::New();
+	for(int i=0; i < numHeaders; ++i)
+    {		
+		column = vtkSmartPointer<vtkVariantArray>::New();
+		column->SetName( BoundsHeaders.at(i).toStdString().c_str() );
+		CellBoundsTable->AddColumn(column);
+    }
+	for (int j = 0; j < (int) this->Cells.size(); j ++)
+	{
+		CellBoundsTable->InsertNextRow(this->Cells[j]->BoundsRow());
+	}
+	return CellBoundsTable;
+}
 ObjectSelection * CellTraceModel::GetObjectSelection()
 {
 	return this->Selection;
@@ -156,7 +187,7 @@ std::vector<CellTrace*> CellTraceModel::GetSelecectedCells()
 }
 int CellTraceModel::getCellCount()
 {
-	return this->Cells.size();
+	return (int) this->Cells.size();
 }
 CellTrace * CellTraceModel::GetCellAt( int i)
 {

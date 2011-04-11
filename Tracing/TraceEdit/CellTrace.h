@@ -30,6 +30,7 @@ public:
 	CellTrace(std::vector<TraceLine*> Segments);
 	void setTraces(std::vector<TraceLine*> Segments);
 	vtkSmartPointer<vtkVariantArray> DataRow();
+	vtkSmartPointer<vtkVariantArray> BoundsRow();
 	std::set<long int> TraceIDsInCell();
 	int rootID();
 	TraceLine * getRootTrace();

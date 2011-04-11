@@ -186,6 +186,22 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	//std::cout << this->FileName << std::endl;
 	return CellData;
 }
+vtkSmartPointer<vtkVariantArray> CellTrace::BoundsRow()
+{
+	// id, somaX somaY somaZ min/max xyz
+	vtkSmartPointer<vtkVariantArray> CellBoundsRow = vtkSmartPointer<vtkVariantArray>::New();
+	CellBoundsRow->InsertNextValue(this->segments[0]->GetId());
+	CellBoundsRow->InsertNextValue(this->somaX);
+	CellBoundsRow->InsertNextValue(this->somaY);
+	CellBoundsRow->InsertNextValue(this->somaZ);
+	CellBoundsRow->InsertNextValue(this->minX);
+	CellBoundsRow->InsertNextValue(this->maxX);
+	CellBoundsRow->InsertNextValue(this->minY);
+	CellBoundsRow->InsertNextValue(this->maxY);
+	CellBoundsRow->InsertNextValue(this->minZ);
+	CellBoundsRow->InsertNextValue(this->maxZ);
+	return CellBoundsRow;
+}
 std::set<long int> CellTrace::TraceIDsInCell()
 {
 	return this->IDs;

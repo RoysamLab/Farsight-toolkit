@@ -3181,7 +3181,7 @@ void View3D::SLine(double d)
 	this->flag=0;//statistics wont update after clear
 	this->TreeModel->GetObjectSelection()->clear();
 	this->tobj->FindMinLines((int) this->LineLengthField->value());
-	numLines= this->tobj->SmallLines.size();
+	numLines= (int) this->tobj->SmallLines.size();
 	this->flag=1;//now statistics will update
  ;
   }
@@ -3190,7 +3190,7 @@ void View3D::SLine(double d)
   {
 	this->TreeModel->GetObjectSelection()->clear();
 	this->tobj->FindMinLines((int) this->LineLengthField->value());
-	numLines= this->tobj->SmallLines.size();
+	numLines= (int) this->tobj->SmallLines.size();
   }
   this->TreeModel->SelectByIDs(this->tobj->SmallLines);
 }
@@ -3203,7 +3203,7 @@ void View3D::FakeSpines(double d)
 		this->flag=0;
 		this->TreeModel->GetObjectSelection()->clear();
 		this->tobj->FindFalseSpines((int) this->MaxSpineBit->value(), (int) this->MaxSpinePathLength->value());
-		numLines= this->tobj->FalseSpines.size();
+		numLines = (int) this->tobj->FalseSpines.size();
 		this->flag=1;
 	}
 
@@ -3211,7 +3211,7 @@ void View3D::FakeSpines(double d)
 	{
 		this->TreeModel->GetObjectSelection()->clear();
 		this->tobj->FindFalseSpines((int) this->MaxSpineBit->value(), (int) this->MaxSpinePathLength->value());
-		numLines= this->tobj->FalseSpines.size();
+		numLines = (int) this->tobj->FalseSpines.size();
 	}
   this->TreeModel->SelectByIDs(this->tobj->FalseSpines);
 }

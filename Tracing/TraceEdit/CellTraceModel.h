@@ -41,6 +41,7 @@ public:
 	~CellTraceModel();
 	void setCells(std::vector<CellTrace*> Cells);
 	vtkSmartPointer<vtkTable> getDataTable();
+	vtkSmartPointer<vtkTable> getCellBoundsTable();
 	ObjectSelection * GetObjectSelection();
 	void SelectByRootTrace(std::vector<TraceLine*> roots);
 	void SelectByIDs(std::vector<int> IDs);
