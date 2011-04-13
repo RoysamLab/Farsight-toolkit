@@ -1089,6 +1089,7 @@ void View3D::CreateGUIObjects()
 
 	this->CellAnalysis = new QAction("Cell Analysis", this->CentralWidget);
 	connect (this->CellAnalysis, SIGNAL(triggered()), this, SLOT(ShowCellAnalysis()));
+	this->CellAnalysis->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_C));
 // Lables for the status bar to show edit counts
 	this->SplitLabel = new QLabel(this);
 	this->SplitLabel->setText(QString::number(this->numSplit));
@@ -2100,10 +2101,11 @@ void View3D::Rerender()
 	this->MergeLabel->setText(QString::number(this->numMerged));
 	this->DeleteLabel->setText(QString::number(this->numDeleted));
 	this->BranchesLabel->setText(QString::number(this->tobj->BranchPoints.size()));
-	//if(this->FL_MeasurePlot && this->FL_MeasureTable)
-	//{
-	//	this->ShowCellAnalysis();
-	//}//end if has cell calculations
+	if(this->FL_MeasurePlot || this->FL_MeasureTable)
+	{
+		std::vector<CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
+		this->CellModel->setCells(NewCells);
+	}//end if has cell calculations
 	if(this->FL_MeasurePlot)
 	{
 		this->FL_MeasurePlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
@@ -4210,6 +4212,7 @@ void View3D::saveRenderWindow(const char *filename)
 {
 	this->WindowToImage = vtkSmartPointer<vtkWindowToImageFilter>::New();
 	this->WindowToImage->SetInput(this->QVTK->GetRenderWindow());
+	this->WindowToImage->SetMagnification(2);
 	this->JPEGWriter = vtkSmartPointer<vtkJPEGWriter>::New();
 	this->JPEGWriter->SetInput(this->WindowToImage->GetOutput());
 	this->JPEGWriter->SetFileName(filename);
