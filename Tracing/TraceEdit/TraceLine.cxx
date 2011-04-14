@@ -657,6 +657,47 @@ char * TraceLine::GetFileName()
 	return this->FileName;
 	//std::cout<< "traceline get filename " << this->FileName << std::endl;
 }
+void TraceLine::getEndPtBounds(double bounds[])
+{
+	//x
+	if ( this->m_trace_bits.front().x < this->m_trace_bits.back().x)
+	{
+		bounds[0] = this->m_trace_bits.front().x;
+		bounds[1] = this->m_trace_bits.back().x;
+	}
+	else
+	{
+		bounds[1] = this->m_trace_bits.front().x;
+		bounds[0] = this->m_trace_bits.back().x;
+	}
+	//y
+	if ( this->m_trace_bits.front().y < this->m_trace_bits.back().y)
+	{
+		bounds[2] = this->m_trace_bits.front().y;
+		bounds[3] = this->m_trace_bits.back().y;
+	}
+	else
+	{
+		bounds[3] = this->m_trace_bits.front().y;
+		bounds[2] = this->m_trace_bits.back().y;
+	}
+	//z
+	if ( this->m_trace_bits.front().z < this->m_trace_bits.back().z)
+	{
+		bounds[4] = this->m_trace_bits.front().z;
+		bounds[5] = this->m_trace_bits.back().z;
+	}
+	else
+	{
+		bounds[5] = this->m_trace_bits.front().z;
+		bounds[4] = this->m_trace_bits.back().z;
+	}
+	//debug
+	for (int i = 0; i < 6; i++)
+	{
+		std::cout<< i <<" Value " << bounds[i];
+	}
+}
 std::string TraceLine::stats()
 {
 	std::stringstream thisStats;

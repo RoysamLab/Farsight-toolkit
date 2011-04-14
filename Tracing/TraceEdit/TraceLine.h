@@ -96,6 +96,7 @@ public:
 	bool Orient(TraceBit bit);
 	void SetFileName(char * newFileName);
 	char * GetFileName();
+	void getEndPtBounds(double bounds[]);
 	std::string stats();	
 	std::string statHeaders();
 

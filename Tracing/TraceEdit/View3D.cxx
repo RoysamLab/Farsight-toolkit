@@ -1527,6 +1527,7 @@ void View3D::raycastToSlicer()
 void View3D::focusOn()
 {
 	std::vector<CellTrace*> cellsSelected = this->CellModel->GetSelecectedCells();
+	std::vector<TraceLine*> traceSelected = this->TreeModel->GetSelectedTraces();
 	if (cellsSelected.size() >=1)
 	{
 		this->FocusOnCell(cellsSelected.back());
@@ -1536,6 +1537,12 @@ void View3D::focusOn()
 		double newPT[3];
 		this->pointer3d->GetPosition(newPT);
 		this->setRenderFocus(newPT, 3);
+	}
+	else if (traceSelected.size() >= 1)
+	{
+		double traceBounds[6];
+		traceSelected.back()->getEndPtBounds(traceBounds);
+		this->setRenderFocus(traceBounds, 6);
 	}
 	else
 	{
