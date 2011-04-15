@@ -333,6 +333,83 @@ void yousef_nucleus_seg::runSeedDetection()
 	}
 }
 
+
+
+
+
+void yousef_nucleus_seg::runSeedDetection(int minScale,int maxScale)
+{
+	//Check for required images
+	if ( !dataImagePtr || !binImagePtr )
+		return;
+
+	//Now clear all subsequent variables
+	clearSeedImagePtr();
+	clearLogImagePtr();
+	clearClustImagePtr();
+	clearSegImagePtr();
+	mySeeds.clear();
+	
+	scaleMin = static_cast<double>(minScale);
+	scaleMax = static_cast<double>(maxScale);
+	autoParamEstimation = false;
+	//allocate space for the binary image of seed points
+	//allocate inside the 3-D seeds detection function in order to save memory for the intermediate steps
+	//seedImagePtr = 0;
+	//seedImagePtr = new unsigned short[numStacks*numRows*numColumns];
+	
+	//copy the binary image into the seeds image for now
+	//memcpy(seedImagePtr/*destination*/, binImagePtr/*source*/, numStacks*numRows*numColumns*sizeof(int)/*num bytes to move*/);
+
+	//need to pass a float pointer with input image in it, so create it here
+	float *imgPtr = new float[numStacks*numRows*numColumns];
+	ucharToFloat(dataImagePtr /*from*/, imgPtr /*to*/, numRows, numColumns, numStacks, 1 /*invert*/);
+	//ushortToFloat(binImagePtr /*from*/, imgPtr /*to*/, numRows, numColumns, numStacks, 1 /*invert*/);
+
+	//allocate space for the laplacian of gaussian
+	//allocate inside the 3-D seeds detection function in order to save memory for the intermediate steps
+	//logImagePtr = new float[numStacks*numRows*numColumns];
+	
+	//Now do seed detection
+	int ok = 0;
+	if (numStacks == 1)
+	{		
+		seedImagePtr = new unsigned short[numStacks*numRows*numColumns];		
+		logImagePtr = new float[numStacks*numRows*numColumns];
+		ok = detectSeeds2D( imgPtr, logImagePtr, seedImagePtr, numRows, numColumns, &scaleMin, &scaleMax, &regionXY, binImagePtr, autoParamEstimation );		
+	}
+	else
+	{	
+		minLoGImg = 10000;
+		ok = Seeds_Detection_3D( imgPtr, &logImagePtr, &seedImagePtr, numRows, numColumns, numStacks, &scaleMin, &scaleMax, &regionXY, &regionZ, getSamplingRatio(), binImagePtr, useDistMap, &minLoGImg, autoParamEstimation );						
+	}		
+	delete [] imgPtr;	//cleanup
+	if(!ok)
+		cerr << "Seed detection Failed!!" << endl;
+	else
+		//Make sure all seeds are in foreground and extract vector of seeds
+    //cout << "zackdebug: extracing seeds" << endl;
+		ExtractSeeds();
+	//added by Yousef on 9/2/2009
+	//In case we did parameter estimation, write the parameters into a file
+	if(autoParamEstimation)
+	{
+		//Write the automatically estimated parameters into a file
+    //cout << "zackdebug: writing parameters to file" << endl;
+		//writeParametersToFile();
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
 void yousef_nucleus_seg::runClustering()
 {
 	//fitMixGaussians();
