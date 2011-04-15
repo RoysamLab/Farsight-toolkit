@@ -75,6 +75,10 @@
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkRegionOfInterestImageFilter.h"
 
+
+#include "itkConnectedComponentImageFilter.h"
+#include "itkRelabelComponentImageFilter.h"
+
 #include <vtkSmartPointer.h>
 #include <vtkDoubleArray.h>
 #include <vtkVariantArray.h>
@@ -163,6 +167,8 @@ public:
 	void PerformPCA();
 	void model_nucleus_seg::Tset2EigenSpace(vnl_matrix<double> nFeats,vnl_matrix<double> Feats);
 	inline int getasscofeatnumb() { return NUM_ASSOC_FEAT;};
+		
+
 
 	void Associations(char* xmlImage,char* projDef);
 	std::vector < std::vector<double> > ComputeAssociations(void);
@@ -214,10 +220,12 @@ public:
 	unsigned short model_nucleus_seg::returnthresh( OutputImageType::Pointer input_image, int num_bin_levs, int num_in_fg );
 	bool LoadSegParams(std::string filename);
 	int GetYousefSeg();
+	void RemoveSmallComponents(int minObjSize,const char* x);	
 
 	double MAX_VOL;
 	int MAX_DEPTH;
 	double WC_DEFAULT;
+	int SPLIT;
 
 	int splitflag;
 	
@@ -239,11 +247,7 @@ private:
 	std::vector<double **> train4class;
 	std::vector<double> prior;
 	
-	 int convexityIndex;
-	 int sbIndex;
-	 int volIndex;
-	 int eccIndex;
-
+	 
 
 	std::vector<OutputImageType::Pointer> li;
 	std::vector<InputImageType::Pointer> ri;
@@ -259,6 +263,11 @@ private:
 	int NUM_COMP;
 	int NUM_FEAT;
 	int NUM_CLASS;
+
+	
+	
+	int minScale;
+	int maxScale;
 
 	unsigned short maxlabel;
 	double medianScore;
