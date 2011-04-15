@@ -118,6 +118,7 @@ model_nucleus_seg::model_nucleus_seg()
 	MAX_VOL = 1e5;
 	MAX_DEPTH = 6;
 	WC_DEFAULT = 5.; //WC_DEFAULT is used in calc scores: libagf parameter
+	SPLIT = 0;
 	globalcount = 0;
 	splitflag = 0;
 	maxL = 0;
@@ -164,20 +165,24 @@ void model_nucleus_seg::SetTrainingFile(char* fname)
 	// Calculate the (Avg Volume - 1*Std of vol ) for each class
 	//This will be useful for constructing trees.
 	calcvolLimits(Feats);
+	
+	//Normalize the features
 	normFeats = this->normTrSet(fname,inputDimensions); 
+	
+	//Compute the sample covariance matrix
 	vnl_matrix<double> normFeats_tr = normFeats.transpose();// Feats * Samples matrix
 	vnl_matrix<double> covMat = normFeats_tr*normFeats/(normFeats.rows()); // Feats * Feats matrix
 	
-
+	//Compute the eigen vectors of the covariance matrix
 	vnl_real_eigensystem eig(covMat);
 	std::vector<double> currvec;
 	currvec.resize(inputDimensions);
 	eigenvecs.resize(this->NUM_COMP);
 
+
 	for(int i = 0; i < this->NUM_COMP; i++)
 	{
 		double den = 0;
-
 		for(int j = 0; j < inputDimensions; j++)
 		{	
 			currvec[j] = eig.V(i,j).real() ;
@@ -188,17 +193,14 @@ void model_nucleus_seg::SetTrainingFile(char* fname)
 		for(int j = 0; j < inputDimensions; j++)
 		{	
 			currvec[j] = currvec[j]/sqrt(den);
-			//std::cout<< currvec[j] << " " ;
 		}
-		//std::cout<<eig.D(i,i)<<std::endl;
+
 		eigenvecs[i] = currvec;
 		currvec.clear();
 		currvec.resize(inputDimensions);
 	}
-
 	Tset2EigenSpace(normFeats,Feats);
 	getFeatureNames(fname); //get the feature names used in this model
-	//GetIndices();
 }		
 
 
@@ -230,11 +232,12 @@ void model_nucleus_seg::calcvolLimits(vnl_matrix<double> feats)
 		volLimit[r] = stats[0]-(1*stats[1]); 
 
 		if(volLimit[r] < 0 )
-			volLimit[r] = stats[0];
+			volLimit[r] = stats[0]; 
 	}
 }
-	
-		
+
+
+// Calulates the mean and standard deviation of the elements of a vector
 std::vector<double> model_nucleus_seg::calcStats(std::vector<double> classVol)
 {
 	double sum =0;
@@ -246,7 +249,6 @@ std::vector<double> model_nucleus_seg::calcStats(std::vector<double> classVol)
 	}
 
 	double mu = sum/classVol.size();
-	
 	sum = 0;
 
 	for(int j =0;j<classVol.size();++j)
@@ -258,11 +260,10 @@ std::vector<double> model_nucleus_seg::calcStats(std::vector<double> classVol)
 	double std = sum/classVol.size();
 	stats[0] = mu;
 	stats[1] = std;
-
 	return stats;
 }
 
-
+// Get the Feature names which are used in the model
 void model_nucleus_seg::getFeatureNames(char* fname)
 {
 	vtkSmartPointer<vtkTable> model_table;
@@ -276,6 +277,7 @@ void model_nucleus_seg::getFeatureNames(char* fname)
 }
 
 
+//Compute the assoications
 void model_nucleus_seg::Associations(char* xmlImage,char* projDef )
 {	
 	allFeat.clear();
@@ -292,7 +294,6 @@ void model_nucleus_seg::Associations(char* xmlImage,char* projDef )
 	maxL = labels.size()-1;
 
 	getFeatureVectorsFarsight(bImage,inputImage,allFeat);
-	
 	labelIndex.resize(allFeat.size());	
 	
 	for(int counter=0; counter < allFeat.size(); counter++)
@@ -306,7 +307,7 @@ void model_nucleus_seg::Associations(char* xmlImage,char* projDef )
 }
 
 
-
+// COmpute associations if the splitting has been performed
 void model_nucleus_seg::splitAssociations()
 {	
 	AssocFeat.clear();
@@ -335,13 +336,13 @@ std::vector<unsigned short> model_nucleus_seg::Detect_undersegmented_cells()
 	bImage = relabel->GetOutput();
 	//////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
-	//////////////////////////////////////////////////////////////////////////////////////////////////////	
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////	
 	// Run SVM : DETECT THE OBJECTS THAT ARE UNDERSEGMENTED
 	//////////////////////////////////////////////////////////////////////////////////////////////////////
 	std::vector<unsigned short> outliers = runSVM(this->gettrainFeats(),labFilter);
 	std::cout<< outliers.size() <<" ---- cells are undersegmented " <<std::endl;
+	
 	return outliers;
 }	
 
@@ -369,6 +370,11 @@ model_nucleus_seg::FeaturesType model_nucleus_seg::get_merged_features(set<int> 
 
 	int lbounds[6] = { 100000 , -100000, 100000 , -100000 , 100000 , -100000 };
 	int ctr = 0;
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+// Get the Bounding boxes
 
 	for(; RPSIterator != currRPS.end(); ++RPSIterator)
 	{
@@ -409,7 +415,7 @@ model_nucleus_seg::FeaturesType model_nucleus_seg::get_merged_features(set<int> 
 
 		++ctr;
 	}	  
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	OutputImageType::SizeType ls;
 	ls[0] = lbounds[1]-lbounds[0]+1;
@@ -444,13 +450,11 @@ model_nucleus_seg::FeaturesType model_nucleus_seg::get_merged_features(set<int> 
 	{
 		vector<unsigned short>::iterator posn1 = find(labelIndex.begin(), labelIndex.end(), *RPSIterator);		
 		currlabs[ctr1] = allFeat[posn1 - labelIndex.begin()].num;
-	//	std::cout<<currlabs[ctr1]<<" ";
 		ctr1++;
 	}
-	//std::cout<<std::endl;
+
 
 	RPSIterator = currRPS.begin();
-
 
 	for(; RPSIterator != currRPS.end(); ++RPSIterator)
 	{
@@ -458,7 +462,7 @@ model_nucleus_seg::FeaturesType model_nucleus_seg::get_merged_features(set<int> 
 		OutputImageType::Pointer lbl;
 		InputImageType::Pointer raw;		
 		std::vector<unsigned short>::iterator posn1 = find(labelIndex.begin(), labelIndex.end(), *RPSIterator);		
-
+		
 		lbl = sli[counter];
 		raw = sri[counter];
 
@@ -517,7 +521,6 @@ model_nucleus_seg::FeaturesType model_nucleus_seg::get_merged_features(set<int> 
 		}
 	}		
 	return f;
-
 }		
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -538,11 +541,10 @@ void model_nucleus_seg::GetFeatsnImages()
 	labFilter->ComputeHistogramOn();
 	labFilter->Update();
 	labels = labFilter->GetLabels();
-
+	
 	getFeatureVectorsFarsight(bImage,inputImage,allFeat);
-	
-	
 	labelIndex.resize(allFeat.size());	
+	
 	for(int counter=0; counter < allFeat.size(); counter++)
 	{	
 		li.push_back(model_nucleus_seg::extract_label_image(allFeat[counter].num,allFeat[counter].BoundingBox,bImage));
@@ -1032,7 +1034,6 @@ void model_nucleus_seg::GetScoresfromKPLS(ftkgnt::MTreeType mTree)
 			mhmBRows.clear();	
 			mhmRows.resize(allFeat.size());		 
 			mhmBRows.resize(allFeat.size());
-			//cout<<"\rEvaluating Hypothesis "<<hypoMatrix.size();
 		}
 		counter = counter +1;
 	}
@@ -1142,10 +1143,31 @@ void model_nucleus_seg::PerformMerges(const char* x)
 
 		std::cout<<""<<std::endl;
 	}
-
-	
 	writeImage<OutputImageType>(clonedImage,x);
 }
+
+
+
+//void model_nucleus_seg::RemoveSmallComponents(int minObjSize,const char* x)
+//{
+//	typedef itk::RelabelComponentImageFilter< OutputImageType, OutputImageType > RelabelFilterType;
+//	RelabelFilterType::Pointer relabel = RelabelFilterType::New();
+//	relabel->SetInput( this->clonedImage );
+//	relabel->SetMinimumObjectSize( minObjSize );
+//	relabel->InPlaceOn();
+//
+//	try
+//    {
+//		relabel->Update();
+//    }
+//    catch( itk::ExceptionObject & excep )
+//    {
+//		std::cerr << "Relabel: exception caught !" << std::endl;
+//		std::cerr << excep << std::endl;
+//		return;
+//    }
+//	writeImage<OutputImageType>(relabel->GetOutput(),x);
+//}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1195,6 +1217,10 @@ int model_nucleus_seg::GetYousefSeg()
 	NucleusSeg->runClustering();
 	NucleusSeg->runAlphaExpansion();
 	output_img=NucleusSeg->getSegImage();
+
+
+	 this->minScale = NucleusSeg->getScaleMin();
+	 this->maxScale = NucleusSeg->getScaleMax();
 
 	IteratorType biterator(bImage,bImage->GetRequestedRegion());
 	for(unsigned int i=0; i<size[0]*size[1]*size[2]; i++)
@@ -1359,13 +1385,17 @@ std::vector<double> model_nucleus_seg::GetOriginalScores()
 	objectFeatures.clear();
 	objectFeatures.resize(allFeat.size());
 
-	objectFeatures = GetFeaturesOriginal();
+	std::cout<< "Computing Original Features" <<std::endl;
+	objectFeatures = GetFeaturesOriginal();	
 	myscore.resize(objectFeatures.size());		
 
 	int counter = 0;
 
 	double **test;
 	test = (double **) malloc(1*sizeof(double *));
+
+	std::cout<< "Finished Computing Original Features" <<std::endl;
+
 
 	for(int g=0; g < allFeat.size() ; g++)
 	{
@@ -1378,8 +1408,10 @@ std::vector<double> model_nucleus_seg::GetOriginalScores()
 		double currVol = allFeat[g].ScalarFeatures[ftk::IntrinsicFeatures::VOLUME];
 		double eccen = allFeat[g].ScalarFeatures[ftk::IntrinsicFeatures::ECCENTRICITY];
 		double sb = allFeat[g].ScalarFeatures[ftk::IntrinsicFeatures::SHARED_BOUNDARY];
-	
 
+
+
+		
 		if(!NUM_ASSOC_FEAT)
 		{
 			for(int c=0; c< NUM_FEAT; ++c)
@@ -1417,6 +1449,8 @@ std::vector<double> model_nucleus_seg::GetOriginalScores()
 
 		vector<double>::iterator posn = std::max_element (scores1.begin(), scores1.end());		
 		int currclass = (scores1.size()- (posn - scores1.begin()));		
+		
+		
 
 		for(int i=0; i<NUM_COMP;++i)
 		{
@@ -1431,6 +1465,7 @@ std::vector<double> model_nucleus_seg::GetOriginalScores()
 			boolMergeTree.push_back(id);
 		}
 
+		
 		//Format the data to input it to LibAGF	
 		train4class = PrepareDataforScores(kpls->myData_dup,kpls->num_classes,kpls->myKnownClass);
 
@@ -1439,7 +1474,6 @@ std::vector<double> model_nucleus_seg::GetOriginalScores()
 
 		//	Calculate the generative model score ! 
 		myscore[g]  =  CalcGenModelScore(train,	classes2.size(),NUM_COMP,(long)1,test)*prior[currclass-1];	
-		//std::cout<<myscore[g]<<std::endl;
 		counter = counter +1;	
 	}
 
@@ -1490,6 +1524,33 @@ void model_nucleus_seg::DispScores(std::vector<double> scores)
 //****************************************************************************
 std::vector<unsigned short> model_nucleus_seg::runSVM(vnl_matrix<double> feats,model_nucleus_seg::FeatureCalcType* filter)
 {
+	// Get all the samples of individual classes into a matrix and
+	// store the matrices in a vector featsbyClass
+	
+	std::vector< vnl_matrix<double> > FeatsbyClass;
+	//FeatsbyClass.resize(NUM_CLASS);
+	
+
+	for(unsigned int classnumb=0; classnumb < NUM_CLASS; ++classnumb)
+	{
+		vnl_matrix<double> temp_Matrix(10000,NUM_FEAT+NUM_ASSOC_FEAT);
+		int rowcounter = 0;
+		for(unsigned int r=0; r<feats.rows(); ++r)
+			{
+				vnl_vector<double> temp_row = feats.get_row(r);
+				//(temp_row.get(temp_row.size()-2)) gives the class
+				if(temp_row.get(temp_row.size()-2) == classnumb+1) // since classIndex starts from 1 and not 0
+				{
+					for(unsigned int featcount=0; featcount<NUM_FEAT+NUM_ASSOC_FEAT; ++featcount)
+						temp_Matrix(rowcounter,featcount) = temp_row(featcount);  
+					rowcounter++;
+				}
+			}
+
+		FeatsbyClass.push_back(temp_Matrix.get_n_rows(0,rowcounter-1));
+	}
+	
+	
 	double nu = 0.1;
 	double vol;
 
@@ -1513,7 +1574,8 @@ std::vector<unsigned short> model_nucleus_seg::runSVM(vnl_matrix<double> feats,m
 	double lower = -1;
 	double desired_range = upper-lower;
 
-
+	
+	
 	//Get the volumes for each class and the max/min values of features
 	// for normalization
 	for(unsigned int r=0; r< myrows; ++r)
@@ -1523,76 +1585,29 @@ std::vector<unsigned short> model_nucleus_seg::runSVM(vnl_matrix<double> feats,m
 			val = feats(r,c);
 			f_max.at(c) = val > f_max.at(c) ? val : f_max.at(c);
 			f_min.at(c) = val < f_min.at(c) ? val : f_min.at(c);
-			//std::cout<<val<<" ";
 		}
-		//std::cout<<""<<std::endl;
+
 	}
 
-	//getch();
-
-	for(unsigned int r=0; r< myrows; ++r)
+	
+	//Normalize the rows 
+	for(unsigned int classnumb=0; classnumb < NUM_CLASS; ++classnumb)
 	{
-		for(int c=0; c < mycols ; ++c) // Edit
+		vnl_matrix<double> temp_Matrix = FeatsbyClass[classnumb];
+		for(unsigned int r=0; r<temp_Matrix.rows(); ++r)
 		{
-			double oldval = feats(r,c);
-			feats(r,c) = lower + desired_range * (oldval - f_min.at(c)) / (f_max.at(c) - f_min.at(c));
+			for(int c=0; c < mycols ; ++c) // Edit
+			{	
+				double oldval = temp_Matrix(r,c);
+				temp_Matrix(r,c) = lower + desired_range * (oldval - f_min.at(c)) / (f_max.at(c) - f_min.at(c));
+			}
+			FeatsbyClass[classnumb] = temp_Matrix;
 		}
 	}
-
-
-	//Create the libSVM problem:
-#define Malloc(type,n) (type *)malloc((n)*sizeof(type))
-	struct svm_problem prob;
-
-	prob.l = myrows;                    //Number of objects
-	prob.y = Malloc(double,prob.l);                    //Array Containing target values (unknowns)
-	prob.x = Malloc(struct svm_node *,prob.l);        //Array of Pointers to Nodes
-
-	for(int r=0; r<prob.l; ++r)
-	{
-		prob.y[r] = 1;                                //This is the label (target) and it is unknown
-
-		struct svm_node *x_space = Malloc(struct svm_node, mycols+1);    //Individual node -> Volume + Intensity + Class = 3 cols
-
-		for(int c=0; c< mycols ; ++c)
-		{
-			x_space[c].index = c+1;
-			x_space[c].value = feats(r,c);
-		}
-		x_space[mycols].index = -1;
-		prob.x[r] = &x_space[0];    //Point to this new set of nodes.
-	}
-
-	//Set the Parameters
-	struct svm_parameter param;
-	param.svm_type = ONE_CLASS;
-	param.kernel_type = RBF;
-	param.degree = 3;
-	param.gamma = 1.0/double(prob.l);    // 1/k
-	//param.gamma = 1;
-	param.coef0 = 0;
-	//param.nu = 0.1;
-	param.nu = nu;
-	param.cache_size = 100;
-	param.C = 1;
-	param.eps = .001;
-	param.p = 0.1;
-	param.shrinking = 1;
-	param.probability = 0;
-	param.nr_weight = 0;
-	param.weight_label = NULL;
-	param.weight = NULL;
-
-	//Now train
-	struct svm_model *m_svm_model;
-	m_svm_model = svm_train(&prob,&param);
-
-	svm_destroy_param(&param);
-	free(prob.y);
-	free(prob.x);
 
 
 	//Predict:
+
 	std::vector<unsigned short> outliers;
 	std::vector< FeatureCalcType::LabelPixelType > labels = filter->GetLabels();
 	objfeatures.resize(labels.size()-1);
@@ -1649,38 +1664,119 @@ std::vector<unsigned short> model_nucleus_seg::runSVM(vnl_matrix<double> feats,m
 			objfeatures.at(r).at(c) = lower + desired_range * (oldval - f_min.at(c)) / (f_max.at(c) - f_min.at(c));
 		}
 	}
+	
+
+	
+
+		//Create the libSVM problem:
+#define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 
 
-	prob.l = (int)objfeatures.size();                    //Number of objects
-	prob.y = Malloc(double,prob.l);                    //Array Containing target values (unknowns)
-	prob.x = Malloc(struct svm_node *,prob.l);        //Array of Pointers to Nodes
-
-
-	for(int r=0; r<prob.l; r++)
+	// Will store 1 in the column if the id ( nucleus ) is an outlier corresponding to this model
+	// rows of the matrix correspond to different ids
+	vnl_matrix<int> id_outlier(objfeatures.size(),NUM_CLASS);
+		
+	for(unsigned int classnumb=0; classnumb < NUM_CLASS; ++classnumb)
 	{	
-		struct svm_node *x = Malloc(struct svm_node,mycols);            //Individual node
-		for(int c=0; c < mycols; ++c)
-		{
-			x[c].index = c+1;
-			x[c].value = objfeatures.at(r).at(c);
-		}
-		x[mycols].index = -1;
 
-		double currVol = x[0].value;
-		//currVol
-		double v = svm_predict(m_svm_model,x);
-		//free(prob.y);
-		//free(prob.x);
-		//free(x);		
+		struct svm_problem prob;
+		vnl_matrix<double> Feats_classnumb = FeatsbyClass[classnumb];
+		prob.l = Feats_classnumb.rows();                    //Number of objects
+		prob.y = Malloc(double,prob.l);                    //Array Containing target values (unknowns)
+		prob.x = Malloc(struct svm_node *,prob.l);        //Array of Pointers to Nodes
 
-		if( v == -1 && currVol > 1)
+		for(int r=0; r<prob.l; ++r)
 		{
-			outliers.push_back(labels.at(r+1));
-			std::cout << labels.at(r+1) << "  is an outlier" <<std::endl;
+			prob.y[r] = 1;                                //This is the label (target) and it is unknown
+
+			struct svm_node *x_space = Malloc(struct svm_node, mycols+1);    //Individual node -> Volume + Intensity + Class = 3 cols
+
+			for(int c=0; c< mycols ; ++c)
+			{
+				x_space[c].index = c+1;
+				x_space[c].value = Feats_classnumb(r,c);
+			}
+			x_space[mycols].index = -1;
+			prob.x[r] = &x_space[0];    //Point to this new set of nodes.
 		}
+
+		//Set the Parameters
+		struct svm_parameter param;
+		param.svm_type = ONE_CLASS;
+		param.kernel_type = RBF;
+		param.degree = 3;
+		param.gamma = 1.0/double(prob.l);    // 1/k
+		//param.gamma = 1;
+		param.coef0 = 0;
+		//param.nu = 0.1;
+		param.nu = nu;
+		param.cache_size = 100;
+		param.C = 1;
+		param.eps = .001;
+		param.p = 0.1;
+		param.shrinking = 1;
+		param.probability = 0;
+		param.nr_weight = 0;
+		param.weight_label = NULL;
+		param.weight = NULL;
+
+		//Now train
+		struct svm_model *m_svm_model;
+		m_svm_model = svm_train(&prob,&param);
+
+		svm_destroy_param(&param);
+		free(prob.y);
+		free(prob.x);
+
+
+		prob.l = (int)objfeatures.size();                    //Number of objects
+		prob.y = Malloc(double,prob.l);                    //Array Containing target values (unknowns)
+		prob.x = Malloc(struct svm_node *,prob.l);        //Array of Pointers to Nodes
+
+
+		for(int r=0; r<prob.l; r++)
+		{	
+			int outlierFlag = 1;
+			struct svm_node *x = Malloc(struct svm_node,mycols);            //Individual node
+
+			for(int c=0; c < mycols; ++c)
+			{
+				x[c].index = c+1;
+				x[c].value = objfeatures.at(r).at(c);
+			}
+			x[mycols].index = -1;
+
+			double currVol = x[0].value; // current volume
+			double v = svm_predict(m_svm_model,x);
+
+			if(v ==-1 && currVol>1)
+				id_outlier(r,classnumb) = 1;	
+		}
+
 	}
 
-	svm_destroy_model(m_svm_model);
+	
+	for(unsigned int r=0; r< id_outlier.rows(); ++r)
+	{	
+		int outlierflag = 1;
+		for(int c=0; c < id_outlier.cols() ; ++c) // Edit
+		{	
+			int x123 = id_outlier(r,c);
+			if(x123!=1)
+			{
+				outlierflag = 0;
+				break;
+			}
+		}
+		if(outlierflag==1)
+		{
+			std::cout<<labels.at(r+1)<< " is an outlier"<<std::endl;
+			outliers.push_back(labels.at(r+1));
+		}
+
+	}
+
+	//svm_destroy_model(m_svm_model);
 	return outliers;
 }
 
@@ -1764,7 +1860,6 @@ model_nucleus_seg::OutputImageType::Pointer model_nucleus_seg::SplitImage(std::v
 		// This function shatters the neculei into small fragments
 		// which can later be merged.
 		pasteImage = Shatter_Nuclei(roiImage,&maxLabel);
-
 		IteratorType piterator(pasteImage,pasteImage->GetRequestedRegion());
 
 		//Reset the background pixels in pasteImage to "background" pixels in the original segmented image
@@ -1787,8 +1882,9 @@ model_nucleus_seg::OutputImageType::Pointer model_nucleus_seg::SplitImage(std::v
 		pfilter->SetSourceRegion(pasteImage->GetLargestPossibleRegion());
 		pfilter->Update();
 		limage = pfilter->GetOutput();
+
 	}		
-	
+
 	return limage;
 }
 
@@ -1851,17 +1947,17 @@ model_nucleus_seg::OutputImageType::Pointer model_nucleus_seg::Shatter_Nuclei(In
 	//segmentation steps
 	//1-Binarization
 	NucleusSeg->runBinarization();
-	NucleusSeg->runSeedDetection();
+	NucleusSeg->runSeedDetection(this->minScale,this->maxScale);
 	NucleusSeg->runClustering();
-	NucleusSeg->runAlphaExpansion();
-	output_img=NucleusSeg->getSegImage();
+	//NucleusSeg->runAlphaExpansion();
+	output_img=NucleusSeg->getClustImage();
 
 	IteratorType biterator(bImagetemp,bImagetemp->GetRequestedRegion());
 	
 	unsigned long maxlocalID = 0;
 
 	for(unsigned int i=0; i<size[0]*size[1]*size[2]; i++)
-	{		
+	{	
 		if(output_img[i]==0)
 			biterator.Set(output_img[i]);
 		else
@@ -1873,6 +1969,7 @@ model_nucleus_seg::OutputImageType::Pointer model_nucleus_seg::Shatter_Nuclei(In
 		++biterator;	
 	}
 	
+
 	*maxLabel = maxlocalID;
 	return bImagetemp;  		
 }
@@ -1950,19 +2047,21 @@ std::vector<double **> model_nucleus_seg::PrepareDataforScores(double **Data,int
 
 	classIndex.clear();
 	classIndex.resize(classes);
-	//Read the sizes of both files:
-	int myrows = Num_Lines2(myfilenamePCA, 0) ;   // number of rows 			
 
+
+	//Read the size of training file:
+	int myrows = Num_Lines2(myfilenamePCA, 0) ;   // number of rows 			
 	double **train;
 	std::vector<int> classes2;	
 
+	//
 	for(int i=0; i<myrows;++i)
 	{
 		classes2 = classIndex[classlabel[i]-1];
 		classes2.push_back(i);
 		classIndex[classlabel[i]-1] = classes2;
 	}
-	//}
+
 
 	for(int i=0; i<classes;++i)
 	{
@@ -1979,7 +2078,6 @@ std::vector<double **> model_nucleus_seg::PrepareDataforScores(double **Data,int
 		}
 		train4class2[i] = train;
 	}
-
 	return train4class2;
 }
 
@@ -2193,9 +2291,10 @@ bool model_nucleus_seg::LoadSegParams(std::string filename)
 			const char * parameter = parameterElement ->Value();
 			this->NUM_CLASS = atoi(parameterElement->Attribute("NUM_CLASS"));
 			this->NUM_COMP = atoi(parameterElement->Attribute("NUM_COMP"));
-			this->NUM_FEAT = atoi(parameterElement->Attribute("NUM_FEAT"));
+			this->NUM_FEAT = atoi(parameterElement->Attribute("NUM_FEAT"));			
 			this->NUM_ASSOC_FEAT = atoi(parameterElement->Attribute("NUM_ASSOC_FEAT"));
-			
+			this->SPLIT = atoi(parameterElement->Attribute("SPLIT"));
+
 			if(parameterElement->Attribute("MAX_VOL"))
 				this->MAX_VOL = static_cast<double>(atoi(parameterElement->Attribute("MAX_VOL")));
 			if(parameterElement->Attribute("MAX_DEPTH"))
@@ -2203,6 +2302,7 @@ bool model_nucleus_seg::LoadSegParams(std::string filename)
 			if(parameterElement->Attribute("WC_DEFAULT"))
 				this->WC_DEFAULT = static_cast<double>(atoi(parameterElement->Attribute("WC_DEFAULT")));
 			
+
 			this->prior.resize(this->NUM_CLASS);
 			this->volLimit.resize(this->NUM_CLASS);		
 			//Assign Prior Probabilities
