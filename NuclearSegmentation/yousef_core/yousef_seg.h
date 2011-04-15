@@ -108,6 +108,7 @@ public:
 	//sub-modules that can be executed
 	void runBinarization();
 	void runSeedDetection();
+	void runSeedDetection(int minScale,int maxScale); // Added by Raghav
 	void runClustering();
 	void runAlphaExpansion();
 	void runAlphaExpansion3D();
