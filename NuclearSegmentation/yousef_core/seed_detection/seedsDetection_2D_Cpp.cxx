@@ -30,6 +30,7 @@
 #include "itkExtractImageFilter.h"
 
 #include "itkSignedMaurerDistanceMapImageFilter.h"
+#include "conio.h"
 //,.,.
 
 typedef    float     InputPixelType;
@@ -118,33 +119,49 @@ int detectSeeds2D( float* IM, float* IM_out, unsigned short* IM_bin, int r, int 
 	if(paramEstimation)
 	{
 		std::cout<<"Estimating parameters..."<<std::endl;
-		estimateMinMaxScales2D(im, dImg, &sigma_min, &sigma_max, r, c);		
+		//estimateMinMaxScales2D(im, dImg, &sigma_min, &sigma_max, r, c);		
 		scale = sigma_min;
+
+		sigma_min = 5;
+		sigma_max = 10;
+
 		if(scale<3)
 			scale = 3; //just avoid very small search boxes		
 		std::cout<<"    Minimum scale = "<<sigma_min<<std::endl;
 		std::cout<<"    Maximum scale = "<<sigma_max<<std::endl;
 		std::cout<<"    Clustering Resolution = "<<scale<<std::endl;
 	
-		// FOR THE MODEL BASED NUCLEUS MERGING,I SHATTER SMALL NUCLEI
-		// TYPICALLY, THE IMAGE ROWS AND COLUMNS ARE LESS THAN 100 PIXELS
-		// USE THIS HEURISTIC TO SET MAX AND MAX SCALES TO 3 AND 4
-		// INSERTED BY RAGHAV 
 
-		if(r <100 || c<100)
-		{
-			sigma_min = 3;
-			sigma_max = 4;
-		}
-
-		
 		//write out the parameters
 		sigma_min_in[0] = sigma_min;
 		sigma_max_in[0] = sigma_max;
 		scale_in[0] =  scale;		
 	}
-
 	
+
+	else
+	{
+		// FOR THE MODEL BASED NUCLEUS MERGING,I SHATTER SMALL NUCLEI
+		// TYPICALLY, THE IMAGE ROWS AND COLUMNS ARE LESS THAN 100 PIXELS
+		// USE THIS HEURISTIC TO SET MAX AND MAX SCALES TO 3 AND 4
+		// INSERTED BY RAGHAV 
+		if(r <100 || c<100)
+		{	
+		
+		//write out the parameters
+		sigma_min_in[0] = sigma_min;
+		//sigma_max_in[0] = ((sigma_max -scaleDiff) > sigma_min)?(sigma_max -2):sigma_min;
+		sigma_max_in[0] =	sigma_max - floor((sigma_max - sigma_min)/2);
+		scale_in[0] =  scale;	
+		sigma_min = sigma_min_in[0];
+		sigma_max = sigma_max_in[0];	
+		}
+
+		std::cout<<"    Minimum scale = "<<sigma_min<<std::endl;
+		std::cout<<"    Maximum scale = "<<sigma_max<<std::endl;
+		std::cout<<"    Clustering Resolution = "<<scale<<std::endl;
+	}
+
 	
 	//Start from sigma_min to sigma sigma_max	
 	double conv = 0;	
