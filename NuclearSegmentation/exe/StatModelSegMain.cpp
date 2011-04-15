@@ -52,12 +52,10 @@ int writeImage(typename T::Pointer im, const char* filename)
 }
 
 
-
-
 int main ( int argc ,  char** argv)
 {	
-	std::cout<<"reading input image...";
 
+	clock_t start_time = clock();
 	// Get the name for the output File name
 	std::stringstream out;
 	out << argv[1];
@@ -67,13 +65,10 @@ int main ( int argc ,  char** argv)
 	std::string prefix = inpName.substr(0,pos);
 	std::string outName = prefix+"_label_nuc.tif";
 	
-
-
 	typedef itk::Image< unsigned char,3>InputImageType;
 	typedef itk::Image< unsigned short,3> OutputImageType;
 	
 	model_nucleus_seg *MNS = new model_nucleus_seg();
-
 	MNS->SetRawImage(argv[1]);
 	MNS->GetYousefSeg();
 	MNS->LoadSegParams(argv[2]);
@@ -83,18 +78,21 @@ int main ( int argc ,  char** argv)
 	if(MNS->getasscofeatnumb()>0)
 		MNS->Associations(argv[4],argv[5]);
 	
-	std::vector<unsigned short> US_Cell_ids = MNS->Detect_undersegmented_cells();
+	std::vector<unsigned short> US_Cell_ids;
+	US_Cell_ids.clear();
+	
+	if(MNS->SPLIT)
+		US_Cell_ids = MNS->Detect_undersegmented_cells();
 	
 	if(US_Cell_ids.size()>0)
 	{
 		MNS->bImage = MNS->SplitImage(US_Cell_ids,MNS->inputImage,MNS->bImage);
 		MNS->splitflag = 1;
 	}
-
+		
 	
 	typedef ftk::LabelImageToFeatures< unsigned char,  unsigned short, 3 > FeatureCalcType;
 	typedef ftk::IntrinsicFeatures FeaturesType;
-
 
 	//Calculates all the features and stores the individual 
 	//labeled and raw images
@@ -104,10 +102,14 @@ int main ( int argc ,  char** argv)
 	////Compute the associations after the split for split Ids only
 	if(MNS->splitflag==1 && MNS->getasscofeatnumb()>0 )
 		MNS->splitAssociations();
+			
 
-	
+	std::cout<<"Computing Scores"<<std::endl;
+
 	//Iniscores contains the inital scores of all the fragments
 	std::vector<double> IniScores = MNS->GetOriginalScores();
+	
+	std::cout<<"Finished Computing Scores"<<std::endl;
 
 //	 idlist will contain the list of all the ids for which the 
 //	 MergeTrees have to be built and analyzed.
@@ -156,4 +158,16 @@ int main ( int argc ,  char** argv)
  //PERFORM MERGES 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 	MNS->PerformMerges(outName.c_str());
+
+	cout << "Total time to segmentation is : " << (clock() - start_time)/(float) CLOCKS_PER_SEC << endl;
 }	
+
+
+//	argv[1] = "C:\\FARSIGHT_BIN\\exe\\Release\\HS 09 6225 1C_Ki67_CD34 AF488 CA9 AF647 SMA Cy3_IP8_F05_40XQB_Nuclear (H).tif";
+///argv[1] = "C:\\FARSIGHT_BIN\\exe\\Release\\SW1.tif";
+//argv[2] = "C:\\FARSIGHT_BIN\\exe\\Release\\SegParams.ini";
+//argv[3] = "C:\\FARSIGHT_BIN\\exe\\Release\\training3.txt" ;
+//argv[4] = "C:\\FARSIGHT_BIN\\exe\\Release\\Histo_Input_Image(2).xml" ;
+//argv[5] = "C:\\FARSIGHT_BIN\\exe\\Release\\HistoProjectDef.xml";
+
+
