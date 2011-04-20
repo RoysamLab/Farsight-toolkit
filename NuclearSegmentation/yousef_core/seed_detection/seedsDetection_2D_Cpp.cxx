@@ -122,8 +122,8 @@ int detectSeeds2D( float* IM, float* IM_out, unsigned short* IM_bin, int r, int 
 		//estimateMinMaxScales2D(im, dImg, &sigma_min, &sigma_max, r, c);		
 		scale = sigma_min;
 
-		sigma_min = 5;
-		sigma_max = 10;
+		//sigma_min = 5;
+		//sigma_max = 10;
 
 		if(scale<3)
 			scale = 3; //just avoid very small search boxes		
