@@ -516,9 +516,10 @@ bool ProjectProcessor::RunQuery(void)
 		//   int sqlite3_open(
 		//   const char *filename,  Database filename (UTF-8) 
 		//   sqlite3 **ppDb         OUT: SQLite db handle )
-		std::string db_name = executable_path + "NE.s3db";
-		ftk::sqliteGetConnection( db_name.c_str() );
-		dbConn = ftk::sqliteOpenConnection();
+		std::string db_name = executable_path + "\\NE.s3db";
+		std::cout<<"Opening database: "<<db_name<<std::endl;
+		dbConn = ftk::sqliteGetConnection( db_name.c_str() );
+		//dbConn = ftk::sqliteOpenConnection();
 		if( dbConn ){
 			if(j==0){
 				std::vector<std::string> column_names;

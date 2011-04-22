@@ -94,6 +94,7 @@ int main(int argc, char *argv[])
 	//Do processing:
 	ftk::ProjectProcessor * pProc = new ftk::ProjectProcessor();
 	pProc->SetExecPath( ftk::GetFilePath( MyName ) );
+	std::cout<<"The executable says my path is: "<<ftk::GetFilePath( MyName )<<std::endl;
 	pProc->SetInputImage(myImg);
 	pProc->SetPath( ftk::GetFilePath(inputFilename) );
 	if(labImg)

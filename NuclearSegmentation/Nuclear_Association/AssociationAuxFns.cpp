@@ -34,12 +34,6 @@
 #include "itkNumericTraits.h"
 #include "itkExtractImageFilter.h"
 #include "itkOtsuMultipleThresholdsCalculator.h"
-#include "itkSignedDanielssonDistanceMapImageFilter.h"
-
-#include "vnl/vnl_matrix.h"
-#include "vnl/vnl_real.h"
-#include "vnl/algo/vnl_real_eigensystem.h"
-#include "vnl/vnl_double_3x3.h"
 
 #include "ftkFeatures/itkLabelGeometryImageFilter.h"
 #include "NuclearSegmentation/CytoplasmSegmentation/whole_cell.h"
@@ -52,332 +46,117 @@ typedef itk::Image< USPixelType, 3 > USImageType;
 typedef float FloatPixelType;
 typedef itk::Image< FloatPixelType, 3 > FloatImageType;
 
-std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USImageType::Pointer inp_labeled, int number_of_rois, unsigned short thresh, int surr_dist ){
+std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USImageType::Pointer inp_labeled, int number_of_rois, unsigned short thresh, int surr_dist){
+
+	//Dialate input first
+	WholeCellSeg *dialate_filter = new WholeCellSeg;
+	typedef itk::ExtractImageFilter< USImageType, UShortImageType > LabelExtractType;
+	typedef itk::ImageRegionConstIterator< UShortImageType > ConstIteratorType;
+	typedef itk::ImageRegionIteratorWithIndex< USImageType > IteratorType;
+	LabelExtractType::Pointer deFilter = LabelExtractType::New();
+	USImageType::RegionType dRegion = inp_labeled->GetLargestPossibleRegion();
+	dRegion.SetSize(2,0);
+	deFilter->SetExtractionRegion(dRegion);
+	deFilter->SetInput( inp_labeled );
+	try{
+		deFilter->Update();
+	}
+	catch( itk::ExceptionObject & excep ){
+		std::cerr << "Exception caught !" << std::endl;
+		std::cerr << excep << std::endl;
+	}
+	dialate_filter->set_nuc_img( deFilter->GetOutput() );
+	dialate_filter->set_radius( surr_dist );
+	dialate_filter->RunSegmentation();
+	UShortImageType::Pointer input_lab = dialate_filter->getSegPointer();
+
+	USImageType::Pointer input_labeled = USImageType::New();
+	USImageType::PointType origint;
+	origint[0] = 0;
+	origint[1] = 0;
+	origint[2] = 0;
+	input_labeled->SetOrigin( origint );
+	USImageType::IndexType startt;
+	startt[0] = 0;  // first index on X
+	startt[1] = 0;  // first index on Y
+	startt[2] = 0;  // first index on Z
+	USImageType::SizeType  sizet;
+	sizet[0] = inp_labeled->GetLargestPossibleRegion().GetSize()[0];  // size along X
+	sizet[1] = inp_labeled->GetLargestPossibleRegion().GetSize()[1];  // size along Y
+	sizet[2] = inp_labeled->GetLargestPossibleRegion().GetSize()[2];  // size along Z
+	USImageType::RegionType regiont;
+	regiont.SetSize( sizet );
+	regiont.SetIndex( startt );
+	input_labeled->SetRegions( regiont );
+	input_labeled->Allocate();
+	input_labeled->FillBuffer(0);
+	input_labeled->Update();
+
+	ConstIteratorType pix_buf1( input_lab, input_lab->GetRequestedRegion() );
+	IteratorType iterator2 ( input_labeled, input_labeled->GetRequestedRegion() );
+	iterator2.GoToBegin();
+	for ( pix_buf1.GoToBegin(); !pix_buf1.IsAtEnd(); ++pix_buf1 ){
+		iterator2.Set( pix_buf1.Get() );
+		++iterator2;
+	}
+
+	std::vector< float > quantified_numbers;
 	std::vector< unsigned short > labelsList;
-	std::vector< double > quantified_numbers_cell;
-	std::vector< float > qfied_num;
 
 	typedef itk::LabelGeometryImageFilter< USImageType > GeometryFilterType;
 	typedef GeometryFilterType::LabelIndicesType labelindicestype;
-	typedef itk::ImageRegionIteratorWithIndex< USImageType > IteratorType;
-	typedef itk::ImageRegionIteratorWithIndex< FloatImageType > IteratorTypeFloat;
-	typedef itk::SignedDanielssonDistanceMapImageFilter<FloatImageType, FloatImageType > DTFilter;
+
+	//int size1 = input_image->GetLargestPossibleRegion().GetSize()[0];
+	//int size2 = input_image->GetLargestPossibleRegion().GetSize()[1];
 
 	GeometryFilterType::Pointer geomfilt1 = GeometryFilterType::New();
 
-	int sz_x, sz_y, sz_z;
-	sz_x = input_image->GetLargestPossibleRegion().GetSize()[0];
-	sz_y = input_image->GetLargestPossibleRegion().GetSize()[1];
-	sz_z = input_image->GetLargestPossibleRegion().GetSize()[2];
+	geomfilt1->SetInput( input_labeled );
+	geomfilt1->SetCalculatePixelIndices( true );
+	geomfilt1->Update();
+	labelsList = geomfilt1->GetLabels();
 
-	if( sz_x==1 || sz_y==1 || sz_z==1 ){
-		//Dialate input first
-		WholeCellSeg *dialate_filter = new WholeCellSeg;
-		typedef itk::ExtractImageFilter< USImageType, UShortImageType > LabelExtractType;
-		typedef itk::ImageRegionConstIterator< UShortImageType > ConstIteratorType;
-		LabelExtractType::Pointer deFilter = LabelExtractType::New();
-		USImageType::RegionType dRegion = inp_labeled->GetLargestPossibleRegion();
-		dRegion.SetSize(2,0);
-		deFilter->SetExtractionRegion(dRegion);
-		deFilter->SetInput( inp_labeled );
-		try{
-			deFilter->Update();
+	bool zp=false;
+	for( unsigned short i=0; (int)i < labelsList.size(); ++i ){
+		if( labelsList[i] == 0 ){ zp=true; continue; }
+		std::vector<float> quantified_numbers_cell;
+		//assert(quantified_numbers_cell.size() == number_of_rois);
+		for( int j=0; j<number_of_rois; ++j ) quantified_numbers_cell.push_back((float)0.0);
+		double centroid_x = (double)(geomfilt1->GetCentroid(labelsList[i])[0]);
+		double centroid_y = (double)(geomfilt1->GetCentroid(labelsList[i])[1]);
+		labelindicestype indices1;
+		indices1 = geomfilt1->GetPixelIndices(labelsList[i]);
+		for( labelindicestype::iterator itPixind = indices1.begin(); itPixind!=indices1.end(); ++itPixind ){
+			IteratorType iterator1 ( input_image, input_image->GetRequestedRegion() );
+			iterator1.SetIndex( *itPixind );
+			if( iterator1.Get() < thresh )
+				continue;
+			double x = (double)(iterator1.GetIndex()[0]);
+			double y = (double)(iterator1.GetIndex()[1]);
+			double angle = atan2((centroid_y-y),fabs(centroid_x-x));
+			if( (centroid_x-x)>0 )
+				angle += MM_PI_2;
+			else
+				angle = MM_PI+MM_PI-(angle+MM_PI_2);
+			angle = ((number_of_rois-1)*angle)/(2*MM_PI);
+			double angle_fraction[1];
+			if( modf( angle, angle_fraction ) > 0.5 )
+				angle = ceil( angle );
+			else
+				angle = floor( angle );
+			quantified_numbers_cell[(int)angle] += iterator1.Get();
 		}
-		catch( itk::ExceptionObject & excep ){
-			std::cerr << "Exception caught !" << std::endl;
-			std::cerr << excep << std::endl;
-		}
-		dialate_filter->set_nuc_img( deFilter->GetOutput() );
-		dialate_filter->set_radius( surr_dist );
-		dialate_filter->RunSegmentation();
-		UShortImageType::Pointer input_lab = dialate_filter->getSegPointer();
-
-		USImageType::Pointer input_labeled = USImageType::New();
-		USImageType::PointType origint;
-		origint[0] = 0;
-		origint[1] = 0;
-		origint[2] = 0;
-		input_labeled->SetOrigin( origint );
-		USImageType::IndexType startt;
-		startt[0] = 0;  // first index on X
-		startt[1] = 0;  // first index on Y
-		startt[2] = 0;  // first index on Z
-		USImageType::SizeType  sizet;
-		sizet[0] = inp_labeled->GetLargestPossibleRegion().GetSize()[0];  // size along X
-		sizet[1] = inp_labeled->GetLargestPossibleRegion().GetSize()[1];  // size along Y
-		sizet[2] = inp_labeled->GetLargestPossibleRegion().GetSize()[2];  // size along Z
-		USImageType::RegionType regiont;
-		regiont.SetSize( sizet );
-		regiont.SetIndex( startt );
-		input_labeled->SetRegions( regiont );
-		input_labeled->Allocate();
-		input_labeled->FillBuffer(0);
-		input_labeled->Update();
-
-		ConstIteratorType pix_buf1( input_lab, input_lab->GetRequestedRegion() );
-		IteratorType iterator2 ( input_labeled, input_labeled->GetRequestedRegion() );
-		iterator2.GoToBegin();
-		for ( pix_buf1.GoToBegin(); !pix_buf1.IsAtEnd(); ++pix_buf1 ){
-			iterator2.Set( pix_buf1.Get() );
-			++iterator2;
-		}
-
-		geomfilt1->SetInput( input_labeled );
-		geomfilt1->SetCalculatePixelIndices( true );
-		geomfilt1->Update();
-		labelsList = geomfilt1->GetLabels();
-
-		bool zp=false;
-		for( unsigned short i=0; (int)i < labelsList.size(); ++i ){
-			if( labelsList[i] == 0 ){ zp=true; continue; }
-			std::vector<float> quantified_numbers_cell;
-			//assert(quantified_numbers_cell.size() == number_of_rois);
-			for( int j=0; j<(number_of_rois*(int)labelsList.size()); ++j ) quantified_numbers_cell.push_back((double)0.0);
-			double centroid_x = (double)(geomfilt1->GetCentroid(labelsList[i])[0]);
-			double centroid_y = (double)(geomfilt1->GetCentroid(labelsList[i])[1]);
-			labelindicestype indices1;
-			indices1 = geomfilt1->GetPixelIndices(labelsList[i]);
-			for( labelindicestype::iterator itPixind = indices1.begin(); itPixind!=indices1.end(); ++itPixind ){
-				IteratorType iterator1 ( input_image, input_image->GetRequestedRegion() );
-				iterator1.SetIndex( *itPixind );
-				if( iterator1.Get() < thresh )
-					continue;
-				double x = (double)(iterator1.GetIndex()[0]);
-				double y = (double)(iterator1.GetIndex()[1]);
-				double angle = atan2((centroid_y-y),fabs(centroid_x-x));
-				if( (centroid_x-x)>0 )
-					angle += MM_PI_2;
-				else
-					angle = MM_PI+MM_PI-(angle+MM_PI_2);
-				angle = ((number_of_rois-1)*angle)/(2*MM_PI);
-				double angle_fraction[1];
-				if( modf( angle, angle_fraction ) > 0.5 )
-					angle = ceil( angle );
-				else
-					angle = floor( angle );
-				quantified_numbers_cell[number_of_rois*i+(int)angle] += iterator1.Get();
-			}
-//			for( int j=0; j<number_of_rois; ++j ) quantified_numbers.push_back(quantified_numbers_cell[j]);
-		}
-/*		int qnum_sz = zp? (int)(labelsList.size()-1) : (int)(labelsList.size());
-		for( int i=0; i<qnum_sz; ++i ){
-			int counter=0;
-			for( int j=0; j<number_of_rois; ++j ){
-				if( quantified_numbers[(i*number_of_rois+j)] > 1 )
-					++counter;
-			}
-			qfied_num.push_back((float)counter);
-		}*/
-	} else {
-		geomfilt1->SetInput( inp_labeled );
-		geomfilt1->SetCalculatePixelIndices( true );
-		geomfilt1->Update();
-		std::vector<double> quantified_numbers_cell;
-		for( int j=0; j<(number_of_rois*(int)labelsList.size()); ++j ) quantified_numbers_cell.push_back((double)0.0);
-		for( unsigned short i=0; (int)i < labelsList.size(); ++i ){
-			//Get label indices
-			labelindicestype indices1;
-			indices1 = geomfilt1->GetPixelIndices(labelsList[i]);
-
-			//Create vnl array 3xN( label indicies )
-			vnl_matrix<double> B(3,(int)indices1.size());
-
-			//Get Centroid
-			double centroid_x = (double)(geomfilt1->GetCentroid(labelsList[i])[0]);
-			double centroid_y = (double)(geomfilt1->GetCentroid(labelsList[i])[1]);
-			double centroid_z = (double)(geomfilt1->GetCentroid(labelsList[i])[2]);
-
-			//Create an image with bounding box + 2 * outside distance + 2
-			//and get distance map for the label
-			GeometryFilterType::BoundingBoxType boundbox = geomfilt1->GetBoundingBox(labelsList[i]);
-			int ssz_x = boundbox[1]-boundbox[0]+2*surr_dist+2;
-			int ssz_y = boundbox[3]-boundbox[2]+2*surr_dist+2;
-			int ssz_z = boundbox[5]-boundbox[4]+2*surr_dist+2;
-			FloatImageType::Pointer inp_lab = FloatImageType::New();
-			FloatImageType::PointType origint;
-			origint[0] = 0;
-			origint[1] = 0;
-			origint[2] = 0;
-			inp_lab->SetOrigin( origint );
-			FloatImageType::IndexType startt;
-			startt[0] = 0;  // first index on X
-			startt[1] = 0;  // first index on Y
-			startt[2] = 0;  // first index on Z
-			FloatImageType::SizeType  sizet;
-			sizet[0] = ssz_x;  // size along X
-			sizet[1] = ssz_y;  // size along Y
-			sizet[2] = ssz_z;  // size along Z
-			FloatImageType::RegionType regiont;
-			regiont.SetSize( sizet );
-			regiont.SetIndex( startt );
-			inp_lab->SetRegions( regiont );
-			inp_lab->Allocate();
-			inp_lab->FillBuffer(0.0);
-			inp_lab->Update();
-			IteratorTypeFloat iterator444 ( inp_lab, inp_lab->GetRequestedRegion() );
-
-			//Populate matrix with deviations from the centroid for principal axes and
-			//at the same time set up distance-transform computation
-			int ind=0;
-			for( labelindicestype::iterator itPixind = indices1.begin(); itPixind!=indices1.end(); ++itPixind, ++ind){
-				IteratorType iterator3( input_image, input_image->GetRequestedRegion() );
-				iterator3.SetIndex( *itPixind );
-				B(0,ind) = iterator3.GetIndex()[0]-centroid_x;
-				B(1,ind) = iterator3.GetIndex()[1]-centroid_y;
-				B(2,ind) = iterator3.GetIndex()[2]-centroid_z;
-				FloatImageType::IndexType cur_in;
-				cur_in[0] = iterator3.GetIndex()[0]-boundbox[0]+1+surr_dist;
-				cur_in[1] = iterator3.GetIndex()[1]-boundbox[2]+1+surr_dist;
-				cur_in[2] = iterator3.GetIndex()[2]-boundbox[4]+1+surr_dist;
-				iterator444.SetIndex( cur_in );
-				iterator444.Set( 255.0 );
-			}
-			//Compute distance transform for the current object
-			DTFilter::Pointer dt_obj= DTFilter::New() ;
-			dt_obj->SetInput( inp_lab );
-			//dt_obj->SetOutsideValue(0.0);
-			try{
-				dt_obj->Update() ;
-			}
-			catch( itk::ExceptionObject & err ){
-				std::cout << "Error in Distance Transform: " << err << std::endl; 
-			}
-			FloatImageType::Pointer dist_im = dt_obj->GetOutput();
-
-			//Use KLT to compute pricipal axes
-			vnl_matrix<double> B_transp((int)indices1.size(),3);
-			B_transp = B.transpose();
-			vnl_matrix<double>  COV(3,3);
-			COV = B * B_transp;
-			double norm = 1.0/(double)indices1.size();
-			COV = COV * norm;
-			//Eigen decomposition
-			vnl_real_eigensystem Eyegun( COV );
-			vnl_matrix<vcl_complex<double>> EVals = Eyegun.D;;
-			double Eval1 = vnl_real(EVals)(0,0);
-			double Eval2 = vnl_real(EVals)(1,1);
-			double Eval3 = vnl_real(EVals)(2,2);
-			vnl_double_3x3 EVectMat = Eyegun.Vreal;
-			double V1[3],V2[3],EP_norm[3];//,EP_norm1[3];
-			if( Eval1 >= Eval3 && Eval2 >= Eval3 ){
-				if( Eval1 >= Eval2 ){
-					V1[0] = EVectMat(0,0); V1[1] = EVectMat(1,0); V1[2] = EVectMat(2,0);
-					V2[0] = EVectMat(0,1); V2[1] = EVectMat(1,1); V2[2] = EVectMat(2,1);
-				} else {
-					V2[0] = EVectMat(0,0); V2[1] = EVectMat(1,0); V2[2] = EVectMat(2,0);
-					V1[0] = EVectMat(0,1); V1[1] = EVectMat(1,1); V1[2] = EVectMat(2,1);
-				}
-			} else if( Eval1 >= Eval2 && Eval3 >= Eval2 ) {
-				if( Eval1 >= Eval3 ){
-					V1[0] = EVectMat(0,0); V1[1] = EVectMat(1,0); V1[2] = EVectMat(2,0);
-					V2[0] = EVectMat(0,2); V2[1] = EVectMat(1,2); V2[2] = EVectMat(2,2);
-				}
-				else{
-					V2[0] = EVectMat(0,0); V2[1] = EVectMat(1,0); V2[2] = EVectMat(2,0);
-					V1[0] = EVectMat(0,2); V1[1] = EVectMat(1,2); V1[2] = EVectMat(2,2);
-				}
-			} else {
-				if( Eval2 >= Eval3 ){
-					V1[0] = EVectMat(0,1); V1[1] = EVectMat(1,1); V1[2] = EVectMat(2,1);
-					V2[0] = EVectMat(0,2); V2[1] = EVectMat(1,2); V2[2] = EVectMat(2,2);
-				}
-				else{
-					V2[0] = EVectMat(0,1); V2[1] = EVectMat(1,1); V2[2] = EVectMat(2,1);
-					V1[0] = EVectMat(0,2); V1[1] = EVectMat(1,2); V1[2] = EVectMat(2,2);
-				}
-			}
-			double n_sum = sqrt( V1[0]*V1[0]+V1[1]*V1[1]+V1[2]*V1[2] );
-			V1[0] /= n_sum; V1[1] /= n_sum; V1[2] /= n_sum;
-			n_sum = sqrt( V2[0]*V2[0]+V2[1]*V2[1]+V2[2]*V2[2] );
-			V2[0] /= n_sum; V2[1] /= n_sum; V2[2] /= n_sum;
-			//Get the normal to the plane formed by the biggest two EVs
-			EP_norm[0] = V1[2]*V2[3]-V1[3]*V2[2];
-			EP_norm[1] = V1[3]*V2[1]-V1[1]*V2[3];
-			EP_norm[2] = V1[1]*V2[2]-V1[2]*V2[1];
-
-			//EP_norm1[0] = V1[2]*EP_norm[3]-V1[3]*EP_norm[2];
-			//EP_norm1[1] = V1[3]*EP_norm[1]-V1[1]*EP_norm[3];
-			//EP_norm1[2] = V1[1]*EP_norm[2]-V1[2]*EP_norm[1];
-
-			//Iterate through and assign values to each region
-			typedef itk::ImageRegionConstIterator< FloatImageType > ConstIteratorTypeFloat;
-			ConstIteratorTypeFloat pix_buf2( dist_im, dist_im->GetRequestedRegion() );
-			IteratorType iterator44( input_image, input_image->GetRequestedRegion() );
-
-			for ( pix_buf2.GoToBegin(); !pix_buf2.IsAtEnd(); ++pix_buf2 ){
-				//Use pixels that are only within the defined radius from the nucleus
-				if( pix_buf2.Get() <= (float)surr_dist ){
-					USImageType::IndexType cur_in;
-					double n_vec[3];
-					cur_in[0] = pix_buf2.GetIndex()[0]+boundbox[0]-1-surr_dist;
-					cur_in[1] = pix_buf2.GetIndex()[1]+boundbox[2]-1-surr_dist;
-					cur_in[2] = pix_buf2.GetIndex()[2]+boundbox[4]-1-surr_dist;
-					if( cur_in[0] < 0 || cur_in[1] < 0 || cur_in[2] < 0 ) continue;
-					iterator44.SetIndex( cur_in );
-					if( iterator44.Get() < thresh )
-						continue;
-					n_vec[0] = centroid_x-(double)cur_in[0];
-					n_vec[1] = centroid_y-(double)cur_in[1];
-					n_vec[2] = centroid_z-(double)cur_in[2];
-					n_sum = sqrt( n_vec[0]*n_vec[0] + n_vec[1]*n_vec[1] + n_vec[2]*n_vec[2] );
-					n_vec[0] /= n_sum;	n_vec[1] /= n_sum;	n_vec[2] /= n_sum;
-					//n_vec is the norm vect in the direction of the point
-					//EP_norm is the normal to the plane
-					//Take ( EP_norm x n_vec ) x EP_norm to get the projection of the vector n_vec on the plane
-					//Then get the angles in the same manner as the 2D case
-					double cross_1[3], cross_2[3];
-					cross_1[0] = EP_norm[2]*n_vec[3]-EP_norm[3]*n_vec[2];
-					cross_1[1] = EP_norm[3]*n_vec[1]-EP_norm[1]*n_vec[3];
-					cross_1[2] = EP_norm[1]*n_vec[2]-EP_norm[2]*n_vec[1];
-					cross_2[0] = cross_1[2]*EP_norm[3]-cross_1[3]*EP_norm[2];
-					cross_2[1] = cross_1[3]*EP_norm[1]-cross_1[1]*EP_norm[3];
-					cross_2[2] = cross_1[1]*EP_norm[2]-cross_1[2]*EP_norm[1];
-
-					n_sum = sqrt( cross_2[0]*cross_2[0]+cross_2[1]*cross_2[1]+cross_2[2]*cross_2[2] );
-					cross_2[0] /= n_sum; cross_2[1] /= n_sum; cross_2[2] /= n_sum;
-
-					double cos_dot, sin_cross;
-					cos_dot   = cross_2[0] * EP_norm[0] + cross_2[1] * EP_norm[1] + cross_2[2] * EP_norm[2];
-					sin_cross = EP_norm[2]*cross_2[3]-EP_norm[3]*cross_2[2]
-							   +EP_norm[3]*cross_2[1]-EP_norm[1]*cross_2[3]
-							   +EP_norm[1]*cross_2[2]-EP_norm[2]*cross_2[1];
-
-					double angle = atan2(sin_cross,cos_dot);
-					if( cos_dot > 0 )
-						angle += MM_PI_2;
-					else
-						angle = MM_PI+MM_PI-(angle+MM_PI_2);
-					angle = ((number_of_rois-1)*angle)/(2*MM_PI);
-					double angle_fraction[1];
-					if( modf( angle, angle_fraction ) > 0.5 )
-						angle = ceil( angle );
-					else
-						angle = floor( angle );
-					quantified_numbers_cell[i*number_of_rois+(int)angle] += iterator44.Get();
-				}
-			}
-		}
+		for( int j=0; j<number_of_rois; ++j ) quantified_numbers.push_back(quantified_numbers_cell[j]);
 	}
-	//Use k-means instead of code below...
-	//Assuming image has been cleaned and the feature positive is close to mean+/-2sigma and negative is 0 + small amount of noise
-	double mean = 0, sigma = 0, counter=0;
-	for( int i=0; i<quantified_numbers_cell.size(); ++i )
-		if( quantified_numbers_cell[i] == 0 )
-			++counter;
-		else
-			mean += (quantified_numbers_cell[i]/quantified_numbers_cell.size());
-	mean = mean * quantified_numbers_cell.size() / (quantified_numbers_cell.size()-counter);
-	for( int i=0; i<quantified_numbers_cell.size(); ++i )
-		if( quantified_numbers_cell[i] > 0 )
-			sigma += (mean-quantified_numbers_cell[i])*(mean-quantified_numbers_cell[i]);
-	double mtwos = mean-2*sigma;
-	for( int i=0; i<labelsList.size(); ++i ){
-		int countter = 0;
+	std::vector< float > qfied_num;
+	int qnum_sz = zp? (int)(labelsList.size()-1) : (int)(labelsList.size());
+	for( int i=0; i<qnum_sz; ++i ){
+		int counter=0;
 		for( int j=0; j<number_of_rois; ++j ){
-			if( quantified_numbers_cell[i*number_of_rois+j] > mtwos )
-				++countter;
+			if( quantified_numbers[(i*number_of_rois+j)] > 1 )
+				++counter;
 		}
-		qfied_num.push_back( countter );
+		qfied_num.push_back((float)counter);
 	}
 	return qfied_num;
 }

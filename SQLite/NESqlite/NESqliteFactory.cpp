@@ -201,7 +201,7 @@ void GenericSearch(sqlite3 *db,const char * sql)
 	if( exeStatus!=SQLITE_OK )
 	  fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(dbConn));
 	else if(exeStatus == SQLITE_OK )
-	  fprintf(stderr, "Open database successfully\n");
+	  fprintf(stderr, "Open database %s successfully\n",dbName);
 
 	return dbConn;
 }
