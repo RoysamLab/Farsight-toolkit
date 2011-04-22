@@ -2,10 +2,12 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 SET( FTKGRAPH_SRCS
   FTKgraph.cpp
+  kNearestObjects.cpp
 )
 
 SET( FTKGRAPH_HDRS
   FTKgraph.h
+  kNearestObjects.h
 )
 
 FIND_PACKAGE(ITK)
