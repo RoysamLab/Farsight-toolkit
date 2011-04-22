@@ -338,8 +338,12 @@ General_Parameters12::General_Parameters12(const QString &title,
 
    noise_level_label = new QLabel("noise level");
    noise_level_box = new QDoubleSpinBox;
+   noise_level_label->setVisible(false);
+   noise_level_box->setVisible(false);
+
    num_iteration_label = new QLabel("iteration num");
    num_iteration_box = new QSpinBox;
+
 
    threshold_label = new QLabel("threshold");
    threshold_box = new QDoubleSpinBox;
@@ -355,6 +359,8 @@ General_Parameters12::General_Parameters12(const QString &title,
 
    smoothing_scale_label = new QLabel("smoothing scale");
    smoothing_scale_box = new QSpinBox;
+   smoothing_scale_label->setVisible(false);
+   smoothing_scale_box->setVisible(false);
 
    min_length_label = new QLabel("min skeleton length");
    min_length_box = new QSpinBox;
@@ -916,15 +922,18 @@ General_Parameters2::General_Parameters2(const QString &title,
    stretching_force->addItem(tr("Momentum Stretch Force"));
    stretching_force->addItem(tr("Combined Stretch Force"));
    stretching_force->setCurrentIndex(1);
+   stretching_force->setVisible(false);
 
    image_coding = new QComboBox;
    image_coding->addItem(tr("Centerline Coding"));
    image_coding->addItem(tr("Vessel Tube Coding"));
-
+   image_coding->setVisible(false);
    //stretching_force->addItem(tr("Curvelet Stretch Force"));
 
    stretch_ratio_label = new QLabel("stretch ratio");
    stretch_ratio_box = new QSpinBox;
+   stretch_ratio_label->setVisible(false);
+   stretch_ratio_box->setVisible(false);
 
    collision_dist_label = new QLabel("collision dist");
    collision_dist_box = new QSpinBox;
@@ -934,6 +943,8 @@ General_Parameters2::General_Parameters2(const QString &title,
 
    gamma_label = new QLabel("gamma");
    gamma_box = new QDoubleSpinBox;
+   gamma_label->setVisible(false);
+   gamma_box->setVisible(false);
 
    minimum_length_label = new QLabel("min length");
    minimum_length_box = new QSpinBox;
@@ -1358,6 +1369,9 @@ General_Parameters3::General_Parameters3(const QString &title,
    offset_Z = new QLineEdit;
    label_Scale = new QLabel("scale factor");
    edit_Scale = new QLineEdit;
+   label_Scale->setVisible(false);
+   edit_Scale->setVisible(false);
+
    label_Min_Length = new QLabel("min length");
    edit_Min_Length = new QLineEdit;
    label_Connection = new QLabel("connection");
