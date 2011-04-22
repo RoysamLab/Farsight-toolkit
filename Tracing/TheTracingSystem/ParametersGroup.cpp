@@ -1366,11 +1366,17 @@ General_Parameters3::General_Parameters3(const QString &title,
    QBoxLayout *layout7 = new QHBoxLayout;
 
    label_X = new QLabel("offset x:");
+   label_X->setVisible(false);
    label_Y = new QLabel("offset y:");
+   label_Y->setVisible(false);
    label_Z = new QLabel("offset z:");
+   label_Z->setVisible(false);
    offset_X = new QLineEdit;
+   offset_X->setVisible(false);
    offset_Y = new QLineEdit;
+   offset_Y->setVisible(false);
    offset_Z = new QLineEdit;
+   offset_Z->setVisible(false);
    label_Scale = new QLabel("scale factor");
    edit_Scale = new QLineEdit;
    label_Scale->setVisible(false);
@@ -1378,8 +1384,13 @@ General_Parameters3::General_Parameters3(const QString &title,
 
    label_Min_Length = new QLabel("min length");
    edit_Min_Length = new QLineEdit;
+   label_Min_Length->setVisible(false);
+   edit_Min_Length->setVisible(false);
+
    label_Connection = new QLabel("connection");
+   label_Connection->setVisible(false);
    edit_Connection = new QLineEdit;
+   edit_Connection->setVisible(false);
 
    offset_X->setValidator(new QDoubleValidator(-10000.0,
              10000.0, 3, offset_X));
