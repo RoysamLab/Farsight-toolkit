@@ -52,6 +52,10 @@ General_Parameters::General_Parameters(const QString &title,
 
    sf_label = new QLabel("Scale Factor");
    sf_box = new QSpinBox;
+
+   sf_label->setVisible(false);
+   sf_box->setVisible(false);
+
    sf_box->setValue(1);
    sf_box->setSingleStep(1);
    sf_box->setMaximum(10);
