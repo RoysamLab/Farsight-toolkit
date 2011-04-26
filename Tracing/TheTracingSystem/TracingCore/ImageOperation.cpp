@@ -1496,8 +1496,36 @@ void ImageOperation::SeedAdjustment(int iter_num)
 {
    
    normalizeGVF();
+
    if( iter_num == 0 )
+   {
+      //sort seeds by their saliency
+     PointList3D New_SeedPt;
+
+     vnl_vector<double> saliency(SeedPt.NP);
+     for( int i = 0; i < SeedPt.NP; i++)
+     {
+	  GradientImageType::IndexType index; 
+	  SeedPt.Pt[i].check_out_of_range_3D(SM,SN,SZ);
+	  index[0] = ceil(SeedPt.Pt[i].x);
+	  index[1] = ceil(SeedPt.Pt[i].y);
+	  index[2] = ceil(SeedPt.Pt[i].z);
+	  saliency(i) = IVessel->GetPixel(index);
+     }
+
+     for( unsigned int i = 0; i < saliency.size(); i++)
+     {
+      int index = saliency.arg_max();
+	  New_SeedPt.AddPt(SeedPt.Pt[index]);
+	  saliency(index) = -1;
+     } 
+
+      SeedPt = New_SeedPt;
+
+	  visit_label.set_size(SeedPt.GetSize());
+	  visit_label.fill(0);
 	   return;
+   }
 
    //int iter_num = 100;
 
