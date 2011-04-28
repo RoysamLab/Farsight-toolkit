@@ -96,15 +96,20 @@ public:
 	QImage * GetROIMaskImage();
 	void SetROIMaskImage( QImage img );
 
+	std::map<int, ftk::Object::Point> * GetCenterMapPointer(){ return centerMap; };
 	bool GetCrosshairsVisible(){ return showCrosshairs; };
 	bool GetBoundsVisible(){ return showBounds; };
 	bool GetIDsVisible(){ return showIDs; };
 	bool GetCentroidsVisible(){ return showCentroids; };
 	bool GetROIVisible(){ return showROI; };
+	bool GetKNeighborsVisible(){ return showKNeighbors; };
 	bool GetNucAdjVisible(){ return showNucAdj; };
 	bool GetCellAdjVisible(){ return showCellAdj; };
+	void SetTable(vtkSmartPointer<vtkTable> table){ Table = table; refreshBoundsImage();};
 	void SetNucAdjTable(vtkSmartPointer<vtkTable> NucAdjTable){ NucTable = NucAdjTable; refreshBoundsImage();};
 	void SetCellAdjTable(vtkSmartPointer<vtkTable> CellAdjTable){ CellTable = CellAdjTable; refreshBoundsImage();};
+	void SetKNeighborTable(vtkSmartPointer<vtkTable> kNeighborsTable){ kNeighborTable = kNeighborsTable;};
+	void SetRadNeighborTable(vtkSmartPointer<vtkTable> radNeighborsTable){ radNeighborTable = radNeighborsTable;};
 	void DoubleClicksOff(void){ enableDoubleClicks = false;};
 	void DoubleClicksOn(void){ enableDoubleClicks = true;};
 		
@@ -116,6 +121,9 @@ public slots:
 	void SetIDsVisible(bool val);
 	void SetCentroidsVisible(bool val);
 	void SetCrosshairsVisible(bool val);
+	void SetKNeighborsVisibleOn(void);
+	void SetRadNeighborsVisibleOn(void);
+	void SetQueryViewsOff(void);
 	void SetNucAdjVisible(bool val);
 	void SetCellAdjVisible(bool val);
 	void SetROIVisible(bool val);
@@ -147,6 +155,8 @@ protected slots:
 	void drawSelectionCrosshairs(QPainter *painter);
 	void drawNucAdjacency(QPainter *painter);
 	void drawCellAdjacency(QPainter *painter);
+	void drawKNeighbors(QPainter *painter);
+	void drawRadNeighbors(QPainter *painter);
 	void drawROI(QPainter *painter);
 	void selectionChange(void);
 	void sliderChange(int v);
@@ -205,13 +215,17 @@ protected:
 
 	ftk::Image::Pointer labelImg;
 	std::map<int, ftk::Object::Point> *	centerMap;
+	std::map<int, ftk::Object::Point>::iterator it;
 	std::map<int, ftk::Object::Box> * bBoxMap;
 	std::map<int, int> classMap1;
 	std::map<int, int> classMap2;
 	std::map<int, int> classMap3;
 	std::map<int, int> classMap4;
+	vtkSmartPointer<vtkTable> Table;
 	vtkSmartPointer<vtkTable> NucTable;
 	vtkSmartPointer<vtkTable> CellTable;
+	vtkSmartPointer<vtkTable> kNeighborTable;
+	vtkSmartPointer<vtkTable> radNeighborTable;
 
 	ftk::Image::Pointer channelImg;
 	ObjectSelection * selection;
@@ -228,6 +242,9 @@ protected:
 	bool showCentroids;
 	bool showCrosshairs;
 	bool showROI;		//always comes up false
+	bool showKNeighbors;
+	bool showRadNeighbors;
+	bool knnDone;
 	bool showNucAdj;
 	bool showCellAdj;
 	bool enableDoubleClicks;
