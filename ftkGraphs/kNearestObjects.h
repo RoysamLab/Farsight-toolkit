@@ -25,6 +25,8 @@
 #include <sstream>
 #include <vector>
 #include <map>
+#include <utility>
+#include <fstream>
 
 using namespace boost;
 
@@ -34,26 +36,32 @@ public:
 	typedef itk::Vector< float, 3 > MeasurementVectorType;
 	typedef itk::Statistics::ListSample< MeasurementVectorType > SampleType;
 	typedef itk::Statistics::KdTreeGenerator< SampleType > TreeGeneratorType;
+	typedef itk::Statistics::KdTreeNode< MeasurementVectorType > KdTreeNodeType;
 	typedef TreeGeneratorType::KdTreeType TreeType;
 	typedef itk::Statistics::EuclideanDistance< MeasurementVectorType > DistanceMetricType;
 	typedef property<vertex_name_t, std::string > VertexProperties;
-	typedef adjacency_list <vecS, vecS, undirectedS,VertexProperties> kNeighborGraph;
-	typedef graph_traits<kNeighborGraph>::vertex_descriptor node;
-	typedef graph_traits<kNeighborGraph>::edge_descriptor Edge;
-	typedef property_map<kNeighborGraph, vertex_name_t>::type node_name;
-	graph_traits < kNeighborGraph >::vertex_iterator vi, vi_end;
-	graph_traits < kNeighborGraph >::adjacency_iterator ai, ai_end;
+	typedef adjacency_list <vecS, vecS, undirectedS,VertexProperties> NeighborGraph;
+	typedef graph_traits<NeighborGraph>::vertex_descriptor node;
+	typedef graph_traits<NeighborGraph>::edge_descriptor Edge;
+	typedef property_map<NeighborGraph, vertex_name_t>::type node_name;
+	graph_traits < NeighborGraph >::vertex_iterator vi, vi_end;
+	graph_traits < NeighborGraph >::adjacency_iterator ai, ai_end;
 
 	//constructor
 	kNearestObjects(std::map< unsigned int, std::vector<float> > centroidMap);
 	//destructor
 	~kNearestObjects();
 
-	std::vector<std::vector<unsigned int>> k_nearest_neighbors_All(unsigned int k=5);
-	std::vector<unsigned int> k_nearest_neighbors_ID(unsigned int id, unsigned int k=5);
-	kNeighborGraph kNearestGraph(std::vector<unsigned int>);
-	kNeighborGraph kNearestGraph(std::vector<std::vector<unsigned int>>);
-	vtkSmartPointer<vtkTable> kNeighborTable(kNeighborGraph g);
+	std::vector<std::vector< std::pair<unsigned int, double> >> k_nearest_neighbors_All(unsigned int k, unsigned short Class_dest, unsigned short Class_src);
+	std::vector< std::pair<unsigned int, double> > k_nearest_neighbors_ID(unsigned int id, unsigned int k, unsigned short Class_dest);
+	std::vector<std::vector< std::pair<unsigned int, double> >> neighborsWithinRadius_All(double radius, unsigned short Class_dest, unsigned short Class_src);
+	std::vector< std::pair<unsigned int, double> > neighborsWithinRadius_ID(unsigned int id, double radius, unsigned short Class_dest);
+	vtkSmartPointer<vtkTable> vectorsToGraphTable(std::vector< std::vector< std::pair<unsigned int, double> > > NeighborIDs);
+	vtkSmartPointer<vtkTable> vectorsToGraphTable(std::vector< std::pair<unsigned int, double> > NeighborIds);
+	NeighborGraph getNeighborGraph(std::vector< std::pair<unsigned int, double> >);
+	NeighborGraph getNeighborGraph(std::vector<std::vector< std::pair<unsigned int, double> >>);
+	vtkSmartPointer<vtkTable> graphToTable(NeighborGraph g);
+	void setFeatureTable(vtkSmartPointer<vtkTable> table){featureTable = table; return;};
 
 private:
 	
@@ -65,8 +73,10 @@ private:
 	std::map<int, MeasurementVectorType> idToCentroidMap;
 	std::map<int, MeasurementVectorType>::iterator IdIt;
 	TreeType::Pointer tree;
-	kNeighborGraph KNG;
+	NeighborGraph NG;
+	vtkSmartPointer<vtkTable> graphtable;
 	node_name nodeName;
+	vtkSmartPointer<vtkTable> featureTable;
 	int check;
 
 	std::string convert2string(unsigned int id);
