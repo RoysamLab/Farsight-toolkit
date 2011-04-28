@@ -59,6 +59,8 @@ LabelImageViewQT::LabelImageViewQT(QMap<QString, QColor> * new_colorItemsMap, QW
 	rubberBand = NULL;					//For drawing a box!!
 	pointsMode = false;					//For collecting points
 	roiMode = false;					//For drawing Region of Interest (ROI)
+	showKNeighbors = false;
+	showRadNeighbors = false;
 	showNucAdj = false;
 	showCellAdj = false;
 	enableDoubleClicks = true;
@@ -329,6 +331,31 @@ void LabelImageViewQT::SetIDsVisible(bool val)
 void LabelImageViewQT::SetCentroidsVisible(bool val)
 {
 	this->showCentroids = val;
+	refreshBoundsImage();
+}
+
+void LabelImageViewQT::SetKNeighborsVisibleOn()
+{
+	this->showKNeighbors = true;
+	this->showRadNeighbors = false;
+	this->showNucAdj = false;
+	this->showCellAdj = false;
+	refreshBoundsImage();
+}
+
+void LabelImageViewQT::SetRadNeighborsVisibleOn()
+{
+	this->showKNeighbors = false;
+	this->showRadNeighbors = true;
+	this->showNucAdj = false;
+	this->showCellAdj = false;
+	refreshBoundsImage();
+}
+
+void LabelImageViewQT::SetQueryViewsOff()
+{
+	this->showKNeighbors = false;
+	this->showRadNeighbors = false;
 	refreshBoundsImage();
 }
 
@@ -1138,7 +1165,10 @@ void LabelImageViewQT::refreshBoundsImage(void)
 	this->drawROI(&painter);
 	this->drawNucAdjacency(&painter);
 	this->drawCellAdjacency(&painter);
+	this->drawKNeighbors(&painter);
+	this->drawRadNeighbors(&painter);
 	this->repaint();
+	
 }
 
 void LabelImageViewQT::drawObjectBoundaries(QPainter *painter)
@@ -1208,7 +1238,6 @@ void LabelImageViewQT::drawObjectIDs(QPainter *painter)
 	int currentZ = vSpin->value();
 
 	//Iterate through each object and write its id at its centroid.
-	std::map<int,ftk::Object::Point>::iterator it;
 	for ( it = centerMap->begin() ; it != centerMap->end(); ++it )
 	{
 		int id = (*it).first;
@@ -1231,7 +1260,6 @@ void LabelImageViewQT::drawObjectCentroids(QPainter *painter)
 	int currentZ = vSpin->value();
 
 	//Iterate through each object and write its id at its centroid.
-	std::map<int,ftk::Object::Point>::iterator it;
 	for ( it = centerMap->begin() ; it != centerMap->end(); ++it )
 	{
 		int id = (*it).first;
@@ -1251,6 +1279,7 @@ void LabelImageViewQT::drawObjectCentroids(QPainter *painter)
 		QColor myColor2, myColor3, myColor4;
 		painter->setPen(Qt::black);
 		painter->setBrush(myColor1);
+		//painter->setBrush(Qt::green);
 		
 		ftk::Object::Point point = (*it).second;
 		if ( (currentZ == point.z) )
@@ -1275,6 +1304,7 @@ void LabelImageViewQT::drawObjectCentroids(QPainter *painter)
 			painter->drawEllipse(point.x - 2, point.y - 2, 5, 5);
 		}
 	}
+	
 }
 
 void LabelImageViewQT::drawSelectionCrosshairs(QPainter *painter)
@@ -1301,21 +1331,64 @@ void LabelImageViewQT::drawSelectionCrosshairs(QPainter *painter)
 
 }
 
+void LabelImageViewQT::drawKNeighbors(QPainter *painter)
+{
+	if(!showKNeighbors) return;
+	if(!kNeighborTable) return;
+	if(!centerMap) return;
+
+	int currentZ = vSpin->value();
+		
+	for(int i=0; i<(int)kNeighborTable->GetNumberOfRows(); ++i )
+	{
+		int src_id = kNeighborTable->GetValue(i,0).ToInt();
+		int trg_id = kNeighborTable->GetValue(i,1).ToInt();
+		ftk::Object::Point source = (*centerMap)[src_id];
+		ftk::Object::Point target = (*centerMap)[trg_id];
+		painter->setPen(Qt::yellow);
+		if ( (currentZ == source.z) && (currentZ == target.z) )
+			painter->drawLine(source.x, source.y, target.x, target.y);
+	}
+}
+
+void LabelImageViewQT::drawRadNeighbors(QPainter *painter)
+{
+	if(!showRadNeighbors) return;
+	if(!radNeighborTable) return;
+	if(!centerMap) return;
+
+	int currentZ = vSpin->value();
+		
+	for(int i=0; i<(int)radNeighborTable->GetNumberOfRows(); ++i )
+	{
+		int src_id = radNeighborTable->GetValue(i,0).ToInt();
+		int trg_id = radNeighborTable->GetValue(i,1).ToInt();
+		ftk::Object::Point source = (*centerMap)[src_id];
+		ftk::Object::Point target = (*centerMap)[trg_id];
+		painter->setPen(Qt::yellow);
+		if ( (currentZ == source.z) && (currentZ == target.z) )
+			painter->drawLine(source.x, source.y, target.x, target.y);
+	}
+}
+
+
 void LabelImageViewQT::drawNucAdjacency(QPainter *painter)
 {
 	if(!showNucAdj) return;
 	if(!NucTable) return;
 	if(!centerMap) return;
+
+	int currentZ = vSpin->value();
 		
-	std::map<int,ftk::Object::Point>::iterator src_it, trg_it;
 	for(int i=0; i<(int)NucTable->GetNumberOfRows(); ++i )
 	{
 		int src_id = NucTable->GetValue(i,0).ToInt();
 		int trg_id = NucTable->GetValue(i,1).ToInt();
 		ftk::Object::Point source = (*centerMap)[src_id];
 		ftk::Object::Point target = (*centerMap)[trg_id];
-		painter->setPen(Qt::green);
-		painter->drawLine(source.x, source.y, target.x, target.y);
+		painter->setPen(Qt::yellow);
+		if ( (currentZ == source.z) && (currentZ == target.z) )
+			painter->drawLine(source.x, source.y, target.x, target.y);
 	}
 }
 
@@ -1324,15 +1397,16 @@ void LabelImageViewQT::drawCellAdjacency(QPainter *painter)
 	if(!showCellAdj) return;
 	if(!CellTable) return;
 	if(!centerMap) return;
+
+	int currentZ = vSpin->value();
 	
-	std::map<int,ftk::Object::Point>::iterator it;
 	for(int j=0; j<(int)CellTable->GetNumberOfRows(); ++j )
 	{
 		int src_id = CellTable->GetValue(j,0).ToInt();
 		int trg_id = CellTable->GetValue(j,1).ToInt();
 		ftk::Object::Point source = (*centerMap)[src_id];
 		ftk::Object::Point target = (*centerMap)[trg_id];
-		painter->setPen(Qt::green);
+		painter->setPen(Qt::yellow);
 		painter->drawLine(source.x, source.y, target.x, target.y);		
 	}
 }
@@ -1358,7 +1432,8 @@ void LabelImageViewQT::drawROI(QPainter *painter)
 				v4 = roiImage.pixelIndex(i-1, j);
 				if(v!=v1 || v!=v2 || v!=v3 || v!=v4)
 				{
-					painter->setPen( (*colorItemsMap)["ROI Boundary"] );
+					painter->setPen(Qt::red);
+					//painter->setPen( (*colorItemsMap)["ROI Boundary"] );
 					painter->drawPoint(i,j);
 				}
 			}
