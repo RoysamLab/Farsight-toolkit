@@ -62,6 +62,20 @@ std::vector< std::vector< std::pair<unsigned int, double> > > kNearestObjects::k
 	return kNearestIDs;
 }
 
+std::vector< std::vector< std::pair<unsigned int, double> > > kNearestObjects::k_nearest_neighbors_IDs(std::vector<unsigned int> IDs, unsigned int k, unsigned short Class_dest)
+{
+	std::vector<std::vector< std::pair<unsigned int, double> >> kNearestIDs;
+	for(int n=0; n<(int)IDs.size(); ++n)
+	{
+		std::vector< std::pair<unsigned int, double> > kNearestIds;
+		unsigned int ID = IDs.at(n);
+		kNearestIds = k_nearest_neighbors_ID(ID, k, Class_dest);
+		kNearestIDs.push_back(kNearestIds);				
+	}
+
+	return kNearestIDs;
+}
+
 std::vector< std::pair<unsigned int, double> > kNearestObjects::k_nearest_neighbors_ID(unsigned int id, unsigned int k, unsigned short Class_dest)
 {
 	std::vector< std::pair<unsigned int, double> > kNearestIds;
@@ -149,6 +163,20 @@ std::vector< std::vector< std::pair<unsigned int, double> > > kNearestObjects::n
 				}
 			}
 		}		
+	}
+
+	return inRadiusIDs;
+}
+
+std::vector< std::vector< std::pair<unsigned int, double> > > kNearestObjects::neighborsWithinRadius_IDs(std::vector<unsigned int> IDs, double radius, unsigned short Class_dest)
+{
+	std::vector<std::vector< std::pair<unsigned int, double> >> inRadiusIDs;
+	for(int n=0; n<(int)IDs.size(); ++n)
+	{
+		std::vector< std::pair<unsigned int, double> > inRadiusIds;
+		unsigned int ID = IDs.at(n);
+		inRadiusIds = neighborsWithinRadius_ID(ID, radius, Class_dest);
+		inRadiusIDs.push_back(inRadiusIds);				
 	}
 
 	return inRadiusIDs;
