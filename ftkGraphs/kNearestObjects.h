@@ -53,8 +53,10 @@ public:
 	~kNearestObjects();
 
 	std::vector<std::vector< std::pair<unsigned int, double> >> k_nearest_neighbors_All(unsigned int k, unsigned short Class_dest, unsigned short Class_src);
+	std::vector< std::vector< std::pair<unsigned int, double> > > k_nearest_neighbors_IDs(std::vector<unsigned int> IDs, unsigned int k, unsigned short Class_dest);
 	std::vector< std::pair<unsigned int, double> > k_nearest_neighbors_ID(unsigned int id, unsigned int k, unsigned short Class_dest);
 	std::vector<std::vector< std::pair<unsigned int, double> >> neighborsWithinRadius_All(double radius, unsigned short Class_dest, unsigned short Class_src);
+	std::vector< std::vector< std::pair<unsigned int, double> > > neighborsWithinRadius_IDs(std::vector<unsigned int> IDs, double radius, unsigned short Class_dest);
 	std::vector< std::pair<unsigned int, double> > neighborsWithinRadius_ID(unsigned int id, double radius, unsigned short Class_dest);
 	vtkSmartPointer<vtkTable> vectorsToGraphTable(std::vector< std::vector< std::pair<unsigned int, double> > > NeighborIDs);
 	vtkSmartPointer<vtkTable> vectorsToGraphTable(std::vector< std::pair<unsigned int, double> > NeighborIds);
