@@ -70,9 +70,10 @@
 #include "ftkGUI/TableWindow.h"
 #include "ftkGUI/PlotWindow.h"
 #include "ftkGUI/ImageBrowser5D.h"
-//#include "ftkGUI/HistoWindow.h"
+#include "ftkGUI/HistoWindow.h"
 #include "ftkGUI/LabelImageViewQT.h"
 #include "ftkGUI/PreprocessDialog.h"
+#include "ftkGraphs/kNearestObjects.h"
 
 //VTK includes:
 #include "vtkQtTableView.h"
@@ -143,7 +144,7 @@ protected slots:
 	void DisplayChannelsMenu();
 	void CreateNewPlotWindow();
 	void CreateNewTableWindow();
-	//void CreateNewHistoWindow();
+	void CreateNewHistoWindow();
 	void CreateNewNucRAG();
 	void CreateNewCellRAG();
 	void updateViews();
@@ -185,6 +186,12 @@ protected slots:
 	// Models Menu
 	void createTrainer(void);
 	void appendTrainer(void);
+
+	//Queries Menu
+	void queryKNearest(void);
+	void queryInRadius(void);
+	void queryViewsOff(void);
+	double average(std::vector< std::pair<unsigned int, double> > ID);
 
 	//*****************************************************
 
@@ -229,7 +236,7 @@ protected:
 	LabelImageViewQT *segView;
 	std::vector<PlotWindow *> pltWin;
 	std::vector<TableWindow *> tblWin;
-	//std::vector<HistoWindow *> hisWin;
+	std::vector<HistoWindow *> hisWin;
 	PatternAnalysisWizard *pWizard;
 
 	QMenu *fileMenu;
@@ -307,6 +314,12 @@ protected:
     QAction *createTrainingAction;
     QAction *appendTrainingAction;
 
+	//For Queries Menu
+	QMenu *queriesMenu;
+    QAction *kNearestNeighborsAction;
+    QAction *inRadiusNeighborsAction;
+	QAction *queryViewsOffAction;
+
 	//************************************************************************
 	//Preprocess menu
 	QMenu *PreprocessMenu;
@@ -382,6 +395,38 @@ private:
 	QComboBox *fileCombo;
 	QString lastPath;
 	QPushButton *okButton;
+};
+
+class QueryDialog : public QDialog
+{
+	Q_OBJECT
+public:
+	QueryDialog(int QueryType, QVector<QString> classes, QWidget *parent = 0);
+	std::vector<unsigned int> parseIDs(void);
+	unsigned int parseK(void);
+	double parseRad(void);
+	unsigned short getSourceClass(void);
+	unsigned short getDestClass(void);
+
+private:
+	QLabel * idLabel;
+	QLineEdit * IDs;
+	QHBoxLayout *idLayout;
+	QLabel * kLabel;
+	QLineEdit * K;
+	QHBoxLayout *kLayout;
+	QLabel * radLabel;
+	QLineEdit * RAD;
+	QHBoxLayout *radLayout;
+	QLabel * classLabel1;
+	QComboBox * classCombo1;
+	QHBoxLayout * classLayout1;
+	QLabel * classLabel2;
+	QComboBox * classCombo2;
+	QHBoxLayout * classLayout2;
+	QPushButton * okButton;
+	QHBoxLayout * bLayout;
+	QVBoxLayout * layout;
 };
 
 class ProcessThread : public QThread
