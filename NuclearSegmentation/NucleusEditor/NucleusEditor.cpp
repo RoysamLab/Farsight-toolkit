@@ -347,10 +347,10 @@ void NucleusEditor::createMenus()
 	connect(newScatterAction,SIGNAL(triggered()),this,SLOT(CreateNewPlotWindow()));
 	viewMenu->addAction(newScatterAction);
 
-	/*newHistoAction = new QAction(tr("New Histogram"),this);
-	newHistoAction->setStatusTip(tr("Open a new Histogram Window"));
-	connect(newHistoAction,SIGNAL(triggered()),this,SLOT(CreateNewHistoWindow()));
-	viewMenu->addAction(newHistoAction);*/
+	//newHistoAction = new QAction(tr("New Histogram"),this);
+	//newHistoAction->setStatusTip(tr("Open a new Histogram Window"));
+	//connect(newHistoAction,SIGNAL(triggered()),this,SLOT(CreateNewHistoWindow()));
+	//viewMenu->addAction(newHistoAction);
 
 	ragMenu = viewMenu->addMenu(tr("New Region Adjacency Graph"));
 
@@ -504,6 +504,22 @@ void NucleusEditor::createMenus()
     appendTrainingAction = new QAction(tr("Append Training Model..."), this);
     connect(appendTrainingAction, SIGNAL(triggered()), this, SLOT(appendTrainer()));
     modelsMenu->addAction(appendTrainingAction);
+
+	//QUERIES MENU
+	queriesMenu = menuBar()->addMenu(tr("Queries"));
+
+	kNearestNeighborsAction = new QAction(tr("Query K Nearest Neighbors..."), this);
+    connect(kNearestNeighborsAction, SIGNAL(triggered()), this, SLOT(queryKNearest()));
+    queriesMenu->addAction(kNearestNeighborsAction);
+    
+    inRadiusNeighborsAction = new QAction(tr("Query Neighbors Within Radius..."), this);
+    connect(inRadiusNeighborsAction, SIGNAL(triggered()), this, SLOT(queryInRadius()));
+    queriesMenu->addAction(inRadiusNeighborsAction);
+
+	queryViewsOffAction = new QAction(tr("Set Query Views Off"), this);
+	queryViewsOffAction->setShortcut(tr("Shift+O"));
+    connect(queryViewsOffAction, SIGNAL(triggered()), this, SLOT(queryViewsOff()));
+    queriesMenu->addAction(queryViewsOffAction);
 
 	//HELP MENU
 	helpMenu = menuBar()->addMenu(tr("Help"));
@@ -1602,6 +1618,183 @@ void NucleusEditor::loadModelFromFile( std::string file_name ){
 	return;
 }
 
+//**********************************************************************
+// SLOT: Query K Nearest Neighbors
+//**********************************************************************
+void NucleusEditor::queryKNearest()
+{
+	if(!table) return;
+	if(!segView) return;
+	
+	std::vector<unsigned int> IDs;
+	unsigned int k;
+	unsigned short Class_dest, Class_src = 0;
+	
+	QVector<QString> classes;
+	int max_class = 0;
+	for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
+	{
+		if(table->GetValueByName(row,"prediction_default1").ToInt() > max_class)
+			max_class = table->GetValueByName(row,"prediction_default1").ToInt();
+	}
+	for(int i=0; i<max_class; ++i)
+		classes.push_back(QString::number(i+1));
+	
+
+	QueryDialog *dialog = new QueryDialog(1,classes,this);
+	if( dialog->exec() )
+	{
+		IDs = dialog->parseIDs();
+		k = dialog->parseK();
+		if(IDs.at(0) == 0)
+			Class_src = dialog->getSourceClass();
+		Class_dest = dialog->getDestClass();
+    }
+	delete dialog;
+
+	std::map<int, ftk::Object::Point> *	centerMap;
+	centerMap = segView->GetCenterMapPointer();
+	std::map<int, ftk::Object::Point>::iterator it;
+	std::map< unsigned int, std::vector<float> > centroidMap;
+	for ( it = centerMap->begin() ; it != centerMap->end(); ++it )
+	{
+		unsigned int id = (unsigned int)(*it).first;
+		std::vector<float> c;
+		c.push_back((float)(*it).second.x);
+		c.push_back((float)(*it).second.y);
+		c.push_back((float)(*it).second.z);
+		centroidMap[id] = c;				
+	}
+
+	kNearestObjects* KNObj = new kNearestObjects(centroidMap);
+	KNObj->setFeatureTable(table);
+	std::vector<std::vector< std::pair<unsigned int, double> >> kNeighborIDs;
+	if(IDs.at(0) == 0)
+		kNeighborIDs = KNObj->k_nearest_neighbors_All(k, Class_dest, Class_src);
+	else
+		kNeighborIDs = KNObj->k_nearest_neighbors_IDs(IDs, k, Class_dest);
+
+	std::string Filename = "C:\\Users\\vhsomasu\\Desktop\\india.txt";
+	ofstream outFile; 
+	outFile.open(Filename.c_str(), ios::out | ios::trunc );
+	if ( !outFile.is_open() )
+	{
+		std::cerr << "Failed to Load Document: " << outFile << std::endl;
+		return;
+	}
+	//Write out the average distance:
+	for(int i=0; i < (int)kNeighborIDs.size(); ++i)
+	{
+		outFile <<  kNeighborIDs.at(i).at(0).first << "\t";
+		outFile << average(kNeighborIDs.at(i)) << "\n";
+	}
+	outFile.close();
+	vtkSmartPointer<vtkTable> kNeighborTable = KNObj->vectorsToGraphTable(kNeighborIDs);
+	segView->SetKNeighborTable(kNeighborTable);
+	segView->SetKNeighborsVisibleOn();		
+}
+
+double NucleusEditor::average(std::vector< std::pair<unsigned int, double> > ID)
+{
+	double dist = 0;
+	for(int i=1; i<(int)ID.size(); ++i)
+	{
+		dist += ID.at(i).second;
+	}
+	double average = dist/(int)(ID.size()-1);
+	return average;
+}
+
+
+//**********************************************************************
+// SLOT: Query Neighbors Within Radius
+//**********************************************************************
+void NucleusEditor::queryInRadius()
+{
+	if(!table) return;
+	if(!segView) return;
+	
+	std::vector<unsigned int> IDs;
+	double radius;
+	unsigned short Class_dest, Class_src = 0;
+
+	QVector<QString> classes;
+	int max_class = 0;
+	for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
+	{
+		if(table->GetValueByName(row,"prediction_default1").ToInt() > max_class)
+			max_class = table->GetValueByName(row,"prediction_default1").ToInt();
+	}
+	for(int i=0; i<max_class; ++i)
+		classes.push_back(QString::number(i+1));
+
+	QueryDialog *dialog = new QueryDialog(2,classes,this);
+	if( dialog->exec() )
+	{
+		IDs = dialog->parseIDs();
+		radius = dialog->parseRad();
+		if(IDs.at(0) == 0)
+			Class_src = dialog->getSourceClass();
+		Class_dest = dialog->getDestClass();
+    }
+	delete dialog;
+
+	std::map<int, ftk::Object::Point> *	centerMap;
+	centerMap = segView->GetCenterMapPointer();
+	std::map<int, ftk::Object::Point>::iterator it;
+	std::map< unsigned int, std::vector<float> > centroidMap;
+	for ( it = centerMap->begin() ; it != centerMap->end(); ++it )
+	{
+		unsigned int id = (unsigned int)(*it).first;
+		std::vector<float> c;
+		c.push_back((float)(*it).second.x);
+		c.push_back((float)(*it).second.y);
+		c.push_back((float)(*it).second.z);
+		centroidMap[id] = c;
+	}
+
+	kNearestObjects* KNObj = new kNearestObjects(centroidMap);
+	KNObj->setFeatureTable(table);
+	std::vector<std::vector< std::pair<unsigned int, double> >> radNeighborIDs;
+	if(IDs.at(0) == 0)
+		radNeighborIDs = KNObj->neighborsWithinRadius_All(radius, Class_dest, Class_src);
+	else
+		radNeighborIDs = KNObj->neighborsWithinRadius_IDs(IDs, radius, Class_dest);
+	
+	std::string Filename = "C:\\Users\\vhsomasu\\Desktop\\india.txt";
+	ofstream outFile; 
+	outFile.open(Filename.c_str(), ios::out | ios::trunc );
+	if ( !outFile.is_open() )
+	{
+		std::cerr << "Failed to Load Document: " << outFile << std::endl;
+		return;
+	}
+	//Write out the average distance:
+	for(int i=0; i < (int)radNeighborIDs.size(); ++i)
+	{
+		outFile <<  radNeighborIDs.at(i).at(0).first << "\t";
+		outFile << average(radNeighborIDs.at(i)) << "\n";
+	}
+	outFile.close();
+
+	vtkSmartPointer<vtkTable> radNeighborTable = KNObj->vectorsToGraphTable(radNeighborIDs);
+	
+	segView->SetRadNeighborTable(radNeighborTable);
+	segView->SetRadNeighborsVisibleOn();
+	
+}
+
+//**********************************************************************
+// SLOT: Turn Off Query Views
+//**********************************************************************
+void NucleusEditor::queryViewsOff()
+{
+	if(!segView) return;
+	segView->SetQueryViewsOff();	
+
+}
+
+
 //*********************************************************************************************************
 //Connect the closing signal from views to this slot to remove it from my lists of open views:
 //*********************************************************************************************************
@@ -1627,15 +1820,15 @@ void NucleusEditor::viewClosing(QWidget * view)
 		}
 	}
 
-	//std::vector<HistoWindow *>::iterator hist_it;
-	//for ( hist_it = hisWin.begin(); hist_it < hisWin.end(); hist_it++ )
-	//{
-	//	if( *hist_it == view )
-	//	{
-	//		hisWin.erase(hist_it);
-	//		return;
-	//	}
-	//}
+	std::vector<HistoWindow *>::iterator hist_it;
+	for ( hist_it = hisWin.begin(); hist_it < hisWin.end(); hist_it++ )
+	{
+		if( *hist_it == view )
+		{
+			hisWin.erase(hist_it);
+			return;
+		}
+	}
 }
 
 void NucleusEditor::closeViews()
@@ -1646,8 +1839,8 @@ void NucleusEditor::closeViews()
 	for(int p=0; p<(int)pltWin.size(); ++p)
 		pltWin.at(p)->close();
 
-	//for(int p=0; p<(int)hisWin.size(); ++p)
-	//	hisWin.at(p)->close();
+	for(int p=0; p<(int)hisWin.size(); ++p)
+		hisWin.at(p)->close();
 }
 
 //Call this slot when the table has been modified (new rows or columns) to update the views:
@@ -1670,8 +1863,8 @@ void NucleusEditor::updateViews(void)
 	for(int p=0; p<(int)pltWin.size(); ++p)
 		pltWin.at(p)->update();
 
-	//for(int p=0; p<(int)hisWin.size(); ++p)
-	//	hisWin.at(p)->update();
+	for(int p=0; p<(int)hisWin.size(); ++p)
+		hisWin.at(p)->update();
 
 
 }
@@ -1687,6 +1880,7 @@ void NucleusEditor::CreateNewPlotWindow(void)
 	pltWin.back()->setModels(table,selection);
 	pltWin.back()->show();
 }
+
 
 //******************************************************************************
 // Create a new table window
@@ -1709,15 +1903,15 @@ void NucleusEditor::CreateNewTableWindow(void)
 //*******************************************************************************
 // Create new Histogram Window
 //*******************************************************************************
-//void NucleusEditor::CreateNewHistoWindow(void)
-//{
-//	if(!table) return;
-//
-//	hisWin.push_back(new HistoWindow());
-//	connect(hisWin.back(), SIGNAL(closing(QWidget *)), this, SLOT(viewClosing(QWidget *)));
-//	hisWin.back()->setModels(table,selection);
-//	hisWin.back()->show();
-//}
+void NucleusEditor::CreateNewHistoWindow(void)
+{
+	if(!table) return;
+
+	hisWin.push_back(new HistoWindow());
+	connect(hisWin.back(), SIGNAL(closing(QWidget *)), this, SLOT(viewClosing(QWidget *)));
+	hisWin.back()->setModels(table,selection);
+	hisWin.back()->show();
+}
 
 //******************************************************************************
 // Create Region Adjacency Graphs
@@ -1896,6 +2090,7 @@ void NucleusEditor::updateNucSeg(bool ask)
 	nucSeg->SetLabelImage(labImg,"lab_img");
 	nucSeg->ComputeAllGeometries();
 
+	
 	segView->SetCenterMapPointer( nucSeg->GetCenterMapPointer() );
 	segView->SetBoundingBoxMapPointer( nucSeg->GetBoundingBoxMapPointer() );
 }
@@ -2612,6 +2807,148 @@ void ParamsFileDialog::ParamBrowse(QString comboSelection)
 	fileCombo->setCurrentIndex(0);
 	fileCombo->setItemText(0,newfilename);
 }
+
+//***************************************************************************
+//***********************************************************************************
+//***********************************************************************************
+// A dialog to get the paramaters file to use and specify the channel if image has
+// more than one:
+//***********************************************************************************
+QueryDialog::QueryDialog(int QueryType, QVector<QString> classes, QWidget *parent)
+: QDialog(parent)
+{
+	idLabel = new QLabel("Choose Object IDs ('0' for all IDs) :");
+	IDs = new QLineEdit();
+	IDs->setMinimumWidth(100);
+	IDs->setFocusPolicy(Qt::StrongFocus);
+	idLayout = new QHBoxLayout;
+	idLayout->addWidget(idLabel);
+	idLayout->addWidget(IDs);
+
+	if(QueryType == 1)
+	{
+		kLabel = new QLabel("Choose Number Of Nearest Neighbors K: ");
+		K = new QLineEdit();
+		K->setMinimumWidth(50);
+		K->setFocusPolicy(Qt::StrongFocus);
+		kLayout = new QHBoxLayout;
+		kLayout->addWidget(kLabel);
+		kLayout->addWidget(K);
+	}
+	else if(QueryType == 2)
+	{
+		radLabel = new QLabel("Choose Radius: ");
+		RAD = new QLineEdit();
+		RAD->setMinimumWidth(50);
+		RAD->setFocusPolicy(Qt::StrongFocus);
+		radLayout = new QHBoxLayout;
+		radLayout->addWidget(radLabel);
+		radLayout->addWidget(RAD);
+	}	
+
+	classLabel1 = new QLabel("Choose Source Class: ");
+	classCombo1 = new QComboBox();
+	classCombo1->addItem("All");
+	for(int v = 0; v<classes.size(); ++v)
+	{
+		classCombo1->addItem(classes.at(v));
+	}
+	QHBoxLayout *classLayout1 = new QHBoxLayout;
+	classLayout1->addWidget(classLabel1);
+	classLayout1->addWidget(classCombo1);
+
+	classLabel2 = new QLabel("Choose Destination Class: ");
+	classCombo2 = new QComboBox();
+	classCombo2->addItem("All");
+	for(int v = 0; v<classes.size(); ++v)
+	{
+		classCombo2->addItem(classes.at(v));
+	}
+	QHBoxLayout *classLayout2 = new QHBoxLayout;
+	classLayout2->addWidget(classLabel2);
+	classLayout2->addWidget(classCombo2);
+
+	//autoButton = new QRadioButton(tr("Automatic Parameter Selection"),this);
+	//autoButton->setChecked(true);
+
+	//fileButton = new QRadioButton(tr("Use Parameter File..."),this);
+
+	//fileCombo = new QComboBox();
+	//fileCombo->addItem(tr(""));
+	//fileCombo->addItem(tr("Browse..."));
+	//connect(fileCombo, SIGNAL(currentIndexChanged(QString)),this,SLOT(ParamBrowse(QString)));
+
+	okButton = new QPushButton(tr("OK"),this);
+	connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
+	bLayout = new QHBoxLayout;
+	bLayout->addStretch(20);
+	bLayout->addWidget(okButton);
+
+	layout = new QVBoxLayout;
+	layout->addLayout(idLayout);
+	if(QueryType == 1)
+		layout->addLayout(kLayout);
+	if(QueryType == 2)
+		layout->addLayout(radLayout);
+	layout->addLayout(classLayout1);
+	layout->addLayout(classLayout2);
+	//layout->addWidget(autoButton);
+	//layout->addWidget(quitButton);
+	//layout->addWidget(okButton);
+	layout->addLayout(bLayout);
+	this->setLayout(layout);
+	if(QueryType == 1)
+		this->setWindowTitle(tr("K Nearest Neighbors"));
+	else if(QueryType == 2)
+		this->setWindowTitle(tr("Neighbors Within Radius"));
+
+	Qt::WindowFlags flags = this->windowFlags();
+	flags &= ~Qt::WindowContextHelpButtonHint;
+	this->setWindowFlags(flags);
+}
+
+std::vector<unsigned int> QueryDialog::parseIDs(void)
+{
+	std::vector<unsigned int> ids;
+	QString input = IDs->displayText();
+	QStringList values = input.split(",");
+	for(int i=0; i<values.size(); ++i)
+	{
+		QString str = values.at(i);
+		unsigned int v = str.toUInt();
+		ids.push_back( v );
+	}
+	return ids;
+}
+
+unsigned int QueryDialog::parseK(void)
+{
+	unsigned int k;
+	QString input = K->displayText();
+	k = input.toUInt();
+	return k;
+}
+
+double QueryDialog::parseRad(void)
+{
+	double rad;
+	QString input = RAD->displayText();
+	rad = input.toUInt();
+	return rad;
+}
+
+unsigned short QueryDialog::getSourceClass()
+{
+	return classCombo1->currentIndex();
+}
+
+unsigned short QueryDialog::getDestClass()
+{
+	return classCombo2->currentIndex();
+}
+
+
+
 //***********************************************************************************
 //***********************************************************************************
 //***********************************************************************************
