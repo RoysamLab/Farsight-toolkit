@@ -347,10 +347,10 @@ void NucleusEditor::createMenus()
 	connect(newScatterAction,SIGNAL(triggered()),this,SLOT(CreateNewPlotWindow()));
 	viewMenu->addAction(newScatterAction);
 
-	//newHistoAction = new QAction(tr("New Histogram"),this);
-	//newHistoAction->setStatusTip(tr("Open a new Histogram Window"));
-	//connect(newHistoAction,SIGNAL(triggered()),this,SLOT(CreateNewHistoWindow()));
-	//viewMenu->addAction(newHistoAction);
+	newHistoAction = new QAction(tr("New Histogram"),this);
+	newHistoAction->setStatusTip(tr("Open a new Histogram Window"));
+	connect(newHistoAction,SIGNAL(triggered()),this,SLOT(CreateNewHistoWindow()));
+	viewMenu->addAction(newHistoAction);
 
 	ragMenu = viewMenu->addMenu(tr("New Region Adjacency Graph"));
 
@@ -1674,7 +1674,7 @@ void NucleusEditor::queryKNearest()
 	else
 		kNeighborIDs = KNObj->k_nearest_neighbors_IDs(IDs, k, Class_dest);
 
-	std::string Filename = "C:\\Users\\vhsomasu\\Desktop\\india.txt";
+	std::string Filename = "K_Nearest_Neighbors.txt";
 	ofstream outFile; 
 	outFile.open(Filename.c_str(), ios::out | ios::trunc );
 	if ( !outFile.is_open() )
@@ -1761,7 +1761,7 @@ void NucleusEditor::queryInRadius()
 	else
 		radNeighborIDs = KNObj->neighborsWithinRadius_IDs(IDs, radius, Class_dest);
 	
-	std::string Filename = "C:\\Users\\vhsomasu\\Desktop\\india.txt";
+	std::string Filename = "Neighbors_Within_Radius.txt";
 	ofstream outFile; 
 	outFile.open(Filename.c_str(), ios::out | ios::trunc );
 	if ( !outFile.is_open() )
