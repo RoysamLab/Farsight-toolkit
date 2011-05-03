@@ -89,7 +89,7 @@ ELSE(QT4_FOUND)
 ENDIF(QT4_FOUND)
 
 
-SET (GLUT_INCLUDE_DIR "freeglut/include")
+SET (GLUT_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/freeglut/include")
 SET (GLUT_glut_LIBRARY ${CMAKE_SOURCE_DIR}/freeglut/lib/freeglut.lib)
 #SET (GLUT_LIBRARIES "freeglut/lib/freeglut")
 FIND_PACKAGE(GLUT)
