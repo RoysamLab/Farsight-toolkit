@@ -15,14 +15,14 @@ ENDIF ("${Farsight_BINARY_DIR}" MATCHES "^${Farsight_SOURCE_DIR}$")
 #########################################
 # ADD NEW MODULES HERE
 #########################################
-OPTION( BUILD_TRACING "Build Tracing Tools" ON )
-OPTION( BUILD_NUCLEI "Build Nuclear Segmentation" ON )
+OPTION( BUILD_TRACING "Build Tracing Tools" OFF )
+OPTION( BUILD_NUCLEI "Build Nuclear Segmentation" OFF )
 OPTION( BUILD_VESSEL "Build Vessel Surface Segmentation" OFF )
-OPTION( BUILD_REGISTRATION "Build Image Registration (fregl)" ON )
-OPTION( BUILD_SAMPLE_EDITOR "Build Sample Editor" ON )
+OPTION( BUILD_REGISTRATION "Build Image Registration (fregl)" OFF )
+OPTION( BUILD_SAMPLE_EDITOR "Build Sample Editor" OFF )
 OPTION( BUILD_TISSUENETS "Build TissueNets" OFF )
 OPTION( BUILD_TRACKER "Build Cell Tracker" OFF )
-OPTION( USE_KPLS "Use KPLS module for classification" OFF )
+OPTION( USE_KPLS "Use KPLS module for classification" ON )
 OPTION( USE_SQLITE_DATABASE "Use SQLite database libraries" ON )
 OPTION( WRAP_PYTHON "Wrap Farsight in Python" OFF )
 OPTION( BUILD_EMBREX "Build Mark Embrecht's KPLS module" OFF )
@@ -81,16 +81,19 @@ ELSEIF(VTK_FOUND AND VXL_FOUND)
         MESSAGE(FATAL_ERROR "Cannot build without VTK & VXL.")
 ENDIF(VTK_FOUND AND VXL_FOUND)
 
-FIND_PACKAGE (Boost)
-LINK_DIRECTORIES (${Boost_LIBRARY_DIRS})
-INCLUDE_DIRECTORIES (${Boost_INCLUDE_DIRS})
-
 FIND_PACKAGE(Qt4)
 IF(QT4_FOUND)
     INCLUDE( ${QT_USE_FILE} )
 ELSE(QT4_FOUND)
     MESSAGE(FATAL_ERROR "Cannot build without Qt4")
 ENDIF(QT4_FOUND)
+
+
+SET (GLUT_INCLUDE_DIR "freeglut/include")
+SET (GLUT_glut_LIBRARY ${CMAKE_SOURCE_DIR}/freeglut/lib/freeglut.lib)
+#SET (GLUT_LIBRARIES "freeglut/lib/freeglut")
+FIND_PACKAGE(GLUT)
+
 
 ################################################################################
 ################################################################################
@@ -115,15 +118,11 @@ SUBDIRS( ftkFeatures )
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkGUI )
 SUBDIRS( ftkGUI )
 
-INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkGraphs )
-SUBDIRS( ftkGraphs )
-
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/tinyxml )
 SUBDIRS( tinyxml )
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/PatternAnalysis )
 SUBDIRS( PatternAnalysis )
-
 
 IF(USE_KPLS)
 ADD_DEFINITIONS(-DUSE_KPLS)
@@ -151,9 +150,6 @@ IF( USE_SQLITE_DATABASE )
 ENDIF( USE_SQLITE_DATABASE )
 
 
-LINK_DIRECTORIES( ${PROJECT_SOURCE_DIR}/PatternAnalysis/glpk)
-
-
 ####################################################################################
 ####################################################################################
 # NOW WE CAN INCLUDE THE MODULES ACCORDING TO THE OPTIONS SELECTED ABOVE:
@@ -179,6 +175,7 @@ IF(BUILD_NUCLEI)
 ENDIF(BUILD_NUCLEI)
 
 IF(BUILD_VESSEL)
+  
   INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Vessel )
   SUBDIRS( Vessel )
 ENDIF(BUILD_VESSEL)

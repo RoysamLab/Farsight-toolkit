@@ -59,7 +59,7 @@ IF( BUILD_MultipleNeuronTracer )
 ENDIF()
 
 
-OPTION( BUILD_TracingSystem "Build The Tracing System" ON )
+OPTION( BUILD_TracingSystem "Build The Tracing System" OFF )
 IF(BUILD_TracingSystem)
   SUBDIRS( TheTracingSystem )
 ENDIF()
