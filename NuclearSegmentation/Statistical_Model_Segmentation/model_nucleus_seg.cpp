@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <float.h>
-#include <conio.h>
+//#include <conio.h>
 
 
 using namespace std;
@@ -2028,7 +2028,7 @@ double model_nucleus_seg::CalcGenModelScore(double** train, long ntrain,long nva
 	for (long i=0; i<ntest; i++) 
 	{
 		result[i]=agf_calc_pdf(train, nvar, ntrain, test[i],opt_args.var_0, opt_args.Wc, &diag_param);
-		if(_isnan(result[i]))
+		if(result[i]!=result[i]) //if(_isnan(result[i]))
 		{
 			result[i] = 0;
 		}

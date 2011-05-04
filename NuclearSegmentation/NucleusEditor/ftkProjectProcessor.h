@@ -79,7 +79,7 @@ protected:
 	//Tasks I can do:
 	bool PreprocessImage( void );
 	bool SegmentNuclei(int nucChannel);						//Segment nucChannel as Nuclei & Compute Intrinsic Features
-	bool ProjectProcessor::ComputeFeatures(int nucChannel);  
+	bool ComputeFeatures(int nucChannel);  
 	bool SegmentCytoplasm(int cytChannel, int memChannel);	//Segment Cytoplasm Channel & Compute Intrinsic Features
 	bool ComputeAssociations(void);							//Compute Associative Measures
 	bool PixLevAnalysis(void);								//If you must with all this nice object level machinery available

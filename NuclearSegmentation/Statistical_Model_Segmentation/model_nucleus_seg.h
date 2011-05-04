@@ -165,7 +165,7 @@ public:
 	void GetScoresfromKPLS(ftkgnt::MTreeType mTree,KPLS *kpls);
 	void SetAssocFeatNumber(int nFeat);
 	void PerformPCA();
-	void model_nucleus_seg::Tset2EigenSpace(vnl_matrix<double> nFeats,vnl_matrix<double> Feats);
+	void Tset2EigenSpace(vnl_matrix<double> nFeats,vnl_matrix<double> Feats);
 	inline int getasscofeatnumb() { return NUM_ASSOC_FEAT;};
 		
 
@@ -178,10 +178,10 @@ public:
 	void SelectHypothesis();
 	double CalcGenModelScore(double** train, long ntrain,long nvar,long ntest,double **test);
 	OutputImageType::Pointer SplitImage(std::vector<int> outliers,InputImageType::Pointer rimage, OutputImageType::Pointer limage);
-	std::vector<unsigned short> model_nucleus_seg::runSVM(vnl_matrix<double> feats,model_nucleus_seg::FeatureCalcType* filter);
+	std::vector<unsigned short> runSVM(vnl_matrix<double> feats,model_nucleus_seg::FeatureCalcType* filter);
 	std::vector<unsigned short> Detect_undersegmented_cells();
 	bool LoadAssoc(std::string filename);
-	FeaturesType model_nucleus_seg::get_merged_features(set<int> currRPS);
+	FeaturesType get_merged_features(set<int> currRPS);
 	void getFeatureVectorsFarsight(OutputImageType::Pointer im, InputImageType::Pointer in_image, std::vector<FeaturesType> & feature_vector);
 	OutputImageType::Pointer extract_label_image(int label, float bbox[6],OutputImageType::Pointer l);
 	InputImageType::Pointer extract_raw_image(float bbox[6],InputImageType::Pointer r);
@@ -217,7 +217,7 @@ public:
 	std::vector<double> populateVector(ftk::IntrinsicFeatures *f);
 	void calcvolLimits(vnl_matrix<double> feats);
 	std::vector<double> calcStats(std::vector<double> classVol);
-	unsigned short model_nucleus_seg::returnthresh( OutputImageType::Pointer input_image, int num_bin_levs, int num_in_fg );
+	unsigned short returnthresh( OutputImageType::Pointer input_image, int num_bin_levs, int num_in_fg );
 	bool LoadSegParams(std::string filename);
 	int GetYousefSeg();
 	void RemoveSmallComponents(int minObjSize,const char* x);	

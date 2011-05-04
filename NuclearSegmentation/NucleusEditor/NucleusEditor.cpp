@@ -1668,7 +1668,7 @@ void NucleusEditor::queryKNearest()
 
 	kNearestObjects* KNObj = new kNearestObjects(centroidMap);
 	KNObj->setFeatureTable(table);
-	std::vector<std::vector< std::pair<unsigned int, double> >> kNeighborIDs;
+	std::vector<std::vector< std::pair<unsigned int, double> > > kNeighborIDs;
 	if(IDs.at(0) == 0)
 		kNeighborIDs = KNObj->k_nearest_neighbors_All(k, Class_dest, Class_src);
 	else
@@ -1755,7 +1755,7 @@ void NucleusEditor::queryInRadius()
 
 	kNearestObjects* KNObj = new kNearestObjects(centroidMap);
 	KNObj->setFeatureTable(table);
-	std::vector<std::vector< std::pair<unsigned int, double> >> radNeighborIDs;
+	std::vector<std::vector< std::pair<unsigned int, double> > > radNeighborIDs;
 	if(IDs.at(0) == 0)
 		radNeighborIDs = KNObj->neighborsWithinRadius_All(radius, Class_dest, Class_src);
 	else

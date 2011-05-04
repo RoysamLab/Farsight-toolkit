@@ -21,7 +21,7 @@ limitations under the License.
 #include <itkConstantBoundaryCondition.h>
 #include <itkRescaleIntensityImageFilter.h>
 #include <itkExtractImageFilter.h>
-#include<conio.h>
+//#include<conio.h>
 
 
 #include <math.h>

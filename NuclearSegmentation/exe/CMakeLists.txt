@@ -9,10 +9,10 @@ ADD_EXECUTABLE( graph_coloring_on_output graph_coloring_on_output.cpp )
 
 ADD_EXECUTABLE( convert_dat_to_label convert_dat_to_label.cpp )
 
-ADD_EXECUTABLE(MBSeg StatModelSegMain.cpp)
+#ADD_EXECUTABLE(MBSeg StatModelSegMain.cpp)
 ADD_EXECUTABLE(SomaExtraction SomaExtraction.cpp)
 
-TARGET_LINK_LIBRARIES(MBSeg ModelSeg) 
+#TARGET_LINK_LIBRARIES(MBSeg ModelSeg) 
 
 
 TARGET_LINK_LIBRARIES( segment_nuclei  Yousef_Nucleus_Seg)# ITKBasicFilters ITKCommon ITKIO)
@@ -51,7 +51,7 @@ INSTALL( TARGETS classify_nuclei DESTINATION ${INSTALL_BIN_DIR} )
 
 INSTALL( TARGETS convert_dat_to_label DESTINATION ${INSTALL_BIN_DIR} )
 
-INSTALL( TARGETS MBSeg DESTINATION ${INSTALL_BIN_DIR} )
+#INSTALL( TARGETS MBSeg DESTINATION ${INSTALL_BIN_DIR} )
 
 
 #ADD_EXECUTABLE( nucseg2 extended_main.cpp )

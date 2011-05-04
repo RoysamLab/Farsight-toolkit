@@ -30,7 +30,7 @@
 #include "itkExtractImageFilter.h"
 
 #include "itkSignedMaurerDistanceMapImageFilter.h"
-#include "conio.h"
+//#include "conio.h"
 //,.,.
 
 typedef    float     InputPixelType;
