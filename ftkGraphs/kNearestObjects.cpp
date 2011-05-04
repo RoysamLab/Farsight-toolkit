@@ -43,7 +43,10 @@ std::vector< std::vector< std::pair<unsigned int, double> > > kNearestObjects::k
 		std::vector< std::pair<unsigned int, double> > kNearestIds;
 		unsigned int ID = (*IdIt).first;
 		if(Class_src == 0)
+		{
 			kNearestIds = k_nearest_neighbors_ID(ID, k, Class_dest);
+			kNearestIDs.push_back(kNearestIds);
+		}
 		else
 		{
 			for(int row = 0; row<(int)featureTable->GetNumberOfRows(); ++row)
@@ -149,7 +152,10 @@ std::vector< std::vector< std::pair<unsigned int, double> > > kNearestObjects::n
 		std::vector< std::pair<unsigned int, double> > inRadiusIds;
 		unsigned int ID = (*IdIt).first;
 		if(Class_src == 0)
+		{
 			inRadiusIds = neighborsWithinRadius_ID(ID, radius, Class_dest);
+			inRadiusIDs.push_back(inRadiusIds);
+		}
 		else
 		{
 			for(int row = 0; row<(int)featureTable->GetNumberOfRows(); ++row)
