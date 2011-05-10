@@ -41,7 +41,7 @@ ADD_EXECUTABLE(anisodiff anisodiff.cpp helpers.h)
 #ADD_EXECUTABLE(tracklog tracklog.cpp helpers.h)
 ADD_EXECUTABLE(render_tracks render_tracks.cpp helpers.h)
 
-TARGET_LINK_LIBRARIES(trackingHelpers ITKIO ITKCommon ITKStatistics)
+TARGET_LINK_LIBRARIES(trackingHelpers ITKIO ITKCommon ITKStatistics ftkFeatures)
 TARGET_LINK_LIBRARIES(unmix ITKCommon ITKIO Yousef_Nucleus_Seg ITKStatistics trackingHelpers)
 TARGET_LINK_LIBRARIES(unmixt ITKCommon ITKIO Yousef_Nucleus_Seg ITKStatistics trackingHelpers)
 TARGET_LINK_LIBRARIES(segmentation ITKCommon ITKIO Yousef_Nucleus_Seg ITKStatistics trackingHelpers)

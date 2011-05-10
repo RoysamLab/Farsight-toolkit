@@ -1856,9 +1856,9 @@ void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::T
 			int t = tfs[tc].intrinsic_features[tp].time;
 			
 			int x,y,z;
-			x = static_cast<int>(tfs[tc].intrinsic_features[tp].Centroid[0]*spacing[0]);
-			y = static_cast<int>(tfs[tc].intrinsic_features[tp].Centroid[1]*spacing[1]);
-			z = static_cast<int>(tfs[tc].intrinsic_features[tp].Centroid[2]*spacing[2]);
+			x = static_cast<int>(tfs[tc].intrinsic_features[tp].Centroid[0]);//*spacing[0]);
+			y = static_cast<int>(tfs[tc].intrinsic_features[tp].Centroid[1]);//*spacing[1]);
+			z = static_cast<int>(tfs[tc].intrinsic_features[tp].Centroid[2]);//*spacing[2]);
 
 			while(true)
 			{
@@ -1912,7 +1912,7 @@ void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::T
 						sum = sum + distances[counter];
 					}
 					sum /= num_num;
-					radius = pow(static_cast<float>(tfs[tc].intrinsic_features[tp].ScalarFeatures[FeaturesType::VOLUME]*3.0/8.0/acos(double(0))),1/3.0f);
+					radius = pow(static_cast<float>(tfs[tc].intrinsic_features[tp].ScalarFeatures[FeaturesType::VOLUME]*spacing[0]*spacing[1]*spacing[2]*3.0/8.0/acos(double(0))),1/3.0f);
 					printf("Sum = %0.2f radius = %0.2f ratio = %0.3f\n",sum,radius,sum/radius);
 					if(sum/radius<= ratio_threshold)
 					{
@@ -2026,7 +2026,7 @@ LabelImageType::Pointer extract_label_image(int label, float bbox[6],LabelImageT
 }
 void annotateImage(Color2DImageType::Pointer number,Color2DImageType::Pointer orig, int n, int x, int y)
 {
-	//printf("annotateImage called with n = %d x = %d y = %d ... ", n,x,y);
+	printf("annotateImage called with n = %d x = %d y = %d ... ", n,x,y);
 	typedef itk::ImageRegionConstIterator<Color2DImageType> ConstColor2DIteratorType;
 	typedef itk::ImageRegionIterator<Color2DImageType> Color2DIteratorType;
 
@@ -2066,7 +2066,7 @@ void annotateImage(Color2DImageType::Pointer number,Color2DImageType::Pointer or
 		index[1]=0;
 	else
 		index[1] = MIN(MAX(y-size[1]/2,0),orig->GetLargestPossibleRegion().GetSize()[1]-size[1]);
-	//printf("index : %d %d\n",index[0],index[1]);
+	printf("index : %d %d\n",index[0],index[1]);
 	region.SetIndex(index);
 
 	Color2DIteratorType origiter(orig,region);

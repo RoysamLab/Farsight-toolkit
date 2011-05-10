@@ -1,5 +1,6 @@
 #include "helpers.h"
 
+#include "itkSmoothingRecursiveGaussianImageFilter.h"
 using namespace helpers;
 template <typename T>
 typename T::Pointer readImage(const char *filename)
@@ -49,7 +50,53 @@ int writeImage(typename T::Pointer im, const char* filename)
 
 
 #define MAX_TIME 1000
-int main(int argc, char** argv)
+bool file_exists(char *filename)
+{
+	FILE * fp = fopen(filename,"r");
+	if(fp!=NULL)
+	{
+		fclose(fp);
+		return true;
+	}
+	return false;
+}
+
+
+int main(int argc, char**argv)
+{
+	std::string input = argv[1];
+	std::string out = argv[3];
+
+	if(!file_exists((char*)out.c_str())){
+
+	InputImageType::Pointer im = readImage<InputImageType>(input.c_str());
+	
+	InputImageType::SpacingType spacing;
+	spacing[0] = 1;
+	spacing[1] = 1;
+	spacing[2] = 4.0;
+	im->SetSpacing(spacing);
+	typedef itk::SmoothingRecursiveGaussianImageFilter<InputImageType,InputImageType> FilterType;
+	FilterType::Pointer filter = FilterType::New();
+	filter->SetInput(im);
+	filter->SetSigma(atof(argv[2]));
+	
+	
+	filter->Update();
+
+	InputImageType::Pointer outim = filter->GetOutput();
+
+	IteratorType it1(im,im->GetLargestPossibleRegion());
+	IteratorType it2(outim,outim->GetLargestPossibleRegion());
+	for(it1.GoToBegin(),it2.GoToBegin();!it1.IsAtEnd();++it1,++it2)
+	{
+		it2.Set(MIN(MAX(it1.Get()-it2.Get(),0),255));
+	}
+	writeImage<InputImageType>(outim, out.c_str());
+	}
+	return 0;
+}
+int main_old(int argc, char** argv)
 {
 	int num_t = (argc-1)/2;
 	InputImageType::Pointer input[MAX_TIME];

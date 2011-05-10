@@ -3758,6 +3758,16 @@ int CellTracker::my_connected_components(std::vector<int> &component)
 			}
 		}
 	}
+	
+	for(int counter = 0; counter < component.size(); counter++)
+	{
+		if(component[counter] <0 )
+		{
+			printf("Some connected components are still < 0: component[%d] = %d\n",counter,component[counter]);
+			scanf("%*d");
+		}
+	}
+	return (curcomp+1);
 }
 
 
@@ -4253,6 +4263,12 @@ void CellTracker::run()
 		if(g[*v_i].special == 0 )
 		{
 			g[*v_i].new_label = component[index[*v_i]]+1;
+			if(component[index[*v_i]]+1 <0)
+			{
+				printf("I'm assigning negative labels:");
+				print_vertex(*v_i,1);
+				scanf("%*d");
+			}
 			old_to_new[g[*v_i].t][fvector[g[*v_i].t][g[*v_i].findex].num]=component[index[*v_i]]+1;
 			max1 = MAX(max1,component[index[*v_i]]+1);
 		}
@@ -4316,6 +4332,7 @@ LabelImageType::Pointer CellTracker::getOutputAtTime(int t)
 
 	lim->SetRegions(lregion);
 	lim->Allocate();
+	lim->FillBuffer(0);
 
 	TGraph::vertex_iterator v_i,v_end;
 	for(tie(v_i,v_end) = vertices(g); v_i!=v_end; ++v_i)
@@ -4350,7 +4367,6 @@ LabelImageType::Pointer CellTracker::getOutputAtTime(int t)
 				if(liter1.Get()!=0)
 					liter2.Set(g[*v_i].new_label);
 			}
-
 		}
 	}
 
@@ -5136,6 +5152,11 @@ int main(int argc1, char **argv1)
 		debugcol2->Allocate();
 		debugcol3->SetRegions(colregion);
 		debugcol3->Allocate();
+		ColorImageType::PixelType colorpixel;
+		colorpixel[0] = 0; colorpixel[1] = 0; colorpixel[2] = 0;
+		debugcol1->FillBuffer(colorpixel);
+		debugcol2->FillBuffer(colorpixel);
+		debugcol3->FillBuffer(colorpixel);
 		ct.set_debug_images(debugcol1,debugcol2,debugcol3);
 		ct.run();
 		printf("Rerunning with computed variances\n");

@@ -682,7 +682,8 @@ int main(int argc1, char**argv1)//int argc, char **argv)
   FILE*fp2 = fopen(argv[pc++],"w");
   for(unsigned int counter  = 0; counter< tfs.size(); counter++)
     {
-    tfs[counter].Fprintf(fp2,fp1);
+		if(tfs[counter].intrinsic_features.size()>1)
+			tfs[counter].Fprintf(fp2,fp1);
     }
   fclose(fp1);
   fclose(fp2);
