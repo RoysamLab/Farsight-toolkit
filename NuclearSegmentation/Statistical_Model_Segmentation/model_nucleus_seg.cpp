@@ -128,11 +128,11 @@ model_nucleus_seg::model_nucleus_seg()
 ///////////////////////
 // SET THE RAW IMAGE
 ///////////////////////
-void model_nucleus_seg::SetRawImage(char* fname)
+void model_nucleus_seg::SetRawImage(const char* fname)
 {
 	inputImage = readImage<InputImageType>(fname);
 
-	//Get gradient image from cytoplasm image
+	////Get gradient image from cytoplasm image
 	MedianFilterType::Pointer  mfilter = MedianFilterType::New();
 	InputImageType::SizeType radius; 
 	radius[0] = 2; // radius along x 
@@ -152,9 +152,9 @@ void model_nucleus_seg::SetAssocFeatNumber(int nFeat)
 
 
 
-///////////////////////
+/////////////////////////
 // SET THE TRAINING FILE
-///////////////////////
+/////////////////////////
 void model_nucleus_seg::SetTrainingFile(char* fname)
 {	
 
@@ -174,30 +174,18 @@ void model_nucleus_seg::SetTrainingFile(char* fname)
 	vnl_matrix<double> covMat = normFeats_tr*normFeats/(normFeats.rows()); // Feats * Feats matrix
 	
 	//Compute the eigen vectors of the covariance matrix
-	vnl_real_eigensystem eig(covMat);
+	vnl_symmetric_eigensystem<double> eig(covMat);
+
 	std::vector<double> currvec;
 	currvec.resize(inputDimensions);
-	eigenvecs.resize(this->NUM_COMP);
+	eigenvecs.resize(inputDimensions);
 
 
-	for(int i = 0; i < this->NUM_COMP; i++)
+	for(int i = 0; i < inputDimensions; i++)
 	{
-		double den = 0;
-		for(int j = 0; j < inputDimensions; j++)
-		{	
-			currvec[j] = eig.V(i,j).real() ;
-			den += currvec[j]*currvec[j];
-		}
-
-		//Convert it into a unit vector
-		for(int j = 0; j < inputDimensions; j++)
-		{	
-			currvec[j] = currvec[j]/sqrt(den);
-		}
-
-		eigenvecs[i] = currvec;
-		currvec.clear();
-		currvec.resize(inputDimensions);
+		eigenvecs[i] = eig.get_eigenvector(i);
+		std::cout<< eigenvecs[i] << std::endl;
+		std::cout<< eig.get_eigenvalue(i) << std::endl;
 	}
 	Tset2EigenSpace(normFeats,Feats);
 	getFeatureNames(fname); //get the feature names used in this model
@@ -235,6 +223,7 @@ void model_nucleus_seg::calcvolLimits(vnl_matrix<double> feats)
 			volLimit[r] = stats[0]; 
 	}
 }
+
 
 
 // Calulates the mean and standard deviation of the elements of a vector
@@ -839,19 +828,22 @@ void model_nucleus_seg::Tset2EigenSpace(vnl_matrix<double> nFeats,vnl_matrix<dou
 std::vector<double> model_nucleus_seg::Convert2EigenSpace(std::vector<double> feat)
 {
 	std::vector<double> eigenFeature;
-	std::vector<double> currEig;
+	vnl_vector<double> currEig;
 	eigenFeature.resize(NUM_COMP);
 
 	for(int i = 0; i < NUM_COMP; i++)
 	{
-		currEig.resize(NUM_FEAT+NUM_ASSOC_FEAT);
-		currEig = eigenvecs[i];
+		// since eigenvecs stores the eigen vectors in ascending order 
+		// of eigen values and since we need the last NUM_COMP(5) eigen vectors 
+		// 
+		currEig = eigenvecs[NUM_FEAT+NUM_ASSOC_FEAT-1-i];
 		eigenFeature[i] = 0;
 
 		for(int j = 0; j < NUM_FEAT+NUM_ASSOC_FEAT; j++)
-		{
+		{	
+			std::cout<< currEig[j] << "-" << feat[j] <<std::endl;
 			eigenFeature[i] += currEig[j]*feat[j]; 
-		}
+		}	
 		currEig.clear();
 	}
 	return eigenFeature;
