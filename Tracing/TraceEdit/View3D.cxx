@@ -4219,7 +4219,7 @@ void View3D::saveRenderWindow(const char *filename)
 {
 	this->WindowToImage = vtkSmartPointer<vtkWindowToImageFilter>::New();
 	this->WindowToImage->SetInput(this->QVTK->GetRenderWindow());
-	this->WindowToImage->SetMagnification(2);
+	//this->WindowToImage->SetMagnification(2); //save this for presentations
 	this->JPEGWriter = vtkSmartPointer<vtkJPEGWriter>::New();
 	this->JPEGWriter->SetInput(this->WindowToImage->GetOutput());
 	this->JPEGWriter->SetFileName(filename);
@@ -4260,7 +4260,13 @@ void View3D::AutoCellExport()
 			QString ScreenShotFileName = traceDir % "/" % cellName % QString(".jpg");
 			this->tobj->WriteToSWCFile(roots, swcFileName.toStdString().c_str());
 			this->saveRenderWindow(ScreenShotFileName.toStdString().c_str());
-		}
+			if (this->viewIn2D)
+			{
+				double test [6];
+				this->Renderer->ComputeVisiblePropBounds(test);
+				this->setRenderFocus(test, 6);
+			}// end of reset renderer when in 2d mode 
+		}//end of cell export loop
 		progress.setValue(cellCount);
 	}
 	else
