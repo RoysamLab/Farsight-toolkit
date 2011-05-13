@@ -57,7 +57,8 @@
 //#include "itkListSample2.h"
 #include "itkFixedArray.h"
 
-#include <vnl/algo/vnl_real_eigensystem.h>
+//#include <vnl/algo/vnl_real_eigensystem.h>
+#include <vnl/algo/vnl_symmetric_eigensystem.h>
 #include <vnl/algo/vnl_determinant.h>
 #include "itkVariableSizeMatrix.h"
 #include <tinyxml/tinyxml.h>
@@ -86,6 +87,7 @@
 #include <itkMedianImageFilter.h>
 #include <PatternAnalysis/agf/agf.h>
 #include "itkOtsuMultipleThresholdsCalculator.h"
+#include <ftkCommon/eigen/Eigen/Dense>
 
 #include <map>
 
@@ -145,7 +147,7 @@ public:
 	vnl_matrix <double> normTrSet(char* train_fname,int inputdDimensions);
 	vnl_matrix <double> getTrSet(char* train_fname,int inputdDimensions);
 
-	void SetRawImage(char* fname);	
+	void SetRawImage(const char* fname);	
 	void SetSplitImage(OutputImageType::Pointer img1);
 	OutputImageType::Pointer SplitImage(std::vector<unsigned short> outliers,InputImageType::Pointer rimage, OutputImageType::Pointer limage);
 	void SetTrainingFile(char* fname, int inputDimensions);				
@@ -279,7 +281,7 @@ private:
     std::vector< double > volLimit;
 	std::vector<double> volumesys;
 	std::vector<unsigned short> boolMergeTree;
-	std::vector< std::vector<double> > eigenvecs; // eigenvector matrix
+	std::vector< vnl_vector<double> > eigenvecs; // eigenvector matrix
 	int numSplit;
     int preparedatacounter;
 	ftk::NuclearAssociationRules *assoc;
