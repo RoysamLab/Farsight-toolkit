@@ -54,29 +54,38 @@ int writeImage(typename T::Pointer im, const char* filename)
 
 int main ( int argc ,  char** argv)
 {	
+	
+	
+	//argv[1] = "C:\\FARSIGHT_BIN\\exe\\Release\\Histo_Input_Image.xml";
+	//argv[2] = "C:\\FARSIGHT_BIN\\exe\\Release\\SegParams.ini";
+	//argv[3] = "C:\\FARSIGHT_BIN\\exe\\Release\\training3.txt";
+	//argv[4] = "C:\\FARSIGHT_BIN\\exe\\Release\\HistoProjectDef.xml";
 
 	clock_t start_time = clock();
-	// Get the name for the output File name
+
+	typedef itk::Image< unsigned char,3>InputImageType;
+	typedef itk::Image< unsigned short,3> OutputImageType;
+	
+	ftk::Image::Pointer myFtkImage = ftk::LoadXMLImage(argv[1]);
+	std::vector<std::string> filenames =  myFtkImage->GetFilenames();
+	
 	std::stringstream out;
-	out << argv[1];
+	out << filenames[0];
 	std::string inpName = out.str();
 	size_t pos;	
 	pos = inpName.find(".tif");
 	std::string prefix = inpName.substr(0,pos);
 	std::string outName = prefix+"_label_nuc.tif";
 	
-	typedef itk::Image< unsigned char,3>InputImageType;
-	typedef itk::Image< unsigned short,3> OutputImageType;
-	
 	model_nucleus_seg *MNS = new model_nucleus_seg();
-	MNS->SetRawImage(argv[1]);
-	MNS->GetYousefSeg();
+	MNS->SetRawImage(filenames[0].c_str());
+	//MNS->GetYousefSeg();
 	MNS->LoadSegParams(argv[2]);
 	MNS->SetTrainingFile(argv[3]);
 	
 	////Compute the associations if associative features provided
 	if(MNS->getasscofeatnumb()>0)
-		MNS->Associations(argv[4],argv[5]);
+		MNS->Associations(argv[1],argv[4]);
 	
 	std::vector<unsigned short> US_Cell_ids;
 	US_Cell_ids.clear();
@@ -163,11 +172,5 @@ int main ( int argc ,  char** argv)
 }	
 
 
-//	argv[1] = "C:\\FARSIGHT_BIN\\exe\\Release\\HS 09 6225 1C_Ki67_CD34 AF488 CA9 AF647 SMA Cy3_IP8_F05_40XQB_Nuclear (H).tif";
-///argv[1] = "C:\\FARSIGHT_BIN\\exe\\Release\\SW1.tif";
-//argv[2] = "C:\\FARSIGHT_BIN\\exe\\Release\\SegParams.ini";
-//argv[3] = "C:\\FARSIGHT_BIN\\exe\\Release\\training3.txt" ;
-//argv[4] = "C:\\FARSIGHT_BIN\\exe\\Release\\Histo_Input_Image(2).xml" ;
-//argv[5] = "C:\\FARSIGHT_BIN\\exe\\Release\\HistoProjectDef.xml";
 
 
