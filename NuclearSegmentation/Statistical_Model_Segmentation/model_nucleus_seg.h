@@ -87,7 +87,7 @@
 #include <itkMedianImageFilter.h>
 #include <PatternAnalysis/agf/agf.h>
 #include "itkOtsuMultipleThresholdsCalculator.h"
-#include <ftkCommon/eigen/Eigen/Dense>
+
 
 #include <map>
 
