@@ -25,6 +25,13 @@
 #include "itkBinaryBallStructuringElement.h"
 #include "itkGrayscaleMorphologicalOpeningImageFilter.h"
 #include "itkRelabelComponentImageFilter.h"
+#include "itkBinaryThresholdImageFilter.h"
+
+//label object classes
+#include "itkShapeLabelObject.h"
+#include "itkShapeLabelMapFilter.h" 
+#include "itkBinaryImageToShapeLabelMapFilter.h"
+
 #include <iostream>
 #include <time.h>
 
@@ -174,21 +181,55 @@ int main(int argc, char* argv[])
 		std::cerr << excep << std::endl;
 		return 1;
     }
-	
-		typedef itk::ImageFileWriter< SegmentedImageType > WriterType;
-		WriterType::Pointer writer = WriterType::New();
-		writer->SetFileName(argv[2]);
-		writer->SetInput( filter->GetOutput() );
-		writer->Update();
-		image = 0;
-		writer = 0;
+	typedef itk::BinaryThresholdImageFilter<SegmentedImageType, OutputImageType> BinaryThresholdImageType;
+	BinaryThresholdImageType::Pointer  BinaryThresholdImage = BinaryThresholdImageType::New();
+	BinaryThresholdImage->SetInput( filter->GetOutput() );
+	BinaryThresholdImage->SetLowerThreshold( 1 );
+	//BinaryThresholdImage->SetUpperThreshold( 255 );	//save for potential later use
+	BinaryThresholdImage->SetInsideValue(255);
+	BinaryThresholdImage->SetOutsideValue(0);
 
-		     
-		delete NucleusSeg;
-		//delete output_img; //This is deleted when I delete NucleusSeg
-		delete in_Image;
-	//}
-	
+	typedef unsigned long LabelType;
+	typedef itk::ShapeLabelObject< LabelType, 3 > LabelObjectType;
+	typedef itk::LabelMap< LabelObjectType > LabelMapType;
+	typedef itk::BinaryImageToShapeLabelMapFilter< OutputImageType, LabelMapType >	ConverterType;
+	ConverterType::Pointer converter = ConverterType::New();
+	converter->SetInputForegroundValue(255);
+	converter->SetInput(BinaryThresholdImage->GetOutput());
+	LabelMapType::Pointer Somas = converter->GetOutput();
+	converter->Update();
+	unsigned int numSomas = Somas->GetNumberOfLabelObjects();
+	std::string FileName = argv[2];
+	FileName.append(".txt");
+	std::ofstream outfile(FileName.c_str());
+	outfile.precision(1);
+
+	for(unsigned int label=1; label<= numSomas; ++label)
+	{
+		const LabelObjectType * labelObject = Somas->GetLabelObject(label);
+		if(labelObject->GetPhysicalSize() < 100)
+		{	//skip small blobs: they probably aren't real somas
+			continue;
+		}
+		const LabelObjectType::CentroidType centroid = labelObject->GetCentroid();
+		OutputImageType::IndexType pixelIndex;
+		BinaryThresholdImage->GetOutput()->TransformPhysicalPointToIndex( centroid, pixelIndex );
+		outfile << std::fixed << pixelIndex[0] << " " << pixelIndex[1] << " " << pixelIndex[2] << endl;
+	}
+	outfile.close();
+//save soma image
+	typedef itk::ImageFileWriter< OutputImageType > WriterType;
+	WriterType::Pointer writer = WriterType::New();
+	writer->SetFileName(argv[2]);
+	writer->SetInput( BinaryThresholdImage->GetOutput() );
+	writer->Update();
+	image = 0;
+	writer = 0;
+
+	     
+	delete NucleusSeg;
+	//delete output_img; //This is deleted when I delete NucleusSeg
+	delete in_Image;
 	std::cout<<"Time elapsed is: "<<(((double)clock() - startTimer) / CLOCKS_PER_SEC)<<" seconds"<<std::endl;
       
 	return 0;
