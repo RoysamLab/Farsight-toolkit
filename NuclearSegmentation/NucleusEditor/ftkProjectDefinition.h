@@ -47,13 +47,14 @@ class ProjectDefinition
 {
 public:
 	//ENUMS & STRUCTS:
-	enum TaskType { PREPROCESSING, NUCLEAR_SEGMENTATION, FEATURE_COMPUTATION, CYTOPLASM_SEGMENTATION, RAW_ASSOCIATIONS, CLASSIFY, ANALYTE_MEASUREMENTS, PIXEL_ANALYSIS, QUERY };
+	enum TaskType { PREPROCESSING, NUCLEAR_SEGMENTATION, FEATURE_COMPUTATION, CYTOPLASM_SEGMENTATION, RAW_ASSOCIATIONS, MULTI_MODEL_SEGMENTATION, CLASSIFY, ANALYTE_MEASUREMENTS, PIXEL_ANALYSIS, QUERY };
 	typedef struct { int number; std::string name; std::string type; } Channel;
 	typedef struct { std::string name; double value; } Parameter;
 	typedef struct { std::string TrainingColumn; std::vector<std::string> ClassificationColumns; } ClassParam;
 	typedef struct { std::string filterName; std::string channelName; std::string paramenter1; double value1; std::string paramenter2; double value2; std::string paramenter3; double value3; std::string paramenter4; double value4;
 					 std::string paramenter5; double value5; std::string paramenter6; double value6; } preprocessParam;
 	typedef struct { std::string name; std::string value; } QueryParameter;
+	typedef struct { std::string type; std::string path; } mmSegFile;
 	//FUNCTIONS:
 	ProjectDefinition();
 	bool Load(std::string filename);
@@ -65,6 +66,7 @@ public:
 	std::vector<preprocessParam> ReadPreprocessingParameters(TiXmlElement * inputElement);
 	std::vector<Parameter> ReadParameters(TiXmlElement * inputElement);
 	std::vector<ftk::AssociationRule> ReadAssociationRules(TiXmlElement * inputElement);
+	std::vector<mmSegFile> ReadMMSegFiles(TiXmlElement * inputElement);
 	std::vector<std::string> ParseText(TiXmlElement * element);
 	std::vector<ClassParam> ReadClassificationParameters(TiXmlElement * inputElement);
 	std::vector<ftk::PixelAnalysisDefinitions> ReadPixelLevelRules(TiXmlElement * element);
@@ -94,6 +96,7 @@ public:
 	std::vector<ClassParam> classificationParameters;
 
 	std::vector<ftk::AssociationRule> associationRules;
+	std::vector<mmSegFile> mmSegFiles;
 	std::vector<ftk::PixelAnalysisDefinitions> pixelLevelRules;
 	std::vector<std::string> intrinsicFeatures;
 	std::vector<std::string> analyteMeasures;
