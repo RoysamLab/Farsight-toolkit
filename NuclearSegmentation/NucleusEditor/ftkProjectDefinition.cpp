@@ -88,6 +88,10 @@ bool ProjectDefinition::Load(std::string filename)
 		{
 			associationRules = this->ReadAssociationRules(parentElement);
 		}
+		else if( strcmp( parent, "MultiModelSegmentationFiles" ) == 0 )
+		{
+			mmSegFiles = this->ReadMMSegFiles(parentElement);
+		}
 		else if( strcmp( parent, "IntrinsicFeatures" ) == 0 )
 		{
 			intrinsicFeatures = this->ParseText(parentElement);
@@ -152,6 +156,8 @@ std::vector<ProjectDefinition::TaskType> ProjectDefinition::ReadSteps(TiXmlEleme
 				returnVector.push_back(CYTOPLASM_SEGMENTATION);
 			else if(step == "RAW_ASSOCIATIONS")
 				returnVector.push_back(RAW_ASSOCIATIONS);
+			else if(step == "MULTI_MODEL_SEGMENTATION")
+				returnVector.push_back(MULTI_MODEL_SEGMENTATION);
 			else if(step == "CLASSIFY")
 				returnVector.push_back(CLASSIFY);
 			else if(step == "ANALYTE_MEASUREMENTS")
@@ -297,6 +303,25 @@ std::vector<ftk::AssociationRule> ProjectDefinition::ReadAssociationRules(TiXmlE
 		parameterElement = parameterElement->NextSiblingElement();
 	}
 	return returnVector;
+}
+
+std::vector<ProjectDefinition::mmSegFile> ProjectDefinition::ReadMMSegFiles(TiXmlElement * inputElement)
+{
+	std::vector<mmSegFile> returnVector;
+
+	TiXmlElement * fileElement = inputElement->FirstChildElement();
+	while (fileElement)
+	{
+		const char * parent = fileElement->Value();
+		if ( strcmp( parent, "file" ) == 0 )
+		{
+			mmSegFile file;
+			file.type = fileElement->Attribute("type");
+			file.path = fileElement->Attribute("path");
+			returnVector.push_back(file);
+		}
+		fileElement = fileElement->NextSiblingElement();
+	}
 }
 
 std::vector<ProjectDefinition::ClassParam> ProjectDefinition::ReadClassificationParameters(TiXmlElement * inputElement){
