@@ -1227,11 +1227,13 @@ void WriteSWCFile(std::string fname, unsigned int padz) {
   std::vector<SWCNode*>::iterator sit;
   std::cout << "Writing SWC file " << fname << " with " << SWCNodeContainer.size() << " nodes...";
   std::ofstream ofile(fname.c_str());
-  ofile << "#Neuron Tracing Code 3D, RPI" << std::endl;
-  ofile << "#author: AM" << std::endl;
-  for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) {
+  //ofile << "#Neuron Tracing Code 3D, RPI" << std::endl;
+  //ofile << "#author: AM" << std::endl;
+  for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+  {
+	  float radius = getRadius((*sit)->pos);
     ofile << (*sit)->ID << " 3 " << (*sit)->pos[0] << " " << (*sit)->pos[1] << " "
-      << (*sit)->pos[2]-padz << " " <<  " 2.00 " << (*sit)->PID << std::endl;
+      << (*sit)->pos[2]-padz << " " <<  radius << " " <<  (*sit)->PID << std::endl;
     delete (*sit);
   }
   ofile.close();
