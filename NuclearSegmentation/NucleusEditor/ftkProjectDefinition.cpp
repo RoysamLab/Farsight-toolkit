@@ -322,6 +322,7 @@ std::vector<ProjectDefinition::mmSegFile> ProjectDefinition::ReadMMSegFiles(TiXm
 		}
 		fileElement = fileElement->NextSiblingElement();
 	}
+	return returnVector;
 }
 
 std::vector<ProjectDefinition::ClassParam> ProjectDefinition::ReadClassificationParameters(TiXmlElement * inputElement){
