@@ -130,9 +130,10 @@ std::vector<IndexType> StartPoints;
 
 int main (int argc, char * argv[])  {
 
-  std::cout << std::endl<< "Parallel Neuron Tracing Code 3D (Version 2)" << std::endl;
-  std::cout << "ECSE dept. Rensselaer Polytechnic Institute, Troy NY 12180" << std::endl <<std::endl;
+  std::cout << "Parallel Neuron Tracing Code 3D (Version 2)" << std::endl;
+  //std::cout << "ECSE dept. Rensselaer Polytechnic Institute, Troy NY 12180" << std::endl;
   //std::cout << "copyright AM 2010." << std::endl;
+	//only error and critical messages will be printed
 
   if( (argc < 3) )  {
     std::cerr << "!!! Incorrect Input Arguments !!! "<<std::endl;
@@ -147,15 +148,17 @@ int main (int argc, char * argv[])  {
   unsigned int padz = 1;
 
   std::string InputFilename = std::string(argv[1]);
+  std::string StartPointFilename =std::string(argv[2]);
   std::string SWCFilename = InputFilename;
   SWCFilename.erase(SWCFilename.length()-4,SWCFilename.length());
   SWCFilename.append("_ANT.swc");
 
-  try {
+  try 
+  {
 
-    ReadImage3D(std::string(argv[1]), vol, padz);
+    ReadImage3D(InputFilename, vol, padz);
     sz = vol->GetBufferedRegion().GetSize();
-    ReadStartPoints(std::string(argv[2]), StartPoints, padz);
+    ReadStartPoints(StartPointFilename, StartPoints, padz);
   }
   catch ( itk::ExceptionObject & e )    {
     std::cout << e << std::endl;
@@ -170,7 +173,12 @@ int main (int argc, char * argv[])  {
   PixelType CostThreshold = 1000.0f;
   if (argc >= 4) {
     CostThreshold = atoi(argv[3]);
-    std::cout << "Cost threshold is set at :" << CostThreshold << std::endl;
+    //std::cout << "Cost threshold is set at :" << CostThreshold << std::endl;
+  } 
+  const char *somaFileName = NULL;
+  if(argc == 5)
+  {
+    somaFileName = argv[4];
   }
 
   // fill it with nodes, tree id -ver indicate untouched nodes
@@ -215,7 +223,7 @@ int main (int argc, char * argv[])  {
     }
   }
   TotalePoints = eCounter;
-  std::cout << "No of CTs inserted : " <<  TotalePoints << std::endl;
+  //std::cout << "No of CTs inserted : " <<  TotalePoints << std::endl;
 
   itk::Offset<3> x1 = {{-1, 0 ,0}};
   off.push_back( x1 );
@@ -226,8 +234,8 @@ int main (int argc, char * argv[])  {
   x1[2] = 1;  off.push_back( x1 );
 
   std::vector<OffsetType>::iterator oit;
-  bool showMessage = true;
-  std::cout << " Heap size: " << PQ.size() << std::endl;
+  bool showMessage = false;
+  //std::cout << " Heap size: " << PQ.size() << std::endl;
   while(!PQ.empty())  {
     HeapNode *h = PQ.top();
     PQ.pop();
@@ -290,7 +298,7 @@ int main (int argc, char * argv[])  {
                 SWC->SetPixel((*cit),s);
                 SWCNodeContainer.push_back(s);
                 par->children.push_back(s);
-                std::cout<<"SWC Node @ " << (*cit) << "(" << s->ID << ") with parent " << par->ID << "  Cost: " << val << "  " << (100*eCounter)/TotalePoints << "% Remaining.\r";// << std::endl;
+               // std::cout<<"SWC Node @ " << (*cit) << "(" << s->ID << ") with parent " << par->ID << "  Cost: " << val << "  " << (100*eCounter)/TotalePoints << "% Remaining.\r";// << std::endl;
                 par = s;
                 HeapNode *h = new HeapNode((*cit), val);
                 PQ.push(h);
@@ -326,11 +334,10 @@ int main (int argc, char * argv[])  {
   Interpolate(2.0);
   Decimate();
   Interpolate(2.0);
-  if(argc == 5)
-    {
-    const char *somaFileName = argv[4];
-    RemoveIntraSomaNodes(somaFileName);
-    }
+	if (somaFileName)
+	{
+		RemoveIntraSomaNodes(somaFileName);
+	}
   //WriteMultipleSWCFiles(SWCFilename, padz) ;
   WriteSWCFile(SWCFilename, padz) ;
   timer.Stop();
@@ -529,7 +536,7 @@ SWCNode* TBack(itk::Index<3>& ndx, std::vector<IndexType>& Chain)   {
       }
     }
     if (Chain.size() > 500) {
-      std::cout << "Tree not found for " << ndx << " in 500 steps, exiting!! " << std::endl;
+      //std::cout << "Tree not found for " << ndx << " in 500 steps, exiting!! " << std::endl;
       Chain.clear();
       Label = NULL;
       done = true;
@@ -541,7 +548,7 @@ SWCNode* TBack(itk::Index<3>& ndx, std::vector<IndexType>& Chain)   {
 
 ///////////////////////////////////////////////////////////////////////////////////
 void Decimate() {
-  std::cout << "Decimating the tree of size: " << SWCNodeContainer.size() << std::endl;
+  //std::cout << "Decimating the tree of size: " << SWCNodeContainer.size() << std::endl;
   std::vector<SWCNode*>::iterator sit;
   for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) {
     if((*sit)->children.size() >= 2) {
@@ -559,7 +566,7 @@ void Decimate() {
       (*sit)->IsActive = false;
     }
   }
-  std::cout << "Tree labeled: 1" << std::endl;
+  //std::cout << "Tree labeled: 1" << std::endl;
   for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) {
     if ((*sit)->IsActive == false) {
       if ((*sit)->parent->IsActive == false)  {
@@ -577,7 +584,7 @@ void Decimate() {
   }
 
   const float minOffshootLength = 6;
-  std::cout << "Removing offshoots of length less than " << minOffshootLength  << std::endl;
+  //std::cout << "Removing offshoots of length less than " << minOffshootLength  << std::endl;
 
   for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) {
     if ((*sit)->IsLeaf == true) {
@@ -619,7 +626,7 @@ void Decimate() {
     }
   }
 
-  std::cout << "Tree labeled: 3" << std::endl;
+  //std::cout << "Tree labeled: 3" << std::endl;
 
   std::vector<SWCNode*> NewContainer;
   NewContainer.reserve(SWCNodeContainer.size());
@@ -633,7 +640,7 @@ void Decimate() {
       IDLookUp[i] = newID++;
     }
   }
-  std::cout << "Lookup generated: " << std::endl;
+  //std::cout << "Lookup generated: " << std::endl;
 
   for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) {
     if ((*sit)->IsActive == true) {
@@ -683,7 +690,7 @@ void Decimate() {
       NewContainer.push_back(s);
     }
   }
-  std::cout << "NewContainer created: " << std::endl;
+  //std::cout << "NewContainer created: " << std::endl;
 
   for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) {
     delete (*sit);
@@ -693,7 +700,7 @@ void Decimate() {
 ///////////////////////////////////////////////////////////////////////////////////
 void Interpolate(float sigma) {
 
-  std::cout << "Interpolating the tree: " << std::endl;
+  //std::cout << "Interpolating the tree: " << std::endl;
   typedef itk::SmoothingRecursiveGaussianImageFilter< ImageType3D , ImageType3D> GFilterType;
   GFilterType::Pointer gauss = GFilterType::New();
   gauss->SetInput( vol );
@@ -811,7 +818,7 @@ void ScanNeighbors( PixelType& a1,PixelType& a2,PixelType& a3, itk::Index<3>& nd
 
 void FeatureMain () {
 
-  std::cout << std::endl<< "Feature detection 3D" << std::endl;
+  //std::cout << std::endl<< "Feature detection 3D" << std::endl;
   NDX = ImageType3D::New();
   NDX->SetRegions(vol->GetBufferedRegion());
   NDX->Allocate();
@@ -819,7 +826,7 @@ void FeatureMain () {
 
   float sigmas[] =  { 2.0f, 2.8284f, 4.0f, 5.6569f, 8.0f, 11.31f };
   for (unsigned int i = 0; i < 6; ++i)  {
-    std::cout << "Analysis at " << sigmas[i] << std::endl;
+    //std::cout << "Analysis at " << sigmas[i] << std::endl;
     GetFeature( sigmas[i] );
   }
 
@@ -920,7 +927,7 @@ void GetFeature( float sigma ) {
     tot += q*q;
     num ++;
   }
-  std::cout << "Scale "<< sigma << " had average Energy: " << tot <<std::endl;
+  //std::cout << "Scale "<< sigma << " had average Energy: " << tot <<std::endl;
 
   // set the diagonal terms in neighborhood iterator
   itk::Offset<3>
@@ -1015,12 +1022,12 @@ void GetFeature( float sigma ) {
     ++it;
     ++nit;
   }
-  std::cout <<"Number of CTs at this stage: " << ctCnt <<std::endl;
+  //std::cout <<"Number of CTs at this stage: " << ctCnt <<std::endl;
 }
 
 ///////////////////////////////////////////////////////////////////////
 void WriteImage3D(std::string& fname, ImageType3D::Pointer& vol)  {
-  std::cout << "Writing output file "<< fname << std::endl;
+  //std::cout << "Writing output file "<< fname << std::endl;
   typedef itk::ImageFileWriter<ImageType3D> WriterType;
   WriterType::GlobalWarningDisplayOff();
   WriterType::Pointer writer = WriterType::New();
@@ -1031,7 +1038,7 @@ void WriteImage3D(std::string& fname, ImageType3D::Pointer& vol)  {
 
 ///////////////////////////////////////////////////////////////////////
 void ReadITKImage3D(std::string& fname, ImageType3D::Pointer& vol)  {
-  std::cout << "Reading file "<< fname << std::endl;
+  //std::cout << "Reading file "<< fname << std::endl;
   typedef itk::ImageFileReader<ImageType3D> ReaderType;
   ReaderType::GlobalWarningDisplayOff();
   ReaderType::Pointer reader = ReaderType::New();
@@ -1043,7 +1050,7 @@ void ReadITKImage3D(std::string& fname, ImageType3D::Pointer& vol)  {
 ///////////////////////////////////////////////////////////////////////
 void ReadImage3D(std::string fname, ImageType3D::Pointer& vol, const long pad)  {
   //pad 2 slices on top an bottom
-  std::cout << "Reading input file "<< fname << std::endl;
+ // std::cout << "Reading input file "<< fname << std::endl;
   typedef itk::ImageFileReader<ImageType3D> ReaderType;
   ReaderType::GlobalWarningDisplayOff();
   ReaderType::Pointer reader = ReaderType::New();
@@ -1093,7 +1100,7 @@ void ReadImage3D(std::string fname, ImageType3D::Pointer& vol, const long pad)  
       }
     }
   }
-  std::cout << "Input file size (after zero padding) is " << vol->GetBufferedRegion().GetSize() << std::endl;
+  //std::cout << "Input file size (after zero padding) is " << vol->GetBufferedRegion().GetSize() << std::endl;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -1102,14 +1109,14 @@ void ReadStartPoints(std::string fname, std::vector<IndexType>& StList, unsigned
   std::ifstream infile;
   infile.open(fname.c_str());
   size_t x1, x2;
-  std::cout << "Reading start points " << std::endl;
+  //std::cout << "Reading start points " << std::endl;
 
     while(!infile.eof()) {
     std::getline(infile,temp);
     if (temp.length() < 1) {
       continue;
     }
-    std::cout<<temp; // Prints our STRING.
+    //std::cout<<temp; // Prints our STRING.
     x1 = temp.find_first_of("0123456789.");
     x2 = temp.find_first_not_of("0123456789.",x1);
     if ((x2 - x1) > 10) {
@@ -1139,7 +1146,7 @@ void ReadStartPoints(std::string fname, std::vector<IndexType>& StList, unsigned
 
     itk::Size<3> osz = sz;  //original size padz
     osz[2] = osz[2]-padz;
-    std::cout <<" after conversion " << x <<" "<< y <<" " << z << std::endl;
+    //std::cout <<" after conversion " << x <<" "<< y <<" " << z << std::endl;
 
     if ( (x>=0.0) && (y>=0.0)  && (z>=0.0) ) {
       itk::Index<3> n;
@@ -1147,10 +1154,10 @@ void ReadStartPoints(std::string fname, std::vector<IndexType>& StList, unsigned
       n[1] = long(y + 0.5); if (n[1] >= (unsigned int)osz[1]) {n[1] = osz[1]-1;}
       n[2] = long(z + 0.5); if (n[2] >= (unsigned int)osz[2]) {n[2] = osz[2]-1;}
       StList.push_back(n);
-      std::cout << " is read as " << n << std::endl;
+      //std::cout << " is read as " << n << std::endl;
     }
     else {
-      std::cout << " is discarded (Recommended format XXX YYY ZZZ , Try removing decimal points, add leading zeros in the input text file)" << std::endl;
+      //std::cout << " is discarded (Recommended format XXX YYY ZZZ , Try removing decimal points, add leading zeros in the input text file)" << std::endl;
     }
     }
   infile.close();
@@ -1159,7 +1166,7 @@ void ReadStartPoints(std::string fname, std::vector<IndexType>& StList, unsigned
 ///////////////////////////////////////////////////////////////////////////////////
 void WriteMultipleSWCFiles(std::string fname, unsigned int padz) {
   // check number of start points to determine number of files to write, with new filename eachtime
-  std::cout << "Total " << SWCNodeContainer.size() << " nodes..." <<std::endl;
+  //std::cout << "Total " << SWCNodeContainer.size() << " nodes..." <<std::endl;
   std::vector<SWCNode*>::iterator sit;
   float SCALE = 1.0f;
 
@@ -1168,10 +1175,10 @@ void WriteMultipleSWCFiles(std::string fname, unsigned int padz) {
     ss << "_" << i+1 << ".swc";
     std::string fname1 = fname;
     fname1.replace(fname.length()-4,8,ss.str());
-    std::cout << "Writing SWC file " << fname1 << " \n Tree ID " << i+1 <<std::endl;
+    //std::cout << "Writing SWC file " << fname1 << " \n Tree ID " << i+1 <<std::endl;
     std::ofstream ofile(fname1.c_str());
-    ofile << "#Neuron Tracing Code 3D, RPI" << std::endl;
-    ofile << "#author: AM" << std::endl;
+    //ofile << "#Neuron Tracing Code 3D, RPI" << std::endl;
+    //ofile << "#author: AM" << std::endl;
     //make the LookUp table
     std::map<long, long> NodeIDToSWCIDMap;
     long ID = 1;
@@ -1181,7 +1188,7 @@ void WriteMultipleSWCFiles(std::string fname, unsigned int padz) {
         NodeIDToSWCIDMap[(*sit)->ID] = ID++;
       }
     }
-    std::cout << ID << " Nodes found  ";
+    //std::cout << ID << " Nodes found  ";
 
     //create the SWC file
     for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) {
@@ -1213,13 +1220,13 @@ void WriteMultipleSWCFiles(std::string fname, unsigned int padz) {
       }
     }
     ofile.close();
-    std::cout << " file written. " << std::endl;
+    //std::cout << " file written. " << std::endl;
   }
 
   for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) {
     delete (*sit);
   }
-  std::cout << " done! " << std::endl;
+  //std::cout << " done! " << std::endl;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -1237,7 +1244,7 @@ void WriteSWCFile(std::string fname, unsigned int padz) {
     delete (*sit);
   }
   ofile.close();
-  std::cout << " done! " << std::endl;
+  //std::cout << " done! " << std::endl;
 }
 ///////////////////////////////////////////////////////////////////////
 void GenerateTestImage() {
@@ -1274,8 +1281,8 @@ void GenerateTestImage() {
 ///////////////////////////////////////////////////////////////////////////////
 void RemoveIntraSomaNodes(const char *somaFileName)
 {
-  std::cout << "removing nodes that fall inside the somas of "
-            << somaFileName << std::endl;
+  /*std::cout << "removing nodes that fall inside the somas of "
+            << somaFileName << std::endl;*/
   //load the soma volume binary image
   typedef itk::ImageFileReader<CharImageType3D> SomaReaderType;
   SomaReaderType::Pointer somaReader = SomaReaderType::New();
@@ -1339,9 +1346,9 @@ void RemoveIntraSomaNodes(const char *somaFileName)
       }
     }
   unsigned int newSize = SWCNodeContainer.size();
-  std::cout << "Just removed " << originalSize - newSize
+  /*std::cout << "Just removed " << originalSize - newSize
             << " nodes (" << originalSize << " to " << newSize << ")"
-            << std::endl;
+            << std::endl;*/
 }
 
 float getRadius(itk::Vector<float,3>& pos) {
