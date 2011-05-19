@@ -1,0 +1,1 @@
+double*** runLoG(double*** image, float scale, int image_x_size, int image_y_size, int image_z_size); //image[x][y][z] format required

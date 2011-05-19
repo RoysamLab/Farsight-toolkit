@@ -14,6 +14,11 @@ SET( FTKCOMMON_HDRS
   ftkProjectManager.h
 )
 
+if (BUILD_CUDA)
+    SET ( FTKCOMMON_SRCS ${FTKCOMMON_SRCS} ftkLaplacianOfGaussian3DCPU.cpp )
+    SET ( FTKCOMMON_HDRS ${FTKCOMMON_HDRS} ftkLaplacianOfGaussian3DCPU.h)
+endif (BUILD_CUDA)
+
 
 # GnT -> Graphs and Tree Classes
 # Contains RAG and Merge Tree Codes

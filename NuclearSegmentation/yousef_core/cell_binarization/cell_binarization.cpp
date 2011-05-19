@@ -23,6 +23,12 @@
 #include <math.h>
 #include <time.h>
 
+#include "ftkLaplacianOfGaussian3DCPU.h"
+
+#include "itkImage.h"
+#include "itkImageFileWriter.h"
+#include "itkImageFileReader.h"
+
 
 #ifdef _OPENMP
 #include "omp.h"
@@ -74,6 +80,96 @@ int Cell_Binarization_2D(unsigned char* imgIn, unsigned short *imgOut, int R, in
 //Main function for 3-D binarization
 int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, int C, int Z, int shd, int div) //modifed by Yousef on 5-20-2008.. The first input change from uchar* to int*
 {			
+	double*** image_3D = (double***) malloc(C * sizeof(double **));
+	for (int k = 0; k < C; k++)
+	{
+		image_3D[k] = (double **) malloc(R * sizeof(double *));
+		for (int l = 0; l < R; l++)
+		{
+			image_3D[k][l] = (double *) malloc(Z * sizeof(double));
+			for (int m = 0; m < Z; m++)
+			{
+				image_3D[k][l][m] = imgIn[k + l * C + m * R * C];
+			}
+		}
+	}
+
+	for (double scale = 1; scale <= 10; scale += 1)
+	{
+		double*** out_image = runLoG(image_3D, scale, C, R, Z); //LoG
+
+		//rescale out_image
+		double max = numeric_limits<double>::min();
+		double min = numeric_limits<double>::max();
+
+		for (int k = 0; k < C; k++)
+			for (int l = 0; l < R; l++)
+				for (int m = 0; m < Z; m++)
+				{
+					if (out_image[k][l][m] > max)
+						max = out_image[k][l][m];
+					if (out_image[k][l][m] < min)
+						min = out_image[k][l][m];
+				}
+		
+		for (int k = 0; k < C; k++)
+			for (int l = 0; l < R; l++)
+				for (int m = 0; m < Z; m++)
+					out_image[k][l][m] = (out_image[k][l][m] - min) * 255 / (max - min);
+
+		std::string outputFilename = "LoG";
+		std::stringstream tempStringStream;
+		tempStringStream << scale;
+		outputFilename.append(tempStringStream.str());
+		outputFilename.append(".tif");
+
+		typedef unsigned char OutputPixelType;
+		const unsigned int Dimension = 3;
+		typedef itk::Image<OutputPixelType, Dimension > ImageType;
+
+		ImageType::RegionType region;
+		ImageType::IndexType start;
+		
+		start[0] = 0;
+		start[1] = 0;
+		start[2] = 0;
+
+		ImageType::SizeType size;
+		size[0] = C;
+		size[1] = R;
+		size[2] = Z;
+
+		region.SetSize(size);
+		region.SetIndex(start);
+
+		ImageType::Pointer image = ImageType::New();
+		image->SetRegions(region);
+		image->Allocate();
+
+		ImageType::IndexType pixelIndex;
+
+		for (int k = 0; k < C; k++)
+			for (int l = 0; l < R; l++)
+				for (int m = 0; m < Z; m++)
+				{
+					pixelIndex[0] = k;
+					pixelIndex[1] = l;
+					pixelIndex[2] = m;
+
+					image->SetPixel(pixelIndex, out_image[k][l][m]);
+				}
+
+		
+
+		typedef  itk::ImageFileWriter< ImageType  > WriterType;
+		WriterType::Pointer writer = WriterType::New();
+		writer->SetFileName(outputFilename);
+		writer->SetInput(image);
+		writer->Update();
+	}
+
+
+	
 	//Now, to do the binarization, follow these steps:
 	//1- Assuming that the histogram of the image is modeled by a mixture of two 
 	//poisson distributions, estimate the parameters of the mixture model 
