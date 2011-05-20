@@ -19,7 +19,8 @@ TARGET_LINK_LIBRARIES( NuclearSegmentation ftkCommon ftkFeatures ftkImage Yousef
 
 #Remove SegmentationViewer (segren) because it does not compile on Windows 7 machine.
 #SUBDIRS( yousef_core Nuclear_Association exe CytoplasmSegmentation PixelAnalysis NucleusEditor SegmentationViewer )
-SUBDIRS( yousef_core Nuclear_Association exe CytoplasmSegmentation PixelAnalysis NucleusEditor SubtractChannel) # Statistical_Model_Segmentation )
+SUBDIRS( yousef_core Nuclear_Association exe CytoplasmSegmentation PixelAnalysis NucleusEditor SubtractChannel) 
+# Statistical_Model_Segmentation )
 
 IF (BUILD_OPENCL)
     IF (MSVC)
