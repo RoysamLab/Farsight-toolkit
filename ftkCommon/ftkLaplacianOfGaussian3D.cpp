@@ -1,4 +1,4 @@
-#include "ftkLaplacianOfGaussian3DCPU.h"
+#include "ftkLaplacianOfGaussian3D.h"
 #include <math.h>
 #include <stdlib.h>
 #include <iostream>
@@ -8,6 +8,9 @@
 #include "omp.h"
 #endif
 
+#if CUDA
+#include "Convolution_CUDA.cuh"
+#endif
 
 using namespace std;
 
@@ -15,8 +18,11 @@ using namespace std;
 double*** generateKernel(float scale, int kernel_size, double* error);
 double*** zeroPadImage(double*** image, int image_x_size, int image_y_size, int image_z_size, int kernel_size);
 double*** convolve(double*** kernel, double*** paddedImage, int padded_image_x_size, int padded_image_y_size, int padded_image_z_size, int kernel_size);
-double sumOfConvolutionProduct(double*** kernel, double*** paddedImage, int padded_image_start_x, int padded_image_start_y, int padded_image_start_z, int kernel_size);
-
+double sumOfProduct(double*** kernel, double*** paddedImage, int padded_image_start_x, int padded_image_start_y, int padded_image_start_z, int kernel_size);
+double* flattenKernel(double*** kernel, int kernel_size);
+double* flattenPaddedImage(double*** paddedImage, int padded_image_x_size, int padded_image_y_size, int padded_image_z_size);
+void freeKernelMem(double*** kernel, int kernel_size);
+void freePaddedImageMem(double*** paddedImage, int padded_image_x_size, int padded_image_y_size);
 
 const double PI = atan(1.0) * 4;
 	
@@ -38,13 +44,23 @@ double*** runLoG(double*** image, float scale, int image_x_size, int image_y_siz
 	
 	cout << "Finding appropriate kernel size for scale " << scale << endl;
 	//repeatedly generate kernels of sucessively larger sizes until our error falls below 5%
-	for (int k = 2; k < 40; k++)
+	for (int k = 2 * scale; k < 1000; k++)
 	{
-		kernel_size = scale * k;
+		kernel_size = k;
 		kernel = generateKernel(scale, kernel_size, &error);
-		if (error < 10.0)
+		if (error < 10.0 && error > 0)
 			break;
+
+		for (int k = 0; k < kernel_size; k++)
+		{
+			for (int l = 0; l < kernel_size; l++)
+				free(kernel[k][l]);
+			free(kernel[k]);
+		}
+		free(kernel);
 	}
+	
+	cout << "Found appropriate kernel size: " << kernel_size << endl;
 
 	double*** paddedImage = zeroPadImage(image, image_x_size, image_y_size, image_z_size, kernel_size);
 
@@ -53,11 +69,33 @@ double*** runLoG(double*** image, float scale, int image_x_size, int image_y_siz
 	int padded_image_z_size = image_z_size + 2 * (kernel_size / 2);
 
 	double*** convolvedImage = convolve(kernel, paddedImage, padded_image_x_size , padded_image_y_size, padded_image_z_size, kernel_size);
-	
-	free(kernel);
-	free(paddedImage);
+
+	freeKernelMem(kernel, kernel_size);
+	freePaddedImageMem(paddedImage, padded_image_x_size, padded_image_y_size);
 
 	return convolvedImage;
+}
+
+void freeKernelMem(double*** kernel, int kernel_size)
+{
+	for (int k = 0; k < kernel_size; k++)
+	{
+		for (int l = 0; l < kernel_size; l++)
+			free(kernel[k][l]);
+		free(kernel[k]);
+	}
+	free(kernel);
+}
+
+void freePaddedImageMem(double*** paddedImage, int padded_image_x_size, int padded_image_y_size)
+{
+	for (int k = 0; k < padded_image_x_size; k++)
+	{
+		for (int l = 0; l < padded_image_y_size; l++)
+			free(paddedImage[k][l]);
+		free(paddedImage[k]);
+	}
+	free(paddedImage);
 }
 
 double*** generateKernel(float scale, int kernel_size, double* error)
@@ -227,6 +265,9 @@ double*** convolve(double*** kernel, double*** paddedImage, int padded_image_x_s
 	}
 
 	//convolution
+#if CUDA
+	sumOfProduct_CUDA(flattenKernel(kernel, kernel_size), flattenPaddedImage(paddedImage, padded_image_x_size, padded_image_y_size, padded_image_z_size), outputImage_x_size, outputImage_y_size, outputImage_z_size, kernel_size, outputImage);
+#else
 	#pragma omp parallel for
 	for(int k = 0; k < outputImage_x_size; k++)
 	{        
@@ -234,10 +275,11 @@ double*** convolve(double*** kernel, double*** paddedImage, int padded_image_x_s
 		{			
 			for(int m = 0; m < outputImage_z_size; m++)
 			{				
-				outputImage[k][l][m] = sumOfConvolutionProduct(kernel, paddedImage, k, l, m, kernel_size);
+				outputImage[k][l][m] = sumOfProduct(kernel, paddedImage, k, l, m, kernel_size);
 			}
 		}
 	}
+#endif
 
 	/*cout << "Printing out convolved image" << endl;
 	for (int m = 0; m < outputImage_z_size; m++)
@@ -259,7 +301,7 @@ double*** convolve(double*** kernel, double*** paddedImage, int padded_image_x_s
 	return outputImage;
 }
 
-double sumOfConvolutionProduct(double*** kernel, double*** paddedImage, int padded_image_start_x, int padded_image_start_y, int padded_image_start_z, int kernel_size)
+double sumOfProduct(double*** kernel, double*** paddedImage, int padded_image_start_x, int padded_image_start_y, int padded_image_start_z, int kernel_size)
 {
 	int padding = kernel_size / 2;
 	double sum = 0;
@@ -270,4 +312,47 @@ double sumOfConvolutionProduct(double*** kernel, double*** paddedImage, int padd
 				sum += kernel[k][l][m] * paddedImage[padded_image_start_x + k][padded_image_start_y + l][padded_image_start_z + m]; //note that this is reduction
 
 	return sum;
+}
+
+double* flattenKernel(double*** kernel, int kernel_size)
+{
+	double* flat_kernel = (double*) malloc(kernel_size * kernel_size * kernel_size * sizeof(double));
+
+	for (int k = 0; k < kernel_size; k++)
+		for (int l = 0; l < kernel_size; l++)
+			for (int m = 0; m < kernel_size; m++)
+				flat_kernel[m + kernel_size * l + kernel_size * kernel_size * k] = kernel[k][l][m];
+	
+	/*for (int n = 0; n < kernel_size * kernel_size * kernel_size; n++)
+	{
+		int k =	n / (kernel_size * kernel_size);
+		int l = n % (kernel_size * kernel_size) / kernel_size;
+		int m = n % kernel_size;
+		 
+		cout << k << " " << l << " " << m << endl;
+	}*/
+
+	return flat_kernel;
+}
+
+double* flattenPaddedImage(double*** paddedImage, int padded_image_x_size, int padded_image_y_size, int padded_image_z_size)
+{
+	double* flat_padded_image = (double*) malloc(padded_image_x_size * padded_image_y_size * padded_image_z_size * sizeof(double));
+
+	for (int k = 0; k < padded_image_x_size; k++)
+		for (int l = 0; l < padded_image_y_size; l++)
+			for (int m = 0; m < padded_image_z_size; m++)
+				flat_padded_image[m + padded_image_z_size * l + padded_image_z_size * padded_image_y_size * k] = paddedImage[k][l][m];
+
+	/*for (int n = 0; n < padded_image_x_size * padded_image_y_size * padded_image_z_size; n++)
+	{
+		int k =	n / (padded_image_z_size * padded_image_y_size);
+		int l = n % (padded_image_z_size * padded_image_y_size) / padded_image_z_size;
+		int m = n % padded_image_z_size;
+		 
+		cout << k << " " << l << " " << m << endl;
+	}*/
+
+
+	return flat_padded_image;
 }

@@ -23,7 +23,7 @@
 #include <math.h>
 #include <time.h>
 
-#include "ftkLaplacianOfGaussian3DCPU.h"
+#include "ftkLaplacianOfGaussian3D.h"
 
 #include "itkImage.h"
 #include "itkImageFileWriter.h"

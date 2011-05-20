@@ -4,6 +4,7 @@ SET( FTKCOMMON_SRCS
   ftkMultipleImageHandler.cpp
   ftkParameters.cpp
   ftkProjectManager.cxx
+ftkLaplacianOfGaussian3D.cpp
 )
 
 SET( FTKCOMMON_HDRS
@@ -12,11 +13,12 @@ SET( FTKCOMMON_HDRS
   ftkMultipleImageHandler.h
   ftkParameters.h
   ftkProjectManager.h
+  ftkLaplacianOfGaussian3D.h
 )
 
 if (BUILD_CUDA)
-    SET ( FTKCOMMON_SRCS ${FTKCOMMON_SRCS} ftkLaplacianOfGaussian3DCPU.cpp )
-    SET ( FTKCOMMON_HDRS ${FTKCOMMON_HDRS} ftkLaplacianOfGaussian3DCPU.h)
+    SET ( FTKCOMMON_SRCS ${FTKCOMMON_SRCS} Convolution_CUDA.cu )
+    SET ( FTKCOMMON_HDRS ${FTKCOMMON_HDRS} Convolution_CUDA.cuh )
 endif (BUILD_CUDA)
 
 
@@ -37,12 +39,21 @@ FIND_PACKAGE(Boost)
 LINK_DIRECTORIES ( ${Boost_LIBRARY_DIRS})
 INCLUDE_DIRECTORIES ( ${Boost_INCLUDE_DIRS})
 
-ADD_LIBRARY( ftkCommon
+if (BUILD_CUDA)
+	CUDA_ADD_LIBRARY( ftkCommon
             ${FTKCOMMON_SRCS} 
             ${FTKCOMMON_HDRS} 
             ${GnT_HDRS}
             ${GnT_SRCS}
-)
+	)
+else (BUILD_CUDA)
+	ADD_LIBRARY( ftkCommon
+            ${FTKCOMMON_SRCS} 
+            ${FTKCOMMON_HDRS} 
+            ${GnT_HDRS}
+            ${GnT_SRCS}
+	)
+endif (BUILD_CUDA)
 
 
 TARGET_LINK_LIBRARIES( ftkCommon TinyXML ftkImage
@@ -53,4 +64,3 @@ ADD_EXECUTABLE( block main.cpp )
 TARGET_LINK_LIBRARIES( block ftkCommon )
 
 INSTALL( TARGETS block RUNTIME DESTINATION bin )
-
