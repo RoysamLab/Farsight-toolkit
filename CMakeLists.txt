@@ -29,6 +29,9 @@ OPTION( BUILD_EMBREX "Build Mark Embrecht's KPLS module" OFF )
 OPTION( BUILD_UNMIXING "Build Unmixing module" OFF )
 OPTION( BUILD_OPENMP "Build with OpenMP support (Note that only VS2008 Pro and VS2008 Team System supports OpenMP)" OFF)
 
+OPTION( BUILD_MODEL_SEG "Build Statistical_Model_Segmentation (Note that it has dependency on glpk library)" OFF)
+
+
 #Make sure OPENCL AND CUDA ARE NOT BOTH ENABLED
 OPTION( BUILD_OPENCL "Build with OpenCL support (VS 2008 only at the moment)" OFF) 
 OPTION(	BUILD_CUDA "Build with CUDA support" OFF)
@@ -152,6 +155,9 @@ IF( USE_SQLITE_DATABASE )
   SUBDIRS( SQLite/NESqlite )
 ENDIF( USE_SQLITE_DATABASE )
 
+IF(BUILD_MODEL_SEG)
+LINK_DIRECTORIES( ${PROJECT_SOURCE_DIR}/PatternAnalysis/glpk )
+ENDIF(BUILD_MODEL_SEG)
 
 ####################################################################################
 ####################################################################################
