@@ -9,11 +9,13 @@ ADD_EXECUTABLE( graph_coloring_on_output graph_coloring_on_output.cpp )
 
 ADD_EXECUTABLE( convert_dat_to_label convert_dat_to_label.cpp )
 
-#ADD_EXECUTABLE(MBSeg StatModelSegMain.cpp)
+
 ADD_EXECUTABLE(SomaExtraction SomaExtraction.cpp)
 
-#TARGET_LINK_LIBRARIES(MBSeg ModelSeg) 
-
+IF(BUILD_MODEL_SEG)
+ADD_EXECUTABLE(MBSeg StatModelSegMain.cpp)
+TARGET_LINK_LIBRARIES(MBSeg ModelSeg) 
+ENDIF(BUILD_MODEL_SEG)
 
 TARGET_LINK_LIBRARIES( segment_nuclei  Yousef_Nucleus_Seg)# ITKBasicFilters ITKCommon ITKIO)
 
