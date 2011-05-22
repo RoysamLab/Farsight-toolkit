@@ -80,7 +80,7 @@ int Cell_Binarization_2D(unsigned char* imgIn, unsigned short *imgOut, int R, in
 //Main function for 3-D binarization
 int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, int C, int Z, int shd, int div) //modifed by Yousef on 5-20-2008.. The first input change from uchar* to int*
 {			
-	double*** image_3D = (double***) malloc(C * sizeof(double **));
+	/*double*** image_3D = (double***) malloc(C * sizeof(double **));
 	for (int k = 0; k < C; k++)
 	{
 		image_3D[k] = (double **) malloc(R * sizeof(double *));
@@ -94,16 +94,16 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 		}
 	}
 
-	for (double scale = 1; scale <= 10; scale += 1)
+	for (double scale = 1; scale <= 20; scale += 1)
 	{
-		double*** out_image = runLoG(image_3D, scale, C, R, Z); //LoG
+		double*** out_image = runLoG(image_3D, scale, scale, scale, C, R, Z); //LoG
 
 		//rescale out_image
 		double max = numeric_limits<double>::min();
 		double min = numeric_limits<double>::max();
 
-		for (int k = 0; k < C; k++)
-			for (int l = 0; l < R; l++)
+		for (int k = 1; k < C - 1; k++)
+			for (int l = 1; l < R - 1; l++)
 				for (int m = 0; m < Z; m++)
 				{
 					if (out_image[k][l][m] > max)
@@ -149,7 +149,9 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 		ImageType::IndexType pixelIndex;
 
 		for (int k = 0; k < C; k++)
+		{
 			for (int l = 0; l < R; l++)
+			{
 				for (int m = 0; m < Z; m++)
 				{
 					pixelIndex[0] = k;
@@ -158,7 +160,11 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 
 					image->SetPixel(pixelIndex, out_image[k][l][m]);
 				}
-
+				free(out_image[k][l]);
+			}
+			free(out_image[k]);
+		}
+		free(out_image);
 		
 
 		typedef  itk::ImageFileWriter< ImageType  > WriterType;
@@ -166,7 +172,7 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 		writer->SetFileName(outputFilename);
 		writer->SetInput(image);
 		writer->Update();
-	}
+	}*/
 
 
 	
