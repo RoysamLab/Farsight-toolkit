@@ -45,19 +45,19 @@ double*** runLoG(double*** image, float scale_X, float scale_Y, float scale_Z, i
 	//10 decimal point precision
 	cout << setprecision(10);
 	
-	int kernel_size_X = 12 * scale_X;
-	int kernel_size_Y = 12 * scale_Y;
-	int kernel_size_Z = 12 * scale_Z;
+	int kernel_size_X = 6 * scale_X;
+	int kernel_size_Y = 6 * scale_Y;
+	int kernel_size_Z = 6 * scale_Z;
 
-	int padding_X = kernel_size_X / 2;
-	int padding_Y = kernel_size_X / 2;
-	int padding_Z = kernel_size_X / 2;
+	int padding_X = kernel_size_X / 2 + 1;
+	int padding_Y = kernel_size_X / 2 + 1;
+	int padding_Z = kernel_size_X / 2 + 1;
 	
 	double* kernel_X = generateGaussianKernel(scale_X, kernel_size_X);
 	double* kernel_Y = generateGaussianKernel(scale_Y, kernel_size_Y);
 	double* kernel_Z = generateGaussianKernel(scale_Z, kernel_size_Z);
 
-	double*** paddedImage = padImage(image, image_x_size, image_y_size, image_z_size, kernel_size_X, kernel_size_Y, kernel_size_Z);
+	double*** paddedImage = padImage(image, image_x_size, image_y_size, image_z_size, kernel_size_X + 2, kernel_size_Y + 2, kernel_size_Z + 2);
 
 	int padded_image_x_size = 2 * padding_X + image_x_size;
 	int padded_image_y_size = 2 * padding_Y + image_y_size;
@@ -82,8 +82,8 @@ double*** runLoG(double*** image, float scale_X, float scale_Y, float scale_Z, i
 	freeImageMem(paddedLoGimage, padded_image_x_size + 2, padded_image_y_size + 2);
 
 
-	/*//For testing Laplacian	
-	double*** laplacianKernel = generateLaplacianKernel();
+	//For testing Laplacian	
+	/*double*** laplacianKernel = generateLaplacianKernel();
 
 	double*** paddedImage = padImage(image, image_x_size, image_y_size, image_z_size, 3, 3, 3);
 	double*** paddedLoGimage = convolveLaplacian(laplacianKernel, paddedImage, image_x_size + 2, image_y_size + 2, image_z_size + 2);
@@ -110,8 +110,9 @@ double* generateGaussianKernel(float scale, int kernel_size)
 	
 	for (int k = 0; k < kernel_size; k++)
 	{
-		kernel[k] = pow(scale, 2) 
-					//* 1 / sqrt(2 * PI * pow(scale, 2)) 
+		kernel[k] = 1
+					* pow(scale, 2) 
+					* 1 / sqrt(2 * PI * pow(scale, 2)) 
 					* exp( -(pow(k-(kernel_size-1)/2.0, 2))/ (2 * pow(scale, 2))); //1-D gaussian kernel
 	}
 	
@@ -213,7 +214,7 @@ double*** padImage(double*** image, int image_x_size, int image_y_size, int imag
 				if (k < padding_X || k >= padding_X + image_x_size  || l < padding_Y || l >= padding_Y + image_y_size || m < padding_Z || m >= padding_Z + image_z_size)
 				{	
 					//Clamp pixels that are edges but not "corners". Corners are defined as places where neither the seperable Gaussian kernels nor the Laplacian kernels would ever read data from when convolving. (6 cases, 2 for each direction)
-					if (!(l < padding_Y || l >= padding_Y + image_y_size) && !(m < padding_Z || m >= padding_Z + image_z_size))			//outside X but within Y and Z
+					/*if (!(l < padding_Y || l >= padding_Y + image_y_size) && !(m < padding_Z || m >= padding_Z + image_z_size))			//outside X but within Y and Z
 					{
 						if (k < padding_X)
 							paddedImage[k][l][m] = image[0][l - padding_Y][m - padding_Z];
@@ -234,7 +235,7 @@ double*** padImage(double*** image, int image_x_size, int image_y_size, int imag
 						else if (m >= padding_Z + image_z_size)
 							paddedImage[k][l][m] = image[k - padding_X][l - padding_Y][image_z_size - 1];
 					}
-					else
+					else*/
 						paddedImage[k][l][m] = 0;
 				}
 				else 
@@ -268,9 +269,9 @@ double*** convolveGaussian(double* kernel_X, double* kernel_Y, double* kernel_Z,
 {
 	cout << "Convolving Gaussian" << endl;
 
-	int padding_X = kernel_size_X / 2;
-	int padding_Y = kernel_size_Y / 2;
-	int padding_Z = kernel_size_Z / 2;
+	int padding_X = kernel_size_X / 2 + 1;
+	int padding_Y = kernel_size_Y / 2 + 1;
+	int padding_Z = kernel_size_Z / 2 + 1;
 
 	int image_x_size = padded_image_x_size - 2 * padding_X; //note that <2 * (kernel_size / 2)> is <2 * padding> which is one less than kernel_size for odd-sized kernel
 	int image_y_size = padded_image_y_size - 2 * padding_Y;
@@ -286,7 +287,7 @@ double*** convolveGaussian(double* kernel_X, double* kernel_Y, double* kernel_Z,
 			tempPaddedImage[k][l] = (double *) malloc(padded_image_z_size * sizeof(double));
 			for (int m = 0; m < padded_image_z_size; m++)
 			{
-				tempPaddedImage[k][l][m] = 0;
+				tempPaddedImage[k][l][m] = paddedImage[k][l][m];
 			}
 		}
 	}
@@ -295,13 +296,13 @@ double*** convolveGaussian(double* kernel_X, double* kernel_Y, double* kernel_Z,
 
 	//convolving in x direction
 	#pragma omp parallel for
-	for(int k = 0; k < image_x_size; k++)
+	for(int k = 0; k < image_x_size + 2; k++)
 	{        
-		for(int l = 0; l < image_y_size; l++)
+		for(int l = 0; l < image_y_size + 2; l++)
 		{			
-			for(int m = 0; m < image_z_size; m++)
+			for(int m = 0; m < image_z_size + 2; m++)
 			{				
-				tempPaddedImage[k + padding_X][l + padding_Y][m + padding_Z] = sumOfProductX(kernel_X, paddedImage, k, l + padding_Y, m + padding_Z, kernel_size_X);
+				tempPaddedImage[k + padding_X - 1][l + padding_Y - 1][m + padding_Z - 1] = sumOfProductX(kernel_X, paddedImage, k + padding_X - kernel_size_X / 2, l + padding_Y - 1, m + padding_Z - 1, kernel_size_X);
 			}
 		}
 	}
@@ -309,26 +310,26 @@ double*** convolveGaussian(double* kernel_X, double* kernel_Y, double* kernel_Z,
 
 	//convolving in y-direction
 	#pragma omp parallel for
-	for(int k = 0; k < image_x_size; k++)
+	for(int k = 0; k < image_x_size + 2; k++)
 	{        
-		for(int l = 0; l < image_y_size; l++)
+		for(int l = 0; l < image_y_size + 2; l++)
 		{			
-			for(int m = 0; m < image_z_size; m++)
+			for(int m = 0; m < image_z_size + 2; m++)
 			{				
-				paddedImage[k + padding_X][l + padding_Y][m + padding_Z] = sumOfProductY(kernel_Y, tempPaddedImage, k + padding_X, l, m + padding_Z, kernel_size_Y);
+				paddedImage[k + padding_X - 1][l + padding_Y - 1][m + padding_Z - 1] = sumOfProductY(kernel_Y, tempPaddedImage, k + padding_X - 1, l + padding_Y - kernel_size_Y / 2, m + padding_Z - 1, kernel_size_Y);
 			}
 		}
 	}
 
 	//convolving in z-direction
 	#pragma omp parallel for
-	for(int k = 0; k < image_x_size; k++)
+	for(int k = 0; k < image_x_size + 2; k++)
 	{        
-		for(int l = 0; l < image_y_size; l++)
+		for(int l = 0; l < image_y_size + 2; l++)
 		{			
-			for(int m = 0; m < image_z_size; m++)
+			for(int m = 0; m < image_z_size + 2; m++)
 			{				
-				tempPaddedImage[k + padding_X][l + padding_Y][m + padding_Z] = sumOfProductZ(kernel_Z, paddedImage, k + padding_X, l + padding_Y, m, kernel_size_Z);
+				tempPaddedImage[k + padding_X - 1][l + padding_Y - 1][m + padding_Z - 1] = sumOfProductZ(kernel_Z, paddedImage, k + padding_X - 1, l + padding_Y - 1, m + padding_Z - kernel_size_Z / 2, kernel_size_Z);
 			}
 		}
 	}

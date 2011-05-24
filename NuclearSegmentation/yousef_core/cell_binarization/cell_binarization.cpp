@@ -102,9 +102,27 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 		double max = numeric_limits<double>::min();
 		double min = numeric_limits<double>::max();
 
-		for (int k = 1; k < C - 1; k++)
-			for (int l = 1; l < R - 1; l++)
-				for (int m = 0; m < Z; m++)
+		int Ctemp = C;
+		int Rtemp = R;
+		int Ztemp = Z;
+
+		/*for (int k = 0; k < Ztemp; k++)
+		{
+			for (int l = 0; l < Rtemp; l++)
+			{	
+				for (int m = 0; m < Ctemp; m++)
+				{
+					cout << out_image[m][l][k] << " ";
+				}
+				cout << endl;		
+			}
+			cout << endl;
+		}
+		cout << endl;*/
+
+		for (int k = 0; k < Ctemp; k++)
+			for (int l = 0; l < Rtemp; l++)
+				for (int m = 0; m < Ztemp; m++)
 				{
 					if (out_image[k][l][m] > max)
 						max = out_image[k][l][m];
@@ -112,10 +130,12 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 						min = out_image[k][l][m];
 				}
 		
-		for (int k = 0; k < C; k++)
-			for (int l = 0; l < R; l++)
-				for (int m = 0; m < Z; m++)
-					out_image[k][l][m] = (out_image[k][l][m] - min) * 255 / (max - min);
+		for (int k = 0; k < Ctemp; k++)
+			for (int l = 0; l < Rtemp; l++)
+				for (int m = 0; m < Ztemp; m++)
+					out_image[k][l][m] = (out_image[k][l][m] - min) * 65535 / (max - min);
+
+
 
 		std::string outputFilename = "LoG";
 		std::stringstream tempStringStream;
@@ -123,7 +143,7 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 		outputFilename.append(tempStringStream.str());
 		outputFilename.append(".tif");
 
-		typedef unsigned char OutputPixelType;
+		typedef unsigned short OutputPixelType;
 		const unsigned int Dimension = 3;
 		typedef itk::Image<OutputPixelType, Dimension > ImageType;
 
@@ -135,9 +155,9 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 		start[2] = 0;
 
 		ImageType::SizeType size;
-		size[0] = C;
-		size[1] = R;
-		size[2] = Z;
+		size[0] = Ctemp;
+		size[1] = Rtemp;
+		size[2] = Ztemp;
 
 		region.SetSize(size);
 		region.SetIndex(start);
@@ -148,11 +168,11 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 
 		ImageType::IndexType pixelIndex;
 
-		for (int k = 0; k < C; k++)
+		for (int k = 0; k < Ctemp; k++)
 		{
-			for (int l = 0; l < R; l++)
+			for (int l = 0; l < Rtemp; l++)
 			{
-				for (int m = 0; m < Z; m++)
+				for (int m = 0; m < Ztemp; m++)
 				{
 					pixelIndex[0] = k;
 					pixelIndex[1] = l;
