@@ -200,6 +200,7 @@ int main(int argc, char* argv[])
 	converter->Update();
 	unsigned int numSomas = Somas->GetNumberOfLabelObjects();
 	std::string FileName = argv[2];
+	FileName.erase(FileName.length() -4, FileName.length());
 	FileName.append(".txt");
 	std::ofstream outfile(FileName.c_str());
 	outfile.precision(1);
@@ -209,6 +210,7 @@ int main(int argc, char* argv[])
 		const LabelObjectType * labelObject = Somas->GetLabelObject(label);
 		if(labelObject->GetPhysicalSize() < 100)
 		{	//skip small blobs: they probably aren't real somas
+			std::cout<< "rejected cell "<< label <<" of size " << labelObject->GetPhysicalSize() << std::endl;
 			continue;
 		}
 		const LabelObjectType::CentroidType centroid = labelObject->GetCentroid();
