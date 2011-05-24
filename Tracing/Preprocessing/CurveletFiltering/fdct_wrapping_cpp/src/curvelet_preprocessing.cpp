@@ -568,17 +568,18 @@ int main(int argc, char** argv)
 	time_t t1,t2;
 
 	time(&t1);
-	if(argc < 2 || argc > 3)
+	if(argc < 2 || argc > 4)
 	{
-		printf("Usage : curvelets.exe input_file [options_file]");
+		std::cout<<"Usage : curvelets.exe input_file sigma\n";
+		std::cout<<"Usage : curvelets.exe input_file '-options' [options_file]\n";
 		return -1;
 	}
 	//assert(argc==3);
 	//get options
 
 	map<string, string> opts;  
-	if(argc == 3)
-		optionsCreate(argv[2], opts);
+	if(argc == 4)
+		optionsCreate(argv[3], opts);
 
 	map<string,string>::iterator mi;
 
@@ -611,25 +612,30 @@ int main(int argc, char** argv)
 	{ istringstream ss((*mi).second); ss>>tuning_neighb; }
 	else
 	{ tuning_neighb = 0.6; printf("Chose tuning_neighb = 0.6 as default\n"); }
-
 	mi = opts.find("-sigma_ratio"); 
-	if(mi!=opts.end())
+	if (strcmp(argv[2], "-options"))
+		{
+			sigma_ratio = atof(argv[2]);
+			std::cout << "sigma set to arg[2]";
+		}
+	else if(mi!=opts.end())
 	{ istringstream ss((*mi).second); ss>>sigma_ratio; }
 	else
 	{ sigma_ratio = 0.2; printf("Chose sigma_ratio = 0.2 as default \n"); }
+	std::cout << "Sigma\t" << sigma_ratio << std::endl;
 	int numt;
 	mi = opts.find("-num_threads"); 
 	if(mi!=opts.end())
 	{ istringstream ss((*mi).second); ss>>numt; }
 	else
-	{ numt = 8; printf("Chose num_threads = 8 as default \n"); }
+	{ numt = 16; printf("Chose num_threads = 8 as default \n"); }
 
 	int tile_size;
 	mi = opts.find("-tile_size"); 
 	if(mi!=opts.end())
 	{ istringstream ss((*mi).second); ss>>tile_size; }
 	else
-	{ tile_size = 1024; printf("Chose tile_size = 1024 as default \n"); }
+	{ tile_size = 4024; printf("Chose tile_size = 1024 as default \n"); }
 
 	
 	int border;
@@ -819,12 +825,12 @@ int main(int argc, char** argv)
 	printf("writing the image to disk...\n");
 	char buffer[1024];
 	argv[1][strlen(argv[1])-4] = 0;
-	sprintf(buffer, "%s_CV.tif",argv[1]);
+	sprintf(buffer, "%s_sigma_%f_CV.tif",argv[1],sigma_ratio);
 	writeImage<InputImageType>(outputim,buffer);	
-	sprintf(buffer, "%s_CV_cos.mhd",argv[1]);
+	/*sprintf(buffer, "%s_CV_cos.mhd",argv[1]);
 	writeImage<FloatImageType>(cosim,buffer);
 	sprintf(buffer, "%s_CV_sin.mhd",argv[1]);
-	writeImage<FloatImageType>(sinim,buffer);
+	writeImage<FloatImageType>(sinim,buffer);*/
 
 
 	time(&t2);
