@@ -92,7 +92,7 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 				image_3D[k][l][m] = imgIn[k + l * C + m * R * C];
 			}
 		}
-	}
+	}*/
 
 	for (double scale = 1; scale <= 20; scale += 1)
 	{
@@ -120,7 +120,7 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 		}
 		cout << endl;*/
 
-		for (int k = 0; k < Ctemp; k++)
+		/*for (int k = 0; k < Ctemp; k++)
 			for (int l = 0; l < Rtemp; l++)
 				for (int m = 0; m < Ztemp; m++)
 				{
