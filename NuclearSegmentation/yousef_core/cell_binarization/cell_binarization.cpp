@@ -194,8 +194,6 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 		writer->Update();
 	}*/
 
-
-	
 	//Now, to do the binarization, follow these steps:
 	//1- Assuming that the histogram of the image is modeled by a mixture of two 
 	//poisson distributions, estimate the parameters of the mixture model 

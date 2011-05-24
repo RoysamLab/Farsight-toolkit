@@ -26,8 +26,6 @@ double*** generateLaplacianKernel();
 double*** convolveLaplacian(double*** kernel, double*** image, int image_x_size, int image_y_size, int image_z_size);
 double sumOfProduct(double*** kernel, double*** paddedImage, int padded_image_start_x, int padded_image_start_y, int padded_image_start_z, int kernel_size);
 double*** unpadImage(double*** padded_image, int image_x_size, int image_y_size, int image_z_size, int padding_X, int padding_Y, int padding_Z);
-
-double* flattenPaddedImage(double*** paddedImage, int padded_image_x_size, int padded_image_y_size, int padded_image_z_size);
 void freeImageMem(double*** paddedImage, int padded_image_x_size, int padded_image_y_size);
 
 const double PI = atan(1.0) * 4;
@@ -45,9 +43,9 @@ double*** runLoG(double*** image, float scale_X, float scale_Y, float scale_Z, i
 	//10 decimal point precision
 	cout << setprecision(10);
 	
-	int kernel_size_X = 6 * scale_X;
-	int kernel_size_Y = 6 * scale_Y;
-	int kernel_size_Z = 6 * scale_Z;
+	int kernel_size_X = 7 * 2 * scale_X;
+	int kernel_size_Y = 7 * 2 * scale_Y;
+	int kernel_size_Z = 7 * 2 * scale_Z;
 
 	int padding_X = kernel_size_X / 2 + 1;
 	int padding_Y = kernel_size_X / 2 + 1;
@@ -81,7 +79,7 @@ double*** runLoG(double*** image, float scale_X, float scale_Y, float scale_Z, i
 	double*** LoGimage = unpadImage(paddedLoGimage, image_x_size, image_y_size, image_z_size, padding_X + 1, padding_Y + 1, padding_Z + 1);
 	freeImageMem(paddedLoGimage, padded_image_x_size + 2, padded_image_y_size + 2);
 
-
+  
 	//For testing Laplacian	
 	/*double*** laplacianKernel = generateLaplacianKernel();
 
@@ -398,27 +396,6 @@ double sumOfProductZ(double* kernel, double*** paddedImage, int padded_image_sta
 	return sum;
 }
 
-double* flattenPaddedImage(double*** paddedImage, int padded_image_x_size, int padded_image_y_size, int padded_image_z_size)
-{
-	double* flat_padded_image = (double*) malloc(padded_image_x_size * padded_image_y_size * padded_image_z_size * sizeof(double));
-
-	for (int k = 0; k < padded_image_x_size; k++)
-		for (int l = 0; l < padded_image_y_size; l++)
-			for (int m = 0; m < padded_image_z_size; m++)
-				flat_padded_image[m + padded_image_z_size * l + padded_image_z_size * padded_image_y_size * k] = paddedImage[k][l][m];
-
-	/*for (int n = 0; n < padded_image_x_size * padded_image_y_size * padded_image_z_size; n++)
-	{
-		int k =	n / (padded_image_z_size * padded_image_y_size);
-		int l = n % (padded_image_z_size * padded_image_y_size) / padded_image_z_size;
-		int m = n % padded_image_z_size;
-		 
-		cout << k << " " << l << " " << m << endl;
-	}*/
-
-
-	return flat_padded_image;
-}
 
 double*** convolveLaplacian(double*** kernel, double*** padded_image, int padded_image_x_size, int padded_image_y_size, int padded_image_z_size)
 {

@@ -1,7 +1,7 @@
 #include <cuda.h>
 #include <iostream>
 
-using namespace std;
+using namespace st;
 
 __global__ void ConvolutionKernel_CUDA (double* kernel, double* paddedImage, double* outputImage, int outputImage_x_size, int outputImage_y_size, int outputImage_z_size, int padded_image_x_size, int padded_image_y_size, int padded_image_z_size, int kernel_size, int offset)
 {
@@ -30,7 +30,7 @@ __global__ void ConvolutionKernel_CUDA (double* kernel, double* paddedImage, dou
 	outputImage[outImageIndex] = sum;
 }
 
-void sumOfProduct_CUDA(double* kernel, double* paddedImage, int outputImage_x_size, int outputImage_y_size, int outputImage_z_size, int kernel_size, double*** output3DImage)
+double*** Convolution_CUDA(double* kernel, double* paddedImage, int padded_image_x_size, int padded_image_y_size, padded_image_z_size, int kernel_size)
 {	
 	cout << "Entering sumOfProduct_CUDA" << endl;
 
@@ -111,7 +111,7 @@ void sumOfProduct_CUDA(double* kernel, double* paddedImage, int outputImage_x_si
 		output3DImage[k][l][m] = outputImage[n];
 	}
 
-	//Testing by making output equal to teh input
+	//Testing by making output equal to the input
 	/*for (int n = 0; n < outputImage_x_size * outputImage_y_size * outputImage_z_size; n++)
 	{
 		int k =	n / (padded_image_z_size * padded_image_y_size);
@@ -127,5 +127,27 @@ void sumOfProduct_CUDA(double* kernel, double* paddedImage, int outputImage_x_si
 	free(outputImage);
 	
 	cout << "CUDA_Convolution done" << endl;
+}
+
+double* flattenImage(double*** image, int image_x_size, int image_y_size, int image_z_size)
+{
+	double* flat_image = (double*) malloc(image_x_size * image_y_size * image_z_size * sizeof(double));
+
+	for (int k = 0; k < image_x_size; k++)
+		for (int l = 0; l < image_y_size; l++)
+			for (int m = 0; m < image_z_size; m++)
+				flattened_image[m + image_z_size * l + image_z_size * image_y_size * k] = paddedImage[k][l][m];
+
+	/*for (int n = 0; n < image_x_size * image_y_size * image_z_size; n++)
+	{
+		int k =	n / (image_z_size * image_y_size);
+		int l = n % (image_z_size * image_y_size) / image_z_size;
+		int m = n % image_z_size;
+		 
+		cout << k << " " << l << " " << m << endl;
+	}*/
+
+
+	return flattened_image;
 }
 
