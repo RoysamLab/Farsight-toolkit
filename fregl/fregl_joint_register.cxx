@@ -487,24 +487,23 @@ estimate(int anchor)
   std::vector<int> indices_for_other_images;
   indices_for_other_images.reserve(image_ids_.size());
   for (unsigned int i = 0; i<image_ids_.size();i++)
-    if (i!=anchor && graph_indices_[anchor]==graph_indices_[i])
+    if (i!=anchor && graph_indices_[anchor]==graph_indices_[i]) {
       indices_for_other_images.push_back(i);
+    }
   
   //get the size of X_D (direct constraints) and X_I (indirect constraints)
   //
   unsigned int size = indices_for_other_images.size();
   int X_D_dim = 0, X_I_dim = 0;
   for (unsigned int i = 0; i<size; i++) {
-    if (i == (unsigned int)anchor) continue;
-
-    if (pairwise_constraints_[indices_for_other_images[i]][anchor].size() > 0)
+    if (pairwise_constraints_[indices_for_other_images[i]][anchor].size() > 0) 
       X_D_dim += pairwise_constraints_[indices_for_other_images[i]][anchor].size();
     for (unsigned int j = i+1; j<size; j++) {
-      if (j == (unsigned int)anchor) continue;
       if (pairwise_constraints_[indices_for_other_images[i]][indices_for_other_images[j]].size() > 0)
 	X_I_dim += pairwise_constraints_[indices_for_other_images[i]][indices_for_other_images[j]].size();
     }
   }
+
   if ( X_D_dim == 0 ) {
     std::cerr<< "fregl_joint_register::estimate --- ERROR \n"
              << "    no direct constraints\n"<<std::endl;
@@ -939,21 +938,17 @@ read_xml(std::string const & filename)
     std::stringstream(root_element->Attribute("error_bound")) >> error_bound_;
   }
   */
-  
-  // number of images
-  int num_images;
-  num_images = atoi(root_element->Attribute("number_of_images"));
 
-  // Reading the subgraphs
   TiXmlElement* cur_node = root_element->FirstChildElement();
   
-  int num_graphs;
-  num_graphs = atoi(root_element->Attribute("sub_graphs_built"));
-  std::cout<<"number of subgraphs = "<<num_graphs;
-  for (int i = 0; i<num_graphs; i++)
-    cur_node = cur_node->NextSiblingElement();
-
-  
+   // skip the information on subgraphs, found in joint registration only  
+  if (strcmp(docname, "Joint_Registration") ==0) {  
+    int num_graphs;
+    num_graphs = atoi(root_element->Attribute("sub_graphs_built"));
+    std::cout<<"number of subgraphs = "<<num_graphs<<std::endl;
+    for (int i = 0; i<num_graphs; i++)
+      cur_node = cur_node->NextSiblingElement();
+  }
   
   // Reading the records
   std::vector<fregl_reg_record::Pointer> reg_records;

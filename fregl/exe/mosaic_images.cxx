@@ -134,8 +134,8 @@ main(  int argc, char* argv[] )
     std::string image_name = arg_img_path()+std::string("/")+image_names[0];
     ImageType::Pointer image, xformed_image;
     image = fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise());
+     std::cout<<"Composing the final image ..."<<std::endl;
     final_image = space_transformer.transform_image_weighted(image, 0, 0, arg_nn());
-    std::cout<<"Composing the final image ..."<<std::endl;
     for (unsigned int  i = 1; i<image_names.size(); i++) {
       std::string image_name = arg_img_path()+std::string("/")+image_names[i];
       ImageType::Pointer image = fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise() );
@@ -171,7 +171,6 @@ main(  int argc, char* argv[] )
     std::cout<<"Composing the final image ..."<<std::endl;
     for (unsigned int  i = 0; i<image_names.size(); i++) {
       std::string image_name = arg_img_path()+std::string("/")+image_names[i];
-      std::cout<<"Transform image "<<image_name<<std::endl;
       ImageType::Pointer image, xformed_image;
       image = fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise() );
       xformed_image = space_transformer.transform_image(image, i, 0, arg_nn());
@@ -223,11 +222,10 @@ main(  int argc, char* argv[] )
     std::string image_name = arg_img_path()+std::string("/")+image_names[0];
     ImageType::Pointer image, xformed_image;
     image = fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise());
-    final_image = space_transformer.transform_image(image, 0, 0, arg_nn());
     std::cout<<"Composing the final image ..."<<std::endl;
+    final_image = space_transformer.transform_image(image, 0, 0, arg_nn());
     for (unsigned int  i = 1; i<image_names.size(); i++) {
       image_name = arg_img_path()+std::string("/")+image_names[i];
-      std::cout<<"Transform image "<<image_name<<std::endl;
       image = fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise());
       xformed_image = space_transformer.transform_image(image, i, 0, arg_nn());
       if ( !xformed_image ) continue;

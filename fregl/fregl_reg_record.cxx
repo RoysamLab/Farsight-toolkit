@@ -107,7 +107,6 @@ write_xml(std::string const & filename)
 
   root_node = new TiXmlElement( "Pairwise_Registration" );
   doc.LinkEndChild( root_node );
-  root_node->SetAttribute("number_of_images","2");
   
   write_xml_node(root_node);
  

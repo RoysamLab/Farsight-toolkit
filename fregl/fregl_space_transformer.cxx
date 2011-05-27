@@ -80,6 +80,7 @@ set_anchor( std::string const & anchor_name, bool in_anchor, bool overlap_only, 
 
     image_id_indices_.push_back(i);
    }
+  
   weight_images_2D_.resize(image_id_indices_.size(), 0);
   normalized_weight_images_2D_.resize(image_id_indices_.size(), 0);
 
@@ -350,7 +351,9 @@ transform_image(ImageType::Pointer in_image, int image_index, int background, bo
   int index = image_id_indices_[image_index];
   TransformType::Pointer inverse_xform = joint_register_->get_transform(anchor_,index);
   if ( !inverse_xform ) return NULL;
-  
+
+  std::cout<<"Transform image "<<joint_register_->image_names()[index]<<std::endl;
+    
   TransformType::ParametersType params(12);
   params = inverse_xform->GetParameters();
   /*
@@ -378,7 +381,7 @@ transform_image(ImageType::Pointer in_image, int image_index, int background, bo
     vcl_cout << e << vcl_endl;
     return NULL;
   }
-
+ 
   return resampler->GetOutput();
 }
 
@@ -390,9 +393,9 @@ transform_image_weighted(ImageType::Pointer image, int image_index, int backgrou
     std::cerr<<"Set anchor first"<<std::endl;
     return NULL;
   }
-
-  std::cout<<"Computing photo-bleached weighted image"<<std::endl;
+  
   int index = image_id_indices_[image_index];
+  std::cout<<"Computing photo-bleached weighted image for "<<joint_register_->image_names()[index]<<std::endl;
   TransformType::Pointer inverse_xform = joint_register_->get_transform(anchor_,index);
   if (!inverse_xform) return NULL;
   
