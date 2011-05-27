@@ -15,7 +15,9 @@ ELSE(ITK_FOUND)
 ENDIF(ITK_FOUND)
 
 INCLUDE(FindFFTW215.cmake)
-
+ADD_LIBRARY(CurveletClass
+		Curvelet.h	Curvelet.cpp
+		)
 IF(FFTW_FOUND)
 	INCLUDE_DIRECTORIES(${FFTW_INCLUDE_DIR})
 	ADD_LIBRARY(fdct_wrapping fdct_wrapping.cpp ifdct_wrapping.cpp fdct_wrapping_param.cpp)
@@ -26,7 +28,7 @@ IF(FFTW_FOUND)
 		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 	ENDIF(WIN32)
 	ADD_EXECUTABLE(curvelets curvelet_preprocessing.cpp)
-	TARGET_LINK_LIBRARIES(curvelets fdct_wrapping ITKCommon ITKIO ITKStatistics)
+	TARGET_LINK_LIBRARIES(curvelets CurveletClass fdct_wrapping ITKCommon ITKIO ITKStatistics)
 	INSTALL(TARGETS curvelets RUNTIME DESTINATION bin)
 	INSTALL(TARGETS fdct_wrapping ARCHIVE DESTINATION lib)
 ENDIF(FFTW_FOUND)
