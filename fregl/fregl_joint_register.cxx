@@ -308,9 +308,7 @@ fregl_joint_register::get_adjacent_images(std::string anchor_image, std::vector<
 }
 
 
-std::vector<std::string> const &
-fregl_joint_register::
-image_names() const
+std::vector<std::string> const & fregl_joint_register::image_names() const
 {
   return image_ids_;
 }
