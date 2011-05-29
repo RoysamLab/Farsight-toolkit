@@ -143,7 +143,7 @@ main(  int argc, char* argv[] )
 
   // Perform registration
   //
-  fregl_pairwise_register registor(from_image, to_image, background());
+  fregl_pairwise_register registor(from_image, to_image, from_image_id_wo_ext, to_image_id_wo_ext, background());
   if (slices.set()) registor.set_stack_size( slices() );
   registor.set_smoothing( smooth() );
 
@@ -203,9 +203,10 @@ main(  int argc, char* argv[] )
 
   if (!prior_arg.set() && remove_2d()) {
 #if defined(VCL_WIN32) && !defined(__CYGWIN__)
-    vcl_system("del xxx_from_image_proj.tif");
+    /*//Delete temporary files, no need to delete now since they are unique
+	vcl_system("del xxx_from_image_proj.tif");
     vcl_system("del xxx_to_image_proj.tif");
-    vcl_system("del mosaic_xxx_from_image_proj_to_xxx_to_image_proj.xform");
+    vcl_system("del mosaic_xxx_from_image_proj_to_xxx_to_image_proj.xform");*/
 #else
     if( vcl_system("rm xxx_from_image_proj.tif") != 0 )
       {

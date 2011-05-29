@@ -147,7 +147,7 @@ main(  int argc, char* argv[] )
 
   // Perform registration
   //
-  fregl_pairwise_register registor(from_image, to_image, background());
+  fregl_pairwise_register registor(from_image, to_image, from_image_id_wo_ext, to_image_id_wo_ext, background());
   registor.set_smoothing( smooth() );
   
   double obj_value;

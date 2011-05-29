@@ -42,14 +42,19 @@ limitations under the License.
 fregl_pairwise_register::
 fregl_pairwise_register( InputImageType::Pointer from_image, 
                          InputImageType::Pointer to_image,
+						 std::string from_image_filename,
+						 std::string to_image_filename,
                          float background )
-  : from_image_( from_image ),
-    to_image_( to_image ),
-    background_( background ),
-    exhaustive_( false ),
-    stack_size_set_( false ),
-    smoothing_( 0 )
-{}
+{
+	from_image_ = from_image;
+	to_image_ = to_image;
+	this->from_image_filename = from_image_filename;
+	this->to_image_filename = to_image_filename;
+	background_ = background;
+	exhaustive_ = false;
+	stack_size_set_ = false;
+	smoothing_ = 0;
+}
 
 fregl_pairwise_register::
 ~fregl_pairwise_register()
@@ -143,7 +148,7 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
   // where the major motion is. The shift in the z-stack is taken care
   // of later by the coarse-to-fine refinement in 3D
 
-  ImageType2D::Pointer from_image_2d =fregl_util_max_projection(from_image_);
+  ImageType2D::Pointer from_image_2d = fregl_util_max_projection(from_image_);
   vcl_cout << "Projecting the from_image ....\n";
   ImageType2D::Pointer to_image_2d = fregl_util_max_projection(to_image_);
   vcl_cout << "Projecting the to_image ....\n";
@@ -152,8 +157,8 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
   // images. This might not be a very neat approach, but it is much
   // easier this way, since rrl_gdbicp_info takes image filenames.
 
-  vcl_string from_2dfilename = vcl_string("xxx_from_image_proj.tif");
-  vcl_string to_2dfilename = vcl_string("xxx_to_image_proj.tif");
+  vcl_string from_2dfilename = vcl_string("xxx_")+from_image_filename+vcl_string("_proj.tif");
+  vcl_string to_2dfilename = vcl_string("xxx_")+to_image_filename+vcl_string("_proj.tif");
 
   typedef itk::ImageFileWriter< ImageType2D >  WriterType2D;
 
@@ -194,8 +199,10 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
 
     // Read in the file
     // mosaic_xxx_from_image_proj_to_xxx_to_image_proj.xform back to
-    // memory
-    vcl_ifstream reg_info("mosaic_xxx_from_image_proj_to_xxx_to_image_proj.xform");
+    // memoyr
+	vcl_string xform_string = vcl_string("mosaic_xxx_") + from_image_filename.c_str() + vcl_string("_proj_to_xxx_") + to_image_filename.c_str() + vcl_string("_proj.xform");
+	std::cout << "Reading in xform file: " << xform_string << std::endl;
+	vcl_ifstream reg_info(xform_string.c_str());
     rgrl_transformation_sptr xform_2d = read_2d_xform( reg_info );
 
     if ( !valid_2d_xform(xform_2d, scaling) ) {
