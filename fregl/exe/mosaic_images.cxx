@@ -249,7 +249,7 @@ main(  int argc, char* argv[] )
 		name_prefix = arg_outfile();
 	}
 
-	std::string command = std::string("mkdir ")+name_prefix;
+	/*std::string command = std::string("mkdir ")+name_prefix;
 	if(vcl_system(command.c_str()) != 0)
 	{
 		cerr << "mkdir returned nonzero" << endl;
@@ -274,10 +274,10 @@ main(  int argc, char* argv[] )
 #endif
 	nameGenerator->SetSeriesFormat( name_pattern );
 	seriesWriter->SetFileNames( nameGenerator->GetFileNames() );
-	seriesWriter->Update();
+	seriesWriter->Update();*/
 
 	if (arg_3d()) {
-		std::string name_3d = name_prefix + std::string(".tiff");
+		std::string name_3d = name_prefix + std::string(".tif");
 		typedef itk::ImageFileWriter< ImageType >  WriterType;
 		WriterType::Pointer writer = WriterType::New();
 		writer->SetFileName( name_3d );

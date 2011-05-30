@@ -163,6 +163,7 @@ main(  int argc, char* argv[] )
     name_prefix = arg_outfile();
   }
 
+  /*
   std::string command = std::string("mkdir ")+name_prefix;
   if(vcl_system(command.c_str()) != 0)
     {
@@ -188,7 +189,7 @@ main(  int argc, char* argv[] )
 #endif
   nameGenerator->SetSeriesFormat( name_pattern );
   seriesWriter->SetFileNames( nameGenerator->GetFileNames() );
-  seriesWriter->Update();
+  seriesWriter->Update();*/
 
   // doing the 2d maximum projection and dump it out
   ColorImageType2D::Pointer image_2d = fregl_util_max_projection_color(out_image);
@@ -202,7 +203,7 @@ main(  int argc, char* argv[] )
   // dump out 3D the montage
   typedef itk::ImageFileWriter< ColorImageType >  WriterType3D;
   WriterType3D::Pointer writer3D = WriterType3D::New();
-  writer3D->SetFileName( name_prefix+".tiff" );
+  writer3D->SetFileName( name_prefix+".tif" );
   writer3D->SetInput( out_image );
   writer3D->Update();
 
