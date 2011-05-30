@@ -115,6 +115,11 @@ def register(pair_list, argv):
     from_image_list=[]
     to_image_list=[]
     subprocess_command_list=[]
+    subprocess_list=[]
+    file_handle_list=[]
+    launched_processes_list=[]
+    launched_subp_list=[]
+    still_launched_subp_list=[]
 
     #pairwise registration
     for line in pair_list:
@@ -127,13 +132,32 @@ def register(pair_list, argv):
         to_image_list.append(to_image)
         
         subprocess_command_list.append(regp+' '+image_dir+from_image+' '+ image_dir+to_image +' -remove_2d')
-            
+    
     #spawn and add subprocesses (each representing an execution of register_pair.exe) into a list
     idx = 0
+    threads_launched = 0
     for subprocess_command in subprocess_command_list:
+        #while loop to check active processes to see if we can launch more threads
+        while threads_launched >= multiprocessing.cpu_count():
+            threads_launched = 0
+            still_launched_subp_list = []
+            for launched_subp in launched_processes_list:                  
+                if launched_subp.poll() == None:
+                    threads_launched = threads_launched + 1
+                    still_launched_subp_list.append(launched_subp)
+            launched_processes_list = still_launched_subp_list[:]
+            #print "Threads launched: " + str(threads_launched)
+            time.sleep(1)
+            
+                        
         fh = open('debug_from_' + from_image_list[idx] + '_to_' + to_image_list[idx] + '.txt', 'w')
-        subprocess_list.append(subprocess.Popen(subprocess_command, stdout = fh, stderr = fh))
+        print "Launching " + subprocess_command
+        subp = subprocess.Popen(subprocess_command, stdout = fh, stderr = fh)
+        
+        subprocess_list.append(subp)
+        launched_processes_list.append(subp)
         file_handle_list.append(fh)
+        threads_launched = threads_launched + 1;
         idx = idx + 1
         
     #loop through entire list to check if process are done

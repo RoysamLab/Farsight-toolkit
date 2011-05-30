@@ -41,8 +41,11 @@ def register(argv):
     subprocess_command_list=[]
     subprocess_list=[]
     file_handle_list=[]
+    launched_processes_list=[]
+    launched_subp_list=[]
+    still_launched_subp_list=[]
 
-    #pairwise registration
+     #pairwise registration
     for line in pair_list:
         s_line = line.rstrip().rstrip('\n')
         pos = s_line.find(' ')
@@ -56,56 +59,30 @@ def register(argv):
     
     #spawn and add subprocesses (each representing an execution of register_pair.exe) into a list
     idx = 0
+    threads_launched = 0
     for subprocess_command in subprocess_command_list:
+        #while loop to check active processes to see if we can launch more threads
+        while threads_launched >= multiprocessing.cpu_count():
+            threads_launched = 0
+            still_launched_subp_list = []
+            for launched_subp in launched_processes_list:                  
+                if launched_subp.poll() == None:
+                    threads_launched = threads_launched + 1
+                    still_launched_subp_list.append(launched_subp)
+            launched_processes_list = still_launched_subp_list[:]
+            #print "Threads launched: " + str(threads_launched)
+            time.sleep(1)
+            
+                        
         fh = open('debug_from_' + from_image_list[idx] + '_to_' + to_image_list[idx] + '.txt', 'w')
-        subprocess_list.append(subprocess.Popen(subprocess_command, stdout = fh, stderr = fh))
-        file_handle_list.append(fh)
-        idx = idx + 1
+        print "Launching " + subprocess_command
+        subp = subprocess.Popen(subprocess_command, stdout = fh, stderr = fh)
         
-    #loop through entire list to check if process are done
-    processes_done = False
-    while not processes_done:
-        processes_done = True
-        time.sleep(1) #sleep 1 second before polling all processes
-        for subp in subprocess_list:
-            if subp.poll() == None:
-                processes_done = False
-    
-    #close all the file handles since we are done writing to them
-    for fh in file_handle_list:
-        fh.close()
-    
-    #all processes are done, so read return values and take appropriate action
-    idx = 0
-    for subp in subprocess_list:
-        if subp.poll() == 0: #success
-            found = False
-            for name in names:
-                if name == from_image_list[idx]:
-                    found = True
-                    break
-            if not found:
-                names.append(from_image_list[idx])
-            
-            found = False
-            for name in names:
-                if name == to_image_list[idx]:
-                    found = True
-                    break
-            if not found:
-                names.append(to_image)
-                
-            #add the transformed.xml to the list
-            from_dot = from_image_list[idx].find('.')
-            to_dot = to_image_list[idx].find('.')
-            f_xforms.write(from_image_list[idx][:from_dot]+"_to_"+to_image_list[idx][:to_dot]+"_transform.xml\n")
-            print "From "+from_image+" to "+to_image+" succeeded"
-        else:
-            f_o.write("From "+from_image_list[idx]+" to "+to_image_list[idx]+" failed\n")
-            print "From "+from_image+" to "+to_image+" failed"
-            
+        subprocess_list.append(subp)
+        launched_processes_list.append(subp)
+        file_handle_list.append(fh)
+        threads_launched = threads_launched + 1;
         idx = idx + 1
-    
     
     # Perform joint registration write the xform list to a
     # temporary file and remove it after joint registration
