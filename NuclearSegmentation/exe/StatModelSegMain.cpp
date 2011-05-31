@@ -79,7 +79,7 @@ int main ( int argc ,  char** argv)
 	
 	model_nucleus_seg *MNS = new model_nucleus_seg();
 	MNS->SetRawImage(filenames[0].c_str());
-	//MNS->GetYousefSeg();
+	MNS->GetYousefSeg();
 	MNS->LoadSegParams(argv[2]);
 	MNS->SetTrainingFile(argv[3]);
 	
@@ -97,8 +97,7 @@ int main ( int argc ,  char** argv)
 	{
 		MNS->bImage = MNS->SplitImage(US_Cell_ids,MNS->inputImage,MNS->bImage);
 		MNS->splitflag = 1;
-	}
-		
+	}		
 	
 	typedef ftk::LabelImageToFeatures< unsigned char,  unsigned short, 3 > FeatureCalcType;
 	typedef ftk::IntrinsicFeatures FeaturesType;
