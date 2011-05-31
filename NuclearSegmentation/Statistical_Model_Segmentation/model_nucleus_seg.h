@@ -148,6 +148,7 @@ public:
 	vnl_matrix <double> getTrSet(char* train_fname,int inputdDimensions);
 
 	void SetRawImage(const char* fname);	
+	void SetImages(InputImageType::Pointer rawImage, OutputImageType::Pointer labelImage);
 	void SetSplitImage(OutputImageType::Pointer img1);
 	OutputImageType::Pointer SplitImage(std::vector<unsigned short> outliers,InputImageType::Pointer rimage, OutputImageType::Pointer limage);
 	void SetTrainingFile(char* fname, int inputDimensions);				
@@ -164,15 +165,15 @@ public:
 	std::vector<OutputImageType> getIndLabelImages(){ };
 	std::vector<InputImageType> getIndRawImages(){ };
 	void GetFeatsnImages();
-	void GetScoresfromKPLS(ftkgnt::MTreeType mTree,KPLS *kpls);
+	//void GetScoresfromKPLS(ftkgnt::MTreeType mTree,KPLS *kpls);
 	void SetAssocFeatNumber(int nFeat);
 	void PerformPCA();
 	void Tset2EigenSpace(vnl_matrix<double> nFeats,vnl_matrix<double> Feats);
 	inline int getasscofeatnumb() { return NUM_ASSOC_FEAT;};
 		
 
-
 	void Associations(char* xmlImage,char* projDef);
+	void Associations_NucEd(ftk::Image::Pointer xmlImage, std::vector<ftk::AssociationRule> assocRules);
 	std::vector < std::vector<double> > ComputeAssociations(void);
 	void splitAssociations();
 	OutputImageType::Pointer Shatter_Nuclei(InputImageType::Pointer roiImage,unsigned long * maxLabel);
@@ -193,6 +194,7 @@ public:
 	std::vector< std::vector<double> > GetFeaturesOriginal();
 	std::vector<double>  get_merged_assoc_features(set<int> currRPS,float* bbox);
 	void PerformMerges(const char* x);
+	OutputImageType::Pointer PerformMerges_NucEd();
 	double GetScoreforId(std::vector<double> filtered_features);
 	std::vector<double> GetOriginalScores();
 	void UpdateBoolMerge();
@@ -224,7 +226,7 @@ public:
 	int GetYousefSeg();
 	void RemoveSmallComponents(int minObjSize,const char* x);	
 
-	double MAX_VOL;
+	double MAX_VOL, MIN_VOL;
 	int MAX_DEPTH;
 	double WC_DEFAULT;
 	int SPLIT;
