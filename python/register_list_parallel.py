@@ -133,6 +133,9 @@ def register(pair_list, argv):
         
         subprocess_command_list.append(regp+' '+image_dir+from_image+' '+ image_dir+to_image +' -remove_2d')
     
+    if (not (os.path.exists(os.getcwd() + '\\debug\\'))):
+        os.makedirs(os.getcwd() + '\\debug\\')
+
     #spawn and add subprocesses (each representing an execution of register_pair.exe) into a list
     idx = 0
     threads_launched = 0
@@ -150,7 +153,7 @@ def register(pair_list, argv):
             time.sleep(1)
             
                         
-        fh = open('debug_from_' + from_image_list[idx] + '_to_' + to_image_list[idx] + '.txt', 'w')
+        fh = open(os.getcwd() + '\debug\debug_from_' + from_image_list[idx] + '_to_' + to_image_list[idx] + '.txt', 'w')
         print "Launching " + subprocess_command
         subp = subprocess.Popen(subprocess_command, stdout = fh, stderr = fh)
         

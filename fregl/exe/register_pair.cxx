@@ -203,10 +203,10 @@ main(  int argc, char* argv[] )
 
   if (!prior_arg.set() && remove_2d()) {
 #if defined(VCL_WIN32) && !defined(__CYGWIN__)
-    /*//Delete temporary files, no need to delete now since they are unique
-	vcl_system("del xxx_from_image_proj.tif");
-    vcl_system("del xxx_to_image_proj.tif");
-    vcl_system("del mosaic_xxx_from_image_proj_to_xxx_to_image_proj.xform");*/
+    //Delete temporary files, no need to delete now since they are unique
+	vcl_system(("del xxx_" + from_image_id_wo_ext + "_proj.tif").c_str());
+    vcl_system(("del xxx_" + to_image_id_wo_ext + "_proj.tif").c_str());
+    vcl_system(("del mosaic_xxx_" + from_image_id_wo_ext + "_proj_to_xxx_" + to_image_id_wo_ext + "_proj.xform").c_str());
 #else
     if( vcl_system("rm xxx_from_image_proj.tif") != 0 )
       {
