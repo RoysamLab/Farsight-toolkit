@@ -148,8 +148,17 @@ void model_nucleus_seg::SetAssocFeatNumber(int nFeat)
 {
 	NUM_ASSOC_FEAT = nFeat;
 	featureNumb = this->NUM_ASSOC_FEAT + this->NUM_FEAT;
-}		
+}	
 
+
+/////////////////////////
+// SET IMAGES
+/////////////////////////
+void model_nucleus_seg::SetImages(InputImageType::Pointer rawImage, OutputImageType::Pointer labelImage)
+{
+	inputImage = rawImage;
+	bImage = labelImage;
+}
 
 
 /////////////////////////
@@ -184,8 +193,8 @@ void model_nucleus_seg::SetTrainingFile(char* fname)
 	for(int i = 0; i < inputDimensions; i++)
 	{
 		eigenvecs[i] = eig.get_eigenvector(i);
-		std::cout<< eigenvecs[i] << std::endl;
-		std::cout<< eig.get_eigenvalue(i) << std::endl;
+		//std::cout<< eigenvecs[i] << std::endl;
+		//std::cout<< eig.get_eigenvalue(i) << std::endl;
 	}
 	Tset2EigenSpace(normFeats,Feats);
 	getFeatureNames(fname); //get the feature names used in this model
@@ -292,6 +301,36 @@ void model_nucleus_seg::Associations(char* xmlImage,char* projDef )
 
 	myFtkImage = ftk::LoadXMLImage(xmlImage);
 	LoadAssoc(projDef);
+	AssocFeat = ComputeAssociations();
+}
+
+void model_nucleus_seg::Associations_NucEd(ftk::Image::Pointer xmlImage, std::vector<ftk::AssociationRule> assocRules )
+{	
+	allFeat.clear();
+	labelIndex.clear();
+	
+	labFilter = FeatureCalcType::New();
+	labFilter->SetImageInputs( inputImage, bImage );
+	labFilter->SetLevel(3);
+	labFilter->ComputeHistogramOn();
+	labFilter->Update();
+	labels = labFilter->GetLabels();
+	
+	//Any Id greater than maxL has been split !
+	maxL = labels.size()-1;
+
+	getFeatureVectorsFarsight(bImage,inputImage,allFeat);
+	labelIndex.resize(allFeat.size());	
+	
+	for(int counter=0; counter < allFeat.size(); counter++)
+	{
+		labelIndex[counter] =  allFeat[counter].num;
+	}	
+
+	//myFtkImage = ftk::LoadXMLImage(xmlImage);
+	//LoadAssoc(projDef);
+	myFtkImage = xmlImage;
+	associationRules = assocRules;
 	AssocFeat = ComputeAssociations();
 }
 
@@ -841,7 +880,7 @@ std::vector<double> model_nucleus_seg::Convert2EigenSpace(std::vector<double> fe
 
 		for(int j = 0; j < NUM_FEAT+NUM_ASSOC_FEAT; j++)
 		{	
-			std::cout<< currEig[j] << "-" << feat[j] <<std::endl;
+			//std::cout<< currEig[j] << "-" << feat[j] <<std::endl;
 			eigenFeature[i] += currEig[j]*feat[j]; 
 		}	
 		currEig.clear();
@@ -1133,33 +1172,68 @@ void model_nucleus_seg::PerformMerges(const char* x)
 			std::cout<<*RPSIterator<<"-";
 		}
 
-		std::cout<<""<<std::endl;
-	}
-	writeImage<OutputImageType>(clonedImage,x);
+		std::cout<<""<<std::endl;		
+	}	
+	RemoveSmallComponents(MIN_VOL, x);
+	//writeImage<OutputImageType>(clonedImage,x);
+}
+
+model_nucleus_seg::OutputImageType::Pointer model_nucleus_seg::PerformMerges_NucEd()
+{
+	////Create a clone of the original output. Will perform merges on this image	
+	typedef itk::ImageDuplicator< OutputImageType > DuplicatorType; 
+	DuplicatorType::Pointer duplicator1 = DuplicatorType::New(); 
+	duplicator1->SetInputImage(bImage); 
+	duplicator1->Update();
+	clonedImage = duplicator1->GetOutput();	
+
+	std::cout<<"No.of valid hypotheses:"<<mergeindices.size()<<std::endl;
+
+	for(int i =0 ; i< mergeindices.size() ; ++i)
+	{
+		set<int> currRPS;
+		set<int>::iterator RPSIterator;
+		currRPS =  hypothesis[mergeindices[i]];
+		RPSIterator = currRPS.begin();
+		unsigned short root = *RPSIterator;
+
+		std::cout<<"Merged"<<"--->"<<root<<"-";
+
+		++RPSIterator;
+		for(; RPSIterator != currRPS.end(); ++RPSIterator)
+		{
+			labelChange(root,*RPSIterator);
+			std::cout<<*RPSIterator<<"-";
+		}
+
+		std::cout<<""<<std::endl;		
+	}	
+	return clonedImage;
 }
 
 
 
-//void model_nucleus_seg::RemoveSmallComponents(int minObjSize,const char* x)
-//{
-//	typedef itk::RelabelComponentImageFilter< OutputImageType, OutputImageType > RelabelFilterType;
-//	RelabelFilterType::Pointer relabel = RelabelFilterType::New();
-//	relabel->SetInput( this->clonedImage );
-//	relabel->SetMinimumObjectSize( minObjSize );
-//	relabel->InPlaceOn();
-//
-//	try
-//    {
-//		relabel->Update();
-//    }
-//    catch( itk::ExceptionObject & excep )
-//    {
-//		std::cerr << "Relabel: exception caught !" << std::endl;
-//		std::cerr << excep << std::endl;
-//		return;
-//    }
-//	writeImage<OutputImageType>(relabel->GetOutput(),x);
-//}
+void model_nucleus_seg::RemoveSmallComponents(int minObjSize,const char* x)
+{
+	typedef itk::RelabelComponentImageFilter< OutputImageType, OutputImageType > RelabelFilterType;
+	RelabelFilterType::Pointer relabel = RelabelFilterType::New();
+	relabel->SetInput( this->clonedImage );
+	relabel->SetMinimumObjectSize( minObjSize );
+	relabel->InPlaceOn();
+	
+	try
+    {
+		relabel->Update();
+    }
+    catch( itk::ExceptionObject & excep )
+    {
+		std::cerr << "Relabel: exception caught !" << std::endl;
+		std::cerr << excep << std::endl;
+		return;
+    }
+	std::cout<<"Removing Small Components"<<std::endl;
+	writeImage<OutputImageType>(relabel->GetOutput(),x);
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1597,7 +1671,7 @@ std::vector<unsigned short> model_nucleus_seg::runSVM(vnl_matrix<double> feats,m
 		}
 	}
 
-
+	
 	//Predict:
 
 	std::vector<unsigned short> outliers;
@@ -2289,6 +2363,8 @@ bool model_nucleus_seg::LoadSegParams(std::string filename)
 
 			if(parameterElement->Attribute("MAX_VOL"))
 				this->MAX_VOL = static_cast<double>(atoi(parameterElement->Attribute("MAX_VOL")));
+			if(parameterElement->Attribute("MIN_VOL"))
+				this->MIN_VOL = static_cast<double>(atoi(parameterElement->Attribute("MIN_VOL")));
 			if(parameterElement->Attribute("MAX_DEPTH"))
 				this->MAX_DEPTH =  atoi(parameterElement->Attribute("MAX_DEPTH"));
 			if(parameterElement->Attribute("WC_DEFAULT"))
