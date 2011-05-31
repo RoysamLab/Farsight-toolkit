@@ -15,8 +15,8 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef _RAGHAV_SEG_H_
-#define _RAGHAV_SEG_H_
+#ifndef _MODEL_NUCLEUS_SEG_H_
+#define _MODEL_NUCLEUS_SEG_H_
 
 #ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS
