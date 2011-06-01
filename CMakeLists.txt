@@ -28,6 +28,7 @@ OPTION( WRAP_PYTHON "Wrap Farsight in Python" OFF )
 OPTION( BUILD_EMBREX "Build Mark Embrecht's KPLS module" OFF )
 OPTION( BUILD_UNMIXING "Build Unmixing module" OFF )
 OPTION( BUILD_OPENMP "Build with OpenMP support (Note that only VS2008 Pro and VS2008 Team System supports OpenMP)" OFF)
+OPTION( BUILD_IMAGE_MANAGER  "Manage Image File Conversions and Directories" OFF)
 
 OPTION( BUILD_MODEL_SEG "Build Statistical_Model_Segmentation (Note that it has dependency on glpk library)" OFF)
 
@@ -227,6 +228,11 @@ ENDIF(BUILD_TISSUENETS OR BUILD_MDL)
 IF(BUILD_UNMIXING)
 	SUBDIRS(Unmixing)
 ENDIF(BUILD_UNMIXING)
+
+IF(BUILD_IMAGE_MANAGER)
+	INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkImageManager )
+	SUBDIRS( ftkImageManager )
+ENDIF(BUILD_IMAGE_MANAGER)
 
 IF (BUILD_OPENMP)
     IF (MSVC)
