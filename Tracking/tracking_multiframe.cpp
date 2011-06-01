@@ -738,7 +738,11 @@ int CellTracker::compute_boundary_utility(float x[3])
 
 	float dist = get_boundary_dist(x);
 	int retval = fvar.AD_prior*UTILITY_MAX*(exp(-dist*dist/2.0/fvar.distVariance));
-
+	if(retval < 0)
+	{
+		printf("returning negative utility in compute_boundary_utility\n");
+		scanf("%*d");
+	}
 	//if(get_distance(x,test) < 30 || get_distance(x,test1) <30)
 	//{
 	//	printf("retval = %d x = %0.0f y = %0.0f z = %0.0f\n", retval,x[0],x[1],x[2]);
@@ -750,24 +754,32 @@ int CellTracker::compute_boundary_utility(float x[3])
 int CellTracker::compute_normal_utility(FeaturesType f1, FeaturesType f2)
 {
 	float utility = 0;
+	
+	//printf("FeaturesType::N =%d  FeatureVariances::N = %d",FeaturesType::N,FeatureVariances::N);
 	for(int counter=0; counter< FeaturesType::N; counter++)
 	{
 		utility += (f1.ScalarFeatures[counter]-f2.ScalarFeatures[counter])*(f1.ScalarFeatures[counter]-f2.ScalarFeatures[counter])/fvar.variances[counter];
+	//	printf("f1.ScalarFeatures[counter] = %f f2.ScalarFeatures[counter] = %f fvar.variances[counter]=%f\n",f1.ScalarFeatures[counter],f2.ScalarFeatures[counter],fvar.variances[counter]);
 	}
-
+	//printf("utility 1 = %f\n", utility);
 	float dist = get_distance(f1.Centroid,f2.Centroid);
 	utility += (dist-fvar.distMean)*(dist-fvar.distMean)/fvar.distVariance;
+	//printf("utility 2 = %f\n", utility);
 	utility += (abs(f1.time-f2.time)-1)*(abs(f1.time-f2.time)-1)/fvar.timeVariance;
+	//printf("utility 3 = %f\n", utility);
 	float ovlap = overlap(f1.BoundingBox,f2.BoundingBox);
 	ovlap = 1-(ovlap)/MIN(f1.ScalarFeatures[FeaturesType::BBOX_VOLUME],f2.ScalarFeatures[FeaturesType::BBOX_VOLUME]);
 	utility += ovlap*ovlap/fvar.overlapVariance;
+	//printf("utility 4 = %f\n", utility);
 	utility /= 2.0;
 	utility = fvar.T_prior*UTILITY_MAX*(exp(-utility));
+	//printf("utility 5 = %f\n", utility);
 	if(utility < 0)
 	{
 		printf("returning negative utility\n");
 		scanf("%*d");
 	}
+	//printf("returning utility = %f\n", utility);
 	return utility;
 }
 
@@ -815,6 +827,11 @@ int CellTracker::add_disappear_vertices(int t)
 						g[e].selected = 0;
 						g[e].utility = compute_boundary_utility(fvector[t-1][g[*vi].findex].Centroid);
 						ret_count ++;
+					}
+					else
+					{
+						printf("FATAL ERROR: Could not add an edge for some reason..\n");
+						scanf("%*d");
 					}
 					float test[3] = { 182,299,6};
 					float test1[3] = { 170, 285, 6};
@@ -866,6 +883,11 @@ int CellTracker::add_appear_vertices(int t)
 						g[e].selected = 0;
 						g[e].utility = compute_boundary_utility(fvector[t+1][g[*vi].findex].Centroid);
 						ret_count ++;
+					}
+					else
+					{
+						printf("FATAL ERROR: Could not add an edge for some reason..\n");
+						scanf("%*d");
 					}
 					float test[3] = { 182,299,6};
 					float test1[3] = { 170, 285, 6};
@@ -922,15 +944,26 @@ int CellTracker::add_normal_edges(int tmin, int tmax)
 							g[e].fixed = 0;
 							g[e].selected = 0;
 							float test[]={182,297,6};
-							if(tmax==21 && t==19 && get_distance(fvector[tmax][counter].Centroid,test)<30)
-							{
-							printFeatures(fvector[t][counter1]);
-							printFeatures(fvector[tmax][counter]);
-							printf("g[e].utility = %d\n", g[e].utility);
-							//PAUSE;
-							}
+							//if(tmax==21 && t==19 && get_distance(fvector[tmax][counter].Centroid,test)<30)
+							//{
+							//printFeatures(fvector[t][counter1]);
+							//printFeatures(fvector[tmax][counter]);
+							//printf("g[e].utility = %d\n", g[e].utility);
+							////PAUSE;
+							//}
+							
 							g[e].utility = compute_normal_utility(fvector[t][counter1],fvector[tmax][counter]);
+							if(g[e].utility < 0)
+							{
+								printf("utility < 0 = %d\n", g[e].utility);
+								scanf("%*d");
+							}
 							nec++;
+						}
+						else
+						{
+							printf("FATAL ERROR: Could not add an edge for some reason..\n");
+							scanf("%*d");
 						}
 
 					}
@@ -1124,20 +1157,25 @@ int CellTracker::add_merge_split_edges(int tmax)
 						coupled_map[e2] = e1;
 						g[e1].utility = (utility1+utility2)/fvar.T_prior*fvar.MS_prior;
 						g[e2].utility = (utility1+utility2)/fvar.T_prior*fvar.MS_prior;
-						if(utility1+utility2 == 0)
+						if(utility1+utility2 <0)
 						{
-							//printf("debug_for_merge :\n");
-							//print_vertex(rmap[tcounter][i1],1);
-							//printf("\n\n\n");
-							//print_vertex(rmap[tcounter][i2],1);
-							//printf("\n\n\n");
-//							PAUSE;
+							printf("debug_for_merge :\n");
+							print_vertex(rmap[tcounter][i1],1);
+							printf("\n\n\n");
+							print_vertex(rmap[tcounter][i2],1);
+							printf("\n\n\n");
+							PAUSE;
 						}
 						g[e1].fixed = 0;
 						g[e2].fixed = 0;
 						g[e1].selected = 0;
 						g[e2].selected = 0;
 						msec+=2;
+					}
+					else
+					{
+						printf("FATAL ERROR: Could not add an edge for some reason..\n");
+						scanf("%*d");
 					}
 				}
 			}
@@ -1182,18 +1220,18 @@ int CellTracker::add_merge_split_edges(int tmax)
 						coupled_map[e2] = e1;
 						g[e1].utility = (utility1+utility2)/fvar.T_prior*fvar.MS_prior;
 						g[e2].utility = (utility1+utility2)/fvar.T_prior*fvar.MS_prior;
-						if(utility1+utility2 == 0)
+						if(utility1+utility2 < 0)
 						{
-							if(tcounter==2 && tmax == 3)
+							//if(tcounter==2 && tmax == 3)
 							{
-							/*printf("debug_for_merge :\n");
+							printf("debug_for_merge :\n");
 							print_vertex(rmap[tcounter][counter1],0);
 							printf("\n\n\n");
 							print_vertex(rmap[tmax][i1],0);
 							printf("\n\n\n");
 							print_vertex(rmap[tmax][i2],0);
 							printf("\n\n\n");
-							PAUSE;*/
+							PAUSE;
 							}
 						}
 						g[e1].fixed = 0;
@@ -1201,6 +1239,11 @@ int CellTracker::add_merge_split_edges(int tmax)
 						g[e1].selected = 0;
 						g[e2].selected = 0;
 						msec+=2;
+					}
+					else
+					{
+						printf("FATAL ERROR: Could not add an edge for some reason..\n");
+						scanf("%*d");
 					}
 				}
 			}
@@ -1770,6 +1813,7 @@ float CellTracker::compute_LRUtility_product(TGraph::edge_descriptor e1,TGraph::
 	if(g[e1].utility < 0 || g[e2].utility <0)
 	{
 		printf("I'm getting negative utilities here\n");
+		printf("g[e1].utility = %d, g[e2].utility = %d\n",g[e1].utility,g[e2].utility);
 		scanf("%*d");
 	}
 

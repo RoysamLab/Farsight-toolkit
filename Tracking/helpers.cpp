@@ -465,6 +465,7 @@ InputImageType::Pointer getLargeComponents(InputImageType::Pointer im, int n)
 
 LabelImageType::Pointer getLargeLabels(LabelImageType::Pointer im, int n)
 {
+	printf("getLargeLabels called with input n = %d\n",n);
 	printf("Removing small connected components ...\n");
 	typedef itk::Image<short int,3> LabelImageType;
 	typedef itk::RelabelComponentImageFilter<LabelImageType,LabelImageType> RelabelFilterType;
