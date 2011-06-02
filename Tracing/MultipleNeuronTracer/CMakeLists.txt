@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.6)
 project( MultipleNeuronTracer )
 
-add_executable( MultipleNeuronTracer mainTracer3a.cxx )
-target_link_libraries(MultipleNeuronTracer
+ADD_EXECUTABLE( MultipleNeuronTracer MNT_MAIN.cpp MultipleNeuronTracer.cpp MultipleNeuronTracer.h)
+TARGET_LINK_LIBRARIES(MultipleNeuronTracer
   ITKNumerics ITKStatistics ITKIO ITKBasicFilters )
 
 #MultipleNeuronTracer's test depends on ExtractSomas' test.
