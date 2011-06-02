@@ -9,8 +9,7 @@ ADD_EXECUTABLE( graph_coloring_on_output graph_coloring_on_output.cpp )
 
 ADD_EXECUTABLE( convert_dat_to_label convert_dat_to_label.cpp )
 
-
-ADD_EXECUTABLE(SomaExtraction SomaExtraction.cpp)
+ADD_EXECUTABLE(SomaExtraction SOMA_MAIN.cpp SomaExtraction.cpp SomaExtraction.h)
 
 IF(BUILD_MODEL_SEG)
 ADD_EXECUTABLE(MBSeg StatModelSegMain.cpp)
