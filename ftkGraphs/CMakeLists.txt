@@ -33,4 +33,4 @@ LINK_DIRECTORIES ( ${Boost_LIBRARY_DIRS})
 INCLUDE_DIRECTORIES ( ${Boost_INCLUDE_DIRS})
 
 
-TARGET_LINK_LIBRARIES( ftkGraphs VTKCOMMON VTKINFOVIS VTKVIEWS VTKRENDERING VTKFILTERING VTKGRAPHICS ITKCommon ITKStatistics ftkGUI ftkCommon ftkFeatures)
+TARGET_LINK_LIBRARIES( ftkGraphs vtkCommon vtkInfovis vtkViews vtkRendering vtkFiltering vtkGraphics ITKCommon ITKStatistics ftkGUI ftkCommon ftkFeatures)
