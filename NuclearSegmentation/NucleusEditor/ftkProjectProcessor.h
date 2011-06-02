@@ -42,6 +42,11 @@
 #include "PixelAnalysis/ftkPixelLevelAnalysis.h"
 #include "SQLite/NESqlite/NESqliteFactory.h"
 
+// MODEL_SEG is defined as a compiler option in the Nucleus Editor's CMakeLists
+#ifdef MODEL_SEG
+#include "Statistical_Model_Segmentation/model_nucleus_seg.h"
+#endif
+
 
 namespace ftk
 {
@@ -79,6 +84,7 @@ protected:
 	//Tasks I can do:
 	bool PreprocessImage( void );
 	bool SegmentNuclei(int nucChannel);						//Segment nucChannel as Nuclei & Compute Intrinsic Features
+	void mmSegmentation(int intChannel, int labChannel);
 	bool ComputeFeatures(int nucChannel);  
 	bool SegmentCytoplasm(int cytChannel, int memChannel);	//Segment Cytoplasm Channel & Compute Intrinsic Features
 	bool ComputeAssociations(void);							//Compute Associative Measures
@@ -98,6 +104,7 @@ protected:
 	vtkSmartPointer<vtkTable> CellAdjTable;
 
 private:
+	char* stringToChar(std::string str);
 	int numTasks;
 	int lastTask;
 	bool resultIsEditable;  //Only true when done nucleus segmentation!!

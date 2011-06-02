@@ -76,6 +76,8 @@ void ProjectProcessor::Initialize(void)
 			break;
 		case ProjectDefinition::RAW_ASSOCIATIONS:
 			break;
+		//case ProjectDefinition::MULTI_MODEL_SEGMENTATION:
+		//	break;
 		case ProjectDefinition::CLASSIFY:
 			break;
 		case ProjectDefinition::ANALYTE_MEASUREMENTS:
@@ -117,6 +119,9 @@ void ProjectProcessor::ProcessNext(void)
 	case ProjectDefinition::RAW_ASSOCIATIONS:
 		taskDone = ComputeAssociations();
 		break;
+	//case ProjectDefinition::MULTI_MODEL_SEGMENTATION:
+	//	taskDone = mmSegmentation(tasks.at(thisTask).inputChannel1);
+	//	break;
 	case ProjectDefinition::ANALYTE_MEASUREMENTS:
 		taskDone = false;
 		break;
@@ -138,6 +143,10 @@ void ProjectProcessor::ProcessNext(void)
 	}
 }
 
+
+//***********************************************************************************************************
+//  PRE-PROCESSING
+//***********************************************************************************************************
 bool ProjectProcessor::PreprocessImage(){
 
 	if(!inputImage)
@@ -193,6 +202,10 @@ bool ProjectProcessor::PreprocessImage(){
 	return true;
 }
 
+
+//***********************************************************************************************************
+//  NUCLEAR SEGMENTATION
+//***********************************************************************************************************
 bool ProjectProcessor::SegmentNuclei(int nucChannel)
 {
 	clock_t start_time = clock();
@@ -240,6 +253,11 @@ bool ProjectProcessor::SegmentNuclei(int nucChannel)
 		definition->nuclearParameters.push_back(p);
 	}
 
+	if((int)definition->mmSegFiles.size() != 0)
+	{
+		mmSegmentation(nucChannel, 0);
+	}
+
 	delete nucSeg;
 	cout << "Total time to segmentation is : " << (clock() - start_time)/(float) CLOCKS_PER_SEC << endl;
 	std::cout << "Done Nucleus Segmentation\nComputing intrisic features for the nuclei\n";
@@ -264,7 +282,122 @@ bool ProjectProcessor::SegmentNuclei(int nucChannel)
 }
 
 
+//***********************************************************************************************************
+//  MULTI-MODEL SEGMENTATION
+//***********************************************************************************************************
+void ProjectProcessor::mmSegmentation(int intChannel, int labChannel)
+{
+	#ifdef MODEL_SEG
+	{
+		model_nucleus_seg *MNS = new model_nucleus_seg();
+		MNS->SetImages(inputImage->GetItkPtr<IPixelT>(0,intChannel), outputImage->GetItkPtr<LPixelT>(0,labChannel));
+		for(int i=0; i<(int)definition->mmSegFiles.size(); ++i)
+		{
+			if(definition->mmSegFiles.at(i).type == "MMSeg_Params")
+				MNS->LoadSegParams(definition->mmSegFiles.at(i).path);
+			if(definition->mmSegFiles.at(i).type == "Training_File")
+				MNS->SetTrainingFile(stringToChar(definition->mmSegFiles.at(i).path));
+		}
 
+		if(MNS->getasscofeatnumb()>0)
+			MNS->Associations_NucEd(inputImage, definition->associationRules);
+		std::vector<unsigned short> US_Cell_ids;
+		US_Cell_ids.clear();
+
+		if(MNS->SPLIT)
+			US_Cell_ids = MNS->Detect_undersegmented_cells();
+
+		if(US_Cell_ids.size()>0)
+		{
+			MNS->bImage = MNS->SplitImage(US_Cell_ids,MNS->inputImage,MNS->bImage);
+			MNS->splitflag = 1;
+		}		
+
+		typedef ftk::LabelImageToFeatures< unsigned char,  unsigned short, 3 > FeatureCalcType;
+		typedef ftk::IntrinsicFeatures FeaturesType;
+
+		//Calculates all the features and stores the individual 
+		//labeled and raw images
+		MNS->GetFeatsnImages();
+
+		////Compute the associations after the split for split Ids only
+		if(MNS->splitflag==1 && MNS->getasscofeatnumb()>0 )
+			MNS->splitAssociations();			
+
+		std::cout<<"Computing Scores"<<std::endl;
+
+		//Iniscores contains the inital scores of all the fragments
+		std::vector<double> IniScores = MNS->GetOriginalScores();
+
+		std::cout<<"Finished Computing Scores"<<std::endl;
+
+		//	 idlist will contain the list of all the ids for which the 
+		//	 MergeTrees have to be built and analyzed.
+
+		std::vector<unsigned short> idList = MNS->getListofIds(); 	
+		std::vector< unsigned short > labelIndex = MNS->getLabelIndex();
+		std::vector<FeaturesType> allFeat = MNS->getFeats();
+
+
+		//Loop through the list of ids and build graphs.
+		ftkgnt *sg1 = new ftkgnt();
+		sg1->runLabFilter(MNS->inputImage,MNS->bImage);
+		sg1->setFeats(allFeat,labelIndex);
+
+		// 1e5 is the default volume I choose. With this
+		// default value, the size of the tree is controlled 
+		// only by the depth value and volume has no effect
+		// If this limit is specified in the parameters file 
+		// that value takes precedence
+
+		if(MNS->MAX_VOL!=1e5)
+			sg1->setmaxVol(MNS->MAX_VOL);
+
+		// 6 is the default depth I choose. If specidied differently 
+		// in the parameters file, then use that value
+		if(MNS->MAX_DEPTH!=6)
+			sg1->setmaxDepth(MNS->MAX_DEPTH);
+
+
+		for (unsigned short r = 0;r < idList.size();r++)
+		{		
+			FeatureCalcType::LabelPixelType id = idList[r]; 
+			cout<<"\rEvaluating Hypothesis for id "<<id;
+			sg1->RAG = sg1->BuildRAG(id); 
+			//Build the Merge Tree from the RAG and root information
+			ftkgnt::MTreeType mTree =  sg1->BuildMergeTreeDcon(sg1->RAG,id,sg1->hypotheses);	
+			MNS->GetScoresfromKPLS(mTree);
+			//std::cout<<"\rr"<<r;
+		}
+
+		std::cout<<""<<std::endl;
+		MNS->SelectHypothesis();
+
+		//PERFORM MERGES 
+		itk::Image< unsigned short, 3>::Pointer mmSegImage = MNS->PerformMerges_NucEd();
+
+		const ftk::Image::Info * info = outputImage->GetImageInfo();
+		int bpChunk = info->numZSlices * info->numRows * info->numColumns * info->bytesPerPix;
+		memcpy( outputImage->GetDataPtr(0,labChannel), mmSegImage->GetBufferPointer(), bpChunk );
+
+	}
+
+	#endif
+
+}
+
+char* ProjectProcessor::stringToChar(std::string str)
+{
+	char * writable = new char[str.size() + 1];
+	std::copy(str.begin(), str.end(), writable);
+	writable[str.size()] = '\0'; 
+	return writable;
+}
+
+
+//***********************************************************************************************************
+//  INTRINSIC FEATURE COMPUTATION
+//***********************************************************************************************************
 bool ProjectProcessor::ComputeFeatures(int nucChannel)
 {
 	ftk::IntrinsicFeatureCalculator *iCalc = new ftk::IntrinsicFeatureCalculator();
@@ -280,6 +413,9 @@ bool ProjectProcessor::ComputeFeatures(int nucChannel)
 }
 
 
+//***********************************************************************************************************
+//  CYTOPLASM SEGMENTATION
+//***********************************************************************************************************
 bool ProjectProcessor::SegmentCytoplasm(int cytChannel, int memChannel)
 {
 	if(!inputImage || !outputImage || !table)
@@ -332,6 +468,10 @@ bool ProjectProcessor::SegmentCytoplasm(int cytChannel, int memChannel)
 	return true;
 }
 
+
+//***********************************************************************************************************
+//  ASSOCIATIVE FEATURE COMPUTATION
+//***********************************************************************************************************
 bool ProjectProcessor::ComputeAssociations(void)
 {
 	if(!inputImage || !outputImage || !table)
@@ -391,6 +531,11 @@ bool ProjectProcessor::ComputeAssociations(void)
 	return true;
 }
 
+
+
+//***********************************************************************************************************
+//  PIXEL LEVEL ANALYSIS
+//***********************************************************************************************************
 bool ProjectProcessor::PixLevAnalysis(void){
 	if( !inputImage )
 		return false;
@@ -442,6 +587,10 @@ std::set<int> ProjectProcessor::GetOnIntrinsicFeatures(void)
 	return retSet;
 }
 
+
+//***********************************************************************************************************
+//  CLASSIFICATION
+//***********************************************************************************************************
 bool ProjectProcessor::Classify(void){
 	std::cout<<"Entered Classification step\n";
 	if(!table)
@@ -499,6 +648,10 @@ bool ProjectProcessor::Classify(void){
 }
 */
 
+
+//***********************************************************************************************************
+//  RUN QUERIES
+//***********************************************************************************************************
 bool ProjectProcessor::RunQuery(void)
 {
 	int sql_db_img_id=-1;

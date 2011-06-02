@@ -61,6 +61,15 @@ ADD_EXECUTABLE( projproc processor_main.cpp ftkProjectProcessor.cpp ftkProjectDe
 TARGET_LINK_LIBRARIES( projproc ${QT_LIBRARIES} ftkGraphs ftkGUI ftkImage ftkCommon ftkFeatures NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis NESQLITE sqlite3)
 install(TARGETS projproc DESTINATION bin )
 
+IF (BUILD_MODEL_SEG)
+    IF (MSVC)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D MODEL_SEG")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D MODEL_SEG")
+	ENDIF(MSVC)
+	TARGET_LINK_LIBRARIES( NucleusEditor ModelSeg )
+	TARGET_LINK_LIBRARIES( projproc ModelSeg )
+ENDIF(BUILD_MODEL_SEG)
+
 #MAKE A GUI EXECUTABLE, NOT A CONSOLE APPLICATION
 #SET_TARGET_PROPERTIES( NucleusEditor PROPERTIES WIN32_EXECUTABLE 1)
 #OR MAKE A CONSOLE APPLICATION
