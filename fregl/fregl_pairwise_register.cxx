@@ -157,8 +157,8 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
   // images. This might not be a very neat approach, but it is much
   // easier this way, since rrl_gdbicp_info takes image filenames.
 
-  vcl_string from_2dfilename = vcl_string("xxx_")+from_image_filename+vcl_string("_proj.tif");
-  vcl_string to_2dfilename = vcl_string("xxx_")+to_image_filename+vcl_string("_proj.tif");
+  vcl_string from_2dfilename = from_image_filename + vcl_string("_to_") + to_image_filename + vcl_string("_") + vcl_string("xxx_")+from_image_filename+vcl_string("_proj.tif");
+  vcl_string to_2dfilename = from_image_filename + vcl_string("_to_") + to_image_filename + vcl_string("_xxx_")+to_image_filename+vcl_string("_proj.tif");
 
   typedef itk::ImageFileWriter< ImageType2D >  WriterType2D;
 
@@ -200,7 +200,9 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
     // Read in the file
     // mosaic_xxx_from_image_proj_to_xxx_to_image_proj.xform back to
     // memoyr
-	vcl_string xform_string = vcl_string("mosaic_xxx_") + from_image_filename.c_str() + vcl_string("_proj_to_xxx_") + to_image_filename.c_str() + vcl_string("_proj.xform");
+	vcl_string xform_string = vcl_string("mosaic_") + from_image_filename + vcl_string("_to_") + to_image_filename + vcl_string("_xxx_") + from_image_filename + vcl_string("_proj_to_") + from_image_filename + vcl_string("_to_") + to_image_filename + vcl_string("_xxx_") + to_image_filename + vcl_string("_proj.xform");
+	std::cout << from_image_filename << std::endl;
+	std::cout << to_image_filename << std::endl;
 	std::cout << "Reading in xform file: " << xform_string << std::endl;
 	vcl_ifstream reg_info(xform_string.c_str());
     rgrl_transformation_sptr xform_2d = read_2d_xform( reg_info );

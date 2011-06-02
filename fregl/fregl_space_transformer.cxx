@@ -352,7 +352,8 @@ transform_image(ImageType::Pointer in_image, int image_index, int background, bo
 	typedef itk::ResampleImageFilter<ImageType, ImageType> ResamplerType;
 	int index = image_id_indices_[image_index];
 	TransformType::Pointer inverse_xform = joint_register_->get_transform(anchor_,index);
-	if ( !inverse_xform ) return NULL;
+	if ( !inverse_xform ) 
+		return NULL;
 
 	std::cout<<"Transform image "<<joint_register_->image_names()[index]<<std::endl;
 

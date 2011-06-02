@@ -90,6 +90,8 @@ def register(pair_list, argv):
         
         subprocess_command_list.append(regp+' '+image_dir+from_image+' '+ image_dir+to_image +' -remove_2d')
     
+    
+    #make "debug" directory to store the console output of each subprocess
     if (not (os.path.exists(os.getcwd() + '\\debug\\'))):
         os.makedirs(os.getcwd() + '\\debug\\')  
 
@@ -128,7 +130,7 @@ def register(pair_list, argv):
             if subp.poll() == None:
                 processes_done = False
     
-    #close all the file handles since we are done writing to them
+    #close all the debug file handles since we are done writing to them
     for fh in file_handle_list:
         fh.close()
     
