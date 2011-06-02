@@ -37,6 +37,7 @@ limitations under the License.
 #include <vtkSmartPointer.h>
 #include <vtkQtBarChartView.h>
 #include <vtkDoubleArray.h>
+#include <vtkQtBarChartView.h>
 
 #include "ObjectSelection.h"
 
