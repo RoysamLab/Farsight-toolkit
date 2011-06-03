@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 =========================================================================*/
 
-#ifndef NUCLEUS_EDITOR_H
-#define NUCLEUS_EDITOR_H
+#ifndef KPLS_H
+#define KPLS_H
 
 #ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS
