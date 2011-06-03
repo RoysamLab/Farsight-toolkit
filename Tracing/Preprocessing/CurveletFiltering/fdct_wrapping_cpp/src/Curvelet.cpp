@@ -95,7 +95,7 @@ InputImageType::Pointer Curvelet::RunOnInputImage(InputImageType::Pointer InputI
 			IteratorType iter2(imtile,region);
 
 
-			printf("xco = %d yco = %d :\n",xco,yco);
+			//printf("xco = %d yco = %d :\n",xco,yco);
 			region1.Print(std::cout);
 			region.Print(std::cout);
 
@@ -125,7 +125,7 @@ InputImageType::Pointer Curvelet::RunOnInputImage(InputImageType::Pointer InputI
 #pragma omp parallel for shared(cosimtile,imtile,sinimtile,outputtile)  num_threads(numt)
 				for(int counter = 0; counter < slices; counter++)
 				{
-					printf("Counter = %d\n",counter);
+					//printf("Counter = %d\n",counter);
 					Input2DImageType::Pointer im2d = getSlice(imtile,counter);
 					Input2DImageType::Pointer om2d;
 					Float2DImageType::Pointer cosim2d,sinim2d;
@@ -137,7 +137,7 @@ InputImageType::Pointer Curvelet::RunOnInputImage(InputImageType::Pointer InputI
 				}
 			}
 			
-			printf("copying the tile\n");
+			//printf("copying the tile\n");
 			if(xco != 0)
 			{
 				size[0] = size[0] - border/2;
@@ -196,7 +196,7 @@ InputImageType::Pointer Curvelet::RunOnInputImage(InputImageType::Pointer InputI
 				iter3.Set(iter4.Get());
 				iter5.Set(iter6.Get());
 			}
-			printf("Done with copying the tile to full image\n");
+			//printf("Done with copying the tile to full image\n");
 		}
 	}
 	return outputim;
@@ -249,7 +249,7 @@ Input2DImageType::Pointer Curvelet::getSlice(InputImageType::Pointer im, int sli
 template<typename PixelType>
 void Curvelet::copyslice(typename itk::Image<PixelType,2>::Pointer im1, typename itk::Image<PixelType,3>::Pointer im2, int slice)
 {
-	printf("Copying slice\n");
+	//printf("Copying slice\n");
 	PixelType* inpointer  = im1->GetBufferPointer();
 	PixelType* outpointer = im2->GetBufferPointer();
 	typename itk::Image<PixelType,2>::SizeType size = im1->GetLargestPossibleRegion().GetSize();
@@ -297,13 +297,13 @@ void Curvelet::getCurveletsForOneSlice(Input2DImageType::Pointer im,Input2DImage
 	F(m/2,n/2) = cpxtemp;
 
 
-	printf("Computing L^2 norms...");
+	//printf("Computing L^2 norms...");
 	//fdct_wrapping_
 	vector< vector<CpxNumMat> > c;  //vector<int> extra;
 	fdct_wrapping(m, n, nbscales, nbangles_coarse, ac, F, c);
 	F.resize(0,0);
 
-	printf("Done\n");
+	//printf("Done\n");
 	CpxNumMat input(m,n);
 	typedef itk::ImageRegionIteratorWithIndex<Input2DImageType> IterType1;
 
@@ -415,7 +415,7 @@ void Curvelet::getCurveletsForOneSlice(Input2DImageType::Pointer im,Input2DImage
 	}
 
 
-	printf("Done creating E\n");
+	//printf("Done creating E\n");
 
 	int ndone = 0;
 	CpxNumMat temp_restored(m,n);
@@ -435,13 +435,13 @@ void Curvelet::getCurveletsForOneSlice(Input2DImageType::Pointer im,Input2DImage
 			circshift(input, xshift,yshift,shift_img);
 			ndone = ndone + 1;
 
-			printf("Direct transform, shift nr. %d ...\n",ndone);
+			//printf("Direct transform, shift nr. %d ...\n",ndone);
 			vector< vector< CpxNumMat > > out;
 			vector< vector< CpxNumMat > > outcos;
 			vector< vector< CpxNumMat > > outsin;
 			fdct_wrapping(m, n, nbscales, nbangles_coarse, ac, shift_img, out);
 
-			printf("Thresholding...\n");
+			//printf("Thresholding...\n");
 
 			double thresh = nsigmas_coarse * sigma;
 			for(int j = 0; j < nbscales; j++)
@@ -562,11 +562,11 @@ void Curvelet::getCurveletsForOneSlice(Input2DImageType::Pointer im,Input2DImage
 			CpxNumMat temp_restored_sin_t(m,n);
 
 			clear(temp_restored_t);clear(temp_restored_cos_t);clear(temp_restored_sin_t);
-			printf("About to call ifdct wrapping1\n");
+			//printf("About to call ifdct wrapping1\n");
 			ifdct_wrapping(m,n,nbscales,nbangles_coarse, ac,out,temp_restored_t);
-			printf("About to call ifdct wrapping2\n");
+			//printf("About to call ifdct wrapping2\n");
 			ifdct_wrapping(m,n,nbscales,nbangles_coarse, ac,outcos,temp_restored_cos_t);
-			printf("About to call ifdct wrapping3\n");
+			//printf("About to call ifdct wrapping3\n");
 			ifdct_wrapping(m,n,nbscales,nbangles_coarse, ac,outsin,temp_restored_sin_t);
 
 			circshift(temp_restored_t,-xshift,-yshift,temp_restored);
@@ -577,7 +577,7 @@ void Curvelet::getCurveletsForOneSlice(Input2DImageType::Pointer im,Input2DImage
 	}
 
 
-	printf("About to copy the output to images\n");
+	//printf("About to copy the output to images\n");
 	//printf("temp_restored size = %d %d\n",temp_restored.m(),temp_restored.n());
 	typedef itk::ImageRegionIteratorWithIndex<Input2DImageType> IterType2;
 	typedef itk::ImageRegionIteratorWithIndex<Float2DImageType> IterType3;
@@ -613,7 +613,7 @@ void Curvelet::getCurveletsForOneSlice(Input2DImageType::Pointer im,Input2DImage
 	iter3.GoToBegin();
 	iter4.GoToBegin();
 	//region.Print(std::cout);
-	printf("Beginning loop..\n");
+	//printf("Beginning loop..\n");
 	for(;!iter2.IsAtEnd();++iter2,++iter3,++iter4)
 	{
 		index = iter2.GetIndex();
@@ -635,7 +635,7 @@ void Curvelet::getCurveletsForOneSlice(Input2DImageType::Pointer im,Input2DImage
 	}
 
 
-	printf("Returning..\n");
+	//printf("Returning..\n");
 	////ifdct_wrapping_
 	//CpxNumMat y(x); clear(y);
 	//ifdct_wrapping(m, n, nbscales, nbangles_coarse, ac, c, y);

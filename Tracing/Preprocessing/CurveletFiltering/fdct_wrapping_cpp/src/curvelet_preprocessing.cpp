@@ -168,7 +168,7 @@ int main(int argc, char** argv)
 	printf("writing the image to disk...\n");
 	char buffer[1024];
 	argv[1][strlen(argv[1])-4] = 0;
-	sprintf(buffer, "%s_sigma_%f_CV.tif",argv[1],sigma);
+	sprintf(buffer, "%s_sigma_%4.2f_CV.tif",argv[1],sigma);
 	writeImage<InputImageType>(outputim,buffer);	
 	/*sprintf(buffer, "%s_CV_cos.mhd",argv[1]);
 	writeImage<FloatImageType>(cosim,buffer);
