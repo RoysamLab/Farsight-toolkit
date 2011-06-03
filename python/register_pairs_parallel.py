@@ -3,7 +3,7 @@
 #python script to register pairs specified in a file, which contains a pair of
 #image names per line.
 
-import os, sys, platform
+import os, sys, platform, multiprocessing, subprocess, time
 
 #initialize executables for platform
 regp = ''
@@ -46,8 +46,9 @@ def register(argv):
     still_launched_subp_list=[]
 
      #pairwise registration
-    for line in pair_list:
-        s_line = line.rstrip().rstrip('\n')
+    for line in f:
+        s_line = line.rstrip().rstrip('\n').replace('\t',' ')
+        print s_line
         pos = s_line.find(' ')
         from_image = s_line[:pos]
         to_image = s_line[pos+1:]
@@ -55,7 +56,7 @@ def register(argv):
         from_image_list.append(from_image)
         to_image_list.append(to_image)
         
-        subprocess_command_list.append(regp+' '+image_dir+from_image+' '+ image_dir+to_image +' -remove_2d')
+        subprocess_command_list.append(regp+' '+from_image+' '+to_image +' -remove_2d')
 
     if (not (os.path.exists(os.getcwd() + '\\debug\\'))):
         os.makedirs(os.getcwd() + '\\debug\\')
