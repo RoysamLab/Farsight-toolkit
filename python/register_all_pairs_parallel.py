@@ -213,5 +213,8 @@ if __name__ == '__main__':
     if len(sys.argv) < 3:
         print '\nUsage: '+sys.argv[0]+' image_dir image_list_file [channel_color_file]\n '
         sys.exit(1)
+    
+    start_time = time.clock()
     pairs = create_pairs(sys.argv[2:])
     register(pairs,sys.argv[1:])
+    print 'Registration and Montaging took: ' + time.clock() - start_time + ' seconds'

@@ -251,8 +251,11 @@ if __name__ == '__main__':
         print 'Example1: for a 1D image series containing mcnor_5-8-06_arc_bk2_26_ca3_2_7.lsm and mcnor_5-8-06_arc_bk2_26_ca3_2_10.lsm, the filename_pattern is "mcnor_5-8-06_arc_bk2_26_ca3_2_([0-9]*).lsm"\n'
         print 'Example2: for a 2D image series containing Slide61Lbox003F_ChS1-T2.tiff and Slide61Lbox001A_ChS1-T2.tiff, the filename_pattern is "Slide61Lbox00([0-9])([A-Z])_ChS1-T2.tiff"\n'
         sys.exit(1)
+    
+    start_time = time.clock()
     pairs = create_pairs(sys.argv[2:])
     register(pairs,sys.argv[1:])
+    print 'Registration and Montaging took: ' + time.clock() - start_time + ' seconds'
 
 # Example1: for a 1D image series containing mcnor_5-8-06_arc_bk2_26_ca3_2_7.lsm and mcnor_5-8-06_arc_bk2_26_ca3_2_10.lsm, the filename_pattern is "mcnor_5-8-06_arc_bk2_26_ca3_2_([0-9]*).lsm"
 
