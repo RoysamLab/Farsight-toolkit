@@ -15,8 +15,8 @@ ENDIF ("${Farsight_BINARY_DIR}" MATCHES "^${Farsight_SOURCE_DIR}$")
 #########################################
 # ADD NEW MODULES HERE
 #########################################
-OPTION( BUILD_TRACING "Build Tracing Tools" OFF )
-OPTION( BUILD_NUCLEI "Build Nuclear Segmentation" OFF )
+OPTION( BUILD_TRACING "Build Tracing Tools" ON )
+OPTION( BUILD_NUCLEI "Build Nuclear Segmentation" ON )
 OPTION( BUILD_VESSEL "Build Vessel Surface Segmentation" OFF )
 OPTION( BUILD_REGISTRATION "Build Image Registration (fregl)" OFF )
 OPTION( BUILD_SAMPLE_EDITOR "Build Sample Editor" OFF )
