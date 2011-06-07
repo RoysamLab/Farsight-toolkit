@@ -94,12 +94,7 @@ model_nucleus_seg::model_nucleus_seg()
 	bImagetemp= NULL;  
 	clonedImage = NULL;
 	featureNumb = NULL;
-
-
-	kplsdup = new KPLS();
-	kplsdup->SetLatentVars(5);
-	kplsdup->SetSigma(20);	
-	globalcount ==0;
+	PCAdata = NULL;
 
 	myfilenamenorm ="";
 	myfilenamePCA ="PCAfile.txt";
@@ -173,7 +168,7 @@ void model_nucleus_seg::SetTrainingFile(char* fname)
 	
 	// Calculate the (Avg Volume - 1*Std of vol ) for each class
 	//This will be useful for constructing trees.
-	calcvolLimits(Feats);
+	//calcvolLimits(Feats);
 	
 	//Normalize the features
 	normFeats = this->normTrSet(fname,inputDimensions); 
@@ -201,37 +196,37 @@ void model_nucleus_seg::SetTrainingFile(char* fname)
 }		
 
 
-void model_nucleus_seg::calcvolLimits(vnl_matrix<double> feats)
-{
-
-	std::vector< std::vector<double> > vols;
-	
-	//Get the volumes of each class into a vector
-	for(int classval = 1; classval<NUM_CLASS+1 ; classval++) //NUM_CLASS
-	{
-		std::vector<double> classVol;
-		for(unsigned int r=0; r<feats.rows(); ++r)
-		{	
-			if(feats(r,NUM_FEAT+NUM_ASSOC_FEAT)==classval)
-				classVol.push_back(feats(r,0));
-		}
-		vols.push_back(classVol);
-	}
-
-	
-	int ctr=0;
-	
-	//extract data from the model and get min/max values:
-	for(unsigned int r=0; r<vols.size(); ++r)
-	{	
-		std::vector<double> classVol = vols[r];
-		std::vector<double> stats = calcStats(classVol);
-		volLimit[r] = stats[0]-(1*stats[1]); 
-
-		if(volLimit[r] < 0 )
-			volLimit[r] = stats[0]; 
-	}
-}
+//void model_nucleus_seg::calcvolLimits(vnl_matrix<double> feats)
+//{
+//
+//	std::vector< std::vector<double> > vols;
+//	
+//	//Get the volumes of each class into a vector
+//	for(int classval = 1; classval<NUM_CLASS+1 ; classval++) //NUM_CLASS
+//	{
+//		std::vector<double> classVol;
+//		for(unsigned int r=0; r<feats.rows(); ++r)
+//		{	
+//			if(feats(r,NUM_FEAT+NUM_ASSOC_FEAT)==classval)
+//				classVol.push_back(feats(r,0));
+//		}
+//		vols.push_back(classVol);
+//	}
+//
+//	
+//	int ctr=0;
+//	
+//	//extract data from the model and get min/max values:
+//	for(unsigned int r=0; r<vols.size(); ++r)
+//	{	
+//		std::vector<double> classVol = vols[r];
+//		std::vector<double> stats = calcStats(classVol);
+//		volLimit[r] = stats[0]-(1*stats[1]); 
+//
+//		if(volLimit[r] < 0 )
+//			volLimit[r] = stats[0]; 
+//	}
+//}
 
 
 
@@ -740,7 +735,7 @@ vnl_matrix <double> model_nucleus_seg::getTrSet(char* train_fname,int inputdDime
 		for(int c=0; c< mycols; ++c)
 		{
 			//Edit -- read from file
-			fscanf(fpin, "%lf", &val);
+				fscanf(fpin, "%lf", &val);
 			trVecs[r][c] = val;
 			FeatsMatrix.put(r,c,val);
 		}
@@ -823,8 +818,6 @@ vnl_matrix <double> model_nucleus_seg::normTrSet(char* train_fname,int inputdDim
 }
 
 
-
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // TRANSFORM TRAINING FILE FEATURES FROM ORIGINAL SPACE TO EIGEN SPACE/PCA SPACE
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -832,13 +825,18 @@ void model_nucleus_seg::Tset2EigenSpace(vnl_matrix<double> nFeats,vnl_matrix<dou
 {
 	std::vector<double> measure;
 	measure.resize(NUM_FEAT+NUM_ASSOC_FEAT);
-	double templf;
+
 
 	FILE * fpin1 = FDeclare2(this->myfilenamePCA, "", 'w');
-	const unsigned int numberOfrows =  nFeats.rows();
-
+	const unsigned int numberOfrows =  nFeats.rows();		
+	
+	PCAdata = (double **) malloc(numberOfrows*sizeof(double *));
+	myKnownClass  = (double *)malloc(numberOfrows * sizeof(double));
 	for (int i = 0; i < numberOfrows; i++) 
 	{	
+		
+		PCAdata[i] = (double *)malloc(NUM_COMP * sizeof(double));
+
 		for (int j = 0; j < nFeats.columns(); j++) 
 		{
 			measure[j] = nFeats(i,j);	
@@ -849,10 +847,12 @@ void model_nucleus_seg::Tset2EigenSpace(vnl_matrix<double> nFeats,vnl_matrix<dou
 		for(int c=0; c< this->NUM_COMP; ++c)
 		{
 			fprintf(fpin1, "%lf    ", eigenMeasure[c]);
+			PCAdata[i][c] = eigenMeasure[c];
 		}		
 
 		//Then get class and Id:
 		fprintf(fpin1, "%lf    ", Feats(i,Feats.columns()-2));
+		myKnownClass[i] = Feats(i,Feats.columns()-2);
 		fprintf(fpin1, "%lf    ", Feats(i,Feats.columns()-1));
 		fprintf(fpin1,"\n");
 	}
@@ -874,7 +874,6 @@ std::vector<double> model_nucleus_seg::Convert2EigenSpace(std::vector<double> fe
 	{
 		// since eigenvecs stores the eigen vectors in ascending order 
 		// of eigen values and since we need the last NUM_COMP(5) eigen vectors 
-		// 
 		currEig = eigenvecs[NUM_FEAT+NUM_ASSOC_FEAT-1-i];
 		eigenFeature[i] = 0;
 
@@ -999,7 +998,6 @@ void model_nucleus_seg::GetScoresfromKPLS(ftkgnt::MTreeType mTree)
 { 
 	unsigned int counter = 0; 
 	set<int> currRPS;	
-	bool hypo_cond;
 
 	//std::cout<< num_vertices(mTree) <<std::endl;
 	while (counter != num_vertices(mTree))
@@ -1373,7 +1371,7 @@ double model_nucleus_seg::GetScoreforId(std::vector<double> filtered_features)
 	//Compute region features:	
 	double **test;
 	//Load the feature vector of the current node after the merge
-	double myscore;
+	double myscore = 0;
 	
 	for(int c=0; c< NUM_FEAT+NUM_ASSOC_FEAT; ++c)
 	{
@@ -1390,36 +1388,19 @@ double model_nucleus_seg::GetScoreforId(std::vector<double> filtered_features)
 		test[0][i] = filtered_features[i];
 	}
 
-	// globalcount checks if we need to load data for kpls and train
-	// Loading/Training happens only for the first ID and globalcount is a global var 
-	if(this->globalcount ==0)
-	{
-		kplsdup->LoadData(myfilenamePCA,1);
-		kplsdup->LoadNodeFeatures(filtered_features);
-		kplsdup->ScaleData();
-		kplsdup->Train();
-	}
-	else {
-		kplsdup->LoadNodeFeatures(filtered_features);
-	}
-
-	std::vector <std::vector<double> > scores =  kplsdup->Classify2();
-	//Since Kpls gives the indices in the reverse order we need to get the correct "class"
-	std::vector<double > scores1 = scores[0];
-	vector<double>::iterator posn = std::max_element (scores1.begin(), scores1.end());		
-	//currclass gives us the class of the object
-	int currclass = (scores1.size()-  (posn - scores1.begin()));
-	long ntest = 1;
-
 	// need to get the data in the format that libagf requires
-	train4class = PrepareDataforScores(kplsdup->myData_dup,kplsdup->num_classes,kplsdup->myKnownClass);
-	std::vector<int> classes2 = classIndex[currclass-1];
-	double** train = train4class[currclass-1];
-	//	Calculate the generative model score ! 
-	myscore =  CalcGenModelScore(train,classes2.size(),NUM_COMP,(long)1,test)*prior[currclass-1]; 
-	//Not to load train data from file again
-	globalcount =1;
-	return myscore;
+	train4class = PrepareDataforScores();
+	
+	
+	for(int i=1;i<=NUM_CLASS ;++i)
+	{
+		std::vector<int> classes2 = classIndex[i-1];
+		double** train = train4class[i-1];
+		//	Calculate the generative model score ! 
+		myscore =  myscore + CalcGenModelScore(train,classes2.size(),NUM_COMP,(long)1,test)*prior[i-1]; 
+	}
+		
+		return myscore;
 }
 
 
@@ -1440,11 +1421,6 @@ double model_nucleus_seg::GetScoreforId(std::vector<double> filtered_features)
 
 std::vector<double> model_nucleus_seg::GetOriginalScores()
 {
-	// Define a new KPLS Object
-	KPLS *kpls = new KPLS();
-	kpls->SetLatentVars(5);
-	kpls->SetSigma(20);	
-
 	std::vector<double> myscore;
 
 	std::vector< std::vector< double > > objectFeatures; 
@@ -1476,8 +1452,6 @@ std::vector<double> model_nucleus_seg::GetOriginalScores()
 		double sb = allFeat[g].ScalarFeatures[ftk::IntrinsicFeatures::SHARED_BOUNDARY];
 
 
-
-		
 		if(!NUM_ASSOC_FEAT)
 		{
 			for(int c=0; c< NUM_FEAT; ++c)
@@ -1496,53 +1470,33 @@ std::vector<double> model_nucleus_seg::GetOriginalScores()
 		filtered_features2 = Convert2EigenSpace(filtered_features2);
 		test[0] = (double *)malloc(NUM_COMP * sizeof(double));
 
-		//instead of classifying the features in Eigen space... We can do it in Original Space... CORRECT THIS	
-		if(counter ==0)
-		{
-			kpls->LoadData(myfilenamePCA,1);
-			kpls->LoadNodeFeatures(filtered_features2);
-			kpls->ScaleData();
-			kpls->Train();		
-		}
-		else
-		{
-			kpls->LoadNodeFeatures(filtered_features2);
-		}
-
-		std::vector< std::vector<double> > scores =  kpls->Classify2();
-		std::vector<double> scores1 = scores[0]; 		
-		//Since Kpls gives the indices in the reverse order we need to get the correct "class"		
-
-		vector<double>::iterator posn = std::max_element (scores1.begin(), scores1.end());		
-		int currclass = (scores1.size()- (posn - scores1.begin()));		
-		
-		
-
 		for(int i=0; i<NUM_COMP;++i)
 		{
 			test[0][i] = filtered_features2[i];
 		}
-
+		
 		// Insert ids into boolMerge tree if the shared bdary > 0 and 
-		// for eccentricity values > 0.7 or if the fragment is really small
+		// for eccentricity values > 0.9 or if the fragment is really small
 		// eccentricity is considered to account for oversegmented endothelials
-		if(sb>0 && (currVol < volLimit[currclass-1] || eccen>0.7))
+		//if(sb>0 && (currVol < MIN_VOL || eccen>0.7))
+		if(sb>0 && (currVol < MIN_VOL || eccen>0.9))
 		{
 			boolMergeTree.push_back(id);
 		}
 
-		
 		//Format the data to input it to LibAGF	
-		train4class = PrepareDataforScores(kpls->myData_dup,kpls->num_classes,kpls->myKnownClass);
-
-		std::vector<int> classes2 = classIndex[currclass-1];
-		double** train = train4class[currclass-1];
-
-		//	Calculate the generative model score ! 
-		myscore[g]  =  CalcGenModelScore(train,	classes2.size(),NUM_COMP,(long)1,test)*prior[currclass-1];	
-		counter = counter +1;	
+		train4class = PrepareDataforScores();
+		myscore[g] = 0;
+		
+		for(int classCount=1;classCount<=NUM_CLASS;classCount++)
+		{
+			double** train = train4class[classCount-1];
+			std::vector<int> classes2 = classIndex[classCount-1];
+			//	Calculate the generative model score ! 
+			myscore[g]  =  myscore[g]+CalcGenModelScore(train,	classes2.size(),NUM_COMP,(long)1,test)*prior[classCount-1];	
+		}
+			counter = counter +1;	
 	}
-
 
 	// display the scores for reference on the command prompt.
 	DispScores(myscore);
@@ -1612,12 +1566,11 @@ std::vector<unsigned short> model_nucleus_seg::runSVM(vnl_matrix<double> feats,m
 					rowcounter++;
 				}
 			}
-
 		FeatsbyClass.push_back(temp_Matrix.get_n_rows(0,rowcounter-1));
 	}
 	
 	
-	double nu = 0.1;
+	double nu = SPLIT_SENSITIVITY;
 	double vol;
 
 	int myrows = feats.rows();
@@ -1641,7 +1594,6 @@ std::vector<unsigned short> model_nucleus_seg::runSVM(vnl_matrix<double> feats,m
 	double desired_range = upper-lower;
 
 	
-	
 	//Get the volumes for each class and the max/min values of features
 	// for normalization
 	for(unsigned int r=0; r< myrows; ++r)
@@ -1652,7 +1604,6 @@ std::vector<unsigned short> model_nucleus_seg::runSVM(vnl_matrix<double> feats,m
 			f_max.at(c) = val > f_max.at(c) ? val : f_max.at(c);
 			f_min.at(c) = val < f_min.at(c) ? val : f_min.at(c);
 		}
-
 	}
 
 	
@@ -1737,7 +1688,6 @@ std::vector<unsigned short> model_nucleus_seg::runSVM(vnl_matrix<double> feats,m
 		//Create the libSVM problem:
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 
-
 	// Will store 1 in the column if the id ( nucleus ) is an outlier corresponding to this model
 	// rows of the matrix correspond to different ids
 	vnl_matrix<int> id_outlier(objfeatures.size(),NUM_CLASS);
@@ -1815,7 +1765,7 @@ std::vector<unsigned short> model_nucleus_seg::runSVM(vnl_matrix<double> feats,m
 			double currVol = x[0].value; // current volume
 			double v = svm_predict(m_svm_model,x);
 
-			if(v ==-1 && currVol>1)
+			if(v ==-1 && currVol>0)
 				id_outlier(r,classnumb) = 1;	
 		}
 
@@ -1841,34 +1791,9 @@ std::vector<unsigned short> model_nucleus_seg::runSVM(vnl_matrix<double> feats,m
 		}
 
 	}
-
 	//svm_destroy_model(m_svm_model);
 	return outliers;
 }
-
-
-
-//volumes[r] = (double *)malloc(1 * sizeof(double));
-//volumes[r][0] = feats(r,0);
-
-//double* q1;
-//double* q2;
-//q1=new double[1];
-//q2=new double[1];
-//calc_norm(volumes, 1, myrows, q1, q2);
-//
-////volLimit is used to check for building Merge Trees
-//volLimit[classNumb] = q1[0]-(2*q2[0]);
-//
-//if(volLimit[classNumb] < 0 )
-//volLimit[classNumb] = q1[0]-(1*q2[0]); 
-//
-//if(volLimit[classNumb] < 0 )
-//volLimit[classNumb] = q1[0];	
-//
-//classNumb = classNumb+1;
-
-
 
 
 
@@ -2106,30 +2031,28 @@ double model_nucleus_seg::CalcGenModelScore(double** train, long ntrain,long nva
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 //PREPARE THE DATA FOR SCORES 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
-std::vector<double **> model_nucleus_seg::PrepareDataforScores(double **Data,int classes,double *classlabel)
+
+std::vector<double **> model_nucleus_seg::PrepareDataforScores()
 {
 	std::vector<double **> train4class2;
-	train4class2.resize(classes);
+	train4class2.resize(NUM_CLASS);
 
 	classIndex.clear();
-	classIndex.resize(classes);
-
+	classIndex.resize(NUM_CLASS);
 
 	//Read the size of training file:
 	int myrows = Num_Lines2(myfilenamePCA, 0) ;   // number of rows 			
 	double **train;
 	std::vector<int> classes2;	
 
-	//
 	for(int i=0; i<myrows;++i)
 	{
-		classes2 = classIndex[classlabel[i]-1];
+		classes2 = classIndex[myKnownClass[i]-1];
 		classes2.push_back(i);
-		classIndex[classlabel[i]-1] = classes2;
+		classIndex[myKnownClass[i]-1] = classes2;
 	}
 
-
-	for(int i=0; i<classes;++i)
+	for(int i=0; i<NUM_CLASS;++i)
 	{
 		std::vector<int> classes2 = classIndex.at(i);		
 		train = (double **) malloc(classes2.size()*sizeof(double *));
@@ -2139,7 +2062,7 @@ std::vector<double **> model_nucleus_seg::PrepareDataforScores(double **Data,int
 
 			for(int k = 0 ; k < NUM_COMP ; ++k )
 			{
-				train[j][k] = Data[classes2.at(j)][k];	
+				train[j][k] = PCAdata[classes2.at(j)][k];	
 			}
 		}
 		train4class2[i] = train;
@@ -2360,6 +2283,7 @@ bool model_nucleus_seg::LoadSegParams(std::string filename)
 			this->NUM_FEAT = atoi(parameterElement->Attribute("NUM_FEAT"));			
 			this->NUM_ASSOC_FEAT = atoi(parameterElement->Attribute("NUM_ASSOC_FEAT"));
 			this->SPLIT = atoi(parameterElement->Attribute("SPLIT"));
+			this->SPLIT_SENSITIVITY = atoi(parameterElement->Attribute("SPLIT_SENSTIVITY"));
 
 			if(parameterElement->Attribute("MAX_VOL"))
 				this->MAX_VOL = static_cast<double>(atoi(parameterElement->Attribute("MAX_VOL")));
@@ -2372,7 +2296,7 @@ bool model_nucleus_seg::LoadSegParams(std::string filename)
 			
 
 			this->prior.resize(this->NUM_CLASS);
-			this->volLimit.resize(this->NUM_CLASS);		
+			//this->volLimit.resize(this->NUM_CLASS);		
 			//Assign Prior Probabilities
 			for(unsigned long i=1; i<=this->NUM_CLASS;++i)
 			{
