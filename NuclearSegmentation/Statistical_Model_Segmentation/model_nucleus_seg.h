@@ -211,7 +211,7 @@ public:
 	FILE* FDeclare2(char *root, char *extension, char key);
 	void calc_norm(double **mat, long D,long n, double *ave,double *stdev);
 	std::string convert2string(unsigned long id);
-	std::vector<double **> PrepareDataforScores(double **Data,int classes,double *classlabel);
+	std::vector<double **> PrepareDataforScores();
 	void SetTrainingFile(char* fname);
 	double ComputeTotal(std::vector<int> LST);
 	double ComputeAverage(std::vector<int> LST);
@@ -219,7 +219,7 @@ public:
 	void GetScoresfromKPLS(ftkgnt::MTreeType mTree);
 	void getFeatureNames(char* fname);
 	std::vector<double> populateVector(ftk::IntrinsicFeatures *f);
-	void calcvolLimits(vnl_matrix<double> feats);
+	//void calcvolLimits(vnl_matrix<double> feats);
 	std::vector<double> calcStats(std::vector<double> classVol);
 	unsigned short returnthresh( OutputImageType::Pointer input_image, int num_bin_levs, int num_in_fg );
 	bool LoadSegParams(std::string filename);
@@ -236,9 +236,6 @@ public:
 private:	
 
 	std::vector<Channel> inputs;	
-	////Setup up the kpls:
-	KPLS *kpls;
-	KPLS *kplsdup;
 	int globalcount;
 	std::vector <double> originalScores;
 	std::vector <double> mhmRows; // multiple hypothesis matrix rows
@@ -250,7 +247,8 @@ private:
 	unsigned short numLabels;
 	std::vector<double **> train4class;
 	std::vector<double> prior;
-	
+	double **PCAdata;	// Stores the training set after reducing the number of dimensions
+	double *myKnownClass;
 	 
 
 	std::vector<OutputImageType::Pointer> li;
