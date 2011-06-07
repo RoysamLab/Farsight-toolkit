@@ -162,21 +162,6 @@ ENDIF( USE_SQLITE_DATABASE )
 
 IF(BUILD_MODEL_SEG)
 LINK_DIRECTORIES( ${PROJECT_SOURCE_DIR}/PatternAnalysis/glpk )
-ADD_DEFINITIONS(-DUSE_KPLS)
-IF( NOT BUILD_EMBREX )
-  IF(WIN32)
-	IF(CMAKE_CL_64)
-		LINK_DIRECTORIES( ${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/win64 )
-	ELSEIF(WIN32)
-		LINK_DIRECTORIES( ${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/win32 )
-	ENDIF(CMAKE_CL_64)
-  ELSEIF(APPLE)
-	LINK_DIRECTORIES( ${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/osx )
-  ELSEIF(UNIX)
-	LINK_DIRECTORIES( ${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/unix )
-  ENDIF(WIN32)
-ENDIF( NOT BUILD_EMBREX )
-
 ENDIF(BUILD_MODEL_SEG)
 
 ####################################################################################
