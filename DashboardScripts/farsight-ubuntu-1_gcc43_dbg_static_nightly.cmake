@@ -22,7 +22,7 @@ MAKECOMMAND:STRING=/usr/bin/make -i
 CMAKE_BUILD_TYPE:STRING=Debug
 BUILD_SHARED_LIBS:BOOL=OFF
 ITK_DIR:PATH=/Dashboards/ITK-3.16-static
-VTK_DIR:PATH=/Dashboards/VTK-5.4.2-static
+VTK_DIR:PATH=/Dashboards/VTK-5.6.1-static
 Boost_INCLUDE_DIR:PATH=/Dashboards/boost_1_41_0
 FARSIGHT_DATA_ROOT:PATH=/Dashboards/farsight-data
 ")
