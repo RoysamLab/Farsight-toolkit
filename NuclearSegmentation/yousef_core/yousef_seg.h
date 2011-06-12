@@ -49,9 +49,7 @@
 #include "itkImageRegionIterator.h"
 #include "itkScalarConnectedComponentImageFilter.h"
 #include "itkBinaryBallStructuringElement.h"
-
-//ITK in FTK dir includes
-#include "tmp_itk_rev/itkBinaryMorphologicalClosingImageFilter.h"
+#include "itkBinaryMorphologicalClosingImageFilter.h"
 
 
 using namespace std;
