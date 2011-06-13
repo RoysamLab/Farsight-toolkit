@@ -84,6 +84,8 @@ limitations under the License.
 #include "vtkAxesActor.h"
 #include "vtkWindowToImageFilter.h"
 #include "vtkJPEGWriter.h"
+#include "vtkQuad.h"
+#include "vtkLinearExtrusionFilter.h"
 
 #include "TraceBit.h"
 #include "TraceGap.h"
@@ -654,6 +656,7 @@ bool View3D::readProject(QString projectFile)
 					this->tobj->SetTraceOffset(project->GetTranslationX(i),
 						project->GetTranslationY(i),project->GetTranslationZ(i));
 					QString trace = QString(FileName.c_str());
+					this->TraceFiles.append(QString(FileName.c_str()));
 					if(trace.endsWith("swc"))
 					{
 						this->tobj->ReadFromSWCFile((char*)FileName.c_str());
@@ -666,7 +669,6 @@ bool View3D::readProject(QString projectFile)
 					{
 						this->tobj->ReadFromVTKFile((char*)FileName.c_str());
 					}
-					this->TraceFiles.append(QString(FileName.c_str()));
 			//this->EditLogDisplay->append("Trace file: \t" + this->TraceFiles.last());
 				}//end type trace
 				else if (type == "Log")
@@ -941,6 +943,9 @@ void View3D::CreateGUIObjects()
 	connect(this->createNewBitButton, SIGNAL(clicked()), this, SLOT(createNewTraceBit()));
 	this->createNewBitButton->setShortcut(QKeySequence(Qt::Key_P));
 
+	this->createNewROIPointButton = new QPushButton("Create New ROI point", this->CentralWidget);
+	connect(this->createNewROIPointButton, SIGNAL(clicked()), this, SLOT(DrawROI()));
+
 	this->ShowPointer = new QCheckBox("Use 3D Cursor", this->CentralWidget);
 	this->ShowPointer->setStatusTip("Show Pointer Automatically?");
 	this->ShowPointer3DDefault = true;
@@ -1155,6 +1160,7 @@ void View3D::CreateLayout()
   CursorToolsLayout->addWidget(this->updatePT3D);
   CursorToolsLayout->addWidget(this->setSoma);
   CursorToolsLayout->addWidget(this->createNewBitButton);
+  CursorToolsLayout->addWidget(this->createNewROIPointButton);
   CursorToolsLayout->addStretch();
 
   this->CursorActionsWidget->setMaximumSize(256,256);
@@ -2030,7 +2036,53 @@ void View3D::createNewTraceBit()
 		}//end stems size = 1
 	}
 }
+void View3D::DrawROI()
+{
+	double p0[3] = {0.0, 0.0, 0.0};
+	double p1[3] = {10.0, 0.0, 0.0};
+	double p2[3] = {10.0, 10.0, 0.0};
+	double p3[3] = {0.0, 10.0, 0.0};
 
+	// Add the points to a vtkPoints object
+	vtkSmartPointer<vtkPoints> ROIpoints = vtkSmartPointer<vtkPoints>::New();
+	ROIpoints->InsertNextPoint(p0);
+	ROIpoints->InsertNextPoint(p1);
+	ROIpoints->InsertNextPoint(p2);
+	ROIpoints->InsertNextPoint(p3);
+
+	// Create a quad on the four points
+	vtkSmartPointer<vtkQuad> ROIquad = vtkSmartPointer<vtkQuad>::New();
+	ROIquad->GetPointIds()->SetId(0,0);
+	ROIquad->GetPointIds()->SetId(1,1);
+	ROIquad->GetPointIds()->SetId(2,2);
+	ROIquad->GetPointIds()->SetId(3,3);
+
+	// Create a cell array to store the quad in
+	vtkSmartPointer<vtkCellArray> ROIquads = vtkSmartPointer<vtkCellArray>::New();
+	ROIquads->InsertNextCell(ROIquad);
+
+	// Create a polydata to store everything in
+	vtkSmartPointer<vtkPolyData> ROIpolydata = vtkSmartPointer<vtkPolyData>::New();
+
+	// Add the points and quads to the dataset
+	ROIpolydata->SetPoints(ROIpoints);
+	ROIpolydata->SetPolys(ROIquads);
+
+	vtkSmartPointer<vtkLinearExtrusionFilter> extrude = vtkSmartPointer<vtkLinearExtrusionFilter>::New();
+	extrude->SetInput( ROIpolydata);
+	extrude->SetExtrusionTypeToNormalExtrusion();
+	extrude->SetVector(0, 0, 1 );
+	extrude->SetScaleFactor (100);
+	extrude->Update();
+	// Setup actor and mapper
+	vtkSmartPointer<vtkPolyDataMapper> ROImapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	ROImapper->SetInput(extrude->GetOutput());
+
+	vtkSmartPointer<vtkActor> ROIactor = vtkSmartPointer<vtkActor>::New();
+	ROIactor->SetMapper(ROImapper);
+
+	this->Renderer->AddActor(ROIactor);
+}
 /*Selections*/
 void View3D::updateTraceSelectionHighlights()
 {
@@ -4272,7 +4324,7 @@ void View3D::AutoCellExport()
 	else
 	{
 		QMessageBox AutoExportInfo;
-		AutoExportInfo.setText("No Cells Identified/nRun Cell Analysis");
+		AutoExportInfo.setText("No Cells Identified\nRun Cell Analysis");
 		AutoExportInfo.exec();
 	}
 }

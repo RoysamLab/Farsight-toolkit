@@ -71,6 +71,8 @@ class ImageRenderActors;
 class vtkPointWidget;
 class vtkOrientationMarkerWidget;
 class vtkAxesActor;
+class vtkQuad;
+class vtkLinearExtrusionFilter;
 
 class View3D : public QMainWindow 
 {
@@ -174,6 +176,9 @@ public slots:
 	void setPTtoSoma();
 	void setUsePointer(int i);
 	void createNewTraceBit();
+
+	void DrawROI();
+
 	void focusOn();
 	void setRenderFocus(double renderBounds[], int size);
 	void FocusOnCell(CellTrace* SelectedCell);
@@ -276,6 +281,7 @@ private:
 	QCheckBox *ShowPointer;
 	QPushButton *setSoma;
 	QPushButton *createNewBitButton;
+	QPushButton *createNewROIPointButton;
 	QAction *FocusAction;
 	QAction *AutoCellExportAction;
 	QAction *ShowPlots;

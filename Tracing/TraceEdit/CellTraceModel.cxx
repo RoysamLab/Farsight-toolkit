@@ -57,6 +57,9 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Total Path Length");
 	this->headers.push_back("Average Segment Path Length");
 	this->headers.push_back("Total Volume");
+	this->headers.push_back("Width X");
+	this->headers.push_back("Length Y");
+	this->headers.push_back("Height Z");
 	this->headers.push_back("Soma X");
 	this->headers.push_back("Soma Y");
 	this->headers.push_back("Soma Z");

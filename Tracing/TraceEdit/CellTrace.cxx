@@ -179,6 +179,9 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->TotalPathLength);
 	CellData->InsertNextValue(this->TotalPathLength/this->NumSegments);//average segment length
 	CellData->InsertNextValue(this->TotalVolume);
+	CellData->InsertNextValue(this->maxX - this->minX);
+	CellData->InsertNextValue(this->maxY - this->minY);
+	CellData->InsertNextValue(this->maxZ - this->minZ);
 	CellData->InsertNextValue(this->somaX);
 	CellData->InsertNextValue(this->somaY);
 	CellData->InsertNextValue(this->somaZ);
