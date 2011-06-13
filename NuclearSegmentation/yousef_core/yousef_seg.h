@@ -49,7 +49,7 @@
 #include "itkImageRegionIterator.h"
 #include "itkScalarConnectedComponentImageFilter.h"
 #include "itkBinaryBallStructuringElement.h"
-#include "itkBinaryMorphologicalClosingImageFilter.h"
+#include "tmp_itk_rev/itkBinaryMorphologicalClosingImageFilter.h"
 
 
 using namespace std;
