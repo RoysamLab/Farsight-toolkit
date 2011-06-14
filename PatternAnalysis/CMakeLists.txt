@@ -1,6 +1,6 @@
 SUBDIRS( fuzzyClustering )
 SUBDIRS( libsvm )
-SUBDIRS( agf )
+SUBDIRS( activeLearning )
 
 IF(BUILD_EMBREX)
   SUBDIRS( embrex )
