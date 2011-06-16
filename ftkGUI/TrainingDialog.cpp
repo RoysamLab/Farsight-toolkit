@@ -15,7 +15,7 @@ limitations under the License.
 
 #include "TrainingDialog.h"
 
-TrainingDialog::TrainingDialog(vtkSmartPointer<vtkTable> table, const char * trainColumn, QWidget *parent)
+TrainingDialog::TrainingDialog(vtkSmartPointer<vtkTable> table, const char * trainColumn,std::string mode, QWidget *parent)
 	: QDialog(parent){
 
 	m_table = table;
@@ -28,6 +28,7 @@ TrainingDialog::TrainingDialog(vtkSmartPointer<vtkTable> table, const char * tra
 
 	QLabel *topLabel = new QLabel(tr("Please enter a comma separated list of Example Object IDs: "));
 	QLabel *topLabel1 = new QLabel(tr("Select the classifier to be trained or enter a new classifier: "));
+
 
 	classesLayout = new QVBoxLayout;
 	inputsLayout = new QVBoxLayout;
@@ -81,6 +82,17 @@ TrainingDialog::TrainingDialog(vtkSmartPointer<vtkTable> table, const char * tra
 	masterLayout->addLayout(bLayout);
 	masterLayout->addStretch(20);
 	masterLayout->addLayout(endLayout);
+
+
+	if(mode=="active")
+	{
+		topLabel->setText("Please enter one example for each class");
+		topLabel1->hide();
+		radio6->hide();
+		className->hide();
+		loadButton->setEnabled(FALSE);
+		saveButton->setEnabled(FALSE);
+	}
 
 	this->setLayout(masterLayout);
 
