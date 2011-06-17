@@ -18,6 +18,7 @@ limitations under the License.
 #include <vector>
 #include <string>
 #include <set>
+#include <fstream>
 //QT INCLUDES
 #include <QtCore>
 #include <QtGui>
@@ -49,6 +50,7 @@ public:
 	std::vector<CellTrace*> GetSelecectedCells();
 	int getCellCount();
 	CellTrace * GetCellAt( int i);
+	void WriteCellCoordsToFile(const char* fileName);
 signals:
 	void selectionChanged(void);
 private:

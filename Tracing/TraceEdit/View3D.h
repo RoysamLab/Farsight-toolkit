@@ -73,6 +73,7 @@ class vtkOrientationMarkerWidget;
 class vtkAxesActor;
 class vtkQuad;
 class vtkLinearExtrusionFilter;
+class vtkCellLocator;
 
 class View3D : public QMainWindow 
 {

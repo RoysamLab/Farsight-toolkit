@@ -20,6 +20,7 @@ limitations under the License.
 #include "vtkDoubleArray.h"
 #include "vtkAbstractArray.h"
 #include "vtkVariantArray.h"
+#include <sstream>
 #include <math.h>
 class TraceBit;
 class TraceLine;
@@ -31,6 +32,7 @@ public:
 	void setTraces(std::vector<TraceLine*> Segments);
 	vtkSmartPointer<vtkVariantArray> DataRow();
 	vtkSmartPointer<vtkVariantArray> BoundsRow();
+	std::string BasicFeatureString();
 	std::set<long int> TraceIDsInCell();
 	int rootID();
 	TraceLine * getRootTrace();
@@ -45,6 +47,7 @@ private:
 	double TotalPathLength, TotalVolume, TotalEuclidianPath, TerminalPathLength;
 	double maxTerminalPathLength, minTerminalPathLength;
 	float somaX, somaY, somaZ, maxX, maxY, maxZ, minX, minY, minZ; 
+	float sectionAreaTotal, SectionAreaMin, SectionAreaMax, surfaceAreaTotal, SurfaceAreaMax, SurfaceAreaMin;
 	std::string FileName;
 	std::set<long int> IDs;
 	//TraceBit rootBit;

@@ -86,6 +86,7 @@ limitations under the License.
 #include "vtkJPEGWriter.h"
 #include "vtkQuad.h"
 #include "vtkLinearExtrusionFilter.h"
+#include "vtkCellLocator.h"
 
 #include "TraceBit.h"
 #include "TraceGap.h"
@@ -2122,9 +2123,9 @@ void View3D::createNewTraceBit()
 void View3D::DrawROI()
 {
 	double p0[3] = {0.0, 0.0, 0.0};
-	double p1[3] = {10.0, 0.0, 0.0};
-	double p2[3] = {10.0, 10.0, 0.0};
-	double p3[3] = {0.0, 10.0, 0.0};
+	double p1[3] = {100.0, 0.0, 0.0};
+	double p2[3] = {100.0, 100.0, 0.0};
+	double p3[3] = {0.0, 100.0, 0.0};
 
 	// Add the points to a vtkPoints object
 	vtkSmartPointer<vtkPoints> ROIpoints = vtkSmartPointer<vtkPoints>::New();
@@ -2139,15 +2140,11 @@ void View3D::DrawROI()
 	ROIquad->GetPointIds()->SetId(1,1);
 	ROIquad->GetPointIds()->SetId(2,2);
 	ROIquad->GetPointIds()->SetId(3,3);
-
-	// Create a cell array to store the quad in
 	vtkSmartPointer<vtkCellArray> ROIquads = vtkSmartPointer<vtkCellArray>::New();
 	ROIquads->InsertNextCell(ROIquad);
 
 	// Create a polydata to store everything in
 	vtkSmartPointer<vtkPolyData> ROIpolydata = vtkSmartPointer<vtkPolyData>::New();
-
-	// Add the points and quads to the dataset
 	ROIpolydata->SetPoints(ROIpoints);
 	ROIpolydata->SetPolys(ROIquads);
 
@@ -2164,6 +2161,21 @@ void View3D::DrawROI()
 	vtkSmartPointer<vtkActor> ROIactor = vtkSmartPointer<vtkActor>::New();
 	ROIactor->SetMapper(ROImapper);
 
+	vtkSmartPointer<vtkCellLocator> cellLocator = vtkSmartPointer<vtkCellLocator>::New();
+	cellLocator->SetDataSet(extrude->GetOutput());
+	cellLocator->BuildLocator();
+	double testPoint[3] = {500, 600, 50};
+ 
+	//Find the closest points to TestPoint
+	double closestPoint[3];//the coordinates of the closest point will be returned here
+	double closestPointDist2; //the squared distance to the closest point will be returned here
+	vtkIdType cellId; //the cell id of the cell containing the closest point will be returned here
+	int subId; //this is rarely used (in triangle strips only, I believe)
+	cellLocator->FindClosestPoint(testPoint, closestPoint, cellId, subId, closestPointDist2);
+
+	std::cout << "Coordinates of closest point: " << closestPoint[0] << " " << closestPoint[1] << " " << closestPoint[2] << std::endl;
+	std::cout << "distance to closest point: " << std::sqrt(closestPointDist2) << std::endl;
+	std::cout << "CellId: " << cellId << std::endl;
 	this->Renderer->AddActor(ROIactor);
 }
 /*Selections*/
@@ -4393,7 +4405,9 @@ void View3D::AutoCellExport()
 
 		QProgressDialog progress("Finding Cells", "Abort", 0, cellCount, this);
 		progress.setWindowModality(Qt::WindowModal);
-
+		QString traceDir = this->TraceEditSettings.value("traceDir", ".").toString();		
+		QString coordFileName = traceDir % "/coord.txt";
+		this->CellModel->WriteCellCoordsToFile(coordFileName.toStdString().c_str());
 		for (int i = 0; i < cellCount; i++)
 		{
 			progress.setValue(i);

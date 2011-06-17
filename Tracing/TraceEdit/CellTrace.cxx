@@ -42,14 +42,22 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 	this->minX = rootBit.x;
 	this->minY = rootBit.y;
 	this->minZ = rootBit.z;
-	//std::cout << this->segments[0]->GetFileName()<< std::endl;
-	//this->FileName = this->segments[0]->GetFileName();
+
 	for(i = 0; i < this->segments.size(); i++)
 	{
 		this->IDs.insert(this->segments[i]->GetId());
 		this->TotalPathLength += this->segments[i]->GetLength();
 		this->TotalVolume += this->segments[i]->GetVolume();
 		this->TotalEuclidianPath += this->segments[i]->GetEuclidianLength();
+		this->surfaceAreaTotal += this->segments[i]->GetSurfaceArea();
+		if (this->SurfaceAreaMax < this->segments[i]->GetSurfaceArea())
+		{
+			this->SurfaceAreaMax = this->segments[i]->GetSurfaceArea();
+		}else if (this->SurfaceAreaMin > this->segments[i]->GetSurfaceArea())
+		{
+			this->SurfaceAreaMin = this->segments[i]->GetSurfaceArea();
+		}
+		this->sectionAreaTotal += this->segments[i]->GetSectionArea();
 		int tempLevel = this->segments[i]->GetLevel();
 		if (this->segments[i]->isLeaf())
 		{
@@ -160,6 +168,12 @@ void CellTrace::clearAll()
 	this->minX = 0;
 	this->minY = 0;
 	this->minZ = 0;
+	this->sectionAreaTotal = 0;
+	this->SectionAreaMax = 0;
+	this->SectionAreaMin = 0;
+	this->surfaceAreaTotal = 0;
+	this->SurfaceAreaMax = 0;
+	this->SurfaceAreaMin = 0;
 }
 vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 {
@@ -176,12 +190,18 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->SumTerminalLevel /this->terminalTips);//average terminal level
 	CellData->InsertNextValue(this->TerminalPathLength/this->terminalTips);//now average path to end
 	CellData->InsertNextValue(this->TotalEuclidianPath);
+	CellData->InsertNextValue(this->TotalEuclidianPath/this->NumSegments);//average segment euclidian length
 	CellData->InsertNextValue(this->TotalPathLength);
 	CellData->InsertNextValue(this->TotalPathLength/this->NumSegments);//average segment length
 	CellData->InsertNextValue(this->TotalVolume);
-	CellData->InsertNextValue(this->maxX - this->minX);
-	CellData->InsertNextValue(this->maxY - this->minY);
-	CellData->InsertNextValue(this->maxZ - this->minZ);
+	CellData->InsertNextValue(this->TotalVolume/this->NumSegments);////average segment Volume
+	CellData->InsertNextValue(this->surfaceAreaTotal);
+	CellData->InsertNextValue(this->SurfaceAreaMax);
+	CellData->InsertNextValue(this->surfaceAreaTotal/this->NumSegments);
+	CellData->InsertNextValue(this->SurfaceAreaMin);
+	CellData->InsertNextValue(this->maxX - this->minX);//Width
+	CellData->InsertNextValue(this->maxY - this->minY);//Length
+	CellData->InsertNextValue(this->maxZ - this->minZ);//Height
 	CellData->InsertNextValue(this->somaX);
 	CellData->InsertNextValue(this->somaY);
 	CellData->InsertNextValue(this->somaZ);
@@ -204,6 +224,15 @@ vtkSmartPointer<vtkVariantArray> CellTrace::BoundsRow()
 	CellBoundsRow->InsertNextValue(this->minZ);
 	CellBoundsRow->InsertNextValue(this->maxZ);
 	return CellBoundsRow;
+}
+std::string CellTrace::BasicFeatureString()
+{
+	std::stringstream features;
+	features << this->GetFileName().c_str() << "\t";
+	features << this->somaX << "\t";
+	features << this->somaY << "\t";
+	features << this->somaZ << "\t";
+	return features.str();
 }
 std::set<long int> CellTrace::TraceIDsInCell()
 {

@@ -54,9 +54,15 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Ave Leaf Level");
 	this->headers.push_back("Ave Leaf Path Length");
 	this->headers.push_back("Total Euclidian Length");
+	this->headers.push_back("Average Segment Euclidian Length");
 	this->headers.push_back("Total Path Length");
 	this->headers.push_back("Average Segment Path Length");
 	this->headers.push_back("Total Volume");
+	this->headers.push_back("Average Segment Volume");
+	this->headers.push_back("Total Surface Area");
+	this->headers.push_back("Max Segment Surface Area");
+	this->headers.push_back("Average Segment Surface Area");
+	this->headers.push_back("Min Segment Surface Area");
 	this->headers.push_back("Width X");
 	this->headers.push_back("Length Y");
 	this->headers.push_back("Height Z");
@@ -205,4 +211,15 @@ CellTrace * CellTraceModel::GetCellAt( int i)
 	}
 	this->Selection->select(currentCell->rootID());
 	return currentCell;
+}
+void CellTraceModel::WriteCellCoordsToFile(const char *fileName)
+{
+	fstream outputTxt;
+	outputTxt.open(fileName, fstream::out);
+	for (int i = 0; i < this->Cells.size(); i++)
+	{
+		outputTxt << this->Cells.at(i)->BasicFeatureString() << "\n";
+	}
+	outputTxt.close();
+	std::cout << "file written\n";
 }
