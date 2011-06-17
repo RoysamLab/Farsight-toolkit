@@ -1,4 +1,8 @@
+cmake_minimum_required(VERSION 2.8)
 PROJECT(TraceEdit)
+
+FIND_PACKAGE(Qt4 REQUIRED)
+INCLUDE(${QT_USE_FILE})
 
 SET( Libraries
     tiff
@@ -20,7 +24,7 @@ SET( Libraries
     ftkCommon
     ${QT_LIBRARIES} )
 
-QT4_WRAP_CPP( GUI_MOC_SRCS View3D.h MergeModel.h TraceModel.h CellTraceModel.h)
+QT4_WRAP_CPP( GUI_MOC_SRCS View3D.h MergeModel.h TraceModel.h CellTraceModel.h cellexport.h)
 
 ADD_LIBRARY(Trace
   TraceBit.h        TraceBit.cxx
@@ -35,6 +39,7 @@ ADD_LIBRARY(Trace
   CellTraceModel.h  CellTraceModel.cxx
   vtkPlotEdges.h    vtkPlotEdges.cxx 
   View3D.h          View3D.cxx 
+  cellexport.h	    cellexport.cxx
   ${GUI_MOC_SRCS} 
   )
 OPTION( USE_GPUREN "Use GPU for Rendering" OFF )

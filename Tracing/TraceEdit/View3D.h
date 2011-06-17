@@ -124,6 +124,7 @@ public:
 	vtkSmartPointer<vtkActor> BranchActor;
 
 public slots:
+	void choosetoRender(int row, int col);
 	void ListSelections();
 	void ClearSelection();
 	void SelectTrees();
@@ -207,8 +208,11 @@ private:
 	//the get____file functions called as renderer is not initalized
 	double uMperVoxel; //0 x, 1 y, 2 z
 	QSettings TraceEditSettings;
-	QDockWidget * InformationDisplays, *BootDock, * settingsDock, *cursor3DDock, *AutomationDock;
+	QDockWidget * InformationDisplays, *BootDock, * settingsDock, *cursor3DDock, *AutomationDock, *projectFilesDock;
 	QTextEdit * EditLogDisplay;
+	
+	QTableWidget * projectFilesTable;
+	
 	QString UserName, LabName, ProjectName;
 	QStringList TraceFiles, Image, SomaFile, tempTraceFile;
 	QWidget * bootLoadFiles;

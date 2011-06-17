@@ -145,6 +145,22 @@ View3D::View3D(QWidget *parent)
 	this->InformationDisplays = new QDockWidget("Edit Log Information", this);
 	this->InformationDisplays->setWidget(this->EditLogDisplay);
 	this->addDockWidget(Qt::LeftDockWidgetArea, this->InformationDisplays);
+	
+	QStringList projecttableHeaders;
+	projecttableHeaders << tr("Filename") << tr("Type") << tr("Renderstatus");
+	this->projectFilesTable = new QTableWidget(this);
+	this->projectFilesTable->setColumnCount(3);	
+	this->projectFilesTable->setColumnWidth(1,40);
+	this->projectFilesTable->setColumnWidth(2,75);
+
+	QObject::connect(this->projectFilesTable, SIGNAL(cellClicked(int,int)), this, SLOT(choosetoRender(int,int)));
+	this->projectFilesTable->setHorizontalHeaderLabels(projecttableHeaders);
+	this->projectFilesTable->setSortingEnabled(true);
+	this->projectFilesDock = new QDockWidget(tr("List of files"), this);
+	this->projectFilesDock->setWidget(this->projectFilesTable);
+	this->addDockWidget(Qt::LeftDockWidgetArea, this->projectFilesDock);
+	
+	
 	//Set up the main window's central widget
 	this->CentralWidget = new QWidget(this);
 	this->setCentralWidget(this->CentralWidget);
@@ -204,6 +220,43 @@ View3D::View3D(TraceObject *Traces)
 	this->statusBar()->showMessage(tr("Trace Editor Started"));
 }
 
+void View3D::choosetoRender(int row, int col)
+{
+	//this->projectFilesTable->itemClicked();
+	//QList<QTableWidgetItem> selection = this->projectFilesTable->selectedItems(); ////////???? doesn't work
+	//for (int i = 0; i < selection.size(); i++)
+	//{
+	//	std::cout << selection.toStdString().c_str();
+	//}
+
+	QList<QTableWidgetSelectionRange> ranges = this->projectFilesTable->selectedRanges();
+	/*std::cout << "row count: " << ranges.first().rowCount() << "\n";
+	std::cout << "column count: " << ranges.first().columnCount() << "\n";
+	std::cout << "top row: " << ranges.first().topRow() << "\n";
+	std::cout << "bottom row: " << ranges.first().bottomRow() << std::endl;
+	std::cout << "left column: " << ranges.first().leftColumn() << "\n";
+	std::cout << "right column: " << ranges.first().rightColumn() << std::endl;*/
+
+	if(ranges.first().rightColumn() == 2)
+	{
+		QTableWidgetItem *onItem = new QTableWidgetItem(tr("on"));
+		onItem->setFlags(onItem->flags() & (~Qt::ItemIsEditable));
+		QTableWidgetItem *offItem = new QTableWidgetItem(tr("off"));
+		offItem->setFlags(offItem->flags() & (~Qt::ItemIsEditable));
+		
+		int rowselected = ranges.first().topRow();
+		if(this->projectFilesTable->item(rowselected,2)->text() == "on") 
+		{
+		//std::cout << this->projectFilesTable->item(rowselected,2) << std::endl;
+
+			this->projectFilesTable->setItem(rowselected,2,offItem);
+		}
+		else
+		{
+			this->projectFilesTable->setItem(rowselected,2,onItem);
+		}
+	}
+}
 void View3D::CreateBootLoader()
 {
 	// Create a window that allows files to be loaded
@@ -594,7 +647,7 @@ void View3D::LoadProject()
     projectDir = QFileInfo(projectFile).absolutePath();
     this->TraceEditSettings.setValue("projectDir", projectDir);
 		this->readProject(projectFile);
-		this->OkToBoot();
+		//this->OkToBoot();
 	}// end of project !empty
 }
 
@@ -616,11 +669,26 @@ bool View3D::readProject(QString projectFile)
 		{ 
 			bool found = false;
 			std::string FileName = project->GetFileName(i);
+
+			this->projectFilesTable->setRowCount(project->size());
+
+			QTableWidgetItem *newfileItem = new QTableWidgetItem(QString::fromStdString(FileName));
+			newfileItem->setFlags(newfileItem->flags() & (~Qt::ItemIsEditable));
+			projectFilesTable->setItem(i,0,newfileItem);
+
+
+			{
+
+				QTableWidgetItem *newrenderItem = new QTableWidgetItem(tr("on"));
+				newrenderItem->setFlags(newrenderItem->flags() & (~Qt::ItemIsEditable));
+				projectFilesTable->setItem(i,2,newrenderItem);
+				//this->ImageActors->setRenderStatus(i);
+			}
+
 			QFileInfo  NewFileInfo(QString(FileName.c_str()));
 			if (!NewFileInfo.exists())
 			{
-				
-					std::cout << "file not found " << FileName << std::endl;
+				std::cout << "file not found " << FileName << std::endl;
 				QFileInfo testFile(QString(RelativeProjectPath + "/" +  NewFileInfo.fileName()));
 				if (testFile.exists())
 				{
@@ -632,10 +700,15 @@ bool View3D::readProject(QString projectFile)
 			else
 			{
 				found = true;
-			}
+			}  
 			if (found)
 			{
 				QString type = QString(project->GetFileType(i).c_str());
+
+				QTableWidgetItem *newtypeItem = new QTableWidgetItem(type);
+				newtypeItem->setFlags(newtypeItem->flags() & (~Qt::ItemIsEditable));
+				projectFilesTable->setItem(i,1,newtypeItem);
+
 				if ((type == "Image")||(type == "Soma"))
 				{
 					if (type == "Image")
@@ -677,8 +750,10 @@ bool View3D::readProject(QString projectFile)
 				}//end type log
 			} //end if newFileInfo exists
 		}//end of for project size
+		int maxrow;
 		if (!this->TraceFiles.isEmpty() )
 		{	
+			//this->projectFilesTable->setRowCount(this->TraceFiles.size());
 			this->EditLogDisplay->append("Trace file:");
 			for (i = 0; i < (unsigned int) this->TraceFiles.size(); i++)
 			{
@@ -687,6 +762,10 @@ bool View3D::readProject(QString projectFile)
 		}
 		if (!this->Image.isEmpty())
 		{
+			if (this->projectFilesTable->rowCount() < this->Image.size())
+			{
+				//this->projectFilesTable->setRowCount(this->Image.size());
+			}
 			this->EditLogDisplay->append("Image file:");
 			for (i=0; i < (unsigned int) this->Image.size(); i++)
 			{
@@ -695,6 +774,10 @@ bool View3D::readProject(QString projectFile)
 		}
 		if (!this->SomaFile.isEmpty())
 		{
+			if (this->projectFilesTable->rowCount() < this->SomaFile.size())
+			{
+				//this->projectFilesTable->setRowCount(this->SomaFile.size());
+			}
 			this->EditLogDisplay->append("Soma file: ");
 			for (i=0; i < (unsigned int) this->SomaFile.size(); i++)
 			{
