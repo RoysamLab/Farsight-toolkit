@@ -99,6 +99,7 @@ limitations under the License.
 #include "ImageActors.h"
 #include "ftkCommon/ftkProjectManager.h"
 #include "View3D.h"
+#include "cellexport.h"
 
 View3D::View3D(QWidget *parent)
 : QMainWindow(parent)
@@ -675,7 +676,6 @@ bool View3D::readProject(QString projectFile)
 			QTableWidgetItem *newfileItem = new QTableWidgetItem(QString::fromStdString(FileName));
 			newfileItem->setFlags(newfileItem->flags() & (~Qt::ItemIsEditable));
 			projectFilesTable->setItem(i,0,newfileItem);
-
 
 			{
 
@@ -4375,9 +4375,25 @@ void View3D::AutoCellExport()
 	int cellCount= this->CellModel->getCellCount();
 	if (cellCount >= 1)
 	{
+		QString curdirectoryswc = this->TraceEditSettings.value("traceDir", ".").toString();
+		QString curdirectoryjpg = this->TraceEditSettings.value("imageDir", ".").toString();
+		QString swcfileName, jpgfileName;
+		bool changeswcfileName = false;
+		bool changejpgfileName = false;
+
+		SaveCellExportDialog *cellexportDialog = new SaveCellExportDialog(this, curdirectoryswc, curdirectoryjpg, swcfileName, jpgfileName, changeswcfileName, changejpgfileName);
+		cellexportDialog->exec();
+
+		curdirectoryswc = cellexportDialog->getSWCDir();
+		curdirectoryjpg = cellexportDialog->getJPGDir();
+		swcfileName = cellexportDialog->getSWCfileName();
+		jpgfileName = cellexportDialog->getJPGfileName();
+		changeswcfileName = cellexportDialog->keeporiginalSWCfileName();
+		changejpgfileName = cellexportDialog->keeporiginalJPGfileName();
+
 		QProgressDialog progress("Finding Cells", "Abort", 0, cellCount, this);
 		progress.setWindowModality(Qt::WindowModal);
-		QString traceDir = this->TraceEditSettings.value("traceDir", ".").toString();
+
 		for (int i = 0; i < cellCount; i++)
 		{
 			progress.setValue(i);
@@ -4391,9 +4407,32 @@ void View3D::AutoCellExport()
 
 			std::vector<TraceLine*> roots;
 			roots.push_back(currCell->getRootTrace());
-			QString swcFileName = traceDir % "/" % cellName % QString(".swc");
-			QString ScreenShotFileName = traceDir % "/" % cellName % QString(".jpg");
+			int cellNum = i+1;
+			if (changeswcfileName)
+			{
+				if (!swcfileName.isEmpty())
+				{
+					cellName = swcfileName;
+				}
+				else
+				{
+					cellName = tr("cell_") + QString("%1").arg(cellNum);
+				}
+			}
+			QString swcFileName = curdirectoryswc % "/" % cellName % QString(".swc");
 			this->tobj->WriteToSWCFile(roots, swcFileName.toStdString().c_str());
+			if (changejpgfileName)
+			{
+				if (!jpgfileName.isEmpty())
+				{
+					cellName = jpgfileName;
+				}
+				else
+				{
+					cellName = tr("cell_") + QString("%1").arg(cellNum);
+				}
+			}
+			QString ScreenShotFileName = curdirectoryjpg % "/" % cellName % QString(".jpg");
 			this->saveRenderWindow(ScreenShotFileName.toStdString().c_str());
 			if (this->viewIn2D)
 			{
