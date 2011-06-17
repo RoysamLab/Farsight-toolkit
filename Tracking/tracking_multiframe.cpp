@@ -606,7 +606,7 @@ public:
 		limages = l; // copy only pointers
 		rimages = r;
 		UTILITY_MAX = 1<<14;
-		K = 2;
+		K = 3;
 	}
 
 	void run();
@@ -626,6 +626,7 @@ public:
 	{
 		return fvarnew;
 	}
+	std::string dataset_id;
 private:
 	enum EDGE_TYPE {SPLIT,MERGE,APPEAR,DISAPPEAR,TRANSLATION};
 	float overlap(float bb1[6],float bb2[6]);
@@ -681,7 +682,7 @@ private:
 	FeatureVariances fvar;
 	FeatureVariances fvarnew;
 	int K;
-
+	
 	ColorImageType::Pointer debugimage1,debugimage2,debugimage3;
 	bool edge_uniqueness(TGraph::edge_descriptor, TGraph::edge_descriptor);
 
@@ -2146,6 +2147,7 @@ void CellTracker::solve_higher_order()
 		typedef std::pair<TGraph::vertex_descriptor, int> VertexMapType;
 
 		IloObjective obj = IloMaximize(env);
+		//IloObjective objf = IloMaximize(env);
 		IloRangeArray c(env);
 
 		//find number of variables
@@ -2244,7 +2246,9 @@ void CellTracker::solve_higher_order()
 		//_exit(0);
 		varc = lredges.size();
 		IloNumVarArray x(env,varc,0,1,ILOBOOL);
+//		IloNumVarArray xf(env,varc,0,1,ILOFLOAT);
 		IloNumArray numarr(env,varc);
+
 
 		//IloNumExprArg expr(env);
 		printf("I have changed\n");
@@ -2261,6 +2265,8 @@ void CellTracker::solve_higher_order()
 		}
 		//obj.setLinearCoef(x[counter],utility[counter]);
 		obj.setLinearCoefs(x,numarr);
+
+		
 			//if(index[source(lredges[counter].front,g)]==638)
 			//{
 			//	printf("Utility for 638 is %d\n", utility[counter]);
@@ -2282,16 +2288,22 @@ void CellTracker::solve_higher_order()
 		//}
 		printf("step1 completed\n");
 		int vcount = -1;
+		std::string entropy_out_file = "L:\\Tracking\\metric\\";
+		entropy_out_file +=  dataset_id + "_entropy.txt";
+		FILE *fp = fopen(entropy_out_file.c_str(),"w");
+
 		for(tie(vi,vend) = vertices(g); vi != vend; ++vi)
 		{
 			if(g[*vi].vertlre.size()>0)
 			{
 				vcount++;
-				c.add(IloRange(env,0.99,1.01));
+				c.add(IloRange(env,0,1));
 				for(int colre = 0; colre< g[*vi].vertlre.size(); colre++)
 				{
 					c[vcount].setLinearCoef(x[g[*vi].vertlre[colre]],1);
+					fprintf(fp,"%d ", (int)utility[g[*vi].vertlre[colre]]);
 				}
+				fprintf(fp,"\n");
 			}
 			/*if(vertmap.count(*vi)!=0)
 			{
@@ -2306,6 +2318,7 @@ void CellTracker::solve_higher_order()
 				}
 			}*/
 		}
+		fclose(fp);
 		printf("Done adding vertex constraints\n");
 		//for(int counter = 0; counter < varc; counter++)
 		//{
@@ -2403,15 +2416,35 @@ void CellTracker::solve_higher_order()
 		//PAUSE;
 		//std::cout<<model<<std::endl;
 		IloCplex cplex(model);
+	
 		if(!cplex.solve())
 		{
 			std::cerr << " Could not solve.. error"<<std::endl;
 			PAUSE;
 		}
 		IloNumArray vals(env);
-		env.out() << "Solution status = " << cplex.getStatus() << std::endl;
-		env.out() << "Solution value  = " << cplex.getObjValue() << std::endl;
 		cplex.getValues(vals, x);
+
+
+		IloModel model1(env);
+		model1.add(obj);
+		model1.add(c);
+		model1.add(IloConversion(env,x,ILOFLOAT));
+		IloCplex cplex1(model1);
+
+		if(!cplex1.solve())
+		{
+			std::cerr << " Could not solve model1.. error"<<std::endl;
+			PAUSE;
+		}
+		
+		
+		IloNumArray vals1(env);
+		env.out() << "Solution status = " << cplex.getStatus() << std::endl;
+		env.out() << "IP Solution value  = " << cplex.getObjValue() << std::endl;
+		env.out() << "LP Solution value  = " << cplex1.getObjValue() << std::endl;
+		
+		cplex1.getValues(vals1,x);
 		/*for(int counter =0; counter < vals.getSize(); counter++)
 		{
 			if(vals[counter] < 0)
@@ -2426,6 +2459,8 @@ void CellTracker::solve_higher_order()
 		writeXGMML_secondorder("C:\\Users\\arun\\Research\\Tracking\\harvard\\ch4_secondorder.xgmml",lredges,utility,vals);
 		printf("varc =%d vals.getSize() = %d\n",varc,vals.getSize());
 		//PAUSE;
+		double maxval = 0;
+		int numfracvals = 0;
 		for(int counter=0; counter< vals.getSize(); counter++)
 		{
 			if(int(vals[counter]+0.5)==1)
@@ -2437,8 +2472,14 @@ void CellTracker::solve_higher_order()
 				printf("vals[counter] = %f\n",vals[counter]);
 				num_others++;
 			}
+			if(abs(vals1[counter])>0.00002 && abs(vals1[counter]-1)>0.00002)
+			{
+				numfracvals++;
+				printf("frac val = %f\n",vals1[counter]);
+			}
 			if(int(vals[counter]+0.5)==1)
 			{
+				
 				g[lredges[counter].front].selected = 1;
 				if(g[lredges[counter].front].coupled == 1)
 				{
@@ -2449,8 +2490,34 @@ void CellTracker::solve_higher_order()
 				{
 					g[coupled_map[lredges[counter].back]].selected = 1;
 				}
+				int edge_type = get_edge_type(lredges[counter].front);
+				double tempval = 1;
+				if(edge_type==SPLIT)
+				{
+					tempval*=2;
+				}
+				edge_type = get_edge_type(lredges[counter].front);
+				if(edge_type==MERGE)
+				{
+					tempval*=2;
+				}
+				maxval+=tempval*UTILITY_MAX*UTILITY_MAX;
 			}
 		}
+
+		printf("Confidence = %lf maxutility = %lf objectivefunction = %lf ",cplex.getObjValue()/maxval,maxval,cplex.getObjValue());
+		//printf("Integrality tolerance = %lf\n",cplex.getParam(IloCplex::EpInt));
+		printf("Integrality gap = %lf %% LP Solution = %lf IP Solution = %lf Num frac/total = %d/%d\n",(1-cplex.getObjValue()/cplex1.getObjValue())*100, cplex1.getObjValue(), cplex.getObjValue(), numfracvals, vals.getSize());
+		scanf("%*d");
+		/*graph_traits<TGraph>::edge_iterator e_i,e_end;
+		for(tie(e_i,e_end)=edges(g);e_i!=e_end;++e_i)
+		{
+			if(g[*e_i].selected==1)
+			{
+
+			}
+		}*/
+		
 		printf("num_zero = %d num_one = %d num_others = %d\n",num_zero,num_one, num_others);
 		//	//assert(g[inv_index[counter]].selected == 1);
 		//	g[inv_index[counter]].selected = vals[counter];
@@ -4866,6 +4933,7 @@ int optionsCreate(const char* optfile, map<std::string,std::string>& options)
   return 0;
 }
 
+
 int main(int argc1, char **argv1)
 {
 	FeatureVariances fvar;
@@ -5124,6 +5192,11 @@ int main(int argc1, char **argv1)
 			break;
 		}
 	}
+
+	std::string dataset_folder = argv[1];
+	std::string dataset_id = dataset_folder.substr(dataset_folder.find_last_of("\\")+1);
+	printf("datasetid = %s\n",dataset_id.c_str());
+	//scanf("%*d");
 	if(1)//!fexists)
 	{
 		CellTracker::VVL limages;
@@ -5178,6 +5251,7 @@ int main(int argc1, char **argv1)
 
 
 		CellTracker ct(fvector,fvar,limages,rimages);
+		ct.dataset_id = dataset_id;
 		ColorImageType::Pointer debugcol1 = ColorImageType::New();
 		ColorImageType::Pointer debugcol2 = ColorImageType::New();
 		ColorImageType::Pointer debugcol3 = ColorImageType::New();
