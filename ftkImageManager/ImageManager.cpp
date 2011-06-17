@@ -16,6 +16,10 @@ ImageFileManger::ImageFileManger(QWidget *parent)
 	connect(this->loadImages, SIGNAL(triggered()), this, SLOT(BrowseFiles()));
 	this->menuBar()->addAction(this->loadImages);
 
+	this->append = new QAction("Append L Measure txt", this);
+	connect(this->append, SIGNAL(triggered()), this, SLOT(appendLists()));
+	this->menuBar()->addAction(this->append);
+
 	this->ConvertImages = new QAction("Convert Images", this);
 	connect(this->ConvertImages, SIGNAL(triggered()), this, SLOT(ConvertFiles()));
 	this->ConvertImages->setEnabled(false);
@@ -48,8 +52,15 @@ void ImageFileManger::ConvertFiles()
 		{
 			directory.mkdir(this->outputDirectories[k]);
 		}
+		QProgressDialog progress("Converting Images", "Abort", 0, this->InputFileList.size(), this);
+		progress.setWindowModality(Qt::WindowModal);
 		for (int i = 0; i < this->InputFileList.size(); i++)
 		{
+			progress.setValue(i);
+			if (progress.wasCanceled())
+			{
+				break;
+			}
 			QString currentDir;
 			currentDir.clear();
 			QString tempname = QFileInfo(this->InputFileList[i]).fileName();
@@ -67,7 +78,7 @@ void ImageFileManger::ConvertFiles()
 			tempname.replace(" ", "_");
 			tempname.prepend("8Bit");
 			QString outputFilename = QString(this->imageDir +"/"+ currentDir +"/"+tempname);
-			std::cout<< "Output name\t" <<outputFilename.toStdString().c_str()<< "\n";
+			//std::cout<< "Output name\t" <<outputFilename.toStdString().c_str()<< "\n";
 
 
 			InputReaderType::Pointer reader = InputReaderType::New();
@@ -85,9 +96,61 @@ void ImageFileManger::ConvertFiles()
 			writer->SetFileName(outputFilename.toStdString().c_str());
 			writer->Update();
 		}
+		progress.setValue(this->InputFileList.size());
 	}
 	
 	//16 to 8 bit conversion
+}
+std::vector<QString> ImageFileManger::readDataFile(QString FileName)
+{
+	QFile inFile(FileName);
+	if (!inFile.open(QIODevice::ReadOnly | QIODevice::Text))
+	{
+	}
+	std::vector<QString> Lines;
+	QTextStream in(&inFile);
+	QString lineIn = in.readLine();
+	while (!lineIn.isNull()) 
+	{
+		QString newList = lineIn;//.split("\t");
+		Lines.push_back(newList);
+		lineIn = in.readLine();
+	}
+	inFile.close();
+	return Lines;
+}
+void ImageFileManger::appendLists()
+{
+	QString MainFileName = QFileDialog::getOpenFileName(this , "Choose file", "", tr("Text ( *.txt ) "));
+	QString appendFileName = QFileDialog::getOpenFileName(this , "Choose file", "", tr("Text ( *.txt ) "));
+	std::vector<QString> MainList = this->readDataFile(MainFileName);
+	std::vector<QString> AppendList = this->readDataFile(appendFileName);
+	for (int i = 0; i < MainList.size() ; i++)
+	{
+		for (int j = 0; j < AppendList.size(); j++)
+		{
+			QString appendString = AppendList.at(j);
+			QString key = QString(AppendList.at(j).section('\t', 0, 0) + "\t");
+			//std::cout<< "Key\t"<<j << "\t" << key.toStdString().c_str() << "\n";
+			if (MainList.at(i).contains(key))
+			{
+				std::cout<< "matched " << key.toStdString().c_str() << "\n";
+				appendString.remove(key);
+				MainList.at(i).append(appendString);
+				continue;
+			}
+		}//end j loop
+	}//end for loop
+	QFile outFile(MainFileName);
+	if(outFile.open(QIODevice::WriteOnly))
+	{
+		QTextStream out(&outFile);
+		for (int i = 0; i < MainList.size() ; i++)
+		{
+			out << MainList.at(i) << "\n";
+		}
+	}
+	outFile.close();
 }
 void ImageFileManger::closeEvent(QCloseEvent *event)
 {

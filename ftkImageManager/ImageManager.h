@@ -1,5 +1,7 @@
 #include <QAction>
 #include <QtGui>
+#include <QFile>
+#include <QTextStream>
 
 #include "itkImage.h"
 #include "itkImageFileWriter.h"
@@ -23,9 +25,11 @@ Q_OBJECT;
 public:
 	ImageFileManger(QWidget * parent = 0);
 	QListWidget * FileListView;
+	std::vector<QString> readDataFile(QString FileName);
 public slots:
 	void BrowseFiles();
 	void ConvertFiles();
+	void appendLists();
 protected:
 	void closeEvent(QCloseEvent *event);
 private:
@@ -33,6 +37,7 @@ private:
 	QString imageDir;
 	QAction *exitAction;
 	QAction *loadImages;
+	QAction *append;
 	QAction *ConvertImages;
 	QStringList InputFileList;
 	QStringList outputDirectories;
