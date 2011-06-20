@@ -42,6 +42,9 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 	this->minX = rootBit.x;
 	this->minY = rootBit.y;
 	this->minZ = rootBit.z;
+	this->somaSurface = this->segments[0]->GetSurfaceArea();
+	this->somaVolume = this->segments[0]->GetVolume();
+	this->SomaRadii = this->segments[0]->GetRadii();
 
 	for(i = 0; i < this->segments.size(); i++)
 	{
@@ -174,6 +177,9 @@ void CellTrace::clearAll()
 	this->surfaceAreaTotal = 0;
 	this->SurfaceAreaMax = 0;
 	this->SurfaceAreaMin = 0;
+	this->somaVolume= 0;
+	this->somaSurface = 0;
+	this->SomaRadii = 0;
 }
 vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 {
@@ -205,6 +211,9 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->somaX);
 	CellData->InsertNextValue(this->somaY);
 	CellData->InsertNextValue(this->somaZ);
+	CellData->InsertNextValue(this->SomaRadii);
+	CellData->InsertNextValue(this->somaVolume);
+	CellData->InsertNextValue(this->somaSurface);
 	CellData->InsertNextValue(this->GetFileName().c_str());
 	//std::cout << this->FileName << std::endl;
 	return CellData;

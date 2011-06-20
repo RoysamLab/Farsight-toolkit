@@ -64,11 +64,14 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Average Segment Surface Area");
 	this->headers.push_back("Min Segment Surface Area");
 	this->headers.push_back("Width X");
-	this->headers.push_back("Length Y");
-	this->headers.push_back("Height Z");
+	this->headers.push_back("Height Y");
+	this->headers.push_back("Depth Z");
 	this->headers.push_back("Soma X");
 	this->headers.push_back("Soma Y");
 	this->headers.push_back("Soma Z");
+	this->headers.push_back("Soma Radii");
+	this->headers.push_back("Soma Volume");
+	this->headers.push_back("Soma Surface Area");
 	this->headers.push_back("Trace File");
 	int numHeaders = (int)this->headers.size();
 	vtkSmartPointer<vtkVariantArray> column = vtkSmartPointer<vtkVariantArray>::New();
