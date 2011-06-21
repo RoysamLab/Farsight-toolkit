@@ -118,11 +118,16 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 			if(tempLevel > this->MaxTerminalLevel)
 			{
 				this->MaxTerminalLevel = tempLevel;
-				this->maxTerminalPathLength = this->segments[i]->GetPathLength();
-			}
-			if(tempLevel < this->MinTerminalLevel)
+				
+			}else if(tempLevel < this->MinTerminalLevel)
 			{
 				this->MinTerminalLevel = tempLevel;
+			}
+			if (this->maxTerminalPathLength < this->segments[i]->GetPathLength())
+			{
+				this->maxTerminalPathLength = this->segments[i]->GetPathLength();
+			}else if(this->minTerminalPathLength > this->segments[i]->GetPathLength())
+			{
 				this->minTerminalPathLength = this->segments[i]->GetPathLength();
 			}
 		}//end if leaf
@@ -176,6 +181,8 @@ void CellTrace::clearAll()
 	this->MinTerminalLevel = 100; //something large for initial value
 	this->MaxTerminalLevel = 0;
 	this->SumTerminalLevel = 0;
+	this->minTerminalPathLength = 100;
+	this->maxTerminalPathLength=0;
 	this->TotalEuclidianPath = 0;
 	this->TotalPathLength = 0;
 	this->TotalVolume = 0;
