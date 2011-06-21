@@ -290,8 +290,9 @@ std::vector<TraceLine*> TraceObject::GetTraceLines()
 	}
   return allTLines;
 }
-void TraceObject::LinearTraceLinesRecursive(std::vector<TraceLine*> &allLine, TraceLine *tline)
+int TraceObject::LinearTraceLinesRecursive(std::vector<TraceLine*> &allLine, TraceLine *tline)
 {
+	int terminalDegree = 0;
 	tline->calculateVol();	//this call should go somewhere else in the pipeline
 	if (tline->GetParentID() == -1)
 	{//if no parent this thile is the root
@@ -304,10 +305,16 @@ void TraceObject::LinearTraceLinesRecursive(std::vector<TraceLine*> &allLine, Tr
 			parent->GetPathLength()+tline->GetDistToParent());
 	}
 	allLine.push_back(tline);
+	if (tline->GetBranchPointer()->size()== 0)
+	{
+		terminalDegree =1;
+	}
 	for(unsigned int counter = 0; counter < tline->GetBranchPointer()->size(); counter++)
 	{
-		this->LinearTraceLinesRecursive(allLine, (*tline->GetBranchPointer())[counter]);
+		terminalDegree += this->LinearTraceLinesRecursive(allLine, (*tline->GetBranchPointer())[counter]);
 	}
+	tline->setTerminalDegree(terminalDegree);
+	return terminalDegree;
 }
 void TraceObject::ImageIntensity(vtkSmartPointer<vtkImageData> imageData)
 {

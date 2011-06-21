@@ -48,7 +48,7 @@ private:
 	double maxTerminalPathLength, minTerminalPathLength;
 	float somaX, somaY, somaZ, maxX, maxY, maxZ, minX, minY, minZ; 
 	float sectionAreaTotal, SectionAreaMin, SectionAreaMax, surfaceAreaTotal, SurfaceAreaMax, SurfaceAreaMin;
-	double somaVolume, somaSurface, SomaRadii;
+	double somaVolume, somaSurface, SomaRadii, DiamThresholdTotal, DiamThresholdMin, DiamThresholdMax;
 	std::string FileName;
 	std::set<long int> IDs;
 	//TraceBit rootBit;

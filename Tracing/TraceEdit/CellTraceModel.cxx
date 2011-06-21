@@ -57,6 +57,9 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Average Segment Euclidian Length");
 	this->headers.push_back("Total Path Length");
 	this->headers.push_back("Average Segment Path Length");
+	this->headers.push_back("Average Diameter Threshold");
+	this->headers.push_back("Diameter Threshold Max");
+	this->headers.push_back("Diameter Threshold Min");
 	this->headers.push_back("Total Volume");
 	this->headers.push_back("Average Segment Volume");
 	this->headers.push_back("Total Surface Area");

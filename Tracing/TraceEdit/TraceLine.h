@@ -43,6 +43,8 @@ public:
 	void SetParent(TraceLine* p);
 	int GetRootID();
 	int GetLevel();
+	int GetTerminalDegree() {return terminalDegree;}
+	void setTerminalDegree(int degree);
 	double GetPathLength()
 		{return PathLength;}
 	void calculateVol();
@@ -108,7 +110,7 @@ private:
 	double traceColor, radii, sectionArea, length, volume, surfaceArea, PathLength, EuclidianD, DistToParent;
 	double BitDensity, BurkTaper, HillmanTaper;
 	char * FileName; 
-	int m_id, root, level;
+	int m_id, root, level, terminalDegree;
 	std::vector<unsigned int> m_markers;
 	unsigned char m_type;
 	TraceLine *m_parent;

@@ -65,6 +65,16 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 		if (this->segments[i]->isLeaf())
 		{
 			TraceBit leafBit = this->segments[i]->GetTraceBitsPointer()->back();
+			TraceBit leadBit = this->segments[i]->GetTraceBitsPointer()->front();
+			double DiamThreshold = 2*leadBit.r;
+			this->DiamThresholdTotal += DiamThreshold;
+			if (this->DiamThresholdMin > DiamThreshold)
+			{
+				this->DiamThresholdMin = DiamThreshold;
+			}else if(this->DiamThresholdMax < DiamThreshold)
+			{
+				this->DiamThresholdMax = DiamThreshold;
+			}
 			float lx = leafBit.x;
 			float ly = leafBit.y;
 			float lz = leafBit.z;
@@ -168,15 +178,18 @@ void CellTrace::clearAll()
 	this->maxX = 0;
 	this->maxY = 0;
 	this->maxZ = 0;
-	this->minX = 0;
-	this->minY = 0;
-	this->minZ = 0;
+	this->minX = 100;
+	this->minY = 100;
+	this->minZ = 100;
 	this->sectionAreaTotal = 0;
 	this->SectionAreaMax = 0;
-	this->SectionAreaMin = 0;
+	this->SectionAreaMin = 100;
 	this->surfaceAreaTotal = 0;
 	this->SurfaceAreaMax = 0;
-	this->SurfaceAreaMin = 0;
+	this->SurfaceAreaMin = 100;
+	this->DiamThresholdTotal = 0;
+	this->DiamThresholdMax = 0;
+	this->DiamThresholdMin = 100;
 	this->somaVolume= 0;
 	this->somaSurface = 0;
 	this->SomaRadii = 0;
@@ -199,6 +212,9 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->TotalEuclidianPath/this->NumSegments);//average segment euclidian length
 	CellData->InsertNextValue(this->TotalPathLength);
 	CellData->InsertNextValue(this->TotalPathLength/this->NumSegments);//average segment length
+	CellData->InsertNextValue(this->DiamThresholdTotal/this->terminalTips);
+	CellData->InsertNextValue(this->DiamThresholdMax);
+	CellData->InsertNextValue(this->DiamThresholdMin);
 	CellData->InsertNextValue(this->TotalVolume);
 	CellData->InsertNextValue(this->TotalVolume/this->NumSegments);////average segment Volume
 	CellData->InsertNextValue(this->surfaceAreaTotal);

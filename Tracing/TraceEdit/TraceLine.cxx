@@ -80,6 +80,10 @@ int TraceLine::GetLevel()
 {
 	return this->level;
 }
+void TraceLine::setTerminalDegree(int degree)
+{
+	this->terminalDegree = degree;
+}
 bool TraceLine::isLeaf()
 {
 	if (this->m_branches.size() ==0)

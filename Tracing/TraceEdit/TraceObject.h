@@ -191,7 +191,7 @@ private:
   int unsolvedBranches;
   void CollectTraceBitsRecursive(std::vector<TraceBit> &vec,TraceLine *l);
   void CollectIdsRecursive(std::vector<int> &ids, TraceLine* tline);
-  void LinearTraceLinesRecursive(std::vector<TraceLine*> &allLine, TraceLine* tline);
+  int LinearTraceLinesRecursive(std::vector<TraceLine*> &allLine, TraceLine* tline);
   void CollectBranchPointsRecursive(vtkSmartPointer<vtkPoints> p, vtkSmartPointer<vtkCellArray> cells,TraceLine *tline);
   void CollectSegmentMidPointsRecursive(vtkSmartPointer<vtkPoints>p, vtkSmartPointer<vtkCellArray> cells, vtkSmartPointer<vtkFloatArray> da,TraceLine* tline);
 

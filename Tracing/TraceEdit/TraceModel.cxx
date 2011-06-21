@@ -72,6 +72,7 @@ void TraceModel::stdHeaders()
 	this->headers.push_back("D To Parent");
 	this->headers.push_back("Path To Root");
 	this->headers.push_back("Num Children");
+	this->headers.push_back("Terminal Degree");
 	this->headers.push_back("Is Leaf");
 }
 void TraceModel::SetTraces(std::vector<TraceLine*> trace_lines)
@@ -128,6 +129,7 @@ void TraceModel::SyncModel()
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetDistToParent());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetPathLength());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBranchPointer()->size());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetTerminalDegree());
 		DataRow->InsertNextValue((int)this->TraceLines.at(i)->isLeaf());
 		for (int j = 0; j < (int)this->TraceLines.at(i)->Features.size(); ++j)
 		{
