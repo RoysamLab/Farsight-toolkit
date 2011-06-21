@@ -60,6 +60,9 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Average Diameter Threshold");
 	this->headers.push_back("Diameter Threshold Max");
 	this->headers.push_back("Diameter Threshold Min");
+	this->headers.push_back("Average Parent Diameter");
+	this->headers.push_back("Parent Diameter Max");
+	this->headers.push_back("Parent Diameter Min");
 	this->headers.push_back("Total Volume");
 	this->headers.push_back("Average Segment Volume");
 	this->headers.push_back("Total Surface Area");

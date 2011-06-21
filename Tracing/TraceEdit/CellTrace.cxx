@@ -66,6 +66,15 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 		{
 			TraceBit leafBit = this->segments[i]->GetTraceBitsPointer()->back();
 			TraceBit leadBit = this->segments[i]->GetTraceBitsPointer()->front();
+			double parentDiam = this->segments[i]->GetParent()->GetTraceBitsPointer()->back().r;
+			this->TotalLastParentDiam += parentDiam;
+			if (this->LastParentDiamMax < parentDiam)
+			{
+				this->LastParentDiamMax = parentDiam;
+			}else if(this->LastParentDiamMin > parentDiam)
+			{
+				this->LastParentDiamMin = parentDiam;
+			}
 			double DiamThreshold = 2*leadBit.r;
 			this->DiamThresholdTotal += DiamThreshold;
 			if (this->DiamThresholdMin > DiamThreshold)
@@ -190,6 +199,9 @@ void CellTrace::clearAll()
 	this->DiamThresholdTotal = 0;
 	this->DiamThresholdMax = 0;
 	this->DiamThresholdMin = 100;
+	this->TotalLastParentDiam = 0;
+	this->LastParentDiamMax = 0;
+	this->LastParentDiamMin = 100;
 	this->somaVolume= 0;
 	this->somaSurface = 0;
 	this->SomaRadii = 0;
@@ -215,6 +227,9 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->DiamThresholdTotal/this->terminalTips);
 	CellData->InsertNextValue(this->DiamThresholdMax);
 	CellData->InsertNextValue(this->DiamThresholdMin);
+	CellData->InsertNextValue(this->TotalLastParentDiam/this->terminalTips);
+	CellData->InsertNextValue(this->LastParentDiamMax);
+	CellData->InsertNextValue(this->LastParentDiamMin);
 	CellData->InsertNextValue(this->TotalVolume);
 	CellData->InsertNextValue(this->TotalVolume/this->NumSegments);////average segment Volume
 	CellData->InsertNextValue(this->surfaceAreaTotal);
