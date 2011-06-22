@@ -43,6 +43,20 @@ TraceLine::TraceLine()
 	this->BurkTaper = 0;
 	this->HillmanTaper = 0;
 	this->FileName = "default";
+
+	this->daughterRatio = 0;
+	this->parentDaughterRatio = 0;
+	this->partitionAsymmetry = 0;
+
+	this->rallPower = 0;
+	this->Pk = 0;
+	this->Pk_2 = 0;
+	this->Pk_classic = 0;
+
+	this->BifAmplLocal = 0;
+	this->BifAmpRemote = 0;
+	this->BifTiltLocal = 0;
+	this->BifTiltRemote = 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -169,6 +183,72 @@ void TraceLine::calculateVol()
 		this->HillmanTaper = 0;
 	}//end else
 }//end vol calculation
+void TraceLine::calculateBifFeatures()
+{
+	TraceBit BranchBit= this->m_trace_bits.back();
+	TraceBit previousBit = this->GetBitXFromEnd(1);
+	double BranchBitRadii = BranchBit.r;
+	TraceLine* Daughter1 = this->GetBranch1();
+	TraceBit  D1F = Daughter1->GetTraceBitsPointer()->front();
+	TraceBit  D1B = Daughter1->GetTraceBitsPointer()->back();
+	int n1 = Daughter1->GetTerminalDegree();
+	double D1Radii = D1F.r;
+	TraceLine* Daughter2 = this->GetBranch2();
+	TraceBit  D2F = Daughter2->GetTraceBitsPointer()->front();
+	TraceBit  D2B = Daughter2->GetTraceBitsPointer()->back();
+	int n2 = Daughter2->GetTerminalDegree();
+	double D2Radii = D2F.r;
+	if (D1Radii > D2Radii)
+	{
+		this->daughterRatio = D1Radii /D2Radii;
+	}
+	else
+	{
+		this->daughterRatio = D2Radii / D1Radii;
+	}
+	double PDRatio1 = 0, PDRatio2 = 0;
+	PDRatio1 = D1Radii / BranchBitRadii;
+	PDRatio2 = D2Radii / BranchBitRadii;
+	if (PDRatio1 > PDRatio2)
+	{
+		this->parentDaughterRatio = PDRatio1;
+	}
+	else
+	{
+		this->parentDaughterRatio = PDRatio2;
+	}
+	//this->rallPower = pow ((1 + pow (ratio, power)), -1/power);	//need to solve ratio and power
+	//this->Pk = this->CalculatePk(BranchBitRadii, D1Radii, D2Radii, this->rallPower);
+	this->Pk_classic = this->CalculatePk(BranchBitRadii, D1Radii, D2Radii, 1.5);
+	this->Pk_2 = this->CalculatePk(BranchBitRadii, D1Radii, D2Radii, 1.5);
+
+	this->partitionAsymmetry = abs(n1 - n2) / (n1 + n2 - 2);
+
+	this->BifAmplLocal = this->Angle(D1F, BranchBit, D2F);
+	this->BifAmpRemote = this->Angle(D1B, BranchBit, D2B);
+
+	double BifTiltLocal1 = this->Angle(previousBit, BranchBit, D1F);
+	double BifTiltLocal2 = this->Angle(previousBit, BranchBit, D2F);
+	if (BifTiltLocal1 < BifTiltLocal2)
+	{
+		this->BifTiltLocal = BifTiltLocal1;
+	}
+	else
+	{
+		this->BifTiltLocal = BifTiltLocal2;
+	}
+
+	double BifTiltRemote1 = this->Angle(previousBit, BranchBit, D1B);
+	double BifTiltRemote2 = this->Angle(previousBit, BranchBit, D2B);
+	if (BifTiltRemote1 < BifTiltRemote2)
+	{
+		this->BifTiltRemote = BifTiltRemote1;
+	}
+	else
+	{
+		this->BifTiltRemote = BifTiltRemote2;
+	}
+}
 void TraceLine::setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData)
 {
 	TraceBit curBit;
@@ -546,6 +626,24 @@ double TraceLine::Angle(TraceBit bit1f, TraceBit bit1b, TraceBit bit2f, TraceBit
 	}
 	return angle;
 }
+double TraceLine::Angle(TraceBit bit1, TraceBit vertex, TraceBit bit2)
+{
+	double delX1, delX2, delY1, delY2, delZ1, delZ2,  norm1, norm2;
+	double NewAngle = 0;
+	//delta x,y,z 	
+	delX1= fabs (vertex.x-bit1.x);	delX2= fabs (vertex.x-bit2.x);
+	delY1= fabs (vertex.y-bit1.y);	delY2= fabs (vertex.y-bit2.y);
+	delZ1= fabs (vertex.z-bit1.z);	delZ2= fabs (vertex.z-bit2.z);
+	norm1=sqrt(pow((delX1),2)+ pow((delY1),2)+ pow((delZ1),2));
+	norm2=sqrt(pow((delX2),2)+ pow((delY2),2)+ pow((delZ2),2));
+	NewAngle = acos(((delX1 * delX2) + (delY1 *delY2) + (delZ1 * delZ2)) /
+          (norm2 * norm1));
+	if (!(NewAngle >= 0))
+	{//prevent nan rounding errors
+		NewAngle = 0;
+	}
+	return NewAngle;
+}
 bool TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
                           double &maxdist, double &angle) 
 {
@@ -625,6 +723,10 @@ bool TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
     maxdist= distances[0];
     }
   return true;
+}
+double TraceLine::CalculatePk(double Dp, double Da, double Db, double n)
+{
+	return (pow(Da, n) + pow(Db, n))/pow(Dp, n);
 }
 bool TraceLine::Orient(TraceLine * Trunk)
 {

@@ -48,6 +48,7 @@ public:
 	double GetPathLength()
 		{return PathLength;}
 	void calculateVol();
+	void calculateBifFeatures();
 	double GetLength() {return length;}
 	double GetEuclidianLength();
 	double GetBitDensity();
@@ -59,6 +60,17 @@ public:
 	double GetHillmanTaper() {return HillmanTaper;}
 	double GetSectionArea() {return sectionArea;}
 	double GetSurfaceArea() {return surfaceArea;}
+	double GetdaughterRatio() {return daughterRatio;}
+	double GetparentDaughterRatio() {return parentDaughterRatio;}
+	double GetpartitionAsymmetry() {return partitionAsymmetry;}
+	double GetrallPower() {return rallPower;}
+	double GetPk() {return Pk;}
+	double GetPk_2() {return Pk_2;}
+	double GetPk_classic() {return Pk_classic;}
+	double GetBifAmplLocal() {return BifAmplLocal;}
+	double GetBifAmpRemote() {return BifAmpRemote;}
+	double GetBifTiltLocal() {return BifTiltLocal;}
+	double GetBifTiltRemote() {return BifTiltRemote;}
 	void setRoot(int RootID, int traceLevel, double parentPath);
 	void AddBranch(TraceLine* b);
 	TraceLine *GetBranch1();
@@ -94,6 +106,7 @@ public:
 	void Getstats();
 	bool EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
                  double &maxdist, double &angle);
+	double CalculatePk(double Dp, double Da, double Db, double n);
 	bool Orient(TraceLine * Trunk);
 	bool Orient(TraceBit bit);
 	void SetFileName(char * newFileName);
@@ -106,7 +119,9 @@ private:
 
 	double Euclidian(TraceBit bit1, TraceBit bit2);
 	double Angle(TraceBit bit1f, TraceBit bit1b, TraceBit bit2f, TraceBit bit2b);
-
+	double Angle(TraceBit bit1, TraceBit vertex, TraceBit bit2);
+	double daughterRatio, parentDaughterRatio, partitionAsymmetry, rallPower, Pk, Pk_2, Pk_classic;
+	double BifAmplLocal, BifAmpRemote, BifTiltLocal, BifTiltRemote;
 	double traceColor, radii, sectionArea, length, volume, surfaceArea, PathLength, EuclidianD, DistToParent;
 	double BitDensity, BurkTaper, HillmanTaper;
 	char * FileName; 
