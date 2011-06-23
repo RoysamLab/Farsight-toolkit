@@ -66,15 +66,19 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 		{
 			TraceBit leafBit = this->segments[i]->GetTraceBitsPointer()->back();
 			TraceBit leadBit = this->segments[i]->GetTraceBitsPointer()->front();
-			double parentDiam = this->segments[i]->GetParent()->GetTraceBitsPointer()->back().r;
-			this->TotalLastParentDiam += parentDiam;
-			if (this->LastParentDiamMax < parentDiam)
+			if(!this->segments[i]->isRoot())
 			{
-				this->LastParentDiamMax = parentDiam;
-			}else if(this->LastParentDiamMin > parentDiam)
-			{
-				this->LastParentDiamMin = parentDiam;
-			}
+				TraceBit parentBit = this->segments[i]->GetParent()->GetTraceBitsPointer()->back();
+				double parentDiam = 2*parentBit.r;
+				this->TotalLastParentDiam += parentDiam;
+				if (this->LastParentDiamMax < parentDiam)
+				{
+					this->LastParentDiamMax = parentDiam;
+				}else if(this->LastParentDiamMin > parentDiam)
+				{
+					this->LastParentDiamMin = parentDiam;
+				}
+			}//fails if non branching tree
 			double DiamThreshold = 2*leadBit.r;
 			this->DiamThresholdTotal += DiamThreshold;
 			if (this->DiamThresholdMin > DiamThreshold)
@@ -114,7 +118,6 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 
 			this->terminalTips++;
 			this->SumTerminalLevel += tempLevel;
-			this->TerminalPathLength += this->segments[i]->GetPathLength();
 			if(tempLevel > this->MaxTerminalLevel)
 			{
 				this->MaxTerminalLevel = tempLevel;
@@ -123,13 +126,15 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 			{
 				this->MinTerminalLevel = tempLevel;
 			}
+			this->MaxMin(this->segments[i]->GetPathLength(), this->TerminalPathLength, this->minTerminalPathLength, this->maxTerminalPathLength);
+			/*this->TerminalPathLength += this->segments[i]->GetPathLength();
 			if (this->maxTerminalPathLength < this->segments[i]->GetPathLength())
 			{
 				this->maxTerminalPathLength = this->segments[i]->GetPathLength();
 			}else if(this->minTerminalPathLength > this->segments[i]->GetPathLength())
 			{
 				this->minTerminalPathLength = this->segments[i]->GetPathLength();
-			}
+			}*/
 		}//end if leaf
 		else if(!this->segments[i]->isRoot())
 		{
@@ -246,7 +251,49 @@ void CellTrace::clearAll()
 
 	this->Pk_2 = 0;
 	this->Pk_2Min = 100;
-	this->PkMax = 0;
+	this->Pk_2Max = 0;
+
+	this->Pk_classic = 0;
+	this->Pk_classicMin = 100;
+	this->Pk_classicMax = 0;
+
+	this->BifAmplLocal = 0;
+	this->BifAmplLocalMin = 100;
+	this->BifAmplLocalMax = 0;
+
+	this->BifAmpRemote = 0;
+	this->BifAmpRemoteMin = 100;
+	this->BifAmpRemoteMax = 0;
+
+	this->BifTiltLocal = 0;
+	this->BifTiltLocalMin = 100;
+	this->BifTiltLocalMax = 0;
+
+	this->BifTiltRemote = 0;
+	this->BifTiltRemoteMin = 100;
+	this->BifTiltRemoteMax = 0;
+}
+void CellTrace::MaxMin(double NewValue, double &total, double &Min, double &Max)
+{
+	total += NewValue;
+	if (NewValue > Max)
+	{
+		Max = NewValue;
+	}else if (NewValue < Min)
+	{
+		Min = NewValue;
+	}
+}
+void CellTrace::MaxMin(float NewValue, float &total, float &Min, float &Max)
+{
+	total += NewValue;
+	if (NewValue > Max)
+	{
+		Max = NewValue;
+	}else if (NewValue < Min)
+	{
+		Min = NewValue;
+	}
 }
 vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 {
