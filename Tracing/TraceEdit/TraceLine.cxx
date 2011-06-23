@@ -216,7 +216,13 @@ void TraceLine::calculateBifFeatures()
 	this->Pk_classic = this->CalculatePk(BranchBitRadii, D1Radii, D2Radii, 1.5);
 	this->Pk_2 = this->CalculatePk(BranchBitRadii, D1Radii, D2Radii, 1.5);
 
-	this->partitionAsymmetry = abs(n1 - n2) / (n1 + n2 - 2);
+	if ((n1+n2) > 2)
+	{
+		this->partitionAsymmetry = abs(n1 - n2) / (n1 + n2 - 2);
+	}else
+	{
+		this->partitionAsymmetry = 1;
+	}
 
 	this->BifAmplLocal = this->Angle(D1F, BranchBit, D2F);
 	this->BifAmpRemote = this->Angle(D1B, BranchBit, D2B);
