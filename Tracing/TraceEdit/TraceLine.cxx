@@ -206,17 +206,11 @@ void TraceLine::calculateBifFeatures()
 	{
 		this->daughterRatio = D2Radii / D1Radii;
 	}
-	double PDRatio1 = 0, PDRatio2 = 0;
-	PDRatio1 = D1Radii / BranchBitRadii;
-	PDRatio2 = D2Radii / BranchBitRadii;
-	if (PDRatio1 > PDRatio2)
-	{
-		this->parentDaughterRatio = PDRatio1;
-	}
-	else
-	{
-		this->parentDaughterRatio = PDRatio2;
-	}
+	
+	Daughter1->SetParentDaughterRatio( D1Radii / BranchBitRadii);
+	Daughter2->SetParentDaughterRatio( D2Radii / BranchBitRadii);
+	this->HillmanThreshold = .5*BranchBitRadii + .25*D1Radii +.25*D2Radii;
+
 	//this->rallPower = pow ((1 + pow (ratio, power)), -1/power);	//need to solve ratio and power
 	//this->Pk = this->CalculatePk(BranchBitRadii, D1Radii, D2Radii, this->rallPower);
 	this->Pk_classic = this->CalculatePk(BranchBitRadii, D1Radii, D2Radii, 1.5);

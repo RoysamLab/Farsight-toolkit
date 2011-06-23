@@ -50,6 +50,8 @@ private:
 	float sectionAreaTotal, SectionAreaMin, SectionAreaMax, surfaceAreaTotal, SurfaceAreaMax, SurfaceAreaMin;
 	double somaVolume, somaSurface, SomaRadii, DiamThresholdTotal, DiamThresholdMin, DiamThresholdMax;
 	double TotalLastParentDiam, LastParentDiamMin, LastParentDiamMax;
+	double daughterRatio, parentDaughterRatio, partitionAsymmetry, rallPower, Pk, Pk_2, Pk_classic;
+	double BifAmplLocal, BifAmpRemote, BifTiltLocal, BifTiltRemote;
 	std::string FileName;
 	std::set<long int> IDs;
 	//TraceBit rootBit;

@@ -58,12 +58,14 @@ public:
 	double GetVolume() {return volume;}
 	double GetBurkTaper() {return BurkTaper;}
 	double GetHillmanTaper() {return HillmanTaper;}
+	double GetHillmanThreshold() {return HillmanThreshold;}
 	double GetSectionArea() {return sectionArea;}
 	double GetSurfaceArea() {return surfaceArea;}
 	double GetdaughterRatio() {return daughterRatio;}
 	double GetparentDaughterRatio() {return parentDaughterRatio;}
+	void SetParentDaughterRatio(double Ratio){parentDaughterRatio = Ratio;}
 	double GetpartitionAsymmetry() {return partitionAsymmetry;}
-	double GetrallPower() {return rallPower;}
+	double GetRallPower() {return rallPower;}
 	double GetPk() {return Pk;}
 	double GetPk_2() {return Pk_2;}
 	double GetPk_classic() {return Pk_classic;}
@@ -123,7 +125,7 @@ private:
 	double daughterRatio, parentDaughterRatio, partitionAsymmetry, rallPower, Pk, Pk_2, Pk_classic;
 	double BifAmplLocal, BifAmpRemote, BifTiltLocal, BifTiltRemote;
 	double traceColor, radii, sectionArea, length, volume, surfaceArea, PathLength, EuclidianD, DistToParent;
-	double BitDensity, BurkTaper, HillmanTaper;
+	double BitDensity, BurkTaper, HillmanTaper, HillmanThreshold;
 	char * FileName; 
 	int m_id, root, level, terminalDegree;
 	std::vector<unsigned int> m_markers;

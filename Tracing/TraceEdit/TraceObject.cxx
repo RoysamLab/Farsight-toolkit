@@ -313,6 +313,10 @@ int TraceObject::LinearTraceLinesRecursive(std::vector<TraceLine*> &allLine, Tra
 	{
 		terminalDegree += this->LinearTraceLinesRecursive(allLine, (*tline->GetBranchPointer())[counter]);
 	}
+	if (tline->GetBranchPointer()->size() == 2)
+	{
+		tline->calculateBifFeatures();
+	}
 	tline->setTerminalDegree(terminalDegree);
 	return terminalDegree;
 }
