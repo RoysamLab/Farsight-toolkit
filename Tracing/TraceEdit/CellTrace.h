@@ -50,8 +50,19 @@ private:
 	float sectionAreaTotal, SectionAreaMin, SectionAreaMax, surfaceAreaTotal, SurfaceAreaMax, SurfaceAreaMin;
 	double somaVolume, somaSurface, SomaRadii, DiamThresholdTotal, DiamThresholdMin, DiamThresholdMax;
 	double TotalLastParentDiam, LastParentDiamMin, LastParentDiamMax;
+
 	double daughterRatio, parentDaughterRatio, partitionAsymmetry, rallPower, Pk, Pk_2, Pk_classic;
 	double BifAmplLocal, BifAmpRemote, BifTiltLocal, BifTiltRemote;
+
+	double daughterRatioMin, parentDaughterRatioMin, partitionAsymmetryMin, rallPowerMin, PkMin, Pk_2Min, Pk_classicMin;
+	double BifAmplLocalMin, BifAmpRemoteMin, BifTiltLocalMin, BifTiltRemoteMin;
+
+	double daughterRatioMax, parentDaughterRatioMax, partitionAsymmetryMax, rallPowerMax, PkMax, Pk_2Max, Pk_classicMax;
+	double BifAmplLocalMax, BifAmpRemoteMax, BifTiltLocalMax, BifTiltRemoteMax;
+
+	//double daughterRatioAverage, parentDaughterRatioAverage, partitionAsymmetryAverage, rallPowerAverage, PkAverage, Pk_2Average, Pk_classicAverage;
+	//double BifAmplLocalAverage, BifAmpRemoteAverage, BifTiltLocalAverage, BifTiltRemoteAverage;
+
 	std::string FileName;
 	std::set<long int> IDs;
 	//TraceBit rootBit;

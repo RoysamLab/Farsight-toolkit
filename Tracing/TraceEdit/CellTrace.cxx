@@ -178,40 +178,75 @@ void CellTrace::clearAll()
 	this->stems = 0;
 	this->branchPoints = 0;
 	this->terminalTips = 0;
+
 	this->MinTerminalLevel = 100; //something large for initial value
 	this->MaxTerminalLevel = 0;
 	this->SumTerminalLevel = 0;
+
 	this->minTerminalPathLength = 100;
 	this->maxTerminalPathLength=0;
+	this->TerminalPathLength = 0;
+
 	this->TotalEuclidianPath = 0;
 	this->TotalPathLength = 0;
 	this->TotalVolume = 0;
-	this->TerminalPathLength = 0;
 	this->FileName = "file";
+
 	this->somaX = 0;
 	this->somaY = 0;
 	this->somaZ = 0;
+
 	this->maxX = 0;
 	this->maxY = 0;
 	this->maxZ = 0;
+
 	this->minX = 100;
 	this->minY = 100;
 	this->minZ = 100;
+
 	this->sectionAreaTotal = 0;
 	this->SectionAreaMax = 0;
 	this->SectionAreaMin = 100;
+
 	this->surfaceAreaTotal = 0;
 	this->SurfaceAreaMax = 0;
 	this->SurfaceAreaMin = 100;
+
 	this->DiamThresholdTotal = 0;
 	this->DiamThresholdMax = 0;
 	this->DiamThresholdMin = 100;
+
 	this->TotalLastParentDiam = 0;
 	this->LastParentDiamMax = 0;
 	this->LastParentDiamMin = 100;
+
 	this->somaVolume= 0;
 	this->somaSurface = 0;
 	this->SomaRadii = 0;
+
+	this->daughterRatio = 0;
+	this->daughterRatioMin = 100;
+	this->daughterRatioMax = 0;
+
+	this->parentDaughterRatio = 0;
+	this->parentDaughterRatioMin = 100;
+	this->parentDaughterRatioMax = 0;
+
+	this->partitionAsymmetry = 0;
+	this->partitionAsymmetryMin = 100;
+	this->partitionAsymmetryMax = 0;
+
+	this->rallPower = 0;
+	this->rallPowerMin = 100;
+	this->rallPowerMax = 0;
+
+	this->Pk = 0;
+	this->PkMin = 100;
+	this->PkMax = 0;
+
+	this->Pk_2 = 0;
+	this->Pk_2Min = 100;
+	this->PkMax = 0;
 }
 vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 {
