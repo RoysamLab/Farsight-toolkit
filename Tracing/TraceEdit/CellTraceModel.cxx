@@ -47,6 +47,7 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Stems");
 	this->headers.push_back("Branch Pt");
 	this->headers.push_back("Leaf Nodes");
+
 	this->headers.push_back("Min Leaf Level");
 	this->headers.push_back("Min Leaf Path Length");
 	this->headers.push_back("Max Leaf Level");
@@ -57,21 +58,34 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Average Segment Euclidian Length");
 	this->headers.push_back("Total Path Length");
 	this->headers.push_back("Average Segment Path Length");
+
 	this->headers.push_back("Average Diameter Threshold");
 	this->headers.push_back("Diameter Threshold Max");
 	this->headers.push_back("Diameter Threshold Min");
 	this->headers.push_back("Average Parent Diameter");
 	this->headers.push_back("Parent Diameter Max");
 	this->headers.push_back("Parent Diameter Min");
+
 	this->headers.push_back("Total Volume");
+	this->headers.push_back("Min Segment Volume");
+	this->headers.push_back("Max Segment Volume");
 	this->headers.push_back("Average Segment Volume");
 	this->headers.push_back("Total Surface Area");
 	this->headers.push_back("Max Segment Surface Area");
 	this->headers.push_back("Average Segment Surface Area");
 	this->headers.push_back("Min Segment Surface Area");
+
+	this->headers.push_back("Average Local Bifurcation Amp");
+	this->headers.push_back("Min Local Bifurcation Amp");
+	this->headers.push_back("Max Local Bifurcation Amp");
+	this->headers.push_back("Average Local Bifurcation Tilt");
+	this->headers.push_back("Min Local Bifurcation Tilt");
+	this->headers.push_back("Max Local Bifurcation Tilt");
+
 	this->headers.push_back("Width X");
 	this->headers.push_back("Height Y");
 	this->headers.push_back("Depth Z");
+
 	this->headers.push_back("Soma X");
 	this->headers.push_back("Soma Y");
 	this->headers.push_back("Soma Z");
@@ -80,6 +94,7 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Soma Surface Area");
 	this->headers.push_back("Trace File");
 	int numHeaders = (int)this->headers.size();
+	std::cout<<numHeaders << "\t features computed\n";
 	vtkSmartPointer<vtkVariantArray> column = vtkSmartPointer<vtkVariantArray>::New();
 	for(int i=0; i < numHeaders; ++i)
     {		

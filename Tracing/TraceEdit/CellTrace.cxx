@@ -49,21 +49,16 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 	for(i = 0; i < this->segments.size(); i++)
 	{
 		this->IDs.insert(this->segments[i]->GetId());
-		this->TotalPathLength += this->segments[i]->GetLength();
-		this->TotalVolume += this->segments[i]->GetVolume();
-		this->TotalEuclidianPath += this->segments[i]->GetEuclidianLength();
-		this->surfaceAreaTotal += this->segments[i]->GetSurfaceArea();
-		if (this->SurfaceAreaMax < this->segments[i]->GetSurfaceArea())
-		{
-			this->SurfaceAreaMax = this->segments[i]->GetSurfaceArea();
-		}else if (this->SurfaceAreaMin > this->segments[i]->GetSurfaceArea())
-		{
-			this->SurfaceAreaMin = this->segments[i]->GetSurfaceArea();
-		}
+		this->MaxMin(this->segments[i]->GetLength(), this->TotalPathLength, this->minPathLength, this->MaxPathLength);
+		this->MaxMin(this->segments[i]->GetVolume(), this->TotalVolume, this->minSegmentVolume, this->maxSegmentVolume);
+		this->MaxMin(this->segments[i]->GetEuclidianLength(),this->TotalEuclidianPath, this->MinEuclidianPath, this->MaxEuclidianPath);
+		this->MaxMin(this->segments[i]->GetSurfaceArea(), this->surfaceAreaTotal, this->SurfaceAreaMin, this->SurfaceAreaMax);
 		this->MaxMin(this->segments[i]->GetSectionArea(), this->sectionAreaTotal, this->SectionAreaMin, this->SectionAreaMax);
 		int tempLevel = this->segments[i]->GetLevel();
 		if (this->segments[i]->isLeaf())
 		{
+			this->terminalTips++;
+
 			TraceBit leafBit = this->segments[i]->GetTraceBitsPointer()->back();
 			TraceBit leadBit = this->segments[i]->GetTraceBitsPointer()->front();
 			if(!this->segments[i]->isRoot())
@@ -95,7 +90,6 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 			this->MaxMin(lx, total, this->minX, this->maxX);
 			this->MaxMin(ly, total, this->minY, this->maxY);
 			this->MaxMin(lz, total, this->minZ, this->maxZ);
-			this->terminalTips++;
 			this->MaxMin(tempLevel, this->SumTerminalLevel, this->MinTerminalLevel, this->MaxTerminalLevel);
 			this->MaxMin(this->segments[i]->GetPathLength(), this->TerminalPathLength, this->minTerminalPathLength, this->maxTerminalPathLength);
 			
@@ -287,6 +281,11 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->stems);
 	CellData->InsertNextValue(this->branchPoints);
 	CellData->InsertNextValue(this->terminalTips);
+	if (this->branchPoints == 0) 
+	{
+		this->branchPoints = 1;
+	}//protect from divide by zero
+
 	CellData->InsertNextValue(this->MinTerminalLevel);
 	CellData->InsertNextValue(this->minTerminalPathLength);
 	CellData->InsertNextValue(this->MaxTerminalLevel);
@@ -297,21 +296,34 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->TotalEuclidianPath/this->NumSegments);//average segment euclidian length
 	CellData->InsertNextValue(this->TotalPathLength);
 	CellData->InsertNextValue(this->TotalPathLength/this->NumSegments);//average segment length
+
 	CellData->InsertNextValue(this->DiamThresholdTotal/this->terminalTips);
 	CellData->InsertNextValue(this->DiamThresholdMax);
 	CellData->InsertNextValue(this->DiamThresholdMin);
 	CellData->InsertNextValue(this->TotalLastParentDiam/this->terminalTips);
 	CellData->InsertNextValue(this->LastParentDiamMax);
 	CellData->InsertNextValue(this->LastParentDiamMin);
+
 	CellData->InsertNextValue(this->TotalVolume);
 	CellData->InsertNextValue(this->TotalVolume/this->NumSegments);////average segment Volume
+	CellData->InsertNextValue(this->minSegmentVolume);
+	CellData->InsertNextValue(this->maxSegmentVolume);
 	CellData->InsertNextValue(this->surfaceAreaTotal);
 	CellData->InsertNextValue(this->SurfaceAreaMax);
 	CellData->InsertNextValue(this->surfaceAreaTotal/this->NumSegments);
 	CellData->InsertNextValue(this->SurfaceAreaMin);
+
+	CellData->InsertNextValue(this->BifAmplLocal / this->branchPoints);
+	CellData->InsertNextValue(this->BifAmplLocalMin);
+	CellData->InsertNextValue(this->BifAmplLocalMax);
+	CellData->InsertNextValue(this->BifTiltLocal/ this->branchPoints);
+	CellData->InsertNextValue(this->BifTiltLocalMin);
+	CellData->InsertNextValue(this->BifTiltLocalMax);
+
 	CellData->InsertNextValue(this->maxX - this->minX);//Width
 	CellData->InsertNextValue(this->maxY - this->minY);//Length
 	CellData->InsertNextValue(this->maxZ - this->minZ);//Height
+
 	CellData->InsertNextValue(this->somaX);
 	CellData->InsertNextValue(this->somaY);
 	CellData->InsertNextValue(this->somaZ);
