@@ -60,7 +60,7 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 		{
 			this->SurfaceAreaMin = this->segments[i]->GetSurfaceArea();
 		}
-		this->sectionAreaTotal += this->segments[i]->GetSectionArea();
+		this->MaxMin(this->segments[i]->GetSectionArea(), this->sectionAreaTotal, this->SectionAreaMin, this->SectionAreaMax);
 		int tempLevel = this->segments[i]->GetLevel();
 		if (this->segments[i]->isLeaf())
 		{
@@ -91,55 +91,28 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 			float lx = leafBit.x;
 			float ly = leafBit.y;
 			float lz = leafBit.z;
-
-			if (lx > this->maxX)
-			{
-				this->maxX = lx;
-			}else if ( lx < this->minX)
-			{
-				this->minX = lx;
-			}
-
-			if (ly > this->maxY)
-			{
-				this->maxY = ly;
-			}else if ( ly < this->minY)
-			{
-				this->minY = ly;
-			}
-
-			if (lz > this->maxZ)
-			{
-				this->maxZ = lz;
-			}else if ( lz < this->minZ)
-			{
-				this->minZ = lz;
-			}
-
+			float total; //just so things work
+			this->MaxMin(lx, total, this->minX, this->maxX);
+			this->MaxMin(ly, total, this->minY, this->maxY);
+			this->MaxMin(lz, total, this->minZ, this->maxZ);
 			this->terminalTips++;
-			this->SumTerminalLevel += tempLevel;
-			if(tempLevel > this->MaxTerminalLevel)
-			{
-				this->MaxTerminalLevel = tempLevel;
-				
-			}else if(tempLevel < this->MinTerminalLevel)
-			{
-				this->MinTerminalLevel = tempLevel;
-			}
+			this->MaxMin(tempLevel, this->SumTerminalLevel, this->MinTerminalLevel, this->MaxTerminalLevel);
 			this->MaxMin(this->segments[i]->GetPathLength(), this->TerminalPathLength, this->minTerminalPathLength, this->maxTerminalPathLength);
-			/*this->TerminalPathLength += this->segments[i]->GetPathLength();
-			if (this->maxTerminalPathLength < this->segments[i]->GetPathLength())
-			{
-				this->maxTerminalPathLength = this->segments[i]->GetPathLength();
-			}else if(this->minTerminalPathLength > this->segments[i]->GetPathLength())
-			{
-				this->minTerminalPathLength = this->segments[i]->GetPathLength();
-			}*/
+			
 		}//end if leaf
 		else if(!this->segments[i]->isRoot())
 		{
 			this->branchPoints++;
-		}
+			this->MaxMin(this->segments[i]->GetpartitionAsymmetry(), this->partitionAsymmetry, this->partitionAsymmetryMin, this->partitionAsymmetryMax);
+			this->MaxMin(this->segments[i]->GetdaughterRatio(), this->daughterRatio, this->daughterRatioMin, this->daughterRatioMax);
+			this->MaxMin(this->segments[i]->GetparentDaughterRatio(), this->parentDaughterRatio, this->parentDaughterRatioMin, this->parentDaughterRatioMax);
+			this->MaxMin(this->segments[i]->GetPk_2(), this->Pk_2, this->Pk_2Min, this->Pk_2Max);
+			this->MaxMin(this->segments[i]->GetPk_classic(), this->Pk_classic, this->Pk_classicMin, this->Pk_classicMax);
+			this->MaxMin(this->segments[i]->GetBifAmplLocal(), this->BifAmplLocal, this->BifAmplLocalMin, this->BifAmplLocalMax);
+			this->MaxMin(this->segments[i]->GetBifAmpRemote(), this->BifAmpRemote, this->BifAmpRemoteMin, this->BifAmpRemoteMax);
+			this->MaxMin(this->segments[i]->GetBifTiltLocal(), this->BifTiltLocal, this->BifTiltLocalMin, this->BifTiltLocalMax);
+			this->MaxMin(this->segments[i]->GetBifTiltRemote(), this->BifTiltRemote, this->BifTiltRemoteMin, this->BifTiltRemoteMax);
+		}//end bifurcation features
 	}//end for segment size
 }
 void CellTrace::setFileName(std::string newFileName)
@@ -285,6 +258,17 @@ void CellTrace::MaxMin(double NewValue, double &total, double &Min, double &Max)
 	}
 }
 void CellTrace::MaxMin(float NewValue, float &total, float &Min, float &Max)
+{
+	total += NewValue;
+	if (NewValue > Max)
+	{
+		Max = NewValue;
+	}else if (NewValue < Min)
+	{
+		Min = NewValue;
+	}
+}
+void CellTrace::MaxMin(int NewValue, int &total, int &Min, int &Max)
 {
 	total += NewValue;
 	if (NewValue > Max)

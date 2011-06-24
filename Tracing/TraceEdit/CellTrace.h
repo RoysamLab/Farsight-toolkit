@@ -44,6 +44,7 @@ private:
 	void clearAll();
 	void MaxMin(double NewValue, double &total, double &Min, double &Max);
 	void MaxMin(float NewValue, float &total, float &Min, float &Max);
+	void MaxMin(int NewValue, int &total, int &Min, int &Max);
 	std::vector<TraceLine*>  segments;
 	int NumSegments, stems, branchPoints,terminalTips, MinTerminalLevel, MaxTerminalLevel, SumTerminalLevel;
 	double TotalPathLength, TotalVolume, TotalEuclidianPath, TerminalPathLength;
