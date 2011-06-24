@@ -642,7 +642,7 @@ double TraceLine::Angle(TraceBit bit1, TraceBit vertex, TraceBit bit2)
 	{//prevent nan rounding errors
 		NewAngle = 0;
 	}
-	return NewAngle;
+	return (NewAngle *180 )/PI;
 }
 bool TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
                           double &maxdist, double &angle) 

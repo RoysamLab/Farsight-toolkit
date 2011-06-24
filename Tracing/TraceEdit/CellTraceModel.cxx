@@ -80,7 +80,14 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Max Local Bifurcation Amp");
 	this->headers.push_back("Average Local Bifurcation Tilt");
 	this->headers.push_back("Min Local Bifurcation Tilt");
-	this->headers.push_back("Max Local Bifurcation Tilt");
+	this->headers.push_back("Max Local Bifurcation Tilt");	
+	
+	this->headers.push_back("Average Remote Bifurcation Amp");
+	this->headers.push_back("Min Remote Bifurcation Amp");
+	this->headers.push_back("Max Remote Bifurcation Amp");
+	this->headers.push_back("Average Remote Bifurcation Tilt");
+	this->headers.push_back("Min Remote Bifurcation Tilt");
+	this->headers.push_back("Max Remote Bifurcation Tilt");
 
 	this->headers.push_back("Width X");
 	this->headers.push_back("Height Y");

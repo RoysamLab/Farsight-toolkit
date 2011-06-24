@@ -225,19 +225,19 @@ void CellTrace::clearAll()
 	this->Pk_classicMax = 0;
 
 	this->BifAmplLocal = 0;
-	this->BifAmplLocalMin = 100;
+	this->BifAmplLocalMin = 180;
 	this->BifAmplLocalMax = 0;
 
 	this->BifAmpRemote = 0;
-	this->BifAmpRemoteMin = 100;
+	this->BifAmpRemoteMin = 180;
 	this->BifAmpRemoteMax = 0;
 
 	this->BifTiltLocal = 0;
-	this->BifTiltLocalMin = 100;
+	this->BifTiltLocalMin = 180;
 	this->BifTiltLocalMax = 0;
 
 	this->BifTiltRemote = 0;
-	this->BifTiltRemoteMin = 100;
+	this->BifTiltRemoteMin = 180;
 	this->BifTiltRemoteMax = 0;
 }
 void CellTrace::MaxMin(double NewValue, double &total, double &Min, double &Max)
@@ -319,6 +319,13 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->BifTiltLocal/ this->branchPoints);
 	CellData->InsertNextValue(this->BifTiltLocalMin);
 	CellData->InsertNextValue(this->BifTiltLocalMax);
+
+	CellData->InsertNextValue(this->BifAmpRemote / this->branchPoints);
+	CellData->InsertNextValue(this->BifAmpRemoteMin);
+	CellData->InsertNextValue(this->BifAmpRemoteMax);
+	CellData->InsertNextValue(this->BifTiltRemote / this->branchPoints);
+	CellData->InsertNextValue(this->BifTiltRemoteMin);
+	CellData->InsertNextValue(this->BifTiltRemoteMax);
 
 	CellData->InsertNextValue(this->maxX - this->minX);//Width
 	CellData->InsertNextValue(this->maxY - this->minY);//Length
