@@ -72,7 +72,9 @@ public:
 	double GetBifAmplLocal() {return BifAmplLocal;}
 	double GetBifAmpRemote() {return BifAmpRemote;}
 	double GetBifTiltLocal() {return BifTiltLocal;}
+	void setBifTiltLocal(double NewBifTiltLocal) {BifTiltLocal = NewBifTiltLocal;}
 	double GetBifTiltRemote() {return BifTiltRemote;}
+	void setBifTiltRemote(double NewBifTiltRemote) { BifTiltRemote = NewBifTiltRemote;}
 	void setRoot(int RootID, int traceLevel, double parentPath);
 	void AddBranch(TraceLine* b);
 	TraceLine *GetBranch1();

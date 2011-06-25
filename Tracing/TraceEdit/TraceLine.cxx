@@ -227,27 +227,27 @@ void TraceLine::calculateBifFeatures()
 	this->BifAmplLocal = this->Angle(D1F, BranchBit, D2F);
 	this->BifAmpRemote = this->Angle(D1B, BranchBit, D2B);
 
-	double BifTiltLocal1 = this->Angle(previousBit, BranchBit, D1F);
-	double BifTiltLocal2 = this->Angle(previousBit, BranchBit, D2F);
-	if (BifTiltLocal1 < BifTiltLocal2)
-	{
-		this->BifTiltLocal = BifTiltLocal1;
-	}
-	else
-	{
-		this->BifTiltLocal = BifTiltLocal2;
-	}
+	Daughter1->setBifTiltLocal( this->Angle(previousBit, BranchBit, D1F));
+	Daughter2->setBifTiltLocal( this->Angle(previousBit, BranchBit, D2F));
+	//if (BifTiltLocal1 < BifTiltLocal2)
+	//{
+	//	this->BifTiltLocal = BifTiltLocal1;
+	//}
+	//else
+	//{
+	//	this->BifTiltLocal = BifTiltLocal2;
+	//}
 
-	double BifTiltRemote1 = this->Angle(previousBit, BranchBit, D1B);
-	double BifTiltRemote2 = this->Angle(previousBit, BranchBit, D2B);
-	if (BifTiltRemote1 < BifTiltRemote2)
+	Daughter1->setBifTiltRemote(this->Angle(previousBit, BranchBit, D1B));
+	Daughter2->setBifTiltRemote(this->Angle(previousBit, BranchBit, D2B));
+	/*if (BifTiltRemote1 < BifTiltRemote2)
 	{
 		this->BifTiltRemote = BifTiltRemote1;
 	}
 	else
 	{
 		this->BifTiltRemote = BifTiltRemote2;
-	}
+	}*/
 }
 void TraceLine::setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData)
 {

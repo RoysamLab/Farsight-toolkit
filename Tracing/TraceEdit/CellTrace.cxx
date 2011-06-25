@@ -104,8 +104,8 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 			this->MaxMin(this->segments[i]->GetPk_classic(), this->Pk_classic, this->Pk_classicMin, this->Pk_classicMax);
 			this->MaxMin(this->segments[i]->GetBifAmplLocal(), this->BifAmplLocal, this->BifAmplLocalMin, this->BifAmplLocalMax);
 			this->MaxMin(this->segments[i]->GetBifAmpRemote(), this->BifAmpRemote, this->BifAmpRemoteMin, this->BifAmpRemoteMax);
-			this->MaxMin(this->segments[i]->GetBifTiltLocal(), this->BifTiltLocal, this->BifTiltLocalMin, this->BifTiltLocalMax);
-			this->MaxMin(this->segments[i]->GetBifTiltRemote(), this->BifTiltRemote, this->BifTiltRemoteMin, this->BifTiltRemoteMax);
+			this->MaxMin(this->segments[i]->GetBranch1()->GetBifTiltLocal(), this->BifTiltLocal, this->BifTiltLocalMin, this->BifTiltLocalMax);
+			this->MaxMin(this->segments[i]->GetBranch2()->GetBifTiltRemote(), this->BifTiltRemote, this->BifTiltRemoteMin, this->BifTiltRemoteMax);
 		}//end bifurcation features
 	}//end for segment size
 }
@@ -160,8 +160,17 @@ void CellTrace::clearAll()
 	this->TerminalPathLength = 0;
 
 	this->TotalEuclidianPath = 0;
+	this->MinEuclidianPath = 1000;
+	this->MaxEuclidianPath = 0;
+
 	this->TotalPathLength = 0;
+	this->minPathLength = 1000;
+	this->MaxPathLength = 0;
+
 	this->TotalVolume = 0;
+	this->maxSegmentVolume = 0;
+	this->minSegmentVolume = 1000;
+
 	this->FileName = "file";
 
 	this->somaX = 0;
@@ -246,7 +255,8 @@ void CellTrace::MaxMin(double NewValue, double &total, double &Min, double &Max)
 	if (NewValue > Max)
 	{
 		Max = NewValue;
-	}else if (NewValue < Min)
+	}
+	if (NewValue < Min)
 	{
 		Min = NewValue;
 	}
@@ -257,7 +267,8 @@ void CellTrace::MaxMin(float NewValue, float &total, float &Min, float &Max)
 	if (NewValue > Max)
 	{
 		Max = NewValue;
-	}else if (NewValue < Min)
+	}
+	if (NewValue < Min)
 	{
 		Min = NewValue;
 	}
@@ -268,7 +279,8 @@ void CellTrace::MaxMin(int NewValue, int &total, int &Min, int &Max)
 	if (NewValue > Max)
 	{
 		Max = NewValue;
-	}else if (NewValue < Min)
+	}
+	if (NewValue < Min)
 	{
 		Min = NewValue;
 	}
