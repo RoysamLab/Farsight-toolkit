@@ -94,6 +94,9 @@ public:
 	NucleusEditor(QWidget * parent = 0, Qt::WindowFlags flags = 0);
 	~NucleusEditor();
 	void loadModelFromFile(std::string file_name);
+	void getColorInfo(int numChann,std::vector<std::string> *channelNames,std::vector<unsigned char> *channelColors);
+	void getColor(int numChann,std::vector<unsigned char> *channelColors);
+	void loadTableSeries(QString fileName);
 
 protected:
 	void closeEvent(QCloseEvent *event);
@@ -101,10 +104,18 @@ protected:
 protected slots:
 	void setMouseStatus(int,int,int,int,list<int>);
 	void EnableModels() {modelsMenu->setEnabled(true);};
-
 	//Loading:
 	void askLoadImage(void);
 	void loadImage(QString fileName);
+	//Amin Loading
+	void askload5DImage(void);
+	void load5DImage(std::vector<QStringList> filesChannTimeList, int numChann);
+
+	void askload5DLabelImage(void);
+	void load5DLabelImage(QStringList labelfilesChannTimeList);
+	void update5DTable(void);
+
+
 	void askLoadResult(void);
 	void loadResult(QString fileName);
 	void askLoadTable(void);
@@ -120,6 +131,7 @@ protected slots:
 	void abortProcess(void);
 	void continueProcess(void);
 	void deleteProcess(void);
+
 	//Saving:
 	bool saveProject(void);
 	bool askSaveImage(void);
@@ -212,6 +224,8 @@ protected slots:
 	void startTraining();
 	void startKPLS();
 
+	//******************************************************
+	//5D Views Menu
 	void about(void);
 
 	void menusEnabled(bool val);
@@ -241,6 +255,11 @@ protected:
 
 	QMenu *fileMenu;
 	QAction *loadImageAction;
+	//Amin: 
+	QAction *load5DImageAction;
+	QAction *load5DLabelImageAction;
+
+	//
 	QAction *loadLabelAction;
 	QAction *loadTableAction;
 	QAction *loadProjectAction;
@@ -320,6 +339,9 @@ protected:
     QAction *inRadiusNeighborsAction;
 	QAction *queryViewsOffAction;
 
+	//For 5D Image Menu
+	QMenu *view5DMenu;
+
 	//************************************************************************
 	//Preprocess menu
 	QMenu *PreprocessMenu;
@@ -348,6 +370,10 @@ protected:
 	ftk::ProjectProcessor *pProc;				//My project processor
 	ftk::Image::Pointer myImg;					//My currently visible image
 	ftk::Image::Pointer labImg;					//Currently visible label image
+	//Amin
+	ftk::Image::PtrMode mode;
+	std::vector<QStringList> * filesChannTimeList;
+
 	ObjectSelection * selection;				//object selection list
 	vtkSmartPointer<vtkTable> table;			//table
 	vtkSmartPointer<vtkTable> NucAdjTable;		//Nuclear Adjacency Table
@@ -376,6 +402,11 @@ protected:
 	std::vector<std::string> class_names;
 	int trainName;
 	int predictName;
+
+	// Loads all the tables of the time series
+	std::vector< vtkSmartPointer<vtkTable> > tableVector;
+
+
 };
 
 class ParamsFileDialog : public QDialog

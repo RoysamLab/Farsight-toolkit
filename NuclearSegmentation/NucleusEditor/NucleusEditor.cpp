@@ -39,6 +39,8 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	segView = new LabelImageViewQT(&colorItemsMap);
 	connect(segView, SIGNAL(mouseAt(int,int,int, int,list<int>)), this, SLOT(setMouseStatus(int,int,int, int, list<int>)));
 	connect(segView, SIGNAL(autoMerge()), this, SLOT(mergeCells()));
+	connect(segView, SIGNAL(emitTimeChanged()), this, SLOT(update5DTable()));
+
 	selection = new ObjectSelection();
 	this->setCentralWidget(segView);
 
@@ -182,7 +184,7 @@ void NucleusEditor::createProcessToolBar()
 /*     modules should be defined as "private" operators in the main class.    */
 /*     The actual routines performing the operations (e.g., an image          */
 /*     thresholding operation) must be accessed from within the called module.*/
-/*	   Finally, after all these action's, we bind them to a "QActionGroup".       */
+/*	   Finally, after all these action's, we bind them to a "QActionGroup".   */
 /*----------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------*/
 void NucleusEditor::createMenus()
@@ -201,6 +203,16 @@ void NucleusEditor::createMenus()
 	loadImageAction->setShortcut(tr("Ctrl+O"));
 	connect(loadImageAction, SIGNAL(triggered()), this, SLOT(askLoadImage()));
 	fileMenu->addAction(loadImageAction);
+
+	//Amin
+	load5DImageAction = new QAction(tr("Load 5D Images"), this);
+	connect(load5DImageAction, SIGNAL(triggered()), this, SLOT(askload5DImage()));
+	fileMenu->addAction(load5DImageAction);
+
+    load5DLabelImageAction = new QAction(tr("Load 5D Labels"), this);
+	connect(load5DLabelImageAction, SIGNAL(triggered()), this, SLOT(askload5DLabelImage()));
+	fileMenu->addAction(load5DLabelImageAction);
+
 
 	loadLabelAction = new QAction(tr("Load Result..."), this);
 	loadLabelAction->setStatusTip(tr("Load a result image into the image browser"));
@@ -300,23 +312,23 @@ void NucleusEditor::createMenus()
 	connect(showCentroidsAction, SIGNAL(triggered()), this, SLOT(toggleCentroids()));
 	viewMenu->addAction(showCentroidsAction);
 
-	adjacencyMenu = viewMenu->addMenu(tr("Show Adjacency"));
+	//adjacencyMenu = viewMenu->addMenu(tr("Show Adjacency"));
 
-	showNucAdjAction = new QAction(tr("Nuclear"), this);
-	showNucAdjAction->setCheckable(true);
-	showNucAdjAction->setChecked( segView->GetNucAdjVisible() );
-	showNucAdjAction->setStatusTip(tr("Show adjacency of nuclei"));
-	showNucAdjAction->setShortcut(tr("Shift+N"));
-	connect(showNucAdjAction, SIGNAL(triggered()), this, SLOT(toggleNucAdjacency()));
-	adjacencyMenu->addAction(showNucAdjAction);
+	//showNucAdjAction = new QAction(tr("Nuclear"), this);
+	//showNucAdjAction->setCheckable(true);
+	//showNucAdjAction->setChecked( segView->GetNucAdjVisible() );
+	//showNucAdjAction->setStatusTip(tr("Show adjacency of nuclei"));
+	//showNucAdjAction->setShortcut(tr("Shift+N"));
+	//connect(showNucAdjAction, SIGNAL(triggered()), this, SLOT(toggleNucAdjacency()));
+	//adjacencyMenu->addAction(showNucAdjAction);
 
-	showCellAdjAction = new QAction(tr("Cellular"), this);
-	showCellAdjAction->setCheckable(true);
-	showCellAdjAction->setChecked( segView->GetCellAdjVisible() );
-	showCellAdjAction->setStatusTip(tr("Show adjacency of cells"));
-	showCellAdjAction->setShortcut(tr("Shift+C"));
-	connect(showCellAdjAction, SIGNAL(triggered()), this, SLOT(toggleCellAdjacency()));
-	adjacencyMenu->addAction(showCellAdjAction);
+	//showCellAdjAction = new QAction(tr("Cellular"), this);
+	//showCellAdjAction->setCheckable(true);
+	//showCellAdjAction->setChecked( segView->GetCellAdjVisible() );
+	//showCellAdjAction->setStatusTip(tr("Show adjacency of cells"));
+	//showCellAdjAction->setShortcut(tr("Shift+C"));
+	//connect(showCellAdjAction, SIGNAL(triggered()), this, SLOT(toggleCellAdjacency()));
+	//adjacencyMenu->addAction(showCellAdjAction);
 
 	zoomMenu = viewMenu->addMenu(tr("Zoom"));
 
@@ -352,15 +364,15 @@ void NucleusEditor::createMenus()
 	connect(newHistoAction,SIGNAL(triggered()),this,SLOT(CreateNewHistoWindow()));
 	viewMenu->addAction(newHistoAction);
 
-	ragMenu = viewMenu->addMenu(tr("New Region Adjacency Graph"));
+	//ragMenu = viewMenu->addMenu(tr("New Region Adjacency Graph"));
 
-	nucRagAction = new QAction(tr("Nuclear Adjacency Graph"), this);	
-	connect(nucRagAction, SIGNAL(triggered()), this, SLOT(CreateNewNucRAG()));
-	ragMenu->addAction(nucRagAction);
+	//nucRagAction = new QAction(tr("Nuclear Adjacency Graph"), this);	
+	//connect(nucRagAction, SIGNAL(triggered()), this, SLOT(CreateNewNucRAG()));
+	//ragMenu->addAction(nucRagAction);
 
-	cellRagAction = new QAction(tr("Cellular Adjacency Graph"), this);
-	connect(cellRagAction, SIGNAL(triggered()), this, SLOT(CreateNewCellRAG()));
-	ragMenu->addAction(cellRagAction);
+	//cellRagAction = new QAction(tr("Cellular Adjacency Graph"), this);
+	//connect(cellRagAction, SIGNAL(triggered()), this, SLOT(CreateNewCellRAG()));
+	//ragMenu->addAction(cellRagAction);
 
 	imageIntensityAction = new QAction(tr("Adjust Image Intensity"), this);
 	imageIntensityAction->setStatusTip(tr("Allows modification of image intensity"));
@@ -491,8 +503,6 @@ void NucleusEditor::createMenus()
 	connect(exclusionAction, SIGNAL(triggered()), this, SLOT(applyExclusionMargin()));
 	editMenu->addAction(exclusionAction);
 
-	// PRE-PROCESSING:
-	createPreprocessingMenu();
 
 	// MODELS MENU
 	modelsMenu = menuBar()->addMenu(tr("&Models"));
@@ -505,21 +515,21 @@ void NucleusEditor::createMenus()
     connect(appendTrainingAction, SIGNAL(triggered()), this, SLOT(appendTrainer()));
     modelsMenu->addAction(appendTrainingAction);
 
-	//QUERIES MENU
-	queriesMenu = menuBar()->addMenu(tr("Queries"));
+	////QUERIES MENU
+	//queriesMenu = menuBar()->addMenu(tr("Queries"));
 
-	kNearestNeighborsAction = new QAction(tr("Query K Nearest Neighbors..."), this);
-    connect(kNearestNeighborsAction, SIGNAL(triggered()), this, SLOT(queryKNearest()));
-    queriesMenu->addAction(kNearestNeighborsAction);
-    
-    inRadiusNeighborsAction = new QAction(tr("Query Neighbors Within Radius..."), this);
-    connect(inRadiusNeighborsAction, SIGNAL(triggered()), this, SLOT(queryInRadius()));
-    queriesMenu->addAction(inRadiusNeighborsAction);
+	//kNearestNeighborsAction = new QAction(tr("Query K Nearest Neighbors..."), this);
+ //   connect(kNearestNeighborsAction, SIGNAL(triggered()), this, SLOT(queryKNearest()));
+ //   queriesMenu->addAction(kNearestNeighborsAction);
+ //   
+ //   inRadiusNeighborsAction = new QAction(tr("Query Neighbors Within Radius..."), this);
+ //   connect(inRadiusNeighborsAction, SIGNAL(triggered()), this, SLOT(queryInRadius()));
+ //   queriesMenu->addAction(inRadiusNeighborsAction);
 
-	queryViewsOffAction = new QAction(tr("Set Query Views Off"), this);
-	queryViewsOffAction->setShortcut(tr("Shift+O"));
-    connect(queryViewsOffAction, SIGNAL(triggered()), this, SLOT(queryViewsOff()));
-    queriesMenu->addAction(queryViewsOffAction);
+	//queryViewsOffAction = new QAction(tr("Set Query Views Off"), this);
+	//queryViewsOffAction->setShortcut(tr("Shift+O"));
+ //   connect(queryViewsOffAction, SIGNAL(triggered()), this, SLOT(queryViewsOff()));
+ //   queriesMenu->addAction(queryViewsOffAction);
 
 	//HELP MENU
 	helpMenu = menuBar()->addMenu(tr("Help"));
@@ -529,81 +539,6 @@ void NucleusEditor::createMenus()
 	helpMenu->addAction(aboutAction);
 }
 
-void NucleusEditor::createPreprocessingMenu()
-{
-	//************************************************************************************************
-	//************************************************************************************************
-	// PRE-PROCESSING
-	//************************************************************************************************
-    PreprocessMenu = menuBar()->addMenu(tr("&Preprocessing"));
-
-	cropAction = new QAction(tr("Crop Image"), this);
-	cropAction->setStatusTip(tr("Draw and crop the image to rectangle"));
-	connect(cropAction, SIGNAL(triggered()), this, SLOT(CropToRegion()));
-	//PreprocessMenu->addAction(cropAction);
-
-	blankAction = new QAction(tr("Mask Image"), this);
-	blankAction->setStatusTip(tr("Draw a polygon region, and mask all pixels outside this region"));
-	connect(blankAction, SIGNAL(triggered()), this, SLOT(startROI()));
-	//PreprocessMenu->addAction(blankAction);
-
-	//PreprocessMenu->addSeparator();
-
-	invertPixAction = new QAction(tr("Invert Intensity Filter"), this);
-	invertPixAction->setStatusTip(tr("Invert intensity value of each pixel"));
-	connect(invertPixAction, SIGNAL(triggered()), this, SLOT(InvertIntensities()));
-	PreprocessMenu->addAction(invertPixAction);
-
-    MedianAction = new QAction(tr("Median Filter"), this);
-   	MedianAction->setStatusTip(tr("Apply Median Filter "));
-   	connect(MedianAction, SIGNAL(triggered()), this, SLOT(MedianFilter()));
-   	PreprocessMenu->addAction(MedianAction);
-
-
-   	AnisotropicAction = new QAction(tr("Gradient Anisotropic Diffusion Filter"), this);
-	AnisotropicAction->setStatusTip(tr("Apply Gradient Anisotropic Diffusion Filtering "));
-	connect(AnisotropicAction, SIGNAL(triggered()), this, SLOT(AnisotropicDiffusion()));
-	PreprocessMenu->addAction(AnisotropicAction);
-
-	CurvAnisotropicAction = new QAction(tr("Curvature Anisotropic Diffusion Filter"), this);
-	CurvAnisotropicAction->setStatusTip(tr("Apply Curvature Anisotropic Diffusion Filtering "));
-	connect(CurvAnisotropicAction, SIGNAL(triggered()), this, SLOT(CurvAnisotropicDiffusion()));
-	PreprocessMenu->addAction(CurvAnisotropicAction);
-
-	GSErodeAction = new QAction(tr("Grayscale Erosion Filter"), this);
-	GSErodeAction->setStatusTip(tr("Apply Grayscale Erosion"));
-	connect(GSErodeAction, SIGNAL(triggered()), this, SLOT(GrayscaleErode()));
-	PreprocessMenu->addAction(GSErodeAction);
-
-	GSDilateAction = new QAction(tr("Grayscale Dilation Filter"), this);
-	GSDilateAction->setStatusTip(tr("Apply Grayscale Dilation"));
-	connect(GSDilateAction, SIGNAL(triggered()), this, SLOT(GrayscaleDilate()));
-	PreprocessMenu->addAction(GSDilateAction);
-
-	GSOpenAction = new QAction(tr("Grayscale Open Filter"), this);
-	GSOpenAction->setStatusTip(tr("Apply Grayscale Opening"));
-	connect(GSOpenAction, SIGNAL(triggered()), this, SLOT(GrayscaleOpen()));
-	PreprocessMenu->addAction(GSOpenAction);
-
-	GSCloseAction = new QAction(tr("Grayscale Close Filter"), this);
-	GSCloseAction->setStatusTip(tr("Apply Grayscale Closing"));
-	connect(GSCloseAction, SIGNAL(triggered()), this, SLOT(GrayscaleClose()));
-	PreprocessMenu->addAction(GSCloseAction);
-
-
-	SigmoidAction = new QAction(tr("Sigmoid Filter"), this);
-	SigmoidAction->setStatusTip(tr("Apply Sigmoid Filter "));
-	connect(SigmoidAction, SIGNAL(triggered()), this, SLOT(SigmoidFilter()));
-	PreprocessMenu->addAction(SigmoidAction);
-
-	//ResampleAction = new QAction(tr("Resample Image Filter"), this);
-	//ResampleAction->setStatusTip(tr("Resample the Image"));
-	//connect(ResampleAction, SIGNAL(triggered()), this, SLOT(Resample()));
-	//PreprocessMenu->addAction(ResampleAction);
-
-	//************************************************************************************************
-	//************************************************************************************************
-}
 
 void NucleusEditor::setEditsEnabled(bool val)
 {
@@ -721,8 +656,8 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 				this->askSaveResult();
 			if(!projectFiles.tableSaved && askSaveChanges(tr("Save changes to the table?")) )
 				this->askSaveTable();
-			if(!projectFiles.adjTablesSaved && askSaveChanges(tr("Save changes to the adjacency tables?")) )
-				this->askSaveAdjTables();
+			//if(!projectFiles.adjTablesSaved && askSaveChanges(tr("Save changes to the adjacency tables?")) )
+			//	this->askSaveAdjTables();
 		}
 	}
 
@@ -756,66 +691,64 @@ bool NucleusEditor::saveProject()
 	}
 
 	//Make up defaults if needed:
-	if(projectFiles.input.size() != 0)
-	{
-		QString fname = QString::fromStdString(projectFiles.input);
-		QString bname = QFileInfo(fname).baseName();
+		if(projectFiles.input.size() != 0)
+		{
+			QString fname = QString::fromStdString(projectFiles.input);
+			QString bname = QFileInfo(fname).baseName();
 
-		if(projectFiles.output == "")
-			projectFiles.output = bname.toStdString() + "_label.xml";
+			if(projectFiles.output == "")
+				projectFiles.output = bname.toStdString() + "_label.xml";
 
-		if(projectFiles.definition == "")
-			projectFiles.definition = bname.toStdString() + "_def.xml";
+			if(projectFiles.definition == "")
+				projectFiles.definition = bname.toStdString() + "_def.xml";
 
-		if(projectFiles.table == "")
-			projectFiles.table = bname.toStdString() + "_table.txt";
+			if(projectFiles.table == "")
+				projectFiles.table = bname.toStdString() + "_table.txt";
 
-		if(projectFiles.adjTables == "")
-			projectFiles.adjTables = bname.toStdString() + "_adjTables.txt";
+			//if(projectFiles.adjTables == "")
+			//	projectFiles.adjTables = bname.toStdString() + "_adjTables.txt";
 
-		if(projectFiles.log == "")
-			createDefaultLogName();
-	}
+			if(projectFiles.log == "")
+				createDefaultLogName();
+		}
 
-	ProjectFilenamesDialog *dialog = new ProjectFilenamesDialog(&projectFiles, this);
-	if(dialog->exec() == QDialog::Rejected)
-		return false;
+		ProjectFilenamesDialog *dialog = new ProjectFilenamesDialog(&projectFiles, this);
+		if(dialog->exec() == QDialog::Rejected)
+			return false;
 
-	if(projectFiles.name != "")
-	{
-		projectFiles.Write();
-		lastPath = QString::fromStdString(projectFiles.path);
-	}
-	else
-		return false;
+		if(projectFiles.name != "")
+		{
+			projectFiles.Write();
+			lastPath = QString::fromStdString(projectFiles.path);
+		}
+		else
+			return false;
 
-	if(projectFiles.input != "" && !projectFiles.inputSaved)
-	{
-		this->saveImage();
-	}
-	if(projectFiles.output != "" && !projectFiles.outputSaved)
-	{
-		this->saveResult();
-	}
-	//if(projectFiles.log != "" && !projectFiles.logSaved)
-	//{
-	//}
-	if(projectFiles.definition != "" && !projectFiles.definitionSaved)
-	{
-		if( projectDefinition.Write(projectFiles.GetFullDef()) )
-			projectFiles.definitionSaved = true;
-	}
-	if(projectFiles.table != "" && !projectFiles.tableSaved)
-	{
-		this->saveTable();
-	}
-	if(projectFiles.adjTables != "" && !projectFiles.adjTablesSaved)
-	{
-		this->saveAdjTables();
-	}
+		if(projectFiles.input != "" && !projectFiles.inputSaved)
+		{
+			this->saveImage();
+		}
+		if(projectFiles.output != "" && !projectFiles.outputSaved)
+		{
+			this->saveResult();
+		}
+		if(projectFiles.definition != "" && !projectFiles.definitionSaved)
+		{
+			if( projectDefinition.Write(projectFiles.GetFullDef()) )
+				projectFiles.definitionSaved = true;
+		}
+		if(projectFiles.table != "" && !projectFiles.tableSaved)
+		{
+			this->saveTable();
+		}
+		//if(projectFiles.adjTables != "" && !projectFiles.adjTablesSaved)
+		//{
+		//	this->saveAdjTables();
+		//}
 
 	return true;
 }
+
 
 bool NucleusEditor::askSaveImage()
 {
@@ -1021,27 +954,48 @@ void NucleusEditor::loadProject()
 	if(dialog->exec() == QDialog::Rejected)
 		return;
 
-	if(projectFiles.input != "")
+	if(projectFiles.input != "" && projectFiles.type!="multi")
 	{
 		this->loadImage( QString::fromStdString(projectFiles.GetFullInput()) );
 	}
-	if(projectFiles.output != "")
+	else
+	{	
+		myImg = ftk::LoadImageSeries( projectFiles.GetFullInput() );
+		segView->SetChannelImage(myImg);
+	}
+
+	if(projectFiles.output != "" && projectFiles.type!="multi")
 	{
 		this->loadResult( QString::fromStdString(projectFiles.GetFullOutput()) );
 	}
+	else
+	{
+		labImg = ftk::LoadImageSeriesLabels(projectFiles.GetFullOutput());
+		segView->SetLabelImage(labImg, selection);
+		this->updateNucSeg();
+		nucSeg->SetCurrentbBox(nucSeg->bBoxMap4DImage.at(segView->GetCurrentTimeVal()));
+	}
+
+	if(projectFiles.table != "" && projectFiles.type!="multi")
+	{
+		this->loadTable( QString::fromStdString(projectFiles.GetFullTable()) );
+	}
+	else
+	{
+		this->loadTableSeries( QString::fromStdString(projectFiles.GetFullTable()) );		
+	}
+
 	if(projectFiles.log == "")	//Not opposite boolean here
 	{
 		this->createDefaultLogName();		//If log file not given, use the default name.
 	}
+
 	if(projectFiles.definition != "")
 	{
 		projectDefinition.Load( projectFiles.GetFullDef() );
 		projectFiles.definitionSaved = true;
 	}
-	if(projectFiles.table != "")
-	{
-		this->loadTable( QString::fromStdString(projectFiles.GetFullTable()) );
-	}
+
 	if(projectFiles.adjTables != "")
 	{
 		this->loadAdjTables( QString::fromStdString(projectFiles.GetFullAdjTables()) );
@@ -1049,6 +1003,8 @@ void NucleusEditor::loadProject()
 
 	this->startEditing();
 }
+
+
 
 void NucleusEditor::askLoadTable()
 {
@@ -1093,6 +1049,43 @@ void NucleusEditor::loadTable(QString fileName)
 	else
 		kplsRun = 0;
 }
+
+
+
+void NucleusEditor::loadTableSeries(QString fileName)
+{
+	lastPath = QFileInfo(fileName).absolutePath() + QDir::separator();
+
+	tableVector = ftk::LoadTableSeries(fileName.toStdString());
+	if(tableVector.size()==0) return;
+
+	nucSeg->updatetable4DImage(tableVector);
+
+	projectFiles.path = lastPath.toStdString();
+	projectFiles.table = QFileInfo(fileName).fileName().toStdString();
+	projectFiles.tableSaved = true;
+
+	selection->clear();
+
+	// Get the table corresponding to the current image
+	table = tableVector.at(segView->GetCurrentTimeVal());
+
+	this->closeViews();
+	this->CreateNewTableWindow();
+
+	//Get prediction colums, if any, for center map coloring
+	prediction_names.clear();
+	prediction_names = ftk::GetColumsWithString( "prediction" , table );
+
+	if( !prediction_names.empty() ){
+		kplsRun = 1;
+		this->updateViews();
+	}
+	else
+		kplsRun = 0;
+}
+
+
 
 void NucleusEditor::loadAdjTables(QString fileName)
 {
@@ -1205,6 +1198,237 @@ void NucleusEditor::askLoadImage()
 	this->loadImage(fileName);
 }
 
+void NucleusEditor::askload5DLabelImage()
+{
+	
+	if(!myImg) return;
+	
+	if(!projectFiles.inputSaved && askSaveChanges(tr("Save changes to the input image?")) )
+	{
+		askSaveImage();
+	}
+    QStringList filesTimeList = QFileDialog::getOpenFileNames(this, "Load one or more time points", lastPath, standardImageTypes);
+ 
+	const ftk::Image::Info * imInfo = myImg->GetImageInfo();
+	if (imInfo->numTSlices != filesTimeList.size())	return;
+	if (filesTimeList.isEmpty()) return;
+	load5DLabelImage(filesTimeList);
+}
+
+void NucleusEditor::askload5DImage()
+{
+	if(!projectFiles.inputSaved && askSaveChanges(tr("Save changes to the input image?")) )
+	{
+		askSaveImage();
+	}
+
+	bool ok;
+	int numChann =  QInputDialog::getInt(this, tr("Number of Channels"),
+                                  tr("Channels:"), 1, 1, 10, 1, &ok);
+
+	// if ok button was clicked 
+	if(ok)
+	{
+		std::vector<QStringList> filesChannTimeList;
+		for (int ch = 0; ch<numChann; ++ch)
+		{
+			QStringList filesTimeList = QFileDialog::getOpenFileNames(this, "Load one or more time points", lastPath, standardImageTypes);
+			if (filesTimeList.isEmpty()) return;
+			filesChannTimeList.push_back(filesTimeList); 
+			std::cout<<filesChannTimeList[0][ch].toStdString()<<std::endl;
+		}
+
+		for (int ch = 0; ch<numChann-1; ++ch)
+		{
+			if (filesChannTimeList[ch].size()!=filesChannTimeList[ch+1].size())
+				return;
+		}
+
+		load5DImage(filesChannTimeList,numChann);
+	}
+}
+
+
+
+void NucleusEditor::load5DImage(std::vector<QStringList> filesChannTimeList, int numChann)
+{
+	// Amin: I need to put more restriction on this function.
+	lastPath = QFileInfo(filesChannTimeList[0][0]).absolutePath() + QDir::separator();
+	// Declare necessary variables for loading:
+	myImg = ftk::Image::New();
+	ftk::Image::Pointer tmp4DImage = ftk::Image::New();
+	ftk::Image::PtrMode mode;
+	mode = static_cast<ftk::Image::PtrMode>(1); //RELEASE_CONTROL mode
+	std::vector<std::string> channelNames;
+	std::vector<unsigned char> channelColors;
+	std::vector<std::string>  filesChann;
+	std::vector<std::vector<std::string>>  filesChannTime;
+	int numTimes = filesChannTimeList[0].size();
+	
+	// Initialize variables:
+	for (int t = 0; t< numTimes; ++t)
+	{
+		for (int ch = 0; ch<numChann; ++ch)
+		{
+			filesChann.push_back(filesChannTimeList[ch][t].toStdString());
+		}
+	  filesChannTime.push_back(filesChann);
+	  filesChann.clear();
+	}
+		
+	getColorInfo(numChann,&channelNames,&channelColors); //Supports upto 10 channels
+
+	// Load Images:
+	if(!myImg->LoadFilesAsMultipleChannels(filesChannTime[0],channelNames,channelColors))
+		myImg = NULL;
+
+	for(int t = 1; t <numTimes; t++)
+	{
+		tmp4DImage->LoadFilesAsMultipleChannels(filesChannTime[t],channelNames,channelColors);
+		myImg->AppendImage(tmp4DImage,mode,true);
+	}
+
+	//Display Images:
+	segView->SetChannelImage(myImg);
+	projectFiles.path = lastPath.toStdString();
+	projectFiles.inputSaved = true;
+	load5DLabelImageAction->setEnabled(true);
+	//For storing edit information.. need to have a bBoxMap set 
+	nucSeg->SetCurrentbBox(nucSeg->bBoxMap4DImage.at(segView->GetCurrentTimeVal()));
+}
+
+
+//Eventually needs to move to ftkImage
+void NucleusEditor::getColorInfo(int numChann,std::vector<std::string> *channelNames,std::vector<unsigned char> *channelColors)
+{
+	std::string channame;
+	for (int ch = 0; ch<numChann; ++ch)
+	{
+		std::stringstream out;
+		out << ch;
+		std::string s = out.str();
+		channame="channel"+ s;
+		(*channelNames).push_back(channame);
+		getColor(ch,channelColors);  
+	}
+}
+
+//Eventually needs to move to ftkImage
+void NucleusEditor::getColor(int numChann,std::vector<unsigned char> *channelColors)
+{
+  
+	switch(numChann)
+	{
+	//Cyan
+	case 0:
+	    	(*channelColors).push_back(0);
+			(*channelColors).push_back(255);
+			(*channelColors).push_back(255);
+			
+					 break;
+	//Green
+	case 1:
+	    	(*channelColors).push_back(0);
+			(*channelColors).push_back(255);
+			(*channelColors).push_back(0);
+			
+					 break;
+	//Red
+	case 2:
+	    	(*channelColors).push_back(255);
+			(*channelColors).push_back(0);
+			(*channelColors).push_back(0);
+			
+					 break;
+	//Blue
+	case 3:
+	    	(*channelColors).push_back(0);
+			(*channelColors).push_back(0);
+			(*channelColors).push_back(255);
+			
+					 break;
+	
+	//Orange 	255-165-0
+	case 4:
+	    	(*channelColors).push_back(255);
+			(*channelColors).push_back(165);
+			(*channelColors).push_back(0);
+			
+					 break;
+	//Violet 	238-130-238
+	case 5:
+	    	(*channelColors).push_back(238);
+			(*channelColors).push_back(130);
+			(*channelColors).push_back(238);
+			 
+					 break;
+	//Yellow 	255-255-0
+	case 6:
+	    	(*channelColors).push_back(255);
+			(*channelColors).push_back(255);
+			(*channelColors).push_back(0);
+			
+					 break;
+	//Dark Green 	0-100-0
+	case 7:
+	    	(*channelColors).push_back(0);
+			(*channelColors).push_back(100);
+			(*channelColors).push_back(0);
+			
+					 break;
+	//Royal Blue 	65-105-225
+	case 8:
+	    	(*channelColors).push_back(65);
+			(*channelColors).push_back(105);
+			(*channelColors).push_back(225);
+			
+					 break;
+	//Gray 	190-190-190
+	case 9:
+	    	(*channelColors).push_back(190);
+			(*channelColors).push_back(190);
+			(*channelColors).push_back(190);
+			
+					 break;
+	  }
+}
+
+
+void NucleusEditor::load5DLabelImage(QStringList filesList)
+{
+	lastPath = QFileInfo(filesList[0]).absolutePath() + QDir::separator();
+
+	// Declare necessary variables for loading:
+	labImg = ftk::Image::New();
+	ftk::Image::Pointer tmp4DImage = ftk::Image::New();
+	ftk::Image::PtrMode mode;
+	mode = static_cast<ftk::Image::PtrMode>(1); //RELEASE_CONTROL mode
+	std::vector<std::string>  filesTimeList;
+
+	// Initialize variables:
+	for (int t = 0; t< filesList.size(); ++t)
+	{
+	  filesTimeList.push_back(filesList[t].toStdString());
+	}
+
+	if(!labImg->LoadFile(filesTimeList[0]))
+		labImg = NULL;
+	for(int t = 1; t <filesList.size(); t++)
+	{
+		tmp4DImage->LoadFile(filesTimeList[t]);
+		labImg->AppendImage(tmp4DImage,mode,true);
+	}
+	//Display Images Tables and Plots:
+	segView->SetLabelImage(labImg, selection);
+	this->updateNucSeg();  
+	table = nucSeg->table4DImage.at(segView->GetCurrentTimeVal());
+	CreateNewTableWindow();
+	CreateNewPlotWindow();
+	projectFiles.path = lastPath.toStdString();
+	projectFiles.outputSaved = true;
+}
+
+
 void NucleusEditor::loadImage(QString fileName)
 {
 	lastPath = QFileInfo(fileName).absolutePath() + QDir::separator();
@@ -1235,6 +1459,39 @@ void NucleusEditor::loadImage(QString fileName)
 	projectFiles.input = name.toStdString();
 	projectFiles.inputSaved = true;
 }
+
+
+//void NucleusEditor::loadImageSeries(QString fileName)
+//{
+//
+//	lastPath = QFileInfo(fileName).absolutePath() + QDir::separator();
+//	QString name = QFileInfo(fileName).fileName();
+//	QString myExt = QFileInfo(fileName).suffix();
+//	if(myExt == "xml")
+//	{
+//		myImg = ftk::LoadXMLImage(fileName.toStdString());
+//	}
+//	else
+//	{
+//		myImg = ftk::Image::New();
+//		if(!myImg->LoadFile(fileName.toStdString()))
+//			myImg = NULL;
+//	}
+//	
+//	//this->updateNucSeg();
+//	if(nucSeg)
+//	{
+//		segView->SetCenterMapPointer( 0 );
+//		segView->SetBoundingBoxMapPointer( 0 );
+//		delete nucSeg;
+//		nucSeg = NULL;
+//	}
+//
+//	segView->SetChannelImage(myImg);
+//	projectFiles.path = lastPath.toStdString();
+//	projectFiles.input = name.toStdString();
+//	projectFiles.inputSaved = true;
+//}
 
 void NucleusEditor::saveDisplayImageToFile(void)
 {
@@ -1865,9 +2122,8 @@ void NucleusEditor::updateViews(void)
 
 	for(int p=0; p<(int)hisWin.size(); ++p)
 		hisWin.at(p)->update();
-
-
 }
+
 //******************************************************************************
 // Create a new Plot window and give it the provided model and selection model
 //******************************************************************************
@@ -2088,22 +2344,39 @@ void NucleusEditor::updateNucSeg(bool ask)
 	nucSeg = new ftk::NuclearSegmentation();
 	nucSeg->SetInput(myImg,"nuc_img", nucChannel);
 	nucSeg->SetLabelImage(labImg,"lab_img");
-	nucSeg->ComputeAllGeometries();
 
-	
+	//Amin: check if image is at least 4D:
+	const ftk::Image::Info * imInfo = labImg->GetImageInfo();
+	if (imInfo->numTSlices > 1)
+	{
+		nucSeg->ComputeAllGeometries(imInfo->numTSlices);
+		segView->SetCenterMapVectorPointer(nucSeg->centerMap4DImage);
+		segView->SetBoundingBoxMapVectorPointer(nucSeg->bBoxMap4DImage);
+	}
+	else
+	{
+		nucSeg->ComputeAllGeometries();
+	}
 	segView->SetCenterMapPointer( nucSeg->GetCenterMapPointer() );
 	segView->SetBoundingBoxMapPointer( nucSeg->GetBoundingBoxMapPointer() );
 }
 
 void NucleusEditor::startEditing(void)
 {
+	if(!myImg || !labImg)
+	return;
+
 	std::string log_entry = "NUCLEAR_SEGMENTATION , ";
 	log_entry += ftk::NumToString(nucSeg->GetNumberOfObjects()) + " , ";
 	log_entry += ftk::TimeStamp();
 	ftk::AppendTextFile(projectFiles.GetFullLog(), log_entry);
 
 	projectFiles.nucSegValidated = false;
-	setEditsEnabled(true);
+	if(projectFiles.type == "multi")
+		setEditsEnabled(false);
+	else
+		setEditsEnabled(true);
+
 	setCommonEnabled(true);
 }
 
@@ -2215,6 +2488,24 @@ void NucleusEditor::deleteCells(void)
 		ftk::AppendTextFile(projectFiles.GetFullLog(), log_entry);
 	}
 }
+
+void NucleusEditor::update5DTable(void)
+{
+	//if(!table) return;
+	int currentTime = segView->GetCurrentTimeVal();
+	table = nucSeg->table4DImage.at(currentTime);
+	nucSeg->SetCurrentbBox(nucSeg->bBoxMap4DImage.at(segView->GetCurrentTimeVal()));
+
+	//Update the table and scatter plot views
+	if (tblWin.size()!=0)
+	  tblWin.back()->setModels(table,selection);
+	if (pltWin.size()!=0)
+		pltWin.back()->setModels(table,selection);
+	
+	this->updateViews();
+
+}
+
 
 void NucleusEditor::mergeCells(void)
 {
