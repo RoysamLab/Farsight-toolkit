@@ -137,8 +137,8 @@ void LabelImageViewQT::setupUI(void)
 	//setup connections
 	connect(vSlider, SIGNAL(valueChanged(int)), this, SLOT(sliderChange(int)));
 	connect(hSlider, SIGNAL(valueChanged(int)), this, SLOT(sliderChange(int)));
-	connect(vSpin, SIGNAL(valueChanged(int)), this, SLOT(spinChange(int)));
-	connect(hSpin, SIGNAL(valueChanged(int)), this, SLOT(spinChange(int)));
+	connect(vSpin, SIGNAL(valueChanged(int)), this, SLOT(vspinChange(int)));
+	connect(hSpin, SIGNAL(valueChanged(int)), this, SLOT(hspinChange(int)));
 
 	setAttribute ( Qt::WA_DeleteOnClose );
 	setWindowTitle(tr("Image Browser"));
@@ -384,6 +384,27 @@ void LabelImageViewQT::SetBoundingBoxMapPointer(std::map<int, ftk::Object::Box> 
 	this->update();
 }
 
+void LabelImageViewQT::SetCenterMapfromVectorPointer(int time)
+{
+	centerMap = &(centerMapVector.at(time));
+	this->update();
+}
+
+void LabelImageViewQT::SetBoundingBoxMapfromVectorPointer(int time)
+{
+	bBoxMap = &(boxMapVector.at(time)) ;
+	this->update();
+}
+
+
+void LabelImageViewQT::SetCenterMapVectorPointer(std::vector<std::map<int, ftk::Object::Point>> vectorcenterMap)
+{
+	centerMapVector = vectorcenterMap;
+}
+void LabelImageViewQT::SetBoundingBoxMapVectorPointer(std::vector<std::map<int, ftk::Object::Box>>  vectorboxMap)
+{
+	boxMapVector = vectorboxMap;
+}
 void LabelImageViewQT::ClearGets(void)
 {
 	//stop getting points:
@@ -594,13 +615,40 @@ void LabelImageViewQT::sliderChange(int v)
 	vSpin->setValue(vSlider->value());
 	hSpin->setValue(hSlider->value());
 }
-void LabelImageViewQT::spinChange(int v)
+void LabelImageViewQT::hspinChange(int v)
 {
-	vSlider->setValue(vSpin->value());
 	hSlider->setValue(hSpin->value());
+
+	//Update center map and bounding box:
+	if (labelImg)
+	{
+		const ftk::Image::Info * labImInfo = labelImg->GetImageInfo();
+		if (labImInfo->numTSlices > 1)
+		{
+	//		int currentT = hSpin->value();
+			SetCenterMapfromVectorPointer(hSpin->value() );
+			SetBoundingBoxMapfromVectorPointer(hSpin->value());
+			emit emitTimeChanged();
+		}
+	}
 	refreshBaseImage();		//Only need this in either slider or spin changes!!!
 	refreshBoundsImage();
 }
+
+
+void LabelImageViewQT::vspinChange(int v)
+{
+	vSlider->setValue(vSpin->value());
+	refreshBaseImage();		//Only need this in either slider or spin changes!!!
+	refreshBoundsImage();
+}
+
+
+int LabelImageViewQT::GetCurrentTimeVal(void)
+{
+	return hSlider->value();
+}
+
 
 void LabelImageViewQT::update(void)
 {
@@ -1235,13 +1283,23 @@ void LabelImageViewQT::drawObjectIDs(QPainter *painter)
 	if(!centerMap) return;
 	if(!bBoxMap) return;
 
+	const ftk::Image::Info *labImInfo = labelImg->GetImageInfo();
 	int currentZ = vSpin->value();
-
-	//Iterate through each object and write its id at its centroid.
-	for ( it = centerMap->begin() ; it != centerMap->end(); ++it )
+	if (labImInfo->numTSlices >1)
 	{
-		int id = (*it).first;
-		ftk::Object::Point point = (*it).second;
+		int currentT = hSpin->value();
+		centerMap = &(centerMapVector.at(currentT));
+		bBoxMap = &(boxMapVector.at(currentT)) ;
+	}
+
+	
+	//Iterate through each object and write its id at its centroid.
+	std::map<int, ftk::Object::Point>::iterator it2;
+	for ( it2 = centerMap->begin() ; it2 != centerMap->end(); ++it2 )
+	{
+		int id = (*it2).first;
+		ftk::Object::Point point = (*it2).second;
+
 		//if ( (currentZ == point.z) )
 		if( currentZ >= ((*bBoxMap)[id]).min.z && currentZ <= ((*bBoxMap)[id]).max.z )
 		{
