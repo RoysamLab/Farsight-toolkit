@@ -443,6 +443,7 @@ bool NuclearSegmentation::ComputeAllGeometries(void)
 
 			bBoxMap[(int)id] = b;
 			centerMap[(int)id] = c;
+
 		}
 //	}
 	return true;
