@@ -13,7 +13,7 @@
 #include <vnl/algo/vnl_matrix_inverse.h>
 #include <vnl/algo/vnl_determinant.h>
 //#include <vnl/algo/vnl_trace.h>
-#include <C:/Software/vxl-1.14.0/vxl-1.14.0/contrib/mul/mbl/mbl_stats_nd.h>
+#include "mbl_stats_nd.h"
 #include <vtkTable.h>
 #include <vtkSmartPointer.h>
 #include <vtkVariant.h>
