@@ -413,34 +413,173 @@ bool NuclearSegmentation::ComputeAllGeometries(void)
 
 	//Now populate centroid and bounding box maps::
 	std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
-	for (int i=0; i<(int)labels.size(); ++i)
+//	const Image::Info * labimInfo = labelImage->GetImageInfo();
+
+
+//	for (int t=0; t<labimInfo->numTSlices; t++)
+//	{
+		for (int i=0; i<(int)labels.size(); ++i)
+		{
+			FeatureCalcType::LabelPixelType id = labels.at(i);
+			if(id == 0) continue;
+
+			ftk::IntrinsicFeatures * features = labFilter->GetFeatures(id);
+
+			Object::Point c;
+			c.x = (int)features->Centroid[0];
+			c.y = (int)features->Centroid[1];
+			c.z = (int)features->Centroid[2];
+			c.t = 0;
+
+			Object::Box b;
+			b.min.x = (int)features->BoundingBox[0];
+			b.max.x = (int)features->BoundingBox[1];
+			b.min.y = (int)features->BoundingBox[2];
+			b.max.y = (int)features->BoundingBox[3];
+			b.min.z = (int)features->BoundingBox[4];
+			b.max.z = (int)features->BoundingBox[5];
+			b.min.t = 0;
+			b.max.t = 0;
+
+			bBoxMap[(int)id] = b;
+			centerMap[(int)id] = c;
+		}
+//	}
+	return true;
+}
+
+
+// For Time Series
+bool NuclearSegmentation::ComputeAllGeometries(int ntimes)
+{
+	if(!labelImage)
 	{
-		FeatureCalcType::LabelPixelType id = labels.at(i);
-		if(id == 0) continue;
+		errorMessage = "No label Image";
+		return false;
+	}
+	if(!dataImage)
+	{
+		errorMessage = "No data Image";
+		return false;
+	}
 
-		ftk::IntrinsicFeatures * features = labFilter->GetFeatures(id);
+	//Compute region features:
+	std::vector<ftk::IntrinsicFeatures> featureVector;
+	bBoxMap.clear();
+	centerMap.clear();
+	featureVector.clear();
 
-		Object::Point c;
-		c.x = (int)features->Centroid[0];
-		c.y = (int)features->Centroid[1];
-		c.z = (int)features->Centroid[2];
-		c.t = 0;
+	typedef ftk::LabelImageToFeatures< IntrinsicFeatureCalculator::IPixelT,  IntrinsicFeatureCalculator::LPixelT, 3 > FeatureCalcType;
+	const Image::Info * imInfo = dataImage->GetImageInfo();
 
-		Object::Box b;
-		b.min.x = (int)features->BoundingBox[0];
-		b.max.x = (int)features->BoundingBox[1];
-		b.min.y = (int)features->BoundingBox[2];
-		b.max.y = (int)features->BoundingBox[3];
-		b.min.z = (int)features->BoundingBox[4];
-		b.max.z = (int)features->BoundingBox[5];
-		b.min.t = 0;
-		b.max.t = 0;
+	
 
-		bBoxMap[(int)id] = b;
-		centerMap[(int)id] = c;
+	for (int t=0; t< imInfo->numTSlices; t++)
+	{
+		FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
+		labFilter->SetImageInputs( dataImage->GetItkPtr<IntrinsicFeatureCalculator::IPixelT>(t,channelNumber), labelImage->GetItkPtr<IntrinsicFeatureCalculator::LPixelT>(t,0) );
+		labFilter->SetLevel(1);
+		labFilter->Update();
+		std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
+
+			for (int i=0; i<(int)labels.size(); ++i)
+			{
+				FeatureCalcType::LabelPixelType id = labels.at(i);
+				if(id == 0) continue;
+
+				ftk::IntrinsicFeatures * features = labFilter->GetFeatures(id);
+				featureVector.push_back(*features);
+				featureVector.back().num = id;
+				featureVector.back().tag = 0;
+				featureVector.back().time = t;
+//				if(featureVector.back().spacing.size()==0)
+//				 {
+//					featureVector.back().spacing.push_back(1.0);
+//					featureVector.back().spacing.push_back(1.0);
+//					featureVector.back().spacing.push_back(5.0);
+//				 }
+
+				Object::Point c;
+				c.x = (int)features->Centroid[0];
+				c.y = (int)features->Centroid[1];
+				c.z = (int)features->Centroid[2];
+				c.t = t;
+
+				Object::Box b;
+				b.min.x = (int)features->BoundingBox[0];
+				b.max.x = (int)features->BoundingBox[1];
+				b.min.y = (int)features->BoundingBox[2];
+				b.max.y = (int)features->BoundingBox[3];
+				b.min.z = (int)features->BoundingBox[4];
+				b.max.z = (int)features->BoundingBox[5];
+				b.min.t = t;
+				b.max.t = t+1;
+
+				bBoxMap[(int)id] = b;
+				centerMap[(int)id] = c;
+		}
+
+		centerMap4DImage.push_back(centerMap);
+		bBoxMap4DImage.push_back(bBoxMap);
+		featureVector4DImage.push_back(featureVector);
+		
+		// We can easily update tables compared to featureVectors 
+		// when tables are loaded from files. Always better to refer to
+		// vtktable than feature vector from other classes
+		
+		table4DImage.push_back(featureVectorTovtkTable(featureVector));
+
+		bBoxMap.clear();
+		centerMap.clear();
+		featureVector.clear();
 	}
 	return true;
 }
+
+
+void NuclearSegmentation::SetCurrentbBox(std::map<int, ftk::Object::Box> currentbBoxMap)
+{
+	bBoxMap = currentbBoxMap;
+}
+
+
+vtkSmartPointer<vtkTable> NuclearSegmentation::featureVectorTovtkTable(std::vector<ftk::IntrinsicFeatures> featurevector)
+{
+	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
+
+	//Init the table (headers):
+	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName( "ID" );
+	table->AddColumn(column);
+	std::string fPrefix = "";
+	for (int i=0; i < ftk::IntrinsicFeatures::N; ++i)
+	{
+			column = vtkSmartPointer<vtkDoubleArray>::New();
+			column->SetName( (fPrefix+ftk::IntrinsicFeatures::Info[i].name).c_str() );
+			table->AddColumn(column);
+	}
+
+	//Now populate the table:
+	for (int i=0; i<(int)featurevector.size(); ++i)
+	{
+		vtkSmartPointer<vtkVariantArray> row = vtkSmartPointer<vtkVariantArray>::New();
+		row->InsertNextValue(featurevector.at(i).num);
+		for (int j=0; j<ftk::IntrinsicFeatures::N; ++j)
+		{
+			row->InsertNextValue( vtkVariant(featurevector.at(i).ScalarFeatures[j]) );
+		}
+		table->InsertNextRow(row);
+	}
+	return table;
+}
+
+
+void NuclearSegmentation::updatetable4DImage(std::vector< vtkSmartPointer<vtkTable> > tableOfFeatures)
+{
+	table4DImage.clear();
+	table4DImage = tableOfFeatures;
+}
+
 
 bool NuclearSegmentation::LoadLabelImage(std::string fname)
 {
@@ -837,15 +976,15 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 		
 	int objID = id1;		//The ID of the object I am splitting!!
 
-	//Remove the corresponding rows from the Nuclear Adjacency table
-	for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
-	{
-		if((NucAdjTable->GetValue(row,0).ToInt()==objID)||(NucAdjTable->GetValue(row,1).ToInt()==objID))
-		{
-			NucAdjTable->RemoveRow(row);
-			--row;
-		}
-	}
+	////Remove the corresponding rows from the Nuclear Adjacency table
+	//for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
+	//{
+	//	if((NucAdjTable->GetValue(row,0).ToInt()==objID)||(NucAdjTable->GetValue(row,1).ToInt()==objID))
+	//	{
+	//		NucAdjTable->RemoveRow(row);
+	//		--row;
+	//	}
+	//}
 	
 	//Update the segmentation image
 	//Now get the bounding box around the object
@@ -1152,26 +1291,26 @@ int NuclearSegmentation::Merge(vector<int> ids, vtkSmartPointer<vtkTable> table,
 	}
 
 	int newID = maxID() + 1;
-	for(int j=0; j<(int)ids.size(); ++j)
-	{
-		int OldID = ids.at(j);
-		for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
-		{
-			for(int col=0; col<(int)NucAdjTable->GetNumberOfRows(); ++col)
-			{
-				if(NucAdjTable->GetValue(row,col).ToInt() == OldID)
-					NucAdjTable->SetValue(row,col,newID);
-			}
-		}
-	}
-	for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
-	{
-		if((NucAdjTable->GetValue(row,0).ToInt()) == (NucAdjTable->GetValue(row,1).ToInt()))
-		{
-			NucAdjTable->RemoveRow(row);
-			--row;
-		}
-	}
+	//for(int j=0; j<(int)ids.size(); ++j)
+	//{
+	//	int OldID = ids.at(j);
+	//	for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
+	//	{
+	//		for(int col=0; col<(int)NucAdjTable->GetNumberOfRows(); ++col)
+	//		{
+	//			if(NucAdjTable->GetValue(row,col).ToInt() == OldID)
+	//				NucAdjTable->SetValue(row,col,newID);
+	//		}
+	//	}
+	//}
+	//for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
+	//{
+	//	if((NucAdjTable->GetValue(row,0).ToInt()) == (NucAdjTable->GetValue(row,1).ToInt()))
+	//	{
+	//		NucAdjTable->RemoveRow(row);
+	//		--row;
+	//	}
+	//}
 
 	ReassignLabels(ids, newID);					//Assign all old labels to this new label
 	ftk::Object::Box region = ExtremaBox(ids);
@@ -1729,7 +1868,7 @@ std::vector<std::string> NuclearSegmentation::RunGraphColoring(std::string label
 	}
 	std::cout<<"The maximum cell label is "<<max_lab<<std::endl;
 	  
-    //Build the region adjacency graph    
+ //   //Build the region adjacency graph    
     std::cout<<"Building Region Adjacency Graph...";
     RAG = (int **) malloc(max_lab*sizeof(int*));
     for(int i=0; i<max_lab; i++)
