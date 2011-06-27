@@ -449,6 +449,37 @@ void LabelImageViewQT::GetROI(void)
 	roiMode = true;
 }
 
+
+void LabelImageViewQT::getSnapshots()
+{
+	//QPainter painter(&displayImage);
+	if(!centerMap) return;
+	this->showCrosshairs = true;
+	std::map<int, ftk::Object::Box>::iterator it;
+	for(it = (*bBoxMap).begin(); it!=(*bBoxMap).end() ; ++it)
+	{
+		QImage snapshot = getSnapshotforID((*it).first);
+		QString idval;
+		snapshot.save( "nucleus_"+idval.setNum((*it).first)+".tif" );
+	}
+}
+
+
+
+QImage LabelImageViewQT::getSnapshotforID(int id)
+{	
+	QImage snapshot;
+	if(!centerMap) return snapshot;
+	this->showCrosshairs = true;
+	selection->select(id);
+	refreshBoundsImage();
+	ftk::Object::Point center = (*centerMap)[id];
+	snapshot = displayImage.copy(center.x-50, center.y-50,100,100);
+	return snapshot;
+}
+
+
+
 void LabelImageViewQT::SaveDisplayImageToFile(QString fileName)
 {
 	bool ok = displayImage.save( fileName );

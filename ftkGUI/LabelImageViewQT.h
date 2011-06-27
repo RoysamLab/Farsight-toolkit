@@ -149,8 +149,11 @@ public slots:
 	void SetColorsToDefaults(void);
 	void zoomIn(){ zoom( ZoomInFactor ); };
 	void zoomOut(){ zoom( ZoomOutFactor ); };
-	// 5D Image
-	//void Set5DImageTableVisible(bool val);
+	void getSnapshots();
+	QImage getSnapshotforID(int id);
+
+
+
 signals:
 	void mouseAt(int x, int y, int z, int t, list<int> v);
 	void boxDrawn(int x1, int y1, int x2, int y2, int z);
