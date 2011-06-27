@@ -76,6 +76,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	kplsRun = 0;	//This flag gets set after kpls has run to make sure we show the colored centroids!!
 	trainName = 0;
 	predictName = 0;
+	activeRun = 0;
 
 	this->resize(800,800);
 
@@ -423,6 +424,11 @@ void NucleusEditor::createMenus()
 	databaseAction = new QAction(tr("Update Database"), this);
 	connect(databaseAction, SIGNAL(triggered()), this, SLOT(updateDatabase()));
 	toolMenu->addAction(databaseAction);
+
+	activeAction = new QAction(tr("Start Active Learning"), this);
+	connect(activeAction, SIGNAL(triggered()), this, SLOT(startActiveLearningwithFeat()));
+	toolMenu->addAction(activeAction);
+
 
 	classifyMenu = toolMenu->addMenu(tr("Classifier"));
 
@@ -1235,7 +1241,6 @@ void NucleusEditor::askload5DImage()
 			QStringList filesTimeList = QFileDialog::getOpenFileNames(this, "Load one or more time points", lastPath, standardImageTypes);
 			if (filesTimeList.isEmpty()) return;
 			filesChannTimeList.push_back(filesTimeList); 
-			std::cout<<filesChannTimeList[0][ch].toStdString()<<std::endl;
 		}
 
 		for (int ch = 0; ch<numChann-1; ++ch)
@@ -1760,6 +1765,168 @@ void NucleusEditor::updateDatabase()
 	}
 }
 
+
+
+void NucleusEditor::startActiveLearningwithFeat()
+{	
+
+	if(!table) return;
+
+	if(pWizard)
+	{
+		delete pWizard;
+	}
+
+	TrainingDialog *d = new TrainingDialog(table, "train","active", this);
+	connect(d, SIGNAL(changedTable()), this, SLOT(updateViews()));
+	d->exec();
+
+	std::vector<double> list_of_ids;	
+	// Remove the training examples from the list of ids.
+	//Get the list of ids
+	for(int i=0;i<table->GetNumberOfRows(); ++i)
+	{
+		if(table->GetValueByName(i,"train_default1").ToDouble()==-1) 
+		{
+			list_of_ids.push_back(table->GetValue(i,0).ToDouble());
+		}
+	}
+
+
+	// If the user did not hit cancel 
+	if(d->result())
+	{
+	
+	pWizard = new PatternAnalysisWizard( table, PatternAnalysisWizard::_ACTIVE,"","", this);
+	pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
+	pWizard->exec();
+
+	vtkSmartPointer<vtkTable> new_table = pWizard->getExtractedTable();
+	
+	//// Delete the prediction column if it exists
+	prediction_names = ftk::GetColumsWithString( "Prediction_Active" , new_table);
+	if(prediction_names.size()>0)
+		new_table->RemoveColumnByName("Prediction_Active");
+
+	vnl_vector<double> class_list(new_table->GetNumberOfRows()); 
+
+	for(int row = 0; (int)row < new_table->GetNumberOfRows(); ++row)  
+	{
+		class_list.put(row,vtkVariant(table->GetValueByName(row,"train_default1")).ToDouble());
+	}
+
+
+ 	MCLR *mclr = new MCLR();
+	double sparsity = 1;
+	int active_query = 1;
+	double max_info = -1e9;
+	int max_label_examples = 20; //NEEDS ATTENTION !!!!!!!!!!!!!!!!!!!!
+
+	vnl_matrix<double> Feats = mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(new_table,list_of_ids));
+	mclr->Initialize(Feats,sparsity,class_list,"",new_table);
+	mclr->Get_Training_Model();
+	
+	// Get the active query based on information gain
+	active_query = mclr->Active_Query();
+	
+
+
+	int AL_iteration = 1;
+
+	bool user_stop_dialog_flag = false;
+	bool loop_termination_condition = true;
+
+	while(loop_termination_condition)
+	 {	
+
+		ActiveLearningDialog *dialog;
+		dialog =  new ActiveLearningDialog(segView->getSnapshotforID(mclr->list_of_ids.at(active_query)),mclr->test_table,mclr->no_of_classes,active_query,mclr->top_features);
+		dialog->exec();	 
+
+
+		loop_termination_condition = dialog->finish && dialog->result();
+		
+
+		// Update the data & refresh the training model and refresh the Training Dialog 		
+		mclr->Update_Train_Data(active_query,dialog->class_selected);
+
+		if(dialog->class_selected ==0)
+			continue;
+
+		if(mclr->stop_training && dialog->class_selected!=0)
+		{
+			QMessageBox msgBox;
+			msgBox.setText("I understand the classification problem.");
+			msgBox.setInformativeText("Do you want to stop training and classify ? ");
+			msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+			msgBox.setDefaultButton(QMessageBox::Ok);
+			int ret = msgBox.exec();
+
+			switch (ret) {
+				case QMessageBox::Ok:
+					// Save was clicked
+					user_stop_dialog_flag = true;
+					break;
+				case QMessageBox::Cancel:
+					mclr->stop_training = false;
+					break;
+			   default:
+					// should never be reached
+					break;
+						}
+		}
+
+		if(user_stop_dialog_flag)
+			break;
+		
+		mclr->Get_Training_Model();
+		active_query = mclr->Active_Query();
+	}
+	
+	// Create a new test table to test al the samples and classify
+	int counter = 0;
+	vtkSmartPointer<vtkTable> test_table  = vtkSmartPointer<vtkTable>::New();
+	test_table->Initialize();
+	test_table->SetNumberOfRows(table->GetNumberOfRows());
+	
+	for(int i=0;i<new_table->GetNumberOfColumns(); ++i)
+	{
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName(new_table->GetColumnName(i));
+		test_table->AddColumn(column);	
+	}
+
+	for(int row = 0; row < (int)table->GetNumberOfRows(); ++row)
+	{		
+		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+		for(int c =0;c<(int)test_table->GetNumberOfColumns();++c)
+			model_data1->InsertNextValue(table->GetValueByName(row,test_table->GetColumnName(c)));
+		test_table->InsertNextRow(model_data1);
+	}	
+
+	////// Final Data  to classify after the active training
+	vnl_matrix<double> data_classify =  mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(test_table,list_of_ids));
+	data_classify = data_classify.transpose();
+	vnl_matrix<double> currprob = mclr->Test_Current_Model(data_classify);
+
+	//// Add the Prediction Column 
+	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName("Prediction_Active");
+	column->SetNumberOfValues( table->GetNumberOfRows() );
+	table->AddColumn(column);
+
+	for(int row = 0; (int)row < table->GetNumberOfRows(); ++row)  
+	{
+		vnl_vector<double> curr_col = currprob.get_column(row);
+		table->SetValueByName(row,"Prediction_Active", vtkVariant(curr_col.arg_max()+1));
+	}
+	prediction_names = ftk::GetColumsWithString( "Prediction_Active" , table );
+	activeRun = 1;
+	selection->clear();
+	this->updateViews();
+	}
+}
+
 //**********************************************************************
 // SLOT: start the training dialog:
 //**********************************************************************
@@ -1767,7 +1934,7 @@ void NucleusEditor::startTraining()
 {
 	if(!table) return;
 
-	TrainingDialog *d = new TrainingDialog(table, "train", this);
+	TrainingDialog *d = new TrainingDialog(table, "train","", this);
 	connect(d, SIGNAL(changedTable()), this, SLOT(updateViews()));
 	d->show();
 }
@@ -2115,6 +2282,17 @@ void NucleusEditor::updateViews(void)
 		segView->SetCentroidsVisible(true);
 		kplsRun = 0;
 	}
+	
+		//Show colored seeds after Active Learning has finished
+	if( activeRun )
+	{
+		segView->SetClassMap(table, prediction_names);
+		showCentroidsAction->setChecked(true);
+		segView->SetCentroidsVisible(true);
+		activeRun = 0;
+	}
+
+
 
 	segView->update();
 

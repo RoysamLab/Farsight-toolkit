@@ -58,6 +58,7 @@
 #include "PreferencesDialog.h"
 #include "ftkProjectProcessor.h"
 #include "ftkProjectFiles.h"
+#include "ActiveLearningDialog.h"
 
 //Farsight Includes:
 #include "NuclearSegmentation/ftkNuclearSegmentation.h"
@@ -74,6 +75,7 @@
 #include "ftkGUI/LabelImageViewQT.h"
 #include "ftkGUI/PreprocessDialog.h"
 #include "ftkGraphs/kNearestObjects.h"
+#include "PatternAnalysis/activeLearning/mclr.h"
 
 //VTK includes:
 #include "vtkQtTableView.h"
@@ -223,7 +225,7 @@ protected slots:
 	void updateDatabase();
 	void startTraining();
 	void startKPLS();
-
+	void startActiveLearningwithFeat();
 	//******************************************************
 	//5D Views Menu
 	void about(void);
@@ -309,8 +311,9 @@ protected:
 	QAction *svmAction;		//Start the One-Class SVM outlier detecter
 	QAction *databaseAction;
 	QMenu *classifyMenu;
-		QAction *trainAction;	//Train the KPLS Classifier
-		QAction *kplsAction;	//Start the KPLS Classifier
+	QAction *trainAction;	//Train the KPLS Classifier
+	QAction *kplsAction;	//Start the KPLS Classifier
+	QAction *activeAction; // Active Learning 
 
 	//For Editing Menu
 	QMenu *editMenu;
@@ -381,7 +384,7 @@ protected:
 	ftk::ProjectFiles projectFiles;				//files in the currently visible project
 	ftk::ProjectDefinition projectDefinition;	//the project definition currently being used.
 	unsigned int kplsRun;
-
+	unsigned int activeRun;
 	//This does not belong here, but is a temporary fix:
 	void CreateDefaultAssociationRules();
 
