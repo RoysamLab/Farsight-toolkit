@@ -57,6 +57,9 @@ public:
 	//VARIABLES
 	std::string path;		//Includes last separator character
 	std::string name;		//Name of the project (also used as filename)
+	std::string type;		// If it is a single image project -> "single"
+							// or multiImage/Time Series project -> "multi"
+
 	bool nucSegValidated;	//Nuclear Segmentation is validated
 
 	//Filenames:

@@ -40,6 +40,7 @@ void ProjectFiles::ClearAll()
 {
 	path = "";
 	name = "";
+	type = "";
 
 	//Filenames:
 	input = "";
@@ -75,6 +76,8 @@ bool ProjectFiles::Read(std::string filename)
 
 	path = rootElement->Attribute("path");
 	name = rootElement->Attribute("name");
+	if(rootElement->Attribute("type"))		
+		type = rootElement->Attribute("type"); 
 
 	TiXmlElement * parentElement = rootElement->FirstChildElement();
 	while (parentElement)
