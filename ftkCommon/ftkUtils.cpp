@@ -199,6 +199,23 @@ std::vector< vtkSmartPointer<vtkTable> > LoadTableSeries(std::string filename)
 
 
 
+vtkSmartPointer<vtkTable> AppendTables(vtkSmartPointer<vtkTable> table_initial,vtkSmartPointer<vtkTable> table_new )
+{
+	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();	
+ 
+  //fill the table with values
+  unsigned int counter = 0;
+  for(vtkIdType r = 0; r < table_new->GetNumberOfRows() ; r++ )
+    {
+	  table_initial->InsertNextRow(table_new->GetRow(r));
+    }
+
+	return table_initial;
+}
+
+
+
+
 ftk::Image::Pointer LoadXMLImage(std::string filename)
 {
 	TiXmlDocument doc;
