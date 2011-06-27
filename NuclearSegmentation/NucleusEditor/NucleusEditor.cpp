@@ -1293,8 +1293,7 @@ void NucleusEditor::load5DImage(std::vector<QStringList> filesChannTimeList, int
 	projectFiles.path = lastPath.toStdString();
 	projectFiles.inputSaved = true;
 	load5DLabelImageAction->setEnabled(true);
-	//For storing edit information.. need to have a bBoxMap set 
-	nucSeg->SetCurrentbBox(nucSeg->bBoxMap4DImage.at(segView->GetCurrentTimeVal()));
+
 }
 
 
@@ -1426,6 +1425,11 @@ void NucleusEditor::load5DLabelImage(QStringList filesList)
 	CreateNewPlotWindow();
 	projectFiles.path = lastPath.toStdString();
 	projectFiles.outputSaved = true;
+
+					
+	//For storing edit information.. need to have a bBoxMap set 
+	nucSeg->SetCurrentbBox(nucSeg->bBoxMap4DImage.at(segView->GetCurrentTimeVal()));
+
 }
 
 
