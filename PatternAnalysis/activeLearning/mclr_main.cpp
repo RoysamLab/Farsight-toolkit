@@ -100,7 +100,7 @@ vnl_matrix <double> Read_From_File(char* train_fname)
 
 	vnl_matrix <double> FeatsMatrix(myrows,mycols);
 
-	//extract data from the model and get min/max values:
+
 	for(unsigned int r=0; r < myrows ; ++r)
 	{
 		for(int c=0; c< mycols; ++c)

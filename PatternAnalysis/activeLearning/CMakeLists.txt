@@ -37,5 +37,7 @@ SET( MCLR_HDRS
 
 ADD_LIBRARY(MCLR ${MCLR_SRCS} ${MCLR_HDRS})
 #ADD_EXECUTABLE(mclr_main mclr_main.cpp) 
+TARGET_LINK_LIBRARIES(MCLR vtkCommon vtkIO vtkCommon vtkHybrid vnl vnl_algo vnl_io mbl)
+
 #TARGET_LINK_LIBRARIES(mclr_main MCLR vtkCommon vtkIO vtkCommon vtkHybrid vnl vnl_algo vnl_io mbl)
 

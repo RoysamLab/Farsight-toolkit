@@ -17,6 +17,13 @@
 #include <vtkTable.h>
 #include <vtkSmartPointer.h>
 #include <vtkVariant.h>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <utility>
+#include <algorithm>
+#include <iostream>
+
 
 using namespace std;
 
@@ -48,24 +55,37 @@ struct model{
  vnl_matrix<double> train_data;
  vnl_vector<double> y; // labels (-1 for training)	
  vnl_vector<double> y_ground_truth;	
+ std::vector<double> list_of_ids;	
  vnl_matrix<double> z; // used in gradient computation	
  vnl_matrix<double> gradient_w; // used in gradient computation	 
  vnl_matrix<double> hessian;
  vnl_matrix<double> direction;  	
  vnl_vector<int> class_vector;
- double g;	
+ 
+ std::vector<int> top_features;
+ std::vector<double> max_info_vector;
+ vtkSmartPointer<vtkTable> test_table;
 
+ vnl_vector<double> diff_info_3_it;//difference in g vals for last 3 iterations
+ vnl_vector<double> info_3_it;	// g vals for the last three
+
+
+ double g;	
+ bool stop_training;
  vnl_vector<double> stop_cond;	
  double delta; 	
  int no_of_features;
  int no_of_classes;
+
+ double max_info;
 
  std::string validation;
 
 public:
 
 //void Initialize(vnl_matrix<double> data,double c);
-void Initialize(vnl_matrix<double> data,double c,std::string ground_truth_bool );
+void Initialize(vnl_matrix<double> data,double c,vnl_vector<double> classes, std::string str,vtkSmartPointer<vtkTable> table );
+
 vnl_matrix<double> Add_Bias(vnl_matrix<double> data);
 
 void Get_Gradient(vnl_matrix<double> data_with_bias);
@@ -83,11 +103,14 @@ vnl_matrix<double> Normalize_F_Sum(vnl_matrix<double> f);
 vnl_matrix<double> Test_Current_Model(vnl_matrix<double> test_data);
 //vnl_matrix <double> Normalize_Feature_Matrix(vnl_matrix<double> feats);
 model Get_Training_Model();
-void Update_Train_Data(int active_query);
+void Update_Train_Data(int query,int label);
 vnl_matrix<double> Kron(vnl_vector<double> x,vnl_vector<double> y);
 void Get_Label_Sample(int query);
 FILE* FDeclare2(char *root, char *extension, char key);
-vnl_matrix <double> tableToMatrix(vtkSmartPointer<vtkTable> table);
+vnl_matrix <double> tableToMatrix(vtkSmartPointer<vtkTable> table,std::vector<double> id_list);
+vnl_matrix <double> Normalize_Feature_Matrix(vnl_matrix<double> feats);
+int Active_Query();
+std::vector<int> Get_Top_Features();
 
 };
 #endif

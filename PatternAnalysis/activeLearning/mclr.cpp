@@ -1,7 +1,3 @@
-
-
-
-
 #include "mclr.h"
 
 
@@ -18,71 +14,60 @@ MCLR::~MCLR()
 
 // x contains the training features
 // y contains the training labels
-void MCLR::Initialize(vnl_matrix<double> data,double c,std::string str )
+void MCLR::Initialize(vnl_matrix<double> data,double c,vnl_vector<double> classes, std::string str,vtkSmartPointer<vtkTable> table )
 {
-	
 	int train_counter =0;
 	int test_counter = 0;
-	//vnl_vector<double> classes = data.get_column(data.cols()-2);
 	validation = str;
-
-	vnl_vector<double> classes;
-	if(validation=="ground_truth")
-	{
-		classes = data.get_column(data.cols()-2);
-	//	y_ground_truth = data.get_column(data.cols()-3);
-	}
-
+	
+	// test_table contains the table after the queried samples are removed from the original table
+	// It is updated in the Update_Train_data 
+	test_table = table;
+	
 	for(int i = 0; i< classes.size() ; ++i)
 	{
 		if(classes(i) == -1)
 			test_counter++;
 	}
 	
-	
 	train_data.set_size(data.rows()-test_counter,data.cols());
 	test_data.set_size(test_counter,data.cols());
 	
-	if(validation=="ground_truth")
-	{
-		y_ground_truth.set_size(test_counter);
-	}
-	
-
 	test_counter = 0;
 
 	for(int i= 0;i<data.rows();++i)
 	{
-		if(data(i,data.cols()-2)!=-1)
+		if(classes(i)!=-1)
 		{	
 			train_data.set_row(train_counter,data.get_row(i));
 			++train_counter;
+			test_table->RemoveRow(i);
 		}
 		else
 		{
 			test_data.set_row(test_counter,data.get_row(i));
-			if(validation=="ground_truth")
-			{
-				y_ground_truth(test_counter) = data(i,data.cols()-3);
-			}
 			++test_counter;
 		}
 	}
+	
+
+	y.set_size(train_data.rows());
 
 	// Transpose : Features->Rows ; Samples -> Columns
 	x = train_data.transpose();// Feature matrix of training samples only ; does not contain unlabeled sample data
-	y = train_data.get_column(train_data.cols()-2);// label value ; 
-
-
-	if(validation=="ground_truth")
-	// remove the the rows corresponding to id and class
-	x = x.get_n_rows(0,x.rows()-3);
-	else
-	x = x.get_n_rows(0,x.rows()-2);	
-
-
-
 	
+	int counter = 0;
+	for(int i = 0; i < classes.size(); ++i)
+	{
+		if(classes(i)!=-1)
+		{
+			y(counter) = classes(i);// class value ; 
+			counter++;
+		}
+	}
+	
+
+
 	//m.method = "direct"; // No kernel is the default
 	m.sparsity_control = c; // greater the value , more is the sparsity
 	m.kstd_level = 1; // kernel sigma val
@@ -91,7 +76,7 @@ void MCLR::Initialize(vnl_matrix<double> data,double c,std::string str )
 	// Used in active label selection
 	stop_cond.set_size(2);
 	stop_cond[0] = 1e-5;
-	stop_cond[1] = 1e-5;
+	stop_cond[1] = 0.015;
 	delta = 1e-9; // used for approximating |w| 
 	
 	no_of_features = x.rows();
@@ -104,7 +89,7 @@ void MCLR::Initialize(vnl_matrix<double> data,double c,std::string str )
 	m.w.fill(0);
 
 	gradient_w.set_size(no_of_features+1,no_of_classes);
-	hessian.set_size((no_of_features+1)*(no_of_classes-1),(no_of_features+1)*(no_of_classes-1)); /// Check the size again!!!
+	hessian.set_size((no_of_features+1)*(no_of_classes),(no_of_features+1)*(no_of_classes)); /// Check the size again!!!
 	
 	// g :the objective function value
 	g = 0;
@@ -113,14 +98,19 @@ void MCLR::Initialize(vnl_matrix<double> data,double c,std::string str )
 	{
 		class_vector.put(i-1,i); 
 	}
+	
+	diff_info_3_it.set_size(3);
+	info_3_it.set_size(3);
+
 }
 
 
 //Converts vtkTable to Vnl_Matrix
-vnl_matrix <double> MCLR::tableToMatrix(vtkSmartPointer<vtkTable> table)
+vnl_matrix <double> MCLR::tableToMatrix(vtkSmartPointer<vtkTable> table,std::vector<double> id_list)
 {
-
+	
 	vnl_matrix <double> FeatsMatrix(table->GetNumberOfRows(),table->GetNumberOfColumns());
+	vnl_matrix <double> FeatsMatrix_no_id(table->GetNumberOfRows(),table->GetNumberOfColumns()-1);
 
 	//extract data from the model and get min/max values:
 	for(unsigned int r=0; r < table->GetNumberOfRows() ; ++r)
@@ -130,12 +120,50 @@ vnl_matrix <double> MCLR::tableToMatrix(vtkSmartPointer<vtkTable> table)
 			FeatsMatrix.put(r,c,table->GetValue(r,c).ToDouble());
 		}
 	}
+	
+	
 
-//	FeatsMatrix = Normalize_Feature_Matrix(FeatsMatrix);
+	// Contains the ids of nuclei.
+	list_of_ids = id_list;
+
+	//// The first column in vtkTable is always ID 
+	//// remove id 
+	//FeatsMatrix_no_id = FeatsMatrix.get_n_columns(1,FeatsMatrix.cols()-1);
+	
+	//return FeatsMatrix_no_id;
 	return FeatsMatrix;
 }
 
 
+vnl_matrix <double> MCLR::Normalize_Feature_Matrix(vnl_matrix<double> feats)
+{
+	mbl_stats_nd stats;
+
+	for(int i = 0; i<feats.rows() ; ++i)
+	{
+		vnl_vector<double> temp_row = feats.get_row(i);
+		stats.obs(temp_row);	
+	}
+
+	vnl_vector<double> std_vec = stats.sd();
+	vnl_vector<double> mean_vec = stats.mean();
+	
+
+//The last column is the training column 
+	for(int i = 0; i<feats.columns() ; ++i)
+	{
+		vnl_vector<double> temp_col = feats.get_column(i);
+		if(std_vec(i) > 0)
+		{	
+			for(int j =0; j<temp_col.size() ; ++j)
+				temp_col[j] = (temp_col[j] - mean_vec(i))/std_vec(i) ;
+		}
+	
+		feats.set_column(i,temp_col);
+	}
+
+	return feats;
+}
 
 
 vnl_matrix<double> MCLR::Get_F_Matrix(vnl_matrix<double> data_bias,vnl_matrix<double> w_temp)
@@ -365,29 +393,33 @@ void MCLR::Get_Hessian(vnl_matrix<double> data_with_bias)
 
 
 void MCLR::Ameliorate_Hessian_Conditions()
-{
-	//Compute the eigen vectors of the covariance matrix
-	vnl_symmetric_eigensystem<double> eig(hessian);
-	double ratio = fabs(eig.get_eigenvalue((no_of_features+1)*2))/fabs(eig.get_eigenvalue(1));
-	
-	while(ratio>1e9)
-	{
-	   vnl_diag_matrix<double> diag((no_of_classes-1)*(no_of_features+1),Compute_Mean_Abs_Eig(eig));
-	   hessian = hessian + diag;
-	   vnl_symmetric_eigensystem<double> eig(hessian);
-	}
+{	
 
+	//std::cout<< "Into Amel Hessian" << std::endl;
+	//Compute the eigen vectors of the hessian matrix
+	vnl_symmetric_eigensystem<double> eig(hessian);
+
+	double ratio = fabs(eig.get_eigenvalue(0))/fabs(eig.get_eigenvalue((no_of_features+1)*no_of_classes)-1);
+	int counter = 0;
+
+	if(ratio>1e9)
+	{
+	   vnl_diag_matrix<double> diag((no_of_classes)*(no_of_features+1),Compute_Mean_Abs_Eig(eig));
+	   hessian = hessian + diag;
+	   //vnl_symmetric_eigensystem<double> eig(hessian);
+	   //ratio = fabs(eig.get_eigenvalue(0))/fabs(eig.get_eigenvalue((no_of_features+1)*no_of_classes)-1);
+	}
 }
 
 
 double MCLR::Compute_Mean_Abs_Eig(vnl_symmetric_eigensystem<double> eig)
 {
 	double sum = 0; 	
-	for(int i =0; i<(no_of_features+1)*(no_of_classes-1);++i)
+	for(int i =0; i<(no_of_features+1)*(no_of_classes);++i)
 	{
 		sum = sum + fabs(eig.get_eigenvalue(i));
 	}	
-	sum = sum/((no_of_features+1)*(no_of_classes-1)) ;
+	sum = sum/((no_of_features+1)*(no_of_classes)) ;
 	return sum;
 }
 
@@ -618,22 +650,7 @@ double MCLR::logit_g(double alpha,vnl_matrix<double> data_with_bias)
 	
 	vnl_matrix<double> f;
 
-	//vnl_matrix<double> epow_matrix = m.w.transpose()*x_with_bias;
-	//f.set_size(epow_matrix.rows(),epow_matrix.cols());
-
-	//for(int i=0;i<epow_matrix.rows();++i)
-	//{
-	//  for(int j=0;j<epow_matrix.cols();++j)
-	//   {
-	//	  f(i,j) = exp(epow_matrix(i,j));
-	//  }
-	//}
-
 	f = Get_F_Matrix(data_with_bias,w_temp);
-
-	//std::cout<<"--------------------------"<<std::endl;
-	//std::cout<<f.get_n_columns(0,2)<<std::endl;
-	//std::cout<<"--------------------------"<<std::endl;
 
 
 	vnl_vector<double> denominator(f.cols(),0);
@@ -681,14 +698,46 @@ double MCLR::logit_g(double alpha,vnl_matrix<double> data_with_bias)
 }
 
 
+
+std::vector<int> MCLR::Get_Top_Features()
+{
+	//Need the indices of the top 5 features
+	std::vector<int> indices(MIN(5,x.rows()));
+	
+    std::vector<std::pair<double, int> > val_idx; // value and index
+
+	// find the maximum in each row
+	for(int i = 1; i< m.w.rows() ; ++i)
+	{
+		vnl_vector<double> temp_row = m.w.get_row(i);
+		val_idx.push_back(std::pair<double, int>(temp_row.max_value(),i-1));
+	}
+
+	// sorts by first element of the pair automatically
+	 std::sort(val_idx.begin(), val_idx.end());
+	 std::vector<std::pair<double, int> >::const_iterator itr;
+	 int counter = 0;
+
+
+	 reverse(val_idx.begin(),val_idx.end());
+
+	for(itr = val_idx.begin(); itr != val_idx.begin()+MIN(5,x.rows()); ++itr)
+	{
+		indices[counter] = (*itr).second;			
+		counter++;
+	}
+	
+	return indices;
+}
+
+
+
 MCLR::model MCLR::Get_Training_Model()
 {	
-
-	
-	
 	// Set the z matrix 
 	z.set_size(no_of_classes,x.cols());// Used in gradient computation
 	z.fill(0);
+	 
 
 	// Create the z matrix
 	for(int i=0;i<x.cols();++i)
@@ -698,47 +747,47 @@ MCLR::model MCLR::Get_Training_Model()
 		z.set_column(i,temp_vector);
 	}
 
+
 	vnl_vector<double> diff_g_3_it(3,0);//difference in g vals for last 3 iterations
-	vnl_vector<double> g_3_it(3,0);	// g vals for the last three
+	vnl_vector<double> g_4_it(4,0);	// g vals for the last three
+
+	//std::cout<<x.cols()<<std::endl;
+	//std::cout<<test_data.rows()<<std::endl;
+	//std::cout<< x.get_n_columns(0,2)<< std::endl; 
 
 	for(int i =0;i<1e10;++i)
 	{	
 		//Get the gradient
 		Get_Gradient(Add_Bias(x));
+		
 		//Get the hessian
 		Get_Hessian(Add_Bias(x));
+
 		//ameliorate hessian conditions
 		Ameliorate_Hessian_Conditions();	
+		
+
 		//Get the direction 
 //		vnl_vector<double> dir = mclr->Newton_Direction(mclr->hessian,mclr->Column_Order_Matrix(mclr->gradient_w));
 //		mclr->direction = mclr->Reshape_Vector(dir,mclr->no_of_features+1,mclr->no_of_classes);
 		direction = Reshape_Vector(Newton_Direction(hessian,Column_Order_Matrix(gradient_w)),no_of_features+1,no_of_classes);
-		
+
 		double step = logit_stepsize();		
 		if(step == -1)
 			step = 1e-9;
 		
-
 		m.w = m.w + step * direction;
-		
 
-		//std::cout<<"----------------------"<<std::endl;
-		//std::cout<<hessian.get_column(0)<<std::endl;
-		//std::cout<<"----------------------"<<std::endl;
-		//std::cout<<hessian.get_column(1)<<std::endl;
-		//std::cout<<"----------------------"<<std::endl;
-		//std::cout<<hessian.get_column(2)<<std::endl;
-		//std::cout<<"----------------------"<<std::endl;
-
-		g_3_it(i%3) = g;	
+		g_4_it(i%4) = g;	
 
 		if(i>1)
-			diff_g_3_it(i%3) = g_3_it(i%3) - g_3_it((i-1)%3);
+			diff_g_3_it(i%3) = g_4_it(i%4) - g_4_it((i-1)%4);
     
-		if (i>3 && (diff_g_3_it.one_norm()/3)/(g_3_it.one_norm()/3) < stop_cond(1))
+		if (i>3 && (diff_g_3_it.one_norm()/3)/(g_4_it.one_norm()/4) < stop_cond(0))
 			break;
 	}
-
+	
+	
 
 	m.FIM = hessian*-1;
 	m.CRB = vnl_matrix_inverse<double>(hessian);
@@ -749,28 +798,23 @@ MCLR::model MCLR::Get_Training_Model()
 	//std::cout<<vnl_trace(m.CRB)<<std::endl;
 
 
-    FILE * fpin1 = FDeclare2("C:\\Users\\rkpadman\\Documents\\MATLAB\\crb.txt", "", 'w');
+ //   FILE * fpin1 = FDeclare2("C:\\Users\\rkpadman\\Documents\\MATLAB\\crb.txt", "", 'w');
 
-	for(int abc =0;abc<hessian.rows();++abc)
-	{	
-		vnl_vector<double> temp = hessian.get_row(abc);
-		for(int abcd =0;abcd<hessian.cols();++abcd)
-		{
-			fprintf(fpin1, "%lf    ", temp[abcd]);
-		}
-		fprintf(fpin1, "\n");
-	}
+	//for(int abc =0;abc<hessian.rows();++abc)
+	//{	
+	//	vnl_vector<double> temp = hessian.get_row(abc);
+	//	for(int abcd =0;abcd<hessian.cols();++abcd)
+	//	{
+	//		fprintf(fpin1, "%lf    ", temp[abcd]);
+	//	}
+	//	fprintf(fpin1, "\n");
+	//}
 
 
-		//std::cout<<"----------------------"<<std::endl;
-		//std::cout<<m.CRB.get_column(0)<<std::endl;
-		//std::cout<<"----------------------"<<std::endl;
-		//std::cout<<m.CRB.get_column(1)<<std::endl;
-		//std::cout<<"----------------------"<<std::endl;
-		//std::cout<<m.CRB.get_column(2)<<std::endl;
-		//std::cout<<"----------------------"<<std::endl;
-	fclose(fpin1);
 
+	//fclose(fpin1);
+	top_features.clear();
+	top_features = Get_Top_Features();
 
 	return m;
 
@@ -807,10 +851,13 @@ FILE* MCLR::FDeclare2(char *root, char *extension, char key) {
 }
 
 
-void MCLR::Update_Train_Data(int query)
+void MCLR::Update_Train_Data(int query,int label)
 {
+	
 	vnl_vector<double> queried_sample = test_data.get_row(query);
 	vnl_matrix<double> sub_test_matrix(test_data.rows()-1,test_data.cols());
+
+	//std::cout<<list_of_ids.at(query) <<std::endl; 
 
 	if(query!=0)
 	{
@@ -818,27 +865,36 @@ void MCLR::Update_Train_Data(int query)
 		//for(int i =  ; i < test_data.rows() ; ++i)
 		//	sub_test_matrix.set_row(i-1,test_data.get_row(i));
 		sub_test_matrix.update(test_data.get_n_rows(query+1,test_data.rows()-query-1),query,0);	
-
 	}
 	else
 		sub_test_matrix = test_data.get_n_rows(1,test_data.rows()-1);
 
 		test_data = sub_test_matrix;
 
-		if(validation=="ground_truth")
-			queried_sample = queried_sample.extract(queried_sample.size()-3,0);
-		else
-			queried_sample = queried_sample.extract(queried_sample.size()-2,0);
+		//queried_sample = queried_sample.extract(queried_sample.size(),0);
 		
-
+		// if label == 0, then the user selected " I am not sure" option 
+		if(label!=0)
+		{
 		vnl_matrix<double> temp_x = x;
 		x.set_size(x.rows(),x.cols()+1);
 		
 		x.update(temp_x,0,0);
 		x.set_column(x.cols()-1,queried_sample);
-		Get_Label_Sample(query);
-}
+		
+		// Update y
+		vnl_vector<double> temp_y = y;
+		y.set_size(y.size()+1);
+		y.update(temp_y,0);
+		y(temp_y.size()) = label;
+		}
+		
+		//Update list of ids and the table
+		list_of_ids.erase(list_of_ids.begin()+query);
+		test_table->RemoveRow(query);
+		
 
+}
 
 void MCLR::Get_Label_Sample(int query)
 {
@@ -874,6 +930,72 @@ vnl_matrix<double> MCLR::Kron(vnl_vector<double> x,vnl_vector<double> y )
 				counter++;
 			}
 		return q;
+}
+
+
+
+
+int MCLR::Active_Query()
+{
+	stop_training = false;
+
+	max_info = -1e9;
+	int active_query = 0;
+	//vnl_vector<double> diff_info_3_it(3,0);//difference in g vals for last 3 iterations
+	//vnl_vector<double> g_3_it(3,0);	// g vals for the last three
+
+	vnl_matrix<double> test_data_just_features =  test_data.transpose();
+	//test_data_just_features = test_data_just_features.get_n_rows(0,test_data_just_features.rows()-1);
+	vnl_matrix<double> prob = Test_Current_Model(test_data_just_features);
+		
+
+	vnl_matrix<double> test_data_bias = Add_Bias(test_data_just_features);
+	vnl_vector<double> info_vector(test_data_just_features.cols());
+
+	//Compute Information gain
+	for(int i =0; i< test_data_just_features.cols();++i )
+	{
+		vnl_vector<double> temp_col_prob = prob.get_column(i);
+		vnl_vector<double> temp_col_data = test_data_bias.get_column(i);		
+		vnl_matrix<double> q = Kron(temp_col_prob,temp_col_data);//Kronecker Product
+		vnl_diag_matrix<double> identity_matrix(no_of_classes,1); // Identity Matrix;
+		double infoval = (q.transpose() * m.CRB.transpose() * q).get(0,0);
+		vnl_matrix<double> info_matrix(no_of_classes,no_of_classes,infoval);
+		info_matrix = identity_matrix + info_matrix ;
+		info_vector(i) = log(vnl_determinant(info_matrix));
+		if(info_vector(i)>max_info)
+		{
+			active_query = i;
+			max_info = info_vector(i);
+		}
+	}
+
+	max_info_vector.push_back(max_info);
+
+	if(max_info_vector.size()>1)
+	  diff_info_3_it((max_info_vector.size()-1)%3) =  max_info_vector.at((max_info_vector.size()-1)) - max_info_vector.at((max_info_vector.size()-2));
+
+
+	 info_3_it((max_info_vector.size()-1)%3) = max_info;	
+	
+	if (max_info_vector.size()>3) 
+	{
+		int sum = 0;
+		for(int iter =0; iter < 3; iter++)
+		{
+			//std::cout<<fabs(diff_info_3_it(iter))/fabs(info_3_it(iter))<<std::endl;
+
+			if(fabs(diff_info_3_it(iter))/fabs(info_3_it(iter)) < stop_cond(1))
+			{
+				sum = sum + 1;	
+			}
+		}
+		// The algorithm is now confident about the problem
+		// Training can be stopped
+		if(sum==3)
+			stop_training = true;
+	}
+	return active_query;
 }
 
 
