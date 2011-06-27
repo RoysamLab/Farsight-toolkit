@@ -55,10 +55,10 @@ ADD_EXECUTABLE( NucleusEditor ${EXE_TYPE}
                 ${NucleusEditor_UI_HDRS}
                 ${NucleusEditor_RC_SRCS} )
 
-TARGET_LINK_LIBRARIES( NucleusEditor ${QT_LIBRARIES} ftkGraphs ftkGUI ftkImage ftkCommon ftkFeatures libSVM vtkVolumeRendering QVTK NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis NESQLITE sqlite3)
+TARGET_LINK_LIBRARIES( NucleusEditor ${QT_LIBRARIES} ftkGraphs ftkGUI ftkImage ftkCommon ftkFeatures libSVM vtkVolumeRendering QVTK NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis NESQLITE sqlite3 MCLR)
 
 ADD_EXECUTABLE( projproc processor_main.cpp ftkProjectProcessor.cpp ftkProjectDefinition.cpp)
-TARGET_LINK_LIBRARIES( projproc ${QT_LIBRARIES} ftkGraphs ftkGUI ftkImage ftkCommon ftkFeatures NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis NESQLITE sqlite3)
+TARGET_LINK_LIBRARIES( projproc ${QT_LIBRARIES} ftkGraphs ftkGUI ftkImage ftkCommon ftkFeatures NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis NESQLITE sqlite3 MCLR)
 install(TARGETS projproc DESTINATION bin )
 
 IF (BUILD_MODEL_SEG)
