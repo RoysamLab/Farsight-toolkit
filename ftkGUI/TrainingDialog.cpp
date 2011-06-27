@@ -15,7 +15,7 @@ limitations under the License.
 
 #include "TrainingDialog.h"
 
-TrainingDialog::TrainingDialog(vtkSmartPointer<vtkTable> table, const char * trainColumn, QWidget *parent)
+TrainingDialog::TrainingDialog(vtkSmartPointer<vtkTable> table, const char * trainColumn,std::string mode, QWidget *parent)
 	: QDialog(parent){
 
 	m_table = table;
@@ -84,15 +84,15 @@ TrainingDialog::TrainingDialog(vtkSmartPointer<vtkTable> table, const char * tra
 	masterLayout->addLayout(endLayout);
 
 
-	//if(mode=="active")
-	//{
-	//	topLabel->setText("Please enter one example for each class");
-	//	topLabel1->hide();
-	//	radio6->hide();
-	//	className->hide();
-	//	loadButton->setEnabled(FALSE);
-	//	saveButton->setEnabled(FALSE);
-	//}
+	if(mode=="active")
+	{
+		topLabel->setText("Please enter one example for each class");
+		topLabel1->hide();
+		radio6->hide();
+		className->hide();
+		loadButton->setEnabled(FALSE);
+		saveButton->setEnabled(FALSE);
+	}
 
 	this->setLayout(masterLayout);
 
