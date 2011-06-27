@@ -50,6 +50,9 @@ bool SaveTable(std::string filename, vtkSmartPointer<vtkTable> table);
 vtkSmartPointer<vtkTable> LoadTable(std::string filename);
 bool SaveXMLImage(std::string filename, ftk::Image::Pointer image);
 ftk::Image::Pointer LoadXMLImage(std::string filename);
+ftk::Image::Pointer LoadImageSeries(std::string filename);
+ftk::Image::Pointer LoadImageSeriesLabels(std::string filename);
+std::vector< vtkSmartPointer<vtkTable> > LoadTableSeries(std::string filename);
 std::string NumToString(double d);
 std::string NumToString(int i);
 std::string NumToString(double d, int p);
@@ -61,6 +64,7 @@ std::string GetFilePath(std::string f);
 std::vector<std::string> GetColumsWithString( std::string colName, vtkSmartPointer<vtkTable> table );
 std::string GetStringInCaps( std::string in_srting );
 bool Load(std::string filename);
+
 //std::vector<ftk::AssociationRule> ReadAssociationRules(TiXmlElement * inputElement);
 
 typedef struct { std::string regionChannelName; std::string targetChannelName; int mode;

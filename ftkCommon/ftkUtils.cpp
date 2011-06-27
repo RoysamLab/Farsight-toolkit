@@ -166,6 +166,39 @@ vtkSmartPointer<vtkTable> LoadTable(std::string filename)
 	return table;
 }
 
+std::vector< vtkSmartPointer<vtkTable> > LoadTableSeries(std::string filename)
+{
+	std::vector< vtkSmartPointer<vtkTable> > tableVector;
+	tableVector.clear();
+
+	TiXmlDocument doc;
+	if ( !doc.LoadFile( filename.c_str() ) )
+		return tableVector;
+
+	TiXmlElement* rootElement = doc.FirstChildElement();
+	const char* docname = rootElement->Value();
+	if ( strcmp( docname, "Table" ) != 0 )
+		return tableVector;
+
+	//Parents we know of: datafilename,resultfilename,object,parameter
+	TiXmlElement* parentElement = rootElement->FirstChildElement();
+
+	while (parentElement)
+	{
+		const char * parent = parentElement->Value();
+		if ( strcmp( parent, "file" ) == 0 )
+		{
+			tableVector.push_back(LoadTable(std::string(reinterpret_cast<const char*>(parentElement->GetText()))));
+		}
+		parentElement = parentElement->NextSiblingElement();
+	} // end while(parentElement)
+	//doc.close();
+	
+	return tableVector;
+}
+
+
+
 ftk::Image::Pointer LoadXMLImage(std::string filename)
 {
 	TiXmlDocument doc;
@@ -203,6 +236,87 @@ ftk::Image::Pointer LoadXMLImage(std::string filename)
 	{
 		img = NULL;
 	}
+	return img;
+}
+
+//Loads a time series
+ftk::Image::Pointer LoadImageSeries(std::string filename)
+{
+	TiXmlDocument doc;
+	if ( !doc.LoadFile( filename.c_str() ) )
+		return false;
+
+	TiXmlElement* rootElement = doc.FirstChildElement();
+	const char* docname = rootElement->Value();
+	if ( strcmp( docname, "Image" ) != 0 )
+		return false;
+
+
+	ftk::Image::PtrMode mode;
+	mode = static_cast<ftk::Image::PtrMode>(1); //RELEASE_CONTROL mode	
+
+	//Parents we know of: datafilename,resultfilename,object,parameter
+	TiXmlElement* parentElement = rootElement->FirstChildElement();
+	ftk::Image::Pointer img = ftk::Image::New();
+	img = LoadXMLImage(std::string(reinterpret_cast<const char*>(parentElement->GetText())));
+	parentElement = parentElement->NextSiblingElement();
+
+	while (parentElement)
+	{
+		const char * parent = parentElement->Value();
+		if ( strcmp( parent, "file" ) == 0 )
+		{
+			img->AppendImage(LoadXMLImage(std::string(reinterpret_cast<const char*>(parentElement->GetText()))),mode,true);
+		}
+		parentElement = parentElement->NextSiblingElement();
+	} // end while(parentElement)
+	//doc.close();
+	return img;
+}
+
+//Loads a time series label images
+ftk::Image::Pointer LoadImageSeriesLabels(std::string filename)
+{
+	TiXmlDocument doc;
+	if ( !doc.LoadFile( filename.c_str() ) )
+		return false;
+
+	TiXmlElement* rootElement = doc.FirstChildElement();
+	const char* docname = rootElement->Value();
+	if ( strcmp( docname, "Image" ) != 0 )
+		return false;
+
+
+	ftk::Image::PtrMode mode;
+	mode = static_cast<ftk::Image::PtrMode>(1); //RELEASE_CONTROL mode	
+
+	//Parents we know of: datafilename,resultfilename,object,parameter
+	TiXmlElement* parentElement = rootElement->FirstChildElement();
+	ftk::Image::Pointer img = ftk::Image::New();
+
+	img->LoadFile(std::string(reinterpret_cast<const char*>(parentElement->GetText())));
+	if(!img)
+	{	
+		img = NULL;
+	}
+		
+	parentElement = parentElement->NextSiblingElement();
+
+	while (parentElement)
+	{
+		const char * parent = parentElement->Value();
+		if ( strcmp( parent, "file" ) == 0 )
+		{
+			ftk::Image::Pointer tempImg = ftk::Image::New();
+			tempImg->LoadFile(std::string(reinterpret_cast<const char*>(parentElement->GetText())));
+			img->AppendImage(tempImg,mode,true);
+		}
+		parentElement = parentElement->NextSiblingElement();
+	} // end while(parentElement)
+	//doc.close();
+
+	std::cout<<img->GetImageInfo()->numTSlices<<std::endl;
+
 	return img;
 }
 
