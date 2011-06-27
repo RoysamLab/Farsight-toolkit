@@ -94,7 +94,7 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 			this->MaxMin(this->segments[i]->GetPathLength(), this->TerminalPathLength, this->minTerminalPathLength, this->maxTerminalPathLength);
 			
 		}//end if leaf
-		else if(!this->segments[i]->isRoot())
+		else //if(!this->segments[i]->isRoot())
 		{
 			this->branchPoints++;
 			this->MaxMin(this->segments[i]->GetpartitionAsymmetry(), this->partitionAsymmetry, this->partitionAsymmetryMin, this->partitionAsymmetryMax);
@@ -251,38 +251,47 @@ void CellTrace::clearAll()
 }
 void CellTrace::MaxMin(double NewValue, double &total, double &Min, double &Max)
 {
-	total += NewValue;
-	if (NewValue > Max)
+	if (NewValue != -1)
 	{
-		Max = NewValue;
-	}
-	if (NewValue < Min)
-	{
-		Min = NewValue;
+		total += NewValue;
+		if (NewValue > Max)
+		{
+			Max = NewValue;
+		}
+		if (NewValue < Min)
+		{
+			Min = NewValue;
+		}
 	}
 }
 void CellTrace::MaxMin(float NewValue, float &total, float &Min, float &Max)
 {
-	total += NewValue;
-	if (NewValue > Max)
+	if (NewValue != -1)
 	{
-		Max = NewValue;
-	}
-	if (NewValue < Min)
-	{
-		Min = NewValue;
+		total += NewValue;
+		if (NewValue > Max)
+		{
+			Max = NewValue;
+		}
+		if (NewValue < Min)
+		{
+			Min = NewValue;
+		}
 	}
 }
 void CellTrace::MaxMin(int NewValue, int &total, int &Min, int &Max)
 {
-	total += NewValue;
-	if (NewValue > Max)
+	if (NewValue != -1)
 	{
-		Max = NewValue;
-	}
-	if (NewValue < Min)
-	{
-		Min = NewValue;
+		total += NewValue;
+		if (NewValue > Max)
+		{
+			Max = NewValue;
+		}
+		if (NewValue < Min)
+		{
+			Min = NewValue;
+		}
 	}
 }
 vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()

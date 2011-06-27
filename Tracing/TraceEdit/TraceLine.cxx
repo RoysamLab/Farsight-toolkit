@@ -55,8 +55,8 @@ TraceLine::TraceLine()
 
 	this->BifAmplLocal = 0;
 	this->BifAmpRemote = 0;
-	this->BifTiltLocal = 0;
-	this->BifTiltRemote = 0;
+	this->BifTiltLocal = -1;
+	this->BifTiltRemote = -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
