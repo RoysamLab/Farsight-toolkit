@@ -81,6 +81,14 @@ public:
 	ftk::Image::Pointer GetLabelImage(){return labelImg;};
 	void SetCenterMapPointer(std::map<int, ftk::Object::Point> * cMap = NULL);
 	void SetBoundingBoxMapPointer(std::map<int, ftk::Object::Box> * bMap = NULL);
+
+	// 5D-4D image functions:
+	void SetCenterMapVectorPointer(std::vector<std::map<int, ftk::Object::Point>> vectorcenterMap);
+	void SetBoundingBoxMapVectorPointer(std::vector<std::map<int, ftk::Object::Box>>  vectorboxMap);
+
+	void SetCenterMapfromVectorPointer(int time =0);
+	void SetBoundingBoxMapfromVectorPointer(int time =0);
+
 	void SetClassMap(vtkSmartPointer<vtkTable> table, std::vector<std::string> columns);
 	QString GetColorNameFromTable( int class_num );
 	void ClearClassMap(void){ classMap1.clear(); classMap2.clear(); classMap3.clear(); refreshBoundsImage();};
@@ -112,6 +120,9 @@ public:
 	void SetRadNeighborTable(vtkSmartPointer<vtkTable> radNeighborsTable){ radNeighborTable = radNeighborsTable;};
 	void DoubleClicksOff(void){ enableDoubleClicks = false;};
 	void DoubleClicksOn(void){ enableDoubleClicks = true;};
+	//5D Image;
+	int GetCurrentTimeVal(void);
+
 		
 public slots:
 	void SaveDisplayImageToFile(QString fileName);
@@ -138,13 +149,15 @@ public slots:
 	void SetColorsToDefaults(void);
 	void zoomIn(){ zoom( ZoomInFactor ); };
 	void zoomOut(){ zoom( ZoomOutFactor ); };
-
+	// 5D Image
+	//void Set5DImageTableVisible(bool val);
 signals:
 	void mouseAt(int x, int y, int z, int t, list<int> v);
 	void boxDrawn(int x1, int y1, int x2, int y2, int z);
 	void pointsClicked(int x1, int y1, int z1, int x2, int y2, int z2);
 	void roiDrawn(void);
 	void autoMerge(void);
+	void emitTimeChanged(void);
 
 protected slots:
 	void refreshBaseImage(void);
@@ -160,7 +173,8 @@ protected slots:
 	void drawROI(QPainter *painter);
 	void selectionChange(void);
 	void sliderChange(int v);
-	void spinChange(int v);
+	void hspinChange(int v);
+	void vspinChange(int v);
 	void adjustImageIntensity(int threshold, int offset);
 	//void refreshFeatures(void);
 	void updateVSlider(void);
@@ -217,6 +231,10 @@ protected:
 	std::map<int, ftk::Object::Point> *	centerMap;
 	std::map<int, ftk::Object::Point>::iterator it;
 	std::map<int, ftk::Object::Box> * bBoxMap;
+	// Amin: 4D images
+	std::vector<std::map  <int, ftk::Object::Point>>  centerMapVector;
+	std::vector<std::map  <int, ftk::Object::Box>> boxMapVector;
+
 	std::map<int, int> classMap1;
 	std::map<int, int> classMap2;
 	std::map<int, int> classMap3;
