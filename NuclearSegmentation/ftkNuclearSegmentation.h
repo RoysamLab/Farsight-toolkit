@@ -69,6 +69,7 @@ public:
 	bool Finalize();											//Will finilize the output using alpha expansion
 	void ReleaseSegMemory();									//Delete the NucleusSeg object to release all of its memory.
 	bool ComputeAllGeometries();									//Compute all geometries for the label image!!!
+	bool ComputeAllGeometries(int numTimes);									//Compute all geometries and return the features for the label image across time!!!
 
 	//For use when loading from pre-existing results:
 	bool LoadLabelImage(std::string fname);						//Filename of the label image to load
@@ -109,12 +110,21 @@ public:
 	ftk::Image::Pointer GetDataImage(void){ return dataImage; };	
 	ftk::Image::Pointer GetLabelImage(void){ return labelImage; };
 	std::map<int, ftk::Object::Point> * GetCenterMapPointer(){ return &centerMap; };
-	std::map<int, ftk::Object::Box> * GetBoundingBoxMapPointer(){ return &bBoxMap; };
+	//std::vector<std::map<int, ftk::Object::Point>>  GetCenterMapVectorPointer(){ return centerMap4DImage; };		// Overloaded function for time dimension
+	std::map<int, ftk::Object::Box> * GetBoundingBoxMapPointer(){ return &bBoxMap; };	
+	//std::vector<std::map<int, ftk::Object::Box>> GetBoundingBoxMapVectorPointer(){ return bBoxMap4DImage; };	// Overloaded function for time dimension		
+	std::vector<std::map<int, ftk::Object::Point>>  centerMap4DImage;
+	std::vector<std::map<int, ftk::Object::Box>> bBoxMap4DImage;	
+	std::vector<std::vector<ftk::IntrinsicFeatures>> featureVector4DImage;
+	std::vector< vtkSmartPointer<vtkTable> >  table4DImage;
 	//*********************************************************************************************
 
 	//ADDED BY YOUSEF/RAGHAV:
 	std::vector<std::string> RunGraphColoring(std::string labelname, std::string filename);	//Run Graph coloring on label image and save adjacency file as filename
 	std::vector<Seed> getSeeds();
+	void updatetable4DImage(std::vector< vtkSmartPointer<vtkTable> > tableOfFeatures);
+	void SetCurrentbBox(std::map<int, ftk::Object::Box> currentbBoxMap); // To set the current bBox to store edit information when time series is loaded
+
 
 protected:
 	std::string errorMessage;
@@ -134,6 +144,10 @@ protected:
 	//Geometry information that is kept for editing purposes:
 	std::map<int, ftk::Object::Box>		bBoxMap;			//Bounding boxes
 	std::map<int, ftk::Object::Point>	centerMap;			//Centroids
+	//Geometry and feature information for 4D Images:
+	//std::vector<std::vector<ftk::IntrinsicFeatures>> featureVector4DImage;
+
+
 
 	bool GetResultImage();									//Gets the result of last module and puts it in labelImage
 	void GetParameters(void);								//Retrieve the Parameters from nuclear segmentation.
@@ -151,6 +165,8 @@ protected:
 	ftk::Object::Box ExtremaBox(std::vector<int> ids);
 	ftk::Object::Box GrowBox(ftk::Object::Box b, int s);
 	std::vector<int> GetNeighbors(int id);
+	vtkSmartPointer<vtkTable> featureVectorTovtkTable(std::vector<ftk::IntrinsicFeatures> featurevector);
+	
 	
 	//FOR PRINTING SEEDS IMAGE:
 	void Cleandptr(unsigned short*x,vector<int> y );
