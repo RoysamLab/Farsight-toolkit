@@ -75,8 +75,8 @@ public:
 	bool SaveChannelAs( int channel, std::string baseName, std::string ext );
 
 	bool AppendChannelFromData3D(void *dptr, DataType dataType, int bpPix, int cs, int rs, int zs, std::string name, std::vector<unsigned char> color, bool copy);
-	bool AppendImage(ftk::Image::Pointer img, PtrMode mode);	//Will add the image data as a new time slice or slices if all other sizes match.
-
+    bool AppendImage(ftk::Image::Pointer img, PtrMode mode);	//Will add the image data as a new time slice or slices if all other sizes match.
+    bool AppendImage(ftk::Image::Pointer img, PtrMode mode, bool isforOneTime);    // overloaded function	
 	void SetSpacing(float x, float y, float z);
 
 	std::vector< unsigned short > Size(void);

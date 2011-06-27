@@ -487,6 +487,47 @@ Image::VtkImagePtr Image::GetVtkPtr(int T, int CH, PtrMode mode)
 // 2. RELEASE_CONTROL: this image (this) gets control of the memory
 // 3. DEEP_COPY: both images have their own copy of the memory
 // It is up to the programmer to use these correctly!!!
+bool Image::AppendImage( ftk::Image::Pointer img, PtrMode mode, bool isforOneTime)// overloaded function
+{
+	if (!isforOneTime)
+		return false;
+
+	const Image::Info * in_size = img->GetImageInfo();
+
+	//First check sizes to be sure that they match!!!
+	if( m_Info.numChannels != in_size->numChannels ||
+		m_Info.numZSlices != in_size->numZSlices ||
+		m_Info.numRows != in_size->numRows ||
+		m_Info.numColumns != in_size->numColumns ||
+		m_Info.dataType != in_size->dataType )
+	{
+		return false;
+	}
+
+	ImageMemoryBlock block;
+	if(mode == DEFAULT)
+		block.manager = OTHER;
+	else
+		block.manager = FTK;
+
+	//Resize the data pointers:
+	m_Info.numTSlices += in_size->numTSlices;
+
+	imageDataPtrs.resize(m_Info.numTSlices);
+
+	int t = m_Info.numTSlices - 1;
+	std::vector< std::string > fileName = img->GetFilenames();
+	filenames.push_back( this->GetFilename(fileName.at(0)));		//Filename of this image
+
+
+		for (int ch=0; ch<m_Info.numChannels; ++ch)
+		{
+			block.mem = img->GetDataPtr(0,ch,mode);
+			imageDataPtrs.at(t).push_back(block);
+		}
+	return true;
+}
+
 bool Image::AppendImage(ftk::Image::Pointer img, PtrMode mode)
 {
 	const Image::Info * in_size = img->GetImageInfo();
@@ -515,7 +556,7 @@ bool Image::AppendImage(ftk::Image::Pointer img, PtrMode mode)
 	{
 		for (int ch=0; ch<m_Info.numChannels; ++ch)
 		{
-			block.mem = img->GetDataPtr(t,ch,mode);
+			block.mem = img->GetDataPtr(0,ch,mode);
 			imageDataPtrs.at(t).push_back(block);
 		}
 	}
