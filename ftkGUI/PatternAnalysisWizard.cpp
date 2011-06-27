@@ -47,7 +47,7 @@ PatternAnalysisWizard::PatternAnalysisWizard(
 	//setOption(HaveHelpButton, true);
 	//setPixmap(QWizard::LogoPixmap, QPixmap(":/images/logo.png"));
 	//connect(this, SIGNAL(helpRequested()), this, SLOT(showHelp()));
-
+	extractedTable = false;
 	
  }
 //******************************************************************************************
@@ -140,11 +140,13 @@ void PatternAnalysisWizard::initOptionGroup(void)
 	QRadioButton *classifyButton = new QRadioButton(tr("Classify (using KPLS)"));
 	QRadioButton *createTrainButton = new QRadioButton(tr("Create Training Model... (using SEGMODEL)"));
 	QRadioButton *appendTrainButton = new QRadioButton(tr("Append Training Model... (using APPENDMODEL)"));
+	QRadioButton *activeButton = new QRadioButton(tr("Choose Features for Active Learning..."));
 
 	optionGroup->addButton(outlierButton, 0);
 	optionGroup->addButton(classifyButton, 1);
 	optionGroup->addButton(createTrainButton, 2);
 	optionGroup->addButton(appendTrainButton, 3);
+	optionGroup->addButton(activeButton, 4);
 
 	switch(m_module)
 		{
@@ -160,8 +162,10 @@ void PatternAnalysisWizard::initOptionGroup(void)
 			case _APPENDMODEL:
 				appendTrainButton->setChecked(true);
 				break;
+			case _ACTIVE:
+				activeButton->setChecked(true);
+				break;
 		}
-	
 }
 
 /*
@@ -222,6 +226,10 @@ bool PatternAnalysisWizard::validateCurrentPage()
 				case 3:
 					appendModel(mod_table, filename);
 					break;
+				case 4:
+					extractTable();
+					break;
+
 			}
 			return true;
 		break;
@@ -823,6 +831,57 @@ void PatternAnalysisWizard::saveModel(void)
 	outFile.close();
     //******************************************************************************************
 }
+
+
+
+
+//****************************************************************************
+// Save Segmentation Model
+//****************************************************************************
+void PatternAnalysisWizard::extractTable(void)
+{	
+
+	extractedTable = true;
+    //Selected Features
+	std::vector<int> columnsToUse;
+	QList<QAbstractButton *> buttons = featureGroup->buttons();
+	for(int b = 0; b<buttons.size(); ++b)
+	{
+		//buttons.at(b)->setCheckable(false);
+		if( buttons.at(b)->isChecked() )
+		{
+			columnsToUse.push_back( featureGroup->id(buttons.at(b)) );
+		}
+	}	
+	if(columnsToUse.size() <= 0)
+		return;
+
+
+	//Get the new table
+    new_table = vtkSmartPointer<vtkTable>::New();
+	new_table->Initialize();
+   
+	for(int c=0; c<(int)columnsToUse.size(); ++c)
+	{
+	    vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( m_table->GetColumnName(columnsToUse.at(c)) );
+		new_table->AddColumn(column);
+	}
+
+   	for(int row = 0; row < (int)m_table->GetNumberOfRows(); ++row)
+	{		
+		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+		for(int c =0;c<(int)columnsToUse.size();++c)
+			model_data1->InsertNextValue(m_table->GetValue(row,columnsToUse.at(c)));
+		new_table->InsertNextRow(model_data1);
+	}
+
+}
+
+
+
+
+
 
 //****************************************************************************
 // Append Segmentation Model
