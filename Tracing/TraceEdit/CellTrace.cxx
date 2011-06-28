@@ -54,6 +54,11 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 		this->MaxMin(this->segments[i]->GetEuclidianLength(),this->TotalEuclidianPath, this->MinEuclidianPath, this->MaxEuclidianPath);
 		this->MaxMin(this->segments[i]->GetSurfaceArea(), this->surfaceAreaTotal, this->SurfaceAreaMin, this->SurfaceAreaMax);
 		this->MaxMin(this->segments[i]->GetSectionArea(), this->sectionAreaTotal, this->SectionAreaMin, this->SectionAreaMax);
+		this->MaxMin(this->segments[i]->GetSize(), this->TotalFragmentation, this->MinFragmentation, this->MaxFragmentation);
+		this->MaxMin(this->segments[i]->GetBurkTaper(), this->TotalBurkTaper, this->MinBurkTaper, this->MaxBurkTaper);
+		this->MaxMin(this->segments[i]->GetHillmanTaper(), this->TotalHillmanTaper, this->MinHillmanTaper, this->MaxHillmanTaper);
+		//this->MaxMin(this->segments[i]-
+		this->MaxMin(this->segments[i]->GetFragmentationSmoothness(), this->TotalContraction, this->MinContraction, this->MaxContraction);
 		int tempLevel = this->segments[i]->GetLevel();
 		if (this->segments[i]->isLeaf())
 		{
@@ -61,6 +66,7 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 
 			TraceBit leafBit = this->segments[i]->GetTraceBitsPointer()->back();
 			TraceBit leadBit = this->segments[i]->GetTraceBitsPointer()->front();
+			this->MaxMin(this->segments[i]->GetSize(), this->TotalTerminalSegment, this->MinTerminalSegment, this->MaxTerminalSegment);
 			if(!this->segments[i]->isRoot())
 			{
 				TraceBit parentBit = this->segments[i]->GetParent()->GetTraceBitsPointer()->back();
@@ -159,6 +165,26 @@ void CellTrace::clearAll()
 	this->maxTerminalPathLength=0;
 	this->TerminalPathLength = 0;
 
+	this->TotalFragmentation = 0;
+	this->MinFragmentation = 100;
+	this->MaxFragmentation = 0;
+
+	this->TotalHillmanTaper = 0;
+	this->MinHillmanTaper = 100;
+	this->MaxHillmanTaper = 0;
+
+	this->TotalBurkTaper = 0;
+	this->MinBurkTaper = 100;
+	this->MaxBurkTaper = 0;
+
+	this->TotalHillmanThresh = 0;
+	this->MinHillmanThresh = 100;
+	this->MaxHillmanThresh = 0;
+
+	this->TotalContraction = 0;
+	this->MinContraction = 100;
+	this->MaxContraction = 0;
+
 	this->TotalEuclidianPath = 0;
 	this->MinEuclidianPath = 1000;
 	this->MaxEuclidianPath = 0;
@@ -166,6 +192,10 @@ void CellTrace::clearAll()
 	this->TotalPathLength = 0;
 	this->minPathLength = 1000;
 	this->MaxPathLength = 0;
+
+	this->TotalTerminalSegment = 0;
+	this->MinTerminalSegment = 100;
+	this->MaxTerminalSegment = 0;
 
 	this->TotalVolume = 0;
 	this->maxSegmentVolume = 0;
@@ -318,12 +348,36 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->TotalPathLength);
 	CellData->InsertNextValue(this->TotalPathLength/this->NumSegments);//average segment length
 
+	CellData->InsertNextValue(this->TotalFragmentation);
+	CellData->InsertNextValue(this->MinFragmentation);
+	CellData->InsertNextValue(this->TotalFragmentation / this->NumSegments);
+	CellData->InsertNextValue(this->MaxFragmentation);
+
+	//CellData->InsertNextValue(this->TotalBurkTaper);
+	CellData->InsertNextValue(this->MinBurkTaper);
+	CellData->InsertNextValue(this->TotalBurkTaper / this->NumSegments);
+	CellData->InsertNextValue(this->MaxBurkTaper);
+
+	//CellData->InsertNextValue(this->TotalHillmanTaper);
+	CellData->InsertNextValue(this->MinHillmanTaper);
+	CellData->InsertNextValue(this->TotalHillmanTaper / this->NumSegments);
+	CellData->InsertNextValue(this->MaxBurkTaper);
+
+	CellData->InsertNextValue(this->MinContraction);
+	CellData->InsertNextValue(this->TotalContraction / this->NumSegments);
+	CellData->InsertNextValue(this->MaxContraction);
+
 	CellData->InsertNextValue(this->DiamThresholdTotal/this->terminalTips);
 	CellData->InsertNextValue(this->DiamThresholdMax);
 	CellData->InsertNextValue(this->DiamThresholdMin);
 	CellData->InsertNextValue(this->TotalLastParentDiam/this->terminalTips);
 	CellData->InsertNextValue(this->LastParentDiamMax);
 	CellData->InsertNextValue(this->LastParentDiamMin);
+
+	CellData->InsertNextValue(this->TotalTerminalSegment);
+	CellData->InsertNextValue(this->MinTerminalSegment);
+	CellData->InsertNextValue(this->TotalTerminalSegment / this->terminalTips); //average
+	CellData->InsertNextValue(this->MaxTerminalSegment);
 
 	CellData->InsertNextValue(this->TotalVolume);
 	CellData->InsertNextValue(this->TotalVolume/this->NumSegments);////average segment Volume

@@ -46,11 +46,20 @@ private:
 	void MaxMin(float NewValue, float &total, float &Min, float &Max);
 	void MaxMin(int NewValue, int &total, int &Min, int &Max);
 	std::vector<TraceLine*>  segments;
-	int NumSegments, stems, branchPoints,terminalTips, MinTerminalLevel, MaxTerminalLevel, SumTerminalLevel;
+	int NumSegments, stems, branchPoints,terminalTips;
+	int MinTerminalLevel, MaxTerminalLevel, SumTerminalLevel;
+
+	int TotalFragmentation, MaxFragmentation, MinFragmentation;
+	double TotalBurkTaper, MaxBurkTaper, MinBurkTaper;
+	double TotalHillmanTaper, MaxHillmanTaper, MinHillmanTaper;
+	double TotalHillmanThresh, MaxHillmanThresh, MinHillmanThresh;
+	double TotalContraction, MaxContraction, MinContraction;
+
 	double TotalPathLength, minPathLength, MaxPathLength;
 	double TotalVolume, minSegmentVolume, maxSegmentVolume;
 	double TotalEuclidianPath, MinEuclidianPath, MaxEuclidianPath;
 	double TerminalPathLength, maxTerminalPathLength, minTerminalPathLength;
+	int TotalTerminalSegment, MaxTerminalSegment, MinTerminalSegment;
 	float somaX, somaY, somaZ, maxX, maxY, maxZ, minX, minY, minZ; 
 	float sectionAreaTotal, SectionAreaMin, SectionAreaMax, surfaceAreaTotal, SurfaceAreaMax, SurfaceAreaMin;
 	double somaVolume, somaSurface, SomaRadii, DiamThresholdTotal, DiamThresholdMin, DiamThresholdMax;

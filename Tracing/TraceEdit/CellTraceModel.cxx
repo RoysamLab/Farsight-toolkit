@@ -59,12 +59,34 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Total Path Length");
 	this->headers.push_back("Average Segment Path Length");
 
+	this->headers.push_back("Total Fragmentation");
+	this->headers.push_back("Min Fragmentation");
+	this->headers.push_back("Average Fragmentation");
+	this->headers.push_back("Max Fragmentation");
+
+	this->headers.push_back("Min Burk Taper");
+	this->headers.push_back("Average Burk Taper");
+	this->headers.push_back("Max Burk Taper");
+
+	this->headers.push_back("Min Hillman Taper");
+	this->headers.push_back("Average Hillman Taper");
+	this->headers.push_back("Max Hillman Taper");
+
+	this->headers.push_back("Min Contraction");
+	this->headers.push_back("Average Contraction");
+	this->headers.push_back("Max Contraction");
+
 	this->headers.push_back("Average Diameter Threshold");
 	this->headers.push_back("Diameter Threshold Max");
 	this->headers.push_back("Diameter Threshold Min");
 	this->headers.push_back("Average Parent Diameter");
 	this->headers.push_back("Parent Diameter Max");
 	this->headers.push_back("Parent Diameter Min");
+
+	this->headers.push_back( "Total Terminal Compartments");
+	this->headers.push_back( "Min Terminal Compartments");
+	this->headers.push_back( "Average Terminal Compartments");
+	this->headers.push_back( "Max Terminal Compartments");
 
 	this->headers.push_back("Total Volume");
 	this->headers.push_back("Min Segment Volume");
