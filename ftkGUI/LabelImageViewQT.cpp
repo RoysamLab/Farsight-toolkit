@@ -657,9 +657,10 @@ void LabelImageViewQT::hspinChange(int v)
 		if (labImInfo->numTSlices > 1)
 		{
 	//		int currentT = hSpin->value();
+			emit emitTimeChanged();
 			SetCenterMapfromVectorPointer(hSpin->value() );
 			SetBoundingBoxMapfromVectorPointer(hSpin->value());
-			emit emitTimeChanged();
+
 		}
 	}
 	refreshBaseImage();		//Only need this in either slider or spin changes!!!
@@ -679,6 +680,12 @@ int LabelImageViewQT::GetCurrentTimeVal(void)
 {
 	return hSlider->value();
 }
+
+void LabelImageViewQT::SetCurrentTimeVal(int time)
+{
+	hSlider->setValue(time);
+}
+
 
 
 void LabelImageViewQT::update(void)

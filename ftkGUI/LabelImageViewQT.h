@@ -122,6 +122,7 @@ public:
 	void DoubleClicksOn(void){ enableDoubleClicks = true;};
 	//5D Image;
 	int GetCurrentTimeVal(void);
+	void SetCurrentTimeVal(int time);
 
 		
 public slots:
