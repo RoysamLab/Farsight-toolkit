@@ -76,6 +76,14 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Average Contraction");
 	this->headers.push_back("Max Contraction");
 
+	this->headers.push_back("Min Diameter");
+	this->headers.push_back("Average Diameter");
+	this->headers.push_back("Max Diameter");
+
+	this->headers.push_back("Min Diameter Power");
+	this->headers.push_back("Average Diameter Power");
+	this->headers.push_back("Max Diameter Power");
+
 	this->headers.push_back("Average Diameter Threshold");
 	this->headers.push_back("Diameter Threshold Max");
 	this->headers.push_back("Diameter Threshold Min");
@@ -110,6 +118,10 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Average Remote Bifurcation Tilt");
 	this->headers.push_back("Min Remote Bifurcation Tilt");
 	this->headers.push_back("Max Remote Bifurcation Tilt");
+
+	this->headers.push_back("Min Hillman Thresh");
+	this->headers.push_back("Average Hillman Thresh");
+	this->headers.push_back("Max Hillman Thresh");
 
 	this->headers.push_back("Width X");
 	this->headers.push_back("Height Y");

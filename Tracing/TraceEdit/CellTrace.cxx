@@ -57,7 +57,12 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 		this->MaxMin(this->segments[i]->GetSize(), this->TotalFragmentation, this->MinFragmentation, this->MaxFragmentation);
 		this->MaxMin(this->segments[i]->GetBurkTaper(), this->TotalBurkTaper, this->MinBurkTaper, this->MaxBurkTaper);
 		this->MaxMin(this->segments[i]->GetHillmanTaper(), this->TotalHillmanTaper, this->MinHillmanTaper, this->MaxHillmanTaper);
-		//this->MaxMin(this->segments[i]-
+
+		double diam = 2*this->segments[i]->GetRadii();
+		this->MaxMin(diam, this->TotalDiameter, this->MinDiameter, this->MaxDiameter);
+		double diamPower = pow(diam,1.5);
+		this->MaxMin(diamPower, this->TotalDiameterPower, this->MinDiameterPower, this->MaxDiameterPower);
+
 		this->MaxMin(this->segments[i]->GetFragmentationSmoothness(), this->TotalContraction, this->MinContraction, this->MaxContraction);
 		int tempLevel = this->segments[i]->GetLevel();
 		if (this->segments[i]->isLeaf())
@@ -112,6 +117,11 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 			this->MaxMin(this->segments[i]->GetBifAmpRemote(), this->BifAmpRemote, this->BifAmpRemoteMin, this->BifAmpRemoteMax);
 			this->MaxMin(this->segments[i]->GetBranch1()->GetBifTiltLocal(), this->BifTiltLocal, this->BifTiltLocalMin, this->BifTiltLocalMax);
 			this->MaxMin(this->segments[i]->GetBranch2()->GetBifTiltRemote(), this->BifTiltRemote, this->BifTiltRemoteMin, this->BifTiltRemoteMax);
+			if (this->segments[i]->GetTerminalDegree() ==2)
+			{
+				this->terminalBifCount++;
+				this->MaxMin(this->segments[i]->GetHillmanThreshold(), this->TotalHillmanThresh, this->MinHillmanThresh, this->MaxHillmanThresh);
+			}
 		}//end bifurcation features
 	}//end for segment size
 }
@@ -180,10 +190,19 @@ void CellTrace::clearAll()
 	this->TotalHillmanThresh = 0;
 	this->MinHillmanThresh = 100;
 	this->MaxHillmanThresh = 0;
+	this->terminalBifCount = 0;
 
 	this->TotalContraction = 0;
 	this->MinContraction = 100;
 	this->MaxContraction = 0;
+
+	this->TotalDiameter = 0;
+	this->MinDiameter = 100;
+	this->MaxDiameter = 0;
+
+	this->TotalDiameterPower = 0;
+	this->MinDiameterPower = 100;
+	this->MaxDiameterPower = 0;
 
 	this->TotalEuclidianPath = 0;
 	this->MinEuclidianPath = 1000;
@@ -367,6 +386,15 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->TotalContraction / this->NumSegments);
 	CellData->InsertNextValue(this->MaxContraction);
 
+	CellData->InsertNextValue(this->MinDiameter);
+	CellData->InsertNextValue(this->TotalDiameter / this->NumSegments);
+	CellData->InsertNextValue(this->MaxDiameter);
+
+	CellData->InsertNextValue(this->MinDiameterPower);
+	CellData->InsertNextValue(this->TotalDiameterPower / this->NumSegments);
+	CellData->InsertNextValue(this->MaxDiameterPower);
+
+
 	CellData->InsertNextValue(this->DiamThresholdTotal/this->terminalTips);
 	CellData->InsertNextValue(this->DiamThresholdMax);
 	CellData->InsertNextValue(this->DiamThresholdMin);
@@ -401,6 +429,10 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->BifTiltRemote / this->branchPoints);
 	CellData->InsertNextValue(this->BifTiltRemoteMin);
 	CellData->InsertNextValue(this->BifTiltRemoteMax);
+
+	CellData->InsertNextValue(this->MinHillmanThresh); 
+	CellData->InsertNextValue(this->TotalHillmanThresh/ this->terminalBifCount);
+	CellData->InsertNextValue(this->MaxHillmanThresh);
 
 	CellData->InsertNextValue(this->maxX - this->minX);//Width
 	CellData->InsertNextValue(this->maxY - this->minY);//Length

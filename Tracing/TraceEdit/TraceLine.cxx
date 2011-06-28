@@ -42,6 +42,7 @@ TraceLine::TraceLine()
 	this->volume = 0;
 	this->BurkTaper = 0;
 	this->HillmanTaper = 0;
+	this->HillmanThreshold = 0;
 	this->FileName = "default";
 
 	this->daughterRatio = 0;

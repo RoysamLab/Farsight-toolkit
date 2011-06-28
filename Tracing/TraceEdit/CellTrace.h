@@ -46,6 +46,7 @@ private:
 	void MaxMin(float NewValue, float &total, float &Min, float &Max);
 	void MaxMin(int NewValue, int &total, int &Min, int &Max);
 	std::vector<TraceLine*>  segments;
+	int terminalBifCount;
 	int NumSegments, stems, branchPoints,terminalTips;
 	int MinTerminalLevel, MaxTerminalLevel, SumTerminalLevel;
 
@@ -54,6 +55,9 @@ private:
 	double TotalHillmanTaper, MaxHillmanTaper, MinHillmanTaper;
 	double TotalHillmanThresh, MaxHillmanThresh, MinHillmanThresh;
 	double TotalContraction, MaxContraction, MinContraction;
+
+	double TotalDiameter, MaxDiameter, MinDiameter;
+	double TotalDiameterPower, MaxDiameterPower, MinDiameterPower;
 
 	double TotalPathLength, minPathLength, MaxPathLength;
 	double TotalVolume, minSegmentVolume, maxSegmentVolume;
