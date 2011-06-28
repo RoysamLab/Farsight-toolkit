@@ -111,6 +111,8 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 			this->MaxMin(this->segments[i]->GetpartitionAsymmetry(), this->partitionAsymmetry, this->partitionAsymmetryMin, this->partitionAsymmetryMax);
 			this->MaxMin(this->segments[i]->GetdaughterRatio(), this->daughterRatio, this->daughterRatioMin, this->daughterRatioMax);
 			this->MaxMin(this->segments[i]->GetparentDaughterRatio(), this->parentDaughterRatio, this->parentDaughterRatioMin, this->parentDaughterRatioMax);
+			this->MaxMin(this->segments[i]->GetRallPower(), this->rallPower, this->rallPowerMin, this->rallPowerMax);
+			this->MaxMin(this->segments[i]->GetPk(), this->Pk, this->PkMin, this->PkMax);
 			this->MaxMin(this->segments[i]->GetPk_2(), this->Pk_2, this->Pk_2Min, this->Pk_2Max);
 			this->MaxMin(this->segments[i]->GetPk_classic(), this->Pk_classic, this->Pk_classicMin, this->Pk_classicMax);
 			this->MaxMin(this->segments[i]->GetBifAmplLocal(), this->BifAmplLocal, this->BifAmplLocalMin, this->BifAmplLocalMax);
@@ -394,7 +396,6 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->TotalDiameterPower / this->NumSegments);
 	CellData->InsertNextValue(this->MaxDiameterPower);
 
-
 	CellData->InsertNextValue(this->DiamThresholdTotal/this->terminalTips);
 	CellData->InsertNextValue(this->DiamThresholdMax);
 	CellData->InsertNextValue(this->DiamThresholdMin);
@@ -426,13 +427,42 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->BifAmpRemote / this->branchPoints);
 	CellData->InsertNextValue(this->BifAmpRemoteMin);
 	CellData->InsertNextValue(this->BifAmpRemoteMax);
+
 	CellData->InsertNextValue(this->BifTiltRemote / this->branchPoints);
 	CellData->InsertNextValue(this->BifTiltRemoteMin);
 	CellData->InsertNextValue(this->BifTiltRemoteMax);
 
+	CellData->InsertNextValue(this->daughterRatioMin);
+	CellData->InsertNextValue(this->daughterRatio / this->branchPoints);
+	CellData->InsertNextValue(this->daughterRatioMax);
+
+	CellData->InsertNextValue(this->parentDaughterRatioMin);
+	CellData->InsertNextValue(this->parentDaughterRatio/ this->branchPoints);
+	CellData->InsertNextValue(this->parentDaughterRatioMax);
+
+	CellData->InsertNextValue(this->partitionAsymmetryMin);
+	CellData->InsertNextValue(this->partitionAsymmetry / this->branchPoints);
+	CellData->InsertNextValue(this->partitionAsymmetryMax);
+
 	CellData->InsertNextValue(this->MinHillmanThresh); 
 	CellData->InsertNextValue(this->TotalHillmanThresh/ this->terminalBifCount);
 	CellData->InsertNextValue(this->MaxHillmanThresh);
+
+	CellData->InsertNextValue(this->rallPowerMin);
+	CellData->InsertNextValue(this->rallPower / this->branchPoints);
+	CellData->InsertNextValue(this->rallPowerMax);
+
+	CellData->InsertNextValue(this->PkMin);
+	CellData->InsertNextValue(this->Pk / this->branchPoints);
+	CellData->InsertNextValue(this->PkMax);
+
+	CellData->InsertNextValue(this->Pk_classicMin);
+	CellData->InsertNextValue(this->Pk_classic / this->branchPoints);
+	CellData->InsertNextValue(this->Pk_classicMax);
+
+	CellData->InsertNextValue(this->Pk_2Min);
+	CellData->InsertNextValue(this->Pk_2 / this->branchPoints);
+	CellData->InsertNextValue(this->Pk_2Max);
 
 	CellData->InsertNextValue(this->maxX - this->minX);//Width
 	CellData->InsertNextValue(this->maxY - this->minY);//Length

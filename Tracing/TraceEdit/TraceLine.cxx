@@ -212,8 +212,12 @@ void TraceLine::calculateBifFeatures()
 	Daughter2->SetParentDaughterRatio( D2Radii / BranchBitRadii);
 	this->HillmanThreshold = .5*BranchBitRadii + .25*D1Radii +.25*D2Radii;
 
+	this->rallPower = this->RallPower(BranchBitRadii, D1Radii, D2Radii);
 	//this->rallPower = pow ((1 + pow (ratio, power)), -1/power);	//need to solve ratio and power
-	//this->Pk = this->CalculatePk(BranchBitRadii, D1Radii, D2Radii, this->rallPower);
+	if (this->rallPower != -1)
+	{
+		this->Pk = this->CalculatePk(BranchBitRadii, D1Radii, D2Radii, this->rallPower);
+	}
 	this->Pk_classic = this->CalculatePk(BranchBitRadii, D1Radii, D2Radii, 1.5);
 	this->Pk_2 = this->CalculatePk(BranchBitRadii, D1Radii, D2Radii, 1.5);
 
@@ -230,25 +234,10 @@ void TraceLine::calculateBifFeatures()
 
 	Daughter1->setBifTiltLocal( this->Angle(previousBit, BranchBit, D1F));
 	Daughter2->setBifTiltLocal( this->Angle(previousBit, BranchBit, D2F));
-	//if (BifTiltLocal1 < BifTiltLocal2)
-	//{
-	//	this->BifTiltLocal = BifTiltLocal1;
-	//}
-	//else
-	//{
-	//	this->BifTiltLocal = BifTiltLocal2;
-	//}
 
 	Daughter1->setBifTiltRemote(this->Angle(previousBit, BranchBit, D1B));
 	Daughter2->setBifTiltRemote(this->Angle(previousBit, BranchBit, D2B));
-	/*if (BifTiltRemote1 < BifTiltRemote2)
-	{
-		this->BifTiltRemote = BifTiltRemote1;
-	}
-	else
-	{
-		this->BifTiltRemote = BifTiltRemote2;
-	}*/
+
 }
 void TraceLine::setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData)
 {
@@ -644,6 +633,23 @@ double TraceLine::Angle(TraceBit bit1, TraceBit vertex, TraceBit bit2)
 		NewAngle = 0;
 	}
 	return (NewAngle *180 )/PI;
+}
+double TraceLine::RallPower(double diamParent, double diamD1, double diamD2)
+{
+	double m = 0;
+	double min = 1000; //min should be less than max
+	while (m < 5)
+	{
+		double a1 = pow(diamParent, m);
+		double a2 = pow(diamD1, m) + pow(diamD2, m);
+		double a3 = fabs(a1 - a2);
+		if (a3 <= .001)
+		{
+			return m;
+		}
+		m += .001;
+	}
+	return -1;
 }
 bool TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
                           double &maxdist, double &angle) 

@@ -119,9 +119,37 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Min Remote Bifurcation Tilt");
 	this->headers.push_back("Max Remote Bifurcation Tilt");
 
+	this->headers.push_back("Min Daughter Ratio");
+	this->headers.push_back("Average Daughter Ratio");
+	this->headers.push_back("Max Daughter Ratio");
+
+	this->headers.push_back("Min Parent Daughter Ratio");
+	this->headers.push_back("Average Parent Daughter Ratio");
+	this->headers.push_back("Max Parent Daughter Ratio");
+
+	this->headers.push_back("Min Partition Asymmetry");
+	this->headers.push_back("Average Partition Asymmetry");
+	this->headers.push_back("Max Partition Asymmetry");
+
 	this->headers.push_back("Min Hillman Thresh");
 	this->headers.push_back("Average Hillman Thresh");
 	this->headers.push_back("Max Hillman Thresh");
+
+	this->headers.push_back("Min Rall Power");
+	this->headers.push_back("Average Rall Power");
+	this->headers.push_back("Max Rall Power");
+
+	this->headers.push_back("Min Pk");
+	this->headers.push_back("Average Pk");
+	this->headers.push_back("Max Pk");
+
+	this->headers.push_back("Min Pk Classic");
+	this->headers.push_back("Average Pk Classic");
+	this->headers.push_back("Max Pk Classic");
+
+	this->headers.push_back("Min Pk 2");
+	this->headers.push_back("Average Pk 2");
+	this->headers.push_back("Max Pk 2");
 
 	this->headers.push_back("Width X");
 	this->headers.push_back("Height Y");
