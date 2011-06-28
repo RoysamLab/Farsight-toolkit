@@ -836,7 +836,7 @@ void PatternAnalysisWizard::saveModel(void)
 
 
 //****************************************************************************
-// Save Segmentation Model
+// Extract the table with the features selected by the user
 //****************************************************************************
 void PatternAnalysisWizard::extractTable(void)
 {	
