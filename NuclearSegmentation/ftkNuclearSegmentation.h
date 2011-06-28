@@ -91,6 +91,7 @@ public:
 	bool FillObjects(vector<int> ids);
 	bool FillAnObject(int id);
 	bool EditsNotSaved;
+	vtkSmartPointer<vtkTable> megaTable;
 
 	//Edits applied on initial segmentation and updates LoG resp image
 	ftk::Object::Point MergeInit(ftk::Object::Point P1, ftk::Object::Point P2, int* new_id); 
@@ -166,7 +167,7 @@ protected:
 	ftk::Object::Box GrowBox(ftk::Object::Box b, int s);
 	std::vector<int> GetNeighbors(int id);
 	vtkSmartPointer<vtkTable> featureVectorTovtkTable(std::vector<ftk::IntrinsicFeatures> featurevector);
-	
+	void NuclearSegmentation::createMegaTable();	
 	
 	//FOR PRINTING SEEDS IMAGE:
 	void Cleandptr(unsigned short*x,vector<int> y );

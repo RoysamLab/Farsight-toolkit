@@ -534,8 +534,60 @@ bool NuclearSegmentation::ComputeAllGeometries(int ntimes)
 		centerMap.clear();
 		featureVector.clear();
 	}
+
+	//Create Mega Table : Concatenated table of all the tables
+	createMegaTable();
+
 	return true;
 }
+
+// Loads a bunch of VTK tables and creates a mega table
+// CONDITION: All the tables should have the same number of columns
+void NuclearSegmentation::createMegaTable()
+{	
+	megaTable = vtkSmartPointer<vtkTable>::New();
+	megaTable->Initialize();
+	int cols = table4DImage.at(0)->GetNumberOfColumns();
+	
+	// Need to add columns first...
+	// Just the way vtkTable works
+    for ( unsigned int i = 0; i < cols; i++ )
+    {
+		vtkSmartPointer<vtkVariantArray> col = vtkSmartPointer<vtkVariantArray>::New();
+		col->SetName(table4DImage.at(0)->GetColumnName(i));
+		megaTable->AddColumn ( col );
+    }
+
+	for(int i=0;i<table4DImage.size();++i)
+	{
+		if(table4DImage.at(i)->GetNumberOfColumns()== cols)
+			megaTable = ftk::AppendTables(megaTable,table4DImage.at(i));
+		else
+		{
+			megaTable->Delete();
+			return;
+		}
+	}
+	
+	vtkSmartPointer<vtkVariantArray> col = vtkSmartPointer<vtkVariantArray>::New();
+	col->SetName("time");
+	col->SetNumberOfValues(megaTable->GetNumberOfRows() );
+	megaTable->AddColumn( col );
+
+	int counter = 0;
+
+	for(int i=0;i<table4DImage.size();++i)
+	{
+	  for(int j=0; j < table4DImage.at(i)->GetNumberOfRows() ;++j)
+		{
+			megaTable->SetValueByName(counter,"time",i);
+			counter++;
+		}
+	}
+
+}
+
+
 
 
 void NuclearSegmentation::SetCurrentbBox(std::map<int, ftk::Object::Box> currentbBoxMap)
@@ -579,6 +631,7 @@ void NuclearSegmentation::updatetable4DImage(std::vector< vtkSmartPointer<vtkTab
 {
 	table4DImage.clear();
 	table4DImage = tableOfFeatures;
+	createMegaTable();
 }
 
 
