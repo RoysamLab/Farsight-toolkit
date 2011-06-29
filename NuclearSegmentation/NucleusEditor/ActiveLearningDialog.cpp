@@ -18,9 +18,13 @@ limitations under the License.
 ActiveLearningDialog::ActiveLearningDialog(QImage snapshot, vtkSmartPointer<vtkTable> table,int num_classes,int active_query,std::vector<int>top_feats,QWidget *parent)
 : QDialog(parent)
 {
+
+	temp_pair.first = snapshot;
+		
 	QLabel *imageLabel = new QLabel(this);
 	imageLabel->setPixmap(QPixmap::fromImage(snapshot));
 	imageLabel->resize(imageLabel->pixmap()->size());
+	
 	
 
 	this->setWindowTitle(tr("Active Learning Window: Specify Class"));
@@ -64,11 +68,8 @@ ActiveLearningDialog::ActiveLearningDialog(QImage snapshot, vtkSmartPointer<vtkT
 		QRadioButton *class_button = new QRadioButton(QString::number(i), this);
 		topRow->addWidget(class_button,0,0);
 		button_vector.push_back(class_button);
-		if(i==1)
-			class_button->click();
 		connect(class_button, SIGNAL(clicked()),this,SLOT(Set_Class()));
 		// Class 1 is always the default selection
-
 	}
 		
 		QRadioButton *class_button = new QRadioButton("I am not sure" , this);
@@ -105,7 +106,8 @@ ActiveLearningDialog::ActiveLearningDialog(QImage snapshot, vtkSmartPointer<vtkT
 	  newItem->setFlags(newItem->flags() & ~Qt::ItemIsEditable);
 	  tableWidget->setItem(0, i, newItem);
 	}
-
+	
+	class_selected = -1; // Used to check if no radiobutton was selected
 	
 	//Bottom-row of the window 
 	QVBoxLayout *botRow = new QVBoxLayout;
@@ -116,11 +118,6 @@ ActiveLearningDialog::ActiveLearningDialog(QImage snapshot, vtkSmartPointer<vtkT
 	layout->addLayout(botRow,1,0,0);
 
 	this->setLayout(layout);
-
-	//Default Class selected is 1 
-
-	class_selected = 1;
-
 }
 
 void ActiveLearningDialog::finished()
@@ -144,6 +141,8 @@ void ActiveLearningDialog::Set_Class()
 				class_selected = test_button->text().toInt();
 		}
 	}
+
+	temp_pair.second = class_selected;	
 
 }
 

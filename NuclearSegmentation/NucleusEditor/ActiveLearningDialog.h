@@ -49,6 +49,8 @@ public:
 	//QLineEdit *lineEdit;
 	int class_selected;
 	std::vector<QRadioButton *> button_vector;
+	std::pair<QImage,int> temp_pair;
+
 private slots:
 	void finished();
 	void Set_Class();
