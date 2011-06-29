@@ -6,7 +6,8 @@ SET( NucleusEditor_SRCS
   ftkProjectDefinition.cpp
   ftkProjectProcessor.cpp
   ftkProjectFiles.cpp
-  ActiveLearningDialog.cpp	
+  ActiveLearningDialog.cpp
+  GalleryDialog.cpp	
 )
 
 SET( NucleusEditor_HDRS
@@ -18,6 +19,7 @@ SET( NucleusEditor_HDRS
   ftkProjectProcessor.h
   ftkProjectFiles.h
   ActiveLearningDialog.h
+  GalleryDialog.h
 )
 
 SET( NucleusEditor_MOC_REQD_HDRS
@@ -26,6 +28,7 @@ SET( NucleusEditor_MOC_REQD_HDRS
   ExclusionDialog.h
   PreferencesDialog.h
   ActiveLearningDialog.h
+  GalleryDialog.h
 )
 
 SET( NucleusEditor_UIS
