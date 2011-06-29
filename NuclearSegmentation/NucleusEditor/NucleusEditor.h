@@ -59,6 +59,7 @@
 #include "ftkProjectProcessor.h"
 #include "ftkProjectFiles.h"
 #include "ActiveLearningDialog.h"
+#include "GalleryDialog.h"
 
 //Farsight Includes:
 #include "NuclearSegmentation/ftkNuclearSegmentation.h"
@@ -226,6 +227,10 @@ protected slots:
 	void startTraining();
 	void startKPLS();
 	void startActiveLearningwithFeat();
+	void startActiveLearning();
+	void startActiveLearningMulti();
+	void BuildGallery();
+	void SaveActiveLearningResults(void);
 	//******************************************************
 	//5D Views Menu
 	void about(void);
@@ -311,9 +316,12 @@ protected:
 	QAction *svmAction;		//Start the One-Class SVM outlier detecter
 	QAction *databaseAction;
 	QMenu *classifyMenu;
+	QMenu *activeMenu;
 	QAction *trainAction;	//Train the KPLS Classifier
 	QAction *kplsAction;	//Start the KPLS Classifier
 	QAction *activeAction; // Active Learning 
+	QAction *showGalleryAction;
+	QAction *saveActiveResultsAction;
 
 	//For Editing Menu
 	QMenu *editMenu;
@@ -385,6 +393,8 @@ protected:
 	ftk::ProjectDefinition projectDefinition;	//the project definition currently being used.
 	unsigned int kplsRun;
 	unsigned int activeRun;
+	// Gallery contains both the image of the query nuclei and their class values
+	std::vector<std::pair<QImage,int> > gallery; 
 	//This does not belong here, but is a temporary fix:
 	void CreateDefaultAssociationRules();
 
