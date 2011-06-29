@@ -55,7 +55,7 @@ struct model{
  vnl_matrix<double> train_data;
  vnl_vector<double> y; // labels (-1 for training)	
  vnl_vector<double> y_ground_truth;	
- std::vector<double> list_of_ids;	
+ std::vector< std::pair<double,double> > id_time;	
  vnl_matrix<double> z; // used in gradient computation	
  vnl_matrix<double> gradient_w; // used in gradient computation	 
  vnl_matrix<double> hessian;
@@ -76,6 +76,7 @@ struct model{
  double delta; 	
  int no_of_features;
  int no_of_classes;
+ int current_label;
 
  double max_info;
 
@@ -107,7 +108,7 @@ void Update_Train_Data(int query,int label);
 vnl_matrix<double> Kron(vnl_vector<double> x,vnl_vector<double> y);
 void Get_Label_Sample(int query);
 FILE* FDeclare2(char *root, char *extension, char key);
-vnl_matrix <double> tableToMatrix(vtkSmartPointer<vtkTable> table,std::vector<double> id_list);
+vnl_matrix <double> tableToMatrix(vtkSmartPointer<vtkTable> table,std::vector< std::pair<double,double> > id_list);
 vnl_matrix <double> Normalize_Feature_Matrix(vnl_matrix<double> feats);
 int Active_Query();
 std::vector<int> Get_Top_Features();

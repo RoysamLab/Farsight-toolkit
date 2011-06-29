@@ -3,7 +3,7 @@
 
 MCLR::MCLR()
 {
-
+	current_label = -1; // keeps a track of the current label
 }
 
 MCLR::~MCLR()
@@ -76,7 +76,7 @@ void MCLR::Initialize(vnl_matrix<double> data,double c,vnl_vector<double> classe
 	// Used in active label selection
 	stop_cond.set_size(2);
 	stop_cond[0] = 1e-5;
-	stop_cond[1] = 0.015;
+	stop_cond[1] = 0.01;
 	delta = 1e-9; // used for approximating |w| 
 	
 	no_of_features = x.rows();
@@ -106,7 +106,7 @@ void MCLR::Initialize(vnl_matrix<double> data,double c,vnl_vector<double> classe
 
 
 //Converts vtkTable to Vnl_Matrix
-vnl_matrix <double> MCLR::tableToMatrix(vtkSmartPointer<vtkTable> table,std::vector<double> id_list)
+vnl_matrix <double> MCLR::tableToMatrix(vtkSmartPointer<vtkTable> table,std::vector< std::pair<double,double> > id_time)
 {
 	
 	vnl_matrix <double> FeatsMatrix(table->GetNumberOfRows(),table->GetNumberOfColumns());
@@ -121,10 +121,8 @@ vnl_matrix <double> MCLR::tableToMatrix(vtkSmartPointer<vtkTable> table,std::vec
 		}
 	}
 	
-	
-
-	// Contains the ids of nuclei.
-	list_of_ids = id_list;
+	// Contains the ids and time of nuclei.
+	this->id_time = id_time;
 
 	//// The first column in vtkTable is always ID 
 	//// remove id 
@@ -853,7 +851,7 @@ FILE* MCLR::FDeclare2(char *root, char *extension, char key) {
 
 void MCLR::Update_Train_Data(int query,int label)
 {
-	
+	current_label = label;
 	vnl_vector<double> queried_sample = test_data.get_row(query);
 	vnl_matrix<double> sub_test_matrix(test_data.rows()-1,test_data.cols());
 
@@ -890,9 +888,11 @@ void MCLR::Update_Train_Data(int query,int label)
 		}
 		
 		//Update list of ids and the table
-		list_of_ids.erase(list_of_ids.begin()+query);
+		id_time.erase(id_time.begin()+query);
 		test_table->RemoveRow(query);
-		
+
+		//
+
 
 }
 
@@ -939,6 +939,13 @@ int MCLR::Active_Query()
 {
 	stop_training = false;
 
+	// The max_info value and hence the algo converges if the user successively selects 
+	//"I am not sure option" .. so whenever the user selects the "I am not sure option
+	// delete that info value from max_info;
+	if(current_label==0)
+		max_info_vector.erase(max_info_vector.begin()+max_info_vector.size()-1);
+
+	
 	max_info = -1e9;
 	int active_query = 0;
 	//vnl_vector<double> diff_info_3_it(3,0);//difference in g vals for last 3 iterations
@@ -972,6 +979,8 @@ int MCLR::Active_Query()
 
 	max_info_vector.push_back(max_info);
 
+//	std::cout<<max_info_vector.size() << "--" << max_info <<std::endl;
+
 	if(max_info_vector.size()>1)
 	  diff_info_3_it((max_info_vector.size()-1)%3) =  max_info_vector.at((max_info_vector.size()-1)) - max_info_vector.at((max_info_vector.size()-2));
 
@@ -995,6 +1004,7 @@ int MCLR::Active_Query()
 		if(sum==3)
 			stop_training = true;
 	}
+
 	return active_query;
 }
 
