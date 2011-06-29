@@ -265,6 +265,7 @@ private:
 	int NUM_COMP;
 	int NUM_FEAT;
 	int NUM_CLASS;
+	int SPLIT_SENSITIVITY;
 
 	
 	

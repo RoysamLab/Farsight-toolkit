@@ -2757,8 +2757,6 @@ std::string model_nucleus_seg::convert2string(unsigned long id)
 
 
 
-
-
 unsigned short model_nucleus_seg::returnthresh( OutputImageType::Pointer input_image, int num_bin_levs, int num_in_fg ){
 	//Instantiate the different image and filter types that will be used
 	typedef itk::ImageRegionConstIterator< InputImageType > ConstIteratorType;
