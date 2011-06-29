@@ -271,8 +271,8 @@ bool ProjectProcessor::SegmentNuclei(int nucChannel)
 	table = iCalc->Compute();									//Create a new table
 	delete iCalc;
 
-	FTKgraph* NucRAG = new FTKgraph();
-	NucAdjTable = NucRAG->AdjacencyGraph_All(inputImage->GetItkPtr<IPixelT>(0,nucChannel), outputImage->GetItkPtr<LPixelT>(0,0));
+	//FTKgraph* NucRAG = new FTKgraph();
+	//NucAdjTable = NucRAG->AdjacencyGraph_All(inputImage->GetItkPtr<IPixelT>(0,nucChannel), outputImage->GetItkPtr<LPixelT>(0,0));
 
 	std::cout << "Done: Instrinsic Nuclear Features\n";
 
