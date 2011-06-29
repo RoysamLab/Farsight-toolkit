@@ -681,7 +681,7 @@ int LabelImageViewQT::GetCurrentTimeVal(void)
 	return hSlider->value();
 }
 
-void LabelImageViewQT::SetCurrentTimeVal(int time)
+void LabelImageViewQT::SetCurrentTimeVal(double time)
 {
 	hSlider->setValue(time);
 }
