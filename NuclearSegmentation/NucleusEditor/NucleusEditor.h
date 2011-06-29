@@ -183,7 +183,6 @@ protected slots:
 
 	//***************************************************
 	// Preprocessing Menu
-	void setPreprocessingEnabled(bool val);
 	void CropToRegion(void);
 	void InvertIntensities(void);
 	void AnisotropicDiffusion(void);

@@ -590,26 +590,12 @@ void NucleusEditor::setCommonEnabled(bool val){
 	viewMenu->setEnabled(val);
 }
 
-void NucleusEditor::setPreprocessingEnabled(bool val)
-{
-	PreprocessMenu->setEnabled(val);
-	//AnisotropicAction->setEnabled(val);
-	//CurvAnisotropicAction->setEnabled(val);
-	//SigmoidAction->setEnabled(val);
-	MedianAction->setEnabled(val);
-	//GSErodeAction->setEnabled(val);
-	//GSDilateAction->setEnabled(val);
-	//GSOpenAction->setEnabled(val);
-	//GSCloseAction->setEnabled(val);
-}
-
 void NucleusEditor::menusEnabled(bool val)
 {
 	fileMenu->setEnabled(val);
 	viewMenu->setEnabled(val);
 	editMenu->setEnabled(val);
 	toolMenu->setEnabled(val);
-	PreprocessMenu->setEnabled(val);
 }
 
 //****************************************************************************
