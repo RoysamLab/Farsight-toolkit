@@ -568,7 +568,17 @@ void NuclearSegmentation::createMegaTable()
 			return;
 		}
 	}
-	
+
+}
+
+
+// Adds time to the megatable...
+// This is used for correspondence when multiple images are loaded 
+// and there are same ids present in multiple images
+// We differentiate using the time value. 
+// used in NucleusEditor::startActiveLearningMulti()
+void NuclearSegmentation::AddTimeToMegaTable()
+{
 	vtkSmartPointer<vtkVariantArray> col = vtkSmartPointer<vtkVariantArray>::New();
 	col->SetName("time");
 	col->SetNumberOfValues(megaTable->GetNumberOfRows() );
@@ -586,8 +596,6 @@ void NuclearSegmentation::createMegaTable()
 	}
 
 }
-
-
 
 
 void NuclearSegmentation::SetCurrentbBox(std::map<int, ftk::Object::Box> currentbBoxMap)

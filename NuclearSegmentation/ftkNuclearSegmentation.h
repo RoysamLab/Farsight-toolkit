@@ -125,6 +125,7 @@ public:
 	std::vector<Seed> getSeeds();
 	void updatetable4DImage(std::vector< vtkSmartPointer<vtkTable> > tableOfFeatures);
 	void SetCurrentbBox(std::map<int, ftk::Object::Box> currentbBoxMap); // To set the current bBox to store edit information when time series is loaded
+	void AddTimeToMegaTable();
 
 
 protected:
