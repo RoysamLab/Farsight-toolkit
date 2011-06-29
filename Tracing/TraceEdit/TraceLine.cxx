@@ -636,7 +636,7 @@ double TraceLine::Angle(TraceBit bit1, TraceBit vertex, TraceBit bit2)
 }
 double TraceLine::RallPower(double diamParent, double diamD1, double diamD2)
 {
-	double m = 0;
+	double m = .001;
 	double min = 1000; //min should be less than max
 	while (m < 5)
 	{
