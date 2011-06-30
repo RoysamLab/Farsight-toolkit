@@ -1797,10 +1797,10 @@ void NucleusEditor::startActiveLearning()
 {
 	if(!table) return;
 
-	if(pWizard)
-	{
-		delete pWizard;
-	}
+	//if(pWizard)
+	//{
+	//	delete pWizard;
+	//}
 
 	TrainingDialog *d = new TrainingDialog(table, "train","active", this);
 	connect(d, SIGNAL(changedTable()), this, SLOT(updateViews()));
@@ -1847,6 +1847,9 @@ void NucleusEditor::startActiveLearning()
 	//new_table does not have the id column 
 	vtkSmartPointer<vtkTable> new_table = pWizard->getExtractedTable();
 	
+   // If the user did not hit cancel 	
+	if(pWizard->result())
+	{
 	//// Delete the prediction column if it exists
 	prediction_names = ftk::GetColumsWithString( "prediction_active" , new_table);
 	if(prediction_names.size()>0)
@@ -1987,6 +1990,7 @@ void NucleusEditor::startActiveLearning()
 	selection->clear();
 	this->updateViews();
 	}
+   }
 }
 
 
