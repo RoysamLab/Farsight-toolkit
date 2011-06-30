@@ -213,7 +213,7 @@ void yousef_nucleus_seg::runBinarization()
 	}
 	else
 	{*/
-		ok = Cell_Binarization_3D(dataImagePtr,binImagePtr, numRows, numColumns, numStacks, shift, 1);		//Do Binarization		
+		ok = Cell_Binarization_3D(dataImagePtr,binImagePtr, numRows, numColumns, numStacks, shift, 1, 128);		//Do Binarization		
 	//}
 
 	if(ok)
@@ -701,13 +701,12 @@ int yousef_nucleus_seg::getConnCompImage(unsigned short *IM, int connectivity, i
 		++iterator1;	
 	}
 	
-	/*
+	
 	typedef itk::ImageFileWriter< InputImageType > WriterType;
 	WriterType::Pointer writer = WriterType::New();
 	writer->SetInput(im);
 	writer->SetFileName("bin_test.tif");
 	writer->Update();
-	*/
 
 	typedef itk::ConnectedComponentImageFilter< InputImageType, OutputImageType > FilterType;
 	FilterType::Pointer filter = FilterType::New();
@@ -2299,7 +2298,7 @@ int yousef_nucleus_seg::AddObject(unsigned char* inImage, unsigned short* lbImag
 	//}
 	//else
 	//{
-		ok = Cell_Binarization_3D(subDataImagePtr,subBinImagePtr, sz_y, sz_x, sz_z, 0, 0);		//Do Binarization		
+		ok = Cell_Binarization_3D(subDataImagePtr,subBinImagePtr, sz_y, sz_x, sz_z, 0, 0, 128);		//Do Binarization		
 	//}
 	if(ok==0)
 		return 0;
