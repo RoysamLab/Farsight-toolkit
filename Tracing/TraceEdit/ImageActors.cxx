@@ -230,7 +230,7 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 	this->LoadedImages[i]->volume = vtkSmartPointer<vtkVolume>::New();
 #ifdef USE_GPUREN
 	{
-		this->LoadedImages[i]->volumeMapperGPU = vtkSmartPointer<vtkVolumeTextureMapper3D>::New();
+		this->LoadedImages[i]->volumeMapperGPU = vtkSmartPointer<vtkGPUVolumeRayCastMapper>::New();
 		this->LoadedImages[i]->volumeMapperGPU->SetInput(this->LoadedImages[i]->ImageData);
 		this->LoadedImages[i]->volumeMapperGPU->SetSampleDistance((float)this->RaycastSampleDist);
 		this->LoadedImages[i]->volumeMapperGPU->SetBlendModeToComposite();

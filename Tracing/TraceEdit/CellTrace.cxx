@@ -420,17 +420,17 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->BifAmplLocal / this->branchPoints);
 	CellData->InsertNextValue(this->BifAmplLocalMin);
 	CellData->InsertNextValue(this->BifAmplLocalMax);
-	/*CellData->InsertNextValue(this->BifTiltLocal/ this->branchPoints);
+	CellData->InsertNextValue(this->BifTiltLocal/ this->branchPoints);
 	CellData->InsertNextValue(this->BifTiltLocalMin);
-	CellData->InsertNextValue(this->BifTiltLocalMax);*/
+	CellData->InsertNextValue(this->BifTiltLocalMax);
 
 	CellData->InsertNextValue(this->BifAmpRemote / this->branchPoints);
 	CellData->InsertNextValue(this->BifAmpRemoteMin);
 	CellData->InsertNextValue(this->BifAmpRemoteMax);
 
-	/*CellData->InsertNextValue(this->BifTiltRemote / this->branchPoints);
+	CellData->InsertNextValue(this->BifTiltRemote / this->branchPoints);
 	CellData->InsertNextValue(this->BifTiltRemoteMin);
-	CellData->InsertNextValue(this->BifTiltRemoteMax);*/
+	CellData->InsertNextValue(this->BifTiltRemoteMax);
 
 	CellData->InsertNextValue(this->daughterRatioMin);
 	CellData->InsertNextValue(this->daughterRatio / this->branchPoints);

@@ -27,7 +27,7 @@ limitations under the License.
 #include "itkMinimumProjectionImageFilter.h"
 #include "itkMeanProjectionImageFilter.h"
 #ifdef USE_GPUREN
-#include <vtkVolumeTextureMapper3D.h>
+#include <vtkGPUVolumeRayCastMapper.h>
 #endif
 #include "vtkPiecewiseFunction.h"
 #include "vtkPolyData.h"
@@ -86,7 +86,7 @@ struct imageFileHandle
 	ImageActorPointerType sliceActor;
 	vtkSmartPointer<vtkImageActor> ProjectionActor;
 #ifdef USE_GPUREN
-	vtkSmartPointer<vtkVolumeTextureMapper3D> volumeMapperGPU;
+	vtkSmartPointer<vtkGPUVolumeRayCastMapper> volumeMapperGPU;
 #endif
 	vtkSmartPointer<vtkVolume> volume;
 };
