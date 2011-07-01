@@ -187,7 +187,7 @@ void TraceLine::calculateVol()
 void TraceLine::calculateBifFeatures()
 {
 	TraceBit BranchBit= this->m_trace_bits.back();
-	TraceBit previousBit = this->GetBitXFromEnd(1);
+	TraceBit previousBit = this->GetBitXFromEnd(2);
 	double BranchBitRadii = BranchBit.r;
 	TraceLine* Daughter1 = this->GetBranch1();
 	TraceBit  D1F = Daughter1->GetTraceBitsPointer()->front();

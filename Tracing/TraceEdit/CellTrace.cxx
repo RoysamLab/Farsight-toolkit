@@ -105,7 +105,7 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 			this->MaxMin(this->segments[i]->GetPathLength(), this->TerminalPathLength, this->minTerminalPathLength, this->maxTerminalPathLength);
 			
 		}//end if leaf
-		else //if(!this->segments[i]->isRoot())
+		else if(!this->segments[i]->isRoot())
 		{
 			this->branchPoints++;
 			this->MaxMin(this->segments[i]->GetpartitionAsymmetry(), this->partitionAsymmetry, this->partitionAsymmetryMin, this->partitionAsymmetryMax);
