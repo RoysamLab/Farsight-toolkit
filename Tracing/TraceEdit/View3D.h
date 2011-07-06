@@ -122,7 +122,8 @@ public:
 	bool readProject(QString projectFile);
 	//todo: make these private with accessors
 	vtkSmartPointer<vtkRenderer> Renderer;
-	vtkSmartPointer<vtkActor> BranchActor;
+	vtkSmartPointer<vtkActor> BranchActor;\
+	void ShowProjectTable();
 
 public slots:
 	void choosetoRender(int row, int col);
