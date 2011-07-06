@@ -795,6 +795,9 @@ void View3D::ShowProjectTable()
 				QTableWidgetItem *newrenderItem = new QTableWidgetItem(tr("on"));
 				newrenderItem->setFlags(newrenderItem->flags() & (~Qt::ItemIsEditable));
 				projectFilesTable->setItem(i,2,newrenderItem);
+				//4th column of table
+				/*QTableWidgetItem *dimensionItem = new QTableWidgetItem(
+				dimensions*/
 				//this->ImageActors->setRenderStatus(i);	
 			} //end if newFileInfo exists
 		} //end of filetype is image or soma
@@ -803,13 +806,6 @@ void View3D::ShowProjectTable()
 }
 void View3D::choosetoRender(int row, int col)
 {
-	//this->projectFilesTable->itemClicked();
-	//QList<QTableWidgetItem> selection = this->projectFilesTable->selectedItems(); ////////???? doesn't work
-	//for (int i = 0; i < selection.size(); i++)
-	//{
-	//	std::cout << selection.toStdString().c_str();
-	//}
-
 	QList<QTableWidgetSelectionRange> ranges = this->projectFilesTable->selectedRanges(); //for future use
 	//add buttons to change all highlighted cells to "on" or "off"
 
@@ -833,14 +829,44 @@ void View3D::choosetoRender(int row, int col)
 			//std::cout << this->projectFilesTable->item(rowselected,2) << std::endl;
 			this->projectFilesTable->setItem(row,2,offItem);
 			this->ImageActors->setRenderStatus(row, false);
-			this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(row));
+			if(this->ImageActors->is2D(row))
+			{
+				this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(row));
+				this->ImageActors->setIs2D(row, false);
+			}
+			else if (this->ImageActors->isRayCast(row))
+			{
+				this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(row));
+			} 
+			else
+			{
+				this->Renderer->RemoveActor(this->ImageActors->GetContourActor(row));
+			}
 		}
 		else //turn on
 		{
 			this->projectFilesTable->setItem(row,2,onItem);
 			this->ImageActors->setRenderStatus(row, true);
-			this->Renderer->AddActor(this->ImageActors->createProjection(row, this->projectionStyle));
-			this->ImageActors->setIs2D(row, true);
+			if (this->ImageActors->isRayCast(row))
+			{
+				if (!this->viewIn2D)
+				{
+					this->Renderer->AddVolume(this->ImageActors->RayCastVolume(row));
+					//this->ImageActors->setRenderStatus(row, true);
+					this->RacastBar->show();
+				}else
+				{
+					//this->Renderer->AddActor(this->ImageActors->CreateSliceActor(row));
+					this->Renderer->AddActor(this->ImageActors->createProjection(row, this->projectionStyle));
+					this->ImageActors->setIs2D(row, true);
+					//this->SlicerBar->show();
+				}
+			}
+			else
+			{
+				this->Renderer->AddActor(this->ImageActors->ContourActor(row));
+				//this->ImageActors->setRenderStatus(row, true);
+			}
 		}
 	}
 }
@@ -1625,7 +1651,7 @@ void View3D::removeImageActors()
 		}			
 		
 		this->ImageActors->setRenderStatus(i, false);
-		std::cout << "Turning off item " << i << std::endl;
+		//std::cout << "Turning off item " << i << std::endl;
 		this->projectFilesTable->setItem(i,2,offItem);
 
 	}//end num images
