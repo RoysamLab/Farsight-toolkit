@@ -127,6 +127,7 @@ public:
 
 public slots:
 	void choosetoRender(int row, int col);
+	void changeDimension(int row, int col);
 	void ListSelections();
 	void ClearSelection();
 	void SelectTrees();

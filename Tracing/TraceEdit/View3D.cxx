@@ -795,9 +795,17 @@ void View3D::ShowProjectTable()
 				QTableWidgetItem *newrenderItem = new QTableWidgetItem(tr("on"));
 				newrenderItem->setFlags(newrenderItem->flags() & (~Qt::ItemIsEditable));
 				projectFilesTable->setItem(i,2,newrenderItem);
-				//4th column of table
-				/*QTableWidgetItem *dimensionItem = new QTableWidgetItem(
-				dimensions*/
+				//4th column of projectfiletable
+				if (this->viewIn2D){
+					QTableWidgetItem *dimensionItem = new QTableWidgetItem(tr("2d"));
+					dimensionItem->setFlags(dimensionItem->flags() & (~Qt::ItemIsEditable));
+					projectFilesTable->setItem(i,3,dimensionItem);
+				}else{
+					QTableWidgetItem *dimensionItem = new QTableWidgetItem(tr("    3d"));
+					dimensionItem->setFlags(dimensionItem->flags() & (~Qt::ItemIsEditable));
+					projectFilesTable->setItem(i,3,dimensionItem);
+				}
+
 				//this->ImageActors->setRenderStatus(i);	
 			} //end if newFileInfo exists
 		} //end of filetype is image or soma
@@ -870,7 +878,70 @@ void View3D::choosetoRender(int row, int col)
 		}
 	}
 }
+void View3D::changeDimension(int row, int col)
+{
+	if(col == 3) //click on one cell in the 4th column (2D/3D) only to activate
+	{
+		QTableWidgetItem *Item2D = new QTableWidgetItem(tr("2d"));
+		Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
+		QTableWidgetItem *Item3D = new QTableWidgetItem(tr("    3d"));
+		Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
 
+		if(this->projectFilesTable->item(row,3)->text() == "    3d")
+		{
+			//std::cout << this->projectFilesTable->item(rowselected,3) << std::endl;
+			this->projectFilesTable->setItem(row,3,Item2D);
+			if ((this->ImageActors->getRenderStatus(row))&&(this->ImageActors->isRayCast(row)))
+			{
+			  //this->Renderer->AddActor(this->ImageActors->CreateSliceActor(row));
+				this->Renderer->AddActor(this->ImageActors->createProjection(row,this->projectionStyle));
+			  this->ImageActors->setIs2D(row, true);
+			  this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(row));
+			  this->ImageActors->setRenderStatus(row, false);
+			}
+			this->RacastBar->toggleViewAction()->setDisabled(1);
+			if (this->RacastBar->isVisible())
+			{
+			  this->RacastBar->hide();
+			}
+			//this->SlicerBar->show();
+			//this->QVTK->GetRenderWindow()->Render();
+			//this->chooseInteractorStyle(1);
+		} //end if 3d to 2d
+		else //turn on
+		{
+			this->projectFilesTable->setItem(row,3,Item3D);
+			//if (this->ImageActors->is2D(row))
+			//{
+				//this->Renderer->RemoveActor(this->ImageActors->GetSliceActor(row));
+				this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(row));
+				this->ImageActors->setIs2D(row, false);
+				this->Renderer->AddVolume(this->ImageActors->RayCastVolume(row));
+				this->ImageActors->setRenderStatus(row, true);
+			//}
+			this->RacastBar->toggleViewAction()->setDisabled(0);
+			if (this->SlicerBar->isVisible())
+			{
+				this->SlicerBar->hide();
+			}
+			this->RacastBar->show();
+			//this->chooseInteractorStyle(0);
+		} //end else 2d to 3d
+	}
+	int numof3d=0;
+	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+	{ 
+		if (!this->ImageActors->is2D(i))
+		{
+			numof3d++;
+		}
+	}
+	if (numof3d>0) {
+		this->chooseInteractorStyle(0);
+	}else {
+		this->chooseInteractorStyle(1);
+	}
+}
 void View3D::SetImgInt()
 {
 	if (this->ImageActors->NumberOfImages()>=1)
@@ -1269,15 +1340,17 @@ void View3D::CreateGUIObjects()
 
 	/********************************************************************************************/
 	QStringList projecttableHeaders;
-	projecttableHeaders << tr("Filename") << tr("Type") << tr("Renderstatus");
+	projecttableHeaders << tr("Filename") << tr("Type") << tr("Renderstatus") << tr("2d/3d");
 	this->projectFilesTable = new QTableWidget(this);
-	this->projectFilesTable->setColumnCount(3);	
+	this->projectFilesTable->setColumnCount(4);	
 	this->projectFilesTable->setColumnWidth(1,40);
 	this->projectFilesTable->setColumnWidth(2,75);
 
 	QObject::connect(this->projectFilesTable, SIGNAL(cellClicked(int,int)), this, SLOT(choosetoRender(int,int)));
+	QObject::connect(this->projectFilesTable, SIGNAL(cellClicked(int,int)), this, SLOT(changeDimension(int,int)));
 	this->projectFilesTable->setHorizontalHeaderLabels(projecttableHeaders);
 	//this->projectFilesTable->setSortingEnabled(true); //complicated
+
 	/********************************************************************************************/
 }
 
@@ -1634,8 +1707,6 @@ void View3D::removeImageActors()
 {
 	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
 	{  
-		QTableWidgetItem *offItem = new QTableWidgetItem(tr("off"));
-		offItem->setFlags(offItem->flags() & (~Qt::ItemIsEditable));
 		if(this->ImageActors->is2D(i))
 		{
 			this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(i));
@@ -1652,6 +1723,8 @@ void View3D::removeImageActors()
 		
 		this->ImageActors->setRenderStatus(i, false);
 		//std::cout << "Turning off item " << i << std::endl;
+		QTableWidgetItem *offItem = new QTableWidgetItem(tr("off"));
+		offItem->setFlags(offItem->flags() & (~Qt::ItemIsEditable));
 		this->projectFilesTable->setItem(i,2,offItem);
 
 	}//end num images
@@ -1679,6 +1752,11 @@ void View3D::raycastToSlicer()
 			  this->ImageActors->setIs2D(i, true);
 			  this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
 			  this->ImageActors->setRenderStatus(i, false);
+				/***************************************************************/
+				QTableWidgetItem *Item2D = new QTableWidgetItem(tr("2d"));
+				Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
+				this->projectFilesTable->setItem(i,3,Item2D);
+				/***************************************************************/
 			}
 		}//end num images
 		this->RacastBar->toggleViewAction()->setDisabled(1);
@@ -1702,6 +1780,11 @@ void View3D::raycastToSlicer()
 				this->ImageActors->setIs2D(i, false);
 				this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
 				this->ImageActors->setRenderStatus(i, true);
+				/***************************************************************/
+				QTableWidgetItem *Item3D = new QTableWidgetItem(tr("    3d"));
+				Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
+				this->projectFilesTable->setItem(i,3,Item3D);
+				/***************************************************************/
 			}
 		}
 		this->RacastBar->toggleViewAction()->setDisabled(0);
