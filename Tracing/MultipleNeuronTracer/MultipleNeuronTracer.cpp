@@ -32,6 +32,7 @@ void MultipleNeuronTracer::LoadCurvImage(ImageType3D::Pointer &image, unsigned i
 
 	//Median filter	
 	MedianFilterType::Pointer medfilt = MedianFilterType::New();
+	medfilt->SetNumberOfThreads(16);
 	medfilt->SetInput(rescaler->GetOutput());
 	ImageType3D::SizeType rad = { {1, 1, 1} };
 	medfilt->SetRadius(rad);
@@ -63,7 +64,7 @@ void MultipleNeuronTracer::LoadCurvImage(ImageType3D::Pointer &image, unsigned i
 			}
 		}
 	}
-
+	CurvImage->Delete();
 	std::cout << "Input file size (after zero padding) is " << PaddedCurvImage->GetBufferedRegion().GetSize() << std::endl;
 	size = PaddedCurvImage->GetBufferedRegion().GetSize();
 }
@@ -374,7 +375,7 @@ void MultipleNeuronTracer::FeatureMain(void)
 		GetFeature( sigmas[i] );
 	}
 	
-	ImageType3D::Pointer temp = ImageType3D::New();
+	/*ImageType3D::Pointer temp = ImageType3D::New();
 	temp->SetRegions(PaddedCurvImage->GetBufferedRegion());
 	temp->Allocate();
 
@@ -387,7 +388,7 @@ void MultipleNeuronTracer::FeatureMain(void)
 		{
 			tit.Set(1.0);		
 		}
-	}
+	}*/
 }
 
 void MultipleNeuronTracer::GetFeature( float sigma ) 
