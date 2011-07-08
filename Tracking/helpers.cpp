@@ -2296,7 +2296,7 @@ void MergeCells(std::vector<LabelImageType::Pointer> lin, std::vector<InputImage
 	f.BoundingBox[2]+=lbounds[2];
 	f.BoundingBox[3]+=lbounds[2];
 	f.BoundingBox[4]+=lbounds[4];
-	f.BoundingBox[5]+=lbounds[5];
+	f.BoundingBox[5]+=lbounds[4];
 	lout = p;
 	rout = r;
 	fout = f;
