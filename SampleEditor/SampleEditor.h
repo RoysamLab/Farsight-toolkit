@@ -49,6 +49,7 @@ limitations under the License.
 #include <vector>
 #include <string>
 
+class Dendrogram;
 class SampleEditor : public QMainWindow
 {
     Q_OBJECT;
@@ -86,6 +87,7 @@ private:
 	TableWindow *table;
 	PlotWindow *plot;
 	HistoWindow *histo;
+	Dendrogram *dendro;
 	int flag;
 
 	vtkSmartPointer<vtkTable> data;

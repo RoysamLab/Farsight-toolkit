@@ -14,6 +14,7 @@ limitations under the License.
 =========================================================================*/
 
 #include "SampleEditor.h"
+#include "Dendrogram.h"
 
 
 
@@ -27,6 +28,7 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 	table = new TableWindow();
 	plot = new PlotWindow(this);
 	histo = new HistoWindow(this);
+	dendro = new Dendrogram(0,0);
 
 
 	data = NULL;
@@ -167,17 +169,23 @@ void SampleEditor::loadFile()
 	plot->show();
 	this->histo->setModels(data, selection);
 	this->histo->show();
+	std::cout << "I reached here inside the sample editor"<<std::endl;
+	this->dendro->setModels(data,selection);
+	this->dendro->show();
+
 }
 
 
 void SampleEditor::ReadFiles(std::string hname, std::string dname)
 {
 
-	const int MAXLINESIZE = 1024;	//Numbers could be in scientific notation in this file
+	const int MAXLINESIZE = 102400;	//Numbers could be in scientific notation in this file
 	char line[MAXLINESIZE];
 
 	//data = vtkSmartPointer<vtkTable>::New();		//Start with a new table
 	data->Initialize();
+	std::cout << "The value of hname is "<<hname<<std::endl;
+	std::cout << "The value of dname is "<<dname <<std::endl;
 
 	//LOAD THE HEADER INFO:
 	ifstream headerFile; 
@@ -187,6 +195,7 @@ void SampleEditor::ReadFiles(std::string hname, std::string dname)
 
 	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
 	headerFile.getline(line, MAXLINESIZE);
+	/*std::cout << line << std::endl;*/
 	while ( !headerFile.eof() ) //Get all values
 	{
 		std::string h;
@@ -199,10 +208,12 @@ void SampleEditor::ReadFiles(std::string hname, std::string dname)
 		column = vtkSmartPointer<vtkDoubleArray>::New();
 		column->SetName( h.c_str() );
 		data->AddColumn(column);
-
+		/*std::cout<<"The headers is:"<<std::endl;*/
+		/*data->Dump(3);*/
 		headerFile.getline(line, MAXLINESIZE);
 	}
 	headerFile.close();
+	/*std::cout << "Finished loading headers" << std::endl;*/
 
 	//LOAD ALL OF THE FEATURES INFO:
 	ifstream featureFile; 
@@ -211,6 +222,8 @@ void SampleEditor::ReadFiles(std::string hname, std::string dname)
 		return;
 
 	featureFile.getline(line, MAXLINESIZE);
+	
+	std::cout << line<<std::endl;
 	while ( !featureFile.eof() ) //Get all values
 	{
 		vtkSmartPointer<vtkVariantArray> row = vtkSmartPointer<vtkVariantArray>::New();
@@ -221,9 +234,13 @@ void SampleEditor::ReadFiles(std::string hname, std::string dname)
 			pch = strtok (NULL, " \t");
 		}
 		data->InsertNextRow(row);
+		/*std::cout <<"The data is:"<<std::endl;*/
+		/*data->Dump(3);*/
+
 		featureFile.getline(line, MAXLINESIZE);
 	}
 	featureFile.close();
+	/*std::cout << "Finished loading data" << std::endl;*/
 	
 }
 
