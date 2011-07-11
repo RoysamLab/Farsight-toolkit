@@ -398,11 +398,11 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 	gauss->SetInput( PaddedCurvImage );
 	gauss->SetSigma( sigma );
 	gauss->SetNormalizeAcrossScale(false);
-	ImageType3D::Pointer smoothedCurvImage = gauss->GetOutput();
-	smoothedCurvImage->Update();
+	//ImageType3D::Pointer smoothedCurvImage = gauss->GetOutput();
+	gauss->GetOutput()->Update();
 
 	float tot = 0.0f, num = 0.0f;
-	itk::ImageRegionIterator<ImageType3D> ittemp(smoothedCurvImage, smoothedCurvImage->GetBufferedRegion());
+	itk::ImageRegionIterator<ImageType3D> ittemp(gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
 	float gamma = 1.6f;
 	float tnorm = vcl_pow(sigma,gamma);
 
@@ -425,8 +425,8 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 		zn =  {{0,   0,   -2}};
 
 	itk::Size<3> rad = {{1,1,1}};
-	itk::NeighborhoodIterator<ImageType3D> nit(rad , smoothedCurvImage, smoothedCurvImage->GetBufferedRegion());
-	itk::ImageRegionIterator<ImageType3D> it(smoothedCurvImage, smoothedCurvImage->GetBufferedRegion());
+	itk::NeighborhoodIterator<ImageType3D> nit(rad , gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
+	itk::ImageRegionIterator<ImageType3D> it(gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
 
 	unsigned int
 		xy1 =  17, //{ 1 ,   1 ,  0 },
@@ -490,9 +490,9 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 		if ( ((val - a1/13.0f) > thresh2 ) && ( val > thresh1 ))  
 		{
 			TensorType h;
-			h[0] = smoothedCurvImage->GetPixel( ndx + xp ) + smoothedCurvImage->GetPixel( ndx + xn ) - 2*nit.GetPixel( 13 );
-			h[3] = smoothedCurvImage->GetPixel( ndx + yp ) + smoothedCurvImage->GetPixel( ndx + yn ) - 2*nit.GetPixel( 13 );
-			h[5] = smoothedCurvImage->GetPixel( ndx + zp ) + smoothedCurvImage->GetPixel( ndx + zn ) - 2*nit.GetPixel( 13 );
+			h[0] = gauss->GetOutput()->GetPixel( ndx + xp ) + gauss->GetOutput()->GetPixel( ndx + xn ) - 2*nit.GetPixel( 13 );
+			h[3] = gauss->GetOutput()->GetPixel( ndx + yp ) + gauss->GetOutput()->GetPixel( ndx + yn ) - 2*nit.GetPixel( 13 );
+			h[5] = gauss->GetOutput()->GetPixel( ndx + zp ) + gauss->GetOutput()->GetPixel( ndx + zn ) - 2*nit.GetPixel( 13 );
 			h[1] = nit.GetPixel(xy1) + nit.GetPixel(xy2) - nit.GetPixel(xy3) - nit.GetPixel(xy4);
 			h[2] = nit.GetPixel(xz1) + nit.GetPixel(xz2) - nit.GetPixel(xz3) - nit.GetPixel(xz4);
 			h[4] = nit.GetPixel(yz1) + nit.GetPixel(yz2) - nit.GetPixel(yz3) - nit.GetPixel(yz4);
@@ -1136,8 +1136,8 @@ void MultipleNeuronTracer::Interpolate(float sigma)
 	gauss->SetInput( PaddedCurvImage );
 	gauss->SetSigma( sigma );
 	gauss->SetNormalizeAcrossScale(false);
-	ImageType3D::Pointer smoothedCurvImage = gauss->GetOutput();
-	smoothedCurvImage->Update();
+	//ImageType3D::Pointer smoothedCurvImage = gauss->GetOutput();
+	gauss->GetOutput()->Update();
 
 	std::vector<SWCNode*>::iterator sit;
 	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
@@ -1145,14 +1145,14 @@ void MultipleNeuronTracer::Interpolate(float sigma)
 		float w,x,y,z;
 		if (((*sit)->children.size() > 0) && ((*sit)->parent != NULL)) 
 		{
-			w = vnl_math_max(smoothedCurvImage->GetPixel((*sit)->ndx), 0.1f);
+			w = vnl_math_max(gauss->GetOutput()->GetPixel((*sit)->ndx), 0.1f);
 			x = w * float((*sit)->ndx[0]);
 			y = w * float((*sit)->ndx[1]);
 			z = w * float((*sit)->ndx[2]);
 
 			if ((*sit)->parent != NULL) 
 			{
-				float w1 = vnl_math_max(smoothedCurvImage->GetPixel((*sit)->parent->ndx), 0.1f);
+				float w1 = vnl_math_max(gauss->GetOutput()->GetPixel((*sit)->parent->ndx), 0.1f);
 				w += w1;
 				x += (w1 * float((*sit)->parent->ndx[0]));
 				y += (w1 * float((*sit)->parent->ndx[1]));
@@ -1160,7 +1160,7 @@ void MultipleNeuronTracer::Interpolate(float sigma)
 			}
 			for (unsigned int i = 0; i < (*sit)->children.size() ; ++i) 
 			{
-				float w1 = vnl_math_max(smoothedCurvImage->GetPixel((*sit)->children[i]->ndx), 0.1f);
+				float w1 = vnl_math_max(gauss->GetOutput()->GetPixel((*sit)->children[i]->ndx), 0.1f);
 				w += w1;
 				x += (w1 * float((*sit)->children[i]->ndx[0]));
 				y += (w1 * float((*sit)->children[i]->ndx[1]));
