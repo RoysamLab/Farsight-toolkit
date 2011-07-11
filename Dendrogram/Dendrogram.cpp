@@ -994,7 +994,7 @@ void Dendrogram::GetSelecectedIDs()
 	int i=0;
 	for(it=selection.begin();it!=selection.end();it++)
 	{
-		lookupTable->SetTableValue((*it)-1,1,0,1);
+		//lookupTable->SetTableValue((*it)-1,1,0,1);
 		std::cout <<"The selected ID is :"<<(*it)-1<<std::endl;
 		
 		
