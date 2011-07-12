@@ -627,6 +627,12 @@ public:
 		return fvarnew;
 	}
 	std::string dataset_id;
+	std::vector<LabelImageType::Pointer> tim;
+	std::string train_out,train_in;
+	std::string mode;
+	std::vector<std::map<int,int> > ftforwardmaps;
+	std::vector<std::map<int,int> > ftreversemaps;
+	
 private:
 	enum EDGE_TYPE {SPLIT,MERGE,APPEAR,DISAPPEAR,TRANSLATION};
 	float overlap(float bb1[6],float bb2[6]);
@@ -663,6 +669,7 @@ private:
 	TGraph::vertex_descriptor get_parent(TGraph::vertex_descriptor);// no error check implemented TODO
 	TGraph::vertex_descriptor get_child(TGraph::vertex_descriptor);// no error check implemented TODO
 	bool is_separate(CellTracker::TGraph::vertex_descriptor v1, CellTracker::TGraph::vertex_descriptor v2);
+	int get_shared_boundary(CellTracker::TGraph::vertex_descriptor v1, CellTracker::TGraph::vertex_descriptor v2);
 	float get_LRUtility(std::vector< TGraph::vertex_descriptor > desc);
 	float get_misalignment_cost(FeaturesType f1, FeaturesType f2, FeaturesType f3);
     void print_debug_info(void);
@@ -672,15 +679,19 @@ private:
 	int my_connected_components2(std::vector<int> &component);
 	void print_all_LRUtilities(TGraph::vertex_descriptor v);
 	void compute_feature_variances();
-	
+	void print_training_statistics_to_file();
+	int get_vertex_label_from_training(TGraph::vertex_descriptor v);
 	//variables
 
 	TGraph g; 
-	VVF fvector; 
+	VVF fvector;
+	VVF ftvector;
 	VVL limages;
 	VVR rimages;
 	VVV rmap;
 	VVM m_cand;
+	std::map<TGraph::vertex_descriptor,int> vlindexmap;
+	std::vector<std::set<int> > vlabels;
 	std::map<TGraph::edge_descriptor, TGraph::edge_descriptor> coupled_map;
 	int UTILITY_MAX;
 	FeatureVariances fvar;
@@ -3156,46 +3167,85 @@ bool CellTracker::is_separate(CellTracker::TGraph::vertex_descriptor v1, CellTra
 		return false;
 	}
 	return true;
-	/*FeaturesType f1,f2;
-	f1 = fvector[g[v1].t][g[v1].findex];
-	f2 = fvector[g[v2].t][g[v2].findex];
 
-	float min[3];
-	float max[3];
-	min[0] = MAX(f1.BoundingBox[0],f2.BoundingBox[0]);
-	min[1] = MAX(f1.BoundingBox[2],f2.BoundingBox[2]);
-	min[2] = MAX(f1.BoundingBox[4],f2.BoundingBox[4]);
+}
 
-	max[0] = MIN(f1.BoundingBox[1],f2.BoundingBox[1]);
-	max[1] = MIN(f1.BoundingBox[3],f2.BoundingBox[3]);
-	max[2] = MIN(f1.BoundingBox[5],f2.BoundingBox[5]);
+int CellTracker::get_shared_boundary(CellTracker::TGraph::vertex_descriptor v1, CellTracker::TGraph::vertex_descriptor v2)
+{
+	// assuming not special vertices or sth like that
 
-	LabelImageType::Pointer lim1,lim2;
-	lim1 = limages[g[v1].t][g[v1].findex];
-	lim2 = limages[g[v2].t][g[v2].findex];
+	if(g[v1].special ==1 || g[v2].special == 1)
+	{
+		printf("Can't find shared boundary for auxilliary vertices\n");
+		return 0;
+	}
+
+	int t1 = g[v1].t;
+	int t2 = g[v2].t;
+	int i1 = g[v1].findex;
+	int i2 = g[v2].findex;
+	LabelImageType::Pointer p1,p2;
+	p1 = limages[t1][i1];
+	p2 = limages[t2][i2];
 
 
-	LabelImageType::IndexType ind1,ind2;
-	LabelImageType::SizeType size1,size2;
-	LabelImageType::RegionType region1,region2;
 
-	ind1[0] = min[0] - f1.BoundingBox[0];
-	ind1[1] = min[1] - f1.BoundingBox[2];
-	ind1[2] = min[2] - f1.BoundingBox[4];
+	LabelImageType::SizeType ls;
 
-	ind2[0] = min[0] - f2.BoundingBox[0];
-	ind2[1] = min[1] - f2.BoundingBox[2];
-	ind2[2] = min[2] - f2.BoundingBox[4];
+	int lbounds[6];
 
-	size1[0] = max[0] - min[0] + 1;
-	size1[1] = max[1] - min[1] + 1;
-	size1[2] = max[2] - min[2] + 1;
+	lbounds[0] = MIN(fvector[t1][i1].BoundingBox[0],fvector[t2][i2].BoundingBox[0]);
+	lbounds[2] = MIN(fvector[t1][i1].BoundingBox[2],fvector[t2][i2].BoundingBox[2]);
+	lbounds[4] = MIN(fvector[t1][i1].BoundingBox[4],fvector[t2][i2].BoundingBox[4]);
+	lbounds[1] = MAX(fvector[t1][i1].BoundingBox[1],fvector[t2][i2].BoundingBox[1]);
+	lbounds[3] = MAX(fvector[t1][i1].BoundingBox[3],fvector[t2][i2].BoundingBox[3]);
+	lbounds[5] = MAX(fvector[t1][i1].BoundingBox[5],fvector[t2][i2].BoundingBox[5]);
 
-	size2 = size1;
+	ls[0] = lbounds[1]-lbounds[0]+1;
+	ls[1] = lbounds[3]-lbounds[2]+1;
+	ls[2] = lbounds[5]-lbounds[4]+1;
 
-	region1.SetIndex(ind1);region1.SetSize(size1);
-	region2.SetIndex(ind2);region2.SetSize(size2);
+	LabelImageType::Pointer p = LabelImageType::New();
+	LabelImageType::IndexType lindex;
+	lindex.Fill(0);
+	LabelImageType::RegionType lregion;
+	lregion.SetIndex(lindex);
+	lregion.SetSize(ls);
+	p->SetRegions(lregion);
+	p->Allocate();
+	p->FillBuffer(0);
+	LabelIteratorType liter1(p1,p1->GetLargestPossibleRegion());
 
+
+	lindex[0] = fvector[t1][i1].BoundingBox[0]-lbounds[0];
+	lindex[1] = fvector[t1][i1].BoundingBox[2]-lbounds[2];
+	lindex[2] = fvector[t1][i1].BoundingBox[4]-lbounds[4];
+
+	lregion.SetSize(p1->GetLargestPossibleRegion().GetSize());
+	lregion.SetIndex(lindex);
+
+	LabelIteratorType liter(p,lregion);
+	for(liter1.GoToBegin(),liter.GoToBegin();!liter1.IsAtEnd(); ++liter1,++liter)
+	{
+		if(liter1.Get()==fvector[t1][i1].num)
+			liter.Set(fvector[t1][i1].num);
+	}
+
+	LabelIteratorType liter2(p2,p2->GetLargestPossibleRegion());
+
+	lindex[0] = fvector[t2][i2].BoundingBox[0]-lbounds[0];
+	lindex[1] = fvector[t2][i2].BoundingBox[2]-lbounds[2];
+	lindex[2] = fvector[t2][i2].BoundingBox[4]-lbounds[4];
+	lregion.SetIndex(lindex);
+	lregion.SetSize(p2->GetLargestPossibleRegion().GetSize());
+
+	liter = LabelIteratorType(p,lregion);
+
+	for(liter2.GoToBegin(),liter.GoToBegin();!liter2.IsAtEnd(); ++liter2,++liter)
+	{
+		if(liter2.Get()==fvector[t2][i2].num)
+			liter.Set(fvector[t2][i2].num);
+	}
 
 	typedef itk::ConstNeighborhoodIterator< LabelImageType > ConstNeighType;
 	typedef itk::NeighborhoodIterator < LabelImageType > NeighborhoodType;
@@ -3205,68 +3255,37 @@ bool CellTracker::is_separate(CellTracker::TGraph::vertex_descriptor v1, CellTra
 	float radius = 1;
 	rad.Fill(radius);
 
-	FaceCalculatorType facecalc1;
-	FaceCalculatorType::FaceListType facelist1;
-	FaceCalculatorType facecalc2;
-	FaceCalculatorType::FaceListType facelist2;
-
-	LabelImageType::Pointer lom1,lom2;
-	typedef itk::RegionOfInterestImageFilter<LabelImageType,LabelImageType> ExtractFilterType;
-
-	region1.Print(std::cout);
-	region2.Print(std::cout);
-	ExtractFilterType::Pointer ext1 = ExtractFilterType::New();
-	ext1->SetInput(lim1);
-	ext1->SetRegionOfInterest(region1);
-	ext1->Update();
-	lom1 = ext1->GetOutput();
-
-	ExtractFilterType::Pointer ext2 = ExtractFilterType::New();
-	ext2->SetInput(lim2);
-	ext2->SetRegionOfInterest(region2);
-	ext2->Update();
-	lom2 = ext2->GetOutput();
-
-	LabelImageType::RegionType region;
-	LabelImageType::IndexType ind;
-	LabelImageType::SizeType size;
-	ind.Fill(0);
-	size = region1.GetSize();
-	region.SetIndex(ind);
-	region.SetSize(size);
+	FaceCalculatorType facecalc;
+	FaceCalculatorType::FaceListType facelist;
 
 
-	facelist1 = facecalc1(lom1,region,rad);
-	facelist2 = facecalc2(lom2,region,rad);
+	facelist = facecalc(p,p->GetLargestPossibleRegion(),rad);
 
 	ConstNeighType nit1,nit2;
-	FaceCalculatorType::FaceListType::iterator fit1,fit2;
+	FaceCalculatorType::FaceListType::iterator fit;
 
 	int found = 0;
-	for(fit1 = facelist1.begin(),fit2 = facelist2.begin(); fit1!=facelist1.end(); ++fit2,++fit1)
+	int val1 = fvector[t1][i1].num;
+	int val2 = fvector[t2][i2].num;
+	int total_found = 0;
+	for(fit = facelist.begin(); fit!=facelist.end(); ++fit)
 	{
-	nit1 = ConstNeighType(rad,lim1,*fit1);
-	nit2 = ConstNeighType(rad,lim2,*fit2);
+		nit1 = ConstNeighType(rad,p,*fit);
 
-	for(nit1.GoToBegin(),nit2.GoToBegin(); !nit1.IsAtEnd(); ++nit1,++nit2)
-	{
-	if(nit1.GetCenterPixel()!=0)
-	{
-	found = (nit2.GetPrevious(0)!=0) + (nit2.GetNext(0)!=0) + (nit2.GetPrevious(1)!=0) + (nit2.GetNext(1)!=0) + (nit2.GetPrevious(2)!=0) + (nit2.GetNext(2)!=0);
-	if(found>0)
-	break;
-	}
-	}
-	if(found>0)
-	break;
+		for(nit1.GoToBegin(); !nit1.IsAtEnd(); ++nit1)
+		{
+			if(nit1.GetCenterPixel()!=0)
+			{
+				unsigned short value = nit1.GetCenterPixel();
+				unsigned short other = val1+val2-value;
+				found = (nit1.GetPrevious(0)==other) + (nit1.GetNext(0)==other) + (nit1.GetPrevious(1)==other) + (nit1.GetNext(1)==other) + (nit1.GetPrevious(2)==other) + (nit1.GetNext(2)==other);
+				total_found +=found;
+			}
+		}
 	}
 
-	if(found>0)
-	{
-	//yay!
-	return false;
-	}
-	return true;*/
+	return total_found;
+
 }
 
 std::vector<std::vector<bool> >  generate_all_binary_strings(int n)
@@ -4930,8 +4949,15 @@ void CellTracker::run()
 		printFeatures(fvector[tin][indin]);
 	}
 */
-
+	printf("About to print debug info\n");
 	print_debug_info();
+
+	if(strcmp(mode.c_str(),"TRAINING")==0)
+	{
+		printf("About to do training\n");
+		print_training_statistics_to_file();
+		return;
+	}
 	solve_higher_order();
 	//solve_lip();
 	print_stats();
@@ -5665,8 +5691,357 @@ void testKPLS()
 	exit(0);
 }
 
+std::set<int> CellTracker::get_vertex_labels_from_training(TGraph::vertex_descriptor v)
+{
+	if(vlindexmap.find(v)!=vlindexmap.end()) // memoization
+	{
+		return vlabels[vlindexmap[v]];
+	}
+	std::set<int> ret;
+	if(g[v].special==1)
+	{
+		return ret;
+	}
+	LabelImageType::RegionType lr;
+	LabelImageType::IndexType li;
+	LabelImageType::SizeType ls;
+	FeaturesType f = fvector[g[v].t][g[v].findex];
+	li[0]=f.BoundingBox[0];
+	li[1]=f.BoundingBox[2];
+	li[2]=f.BoundingBox[4];
+	ls[0]=f.BoundingBox[1]-f.BoundingBox[0]+1;
+	ls[1]=f.BoundingBox[3]-f.BoundingBox[2]+1;
+	ls[2]=f.BoundingBox[5]-f.BoundingBox[4]+1;
+	lr.SetIndex(li);
+	lr.SetIndex(ls);
 
+	ConstLabelIterator liter1(limages[g[v].t][g[v].findex],limages[g[v].t][g[v].findex]->GetLargestPossibleRegion());
+	ConstLabelIterator liter2(tim[g[v].t],lr);
+	std::set<int> labels;
+	std::map<int,int> sizemap;
+	for(liter1.GoToBegin(),liter2.GoToBegin();!liter1.IsAtEnd();++liter1,++liter2)
+	{
+		if(liter1.Get()!=0)
+		{
+			int curl = liter2.Get();
+			if(curl!=0)
+			{
+				if(labels.find(curl)==labels.end())
+				{
+					labels.insert(curl);
+					sizemap[curl]=0;
+				}
+				else
+				{
+					++sizemap[curl];
+				}
+			}
+		}
+	}
+	
+	std::set<int>::iterator it;
+	it = labels.begin();
+	for(it = labels.begin();it!=labels.end();++it)
+	{
+		if(sizemap[*it]>0.2*ftvector[g[v].t][ftforwardmaps[g[v].t][*it]].ScalarFeatures[FeaturesType::VOLUME]) // at least 20% volume of the cell should be covered.
+		{
+			ret.insert(*it);
+		}
+	}
+	vlabels.push_back(ret);
+	vlindexmap[v]=vlabels.size()-1; //memoize before returning
 
+return ret;
+}
+
+void CellTracker::print_training_statistics_to_file()
+{
+	FILE *fp = fopen(train_in.c_str(),"r");
+	std::set<int> trackids;
+	FILE  *fpout = fopen(train_out.c_str(),"w");
+
+	printf("train_in |%s| train_out |%s|\n", train_in.c_str(), train_out.c_str());
+	printf("In print_training_statistics_to_file()\n");
+	while(!feof(fp))
+	{
+		int cellid;
+		fscanf(fp,"%d",&cellid);
+		if(feof(fp))
+			break;
+		printf("About to insert cellid\n");
+		trackids.insert(cellid);
+	}
+	fclose(fp);
+	printf("Read training input\n");
+	TGraph::vertex_iterator vi,vend;
+	std::set<int> intersect(50);
+	for(tie(vi,vend) = vertices(g); vi!=vend;++vi)
+	{
+		if(g[*vi].special==1)
+			continue;
+		std::set<int> labels = get_vertex_labels_from_training(*vi);
+		for(int t = g[*vi].t-1; t>=0 && t>=g[*vi].t-K; t--)
+		{
+			std::vector<TGraph::vertex_descriptor> connected_vertices;
+			// find the vertices in t that interset with labels
+			TGraph::in_edge_iterator ein,einend;
+			for(tie(ein,einend)=in_edges(*vi,g); ein!=einend; ++ein)
+			{
+				if(g[source(*ein,g)].t==t) // we're interested in this vertex now
+				{
+					TGraph::vertex_descriptor v1 = source(*ein,g);
+					std::set<int> newlabels = get_vertex_labels_from_training(v1);
+					intersect.clear();
+					std::set<int>::iterator it = set_intersection(labels.begin(),labels.end(),newlabels.begin(),newlabels.end(),intersect.begin());
+					if(it!=intersect.begin())
+					{
+						connected_vertices.push_back(v1);
+					}
+				}
+			}
+			if(connected_vertices.size()>0)
+			{
+				if(connected_vertices.size()>=2)
+				{
+					if(connected_vertices.size()>2)
+					{
+						printf("We have a problem. Cannot merge more than 2 vertices. Arbitrarily choosing 2\n");
+						scanf("%*d");
+					}
+					select_merge_edge(connected_vertices[0],connected_vertices[1],*vi);
+					break;
+				}
+				else
+				{
+					//find if there are more vertices in g[*vi].t that intersect with these labels
+					TGraph::out_edge_iterator eout,eoutend;
+					std::set<int> curlabels = get_vertex_labels_from_training(connected_vertices[0]);
+					std::vector<TGraph::vertex_descriptor> outverts;
+					for(tie(eout,eoutend)=out_edges(connected_vertices[0],g);eout!=eoutend;++eout)
+					{
+						if(g[target(*eout,g)].t==g[*vi].t) // we are interested in such vertices
+						{
+							TGraph::vertex_descriptor v1 = target(*eout,g);
+							std::set<int> newlabels = get_vertex_labels_from_training(v1);
+							intersect.clear();
+							std::set<int>::iterator it = set_intersection(curlabels.begin(),curlabels.end(),newlabels.begin(),newlabels.end(),intersect.begin());
+							if(it!=intersect.begin())
+							{
+								outverts.push_back(v1);
+							}
+						}
+					}
+					if(outverts.size()==0)
+					{
+						printf("Something serious wrong here 23124\n");
+						scanf("%*d");
+						break;
+					}
+					if(outverts.size()>=2)
+					{
+						if(outverts.size()>2)
+						{
+							printf("We have a problem. Cannot split to more than 2 vertices. Arbitrarily choosing 2\n");
+							scanf("%*d");
+						}
+						select_split_edge(connected_vertices[0],outverts[0],outverts[1]);
+						break;
+					}
+					else
+					{
+						select_translation_edge(connected_vertices[0],outverts[0]);
+						break;
+					}
+				}
+			}
+		}
+	}
+		
+		
+		/*if(g[*vi].special ==1)
+		{
+			continue;
+		}
+		LabelImageType::IndexType Centroid;
+		Centroid[0] = fvector[g[*vi].t][g[*vi].findex].Centroid[0];
+		Centroid[1] = fvector[g[*vi].t][g[*vi].findex].Centroid[1];
+		Centroid[2] = fvector[g[*vi].t][g[*vi].findex].Centroid[2];
+		printf("Centroid %d %d %d\n",Centroid[0],Centroid[1],Centroid[2]);
+		int id = tim[g[*vi].t]->GetPixel(Centroid);
+	
+		if(trackids.find(id)!=trackids.end())
+		{
+			std::vector<TGraph::edge_descriptor> edgeset;
+			TGraph::in_edge_iterator ein,einend;
+			for(tie(ein,einend)=in_edges(*vi,g); ein!=einend; ++ein)
+			{
+				TGraph::vertex_descriptor vin = source(*ein,g);
+				if(g[vin].special==1)
+				{
+					continue;
+				}
+				LabelImageType::IndexType Centroid1;
+				Centroid1[0] = fvector[g[vin].t][g[vin].findex].Centroid[0];
+				Centroid1[1] = fvector[g[vin].t][g[vin].findex].Centroid[1];
+				Centroid1[2] = fvector[g[vin].t][g[vin].findex].Centroid[2];
+				printf("Centroid1 %d %d %d\n",Centroid1[0],Centroid1[1],Centroid1[2]);
+				int newid = tim[g[vin].t]->GetPixel(Centroid1);
+				
+				if(newid==id)
+				{
+					if(get_edge_type(*ein)==MERGE)
+					{
+						TGraph::vertex_descriptor v = source(coupled_map[*ein],g);
+						int label = get_vertex_label_from_training(v);
+						
+						if(label!=newid)
+							continue;
+					}
+					else if(get_edge_type(*ein)==SPLIT)
+					{
+						TGraph::vertex_descriptor v = target(coupled_map[*ein],g);
+						int label = get_vertex_label_from_training(v);
+						
+						if(label!=newid)
+							continue;
+					}
+					edgeset.push_back(*ein);
+				}
+			}
+			int maxt = -1;
+			int coupled_select = -1;
+			printf("About to find the max time\n");
+			for(int counter =0; counter < edgeset.size(); counter++)
+			{
+				TGraph::vertex_descriptor vin = source(edgeset[counter],g);
+				maxt = MAX(g[vin].t,maxt);
+			}
+			printf("About to find the vertex with the max time\n");
+			TGraph::edge_descriptor ebest;
+			bool found_coupled_edges = false;
+			bool found_something = false;
+			for(int counter =0; counter < edgeset.size(); counter++)
+			{
+				TGraph::vertex_descriptor vin = source(edgeset[counter],g);
+				if(g[vin].t==maxt)
+				{
+					if(get_edge_type(edgeset[counter])==MERGE||get_edge_type(edgeset[counter])==SPLIT)
+					{
+						found_coupled_edges = true;
+						ebest = edgeset[counter];
+						found_something = true;
+						break;
+					}
+					ebest = edgeset[counter];
+					found_something = true;
+				}
+			}
+			printf("finished finding the vertex\n");
+			printf("found_something = %d\n",found_something);
+			
+
+			if(found_something)
+			{
+			float ovlap,ovlap1,ovlap2;
+			FeaturesType f1, f2,f3;
+			LabelImageType::IndexType Centroid1;
+			LabelImageType::IndexType Centroid2;
+			LabelImageType::IndexType Centroid3;
+			TGraph::vertex_descriptor vin;
+			switch(get_edge_type(ebest))
+			{
+			case TRANSLATION:
+				printf("In T\n");
+				vin = source(ebest,g);
+				f1 = fvector[g[vin].t][g[vin].findex];
+				f2 = fvector[g[*vi].t][g[*vi].findex];
+				
+				Centroid1[0] = fvector[g[vin].t][g[vin].findex].Centroid[0];
+				Centroid1[1] = fvector[g[vin].t][g[vin].findex].Centroid[1];
+				Centroid1[2] = fvector[g[vin].t][g[vin].findex].Centroid[2];
+				ovlap = overlap(f1.BoundingBox,f2.BoundingBox);
+				printf("About to fprintf\n");
+				fprintf(fpout,"T dx %d dy %d dz %d v1 %f v2 %f v1v2 %0.2f t1 %d t2 %d\n",Centroid[0]-Centroid1[0],Centroid[1]-Centroid1[1],Centroid[2]-Centroid1[2],f1.ScalarFeatures[FeaturesType::VOLUME],f2.ScalarFeatures[FeaturesType::VOLUME],ovlap,f1.time,f2.time);
+				break;
+			case MERGE:
+				printf("In M\n");
+				if(rand()*1.0/RAND_MAX <0.5)
+				{
+					ebest = coupled_map[ebest];
+				}
+				TGraph::vertex_descriptor v1,v2,v3;
+				v1 = source(ebest,g);
+				if(coupled_map[coupled_map[ebest]]!=ebest)
+				{
+					printf("Something is wrong with coupled_map M\n");
+					scanf("%*d");
+				}
+				v2 = source(coupled_map[ebest],g);
+				v3 = target(ebest,g);
+				f1 = fvector[g[v1].t][g[v1].findex];
+				f2 = fvector[g[v2].t][g[v2].findex];
+				f3 = fvector[g[v3].t][g[v3].findex];
+				Centroid3[0] = fvector[g[v3].t][g[v3].findex].Centroid[0];
+				Centroid3[1] = fvector[g[v3].t][g[v3].findex].Centroid[1];
+				Centroid3[2] = fvector[g[v3].t][g[v3].findex].Centroid[2];
+				Centroid1[0] = fvector[g[v1].t][g[v1].findex].Centroid[0];
+				Centroid1[1] = fvector[g[v1].t][g[v1].findex].Centroid[1];
+				Centroid1[2] = fvector[g[v1].t][g[v1].findex].Centroid[2];
+				LabelImageType::IndexType Centroid2;
+				Centroid2[0] = f2.Centroid[0];
+				Centroid2[1] = f2.Centroid[1];
+				Centroid2[2] = f2.Centroid[2];
+				printf("Centroid2 %d %d %d\n",Centroid2[0],Centroid2[1],Centroid2[2]);
+				ovlap1 = overlap(f1.BoundingBox,f3.BoundingBox);
+				ovlap2 = overlap(f2.BoundingBox,f3.BoundingBox);
+				fprintf(fpout,"M id1 %d id2 %d id3 %d dx1 %d dy1 %d dz1 %d dx2 %d dy2 %d dz2 %d v1 %f v2 %f v3 %f sv1v2 %d v1v3 %0.2f v2v3 %0.2f t1 %d t2 %d\n",f1.num, f2.num, f3.num, Centroid3[0]-Centroid1[0],Centroid3[1]-Centroid1[1],Centroid3[2]-Centroid1[2],Centroid3[0]-Centroid2[0],Centroid3[1]-Centroid2[1],Centroid3[2]-Centroid2[2],f1.ScalarFeatures[FeaturesType::VOLUME],f2.ScalarFeatures[FeaturesType::VOLUME],f3.ScalarFeatures[FeaturesType::VOLUME],get_shared_boundary(v1,v2),ovlap1,ovlap2,f1.time,f3.time);
+				break;
+			case SPLIT:
+				printf("In S\n");
+				if(rand()*1.0/RAND_MAX <0.5)
+				{
+					ebest = coupled_map[ebest];
+				}
+				v1 = target(ebest,g);
+				
+				if(coupled_map[coupled_map[ebest]]!=ebest)
+				{
+					printf("Something is wrong with coupled_map S\n");
+					scanf("%*d");
+				}
+				v2 = target(coupled_map[ebest],g);
+				v3 = source(ebest,g);
+				f1 = fvector[g[v1].t][g[v1].findex];
+				f2 = fvector[g[v2].t][g[v2].findex];
+				f3 = fvector[g[v3].t][g[v3].findex];
+				Centroid1[0] = fvector[g[v1].t][g[v1].findex].Centroid[0];
+				Centroid1[1] = fvector[g[v1].t][g[v1].findex].Centroid[1];
+				Centroid1[2] = fvector[g[v1].t][g[v1].findex].Centroid[2];
+				Centroid3[0] = fvector[g[v3].t][g[v3].findex].Centroid[0];
+				Centroid3[1] = fvector[g[v3].t][g[v3].findex].Centroid[1];
+				Centroid3[2] = fvector[g[v3].t][g[v3].findex].Centroid[2];
+				Centroid2[0] = f2.Centroid[0];
+				Centroid2[1] = f2.Centroid[1];
+				Centroid2[2] = f2.Centroid[2];
+				printf("Centroid2 %d %d %d\n",Centroid2[0],Centroid2[1],Centroid2[2]);
+				ovlap1 = overlap(f1.BoundingBox,f3.BoundingBox);
+				ovlap2 = overlap(f2.BoundingBox,f3.BoundingBox);
+				fprintf(fpout,"S id1 %d id2 %d id3 %d dx1 %d dy1 %d dz1 %d dx2 %d dy2 %d dz2 %d v1 %f v2 %f v3 %f sv1v2 %d v1v3 %0.2f v2v3 %0.2f t1 %d t2 %d\n",f1.num, f2.num, f3.num, Centroid3[0]-Centroid1[0],Centroid3[1]-Centroid1[1],Centroid3[2]-Centroid1[2],Centroid3[0]-Centroid2[0],Centroid3[1]-Centroid2[1],Centroid3[2]-Centroid2[2],f1.ScalarFeatures[FeaturesType::VOLUME],f2.ScalarFeatures[FeaturesType::VOLUME],f3.ScalarFeatures[FeaturesType::VOLUME],get_shared_boundary(v1,v2),ovlap1,ovlap2,f1.time,f3.time);
+				break;
+			default:
+				break;
+			}
+			}
+
+		}
+		
+	}*/
+
+	
+
+	
+	fclose(fpout);
+}
 void CellTracker::compute_feature_variances()
 {
 	TGraph::edge_iterator ei,eend;
@@ -5771,6 +6146,99 @@ int optionsCreate(const char* optfile, map<std::string,std::string>& options)
   return 0;
 }
 
+void RunTraining(std::vector<std::string> im, std::vector<std::string> label, std::vector<std::string> tracks, std::string intrain, std::string outtrain, FeatureVariances fvar)
+{
+	CellTracker::VVL limages;
+	std::vector<LabelImageType::Pointer> timages;
+	CellTracker::VVR rimages;
+	std::vector<std::vector<FeaturesType> > fvector;
+	std::vector<std::vector<FeaturesType> > ftvector;
+	std::vector<std::map<int,int> > ftforwardmaps;
+	std::vector<std::map<int,int> > ftreversemaps;
+	LabelImageType::Pointer tempsegmented;
+	LabelImageType::Pointer temptrack;
+	InputImageType::Pointer tempimage;
+	int num_t = im.size();
+	fvar.time_last = num_t-1;
+	int c = 1;
+	for(int t =0; t<num_t; t++)
+	{
+			tempimage = readImage<InputImageType>(im[t].c_str());	
+			tempsegmented = readImage<LabelImageType>(label[t].c_str());
+			temptrack = readImage<LabelImageType>(tracks[t].c_str());
+			//tempsegmented = getLargeLabels(tempsegmented,100);
+			
+			std::vector<FeaturesType> f;
+			std::vector<FeaturesType> ft;
+			std::vector<LabelImageType::Pointer> li;
+			std::vector<InputImageType::Pointer> ri;
+			std::vector<LabelImageType::Pointer> ti;
+			getFeatureVectorsFarsight(tempsegmented,tempimage,f,t,c);
+			getFeatureVectorsFarsight(temptrack,tempimage,ft,t,c);
+
+			for(int counter=0; counter < f.size(); counter++)
+			{
+				li.push_back(extract_label_image(f[counter].num,f[counter].BoundingBox,tempsegmented));
+				ri.push_back(extract_raw_image(f[counter].BoundingBox,tempimage));
+			}
+			for(int counter =0; counter < ft.size(); counter++)
+			{
+				ftforwardmap[ft.num]=counter;
+				ftreversemap[counter]=ft.num;
+			}
+			fvector.push_back(f);
+			ftvector.push_back(ft);
+			limages.push_back(li);
+			rimages.push_back(ri);
+			timages.push_back(temptrack);
+			ftforwardmaps.push_back(ftforwardmap);
+			ftreversemaps.push_back(ftreversemap);
+	}
+
+	InputImageType::SizeType imsize = tempimage->GetLargestPossibleRegion().GetSize();
+	fvar.BoundingBox[0] = 0;
+	fvar.BoundingBox[2] = 0;
+	fvar.BoundingBox[4] = 0;
+	fvar.BoundingBox[1] = imsize[0]-1;
+	fvar.BoundingBox[3] = imsize[1]-1;
+	fvar.BoundingBox[5] = imsize[2]-1;
+
+	CellTracker ct(fvector,fvar,limages,rimages);
+//	ct.dataset_id = dataset_id;
+	ct.tim = timages;
+	ct.train_out = outtrain;
+	ct.train_in = intrain;
+	ct.mode = "TRAINING";
+	ct.ftvector = ftvector;
+	ct.ftforwardmaps = ftforwardmaps;
+	ct.ftreversemaps = ftreversemaps;
+	ColorImageType::Pointer debugcol1 = ColorImageType::New();
+	ColorImageType::Pointer debugcol2 = ColorImageType::New();
+	ColorImageType::Pointer debugcol3 = ColorImageType::New();
+	ColorImageType::SizeType colsize;
+	ColorImageType::RegionType colregion;
+	ColorImageType::IndexType colindex;
+	colindex.Fill(0);
+	colsize[0] = imsize[0]*1;
+	colsize[1] = imsize[1]*1;
+	colsize[2] = num_t;
+	colregion.SetIndex(colindex);
+	colregion.SetSize(colsize);
+	debugcol1->SetRegions(colregion);
+	debugcol1->Allocate();
+	debugcol2->SetRegions(colregion);
+	debugcol2->Allocate();
+	debugcol3->SetRegions(colregion);
+	debugcol3->Allocate();
+	ColorImageType::PixelType colorpixel;
+	colorpixel[0] = 0; colorpixel[1] = 0; colorpixel[2] = 0;
+	debugcol1->FillBuffer(colorpixel);
+	debugcol2->FillBuffer(colorpixel);
+	debugcol3->FillBuffer(colorpixel);
+	ct.set_debug_images(debugcol1,debugcol2,debugcol3);
+
+	ct.run();
+}
 
 int main(int argc1, char **argv1)
 {
@@ -5798,6 +6266,9 @@ int main(int argc1, char **argv1)
 	fvar.boundDistVariance = 50;
 
 	std::string debugprefix = "harvard";
+	std::string mode = "TRACKING";
+	std::string training_output_file = "L:\\Tracking\\Training\\training_out.txt";
+	std::string training_input_file = "L:\\Tracking\\Training\\training_in.txt";
 
 	if(argc1==3)
 	{
@@ -5854,6 +6325,16 @@ int main(int argc1, char **argv1)
 		mi = opts.find("debugprefix"); 
 		if(mi!=opts.end()){ istringstream ss((*mi).second); ss>>debugprefix; }
 
+		mi = opts.find("mode"); 
+		if(mi!=opts.end()){ istringstream ss((*mi).second); ss>>mode; }
+
+		mi = opts.find("training_input_file"); 
+		if(mi!=opts.end()){ istringstream ss((*mi).second); ss>>training_input_file; }
+
+		mi = opts.find("training_output_file"); 
+		if(mi!=opts.end()){ istringstream ss((*mi).second); ss>>training_output_file; }
+
+
 		printf("fvar.spacing[0] = %f\n",fvar.spacing[0]);
 		printf("fvar.spacing[1] = %f\n",fvar.spacing[1]);
 		printf("fvar.spacing[2] = %f\n",fvar.spacing[2]);
@@ -5870,6 +6351,9 @@ int main(int argc1, char **argv1)
 		printf("fvar.AD_prior = %f\n", fvar.AD_prior);
 		printf("fvar.T_prior = %f\n", fvar.T_prior);
 		printf("debugprefix = %s\n",debugprefix.c_str());
+		printf("mode = |%s|\n",mode.c_str());
+		printf("training_output_file = |%s|\n",training_output_file.c_str());
+		printf("training_input_file = |%s|\n",training_input_file.c_str());
 		//scanf("%*d");
 
 	}
@@ -5978,7 +6462,11 @@ int main(int argc1, char **argv1)
 		outputfilenames.push_back(tbuff);
 	}
 
-
+	if(strcmp(mode.c_str(),"TRAINING")==0)
+	{
+		RunTraining(imfilenames,labelfilenames,outputfilenames,training_input_file,training_output_file,fvar);
+		return 0;
+	}
 	/*for(int counter=0; counter < num_t; counter++)
 	{
 	printf("---t = %d %s %s %s----\n", counter, imfilenames[counter].c_str(),labelfilenames[counter].c_str(), outputfilenames[counter].c_str());
@@ -6017,7 +6505,7 @@ int main(int argc1, char **argv1)
 	//Now track the cells alone and compute associations
 
 	std::vector<std::vector<FeaturesType> > fvector;
-	CellTracker::VVL limages;
+	
 	//FeaturesType *farray;
 
 	LabelImageType::Pointer labeled;
