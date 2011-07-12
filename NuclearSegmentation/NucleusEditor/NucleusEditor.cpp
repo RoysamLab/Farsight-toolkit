@@ -2923,26 +2923,26 @@ void NucleusEditor::deleteCells(void)
 	if(ids.size() == 0)
 		return;
 
-	if(nucSeg->Delete(ids, table))
-	{
-		projectFiles.outputSaved = false;
-		projectFiles.tableSaved = false;
-		projectFiles.adjTablesSaved = false;
-		selection->clear();
-		this->updateViews();
-		for(int j=0; j<(int)ids.size(); ++j)
-		{
-			int ID = ids.at(j);
-			for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
-			{
-				if((NucAdjTable->GetValue(row,0).ToInt() == ID) || (NucAdjTable->GetValue(row,1).ToInt() == ID))
-				{
-					NucAdjTable->RemoveRow(row);
-					--row;
-				}
-			}
-		}
-		segView->SetNucAdjTable(NucAdjTable);
+	//if(nucSeg->Delete(ids, table))
+	//{
+	//	projectFiles.outputSaved = false;
+	//	projectFiles.tableSaved = false;
+	//	projectFiles.adjTablesSaved = false;
+	//	selection->clear();
+	//	this->updateViews();
+	//	for(int j=0; j<(int)ids.size(); ++j)
+	//	{
+	//		int ID = ids.at(j);
+	//		for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
+	//		{
+	//			if((NucAdjTable->GetValue(row,0).ToInt() == ID) || (NucAdjTable->GetValue(row,1).ToInt() == ID))
+	//			{
+	//				NucAdjTable->RemoveRow(row);
+	//				--row;
+	//			}
+	//		}
+	//	}
+	//	segView->SetNucAdjTable(NucAdjTable);
 
 		std::string log_entry = "DELETE , ";
 		for(int i=0; i<(int)ids.size(); ++i)
