@@ -2923,13 +2923,13 @@ void NucleusEditor::deleteCells(void)
 	if(ids.size() == 0)
 		return;
 
-	//if(nucSeg->Delete(ids, table))
-	//{
-	//	projectFiles.outputSaved = false;
-	//	projectFiles.tableSaved = false;
+	if(nucSeg->Delete(ids, table))
+	{
+		projectFiles.outputSaved = false;
+		projectFiles.tableSaved = false;
 	//	projectFiles.adjTablesSaved = false;
-	//	selection->clear();
-	//	this->updateViews();
+		selection->clear();
+		this->updateViews();
 	//	for(int j=0; j<(int)ids.size(); ++j)
 	//	{
 	//		int ID = ids.at(j);
