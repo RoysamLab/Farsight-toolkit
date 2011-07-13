@@ -627,12 +627,15 @@ public:
 		return fvarnew;
 	}
 	std::string dataset_id;
+
+	//Training variables
 	std::vector<LabelImageType::Pointer> tim;
 	std::string train_out,train_in;
 	std::string mode;
 	std::vector<std::map<int,int> > ftforwardmaps;
 	std::vector<std::map<int,int> > ftreversemaps;
-	
+	VVF ftvector;
+	//end of Training variables
 private:
 	enum EDGE_TYPE {SPLIT,MERGE,APPEAR,DISAPPEAR,TRANSLATION};
 	float overlap(float bb1[6],float bb2[6]);
@@ -680,12 +683,15 @@ private:
 	void print_all_LRUtilities(TGraph::vertex_descriptor v);
 	void compute_feature_variances();
 	void print_training_statistics_to_file();
-	int get_vertex_label_from_training(TGraph::vertex_descriptor v);
+	std::set<int> get_vertex_labels_from_training(TGraph::vertex_descriptor v);
+	void select_merge_edge(TGraph::vertex_descriptor v1, TGraph::vertex_descriptor v2, TGraph::vertex_descriptor v3);
+	void select_split_edge(TGraph::vertex_descriptor v1, TGraph::vertex_descriptor v2, TGraph::vertex_descriptor v3);
+	void select_translation_edge(TGraph::vertex_descriptor v1, TGraph::vertex_descriptor v2);
 	//variables
 
 	TGraph g; 
 	VVF fvector;
-	VVF ftvector;
+	
 	VVL limages;
 	VVR rimages;
 	VVV rmap;
@@ -947,7 +953,7 @@ int CellTracker::add_normal_edges(int tmin, int tmax)
 					tried2++;
 					float dist = get_distance(fvector[t][counter1].Centroid,fvector[tmax][counter].Centroid);
 
-					if(dist < 4.0*sqrt(fvar.distVariance)*(abs(t-tmax)))
+					if(dist < (fvar.distMean + 4.0*sqrt(fvar.distVariance))*(abs(t-tmax)))
 					{
 					
 						
@@ -1101,7 +1107,7 @@ void  CellTracker::populate_merge_candidates(int t)
 		for(int counter1 = counter+1; counter1 < fvector[t].size(); counter1++)
 		{
 			//if( MIN(fvector[t][counter].ScalarFeatures[FeaturesType::BBOX_VOLUME],fvector[t][counter1].ScalarFeatures[FeaturesType::BBOX_VOLUME])/overlap(fvector[t][counter].BoundingBox,fvector[t][counter1].BoundingBox)< 4.0*sqrt(fvar.overlapVariance))
-			if(get_distance(fvector[t][counter1].Centroid,fvector[t][counter].Centroid)<4.0*sqrt(fvar.distVariance))
+			if(get_distance(fvector[t][counter1].Centroid,fvector[t][counter].Centroid)<(fvar.distMean + 4.0*sqrt(fvar.distVariance)))
 			{
 				m.t = t;
 				m.index1 = counter;
@@ -1148,7 +1154,7 @@ int CellTracker::add_merge_split_edges(int tmax)
 				for(int i = 0; i < 3; i++)
 					centroid[i] = (fvector[tcounter][i1].Centroid[i] + fvector[tcounter][i2].Centroid[i])/2.0;
 
-				if(get_distance(fvector[tcounter][i1].Centroid,fvector[tmax][counter1].Centroid)<4.0*sqrt(fvar.distVariance) && get_distance(fvector[tcounter][i2].Centroid,fvector[tmax][counter1].Centroid)<4.0*sqrt(fvar.distVariance))
+				if(get_distance(fvector[tcounter][i1].Centroid,fvector[tmax][counter1].Centroid)< (fvar.distMean + 4.0*sqrt(fvar.distVariance)) && get_distance(fvector[tcounter][i2].Centroid,fvector[tmax][counter1].Centroid)< (fvar.distMean + 4.0*sqrt(fvar.distVariance)))
 				{
 					FeaturesType lc1 = fvector[tcounter][i1];
 					FeaturesType lc2 = fvector[tcounter][i2];
@@ -1211,7 +1217,7 @@ int CellTracker::add_merge_split_edges(int tmax)
 				for(int i = 0; i < 3; i++)
 					centroid[i] = (fvector[tmax][i1].Centroid[i] + fvector[tmax][i2].Centroid[i])/2.0;
 
-				if(get_distance(fvector[tmax][i1].Centroid,fvector[tcounter][counter1].Centroid)<4.0*sqrt(fvar.distVariance) && get_distance(fvector[tmax][i2].Centroid,fvector[tcounter][counter1].Centroid)<4.0*sqrt(fvar.distVariance))
+				if(get_distance(fvector[tmax][i1].Centroid,fvector[tcounter][counter1].Centroid)<(fvar.distMean + 4.0*sqrt(fvar.distVariance)) && get_distance(fvector[tmax][i2].Centroid,fvector[tcounter][counter1].Centroid)<(fvar.distMean+ 4.0*sqrt(fvar.distVariance)))
 				{
 					FeaturesType lc1 = fvector[tmax][i1];
 					FeaturesType lc2 = fvector[tmax][i2];
@@ -2049,14 +2055,14 @@ void CellTracker::draw_line_for_edge(int num, TGraph::edge_descriptor e,VectorPi
 			//	printf("This edge is still there %d %d %d %d\n",g[v1].t,g[v1].findex,g[v2].t,g[v2].findex);
 			//	scanf("%*d");
 			//}
-			if(get_distance(f1.Centroid,f2.Centroid)>100)
+			/*if(get_distance(f1.Centroid,f2.Centroid)>100)
 			{
 				printf("source\n");
 				print_vertex(v1,1);
 				printf("target\n");
 				print_vertex(v2,1);
 				scanf("%*d");
-			}
+			}*/
 			//printf("col1 col2 %d %d %d %d %d %d\n",col1[0],col1[1],col1[2],col2[0],col2[1],col2[2]);
 			//printf("color1 color2 %d %d %d %d %d %d\n",color1[0],color1[1],color1[2],color2[0],color2[1],color2[2]);
 			//PAUSE;
@@ -5269,13 +5275,13 @@ void CellTracker::print_vertex(TGraph::vertex_descriptor v, int depth)
 		TGraph::in_edge_iterator e_i,e_end;
 		for(tie(e_i,e_end) = in_edges(v,g); e_i!=e_end; ++e_i)
 		{
-			printf("in w=%d\t",g[*e_i].utility);
+			printf("in etype=%d w=%d\t",get_edge_type(*e_i), g[*e_i].utility);
 			print_vertex(source(*e_i,g),depth-1);
 		}
 		TGraph::out_edge_iterator e_o,e_end2;
 		for(tie(e_o,e_end2) = out_edges(v,g); e_o!=e_end2; ++e_o)
 		{
-			printf("out w=%d\t",g[*e_o].utility);
+			printf("out etype=%d w=%d\t",get_edge_type(*e_o),g[*e_o].utility);
 			print_vertex(target(*e_o,g),depth-1);
 		}
 	}
@@ -5693,13 +5699,16 @@ void testKPLS()
 
 std::set<int> CellTracker::get_vertex_labels_from_training(TGraph::vertex_descriptor v)
 {
+	printf("Entering get_vertex_labels_from_training() \n");
 	if(vlindexmap.find(v)!=vlindexmap.end()) // memoization
 	{
+		printf("Returning from get_vertex_labels_from_training() 1\n");
 		return vlabels[vlindexmap[v]];
 	}
 	std::set<int> ret;
 	if(g[v].special==1)
 	{
+		printf("Returning from get_vertex_labels_from_training() 2\n");
 		return ret;
 	}
 	LabelImageType::RegionType lr;
@@ -5713,10 +5722,10 @@ std::set<int> CellTracker::get_vertex_labels_from_training(TGraph::vertex_descri
 	ls[1]=f.BoundingBox[3]-f.BoundingBox[2]+1;
 	ls[2]=f.BoundingBox[5]-f.BoundingBox[4]+1;
 	lr.SetIndex(li);
-	lr.SetIndex(ls);
+	lr.SetSize(ls);
 
-	ConstLabelIterator liter1(limages[g[v].t][g[v].findex],limages[g[v].t][g[v].findex]->GetLargestPossibleRegion());
-	ConstLabelIterator liter2(tim[g[v].t],lr);
+	ConstLabelIteratorType liter1(limages[g[v].t][g[v].findex],limages[g[v].t][g[v].findex]->GetLargestPossibleRegion());
+	ConstLabelIteratorType liter2(tim[g[v].t],lr);
 	std::set<int> labels;
 	std::map<int,int> sizemap;
 	for(liter1.GoToBegin(),liter2.GoToBegin();!liter1.IsAtEnd();++liter1,++liter2)
@@ -5750,8 +5759,69 @@ std::set<int> CellTracker::get_vertex_labels_from_training(TGraph::vertex_descri
 	}
 	vlabels.push_back(ret);
 	vlindexmap[v]=vlabels.size()-1; //memoize before returning
-
+	printf("Returning from get_vertex_labels_from_training() 3\n");
 return ret;
+}
+
+void CellTracker::select_merge_edge(TGraph::vertex_descriptor v1, TGraph::vertex_descriptor v2, TGraph::vertex_descriptor v3)
+{
+	_TRACE;
+	TGraph::in_edge_iterator ein, eend;
+	for(tie(ein,eend)=in_edges(v3,g); ein!=eend; ++ein)
+	{
+		if(source(*ein,g)==v1 && get_edge_type(*ein)==MERGE)
+		{
+			if(source(coupled_map[*ein],g)==v2)
+			{
+				g[*ein].selected=1;
+				g[coupled_map[*ein]].selected=1;
+				_TRACE;
+				return;
+			}
+		}
+	}
+	printf(" Oops! could not find the merge edge. is there one?\n");
+	scanf("%*d");
+	return;
+}
+void CellTracker::select_split_edge(TGraph::vertex_descriptor v1, TGraph::vertex_descriptor v2, TGraph::vertex_descriptor v3)
+{
+	_TRACE;
+	TGraph::out_edge_iterator eout, eend;
+	for(tie(eout,eend)=out_edges(v1,g); eout!=eend; ++eout)
+	{
+		if(target(*eout,g)==v2 && get_edge_type(*eout)==SPLIT)
+		{
+			if(target(coupled_map[*eout],g)==v3)
+			{
+				g[*eout].selected=1;
+				g[coupled_map[*eout]].selected=1;
+				_TRACE;
+				return;
+			}
+		}
+	}
+	printf(" Oops! could not find the split edge. is there one?\n");
+	scanf("%*d");
+	return;
+}
+
+void CellTracker::select_translation_edge(TGraph::vertex_descriptor v1, TGraph::vertex_descriptor v2)
+{
+	_TRACE;
+	TGraph::out_edge_iterator eout, eend;
+	for(tie(eout,eend)=out_edges(v1,g); eout!=eend; ++eout)
+	{
+		if(target(*eout,g)==v2 && get_edge_type(*eout)==TRANSLATION)
+		{
+			g[*eout].selected=1;
+			_TRACE;
+			return;
+		}
+	}
+	printf(" Oops! could not find the translation edge. is there one?\n");
+	scanf("%*d");
+	return;
 }
 
 void CellTracker::print_training_statistics_to_file()
@@ -5774,15 +5844,16 @@ void CellTracker::print_training_statistics_to_file()
 	fclose(fp);
 	printf("Read training input\n");
 	TGraph::vertex_iterator vi,vend;
-	std::set<int> intersect(50);
+	std::vector<int> intersect(50);
 	for(tie(vi,vend) = vertices(g); vi!=vend;++vi)
 	{
 		if(g[*vi].special==1)
 			continue;
 		std::set<int> labels = get_vertex_labels_from_training(*vi);
+		printf("About to begin the search for selected edge\n");
 		for(int t = g[*vi].t-1; t>=0 && t>=g[*vi].t-K; t--)
 		{
-			std::vector<TGraph::vertex_descriptor> connected_vertices;
+			std::set<TGraph::vertex_descriptor> connected_vertices;
 			// find the vertices in t that interset with labels
 			TGraph::in_edge_iterator ein,einend;
 			for(tie(ein,einend)=in_edges(*vi,g); ein!=einend; ++ein)
@@ -5790,44 +5861,64 @@ void CellTracker::print_training_statistics_to_file()
 				if(g[source(*ein,g)].t==t) // we're interested in this vertex now
 				{
 					TGraph::vertex_descriptor v1 = source(*ein,g);
+					if(g[v1].special==1)
+						continue;
 					std::set<int> newlabels = get_vertex_labels_from_training(v1);
-					intersect.clear();
-					std::set<int>::iterator it = set_intersection(labels.begin(),labels.end(),newlabels.begin(),newlabels.end(),intersect.begin());
+					printf("Got vertex labels 1\n");
+					
+					_TRACE;
+					std::vector<int>::iterator it = set_intersection(labels.begin(),labels.end(),newlabels.begin(),newlabels.end(),intersect.begin());
+					_TRACE;
 					if(it!=intersect.begin())
 					{
-						connected_vertices.push_back(v1);
+						_TRACE;
+						connected_vertices.insert(v1);
+						_TRACE;
 					}
 				}
 			}
+			_TRACE;
 			if(connected_vertices.size()>0)
 			{
+				std::set<TGraph::vertex_descriptor>::iterator it = connected_vertices.begin();
 				if(connected_vertices.size()>=2)
 				{
+					TGraph::vertex_descriptor v1 = *it;
+					TGraph::vertex_descriptor v2 = *(++it);
 					if(connected_vertices.size()>2)
 					{
 						printf("We have a problem. Cannot merge more than 2 vertices. Arbitrarily choosing 2\n");
 						scanf("%*d");
 					}
-					select_merge_edge(connected_vertices[0],connected_vertices[1],*vi);
+					/*printf("--------------------\n");
+					print_vertex(v1,1);
+					printf("--------------------\n");
+					print_vertex(v2,1);
+					printf("--------------------\n");
+					print_vertex(*vi,1);*/
+					select_merge_edge(v1,v2,*vi);
 					break;
 				}
 				else
 				{
 					//find if there are more vertices in g[*vi].t that intersect with these labels
 					TGraph::out_edge_iterator eout,eoutend;
-					std::set<int> curlabels = get_vertex_labels_from_training(connected_vertices[0]);
-					std::vector<TGraph::vertex_descriptor> outverts;
-					for(tie(eout,eoutend)=out_edges(connected_vertices[0],g);eout!=eoutend;++eout)
+					std::set<int> curlabels = get_vertex_labels_from_training(*it);
+					std::set<TGraph::vertex_descriptor> outverts;
+					for(tie(eout,eoutend)=out_edges(*it,g);eout!=eoutend;++eout)
 					{
 						if(g[target(*eout,g)].t==g[*vi].t) // we are interested in such vertices
 						{
 							TGraph::vertex_descriptor v1 = target(*eout,g);
+							if(g[v1].special==1)
+								continue;
 							std::set<int> newlabels = get_vertex_labels_from_training(v1);
-							intersect.clear();
-							std::set<int>::iterator it = set_intersection(curlabels.begin(),curlabels.end(),newlabels.begin(),newlabels.end(),intersect.begin());
+							printf("Got vertex labels 2\n");
+							
+							std::vector<int>::iterator it = set_intersection(curlabels.begin(),curlabels.end(),newlabels.begin(),newlabels.end(),intersect.begin());
 							if(it!=intersect.begin())
 							{
-								outverts.push_back(v1);
+								outverts.insert(v1);
 							}
 						}
 					}
@@ -5844,12 +5935,26 @@ void CellTracker::print_training_statistics_to_file()
 							printf("We have a problem. Cannot split to more than 2 vertices. Arbitrarily choosing 2\n");
 							scanf("%*d");
 						}
-						select_split_edge(connected_vertices[0],outverts[0],outverts[1]);
+						std::set<TGraph::vertex_descriptor>::iterator it1 = outverts.begin();
+						std::set<TGraph::vertex_descriptor>::iterator it2 = it1;
+						++it2;
+					/*	printf("--------------------\n");
+						print_vertex(*it,1);
+						printf("--------------------\n");
+						print_vertex(*it1,1);
+						printf("--------------------\n");
+						print_vertex(*it2,1);*/
+						select_split_edge(*it,*it1,*it2);
 						break;
 					}
 					else
 					{
-						select_translation_edge(connected_vertices[0],outverts[0]);
+						std::set<TGraph::vertex_descriptor>::iterator it1 = outverts.begin();
+						/*printf("--------------------\n");
+						print_vertex(*it,1);
+						printf("--------------------\n");
+						print_vertex(*it1,1);*/
+						select_translation_edge(*it,*it1);
 						break;
 					}
 				}
@@ -5939,26 +6044,42 @@ void CellTracker::print_training_statistics_to_file()
 			printf("finished finding the vertex\n");
 			printf("found_something = %d\n",found_something);
 			
-
+			
 			if(found_something)
 			{
+
+			*/
+			
+
+	TGraph::edge_iterator ei, eend;
+	for(tie(ei,eend)=edges(g);ei!=eend; ++ei)
+	{
+		if(g[*ei].selected==1)
+		{
+			TGraph::edge_descriptor ebest = *ei;
 			float ovlap,ovlap1,ovlap2;
 			FeaturesType f1, f2,f3;
+			LabelImageType::IndexType Centroid;
 			LabelImageType::IndexType Centroid1;
 			LabelImageType::IndexType Centroid2;
 			LabelImageType::IndexType Centroid3;
-			TGraph::vertex_descriptor vin;
+			TGraph::vertex_descriptor vin,vout;
+			TGraph::vertex_descriptor v1,v2,v3;
 			switch(get_edge_type(ebest))
 			{
 			case TRANSLATION:
 				printf("In T\n");
 				vin = source(ebest,g);
+				vout = target(ebest,g);
 				f1 = fvector[g[vin].t][g[vin].findex];
-				f2 = fvector[g[*vi].t][g[*vi].findex];
+				f2 = fvector[g[vout].t][g[vout].findex];
 				
-				Centroid1[0] = fvector[g[vin].t][g[vin].findex].Centroid[0];
-				Centroid1[1] = fvector[g[vin].t][g[vin].findex].Centroid[1];
-				Centroid1[2] = fvector[g[vin].t][g[vin].findex].Centroid[2];
+				Centroid[0] = f2.Centroid[0];
+				Centroid[1] = f2.Centroid[1];
+				Centroid[2] = f2.Centroid[2];
+				Centroid1[0] = f1.Centroid[0];
+				Centroid1[1] = f1.Centroid[1];
+				Centroid1[2] = f1.Centroid[2];
 				ovlap = overlap(f1.BoundingBox,f2.BoundingBox);
 				printf("About to fprintf\n");
 				fprintf(fpout,"T dx %d dy %d dz %d v1 %f v2 %f v1v2 %0.2f t1 %d t2 %d\n",Centroid[0]-Centroid1[0],Centroid[1]-Centroid1[1],Centroid[2]-Centroid1[2],f1.ScalarFeatures[FeaturesType::VOLUME],f2.ScalarFeatures[FeaturesType::VOLUME],ovlap,f1.time,f2.time);
@@ -5969,7 +6090,7 @@ void CellTracker::print_training_statistics_to_file()
 				{
 					ebest = coupled_map[ebest];
 				}
-				TGraph::vertex_descriptor v1,v2,v3;
+				
 				v1 = source(ebest,g);
 				if(coupled_map[coupled_map[ebest]]!=ebest)
 				{
@@ -6031,13 +6152,9 @@ void CellTracker::print_training_statistics_to_file()
 			default:
 				break;
 			}
-			}
 
 		}
-		
-	}*/
-
-	
+	}
 
 	
 	fclose(fpout);
@@ -6163,6 +6280,8 @@ void RunTraining(std::vector<std::string> im, std::vector<std::string> label, st
 	int c = 1;
 	for(int t =0; t<num_t; t++)
 	{
+		std::map<int,int> ftforwardmap;
+		std::map<int,int> ftreversemap;
 			tempimage = readImage<InputImageType>(im[t].c_str());	
 			tempsegmented = readImage<LabelImageType>(label[t].c_str());
 			temptrack = readImage<LabelImageType>(tracks[t].c_str());
@@ -6183,8 +6302,8 @@ void RunTraining(std::vector<std::string> im, std::vector<std::string> label, st
 			}
 			for(int counter =0; counter < ft.size(); counter++)
 			{
-				ftforwardmap[ft.num]=counter;
-				ftreversemap[counter]=ft.num;
+				ftforwardmap[ft[counter].num]=counter;
+				ftreversemap[counter]=ft[counter].num;
 			}
 			fvector.push_back(f);
 			ftvector.push_back(ft);
