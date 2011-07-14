@@ -119,6 +119,8 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 			this->MaxMin(this->segments[i]->GetBifAmpRemote(), this->BifAmpRemote, this->BifAmpRemoteMin, this->BifAmpRemoteMax);
 			this->MaxMin(this->segments[i]->GetBranch1()->GetBifTiltLocal(), this->BifTiltLocal, this->BifTiltLocalMin, this->BifTiltLocalMax);
 			this->MaxMin(this->segments[i]->GetBranch2()->GetBifTiltRemote(), this->BifTiltRemote, this->BifTiltRemoteMin, this->BifTiltRemoteMax);
+			this->MaxMin(this->segments[i]->GetAzimuth(), this->Azimuth, this->AzimuthMin, this->AzimuthMax);
+			this->MaxMin(this->segments[i]->GetElevation(), this->Elevation, this->ElevationMin, this->ElevationMax);
 			if (this->segments[i]->GetTerminalDegree() ==2)
 			{
 				this->terminalBifCount++;
@@ -299,6 +301,14 @@ void CellTrace::clearAll()
 	this->BifTiltRemote = 0;
 	this->BifTiltRemoteMin = 180;
 	this->BifTiltRemoteMax = 0;
+
+	this->Azimuth = 0;
+	this->AzimuthMin = 180;
+	this->AzimuthMax = 0;
+
+	this->Elevation = 0;
+	this->ElevationMin = 180;
+	this->ElevationMax = 0;
 }
 void CellTrace::MaxMin(double NewValue, double &total, double &Min, double &Max)
 {
@@ -431,6 +441,14 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->BifTiltRemote / this->branchPoints);
 	CellData->InsertNextValue(this->BifTiltRemoteMin);
 	CellData->InsertNextValue(this->BifTiltRemoteMax);
+
+	CellData->InsertNextValue(this->Azimuth);
+	CellData->InsertNextValue(this->AzimuthMin);
+	CellData->InsertNextValue(this->AzimuthMax);
+
+	CellData->InsertNextValue(this->Elevation);
+	CellData->InsertNextValue(this->ElevationMin);
+	CellData->InsertNextValue(this->ElevationMax);
 
 	CellData->InsertNextValue(this->daughterRatioMin);
 	CellData->InsertNextValue(this->daughterRatio / this->branchPoints);

@@ -119,11 +119,16 @@ public:
 	std::string stats();	
 	std::string statHeaders();
 
+	double GetAzimuth();
+	double GetElevation();
+
 private:
 
 	double Euclidian(TraceBit bit1, TraceBit bit2);
 	double Angle(TraceBit bit1f, TraceBit bit1b, TraceBit bit2f, TraceBit bit2b);
 	double Angle(TraceBit bit1, TraceBit vertex, TraceBit bit2);
+	double AzimuthAngle(TraceBit vertex, TraceBit bit1);
+	double ElevationAngle(TraceBit vertex, TraceBit bit1);
 	double RallPower(double diamParent, double diamD1, double diamD2);
 	double daughterRatio, parentDaughterRatio, partitionAsymmetry, rallPower, Pk, Pk_2, Pk_classic;
 	double BifAmplLocal, BifAmpRemote, BifTiltLocal, BifTiltRemote;

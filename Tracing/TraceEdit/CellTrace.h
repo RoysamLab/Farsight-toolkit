@@ -78,6 +78,9 @@ private:
 	double daughterRatioMax, parentDaughterRatioMax, partitionAsymmetryMax, rallPowerMax, PkMax, Pk_2Max, Pk_classicMax;
 	double BifAmplLocalMax, BifAmpRemoteMax, BifTiltLocalMax, BifTiltRemoteMax;
 
+	double Azimuth, AzimuthMin, AzimuthMax;
+	double Elevation, ElevationMin, ElevationMax;
+
 	//double daughterRatioAverage, parentDaughterRatioAverage, partitionAsymmetryAverage, rallPowerAverage, PkAverage, Pk_2Average, Pk_classicAverage;
 	//double BifAmplLocalAverage, BifAmpRemoteAverage, BifTiltLocalAverage, BifTiltRemoteAverage;
 

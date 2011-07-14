@@ -74,6 +74,8 @@ void TraceModel::stdHeaders()
 	this->headers.push_back("Num Children");
 	this->headers.push_back("Bif tilt Local");
 	this->headers.push_back("Bif tilt Remote");
+	this->headers.push_back("Azimuth");
+	this->headers.push_back("Elevation");
 	this->headers.push_back("Terminal Degree");
 	this->headers.push_back("Is Leaf");
 }
@@ -133,6 +135,8 @@ void TraceModel::SyncModel()
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBranchPointer()->size());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifTiltLocal());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifTiltRemote());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetAzimuth());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetElevation());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetTerminalDegree());
 		DataRow->InsertNextValue((int)this->TraceLines.at(i)->isLeaf());
 		for (int j = 0; j < (int)this->TraceLines.at(i)->Features.size(); ++j)

@@ -238,6 +238,7 @@ void TraceLine::calculateBifFeatures()
 	Daughter1->setBifTiltRemote(this->Angle(previousBit, BranchBit, D1B));
 	Daughter2->setBifTiltRemote(this->Angle(previousBit, BranchBit, D2B));
 
+
 }
 void TraceLine::setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData)
 {
@@ -634,6 +635,34 @@ double TraceLine::Angle(TraceBit bit1, TraceBit vertex, TraceBit bit2)
 	}
 	return (NewAngle *180 )/PI;
 }
+double TraceLine::AzimuthAngle(TraceBit vertex, TraceBit bit1)
+{
+	double delX, delY;
+	double NewAngle = 0;
+	//delta x,y
+	delX = bit1.x - vertex.x;
+	delY = bit1.y - vertex.y;
+
+	NewAngle = atan2(delY,delX);
+	//gives positive angle if counterclockwise and negative angle if clockwise
+
+	return (NewAngle *180 )/PI;
+}
+double TraceLine::ElevationAngle(TraceBit vertex, TraceBit bit1)
+{
+	double delX, delY, delZ;
+	double NewAngle = 0;
+	//delta x,y,z
+	delX = bit1.x - vertex.x;
+	delY = bit1.y - vertex.y;
+	delZ = bit1.z - vertex.z;
+	
+	double hypotenuse = sqrt(pow(delX,2) + pow(delY,2));
+	NewAngle = atan2(delZ,hypotenuse);
+	//gives positive angle if counterclockwise and negative angle if clockwise
+
+	return (NewAngle *180 )/PI;
+}
 double TraceLine::RallPower(double diamParent, double diamD1, double diamD2)
 {
 	double m = .001;
@@ -843,4 +872,61 @@ std::string TraceLine::statHeaders()
 		<<"\tContraction"
 		<<"\tParent ID";
 	return thisStatsHeaders.str();
+}
+
+//void TraceLine::calculateAzimuthElevation()
+//{
+//	TraceBit P1 = this->GetParent()->GetTraceBitsPointer()->front();
+//	TraceBit D1 = this->GetTraceBitsPointer()->front();
+//	/*TraceBit Ref;
+//	
+//	Ref.x = D1.x;
+//	Ref.y = D1.y;
+//	Ref.z = P1.z;*/
+//	
+//	azimuthangle = this->Azimuth(P1,D1);
+//	elevationangle = this->Elevation(P1,D1);
+//}
+
+double TraceLine::GetAzimuth()
+{
+	double newAzimuthAngle = 0;
+	if (this->m_parent)
+	{
+		if (this->m_trace_bits.size()>1)
+		{
+			TraceBit pre, cur;
+			TraceBitsType::iterator it = this->m_trace_bits.begin();
+			pre = *it;
+			it++;
+			cur = *it;
+			newAzimuthAngle = this->AzimuthAngle(pre,cur);
+		}
+		return newAzimuthAngle;
+	}
+	else
+	{
+		return -1;
+	}
+}
+double TraceLine::GetElevation()
+{
+	double newElevationAngle = 0;
+	if (this->m_parent)
+	{
+		if (this->m_trace_bits.size()>1)
+		{
+			TraceBit pre, cur;
+			TraceBitsType::iterator it = this->m_trace_bits.begin();
+			pre = *it;
+			it++;
+			cur = *it;
+			newElevationAngle = this->ElevationAngle(pre,cur);
+		}
+		return newElevationAngle;
+	}
+	else
+	{
+		return -1;
+	}
 }
