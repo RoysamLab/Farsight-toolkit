@@ -31,7 +31,10 @@ OPTION( BUILD_OPENMP "Build with OpenMP support (Note that only VS2008 Pro and V
 OPTION( BUILD_IMAGE_MANAGER  "Manage Image File Conversions and Directories" OFF)
 
 OPTION( BUILD_MODEL_SEG "Build Statistical_Model_Segmentation (Note that it has dependency on glpk library)" OFF)
-
+OPTION( BUILD_ZERNIKE  " Build zernike_moments_calculattion " OFF)
+OPTION( BUILD_HARALICK "Biild Haralick_features_calculation" OFF)
+OPTION( BUILD_DANIELA "color_segmentation base on satration" OFF)   
+OPTION( BUILD_QTIMAGECOMBINER "combines logical OR of two QImages" OFF) 
 
 #Make sure OPENCL AND CUDA ARE NOT BOTH ENABLED
 OPTION( BUILD_OPENCL "Build with OpenCL support (VS 2008 only at the moment)" OFF) 
@@ -270,6 +273,28 @@ IF (BUILD_CUDA)
         ENDIF(MSVC)
     ENDIF (CUDA_FOUND)
 ENDIF(BUILD_CUDA)
+
+IF (BUILD_ZERNIKE)
+ 	INCLUDE_DIRECTORIES (${PROJECT_SOURCE_DIR}/Zernike)
+	SUBDIRS(Zernike)
+ENDIF(BUILD_ZERNIKE)
+
+IF (BUILD_HARALICK)
+ 	INCLUDE_DIRECTORIES (${PROJECT_SOURCE_DIR}/Haralick)
+	SUBDIRS(Haralick)
+ENDIF(BUILD_HARALICK)
+
+IF (BUILD_DANIELA)
+ 	INCLUDE_DIRECTORIES (${PROJECT_SOURCE_DIR}/Daniela)
+	SUBDIRS(Daniela)
+ENDIF(BUILD_DANIELA)
+
+IF (BUILD_QTIMAGECOMBINER)
+ 	INCLUDE_DIRECTORIES (${PROJECT_SOURCE_DIR}/QtImageCombiner)
+	SUBDIRS(QtImageCombiner)
+ENDIF(BUILD_QTIMAGECOMBINER)
+
+
 
 #####################################################################################
 # Optionally find Farsight's data directory, used for testing and installers
