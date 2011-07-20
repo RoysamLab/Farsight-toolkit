@@ -211,7 +211,7 @@ std::vector< std::pair<unsigned int, double> > kNearestObjects::k_nearest_neighb
 				}
 			}
 
-			num_neighbors += 8;
+			num_neighbors += 10;
 		}
 
 		// calculate the distance of each neighbor and store it in a vector of pairs
