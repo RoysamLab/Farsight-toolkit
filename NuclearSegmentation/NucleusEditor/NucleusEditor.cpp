@@ -313,23 +313,23 @@ void NucleusEditor::createMenus()
 	connect(showCentroidsAction, SIGNAL(triggered()), this, SLOT(toggleCentroids()));
 	viewMenu->addAction(showCentroidsAction);
 
-	//adjacencyMenu = viewMenu->addMenu(tr("Show Adjacency"));
+	adjacencyMenu = viewMenu->addMenu(tr("Show Adjacency"));
 
-	//showNucAdjAction = new QAction(tr("Nuclear"), this);
-	//showNucAdjAction->setCheckable(true);
-	//showNucAdjAction->setChecked( segView->GetNucAdjVisible() );
-	//showNucAdjAction->setStatusTip(tr("Show adjacency of nuclei"));
-	//showNucAdjAction->setShortcut(tr("Shift+N"));
-	//connect(showNucAdjAction, SIGNAL(triggered()), this, SLOT(toggleNucAdjacency()));
-	//adjacencyMenu->addAction(showNucAdjAction);
+	showNucAdjAction = new QAction(tr("Nuclear"), this);
+	showNucAdjAction->setCheckable(true);
+	showNucAdjAction->setChecked( segView->GetNucAdjVisible() );
+	showNucAdjAction->setStatusTip(tr("Show adjacency of nuclei"));
+	showNucAdjAction->setShortcut(tr("Shift+N"));
+	connect(showNucAdjAction, SIGNAL(triggered()), this, SLOT(toggleNucAdjacency()));
+	adjacencyMenu->addAction(showNucAdjAction);
 
-	//showCellAdjAction = new QAction(tr("Cellular"), this);
-	//showCellAdjAction->setCheckable(true);
-	//showCellAdjAction->setChecked( segView->GetCellAdjVisible() );
-	//showCellAdjAction->setStatusTip(tr("Show adjacency of cells"));
-	//showCellAdjAction->setShortcut(tr("Shift+C"));
-	//connect(showCellAdjAction, SIGNAL(triggered()), this, SLOT(toggleCellAdjacency()));
-	//adjacencyMenu->addAction(showCellAdjAction);
+	showCellAdjAction = new QAction(tr("Cellular"), this);
+	showCellAdjAction->setCheckable(true);
+	showCellAdjAction->setChecked( segView->GetCellAdjVisible() );
+	showCellAdjAction->setStatusTip(tr("Show adjacency of cells"));
+	showCellAdjAction->setShortcut(tr("Shift+C"));
+	connect(showCellAdjAction, SIGNAL(triggered()), this, SLOT(toggleCellAdjacency()));
+	adjacencyMenu->addAction(showCellAdjAction);
 
 	zoomMenu = viewMenu->addMenu(tr("Zoom"));
 
@@ -535,21 +535,21 @@ void NucleusEditor::createMenus()
     connect(appendTrainingAction, SIGNAL(triggered()), this, SLOT(appendTrainer()));
     modelsMenu->addAction(appendTrainingAction);
 
-	////QUERIES MENU
-	//queriesMenu = menuBar()->addMenu(tr("Queries"));
+	//QUERIES MENU
+	queriesMenu = menuBar()->addMenu(tr("Queries"));
 
-	//kNearestNeighborsAction = new QAction(tr("Query K Nearest Neighbors..."), this);
- //   connect(kNearestNeighborsAction, SIGNAL(triggered()), this, SLOT(queryKNearest()));
- //   queriesMenu->addAction(kNearestNeighborsAction);
- //   
- //   inRadiusNeighborsAction = new QAction(tr("Query Neighbors Within Radius..."), this);
- //   connect(inRadiusNeighborsAction, SIGNAL(triggered()), this, SLOT(queryInRadius()));
- //   queriesMenu->addAction(inRadiusNeighborsAction);
+	kNearestNeighborsAction = new QAction(tr("Query K Nearest Neighbors..."), this);
+    connect(kNearestNeighborsAction, SIGNAL(triggered()), this, SLOT(queryKNearest()));
+    queriesMenu->addAction(kNearestNeighborsAction);
+    
+    inRadiusNeighborsAction = new QAction(tr("Query Neighbors Within Radius..."), this);
+    connect(inRadiusNeighborsAction, SIGNAL(triggered()), this, SLOT(queryInRadius()));
+    queriesMenu->addAction(inRadiusNeighborsAction);
 
-	//queryViewsOffAction = new QAction(tr("Set Query Views Off"), this);
-	//queryViewsOffAction->setShortcut(tr("Shift+O"));
- //   connect(queryViewsOffAction, SIGNAL(triggered()), this, SLOT(queryViewsOff()));
- //   queriesMenu->addAction(queryViewsOffAction);
+	queryViewsOffAction = new QAction(tr("Set Query Views Off"), this);
+	queryViewsOffAction->setShortcut(tr("Shift+O"));
+    connect(queryViewsOffAction, SIGNAL(triggered()), this, SLOT(queryViewsOff()));
+    queriesMenu->addAction(queryViewsOffAction);
 
 	//HELP MENU
 	helpMenu = menuBar()->addMenu(tr("Help"));
@@ -664,8 +664,8 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 				this->askSaveResult();
 			if(!projectFiles.tableSaved && askSaveChanges(tr("Save changes to the table?")) )
 				this->askSaveTable();
-			//if(!projectFiles.adjTablesSaved && askSaveChanges(tr("Save changes to the adjacency tables?")) )
-			//	this->askSaveAdjTables();
+			if(!projectFiles.adjTablesSaved && askSaveChanges(tr("Save changes to the adjacency tables?")) )
+				this->askSaveAdjTables();
 		}
 	}
 
@@ -713,8 +713,8 @@ bool NucleusEditor::saveProject()
 			if(projectFiles.table == "")
 				projectFiles.table = bname.toStdString() + "_table.txt";
 
-			//if(projectFiles.adjTables == "")
-			//	projectFiles.adjTables = bname.toStdString() + "_adjTables.txt";
+			if(projectFiles.adjTables == "")
+				projectFiles.adjTables = bname.toStdString() + "_adjTables.txt";
 
 			if(projectFiles.log == "")
 				createDefaultLogName();
@@ -750,10 +750,10 @@ bool NucleusEditor::saveProject()
 			this->saveTable();
 		}
 
-		//if(projectFiles.adjTables != "" && !projectFiles.adjTablesSaved)
-		//{
-		//	this->saveAdjTables();
-		//}
+		if(projectFiles.adjTables != "" && !projectFiles.adjTablesSaved)
+		{
+			this->saveAdjTables();
+		}
 
 	return true;
 }
@@ -2342,11 +2342,20 @@ void NucleusEditor::queryKNearest()
 	
 	QVector<QString> classes;
 	int max_class = 0;
-	for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
-	{
-		if(table->GetValueByName(row,"prediction_default1").ToInt() > max_class)
-			max_class = table->GetValueByName(row,"prediction_default1").ToInt();
+	for(int col=0; col<(int)table->GetNumberOfColumns(); ++col)
+	{	
+		std::string current_column = table->GetColumnName(col);
+		if(current_column.find("prediction") != std::string::npos )
+		{
+			for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
+			{
+				if(table->GetValue(row,col).ToInt() > max_class)
+					max_class = table->GetValue(row,col).ToInt();
+			}
+			break;
+		}
 	}
+
 	for(int i=0; i<max_class; ++i)
 		classes.push_back(QString::number(i+1));
 	
@@ -2430,11 +2439,20 @@ void NucleusEditor::queryInRadius()
 
 	QVector<QString> classes;
 	int max_class = 0;
-	for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
-	{
-		if(table->GetValueByName(row,"prediction_default1").ToInt() > max_class)
-			max_class = table->GetValueByName(row,"prediction_default1").ToInt();
+	for(int col=0; col<(int)table->GetNumberOfColumns(); ++col)
+	{	
+		std::string current_column = table->GetColumnName(col);
+		if(current_column.find("prediction") != std::string::npos )
+		{
+			for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
+			{
+				if(table->GetValue(row,col).ToInt() > max_class)
+					max_class = table->GetValue(row,col).ToInt();
+			}
+			break;
+		}
 	}
+
 	for(int i=0; i<max_class; ++i)
 		classes.push_back(QString::number(i+1));
 
@@ -2927,22 +2945,22 @@ void NucleusEditor::deleteCells(void)
 	{
 		projectFiles.outputSaved = false;
 		projectFiles.tableSaved = false;
-	//	projectFiles.adjTablesSaved = false;
+		projectFiles.adjTablesSaved = false;
 		selection->clear();
 		this->updateViews();
-	//	for(int j=0; j<(int)ids.size(); ++j)
-	//	{
-	//		int ID = ids.at(j);
-	//		for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
-	//		{
-	//			if((NucAdjTable->GetValue(row,0).ToInt() == ID) || (NucAdjTable->GetValue(row,1).ToInt() == ID))
-	//			{
-	//				NucAdjTable->RemoveRow(row);
-	//				--row;
-	//			}
-	//		}
-	//	}
-	//	segView->SetNucAdjTable(NucAdjTable);
+		for(int j=0; j<(int)ids.size(); ++j)
+		{
+			int ID = ids.at(j);
+			for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
+			{
+				if((NucAdjTable->GetValue(row,0).ToInt() == ID) || (NucAdjTable->GetValue(row,1).ToInt() == ID))
+				{
+					NucAdjTable->RemoveRow(row);
+					--row;
+				}
+			}
+		}
+		segView->SetNucAdjTable(NucAdjTable);
 
 		std::string log_entry = "DELETE , ";
 		for(int i=0; i<(int)ids.size(); ++i)
