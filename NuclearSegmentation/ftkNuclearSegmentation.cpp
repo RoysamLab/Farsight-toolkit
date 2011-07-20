@@ -1038,15 +1038,15 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 		
 	int objID = id1;		//The ID of the object I am splitting!!
 
-	////Remove the corresponding rows from the Nuclear Adjacency table
-	//for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
-	//{
-	//	if((NucAdjTable->GetValue(row,0).ToInt()==objID)||(NucAdjTable->GetValue(row,1).ToInt()==objID))
-	//	{
-	//		NucAdjTable->RemoveRow(row);
-	//		--row;
-	//	}
-	//}
+	//Remove the corresponding rows from the Nuclear Adjacency table
+	for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
+	{
+		if((NucAdjTable->GetValue(row,0).ToInt()==objID)||(NucAdjTable->GetValue(row,1).ToInt()==objID))
+		{
+			NucAdjTable->RemoveRow(row);
+			--row;
+		}
+	}
 	
 	//Update the segmentation image
 	//Now get the bounding box around the object
@@ -1353,26 +1353,26 @@ int NuclearSegmentation::Merge(vector<int> ids, vtkSmartPointer<vtkTable> table,
 	}
 
 	int newID = maxID() + 1;
-	//for(int j=0; j<(int)ids.size(); ++j)
-	//{
-	//	int OldID = ids.at(j);
-	//	for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
-	//	{
-	//		for(int col=0; col<(int)NucAdjTable->GetNumberOfRows(); ++col)
-	//		{
-	//			if(NucAdjTable->GetValue(row,col).ToInt() == OldID)
-	//				NucAdjTable->SetValue(row,col,newID);
-	//		}
-	//	}
-	//}
-	//for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
-	//{
-	//	if((NucAdjTable->GetValue(row,0).ToInt()) == (NucAdjTable->GetValue(row,1).ToInt()))
-	//	{
-	//		NucAdjTable->RemoveRow(row);
-	//		--row;
-	//	}
-	//}
+	for(int j=0; j<(int)ids.size(); ++j)
+	{
+		int OldID = ids.at(j);
+		for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
+		{
+			for(int col=0; col<(int)NucAdjTable->GetNumberOfRows(); ++col)
+			{
+				if(NucAdjTable->GetValue(row,col).ToInt() == OldID)
+					NucAdjTable->SetValue(row,col,newID);
+			}
+		}
+	}
+	for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
+	{
+		if((NucAdjTable->GetValue(row,0).ToInt()) == (NucAdjTable->GetValue(row,1).ToInt()))
+		{
+			NucAdjTable->RemoveRow(row);
+			--row;
+		}
+	}
 
 	ReassignLabels(ids, newID);					//Assign all old labels to this new label
 	ftk::Object::Box region = ExtremaBox(ids);
