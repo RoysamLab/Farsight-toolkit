@@ -13,6 +13,10 @@ kNearestObjects::kNearestObjects(std::map< unsigned int, std::vector<float> > ce
 
 	MeasurementVectorType mv;
 	unsigned int id;
+
+	// store the object centroids as measurement vectors and form a map of object ID to centroid
+	// also store the measurement vectors as a list sample for the generation of the KD tree
+
 	for (It = centerMap.begin(); It != centerMap.end(); ++It )
 	{
 		id = (*It).first;
@@ -23,6 +27,7 @@ kNearestObjects::kNearestObjects(std::map< unsigned int, std::vector<float> > ce
 		sample->PushBack( mv );
     }
 
+	
 	treeGenerator->SetSample( sample );
 	treeGenerator->SetBucketSize( 16 );
 	treeGenerator->Update();
@@ -31,31 +36,55 @@ kNearestObjects::kNearestObjects(std::map< unsigned int, std::vector<float> > ce
 }
 
 
+
+
+
+//***********************************************************************************************
 //***********************************************************************************************
 // K Nearest Neighbors
 //***********************************************************************************************
+//***********************************************************************************************
+
+// returns the k nearest neighbors for all IDs and returns a vector of vectors where
+// each inner vector contains an ID itself and its neighbors paired with their distances to the ID
 
 std::vector< std::vector< std::pair<unsigned int, double> > > kNearestObjects::k_nearest_neighbors_All(unsigned int k, unsigned short Class_dest, unsigned short Class_src)
 {	
+	// Initialize the vector of vectors
 	std::vector<std::vector< std::pair<unsigned int, double> > > kNearestIDs;
+	
+	// fetch each ID to get its nearest neighbors
 	for(IdIt = idToCentroidMap.begin(); IdIt != idToCentroidMap.end(); ++IdIt )
 	{
+		// initialize a vector to store the neighbors and their distances as pairs
 		std::vector< std::pair<unsigned int, double> > kNearestIds;
 		unsigned int ID = (*IdIt).first;
+		
+		// for any ID
 		if(Class_src == 0)
 		{
 			kNearestIds = k_nearest_neighbors_ID(ID, k, Class_dest);
 			kNearestIDs.push_back(kNearestIds);
 		}
+		
+		// for ID of a given class
 		else
 		{
-			for(int row = 0; row<(int)featureTable->GetNumberOfRows(); ++row)
-			{
-				if( (ID == featureTable->GetValueByName(row, "ID").ToUnsignedInt())
-					&& (featureTable->GetValueByName(row, "prediction_default1").ToUnsignedShort() == Class_src) )
+			for(int col=((int)featureTable->GetNumberOfColumns())-1; col>=0; --col)
+			{	
+				std::string current_column = featureTable->GetColumnName(col);
+				if(current_column.find("prediction") != std::string::npos )
 				{
-					kNearestIds = k_nearest_neighbors_ID(ID, k, Class_dest);
-					kNearestIDs.push_back(kNearestIds);
+					for(int row = 0; row<(int)featureTable->GetNumberOfRows(); ++row)
+					{
+						if( (ID == featureTable->GetValueByName(row, "ID").ToUnsignedInt())
+							&& (featureTable->GetValue(row, col).ToUnsignedShort() == Class_src) )
+						{
+							kNearestIds = k_nearest_neighbors_ID(ID, k, Class_dest);
+							kNearestIDs.push_back(kNearestIds);
+							break;
+						}
+					}
 					break;
 				}
 			}
@@ -64,6 +93,11 @@ std::vector< std::vector< std::pair<unsigned int, double> > > kNearestObjects::k
 
 	return kNearestIDs;
 }
+
+
+
+// returns the k nearest neighbors for a set of IDs and returns a vector of vectors where
+// each inner vector contains an ID itself and its neighbors paired with their distances to the ID
 
 std::vector< std::vector< std::pair<unsigned int, double> > > kNearestObjects::k_nearest_neighbors_IDs(std::vector<unsigned int> IDs, unsigned int k, unsigned short Class_dest)
 {
@@ -79,10 +113,16 @@ std::vector< std::vector< std::pair<unsigned int, double> > > kNearestObjects::k
 	return kNearestIDs;
 }
 
+
+
+// returns the k nearest neighbors for an ID and returns a vector that contains the
+// ID itself and its neighbors paired with their distances to the ID
+
 std::vector< std::pair<unsigned int, double> > kNearestObjects::k_nearest_neighbors_ID(unsigned int id, unsigned int k, unsigned short Class_dest)
 {
 	std::vector< std::pair<unsigned int, double> > kNearestIds;
 	
+	// to get the K nearest neighbors of all classes
 	if(Class_dest == 0)
 	{
 		DistanceMetricType::Pointer distanceMetric = DistanceMetricType::New();
@@ -113,10 +153,87 @@ std::vector< std::pair<unsigned int, double> > kNearestObjects::k_nearest_neighb
 		}
 	}
 
+	// to get the K nearest neighbors of a particular class
 	else
 	{
-		kNearestIds = neighborsWithinRadius_ID(id, 1e5, Class_dest);
-		unsigned int vector_size = (unsigned int)kNearestIds.size();
+		DistanceMetricType::Pointer distanceMetric = DistanceMetricType::New();
+		DistanceMetricType::OriginType origin( 3 );
+		for (unsigned int i = 0 ; i < (unsigned int)sample->GetMeasurementVectorSize() ; ++i)
+		{
+			origin[i] = idToCentroidMap[id][i];
+		}
+		distanceMetric->SetOrigin( origin );
+
+		kNearestIds.push_back( std::make_pair(id,0) );
+	
+		int count = 0;
+		unsigned int num_neighbors = k+1;
+		TreeType::InstanceIdentifierVectorType temp_vector;
+		
+		// repeat till the number of nearest neighbors is greater than or equal to k
+		while(count < k)
+		{
+			count = 0;
+			temp_vector.clear();
+			TreeType::InstanceIdentifierVectorType kNeighbors;
+			tree->Search( idToCentroidMap[id], num_neighbors, kNeighbors ); 
+			for ( unsigned int i = 0 ; i < kNeighbors.size() ; ++i )
+			{
+			    std::map<int, MeasurementVectorType>::iterator iter;
+				MeasurementVectorType mvt = tree->GetMeasurementVector(kNeighbors[i]);
+				for(iter = idToCentroidMap.begin(); iter != idToCentroidMap.end(); ++iter)
+				{
+					// find the ID of the neighbor from the centroid map and check if it is the source ID itself
+					if(((*iter).second == mvt) && ((*iter).first!=id))
+					{
+						for(int col=((int)featureTable->GetNumberOfColumns())-1; col>=0; --col)
+						{	
+							std::string current_column = featureTable->GetColumnName(col);
+							if(current_column.find("prediction") != std::string::npos )
+							{
+								for(int row = 0; row<(int)featureTable->GetNumberOfRows(); ++row)
+								{
+									// check if the neighbor is of the desired class
+									if( ((*iter).first == featureTable->GetValueByName(row, "ID").ToUnsignedInt())
+										&& (featureTable->GetValue(row, col).ToUnsignedShort() == Class_dest) )
+									{
+										// push the neighbor into a temporary vector and increase the count
+										temp_vector.push_back(kNeighbors[i]);
+										count++;
+										break;
+									}
+								}
+								break;
+							}
+						}					
+						break;				
+					}
+				}
+			}
+
+			num_neighbors += 8;
+		}
+
+		// calculate the distance of each neighbor and store it in a vector of pairs
+		for ( unsigned int i = 0 ; i < temp_vector.size() ; ++i )
+		{
+			std::map<int, MeasurementVectorType>::iterator iter;
+			MeasurementVectorType mvt = tree->GetMeasurementVector(temp_vector[i]);
+			{
+				for(iter = idToCentroidMap.begin(); iter != idToCentroidMap.end(); ++iter)
+				{
+					if((*iter).second == mvt)
+					{
+						double dist = distanceMetric->Evaluate(mvt);
+						std::pair<unsigned int, double> Neighbor = std::make_pair((*iter).first, dist);
+						kNearestIds.push_back(Neighbor);
+						break;
+					}
+				}
+			}
+		}
+		
+		//get the five nearest neighbors from the above vector 
 		double max_dist;
 		unsigned int max_pos;
 		while((unsigned int)kNearestIds.size() != k+1)
@@ -140,31 +257,56 @@ std::vector< std::pair<unsigned int, double> > kNearestObjects::k_nearest_neighb
 	return kNearestIds;
 }
 
+
+
+
+
+//***********************************************************************************************
 //***********************************************************************************************
 // Neighbors with certain radius
 //***********************************************************************************************
+//***********************************************************************************************
+
+// returns the neighbors within radius for all IDs and returns a vector of vectors where
+// each inner vector contains an ID itself and its neighbors paired with their distances to the ID
 
 std::vector< std::vector< std::pair<unsigned int, double> > > kNearestObjects::neighborsWithinRadius_All(double radius, unsigned short Class_dest, unsigned short Class_src)
 {	
+	// Initialize the vector of vectors
 	std::vector<std::vector< std::pair<unsigned int, double> > > inRadiusIDs;
+
+	// fetch each ID to get its nearest neighbors
 	for(IdIt = idToCentroidMap.begin(); IdIt != idToCentroidMap.end(); ++IdIt )
 	{
+		// initialize a vector to store the neighbors and their distances as pairs
 		std::vector< std::pair<unsigned int, double> > inRadiusIds;
 		unsigned int ID = (*IdIt).first;
+		
+		// for any ID
 		if(Class_src == 0)
 		{
 			inRadiusIds = neighborsWithinRadius_ID(ID, radius, Class_dest);
 			inRadiusIDs.push_back(inRadiusIds);
 		}
+		
+		// for ID of a given class
 		else
 		{
-			for(int row = 0; row<(int)featureTable->GetNumberOfRows(); ++row)
-			{
-				if( (ID == featureTable->GetValueByName(row, "ID").ToUnsignedInt())
-					&& (featureTable->GetValueByName(row, "prediction_default1").ToUnsignedShort() == Class_src) )
+			for(int col=((int)featureTable->GetNumberOfColumns())-1; col>=0; --col)
+			{	
+				std::string current_column = featureTable->GetColumnName(col);
+				if(current_column.find("prediction") != std::string::npos )
 				{
-					inRadiusIds = neighborsWithinRadius_ID(ID, radius, Class_dest);
-					inRadiusIDs.push_back(inRadiusIds);
+					for(int row = 0; row<(int)featureTable->GetNumberOfRows(); ++row)
+					{
+						if( (ID == featureTable->GetValueByName(row, "ID").ToUnsignedInt())
+							&& (featureTable->GetValue(row, col).ToUnsignedShort() == Class_src) )
+						{
+							inRadiusIds = neighborsWithinRadius_ID(ID, radius, Class_dest);
+							inRadiusIDs.push_back(inRadiusIds);
+							break;
+						}
+					}
 					break;
 				}
 			}
@@ -173,6 +315,11 @@ std::vector< std::vector< std::pair<unsigned int, double> > > kNearestObjects::n
 
 	return inRadiusIDs;
 }
+
+
+
+// returns the neighbors within radius for a set of IDs and returns a vector of vectors where
+// each inner vector contains an ID itself and its neighbors paired with their distances to the ID
 
 std::vector< std::vector< std::pair<unsigned int, double> > > kNearestObjects::neighborsWithinRadius_IDs(std::vector<unsigned int> IDs, double radius, unsigned short Class_dest)
 {
@@ -187,6 +334,11 @@ std::vector< std::vector< std::pair<unsigned int, double> > > kNearestObjects::n
 
 	return inRadiusIDs;
 }
+
+
+
+// returns the neighbors within radius for an ID and returns a vector that contains the
+// ID itself and its neighbors paired with their distances to the ID
 
 std::vector< std::pair<unsigned int, double> > kNearestObjects::neighborsWithinRadius_ID(unsigned int id, double radius, unsigned short Class_dest)
 {
@@ -210,6 +362,7 @@ std::vector< std::pair<unsigned int, double> > kNearestObjects::neighborsWithinR
 		{
 			if(((*iter).second == mvt) && ((*iter).first!=id))
 			{
+				// to get the neighbors of all classes				
 				if(Class_dest == 0)
 				{
 					double dist = distanceMetric->Evaluate( tree->GetMeasurementVector( radNeighbors[i] ));
@@ -217,16 +370,26 @@ std::vector< std::pair<unsigned int, double> > kNearestObjects::neighborsWithinR
 					inRadiusIds.push_back(Neighbor);
 					break;
 				}
+
+				// to get the neighbors of a particular classes
 				else
 				{
-					for(int row = 0; row<(int)featureTable->GetNumberOfRows(); ++row)
-					{
-						if( ((*iter).first == featureTable->GetValueByName(row, "ID").ToUnsignedInt())
-							&& (featureTable->GetValueByName(row, "prediction_default1").ToUnsignedShort() == Class_dest) )
+					for(int col=((int)featureTable->GetNumberOfColumns())-1; col>=0; --col)
+					{	
+						std::string current_column = featureTable->GetColumnName(col);
+						if(current_column.find("prediction") != std::string::npos )
 						{
-							double dist = distanceMetric->Evaluate( tree->GetMeasurementVector( radNeighbors[i] ));
-							std::pair<unsigned int, double> Neighbor = std::make_pair((*iter).first, dist);
-							inRadiusIds.push_back(Neighbor);
+							for(int row = 0; row<(int)featureTable->GetNumberOfRows(); ++row)
+							{
+								if( ((*iter).first == featureTable->GetValueByName(row, "ID").ToUnsignedInt())
+									&& (featureTable->GetValue(row, col).ToUnsignedShort() == Class_dest) )
+								{
+									double dist = distanceMetric->Evaluate( tree->GetMeasurementVector( radNeighbors[i] ));
+									std::pair<unsigned int, double> Neighbor = std::make_pair((*iter).first, dist);
+									inRadiusIds.push_back(Neighbor);
+									break;
+								}
+							}
 							break;
 						}
 					}
@@ -240,9 +403,14 @@ std::vector< std::pair<unsigned int, double> > kNearestObjects::neighborsWithinR
 }
 
 
+
+
 //***********************************************************************************************
-// Build Graph from Vectors
 //***********************************************************************************************
+// Build GraphTable from Vectors
+//***********************************************************************************************
+//***********************************************************************************************
+
 vtkSmartPointer<vtkTable> kNearestObjects::vectorsToGraphTable(std::vector< std::vector< std::pair<unsigned int, double> > > NeighborIDs)
 {
 	graphtable = vtkSmartPointer<vtkTable>::New();
@@ -288,8 +456,13 @@ vtkSmartPointer<vtkTable> kNearestObjects::vectorsToGraphTable(std::vector< std:
 	return graphtable;
 }
 
+
+
+
+//***********************************************************************************************
 //***********************************************************************************************
 // Build Graph from Vectors
+//***********************************************************************************************
 //***********************************************************************************************
 
 kNearestObjects::NeighborGraph kNearestObjects::getNeighborGraph(std::vector< std::vector< std::pair<unsigned int, double> > > NeighborIDs)
