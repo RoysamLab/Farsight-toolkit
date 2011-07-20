@@ -2943,6 +2943,18 @@ void NucleusEditor::deleteCells(void)
 
 	if(nucSeg->Delete(ids, table))
 	{
+		for(int j=0; j<(int)ids.size(); ++j)
+		{
+			int ID = ids.at(j);
+			for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
+			{
+				if((NucAdjTable->GetValue(row,0).ToInt() == ID) || (NucAdjTable->GetValue(row,1).ToInt() == ID))
+				{
+					NucAdjTable->RemoveRow(row);
+					--row;
+				}
+			}
+		}
 		projectFiles.outputSaved = false;
 		projectFiles.tableSaved = false;
 		projectFiles.adjTablesSaved = false;
