@@ -1,0 +1,13 @@
+diff --git a/src/gui/itemviews/qheaderview.cpp b/src/gui/itemviews/qheaderview.cpp
+index 67854a3..86c9175 100644
+--- a/src/gui/itemviews/qheaderview.cpp
++++ b/src/gui/itemviews/qheaderview.cpp
+@@ -336,6 +336,8 @@ QHeaderView::QHeaderView(QHeaderViewPrivate &dd,
+ 
+ QHeaderView::~QHeaderView()
+ {
++    Q_D(QHeaderView);
++    d->delayedResize.stop();
+ }
+ 
+ /*!
