@@ -12,16 +12,11 @@ endif()
 set(shared ${BUILD_SHARED_LIBS}) # setting to use for BUILD_SHARED_LIBS on all subsequent projects
 set(testing OFF) # setting to use for BUILD_TESTING on all subsequent projects
 
-find_package(Qt4)
-if(NOT QT_QMAKE_EXECUTABLE)
-  message(FATAL_ERROR "error: install Qt4 or set QT_QMAKE_EXECUTABLE")
-endif()
-set(qmake "${QT_QMAKE_EXECUTABLE}")
-
 #TODO: add external project stuff to download Boost if its not found.
 find_package(Boost)
 if(NOT Boost_INCLUDE_DIR)
   message(FATAL_ERROR "error: install Boost or set Boost_INCLUDE_DIR")
+  mark_as_advanced(CLEAR Boost_INCLUDE_DIR)
 endif()
 set(boost "${Boost_INCLUDE_DIR}")
 
@@ -41,7 +36,6 @@ if(CMAKE_BUILD_TYPE)
   set(build_type "${CMAKE_BUILD_TYPE}")
 endif()
 
-# Maybe make an option for this, but force developers to see their leaks for now...
 option(DEBUG_LEAKS "SHOW VTK DEBUG LEAKS" OFF)
 if (DEBUG_LEAKS)
   set(vtk_debug_leaks ON)
@@ -57,6 +51,9 @@ if(APPLE)
     )
 endif()
 
+############################################################################
+# VXL
+#
 ExternalProject_Add(VXL
   SVN_REPOSITORY "https://vxl.svn.sourceforge.net/svnroot/vxl/trunk"
   SVN_REVISION -r "29473"
@@ -81,6 +78,32 @@ ExternalProject_Add(VXL
 )
 set(VXL_DIR ${base}/Build/VXL)
 
+############################################################################
+# Qt
+#
+find_package(Qt4)
+
+if(QT_QMAKE_EXECUTABLE)
+  set(USE_SYSTEM_QT_DEFAULT ON)
+else()
+  set(USE_SYSTEM_QT_DEFAULT OFF)
+endif()
+
+option(USE_SYSTEM_QT "Use the system Qt4" ${USE_SYSTEM_QT_DEFAULT})
+
+set(Qt_Target "")
+
+if(NOT USE_SYSTEM_QT)
+  unset(QT_QMAKE_EXECUTABLE CACHE)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/BuildQt.cmake)
+  ExternalProject_Get_Property(Qt binary_dir)
+  set(QT_QMAKE_EXECUTABLE "${binary_dir}/bin/qmake${CMAKE_EXECUTABLE_SUFFIX}")
+  set(Qt_Target "Qt")
+endif()
+
+############################################################################
+# VTK
+#
 ExternalProject_Add(VTK
   GIT_REPOSITORY git://vtk.org/VTK.git
   GIT_TAG v5.6.1
@@ -93,13 +116,15 @@ ExternalProject_Add(VTK
     -DBUILD_SHARED_LIBS:BOOL=${shared}
     -DBUILD_TESTING:BOOL=${testing}
     -DDESIRED_QT_VERSION:STRING=4
-    -DQT_QMAKE_EXECUTABLE:FILEPATH=${qmake}
+    -DQT_QMAKE_EXECUTABLE:FILEPATH=${QT_QMAKE_EXECUTABLE}
     -DVTK_USE_GUISUPPORT:BOOL=ON
     -DVTK_USE_QT:BOOL=ON
     -DVTK_USE_RPATH:BOOL=ON
     -DVTK_QT_USE_WEBKIT:BOOL=OFF
     -DBoost_INCLUDE_DIR:FILEPATH=${boost}
     ${mac_args}
+  DEPENDS
+    ${Qt_Target}
 )
 set(VTK_DIR ${base}/Build/VTK)
 
@@ -133,6 +158,8 @@ ELSE()
   SET(BUILD_VESSEL OFF CACHE BOOL "Build Vessel Surface Segmentation")
 ENDIF()
 
+option(USE_KPLS "Use KPLS module for classification" OFF)
+
 ExternalProject_Add(Farsight
   SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.."
   BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/Farsight"
@@ -141,13 +168,14 @@ ExternalProject_Add(Farsight
     -DCMAKE_INSTALL_PREFIX:PATH=${install_dir}
     -DBUILD_SHARED_LIBS:BOOL=${shared}
     -DBoost_INCLUDE_DIR:FILEPATH=${boost}
-    -DQT_QMAKE_EXECUTABLE:FILEPATH=${qmake}
+    -DQT_QMAKE_EXECUTABLE:FILEPATH=${QT_QMAKE_EXECUTABLE}
     -DVTK_DIR:FILEPATH=${VTK_DIR}
     -DITK_DIR:FILEPATH=${ITK_DIR}
     -DVXL_DIR:FILEPATH=${VXL_DIR}
     -DEXE_DIR:FILEPATH=${EXE_DIR}
     -DLIB_DIR:FILEPATH=${LIB_DIR}
     -DBUILD_VESSEL:BOOL=${BUILD_VESSEL}
+    -DUSE_KPLS:BOOL=${USE_KPLS}
     ${mac_args}
   DEPENDS
     VXL
