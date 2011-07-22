@@ -138,9 +138,6 @@ View3D::View3D(QWidget *parent)
 	this->backColorR = this->TraceEditSettings.value("mainWin/ColorR", .6).toDouble() ;
 	this->backColorG = this->TraceEditSettings.value("mainWin/ColorG", .6).toDouble() ;
 	this->backColorB = this->TraceEditSettings.value("mainWin/ColorB", .6).toDouble() ;
-	//this->prev_azimuthAngle = 0;
-	//this->prev_elevationAngle = 0;
-	//this->prev_rollAngle = 0;
 	this->ImageActors = new ImageRenderActors();
 	this->EditLogDisplay = new QTextEdit();
 	this->EditLogDisplay->setReadOnly(true);
@@ -1757,62 +1754,8 @@ void View3D::rotationOptions()
 	this->QVTK->GetRenderWindow()->Render();
 
 	//std::cout << projection_base.roll << " " << projection_base.azimuth << " " << projection_base.elevation << std::endl;
-
 }
-//void View3D::rotateImageRight90()
-//{
-//	vtkCamera *cam = this->Renderer->GetActiveCamera();
-//	cam->Roll(-90);
-// 	cam->OrthogonalizeViewUp();
-//	cam->ParallelProjectionOn();
-//	this->Renderer->ResetCamera();
-//	this->QVTK->GetRenderWindow()->Render();
-//}
-//void View3D::rotateImageLeft90()
-//{
-//	vtkCamera *cam = this->Renderer->GetActiveCamera();
-//	cam->Roll(90);
-// 	cam->OrthogonalizeViewUp();
-//	cam->ParallelProjectionOn();
-//	this->Renderer->ResetCamera();
-//	this->QVTK->GetRenderWindow()->Render();
-//}
-//void View3D::ElevateImageUp90()
-//{
-//	vtkCamera *cam = this->Renderer->GetActiveCamera();
-//	cam->Elevation(-90);
-// 	cam->OrthogonalizeViewUp();
-//	cam->ParallelProjectionOn();
-//	this->Renderer->ResetCamera();
-//	this->QVTK->GetRenderWindow()->Render();
-//}
-//void View3D::ElevateImageDown90()
-//{
-//	vtkCamera *cam = this->Renderer->GetActiveCamera();
-//	cam->Elevation(90);
-// 	cam->OrthogonalizeViewUp();
-//	cam->ParallelProjectionOn();
-//	this->Renderer->ResetCamera();
-//	this->QVTK->GetRenderWindow()->Render();
-//}
-//void View3D::AzimuthImageRight90()
-//{
-//	vtkCamera *cam = this->Renderer->GetActiveCamera();
-//	cam->Azimuth(-90);
-// 	cam->OrthogonalizeViewUp();
-//	cam->ParallelProjectionOn();
-//	this->Renderer->ResetCamera();
-//	this->QVTK->GetRenderWindow()->Render();
-//}
-//void View3D::AzimuthImageLeft90()
-//{
-//	vtkCamera *cam = this->Renderer->GetActiveCamera();
-//	cam->Azimuth(90);
-// 	cam->OrthogonalizeViewUp();
-//	cam->ParallelProjectionOn();
-//	this->Renderer->ResetCamera();
-//	this->QVTK->GetRenderWindow()->Render();
-//}
+
 void View3D::SetProjectionMethod(int style)
 {
 	this->projectionStyle = style;

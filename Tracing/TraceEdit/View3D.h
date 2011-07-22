@@ -196,15 +196,7 @@ public slots:
 	void showStatistics(void);
 	void updateStatistics(void);
 
-	///////////////////////////////////////
 	void rotateImage(int axis);
-	//void rotateImageRight90();
-	//void rotateImageLeft90();
-	//void ElevateImageUp90();
-	//void ElevateImageDown90();
-	//void AzimuthImageRight90();
-	//void AzimuthImageLeft90();
-
 	void rotationOptions();
 
 protected slots:
@@ -306,12 +298,6 @@ private:
 	QAction *CellAnalysis;
 	QAction *showStatisticsAction;
 	QAction *updateStatisticsAction;
-	/////////////////////////
-	QAction *rotateleft90;
-	QAction *rotateright90;
-	QAction *rotatecustom;
-	QAction *rotatereset;
-	/////////////////////////
 
 	/*QAction *UndoButton;
 	QAction *RedoButton;*/
@@ -345,8 +331,7 @@ private:
 	QDialogButtonBox *ApplySettingsButton;
 	QComboBox *typeCombo, *StyleCombo, *ProjectionCombo, *RotateImageUpCombo;
 	QPushButton *updateRotationButton;
-	//QPushButton *RotateRight90Button, *RotateLeft90Button, *ElevateUp90Button, *ElevateDown90Button, *AzimuthRight90Button, *AzimuthLeft90Button;
-
+	
 	//Automation widgets
 	QWidget * AutomationWidget;
 	//QSpinBox *MaxSpineBit, *MaxBridgeBits, *MaxHalfBridgeBits;
@@ -406,9 +391,6 @@ private:
 	TraceObject * debug_object;
 	vtkSmartPointer<vtkActor> debug_actor;
 
-	//double prev_rollAngle;
-	//double prev_azimuthAngle;
-	//double prev_elevationAngle;
 	struct projection {
 		double roll;
 		double azimuth;

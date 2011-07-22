@@ -447,7 +447,7 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 
 	CellData->InsertNextValue(this->Azimuth / this->stems);
 	CellData->InsertNextValue(this->AzimuthMin);
-	CellData->InsertNextValue(this->AzimuthMax);
+	CellData->InsertNextValue(this->AzimuthMax); 
 
 	CellData->InsertNextValue(this->Elevation / this->stems);
 	CellData->InsertNextValue(this->ElevationMin);
