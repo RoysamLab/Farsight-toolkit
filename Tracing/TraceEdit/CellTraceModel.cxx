@@ -119,6 +119,13 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Min Remote Bifurcation Tilt");
 	this->headers.push_back("Max Remote Bifurcation Tilt");
 
+	this->headers.push_back("Average Azimuth");
+	this->headers.push_back("Min Azimuth");
+	this->headers.push_back("Max Azimuth");
+	this->headers.push_back("Average Elevation");
+	this->headers.push_back("Min Elevation");
+	this->headers.push_back("Max Elevation");
+
 	this->headers.push_back("Min Daughter Ratio");
 	this->headers.push_back("Average Daughter Ratio");
 	this->headers.push_back("Max Daughter Ratio");

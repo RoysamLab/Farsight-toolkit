@@ -138,6 +138,9 @@ View3D::View3D(QWidget *parent)
 	this->backColorR = this->TraceEditSettings.value("mainWin/ColorR", .6).toDouble() ;
 	this->backColorG = this->TraceEditSettings.value("mainWin/ColorG", .6).toDouble() ;
 	this->backColorB = this->TraceEditSettings.value("mainWin/ColorB", .6).toDouble() ;
+	//this->prev_azimuthAngle = 0;
+	//this->prev_elevationAngle = 0;
+	//this->prev_rollAngle = 0;
 	this->ImageActors = new ImageRenderActors();
 	this->EditLogDisplay = new QTextEdit();
 	this->EditLogDisplay->setReadOnly(true);
@@ -1234,6 +1237,18 @@ void View3D::CreateGUIObjects()
 	this->BackgroundBBox->setRange(0,1);
 	this->BackgroundBBox->setSingleStep(.01);
 
+	this->RollBox = new QDoubleSpinBox(this->SettingsWidget);
+	this->RollBox->setRange(-360,360);
+	this->RollBox->setSingleStep(1);
+	
+	this->ElevationBox = new QDoubleSpinBox(this->SettingsWidget);
+	this->ElevationBox->setRange(-90,90);
+	this->ElevationBox->setSingleStep(1);
+
+	this->AzimuthBox = new QDoubleSpinBox(this->SettingsWidget);
+	this->AzimuthBox->setRange(-360,360);
+	this->AzimuthBox->setSingleStep(1);
+
 	this->ApplySettingsButton = new QDialogButtonBox(QDialogButtonBox::SaveAll | QDialogButtonBox::Close);
 	connect(this->ApplySettingsButton, SIGNAL(accepted()), this, SLOT(ApplyNewSettings()));
 	connect(this->ApplySettingsButton, SIGNAL(rejected()), this, SLOT(HideSettingsWindow()));
@@ -1269,6 +1284,12 @@ void View3D::CreateGUIObjects()
 	this->ProjectionCombo = new QComboBox;
 	this->ProjectionCombo->addItems(ProjectionStyles);
 	connect(this->ProjectionCombo, SIGNAL(activated(int)), this, SLOT(SetProjectionMethod(int)));
+
+	QStringList AxisList;
+	AxisList<< "X" << "Y" << "Z";
+	this->RotateImageUpCombo = new QComboBox;
+	this->RotateImageUpCombo->addItems(AxisList);
+	connect(this->RotateImageUpCombo, SIGNAL(activated(int)), this, SLOT(rotateImage(int)));
 	
 	this->aboutAction = new QAction("About", this->CentralWidget);
 	this->aboutAction->setStatusTip("About Trace Edit");
@@ -1293,6 +1314,27 @@ void View3D::CreateGUIObjects()
 	this->LineLengthField->setRange(0,1000);
 	this->LineLengthField->setValue(this->SmallLineLength);
 	connect(this->LineLengthField, SIGNAL(valueChanged(double)), this, SLOT( SLine(double)));
+	
+	//this->RotateRight90Button = new QPushButton(tr("Roll +90"), this->SettingsWidget);
+	//connect(this->RotateRight90Button, SIGNAL(clicked()), this, SLOT(rotateImageRight90()));
+
+	//this->RotateLeft90Button = new QPushButton(tr("Roll -90"), this->SettingsWidget);
+	//connect(this->RotateLeft90Button, SIGNAL(clicked()), this, SLOT(rotateImageLeft90()));
+
+	//this->ElevateUp90Button = new QPushButton(tr("Elevate +90"), this->SettingsWidget);
+	//connect(this->ElevateUp90Button, SIGNAL(clicked()), this, SLOT(ElevateImageUp90()));
+
+	//this->ElevateDown90Button = new QPushButton(tr("Elevate -90"), this->SettingsWidget);
+	//connect(this->ElevateDown90Button, SIGNAL(clicked()), this, SLOT(ElevateImageDown90()));
+
+	//this->AzimuthRight90Button = new QPushButton(tr("Azimuth +90"), this->SettingsWidget);
+	//connect(this->AzimuthRight90Button, SIGNAL(clicked()), this, SLOT(AzimuthImageRight90()));
+
+	//this->AzimuthLeft90Button = new QPushButton(tr("Azimuth -90"), this->SettingsWidget);
+	//connect(this->AzimuthLeft90Button, SIGNAL(clicked()), this, SLOT(AzimuthImageLeft90()));
+
+	this->updateRotationButton = new QPushButton(tr("Update"),this->SettingsWidget);
+	connect(this->updateRotationButton, SIGNAL(clicked()), this, SLOT(rotationOptions()));
 
 	this->MaxSpineBit = new QDoubleSpinBox(this->AutomationWidget);
 	this->MaxSpineBit->setRange(1,20);
@@ -1352,6 +1394,7 @@ void View3D::CreateGUIObjects()
 	//this->projectFilesTable->setSortingEnabled(true); //complicated
 
 	/********************************************************************************************/
+
 }
 
 void View3D::CreateLayout()
@@ -1440,14 +1483,33 @@ void View3D::CreateLayout()
 	//selectionSettings->setLayout(settingsLayout);
 	SettingsBox->addWidget(selectionSettings);
 
+	/*QHBoxLayout * RotationBox = new QHBoxLayout(this->SettingsWidget);
+	RotationBox->addWidget(this->RotateRight90Button);
+	RotationBox->addWidget(this->RotateLeft90Button);*/
+
 	QGroupBox *displaySettings = new QGroupBox("Display Settings");
 	QFormLayout *DisplayLayout = new QFormLayout(displaySettings);
 	DisplayLayout->addRow(tr("Line Color RGB 0 to 1:"),this->ColorValueField);
 	DisplayLayout->addRow(tr("Line width:"),this->LineWidthField);
 	DisplayLayout->addRow(tr("Interactor style:"),this->StyleCombo);
 	DisplayLayout->addRow(tr("Projection style:"),this->ProjectionCombo);
+	DisplayLayout->addRow(tr("Up Projection: "),this->RotateImageUpCombo);
+	//DisplayLayout->addWidget(this->RotateRight90Button);
+	//DisplayLayout->addWidget(this->RotateLeft90Button);
+	//DisplayLayout->addWidget(this->ElevateUp90Button);
+	//DisplayLayout->addWidget(this->ElevateDown90Button);
+	//DisplayLayout->addWidget(this->AzimuthRight90Button);
+	//DisplayLayout->addWidget(this->AzimuthLeft90Button);
 	DisplayLayout->addRow(this->markTraceBits);
 	SettingsBox->addWidget(displaySettings);
+
+	QGroupBox *rotationSettings = new QGroupBox("Rotation");
+	QFormLayout *RotateLayout = new QFormLayout(rotationSettings);
+	RotateLayout->addRow(tr("Roll: "),this->RollBox);
+	RotateLayout->addRow(tr("Elevation: "),this->ElevationBox);
+	RotateLayout->addRow(tr("Azimuth: "),this->AzimuthBox);
+	RotateLayout->addWidget(this->updateRotationButton);
+	SettingsBox->addWidget(rotationSettings);
 
 	QGroupBox *BackgroundSettings = new QGroupBox(("Background RGB Color"));
 	QFormLayout *BackgroundLayout = new QFormLayout(BackgroundSettings);
@@ -1459,7 +1521,7 @@ void View3D::CreateLayout()
 	SettingsBox->addWidget(this->ApplySettingsButton);
 	SettingsBox->addStretch();
 
-	this->SettingsWidget->setMaximumSize(256,512);
+	this->SettingsWidget->setMaximumSize(256,600);
 
   this->settingsDock = new QDockWidget("Editor Settings", this);
   this->settingsDock->setWidget(this->SettingsWidget);
@@ -1548,6 +1610,10 @@ void View3D::CreateLayout()
 	this->ShowToolBars->addAction(this->projectFilesDock->toggleViewAction());
 	this->projectFilesDock->hide();
 	/**************************************************************************/
+
+	/**************************************************************************/
+	
+
 }
 
 void View3D::ShowAutomatedEdits()
@@ -1641,6 +1707,112 @@ void View3D::chooseInteractorStyle(int iren)
 	}
 }
 
+void View3D::rotateImage(int axis)
+{
+	this->RollBox->setValue(0.00);
+	this->AzimuthBox->setValue(0.00);
+	this->ElevationBox->setValue(0.00);
+	vtkCamera *cam = this->Renderer->GetActiveCamera();
+	cam->SetFocalPoint(0,0,0);
+	cam->SetPosition(0,0,1);
+	cam->ComputeViewPlaneNormal();
+	double x = 0; double y = 1; double z = 0;
+	cam->SetViewUp(x,y,z);	
+
+	switch(axis)
+	{
+		case 0: cam->Roll(90);			projection_base.roll = 90; projection_base.azimuth = 0; projection_base.elevation = 0;	break; // x axis up
+		case 1:							projection_base.roll = 0;  projection_base.azimuth = 0; projection_base.elevation = 0;	break; // y axis up
+		case 2: cam->Elevation(-90);	projection_base.roll = 0;  projection_base.azimuth = 0; projection_base.elevation = -90;	break; // z axis up
+		default: std::cerr << "View3D::rotateImage cannot handle axis = " << axis << ". Defaulting to y-axis" << std::endl;
+	}
+
+	cam->OrthogonalizeViewUp();
+	cam->ParallelProjectionOn();
+	this->Renderer->ResetCamera();
+	this->QVTK->GetRenderWindow()->Render();
+}
+void View3D::rotationOptions()
+{
+	//std::cout << "Rotation Updated " << std::endl;
+	vtkCamera *cam = this->Renderer->GetActiveCamera();
+	cam->SetFocalPoint(0,0,0);
+	cam->SetPosition(0,0,1);
+	cam->ComputeViewPlaneNormal();
+	double x = 0; double y = 1; double z = 0;
+	cam->SetViewUp(x,y,z);
+	
+	double rollAngle = this->RollBox->value();
+	double elevationAngle = this->ElevationBox->value();
+	double azimuthAngle = this->AzimuthBox->value();
+
+	//std::cout << projection_base.roll + rollAngle << " " << projection_base.azimuth + azimuthAngle << " " << projection_base.elevation + elevationAngle << std::endl;
+	
+	cam->Azimuth(projection_base.azimuth + azimuthAngle);
+	cam->Elevation(projection_base.elevation + elevationAngle);	
+	cam->Roll(projection_base.roll + rollAngle);
+	cam->OrthogonalizeViewUp();
+
+	this->Renderer->ResetCamera();
+	this->QVTK->GetRenderWindow()->Render();
+
+	//std::cout << projection_base.roll << " " << projection_base.azimuth << " " << projection_base.elevation << std::endl;
+
+}
+//void View3D::rotateImageRight90()
+//{
+//	vtkCamera *cam = this->Renderer->GetActiveCamera();
+//	cam->Roll(-90);
+// 	cam->OrthogonalizeViewUp();
+//	cam->ParallelProjectionOn();
+//	this->Renderer->ResetCamera();
+//	this->QVTK->GetRenderWindow()->Render();
+//}
+//void View3D::rotateImageLeft90()
+//{
+//	vtkCamera *cam = this->Renderer->GetActiveCamera();
+//	cam->Roll(90);
+// 	cam->OrthogonalizeViewUp();
+//	cam->ParallelProjectionOn();
+//	this->Renderer->ResetCamera();
+//	this->QVTK->GetRenderWindow()->Render();
+//}
+//void View3D::ElevateImageUp90()
+//{
+//	vtkCamera *cam = this->Renderer->GetActiveCamera();
+//	cam->Elevation(-90);
+// 	cam->OrthogonalizeViewUp();
+//	cam->ParallelProjectionOn();
+//	this->Renderer->ResetCamera();
+//	this->QVTK->GetRenderWindow()->Render();
+//}
+//void View3D::ElevateImageDown90()
+//{
+//	vtkCamera *cam = this->Renderer->GetActiveCamera();
+//	cam->Elevation(90);
+// 	cam->OrthogonalizeViewUp();
+//	cam->ParallelProjectionOn();
+//	this->Renderer->ResetCamera();
+//	this->QVTK->GetRenderWindow()->Render();
+//}
+//void View3D::AzimuthImageRight90()
+//{
+//	vtkCamera *cam = this->Renderer->GetActiveCamera();
+//	cam->Azimuth(-90);
+// 	cam->OrthogonalizeViewUp();
+//	cam->ParallelProjectionOn();
+//	this->Renderer->ResetCamera();
+//	this->QVTK->GetRenderWindow()->Render();
+//}
+//void View3D::AzimuthImageLeft90()
+//{
+//	vtkCamera *cam = this->Renderer->GetActiveCamera();
+//	cam->Azimuth(90);
+// 	cam->OrthogonalizeViewUp();
+//	cam->ParallelProjectionOn();
+//	this->Renderer->ResetCamera();
+//	this->QVTK->GetRenderWindow()->Render();
+//}
 void View3D::SetProjectionMethod(int style)
 {
 	this->projectionStyle = style;
@@ -1748,7 +1920,7 @@ void View3D::raycastToSlicer()
 			if ((this->ImageActors->getRenderStatus(i))&&(this->ImageActors->isRayCast(i)))
 			{
 			  //this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
-				this->Renderer->AddActor(this->ImageActors->createProjection(i,this->projectionStyle));
+			  this->Renderer->AddActor(this->ImageActors->createProjection(i,this->projectionStyle));
 			  this->ImageActors->setIs2D(i, true);
 			  this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
 			  this->ImageActors->setRenderStatus(i, false);
