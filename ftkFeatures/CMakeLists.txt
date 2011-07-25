@@ -11,8 +11,6 @@ SET( FTKFEATURES_HDRS
   ftkIntrinsicFeatures.h
   ftkObject.h
   ftkObjectAssociation.h
-  itkLabelGeometryImageFilter.h
-  itkLabelGeometryImageFilter.txx 
 	
 )
 
