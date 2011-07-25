@@ -80,126 +80,104 @@ int Cell_Binarization_2D(unsigned char* imgIn, unsigned short *imgOut, int R, in
 //Main function for 3-D binarization
 int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, int C, int Z, int shd, int div, unsigned short number_of_bins) //modifed by Yousef on 5-20-2008.. The first input change from uchar* to int*
 {			
-	/*typedef unsigned short LoGTestPixelType;
-	LoGTestPixelType*** image_3D = (LoGTestPixelType***) malloc(C * sizeof(LoGTestPixelType **));
+	/*double*** image_3D = (double***) malloc(C * sizeof(double **));
 	for (int k = 0; k < C; k++)
 	{
-		image_3D[k] = (LoGTestPixelType **) malloc(R * sizeof(LoGTestPixelType *));
-		for (int l = 0; l < R; l++)
-		{
-			image_3D[k][l] = (LoGTestPixelType *) malloc(Z * sizeof(LoGTestPixelType));
-			for (int m = 0; m < Z; m++)
-			{
-				image_3D[k][l][m] = imgIn[k + l * C + m * R * C];
-			}
-		}
+	image_3D[k] = (double **) malloc(R * sizeof(double *));
+	for (int l = 0; l < R; l++)
+	{
+	image_3D[k][l] = (double *) malloc(Z * sizeof(double));
+	for (int m = 0; m < Z; m++)
+	{
+	image_3D[k][l][m] = imgIn[k + l * C + m * R * C];
+	}
+	}
 	}
 
 	for (double scale = 1; scale <= 20; scale += 1)
 	{
-		//std::cout << C << " " << R << " " << Z << std::endl;
-		ftkLaplacianOfGaussian3D<LoGTestPixelType> *LoGFilter = new ftkLaplacianOfGaussian3D<LoGTestPixelType>(image_3D, scale, scale, scale, C, R, Z);
-		LoGFilter->RunFilter();
-		LoGTestPixelType ***out_image = LoGFilter->GetOutput();
+	double*** out_image = runLoG(image_3D, scale, scale, scale, C, R, Z); //LoG
 
-		typedef unsigned short LoGTestWriterType;
-		//rescale out_image
-		LoGTestPixelType max = std::numeric_limits<LoGTestPixelType>::min();
-		LoGTestPixelType min = std::numeric_limits<LoGTestPixelType>::max();
+	//rescale out_image
+	double max = numeric_limits<double>::min();
+	double min = numeric_limits<double>::max();
 
-		//std::cout << "Minimum possible value of LoGTestWriterType is: " << max << std::endl;
-		//std::cout << "Maximum possible value of LoGTestWriterType is: " << min << std::endl;
+	int Ctemp = C;
+	int Rtemp = R;
+	int Ztemp = Z;
 
-		int Ctemp = C;
-		int Rtemp = R;
-		int Ztemp = Z;
+	for (int k = 0; k < Ctemp; k++)
+	for (int l = 0; l < Rtemp; l++)
+	for (int m = 0; m < Ztemp; m++)
+	{
+	if (out_image[k][l][m] > max)
+	max = out_image[k][l][m];
+	if (out_image[k][l][m] < min)
+	min = out_image[k][l][m];
+	}
 
-		for (int k = 0; k < Ctemp; k++)
-			for (int l = 0; l < Rtemp; l++)
-				for (int m = 0; m < Ztemp; m++)
-				{
-					if (out_image[k][l][m] > max)
-					{
-						//std::cout << "New max: " << static_cast<int>(max) << std::endl;
-						max = out_image[k][l][m];
-					}
-					if (out_image[k][l][m] < min)
-					{	
-						//std::cout << "New min: " << static_cast<int>(min) << std::endl;
-						min = out_image[k][l][m];
-					}
-				}
-
-				for (int k = 0; k < Ctemp; k++)
-					for (int l = 0; l < Rtemp; l++)
-						for (int m = 0; m < Ztemp; m++)
-							out_image[k][l][m] = (out_image[k][l][m] - min) * numeric_limits<LoGTestWriterType>::max() / (float)(max - min);
+	for (int k = 0; k < Ctemp; k++)
+	for (int l = 0; l < Rtemp; l++)
+	for (int m = 0; m < Ztemp; m++)
+	out_image[k][l][m] = (out_image[k][l][m] - min) * 65535 / (max - min);
 
 
 
-				std::string outputFilename = "LoG";
-				std::stringstream tempStringStream;
-				tempStringStream << scale;
-				outputFilename.append(tempStringStream.str());
-				outputFilename.append(".tif");
+	std::string outputFilename = "LoG";
+	std::stringstream tempStringStream;
+	tempStringStream << scale;
+	outputFilename.append(tempStringStream.str());
+	outputFilename.append(".tif");
 
-				typedef LoGTestWriterType OutputPixelType;
-				const unsigned int Dimension = 3;
-				typedef itk::Image<OutputPixelType, Dimension > ImageType;
+	typedef unsigned short OutputPixelType;
+	const unsigned int Dimension = 3;
+	typedef itk::Image<OutputPixelType, Dimension > ImageType;
 
-				ImageType::RegionType region;
-				ImageType::IndexType start;
+	ImageType::RegionType region;
+	ImageType::IndexType start;
 
-				start[0] = 0;
-				start[1] = 0;
-				start[2] = 0;
+	start[0] = 0;
+	start[1] = 0;
+	start[2] = 0;
 
-				ImageType::SizeType size;
-				size[0] = Ctemp;
-				size[1] = Rtemp;
-				size[2] = Ztemp;
+	ImageType::SizeType size;
+	size[0] = Ctemp;
+	size[1] = Rtemp;
+	size[2] = Ztemp;
 
-				region.SetSize(size);
-				region.SetIndex(start);
+	region.SetSize(size);
+	region.SetIndex(start);
 
-				ImageType::Pointer image = ImageType::New();
-				image->SetRegions(region);
-				image->Allocate();
+	ImageType::Pointer image = ImageType::New();
+	image->SetRegions(region);
+	image->Allocate();
 
-				ImageType::IndexType pixelIndex;
+	ImageType::IndexType pixelIndex;
 
-				for (int k = 0; k < Ctemp; k++)
-				{
-					for (int l = 0; l < Rtemp; l++)
-					{
-						for (int m = 0; m < Ztemp; m++)
-						{
-							pixelIndex[0] = k;
-							pixelIndex[1] = l;
-							pixelIndex[2] = m;
+	for (int k = 0; k < Ctemp; k++)
+	{
+	for (int l = 0; l < Rtemp; l++)
+	{
+	for (int m = 0; m < Ztemp; m++)
+	{
+	pixelIndex[0] = k;
+	pixelIndex[1] = l;
+	pixelIndex[2] = m;
 
-							image->SetPixel(pixelIndex, out_image[k][l][m]);
-						}
-						free(out_image[k][l]);
-					}
-					free(out_image[k]);
-				}
-				free(out_image);
+	image->SetPixel(pixelIndex, out_image[k][l][m]);
+	}
+	free(out_image[k][l]);
+	}
+	free(out_image[k]);
+	}
+	free(out_image);
 
 
-				typedef  itk::ImageFileWriter< ImageType  > WriterType;
-				WriterType::Pointer writer = WriterType::New();
-				writer->SetFileName(outputFilename);
-				writer->SetInput(image);
-				try
-				{
-					writer->Update();
-				}
-				catch (itk::ExceptionObject &err)
-				{
-					std::cout << "LoGTestWriter error: " << err << std::endl;
-					return EXIT_FAILURE;
-				}
+	typedef  itk::ImageFileWriter< ImageType  > WriterType;
+	WriterType::Pointer writer = WriterType::New();
+	writer->SetFileName(outputFilename);
+	writer->SetInput(image);
+	writer->Update();
 	}*/
 
 	//Now, to do the binarization, follow these steps:
@@ -220,22 +198,19 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	//post_binarization(imgOut, 2, 3, R, C, Z);
 	//cout<<"done"<<endl;
 
+	int block_divisor;
+
 #ifdef _OPENMP			
-	int block_divisor_X = 1;
-	int block_divisor_Y = 1;
-	int block_divisor_Z = 1;
+	block_divisor = 32;
 #else		
-	int block_divisor_X = 2;
-	int block_divisor_Y = 2;
-	int block_divisor_Z = 2;
+	block_divisor = 4;	
 #endif
 
+	
+	std::cerr << "block_divisor = " << block_divisor << std::endl;
 
-	std::cerr << "block_divisor_X = " << block_divisor_X << " block_divisor_Y = " << block_divisor_Y << " block_divisor_Z = " << block_divisor_Z << std::endl;
-
-	size_t num_pixels_per_block_R = R/block_divisor_Y;	//holds the number of pixels per block in the y-direction
-	size_t num_pixels_per_block_C = C/block_divisor_X;	//holds the number of pixels per block in the x-direction
-	size_t num_pixels_per_block_Z = Z/block_divisor_Z;	//holds the number of pixels per block in the z-direction
+	size_t num_pixels_per_block_R = R/block_divisor;	//holds the number of pixels per block in the y-direction
+	size_t num_pixels_per_block_C = C/block_divisor;	//holds the number of pixels per block in the x-direction
 
 	size_t num_blocks_R = 0;				//num_blocks_R holds the number of blocks in the y-direction
 	for(int i=0; i<R; i+= num_pixels_per_block_R) 
@@ -245,19 +220,14 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	for (int j=0; j<C; j+=num_pixels_per_block_C)
 		num_blocks_C++;
 
-	size_t num_blocks_Z = 0;				//num_blocks_Z holds the number of blocks in the z-direction;
-	for (int k=0; k<Z; k+=num_pixels_per_block_Z)
-		num_blocks_Z++;
-
 	int cntr = 0;							//cntr holds the total number of blocks (should be num_blocks_C * num_blocks_R)
-	for(int i=0; i<R; i += num_pixels_per_block_R)
-		for(int j=0; j<C; j += num_pixels_per_block_C)
-			for (int k = 0; k<Z; k += num_pixels_per_block_Z)
-				cntr++;
 
-	std::cout << "num_blocks_C: " << num_blocks_C << " num_blocks_R: " << num_blocks_R << " num_blocks_Z: " << num_blocks_Z << " cntr: " << cntr << std::endl;
-	std::cout << "num_pixels_per_block_R: " << num_pixels_per_block_R << " num_pixels_per_block_C: " << num_pixels_per_block_C << " num_pixels_per_block_Z: " << num_pixels_per_block_Z << std::endl;
-
+	std::cout << "num_blocks_C: " << num_blocks_C << " num_blocks_R: " << num_blocks_R << " cntr: " << cntr << std::endl;
+	std::cout << "num_pixels_per_block_R: " << num_pixels_per_block_R << " num_pixels_per_block_C: " << num_pixels_per_block_C << std::endl;
+	
+	for(int i=0; i<R; i+=R/block_divisor)
+		for(int j=0; j<C; j+=C/block_divisor)
+			cntr++;	
 
 	std::cout<<"Total Blocks: "<<cntr<<std::endl;	
 
@@ -265,91 +235,76 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 
 	clock_t start_time_cell_bin_alpha_exp = clock();
 
+#ifdef _OPENMP
+	omp_set_nested(1);
+#endif
+
 	//Allocate memory for matrix to hold dimensions of subImgBlock
-	long long ****subImgBlockArray = (long long ****) malloc(num_blocks_R * sizeof(long long ***));
+	long long ***subImgBlockArray = (long long ***) malloc(num_blocks_R * sizeof(long long **));
 	for (int i = 0; i < num_blocks_R; i++)
 	{
-		subImgBlockArray[i] = (long long ***) malloc(num_blocks_C * sizeof(long long **));
+		subImgBlockArray[i] = (long long **) malloc(num_blocks_C * sizeof(long long *));
 		for (int j = 0; j < num_blocks_C; j++) 
-		{
-			subImgBlockArray[i][j] = (long long **) malloc(Z * sizeof(long long *));
-			for (int k = 0; k < num_blocks_Z; k++)
-				subImgBlockArray[i][j][k] = (long long *) malloc (6 * sizeof(long long));
-		}
+			subImgBlockArray[i][j] = (long long *) malloc(6 * sizeof(long long));
 	}
 
 
 
 	std::cout << "Image size: " << R << "x" <<  C << "x" << Z << std::endl;
-
-	//#pragma omp parallel for
-	for(int i=0; i < num_blocks_R; i++)
+	
+	#pragma omp parallel for
+	for(int i=0; i<num_blocks_R; i++)
 	{			
-		for(int j=0; j < num_blocks_C; j++)
+		#pragma omp parallel for
+		for(int j=0; j<num_blocks_C; j++)
 		{				
-			for (int k = 0; k < num_blocks_Z; k++)
+			subImgBlockArray[i][j][4] = 0;
+			subImgBlockArray[i][j][5] = Z - 1;
+			subImgBlockArray[i][j][0] = j * num_pixels_per_block_C - 1;
+			subImgBlockArray[i][j][1] = (j + 1) * num_pixels_per_block_C;
+			subImgBlockArray[i][j][2] = i * num_pixels_per_block_R - 1;
+			subImgBlockArray[i][j][3] = (i + 1) * num_pixels_per_block_R;
+			
+			//bounds checking
+			if (subImgBlockArray[i][j][1] >= C)
+				subImgBlockArray[i][j][1] = C - 1;
+			if (subImgBlockArray[i][j][3] >= R)
+				subImgBlockArray[i][j][3] = R - 1;
+			if (subImgBlockArray[i][j][0] < 0)
+				subImgBlockArray[i][j][0] = 0;
+			if (subImgBlockArray[i][j][2] < 0)
+				subImgBlockArray[i][j][2] = 0;
+
+			/*#pragma omp critical
 			{
-				subImgBlockArray[i][j][k][0] = j * num_pixels_per_block_C - 1;
-				subImgBlockArray[i][j][k][1] = (j + 1) * num_pixels_per_block_C;
-				subImgBlockArray[i][j][k][2] = i * num_pixels_per_block_R - 1;
-				subImgBlockArray[i][j][k][3] = (i + 1) * num_pixels_per_block_R;
-				subImgBlockArray[i][j][k][4] = k * num_pixels_per_block_Z - 1;
-				subImgBlockArray[i][j][k][5] = (k + 1) * num_pixels_per_block_Z;
-
-				//bounds checking
-				if (subImgBlockArray[i][j][k][1] >= C)
-					subImgBlockArray[i][j][k][1] = C - 1;
-				if (subImgBlockArray[i][j][k][3] >= R)
-					subImgBlockArray[i][j][k][3] = R - 1;
-				if (subImgBlockArray[i][j][k][5] >= Z)
-					subImgBlockArray[i][j][k][5] = Z - 1;
-				if (subImgBlockArray[i][j][k][0] < 0)
-					subImgBlockArray[i][j][k][0] = 0;
-				if (subImgBlockArray[i][j][k][2] < 0)
-					subImgBlockArray[i][j][k][2] = 0;
-				if (subImgBlockArray[i][j][k][4] < 0)
-					subImgBlockArray[i][j][k][4] = 0;
-
-				//std::cout << "C: from " << subImgBlockArray[i][j][k][0] << " to " << subImgBlockArray[i][j][k][1] << " R: from " << subImgBlockArray[i][j][k][2] << " to " << subImgBlockArray[i][j][k][3] << " Z: from " << subImgBlockArray[i][j][k][4] << " to " << subImgBlockArray[i][j][k][5] << std::endl;
-			}
+				std::cout << "R from: " << subImgBlockArray[i][j][2] << " to " << subImgBlockArray[i][j][3] << " C from: " << subImgBlockArray[i][j][0] << " to " << subImgBlockArray[i][j][1] << " Z from: 0 to " << subImgBlockArray[i][j][5] << std::endl;
+			}*/
 		}
 	}
-
-#ifdef _OPENMP
-	omp_set_nested(1);
-#endif
 
 	std::cout << "Starting Graph Cuts" << std::endl;
-	#pragma omp parallel for num_threads(4)
-	for(int i=0; i< num_blocks_R; i++)			
-	{
-		#pragma omp parallel for num_threads(2)
+	#pragma omp parallel for num_threads(8)
+	for(int i=0; i< num_blocks_R; i++)
+	{			
+		#pragma omp parallel for num_threads(8)
 		for(int j = 0; j < num_blocks_C; j++)
 		{
-			#pragma omp parallel for num_threads(2)
-			for (int k = 0; k < num_blocks_Z; k++)
+			//#pragma omp critical
 			{
-				#pragma omp critical
-				{
-					std::cout<<"    Binarizing block " << blk++ <<" of "<<cntr<<std::endl;	
-				}
-				Seg_GC_Full_3D_Blocks(imgIn, R, C, Z, alpha_F, alpha_B, P_I, imgOut, subImgBlockArray[i][j][k]); //imgIn is dataImagePtr, imgOut is binImagePtr
+				//std::cout<<"    Binarizing block " << blk++ <<" of "<<cntr<<std::endl;	
 			}
+			Seg_GC_Full_3D_Blocks(imgIn, R, C, Z, alpha_F, alpha_B, P_I, imgOut, subImgBlockArray[i][j]); //imgIn is dataImagePtr, imgOut is binImagePtr
 		}
 	}
 
-#ifdef _OPENMP
-	omp_set_nested(0);
-#endif
+	/*#ifdef _OPENMP
+	omp_set_nested(1);
+	#endif*/
 
 	for(int i=0; i< num_blocks_R; i++)
 	{			
 		for(int j = 0; j < num_blocks_C; j++)
 		{
-			for (int k = 0; k < num_blocks_Z; k++)
-			{
-				free(subImgBlockArray[i][j][k]);
-			}
 			free(subImgBlockArray[i][j]);
 		}
 		free(subImgBlockArray[i]);
@@ -360,6 +315,9 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 
 
 
+#ifdef _OPENMP
+	omp_set_nested(0);
+#endif
 
 	cout << "Cell Binarization refinement by alpha expansion took " << (clock() - start_time_cell_bin_alpha_exp)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 
@@ -888,7 +846,7 @@ void MinErrorThresholding(unsigned char* img, float* alpha_B, float* alpha_A, fl
 	WriterType::Pointer writer = WriterType::New();
 	writer->SetFileName("minError.mhd");
 	writer->SetInput(filter->GetOutput());
-	writer->Update();*/
+	writer->Update(); */
 
 	//get output
 	alpha_B[0] = ((float) filter->GetAlphaLeft());

@@ -320,7 +320,7 @@ LabelBorderImageFilter< TInputImage, TOutputImage>
   OutputOffsetType Off = A - B;
   for (unsigned i = 1; i < OutputImageDimension; i++)
     {
-    if (Off[i] > 1 || Off[i] < -1)
+    if (abs(Off[i]) > 1)
       {
       return(false);
       }

@@ -7,7 +7,7 @@
 #include "itkKdTree.h"
 #include "itkKdTreeGenerator.h"
 #include "itkWeightedCentroidKdTreeGenerator.h"
-#include "itkEuclideanDistanceMetric.h"
+#include "itkEuclideanDistance.h"
 
 //VTK includes
 #include <vtkTable.h>
@@ -38,7 +38,7 @@ public:
 	typedef itk::Statistics::KdTreeGenerator< SampleType > TreeGeneratorType;
 	typedef itk::Statistics::KdTreeNode< MeasurementVectorType > KdTreeNodeType;
 	typedef TreeGeneratorType::KdTreeType TreeType;
-	typedef itk::Statistics::EuclideanDistanceMetric< MeasurementVectorType > DistanceMetricType;
+	typedef itk::Statistics::EuclideanDistance< MeasurementVectorType > DistanceMetricType;
 	typedef property<vertex_name_t, std::string > VertexProperties;
 	typedef adjacency_list <vecS, vecS, undirectedS,VertexProperties> NeighborGraph;
 	typedef graph_traits<NeighborGraph>::vertex_descriptor node;

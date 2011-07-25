@@ -208,7 +208,7 @@ VanHerkGilWermanErodeDilateImageFilter<TImage, TKernel, TFunction1>
     
     // build an exception
     InvalidRequestedRegionError e(__FILE__, __LINE__);
-	std::ostringstream msg;
+    OStringStream msg;
     msg << static_cast<const char *>(this->GetNameOfClass())
         << "::GenerateInputRequestedRegion()";
     e.SetLocation(msg.str().c_str());
