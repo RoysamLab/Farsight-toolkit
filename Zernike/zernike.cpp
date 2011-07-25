@@ -1,9 +1,5 @@
-
-#include <iostream>
-#include <math.h>
 #include "zernike.h"
 
-using namespace std;
 ///////////////////////
 /*THE CLASS ZERNIKE RETURNS THE ZERNIKE MOMENTS FOR GRAY SCALE IMAGES
 Now,zernike moments are orthogonal on the unit circle(r==1) */
@@ -39,7 +35,7 @@ zernike::zernike(ImageType::Pointer inputImage,int orderofmoments)
     f = (unsigned char **) malloc (M * sizeof(unsigned char *));
 	for (int k = 0; k < M; k++)
 		f[k] = (unsigned char *) malloc (N * sizeof(unsigned char));
-	std::cout << "M = " << M << " N = " << N << std::endl;
+	//std::cout << "M = " << M << " N = " << N << std::endl;
 
     for (It.GoToBegin(); !It.IsAtEnd(); ++It)
     {
@@ -91,7 +87,7 @@ void zernike::SetInputImage()
     f = (unsigned char **) malloc (M * sizeof(unsigned char *));
 	for (int k = 0; k < M; k++)
 		f[k] = (unsigned char *) malloc (N * sizeof(unsigned char));
-	std::cout << "M = " << M << " N = " << N << std::endl;
+	//std::cout << "M = " << M << " N = " << N << std::endl;
 
     for (It.GoToBegin(); !It.IsAtEnd(); ++It)
     {
@@ -331,26 +327,32 @@ double* zernike::CalculateZernike(int p, int q )
 	free(theta);
 	return V;
 }
-void zernike::GetZernike()
+std::vector< std::vector<double> > zernike::GetZernike()
 {
 	int p = orderofmoments;
 	
+	std::vector< std::vector<double> > zern_i;
 	for(int i=0; i<=p; ++i)
 	{
+		std::vector<double> zern_j;
 		for (int j=0; j<=i; ++j)
 		{
 			if((i-j)%2==0)
 			{
 				double* Z = CalculateZernike(i,j);
 				if (sqrt(Z[0]*Z[0]+Z[1]*Z[1])<0.0001)
-					cout<<"Zernike of order ("<<i<<"," <<j<<") are "<< 0 << endl;
+					zern_j.push_back(0);
+					//cout<<"Zernike of order ("<<i<<"," <<j<<") are "<< 0 << endl;
 				else
-					cout<<"Zernike of order ("<<i<<"," <<j<<") are "<<sqrt(Z[0]*Z[0]+Z[1]*Z[1])<< endl; 
+					zern_j.push_back(sqrt(Z[0]*Z[0]+Z[1]*Z[1]));
+					//cout<<"Zernike of order ("<<i<<"," <<j<<") are "<<sqrt(Z[0]*Z[0]+Z[1]*Z[1])<< endl; 
 				free(Z);
 
 			}
-		} 
+		}
+		zern_i.push_back(zern_j);
 	} 
+	return zern_i;
 }
 
 
@@ -789,6 +791,3 @@ void zernike::GetZernike()
 //		} 
 //	}  
 //}
-
-
-
