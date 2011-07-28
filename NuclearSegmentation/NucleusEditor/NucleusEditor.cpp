@@ -2339,6 +2339,7 @@ void NucleusEditor::queryKNearest()
 	std::vector<unsigned int> IDs;
 	unsigned int k;
 	unsigned short Class_dest, Class_src = 0;
+	bool k_mutual;
 	
 	QVector<QString> classes;
 	int max_class = 0;
@@ -2368,6 +2369,7 @@ void NucleusEditor::queryKNearest()
 		if(IDs.at(0) == 0)
 			Class_src = dialog->getSourceClass();
 		Class_dest = dialog->getDestClass();
+		k_mutual = dialog->getKMutual();
     }
 	delete dialog;
 
@@ -2410,7 +2412,7 @@ void NucleusEditor::queryKNearest()
 	outFile.close();
 	vtkSmartPointer<vtkTable> kNeighborTable = KNObj->vectorsToGraphTable(kNeighborIDs);
 	segView->SetKNeighborTable(kNeighborTable);
-	segView->SetKNeighborsVisibleOn();		
+	segView->SetKNeighborsVisibleOn(k_mutual);		
 }
 
 double NucleusEditor::average(std::vector< std::pair<unsigned int, double> > ID)
@@ -3671,6 +3673,12 @@ QueryDialog::QueryDialog(int QueryType, QVector<QString> classes, QWidget *paren
 	bLayout->addStretch(20);
 	bLayout->addWidget(okButton);
 
+	if(QueryType == 1)
+	{
+		check = new QCheckBox("Show k mutual graph");
+		check->setChecked(false);
+	}
+
 	layout = new QVBoxLayout;
 	layout->addLayout(idLayout);
 	if(QueryType == 1)
@@ -3679,6 +3687,8 @@ QueryDialog::QueryDialog(int QueryType, QVector<QString> classes, QWidget *paren
 		layout->addLayout(radLayout);
 	layout->addLayout(classLayout1);
 	layout->addLayout(classLayout2);
+	if(QueryType == 1)
+		layout->addWidget(check);
 	//layout->addWidget(autoButton);
 	//layout->addWidget(quitButton);
 	//layout->addWidget(okButton);
@@ -3732,6 +3742,11 @@ unsigned short QueryDialog::getSourceClass()
 unsigned short QueryDialog::getDestClass()
 {
 	return classCombo2->currentIndex();
+}
+
+bool QueryDialog::getKMutual()
+{
+	return check->isChecked();
 }
 
 
