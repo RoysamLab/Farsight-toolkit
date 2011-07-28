@@ -334,8 +334,9 @@ void LabelImageViewQT::SetCentroidsVisible(bool val)
 	refreshBoundsImage();
 }
 
-void LabelImageViewQT::SetKNeighborsVisibleOn()
+void LabelImageViewQT::SetKNeighborsVisibleOn(bool flag)
 {
+	this->k_mutual = flag;
 	this->showKNeighbors = true;
 	this->showRadNeighbors = false;
 	this->showNucAdj = false;
@@ -1439,11 +1440,31 @@ void LabelImageViewQT::drawKNeighbors(QPainter *painter)
 	{
 		int src_id = kNeighborTable->GetValue(i,0).ToInt();
 		int trg_id = kNeighborTable->GetValue(i,1).ToInt();
-		ftk::Object::Point source = (*centerMap)[src_id];
-		ftk::Object::Point target = (*centerMap)[trg_id];
 		painter->setPen(Qt::yellow);
-		if ( (currentZ == source.z) && (currentZ == target.z) )
-			painter->drawLine(source.x, source.y, target.x, target.y);
+		if(k_mutual == false)
+		{
+			ftk::Object::Point source = (*centerMap)[src_id];
+			ftk::Object::Point target = (*centerMap)[trg_id];
+			if ( (currentZ == source.z) && (currentZ == target.z) )
+				painter->drawLine(source.x, source.y, target.x, target.y);
+		}
+		else
+		{
+			for(int j=i-1; j>=0; --j)
+			{
+				if(trg_id == kNeighborTable->GetValue(j,0).ToInt())
+				{
+					if(src_id == kNeighborTable->GetValue(j,1).ToInt())
+					{
+						ftk::Object::Point source = (*centerMap)[src_id];
+						ftk::Object::Point target = (*centerMap)[trg_id];
+						if ( (currentZ == source.z) && (currentZ == target.z) )
+							painter->drawLine(source.x, source.y, target.x, target.y);
+						break;
+					}
+				}
+			}
+		}
 	}
 }
 
