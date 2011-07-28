@@ -51,7 +51,7 @@ public:
 		return this->TraceLines;
 	};
 	std::vector<TraceLine*>GetSelectedTraces();
-	std::vector<int> GetSelecectedIDs();
+	std::vector<int> GetSelectedIDs();
 	std::vector<TraceLine*> GetSelectedRoots();
 	void SelectByIDs(int ID);
 	void SelectByIDs(std::set<long int> ID);

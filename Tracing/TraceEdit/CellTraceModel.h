@@ -46,8 +46,8 @@ public:
 	ObjectSelection * GetObjectSelection();
 	void SelectByRootTrace(std::vector<TraceLine*> roots);
 	void SelectByIDs(std::vector<int> IDs);
-	std::set<long int> GetSelecectedIDs();
-	std::vector<CellTrace*> GetSelecectedCells();
+	std::set<long int> GetSelectedIDs();
+	std::vector<CellTrace*> GetSelectedCells();
 	int getCellCount();
 	CellTrace * GetCellAt( int i);
 	void WriteCellCoordsToFile(const char* fileName);

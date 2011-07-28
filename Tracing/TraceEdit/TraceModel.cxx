@@ -173,7 +173,7 @@ void TraceModel::SelectByIDs(std::vector<int> IDs)
 	this->blockSignals(0);
 	emit selectionChanged();
 }
-std::vector<int> TraceModel::GetSelecectedIDs()
+std::vector<int> TraceModel::GetSelectedIDs()
 {
 	std::vector<int> SelectedIDs;
 	std::set<long> selected = this->Selection->getSelections();
@@ -187,7 +187,14 @@ std::vector<int> TraceModel::GetSelecectedIDs()
 std::vector<TraceLine*> TraceModel::GetSelectedTraces()
 {
 	std::vector<TraceLine*> selectedTrace;
-	std::vector<int> IDList = this->GetSelecectedIDs();
+	std::vector<int> IDList = this->GetSelectedIDs();
+	
+	//For printing out all the traces selected to the console
+	/*std::cout << "TraceModel IDs selected: ";
+	for (int i = 0; i < IDList.size(); i++)
+		std::cout << IDList[i] << " ";
+	std::cout << std::endl;*/
+	
 	for ( unsigned int i = 0; i< IDList.size(); i++)
 	{
 		bool found = false; 

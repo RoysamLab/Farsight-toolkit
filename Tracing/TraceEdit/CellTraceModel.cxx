@@ -169,8 +169,11 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Soma Volume");
 	this->headers.push_back("Soma Surface Area");
 	this->headers.push_back("Trace File");
+	
+	
 	int numHeaders = (int)this->headers.size();
 	std::cout<<numHeaders << "\t features computed\n";
+	
 	vtkSmartPointer<vtkVariantArray> column = vtkSmartPointer<vtkVariantArray>::New();
 	for(int i=0; i < numHeaders; ++i)
     {		
@@ -225,6 +228,7 @@ vtkSmartPointer<vtkTable> CellTraceModel::getCellBoundsTable()
 	}
 	return CellBoundsTable;
 }
+
 ObjectSelection * CellTraceModel::GetObjectSelection()
 {
 	return this->Selection;
@@ -241,7 +245,7 @@ void CellTraceModel::SelectByRootTrace(std::vector<TraceLine*> roots)
 	}
 	this->Selection->select(ID);
 }
-std::set<long int> CellTraceModel::GetSelecectedIDs()
+std::set<long int> CellTraceModel::GetSelectedIDs()
 {
 	std::set<long int> allSelectedIDs, nextIDs;
 	std::set<long> selected = this->Selection->getSelections();
@@ -270,7 +274,7 @@ std::set<long int> CellTraceModel::GetSelecectedIDs()
 	}//end for selected
 	return allSelectedIDs;
 }
-std::vector<CellTrace*> CellTraceModel::GetSelecectedCells()
+std::vector<CellTrace*> CellTraceModel::GetSelectedCells()
 {
 	std::vector<CellTrace*> selectedCell;
 	std::set<long> selected = this->Selection->getSelections();
