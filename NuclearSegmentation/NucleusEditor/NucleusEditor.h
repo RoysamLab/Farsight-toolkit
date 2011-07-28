@@ -450,6 +450,7 @@ public:
 	double parseRad(void);
 	unsigned short getSourceClass(void);
 	unsigned short getDestClass(void);
+	bool getKMutual(void);
 
 private:
 	QLabel * idLabel;
@@ -467,6 +468,7 @@ private:
 	QLabel * classLabel2;
 	QComboBox * classCombo2;
 	QHBoxLayout * classLayout2;
+	QCheckBox * check;
 	QPushButton * okButton;
 	QHBoxLayout * bLayout;
 	QVBoxLayout * layout;
