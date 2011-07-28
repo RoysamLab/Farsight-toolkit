@@ -133,7 +133,7 @@ public slots:
 	void SetIDsVisible(bool val);
 	void SetCentroidsVisible(bool val);
 	void SetCrosshairsVisible(bool val);
-	void SetKNeighborsVisibleOn(void);
+	void SetKNeighborsVisibleOn(bool flag);
 	void SetRadNeighborsVisibleOn(void);
 	void SetQueryViewsOff(void);
 	void SetNucAdjVisible(bool val);
@@ -265,6 +265,7 @@ protected:
 	bool showCrosshairs;
 	bool showROI;		//always comes up false
 	bool showKNeighbors;
+	bool k_mutual;
 	bool showRadNeighbors;
 	bool knnDone;
 	bool showNucAdj;
