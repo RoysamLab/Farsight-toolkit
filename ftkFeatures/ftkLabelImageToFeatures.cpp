@@ -174,6 +174,7 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
 	column->SetName( "ID" );
 	table->AddColumn(column);
+	
 	for (int i=0; i < IntrinsicFeatures::N; ++i)
 	{
 		if(doFeat[i])
@@ -184,8 +185,32 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 		}
 	}
 
-	//Now populate the table:
 	std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
+	for (int i=0; i<(int)labels.size(); ++i)
+	{
+		FeatureCalcType::LabelPixelType id = labels.at(i);
+		if(id == 0) continue;
+		if(useIDs)
+			if(IDs.find(id) == IDs.end()) continue;	//Don't care about this id, so skip it
+		std::vector< std::vector<double> > testVec = labFilter->GetZernikeMoments(id);
+		for(int i=0; i<(int)testVec.size(); ++i)
+		{
+			std::stringstream ss1;
+			ss1 << i;
+			for(int j=0; j<(int)testVec.at(i).size(); ++j)
+			{
+				column = vtkSmartPointer<vtkDoubleArray>::New();
+				std::stringstream ss2;
+				ss2 << ((i%2)+(2*j));
+				column->SetName( ("Zern("+ss1.str()+","+ss2.str()+")").c_str() );
+				table->AddColumn(column);
+			}
+		}
+		break;
+	}
+
+	//Now populate the table:
+	//std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
 	for (int i=0; i<(int)labels.size(); ++i)
 	{
 		FeatureCalcType::LabelPixelType id = labels.at(i);
@@ -200,6 +225,14 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 		{
 			if(doFeat[i])
 				row->InsertNextValue( vtkVariant(features->ScalarFeatures[i]) );
+		}
+		std::vector< std::vector<double> > zernVec = labFilter->GetZernikeMoments(id);
+		for(int i=0; i<(int)zernVec.size(); ++i)
+		{
+			for(int j=0; j<(int)zernVec.at(i).size(); ++j)
+			{
+				row->InsertNextValue( vtkVariant(zernVec.at(i).at(j)) );
+			}
 		}
 		table->InsertNextRow(row);
 	}
@@ -313,10 +346,22 @@ void IntrinsicFeatureCalculator::Update(vtkSmartPointer<vtkTable> table, std::ma
 			}
 
 			//Update table:
+			int col_count = 0;
 			for (int f=0; f<IntrinsicFeatures::N; ++f)
 			{
 				if(doFeat[f])
+				{
 					table->SetValueByName(row,(fPrefix+IntrinsicFeatures::Info[f].name).c_str(), vtkVariant(features->ScalarFeatures[f]));
+					++col_count;
+				}
+			}
+			std::vector< std::vector<double> > zernVec = labFilter->GetZernikeMoments(id);
+			for(int i=0; i<(int)zernVec.size(); ++i)
+			{
+				for(int j=0; j<(int)zernVec.at(i).size(); ++j)
+				{
+					table->SetValue(row, ++col_count ,vtkVariant(zernVec.at(i).at(j)) );
+				}
 			}
 		}
 

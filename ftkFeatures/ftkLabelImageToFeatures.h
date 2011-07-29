@@ -57,8 +57,11 @@ limitations under the License.
 #include "ftkIntrinsicFeatures.h"
 #include "ftkObject.h"
 #include "ftkImage/ftkImage.h"
+#include "Zernike/zernike.h"
 
 #include <iostream>
+#include <sstream>
+#include <string>
 #include <map>
 #include <set>
 
@@ -127,8 +130,13 @@ public:
 	typedef TLPixel LabelPixelType;
 	typedef itk::Image< IntensityPixelType, VImageDimension > IntensityImageType;
 	typedef itk::Image< LabelPixelType, VImageDimension > LabelImageType;
+	typedef itk::ImageRegionIterator< IntensityImageType> intIteratorType;
+	typedef itk::ImageRegionIterator< LabelImageType> labIteratorType;
 	typedef typename IntensityImageType::Pointer IntensityImagePointer;
 	typedef typename LabelImageType::Pointer LabelImagePointer;
+
+	typedef zernike::ImageType zernikeImageType;
+	typedef itk::ImageRegionIterator< zernikeImageType> zerIteratorType;
 
 	itkNewMacro( Self );
 	
@@ -143,6 +151,7 @@ public:
 	float GetPercentSharedBoundary(TLPixel focusLabel, TLPixel neighborLabel);
 	std::vector<TLPixel> GetContactNeighbors(TLPixel label);
 	IntrinsicFeatures * GetFeatures( LabelPixelType label );
+	std::vector< std::vector<double> > GetZernikeMoments( LabelPixelType label ){ return IDtoZernikeMap[label]; };
 	std::vector< LabelPixelType > GetLabels() { return this->labels; };
 
 	void ComputeHistogramOn();
@@ -150,6 +159,7 @@ public:
 	void ComputeTexturesOn();
 	void ComputeTexturesOff(){ this->computeTextures = false; };
 	void SetLevel(short int newLevel);
+	void SetZernikeOrder(int order){ this->zernikeOrder = order; };
 	short int GetLevel(){ return computationLevel; };
 	void GetAdjacency();
 
@@ -165,6 +175,7 @@ private:
 	bool RunLabelGeometryFilter();
 	bool RunLabelStatisticsFilter();
 	bool RunTextureFilter();
+	bool RunZernikeFilter();
 	void LabelImageScan();
 	void CalculateScanFeatures();
 	void SetHistogramParameters(int* numBins, int* lowerBound, int* upperBound);
@@ -172,6 +183,7 @@ private:
 	//Internal Variables:
 	IntensityImagePointer intensityImage;	//Input intensity image;
 	LabelImagePointer labelImage;			//Input label image;
+	int zernikeOrder;
 	bool cyto_image;
 
 	std::vector< std::vector< typename LabelImageType::IndexType > > boundaryPix;	//boundary pixels for each label
@@ -182,6 +194,7 @@ private:
 	typedef std::map<TLPixel, IntrinsicFeatures> FeatureMapType;
 	FeatureMapType featureVals;					//Holds all Features that have been calculated (including 0)
 	std::map<TLPixel, int> LtoIMap;				//Map the label to the index in vectors that it is stored
+	std::map<TLPixel, std::vector< std::vector<double> > > IDtoZernikeMap;
 	std::vector< LabelPixelType > labels;		//Holds all of the Labels that have been found (including 0)
 	
 	//OPTIONS

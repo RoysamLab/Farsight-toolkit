@@ -88,6 +88,7 @@ LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 {
 	intensityImage = NULL;
 	labelImage = NULL;
+	zernikeOrder = 10;
 	
 	boundaryPix.clear();
 	interiorPix.clear();
@@ -329,6 +330,7 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	{
 		LabelImageScan();
 		CalculateScanFeatures();
+		RunZernikeFilter();
 	}
 	
 	//TEXTURE CALCULATOR:
@@ -1020,6 +1022,89 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 	tempIntensityImage = 0;
 	return true;
 }
+
+
+//**************************************************************************
+// RUN THE ZERNIKE FILTER
+//**************************************************************************
+template< typename TIPixel, typename TLPixel, unsigned int VImageDimension >
+bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
+::RunZernikeFilter()
+{
+	if(!intensityImage || !labelImage) return false;
+	if(!labels.size()) return false;
+	
+	IntensityImagePointer nucleusImage;
+	for(int i = 0; i<(int)labels.size(); ++i)
+	{
+		TLPixel label = labels.at(i);
+		int bb[6];
+		for(int co = 0; co < 6; co++)
+		{
+			bb[co] = int(featureVals[label].BoundingBox[co]+0.5);
+		}
+		
+		LabelImageType::IndexType labIndex;
+		LabelImageType::SizeType labSize;
+		LabelImageType::RegionType labRegion;
+		labIndex[0] = bb[0];
+		labIndex[1] = bb[2];
+		labIndex[2] = bb[4];
+		labSize[0] = bb[1]-bb[0]+1;
+		labSize[1] = bb[3]-bb[2]+1;
+		labSize[2] = bb[5]-bb[4]+1;
+		labRegion.SetIndex(labIndex);
+		labRegion.SetSize(labSize);
+		labIteratorType labIter(labelImage,labRegion);
+		
+		IntensityImageType::IndexType intIndex;
+		IntensityImageType::SizeType intSize;
+		IntensityImageType::RegionType intRegion;
+		intIndex[0] = bb[0];
+		intIndex[1] = bb[2];
+		intIndex[2] = bb[4];
+		intSize[0] = bb[1]-bb[0]+1;
+		intSize[1] = bb[3]-bb[2]+1;
+		intSize[2] = bb[5]-bb[4]+1;
+		intRegion.SetIndex(intIndex);
+		intRegion.SetSize(intSize);
+		intIteratorType intIter(intensityImage,intRegion);
+		
+		zernikeImageType::Pointer zerImg = zernikeImageType::New();
+		zernikeImageType::IndexType zerIndex;
+		zernikeImageType::SizeType zerSize;
+		zernikeImageType::RegionType zerRegion;
+		zerIndex.Fill(0);
+		zerSize[0] = bb[1]-bb[0]+1;
+		zerSize[1] = bb[3]-bb[2]+1;
+		zerSize[2] = bb[5]-bb[4]+1;
+		zerRegion.SetIndex(zerIndex);
+		zerRegion.SetSize(zerSize);
+		zerImg->SetRegions(zerRegion);
+		zerImg->Allocate();
+		zerImg->FillBuffer(0);
+		zerIteratorType zerIter(zerImg,zerImg->GetLargestPossibleRegion());
+		
+		for(;!zerIter.IsAtEnd(); ++zerIter,++intIter,++labIter)
+		{
+			if(labIter.Get() == label)
+			{
+				zerIter.Set(intIter.Get());
+			}
+			else
+			{
+				zerIter.Set(0);
+			}
+		}
+		
+		zernike* myzernike = new zernike( zerImg, zernikeOrder);
+		IDtoZernikeMap[label] = myzernike->GetZernike();		
+
+	}
+	return true;
+}
+
+
 
 //**************************************************************************
 // This function will compute the percent of the object's boundary with label 
