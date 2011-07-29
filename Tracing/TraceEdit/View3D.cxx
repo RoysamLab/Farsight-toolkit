@@ -1392,6 +1392,9 @@ void View3D::CreateGUIObjects()
 
 	/********************************************************************************************/
 
+	CropBorderCellsButton = new QPushButton("Crop border cells");
+	connect(CropBorderCellsButton, SIGNAL(clicked()), this, SLOT(calculateCellCroppingBorderWidth()));
+
 }
 
 void View3D::CreateLayout()
@@ -1531,7 +1534,9 @@ void View3D::CreateLayout()
 	updateStatisticsAction = new QAction(tr("Update Statistics"), this);
 	connect(updateStatisticsAction, SIGNAL(triggered()), this, SLOT(updateStatistics()));
 
-
+	//////////////////////
+	// Automation Dock	//
+	//////////////////////
 	this->AutomationDock = new QDockWidget("Automated Edits", this);
 	QVBoxLayout * AutomationDockLayout = new QVBoxLayout(this->AutomationWidget);
 
@@ -1569,12 +1574,22 @@ void View3D::CreateLayout()
 	HalfBridgesLayout->addRow("Distance From Parent", this->MinDistanceToParent);
 	AutomationDockLayout->addWidget(this->HalfBridgeGroup);
 	AutomationDockLayout->addWidget(this->AutomateButton);
+	
+	//Select border cells
+	BorderCellsCroppingGroup = new QGroupBox("Border Cells Cropping");
+	QFormLayout *BorderCellsCroppingLayout = new QFormLayout(BorderCellsCroppingGroup);
+	BorderCellsCroppingLayout->addWidget(CropBorderCellsButton);
+	AutomationDockLayout->addWidget(BorderCellsCroppingGroup);
 	AutomationDockLayout->addStretch();
 
 	this->AutomationDock->setWidget(this->AutomationWidget);
 	this->addDockWidget(Qt::RightDockWidgetArea, this->AutomationDock);
 	this->ShowToolBars->addAction(this->AutomationDock->toggleViewAction());
 	this->AutomationDock->hide();
+
+	////////////////
+	// Status Bar //
+	////////////////
 
 	this->statusBar()->addPermanentWidget(new QLabel("Statistics: Split: ", this));
 	this->statusBar()->addPermanentWidget(this->SplitLabel,0);
@@ -4787,3 +4802,187 @@ void View3D::closeEvent(QCloseEvent *event)
 	event->accept();
 }
 
+void View3D::calculateCellCroppingBorderWidth()
+{
+	//for each root trace grab the CellID and get the size
+	//generate histogram for all the cell sizes
+	//reject the bottom Y%
+	//the new bottom cell size is the border size
+	//remove all cells inside the border
+	
+	std::vector<TraceLine*> roots = tobj->GetAllRoots();
+
+	if (roots.size() == 0)
+		return;	//No roots, so do nothing
+
+	if (CellModel->getCellCount() == 0)	//Need to calculate cell features before we can select them!
+	{
+		std::vector<CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
+		if (NewCells.size() > 0)
+		{
+			this->CellModel->setCells(NewCells);
+		}
+	}
+
+	CellModel->SelectByRootTrace(roots);
+	std::vector<CellTrace*> cells_list = CellModel->GetSelectedCells();
+	std::vector<CellTrace*>::iterator cells_list_iter;
+
+	float sum_of_skewness_X = 0;
+	float sum_of_skewness_Y = 0; 
+	float sum_of_skewness_Z = 0;
+	float sum_of_height = 0;
+	float sum_of_width = 0; 
+	float sum_of_depth = 0;
+	float max_skewness_X = 0;
+	float max_skewness_Y = 0;
+	float max_skewness_Z = 0;
+
+	unsigned int num_cells = 0;
+
+	std::vector<int> bad_cell_roots;
+	for (cells_list_iter = cells_list.begin(); cells_list_iter != cells_list.end(); cells_list_iter++)
+	{
+		CellTrace* cell = *cells_list_iter;
+		if (cell->skewnessX == cell->skewnessX 
+			&& cell->skewnessY == cell->skewnessY 
+			&& cell->skewnessZ == cell->skewnessZ
+			&& cell->maxX == cell->maxX
+			&& cell->minX == cell->minX
+			&& cell->maxY == cell->maxY
+			&& cell->minY == cell->minY
+			&& cell->maxZ == cell->maxZ
+			&& cell->minZ == cell->minZ) //necessary to check for indeterminate floating point numbers
+		{
+			//calculate a bunch of statistical values
+			sum_of_skewness_X += abs(cell->skewnessX);
+			sum_of_skewness_Y += abs(cell->skewnessY);
+			sum_of_skewness_Z += abs(cell->skewnessZ);
+			sum_of_height += (cell->maxY - cell->minY);
+			sum_of_width += (cell->maxX - cell->minX);
+			sum_of_depth += (cell->maxZ - cell->minZ);
+			if (abs(cell->skewnessX) > max_skewness_X)
+				max_skewness_X = abs(cell->skewnessX);
+			if (abs(cell->skewnessY) > max_skewness_Y)
+				max_skewness_Y = abs(cell->skewnessY);
+			if (abs(cell->skewnessZ) > max_skewness_Z)
+				max_skewness_Z = abs(cell->skewnessZ);
+			
+			num_cells++;
+		}
+		else
+		{
+			std::cout << "Bad cell (indeterminate number), ID: " << cell->rootID() << std::endl;
+			bad_cell_roots.push_back(cell->rootID());
+		}
+	}
+
+	//Select the bad cells and delete them
+	CellModel->SelectByIDs(bad_cell_roots);
+	DeleteTraces();
+	CellModel->SelectByRootTrace(roots);
+	cells_list = CellModel->GetSelectedCells();
+
+	double average_skewness_X = sum_of_skewness_X / num_cells;
+	double average_skewness_Y = sum_of_skewness_Y / num_cells;
+	double average_skewness_Z = sum_of_skewness_Z / num_cells;
+
+	double average_width = sum_of_width / num_cells;
+	double average_height = sum_of_height / num_cells;
+	double average_depth = sum_of_depth / num_cells;
+
+	std::cout << "Number of cells: " << num_cells << std::endl;
+
+	std::cout << "Average Skewness X: " << average_skewness_X << std::endl;
+	std::cout << "Average Skewness Y: " << average_skewness_Y << std::endl;
+	std::cout << "Average Skewness Z: " << average_skewness_Z << std::endl;
+
+	std::cout << "Average Cell Width: " << average_width << std::endl;
+	std::cout << "Average Cell Height: " << average_height << std::endl;
+	std::cout << "Average Cell Depth: " << average_depth << std::endl;
+
+	std::cout << "Max Skewness X: " << max_skewness_X << std::endl;
+	std::cout << "Max Skewness Y: " << max_skewness_Y << std::endl;
+	std::cout << "Max Skewness Z: " << max_skewness_Z << std::endl;
+	std::cout << std::endl;
+
+	//Go through cells list again and only calculate average dimensions on cells with within 80% of the max skewness in each dimension (x, y, z)
+	
+	double sum_of_pruned_skewness_X = 0;
+	double sum_of_pruned_skewness_Y = 0;
+	double sum_of_pruned_skewness_Z = 0;
+	double sum_of_pruned_width = 0;
+	double sum_of_pruned_height = 0;
+	double sum_of_pruned_depth = 0;
+	size_t num_cells_after_pruning = 0;
+
+	std::vector<int> pruned_cells_roots;
+	for (cells_list_iter = cells_list.begin(); cells_list_iter != cells_list.end(); cells_list_iter++)
+	{
+		CellTrace* cell = *cells_list_iter;
+		if (	abs(cell->skewnessX) <= 0.8 * max_skewness_X
+			&&	abs(cell->skewnessY) <= 0.8 * max_skewness_Y
+			&&	abs(cell->skewnessZ) <= 0.8 * max_skewness_Z)
+		{
+
+			sum_of_pruned_skewness_X += abs(cell->skewnessX);
+			sum_of_pruned_skewness_Y += abs(cell->skewnessY);
+			sum_of_pruned_skewness_Z += abs(cell->skewnessX);
+			sum_of_pruned_width += (cell->maxX - cell->minX);
+			sum_of_pruned_height += (cell->maxY - cell->minY);
+			sum_of_pruned_depth += (cell->maxZ - cell->minZ);
+			num_cells_after_pruning++;
+		}
+	}
+
+	double average_pruned_skewness_X = sum_of_pruned_skewness_X / num_cells_after_pruning;
+	double average_pruned_skewness_Y = sum_of_pruned_skewness_Y / num_cells_after_pruning;
+	double average_pruned_skewness_Z = sum_of_pruned_skewness_Z / num_cells_after_pruning;
+
+	double average_pruned_height = sum_of_pruned_height / num_cells_after_pruning;
+	double average_pruned_width = sum_of_pruned_width / num_cells_after_pruning;
+	double average_pruned_depth = sum_of_pruned_depth / num_cells_after_pruning;
+
+	std::cout << "Average Pruned Skewness X: " << average_pruned_skewness_X << std::endl;
+	std::cout << "Average Pruned Skewness Y: " << average_pruned_skewness_Y << std::endl;
+	std::cout << "Average Pruned Skewness Z: " << average_pruned_skewness_Z << std::endl;
+	
+	std::cout << "Average Pruned Width: " << average_pruned_width << std::endl;
+	std::cout << "Average Pruned Height: " << average_pruned_height << std::endl;
+	std::cout << "Average Pruned Depth: " << average_pruned_depth << std::endl;
+
+	std::cout << std::endl;
+
+	//Remove the cells which are within 1/2 of the average pruned width/height/depth from the edge
+	double bounds[6];
+	ImageActors->getImageBounds(bounds);
+	double image_min_x_bounds = bounds[0];
+	double image_max_x_bounds = bounds[1];
+	double image_min_y_bounds = bounds[2];
+	double image_max_y_bounds = bounds[3];
+	double image_min_z_bounds = bounds[4];
+	double image_max_z_bounds = bounds[5];
+
+	std::cout << "New cell bounds: XMin = " << image_min_x_bounds + average_pruned_width/2 << " XMax = " << image_max_x_bounds - average_pruned_width/2 << std::endl;
+	std::vector<int> cropped_cells_root;
+	for (cells_list_iter = cells_list.begin(); cells_list_iter != cells_list.end(); cells_list_iter++)
+	{
+		CellTrace* cell = *cells_list_iter;
+		if (	cell->somaX < image_min_x_bounds + average_pruned_width/2  
+			|| 	cell->somaX > image_max_x_bounds - average_pruned_width/2  
+			|| 	cell->somaY < image_min_y_bounds + average_pruned_height/2
+			|| 	cell->somaY > image_max_y_bounds - average_pruned_height/2
+			|| 	cell->somaZ < image_min_z_bounds + average_pruned_depth/2
+			|| 	cell->somaZ > image_max_z_bounds - average_pruned_depth/2
+			)
+		{
+			std::cout << "Cropping cell ID = " << cell->rootID() << "\tsomaX = " << cell->somaX << "\tsomaY = " << cell->somaY << std::endl;
+			cropped_cells_root.push_back(cell->rootID());
+		}
+	}
+	
+	CellModel->SelectByIDs(cropped_cells_root);
+	DeleteTraces();
+	CellModel->SelectByRootTrace(roots);
+	cells_list = CellModel->GetSelectedCells();
+}                                                                                                                                                                                                                                      

@@ -190,11 +190,12 @@ std::vector<TraceLine*> TraceModel::GetSelectedTraces()
 	std::vector<int> IDList = this->GetSelectedIDs();
 	
 	//For printing out all the traces selected to the console
-	/*std::cout << "TraceModel IDs selected: ";
-	for (int i = 0; i < IDList.size(); i++)
-		std::cout << IDList[i] << " ";
-	std::cout << std::endl;*/
+	//std::cout << "TraceModel IDs selected: ";
+	//for (int i = 0; i < IDList.size(); i++)
+	//	std::cout << IDList[i] << " ";
+	//std::cout << std::endl;
 	
+	//Search for traces
 	for ( unsigned int i = 0; i< IDList.size(); i++)
 	{
 		bool found = false; 

@@ -162,6 +162,11 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Height Y");
 	this->headers.push_back("Depth Z");
 
+	this->headers.push_back("Skewness X");
+	this->headers.push_back("Skewness Y");
+	this->headers.push_back("Skewness Z");
+	this->headers.push_back("Euclidean Skewness");
+
 	this->headers.push_back("Soma X");
 	this->headers.push_back("Soma Y");
 	this->headers.push_back("Soma Z");
@@ -214,6 +219,10 @@ vtkSmartPointer<vtkTable> CellTraceModel::getCellBoundsTable()
 	BoundsHeaders.push_back("Max Y");
 	BoundsHeaders.push_back("Min Z");
 	BoundsHeaders.push_back("Max Z");
+	BoundsHeaders.push_back("Skewness X");
+	BoundsHeaders.push_back("Skewness Y");
+	BoundsHeaders.push_back("Skewness Z");
+
 	int numHeaders = (int)BoundsHeaders.size();
 	vtkSmartPointer<vtkVariantArray> column = vtkSmartPointer<vtkVariantArray>::New();
 	for(int i=0; i < numHeaders; ++i)
@@ -237,14 +246,39 @@ void CellTraceModel::SelectByRootTrace(std::vector<TraceLine*> roots)
 {
 	this->Selection->clear();
 	std::set<long int> ID;
-	unsigned int i = 0;
-	for (i = 0; i < roots.size(); i++)
+	for (int i = 0; i < roots.size(); i++)
 	{
 		ID.insert((long)roots.at(i)->GetId());
-		//std::cout<< "root" << roots.at(i)->GetId()<< " at" <<i<< std::endl;
+		//std::cout<< "Root ID selected: " << roots.at(i)->GetId() << std::endl; //print out the root traces selected
 	}
 	this->Selection->select(ID);
 }
+
+void CellTraceModel::SelectByIDs(std::vector<int> IDs)
+{
+	this->Selection->clear();
+	std::set<long int> ID;
+	std::vector<int>::iterator IDs_iterator;
+	
+	//std::cout << "IDs.size(): " << IDs.size() << std::endl;
+	for (IDs_iterator = IDs.begin(); IDs_iterator != IDs.end(); IDs_iterator++)
+	{
+		ID.insert(*IDs_iterator);
+	}
+	Selection->select(ID);
+}
+
+std::vector<CellTrace*> CellTraceModel::getCells(std::vector<long> IDs)
+{
+	std::vector<CellTrace*> cells;
+	std::vector<long>::iterator IDs_iterator;
+	
+	for (IDs_iterator = IDs.begin(); IDs_iterator != IDs.end(); IDs_iterator++)
+		cells.push_back(Cells.at(*IDs_iterator));
+	
+	return cells;
+}
+
 std::set<long int> CellTraceModel::GetSelectedIDs()
 {
 	std::set<long int> allSelectedIDs, nextIDs;

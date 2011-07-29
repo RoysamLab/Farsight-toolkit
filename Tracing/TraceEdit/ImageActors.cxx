@@ -151,10 +151,12 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 	newImage->connector= ConnectorType::New();
 	newImage->connector->SetInput( newImage->Rescale->GetOutput() );
 	newImage->ImageData = newImage->connector->GetOutput();
+	newImage->ImageData->Update();
 	newImage->ImageData->GetBounds(bounds);
 	newImage->projectionConnector = ConnectorType::New();
 	newImage->projectionConnector->SetInput( newImage->reader->GetOutput() );
 
+	
 	this->setImageBounds(bounds);
 	this->LoadedImages.push_back(newImage);
 	return (int) (this->LoadedImages.size() -1);
@@ -531,35 +533,35 @@ vtkSmartPointer<vtkImageActor> ImageRenderActors::GetProjectionImage(int i)
 	return this->LoadedImages[i]->ProjectionActor;
 }
 void ImageRenderActors::setImageBounds(double bounds[])
-{
-	if (this->TotalImageSize[0] < bounds[0])
+{ 
+	if (this->TotalImageSize[0] > bounds[0])
 	{
 		this->TotalImageSize[0] = bounds[0];
 	}
-	if (this->TotalImageSize[1] > bounds[1])
+	if (this->TotalImageSize[1] < bounds[1])
 	{
 		this->TotalImageSize[1] = bounds[1];
 	}
-	if (this->TotalImageSize[2] < bounds[2])
+	if (this->TotalImageSize[2] > bounds[2])
 	{
 		this->TotalImageSize[2] = bounds[2];
 	}
-	if (this->TotalImageSize[3] > bounds[3])
+	if (this->TotalImageSize[3] < bounds[3])
 	{
 		this->TotalImageSize[3] = bounds[3];
 	}
-	if (this->TotalImageSize[4] < bounds[4])
+	if (this->TotalImageSize[4] > bounds[4])
 	{
 		this->TotalImageSize[4] = bounds[4];
 	}
-	if (this->TotalImageSize[5] > bounds[5])
+	if (this->TotalImageSize[5] < bounds[5])
 	{
 		this->TotalImageSize[5] = bounds[5];
 	}
 }
 void ImageRenderActors::getImageBounds(double bounds[])
 {
-	for (int i = 0; i <6; i++)
+	for (int i = 0; i < 6; i++)
 	{
 		bounds[i] = this->TotalImageSize.at(i);
 	}

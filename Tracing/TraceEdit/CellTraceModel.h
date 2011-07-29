@@ -51,6 +51,7 @@ public:
 	int getCellCount();
 	CellTrace * GetCellAt( int i);
 	void WriteCellCoordsToFile(const char* fileName);
+	std::vector<CellTrace*> getCells(std::vector<long> IDs);
 signals:
 	void selectionChanged(void);
 private:

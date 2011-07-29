@@ -42,6 +42,7 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 	this->minX = rootBit.x;
 	this->minY = rootBit.y;
 	this->minZ = rootBit.z;
+
 	this->somaSurface = this->segments[0]->GetSurfaceArea();
 	this->somaVolume = this->segments[0]->GetVolume();
 	this->SomaRadii = this->segments[0]->GetRadii();
@@ -131,6 +132,10 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 			}
 		}//end bifurcation features
 	}//end for segment size
+	this->skewnessX = (somaX - (minX + (maxX - minX)/2)); /// ((float)(maxX - minX)/2);
+	this->skewnessY = (somaY - (minY + (maxY - minY)/2)); /// ((float)(maxY - minY)/2);
+	this->skewnessZ = (somaZ - (minZ + (maxZ - minZ)/2)); /// ((float)(maxZ - minZ)/2);
+	this->euclideanSkewness = sqrt(pow(skewnessX, 2) + pow(skewnessY, 2) + pow(skewnessZ, 2)) / sqrt(3.0);
 }
 void CellTrace::setFileName(std::string newFileName)
 {
@@ -489,6 +494,11 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->maxY - this->minY);//Length
 	CellData->InsertNextValue(this->maxZ - this->minZ);//Height
 
+	CellData->InsertNextValue(this->skewnessX);
+	CellData->InsertNextValue(this->skewnessY);
+	CellData->InsertNextValue(this->skewnessZ);
+	CellData->InsertNextValue(this->euclideanSkewness);
+
 	CellData->InsertNextValue(this->somaX);
 	CellData->InsertNextValue(this->somaY);
 	CellData->InsertNextValue(this->somaZ);
@@ -501,7 +511,7 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 }
 vtkSmartPointer<vtkVariantArray> CellTrace::BoundsRow()
 {
-	// id, somaX somaY somaZ min/max xyz
+	// id, somaX somaY somaZ min/max xyz, skewness xyz
 	vtkSmartPointer<vtkVariantArray> CellBoundsRow = vtkSmartPointer<vtkVariantArray>::New();
 	CellBoundsRow->InsertNextValue(this->segments[0]->GetId());
 	CellBoundsRow->InsertNextValue(this->somaX);

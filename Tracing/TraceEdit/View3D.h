@@ -203,6 +203,7 @@ protected slots:
 	void updateSelectionFromCell();
 	void updateSelectionHighlights();
 	void updateTraceSelectionHighlights();
+	void calculateCellCroppingBorderWidth();
 
 protected:
 	void closeEvent(QCloseEvent *event);
@@ -337,7 +338,8 @@ private:
 	//QSpinBox *MaxSpineBit, *MaxBridgeBits, *MaxHalfBridgeBits;
 	QDoubleSpinBox *MaxSpinePathLength, * MinDistanceToParent, *MaxSpineBit, *MaxBridgeBits, *MaxHalfBridgeBits, *LineLengthField;
 	QRadioButton *SmallLinesButton, *FalseSpinesButton, *FalseBridgesButton, *HalfBridgesButton;
-	QGroupBox *SmallLinesGroup, *FakeSpinesGroup, *FakeBridgeGroup, *HalfBridgeGroup;
+	QGroupBox *SmallLinesGroup, *FakeSpinesGroup, *FakeBridgeGroup, *HalfBridgeGroup, *BorderCellsCroppingGroup;
+	QPushButton *CropBorderCellsButton;
 	//stuff for tol and selection
     //general render window variables
 	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;
