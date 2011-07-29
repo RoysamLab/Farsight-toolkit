@@ -444,6 +444,7 @@ void NucleusEditor::createMenus()
 	showGalleryAction->setEnabled(false);
 	saveActiveResultsAction->setEnabled(false);
 
+
 	classifyMenu = toolMenu->addMenu(tr("Classifier"));
 
 	trainAction = new QAction(tr("Train"), this);
@@ -454,6 +455,7 @@ void NucleusEditor::createMenus()
 	connect(kplsAction, SIGNAL(triggered()), this, SLOT(startKPLS()));
 	classifyMenu->addAction(kplsAction);
 
+	
 	//EDITING MENU
 	editMenu = menuBar()->addMenu(tr("&Editing"));
 
@@ -2962,18 +2964,7 @@ void NucleusEditor::deleteCells(void)
 		projectFiles.adjTablesSaved = false;
 		selection->clear();
 		this->updateViews();
-		for(int j=0; j<(int)ids.size(); ++j)
-		{
-			int ID = ids.at(j);
-			for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
-			{
-				if((NucAdjTable->GetValue(row,0).ToInt() == ID) || (NucAdjTable->GetValue(row,1).ToInt() == ID))
-				{
-					NucAdjTable->RemoveRow(row);
-					--row;
-				}
-			}
-		}
+		
 		segView->SetNucAdjTable(NucAdjTable);
 
 		std::string log_entry = "DELETE , ";
@@ -3020,7 +3011,8 @@ void NucleusEditor::mergeCells(void)
 		projectFiles.adjTablesSaved = false;
 		selection->clear();
 		this->updateViews();
-		segView->SetNucAdjTable(NucAdjTable);
+		if(NucAdjTable)
+			segView->SetNucAdjTable(NucAdjTable);
 
 		for(int i=0; i<(int)new_grps.size(); ++i)
 		{
@@ -3671,8 +3663,7 @@ QueryDialog::QueryDialog(int QueryType, QVector<QString> classes, QWidget *paren
 	connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
 	bLayout = new QHBoxLayout;
 	bLayout->addStretch(20);
-	bLayout->addWidget(okButton);
-
+	bLayout->addWidget(okButton);	
 	if(QueryType == 1)
 	{
 		check = new QCheckBox("Show k mutual graph");
