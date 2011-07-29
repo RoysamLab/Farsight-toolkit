@@ -1039,12 +1039,15 @@ std::vector< int > NuclearSegmentation::Split(ftk::Object::Point P1, ftk::Object
 	int objID = id1;		//The ID of the object I am splitting!!
 
 	//Remove the corresponding rows from the Nuclear Adjacency table
-	for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
+	if(NucAdjTable)
 	{
-		if((NucAdjTable->GetValue(row,0).ToInt()==objID)||(NucAdjTable->GetValue(row,1).ToInt()==objID))
+		for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
 		{
-			NucAdjTable->RemoveRow(row);
-			--row;
+			if((NucAdjTable->GetValue(row,0).ToInt()==objID)||(NucAdjTable->GetValue(row,1).ToInt()==objID))
+			{
+				NucAdjTable->RemoveRow(row);
+				--row;
+			}
 		}
 	}
 	
@@ -1353,24 +1356,27 @@ int NuclearSegmentation::Merge(vector<int> ids, vtkSmartPointer<vtkTable> table,
 	}
 
 	int newID = maxID() + 1;
-	for(int j=0; j<(int)ids.size(); ++j)
+	if(NucAdjTable)
 	{
-		int OldID = ids.at(j);
-		for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
+		for(int j=0; j<(int)ids.size(); ++j)
 		{
-			for(int col=0; col<(int)NucAdjTable->GetNumberOfRows(); ++col)
+			int OldID = ids.at(j);
+			for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
 			{
-				if(NucAdjTable->GetValue(row,col).ToInt() == OldID)
-					NucAdjTable->SetValue(row,col,newID);
+				for(int col=0; col<(int)NucAdjTable->GetNumberOfRows(); ++col)
+				{
+					if(NucAdjTable->GetValue(row,col).ToInt() == OldID)
+						NucAdjTable->SetValue(row,col,newID);
+				}
 			}
 		}
-	}
-	for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
-	{
-		if((NucAdjTable->GetValue(row,0).ToInt()) == (NucAdjTable->GetValue(row,1).ToInt()))
+		for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
 		{
-			NucAdjTable->RemoveRow(row);
-			--row;
+			if((NucAdjTable->GetValue(row,0).ToInt()) == (NucAdjTable->GetValue(row,1).ToInt()))
+			{
+				NucAdjTable->RemoveRow(row);
+				--row;
+			}
 		}
 	}
 
@@ -1723,6 +1729,19 @@ void NuclearSegmentation::removeObjectFromMaps(int ID, vtkSmartPointer<vtkTable>
 			}
 		}
 	}
+
+	//if(zernikeTable)
+	//{
+	//	for(int row = 0; row<zernikeTable->GetNumberOfRows(); ++row)
+	//	{
+	//		if(zernikeTable->GetValue(row,0) == ID)
+	//		{
+	//			zernikeTable->RemoveRow( row );
+	//			break;
+	//		}
+	//	}
+	//}
+	
 	centerMap.erase( ID );
 	bBoxMap.erase( ID );
 }
@@ -1742,6 +1761,7 @@ bool NuclearSegmentation::addObjectsToMaps(std::set<unsigned short> IDs, int x1,
 	calc->SetRegion(x1,y1,z1,x2,y2,z2);
 	calc->SetIDs(IDs);
 	calc->Update(table, &centerMap, &bBoxMap, NucAdjTable);
+	//calc->UpdateZernike(zernikeTable);
 	delete calc;
 
 	/*
