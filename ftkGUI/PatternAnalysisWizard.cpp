@@ -95,12 +95,24 @@ void PatternAnalysisWizard::initFeatureGroup(void)
 	if(!m_table) return;
 
 	featureGroup->setExclusive(false);
+	bool zernike_added = false;
 	for (int c=1; c<m_table->GetNumberOfColumns(); ++c)
 	{
 		const char * name = m_table->GetColumnName(c);
 		std::string current_name = name;
 		if( current_name.find("train")!=std::string::npos || current_name.find("prediction")!=std::string::npos )
 			continue;
+		if( current_name.find("Zern")!=std::string::npos)
+		{
+			if(zernike_added == false)
+			{
+				QCheckBox * check = new QCheckBox("zernike moments");
+				check->setChecked(true);
+				featureGroup->addButton(check, 0);
+				zernike_added = true;
+			}
+			continue;
+		}
 		QCheckBox * check = new QCheckBox(QString(name));
 		check->setChecked(true);
 		featureGroup->addButton(check, c);
@@ -112,25 +124,26 @@ void PatternAnalysisWizard::disabledFeatureGroup(void)
 	if(!m_table) return;
 
 	featureGroup->setExclusive(false);
-	for (int c=1; c<m_table->GetNumberOfColumns(); ++c)
+	bool zernike_added = false;
+	for (int d=0; d<mod_table->GetNumberOfColumns(); ++d)
 	{
-		const char * name = m_table->GetColumnName(c);
-		std::string current_name = name;
-		if( current_name.find("train")!=std::string::npos || current_name.find("prediction")!=std::string::npos )
-			continue;
-		QCheckBox * check = new QCheckBox(QString(name));
-		for (int d=0; d<mod_table->GetNumberOfColumns(); ++d)
-	    {
-		    const char * mod_name = mod_table->GetColumnName(d);
-		    std::string model_name = mod_name;
-		    if(current_name == model_name)
+	    const char * mod_name = mod_table->GetColumnName(d);
+	    std::string model_name = mod_name;
+	    if(model_name.find("Zern")!=std::string::npos)
+		{
+			if(zernike_added == false)
 			{
-			   check->setCheckable(false);  
-			   featureGroup->addButton(check, c);
-		       break;
+				QCheckBox * check = new QCheckBox("zernike moments");
+				check->setCheckable(false);  
+				featureGroup->addButton(check);
+				zernike_added = true;
 			}
+			continue;
 		}
-	}
+		QCheckBox * check = new QCheckBox(QString(mod_name));
+		check->setCheckable(false);  
+		featureGroup->addButton(check);		
+	}	
 }
 
 void PatternAnalysisWizard::initOptionGroup(void)
@@ -596,7 +609,21 @@ void PatternAnalysisWizard::runKPLS()
 	{
 		if( buttons.at(b)->isChecked() )
 		{
-			columnsToUse.push_back( featureGroup->id(buttons.at(b)) );
+			if(featureGroup->id(buttons.at(b)) != 0)
+			{
+				columnsToUse.push_back( featureGroup->id(buttons.at(b)) );
+			}
+			else
+			{
+				for(int col=0; col<(int)m_table->GetNumberOfColumns(); ++col)
+				{
+					std::string col_name = m_table->GetColumnName(col);
+					if(col_name.find("Zern")!=std::string::npos)
+					{
+						columnsToUse.push_back(col);
+					}
+				}
+			}
 		}
 	}
 	
@@ -756,7 +783,21 @@ void PatternAnalysisWizard::saveModel(void)
 		//buttons.at(b)->setCheckable(false);
 		if( buttons.at(b)->isChecked() )
 		{
-			columnsToUse.push_back( featureGroup->id(buttons.at(b)) );
+			if(featureGroup->id(buttons.at(b)) != 0)
+			{
+				columnsToUse.push_back( featureGroup->id(buttons.at(b)) );
+			}
+			else
+			{
+				for(int col=0; col<(int)m_table->GetNumberOfColumns(); ++col)
+				{
+					std::string col_name = m_table->GetColumnName(col);
+					if(col_name.find("Zern")!=std::string::npos)
+					{
+						columnsToUse.push_back(col);
+					}
+				}
+			}
 		}
 	}	
 	if(columnsToUse.size() <= 0)
@@ -790,7 +831,15 @@ void PatternAnalysisWizard::saveModel(void)
 		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
 		for(int c =0;c<(int)columnsToUse.size();++c)
 			model_data1->InsertNextValue(m_table->GetValue(row,columnsToUse.at(c)));
-		model_data1->InsertNextValue(m_table->GetValueByName(row, "prediction_default1"));
+		for(int col=((int)m_table->GetNumberOfColumns())-1; col>=0; --col)
+		{	
+			std::string current_column = m_table->GetColumnName(col);
+			if(current_column.find("prediction") != std::string::npos )
+			{
+				model_data1->InsertNextValue(m_table->GetValue(row, col));
+				break;
+			}	
+		}
 		model_data1->InsertNextValue(m_table->GetValueByName(row, "ID"));
 		new_table->InsertNextRow(model_data1);
 	}
@@ -850,7 +899,21 @@ void PatternAnalysisWizard::extractTable(void)
 		//buttons.at(b)->setCheckable(false);
 		if( buttons.at(b)->isChecked() )
 		{
-			columnsToUse.push_back( featureGroup->id(buttons.at(b)) );
+			if(featureGroup->id(buttons.at(b)) != 0)
+			{
+				columnsToUse.push_back( featureGroup->id(buttons.at(b)) );
+			}
+			else
+			{
+				for(int col=0; col<(int)m_table->GetNumberOfColumns(); ++col)
+				{
+					std::string col_name = m_table->GetColumnName(col);
+					if(col_name.find("Zern")!=std::string::npos)
+					{
+						columnsToUse.push_back(col);
+					}
+				}
+			}
 		}
 	}	
 	if(columnsToUse.size() <= 0)
@@ -896,7 +959,18 @@ void PatternAnalysisWizard::appendModel(vtkSmartPointer<vtkTable> mod_table, QSt
 		{
 			 std::string mod_column = mod_table->GetColumnName(c);
 			 if(mod_column.compare("Class") == 0)
-				 model_data1->InsertNextValue(m_table->GetValueByName(row,"prediction_default1"));
+			 {
+				 for(int col=((int)m_table->GetNumberOfColumns())-1; col>=0; --col)
+				{	
+					std::string current_column = m_table->GetColumnName(col);
+					if(current_column.find("prediction") != std::string::npos )
+					{
+						model_data1->InsertNextValue(m_table->GetValue(row, col));
+						break;
+					}	
+				}
+			 }
+
 			 else
 			 {
 		        for(int d=0; d<(int)m_table->GetNumberOfColumns(); ++d)
