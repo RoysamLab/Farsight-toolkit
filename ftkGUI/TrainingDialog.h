@@ -50,8 +50,10 @@ class TrainingDialog : public QDialog
     Q_OBJECT;
 
 public:
-	TrainingDialog(vtkSmartPointer<vtkTable> table, const char * trainColumn,std::string mode, QWidget *parent = 0);
+	TrainingDialog::TrainingDialog(vtkSmartPointer<vtkTable> table, const char * trainColumn,std::string mode,int firstTableSize, QWidget *parent=0);
+	//TrainingDialog(vtkSmartPointer<vtkTable> table, const char * trainColumn,std::string mode, QWidget *parent = 0);
 	void loadModelFromFile(std::string file_name);
+	int firstTableRows;
 
 public slots:
 	  void accept();
