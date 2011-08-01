@@ -15,11 +15,12 @@ limitations under the License.
 
 #include "TrainingDialog.h"
 
-TrainingDialog::TrainingDialog(vtkSmartPointer<vtkTable> table, const char * trainColumn,std::string mode, QWidget *parent)
+TrainingDialog::TrainingDialog(vtkSmartPointer<vtkTable> table, const char * trainColumn,std::string mode,int firstTableSize, QWidget *parent)
 	: QDialog(parent){
 
 	m_table = table;
 	columnForTraining = trainColumn;
+	firstTableRows = firstTableSize;
 
 	this->GetTrainingNames( m_table );
 
@@ -395,7 +396,7 @@ void TrainingDialog::updateTable(void){
 		m_table->AddColumn(column);
 	}
 
-	for(int row = 0; (int)row < m_table->GetNumberOfRows(); ++row){
+	for(int row = 0; (int)row < firstTableRows; ++row){
 		int id = m_table->GetValue(row,0).ToInt();
 		bool idFound = false;
 		for(it=training.begin(); it!=training.end(); ++it){
