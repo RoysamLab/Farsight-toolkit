@@ -2397,21 +2397,43 @@ void NucleusEditor::queryKNearest()
 	else
 		kNeighborIDs = KNObj->k_nearest_neighbors_IDs(IDs, k, Class_dest);
 
-	std::string Filename = "K_Nearest_Neighbors.txt";
-	ofstream outFile; 
-	outFile.open(Filename.c_str(), ios::out | ios::trunc );
-	if ( !outFile.is_open() )
+	std::string full_string;
+	std::stringstream ss1;
+	ss1 << k;
+	if(Class_dest == 0)
 	{
-		std::cerr << "Failed to Load Document: " << outFile << std::endl;
-		return;
+		full_string = "D (k=" + ss1.str() + ", class=all)" ;
 	}
-	//Write out the average distance:
+	else
+	{
+		std::stringstream ss2;
+		ss2 << Class_dest;
+		full_string = "D (k=" + ss1.str() + ", class=" + ss2.str() + ")";
+	}
+	table->RemoveColumnByName(full_string.c_str());
+	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName(full_string.c_str());
+	column->SetNumberOfValues((int)table->GetNumberOfRows());
+	table->AddColumn(column);
+	for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
+	{
+		table->SetValueByName(row, full_string.c_str(), 0);
+	}
 	for(int i=0; i < (int)kNeighborIDs.size(); ++i)
 	{
-		outFile <<  kNeighborIDs.at(i).at(0).first << "\t";
-		outFile << average(kNeighborIDs.at(i)) << "\n";
+		int Id = kNeighborIDs.at(i).at(0).first;
+		double avg_dist = average(kNeighborIDs.at(i));
+		for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
+		{
+			if(table->GetValue(row,0).ToInt() == Id)
+			{
+				table->SetValueByName(row, full_string.c_str(), vtkVariant(avg_dist));
+				break;
+			}
+		}
 	}
-	outFile.close();
+	this->updateViews();
+	
 	vtkSmartPointer<vtkTable> kNeighborTable = KNObj->vectorsToGraphTable(kNeighborIDs);
 	segView->SetKNeighborTable(kNeighborTable);
 	segView->SetKNeighborsVisibleOn(k_mutual);		
@@ -2492,25 +2514,45 @@ void NucleusEditor::queryInRadius()
 		radNeighborIDs = KNObj->neighborsWithinRadius_All(radius, Class_dest, Class_src);
 	else
 		radNeighborIDs = KNObj->neighborsWithinRadius_IDs(IDs, radius, Class_dest);
-	
-	std::string Filename = "Neighbors_Within_Radius.txt";
-	ofstream outFile; 
-	outFile.open(Filename.c_str(), ios::out | ios::trunc );
-	if ( !outFile.is_open() )
+
+	std::string full_string;
+	std::stringstream ss1;
+	ss1 << radius;
+	if(Class_dest == 0)
 	{
-		std::cerr << "Failed to Load Document: " << outFile << std::endl;
-		return;
+		full_string = "D (rad=" + ss1.str() + ", class=all)";
 	}
-	//Write out the average distance:
+	else
+	{
+		std::stringstream ss2;
+		ss2 << Class_dest;
+		full_string = "D (rad=" + ss1.str() + ", class=" + ss2.str() + ")";
+	}
+	table->RemoveColumnByName(full_string.c_str());
+	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName(full_string.c_str());
+	column->SetNumberOfValues((int)table->GetNumberOfRows());
+	table->AddColumn(column);
+	for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
+	{
+		table->SetValueByName(row, full_string.c_str(), 0);
+	}
 	for(int i=0; i < (int)radNeighborIDs.size(); ++i)
 	{
-		outFile <<  radNeighborIDs.at(i).at(0).first << "\t";
-		outFile << average(radNeighborIDs.at(i)) << "\n";
+		int Id = radNeighborIDs.at(i).at(0).first;
+		double avg_dist = average(radNeighborIDs.at(i));
+		for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
+		{
+			if(table->GetValue(row,0).ToInt() == Id)
+			{
+				table->SetValueByName(row, full_string.c_str(), vtkVariant(avg_dist));
+				break;
+			}
+		}
 	}
-	outFile.close();
-
-	vtkSmartPointer<vtkTable> radNeighborTable = KNObj->vectorsToGraphTable(radNeighborIDs);
+	this->updateViews();
 	
+	vtkSmartPointer<vtkTable> radNeighborTable = KNObj->vectorsToGraphTable(radNeighborIDs);	
 	segView->SetRadNeighborTable(radNeighborTable);
 	segView->SetRadNeighborsVisibleOn();
 	
