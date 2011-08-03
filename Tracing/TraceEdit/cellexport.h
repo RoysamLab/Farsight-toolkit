@@ -31,33 +31,26 @@ private:
 	QPushButton *createButton(const QString &text, const char *member);
 	QComboBox *createComboBox(const QString &text = QString());
 
-	QGroupBox *saveSWCGroupBox;
-	QGroupBox *saveJPGGroupBox;
+	QGroupBox *saveSWCGroupBox, *saveJPGGroupBox;
 //set up for swc files
 	QComboBox *swcdirectoryComboBox;
-	QPushButton *swcbrowseButton;
-	QPushButton *swcmoreButton;
+	QPushButton *swcbrowseButton, *swcmoreButton;
 	QWidget *swcextension;
 	QRadioButton *originalswcfileNameButton, *renumberswcfileNameButton, *renameswcfileNameButton;
 	QLineEdit *nameswcfileNameLine;
 //set up for jpg files
 	QComboBox *jpgdirectoryComboBox;
-	QPushButton *jpgbrowseButton;
-	QPushButton *jpgmoreButton;
+	QPushButton *jpgbrowseButton, *jpgmoreButton;
 	QWidget* jpgextension;
 	QRadioButton *originaljpgfileNameButton, *renumberjpgfileNameButton, *renamejpgfileNameButton;
-	QLineEdit *namejpgfileNameLine;\
+	QLineEdit *namejpgfileNameLine;
 
 	QPushButton *OkButton;
 	QPushButton *CancelButton;
 
 	//variables to return to the caller
-	QString curdirectoryswc;
-	QString curdirectoryjpg;
-	QString swcfileName;
-	QString jpgfileName;
-	bool changeswcfileName;
-	bool changejpgfileName;
+	QString curdirectoryswc, curdirectoryjpg, swcfileName, jpgfileName;
+	bool changeswcfileName, changejpgfileName;
 	
 };
 

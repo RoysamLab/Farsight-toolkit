@@ -101,6 +101,7 @@ v7: new GUI and file control
 #include "ftkCommon/ftkProjectManager.h"
 #include "View3D.h"
 #include "cellexport.h"
+#include "screenshot.h"
 
 View3D::View3D(QWidget *parent)
 : QMainWindow(parent)
@@ -128,6 +129,7 @@ View3D::View3D(QWidget *parent)
 	this->viewIn2D = this->TraceEditSettings.value("mainWin/use2d",false).toBool();
 	this->renderTraceBits = false;
 	this->projectionStyle = 0;	//should me maximum projection
+	this->projection_axis = 2; // z projection
 	this->Date.currentDate();
 	this->Time.currentTime();
 	this->ProjectName.clear();
@@ -865,7 +867,7 @@ void View3D::choosetoRender(int row, int col)
 				}else
 				{
 					//this->Renderer->AddActor(this->ImageActors->CreateSliceActor(row));
-					this->Renderer->AddActor(this->ImageActors->createProjection(row, this->projectionStyle));
+					this->Renderer->AddActor(this->ImageActors->createProjection(row, this->projectionStyle,this->projection_axis));
 					this->ImageActors->setIs2D(row, true);
 					//this->SlicerBar->show();
 				}
@@ -894,7 +896,10 @@ void View3D::changeDimension(int row, int col)
 			if ((this->ImageActors->getRenderStatus(row))&&(this->ImageActors->isRayCast(row)))
 			{
 				//this->Renderer->AddActor(this->ImageActors->CreateSliceActor(row));
-				this->Renderer->AddActor(this->ImageActors->createProjection(row,this->projectionStyle));
+				//if (projection_axis == 2)
+					this->Renderer->AddActor(this->ImageActors->createProjection(row,this->projectionStyle,this->projection_axis));
+				/*else
+					this->Renderer->AddActor(this->ImageActors->CreateProjectionXZorYZ(row,this->projectionStyle,this->projection_axis));*/
 				this->ImageActors->setIs2D(row, true);
 				this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(row));
 				this->ImageActors->setRenderStatus(row, false);
@@ -1283,11 +1288,15 @@ void View3D::CreateGUIObjects()
 	connect(this->ProjectionCombo, SIGNAL(activated(int)), this, SLOT(SetProjectionMethod(int)));
 
 	QStringList AxisList;
-	AxisList<< "X" << "Y" << "Z";
+	AxisList<< "X-Y" << "X-Z" << "Y-Z";
 	this->RotateImageUpCombo = new QComboBox;
 	this->RotateImageUpCombo->addItems(AxisList);
 	connect(this->RotateImageUpCombo, SIGNAL(activated(int)), this, SLOT(rotateImage(int)));
 
+	/*this->ProjectionAxisCombo = new QComboBox;
+	this->ProjectionAxisCombo->addItems(AxisList);
+	connect(this->ProjectionAxisCombo, SIGNAL(activated(int)), this, SLOT(projectionAlongAxis(int)));*/
+	
 	this->aboutAction = new QAction("About", this->CentralWidget);
 	this->aboutAction->setStatusTip("About Trace Edit");
 	connect(this->aboutAction, SIGNAL(triggered()), this, SLOT(About()));
@@ -1314,21 +1323,6 @@ void View3D::CreateGUIObjects()
 
 	//this->RotateRight90Button = new QPushButton(tr("Roll +90"), this->SettingsWidget);
 	//connect(this->RotateRight90Button, SIGNAL(clicked()), this, SLOT(rotateImageRight90()));
-
-	//this->RotateLeft90Button = new QPushButton(tr("Roll -90"), this->SettingsWidget);
-	//connect(this->RotateLeft90Button, SIGNAL(clicked()), this, SLOT(rotateImageLeft90()));
-
-	//this->ElevateUp90Button = new QPushButton(tr("Elevate +90"), this->SettingsWidget);
-	//connect(this->ElevateUp90Button, SIGNAL(clicked()), this, SLOT(ElevateImageUp90()));
-
-	//this->ElevateDown90Button = new QPushButton(tr("Elevate -90"), this->SettingsWidget);
-	//connect(this->ElevateDown90Button, SIGNAL(clicked()), this, SLOT(ElevateImageDown90()));
-
-	//this->AzimuthRight90Button = new QPushButton(tr("Azimuth +90"), this->SettingsWidget);
-	//connect(this->AzimuthRight90Button, SIGNAL(clicked()), this, SLOT(AzimuthImageRight90()));
-
-	//this->AzimuthLeft90Button = new QPushButton(tr("Azimuth -90"), this->SettingsWidget);
-	//connect(this->AzimuthLeft90Button, SIGNAL(clicked()), this, SLOT(AzimuthImageLeft90()));
 
 	this->updateRotationButton = new QPushButton(tr("Update"),this->SettingsWidget);
 	connect(this->updateRotationButton, SIGNAL(clicked()), this, SLOT(rotationOptions()));
@@ -1483,23 +1477,14 @@ void View3D::CreateLayout()
 	//selectionSettings->setLayout(settingsLayout);
 	SettingsBox->addWidget(selectionSettings);
 
-	/*QHBoxLayout * RotationBox = new QHBoxLayout(this->SettingsWidget);
-	RotationBox->addWidget(this->RotateRight90Button);
-	RotationBox->addWidget(this->RotateLeft90Button);*/
-
 	QGroupBox *displaySettings = new QGroupBox("Display Settings");
 	QFormLayout *DisplayLayout = new QFormLayout(displaySettings);
 	DisplayLayout->addRow(tr("Line Color RGB 0 to 1:"),this->ColorValueField);
 	DisplayLayout->addRow(tr("Line width:"),this->LineWidthField);
 	DisplayLayout->addRow(tr("Interactor style:"),this->StyleCombo);
 	DisplayLayout->addRow(tr("Projection style:"),this->ProjectionCombo);
-	DisplayLayout->addRow(tr("Up Projection: "),this->RotateImageUpCombo);
-	//DisplayLayout->addWidget(this->RotateRight90Button);
-	//DisplayLayout->addWidget(this->RotateLeft90Button);
-	//DisplayLayout->addWidget(this->ElevateUp90Button);
-	//DisplayLayout->addWidget(this->ElevateDown90Button);
-	//DisplayLayout->addWidget(this->AzimuthRight90Button);
-	//DisplayLayout->addWidget(this->AzimuthLeft90Button);
+	DisplayLayout->addRow(tr("Projection: "),this->RotateImageUpCombo);
+	//DisplayLayout->addRow(tr("2D Projection: "),this->ProjectionAxisCombo);
 	DisplayLayout->addRow(this->markTraceBits);
 	SettingsBox->addWidget(displaySettings);
 
@@ -1533,7 +1518,6 @@ void View3D::CreateLayout()
 	connect(showStatisticsAction,SIGNAL(triggered()), this, SLOT(showStatistics()));
 	updateStatisticsAction = new QAction(tr("Update Statistics"), this);
 	connect(updateStatisticsAction, SIGNAL(triggered()), this, SLOT(updateStatistics()));
-
 	//////////////////////
 	// Automation Dock	//
 	//////////////////////
@@ -1721,6 +1705,7 @@ void View3D::chooseInteractorStyle(int iren)
 
 void View3D::rotateImage(int axis)
 {
+	int projection_axis;
 	this->RollBox->setValue(0.00);
 	this->AzimuthBox->setValue(0.00);
 	this->ElevationBox->setValue(0.00);
@@ -1733,13 +1718,23 @@ void View3D::rotateImage(int axis)
 
 	switch(axis)
 	{
-	case 0: cam->Roll(90);			projection_base.roll = 90; projection_base.azimuth = 0; projection_base.elevation = 0;	break; // x axis up
-	case 1:							projection_base.roll = 0;  projection_base.azimuth = 0; projection_base.elevation = 0;	break; // y axis up
-	case 2: cam->Elevation(-90);	projection_base.roll = 0;  projection_base.azimuth = 0; projection_base.elevation = -90;	break; // z axis up
-	default: std::cerr << "View3D::rotateImage cannot handle axis = " << axis << ". Defaulting to y-axis" << std::endl;
+		case 0:	
+			projection_axis = 2;
+			projection_base.roll = 0; projection_base.azimuth = 0;   projection_base.elevation = 0;		break; // x-y plane; z projection
+		case 1: 
+			cam->Elevation(90);	
+			cam->OrthogonalizeViewUp();
+			projection_axis = 1; 
+			projection_base.roll = 0; projection_base.azimuth = 0;   projection_base.elevation = -90;	break; // x-z plane; y projection
+		case 2: 
+			cam->Azimuth(90); cam->Roll(-90);
+			projection_axis = 0; 
+			projection_base.roll = -90; projection_base.azimuth = 90; projection_base.elevation = 0;	break; // y-z plane; x projection
+		default: std::cerr << "View3D::rotateImage cannot handle axis = " << axis << ". Defaulting to y-axis" << std::endl;
 	}
+	this->projection_axis = projection_axis;
+	this->SetProjectionMethod(projectionStyle);
 
-	cam->OrthogonalizeViewUp();
 	cam->ParallelProjectionOn();
 	this->Renderer->ResetCamera();
 	this->QVTK->GetRenderWindow()->Render();
@@ -1771,6 +1766,12 @@ void View3D::rotationOptions()
 	//std::cout << projection_base.roll << " " << projection_base.azimuth << " " << projection_base.elevation << std::endl;
 }
 
+//void View3D::projectionAlongAxis(int projection_axis)
+//{
+//	this->projection_axis = projection_axis;
+//	this->SetProjectionMethod(projectionStyle);
+//}
+
 void View3D::SetProjectionMethod(int style)
 {
 	this->projectionStyle = style;
@@ -1779,7 +1780,7 @@ void View3D::SetProjectionMethod(int style)
 		if (this->ImageActors->is2D(i))
 		{
 			this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(i));
-			this->Renderer->AddActor(this->ImageActors->createProjection(i,this->projectionStyle));
+			this->Renderer->AddActor(this->ImageActors->createProjection(i,this->projectionStyle,this->projection_axis));
 		}
 	}//end for num images
 	this->QVTK->GetRenderWindow()->Render();
@@ -1793,44 +1794,44 @@ void View3D::CreateActors()
 	this->LineActor->SetPickable(1);
 	this->Renderer->AddActor(this->LineActor);
 
-	this->UpdateBranchActor();
-	this->Renderer->AddActor(this->BranchActor);
-	this->QVTK->GetRenderWindow()->Render();
-	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
-	{
-		if (this->ImageActors->isRayCast(i))
-		{
-			if (!this->viewIn2D)
-			{
-				this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
-				this->ImageActors->setRenderStatus(i, true);
-				this->RacastBar->show();
-			}else
-			{
-				//this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
-				this->Renderer->AddActor(this->ImageActors->createProjection(i, this->projectionStyle));
-				this->ImageActors->setIs2D(i, true);
-				//this->SlicerBar->show();
-			}
-		}
-		else
-		{
-			this->Renderer->AddActor(this->ImageActors->ContourActor(i));
-			this->ImageActors->setRenderStatus(i, true);
-		}
-	}
-	//sphere is used to mark the picks
-	this->CreateSphereActor();
-	Renderer->AddActor(this->SphereActor);
-	this->axes = vtkSmartPointer<vtkAxesActor>::New();
-	this->UCSMarker = vtkSmartPointer<vtkOrientationMarkerWidget>::New();
-	this->UCSMarker->SetOutlineColor(0.9300, 0.5700, 0.1300 );
-	this->UCSMarker->SetOrientationMarker(this->axes);
-	this->UCSMarker->SetInteractor(this->Interactor);
-	this->UCSMarker->SetViewport(0,0,.1,.1);
-	this->UCSMarker->SetEnabled(1);
-	//this->UCSMarker->InteractiveOn();
-	this->QVTK->GetRenderWindow()->Render();
+  this->UpdateBranchActor();
+  this->Renderer->AddActor(this->BranchActor);
+  this->QVTK->GetRenderWindow()->Render();
+  for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+  {
+	  if (this->ImageActors->isRayCast(i))
+	  {
+		  if (!this->viewIn2D)
+		  {
+			  this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
+			  this->ImageActors->setRenderStatus(i, true);
+			  this->RacastBar->show();
+		  }else
+		  {
+			  //this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
+			  this->Renderer->AddActor(this->ImageActors->createProjection(i, this->projectionStyle,this->projection_axis));
+			  this->ImageActors->setIs2D(i, true);
+			  //this->SlicerBar->show();
+		  }
+	  }
+	  else
+	  {
+		  this->Renderer->AddActor(this->ImageActors->ContourActor(i));
+		  this->ImageActors->setRenderStatus(i, true);
+	  }
+  }
+  //sphere is used to mark the picks
+  this->CreateSphereActor();
+  Renderer->AddActor(this->SphereActor);
+  this->axes = vtkSmartPointer<vtkAxesActor>::New();
+  this->UCSMarker = vtkSmartPointer<vtkOrientationMarkerWidget>::New();
+  this->UCSMarker->SetOutlineColor(0.9300, 0.5700, 0.1300 );
+  this->UCSMarker->SetOrientationMarker(this->axes);
+  this->UCSMarker->SetInteractor(this->Interactor);
+  this->UCSMarker->SetViewport(0,0,.1,.1);
+  this->UCSMarker->SetEnabled(1);
+  //this->UCSMarker->InteractiveOn();
+  this->QVTK->GetRenderWindow()->Render();
 }
 
 void View3D::removeImageActors()
@@ -1877,11 +1878,11 @@ void View3D::raycastToSlicer()
 		{  
 			if ((this->ImageActors->getRenderStatus(i))&&(this->ImageActors->isRayCast(i)))
 			{
-				//this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
-				this->Renderer->AddActor(this->ImageActors->createProjection(i,this->projectionStyle));
-				this->ImageActors->setIs2D(i, true);
-				this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
-				this->ImageActors->setRenderStatus(i, false);
+			  //this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
+			  this->Renderer->AddActor(this->ImageActors->createProjection(i,this->projectionStyle,this->projection_axis));
+			  this->ImageActors->setIs2D(i, true);
+			  this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
+			  this->ImageActors->setRenderStatus(i, false);
 				/***************************************************************/
 				QTableWidgetItem *Item2D = new QTableWidgetItem(tr("2d"));
 				Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
@@ -1931,6 +1932,9 @@ void View3D::focusOn()
 {
 	std::vector<CellTrace*> cellsSelected = this->CellModel->GetSelectedCells();
 	std::vector<TraceLine*> traceSelected = this->TreeModel->GetSelectedTraces();
+	//////////////////////////////////////
+
+	
 	if (cellsSelected.size() >=1)
 	{
 		this->FocusOnCell(cellsSelected.back());
@@ -4688,11 +4692,16 @@ void View3D::saveRenderWindow(const char *filename)
 }
 void View3D::SaveScreenShot()
 {
+	QString fileName, filePath;
 	QString imageDir = this->TraceEditSettings.value("imageDir", ".").toString();
-	QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"),imageDir, tr("Image (*.jpg *.jpeg)"));
-	if (!fileName.isEmpty())
+	ScreenShotDialog *savescreenshotDialog = new ScreenShotDialog(this, fileName, imageDir);
+	savescreenshotDialog->exec();
+	filePath = savescreenshotDialog->getDir();
+	fileName = savescreenshotDialog->getfileName();
+	QString fullFileName = filePath % "/" % fileName % QString(".jpg");
+	if (!fullFileName.isEmpty())
 	{
-		this->saveRenderWindow(fileName.toStdString().c_str());
+		this->saveRenderWindow(fullFileName.toStdString().c_str());
 	}
 }
 void View3D::AutoCellExport()

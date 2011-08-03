@@ -16,6 +16,7 @@ limitations under the License.
 #ifndef VIEW3D_H_
 #define VIEW3D_H_
 
+#include "vtkImagePlaneWidget.h"
 #include "vtkSmartPointer.h"
 //#include "UndoBuffer.h"
 //#include "undobuff.h"
@@ -198,6 +199,7 @@ public slots:
 
 	void rotateImage(int axis);
 	void rotationOptions();
+	//void projectionAlongAxis(int projection_axis);
 
 protected slots:
 	void updateSelectionFromCell();
@@ -330,7 +332,7 @@ private:
 	QDoubleSpinBox *BackgroundRBox,*BackgroundGBox,*BackgroundBBox;
 	QDoubleSpinBox *RollBox, *ElevationBox, *AzimuthBox;
 	QDialogButtonBox *ApplySettingsButton;
-	QComboBox *typeCombo, *StyleCombo, *ProjectionCombo, *RotateImageUpCombo;
+	QComboBox *typeCombo, *StyleCombo, *ProjectionCombo, *RotateImageUpCombo, *ProjectionAxisCombo;
 	QPushButton *updateRotationButton;
 	
 	//Automation widgets
@@ -398,5 +400,10 @@ private:
 		double azimuth;
 		double elevation;
 	} projection_base;
+	int projection_axis;
+
+	//void filerenderstatus();
+	//bool filerender;
+	
 };
 #endif

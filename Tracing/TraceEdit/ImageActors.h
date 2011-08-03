@@ -40,6 +40,16 @@ limitations under the License.
 #include "itkImageFileReader.h"
 #include "itkImageToVTKImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
+#include "itkExtractImageFilter.h"
+#include "vtkImagePermute.h"
+#include "vtkImagePlaneWidget.h"
+#include "vtkImageReslice.h"
+#include "vtkMatrix4x4.h"
+#include "itkPermuteAxesImageFilter.h"
+
+#include "vtkImageEllipsoidSource.h"
+//#include "vtkVolumeRayCastMapper.h"
+//#include "vtkVolumeRayCastCompositeFunction.h"
 
 #include <stdio.h>
 #include <string>
@@ -52,13 +62,17 @@ limitations under the License.
 const unsigned int Dimension = 3;
 typedef unsigned char  ImageActorPixelType;
 typedef itk::Image< ImageActorPixelType, Dimension >   ImageType;
+typedef itk::Image< ImageActorPixelType, 2 >   ImageType2D;
 typedef itk::ImageFileReader< ImageType >    ReaderType;
 typedef itk::ImageToVTKImageFilter<ImageType> ConnectorType;
-typedef itk::MaximumProjectionImageFilter < ImageType, ImageType> MaxProjectionType;
+typedef itk::MaximumProjectionImageFilter < ImageType, ImageType2D> MaxProjectionType;
 typedef itk::MinimumProjectionImageFilter < ImageType, ImageType> MinProjectionType;
 typedef itk::MeanProjectionImageFilter < ImageType, ImageType> MeanProjectionType;
 typedef itk::RescaleIntensityImageFilter< ImageType, ImageType> IntensityRescaleType;
 typedef vtkSmartPointer<vtkImageActor> ImageActorPointerType;
+typedef vtkSmartPointer<vtkImagePermute> PermuteFilterType;
+//typedef vtkSmartPointer<vtkImageResliceMapper> ImageResliceMapper;
+typedef itk::PermuteAxesImageFilter<ImageType> itkPermuteFilterType;
 
 struct imageFileHandle
 {
@@ -73,7 +87,11 @@ struct imageFileHandle
 	MaxProjectionType::Pointer MaxProjection;
 	MeanProjectionType::Pointer MeanProjection;
 	MinProjectionType::Pointer MinProjection;
-	IntensityRescaleType::Pointer Rescale;	
+	IntensityRescaleType::Pointer Rescale;
+	vtkSmartPointer<vtkImagePermute> PermuteFilter;
+	//vtkSmartPointer<vtkImageResliceMapper> resliceMapper;
+	//vtkSmartPointer<vtkImageSlice> imageSlice;
+	itkPermuteFilterType::Pointer itkPermute;
 	double x,y,z;
 //Contour Filter pointers
 	vtkSmartPointer<vtkContourFilter> ContourFilter;
@@ -84,6 +102,9 @@ struct imageFileHandle
 	vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper;
 //image slicer
 	ImageActorPointerType sliceActor;
+	vtkSmartPointer<vtkMatrix4x4> resliceAxes;
+	vtkSmartPointer<vtkImageReslice> reslice;
+	vtkSmartPointer<vtkImagePlaneWidget> ProjectionActorYZ;
 	vtkSmartPointer<vtkImageActor> ProjectionActor;
 #ifdef USE_GPUREN
 	vtkSmartPointer<vtkGPUVolumeRayCastMapper> volumeMapperGPU;
@@ -102,8 +123,11 @@ public:
 	vtkSmartPointer<vtkActor> GetContourActor(int i);
 	ImageActorPointerType CreateSliceActor(int i);
 	ImageActorPointerType GetSliceActor(int i);
-	vtkSmartPointer<vtkImageActor> createProjection(int i, int method);
+	vtkSmartPointer<vtkImageActor> createProjection(int i, int method, int projection_dim);
 	vtkSmartPointer<vtkImageActor> GetProjectionImage(int i);
+	///////////////////////////////////////////////////////////////////////////
+	vtkSmartPointer<vtkImagePlaneWidget> CreateProjectionXZorYZ(int i, int method, int projection_dim);
+	///////////////////////////////////////////////////////////////////////////
 	vtkSmartPointer<vtkVolume> RayCastVolume(int i);
 	vtkSmartPointer<vtkVolume> GetRayCastVolume(int i);
 	bool getRenderStatus(int i);
@@ -149,5 +173,6 @@ private:
 	std::vector<double> TotalImageSize;
 	double r,g,b, opacity1, opacity2, opacity1Value, opacity2Value, RaycastSampleDist;
 	double brightness;
+	int minXBound, maxXBound, minYBound, maxYBound, minZBound, maxZBound;
 };
 #endif

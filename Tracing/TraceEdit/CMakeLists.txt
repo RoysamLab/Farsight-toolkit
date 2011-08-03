@@ -24,7 +24,7 @@ SET( Libraries
     ftkCommon
     ${QT_LIBRARIES} )
 
-QT4_WRAP_CPP( GUI_MOC_SRCS View3D.h MergeModel.h TraceModel.h CellTraceModel.h cellexport.h)
+QT4_WRAP_CPP( GUI_MOC_SRCS View3D.h MergeModel.h TraceModel.h CellTraceModel.h cellexport.h screenshot.h)
 
 ADD_LIBRARY(Trace
   TraceBit.h        TraceBit.cxx
@@ -40,6 +40,7 @@ ADD_LIBRARY(Trace
   vtkPlotEdges.h    vtkPlotEdges.cxx 
   View3D.h          View3D.cxx 
   cellexport.h	    cellexport.cxx
+  screenshot.h	    screenshot.cxx
   ${GUI_MOC_SRCS} 
   )
 OPTION( USE_GPUREN "Use GPU for Rendering" OFF )

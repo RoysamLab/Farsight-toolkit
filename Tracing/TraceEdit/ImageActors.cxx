@@ -492,45 +492,301 @@ void ImageRenderActors::SetSliceNumber(int i, int num)
 		this->LoadedImages[i]->sliceActor->SetZSlice(num);
 	}
 }
-vtkSmartPointer<vtkImageActor> ImageRenderActors::createProjection(int i, int method)
+vtkSmartPointer<vtkImageActor> ImageRenderActors::createProjection(int i, int method, int projection_dim)
 {
-	if (i == -1)
-	{
-		i = int (this->LoadedImages.size() - 1);
-	}
+	std::cout << "projection_dim: " << projection_dim << std::endl;
 	this->LoadedImages[i]->ProjectionActor = vtkSmartPointer<vtkImageActor>::New();
-	if (method ==2)
+	if (method == 2)
 	{
 		this->LoadedImages[i]->MinProjection = MinProjectionType::New();
+		//this->LoadedImages[i]->MinProjection->SetProjectionDimension(projection_dim);
+		this->LoadedImages[i]->MinProjection->SetNumberOfThreads(16);
 		this->LoadedImages[i]->MinProjection->SetInput(this->LoadedImages[i]->Rescale->GetOutput());
 		this->LoadedImages[i]->projectionConnector->SetInput(this->LoadedImages[i]->MinProjection->GetOutput());
 	}
 	else if (method == 1)
 	{
 		this->LoadedImages[i]->MeanProjection = MeanProjectionType::New();
+		//this->LoadedImages[i]->MeanProjection->SetProjectionDimension(projection_dim);
+		this->LoadedImages[i]->MeanProjection->SetNumberOfThreads(16);
 		this->LoadedImages[i]->MeanProjection->SetInput(this->LoadedImages[i]->Rescale->GetOutput());
 		this->LoadedImages[i]->projectionConnector->SetInput(this->LoadedImages[i]->MeanProjection->GetOutput());
 	}
-	else
+	else // 0 is maximum projection
 	{
 		this->LoadedImages[i]->MaxProjection = MaxProjectionType::New();
+		this->LoadedImages[i]->MaxProjection->SetProjectionDimension(projection_dim);
+		this->LoadedImages[i]->MaxProjection->SetNumberOfThreads(16);
 		this->LoadedImages[i]->MaxProjection->SetInput(this->LoadedImages[i]->Rescale->GetOutput());
-		this->LoadedImages[i]->projectionConnector->SetInput(this->LoadedImages[i]->MaxProjection->GetOutput());
+		
+		/*LoadedImages[i]->Rescale->Update();
+		ImageType::Pointer max_proj_input_image = LoadedImages[i]->Rescale->GetOutput();
+		std::cout << "Max Projection Input Image Size: " << max_proj_input_image->GetLargestPossibleRegion().GetSize() << std::endl;*/
+		
+		this->LoadedImages[i]->MaxProjection->Update();
+		ImageType2D::Pointer max_proj_2D_image = LoadedImages[i]->MaxProjection->GetOutput();
+		std::cout << "Max Projection Output Image Size: " << max_proj_2D_image->GetLargestPossibleRegion().GetSize() << std::endl;
+		
+		//Make destination image		
+		ImageType::Pointer max_proj_3D_image = ImageType::New();
+		ImageType::RegionType region;
+		ImageType::IndexType start;
+		start[0] = 0;
+		start[1] = 0;
+		start[2] = 0;
+
+		ImageType2D::SizeType input_size = LoadedImages[i]->MaxProjection->GetOutput()->GetLargestPossibleRegion().GetSize();
+		ImageType::SizeType output_size;
+
+		output_size[0] = input_size[0];
+		output_size[1] = input_size[1];
+		output_size[2] = 1;
+
+		region.SetSize(output_size);
+		region.SetIndex(start);
+
+		max_proj_3D_image->SetRegions(region);
+		max_proj_3D_image->Allocate();
+
+		itk::ImageRegionIterator<ImageType2D>	max_proj_2D_image_iterator(max_proj_2D_image, max_proj_2D_image->GetRequestedRegion());
+		itk::ImageRegionIterator<ImageType>		max_proj_3D_image_iterator(max_proj_3D_image, max_proj_3D_image->GetRequestedRegion());
+
+		for (max_proj_2D_image_iterator = max_proj_2D_image_iterator.Begin(); !max_proj_2D_image_iterator.IsAtEnd(); ++max_proj_2D_image_iterator, ++max_proj_3D_image_iterator)
+			max_proj_3D_image_iterator.Set(max_proj_2D_image_iterator.Get());
+
+		//Permute image axes
+		LoadedImages[i]->itkPermute = itkPermuteFilterType::New();
+		unsigned int permuteAxes[3];
+		minXBound = 0; maxXBound = 0;
+		minYBound = 0; maxYBound = 0;
+		minZBound = 0; maxZBound = 0;
+		switch(projection_dim)
+		{
+			case 0:
+				permuteAxes[0] = 2;
+				permuteAxes[1] = 1;
+				permuteAxes[2] = 0;
+				minXBound = 0; maxXBound = 0;
+				minYBound = 0; maxYBound = output_size[1]-1;
+				minZBound = 0; maxZBound = output_size[0]-1;
+				break;
+			case 1:
+				permuteAxes[0] = 0;
+				permuteAxes[1] = 2;
+				permuteAxes[2] = 1;
+				minXBound = 0; maxXBound = output_size[0]-1;
+				minYBound = 0; maxYBound = 0;
+				minZBound = 0; maxZBound = output_size[1]-1;
+				break;
+			case 2:
+				permuteAxes[0] = 0;
+				permuteAxes[1] = 1;
+				permuteAxes[2] = 2;
+				minXBound = 0; maxXBound = output_size[0]-1;
+				minYBound = 0; maxYBound = output_size[1]-1;
+				minZBound = 0; maxZBound = 0;
+				break;
+			default:
+				permuteAxes[0] = 0;
+				permuteAxes[1] = 1;
+				permuteAxes[2] = 2;
+				break;
+		}
+		LoadedImages[i]->itkPermute->SetOrder(permuteAxes);
+		LoadedImages[i]->itkPermute->SetInput(max_proj_3D_image);
+
+		//this->LoadedImages[i]->projectionConnector->SetInput(max_proj_3D_image);
+		this->LoadedImages[i]->projectionConnector->SetInput(LoadedImages[i]->itkPermute->GetOutput());
+		std::cout << "3D image size" << max_proj_3D_image->GetLargestPossibleRegion().GetSize() << std::endl;
+		//max_proj_3D_image->GetLargestPossibleRegion().GetSize()[0]
+		//std::cout << "ItkPermute size" << LoadedImages[i]->itkPermute << std::endl;
+		
+		//vtkSmartPointer<vtkImageEllipsoidSource > source = vtkSmartPointer<vtkImageEllipsoidSource >::New();
+		//source->SetWholeExtent(0, 20, 0, 20, 0, 0);
+		//source->SetCenter(10,10,0);
+		//source->SetRadius(2,5,0);
+		//source->Update();
+		
+		//LoadedImages[i]->PermuteFilter = PermuteFilterType::New();
+		//LoadedImages[i]->PermuteFilter->SetInputConnection(source->GetOutputPort());
+
+
+		//
+		////LoadedImages[i]->PermuteFilter->SetInputConnection(source->GetOutputPort());
+		//LoadedImages[i]->PermuteFilter->SetFilteredAxes(0,2,1);
+		//try
+		//{
+		//	LoadedImages[i]->PermuteFilter->Update();
+		//}
+		//catch (itk::ExceptionObject &err)
+		//{
+		//	std::cout << err << std::endl;
+		//	return NULL;
+		//}	
+		////double center[3];
+
+
+		//static double xyplane[16] = {
+		//		1, 0, 0, 0,
+		//		0, 1, 0, 0,
+		//		0, 0, 1, 0,
+		//		0, 0, 0, 1 };
+		//static double yzplane[16] = {
+		//		0, 0,-1, 0,
+		//		1, 0, 0, 0,
+		//		0,-1, 0, 0,
+		//		0, 0, 0, 1 };
+
+		//// Set slice orientation
+		//LoadedImages[i]->resliceAxes = vtkSmartPointer<vtkMatrix4x4>::New();
+		//LoadedImages[i]->resliceAxes->DeepCopy(xyplane);
+		//// Set the point through which to slice
+		////LoadedImages[i]->resliceAxes->SetElement(0, 3, center[0]);
+		////LoadedImages[i]->resliceAxes->SetElement(1, 3, center[1]);
+		////LoadedImages[i]->resliceAxes->SetElement(2, 3, center[2]);
+		//LoadedImages[i]->resliceAxes->SetElement(0, 3, output_size[0]/2);
+		//LoadedImages[i]->resliceAxes->SetElement(1, 3, output_size[1]/2);
+		//LoadedImages[i]->resliceAxes->SetElement(2, 3, 0);
+
+		//// Extract slice in the desired orientation
+		//LoadedImages[i]->reslice = vtkSmartPointer<vtkImageReslice>::New();
+		//this->LoadedImages[i]->PermuteFilter->Update();
+		//LoadedImages[i]->reslice->SetInput(this->LoadedImages[i]->PermuteFilter->GetOutput());
+		//LoadedImages[i]->reslice->SetResliceAxes(LoadedImages[i]->resliceAxes);
+		//LoadedImages[i]->reslice->Update();
+		//int* extent_output = LoadedImages[i]->PermuteFilter->GetOutputExtent();
+		//std::cout << extent_output[0] << std::endl;
 	}
+
+	//vtkimageactor can only show xy slices?
+	//this->LoadedImages[i]->ProjectionActor->SetInput(this->LoadedImages[i]->reslice->GetOutput());
 	this->LoadedImages[i]->ProjectionActor->SetInput(this->LoadedImages[i]->projectionConnector->GetOutput());
-	this->LoadedImages[i]->ProjectionActor->SetPosition(this->LoadedImages[i]->x, 
-		this->LoadedImages[i]->y,this->LoadedImages[i]->z);
+	this->LoadedImages[i]->ProjectionActor->SetPosition(this->LoadedImages[i]->x, this->LoadedImages[i]->y, this->LoadedImages[i]->z);
 	this->LoadedImages[i]->ProjectionActor->SetPickable(0);
+	this->LoadedImages[i]->ProjectionActor->SetDisplayExtent(minXBound,maxXBound,minYBound,maxYBound,minZBound,maxZBound);
 
 	return this->LoadedImages[i]->ProjectionActor;
 }
 vtkSmartPointer<vtkImageActor> ImageRenderActors::GetProjectionImage(int i)
 {
-	if (i == -1)
+	if (i == -1) 
 	{
 		i = int (this->LoadedImages.size() - 1);
 	}
 	return this->LoadedImages[i]->ProjectionActor;
+}
+vtkSmartPointer<vtkImagePlaneWidget> ImageRenderActors::CreateProjectionXZorYZ(int i, int method, int projection_dim)
+{
+	std::cout << "projection_dim: " << projection_dim << std::endl;
+	//this->LoadedImages[i]->ProjectionActor = vtkSmartPointer<vtkImageActor>::New();
+	LoadedImages[i]->PermuteFilter = PermuteFilterType::New();
+	LoadedImages[i]->ProjectionActorYZ = vtkSmartPointer<vtkImagePlaneWidget>::New();
+	if (method == 2)
+	{
+		this->LoadedImages[i]->MinProjection = MinProjectionType::New();
+		//this->LoadedImages[i]->MinProjection->SetProjectionDimension(projection_dim);
+		this->LoadedImages[i]->MinProjection->SetNumberOfThreads(16);
+		this->LoadedImages[i]->MinProjection->SetInput(this->LoadedImages[i]->Rescale->GetOutput());
+		this->LoadedImages[i]->projectionConnector->SetInput(this->LoadedImages[i]->MinProjection->GetOutput());
+	}
+	else if (method == 1)
+	{
+		this->LoadedImages[i]->MeanProjection = MeanProjectionType::New();
+		//this->LoadedImages[i]->MeanProjection->SetProjectionDimension(projection_dim);
+		this->LoadedImages[i]->MeanProjection->SetNumberOfThreads(16);
+		this->LoadedImages[i]->MeanProjection->SetInput(this->LoadedImages[i]->Rescale->GetOutput());
+		this->LoadedImages[i]->projectionConnector->SetInput(this->LoadedImages[i]->MeanProjection->GetOutput());
+	}
+	else // 0 is maximum projection
+	{
+		this->LoadedImages[i]->MaxProjection = MaxProjectionType::New();
+		this->LoadedImages[i]->MaxProjection->SetProjectionDimension(projection_dim);
+		this->LoadedImages[i]->MaxProjection->SetNumberOfThreads(16);
+		this->LoadedImages[i]->MaxProjection->SetInput(this->LoadedImages[i]->Rescale->GetOutput());
+		
+		/*LoadedImages[i]->Rescale->Update();
+		ImageType::Pointer max_proj_input_image = LoadedImages[i]->Rescale->GetOutput();
+		std::cout << "Max Projection Input Image Size: " << max_proj_input_image->GetLargestPossibleRegion().GetSize() << std::endl;*/
+		
+		this->LoadedImages[i]->MaxProjection->Update();
+		ImageType2D::Pointer max_proj_2D_image = LoadedImages[i]->MaxProjection->GetOutput();
+		std::cout << "Max Projection Output Image Size: " << max_proj_2D_image->GetLargestPossibleRegion().GetSize() << std::endl;
+		
+		//Make destination image		
+		ImageType::Pointer max_proj_3D_image = ImageType::New();
+		ImageType::RegionType region;
+		ImageType::IndexType start;
+		start[0] = 0;
+		start[1] = 0;
+		start[2] = 0;
+
+		ImageType2D::SizeType input_size = LoadedImages[i]->MaxProjection->GetOutput()->GetLargestPossibleRegion().GetSize();
+		ImageType::SizeType output_size;
+
+		output_size[0] = input_size[0];
+		output_size[1] = input_size[1];
+		output_size[2] = 1;
+
+		region.SetSize(output_size);
+		region.SetIndex(start);
+
+		max_proj_3D_image->SetRegions(region);
+		max_proj_3D_image->Allocate();
+
+		itk::ImageRegionIterator<ImageType2D>	max_proj_2D_image_iterator(max_proj_2D_image, max_proj_2D_image->GetRequestedRegion());
+		itk::ImageRegionIterator<ImageType>		max_proj_3D_image_iterator(max_proj_3D_image, max_proj_3D_image->GetRequestedRegion());
+
+		for (max_proj_2D_image_iterator = max_proj_2D_image_iterator.Begin(); !max_proj_2D_image_iterator.IsAtEnd(); ++max_proj_2D_image_iterator, ++max_proj_3D_image_iterator)
+			max_proj_3D_image_iterator.Set(max_proj_2D_image_iterator.Get());
+
+		this->LoadedImages[i]->projectionConnector->SetInput(max_proj_3D_image); //3D-ITKimage to 3D-VTKimage
+
+		//std::cout << "3D image size" << LoadedImages[i]->itkPermute << std::endl;
+		std::cout << "3D image size" << max_proj_3D_image->GetLargestPossibleRegion().GetSize() << std::endl;
+		/////////////////////////////////////
+
+		//LoadedImages[i]->resliceMapper = ImageResliceMapper::New();
+		//LoadedImages[i]->resliceMapper->SetInputConnection(LoadedImages[i]->projectionConnector->GetOutput()->GetProducerPort());
+		//LoadedImages[i]->resliceMapper->SliceFacesCameraOn();
+		//LoadedImages[i]->resliceMapper->SliceAtFocalPointOn();
+		//LoadedImages[i]->resliceMapper->BorderOff();
+
+		//LoadedImages[i]->imageSlice = vtkImageSlice::New();
+		//LoadedImages[i]->imageSlice->SetMapper(resliceMapper);
+		//LoadedImages[i]->imageSlice->SetProperty(PROPERTY);
+		///////////////////////////////////////
+		
+	//	// Permute xy image to the xz or yz plane
+	//	LoadedImages[i]->PermuteFilter->SetInputConnection(LoadedImages[i]->projectionConnector->GetOutput()->GetProducerPort());
+
+	//	if (projection_dim == 0)
+	//		LoadedImages[i]->PermuteFilter->SetFilteredAxes(2,0,1);
+	//	else
+	//		LoadedImages[i]->PermuteFilter->SetFilteredAxes(0,2,1);
+
+	//	try
+	//	{
+	//		LoadedImages[i]->PermuteFilter->Update();
+	//	}
+	//	catch (itk::ExceptionObject &err)
+	//	{
+	//		std::cout << err << std::endl;
+	//		return NULL;
+	//	}
+	//	
+
+	}
+	//// Set viewing plane to the desired orientation (e.g. xz plane/yz plane)
+	//LoadedImages[i]->ProjectionActorYZ->SetInput(LoadedImages[i]->PermuteFilter->GetOutput());
+	//LoadedImages[i]->ProjectionActorYZ->SetPlaneOrientation(projection_dim);
+	//LoadedImages[i]->ProjectionActorYZ->SetSliceIndex(1);
+
+	this->LoadedImages[i]->ProjectionActorYZ->SetInput(this->LoadedImages[i]->reslice->GetOutput());
+	//this->LoadedImages[i]->ProjectionActor->SetInput(this->LoadedImages[i]->projectionConnector->GetOutput());
+	this->LoadedImages[i]->ProjectionActor->SetPosition(this->LoadedImages[i]->x, this->LoadedImages[i]->y, this->LoadedImages[i]->z);
+	this->LoadedImages[i]->ProjectionActor->SetPickable(0);
+
+	return this->LoadedImages[i]->ProjectionActorYZ;
 }
 void ImageRenderActors::setImageBounds(double bounds[])
 { 
