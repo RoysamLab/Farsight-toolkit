@@ -504,83 +504,83 @@ vtkSmartPointer<vtkImageActor> ImageRenderActors::createProjection(int i, int me
 	if (method == 2)
 	{
 		this->LoadedImages[i]->MinProjection = MinProjectionType::New();
-		//this->LoadedImages[i]->MinProjection->SetProjectionDimension(projection_dim);
+		this->LoadedImages[i]->MinProjection->SetProjectionDimension(projection_dim);
 		this->LoadedImages[i]->MinProjection->SetNumberOfThreads(16);
 		this->LoadedImages[i]->MinProjection->SetInput(this->LoadedImages[i]->Rescale->GetOutput());
 		//this->LoadedImages[i]->projectionConnector->SetInput(this->LoadedImages[i]->MinProjection->GetOutput());
 				
-		//this->LoadedImages[i]->MinProjection->Update();
-		//ImageType2D::Pointer Min_proj_2D_image = LoadedImages[i]->MinProjection->GetOutput();
-		//
-		////Make destination image		
-		//ImageType::Pointer Min_proj_3D_image = ImageType::New();
-		//ImageType::RegionType region;
-		//ImageType::IndexType start;
-		//start[0] = 0;
-		//start[1] = 0;
-		//start[2] = 0;
+		this->LoadedImages[i]->MinProjection->Update();
+		ImageType2D::Pointer Min_proj_2D_image = LoadedImages[i]->MinProjection->GetOutput();
+		
+		//Make destination image		
+		ImageType::Pointer Min_proj_3D_image = ImageType::New();
+		ImageType::RegionType region;
+		ImageType::IndexType start;
+		start[0] = 0;
+		start[1] = 0;
+		start[2] = 0;
 
-		//ImageType2D::SizeType input_size = LoadedImages[i]->MinProjection->GetOutput()->GetLargestPossibleRegion().GetSize();
-		//ImageType::SizeType output_size;
+		ImageType2D::SizeType input_size = LoadedImages[i]->MinProjection->GetOutput()->GetLargestPossibleRegion().GetSize();
+		ImageType::SizeType output_size;
 
-		//output_size[0] = input_size[0];
-		//output_size[1] = input_size[1];
-		//output_size[2] = 1;
+		output_size[0] = input_size[0];
+		output_size[1] = input_size[1];
+		output_size[2] = 1;
 
-		//region.SetSize(output_size);
-		//region.SetIndex(start);
+		region.SetSize(output_size);
+		region.SetIndex(start);
 
-		//Min_proj_3D_image->SetRegions(region);
-		//Min_proj_3D_image->Allocate();
+		Min_proj_3D_image->SetRegions(region);
+		Min_proj_3D_image->Allocate();
 
-		//itk::ImageRegionIterator<ImageType2D>	Min_proj_2D_image_iterator(Min_proj_2D_image, Min_proj_2D_image->GetRequestedRegion());
-		//itk::ImageRegionIterator<ImageType>		Min_proj_3D_image_iterator(Min_proj_3D_image, Min_proj_3D_image->GetRequestedRegion());
+		itk::ImageRegionIterator<ImageType2D>	Min_proj_2D_image_iterator(Min_proj_2D_image, Min_proj_2D_image->GetRequestedRegion());
+		itk::ImageRegionIterator<ImageType>		Min_proj_3D_image_iterator(Min_proj_3D_image, Min_proj_3D_image->GetRequestedRegion());
 
-		//for (Min_proj_2D_image_iterator = Min_proj_2D_image_iterator.Begin(); !Min_proj_2D_image_iterator.IsAtEnd(); ++Min_proj_2D_image_iterator, ++Min_proj_3D_image_iterator)
-		//	Min_proj_3D_image_iterator.Set(Min_proj_2D_image_iterator.Get());
+		for (Min_proj_2D_image_iterator = Min_proj_2D_image_iterator.Begin(); !Min_proj_2D_image_iterator.IsAtEnd(); ++Min_proj_2D_image_iterator, ++Min_proj_3D_image_iterator)
+			Min_proj_3D_image_iterator.Set(Min_proj_2D_image_iterator.Get());
 
-		////Permute image axes
-		//LoadedImages[i]->itkPermute = itkPermuteFilterType::New();
-		//unsigned int permuteAxes[3];
-		//minXBound = 0; maxXBound = 0;
-		//minYBound = 0; maxYBound = 0;
-		//minZBound = 0; maxZBound = 0;
-		//switch(projection_dim)
-		//{
-		//	case 0:
-		//		permuteAxes[0] = 2;
-		//		permuteAxes[1] = 1;
-		//		permuteAxes[2] = 0;
-		//		minXBound = 0; maxXBound = 0;
-		//		minYBound = 0; maxYBound = output_size[1]-1;
-		//		minZBound = 0; maxZBound = output_size[0]-1;
-		//		break;
-		//	case 1:
-		//		permuteAxes[0] = 0;
-		//		permuteAxes[1] = 2;
-		//		permuteAxes[2] = 1;
-		//		minXBound = 0; maxXBound = output_size[0]-1;
-		//		minYBound = 0; maxYBound = 0;
-		//		minZBound = 0; maxZBound = output_size[1]-1;
-		//		break;
-		//	case 2:
-		//		permuteAxes[0] = 0;
-		//		permuteAxes[1] = 1;
-		//		permuteAxes[2] = 2;
-		//		minXBound = 0; maxXBound = output_size[0]-1;
-		//		minYBound = 0; maxYBound = output_size[1]-1;
-		//		minZBound = 0; maxZBound = 0;
-		//		break;
-		//	default:
-		//		permuteAxes[0] = 0;
-		//		permuteAxes[1] = 1;
-		//		permuteAxes[2] = 2;
-		//		break;
-		//}
-		//LoadedImages[i]->itkPermute->SetOrder(permuteAxes);
-		//LoadedImages[i]->itkPermute->SetInput(Min_proj_3D_image);
+		//Permute image axes
+		LoadedImages[i]->itkPermute = itkPermuteFilterType::New();
+		unsigned int permuteAxes[3];
+		minXBound = 0; maxXBound = 0;
+		minYBound = 0; maxYBound = 0;
+		minZBound = 0; maxZBound = 0;
+		switch(projection_dim)
+		{
+			case 0:
+				permuteAxes[0] = 2;
+				permuteAxes[1] = 1;
+				permuteAxes[2] = 0;
+				minXBound = 0; maxXBound = 0;
+				minYBound = 0; maxYBound = output_size[1]-1;
+				minZBound = 0; maxZBound = output_size[0]-1;
+				break;
+			case 1:
+				permuteAxes[0] = 0;
+				permuteAxes[1] = 2;
+				permuteAxes[2] = 1;
+				minXBound = 0; maxXBound = output_size[0]-1;
+				minYBound = 0; maxYBound = 0;
+				minZBound = 0; maxZBound = output_size[1]-1;
+				break;
+			case 2:
+				permuteAxes[0] = 0;
+				permuteAxes[1] = 1;
+				permuteAxes[2] = 2;
+				minXBound = 0; maxXBound = output_size[0]-1;
+				minYBound = 0; maxYBound = output_size[1]-1;
+				minZBound = 0; maxZBound = 0;
+				break;
+			default:
+				permuteAxes[0] = 0;
+				permuteAxes[1] = 1;
+				permuteAxes[2] = 2;
+				break;
+		}
+		LoadedImages[i]->itkPermute->SetOrder(permuteAxes);
+		LoadedImages[i]->itkPermute->SetInput(Min_proj_3D_image);
 
-		//this->LoadedImages[i]->projectionConnector->SetInput(LoadedImages[i]->itkPermute->GetOutput());
+		this->LoadedImages[i]->projectionConnector->SetInput(LoadedImages[i]->itkPermute->GetOutput());
 	}
 	else if (method == 1)
 	{
@@ -589,78 +589,78 @@ vtkSmartPointer<vtkImageActor> ImageRenderActors::createProjection(int i, int me
 		this->LoadedImages[i]->MeanProjection->SetNumberOfThreads(16);
 		this->LoadedImages[i]->MeanProjection->SetInput(this->LoadedImages[i]->Rescale->GetOutput());
 
-		//this->LoadedImages[i]->MeanProjection->Update();
-		//ImageType2D::Pointer mean_proj_2D_image = LoadedImages[i]->MeanProjection->GetOutput();
-		//
-		////Make destination image		
-		//ImageType::Pointer mean_proj_3D_image = ImageType::New();
-		//ImageType::RegionType region;
-		//ImageType::IndexType start;
-		//start[0] = 0;
-		//start[1] = 0;
-		//start[2] = 0;
+		this->LoadedImages[i]->MeanProjection->Update();
+		ImageType2D::Pointer mean_proj_2D_image = LoadedImages[i]->MeanProjection->GetOutput();
+		
+		//Make destination image		
+		ImageType::Pointer mean_proj_3D_image = ImageType::New();
+		ImageType::RegionType region;
+		ImageType::IndexType start;
+		start[0] = 0;
+		start[1] = 0;
+		start[2] = 0;
 
-		//ImageType2D::SizeType input_size = LoadedImages[i]->MeanProjection->GetOutput()->GetLargestPossibleRegion().GetSize();
-		//ImageType::SizeType output_size;
+		ImageType2D::SizeType input_size = LoadedImages[i]->MeanProjection->GetOutput()->GetLargestPossibleRegion().GetSize();
+		ImageType::SizeType output_size;
 
-		//output_size[0] = input_size[0];
-		//output_size[1] = input_size[1];
-		//output_size[2] = 1;
+		output_size[0] = input_size[0];
+		output_size[1] = input_size[1];
+		output_size[2] = 1;
 
-		//region.SetSize(output_size);
-		//region.SetIndex(start);
+		region.SetSize(output_size);
+		region.SetIndex(start);
 
-		//mean_proj_3D_image->SetRegions(region);
-		//mean_proj_3D_image->Allocate();
+		mean_proj_3D_image->SetRegions(region);
+		mean_proj_3D_image->Allocate();
 
-		//itk::ImageRegionIterator<ImageType2D>	mean_proj_2D_image_iterator(mean_proj_2D_image, mean_proj_2D_image->GetRequestedRegion());
-		//itk::ImageRegionIterator<ImageType>		mean_proj_3D_image_iterator(mean_proj_3D_image, mean_proj_3D_image->GetRequestedRegion());
+		itk::ImageRegionIterator<ImageType2D>	mean_proj_2D_image_iterator(mean_proj_2D_image, mean_proj_2D_image->GetRequestedRegion());
+		itk::ImageRegionIterator<ImageType>		mean_proj_3D_image_iterator(mean_proj_3D_image, mean_proj_3D_image->GetRequestedRegion());
 
-		//for (mean_proj_2D_image_iterator = mean_proj_2D_image_iterator.Begin(); !mean_proj_2D_image_iterator.IsAtEnd(); ++mean_proj_2D_image_iterator, ++mean_proj_3D_image_iterator)
-		//	mean_proj_3D_image_iterator.Set(mean_proj_2D_image_iterator.Get());
+		for (mean_proj_2D_image_iterator = mean_proj_2D_image_iterator.Begin(); !mean_proj_2D_image_iterator.IsAtEnd(); ++mean_proj_2D_image_iterator, ++mean_proj_3D_image_iterator)
+			mean_proj_3D_image_iterator.Set(mean_proj_2D_image_iterator.Get());
 
-		////Permute image axes
-		//LoadedImages[i]->itkPermute = itkPermuteFilterType::New();
-		//unsigned int permuteAxes[3];
-		//minXBound = 0; maxXBound = 0;
-		//minYBound = 0; maxYBound = 0;
-		//minZBound = 0; maxZBound = 0;
-		//switch(projection_dim)
-		//{
-		//	case 0:
-		//		permuteAxes[0] = 2;
-		//		permuteAxes[1] = 1;
-		//		permuteAxes[2] = 0;
-		//		minXBound = 0; maxXBound = 0;
-		//		minYBound = 0; maxYBound = output_size[1]-1;
-		//		minZBound = 0; maxZBound = output_size[0]-1;
-		//		break;
-		//	case 1:
-		//		permuteAxes[0] = 0;
-		//		permuteAxes[1] = 2;
-		//		permuteAxes[2] = 1;
-		//		minXBound = 0; maxXBound = output_size[0]-1;
-		//		minYBound = 0; maxYBound = 0;
-		//		minZBound = 0; maxZBound = output_size[1]-1;
-		//		break;
-		//	case 2:
-		//		permuteAxes[0] = 0;
-		//		permuteAxes[1] = 1;
-		//		permuteAxes[2] = 2;
-		//		minXBound = 0; maxXBound = output_size[0]-1;
-		//		minYBound = 0; maxYBound = output_size[1]-1;
-		//		minZBound = 0; maxZBound = 0;
-		//		break;
-		//	default:
-		//		permuteAxes[0] = 0;
-		//		permuteAxes[1] = 1;
-		//		permuteAxes[2] = 2;
-		//		break;
-		//}
-		//LoadedImages[i]->itkPermute->SetOrder(permuteAxes);
-		//LoadedImages[i]->itkPermute->SetInput(mean_proj_3D_image);
+		//Permute image axes
+		LoadedImages[i]->itkPermute = itkPermuteFilterType::New();
+		unsigned int permuteAxes[3];
+		minXBound = 0; maxXBound = 0;
+		minYBound = 0; maxYBound = 0;
+		minZBound = 0; maxZBound = 0;
+		switch(projection_dim)
+		{
+			case 0:
+				permuteAxes[0] = 2;
+				permuteAxes[1] = 1;
+				permuteAxes[2] = 0;
+				minXBound = 0; maxXBound = 0;
+				minYBound = 0; maxYBound = output_size[1]-1;
+				minZBound = 0; maxZBound = output_size[0]-1;
+				break;
+			case 1:
+				permuteAxes[0] = 0;
+				permuteAxes[1] = 2;
+				permuteAxes[2] = 1;
+				minXBound = 0; maxXBound = output_size[0]-1;
+				minYBound = 0; maxYBound = 0;
+				minZBound = 0; maxZBound = output_size[1]-1;
+				break;
+			case 2:
+				permuteAxes[0] = 0;
+				permuteAxes[1] = 1;
+				permuteAxes[2] = 2;
+				minXBound = 0; maxXBound = output_size[0]-1;
+				minYBound = 0; maxYBound = output_size[1]-1;
+				minZBound = 0; maxZBound = 0;
+				break;
+			default:
+				permuteAxes[0] = 0;
+				permuteAxes[1] = 1;
+				permuteAxes[2] = 2;
+				break;
+		}
+		LoadedImages[i]->itkPermute->SetOrder(permuteAxes);
+		LoadedImages[i]->itkPermute->SetInput(mean_proj_3D_image);
 
-		//this->LoadedImages[i]->projectionConnector->SetInput(LoadedImages[i]->itkPermute->GetOutput());
+		this->LoadedImages[i]->projectionConnector->SetInput(LoadedImages[i]->itkPermute->GetOutput());
 	}
 	else // 0 is maximum projection
 	{
