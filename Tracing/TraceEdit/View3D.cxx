@@ -1065,6 +1065,9 @@ void View3D::CreateGUIObjects()
 	this->saveAction->setShortcut(QKeySequence::Save);
 	this->saveAction->setStatusTip("Save results to file");
 
+	this->SaveComputedCellFeaturesTableAction = new QAction(tr("&Save Computed Cell Features Table"), this->CentralWidget);
+	connect(this->SaveComputedCellFeaturesTableAction, SIGNAL(triggered()), this, SLOT(SaveComputedCellFeaturesTable()));
+
 	this->saveSelectedAction = new QAction(tr("&Save Selected Trees"), this->CentralWidget);
 	connect(this->saveSelectedAction, SIGNAL(triggered()), this, SLOT(SaveSelected()));
 	this->saveSelectedAction->setStatusTip("Save Selected tree structures to seperate file");
@@ -1387,7 +1390,7 @@ void View3D::CreateGUIObjects()
 	/********************************************************************************************/
 
 	CropBorderCellsButton = new QPushButton("Crop border cells");
-	connect(CropBorderCellsButton, SIGNAL(clicked()), this, SLOT(calculateCellCroppingBorderWidth()));
+	connect(CropBorderCellsButton, SIGNAL(clicked()), this, SLOT(CropBorderCells()));
 
 }
 
@@ -1399,6 +1402,7 @@ void View3D::CreateLayout()
 	this->fileMenu->addAction(this->loadSoma);
 	this->fileMenu->addSeparator();
 	this->fileMenu->addAction(this->saveAction);
+	this->fileMenu->addAction(this->SaveComputedCellFeaturesTableAction);
 	this->fileMenu->addAction(this->saveSelectedAction);
 	this->fileMenu->addSeparator();
 	this->fileMenu->addAction(this->ScreenshotAction);
@@ -4811,14 +4815,8 @@ void View3D::closeEvent(QCloseEvent *event)
 	event->accept();
 }
 
-void View3D::calculateCellCroppingBorderWidth()
+void View3D::CropBorderCells()
 {
-	//for each root trace grab the CellID and get the size
-	//generate histogram for all the cell sizes
-	//reject the bottom Y%
-	//the new bottom cell size is the border size
-	//remove all cells inside the border
-	
 	std::vector<TraceLine*> roots = tobj->GetAllRoots();
 
 	if (roots.size() == 0)
@@ -4972,7 +4970,7 @@ void View3D::calculateCellCroppingBorderWidth()
 	double image_min_z_bounds = bounds[4];
 	double image_max_z_bounds = bounds[5];
 
-	std::cout << "New cell bounds: XMin = " << image_min_x_bounds + average_pruned_width/2 << " XMax = " << image_max_x_bounds - average_pruned_width/2 << std::endl;
+	//std::cout << "New image bounds: XMin = " << image_min_x_bounds + average_pruned_width/2 << " XMax = " << image_max_x_bounds - average_pruned_width/2 << std::endl;
 	std::vector<int> cropped_cells_root;
 	for (cells_list_iter = cells_list.begin(); cells_list_iter != cells_list.end(); cells_list_iter++)
 	{
@@ -4985,7 +4983,7 @@ void View3D::calculateCellCroppingBorderWidth()
 			|| 	cell->somaZ > image_max_z_bounds - average_pruned_depth/2
 			)
 		{
-			std::cout << "Cropping cell ID = " << cell->rootID() << "\tsomaX = " << cell->somaX << "\tsomaY = " << cell->somaY << std::endl;
+			//std::cout << "Cropping cell ID = " << cell->rootID() << "\tsomaX = " << cell->somaX << "\tsomaY = " << cell->somaY << std::endl;
 			cropped_cells_root.push_back(cell->rootID());
 		}
 	}
@@ -4995,3 +4993,44 @@ void View3D::calculateCellCroppingBorderWidth()
 	CellModel->SelectByRootTrace(roots);
 	cells_list = CellModel->GetSelectedCells();
 }                                                                                                                                                                                                                                      
+
+
+
+void View3D::SaveComputedCellFeaturesTable()
+{
+	if (CellModel->getCellCount() == 0)	//Need to calculate cell features before we can write them!
+	{
+		std::vector<CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
+		if (NewCells.size() > 0)
+		{
+			this->CellModel->setCells(NewCells);
+		}
+	}
+	
+	ofstream myfile;
+	myfile.open("L-Measures.txt");
+	
+	vtkSmartPointer<vtkTable> table = CellModel->getDataTable();
+	
+	//table->Dump(1);
+	
+	//Dump out headers
+	for(vtkIdType columnIndex = 0; columnIndex < table->GetNumberOfColumns(); columnIndex++ )
+	{	
+		myfile << table->GetColumnName(columnIndex) << "\t";
+	}
+	myfile << std::endl;
+
+	//Dump out data
+	for(vtkIdType rowIndex = 0; rowIndex < table->GetNumberOfRows(); rowIndex++ )
+	{
+		for(vtkIdType columnIndex = 0; columnIndex < table->GetNumberOfColumns(); columnIndex++ )
+		{
+			vtkVariant value = table->GetValue(rowIndex, columnIndex);
+			myfile << value << "\t";
+		}
+		myfile << endl;
+	}
+
+	myfile.close();
+}

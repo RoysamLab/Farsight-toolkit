@@ -205,7 +205,8 @@ protected slots:
 	void updateSelectionFromCell();
 	void updateSelectionHighlights();
 	void updateTraceSelectionHighlights();
-	void calculateCellCroppingBorderWidth();
+	void CropBorderCells();
+	void SaveComputedCellFeaturesTable();
 
 protected:
 	void closeEvent(QCloseEvent *event);
@@ -265,6 +266,7 @@ private:
 
 	//Qt widgets on the main window
 	QAction *saveAction;
+	QAction *SaveComputedCellFeaturesTableAction;
 	QAction *saveSelectedAction;
 	QAction *exitAction;
 	QAction *loadTraceAction;

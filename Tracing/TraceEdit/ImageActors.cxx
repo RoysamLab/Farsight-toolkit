@@ -232,11 +232,16 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 	this->LoadedImages[i]->volume = vtkSmartPointer<vtkVolume>::New();
 #ifdef USE_GPUREN
 	{
-		this->LoadedImages[i]->volumeMapperGPU = vtkSmartPointer<vtkGPUVolumeRayCastMapper>::New();
+		double max_memory = (5.0 * 1024 * 1024 * 1024) / LoadedImages.size();
+		this->LoadedImages[i]->volumeMapperGPU = vtkSmartPointer<vtkOpenGLGPUVolumeRayCastMapper>::New();
 		this->LoadedImages[i]->volumeMapperGPU->SetInput(this->LoadedImages[i]->ImageData);
+		this->LoadedImages[i]->volumeMapperGPU->SetMaxMemoryInBytes(std::min(max_memory, 1.9 * 1024 * 1024 * 1024));
+		this->LoadedImages[i]->volumeMapperGPU->SetMaxMemoryFraction(1.0);
 		this->LoadedImages[i]->volumeMapperGPU->SetSampleDistance((float)this->RaycastSampleDist);
 		this->LoadedImages[i]->volumeMapperGPU->SetBlendModeToComposite();
 		this->LoadedImages[i]->volume->SetMapper(this->LoadedImages[i]->volumeMapperGPU);
+		std::cout << "Maximum GPU Memory: " << this->LoadedImages[i]->volumeMapperGPU->GetMaxMemoryInBytes() / (1024 * 1024.0) << " MB" << std::endl;
+		std::cout << "Maximum GPU Usage Fraction: " << this->LoadedImages[i]->volumeMapperGPU->GetMaxMemoryFraction() << std::endl;
 	}
 #else
 	{
