@@ -41,13 +41,13 @@ limitations under the License.
 #include "itkImageToVTKImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkExtractImageFilter.h"
-#include "vtkImagePermute.h"
-#include "vtkImagePlaneWidget.h"
+//#include "vtkImagePermute.h"
+//#include "vtkImagePlaneWidget.h"
 #include "vtkImageReslice.h"
-#include "vtkMatrix4x4.h"
+//#include "vtkMatrix4x4.h"
 #include "itkPermuteAxesImageFilter.h"
 
-#include "vtkImageEllipsoidSource.h"
+//#include "vtkImageEllipsoidSource.h"
 //#include "vtkVolumeRayCastMapper.h"
 //#include "vtkVolumeRayCastCompositeFunction.h"
 
@@ -70,7 +70,7 @@ typedef itk::MinimumProjectionImageFilter < ImageType, ImageType> MinProjectionT
 typedef itk::MeanProjectionImageFilter < ImageType, ImageType> MeanProjectionType;
 typedef itk::RescaleIntensityImageFilter< ImageType, ImageType> IntensityRescaleType;
 typedef vtkSmartPointer<vtkImageActor> ImageActorPointerType;
-typedef vtkSmartPointer<vtkImagePermute> PermuteFilterType;
+//typedef vtkSmartPointer<vtkImagePermute> PermuteFilterType;
 //typedef vtkSmartPointer<vtkImageResliceMapper> ImageResliceMapper;
 typedef itk::PermuteAxesImageFilter<ImageType> itkPermuteFilterType;
 
@@ -88,8 +88,7 @@ struct imageFileHandle
 	MeanProjectionType::Pointer MeanProjection;
 	MinProjectionType::Pointer MinProjection;
 	IntensityRescaleType::Pointer Rescale;
-	vtkSmartPointer<vtkImagePermute> PermuteFilter;
-	//vtkSmartPointer<vtkImageResliceMapper> resliceMapper;
+	//vtkSmartPointer<vtkImagePermute> PermuteFilter;
 	//vtkSmartPointer<vtkImageSlice> imageSlice;
 	itkPermuteFilterType::Pointer itkPermute;
 	double x,y,z;
@@ -104,7 +103,6 @@ struct imageFileHandle
 	ImageActorPointerType sliceActor;
 	vtkSmartPointer<vtkMatrix4x4> resliceAxes;
 	vtkSmartPointer<vtkImageReslice> reslice;
-	vtkSmartPointer<vtkImagePlaneWidget> ProjectionActorYZ;
 	vtkSmartPointer<vtkImageActor> ProjectionActor;
 #ifdef USE_GPUREN
 	vtkSmartPointer<vtkOpenGLGPUVolumeRayCastMapper> volumeMapperGPU;
@@ -125,9 +123,6 @@ public:
 	ImageActorPointerType GetSliceActor(int i);
 	vtkSmartPointer<vtkImageActor> createProjection(int i, int method, int projection_dim);
 	vtkSmartPointer<vtkImageActor> GetProjectionImage(int i);
-	///////////////////////////////////////////////////////////////////////////
-	vtkSmartPointer<vtkImagePlaneWidget> CreateProjectionXZorYZ(int i, int method, int projection_dim);
-	///////////////////////////////////////////////////////////////////////////
 	vtkSmartPointer<vtkVolume> RayCastVolume(int i);
 	vtkSmartPointer<vtkVolume> GetRayCastVolume(int i);
 	bool getRenderStatus(int i);

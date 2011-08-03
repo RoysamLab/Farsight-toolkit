@@ -803,7 +803,7 @@ void View3D::ShowProjectTable()
 					dimensionItem->setFlags(dimensionItem->flags() & (~Qt::ItemIsEditable));
 					projectFilesTable->setItem(i,3,dimensionItem);
 				}else{
-					QTableWidgetItem *dimensionItem = new QTableWidgetItem(tr("    3d"));
+					QTableWidgetItem *dimensionItem = new QTableWidgetItem(tr("3d"));
 					dimensionItem->setFlags(dimensionItem->flags() & (~Qt::ItemIsEditable));
 					projectFilesTable->setItem(i,3,dimensionItem);
 				}
@@ -886,20 +886,19 @@ void View3D::changeDimension(int row, int col)
 	{
 		QTableWidgetItem *Item2D = new QTableWidgetItem(tr("2d"));
 		Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
-		QTableWidgetItem *Item3D = new QTableWidgetItem(tr("    3d"));
+		QTableWidgetItem *Item3D = new QTableWidgetItem(tr("3d"));
+		QFont font;
+		font.setBold(true);
+		Item3D->setFont(font);
 		Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
 
-		if(this->projectFilesTable->item(row,3)->text() == "    3d")
+		if(this->projectFilesTable->item(row,3)->text() == "3d")
 		{
 			//std::cout << this->projectFilesTable->item(rowselected,3) << std::endl;
 			this->projectFilesTable->setItem(row,3,Item2D);
 			if ((this->ImageActors->getRenderStatus(row))&&(this->ImageActors->isRayCast(row)))
 			{
-				//this->Renderer->AddActor(this->ImageActors->CreateSliceActor(row));
-				//if (projection_axis == 2)
-					this->Renderer->AddActor(this->ImageActors->createProjection(row,this->projectionStyle,this->projection_axis));
-				/*else
-					this->Renderer->AddActor(this->ImageActors->CreateProjectionXZorYZ(row,this->projectionStyle,this->projection_axis));*/
+				this->Renderer->AddActor(this->ImageActors->createProjection(row,this->projectionStyle,this->projection_axis));
 				this->ImageActors->setIs2D(row, true);
 				this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(row));
 				this->ImageActors->setRenderStatus(row, false);
@@ -1381,6 +1380,7 @@ void View3D::CreateGUIObjects()
 	this->projectFilesTable->setColumnCount(4);	
 	this->projectFilesTable->setColumnWidth(1,40);
 	this->projectFilesTable->setColumnWidth(2,75);
+	this->projectFilesTable->setColumnWidth(3,35);
 
 	QObject::connect(this->projectFilesTable, SIGNAL(cellClicked(int,int)), this, SLOT(choosetoRender(int,int)));
 	QObject::connect(this->projectFilesTable, SIGNAL(cellClicked(int,int)), this, SLOT(changeDimension(int,int)));
@@ -1916,7 +1916,7 @@ void View3D::raycastToSlicer()
 				this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
 				this->ImageActors->setRenderStatus(i, true);
 				/***************************************************************/
-				QTableWidgetItem *Item3D = new QTableWidgetItem(tr("    3d"));
+				QTableWidgetItem *Item3D = new QTableWidgetItem(tr("3d"));
 				Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
 				this->projectFilesTable->setItem(i,3,Item3D);
 				/***************************************************************/
