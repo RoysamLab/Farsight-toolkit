@@ -31,7 +31,7 @@ OPTION( BUILD_OPENMP "Build with OpenMP support (Note that only VS2008 Pro and V
 OPTION( BUILD_IMAGE_MANAGER  "Manage Image File Conversions and Directories" OFF)
 
 OPTION( BUILD_MODEL_SEG "Build Statistical_Model_Segmentation (Note that it has dependency on glpk library)" OFF)
-OPTION( BUILD_ZERNIKE  " Build zernike_moments_calculattion " OFF)
+OPTION( BUILD_ZERNIKE  " Build zernike_moments_calculattion " ON)
 OPTION( BUILD_HARALICK "Biild Haralick_features_calculation" OFF)
 OPTION( BUILD_DANIELA "color_segmentation base on satration" OFF)   
 OPTION( BUILD_QTIMAGECOMBINER "combines logical OR of two QImages" OFF) 
@@ -43,6 +43,7 @@ OPTION(	BUILD_CUDA "Build with CUDA support" OFF)
 
 MARK_AS_ADVANCED(BUILD_EMBREX)
 MARK_AS_ADVANCED(WRAP_PYTHON)
+MARK_AS_ADVANCED(BUILD_ZERNIKE)
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR} )
 
