@@ -4,6 +4,7 @@
 MCLR::MCLR()
 {
 	current_label = -1; // keeps a track of the current label
+	confidence_threshold = 0.7;
 }
 
 MCLR::~MCLR()
@@ -122,7 +123,7 @@ vnl_matrix <double> MCLR::tableToMatrix(vtkSmartPointer<vtkTable> table,std::vec
 	}
 	
 	// Contains the ids and time of nuclei.
-	this->id_time = id_time;
+	this->id_time_val = id_time;
 
 	//// The first column in vtkTable is always ID 
 	//// remove id 
@@ -888,10 +889,8 @@ void MCLR::Update_Train_Data(int query,int label)
 		}
 		
 		//Update list of ids and the table
-		id_time.erase(id_time.begin()+query);
+		id_time_val.erase(id_time_val.begin()+query);
 		test_table->RemoveRow(query);
-
-		//
 
 
 }

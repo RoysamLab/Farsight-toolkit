@@ -55,7 +55,7 @@ struct model{
  vnl_matrix<double> train_data;
  vnl_vector<double> y; // labels (-1 for training)	
  vnl_vector<double> y_ground_truth;	
- std::vector< std::pair<double,double> > id_time;	
+ std::vector< std::pair<double,double> > id_time_val;	
  vnl_matrix<double> z; // used in gradient computation	
  vnl_matrix<double> gradient_w; // used in gradient computation	 
  vnl_matrix<double> hessian;
@@ -81,6 +81,7 @@ struct model{
  double max_info;
 
  std::string validation;
+ double confidence_threshold;
 
 public:
 
