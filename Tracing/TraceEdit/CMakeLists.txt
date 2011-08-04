@@ -6,7 +6,11 @@ INCLUDE(${QT_USE_FILE})
 
 SET( Libraries
     tiff
-    ${ITK_LIBRARIES}
+    ITKCommon
+    ITKNumerics
+    ITKStatistics
+    ITKIO
+    ITKBasicFilters
     vtkRendering
     vtkIO
     vtkHybrid
