@@ -1804,7 +1804,7 @@ void NucleusEditor::startActiveLearning()
 	//	delete pWizard;
 	//}
 
-	TrainingDialog *d = new TrainingDialog(table, "train","active", this);
+	TrainingDialog *d = new TrainingDialog(table, "train","active",table->GetNumberOfRows(), this);
 	connect(d, SIGNAL(changedTable()), this, SLOT(updateViews()));
 	d->exec();
 	
@@ -1886,7 +1886,7 @@ void NucleusEditor::startActiveLearning()
 	 {	
 
 		ActiveLearningDialog *dialog;
-		dialog =  new ActiveLearningDialog(segView->getSnapshotforID(mclr->id_time.at(active_query).first),mclr->test_table,mclr->no_of_classes,active_query,mclr->top_features);
+		dialog =  new ActiveLearningDialog(segView->getSnapshotforID(mclr->id_time_val.at(active_query).first),mclr->test_table,mclr->no_of_classes,active_query,mclr->top_features);
 		dialog->exec();	 
 
 
@@ -1897,7 +1897,7 @@ void NucleusEditor::startActiveLearning()
 		{	
 			QMessageBox::critical(this, tr("Oops"), tr("Please select a class"));
 			this->show();
-			dialog =  new ActiveLearningDialog(segView->getSnapshotforID(mclr->id_time.at(active_query).first),mclr->test_table,mclr->no_of_classes,active_query,mclr->top_features);	
+			dialog =  new ActiveLearningDialog(segView->getSnapshotforID(mclr->id_time_val.at(active_query).first),mclr->test_table,mclr->no_of_classes,active_query,mclr->top_features);	
 			dialog->exec();
 		}
 
@@ -2007,16 +2007,22 @@ void NucleusEditor::startActiveLearningMulti()
 	//Clear the Gallery 
 	gallery.clear();	
 
-	TrainingDialog *d = new TrainingDialog(nucSeg->megaTable, "train","active", this);
+	TrainingDialog *d = new TrainingDialog(nucSeg->megaTable, "train","active",table->GetNumberOfRows() ,this);
 	connect(d, SIGNAL(changedTable()), this, SLOT(updateViews()));
 	d->exec();
+
 	
 	//Add the time column to the megatable
 	nucSeg->AddTimeToMegaTable();	
 
+	int justacount = 0;
+
 	std::vector< std::pair<double,double> > id_time;	
 	// Remove the training examples from the list of ids.
 	//Get the list of ids
+	
+
+
 	for(int i=0;i<nucSeg->megaTable->GetNumberOfRows(); ++i)
 	{
 		if(nucSeg->megaTable->GetValueByName(i,"train_default1").ToDouble()==-1) 
@@ -2026,6 +2032,7 @@ void NucleusEditor::startActiveLearningMulti()
 			temp_pair.second = nucSeg->megaTable->GetValueByName(i,"time").ToDouble();
 			id_time.push_back(temp_pair);
 		}
+
 	}
 
 	//Since we have stored the time values in id_time
@@ -2064,15 +2071,17 @@ void NucleusEditor::startActiveLearningMulti()
 
 
 			vnl_matrix<double> Feats = mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(pWizard_table,id_time));
+			
+
 			mclr->Initialize(Feats,sparsity,class_list,"",pWizard_table);
 			mclr->Get_Training_Model();
 
 			// Get the active query based on information gain
 			active_query = mclr->Active_Query();
-
+			
 			// We can determine the time point corresponding to the current query
 			// using the id_time
-			segView->SetCurrentTimeVal(id_time.at(active_query).second);
+			segView->SetCurrentTimeVal(mclr->id_time_val.at(active_query).second);
 			
 			
 			bool user_stop_dialog_flag = false;
@@ -2083,7 +2092,7 @@ void NucleusEditor::startActiveLearningMulti()
 			while(loop_termination_condition)
 			{	
 
-				dialog =  new ActiveLearningDialog(segView->getSnapshotforID(mclr->id_time.at(active_query).first),mclr->test_table,mclr->no_of_classes,active_query,mclr->top_features);
+				dialog =  new ActiveLearningDialog(segView->getSnapshotforID(mclr->id_time_val.at(active_query).first),mclr->test_table,mclr->no_of_classes,active_query,mclr->top_features);
 				dialog->exec();	 
 				loop_termination_condition = dialog->finish && dialog->result();
 
@@ -2092,11 +2101,11 @@ void NucleusEditor::startActiveLearningMulti()
 				{	
 					QMessageBox::critical(this, tr("Oops"), tr("Please select a class"));
 					this->show();
-					dialog =  new ActiveLearningDialog(segView->getSnapshotforID(mclr->id_time.at(active_query).first),mclr->test_table,mclr->no_of_classes,active_query,mclr->top_features);	
+					dialog =  new ActiveLearningDialog(segView->getSnapshotforID(mclr->id_time_val.at(active_query).first),mclr->test_table,mclr->no_of_classes,active_query,mclr->top_features);	
 					dialog->exec();
 				}
 
-
+				
 
 				// Update the data & refresh the training model and refresh the Training Dialog 		
 				mclr->Update_Train_Data(active_query,dialog->class_selected);
@@ -2105,7 +2114,7 @@ void NucleusEditor::startActiveLearningMulti()
 				{
 					mclr->Get_Training_Model();
 					active_query = mclr->Active_Query();
-					segView->SetCurrentTimeVal(id_time.at(active_query).second);
+					segView->SetCurrentTimeVal(mclr->id_time_val.at(active_query).second);
 					continue;
 				}
 
@@ -2140,7 +2149,8 @@ void NucleusEditor::startActiveLearningMulti()
 
 				mclr->Get_Training_Model();
 				active_query = mclr->Active_Query();
-				segView->SetCurrentTimeVal(id_time.at(active_query).second);
+				segView->SetCurrentTimeVal(mclr->id_time_val.at(active_query).second);
+				//std::cout<< " Active Query # is " << active_query <<std::endl;
 			}
 
 			//Enable the Menu Items related to active Learning
@@ -2154,8 +2164,7 @@ void NucleusEditor::startActiveLearningMulti()
 				vtkSmartPointer<vtkTable> test_table  = vtkSmartPointer<vtkTable>::New();
 				test_table->Initialize();
 				test_table->SetNumberOfRows(nucSeg->table4DImage.at(i)->GetNumberOfRows());
-
-
+				
 
 				for(int j=0;j<pWizard_table->GetNumberOfColumns(); ++j)
 				{
@@ -2171,9 +2180,9 @@ void NucleusEditor::startActiveLearningMulti()
 						model_data1->InsertNextValue(nucSeg->table4DImage.at(i)->GetValueByName(row,test_table->GetColumnName(c)));
 					test_table->InsertNextRow(model_data1);
 				}	
-
+			
 				////// Final Data  to classify after the active training
-				vnl_matrix<double> data_classify =  mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(test_table,id_time));
+				vnl_matrix<double> data_classify =  mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(test_table,mclr->id_time_val));
 				data_classify = data_classify.transpose();
 				vnl_matrix<double> currprob = mclr->Test_Current_Model(data_classify);
 
@@ -2182,11 +2191,18 @@ void NucleusEditor::startActiveLearningMulti()
 				column->SetName("prediction_active");
 				column->SetNumberOfValues( nucSeg->table4DImage.at(i)->GetNumberOfRows() );
 				nucSeg->table4DImage.at(i)->AddColumn(column);
+			
+				// Add the confidence column
+				vtkSmartPointer<vtkDoubleArray> column_confidence = vtkSmartPointer<vtkDoubleArray>::New();
+				column_confidence->SetName("confidence");
+				column_confidence->SetNumberOfValues( nucSeg->table4DImage.at(i)->GetNumberOfRows() );
+				nucSeg->table4DImage.at(i)->AddColumn(column_confidence);
 
 				for(int row = 0;(int)row < nucSeg->table4DImage.at(i)->GetNumberOfRows(); ++row)  
 				{
 					vnl_vector<double> curr_col = currprob.get_column(row);
 					nucSeg->table4DImage.at(i)->SetValueByName(row,"prediction_active", vtkVariant(curr_col.arg_max()+1));
+					nucSeg->table4DImage.at(i)->SetValueByName(row,"confidence", vtkVariant(curr_col(curr_col.arg_max())));
 				}
 				prediction_names = ftk::GetColumsWithString( "prediction_active" , nucSeg->table4DImage.at(i) );
 				selection->clear();
@@ -2194,6 +2210,7 @@ void NucleusEditor::startActiveLearningMulti()
 
 			activeRun = 1;
 			this->updateViews();
+
 		}
 	}
 }
@@ -2218,7 +2235,7 @@ void NucleusEditor::startTraining()
 {
 	if(!table) return;
 
-	TrainingDialog *d = new TrainingDialog(table, "train","", this);
+	TrainingDialog *d = new TrainingDialog(table, "train","", 0,this);
 	connect(d, SIGNAL(changedTable()), this, SLOT(updateViews()));
 	d->show();
 }
