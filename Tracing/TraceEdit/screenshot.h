@@ -15,6 +15,7 @@ public:
 
 	QString getfileName();
 	QString getDir();
+	int getMagnification();
 	//QString getSWCfileName();
 	//QString getJPGfileName();
 	//bool keeporiginalSWCfileName();
@@ -62,6 +63,7 @@ private:
 //	bool changeswcfileName;
 //	bool changejpgfileName;
 	QString fileName;
+	int magnifynum;
 	
 };
 

@@ -16,7 +16,8 @@ limitations under the License.
 #ifndef VIEW3D_H_
 #define VIEW3D_H_
 
-#include "vtkImagePlaneWidget.h"
+#include "screenshot.h"
+////#include "vtkImagePlaneWidget.h"
 #include "vtkSmartPointer.h"
 //#include "UndoBuffer.h"
 //#include "undobuff.h"
@@ -123,7 +124,7 @@ public:
 	bool readProject(QString projectFile);
 	//todo: make these private with accessors
 	vtkSmartPointer<vtkRenderer> Renderer;
-	vtkSmartPointer<vtkActor> BranchActor;\
+	vtkSmartPointer<vtkActor> BranchActor;
 	void ShowProjectTable();
 
 public slots:
@@ -220,8 +221,6 @@ private:
 	QSettings TraceEditSettings;
 	QDockWidget * InformationDisplays, *BootDock, * settingsDock, *cursor3DDock, *AutomationDock, *projectFilesDock;
 	QTextEdit * EditLogDisplay;
-	
-	QTableWidget * projectFilesTable;
 	
 	QString UserName, LabName, ProjectName;
 	QStringList TraceFiles, Image, SomaFile, tempTraceFile;
@@ -336,6 +335,9 @@ private:
 	QDialogButtonBox *ApplySettingsButton;
 	QComboBox *typeCombo, *StyleCombo, *ProjectionCombo, *RotateImageUpCombo, *ProjectionAxisCombo;
 	QPushButton *updateRotationButton;
+		
+	QTableWidget * projectFilesTable;
+	//QTableWidgetItem * Item2D, * Item3D;
 	
 	//Automation widgets
 	QWidget * AutomationWidget;
@@ -354,6 +356,7 @@ private:
 	// save screenshots
 	vtkSmartPointer<vtkWindowToImageFilter> WindowToImage;
 	vtkSmartPointer<vtkJPEGWriter> JPEGWriter;
+	ScreenShotDialog * savescreenshotDialog;
 
     //interactor variables and point picking
 	QWidget * CursorActionsWidget;

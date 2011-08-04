@@ -116,6 +116,7 @@ View3D::View3D(QWidget *parent)
 	this->FL_MeasureTable = NULL;
 	this->GapsTableView = NULL;
 	this->TreeModel = NULL;
+	this->savescreenshotDialog = NULL;
 
 	this->tobj = new TraceObject;
 	//int num_loaded = 0;
@@ -1387,6 +1388,16 @@ void View3D::CreateGUIObjects()
 	this->projectFilesTable->setHorizontalHeaderLabels(projecttableHeaders);
 	//this->projectFilesTable->setSortingEnabled(true); //complicated
 
+	//this->Item2D = new QTableWidgetItem(tr("2d"));
+	//Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
+	//this->projectFilesTable->setItem(i,3,Item2D);
+
+	//this->Item3D = new QTableWidgetItem(tr("3d"));
+	//Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
+	//QFont font;
+	//font.setBold(true);
+	//Item3D->setFont(font);
+
 	/********************************************************************************************/
 
 	CropBorderCellsButton = new QPushButton("Crop border cells");
@@ -1918,6 +1929,9 @@ void View3D::raycastToSlicer()
 				/***************************************************************/
 				QTableWidgetItem *Item3D = new QTableWidgetItem(tr("3d"));
 				Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
+				QFont font;
+				font.setBold(true);
+				Item3D->setFont(font);
 				this->projectFilesTable->setItem(i,3,Item3D);
 				/***************************************************************/
 			}
@@ -4688,7 +4702,12 @@ void View3D::saveRenderWindow(const char *filename)
 {
 	this->WindowToImage = vtkSmartPointer<vtkWindowToImageFilter>::New();
 	this->WindowToImage->SetInput(this->QVTK->GetRenderWindow());
-	//this->WindowToImage->SetMagnification(2); //save this for presentations
+	
+	if (savescreenshotDialog) //only if savescreenshotDialog is constructed
+		this->WindowToImage->SetMagnification(this->savescreenshotDialog->getMagnification()); //save this for presentations
+	else
+		this->WindowToImage->SetMagnification(1);
+	
 	this->JPEGWriter = vtkSmartPointer<vtkJPEGWriter>::New();
 	this->JPEGWriter->SetInput(this->WindowToImage->GetOutput());
 	this->JPEGWriter->SetFileName(filename);
@@ -4698,7 +4717,7 @@ void View3D::SaveScreenShot()
 {
 	QString fileName, filePath;
 	QString imageDir = this->TraceEditSettings.value("imageDir", ".").toString();
-	ScreenShotDialog *savescreenshotDialog = new ScreenShotDialog(this, fileName, imageDir);
+	this->savescreenshotDialog = new ScreenShotDialog(this, fileName, imageDir);
 	savescreenshotDialog->exec();
 	filePath = savescreenshotDialog->getDir();
 	fileName = savescreenshotDialog->getfileName();
@@ -4707,6 +4726,8 @@ void View3D::SaveScreenShot()
 	{
 		this->saveRenderWindow(fullFileName.toStdString().c_str());
 	}
+	delete savescreenshotDialog;
+	savescreenshotDialog = NULL;
 }
 void View3D::AutoCellExport()
 {
@@ -4729,60 +4750,64 @@ void View3D::AutoCellExport()
 		jpgfileName = cellexportDialog->getJPGfileName();
 		changeswcfileName = cellexportDialog->keeporiginalSWCfileName();
 		changejpgfileName = cellexportDialog->keeporiginalJPGfileName();
-
-		QProgressDialog progress("Finding Cells", "Abort", 0, cellCount, this);
-		progress.setWindowModality(Qt::WindowModal);
-		QString traceDir = this->TraceEditSettings.value("traceDir", ".").toString();		
-		QString coordFileName = traceDir % "/coord.txt";
-		this->CellModel->WriteCellCoordsToFile(coordFileName.toStdString().c_str());
-		for (int i = 0; i < cellCount; i++)
+		
+		if (!curdirectoryswc.isEmpty() || !curdirectoryjpg.isEmpty())
 		{
-			progress.setValue(i);
-			if (progress.wasCanceled())
-			{
-				break;
-			}
-			CellTrace* currCell = this->CellModel->GetCellAt( i);
-			this->FocusOnCell(currCell);
-			QString cellName = QString(currCell->GetFileName().c_str());
+			QProgressDialog progress("Finding Cells", "Abort", 0, cellCount, this);
+			progress.setWindowModality(Qt::WindowModal);
+			QString traceDir = this->TraceEditSettings.value("traceDir", ".").toString();		
+			QString coordFileName = traceDir % "/coord.txt";
+			this->CellModel->WriteCellCoordsToFile(coordFileName.toStdString().c_str());
 
-			std::vector<TraceLine*> roots;
-			roots.push_back(currCell->getRootTrace());
-			int cellNum = i+1;
-			if (changeswcfileName)
+			for (int i = 0; i < cellCount; i++)
 			{
-				if (!swcfileName.isEmpty())
+				progress.setValue(i);
+				if (progress.wasCanceled())
 				{
-					cellName = swcfileName;
+					break;
 				}
-				else
+				CellTrace* currCell = this->CellModel->GetCellAt( i);
+				this->FocusOnCell(currCell);
+				QString cellName = QString(currCell->GetFileName().c_str());
+
+				std::vector<TraceLine*> roots;
+				roots.push_back(currCell->getRootTrace());
+				int cellNum = i+1;
+				if (changeswcfileName)
 				{
-					cellName = tr("cell_") + QString("%1").arg(cellNum);
+					if (!swcfileName.isEmpty())
+					{
+						cellName = swcfileName;
+					}
+					else
+					{
+						cellName = tr("cell_") + QString("%1").arg(cellNum);
+					}
 				}
-			}
-			QString swcFileName = curdirectoryswc % "/" % cellName % QString(".swc");
-			this->tobj->WriteToSWCFile(roots, swcFileName.toStdString().c_str());
-			if (changejpgfileName)
-			{
-				if (!jpgfileName.isEmpty())
+				QString swcFileName = curdirectoryswc % "/" % cellName % QString(".swc");
+				this->tobj->WriteToSWCFile(roots, swcFileName.toStdString().c_str());
+				if (changejpgfileName)
 				{
-					cellName = jpgfileName;
+					if (!jpgfileName.isEmpty())
+					{
+						cellName = jpgfileName;
+					}
+					else
+					{
+						cellName = tr("cell_") + QString("%1").arg(cellNum);
+					}
 				}
-				else
+				QString ScreenShotFileName = curdirectoryjpg % "/" % cellName % QString(".jpg");
+				this->saveRenderWindow(ScreenShotFileName.toStdString().c_str());
+				if (this->viewIn2D)
 				{
-					cellName = tr("cell_") + QString("%1").arg(cellNum);
-				}
-			}
-			QString ScreenShotFileName = curdirectoryjpg % "/" % cellName % QString(".jpg");
-			this->saveRenderWindow(ScreenShotFileName.toStdString().c_str());
-			if (this->viewIn2D)
-			{
-				double test [6];
-				this->Renderer->ComputeVisiblePropBounds(test);
-				this->setRenderFocus(test, 6);
-			}// end of reset renderer when in 2d mode 
-		}//end of cell export loop
-		progress.setValue(cellCount);
+					double test [6];
+					this->Renderer->ComputeVisiblePropBounds(test);
+					this->setRenderFocus(test, 6);
+				}// end of reset renderer when in 2d mode 
+			}//end of cell export loop
+			progress.setValue(cellCount);
+		}
 	}
 	else
 	{

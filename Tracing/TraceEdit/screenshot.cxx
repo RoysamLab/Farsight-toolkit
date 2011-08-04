@@ -6,18 +6,21 @@
 ScreenShotDialog::ScreenShotDialog(QWidget* parent, QString fileName, QString imageDir)
 : QDialog(parent)
 {
-	//QLabel *directoryLabel = new QLabel(tr("Directory:"));
+	this->magnifynum = 1;
+	QLabel *directoryLabel = new QLabel(tr("Directory:"));
 	directoryComboBox = createComboBox();	
-	//directoryLabel->setBuddy(directoryComboBox);
+	directoryComboBox->setEditText(imageDir);
+	directoryLabel->setBuddy(directoryComboBox);
 	browseButton = createButton(tr("&Browse..."), SLOT(Browse()));
 
-	//QLabel *fileNameLabel = new QLabel(tr("Filename:"));
+	QLabel *fileNameLabel = new QLabel(tr("Filename:"));
 	fileNameLine = new QLineEdit();
-	//fileNameLabel->setBuddy(fileNameLine);
+	fileNameLabel->setBuddy(fileNameLine);
 
-	//QLabel * ZoomLabel = new QLabel(tr("Zoom: "));
+	QLabel * ZoomLabel = new QLabel(tr("Magnify factor: "));
 	ZoomSpinBox = new QSpinBox();
-	//ZoomLabel->setBuddy(ZoomSpinBox);
+	ZoomSpinBox->setValue(1);
+	ZoomLabel->setBuddy(ZoomSpinBox);
 
 	OkButton = new QPushButton(tr("Ok"));
 	OkButton->setDefault(true);
@@ -26,30 +29,16 @@ ScreenShotDialog::ScreenShotDialog(QWidget* parent, QString fileName, QString im
 	CancelButton = new QPushButton(tr("Cancel"));
 	connect(CancelButton, SIGNAL(clicked()), this, SLOT(close()));
 
-	QHBoxLayout * browseLayout = new QHBoxLayout();
-	browseLayout->addWidget(directoryComboBox);
-	browseLayout->addWidget(browseButton);
-
-	QHBoxLayout * ConcludeLayout = new QHBoxLayout();
-	ConcludeLayout->addWidget(OkButton);
-	ConcludeLayout->addWidget(CancelButton);
-
-	//QVBoxLayout * verticalLayout = new QVBoxLayout();
-	//verticalLayout->addWidget(directoryComboBox);
-	//verticalLayout->addWidget(fileNameLine);
-	//verticalLayout->addWidget(ZoomSpinBox);
-	//verticalLayout->addWidget(OkButton);
-	//verticalLayout->addWidget(CancelButton);
-
-	//QGroupBox *displaySettings = new QGroupBox();
-	QFormLayout *DisplayLayout = new QFormLayout();
-	DisplayLayout->addRow(tr("Browse:"),browseLayout);
-	DisplayLayout->addRow(tr("Filename:"),fileNameLine);
-	DisplayLayout->addRow(tr("Zoom:"),ZoomSpinBox);
-
-	QVBoxLayout * mainLayout = new QVBoxLayout();
-	mainLayout->addLayout(DisplayLayout);
-	mainLayout->addLayout(ConcludeLayout);
+	QGridLayout *mainLayout = new QGridLayout;
+	mainLayout->addWidget(directoryLabel,0,0);
+	mainLayout->addWidget(directoryComboBox,0,1,1,2);
+	mainLayout->addWidget(browseButton,0,3);
+	mainLayout->addWidget(fileNameLabel,1,0);
+	mainLayout->addWidget(fileNameLine,1,1,1,3);
+	mainLayout->addWidget(ZoomLabel,2,0);
+	mainLayout->addWidget(ZoomSpinBox,2,1);
+	mainLayout->addWidget(OkButton,3,2);
+	mainLayout->addWidget(CancelButton,3,3);
 	
 	setLayout(mainLayout);
 	setWindowTitle(tr("Save ScreenShot"));
@@ -93,6 +82,7 @@ void ScreenShotDialog::save()
 	{
 		directory.mkdir(curdirectory);
 	}
+	this->magnifynum = ZoomSpinBox->value();
 
 	QDialog::accept(); //save and close export cell dialog
 }
@@ -104,4 +94,8 @@ QString ScreenShotDialog::getfileName()
 {
 	fileName = fileNameLine->text();
 	return fileName;
+}
+int ScreenShotDialog::getMagnification()
+{
+	return magnifynum;
 }

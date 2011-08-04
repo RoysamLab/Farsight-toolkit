@@ -216,15 +216,15 @@ QComboBox *SaveCellExportDialog::createComboBox(const QString &text)
 }
 QString SaveCellExportDialog::getSWCDir()
 {
-	if (!saveJPGGroupBox->isChecked())
+	if (!saveSWCGroupBox->isChecked())
 	{
-		curdirectoryjpg.clear();
+		curdirectoryswc.clear();
 	}
 	return curdirectoryswc;
 }
 QString SaveCellExportDialog::getJPGDir()
 {
-	if (!saveSWCGroupBox->isChecked())
+	if (!saveJPGGroupBox->isChecked())
 	{
 		curdirectoryjpg.clear();
 	}
