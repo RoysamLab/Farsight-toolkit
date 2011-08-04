@@ -1866,7 +1866,7 @@ void NucleusEditor::startActiveLearning()
 
 
  	MCLR *mclr = new MCLR();
-	double sparsity = 1;
+	double sparsity = 2;
 	int active_query = 1;
 	double max_info = -1e9;
 
@@ -2419,13 +2419,13 @@ void NucleusEditor::queryKNearest()
 	ss1 << k;
 	if(Class_dest == 0)
 	{
-		full_string = "D (k=" + ss1.str() + ", class=all)" ;
+		full_string = "D(k=" + ss1.str() + ",class=all)" ;
 	}
 	else
 	{
 		std::stringstream ss2;
 		ss2 << Class_dest;
-		full_string = "D (k=" + ss1.str() + ", class=" + ss2.str() + ")";
+		full_string = "D(k=" + ss1.str() + ",class=" + ss2.str() + ")";
 	}
 	table->RemoveColumnByName(full_string.c_str());
 	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
@@ -2537,13 +2537,13 @@ void NucleusEditor::queryInRadius()
 	ss1 << radius;
 	if(Class_dest == 0)
 	{
-		full_string = "D (rad=" + ss1.str() + ", class=all)";
+		full_string = "D(rad=" + ss1.str() + ",class=all)";
 	}
 	else
 	{
 		std::stringstream ss2;
 		ss2 << Class_dest;
-		full_string = "D (rad=" + ss1.str() + ", class=" + ss2.str() + ")";
+		full_string = "D(rad=" + ss1.str() + ",class=" + ss2.str() + ")";
 	}
 	table->RemoveColumnByName(full_string.c_str());
 	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
