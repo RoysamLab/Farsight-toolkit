@@ -16,10 +16,7 @@ public:
 	QString getfileName();
 	QString getDir();
 	int getMagnification();
-	//QString getSWCfileName();
-	//QString getJPGfileName();
-	//bool keeporiginalSWCfileName();
-	//bool keeporiginalJPGfileName();
+	bool getSave();
 	
 private slots:	
 	void Browse();
@@ -27,41 +24,18 @@ private slots:
 
 private:
 	QComboBox * directoryComboBox;
+	QLineEdit * fileNameLine;
+	QPushButton * browseButton;
 	QSpinBox * ZoomSpinBox;
+	QPushButton *OkButton, *CancelButton;
+	
 	QPushButton *createButton(const QString &text, const char *member);
 	QComboBox *createComboBox(const QString &text = QString());
 
-	QLineEdit * fileNameLine;
-//
-//	QGroupBox *saveSWCGroupBox;
-//	QGroupBox *saveJPGGroupBox;
-////set up for swc files
-//	QComboBox *swcdirectoryComboBox;
-//	QPushButton *swcbrowseButton;
-//	QPushButton *swcmoreButton;
-//	QWidget *swcextension;
-//	QRadioButton *originalswcfileNameButton, *renumberswcfileNameButton, *renameswcfileNameButton;
-//	QLineEdit *nameswcfileNameLine;
-////set up for jpg files
-//	QComboBox *jpgdirectoryComboBox;
-//	QPushButton *jpgbrowseButton;
-//	QPushButton *jpgmoreButton;
-//	QWidget* jpgextension;
-//	QRadioButton *originaljpgfileNameButton, *renumberjpgfileNameButton, *renamejpgfileNameButton;
-//	QLineEdit *namejpgfileNameLine;\
-//
-	QPushButton * browseButton;
-	QPushButton *OkButton;
-	QPushButton *CancelButton;
-//
-//	//variables to return to the caller
-	QString curdirectory;
+	bool saveclicked;
 	QString imageDir;
-//	QString curdirectoryjpg;
-//	QString swcfileName;
-//	QString jpgfileName;
-//	bool changeswcfileName;
-//	bool changejpgfileName;
+//variables to return to the caller
+	QString curdirectory;
 	QString fileName;
 	int magnifynum;
 	

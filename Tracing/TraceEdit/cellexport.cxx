@@ -1,7 +1,8 @@
-/* File dialog for autocellexport to save individual traces in swc and jpg files.
-You are given the options of saving swc files, jpg files, or both in the chosen 
-directory you choose.  You can also name the files as you wish or use default names.
-*/
+/*****************************************************************************************
+// File dialog for autocellexport to save individual traces in swc and jpg files.		//
+// You are given the options of saving swc files, jpg files, or both in the chosen		//
+// directory you choose.  You can also name the files as you wish or use default names.	//
+*****************************************************************************************/
 
 #include "cellexport.h"
 
@@ -10,7 +11,9 @@ SaveCellExportDialog::SaveCellExportDialog(QWidget* parent, QString curdirectory
 {
 	this->curdirectoryswc = curdirectoryswc;
 	this->curdirectoryjpg = curdirectoryjpg;
+	saveclicked = false;
 
+// SWC files directory setup
 	QLabel *swclabel = new QLabel(tr("Directory for SWC files:"));
 	swcdirectoryComboBox = createComboBox(curdirectoryswc);
 	swclabel->setBuddy(swcdirectoryComboBox);
@@ -18,12 +21,15 @@ SaveCellExportDialog::SaveCellExportDialog(QWidget* parent, QString curdirectory
 	swcmoreButton = new QPushButton(tr("&More..."));
 	swcmoreButton->setCheckable(true);
 
+// JPG files directory setup
 	QLabel *jpglabel = new QLabel(tr("Directory for JPG files:"));
 	jpgdirectoryComboBox = createComboBox(curdirectoryjpg);
 	jpglabel->setBuddy(jpgdirectoryComboBox);
 	jpgbrowseButton = createButton(tr("&Browse..."), SLOT(jpgBrowse()));
 	jpgmoreButton = new QPushButton(tr("&More..."));
 	jpgmoreButton->setCheckable(true);
+
+// SWC files: customize naming files setup (original filename, "cell_1", or new name with numbers)
 	swcextension = new QWidget;
 	originalswcfileNameButton = new QRadioButton(tr("Keep original filename"), swcextension);
 	originalswcfileNameButton->setChecked(true);
@@ -33,7 +39,8 @@ SaveCellExportDialog::SaveCellExportDialog(QWidget* parent, QString curdirectory
 	nameswcfileNameLine = new QLineEdit(swcextension);
 	connect(swcmoreButton, SIGNAL(toggled(bool)), swcextension, SLOT(setVisible(bool)));
 	connect(nameswcfileNameLine, SIGNAL(textChanged(const QString &)), this, SLOT(swcfilenaming()));
-	
+
+// JPG files: customize naming files setup (original filename, "cell_1", or new name with numbers)
 	jpgextension = new QWidget;
 	originaljpgfileNameButton = new QRadioButton(tr("Keep original filename"), jpgextension);
 	originaljpgfileNameButton->setChecked(true);
@@ -44,12 +51,14 @@ SaveCellExportDialog::SaveCellExportDialog(QWidget* parent, QString curdirectory
 	connect(jpgmoreButton, SIGNAL(toggled(bool)), jpgextension, SLOT(setVisible(bool)));
 	connect(namejpgfileNameLine, SIGNAL(textChanged(const QString &)), this, SLOT(jpgfilenaming()));
 	
-	OkButton = new QPushButton(tr("Ok"));
-	OkButton->setDefault(true);
-	connect(OkButton, SIGNAL(clicked()), this, SLOT(save()));
-	
-	CancelButton = new QPushButton(tr("Cancel"));
-	connect(CancelButton, SIGNAL(clicked()), this, SLOT(close()));
+// Create layout
+	QHBoxLayout *swcdirLayout = new QHBoxLayout();
+	swcdirLayout->addWidget(swclabel);
+	swcdirLayout->addWidget(swcdirectoryComboBox);
+
+	QHBoxLayout *jpgdirLayout = new QHBoxLayout();
+	jpgdirLayout->addWidget(jpglabel);
+	jpgdirLayout->addWidget(jpgdirectoryComboBox);
 
 	QVBoxLayout* swcextensionLayout = new QVBoxLayout();
 	swcextensionLayout->addWidget(originalswcfileNameButton);
@@ -65,10 +74,14 @@ SaveCellExportDialog::SaveCellExportDialog(QWidget* parent, QString curdirectory
 	jpgextensionLayout->addWidget(namejpgfileNameLine);
 	jpgextension->setLayout(jpgextensionLayout);
 
-	QHBoxLayout *swcdirLayout = new QHBoxLayout();
-	swcdirLayout->addWidget(swclabel);
-	swcdirLayout->addWidget(swcdirectoryComboBox);
+	OkButton = new QPushButton(tr("Ok"));
+	OkButton->setDefault(true);
+	connect(OkButton, SIGNAL(clicked()), this, SLOT(save()));
+	
+	CancelButton = new QPushButton(tr("Cancel"));
+	connect(CancelButton, SIGNAL(clicked()), this, SLOT(close()));
 
+// Different layout
 	//QVBoxLayout *leftswcLayout = new QVBoxLayout();
 	//leftswcLayout->addLayout(swcdirLayout);
 	//leftswcLayout->addWidget(swcextension);
@@ -83,9 +96,6 @@ SaveCellExportDialog::SaveCellExportDialog(QWidget* parent, QString curdirectory
 	//fullswcLayout->addLayout(leftswcLayout);
 	//fullswcLayout->addLayout(swcButtonLayout);
 
-	QHBoxLayout *jpgdirLayout = new QHBoxLayout();
-	jpgdirLayout->addWidget(jpglabel);
-	jpgdirLayout->addWidget(jpgdirectoryComboBox);
 
 	//QVBoxLayout *leftjpgLayout = new QVBoxLayout();
 	//leftjpgLayout->addLayout(jpgdirLayout);
@@ -101,9 +111,9 @@ SaveCellExportDialog::SaveCellExportDialog(QWidget* parent, QString curdirectory
 	//fulljpgLayout->addLayout(leftjpgLayout);
 	//fulljpgLayout->addLayout(jpgButtonLayout);
 
-	//QHBoxLayout *bottomLayout = new QHBoxLayout();
-	//bottomLayout->addWidget(OkButton);
-	//bottomLayout->addWidget(CancelButton);
+	QHBoxLayout *bottomLayout = new QHBoxLayout();
+	bottomLayout->addWidget(OkButton);
+	bottomLayout->addWidget(CancelButton);
 
 	//QVBoxLayout *MainLayout = new QVBoxLayout();
 	//MainLayout->addLayout(fullswcLayout);
@@ -111,6 +121,8 @@ SaveCellExportDialog::SaveCellExportDialog(QWidget* parent, QString curdirectory
 	//MainLayout->addLayout(bottomLayout);
 	//MainLayout->setSizeConstraint(QLayout::SetFixedSize);
 
+	// QGridLayout - the 1st number: initial row index, the 2nd number: initial column index, 
+	//					the 3rd number: rowSpan, and the 4th number: columnSpan.
 	saveSWCGroupBox = new QGroupBox(tr("Save SWC files"));
 	saveSWCGroupBox->setCheckable(true);
 	QGridLayout *swcLayout = new QGridLayout(saveSWCGroupBox);
@@ -130,8 +142,9 @@ SaveCellExportDialog::SaveCellExportDialog(QWidget* parent, QString curdirectory
 	QGridLayout *cellexportLayout = new QGridLayout;
 	cellexportLayout->addWidget(saveSWCGroupBox,0,0);
 	cellexportLayout->addWidget(saveJPGGroupBox,1,0);
-	cellexportLayout->addWidget(OkButton,5,0);
-	cellexportLayout->addWidget(CancelButton,5,1);
+	cellexportLayout->addLayout(bottomLayout,5,0,Qt::AlignRight);
+	//cellexportLayout->addWidget(OkButton,5,0);
+	//cellexportLayout->addWidget(CancelButton,5,1);
 	cellexportLayout->setSizeConstraint(QLayout::SetFixedSize);
 	
 	setLayout(cellexportLayout);
@@ -142,7 +155,7 @@ SaveCellExportDialog::SaveCellExportDialog(QWidget* parent, QString curdirectory
 	swcextension->hide();
 	jpgextension->hide();
 }
-
+// Specify folder to save swc file
 void SaveCellExportDialog::swcBrowse()
 {
 	//std::cout << curdirectoryswc.toStdString() << std::endl;
@@ -159,6 +172,7 @@ void SaveCellExportDialog::swcBrowse()
 		swcdirectoryComboBox->setCurrentIndex(swcdirectoryComboBox->findText(curdirectoryswc));	
 	}
 }
+// Specify folder to save jpg file
 void SaveCellExportDialog::jpgBrowse()
 {
 	curdirectoryjpg = QFileDialog::getExistingDirectory(this, tr("Choose Directory for JPG files"), 
@@ -184,6 +198,7 @@ void SaveCellExportDialog::jpgfilenaming()
 
 void SaveCellExportDialog::save()
 {
+	saveclicked = true;
 	//check if directory exist, otherwise make directory
 	curdirectoryswc = swcdirectoryComboBox->currentText();
 	QDir SWCdirectory(curdirectoryswc);
@@ -214,6 +229,7 @@ QComboBox *SaveCellExportDialog::createComboBox(const QString &text)
 	comboBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 	return comboBox;
 }
+// return directory to save files
 QString SaveCellExportDialog::getSWCDir()
 {
 	if (!saveSWCGroupBox->isChecked())
@@ -257,7 +273,7 @@ QString SaveCellExportDialog::getJPGfileName()
 	return jpgfileName;
 }
 //decide whether to keep original filename or change it
-bool SaveCellExportDialog::keeporiginalSWCfileName()
+bool SaveCellExportDialog::differentSWCfileName()
 {
 	if (originalswcfileNameButton->isChecked())
 	{
@@ -269,7 +285,7 @@ bool SaveCellExportDialog::keeporiginalSWCfileName()
 	}
 	return changeswcfileName;
 }
-bool SaveCellExportDialog::keeporiginalJPGfileName()
+bool SaveCellExportDialog::differentJPGfileName()
 {
 	if (originaljpgfileNameButton->isChecked())
 	{
@@ -280,4 +296,8 @@ bool SaveCellExportDialog::keeporiginalJPGfileName()
 		changejpgfileName = true;
 	}
 	return changejpgfileName;
+}
+bool SaveCellExportDialog::getSave()
+{
+	return saveclicked;
 }

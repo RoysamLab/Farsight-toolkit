@@ -16,8 +16,8 @@ limitations under the License.
 #ifndef VIEW3D_H_
 #define VIEW3D_H_
 
+#include "cellexport.h"
 #include "screenshot.h"
-////#include "vtkImagePlaneWidget.h"
 #include "vtkSmartPointer.h"
 //#include "UndoBuffer.h"
 //#include "undobuff.h"
@@ -200,7 +200,6 @@ public slots:
 
 	void rotateImage(int axis);
 	void rotationOptions();
-	//void projectionAlongAxis(int projection_axis);
 
 protected slots:
 	void updateSelectionFromCell();
@@ -406,9 +405,6 @@ private:
 		double elevation;
 	} projection_base;
 	int projection_axis;
-
-	//void filerenderstatus();
-	//bool filerender;
 	
 };
 #endif

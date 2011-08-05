@@ -17,8 +17,9 @@ public:
 	QString getJPGDir();
 	QString getSWCfileName();
 	QString getJPGfileName();
-	bool keeporiginalSWCfileName();
-	bool keeporiginalJPGfileName();
+	bool differentSWCfileName();
+	bool differentJPGfileName();
+	bool getSave();
 	
 private slots:	
 	void swcBrowse();
@@ -45,12 +46,12 @@ private:
 	QRadioButton *originaljpgfileNameButton, *renumberjpgfileNameButton, *renamejpgfileNameButton;
 	QLineEdit *namejpgfileNameLine;
 
-	QPushButton *OkButton;
-	QPushButton *CancelButton;
+	QPushButton *OkButton, *CancelButton;
 
 	//variables to return to the caller
 	QString curdirectoryswc, curdirectoryjpg, swcfileName, jpgfileName;
 	bool changeswcfileName, changejpgfileName;
+	bool saveclicked;
 	
 };
 

@@ -1,5 +1,7 @@
-/* Screenshot dialog for saving the screenshot and allowing for customizable features such as zooming.
-*/
+/*********************************************************************************************
+// Screenshot dialog to browse for a folder, specify a filename, and save the screenshot.	//
+// Additional functions: magnification factor.												//
+*********************************************************************************************/
 
 #include "screenshot.h"
 
@@ -7,6 +9,7 @@ ScreenShotDialog::ScreenShotDialog(QWidget* parent, QString fileName, QString im
 : QDialog(parent)
 {
 	this->magnifynum = 1;
+
 	QLabel *directoryLabel = new QLabel(tr("Directory:"));
 	directoryComboBox = createComboBox();	
 	directoryComboBox->setEditText(imageDir);
@@ -29,6 +32,8 @@ ScreenShotDialog::ScreenShotDialog(QWidget* parent, QString fileName, QString im
 	CancelButton = new QPushButton(tr("Cancel"));
 	connect(CancelButton, SIGNAL(clicked()), this, SLOT(close()));
 
+	// QGridLayout - the 1st number: initial row index, the 2nd number: initial column index, 
+	//					the 3rd number: rowSpan, and the 4th number: columnSpan.
 	QGridLayout *mainLayout = new QGridLayout;
 	mainLayout->addWidget(directoryLabel,0,0);
 	mainLayout->addWidget(directoryComboBox,0,1,1,2);
@@ -42,22 +47,6 @@ ScreenShotDialog::ScreenShotDialog(QWidget* parent, QString fileName, QString im
 	
 	setLayout(mainLayout);
 	setWindowTitle(tr("Save ScreenShot"));
-}
-void ScreenShotDialog::Browse()
-{
-	//std::cout << curdirectoryswc.toStdString() << std::endl;
-	//std::cout << curdirectoryjpg.toStdString() << std::endl;
-
-	curdirectory = 	QFileDialog::getExistingDirectory(this, tr("Directory"), 
-															QFileInfo(imageDir).dir().canonicalPath());
-	if (!curdirectory.isEmpty())
-	{
-		if (directoryComboBox->findText(curdirectory) == -1)
-		{
-			directoryComboBox->addItem(curdirectory);
-		}
-		directoryComboBox->setCurrentIndex(directoryComboBox->findText(curdirectory));
-	}
 }
 QPushButton *ScreenShotDialog::createButton(const QString &text, const char *member)
 {
@@ -73,6 +62,20 @@ QComboBox *ScreenShotDialog::createComboBox(const QString &text)
 	comboBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 	return comboBox;
 }
+// Specify folder to save file
+void ScreenShotDialog::Browse()
+{
+	curdirectory = 	QFileDialog::getExistingDirectory(this, tr("Directory"), 
+															QFileInfo(imageDir).dir().canonicalPath());
+	if (!curdirectory.isEmpty())
+	{
+		if (directoryComboBox->findText(curdirectory) == -1)
+		{
+			directoryComboBox->addItem(curdirectory);
+		}
+		directoryComboBox->setCurrentIndex(directoryComboBox->findText(curdirectory));
+	}
+}
 void ScreenShotDialog::save()
 {
 	//check if directory exist, otherwise make directory
@@ -86,6 +89,7 @@ void ScreenShotDialog::save()
 
 	QDialog::accept(); //save and close export cell dialog
 }
+// Return the directory, filename, and magnification factor
 QString ScreenShotDialog::getDir()
 {
 	return curdirectory;
@@ -98,4 +102,8 @@ QString ScreenShotDialog::getfileName()
 int ScreenShotDialog::getMagnification()
 {
 	return magnifynum;
+}
+bool ScreenShotDialog::getSave()
+{
+	return saveclicked;
 }

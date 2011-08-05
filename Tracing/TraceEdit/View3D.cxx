@@ -100,8 +100,6 @@ v7: new GUI and file control
 #include "ImageActors.h"
 #include "ftkCommon/ftkProjectManager.h"
 #include "View3D.h"
-#include "cellexport.h"
-#include "screenshot.h"
 
 View3D::View3D(QWidget *parent)
 : QMainWindow(parent)
@@ -1780,13 +1778,6 @@ void View3D::rotationOptions()
 
 	//std::cout << projection_base.roll << " " << projection_base.azimuth << " " << projection_base.elevation << std::endl;
 }
-
-//void View3D::projectionAlongAxis(int projection_axis)
-//{
-//	this->projection_axis = projection_axis;
-//	this->SetProjectionMethod(projectionStyle);
-//}
-
 void View3D::SetProjectionMethod(int style)
 {
 	this->projectionStyle = style;
@@ -4748,10 +4739,10 @@ void View3D::AutoCellExport()
 		curdirectoryjpg = cellexportDialog->getJPGDir();
 		swcfileName = cellexportDialog->getSWCfileName();
 		jpgfileName = cellexportDialog->getJPGfileName();
-		changeswcfileName = cellexportDialog->keeporiginalSWCfileName();
-		changejpgfileName = cellexportDialog->keeporiginalJPGfileName();
+		changeswcfileName = cellexportDialog->differentSWCfileName();
+		changejpgfileName = cellexportDialog->differentJPGfileName();
 		
-		if (!curdirectoryswc.isEmpty() || !curdirectoryjpg.isEmpty())
+		if (cellexportDialog->getSave())
 		{
 			QProgressDialog progress("Finding Cells", "Abort", 0, cellCount, this);
 			progress.setWindowModality(Qt::WindowModal);
@@ -4773,11 +4764,12 @@ void View3D::AutoCellExport()
 				std::vector<TraceLine*> roots;
 				roots.push_back(currCell->getRootTrace());
 				int cellNum = i+1;
+				// if change swc filename and assign a number
 				if (changeswcfileName)
 				{
 					if (!swcfileName.isEmpty())
 					{
-						cellName = swcfileName;
+						cellName = swcfileName + QString("%1").arg(cellNum);;
 					}
 					else
 					{
@@ -4786,11 +4778,12 @@ void View3D::AutoCellExport()
 				}
 				QString swcFileName = curdirectoryswc % "/" % cellName % QString(".swc");
 				this->tobj->WriteToSWCFile(roots, swcFileName.toStdString().c_str());
+				// if change jpg filename and assign a number
 				if (changejpgfileName)
 				{
 					if (!jpgfileName.isEmpty())
 					{
-						cellName = jpgfileName;
+						cellName = jpgfileName + QString("%1").arg(cellNum);
 					}
 					else
 					{
