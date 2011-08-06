@@ -35,12 +35,14 @@
 #include <ftkCommon/ftkUtils.h>
 #include <ftkFeatures/ftkObject.h>
 #include <yousef_core/yousef_seg.h>
+#include <cellTracker/ftkTrackFeatures.h>
 
 #include <vtkSmartPointer.h>
 #include <vtkTable.h>
 
 #include <map>
 #include <set>
+
 
 namespace ftk
 { 
@@ -111,9 +113,7 @@ public:
 	ftk::Image::Pointer GetDataImage(void){ return dataImage; };	
 	ftk::Image::Pointer GetLabelImage(void){ return labelImage; };
 	std::map<int, ftk::Object::Point> * GetCenterMapPointer(){ return &centerMap; };
-	//std::vector<std::map<int, ftk::Object::Point>>  GetCenterMapVectorPointer(){ return centerMap4DImage; };		// Overloaded function for time dimension
 	std::map<int, ftk::Object::Box> * GetBoundingBoxMapPointer(){ return &bBoxMap; };	
-	//std::vector<std::map<int, ftk::Object::Box>> GetBoundingBoxMapVectorPointer(){ return bBoxMap4DImage; };	// Overloaded function for time dimension		
 	std::vector<std::map<int, ftk::Object::Point>>  centerMap4DImage;
 	std::vector<std::map<int, ftk::Object::Box>> bBoxMap4DImage;	
 	std::vector<std::vector<ftk::IntrinsicFeatures>> featureVector4DImage;
@@ -127,6 +127,8 @@ public:
 	void SetCurrentbBox(std::map<int, ftk::Object::Box> currentbBoxMap); // To set the current bBox to store edit information when time series is loaded
 	void AddTimeToMegaTable();
 
+	//Set Data:
+	void SetTrackFeatures(std::vector<std::vector<ftk::TrackPointFeatures>> trackfeatures);
 
 protected:
 	std::string errorMessage;
@@ -146,8 +148,6 @@ protected:
 	//Geometry information that is kept for editing purposes:
 	std::map<int, ftk::Object::Box>		bBoxMap;			//Bounding boxes
 	std::map<int, ftk::Object::Point>	centerMap;			//Centroids
-	//Geometry and feature information for 4D Images:
-	//std::vector<std::vector<ftk::IntrinsicFeatures>> featureVector4DImage;
 
 
 
@@ -169,11 +169,16 @@ protected:
 	std::vector<int> GetNeighbors(int id);
 	vtkSmartPointer<vtkTable> featureVectorTovtkTable(std::vector<ftk::IntrinsicFeatures> featurevector);
 	void NuclearSegmentation::createMegaTable();	
-	
 	//FOR PRINTING SEEDS IMAGE:
 	void Cleandptr(unsigned short*x,vector<int> y );
 	void Restoredptr(unsigned short* );
 	std::list<int> negativeseeds;
+
+	//Add Tracking Features:
+	std::vector<std::vector<ftk::TrackPointFeatures>> nucsegTrackFeatures;
+	std::vector<ftk::TrackPointFeatures> currentTrackFeatures; // means current time
+	void setCurrentTrackFeatures(int time);
+
 
 //********************************************************************************************
 //********************************************************************************************
