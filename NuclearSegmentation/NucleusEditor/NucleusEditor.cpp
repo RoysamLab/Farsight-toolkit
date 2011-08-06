@@ -72,6 +72,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	table = NULL;
 	NucAdjTable = NULL;
 	CellAdjTable = NULL;
+	mfcellTracker = NULL;
 	
 	kplsRun = 0;	//This flag gets set after kpls has run to make sure we show the colored centroids!!
 	trainName = 0;
@@ -552,6 +553,17 @@ void NucleusEditor::createMenus()
 	queryViewsOffAction->setShortcut(tr("Shift+O"));
     connect(queryViewsOffAction, SIGNAL(triggered()), this, SLOT(queryViewsOff()));
     queriesMenu->addAction(queryViewsOffAction);
+
+	//5-D MENU
+	fiveDMenu = menuBar()->addMenu(tr("5D"));
+
+	trackingAction = new QAction(tr("Run Tracking"),this);
+	connect(trackingAction, SIGNAL(triggered()), this, SLOT(startTracking()));
+	fiveDMenu->addAction(trackingAction);
+
+	kymoViewAction = new QAction(tr("View Kymograph"),this);
+	connect(kymoViewAction, SIGNAL(triggered()), this, SLOT(displayKymoGraph()));
+	fiveDMenu->addAction(kymoViewAction);
 
 	//HELP MENU
 	helpMenu = menuBar()->addMenu(tr("Help"));
@@ -2239,7 +2251,48 @@ void NucleusEditor::startTraining()
 	connect(d, SIGNAL(changedTable()), this, SLOT(updateViews()));
 	d->show();
 }
+//**********************************************************************
+// SLOT: start tracking:
+//**********************************************************************
+void NucleusEditor::startTracking()
+{
+	if(!labImg) return;
+	if(!myImg) return;
+	if(myImg->GetImageInfo()->numTSlices <3) return;
 
+
+	TrackingDialog * trackdialog= new  TrackingDialog();
+	trackdialog->exec();
+	if(trackdialog->result())
+	{
+		this->closeViews();
+		mfcellTracker = new MultiFrameCellTracker();
+		mfcellTracker->setTrackParameters(trackdialog->getParameters());
+		mfcellTracker->settrackresultFolders(trackdialog->getFolders());
+		mfcellTracker->setTrackImages(myImg,labImg);
+		labImg = mfcellTracker->getTrackImages();
+
+		//Display Images Tables and Plots:
+		segView->SetLabelImage(labImg, selection);
+		this->updateNucSeg();  
+		table = nucSeg->table4DImage.at(segView->GetCurrentTimeVal());
+		CreateNewTableWindow();
+		CreateNewPlotWindow();
+		nucSeg->SetCurrentbBox(nucSeg->bBoxMap4DImage.at(segView->GetCurrentTimeVal()));
+	}
+
+
+}
+//**********************************************************************
+// SLOT: start kymograph view:
+//**********************************************************************
+void NucleusEditor::displayKymoGraph()
+{
+	if(!labImg) return;
+	if(!myImg) return;
+	kymoView = new TrackingKymoView(myImg,nucSeg->featureVector4DImage);
+
+}
 //**********************************************************************
 // SLOT: start the pattern analysis widget:
 //**********************************************************************
@@ -2889,11 +2942,13 @@ void NucleusEditor::updateNucSeg(bool ask)
 	nucSeg = new ftk::NuclearSegmentation();
 	nucSeg->SetInput(myImg,"nuc_img", nucChannel);
 	nucSeg->SetLabelImage(labImg,"lab_img");
-
-	//Amin: check if image is at least 4D:
 	const ftk::Image::Info * imInfo = labImg->GetImageInfo();
 	if (imInfo->numTSlices > 1)
 	{
+		if(mfcellTracker)
+		{
+			nucSeg->SetTrackFeatures(mfcellTracker->getTrackFeatures());// needs to be called before ComputeAllGeometries.
+		}
 		nucSeg->ComputeAllGeometries(imInfo->numTSlices);
 		segView->SetCenterMapVectorPointer(nucSeg->centerMap4DImage);
 		segView->SetBoundingBoxMapVectorPointer(nucSeg->bBoxMap4DImage);

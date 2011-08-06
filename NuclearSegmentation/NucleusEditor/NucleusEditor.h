@@ -61,6 +61,10 @@
 #include "ActiveLearningDialog.h"
 #include "GalleryDialog.h"
 
+#include "KymoGraphView.h" 
+#include "TrackingDialog.h"
+#include "cellTracker/MultiFrameCellTracker.h"
+
 //Farsight Includes:
 #include "NuclearSegmentation/ftkNuclearSegmentation.h"
 #include "NuclearSegmentation/CytoplasmSegmentation/CytoplasmSegmentation.h"
@@ -110,7 +114,6 @@ protected slots:
 	//Loading:
 	void askLoadImage(void);
 	void loadImage(QString fileName);
-	//Amin Loading
 	void askload5DImage(void);
 	void load5DImage(std::vector<QStringList> filesChannTimeList, int numChann);
 
@@ -232,8 +235,9 @@ protected slots:
 	void SaveActiveLearningResults(void);
 	//******************************************************
 	//5D Views Menu
+	void startTracking(void);
+	void displayKymoGraph(void);
 	void about(void);
-
 	void menusEnabled(bool val);
 
 signals:
@@ -261,11 +265,9 @@ protected:
 
 	QMenu *fileMenu;
 	QAction *loadImageAction;
-	//Amin: 
 	QAction *load5DImageAction;
 	QAction *load5DLabelImageAction;
 
-	//
 	QAction *loadLabelAction;
 	QAction *loadTableAction;
 	QAction *loadProjectAction;
@@ -350,8 +352,9 @@ protected:
 	QAction *queryViewsOffAction;
 
 	//For 5D Image Menu
-	QMenu *view5DMenu;
-
+	QMenu * fiveDMenu;
+	QAction * trackingAction;
+	QAction * kymoViewAction;
 	//************************************************************************
 	//Preprocess menu
 	QMenu *PreprocessMenu;
@@ -383,6 +386,9 @@ protected:
 	//Amin
 	ftk::Image::PtrMode mode;
 	std::vector<QStringList> * filesChannTimeList;
+	TrackingKymoView * kymoView;
+	MultiFrameCellTracker * mfcellTracker;
+
 
 	ObjectSelection * selection;				//object selection list
 	vtkSmartPointer<vtkTable> table;			//table
