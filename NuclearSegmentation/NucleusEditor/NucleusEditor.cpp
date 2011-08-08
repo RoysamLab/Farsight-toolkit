@@ -72,7 +72,9 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	table = NULL;
 	NucAdjTable = NULL;
 	CellAdjTable = NULL;
+#ifdef USE_TRACKING
 	mfcellTracker = NULL;
+#endif
 	
 	kplsRun = 0;	//This flag gets set after kpls has run to make sure we show the colored centroids!!
 	trainName = 0;
@@ -554,6 +556,7 @@ void NucleusEditor::createMenus()
     connect(queryViewsOffAction, SIGNAL(triggered()), this, SLOT(queryViewsOff()));
     queriesMenu->addAction(queryViewsOffAction);
 
+#ifdef USE_TRACKING
 	//5-D MENU
 	fiveDMenu = menuBar()->addMenu(tr("5D"));
 
@@ -564,6 +567,7 @@ void NucleusEditor::createMenus()
 	kymoViewAction = new QAction(tr("View Kymograph"),this);
 	connect(kymoViewAction, SIGNAL(triggered()), this, SLOT(displayKymoGraph()));
 	fiveDMenu->addAction(kymoViewAction);
+#endif
 
 	//HELP MENU
 	helpMenu = menuBar()->addMenu(tr("Help"));
@@ -2251,9 +2255,11 @@ void NucleusEditor::startTraining()
 	connect(d, SIGNAL(changedTable()), this, SLOT(updateViews()));
 	d->show();
 }
+
 //**********************************************************************
 // SLOT: start tracking:
 //**********************************************************************
+#ifdef USE_TRACKING
 void NucleusEditor::startTracking()
 {
 	if(!labImg) return;
@@ -2280,8 +2286,6 @@ void NucleusEditor::startTracking()
 		CreateNewPlotWindow();
 		nucSeg->SetCurrentbBox(nucSeg->bBoxMap4DImage.at(segView->GetCurrentTimeVal()));
 	}
-
-
 }
 //**********************************************************************
 // SLOT: start kymograph view:
@@ -2293,6 +2297,7 @@ void NucleusEditor::displayKymoGraph()
 	kymoView = new TrackingKymoView(myImg,nucSeg->featureVector4DImage);
 
 }
+#endif
 //**********************************************************************
 // SLOT: start the pattern analysis widget:
 //**********************************************************************
@@ -2943,12 +2948,14 @@ void NucleusEditor::updateNucSeg(bool ask)
 	nucSeg->SetInput(myImg,"nuc_img", nucChannel);
 	nucSeg->SetLabelImage(labImg,"lab_img");
 	const ftk::Image::Info * imInfo = labImg->GetImageInfo();
+
+#ifdef USE_TRACKING
+	if ((imInfo->numTSlices > 1)&& mfcellTracker)
+		nucSeg->SetTrackFeatures(mfcellTracker->getTrackFeatures());// needs to be called before ComputeAllGeometries.
+#endif
+
 	if (imInfo->numTSlices > 1)
 	{
-		if(mfcellTracker)
-		{
-			nucSeg->SetTrackFeatures(mfcellTracker->getTrackFeatures());// needs to be called before ComputeAllGeometries.
-		}
 		nucSeg->ComputeAllGeometries(imInfo->numTSlices);
 		segView->SetCenterMapVectorPointer(nucSeg->centerMap4DImage);
 		segView->SetBoundingBoxMapVectorPointer(nucSeg->bBoxMap4DImage);

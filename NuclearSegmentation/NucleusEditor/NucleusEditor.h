@@ -61,9 +61,11 @@
 #include "ActiveLearningDialog.h"
 #include "GalleryDialog.h"
 
+#ifdef USE_TRACKING
 #include "KymoGraphView.h" 
 #include "TrackingDialog.h"
 #include "cellTracker/MultiFrameCellTracker.h"
+#endif
 
 //Farsight Includes:
 #include "NuclearSegmentation/ftkNuclearSegmentation.h"
@@ -235,8 +237,11 @@ protected slots:
 	void SaveActiveLearningResults(void);
 	//******************************************************
 	//5D Views Menu
+#ifdef USE_TRACKING
 	void startTracking(void);
 	void displayKymoGraph(void);
+#endif
+
 	void about(void);
 	void menusEnabled(bool val);
 
@@ -351,10 +356,12 @@ protected:
     QAction *inRadiusNeighborsAction;
 	QAction *queryViewsOffAction;
 
+#ifdef USE_TRACKING
 	//For 5D Image Menu
 	QMenu * fiveDMenu;
 	QAction * trackingAction;
 	QAction * kymoViewAction;
+#endif
 	//************************************************************************
 	//Preprocess menu
 	QMenu *PreprocessMenu;
@@ -386,9 +393,11 @@ protected:
 	//Amin
 	ftk::Image::PtrMode mode;
 	std::vector<QStringList> * filesChannTimeList;
+
+#ifdef USE_TRACKING
 	TrackingKymoView * kymoView;
 	MultiFrameCellTracker * mfcellTracker;
-
+#endif
 
 	ObjectSelection * selection;				//object selection list
 	vtkSmartPointer<vtkTable> table;			//table

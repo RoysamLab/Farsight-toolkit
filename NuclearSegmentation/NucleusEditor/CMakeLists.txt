@@ -6,11 +6,8 @@ SET( NucleusEditor_SRCS
   ftkProjectDefinition.cpp
   ftkProjectProcessor.cpp
   ftkProjectFiles.cpp
-  KymoGraphView.cpp
-  Trace.cpp
   ActiveLearningDialog.cpp
   GalleryDialog.cpp	
-  TrackingDialog.cpp
 )
 
 SET( NucleusEditor_HDRS
@@ -21,11 +18,8 @@ SET( NucleusEditor_HDRS
   ftkProjectDefinition.h
   ftkProjectProcessor.h
   ftkProjectFiles.h
-  KymoGraphView.h
-  Trace.h
   ActiveLearningDialog.h
   GalleryDialog.h
-  TrackingDialog.h
 )
 
 SET( NucleusEditor_MOC_REQD_HDRS
@@ -33,11 +27,8 @@ SET( NucleusEditor_MOC_REQD_HDRS
   ProjectFilenamesDialog.h 
   ExclusionDialog.h
   PreferencesDialog.h
-  KymoGraphView.h
-  Trace.h
   ActiveLearningDialog.h
   GalleryDialog.h  
-  TrackingDialog.h
 )
 
 SET( NucleusEditor_UIS
@@ -47,23 +38,47 @@ SET( NucleusEditor_RCS
   icons.qrc
 )
 
-FIND_PACKAGE(CPLEX)
-FIND_PACKAGE(CONCERT)
-IF(CPLEX_FOUND)
-	INCLUDE_DIRECTORIES(${CPLEX_INCLUDE_DIRS})
-ENDIF(CPLEX_FOUND)
-IF(CONCERT_FOUND)
-	INCLUDE_DIRECTORIES(${CONCERT_INCLUDE_DIRS})
-ENDIF(CONCERT_FOUND)
-ADD_DEFINITIONS(-DIL_STD)
+# This part makes sure to include the necessary modification 
+# if tracking is to be used with nucleus editor:
+IF (USE_TRACKING)
+SET( NucleusEditor_SRCS
+	${NucleusEditor_SRCS}
+	KymoGraphView.cpp
+	Trace.cpp
+	TrackingDialog.cpp
+	)		
+SET( NucleusEditor_HDRS
+	${NucleusEditor_HDRS}
+	KymoGraphView.h
+	Trace.h
+	TrackingDialog.h
+	)
+SET( NucleusEditor_MOC_REQD_HDRS
+	${NucleusEditor_MOC_SRCS}
+	KymoGraphView.h
+	Trace.h
+	TrackingDialog.h
+	)
+	FIND_PACKAGE(CPLEX)
+	FIND_PACKAGE(CONCERT)
+	IF(CPLEX_FOUND)
+		INCLUDE_DIRECTORIES(${CPLEX_INCLUDE_DIRS})
+	ENDIF(CPLEX_FOUND)
+	IF(CONCERT_FOUND)
+		INCLUDE_DIRECTORIES(${CONCERT_INCLUDE_DIRS})
+	ENDIF(CONCERT_FOUND)
+	ADD_DEFINITIONS(-DIL_STD)
+	
+	IF (MSVC)
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /FORCE:MULTIPLE")
+		set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /FORCE:MULTIPLE")
+		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /FORCE:MULTIPLE")
+	ENDIF (MSVC)	
+ENDIF (USE_TRACKING)
 
 FIND_PACKAGE(Boost)
 
-IF (MSVC)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /FORCE:MULTIPLE")
-    set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /FORCE:MULTIPLE")
-	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /FORCE:MULTIPLE")
-ENDIF (MSVC)
+
 
 LINK_DIRECTORIES ( ${Boost_LIBRARY_DIRS})
 INCLUDE_DIRECTORIES ( ${Boost_INCLUDE_DIRS})
@@ -86,7 +101,12 @@ ADD_EXECUTABLE( NucleusEditor ${EXE_TYPE}
                 ${NucleusEditor_UI_HDRS}
                 ${NucleusEditor_RC_SRCS} )
 
-TARGET_LINK_LIBRARIES( NucleusEditor ${QT_LIBRARIES} CellTrackerLib ftkGraphs ftkGUI ftkImage ftkCommon ftkFeatures libSVM vtkVolumeRendering QVTK NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis NESQLITE sqlite3 MCLR ITKCommon)
+TARGET_LINK_LIBRARIES( NucleusEditor ${QT_LIBRARIES} ftkGraphs ftkGUI ftkImage ftkCommon ftkFeatures libSVM vtkVolumeRendering QVTK NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis NESQLITE sqlite3 MCLR ITKCommon)
+
+
+IF (USE_TRACKING)
+	TARGET_LINK_LIBRARIES( NucleusEditor CellTrackerLib)
+ENDIF (USE_TRACKING)
 
 ADD_EXECUTABLE( projproc processor_main.cpp ftkProjectProcessor.cpp ftkProjectDefinition.cpp)
 TARGET_LINK_LIBRARIES( projproc ${QT_LIBRARIES}  ftkGraphs ftkGUI ftkImage ftkCommon ftkFeatures NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis NESQLITE sqlite3 MCLR)
