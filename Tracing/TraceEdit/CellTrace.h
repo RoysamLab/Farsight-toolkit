@@ -40,6 +40,7 @@ public:
 	std::string GetFileName();
 	void getSomaCoord(double xyz[]);
 	void getCellBounds(double bounds[]);
+	void setDistanceToROI(double newDistance);
 private:
 	void clearAll();
 	void MaxMin(double NewValue, double &total, double &Min, double &Max);
@@ -82,6 +83,8 @@ public:
 
 	double Azimuth, AzimuthMin, AzimuthMax;
 	double Elevation, ElevationMin, ElevationMax;
+
+	double DeviceDistance;
 	
 private:
 	//double daughterRatioAverage, parentDaughterRatioAverage, partitionAsymmetryAverage, rallPowerAverage, PkAverage, Pk_2Average, Pk_classicAverage;

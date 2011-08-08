@@ -1183,7 +1183,10 @@ void View3D::CreateGUIObjects()
 	this->createNewBitButton->setShortcut(QKeySequence(Qt::Key_P));
 
 	this->createNewROIPointButton = new QPushButton("Create New ROI point", this->CentralWidget);
-	connect(this->createNewROIPointButton, SIGNAL(clicked()), this, SLOT(DrawROI()));
+	connect(this->createNewROIPointButton, SIGNAL(clicked()), this, SLOT(AddROIPoint()));
+
+	this->ExtrudeROIButton = new QPushButton("Extrude ROI points", this->CentralWidget);
+	connect(this->ExtrudeROIButton, SIGNAL(clicked()), this, SLOT(DrawROI()));
 
 	this->ShowPointer = new QCheckBox("Use 3D Cursor", this->CentralWidget);
 	this->ShowPointer->setStatusTip("Show Pointer Automatically?");
@@ -1459,6 +1462,7 @@ void View3D::CreateLayout()
 	CursorToolsLayout->addWidget(this->setSoma);
 	CursorToolsLayout->addWidget(this->createNewBitButton);
 	CursorToolsLayout->addWidget(this->createNewROIPointButton);
+	CursorToolsLayout->addWidget(this->ExtrudeROIButton);
 	CursorToolsLayout->addStretch();
 
 	this->CursorActionsWidget->setMaximumSize(256,256);
@@ -2446,19 +2450,47 @@ void View3D::createNewTraceBit()
 		}//end stems size = 1
 	}
 }
+void View3D::AddROIPoint()
+{
+	if (this->pointer3d->GetEnabled())
+	{	
+		if (this->ROIPoints.size() >= 4)
+		{
+			this->ROIPoints.erase(this->ROIPoints.begin());
+		}
+		double* newPT = new double[3];
+		this->pointer3d->GetPosition(newPT);
+		std::cout << "adding point xyz " << newPT[0] << " " << newPT[1] << " " << newPT[2] << " \n" ;
+		this->ROIPoints.push_back(newPT);
+	}
+}
 void View3D::DrawROI()
 {
-	double p0[3] = {0.0, 0.0, 0.0};
-	double p1[3] = {100.0, 0.0, 0.0};
-	double p2[3] = {100.0, 100.0, 0.0};
-	double p3[3] = {0.0, 100.0, 0.0};
+	if (this->ROIPoints.size() != 4)
+	{
+		std::cout<< "not enough points\n";
+		return;
+	}
+	//double p0[3] = {0.0, 0.0, 0.0};
+	//double p1[3] = {100.0, 0.0, 0.0};
+	//double p2[3] = {100.0, 100.0, 0.0};
+	//double p3[3] = {0.0, 100.0, 0.0};
 
-	// Add the points to a vtkPoints object
-	vtkSmartPointer<vtkPoints> ROIpoints = vtkSmartPointer<vtkPoints>::New();
-	ROIpoints->InsertNextPoint(p0);
-	ROIpoints->InsertNextPoint(p1);
-	ROIpoints->InsertNextPoint(p2);
-	ROIpoints->InsertNextPoint(p3);
+	//// Add the points to a vtkPoints object
+	vtkSmartPointer<vtkPoints> vtkROIpoints = vtkSmartPointer<vtkPoints>::New();
+	//ROIpoints->InsertNextPoint(p0);
+	//ROIpoints->InsertNextPoint(p1);
+	//ROIpoints->InsertNextPoint(p2);
+	//ROIpoints->InsertNextPoint(p3);
+	std::vector<double*>::iterator ROIPoints_iter;
+
+	for (ROIPoints_iter = ROIPoints.begin(); ROIPoints_iter != ROIPoints.end(); ROIPoints_iter++)
+	{
+		vtkROIpoints->InsertNextPoint(*ROIPoints_iter);
+		std::cout << "Poppping point: " << (*ROIPoints_iter)[0] << " " << (*ROIPoints_iter)[1] << " " << (*ROIPoints_iter)[2] << std::endl;
+		delete *ROIPoints_iter;
+		*ROIPoints_iter = NULL;
+	}
 
 	// Create a quad on the four points
 	vtkSmartPointer<vtkQuad> ROIquad = vtkSmartPointer<vtkQuad>::New();
@@ -2471,7 +2503,7 @@ void View3D::DrawROI()
 
 	// Create a polydata to store everything in
 	vtkSmartPointer<vtkPolyData> ROIpolydata = vtkSmartPointer<vtkPolyData>::New();
-	ROIpolydata->SetPoints(ROIpoints);
+	ROIpolydata->SetPoints(vtkROIpoints);
 	ROIpolydata->SetPolys(ROIquads);
 
 	vtkSmartPointer<vtkLinearExtrusionFilter> extrude = vtkSmartPointer<vtkLinearExtrusionFilter>::New();
@@ -2490,19 +2522,30 @@ void View3D::DrawROI()
 	vtkSmartPointer<vtkCellLocator> cellLocator = vtkSmartPointer<vtkCellLocator>::New();
 	cellLocator->SetDataSet(extrude->GetOutput());
 	cellLocator->BuildLocator();
-	double testPoint[3] = {500, 600, 50};
-
-	//Find the closest points to TestPoint
-	double closestPoint[3];//the coordinates of the closest point will be returned here
-	double closestPointDist2; //the squared distance to the closest point will be returned here
-	vtkIdType cellId; //the cell id of the cell containing the closest point will be returned here
-	int subId; //this is rarely used (in triangle strips only, I believe)
-	cellLocator->FindClosestPoint(testPoint, closestPoint, cellId, subId, closestPointDist2);
-
-	std::cout << "Coordinates of closest point: " << closestPoint[0] << " " << closestPoint[1] << " " << closestPoint[2] << std::endl;
-	std::cout << "distance to closest point: " << std::sqrt(closestPointDist2) << std::endl;
-	std::cout << "CellId: " << cellId << std::endl;
+	
+	int cellCount= this->CellModel->getCellCount();
+	if (cellCount >= 1)
+	{
+		for (int i = 0; i < cellCount; i++)
+		{
+			//double testPoint[3] = {500, 600, 50};
+			double testPoint[3];
+			CellTrace* currCell = this->CellModel->GetCellAtNoSelection( i);
+			currCell->getSomaCoord(testPoint);
+			//Find the closest points to TestPoint
+			double closestPoint[3];//the coordinates of the closest point will be returned here
+			double closestPointDist2; //the squared distance to the closest point will be returned here
+			vtkIdType cellId; //the cell id of the cell containing the closest point will be returned here
+			int subId; //this is rarely used (in triangle strips only, I believe)
+			cellLocator->FindClosestPoint(testPoint, closestPoint, cellId, subId, closestPointDist2);
+			currCell->setDistanceToROI( std::sqrt(closestPointDist2));
+			/*std::cout << "Coordinates of closest point: " << closestPoint[0] << " " << closestPoint[1] << " " << closestPoint[2] << std::endl;
+			std::cout << "distance to closest point: " << std::sqrt(closestPointDist2) << std::endl;
+			std::cout << "CellId: " << cellId << std::endl;*/
+		}//end for cell count
+	}
 	this->Renderer->AddActor(ROIactor);
+	this->Rerender();
 }
 /*Selections*/
 void View3D::updateTraceSelectionHighlights()

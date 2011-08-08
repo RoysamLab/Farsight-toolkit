@@ -174,6 +174,7 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Soma Volume");
 	this->headers.push_back("Soma Surface Area");
 	this->headers.push_back("Trace File");
+	this->headers.push_back("Distance to Device");
 	
 	
 	int numHeaders = (int)this->headers.size();
@@ -348,6 +349,20 @@ CellTrace * CellTraceModel::GetCellAt( int i)
 		currentCell = this->Cells.back();
 	}
 	this->Selection->select(currentCell->rootID());
+	return currentCell;
+}
+CellTrace * CellTraceModel::GetCellAtNoSelection( int i)
+{
+	CellTrace* currentCell;
+	if (i < this->Cells.size())
+	{
+		currentCell = this->Cells.at(i);
+	}
+	else
+	{
+		currentCell = this->Cells.back();
+	}
+	//this->Selection->select(currentCell->rootID());
 	return currentCell;
 }
 void CellTraceModel::WriteCellCoordsToFile(const char *fileName)

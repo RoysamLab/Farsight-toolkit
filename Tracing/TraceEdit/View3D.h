@@ -27,7 +27,7 @@ limitations under the License.
 #include <QtGui>
 #include <QDate>
 #include <QTime>
-
+#include "Dendrogram.h"
 //forward declarations
 class HistoWindow;
 class PlotWindow;
@@ -42,6 +42,7 @@ class CellTrace;
 class ImageRenderActors;
 class ProjectManager;
 class StatisticsToolbar;
+//class Dendrogram;
 
 class vtkActor;
 class vtkCallbackCommand;
@@ -183,6 +184,7 @@ public slots:
 	void setUsePointer(int i);
 	void createNewTraceBit();
 
+	void AddROIPoint();
 	void DrawROI();
 
 	void focusOn();
@@ -295,6 +297,7 @@ private:
 	QPushButton *setSoma;
 	QPushButton *createNewBitButton;
 	QPushButton *createNewROIPointButton;
+	QPushButton *ExtrudeROIButton;
 	QAction *FocusAction;
 	QAction *AutoCellExportAction;
 	QAction *ShowPlots;
@@ -319,6 +322,7 @@ private:
 	TableWindow * FL_MeasureTable;
 	PlotWindow *FL_MeasurePlot;
 	StatisticsToolbar * statisticsToolbar;
+	Dendrogram * CellFeatureDendrogram;
 
 	//Qt widgets for the settings window
 	QWidget *SettingsWidget;
@@ -372,6 +376,7 @@ private:
 	vtkSmartPointer<vtkPolyDataMapper> SphereMapper;
 	vtkSmartPointer<vtkActor> SphereActor;
 	//double pointer3DPos[3];
+	std::vector<double*> ROIPoints;
 	std::vector<TraceLine*> stems;
 	vtkSmartPointer<vtkAxesActor> axes;
 	vtkSmartPointer<vtkOrientationMarkerWidget> UCSMarker;
@@ -405,6 +410,5 @@ private:
 		double elevation;
 	} projection_base;
 	int projection_axis;
-	
 };
 #endif

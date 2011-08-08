@@ -46,6 +46,7 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 	this->somaSurface = this->segments[0]->GetSurfaceArea();
 	this->somaVolume = this->segments[0]->GetVolume();
 	this->SomaRadii = this->segments[0]->GetRadii();
+	this->DeviceDistance = this->segments[0]->GetDistanceToROI();
 
 	for(i = 0; i < this->segments.size(); i++)
 	{
@@ -170,6 +171,10 @@ void CellTrace::getCellBounds(double bounds[])
 	bounds[3] = this->maxY;
 	bounds[4] = this->minZ;
 	bounds[5] = this->maxZ;
+}
+void CellTrace::setDistanceToROI(double newDistance)
+{
+	this->segments[0]->SetDistanceToROI(newDistance);
 }
 void CellTrace::clearAll()
 {
@@ -317,6 +322,8 @@ void CellTrace::clearAll()
 	this->Elevation = 0;
 	this->ElevationMin = 180;
 	this->ElevationMax = 0;
+
+	this->DeviceDistance = 0;
 }
 void CellTrace::MaxMin(double NewValue, double &total, double &Min, double &Max)
 {
@@ -506,6 +513,7 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->somaVolume);
 	CellData->InsertNextValue(this->somaSurface);
 	CellData->InsertNextValue(this->GetFileName().c_str());
+	CellData->InsertNextValue(this->DeviceDistance);
 	//std::cout << this->FileName << std::endl;
 	return CellData;
 }
