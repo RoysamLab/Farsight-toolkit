@@ -29,6 +29,7 @@ OPTION( BUILD_EMBREX "Build Mark Embrecht's KPLS module" OFF )
 OPTION( BUILD_UNMIXING "Build Unmixing module" OFF )
 OPTION( BUILD_OPENMP "Build with OpenMP support (Note that only VS2008 Pro and VS2008 Team System supports OpenMP)" OFF)
 OPTION( BUILD_IMAGE_MANAGER  "Manage Image File Conversions and Directories" OFF)
+OPTION( USE_TRACKING "Use Tracking module with nucleus editor" OFF)
 
 OPTION( BUILD_MODEL_SEG "Build Statistical_Model_Segmentation (Note that it has dependency on glpk library)" OFF)
 OPTION( BUILD_ZERNIKE  " Build zernike_moments_calculattion " ON)
@@ -140,13 +141,8 @@ SUBDIRS( ftkGraphs )
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/tinyxml )
 SUBDIRS( tinyxml )
 
-INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/cellTracker )
-SUBDIRS( cellTracker )
-
-
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/PatternAnalysis )
 SUBDIRS( PatternAnalysis )
-
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Dendrogram )
 SUBDIRS( Dendrogram)
@@ -181,6 +177,14 @@ ENDIF( USE_SQLITE_DATABASE )
 IF(BUILD_MODEL_SEG)
 LINK_DIRECTORIES( ${PROJECT_SOURCE_DIR}/PatternAnalysis/glpk )
 ENDIF(BUILD_MODEL_SEG)
+
+IF (USE_TRACKING)
+	ADD_DEFINITIONS(-DUSE_TRACKING)
+	INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/cellTracker )
+	SUBDIRS( cellTracker )
+ENDIF (USE_TRACKING)
+	
+
 
 ####################################################################################
 ####################################################################################
