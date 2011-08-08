@@ -518,8 +518,10 @@ bool NuclearSegmentation::ComputeAllGeometries(int ntimes)
 		// We can easily update tables compared to featureVectors 
 		// when tables are loaded from files. Always better to refer to
 		// vtktable than feature vector from other classes
+#ifdef USE_TRACKING
 		if(!nucsegTrackFeatures.empty())
 			this->setCurrentTrackFeatures(t);
+#endif
 		table4DImage.push_back(featureVectorTovtkTable(featureVector));
 
 		bBoxMap.clear();
@@ -532,12 +534,14 @@ bool NuclearSegmentation::ComputeAllGeometries(int ntimes)
 
 	return true;
 }
+#ifdef USE_TRACKING
 //This function sets the the current trackfeatures data for table
 void NuclearSegmentation::setCurrentTrackFeatures(int time)
 {
 	currentTrackFeatures.clear();
 	currentTrackFeatures = nucsegTrackFeatures.at(time);
 }
+#endif
 
 // Loads a bunch of VTK tables and creates a mega table
 // CONDITION: All the tables should have the same number of columns
@@ -618,6 +622,7 @@ vtkSmartPointer<vtkTable> NuclearSegmentation::featureVectorTovtkTable(std::vect
 			table->AddColumn(column);
 	}
 
+#ifdef USE_TRACKING
 	//Add Tracking Features:
 	if(!nucsegTrackFeatures.empty())
 	{
@@ -628,7 +633,7 @@ vtkSmartPointer<vtkTable> NuclearSegmentation::featureVectorTovtkTable(std::vect
 			table->AddColumn(column);
 		}
 	}
-
+#endif
 	//Now populate the table:
 	for (int i=0; i<(int)featurevector.size(); ++i)
 	{
@@ -639,6 +644,7 @@ vtkSmartPointer<vtkTable> NuclearSegmentation::featureVectorTovtkTable(std::vect
 		{
 			row->InsertNextValue( vtkVariant(featurevector.at(i).ScalarFeatures[j]) );
 		}
+#ifdef USE_TRACKING
 		// Add Track Features:
 		if(!nucsegTrackFeatures.empty())
 		{
@@ -653,18 +659,19 @@ vtkSmartPointer<vtkTable> NuclearSegmentation::featureVectorTovtkTable(std::vect
 				}
 			}
 		}
+#endif
 		table->InsertNextRow(row);
 	}
 	return table;
 }
 
-
+#ifdef USE_TRACKING
 void NuclearSegmentation::SetTrackFeatures(std::vector<std::vector<ftk::TrackPointFeatures>> trackfeatures)
 {
 	nucsegTrackFeatures.clear();
 	nucsegTrackFeatures = trackfeatures;
 }
-
+#endif
 void NuclearSegmentation::updatetable4DImage(std::vector< vtkSmartPointer<vtkTable> > tableOfFeatures)
 {
 	table4DImage.clear();

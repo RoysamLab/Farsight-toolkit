@@ -30,12 +30,15 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
+#ifdef USE_TRACKING
+#include <cellTracker/ftkTrackFeatures.h>
+#endif
+
 #include <ftkImage/ftkImage.h>
 #include <ftkFeatures/ftkLabelImageToFeatures.h>
 #include <ftkCommon/ftkUtils.h>
 #include <ftkFeatures/ftkObject.h>
 #include <yousef_core/yousef_seg.h>
-#include <cellTracker/ftkTrackFeatures.h>
 
 #include <vtkSmartPointer.h>
 #include <vtkTable.h>
@@ -128,8 +131,9 @@ public:
 	void AddTimeToMegaTable();
 
 	//Set Data:
+#ifdef USE_TRACKING
 	void SetTrackFeatures(std::vector<std::vector<ftk::TrackPointFeatures>> trackfeatures);
-
+#endif
 protected:
 	std::string errorMessage;
 
@@ -174,11 +178,13 @@ protected:
 	void Restoredptr(unsigned short* );
 	std::list<int> negativeseeds;
 
+
+#ifdef USE_TRACKING
 	//Add Tracking Features:
 	std::vector<std::vector<ftk::TrackPointFeatures>> nucsegTrackFeatures;
 	std::vector<ftk::TrackPointFeatures> currentTrackFeatures; // means current time
 	void setCurrentTrackFeatures(int time);
-
+#endif
 
 //********************************************************************************************
 //********************************************************************************************
