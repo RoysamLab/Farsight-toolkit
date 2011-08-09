@@ -127,7 +127,7 @@ public:
 	vtkSmartPointer<vtkRenderer> Renderer;
 	vtkSmartPointer<vtkActor> BranchActor;
 	void ShowProjectTable();
-	std::vector<double> roiDistaces;
+	double *roiDistaces;
 
 public slots:
 	void choosetoRender(int row, int col);

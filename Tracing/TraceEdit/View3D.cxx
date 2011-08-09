@@ -363,6 +363,7 @@ void View3D::PreBoot(){
 			cellposxy.push_back( soma_cord[0] );
 			cellposxy.push_back( soma_cord[1] );
 		}
+		roiDistaces = new double[num_cells];
 		ROISelectionDialog *ROIdial = new ROISelectionDialog(roiDistaces, Image.at(0).toStdString(), cellposxy, this );
 		connect( ROIdial, SIGNAL(dialogClosed()), this, SLOT(ROISelAct()));
 		ROIdial->show();
@@ -4385,6 +4386,9 @@ void View3D::ShowCellAnalysis()
 {
 	this->HideCellAnalysis();
 	std::vector<CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
+	if( distancetoSoma )
+			for( int i=0; i<NewCells.size(); ++i)
+				NewCells.at(i)->setDistanceToROI( roiDistaces[i] );
 	if (NewCells.size() > 0)
 	{
 		this->CellModel->setCells(NewCells);

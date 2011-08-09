@@ -18,7 +18,7 @@ class ROISelectionDialog : public QMainWindow
 {
 	Q_OBJECT
 public:
-	ROISelectionDialog(std::vector<double> &distances, std::string &ImageName, std::vector<double> &cellposxy, QWidget *parent, Qt::WindowFlags flags = 0);
+	ROISelectionDialog(double *tedistances, std::string &ImageName, std::vector<double> &cellposxy, QWidget *parent, Qt::WindowFlags flags = 0);
 	~ROISelectionDialog();
 
 private slots:
@@ -38,7 +38,7 @@ private:
 
 	QSettings settings;
 
-	std::vector<double> distances;
+	double *distances;
 	std::string MyImageName;
 	ftk::Image::Pointer MyImg;
 	std::vector<double> Mycellpos;

@@ -1,6 +1,7 @@
 #include "ROISelection.h"
 
-ROISelectionDialog::ROISelectionDialog(std::vector<double> &distances, std::string &ImageName, std::vector<double> &cellposxy, QWidget *parent, Qt::WindowFlags flags): QMainWindow(parent,flags){
+ROISelectionDialog::ROISelectionDialog(double *tedistances, std::string &ImageName, std::vector<double> &cellposxy, QWidget *parent, Qt::WindowFlags flags): QMainWindow(parent,flags){
+	distances = tedistances;
 	MyImageName = ImageName;
 	Mycellpos = cellposxy;
 	num_cells = (int)(cellposxy.size()/2);
@@ -206,9 +207,9 @@ void ROISelectionDialog::UpdatedTable(void){
 		outputi[0] = (int)Mycellpos.at(i*2); outputi[1] = (int)Mycellpos.at(i*2+1);
 		pix_buf.SetIndex( outputi );
 		if( pix_buf.Get()>0 )
-			distances.push_back(pix_buf.Get());
+			distances[i] = pix_buf.Get();
 		else
-			distances.push_back( 0 );
+			distances[i] = 0;
 	}
 	remove("max_pr.tif");
 	QMainWindow::close();
