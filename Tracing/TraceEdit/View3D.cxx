@@ -378,6 +378,10 @@ void View3D::OkToBoot()
 }
 
 void View3D::ROISelAct(){
+	std::vector<CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
+	int num_cells = NewCells.size();
+	for( int i=0; i<NewCells.size(); ++i)
+		NewCells.at(i)->setDistanceToROI( roiDistaces[i] );
 	this->OkToBootContinue();
 }
 
@@ -4386,9 +4390,6 @@ void View3D::ShowCellAnalysis()
 {
 	this->HideCellAnalysis();
 	std::vector<CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
-	if( distancetoSoma )
-			for( int i=0; i<NewCells.size(); ++i)
-				NewCells.at(i)->setDistanceToROI( roiDistaces[i] );
 	if (NewCells.size() > 0)
 	{
 		this->CellModel->setCells(NewCells);
