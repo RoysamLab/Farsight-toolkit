@@ -27,7 +27,7 @@ limitations under the License.
 #include <QtGui>
 #include <QDate>
 #include <QTime>
-#include "Dendrogram.h"
+
 //forward declarations
 class HistoWindow;
 class PlotWindow;
@@ -322,7 +322,6 @@ private:
 	TableWindow * FL_MeasureTable;
 	PlotWindow *FL_MeasurePlot;
 	StatisticsToolbar * statisticsToolbar;
-	Dendrogram * CellFeatureDendrogram;
 
 	//Qt widgets for the settings window
 	QWidget *SettingsWidget;
