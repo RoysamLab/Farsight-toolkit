@@ -168,6 +168,7 @@ std::vector< std::pair<unsigned int, double> > kNearestObjects::k_nearest_neighb
 	
 		int count = 0;
 		unsigned int num_neighbors = k+1;
+		int increment = 10;
 		TreeType::InstanceIdentifierVectorType temp_vector;
 		
 		// repeat till the number of nearest neighbors is greater than or equal to k
@@ -211,7 +212,8 @@ std::vector< std::pair<unsigned int, double> > kNearestObjects::k_nearest_neighb
 				}
 			}
 
-			num_neighbors += 10;
+			increment = increment * 2;;
+			num_neighbors += increment;
 		}
 
 		// calculate the distance of each neighbor and store it in a vector of pairs
