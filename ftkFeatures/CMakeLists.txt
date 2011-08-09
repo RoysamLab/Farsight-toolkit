@@ -30,4 +30,3 @@ SUBDIRS(Qhull)
 TARGET_LINK_LIBRARIES( ftkFeatures TinyXML ftkImage
                        vtksys vtkCommon vtkFiltering vtkIO
                        ITKCommon ITKBasicFilters ITKIO ITKStatistics QHULL zernike)
-

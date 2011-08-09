@@ -57,7 +57,10 @@ limitations under the License.
 #include "ftkIntrinsicFeatures.h"
 #include "ftkObject.h"
 #include "ftkImage/ftkImage.h"
+
+#ifdef _ZERNIKE
 #include "Zernike/zernike.h"
+#endif
 
 #include <iostream>
 #include <sstream>
@@ -175,7 +178,7 @@ private:
 	bool RunLabelGeometryFilter();
 	bool RunLabelStatisticsFilter();
 	bool RunTextureFilter();
-	bool RunZernikeFilter();
+	void RunZernikeFilter();
 	void LabelImageScan();
 	void CalculateScanFeatures();
 	void SetHistogramParameters(int* numBins, int* lowerBound, int* upperBound);
