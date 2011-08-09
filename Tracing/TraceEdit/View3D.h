@@ -127,6 +127,7 @@ public:
 	vtkSmartPointer<vtkRenderer> Renderer;
 	vtkSmartPointer<vtkActor> BranchActor;
 	void ShowProjectTable();
+	std::vector<double> roiDistaces;
 
 public slots:
 	void choosetoRender(int row, int col);
@@ -186,6 +187,7 @@ public slots:
 
 	void AddROIPoint();
 	void DrawROI();
+	void ROISelAct();
 
 	void focusOn();
 	void setRenderFocus(double renderBounds[], int size);
@@ -194,7 +196,9 @@ public slots:
 	QString getTraceFile();
 	QString getImageFile();
 	QString getSomaFile();
+	void PreBoot();
 	void OkToBoot();
+	void OkToBootContinue();
 	void EditHelp();
 	void About();
 	void showStatistics(void);
@@ -237,6 +241,7 @@ private:
 	QGroupBox * ImageListBox;
 	QListView * ImageListView; 
 	QCheckBox * Use2DSlicer;
+	QCheckBox * UseROItoSoma;
 	bool translateImages;
 	QDate  Date;
 	QTime  Time;
@@ -389,6 +394,7 @@ private:
 	std::vector<VolumePointerType> m_volumes;
 
 	bool viewIn2D;
+	bool distancetoSoma;
 	int projectionStyle;
 	void createSlicerSlider();
 	void setSlicerBarValues(int i);

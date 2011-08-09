@@ -100,6 +100,7 @@ v7: new GUI and file control
 #include "ImageActors.h"
 #include "ftkCommon/ftkProjectManager.h"
 #include "View3D.h"
+#include "ROISelection.h"
 
 View3D::View3D(QWidget *parent)
 : QMainWindow(parent)
@@ -126,6 +127,7 @@ View3D::View3D(QWidget *parent)
 	//bool tracesLoaded = false;
 	this->translateImages = false;	//this is for testing a switch is needed
 	this->viewIn2D = this->TraceEditSettings.value("mainWin/use2d",false).toBool();
+	this->distancetoSoma = false;
 	this->renderTraceBits = false;
 	this->projectionStyle = 0;	//should me maximum projection
 	this->projection_axis = 2; // z projection
@@ -236,13 +238,16 @@ void View3D::CreateBootLoader()
 	this->BootProject = new QPushButton("Project", this->bootLoadFiles);
 	connect(this->BootProject, SIGNAL(clicked()), this, SLOT(LoadProject()));
 	this->Use2DSlicer = new QCheckBox;
+	this->UseROItoSoma = new QCheckBox;
 	this->Use2DSlicer->setChecked(this->viewIn2D);
+	this->UseROItoSoma->setChecked(this->distancetoSoma);
 	QFormLayout *LoadLayout = new QFormLayout(this->bootLoadFiles);
 	LoadLayout->addRow(tr("User Name "), this->GetAUserName);
 	LoadLayout->addRow(tr("Lab Name "), this->GetLab);
 	LoadLayout->addRow(tr("Trace Files"), this->BootTrace);
 	LoadLayout->addRow(tr("Image File"), this->BootImage);
 	LoadLayout->addRow(tr("Default Use Slicer"), this->Use2DSlicer);
+	LoadLayout->addRow(tr("ROI Distance To Somas"), this->UseROItoSoma);
 	LoadLayout->addRow(tr("Somas File"), this->BootSoma);
 	//LoadLayout->addRow(tr("uM Per Voxel"), this->scale);
 	LoadLayout->addRow(tr("Reload Previous Session"), this->Reload);
@@ -346,8 +351,36 @@ void View3D::ReloadState()
 	this->OkToBoot();
 }
 
+void View3D::PreBoot(){
+	this->distancetoSoma = this->UseROItoSoma->isChecked();
+	if( distancetoSoma && !this->Image.isEmpty() && !this->TraceFiles.isEmpty() ){
+		std::vector<double> cellposxy;
+		std::vector<CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
+		int num_cells = NewCells.size();
+		double soma_cord[3];
+		for (int i=0; i<num_cells; ++i){
+			NewCells.at(i)->getSomaCoord(soma_cord);
+			cellposxy.push_back( soma_cord[0] );
+			cellposxy.push_back( soma_cord[1] );
+		}
+		ROISelectionDialog *ROIdial = new ROISelectionDialog(roiDistaces, Image.at(0).toStdString(), cellposxy, this );
+		connect( ROIdial, SIGNAL(dialogClosed()), this, SLOT(ROISelAct()));
+		ROIdial->show();
+	}
+	else
+		this->OkToBootContinue();
+}
+
 void View3D::OkToBoot()
 {
+	this->PreBoot();
+}
+
+void View3D::ROISelAct(){
+	this->OkToBootContinue();
+}
+
+void View3D::OkToBootContinue(){
 	if(!this->TraceFiles.isEmpty() || !this->Image.isEmpty() || !this->SomaFile.isEmpty())
 	{
 		this->BootDock->hide();
