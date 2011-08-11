@@ -154,12 +154,14 @@ void PatternAnalysisWizard::initOptionGroup(void)
 	QRadioButton *createTrainButton = new QRadioButton(tr("Create Training Model... (using SEGMODEL)"));
 	QRadioButton *appendTrainButton = new QRadioButton(tr("Append Training Model... (using APPENDMODEL)"));
 	QRadioButton *activeButton = new QRadioButton(tr("Choose Features for Active Learning..."));
+	QRadioButton *activeModelButton = new QRadioButton(tr("Extract Table From Active Model..."));
 
 	optionGroup->addButton(outlierButton, 0);
 	optionGroup->addButton(classifyButton, 1);
 	optionGroup->addButton(createTrainButton, 2);
 	optionGroup->addButton(appendTrainButton, 3);
 	optionGroup->addButton(activeButton, 4);
+	optionGroup->addButton(activeModelButton, 5);
 
 	switch(m_module)
 		{
@@ -177,6 +179,9 @@ void PatternAnalysisWizard::initOptionGroup(void)
 				break;
 			case _ACTIVE:
 				activeButton->setChecked(true);
+				break;
+			case _ACTIVEMODEL:
+				activeModelButton->setChecked(true);
 				break;
 		}
 }
@@ -241,6 +246,9 @@ bool PatternAnalysisWizard::validateCurrentPage()
 					break;
 				case 4:
 					extractTable();
+					break;
+				case 5:
+					extractTableFromModel(mod_table);
 					break;
 
 			}
@@ -887,7 +895,7 @@ void PatternAnalysisWizard::saveModel(void)
 //****************************************************************************
 // Extract the table with the features selected by the user
 //****************************************************************************
-void PatternAnalysisWizard::extractTable(void)
+void PatternAnalysisWizard::extractTable()
 {	
 
 	extractedTable = true;
@@ -897,6 +905,7 @@ void PatternAnalysisWizard::extractTable(void)
 	for(int b = 0; b<buttons.size(); ++b)
 	{
 		//buttons.at(b)->setCheckable(false);
+		
 		if( buttons.at(b)->isChecked() )
 		{
 			if(featureGroup->id(buttons.at(b)) != 0)
@@ -939,6 +948,38 @@ void PatternAnalysisWizard::extractTable(void)
 		new_table->InsertNextRow(model_data1);
 	}
 
+}
+
+
+//****************************************************************************
+// Extract the table with the features present in the model
+//****************************************************************************
+void PatternAnalysisWizard::extractTableFromModel(vtkSmartPointer<vtkTable> mod_table)
+{	
+
+	extractedTable = true;
+    //Selected Features
+	
+	new_table = vtkSmartPointer<vtkTable>::New();
+	new_table->Initialize();
+
+	for(int col=0; col<(int)mod_table->GetNumberOfColumns(); ++col)
+	{
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( mod_table->GetColumnName(col) );
+		new_table->AddColumn(column);
+	}
+
+	for(int row=0; row<(int)m_table->GetNumberOfRows(); ++row)
+	{
+		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+		for(int col=0; col<(int)mod_table->GetNumberOfColumns(); ++col)
+		{
+			std::string column_name = mod_table->GetColumnName(col);
+			model_data1->InsertNextValue(m_table->GetValueByName(row,column_name.c_str()));
+
+		}
+	}
 }
 
 

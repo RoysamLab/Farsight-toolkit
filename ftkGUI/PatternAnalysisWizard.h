@@ -55,7 +55,7 @@ class PatternAnalysisWizard : public QWizard
 
 public:
 	enum { Page_Start, Page_Features, Page_Training, Page_Parameters, Page_Execute };
-	typedef enum { _SVM, _KPLS, _SEGMODEL, _APPENDMODEL,_ACTIVE } Module;
+	typedef enum { _SVM, _KPLS, _SEGMODEL, _APPENDMODEL, _ACTIVE, _ACTIVEMODEL } Module;
 
 	PatternAnalysisWizard(vtkSmartPointer<vtkTable> table, Module mod,
                         const char * trainColumn, const char * resultColumn,
@@ -68,6 +68,7 @@ public:
 	QString filename;
 	inline vtkSmartPointer<vtkTable>  getExtractedTable(){ return new_table;} 
 	bool extractedTable;
+	bool fromModel;
 	
 
 protected:
@@ -79,6 +80,7 @@ protected:
 	void runSVM();
 	void runKPLS();
 	void extractTable();
+	void extractTableFromModel(vtkSmartPointer<vtkTable>);
 	void saveModel(void);
 	void appendModel(vtkSmartPointer<vtkTable>, QString);
 
