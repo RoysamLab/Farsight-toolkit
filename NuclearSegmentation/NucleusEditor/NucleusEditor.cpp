@@ -3319,7 +3319,7 @@ int NucleusEditor::requestChannel(ftk::Image::Pointer img)
 	int ch=0;
 	for(int i=0; i<numChannels; ++i)
 	{
-		if( choice == QString::fromStdString(img->GetImageInfo()->channelNames.at(i)) )
+		if( choice == QString::number(i) + ". " + QString::fromStdString(img->GetImageInfo()->channelNames.at(i)) )
 		{
 			ch = i;
 			break;
@@ -3887,11 +3887,11 @@ void NucleusEditor::preprocessImage(void)
 	if(!myImg)
 		return;
 
+	//ask the user which channel they wish to preprocess
 	int nucChannel = 0;
 	if(myImg->GetImageInfo()->numChannels > 1)
 		nucChannel = this->requestChannel(myImg);
-
-	PreprocessDialog * dialog = new PreprocessDialog(lastPath,this);
+	PreprocessDialog * dialog = new PreprocessDialog(lastPath,this);	
 	dialog->SetImage( myImg->GetItkPtr<unsigned char>(0,nucChannel) );
 
 	if(dialog->exec())

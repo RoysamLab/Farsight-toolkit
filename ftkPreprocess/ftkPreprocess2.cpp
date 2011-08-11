@@ -552,7 +552,7 @@ void Preprocess::MedianFilter( int radiusX, int radiusY, int radiusZ)
 	ImageType3D::SizeType radius; 
 	radius[0] = radiusX; // radius along x 
 	radius[1] = radiusY; // radius along y 
-	radius[2] = radiusZ; // radius along y 
+	radius[2] = radiusZ; // radius along z 
 
 	typedef itk::MedianImageFilter<ImageType3D,ImageType3D> FilterType;
 	FilterType::Pointer filter = FilterType::New();
