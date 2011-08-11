@@ -235,6 +235,11 @@ protected slots:
 	void startActiveLearningMulti();
 	void BuildGallery();
 	void SaveActiveLearningResults(void);
+	void SaveActiveLearningModel();
+	void classifyFromActiveLearningModel();
+	vtkSmartPointer<vtkTable> loadActiveLearningModel(std::string filename);
+	void Perform_Classification(vnl_matrix<double> matrix, vnl_vector<double> vec_1, vnl_vector<double> vec_2, vtkSmartPointer<vtkTable> acm_table);
+	void Perform_Classification_Multi(vnl_matrix<double> matrix, vnl_vector<double> vec_1, vnl_vector<double> vec_2, vtkSmartPointer<vtkTable> acm_table);
 	//******************************************************
 	//5D Views Menu
 #ifdef USE_TRACKING
@@ -321,13 +326,15 @@ protected:
 	QAction *editNucleiAction;
 	QAction *svmAction;		//Start the One-Class SVM outlier detecter
 	QAction *databaseAction;
-	QMenu *classifyMenu;
 	QMenu *activeMenu;
-	QAction *trainAction;	//Train the KPLS Classifier
-	QAction *kplsAction;	//Start the KPLS Classifier
-	QAction *activeAction; // Active Learning 
-	QAction *showGalleryAction;
-	QAction *saveActiveResultsAction;
+		QAction *activeAction; // Active Learning 
+		QAction *showGalleryAction;
+		QAction *saveActiveResultsAction;
+		QAction *saveActiveLearningModelAction;
+		QAction *classifyFromActiveLearningModelAction;
+	QMenu *classifyMenu;
+		QAction *trainAction;	//Train the KPLS Classifier
+		QAction *kplsAction;	//Start the KPLS Classifier
 
 	//For Editing Menu
 	QMenu *editMenu;
@@ -407,6 +414,11 @@ protected:
 	ftk::ProjectDefinition projectDefinition;	//the project definition currently being used.
 	unsigned int kplsRun;
 	unsigned int activeRun;
+	vnl_matrix<double> act_learn_matrix;
+	double confidence_thresh;
+	vnl_vector<double> std_dev_vec;
+	vnl_vector<double> mean_vec;
+	std::vector< std::pair< std::string, vnl_vector<double> > >act_learn_model;
 	// Gallery contains both the image of the query nuclei and their class values
 	std::vector<std::pair<QImage,int> > gallery; 
 	//This does not belong here, but is a temporary fix:
@@ -453,6 +465,22 @@ private:
 	QComboBox *fileCombo;
 	QString lastPath;
 	QPushButton *okButton;
+};
+
+class ConfidenceThresholdDialog : public QDialog
+{
+	Q_OBJECT
+public:
+	ConfidenceThresholdDialog(QWidget *parent = 0);
+	double getConfThresh();
+
+private:
+	QLabel *confidenceLabel;
+	QLineEdit *conf_thresh;
+	QHBoxLayout *confLayout;
+	QPushButton *okButton;
+	QHBoxLayout *bLayout;
+	QVBoxLayout *layout;
 };
 
 class QueryDialog : public QDialog
