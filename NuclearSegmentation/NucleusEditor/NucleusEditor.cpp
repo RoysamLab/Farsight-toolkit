@@ -3887,10 +3887,14 @@ void NucleusEditor::preprocessImage(void)
 	if(!myImg)
 		return;
 
-	//ask the user which channel they wish to preprocess
+	//if multichannel image, ask the user which channel they wish to preprocess
 	int nucChannel = 0;
 	if(myImg->GetImageInfo()->numChannels > 1)
 		nucChannel = this->requestChannel(myImg);
+		if (nucChannel < 0) //user cancelled out of the channel dialog
+			return;
+
+	//start up the preprocessing dialog
 	PreprocessDialog * dialog = new PreprocessDialog(lastPath,this);	
 	dialog->SetImage( myImg->GetItkPtr<unsigned char>(0,nucChannel) );
 
