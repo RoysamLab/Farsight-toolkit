@@ -133,6 +133,24 @@ vnl_matrix <double> MCLR::tableToMatrix(vtkSmartPointer<vtkTable> table,std::vec
 	return FeatsMatrix;
 }
 
+vnl_matrix <double> MCLR::tableToMatrix(vtkSmartPointer<vtkTable> table)
+{
+	
+	vnl_matrix <double> FeatsMatrix(table->GetNumberOfRows(),table->GetNumberOfColumns());
+	vnl_matrix <double> FeatsMatrix_no_id(table->GetNumberOfRows(),table->GetNumberOfColumns()-1);
+
+	//extract data from the model and get min/max values:
+	for(unsigned int r=0; r < table->GetNumberOfRows() ; ++r)
+	{
+		for(int c=0; c< table->GetNumberOfColumns(); ++c)
+		{
+			FeatsMatrix.put(r,c,table->GetValue(r,c).ToDouble());
+		}
+	}
+	
+	return FeatsMatrix;
+}
+
 
 vnl_matrix <double> MCLR::Normalize_Feature_Matrix(vnl_matrix<double> feats)
 {
@@ -144,8 +162,30 @@ vnl_matrix <double> MCLR::Normalize_Feature_Matrix(vnl_matrix<double> feats)
 		stats.obs(temp_row);	
 	}
 
-	vnl_vector<double> std_vec = stats.sd();
-	vnl_vector<double> mean_vec = stats.mean();
+	std_vec = stats.sd();
+	mean_vec = stats.mean();
+	
+
+//The last column is the training column 
+	for(int i = 0; i<feats.columns() ; ++i)
+	{
+		vnl_vector<double> temp_col = feats.get_column(i);
+		if(std_vec(i) > 0)
+		{	
+			for(int j =0; j<temp_col.size() ; ++j)
+				temp_col[j] = (temp_col[j] - mean_vec(i))/std_vec(i) ;
+		}
+	
+		feats.set_column(i,temp_col);
+	}
+
+	return feats;
+}
+
+vnl_matrix <double> MCLR::Normalize_Feature_Matrix(vnl_matrix<double> feats, vnl_vector<double> vector_1, vnl_vector<double> vector_2)
+{
+	std_vec = vector_1;
+	mean_vec = vector_2;
 	
 
 //The last column is the training column 
@@ -1028,12 +1068,20 @@ vnl_vector<double> MCLR::Newton_Direction(vnl_matrix<double> hessian_matrix,vnl_
 }
 
 
-
 vnl_matrix<double> MCLR::Test_Current_Model(vnl_matrix<double> test_data)
 {	
 	vnl_matrix<double> f;
 	vnl_matrix<double> test_data_bias = Add_Bias(test_data);
 	f = Get_F_Matrix(test_data_bias,m.w);	
+	f = Normalize_F_Sum(f);
+	return f;
+}
+
+vnl_matrix<double> MCLR::Test_Current_Model(vnl_matrix<double> test_data, vnl_matrix<double> m_w_matrix)
+{	
+	vnl_matrix<double> f;
+	vnl_matrix<double> test_data_bias = Add_Bias(test_data);
+	f = Get_F_Matrix(test_data_bias,m_w_matrix);	
 	f = Normalize_F_Sum(f);
 	return f;
 }
