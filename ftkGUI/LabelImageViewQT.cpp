@@ -398,11 +398,11 @@ void LabelImageViewQT::SetBoundingBoxMapfromVectorPointer(int time)
 }
 
 
-void LabelImageViewQT::SetCenterMapVectorPointer(std::vector<std::map<int, ftk::Object::Point>> vectorcenterMap)
+void LabelImageViewQT::SetCenterMapVectorPointer(std::vector<std::map<int, ftk::Object::Point> > vectorcenterMap)
 {
 	centerMapVector = vectorcenterMap;
 }
-void LabelImageViewQT::SetBoundingBoxMapVectorPointer(std::vector<std::map<int, ftk::Object::Box>>  vectorboxMap)
+void LabelImageViewQT::SetBoundingBoxMapVectorPointer(std::vector<std::map<int, ftk::Object::Box> >  vectorboxMap)
 {
 	boxMapVector = vectorboxMap;
 }

@@ -1,8 +1,10 @@
 #ifndef DENDROGRAM_H_
 #define DENDROGRAM_H_
 
-#include <vector>
 #include <iostream>
+#include <vector>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include <vtkLookupTable.h>
 #include <vtkDataSetAttributes.h>
@@ -71,6 +73,8 @@
 #include <QIODevice>
 #include<QtGui/QWizard>
 #include <QVTKWidget.h>
+
+#include <ftkCommon/ftkUtils.h>
 
 #include "ObjectSelection.h"
 

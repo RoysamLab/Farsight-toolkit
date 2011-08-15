@@ -83,8 +83,8 @@ public:
 	void SetBoundingBoxMapPointer(std::map<int, ftk::Object::Box> * bMap = NULL);
 
 	// 5D-4D image functions:
-	void SetCenterMapVectorPointer(std::vector<std::map<int, ftk::Object::Point>> vectorcenterMap);
-	void SetBoundingBoxMapVectorPointer(std::vector<std::map<int, ftk::Object::Box>>  vectorboxMap);
+	void SetCenterMapVectorPointer(std::vector<std::map<int, ftk::Object::Point> > vectorcenterMap);
+	void SetBoundingBoxMapVectorPointer(std::vector<std::map<int, ftk::Object::Box> >  vectorboxMap);
 
 	void SetCenterMapfromVectorPointer(int time =0);
 	void SetBoundingBoxMapfromVectorPointer(int time =0);
@@ -236,8 +236,8 @@ protected:
 	std::map<int, ftk::Object::Point>::iterator it;
 	std::map<int, ftk::Object::Box> * bBoxMap;
 	// Amin: 4D images
-	std::vector<std::map  <int, ftk::Object::Point>>  centerMapVector;
-	std::vector<std::map  <int, ftk::Object::Box>> boxMapVector;
+	std::vector<std::map  <int, ftk::Object::Point> >  centerMapVector;
+	std::vector<std::map  <int, ftk::Object::Box> > boxMapVector;
 
 	std::map<int, int> classMap1;
 	std::map<int, int> classMap2;

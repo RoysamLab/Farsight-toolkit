@@ -18,6 +18,7 @@ Now,zernike moments are orthogonal on the unit circle(r==1) */
 ////////////////////////////
 
 
+namespace ftk{
 class zernike
 {
 	public:
@@ -38,8 +39,8 @@ class zernike
 		zernike(std::string imageFileName,int orderofmoments);
 		//if the input is  an ITK image pointer then call this constructor
 		zernike(ImageType::Pointer inputImage,int orderofmoments);
-		zernike::zernike();
-		zernike::~zernike();		
+		zernike();
+		~zernike();		
 		std::vector< std::vector<double> > GetZernike();
 		
     private: 	    	
@@ -72,6 +73,7 @@ class zernike
 		double* CalculateZernike(int p , int q);
 
 };
+} //end namespace ftk
 
 
 #endif

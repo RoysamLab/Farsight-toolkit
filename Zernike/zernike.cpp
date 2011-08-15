@@ -4,7 +4,7 @@
 /*THE CLASS ZERNIKE RETURNS THE ZERNIKE MOMENTS FOR GRAY SCALE IMAGES
 Now,zernike moments are orthogonal on the unit circle(r==1) */
 ////////////////////////////
-
+namespace ftk{
 zernike::zernike()
 {
 	M =0;
@@ -791,3 +791,5 @@ std::vector< std::vector<double> > zernike::GetZernike()
 //		} 
 //	}  
 //}
+
+} //end namespace ftk

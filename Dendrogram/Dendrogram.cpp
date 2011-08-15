@@ -589,14 +589,20 @@ std::cout << "Total time taken for processing the points is: " << ( (clock() - t
 
     char *str1;
     str1="Merge Level : ";
-    itoa (buffer,str,10);
+    //itoa (buffer,str,10);
+    std::string dummy;
+    dummy = ftk::NumToString(buffer);
+    strcpy (str,dummy.c_str());
     char str2[80];
     strcpy (str2,str1);
     strcat (str2,str);
     char *str3;
     char str4[30];
     str3="\nNo of Leaf Nodes : ";
-    itoa (num_leaf,str4,10);
+    dummy.clear();
+    dummy = ftk::NumToString(num_leaf);
+    strcpy (str4,dummy.c_str());
+    //itoa (num_leaf,str4,10);
     char str5[80];
     strcpy (str5,str3);
     strcat (str5,str4);
