@@ -58,7 +58,7 @@ endif (BUILD_CUDA)
 
 TARGET_LINK_LIBRARIES( ftkCommon TinyXML ftkImage
                        vtksys vtkCommon vtkFiltering vtkIO
-                       ITKCommon ITKBasicFilters ITKIO ITKStatistics )
+                       ${ITK_LIBRARIES} )
 
 ADD_EXECUTABLE( block main.cpp )
 TARGET_LINK_LIBRARIES( block ftkCommon )
@@ -69,5 +69,5 @@ INSTALL( TARGETS block RUNTIME DESTINATION bin )
 
 #16 bit to 8 bit TIF convertor
 ADD_EXECUTABLE ( TIF16bitTo8bit TIF16bitTo8Bit.cpp )
-TARGET_LINK_LIBRARIES( TIF16bitTo8bit ITKCommon ITKBasicFilters ITKIO)
+TARGET_LINK_LIBRARIES( TIF16bitTo8bit      ${ITK_LIBRARIES} )
 INSTALL( TARGETS TIF16bitTo8bit RUNTIME DESTINATION bin )

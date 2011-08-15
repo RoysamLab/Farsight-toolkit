@@ -12,10 +12,10 @@ SET( cbin_SRCS
 ADD_LIBRARY(mdlUtils mdlUtils.h mdlUtils.cpp)
 
 ADD_LIBRARY(mdlVolumeProcess mdlVolumeProcess.h mdlVolumeProcess.cpp ${cbin_SRCS})
-TARGET_LINK_LIBRARIES(mdlVolumeProcess ITKIO ITKStatistics ITKBasicFilters ITKCommon)
+TARGET_LINK_LIBRARIES(mdlVolumeProcess         ${ITK_LIBRARIES} )
 
 ADD_LIBRARY(mdlIntegratedSkeleton mdlIntegratedSkeleton.h mdlIntegratedSkeleton.cpp)
-TARGET_LINK_LIBRARIES(mdlIntegratedSkeleton mdlUtils ITKBasicFilters ITKCommon ITKIO ITKStatistics )
+TARGET_LINK_LIBRARIES(mdlIntegratedSkeleton mdlUtils          ${ITK_LIBRARIES} )
 
 ADD_EXECUTABLE(mdl_skeletonize skeleton_main.cpp)
 TARGET_LINK_LIBRARIES(mdl_skeletonize mdlIntegratedSkeleton)
@@ -27,7 +27,7 @@ ADD_EXECUTABLE(mdl_mst mst_main.cpp)
 TARGET_LINK_LIBRARIES(mdl_mst mdlMST)
 
 ADD_LIBRARY(mdlBSplineFitting mdlBSplineFitting.cpp mdlBSplineFitting.h)
-TARGET_LINK_LIBRARIES(mdlBSplineFitting mdlUtils ITKCommon)
+TARGET_LINK_LIBRARIES(mdlBSplineFitting mdlUtils      ${ITK_LIBRARIES} )
 
 SUBDIRS( wizard )
 

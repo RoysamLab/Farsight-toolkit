@@ -4,5 +4,5 @@ SET( SRCS
 )
 
 ADD_LIBRARY( clustering_2D ${SRCS} )
-TARGET_LINK_LIBRARIES ( clustering_2D ITKBasicFilters ITKCommon ITKIO)
+TARGET_LINK_LIBRARIES ( clustering_2D        ${ITK_LIBRARIES} )
 #INSTALL( TARGETS clustering_2D DESTINATION . )

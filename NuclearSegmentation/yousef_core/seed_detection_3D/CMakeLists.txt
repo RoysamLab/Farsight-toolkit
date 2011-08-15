@@ -17,7 +17,7 @@ else (BUILD_CUDA)
 
 endif (BUILD_CUDA)
 
-TARGET_LINK_LIBRARIES ( seedsDetection_3D ITKBasicFilters ITKCommon ITKIO)
+TARGET_LINK_LIBRARIES ( seedsDetection_3D        ${ITK_LIBRARIES} )
 
 #INSTALL( TARGETS seedsDetection_3D DESTINATION . )
 

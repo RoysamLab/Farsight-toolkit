@@ -24,4 +24,4 @@ SET( NSRCS
 
 ADD_Executable( colorbin ${NSRCS} )
 
-TARGET_LINK_LIBRARIES( colorbin ITKCommon ITKBasicFilters ITKAlgorithms ITKIO )
+TARGET_LINK_LIBRARIES( colorbin       ${ITK_LIBRARIES} )

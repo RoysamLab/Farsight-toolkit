@@ -126,7 +126,7 @@ void yousef_nucleus_seg::runGradAnisDiffSmoothing()
 		std::cout<<"failed!\n segmentation will be applied on the raw image\n";
 	}
 }
-void yousef_nucleus_seg::runBinarization()
+void yousef_nucleus_seg::runBinarization(unsigned short number_of_bins)
 {
 	//try this for now
 	//runGradAnisDiffSmoothing();
@@ -136,6 +136,7 @@ void yousef_nucleus_seg::runBinarization()
 		return;
 		
 	//Now clear all subsequent variables (dependent upon this binary image
+	std::cout << "Clearing binarization stuff" << std::endl;
 	numConnComp = 0;
 	clearBinImagePtr();
 	clearSeedImagePtr();
@@ -201,6 +202,7 @@ void yousef_nucleus_seg::runBinarization()
 	//subtract the gradient image from the input image
 	//subtractGradientImage(dataImagePtr, numRows, numColumns, numStacks, sampling_ratio_XY_to_Z);
 	//allocate space for the binary image
+	std::cout << "Allocating " << numStacks*numRows*numColumns*sizeof(unsigned short) / (1024.0 * 1024) << " MB of memory for binImagePtr" << std::endl;
 	binImagePtr = new unsigned short[numStacks*numRows*numColumns];	
 
 	std::cout<<"Start Binarization ..."<<std::endl;
@@ -218,7 +220,9 @@ void yousef_nucleus_seg::runBinarization()
 
 	if(ok)
 	{
+		std::cout << "Entering getConnCompImage" << std::endl;
 		numConnComp = getConnCompImage(binImagePtr, 26, minObjSize, numRows, numColumns, numStacks,1);			//Find connected components
+		std::cout << "Entering getConnCompInfo3D" << std::endl;
 		getConnCompInfo3D();																			//Populate myConnComp
 		cerr << "Cell Binarized.. with " << numConnComp << " connected components" << endl;	
 	}
@@ -659,7 +663,7 @@ void yousef_nucleus_seg::outputSeeds(void)
 }
 
 
-int yousef_nucleus_seg::getConnCompImage(unsigned short *IM, int connectivity, int minSize, int r, int c, int z, int runConnComp)
+int yousef_nucleus_seg::getConnCompImage(unsigned short *IM, int connectivity, int minSize, size_t r, size_t c, size_t z, int runConnComp)
 {
 	typedef unsigned short InputPixelType;
 	typedef unsigned short OutputPixelType;
@@ -693,20 +697,21 @@ int yousef_nucleus_seg::getConnCompImage(unsigned short *IM, int connectivity, i
 	im->Update();
 	
 	//copy the input image into the ITK image
+	std::cout << "Copying input image into ITKImage" << std::endl;
 	typedef itk::ImageRegionIteratorWithIndex< InputImageType > IteratorType;
 	IteratorType iterator1(im,im->GetRequestedRegion());
-	for(int i=0; i<r*c*z; i++)
+	for(size_t i=0; i<r*c*z; i++)
 	{		
 		iterator1.Set(IM[i]);
 		++iterator1;	
 	}
 	
 	
-	typedef itk::ImageFileWriter< InputImageType > WriterType;
-	WriterType::Pointer writer = WriterType::New();
-	writer->SetInput(im);
-	writer->SetFileName("bin_test.tif");
-	writer->Update();
+	//typedef itk::ImageFileWriter< InputImageType > WriterType;
+	//WriterType::Pointer writer = WriterType::New();
+	//writer->SetInput(im);
+	//writer->SetFileName("bin_test.tif");
+	//writer->Update();
 
 	typedef itk::ConnectedComponentImageFilter< InputImageType, OutputImageType > FilterType;
 	FilterType::Pointer filter = FilterType::New();
@@ -715,6 +720,7 @@ int yousef_nucleus_seg::getConnCompImage(unsigned short *IM, int connectivity, i
 
 	if(runConnComp == 1)
 	{
+		std::cout << "Computing the labeled connected component image" << std::endl;
 		//Compute the labeled connected component image		
 		filter->SetInput (im);
 		filter->SetFullyConnected( connectivity );		
@@ -727,7 +733,8 @@ int yousef_nucleus_seg::getConnCompImage(unsigned short *IM, int connectivity, i
 		//relabel->SetInput( im );
 	}
 
-    //set the minimum object size
+	std::cout << "Setting minimum object size" << std::endl;
+	//set the minimum object size
 	relabel->SetMinimumObjectSize( minSize );
 
 	try
@@ -743,9 +750,10 @@ int yousef_nucleus_seg::getConnCompImage(unsigned short *IM, int connectivity, i
 
 	
     //write the output of the labeling CC filter into our input image
+	std::cout << "Writing output of relabel coloring filter to input image" << std::endl;
 	int mx;
 	IteratorType iterator2(relabel->GetOutput(),relabel->GetOutput()->GetRequestedRegion());
-	for(int i=0; i<r*c*z; i++)
+	for(size_t i=0; i<r*c*z; i++)
 	{			
 		
 		mx = iterator2.Get();	
@@ -757,14 +765,16 @@ int yousef_nucleus_seg::getConnCompImage(unsigned short *IM, int connectivity, i
 	}
 
 	//return the number of CCs
-	return relabel->GetNumberOfObjects();;
+	std::cout << "Returning number of connected components" << std::endl;
+	return relabel->GetNumberOfObjects();
 }
 
 //By Yousef: 5-21-2008
 //Get the connected component information of the binary (conncomp) image
 void yousef_nucleus_seg::getConnCompInfo3D()
 {
-	int val, curNode;
+	int val; 
+	size_t curNode;
 	myConnComp = new ConnComp[numConnComp];
 	for( int i=0; i<numConnComp; i++){
 		myConnComp[i].x1 = 	numColumns+1;

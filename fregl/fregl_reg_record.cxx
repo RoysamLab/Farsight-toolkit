@@ -190,6 +190,8 @@ write_xml_node(TiXmlElement* root_node)
     node->SetAttribute("ty", str.c_str());
     str = ToString( params[11] );
     node->SetAttribute("tz", str.c_str());
+
+	//std::cout << params[11] << std::endl;
   }
 }
 

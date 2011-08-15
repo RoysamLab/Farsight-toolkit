@@ -1,11 +1,7 @@
 PROJECT (ImageManager)
 
 SET( Libraries
-    ITKCommon
-    #ITKNumerics
-    #ITKStatistics
-    ITKIO
-    ITKBasicFilters
+    ${ITK_LIBRARIES}
     #ftkCommon
     ${QT_LIBRARIES} )
 	

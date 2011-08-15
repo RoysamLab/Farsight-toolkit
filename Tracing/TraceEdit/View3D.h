@@ -18,6 +18,7 @@ limitations under the License.
 
 #include "cellexport.h"
 #include "screenshot.h"
+#include "vtkInteractorStyleImage.h"
 #include "vtkSmartPointer.h"
 //#include "UndoBuffer.h"
 //#include "undobuff.h"
@@ -127,7 +128,6 @@ public:
 	vtkSmartPointer<vtkRenderer> Renderer;
 	vtkSmartPointer<vtkActor> BranchActor;
 	void ShowProjectTable();
-	double *roiDistaces;
 
 public slots:
 	void choosetoRender(int row, int col);
@@ -173,7 +173,7 @@ public slots:
 	void chooseInteractorStyle(int iren);
 	void SetProjectionMethod(int style);
 	void removeImageActors();
-	void raycastToSlicer();
+	//void raycastToSlicer();
 	void ToggleColorByTrees();
 	void setSlicerZValue(int value);
 	void RayCastOpacityChanged(int value);
@@ -187,7 +187,7 @@ public slots:
 
 	void AddROIPoint();
 	void DrawROI();
-	void ROISelAct();
+	void CalculateDistanceToDevice();
 
 	void focusOn();
 	void setRenderFocus(double renderBounds[], int size);
@@ -196,9 +196,7 @@ public slots:
 	QString getTraceFile();
 	QString getImageFile();
 	QString getSomaFile();
-	void PreBoot();
 	void OkToBoot();
-	void OkToBootContinue();
 	void EditHelp();
 	void About();
 	void showStatistics(void);
@@ -213,6 +211,10 @@ protected slots:
 	void updateTraceSelectionHighlights();
 	void CropBorderCells();
 	void SaveComputedCellFeaturesTable();
+
+	void setSlicerMode();
+	void setProjectionMode();
+	void setRaycastMode();
 
 protected:
 	void closeEvent(QCloseEvent *event);
@@ -241,7 +243,6 @@ private:
 	QGroupBox * ImageListBox;
 	QListView * ImageListView; 
 	QCheckBox * Use2DSlicer;
-	QCheckBox * UseROItoSoma;
 	bool translateImages;
 	QDate  Date;
 	QTime  Time;
@@ -267,7 +268,7 @@ private:
 	QMenu *analysisViews;
 	QMenu *help;
 	QAction *aboutAction;
-	QToolBar *EditsToolBar, *BranchToolBar, *RacastBar, *SlicerBar;
+	QToolBar *EditsToolBar, *BranchToolBar, *RaycastBar, *SlicerBar;
 
 	//Qt widgets on the main window
 	QAction *saveAction;
@@ -277,7 +278,11 @@ private:
 	QAction *loadTraceAction;
 	QAction *loadTraceImage;
 	QAction *CloseAllImage;
-	QAction *SetRaycastToSlicer;
+
+	QAction *SetSlicer;
+	QAction *SetProjection;
+	QAction *SetRaycast;
+
 	QAction *ColorByTreesAction;
 	QAction *loadSoma;
 	QAction *ListButton;
@@ -303,6 +308,7 @@ private:
 	QPushButton *createNewBitButton;
 	QPushButton *createNewROIPointButton;
 	QPushButton *ExtrudeROIButton;
+	QPushButton *CalculateDistanceToDeviceButton;
 	QAction *FocusAction;
 	QAction *AutoCellExportAction;
 	QAction *ShowPlots;
@@ -394,7 +400,6 @@ private:
 	std::vector<VolumePointerType> m_volumes;
 
 	bool viewIn2D;
-	bool distancetoSoma;
 	int projectionStyle;
 	void createSlicerSlider();
 	void setSlicerBarValues(int i);
@@ -415,5 +420,14 @@ private:
 		double elevation;
 	} projection_base;
 	int projection_axis;
+
+	vtkSmartPointer<vtkPolyData> ROIExtrudedpolydata;
+
+	enum RenderModeEnum { SLICER, PROJECTION, RAYCAST};
+
+	enum RenderModeEnum renderMode;
+
+	void ClearRenderer(int i);
+	
 };
 #endif

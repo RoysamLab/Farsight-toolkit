@@ -107,7 +107,7 @@ int main( int argc, char ** argv )
     
     outfile << std::fixed << pixelIndex[0] << " " << pixelIndex[1] << " " << pixelIndex[2] << endl;
 
-    double elongation = labelObject->GetBinaryElongation();
+    double elongation = labelObject->GetElongation();
     if(elongation < minElongation)
       {
       minElongation = elongation;
@@ -117,7 +117,7 @@ int main( int argc, char ** argv )
       maxElongation = elongation;
       }
 
-    double flatness = labelObject->GetBinaryFlatness();
+    double flatness = labelObject->GetFlatness();
     if(flatness < minFlatness)
       {
       minFlatness = flatness;
@@ -127,7 +127,7 @@ int main( int argc, char ** argv )
       maxFlatness = flatness;
       }
 
-    double radius = labelObject->GetEquivalentRadius();
+    double radius = labelObject->GetEquivalentSphericalRadius();
     if(radius < minRadius)
       {
       minRadius = radius;
@@ -137,7 +137,7 @@ int main( int argc, char ** argv )
       maxRadius = radius;
       }
 
-    unsigned long size = labelObject->GetSize();
+    unsigned long size = labelObject->GetNumberOfPixels();
     if(size < minSize)
       {
       minSize = size;

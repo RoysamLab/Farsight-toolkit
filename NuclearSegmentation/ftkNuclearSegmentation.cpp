@@ -413,6 +413,11 @@ bool NuclearSegmentation::ComputeAllGeometries(void)
 
 	//Now populate centroid and bounding box maps::
 	std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
+//	const Image::Info * labimInfo = labelImage->GetImageInfo();
+
+
+//	for (int t=0; t<labimInfo->numTSlices; t++)
+//	{
 		for (int i=0; i<(int)labels.size(); ++i)
 		{
 			FeatureCalcType::LabelPixelType id = labels.at(i);
@@ -440,7 +445,7 @@ bool NuclearSegmentation::ComputeAllGeometries(void)
 			centerMap[(int)id] = c;
 
 		}
-
+//	}
 	return true;
 }
 
@@ -474,8 +479,6 @@ bool NuclearSegmentation::ComputeAllGeometries(int ntimes)
 	{
 		FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
 		labFilter->SetImageInputs( dataImage->GetItkPtr<IntrinsicFeatureCalculator::IPixelT>(t,channelNumber), labelImage->GetItkPtr<IntrinsicFeatureCalculator::LPixelT>(t,0) );
-	//	labFilter->ComputeTexturesOn();
-	//	labFilter->ComputeHistogramOn();
 		labFilter->SetLevel(1);
 		labFilter->Update();
 		std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
@@ -490,7 +493,12 @@ bool NuclearSegmentation::ComputeAllGeometries(int ntimes)
 				featureVector.back().num = id;
 				featureVector.back().tag = 0;
 				featureVector.back().time = t;
-
+//				if(featureVector.back().spacing.size()==0)
+//				 {
+//					featureVector.back().spacing.push_back(1.0);
+//					featureVector.back().spacing.push_back(1.0);
+//					featureVector.back().spacing.push_back(5.0);
+//				 }
 
 				Object::Point c;
 				c.x = (int)features->Centroid[0];
@@ -511,6 +519,7 @@ bool NuclearSegmentation::ComputeAllGeometries(int ntimes)
 				bBoxMap[(int)id] = b;
 				centerMap[(int)id] = c;
 		}
+
 		centerMap4DImage.push_back(centerMap);
 		bBoxMap4DImage.push_back(bBoxMap);
 		featureVector4DImage.push_back(featureVector);
@@ -518,10 +527,7 @@ bool NuclearSegmentation::ComputeAllGeometries(int ntimes)
 		// We can easily update tables compared to featureVectors 
 		// when tables are loaded from files. Always better to refer to
 		// vtktable than feature vector from other classes
-#ifdef USE_TRACKING
-		if(!nucsegTrackFeatures.empty())
-			this->setCurrentTrackFeatures(t);
-#endif
+		
 		table4DImage.push_back(featureVectorTovtkTable(featureVector));
 
 		bBoxMap.clear();
@@ -534,14 +540,6 @@ bool NuclearSegmentation::ComputeAllGeometries(int ntimes)
 
 	return true;
 }
-#ifdef USE_TRACKING
-//This function sets the the current trackfeatures data for table
-void NuclearSegmentation::setCurrentTrackFeatures(int time)
-{
-	currentTrackFeatures.clear();
-	currentTrackFeatures = nucsegTrackFeatures.at(time);
-}
-#endif
 
 // Loads a bunch of VTK tables and creates a mega table
 // CONDITION: All the tables should have the same number of columns
@@ -622,56 +620,21 @@ vtkSmartPointer<vtkTable> NuclearSegmentation::featureVectorTovtkTable(std::vect
 			table->AddColumn(column);
 	}
 
-#ifdef USE_TRACKING
-	//Add Tracking Features:
-	if(!nucsegTrackFeatures.empty())
-	{
-		for (int i=0; i < ftk::TrackPointFeatures::M; ++i)
-		{
-			column = vtkSmartPointer<vtkDoubleArray>::New();
-			column->SetName( (fPrefix+ftk::TrackPointFeatures::Info[i].name).c_str() );
-			table->AddColumn(column);
-		}
-	}
-#endif
 	//Now populate the table:
 	for (int i=0; i<(int)featurevector.size(); ++i)
 	{
-
 		vtkSmartPointer<vtkVariantArray> row = vtkSmartPointer<vtkVariantArray>::New();
 		row->InsertNextValue(featurevector.at(i).num);
 		for (int j=0; j<ftk::IntrinsicFeatures::N; ++j)
 		{
 			row->InsertNextValue( vtkVariant(featurevector.at(i).ScalarFeatures[j]) );
 		}
-#ifdef USE_TRACKING
-		// Add Track Features:
-		if(!nucsegTrackFeatures.empty())
-		{
-			for (int k=0; k<(int)currentTrackFeatures.size(); ++k)
-			{
-				if(currentTrackFeatures.at(k).num == featurevector.at(i).num)
-				{
-					for (int j=0; j<ftk::TrackPointFeatures::M; ++j)
-					{
-						row->InsertNextValue( vtkVariant(currentTrackFeatures.at(k).scalars[j]) );
-					}
-				}
-			}
-		}
-#endif
 		table->InsertNextRow(row);
 	}
 	return table;
 }
 
-#ifdef USE_TRACKING
-void NuclearSegmentation::SetTrackFeatures(std::vector<std::vector<ftk::TrackPointFeatures>> trackfeatures)
-{
-	nucsegTrackFeatures.clear();
-	nucsegTrackFeatures = trackfeatures;
-}
-#endif
+
 void NuclearSegmentation::updatetable4DImage(std::vector< vtkSmartPointer<vtkTable> > tableOfFeatures)
 {
 	table4DImage.clear();
@@ -1766,19 +1729,6 @@ void NuclearSegmentation::removeObjectFromMaps(int ID, vtkSmartPointer<vtkTable>
 			}
 		}
 	}
-
-	//if(zernikeTable)
-	//{
-	//	for(int row = 0; row<zernikeTable->GetNumberOfRows(); ++row)
-	//	{
-	//		if(zernikeTable->GetValue(row,0) == ID)
-	//		{
-	//			zernikeTable->RemoveRow( row );
-	//			break;
-	//		}
-	//	}
-	//}
-	
 	centerMap.erase( ID );
 	bBoxMap.erase( ID );
 }
@@ -1798,7 +1748,6 @@ bool NuclearSegmentation::addObjectsToMaps(std::set<unsigned short> IDs, int x1,
 	calc->SetRegion(x1,y1,z1,x2,y2,z2);
 	calc->SetIDs(IDs);
 	calc->Update(table, &centerMap, &bBoxMap, NucAdjTable);
-	//calc->UpdateZernike(zernikeTable);
 	delete calc;
 
 	/*

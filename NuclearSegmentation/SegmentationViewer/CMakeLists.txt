@@ -1,3 +1,3 @@
 ADD_EXECUTABLE ( segren segren.cpp )
-TARGET_LINK_LIBRARIES ( segren ftkCommon NuclearSegmentation ITKBasicFilters ITKCommon ITKIO vtkRendering vtkIO vtkHybrid vtkCommon vtkFiltering vtkVolumeRendering vtksys )
+TARGET_LINK_LIBRARIES ( segren ftkCommon NuclearSegmentation    vtkRendering vtkIO vtkHybrid vtkCommon vtkFiltering vtkVolumeRendering vtksys      ${ITK_LIBRARIES} )
 INSTALL ( TARGETS segren DESTINATION bin )

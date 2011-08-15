@@ -1,4 +1,5 @@
 #include "MultipleNeuronTracer.h"
+#include "time.h"
 
 #ifdef _OPENMP
 #include "omp.h"
@@ -17,12 +18,13 @@ void MultipleNeuronTracer::LoadCurvImage(std::string fname, unsigned int pad)
 	ImageType3D::Pointer image = reader->GetOutput();
 	image->Update();
 
+	std::cout << "Entering LoadCurvImage" << std::endl;
 	LoadCurvImage(image, pad);
 }
 
 void MultipleNeuronTracer::LoadCurvImage(ImageType3D::Pointer &image, unsigned int pad)  
 {
-	CurvImage = image;
+	ImageType3D::Pointer CurvImage = image;
 	padz = pad;
 
 	RescalerType::Pointer rescaler = RescalerType::New();
@@ -30,7 +32,8 @@ void MultipleNeuronTracer::LoadCurvImage(ImageType3D::Pointer &image, unsigned i
 	rescaler->SetOutputMaximum(1.0);
 	rescaler->SetInput(CurvImage);
 
-	//Median filter	
+	//Median filter
+	std::cout << "Running Median Filter" << std::endl;
 	MedianFilterType::Pointer medfilt = MedianFilterType::New();
 	medfilt->SetNumberOfThreads(16);
 	medfilt->SetInput(rescaler->GetOutput());
@@ -40,6 +43,7 @@ void MultipleNeuronTracer::LoadCurvImage(ImageType3D::Pointer &image, unsigned i
 	CurvImage = medfilt->GetOutput();
 
 	//pad z slices
+	std::cout << "pad z slices" << std::endl;
 	itk::Size<3> isz = CurvImage->GetBufferedRegion().GetSize();
 	itk::Size<3> osz = isz;
 	osz[2] += 2*padz;
@@ -50,14 +54,14 @@ void MultipleNeuronTracer::LoadCurvImage(ImageType3D::Pointer &image, unsigned i
 	PaddedCurvImage->Allocate();
 	PaddedCurvImage->SetSpacing(CurvImage->GetSpacing());
 	
-	for(ondx[2] = 0; ondx[2] < (unsigned int)osz[2]; ++ondx[2]) 
+	for(ondx[2] = 0; ondx[2] < osz[2]; ++ondx[2]) 
 	{
 		indx[2] = (ondx[2] < padz) ? 0 : ondx[2] - padz;
-		indx[2] = (ondx[2] >= (unsigned int)osz[2]-padz) ? isz[2]-1 : indx[2];
-		for(ondx[1] = 0; ondx[1] < (unsigned int)osz[1]; ++ondx[1]) 
+		indx[2] = (ondx[2] >= osz[2]-padz) ? isz[2]-1 : indx[2];
+		for(ondx[1] = 0; ondx[1] < osz[1]; ++ondx[1]) 
 		{
 			indx[1] = ondx[1];
-			for(ondx[0] = 0; ondx[0] < (unsigned int)osz[0]; ++ondx[0]) 
+			for(ondx[0] = 0; ondx[0] < osz[0]; ++ondx[0]) 
 			{
 				indx[0] = ondx[0];
 				PaddedCurvImage->SetPixel(ondx, CurvImage->GetPixel(indx));
@@ -67,6 +71,7 @@ void MultipleNeuronTracer::LoadCurvImage(ImageType3D::Pointer &image, unsigned i
 	CurvImage->Delete();
 	std::cout << "Input file size (after zero padding) is " << PaddedCurvImage->GetBufferedRegion().GetSize() << std::endl;
 	size = PaddedCurvImage->GetBufferedRegion().GetSize();
+	CurvImage->Delete();
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -187,7 +192,7 @@ void MultipleNeuronTracer::RunTracing(void)
 	ConnImage->Allocate();
 	ConnImage->FillBuffer(MAXVAL);
 
-	SWCImage = SWCImageType3D::New();
+	SWCImage = SWCImageType3D::New(); //major memory
 	SWCImage->SetRegions(PaddedCurvImage->GetBufferedRegion());
 	SWCImage->Allocate();
 	SWCImage->FillBuffer(NULL);
@@ -195,6 +200,8 @@ void MultipleNeuronTracer::RunTracing(void)
 	// fill the SWCImage image with start points
 	std::vector<IndexType>::iterator startIt;
 	int tID = 1;
+	
+	clock_t fillSWCImage1_start_time = clock();
 	for (startIt = StartPoints.begin(); startIt != StartPoints.end(); ++startIt, ++tID)
 	{
 		itk::Index<3> stndx = (*startIt);
@@ -206,8 +213,9 @@ void MultipleNeuronTracer::RunTracing(void)
 		HeapNode *h = new HeapNode(s1->ndx, 0.0);
 		PQ.push(h);
 	}
+	std::cout << "fillSWCImage1 took: " << (clock() - fillSWCImage1_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
-
+	clock_t fillSWCImage2_start_time = clock();
 	long eCounter = 0, TotalePoints;
 	itk::ImageRegionConstIterator<ImageType3D> Nit(NDXImage, NDXImage->GetBufferedRegion());
 	for (Nit.GoToBegin(); !Nit.IsAtEnd(); ++Nit) 
@@ -219,6 +227,8 @@ void MultipleNeuronTracer::RunTracing(void)
 			SWCImage->SetPixel(endx,s2);
 		}
 	}
+	std::cout << "fillSWCImage2 took: " << (clock() - fillSWCImage2_start_time)/(float) CLOCKS_PER_SEC << std::endl;
+
 	TotalePoints = eCounter;
 	std::cout<<"eCounter = "<<eCounter<<std::endl;
 	//std::cout << "No of CTs inserted : " <<  TotalePoints << std::endl;
@@ -242,6 +252,9 @@ void MultipleNeuronTracer::RunTracing(void)
 	bool showMessage = false;
 	//std::cout << " Heap size: " << PQ.size() << std::endl;
 	float KeyValue;
+	
+	clock_t PQ_popping_start_time = clock();
+	
 	while(!PQ.empty())  
 	{
 		HeapNode *h = PQ.top();
@@ -349,10 +362,23 @@ void MultipleNeuronTracer::RunTracing(void)
 			}
 		}
 	}
+	std::cout << "PQ popping took: " << (clock() - PQ_popping_start_time)/(float) CLOCKS_PER_SEC << std::endl;
+	
+	clock_t Interpolate1_start_time = clock();
 	Interpolate(2.0);
+	std::cout << "Interpolate1 took: " << (clock() - Interpolate1_start_time)/(float) CLOCKS_PER_SEC << std::endl;
+
+	clock_t Decimate_start_time = clock();
 	Decimate();
+	std::cout << "Decimate took: " << (clock() - Decimate_start_time)/(float) CLOCKS_PER_SEC << std::endl;
+
+	clock_t Interpolate2_start_time = clock();
 	Interpolate(2.0);	
+	std::cout << "Interpolate2 took: " << (clock() - Interpolate2_start_time)/(float) CLOCKS_PER_SEC << std::endl;
+
+	clock_t RemoveIntraSomaNodes_start_time = clock();
 	RemoveIntraSomaNodes();
+	std::cout << "RemoveIntraSomaNodes took: " << (clock() - RemoveIntraSomaNodes_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
 }
 
@@ -362,6 +388,7 @@ void MultipleNeuronTracer::RunTracing(void)
 
 void MultipleNeuronTracer::FeatureMain(void)
 {
+	time_t FeatureMain_start_time = clock();
 	std::cout << std::endl<< "Feature detection 3D" << std::endl;
 	NDXImage = ImageType3D::New();
 	NDXImage->SetRegions(PaddedCurvImage->GetBufferedRegion());
@@ -393,6 +420,7 @@ void MultipleNeuronTracer::FeatureMain(void)
 
 void MultipleNeuronTracer::GetFeature( float sigma ) 
 {
+	clock_t LoG_start_time = clock();
 	typedef itk::LaplacianRecursiveGaussianImageFilter< ImageType3D , ImageType3D> GFilterType;
 	GFilterType::Pointer gauss = GFilterType::New();
 	gauss->SetInput( PaddedCurvImage );
@@ -400,13 +428,14 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 	gauss->SetNormalizeAcrossScale(false);
 	//ImageType3D::Pointer smoothedCurvImage = gauss->GetOutput();
 	gauss->GetOutput()->Update();
+	std::cout << "Laplacian of Gaussian at " << sigma << " took " << (clock() - LoG_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
 	float tot = 0.0f, num = 0.0f;
 	itk::ImageRegionIterator<ImageType3D> ittemp(gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
 	float gamma = 1.6f;
 	float tnorm = vcl_pow(sigma,gamma);
 
-	for(ittemp.GoToBegin(); !ittemp.IsAtEnd(); ++ittemp) 
+	for(ittemp.GoToBegin(); !ittemp.IsAtEnd(); ++ittemp)
 	{
 		float q = ittemp.Get()*tnorm;
 		ittemp.Set(-1.0f*q);

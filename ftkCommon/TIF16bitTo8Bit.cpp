@@ -23,20 +23,47 @@ int main(int argc, char *argv[])
 	const char* inputFilename = argv[1];
 
 	reader->SetFileName(inputFilename);
-	reader->Update();
-
+	try
+	{
+		reader->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "Error in reader: " << err << std::endl;
+		return -1;
+	}
+	
 	typedef itk::RescaleIntensityImageFilter<InputImageType, OutputImageType> RescaleFilterType;
 	RescaleFilterType::Pointer rescaleFilter = RescaleFilterType::New();
 
 	rescaleFilter->SetInput(reader->GetOutput());
 	rescaleFilter->SetOutputMinimum(0);
 	rescaleFilter->SetOutputMaximum(255);
-	rescaleFilter->Update();
+	
+	try
+	{
+		rescaleFilter->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "Error in rescaleFilter: " << err << std::endl;
+		return -1;
+	}
 
 	writer->SetInput(rescaleFilter->GetOutput());
 	
 	outputFileName.append(inputFilename);
 	
 	writer->SetFileName(outputFileName);
+	
+	try
+	{
+		writer->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "Error in writer: " << err << std::endl;
+		return -1;
+	}
 	writer->Update();	
 }

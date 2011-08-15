@@ -3,9 +3,7 @@ PROJECT(AnisotropicDiffusionVesselEnhancement)
 FIND_PACKAGE(ITK REQUIRED)
 
 SET(Libraries
-		ITKCommon
-		ITKBasicFilters
-		ITKIO
+		${ITK_LIBRARIES}
    )
 INCLUDE_DIRECTORIES(${ITK_INCLUDE_DIRS} ${AnisotropicDiffusionVesselEnhancement_SOURCE_DIR}/src)
 LINK_DIRECTORIES(${ITK_LIBRARY_DIRS})

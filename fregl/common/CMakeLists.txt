@@ -6,4 +6,4 @@ AUX_SOURCE_DIRECTORY( Templates fs_sources )
 
 
 ADD_LIBRARY( fscommon ${fs_sources} )
-TARGET_LINK_LIBRARIES( fscommon ITKCommon ITKNumerics)
+TARGET_LINK_LIBRARIES( fscommon  ${ITK_LIBRARIES} )

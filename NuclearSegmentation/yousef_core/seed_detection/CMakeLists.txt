@@ -6,6 +6,6 @@ SET( SRCS
 ADD_LIBRARY( seedsDetection_2D ${SRCS} )
 
 
-TARGET_LINK_LIBRARIES ( seedsDetection_2D ITKBasicFilters ITKIO ITKCommon)
+TARGET_LINK_LIBRARIES ( seedsDetection_2D        ${ITK_LIBRARIES} )
 #INSTALL( TARGETS seedsDetection_2D DESTINATION . )
 

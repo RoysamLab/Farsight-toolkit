@@ -1,9 +1,5 @@
 SET( TracingSysLibraries
-    ITKCommon
-    ITKNumerics
-    ITKStatistics
-    ITKIO
-    ITKBasicFilters
+    ${ITK_LIBRARIES}
     rtvl
     rgtl
     vtkRendering

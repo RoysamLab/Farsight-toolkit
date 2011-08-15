@@ -64,7 +64,7 @@
 #ifdef USE_TRACKING
 #include "KymoGraphView.h" 
 #include "TrackingDialog.h"
-#include "CellTrackerLib/MultiFrameCellTracker.h"
+#include "cellTracker/MultiFrameCellTracker.h"
 #endif
 
 //Farsight Includes:

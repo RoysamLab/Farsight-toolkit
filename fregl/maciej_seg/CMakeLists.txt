@@ -21,5 +21,5 @@ AUX_SOURCE_DIRECTORY( Templates MS_sources)
 
 ADD_LIBRARY( maciejseg ${MS_sources} )
 
-TARGET_LINK_LIBRARIES( maciejseg fscommon rsdl vbl ITKCommon ITKIO 
-${LIBXML2_LIBRARIES} )
+TARGET_LINK_LIBRARIES( maciejseg fscommon rsdl vbl  
+${LIBXML2_LIBRARIES}  ${ITK_LIBRARIES} )

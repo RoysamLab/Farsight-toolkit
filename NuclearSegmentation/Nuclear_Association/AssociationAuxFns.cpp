@@ -35,7 +35,7 @@
 #include "itkExtractImageFilter.h"
 #include "itkOtsuMultipleThresholdsCalculator.h"
 
-#include "ftkFeatures/itkLabelGeometryImageFilter.h"
+#include "itkLabelGeometryImageFilter.h"
 #include "NuclearSegmentation/CytoplasmSegmentation/whole_cell.h"
 
 #define MM_PI		3.14159265358979323846
@@ -166,7 +166,7 @@ unsigned short returnthresh( USImageType::Pointer input_image, int num_bin_levs,
 	typedef itk::ImageRegionConstIterator< USImageType > ConstIteratorType;
 	//typedef itk::Statistics::ScalarImageToHistogramGenerator< USImageType > ScalarImageToHistogramGeneratorType;
 	//typedef ScalarImageToHistogramGeneratorType::HistogramType HistogramType;
-	typedef itk::Statistics::Histogram< FloatPixelType, 1 > HistogramType;
+	typedef itk::Statistics::Histogram< FloatPixelType > HistogramType;
 	typedef itk::OtsuMultipleThresholdsCalculator< HistogramType > CalculatorType;
 
 	std::cout<<"Starting threshold computation\n";

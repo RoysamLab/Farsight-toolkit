@@ -161,8 +161,9 @@ private:
   //  distance in the overlapping area to generate correspondences.
   void generate_correspondences();
 
-private:
+public: //temporary
   vbl_array_2d<TransformType::Pointer> transforms_; // (from,to)
+private:
   vbl_array_2d<double> overlap_; //initially pairwise, finally updated by joint
   vbl_array_2d<double> obj_; //values from the pairwise registration
   std::vector<std::string> image_ids_;

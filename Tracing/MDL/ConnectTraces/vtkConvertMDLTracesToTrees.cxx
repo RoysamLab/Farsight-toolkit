@@ -33,7 +33,7 @@ typedef itk::RGBPixel<unsigned char> RGBPixelType;
 typedef itk::Image<RGBPixelType, 3> RGBImageType;
 
 vtkStandardNewMacro(vtkConvertMDLTracesToTrees);
-vtkCxxRevisionMacro(vtkConvertMDLTracesToTrees, "$Revision$");
+vtkCxxRevisionMacro(vtkConvertMDLTracesToTrees, "$Revision: 1107 $");
 
 ////////////////////////////////////////////////////////////////////////////////
 vtkConvertMDLTracesToTrees::vtkConvertMDLTracesToTrees()

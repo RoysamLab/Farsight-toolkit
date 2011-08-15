@@ -32,7 +32,7 @@ limitations under the License.
 
 #include "itkLabelGeometryImageFilter.h"
 #include <itkLabelStatisticsImageFilter.h>
-#include <itkScalarImageTextureCalculator.h>
+#include <itkScalarImageToTextureFeaturesFilter.h>
 #include <itkGradientMagnitudeImageFilter.h>
 
 #include <vtkSmartPointer.h>
@@ -58,9 +58,9 @@ limitations under the License.
 #include "ftkObject.h"
 #include "ftkImage/ftkImage.h"
 
-#ifdef _ZERNIKE
+//#ifdef _ZERNIKE
 #include "Zernike/zernike.h"
-#endif
+//#endif
 
 #include <iostream>
 #include <sstream>
@@ -137,9 +137,6 @@ public:
 	typedef itk::ImageRegionIterator< LabelImageType> labIteratorType;
 	typedef typename IntensityImageType::Pointer IntensityImagePointer;
 	typedef typename LabelImageType::Pointer LabelImagePointer;
-
-	typedef zernike::ImageType zernikeImageType;
-	typedef itk::ImageRegionIterator< zernikeImageType> zerIteratorType;
 
 	itkNewMacro( Self );
 	

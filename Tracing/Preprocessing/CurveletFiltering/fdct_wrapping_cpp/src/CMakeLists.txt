@@ -34,11 +34,11 @@ IF(FFTW_FOUND)
 		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 	ENDIF(WIN32)
 	ADD_EXECUTABLE(curvelets curvelet_preprocessing.cpp)
-	TARGET_LINK_LIBRARIES(curvelets CurveletClass fdct_wrapping ITKCommon ITKIO ITKStatistics)
+	TARGET_LINK_LIBRARIES(curvelets CurveletClass fdct_wrapping        ${ITK_LIBRARIES} )
 	INSTALL(TARGETS curvelets RUNTIME DESTINATION bin)
 	
 	ADD_EXECUTABLE(CurveletGUI CurveletGUIDriver.cpp)
-	TARGET_LINK_LIBRARIES(CurveletGUI CurveletClassGUI CurveletClass fdct_wrapping ITKCommon ITKIO ITKStatistics ${QT_LIBRARIES} )
+	TARGET_LINK_LIBRARIES(CurveletGUI CurveletClassGUI CurveletClass fdct_wrapping    ${QT_LIBRARIES}      ${ITK_LIBRARIES} )
 	INSTALL(TARGETS CurveletGUI RUNTIME DESTINATION bin)
 	
 	INSTALL(TARGETS fdct_wrapping ARCHIVE DESTINATION lib)

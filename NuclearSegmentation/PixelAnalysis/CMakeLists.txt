@@ -7,4 +7,4 @@ SET( NHDRS
 )
 
 ADD_LIBRARY( PixelLevelAnalysis ${NSRCS} ${NHDRS} )
-TARGET_LINK_LIBRARIES( PixelLevelAnalysis ftkCommon Nuclear_Association ITKCommon ITKBasicFilters ITKAlgorithms ITKIO )
+TARGET_LINK_LIBRARIES( PixelLevelAnalysis ftkCommon Nuclear_Association          ${ITK_LIBRARIES} )

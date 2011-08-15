@@ -43,5 +43,5 @@ SET ( Trace3D_headers
 )      
 
 CUDA_ADD_EXECUTABLE ( Trace3D SegInit.cu ${Trace3D_sources} ${Trace3D_headers} TraceMain.cxx )
-TARGET_LINK_LIBRARIES( Trace3D ITKCommon ITKIO ITKNumerics)
+TARGET_LINK_LIBRARIES( Trace3D        ${ITK_LIBRARIES} )
 

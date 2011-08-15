@@ -434,30 +434,55 @@ void ImageRenderActors::syncOpacityTransfetFunction()
 	}
 }
 
-ImageActorPointerType ImageRenderActors::CreateSliceActor(int i)
+ImageSlicePointerType ImageRenderActors::CreateSliceActor(int i)
 {
+	std::cout << "Slice Actor is created." << std::endl;
 	if (i == -1)
 	{
 		i = int (this->LoadedImages.size() - 1);
 	}
-	vtkImageData * newimage = this->LoadedImages[i]->ImageData;
+	this->LoadedImages[i]->ImageData->GetExtent(sliceBounds);
+	
+	std::cout << sliceBounds[0] << " " << sliceBounds[1] << " " << sliceBounds[2] << " " << sliceBounds[3] << " " << sliceBounds[4] << " " << sliceBounds[5] << std::endl;
+
+	/*vtkImageData * newimage = this->LoadedImages[i]->ImageData;
 	this->LoadedImages[i]->sliceActor = ImageActorPointerType::New();
 	this->LoadedImages[i]->sliceActor->SetInput(newimage);
+	this->LoadedImages[i]->sliceActor->SetDisplayExtent(sliceBounds);
 	this->LoadedImages[i]->sliceActor->SetZSlice(0);
-	this->LoadedImages[i]->sliceActor->SetPosition(this->LoadedImages[i]->x, 
-		this->LoadedImages[i]->y,this->LoadedImages[i]->z);
-	this->LoadedImages[i]->sliceActor->SetPickable(0);
+	this->LoadedImages[i]->sliceActor->SetPosition(this->LoadedImages[i]->x,this->LoadedImages[i]->y,this->LoadedImages[i]->z);
+	this->LoadedImages[i]->sliceActor->SetPickable(0);*/
 
-	return this->LoadedImages[i]->sliceActor;
+	//return this->LoadedImages[i]->sliceActor;
 
+	this->LoadedImages[i]->imageResliceMapper = vtkSmartPointer<vtkImageResliceMapper>::New();
+	this->LoadedImages[i]->imageResliceMapper->SetInput(this->LoadedImages[i]->ImageData);
+	this->LoadedImages[i]->imageResliceMapper->SliceFacesCameraOn();
+	this->LoadedImages[i]->imageResliceMapper->SliceAtFocalPointOn();
+	//this->LoadedImages[i]->imageResliceMapper->SetSlicePlane(2);
+	
+	this->LoadedImages[i]->imageSlice = vtkImageSlice::New();
+	this->LoadedImages[i]->imageProperty = vtkImageProperty::New();
+	this->LoadedImages[i]->imageProperty->SetColorWindow(2000);
+	this->LoadedImages[i]->imageProperty->SetColorLevel(1000);
+	this->LoadedImages[i]->imageProperty->SetInterpolationTypeToLinear();
+
+	this->LoadedImages[i]->imageSlice->SetMapper(this->LoadedImages[i]->imageResliceMapper);
+	//this->LoadedImages[i]->imageResliceMapper->Delete();
+	this->LoadedImages[i]->imageSlice->SetProperty(this->LoadedImages[i]->imageProperty);
+	LoadedImages[i]->imageSlice->SetPickable(0);
+	
+	return this->LoadedImages[i]->imageSlice;
 }
-ImageActorPointerType ImageRenderActors::GetSliceActor(int i)
+ImageSlicePointerType ImageRenderActors::GetSliceActor(int i)
 {
 	if (i == -1)
 	{
 		i = int (this->LoadedImages.size() - 1);
 	}
-	return this->LoadedImages[i]->sliceActor;
+	//return this->LoadedImages[i]->sliceActor;
+	
+	return this->LoadedImages[i]->imageSlice;
 }
 std::vector<int> ImageRenderActors::MinCurrentMaxSlices(int i)
 {
@@ -466,12 +491,21 @@ std::vector<int> ImageRenderActors::MinCurrentMaxSlices(int i)
 		i = int (this->LoadedImages.size() - 1);
 	}
 	std::vector<int> slices;
-	slices.push_back(this->LoadedImages[i]->sliceActor->GetSliceNumberMin());
-	slices.push_back(this->LoadedImages[i]->sliceActor->GetZSlice());
-	slices.push_back(this->LoadedImages[i]->sliceActor->GetSliceNumberMax());
+	//slices.push_back(this->LoadedImages[i]->sliceActor->GetSliceNumberMin()); // These need numbers from display extent
+	//slices.push_back(this->LoadedImages[i]->sliceActor->GetZSlice());
+	//slices.push_back(this->LoadedImages[i]->sliceActor->GetSliceNumberMax());
+	
+	slices.push_back(0); // Audrey test
+	slices.push_back(0);
+	slices.push_back(this->sliceBounds[5]);
+
+	//slices.push_back(this->LoadedImages[i]->imageSlice->GetMinZBound); // Audrey test2
+	//slices.push_back(0);
+	//slices.push_back(this->LoadedImages[i]->imageSlice->GetMaxZBound());
+	
 	return slices;
 }
-void ImageRenderActors::SetSliceNumber(int i, int num)
+void ImageRenderActors::SetSliceNumber(int i, int num) // i is number of images, num is the chosen z slice
 {
 	if (i == -1)
 	{
@@ -484,18 +518,20 @@ void ImageRenderActors::SetSliceNumber(int i, int num)
 	std::vector<int> slices;
 	slices = this->MinCurrentMaxSlices(i);
 	std::cout << num << " min " << slices[0] << " current " << slices[1] << " max " << slices[2] << std::endl;
-	if (slices[2] < num)
-	{
-		this->LoadedImages[i]->sliceActor->SetZSlice(slices[2]);
-	}
-	else if (slices[0] > num)
-	{
-		this->LoadedImages[i]->sliceActor->SetZSlice(slices[0]);
-	}
-	else
-	{
-		this->LoadedImages[i]->sliceActor->SetZSlice(num);
-	}
+	//if (slices[2] < num)
+	//{
+	//	this->LoadedImages[i]->sliceActor->SetZSlice(slices[2]);
+	//}
+	//else if (slices[0] > num)
+	//{
+	//	this->LoadedImages[i]->sliceActor->SetZSlice(slices[0]);
+	//}
+	//else
+	//{
+	//	std::cout << "Extent: " << LoadedImages[i]->ImageData->GetExtent()[0] << " " << LoadedImages[i]->ImageData->GetExtent()[1] <<  " " << LoadedImages[i]->ImageData->GetExtent()[2] << " " <<  LoadedImages[i]->ImageData->GetExtent()[3] << " " <<  LoadedImages[i]->ImageData->GetExtent()[4]<< " " <<  LoadedImages[i]->ImageData->GetExtent()[5] << std::endl;
+	//	this->LoadedImages[i]->sliceActor->SetZSlice(num);
+	//}
+	//this->LoadedImages[i]->imageSlice->set
 }
 vtkSmartPointer<vtkImageActor> ImageRenderActors::createProjection(int i, int method, int projection_dim)
 {

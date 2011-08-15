@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
 	typedef itk::ImageFileWriter< USImageType > WriterType;
 	typedef itk::ImageRegionIterator< USImageType > IteratorType; 
 	typedef itk::ImageRegionConstIterator< USImageType > ConstIteratorType;
-	typedef itk::Statistics::Histogram< FloatPixelType, 1 > HistogramType;
+	typedef itk::Statistics::Histogram< FloatPixelType > HistogramType;
 	typedef itk::OtsuMultipleThresholdsCalculator< HistogramType > CalculatorType;
 
 	int num_bin_levs, num_in_fg;

@@ -49,7 +49,8 @@
 #include "itkImageRegionIterator.h"
 #include "itkScalarConnectedComponentImageFilter.h"
 #include "itkBinaryBallStructuringElement.h"
-#include "tmp_itk_rev/itkBinaryMorphologicalClosingImageFilter.h"
+#include "itkBinaryMorphologicalClosingImageFilter.h"
+//#include "tmp_itk_rev/itkBinaryMorphologicalClosingImageFilter.h"
 
 
 using namespace std;
@@ -104,7 +105,7 @@ public:
 	void outputSeeds(void);
 
 	//sub-modules that can be executed
-	void runBinarization();
+	void runBinarization(unsigned short number_of_bins = 16);
 	void runSeedDetection();
 	void runSeedDetection(int minScale,int maxScale); // Added by Raghav
 	void runClustering();
@@ -153,7 +154,7 @@ public:
 private:	
 	void ExtractSeeds();
 	void getConnCompInfo3D();
-	int getConnCompImage(unsigned short* IM, int connectivity, int minSize, int r, int c, int z,int runConnComp);
+	int getConnCompImage(unsigned short* IM, int connectivity, int minSize, size_t r, size_t c, size_t z,int runConnComp);
 	int getRelabeledImage(unsigned short* IM, int connectivity, int minSize, int r, int c, int z,int runConnComp);
 	
 	void clearBinImagePtr();
@@ -178,9 +179,9 @@ private:
 	unsigned short* segImagePtr;				//Created in yousef_seg
 	
 	//Size of all images above
-	int numStacks;
-	int numRows;
-	int numColumns;
+	size_t numStacks;
+	size_t numRows;
+	size_t numColumns;
 
 	vector<Seed> mySeeds;
 	ConnComp* myConnComp;	//added by Yousef on 05-21-2008

@@ -6,5 +6,5 @@ SET( cb_SRCS
 )
 
 ADD_LIBRARY( cellLabelToBorders ${cb_SRCS} )
-TARGET_LINK_LIBRARIES( cellLabelToBorders ITKBasicFilters ITKCommon ITKIO )
+TARGET_LINK_LIBRARIES( cellLabelToBorders         ${ITK_LIBRARIES} )
 #INSTALL( TARGETS cellLabelToBorders DESTINATION . )

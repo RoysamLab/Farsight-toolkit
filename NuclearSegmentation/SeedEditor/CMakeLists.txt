@@ -16,11 +16,7 @@ set(qtproject_SRCS
 
 #Define (additional) ITK and VTK libraries that are needed for vtkTraceViewer to be built
 SET( Libraries
-    ITKCommon
-    ITKNumerics
-    ITKStatistics
-    ITKIO
-    ITKBasicFilters
+    ${ITK_LIBRARIES}
     vtkRendering
     vtkIO
     vtkHybrid

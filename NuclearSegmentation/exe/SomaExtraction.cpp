@@ -17,7 +17,6 @@
 
 #include "SomaExtraction.h"
 
-
 SomaExtractor::SomaExtractor()
 {
 
@@ -30,7 +29,7 @@ void SomaExtractor::SetInputImage(char * fileName)
 	reader->Update();	
 	//read the input image into an ITK image
 	OutputImageType::Pointer img = reader->GetOutput();	
-	this->SetInputImage(img);
+	SetInputImage(img);
 	
 }
 
@@ -43,21 +42,29 @@ void SomaExtractor::SetInputImage(OutputImageType::Pointer img)
 	size2 = inputImage->GetLargestPossibleRegion().GetSize()[1];
 	size3 = inputImage->GetLargestPossibleRegion().GetSize()[2];
 	//size3 +=1;
-	in_Image = (unsigned char *) malloc (size1*size2*size3);
+
+	std::cout << "Allocating memory of: " << size1*size2*size3 / (1024.0 * 1024.0) << " MB"  << std::endl;
+	in_Image = (unsigned char *) malloc (size1*size2*size3*sizeof(unsigned char));
 	
 	if( in_Image == NULL )
 	{
 		std::cout<<"Memory allocation for image failed\n";
 		return ;
 	}
+	std::cout << "Done allocating memory" << std::endl;
 
+	std::cout << "Copying 0s into new array" << std::endl;
 	memset(in_Image/*destination*/,0/*value*/,size1*size2*size3*sizeof(unsigned char)/*num bytes to move*/);
+	std::cout << "Done copying 0s into image" << std::endl;
 
 	ConstIteratorType pix_buf( inputImage, inputImage->GetRequestedRegion() );
-
-	int ind=0;
+	
+	std::cout << "Copying image into in_Image" << std::endl;
+	size_t ind=0;
 	for ( pix_buf.GoToBegin(); !pix_buf.IsAtEnd(); ++pix_buf, ++ind )
-	in_Image[ind]=(pix_buf.Get());
+		in_Image[ind]=(pix_buf.Get());
+
+	std::cout << "Copied " << ind << " pixels into in_Image" << std::endl;
 
 
 }
@@ -96,13 +103,18 @@ bool SomaExtractor::LoadSegParams(int kernel, int minObj)
 	return true;
 }
 
-int SomaExtractor::binarizeImage(char* paramFile)
+int SomaExtractor::binarizeImage(char* paramFile, unsigned short num_bins)
 {
+	std::cout << "Constructing youself_nucleus_seg" << std::endl;
 	NucleusSeg = new yousef_nucleus_seg(); //
+	
+	std::cout << "Reading parameters file" << std::endl;
 	if(!paramFile)
 		NucleusSeg->readParametersFromFile("");
 	else
 	NucleusSeg->readParametersFromFile(paramFile);
+	
+	std::cout << "Entering setDataImage" << std::endl;
 	NucleusSeg->setDataImage(in_Image, size1, size2, size3, "");
 	
 	
@@ -110,7 +122,10 @@ int SomaExtractor::binarizeImage(char* paramFile)
 	//segmentation steps
 	//1-Binarization
 	
-	NucleusSeg->runBinarization();
+	std::cout << "Entering runBinarization" << std::endl;
+	NucleusSeg->runBinarization(num_bins);
+	
+	std::cout << "Entering getBinImage" << std::endl;
 	output_img = NucleusSeg->getBinImage();	
 	
 	binImage = SegmentedImageType::New();
@@ -140,7 +155,7 @@ int SomaExtractor::binarizeImage(char* paramFile)
 
 	//copy the output image into the ITK image
 	IteratorType iterator1(binImage, binImage->GetRequestedRegion());		
-	for(int i=0; i<(size1*size2*size3); i++)
+	for(size_t i=0; i<(size1*size2*size3); i++)
 	{				
 		unsigned short val = (unsigned short)output_img[i];
 		iterator1.Set(val);			
@@ -180,8 +195,10 @@ int SomaExtractor::relabelBinaryImage(void)
 	relabel->SetInput( binImage );
 	relabel->SetMinimumObjectSize( minObjSize );  //Still have to read the segParams file before this
 	//std::cout<<"minObjSize = "<<minObjSize<<std::endl;
+	
 	relabel->InPlaceOn();
 
+	//Calculate labels
 	try
     {
 		relabel->Update();
@@ -192,7 +209,63 @@ int SomaExtractor::relabelBinaryImage(void)
 		std::cerr << excep << std::endl;
 		return EXIT_FAILURE;
     }
+	
+	std::cout << "Originally there were " << relabel->GetOriginalNumberOfObjects() << " objects" << std::endl;
+	std::cout << "After relabel there are now " << relabel->GetNumberOfObjects() << " objects" << std::endl;
 
+	/*typedef itk::LabelGeometryImageFilter<SegmentedImageType> LabelGeometryType;
+	LabelGeometryType::Pointer labelGeometryFilter = LabelGeometryType::New();
+	labelGeometryFilter->SetInput(binImage);
+	labelGeometryFilter->SetCalculateOrientedBoundingBox(false);
+	labelGeometryFilter->SetCalculateOrientedIntensityRegions(false);
+ 	labelGeometryFilter->SetCalculateOrientedLabelRegions(false);
+	labelGeometryFilter->SetCalculatePixelIndices(true);
+	std::cout << "Running labelGeometryFilter->Update" << std::endl;
+	try
+    {
+		labelGeometryFilter->Update();
+    }
+    catch( itk::ExceptionObject & excep )
+    {
+		std::cerr << "labelGeometryFilter: soma extraction exception caught !" << std::endl;
+		std::cerr << excep << std::endl;
+		return EXIT_FAILURE;
+    }
+	
+	//Reject small cells
+
+	//Get the vector containing all the labels of the image
+	std::cout << "Getting labelVector" << std::endl;
+	std::vector<LabelGeometryType::LabelPixelType> labelVector = labelGeometryFilter->GetLabels();
+	std::vector<LabelGeometryType::LabelPixelType>::iterator labelVectorIterator;
+
+	//For each label
+	std::cout << "Iterating through all the labels" << std::endl;
+	for (labelVectorIterator = labelVector.begin(); labelVectorIterator != labelVector.end(); labelVectorIterator++)
+	{
+		LabelGeometryType::LabelPixelType label = *labelVectorIterator;
+		//Get the volume of that label
+		unsigned long volume = labelGeometryFilter->GetVolume(label);
+		
+		//If the volume is smaller than minObjSize
+		if (volume < minObjSize)
+		{
+			std::cout << "Rejected cell " << label << " of size " << volume << std::endl;
+			//Get the index of all the pixels in that label with small value
+			LabelGeometryType::LabelIndicesType indices = labelGeometryFilter->GetPixelIndices(label);
+			LabelGeometryType::LabelIndicesType::iterator indexIterator;
+
+			//And Reject it by setting all the pixel values to 0
+			for (indexIterator = indices.begin(); indexIterator != indices.end(); indexIterator++)
+			{
+				LabelGeometryType::LabelIndexType index = *indexIterator;
+				binImage->SetPixel(index, 0);
+			}
+		}
+	}*/
+
+
+	std::cout << "Creating Binary Threshold Image" << std::endl;
 	BinaryThresholdImageType::Pointer  BinaryThreshold = BinaryThresholdImageType::New();
 	BinaryThreshold->SetInput( binImage );
 	BinaryThreshold->SetLowerThreshold( 1 );
@@ -201,7 +274,8 @@ int SomaExtractor::relabelBinaryImage(void)
 	BinaryThreshold->SetOutsideValue(0);
 	BinaryThreshold->Update();
 	outputImage = BinaryThreshold->GetOutput();
-	
+
+	return 1;	
 }
 
 SomaExtractor::centroidVectorType SomaExtractor::GetSomaCentroids()
@@ -216,12 +290,12 @@ SomaExtractor::centroidVectorType SomaExtractor::GetSomaCentroids()
 	for(unsigned int label=1; label<= numSomas; ++label)
 	{
 		const LabelObjectType * labelObject = Somas->GetLabelObject(label);
-		if(labelObject->GetPhysicalSize() < minObjSize)
+		/*if(labelObject->GetPhysicalSize() < minObjSize)
 		{	
 			//skip small blobs: they probably aren't real somas
 			std::cout<< "rejected cell "<< label <<" of size " << labelObject->GetPhysicalSize() << std::endl;
 			continue;
-		}
+		}*/
 		const LabelObjectType::CentroidType centroid = labelObject->GetCentroid();
 		OutputImageType::IndexType pixelIndex;
 		outputImage->TransformPhysicalPointToIndex( centroid, pixelIndex );
@@ -250,212 +324,25 @@ void SomaExtractor::writeSomaImage(char* writeFileName)
 	WriterType::Pointer writer = WriterType::New();
 	writer->SetFileName(writeFileName);
 	writer->SetInput(outputImage);
-	writer->Update();
+	try
+	{
+		writer->Update();
+	}
+	catch ( itk::ExceptionObject &err)
+	{
+		std::cout << "Error in writer: " << err << std::endl; 
+	}
+	
+	
+	BinImageWriter::Pointer bin_image_writer = BinImageWriter::New();
+	bin_image_writer->SetFileName("binImage.mhd");
+	bin_image_writer->SetInput(binImage);
+	try
+	{
+		bin_image_writer->Update();
+	}
+	catch ( itk::ExceptionObject &err)
+	{
+		std::cout << "Error in bin_image_writer: " << err << std::endl; 
+	}
 }
-
-
-
-//
-//int main(int argc, char* argv[])
-//{	
-//
-//	if(argc <6)
-//	{
-//		std::cout<<"Usage: segment_nuclei <InputImageFileName> <OutputImageFileName> <ParametersFileName> <Opening Kernel Size> <Min Object Size>\n";
-//		return 0;
-//	}
-//	clock_t startTimer = clock();
-//	
-//	std::cout<<"reading input image...";
-//	//For 8-bit grayscale images only 
-//	/*typedef itk::Image< unsigned char, 3 > OutputImageType;
-//	typedef itk::ImageFileReader< OutputImageType > ReaderType;*/
-//	ReaderType::Pointer reader = ReaderType::New();
-//	reader->SetFileName (argv[1]);
-//	reader->Update();	
-//	std::cout<<"done"<<std::endl;
-//	//read the input image into an ITK image
-//	OutputImageType::Pointer img = reader->GetOutput();	
-//	//get the image dimensions
-//	int size1=img->GetLargestPossibleRegion().GetSize()[0];
-//	int size2=img->GetLargestPossibleRegion().GetSize()[1];
-//	int size3=img->GetLargestPossibleRegion().GetSize()[2];
-//	//size3 +=1;
-//	unsigned char *in_Image;
-//	in_Image = (unsigned char *) malloc (size1*size2*size3);
-//	
-//	if( in_Image == NULL )
-//	{
-//		std::cout<<"Memory allocation for image failed\n";
-//		return 0;
-//	}
-//	memset(in_Image/*destination*/,0/*value*/,size1*size2*size3*sizeof(unsigned char)/*num bytes to move*/);
-//
-//	//typedef itk::ImageRegionConstIterator< OutputImageType > ConstIteratorType;
-//	ConstIteratorType pix_buf( img, img->GetRequestedRegion() );
-//
-//	int ind=0;
-//	for ( pix_buf.GoToBegin(); !pix_buf.IsAtEnd(); ++pix_buf, ++ind )
-//	in_Image[ind]=(pix_buf.Get());
-//
-//	//reader = 0;
-//	//img=0;
-//
-//	yousef_nucleus_seg *NucleusSeg = new yousef_nucleus_seg();
-//	if(argc == 3)
-//		NucleusSeg->readParametersFromFile("");
-//	else
-//		NucleusSeg->readParametersFromFile(argv[3]);
-//	NucleusSeg->setDataImage(in_Image,size1,size2,size3,argv[1]);
-//	
-//	
-//	unsigned short *output_img;
-//	//segmentation steps
-//	//1-Binarization
-//	NucleusSeg->runBinarization();
-//	output_img=NucleusSeg->getBinImage();
-//	
-// 
-//		//typedef itk::Image< unsigned short, 3 > SegmentedImageType;
-//		SegmentedImageType::Pointer image;
-//		image = SegmentedImageType::New();
-//		SegmentedImageType::PointType origin;
-//   		origin[0] = 0; 
-//    	origin[1] = 0;    
-//		origin[2] = 0;    
-//    	image->SetOrigin( origin );
-//
-//    	SegmentedImageType::IndexType start;
-//    	start[0] = 0;  // first index on X
-//    	start[1] = 0;  // first index on Y    
-//		start[2] = 0;  // first index on Z    
-//    	SegmentedImageType::SizeType  size;
-//    	size[0] = size1;  // size along X
-//    	size[1] = size2;  // size along Y
-//		size[2] = size3;  // size along Z
-//
-//    	SegmentedImageType::RegionType region;
-//    	region.SetSize( size );
-//    	region.SetIndex( start );
-//
-//    	image->SetRegions( region );
-//    	image->Allocate();
-//    	image->FillBuffer(0);
-//		image->Update();
-//
-//		//copy the output image into the ITK image
-//		//typedef itk::ImageRegionIteratorWithIndex< SegmentedImageType > IteratorType;
-//		IteratorType iterator1(image,image->GetRequestedRegion());		
-//		for(int i=0; i<(size1*size2*size3); i++)
-//		{				
-//			unsigned short val = (unsigned short)output_img[i];
-//			iterator1.Set(val);			
-//			++iterator1;				
-//		}
-//
-//
-//		//////////////////////////////////////////////////////////////////////////////////////////
-//		
-//
-//		
-//
-//	//Binary Morphological closing....
-//	//1-Create the structuring element
-//	//typedef itk::BinaryBallStructuringElement< unsigned short, 3 > KernelType;
-//	KernelType ball;
-//	KernelType::SizeType ballSize;
-//	//ballSize.Fill( atoi(argv[4]) ); //for now, set the radius to 4
-//	ballSize[0] = ( atoi(argv[4]) );
-//	ballSize[1] = ( atoi(argv[4]) );
-//	ballSize[2] = ( 2 );
-//	ball.SetRadius( ballSize );
-//	ball.CreateStructuringElement();
-//	
-//	//typedef itk::GrayscaleMorphologicalOpeningImageFilter< SegmentedImageType, SegmentedImageType, KernelType > FilterType;
-//	FilterType::Pointer filter = FilterType::New();
-//	filter->SetInput( image );
-//	filter->SetKernel( ball );
-//	//filter->SetForegroundValue( 255 ); 
-//
-//    try
-//    {
-//		filter->Update();
-//    } 
-//    catch ( itk::ExceptionObject & excp )
-//    {
-//		std::cerr << excp << std::endl;
-//		return EXIT_FAILURE;
-//    }
-//		
-//	
-//	//typedef itk::RelabelComponentImageFilter< SegmentedImageType, SegmentedImageType > RelabelFilterType;
-//	RelabelFilterType::Pointer relabel = RelabelFilterType::New();
-//	relabel->SetInput( filter->GetOutput() );
-//	relabel->SetMinimumObjectSize( atoi(argv[5]) );
-//	relabel->InPlaceOn();
-//
-//	try
-//    {
-//		relabel->Update();
-//    }
-//    catch( itk::ExceptionObject & excep )
-//    {
-//		std::cerr << "Relabel: exception caught !" << std::endl;
-//		std::cerr << excep << std::endl;
-//		return 1;
-//    }
-//	//typedef itk::BinaryThresholdImageFilter<SegmentedImageType, OutputImageType> BinaryThresholdImageType;
-//	BinaryThresholdImageType::Pointer  BinaryThresholdImage = BinaryThresholdImageType::New();
-//	BinaryThresholdImage->SetInput( filter->GetOutput() );
-//	BinaryThresholdImage->SetLowerThreshold( 1 );
-//	//BinaryThresholdImage->SetUpperThreshold( 255 );	//save for potential later use
-//	BinaryThresholdImage->SetInsideValue(255);
-//	BinaryThresholdImage->SetOutsideValue(0);
-//
-//	//typedef unsigned long LabelType;
-//	//typedef itk::ShapeLabelObject< LabelType, 3 > LabelObjectType;
-//	//typedef itk::LabelMap< LabelObjectType > LabelMapType;
-//	//typedef itk::BinaryImageToShapeLabelMapFilter< OutputImageType, LabelMapType >	ConverterType;
-//	ConverterType::Pointer converter = ConverterType::New();
-//	converter->SetInputForegroundValue(255);
-//	converter->SetInput(BinaryThresholdImage->GetOutput());
-//	LabelMapType::Pointer Somas = converter->GetOutput();
-//	converter->Update();
-//	unsigned int numSomas = Somas->GetNumberOfLabelObjects();
-//	std::string FileName = argv[2];
-//	FileName.erase(FileName.length() -4, FileName.length());
-//	FileName.append(".txt");
-//	std::ofstream outfile(FileName.c_str());
-//	outfile.precision(1);
-//
-//	for(unsigned int label=1; label<= numSomas; ++label)
-//	{
-//		const LabelObjectType * labelObject = Somas->GetLabelObject(label);
-//		if(labelObject->GetPhysicalSize() < 100)
-//		{	//skip small blobs: they probably aren't real somas
-//			std::cout<< "rejected cell "<< label <<" of size " << labelObject->GetPhysicalSize() << std::endl;
-//			continue;
-//		}
-//		const LabelObjectType::CentroidType centroid = labelObject->GetCentroid();
-//		OutputImageType::IndexType pixelIndex;
-//		BinaryThresholdImage->GetOutput()->TransformPhysicalPointToIndex( centroid, pixelIndex );
-//		outfile << std::fixed << pixelIndex[0] << " " << pixelIndex[1] << " " << pixelIndex[2] << endl;
-//	}
-//	outfile.close();
-////save soma image
-//	//typedef itk::ImageFileWriter< OutputImageType > WriterType;
-//	WriterType::Pointer writer = WriterType::New();
-//	writer->SetFileName(argv[2]);
-//	writer->SetInput( BinaryThresholdImage->GetOutput() );
-//	writer->Update();
-//	image = 0;
-//	writer = 0;
-//
-//	     
-//	delete NucleusSeg;
-//	//delete output_img; //This is deleted when I delete NucleusSeg
-//	delete in_Image;
-//	std::cout<<"Time elapsed is: "<<(((double)clock() - startTimer) / CLOCKS_PER_SEC)<<" seconds"<<std::endl;
-//      
-//	return 0;
-//}

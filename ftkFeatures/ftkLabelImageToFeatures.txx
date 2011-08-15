@@ -970,11 +970,11 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 	rescaleFilter->Update();
 	tempIntensityImage = rescaleFilter->GetOutput();
 	
-	typedef itk::Statistics::ScalarImageTextureCalculator< LabelImageType > TextureCalcType;
+	typedef itk::Statistics::ScalarImageToTextureFeaturesFilter< LabelImageType > TextureCalcType;
 	typedef typename TextureCalcType::Pointer TextureCalcPointer;
 	TextureCalcPointer textureCalculator = TextureCalcType::New();
 	textureCalculator->SetInput(tempIntensityImage);
-	textureCalculator->SetImageMask(labelImage);
+	textureCalculator->SetMaskImage(labelImage);
 	textureCalculator->SetPixelValueMinMax(0,255);
 	textureCalculator->SetFastCalculations(true);
 	
@@ -1001,8 +1001,15 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
         labelImage->SetRequestedRegion(region);
         tempIntensityImage->SetRequestedRegion(region);
 		textureCalculator->SetInsidePixelValue( currentLabel );
-		textureCalculator->Compute();
 		
+		try
+		{
+			textureCalculator->Update();
+		}
+		catch (itk::ExceptionObject &err)
+		{
+			std::cerr << "textureCalculator error: " << err << std::endl;
+		}
 		/*
 		FeatureValueVector * 	GetFeatureMeans ()
 		FeatureValueVector * 	GetFeatureStandardDeviations ()
@@ -1031,8 +1038,11 @@ template< typename TIPixel, typename TLPixel, unsigned int VImageDimension >
 void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 ::RunZernikeFilter()
 {
-	#ifdef ZERNIKE
+	#ifdef _ZERNIKE
 	{
+		typedef zernike::ImageType zernikeImageType;
+		typedef itk::ImageRegionIterator< zernikeImageType> zerIteratorType;
+		
 		if(!intensityImage || !labelImage) return;
 		if(!labels.size()) return;
 		

@@ -15,6 +15,6 @@ SET( cb3_SRCS
 )
 
 ADD_LIBRARY( alpha_expansion_3d ${cb3_SRCS} )
-TARGET_LINK_LIBRARIES ( alpha_expansion_3d ITKBasicFilters ITKCommon ITKIO)
+TARGET_LINK_LIBRARIES ( alpha_expansion_3d        ${ITK_LIBRARIES} )
 #INSTALL( TARGETS alpha_expansion_3d DESTINATION . )
 

@@ -122,7 +122,7 @@ private:
 };
 
 
-vtkCxxRevisionMacro(Segment, "$Revision$");
+vtkCxxRevisionMacro(Segment, "$Revision: 1179 $");
 vtkStandardNewMacro(Segment);
 
 Segment::Segment()
@@ -469,7 +469,7 @@ void Segment::InsertSegment(vtkIdType pos, Segment* segment)
   //cerr << __FUNCTION__ << "end." << endl;
 }
 
-vtkCxxRevisionMacro(Node, "$Revision$");
+vtkCxxRevisionMacro(Node, "$Revision: 1179 $");
 vtkStandardNewMacro(Node);
 
 Node::Node()
@@ -551,7 +551,7 @@ double Node::ComputeConnectionScore(Segment* segment1, Segment* segment2)
   return angleScore * pointFrequencyScore * penaltyScore;
 }
 
-vtkCxxRevisionMacro(vtkPlotEdges, "$Revision$");
+vtkCxxRevisionMacro(vtkPlotEdges, "$Revision: 1179 $");
 vtkStandardNewMacro(vtkPlotEdges);
 
 // Construct object with MaximumLength set to 1000.

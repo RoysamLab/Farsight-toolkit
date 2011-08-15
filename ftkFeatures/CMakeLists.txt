@@ -11,8 +11,6 @@ SET( FTKFEATURES_HDRS
   ftkIntrinsicFeatures.h
   ftkObject.h
   ftkObjectAssociation.h
-  itkLabelGeometryImageFilter.h
-  itkLabelGeometryImageFilter.txx 
 	
 )
 
@@ -29,4 +27,10 @@ SUBDIRS(Qhull)
 
 TARGET_LINK_LIBRARIES( ftkFeatures TinyXML ftkImage
                        vtksys vtkCommon vtkFiltering vtkIO
-                       ITKCommon ITKBasicFilters ITKIO ITKStatistics QHULL zernike)
+                       ${ITK_LIBRARIES} QHULL)
+                       
+IF (BUILD_ZERNIKE)
+    TARGET_LINK_LIBRARIES( ftkFeatures zernike)
+ENDIF (BUILD_ZERNIKE)
+                      
+

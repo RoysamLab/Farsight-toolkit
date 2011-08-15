@@ -24,9 +24,9 @@ SET( xl_srcs
 
 
 ADD_EXECUTABLE(mdl_XL_pipe ${xl_srcs} )
-TARGET_LINK_LIBRARIES(mdl_XL_pipe ITKIO ITKStatistics ITKBasicFilters ITKCommon)
+TARGET_LINK_LIBRARIES(mdl_XL_pipe         ${ITK_LIBRARIES} )
 
 ADD_EXECUTABLE(Demo_Bspline Demo_Bspline.cpp  mdlBSplineFitting.cpp mdlBSplineFitting.h   mdlTypes.h 
   mdlUtils.h mdlUtils.cpp)
-TARGET_LINK_LIBRARIES(Demo_Bspline mdlUtils  ITKBasicFilters ITKCommon ITKIO ITKStatistics)
+TARGET_LINK_LIBRARIES(Demo_Bspline mdlUtils          ${ITK_LIBRARIES} )
 

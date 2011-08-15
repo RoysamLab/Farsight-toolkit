@@ -2283,9 +2283,8 @@ bool model_nucleus_seg::LoadSegParams(std::string filename)
 			this->NUM_FEAT = atoi(parameterElement->Attribute("NUM_FEAT"));			
 			this->NUM_ASSOC_FEAT = atoi(parameterElement->Attribute("NUM_ASSOC_FEAT"));
 			this->SPLIT = atoi(parameterElement->Attribute("SPLIT"));
-			
-			if(parameterElement->Attribute("SPLIT_SENSITIVITY"))
-				this->SPLIT_SENSITIVITY = atoi(parameterElement->Attribute("SPLIT_SENSITIVITY"));
+			this->SPLIT_SENSITIVITY = atoi(parameterElement->Attribute("SPLIT_SENSTIVITY"));
+
 			if(parameterElement->Attribute("MAX_VOL"))
 				this->MAX_VOL = static_cast<double>(atoi(parameterElement->Attribute("MAX_VOL")));
 			if(parameterElement->Attribute("MIN_VOL"))

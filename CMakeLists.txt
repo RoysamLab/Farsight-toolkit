@@ -32,7 +32,7 @@ OPTION( BUILD_IMAGE_MANAGER  "Manage Image File Conversions and Directories" OFF
 OPTION( USE_TRACKING "Use Tracking module with nucleus editor" OFF)
 
 OPTION( BUILD_MODEL_SEG "Build Statistical_Model_Segmentation (Note that it has dependency on glpk library)" OFF)
-OPTION( BUILD_ZERNIKE  " Build zernike_moments_calculattion " ON)
+OPTION( BUILD_ZERNIKE  " Build zernike_moments_calculation " OFF)
 OPTION( BUILD_HARALICK "Biild Haralick_features_calculation" OFF)
 OPTION( BUILD_DANIELA "color_segmentation base on satration" OFF)   
 OPTION( BUILD_QTIMAGECOMBINER "combines logical OR of two QImages" OFF) 
@@ -180,8 +180,8 @@ ENDIF(BUILD_MODEL_SEG)
 
 IF (USE_TRACKING)
 	ADD_DEFINITIONS(-DUSE_TRACKING)
-	INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/CellTrackerLib )
-	SUBDIRS( CellTrackerLib )
+	INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/cellTracker )
+	SUBDIRS( cellTracker )
 ENDIF (USE_TRACKING)
 	
 
@@ -283,8 +283,8 @@ IF (BUILD_ZERNIKE)
  	INCLUDE_DIRECTORIES (${PROJECT_SOURCE_DIR}/Zernike)
 	SUBDIRS(Zernike)
 	IF(MSVC)
-            SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D _ZERNIKE")
-            SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D _ZERNIKE")
+       SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D _ZERNIKE")
+ 	   SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D _ZERNIKE")
 	ENDIF(MSVC)
 ENDIF(BUILD_ZERNIKE)
 

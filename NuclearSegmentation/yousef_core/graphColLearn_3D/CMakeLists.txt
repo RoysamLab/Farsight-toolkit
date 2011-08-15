@@ -6,5 +6,5 @@ SET( SRCS
 )
 
 ADD_LIBRARY( graphColLearn_3D ${SRCS} )
-TARGET_LINK_LIBRARIES ( graphColLearn_3D ITKBasicFilters ITKCommon ITKIO)
+TARGET_LINK_LIBRARIES ( graphColLearn_3D        ${ITK_LIBRARIES} )
 #INSTALL( TARGETS graphColLearn_3D DESTINATION . )

@@ -21,11 +21,10 @@ ADD_LIBRARY(TraceSE3DLib
   TraceContainer3D.cxx  TraceContainer3D.h
   TraceNode.h
 )      
-TARGET_LINK_LIBRARIES( TraceSE3DLib ITKCommon TinyXML )
+TARGET_LINK_LIBRARIES( TraceSE3DLib  TinyXML      ${ITK_LIBRARIES} )
 
 SET ( Libraries
-      ITKIO
-      ITKNumerics
+      ${ITK_LIBRARIES}
       TraceSE3DLib
 )
 QT4_WRAP_CPP( GUI_MOC_SRCS TraceMain.h)
@@ -37,7 +36,7 @@ SET(CPACK_PACKAGE_EXECUTABLES "${PROJECT_NAME};Trace FL3D")
 ADD_EXECUTABLE ( RenderTraces Render.cxx TraceNode.h ${XML_sources})
 TARGET_LINK_LIBRARIES( RenderTraces
                        ${Libraries}
-                       ITKBasicFilters
+                       ${ITK_LIBRARIES}
                        tiff
                        vtkRendering
                        vtkIO 

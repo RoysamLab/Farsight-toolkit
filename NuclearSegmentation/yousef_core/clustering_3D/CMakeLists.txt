@@ -6,6 +6,6 @@ SET( SRCS
 
 ADD_LIBRARY( clustering_3D ${SRCS} )
 
-TARGET_LINK_LIBRARIES ( clustering_3D ITKBasicFilters ITKCommon ITKIO)
+TARGET_LINK_LIBRARIES ( clustering_3D        ${ITK_LIBRARIES} )
 
 #INSTALL( TARGETS clustering_3D DESTINATION . )

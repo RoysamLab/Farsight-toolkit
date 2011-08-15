@@ -23,4 +23,4 @@ ADD_EXECUTABLE(SLFFeatureCal SLFFeatureCal.cxx itkBinarizeFilter.h
               itkCoOccurrenceFilter.h itkCO2Feature3DFilter.h itkTextureFeaturesFilter.h)
 
 TARGET_LINK_LIBRARIES(SLFFeatureCal
-ITKBasicFilters ITKCommon ITKIO ITKStatistics)
+${ITK_LIBRARIES})

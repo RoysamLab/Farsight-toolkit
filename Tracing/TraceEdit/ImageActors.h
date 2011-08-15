@@ -42,14 +42,15 @@ limitations under the License.
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkExtractImageFilter.h"
 //#include "vtkImagePermute.h"
-//#include "vtkImagePlaneWidget.h"
+#include "vtkImagePlaneWidget.h"
 #include "vtkImageReslice.h"
-//#include "vtkMatrix4x4.h"
 #include "itkPermuteAxesImageFilter.h"
 
 //#include "vtkImageEllipsoidSource.h"
-//#include "vtkVolumeRayCastMapper.h"
-//#include "vtkVolumeRayCastCompositeFunction.h"
+//slicer
+#include "vtkImageResliceMapper.h"
+#include "vtkImageSlice.h"
+#include "vtkImageProperty.h"
 
 #include <stdio.h>
 #include <string>
@@ -73,6 +74,7 @@ typedef vtkSmartPointer<vtkImageActor> ImageActorPointerType;
 //typedef vtkSmartPointer<vtkImagePermute> PermuteFilterType;
 //typedef vtkSmartPointer<vtkImageResliceMapper> ImageResliceMapper;
 typedef itk::PermuteAxesImageFilter<ImageType> itkPermuteFilterType;
+typedef vtkSmartPointer<vtkImageSlice> ImageSlicePointerType;
 
 struct imageFileHandle
 {
@@ -101,9 +103,13 @@ struct imageFileHandle
 	vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper;
 //image slicer
 	ImageActorPointerType sliceActor;
-	vtkSmartPointer<vtkMatrix4x4> resliceAxes;
+	ImageSlicePointerType imageSlicer;
+	//vtkSmartPointer<vtkMatrix4x4> resliceAxes;
 	vtkSmartPointer<vtkImageReslice> reslice;
 	vtkSmartPointer<vtkImageActor> ProjectionActor;
+	vtkSmartPointer<vtkImageResliceMapper> imageResliceMapper;
+	vtkSmartPointer<vtkImageSlice> imageSlice;
+	vtkSmartPointer<vtkImageProperty> imageProperty;
 #ifdef USE_GPUREN
 	vtkSmartPointer<vtkOpenGLGPUVolumeRayCastMapper> volumeMapperGPU;
 #endif
@@ -119,8 +125,12 @@ public:
 //render actors
 	vtkSmartPointer<vtkActor> ContourActor(int i);
 	vtkSmartPointer<vtkActor> GetContourActor(int i);
-	ImageActorPointerType CreateSliceActor(int i);
-	ImageActorPointerType GetSliceActor(int i);
+	//ImageActorPointerType CreateSliceActor(int i);
+	//ImageActorPointerType GetSliceActor(int i);
+	//ImageSlicePointerType CreateSlicer(int i);
+	//ImageSlicePointerType GetSlicer(int i);
+	ImageSlicePointerType CreateSliceActor(int i);
+	ImageSlicePointerType GetSliceActor(int i);
 	vtkSmartPointer<vtkImageActor> createProjection(int i, int method, int projection_dim);
 	vtkSmartPointer<vtkImageActor> GetProjectionImage(int i);
 	vtkSmartPointer<vtkVolume> RayCastVolume(int i);
@@ -169,5 +179,6 @@ private:
 	double r,g,b, opacity1, opacity2, opacity1Value, opacity2Value, RaycastSampleDist;
 	double brightness;
 	int minXBound, maxXBound, minYBound, maxYBound, minZBound, maxZBound;
+	int sliceBounds[6];
 };
 #endif

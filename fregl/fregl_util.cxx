@@ -207,7 +207,8 @@ fregl_util_overlap(TransformType::Pointer transform, itk::Size<3> size_from, itk
 	if (tx > size_to[0] || ty > size_to[1]) is_overlap = false;
 	if (-tx> size_from[0] || -ty> size_from[1]) is_overlap = false;
 
-	if (!is_overlap) return overlap;
+	if (!is_overlap) 
+		return overlap;
 
 	//Work out the appoximate amount of overlapping using only the x-y
 	//translation since the z-dimension changes.

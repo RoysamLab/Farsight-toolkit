@@ -12,10 +12,7 @@ ADD_LIBRARY( NuclearSegmentation
             ${NUCLEARSEGMENTATION_HDRS} 
 )
 
-TARGET_LINK_LIBRARIES( NuclearSegmentation ftkCommon ftkFeatures ftkImage Yousef_Nucleus_Seg Nuclear_Association PixelLevelAnalysis)
-IF (USE_TRACKING)
-	TARGET_LINK_LIBRARIES( NuclearSegmentation  ${NUCLEARSEGMENTATION} CellTrackerLib)
-ENDIF (USE_TRACKING)
+TARGET_LINK_LIBRARIES( NuclearSegmentation ftkCommon ftkFeatures ftkImage Yousef_Nucleus_Seg Nuclear_Association PixelLevelAnalysis )
 #INSTALL( TARGETS NuclearSegmentation DESTINATION . )
 
 

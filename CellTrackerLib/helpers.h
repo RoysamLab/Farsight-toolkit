@@ -40,9 +40,8 @@
 #include "itkLabelStatisticsImageFilter.h"
 #include "itkScalarImageTextureCalculator.h"
 #include "ftkLabelImageToFeatures.h"
-//#include "ftkIntrinsicFeatures.h"
+#include "ftkIntrinsicFeatures.h"
 #include "ftkTrackFeatures.h"
-//#include "ftkNuclearSegmentation.h"
 #include "itkBinaryThinningImageFilter3D.h"
 
 //int npes,rank;

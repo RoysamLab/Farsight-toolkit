@@ -100,7 +100,6 @@ v7: new GUI and file control
 #include "ImageActors.h"
 #include "ftkCommon/ftkProjectManager.h"
 #include "View3D.h"
-#include "ROISelection.h"
 
 View3D::View3D(QWidget *parent)
 : QMainWindow(parent)
@@ -116,6 +115,7 @@ View3D::View3D(QWidget *parent)
 	this->GapsTableView = NULL;
 	this->TreeModel = NULL;
 	this->savescreenshotDialog = NULL;
+	this->ROIExtrudedpolydata = NULL;
 
 	this->tobj = new TraceObject;
 	//int num_loaded = 0;
@@ -127,9 +127,8 @@ View3D::View3D(QWidget *parent)
 	//bool tracesLoaded = false;
 	this->translateImages = false;	//this is for testing a switch is needed
 	this->viewIn2D = this->TraceEditSettings.value("mainWin/use2d",false).toBool();
-	this->distancetoSoma = false;
 	this->renderTraceBits = false;
-	this->projectionStyle = 0;	//should me maximum projection
+	this->projectionStyle = 0;	//should be maximum projection
 	this->projection_axis = 2; // z projection
 	this->Date.currentDate();
 	this->Time.currentTime();
@@ -238,16 +237,13 @@ void View3D::CreateBootLoader()
 	this->BootProject = new QPushButton("Project", this->bootLoadFiles);
 	connect(this->BootProject, SIGNAL(clicked()), this, SLOT(LoadProject()));
 	this->Use2DSlicer = new QCheckBox;
-	this->UseROItoSoma = new QCheckBox;
 	this->Use2DSlicer->setChecked(this->viewIn2D);
-	this->UseROItoSoma->setChecked(this->distancetoSoma);
 	QFormLayout *LoadLayout = new QFormLayout(this->bootLoadFiles);
 	LoadLayout->addRow(tr("User Name "), this->GetAUserName);
 	LoadLayout->addRow(tr("Lab Name "), this->GetLab);
 	LoadLayout->addRow(tr("Trace Files"), this->BootTrace);
 	LoadLayout->addRow(tr("Image File"), this->BootImage);
 	LoadLayout->addRow(tr("Default Use Slicer"), this->Use2DSlicer);
-	LoadLayout->addRow(tr("ROI Distance To Somas"), this->UseROItoSoma);
 	LoadLayout->addRow(tr("Somas File"), this->BootSoma);
 	//LoadLayout->addRow(tr("uM Per Voxel"), this->scale);
 	LoadLayout->addRow(tr("Reload Previous Session"), this->Reload);
@@ -351,41 +347,8 @@ void View3D::ReloadState()
 	this->OkToBoot();
 }
 
-void View3D::PreBoot(){
-	this->distancetoSoma = this->UseROItoSoma->isChecked();
-	if( distancetoSoma && !this->Image.isEmpty() && !this->TraceFiles.isEmpty() ){
-		std::vector<double> cellposxy;
-		std::vector<CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
-		int num_cells = NewCells.size();
-		double soma_cord[3];
-		for (int i=0; i<num_cells; ++i){
-			NewCells.at(i)->getSomaCoord(soma_cord);
-			cellposxy.push_back( soma_cord[0] );
-			cellposxy.push_back( soma_cord[1] );
-		}
-		roiDistaces = new double[num_cells];
-		ROISelectionDialog *ROIdial = new ROISelectionDialog(roiDistaces, Image.at(0).toStdString(), cellposxy, this );
-		connect( ROIdial, SIGNAL(dialogClosed()), this, SLOT(ROISelAct()));
-		ROIdial->show();
-	}
-	else
-		this->OkToBootContinue();
-}
-
 void View3D::OkToBoot()
 {
-	this->PreBoot();
-}
-
-void View3D::ROISelAct(){
-	std::vector<CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
-	int num_cells = NewCells.size();
-	for( int i=0; i<NewCells.size(); ++i)
-		NewCells.at(i)->setDistanceToROI( roiDistaces[i] );
-	this->OkToBootContinue();
-}
-
-void View3D::OkToBootContinue(){
 	if(!this->TraceFiles.isEmpty() || !this->Image.isEmpty() || !this->SomaFile.isEmpty())
 	{
 		this->BootDock->hide();
@@ -437,7 +400,7 @@ void View3D::OkToBootContinue(){
 	if (viewIn2D == true)
 	{
 
-		this->RacastBar->toggleViewAction()->setDisabled(1);
+		this->RaycastBar->toggleViewAction()->setDisabled(1);
 		this->chooseInteractorStyle(1);
 	}
 	else
@@ -579,6 +542,7 @@ void View3D::LoadTraces()
 
 void View3D::LoadImageData()
 {
+	std::cout << "LoadImageData called" << std::endl;
 	QString newImage = this->getImageFile();
 	if (!newImage.isEmpty())
 	{
@@ -599,7 +563,9 @@ void View3D::LoadImageData()
 		}
 		else
 		{
-			this->Renderer->AddActor(this->ImageActors->CreateSliceActor(-1));
+			std::cout << "View in 2D and createsliceactor" << std::endl;
+			//this->Renderer->AddActor(this->ImageActors->CreateSliceActor(-1));
+			this->Renderer->AddViewProp(this->ImageActors->CreateSliceActor(-1));
 			this->ImageActors->setIs2D(-1, true);
 			this->chooseInteractorStyle(1);//set to image interactor
 		}
@@ -900,7 +866,7 @@ void View3D::choosetoRender(int row, int col)
 				{
 					this->Renderer->AddVolume(this->ImageActors->RayCastVolume(row));
 					//this->ImageActors->setRenderStatus(row, true);
-					this->RacastBar->show();
+					this->RaycastBar->show();
 				}else
 				{
 					//this->Renderer->AddActor(this->ImageActors->CreateSliceActor(row));
@@ -940,10 +906,10 @@ void View3D::changeDimension(int row, int col)
 				this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(row));
 				this->ImageActors->setRenderStatus(row, false);
 			}
-			this->RacastBar->toggleViewAction()->setDisabled(1);
-			if (this->RacastBar->isVisible())
+			this->RaycastBar->toggleViewAction()->setDisabled(1);
+			if (this->RaycastBar->isVisible())
 			{
-				this->RacastBar->hide();
+				this->RaycastBar->hide();
 			}
 			//this->SlicerBar->show();
 			//this->QVTK->GetRenderWindow()->Render();
@@ -960,12 +926,12 @@ void View3D::changeDimension(int row, int col)
 			this->Renderer->AddVolume(this->ImageActors->RayCastVolume(row));
 			this->ImageActors->setRenderStatus(row, true);
 			//}
-			this->RacastBar->toggleViewAction()->setDisabled(0);
+			this->RaycastBar->toggleViewAction()->setDisabled(0);
 			if (this->SlicerBar->isVisible())
 			{
 				this->SlicerBar->hide();
 			}
-			this->RacastBar->show();
+			this->RaycastBar->show();
 			//this->chooseInteractorStyle(0);
 		} //end else 2d to 3d
 	}
@@ -1200,8 +1166,20 @@ void View3D::CreateGUIObjects()
 	this->ImageIntensity = new QAction("Intensity", this->CentralWidget);
 	this->ImageIntensity->setStatusTip("Calculates intensity of trace bits from one image");
 	connect(this->ImageIntensity, SIGNAL(triggered()), this, SLOT(SetImgInt()));
-	this->SetRaycastToSlicer = new QAction("Raycast To Slicer", this->CentralWidget);
-	connect(this->SetRaycastToSlicer, SIGNAL(triggered()), this, SLOT(raycastToSlicer()));
+	
+	//this->SetRaycastToSlicer = new QAction("Raycast To Slicer", this->CentralWidget);
+	//connect(this->SetRaycastToSlicer, SIGNAL(triggered()), this, SLOT(raycastToSlicer()));
+	 
+	this->SetSlicer = new QAction("Set Slicer DO NOT USE", this->CentralWidget);
+	connect(this->SetSlicer, SIGNAL(triggered()), this, SLOT(setSlicerMode()));
+
+	this->SetProjection = new QAction("Set Projection", this->CentralWidget);
+	connect(this->SetProjection, SIGNAL(triggered()), this, SLOT(setProjectionMode()));
+
+	this->SetRaycast = new QAction("Set Raycast", this->CentralWidget);
+	connect(this->SetRaycast, SIGNAL(triggered()), this, SLOT(setRaycastMode()));
+	
+
 	this->ColorByTreesAction = new QAction("Color By Trees", this->CentralWidget);
 	this->ColorByTreesAction->setCheckable(true);
 	this->ColorByTreesAction->setChecked(false);
@@ -1225,6 +1203,9 @@ void View3D::CreateGUIObjects()
 
 	this->ExtrudeROIButton = new QPushButton("Extrude ROI points", this->CentralWidget);
 	connect(this->ExtrudeROIButton, SIGNAL(clicked()), this, SLOT(DrawROI()));
+
+	this->CalculateDistanceToDeviceButton = new QPushButton("Calculate Distance To Device", this->CentralWidget);
+	connect(this->CalculateDistanceToDeviceButton, SIGNAL(clicked()), this, SLOT(CalculateDistanceToDevice()));
 
 	this->ShowPointer = new QCheckBox("Use 3D Cursor", this->CentralWidget);
 	this->ShowPointer->setStatusTip("Show Pointer Automatically?");
@@ -1318,7 +1299,7 @@ void View3D::CreateGUIObjects()
 	connect(this->typeCombo, SIGNAL(activated( int )), this, SLOT(SetTraceType(int )));
 
 	QStringList ZoomStyles;
-	ZoomStyles<< "Track Ball" << "Image" << "RubberBandZoom" ;
+	ZoomStyles<< "Track Ball" << "Image" << "RubberBandZoom" << "Slicer";
 	this->StyleCombo = new QComboBox;
 	this->StyleCombo->addItems(ZoomStyles);
 	connect(this->StyleCombo, SIGNAL(activated(int)), this, SLOT(chooseInteractorStyle(int)));
@@ -1501,6 +1482,7 @@ void View3D::CreateLayout()
 	CursorToolsLayout->addWidget(this->createNewBitButton);
 	CursorToolsLayout->addWidget(this->createNewROIPointButton);
 	CursorToolsLayout->addWidget(this->ExtrudeROIButton);
+	CursorToolsLayout->addWidget(this->CalculateDistanceToDeviceButton);
 	CursorToolsLayout->addStretch();
 
 	this->CursorActionsWidget->setMaximumSize(256,256);
@@ -1643,7 +1625,10 @@ void View3D::CreateLayout()
 	// this->analysisViews->addAction(this->updateStatisticsAction);
 	this->analysisViews->addAction(this->CellAnalysis);
 	//this->ShowToolBars->addSeparator();
-	this->DataViews->addAction(this->SetRaycastToSlicer);
+	QMenu *renderer_sub_menu = this->DataViews->addMenu(tr("Renderer Mode"));
+	renderer_sub_menu->addAction(this->SetSlicer);
+	renderer_sub_menu->addAction(this->SetProjection);
+	renderer_sub_menu->addAction(this->SetRaycast);
 	this->DataViews->addAction(this->ColorByTreesAction);
 
 	this->createRayCastSliders();
@@ -1738,23 +1723,25 @@ void View3D::chooseInteractorStyle(int iren)
 		cam->SetViewUp(0,1,0);
 		cam->OrthogonalizeViewUp();
 		cam->ParallelProjectionOn();
-		vtkSmartPointer<vtkInteractorStyleImage> style =
-			vtkSmartPointer<vtkInteractorStyleImage>::New();
+		vtkSmartPointer<vtkInteractorStyleImage> style = vtkSmartPointer<vtkInteractorStyleImage>::New();
 		this->Interactor->SetInteractorStyle(style);
 		this->Renderer->ResetCamera();
 		this->QVTK->GetRenderWindow()->Render();
 	}else if (iren== 2)
 	{
-		vtkSmartPointer<vtkInteractorStyleRubberBandZoom> style =
-			vtkSmartPointer<vtkInteractorStyleRubberBandZoom>::New();
+		vtkSmartPointer<vtkInteractorStyleRubberBandZoom> style = vtkSmartPointer<vtkInteractorStyleRubberBandZoom>::New();
 		this->Interactor->SetInteractorStyle(style);
-	}else 
+	}else if (iren == 3) 
 	{
-		vtkSmartPointer<vtkInteractorStyleTrackballCamera> style =
-			vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
+		vtkSmartPointer<vtkInteractorStyleTrackballCamera> style = vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
 		this->Interactor->SetInteractorStyle(style);
 		this->Renderer->ResetCamera();
 		this->QVTK->GetRenderWindow()->Render();
+	}else
+	{
+		vtkSmartPointer<vtkInteractorStyleImage> styleImage = vtkSmartPointer<vtkInteractorStyleImage>::New();
+		styleImage->SetInteractionModeToImage3D();
+		this->Interactor->SetInteractorStyle(styleImage);
 	}
 }
 
@@ -1842,44 +1829,45 @@ void View3D::CreateActors()
 	this->LineActor->SetPickable(1);
 	this->Renderer->AddActor(this->LineActor);
 
-  this->UpdateBranchActor();
-  this->Renderer->AddActor(this->BranchActor);
-  this->QVTK->GetRenderWindow()->Render();
-  for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
-  {
-	  if (this->ImageActors->isRayCast(i))
-	  {
-		  if (!this->viewIn2D)
-		  {
-			  this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
-			  this->ImageActors->setRenderStatus(i, true);
-			  this->RacastBar->show();
-		  }else
-		  {
-			  //this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
-			  this->Renderer->AddActor(this->ImageActors->createProjection(i, this->projectionStyle,this->projection_axis));
-			  this->ImageActors->setIs2D(i, true);
-			  //this->SlicerBar->show();
-		  }
-	  }
-	  else
-	  {
-		  this->Renderer->AddActor(this->ImageActors->ContourActor(i));
-		  this->ImageActors->setRenderStatus(i, true);
-	  }
-  }
-  //sphere is used to mark the picks
-  this->CreateSphereActor();
-  Renderer->AddActor(this->SphereActor);
-  this->axes = vtkSmartPointer<vtkAxesActor>::New();
-  this->UCSMarker = vtkSmartPointer<vtkOrientationMarkerWidget>::New();
-  this->UCSMarker->SetOutlineColor(0.9300, 0.5700, 0.1300 );
-  this->UCSMarker->SetOrientationMarker(this->axes);
-  this->UCSMarker->SetInteractor(this->Interactor);
-  this->UCSMarker->SetViewport(0,0,.1,.1);
-  this->UCSMarker->SetEnabled(1);
-  //this->UCSMarker->InteractiveOn();
-  this->QVTK->GetRenderWindow()->Render();
+	this->UpdateBranchActor();
+	this->Renderer->AddActor(this->BranchActor);
+	this->QVTK->GetRenderWindow()->Render();
+	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+	{
+		if (this->ImageActors->isRayCast(i))
+		{
+			if (!this->viewIn2D)
+			{
+				this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
+				this->ImageActors->setRenderStatus(i, true);
+				this->RaycastBar->show();
+			}else
+			{
+				//this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
+				//this->Renderer->AddViewProp(this->ImageActors->CreateSliceActor(-1));
+				this->Renderer->AddActor(this->ImageActors->createProjection(i, this->projectionStyle,this->projection_axis));
+				this->ImageActors->setIs2D(i, true);
+				//this->SlicerBar->show();
+			}
+		}
+		else
+		{
+			this->Renderer->AddActor(this->ImageActors->ContourActor(i));
+			this->ImageActors->setRenderStatus(i, true);
+		}
+	}
+	//sphere is used to mark the picks
+	this->CreateSphereActor();
+	Renderer->AddActor(this->SphereActor);
+	this->axes = vtkSmartPointer<vtkAxesActor>::New();
+	this->UCSMarker = vtkSmartPointer<vtkOrientationMarkerWidget>::New();
+	this->UCSMarker->SetOutlineColor(0.9300, 0.5700, 0.1300 );
+	this->UCSMarker->SetOrientationMarker(this->axes);
+	this->UCSMarker->SetInteractor(this->Interactor);
+	this->UCSMarker->SetViewport(0,0,.1,.1);
+	this->UCSMarker->SetEnabled(1);
+	//this->UCSMarker->InteractiveOn();
+	this->QVTK->GetRenderWindow()->Render();
 }
 
 void View3D::removeImageActors()
@@ -1907,9 +1895,9 @@ void View3D::removeImageActors()
 		this->projectFilesTable->setItem(i,2,offItem);
 
 	}//end num images
-	if (this->RacastBar->isVisible())
+	if (this->RaycastBar->isVisible())
 	{
-		this->RacastBar->hide();
+		this->RaycastBar->hide();
 	}
 	if (this->SlicerBar->isVisible())
 	{
@@ -1918,67 +1906,159 @@ void View3D::removeImageActors()
 	this->QVTK->GetRenderWindow()->Render();
 }
 
-void View3D::raycastToSlicer()
+//void View3D::raycastToSlicer()
+//{
+//	if (!this->viewIn2D)
+//	{
+//		for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+//		{  
+//			if ((this->ImageActors->getRenderStatus(i))&&(this->ImageActors->isRayCast(i)))
+//			{
+//			  //this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
+//			  this->Renderer->AddActor(this->ImageActors->createProjection(i,this->projectionStyle,this->projection_axis));
+//			  this->ImageActors->setIs2D(i, true);
+//			  this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
+//			  this->ImageActors->setRenderStatus(i, false);
+//				/***************************************************************/
+//				QTableWidgetItem *Item2D = new QTableWidgetItem(tr("2d"));
+//				Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
+//				this->projectFilesTable->setItem(i,3,Item2D);
+//				/***************************************************************/
+//			}
+//		}//end num images
+//		this->RacastBar->toggleViewAction()->setDisabled(1);
+//		if (this->RacastBar->isVisible())
+//		{
+//			this->RacastBar->hide();
+//		}
+//		//this->SlicerBar->show();
+//		//this->QVTK->GetRenderWindow()->Render();
+//		this->chooseInteractorStyle(1);
+//		this->viewIn2D = true;
+//	}//end if 3d to 2d
+//	else
+//	{
+//		for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+//		{  
+//			if (this->ImageActors->is2D(i))
+//			{
+//				//this->Renderer->RemoveActor(this->ImageActors->GetSliceActor(i));
+//				this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(i));
+//				this->ImageActors->setIs2D(i, false);
+//				this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
+//				this->ImageActors->setRenderStatus(i, true);
+//				/***************************************************************/
+//				QTableWidgetItem *Item3D = new QTableWidgetItem(tr("3d"));
+//				Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
+//				QFont font;
+//				font.setBold(true);
+//				Item3D->setFont(font);
+//				this->projectFilesTable->setItem(i,3,Item3D);
+//				/***************************************************************/
+//			}
+//		}
+//		this->RacastBar->toggleViewAction()->setDisabled(0);
+//		if (this->SlicerBar->isVisible())
+//		{
+//			this->SlicerBar->hide();
+//		}
+//		this->RacastBar->show();
+//		this->chooseInteractorStyle(0);
+//		this->viewIn2D = false;
+//	}//end else 2d to 3d
+//}
+
+void View3D::setSlicerMode()
 {
-	if (!this->viewIn2D)
+	//DO NOT USE
+	
+	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
 	{
-		for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
-		{  
-			if ((this->ImageActors->getRenderStatus(i))&&(this->ImageActors->isRayCast(i)))
-			{
-			  //this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
-			  this->Renderer->AddActor(this->ImageActors->createProjection(i,this->projectionStyle,this->projection_axis));
-			  this->ImageActors->setIs2D(i, true);
-			  this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
-			  this->ImageActors->setRenderStatus(i, false);
-				/***************************************************************/
-				QTableWidgetItem *Item2D = new QTableWidgetItem(tr("2d"));
-				Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
-				this->projectFilesTable->setItem(i,3,Item2D);
-				/***************************************************************/
-			}
-		}//end num images
-		this->RacastBar->toggleViewAction()->setDisabled(1);
-		if (this->RacastBar->isVisible())
-		{
-			this->RacastBar->hide();
-		}
-		//this->SlicerBar->show();
-		//this->QVTK->GetRenderWindow()->Render();
-		this->chooseInteractorStyle(1);
-		this->viewIn2D = true;
-	}//end if 3d to 2d
-	else
-	{
-		for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
-		{  
-			if (this->ImageActors->is2D(i))
-			{
-				//this->Renderer->RemoveActor(this->ImageActors->GetSliceActor(i));
-				this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(i));
-				this->ImageActors->setIs2D(i, false);
-				this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
-				this->ImageActors->setRenderStatus(i, true);
-				/***************************************************************/
-				QTableWidgetItem *Item3D = new QTableWidgetItem(tr("3d"));
-				Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
-				QFont font;
-				font.setBold(true);
-				Item3D->setFont(font);
-				this->projectFilesTable->setItem(i,3,Item3D);
-				/***************************************************************/
-			}
-		}
-		this->RacastBar->toggleViewAction()->setDisabled(0);
-		if (this->SlicerBar->isVisible())
-		{
-			this->SlicerBar->hide();
-		}
-		this->RacastBar->show();
-		this->chooseInteractorStyle(0);
-		this->viewIn2D = false;
-	}//end else 2d to 3d
+		Renderer->AddActor(ImageActors->CreateSliceActor(i));
+		ClearRenderer(i);
+		ImageActors->setRenderStatus(i, false);
+	}
+
+	this->RaycastBar->toggleViewAction()->setDisabled(1);
+	if (this->RaycastBar->isVisible())
+		this->RaycastBar->hide();
+	//this->SlicerBar->show();
+	//this->QVTK->GetRenderWindow()->Render();
+	
+	this->chooseInteractorStyle(1);
+	renderMode = SLICER;
 }
+
+void View3D::setProjectionMode()
+{
+	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+	{  
+		this->Renderer->AddActor(this->ImageActors->createProjection(i,this->projectionStyle,this->projection_axis));
+		
+		//this->ImageActors->setIs2D(i, true); //this line incompatible with multiple mode renderer
+		ClearRenderer(i);
+		this->ImageActors->setRenderStatus(i, false);
+		
+		//Incompatible with slicer/projection upgrade
+		/***************************************************************/
+		QTableWidgetItem *Item2D = new QTableWidgetItem(tr("2d"));
+		Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
+		this->projectFilesTable->setItem(i,3,Item2D);
+		/***************************************************************/
+
+	}
+
+	this->RaycastBar->toggleViewAction()->setDisabled(1);
+	if (this->RaycastBar->isVisible())
+		this->RaycastBar->hide();
+	//this->SlicerBar->show();
+	//this->QVTK->GetRenderWindow()->Render();
+	this->chooseInteractorStyle(1);
+	
+	renderMode = PROJECTION;
+}
+
+void View3D::setRaycastMode()
+{
+	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+	{  
+		ClearRenderer(i);			
+		//this->ImageActors->setIs2D(i, false); //this line incompatible with multiple mode renderer
+		this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
+		this->ImageActors->setRenderStatus(i, true);
+
+		//Incompatible with slice/projection upgrade
+		/***************************************************************/
+		QTableWidgetItem *Item3D = new QTableWidgetItem(tr("3d"));
+		Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
+		QFont font;
+		font.setBold(true);
+		Item3D->setFont(font);
+		this->projectFilesTable->setItem(i,3,Item3D);
+		/***************************************************************/
+	}
+	this->RaycastBar->toggleViewAction()->setDisabled(0);
+	
+	if (this->SlicerBar->isVisible())
+		this->SlicerBar->hide();
+
+	this->RaycastBar->show();
+	this->chooseInteractorStyle(0);
+	this->viewIn2D = false;
+	
+	renderMode = RAYCAST;
+}
+
+void View3D::ClearRenderer(int i)
+{
+	if (renderMode == SLICER)
+		Renderer->RemoveActor(ImageActors->GetProjectionImage(i));
+	else if (renderMode == PROJECTION)
+		Renderer->RemoveActor(ImageActors->GetProjectionImage(i));
+	else if (renderMode == RAYCAST)
+		Renderer->RemoveVolume(ImageActors->GetRayCastVolume(i));
+}
+
 void View3D::focusOn()
 {
 	std::vector<CellTrace*> cellsSelected = this->CellModel->GetSelectedCells();
@@ -2063,13 +2143,13 @@ void View3D::createSlicerSlider()
 	this->SliceSlider->setRange(0,100);
 	this->SliceSlider->setTickInterval(5);
 	this->SliceSlider->setTickPosition(QSlider::TicksRight);
-	connect(this->SliceSlider, SIGNAL(valueChanged(int)), this->SliceSpinBox, SLOT(setValue(int)));
 	this->SliceSlider->setValue(0);
+	connect(this->SliceSlider, SIGNAL(valueChanged(int)), this->SliceSpinBox, SLOT(setValue(int)));
 	connect(this->SliceSpinBox, SIGNAL(valueChanged(int)), this->SliceSlider, SLOT(setValue(int)));
 	connect (this->SliceSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setSlicerZValue(int)));
 	this->SlicerBar->addWidget(this->SliceSpinBox);
 	this->SlicerBar->addWidget(this->SliceSlider);
-	this->SlicerBar->hide();
+	//this->SlicerBar->hide();
 }
 
 void View3D::setSlicerZValue(int value)
@@ -2078,9 +2158,16 @@ void View3D::setSlicerZValue(int value)
 	{
 		if(this->ImageActors->is2D(i))
 		{
+			std::cout << "setSlicerZValue called" << std::endl;
+			this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(i));
 			//this->Renderer->RemoveActor(this->ImageActors->GetSliceActor(i));
-			this->ImageActors->SetSliceNumber(i , value);
+			this->Renderer->RemoveViewProp(this->ImageActors->GetSliceActor(i));
+			//this->ImageActors->SetSliceNumber(i, value);
 			//this->Renderer->AddActor(this->ImageActors->GetSliceActor(i));
+			this->Renderer->AddViewProp(this->ImageActors->GetSliceActor(i));
+			vtkInteractorStyleImage * styleImage = vtkInteractorStyleImage::New();
+			styleImage->SetInteractionModeToImage3D();
+			this->Interactor->SetInteractorStyle(styleImage);
 		}
 	}
 	this->QVTK->GetRenderWindow()->Render();
@@ -2124,11 +2211,11 @@ void View3D::CreateSphereActor()
 
 void View3D::createRayCastSliders()
 {
-	this->RacastBar = new QToolBar("RayCast Tools", this);
-	this->RacastBar->setAllowedAreas(Qt::BottomToolBarArea);
-	this->RacastBar->setMovable(false);
-	this->addToolBar(Qt::BottomToolBarArea,this->RacastBar);
-	this->RacastBar->setToolTip("Racaster settings");
+	this->RaycastBar = new QToolBar("RayCast Tools", this);
+	this->RaycastBar->setAllowedAreas(Qt::BottomToolBarArea);
+	this->RaycastBar->setMovable(false);
+	this->addToolBar(Qt::BottomToolBarArea,this->RaycastBar);
+	this->RaycastBar->setToolTip("Racaster settings");
 	//functions to control raycast opacity 
 	this->OpacitySpin = new QSpinBox(this);
 	this->OpacitySpin->setRange(0,250);
@@ -2166,19 +2253,19 @@ void View3D::createRayCastSliders()
 	connect (this->BrightnessSpin, SIGNAL(valueChanged(int)), this->BrightnessSlider, SLOT(setValue(int)));
 	connect (this->BrightnessSpin, SIGNAL(valueChanged(int)), this , SLOT(RayCastBrightnessChanged(int)));
 	//add the widgets to the bar
-	this->RacastBar->addWidget(new QLabel("Opacity Threshold"));
-	this->RacastBar->addWidget(this->OpacitySpin);
-	this->RacastBar->addWidget(this->OpacitySlider);
-	this->RacastBar->addWidget(new QLabel("Opacity Value"));
-	this->RacastBar->addWidget(this->OpacityValueSpin);
-	this->RacastBar->addSeparator();
-	this->RacastBar->addWidget(new QLabel("Brightness"));
-	this->RacastBar->addWidget(this->BrightnessSpin);
-	this->RacastBar->addWidget(this->BrightnessSlider);
-	this->DataViews->addAction(this->RacastBar->toggleViewAction());
+	this->RaycastBar->addWidget(new QLabel("Opacity Threshold"));
+	this->RaycastBar->addWidget(this->OpacitySpin);
+	this->RaycastBar->addWidget(this->OpacitySlider);
+	this->RaycastBar->addWidget(new QLabel("Opacity Value"));
+	this->RaycastBar->addWidget(this->OpacityValueSpin);
+	this->RaycastBar->addSeparator();
+	this->RaycastBar->addWidget(new QLabel("Brightness"));
+	this->RaycastBar->addWidget(this->BrightnessSpin);
+	this->RaycastBar->addWidget(this->BrightnessSlider);
+	this->DataViews->addAction(this->RaycastBar->toggleViewAction());
 	if(this->ImageActors->NumberOfImages() < 1)
 	{
-		this->RacastBar->hide();
+		this->RaycastBar->hide();
 	}
 }
 
@@ -2504,6 +2591,19 @@ void View3D::AddROIPoint()
 }
 void View3D::DrawROI()
 {
+	std::vector<TraceLine*> roots = tobj->GetAllRoots();
+	if (roots.size() == 0)
+		return;	//No roots, so do nothing
+
+	if (CellModel->getCellCount() == 0)	//Need to calculate cell features before we write to them!
+	{
+		std::vector<CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
+		if (NewCells.size() > 0)
+		{
+			this->CellModel->setCells(NewCells);
+		}
+	}
+	
 	if (this->ROIPoints.size() != 4)
 	{
 		std::cout<< "not enough points\n";
@@ -2552,13 +2652,20 @@ void View3D::DrawROI()
 	extrude->Update();
 	// Setup actor and mapper
 	vtkSmartPointer<vtkPolyDataMapper> ROImapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	ROImapper->SetInput(extrude->GetOutput());
+	ROIExtrudedpolydata = extrude->GetOutput();
+	ROImapper->SetInput(ROIExtrudedpolydata);
 
 	vtkSmartPointer<vtkActor> ROIactor = vtkSmartPointer<vtkActor>::New();
 	ROIactor->SetMapper(ROImapper);
 
+	this->Renderer->AddActor(ROIactor);
+	this->Rerender();
+}
+
+void View3D::CalculateDistanceToDevice()
+{
 	vtkSmartPointer<vtkCellLocator> cellLocator = vtkSmartPointer<vtkCellLocator>::New();
-	cellLocator->SetDataSet(extrude->GetOutput());
+	cellLocator->SetDataSet(ROIExtrudedpolydata);
 	cellLocator->BuildLocator();
 	
 	int cellCount= this->CellModel->getCellCount();
@@ -2567,23 +2674,18 @@ void View3D::DrawROI()
 		for (int i = 0; i < cellCount; i++)
 		{
 			//double testPoint[3] = {500, 600, 50};
-			double testPoint[3];
+			double somaPoint[3];
 			CellTrace* currCell = this->CellModel->GetCellAtNoSelection( i);
-			currCell->getSomaCoord(testPoint);
+			currCell->getSomaCoord(somaPoint);
 			//Find the closest points to TestPoint
 			double closestPoint[3];//the coordinates of the closest point will be returned here
 			double closestPointDist2; //the squared distance to the closest point will be returned here
 			vtkIdType cellId; //the cell id of the cell containing the closest point will be returned here
 			int subId; //this is rarely used (in triangle strips only, I believe)
-			cellLocator->FindClosestPoint(testPoint, closestPoint, cellId, subId, closestPointDist2);
+			cellLocator->FindClosestPoint(somaPoint, closestPoint, cellId, subId, closestPointDist2);
 			currCell->setDistanceToROI( std::sqrt(closestPointDist2));
-			/*std::cout << "Coordinates of closest point: " << closestPoint[0] << " " << closestPoint[1] << " " << closestPoint[2] << std::endl;
-			std::cout << "distance to closest point: " << std::sqrt(closestPointDist2) << std::endl;
-			std::cout << "CellId: " << cellId << std::endl;*/
 		}//end for cell count
 	}
-	this->Renderer->AddActor(ROIactor);
-	this->Rerender();
 }
 /*Selections*/
 void View3D::updateTraceSelectionHighlights()

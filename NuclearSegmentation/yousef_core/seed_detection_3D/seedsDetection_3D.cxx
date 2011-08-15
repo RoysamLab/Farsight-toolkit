@@ -1,19 +1,19 @@
 /* 
- * Copyright 2009 Rensselaer Polytechnic Institute
- * This program is free software; you can redistribute it and/or modify 
- * it under the terms of the GNU General Public License as published by 
- * the Free Software Foundation; either version 2 of the License, or 
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
- * for more details.
- * 
- * You should have received a copy of the GNU General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc., 
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
+* Copyright 2009 Rensselaer Polytechnic Institute
+* This program is free software; you can redistribute it and/or modify 
+* it under the terms of the GNU General Public License as published by 
+* the Free Software Foundation; either version 2 of the License, or 
+* (at your option) any later version.
+* 
+* This program is distributed in the hope that it will be useful, but 
+* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+* or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+* for more details.
+* 
+* You should have received a copy of the GNU General Public License along 
+* with this program; if not, write to the Free Software Foundation, Inc., 
+* 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+*/
 
 //seedsDetection_2D.cxx
 
@@ -42,15 +42,15 @@
 
 //OpenCL support
 #ifdef OPENCL
-	#include "CL\cl.h"
-	#include "CL\cl_ext.h"
-	#ifndef MSTRINGIFY
-		#define MSTRINGIFY(A) #A
-		char* stringifiedKernel =
-		#include "TestKernel.cl"
-		char* LocalMaximaKernel =
-		#include "LocalMaximaKernel.cl"
-	#endif
+#include "CL\cl.h"
+#include "CL\cl_ext.h"
+#ifndef MSTRINGIFY
+#define MSTRINGIFY(A) #A
+char* stringifiedKernel =
+#include "TestKernel.cl"
+char* LocalMaximaKernel =
+#include "LocalMaximaKernel.cl"
+#endif
 #endif
 
 
@@ -116,38 +116,38 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	MyInputImageType::Pointer im;
 	im = MyInputImageType::New();
 	MyInputImageType::PointType origin;
-    origin[0] = 0.; 
-    origin[1] = 0.;    
+	origin[0] = 0.; 
+	origin[1] = 0.;    
 	origin[2] = 0.;    
-    im->SetOrigin( origin );
+	im->SetOrigin( origin );
 
-    MyInputImageType::IndexType start;
-    start[0] =   0;  // first index on X
-    start[1] =   0;  // first index on Y    
+	MyInputImageType::IndexType start;
+	start[0] =   0;  // first index on X
+	start[1] =   0;  // first index on Y    
 	start[2] =   0;  // first index on Z    
-    MyInputImageType::SizeType  size;
-    size[0]  = c;  // size along X
-    size[1]  = r;  // size along Y
+	MyInputImageType::SizeType  size;
+	size[0]  = c;  // size along X
+	size[1]  = r;  // size along Y
 	size[2]  = z;  // size along Z
-  
-    MyInputImageType::RegionType region;
-    region.SetSize( size );
-    region.SetIndex( start );
-    
-    double spacing[3];
+
+	MyInputImageType::RegionType region;
+	region.SetSize( size );
+	region.SetIndex( start );
+
+	double spacing[3];
 	spacing[0] = 1; //spacing along x
 	spacing[1] = 1; //spacing along y
 	spacing[2] = sampl_ratio; //spacing along z
 
-    im->SetRegions( region );
+	im->SetRegions( region );
 	im->SetSpacing(spacing);
-    im->Allocate();
-    im->FillBuffer(0);
+	im->Allocate();
+	im->FillBuffer(0);
 	im->Update();	
 	//copy the input image into the ITK image
 	typedef itk::ImageRegionIteratorWithIndex< MyInputImageType > IteratorType;
 	IteratorType iterator1(im,im->GetRequestedRegion());
-	
+
 	unsigned short* dImg = NULL;	
 	int max_dist = 1;
 	if(UseDistMap == 1)
@@ -159,14 +159,14 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 			else
 				iterator1.Set(255.0);
 			++iterator1;
-		
+
 		}
 		//By Yousef on 09/08/2009
 		//Just for testing purposes: Write out the distance map into an image file
-		typedef itk::ImageFileWriter< MyInputImageType > WriterType;
-		WriterType::Pointer writer = WriterType::New();
-		writer->SetFileName("bin_test.tif");
-		writer->SetInput( im );
+		//typedef itk::ImageFileWriter< MyInputImageType > WriterType;
+		//WriterType::Pointer writer = WriterType::New();
+		//writer->SetFileName("bin_test.tif");
+		//writer->SetInput( im );
 		//writer->Update();
 		//////////////////////////////////////////////////////////////////////////
 		std::cout<<"Computing distance transform...";
@@ -181,21 +181,21 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 		std::cout<<"done"<<std::endl;
 		iterator1.GoToBegin();		
 	}
-	
+
 	float multp = 1.0;
 	for(int i=0; i<r*c*z; i++)
 	{
-		
+
 		if(UseDistMap == 1)
 			multp = 1+((float) dImg[i]/(2*max_dist));
 		if(bImg[i] > 0)
 			iterator1.Set((unsigned short)IM[i]/multp);			
 		else
 			iterator1.Set(255);
-		
+
 		++iterator1;
 	}
-	
+
 	cout << "About to enter Estimating parameters" << endl;
 	//By Yousef (8/29/2009)
 	//Estimate the segmentation parameters
@@ -229,23 +229,23 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	//approximately, we need (20~21)ximage size in bytes
 	//try to allocate memory for an unsigned char* of the 23ximage size
 	int block_divisor = 1; //Assumes you will not overflow RAM (according to Yousef above, you need 24 * image size of RAM, otherwise performance suffers)
-	
+
 	int blk = 1;
 	int cntr = 0;
-	
+
 	for(int i=0; i<r; i+=r/block_divisor)
 		for(int j=0; j<c; j+=c/block_divisor)
 			cntr++;
 
 	int min_x, min_y, max_x, max_y;
-	
+
 	clock_t start_time_multiscale_log = clock();
 
-	#ifdef _OPENMP
-		omp_set_nested(1);
-	#endif
-	
-	#pragma omp parallel for private(min_x, min_y, max_x, max_y)
+#ifdef _OPENMP
+	omp_set_nested(1);
+#endif
+
+#pragma omp parallel for private(min_x, min_y, max_x, max_y)
 	for(int i=0; i<r; i+=r/block_divisor)
 	{
 		for(int j=0; j<c; j+=c/block_divisor)
@@ -262,21 +262,21 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 
 			//Create an itk image to hold the sub image (tile) being processing
 			MyInputImageType::Pointer im_Small = extract3DImageRegion(im, max_x-min_x+1, max_y-min_y+1, z, min_x, min_y, 0);
-						
+
 			//By Yousef (8/27/2009): multi-scale LoG is done in one function now
 			multiScaleLoG(im_Small, r, c, z, min_y, max_y, min_x, max_x, 0, z-1, sigma_min, sigma_max, IM, sampl_ratio, dImg, minIMout, UseDistMap);
 			//
 		}
 	}
-	
-	#ifdef _OPENMP
-		omp_set_nested(0);
-	#endif
+
+#ifdef _OPENMP
+	omp_set_nested(0);
+#endif
 
 	cout << "Multiscale Log took " << (clock() - start_time_multiscale_log)/(float)CLOCKS_PER_SEC << " seconds" << endl;
-		
+
 	free(dImg);
-   
+
 	*IM_out = new float[r*c*z];
 	if(!*IM_out)
 	{
@@ -290,100 +290,100 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	//Detect the seed points (which are also the local maxima points)	
 	std::cout<<"Detecting Seeds"<<std::endl;
 	*IM_bin = new unsigned short[r*c*z];
-  //std::cout << "about to call Detect_Local_MaximaPoints_3D" << std::endl;
+	//std::cout << "about to call Detect_Local_MaximaPoints_3D" << std::endl;
 	clock_t start_time_local_maxima = clock();
-	#ifdef OPENCL	
-		Detect_Local_MaximaPoints_3D_ocl(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0]);
-	#elif CUDA
-		Detect_Local_MaximaPoints_3D_CUDA(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0]);
-    #else
-		Detect_Local_MaximaPoints_3D(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0], bImg);
-	#endif OPENCL
+#ifdef OPENCL	
+	Detect_Local_MaximaPoints_3D_ocl(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0]);
+#elif CUDA
+	Detect_Local_MaximaPoints_3D_CUDA(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0]);
+#else
+	Detect_Local_MaximaPoints_3D(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0], bImg);
+#endif OPENCL
 	cout << "Local maxima point detection took " << (clock() - start_time_local_maxima)/(float)CLOCKS_PER_SEC << " seconds" << endl;
-	
+
 	std::cout << "done detecting seeds" << std::endl;
-	
+
 	return 1;
 
-	
+
 }
 
 
 int detect_seeds(itk::SmartPointer<MyInputImageType> im, int r, int c, int z,const double sigma, float* IMG, int sampl_ratio)
 {
-  
-  //  Types should be selected on the desired input and output pixel types.
-  typedef    float     OutputPixelType;
+
+	//  Types should be selected on the desired input and output pixel types.
+	typedef    float     OutputPixelType;
 
 
-  //  The input and output image types are instantiated using the pixel types.
-  typedef itk::Image< OutputPixelType, 3 >   OutputImageType;
+	//  The input and output image types are instantiated using the pixel types.
+	typedef itk::Image< OutputPixelType, 3 >   OutputImageType;
 
 
-  //  The filter type is now instantiated using both the input image and the
-  //  output image types.
-  typedef itk::LaplacianRecursiveGaussianImageFilterNew<MyInputImageType, OutputImageType >  FilterType;
-  FilterType::Pointer laplacian = FilterType::New();
-  
+	//  The filter type is now instantiated using both the input image and the
+	//  output image types.
+	typedef itk::LaplacianRecursiveGaussianImageFilterNew<MyInputImageType, OutputImageType >  FilterType;
+	FilterType::Pointer laplacian = FilterType::New();
 
-  //  The option for normalizing across scale space can also be selected in this filter.
-  laplacian->SetNormalizeAcrossScale( true );
 
-  //  The input image can be obtained from the output of another
-  //  filter. Here the image comming from the calling function is used as the source
-  laplacian->SetInput( im);
-  
+	//  The option for normalizing across scale space can also be selected in this filter.
+	laplacian->SetNormalizeAcrossScale( true );
 
-  
-  //  It is now time to select the $\sigma$ of the Gaussian used to smooth the
-  //  data.  Note that $\sigma$ must be passed to both filters and that sigma
-  //  is considered to be in millimeters. That is, at the moment of applying
-  //  the smoothing process, the filter will take into account the spacing
-  //  values defined in the image.
-  //
-  laplacian->SetSigma(sigma);
- 
-  //  Finally the pipeline is executed by invoking the \code{Update()} method.
-  //
- try
-    {
-    laplacian->Update();
-    }
-  catch( itk::ExceptionObject & err ) 
-    { 
-    std::cout << "ExceptionObject caught !" << std::endl; 
-    std::cout << err << std::endl; 
-    return EXIT_FAILURE;
-    } 
- 
-  //   Copy the resulting image into the input array
-  long int i = 0;
-  typedef itk::ImageRegionIteratorWithIndex< OutputImageType > IteratorType;
-  IteratorType iterate(laplacian->GetOutput(),laplacian->GetOutput()->GetRequestedRegion());
-  while ( i<r*c*z)
-  {
-    IMG[i] = /*sigma*sigma*/iterate.Get()/sqrt(sigma);
-    ++i;
-	++iterate;
-  }
+	//  The input image can be obtained from the output of another
+	//  filter. Here the image comming from the calling function is used as the source
+	laplacian->SetInput( im);
 
-  return EXIT_SUCCESS;
+
+
+	//  It is now time to select the $\sigma$ of the Gaussian used to smooth the
+	//  data.  Note that $\sigma$ must be passed to both filters and that sigma
+	//  is considered to be in millimeters. That is, at the moment of applying
+	//  the smoothing process, the filter will take into account the spacing
+	//  values defined in the image.
+	//
+	laplacian->SetSigma(sigma);
+
+	//  Finally the pipeline is executed by invoking the \code{Update()} method.
+	//
+	try
+	{
+		laplacian->Update();
+	}
+	catch( itk::ExceptionObject & err ) 
+	{ 
+		std::cout << "ExceptionObject caught !" << std::endl; 
+		std::cout << err << std::endl; 
+		return EXIT_FAILURE;
+	} 
+
+	//   Copy the resulting image into the input array
+	long int i = 0;
+	typedef itk::ImageRegionIteratorWithIndex< OutputImageType > IteratorType;
+	IteratorType iterate(laplacian->GetOutput(),laplacian->GetOutput()->GetRequestedRegion());
+	while ( i<r*c*z)
+	{
+		IMG[i] = /*sigma*sigma*/iterate.Get()/sqrt(sigma);
+		++i;
+		++iterate;
+	}
+
+	return EXIT_SUCCESS;
 }
 
 int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, int rmin, int rmax, int cmin, int cmax, int zmin, int zmax,const double sigma_min, double sigma_max, float* IMG, int sampl_ratio, int unsigned short* dImg, int* minIMout, int UseDistMap)
 {
-  
+
 	//  Types should be selected on the desired input and output pixel types.
 	typedef    float     OutputPixelType;
 	//  The input and output image types are instantiated using the pixel types.
 	typedef itk::Image< OutputPixelType, 3 >   OutputImageType;
 	bool failed = false;
 
-	#pragma omp parallel for firstprivate(im) ordered
+#pragma omp parallel for firstprivate(im) ordered
 	for(int i = sigma_max - sigma_min; i >= 0; i--)
 	{
 		int sigma = sigma_max - i;
-		#pragma omp critical (ProcessingScaleCout)
+#pragma omp critical (ProcessingScaleCout)
 		{
 			std::cout<<"Processing scale "<<sigma<<endl;
 		}
@@ -397,7 +397,7 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 		//  The input image can be obtained from the output of another
 		//  filter. Here the image comming from the calling function is used as the source
 		laplacian->SetInput(im);
-	  
+
 		//  It is now time to select the $\sigma$ of the Gaussian used to smooth the
 		//  data.  Note that $\sigma$ must be passed to both filters and that sigma
 		//  is considered to be in millimeters. That is, at the moment of applying
@@ -405,7 +405,7 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 		//  values defined in the image.
 		//
 		laplacian->SetSigma(sigma);
-	 
+
 		//  Finally the pipeline is executed by invoking the \code{Update()} method.
 		//
 		try
@@ -418,13 +418,13 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 			std::cout << err << std::endl; 
 			failed = true;
 		} 
- 
+
 		//   Copy the resulting image into the input array
 		typedef itk::ImageRegionIteratorWithIndex< OutputImageType > IteratorType;
 		IteratorType iterate(laplacian->GetOutput(),laplacian->GetOutput()->GetRequestedRegion());
-		
+
 		long int II;
-		#pragma omp ordered
+#pragma omp ordered
 		{
 			for(int k1=zmin; k1<=zmax; k1++)
 			{
@@ -473,59 +473,59 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 
 float get_maximum_3D(float* A, int r1, int r2, int c1, int c2, int z1, int z2,int R, int C)
 {
-	
-   	float mx = A[(z1*R*C)+(r1*C)+c1];
-    
+
+	float mx = A[(z1*R*C)+(r1*C)+c1];
+
 	for(int i=r1; i<=r2; i++)
-    {
-        for(int j=c1; j<=c2; j++)
-        {
+	{
+		for(int j=c1; j<=c2; j++)
+		{
 			for(int k=z1; k<=z2; k++)
 			{				
 				if(A[(k*R*C)+(i*C)+j]>mx)
 					mx = A[(k*R*C)+(i*C)+j];
 			}
-        }
-    }
-    return mx;
+		}
+	}
+	return mx;
 }
 
 unsigned short get_maximum_3D(unsigned short* A, int r1, int r2, int c1, int c2, int z1, int z2,int R, int C)
 {
-	
-   	unsigned short mx = A[(z1*R*C)+(r1*C)+c1];
-    for(int i=r1; i<=r2; i++)
-    {
-        for(int j=c1; j<=c2; j++)
-        {
+
+	unsigned short mx = A[(z1*R*C)+(r1*C)+c1];
+	for(int i=r1; i<=r2; i++)
+	{
+		for(int j=c1; j<=c2; j++)
+		{
 			for(int k=z1; k<=z2; k++)
 			{				
 				if(A[(k*R*C)+(i*C)+j]>mx)
 					mx = A[(k*R*C)+(i*C)+j];
 			}
-        }
-    }
-    return mx;
+		}
+	}
+	return mx;
 }
 
 
 void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, unsigned short* out1, unsigned short* bImg)
 {  
-    int min_r, min_c, max_r, max_c, min_z, max_z;    
-       
-    //start by getting local maxima points
-    //if a point is a local maximam give it a local maximum ID
-        
+	int min_r, min_c, max_r, max_c, min_z, max_z;    
+
+	//start by getting local maxima points
+	//if a point is a local maximam give it a local maximum ID
+
 	//int IND = 0;
 	int II = 0;
-  int itr = 0;
-  //std::cout << "In Detect_Local_MaximaPoints_3D, about to plunge in the loop" << std::endl;
+	int itr = 0;
+	//std::cout << "In Detect_Local_MaximaPoints_3D, about to plunge in the loop" << std::endl;
 
-	#pragma omp parallel for private(II, min_r, min_c, min_z, max_r, max_c, max_z)
+#pragma omp parallel for private(II, min_r, min_c, min_z, max_r, max_c, max_z)
 	for(int i=0; i<r; i++)
-    {
-        for(int j=0; j<c; j++)
-        {				
+	{
+		for(int j=0; j<c; j++)
+		{				
 			for(int k=0; k<z; k++)
 			{									
 				//calculate bounds
@@ -535,10 +535,10 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
 				max_r = (int)min((double)r-1,i+scale_xy);
 				max_c = (int)min((double)c-1,j+scale_xy);                         
 				max_z = (int)min((double)z-1,k+scale_z);                         
-				
+
 				//get the intensity maximum of the bounded im_vals
 				float mx = get_maximum_3D(im_vals, min_r, max_r, min_c, max_c, min_z, max_z,r,c);
-				
+
 				//if the current pixel is at the maximum intensity, set it to 255 in out1 (seedImagePtr), else set it to 0
 				II = (k*r*c)+(i*c)+j;
 				if(im_vals[II] == mx)    
@@ -546,15 +546,15 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
 				else
 					out1[(k*r*c)+(i*c)+j]=0;
 			}			
-        }
-    }  
-  //std::cout << std::endl << "made it out of the loop" << std::endl;
+		}
+	}  
+	//std::cout << std::endl << "made it out of the loop" << std::endl;
 }
 
 void Detect_Local_MaximaPoints_3D_ocl(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, unsigned short* out1)
 {
 #ifdef OPENCL
-	
+
 	// START OPENCL BOILERPLATE ----------------------------------------------------------------------------------------------------------------
 	cl_platform_id platforms[10];
 	cl_uint num_platforms;
@@ -571,14 +571,14 @@ void Detect_Local_MaximaPoints_3D_ocl(float* im_vals, int r, int c, int z, doubl
 	clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_GPU, 10, device, &num_devices); //Get the first platform and get a list of devices
 	context = clCreateContext(0, 1, device, &seed_pfn_notify, NULL, NULL); //Create context from first device
 	queue = clCreateCommandQueue(context, device[0], 0, NULL); //Create a command queue for the first device
-	
+
 	//cout << endl << LocalMaximaKernel << endl << endl; //print out strinfified kernel
-	
+
 	program = clCreateProgramWithSource(context, 1, (const char **) &LocalMaximaKernel, 0, &errorcode); //Read in kernel and create a program
-	
+
 	if (errorcode != CL_SUCCESS)
 		cout << "clCreateProgramWithSource Error code: " << errorcode << endl;
-	
+
 	errorcode = clBuildProgram(program, 0, 0, 0, 0, 0); //Build the program
 
 	if (errorcode != CL_SUCCESS) //If there was a build error, print out build_info
@@ -593,24 +593,24 @@ void Detect_Local_MaximaPoints_3D_ocl(float* im_vals, int r, int c, int z, doubl
 	}
 
 	kernel = clCreateKernel(program, "LocalMaximaKernel", &errorcode); //Create the kernel from the source code
-	
+
 	if (errorcode != CL_SUCCESS)
 		cout << "clCreateKernel Error code: " << errorcode << endl;
 
 	//END OPENCL BOILERPLATE ---------------------------------------------------------------------------------------------------------------------
 
 	size_t cnDimension = r * c * z; //array size
-	
+
 	cout << "Allocating " << (sizeof(*im_vals) * cnDimension)/(double)(1024*1024) << " MB of memory on GPU for im_vals" << endl;
 	cout << "Allocating " << (sizeof(*out1) * cnDimension)/(double)(1024*1024) << " MB of memory on GPU for out1" << endl;
-	
+
 	//Allocate device memory
 	cl_mem device_mem_im_vals = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(cl_float) * cnDimension, NULL, NULL);
 	cl_mem device_mem_out1 = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(cl_ushort) * cnDimension, NULL, NULL);
 
 	if (device_mem_im_vals == NULL || device_mem_out1 == NULL)
 		cout << "Failed to allocate buffer memory on GPU" << endl; 
-	
+
 	//Write memory from host to device
 	clEnqueueWriteBuffer(queue, device_mem_im_vals, CL_TRUE, 0, sizeof(cl_float) * cnDimension, im_vals, NULL, NULL, NULL);
 
@@ -625,7 +625,7 @@ void Detect_Local_MaximaPoints_3D_ocl(float* im_vals, int r, int c, int z, doubl
 
 	//Execute the kernel
 	clEnqueueNDRangeKernel(queue, kernel, 1, 0, (const size_t *) &cnDimension, 0, 0, 0, 0);
-	
+
 	//Read the output from the device back into host memory
 	clEnqueueReadBuffer(queue, device_mem_out1, CL_TRUE, 0, sizeof(cl_ushort) * cnDimension, out1, NULL, NULL, NULL);
 
@@ -655,16 +655,16 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 	maxScale[0] = 0.0;
 	int cent_slice = (int) z/2;
 	std::vector< std::vector<unsigned short> > scales;
-//	double mean = 0.0;
-//	double stdv = 0.0;
+	//	double mean = 0.0;
+	//	double stdv = 0.0;
 	int cnt = 0;
 	ofstream p;
-//	int max_dist = 0;
+	//	int max_dist = 0;
 	//p.open("checkme.txt");
 	for(int i=1; i<r-1; i++)
-    {
-        for(int j=1; j<c-1; j++)
-        {				
+	{
+		for(int j=1; j<c-1; j++)
+		{				
 			//for(int k=1; k<z-1; k+=2)
 			for(int k=cent_slice; k<=cent_slice; k++)
 			{									
@@ -675,7 +675,7 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 				max_c = (int)min((double)c-1,(double)j+2);                         
 				max_z = (int)min((double)z-1,(double)k);                         
 				unsigned short mx = get_maximum_3D(distIm, min_r, max_r, min_c, max_c, min_z, max_z,r,c);
-				
+
 				if(mx <= 100)
 					continue; //background or edge point
 				II = (k*r*c)+(i*c)+j;
@@ -696,10 +696,10 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 					cnt++;										
 				}				
 			}			
-        }
-    } 
+		}
+	} 
 	//p.close();
-	
+
 	//get the median of the scales(distances)
 	int medianS = computeMedian(scales, cnt);
 	//ofstream p2;
@@ -717,7 +717,7 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 	int MAD = computeMedian(madList, cnt);
 	minScale[0] = medianS-MAD;
 	maxScale[0] = medianS+MAD;		
-		
+
 	//p2<<"mad = "<<MAD<<std::endl;
 	//p2<<"med-mad = "<<minScale[0]<<std::endl;
 	//p2<<"med+mad = "<<maxScale[0]<<std::endl;
@@ -753,7 +753,7 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 		max_r = (int)min((double)r-1,(double)i+mx);
 		max_c = (int)min((double)c-1,(double)j+mx);                         
 		max_z = (int)min((double)z-1,(double)k+mx);                         
-					
+
 		int sub_r = i-min_r;
 		int sub_c = j-min_c;
 		int sub_z = k-min_z;
@@ -761,7 +761,7 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 		int sz_c = (max_c-min_c+1);
 		int sz_z = (max_z-min_z+1);
 		int ind_i = sub_z*sz_r*sz_c+sub_r*sz_c+sub_c;
-																	
+
 		MyInputImageType::Pointer im_Small = extract3DImageRegion(im, sz_c, sz_r, sz_z, min_c, min_r, min_z);															
 		float* IMG = new float[sz_c*sz_r*sz_z];
 		float max_resp = -100000.0;	
@@ -784,13 +784,13 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 			/*float mx2 = get_maximum_3D(IMG, 0, sz_r-1, 0, sz_c-1, 0, sz_z-1,sz_r,sz_c);
 			if(mx2>=max_resp)
 			{
-				max_resp = mx2;								
-				best_scale = kk;				
+			max_resp = mx2;								
+			best_scale = kk;				
 			}*/
 		}
 		p3<<j<<" "<<i<<" "<<k<<" "<<mx<<" "<<best_scale<<" "<<max_resp<<std::endl;
 		mx = best_scale;
-		
+
 		if(mx<mnScl)
 			mnScl = mx;
 		if(mx>mxScl)
@@ -826,11 +826,11 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 	ofstream p;
 	//int max_dist = 0;
 	//p.open("checkme.txt");
-	#pragma omp parallel for private(min_r, min_c, min_z, max_r, max_c, max_z)
+#pragma omp parallel for private(min_r, min_c, min_z, max_r, max_c, max_z)
 	for(int i=1; i<r-1; i++)
-    {
-        for(int j=1; j<c-1; j++)
-        {				
+	{
+		for(int j=1; j<c-1; j++)
+		{				
 			//for(int k=1; k<z-1; k+=2)
 			for(int k=cent_slice; k<=cent_slice; k++)
 			{									
@@ -841,7 +841,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 				max_c = (int)min((double)c-1,(double)j+2);                         
 				max_z = (int)min((double)z-1,(double)k);                         
 				unsigned short mx = get_maximum_3D(distIm, min_r, max_r, min_c, max_c, min_z, max_z,r,c);
-				
+
 				if(mx <= 100)
 					continue; //background or edge point
 				II = (k*r*c)+(i*c)+j;
@@ -858,19 +858,19 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 					lst.push_back(j);
 					lst.push_back(k);
 					p<<j<<" "<<i<<" "<<k<<" "<<mx<<std::endl;
-					#pragma omp critical(scalesCS)
+#pragma omp critical(scalesCS)
 					{
 						scales.push_back(lst);
-					
-					//mean +=mx;
+
+						//mean +=mx;
 						cnt++;
 					}
 				}				
 			}			
-        }
-    } 
+		}
+	} 
 	//p.close();
-	
+
 	//get the median of the scales(distances)
 	int medianS = computeMedian(scales, cnt);
 	//ofstream p2;
@@ -911,7 +911,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 		max_r = (int)min((double)r-1,(double)i+mx);
 		max_c = (int)min((double)c-1,(double)j+mx);                         
 		max_z = (int)min((double)z-1,(double)k+mx);                         
-					
+
 		int sub_r = i-min_r;
 		int sub_c = j-min_c;
 		int sub_z = k-min_z;
@@ -919,13 +919,13 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 		int sz_c = (max_c-min_c+1);
 		int sz_z = (max_z-min_z+1);
 		int ind_i = sub_z*sz_r*sz_c+sub_r*sz_c+sub_c;
-																	
+
 		MyInputImageType::Pointer im_Small = extract3DImageRegion(im, sz_c, sz_r, sz_z, min_c, min_r, min_z);
 		float* IMG = new float[sz_c*sz_r*sz_z];
 		float max_resp = -100000.0;	
 		int best_scale = 0.0;
 		double sigma;	
-	
+
 		for(int kk=smin; kk<=mx; kk++)
 		{						
 			sigma = kk;
@@ -943,8 +943,8 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 			/*float mx2 = get_maximum_3D(IMG, 0, sz_r-1, 0, sz_c-1, 0, sz_z-1,sz_r,sz_c);
 			if(mx2>=max_resp)
 			{
-				max_resp = mx2;								
-				best_scale = kk;				
+			max_resp = mx2;								
+			best_scale = kk;				
 			}*/
 		}
 		std::vector<float> pp;
@@ -953,7 +953,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 
 		if(mx<=medianS)
 		{	
-			#pragma omp critical (smallScalesPushBack)
+#pragma omp critical (smallScalesPushBack)
 			{
 				numSmall++;		
 				smallScales.push_back(pp);
@@ -961,7 +961,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 		}
 		else
 		{
-			#pragma omp critical (largeScalesPushBack)	
+#pragma omp critical (largeScalesPushBack)	
 			{	
 				numLarge++;		
 				largeScales.push_back(pp);
@@ -971,9 +971,9 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 		//p3<<j<<" "<<i<<" "<<k<<" "<<mx<<" "<<best_scale<<" "<<max_resp<<std::endl;
 		/*mx = best_scale;	
 		if(mx<mnScl)
-			mnScl = mx;
+		mnScl = mx;
 		if(mx>mxScl)
-			mxScl = mx;*/
+		mxScl = mx;*/
 
 		delete [] IMG;
 	}
@@ -998,195 +998,207 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 
 int distMap(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, unsigned short* IMG)
 {
-  
-  //  Types should be selected on the desired input and output pixel types.  
-  typedef unsigned short             InputPixelType2;
-  typedef float          OutputPixelType2;
 
-  //  The input and output image types are instantiated using the pixel types.
-  typedef itk::Image< InputPixelType2,  3 >   InputImageType2;
-  typedef itk::Image< OutputPixelType2, 3 >   OutputImageType2;
+	//  Types should be selected on the desired input and output pixel types.  
+	typedef unsigned short             InputPixelType2;
+	typedef float          OutputPixelType2;
+
+	//  The input and output image types are instantiated using the pixel types.
+	typedef itk::Image< InputPixelType2,  3 >   InputImageType2;
+	typedef itk::Image< OutputPixelType2, 3 >   OutputImageType2;
 
 
-  //  The filter type is now instantiated using both the input image and the
-  //  output image types.
-  //typedef itk::ApproximateSignedDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;    
-  //typedef itk::DanielssonDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;  
-  typedef itk::SignedMaurerDistanceMapImageFilter<InputImageType2, OutputImageType2>  DTFilter;
-  DTFilter::Pointer dt_obj= DTFilter::New() ;
-  //dt_obj->UseImageSpacingOn();
+	//  The filter type is now instantiated using both the input image and the
+	//  output image types.
+	//typedef itk::ApproximateSignedDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;    
+	//typedef itk::DanielssonDistanceMapImageFilter<InputImageType, OutputImageType > DTFilter ;  
+	typedef itk::SignedMaurerDistanceMapImageFilter<InputImageType2, OutputImageType2>  DTFilter;
+	DTFilter::Pointer dt_obj= DTFilter::New() ;
+	//dt_obj->UseImageSpacingOn();
 
-  typedef itk::CastImageFilter< MyInputImageType, InputImageType2> myCasterType;
-  myCasterType::Pointer potCaster = myCasterType::New();
-  potCaster->SetInput( im );
-  potCaster->Update();
+	typedef itk::CastImageFilter< MyInputImageType, InputImageType2> myCasterType;
+	myCasterType::Pointer potCaster = myCasterType::New();
+	potCaster->SetInput( im );
+	potCaster->Update();
 
-  dt_obj->SetInput(potCaster->GetOutput()) ;
-  dt_obj->SetSquaredDistance( false );
-  dt_obj->SetUseImageSpacing( true );
-  dt_obj->SetInsideIsPositive( false );
+	dt_obj->SetInput(potCaster->GetOutput()) ;
+	dt_obj->SetSquaredDistance( false );
+	dt_obj->SetUseImageSpacing( true );
+	dt_obj->SetInsideIsPositive( false );
 
-  //dt_obj->SetInsideValue(0.0);
-  //dt_obj->SetOutsideValue(255.0);
-  try{
-	 dt_obj->Update() ;
-  }
-  catch( itk::ExceptionObject & err ){
-	std::cerr << "Error calculating distance transform: " << err << endl ;
-    return -1;
-  }
- 
-  //   Copy the resulting image into the input array
-  long int i = 0;
-  typedef itk::ImageRegionIteratorWithIndex< OutputImageType2 > IteratorType;
-  IteratorType iterate(dt_obj->GetOutput(),dt_obj->GetOutput()->GetRequestedRegion());
-        
-  int max_dist = 0;
-  while ( i<r*c*z)
-  {	  
-	  double ds = iterate.Get();
-	  if(ds<=0)
-		  IMG[i] = 0;
-	  else
-		IMG[i] = (unsigned short) ds;
+	//dt_obj->SetInsideValue(0.0);
+	//dt_obj->SetOutsideValue(255.0);
+	try{
+		dt_obj->Update() ;
+	}
+	catch( itk::ExceptionObject & err ){
+		std::cerr << "Error calculating distance transform: " << err << endl ;
+		return -1;
+	}
 
-	  if(IMG[i]>max_dist)
-		  max_dist = IMG[i];
+	//   Copy the resulting image into the input array
+	long int i = 0;
+	typedef itk::ImageRegionIteratorWithIndex< OutputImageType2 > IteratorType;
+	IteratorType iterate(dt_obj->GetOutput(),dt_obj->GetOutput()->GetRequestedRegion());
 
-      ++i;
- 	  ++iterate;
-  }	
- 
-  return max_dist;
+	int max_dist = 0;
+	while ( i<r*c*z)
+	{	  
+		double ds = iterate.Get();
+		if(ds<=0)
+			IMG[i] = 0;
+		else
+			IMG[i] = (unsigned short) ds;
+
+		if(IMG[i]>max_dist)
+			max_dist = IMG[i];
+
+		++i;
+		++iterate;
+	}	
+
+	return max_dist;
 }
 
 
 int distMap_SliceBySlice(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, unsigned short* IMG)
 {
-  
-  //  Types should be selected on the desired input and output pixel types.  
-  typedef unsigned short             InputPixelType2;
-  typedef float          OutputPixelType2;
 
-  //  The input and output image types are instantiated using the pixel types.  
-  typedef itk::Image< OutputPixelType2, 2 >   OutputImageType2;
-  long int k = 0;
-  int max_dist = 0;
-  for(int i=0; i<z; i++)
-  {
-	  MyInputImageType2D::Pointer image2D = extract2DImageSlice(im, 2, i);
-	  typedef itk::SignedMaurerDistanceMapImageFilter<MyInputImageType2D, OutputImageType2>  DTFilter;
-	  DTFilter::Pointer dt_obj= DTFilter::New() ;
-	  dt_obj->SetInput(image2D) ;
-	  dt_obj->SetSquaredDistance( false );      
-	  dt_obj->SetInsideIsPositive( false );
-	  try{
-		dt_obj->Update() ;
-      }
-      catch( itk::ExceptionObject & err ){
-		std::cerr << "Error calculating distance transform: " << err << endl ;
-		return -1;
-	  }
-	  
-	  //   Copy the resulting image into the input array  
-      typedef itk::ImageRegionIteratorWithIndex< OutputImageType2 > IteratorType;
-      IteratorType iterate(dt_obj->GetOutput(),dt_obj->GetOutput()->GetRequestedRegion());
-	  int j=0;	  	 
-      while ( j<r*c)
-      {	  
-		  double ds = iterate.Get();
-		  ds = ds*100; //enhance the contrast
-		  if(ds<=0)
-		  {
-			 IMG[k] = 0;
-			 //iterate.Set(0.0);//try to write back 
-		  }
-		  else
-			 IMG[k] = (unsigned short) ds;
-		  if(IMG[k]>max_dist)
-			  max_dist = IMG[k];
-		  ++k;
-		  ++j;
- 		  ++iterate;
-	  }	  
+	//  Types should be selected on the desired input and output pixel types.  
+	typedef unsigned short             InputPixelType2;
+	typedef float          OutputPixelType2;
 
-	  //By Yousef: try to write out the output at the central slice
-	  int cent_slice = (int) z/2;
-	  if(i==cent_slice)
-	  {
-		  typedef    unsigned char     MyInputPixelTypeNew;
-		  typedef itk::Image< MyInputPixelTypeNew,  2 >   MyInputImageType2DNew;
-		  typedef itk::CastImageFilter< OutputImageType2, MyInputImageType2DNew> myCasterType;
-		  myCasterType::Pointer potCaster = myCasterType::New();
-		  potCaster->SetInput( dt_obj->GetOutput() );
-		  typedef itk::ImageFileWriter< MyInputImageType2DNew > WriterType;
-		  WriterType::Pointer writer = WriterType::New();
-		  writer->SetFileName("dist_test.tif");
-		  writer->SetInput( potCaster->GetOutput() );
-		  //writer->Update();		  
-	  }
-  } 
- 
-  return max_dist;
+	//  The input and output image types are instantiated using the pixel types.  
+	typedef itk::Image< OutputPixelType2, 2 >   OutputImageType2;
+	long int k = 0;
+	int max_dist = 0;
+	for(int i=0; i<z; i++)
+	{
+		MyInputImageType2D::Pointer image2D = extract2DImageSlice(im, 2, i);
+		typedef itk::SignedMaurerDistanceMapImageFilter<MyInputImageType2D, OutputImageType2>  DTFilter;
+		DTFilter::Pointer dt_obj= DTFilter::New() ;
+		dt_obj->SetInput(image2D) ;
+		dt_obj->SetSquaredDistance( false );      
+		dt_obj->SetInsideIsPositive( false );
+		try {
+			dt_obj->Update() ;
+		}
+		catch( itk::ExceptionObject & err ) {
+			std::cerr << "Error calculating distance transform: " << err << endl ;
+			return -1;
+		}
+
+		//   Copy the resulting image into the input array  
+		typedef itk::ImageRegionIteratorWithIndex< OutputImageType2 > IteratorType;
+		IteratorType iterate(dt_obj->GetOutput(),dt_obj->GetOutput()->GetRequestedRegion());
+		int j=0;	  	 
+		while ( j<r*c)
+		{	  
+			double ds = iterate.Get();
+			ds = ds*100; //enhance the contrast
+			if(ds<=0)
+			{
+				IMG[k] = 0;
+				//iterate.Set(0.0);//try to write back 
+			}
+			else
+				IMG[k] = (unsigned short) ds;
+			if(IMG[k]>max_dist)
+				max_dist = IMG[k];
+			++k;
+			++j;
+			++iterate;
+		}	  
+
+		//By Yousef: try to write out the output at the central slice
+		int cent_slice = (int) z/2;
+		if(i==cent_slice)
+		{
+			typedef    unsigned char     MyInputPixelTypeNew;
+			typedef itk::Image< MyInputPixelTypeNew,  2 >   MyInputImageType2DNew;
+			typedef itk::CastImageFilter< OutputImageType2, MyInputImageType2DNew> myCasterType;
+			myCasterType::Pointer potCaster = myCasterType::New();
+			potCaster->SetInput( dt_obj->GetOutput() );
+			typedef itk::ImageFileWriter< MyInputImageType2DNew > WriterType;
+			WriterType::Pointer writer = WriterType::New();
+			writer->SetFileName("dist_test.tif");
+			writer->SetInput( potCaster->GetOutput() );
+			//writer->Update();		  
+		}
+	} 
+
+	return max_dist;
 }
 
 
 MyInputImageType2D::Pointer extract2DImageSlice(itk::SmartPointer<MyInputImageType> im, int plane, int slice) 
 {
-    typedef itk::ExtractImageFilter< MyInputImageType, MyInputImageType2D > FilterType2D;
+	typedef itk::ExtractImageFilter< MyInputImageType, MyInputImageType2D > FilterType2D;
 	FilterType2D::Pointer filter = FilterType2D::New();
-    
-    MyInputImageType::RegionType inputRegion = im->GetLargestPossibleRegion();
-    
-    MyInputImageType::SizeType size = inputRegion.GetSize();
-    size[plane] = 0;
-    
-    MyInputImageType::IndexType start = inputRegion.GetIndex();
-    const unsigned int sliceNumber = slice;
-    start[plane] = sliceNumber;
-    
-    MyInputImageType::RegionType desiredRegion;
-    desiredRegion.SetSize(  size  );
-    desiredRegion.SetIndex( start );
-    
-    filter->SetExtractionRegion( desiredRegion );
-    
-    filter->SetInput( im );
 
-    MyInputImageType2D::Pointer img = filter->GetOutput();
-    img->Update();
+	MyInputImageType::RegionType inputRegion = im->GetLargestPossibleRegion();
 
-    return img;
+	MyInputImageType::SizeType size = inputRegion.GetSize();
+	size[plane] = 0;
+
+	MyInputImageType::IndexType start = inputRegion.GetIndex();
+	const unsigned int sliceNumber = slice;
+	start[plane] = sliceNumber;
+
+	MyInputImageType::RegionType desiredRegion;
+	desiredRegion.SetSize(  size  );
+	desiredRegion.SetIndex( start );
+
+	filter->SetExtractionRegion( desiredRegion );
+	filter->SetDirectionCollapseToIdentity();
+
+	filter->SetInput( im );
+
+	MyInputImageType2D::Pointer img = filter->GetOutput();
+	try
+	{
+		img->Update();
+	}
+	catch( itk::ExceptionObject & excep )
+	{
+		std::cerr << "Exception caught !" << std::endl;
+		std::cerr << excep << std::endl;
+	}
+
+
+
+	return img;
 }
 
 MyInputImageType::Pointer extract3DImageRegion(itk::SmartPointer<MyInputImageType> im, int sz_x, int sz_y, int sz_z, int start_x, int start_y, int start_z)
 {
-    typedef itk::ExtractImageFilter< MyInputImageType, MyInputImageType > FilterType;
+	typedef itk::ExtractImageFilter< MyInputImageType, MyInputImageType > FilterType;
 	FilterType::Pointer filter = FilterType::New();   
-    
-    MyInputImageType::SizeType size;
+
+	MyInputImageType::SizeType size;
 	size[0] = sz_x;
 	size[1] = sz_y;
 	size[2] = sz_z;
-    
-    MyInputImageType::IndexType start;
-    start[0] = start_x;
+
+	MyInputImageType::IndexType start;
+	start[0] = start_x;
 	start[1] = start_y;
 	start[2] = start_z;
-    
-    MyInputImageType::RegionType desiredRegion;
-    desiredRegion.SetSize(  size  );
-    desiredRegion.SetIndex( start );
-	
-    
-    filter->SetExtractionRegion( desiredRegion );
-    
-    filter->SetInput( im );
 
-    MyInputImageType::Pointer img = filter->GetOutput();
-    img->Update();
+	MyInputImageType::RegionType desiredRegion;
+	desiredRegion.SetSize(  size  );
+	desiredRegion.SetIndex( start );
 
-    return img;
+
+	filter->SetExtractionRegion( desiredRegion );
+	filter->SetDirectionCollapseToIdentity();
+
+	filter->SetInput( im );
+
+	MyInputImageType::Pointer img = filter->GetOutput();
+	img->Update();
+
+	return img;
 }
 
 int computeMedian(std::vector< std::vector<unsigned short> > scales, int cntr)
@@ -1227,7 +1239,7 @@ int computeMedian(std::vector< std::vector<unsigned short> > scales, int cntr)
 		int mdn1 = cntr/2;
 		mdn = (int) (srtList[mdn1]+srtList[mdn1+1])/2;
 	}
-		
+
 	return mdn;
 }
 
@@ -1238,7 +1250,7 @@ int computeWeightedMedian(std::vector< std::vector<float> > scales, int cntr)
 
 	float* srtList = new float[cntr];
 	float* wgtList = new float[cntr];
-	
+
 
 	float sumWeights = 0;
 	for(int i=0; i<cntr; i++)
@@ -1283,7 +1295,7 @@ int computeWeightedMedian(std::vector< std::vector<float> > scales, int cntr)
 		}
 
 	}	
-		
+
 	delete [] srtList;
 	delete [] wgtList;
 	return mdn;
@@ -1302,14 +1314,14 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 	cl_program program;
 	cl_kernel kernel;
 	cl_int errorcode;
-	
-	
+
+
 	char platform_profile[1024], platform_version[1024], platform_name[1024], platform_vendor[1024], platform_extensions[10240];
 
 	// Platform
 	clGetPlatformIDs(10, platforms, &num_platforms);
 	cout << "Number of OpenCL platforms:\t" << num_platforms << endl;
-	
+
 	for (unsigned int i = 0; i < num_platforms; i++)
 	{
 		cout << "Platform " << i+1 << endl;
@@ -1318,7 +1330,7 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 		clGetPlatformInfo(platforms[i], CL_PLATFORM_NAME, sizeof(platform_name), platform_name, NULL);
 		clGetPlatformInfo(platforms[i], CL_PLATFORM_VENDOR, sizeof(platform_vendor), platform_vendor, NULL);
 		clGetPlatformInfo(platforms[i], CL_PLATFORM_EXTENSIONS, sizeof(platform_extensions), platform_extensions, NULL);
-	
+
 		cout << "OpenCL Profile:\t\t\t" << platform_profile << endl;
 		cout << "OpenCL Platform Version:\t" << platform_version << endl;
 		cout << "OpenCL Platform Name:\t\t" << platform_name << endl;
@@ -1336,29 +1348,29 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 				device_preferred_vendor_width_float, device_preferred_vendor_width_double, device_vendor_id;
 
 			cl_bool device_available, device_compiler_available, device_endian_little, device_ecc_support, device_image_support;
-			
+
 			cl_device_fp_config device_double_fp_config, device_half_fp_config, device_single_fp_config;
-			
+
 			cl_device_exec_capabilities device_exec_capabilities;
-			
+
 			char device_extensions[1024], device_name[1024], device_profile[1024], device_vendor_2[1024], device_version[1024], driver_version[1024];
 
 			cl_ulong device_global_mem_cache_size, device_global_mem_size, device_local_mem_size, device_max_constant_buffer_size, device_max_mem_alloc_size;
-			
+
 			cl_device_mem_cache_type device_global_mem_cache_type;
-			
+
 			size_t device_image2d_max_height, device_image2d_max_width, device_image3d_max_depth, device_image3d_max_height, device_image3d_max_width, device_max_parameter_size, device_max_work_group_size, device_profiling_timer_resolution;
-			
+
 			size_t device_max_work_item_sizes[1024];
-			
+
 			cl_device_local_mem_type device_local_mem_type;
-			
+
 			cl_platform_id device_platform;
-			
+
 			cl_command_queue_properties device_queue_properties;
-			
+
 			cl_device_type device_type;
-			
+
 			clGetDeviceInfo(device[j], CL_DEVICE_ADDRESS_BITS,					1024, &device_address_bits,					NULL);
 			clGetDeviceInfo(device[j], CL_DEVICE_AVAILABLE,						1024, &device_available,					NULL);
 			clGetDeviceInfo(device[j], CL_DEVICE_COMPILER_AVAILABLE,			1024, &device_compiler_available,			NULL);
@@ -1433,19 +1445,19 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 		context = clCreateContext(0, 1, device, &seed_pfn_notify, NULL, NULL);
 		queue = clCreateCommandQueue(context, device[0], 0, NULL);
 		program = clCreateProgramWithSource(context, 1, (const char **) &stringifiedKernel, 0, &errorcode);
-		
+
 		cout << "clCreateProgramWithSource Error code: " << errorcode << endl;
-		
+
 		errorcode = clBuildProgram(program, 0, 0, 0, 0, 0);
 
 		char build_log[1000];
-		
+
 		clGetProgramBuildInfo(program, device[0], CL_PROGRAM_BUILD_LOG, sizeof(build_log), build_log, NULL);
-		
+
 		cout << "Build Log:" << endl << build_log << endl;
 
 		kernel = clCreateKernel(program, "fibonacci", &errorcode);
-		
+
 		cout << "clCreateKernel Error code: " << errorcode << endl;
 
 		size_t cnDimension = 128;
@@ -1454,22 +1466,22 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 
 		for (int i = 0; i < cnDimension; i++)
 			testArray[i] = 1;
-		
+
 		cout << "Size of array element = " << sizeof(*testArray) << endl;
 		cout << "Size of cl_double = " << sizeof(cl_double) << endl;
 		cout << "Allocating " << (sizeof(*testArray) * cnDimension)/(double)(1024) << " KB of memory for matrix" << endl;
-		
+
 		cl_mem deviceMem = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(cl_ulong) * cnDimension, NULL, NULL);
 
 		if (deviceMem == NULL)
 			cout << "Failed to allocate buffer memory" << endl; 
 		else
 			cout << "Memory allocation sucessful" << endl;		
-		
+
 		clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *) &deviceMem);
-		
+
 		clEnqueueNDRangeKernel(queue, kernel, 1, 0, (const size_t *) &cnDimension, 0, 0, 0, 0);
-		
+
 		clEnqueueReadBuffer(queue, deviceMem, CL_TRUE, 0, sizeof(cl_ulong) * cnDimension, testArray, NULL, NULL, NULL);
 
 		clFinish(queue);
@@ -1477,7 +1489,7 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 		cout << "Results" << endl;
 		for (int i = 0; i < cnDimension; i++)
 			cout << testArray[i] << endl;
-		
+
 		cout << endl;
 
 		delete[] testArray;
@@ -1488,7 +1500,7 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 		clReleaseContext(context);
 
 	}
-	
+
 	cout << endl;
 #endif
 }

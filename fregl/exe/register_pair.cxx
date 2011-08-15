@@ -199,6 +199,7 @@ main(  int argc, char* argv[] )
     std::cout<<"Timing: Failed registration in ";
     timer.print( std::cout );
     std::cout<<std::endl;
+	return 1;
   }
 
   if (!prior_arg.set() && remove_2d()) {

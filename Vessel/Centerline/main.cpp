@@ -4839,7 +4839,7 @@ int main(int argc, char* argv[])
 	
 	load_points_without_normal(argv[1]);
 
-	//m->set_pic_name("D:\\MSA paper\\vessel.pic");
+//	m->set_pic_name("D:\\MSA paper\\vessel.pic");
 	//	read_from_file("../ascii.txt");
 	printf("done reading from file\n");
 	//	make_hypothesis_model();
@@ -4917,10 +4917,10 @@ int main(int argc, char* argv[])
 	strcpy(&tif_filename[strlen(argv[2])-3],"tif");
 	printf("tif_filename %s inputfilename %s outputfilename %s\n",tif_filename,argv[1],argv[2]);
 
-	//char votesbuff[2000];
-	//sprintf(votesbuff,"./votestotiff %s %s",argv[2],tif_filename);
-	//printf("to run |%s|\n",votesbuff);
-	//system(votesbuff);
+//	char votesbuff[2000];
+//	sprintf(votesbuff,"./votestotiff %s %s",argv[2],tif_filename);
+//	printf("to run |%s|\n",votesbuff);
+//	system(votesbuff);
 	
 
 	return 0;

@@ -17,47 +17,47 @@ endif(APPLE)
 
 
 add_executable(MedianImageFilter MedianImageFilter.cxx)
-target_link_libraries(MedianImageFilter ITKIO ITKStatistics)
+target_link_libraries(MedianImageFilter ${ITK_LIBRARIES})
 install(TARGETS MedianImageFilter DESTINATION ${INSTALL_DEST} )
 
 add_executable(RobustAutomaticThresholdImageFilterTest RobustAutomaticThresholdImageFilterTest.cxx)
-target_link_libraries(RobustAutomaticThresholdImageFilterTest ITKIO ITKStatistics)
+target_link_libraries(RobustAutomaticThresholdImageFilterTest ${ITK_LIBRARIES})
 install(TARGETS RobustAutomaticThresholdImageFilterTest DESTINATION ${INSTALL_DEST} )
 
 add_executable(PadImage PadImage.cxx)
-target_link_libraries(PadImage ITKIO ITKStatistics)
+target_link_libraries(PadImage ${ITK_LIBRARIES})
 install(TARGETS PadImage DESTINATION ${INSTALL_DEST} )
 
 add_executable(HoleFillingFilterTest HoleFillingFilterTest.cxx)
-target_link_libraries(HoleFillingFilterTest ITKIO ITKStatistics)
+target_link_libraries(HoleFillingFilterTest ${ITK_LIBRARIES})
 install(TARGETS HoleFillingFilterTest DESTINATION ${INSTALL_DEST} )
 
 add_executable(ExtractImageFromPadding ExtractImageFromPadding.cxx)
-target_link_libraries(ExtractImageFromPadding ITKIO ITKStatistics)
+target_link_libraries(ExtractImageFromPadding ${ITK_LIBRARIES})
 install(TARGETS ExtractImageFromPadding DESTINATION ${INSTALL_DEST} )
 
 add_executable(DistanceMapFilter DistanceMapFilter.cxx)
-target_link_libraries(DistanceMapFilter ITKIO ITKStatistics)
+target_link_libraries(DistanceMapFilter ${ITK_LIBRARIES})
 install(TARGETS DistanceMapFilter DESTINATION ${INSTALL_DEST} )
 
 add_executable(BinaryThresholdImageFilter BinaryThresholdImageFilter.cxx)
-target_link_libraries(BinaryThresholdImageFilter ITKIO ITKStatistics)
+target_link_libraries(BinaryThresholdImageFilter ${ITK_LIBRARIES})
 install(TARGETS BinaryThresholdImageFilter DESTINATION ${INSTALL_DEST} )
 
 add_executable(PadDistanceMap PadDistanceMap.cxx)
-target_link_libraries(PadDistanceMap ITKIO ITKStatistics)
+target_link_libraries(PadDistanceMap ${ITK_LIBRARIES})
 install(TARGETS PadDistanceMap DESTINATION ${INSTALL_DEST} )
 
 add_executable(DownwardFrontPropagation DownwardFrontPropagation.cxx)
-target_link_libraries(DownwardFrontPropagation ITKIO ITKStatistics)
+target_link_libraries(DownwardFrontPropagation ${ITK_LIBRARIES})
 install(TARGETS DownwardFrontPropagation DESTINATION ${INSTALL_DEST} )
 
 add_executable(IsolateCentroids IsolateCentroids.cxx)
-target_link_libraries(IsolateCentroids ITKIO ITKStatistics)
+target_link_libraries(IsolateCentroids ${ITK_LIBRARIES})
 install(TARGETS IsolateCentroids DESTINATION ${INSTALL_DEST} )
 
 #add_executable(VoronoiFilter VoronoiFilter.cxx)
-#target_link_libraries(VoronoiFilter ITKIO ITKStatistics)
+#target_link_libraries(VoronoiFilter ${ITK_LIBRARIES})
 #install(TARGETS VoronoiFilter DESTINATION ${INSTALL_DEST} )
 
 include(CTest)

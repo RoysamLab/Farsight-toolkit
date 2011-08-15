@@ -130,7 +130,7 @@ private:
 	CharImageType3D::Pointer SomaImage;
 	PixelType CostThreshold;
 	std::priority_queue < HeapNode* , std::vector<HeapNode*>,  Comparison > PQ;
-	ImageType3D::Pointer CurvImage, PaddedCurvImage, ConnImage, NDXImage;   //Input Image, EK image, CT image
+	ImageType3D::Pointer PaddedCurvImage, ConnImage, NDXImage;   //Input Image, EK image, CT image
 	SWCImageType3D::Pointer SWCImage; //swc label image
 	itk::Size<3> size;
 	std::vector<OffsetType> off;

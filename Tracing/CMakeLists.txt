@@ -1,6 +1,7 @@
 OPTION( BUILD_MDL "Build MDL Tracing" OFF )
 
 SUBDIRS( Focus )
+SUBDIRS(MontagingToTraceEditorXMLConverter)
 
 IF( BUILD_MDL )
     #SUBDIRS( MDL )
@@ -63,3 +64,4 @@ OPTION( BUILD_TracingSystem "Build The Tracing System" OFF )
 IF(BUILD_TracingSystem)
   SUBDIRS( TheTracingSystem )
 ENDIF()
+

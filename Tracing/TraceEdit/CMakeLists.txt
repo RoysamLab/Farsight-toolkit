@@ -6,11 +6,7 @@ INCLUDE(${QT_USE_FILE})
 
 SET( Libraries
     tiff
-    ITKCommon
-    ITKNumerics
-    ITKStatistics
-    ITKIO
-    ITKBasicFilters
+    ${ITK_LIBRARIES}
     vtkRendering
     vtkIO
     vtkHybrid
@@ -24,7 +20,7 @@ SET( Libraries
     ftkCommon
     ${QT_LIBRARIES} )
 
-QT4_WRAP_CPP( GUI_MOC_SRCS View3D.h MergeModel.h TraceModel.h CellTraceModel.h cellexport.h screenshot.h RoiSelection.h)
+QT4_WRAP_CPP( GUI_MOC_SRCS View3D.h MergeModel.h TraceModel.h CellTraceModel.h cellexport.h screenshot.h)
 
 ADD_LIBRARY(Trace
   TraceBit.h        TraceBit.cxx
@@ -41,7 +37,6 @@ ADD_LIBRARY(Trace
   View3D.h          View3D.cxx 
   cellexport.h	    cellexport.cxx
   screenshot.h	    screenshot.cxx
-  RoiSelection.h    RoiSelection.cxx
   ${GUI_MOC_SRCS} 
   )
 OPTION( USE_GPUREN "Use GPU for Rendering" OFF )
@@ -49,7 +44,7 @@ IF(USE_GPUREN)
 	ADD_DEFINITIONS(-DUSE_GPUREN)
 ENDIF(USE_GPUREN)
 
-TARGET_LINK_LIBRARIES(Trace ${Libraries} )
+TARGET_LINK_LIBRARIES(Trace ${Libraries})
 
 ADD_EXECUTABLE(${PROJECT_NAME} ${EXE_TYPE} vtkTraceViewerDriver.cxx )
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME} Trace )

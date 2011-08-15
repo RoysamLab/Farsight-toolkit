@@ -12,6 +12,7 @@
 #include "itkGrayscaleMorphologicalOpeningImageFilter.h"
 #include "itkRelabelComponentImageFilter.h"
 #include "itkBinaryThresholdImageFilter.h"
+#include "itkLabelGeometryImageFilter.h"
 
 //label object classes
 #include "itkShapeLabelObject.h"
@@ -35,6 +36,7 @@ public:
 
 	static const int Dim = 3;
 
+
 	typedef itk::Image< unsigned char, Dim > OutputImageType;
 	typedef std::vector<OutputImageType::IndexType> centroidVectorType;
 	typedef itk::ImageFileReader< OutputImageType > ReaderType;
@@ -42,6 +44,7 @@ public:
 	typedef itk::Image< unsigned short, Dim > SegmentedImageType;
 	typedef itk::ImageRegionIteratorWithIndex< SegmentedImageType > IteratorType;
 	typedef itk::BinaryBallStructuringElement< unsigned short, Dim > KernelType;
+	//typedef itk::FlatStructuringElement< Dim > KernelType;
 	typedef itk::GrayscaleMorphologicalOpeningImageFilter< SegmentedImageType, SegmentedImageType, KernelType > morphOpenFilterType;
 	typedef itk::RelabelComponentImageFilter< SegmentedImageType, SegmentedImageType > RelabelFilterType;
 	typedef itk::BinaryThresholdImageFilter<SegmentedImageType, OutputImageType> BinaryThresholdImageType;
@@ -50,11 +53,13 @@ public:
 	typedef itk::LabelMap< LabelObjectType > LabelMapType;
 	typedef itk::BinaryImageToShapeLabelMapFilter< OutputImageType, LabelMapType >	ConverterType;
 	typedef itk::ImageFileWriter< OutputImageType > WriterType;
+	typedef itk::ImageFileWriter< SegmentedImageType > BinImageWriter;
+
 
 	void SetInputImage(char * fileName);
 	void SetInputImage(OutputImageType::Pointer img);
 	bool LoadSegParams(int kernel, int minObj);
-	int binarizeImage( char* paramFile);
+	int binarizeImage( char* paramFile, unsigned short num_bins);
 	OutputImageType::Pointer GetSomaBinaryImage() { return outputImage; };
 	int relabelBinaryImage(void);
 	centroidVectorType GetSomaCentroids();
@@ -69,7 +74,7 @@ private:
 	unsigned char *in_Image;
 	//ConstIteratorType pix_buf;
 	yousef_nucleus_seg * NucleusSeg;
-	int size1, size2, size3;
+	size_t size1, size2, size3;
 	morphOpenFilterType::Pointer morphOpenFilter;
 	int minObjSize, KernelSize;
 

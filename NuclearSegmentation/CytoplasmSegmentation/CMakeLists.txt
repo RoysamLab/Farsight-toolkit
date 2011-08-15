@@ -12,4 +12,4 @@ SET( NHDRS
 )
 
 ADD_LIBRARY( CytoplasmSegmentation ${NSRCS} ${NHDRS} )
-TARGET_LINK_LIBRARIES( CytoplasmSegmentation Yousef_Nucleus_Seg ftkCommon ITKCommon ITKBasicFilters ITKAlgorithms ITKIO )
+TARGET_LINK_LIBRARIES( CytoplasmSegmentation Yousef_Nucleus_Seg ftkCommon          ${ITK_LIBRARIES} )

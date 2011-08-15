@@ -20,6 +20,7 @@
 
 #include "itkLabelBorderImageFilter.h"
 #include "itkImageFileWriter.h"
+#include "itkImageRegionIteratorWithIndex.h"
 
 void label2border(int* img,int c, int r, int z);
 void label2border2(int* img,int* bordImg, int c, int r, int z); // Added by Yousef on May 29th 2008

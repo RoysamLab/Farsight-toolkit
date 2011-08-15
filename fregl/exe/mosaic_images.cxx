@@ -83,21 +83,22 @@ main(  int argc, char* argv[] )
 
 	// Cosntruct the graph of joint registration
 	fregl_joint_register::Pointer joint_register = new fregl_joint_register( arg_xml_file() );
-	if (arg_old_str.set() && arg_new_str.set()) {
+	if (arg_old_str.set() && arg_new_str.set()) 
+	{
 		std::cout<<"Replace the name substr"<<std::endl;
 		joint_register->replace_image_name_substr(arg_old_str(), arg_new_str());
 	}
-	
+
 	switch (arg_blending()) 
 	{
 		case 0: std::cout<<"Blending with maximum intensity values"<<std::endl;
 			break;
 		case 1: std::cout<<"Blending with even weighting"<<std::endl;
 			break;
-  case 2: std::cout<<"Blending with photopleaching weighting"<<std::endl;
-	  break;
-  default: std::cout<<"No such scheme defined for blending!"<<std::endl;
-	  return 1;
+		case 2: std::cout<<"Blending with photopleaching weighting"<<std::endl;
+			break;
+		default: std::cout<<"No such scheme defined for blending!"<<std::endl;
+			return 1;
 	}
 
 	// Transform the images
@@ -114,7 +115,8 @@ main(  int argc, char* argv[] )
 	std::vector<std::string> image_names = space_transformer.image_names();
 	std::cout<<"Total number of images = "<< image_names.size() <<std::endl;
 
-	if (arg_blending() == 2) {
+	if (arg_blending() == 2) 
+	{
 		// This option takes into consideration the photobleahcing issue
 		// as well. Photobleaching results in much lower intensity value
 		// in an image when the region was previously imaged. This option
@@ -123,7 +125,8 @@ main(  int argc, char* argv[] )
 		// Individual weight maps are computed to factor in
 		// photobleaching. The original 3D images are not saved to reduce
 		// memory consumption. They will be read in again during blending
-		for (unsigned int  i = 0; i<image_names.size(); i++) {
+		for (unsigned int  i = 0; i<image_names.size(); i++) 
+		{
 			std::string image_name = arg_img_path()+std::string("/")+image_names[i];
 			std::cout<<"Image "<<image_name<<std::endl;
 			ImageType::Pointer image = fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise() );
@@ -138,18 +141,20 @@ main(  int argc, char* argv[] )
 		image = fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise());
 		std::cout<<"Composing the final image ..."<<std::endl;
 		final_image = space_transformer.transform_image_weighted(image, 0, 0, arg_nn());
-		for (unsigned int  i = 1; i<image_names.size(); i++) {
+		for (unsigned int  i = 1; i<image_names.size(); i++) 
+		{
 			std::string image_name = arg_img_path()+std::string("/")+image_names[i];
 			ImageType::Pointer image = fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise() );
 			xformed_image = space_transformer.transform_image_weighted(image, i, 0, arg_nn());
-			if ( !xformed_image ) continue;
+			if ( !xformed_image ) 
+				continue;
 
 			//fuse the image
 			RegionConstIterator inputIt( xformed_image, xformed_image->GetRequestedRegion() );
 			RegionIterator outputIt( final_image, final_image->GetRequestedRegion() );
 
-			for ( inputIt.GoToBegin(), outputIt.GoToBegin(); !inputIt.IsAtEnd();  
-				++inputIt, ++outputIt) {
+			for ( inputIt.GoToBegin(), outputIt.GoToBegin(); !inputIt.IsAtEnd(); ++inputIt, ++outputIt) 
+			{
 					outputIt.Set( outputIt.Get() + inputIt.Get() );
 			}   
 		}
@@ -171,12 +176,14 @@ main(  int argc, char* argv[] )
 			outputIt.Set(0);
 
 		std::cout<<"Composing the final image ..."<<std::endl;
-		for (unsigned int  i = 0; i<image_names.size(); i++) {
+		for (unsigned int  i = 0; i<image_names.size(); i++) 
+		{
 			std::string image_name = arg_img_path()+std::string("/")+image_names[i];
 			ImageType::Pointer image, xformed_image;
 			image = fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise() );
 			xformed_image = space_transformer.transform_image(image, i, 0, arg_nn());
-			if ( !xformed_image ) continue;
+			if ( !xformed_image ) 
+				continue;
 
 			//fuse the image
 			SliceIteratorType outputSliceIt( final_image, final_image->GetRequestedRegion() );
@@ -194,11 +201,16 @@ main(  int argc, char* argv[] )
 
 			outputSliceIt.GoToBegin();
 			inputSliceIt.GoToBegin();
-			while( !outputSliceIt.IsAtEnd() ) {
-				while( !outputSliceIt.IsAtEndOfSlice() ) {
-					while ( !outputSliceIt.IsAtEndOfLine() ) {
-						if (input2DIt.Get() == 0 ) outputSliceIt.Set(0);
-						else outputSliceIt.Set( outputSliceIt.Get() + (int)(inputSliceIt.Get()/(float)input2DIt.Get()) );
+			while( !outputSliceIt.IsAtEnd() ) 
+			{
+				while( !outputSliceIt.IsAtEndOfSlice() ) 
+				{
+					while ( !outputSliceIt.IsAtEndOfLine() ) 
+					{
+						if (input2DIt.Get() == 0 ) 
+							outputSliceIt.Set(0);
+						else 
+							outputSliceIt.Set( outputSliceIt.Get() + (int)(inputSliceIt.Get()/(float)input2DIt.Get()) );
 						++outputSliceIt;
 						++inputSliceIt;
 						++input2DIt;
@@ -220,17 +232,20 @@ main(  int argc, char* argv[] )
 			*/
 		}
 	}
-	else { //Taking the maximum
+	else 
+	{ //Taking the maximum
 		std::string image_name = arg_img_path()+std::string("/")+image_names[0];
 		ImageType::Pointer image, xformed_image;
 		image = fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise());
 		std::cout<<"Composing the final image ..."<<std::endl;
 		final_image = space_transformer.transform_image(image, 0, 0, arg_nn());
-		for (unsigned int  i = 1; i<image_names.size(); i++) {
+		for (unsigned int  i = 1; i<image_names.size(); i++) 
+		{
 			image_name = arg_img_path()+std::string("/")+image_names[i];
 			image = fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise());
 			xformed_image = space_transformer.transform_image(image, i, 0, arg_nn());
-			if ( !xformed_image ) continue;
+			if ( !xformed_image ) 
+				continue;
 
 			//fuse the image
 			RegionConstIterator inputIt( xformed_image, xformed_image->GetRequestedRegion() );
@@ -252,7 +267,7 @@ main(  int argc, char* argv[] )
 	/*std::string command = std::string("mkdir ")+name_prefix;
 	if(vcl_system(command.c_str()) != 0)
 	{
-		cerr << "mkdir returned nonzero" << endl;
+	cerr << "mkdir returned nonzero" << endl;
 	}
 
 	typedef itk::NumericSeriesFileNames NameGeneratorType;
@@ -267,17 +282,18 @@ main(  int argc, char* argv[] )
 	nameGenerator->SetEndIndex( last );
 	nameGenerator->SetIncrementIndex( 1 );
 
-#if defined(VCL_WIN32) && !defined(__CYGWIN__)
+	#if defined(VCL_WIN32) && !defined(__CYGWIN__)
 	std::string name_pattern = name_prefix+std::string("\\slice")+std::string("_%03d.png");
-#else
+	#else
 	std::string name_pattern = name_prefix+std::string("/slice")+std::string("_%03d.png");
-#endif
+	#endif
 	nameGenerator->SetSeriesFormat( name_pattern );
 	seriesWriter->SetFileNames( nameGenerator->GetFileNames() );
 	seriesWriter->Update();*/
 
-	if (arg_3d()) {
-		std::string name_3d = name_prefix + std::string(".tif");
+	if (arg_3d()) 
+	{
+		std::string name_3d = name_prefix + std::string(".mhd");
 		typedef itk::ImageFileWriter< ImageType >  WriterType;
 		WriterType::Pointer writer = WriterType::New();
 		writer->SetFileName( name_3d );

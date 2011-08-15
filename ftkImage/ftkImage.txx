@@ -125,14 +125,15 @@ template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::
 		letItkManageMemory = true;	//itk DOES manage the memory
 	}
 
-	typedef itk::ImportImageContainer<unsigned long, pixelType> ImageContainerType;
+	typedef itk::Image< pixelType, 3 > OutputImageType;
+	typedef OutputImageType::PixelContainer ImageContainerType;
 	typename ImageContainerType::Pointer container = ImageContainerType::New();
 
 	container->Initialize();
 	container->Reserve(numPixels);
 	container->SetImportPointer( static_cast<pixelType *>(mem), numPixels, letItkManageMemory );
 
-	typedef itk::Image< pixelType, 3 > OutputImageType;
+	
 	typename OutputImageType::Pointer image = OutputImageType::New();
 
 	typename OutputImageType::PointType origin;
