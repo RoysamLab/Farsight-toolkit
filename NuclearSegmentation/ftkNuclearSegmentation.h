@@ -31,7 +31,7 @@
 #endif
 
 #ifdef USE_TRACKING
-#include <cellTracker/ftkTrackFeatures.h>
+#include <CellTrackerLib/ftkTrackFeatures.h>
 #endif
 
 #include <ftkImage/ftkImage.h>
