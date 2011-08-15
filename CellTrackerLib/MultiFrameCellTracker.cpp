@@ -3943,7 +3943,7 @@ void MultiFrameCellTracker::run()
 
 	_TRACE;
 //	first_t = clock();
-	first_time = clock();
+//	firsttime = clock();
 	for(int t = 1; t < fvector.size(); t++)
 	{
 		int tmin = MAX(0,t-K);
@@ -3955,15 +3955,23 @@ void MultiFrameCellTracker::run()
 			g[v].findex = counter;
 			rmap[t][counter] = v;
 		}
-		//printf("T = %d\n",t);
-		TIC		populate_merge_candidates(t);//TOC("populate_merge_candidates");
-		TIC;		nec += this->add_normal_edges(tmin,t);// TOC("add_normal_edges()");
-		TIC;		msec+= this->add_merge_split_edges(t);// TOC("add_merge_split_edges()");
-		TIC;		dvc += this->add_disappear_vertices(t);// TOC("add_disappear_vertices()");
-		TIC;		avc += this->add_appear_vertices(t-1);// TOC("add_appear_vertices()");
-		printf("total edges = %d+%d+%d+%d = %d\n",nec,dvc,avc,msec,nec+dvc+avc+msec);
+		////printf("T = %d\n",t);
+		//TIC		populate_merge_candidates(t);//TOC("populate_merge_candidates");
+		//TIC;		nec += this->add_normal_edges(tmin,t);// TOC("add_normal_edges()");
+		//TIC;		msec+= this->add_merge_split_edges(t);// TOC("add_merge_split_edges()");
+		//TIC;		dvc += this->add_disappear_vertices(t);// TOC("add_disappear_vertices()");
+		//TIC;		avc += this->add_appear_vertices(t-1);// TOC("add_appear_vertices()");
+		//printf("total edges = %d+%d+%d+%d = %d\n",nec,dvc,avc,msec,nec+dvc+avc+msec);
+		////PAUSE;
+		//TIC;		prune(t);//TOC("prune()");
+			populate_merge_candidates(t);//TOC("populate_merge_candidates");
+			nec += this->add_normal_edges(tmin,t);// TOC("add_normal_edges()");
+			msec+= this->add_merge_split_edges(t);// TOC("add_merge_split_edges()");
+			dvc += this->add_disappear_vertices(t);// TOC("add_disappear_vertices()");
+			avc += this->add_appear_vertices(t-1);// TOC("add_appear_vertices()");
+			printf("total edges = %d+%d+%d+%d = %d\n",nec,dvc,avc,msec,nec+dvc+avc+msec);
 		//PAUSE;
-		TIC;		prune(t);//TOC("prune()");
+			prune(t);//TOC("prune()");
 	}
 	//dvc += this->add_disappear_vertices(fvector.size());
 
