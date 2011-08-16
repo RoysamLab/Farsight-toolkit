@@ -32,7 +32,7 @@ limitations under the License.
 
 #include "itkLabelGeometryImageFilter.h"
 #include <itkLabelStatisticsImageFilter.h>
-#include <itkScalarImageTextureCalculator.h>
+#include <itkScalarImageToTextureFeaturesFilter.h>
 #include <itkGradientMagnitudeImageFilter.h>
 
 #include <vtkSmartPointer.h>

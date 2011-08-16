@@ -36,6 +36,7 @@ OPTION( BUILD_ZERNIKE  " Build zernike_moments_calculation " OFF)
 OPTION( BUILD_HARALICK "Biild Haralick_features_calculation" OFF)
 OPTION( BUILD_DANIELA "color_segmentation base on satration" OFF)   
 OPTION( BUILD_QTIMAGECOMBINER "combines logical OR of two QImages" OFF) 
+OPTION( BUILD_DENDROGRAM "Dendrogram code" OFF)
 
 #Make sure OPENCL AND CUDA ARE NOT BOTH ENABLED
 OPTION( BUILD_OPENCL "Build with OpenCL support (VS 2008 only at the moment)" OFF) 
@@ -143,11 +144,6 @@ SUBDIRS( tinyxml )
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/PatternAnalysis )
 SUBDIRS( PatternAnalysis )
-
-INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Dendrogram )
-SUBDIRS( Dendrogram)
-
-
 
 IF(USE_KPLS)
 ADD_DEFINITIONS(-DUSE_KPLS)
@@ -302,6 +298,11 @@ IF (BUILD_QTIMAGECOMBINER)
  	INCLUDE_DIRECTORIES (${PROJECT_SOURCE_DIR}/QtImageCombiner)
 	SUBDIRS(QtImageCombiner)
 ENDIF(BUILD_QTIMAGECOMBINER)
+
+IF (BUILD_DENDROGRAM)
+	INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Dendrogram )
+	SUBDIRS( Dendrogram)
+ENDIF (BUILD_DENDROGRAM)
 
 
 
