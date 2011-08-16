@@ -44,7 +44,7 @@ class ActiveLearningDialog : public QDialog
 {
 	Q_OBJECT
 public:
-	ActiveLearningDialog::ActiveLearningDialog(QImage snapshot, vtkSmartPointer<vtkTable> table,int num_classes,int active_query,std::vector<int>top_feats,QWidget *parent=0);
+	ActiveLearningDialog(QImage snapshot, vtkSmartPointer<vtkTable> table,int num_classes,int active_query,std::vector<int>top_feats,QWidget *parent=0);
 	bool finish;
 	//QLineEdit *lineEdit;
 	int class_selected;

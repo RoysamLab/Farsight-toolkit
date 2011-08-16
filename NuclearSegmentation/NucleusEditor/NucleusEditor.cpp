@@ -1310,7 +1310,7 @@ void NucleusEditor::load5DImage(std::vector<QStringList> filesChannTimeList, int
 	std::vector<std::string> channelNames;
 	std::vector<unsigned char> channelColors;
 	std::vector<std::string>  filesChann;
-	std::vector<std::vector<std::string>>  filesChannTime;
+	std::vector<std::vector<std::string> >  filesChannTime;
 	int numTimes = filesChannTimeList[0].size();
 	
 	// Initialize variables:

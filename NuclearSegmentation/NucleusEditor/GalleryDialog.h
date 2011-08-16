@@ -45,7 +45,7 @@ class GalleryDialog : public QDialog
 {
 	Q_OBJECT
 public:
-	GalleryDialog::GalleryDialog(std::vector<std::pair<QImage,int> > gallery ,QVector<QColor>,QWidget *parent=0);
+	GalleryDialog(std::vector<std::pair<QImage,int> > gallery ,QVector<QColor>,QWidget *parent=0);
 
 private slots:
 
