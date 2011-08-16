@@ -33,7 +33,7 @@ using namespace boost;
 #if defined(_MSC_VER)
 #pragma warning(disable: 4996)
 #endif
-clock_t start_time,end_time,first_time;
+//clock_t starttime,endtime,firsttime;
 
 #define DEBUG
 #ifdef DEBUG
@@ -48,8 +48,8 @@ clock_t start_time,end_time,first_time;
 #endif
 
 
-#define TIC {start_time = clock();}
-#define TOC(x) {end_time = clock(); printf("Time for %s == %0.2lfs total == %0.2lfs\n",(x),double((end_time-start_time)*1.0/CLOCKS_PER_SEC),double((end_time-first_time)*1.0/CLOCKS_PER_SEC));}
+//#define TIC {starttime = clock();}
+//#define TOC(x) {endtime = clock(); printf("Time for %s == %0.2lfs total == %0.2lfs\n",(x),double((endtime-starttime)*1.0/CLOCKS_PER_SEC),double((endtime-firsttime)*1.0/CLOCKS_PER_SEC));}
 
 #define mxIsFinite(a) ((a)<1e6)
 #define USE_VNL_HUNGARIAN 

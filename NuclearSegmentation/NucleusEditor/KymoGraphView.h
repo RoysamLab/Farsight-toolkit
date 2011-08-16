@@ -61,7 +61,7 @@
 #include "itkLabelGeometryImageFilter.h"
 #include "ftkLabelImageToFeatures.h"
 #include "itkLabelStatisticsImageFilter.h"
-#include "itkScalarImageTextureCalculator.h"
+#include "itkScalarImageToTextureFeaturesFilter.h"
 
 //VTK includes
 #include "vtkPolyData.h"

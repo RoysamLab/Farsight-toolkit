@@ -30,6 +30,10 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
+#ifdef USE_TRACKING
+#include <CellTrackerLib/ftkTrackFeatures.h>
+#endif
+
 #include <ftkImage/ftkImage.h>
 #include <ftkFeatures/ftkLabelImageToFeatures.h>
 #include <ftkCommon/ftkUtils.h>
@@ -127,7 +131,10 @@ public:
 	void SetCurrentbBox(std::map<int, ftk::Object::Box> currentbBoxMap); // To set the current bBox to store edit information when time series is loaded
 	void AddTimeToMegaTable();
 
-
+	//Set Data:
+#ifdef USE_TRACKING
+	void SetTrackFeatures(std::vector<std::vector<ftk::TrackPointFeatures>> trackfeatures);
+#endif
 protected:
 	std::string errorMessage;
 
@@ -174,6 +181,14 @@ protected:
 	void Cleandptr(unsigned short*x,vector<int> y );
 	void Restoredptr(unsigned short* );
 	std::list<int> negativeseeds;
+
+
+#ifdef USE_TRACKING
+	//Add Tracking Features:
+	std::vector<std::vector<ftk::TrackPointFeatures>> nucsegTrackFeatures;
+	std::vector<ftk::TrackPointFeatures> currentTrackFeatures; // means current time
+	void setCurrentTrackFeatures(int time);
+#endif
 
 //********************************************************************************************
 //********************************************************************************************

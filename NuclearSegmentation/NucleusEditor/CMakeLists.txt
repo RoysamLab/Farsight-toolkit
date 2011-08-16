@@ -42,21 +42,41 @@ SET( NucleusEditor_RCS
 # if tracking is to be used with nucleus editor:
 IF (USE_TRACKING)
 SET( NucleusEditor_SRCS
-	${NucleusEditor_SRCS}
+	NucleusEditor.cpp
+	ProjectFilenamesDialog.cpp
+	ExclusionDialog.cpp
+	PreferencesDialog.cpp
+	ftkProjectDefinition.cpp
+	ftkProjectProcessor.cpp
+	ftkProjectFiles.cpp
+	ActiveLearningDialog.cpp
+	GalleryDialog.cpp	
 	KymoGraphView.cpp
 	Trace.cpp
 	TrackingDialog.cpp
 	)		
 SET( NucleusEditor_HDRS
-	${NucleusEditor_HDRS}
+    NucleusEditor.h
+    ProjectFilenamesDialog.h
+    ExclusionDialog.h
+    PreferencesDialog.h
+    ftkProjectDefinition.h
+    ftkProjectProcessor.h
+    ftkProjectFiles.h
+    ActiveLearningDialog.h
+    GalleryDialog.h
 	KymoGraphView.h
 	Trace.h
 	TrackingDialog.h
 	)
 SET( NucleusEditor_MOC_REQD_HDRS
-	${NucleusEditor_MOC_SRCS}
+    NucleusEditor.h 
+    ProjectFilenamesDialog.h 
+    ExclusionDialog.h
+    PreferencesDialog.h
+    ActiveLearningDialog.h
+    GalleryDialog.h  
 	KymoGraphView.h
-	Trace.h
 	TrackingDialog.h
 	)
 	FIND_PACKAGE(CPLEX)
@@ -101,11 +121,12 @@ ADD_EXECUTABLE( NucleusEditor ${EXE_TYPE}
                 ${NucleusEditor_UI_HDRS}
                 ${NucleusEditor_RC_SRCS} )
 
-TARGET_LINK_LIBRARIES( NucleusEditor ${QT_LIBRARIES} ftkGraphs ftkGUI ftkImage ftkCommon ftkFeatures libSVM vtkVolumeRendering QVTK NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis NESQLITE sqlite3 MCLR ${ITK_LIBRARIES})
 
 
 IF (USE_TRACKING)
-	TARGET_LINK_LIBRARIES( NucleusEditor CellTrackerLib)
+	TARGET_LINK_LIBRARIES( NucleusEditor ${ITK_USE_LIBRARIES} ${QT_LIBRARIES} ftkGraphs ftkGUI ftkCommon ftkFeatures libSVM vtkVolumeRendering QVTK NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis NESQLITE sqlite3 MCLR CellTrackerLib)
+ELSE (USE_TRACKING)
+	TARGET_LINK_LIBRARIES( NucleusEditor ${ITK_USE_LIBRARIES} ${QT_LIBRARIES} ftkGraphs ftkGUI ftkImage ftkCommon ftkFeatures libSVM vtkVolumeRendering QVTK NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis NESQLITE sqlite3 MCLR)
 ENDIF (USE_TRACKING)
 
 ADD_EXECUTABLE( projproc processor_main.cpp ftkProjectProcessor.cpp ftkProjectDefinition.cpp)
