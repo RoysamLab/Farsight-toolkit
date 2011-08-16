@@ -67,11 +67,11 @@ class MultiFrameCellTracker{
 public:
 	MultiFrameCellTracker();
 	~MultiFrameCellTracker();
-	void setTrackParameters(std::vector<std::pair<std::string,float>> parameters);
-	void settrackresultFolders(std::vector<std::pair<std::string,std::string>> folders);
+	void setTrackParameters(std::vector<std::pair<std::string,float> > parameters);
+	void settrackresultFolders(std::vector<std::pair<std::string,std::string> > folders);
 	void setTrackImages(ftk::Image::Pointer rawimage,ftk::Image::Pointer labelimage);
 	ftk::Image::Pointer getTrackImages(void);
-	std::vector<std::vector<ftk::TrackPointFeatures>> getTrackFeatures(void);
+	std::vector<std::vector<ftk::TrackPointFeatures> > getTrackFeatures(void);
 
 private:
 		struct TrackVertex{
@@ -159,7 +159,7 @@ private:
 		return EXIT_SUCCESS;
 	}
 
-	std::vector<std::map<int,int>> old_to_new;
+	std::vector<std::map<int,int> > old_to_new;
 	void set_debug_images(helpers::ColorImageType::Pointer in1,helpers::ColorImageType::Pointer in2, helpers::ColorImageType::Pointer in3)
 	{
 		debugimage1 = in1;
@@ -248,7 +248,7 @@ private:
 
 	ftk::Image::Pointer resultImages;
 	std::vector<ftk::TrackFeatures> tfs;
-	std::vector<std::vector<ftk::TrackPointFeatures>> timeFeatures; 	// Set a different data hierarchy for output of time features:
+	std::vector<std::vector<ftk::TrackPointFeatures> > timeFeatures; 	// Set a different data hierarchy for output of time features:
 
 	std::string numbersfile;
 	std::string entropyfilename;

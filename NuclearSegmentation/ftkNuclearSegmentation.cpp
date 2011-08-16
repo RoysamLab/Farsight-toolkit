@@ -676,7 +676,7 @@ vtkSmartPointer<vtkTable> NuclearSegmentation::featureVectorTovtkTable(std::vect
 }
 
 #ifdef USE_TRACKING
-void NuclearSegmentation::SetTrackFeatures(std::vector<std::vector<ftk::TrackPointFeatures>> trackfeatures)
+void NuclearSegmentation::SetTrackFeatures(std::vector<std::vector<ftk::TrackPointFeatures> > trackfeatures)
 {
 	nucsegTrackFeatures.clear();
 	nucsegTrackFeatures = trackfeatures;

@@ -4,7 +4,7 @@ MultiFrameCellTracker::MultiFrameCellTracker()
 {
 
 }
-void MultiFrameCellTracker::setTrackParameters(std::vector<std::pair<std::string,float>> parameters)
+void MultiFrameCellTracker::setTrackParameters(std::vector<std::pair<std::string,float> > parameters)
 {
 
 	for(int counter=0; counter < FeatureVariances::N; counter++)
@@ -45,7 +45,7 @@ void MultiFrameCellTracker::setTrackParameters(std::vector<std::pair<std::string
 	fvar.boundDistMean = parameters.at(13).second; 
 	fvar.boundDistVariance = parameters.at(14).second; 
 }
-void MultiFrameCellTracker::settrackresultFolders(std::vector<std::pair<std::string,std::string>> folders)
+void MultiFrameCellTracker::settrackresultFolders(std::vector<std::pair<std::string,std::string> > folders)
 {
 
 	numbersfile = folders.at(0).second;
@@ -714,7 +714,7 @@ int MultiFrameCellTracker::add_disappear_vertices(int t)
 {
 	_ETRACE;
 	using boost::graph_traits;
-	typedef graph_traits<typename TGraph>::vertex_iterator vertex_iter;
+	typedef typename graph_traits<TGraph>::vertex_iterator vertex_iter;
 	TGraph::vertex_descriptor v;
 	TGraph::edge_descriptor e;
 
@@ -772,7 +772,7 @@ int MultiFrameCellTracker::add_appear_vertices(int t)
 {
 	_ETRACE;
 	using boost::graph_traits;
-	typedef graph_traits<typename TGraph>::vertex_iterator vertex_iter;
+	typedef typename graph_traits<TGraph>::vertex_iterator vertex_iter;
 	TGraph::vertex_descriptor v;
 	TGraph::edge_descriptor e;
 
@@ -2149,7 +2149,7 @@ void MultiFrameCellTracker::solve_higher_order()
 
 
 		
-		printf("lredges.size() = %d\n", lredges.size(),utility);
+		printf("lredges.size() = %d\n", lredges.size());//,utility);//GCC doesn't like this
 		printf("num_v = %d avg_in_degree = %0.2f avg_out_degree = %0.2f\n", num_v, in_deg_count*1.0/num_v, out_deg_count*1.0/num_v);
 		//PAUSE;
 		//_exit(0);
@@ -3530,7 +3530,7 @@ void MultiFrameCellTracker::resolve_merges_and_splits()
 					permsize++;
 				if(before.size()!=0)
 					permsize++;
-				std::vector<std::vector<bool>> permutations = generate_all_binary_strings(permsize);
+				std::vector<std::vector<bool> > permutations = generate_all_binary_strings(permsize);
 				float utilmax = -1;
 				int utilpos = -1;
 				_TRACE;
