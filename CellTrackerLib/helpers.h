@@ -39,8 +39,6 @@
 
 #include "itkLabelStatisticsImageFilter.h"
 #include "itkScalarImageToTextureFeaturesFilter.h"
-#include "ftkLabelImageToFeatures.h"
-#include "ftkIntrinsicFeatures.h"
 #include "ftkTrackFeatures.h"
 #include "itkBinaryThinningImageFilter3D.h"
 
@@ -124,7 +122,7 @@ typedef DistanceMapFilterType::VectorImageType OffsetImageType;
 typedef itk::ConnectedComponentImageFilter<InputImageType,LabelImageType> ConnectedFilterType;
 typedef itk::RelabelComponentImageFilter<LabelImageType,LabelImageType> RelabelFilterType;
 
-typedef ftk::IntrinsicFeatures FeaturesType;
+typedef ftk::IntrinsicFeatures FeatureType;
 
 typedef itk::VTKImageExport<InputImageType> ExportFilterType;
 
@@ -189,8 +187,9 @@ struct FeatureVariances{
 // all header declarations
 //
 //
-double features_box_overlap(FeaturesType &f1, FeaturesType &f2);
-double features_diff(FeaturesType &f1, FeaturesType &f2,bool overlap);
+
+double features_box_overlap(FeatureType &f1, FeatureType &f2);
+double features_diff(FeatureType &f1, FeatureType &f2,bool overlap);
 
 Input2DImageType::Pointer getProjection(InputImageType::Pointer im);
 Color2DImageType::Pointer getColorProjection(ColorImageType::Pointer im);
@@ -204,8 +203,8 @@ OutputImageType::Pointer getBinaryMedianFiltered(InputImageType::Pointer im, Inp
 OutputImageType::Pointer getScaledFromBool(BoolImageType::Pointer im);
 InputImageType::Pointer getLargeComponents(InputImageType::Pointer im, int n);
 LabelImageType::Pointer getLargeLabels(LabelImageType::Pointer im, int n);
-LabelImageType::Pointer getFeatureVectors(LabelImageType::Pointer im, InputImageType::Pointer in_image,std::vector<FeaturesType> &feature_vector,int time,int tag);
-void getFeatureVectorsOld(InputImageType::Pointer im,std::vector<FeaturesType> &feature_vector,int time,int tag);
+LabelImageType::Pointer getFeatureVectors(LabelImageType::Pointer im, InputImageType::Pointer in_image,std::vector<FeatureType> &feature_vector,int time,int tag);
+void getFeatureVectorsOld(InputImageType::Pointer im,std::vector<FeatureType> &feature_vector,int time,int tag);
 InputImageType::Pointer getDilated(InputImageType::Pointer im, int n);
 InputImageType::Pointer getEroded(InputImageType::Pointer im, int n);
 DistanceMapFilterType::Pointer getDistanceMap(InputImageType::Pointer im);
@@ -225,8 +224,8 @@ Input2DImageType::Pointer get2DBoundary(LabelImageType::Pointer label);
 InputImageType::Pointer getEmpty(int,int,int);
 Input2DImageType::Pointer get2DEmpty(int, int);
 Color2DImageType::Pointer getColorBoundaryImage(LabelImageType::Pointer, InputImageType::Pointer,int);
-LabelImageType::Pointer getLabelsMapped(LabelImageType::Pointer label, std::vector<FeaturesType> &fvec, unsigned int * indices);
-void getFeatureVectorsFarsight(LabelImageType::Pointer im, InputImageType::Pointer in_image, std::vector<FeaturesType> & feature_vector, int time, int tag);
+LabelImageType::Pointer getLabelsMapped(LabelImageType::Pointer label, std::vector<FeatureType> &fvec, unsigned int * indices);
+void getFeatureVectorsFarsight(LabelImageType::Pointer im, InputImageType::Pointer in_image, std::vector<FeatureType> & feature_vector, int time, int tag);
 InputImageType::Pointer getLabelToBinary(LabelImageType::Pointer l);
 InputImageType::Pointer getMaxImage(InputImageType::Pointer,InputImageType::Pointer);
 std::vector<float> traverseCenterline(itk::ImageRegionIteratorWithIndex<InputImageType> iter,InputImageType::Pointer im,char neighbors[26][3],int n);
@@ -239,9 +238,9 @@ InputImageType::Pointer extract_raw_image(float bbox[6],InputImageType::Pointer 
 void annotateImage(Color2DImageType::Pointer number,Color2DImageType::Pointer orig, int n, int x, int y);
 ColorImageType::Pointer getColorImageFromColor2DImages(std::vector<Color2DImageType::Pointer> input);
 void drawLine(ColorImageType::Pointer input, VectorPixelType color1, VectorPixelType color2, int x1, int y1, int z1, int x2, int y2, int z2);
-std::vector<FeaturesType> get_all_connected_components(LabelImageType::Pointer,FeaturesType);
-void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,FeaturesType fin, FeatureVariances fvar,std::vector<LabelImageType::Pointer> &lout,std::vector<InputImageType::Pointer> &rout,std::vector<FeaturesType> &fvecout);
-void MergeCells(std::vector<LabelImageType::Pointer> lin, std::vector<InputImageType::Pointer> imin, std::vector<FeaturesType> fin, FeatureVariances fvar, LabelImageType::Pointer &lout, InputImageType::Pointer &rout, FeaturesType &fout);
+std::vector<FeatureType> get_all_connected_components(LabelImageType::Pointer,FeatureType);
+void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,FeatureType fin, FeatureVariances fvar,std::vector<LabelImageType::Pointer> &lout,std::vector<InputImageType::Pointer> &rout,std::vector<FeatureType> &fvecout);
+void MergeCells(std::vector<LabelImageType::Pointer> lin, std::vector<InputImageType::Pointer> imin, std::vector<FeatureType> fin, FeatureVariances fvar, LabelImageType::Pointer &lout, InputImageType::Pointer &rout, FeatureType &fout);
 LabelImageType::Pointer fillHoles(LabelImageType::Pointer im, int n);
 }
 #endif

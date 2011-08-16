@@ -91,7 +91,7 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 
 	//Now track the cells alone and compute associations
 
-	std::vector<std::vector<FeaturesType> > locfvector;
+	std::vector<std::vector<FeatureType> > locfvector;
 
 	helpers::LabelImageType::Pointer labeled;
 	bool fexists = true;
@@ -118,7 +118,7 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 			tempsegmented = labelimage->GetItkPtr<helpers::LabelPixelType>(t,0,readmode);	
 
 			Color2DImageType::Pointer cimp = getColor2DImage(tempsegmented,2);
-			std::vector<FeaturesType> f;
+			std::vector<FeatureType> f;
 			std::vector<helpers::LabelImageType::Pointer> li;
 			std::vector<helpers::InputImageType::Pointer> ri;
 			getFeatureVectorsFarsight(tempsegmented,tempimage,f,t,c);
@@ -127,9 +127,9 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 				li.push_back(extract_label_image(f[counter].num,f[counter].BoundingBox,tempsegmented));
 				ri.push_back(extract_raw_image(f[counter].BoundingBox,tempimage));
 				annotateImage(number,cimp,f[counter].num,MAX(f[counter].Centroid[0],0),MAX(f[counter].Centroid[1],0));
-				if(f[counter].ScalarFeatures[FeaturesType::VOLUME]<5)
+				if(f[counter].ScalarFeatures[FeatureType::VOLUME]<5)
 				{
-					printf("A cell has a volume of %f\n",f[counter].ScalarFeatures[FeaturesType::VOLUME]);
+					printf("A cell has a volume of %f\n",f[counter].ScalarFeatures[FeatureType::VOLUME]);
 					printFeatures(f[counter]);
 				}
 			}
@@ -198,12 +198,12 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 
 			helpers::LabelImageType::Pointer track = this->getOutputAtTime(t);
 			Color2DImageType::Pointer cimp = getColor2DImage(track,2);
-			std::vector<FeaturesType> f;
+			std::vector<FeatureType> f;
 			getFeatureVectorsFarsight(track,tempimage,f,t,c);
 			printf("About to begin annotate loop\n");
 			for(int counter=0; counter< f.size(); counter++)
 			{
-				std::vector<FeaturesType> conncomp = get_all_connected_components(track,f[counter]);
+				std::vector<FeatureType> conncomp = get_all_connected_components(track,f[counter]);
 				for(int counter1 = 0; counter1 < conncomp.size(); counter1++)
 				{
 					annotateImage(number,cimp,f[counter].num, MAX(conncomp[counter1].Centroid[0],0),MAX(conncomp[counter1].Centroid[1],0));
@@ -250,7 +250,7 @@ void MultiFrameCellTracker::summarize_tracking(ftk::Image::Pointer rawImg)
 
 	LabelImageType::Pointer segmented[MAX_TIME][MAX_TAGS]; // FIXME
 	InputImageType::Pointer images[MAX_TIME][MAX_TAGS];
-	std::vector<FeaturesType> summaryfvector[MAX_TIME][MAX_TAGS];
+	std::vector<FeatureType> summaryfvector[MAX_TIME][MAX_TAGS];
 
 	float spac[3];
 	spac[0] = fvar.spacing[0] ; 
@@ -317,8 +317,11 @@ void MultiFrameCellTracker::changeDataHierarchy(std::vector<ftk::TrackFeatures> 
 	}
 
 }
-
-void MultiFrameCellTracker::createTrackFeatures(std::vector<FeaturesType> summaryfvector[MAX_TIME][MAX_TAGS], std::vector<ftk::TrackFeatures> &trfeats, int c,int num_t)
+bool CompareFeaturesTime(FeatureType a, FeatureType b)
+{
+	return a.time<b.time;
+}
+void MultiFrameCellTracker::createTrackFeatures(std::vector<FeatureType> summaryfvector[MAX_TIME][MAX_TAGS], std::vector<ftk::TrackFeatures> &trfeats, int c,int num_t)
 {
 	int max_track_num = 0;
 	for(int t = 0; t< num_t; t++)
@@ -343,18 +346,14 @@ void MultiFrameCellTracker::createTrackFeatures(std::vector<FeaturesType> summar
 			}
 		}
 		}
-		std::sort(trackf.intrinsic_features.begin(),trackf.intrinsic_features.end(),compare);
+		std::sort(trackf.intrinsic_features.begin(),trackf.intrinsic_features.end(),CompareFeaturesTime);
 		trfeats.push_back(trackf);
 		//PRINTF("Added %d elements to trfeats\n",counter);
 	}
 
 }
 
-//std::vector<ftk::TrackFeatures> MultiFrameCellTracker::getTrackFeatures(void)
-//{
-//	return tfs;
-//}
-std::vector<std::vector<ftk::TrackPointFeatures>> MultiFrameCellTracker::getTrackFeatures(void)
+std::vector<std::vector<ftk::TrackPointFeatures> > MultiFrameCellTracker::getTrackFeatures(void)
 {
 	return timeFeatures;
 }
@@ -611,13 +610,13 @@ void  MultiFrameCellTracker::assignmentsuboptimal1(double *assignment, double *c
 
 
 
-void  MultiFrameCellTracker::printFeatures(FeaturesType f)
+void  MultiFrameCellTracker::printFeatures(FeatureType f)
 {
 	printf("\nIntrinsicFeatures:\n");
 	printf("\t\n");
 	printf("\t X = %d Y = %d Z = %d\n", int(f.Centroid[0]+0.5), int(f.Centroid[1]+0.5), int(f.Centroid[2]+0.5));
 	printf("\t Num = %d time = %d\n", f.num, f.time);
-	printf("\t Volume = %d\n\n", int(f.ScalarFeatures[FeaturesType::VOLUME]));
+	printf("\t Volume = %d\n\n", int(f.ScalarFeatures[FeatureType::VOLUME]));
 }
 
 float MultiFrameCellTracker::overlap(float bb1[6],float bb2[6])
@@ -670,12 +669,12 @@ int MultiFrameCellTracker::compute_boundary_utility(float x[3])
 	return retval;
 }
 
-int MultiFrameCellTracker::compute_normal_utility(FeaturesType f1, FeaturesType f2)
+int MultiFrameCellTracker::compute_normal_utility(FeatureType f1, FeatureType f2)
 {
 	float utility = 0;
 	
-	//printf("FeaturesType::N =%d  FeatureVariances::N = %d",FeaturesType::N,FeatureVariances::N);
-	for(int counter=0; counter< FeaturesType::N; counter++)
+	//printf("FeatureType::N =%d  FeatureVariances::N = %d",FeatureType::N,FeatureVariances::N);
+	for(int counter=0; counter< FeatureType::N; counter++)
 	{
 		utility += (f1.ScalarFeatures[counter]-f2.ScalarFeatures[counter])*(f1.ScalarFeatures[counter]-f2.ScalarFeatures[counter])/fvar.variances[counter];
 	//	printf("f1.ScalarFeatures[counter] = %f f2.ScalarFeatures[counter] = %f fvar.variances[counter]=%f\n",f1.ScalarFeatures[counter],f2.ScalarFeatures[counter],fvar.variances[counter]);
@@ -687,7 +686,7 @@ int MultiFrameCellTracker::compute_normal_utility(FeaturesType f1, FeaturesType 
 	utility += (abs(f1.time-f2.time)-1)*(abs(f1.time-f2.time)-1)/fvar.timeVariance;
 	//printf("utility 3 = %f\n", utility);
 	float ovlap = overlap(f1.BoundingBox,f2.BoundingBox);
-	ovlap = 1-(ovlap)/MIN(f1.ScalarFeatures[FeaturesType::BBOX_VOLUME],f2.ScalarFeatures[FeaturesType::BBOX_VOLUME]);
+	ovlap = 1-(ovlap)/MIN(f1.ScalarFeatures[FeatureType::BBOX_VOLUME],f2.ScalarFeatures[FeatureType::BBOX_VOLUME]);
 	utility += ovlap*ovlap/fvar.overlapVariance;
 	//printf("utility 4 = %f\n", utility);
 	utility /= 2.0;
@@ -894,7 +893,7 @@ int MultiFrameCellTracker::add_normal_edges(int tmin, int tmax)
 	return nec;
 }
 
-FeaturesType MultiFrameCellTracker::get_merged_features(int t1, int i1, int i2)
+FeatureType MultiFrameCellTracker::get_merged_features(int t1, int i1, int i2)
 {
 	int t2 = t1;
 	helpers::LabelImageType::Pointer p1,p2;
@@ -973,10 +972,10 @@ FeaturesType MultiFrameCellTracker::get_merged_features(int t1, int i1, int i2)
 	}
 
 
-	std::vector<FeaturesType> f1;
+	std::vector<FeatureType> f1;
 	getFeatureVectorsFarsight(p,r,f1,t1,fvector[t1][i1].tag);
 
-	FeaturesType f = f1[0];
+	FeatureType f = f1[0];
 	f.Centroid[0]+=lbounds[0];
 	f.Centroid[1]+=lbounds[2];
 	f.Centroid[2]+=lbounds[4];
@@ -1002,7 +1001,7 @@ void  MultiFrameCellTracker::populate_merge_candidates(int t)
 	{
 		for(int counter1 = counter+1; counter1 < fvector[t].size(); counter1++)
 		{
-			//if( MIN(fvector[t][counter].ScalarFeatures[FeaturesType::BBOX_VOLUME],fvector[t][counter1].ScalarFeatures[FeaturesType::BBOX_VOLUME])/overlap(fvector[t][counter].BoundingBox,fvector[t][counter1].BoundingBox)< 4.0*sqrt(fvar.overlapVariance))
+			//if( MIN(fvector[t][counter].ScalarFeatures[FeatureType::BBOX_VOLUME],fvector[t][counter1].ScalarFeatures[FeatureType::BBOX_VOLUME])/overlap(fvector[t][counter].BoundingBox,fvector[t][counter1].BoundingBox)< 4.0*sqrt(fvar.overlapVariance))
 			if(get_distance(fvector[t][counter1].Centroid,fvector[t][counter].Centroid)<4.0*sqrt(fvar.distVariance))
 			{
 				m.t = t;
@@ -1052,16 +1051,16 @@ int MultiFrameCellTracker::add_merge_split_edges(int tmax)
 
 				if(get_distance(fvector[tcounter][i1].Centroid,fvector[tmax][counter1].Centroid)<4.0*sqrt(fvar.distVariance) && get_distance(fvector[tcounter][i2].Centroid,fvector[tmax][counter1].Centroid)<4.0*sqrt(fvar.distVariance))
 				{
-					FeaturesType lc1 = fvector[tcounter][i1];
-					FeaturesType lc2 = fvector[tcounter][i2];
+					FeatureType lc1 = fvector[tcounter][i1];
+					FeatureType lc2 = fvector[tcounter][i2];
 
 					int volume_factor = 1;
 
-					lc1.ScalarFeatures[FeaturesType::VOLUME] = (lc1.ScalarFeatures[FeaturesType::VOLUME] + lc2.ScalarFeatures[FeaturesType::VOLUME])/volume_factor;
-					lc2.ScalarFeatures[FeaturesType::VOLUME] = lc1.ScalarFeatures[FeaturesType::VOLUME];
+					lc1.ScalarFeatures[FeatureType::VOLUME] = (lc1.ScalarFeatures[FeatureType::VOLUME] + lc2.ScalarFeatures[FeatureType::VOLUME])/volume_factor;
+					lc2.ScalarFeatures[FeatureType::VOLUME] = lc1.ScalarFeatures[FeatureType::VOLUME];
 
-					FeaturesType lc3 = fvector[tmax][counter1];
-					lc3.ScalarFeatures[FeaturesType::VOLUME] /=volume_factor;
+					FeatureType lc3 = fvector[tmax][counter1];
+					lc3.ScalarFeatures[FeatureType::VOLUME] /=volume_factor;
 
 					int utility1 = compute_normal_utility(lc1,lc3);//fvector[tmax][counter1]);
 					int utility2 = compute_normal_utility(lc2,lc3);//fvector[tmax][counter1]);
@@ -1115,16 +1114,16 @@ int MultiFrameCellTracker::add_merge_split_edges(int tmax)
 
 				if(get_distance(fvector[tmax][i1].Centroid,fvector[tcounter][counter1].Centroid)<4.0*sqrt(fvar.distVariance) && get_distance(fvector[tmax][i2].Centroid,fvector[tcounter][counter1].Centroid)<4.0*sqrt(fvar.distVariance))
 				{
-					FeaturesType lc1 = fvector[tmax][i1];
-					FeaturesType lc2 = fvector[tmax][i2];
+					FeatureType lc1 = fvector[tmax][i1];
+					FeatureType lc2 = fvector[tmax][i2];
 
 					int volume_factor = 1;
 
-					lc1.ScalarFeatures[FeaturesType::VOLUME] = (lc1.ScalarFeatures[FeaturesType::VOLUME] + lc2.ScalarFeatures[FeaturesType::VOLUME])/volume_factor;
-					lc2.ScalarFeatures[FeaturesType::VOLUME] = lc1.ScalarFeatures[FeaturesType::VOLUME];
+					lc1.ScalarFeatures[FeatureType::VOLUME] = (lc1.ScalarFeatures[FeatureType::VOLUME] + lc2.ScalarFeatures[FeatureType::VOLUME])/volume_factor;
+					lc2.ScalarFeatures[FeatureType::VOLUME] = lc1.ScalarFeatures[FeatureType::VOLUME];
 
-					FeaturesType lc3 = fvector[tcounter][counter1];
-					lc3.ScalarFeatures[FeaturesType::VOLUME] /=volume_factor;
+					FeatureType lc3 = fvector[tcounter][counter1];
+					lc3.ScalarFeatures[FeatureType::VOLUME] /=volume_factor;
 					
 					int utility1 = compute_normal_utility(lc1,lc3);//fvector[tcounter][counter1]);
 					int utility2 = compute_normal_utility(lc2,lc3);//fvector[tcounter][counter1]);
@@ -1211,9 +1210,9 @@ int MultiFrameCellTracker::get_edge_type(TGraph::edge_descriptor ei)
 }
 
 
-FeaturesType predict_feature(FeaturesType f1, FeaturesType f2)
+FeatureType predict_feature(FeatureType f1, FeatureType f2)
 {
-	FeaturesType f3;
+	FeatureType f3;
 	f3.Centroid[0] = f2.Centroid[0] + f2.Centroid[0] - f1.Centroid[0];
 	f3.Centroid[1] = f2.Centroid[1] + f2.Centroid[1] - f1.Centroid[1];
 	f3.Centroid[2] = f2.Centroid[2] + f2.Centroid[2] - f1.Centroid[2];
@@ -1224,7 +1223,7 @@ FeaturesType predict_feature(FeaturesType f1, FeaturesType f2)
 	f3.BoundingBox[3] = 2*f2.BoundingBox[3] - f1.BoundingBox[3]; 
 	f3.BoundingBox[4] = 2*f2.BoundingBox[4] - f1.BoundingBox[4]; 
 	f3.BoundingBox[5] = 2*f2.BoundingBox[5] - f1.BoundingBox[5]; 
-	for(int counter=0; counter< FeaturesType::N; counter++)
+	for(int counter=0; counter< FeatureType::N; counter++)
 	{
 		f3.ScalarFeatures[counter] = (f2.ScalarFeatures[counter] + f1.ScalarFeatures[counter])/2.0;
 	}
@@ -1232,7 +1231,7 @@ FeaturesType predict_feature(FeaturesType f1, FeaturesType f2)
 	return f3;
 }
 
-float MultiFrameCellTracker::compute_LRUtility(FeaturesType f1, FeaturesType f2, FeaturesType f3)
+float MultiFrameCellTracker::compute_LRUtility(FeatureType f1, FeatureType f2, FeatureType f3)
 {
 	float utility = 0;
 	utility += compute_normal_utility(f1,f2);
@@ -1258,8 +1257,8 @@ float MultiFrameCellTracker::compute_LRUtility(FeaturesType f1, FeaturesType f2,
 		float factor;
 		float dist1 = get_distance(f1.Centroid,f2.Centroid);
 		float dist2 = get_distance(f2.Centroid,f3.Centroid);
-		float radius1 = pow(3.0/4.0/3.141*f1.ScalarFeatures[FeaturesType::VOLUME],1/3.0);
-		float radius2 = pow(3.0/4.0/3.141*f2.ScalarFeatures[FeaturesType::VOLUME],1/3.0);
+		float radius1 = pow(3.0/4.0/3.141*f1.ScalarFeatures[FeatureType::VOLUME],1/3.0);
+		float radius2 = pow(3.0/4.0/3.141*f2.ScalarFeatures[FeatureType::VOLUME],1/3.0);
 		if(dist1<radius1 || dist2 < radius2)
 		{
 			return utility;
@@ -1307,7 +1306,7 @@ float MultiFrameCellTracker::compute_LRUtility(FeaturesType f1, FeaturesType f2,
 
 }
 
-float MultiFrameCellTracker::get_misalignment_cost(FeaturesType f1, FeaturesType f2, FeaturesType f3)
+float MultiFrameCellTracker::get_misalignment_cost(FeatureType f1, FeatureType f2, FeatureType f3)
 {
 	float cencentroid[3];
 	cencentroid[0] = (f1.Centroid[0] + f3.Centroid[0])/2.0;
@@ -1321,10 +1320,10 @@ float MultiFrameCellTracker::get_misalignment_cost(FeaturesType f1, FeaturesType
 }
 
 
-FeaturesType average_feature(FeaturesType f1,FeaturesType f2)
+FeatureType average_feature(FeatureType f1,FeatureType f2)
 {
-	FeaturesType f;
-	for(int counter = 0; counter< FeaturesType::N; counter++)
+	FeatureType f;
+	for(int counter = 0; counter< FeatureType::N; counter++)
 	{
 		f.ScalarFeatures[counter] = (f1.ScalarFeatures[counter]+f2.ScalarFeatures[counter])/2.0;
 	}
@@ -1350,15 +1349,15 @@ float MultiFrameCellTracker::compute_LRUtility(TGraph::edge_descriptor e1,TGraph
 		printf("a");
 		if(get_edge_type(e1)==APPEAR && get_edge_type(e2)!=DISAPPEAR)
 		{
-			FeaturesType f1, f2, f3;
+			FeatureType f1, f2, f3;
 			f2 = fvector[g[source(e2,g)].t][g[source(e2,g)].findex];
 			f3 = fvector[g[target(e2,g)].t][g[target(e2,g)].findex];
 			
 			if(get_edge_type(e2)==SPLIT)
 			{
 				printf("c");
-				FeaturesType f1a = predict_feature(f3,f2);
-				FeaturesType f1b = predict_feature(fvector[g[target(coupled_map[e2],g)].t][g[target(coupled_map[e2],g)].findex],f2);
+				FeatureType f1a = predict_feature(f3,f2);
+				FeatureType f1b = predict_feature(fvector[g[target(coupled_map[e2],g)].t][g[target(coupled_map[e2],g)].findex],f2);
 				f1 = average_feature(f1a,f1b);
 				utility = g[e2].utility;
 			}
@@ -1394,15 +1393,15 @@ float MultiFrameCellTracker::compute_LRUtility(TGraph::edge_descriptor e1,TGraph
 		else if(get_edge_type(e1)!=APPEAR && get_edge_type(e2)==DISAPPEAR)
 		{
 			printf("b");
-			FeaturesType f1, f2,f3;
+			FeatureType f1, f2,f3;
 			f1 = fvector[g[source(e1,g)].t][g[source(e1,g)].findex];
 			f2 = fvector[g[target(e1,g)].t][g[target(e1,g)].findex];
 
 			if(get_edge_type(e1)==MERGE)
 			{
 				printf("c");
-				FeaturesType f3a = predict_feature(f1,f2);
-				FeaturesType f3b = predict_feature(fvector[g[target(coupled_map[e1],g)].t][g[target(coupled_map[e1],g)].findex],f2);
+				FeatureType f3a = predict_feature(f1,f2);
+				FeatureType f3b = predict_feature(fvector[g[target(coupled_map[e1],g)].t][g[target(coupled_map[e1],g)].findex],f2);
 				f3 = average_feature(f3a,f3b);
 				utility = g[e1].utility;
 			}
@@ -1437,11 +1436,11 @@ float MultiFrameCellTracker::compute_LRUtility(TGraph::edge_descriptor e1,TGraph
 		}
 		return utility;
 	}
-	/*FeaturesType f1,f2,f3;
+	/*FeatureType f1,f2,f3;
 	f1 = fvector[g[source(e1,g)].t][g[source(e1,g)].findex];
 	f2 = fvector[g[source(e2,g)].t][g[source(e2,g)].findex];
 	f3 = fvector[g[target(e2,g)].t][g[target(e2,g)].findex];*/
-	FeaturesType f1a, f1b,f2, f3a,f3b;
+	FeatureType f1a, f1b,f2, f3a,f3b;
 	
 	int e1_type = get_edge_type(e1);
 	int e2_type = get_edge_type(e2);
@@ -1541,15 +1540,15 @@ float MultiFrameCellTracker::compute_LRUtility_sum(TGraph::edge_descriptor e1,TG
 		printf("a");
 		if(get_edge_type(e1)==APPEAR && get_edge_type(e2)!=DISAPPEAR)
 		{
-			FeaturesType f1, f2, f3;
+			FeatureType f1, f2, f3;
 			f2 = fvector[g[source(e2,g)].t][g[source(e2,g)].findex];
 			f3 = fvector[g[target(e2,g)].t][g[target(e2,g)].findex];
 			
 			if(get_edge_type(e2)==SPLIT)
 			{
 				printf("c");
-				FeaturesType f1a = predict_feature(f3,f2);
-				FeaturesType f1b = predict_feature(fvector[g[target(coupled_map[e2],g)].t][g[target(coupled_map[e2],g)].findex],f2);
+				FeatureType f1a = predict_feature(f3,f2);
+				FeatureType f1b = predict_feature(fvector[g[target(coupled_map[e2],g)].t][g[target(coupled_map[e2],g)].findex],f2);
 				f1 = average_feature(f1a,f1b);
 				utility = g[e2].utility;
 			}
@@ -1588,15 +1587,15 @@ float MultiFrameCellTracker::compute_LRUtility_sum(TGraph::edge_descriptor e1,TG
 		else if(get_edge_type(e1)!=APPEAR && get_edge_type(e2)==DISAPPEAR)
 		{
 			printf("b");
-			FeaturesType f1, f2,f3;
+			FeatureType f1, f2,f3;
 			f1 = fvector[g[source(e1,g)].t][g[source(e1,g)].findex];
 			f2 = fvector[g[target(e1,g)].t][g[target(e1,g)].findex];
 
 			if(get_edge_type(e1)==MERGE)
 			{
 				printf("c");
-				FeaturesType f3a = predict_feature(f1,f2);
-				FeaturesType f3b = predict_feature(fvector[g[target(coupled_map[e1],g)].t][g[target(coupled_map[e1],g)].findex],f2);
+				FeatureType f3a = predict_feature(f1,f2);
+				FeatureType f3b = predict_feature(fvector[g[target(coupled_map[e1],g)].t][g[target(coupled_map[e1],g)].findex],f2);
 				f3 = average_feature(f3a,f3b);
 				utility = g[e1].utility;
 			}
@@ -1634,11 +1633,11 @@ float MultiFrameCellTracker::compute_LRUtility_sum(TGraph::edge_descriptor e1,TG
 		}
 		return utility;
 	}
-	/*FeaturesType f1,f2,f3;
+	/*FeatureType f1,f2,f3;
 	f1 = fvector[g[source(e1,g)].t][g[source(e1,g)].findex];
 	f2 = fvector[g[source(e2,g)].t][g[source(e2,g)].findex];
 	f3 = fvector[g[target(e2,g)].t][g[target(e2,g)].findex];*/
-	FeaturesType f1a, f1b,f2, f3a,f3b;
+	FeatureType f1a, f1b,f2, f3a,f3b;
 	
 	int e1_type = get_edge_type(e1);
 	int e2_type = get_edge_type(e2);
@@ -1740,15 +1739,15 @@ float MultiFrameCellTracker::compute_LRUtility_product(TGraph::edge_descriptor e
 		printf("a");
 		if(get_edge_type(e1)==APPEAR && get_edge_type(e2)!=DISAPPEAR)
 		{
-			FeaturesType f1, f2, f3;
+			FeatureType f1, f2, f3;
 			f2 = fvector[g[source(e2,g)].t][g[source(e2,g)].findex];
 			f3 = fvector[g[target(e2,g)].t][g[target(e2,g)].findex];
 			
 			if(get_edge_type(e2)==SPLIT)
 			{
 				printf("c");
-				FeaturesType f1a = predict_feature(f3,f2);
-				FeaturesType f1b = predict_feature(fvector[g[target(coupled_map[e2],g)].t][g[target(coupled_map[e2],g)].findex],f2);
+				FeatureType f1a = predict_feature(f3,f2);
+				FeatureType f1b = predict_feature(fvector[g[target(coupled_map[e2],g)].t][g[target(coupled_map[e2],g)].findex],f2);
 				f1 = average_feature(f1a,f1b);
 				utility = g[e2].utility;
 			}
@@ -1787,15 +1786,15 @@ float MultiFrameCellTracker::compute_LRUtility_product(TGraph::edge_descriptor e
 		else if(get_edge_type(e1)!=APPEAR && get_edge_type(e2)==DISAPPEAR)
 		{
 			printf("b");
-			FeaturesType f1, f2,f3;
+			FeatureType f1, f2,f3;
 			f1 = fvector[g[source(e1,g)].t][g[source(e1,g)].findex];
 			f2 = fvector[g[target(e1,g)].t][g[target(e1,g)].findex];
 
 			if(get_edge_type(e1)==MERGE)
 			{
 				printf("c");
-				FeaturesType f3a = predict_feature(f1,f2);
-				FeaturesType f3b = predict_feature(fvector[g[target(coupled_map[e1],g)].t][g[target(coupled_map[e1],g)].findex],f2);
+				FeatureType f3a = predict_feature(f1,f2);
+				FeatureType f3b = predict_feature(fvector[g[target(coupled_map[e1],g)].t][g[target(coupled_map[e1],g)].findex],f2);
 				f3 = average_feature(f3a,f3b);
 				utility = g[e1].utility;
 			}
@@ -1833,11 +1832,11 @@ float MultiFrameCellTracker::compute_LRUtility_product(TGraph::edge_descriptor e
 		}
 		return utility;
 	}
-	/*FeaturesType f1,f2,f3;
+	/*FeatureType f1,f2,f3;
 	f1 = fvector[g[source(e1,g)].t][g[source(e1,g)].findex];
 	f2 = fvector[g[source(e2,g)].t][g[source(e2,g)].findex];
 	f3 = fvector[g[target(e2,g)].t][g[target(e2,g)].findex];*/
-	FeaturesType f1a, f1b,f2, f3a,f3b;
+	FeatureType f1a, f1b,f2, f3a,f3b;
 	
 	int e1_type = get_edge_type(e1);
 	int e2_type = get_edge_type(e2);
@@ -1936,8 +1935,8 @@ void MultiFrameCellTracker::draw_line_for_edge(int num, TGraph::edge_descriptor 
 	{
 		if(g[v1].special ==0 && g[v2].special ==0)
 		{
-			FeaturesType f1 = fvector[g[v1].t][g[v1].findex];
-			FeaturesType f2 = fvector[g[v2].t][g[v2].findex];
+			FeatureType f1 = fvector[g[v1].t][g[v1].findex];
+			FeatureType f2 = fvector[g[v2].t][g[v2].findex];
 			//if(g[v1].findex==0 && g[v1].t==4)
 			//{
 			//	printf("This edge is still there %d %d %d %d\n",g[v1].t,g[v1].findex,g[v2].t,g[v2].findex);
@@ -1968,7 +1967,7 @@ void MultiFrameCellTracker::draw_line_for_edge(int num, TGraph::edge_descriptor 
 			pixel[0] = 255;
 			pixel[1] = 0;
 			pixel[2] = 0;
-			FeaturesType f1;
+			FeatureType f1;
 			int nshift = 0;
 			if(get_edge_type(e)==APPEAR)
 			{
@@ -2739,7 +2738,7 @@ int MultiFrameCellTracker::is_overlapping(TGraph::edge_descriptor e)
 	if(g[v1].special  == 1 || g[v2].special == 1)
 		return 2;
 	//printf("Not returned yet\n");
-	FeaturesType f1,f2;
+	FeatureType f1,f2;
 	//printf("C-\n");
 	f1 = fvector[g[v1].t][g[v1].findex];
 	//printf("1\n");
@@ -2760,13 +2759,13 @@ int MultiFrameCellTracker::is_alpha_overlapping(TGraph::edge_descriptor e,float 
 	if(g[v1].special  == 1 || g[v2].special == 1)
 		return 2;
 	//printf("Not returned yet\n");
-	FeaturesType f1,f2;
+	FeatureType f1,f2;
 	//printf("C-\n");
 	f1 = fvector[g[v1].t][g[v1].findex];
 	//printf("1\n");
 	f2 = fvector[g[v2].t][g[v2].findex];
 	//printf("2\n");
-	if(overlap(f1.BoundingBox, f2.BoundingBox) > alpha*MIN(f1.ScalarFeatures[FeaturesType::BBOX_VOLUME],f2.ScalarFeatures[FeaturesType::BBOX_VOLUME]))
+	if(overlap(f1.BoundingBox, f2.BoundingBox) > alpha*MIN(f1.ScalarFeatures[FeatureType::BBOX_VOLUME],f2.ScalarFeatures[FeatureType::BBOX_VOLUME]))
 	{
 		return 1;
 	}
@@ -3028,7 +3027,7 @@ bool MultiFrameCellTracker::is_separate(MultiFrameCellTracker::TGraph::vertex_de
 		return false;
 	}
 	return true;
-	/*FeaturesType f1,f2;
+	/*FeatureType f1,f2;
 	f1 = fvector[g[v1].t][g[v1].findex];
 	f2 = fvector[g[v2].t][g[v2].findex];
 
@@ -3194,7 +3193,7 @@ float MultiFrameCellTracker::get_LRUtility(std::vector< MultiFrameCellTracker::T
 			//print_vertex(desc[counter+1],0);
 			//printf("[3]");
 			//print_vertex(desc[counter+2],0);
-			FeaturesType f1,f2,f3;
+			FeatureType f1,f2,f3;
 			f1 = fvector[g[desc[counter]].t][g[desc[counter]].findex];
 			f2 = fvector[g[desc[counter+1]].t][g[desc[counter+1]].findex];
 			f3 = fvector[g[desc[counter+2]].t][g[desc[counter+2]].findex];
@@ -3482,7 +3481,7 @@ void MultiFrameCellTracker::resolve_merges_and_splits()
 
 					std::vector<helpers::LabelImageType::Pointer> lout;
 					std::vector<helpers::InputImageType::Pointer> rout;
-					std::vector<FeaturesType> fvecout;
+					std::vector<FeatureType> fvecout;
 					printf("I'm trying to split:\n");
 					printf("g[vd].t = %d g[vd].findex = %d g[vd].special = %d\n",g[vd].t, g[vd].findex,g[vd].special);
 				
@@ -3863,7 +3862,7 @@ void MultiFrameCellTracker::print_all_LRUtilities(TGraph::vertex_descriptor v)
 			v2 = target(*i1,g);
 			v3 = target(*i2,g);
 			char label[1024];
-			FeaturesType f1;
+			FeatureType f1;
 			if(g[v1].special==1)
 			{
 				if(in_degree(v1,g)==0)
@@ -4170,9 +4169,9 @@ void MultiFrameCellTracker::run()
 				if(g[v1].special == 0 && g[v2].special == 0)
 				{
 
-					FeaturesType f1 = fvector[g[v1].t][g[v1].findex];
-					FeaturesType f2 = fvector[g[v2].t][g[v2].findex];
-					printf("v1 = %0.0f v2 = %0.0f\n",f1.ScalarFeatures[FeaturesType::VOLUME],f2.ScalarFeatures[FeaturesType::VOLUME]);
+					FeatureType f1 = fvector[g[v1].t][g[v1].findex];
+					FeatureType f2 = fvector[g[v2].t][g[v2].findex];
+					printf("v1 = %0.0f v2 = %0.0f\n",f1.ScalarFeatures[FeatureType::VOLUME],f2.ScalarFeatures[FeatureType::VOLUME]);
 				}
 				//draw_line_for_edge(*e_i,col1,col2,-2);
 			}
@@ -4338,7 +4337,7 @@ void MultiFrameCellTracker::print_vertex(TGraph::vertex_descriptor v, int depth)
 
 	if(g[v].special == 0)
 	{
-		FeaturesType f = fvector[g[v].t][g[v].findex];
+		FeatureType f = fvector[g[v].t][g[v].findex];
 		printf("fvector index = %d t = %d Centroid =(%0.0f,%0.0f,%0.0f) ",g[v].findex, g[v].t,f.Centroid[0],f.Centroid[1],f.Centroid[2]);
 	}
 	else
@@ -4466,7 +4465,7 @@ void MultiFrameCellTracker::writeXGMML(char *filename)
 	for(tie(vi,vend)=vertices(g);vi!=vend;++vi)
 	{
 		char label[1024];
-		FeaturesType f1;
+		FeatureType f1;
 		if(g[*vi].special==1)
 		{
 			if(in_degree(*vi,g)==0)
@@ -4489,7 +4488,7 @@ void MultiFrameCellTracker::writeXGMML(char *filename)
 			fprintf(fp,"\t\t<att type=\"real\" name=\"x\" value=\"%0.2f\"/>\n",f1.Centroid[0]);
 			fprintf(fp,"\t\t<att type=\"real\" name=\"y\" value=\"%0.2f\"/>\n",f1.Centroid[1]);
 			fprintf(fp,"\t\t<att type=\"real\" name=\"z\" value=\"%0.2f\"/>\n",f1.Centroid[2]);
-			fprintf(fp,"\t\t<att type=\"integer\" name=\"volume\" value=\"%d\"/>\n",int(f1.ScalarFeatures[FeaturesType::VOLUME]));
+			fprintf(fp,"\t\t<att type=\"integer\" name=\"volume\" value=\"%d\"/>\n",int(f1.ScalarFeatures[FeatureType::VOLUME]));
 			fprintf(fp,"\t\t<att type=\"integer\" name=\"index\" value=\"%d\"/>\n",index[*vi]);
 		}
 		fprintf(fp,"\t\t<att type=\"real\" name=\"special\" value=\"%d\"/>\n",g[*vi].special);
@@ -4575,7 +4574,7 @@ void MultiFrameCellTracker::writeXGMML_secondorder(char *filename, std::vector< 
 	//for(tie(vi,vend)=vertices(g);vi!=vend;++vi)
 	//{
 	//	char label[1024];
-	//	FeaturesType f1;
+	//	FeatureType f1;
 	//	if(g[*vi].special==1)
 	//	{
 	//		if(in_degree(*vi,g)==0)
@@ -4598,7 +4597,7 @@ void MultiFrameCellTracker::writeXGMML_secondorder(char *filename, std::vector< 
 	//		fprintf(fp,"\t\t<att type=\"real\" name=\"x\" value=\"%0.2f\"/>\n",f1.Centroid[0]);
 	//		fprintf(fp,"\t\t<att type=\"real\" name=\"y\" value=\"%0.2f\"/>\n",f1.Centroid[1]);
 	//		fprintf(fp,"\t\t<att type=\"real\" name=\"z\" value=\"%0.2f\"/>\n",f1.Centroid[2]);
-	//		fprintf(fp,"\t\t<att type=\"integer\" name=\"volume\" value=\"%d\"/>\n",int(f1.ScalarFeatures[FeaturesType::VOLUME]));
+	//		fprintf(fp,"\t\t<att type=\"integer\" name=\"volume\" value=\"%d\"/>\n",int(f1.ScalarFeatures[FeatureType::VOLUME]));
 	//		fprintf(fp,"\t\t<att type=\"integer\" name=\"index\" value=\"%d\"/>\n",index[*vi]);
 	//	}
 	//	fprintf(fp,"\t\t<att type=\"real\" name=\"special\" value=\"%d\"/>\n",g[*vi].special);
@@ -4663,7 +4662,7 @@ void MultiFrameCellTracker::writeXGMML_secondorder(char *filename, std::vector< 
 		//		fprintf(fp,"\t\t<att type=\"real\" name=\"x\" value=\"%0.2f\"/>\n",f1.Centroid[0]);
 		//		fprintf(fp,"\t\t<att type=\"real\" name=\"y\" value=\"%0.2f\"/>\n",f1.Centroid[1]);
 		//		fprintf(fp,"\t\t<att type=\"real\" name=\"z\" value=\"%0.2f\"/>\n",f1.Centroid[2]);
-		//		fprintf(fp,"\t\t<att type=\"integer\" name=\"volume\" value=\"%d\"/>\n",int(f1.ScalarFeatures[FeaturesType::VOLUME]));
+		//		fprintf(fp,"\t\t<att type=\"integer\" name=\"volume\" value=\"%d\"/>\n",int(f1.ScalarFeatures[FeatureType::VOLUME]));
 		//		fprintf(fp,"\t\t<att type=\"integer\" name=\"index\" value=\"%d\"/>\n",index[*vi]);
 	int se_index = 0;
 	for(tie(ei,eend)=edges(g);ei!=eend; ++ei)
@@ -4717,7 +4716,7 @@ void MultiFrameCellTracker::compute_feature_variances()
 		case SPLIT: 
 		case MERGE: fvarnew.MS_prior++;
 		case TRANSLATION: 
-			FeaturesType f1,f2;
+			FeatureType f1,f2;
 			f1 = fvector[g[source(*ei,g)].t][g[source(*ei,g)].findex];
 			f2 = fvector[g[target(*ei,g)].t][g[target(*ei,g)].findex];
 			float dist = get_distance(f1.Centroid,f2.Centroid); 
@@ -4725,7 +4724,7 @@ void MultiFrameCellTracker::compute_feature_variances()
 			fvarnew.distVariance += dist*dist;
 			fvarnew.timeMean += f2.time - f1.time;
 			fvarnew.timeVariance += (f2.time - f1.time)*(f2.time - f1.time);
-			float ovlap = 1-overlap(f1.BoundingBox,f2.BoundingBox)/MIN(f1.ScalarFeatures[FeaturesType::BBOX_VOLUME],f2.ScalarFeatures[FeaturesType::BBOX_VOLUME]);
+			float ovlap = 1-overlap(f1.BoundingBox,f2.BoundingBox)/MIN(f1.ScalarFeatures[FeatureType::BBOX_VOLUME],f2.ScalarFeatures[FeatureType::BBOX_VOLUME]);
 			fvarnew.overlapMean += ovlap;
 			fvarnew.overlapVariance +=ovlap*ovlap;
 			for(int counter = 0; counter < FeatureVariances::N; counter++)

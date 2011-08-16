@@ -2,6 +2,7 @@
 SET(cellTracker_SRCS 
 MultiFrameCellTracker.cpp
 helpers.cpp
+ftkTrackFeatures.cpp
 )
 
 SET(cellTracker_HDRS 

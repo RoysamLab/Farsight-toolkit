@@ -62,10 +62,7 @@ using namespace boost;
 #define PAUSE {printf("%d:>",__LINE__);scanf("%*d");}
 
 
-bool compare(FeaturesType a, FeaturesType b)
-{
-	return a.time<b.time;
-}
+
 class MultiFrameCellTracker{
 public:
 	MultiFrameCellTracker();
@@ -100,10 +97,10 @@ private:
 	struct MergeCandidate{
 		int t;
 		int index1, index2;
-		FeaturesType f;
+		FeatureType f;
 	};
 	typedef boost::adjacency_list<boost::listS, boost::vecS, boost::bidirectionalS, TrackVertex, TrackEdge> TGraph;
-	typedef std::vector< std::vector < FeaturesType> > VVF;
+	typedef std::vector< std::vector < FeatureType> > VVF;
 	typedef std::vector< std::vector<TGraph::vertex_descriptor> > VVV;
 	typedef std::vector< std::vector < MergeCandidate > > VVM;
 	typedef std::vector< std::vector < helpers::LabelImageType::Pointer > > VVL;
@@ -176,7 +173,9 @@ private:
 	}
 	std::string dataset_id;
 	//////////////////////////////////////////////////////////////////////////////////////////////////
-	void printFeatures(FeaturesType f);
+
+	//bool CompareFeaturesTime(FeatureType a, FeatureType b);
+	void printFeatures(FeatureType f);
 	std::vector<std::vector<bool> >  generate_all_binary_strings(int n);//Added to the class
 
 	enum EDGE_TYPE {SPLIT,MERGE,APPEAR,DISAPPEAR,TRANSLATION};
@@ -184,7 +183,7 @@ private:
 	float get_boundary_dist(float x[3]);
 	int compute_boundary_utility(float x[3]);
 	float get_distance( float x1[3],float x2[3]);
-	FeaturesType get_merged_features(int, int,int);
+	FeatureType get_merged_features(int, int,int);
 	int add_disappear_vertices(int t);
 	int add_appear_vertices(int t);
 	int add_normal_edges(int tmin, int tmax);
@@ -193,13 +192,13 @@ private:
 	void solve_lip(void);
 	void solve_higher_order(void);
 	void prune(int);
-	int compute_normal_utility(FeaturesType f1, FeaturesType f2);
+	int compute_normal_utility(FeatureType f1, FeatureType f2);
 	void print_stats(void);
 	int get_edge_type(TGraph::edge_descriptor);
 	float compute_LRUtility(TGraph::edge_descriptor, TGraph::edge_descriptor);
 	float compute_LRUtility_sum(TGraph::edge_descriptor, TGraph::edge_descriptor);
 	float compute_LRUtility_product(TGraph::edge_descriptor, TGraph::edge_descriptor);
-	float compute_LRUtility(FeaturesType f1, FeaturesType f2, FeaturesType f3);
+	float compute_LRUtility(FeatureType f1, FeatureType f2, FeatureType f3);
 	void enforce_overlap();
 	int is_overlapping(TGraph::edge_descriptor e);
 	int is_alpha_overlapping(TGraph::edge_descriptor e,float alpha);
@@ -213,16 +212,15 @@ private:
 	TGraph::vertex_descriptor get_child(TGraph::vertex_descriptor);// no error check implemented TODO
 	bool is_separate(MultiFrameCellTracker::TGraph::vertex_descriptor v1, MultiFrameCellTracker::TGraph::vertex_descriptor v2);
 	float get_LRUtility(std::vector< TGraph::vertex_descriptor > desc);
-	float get_misalignment_cost(FeaturesType f1, FeaturesType f2, FeaturesType f3);
+	float get_misalignment_cost(FeatureType f1, FeatureType f2, FeatureType f3);
     void print_debug_info(void);
 	void resolve_merges_and_splits(void);
 	int my_connected_components(std::vector<int> &component);
 	void print_all_LRUtilities(TGraph::vertex_descriptor v);
 	void compute_feature_variances();
 	void setData(VVF &fv, VVL &l, VVR &r);
-	//bool compare(FeaturesType a, FeaturesType b);
 	void summarize_tracking(ftk::Image::Pointer rawImg);	
-	void createTrackFeatures(std::vector<FeaturesType> summaryfvector[MAX_TIME][MAX_TAGS], std::vector<ftk::TrackFeatures> &tfs, int c,int num_t);
+	void createTrackFeatures(std::vector<FeatureType> summaryfvector[MAX_TIME][MAX_TAGS], std::vector<ftk::TrackFeatures> &tfs, int c,int num_t);
 	void changeDataHierarchy(std::vector<ftk::TrackFeatures> vectrackfeatures);
 	
 

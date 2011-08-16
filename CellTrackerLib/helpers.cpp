@@ -518,7 +518,7 @@ LabelImageType::Pointer getLargeLabels(LabelImageType::Pointer im, int n)
 
 }
 
-double features_box_overlap(FeaturesType &f1, FeaturesType &f2)
+double features_box_overlap(FeatureType &f1, FeatureType &f2)
 {
 	float sx,sy,sz;
 	float ex,ey,ez;
@@ -537,7 +537,7 @@ double features_box_overlap(FeaturesType &f1, FeaturesType &f2)
 
 	return overlap;
 }
-double features_diff(FeaturesType &f1, FeaturesType &f2,bool overlap)
+double features_diff(FeatureType &f1, FeatureType &f2,bool overlap)
 {
 	//parameters
 	double distance_threshold = 12;
@@ -1280,7 +1280,7 @@ Color2DImageType::Pointer getColorBoundaryImage(LabelImageType::Pointer labelled
 }
 
 
-LabelImageType::Pointer getLabelsMapped(LabelImageType::Pointer label, std::vector<FeaturesType> &fvec, unsigned int * indices)
+LabelImageType::Pointer getLabelsMapped(LabelImageType::Pointer label, std::vector<FeatureType> &fvec, unsigned int * indices)
 {
 	//ideally .num should have the actual cell id which we want to map to track id, but its not so :-/
 	printf("Entering getLabelsMapped\n");
@@ -1913,7 +1913,7 @@ void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::T
 						sum = sum + distances[counter];
 					}
 					sum /= num_num;
-					radius = pow(static_cast<float>(tfs[tc].intrinsic_features[tp].ScalarFeatures[FeaturesType::VOLUME]*spacing[0]*spacing[1]*spacing[2]*3.0/8.0/acos(double(0))),1/3.0f);
+					radius = pow(static_cast<float>(tfs[tc].intrinsic_features[tp].ScalarFeatures[FeatureType::VOLUME]*spacing[0]*spacing[1]*spacing[2]*3.0/8.0/acos(double(0))),1/3.0f);
 					printf("Sum = %0.2f radius = %0.2f ratio = %0.3f\n",sum,radius,sum/radius);
 					if(sum/radius<= ratio_threshold)
 					{
@@ -2155,10 +2155,10 @@ void drawLine(ColorImageType::Pointer input, VectorPixelType color1, VectorPixel
 	//printf("\n");
 }
 
-std::vector<FeaturesType> get_all_connected_components(LabelImageType::Pointer labelim,FeaturesType f)
+std::vector<FeatureType> get_all_connected_components(LabelImageType::Pointer labelim,FeatureType f)
 {
 	int id = f.num;
-	std::vector<FeaturesType> comps;
+	std::vector<FeatureType> comps;
 	LabelImageType::RegionType lregion;
 	LabelImageType::IndexType index;
 	index[0] = f.BoundingBox[0];
@@ -2202,7 +2202,7 @@ std::vector<FeaturesType> get_all_connected_components(LabelImageType::Pointer l
 
 }
 
-void MergeCells(std::vector<LabelImageType::Pointer> lin, std::vector<InputImageType::Pointer> imin, std::vector<FeaturesType> fin, FeatureVariances fvar, LabelImageType::Pointer &lout, InputImageType::Pointer &rout, FeaturesType &fout)
+void MergeCells(std::vector<LabelImageType::Pointer> lin, std::vector<InputImageType::Pointer> imin, std::vector<FeatureType> fin, FeatureVariances fvar, LabelImageType::Pointer &lout, InputImageType::Pointer &rout, FeatureType &fout)
 {
 	printf("In MergeCell\n");
 	LabelImageType::Pointer p1,p2;
@@ -2281,10 +2281,10 @@ void MergeCells(std::vector<LabelImageType::Pointer> lin, std::vector<InputImage
 	}
 
 
-	std::vector<FeaturesType> f1;
+	std::vector<FeatureType> f1;
 	getFeatureVectorsFarsight(p,r,f1,fin[0].time,fin[0].tag);
 
-	FeaturesType f = f1[0];
+	FeatureType f = f1[0];
 	f.Centroid[0]+=lbounds[0];
 	f.Centroid[1]+=lbounds[2];
 	f.Centroid[2]+=lbounds[4];
@@ -2304,7 +2304,7 @@ void MergeCells(std::vector<LabelImageType::Pointer> lin, std::vector<InputImage
 	printf("End mergecell\n");
 }
 
-void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,FeaturesType fin, FeatureVariances fvar,std::vector<LabelImageType::Pointer> &lout,std::vector<InputImageType::Pointer> &rout,std::vector<FeaturesType> &fvecout)
+void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,FeatureType fin, FeatureVariances fvar,std::vector<LabelImageType::Pointer> &lout,std::vector<InputImageType::Pointer> &rout,std::vector<FeatureType> &fvecout)
 {
 	printf("In SplitCell:\n");
 	float c1[3],c2[3];
@@ -2379,7 +2379,7 @@ void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,Feature
 		{
 			converged = true;			
 
-			std::vector<FeaturesType> ftemp;
+			std::vector<FeatureType> ftemp;
 			_TRACE;
 			getFeatureVectorsFarsight(lcopy,imin,ftemp,fin.time,0);
 			_TRACE;
