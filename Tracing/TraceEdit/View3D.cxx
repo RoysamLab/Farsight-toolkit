@@ -1485,7 +1485,7 @@ void View3D::CreateLayout()
 	CursorToolsLayout->addWidget(this->CalculateDistanceToDeviceButton);
 	CursorToolsLayout->addStretch();
 
-	this->CursorActionsWidget->setMaximumSize(256,256);
+	this->CursorActionsWidget->setMaximumSize(256,500);
 	this->cursor3DDock->setWidget(this->CursorActionsWidget);
 	this->addDockWidget(Qt::LeftDockWidgetArea, this->cursor3DDock);
 	this->ShowToolBars->addAction(this->cursor3DDock->toggleViewAction());
