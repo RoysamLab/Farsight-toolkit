@@ -126,7 +126,7 @@ template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::
 	}
 
 	typedef itk::Image< pixelType, 3 > OutputImageType;
-	typedef OutputImageType::PixelContainer ImageContainerType;
+	typedef typename OutputImageType::PixelContainer ImageContainerType;
 	typename ImageContainerType::Pointer container = ImageContainerType::New();
 
 	container->Initialize();
