@@ -105,7 +105,7 @@ public:
 	void outputSeeds(void);
 
 	//sub-modules that can be executed
-	void runBinarization(unsigned short number_of_bins = 16);
+	void runBinarization(unsigned short number_of_bins = 4);
 	void runSeedDetection();
 	void runSeedDetection(int minScale,int maxScale); // Added by Raghav
 	void runClustering();

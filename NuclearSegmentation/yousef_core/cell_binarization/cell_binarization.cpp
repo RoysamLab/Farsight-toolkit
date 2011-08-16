@@ -221,9 +221,9 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	//cout<<"done"<<endl;
 
 #ifdef _OPENMP			
-	int block_divisor_X = 16;
-	int block_divisor_Y = 16;
-	int block_divisor_Z = 2;
+	int block_divisor_X = 2;
+	int block_divisor_Y = 2;
+	int block_divisor_Z = 1;
 #else		
 	int block_divisor_X = 2;
 	int block_divisor_Y = 2;
@@ -321,13 +321,13 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 #endif
 
 	std::cout << "Starting Graph Cuts" << std::endl;
-	#pragma omp parallel for num_threads(4)
+	//#pragma omp parallel for num_threads(4)
 	for(int i=0; i< num_blocks_R; i++)			
 	{
-		#pragma omp parallel for num_threads(2)
+		//#pragma omp parallel for num_threads(2)
 		for(int j = 0; j < num_blocks_C; j++)
 		{
-			#pragma omp parallel for num_threads(2)
+			//#pragma omp parallel for num_threads(2)
 			for (int k = 0; k < num_blocks_Z; k++)
 			{
 				#pragma omp critical
@@ -359,8 +359,61 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 
 	subImgBlockArray = NULL;
 
+	//copy the output of cell binarization into ITKImage to write out to check the result for debugging purposes
+	std::cout << "Copying cell binarization output (imgOut) to an ITK image so we can see the results" << std::endl;
+	
+	typedef unsigned short InputPixelType;
+	typedef unsigned short OutputPixelType;
+	typedef itk::Image< InputPixelType,  3 >   InputImageType;
+	typedef itk::Image< OutputPixelType, 3 >   OutputImageType;
 
+	InputImageType::Pointer im;
+	im = InputImageType::New();
+	InputImageType::PointType origin;
+	origin[0] = 0; 
+	origin[1] = 0;    
+	origin[2] = 0;    
+	im->SetOrigin( origin );
+	
+	InputImageType::IndexType start;
+	start[0] =   0;  // first index on X
+	start[1] =   0;  // first index on Y    
+	start[2] =   0;  // first index on Z    
+	InputImageType::SizeType  size;
+	size[0]  = C;  // size along X
+	size[1]  = R;  // size along Y
+	size[2]  = Z;  // size along Z
 
+	InputImageType::RegionType region;
+	region.SetSize( size );
+	region.SetIndex( start );
+
+	im->SetRegions( region );
+	im->Allocate();
+	im->FillBuffer(0);
+	im->Update();
+	
+	typedef itk::ImageRegionIteratorWithIndex< InputImageType > IteratorType;
+	IteratorType iterator1(im,im->GetRequestedRegion());
+	for(size_t i=0; i<R*C*Z; i++)
+	{		
+		iterator1.Set(imgOut[i]);
+		++iterator1;	
+	}
+
+	typedef itk::ImageFileWriter< InputImageType > WriterType;
+	WriterType::Pointer writer = WriterType::New();
+	writer->SetInput(im);
+	writer->SetFileName("cell_binarization_output.tif");
+	try
+	{
+		writer->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "Error in ImageFileWriter: " << err << std::endl;
+		return -1;
+	}
 
 	cout << "Cell Binarization refinement by alpha expansion took " << (clock() - start_time_cell_bin_alpha_exp)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 

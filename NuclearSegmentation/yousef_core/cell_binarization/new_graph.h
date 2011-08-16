@@ -1,56 +1,56 @@
 /* 
- * Copyright 2009 Rensselaer Polytechnic Institute
- * This program is free software; you can redistribute it and/or modify 
- * it under the terms of the GNU General Public License as published by 
- * the Free Software Foundation; either version 2 of the License, or 
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
- * for more details.
- * 
- * You should have received a copy of the GNU General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc., 
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
+* Copyright 2009 Rensselaer Polytechnic Institute
+* This program is free software; you can redistribute it and/or modify 
+* it under the terms of the GNU General Public License as published by 
+* the Free Software Foundation; either version 2 of the License, or 
+* (at your option) any later version.
+* 
+* This program is distributed in the hope that it will be useful, but 
+* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+* or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+* for more details.
+* 
+* You should have received a copy of the GNU General Public License along 
+* with this program; if not, write to the Free Software Foundation, Inc., 
+* 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+*/
 
 /* new_graph.h */
 /*
-	This software library implements the maxflow algorithm
-	described in
+This software library implements the maxflow algorithm
+described in
 
-		"An Experimental Comparison of Min-Cut/Max-Flow Algorithms for Energy Minimization in Vision."
-		Yuri Boykov and Vladimir Kolmogorov.
-		In IEEE Transactions on Pattern Analysis and Machine Intelligence (PAMI), 
-		September 2004
+"An Experimental Comparison of Min-Cut/Max-Flow Algorithms for Energy Minimization in Vision."
+Yuri Boykov and Vladimir Kolmogorov.
+In IEEE Transactions on Pattern Analysis and Machine Intelligence (PAMI), 
+September 2004
 
-	This algorithm was developed by Yuri Boykov and Vladimir Kolmogorov
-	at Siemens Corporate Research. To make it available for public use,
-	it was later reimplemented by Vladimir Kolmogorov based on open publications.
+This algorithm was developed by Yuri Boykov and Vladimir Kolmogorov
+at Siemens Corporate Research. To make it available for public use,
+it was later reimplemented by Vladimir Kolmogorov based on open publications.
 
-	If you use this software for research purposes, you should cite
-	the aforementioned paper in any resulting publication.
+If you use this software for research purposes, you should cite
+the aforementioned paper in any resulting publication.
 
-	----------------------------------------------------------------------
+----------------------------------------------------------------------
 
-	REUSING TREES:
+REUSING TREES:
 
-	Starting with version 3.0, there is a also an option of reusing search
-	trees from one maxflow computation to the next, as described in
+Starting with version 3.0, there is a also an option of reusing search
+trees from one maxflow computation to the next, as described in
 
-		"Efficiently Solving Dynamic Markov Random Fields Using Graph Cuts."
-		Pushmeet Kohli and Philip H.S. Torr
-		International Conference on Computer Vision (ICCV), 2005
+"Efficiently Solving Dynamic Markov Random Fields Using Graph Cuts."
+Pushmeet Kohli and Philip H.S. Torr
+International Conference on Computer Vision (ICCV), 2005
 
-	If you use this option, you should cite
-	the aforementioned paper in any resulting publication.
+If you use this option, you should cite
+the aforementioned paper in any resulting publication.
 */
-	
+
 
 
 /*
-	For description, license, example usage see README.TXT.
+For description, license, example usage see README.TXT.
 */
 
 #ifndef __NEW_GRAPH_H__
@@ -68,7 +68,7 @@
 // NOTE: in UNIX you need to use -DNDEBUG preprocessor option to supress assert's!!!
 
 /*
-	special constants for node->parent
+special constants for node->parent
 */
 #define TERMINAL ( (arc *) 1 )		/* to terminal */
 #define ORPHAN   ( (arc *) 2 )		/* orphan */
@@ -95,7 +95,7 @@ public:
 
 	/////////////////////////////////////////////////////////////////////////
 	//                     BASIC INTERFACE FUNCTIONS                       //
-    //              (should be enough for most applications)               //
+	//              (should be enough for most applications)               //
 	/////////////////////////////////////////////////////////////////////////
 
 	// Constructor. 
@@ -283,10 +283,10 @@ public:
 
 
 
-/////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////
-	
+	/////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////
+
 private:
 	// internal variables and functions
 
@@ -296,7 +296,7 @@ private:
 
 		arc			*parent;	// node's parent
 		node		*next;		// pointer to the next active node
-								//   (or to itself if it is the last node in the list)
+		//   (or to itself if it is the last node in the list)
 		int			TS;			// timestamp showing when DIST was computed
 		int			DIST;		// distance to the terminal
 		int			is_sink : 1;	// flag showing whether the node is in the source or in the sink tree (if parent!=NULL)
@@ -304,7 +304,7 @@ private:
 		int			is_in_changed_list : 1; // set by maxflow if 
 
 		tcaptype	tr_cap;		// if tr_cap > 0 then tr_cap is residual capacity of the arc SOURCE->node
-								// otherwise         -tr_cap is residual capacity of the arc node->SINK 
+		// otherwise         -tr_cap is residual capacity of the arc node->SINK 
 
 	};
 
@@ -332,8 +332,8 @@ private:
 	DBlock_B<nodeptr>		*nodeptr_block;
 
 	void	(*error_function)(const char *);	// this function is called if a error occurs,
-										// with a corresponding error message
-										// (or exit(1) is called if it's NULL)
+	// with a corresponding error message
+	// (or exit(1) is called if it's NULL)
 
 	flowtype			flow;		// total flow
 
@@ -374,10 +374,10 @@ private:
 
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	Graph_B<captype, tcaptype, flowtype>::Graph_B(int node_num_max, int edge_num_max, void (*err_function)(const char *))
-	: node_num(0),
-	  nodeptr_block(NULL),
-	  error_function(err_function)
+Graph_B<captype, tcaptype, flowtype>::Graph_B(int node_num_max, int edge_num_max, void (*err_function)(const char *))
+: node_num(0),
+nodeptr_block(NULL),
+error_function(err_function)
 {
 	if (node_num_max < 16) node_num_max = 16;
 	if (edge_num_max < 16) edge_num_max = 16;
@@ -392,19 +392,30 @@ template <typename captype, typename tcaptype, typename flowtype>
 	//std::cout << "Node Num Max = " << node_num_max << std::endl;
 	//std::cout << "Arc Size = " << sizeof(arc) << std::endl;
 	//std::cout << "Edge Num Max = " << edge_num_max << std::endl;
-	
-	if (!nodes || !arcs)
-    {
-    printf("Error allocating memory for Graph_B\n");
-	//std::cout << "Trying to allocate " << ((node_num_max*sizeof(node))+(2*edge_num_max*sizeof(arc))) << std::endl;
-    int unused = scanf("%*d");
-    unused++;
-    if (error_function)
-      {
-      (*error_function)("Not enough memory!");
-      }
-    exit(1);
-    }
+
+	if (!nodes)
+	{
+		std::cout << "Error trying to allocate " << node_num_max*sizeof(node) / (1024 * 1024 * 1024.0) << " GB memory for nodes in Graph_B" << std::endl;
+		int unused = scanf("%*d");
+		unused++;
+		if (error_function)
+		{
+			(*error_function)("Not enough memory!");
+		}
+		exit(1);
+	}
+
+	if (!arcs)
+	{
+		std::cout << "Error trying to allocate " << 2*edge_num_max*sizeof(arc) / (1024 * 1024 * 1024.0) << " GB memory for arcs in Graph_B" << std::endl;
+		int unused = scanf("%*d");
+		unused++;
+		if (error_function)
+		{
+			(*error_function)("Not enough memory!");
+		}
+		exit(1);
+	}
 
 	node_last = nodes;
 	node_max = nodes + node_num_max;
@@ -416,7 +427,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 }
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	Graph_B<captype,tcaptype,flowtype>::~Graph_B()
+Graph_B<captype,tcaptype,flowtype>::~Graph_B()
 {
 	if (nodeptr_block) 
 	{ 
@@ -428,7 +439,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 }
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	void Graph_B<captype,tcaptype,flowtype>::reset()
+void Graph_B<captype,tcaptype,flowtype>::reset()
 {
 	node_last = nodes;
 	arc_last = arcs;
@@ -445,7 +456,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 }
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	void Graph_B<captype,tcaptype,flowtype>::reallocate_nodes(int num)
+void Graph_B<captype,tcaptype,flowtype>::reallocate_nodes(int num)
 {
 	int node_num_max = (int)(node_max - nodes);
 	node* nodes_old = nodes;
@@ -469,7 +480,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 }
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	void Graph_B<captype,tcaptype,flowtype>::reallocate_arcs()
+void Graph_B<captype,tcaptype,flowtype>::reallocate_arcs()
 {
 	int arc_num_max = (int)(arc_max - arcs);
 	int arc_num = (int)(arc_last - arcs);
@@ -506,7 +517,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	inline typename Graph_B<captype,tcaptype,flowtype>::node_id Graph_B<captype,tcaptype,flowtype>::add_node(int num)
+inline typename Graph_B<captype,tcaptype,flowtype>::node_id Graph_B<captype,tcaptype,flowtype>::add_node(int num)
 {
 	assert(num > 0);
 
@@ -534,7 +545,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 }
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	inline void Graph_B<captype,tcaptype,flowtype>::add_tweights(node_id i, tcaptype cap_source, tcaptype cap_sink)
+inline void Graph_B<captype,tcaptype,flowtype>::add_tweights(node_id i, tcaptype cap_source, tcaptype cap_sink)
 {
 	assert(i >= 0 && i < node_num);
 
@@ -546,7 +557,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 }
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	inline void Graph_B<captype,tcaptype,flowtype>::add_edge(node_id _i, node_id _j, captype cap, captype rev_cap)
+inline void Graph_B<captype,tcaptype,flowtype>::add_edge(node_id _i, node_id _j, captype cap, captype rev_cap)
 {
 	assert(_i >= 0 && _i < node_num);
 	assert(_j >= 0 && _j < node_num);
@@ -575,19 +586,19 @@ template <typename captype, typename tcaptype, typename flowtype>
 }
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	inline typename Graph_B<captype,tcaptype,flowtype>::arc* Graph_B<captype,tcaptype,flowtype>::get_first_arc()
+inline typename Graph_B<captype,tcaptype,flowtype>::arc* Graph_B<captype,tcaptype,flowtype>::get_first_arc()
 {
 	return arcs;
 }
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	inline typename Graph_B<captype,tcaptype,flowtype>::arc* Graph_B<captype,tcaptype,flowtype>::get_next_arc(arc* a) 
+inline typename Graph_B<captype,tcaptype,flowtype>::arc* Graph_B<captype,tcaptype,flowtype>::get_next_arc(arc* a) 
 {
 	return a + 1; 
 }
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	inline void Graph_B<captype,tcaptype,flowtype>::get_arc_ends(arc* a, node_id& i, node_id& j)
+inline void Graph_B<captype,tcaptype,flowtype>::get_arc_ends(arc* a, node_id& i, node_id& j)
 {
 	assert(a >= arcs && a < arc_last);
 	i = (node_id) (a->sister->head - nodes);
@@ -595,28 +606,28 @@ template <typename captype, typename tcaptype, typename flowtype>
 }
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	inline tcaptype Graph_B<captype,tcaptype,flowtype>::get_trcap(node_id i)
+inline tcaptype Graph_B<captype,tcaptype,flowtype>::get_trcap(node_id i)
 {
 	assert(i>=0 && i<node_num);
 	return nodes[i].tr_cap;
 }
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	inline captype Graph_B<captype,tcaptype,flowtype>::get_rcap(arc* a)
+inline captype Graph_B<captype,tcaptype,flowtype>::get_rcap(arc* a)
 {
 	assert(a >= arcs && a < arc_last);
 	return a->r_cap;
 }
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	inline void Graph_B<captype,tcaptype,flowtype>::set_trcap(node_id i, tcaptype trcap)
+inline void Graph_B<captype,tcaptype,flowtype>::set_trcap(node_id i, tcaptype trcap)
 {
 	assert(i>=0 && i<node_num); 
 	nodes[i].tr_cap = trcap;
 }
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	inline void Graph_B<captype,tcaptype,flowtype>::set_rcap(arc* a, captype rcap)
+inline void Graph_B<captype,tcaptype,flowtype>::set_rcap(arc* a, captype rcap)
 {
 	assert(a >= arcs && a < arc_last);
 	a->r_cap = rcap;
@@ -624,7 +635,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	inline typename Graph_B<captype,tcaptype,flowtype>::termtype Graph_B<captype,tcaptype,flowtype>::what_segment(node_id i, termtype default_segm)
+inline typename Graph_B<captype,tcaptype,flowtype>::termtype Graph_B<captype,tcaptype,flowtype>::what_segment(node_id i, termtype default_segm)
 {
 	if (nodes[i].parent)
 	{
@@ -637,7 +648,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 }
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	inline void Graph_B<captype,tcaptype,flowtype>::mark_node(node_id _i)
+inline void Graph_B<captype,tcaptype,flowtype>::mark_node(node_id _i)
 {
 	node* i = nodes + _i;
 	if (!i->next)
@@ -652,7 +663,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 }
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	inline void Graph_B<captype,tcaptype,flowtype>::set_active(node *i)
+inline void Graph_B<captype,tcaptype,flowtype>::set_active(node *i)
 {
 	if (!i->next)
 	{
@@ -665,12 +676,12 @@ template <typename captype, typename tcaptype, typename flowtype>
 }
 
 /*
-	Returns the next active node.
-	If it is connected to the sink, it stays in the list,
-	otherwise it is removed from the list
+Returns the next active node.
+If it is connected to the sink, it stays in the list,
+otherwise it is removed from the list
 */
 template <typename captype, typename tcaptype, typename flowtype> 
-	inline typename Graph_B<captype,tcaptype,flowtype>::node* Graph_B<captype,tcaptype,flowtype>::next_active()
+inline typename Graph_B<captype,tcaptype,flowtype>::node* Graph_B<captype,tcaptype,flowtype>::next_active()
 {
 	node *i;
 
@@ -698,7 +709,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 /***********************************************************************/
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	inline void Graph_B<captype,tcaptype,flowtype>::set_orphan_front(node *i)
+inline void Graph_B<captype,tcaptype,flowtype>::set_orphan_front(node *i)
 {
 	nodeptr *np;
 	i -> parent = ORPHAN;
@@ -709,7 +720,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 }
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	inline void Graph_B<captype,tcaptype,flowtype>::set_orphan_rear(node *i)
+inline void Graph_B<captype,tcaptype,flowtype>::set_orphan_rear(node *i)
 {
 	nodeptr *np;
 	i -> parent = ORPHAN;
@@ -724,7 +735,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 /***********************************************************************/
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	inline void Graph_B<captype,tcaptype,flowtype>::add_to_changed_list(node *i)
+inline void Graph_B<captype,tcaptype,flowtype>::add_to_changed_list(node *i)
 {
 	if (changed_list && !i->is_in_changed_list)
 	{
@@ -737,7 +748,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 /***********************************************************************/
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	void Graph_B<captype,tcaptype,flowtype>::maxflow_init()
+void Graph_B<captype,tcaptype,flowtype>::maxflow_init()
 {
 	node *i;
 
@@ -777,7 +788,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 }
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	void Graph_B<captype,tcaptype,flowtype>::maxflow_reuse_trees_init()
+void Graph_B<captype,tcaptype,flowtype>::maxflow_reuse_trees_init()
 {
 	node* i;
 	node* j;
@@ -862,7 +873,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 }
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	void Graph_B<captype,tcaptype,flowtype>::augment(arc *middle_arc)
+void Graph_B<captype,tcaptype,flowtype>::augment(arc *middle_arc)
 {
 	node *i;
 	arc *a;
@@ -934,7 +945,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 /***********************************************************************/
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	void Graph_B<captype,tcaptype,flowtype>::process_source_orphan(node *i)
+void Graph_B<captype,tcaptype,flowtype>::process_source_orphan(node *i)
 {
 	node *j;
 	arc *a0, *a0_min = NULL, *a;
@@ -942,76 +953,76 @@ template <typename captype, typename tcaptype, typename flowtype>
 
 	/* trying to find a new parent */
 	for (a0=i->first; a0; a0=a0->next)
-	if (a0->sister->r_cap)
-	{
-		j = a0 -> head;
-		if (!j->is_sink && (a=j->parent))
-		{
-			/* checking the origin of j */
-			d = 0;
-			while ( 1 )
-			{
-				if (j->TS == TIME)
-				{
-					d += j -> DIST;
-					break;
-				}
-				a = j -> parent;
-				d ++;
-				if (a==TERMINAL)
-				{
-					j -> TS = TIME;
-					j -> DIST = 1;
-					break;
-				}
-				if (a==ORPHAN) { d = INFINITE_D; break; }
-				j = a -> head;
-			}
-			if (d<INFINITE_D) /* j originates from the source - done */
-			{
-				if (d<d_min)
-				{
-					a0_min = a0;
-					d_min = d;
-				}
-				/* set marks along the path */
-				for (j=a0->head; j->TS!=TIME; j=j->parent->head)
-				{
-					j -> TS = TIME;
-					j -> DIST = d --;
-				}
-			}
-		}
-	}
-
-	if ((i->parent = a0_min))
-	{
-		i -> TS = TIME;
-		i -> DIST = d_min + 1;
-	}
-	else
-	{
-		/* no parent is found */
-		add_to_changed_list(i);
-
-		/* process neighbors */
-		for (a0=i->first; a0; a0=a0->next)
+		if (a0->sister->r_cap)
 		{
 			j = a0 -> head;
 			if (!j->is_sink && (a=j->parent))
 			{
-				if (a0->sister->r_cap) set_active(j);
-				if (a!=TERMINAL && a!=ORPHAN && a->head==i)
+				/* checking the origin of j */
+				d = 0;
+				while ( 1 )
 				{
-					set_orphan_rear(j); // add j to the end of the adoption list
+					if (j->TS == TIME)
+					{
+						d += j -> DIST;
+						break;
+					}
+					a = j -> parent;
+					d ++;
+					if (a==TERMINAL)
+					{
+						j -> TS = TIME;
+						j -> DIST = 1;
+						break;
+					}
+					if (a==ORPHAN) { d = INFINITE_D; break; }
+					j = a -> head;
+				}
+				if (d<INFINITE_D) /* j originates from the source - done */
+				{
+					if (d<d_min)
+					{
+						a0_min = a0;
+						d_min = d;
+					}
+					/* set marks along the path */
+					for (j=a0->head; j->TS!=TIME; j=j->parent->head)
+					{
+						j -> TS = TIME;
+						j -> DIST = d --;
+					}
 				}
 			}
 		}
-	}
+
+		if ((i->parent = a0_min))
+		{
+			i -> TS = TIME;
+			i -> DIST = d_min + 1;
+		}
+		else
+		{
+			/* no parent is found */
+			add_to_changed_list(i);
+
+			/* process neighbors */
+			for (a0=i->first; a0; a0=a0->next)
+			{
+				j = a0 -> head;
+				if (!j->is_sink && (a=j->parent))
+				{
+					if (a0->sister->r_cap) set_active(j);
+					if (a!=TERMINAL && a!=ORPHAN && a->head==i)
+					{
+						set_orphan_rear(j); // add j to the end of the adoption list
+					}
+				}
+			}
+		}
 }
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	void Graph_B<captype,tcaptype,flowtype>::process_sink_orphan(node *i)
+void Graph_B<captype,tcaptype,flowtype>::process_sink_orphan(node *i)
 {
 	node *j;
 	arc *a0, *a0_min = NULL, *a;
@@ -1019,78 +1030,78 @@ template <typename captype, typename tcaptype, typename flowtype>
 
 	/* trying to find a new parent */
 	for (a0=i->first; a0; a0=a0->next)
-	if (a0->r_cap)
-	{
-		j = a0 -> head;
-		if (j->is_sink && (a=j->parent))
-		{
-			/* checking the origin of j */
-			d = 0;
-			while ( 1 )
-			{
-				if (j->TS == TIME)
-				{
-					d += j -> DIST;
-					break;
-				}
-				a = j -> parent;
-				d ++;
-				if (a==TERMINAL)
-				{
-					j -> TS = TIME;
-					j -> DIST = 1;
-					break;
-				}
-				if (a==ORPHAN) { d = INFINITE_D; break; }
-				j = a -> head;
-			}
-			if (d<INFINITE_D) /* j originates from the sink - done */
-			{
-				if (d<d_min)
-				{
-					a0_min = a0;
-					d_min = d;
-				}
-				/* set marks along the path */
-				for (j=a0->head; j->TS!=TIME; j=j->parent->head)
-				{
-					j -> TS = TIME;
-					j -> DIST = d --;
-				}
-			}
-		}
-	}
-
-	if ((i->parent = a0_min))
-	{
-		i -> TS = TIME;
-		i -> DIST = d_min + 1;
-	}
-	else
-	{
-		/* no parent is found */
-		add_to_changed_list(i);
-
-		/* process neighbors */
-		for (a0=i->first; a0; a0=a0->next)
+		if (a0->r_cap)
 		{
 			j = a0 -> head;
 			if (j->is_sink && (a=j->parent))
 			{
-				if (a0->r_cap) set_active(j);
-				if (a!=TERMINAL && a!=ORPHAN && a->head==i)
+				/* checking the origin of j */
+				d = 0;
+				while ( 1 )
 				{
-					set_orphan_rear(j); // add j to the end of the adoption list
+					if (j->TS == TIME)
+					{
+						d += j -> DIST;
+						break;
+					}
+					a = j -> parent;
+					d ++;
+					if (a==TERMINAL)
+					{
+						j -> TS = TIME;
+						j -> DIST = 1;
+						break;
+					}
+					if (a==ORPHAN) { d = INFINITE_D; break; }
+					j = a -> head;
+				}
+				if (d<INFINITE_D) /* j originates from the sink - done */
+				{
+					if (d<d_min)
+					{
+						a0_min = a0;
+						d_min = d;
+					}
+					/* set marks along the path */
+					for (j=a0->head; j->TS!=TIME; j=j->parent->head)
+					{
+						j -> TS = TIME;
+						j -> DIST = d --;
+					}
 				}
 			}
 		}
-	}
+
+		if ((i->parent = a0_min))
+		{
+			i -> TS = TIME;
+			i -> DIST = d_min + 1;
+		}
+		else
+		{
+			/* no parent is found */
+			add_to_changed_list(i);
+
+			/* process neighbors */
+			for (a0=i->first; a0; a0=a0->next)
+			{
+				j = a0 -> head;
+				if (j->is_sink && (a=j->parent))
+				{
+					if (a0->r_cap) set_active(j);
+					if (a!=TERMINAL && a!=ORPHAN && a->head==i)
+					{
+						set_orphan_rear(j); // add j to the end of the adoption list
+					}
+				}
+			}
+		}
 }
 
 /***********************************************************************/
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	flowtype Graph_B<captype,tcaptype,flowtype>::maxflow(bool reuse_trees, Block_B<node_id>* _changed_list)
+flowtype Graph_B<captype,tcaptype,flowtype>::maxflow(bool reuse_trees, Block_B<node_id>* _changed_list)
 {
 	node *i, *j, *current_node = NULL;
 	arc *a;
@@ -1128,55 +1139,55 @@ template <typename captype, typename tcaptype, typename flowtype>
 		{
 			/* grow source tree */
 			for (a=i->first; a; a=a->next)
-			if (a->r_cap)
-			{
-				j = a -> head;
-				if (!j->parent)
+				if (a->r_cap)
 				{
-					j -> is_sink = 0;
-					j -> parent = a -> sister;
-					j -> TS = i -> TS;
-					j -> DIST = i -> DIST + 1;
-					set_active(j);
-					add_to_changed_list(j);
+					j = a -> head;
+					if (!j->parent)
+					{
+						j -> is_sink = 0;
+						j -> parent = a -> sister;
+						j -> TS = i -> TS;
+						j -> DIST = i -> DIST + 1;
+						set_active(j);
+						add_to_changed_list(j);
+					}
+					else if (j->is_sink) break;
+					else if (j->TS <= i->TS &&
+						j->DIST > i->DIST)
+					{
+						/* heuristic - trying to make the distance from j to the source shorter */
+						j -> parent = a -> sister;
+						j -> TS = i -> TS;
+						j -> DIST = i -> DIST + 1;
+					}
 				}
-				else if (j->is_sink) break;
-				else if (j->TS <= i->TS &&
-				         j->DIST > i->DIST)
-				{
-					/* heuristic - trying to make the distance from j to the source shorter */
-					j -> parent = a -> sister;
-					j -> TS = i -> TS;
-					j -> DIST = i -> DIST + 1;
-				}
-			}
 		}
 		else
 		{
 			/* grow sink tree */
 			for (a=i->first; a; a=a->next)
-			if (a->sister->r_cap)
-			{
-				j = a -> head;
-				if (!j->parent)
+				if (a->sister->r_cap)
 				{
-					j -> is_sink = 1;
-					j -> parent = a -> sister;
-					j -> TS = i -> TS;
-					j -> DIST = i -> DIST + 1;
-					set_active(j);
-					add_to_changed_list(j);
+					j = a -> head;
+					if (!j->parent)
+					{
+						j -> is_sink = 1;
+						j -> parent = a -> sister;
+						j -> TS = i -> TS;
+						j -> DIST = i -> DIST + 1;
+						set_active(j);
+						add_to_changed_list(j);
+					}
+					else if (!j->is_sink) { a = a -> sister; break; }
+					else if (j->TS <= i->TS &&
+						j->DIST > i->DIST)
+					{
+						/* heuristic - trying to make the distance from j to the sink shorter */
+						j -> parent = a -> sister;
+						j -> TS = i -> TS;
+						j -> DIST = i -> DIST + 1;
+					}
 				}
-				else if (!j->is_sink) { a = a -> sister; break; }
-				else if (j->TS <= i->TS &&
-				         j->DIST > i->DIST)
-				{
-					/* heuristic - trying to make the distance from j to the sink shorter */
-					j -> parent = a -> sister;
-					j -> TS = i -> TS;
-					j -> DIST = i -> DIST + 1;
-				}
-			}
 		}
 
 		TIME ++;
@@ -1228,7 +1239,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 
 
 template <typename captype, typename tcaptype, typename flowtype> 
-	void Graph_B<captype,tcaptype,flowtype>::test_consistency(node* current_node)
+void Graph_B<captype,tcaptype,flowtype>::test_consistency(node* current_node)
 {
 	node *i;
 	arc *a;
@@ -1244,16 +1255,16 @@ template <typename captype, typename tcaptype, typename flowtype>
 	{
 		i = (r == 2) ? current_node : queue_first[r];
 		if (i)
-		for ( ; ; i=i->next)
-		{
-			num2 ++;
-			if (i->next == i)
+			for ( ; ; i=i->next)
 			{
-				if (r<2) assert(i == queue_last[r]);
-				else     assert(i == current_node);
-				break;
+				num2 ++;
+				if (i->next == i)
+				{
+					if (r<2) assert(i == queue_last[r]);
+					else     assert(i == current_node);
+					break;
+				}
 			}
-		}
 	}
 	assert(num1 == num2);
 

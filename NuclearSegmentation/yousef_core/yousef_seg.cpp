@@ -710,8 +710,16 @@ int yousef_nucleus_seg::getConnCompImage(unsigned short *IM, int connectivity, i
 	//typedef itk::ImageFileWriter< InputImageType > WriterType;
 	//WriterType::Pointer writer = WriterType::New();
 	//writer->SetInput(im);
-	//writer->SetFileName("bin_test.tif");
-	//writer->Update();
+	//writer->SetFileName("im_image.tif");
+	//try
+	//{
+	//	writer->Update();
+	//}
+	//catch (itk::ExceptionObject &err)
+	//{
+	//	std::cerr << "Error in ImageFileWriter: " << err << std::endl;
+	//	return -1;
+	//}
 
 	typedef itk::ConnectedComponentImageFilter< InputImageType, OutputImageType > FilterType;
 	FilterType::Pointer filter = FilterType::New();
