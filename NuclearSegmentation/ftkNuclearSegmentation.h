@@ -118,9 +118,9 @@ public:
 	//std::vector<std::map<int, ftk::Object::Point>>  GetCenterMapVectorPointer(){ return centerMap4DImage; };		// Overloaded function for time dimension
 	std::map<int, ftk::Object::Box> * GetBoundingBoxMapPointer(){ return &bBoxMap; };	
 	//std::vector<std::map<int, ftk::Object::Box>> GetBoundingBoxMapVectorPointer(){ return bBoxMap4DImage; };	// Overloaded function for time dimension		
-	std::vector<std::map<int, ftk::Object::Point>>  centerMap4DImage;
-	std::vector<std::map<int, ftk::Object::Box>> bBoxMap4DImage;	
-	std::vector<std::vector<ftk::IntrinsicFeatures>> featureVector4DImage;
+	std::vector<std::map<int, ftk::Object::Point> >  centerMap4DImage;
+	std::vector<std::map<int, ftk::Object::Box> > bBoxMap4DImage;	
+	std::vector<std::vector<ftk::IntrinsicFeatures> > featureVector4DImage;
 	std::vector< vtkSmartPointer<vtkTable> >  table4DImage;
 	//*********************************************************************************************
 
@@ -175,7 +175,7 @@ protected:
 	ftk::Object::Box GrowBox(ftk::Object::Box b, int s);
 	std::vector<int> GetNeighbors(int id);
 	vtkSmartPointer<vtkTable> featureVectorTovtkTable(std::vector<ftk::IntrinsicFeatures> featurevector);
-	void NuclearSegmentation::createMegaTable();	
+	void createMegaTable();	
 	
 	//FOR PRINTING SEEDS IMAGE:
 	void Cleandptr(unsigned short*x,vector<int> y );
