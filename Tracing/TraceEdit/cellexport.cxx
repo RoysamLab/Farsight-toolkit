@@ -145,12 +145,12 @@ SaveCellExportDialog::SaveCellExportDialog(QWidget* parent, QString curdirectory
 	cellexportLayout->addLayout(bottomLayout,5,0,Qt::AlignRight);
 	//cellexportLayout->addWidget(OkButton,5,0);
 	//cellexportLayout->addWidget(CancelButton,5,1);
-	cellexportLayout->setSizeConstraint(QLayout::SetFixedSize);
+	//cellexportLayout->setSizeConstraint(QLayout::SetFixedSize);
 	
 	setLayout(cellexportLayout);
 
 	setWindowTitle(tr("Export Cells"));
-	//resize(500,250);
+	resize(500,250);
 
 	swcextension->hide();
 	jpgextension->hide();

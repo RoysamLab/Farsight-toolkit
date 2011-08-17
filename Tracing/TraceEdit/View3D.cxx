@@ -4898,7 +4898,7 @@ void View3D::saveRenderWindow(const char *filename)
 void View3D::SaveScreenShot()
 {
 	QString fileName, filePath;
-	QString imageDir = this->TraceEditSettings.value("imageDir", ".").toString();
+	QString imageDir = this->TraceEditSettings.value("ScreenShotDir", ".").toString();
 	this->savescreenshotDialog = new ScreenShotDialog(this, fileName, imageDir);
 	savescreenshotDialog->exec();
 	filePath = savescreenshotDialog->getDir();
@@ -4907,6 +4907,7 @@ void View3D::SaveScreenShot()
 	if (!fullFileName.isEmpty())
 	{
 		this->saveRenderWindow(fullFileName.toStdString().c_str());
+		this->TraceEditSettings.setValue("ScreenShotDir", filePath);
 	}
 	delete savescreenshotDialog;
 	savescreenshotDialog = NULL;
@@ -4917,8 +4918,8 @@ void View3D::AutoCellExport()
 	int cellCount= this->CellModel->getCellCount();
 	if (cellCount >= 1)
 	{
-		QString curdirectoryswc = this->TraceEditSettings.value("traceDir", ".").toString();
-		QString curdirectoryjpg = this->TraceEditSettings.value("imageDir", ".").toString();
+		QString curdirectoryswc = this->TraceEditSettings.value("swcDir", ".").toString();
+		QString curdirectoryjpg = this->TraceEditSettings.value("jpgDir", ".").toString();
 		QString swcfileName, jpgfileName;
 		bool changeswcfileName = false;
 		bool changejpgfileName = false;
@@ -4968,6 +4969,7 @@ void View3D::AutoCellExport()
 					}
 				}
 				QString swcFileName = curdirectoryswc % "/" % cellName % QString(".swc");
+				this->TraceEditSettings.setValue("swcDir", curdirectoryswc);
 				this->tobj->WriteToSWCFile(roots, swcFileName.toStdString().c_str());
 				// if change jpg filename and assign a number
 				if (changejpgfileName)
@@ -4982,6 +4984,7 @@ void View3D::AutoCellExport()
 					}
 				}
 				QString ScreenShotFileName = curdirectoryjpg % "/" % cellName % QString(".jpg");
+				this->TraceEditSettings.setValue("jpgDir", curdirectoryjpg);
 				this->saveRenderWindow(ScreenShotFileName.toStdString().c_str());
 				if (this->viewIn2D)
 				{
