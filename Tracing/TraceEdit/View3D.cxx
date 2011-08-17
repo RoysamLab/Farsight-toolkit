@@ -840,11 +840,6 @@ void View3D::changeDimension(int row, int col)
 				this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(row));
 				this->ImageActors->setRenderStatus(row, false);
 			}
-			this->RaycastBar->toggleViewAction()->setDisabled(1);
-			if (this->RaycastBar->isVisible())
-			{
-				this->RaycastBar->hide();
-			}
 			//this->SlicerBar->show();
 			//this->QVTK->GetRenderWindow()->Render();
 			//this->chooseInteractorStyle(1);
@@ -859,13 +854,6 @@ void View3D::changeDimension(int row, int col)
 			this->Renderer->AddVolume(this->ImageActors->RayCastVolume(row));
 			this->ImageActors->setRenderStatus(row, true);
 			//}
-			this->RaycastBar->toggleViewAction()->setDisabled(0);
-			if (this->SlicerBar->isVisible())
-			{
-				this->SlicerBar->hide();
-			}
-			this->RaycastBar->show();
-			//this->chooseInteractorStyle(0);
 		} //end else 2d to 3d
 	}
 	int numof3d=0;
@@ -878,8 +866,15 @@ void View3D::changeDimension(int row, int col)
 	}
 	if (numof3d>0) {
 		this->chooseInteractorStyle(0);
+		this->RaycastBar->toggleViewAction()->setDisabled(0);
+		this->RaycastBar->show();
 	}else {
 		this->chooseInteractorStyle(1);
+		this->RaycastBar->toggleViewAction()->setDisabled(1);
+		if (this->RaycastBar->isVisible())
+		{
+			this->RaycastBar->hide();
+		}
 	}
 }
 void View3D::SetImgInt()
@@ -1791,12 +1786,10 @@ void View3D::CreateActors()
 				this->RaycastBar->show();
 			}else
 			{
-				//this->Renderer->AddActor(this->ImageActors->CreateImageSlice(i));
-				//this->Renderer->AddViewProp(this->ImageActors->CreateImageSlice(-1));
 				this->Renderer->AddActor(this->ImageActors->createProjection(i, this->projectionStyle,this->projection_axis));
 				this->ImageActors->setIs2D(i, true);
 				renderMode = PROJECTION;
-				//this->SlicerBar->show();
+				createSlicerSlider();
 			}
 		}
 		else
