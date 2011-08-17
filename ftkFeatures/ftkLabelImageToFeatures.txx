@@ -978,6 +978,36 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 	textureCalculator->SetPixelValueMinMax(0,255);
 	textureCalculator->SetFastCalculations(true);
 	
+	/*typedef itk::ImageFileWriter<LabelImageType> LabelImageFileWriterType;
+	typedef LabelImageFileWriterType::Pointer LabelImageFileWriter;
+	LabelImageFileWriter label_image_file_writer = LabelImageFileWriterType::New();
+	
+	label_image_file_writer->SetFileName("labelImage.tif");
+	label_image_file_writer->SetInput(labelImage);
+
+	try
+	{
+		label_image_file_writer->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "label_image_file_writer error: " << err << std::endl;
+		//throw std::exception;
+	}
+
+	label_image_file_writer->SetFileName("tempIntensityImage.tif");
+	label_image_file_writer->SetInput(tempIntensityImage);
+
+	try
+	{
+		label_image_file_writer->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "label_image_file_writer error: " << err << std::endl;
+		//throw std::exception;
+	}*/
+	
 	TLPixel currentLabel;
 	for (int lab=0; lab<(int)labels.size(); ++lab)
 	{
