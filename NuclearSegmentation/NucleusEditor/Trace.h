@@ -7,7 +7,7 @@
 #include <ext/hash_map>
 namespace stdext = __gnu_cxx;
 #endif
-#ifdef MSWINDOWS
+#ifdef _WIN32
 #include <hash_map>
 #endif
 #include <queue>

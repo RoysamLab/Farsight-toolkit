@@ -117,11 +117,27 @@ ADD_EXECUTABLE( NucleusEditor ${EXE_TYPE}
                 ${NucleusEditor_RC_SRCS} )
 
 
-
+SET (NUCLEUSEDITOR_LIBRARIES
+	${ITK_USE_LIBRARIES}
+	${QT_LIBRARIES}
+	ftkGraphs
+	ftkGUI 
+	ftkCommon 
+	ftkFeatures 
+	libSVM 
+	vtkVolumeRendering 
+	QVTK 
+	NuclearSegmentation 
+	CytoplasmSegmentation 
+	PixelLevelAnalysis 
+	NESQLITE 
+	sqlite3 
+	MCLR
+	)
 IF (USE_TRACKING)
-	TARGET_LINK_LIBRARIES( NucleusEditor ${ITK_USE_LIBRARIES} ${QT_LIBRARIES} ftkGraphs ftkGUI ftkCommon ftkFeatures libSVM vtkVolumeRendering QVTK NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis NESQLITE sqlite3 MCLR CellTrackerLib)
+	TARGET_LINK_LIBRARIES( NucleusEditor ${NUCLEUSEDITOR_LIBRARIES} CellTrackerLib)
 ELSE (USE_TRACKING)
-	TARGET_LINK_LIBRARIES( NucleusEditor ${ITK_USE_LIBRARIES} ${QT_LIBRARIES} ftkGraphs ftkGUI ftkImage ftkCommon ftkFeatures libSVM vtkVolumeRendering QVTK NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis NESQLITE sqlite3 MCLR)
+	TARGET_LINK_LIBRARIES( NucleusEditor ${NUCLEUSEDITOR_LIBRARIES} ftkImage)
 ENDIF (USE_TRACKING)
 
 ADD_EXECUTABLE( projproc processor_main.cpp ftkProjectProcessor.cpp ftkProjectDefinition.cpp)
