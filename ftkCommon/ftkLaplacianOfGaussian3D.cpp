@@ -15,6 +15,7 @@
 
 const double PI = atan(1.0) * 4;
 
+//The constructor sets up the image sizes and output formatting and generates the kernels required for each step
 template <typename TPixelType>
 ftkLaplacianOfGaussian3D<TPixelType>::ftkLaplacianOfGaussian3D(TPixelType*** image, float scale_X, float scale_Y, float scale_Z, unsigned int image_x_size, unsigned int image_y_size, unsigned int image_z_size)
 {
@@ -56,6 +57,7 @@ ftkLaplacianOfGaussian3D<TPixelType>::ftkLaplacianOfGaussian3D(TPixelType*** ima
 	LoGImage = NULL;
 }
 
+//The main function where all of the actual LoG calculation filter starts
 template <typename TPixelType>
 void ftkLaplacianOfGaussian3D<TPixelType>::RunFilter()
 {
@@ -91,12 +93,14 @@ void ftkLaplacianOfGaussian3D<TPixelType>::RunFilter()
 	std::cout << "Laplacian of Gaussian complete" << std::endl;
 }
 
+//Accessor to get the LoG output
 template <typename TPixelType>
 TPixelType*** ftkLaplacianOfGaussian3D<TPixelType>::GetOutput()
 {
 	return LoGImage;
 }
 
+//function to free all the image memory (works on Laplacian kernel too)
 template <typename TPixelType>
 void ftkLaplacianOfGaussian3D<TPixelType>::freeImageMem(TPixelType*** image, unsigned int image_x_size, unsigned int image_y_size)
 {
@@ -111,6 +115,7 @@ void ftkLaplacianOfGaussian3D<TPixelType>::freeImageMem(TPixelType*** image, uns
 	image = NULL;
 }
 
+//Generates the Laplacian kernel
 template <typename TPixelType>
 double* ftkLaplacianOfGaussian3D<TPixelType>::generateGaussianKernel(float scale, unsigned int kernel_size)
 {	
@@ -120,7 +125,7 @@ double* ftkLaplacianOfGaussian3D<TPixelType>::generateGaussianKernel(float scale
 	for (int k = 0; k < kernel_size; k++)
 	{
 		kernel[k] = 1
-					//* pow(scale, 2) 
+					//* pow(scale, 2) //scale normalization
 					* 1 / sqrt(2 * PI * pow(scale, 2)) 
 					* exp( -(pow(k-(kernel_size-1)/2.0, 2)) / (2 * pow(scale, 2))); //1-D gaussian kernel
 	}
@@ -135,6 +140,7 @@ double* ftkLaplacianOfGaussian3D<TPixelType>::generateGaussianKernel(float scale
 	return kernel;
 }
 
+//Generates Laplacian Kernel
 template <typename TPixelType>
 double*** ftkLaplacianOfGaussian3D<TPixelType>::generateLaplacianKernel()
 {
@@ -272,6 +278,7 @@ TPixelType*** ftkLaplacianOfGaussian3D<TPixelType>::padImage(TPixelType*** image
 	return paddedImage;
 }
 
+//This function is where the convolution of the Gaussian takes place
 template <typename TPixelType>
 TPixelType*** ftkLaplacianOfGaussian3D<TPixelType>::convolveGaussian(double* kernel_X, double* kernel_Y, double* kernel_Z, TPixelType*** paddedImage, unsigned int padded_image_x_size, unsigned int padded_image_y_size, unsigned int padded_image_z_size, unsigned int kernel_size_X, unsigned int kernel_size_Y, unsigned int kernel_size_Z)
 {
@@ -280,14 +287,6 @@ TPixelType*** ftkLaplacianOfGaussian3D<TPixelType>::convolveGaussian(double* ker
 	int padding_X = kernel_size_X / 2 + LoGSmoothnessPadding;
 	int padding_Y = kernel_size_Y / 2 + LoGSmoothnessPadding;
 	int padding_Z = kernel_size_Z / 2 + LoGSmoothnessPadding;
-
-	/*std::cout << "padded_image_x_size: " << padded_image_x_size << " padded_image_y_size: " << padded_image_y_size << " padded_image_z_size: " << padded_image_z_size << std::endl;
-	std::cout << "kernel_size_X: " << kernel_size_X << " kernel_size_Y: " << kernel_size_Y << " kernel_size_Z: " << kernel_size_Z << std::endl;
-	std::cout << "padding_X: " << padding_X << " padding_Y: " << padding_Y << " padding_Z: " << padding_Z << std::endl;*/
-
-	//int image_x_size = padded_image_x_size - 2 * padding_X; //note that <2 * (kernel_size / 2)> is <2 * padding> which is one less than kernel_size for odd-sized kernel
-	//int image_y_size = padded_image_y_size - 2 * padding_Y;
-	//int image_z_size = padded_image_z_size - 2 * padding_Z;
 
 	//Allocate memory for temporary padded image (to hold result after each direction of convolution)
 	TPixelType*** tempPaddedImage = (TPixelType ***) malloc(padded_image_x_size * sizeof(TPixelType**));
@@ -381,7 +380,7 @@ TPixelType*** ftkLaplacianOfGaussian3D<TPixelType>::convolveGaussian(double* ker
 	return tempPaddedImage;
 }
 
-//Sum of the products in the x-direction, to be used with the Gaussian kernel
+//Sum of the products in the x-direction, to be used with the Gaussian convolution
 template <typename TPixelType>
 TPixelType ftkLaplacianOfGaussian3D<TPixelType>::sumOfProductX(double* kernel, TPixelType*** paddedImage, unsigned int padded_image_start_x, unsigned int padded_image_start_y, unsigned int padded_image_start_z, unsigned int kernel_size)
 {
@@ -396,7 +395,7 @@ TPixelType ftkLaplacianOfGaussian3D<TPixelType>::sumOfProductX(double* kernel, T
 	return sum;
 }
 
-//Sum of the products in the y-direction, to be used with the Gaussian kernel
+//Sum of the products in the y-direction, to be used with the Gaussian convolution
 template <typename TPixelType>
 TPixelType ftkLaplacianOfGaussian3D<TPixelType>::sumOfProductY(double* kernel, TPixelType*** paddedImage, unsigned int padded_image_start_x, unsigned int padded_image_start_y, unsigned int padded_image_start_z, unsigned int kernel_size)
 {
@@ -411,7 +410,7 @@ TPixelType ftkLaplacianOfGaussian3D<TPixelType>::sumOfProductY(double* kernel, T
 	return sum;
 }
 
-//Sum of the products in the z-direction, to be used with the Gaussian kernel
+//Sum of the products in the z-direction, to be used with the Gaussian convolution
 template <typename TPixelType>
 TPixelType ftkLaplacianOfGaussian3D<TPixelType>::sumOfProductZ(double* kernel, TPixelType*** paddedImage, unsigned int padded_image_start_x, unsigned int padded_image_start_y, unsigned int padded_image_start_z, unsigned int kernel_size)
 {
@@ -433,7 +432,7 @@ TPixelType ftkLaplacianOfGaussian3D<TPixelType>::sumOfProductZ(double* kernel, T
 	return sum;
 }
 
-//Console with the Laplacian
+//Convolve with the Laplacian
 template <typename TPixelType>
 TPixelType*** ftkLaplacianOfGaussian3D<TPixelType>::convolveLaplacian(double*** kernel, TPixelType*** padded_image, unsigned int padded_image_x_size, unsigned int padded_image_y_size, unsigned int padded_image_z_size)
 {
@@ -459,7 +458,7 @@ TPixelType*** ftkLaplacianOfGaussian3D<TPixelType>::convolveLaplacian(double*** 
 	
 	std::cout << "Convolving Laplacian" << std::endl;
 
-	//if TPixelType can take negative values in its range, then center around 0, otherwise center around half the range
+	//if TPixelType can take negative values in its range, then center around 0, otherwise center around half the range (this is needed because if you used unsigned char and short, the Laplacian convolution may take negative values (which signed types cannot represent, so we shift the center up to the middle of the range of those types)
 	size_t center;
 	if (std::numeric_limits<TPixelType>::is_signed)
 		center = 0;

@@ -61,6 +61,6 @@ private:
 //Explicit instantiation of class
 template class ftkLaplacianOfGaussian3D<double>;
 template class ftkLaplacianOfGaussian3D<float>;
-template class ftkLaplacianOfGaussian3D<unsigned short>;	//works, but you may see weird results, since low intensity "resolution"
-template class ftkLaplacianOfGaussian3D<unsigned char>;		//works, but you may see weird results, since low intensity "resolution"
+//template class ftkLaplacianOfGaussian3D<unsigned short>;	//works, but you may see weird results, since low intensity "resolution"
+//template class ftkLaplacianOfGaussian3D<unsigned char>;		//works, but you may see weird results, since low intensity "resolution"
 
