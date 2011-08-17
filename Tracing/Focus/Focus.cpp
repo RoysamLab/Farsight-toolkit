@@ -2,14 +2,14 @@
 
 //Constructor
 Focus::Focus(UCharImageType::Pointer input)
-: radius(5)
+	: radius(5)
 {
 	imgIn = input;
 	imgInColor = NULL;
 	varImg = NULL;
 }
 Focus::Focus(RGBImageType::Pointer input)
-: radius(5)
+	: radius(5)
 {
 	imgIn = NULL;
 	imgInColor = input;
@@ -41,7 +41,7 @@ void Focus::MakeVarianceImage()
 	int size3 = (int)img->GetLargestPossibleRegion().GetSize()[2];
 
 	varImg = FloatImageType::New();
-	
+
 	FloatImageType::PointType origin;
 	origin[0] = 0;
 	origin[1] = 0;
@@ -76,7 +76,7 @@ void Focus::MakeVarianceImage()
 		typedef itk::MeanImageFilter<UShortImageType2D,UShortImageType2D> MeanFilterType;
 		typedef itk::SquareImageFilter<UShortImageType2D,UShortImageType2D> SquareFilterType;
 		typedef itk::SubtractImageFilter<UShortImageType2D,UShortImageType2D> SubtractFilterType;
-		
+
 		UShortImageType2D::SizeType radiussize = {{radius, radius}};
 		MeanFilterType::Pointer mean1 = MeanFilterType::New();
 		mean1->SetInput(im2);
@@ -91,7 +91,7 @@ void Focus::MakeVarianceImage()
 		MeanFilterType::Pointer mean2 = MeanFilterType::New();
 		mean2->SetInput(sq2->GetOutput());
 		mean2->SetRadius(radiussize);
-		
+
 		SubtractFilterType::Pointer sb1 = SubtractFilterType::New();
 		sb1->SetInput1(mean2->GetOutput());
 		sb1->SetInput2(sq1->GetOutput());
@@ -117,19 +117,19 @@ void Focus::MakeVarianceImage()
 
 		for(int x=0; x<size1; ++x)
 		{
-			for(int y=0; y<size2; ++y)
-			{
-				UCharImageType2D::IndexType ind;
-				ind[0] = x;
-				ind[1] = y;
-				float var = (float)varFunction->EvaluateAtIndex( ind );
+		for(int y=0; y<size2; ++y)
+		{
+		UCharImageType2D::IndexType ind;
+		ind[0] = x;
+		ind[1] = y;
+		float var = (float)varFunction->EvaluateAtIndex( ind );
 
-				FloatImageType::IndexType ind3;
-				ind3[0] = x;
-				ind3[1] = y;
-				ind3[2] = z;
-				varImg->SetPixel(ind3, var);
-			}
+		FloatImageType::IndexType ind3;
+		ind3[0] = x;
+		ind3[1] = y;
+		ind3[2] = z;
+		varImg->SetPixel(ind3, var);
+		}
 		}
 		*/
 
@@ -363,43 +363,43 @@ std::vector<float> Focus::FindVariance(int x, int y)
 /*
 std::vector<float> Focus::FindVariance(int x, int y)
 {
-	typedef itk::Image< UCharPixelType, 2 > UCharImageType2D;
-	typedef itk::VarianceImageFunction< UCharImageType2D > VarianceFunctionType;
-	typedef itk::ExtractImageFilter< UCharImageType, UCharImageType2D > ExtractFilterType;
+typedef itk::Image< UCharPixelType, 2 > UCharImageType2D;
+typedef itk::VarianceImageFunction< UCharImageType2D > VarianceFunctionType;
+typedef itk::ExtractImageFilter< UCharImageType, UCharImageType2D > ExtractFilterType;
 
-	int sizeX = (int)img->GetLargestPossibleRegion().GetSize()[0];
-	int sizeY = (int)img->GetLargestPossibleRegion().GetSize()[1];
-	int sizeZ = (int)img->GetLargestPossibleRegion().GetSize()[2];
+int sizeX = (int)img->GetLargestPossibleRegion().GetSize()[0];
+int sizeY = (int)img->GetLargestPossibleRegion().GetSize()[1];
+int sizeZ = (int)img->GetLargestPossibleRegion().GetSize()[2];
 
-	std::vector<float> variances;
+std::vector<float> variances;
 
-	for(int z = 0; z < sizeZ; ++z)
-	{
-		UCharImageType::IndexType index = { 0,0,z };
-		UCharImageType::SizeType size = { sizeX, sizeY, 0 };
-		UCharImageType::RegionType region;
-		region.SetSize(size);
-		region.SetIndex(index);
+for(int z = 0; z < sizeZ; ++z)
+{
+UCharImageType::IndexType index = { 0,0,z };
+UCharImageType::SizeType size = { sizeX, sizeY, 0 };
+UCharImageType::RegionType region;
+region.SetSize(size);
+region.SetIndex(index);
 
-		ExtractFilterType::Pointer extract = ExtractFilterType::New();
-		extract->SetInput( img );
-		extract->SetExtractionRegion( region );
-		extract->Update();
+ExtractFilterType::Pointer extract = ExtractFilterType::New();
+extract->SetInput( img );
+extract->SetExtractionRegion( region );
+extract->Update();
 
-		UCharImageType2D::Pointer im2 = extract->GetOutput();
+UCharImageType2D::Pointer im2 = extract->GetOutput();
 
-		VarianceFunctionType::Pointer varFunction = VarianceFunctionType::New();
-		varFunction->SetInputImage( im2 );
-		varFunction->SetNeighborhoodRadius( radius );
+VarianceFunctionType::Pointer varFunction = VarianceFunctionType::New();
+varFunction->SetInputImage( im2 );
+varFunction->SetNeighborhoodRadius( radius );
 
-		UCharImageType2D::IndexType ind;
-		ind[0] = x;
-		ind[1] = y;
+UCharImageType2D::IndexType ind;
+ind[0] = x;
+ind[1] = y;
 
-		float var = (float)varFunction->EvaluateAtIndex( ind );
-		variances.push_back(var);
-	}
+float var = (float)varFunction->EvaluateAtIndex( ind );
+variances.push_back(var);
+}
 
-	return variances;
+return variances;
 }
 */
