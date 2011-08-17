@@ -70,7 +70,7 @@ void TableWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * s
 		tableView->verticalHeader()->resizeSection(i,rowHeight);
 	}
 
-
+	Pointer2Table = table;
 }
 
 void TableWindow::setup()
@@ -78,7 +78,7 @@ void TableWindow::setup()
 	this->tableView = new QTableView();
 	this->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	this->setCentralWidget(this->tableView);
-	this->setWindowTitle(tr("Table"));
+	this->setWindowTitle(tr("Features Table"));
 	this->createMenus();
 	this->resize(800,300);
 
@@ -92,6 +92,7 @@ void TableWindow::setup()
 void TableWindow::createMenus()
 {
 	viewMenu = menuBar()->addMenu(tr("View"));
+	exportMenu = menuBar()->addMenu(tr("Export"));
 
 	//sortByAction = new QAction(tr("Sort by..."),this);
 	//connect(sortByAction, SIGNAL(triggered()), this, SLOT(sortBy()));
@@ -111,6 +112,42 @@ void TableWindow::createMenus()
 	connect(testAction, SIGNAL(triggered()), this, SLOT(test()));
 	//viewMenu->addAction(testAction);
 
+	exportAction = new QAction(tr("Save As..."), this);
+	connect(exportAction, SIGNAL(triggered()), this, SLOT(exportTable()));
+	exportMenu->addAction(exportAction);
+}
+
+// Exports the features data table to file
+void TableWindow::exportTable()
+{
+	if(!this->tableView->model())
+		return;
+
+	QString Filename = QFileDialog::getSaveFileName( this, tr("Save Data Table"), QDir::currentPath(), tr("Microsoft Excel Document (*.xls);; Plain Text Document (*.txt)") );
+    
+	ofstream TableOutputStream;
+	QFile DumpedTable(Filename);
+	TableOutputStream.open(DumpedTable.fileName().toAscii());
+
+	for( int i=0; i < this->tableView->model()->columnCount(); ++i)
+	{	
+		QString QHeaders = this->tableView->model()->headerData(i,Qt::Horizontal).toString();
+		string SHeaders = QHeaders.toStdString();
+		TableOutputStream << SHeaders.c_str() << "\t";
+	}
+
+	TableOutputStream << "\n" << "\n";
+	
+	for(vtkIdType row = 0; row < Pointer2Table->GetNumberOfRows(); row++ )
+	{
+		for(vtkIdType col = 0; col < Pointer2Table->GetNumberOfColumns(); col++ )
+		{	
+			TableOutputStream << Pointer2Table->GetValue(row,col).ToString() << "\t";
+		}
+		TableOutputStream << "\n";
+	}
+
+	DumpedTable.close();
 }
 
 void TableWindow::closeEvent(QCloseEvent *event)

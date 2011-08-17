@@ -44,12 +44,22 @@ limitations under the License.
 #include <QtCore/QSignalMapper>
 
 #include <vtkTable.h>
+#include <vtkVariant.h>
 #include <vtkSmartPointer.h>
 #include <vtkQtTableModelAdapter.h>
 
 #include "ObjectSelection.h"
 
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <QApplication>
+#include <QFileDialog>
+#include <QFile>
+#include <QCoreApplication>
+#include <QTextStream>
+using namespace std;
 
 class ChooseItemDialog;
 class ChooseItemsDialog;
@@ -65,6 +75,7 @@ public:
 	~TableWindow();
 	void setQtModels(QItemSelectionModel *mod);
 	void setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels = NULL);
+	vtkSmartPointer<vtkTable> Pointer2Table;
 
 signals:
 	void closing(QWidget *widget);
@@ -82,6 +93,7 @@ private slots:
 	void createMenus();
 	void sortBy();
 	void changeColumns();
+	void exportTable();
 	void showFilters();
     
 private:
@@ -91,6 +103,8 @@ private:
 	ObjectSelection * selection;
 
 	QMenu *viewMenu;
+	QMenu *exportMenu;
+	QAction *exportAction;
 	QAction *visibleColumnsAction;
 	QAction *sortByAction;
 	QAction *filterRowsAction;
