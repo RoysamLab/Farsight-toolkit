@@ -714,7 +714,7 @@ int MultiFrameCellTracker::add_disappear_vertices(int t)
 {
 	_ETRACE;
 	using boost::graph_traits;
-	typedef typename graph_traits<TGraph>::vertex_iterator vertex_iter;
+	typedef graph_traits<TGraph>::vertex_iterator vertex_iter;
 	TGraph::vertex_descriptor v;
 	TGraph::edge_descriptor e;
 
@@ -772,7 +772,7 @@ int MultiFrameCellTracker::add_appear_vertices(int t)
 {
 	_ETRACE;
 	using boost::graph_traits;
-	typedef typename graph_traits<TGraph>::vertex_iterator vertex_iter;
+	typedef graph_traits<TGraph>::vertex_iterator vertex_iter;
 	TGraph::vertex_descriptor v;
 	TGraph::edge_descriptor e;
 
