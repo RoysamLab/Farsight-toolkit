@@ -1,4 +1,4 @@
-#include "trace.h"
+#include "Trace.h"
 #pragma warning(disable:4996)
 
 bool TraceObject::ReadFromFeatureTracksFileForKymograph(char *filename,int type_offset=0)
