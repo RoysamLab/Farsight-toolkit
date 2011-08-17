@@ -28,62 +28,83 @@ limitations under the License.
 #include <QtGui>
 #include <QDate>
 #include <QTime>
+#include <time.h>
 
-//forward declarations
-class HistoWindow;
-class PlotWindow;
-class QAction;
-class QVTKWidget;
-class TraceBit;
-class TraceGap;
-class TraceLine;
-class TraceObject;
-class branchPT;
-class CellTrace;
-class ImageRenderActors;
-class ProjectManager;
-class StatisticsToolbar;
-//class Dendrogram;
+#include "ftkGUI/PlotWindow.h"
+//#include "ftkGUI/HistoWindow.h"
+#include "ftkGUI/TableWindow.h"
+#include"ftkGUI/StatisticsToolbar.h"
+#include "itkImageFileReader.h"
+#include "itkImageToVTKImageFilter.h"
+#include "vnl/vnl_cost_function.h"
+#include "vnl/algo/vnl_conjugate_gradient.h"
+#include "vnl/algo/vnl_powell.h"
 
-class vtkActor;
-class vtkCallbackCommand;
-class vtkContourFilter;
-class vtkCellPicker;
-class vtkFloatArray;
-class vtkGlyph3D;
-class vtkLODActor;
-class vtkObject;
-class vtkPoints;
-class vtkPolyData;
-class vtkPolyDataMapper;
-class vtkRenderer;
-class vtkRenderWindowInteractor;
-class vtkSliderWidget;
-class vtkSphereSource;
-class vtkVolume;
-class vtkImagePlaneWidget;
-class vtkWindowToImageFilter;
-class vtkJPEGWriter;
-  
-class TraceModel;
-class MergeModel;
-class CellTraceModel;
-class QTableView;
-class ScatterView;
-class TableWindow;
-class ImageRenderActors;
-class vtkPointWidget;
-class vtkOrientationMarkerWidget;
-class vtkAxesActor;
-class vtkQuad;
-class vtkLinearExtrusionFilter;
-class vtkCellLocator;
+
+#include <QAction>
+#include <QtGui>
+#include <QVTKWidget.h>
+
+#include "vtkActor.h"
+#include "vtkCallbackCommand.h"
+#include "vtkCellArray.h"
+#include "vtkCellPicker.h"
+#include "vtkColorTransferFunction.h"
+#include "vtkCommand.h"
+#include "vtkContourFilter.h"
+#include "vtkCubeSource.h"
+#include "vtkFloatArray.h"
+#include "vtkGlyph3D.h"
+#include "vtkImageData.h"
+#include "vtkImageToStructuredPoints.h"
+#include "vtkInteractorStyleTrackballCamera.h"
+#include "vtkInteractorStyleRubberBandZoom.h"
+#include "vtkInteractorStyleImage.h"
+#include <vtkImagePlaneWidget.h>
+#include "vtkLODActor.h"
+#include "vtkOpenGLVolumeTextureMapper3D.h"
+#include "vtkPiecewiseFunction.h"
+#include "vtkPlaybackRepresentation.h"
+#include "vtkPlaybackWidget.h"
+#include "vtkPointData.h"
+#include "vtkPoints.h"
+#include "vtkPolyData.h"
+#include "vtkPolyDataMapper.h"
+#include "vtkProperty.h"
+#include "vtkRenderer.h"
+#include "vtkRendererCollection.h"
+#include "vtkRenderWindow.h"
+#include "vtkCamera.h"
+#include "vtkSliderRepresentation2D.h"
+#include "vtkSliderWidget.h"
+#include "vtkSphereSource.h"
+#include "vtkVolume.h"
+#include "vtkVolumeProperty.h"
+#include "vtkPointWidget.h"
+#include "vtkOrientationMarkerWidget.h"
+#include "vtkAxesActor.h"
+#include "vtkWindowToImageFilter.h"
+#include "vtkJPEGWriter.h"
+#include "vtkQuad.h"
+#include "vtkLinearExtrusionFilter.h"
+#include "vtkCellLocator.h"
+
+#include "TraceBit.h"
+#include "TraceGap.h"
+#include "TraceLine.h"
+#include "TraceObject.h"
+#include "branchPT.h"
+#include "CellTrace.h"
+#include "TraceModel.h"
+#include "MergeModel.h"
+#include "CellTraceModel.h"
+#include "ImageActors.h"
+#include "ftkCommon/ftkProjectManager.h"
 
 class View3D : public QMainWindow 
 {
 Q_OBJECT;
 public:
-
 	vtkSmartPointer<vtkPolyData> poly_line_data;
 	View3D(QWidget * parent = 0);
 	View3D(TraceObject* Traces);
@@ -176,6 +197,7 @@ public slots:
 	//void raycastToSlicer();
 	void ToggleColorByTrees();
 	void setSlicerZValue(int value);
+	void setSliceThickness(int initialSlice, int finalSlice);
 	void RayCastOpacityChanged(int value);
 	void RayCastOpacityValueChanged(double value);
 	void RayCastBrightnessChanged(int value);
@@ -405,6 +427,7 @@ private:
 	void setSlicerBarValues(int i);
 	QSpinBox * SliceSpinBox;
 	QSlider * SliceSlider;
+	int sliceThickness;
 
 	void createRayCastSliders();
 	QSpinBox * OpacitySpin, * BrightnessSpin;

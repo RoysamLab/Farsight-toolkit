@@ -29,77 +29,8 @@ v6: "ALISA" implemented
 v7: new GUI and file control
 */
 
-#include "ftkGUI/PlotWindow.h"
-//#include "ftkGUI/HistoWindow.h"
-#include "ftkGUI/TableWindow.h"
-#include"ftkGUI/StatisticsToolbar.h"
-#include "itkImageFileReader.h"
-#include "itkImageToVTKImageFilter.h"
-#include "vnl/vnl_cost_function.h"
-#include "vnl/algo/vnl_conjugate_gradient.h"
-#include "vnl/algo/vnl_powell.h"
-
-
-#include <QAction>
-#include <QtGui>
-#include <QVTKWidget.h>
-
-#include "vtkActor.h"
-#include "vtkCallbackCommand.h"
-#include "vtkCellArray.h"
-#include "vtkCellPicker.h"
-#include "vtkColorTransferFunction.h"
-#include "vtkCommand.h"
-#include "vtkContourFilter.h"
-#include "vtkCubeSource.h"
-#include "vtkFloatArray.h"
-#include "vtkGlyph3D.h"
-#include "vtkImageData.h"
-#include "vtkImageToStructuredPoints.h"
-#include "vtkInteractorStyleTrackballCamera.h"
-#include "vtkInteractorStyleRubberBandZoom.h"
-#include "vtkInteractorStyleImage.h"
-#include <vtkImagePlaneWidget.h>
-#include "vtkLODActor.h"
-#include "vtkOpenGLVolumeTextureMapper3D.h"
-#include "vtkPiecewiseFunction.h"
-#include "vtkPlaybackRepresentation.h"
-#include "vtkPlaybackWidget.h"
-#include "vtkPointData.h"
-#include "vtkPoints.h"
-#include "vtkPolyData.h"
-#include "vtkPolyDataMapper.h"
-#include "vtkProperty.h"
-#include "vtkRenderer.h"
-#include "vtkRendererCollection.h"
-#include "vtkRenderWindow.h"
-#include "vtkCamera.h"
-#include "vtkSliderRepresentation2D.h"
-#include "vtkSliderWidget.h"
-#include "vtkSphereSource.h"
-#include "vtkVolume.h"
-#include "vtkVolumeProperty.h"
-#include "vtkPointWidget.h"
-#include "vtkOrientationMarkerWidget.h"
-#include "vtkAxesActor.h"
-#include "vtkWindowToImageFilter.h"
-#include "vtkJPEGWriter.h"
-#include "vtkQuad.h"
-#include "vtkLinearExtrusionFilter.h"
-#include "vtkCellLocator.h"
-
-#include "TraceBit.h"
-#include "TraceGap.h"
-#include "TraceLine.h"
-#include "TraceObject.h"
-#include "branchPT.h"
-#include "CellTrace.h"
-#include "TraceModel.h"
-#include "MergeModel.h"
-#include "CellTraceModel.h"
-#include "ImageActors.h"
-#include "ftkCommon/ftkProjectManager.h"
 #include "View3D.h"
+
 
 View3D::View3D(QWidget *parent)
 : QMainWindow(parent)
@@ -130,6 +61,7 @@ View3D::View3D(QWidget *parent)
 	this->renderTraceBits = false;
 	this->projectionStyle = 0;	//should be maximum projection
 	this->projection_axis = 2; // z projection
+	this->sliceThickness = 50;
 	this->Date.currentDate();
 	this->Time.currentTime();
 	this->ProjectName.clear();
@@ -563,9 +495,9 @@ void View3D::LoadImageData()
 		}
 		else
 		{
-			std::cout << "View in 2D and createsliceactor" << std::endl;
-			//this->Renderer->AddActor(this->ImageActors->CreateSliceActor(-1));
-			this->Renderer->AddViewProp(this->ImageActors->CreateSliceActor(-1));
+			//std::cout << "View in 2D and CreateImageSlice" << std::endl;
+			//this->Renderer->AddActor(this->ImageActors->CreateImageSlice(-1));
+			//this->Renderer->AddViewProp(this->ImageActors->CreateImageSlice(-1));
 			this->ImageActors->setIs2D(-1, true);
 			this->chooseInteractorStyle(1);//set to image interactor
 		}
@@ -817,6 +749,7 @@ void View3D::ShowProjectTable()
 	}// end of project !empty
 	this->projectFilesDock->show();
 }
+// 2-D projection and raycast (no slice image)
 void View3D::choosetoRender(int row, int col)
 {
 	QList<QTableWidgetSelectionRange> ranges = this->projectFilesTable->selectedRanges(); //for future use
@@ -869,9 +802,10 @@ void View3D::choosetoRender(int row, int col)
 					this->RaycastBar->show();
 				}else
 				{
-					//this->Renderer->AddActor(this->ImageActors->CreateSliceActor(row));
+					//this->Renderer->AddActor(this->ImageActors->CreateImageSlice(row));
 					this->Renderer->AddActor(this->ImageActors->createProjection(row, this->projectionStyle,this->projection_axis));
 					this->ImageActors->setIs2D(row, true);
+					renderMode = PROJECTION;
 					//this->SlicerBar->show();
 				}
 			}
@@ -903,6 +837,7 @@ void View3D::changeDimension(int row, int col)
 			{
 				this->Renderer->AddActor(this->ImageActors->createProjection(row,this->projectionStyle,this->projection_axis));
 				this->ImageActors->setIs2D(row, true);
+				renderMode = PROJECTION;
 				this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(row));
 				this->ImageActors->setRenderStatus(row, false);
 			}
@@ -920,7 +855,7 @@ void View3D::changeDimension(int row, int col)
 			this->projectFilesTable->setItem(row,3,Item3D);
 			//if (this->ImageActors->is2D(row))
 			//{
-			//this->Renderer->RemoveActor(this->ImageActors->GetSliceActor(row));
+			//this->Renderer->RemoveActor(this->ImageActors->GetImageSlice(row));
 			this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(row));
 			this->ImageActors->setIs2D(row, false);
 			this->Renderer->AddVolume(this->ImageActors->RayCastVolume(row));
@@ -1170,7 +1105,7 @@ void View3D::CreateGUIObjects()
 	//this->SetRaycastToSlicer = new QAction("Raycast To Slicer", this->CentralWidget);
 	//connect(this->SetRaycastToSlicer, SIGNAL(triggered()), this, SLOT(raycastToSlicer()));
 	 
-	this->SetSlicer = new QAction("Set Slicer DO NOT USE", this->CentralWidget);
+	this->SetSlicer = new QAction("Set Slicer", this->CentralWidget);
 	connect(this->SetSlicer, SIGNAL(triggered()), this, SLOT(setSlicerMode()));
 
 	this->SetProjection = new QAction("Set Projection", this->CentralWidget);
@@ -1731,17 +1666,18 @@ void View3D::chooseInteractorStyle(int iren)
 	{
 		vtkSmartPointer<vtkInteractorStyleRubberBandZoom> style = vtkSmartPointer<vtkInteractorStyleRubberBandZoom>::New();
 		this->Interactor->SetInteractorStyle(style);
-	}else if (iren == 3) 
+	}else if (iren == 3)
+	{
+		vtkSmartPointer<vtkInteractorStyleImage> styleImage = vtkSmartPointer<vtkInteractorStyleImage>::New();
+		styleImage->SetInteractionModeToImage3D();
+		this->Interactor->SetInteractorStyle(styleImage);
+		this->SlicerBar->show();
+	}else
 	{
 		vtkSmartPointer<vtkInteractorStyleTrackballCamera> style = vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
 		this->Interactor->SetInteractorStyle(style);
 		this->Renderer->ResetCamera();
 		this->QVTK->GetRenderWindow()->Render();
-	}else
-	{
-		vtkSmartPointer<vtkInteractorStyleImage> styleImage = vtkSmartPointer<vtkInteractorStyleImage>::New();
-		styleImage->SetInteractionModeToImage3D();
-		this->Interactor->SetInteractorStyle(styleImage);
 	}
 }
 
@@ -1775,7 +1711,7 @@ void View3D::rotateImage(int axis)
 		default: std::cerr << "View3D::rotateImage cannot handle axis = " << axis << ". Defaulting to y-axis" << std::endl;
 	}
 	this->projection_axis = projection_axis;
-	this->SetProjectionMethod(projectionStyle);
+	this->SetProjectionMethod(projectionStyle); //for projection and slicer mode
 
 	cam->ParallelProjectionOn();
 	this->Renderer->ResetCamera();
@@ -1809,18 +1745,33 @@ void View3D::rotationOptions()
 }
 void View3D::SetProjectionMethod(int style)
 {
-	this->projectionStyle = style;
-	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+	if (renderMode == PROJECTION)
 	{
-		if (this->ImageActors->is2D(i))
+		this->projectionStyle = style;
+		for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
 		{
-			this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(i));
-			this->Renderer->AddActor(this->ImageActors->createProjection(i,this->projectionStyle,this->projection_axis));
-		}
-	}//end for num images
+			if (this->ImageActors->is2D(i))
+			{
+				this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(i));
+				this->Renderer->AddActor(this->ImageActors->createProjection(i,this->projectionStyle,this->projection_axis));
+			}
+		}//end for num images
+	}
+	if (renderMode == SLICER)
+	{
+		for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+		{
+			if (this->ImageActors->is2D(i))
+			{	
+				this->Renderer->RemoveActor(this->ImageActors->GetImageSlice(i));
+				this->Renderer->AddActor(this->ImageActors->GetImageSlice(i));
+			}
+		}//end for num images
+	}
 	this->QVTK->GetRenderWindow()->Render();
 }
 
+//projection image
 void View3D::CreateActors()
 {
 	this->LineActor = vtkSmartPointer<vtkActor>::New();
@@ -1843,10 +1794,11 @@ void View3D::CreateActors()
 				this->RaycastBar->show();
 			}else
 			{
-				//this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
-				//this->Renderer->AddViewProp(this->ImageActors->CreateSliceActor(-1));
+				//this->Renderer->AddActor(this->ImageActors->CreateImageSlice(i));
+				//this->Renderer->AddViewProp(this->ImageActors->CreateImageSlice(-1));
 				this->Renderer->AddActor(this->ImageActors->createProjection(i, this->projectionStyle,this->projection_axis));
 				this->ImageActors->setIs2D(i, true);
+				renderMode = PROJECTION;
 				//this->SlicerBar->show();
 			}
 		}
@@ -1855,6 +1807,7 @@ void View3D::CreateActors()
 			this->Renderer->AddActor(this->ImageActors->ContourActor(i));
 			this->ImageActors->setRenderStatus(i, true);
 		}
+		//this->ImageActors->SetSliceCreate(i,false);
 	}
 	//sphere is used to mark the picks
 	this->CreateSphereActor();
@@ -1914,9 +1867,10 @@ void View3D::removeImageActors()
 //		{  
 //			if ((this->ImageActors->getRenderStatus(i))&&(this->ImageActors->isRayCast(i)))
 //			{
-//			  //this->Renderer->AddActor(this->ImageActors->CreateSliceActor(i));
+//			  //this->Renderer->AddActor(this->ImageActors->CreateImageSlice(i));
 //			  this->Renderer->AddActor(this->ImageActors->createProjection(i,this->projectionStyle,this->projection_axis));
 //			  this->ImageActors->setIs2D(i, true);
+//			renderMode = PROJECTION;
 //			  this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
 //			  this->ImageActors->setRenderStatus(i, false);
 //				/***************************************************************/
@@ -1942,7 +1896,7 @@ void View3D::removeImageActors()
 //		{  
 //			if (this->ImageActors->is2D(i))
 //			{
-//				//this->Renderer->RemoveActor(this->ImageActors->GetSliceActor(i));
+//				//this->Renderer->RemoveActor(this->ImageActors->GetImageSlice(i));
 //				this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(i));
 //				this->ImageActors->setIs2D(i, false);
 //				this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
@@ -1970,12 +1924,10 @@ void View3D::removeImageActors()
 
 void View3D::setSlicerMode()
 {
-	//DO NOT USE
-	
 	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
 	{
-		Renderer->AddActor(ImageActors->CreateSliceActor(i));
 		ClearRenderer(i);
+		Renderer->AddActor(ImageActors->GetImageSlice(i));
 		ImageActors->setRenderStatus(i, false);
 	}
 
@@ -1983,20 +1935,20 @@ void View3D::setSlicerMode()
 	if (this->RaycastBar->isVisible())
 		this->RaycastBar->hide();
 	//this->SlicerBar->show();
-	//this->QVTK->GetRenderWindow()->Render();
-	
-	this->chooseInteractorStyle(1);
+	this->QVTK->GetRenderWindow()->Render();
+	std::cout << "Setting mode slicer" << std::endl;
+	this->chooseInteractorStyle(3);
+	this->setSlicerZValue(1);
 	renderMode = SLICER;
 }
 
 void View3D::setProjectionMode()
 {
 	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
-	{  
+	{
+		ClearRenderer(i);		
 		this->Renderer->AddActor(this->ImageActors->createProjection(i,this->projectionStyle,this->projection_axis));
-		
 		//this->ImageActors->setIs2D(i, true); //this line incompatible with multiple mode renderer
-		ClearRenderer(i);
 		this->ImageActors->setRenderStatus(i, false);
 		
 		//Incompatible with slicer/projection upgrade
@@ -2005,7 +1957,6 @@ void View3D::setProjectionMode()
 		Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
 		this->projectFilesTable->setItem(i,3,Item2D);
 		/***************************************************************/
-
 	}
 
 	this->RaycastBar->toggleViewAction()->setDisabled(1);
@@ -2014,7 +1965,7 @@ void View3D::setProjectionMode()
 	//this->SlicerBar->show();
 	//this->QVTK->GetRenderWindow()->Render();
 	this->chooseInteractorStyle(1);
-	
+	std::cout << "Setting mode projection" << std::endl;
 	renderMode = PROJECTION;
 }
 
@@ -2045,6 +1996,7 @@ void View3D::setRaycastMode()
 	this->RaycastBar->show();
 	this->chooseInteractorStyle(0);
 	this->viewIn2D = false;
+	std::cout << "Setting mode raycast" << std::endl;
 	
 	renderMode = RAYCAST;
 }
@@ -2052,11 +2004,20 @@ void View3D::setRaycastMode()
 void View3D::ClearRenderer(int i)
 {
 	if (renderMode == SLICER)
-		Renderer->RemoveActor(ImageActors->GetProjectionImage(i));
+	{
+		Renderer->RemoveActor(ImageActors->GetImageSlice(i));
+		std::cout << "Removing slicer" << std::endl;
+	}
 	else if (renderMode == PROJECTION)
+	{
 		Renderer->RemoveActor(ImageActors->GetProjectionImage(i));
+		std::cout << "Removing projection" << std::endl;
+	}
 	else if (renderMode == RAYCAST)
+	{
 		Renderer->RemoveVolume(ImageActors->GetRayCastVolume(i));
+		std::cout << "Removing raycast" << std::endl;
+	}
 }
 
 void View3D::focusOn()
@@ -2149,30 +2110,79 @@ void View3D::createSlicerSlider()
 	connect (this->SliceSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setSlicerZValue(int)));
 	this->SlicerBar->addWidget(this->SliceSpinBox);
 	this->SlicerBar->addWidget(this->SliceSlider);
-	//this->SlicerBar->hide();
+	this->SlicerBar->hide();
 }
 
 void View3D::setSlicerZValue(int value)
 {
-	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
-	{
-		if(this->ImageActors->is2D(i))
-		{
-			std::cout << "setSlicerZValue called" << std::endl;
-			this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(i));
-			//this->Renderer->RemoveActor(this->ImageActors->GetSliceActor(i));
-			this->Renderer->RemoveViewProp(this->ImageActors->GetSliceActor(i));
-			//this->ImageActors->SetSliceNumber(i, value);
-			//this->Renderer->AddActor(this->ImageActors->GetSliceActor(i));
-			this->Renderer->AddViewProp(this->ImageActors->GetSliceActor(i));
-			vtkInteractorStyleImage * styleImage = vtkInteractorStyleImage::New();
-			styleImage->SetInteractionModeToImage3D();
-			this->Interactor->SetInteractorStyle(styleImage);
-		}
-	}
-	this->QVTK->GetRenderWindow()->Render();
-}
+	//for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+	//{
+	//	if(this->ImageActors->is2D(i))
+	//	{
+	//		std::cout << "setSlicerZValue called" << std::endl;
+	//		this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(i));
+	//		//this->Renderer->RemoveActor(this->ImageActors->GetImageSlice(i));
+	//		this->Renderer->RemoveViewProp(this->ImageActors->GetImageSlice(i));
+	//		//this->ImageActors->SetSliceNumber(i, value);
+	//		//this->Renderer->AddActor(this->ImageActors->GetImageSlice(i));
+	//		this->Renderer->AddViewProp(this->ImageActors->GetImageSlice(i));
+	//		vtkInteractorStyleImage * styleImage = vtkInteractorStyleImage::New();
+	//		styleImage->SetInteractionModeToImage3D();
+	//		this->Interactor->SetInteractorStyle(styleImage);
+	//	}
+	//}
+	//this->QVTK->GetRenderWindow()->Render();
 
+	//for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+	//{
+	//	if(this->ImageActors->is2D(i))
+	//	{
+	//		this->Renderer->RemoveViewProp(this->ImageActors->GetImageSlice(i));
+	//		//this->Renderer->RemoveActor(ImageActors->GetImageSlice(i));
+	//		//this->Renderer->AddViewProp(ImageActors->GetImageSlice(i));
+	//	}
+	//}
+
+	double* bounds = this->ImageActors->getSliceBounds();
+	double image_center_x = (bounds[0]+bounds[1])/2;
+	double image_center_y = (bounds[2]+bounds[3])/2;
+	double image_center_z = (double)bounds[5]-(bounds[5]-(bounds[4]+1))*value/100.0;
+	//double image_center_z = value;
+
+
+	//std::cout << "image_center_x: "  << image_center_x << " image_center_y = " << image_center_y << " image_center_z " << image_center_z << std::endl;
+
+
+	vtkCamera *cam = this->Renderer->GetActiveCamera();
+	
+	//clock_t start_time = clock();
+	cam->SetFocalPoint(image_center_x,image_center_y,image_center_z);
+	//cam->SetFocalPoint(0,0,image_center_z);
+
+	//std::cout << "SetFocalPoint() took: " << (clock() - start_time)/(double)CLOCKS_PER_SEC << std::endl;
+
+	cam->SetPosition(image_center_x,image_center_y,image_center_z+1);
+	cam->SetViewUp(0,1,0);
+	cam->ComputeViewPlaneNormal();
+	cam->OrthogonalizeViewUp();
+
+	//start_time = clock();
+	this->Renderer->ResetCamera();
+	cam->SetFocalPoint(image_center_x,image_center_y,image_center_z);
+	//std::cout << "SetFocalPoint() took: " << (clock() - start_time)/(double)CLOCKS_PER_SEC << std::endl;
+	//start_time = clock();
+	this->QVTK->GetRenderWindow()->Render();
+	//std::cout << "Render() took: " << (clock() - start_time)/(double)CLOCKS_PER_SEC << std::endl;
+	cam->GetFocalPoint(image_center_x,image_center_y,image_center_z);
+	std::cout << "Get Focal Point: " << image_center_x << " " << image_center_y << " " << image_center_z << std::endl;
+	//cam->GetPosition(image_center_x,image_center_y,image_center_z);
+	//std::cout << "Get Position: " << image_center_x << " " << image_center_y << " " << image_center_z << std::endl;
+
+}
+void View3D::setSliceThickness(int initialSlice, int finalSlice)
+{
+	sliceThickness = finalSlice-initialSlice;
+}
 void View3D::ToggleColorByTrees()
 {
 	bool colorByTrees = !this->tobj->GetColorByTrees();

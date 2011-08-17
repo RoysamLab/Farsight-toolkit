@@ -16,6 +16,7 @@ limitations under the License.
 
 ImageRenderActors::ImageRenderActors()
 {
+
 	this->LoadedImages.clear();
 	//define the points of %90 color
 	this->r = 90.0;
@@ -37,6 +38,7 @@ ImageRenderActors::ImageRenderActors()
 	{
 		this->TotalImageSize.push_back(0);
 	}
+
 }
 
 ImageRenderActors::~ImageRenderActors()
@@ -113,7 +115,10 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 	newImage->tag = tag;
 	newImage->renderStatus = false;
 	newImage->ren2d = false;
+	newImage->sliceCreated = false;
 	newImage->sliceActor = 0;
+	newImage->imageResliceMapper = 0;
+	newImage->imageProperty = 0;
 	//newImage->colorTransferFunction = 0;
 	newImage->ContourActor = 0;
 	newImage->ContourFilter = 0;
@@ -148,7 +153,7 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 	double bounds[6];
 	newImage->Rescale = IntensityRescaleType::New();
 	newImage->Rescale->SetInput( newImage->reader->GetOutput() );
-	newImage->connector= ConnectorType::New();
+	newImage->connector = ConnectorType::New();
 	newImage->connector->SetInput( newImage->Rescale->GetOutput() );
 	newImage->ImageData = newImage->connector->GetOutput();
 	newImage->ImageData->Update();
@@ -156,7 +161,6 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 	newImage->projectionConnector = ConnectorType::New();
 	newImage->projectionConnector->SetInput( newImage->reader->GetOutput() );
 
-	
 	this->setImageBounds(bounds);
 	this->LoadedImages.push_back(newImage);
 	return (int) (this->LoadedImages.size() -1);
@@ -400,7 +404,7 @@ int ImageRenderActors::getOpacity()
 }
 void ImageRenderActors::setOpacityValue(double opacity)
 {
-	this->opacity1Value= opacity;
+	this->opacity1Value = opacity;
 	this->syncOpacityTransfetFunction();
 }
 double ImageRenderActors::getOpacityValue()
@@ -428,23 +432,44 @@ void ImageRenderActors::syncOpacityTransfetFunction()
 	for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
 	{
     if(this->LoadedImages[i]->volume)
-      {
-      this->LoadedImages[i]->volume->Update();
-      }
+		{
+		this->LoadedImages[i]->volume->Update();
+		}
 	}
 }
-
-ImageSlicePointerType ImageRenderActors::CreateSliceActor(int i)
+void ImageRenderActors::CreateImageResliceMapper(int i)
 {
-	std::cout << "Slice Actor is created." << std::endl;
+	this->LoadedImages[i]->imageResliceMapper = vtkImageResliceMapper::New();
+	this->LoadedImages[i]->imageResliceMapper->SetInput(this->LoadedImages[i]->ImageData);
+	this->LoadedImages[i]->imageResliceMapper->SliceFacesCameraOn();
+	this->LoadedImages[i]->imageResliceMapper->SliceAtFocalPointOn(); 
+	//this->LoadedImages[i]->imageResliceMapper->SetSlicePlane(...);
+	//this->LoadedImages[i]->imageResliceMapper->SetSlabThickness(numofslices);
+	this->LoadedImages[i]->imageResliceMapper->SetSlabTypeToMax(); //give options for min and mean
+	//this->LoadedImages[i]->imageResliceMapper->GetSlabThickness();
+	this->LoadedImages[i]->imageResliceMapper->ResampleToScreenPixelsOff();
+}
+void ImageRenderActors::CreateImageProperty(int i)
+{
+	this->LoadedImages[i]->imageProperty = vtkImageProperty::New();
+	this->LoadedImages[i]->imageProperty->SetColorWindow(2000);
+	this->LoadedImages[i]->imageProperty->SetColorLevel(1000);
+	this->LoadedImages[i]->imageProperty->SetInterpolationTypeToLinear();
+
+	//return this->LoadedImages[i]->imageProperty;
+}
+void ImageRenderActors::CreateImageSlice(int i)
+{
+	//std::cout << "Slice Actor is created." << std::endl;
 	if (i == -1)
 	{
 		i = int (this->LoadedImages.size() - 1);
 	}
-	this->LoadedImages[i]->ImageData->GetExtent(sliceBounds);
+	//this->LoadedImages[i]->ImageData->GetExtent(sliceBounds);
 	
-	std::cout << sliceBounds[0] << " " << sliceBounds[1] << " " << sliceBounds[2] << " " << sliceBounds[3] << " " << sliceBounds[4] << " " << sliceBounds[5] << std::endl;
-
+	//std::cout << sliceBounds[0] << " " << sliceBounds[1] << " " << sliceBounds[2] << " " << sliceBounds[3] << " " << sliceBounds[4] << " " << sliceBounds[5] << std::endl;
+	
+	//old code not working
 	/*vtkImageData * newimage = this->LoadedImages[i]->ImageData;
 	this->LoadedImages[i]->sliceActor = ImageActorPointerType::New();
 	this->LoadedImages[i]->sliceActor->SetInput(newimage);
@@ -455,35 +480,71 @@ ImageSlicePointerType ImageRenderActors::CreateSliceActor(int i)
 
 	//return this->LoadedImages[i]->sliceActor;
 
-	this->LoadedImages[i]->imageResliceMapper = vtkSmartPointer<vtkImageResliceMapper>::New();
-	this->LoadedImages[i]->imageResliceMapper->SetInput(this->LoadedImages[i]->ImageData);
-	this->LoadedImages[i]->imageResliceMapper->SliceFacesCameraOn();
-	this->LoadedImages[i]->imageResliceMapper->SliceAtFocalPointOn();
-	//this->LoadedImages[i]->imageResliceMapper->SetSlicePlane(2);
-	
-	this->LoadedImages[i]->imageSlice = vtkImageSlice::New();
-	this->LoadedImages[i]->imageProperty = vtkImageProperty::New();
-	this->LoadedImages[i]->imageProperty->SetColorWindow(2000);
-	this->LoadedImages[i]->imageProperty->SetColorLevel(1000);
-	this->LoadedImages[i]->imageProperty->SetInterpolationTypeToLinear();
+	this->LoadedImages[i]->imageSlice = vtkSmartPointer<vtkImageSlice>::New();
+	CreateImageResliceMapper(i);
+	CreateImageProperty(i);
+	//this->LoadedImages[i]->imageResliceMapper = GetImageResliceMapper(i,50);
+	//this->LoadedImages[i]->imageProperty = GetImageProperty(i);
 
 	this->LoadedImages[i]->imageSlice->SetMapper(this->LoadedImages[i]->imageResliceMapper);
-	//this->LoadedImages[i]->imageResliceMapper->Delete();
 	this->LoadedImages[i]->imageSlice->SetProperty(this->LoadedImages[i]->imageProperty);
-	LoadedImages[i]->imageSlice->SetPickable(0);
-	
-	return this->LoadedImages[i]->imageSlice;
+	this->LoadedImages[i]->imageSlice->SetPickable(0);
+	this->LoadedImages[i]->sliceCreated = true;
+
+	this->LoadedImages[i]->imageSlice->GetBounds(sliceBounds);
 }
-ImageSlicePointerType ImageRenderActors::GetSliceActor(int i)
+ImageSlicePointerType ImageRenderActors::GetImageSlice(int i)
 {
 	if (i == -1)
 	{
 		i = int (this->LoadedImages.size() - 1);
 	}
-	//return this->LoadedImages[i]->sliceActor;
-	
+	if (!LoadedImages[i]->sliceCreated)
+	{
+		CreateImageSlice(i);
+		//std::cout << "Slice is created." << std::endl;
+	}
+	else
+	{
+		//std::cout << "Slice is already created." << std::endl;
+	}
 	return this->LoadedImages[i]->imageSlice;
 }
+//ImageSlicePointerType ImageRenderActors::GetImageSlice(int i, int numofslices)
+//{
+//	this->LoadedImages[i]->imageSlice = vtkSmartPointer<vtkImageSlice>::New();
+//	this->LoadedImages[i]->imageResliceMapper = GetImageResliceMapper(numofslices);
+//	this->LoadedImages[i]->imageProperty = GetImageProperty();
+//
+//	this->LoadedImages[i]->imageSlice->SetMapper(this->LoadedImages[i]->imageResliceMapper);
+//	this->LoadedImages[i]->imageSlice->SetProperty(this->LoadedImages[i]->imageProperty);
+//	this->LoadedImages[i]->imageResliceMapper->Delete();
+//	this->LoadedImages[i]->imageSlice->SetPickable(0);
+//
+//	if (i == -1)
+//	{
+//		i = int (this->LoadedImages.size() - 1);
+//	}
+//	
+//	return this->LoadedImages[i]->imageSlice;
+//}
+void ImageRenderActors::SetSliceThickness(int i, int numofslices)
+{
+	if (i == -1)
+	{
+		i = int (this->LoadedImages.size() - 1);
+	}
+	if (!LoadedImages[i]->sliceCreated)
+	{
+		CreateImageSlice(i);
+	}
+	this->LoadedImages[i]->imageResliceMapper->SetSlabThickness(numofslices);
+	this->LoadedImages[i]->imageSlice->Update();
+}
+//void ImageRenderActors::SetSliceCreate(int i, bool sliceCreate)
+//{
+//	LoadedImages[i]->sliceCreated = sliceCreate;
+//}
 std::vector<int> ImageRenderActors::MinCurrentMaxSlices(int i)
 {
 	if (i == -1)
@@ -498,13 +559,10 @@ std::vector<int> ImageRenderActors::MinCurrentMaxSlices(int i)
 	slices.push_back(0); // Audrey test
 	slices.push_back(0);
 	slices.push_back(this->sliceBounds[5]);
-
-	//slices.push_back(this->LoadedImages[i]->imageSlice->GetMinZBound); // Audrey test2
-	//slices.push_back(0);
-	//slices.push_back(this->LoadedImages[i]->imageSlice->GetMaxZBound());
 	
 	return slices;
 }
+//This function is turned off in View3D and not connected.
 void ImageRenderActors::SetSliceNumber(int i, int num) // i is number of images, num is the chosen z slice
 {
 	if (i == -1)
@@ -893,4 +951,9 @@ void ImageRenderActors::getImageBounds(double bounds[])
 	{
 		bounds[i] = this->TotalImageSize.at(i);
 	}
+}
+//Xmin,Xmax,Ymin,Ymax,Zmin,Zmax
+double* ImageRenderActors::getSliceBounds()
+{
+	return sliceBounds;
 }

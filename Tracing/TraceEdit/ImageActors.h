@@ -49,6 +49,7 @@ limitations under the License.
 //#include "vtkImageEllipsoidSource.h"
 //slicer
 #include "vtkImageResliceMapper.h"
+#include "vtkImageMapper3D.h"
 #include "vtkImageSlice.h"
 #include "vtkImageProperty.h"
 
@@ -82,6 +83,7 @@ struct imageFileHandle
 	std::string filename;
 	bool renderStatus;
 	bool ren2d;
+	bool sliceCreated;
 	vtkSmartPointer<vtkImageData> ImageData;
 	ReaderType::Pointer reader;
 	ConnectorType::Pointer connector;
@@ -91,7 +93,6 @@ struct imageFileHandle
 	MinProjectionType::Pointer MinProjection;
 	IntensityRescaleType::Pointer Rescale;
 	//vtkSmartPointer<vtkImagePermute> PermuteFilter;
-	//vtkSmartPointer<vtkImageSlice> imageSlice;
 	itkPermuteFilterType::Pointer itkPermute;
 	double x,y,z;
 //Contour Filter pointers
@@ -125,12 +126,12 @@ public:
 //render actors
 	vtkSmartPointer<vtkActor> ContourActor(int i);
 	vtkSmartPointer<vtkActor> GetContourActor(int i);
-	//ImageActorPointerType CreateSliceActor(int i);
-	//ImageActorPointerType GetSliceActor(int i);
-	//ImageSlicePointerType CreateSlicer(int i);
-	//ImageSlicePointerType GetSlicer(int i);
-	ImageSlicePointerType CreateSliceActor(int i);
-	ImageSlicePointerType GetSliceActor(int i);
+	void CreateImageResliceMapper(int i);
+	void CreateImageProperty(int i);
+	void CreateImageSlice(int i);
+	ImageSlicePointerType GetImageSlice(int i);
+	void SetSliceThickness(int i,int numofslices);
+	//void SetSliceCreate(int i, bool sliceCreate);
 	vtkSmartPointer<vtkImageActor> createProjection(int i, int method, int projection_dim);
 	vtkSmartPointer<vtkImageActor> GetProjectionImage(int i);
 	vtkSmartPointer<vtkVolume> RayCastVolume(int i);
@@ -167,6 +168,7 @@ public:
 	double getOpacityValueMax();
 	void getImageBounds(double bounds[]);
 	void setImageBounds(double bounds[]);
+	double* getSliceBounds();
 private:
 	bool useGPURendering;
 	void syncColorTransfetFunction();
@@ -179,6 +181,7 @@ private:
 	double r,g,b, opacity1, opacity2, opacity1Value, opacity2Value, RaycastSampleDist;
 	double brightness;
 	int minXBound, maxXBound, minYBound, maxYBound, minZBound, maxZBound;
-	int sliceBounds[6];
+	double sliceBounds[6];
+
 };
 #endif
