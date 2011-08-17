@@ -297,9 +297,9 @@ void FoldersTab::browseResultDirectory()
 	lastdirpath.push_back(resultdirectoryLineEdit->text());
 }
 
-std::vector<std::pair<std::string,std::string>> TrackingDialog::getFolders(void)
+std::vector<std::pair<std::string,std::string> > TrackingDialog::getFolders(void)
 {
-	std::vector<std::pair<std::string,std::string>> filefolders;
+	std::vector<std::pair<std::string,std::string> > filefolders;
 	std::pair<std::string,std::string> tmpfilefolders;
 
 	tmpfilefolders.first = "numbers file:";
@@ -339,10 +339,10 @@ std::vector<std::pair<std::string,std::string>> TrackingDialog::getFolders(void)
 
 
 
-std::vector<std::pair<std::string,float>> TrackingDialog::getParameters()
+std::vector<std::pair<std::string,float> > TrackingDialog::getParameters()
 {
 
-	 std::vector<std::pair<std::string,float>> trackparameters;
+	 std::vector<std::pair<std::string,float> > trackparameters;
 	 std::pair<std::string,float> tmppair;
 	 
 

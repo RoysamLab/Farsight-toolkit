@@ -2,14 +2,22 @@
 #define _TRACKING_KYMO_VIEW_H
 
 #include "Trace.h"
+
+//QT Includes
+#include <QtGui/QMainWindow>
+#include <QtGui/QLabel>
+#include <QtGui/QSlider>
+#include <QtGui/QStatusBar>
+#include <QtGui/QGridLayout>
+#include <QtGui/QDockWidget>
+#include <QtGui>
+#include <QObject>
+#include <QtGui/QDialog>
+
 #include "vtkImageViewer2.h"
 #include "vtkImageActor.h"
-#include "QMainWindow.h"
-#include "QSlider.h"
-#include "QLabel.h"
 #include "vtkSmartPointer.h"
 #include "QVTKWidget.h"
-#include "QStatusBar.h"
 #include "vtkImageData.h"
 #include "vtkRenderWindow.h"
 #include "vtkRenderer.h"
@@ -28,20 +36,12 @@
 //#include "Trace.h"
 #include "vtkCamera.h"
 
-#include "QGridLayout.h"
-#include "QDockWidget.h"
-#include <QtGui>
-#include <QObject>
-#include <QtGui/QDialog>
-
 //stl includes
 #include <vector>
 #include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <string>
-
-
 
 //standard c++ includes
 #include <stdio.h>

@@ -3,7 +3,13 @@
 #include <vector>
 #include <list>
 #include <iostream>
+#ifdef linux
+#include <ext/hash_map>
+namespace stdext = __gnu_cxx;
+#endif
+#ifdef MSWINDOWS
 #include <hash_map>
+#endif
 #include <queue>
 
 #include "vtkSmartPointer.h"

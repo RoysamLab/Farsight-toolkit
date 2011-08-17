@@ -10,7 +10,7 @@
 #include <QtGui/QGridLayout>
 #include <QtGui/QGroupBox>
 #include <QtGui/QLabel>
-#include <QtGui/QDialogButtonBox >
+#include <QtGui/QDialogButtonBox>
 #include <QtGui/QDoubleSpinBox>
 #include <QtGui/QPushButton>
 #include <QtGui/QLineEdit>
@@ -123,8 +123,8 @@ class TrackingDialog : public QDialog
 public:
 	// Functions:
 	TrackingDialog(QWidget *parent = 0);
-	std::vector<std::pair<std::string,float>> getParameters(void);
-	std::vector<std::pair<std::string,std::string>> getFolders(void);
+	std::vector<std::pair<std::string,float> > getParameters(void);
+	std::vector<std::pair<std::string,std::string> > getFolders(void);
 
 private:
 	ParametersTab * paramtertab;
