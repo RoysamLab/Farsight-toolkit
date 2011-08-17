@@ -40,7 +40,7 @@
 #include <vnl/vnl_hungarian_algorithm.h>
 
 #include "itkLabelStatisticsImageFilter.h"
-#include "itkScalarImageTextureCalculator.h"
+#include "itkScalarImageToTextureFeaturesFilter.h"
 #include "ftkLabelImageToFeatures.h"
 #include "ftkIntrinsicFeatures.h"
 #include "ftkTrackFeatures.h"

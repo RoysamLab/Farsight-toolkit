@@ -645,7 +645,7 @@ public:
 	void writeGraphML (char * filename);
 	void writeXGMML(char *filename);
 	
-	std::vector<std::map<int,int>> old_to_new;
+	std::vector<std::map<int,int> > old_to_new;
 	void set_debug_images(ColorImageType::Pointer in1,ColorImageType::Pointer in2, ColorImageType::Pointer in3)
 	{
 		debugimage1 = in1;
@@ -960,7 +960,7 @@ int CellTracker::add_disappear_vertices(int t)
 {
 	_ETRACE;
 	using boost::graph_traits;
-	typedef graph_traits<typename TGraph>::vertex_iterator vertex_iter;
+	typedef typename graph_traits<TGraph>::vertex_iterator vertex_iter;
 	TGraph::vertex_descriptor v;
 	TGraph::edge_descriptor e;
 
@@ -1018,7 +1018,7 @@ int CellTracker::add_appear_vertices(int t)
 {
 	_ETRACE;
 	using boost::graph_traits;
-	typedef graph_traits<typename TGraph>::vertex_iterator vertex_iter;
+	typedef typename graph_traits<TGraph>::vertex_iterator vertex_iter;
 	TGraph::vertex_descriptor v;
 	TGraph::edge_descriptor e;
 
@@ -2643,7 +2643,7 @@ void CellTracker::solve_higher_order()
 
 
 		
-		printf("lredges.size() = %d\n", lredges.size(),utility);
+		printf("lredges.size() = %d\n", lredges.size());//,utility); //GCC Doesn't like this for some reason
 		printf("num_v = %d avg_in_degree = %0.2f avg_out_degree = %0.2f\n", num_v, in_deg_count*1.0/num_v, out_deg_count*1.0/num_v);
 		//PAUSE;
 		//_exit(0);
@@ -4236,7 +4236,7 @@ void CellTracker::merge_loose_ends()
 					permsize++;
 				if(before.size()!=0)
 					permsize++;
-				std::vector<std::vector<bool>> permutations = generate_all_binary_strings(permsize);
+				std::vector<std::vector<bool> > permutations = generate_all_binary_strings(permsize);
 				float utilmax = -1;
 				int utilpos = -1;
 				_TRACE;
@@ -4776,7 +4776,7 @@ void CellTracker::resolve_merges_and_splits()
 					permsize++;
 				if(before.size()!=0)
 					permsize++;
-				std::vector<std::vector<bool>> permutations = generate_all_binary_strings(permsize);
+				std::vector<std::vector<bool> > permutations = generate_all_binary_strings(permsize);
 				float utilmax = -1;
 				int utilpos = -1;
 				_TRACE;
