@@ -61,7 +61,6 @@ View3D::View3D(QWidget *parent)
 	this->renderTraceBits = false;
 	this->projectionStyle = 0;	//should be maximum projection
 	this->projection_axis = 2; // z projection
-	this->sliceThickness = 50;
 	this->Date.currentDate();
 	this->Time.currentTime();
 	this->ProjectName.clear();
@@ -733,7 +732,7 @@ void View3D::ShowProjectTable()
 				newrenderItem->setFlags(newrenderItem->flags() & (~Qt::ItemIsEditable));
 				projectFilesTable->setItem(i,2,newrenderItem);
 				//4th column of projectfiletable
-				if (this->viewIn2D){
+				if (this->viewIn2D || this->Use2DSlicer->isChecked()){
 					QTableWidgetItem *dimensionItem = new QTableWidgetItem(tr("2d"));
 					dimensionItem->setFlags(dimensionItem->flags() & (~Qt::ItemIsEditable));
 					projectFilesTable->setItem(i,3,dimensionItem);
@@ -828,6 +827,7 @@ void View3D::changeDimension(int row, int col)
 		font.setBold(true);
 		Item3D->setFont(font);
 		Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
+		renderMode = MIX;
 
 		if(this->projectFilesTable->item(row,3)->text() == "3d")
 		{
@@ -837,7 +837,6 @@ void View3D::changeDimension(int row, int col)
 			{
 				this->Renderer->AddActor(this->ImageActors->createProjection(row,this->projectionStyle,this->projection_axis));
 				this->ImageActors->setIs2D(row, true);
-				renderMode = PROJECTION;
 				this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(row));
 				this->ImageActors->setRenderStatus(row, false);
 			}
@@ -855,7 +854,6 @@ void View3D::changeDimension(int row, int col)
 			this->projectFilesTable->setItem(row,3,Item3D);
 			//if (this->ImageActors->is2D(row))
 			//{
-			//this->Renderer->RemoveActor(this->ImageActors->GetImageSlice(row));
 			this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(row));
 			this->ImageActors->setIs2D(row, false);
 			this->Renderer->AddVolume(this->ImageActors->RayCastVolume(row));
@@ -1571,7 +1569,6 @@ void View3D::CreateLayout()
 	this->help = this->menuBar()->addMenu("Help");
 	this->help->addAction(this->aboutAction);
 
-	this->createSlicerSlider();
 	this->menuBar()->hide();
 
 	/**************************************************************************/
@@ -1931,12 +1928,10 @@ void View3D::setSlicerMode()
 		ImageActors->setRenderStatus(i, false);
 	}
 
-	this->RaycastBar->toggleViewAction()->setDisabled(1);
-	if (this->RaycastBar->isVisible())
-		this->RaycastBar->hide();
 	//this->SlicerBar->show();
 	this->QVTK->GetRenderWindow()->Render();
 	std::cout << "Setting mode slicer" << std::endl;
+	this->createSlicerSlider();
 	this->chooseInteractorStyle(3);
 	this->setSlicerZValue(1);
 	renderMode = SLICER;
@@ -1959,10 +1954,6 @@ void View3D::setProjectionMode()
 		/***************************************************************/
 	}
 
-	this->RaycastBar->toggleViewAction()->setDisabled(1);
-	if (this->RaycastBar->isVisible())
-		this->RaycastBar->hide();
-	//this->SlicerBar->show();
 	//this->QVTK->GetRenderWindow()->Render();
 	this->chooseInteractorStyle(1);
 	std::cout << "Setting mode projection" << std::endl;
@@ -1989,9 +1980,6 @@ void View3D::setRaycastMode()
 		/***************************************************************/
 	}
 	this->RaycastBar->toggleViewAction()->setDisabled(0);
-	
-	if (this->SlicerBar->isVisible())
-		this->SlicerBar->hide();
 
 	this->RaycastBar->show();
 	this->chooseInteractorStyle(0);
@@ -2006,6 +1994,8 @@ void View3D::ClearRenderer(int i)
 	if (renderMode == SLICER)
 	{
 		Renderer->RemoveActor(ImageActors->GetImageSlice(i));
+		if (this->SlicerBar->isVisible())
+			this->SlicerBar->hide();
 		std::cout << "Removing slicer" << std::endl;
 	}
 	else if (renderMode == PROJECTION)
@@ -2016,7 +2006,13 @@ void View3D::ClearRenderer(int i)
 	else if (renderMode == RAYCAST)
 	{
 		Renderer->RemoveVolume(ImageActors->GetRayCastVolume(i));
+		if (this->RaycastBar->isVisible())
+			this->RaycastBar->hide();
+		this->RaycastBar->toggleViewAction()->setDisabled(1);
 		std::cout << "Removing raycast" << std::endl;
+	}
+	else if (renderMode == MIX)
+	{
 	}
 }
 
@@ -2092,27 +2088,36 @@ void View3D::setRenderFocus(double renderBounds[], int size)
 }
 void View3D::createSlicerSlider()
 {
-	this->SlicerBar =  new QToolBar("Slicer", this);
+	double* bounds = this->ImageActors->getSliceBounds();
+	double upperBound = bounds[5]-(bounds[4]+1);
+
+	this->SlicerBar = new QToolBar("Slicer", this);
 	this->SlicerBar->setAllowedAreas(Qt::RightToolBarArea | Qt::LeftToolBarArea);
 	this->addToolBar(Qt::RightToolBarArea, this->SlicerBar);
 
+	QLabel * SliceThicknessLabel = new QLabel("Slice Thickness",this);
+	this->SliceThicknessSpinBox = new QSpinBox(this);
+	this->SliceThicknessSpinBox->setRange(0,upperBound-1);
+
 	this->SliceSpinBox = new QSpinBox(this);
-	this->SliceSpinBox->setRange(0,100);
+	this->SliceSpinBox->setRange(1,upperBound+1);
 
 	this->SliceSlider = new QSlider(Qt::Vertical);
 	this->SliceSlider->setSingleStep(1);
-	this->SliceSlider->setRange(0,100);
+	this->SliceSlider->setRange(1,upperBound+1);
 	this->SliceSlider->setTickInterval(5);
 	this->SliceSlider->setTickPosition(QSlider::TicksRight);
-	this->SliceSlider->setValue(0);
+	this->SliceSlider->setValue(1);
 	connect(this->SliceSlider, SIGNAL(valueChanged(int)), this->SliceSpinBox, SLOT(setValue(int)));
 	connect(this->SliceSpinBox, SIGNAL(valueChanged(int)), this->SliceSlider, SLOT(setValue(int)));
-	connect (this->SliceSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setSlicerZValue(int)));
+	connect(this->SliceSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setSlicerZValue(int)));
+	connect(this->SliceThicknessSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setSliceThickness(int)));
 	this->SlicerBar->addWidget(this->SliceSpinBox);
 	this->SlicerBar->addWidget(this->SliceSlider);
+	this->SlicerBar->addWidget(SliceThicknessLabel);
+	this->SlicerBar->addWidget(this->SliceThicknessSpinBox);
 	this->SlicerBar->hide();
 }
-
 void View3D::setSlicerZValue(int value)
 {
 	//for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
@@ -2146,8 +2151,8 @@ void View3D::setSlicerZValue(int value)
 	double* bounds = this->ImageActors->getSliceBounds();
 	double image_center_x = (bounds[0]+bounds[1])/2;
 	double image_center_y = (bounds[2]+bounds[3])/2;
-	double image_center_z = (double)bounds[5]-(bounds[5]-(bounds[4]+1))*value/100.0;
-	//double image_center_z = value;
+	//double image_center_z = (double)bounds[5]-(bounds[5]-(bounds[4]+1))*value/100.0;
+	double image_center_z = bounds[5]+1-value;
 
 
 	//std::cout << "image_center_x: "  << image_center_x << " image_center_y = " << image_center_y << " image_center_z " << image_center_z << std::endl;
@@ -2173,15 +2178,15 @@ void View3D::setSlicerZValue(int value)
 	//start_time = clock();
 	this->QVTK->GetRenderWindow()->Render();
 	//std::cout << "Render() took: " << (clock() - start_time)/(double)CLOCKS_PER_SEC << std::endl;
-	cam->GetFocalPoint(image_center_x,image_center_y,image_center_z);
-	std::cout << "Get Focal Point: " << image_center_x << " " << image_center_y << " " << image_center_z << std::endl;
+	//cam->GetFocalPoint(image_center_x,image_center_y,image_center_z);
+	//std::cout << "Get Focal Point: " << image_center_x << " " << image_center_y << " " << image_center_z << std::endl;
 	//cam->GetPosition(image_center_x,image_center_y,image_center_z);
 	//std::cout << "Get Position: " << image_center_x << " " << image_center_y << " " << image_center_z << std::endl;
 
 }
-void View3D::setSliceThickness(int initialSlice, int finalSlice)
+void View3D::setSliceThickness(int sliceThickness)
 {
-	sliceThickness = finalSlice-initialSlice;
+	this->ImageActors->SetSliceThickness(sliceThickness);
 }
 void View3D::ToggleColorByTrees()
 {

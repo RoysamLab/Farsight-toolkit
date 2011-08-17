@@ -528,18 +528,13 @@ ImageSlicePointerType ImageRenderActors::GetImageSlice(int i)
 //	
 //	return this->LoadedImages[i]->imageSlice;
 //}
-void ImageRenderActors::SetSliceThickness(int i, int numofslices)
+void ImageRenderActors::SetSliceThickness(int numofslices)
 {
-	if (i == -1)
+	for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
 	{
-		i = int (this->LoadedImages.size() - 1);
+		this->LoadedImages[i]->imageResliceMapper->SetSlabThickness(numofslices);
+		this->LoadedImages[i]->imageSlice->Update();
 	}
-	if (!LoadedImages[i]->sliceCreated)
-	{
-		CreateImageSlice(i);
-	}
-	this->LoadedImages[i]->imageResliceMapper->SetSlabThickness(numofslices);
-	this->LoadedImages[i]->imageSlice->Update();
 }
 //void ImageRenderActors::SetSliceCreate(int i, bool sliceCreate)
 //{

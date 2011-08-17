@@ -130,7 +130,7 @@ public:
 	void CreateImageProperty(int i);
 	void CreateImageSlice(int i);
 	ImageSlicePointerType GetImageSlice(int i);
-	void SetSliceThickness(int i,int numofslices);
+	void SetSliceThickness(int numofslices);
 	//void SetSliceCreate(int i, bool sliceCreate);
 	vtkSmartPointer<vtkImageActor> createProjection(int i, int method, int projection_dim);
 	vtkSmartPointer<vtkImageActor> GetProjectionImage(int i);

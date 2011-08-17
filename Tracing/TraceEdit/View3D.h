@@ -197,7 +197,7 @@ public slots:
 	//void raycastToSlicer();
 	void ToggleColorByTrees();
 	void setSlicerZValue(int value);
-	void setSliceThickness(int initialSlice, int finalSlice);
+	void setSliceThickness(int sliceThickness);
 	void RayCastOpacityChanged(int value);
 	void RayCastOpacityValueChanged(double value);
 	void RayCastBrightnessChanged(int value);
@@ -425,9 +425,8 @@ private:
 	int projectionStyle;
 	void createSlicerSlider();
 	void setSlicerBarValues(int i);
-	QSpinBox * SliceSpinBox;
+	QSpinBox * SliceSpinBox, * SliceThicknessSpinBox;
 	QSlider * SliceSlider;
-	int sliceThickness;
 
 	void createRayCastSliders();
 	QSpinBox * OpacitySpin, * BrightnessSpin;
@@ -446,7 +445,7 @@ private:
 
 	vtkSmartPointer<vtkPolyData> ROIExtrudedpolydata;
 
-	enum RenderModeEnum { SLICER, PROJECTION, RAYCAST};
+	enum RenderModeEnum { SLICER, PROJECTION, RAYCAST, MIX};
 
 	enum RenderModeEnum renderMode;
 
