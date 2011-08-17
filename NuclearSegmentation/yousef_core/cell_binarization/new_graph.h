@@ -63,6 +63,7 @@ For description, license, example usage see README.TXT.
 #include <stdlib.h>
 #include <string.h>
 #include "block_b.h"
+#include "stdint.h"
 
 #include <assert.h>
 // NOTE: in UNIX you need to use -DNDEBUG preprocessor option to supress assert's!!!
@@ -91,6 +92,7 @@ public:
 		SOURCE	= 0,
 		SINK	= 1
 	} termtype; // terminals 
+	
 	typedef int node_id;
 
 	/////////////////////////////////////////////////////////////////////////
@@ -111,7 +113,7 @@ public:
 	// Also, temporarily the amount of allocated memory would be more than twice than needed.
 	// Similarly for edges.
 	// If you wish to avoid this overhead, you can download version 2.2, where nodes and edges are stored in blocks.
-	Graph_B(int node_num_max, int edge_num_max, void (*err_function)(const char *) = NULL);
+	Graph_B(size_t node_num_max, size_t edge_num_max, void (*err_function)(const char *) = NULL);
 
 	// Destructor
 	~Graph_B();
@@ -374,10 +376,10 @@ private:
 
 
 template <typename captype, typename tcaptype, typename flowtype> 
-Graph_B<captype, tcaptype, flowtype>::Graph_B(int node_num_max, int edge_num_max, void (*err_function)(const char *))
-: node_num(0),
-nodeptr_block(NULL),
-error_function(err_function)
+Graph_B<captype, tcaptype, flowtype>::Graph_B(size_t node_num_max, size_t edge_num_max, void (*err_function)(const char *))
+	: node_num(0),
+	nodeptr_block(NULL),
+	error_function(err_function)
 {
 	if (node_num_max < 16) node_num_max = 16;
 	if (edge_num_max < 16) edge_num_max = 16;
@@ -395,7 +397,7 @@ error_function(err_function)
 
 	if (!nodes)
 	{
-		std::cout << "Error trying to allocate " << node_num_max*sizeof(node) / (1024 * 1024 * 1024.0) << " GB memory for nodes in Graph_B" << std::endl;
+		std::cout << "Error allocating " << node_num_max*sizeof(node) / (1024.0 * 1024 * 1024) << " GB for Graph_B nodes" << std::endl;
 		int unused = scanf("%*d");
 		unused++;
 		if (error_function)
@@ -407,7 +409,7 @@ error_function(err_function)
 
 	if (!arcs)
 	{
-		std::cout << "Error trying to allocate " << 2*edge_num_max*sizeof(arc) / (1024 * 1024 * 1024.0) << " GB memory for arcs in Graph_B" << std::endl;
+		std::cout << "Error allocating " << 2*edge_num_max*sizeof(arc) / (1024.0 * 1024 * 1024) << " GB for Graph_B nodes" << std::endl;
 		int unused = scanf("%*d");
 		unused++;
 		if (error_function)
@@ -416,6 +418,7 @@ error_function(err_function)
 		}
 		exit(1);
 	}
+
 
 	node_last = nodes;
 	node_max = nodes + node_num_max;
@@ -1316,4 +1319,3 @@ void Graph_B<captype,tcaptype,flowtype>::test_consistency(node* current_node)
 
 
 #endif
-
