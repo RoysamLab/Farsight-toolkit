@@ -277,6 +277,8 @@ void FTKgraph::DisplayGraph(vtkSmartPointer<vtkTable> graphtable)
 
    vtkSmartPointer<vtkGraphLayoutView> view = vtkSmartPointer<vtkGraphLayoutView>::New();
    view->AddRepresentationFromInputConnection(TTG->GetOutputPort());
+	view->SetEdgeLabelVisibility(true);
+	view->SetEdgeLabelArrayName("Distance");
    view->SetLayoutStrategyToSimple2D();
    view->SetVertexLabelArrayName("label");
    view->VertexLabelVisibilityOn();

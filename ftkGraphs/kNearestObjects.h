@@ -51,18 +51,23 @@ public:
 	kNearestObjects(std::map< unsigned int, std::vector<float> > centroidMap);
 	//destructor
 	~kNearestObjects();
-
+/* initialization functions */
 	std::vector<std::vector< std::pair<unsigned int, double> > > k_nearest_neighbors_All(unsigned int k, unsigned short Class_dest, unsigned short Class_src);
 	std::vector< std::vector< std::pair<unsigned int, double> > > k_nearest_neighbors_IDs(std::vector<unsigned int> IDs, unsigned int k, unsigned short Class_dest);
 	std::vector< std::pair<unsigned int, double> > k_nearest_neighbors_ID(unsigned int id, unsigned int k, unsigned short Class_dest);
+	
 	std::vector<std::vector< std::pair<unsigned int, double> > > neighborsWithinRadius_All(double radius, unsigned short Class_dest, unsigned short Class_src);
 	std::vector< std::vector< std::pair<unsigned int, double> > > neighborsWithinRadius_IDs(std::vector<unsigned int> IDs, double radius, unsigned short Class_dest);
 	std::vector< std::pair<unsigned int, double> > neighborsWithinRadius_ID(unsigned int id, double radius, unsigned short Class_dest);
+/* conversions vrom the vectors of pairs to useable formats*/	
 	vtkSmartPointer<vtkTable> vectorsToGraphTable(std::vector< std::vector< std::pair<unsigned int, double> > > NeighborIDs);
 	vtkSmartPointer<vtkTable> vectorsToGraphTable(std::vector< std::pair<unsigned int, double> > NeighborIds);
+	
 	NeighborGraph getNeighborGraph(std::vector< std::pair<unsigned int, double> >);
 	NeighborGraph getNeighborGraph(std::vector<std::vector< std::pair<unsigned int, double> > >);
+	
 	vtkSmartPointer<vtkTable> graphToTable(NeighborGraph g);
+	
 	void setFeatureTable(vtkSmartPointer<vtkTable> table){featureTable = table; return;};
 
 private:

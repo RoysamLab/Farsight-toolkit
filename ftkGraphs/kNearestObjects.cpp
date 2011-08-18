@@ -423,6 +423,9 @@ vtkSmartPointer<vtkTable> kNearestObjects::vectorsToGraphTable(std::vector< std:
     vtkSmartPointer<vtkStringArray> column2 = vtkSmartPointer<vtkStringArray>::New();
     column2->SetName( "Target" );
 	graphtable->AddColumn(column2);
+	vtkSmartPointer<vtkStringArray> column3 = vtkSmartPointer<vtkStringArray>::New();
+	column3->SetName( "Distance" );
+	graphtable->AddColumn(column3);
 
 	allIds = 1;
 	for(unsigned int j=0 ; j<NeighborIDs.size() ; j++)
@@ -446,14 +449,29 @@ vtkSmartPointer<vtkTable> kNearestObjects::vectorsToGraphTable(std::vector< std:
 		vtkSmartPointer<vtkStringArray> column2 = vtkSmartPointer<vtkStringArray>::New();
 		column2->SetName( "Target" );
 		graphtable->AddColumn(column2);
+		vtkSmartPointer<vtkStringArray> column3 = vtkSmartPointer<vtkStringArray>::New();
+		column3->SetName( "Distance" );
+		graphtable->AddColumn(column3);
 	}
 	
+		vtkVariant preSource = NULL;
+		vtkVariant preTarget = NULL;
 	for(unsigned int i=1 ; i<(int)NeighborIds.size() ; i++)
 	{
-		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
-     	model_data1->InsertNextValue(static_cast<vtkVariant>(NeighborIds.at(0).first));
-		model_data1->InsertNextValue(static_cast<vtkVariant>(NeighborIds.at(i).first));
-		graphtable->InsertNextRow(model_data1);	
+		vtkVariant currentSource = static_cast<vtkVariant>(NeighborIds.at(0).first);
+		vtkVariant currentTarget = static_cast<vtkVariant>(NeighborIds.at(i).first);
+
+		if ((currentSource != preTarget)&&(currentTarget != preSource))
+		{
+			vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+     		model_data1->InsertNextValue(currentSource);
+			model_data1->InsertNextValue(currentTarget);
+			model_data1->InsertNextValue(static_cast<vtkVariant>(NeighborIds.at(i).second));
+			graphtable->InsertNextRow(model_data1);	
+
+			preTarget = currentTarget;
+			preSource = currentSource;
+		}
 	}
 	return graphtable;
 }
