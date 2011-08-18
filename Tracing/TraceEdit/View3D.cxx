@@ -1926,7 +1926,7 @@ void View3D::setSlicerMode()
 	std::cout << "Setting mode slicer" << std::endl;
 	this->createSlicerSlider();
 	this->chooseInteractorStyle(3);
-	this->setSlicerZValue(1);
+	this->setSlicerZValue(-1);
 	renderMode = SLICER;
 }
 
@@ -2090,7 +2090,7 @@ void View3D::createSlicerSlider()
 
 	QLabel * SliceThicknessLabel = new QLabel("Slice Thickness",this);
 	this->SliceThicknessSpinBox = new QSpinBox(this);
-	this->SliceThicknessSpinBox->setRange(0,upperBound-1);
+	this->SliceThicknessSpinBox->setRange(1,upperBound);
 
 	this->SliceSpinBox = new QSpinBox(this);
 	this->SliceSpinBox->setRange(1,upperBound+1);
@@ -2139,47 +2139,57 @@ void View3D::setSlicerZValue(int value)
 	//		//this->Renderer->RemoveActor(ImageActors->GetImageSlice(i));
 	//		//this->Renderer->AddViewProp(ImageActors->GetImageSlice(i));
 	//	}
-	//}
-
+	//}	
 	double* bounds = this->ImageActors->getSliceBounds();
 	double image_center_x = (bounds[0]+bounds[1])/2;
 	double image_center_y = (bounds[2]+bounds[3])/2;
 	//double image_center_z = (double)bounds[5]-(bounds[5]-(bounds[4]+1))*value/100.0;
-	double image_center_z = bounds[5]+1-value;
-
-
-	//std::cout << "image_center_x: "  << image_center_x << " image_center_y = " << image_center_y << " image_center_z " << image_center_z << std::endl;
-
+	double image_center_z = bounds[5]+1-abs(value);
 
 	vtkCamera *cam = this->Renderer->GetActiveCamera();
-	
-	//clock_t start_time = clock();
-	cam->SetFocalPoint(image_center_x,image_center_y,image_center_z);
-	//cam->SetFocalPoint(0,0,image_center_z);
+	//std::cout << "Z Value: " << value << std::endl;
+	if (value == -1)
+	{
+		//std::cout << "image_center_x: "  << image_center_x << " image_center_y = " << image_center_y << " image_center_z " << image_center_z << std::endl;
 
-	//std::cout << "SetFocalPoint() took: " << (clock() - start_time)/(double)CLOCKS_PER_SEC << std::endl;
+		double prevFocalPoint[3];
+		cam->GetFocalPoint(prevFocalPoint);
+		double curDistance = cam->GetDistance();
+		double prevPosition[3];
+		cam->GetPosition(prevPosition);
+		double ViewUp[3];
+		cam->GetViewUp(ViewUp);
 
-	cam->SetPosition(image_center_x,image_center_y,image_center_z+1);
-	cam->SetViewUp(0,1,0);
-	cam->ComputeViewPlaneNormal();
-	cam->OrthogonalizeViewUp();
+		//cam->SetFocalPoint(prevFocalPoint[0],prevFocalPoint[1],image_center_z);
+		cam->SetFocalPoint(image_center_x,image_center_y,image_center_z);
+		//cam->SetFocalPoint(0,0,image_center_z);
 
-	//start_time = clock();
-	this->Renderer->ResetCamera();
-	cam->SetFocalPoint(image_center_x,image_center_y,image_center_z);
-	//std::cout << "SetFocalPoint() took: " << (clock() - start_time)/(double)CLOCKS_PER_SEC << std::endl;
-	//start_time = clock();
-	this->QVTK->GetRenderWindow()->Render();
-	//std::cout << "Render() took: " << (clock() - start_time)/(double)CLOCKS_PER_SEC << std::endl;
-	//cam->GetFocalPoint(image_center_x,image_center_y,image_center_z);
-	//std::cout << "Get Focal Point: " << image_center_x << " " << image_center_y << " " << image_center_z << std::endl;
-	//cam->GetPosition(image_center_x,image_center_y,image_center_z);
-	//std::cout << "Get Position: " << image_center_x << " " << image_center_y << " " << image_center_z << std::endl;
+		cam->SetPosition(image_center_x,image_center_y,image_center_z+1);
+		//cam->SetPosition(prevFocalPoint[0],prevFocalPoint[1],image_center_z+1);
+		cam->SetViewUp(0,1,0);
+		cam->ComputeViewPlaneNormal();
+		cam->OrthogonalizeViewUp();
+
+		this->Renderer->ResetCamera();
+		cam->SetFocalPoint(image_center_x,image_center_y,image_center_z);
+		cam->SetPosition(prevPosition);
+		cam->SetViewUp(ViewUp);
+		cam->ComputeViewPlaneNormal();
+		cam->OrthogonalizeViewUp();
+		//cam->SetDistance(curDistance);
+		this->QVTK->GetRenderWindow()->Render();
+	}
+	else
+	{
+		cam->SetFocalPoint(image_center_x,image_center_y,image_center_z);
+		this->QVTK->GetRenderWindow()->Render();
+		//std::cout << "SlicerZvalue changed" << std::endl;
+	}
 
 }
 void View3D::setSliceThickness(int sliceThickness)
 {
-	this->ImageActors->SetSliceThickness(sliceThickness);
+	this->ImageActors->SetSliceThickness(sliceThickness - 1);
 }
 void View3D::ToggleColorByTrees()
 {

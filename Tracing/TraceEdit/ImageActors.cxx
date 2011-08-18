@@ -441,7 +441,7 @@ void ImageRenderActors::CreateImageResliceMapper(int i)
 {
 	this->LoadedImages[i]->imageResliceMapper = vtkImageResliceMapper::New();
 	this->LoadedImages[i]->imageResliceMapper->SetInput(this->LoadedImages[i]->ImageData);
-	this->LoadedImages[i]->imageResliceMapper->SliceFacesCameraOn();
+	//this->LoadedImages[i]->imageResliceMapper->SliceFacesCameraOn();
 	this->LoadedImages[i]->imageResliceMapper->SliceAtFocalPointOn(); 
 	//this->LoadedImages[i]->imageResliceMapper->SetSlicePlane(...);
 	//this->LoadedImages[i]->imageResliceMapper->SetSlabThickness(numofslices);
@@ -510,24 +510,6 @@ ImageSlicePointerType ImageRenderActors::GetImageSlice(int i)
 	}
 	return this->LoadedImages[i]->imageSlice;
 }
-//ImageSlicePointerType ImageRenderActors::GetImageSlice(int i, int numofslices)
-//{
-//	this->LoadedImages[i]->imageSlice = vtkSmartPointer<vtkImageSlice>::New();
-//	this->LoadedImages[i]->imageResliceMapper = GetImageResliceMapper(numofslices);
-//	this->LoadedImages[i]->imageProperty = GetImageProperty();
-//
-//	this->LoadedImages[i]->imageSlice->SetMapper(this->LoadedImages[i]->imageResliceMapper);
-//	this->LoadedImages[i]->imageSlice->SetProperty(this->LoadedImages[i]->imageProperty);
-//	this->LoadedImages[i]->imageResliceMapper->Delete();
-//	this->LoadedImages[i]->imageSlice->SetPickable(0);
-//
-//	if (i == -1)
-//	{
-//		i = int (this->LoadedImages.size() - 1);
-//	}
-//	
-//	return this->LoadedImages[i]->imageSlice;
-//}
 void ImageRenderActors::SetSliceThickness(int numofslices)
 {
 	for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
@@ -536,10 +518,6 @@ void ImageRenderActors::SetSliceThickness(int numofslices)
 		this->LoadedImages[i]->imageSlice->Update();
 	}
 }
-//void ImageRenderActors::SetSliceCreate(int i, bool sliceCreate)
-//{
-//	LoadedImages[i]->sliceCreated = sliceCreate;
-//}
 std::vector<int> ImageRenderActors::MinCurrentMaxSlices(int i)
 {
 	if (i == -1)
