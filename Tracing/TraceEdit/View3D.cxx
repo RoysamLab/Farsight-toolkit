@@ -1115,6 +1115,12 @@ void View3D::CreateGUIObjects()
 	// 3d cursor actions 
 	this->CursorActionsWidget = new QWidget(this);
 
+	//vessel segmentation actions
+	this->vesselSegWidget = new QWidget(this);
+
+	this->ArunVesselTracingButton = new QPushButton("Trace Centerlines", this->CentralWidget);
+	connect(this->ArunVesselTracingButton, SIGNAL(clicked()), this, SLOT(ArunCenterline()));
+
 	this->updatePT3D = new QPushButton("Update Location", this->CentralWidget);
 	connect(this->updatePT3D, SIGNAL(clicked()), this, SLOT(getPosPTin3D()));
 	this->updatePT3D->setShortcut(QKeySequence(Qt::Key_U));
@@ -1418,6 +1424,17 @@ void View3D::CreateLayout()
 	this->addDockWidget(Qt::LeftDockWidgetArea, this->cursor3DDock);
 	this->ShowToolBars->addAction(this->cursor3DDock->toggleViewAction());
 	this->cursor3DDock->hide();
+
+	
+	//vessel segmentation toolbar
+	this->vesselSegDock = new QDockWidget("Segment Vessels",this);
+	QVBoxLayout * VesselSegDockLayout = new QVBoxLayout(this->vesselSegWidget);
+	VesselSegDockLayout->addWidget(this->ArunVesselTracingButton);
+	this->vesselSegWidget->setMaximumSize(256,500);
+	this->vesselSegDock->setWidget(this->vesselSegWidget);
+	this->addDockWidget(Qt::LeftDockWidgetArea, this->vesselSegDock);
+	this->ShowToolBars->addAction(this->vesselSegDock->toggleViewAction());
+	this->vesselSegDock->hide();
 
 	// branching toolbars
 	this->BranchToolBar = addToolBar(tr("Branch Toolbar"));
@@ -2535,6 +2552,12 @@ void View3D::setUsePointer(int i)
 		this->ShowPointer3DDefault = false;
 		this->pointer3d->SetEnabled(0);
 	}
+}
+
+void View3D::ArunCenterline()
+{
+	//stub for now to check if it works
+	std::cout<<"What is this?  Is this a working button?  WHY YES I BELIEVE IT IS." <<std::endl;
 }
 
 void View3D::createNewTraceBit()

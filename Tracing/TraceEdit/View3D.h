@@ -204,6 +204,7 @@ public slots:
 	void showPTin3D(double value);
 	void getPosPTin3D();
 	void setPTtoSoma();
+	void ArunCenterline();
 	void setUsePointer(int i);
 	void createNewTraceBit();
 
@@ -248,7 +249,7 @@ private:
 	//the get____file functions called as renderer is not initalized
 	double uMperVoxel; //0 x, 1 y, 2 z
 	QSettings TraceEditSettings;
-	QDockWidget * InformationDisplays, *BootDock, * settingsDock, *cursor3DDock, *AutomationDock, *projectFilesDock;
+	QDockWidget * InformationDisplays, *BootDock, * settingsDock, *cursor3DDock, *AutomationDock, *projectFilesDock, *vesselSegDock;
 	QTextEdit * EditLogDisplay;
 	
 	QString UserName, LabName, ProjectName;
@@ -305,6 +306,7 @@ private:
 	QAction *SetProjection;
 	QAction *SetRaycast;
 
+	QPushButton *ArunVesselTracingButton;
 	QAction *ColorByTreesAction;
 	QAction *loadSoma;
 	QAction *ListButton;
@@ -398,6 +400,9 @@ private:
 	vtkSmartPointer<vtkCallbackCommand> isPicked;
 	vtkSmartPointer<vtkCallbackCommand> keyPress;
 	vtkSmartPointer<vtkCellPicker> CellPicker;
+
+	//vessel segmentation
+	QWidget * vesselSegWidget;
 
   //ID numbers of the selected traces
 	std::vector<int> SelectedTraceIDs;
