@@ -251,6 +251,7 @@ void View3D::ReloadState()
 		{		
 			for (i = 0; i < this->TraceFiles.size(); i++)
 			{
+
 				std::string traceFile = this->TraceFiles.at(i).toStdString();
 				if(this->TraceFiles.at(i).endsWith("swc"))
 				{
@@ -333,10 +334,12 @@ void View3D::OkToBoot()
 
 		this->RaycastBar->toggleViewAction()->setDisabled(1);
 		this->chooseInteractorStyle(1);
+		renderMode = PROJECTION;
 	}
 	else
 	{
 		this->chooseInteractorStyle(0);
+		renderMode = RAYCAST;
 	}
 }
 
@@ -3653,10 +3656,8 @@ void View3D::DeleteEmptyLeafNodesRecursive(TraceLine* tline)
 void View3D::smoothzrecursive( TraceLine* tline, int n)
 {
 
-
-
-#define MAX(a,b) (((a) > (b))?(a):(b))
-#define MIN(a,b) (((a) < (b))?(a):(b))
+	#define MAX(a,b) (((a) > (b))?(a):(b))
+	#define MIN(a,b) (((a) < (b))?(a):(b))
 	std::vector<TraceBit> vec;
 	vec.reserve(50);
 	bool has_parent = false;
