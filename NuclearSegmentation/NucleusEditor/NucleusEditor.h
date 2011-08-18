@@ -399,7 +399,7 @@ protected:
 	ftk::Image::Pointer labImg;					//Currently visible label image
 	//Amin
 	ftk::Image::PtrMode mode;
-	std::vector<QStringList> * filesChannTimeList;
+//	std::vector<QStringList> * filesChannTimeList;
 
 #ifdef USE_TRACKING
 	TrackingKymoView * kymoView;

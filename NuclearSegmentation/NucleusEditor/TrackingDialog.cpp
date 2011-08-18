@@ -191,9 +191,11 @@ FoldersTab::FoldersTab(QWidget *parent)
 	entropyfileLineEdit = createLineEdit("Entropy.txt");
 	entropydirectoryLineEdit = createLineEdit(lastdirpath);
 	debugfileLineEdit = createLineEdit("debug.txt");
-	debugdirectoryLineEdit = createLineEdit(lastdirpath);
+	//debugdirectoryLineEdit = createLineEdit(lastdirpath);
+	debugdirectoryLineEdit = createLineEdit("C:\\Lab\\ArunFiles\\Data\\Tracking\\debug\\");
+	
 	debugdprefixLineEdit = createLineEdit("1color");
-	resultprefixLineEdit= createLineEdit("track");
+	resultprefixLineEdit= createLineEdit("labeled_tracks");
 	resultdirectoryLineEdit = createLineEdit(lastdirpath);
 
 	QGroupBox * loadgroupBox = new QGroupBox(tr("Load Files"));

@@ -81,6 +81,7 @@ public:
 
 	std::vector< unsigned short > Size(void);
 	std::vector< std::string > GetFilenames(void){ return filenames; };
+	std::vector< std::vector <std::string> > GetTimeChannelFilenames(void){ return FileNames; };
 
 	void * GetDataPtr(int T, int CH, PtrMode mode = DEFAULT);			//Returns void * to this 3D stack using 1 of 3 modes, PtrMode defaults to DEFAULT
 	VtkImagePtr GetVtkPtr(int T, int CH, PtrMode mode = DEFAULT);		//Returns vtkSmartPointer of vtkImageData at this T and CH, PtrMode defaults to DEFAULT
@@ -137,6 +138,7 @@ private:
 	std::string path;								//Path to this image file
 	std::vector< std::string > filenames;			//Filenames of this image
 	std::vector< std::vector< ImageMemoryBlock > > imageDataPtrs;		//Pointers to all of the data
+	std::vector< std::vector< std::string > > FileNames; // Filenames of this 5D image (including both time and channel names)
 
 	//Private Functions:
 	void DeleteData();

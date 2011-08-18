@@ -204,7 +204,8 @@ void LabelImageViewQT::SetChannelImage(ftk::Image::Pointer img)
 		{
 			labelImg = NULL;
 			//labelGeometries.clear();
-			selection = NULL;
+			//selection = NULL;		 changed this line for the next one because this one was crashing for reloading multi time images
+			selection->clear();
 			refreshBoundsImage();
 		}
 	}

@@ -1284,6 +1284,7 @@ void NucleusEditor::askload5DImage()
 			QStringList filesTimeList = QFileDialog::getOpenFileNames(this, "Load one or more time points", lastPath, standardImageTypes);
 			if (filesTimeList.isEmpty()) return;
 			filesChannTimeList.push_back(filesTimeList); 
+			lastPath = QFileInfo(filesTimeList[0]).absolutePath() + QDir::separator();
 		}
 
 		for (int ch = 0; ch<numChann-1; ++ch)
@@ -1300,18 +1301,15 @@ void NucleusEditor::askload5DImage()
 
 void NucleusEditor::load5DImage(std::vector<QStringList> filesChannTimeList, int numChann)
 {
-	// Amin: I need to put more restriction on this function.
 	lastPath = QFileInfo(filesChannTimeList[0][0]).absolutePath() + QDir::separator();
-	// Declare necessary variables for loading:
 	myImg = ftk::Image::New();
-	ftk::Image::Pointer tmp4DImage = ftk::Image::New();
 	ftk::Image::PtrMode mode;
 	mode = static_cast<ftk::Image::PtrMode>(1); //RELEASE_CONTROL mode
 	std::vector<std::string> channelNames;
 	std::vector<unsigned char> channelColors;
 	std::vector<std::string>  filesChann;
 	std::vector<std::vector<std::string> >  filesChannTime;
-	int numTimes = filesChannTimeList[0].size();
+	int numTimes = (int)filesChannTimeList[0].size();
 	
 	// Initialize variables:
 	for (int t = 0; t< numTimes; ++t)
@@ -1332,6 +1330,7 @@ void NucleusEditor::load5DImage(std::vector<QStringList> filesChannTimeList, int
 
 	for(int t = 1; t <numTimes; t++)
 	{
+		ftk::Image::Pointer tmp4DImage = ftk::Image::New();
 		tmp4DImage->LoadFilesAsMultipleChannels(filesChannTime[t],channelNames,channelColors);
 		myImg->AppendImage(tmp4DImage,mode,true);
 	}

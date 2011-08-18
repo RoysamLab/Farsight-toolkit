@@ -102,6 +102,7 @@ bool Image::LoadFilesAsMultipleChannels(std::vector<std::string> fnames, std::ve
 	int counter = 0;
 	for(int i=0; i<count; ++i)
 	{
+
 		if( colors.at(i*3+0) == 255 && colors.at(i*3+1) == 255 && colors.at(i*3+2) == 255 ){
 			if( !this->LoadStandardImage( fnames.at(i), false, true, false ) ) //All input colors needed, load as RGB
 				return false;
@@ -134,7 +135,13 @@ bool Image::LoadFilesAsMultipleChannels(std::vector<std::string> fnames, std::ve
 			++counter;
 		}
 	}
-	filenames = fnames;
+
+
+	std::vector<std::string> fnamestmp;
+	for(int i=0; i<count; ++i)
+		fnamestmp.push_back(this->GetFilename(fnames.at(i)));
+	this->FileNames.push_back(fnamestmp);
+
 	return true;
 }
 
@@ -517,7 +524,9 @@ bool Image::AppendImage( ftk::Image::Pointer img, PtrMode mode, bool isforOneTim
 
 	int t = m_Info.numTSlices - 1;
 	std::vector< std::string > fileName = img->GetFilenames();
+	FileNames.push_back(fileName);
 	filenames.push_back( this->GetFilename(fileName.at(0)));		//Filename of this image
+
 
 
 		for (int ch=0; ch<m_Info.numChannels; ++ch)

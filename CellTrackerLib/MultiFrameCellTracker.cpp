@@ -72,14 +72,16 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 
 
 	int num_t = static_cast<int>(rawimage->GetImageInfo()->numTSlices);
+	std::vector<std::vector<std::string> > inputfilenames = rawimage->GetTimeChannelFilenames();
 
 	std::vector<std::string> outputfilenames;
 	std::string outfilenametmp;
 	for (int t=0 ; t<num_t; ++t)
 	{
-		 stringstream ss;//create a stringstream
-         ss << t;
-		 outfilenametmp = resultfiledirectory+"\\"+resultfilename+ss.str()+".tif";
+//		 stringstream ss;//create a stringstream
+  //       ss << t;
+	//	 outfilenametmp = resultfiledirectory+"\\"+resultfilename+ss.str()+".tif";
+		 outfilenametmp = resultfiledirectory+"\\"+resultfilename+"_"+inputfilenames.at(t).at(0);
 		 outputfilenames.push_back(outfilenametmp);
 		 std::cout<<outfilenametmp<<std::endl;
 		 outfilenametmp.clear();
