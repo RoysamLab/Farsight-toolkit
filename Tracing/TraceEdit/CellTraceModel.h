@@ -22,12 +22,36 @@ limitations under the License.
 //QT INCLUDES
 #include <QtCore>
 #include <QtGui>
+//vtk table includes
 #include "vtkTable.h"
+#include <vtkTableToGraph.h>
+#include <vtkViewTheme.h>
+#include <vtkStringToCategory.h>
+#include <vtkGraphLayout.h>
+#include <vtkGraphLayoutView.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkGraphToGlyphs.h>
+#include <vtkRenderer.h>
+#include <vtkFast2DLayoutStrategy.h>
+#include <vtkArcParallelEdgeStrategy.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkEdgeLayout.h>
+#include <vtkGraphToPolyData.h>
+#include <vtkActor.h>
+#include <vtkProperty.h>
+
+
+#include <vtkAbstractArray.h>
 #include "vtkSmartPointer.h"
 #include "vtkDoubleArray.h"
 #include "vtkAbstractArray.h"
 #include "vtkVariantArray.h"
+
+//ftk includes
 #include <ftkGUI/ObjectSelection.h>
+#include "ftkGraphs/kNearestObjects.h"
+
 class QStandardItemModel;
 class QItemSelectionModel;
 class TraceLine;
@@ -53,6 +77,7 @@ public:
 	CellTrace * GetCellAtNoSelection( int i);
 	void WriteCellCoordsToFile(const char* fileName);
 	std::vector<CellTrace*> getCells(std::vector<long> IDs);
+	void createCellToCellGraph();
 signals:
 	void selectionChanged(void);
 private:

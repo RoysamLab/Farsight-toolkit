@@ -212,6 +212,8 @@ public slots:
 	void DrawROI();
 	void CalculateDistanceToDevice();
 
+	void CalculateCellToCellDistanceGraph();
+
 	void focusOn();
 	void setRenderFocus(double renderBounds[], int size);
 	void FocusOnCell(CellTrace* SelectedCell);
@@ -333,6 +335,7 @@ private:
 	QPushButton *createNewROIPointButton;
 	QPushButton *ExtrudeROIButton;
 	QPushButton *CalculateDistanceToDeviceButton;
+	QPushButton *CalculateCellDistanceButton;
 	QAction *FocusAction;
 	QAction *AutoCellExportAction;
 	QAction *ShowPlots;

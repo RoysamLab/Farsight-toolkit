@@ -376,3 +376,51 @@ void CellTraceModel::WriteCellCoordsToFile(const char *fileName)
 	outputTxt.close();
 	std::cout << "file written\n";
 }
+void CellTraceModel::createCellToCellGraph()
+{
+	std::map< unsigned int, std::vector<float> > centroidMap;
+	for(int i = 0; i < this->Cells.size(); i++)
+	{
+		unsigned int id = this->Cells.at(i)->rootID();
+		std::vector<float> cellCoord;
+		cellCoord.push_back(this->Cells.at(i)->somaX);
+		cellCoord.push_back(this->Cells.at(i)->somaY);
+		cellCoord.push_back(this->Cells.at(i)->somaZ);
+		centroidMap[id] = cellCoord;
+	}//end for cell size
+	kNearestObjects* KNObj = new kNearestObjects(centroidMap);
+	//KNObj->setFeatureTable(this->getCellBoundsTable());
+	std::vector<std::vector< std::pair<unsigned int, double> > > kNeighborIDs;
+	kNeighborIDs = KNObj->neighborsWithinRadius_All(200, 0, 0);	//guess at parameters, dist, no classes 
+	vtkSmartPointer<vtkTable> graphTable = KNObj->vectorsToGraphTable(kNeighborIDs);
+	//this;
+	vtkSmartPointer<vtkTableToGraph> TTG = vtkSmartPointer<vtkTableToGraph>::New();
+	//graphTable->Dump(8);	//debug dump
+	TTG->SetInput(0, graphTable);
+	/*TTG->AddLinkVertex("Source", "Vertex", false);
+	TTG->AddLinkVertex("Target", "Vertex", false);*/
+	TTG->AddLinkEdge("Source", "Target"); 
+
+	vtkSmartPointer<vtkViewTheme> theme;
+	theme.TakeReference(vtkViewTheme::CreateMellowTheme());
+	theme->SetLineWidth(5);
+	theme->SetCellOpacity(0.9);
+	theme->SetCellAlphaRange(0.5,0.5);
+	theme->SetPointSize(10);
+	theme->SetSelectedCellColor(1,0,1);
+	theme->SetSelectedPointColor(1,0,1); 
+
+	vtkSmartPointer<vtkGraphLayoutView> view = vtkSmartPointer<vtkGraphLayoutView>::New();
+	view->AddRepresentationFromInputConnection(TTG->GetOutputPort());
+	view->SetEdgeLabelVisibility(true);
+	view->SetEdgeLabelArrayName("Distance");
+	view->SetLayoutStrategyToSimple2D();
+	view->SetVertexLabelArrayName("label");
+	view->VertexLabelVisibilityOn();
+	view->SetVertexLabelFontSize(20);
+
+	view->GetRenderWindow()->SetSize(600, 600);
+	view->ResetCamera();
+	view->Render();
+	view->GetInteractor()->Start();
+}

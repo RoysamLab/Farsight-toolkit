@@ -18,6 +18,7 @@ SET( Libraries
     QVTK
     ftkGUI
     ftkCommon
+    ftkGraphs
     ${QT_LIBRARIES} )
 
 QT4_WRAP_CPP( GUI_MOC_SRCS View3D.h MergeModel.h TraceModel.h CellTraceModel.h cellexport.h screenshot.h)

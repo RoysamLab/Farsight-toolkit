@@ -1144,6 +1144,9 @@ void View3D::CreateGUIObjects()
 	this->CalculateDistanceToDeviceButton = new QPushButton("Calculate Distance To Device", this->CentralWidget);
 	connect(this->CalculateDistanceToDeviceButton, SIGNAL(clicked()), this, SLOT(CalculateDistanceToDevice()));
 
+	this->CalculateCellDistanceButton = new QPushButton("Calculate Cell to Cell Distance Graph", this->CentralWidget);
+	connect(this->CalculateCellDistanceButton, SIGNAL(clicked()), this, SLOT(CalculateCellToCellDistanceGraph()));
+
 	this->ShowPointer = new QCheckBox("Use 3D Cursor", this->CentralWidget);
 	this->ShowPointer->setStatusTip("Show Pointer Automatically?");
 	this->ShowPointer3DDefault = true;
@@ -1420,6 +1423,7 @@ void View3D::CreateLayout()
 	CursorToolsLayout->addWidget(this->createNewROIPointButton);
 	CursorToolsLayout->addWidget(this->ExtrudeROIButton);
 	CursorToolsLayout->addWidget(this->CalculateDistanceToDeviceButton);
+	CursorToolsLayout->addWidget(this->CalculateCellDistanceButton);
 	CursorToolsLayout->addStretch();
 
 	this->CursorActionsWidget->setMaximumSize(256,500);
@@ -2729,6 +2733,14 @@ void View3D::CalculateDistanceToDevice()
 			cellLocator->FindClosestPoint(somaPoint, closestPoint, cellId, subId, closestPointDist2);
 			currCell->setDistanceToROI( std::sqrt(closestPointDist2));
 		}//end for cell count
+	}
+}
+void View3D::CalculateCellToCellDistanceGraph()
+{
+	int cellCount= this->CellModel->getCellCount();
+	if (cellCount >= 1)
+	{
+		this->CellModel->createCellToCellGraph();
 	}
 }
 /*Selections*/
