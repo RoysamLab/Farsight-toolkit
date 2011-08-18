@@ -454,23 +454,30 @@ vtkSmartPointer<vtkTable> kNearestObjects::vectorsToGraphTable(std::vector< std:
 		graphtable->AddColumn(column3);
 	}
 	
-		vtkVariant preSource = NULL;
-		vtkVariant preTarget = NULL;
 	for(unsigned int i=1 ; i<(int)NeighborIds.size() ; i++)
 	{
-		vtkVariant currentSource = static_cast<vtkVariant>(NeighborIds.at(0).first);
-		vtkVariant currentTarget = static_cast<vtkVariant>(NeighborIds.at(i).first);
-
-		if ((currentSource != preTarget)&&(currentTarget != preSource))
+		vtkVariant curSource = static_cast<vtkVariant>(NeighborIds.at(0).first);
+		vtkVariant curTarget = static_cast<vtkVariant>(NeighborIds.at(i).first);
+		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+     	model_data1->InsertNextValue(curSource);
+		model_data1->InsertNextValue(curTarget);
+		model_data1->InsertNextValue(static_cast<vtkVariant>(NeighborIds.at(i).second));
+		bool match = false;
+		int j = 0;
+		while ((j < this->graphtable->GetNumberOfRows())&&!match)
 		{
-			vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
-     		model_data1->InsertNextValue(currentSource);
-			model_data1->InsertNextValue(currentTarget);
-			model_data1->InsertNextValue(static_cast<vtkVariant>(NeighborIds.at(i).second));
+			if ((graphtable->GetValue(j, 0) == curTarget)&&(graphtable->GetValue(j, 1) == curSource))
+			{
+				match = true;
+			}
+			else
+			{
+				j++;
+			}
+		}
+		if (!match)
+		{
 			graphtable->InsertNextRow(model_data1);	
-
-			preTarget = currentTarget;
-			preSource = currentSource;
 		}
 	}
 	return graphtable;
