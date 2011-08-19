@@ -50,6 +50,7 @@ limitations under the License.
 
 //ftk includes
 #include <ftkGUI/ObjectSelection.h>
+#include <ftkGUI/GraphWindow.h>
 #include "ftkGraphs/kNearestObjects.h"
 
 class QStandardItemModel;
@@ -87,6 +88,7 @@ private:
 	void SyncModel();
 	vtkSmartPointer<vtkTable> DataTable;
 	ObjectSelection * Selection;
+	GraphWindow * graphVisualize;
 };
 
 #endif
