@@ -218,18 +218,17 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	//post_binarization(imgOut, 2, 3, R, C, Z);
 	//cout<<"done"<<endl;
 
-	uint64_t mem_size = (uint64_t)24 * 1024 * 1024 * 1024; //72 GB of memory, (uint64_t) is needed because otherwise C++ will represent all the constants as int which are 32-bits and wont autopromote to 64 bits. See: http://stackoverflow.com/questions/3542040/cannot-assign-a-value-to-64-bit-integer-on-32-bit-platform
+	uint64_t mem_size = (uint64_t)72 * 1024 * 1024 * 1024; //72 GB of memory, (uint64_t) is needed because otherwise C++ will represent all the constants as int which are 32-bits and wont autopromote to 64 bits. See: http://stackoverflow.com/questions/3542040/cannot-assign-a-value-to-64-bit-integer-on-32-bit-platform
 	std::cout << "mem_size: " << mem_size / (1024.0 * 1024 * 1024) << " GB" << std::endl;
 
 	uint64_t image_size = (uint64_t)R * C * Z;
 	std::cout << "image_size: " << image_size << std::endl;
 
-	uint64_t mem_needed = image_size * 2048; //2048 bytes per pixel needed for graph cuts (empirically determined)
+	uint64_t mem_needed = image_size * 512; //512 bytes per pixel needed for graph cuts (empirically determined)
 	std::cout << "mem_needed: " << mem_needed / (1024.0 * 1024 * 1024) << " GB" << std::endl;
 
-	uint64_t num_blocks_preferred = mem_needed/mem_size + 1; //The "+1" is for rounding up
-	std::cout << "num_blocks_preferred: " << num_blocks_preferred * 16 << std::endl; //make blocks 16 times smaller so 16 threads will chew up only 1/16th of the memory each	
-
+	unsigned int num_blocks_preferred = (mem_needed/mem_size + 1) * 16; //The "+1" is for rounding up, the "16" is so 16 threads will only chew up 1/16th of the memory each
+	std::cout << "num_blocks_preferred: " << num_blocks_preferred << std::endl;
 	//#ifdef _OPENMP			
 	//	int block_divisor_X = 16;
 	//	int block_divisor_Y = 16;
@@ -247,9 +246,13 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	//	size_t num_pixels_per_block_C = std::max(C/block_divisor_X, 1);	//holds the number of pixels per block in the x-direction
 	//	size_t num_pixels_per_block_Z = std::max(Z/block_divisor_Z, 1);	//holds the number of pixels per block in the z-direction
 
-	size_t num_pixels_per_block_R = R / pow(num_blocks_preferred, 1/3.0);
-	size_t num_pixels_per_block_C = C / pow(num_blocks_preferred, 1/3.0); 
-	size_t num_pixels_per_block_Z = Z / pow(num_blocks_preferred, 1/3.0);
+	double block_divisor = pow(num_blocks_preferred, 1.0/3.0);
+
+	std::cout << "block_divisor: " << block_divisor << std::endl;
+	
+	size_t num_pixels_per_block_R = std::max(R / block_divisor, 1.0);
+	size_t num_pixels_per_block_C = std::max(C / block_divisor, 1.0);
+	size_t num_pixels_per_block_Z = std::max(Z / block_divisor, 1.0);
 
 	size_t num_blocks_R = 0;				//num_blocks_R holds the number of blocks in the y-direction
 	for(int i=0; i<R; i+= num_pixels_per_block_R) 
@@ -274,7 +277,7 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	std::cout << "num_pixels_per_block_R: " << num_pixels_per_block_R << " num_pixels_per_block_C: " << num_pixels_per_block_C << " num_pixels_per_block_Z: " << num_pixels_per_block_Z << std::endl;
 
 
-	std::cout<<"Total Blocks: "<<cntr<<std::endl;	
+	std::cout<<"Total Blocks: "<<cntr<<std::endl;
 
 	int blk = 1;
 
@@ -335,16 +338,16 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 #endif
 
 	std::cout << "Starting Graph Cuts" << std::endl;
-	//#pragma omp parallel for num_threads(4)
+	#pragma omp parallel for num_threads(4)
 	for(int i=0; i< num_blocks_R; i++)			
 	{
-		//#pragma omp parallel for num_threads(2)
+		#pragma omp parallel for num_threads(2)
 		for(int j = 0; j < num_blocks_C; j++)
 		{
-			//#pragma omp parallel for num_threads(2)
+			#pragma omp parallel for num_threads(2)
 			for (int k = 0; k < num_blocks_Z; k++)
 			{
-#pragma omp critical
+				#pragma omp critical
 				{
 					std::cout<<"    Binarizing block " << blk++ <<" of "<<cntr<<std::endl;	
 				}
@@ -374,7 +377,7 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	subImgBlockArray = NULL;
 
 	//copy the output of cell binarization into ITKImage to write out to check the result for debugging purposes
-	std::cout << "Copying cell binarization output (imgOut) to an ITK image so we can see the results" << std::endl;
+	/*std::cout << "Copying cell binarization output (imgOut) to an ITK image so we can see the results" << std::endl;
 	
 	typedef unsigned short InputPixelType;
 	typedef unsigned short OutputPixelType;
@@ -427,7 +430,7 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	{
 		std::cerr << "Error in ImageFileWriter: " << err << std::endl;
 		return -1;
-	}
+	}*/
 
 	cout << "Cell Binarization refinement by alpha expansion took " << (clock() - start_time_cell_bin_alpha_exp)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 
@@ -996,7 +999,12 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, size_t r, size_t c, size_t z, doub
 	//Set the number of edges and the number of nodes and open the files that
 	//will be used to save the weights	
 	num_nodes = (imBlock[1]-imBlock[0])*(imBlock[3]-imBlock[2])*(imBlock[5]-imBlock[4]);
-	num_edges = (imBlock[1]-imBlock[0]-1)*(imBlock[3]-imBlock[2]-1)*(imBlock[5]-imBlock[4]-1)*3;
+	if (imBlock[5]-imBlock[4] != 0)
+		num_edges = (imBlock[1]-imBlock[0]-1)*(imBlock[3]-imBlock[2]-1)*(imBlock[5]-imBlock[4]-1)*3;	//3D-case
+	else
+		num_edges = (imBlock[1]-imBlock[0]-1)*(imBlock[3]-imBlock[2]-1)*3;								//2D-case
+
+
 
 	/*std::cout << "imBlock[0] = " << imBlock[0] << " imBlock[1] = " << imBlock[1] << " imBlock[2] = " << imBlock[2] << " imBlock[3] = " << imBlock[3] << " imBlock[4] = " << imBlock[4] << " imBlock[5] = " << imBlock[5] << std::endl;
 
