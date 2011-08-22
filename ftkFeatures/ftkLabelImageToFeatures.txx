@@ -216,6 +216,7 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	typename IntensityImageType::RegionType intRegion;
 	typename IntensityImageType::IndexType intIndex;
 	typename IntensityImageType::SizeType intSize;
+	
 	typename LabelImageType::RegionType labRegion;
 	typename LabelImageType::IndexType labIndex;
 	typename LabelImageType::SizeType labSize;
@@ -241,7 +242,15 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		typename CropFilterType::Pointer cropFilter = CropFilterType::New();
 		cropFilter->SetInput(intImgIn);
 		cropFilter->SetExtractionRegion(intRegion);
-		cropFilter->Update();
+		cropFilter->SetDirectionCollapseToIdentity();
+		try
+		{
+			cropFilter->Update();
+		}
+		catch (itk::ExceptionObject &err)
+		{
+			std::cout << "Error in cropFilter1: " << err << std::endl;
+		}
 		intensityImage = cropFilter->GetOutput();
 	}
 	else
@@ -256,7 +265,15 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		typename CropFilterType::Pointer cropFilter = CropFilterType::New();
 		cropFilter->SetInput(lblImgIn);
 		cropFilter->SetExtractionRegion(labRegion);
-		cropFilter->Update();
+		cropFilter->SetDirectionCollapseToIdentity();
+		try
+		{
+			cropFilter->Update();
+		}
+		catch (itk::ExceptionObject &err)
+		{
+			std::cout << "Error in cropFilter2: " << err << std::endl;
+		}
 		labelImage = cropFilter->GetOutput();
 	}
 	else

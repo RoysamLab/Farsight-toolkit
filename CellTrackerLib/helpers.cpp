@@ -434,7 +434,8 @@ InputImageType::Pointer getLargeComponents(InputImageType::Pointer im, int n)
 	rfilter->InPlaceOn();
 
 	rfilter->Update();
-	std::vector<long unsigned int> sizes = rfilter->GetSizeOfObjectsInPixels();
+	RelabelFilterType::ObjectSizeInPixelsContainerType sizes = rfilter->GetSizeOfObjectsInPixels();
+	//std::vector<long unsigned int> sizes = rfilter->GetSizeOfObjectsInPixels();
 	int threshsize = -1;
 	for(unsigned int counter=0; counter<sizes.size(); counter++)
 	{
@@ -494,7 +495,8 @@ LabelImageType::Pointer getLargeLabels(LabelImageType::Pointer im, int n)
 	rfilter->InPlaceOn();
 
 	rfilter->Update();
-	std::vector<long unsigned int> sizes = rfilter->GetSizeOfObjectsInPixels();
+	//std::vector<long unsigned int> sizes = rfilter->GetSizeOfObjectsInPixels();
+	RelabelFilterType::ObjectSizeInPixelsContainerType sizes = rfilter->GetSizeOfObjectsInPixels();
 	int threshsize = sizes.size()+1;// just to be safe
 	for(unsigned int counter=0; counter<sizes.size(); counter++)
 	{

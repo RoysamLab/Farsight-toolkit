@@ -1446,7 +1446,6 @@ void NucleusEditor::load5DLabelImage(QStringList filesList)
 
 	// Declare necessary variables for loading:
 	labImg = ftk::Image::New();
-	ftk::Image::Pointer tmp4DImage = ftk::Image::New();
 	ftk::Image::PtrMode mode;
 	mode = static_cast<ftk::Image::PtrMode>(1); //RELEASE_CONTROL mode
 	std::vector<std::string>  filesTimeList;
@@ -1461,6 +1460,7 @@ void NucleusEditor::load5DLabelImage(QStringList filesList)
 		labImg = NULL;
 	for(int t = 1; t <filesList.size(); t++)
 	{
+		ftk::Image::Pointer tmp4DImage = ftk::Image::New();
 		tmp4DImage->LoadFile(filesTimeList[t]);
 		labImg->AppendImage(tmp4DImage,mode,true);
 	}
@@ -3452,6 +3452,7 @@ void NucleusEditor::addCell(int x1, int y1, int x2, int y2, int z)
 void NucleusEditor::deleteCells(void)
 {
 	if(!nucSeg) return;
+//	if(!NucAdjTable) return;
 
 	std::set<long int> sels = selection->getSelections();
 	std::vector<int> ids(sels.begin(), sels.end());
@@ -3478,7 +3479,6 @@ void NucleusEditor::deleteCells(void)
 		projectFiles.adjTablesSaved = false;
 		selection->clear();
 		this->updateViews();
-		
 		segView->SetNucAdjTable(NucAdjTable);
 
 		std::string log_entry = "DELETE , ";

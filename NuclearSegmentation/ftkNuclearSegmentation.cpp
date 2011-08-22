@@ -980,9 +980,10 @@ std::vector<int> NuclearSegmentation::GetNeighbors(int id)
 
 	typedef ftk::LabelImageToFeatures< IntrinsicFeatureCalculator::IPixelT,  IntrinsicFeatureCalculator::LPixelT, 3 > FeatureCalcType;
 	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
-	itk::Image<IntrinsicFeatureCalculator::IPixelT, 3>::Pointer chImg = dataImage->GetItkPtr<IntrinsicFeatureCalculator::IPixelT>(0,channelNumber);
-	itk::Image<IntrinsicFeatureCalculator::LPixelT, 3>::Pointer lbImg = labelImage->GetItkPtr<IntrinsicFeatureCalculator::LPixelT>(0,0);
-	labFilter->SetImageInputs( chImg, lbImg, regionIndex, regionSize );
+	//itk::Image<IntrinsicFeatureCalculator::IPixelT, 3>::Pointer chImg = dataImage->GetItkPtr<IntrinsicFeatureCalculator::IPixelT>(0,channelNumber);
+	//itk::Image<IntrinsicFeatureCalculator::LPixelT, 3>::Pointer lbImg = labelImage->GetItkPtr<IntrinsicFeatureCalculator::LPixelT>(0,0);
+	labFilter->SetImageInputs( dataImage->GetItkPtr<IntrinsicFeatureCalculator::IPixelT>(0,channelNumber), labelImage->GetItkPtr<IntrinsicFeatureCalculator::LPixelT>(0,0), regionIndex, regionSize );
+//	labFilter->SetImageInputs( chImg, lbImg, regionIndex, regionSize );
 	labFilter->SetLevel(3);	//Needed for neighbor information
 	labFilter->Update();
 
