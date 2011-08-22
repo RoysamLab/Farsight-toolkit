@@ -2627,10 +2627,10 @@ void View3D::AddROIPoint()
 {
 	if (this->pointer3d->GetEnabled())
 	{	
-		if (this->ROIPoints.size() >= 4)
+		/*if (this->ROIPoints.size() >= 4)
 		{
 			this->ROIPoints.erase(this->ROIPoints.begin());
-		}
+		}*/
 		double* newPT = new double[3];
 		this->pointer3d->GetPosition(newPT);
 		std::cout << "adding point xyz " << newPT[0] << " " << newPT[1] << " " << newPT[2] << " \n" ;
@@ -2652,38 +2652,35 @@ void View3D::DrawROI()
 		}
 	}
 	
-	if (this->ROIPoints.size() != 4)
+	if (this->ROIPoints.size() < 4)
 	{
 		std::cout<< "not enough points\n";
 		return;
 	}
-	//double p0[3] = {0.0, 0.0, 0.0};
-	//double p1[3] = {100.0, 0.0, 0.0};
-	//double p2[3] = {100.0, 100.0, 0.0};
-	//double p3[3] = {0.0, 100.0, 0.0};
 
 	//// Add the points to a vtkPoints object
 	vtkSmartPointer<vtkPoints> vtkROIpoints = vtkSmartPointer<vtkPoints>::New();
-	//ROIpoints->InsertNextPoint(p0);
-	//ROIpoints->InsertNextPoint(p1);
-	//ROIpoints->InsertNextPoint(p2);
-	//ROIpoints->InsertNextPoint(p3);
+	
 	std::vector<double*>::iterator ROIPoints_iter;
 
+	int count = 0;
 	for (ROIPoints_iter = ROIPoints.begin(); ROIPoints_iter != ROIPoints.end(); ROIPoints_iter++)
 	{
 		vtkROIpoints->InsertNextPoint(*ROIPoints_iter);
 		std::cout << "Poppping point: " << (*ROIPoints_iter)[0] << " " << (*ROIPoints_iter)[1] << " " << (*ROIPoints_iter)[2] << std::endl;
 		delete *ROIPoints_iter;
 		*ROIPoints_iter = NULL;
+		count++; //size of polygon vertex
 	}
 
 	// Create a quad on the four points
-	vtkSmartPointer<vtkQuad> ROIquad = vtkSmartPointer<vtkQuad>::New();
-	ROIquad->GetPointIds()->SetId(0,0);
-	ROIquad->GetPointIds()->SetId(1,1);
-	ROIquad->GetPointIds()->SetId(2,2);
-	ROIquad->GetPointIds()->SetId(3,3);
+	vtkSmartPointer<vtkPolygon> ROIquad = vtkSmartPointer<vtkPolygon>::New();
+	ROIquad->GetPointIds()->SetNumberOfIds(count);
+	for (int i =0; i< count; i++)
+	{
+		ROIquad->GetPointIds()->SetId(i,i);
+	}
+
 	vtkSmartPointer<vtkCellArray> ROIquads = vtkSmartPointer<vtkCellArray>::New();
 	ROIquads->InsertNextCell(ROIquad);
 

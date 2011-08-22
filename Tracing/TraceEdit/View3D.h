@@ -68,6 +68,7 @@ limitations under the License.
 #include "vtkPlaybackWidget.h"
 #include "vtkPointData.h"
 #include "vtkPoints.h"
+#include "vtkPolygon.h"
 #include "vtkPolyData.h"
 #include "vtkPolyDataMapper.h"
 #include "vtkProperty.h"
