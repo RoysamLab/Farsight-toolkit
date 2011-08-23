@@ -42,7 +42,6 @@ OPTION( BUILD_DENDROGRAM "Dendrogram code" OFF)
 OPTION( BUILD_OPENCL "Build with OpenCL support (VS 2008 only at the moment)" OFF) 
 OPTION(	BUILD_CUDA "Build with CUDA support" OFF)
 
-
 MARK_AS_ADVANCED(BUILD_EMBREX)
 MARK_AS_ADVANCED(WRAP_PYTHON)
 MARK_AS_ADVANCED(BUILD_ZERNIKE)
@@ -54,17 +53,11 @@ CONFIGURE_FILE (
   ${PROJECT_BINARY_DIR}/FarsightConfig.h
 )
 
-if(NOT EXE_DIR)
-  SET (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/exe CACHE PATH
-  "Single Directory for all executables"
-  )
-endif()
+SET (EXE_DIR ${PROJECT_BINARY_DIR}/exe CACHE PATH
+  "Single Directory for all executables")
 
-if(NOT LIB_DIR)
-  SET (CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/libs CACHE PATH
-  "Single Directory for all static Libraries"
-  )
-endif()
+SET (LIB_DIR ${PROJECT_BINARY_DIR}/libs CACHE PATH
+  "Single Directory for all static Libraries")
   
 SET (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${EXE_DIR})
 SET (CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LIB_DIR})
@@ -149,16 +142,17 @@ IF(USE_KPLS)
 ADD_DEFINITIONS(-DUSE_KPLS)
 IF( NOT BUILD_EMBREX )
   IF(WIN32)
-	IF(CMAKE_CL_64)
-		LINK_DIRECTORIES( ${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/win64 )
-	ELSEIF(WIN32)
-  		LINK_DIRECTORIES( ${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/win32 )
-	ENDIF(CMAKE_CL_64)
+    IF(CMAKE_CL_64)
+      SET(KPLS_LIB_DIR "${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/win64")
+    ELSE(CMAKE_CL_64)
+      SET(KPLS_LIB_DIR "${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/win32")
+    ENDIF(CMAKE_CL_64)
   ELSEIF(APPLE)
-	LINK_DIRECTORIES( ${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/osx )
+    SET(KPLS_LIB_DIR "${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/osx")
   ELSEIF(UNIX)
-	LINK_DIRECTORIES( ${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/unix )
+    SET(KPLS_LIB_DIR "${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/unix")
   ENDIF(WIN32)
+  FIND_LIBRARY(LIB_KPLS NAMES libKPLS HINTS "${KPLS_LIB_DIR}")
 ENDIF( NOT BUILD_EMBREX )
 ENDIF(USE_KPLS)
 
