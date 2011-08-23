@@ -64,7 +64,7 @@
 #ifdef USE_TRACKING
 #include "KymoGraphView.h" 
 #include "TrackingDialog.h"
-#include "CellTrackerLib/MultiFrameCellTracker.h"
+#include "cellTracker/MultiFrameCellTracker.h"
 #endif
 
 //Farsight Includes:
@@ -100,6 +100,7 @@ class NucleusEditor : public QMainWindow
     Q_OBJECT;
 
 public:
+
 	NucleusEditor(QWidget * parent = 0, Qt::WindowFlags flags = 0);
 	~NucleusEditor();
 	void loadModelFromFile(std::string file_name);
@@ -231,15 +232,14 @@ protected slots:
 	void startTraining();
 	void startKPLS();
 	void startActiveLearningwithFeat();
-	void startActiveLearning();
-	void startActiveLearningMulti();
 	void BuildGallery();
 	void SaveActiveLearningResults(void);
 	void SaveActiveLearningModel();
+	void CreateActiveLearningModel(MCLR* mclr_alm,  vtkSmartPointer<vtkTable> pWizard_table);
 	void classifyFromActiveLearningModel();
 	vtkSmartPointer<vtkTable> loadActiveLearningModel(std::string filename);
-	void Perform_Classification(vnl_matrix<double> matrix, vnl_vector<double> vec_1, vnl_vector<double> vec_2, vtkSmartPointer<vtkTable> acm_table);
-	void Perform_Classification_Multi(vnl_matrix<double> matrix, vnl_vector<double> vec_1, vnl_vector<double> vec_2, vtkSmartPointer<vtkTable> acm_table);
+	std::vector< vtkSmartPointer<vtkTable> > Perform_Classification(MCLR* mclr_class, std::vector< vtkSmartPointer<vtkTable> > table_vector, vtkSmartPointer<vtkTable> pWizard_table, bool from_model);
+	
 	//******************************************************
 	//5D Views Menu
 #ifdef USE_TRACKING
@@ -399,7 +399,7 @@ protected:
 	ftk::Image::Pointer labImg;					//Currently visible label image
 	//Amin
 	ftk::Image::PtrMode mode;
-//	std::vector<QStringList> * filesChannTimeList;
+	std::vector<QStringList> * filesChannTimeList;
 
 #ifdef USE_TRACKING
 	TrackingKymoView * kymoView;

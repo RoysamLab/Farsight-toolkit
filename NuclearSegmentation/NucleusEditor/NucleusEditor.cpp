@@ -1284,7 +1284,6 @@ void NucleusEditor::askload5DImage()
 			QStringList filesTimeList = QFileDialog::getOpenFileNames(this, "Load one or more time points", lastPath, standardImageTypes);
 			if (filesTimeList.isEmpty()) return;
 			filesChannTimeList.push_back(filesTimeList); 
-			lastPath = QFileInfo(filesTimeList[0]).absolutePath() + QDir::separator();
 		}
 
 		for (int ch = 0; ch<numChann-1; ++ch)
@@ -1301,15 +1300,18 @@ void NucleusEditor::askload5DImage()
 
 void NucleusEditor::load5DImage(std::vector<QStringList> filesChannTimeList, int numChann)
 {
+	// Amin: I need to put more restriction on this function.
 	lastPath = QFileInfo(filesChannTimeList[0][0]).absolutePath() + QDir::separator();
+	// Declare necessary variables for loading:
 	myImg = ftk::Image::New();
+	ftk::Image::Pointer tmp4DImage = ftk::Image::New();
 	ftk::Image::PtrMode mode;
 	mode = static_cast<ftk::Image::PtrMode>(1); //RELEASE_CONTROL mode
 	std::vector<std::string> channelNames;
 	std::vector<unsigned char> channelColors;
 	std::vector<std::string>  filesChann;
-	std::vector<std::vector<std::string> >  filesChannTime;
-	int numTimes = (int)filesChannTimeList[0].size();
+	std::vector<std::vector<std::string>>  filesChannTime;
+	int numTimes = filesChannTimeList[0].size();
 	
 	// Initialize variables:
 	for (int t = 0; t< numTimes; ++t)
@@ -1330,7 +1332,6 @@ void NucleusEditor::load5DImage(std::vector<QStringList> filesChannTimeList, int
 
 	for(int t = 1; t <numTimes; t++)
 	{
-		ftk::Image::Pointer tmp4DImage = ftk::Image::New();
 		tmp4DImage->LoadFilesAsMultipleChannels(filesChannTime[t],channelNames,channelColors);
 		myImg->AppendImage(tmp4DImage,mode,true);
 	}
@@ -1446,6 +1447,7 @@ void NucleusEditor::load5DLabelImage(QStringList filesList)
 
 	// Declare necessary variables for loading:
 	labImg = ftk::Image::New();
+	ftk::Image::Pointer tmp4DImage = ftk::Image::New();
 	ftk::Image::PtrMode mode;
 	mode = static_cast<ftk::Image::PtrMode>(1); //RELEASE_CONTROL mode
 	std::vector<std::string>  filesTimeList;
@@ -1460,7 +1462,6 @@ void NucleusEditor::load5DLabelImage(QStringList filesList)
 		labImg = NULL;
 	for(int t = 1; t <filesList.size(); t++)
 	{
-		ftk::Image::Pointer tmp4DImage = ftk::Image::New();
 		tmp4DImage->LoadFile(filesTimeList[t]);
 		labImg->AppendImage(tmp4DImage,mode,true);
 	}
@@ -1811,8 +1812,16 @@ void NucleusEditor::updateDatabase()
 
 void NucleusEditor::startActiveLearningwithFeat()
 {	
-
-	if(!table) return;
+	vtkSmartPointer<vtkTable> featureTable;
+	if(myImg->GetImageInfo()->numTSlices==1)
+		featureTable = table;
+	else
+	{
+		featureTable = nucSeg->megaTable;
+		segView->SetCurrentTimeVal(0);
+	}
+	
+	if(!featureTable) return;
 
 	ConfidenceThresholdDialog *dialog = new ConfidenceThresholdDialog(this);
 	if( dialog->exec() )
@@ -1821,26 +1830,15 @@ void NucleusEditor::startActiveLearningwithFeat()
     }
 	delete dialog;
 
-	if(myImg->GetImageInfo()->numTSlices==1)
-		startActiveLearning();
-	else
-	startActiveLearningMulti();
-}
-
-
-void NucleusEditor::startActiveLearning()
-{
-	if(!table) return;
-
-	//if(pWizard)
-	//{
-	//	delete pWizard;
-	//}
-
-	TrainingDialog *d = new TrainingDialog(table, "train","active",table->GetNumberOfRows(), this);
+	TrainingDialog *d = new TrainingDialog(featureTable, "train","active",featureTable->GetNumberOfRows() ,this);
 	connect(d, SIGNAL(changedTable()), this, SLOT(updateViews()));
 	d->exec();
 
+	if(myImg->GetImageInfo()->numTSlices > 1)
+	{
+		nucSeg->AddTimeToMegaTable();
+		featureTable = nucSeg->megaTable;
+	}
 
 	//Clear the Gallery 
 	gallery.clear();	
@@ -1848,36 +1846,29 @@ void NucleusEditor::startActiveLearning()
 	std::vector< std::pair<double,double> > id_time;	
 	// Remove the training examples from the list of ids.
 	//Get the list of ids
-	for(int i=0;i<table->GetNumberOfRows(); ++i)
+	for(int i=0;i<featureTable->GetNumberOfRows(); ++i)
 	{
-		if(table->GetValueByName(i,"train_default1").ToDouble()==-1) 
+		if(featureTable->GetValueByName(i,"train_default1").ToDouble()==-1) 
 		{
 			std::pair<double,double> temp_pair;
-			temp_pair.first = table->GetValue(i,0).ToDouble();
-			temp_pair.second = 0;
+			temp_pair.first = featureTable->GetValue(i,0).ToDouble();
+			if(myImg->GetImageInfo()->numTSlices == 1)
+				temp_pair.second = 0;
+			else
+				temp_pair.second = featureTable->GetValueByName(i,"time").ToDouble();
 			id_time.push_back(temp_pair);
 		}
 	}
 
-	//std::vector<double> list_of_ids;	
-	//// Remove the training examples from the list of ids.
-	////Get the list of ids
-	//for(int i=0;i<table->GetNumberOfRows(); ++i)
-	//{
-	//	if(table->GetValueByName(i,"train_default1").ToDouble()==-1) 
-	//	{
-	//		list_of_ids.push_back(table->GetValue(i,0).ToDouble());
-	//	}
-	//}
+	if(myImg->GetImageInfo()->numTSlices > 1)
+		featureTable->RemoveColumnByName("time");
 
-
-	// If the user did not hit cancel 
+		// If the user did not hit cancel 
 	if(d->result())
 	{
-		pWizard = new PatternAnalysisWizard( table, PatternAnalysisWizard::_ACTIVE,"","", this);
+		pWizard = new PatternAnalysisWizard( featureTable, PatternAnalysisWizard::_ACTIVE,"","", this);
 		pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
 		pWizard->exec();
-
 
 		//new_table does not have the id column 
 		vtkSmartPointer<vtkTable> new_table = pWizard->getExtractedTable();
@@ -1893,15 +1884,13 @@ void NucleusEditor::startActiveLearning()
 
 			for(int row = 0; (int)row < new_table->GetNumberOfRows(); ++row)  
 			{
-				class_list.put(row,vtkVariant(table->GetValueByName(row,"train_default1")).ToDouble());
+				class_list.put(row,vtkVariant(featureTable->GetValueByName(row,"train_default1")).ToDouble());
 			}
-
 
 			MCLR *mclr = new MCLR();
 			double sparsity = 1;
 			int active_query = 1;
 			double max_info = -1e9;
-
 
 			vnl_matrix<double> Feats = mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(new_table,id_time));
 			mclr->Initialize(Feats,sparsity,class_list,"",new_table);
@@ -1910,267 +1899,19 @@ void NucleusEditor::startActiveLearning()
 			// Get the active query based on information gain
 			active_query = mclr->Active_Query();
 
+			if(myImg->GetImageInfo()->numTSlices > 1)
+				segView->SetCurrentTimeVal(mclr->id_time_val.at(active_query).second);
 
-			bool user_stop_dialog_flag = false;
-			bool loop_termination_condition = true;
-
-			while(loop_termination_condition)
-			{	
-
-				ActiveLearningDialog *dialog;
-				dialog =  new ActiveLearningDialog(segView->getSnapshotforID(mclr->id_time_val.at(active_query).first),mclr->test_table,mclr->no_of_classes,active_query,mclr->top_features);
-				dialog->exec();	 
-
-
-				loop_termination_condition = dialog->finish && dialog->result();
-
-
-				while(dialog->class_selected == -1)
-				{	
-					QMessageBox::critical(this, tr("Oops"), tr("Please select a class"));
-					this->show();
-					dialog =  new ActiveLearningDialog(segView->getSnapshotforID(mclr->id_time_val.at(active_query).first),mclr->test_table,mclr->no_of_classes,active_query,mclr->top_features);	
-					dialog->exec();
-				}
-
-
-				// Update the data & refresh the training model and refresh the Training Dialog 		
-				mclr->Update_Train_Data(active_query,dialog->class_selected);
-
-				if(dialog->class_selected ==0)
-				{
-					mclr->Get_Training_Model();
-					active_query = mclr->Active_Query();
-					continue;
-				}
-
-				// Update the gallery
-				gallery.push_back(dialog->temp_pair);
-
-
-				if(mclr->stop_training && dialog->class_selected!=0)
-				{
-					QMessageBox msgBox;
-					msgBox.setText("I understand the classification problem.");
-					msgBox.setInformativeText("Do you want to stop training and classify ? ");
-					msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-					msgBox.setDefaultButton(QMessageBox::Ok);
-					int ret = msgBox.exec();
-
-					switch (ret) {
-				case QMessageBox::Ok:
-					// Save was clicked
-					user_stop_dialog_flag = true;
-					break;
-				case QMessageBox::Cancel:
-					mclr->stop_training = false;
-					break;
-				default:
-					// should never be reached
-					break;
-					}
-				}
-
-				if(user_stop_dialog_flag)
-					break;
-
-				mclr->Get_Training_Model();
-				active_query = mclr->Active_Query();
-			}
-
-
-			//Enable the Menu Items related to active Learning
-			showGalleryAction->setEnabled(true);
-
-			// Create a new test table to test al the samples and classify
-			int counter = 0;
-			vtkSmartPointer<vtkTable> test_table  = vtkSmartPointer<vtkTable>::New();
-			test_table->Initialize();
-			test_table->SetNumberOfRows(table->GetNumberOfRows());
-
-			for(int i=0;i<new_table->GetNumberOfColumns(); ++i)
-			{
-				vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-				column->SetName(new_table->GetColumnName(i));
-				test_table->AddColumn(column);	
-			}
-
-			for(int row = 0; row < (int)table->GetNumberOfRows(); ++row)
-			{		
-				vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
-				for(int c =0;c<(int)test_table->GetNumberOfColumns();++c)
-					model_data1->InsertNextValue(table->GetValueByName(row,test_table->GetColumnName(c)));
-				test_table->InsertNextRow(model_data1);
-			}	
-
-			////// Final Data  to classify after the active training
-			vnl_matrix<double> data_classify =  mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(test_table,id_time));
-			data_classify = data_classify.transpose();
-			
-			///// Create the Active Learning Model/////////////////////
-			act_learn_matrix = mclr->GetActiveLearningMatrix();
-			std_dev_vec = mclr->Get_Std_Dev();
-			mean_vec = mclr->Get_Mean();
-			std::string feat_name = "bias";
-			vnl_vector<double> feat_values(act_learn_matrix.get_row(0).size() + 2);
-			feat_values.put(0, 0);
-			feat_values.put(1, 0);
-			for(int s=0; s<(int)act_learn_matrix.get_row(0).size(); ++s)
-			{
-				feat_values.put(s+2, act_learn_matrix.get_row(0).get(s));
-			}
-			std::pair< std::string, vnl_vector<double> > temp = std::make_pair(feat_name, feat_values);
-			act_learn_model.push_back(temp);
-			for(unsigned int col=0; col<(unsigned int)new_table->GetNumberOfColumns(); ++col)
-			{
-				feat_name = new_table->GetColumnName(col);
-				feat_values.put(0, std_dev_vec.get(col));
-				feat_values.put(1, mean_vec.get(col));
-				for(int s=0; s<(int)act_learn_matrix.get_row(col).size(); ++s)
-				{
-					feat_values.put(s+2, act_learn_matrix.get_row(col+1).get(s));
-				}
-				std::pair< std::string, vnl_vector<double> > temp = std::make_pair(feat_name, feat_values);
-				act_learn_model.push_back(temp);
-			}
-			////////////////////////////////////////////////
-
-			vnl_matrix<double> currprob = mclr->Test_Current_Model(data_classify);
-
-			//// Add the Prediction Column 
-			vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-			column->SetName("prediction_active");
-			column->SetNumberOfValues( table->GetNumberOfRows() );
-			table->AddColumn(column);
-
-			vtkSmartPointer<vtkDoubleArray> column_confidence = vtkSmartPointer<vtkDoubleArray>::New();
-			column_confidence->SetName("confidence");
-			column_confidence->SetNumberOfValues( table->GetNumberOfRows() );
-			table->AddColumn(column_confidence);
-
-			for(int row = 0; (int)row < table->GetNumberOfRows(); ++row)  
-			{
-				vnl_vector<double> curr_col = currprob.get_column(row);
-				table->SetValueByName(row,"confidence", vtkVariant(curr_col(curr_col.arg_max())));
-				if(curr_col(curr_col.arg_max()) > confidence_thresh) 
-				{
-					table->SetValueByName(row,"prediction_active", vtkVariant(curr_col.arg_max()+1));						
-				}
-				else
-				{
-					table->SetValueByName(row,"prediction_active", vtkVariant(0));
-				}
-			}
-			prediction_names = ftk::GetColumsWithString( "prediction_active" , table );
-			activeRun = 1;
-			projectFiles.tableSaved = false;
-			selection->clear();
-			this->updateViews();
-		}
-	}
-}
-
-
-void NucleusEditor::startActiveLearningMulti()
-{
-	//// Always start from time 0 
-	segView->SetCurrentTimeVal(0);
-	table = nucSeg->table4DImage.at(0);
-	
-	if(!table) return;
-
-	//Clear the Gallery 
-	gallery.clear();	
-
-	TrainingDialog *d = new TrainingDialog(nucSeg->megaTable, "train","active",table->GetNumberOfRows() ,this);
-	connect(d, SIGNAL(changedTable()), this, SLOT(updateViews()));
-	d->exec();
-
-	
-	//Add the time column to the megatable
-	nucSeg->AddTimeToMegaTable();	
-
-	int justacount = 0;
-
-	std::vector< std::pair<double,double> > id_time;	
-	// Remove the training examples from the list of ids.
-	//Get the list of ids
-	
-
-
-	for(int i=0;i<nucSeg->megaTable->GetNumberOfRows(); ++i)
-	{
-		if(nucSeg->megaTable->GetValueByName(i,"train_default1").ToDouble()==-1) 
-		{
-			std::pair<double,double> temp_pair;
-			temp_pair.first = nucSeg->megaTable->GetValue(i,0).ToDouble();
-			temp_pair.second = nucSeg->megaTable->GetValueByName(i,"time").ToDouble();
-			id_time.push_back(temp_pair);
-		}
-
-	}
-
-	//Since we have stored the time values in id_time
-	// We can remove the time column ! 
-	nucSeg->megaTable->RemoveColumnByName("time");
-
-	// If the user did not hit cancel 
-	if(d->result())
-	{
-		pWizard = new PatternAnalysisWizard( nucSeg->megaTable, PatternAnalysisWizard::_ACTIVE,"","", this);
-		pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
-		pWizard->exec();
-
-
-		// If the user did not hit cancel 	
-		if(pWizard->result())
-		{
-			vtkSmartPointer<vtkTable> pWizard_table = pWizard->getExtractedTable();
-			//// Delete the prediction column if it exists
-			prediction_names = ftk::GetColumsWithString( "prediction_active" , pWizard_table);
-			if(prediction_names.size()>0)
-				pWizard_table->RemoveColumnByName("prediction_active");
-
-			vnl_vector<double> class_list(pWizard_table->GetNumberOfRows()); 
-
-			for(int row = 0; (int)row < pWizard_table->GetNumberOfRows(); ++row)  
-			{
-				class_list.put(row,vtkVariant(nucSeg->megaTable->GetValueByName(row,"train_default1")).ToDouble());
-			}
-
-
-			MCLR *mclr = new MCLR();
-			double sparsity = 1;
-			int active_query = 1;
-			double max_info = -1e9;
-
-
-			vnl_matrix<double> Feats = mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(pWizard_table,id_time));
-			
-
-			mclr->Initialize(Feats,sparsity,class_list,"",pWizard_table);
-			mclr->Get_Training_Model();
-
-			// Get the active query based on information gain
-			active_query = mclr->Active_Query();
-			
-			// We can determine the time point corresponding to the current query
-			// using the id_time
-			segView->SetCurrentTimeVal(mclr->id_time_val.at(active_query).second);
-			
-			
 			bool user_stop_dialog_flag = false;
 			bool loop_termination_condition = true;
 
 			ActiveLearningDialog *dialog;
-
 			while(loop_termination_condition)
 			{	
-
 				dialog =  new ActiveLearningDialog(segView->getSnapshotforID(mclr->id_time_val.at(active_query).first),mclr->test_table,mclr->no_of_classes,active_query,mclr->top_features);
 				dialog->exec();	 
-				loop_termination_condition = dialog->finish && dialog->result();
 
+				loop_termination_condition = dialog->finish && dialog->result();
 
 				while(dialog->class_selected == -1)
 				{	
@@ -2180,8 +1921,6 @@ void NucleusEditor::startActiveLearningMulti()
 					dialog->exec();
 				}
 
-				
-
 				// Update the data & refresh the training model and refresh the Training Dialog 		
 				mclr->Update_Train_Data(active_query,dialog->class_selected);
 
@@ -2189,7 +1928,6 @@ void NucleusEditor::startActiveLearningMulti()
 				{
 					mclr->Get_Training_Model();
 					active_query = mclr->Active_Query();
-					segView->SetCurrentTimeVal(mclr->id_time_val.at(active_query).second);
 					continue;
 				}
 
@@ -2205,17 +1943,18 @@ void NucleusEditor::startActiveLearningMulti()
 					msgBox.setDefaultButton(QMessageBox::Ok);
 					int ret = msgBox.exec();
 
-					switch (ret) {
-				case QMessageBox::Ok:
-					// Save was clicked
-					user_stop_dialog_flag = true;
-					break;
-				case QMessageBox::Cancel:
-					mclr->stop_training = false;
-					break;
-				default:
-					// should never be reached
-					break;
+					switch (ret) 
+					{
+					case QMessageBox::Ok:
+						// Save was clicked
+						user_stop_dialog_flag = true;
+						break;
+					case QMessageBox::Cancel:
+						mclr->stop_training = false;
+						break;
+					default:
+						// should never be reached
+						break;
 					}
 				}
 
@@ -2224,109 +1963,64 @@ void NucleusEditor::startActiveLearningMulti()
 
 				mclr->Get_Training_Model();
 				active_query = mclr->Active_Query();
-				segView->SetCurrentTimeVal(mclr->id_time_val.at(active_query).second);
-				//std::cout<< " Active Query # is " << active_query <<std::endl;
+				if(myImg->GetImageInfo()->numTSlices > 1)
+					segView->SetCurrentTimeVal(mclr->id_time_val.at(active_query).second);
 			}
 
 			//Enable the Menu Items related to active Learning
 			showGalleryAction->setEnabled(true);
-			saveActiveResultsAction->setEnabled(true);
+			if(myImg->GetImageInfo()->numTSlices > 1)
+				saveActiveResultsAction->setEnabled(true);
 
-			///// Create the Active Learning Model/////////////////////
-			act_learn_matrix = mclr->GetActiveLearningMatrix();
-			std_dev_vec = mclr->Get_Std_Dev();
-			mean_vec = mclr->Get_Mean();
-			std::string feat_name = "bias";
-			vnl_vector<double> feat_values(act_learn_matrix.get_row(0).size() + 2);
-			feat_values.put(0, 0);
-			feat_values.put(1, 0);
-			for(int s=0; s<(int)act_learn_matrix.get_row(0).size(); ++s)
-			{
-				feat_values.put(s+2, act_learn_matrix.get_row(0).get(s));
-			}
-			std::pair< std::string, vnl_vector<double> > temp = std::make_pair(feat_name, feat_values);
-			act_learn_model.push_back(temp);
-			for(unsigned int col=0; col<(unsigned int)pWizard_table->GetNumberOfColumns(); ++col)
-			{
-				feat_name = pWizard_table->GetColumnName(col);
-				feat_values.put(0, std_dev_vec.get(col));
-				feat_values.put(1, mean_vec.get(col));
-				for(int s=0; s<(int)act_learn_matrix.get_row(col).size(); ++s)
-				{
-					feat_values.put(s+2, act_learn_matrix.get_row(col+1).get(s));
-				}
-				std::pair< std::string, vnl_vector<double> > temp = std::make_pair(feat_name, feat_values);
-				act_learn_model.push_back(temp);
-			}
-			////////////////////////////////////////////////
-
-			//// Create a new test table to test al the samples and classify
-			for(int i=0; i< nucSeg->table4DImage.size() ; ++i)
-			{	
-				int counter = 0;
-				vtkSmartPointer<vtkTable> test_table  = vtkSmartPointer<vtkTable>::New();
-				test_table->Initialize();
-				test_table->SetNumberOfRows(nucSeg->table4DImage.at(i)->GetNumberOfRows());
-				
-
-				for(int j=0;j<pWizard_table->GetNumberOfColumns(); ++j)
-				{
-					vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-					column->SetName(pWizard_table->GetColumnName(j));
-					test_table->AddColumn(column);	
-				}
-
-				for(int row = 0; row < (int)nucSeg->table4DImage.at(i)->GetNumberOfRows(); ++row)
-				{		
-					vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
-					for(int c =0;c<(int)test_table->GetNumberOfColumns();++c)
-						model_data1->InsertNextValue(nucSeg->table4DImage.at(i)->GetValueByName(row,test_table->GetColumnName(c)));
-					test_table->InsertNextRow(model_data1);
-				}	
+			CreateActiveLearningModel(mclr, new_table);
 			
-				////// Final Data  to classify after the active training
-				vnl_matrix<double> data_classify =  mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(test_table,mclr->id_time_val));
-				data_classify = data_classify.transpose();
-
-				vnl_matrix<double> currprob = mclr->Test_Current_Model(data_classify);
-
-				//// Add the Prediction Column 
-				vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-				column->SetName("prediction_active");
-				column->SetNumberOfValues( nucSeg->table4DImage.at(i)->GetNumberOfRows() );
-				nucSeg->table4DImage.at(i)->AddColumn(column);
-			
-				// Add the confidence column
-				vtkSmartPointer<vtkDoubleArray> column_confidence = vtkSmartPointer<vtkDoubleArray>::New();
-				column_confidence->SetName("confidence");
-				column_confidence->SetNumberOfValues( nucSeg->table4DImage.at(i)->GetNumberOfRows() );
-				nucSeg->table4DImage.at(i)->AddColumn(column_confidence);
-
-				for(int row = 0;(int)row < nucSeg->table4DImage.at(i)->GetNumberOfRows(); ++row)  
-				{
-					vnl_vector<double> curr_col = currprob.get_column(row);
-					nucSeg->table4DImage.at(i)->SetValueByName(row,"confidence", vtkVariant(curr_col(curr_col.arg_max())));
-					if(curr_col(curr_col.arg_max()) > confidence_thresh) 
-					{
-						nucSeg->table4DImage.at(i)->SetValueByName(row,"prediction_active", vtkVariant(curr_col.arg_max()+1));						
-					}
-					else
-					{
-						nucSeg->table4DImage.at(i)->SetValueByName(row,"prediction_active", vtkVariant(0));
-					}
-				}
-				prediction_names = ftk::GetColumsWithString( "prediction_active" , nucSeg->table4DImage.at(i) );
-				selection->clear();
+			std::vector< vtkSmartPointer<vtkTable> > VectorOfTables;
+			if(myImg->GetImageInfo()->numTSlices == 1)
+			{
+				VectorOfTables.push_back(table);
+				table = Perform_Classification(mclr, VectorOfTables, new_table, true).at(0);
 			}
-			projectFiles.tableSaved = false;
-
+			else
+			{
+				VectorOfTables = nucSeg->table4DImage;
+				nucSeg->table4DImage = Perform_Classification(mclr, VectorOfTables, new_table, true);
+			}
 			activeRun = 1;
+			projectFiles.tableSaved = false;
 			this->updateViews();
-
 		}
 	}
 }
 
+
+void NucleusEditor::CreateActiveLearningModel(MCLR* mclr_alm, vtkSmartPointer<vtkTable> pWizard_table)
+{
+	act_learn_matrix = mclr_alm->GetActiveLearningMatrix();
+	std_dev_vec = mclr_alm->Get_Std_Dev();
+	mean_vec = mclr_alm->Get_Mean();
+	std::string feat_name = "bias";
+	vnl_vector<double> feat_values(act_learn_matrix.get_row(0).size() + 2);
+	feat_values.put(0, 0);
+	feat_values.put(1, 0);
+	for(int s=0; s<(int)act_learn_matrix.get_row(0).size(); ++s)
+	{
+		feat_values.put(s+2, act_learn_matrix.get_row(0).get(s));
+	}
+	std::pair< std::string, vnl_vector<double> > temp = std::make_pair(feat_name, feat_values);
+	act_learn_model.push_back(temp);
+	for(unsigned int col=0; col<(unsigned int)pWizard_table->GetNumberOfColumns(); ++col)
+	{
+		feat_name = pWizard_table->GetColumnName(col);
+		feat_values.put(0, std_dev_vec.get(col));
+		feat_values.put(1, mean_vec.get(col));
+		for(int s=0; s<(int)act_learn_matrix.get_row(col).size(); ++s)
+		{
+			feat_values.put(s+2, act_learn_matrix.get_row(col+1).get(s));
+		}
+		std::pair< std::string, vnl_vector<double> > temp = std::make_pair(feat_name, feat_values);
+		act_learn_model.push_back(temp);
+	}
+}
 
 void NucleusEditor::BuildGallery()
 {
@@ -2371,7 +2065,14 @@ void NucleusEditor::SaveActiveLearningModel()
 void NucleusEditor::classifyFromActiveLearningModel()
 {
 	//open pattern analysis wizard	
-	if(!table) return;
+	vtkSmartPointer<vtkTable> featureTable;
+	if(myImg->GetImageInfo()->numTSlices==1)
+		featureTable = table;
+	else
+		featureTable = nucSeg->megaTable;
+	
+	if(!featureTable) return;
+
 	if(pWizard)
 	{
 		delete pWizard;
@@ -2404,13 +2105,13 @@ void NucleusEditor::classifyFromActiveLearningModel()
 		mean_vec.put(col-1, act_learn_model_table->GetValue(1,col).ToDouble());
 	}
 
-	vtkSmartPointer<vtkTable> acm_table = vtkSmartPointer<vtkTable>::New();
-	acm_table->Initialize();
+	vtkSmartPointer<vtkTable> alm_table = vtkSmartPointer<vtkTable>::New();
+	alm_table->Initialize();
 	for(int c=1; c<(int)act_learn_model_table->GetNumberOfColumns(); ++c)
 	{
 	    vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
 		column->SetName( act_learn_model_table->GetColumnName(c));
-		acm_table->AddColumn(column);
+		alm_table->AddColumn(column);
 	}
 	for(int row = 2; row < (int)act_learn_model_table->GetNumberOfRows(); ++row)
 	{
@@ -2419,7 +2120,7 @@ void NucleusEditor::classifyFromActiveLearningModel()
 		{
 			model_data1->InsertNextValue(act_learn_model_table->GetValue(row,c));
 		}
-		acm_table->InsertNextRow(model_data1);
+		alm_table->InsertNextRow(model_data1);
 	}
 
 	ConfidenceThresholdDialog *dialog = new ConfidenceThresholdDialog(this);
@@ -2429,161 +2130,114 @@ void NucleusEditor::classifyFromActiveLearningModel()
     }
 	delete dialog;
 
-	if(myImg->GetImageInfo()->numTSlices==1)
-		Perform_Classification(act_learn_matrix, std_dev_vec, mean_vec, acm_table);
-	else
-		Perform_Classification_Multi(act_learn_matrix, std_dev_vec, mean_vec, acm_table);
-	
-
-}
-
-void NucleusEditor::Perform_Classification(vnl_matrix<double> matrix, vnl_vector<double> vec_1, vnl_vector<double> vec_2, vtkSmartPointer<vtkTable> acm_table)
-{
-	pWizard = new PatternAnalysisWizard( table, acm_table, "", PatternAnalysisWizard::_ACTIVEMODEL,"","", this);
+	pWizard = new PatternAnalysisWizard( featureTable, alm_table, "", PatternAnalysisWizard::_ACTIVEMODEL,"","", this);
 	pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
 	pWizard->exec();
-	
-	if(pWizard->result())
-	{
-		vtkSmartPointer<vtkTable> new_table = pWizard->getExtractedTable();
-		
-		MCLR *mclr = new MCLR();
-		// Number of features and classes needed in "add_bias" fuction of MCLR
-		mclr->Set_Number_Of_Classes((int)acm_table->GetNumberOfRows());
-		mclr->Set_Number_Of_Features((int)acm_table->GetNumberOfColumns());
 
-		vtkSmartPointer<vtkTable> test_table  = vtkSmartPointer<vtkTable>::New();
-		test_table->Initialize();
-		test_table->SetNumberOfRows(table->GetNumberOfRows());
-		for(int i=0;i<new_table->GetNumberOfColumns(); ++i)
-		{
-			vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-			column->SetName(new_table->GetColumnName(i));
-			test_table->AddColumn(column);	
-		}
-		for(int row = 0; row < (int)table->GetNumberOfRows(); ++row)
-		{		
-			vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
-			for(int c =0;c<(int)test_table->GetNumberOfColumns();++c)
-				model_data1->InsertNextValue(table->GetValueByName(row,test_table->GetColumnName(c)));
-			test_table->InsertNextRow(model_data1);
-		}	
-
-		////// Final Data  to classify after the active training
-		vnl_matrix<double> data_classify =  mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(test_table), vec_1, vec_2);
-		data_classify = data_classify.transpose();
-
-		vnl_matrix<double> currprob = mclr->Test_Current_Model(data_classify, matrix);
-
-		//// Add the Prediction Column 
-		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-		column->SetName("prediction_active");
-		column->SetNumberOfValues( table->GetNumberOfRows() );
-		table->AddColumn(column);
-
-		vtkSmartPointer<vtkDoubleArray> column_confidence = vtkSmartPointer<vtkDoubleArray>::New();
-		column_confidence->SetName("confidence");
-		column_confidence->SetNumberOfValues( table->GetNumberOfRows() );
-		table->AddColumn(column_confidence);
-
-		for(int row = 0; (int)row < table->GetNumberOfRows(); ++row)  
-		{
-			vnl_vector<double> curr_col = currprob.get_column(row);
-			table->SetValueByName(row,"confidence", vtkVariant(curr_col(curr_col.arg_max())));
-			if(curr_col(curr_col.arg_max()) > confidence_thresh) 
-			{
-				table->SetValueByName(row,"prediction_active", vtkVariant(curr_col.arg_max()+1));						
-			}
-			else
-			{
-				table->SetValueByName(row,"prediction_active", vtkVariant(0));
-			}
-		}
-		prediction_names = ftk::GetColumsWithString( "prediction_active" , table );
-		projectFiles.tableSaved = false;
-		activeRun = 1;
-		selection->clear();
-		this->updateViews();
-	
-	}
-}
-
-void NucleusEditor::Perform_Classification_Multi(vnl_matrix<double> matrix, vnl_vector<double> vec_1, vnl_vector<double> vec_2, vtkSmartPointer<vtkTable> acm_table)
-{
-	pWizard = new PatternAnalysisWizard( nucSeg->megaTable, acm_table, "", PatternAnalysisWizard::_ACTIVEMODEL,"","", this);
-	pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
-	pWizard->exec();
-	
 	if(pWizard->result())
 	{	
 		// Extracted Table containing features of trained model 
 		vtkSmartPointer<vtkTable> new_table = pWizard->getExtractedTable();
-		
+
 		MCLR *mclr = new MCLR();
 		// Number of features and classes needed in "add_bias" fuction of MCLR
-		mclr->Set_Number_Of_Classes((int)acm_table->GetNumberOfRows());
-		mclr->Set_Number_Of_Features((int)acm_table->GetNumberOfColumns());
-		
-		for(int i=0; i< nucSeg->table4DImage.size() ; ++i)
-		{	
-			//test_table contains individual tables 
-			vtkSmartPointer<vtkTable> test_table  = vtkSmartPointer<vtkTable>::New();
-			test_table->Initialize();
+		mclr->Set_Number_Of_Classes((int)alm_table->GetNumberOfRows());
+		mclr->Set_Number_Of_Features((int)alm_table->GetNumberOfColumns());
 
-			test_table->SetNumberOfRows(nucSeg->table4DImage.at(i)->GetNumberOfRows());
-			for(int col=0; col<new_table->GetNumberOfColumns(); ++col)
-			{
-				vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-				column->SetName(new_table->GetColumnName(col));
-				test_table->AddColumn(column);	
-			}
-			for(int row = 0; row < (int)nucSeg->table4DImage.at(i)->GetNumberOfRows(); ++row)
-			{		
-				vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
-				for(int c =0;c<(int)test_table->GetNumberOfColumns();++c)
-					model_data1->InsertNextValue(nucSeg->table4DImage.at(i)->GetValueByName(row,test_table->GetColumnName(c)));
-				test_table->InsertNextRow(model_data1);
-			}	
-
-			////// Final Data  to classify after the active training
-			vnl_matrix<double> data_classify =  mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(test_table), vec_1, vec_2);
-			data_classify = data_classify.transpose();
-
-			vnl_matrix<double> currprob = mclr->Test_Current_Model(data_classify, matrix);
-
-			//// Add the Prediction Column 
-			vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-			column->SetName("prediction_active");
-			column->SetNumberOfValues( nucSeg->table4DImage.at(i)->GetNumberOfRows() );
-			nucSeg->table4DImage.at(i)->AddColumn(column);
-
-			// Add the confidence column
-			vtkSmartPointer<vtkDoubleArray> column_confidence = vtkSmartPointer<vtkDoubleArray>::New();
-			column_confidence->SetName("confidence");
-			column_confidence->SetNumberOfValues( nucSeg->table4DImage.at(i)->GetNumberOfRows() );
-			nucSeg->table4DImage.at(i)->AddColumn(column_confidence);
-
-			for(int row = 0; (int)row < nucSeg->table4DImage.at(i)->GetNumberOfRows(); ++row)  
-			{
-				vnl_vector<double> curr_col = currprob.get_column(row);
-				nucSeg->table4DImage.at(i)->SetValueByName(row,"confidence", vtkVariant(curr_col(curr_col.arg_max())));
-				if(curr_col(curr_col.arg_max()) > confidence_thresh) 
-				{
-					nucSeg->table4DImage.at(i)->SetValueByName(row,"prediction_active", vtkVariant(curr_col.arg_max()+1));						
-				}
-				else
-				{
-					nucSeg->table4DImage.at(i)->SetValueByName(row,"prediction_active", vtkVariant(0));
-				}
-			}
-			prediction_names = ftk::GetColumsWithString( "prediction_active" , nucSeg->table4DImage.at(i) );
-			selection->clear();
-			projectFiles.tableSaved = false;
+		std::vector< vtkSmartPointer<vtkTable> > VectorOfTables;
+		if(myImg->GetImageInfo()->numTSlices==1)
+		{
+			VectorOfTables.push_back(table);
+			table = Perform_Classification(mclr, VectorOfTables, new_table, true).at(0);
 		}
+		else
+		{
+			VectorOfTables = nucSeg->table4DImage;
+			nucSeg->table4DImage = Perform_Classification(mclr, VectorOfTables, new_table, true);
+		}
+		projectFiles.tableSaved = false;
 		activeRun = 1;		
 		this->updateViews();
-	
 	}
+
+}
+
+std::vector< vtkSmartPointer<vtkTable> > NucleusEditor::Perform_Classification(MCLR* mclr_class, std::vector< vtkSmartPointer<vtkTable> > table_vector, vtkSmartPointer<vtkTable> pWizard_table, bool from_model)
+{
+
+	for(int i=0; i<table_vector.size() ; ++i)
+	{	
+		//test_table contains individual tables 
+		vtkSmartPointer<vtkTable> test_table  = vtkSmartPointer<vtkTable>::New();
+		test_table->Initialize();
+
+		test_table->SetNumberOfRows(table_vector.at(i)->GetNumberOfRows());
+		for(int col=0; col<pWizard_table->GetNumberOfColumns(); ++col)
+		{
+			vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+			column->SetName(pWizard_table->GetColumnName(col));
+			test_table->AddColumn(column);	
+		}
+		for(int row = 0; row < (int)table_vector.at(i)->GetNumberOfRows(); ++row)
+		{		
+			vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+			for(int c =0;c<(int)test_table->GetNumberOfColumns();++c)
+				model_data1->InsertNextValue(table_vector.at(i)->GetValueByName(row,test_table->GetColumnName(c)));
+			test_table->InsertNextRow(model_data1);
+		}	
+
+		////// Final Data  to classify after the active training
+		vnl_matrix<double> data_classify;
+		if(from_model)
+		{
+			data_classify =  mclr_class->Normalize_Feature_Matrix(mclr_class->tableToMatrix(test_table), std_dev_vec, mean_vec);
+		}
+		else
+		{
+			data_classify =  mclr_class->Normalize_Feature_Matrix(mclr_class->tableToMatrix(test_table, mclr_class->id_time_val));
+		}
+		data_classify = data_classify.transpose();
+
+		vnl_matrix<double> currprob;
+		if(from_model)
+		{
+			currprob = mclr_class->Test_Current_Model(data_classify, act_learn_matrix);
+		}
+		else
+		{
+			currprob = mclr_class->Test_Current_Model(data_classify);
+		}
+
+		//// Add the Prediction Column 
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName("prediction_active");
+		column->SetNumberOfValues( table_vector.at(i)->GetNumberOfRows() );
+		table_vector.at(i)->AddColumn(column);
+
+		// Add the confidence column
+		vtkSmartPointer<vtkDoubleArray> column_confidence = vtkSmartPointer<vtkDoubleArray>::New();
+		column_confidence->SetName("confidence");
+		column_confidence->SetNumberOfValues( table_vector.at(i)->GetNumberOfRows() );
+		table_vector.at(i)->AddColumn(column_confidence);
+
+		for(int row = 0; (int)row < table_vector.at(i)->GetNumberOfRows(); ++row)  
+		{
+			vnl_vector<double> curr_col = currprob.get_column(row);
+			table_vector.at(i)->SetValueByName(row,"confidence", vtkVariant(curr_col(curr_col.arg_max())));
+			if(curr_col(curr_col.arg_max()) > confidence_thresh) 
+			{
+				table_vector.at(i)->SetValueByName(row,"prediction_active", vtkVariant(curr_col.arg_max()+1));						
+			}
+			else
+			{
+				table_vector.at(i)->SetValueByName(row,"prediction_active", vtkVariant(0));
+			}
+		}
+		prediction_names = ftk::GetColumsWithString( "prediction_active" , table_vector.at(i) );
+		selection->clear();			
+	}
+
+	return table_vector;
 }
 
 
@@ -2598,7 +2252,7 @@ vtkSmartPointer<vtkTable> NucleusEditor::loadActiveLearningModel(std::string fil
 	if ( !inFile.is_open() )
 		return NULL;
 
-	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();	
+	vtkSmartPointer<vtkTable> alm_table = vtkSmartPointer<vtkTable>::New();	
 
 	inFile.getline(line, MAXLINESIZE);
 	while ( !inFile.eof() )
@@ -2616,10 +2270,10 @@ vtkSmartPointer<vtkTable> NucleusEditor::loadActiveLearningModel(std::string fil
 		}	
 		
 		column->SetNumberOfValues(temp_1.size());
-		table->AddColumn(column);
+		alm_table->AddColumn(column);
 		for(int row=0; row<(int)temp_1.size(); ++row)
 		{
-			table->SetValue(row, table->GetNumberOfColumns()-1, temp_1.at(row));
+			alm_table->SetValue(row, alm_table->GetNumberOfColumns()-1, temp_1.at(row));
 		}
 		
 		inFile.getline(line, MAXLINESIZE);
@@ -2627,7 +2281,7 @@ vtkSmartPointer<vtkTable> NucleusEditor::loadActiveLearningModel(std::string fil
 	}
 	inFile.close();
 	
-	return table;
+	return alm_table;
 
 }
 
@@ -3452,7 +3106,6 @@ void NucleusEditor::addCell(int x1, int y1, int x2, int y2, int z)
 void NucleusEditor::deleteCells(void)
 {
 	if(!nucSeg) return;
-//	if(!NucAdjTable) return;
 
 	std::set<long int> sels = selection->getSelections();
 	std::vector<int> ids(sels.begin(), sels.end());
@@ -3479,6 +3132,7 @@ void NucleusEditor::deleteCells(void)
 		projectFiles.adjTablesSaved = false;
 		selection->clear();
 		this->updateViews();
+		
 		segView->SetNucAdjTable(NucAdjTable);
 
 		std::string log_entry = "DELETE , ";
@@ -3845,6 +3499,8 @@ void NucleusEditor::startProcess()
 		pProc->SetOutputImage(labImg);
 	if(table)
 		pProc->SetTable(table);
+	//if(nucSeg->GetCenterMapPointer())
+	//	pProc->SetCenterMapPointer(nucSeg->GetCenterMapPointer());
 	pProc->SetDefinition(&projectDefinition);
 	pProc->Initialize();
 
@@ -3891,6 +3547,7 @@ void NucleusEditor::process()
 	{
 		selection->clear();
 		labImg = pProc->GetOutputImage();
+		//binImg = pProc->GetBinaryImage();
 		segView->SetLabelImage(labImg,selection);
 		this->updateNucSeg();
 		table = pProc->GetTable();
@@ -4318,6 +3975,7 @@ bool QueryDialog::getKMutual()
 //*******************************************************************************************************************************
 //*******************************************************************************************************************************
 //*******************************************************************************************************************************
+
 void NucleusEditor::preprocessImage(void)
 {
 	if(!myImg)
