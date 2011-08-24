@@ -67,6 +67,7 @@ View3D::View3D(QWidget *parent)
 	this->Image.clear();
 	this->TraceFiles.clear();
 	this->SomaFile.clear();
+	this->NucleiFile.clear();
 	this->tempTraceFile.clear();
 	this->backColorR = this->TraceEditSettings.value("mainWin/ColorR", .6).toDouble() ;
 	this->backColorG = this->TraceEditSettings.value("mainWin/ColorG", .6).toDouble() ;
@@ -544,6 +545,8 @@ bool View3D::readProject(QString projectFile)
 {	
 	QString RelativeProjectPath = NULL;
 	unsigned int i =0;
+	vtkSmartPointer<vtkTable> nucleiTable = vtkSmartPointer<vtkTable>::New();
+
 	if (!projectFile.isEmpty())
 	{
 		this->ProjectName = projectFile;
@@ -635,6 +638,13 @@ bool View3D::readProject(QString projectFile)
 				{
 					//the log file reader should be a function and called from here
 				}//end type log
+				else if (type == "Nuclei")
+				{
+					this->NucleiFile.append(FileName.c_str());
+					//reads nuclei table into linked space
+					nucleiTable = ftk::AppendLoadTable(FileName.c_str(), nucleiTable, project->GetTranslationX(i),
+						project->GetTranslationY(i),project->GetTranslationZ(i));
+				}
 			} //end if newFileInfo exists
 		}//end of for project size
 		int maxrow;
@@ -677,6 +687,11 @@ bool View3D::readProject(QString projectFile)
 			this->ShowProjectTable();
 		}
 		//************************************************************************//
+		if (!this->NucleiFile.isEmpty())
+		{
+			// test functions 
+			ftk::SaveTable("C:/Lab/Data/testOutput.txt", nucleiTable);
+		}
 		return true;
 	}// end of project !empty
 	else

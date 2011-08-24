@@ -101,6 +101,7 @@ limitations under the License.
 #include "CellTraceModel.h"
 #include "ImageActors.h"
 #include "ftkCommon/ftkProjectManager.h"
+#include "ftkUtils.h"
 
 class View3D : public QMainWindow 
 {
@@ -256,7 +257,7 @@ private:
 	QTextEdit * EditLogDisplay;
 	
 	QString UserName, LabName, ProjectName;
-	QStringList TraceFiles, Image, SomaFile, tempTraceFile;
+	QStringList TraceFiles, Image, SomaFile, tempTraceFile, NucleiFile;
 	QWidget * bootLoadFiles;
 	QPushButton * BootTrace;
 	QPushButton * BootSoma;
