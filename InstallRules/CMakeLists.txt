@@ -13,6 +13,11 @@ if(APPLE)
   #   If that file changes, this one will likely need a similar change.
   #
 
+set(BUNDLE_LIB_DIRS
+  ${LIB_DIR}
+  ${VXL_DIR}/lib
+)
+
   configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/CompleteBundles.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/CompleteBundles.cmake"

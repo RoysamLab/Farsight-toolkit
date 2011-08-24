@@ -4,7 +4,6 @@
 #   If that file changes, this one will likely need a similar change.
 #
 
-
 # Make sure this CMake has BundleUtilities.cmake:
 #
 if(NOT EXISTS "${CMAKE_ROOT}/Modules/BundleUtilities.cmake")
@@ -29,12 +28,12 @@ include(BundleUtilities)
 fixup_bundle(
   "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/TraceEdit.app"
   ""
-  "@LIB_DIR@"
+  "@BUNDLE_LIB_DIRS@"
   )
 
 fixup_bundle(
   "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/NucleusEditor.app"
   ""
-  "@LIB_DIR@"
+  "@BUNDLE_LIB_DIRS@"
   )
 
