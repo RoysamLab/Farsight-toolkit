@@ -68,7 +68,7 @@ void MultipleNeuronTracer::LoadCurvImage(ImageType3D::Pointer &image, unsigned i
 			}
 		}
 	}
-	CurvImage->Delete();
+
 	std::cout << "Input file size (after zero padding) is " << PaddedCurvImage->GetBufferedRegion().GetSize() << std::endl;
 	size = PaddedCurvImage->GetBufferedRegion().GetSize();
 	CurvImage->Delete();
