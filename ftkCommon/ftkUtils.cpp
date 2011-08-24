@@ -165,7 +165,47 @@ vtkSmartPointer<vtkTable> LoadTable(std::string filename)
 	
 	return table;
 }
+vtkSmartPointer<vtkTable> AppendLoadTable(std::string filename, vtkSmartPointer<vtkTable> initialTable , double tx, double ty, double tz)
+{
+	vtkSmartPointer<vtkTable> outputTable;
+	vtkSmartPointer<vtkTable> newTable = ftk::LoadTable(filename);
+	vtkVariant maxid = 0;
+	if (initialTable->GetNumberOfRows() > 0)
+	{
+		for(vtkIdType r = 0; r < initialTable->GetNumberOfRows() ; r++ )
+		{
+			vtkVariant tempID = initialTable->GetValueByName( r, "ID");
+			if (tempID > maxid)
+			{
+				maxid = tempID;
+			}
+		}//end for rows
+	}
+	for (vtkIdType rnew = 0; rnew < newTable->GetNumberOfRows() ; rnew++ )
+	{
+		vtkVariant tempID = newTable->GetValueByName(rnew , "ID");
+		newTable->SetValueByName(rnew, "ID", vtkVariant(tempID.ToInt() + maxid.ToInt()));
 
+		vtkVariant centroid_X = newTable->GetValueByName(rnew , "centroid_x");
+		newTable->SetValueByName(rnew , "centroid_x",  vtkVariant(centroid_X.ToDouble() + tx));
+
+		vtkVariant centroid_Y = newTable->GetValueByName(rnew , "centroid_y");
+		newTable->SetValueByName(rnew , "centroid_y",  vtkVariant(centroid_Y.ToDouble() + ty));
+
+		vtkVariant centroid_Z = newTable->GetValueByName(rnew , "centroid_z");
+		newTable->SetValueByName(rnew , "centroid_z",  vtkVariant(centroid_Z.ToDouble() + tz));
+	}
+	if (initialTable->GetNumberOfRows() > 0)
+	{
+		outputTable = ftk::AppendTables(initialTable, newTable);
+	}
+	else
+	{
+		outputTable = newTable;
+	}
+	return outputTable;
+
+}
 std::vector< vtkSmartPointer<vtkTable> > LoadTableSeries(std::string filename)
 {
 	std::vector< vtkSmartPointer<vtkTable> > tableVector;
