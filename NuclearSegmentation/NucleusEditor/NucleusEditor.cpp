@@ -2987,7 +2987,7 @@ void NucleusEditor::updateNucSeg(bool ask)
 	else
 	{
 		nucChannel=0;
-		if( !projectDefinition.inputs.size() ) //ISAAC: THIS IS A HACK TO GET THE HISTOPATHOGLOGY PROJECT WORKING WILL FIX SOON SORRY -KEDAR
+		if( !projectDefinition.inputs.size() )
 			projectDefinition.MakeDefaultNucleusSegmentation(nucChannel);
 	}
 

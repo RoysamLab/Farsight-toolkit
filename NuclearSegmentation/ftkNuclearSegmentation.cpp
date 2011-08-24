@@ -405,7 +405,9 @@ bool NuclearSegmentation::ComputeAllGeometries(void)
 	typedef ftk::LabelImageToFeatures< IntrinsicFeatureCalculator::IPixelT,  IntrinsicFeatureCalculator::LPixelT, 3 > FeatureCalcType;
 	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
 	labFilter->SetImageInputs( dataImage->GetItkPtr<IntrinsicFeatureCalculator::IPixelT>(0,channelNumber), labelImage->GetItkPtr<IntrinsicFeatureCalculator::LPixelT>(0,0) );
-	labFilter->SetLevel(1);
+	labFilter->SetLevel(3);
+	labFilter->ComputeTexturesOn();
+	labFilter->ComputeHistogramOn();
 	labFilter->Update();
 
 	bBoxMap.clear();
