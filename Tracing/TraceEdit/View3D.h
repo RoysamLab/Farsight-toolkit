@@ -425,6 +425,7 @@ private:
 	
 	ImageRenderActors *ImageActors;
 	TraceObject* tobj;
+	vtkSmartPointer<vtkTable> nucleiTable;
   //raycast
 	vtkSmartPointer<vtkPolyData> poly;
 	vtkSmartPointer<vtkPolyDataMapper> polymap;

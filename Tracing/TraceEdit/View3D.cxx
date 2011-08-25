@@ -545,7 +545,7 @@ bool View3D::readProject(QString projectFile)
 {	
 	QString RelativeProjectPath = NULL;
 	unsigned int i =0;
-	vtkSmartPointer<vtkTable> nucleiTable = vtkSmartPointer<vtkTable>::New();
+	this->nucleiTable = vtkSmartPointer<vtkTable>::New();
 
 	if (!projectFile.isEmpty())
 	{
@@ -638,11 +638,11 @@ bool View3D::readProject(QString projectFile)
 				{
 					//the log file reader should be a function and called from here
 				}//end type log
-				else if (type == "Nuclei")
+				else if (type == "Nuclei_Table")
 				{
 					this->NucleiFile.append(FileName.c_str());
 					//reads nuclei table into linked space
-					nucleiTable = ftk::AppendLoadTable(FileName.c_str(), nucleiTable, project->GetTranslationX(i),
+					this->nucleiTable = ftk::AppendLoadTable(FileName.c_str(), this->nucleiTable, project->GetTranslationX(i),
 						project->GetTranslationY(i),project->GetTranslationZ(i));
 				}
 			} //end if newFileInfo exists
@@ -690,7 +690,7 @@ bool View3D::readProject(QString projectFile)
 		if (!this->NucleiFile.isEmpty())
 		{
 			// test functions 
-			ftk::SaveTable("C:/Lab/Data/testOutput.txt", nucleiTable);
+			ftk::SaveTable("C:/testOutput.txt", nucleiTable);
 		}
 		return true;
 	}// end of project !empty
@@ -2654,18 +2654,18 @@ void View3D::AddROIPoint()
 }
 void View3D::DrawROI()
 {
-	std::vector<TraceLine*> roots = tobj->GetAllRoots();
-	if (roots.size() == 0)
-		return;	//No roots, so do nothing
+	//std::vector<TraceLine*> roots = tobj->GetAllRoots();
+	//if (roots.size() == 0)
+	//	return;	//No roots, so do nothing
 
-	if (CellModel->getCellCount() == 0)	//Need to calculate cell features before we write to them!
-	{
-		std::vector<CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
-		if (NewCells.size() > 0)
-		{
-			this->CellModel->setCells(NewCells);
-		}
-	}
+	//if (CellModel->getCellCount() == 0)	//Need to calculate cell features before we write to them!
+	//{
+	//	std::vector<CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
+	//	if (NewCells.size() > 0)
+	//	{
+	//		this->CellModel->setCells(NewCells);
+	//	}
+	//}
 	
 	if (this->ROIPoints.size() < 4)
 	{
@@ -2746,6 +2746,41 @@ void View3D::CalculateDistanceToDevice()
 			currCell->setDistanceToROI( std::sqrt(closestPointDist2));
 		}//end for cell count
 	}
+	std::cout<< "im here\n";
+	vtkIdType nucleiRowCount = this->nucleiTable->GetNumberOfRows();
+	if (nucleiRowCount > 0)
+	{
+		// create new column
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName("Distance_To_Device");
+		column->SetNumberOfValues(nucleiRowCount);
+		this->nucleiTable->AddColumn(column);
+		// read coordinates 
+		std::cout<< "im now here\n";
+		for (vtkIdType rowID = 0; rowID < nucleiRowCount; rowID++)
+		{
+			double centroid[3];
+			centroid[0] = this->nucleiTable->GetValueByName(rowID,"centroid_x").ToDouble();
+			centroid[1] = this->nucleiTable->GetValueByName(rowID,"centroid_y").ToDouble();
+			centroid[2] = this->nucleiTable->GetValueByName(rowID,"centroid_z").ToDouble();
+
+			double closestPoint[3];//the coordinates of the closest point will be returned here
+			double closestPointDist2; //the squared distance to the closest point will be returned here
+			vtkIdType cellId; //the cell id of the cell containing the closest point will be returned here
+			int subId; //this is rarely used (in triangle strips only, I believe)
+			cellLocator->FindClosestPoint(centroid, closestPoint, cellId, subId, closestPointDist2);
+
+			this->nucleiTable->SetValueByName(rowID,"Distance_To_Device", vtkVariant(std::sqrt(closestPointDist2)));
+
+			QString nucleifileName = QFileDialog::getSaveFileName(
+				this,
+				tr("Save Nuclei feature File"),
+				"",
+				tr(".txt(*.txt)"));
+			ftk::SaveTable(nucleifileName.toStdString(),this->nucleiTable);
+			//
+		}
+	} // end nuclei dist to device
 }
 void View3D::CalculateCellToCellDistanceGraph()
 {
