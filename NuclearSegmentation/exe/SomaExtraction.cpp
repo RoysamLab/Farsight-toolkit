@@ -196,7 +196,7 @@ int SomaExtractor::relabelBinaryImage(void)
 	relabel->SetMinimumObjectSize( minObjSize );  //Still have to read the segParams file before this
 	//std::cout<<"minObjSize = "<<minObjSize<<std::endl;
 	
-	relabel->InPlaceOn();
+	//relabel->InPlaceOn();
 
 	//Calculate labels
 	try
@@ -209,6 +209,8 @@ int SomaExtractor::relabelBinaryImage(void)
 		std::cerr << excep << std::endl;
 		return EXIT_FAILURE;
     }
+
+	binImage = relabel->GetOutput();
 	
 	std::cout << "Originally there were " << relabel->GetOriginalNumberOfObjects() << " objects" << std::endl;
 	std::cout << "After relabel there are now " << relabel->GetNumberOfObjects() << " objects" << std::endl;
