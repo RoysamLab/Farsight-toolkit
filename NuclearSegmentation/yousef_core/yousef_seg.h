@@ -98,7 +98,7 @@ public:
 	float* getLogImage(){ return logImagePtr; };
 	unsigned short* getClustImage(){ return clustImagePtr; };
 	unsigned short* getSegImage(){ return segImagePtr; };
-	std::vector<int> getImageSize();		// Returns in form [0]numStacks, [1]numRows, [2]numColumns
+	std::vector<int> getImageSize();		// Returns in form [0]numStacks, [1]numRows, [2]numColumns	
 
 	//Return a list of seeds detected during Seeds Detection Function
 	vector<Seed> getSeeds(){ return mySeeds; };

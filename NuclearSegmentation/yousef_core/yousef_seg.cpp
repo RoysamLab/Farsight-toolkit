@@ -1249,15 +1249,15 @@ unsigned char ***TriplePtr(int z, int r, int c)
 void ucharToFloat(unsigned char* fromLoc, float* toLoc,int r, int c, int z, char invert)
 {
 	unsigned char val;
-	int curNode;
+	size_t curNode;
 
 	if ((toLoc != NULL) && (fromLoc != NULL))
 	{
-		for (int k=0; k<z; ++k)
+		for (size_t k=0; k<z; ++k)
 		{
-			for (int j=0; j<r; ++j)
+			for (size_t j=0; j<r; ++j)
 			{
-				for (int i=0; i<c; ++i)
+				for (size_t i=0; i<c; ++i)
 				{
 					curNode = (k*r*c)+(j*c)+i;
 					val = fromLoc[curNode];

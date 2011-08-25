@@ -152,7 +152,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	int max_dist = 1;
 	if(UseDistMap == 1)
 	{
-		for(int i=0; i<r*c*z; i++)
+		for(size_t i=0; i<r*c*z; i++)
 		{				
 			if(bImg[i]>0)
 				iterator1.Set(0.0);//IM[i]);
@@ -183,7 +183,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	}
 
 	float multp = 1.0;
-	for(int i=0; i<r*c*z; i++)
+	for(size_t i=0; i<r*c*z; i++)
 	{
 
 		if(UseDistMap == 1)
@@ -228,7 +228,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	//see if we have enought memory for the LoG step
 	//approximately, we need (20~21)ximage size in bytes
 	//try to allocate memory for an unsigned char* of the 23ximage size
-	int block_divisor = 1; //Assumes you will not overflow RAM (according to Yousef above, you need 24 * image size of RAM, otherwise performance suffers)
+	int block_divisor = 1; //Assumes you will not overflow RAM (according to Yousef above, you need 24 * image size of RAM, otherwise performance suffers) -- this appears to be incorrect for large images -Ho
 
 	int blk = 1;
 	int cntr = 0;
