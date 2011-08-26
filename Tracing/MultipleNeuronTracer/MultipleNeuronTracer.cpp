@@ -1212,77 +1212,77 @@ void MultipleNeuronTracer::Interpolate(float sigma)
 ///////////////////////////////////////////////////////////////////////////////////
 void MultipleNeuronTracer::LoadSomaImage(std::string somaFileName)
 {
-	typedef itk::ImageFileReader<CharImageType3D> SomaReaderType;
-	SomaReaderType::Pointer somaReader = SomaReaderType::New();
-	somaReader->SetFileName(somaFileName);
-	SomaImage = somaReader->GetOutput();
-	somaReader->Update();
+	//typedef itk::ImageFileReader<CharImageType3D> SomaReaderType;
+	//SomaReaderType::Pointer somaReader = SomaReaderType::New();
+	//somaReader->SetFileName(somaFileName);
+	//SomaImage = somaReader->GetOutput();
+	//somaReader->Update();
 }
 
 void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 {
-	std::cout << "Removing nodes that fall inside the somas of the Curvelets Image" << std::endl;
+	//std::cout << "Removing nodes that fall inside the somas of the Curvelets Image" << std::endl;
 
-	unsigned int originalSize = SWCNodeContainer.size();
+	//size_t originalSize = SWCNodeContainer.size();
 
-	//find the root nodes of each tree
-	std::map<long, SWCNode*> treeIDToRootMap;
-	std::vector<SWCNode*>::iterator sit;
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit)
-	{
-		//assume that a node with no parent is a centroid
-		if( (*sit)->parent == NULL )
-		{
-			treeIDToRootMap[(*sit)->TreeID] = (*sit);
-		}
-	}
+	////find the root nodes of each tree
+	//std::map<long long, SWCNode*> treeIDToRootMap;
+	//std::vector<SWCNode*>::iterator sit;
+	//for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit)
+	//{
+	//	//assume that a node with no parent is a centroid
+	//	if( (*sit)->parent == NULL )
+	//	{
+	//		treeIDToRootMap[(*sit)->TreeID] = (*sit);
+	//	}
+	//}
 
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end();)
-	{
-		//don't check nodes that are outside the extent of the soma image
-		if ( !SomaImage->GetLargestPossibleRegion().IsInside( (*sit)->ndx ) )
-		{
-			++sit;
-			continue;
-		}
+	//for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end();)
+	//{
+	//	//don't check nodes that are outside the extent of the soma image
+	//	if ( !SomaImage->GetLargestPossibleRegion().IsInside( (*sit)->ndx ) )
+	//	{
+	//		++sit;
+	//		continue;
+	//	}
 
-		//don't remove centroid nodes
-		if( (*sit)->parent == NULL )
-		{
-			++sit;
-			continue;
-		}
+	//	//don't remove centroid nodes
+	//	if( (*sit)->parent == NULL )
+	//	{
+	//		++sit;
+	//		continue;
+	//	}
 
-		//remove any other node that falls within a soma
-		if ( SomaImage->GetPixel( (*sit)->ndx ) != 0 )
-		{
-			delete (*sit);
-			sit = SWCNodeContainer.erase(sit);
-		}
+	//	//remove any other node that falls within a soma
+	//	if ( SomaImage->GetPixel( (*sit)->ndx ) != 0 )
+	//	{
+	//		delete (*sit);
+	//		sit = SWCNodeContainer.erase(sit);
+	//	}
 
-		//otherwise if its parent lies within a soma reassign it to be a child
-		//of the centroid instead.
-		else
-		{
-			SWCNode *parent = (*sit)->parent;
-			if ( !SomaImage->GetLargestPossibleRegion().IsInside( parent->ndx ) )
-			{
-				++sit;
-				continue;
-			}
-			if( SomaImage->GetPixel( parent->ndx ) != 0)
-			{
-				(*sit)->parent = treeIDToRootMap[(*sit)->TreeID];
-				(*sit)->PID = treeIDToRootMap[(*sit)->TreeID]->ID;
-			}
-			++sit;
-		}
-	}
+	//	//otherwise if its parent lies within a soma reassign it to be a child
+	//	//of the centroid instead.
+	//	else
+	//	{
+	//		SWCNode *parent = (*sit)->parent;
+	//		if ( !SomaImage->GetLargestPossibleRegion().IsInside( parent->ndx ) )
+	//		{
+	//			++sit;
+	//			continue;
+	//		}
+	//		if( SomaImage->GetPixel( parent->ndx ) != 0)
+	//		{
+	//			(*sit)->parent = treeIDToRootMap[(*sit)->TreeID];
+	//			(*sit)->PID = treeIDToRootMap[(*sit)->TreeID]->ID;
+	//		}
+	//		++sit;
+	//	}
+	//}
 
-	unsigned int newSize = SWCNodeContainer.size();
-	std::cout << "Just removed " << originalSize - newSize
-		<< " nodes (" << originalSize << " to " << newSize << ")"
-		<< std::endl;
+	//size_t newSize = SWCNodeContainer.size();
+	//std::cout << "Just removed " << originalSize - newSize
+	//	<< " nodes (" << originalSize << " to " << newSize << ")"
+	//	<< std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////

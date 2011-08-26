@@ -9,7 +9,7 @@ int main(int argc, char* argv[])
 	argv[3] = "C:\\ROYSAMLAB\\FARSIGHT\\BINARY\\exe\\Debug\\ParameterFile.ini";
 	argv[4] = "C:\\ROYSAMLAB\\FARSIGHT\\BINARY\\exe\\Debug\\SegParams.ini";*/
 	
-	if (argc < 5)
+	if (argc < 4)
 	{
 		std::cout << "MultipleNeuronTracer.exe <InputFileName> <SomaCentroids.txt> <CostThreshold (Usually 1000)> <SomaImageFileName>" << std::endl;
 		return -1;
@@ -33,9 +33,9 @@ int main(int argc, char* argv[])
 	MNT->SetCostThreshold(atof(argv[3]));
 	std::cout << "SetCostThreshold took: " << (clock() - SetCostThreshold_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
-	clock_t LoadSomaImage_start_time = clock();
-	MNT->LoadSomaImage(std::string(argv[4]));
-	std::cout << "LoadSomaImage took: " << (clock() - LoadSomaImage_start_time)/(float) CLOCKS_PER_SEC << std::endl;
+	//clock_t LoadSomaImage_start_time = clock();
+	//MNT->LoadSomaImage(std::string(argv[4]));
+	//std::cout << "LoadSomaImage took: " << (clock() - LoadSomaImage_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
 	clock_t RunTracing_start_time = clock();
 	MNT->RunTracing();
