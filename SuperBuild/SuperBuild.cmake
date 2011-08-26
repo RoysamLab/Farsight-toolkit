@@ -1,6 +1,6 @@
 include(ExternalProject)
 
-set(base "${CMAKE_BINARY_DIR}/ExternalProjects")
+set(base "${CMAKE_BINARY_DIR}/SB")
 set_property(DIRECTORY PROPERTY EP_BASE ${base})
 
 set(install_dir "${base}/Install")
