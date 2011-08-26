@@ -690,7 +690,7 @@ bool View3D::readProject(QString projectFile)
 		if (!this->NucleiFile.isEmpty())
 		{
 			// test functions 
-			ftk::SaveTable("C:/testOutput.txt", nucleiTable);
+			//ftk::SaveTable("C:/testOutput.txt", nucleiTable);
 		}
 		return true;
 	}// end of project !empty
@@ -2746,7 +2746,6 @@ void View3D::CalculateDistanceToDevice()
 			currCell->setDistanceToROI( std::sqrt(closestPointDist2));
 		}//end for cell count
 	}
-	std::cout<< "im here\n";
 	vtkIdType nucleiRowCount = this->nucleiTable->GetNumberOfRows();
 	if (nucleiRowCount > 0)
 	{
@@ -2756,7 +2755,6 @@ void View3D::CalculateDistanceToDevice()
 		column->SetNumberOfValues(nucleiRowCount);
 		this->nucleiTable->AddColumn(column);
 		// read coordinates 
-		std::cout<< "im now here\n";
 		for (vtkIdType rowID = 0; rowID < nucleiRowCount; rowID++)
 		{
 			double centroid[3];
@@ -2771,16 +2769,69 @@ void View3D::CalculateDistanceToDevice()
 			cellLocator->FindClosestPoint(centroid, closestPoint, cellId, subId, closestPointDist2);
 
 			this->nucleiTable->SetValueByName(rowID,"Distance_To_Device", vtkVariant(std::sqrt(closestPointDist2)));
-
-			QString nucleifileName = QFileDialog::getSaveFileName(
-				this,
-				tr("Save Nuclei feature File"),
-				"",
-				tr(".txt(*.txt)"));
-			ftk::SaveTable(nucleifileName.toStdString(),this->nucleiTable);
-			//
 		}
+		QString nucleifileName = QFileDialog::getSaveFileName(
+			this, tr("Save Nuclei feature File"), "", tr(".txt(*.txt)"));
+		ftk::SaveTable(nucleifileName.toStdString(),this->nucleiTable);
 	} // end nuclei dist to device
+	if ((cellCount >= 1)&&(nucleiRowCount > 0))
+	{
+		vtkSmartPointer<vtkTable> OutputTable = this->CellModel->getDataTable();
+		vtkIdType nucleiColSize = this->nucleiTable->GetNumberOfColumns();
+		vtkIdType nucleiRowSize = this->nucleiTable->GetNumberOfRows();
+		for (vtkIdType nucleiColIter = 0; nucleiColIter< nucleiColSize; nucleiColIter++)
+		{
+			//
+			vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+			column->SetName(this->nucleiTable->GetColumnName(nucleiColIter));
+			column->SetNumberOfValues(OutputTable->GetNumberOfRows());
+			OutputTable->AddColumn(column);
+		}
+		for (vtkIdType somaRowIter = 0; somaRowIter < OutputTable->GetNumberOfRows(); somaRowIter++)
+		{
+			// search for nucli thats within radii of soma 
+			double distance, somaRadii,  x1, y1, z1; 
+			somaRadii = OutputTable->GetValueByName(somaRowIter, "Soma Radii").ToDouble();
+			x1 = OutputTable->GetValueByName(somaRowIter, "Soma X").ToDouble();
+			y1 = OutputTable->GetValueByName(somaRowIter, "Soma Y").ToDouble();
+			z1 = OutputTable->GetValueByName(somaRowIter, "Soma Z").ToDouble();
+			bool found = false;
+			vtkIdType nucleiRowIter = 0;
+			while (!found && (nucleiRowIter < nucleiRowSize))
+			{
+				double x, y, z, x2, y2, z2;
+				x2 = this->nucleiTable->GetValueByName(nucleiRowIter,"centroid_x").ToDouble();
+				y2 = this->nucleiTable->GetValueByName(nucleiRowIter,"centroid_y").ToDouble();
+				z2 = this->nucleiTable->GetValueByName(nucleiRowIter,"centroid_z").ToDouble();
+				x = pow((x1 - x2),2);
+				y = pow((y1 -y2),2);
+				z = pow((z1 -z2),2);
+				distance = sqrt(x +y +z);
+				if (distance < somaRadii)
+				{
+					for (vtkIdType nucleiColIter = 0; nucleiColIter< nucleiColSize; nucleiColIter++)
+					{
+						const char* colName = this->nucleiTable->GetColumnName(nucleiColIter);
+						vtkVariant colData = this->nucleiTable->GetValue(nucleiRowIter, nucleiColIter);
+						OutputTable->SetValueByName(somaRowIter, colName, colData);
+					}
+					found = true;
+				}
+				nucleiRowIter++;
+			}//end nuclei match search
+			if (!found)
+			{
+				for (vtkIdType nucleiColIter = 0; nucleiColIter< nucleiColSize; nucleiColIter++)
+				{
+					const char* colName = this->nucleiTable->GetColumnName(nucleiColIter);
+					OutputTable->SetValueByName(somaRowIter, colName, vtkVariant(-PI));
+				}
+			}
+		}//end of soma row
+		QString nucleifileName = QFileDialog::getSaveFileName(
+			this, tr("Save Somas with Nuclei features File"), "", tr(".txt(*.txt)"));
+		ftk::SaveTable(nucleifileName.toStdString(),OutputTable);
+	}// end of matching soma to nuclei
 }
 void View3D::CalculateCellToCellDistanceGraph()
 {
