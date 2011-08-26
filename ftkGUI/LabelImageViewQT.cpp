@@ -1325,12 +1325,12 @@ void LabelImageViewQT::drawObjectIDs(QPainter *painter)
 
 	const ftk::Image::Info *labImInfo = labelImg->GetImageInfo();
 	int currentZ = vSpin->value();
-	if (labImInfo->numTSlices >1)
-	{
-		int currentT = hSpin->value();
-		centerMap = &(centerMapVector.at(currentT));
-		bBoxMap = &(boxMapVector.at(currentT)) ;
-	}
+	//if (labImInfo->numTSlices >1)
+	//{
+	//	int currentT = hSpin->value();
+	//	centerMap = &(centerMapVector.at(currentT));
+	//	bBoxMap = &(boxMapVector.at(currentT)) ;
+	//}
 
 	
 	//Iterate through each object and write its id at its centroid.

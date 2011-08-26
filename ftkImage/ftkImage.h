@@ -94,6 +94,7 @@ public:
 	template <typename newType> void Cast();	//Cast the Image to newType (does not scale)
 	template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer GetItkPtr(int T, int CH, PtrMode mode);	//IF pixelType agrees with image pixel type, PtrMode defaults to DEFAULT
 	template <typename pixelType> pixelType * GetSlicePtr(int T, int CH, int Z,PtrMode mode = DEFAULT);	// IF pixelType agrees with image pixel type (NOTE MEMORY MANAGER DOES NOT CHANGE)
+//	template <typename pixelType> void CreateData3DFromItkPtr(typename itk::Image<pixelType, 3>::Pointer itkImagePtr);
 
 	typedef struct 
 	{
@@ -128,8 +129,7 @@ private:
 	void operator=(const Self&);	//purposely not implemented
 
 	typedef struct
-	{
-		void * mem;						//A Memory Block Ptr
+	{	void * mem;						//A Memory Block Ptr
 		WhoManageMemory manager;		//Who Manages this memory block?
 	} ImageMemoryBlock;
 
@@ -165,6 +165,7 @@ private:
 	template<typename TComp> void LoadImageITK(std::string fileName, unsigned int numChannels, itkPixelType pixType, bool stacksAreForTime, bool appendChannels);
 	template<typename TComp> void LoadImageITK(std::string filename, unsigned int numChannels, bool stacksAreForTime, bool appendChannels);
 	template<typename TComp, unsigned int channels> void LoadImageITK(std::string fileName, bool stacksAreForTime, bool appendChannels);
+
 };
 
 }  // end namespace ftk

@@ -241,7 +241,7 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 
 //Update the features in this table whose names match (sets doFeat)
 //Will create new rows if necessary:
-void IntrinsicFeatureCalculator::Update(vtkSmartPointer<vtkTable> table, std::map<int, ftk::Object::Point> * cc, std::map<int, ftk::Object::Box> * bbox, vtkSmartPointer<vtkTable> NucAdjTable)
+void IntrinsicFeatureCalculator::Update(vtkSmartPointer<vtkTable> table, std::map<int, ftk::Object::Point> * cc, std::map<int, ftk::Object::Box> * bbox, vtkSmartPointer<vtkTable> NucAdjTable, int currtime)
 {
 	if(!intensityImage || !labelImage)
 		return;
@@ -372,7 +372,7 @@ void IntrinsicFeatureCalculator::Update(vtkSmartPointer<vtkTable> table, std::ma
 			c.x = (int)features->Centroid[0];
 			c.y = (int)features->Centroid[1];
 			c.z = (int)features->Centroid[2];
-			c.t = 0;
+			c.t = currtime;
 			(*cc)[(int)id] = c;
 		}
 
@@ -386,8 +386,8 @@ void IntrinsicFeatureCalculator::Update(vtkSmartPointer<vtkTable> table, std::ma
 			b.max.y = (int)features->BoundingBox[3];
 			b.min.z = (int)features->BoundingBox[4];
 			b.max.z = (int)features->BoundingBox[5];
-			b.min.t = 0;
-			b.max.t = 0;
+			b.min.t = currtime;
+			b.max.t = currtime;
 			(*bbox)[(int)id] = b;
 		}
 	}

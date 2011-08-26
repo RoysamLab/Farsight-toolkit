@@ -72,8 +72,8 @@ public:
 	bool RunClustering(bool getResultImg = false);				//Will use binary image and seeds to do initial clustering
 	bool Finalize();											//Will finilize the output using alpha expansion
 	void ReleaseSegMemory();									//Delete the NucleusSeg object to release all of its memory.
-	bool ComputeAllGeometries();									//Compute all geometries for the label image!!!
-	bool ComputeAllGeometries(int numTimes);									//Compute all geometries and return the features for the label image across time!!!
+	bool ComputeAllGeometries();								//Compute all geometries for the label image!!!
+	bool ComputeAllGeometries(int numTimes);					//Compute all geometries and return the features for the label image across time!!!
 
 	//For use when loading from pre-existing results:
 	bool LoadLabelImage(std::string fname);						//Filename of the label image to load
@@ -115,9 +115,7 @@ public:
 	ftk::Image::Pointer GetDataImage(void){ return dataImage; };	
 	ftk::Image::Pointer GetLabelImage(void){ return labelImage; };
 	std::map<int, ftk::Object::Point> * GetCenterMapPointer(){ return &centerMap; };
-	//std::vector<std::map<int, ftk::Object::Point> >  GetCenterMapVectorPointer(){ return centerMap4DImage; };		// Overloaded function for time dimension
 	std::map<int, ftk::Object::Box> * GetBoundingBoxMapPointer(){ return &bBoxMap; };	
-	//std::vector<std::map<int, ftk::Object::Box> > GetBoundingBoxMapVectorPointer(){ return bBoxMap4DImage; };	// Overloaded function for time dimension		
 	std::vector<std::map<int, ftk::Object::Point> >  centerMap4DImage;
 	std::vector<std::map<int, ftk::Object::Box> > bBoxMap4DImage;	
 	std::vector<std::vector<ftk::IntrinsicFeatures> > featureVector4DImage;
@@ -135,6 +133,7 @@ public:
 #ifdef USE_TRACKING
 	void SetTrackFeatures(std::vector<std::vector<ftk::TrackPointFeatures> > trackfeatures);
 #endif
+	void setCurrentTime(int t = 0){currentTime = t;};
 protected:
 	std::string errorMessage;
 
@@ -145,6 +144,7 @@ protected:
 	ftk::Image::Pointer labelImage;		//My label image
 	yousef_nucleus_seg *NucleusSeg;		//The Nuclear Segmentation module
 	int lastRunStep;					//0,1,2,3,4 for the stages in a nuclear segmentation.
+	int currentTime;					//current Nucleus Editor time slider.
 			
 	std::string paramFilename;
 	std::vector<Parameter> myParameters;
@@ -153,9 +153,6 @@ protected:
 	//Geometry information that is kept for editing purposes:
 	std::map<int, ftk::Object::Box>		bBoxMap;			//Bounding boxes
 	std::map<int, ftk::Object::Point>	centerMap;			//Centroids
-	//Geometry and feature information for 4D Images:
-	//std::vector<std::vector<ftk::IntrinsicFeatures>> featureVector4DImage;
-
 
 
 	bool GetResultImage();									//Gets the result of last module and puts it in labelImage

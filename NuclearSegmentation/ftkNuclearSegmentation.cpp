@@ -415,11 +415,7 @@ bool NuclearSegmentation::ComputeAllGeometries(void)
 
 	//Now populate centroid and bounding box maps::
 	std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
-//	const Image::Info * labimInfo = labelImage->GetImageInfo();
 
-
-//	for (int t=0; t<labimInfo->numTSlices; t++)
-//	{
 		for (int i=0; i<(int)labels.size(); ++i)
 		{
 			FeatureCalcType::LabelPixelType id = labels.at(i);
@@ -447,7 +443,6 @@ bool NuclearSegmentation::ComputeAllGeometries(void)
 			centerMap[(int)id] = c;
 
 		}
-//	}
 	return true;
 }
 
@@ -541,7 +536,8 @@ bool NuclearSegmentation::ComputeAllGeometries(int ntimes)
 		centerMap.clear();
 		featureVector.clear();
 	}
-
+		centerMap = centerMap4DImage.at(currentTime);
+		bBoxMap = bBoxMap4DImage.at(currentTime);
 	//Create Mega Table : Concatenated table of all the tables
 	createMegaTable();
 
@@ -904,7 +900,10 @@ bool NuclearSegmentation::SaveLabelByClass()
 long int NuclearSegmentation::maxID(void)
 {
 	long int max = -1;
-
+	
+	if (!centerMap4DImage.empty())
+		centerMap = centerMap4DImage.at(currentTime);
+	
 	if(centerMap.size() == 0)
 		return max;
 
@@ -948,11 +947,13 @@ void NuclearSegmentation::ReassignLabels(vector<int> fromIds, int toId)
 		{
 			for(int c=region.min.x; c <= region.max.x; ++c)
 			{
-				int pix = (int)labelImage->GetPixel(0,0,z,r,c);
+				int pix = (int)labelImage->GetPixel(region.min.t,0,z,r,c); // Fix for channels
 				for(int i = 0; i < (int)fromIds.size(); ++i)
 				{
 					if( pix == fromIds.at(i) )
-						labelImage->SetPixel(0,0,z,r,c,toId);
+					{
+						labelImage->SetPixel(region.min.t,0,z,r,c,toId);  // Fix for channels
+					}
 				}
 			}
 		}
@@ -982,10 +983,10 @@ std::vector<int> NuclearSegmentation::GetNeighbors(int id)
 
 	typedef ftk::LabelImageToFeatures< IntrinsicFeatureCalculator::IPixelT,  IntrinsicFeatureCalculator::LPixelT, 3 > FeatureCalcType;
 	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
-	//itk::Image<IntrinsicFeatureCalculator::IPixelT, 3>::Pointer chImg = dataImage->GetItkPtr<IntrinsicFeatureCalculator::IPixelT>(0,channelNumber);
-	//itk::Image<IntrinsicFeatureCalculator::LPixelT, 3>::Pointer lbImg = labelImage->GetItkPtr<IntrinsicFeatureCalculator::LPixelT>(0,0);
-	labFilter->SetImageInputs( dataImage->GetItkPtr<IntrinsicFeatureCalculator::IPixelT>(0,channelNumber), labelImage->GetItkPtr<IntrinsicFeatureCalculator::LPixelT>(0,0), regionIndex, regionSize );
-//	labFilter->SetImageInputs( chImg, lbImg, regionIndex, regionSize );
+	itk::Image<IntrinsicFeatureCalculator::IPixelT, 3>::Pointer chImg = dataImage->GetItkPtr<IntrinsicFeatureCalculator::IPixelT>(currentTime,channelNumber);
+	itk::Image<IntrinsicFeatureCalculator::LPixelT, 3>::Pointer lbImg = labelImage->GetItkPtr<IntrinsicFeatureCalculator::LPixelT>(currentTime,0);
+//	labFilter->SetImageInputs( dataImage->GetItkPtr<IntrinsicFeatureCalculator::IPixelT>(0,channelNumber), labelImage->GetItkPtr<IntrinsicFeatureCalculator::LPixelT>(0,0), regionIndex, regionSize );
+	labFilter->SetImageInputs( chImg, lbImg, regionIndex, regionSize );
 	labFilter->SetLevel(3);	//Needed for neighbor information
 	labFilter->Update();
 
@@ -1794,6 +1795,12 @@ void NuclearSegmentation::removeObjectFromMaps(int ID, vtkSmartPointer<vtkTable>
 	
 	centerMap.erase( ID );
 	bBoxMap.erase( ID );
+	if((!centerMap4DImage.empty())&& (!bBoxMap4DImage.empty()))
+	{
+		centerMap4DImage.at(currentTime).erase( ID );
+		bBoxMap4DImage.at(currentTime).erase( ID );
+	}
+	
 }
 
 //Calculate the features within a specific region of the image for a specific ID, and update the table
@@ -1807,12 +1814,57 @@ bool NuclearSegmentation::addObjectToMaps(int ID, int x1, int y1, int z1, int x2
 bool NuclearSegmentation::addObjectsToMaps(std::set<unsigned short> IDs, int x1, int y1, int z1, int x2, int y2, int z2, vtkSmartPointer<vtkTable> table, vtkSmartPointer<vtkTable> NucAdjTable)
 {
 	IntrinsicFeatureCalculator * calc = new IntrinsicFeatureCalculator();
-	calc->SetInputImages(dataImage, labelImage);
+	ftk::Image::Pointer chImg = ftk::Image::New();
+	ftk::Image::Pointer lbImg = ftk::Image::New();
+	ftk::Image::PtrMode mode;
+	mode = static_cast<ftk::Image::PtrMode>(2); //use DEEP_COPY mode
+
+	itk::Image<unsigned char, 3>::Pointer dataImageItk = dataImage->GetItkPtr<unsigned char>(currentTime,0, mode);
+	itk::Image<unsigned short, 3>::Pointer labelImageItk = labelImage->GetItkPtr<unsigned short>(currentTime,0, mode);
+
+	//chImg->CreateData3DFromItkPtr<unsigned char>(dataImageItk);
+	//lbImg->CreateData3DFromItkPtr<unsigned short>(labelImageItk);
+
+	ftk::Image::DataType dataType = dataImage->GetImageInfo()->dataType;
+	ftk::Image::DataType labelType = labelImage->GetImageInfo()->dataType;
+	unsigned char databpPix = dataImage->GetImageInfo()->bytesPerPix;
+	unsigned char labelbpPix = labelImage->GetImageInfo()->bytesPerPix;
+	unsigned short cs = dataImage->GetImageInfo()->numColumns;
+	unsigned short rs = dataImage->GetImageInfo()->numRows;
+	unsigned short zs = dataImage->GetImageInfo()->numZSlices;
+	std::string name;
+	if (dataImage->GetImageInfo()->numTSlices > 2)
+	{
+		std::vector< std::vector <std::string> > FileNames = dataImage->GetTimeChannelFilenames();
+		name = FileNames.at(currentTime).at(0);
+	}
+	else
+	{
+		std::vector< std::string > FileNames = dataImage->GetFilenames();
+		name = FileNames.at(0);
+	}
+
+
+	std::vector<unsigned char> color(3,255);
+
+	chImg->AppendChannelFromData3D(dataImageItk->GetBufferPointer(), dataType, databpPix, cs, rs, zs, name, color, true);
+	lbImg->AppendChannelFromData3D(labelImageItk->GetBufferPointer(), labelType, labelbpPix, cs, rs, zs, name, color, true);
+
+	calc->SetInputImages(chImg, lbImg);
+//	calc->SetInputImages(dataImage, labelImage);
 	calc->SetRegion(x1,y1,z1,x2,y2,z2);
 	calc->SetIDs(IDs);
-	calc->Update(table, &centerMap, &bBoxMap, NucAdjTable);
+	if((!centerMap4DImage.empty())&& (!bBoxMap4DImage.empty()))
+	{
+		if (centerMap.empty())
+			centerMap = centerMap4DImage.at(currentTime);
+		if (bBoxMap.empty())
+			bBoxMap = bBoxMap4DImage.at(currentTime);
+	}
+	calc->Update(table, &centerMap, &bBoxMap, NucAdjTable, currentTime);
 	//calc->UpdateZernike(zernikeTable);
 	delete calc;
+
 
 	/*
 	FeatureCalcType::Pointer labFilter = computeGeometries(x1,y1,z1,x2,y2,z2);

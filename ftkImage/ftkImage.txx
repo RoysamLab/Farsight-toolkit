@@ -165,6 +165,40 @@ template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::
 
 	return image;
 }
+//template <typename pixelType> void CreateData3DFromItkPtr(typename itk::Image<pixelType, 3>::Pointer itkImagePtr)
+//{
+//	typedef itk::Image< pixelType, 3 >	ImageType;
+//	typedef typename ImageType::Pointer	ImagePointer;	
+//
+//	if(imageDataPtrs.size() > 0)
+//		return;
+//	ImagePointer img = itkImagePtr;
+//	//Set up the size info of the new image I am about to copy:
+//	typename ImageType::RegionType region = img->GetBufferedRegion();
+//	typename ImageType::RegionType::IndexType start = region.GetIndex();
+//	typename ImageType::RegionType::SizeType size = region.GetSize();
+//
+//	//Info of this new image!!
+//	m_Info.numColumns = size[0] - start[0];				//x-dimension
+//	m_Info.numRows = size[1] - start[1];				//y-dimension
+//	m_Info.numZSlices = size[2] - start[2];				//z-dimension
+//	m_Info.numTSlices = 1;		  						//t-dimension
+//	m_Info.bytesPerPix = sizeof(pixelType);				
+//	m_Info.dataType = pixelType;							
+//	m_Info.numChannels = 1;								
+//	m_Info.spacing.assign(3,1);			
+//
+//	//Resize the vector:
+//	imageDataPtrs.resize(m_Info.numTSlices);
+//	unsigned int numBytesPerChunk = m_Info.BytesPerChunk();
+//	ImageMemoryBlock block;
+//	block.manager = FTK;
+//	memcpy(mem,img->GetBufferPointer(),numBytesPerChunk);
+//	block.mem = mem;
+//	imageDataPtrs[0].push_back(block);
+//	img = 0;
+//
+//}
 
 template <typename newType> void Image::Cast()
 {
