@@ -56,7 +56,7 @@ endif()
 #
 ExternalProject_Add(VXL
   SVN_REPOSITORY "https://vxl.svn.sourceforge.net/svnroot/vxl/trunk"
-  SVN_REVISION -r "29473"
+  SVN_REVISION -r "32878"
   CMAKE_GENERATOR ${gen}
   CMAKE_ARGS
     -DCMAKE_INSTALL_PREFIX:PATH=${install_dir}/vxl
@@ -70,9 +70,9 @@ ExternalProject_Add(VXL
     -DBUILD_OXL:BOOL=OFF
     -DBUILD_PRIP:BOOL=OFF
     -DBUILD_TBL:BOOL=OFF
-	-DBUILD_RPL:BOOL= On
-	-DBUILD_RPL_RGTL:BOOL= ON
-	-DBUILD_RPL_RTVL:BOOL= ON
+    -DBUILD_RPL:BOOL=ON
+    -DBUILD_RPL_RGTL:BOOL=ON
+    -DBUILD_RPL_RTVL:BOOL=ON
     -DBUILD_TESTING:BOOL=${testing}
     ${mac_args}
 )
@@ -105,8 +105,8 @@ endif()
 # VTK
 #
 ExternalProject_Add(VTK
-  GIT_REPOSITORY git://vtk.org/VTK.git
-  GIT_TAG v5.6.1
+  URL http://farsight-toolkit.org/support/VTK-Source-Aug-23-2011.tar.gz
+  URL_MD5 05ff74f0c562084ffcfe6cf203355eb7 
   CMAKE_GENERATOR ${gen}
   CMAKE_ARGS
     -DCMAKE_INSTALL_PREFIX:PATH=${install_dir}
@@ -119,6 +119,7 @@ ExternalProject_Add(VTK
     -DQT_QMAKE_EXECUTABLE:FILEPATH=${QT_QMAKE_EXECUTABLE}
     -DVTK_USE_GUISUPPORT:BOOL=ON
     -DVTK_USE_QT:BOOL=ON
+    -DVTK_USE_QTCHARTS:BOOL=ON
     -DVTK_USE_RPATH:BOOL=ON
     -DVTK_QT_USE_WEBKIT:BOOL=OFF
     -DBoost_INCLUDE_DIR:FILEPATH=${boost}
@@ -129,8 +130,8 @@ ExternalProject_Add(VTK
 set(VTK_DIR ${base}/Build/VTK)
 
 ExternalProject_Add(ITK
-  GIT_REPOSITORY git://itk.org/ITK.git
-  GIT_TAG v3.20.0
+  URL http://farsight-toolkit.org/support/ITKv4.0a09-Source.tar.gz
+  URL_MD5 f56d34dae721f67ae8151a6f9657075b 
   CMAKE_GENERATOR ${gen}
   CMAKE_ARGS
     -DCMAKE_INSTALL_PREFIX:PATH=${install_dir}
@@ -142,6 +143,7 @@ ExternalProject_Add(ITK
     -DITK_USE_SYSTEM_VXL:BOOL=ON
     -DVXL_DIR:FILEPATH=${base}/Build/VXL
     ${mac_args}
+  INSTALL_COMMAND ""
   DEPENDS
     "VXL"
 )
