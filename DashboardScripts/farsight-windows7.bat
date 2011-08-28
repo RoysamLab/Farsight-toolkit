@@ -1,0 +1,1 @@
+call "c:/Program Files (x86)/CMake 2.8/bin/ctest.exe -S "C:/dashboard/src/farsight/DashboardScripts/farsight-windows7_dbg_static_nightly.cmake" -VV -O C:/dashboard/farsight_dbg_static_nightly_log.txt
