@@ -34,4 +34,4 @@ VTK_USE_QTCHARTS:BOOL=ON
 VTK_USE_BOOST:BOOL=ON
 ")
 
-SET(CTEST_CVS_COMMAND "C:/Program Files (x86)/Git/bin/git.exe")
+SET(CTEST_CVS_COMMAND "C:/Program Files (x86)/Git/cmd/git.cmd")

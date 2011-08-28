@@ -31,4 +31,4 @@ ITK_BUILD_ALL_MODULES:BOOL=ON
 ITK_USE_64BITS_IDS:BOOL=ON
 ")
 
-SET(CTEST_CVS_COMMAND "C:/Program Files (x86)/Git/bin/git.exe")
+SET(CTEST_CVS_COMMAND "C:/Program Files (x86)/Git/cmd/git.cmd")
