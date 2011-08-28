@@ -1,0 +1,33 @@
+SET(CTEST_SOURCE_NAME farsight)
+SET(CTEST_BINARY_NAME farsight-nightly-dbg)
+SET(CTEST_DASHBOARD_ROOT "/home/gramak/dashboard")
+SET(CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
+SET(CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
+
+SET (CTEST_START_WITH_EMPTY_BINARY_DIRECTORY TRUE)
+
+SET(CTEST_COMMAND
+  "/usr/local/bin/ctest -V -VV -D Nightly -A ${CTEST_SCRIPT_DIRECTORY}/${CTEST_SCRIPT_NAME}"
+)
+
+SET(CTEST_CMAKE_COMMAND
+  "/usr/local/bin/cmake"
+)
+
+SET(CTEST_INITIAL_CACHE "
+SITE:STRING=farsight-opensuse
+BUILDNAME:STRING=gcc45-x86_64-nightly-debug
+CMAKE_GENERATOR:INTERNAL=Unix Makefiles
+MAKECOMMAND:STRING=/usr/bin/make -i -j16
+CMAKE_BUILD_TYPE:STRING=Debug
+BUILD_SHARED_LIBS:BOOL=OFF
+BUILD_TracingSystem:BOOL=ON
+BUILD_TRACKER:BOOL=ON
+ITK_DIR:PATH=/home/gramak/dashboard/itk-nightly-dbg
+VTK_DIR:PATH=/home/gramak/dashboard/vtk-nightly-dbg
+VXL_DIR:PATH=/home/gramak/dashboard/vxl-nightly-dbg
+Boost_INCLUDE_DIR:PATH=/home/gramak/dashboard/boost
+USE_TRACKING:BOOL=ON
+")
+
+SET(CTEST_CVS_COMMAND "/usr/bin/svn")
