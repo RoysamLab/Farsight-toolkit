@@ -16,12 +16,16 @@ SET(CTEST_CMAKE_COMMAND
 
 SET( CMPLR_PATH "C:/Program Files (x86)/Microsoft Visual Studio 9.0/Common7/IDE/devenv.com" )
 SET( FPROJ_PATH "C:/dashboard/bin/farsight-nightly/Farsight.sln" )
+SET( PRLL_STR_CXX "/DWIN32 /D_WINDOWS /W3 /Zm1000 /EHsc /GR /MP16" )
+SET( PRLL_STR_C "/DWIN32 /D_WINDOWS /W3 /Zm1000 /MP16" )
 
 SET(CTEST_INITIAL_CACHE "
 SITE:STRING=farsight-win_7_64
 BUILDNAME:STRING=vs9-64-dbg-nightly
 CMAKE_GENERATOR:INTERNAL=Visual Studio 9 2008 Win64
 MAKECOMMAND:STRING=${CMPLR_PATH} ${FPROJ_PATH} /build Debug /project ALL_BUILD
+CMAKE_CXX_FLAGS:STRING=${PRLL_STR_CXX}
+CMAKE_C_FLAGS:STRING=${PRLL_STR_C}
 BUILD_SHARED_LIBS:BOOL=OFF
 ITK_DIR:PATH=C:/dashboard/bin/itk-nightly
 VTK_DIR:PATH=C:/dashboard/bin/vtk-nightly
