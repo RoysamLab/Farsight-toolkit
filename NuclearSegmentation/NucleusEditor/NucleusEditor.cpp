@@ -1009,6 +1009,7 @@ void NucleusEditor::loadProject()
 	else
 	{	
 		myImg = ftk::LoadImageSeries( projectFiles.GetFullInput() );
+		imageNames = ftk::GetSeriesPaths( projectFiles.GetFullInput() );
 		segView->SetChannelImage(myImg);
 	}
 
@@ -1783,27 +1784,52 @@ void NucleusEditor::updateDatabase()
 	if(table){
 		dbConn = ftk::sqliteOpenConnection();
 		if( dbConn ){
-			for (int col = 1; col< table->GetNumberOfColumns(); ++col){
-				std::string temp3=table->GetColumnName(col);
-				col_names.push_back(temp3);
-			}
-			std::string table_name = "IMAGE_TEST";
-			ftk::checkForUpdate( dbConn, col_names );
+			if(tableVector.size()==0){
+				for (int col = 1; col< table->GetNumberOfColumns(); ++col){
+					std::string temp3=table->GetColumnName(col);
+					col_names.push_back(temp3);
+				}
+				std::string table_name = "IMAGE_TEST";
+				ftk::checkForUpdate( dbConn, col_names );
 
-			std::string image_name;
-			image_name = lastPath.toStdString() + "Nucleus_Editor_Image";
-			char *im_nm_cstr = new char [image_name.size()+1];
-			strcpy (im_nm_cstr, image_name.c_str());
-			char *path_nm_cstr = new char [lastPath.toStdString().size()+1];
-			strcpy (path_nm_cstr, lastPath.toStdString().c_str());
-			std::vector< double > table_array;
-			for (int row = 0; row< table->GetNumberOfRows(); ++row){
-				for (int col = 0; col< table->GetNumberOfColumns(); ++col){
-					table_array.push_back(table->GetValue(row,col).ToDouble());
+				std::string image_name;
+				image_name = lastPath.toStdString() + "Nucleus_Editor_Image";
+				char *im_nm_cstr = new char [image_name.size()+1];
+				strcpy (im_nm_cstr, image_name.c_str());
+				char *path_nm_cstr = new char [lastPath.toStdString().size()+1];
+				strcpy (path_nm_cstr, lastPath.toStdString().c_str());
+				std::vector< double > table_array;
+				for (int row = 0; row< table->GetNumberOfRows(); ++row){
+					for (int col = 0; col< table->GetNumberOfColumns(); ++col){
+						table_array.push_back(table->GetValue(row,col).ToDouble());
+					}
+				}
+				int sql_db_img_id = ftk::GenericInsert( dbConn, im_nm_cstr, table_name.c_str(), path_nm_cstr, table_array,table->GetNumberOfColumns(), table->GetNumberOfRows(), col_names );
+				std::cout << "The image ID on the database is: " << sql_db_img_id << std::endl;
+			}
+			else{
+				for (int col = 1; col< tableVector.at(0)->GetNumberOfColumns(); ++col){
+					std::string temp3=tableVector.at(0)->GetColumnName(col);
+					col_names.push_back(temp3);
+				}
+				std::string table_name = "IMAGE_TEST";
+				ftk::checkForUpdate( dbConn, col_names );
+				for (int i = 0; i< tableVector.size(); ++i){
+					std::string image_name = imageNames.at(i) + "Nucleus_Editor_Image";
+					char *im_nm_cstr = new char [image_name.size()+1];
+					strcpy (im_nm_cstr, image_name.c_str());
+					char *path_nm_cstr = new char [lastPath.toStdString().size()+1];
+					strcpy (path_nm_cstr, lastPath.toStdString().c_str());
+					std::vector< double > table_array;
+					for (int row = 0; row< tableVector.at(i)->GetNumberOfRows(); ++row){
+						for (int col = 0; col< tableVector.at(i)->GetNumberOfColumns(); ++col){
+							table_array.push_back(tableVector.at(i)->GetValue(row,col).ToDouble());
+						}
+					}
+					int sql_db_img_id = ftk::GenericInsert( dbConn, im_nm_cstr, table_name.c_str(), path_nm_cstr, table_array,tableVector.at(i)->GetNumberOfColumns(), tableVector.at(i)->GetNumberOfRows(), col_names );
+					std::cout << "The image ID on the database is: " << sql_db_img_id << std::endl;
 				}
 			}
-			int sql_db_img_id = ftk::GenericInsert( dbConn, im_nm_cstr, table_name.c_str(), path_nm_cstr, table_array,table->GetNumberOfColumns(), table->GetNumberOfRows(), col_names );
-			std::cout << "The image ID on the database is: " << sql_db_img_id << std::endl;
 		}
 	}
 }

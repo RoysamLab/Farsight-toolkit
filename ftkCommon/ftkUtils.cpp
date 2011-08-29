@@ -365,6 +365,33 @@ ftk::Image::Pointer LoadImageSeries(std::string filename)
 	return img;
 }
 
+std::vector<std::string> GetSeriesPaths(std::string filename){
+	std::vector<std::string> paths;
+	TiXmlDocument doc;
+	if ( !doc.LoadFile( filename.c_str() ) )
+		return paths;
+
+	TiXmlElement* rootElement = doc.FirstChildElement();
+	const char* docname = rootElement->Value();
+	if ( strcmp( docname, "Image" ) != 0 )
+		return paths;
+
+	TiXmlElement* parentElement = rootElement->FirstChildElement();
+	while (parentElement){
+		const char * parent = parentElement->Value();
+		if ( strcmp( parent, "file" ) == 0 ){
+			std::string file_name = std::string(reinterpret_cast<const char*>(parentElement->GetText()));
+			paths.push_back( file_name );
+			file_name.clear();
+		}
+		parentElement = parentElement->NextSiblingElement();
+	}
+
+	return paths;
+}
+
+
+
 //Loads a time series label images
 ftk::Image::Pointer LoadImageSeriesLabels(std::string filename)
 {

@@ -444,6 +444,7 @@ protected:
 
 	// Loads all the tables of the time series
 	std::vector< vtkSmartPointer<vtkTable> > tableVector;
+	std::vector<std::string> imageNames;
 
 
 };

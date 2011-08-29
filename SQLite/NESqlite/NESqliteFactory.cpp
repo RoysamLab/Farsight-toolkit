@@ -4,6 +4,13 @@
 #endif
 
 #include "NESqliteFactory.h"
+#ifdef _MSC_VER
+    #include <direct.h>
+    #define GetCurDir _getcwd
+#else
+    #include <unistd.h>
+    #define GetCurDir getcwd
+#endif
 
 namespace ftk
 {
@@ -500,7 +507,12 @@ sqlite3 * sqliteOpenConnection()
 	int  exeStatus ;
 	sqlite3 *dbConn; 
 
-	exeStatus = sqlite3_open("./NE.s3db",&dbConn);
+	char cCurrentPath[FILENAME_MAX];
+	GetCurDir(cCurrentPath, sizeof(cCurrentPath));
+	cCurrentPath[sizeof(cCurrentPath) - 1] = '/0';
+
+	std::cout<<cCurrentPath<<"/NE.s3db"<<std::endl;
+	exeStatus = sqlite3_open("./bin/NE.s3db",&dbConn);
 
  	// int sqlite3_open(
     //    const char *filename,  Database filename (UTF-8) 

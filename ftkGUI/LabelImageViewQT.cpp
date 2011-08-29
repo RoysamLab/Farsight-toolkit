@@ -1373,7 +1373,7 @@ void LabelImageViewQT::drawObjectCentroids(QPainter *painter)
 			cls4 = classMap4[id];
 
 		int numColors = (int)centroidColorTable.size();
-		QColor myColor1 = centroidColorTable.at( (cls1-1)%numColors );
+		QColor myColor1 = centroidColorTable.at( (cls1)%numColors );
 		QColor myColor2, myColor3, myColor4;
 		painter->setPen(Qt::black);
 		painter->setBrush(myColor1);
