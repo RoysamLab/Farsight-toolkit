@@ -208,13 +208,18 @@ unsigned short returnthresh( USImageType::Pointer input_image, int num_bin_levs,
 	HistogramType::Pointer histogram = HistogramType::New() ;
 	// initialize histogram
 	HistogramType::SizeType size;
-	HistogramType::MeasurementVectorType lowerBound ;
-	HistogramType::MeasurementVectorType upperBound ;
+	HistogramType::MeasurementVectorType lowerBound;
+	HistogramType::MeasurementVectorType upperBound;
 
-	lowerBound[0] = 0.0;
-	upperBound[0] = (float)255.0;
+	lowerBound.SetSize(1);
+	upperBound.SetSize(1);
+	size.SetSize(1);
+
+	lowerBound(0.0);
+	upperBound.Fill(255.0);
 	size.Fill(numBins);
 
+	histogram->SetMeasurementVectorSize(1);
 	histogram->Initialize(size, lowerBound, upperBound ) ;
 
 	int i=0;

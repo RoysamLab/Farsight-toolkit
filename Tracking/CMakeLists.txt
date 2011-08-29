@@ -54,7 +54,7 @@ TARGET_LINK_LIBRARIES(segmentation   Yousef_Nucleus_Seg  trackingHelpers     ${I
 TARGET_LINK_LIBRARIES(tracking   Yousef_Nucleus_Seg  trackingHelpers     ${ITK_LIBRARIES} )
 TARGET_LINK_LIBRARIES(remove_small_components trackingHelpers)
 IF(CPLEX_FOUND)
-	TARGET_LINK_LIBRARIES(tracking_multiframe   Yousef_Nucleus_Seg  trackingHelpers ${CPLEX_LIBRARIES} ${CONCERT_LIBRARIES} ${WSOCK_WIN} libKPLS     ${ITK_LIBRARIES} )
+	TARGET_LINK_LIBRARIES(tracking_multiframe   Yousef_Nucleus_Seg  trackingHelpers ${CONCERT_LIBRARIES} ${CPLEX_LIBRARIES} ${WSOCK_WIN} libKPLS     ${ITK_LIBRARIES} )
 ENDIF(CPLEX_FOUND)
 TARGET_LINK_LIBRARIES(vessel_thinning   Yousef_Nucleus_Seg  trackingHelpers     ${ITK_LIBRARIES} )
 TARGET_LINK_LIBRARIES(summary   Yousef_Nucleus_Seg  trackingHelpers ftkTrackFeatures     ${ITK_LIBRARIES} )
