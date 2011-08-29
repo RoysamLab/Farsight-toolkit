@@ -19,7 +19,7 @@ SET( VPROJ_PATH "C:/dashboard/bin/vtk-nightly/VTK.sln" )
 
 SET(CTEST_INITIAL_CACHE "
 SITE:STRING=farsight-win_7_64
-BUILDNAME:STRING=vs9-64-dbg-nightly
+BUILDNAME:STRING=vs9-64-dbg-use-boost-svn
 CMAKE_GENERATOR:INTERNAL=Visual Studio 9 2008 Win64
 MAKECOMMAND:STRING=${CMPLR_PATH} ${VPROJ_PATH} /build Debug /project ALL_BUILD
 QT_QMAKE_EXECUTABLE:STRING=C:/Qt/4.7.2/bin/qmake.exe
