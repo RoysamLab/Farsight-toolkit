@@ -49,6 +49,11 @@ if(APPLE)
     -DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=${CMAKE_OSX_DEPLOYMENT_TARGET}
     -DCMAKE_OSX_SYSROOT:PATH=${CMAKE_OSX_SYSROOT}
     )
+  #Mac OS 10.7 (Lion) apparently ships with a version of PNG that VXL doesn't like.
+  #If we're building on this OS, force VXL to build its own version of PNG
+  if(${CMAKE_SYSTEM} MATCHES "Darwin-11")
+    set(png_arg "-DVXL_FORCE_V3P_PNG:BOOL=ON")
+  endif()
 endif()
 
 ############################################################################
@@ -57,6 +62,7 @@ endif()
 ExternalProject_Add(VXL
   SVN_REPOSITORY "https://vxl.svn.sourceforge.net/svnroot/vxl/trunk"
   SVN_REVISION -r "32878"
+  SVN_TRUST_CERT 1
   CMAKE_GENERATOR ${gen}
   CMAKE_ARGS
     -DCMAKE_INSTALL_PREFIX:PATH=${install_dir}/vxl
@@ -75,6 +81,7 @@ ExternalProject_Add(VXL
     -DBUILD_RPL_RTVL:BOOL=ON
     -DBUILD_TESTING:BOOL=${testing}
     ${mac_args}
+    ${png_arg}
 )
 set(VXL_DIR ${base}/Build/VXL)
 
