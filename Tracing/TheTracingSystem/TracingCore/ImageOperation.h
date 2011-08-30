@@ -44,7 +44,7 @@ limitations under the License.
 #include "itkKdTree.h"
 #include "itkKdTreeGenerator.h"
 
-#include "Filters/itkBinaryThinningImageFilter3D.h"
+#include "itkBinaryThinningImageFilter3D.h"
 #include "itkMedianImageFilter.h"
 
 #include "itkImageSliceConstIteratorWithIndex.h"
@@ -55,7 +55,7 @@ limitations under the License.
 
 #include "itkConnectedComponentImageFilter.h"
 #include "itkRelabelComponentImageFilter.h"
-#include "Filters/itkLabelGeometryImageFilter.h"
+#include "itkLabelGeometryImageFilter.h"
 
 //#include "itkImageToVTKImageFilter.h" 
 

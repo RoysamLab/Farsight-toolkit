@@ -46,21 +46,22 @@ ADD_EXECUTABLE(TracingSystem
       TracingCore/SnakeOperation.h
       TracingCore/SnakeOperation.cpp
 
-      TracingCore/Filters/itkLabelGeometryImageFilter.h
-      TracingCore/Filters/itkLabelGeometryImageFilter.txx
-      TracingCore/Filters/itkBinaryThinningImageFilter3D.h
-      TracingCore/Filters/itkBinaryThinningImageFilter3D.txx
-      TracingCore/Filters/itkMaximumProjectionImageFilter.h
-      TracingCore/Filters/itkProjectionImageFilter.h
-      TracingCore/Filters/itkProjectionImageFilter.txx
-  
-      TracingCore/Montage/Register.h
-      TracingCore/Montage/Register.cpp
-
      ${GUI_MOC_SRCS}
      ${GUI_RC_SRCS})
 
+     
+#      TracingCore/Montage/Register.h
+#      TracingCore/Montage/Register.cpp
 
+
+#      TracingCore/Filters/itkLabelGeometryImageFilter.h
+#      TracingCore/Filters/itkLabelGeometryImageFilter.txx
+#      TracingCore/Filters/itkBinaryThinningImageFilter3D.h
+#      TracingCore/Filters/itkBinaryThinningImageFilter3D.txx
+#      TracingCore/Filters/itkMaximumProjectionImageFilter.h
+#      TracingCore/Filters/itkProjectionImageFilter.h
+#      TracingCore/Filters/itkProjectionImageFilter.txx
+ 
 TARGET_LINK_LIBRARIES(TracingSystem ${QT_LIBRARIES} ${TracingSysLibraries} TinyXML)
  
 #MAKE A GUI EXECUTABLE, NOT A CONSOLE APPLICATION

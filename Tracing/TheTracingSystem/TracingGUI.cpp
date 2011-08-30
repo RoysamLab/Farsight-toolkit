@@ -1711,12 +1711,12 @@ void QtTracer::surfaceRendering(bool rand_color, ImagePointer ID)
 
 	 bool decimation = false;
 
-	  typedef itk::CastImageFilter<ImageType,itk::Image<short int, 3>> CasterType;
+	  typedef itk::CastImageFilter< ImageType,itk::Image<short int, 3> > CasterType;
       CasterType::Pointer caster = CasterType::New();
       caster->SetInput(ID);
       caster->Update();
 
-		 std::vector<vtkSmartPointer<vtkPolyData>> aa = getVTKPolyDataPrecise(caster->GetOutput());
+		 std::vector< vtkSmartPointer<vtkPolyData> > aa = getVTKPolyDataPrecise(caster->GetOutput());
 
       for( int i = 0; i <aa.size(); i++ )
 	  {
@@ -1791,12 +1791,12 @@ void QtTracer::surfaceRendering(bool rand_color)
 
 	 bool decimation = false;
 
-	  typedef itk::CastImageFilter<ImageType,itk::Image<short int, 3>> CasterType;
+	  typedef itk::CastImageFilter< ImageType,itk::Image<short int, 3> > CasterType;
       CasterType::Pointer caster = CasterType::New();
       caster->SetInput(IM->ISeg);
       caster->Update();
 
-		 std::vector<vtkSmartPointer<vtkPolyData>> aa = getVTKPolyDataPrecise(caster->GetOutput());
+		 std::vector< vtkSmartPointer<vtkPolyData> > aa = getVTKPolyDataPrecise(caster->GetOutput());
 
       for( int i = 0; i <aa.size(); i++ )
 	  {

@@ -29,12 +29,12 @@ limitations under the License.
 #include "TracingView.h"
 #include "ParametersGroup.h"
 #include "SlidersGroup.h"
-#include "TracingCore\Montage\Register.h"
+#include "TracingCore/Montage/Register.h"
 #include "dialogs.h"
 #include "dialogs_montage.h"
 #include "time.h"
 #include <vnl/vnl_random.h> 
-#include "Rendering\ImageActors.h"
+#include "Rendering/ImageActors.h"
 #include "vtkWindowToImageFilter.h"
 #include "vtkPNGWriter.h"
 
@@ -334,20 +334,20 @@ private:
 	vtkSmartPointer<vtkActor> seed_actor;
 	vtkSmartPointer<vtkBoundingBox> BoundingBox;
 
-	std::vector<vtkSmartPointer<vtkActor>> line_actors;
-	std::vector<vtkSmartPointer<vtkActor>> tube_actors;
+	std::vector< vtkSmartPointer<vtkActor> > line_actors;
+	std::vector< vtkSmartPointer<vtkActor> > tube_actors;
     vtkSmartPointer<vtkActor> tracing_line_actor;
 
-	std::vector<vtkSmartPointer<vtkActor>> branch_actors;
-	std::vector<vtkSmartPointer<vtkActor>> boundary_actors;
-	std::vector<vtkSmartPointer<vtkActor>> mesh_actors;
-	std::vector<vtkSmartPointer<vtkActor>> soma_mesh_actors;
+	std::vector< vtkSmartPointer<vtkActor> > branch_actors;
+	std::vector< vtkSmartPointer<vtkActor> > boundary_actors;
+	std::vector< vtkSmartPointer<vtkActor> > mesh_actors;
+	std::vector< vtkSmartPointer<vtkActor> > soma_mesh_actors;
 
 	vnl_matrix<double> soma_color;
 
 	//vtk event to Qt Slot
 	vtkEventQtSlotConnect *Connections;
-	std::vector<vtkSmartPointer<vtkActor>> pick_sphere_actors;
+	std::vector< vtkSmartPointer<vtkActor> > pick_sphere_actors;
 	PointList3D picked_pts;
 	bool soma_seeding;
 
