@@ -1815,11 +1815,11 @@ void NucleusEditor::updateDatabase()
 				std::string table_name = "IMAGE_TEST";
 				ftk::checkForUpdate( dbConn, col_names );
 				for (int i = 0; i< tableVector.size(); ++i){
-					std::string image_name = imageNames.at(i) + "Nucleus_Editor_Image";
+					std::string image_name = imageNames.at(i);
 					char *im_nm_cstr = new char [image_name.size()+1];
 					strcpy (im_nm_cstr, image_name.c_str());
 					char *path_nm_cstr = new char [lastPath.toStdString().size()+1];
-					strcpy (path_nm_cstr, lastPath.toStdString().c_str());
+					strcpy (path_nm_cstr, ftk::GetFilePath(image_name).c_str());
 					std::vector< double > table_array;
 					for (int row = 0; row< tableVector.at(i)->GetNumberOfRows(); ++row){
 						for (int col = 0; col< tableVector.at(i)->GetNumberOfColumns(); ++col){
@@ -1830,6 +1830,7 @@ void NucleusEditor::updateDatabase()
 					std::cout << "The image ID on the database is: " << sql_db_img_id << std::endl;
 				}
 			}
+			ftk::sqliteCloseConnection( dbConn );
 		}
 	}
 }
