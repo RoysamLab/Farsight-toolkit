@@ -346,7 +346,7 @@ vcl_vector<unsigned int> getTimeAssociations(std::vector<FeaturesType> &a,std::v
 		}
 	}
 	printf("About to call vnl_hungarian_algorithm\n");
-	vcl_vector<unsigned int> ret = vnl_hungarian_algorithm(mat);
+	vcl_vector<unsigned int> ret = vnl_hungarian_algorithm<double>(mat);
 	printf("Returned from vnl_hungarian_algorithm\n");
 	for(unsigned int counter=0; counter< ret.size(); counter++)
 	{
