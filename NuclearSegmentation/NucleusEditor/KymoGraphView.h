@@ -180,7 +180,7 @@ class TrackingKymoView: public QObject
 {
 	Q_OBJECT
 public:
-	TrackingKymoView(ftk::Image::Pointer myImg,std::vector<std::vector<ftk::IntrinsicFeatures>> vvfeatures )
+	TrackingKymoView(ftk::Image::Pointer myImg,std::vector< std::vector<ftk::IntrinsicFeatures> > vvfeatures )
 	{
 		myfeatures = vvfeatures;
 		my4DImg = myImg;
@@ -255,7 +255,7 @@ private:
 	int m_currenttime;
 
 	ftk::Image::Pointer my4DImg;
-	std::vector<std::vector<ftk::IntrinsicFeatures>> myfeatures;
+	std::vector< std::vector<ftk::IntrinsicFeatures> > myfeatures;
 
 	vtkSmartPointer<vtkRenderer> m_vtkrenderer;
 	vtkSmartPointer<vtkActor> m_selectionactor;

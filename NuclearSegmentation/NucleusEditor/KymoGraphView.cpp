@@ -250,7 +250,7 @@ void TrackingKymoView::GenerateTracks()
 {
 	printf("Started GenerateTracks\n");
 //	std::vector<std::vector<ftk::LabelImageFeatures>> *f = m_model->getFeatures();
-	std::vector<std::vector<ftk::IntrinsicFeatures>> *f = &myfeatures;
+	std::vector< std::vector<ftk::IntrinsicFeatures> > *f = &myfeatures;
 	int max_track_num = 0;
 	for(int cox=0; cox< f->size(); cox++)
 	{
