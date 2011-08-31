@@ -133,7 +133,7 @@ vnl_matrix <double> MCLR::tableToMatrix(vtkSmartPointer<vtkTable> table,std::vec
 	return FeatsMatrix;
 }
 
-vnl_matrix <double> MCLR::tableToMatrix(vtkSmartPointer<vtkTable> table)
+vnl_matrix <double> MCLR::tableToMatrix_1(vtkSmartPointer<vtkTable> table)
 {
 	
 	vnl_matrix <double> FeatsMatrix(table->GetNumberOfRows(),table->GetNumberOfColumns());
@@ -182,7 +182,7 @@ vnl_matrix <double> MCLR::Normalize_Feature_Matrix(vnl_matrix<double> feats)
 	return feats;
 }
 
-vnl_matrix <double> MCLR::Normalize_Feature_Matrix(vnl_matrix<double> feats, vnl_vector<double> vector_1, vnl_vector<double> vector_2)
+vnl_matrix <double> MCLR::Normalize_Feature_Matrix_1(vnl_matrix<double> feats, vnl_vector<double> vector_1, vnl_vector<double> vector_2)
 {
 	std_vec = vector_1;
 	mean_vec = vector_2;
@@ -1077,7 +1077,7 @@ vnl_matrix<double> MCLR::Test_Current_Model(vnl_matrix<double> test_data)
 	return f;
 }
 
-vnl_matrix<double> MCLR::Test_Current_Model(vnl_matrix<double> test_data, vnl_matrix<double> m_w_matrix)
+vnl_matrix<double> MCLR::Test_Current_Model_1(vnl_matrix<double> test_data, vnl_matrix<double> m_w_matrix)
 {	
 	vnl_matrix<double> f;
 	vnl_matrix<double> test_data_bias = Add_Bias(test_data);

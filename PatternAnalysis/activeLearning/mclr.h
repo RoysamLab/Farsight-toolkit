@@ -105,7 +105,7 @@ public:
 	vnl_matrix<double> Get_F_Matrix(vnl_matrix<double> data_bias,vnl_matrix<double> w_temp);
 	vnl_matrix<double> Normalize_F_Sum(vnl_matrix<double> f);
 	vnl_matrix<double> Test_Current_Model(vnl_matrix<double> test_data);
-	vnl_matrix<double> Test_Current_Model(vnl_matrix<double> test_data, vnl_matrix<double> m_w_matrix);
+	vnl_matrix<double> Test_Current_Model_1(vnl_matrix<double> test_data, vnl_matrix<double> m_w_matrix);
 	vnl_matrix<double> GetActiveLearningMatrix(){ return m.w;};
 	//vnl_matrix <double> Normalize_Feature_Matrix(vnl_matrix<double> feats);
 	model Get_Training_Model();
@@ -114,9 +114,9 @@ public:
 	void Get_Label_Sample(int query);
 	FILE* FDeclare2(char *root, char *extension, char key);
 	vnl_matrix <double> tableToMatrix(vtkSmartPointer<vtkTable> table,std::vector< std::pair<double,double> > id_list);
-	vnl_matrix <double> tableToMatrix(vtkSmartPointer<vtkTable> table);
+	vnl_matrix <double> tableToMatrix_1(vtkSmartPointer<vtkTable> table);
 	vnl_matrix <double> Normalize_Feature_Matrix(vnl_matrix<double> feats);
-	vnl_matrix <double> Normalize_Feature_Matrix(vnl_matrix<double> feats, vnl_vector<double> vector_1, vnl_vector<double> vector_2);
+	vnl_matrix <double> Normalize_Feature_Matrix_1(vnl_matrix<double> feats, vnl_vector<double> vector_1, vnl_vector<double> vector_2);
 	int Active_Query();
 	std::vector<int> Get_Top_Features();
 	vnl_vector<double> Get_Std_Dev(){ return std_vec; };
