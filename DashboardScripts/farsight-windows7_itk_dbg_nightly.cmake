@@ -14,7 +14,7 @@ SET(CTEST_CMAKE_COMMAND
   "\"c:/Program Files (x86)/CMake 2.8/bin/cmake.exe\""
   )
 
-find_program(CTEST_GIT_COMMAND NAMES git)
+find_program(CTEST_GIT_COMMAND NAMES "git.cmd" HINTS "C:/Program Files (x86)/Git/cmd/git.cmd")
 
 SET( CMPLR_PATH "C:/Program Files (x86)/Microsoft Visual Studio 9.0/Common7/IDE/devenv.com" )
 SET( VPROJ_PATH "C:/dashboard/bin/itk-nightly/ITK.sln" )
