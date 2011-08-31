@@ -2217,7 +2217,7 @@ std::vector< vtkSmartPointer<vtkTable> > NucleusEditor::Perform_Classification(M
 		vnl_matrix<double> data_classify;
 		if(from_model)
 		{
-			data_classify =  mclr_class->Normalize_Feature_Matrix(mclr_class->tableToMatrix(test_table), std_dev_vec, mean_vec);
+			data_classify =  mclr_class->Normalize_Feature_Matrix_1(mclr_class->tableToMatrix_1(test_table), std_dev_vec, mean_vec);
 		}
 		else
 		{
@@ -2228,7 +2228,7 @@ std::vector< vtkSmartPointer<vtkTable> > NucleusEditor::Perform_Classification(M
 		vnl_matrix<double> currprob;
 		if(from_model)
 		{
-			currprob = mclr_class->Test_Current_Model(data_classify, act_learn_matrix);
+			currprob = mclr_class->Test_Current_Model_1(data_classify, act_learn_matrix);
 		}
 		else
 		{
