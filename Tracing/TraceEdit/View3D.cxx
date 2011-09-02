@@ -711,6 +711,7 @@ void View3D::ShowProjectTable()
 	this->projectFilesDock->show();
 	int setrow = Image.size() + SomaFile.size();
 	this->projectFilesTable->setRowCount(setrow);
+	int j = 0;
 	for ( i = 0; i < project->size(); i++)
 	{
 		bool found = false;
@@ -730,38 +731,41 @@ void View3D::ShowProjectTable()
 					//std::cout << "found " << FileName << std::endl;
 					found = true;
 				}
-			}
+			} //end if newFileInfo exists
 			else
 			{
 				found = true;
 			}  
-			if (found)
+			
+			if (found && type == "Image")
 			{
 				//1st column of table
 				QTableWidgetItem *newfileItem = new QTableWidgetItem(QString::fromStdString(FileName1));
 				newfileItem->setFlags(newfileItem->flags() & (~Qt::ItemIsEditable));
-				projectFilesTable->setItem(i,0,newfileItem);
+				projectFilesTable->setItem(j,0,newfileItem);
 				//2nd column of table
 				QTableWidgetItem *newtypeItem = new QTableWidgetItem(type);
 				newtypeItem->setFlags(newtypeItem->flags() & (~Qt::ItemIsEditable));
-				projectFilesTable->setItem(i,1,newtypeItem);		
+				projectFilesTable->setItem(j,1,newtypeItem);		
 				//3rd column of table
 				QTableWidgetItem *newrenderItem = new QTableWidgetItem(tr("on"));
 				newrenderItem->setFlags(newrenderItem->flags() & (~Qt::ItemIsEditable));
-				projectFilesTable->setItem(i,2,newrenderItem);
+				projectFilesTable->setItem(j,2,newrenderItem);
 				//4th column of projectfiletable
 				if (this->viewIn2D || this->Use2DSlicer->isChecked()){
 					QTableWidgetItem *dimensionItem = new QTableWidgetItem(tr("2d"));
 					dimensionItem->setFlags(dimensionItem->flags() & (~Qt::ItemIsEditable));
-					projectFilesTable->setItem(i,3,dimensionItem);
-				}else{
+					projectFilesTable->setItem(j,3,dimensionItem);
+				}
+				else
+				{
 					QTableWidgetItem *dimensionItem = new QTableWidgetItem(tr("3d"));
 					dimensionItem->setFlags(dimensionItem->flags() & (~Qt::ItemIsEditable));
-					projectFilesTable->setItem(i,3,dimensionItem);
+					projectFilesTable->setItem(j,3,dimensionItem);
 				}
-
+				j++;
 				//this->ImageActors->setRenderStatus(i);	
-			} //end if newFileInfo exists
+			}
 		} //end of filetype is image or soma
 	}// end of project !empty
 	this->projectFilesDock->show();
@@ -1983,6 +1987,7 @@ void View3D::setProjectionMode()
 		QTableWidgetItem *Item2D = new QTableWidgetItem(tr("2d"));
 		Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
 		this->projectFilesTable->setItem(i,3,Item2D);
+		std::cout << "i: " << i << "make 2D." << std::endl;
 		/***************************************************************/
 	}
 
