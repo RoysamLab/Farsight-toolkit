@@ -2687,7 +2687,7 @@ void View3D::DrawROI()
 	for (ROIPoints_iter = ROIPoints.begin(); ROIPoints_iter != ROIPoints.end(); ROIPoints_iter++)
 	{
 		vtkROIpoints->InsertNextPoint(*ROIPoints_iter);
-		std::cout << "Poppping point: " << (*ROIPoints_iter)[0] << " " << (*ROIPoints_iter)[1] << " " << (*ROIPoints_iter)[2] << std::endl;
+		//std::cout << "Poppping point: " << (*ROIPoints_iter)[0] << " " << (*ROIPoints_iter)[1] << " " << (*ROIPoints_iter)[2] << std::endl;
 		delete *ROIPoints_iter;
 		*ROIPoints_iter = NULL;
 		count++; //size of polygon vertex
@@ -2714,6 +2714,7 @@ void View3D::DrawROI()
 	extrude->SetExtrusionTypeToNormalExtrusion();
 	extrude->SetVector(0, 0, 1 );
 	extrude->SetScaleFactor (100);
+	//extrude->CappingOff();
 	extrude->Update();
 	// Setup actor and mapper
 	vtkSmartPointer<vtkPolyDataMapper> ROImapper = vtkSmartPointer<vtkPolyDataMapper>::New();
@@ -2724,7 +2725,7 @@ void View3D::DrawROI()
 	ROIactor->SetMapper(ROImapper);
 
 	this->Renderer->AddActor(ROIactor);
-	this->Rerender();
+	this->QVTK->GetRenderWindow()->Render();
 }
 
 void View3D::CalculateDistanceToDevice()

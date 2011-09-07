@@ -380,7 +380,7 @@ void CellTraceModel::WriteCellCoordsToFile(const char *fileName)
 void CellTraceModel::createCellToCellGraph()
 {
 	std::map< unsigned int, std::vector<float> > centroidMap;
-	for(int i = 0; i < this->Cells.size(); i++)
+	for(unsigned int i = 0; i < this->Cells.size(); i++)
 	{
 		unsigned int id = this->Cells.at(i)->rootID();
 		std::vector<float> cellCoord;
