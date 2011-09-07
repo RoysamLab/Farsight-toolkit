@@ -5,12 +5,21 @@ MCLR::MCLR()
 {
 	current_label = -1; // keeps a track of the current label
 	confidence_threshold = 0.7;
+	model k;
 }
 
 MCLR::~MCLR()
 {
 
 }
+
+
+struct sort_pred {
+    bool operator()(const std::pair<int,int> &left, const std::pair<int,int> &right) {
+        return left.first > right.first;
+    }
+};
+
 
 
 // x contains the training features
@@ -67,8 +76,6 @@ void MCLR::Initialize(vnl_matrix<double> data,double c,vnl_vector<double> classe
 		}
 	}
 	
-
-
 	//m.method = "direct"; // No kernel is the default
 	m.sparsity_control = c; // greater the value , more is the sparsity
 	m.kstd_level = 1; // kernel sigma val
@@ -111,8 +118,7 @@ vnl_matrix <double> MCLR::tableToMatrix(vtkSmartPointer<vtkTable> table,std::vec
 {
 	
 	vnl_matrix <double> FeatsMatrix(table->GetNumberOfRows(),table->GetNumberOfColumns());
-	vnl_matrix <double> FeatsMatrix_no_id(table->GetNumberOfRows(),table->GetNumberOfColumns()-1);
-
+	
 	//extract data from the model and get min/max values:
 	for(unsigned int r=0; r < table->GetNumberOfRows() ; ++r)
 	{
@@ -124,16 +130,10 @@ vnl_matrix <double> MCLR::tableToMatrix(vtkSmartPointer<vtkTable> table,std::vec
 	
 	// Contains the ids and time of nuclei.
 	this->id_time_val = id_time;
-
-	//// The first column in vtkTable is always ID 
-	//// remove id 
-	//FeatsMatrix_no_id = FeatsMatrix.get_n_columns(1,FeatsMatrix.cols()-1);
-	
-	//return FeatsMatrix_no_id;
 	return FeatsMatrix;
 }
 
-vnl_matrix <double> MCLR::tableToMatrix_1(vtkSmartPointer<vtkTable> table)
+vnl_matrix <double> MCLR::tableToMatrix_w(vtkSmartPointer<vtkTable> table)
 {
 	
 	vnl_matrix <double> FeatsMatrix(table->GetNumberOfRows(),table->GetNumberOfColumns());
@@ -165,7 +165,6 @@ vnl_matrix <double> MCLR::Normalize_Feature_Matrix(vnl_matrix<double> feats)
 	std_vec = stats.sd();
 	mean_vec = stats.mean();
 	
-
 //The last column is the training column 
 	for(int i = 0; i<feats.columns() ; ++i)
 	{
@@ -175,14 +174,12 @@ vnl_matrix <double> MCLR::Normalize_Feature_Matrix(vnl_matrix<double> feats)
 			for(int j =0; j<temp_col.size() ; ++j)
 				temp_col[j] = (temp_col[j] - mean_vec(i))/std_vec(i) ;
 		}
-	
 		feats.set_column(i,temp_col);
 	}
-
 	return feats;
 }
 
-vnl_matrix <double> MCLR::Normalize_Feature_Matrix_1(vnl_matrix<double> feats, vnl_vector<double> vector_1, vnl_vector<double> vector_2)
+vnl_matrix <double> MCLR::Normalize_Feature_Matrix_w(vnl_matrix<double> feats, vnl_vector<double> vector_1, vnl_vector<double> vector_2)
 {
 	std_vec = vector_1;
 	mean_vec = vector_2;
@@ -365,11 +362,7 @@ void MCLR::Get_Hessian(vnl_matrix<double> data_with_bias)
 		vnl_matrix<double> temp_matrix =  -data_with_bias*diagonal_matrix*data_with_bias.transpose();
 		temp_hessian.update(temp_matrix,(i-1)*(no_of_features+1),(i-1)*(no_of_features+1));
 
-
-		//
-		//for(int k = 0; k< class_vector.size() ; ++k)
-		//	std::cout<<class_vector(k)<<"--------------"<<std::endl;	
-			
+		
 		vnl_vector<int> all_class_but_i;
 		all_class_but_i.set_size(class_vector.size()-1);
 		int counter = 0;
@@ -383,8 +376,6 @@ void MCLR::Get_Hessian(vnl_matrix<double> data_with_bias)
 			}
 		}	
 
-		//for(int k = 0; k< class_vector.size() ; ++k)
-		//	std::cout<<class_vector(k)<<"--------------"<<std::endl;
 		
 		for(int k = 0; k< all_class_but_i.size() ; ++k)
 		{	
@@ -421,12 +412,6 @@ void MCLR::Get_Hessian(vnl_matrix<double> data_with_bias)
 		temp_hessian = temp_hessian - diagonal_matrix;
 		//temp_hessian.extract(hessian,no_of_features+2,no_of_features+2);
 		hessian = temp_hessian;
-
-		//std::cout<<"------------------------------------------------------"<<std::endl;
-		//std::cout<<hessian.get_row(0)<<std::endl;
-		//std::cout<<"------------------------------------------------------"<<std::endl;
-		//std::cout<<hessian.get_row(115)<<std::endl;
-		//std::cout<<"------------------------------------------------------"<<std::endl;
 
 }	
 
@@ -731,6 +716,7 @@ double MCLR::logit_g(double alpha,vnl_matrix<double> data_with_bias)
 		 diff_term += sqrt(w_temp(i,j)*w_temp(i,j)+delta);
 	  }
 	}	
+
 	diff_term = diff_term * m.sparsity_control;	
 	gVal = diff_term-gVal;
 	return gVal;
@@ -771,13 +757,13 @@ std::vector<int> MCLR::Get_Top_Features()
 
 
 
+
 MCLR::model MCLR::Get_Training_Model()
 {	
 	// Set the z matrix 
 	z.set_size(no_of_classes,x.cols());// Used in gradient computation
 	z.fill(0);
 	 
-
 	// Create the z matrix
 	for(int i=0;i<x.cols();++i)
 	{
@@ -785,14 +771,10 @@ MCLR::model MCLR::Get_Training_Model()
 		temp_vector.put(y.get(i)-1,1);
 		z.set_column(i,temp_vector);
 	}
-
+	
 
 	vnl_vector<double> diff_g_3_it(3,0);//difference in g vals for last 3 iterations
 	vnl_vector<double> g_4_it(4,0);	// g vals for the last three
-
-	//std::cout<<x.cols()<<std::endl;
-	//std::cout<<test_data.rows()<<std::endl;
-	//std::cout<< x.get_n_columns(0,2)<< std::endl; 
 
 	for(int i =0;i<1e10;++i)
 	{	
@@ -830,15 +812,11 @@ MCLR::model MCLR::Get_Training_Model()
 
 	m.FIM = hessian*-1;
 	m.CRB = vnl_matrix_inverse<double>(hessian);
-	
-
 	// quirk of vnl ...
 	m.CRB = m.CRB*-1;
 	//std::cout<<vnl_trace(m.CRB)<<std::endl;
 
-
- //   FILE * fpin1 = FDeclare2("C:\\Users\\rkpadman\\Documents\\MATLAB\\crb.txt", "", 'w');
-
+	//FILE * fpin1 = FDeclare2("C:\\Users\\rkpadman\\Documents\\MATLAB\\crb.txt", "", 'w');
 	//for(int abc =0;abc<hessian.rows();++abc)
 	//{	
 	//	vnl_vector<double> temp = hessian.get_row(abc);
@@ -849,15 +827,104 @@ MCLR::model MCLR::Get_Training_Model()
 	//	fprintf(fpin1, "\n");
 	//}
 
+	//fclose(fpin1);
+	top_features.clear();
+	top_features = Get_Top_Features();
+	return m;
 
+}
+
+
+MCLR::model MCLR::Get_Temp_Training_Model(int query,int label)
+{	
+	current_label = label;
+	vnl_vector<double> queried_sample = test_data.get_row(query);
+	
+	vnl_matrix<double> temp_model_x = x;
+	vnl_vector<double> temp_model_y = y;
+
+	temp_model_x.set_size(temp_model_x.rows(),temp_model_x.cols()+1);
+	temp_model_x.update(x,0,0);
+	temp_model_x.set_column(temp_model_x.cols()-1,queried_sample);
+	
+	// Update y
+	vnl_vector<double> temp_y = y;
+	temp_model_y.set_size(temp_model_y.size()+1);
+	temp_model_y.update(y,0);
+	temp_model_y(y.size()) = label;
+
+	// Set the z matrix 
+	z.set_size(no_of_classes,temp_model_x.cols());// Used in gradient computation
+	z.fill(0);
+	 
+	// Create the z matrix
+	for(int i=0;i<temp_model_x.cols();++i)
+	{
+		vnl_vector<double> temp_vector = z.get_column(i);
+		temp_vector.put(temp_model_y.get(i)-1,1);
+		z.set_column(i,temp_vector);
+	}
+	
+	vnl_vector<double> diff_g_3_it(3,0);//difference in g vals for last 3 iterations
+	vnl_vector<double> g_4_it(4,0);	// g vals for the last three
+
+	for(int i =0;i<1e10;++i)
+	{	
+		//Get the gradient
+		Get_Gradient(Add_Bias(temp_model_x));
+		
+		//Get the hessian
+		Get_Hessian(Add_Bias(temp_model_x));
+
+		//ameliorate hessian conditions
+		Ameliorate_Hessian_Conditions();	
+		
+
+		//Get the direction 
+//		vnl_vector<double> dir = mclr->Newton_Direction(mclr->hessian,mclr->Column_Order_Matrix(mclr->gradient_w));
+//		mclr->direction = mclr->Reshape_Vector(dir,mclr->no_of_features+1,mclr->no_of_classes);
+		direction = Reshape_Vector(Newton_Direction(hessian,Column_Order_Matrix(gradient_w)),no_of_features+1,no_of_classes);
+
+		double step = logit_stepsize();		
+		if(step == -1)
+			step = 1e-9;
+		
+		m.w = m.w + step * direction;
+
+		g_4_it(i%4) = g;	
+
+		if(i>1)
+			diff_g_3_it(i%3) = g_4_it(i%4) - g_4_it((i-1)%4);
+    
+		if (i>3 && (diff_g_3_it.one_norm()/3)/(g_4_it.one_norm()/4) < stop_cond(0))
+			break;
+	}
+	
+	
+
+	m.FIM = hessian*-1;
+	m.CRB = vnl_matrix_inverse<double>(hessian);
+	// quirk of vnl ...
+	m.CRB = m.CRB*-1;
+	//std::cout<<vnl_trace(m.CRB)<<std::endl;
+
+	//FILE * fpin1 = FDeclare2("C:\\Users\\rkpadman\\Documents\\MATLAB\\crb.txt", "", 'w');
+	//for(int abc =0;abc<hessian.rows();++abc)
+	//{	
+	//	vnl_vector<double> temp = hessian.get_row(abc);
+	//	for(int abcd =0;abcd<hessian.cols();++abcd)
+	//	{
+	//		fprintf(fpin1, "%lf    ", temp[abcd]);
+	//	}
+	//	fprintf(fpin1, "\n");
+	//}
 
 	//fclose(fpin1);
 	top_features.clear();
 	top_features = Get_Top_Features();
-
 	return m;
-
 }
+
 
 FILE* MCLR::FDeclare2(char *root, char *extension, char key) {
 	char string1[80];
@@ -890,12 +957,17 @@ FILE* MCLR::FDeclare2(char *root, char *extension, char key) {
 }
 
 
-void MCLR::Update_Train_Data(int query,int label)
+//Updates test_data, x and y,id_time_val,test_table
+void MCLR::Update_Train_Data(std::vector< std::pair<int,int> > query_label)
 {
-	current_label = label;
+	std::sort(query_label.begin(), query_label.end(), sort_pred());
+
+	for(int i = 0; i<query_label.size();++i)
+	{
+	current_label = query_label.at(i).second;
+	int query = query_label.at(i).first;
 	vnl_vector<double> queried_sample = test_data.get_row(query);
 	vnl_matrix<double> sub_test_matrix(test_data.rows()-1,test_data.cols());
-
 	//std::cout<<list_of_ids.at(query) <<std::endl; 
 
 	if(query!=0)
@@ -909,11 +981,10 @@ void MCLR::Update_Train_Data(int query,int label)
 		sub_test_matrix = test_data.get_n_rows(1,test_data.rows()-1);
 
 		test_data = sub_test_matrix;
-
 		//queried_sample = queried_sample.extract(queried_sample.size(),0);
 		
 		// if label == 0, then the user selected " I am not sure" option 
-		if(label!=0)
+		if(current_label!=0)
 		{
 		vnl_matrix<double> temp_x = x;
 		x.set_size(x.rows(),x.cols()+1);
@@ -925,14 +996,13 @@ void MCLR::Update_Train_Data(int query,int label)
 		vnl_vector<double> temp_y = y;
 		y.set_size(y.size()+1);
 		y.update(temp_y,0);
-		y(temp_y.size()) = label;
+		y(temp_y.size()) = current_label;
 		}
 		
 		//Update list of ids and the table
 		id_time_val.erase(id_time_val.begin()+query);
 		test_table->RemoveRow(query);
-
-
+	}
 }
 
 void MCLR::Get_Label_Sample(int query)
@@ -1017,8 +1087,10 @@ int MCLR::Active_Query()
 	}
 
 	max_info_vector.push_back(max_info);
+	
+	std::cout<< max_info << std::endl;
 
-//	std::cout<<max_info_vector.size() << "--" << max_info <<std::endl;
+	//	std::cout<<max_info_vector.size() << "--" << max_info <<std::endl;
 
 	if(max_info_vector.size()>1)
 	  diff_info_3_it((max_info_vector.size()-1)%3) =  max_info_vector.at((max_info_vector.size()-1)) - max_info_vector.at((max_info_vector.size()-2));
@@ -1026,13 +1098,13 @@ int MCLR::Active_Query()
 
 	 info_3_it((max_info_vector.size()-1)%3) = max_info;	
 	
-	if (max_info_vector.size()>3) 
+	if (max_info_vector.size()>=1) 
 	{
 		int sum = 0;
 		for(int iter =0; iter < 3; iter++)
 		{
 			//std::cout<<fabs(diff_info_3_it(iter))/fabs(info_3_it(iter))<<std::endl;
-
+			//std::cout<<stop_cond(1)<<"-->stop condition"<<std::endl;
 			if(fabs(diff_info_3_it(iter))/fabs(info_3_it(iter)) < stop_cond(1))
 			{
 				sum = sum + 1;	
@@ -1043,26 +1115,60 @@ int MCLR::Active_Query()
 		if(sum==3)
 			stop_training = true;
 	}
-
 	return active_query;
 }
 
 
+std::vector<int> MCLR::ALAMO(int active_query)
+{
+	// Store the initial model 
+	// will be replaced after performing margin sampling
+	model k = m;
+
+	std::vector<int> alamo_ids;
+	alamo_ids.push_back(active_query);
+
+	for(int i =0; i<no_of_classes; ++i)
+	{
+
+		// Update the data & refresh the training model and refresh the Training Dialog 		
+		Get_Temp_Training_Model(active_query,i+1);
+		vnl_matrix<double> curr_prob = Test_Current_Model(test_data.transpose());
+
+		// Margin is used to calculate the next best samples 
+		vnl_vector<double> margin;
+		margin.set_size(curr_prob.cols());
+
+		for(int j=0; j<curr_prob.cols();++j)
+		{
+			vnl_vector<double> temp_margin = curr_prob.get_column(j);
+			double curr_class_val = temp_margin(temp_margin.arg_max());
+			temp_margin(temp_margin.arg_max()) = -1;
+			double next_class_val = temp_margin(temp_margin.arg_max()); // next probable class value
+			margin(j) = 1/(	curr_class_val - next_class_val);
+		}
+
+		// This makes sure that the same id is not selected more than once!
+		if(alamo_ids.end() == find(alamo_ids.begin(), alamo_ids.end(), margin.arg_max()))
+		{
+			alamo_ids.push_back(margin.arg_max());
+		}
+		else
+		{
+			margin(margin.arg_max()) = -1;
+			alamo_ids.push_back(margin.arg_max());
+		}
+
+	}
+	//replace the original model
+	m = k;
+	return alamo_ids;
+}
+
 vnl_vector<double> MCLR::Newton_Direction(vnl_matrix<double> hessian_matrix,vnl_vector<double> grad_vector )
 {
 	vnl_matrix<double> inv_hessian =  vnl_matrix_inverse<double>(hessian_matrix);
-	
-
-	
 	vnl_vector<double> newton_direction = -inv_hessian*grad_vector;
-	//std::cout<<"----------------------"<<std::endl;
-	//std::cout<<inv_hessian.get_row(0)<<std::endl;
-	//std::cout<<"----------------------"<<std::endl;
-	//newton_direction = newton_direction.normalize();
-	//std::cout<<"----------------------"<<std::endl;
-	//std::cout<<newton_direction<<std::endl;
-	//std::cout<<"----------------------"<<std::endl;
-
 	//std::cout<<newton_direction<<std::endl;
 	return newton_direction;
 }
@@ -1077,7 +1183,7 @@ vnl_matrix<double> MCLR::Test_Current_Model(vnl_matrix<double> test_data)
 	return f;
 }
 
-vnl_matrix<double> MCLR::Test_Current_Model_1(vnl_matrix<double> test_data, vnl_matrix<double> m_w_matrix)
+vnl_matrix<double> MCLR::Test_Current_Model_w(vnl_matrix<double> test_data, vnl_matrix<double> m_w_matrix)
 {	
 	vnl_matrix<double> f;
 	vnl_matrix<double> test_data_bias = Add_Bias(test_data);
@@ -1085,3 +1191,4 @@ vnl_matrix<double> MCLR::Test_Current_Model_1(vnl_matrix<double> test_data, vnl_
 	f = Normalize_F_Sum(f);
 	return f;
 }
+
