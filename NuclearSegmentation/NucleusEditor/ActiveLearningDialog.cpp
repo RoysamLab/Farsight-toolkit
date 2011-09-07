@@ -13,81 +13,107 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
 #include "ActiveLearningDialog.h"
+#include "math.h"
 
 //Constructors:
-ActiveLearningDialog::ActiveLearningDialog(QImage snapshot, vtkSmartPointer<vtkTable> table,int num_classes,int active_query,std::vector<int>top_feats,QWidget *parent)
+ActiveLearningDialog::ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmartPointer<vtkTable> table,int num_classes,std::vector<int> active_query,std::vector<int>top_feats,QWidget *parent)
 : QDialog(parent)
 {
+	queries = active_query;
+	num_of_classes = num_classes;
+	query_label.resize(snapshot.size());
+	buttongroup.resize(snapshot.size());
 
-	temp_pair.first = snapshot;
-		
-	QLabel *imageLabel = new QLabel(this);
-	imageLabel->setPixmap(QPixmap::fromImage(snapshot));
-	imageLabel->resize(imageLabel->pixmap()->size());
-	
-	
-
-	this->setWindowTitle(tr("Active Learning Window: Specify Class"));
-	this->setModal(false);
-
-
-	finish = true;
-
+	this->setWindowTitle(tr("ALAMO Window: Specify Class"));
+	this->setModal(true);
 	//Master Layout
 	QGridLayout * layout = new QGridLayout;
-	
-	//// textbox
-	//lineEdit = new QLineEdit();
-	//lineEdit->setMaxLength(15);
 
-	//Top-row of the window 
-	QHBoxLayout *topRow = new QHBoxLayout;
-	topRow->addWidget(imageLabel,1,0);
 	
+
+	for(int i=0;i<snapshot.size();++i)
+	{
+	std::vector<QHBoxLayout *> rows  = Sample_Details(snapshot[i],table,num_classes,active_query[i],top_feats,i);
+	layout->addLayout(rows[0],2*i,0,0);
+	layout->addLayout(rows[1],2*i+1,0,0);
+	}
+	
+	//Sample_Details(snapshot,table,num_classes,active_query,top_feats);
+	////QLabel *channelLabel = new QLabel("Please ensure all the relevant channels which might affect classification are ON ", this);	
+	////Master Layout
+	//layout->addLayout(topRow,2,0,0);
+	//layout->addLayout(botRow,3,0,0);
+
+
 	//Done Button
 	QPushButton *doneButton = new QPushButton("Done");
-
 	connect(doneButton, SIGNAL(clicked()), this, SLOT(finished()));
 	doneButton->setDefault(false);
 	doneButton->setAutoDefault(false);
 
-	QPushButton *nextButton = new QPushButton("Next");
 
+	QPushButton *nextButton = new QPushButton("Next");
 	connect(nextButton, SIGNAL(clicked()), this, SLOT(accept()));
 	nextButton->setDefault(false);
 	nextButton->setAutoDefault(true);
+
+	//Top-row of the window 
+	QHBoxLayout *finalRow = new QHBoxLayout;
+	finalRow->addWidget(nextButton,0,0);
+	finalRow->addWidget(doneButton,0,0);
+
+	layout->addLayout(finalRow,2*snapshot.size()+2,0,0);
+	this->setLayout(layout);
+	
+	//QLabel *channelLabel = new QLabel("Please ensure all the relevant channels which might affect classification are ON ", this);	
+	this->resize(600,600);
+}
+
+
+
+std::vector<QHBoxLayout *> ActiveLearningDialog::Sample_Details(QImage snapshot, vtkSmartPointer<vtkTable> table,int num_classes,int active_query,std::vector<int>top_feats,int group)
+{
+
+	temp_pair.first = snapshot;
+	QLabel *imageLabel = new QLabel(this);
+	imageLabel->setPixmap(QPixmap::fromImage(snapshot));
+	imageLabel->resize(imageLabel->pixmap()->size());
+	
+	finish = true;
+
+	//Top-row of the window 
+	QHBoxLayout *topRow = new QHBoxLayout;
+	topRow->addWidget(imageLabel,0,0);
 	
 	QLabel *enterClassLabel = new QLabel("Select Class: ", this);
 	topRow->addWidget(enterClassLabel,0,0);
 	
-
+	buttongroup[group] = new QButtonGroup(this);
+	buttongroup[group]->setExclusive(true);
 
 	// radiobutons for each class
-	for(int i =1 ; i<= num_classes ; ++i)
+	for(int i =0 ; i< num_classes ; ++i)
 	{
-		QRadioButton *class_button = new QRadioButton(QString::number(i), this);
+		QRadioButton  *class_button = new QRadioButton(QString::number(i+1), this);
 		topRow->addWidget(class_button,0,0);
 		button_vector.push_back(class_button);
+		buttongroup[group]->addButton(class_button);
 		connect(class_button, SIGNAL(clicked()),this,SLOT(Set_Class()));
-		// Class 1 is always the default selection
 	}
 		
-		QRadioButton *class_button = new QRadioButton("I am not sure" , this);
-		connect(class_button, SIGNAL(clicked()),this,SLOT(Set_Class()));
-		button_vector.push_back(class_button);
-		topRow->addWidget(class_button,0,0);
-		topRow->addWidget(nextButton,0,0);
-		topRow->addWidget(doneButton,0,0);
 
+	
+	QRadioButton *class_button = new QRadioButton("I am not sure" , this);
+	connect(class_button, SIGNAL(clicked()),this,SLOT(Set_Class()));
+	button_vector.push_back(class_button);
+	buttongroup[group]->addButton(class_button);
+	topRow->addWidget(class_button,0,0);
 
-	QLabel *channelLabel = new QLabel("Please ensure all the relevant channels which might affect classification are ON ", this);
-
-
+	
 	//Remove the train column 
 	table->RemoveColumnByName("train");
 	int numb_cols = MIN(5,table->GetNumberOfColumns());
-
-
+ 
 	QStringList sl;
 
 	for(int i=0;i<numb_cols;++i)
@@ -95,10 +121,11 @@ ActiveLearningDialog::ActiveLearningDialog(QImage snapshot, vtkSmartPointer<vtkT
 		sl<<QString(table->GetColumnName(top_feats[i]));
 	}
 	
-	// Table displaying 10 top features
+	// Table displaying 5 top features
 	QTableWidget *tableWidget = new QTableWidget(1, numb_cols, this);
 	tableWidget->setHorizontalHeaderLabels(sl);
-
+	tableWidget->setRowCount(1);
+    tableWidget->setColumnCount(numb_cols);
 
 	for(int i=0;i<numb_cols;++i)
 	{
@@ -106,19 +133,25 @@ ActiveLearningDialog::ActiveLearningDialog(QImage snapshot, vtkSmartPointer<vtkT
 	  newItem->setFlags(newItem->flags() & ~Qt::ItemIsEditable);
 	  tableWidget->setItem(0, i, newItem);
 	}
-	
-	class_selected = -1; // Used to check if no radiobutton was selected
-	
-	//Bottom-row of the window 
-	QVBoxLayout *botRow = new QVBoxLayout;
-	botRow->addWidget(tableWidget,1,0);
-	botRow->addWidget(channelLabel,1,0);
-	
-	layout->addLayout(topRow,0,0,0);
-	layout->addLayout(botRow,1,0,0);
 
-	this->setLayout(layout);
+	classes_chosen.resize(num_classes+1);
+
+	for(int i =0 ; i<=num_classes ; ++i)
+	{
+		classes_chosen[i] = -1;// Used to check if no radiobutton was selected for any sample
+	}
+
+	//Bottom-row of the window 
+	QHBoxLayout *botRow = new QHBoxLayout;
+	botRow->addWidget(tableWidget,0,0);
+	//botRow->addWidget(channelLabel,1,0);
+	std::vector<QHBoxLayout *> rows;
+	rows.push_back(topRow);
+	rows.push_back(botRow);
+
+	return rows;
 }
+
 
 void ActiveLearningDialog::finished()
 {
@@ -128,7 +161,6 @@ void ActiveLearningDialog::finished()
 
 void ActiveLearningDialog::Set_Class()
 {
-
 	for(int i =0; i< button_vector.size() ; ++i)
 	{
 		QRadioButton * test_button = button_vector.at(i);
@@ -136,14 +168,17 @@ void ActiveLearningDialog::Set_Class()
 		{
 			//std::cout<<test_button->text().toStdString() << " was selected" <<std::endl;
 			if(test_button->text().toStdString()=="I am not sure")
-				class_selected = 0;
+			{
+				query_label.at(i/(num_of_classes+1)).first = queries[i/(num_of_classes+1)];
+				query_label.at(i/(num_of_classes+1)).second = 0;
+			}
 			else
-				class_selected = test_button->text().toInt();
+			{	
+				query_label.at(i/(num_of_classes+1)).first = queries[i/(num_of_classes+1)];
+				query_label.at(i/(num_of_classes+1)).second = test_button->text().toInt();
+			}
 		}
 	}
-
-	temp_pair.second = class_selected;	
-
 }
 
 

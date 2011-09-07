@@ -31,7 +31,8 @@ limitations under the License.
 #include <QtGui/QLineEdit>
 #include <QtGui/QPlainTextEdit>
 #include <QHeaderView>
- #include <QRadioButton>
+#include <QRadioButton>
+#include <QButtonGroup>
 
 #include <vtkTable.h>
 #include <vtkSmartPointer.h>
@@ -44,16 +45,28 @@ class ActiveLearningDialog : public QDialog
 {
 	Q_OBJECT
 public:
-	ActiveLearningDialog(QImage snapshot, vtkSmartPointer<vtkTable> table,int num_classes,int active_query,std::vector<int>top_feats,QWidget *parent=0);
+	ActiveLearningDialog::ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmartPointer<vtkTable> table,int num_classes,std::vector<int> active_query,std::vector<int>top_feats,QWidget *parent=0);
+	std::vector<QHBoxLayout *> Sample_Details(QImage snapshot, vtkSmartPointer<vtkTable> table,int num_classes,int active_query,std::vector<int>top_feats,int group);
 	bool finish;
 	//QLineEdit *lineEdit;
-	int class_selected;
 	std::vector<QRadioButton *> button_vector;
-	std::pair<QImage,int> temp_pair;
+	std::pair<QImage, std::vector<int> >temp_pair;
+	std::vector<int> queries;
+	std::vector<int> classes_chosen;
+	std::vector<std::pair<int,int> > query_label;
+	std::vector<QButtonGroup *> buttongroup;
+	
+	//Top-row of the window 
+	//QHBoxLayout *topRow;
+	////Bottom-row of the window 
+	//QHBoxLayout *botRow;
+	int num_of_classes;
+
 
 private slots:
 	void finished();
 	void Set_Class();
+	
 	
 private:
 	//QMap<QString, QColor> m_snapshot;
