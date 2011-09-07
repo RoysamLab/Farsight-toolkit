@@ -2684,30 +2684,33 @@ void View3D::DrawROI()
 	std::vector<double*>::iterator ROIPoints_iter;
 
 	int count = 0;
+	this->EditLogDisplay->append(QString("\nDefining ROI\n X\tY\tZ"));
 	for (ROIPoints_iter = ROIPoints.begin(); ROIPoints_iter != ROIPoints.end(); ROIPoints_iter++)
 	{
 		vtkROIpoints->InsertNextPoint(*ROIPoints_iter);
 		//std::cout << "Poppping point: " << (*ROIPoints_iter)[0] << " " << (*ROIPoints_iter)[1] << " " << (*ROIPoints_iter)[2] << std::endl;
+		this->EditLogDisplay->append((QString("%1\t%2\t%3").arg((*ROIPoints_iter)[0]).arg((*ROIPoints_iter)[1]).arg((*ROIPoints_iter)[2])));
 		delete *ROIPoints_iter;
 		*ROIPoints_iter = NULL;
 		count++; //size of polygon vertex
 	}
 
-	// Create a quad on the four points
-	vtkSmartPointer<vtkPolygon> ROIquad = vtkSmartPointer<vtkPolygon>::New();
-	ROIquad->GetPointIds()->SetNumberOfIds(count);
+	//
+	vtkSmartPointer<vtkPolygon> ROI_Poly = vtkSmartPointer<vtkPolygon>::New();
+	ROI_Poly->GetPointIds()->SetNumberOfIds(count);
 	for (int i =0; i< count; i++)
 	{
-		ROIquad->GetPointIds()->SetId(i,i);
+		ROI_Poly->GetPointIds()->SetId(i,i);
 	}
 
-	vtkSmartPointer<vtkCellArray> ROIquads = vtkSmartPointer<vtkCellArray>::New();
-	ROIquads->InsertNextCell(ROIquad);
+	//build cell array
+	vtkSmartPointer<vtkCellArray> ROI_Poly_CellArray = vtkSmartPointer<vtkCellArray>::New();
+	ROI_Poly_CellArray->InsertNextCell(ROI_Poly);
 
 	// Create a polydata to store everything in
 	vtkSmartPointer<vtkPolyData> ROIpolydata = vtkSmartPointer<vtkPolyData>::New();
 	ROIpolydata->SetPoints(vtkROIpoints);
-	ROIpolydata->SetPolys(ROIquads);
+	ROIpolydata->SetPolys(ROI_Poly_CellArray);
 
 	vtkSmartPointer<vtkLinearExtrusionFilter> extrude = vtkSmartPointer<vtkLinearExtrusionFilter>::New();
 	extrude->SetInput( ROIpolydata);
