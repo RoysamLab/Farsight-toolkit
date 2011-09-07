@@ -232,7 +232,7 @@ protected slots:
 	void startTraining();
 	void startKPLS();
 	void startActiveLearningwithFeat();
-	void BuildGallery();
+	//void BuildGallery();
 	void SaveActiveLearningResults(void);
 	void SaveActiveLearningModel();
 	void CreateActiveLearningModel(MCLR* mclr_alm,  vtkSmartPointer<vtkTable> pWizard_table);
@@ -420,7 +420,7 @@ protected:
 	vnl_vector<double> mean_vec;
 	std::vector< std::pair< std::string, vnl_vector<double> > >act_learn_model;
 	// Gallery contains both the image of the query nuclei and their class values
-	std::vector<std::pair<QImage,int> > gallery; 
+	std::vector<std::pair<QImage,std::vector<int> > > gallery; 
 	//This does not belong here, but is a temporary fix:
 	void CreateDefaultAssociationRules();
 

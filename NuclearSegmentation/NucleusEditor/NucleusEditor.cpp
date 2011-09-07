@@ -435,9 +435,9 @@ void NucleusEditor::createMenus()
 	connect(activeAction, SIGNAL(triggered()), this, SLOT(startActiveLearningwithFeat()));
 	activeMenu->addAction(activeAction);
 	
-	showGalleryAction = new QAction(tr("Show Query Gallery"), this);
-	connect(showGalleryAction, SIGNAL(triggered()), this, SLOT(BuildGallery()));
-	activeMenu->addAction(showGalleryAction);
+	//showGalleryAction = new QAction(tr("Show Query Gallery"), this);
+	//connect(showGalleryAction, SIGNAL(triggered()), this, SLOT(BuildGallery()));
+	//activeMenu->addAction(showGalleryAction);
 	
 	saveActiveResultsAction = new QAction(tr("Save Active Learning Results (Only for Multiple Images)"), this);
 	connect(saveActiveResultsAction, SIGNAL(triggered()), this, SLOT(SaveActiveLearningResults()));
@@ -452,7 +452,7 @@ void NucleusEditor::createMenus()
 	activeMenu->addAction(classifyFromActiveLearningModelAction);
 
 	// Will be enabled and disabled separately
-	showGalleryAction->setEnabled(false);
+	//showGalleryAction->setEnabled(false);
 	saveActiveResultsAction->setEnabled(false);
 
 
@@ -1840,6 +1840,8 @@ void NucleusEditor::updateDatabase()
 void NucleusEditor::startActiveLearningwithFeat()
 {	
 	vtkSmartPointer<vtkTable> featureTable;
+	std::vector<int> active_queries;
+
 	if(myImg->GetImageInfo()->numTSlices==1)
 		featureTable = table;
 	else
@@ -1849,7 +1851,9 @@ void NucleusEditor::startActiveLearningwithFeat()
 	}
 	
 	if(!featureTable) return;
+	
 
+	//Default confidence threshold is 50 % 
 	ConfidenceThresholdDialog *dialog = new ConfidenceThresholdDialog(this);
 	if( dialog->exec() )
 	{
@@ -1868,7 +1872,7 @@ void NucleusEditor::startActiveLearningwithFeat()
 	}
 
 	//Clear the Gallery 
-	gallery.clear();	
+	//gallery.clear();	
 
 	std::vector< std::pair<double,double> > id_time;	
 	// Remove the training examples from the list of ids.
@@ -1897,7 +1901,7 @@ void NucleusEditor::startActiveLearningwithFeat()
 		pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
 		pWizard->exec();
 
-		//new_table does not have the id column 
+		//new_table does not have the id column  nor the train_default column
 		vtkSmartPointer<vtkTable> new_table = pWizard->getExtractedTable();
 		// If the user did not hit cancel 	
 		if(pWizard->result())
@@ -1918,13 +1922,16 @@ void NucleusEditor::startActiveLearningwithFeat()
 			double sparsity = 1;
 			int active_query = 1;
 			double max_info = -1e9;
-
+			
+			// Normalize the feature matrix
 			vnl_matrix<double> Feats = mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(new_table,id_time));
 			mclr->Initialize(Feats,sparsity,class_list,"",new_table);
 			mclr->Get_Training_Model();
 
 			// Get the active query based on information gain
 			active_query = mclr->Active_Query();
+			active_queries = mclr->ALAMO(active_query);
+			
 
 			if(myImg->GetImageInfo()->numTSlices > 1)
 				segView->SetCurrentTimeVal(mclr->id_time_val.at(active_query).second);
@@ -1933,35 +1940,53 @@ void NucleusEditor::startActiveLearningwithFeat()
 			bool loop_termination_condition = true;
 
 			ActiveLearningDialog *dialog;
+			std::vector<QImage> snapshots;
+			snapshots.resize(active_queries.size());
+			
 			while(loop_termination_condition)
 			{	
-				dialog =  new ActiveLearningDialog(segView->getSnapshotforID(mclr->id_time_val.at(active_query).first),mclr->test_table,mclr->no_of_classes,active_query,mclr->top_features);
+				// Collect all the snapshots
+				for(int i=0;i<active_queries.size(); ++i)
+				//for(int i=0;i<1; ++i)
+				{
+					snapshots[i] =(segView->getSnapshotforID(mclr->id_time_val.at(active_queries[i]).first));	
+				}
+
+				//mclr->test_table is the new_table obtained above
+				dialog =  new ActiveLearningDialog(snapshots,mclr->test_table,mclr->no_of_classes,active_queries,mclr->top_features);
 				dialog->exec();	 
 
 				loop_termination_condition = dialog->finish && dialog->result();
-
-				while(dialog->class_selected == -1)
-				{	
-					QMessageBox::critical(this, tr("Oops"), tr("Please select a class"));
-					this->show();
-					dialog =  new ActiveLearningDialog(segView->getSnapshotforID(mclr->id_time_val.at(active_query).first),mclr->test_table,mclr->no_of_classes,active_query,mclr->top_features);	
-					dialog->exec();
+				
+				int atleast_one_chosen = 0; // A check to see if the user selected Not sure for all the cells
+				
+				for(int i=0;i<active_queries.size();++i)
+				{
+					atleast_one_chosen = atleast_one_chosen+dialog->query_label[i].second;
+					if(dialog->query_label[i].second == -1)
+					{	
+						QMessageBox::critical(this, tr("Oops"), tr("Please select a class for all the cells"));
+						this->show();
+						dialog =  new ActiveLearningDialog(snapshots,mclr->test_table,mclr->no_of_classes,active_queries,mclr->top_features);	
+						dialog->exec();
+					}
 				}
 
 				// Update the data & refresh the training model and refresh the Training Dialog 		
-				mclr->Update_Train_Data(active_query,dialog->class_selected);
+				mclr->Update_Train_Data(dialog->query_label);
 
-				if(dialog->class_selected ==0)
+				if(atleast_one_chosen ==0)
 				{
 					mclr->Get_Training_Model();
 					active_query = mclr->Active_Query();
+					active_queries = mclr->ALAMO(active_query);
 					continue;
 				}
 
 				// Update the gallery
-				gallery.push_back(dialog->temp_pair);
+				//gallery.push_back(dialog->temp_pair);
 
-				if(mclr->stop_training && dialog->class_selected!=0)
+				if(mclr->stop_training && atleast_one_chosen!=0)
 				{
 					QMessageBox msgBox;
 					msgBox.setText("I understand the classification problem.");
@@ -1990,12 +2015,14 @@ void NucleusEditor::startActiveLearningwithFeat()
 
 				mclr->Get_Training_Model();
 				active_query = mclr->Active_Query();
+				active_queries = mclr->ALAMO(active_query);
+
 				if(myImg->GetImageInfo()->numTSlices > 1)
 					segView->SetCurrentTimeVal(mclr->id_time_val.at(active_query).second);
 			}
 
 			//Enable the Menu Items related to active Learning
-			showGalleryAction->setEnabled(true);
+			//showGalleryAction->setEnabled(true);
 			if(myImg->GetImageInfo()->numTSlices > 1)
 				saveActiveResultsAction->setEnabled(true);
 
@@ -2049,11 +2076,11 @@ void NucleusEditor::CreateActiveLearningModel(MCLR* mclr_alm, vtkSmartPointer<vt
 	}
 }
 
-void NucleusEditor::BuildGallery()
-{
-	GalleryDialog *dialog =  new GalleryDialog(this->gallery,segView->CreateColorTable());
-	dialog->exec();	 
-}
+//void NucleusEditor::BuildGallery()
+//{
+//	GalleryDialog *dialog =  new GalleryDialog(this->gallery,segView->CreateColorTable());
+//	dialog->exec();	 
+//}
 
 
 void NucleusEditor::SaveActiveLearningModel()
@@ -2217,7 +2244,7 @@ std::vector< vtkSmartPointer<vtkTable> > NucleusEditor::Perform_Classification(M
 		vnl_matrix<double> data_classify;
 		if(from_model)
 		{
-			data_classify =  mclr_class->Normalize_Feature_Matrix_1(mclr_class->tableToMatrix_1(test_table), std_dev_vec, mean_vec);
+			data_classify =  mclr_class->Normalize_Feature_Matrix_w(mclr_class->tableToMatrix_w(test_table), std_dev_vec, mean_vec);
 		}
 		else
 		{
@@ -2228,7 +2255,7 @@ std::vector< vtkSmartPointer<vtkTable> > NucleusEditor::Perform_Classification(M
 		vnl_matrix<double> currprob;
 		if(from_model)
 		{
-			currprob = mclr_class->Test_Current_Model_1(data_classify, act_learn_matrix);
+			currprob = mclr_class->Test_Current_Model_w(data_classify, act_learn_matrix);
 		}
 		else
 		{
@@ -2266,6 +2293,15 @@ std::vector< vtkSmartPointer<vtkTable> > NucleusEditor::Perform_Classification(M
 
 	return table_vector;
 }
+
+
+double NucleusEditor::performPTest(std::string filename)
+{
+	
+
+
+}
+
 
 
 vtkSmartPointer<vtkTable> NucleusEditor::loadActiveLearningModel(std::string filename)
