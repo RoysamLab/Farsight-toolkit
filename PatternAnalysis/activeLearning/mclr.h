@@ -109,7 +109,7 @@ public:
 	vnl_matrix<double> GetActiveLearningMatrix(){ return m.w;};
 	//vnl_matrix <double> Normalize_Feature_Matrix(vnl_matrix<double> feats);
 	model Get_Training_Model();
-	model MCLR::Get_Temp_Training_Model(int query,int label);
+	Get_Temp_Training_Model(int query,int label);
 	//void Update_Train_Data(int query,int label);
 	void Update_Train_Data(std::vector< std::pair<int,int> > query_label);
 	vnl_matrix<double> Kron(vnl_vector<double> x,vnl_vector<double> y);
