@@ -172,9 +172,12 @@ void CellTrace::getCellBounds(double bounds[])
 	bounds[4] = this->minZ;
 	bounds[5] = this->maxZ;
 }
-void CellTrace::setDistanceToROI(double newDistance)
+void CellTrace::setDistanceToROI(double newDistance, double Coord_X , double Coord_Y, double Coord_Z)
 {
 	this->segments[0]->SetDistanceToROI(newDistance);
+	this->segments[0]->SetDistanceToROICoord_X(Coord_X);
+	this->segments[0]->SetDistanceToROICoord_Y(Coord_Y);
+	this->segments[0]->SetDistanceToROICoord_Z(Coord_Z);
 }
 void CellTrace::clearAll()
 {

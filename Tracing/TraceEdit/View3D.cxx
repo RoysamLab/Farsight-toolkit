@@ -68,6 +68,7 @@ View3D::View3D(QWidget *parent)
 	this->TraceFiles.clear();
 	this->SomaFile.clear();
 	this->NucleiFile.clear();
+	this->nucleiTable = vtkSmartPointer<vtkTable>::New();
 	this->tempTraceFile.clear();
 	this->backColorR = this->TraceEditSettings.value("mainWin/ColorR", .6).toDouble() ;
 	this->backColorG = this->TraceEditSettings.value("mainWin/ColorG", .6).toDouble() ;
@@ -545,7 +546,6 @@ bool View3D::readProject(QString projectFile)
 {	
 	QString RelativeProjectPath = NULL;
 	unsigned int i =0;
-	this->nucleiTable = vtkSmartPointer<vtkTable>::New();
 
 	if (!projectFile.isEmpty())
 	{
@@ -2715,7 +2715,7 @@ void View3D::DrawROI()
 	vtkSmartPointer<vtkLinearExtrusionFilter> extrude = vtkSmartPointer<vtkLinearExtrusionFilter>::New();
 	extrude->SetInput( ROIpolydata);
 	extrude->SetExtrusionTypeToNormalExtrusion();
-	extrude->SetVector(0, 0, 1 );
+	//extrude->SetVector(0, 0, 1 );
 	extrude->SetScaleFactor (100);
 	//extrude->CappingOff();
 	extrude->Update();
@@ -2752,8 +2752,9 @@ void View3D::CalculateDistanceToDevice()
 			vtkIdType cellId; //the cell id of the cell containing the closest point will be returned here
 			int subId; //this is rarely used (in triangle strips only, I believe)
 			cellLocator->FindClosestPoint(somaPoint, closestPoint, cellId, subId, closestPointDist2);
-			currCell->setDistanceToROI( std::sqrt(closestPointDist2));
+			currCell->setDistanceToROI( std::sqrt(closestPointDist2), closestPoint[0], closestPoint[1], closestPoint[2]);
 		}//end for cell count
+		this->ShowCellAnalysis();
 	}
 	vtkIdType nucleiRowCount = this->nucleiTable->GetNumberOfRows();
 	if (nucleiRowCount > 0)

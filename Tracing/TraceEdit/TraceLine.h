@@ -75,8 +75,12 @@ public:
 	void setBifTiltLocal(double NewBifTiltLocal) {BifTiltLocal = NewBifTiltLocal;}
 	double GetBifTiltRemote() {return BifTiltRemote;}
 	void setBifTiltRemote(double NewBifTiltRemote) { BifTiltRemote = NewBifTiltRemote;}
+
 	double GetDistanceToROI() {return DistanceToROI;}
 	void SetDistanceToROI(double distance) {DistanceToROI = distance;}
+	void SetDistanceToROICoord_X(double coord) {ROICoord_X = coord;}
+	void SetDistanceToROICoord_Y(double coord) {ROICoord_Y = coord;}
+	void SetDistanceToROICoord_Z(double coord) {ROICoord_Z = coord;}
 
 	void setRoot(int RootID, int traceLevel, double parentPath);
 	void AddBranch(TraceLine* b);
@@ -137,7 +141,7 @@ private:
 	double BifAmplLocal, BifAmpRemote, BifTiltLocal, BifTiltRemote;
 	double traceColor, radii, sectionArea, length, volume, surfaceArea, PathLength, EuclidianD, DistToParent;
 	double BitDensity, BurkTaper, HillmanTaper, HillmanThreshold;
-	double DistanceToROI;
+	double DistanceToROI, ROICoord_X, ROICoord_Y, ROICoord_Z;
 	char * FileName; 
 	int m_id, root, level, terminalDegree;
 	std::vector<unsigned int> m_markers;

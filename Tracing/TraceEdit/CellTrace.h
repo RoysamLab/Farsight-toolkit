@@ -40,7 +40,7 @@ public:
 	std::string GetFileName();
 	void getSomaCoord(double xyz[]);
 	void getCellBounds(double bounds[]);
-	void setDistanceToROI(double newDistance);
+	void setDistanceToROI(double newDistance, double Coord_X , double Coord_Y, double Coord_Z);
 private:
 	void clearAll();
 	void MaxMin(double NewValue, double &total, double &Min, double &Max);

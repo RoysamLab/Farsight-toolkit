@@ -58,7 +58,12 @@ TraceLine::TraceLine()
 	this->BifAmpRemote = 0;
 	this->BifTiltLocal = -1;
 	this->BifTiltRemote = -1;
+
+//for Dist to device calculations
 	this->DistanceToROI = 0;
+	this->ROICoord_X = 0;
+	this->ROICoord_Y = 0;
+	this->ROICoord_Z = 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

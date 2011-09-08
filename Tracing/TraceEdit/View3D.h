@@ -86,7 +86,6 @@ limitations under the License.
 #include "vtkAxesActor.h"
 #include "vtkWindowToImageFilter.h"
 #include "vtkJPEGWriter.h"
-#include "vtkQuad.h"
 #include "vtkLinearExtrusionFilter.h"
 #include "vtkCellLocator.h"
 
