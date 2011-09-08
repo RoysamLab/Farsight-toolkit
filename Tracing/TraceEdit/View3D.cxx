@@ -1439,9 +1439,16 @@ void View3D::CreateLayout()
 	CursorToolsLayout->addWidget(this->updatePT3D);
 	CursorToolsLayout->addWidget(this->setSoma);
 	CursorToolsLayout->addWidget(this->createNewBitButton);
-	CursorToolsLayout->addWidget(this->createNewROIPointButton);
-	CursorToolsLayout->addWidget(this->ExtrudeROIButton);
-	CursorToolsLayout->addWidget(this->CalculateDistanceToDeviceButton);
+
+	QGroupBox * CursorROIBox = new QGroupBox("ROI Tools");
+	QVBoxLayout *CursorROILayout = new QVBoxLayout();
+	CursorROILayout->addWidget(this->createNewROIPointButton);
+	CursorROILayout->addWidget(this->ExtrudeROIButton);
+	this->ExtrudeROIButton->setEnabled(false);
+	CursorROILayout->addWidget(this->CalculateDistanceToDeviceButton);
+	this->CalculateDistanceToDeviceButton->setEnabled(false);
+	CursorROIBox->setLayout(CursorROILayout);
+	CursorToolsLayout->addWidget(CursorROIBox);
 	CursorToolsLayout->addWidget(this->CalculateCellDistanceButton);
 	CursorToolsLayout->addStretch();
 
@@ -2647,14 +2654,14 @@ void View3D::AddROIPoint()
 {
 	if (this->pointer3d->GetEnabled())
 	{	
-		/*if (this->ROIPoints.size() >= 4)
-		{
-			this->ROIPoints.erase(this->ROIPoints.begin());
-		}*/
 		double* newPT = new double[3];
 		this->pointer3d->GetPosition(newPT);
-		std::cout << "adding point xyz " << newPT[0] << " " << newPT[1] << " " << newPT[2] << " \n" ;
+		//std::cout << "adding point xyz " << newPT[0] << " " << newPT[1] << " " << newPT[2] << " \n" ;
 		this->ROIPoints.push_back(newPT);
+		if (this->ROIPoints.size() >= 3)
+		{
+			this->ExtrudeROIButton->setEnabled(true);
+		}
 	}
 }
 void View3D::DrawROI()
@@ -2672,7 +2679,7 @@ void View3D::DrawROI()
 	//	}
 	//}
 	
-	if (this->ROIPoints.size() < 4)
+	if (this->ROIPoints.size() < 3)
 	{
 		std::cout<< "not enough points\n";
 		return;
@@ -2729,6 +2736,9 @@ void View3D::DrawROI()
 
 	this->Renderer->AddActor(ROIactor);
 	this->QVTK->GetRenderWindow()->Render();
+	this->createNewROIPointButton->setEnabled(false);
+	this->ExtrudeROIButton->setEnabled(false);
+	this->CalculateDistanceToDeviceButton->setEnabled(true);
 }
 
 void View3D::CalculateDistanceToDevice()
