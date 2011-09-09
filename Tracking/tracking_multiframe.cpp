@@ -522,7 +522,7 @@ void getStdVectorFromArray(FeaturesType *farray, int n,std::vector<FeaturesType>
 #define MAX_LABEL 10000
 #define VESSEL_CHANNEL 4 // FIXME : make it dynamic based on user input
 #define PAUSE {printf("%d:>",__LINE__);scanf("%*d");}
-#define USE_TRAINED
+//#define USE_TRAINED
 
 bool compare(FeaturesType a, FeaturesType b)
 {
@@ -595,6 +595,7 @@ class CellTracker{
 	struct TTrainingPoint{
 		float dx1,dy1,dz1;
 		float v1,v2,v1v2;
+		float bv1,bv2;
 		int t1,t2;
 	};
 	struct MSTrainingPoint{
@@ -603,6 +604,7 @@ class CellTracker{
 		float v1,v2,v3;
 		float v1v3,v2v3;
 		float sv1v2;
+		float bv1,bv2,bv3;
 		int t1,t2;
 	};
 	struct ADTrainingPoint{
@@ -672,8 +674,8 @@ public:
 	std::vector<ADTrainingPoint> ADtrpoints;
 
 	
-	std::vector<std::pair<float,float> > Tdistpdf, Tovlappdf, Tvolrpdf, Ttdiffpdf,Mvolrpdf;
-	jointpdf Mdistpdf, Movlappdf, dirdistratiovsorients, adpdf;
+	std::vector<std::pair<float,float> > Tdistpdf, Tovlappdf, Tvolrpdf, Ttdiffpdf,Mvolrpdf,Mtdiffpdf,Movlappdf,adprojpdf;
+	jointpdf Mdistpdf,  dirdistratiovsorients, adpdf;
 	//end of Training variables
 private:
 	enum EDGE_TYPE {SPLIT,MERGE,APPEAR,DISAPPEAR,TRANSLATION};
@@ -715,7 +717,7 @@ private:
 	float get_LRUtility(std::vector< TGraph::vertex_descriptor > desc);
 	float get_misalignment_cost(FeaturesType f1, FeaturesType f2, FeaturesType f3);
     void print_debug_info(void);
-	void resolve_merges_and_splits(void);
+	void resolve_merges_and_splits(bool);
 	void merge_loose_ends(void);
 	int my_connected_components(std::vector<int> &component);
 	int my_connected_components2(std::vector<int> &component);
@@ -764,6 +766,7 @@ private:
 	};
 
 	void writeXGMML_secondorder(char *,std::vector< LREdge >&,std::vector<int>&, IloNumArray& );
+	void writeXGMML_secondorder_combined(char *filename, std::vector< CellTracker::LREdge > &lredges,std::vector<int> &utility, IloNumArray& vals );
 
 };
 
@@ -831,16 +834,29 @@ float CellTracker::extract_value_from_jointpdf(float x,float y,jointpdf &pdf)
 	std::vector<float>::iterator iy = lower_bound(pdf.yvalues.begin(),pdf.yvalues.end(),y);
 	if(ix!=pdf.xvalues.end() && iy!=pdf.yvalues.end())
 	{
-		return pdf.prob[ix-pdf.xvalues.begin()][iy-pdf.yvalues.begin()];
+		float val = pdf.prob[ix-pdf.xvalues.begin()][iy-pdf.yvalues.begin()];
+		//_TRACE;
+		//printf("x = %f y = %f returning %f\n",x,y,val);
+		return val;
 	}
+	//_TRACE;
+	//printf("x = %f y = %f returning 0\n",x,y);
 	return 0;
 }
 float CellTracker::extract_value_from_1dpdf(float x,std::vector<std::pair<float,float> > &pdf)
 {
-	float l = 0,u = pdf.size()-1;
-	float mid = (l+u)/2;
+	//_ETRACE;
+	int l = 0,u = pdf.size()-1;
+	int mid = (l+u)/2;
+	float val;
+	if(u<l)
+	{
+		printf("pdf.size() = %d x = %f\n",pdf.size(),x);
+		scanf("%*d");
+	}
 	while(u>=l)
 	{
+		val = pdf[mid].second;
 		if(x==pdf[mid].first)
 			break;
 		if(x<pdf[mid].first)
@@ -853,19 +869,36 @@ float CellTracker::extract_value_from_1dpdf(float x,std::vector<std::pair<float,
 		}
 		mid = (u+l)/2;
 	}
-	return pdf[mid].second;
+	//_LTRACE;
+	//printf("returning val = %f x= %f\n",val,x);
+	return val;
 }
 int CellTracker::compute_normal_utility_trained(FeaturesType f1, FeaturesType f2)
 {
+	//_ETRACE;
 	float utility = UTILITY_MAX;
 	float vol1 = f1.ScalarFeatures[FeaturesType::VOLUME];
 	float vol2 = f2.ScalarFeatures[FeaturesType::VOLUME];
 	
-	utility *= extract_value_from_1dpdf(get_distance(f1.Centroid,f2.Centroid),Tdistpdf);
-	utility *= extract_value_from_1dpdf(overlap(f1.BoundingBox,f2.BoundingBox)/(vol1+vol2),Tovlappdf);
-	utility *= extract_value_from_1dpdf(MIN(vol1,vol2)/MAX(vol1,vol2),Tvolrpdf);
-	utility *= extract_value_from_1dpdf(abs(f1.time-f2.time)-1,Ttdiffpdf);
 	
+	//_TRACE;
+	utility *= extract_value_from_1dpdf(get_distance(f1.Centroid,f2.Centroid),Tdistpdf);
+	//_TRACE;
+	utility *= extract_value_from_1dpdf(overlap(f1.BoundingBox,f2.BoundingBox)/(f1.ScalarFeatures[FeaturesType::BBOX_VOLUME]+f2.ScalarFeatures[FeaturesType::BBOX_VOLUME]),Tovlappdf);
+//	_TRACE;
+	//utility *= extract_value_from_1dpdf(MIN(vol1,vol2)/MAX(vol1,vol2),Tvolrpdf);
+	//_TRACE;
+	utility *= extract_value_from_1dpdf(abs(f1.time-f2.time)-1,Ttdiffpdf);
+	//_LTRACE;
+	/*if(int(utility)>0)
+	{
+		printf("utility is >0 %f.. waiting\n",utility);
+		scanf("%*d");
+	}*/
+	if(f1.num == 5 && f1.time == 2 && f2.num == 5 && f2.time == 3)
+	{
+	//	scanf("%*d");	
+	}
 	return utility;
 }
 
@@ -887,12 +920,20 @@ int CellTracker::compute_mergesplit_utility_trained(TGraph::vertex_descriptor v1
 	float vol3 = f3.ScalarFeatures[FeaturesType::VOLUME];
 	float dist1 = get_distance(f1.Centroid,f3.Centroid);
 	float dist2 = get_distance(f2.Centroid,f3.Centroid);
-	float ovlapratio1 = overlap(f1.BoundingBox,f3.BoundingBox);
-	float ovlapratio2 = overlap(f2.BoundingBox,f3.BoundingBox);
-	utility *= extract_value_from_jointpdf(dist1,dist2,Mdistpdf);
+	float ovlapratio1 = overlap(f1.BoundingBox,f3.BoundingBox)/(f1.ScalarFeatures[FeaturesType::BBOX_VOLUME]+f3.ScalarFeatures[FeaturesType::BBOX_VOLUME]);
+	float ovlapratio2 = overlap(f2.BoundingBox,f3.BoundingBox)/(f2.ScalarFeatures[FeaturesType::BBOX_VOLUME]+f3.ScalarFeatures[FeaturesType::BBOX_VOLUME]);
+	utility *= extract_value_from_jointpdf(MIN(dist1,dist2),MAX(dist1,dist2),Mdistpdf);
+	//_TRACE;
 	utility *= extract_value_from_1dpdf(vol3/(vol1+vol2+0.001),Mvolrpdf);
-	utility *= extract_value_from_jointpdf(MIN(ovlapratio1,ovlapratio2),MAX(ovlapratio1,ovlapratio2),Movlappdf);
-	
+	//_TRACE;
+	utility *= extract_value_from_1dpdf((ovlapratio1+ovlapratio2)/2.0,Movlappdf);//MIN(ovlapratio1,ovlapratio2),MAX(ovlapratio1,ovlapratio2),Movlappdf);
+	//_TRACE;
+	utility *= extract_value_from_1dpdf(abs(f1.time-f3.time)-1,Mtdiffpdf);
+	//_TRACE;
+	//if(f1.time == 9 &&( (f1.num == 10 && f2.num == 17) || (f2.num == 10 && f1.num==17))&& f3.time == 8 && f3.num == 1)
+	//{
+	//	scanf("%*d");
+	//}
 	return utility;
 }
 
@@ -904,7 +945,7 @@ int CellTracker::compute_appeardisappear_utility_trained(TGraph::vertex_descript
 		scanf("%*d");
 		_exit(0);
 	}
-	float utility = UTILITY_MAX;
+	float utility = UTILITY_MAX/100;
 	FeaturesType f1,f2,f3;
 	f1 = fvector[g[v1].t][g[v1].findex];
 	f2 = fvector[g[v2].t][g[v2].findex];
@@ -912,6 +953,43 @@ int CellTracker::compute_appeardisappear_utility_trained(TGraph::vertex_descript
 	float addist1 = get_boundary_dist(f3.Centroid);
 	float addist2 = get_boundary_dist(f1.Centroid);
 	utility *= extract_value_from_jointpdf(addist1,addist2,adpdf);
+
+		int dirbasis[6][3] = {1,0,0,
+					-1,0,0,
+					0,1,0,
+					0,-1,0,
+					0,0,1,
+					0,0,-1};
+	float bds[6];
+	bds[0] = f3.Centroid[0]*fvar.spacing[0];
+	bds[1] = (fvar.BoundingBox[1]-f3.Centroid[0])*fvar.spacing[0];
+	bds[2] = f3.Centroid[1]*fvar.spacing[1];
+	bds[3] = (fvar.BoundingBox[3]-f3.Centroid[1])*fvar.spacing[1];
+	bds[4] = f3.Centroid[2]*fvar.spacing[2];
+	bds[5] = (fvar.BoundingBox[5]-f3.Centroid[2])*fvar.spacing[2];
+	float minbd = 1232;
+	int minindex = -1;
+	for(int co = 0; co<6; co++)
+	{
+		if(bds[co]<minbd)
+		{
+			minbd = bds[co];
+			minindex = co;
+		}
+	}
+	if(minindex >=0)
+	{
+		float dx1 = f2.Centroid[0]-f1.Centroid[0];
+		float dy1 = f2.Centroid[1]-f1.Centroid[1];
+		float dz1 = f2.Centroid[2]-f1.Centroid[2];
+		float proj = dx1*dirbasis[minindex][0]+dy1*dirbasis[minindex][1]+dz1*dirbasis[minindex][2];
+		proj/=sqrt(dx1*dx1+dy1*dy1+dz1*dz1);
+		printf("adprojpdf.size() = %d\n",adprojpdf.size());
+		utility *= extract_value_from_1dpdf(proj,adprojpdf);
+	}
+
+	if(int(utility)==0)
+		utility = 1;
 	return utility;
 }
 
@@ -1101,6 +1179,7 @@ int CellTracker::add_normal_edges(int tmin, int tmax)
 						//add the edge
 						//if(dist>100)
 						//	printf("distance is greater than 100\n");
+						
 						tie(e,added) = add_edge(rmap[t][counter1],v,g);
 						if(added)
 						{
@@ -1115,16 +1194,30 @@ int CellTracker::add_normal_edges(int tmin, int tmax)
 							//printf("g[e].utility = %d\n", g[e].utility);
 							////PAUSE;
 							//}
-#ifndef USE_TRAINED
-							g[e].utility = compute_normal_utility(fvector[t][counter1],fvector[tmax][counter]);
+							if(strcmp(mode.c_str(),"TRAINING")==0)
+							{
+								g[e].utility = compute_normal_utility(fvector[t][counter1],fvector[tmax][counter]);
+							}
+							else
+							{
+								/*print_vertex(rmap[t][counter1],0);
+								print_vertex(v,0);*/
+#ifdef USE_TRAINED
+								g[e].utility = compute_normal_utility_trained(fvector[t][counter1],fvector[tmax][counter]);
 #else
-							g[e].utility = compute_normal_utility_trained(fvector[t][counter1],fvector[tmax][counter]);
+								g[e].utility = compute_normal_utility(fvector[t][counter1],fvector[tmax][counter]);
 #endif
+							}
 							if(g[e].utility < 0)
 							{
 								printf("utility < 0 = %d\n", g[e].utility);
 								scanf("%*d");
 							}
+							/*if(g[e].utility >0)
+							{
+								printf("utility > 0 = %d\n", g[e].utility);
+								scanf("%*d");
+							}*/
 							nec++;
 						}
 						else
@@ -1310,15 +1403,22 @@ int CellTracker::add_merge_split_edges(int tmax)
 
 					FeaturesType lc3 = fvector[tmax][counter1];
 					lc3.ScalarFeatures[FeaturesType::VOLUME] /=volume_factor;
-
-#ifndef USE_TRAINED
-					int utility1 = compute_normal_utility(lc1,lc3);
-					int utility2 = compute_normal_utility(lc2,lc3);
+					int utility1, utility2;
+					if(strcmp(mode.c_str(),"TRAINING")==0)
+					{
+						utility1 = compute_normal_utility(lc1,lc3);
+						utility2 = compute_normal_utility(lc2,lc3);
+					}
+					else
+					{
+#ifdef USE_TRAINED
+						utility1 = compute_mergesplit_utility_trained(rmap[tcounter][i1],rmap[tcounter][i2],rmap[tmax][counter1]);
+						utility2 = utility1;
 #else
-
-					int utility1 = compute_mergesplit_utility_trained(rmap[tcounter][i1],rmap[tcounter][i2],rmap[tmax][counter1]);
-					int utility2 = utility1;
+						utility1 = compute_normal_utility(lc1,lc3);
+						utility2 = compute_normal_utility(lc2,lc3);
 #endif
+					}
 
 					tie(e1,added1) = add_edge(rmap[tcounter][i1],rmap[tmax][counter1],g);
 					tie(e2,added2) = add_edge(rmap[tcounter][i2],rmap[tmax][counter1],g);
@@ -1379,14 +1479,23 @@ int CellTracker::add_merge_split_edges(int tmax)
 
 					FeaturesType lc3 = fvector[tcounter][counter1];
 					lc3.ScalarFeatures[FeaturesType::VOLUME] /=volume_factor;
-					
-#ifndef USE_TRAINED
-					int utility1 = compute_normal_utility(lc1,lc3);//fvector[tcounter][counter1]);
-					int utility2 = compute_normal_utility(lc2,lc3);//fvector[tcounter][counter1]);
+					int utility1,utility2;
+					if(strcmp(mode.c_str(),"TRAINING")==0)
+					{
+						utility1 = compute_normal_utility(lc1,lc3);//fvector[tcounter][counter1]);
+						utility2 = compute_normal_utility(lc2,lc3);//fvector[tcounter][counter1]);
+					}
+					else
+					{
+#ifdef USE_TRAINED
+						utility1 = compute_mergesplit_utility_trained(rmap[tmax][i1],rmap[tmax][i2],rmap[tcounter][counter1]);
+						utility2 = utility1;
 #else
-					int utility1 = compute_mergesplit_utility_trained(rmap[tmax][i1],rmap[tmax][i2],rmap[tcounter][counter1]);
-					int utility2 = utility1;
+						utility1 = compute_normal_utility(lc1,lc3);//fvector[tcounter][counter1]);
+						utility2 = compute_normal_utility(lc2,lc3);//fvector[tcounter][counter1]);
 #endif
+
+					}
 
 					tie(e1,added1) = add_edge(rmap[tcounter][counter1],rmap[tmax][i1],g);
 					tie(e2,added2) = add_edge(rmap[tcounter][counter1],rmap[tmax][i2],g);
@@ -2017,6 +2126,7 @@ float CellTracker::compute_LRUtility_trained(TGraph::edge_descriptor e1,TGraph::
 		{
 			special_case = true;
 			utility = -2*UTILITY_MAX;
+			//return utility;
 		}
 		printf("a");
 		if(get_edge_type(e1)==APPEAR && get_edge_type(e2)!=DISAPPEAR)
@@ -2624,11 +2734,19 @@ void CellTracker::solve_higher_order()
 					lre.back = *i1;
 					lredges.push_back(lre);
 					//printf("-");
-#ifndef USE_TRAINED
-					utility.push_back(compute_LRUtility_product(lre.back,lre.front));
+					if(strcmp(mode.c_str(),"TRAINING")==0)
+					{
+						utility.push_back(compute_LRUtility_product(lre.back,lre.front));
+					}
+					else
+					{
+#ifdef USE_TRAINED
+						utility.push_back(compute_LRUtility_trained(lre.back,lre.front));
 #else
-					utility.push_back(compute_LRUtility_trained(lre.back,lre.front));
+						utility.push_back(compute_LRUtility_product(lre.back,lre.front));
 #endif
+
+					}
 					//printf("|");
 					g[*i2].frontlre.push_back(lredges.size()-1);
 					g[*i1].backlre.push_back(lredges.size()-1);
@@ -2700,13 +2818,75 @@ void CellTracker::solve_higher_order()
 			if(g[*vi].vertlre.size()>0)
 			{
 				vcount++;
+#ifdef USE_TRAINED
+				c.add(IloRange(env,1,1));
+#else
 				c.add(IloRange(env,0,1));
+#endif 
 				for(int colre = 0; colre< g[*vi].vertlre.size(); colre++)
 				{
 					c[vcount].setLinearCoef(x[g[*vi].vertlre[colre]],1);
 					fprintf(fp,"%d ", (int)utility[g[*vi].vertlre[colre]]);
 				}
 				fprintf(fp,"\n");
+			}
+			else
+			{
+				/*
+				if(g[*vi].t == 0)
+				{
+					tie(e_out,e_out_end) = out_edges(*vi,g);
+					std::set<TGraph::edge_descriptor> out_unique_set;
+					out_unique_set.clear();
+					for(;e_out != e_out_end; ++e_out)
+					{
+						if(g[*e_out].back_lre
+						int type = get_edge_type(*e_out);
+						if(g[*e_out].coupled == 0)
+						{
+							out_unique_set.insert(*e_out);
+						}
+						else
+						{
+							if(out_unique_set.count(coupled_map[*e_out])==0)
+							{
+								out_unique_set.insert(*e_out);
+							}
+						}
+					}
+
+				}
+				else if (g[*vi].t==fvar.time_last)
+				{
+					tie(e_in,e_in_end) = in_edges(*vi,g);
+
+
+
+					std::set<TGraph::edge_descriptor> in_unique_set;
+
+					in_unique_set.clear();
+
+					for(;e_in != e_in_end;++e_in)
+					{
+						if(g[*e_in].coupled == 0)
+						{
+							in_unique_set.insert(*e_in);
+						}
+						else
+						{
+							if(in_unique_set.count(coupled_map[*e_in])==0)
+							{
+								in_unique_set.insert(*e_in);
+							}
+						}
+					}
+
+				}
+				else
+				{
+					printf(" I can't be in this case.. check the graph for inconsistencies 91283\n");
+					scanf("%*d");
+				}*/
 			}
 			/*if(vertmap.count(*vi)!=0)
 			{
@@ -2860,6 +3040,7 @@ void CellTracker::solve_higher_order()
 		int num_one = 0;
 		int num_others =0;
 		writeXGMML_secondorder("C:\\Users\\arun\\Research\\Tracking\\harvard\\ch4_secondorder.xgmml",lredges,utility,vals);
+		writeXGMML_secondorder_combined("C:\\Users\\arun\\Research\\Tracking\\harvard\\ch4_secondorder_combined.xgmml",lredges,utility,vals);
 		printf("varc =%d vals.getSize() = %d\n",varc,vals.getSize());
 		//PAUSE;
 		double maxval = 0;
@@ -2870,9 +3051,10 @@ void CellTracker::solve_higher_order()
 				num_one++;
 			else if(int(vals[counter]+0.5)==0)
 				num_zero++;
-			else
+			if(fabs(vals[counter])>0.01 && fabs(vals[counter]-1)>0.01)
 			{
 				printf("vals[counter] = %f\n",vals[counter]);
+				scanf("%*d");
 				num_others++;
 			}
 			if(abs(vals1[counter])>0.00002 && abs(vals1[counter]-1)>0.00002)
@@ -2911,7 +3093,7 @@ void CellTracker::solve_higher_order()
 		FILE *fp2 = fopen("L:\\Tracking\\metric\\confidence.txt","a+");
 		fprintf(fp2,"%s ",dataset_id.c_str());
 		fprintf(fp2,"Confidence = %lf maxutility = %lf objectivefunction = %lf ",cplex.getObjValue()/maxval,maxval,cplex.getObjValue());
-		//printf("Integrality tolerance = %lf\n",cplex.getParam(IloCplex::EpInt));
+		printf("Integrality tolerance = %lf\n",cplex.getParam(IloCplex::EpInt));
 		fprintf(fp2,"Integrality gap = %lf %% LP Solution = %lf IP Solution = %lf Num frac/total = %d/%d\n",(1-cplex.getObjValue()/cplex1.getObjValue())*100, cplex1.getObjValue(), cplex.getObjValue(), numfracvals, vals.getSize());
 		fclose(fp2);
 		//scanf("%*d");
@@ -3000,6 +3182,7 @@ std::pair<CellTracker::TGraph::edge_descriptor,bool> CellTracker::my_add_edge(TG
 	std::pair<TGraph::edge_descriptor,bool> pair1;
 	pair1.first = e;
 	pair1.second = added;
+	printf("About to return from my_add_edge\n");
 	return pair1;
 }
 void CellTracker::solve_lip()
@@ -4457,7 +4640,7 @@ void CellTracker::merge_loose_ends()
 }
 
 
-void CellTracker::resolve_merges_and_splits()
+void CellTracker::resolve_merges_and_splits(bool forcesplit = false)
 {
 	std::vector< std::vector < boost::graph_traits<TGraph>::vertex_descriptor > > to_resolve;
 
@@ -4506,7 +4689,7 @@ void CellTracker::resolve_merges_and_splits()
 						vvd.push_back(vdt);
 						tr_map[vdt] = true;
 					}while(is_simple_node(vdt));
-					if(incomplete)
+					if(incomplete && (!forcesplit))
 						continue;
 					if(issplit)
 						std::reverse(vvd.begin(),vvd.end());
@@ -4521,8 +4704,13 @@ void CellTracker::resolve_merges_and_splits()
 			printf("START --- \n");
 			for(int counter1 = 0; counter1 < to_resolve[counter].size(); counter1++)
 			{
-				print_vertex(to_resolve[counter][counter1],0);
+				printf("-----------------------------------\n");
+				print_vertex(to_resolve[counter][counter1],1);
+				printf("-----------------------------------\n");
+				
 			}
+			//if(g[to_resolve[counter][0]].t==39 && fvector[g[to_resolve[counter][0]].t][g[to_resolve[counter][0]].findex].num == 2)
+			//		scanf("%*d");
 			printf("\nEND --- \n");
 		}
 
@@ -4647,16 +4835,20 @@ void CellTracker::resolve_merges_and_splits()
 
 			if(got_evidence == true)
 			{
-				if(to_resolve[counter].size()>3)
+				if(to_resolve[counter].size()>3 || forcesplit == true)
 				{
+					printf("inside to_resolve[counter].size()>3 || forcesplit\n");
 					std::vector<TGraph::edge_descriptor> marked_for_removal;
 					TGraph::edge_descriptor dummye1;
 					bool dummy_added;
+					int nbefore = 2;
+					int nafter = 2;
 					if(got_evidence1 == true)
 					{
-						int nbefore = 2;
-						int nafter = 2;
+
 						std::vector<TGraph::vertex_descriptor> option1,option2;
+						if(before.size()<nbefore)
+							continue;
 						for(int counter1 = before.size()- nbefore; counter1 < before.size(); counter1++)
 						{
 							option1.push_back(before[counter1].first);
@@ -4680,14 +4872,14 @@ void CellTracker::resolve_merges_and_splits()
 						{
 							tie(dummye1, dummy_added) = my_add_edge(before[before.size()-1].second,to_resolve[counter][0],1,0,1,1,TRANSLATION);
 						}
-						tie(dummye1, dummy_added) = my_add_edge(to_resolve[counter][0],to_resolve[counter][1],1,0,1,1,TRANSLATION);
+						if(to_resolve[counter].size()>1)
+							tie(dummye1, dummy_added) = my_add_edge(to_resolve[counter][0],to_resolve[counter][1],1,0,1,1,TRANSLATION);
 					}
 					if(got_evidence2 == true)
 					{
-						int nbefore = 2;
-						int nafter = 2;
 						std::vector<TGraph::vertex_descriptor> option1,option2;
-						
+						if(to_resolve[counter].size()<nafter)
+							continue;
 						for(int counter1 = to_resolve[counter].size()-nafter; counter1 < to_resolve[counter].size(); counter1++)
 						{
 							option1.push_back(to_resolve[counter][counter1]);
@@ -4711,7 +4903,8 @@ void CellTracker::resolve_merges_and_splits()
 						{
 							tie(dummye1, dummy_added) = my_add_edge(to_resolve[counter][to_resolve[counter].size()-1],after[0].second,1,0,1,1,TRANSLATION);
 						}
-						tie(dummye1, dummy_added) = my_add_edge(to_resolve[counter][to_resolve[counter].size()-2],to_resolve[counter][to_resolve[counter].size()-1],1,0,1,1,TRANSLATION);
+						if(to_resolve[counter].size()>1)
+							tie(dummye1, dummy_added) = my_add_edge(to_resolve[counter][to_resolve[counter].size()-2],to_resolve[counter][to_resolve[counter].size()-1],1,0,1,1,TRANSLATION);
 					}
 					continue;
 				}
@@ -5216,8 +5409,18 @@ void CellTracker::print_all_LRUtilities(TGraph::vertex_descriptor v)
 }
 void CellTracker::run()
 {
-	//LoadTraining(train_out.c_str());
-	//compute_utility_maps_from_training();
+//	scanf("%*d");
+	if(strcmp(mode.c_str(),"TRACKING")==0)
+	{
+//printf("about to call loadtraining1\n");
+//scanf("%*d");
+#ifdef USE_TRAINED
+//		printf("about to call loadtraining2\n");
+//		scanf("%*d");
+	LoadTraining(train_out);
+	compute_utility_maps_from_training();
+#endif
+	}
 	//exit(0);
 
 	TGraph::vertex_descriptor vt1 = TGraph::null_vertex();
@@ -5249,7 +5452,9 @@ void CellTracker::run()
 	}
 	
 	populate_merge_candidates(0);
-//	avc += add_appear_vertices(-1);
+#ifdef USE_TRAINED
+	avc += add_appear_vertices(-1);
+#endif
 
 	_TRACE;
 	first_t = clock();
@@ -5274,8 +5479,10 @@ void CellTracker::run()
 		//PAUSE;
 		TIC;		prune(t);//TOC("prune()");
 	}
-	//dvc += this->add_disappear_vertices(fvector.size());
 
+#ifdef USE_TRAINED
+	dvc += this->add_disappear_vertices(fvector.size());
+#endif
 	//enforce_overlap();
 	
 
@@ -5348,12 +5555,46 @@ void CellTracker::run()
 		return;
 	}
 
-#ifdef USE_TRAINED
-	LoadTraining(train_out);
-	compute_utility_maps_from_training();
-#endif
+	for(tie(e_i,e_end) = edges(g); e_i!= e_end ; e_i = e_next)
+	{
+		e_next = e_i;
+		++e_next;
+		if(g[*e_i].utility==0 && (get_edge_type(*e_i)!=APPEAR && get_edge_type(*e_i)!=DISAPPEAR ))
+		{
+			remove_edge(*e_i,g);
+		}
+	}
+
 	solve_higher_order();
 	//solve_lip();
+	
+	{
+		TGraph::vertex_iterator vi,vend;
+		for(tie(vi,vend)=vertices(g); vi!=vend; ++vi)
+		{
+			TGraph::out_edge_iterator ei,eend;
+			int count =0;
+			int coupled_count = 0;
+			for(tie(ei,eend)=out_edges(*vi,g); ei!=eend; ++ei)
+			{
+				if(g[*ei].selected == 1)
+				{
+					if(g[*ei].coupled==1)
+						coupled_count++;
+					else
+						count++;
+				}
+			}
+			if(count==2)
+			{
+				printf("something wrong with this vertex count = %d coupled_count = %d\n",count,coupled_count);
+				print_vertex(*vi,1);
+				//scanf("%*d");
+			}
+	
+		}
+	}
+
 	print_stats();
 	writeXGMML("C:\\Users\\arun\\Research\\Tracking\\harvard\\ch4_new.xgmml");
 	boost::property_map<TGraph, boost::vertex_index_t>::type index_v;
@@ -5411,6 +5652,9 @@ void CellTracker::run()
 	resolve_merges_and_splits();
 	merge_loose_ends();
 	resolve_merges_and_splits();
+	resolve_merges_and_splits(true);
+	resolve_merges_and_splits(true);
+	resolve_merges_and_splits(true);
 
 	for(tie(e_i,e_end) = edges(g); e_i!= e_end ; ++e_i)
 	{
@@ -5877,6 +6121,253 @@ void CellTracker::writeXGMML(char *filename)
 	fclose(fp);
 }
 
+
+
+void CellTracker::writeXGMML_secondorder_combined(char *filename, std::vector< CellTracker::LREdge > &lredges,std::vector<int> &utility, IloNumArray& vals )
+{
+	FILE *fp = fopen(filename,"w");
+
+	fprintf(fp,"<?xml version=\"1.0\"?>\n");
+	fprintf(fp,"<graph id=\"Antonio_data_secondorder\" label=\"Antonio_data_secondorder\" directed=\"1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:ns1=\"http://www.w3.org/1999/xlink\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns=\"http://www.cs.rpi.edu/XGMML\">\n");
+	
+	TGraph::vertex_iterator vi,vend;
+
+	boost::property_map<TGraph, boost::vertex_index_t>::type index;
+	index = get(boost::vertex_index,g);
+
+	for(tie(vi,vend)=vertices(g);vi!=vend;++vi)
+	{
+		char label[1024];
+		FeaturesType f1;
+		if(g[*vi].special==1)
+		{
+			if(in_degree(*vi,g)==0)
+				sprintf(label,"A%d",index[*vi]);
+			else
+				sprintf(label,"D%d",index[*vi]);
+		}
+		else
+		{
+			f1 = fvector[g[*vi].t][g[*vi].findex];
+			sprintf(label,"%d,%d",g[*vi].t,f1.num);
+		}
+		
+		fprintf(fp,"\t<node id=\"%d\" label=\"%s\"\>\n",index[*vi],label);
+		if(g[*vi].special==0)
+		{
+			fprintf(fp,"\t\t<graphics type=\"ELLIPSE\" x=\"%d\" y=\"%d\" fill=\"#ff9999\"/>\n",f1.time*100,f1.num*100);
+			fprintf(fp,"\t\t<att type=\"integer\" name=\"time\" value=\"%d\"/>\n",g[*vi].t);
+			fprintf(fp,"\t\t<att type=\"integer\" name=\"num\" value=\"%d\"/>\n",f1.num);
+			fprintf(fp,"\t\t<att type=\"real\" name=\"x\" value=\"%0.2f\"/>\n",f1.Centroid[0]);
+			fprintf(fp,"\t\t<att type=\"real\" name=\"y\" value=\"%0.2f\"/>\n",f1.Centroid[1]);
+			fprintf(fp,"\t\t<att type=\"real\" name=\"z\" value=\"%0.2f\"/>\n",f1.Centroid[2]);
+			fprintf(fp,"\t\t<att type=\"integer\" name=\"volume\" value=\"%d\"/>\n",int(f1.ScalarFeatures[FeaturesType::VOLUME]));
+			fprintf(fp,"\t\t<att type=\"integer\" name=\"index\" value=\"%d\"/>\n",index[*vi]);
+			if(g[*vi].vertlre.size()>0)
+			{
+				fprintf(fp,"\t\t<att type=\"list\" name=\"U_s\">\n");
+				std::string label1;
+				for(int counter = 0; counter < g[*vi].vertlre.size(); counter++)
+				{
+					
+					TGraph::vertex_descriptor v1,v2;
+					TGraph::edge_descriptor e1,e2;
+					e1 = lredges[g[*vi].vertlre[counter]].back;
+					e2 = lredges[g[*vi].vertlre[counter]].front;
+					v1 = source(e1,g);
+					v2 = target(e1,g);
+					int edge_type = get_edge_type(e1);
+					char buff[1024];
+					int n1,n2;
+					switch(edge_type)
+					{
+					case APPEAR: sprintf(buff,"AA-%d,%d",g[v2].t,fvector[g[v2].t][g[v2].findex].num);break;
+					case DISAPPEAR: sprintf(buff,"D%d,%d-D",g[v1].t,fvector[g[v1].t][g[v1].findex].num);break;
+					case TRANSLATION: sprintf(buff,"T%d,%d-%d,%d",g[v1].t,fvector[g[v1].t][g[v1].findex].num,g[v2].t,fvector[g[v2].t][g[v2].findex].num); break;
+					case SPLIT: n1 = fvector[g[v2].t][g[v2].findex].num,n2 = fvector[g[target(coupled_map[e1],g)].t][g[target(coupled_map[e1],g)].findex].num;sprintf(buff,"S%d,%d-%d,{%d,%d}",g[v1].t,fvector[g[v1].t][g[v1].findex].num,g[v2].t,n1,n2);break;
+					case MERGE: n1 = fvector[g[v1].t][g[v1].findex].num,n2 = fvector[g[source(coupled_map[e1],g)].t][g[source(coupled_map[e1],g)].findex].num;sprintf(buff,"M%d,{%d,%d}-%d,%d",g[v1].t,n1,n2,g[v2].t,fvector[g[v2].t][g[v2].findex].num);break;
+					}
+					label1 +=buff;
+					label1 +=" (pp) ";
+					v1 = source(e2,g);
+					v2 = target(e2,g);
+					edge_type = get_edge_type(e2);
+					switch(edge_type)
+					{
+					case APPEAR: sprintf(buff,"AA-%d,%d",g[v2].t,fvector[g[v2].t][g[v2].findex].num);break;
+					case DISAPPEAR: sprintf(buff,"D%d,%d-D",g[v1].t,fvector[g[v1].t][g[v1].findex].num);break;
+					case TRANSLATION: sprintf(buff,"T%d,%d-%d,%d",g[v1].t,fvector[g[v1].t][g[v1].findex].num,g[v2].t,fvector[g[v2].t][g[v2].findex].num); break;
+					case SPLIT: n1 = fvector[g[v2].t][g[v2].findex].num,n2 = fvector[g[target(coupled_map[e2],g)].t][g[target(coupled_map[e2],g)].findex].num;sprintf(buff,"S%d,%d-%d,{%d,%d}",g[v1].t,fvector[g[v1].t][g[v1].findex].num,g[v2].t,n1,n2);break;
+					case MERGE: n1 = fvector[g[v1].t][g[v1].findex].num,n2 = fvector[g[source(coupled_map[e2],g)].t][g[source(coupled_map[e2],g)].findex].num;sprintf(buff,"M%d,{%d,%d}-%d,%d",g[v1].t,n1,n2,g[v2].t,fvector[g[v2].t][g[v2].findex].num);break;
+					}
+					label1 +=buff;
+					sprintf(buff,"  %d",utility[g[*vi].vertlre[counter]]);
+					label1 +=buff;
+					label1 +=" \r\n|  ";
+					
+					fprintf(fp,"\t\t\t<att type=\"integer\" name=\"U_s_%d\" value=\"%d\"/>\n",counter,utility[g[*vi].vertlre[counter]]);
+
+				}
+				fprintf(fp,"\t\t</att>\n");
+				fprintf(fp,"\t\t\t<att type=\"string\" name=\"SE\" value=\"%s\"/>\n",label1.c_str());
+			}
+		}
+		fprintf(fp,"\t\t<att type=\"real\" name=\"special\" value=\"%d\"/>\n",g[*vi].special);
+		printf("%d\n",index[*vi]);
+		fprintf(fp,"\t</node>\n");
+	}
+
+	TGraph::edge_iterator ei,eend;
+	int edge_index = 1;
+	for(tie(ei,eend)=edges(g);ei!=eend; ++ei)
+	{
+		TGraph::vertex_descriptor v1 = source(*ei,g);
+		TGraph::vertex_descriptor v2 = target(*ei,g);
+		TGraph::out_edge_iterator oe,oend;
+		bool once = false;
+		std::string label ="";
+		bool coupled = false;
+		std::string descriptor ="";
+		bool selected = false;
+		for(tie(oe,oend)=out_edges(v1,g);oe!=oend;++oe)
+		{
+			char buff[1024];
+			if(target(*oe,g)!=v2)
+				continue;
+			coupled = coupled | g[*oe].coupled;
+			selected = selected | g[*oe].selected;
+			char ch=' ';
+			int edge_type = get_edge_type(*oe);
+			switch(edge_type)
+			{
+				case APPEAR: ch='A';break;
+				case DISAPPEAR: ch='D';break;
+				case MERGE: ch='M';break;
+				case SPLIT: ch='S';break;
+				case TRANSLATION: ch='T';break;
+			}
+			//if(g[*oe].utility <2)
+			//	continue;
+			if(!once)
+			{
+				sprintf(buff,"%c%d",ch,g[*oe].utility);
+				label = label + buff;
+				sprintf(buff,"%d",*oe);
+				descriptor = descriptor + buff;
+				once = true;
+			}
+			else
+			{
+				sprintf(buff,",%c%d",ch,g[*oe].utility);
+				label = label + buff;
+				sprintf(buff,",%d",*oe);
+				descriptor = descriptor + buff;
+			}
+		}
+		if(label.size()!=0)
+		{
+			fprintf(fp,"\t<edge id=\"%d\" label=\"%s\" source=\"%d\" target=\"%d\">\n",++edge_index,label.c_str(),index[source(*ei,g)],index[target(*ei,g)]);
+			fprintf(fp,"\t\t<att type=\"integer\" name=\"coupled\" value=\"%d\"/>\n",coupled);
+			fprintf(fp,"\t\t<att type=\"integer\" name=\"utility\" value=\"%d\"/>\n",g[*ei].utility);
+			fprintf(fp,"\t\t<att type=\"integer\" name=\"selected\" value=\"%d\"/>\n",selected);
+			fprintf(fp,"\t\t<att type=\"integer\" name=\"type\" value=\"%d\"/>\n",g[*ei].type);
+			fprintf(fp,"\t\t<att type=\"string\" name=\"label\" value=\"%s\"/>\n",label.c_str());
+			//fprintf(fp,"\t\t<att type=\"string\" name=\"descriptor\" value=\"%s\"/>\n",descriptor.c_str());
+			fprintf(fp,"\t</edge>\n");
+		}
+	}
+	fprintf(fp,"</graph>\n");
+	fclose(fp);
+//	for(tie(ei,eend)=edges(g);ei!=eend; ++ei)
+//	{
+//		TGraph::vertex_descriptor v1 = source(*ei,g);
+//		TGraph::vertex_descriptor v2 = target(*ei,g);
+//		bool once = false;
+//		std::string label ="";
+//		bool coupled = false;
+//		std::string descriptor ="";
+//		bool selected = false;
+//		int edge_type = get_edge_type(*ei);
+//		g[*ei].index = edge_index++;
+//		//if(g[*ei].utility <2)
+//		//	continue;
+//		char ch;
+//		/*switch(edge_type)
+//		{
+//				case APPEAR: ch='A';break;
+//				case DISAPPEAR: ch='D';break;
+//				case MERGE: ch='M';break;
+//				case SPLIT: ch='S';break;
+//				case TRANSLATION: ch='T';break;
+//		}
+//		label += ch;*/
+//		char buff[1024];
+//			int n1,n2;
+//		switch(edge_type)
+//		{
+//			case APPEAR: sprintf(buff,"AA-%d,%d",g[v2].t,fvector[g[v2].t][g[v2].findex].num);break;
+//			case DISAPPEAR: sprintf(buff,"D%d,%d-D",g[v1].t,fvector[g[v1].t][g[v1].findex].num);break;
+//			case TRANSLATION: sprintf(buff,"T%d,%d-%d,%d",g[v1].t,fvector[g[v1].t][g[v1].findex].num,g[v2].t,fvector[g[v2].t][g[v2].findex].num); break;
+//			case SPLIT: n1 = fvector[g[v2].t][g[v2].findex].num,n2 = fvector[g[target(coupled_map[*ei],g)].t][g[target(coupled_map[*ei],g)].findex].num;sprintf(buff,"S%d,%d-%d,{%d,%d}",g[v1].t,fvector[g[v1].t][g[v1].findex].num,g[v2].t,n1,n2);break;
+//			case MERGE: n1 = fvector[g[v1].t][g[v1].findex].num,n2 = fvector[g[source(coupled_map[*ei],g)].t][g[source(coupled_map[*ei],g)].findex].num;sprintf(buff,"M%d,{%d,%d}-%d,%d",g[v1].t,n1,n2,g[v2].t,fvector[g[v2].t][g[v2].findex].num);break;
+//		}
+//		label +=buff;
+//		/*
+//		switch(g[v1].special)
+//		{
+//		case 0:
+//
+//			sprintf(buff,"%d,%d",g[v1].t,fvector[g[v1].t][g[v1].findex].num);
+//			label+=buff;
+//			break;
+//		case 1:
+//			label+="A";
+//		}
+//		label += "-";
+//		switch(g[v2].special)
+//		{
+//		case 0:
+//			sprintf(buff,"%d,%d",g[v2].t,fvector[g[v2].t][g[v2].findex].num);
+//			label+=buff;
+//			break;
+//		case 1:
+//			label+="D";
+//		}
+//*/
+//		fprintf(fp,"\t<node id=\"%d\" label=\"%s\">\n",g[*ei].index,label.c_str());
+//		fprintf(fp,"\t\t<graphics type=\"RECTANGLE\" x=\"%d\" y=\"%d\" fill=\"#ff9999\"/>\n",rand()%1000,rand()%1000);
+//		fprintf(fp,"</node>\n");
+//	}
+
+
+		//fprintf(fp,"\t\t<att type=\"string\" name=\"source\" value=\"%s\"/>\n",);
+		//		fprintf(fp,"\t\t<att type=\"integer\" name=\"num\" value=\"%d\"/>\n",f1.num);
+		//		fprintf(fp,"\t\t<att type=\"real\" name=\"x\" value=\"%0.2f\"/>\n",f1.Centroid[0]);
+		//		fprintf(fp,"\t\t<att type=\"real\" name=\"y\" value=\"%0.2f\"/>\n",f1.Centroid[1]);
+		//		fprintf(fp,"\t\t<att type=\"real\" name=\"z\" value=\"%0.2f\"/>\n",f1.Centroid[2]);
+		//		fprintf(fp,"\t\t<att type=\"integer\" name=\"volume\" value=\"%d\"/>\n",int(f1.ScalarFeatures[FeaturesType::VOLUME]));
+		//		fprintf(fp,"\t\t<att type=\"integer\" name=\"index\" value=\"%d\"/>\n",index[*vi]);
+	//int se_index = 0;
+	//for(tie(ei,eend)=edges(g);ei!=eend; ++ei)
+	//{
+	//	for(int counter=0; counter < g[*ei].backlre.size(); counter++)
+	//	{
+	//		char buff[1024];
+	//		sprintf(buff,"%d",utility[g[*ei].backlre[counter]]);
+	//		fprintf(fp,"\t<edge id=\"%d\" label=\"%s\" source=\"%d\" target=\"%d\">\n",++se_index,buff,g[*ei].index,g[lredges[g[*ei].backlre[counter]].front].index);
+	//		fprintf(fp,"\t\t<att type=\"string\" name=\"label\" value=\"%s\"/>\n",buff);
+	//		/*fprintf(fp,"\t\t<att type=\"integer\" name=\"coupled\" value=\"%d\"/>\n",coupled);
+	//		fprintf(fp,"\t\t<att type=\"integer\" name=\"utility\" value=\"%d\"/>\n",g[*ei].utility);*/
+	//		fprintf(fp,"\t\t<att type=\"integer\" name=\"selected\" value=\"%d\"/>\n",int(vals[g[*ei].backlre[counter]]+0.5));
+	//		/*fprintf(fp,"\t\t<att type=\"integer\" name=\"type\" value=\"%d\"/>\n",g[*ei].type);*/
+
+	//		//fprintf(fp,"\t\t<att type=\"string\" name=\"descriptor\" value=\"%s\"/>\n",descriptor.c_str());
+	//		fprintf(fp,"\t</edge>\n");
+	//	}
+	//}
+	//fprintf(fp,"</graph>\n");
+	//fclose(fp);
+}
 void CellTracker::writeXGMML_secondorder(char *filename, std::vector< CellTracker::LREdge > &lredges,std::vector<int> &utility, IloNumArray& vals )
 {
 	FILE *fp = fopen(filename,"w");
@@ -5939,7 +6430,7 @@ void CellTracker::writeXGMML_secondorder(char *filename, std::vector< CellTracke
 		//if(g[*ei].utility <2)
 		//	continue;
 		char ch;
-		switch(edge_type)
+		/*switch(edge_type)
 		{
 				case APPEAR: ch='A';break;
 				case DISAPPEAR: ch='D';break;
@@ -5947,11 +6438,23 @@ void CellTracker::writeXGMML_secondorder(char *filename, std::vector< CellTracke
 				case SPLIT: ch='S';break;
 				case TRANSLATION: ch='T';break;
 		}
-		label += ch;
+		label += ch;*/
 		char buff[1024];
+			int n1,n2;
+		switch(edge_type)
+		{
+			case APPEAR: sprintf(buff,"AA-%d,%d",g[v2].t,fvector[g[v2].t][g[v2].findex].num);break;
+			case DISAPPEAR: sprintf(buff,"D%d,%d-D",g[v1].t,fvector[g[v1].t][g[v1].findex].num);break;
+			case TRANSLATION: sprintf(buff,"T%d,%d-%d,%d",g[v1].t,fvector[g[v1].t][g[v1].findex].num,g[v2].t,fvector[g[v2].t][g[v2].findex].num); break;
+			case SPLIT: n1 = fvector[g[v2].t][g[v2].findex].num,n2 = fvector[g[target(coupled_map[*ei],g)].t][g[target(coupled_map[*ei],g)].findex].num;sprintf(buff,"S%d,%d-%d,{%d,%d}",g[v1].t,fvector[g[v1].t][g[v1].findex].num,g[v2].t,n1,n2);break;
+			case MERGE: n1 = fvector[g[v1].t][g[v1].findex].num,n2 = fvector[g[source(coupled_map[*ei],g)].t][g[source(coupled_map[*ei],g)].findex].num;sprintf(buff,"M%d,{%d,%d}-%d,%d",g[v1].t,n1,n2,g[v2].t,fvector[g[v2].t][g[v2].findex].num);break;
+		}
+		label +=buff;
+		/*
 		switch(g[v1].special)
 		{
 		case 0:
+
 			sprintf(buff,"%d,%d",g[v1].t,fvector[g[v1].t][g[v1].findex].num);
 			label+=buff;
 			break;
@@ -5968,7 +6471,7 @@ void CellTracker::writeXGMML_secondorder(char *filename, std::vector< CellTracke
 		case 1:
 			label+="D";
 		}
-
+*/
 		fprintf(fp,"\t<node id=\"%d\" label=\"%s\">\n",g[*ei].index,label.c_str());
 		fprintf(fp,"\t\t<graphics type=\"RECTANGLE\" x=\"%d\" y=\"%d\" fill=\"#ff9999\"/>\n",rand()%1000,rand()%1000);
 		fprintf(fp,"</node>\n");
@@ -5993,7 +6496,7 @@ void CellTracker::writeXGMML_secondorder(char *filename, std::vector< CellTracke
 			fprintf(fp,"\t\t<att type=\"string\" name=\"label\" value=\"%s\"/>\n",buff);
 			/*fprintf(fp,"\t\t<att type=\"integer\" name=\"coupled\" value=\"%d\"/>\n",coupled);
 			fprintf(fp,"\t\t<att type=\"integer\" name=\"utility\" value=\"%d\"/>\n",g[*ei].utility);*/
-			fprintf(fp,"\t\t<att type=\"integer\" name=\"selected\" value=\"%d\"/>\n",int(vals[g[*ei].backlre[counter]]));
+			fprintf(fp,"\t\t<att type=\"integer\" name=\"selected\" value=\"%d\"/>\n",int(vals[g[*ei].backlre[counter]]+0.5));
 			/*fprintf(fp,"\t\t<att type=\"integer\" name=\"type\" value=\"%d\"/>\n",g[*ei].type);*/
 			
 			//fprintf(fp,"\t\t<att type=\"string\" name=\"descriptor\" value=\"%s\"/>\n",descriptor.c_str());
@@ -6169,7 +6672,7 @@ void CellTracker::select_merge_edge(TGraph::vertex_descriptor v1, TGraph::vertex
 		}
 	}
 	printf(" Oops! could not find the merge edge. is there one?\n");
-	scanf("%*d");
+	//scanf("%*d");
 	return;
 }
 void CellTracker::select_split_edge(TGraph::vertex_descriptor v1, TGraph::vertex_descriptor v2, TGraph::vertex_descriptor v3)
@@ -6190,7 +6693,7 @@ void CellTracker::select_split_edge(TGraph::vertex_descriptor v1, TGraph::vertex
 		}
 	}
 	printf(" Oops! could not find the split edge. is there one?\n");
-	scanf("%*d");
+	//scanf("%*d");
 	return;
 }
 
@@ -6208,7 +6711,7 @@ void CellTracker::select_translation_edge(TGraph::vertex_descriptor v1, TGraph::
 		}
 	}
 	printf(" Oops! could not find the translation edge. is there one?\n");
-	scanf("%*d");
+	//scanf("%*d");
 	return;
 }
 
@@ -6342,7 +6845,7 @@ void CellTracker::print_training_statistics_to_file()
 						std::set<TGraph::vertex_descriptor>::iterator it1 = outverts.begin();
 						std::set<TGraph::vertex_descriptor>::iterator it2 = it1;
 						++it2;
-					/*	printf("--------------------\n");
+						/*printf("--------------------\n");
 						print_vertex(*it,1);
 						printf("--------------------\n");
 						print_vertex(*it1,1);
@@ -6583,7 +7086,8 @@ void CellTracker::print_training_statistics_to_file()
 				Centroid1[2] = f1.Centroid[2];
 				ovlap = overlap(f1.BoundingBox,f2.BoundingBox);
 				printf("About to fprintf\n");
-				fprintf(fpout,"T dx %d dy %d dz %d v1 %0.0f v2 %0.0f v1v2 %0.2f t1 %d t2 %d\n",Centroid[0]-Centroid1[0],Centroid[1]-Centroid1[1],Centroid[2]-Centroid1[2],f1.ScalarFeatures[FeaturesType::VOLUME],f2.ScalarFeatures[FeaturesType::VOLUME],ovlap,f1.time,f2.time);
+				fprintf(fpout,"T dx %d dy %d dz %d v1 %0.0f v2 %0.0f v1v2 %0.2f bv1 %0.2f bv2 %0.2f t1 %d t2 %d\n",Centroid[0]-Centroid1[0],Centroid[1]-Centroid1[1],Centroid[2]-Centroid1[2],\
+					f1.ScalarFeatures[FeaturesType::VOLUME],f2.ScalarFeatures[FeaturesType::VOLUME],ovlap,f1.ScalarFeatures[FeaturesType::BBOX_VOLUME],f2.ScalarFeatures[FeaturesType::BBOX_VOLUME],f1.time,f2.time);
 				break;
 			case MERGE:
 				printf("In M\n");
@@ -6617,7 +7121,7 @@ void CellTracker::print_training_statistics_to_file()
 				printf("Centroid2 %d %d %d\n",Centroid2[0],Centroid2[1],Centroid2[2]);
 				ovlap1 = overlap(f1.BoundingBox,f3.BoundingBox);
 				ovlap2 = overlap(f2.BoundingBox,f3.BoundingBox);
-				fprintf(fpout,"M id1 %d id2 %d id3 %d dx1 %d dy1 %d dz1 %d dx2 %d dy2 %d dz2 %d v1 %0.0f v2 %0.0f v3 %0.0f sv1v2 %d v1v3 %0.2f v2v3 %0.2f t1 %d t2 %d\n",f1.num, f2.num, f3.num, Centroid3[0]-Centroid1[0],Centroid3[1]-Centroid1[1],Centroid3[2]-Centroid1[2],Centroid3[0]-Centroid2[0],Centroid3[1]-Centroid2[1],Centroid3[2]-Centroid2[2],f1.ScalarFeatures[FeaturesType::VOLUME],f2.ScalarFeatures[FeaturesType::VOLUME],f3.ScalarFeatures[FeaturesType::VOLUME],get_shared_boundary(v1,v2),ovlap1,ovlap2,f1.time,f3.time);
+				fprintf(fpout,"M id1 %d id2 %d id3 %d dx1 %d dy1 %d dz1 %d dx2 %d dy2 %d dz2 %d v1 %0.0f v2 %0.0f v3 %0.0f sv1v2 %d v1v3 %0.2f v2v3 %0.2f bv1 %0.2f bv2 %0.2f bv3 %0.2f t1 %d t2 %d\n",f1.num, f2.num, f3.num, Centroid3[0]-Centroid1[0],Centroid3[1]-Centroid1[1],Centroid3[2]-Centroid1[2],Centroid3[0]-Centroid2[0],Centroid3[1]-Centroid2[1],Centroid3[2]-Centroid2[2],f1.ScalarFeatures[FeaturesType::VOLUME],f2.ScalarFeatures[FeaturesType::VOLUME],f3.ScalarFeatures[FeaturesType::VOLUME],get_shared_boundary(v1,v2),ovlap1,ovlap2,f1.ScalarFeatures[FeaturesType::BBOX_VOLUME],f2.ScalarFeatures[FeaturesType::BBOX_VOLUME],f3.ScalarFeatures[FeaturesType::BBOX_VOLUME],f1.time,f3.time);
 				break;
 			case SPLIT:
 				printf("In S\n");
@@ -6649,7 +7153,7 @@ void CellTracker::print_training_statistics_to_file()
 				printf("Centroid2 %d %d %d\n",Centroid2[0],Centroid2[1],Centroid2[2]);
 				ovlap1 = overlap(f1.BoundingBox,f3.BoundingBox);
 				ovlap2 = overlap(f2.BoundingBox,f3.BoundingBox);
-				fprintf(fpout,"S id1 %d id2 %d id3 %d dx1 %d dy1 %d dz1 %d dx2 %d dy2 %d dz2 %d v1 %0.0f v2 %0.0f v3 %0.0f sv1v2 %d v1v3 %0.2f v2v3 %0.2f t1 %d t2 %d\n",f1.num, f2.num, f3.num, Centroid3[0]-Centroid1[0],Centroid3[1]-Centroid1[1],Centroid3[2]-Centroid1[2],Centroid3[0]-Centroid2[0],Centroid3[1]-Centroid2[1],Centroid3[2]-Centroid2[2],f1.ScalarFeatures[FeaturesType::VOLUME],f2.ScalarFeatures[FeaturesType::VOLUME],f3.ScalarFeatures[FeaturesType::VOLUME],get_shared_boundary(v1,v2),ovlap1,ovlap2,f1.time,f3.time);
+				fprintf(fpout,"S id1 %d id2 %d id3 %d dx1 %d dy1 %d dz1 %d dx2 %d dy2 %d dz2 %d v1 %0.0f v2 %0.0f v3 %0.0f sv1v2 %d v1v3 %0.2f v2v3 %0.2f bv1 %0.2f bv2 %0.2f bv3 %0.2f t1 %d t2 %d\n",f1.num, f2.num, f3.num, Centroid3[0]-Centroid1[0],Centroid3[1]-Centroid1[1],Centroid3[2]-Centroid1[2],Centroid3[0]-Centroid2[0],Centroid3[1]-Centroid2[1],Centroid3[2]-Centroid2[2],f1.ScalarFeatures[FeaturesType::VOLUME],f2.ScalarFeatures[FeaturesType::VOLUME],f3.ScalarFeatures[FeaturesType::VOLUME],get_shared_boundary(v1,v2),ovlap1,ovlap2,f1.ScalarFeatures[FeaturesType::BBOX_VOLUME],f2.ScalarFeatures[FeaturesType::BBOX_VOLUME],f3.ScalarFeatures[FeaturesType::BBOX_VOLUME],f1.time,f3.time);
 				break;
 			default:
 				break;
@@ -6674,7 +7178,7 @@ void CellTracker::LoadTraining(std::string filename)
 	}
 
 	printf("Started reading it\n");
-
+//scanf("%*d");
 	while(!feof(fp))
 	{
 		_TRACE;
@@ -6690,11 +7194,11 @@ void CellTracker::LoadTraining(std::string filename)
 			switch(setype[0])
 			{
 			case 'T': 
-				sscanf(buffer,"%*s dx %f dy %f dz %f v1 %f v2 %f v1v2 %f t1 %d t2 %d",&tp.dx1,&tp.dy1,&tp.dz1,&tp.v1,&tp.v2,&tp.v1v2,&tp.t1,&tp.t2);
+				sscanf(buffer,"%*s dx %f dy %f dz %f v1 %f v2 %f v1v2 %f bv1 %f bv2 %f t1 %d t2 %d",&tp.dx1,&tp.dy1,&tp.dz1,&tp.v1,&tp.v2,&tp.v1v2,&tp.bv1,&tp.bv2,&tp.t1,&tp.t2);
 				Ttrpoints.push_back(tp);
 				break;
 			case 'M': case 'S':
-				sscanf(buffer,"%*s id1 %*d id2 %*d id3 %*d dx1 %f dy1 %f dz1 %f dx2 %f dy2 %f dz2 %f v1 %f v2 %f v3 %f sv1v2 %d v1v3 %f v2v3 %f t1 %d t2 %d",&msp.dx1,&msp.dy1,&msp.dz1,&msp.dx2,&msp.dy2,&msp.dz2,&msp.v1,&msp.v2,&msp.v3,&msp.sv1v2,&msp.v1v3,&msp.v2v3,&msp.t1,&msp.t2);
+				sscanf(buffer,"%*s id1 %*d id2 %*d id3 %*d dx1 %f dy1 %f dz1 %f dx2 %f dy2 %f dz2 %f v1 %f v2 %f v3 %f sv1v2 %d v1v3 %f v2v3 %f bv1 %f bv2 %f bv3 %f t1 %d t2 %d",&msp.dx1,&msp.dy1,&msp.dz1,&msp.dx2,&msp.dy2,&msp.dz2,&msp.v1,&msp.v2,&msp.v3,&msp.sv1v2,&msp.v1v3,&msp.v2v3,&msp.bv1,&msp.bv2,&msp.bv3,&msp.t1,&msp.t2);
 				MStrpoints.push_back(msp);
 				break;
 			default: printf("Something went wrong while reading the training data\n Check the input...\n"); scanf("%*d"); break;
@@ -6788,12 +7292,19 @@ void CellTracker::LoadTraining(std::string filename)
 		}
 
 	}
+
+
+	printf("Ttrpoints.size() = %d\n", Ttrpoints.size());
+	printf("MStrpoints.size() = %d\n", MStrpoints.size());
+	printf("ADtrpoints.size() = %d\n", ADtrpoints.size());
+	//scanf("%*d");
 	
 }
 
 std::vector<std::pair<float,float> > compute_parzen_pdf_1d(std::vector<float> data)
 {
 	int num_points = 500;
+	float range_padding = 0.1;//10%
 	std::vector<std::pair<float,float> > pdf;
 	if(data.size()<2)
 	{
@@ -6833,7 +7344,7 @@ std::vector<std::pair<float,float> > compute_parzen_pdf_1d(std::vector<float> da
 	
 	float h = 1.06*sigma*pow(data.size(),-0.2);
 	printf("sigma = %f var = %f h = %f\n",sigma,var,h);
-	scanf("%*d");
+	//scanf("%*d");
 	if(fabs(sigma)<1e-4)
 	{
 		pdf.push_back(std::make_pair<float,float>(data[0]-10*std::numeric_limits<float>::epsilon(),0));
@@ -6841,6 +7352,11 @@ std::vector<std::pair<float,float> > compute_parzen_pdf_1d(std::vector<float> da
 		pdf.push_back(std::make_pair<float,float>(data[0]+10*std::numeric_limits<float>::epsilon(),0));
 		return pdf;
 	}
+
+	float newmax = max + (max-min)*range_padding;
+	float newmin = min - (max-min)*range_padding;
+	max = newmax;
+	min = newmin;
 	
 	std::sort(data.begin(),data.end());
 	float increment = (max-min)/num_points;
@@ -6870,13 +7386,14 @@ std::vector<std::pair<float,float> > compute_parzen_pdf_1d(std::vector<float> da
 		pdf[co].second /=global_max;
 	}
 	//end of normalization;
-	scanf("%*d");
+	//scanf("%*d");
 	return pdf;
 }
 CellTracker::jointpdf CellTracker::compute_parzen_pdf_2d(std::vector<float> data1,std::vector<float> data2)
 {
 	jointpdf pdf;
 	int num_points = 100;
+	float range_padding = 0.2;//10%
 	if(data1.size() !=data2.size())
 	{
 		printf("Invalid input for computing 2d pdf based on parzen-rosenblatt windows\n");
@@ -6948,7 +7465,7 @@ CellTracker::jointpdf CellTracker::compute_parzen_pdf_2d(std::vector<float> data
 
 	printf("sigmax = %f varx = %f hx = %f\n",sigmax,varx,hx);
 	printf("sigmay = %f vary = %f hy = %f\n",sigmay,vary,hy);
-	scanf("%*d");
+	//scanf("%*d");
 	if(fabs(sigmax)<1e-4 || fabs(sigmay) < 1e-4)
 	{
 		//WRONG TODO FIXME .. need to fix this
@@ -6964,6 +7481,15 @@ CellTracker::jointpdf CellTracker::compute_parzen_pdf_2d(std::vector<float> data
 			return pdf;
 	}
 	
+	float newmaxx = maxx + (maxx-minx)*range_padding;
+	float newmaxy = maxy + (maxy-miny)*range_padding;
+	float newminx = minx - (maxx-minx)*range_padding;
+	float newminy = miny - (maxy-miny)*range_padding;
+	maxx = newmaxx;
+	maxy = newmaxy;
+	miny = newminy;
+	minx = newminx;
+
 	float incrementx = (maxx-minx)/num_points;
 	float incrementy = (maxy-miny)/num_points;
 	
@@ -7040,15 +7566,15 @@ void CellTracker::compute_utility_maps_from_training()
 	};
 	*/
 	std::vector<float> Tdists,Toverlapratio,Tvolratio,Ttimediff;
-	std::vector<float> Mvolratio,Mdist1,Mdist2,Moverlapratio1,Moverlapratio2;
+	std::vector<float> Mvolratio,Mdist1,Mdist2,Mtimediff,Moverlapratio;//,Moverlapratio1,Moverlapratio2
 	std::vector<float> dirdist1,dirdist2,dirorients,dirdistratio;
-	std::vector<float> ADdists1,ADdists2;
+	std::vector<float> ADdists1,ADdists2,ADproj;
 
 	for(int counter=0; counter<Ttrpoints.size(); counter++)
 	{
 		TTrainingPoint tp = Ttrpoints[counter];
 		Tdists.push_back(sqrt((tp.dx1*tp.dx1)*fvar.spacing[0]*fvar.spacing[0]+tp.dy1*tp.dy1*fvar.spacing[1]*fvar.spacing[1]+tp.dz1*tp.dz1*fvar.spacing[2]*fvar.spacing[2]));
-		Toverlapratio.push_back(tp.v1v2/(tp.v1+tp.v2));
+		Toverlapratio.push_back(tp.v1v2/(tp.bv1+tp.bv2));
 		Tvolratio.push_back(MIN(tp.v1,tp.v2)/MAX(tp.v1,tp.v2));
 		Ttimediff.push_back(abs(tp.t2-tp.t1)-1);
 	}
@@ -7061,11 +7587,12 @@ void CellTracker::compute_utility_maps_from_training()
 		float dist2 = sqrt(msp.dx2*msp.dx2*fvar.spacing[0]*fvar.spacing[0]+msp.dy2*msp.dy2*fvar.spacing[1]*fvar.spacing[1]+msp.dz2*msp.dz2*fvar.spacing[2]*fvar.spacing[2]);
 		Mdist1.push_back(MIN(dist1,dist2));
 		Mdist2.push_back(MAX(dist1,dist2));
-		float ovlapratio1 = msp.v1v3/(msp.v1+msp.v3);
-		float ovlapratio2 = msp.v2v3/(msp.v2+msp.v3);
-		Moverlapratio1.push_back(MIN(ovlapratio1,ovlapratio2));
-		Moverlapratio2.push_back(MAX(ovlapratio1,ovlapratio2));
-
+		float ovlapratio1 = msp.v1v3/(msp.bv1+msp.bv3);
+		float ovlapratio2 = msp.v2v3/(msp.bv2+msp.bv3);
+	//	Moverlapratio1.push_back(MIN(ovlapratio1,ovlapratio2));
+	//	Moverlapratio2.push_back(MAX(ovlapratio1,ovlapratio2));
+		Moverlapratio.push_back((ovlapratio1+ovlapratio2)/2.0);
+		Mtimediff.push_back(abs(msp.t1-msp.t2)-1);
 	}
 	
 	
@@ -7080,18 +7607,52 @@ void CellTracker::compute_utility_maps_from_training()
 		dirorients.push_back((dp.dx1*dp.dx2*fvar.spacing[0]*fvar.spacing[0]+dp.dy1*dp.dy2*fvar.spacing[1]*fvar.spacing[1]+dp.dz1*dp.dz2*fvar.spacing[2]*fvar.spacing[2])/(dist1+0.0001)/(dist2+0.0001));
 	}
 
-	
+	int dirbasis[6][3] = {1,0,0,
+						 -1,0,0,
+				 		 0,1,0,
+				 		0,-1,0,
+						0,0,1,
+						0,0,-1};
 	for(int counter = 0; counter < ADtrpoints.size(); counter++)
 	{
 		float d[3];
 		d[0] = ADtrpoints[counter].x1-ADtrpoints[counter].dx1;
 		d[1] = ADtrpoints[counter].y1-ADtrpoints[counter].dy1;
 		d[2] = ADtrpoints[counter].z1-ADtrpoints[counter].dz1;
-		ADdists1.push_back(get_boundary_dist(d));
+		float bd = get_boundary_dist(d);
+		if(bd>4) // arbitrary TODO FIXME error in training data
+			continue;
+		float bds[6];
+		bds[0] = d[0]*fvar.spacing[0];
+		bds[1] = (fvar.BoundingBox[1]-d[0])*fvar.spacing[0];
+		bds[2] = d[1]*fvar.spacing[1];
+		bds[3] = (fvar.BoundingBox[3]-d[1])*fvar.spacing[1];
+		bds[4] = d[2]*fvar.spacing[2];
+		bds[5] = (fvar.BoundingBox[5]-d[2])*fvar.spacing[2];
+		float minbd = 1232;
+		int minindex = -1;
+		for(int co = 0; co<6; co++)
+		{
+			if(bds[co]<minbd)
+			{
+				minbd = bds[co];
+				minindex = co;
+			}
+		}
+		printf("minindex = %d\n",minindex);
+		//scanf("%*d");
+		if(minindex >=0)
+		{
+			float proj = ADtrpoints[counter].dx1*dirbasis[minindex][0]+ADtrpoints[counter].dy1*dirbasis[minindex][1]+ADtrpoints[counter].dz1*dirbasis[minindex][2];
+			proj/=sqrt(ADtrpoints[counter].dx1*ADtrpoints[counter].dx1+ADtrpoints[counter].dy1*ADtrpoints[counter].dy1+ADtrpoints[counter].dz1*ADtrpoints[counter].dz1+0.0001);
+			ADproj.push_back(proj);
+		}
+		ADdists1.push_back(bd);
 		d[0] = ADtrpoints[counter].x1;
 		d[1] = ADtrpoints[counter].y1;
 		d[2] = ADtrpoints[counter].z1;
-		ADdists2.push_back(get_boundary_dist(d));
+		float bd1 = get_boundary_dist(d);
+		ADdists2.push_back(bd1);
 	}
 
 
@@ -7102,23 +7663,29 @@ void CellTracker::compute_utility_maps_from_training()
 	Ttdiffpdf = compute_parzen_pdf_1d(Ttimediff);
 	Mvolrpdf = compute_parzen_pdf_1d(Mvolratio);
 	Mdistpdf = compute_parzen_pdf_2d(Mdist1,Mdist2);
-	Movlappdf = compute_parzen_pdf_2d(Moverlapratio1,Moverlapratio2);
+	Movlappdf = compute_parzen_pdf_1d(Moverlapratio);//1,Moverlapratio2);
+	Mtdiffpdf = compute_parzen_pdf_1d(Mtimediff);
 	dirdistratiovsorients = compute_parzen_pdf_2d(dirdistratio,dirorients);
 	adpdf = compute_parzen_pdf_2d(ADdists1,ADdists2);
 
+	adprojpdf = compute_parzen_pdf_1d(ADproj);
+	printf("ADproj.size() = %d\n",ADproj.size());
+	printf("adprojpdf.size() = %d\n",adprojpdf.size());
+	//scanf("%*d");
 
 	FILE *fp = fopen("L:\\Tracking\\Training\\datatest.txt","w");
-	//for(int counter = 0; counter< Mvolrpdf.size(); counter++)
-	//{
-	//	fprintf(fp,"%f %f\n",Mvolrpdf[counter].first,Mvolrpdf[counter].second);
-	//}
-	for(int xco = 0; xco < adpdf.xvalues.size(); xco++)
+	for(int counter = 0; counter< adprojpdf.size(); counter++)
 	{
-		for(int yco = 0;  yco < adpdf.yvalues.size(); yco++)
-		{
-			fprintf(fp,"%f %f %f\n",adpdf.xvalues[xco],adpdf.yvalues[yco],adpdf.prob[xco][yco]);
-		}
+		fprintf(fp,"%f %f\n",adprojpdf[counter].first,adprojpdf[counter].second);
 	}
+	/*for(int xco = 0; xco < Movlappdf.xvalues.size(); xco++)
+	{
+		for(int yco = 0;  yco < Movlappdf.yvalues.size(); yco++)
+		{
+			fprintf(fp,"%f %f %f\n",Movlappdf.xvalues[xco],Movlappdf.yvalues[yco],Movlappdf.prob[xco][yco]);
+		}
+	}*/
+	fclose(fp);
 
 
 }
@@ -7545,13 +8112,15 @@ int main(int argc1, char **argv1)
 		std::string tbuff = std::string(argv[3+2*num_t]) + std::string("/") +std::string(argv[4+2*num_t+counter]);
 		outputfilenames.push_back(tbuff);
 	}
-
+	printf("check1\n");
 	if(strcmp(mode.c_str(),"TRAINING")==0)
 	{
 
 		RunTraining(imfilenames,labelfilenames,outputfilenames,training_input_file,training_output_file,fvar);
 		return 0;
 	}
+	printf("check2\n");
+
 	/*for(int counter=0; counter < num_t; counter++)
 	{
 	printf("---t = %d %s %s %s----\n", counter, imfilenames[counter].c_str(),labelfilenames[counter].c_str(), outputfilenames[counter].c_str());
@@ -7649,6 +8218,7 @@ int main(int argc1, char **argv1)
 		ColorImageType::Pointer colin = getColorImageFromColor2DImages(input);
 		//writeImage<ColorImageType>(colin,"C:\\Users\\arun\\Research\\Tracking\\harvard\\debug\\input.tif");
 		std::string debugfolder = "C:\\Users\\arun\\Research\\Tracking\\harvard\\debug\\";
+		debugprefix += "_" + dataset_id;
 		std::string debugstring = debugfolder + debugprefix + "_input.tif";
 		writeImage<ColorImageType>(colin,debugstring.c_str());
 
@@ -7687,6 +8257,9 @@ int main(int argc1, char **argv1)
 		debugcol2->FillBuffer(colorpixel);
 		debugcol3->FillBuffer(colorpixel);
 		ct.set_debug_images(debugcol1,debugcol2,debugcol3);
+		ct.mode = mode;
+		ct.train_in = training_input_file;
+		ct.train_out = training_output_file;
 		ct.run();
 		printf("Rerunning with computed variances\n");
 		FeatureVariances fvarnew(ct.get_computed_variances());
