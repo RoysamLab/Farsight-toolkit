@@ -30,7 +30,7 @@ limitations under the License.
 #include <itkLightObject.h>
 #include <itkObjectFactory.h>
 
-#include "itkLabelGeometryImageFilter.h"
+#include <itkLabelGeometryImageFilter.h>
 #include <itkLabelStatisticsImageFilter.h>
 #include <itkScalarImageToTextureFeaturesFilter.h>
 #include <itkGradientMagnitudeImageFilter.h>

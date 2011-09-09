@@ -975,6 +975,11 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 {
 	if(!intensityImage || !labelImage) return false;
 	if(!labels.size()) return false;
+	if(	labelImage->GetLargestPossibleRegion().GetSize()[0]==1 ||
+		labelImage->GetLargestPossibleRegion().GetSize()[1]==1 ||
+		labelImage->GetLargestPossibleRegion().GetSize()[2]==1	)
+		return false; //Till we figure out why it is failing on 2D images
+
 	
 	LabelImagePointer tempIntensityImage;
 
