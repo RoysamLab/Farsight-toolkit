@@ -1,3 +1,4 @@
+cmake_minimum_required(VERSION 2.8.4)
 include(ExternalProject)
 
 set(base "${CMAKE_BINARY_DIR}/ExternalProjects")
