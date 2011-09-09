@@ -1,6 +1,6 @@
 include(ExternalProject)
 
-set(base "${CMAKE_BINARY_DIR}/SB")
+set(base "${CMAKE_BINARY_DIR}/ExternalProjects")
 set_property(DIRECTORY PROPERTY EP_BASE ${base})
 
 set(install_dir "${base}/Install")
@@ -8,17 +8,22 @@ set(install_dir "${base}/Install")
 option(BUILD_SHARED_LIBS "Should Farsight be built with shared libraries? (Not possible on Windows)" OFF)
 if(WIN32)
   set(BUILD_SHARED_LIBS OFF CACHE BOOL "Farsight cannot built with shared libraries on Windows" FORCE)
+  mark_as_advanced(BUILD_SHARED_LIBS)
 endif()
 set(shared ${BUILD_SHARED_LIBS}) # setting to use for BUILD_SHARED_LIBS on all subsequent projects
 set(testing OFF) # setting to use for BUILD_TESTING on all subsequent projects
 
-#TODO: add external project stuff to download Boost if its not found.
-find_package(Boost)
-if(NOT Boost_INCLUDE_DIR)
-  message(FATAL_ERROR "error: install Boost or set Boost_INCLUDE_DIR")
-  mark_as_advanced(CLEAR Boost_INCLUDE_DIR)
-endif()
-set(boost "${Boost_INCLUDE_DIR}")
+############################################################################
+# Boost
+#
+ExternalProject_Add(Boost
+  URL http://farsight-toolkit.org/support/boost_1_47_0.tar.gz
+  URL_MD5 ff180a5276bec773a7625cac7e2288e8
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ""
+)  
+set(boost "${base}/Source/Boost")
 
 # Compute -G arg for configuring external projects with the same CMake generator:
 #
@@ -36,7 +41,7 @@ if(CMAKE_BUILD_TYPE)
   set(build_type "${CMAKE_BUILD_TYPE}")
 endif()
 
-option(DEBUG_LEAKS "SHOW VTK DEBUG LEAKS" OFF)
+option(DEBUG_LEAKS "SHOW VTK DEBUG LEAKS" ON)
 if (DEBUG_LEAKS)
   set(vtk_debug_leaks ON)
 endif()
@@ -83,6 +88,7 @@ ExternalProject_Add(VXL
     -DBUILD_TESTING:BOOL=${testing}
     ${mac_args}
     ${png_arg}
+  INSTALL_COMMAND ""
 )
 set(VXL_DIR ${base}/Build/VXL)
 
@@ -132,14 +138,33 @@ ExternalProject_Add(VTK
     -DVTK_QT_USE_WEBKIT:BOOL=OFF
     -DBoost_INCLUDE_DIR:FILEPATH=${boost}
     ${mac_args}
+  INSTALL_COMMAND ""
   DEPENDS
     ${Qt_Target}
 )
 set(VTK_DIR ${base}/Build/VTK)
 
+# ITK v4 needs a short path on Windows
+# We setup different (shorter) directories for ITK here if necessary
+if(WIN32)
+  set(ITK_BASE_DIR_DEFAULT "C:/ITKRoot")
+  set(ITK_BASE_DIR "${ITK_BASE_DIR_DEFAULT}"
+    CACHE PATH "Base of all SuperBuild-built ITK source/build trees.  If this path is too long, ITK will fail to build.")
+  set(ITK_DOWNLOAD_DIR "${ITK_BASE_DIR}/Download")
+  set(ITK_SOURCE_DIR "${ITK_BASE_DIR}/src")
+  set(ITK_BINARY_DIR "${ITK_BASE_DIR}/bin")
+else()
+  set(ITK_DOWNLOAD_DIR "${base}/Download/ITK")
+  set(ITK_SOURCE_DIR "${base}/Source/ITK")
+  set(ITK_BINARY_DIR "${base}/Build/ITK")
+endif()
+
 ExternalProject_Add(ITK
-  URL http://farsight-toolkit.org/support/ITKv4.0a09-Source.tar.gz
-  URL_MD5 f56d34dae721f67ae8151a6f9657075b 
+  URL http://farsight-toolkit.org/support/ITK-Source-Aug-27-2011.tar.gz
+  URL_MD5 6477dff9d18cc92718061a373951f8e0
+  DOWNLOAD_DIR ${ITK_DOWNLOAD_DIR}
+  SOURCE_DIR ${ITK_SOURCE_DIR}
+  BINARY_DIR ${ITK_BINARY_DIR}
   CMAKE_GENERATOR ${gen}
   CMAKE_ARGS
     -DCMAKE_INSTALL_PREFIX:PATH=${install_dir}
@@ -155,7 +180,6 @@ ExternalProject_Add(ITK
   DEPENDS
     "VXL"
 )
-set(ITK_DIR ${base}/Build/ITK)
 
 set(EXE_DIR ${CMAKE_CURRENT_BINARY_DIR}/exe)
 set(LIB_DIR ${CMAKE_CURRENT_BINARY_DIR}/libs)
@@ -180,7 +204,7 @@ ExternalProject_Add(Farsight
     -DBoost_INCLUDE_DIR:FILEPATH=${boost}
     -DQT_QMAKE_EXECUTABLE:FILEPATH=${QT_QMAKE_EXECUTABLE}
     -DVTK_DIR:FILEPATH=${VTK_DIR}
-    -DITK_DIR:FILEPATH=${ITK_DIR}
+    -DITK_DIR:FILEPATH=${ITK_BINARY_DIR}
     -DVXL_DIR:FILEPATH=${VXL_DIR}
     -DEXE_DIR:FILEPATH=${EXE_DIR}
     -DLIB_DIR:FILEPATH=${LIB_DIR}
