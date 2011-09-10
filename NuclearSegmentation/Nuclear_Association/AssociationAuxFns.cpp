@@ -215,7 +215,7 @@ unsigned short returnthresh( USImageType::Pointer input_image, int num_bin_levs,
 	upperBound.SetSize(1);
 	size.SetSize(1);
 
-	lowerBound(0.0);
+	lowerBound.Fill(0.0);
 	upperBound.Fill(255.0);
 	size.Fill(numBins);
 
