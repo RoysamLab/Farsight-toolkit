@@ -58,6 +58,7 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 	dRegion.SetSize(2,0);
 	deFilter->SetExtractionRegion(dRegion);
 	deFilter->SetInput( inp_labeled );
+	deFilter->SetDirectionCollapseToSubmatrix();
 	try{
 		deFilter->Update();
 	}
