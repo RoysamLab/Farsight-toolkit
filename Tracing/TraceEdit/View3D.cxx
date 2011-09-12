@@ -47,6 +47,7 @@ View3D::View3D(QWidget *parent)
 	this->TreeModel = NULL;
 	this->savescreenshotDialog = NULL;
 	this->ROIExtrudedpolydata = NULL;
+	this->ROIactor = NULL;
 
 	this->tobj = new TraceObject;
 	//int num_loaded = 0;
@@ -978,6 +979,9 @@ void View3D::Initialize()
 	{
 		this->setWindowTitle(tr("Trace Editor"));
 	}
+	// scalebar incase its needed 
+	/*this->scalebar = vtkSmartPointer<vtkLegendScaleActor>::New();
+	this->Renderer->AddActor(this->scalebar);*/
 	//this->QVTK->GetRenderWindow()->Render();
 	this->setupLinkedSpace();
 }
@@ -2666,18 +2670,6 @@ void View3D::AddROIPoint()
 }
 void View3D::DrawROI()
 {
-	//std::vector<TraceLine*> roots = tobj->GetAllRoots();
-	//if (roots.size() == 0)
-	//	return;	//No roots, so do nothing
-
-	//if (CellModel->getCellCount() == 0)	//Need to calculate cell features before we write to them!
-	//{
-	//	std::vector<CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
-	//	if (NewCells.size() > 0)
-	//	{
-	//		this->CellModel->setCells(NewCells);
-	//	}
-	//}
 	
 	if (this->ROIPoints.size() < 3)
 	{
@@ -2695,7 +2687,6 @@ void View3D::DrawROI()
 	for (ROIPoints_iter = ROIPoints.begin(); ROIPoints_iter != ROIPoints.end(); ROIPoints_iter++)
 	{
 		vtkROIpoints->InsertNextPoint(*ROIPoints_iter);
-		//std::cout << "Poppping point: " << (*ROIPoints_iter)[0] << " " << (*ROIPoints_iter)[1] << " " << (*ROIPoints_iter)[2] << std::endl;
 		this->EditLogDisplay->append((QString("%1\t%2\t%3").arg((*ROIPoints_iter)[0]).arg((*ROIPoints_iter)[1]).arg((*ROIPoints_iter)[2])));
 		delete *ROIPoints_iter;
 		*ROIPoints_iter = NULL;
@@ -2731,7 +2722,7 @@ void View3D::DrawROI()
 	ROIExtrudedpolydata = extrude->GetOutput();
 	ROImapper->SetInput(ROIExtrudedpolydata);
 
-	vtkSmartPointer<vtkActor> ROIactor = vtkSmartPointer<vtkActor>::New();
+	this->ROIactor = vtkSmartPointer<vtkActor>::New();
 	ROIactor->SetMapper(ROImapper);
 
 	this->Renderer->AddActor(ROIactor);

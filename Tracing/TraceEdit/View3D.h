@@ -87,7 +87,9 @@ limitations under the License.
 #include "vtkWindowToImageFilter.h"
 #include "vtkJPEGWriter.h"
 #include "vtkLinearExtrusionFilter.h"
+#include "vtkOBJReader.h"
 #include "vtkCellLocator.h"
+#include "vtkLegendScaleActor.h"
 
 #include "TraceBit.h"
 #include "TraceGap.h"
@@ -430,6 +432,8 @@ private:
 	vtkSmartPointer<vtkPolyDataMapper> polymap;
 	typedef vtkSmartPointer<vtkVolume> VolumePointerType;
 	std::vector<VolumePointerType> m_volumes;
+	vtkSmartPointer<vtkOBJReader> VolReader_OBJ;
+	vtkSmartPointer<vtkLegendScaleActor> scalebar;
 
 	bool viewIn2D;
 	int projectionStyle;
@@ -453,7 +457,8 @@ private:
 	} projection_base;
 	int projection_axis;
 
-	vtkSmartPointer<vtkPolyData> ROIExtrudedpolydata;
+	vtkSmartPointer<vtkPolyData> ROIExtrudedpolydata;	
+	vtkSmartPointer<vtkActor> ROIactor;
 
 	enum RenderModeEnum { SLICER, PROJECTION, RAYCAST, MIX};
 
