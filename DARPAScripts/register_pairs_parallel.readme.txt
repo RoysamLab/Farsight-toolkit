@@ -1,3 +1,0 @@
-python register_pairs_parallel.py <image dir (you should cd here as well)> <imagepairslist.txt>
-
-This script is multithreaded and may need to adjust threads_launched if you are running out of memory.

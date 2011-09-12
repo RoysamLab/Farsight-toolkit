@@ -1,0 +1,26 @@
+Our montaging software uses executables coded by Charlene, managed with a python script made by her and Ho.
+
+Please refer to the wiki (http://www.farsight-toolkit.org/wiki/Registration_page) for a full description.
+
+Basic usage:
+python register_pairs_parallel.py <image dir (you should cd here as well)> <imagepairslist.txt>
+
+This script is multithreaded and may need to adjust threads_launched (line 77) if you are running out of memory.
+
+You'll also need to copy to the folder the other contents of this one:
+mosaic_images.exe
+register_pair.exe
+register_joint.exe
+gdbicp.exe
+imagepairslist.txt
+
+Before running, you will need to set up imagepairslist.txt, using the text currently there as a guide.  
+Each line represents the overlap of two tiles.  At a minimum, each tile and its adjacent neighbors (up, down, left, right) need to be included.  Too sparse of a list will result in joint_transforms failing to montage the volume.
+
+After running, you can apply the generated joint_transforms.xml to other channels so that they will receive the same alignment:
+
+mosaic_images.exe joint_transforms.xml <first image in imagepairlist> -3d
+
+Consult the wiki for more mosaic_images usage options.
+
+
