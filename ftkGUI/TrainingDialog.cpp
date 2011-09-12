@@ -407,7 +407,15 @@ void TrainingDialog::updateTable(void){
 				break;
 			}
 		}
-		if(!idFound)
+		
+		std::vector<std::string> time_name = ftk::GetColumsWithString( "time" , m_table);
+		int time_col = 0;
+		if(time_name.size()>0)
+		{
+			 time_col = m_table->GetValueByName(row,"time").ToInt();
+		}
+
+		if(!idFound || time_col!=0)
 			m_table->SetValueByName(row, columnForTraining, vtkVariant( -1 ));
 	}
 	emit changedTable();
