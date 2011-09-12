@@ -248,7 +248,7 @@ std::vector<TraceBit> TraceObject::CollectTraceBits()
 		CollectTraceBitsRecursive(vec,trace_lines[counter]);
 	return vec;
 }
-
+/*
 bool TraceObject::WriteToSWCFile(char *filename)
 {
 	FILE * fp = fopen(filename,"w");
@@ -293,7 +293,7 @@ bool TraceObject::WriteToSWCFile(char *filename)
 	}
 	fclose(fp);
 	return true;
-}
+}*/
 vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
 {
 	hashp.clear();
