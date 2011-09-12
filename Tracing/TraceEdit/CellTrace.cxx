@@ -460,11 +460,18 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->BifTiltRemoteMin);
 	CellData->InsertNextValue(this->BifTiltRemoteMax);
 
-	CellData->InsertNextValue(this->Azimuth / this->stems);
+	double AveAzimuth = -PI;
+	double AveElevation = -PI;
+	if (this->stems !=0)
+	{
+		AveAzimuth = this->Azimuth / this->stems;
+		AveElevation = this->Elevation / this->stems;
+	}
+	CellData->InsertNextValue(AveAzimuth);
 	CellData->InsertNextValue(this->AzimuthMin);
 	CellData->InsertNextValue(this->AzimuthMax); 
 
-	CellData->InsertNextValue(this->Elevation / this->stems);
+	CellData->InsertNextValue(AveElevation);
 	CellData->InsertNextValue(this->ElevationMin);
 	CellData->InsertNextValue(this->ElevationMax);
 
@@ -481,7 +488,13 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->partitionAsymmetryMax);
 
 	CellData->InsertNextValue(this->MinHillmanThresh); 
-	CellData->InsertNextValue(this->TotalHillmanThresh/ this->terminalBifCount);
+	if (this->terminalBifCount != 0)
+	{
+		CellData->InsertNextValue(this->TotalHillmanThresh/ this->terminalBifCount);
+	}else
+	{
+		CellData->InsertNextValue(-PI);
+	}
 	CellData->InsertNextValue(this->MaxHillmanThresh);
 
 	CellData->InsertNextValue(this->rallPowerMin);
