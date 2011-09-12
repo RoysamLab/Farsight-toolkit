@@ -232,10 +232,11 @@ protected slots:
 	void startTraining();
 	void startKPLS();
 	void startActiveLearningwithFeat();
+	void startActiveValidation();
 	//void BuildGallery();
 	void SaveActiveLearningResults(void);
 	void SaveActiveLearningModel();
-	void CreateActiveLearningModel(MCLR* mclr_alm,  vtkSmartPointer<vtkTable> pWizard_table);
+	//void CreateActiveLearningModel(MCLR* mclr_alm,  vtkSmartPointer<vtkTable> pWizard_table);
 	void classifyFromActiveLearningModel();
 	vtkSmartPointer<vtkTable> loadActiveLearningModel(std::string filename);
 	std::vector< vtkSmartPointer<vtkTable> > Perform_Classification(MCLR* mclr_class, std::vector< vtkSmartPointer<vtkTable> > table_vector, vtkSmartPointer<vtkTable> pWizard_table, bool from_model);
@@ -328,6 +329,7 @@ protected:
 	QAction *databaseAction;
 	QMenu *activeMenu;
 		QAction *activeAction; // Active Learning 
+		QAction *activeVAction; // Active Learning 
 		QAction *showGalleryAction;
 		QAction *saveActiveResultsAction;
 		QAction *saveActiveLearningModelAction;
@@ -408,6 +410,7 @@ protected:
 
 	ObjectSelection * selection;				//object selection list
 	vtkSmartPointer<vtkTable> table;			//table
+	vtkSmartPointer<vtkTable> pawTable;			//Pattern Analaysis Wizard (paw) table. Contains user selected features only
 	vtkSmartPointer<vtkTable> NucAdjTable;		//Nuclear Adjacency Table
 	vtkSmartPointer<vtkTable> CellAdjTable;		//Cellular Adjacency Table
 	ftk::ProjectFiles projectFiles;				//files in the currently visible project
@@ -418,7 +421,8 @@ protected:
 	double confidence_thresh;
 	vnl_vector<double> std_dev_vec;
 	vnl_vector<double> mean_vec;
-	std::vector< std::pair< std::string, vnl_vector<double> > >act_learn_model;
+	std::vector< std::pair< std::string, vnl_vector<double> > >active_model;
+	std::vector< std::vector<int> >  validation_samples; 
 	// Gallery contains both the image of the query nuclei and their class values
 	std::vector<std::pair<QImage,std::vector<int> > > gallery; 
 	//This does not belong here, but is a temporary fix:
