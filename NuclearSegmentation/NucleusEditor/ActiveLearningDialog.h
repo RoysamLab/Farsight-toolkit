@@ -38,6 +38,10 @@ limitations under the License.
 #include <vtkSmartPointer.h>
 #include <vtkVariant.h>
 
+#include <vector>
+#include <algorithm>
+
+
 #define MAX(a,b) (((a) > (b))?(a):(b))
 #define MIN(a,b) (((a) < (b))?(a):(b))
 
@@ -46,6 +50,8 @@ class ActiveLearningDialog : public QDialog
 	Q_OBJECT
 public:
 	ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmartPointer<vtkTable> table,int num_classes,std::vector<int> active_query,std::vector<int>top_feats,QWidget *parent=0);
+	ActiveLearningDialog::ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmartPointer<vtkTable> table,int classval,std::vector<int> rowvals,std::string validate,QWidget *parent=0);
+	std::vector<QHBoxLayout *> Validation_Sample_Details(QImage snapshot, vtkSmartPointer<vtkTable> table,int classval,int PIA_query,int group);
 	std::vector<QHBoxLayout *> Sample_Details(QImage snapshot, vtkSmartPointer<vtkTable> table,int num_classes,int active_query,std::vector<int>top_feats,int group);
 	bool finish;
 	//QLineEdit *lineEdit;
@@ -61,11 +67,12 @@ public:
 	////Bottom-row of the window 
 	//QHBoxLayout *botRow;
 	int num_of_classes;
-
+	std::vector<int> id_list;
 
 private slots:
 	void finished();
 	void Set_Class();
+	void User_Validation_Response();
 	
 	
 private:
