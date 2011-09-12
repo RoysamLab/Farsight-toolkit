@@ -420,7 +420,7 @@ protected:
 	vnl_matrix<double> act_learn_matrix;
 	double confidence_thresh;
 	vnl_vector<double> std_dev_vec;
-	vnl_vector<double> mean_vec;
+	vnl_vector<double> mean_vec; 
 	std::vector< std::pair< std::string, vnl_vector<double> > >active_model;
 	std::vector< std::vector<int> >  validation_samples; 
 	// Gallery contains both the image of the query nuclei and their class values

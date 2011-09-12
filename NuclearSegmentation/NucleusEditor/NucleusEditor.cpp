@@ -2225,8 +2225,8 @@ void NucleusEditor::startActiveValidation()
 				}
 			}
 			
-			std::pair<int, int> id_response_per_cell;
-			for(int ctr=0;ctr<curr_list.size();++ctr)
+ 			 std::pair<int, int> id_response_per_cell;
+			 for(int ctr=0;ctr<curr_list.size();++ctr)
 			{
 				id_response_per_cell.first = validation_samples.at(i).at(no_of_samples*k+ctr);
 				id_response_per_cell.second = dialog->query_label[ctr].second;
