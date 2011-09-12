@@ -23,7 +23,7 @@
 #include <utility>
 #include <algorithm>
 #include <iostream>
-
+#include "ftkUtils.h"
 
 using namespace std;
 
@@ -88,8 +88,8 @@ public:
 public:
 
 	//void Initialize(vnl_matrix<double> data,double c);
-	void Initialize(vnl_matrix<double> data,double c,vnl_vector<double> classes, std::string str,vtkSmartPointer<vtkTable> table );
-
+	void Initialize(vnl_matrix<double> data,double c,vnl_vector<double> classes, std::string str,vtkSmartPointer<vtkTable> table,bool PIA );
+	vnl_matrix<double> act_learn_matrix;
 	vnl_matrix<double> Add_Bias(vnl_matrix<double> data);
 
 	void Get_Gradient(vnl_matrix<double> data_with_bias);
@@ -111,7 +111,7 @@ public:
 	model Get_Training_Model();
 	MCLR::model Get_Temp_Training_Model(int query,int label);
 	//void Update_Train_Data(int query,int label);
-	void Update_Train_Data(std::vector< std::pair<int,int> > query_label);
+	void Update_Train_Data(std::vector< std::pair<int,int> > query_label,bool PIA);
 	vnl_matrix<double> Kron(vnl_vector<double> x,vnl_vector<double> y);
 	void Get_Label_Sample(int query);
 	FILE* FDeclare2(char *root, char *extension, char key);
@@ -128,6 +128,9 @@ public:
 	void Set_Number_Of_Classes(int num){ no_of_classes = num; };
 	void Set_Number_Of_Features(int num){ no_of_features = num; };
 	bool MyDataSortPredicate(std::pair<int, int>& lhs, std::pair<int, int>& rhs) ;
-
+	std::vector< std::pair< std::string, vnl_vector<double> > >act_learn_model;
+	std::vector< std::pair< std::string, vnl_vector<double> > > CreateActiveLearningModel(vtkSmartPointer<vtkTable> pWizard_table);
+	std::vector<int> Plan_In_Advance(vtkSmartPointer<vtkTable> new_table, int num);
+	int GetNumberOfClasses(vtkSmartPointer<vtkTable> table);
 };
 #endif

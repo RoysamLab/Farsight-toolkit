@@ -24,15 +24,16 @@ struct sort_pred {
 
 // x contains the training features
 // y contains the training labels
-void MCLR::Initialize(vnl_matrix<double> data,double c,vnl_vector<double> classes, std::string str,vtkSmartPointer<vtkTable> table )
+void MCLR::Initialize(vnl_matrix<double> data,double c,vnl_vector<double> classes, std::string str,vtkSmartPointer<vtkTable> table,bool PIA )
 {
 	int train_counter =0;
 	int test_counter = 0;
 	validation = str;
+	//bool PIA =false;
 	
 	// test_table contains the table after the queried samples are removed from the original table
 	// It is updated in the Update_Train_data 
-	test_table = table;
+	test_table = table; //Features->Columns ; Samples -> Rows
 	
 	for(int i = 0; i< classes.size() ; ++i)
 	{
@@ -60,9 +61,9 @@ void MCLR::Initialize(vnl_matrix<double> data,double c,vnl_vector<double> classe
 		}
 	}
 	
-
-	y.set_size(train_data.rows());
-
+	if(PIA)
+		y.set_size(train_data.rows());
+		
 	// Transpose : Features->Rows ; Samples -> Columns
 	x = train_data.transpose();// Feature matrix of training samples only ; does not contain unlabeled sample data
 	
@@ -90,16 +91,18 @@ void MCLR::Initialize(vnl_matrix<double> data,double c,vnl_vector<double> classe
 	no_of_features = x.rows();
 	// We assume that the classes are numbered from 1 to "n" for n classes
 	// so y.maxval - .minval +1 gives number of classes
-	no_of_classes = y.max_value()-y.min_value()+1;
-	class_vector.set_size(no_of_classes);
-
-	m.w.set_size(no_of_features+1,no_of_classes);
-	m.w.fill(0);
-
-	gradient_w.set_size(no_of_features+1,no_of_classes);
-	hessian.set_size((no_of_features+1)*(no_of_classes),(no_of_features+1)*(no_of_classes)); /// Check the size again!!!
+	if(PIA)
+	{
+		no_of_classes = y.max_value()-y.min_value()+1;
+		class_vector.set_size(no_of_classes);
 	
-	// g :the objective function value
+		m.w.set_size(no_of_features+1,no_of_classes);
+		m.w.fill(0);
+
+		gradient_w.set_size(no_of_features+1,no_of_classes);
+		hessian.set_size((no_of_features+1)*(no_of_classes),(no_of_features+1)*(no_of_classes)); /// Check the size again!!!
+	
+		// g :the objective function value
 	g = 0;
 	// Class vector
 	for(int i=1;i<=no_of_classes;++i)
@@ -109,7 +112,7 @@ void MCLR::Initialize(vnl_matrix<double> data,double c,vnl_vector<double> classe
 	
 	diff_info_3_it.set_size(3);
 	info_3_it.set_size(3);
-
+	}
 }
 
 
@@ -958,8 +961,10 @@ FILE* MCLR::FDeclare2(char *root, char *extension, char key) {
 
 
 //Updates test_data, x and y,id_time_val,test_table
-void MCLR::Update_Train_Data(std::vector< std::pair<int,int> > query_label)
-{
+void MCLR::Update_Train_Data(std::vector< std::pair<int,int> > query_label,bool PIA)
+{	
+	
+
 	std::sort(query_label.begin(), query_label.end(), sort_pred());
 
 	for(int i = 0; i<query_label.size();++i)
@@ -1000,7 +1005,9 @@ void MCLR::Update_Train_Data(std::vector< std::pair<int,int> > query_label)
 		}
 		
 		//Update list of ids and the table
-		id_time_val.erase(id_time_val.begin()+query);
+		if(PIA)
+			id_time_val.erase(id_time_val.begin()+query);
+		
 		test_table->RemoveRow(query);
 	}
 }
@@ -1115,7 +1122,7 @@ int MCLR::Active_Query()
 		if(sum==3)
 			stop_training = true;
 	}
-	return active_query;
+	return active_query; 
 }
 
 
@@ -1192,3 +1199,178 @@ vnl_matrix<double> MCLR::Test_Current_Model_w(vnl_matrix<double> test_data, vnl_
 	return f;
 }
 
+//%% a deterministic method of finding the initial examples to acquire labels on
+//%% no need to perform multiple Monte Carlo trials
+//[dummy,idxL] = max(sum(x(:,1).^2,1));
+//[dim,n] = size(x);
+//for i=1:25
+//    idxU = setdiff(1:n,idxL);
+//    z = x(:,idxL);
+//    P = eye(dim) - z*inv(z'*z)*z';
+//    [dummy,idxL(end+1)] = max(sum((P*x(:,idxU)).^2,1));
+//end
+
+std::vector<int> MCLR::Plan_In_Advance(vtkSmartPointer<vtkTable> new_table, int num)
+{	
+	
+	vtkSmartPointer<vtkTable> table_PIA  = vtkSmartPointer<vtkTable>::New();
+	table_PIA->Initialize();
+	
+	for(int col=0; col<new_table->GetNumberOfColumns(); ++col)
+		{	
+			vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+			column->SetName(new_table->GetColumnName(col));
+			table_PIA->AddColumn(column);	
+		}
+
+		for(int row = 0; row < (int)new_table->GetNumberOfRows(); ++row)
+		{	
+			vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+			for(int c =0;c<(int)table_PIA->GetNumberOfColumns();++c)
+				model_data1->InsertNextValue(new_table->GetValueByName(row,table_PIA->GetColumnName(c)));
+			table_PIA->InsertNextRow(model_data1);
+		}
+
+	
+	std::vector<int> id_list;
+	id_list.resize(table_PIA->GetNumberOfRows());
+
+
+	for(int i=0;i<table_PIA->GetNumberOfRows();++i)
+	{
+		id_list[i] = table_PIA->GetValue(i,0).ToInt();
+	}
+	
+	table_PIA->RemoveColumnByName("ID");
+	
+	// class_list has all -1s
+	// both class_list and id_time are dummies in this case
+	// Since we are using the same functions as Active Learning
+	
+	vnl_vector<double> class_list(table_PIA->GetNumberOfRows(),-1); 			
+	std::vector< std::pair<double,double> > id_time;	
+	id_time.resize(0);
+
+	std::vector<std::pair<int,int> > query_label;
+	query_label.resize(1);
+
+	// No training data
+	// we want to deal with all the examples belonging to the class~classval(1,2,3.....) and pick by "Planning in Advance"
+	// Normalize the feature matrix
+
+
+	vnl_matrix<double> Feats = Normalize_Feature_Matrix(tableToMatrix(table_PIA,id_time));
+	Initialize(Feats,1,class_list,"",table_PIA,false);
+	vnl_matrix<double> tempUnlabeledData = test_data.transpose();
+
+	
+	//zmat rows-> features and columns-> samples
+	vnl_matrix<double> zMat; // refer Plan in Adavance Matlab code for interpretation
+	zMat.set_size(tempUnlabeledData.rows(),num);
+	//zMat.set(0);
+
+	vnl_matrix<double> PMat; // refer Plan in Adavance Matlab code for interpretation
+	PMat.set_size(tempUnlabeledData.rows(),tempUnlabeledData.rows());// test_data.cols() = dim !	
+	vnl_diag_matrix<double> identity_matrix(test_data.cols(),1); // Identity Matrix;
+	
+	std::vector<int> PIA;
+	PIA.resize(num);
+
+	query_label[0].first = 0;
+	query_label[0].second = 0;//dummy again
+	zMat.set_column(0,tempUnlabeledData.get_column(0)); // first sample
+	PIA[0] = id_list[0];
+	
+	for(int i =0;i<num-1;++i)
+	{
+		vnl_matrix<double> tempZMat = zMat.extract(tempUnlabeledData.rows(),i+1,0,0);
+// Update tempUnlabeledData		
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		vnl_matrix<double> sub_test_matrix(tempUnlabeledData.rows(),tempUnlabeledData.cols()-1);
+		if(query_label[0].first !=0)
+		{
+			sub_test_matrix.update(tempUnlabeledData.get_n_columns(0,query_label[0].first),0,0);
+			sub_test_matrix.update(tempUnlabeledData.get_n_columns(query_label[0].first+1,tempUnlabeledData.cols()-query_label[0].first-1),0,query_label[0].first);	
+		}
+		else
+			sub_test_matrix = tempUnlabeledData.get_n_columns(1,tempUnlabeledData.columns()-1);
+		
+		tempUnlabeledData = sub_test_matrix;
+		id_list.erase(id_list.begin()+query_label[0].first);
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Always pick the first sample and then pick the rest
+		Update_Train_Data(query_label,false);		
+		vnl_matrix<double> invTempZMat = vnl_matrix_inverse<double>(tempZMat.transpose()*tempZMat);
+		PMat = identity_matrix-(tempZMat*invTempZMat*tempZMat.transpose());
+		vnl_matrix<double> PxIdu = PMat*tempUnlabeledData;
+		vnl_vector<double> sum_vec(tempUnlabeledData.cols(),0);
+
+		for(int j = 0;j<PxIdu.cols(); ++j)
+		{
+		  for(int k = 0;k< PxIdu.rows(); ++k)
+			{
+				sum_vec(j) = sum_vec(j)+ (PxIdu(k,j)*PxIdu(k,j));
+			}
+		}
+		query_label[0].first = sum_vec.arg_max();
+		query_label[0].second = 0;// dummy value 
+		PIA[i+1] = id_list.at(sum_vec.arg_max()); // Will contain the ids
+		zMat.set_column(i+1,tempUnlabeledData.get_column(query_label[0].first)); // first sample
+	}
+
+	return PIA;
+}
+
+
+	
+int MCLR::GetNumberOfClasses(vtkSmartPointer<vtkTable> table)
+{
+	std::vector<std::string> prediction_names;
+	//Get prediction colums, if any, for center map coloring
+	prediction_names.clear();
+	prediction_names = ftk::GetColumsWithString( "prediction" , table );
+
+	int no_of_classes = -1;
+	
+	for(int row = 0; row < (int)table->GetNumberOfRows(); ++row)
+	{
+		if(table->GetValueByName(row,prediction_names[0].c_str())>no_of_classes)
+			no_of_classes = table->GetValueByName(row,prediction_names[0].c_str()).ToInt();
+	}
+	
+	return no_of_classes;
+}
+
+
+
+std::vector< std::pair< std::string, vnl_vector<double> > > MCLR::CreateActiveLearningModel(vtkSmartPointer<vtkTable> pWizard_table)
+{
+	vnl_vector<double> std_dev_vec;
+	vnl_vector<double> mean_vec;
+	act_learn_matrix = GetActiveLearningMatrix();
+	std_dev_vec = Get_Std_Dev();
+	mean_vec = Get_Mean();
+	std::string feat_name = "bias";
+	vnl_vector<double> feat_values(act_learn_matrix.get_row(0).size() + 2);
+	feat_values.put(0, 0);
+	feat_values.put(1, 0);
+	for(int s=0; s<(int)act_learn_matrix.get_row(0).size(); ++s)
+	{
+		feat_values.put(s+2, act_learn_matrix.get_row(0).get(s));
+	}
+	std::pair< std::string, vnl_vector<double> > temp = std::make_pair(feat_name, feat_values);
+	act_learn_model.push_back(temp);
+	for(unsigned int col=0; col<(unsigned int)pWizard_table->GetNumberOfColumns(); ++col)
+	{
+		feat_name = pWizard_table->GetColumnName(col);
+		feat_values.put(0, std_dev_vec.get(col));
+		feat_values.put(1, mean_vec.get(col));
+		for(int s=0; s<(int)act_learn_matrix.get_row(col).size(); ++s)
+		{
+			feat_values.put(s+2, act_learn_matrix.get_row(col+1).get(s));
+		}
+		std::pair< std::string, vnl_vector<double> > temp = std::make_pair(feat_name, feat_values);
+		act_learn_model.push_back(temp);
+	}
+	return act_learn_model;
+}
