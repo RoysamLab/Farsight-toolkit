@@ -1,0 +1,5 @@
+python Tile_MultipleNeuronTracer.py <ImageFileList.txt> <SomaCentroidsFileList.txt> <SomaImageFileList.txt>
+
+Takes in images from the image file lists, soma centroids files, and soma image files and outputs the traces. May need to adjust threshold (1000).
+
+This script is multithreaded and may need to adjust threads_launched if you are running out of memory.

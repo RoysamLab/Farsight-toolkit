@@ -11,7 +11,7 @@ int main(int argc, char* argv[])
 	
 	if (argc < 5)
 	{
-		std::cout << "MultipleNeuronTracer.exe <InputFileName> <SomaCentroids.txt> <CostThreshold (Usually 1000)> <SomaImageFileName>" << std::endl;
+		std::cout << "MultipleNeuronTracer.exe <InputFileName> <SomaCentroids.txt> <CostThreshold (Usually 1000)> <SomaImageFile>" << std::endl;
 		return -1;
 	}
 	clock_t start_time = clock();

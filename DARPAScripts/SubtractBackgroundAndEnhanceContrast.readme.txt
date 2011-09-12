@@ -1,0 +1,4 @@
+Select source directory
+Select destination directory
+
+Will subtract background, enhance contrast, and convert to 8 bits. May pop up errors because it runs the script on all files in the folder (including the non-image files). Ignore it.

@@ -1,0 +1,5 @@
+python Tile_SomaExtraction.py <ImageFileList.txt> <SomaCentroidsFileList.txt> <SomaImageFileList.txt>
+
+Takes in image from an image file list and generates a corresponding SomaCentroidsFileList.txt which contains the SomaCentroid files. Same thing with the SomaImages.
+
+May need to adjust the open morph size, the minimum object size, and the number of histogram bins (5 15000 128)
