@@ -53,10 +53,10 @@ CONFIGURE_FILE (
   ${PROJECT_BINARY_DIR}/FarsightConfig.h
 )
 
-SET (EXE_DIR ${PROJECT_BINARY_DIR}/exe CACHE PATH
+SET (EXE_DIR ${Farsight_BINARY_DIR}/exe CACHE PATH
   "Single Directory for all executables")
 
-SET (LIB_DIR ${PROJECT_BINARY_DIR}/libs CACHE PATH
+SET (LIB_DIR ${Farsight_BINARY_DIR}/libs CACHE PATH
   "Single Directory for all static Libraries")
   
 SET (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${EXE_DIR})
