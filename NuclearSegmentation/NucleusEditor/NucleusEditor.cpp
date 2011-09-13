@@ -72,6 +72,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	table = NULL;
 	NucAdjTable = NULL;
 	CellAdjTable = NULL;
+	confidence_thresh = 0.5;
 #ifdef USE_TRACKING
 	mfcellTracker = NULL;
 #endif
@@ -1866,15 +1867,17 @@ void NucleusEditor::startActiveLearningwithFeat()
     }
 	delete dialog;
 
-	TrainingDialog *d = new TrainingDialog(featureTable, "train","active",featureTable->GetNumberOfRows() ,this);
-	connect(d, SIGNAL(changedTable()), this, SLOT(updateViews()));
-	d->exec();
 
 	if(myImg->GetImageInfo()->numTSlices > 1)
 	{
 		nucSeg->AddTimeToMegaTable();
 		featureTable = nucSeg->megaTable;
 	}
+
+	TrainingDialog *d = new TrainingDialog(featureTable, "train","active",featureTable->GetNumberOfRows() ,this);
+	connect(d, SIGNAL(changedTable()), this, SLOT(updateViews()));
+	d->exec();
+
 
 	//Clear the Gallery 
 	//gallery.clear();	
