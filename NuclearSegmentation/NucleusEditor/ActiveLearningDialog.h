@@ -50,7 +50,7 @@ class ActiveLearningDialog : public QDialog
 	Q_OBJECT
 public:
 	ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmartPointer<vtkTable> table,int num_classes,std::vector<int> active_query,std::vector<int>top_feats,QWidget *parent=0);
-	ActiveLearningDialog::ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmartPointer<vtkTable> table,int classval,std::vector<int> rowvals,std::string validate,QWidget *parent=0);
+	ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmartPointer<vtkTable> table,int classval,std::vector<int> rowvals,std::string validate,QWidget *parent=0);
 	std::vector<QHBoxLayout *> Validation_Sample_Details(QImage snapshot, vtkSmartPointer<vtkTable> table,int classval,int PIA_query,int group);
 	std::vector<QHBoxLayout *> Sample_Details(QImage snapshot, vtkSmartPointer<vtkTable> table,int num_classes,int active_query,std::vector<int>top_feats,int group);
 	bool finish;

@@ -47,12 +47,12 @@ ADD_EXECUTABLE(TracingSystem
       TracingCore/SnakeOperation.cpp
 
      ${GUI_MOC_SRCS}
-     ${GUI_RC_SRCS})
+     ${GUI_RC_SRCS}
 
      
-#      TracingCore/Montage/Register.h
-#      TracingCore/Montage/Register.cpp
-
+      TracingCore/Montage/Register.h
+      TracingCore/Montage/Register.cpp
+)
 
 #      TracingCore/Filters/itkLabelGeometryImageFilter.h
 #      TracingCore/Filters/itkLabelGeometryImageFilter.txx
