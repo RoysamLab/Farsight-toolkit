@@ -116,10 +116,11 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 	newImage->renderStatus = false;
 	newImage->ren2d = false;
 	newImage->sliceCreated = false;
-	newImage->sliceActor = 0;
+	//newImage->sliceActor = 0;
 	newImage->imageResliceMapper = 0;
 	newImage->imageProperty = 0;
-	//newImage->colorTransferFunction = 0;
+	newImage->imageSlice = 0;
+	//newImage->colorTransferFunction = 0;  
 	newImage->ContourActor = 0;
 	newImage->ContourFilter = 0;
 	newImage->ContourMapper = 0;
@@ -160,6 +161,9 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 	newImage->ImageData->GetBounds(bounds);
 	newImage->projectionConnector = ConnectorType::New();
 	newImage->projectionConnector->SetInput( newImage->reader->GetOutput() );
+	// Audrey needs to add imageslice for each image provided by a project
+	//newImage->imageSlice->SetInput( newImage->imageSlice );
+
 
 	this->setImageBounds(bounds);
 	this->LoadedImages.push_back(newImage);
@@ -488,6 +492,7 @@ void ImageRenderActors::CreateImageSlice(int i)
 
 	this->LoadedImages[i]->imageSlice->SetMapper(this->LoadedImages[i]->imageResliceMapper);
 	this->LoadedImages[i]->imageSlice->SetProperty(this->LoadedImages[i]->imageProperty);
+	this->LoadedImages[i]->imageSlice->SetPosition(this->LoadedImages[i]->x,this->LoadedImages[i]->y,this->LoadedImages[i]->z);
 	this->LoadedImages[i]->imageSlice->SetPickable(0);
 	this->LoadedImages[i]->sliceCreated = true;
 

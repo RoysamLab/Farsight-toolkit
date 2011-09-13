@@ -334,7 +334,6 @@ void View3D::OkToBoot()
 	}
 	if (viewIn2D == true)
 	{
-
 		this->RaycastBar->toggleViewAction()->setDisabled(1);
 		this->chooseInteractorStyle(1);
 		renderMode = PROJECTION;
@@ -612,7 +611,7 @@ bool View3D::readProject(QString projectFile)
 						//this->EditLogDisplay->append("Soma file: \t" + this->SomaFile.last());
 					}
 					this->ImageActors->loadImage(FileName, project->GetFileType(i), 
-						project->GetTranslationX(i),project->GetTranslationY(i),project->GetTranslationZ(i));
+						project->GetTranslationX(i),project->GetTranslationY(i),project->GetTranslationZ(i)); //Audrey needs to work on this to get slice to show for all images
 
 				}//end type image
 				else if (type == "Trace")
@@ -658,12 +657,12 @@ bool View3D::readProject(QString projectFile)
 				this->EditLogDisplay->append("\t" + this->TraceFiles.at(i));
 			}
 		}
-		if (!this->Image.isEmpty())
+		if (!this->Image.isEmpty()) //project table
 		{
-			if (this->projectFilesTable->rowCount() < this->Image.size())
-			{
-				//this->projectFilesTable->setRowCount(this->Image.size());
-			}
+			//if (this->projectFilesTable->rowCount() < this->Image.size())
+			//{
+			//	//this->projectFilesTable->setRowCount(this->Image.size());
+			//}
 			this->EditLogDisplay->append("Image file:");
 			for (i=0; i < (unsigned int) this->Image.size(); i++)
 			{
@@ -672,10 +671,10 @@ bool View3D::readProject(QString projectFile)
 		}
 		if (!this->SomaFile.isEmpty())
 		{
-			if (this->projectFilesTable->rowCount() < this->SomaFile.size())
-			{
-				//this->projectFilesTable->setRowCount(this->SomaFile.size());
-			}
+			//if (this->projectFilesTable->rowCount() < this->SomaFile.size())
+			//{
+			//	//this->projectFilesTable->setRowCount(this->SomaFile.size());
+			//}
 			this->EditLogDisplay->append("Soma file: ");
 			for (i=0; i < (unsigned int) this->SomaFile.size(); i++)
 			{
@@ -764,9 +763,9 @@ void View3D::ShowProjectTable()
 					dimensionItem->setFlags(dimensionItem->flags() & (~Qt::ItemIsEditable));
 					projectFilesTable->setItem(j,3,dimensionItem);
 				}
-				j++;
+				j++; //move on to the next row of the project table
 				//this->ImageActors->setRenderStatus(i);	
-			}
+			} //end of found and imagetype
 		} //end of filetype is image or soma
 	}// end of project !empty
 	this->projectFilesDock->show();
@@ -850,7 +849,7 @@ void View3D::changeDimension(int row, int col)
 		font.setBold(true);
 		Item3D->setFont(font);
 		Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
-		renderMode = MIX;
+		renderMode = SLICERRAYCAST;
 
 		if(this->projectFilesTable->item(row,3)->text() == "3d")
 		{
@@ -1838,6 +1837,7 @@ void View3D::CreateActors()
 				this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
 				this->ImageActors->setRenderStatus(i, true);
 				this->RaycastBar->show();
+				renderMode = RAYCAST;
 			}else
 			{
 				this->Renderer->AddActor(this->ImageActors->createProjection(i, this->projectionStyle,this->projection_axis));
@@ -2059,7 +2059,7 @@ void View3D::ClearRenderer(int i)
 		this->RaycastBar->toggleViewAction()->setDisabled(1);
 		std::cout << "Removing raycast" << std::endl;
 	}
-	else if (renderMode == MIX)
+	else if (renderMode == SLICERRAYCAST) //Slicer with raycast
 	{
 	}
 }
@@ -2148,11 +2148,11 @@ void View3D::createSlicerSlider()
 	this->SliceThicknessSpinBox->setRange(1,upperBound);
 
 	this->SliceSpinBox = new QSpinBox(this);
-	this->SliceSpinBox->setRange(1,upperBound+1);
+	this->SliceSpinBox->setRange(1,upperBound);
 
 	this->SliceSlider = new QSlider(Qt::Vertical);
 	this->SliceSlider->setSingleStep(1);
-	this->SliceSlider->setRange(1,upperBound+1);
+	this->SliceSlider->setRange(1,upperBound);
 	this->SliceSlider->setTickInterval(5);
 	this->SliceSlider->setTickPosition(QSlider::TicksRight);
 	this->SliceSlider->setValue(1);
@@ -2199,7 +2199,7 @@ void View3D::setSlicerZValue(int value)
 	double image_center_x = (bounds[0]+bounds[1])/2;
 	double image_center_y = (bounds[2]+bounds[3])/2;
 	//double image_center_z = (double)bounds[5]-(bounds[5]-(bounds[4]+1))*value/100.0;
-	double image_center_z = bounds[5]+1-abs(value);
+	double image_center_z = bounds[5]-abs(value);
 
 	vtkCamera *cam = this->Renderer->GetActiveCamera();
 	//std::cout << "Z Value: " << value << std::endl;

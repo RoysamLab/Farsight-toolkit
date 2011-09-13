@@ -103,10 +103,10 @@ struct imageFileHandle
 	vtkSmartPointer<vtkVolumeProperty> volumeProperty;
 	vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper;
 //image slicer
-	ImageActorPointerType sliceActor;
-	ImageSlicePointerType imageSlicer;
+	//ImageActorPointerType sliceActor;
+	//ImageSlicePointerType imageSlicer;
 	//vtkSmartPointer<vtkMatrix4x4> resliceAxes;
-	vtkSmartPointer<vtkImageReslice> reslice;
+	//vtkSmartPointer<vtkImageReslice> reslice;
 	vtkSmartPointer<vtkImageActor> ProjectionActor;
 	vtkSmartPointer<vtkImageResliceMapper> imageResliceMapper;
 	vtkSmartPointer<vtkImageSlice> imageSlice;

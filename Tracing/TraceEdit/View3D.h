@@ -460,7 +460,7 @@ private:
 	vtkSmartPointer<vtkPolyData> ROIExtrudedpolydata;	
 	vtkSmartPointer<vtkActor> ROIactor;
 
-	enum RenderModeEnum { SLICER, PROJECTION, RAYCAST, MIX};
+	enum RenderModeEnum { SLICER, PROJECTION, RAYCAST, SLICERRAYCAST};
 
 	enum RenderModeEnum renderMode;
 
