@@ -110,10 +110,10 @@ def register(argv):
         fh.close()
     
     #all processes are done, so read return values and take appropriate action
-    idx = 0    
+    idx = 0
+    from_dot = from_image_list[idx].find('.')
+    to_dot = to_image_list[idx].find('.')
     for subp in subprocess_list:
-		from_dot = from_image_list[idx].find('.')
-		to_dot = to_image_list[idx].find('.')
         if subp.poll() == 0: #success
             found = False
             for name in names:
