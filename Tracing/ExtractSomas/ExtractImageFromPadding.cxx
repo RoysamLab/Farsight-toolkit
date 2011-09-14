@@ -29,6 +29,7 @@ int main( int argc, char ** argv )
   
   typedef itk::ExtractImageFilter< ImageType, ImageType > ExtractFilterType;
   ExtractFilterType::Pointer filter = ExtractFilterType::New();
+  filter->SetDirectionCollapseToGuess();
   
   reader->Update();
   ImageType::RegionType inputRegion =

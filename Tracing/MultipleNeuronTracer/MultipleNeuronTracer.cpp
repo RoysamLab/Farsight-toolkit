@@ -82,6 +82,11 @@ void MultipleNeuronTracer::ReadStartPoints(std::string fname, unsigned int pad)
 	std::string temp, num;
 	std::ifstream infile;
 	infile.open(fname.c_str());
+	if(!infile.good())
+	  {
+	  std::cout << "Error reading seed points" << std::endl;
+	  exit(1);
+	  }
 	size_t x1, x2;
 	std::cout << "Reading start points " << std::endl;
 
@@ -361,6 +366,7 @@ void MultipleNeuronTracer::RunTracing(void)
 				PQ.push(h);
 			}
 		}
+	std::cout<<"eCounter = "<<eCounter<<std::endl;
 	}
 	std::cout << "PQ popping took: " << (clock() - PQ_popping_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 	

@@ -18,7 +18,7 @@ if(BUILD_ExtractSomas AND BUILD_TESTING AND FARSIGHT_DATA_ROOT AND PYTHON_EXECUT
   set_tests_properties(TraceSingleMicroglia PROPERTIES
     PASS_REGULAR_EXPRESSION "570 Nodes found   file written."
     DEPENDS ExtractSomas
-    TIMEOUT 300) #5 minutes
+    TIMEOUT 600) #10 minutes
 endif()
 
 if(APPLE)
