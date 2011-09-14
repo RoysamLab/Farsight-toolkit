@@ -182,9 +182,6 @@ ExternalProject_Add(ITK
     "VXL"
 )
 
-set(EXE_DIR ${CMAKE_CURRENT_BINARY_DIR}/exe)
-set(LIB_DIR ${CMAKE_CURRENT_BINARY_DIR}/libs)
-
 #check if we can build vessel
 FIND_PACKAGE(GLUT)
 IF(GLUT_FOUND)
@@ -207,8 +204,6 @@ ExternalProject_Add(Farsight
     -DVTK_DIR:FILEPATH=${VTK_DIR}
     -DITK_DIR:FILEPATH=${ITK_BINARY_DIR}
     -DVXL_DIR:FILEPATH=${VXL_DIR}
-    -DEXE_DIR:FILEPATH=${EXE_DIR}
-    -DLIB_DIR:FILEPATH=${LIB_DIR}
     -DBUILD_VESSEL:BOOL=${BUILD_VESSEL}
     -DUSE_KPLS:BOOL=${USE_KPLS}
     ${mac_args}
