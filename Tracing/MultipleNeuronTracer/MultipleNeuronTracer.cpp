@@ -366,7 +366,6 @@ void MultipleNeuronTracer::RunTracing(void)
 				PQ.push(h);
 			}
 		}
-	std::cout<<"eCounter = "<<eCounter<<std::endl;
 	}
 	std::cout << "PQ popping took: " << (clock() - PQ_popping_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 	
