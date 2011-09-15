@@ -176,6 +176,7 @@ int SomaExtractor::binarizeImage(char* paramFile, unsigned short num_bins)
 	morphOpenFilter->SetKernel( ball );
 	//filter->SetForegroundValue( 255 ); 
 
+	std::cout << "Running GrayscaleMorphologicalOpeningImageFilter" << std::endl;
     try
     {
 		morphOpenFilter->Update();
@@ -186,7 +187,7 @@ int SomaExtractor::binarizeImage(char* paramFile, unsigned short num_bins)
 		return EXIT_FAILURE;
     }
 	binImage = morphOpenFilter->GetOutput();
-		
+	std::cout << "Done with binarizeImage" << std::endl;	
 }
 
 int SomaExtractor::relabelBinaryImage(void)
