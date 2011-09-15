@@ -8,7 +8,7 @@ SET( MontagingToTraceEditorXMLConverter_HDRS
 	ImageTransformData.h
 )
 
-MESSAGE(STATUS "Creating MontagingToTraceEditorXMLConverter Project")
+#MESSAGE(STATUS "Creating MontagingToTraceEditorXMLConverter Project")
 
 #LINK_DIRECTORIES ( ${Boost_LIBRARY_DIRS})
 #INCLUDE_DIRECTORIES ( ${Boost_INCLUDE_DIRS})

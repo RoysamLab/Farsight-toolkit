@@ -2583,7 +2583,7 @@ void NucleusEditor::startTraining()
 {
 	if(!table) return;
 
-	TrainingDialog *d = new TrainingDialog(table, "train","", 0,this);
+	TrainingDialog *d = new TrainingDialog(table, "train","", table->GetNumberOfRows(),this);
 	connect(d, SIGNAL(changedTable()), this, SLOT(updateViews()));
 	d->show();
 }
