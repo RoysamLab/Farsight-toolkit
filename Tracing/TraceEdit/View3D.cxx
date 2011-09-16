@@ -60,6 +60,7 @@ View3D::View3D(QWidget *parent)
 	this->translateImages = false;	//this is for testing a switch is needed
 	this->viewIn2D = this->TraceEditSettings.value("mainWin/use2d",false).toBool();
 	this->renderTraceBits = false;
+	this->projectFilesTableCreated = false;
 	this->projectionStyle = 0;	//should be maximum projection
 	this->projection_axis = 2; // z projection
 	this->Date.currentDate();
@@ -769,6 +770,7 @@ void View3D::ShowProjectTable()
 		} //end of filetype is image or soma
 	}// end of project !empty
 	this->projectFilesDock->show();
+	this->projectFilesTableCreated = true;
 }
 // 2-D projection and raycast (no slice image)
 void View3D::choosetoRender(int row, int col)
@@ -795,11 +797,12 @@ void View3D::choosetoRender(int row, int col)
 		{
 			//std::cout << this->projectFilesTable->item(rowselected,2) << std::endl;
 			this->projectFilesTable->setItem(row,2,offItem);
-			this->ImageActors->setRenderStatus(row, false);
+			//this->ImageActors->setRenderStatus(row, false);
 			if(this->ImageActors->is2D(row))
 			{
+				//std::cout << "Image is 2D." << std::endl;
 				this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(row));
-				this->ImageActors->setIs2D(row, false);
+				//this->ImageActors->setIs2D(row, false);
 			}
 			else if (this->ImageActors->isRayCast(row))
 			{
@@ -809,27 +812,28 @@ void View3D::choosetoRender(int row, int col)
 			{
 				this->Renderer->RemoveActor(this->ImageActors->GetContourActor(row));
 			}
+			this->QVTK->GetRenderWindow()->Render();
+			//this->Renderer->UpdateCamera();
 		}
 		else //turn on
 		{
 			this->projectFilesTable->setItem(row,2,onItem);
-			this->ImageActors->setRenderStatus(row, true);
-			if (this->ImageActors->isRayCast(row))
-			{
-				if (!this->viewIn2D)
+			//this->ImageActors->setRenderStatus(row, true);
+			//if (this->ImageActors->isRayCast(row))
+			//{
+				if (this->projectFilesTable->item(row,3)->text() == "3d")
 				{
 					this->Renderer->AddVolume(this->ImageActors->RayCastVolume(row));
-					//this->ImageActors->setRenderStatus(row, true);
+					this->ImageActors->setRenderStatus(row, true);
 					this->RaycastBar->show();
-				}else
+				}else if (this->projectFilesTable->item(row,3)->text() == "2d")
 				{
 					//this->Renderer->AddActor(this->ImageActors->CreateImageSlice(row));
 					this->Renderer->AddActor(this->ImageActors->createProjection(row, this->projectionStyle,this->projection_axis));
 					this->ImageActors->setIs2D(row, true);
-					renderMode = PROJECTION;
 					//this->SlicerBar->show();
 				}
-			}
+			//}
 			else
 			{
 				this->Renderer->AddActor(this->ImageActors->ContourActor(row));
@@ -840,64 +844,73 @@ void View3D::choosetoRender(int row, int col)
 }
 void View3D::changeDimension(int row, int col)
 {
-	if(col == 3) //click on one cell in the 4th column (2D/3D) only to activate
+	if (this->projectFilesTable->item(row,2)->text() == "on")
 	{
-		QTableWidgetItem *Item2D = new QTableWidgetItem(tr("2d"));
-		Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
-		QTableWidgetItem *Item3D = new QTableWidgetItem(tr("3d"));
-		QFont font;
-		font.setBold(true);
-		Item3D->setFont(font);
-		Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
-		renderMode = SLICERRAYCAST;
+		if(col == 3) //click on one cell in the 4th column (2D/3D) only to activate
+		{
+			QTableWidgetItem *Item2D = new QTableWidgetItem(tr("2d"));
+			Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
+			QTableWidgetItem *Item3D = new QTableWidgetItem(tr("3d"));
+			QFont font;
+			font.setBold(true);
+			Item3D->setFont(font);
+			Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
+			renderMode = SLICERRAYCAST;
 
-		if(this->projectFilesTable->item(row,3)->text() == "3d")
-		{
-			//std::cout << this->projectFilesTable->item(rowselected,3) << std::endl;
-			this->projectFilesTable->setItem(row,3,Item2D);
-			if ((this->ImageActors->getRenderStatus(row))&&(this->ImageActors->isRayCast(row)))
+			if(this->projectFilesTable->item(row,3)->text() == "3d")
 			{
-				this->Renderer->AddActor(this->ImageActors->createProjection(row,this->projectionStyle,this->projection_axis));
-				this->ImageActors->setIs2D(row, true);
-				this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(row));
-				this->ImageActors->setRenderStatus(row, false);
+				//std::cout << this->projectFilesTable->item(rowselected,3) << std::endl;
+				std::cout << "Row selected was 3D" << std::endl;
+				this->projectFilesTable->setItem(row,3,Item2D);
+				if ((this->ImageActors->getRenderStatus(row))&&(this->ImageActors->isRayCast(row)))
+				{
+					std::cout << "Image is Raycast" << std::endl;
+					this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(row));
+					this->Renderer->AddActor(this->ImageActors->createProjection(row,this->projectionStyle,this->projection_axis));
+					this->ImageActors->setIs2D(row, true);
+					this->ImageActors->setRenderStatus(row, false);
+				}
+				//this->SlicerBar->show();
+				//this->QVTK->GetRenderWindow()->Render();
+				//this->chooseInteractorStyle(1);
+			} //end if 3d to 2d
+			else
+			{
+				this->projectFilesTable->setItem(row,3,Item3D);
+				//if (this->ImageActors->is2D(row))
+				//{
+				std::cout << "Removing projection... and set is not 2D" << std::endl;
+				this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(row));
+				this->ImageActors->setIs2D(row, false);
+				this->Renderer->AddVolume(this->ImageActors->RayCastVolume(row));
+				this->ImageActors->setRenderStatus(row, true);
+				//}
+			} //end else 2d to 3d
+		}
+		// Check if there are 3D images
+		int numof3d=0;
+		for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+		{ 
+			if (!this->ImageActors->is2D(i))
+			{
+				numof3d++;
 			}
-			//this->SlicerBar->show();
-			//this->QVTK->GetRenderWindow()->Render();
-			//this->chooseInteractorStyle(1);
-		} //end if 3d to 2d
-		else //turn on
-		{
-			this->projectFilesTable->setItem(row,3,Item3D);
-			//if (this->ImageActors->is2D(row))
-			//{
-			this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(row));
-			this->ImageActors->setIs2D(row, false);
-			this->Renderer->AddVolume(this->ImageActors->RayCastVolume(row));
-			this->ImageActors->setRenderStatus(row, true);
-			//}
-		} //end else 2d to 3d
-	}
-	int numof3d=0;
-	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
-	{ 
-		if (!this->ImageActors->is2D(i))
-		{
-			numof3d++;
 		}
-	}
-	if (numof3d>0) {
-		this->chooseInteractorStyle(0);
-		this->RaycastBar->toggleViewAction()->setDisabled(0);
-		this->RaycastBar->show();
-	}else {
-		this->chooseInteractorStyle(1);
-		this->RaycastBar->toggleViewAction()->setDisabled(1);
-		if (this->RaycastBar->isVisible())
-		{
-			this->RaycastBar->hide();
+		if (numof3d>0) {
+			this->chooseInteractorStyle(0);
+			this->RaycastBar->toggleViewAction()->setDisabled(0);
+			this->RaycastBar->show();
 		}
-	}
+		else 
+		{
+			this->chooseInteractorStyle(1);
+			this->RaycastBar->toggleViewAction()->setDisabled(1);
+			if (this->RaycastBar->isVisible())
+			{
+				this->RaycastBar->hide();
+			}
+		}
+	}//end if "on"
 }
 void View3D::SetImgInt()
 {
@@ -1871,7 +1884,12 @@ void View3D::removeImageActors()
 {
 	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
 	{  
-		if(this->ImageActors->is2D(i))
+		this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(i));
+		this->ImageActors->setIs2D(i, false);
+		this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
+		this->Renderer->RemoveActor(this->ImageActors->GetContourActor(i));
+
+		/*if(this->ImageActors->is2D(i))
 		{
 			this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(i));
 			this->ImageActors->setIs2D(i, false);
@@ -1883,7 +1901,7 @@ void View3D::removeImageActors()
 		else
 		{
 			this->Renderer->RemoveActor(this->ImageActors->GetContourActor(i));
-		}			
+		}			*/
 
 		this->ImageActors->setRenderStatus(i, false);
 		//std::cout << "Turning off item " << i << std::endl;
@@ -1971,8 +1989,19 @@ void View3D::setSlicerMode()
 	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
 	{
 		ClearRenderer(i);
-		Renderer->AddActor(ImageActors->GetImageSlice(i));
-		ImageActors->setRenderStatus(i, false);
+		if (projectFilesTableCreated)
+		{
+			if (this->projectFilesTable->item(i,2)->text() == "on")
+			{
+				Renderer->AddActor(ImageActors->GetImageSlice(i));
+				ImageActors->setRenderStatus(i, false);
+			}
+		}
+		else
+		{
+			Renderer->AddActor(ImageActors->GetImageSlice(i));
+			ImageActors->setRenderStatus(i, false);
+		}
 	}
 
 	//this->SlicerBar->show();
@@ -1988,8 +2017,17 @@ void View3D::setProjectionMode()
 {
 	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
 	{
-		ClearRenderer(i);		
-		this->Renderer->AddActor(this->ImageActors->createProjection(i,this->projectionStyle,this->projection_axis));
+		ClearRenderer(i);
+		if (projectFilesTableCreated)
+		{
+			if (this->projectFilesTable->item(i,2)->text() == "on")
+			{
+				this->Renderer->AddActor(this->ImageActors->createProjection(i,this->projectionStyle,this->projection_axis));
+			}
+		}
+		else
+			this->Renderer->AddActor(this->ImageActors->createProjection(i,this->projectionStyle,this->projection_axis));
+
 		//this->ImageActors->setIs2D(i, true); //this line incompatible with multiple mode renderer
 		this->ImageActors->setRenderStatus(i, false);
 		
@@ -2014,7 +2052,16 @@ void View3D::setRaycastMode()
 	{  
 		ClearRenderer(i);			
 		//this->ImageActors->setIs2D(i, false); //this line incompatible with multiple mode renderer
-		this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
+		if (projectFilesTableCreated)
+		{
+			if (this->projectFilesTable->item(i,2)->text() == "on")
+			{
+				this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
+			}
+		}
+		else
+			this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
+			
 		this->ImageActors->setRenderStatus(i, true);
 
 		//Incompatible with slice/projection upgrade
@@ -2039,29 +2086,33 @@ void View3D::setRaycastMode()
 
 void View3D::ClearRenderer(int i)
 {
-	if (renderMode == SLICER)
-	{
-		Renderer->RemoveActor(ImageActors->GetImageSlice(i));
-		if (this->SlicerBar->isVisible())
-			this->SlicerBar->hide();
-		std::cout << "Removing slicer" << std::endl;
-	}
-	else if (renderMode == PROJECTION)
-	{
-		Renderer->RemoveActor(ImageActors->GetProjectionImage(i));
-		std::cout << "Removing projection" << std::endl;
-	}
-	else if (renderMode == RAYCAST)
-	{
-		Renderer->RemoveVolume(ImageActors->GetRayCastVolume(i));
-		if (this->RaycastBar->isVisible())
-			this->RaycastBar->hide();
-		this->RaycastBar->toggleViewAction()->setDisabled(1);
-		std::cout << "Removing raycast" << std::endl;
-	}
-	else if (renderMode == SLICERRAYCAST) //Slicer with raycast
-	{
-	}
+	Renderer->RemoveActor(ImageActors->GetImageSlice(i));
+	Renderer->RemoveActor(ImageActors->GetProjectionImage(i));
+	Renderer->RemoveVolume(ImageActors->GetRayCastVolume(i));
+
+	//if (renderMode == SLICER)
+	//{
+	//	Renderer->RemoveActor(ImageActors->GetImageSlice(i));
+	//	if (this->SlicerBar->isVisible())
+	//		this->SlicerBar->hide();
+	//	std::cout << "Removing slicer" << std::endl;
+	//}
+	//else if (renderMode == PROJECTION)
+	//{
+	//	Renderer->RemoveActor(ImageActors->GetProjectionImage(i));
+	//	std::cout << "Removing projection" << std::endl;
+	//}
+	//else if (renderMode == RAYCAST)
+	//{
+	//	Renderer->RemoveVolume(ImageActors->GetRayCastVolume(i));
+	//	if (this->RaycastBar->isVisible())
+	//		this->RaycastBar->hide();
+	//	this->RaycastBar->toggleViewAction()->setDisabled(1);
+	//	std::cout << "Removing raycast" << std::endl;
+	//}
+	//else if (renderMode == SLICERRAYCAST) //Slicer with raycast
+	//{
+	//}
 }
 
 void View3D::focusOn()

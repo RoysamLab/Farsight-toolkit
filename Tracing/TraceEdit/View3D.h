@@ -380,6 +380,7 @@ private:
 	QPushButton *updateRotationButton;
 		
 	QTableWidget * projectFilesTable;
+	bool projectFilesTableCreated;
 	//QTableWidgetItem * Item2D, * Item3D;
 	
 	//Automation widgets
