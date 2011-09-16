@@ -61,6 +61,7 @@ View3D::View3D(QWidget *parent)
 	this->viewIn2D = this->TraceEditSettings.value("mainWin/use2d",false).toBool();
 	this->renderTraceBits = false;
 	this->projectFilesTableCreated = false;
+	this->SlicerBarCreated = false;
 	this->projectionStyle = 0;	//should be maximum projection
 	this->projection_axis = 2; // z projection
 	this->Date.currentDate();
@@ -612,7 +613,7 @@ bool View3D::readProject(QString projectFile)
 						//this->EditLogDisplay->append("Soma file: \t" + this->SomaFile.last());
 					}
 					this->ImageActors->loadImage(FileName, project->GetFileType(i), 
-						project->GetTranslationX(i),project->GetTranslationY(i),project->GetTranslationZ(i)); //Audrey needs to work on this to get slice to show for all images
+						project->GetTranslationX(i),project->GetTranslationY(i),project->GetTranslationZ(i));
 
 				}//end type image
 				else if (type == "Trace")
@@ -1630,6 +1631,8 @@ void View3D::CreateLayout()
 	this->help = this->menuBar()->addMenu("Help");
 	this->help->addAction(this->aboutAction);
 
+	//this->createSlicerSlider();
+
 	this->menuBar()->hide();
 
 	/**************************************************************************/
@@ -1856,8 +1859,11 @@ void View3D::CreateActors()
 				this->Renderer->AddActor(this->ImageActors->createProjection(i, this->projectionStyle,this->projection_axis));
 				this->ImageActors->setIs2D(i, true);
 				renderMode = PROJECTION;
-				createSlicerSlider();
+
 			}
+			this->Renderer->AddActor(ImageActors->GetImageSlice(i));
+			this->Renderer->RemoveActor(ImageActors->GetImageSlice(i));
+			createSlicerSlider();
 		}
 		else
 		{
@@ -2004,10 +2010,12 @@ void View3D::setSlicerMode()
 		}
 	}
 
-	//this->SlicerBar->show();
 	this->QVTK->GetRenderWindow()->Render();
 	std::cout << "Setting mode slicer" << std::endl;
-	this->createSlicerSlider();
+	if (!SlicerBarCreated)
+		this->createSlicerSlider();
+	else
+		this->SlicerBar->show();
 	this->chooseInteractorStyle(3);
 	this->setSlicerZValue(-1);
 	renderMode = SLICER;
@@ -2086,8 +2094,12 @@ void View3D::setRaycastMode()
 
 void View3D::ClearRenderer(int i)
 {
+	if (this->SlicerBar->isVisible())
+		this->SlicerBar->hide();
 	Renderer->RemoveActor(ImageActors->GetImageSlice(i));
 	Renderer->RemoveActor(ImageActors->GetProjectionImage(i));
+	if (this->RaycastBar->isVisible())
+		this->RaycastBar->hide();
 	Renderer->RemoveVolume(ImageActors->GetRayCastVolume(i));
 
 	//if (renderMode == SLICER)
@@ -2216,6 +2228,7 @@ void View3D::createSlicerSlider()
 	this->SlicerBar->addWidget(SliceThicknessLabel);
 	this->SlicerBar->addWidget(this->SliceThicknessSpinBox);
 	this->SlicerBar->hide();
+	this->SlicerBarCreated = true;
 }
 void View3D::setSlicerZValue(int value)
 {
@@ -2253,16 +2266,17 @@ void View3D::setSlicerZValue(int value)
 	double image_center_z = bounds[5]-abs(value);
 
 	vtkCamera *cam = this->Renderer->GetActiveCamera();
+		double prevPosition[3];
+		cam->GetPosition(prevPosition);
+		double prevFocalPoint[3];
+		cam->GetFocalPoint(prevFocalPoint);
+
 	//std::cout << "Z Value: " << value << std::endl;
 	if (value == -1)
 	{
 		//std::cout << "image_center_x: "  << image_center_x << " image_center_y = " << image_center_y << " image_center_z " << image_center_z << std::endl;
 
-		double prevFocalPoint[3];
-		cam->GetFocalPoint(prevFocalPoint);
 		double curDistance = cam->GetDistance();
-		double prevPosition[3];
-		cam->GetPosition(prevPosition);
 		double ViewUp[3];
 		cam->GetViewUp(ViewUp);
 
@@ -2277,7 +2291,8 @@ void View3D::setSlicerZValue(int value)
 		cam->OrthogonalizeViewUp();
 
 		this->Renderer->ResetCamera();
-		cam->SetFocalPoint(image_center_x,image_center_y,image_center_z);
+		//cam->SetFocalPoint(image_center_x,image_center_y,image_center_z);
+		cam->SetFocalPoint(prevFocalPoint[0],prevFocalPoint[1],image_center_z);
 		cam->SetPosition(prevPosition);
 		cam->SetViewUp(ViewUp);
 		cam->ComputeViewPlaneNormal();
@@ -2287,7 +2302,9 @@ void View3D::setSlicerZValue(int value)
 	}
 	else
 	{
-		cam->SetFocalPoint(image_center_x,image_center_y,image_center_z);
+		cam->SetFocalPoint(prevFocalPoint[0],prevFocalPoint[1],image_center_z);
+		//std::cout << "Position: " << prevPosition[0] << " " << prevPosition[1] << std::endl;
+		//cam->SetPosition(prevPosition);
 		this->QVTK->GetRenderWindow()->Render();
 		//std::cout << "SlicerZvalue changed" << std::endl;
 	}

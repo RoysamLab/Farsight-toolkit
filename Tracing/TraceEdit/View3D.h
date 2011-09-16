@@ -439,6 +439,7 @@ private:
 	bool viewIn2D;
 	int projectionStyle;
 	void createSlicerSlider();
+	bool SlicerBarCreated;
 	void setSlicerBarValues(int i);
 	QSpinBox * SliceSpinBox, * SliceThicknessSpinBox;
 	QSlider * SliceSlider;

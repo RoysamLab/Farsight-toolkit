@@ -161,9 +161,6 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 	newImage->ImageData->GetBounds(bounds);
 	newImage->projectionConnector = ConnectorType::New();
 	newImage->projectionConnector->SetInput( newImage->reader->GetOutput() );
-	// Audrey needs to add imageslice for each image provided by a project
-	//newImage->imageSlice->SetInput( newImage->imageSlice );
-
 
 	this->setImageBounds(bounds);
 	this->LoadedImages.push_back(newImage);
