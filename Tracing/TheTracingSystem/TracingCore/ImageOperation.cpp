@@ -660,111 +660,16 @@ LabelImagePointer2D ImageOperation::ImMaxProjection(LabelImagePointer IInput)
 
 ImagePointer2D ImageOperation::ImMaxProjection(ImagePointer IInput)
 {
-   int dim = 2;
-
-   typedef itk::MaximumProjectionImageFilter< ImageType, ImageType > FilterType;
-   FilterType::Pointer filter = FilterType::New();
-   filter->SetInput( IInput );
-   filter->SetProjectionDimension( dim );
-   // to be sure that the result is ok with several threads, even on a single
-   // proc computer
-   filter->SetNumberOfThreads( 2 );
-   filter->Update();
-   ImageType::SizeType inputSize = filter->GetOutput()->GetLargestPossibleRegion().GetSize();
-   typedef itk::ExtractImageFilter< ImageType, ImageType2D > ExtractType;
-   ExtractType::Pointer extract = ExtractType::New();
-   extract->SetInput( filter->GetOutput() );
-   ImageType::SizeType size;
-   for(int i=0; i<=3; i++) 
-   {
-    if(i == dim) 
-    {
-     size[i] = 0;
-    } 
-    else 
-    { 
-     size[i] = inputSize[i];
-    }
-   }
-   ImageType::IndexType idx;
-   idx.Fill(0);
-   ImageType::RegionType region;
-   region.SetSize( size );
-   region.SetIndex( idx );
-   extract->SetExtractionRegion( region );
-   extract->Update();
-   ImagePointer2D I2D = extract->GetOutput();
-
-   return I2D;
-
-  /* typedef itk::ImageLinearIteratorWithIndex< ImageType2D > LinearIteratorType;
-   typedef itk::ImageSliceConstIteratorWithIndex< ImageType > SliceIteratorType;
-   unsigned int projectionDirection = 2;
-   unsigned int i, j;
-   unsigned int direction[2];
-  for (i = 0, j = 0; i < 3; ++i )
-  {
-   if (i != projectionDirection)
-  {
-   direction[j] = i;
-   j++;
-   }
-  }
-
-  ImageType2D::RegionType region;
-  ImageType2D::RegionType::SizeType size;
-  ImageType2D::RegionType::IndexType index;
-  ImageType::RegionType requestedRegion = IInput->GetRequestedRegion();
-
-  index[ direction[0] ] = requestedRegion.GetIndex()[ direction[0] ];
-  index[ 1- direction[0] ] = requestedRegion.GetIndex()[ direction[1] ];
-  size[ direction[0] ] = requestedRegion.GetSize()[ direction[0] ];
-  size[ 1- direction[0] ] = requestedRegion.GetSize()[ direction[1] ];
-
-  region.SetSize( size );
-  region.SetIndex( index );
-  ImagePointer2D I2D = ImageType2D::New();
-  I2D->SetRegions( region );
-  I2D->Allocate();
-
-  SliceIteratorType inputIt( IInput, IInput->GetRequestedRegion() );
-  LinearIteratorType outputIt( I2D, I2D->GetRequestedRegion() );
-  inputIt.SetFirstDirection( direction[1] );
-  inputIt.SetSecondDirection( direction[0] );
-  outputIt.SetDirection( 1 - direction[0] );
-
-  outputIt.GoToBegin();
-  while ( ! outputIt.IsAtEnd() )
-  {
-   while ( ! outputIt.IsAtEndOfLine() )
-  {
-   outputIt.Set( itk::NumericTraits<unsigned short>::NonpositiveMin() );
-   ++outputIt;
-  }
-   outputIt.NextLine();
- }
-
-  inputIt.GoToBegin();
-  outputIt.GoToBegin();
-  while( !inputIt.IsAtEnd() )
-  {
-   while ( !inputIt.IsAtEndOfSlice() )
-  {
-    while ( !inputIt.IsAtEndOfLine() )
-   {
-     outputIt.Set( vnl_math_max( outputIt.Get(), inputIt.Get() ));
-     ++inputIt;
-     ++outputIt;
-    }
-   outputIt.NextLine();
-   inputIt.NextLine();
-   }
-
-   outputIt.GoToBegin();
-   inputIt.NextSlice();
-  }
-  
-  return I2D; */
+    int dim = 2;
+	typedef itk::MaximumProjectionImageFilter< ImageType, ImageType2D > MaxProjectionType;
+	MaxProjectionType::Pointer filter = MaxProjectionType::New();
+	filter->SetProjectionDimension(dim);
+	filter->SetNumberOfThreads(16);
+	filter->SetInput(IInput);
+		
+	filter->Update();
+	ImagePointer2D I2D = filter->GetOutput();
+	return I2D;
 }
 
 RGBImagePointer2D ImageOperation::ImMaxProjection1(ImagePointer IInput)
