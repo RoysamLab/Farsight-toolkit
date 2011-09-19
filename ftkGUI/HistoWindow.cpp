@@ -78,7 +78,7 @@ void HistoWindow::update(void)
 {
 	this->updateOptionMenus();
 	this->SyncModel();
-	this->Normalize();
+	//this->Normalize(); //What the heck why would you normalize a histogram
 	this->SetNumofBins(numofbins);
 	this->findFrequencies();    
 	this->setBucketNames(); 
@@ -132,7 +132,7 @@ void HistoWindow::columnChange(QAction *action)
   columnName = action->text().toStdString();
   chartView->SetAxisTitle(1, columnName.c_str() );
   this->SyncModel();
-  this->Normalize();
+  //this->Normalize();
   this->SetNumofBins(numofbins);
   this->findFrequencies();    
   this->setBucketNames(); 
@@ -197,23 +197,12 @@ void HistoWindow::Normalize()
   } else {
     cerr<<"No data...Cannot Normalize!"<<endl;
     normalized = false;
-  }
-
-  // Here are the normalized numbers
-  /*
-  int k=1;
-  for(pos=data.begin(); pos!=data.end(); pos++) {
-    cout<<"k: "<<k<<" "<<*pos<<endl;
-    k++;
-  };
-  */
-  
+  }  
 }
 
 void HistoWindow::SetNumofBins(int n)
 {
-  //if ((n>1) && (n<11))
-	if((n>1) && (n<1000))
+  if((n>1) && (n<1001))
     numofbins=n;
   else 
   {
@@ -233,43 +222,36 @@ bool HistoWindow::findFrequencies()
   double bucketSize;
 
   if (status) 
-  {
-    pos = max_element(data.begin(), data.end());
-    if (*pos != 0) {
-      //if (normalized) bucketSize=100/numofbins;
-      bucketSize = *pos / numofbins;
-      //If the size is big, ignore the decimal
-      //We need to work on other cases
-      /*
-      if (bucketSize >= 2) bucketSize = bucketSize;
-      else if (bucketSize >= 0.2) bucketSize = bucketSize;
-      else if (bucketSize >= 0.02) bucketSize = bucketSize;
-      else bucketSize = bucketSize;
-    */
-    }
-    else {
-      cerr<<"The maximum element is 0"<<endl;
-      return false;
-    }
+  {    
+    //range of data, size of buckets, and how much each bucket needs to shift
+    double range= *(max_element(data.begin(), data.end())) - *(min_element(data.begin(), data.end()));
+    bucketSize = range / numofbins;    	
+	double left_offset = *(min_element(data.begin(), data.end()));
 
     double n,n1,n2;
+	int count=0;
     for (pos=data.begin(); pos!=data.end();pos++) {
+	  count++;
       //find the bucket for the number
       n=*pos;     
       for (int k=0;k<numofbins;k++) {
-        n1 = k*bucketSize;
-        n2 = (k+1)*bucketSize;
+        n1 = k*bucketSize + left_offset;
+        n2 = (k+1)*bucketSize + left_offset;
         //cout<<"n1 : "<<n1<<" n2: "<<n2<<endl;
         if (k == (numofbins - 1)) {
-          if ((n >= n1)  && (n <= n2)) 
+			if ((n >= n1)  && (n <= n2)) {
             result_fq[k]++;
+			}
         } else
           //n1 and n2 have to be double but vc++ cannot compare doubles and flips true and false
           // for some reason. Check the first if statement below
-            if ((n >= n1)  && (n < n2))
+		  if ((n >= n1)  && (n < n2)){
               result_fq[k]++;       
+		  }
+			  
       }
     }
+	cout << count<<" elements binned"<<endl;
 
     for (i=0;i<numofbins;i++ ) 
       cout<<"i : "<<i<<" Frequency "<<result_fq[i]<<endl;
@@ -281,42 +263,24 @@ bool HistoWindow::findFrequencies()
 void HistoWindow::setBucketNames() 
 {
   std::string bucketName;
-  if (status) { // 2<= numofbins <=10
-    double maxNumber = GetMaxNumber();    
-    double bucketSize=maxNumber/numofbins;
-    //double distanceToUpperBound=0;
-    //Upper bound of the bins should be decided as follows:
-    /*
-    if (bucketSize >= 2) distanceToUpperBound = 1;
-    else if (bucketSize >= 0.2) distanceToUpperBound = 0.1;
-    else if (bucketSize >= 0.02) distanceToUpperBound = 0.01;
-    else distanceToUpperBound = 0.001; //not more than 3 decimals for now
-    */
+  if (status) { 
+    //range of data, size of buckets, and how much each bucket needs to shift
+    double range= *(max_element(data.begin(), data.end())) - *(min_element(data.begin(), data.end()));
+    double bucketSize = range / numofbins;    	
+	double left_offset = *(min_element(data.begin(), data.end()));
 
     for (int i=0; i<numofbins; i++) {   
       std::stringstream p1,p2;      
-      if (i == (numofbins - 1))
-        if (bucketSize >= 2) { //if the bin bounds are large numbers, don't show the decimals
-          p1<<(((int)bucketSize) * i);          
-          p2<<ceil(maxNumber);          
-        } else {
-          p1<<(bucketSize * i);
-          p2<<maxNumber;
-          //p2<<((bucketSize * (i+1)) - distanceToUpperBound);
-        }
-      else {
-        //p2<<((((int)(maxNumber/numofbins)) * (i+1)) - 1);
-        if (bucketSize >= 2) { //if the bin bounds are large numbers, don't show the decimals
-          p1<<(((int)bucketSize) * i);          
-          p2<<((((int)bucketSize) * (i+1)) - distanceToUpperBound);
-        } else {
-          p1<<(bucketSize * i);     
-          p2<<((bucketSize * (i+1)) - distanceToUpperBound);
-        }
-
+      if (i == (numofbins - 1)){
+        p1 << (bucketSize * i) + left_offset;
+        p2 << *(max_element(data.begin(), data.end()));
+	  }else{
+        p1 << (bucketSize * i) + left_offset;     
+        p2 << (bucketSize * (i+1)) + left_offset;
       }
 
       bucketName = p1.str() + " - " + p2.str();
+	  cout<<"Bin "<<i<<": "<<bucketName<<endl;
       names.push_back(bucketName);
     }
   }
