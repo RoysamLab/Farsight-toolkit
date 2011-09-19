@@ -31,8 +31,8 @@
 #include <vnl/vnl_matrix.h>
 #include <vnl/vnl_hungarian_algorithm.h>
 #include <vnl/algo/vnl_qr.h>
-#include <ilcplex/ilocplex.h>
-ILOSTLBEGIN
+//#include <ilcplex/ilocplex.h>
+//ILOSTLBEGIN
 
 #define MAX(a,b) (((a) > (b))?(a):(b))
 #define MIN(a,b) (((a) < (b))?(a):(b))
@@ -665,7 +665,7 @@ void unmix_cluster_from_matrix_v2(vnl_matrix<double> mixed, vnl_matrix<double> &
 
 }
 
-#define DO_FILTERING 0
+#define DO_FILTERING 1
 //#define NO_SATURATED_PIXELS_IN_UNMIXIMG
 #define MAX_CHANNELS 50
 #define NUM_ELEMENTS_FOR_UNMIXING 1000000
