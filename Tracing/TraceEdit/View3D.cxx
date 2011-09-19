@@ -1515,7 +1515,7 @@ void View3D::CreateLayout()
 	DisplayLayout->addRow(tr("Line width:"),this->LineWidthField);
 	DisplayLayout->addRow(tr("Interactor style:"),this->StyleCombo);
 	DisplayLayout->addRow(tr("Projection style:"),this->ProjectionCombo);
-	DisplayLayout->addRow(tr("Projection: "),this->RotateImageUpCombo);
+	DisplayLayout->addRow(tr("Projection plane: "),this->RotateImageUpCombo);
 	//DisplayLayout->addRow(tr("2D Projection: "),this->ProjectionAxisCombo);
 	DisplayLayout->addRow(this->markTraceBits);
 	SettingsBox->addWidget(displaySettings);
@@ -1636,7 +1636,7 @@ void View3D::CreateLayout()
 	this->menuBar()->hide();
 
 	/**************************************************************************/
-	this->projectFilesDock = new QDockWidget(tr("Renderstatus"), this);
+	this->projectFilesDock = new QDockWidget(tr("List of Image Files"), this);
 	this->projectFilesDock->setWidget(this->projectFilesTable);
 	this->addDockWidget(Qt::LeftDockWidgetArea, this->projectFilesDock);
 	this->ShowToolBars->addAction(this->projectFilesDock->toggleViewAction());
