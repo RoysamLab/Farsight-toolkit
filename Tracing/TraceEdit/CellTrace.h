@@ -68,8 +68,11 @@ public:
 	double TerminalPathLength, maxTerminalPathLength, minTerminalPathLength;
 	int TotalTerminalSegment, MaxTerminalSegment, MinTerminalSegment;
 	float somaX, somaY, somaZ, maxX, maxY, maxZ, minX, minY, minZ, skewnessX, skewnessY, skewnessZ, euclideanSkewness; 
+
 	float sectionAreaTotal, SectionAreaMin, SectionAreaMax, surfaceAreaTotal, SurfaceAreaMax, SurfaceAreaMin;
 	double somaVolume, somaSurface, SomaRadii, DiamThresholdTotal, DiamThresholdMin, DiamThresholdMax;
+	double MinStemDistiance, MaxStemDistasnce, TotalStemDistance, EstimatedSomaRadius;
+
 	double TotalLastParentDiam, LastParentDiamMin, LastParentDiamMax;
 
 	double daughterRatio, parentDaughterRatio, partitionAsymmetry, rallPower, Pk, Pk_2, Pk_classic;

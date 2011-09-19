@@ -174,6 +174,11 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Soma Radii");
 	this->headers.push_back("Soma Volume");
 	this->headers.push_back("Soma Surface Area");
+
+	this->headers.push_back("Min Stem Distance");
+	this->headers.push_back("AverageStemDistance");
+	this->headers.push_back("Max Stem Distance");
+
 	this->headers.push_back("Trace File");
 	this->headers.push_back("Distance to Device");
 	
@@ -392,8 +397,47 @@ void CellTraceModel::createCellToCellGraph()
 	kNearestObjects* KNObj = new kNearestObjects(centroidMap);
 	//KNObj->setFeatureTable(this->getCellBoundsTable());
 	std::vector<std::vector< std::pair<unsigned int, double> > > kNeighborIDs;
-	kNeighborIDs = KNObj->neighborsWithinRadius_All(200, 0, 0);	//guess at parameters, dist, no classes 
+	kNeighborIDs = KNObj->k_nearest_neighbors_All(4, 0, 0);	//guess at parameters, dist, no classes 
+	//////////////////////////////////////////////////////
+	/*std::string full_string;
+	std::stringstream ss1;
+	ss1 << 4;
+	full_string = "D(k=" + ss1.str() + ",class=all)" ;
+	DataTable->RemoveColumnByName(full_string.c_str());
+	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName(full_string.c_str());
+	column->SetNumberOfValues((int)DataTable->GetNumberOfRows());
+	DataTable->AddColumn(column);
+	for(int row=0; row<(int)DataTable->GetNumberOfRows(); ++row)
+	{
+		DataTable->SetValueByName(row, full_string.c_str(), 0);
+	}
+	for(int i=0; i < (int)kNeighborIDs.size(); ++i)
+	{
+		int Id = kNeighborIDs.at(i).at(0).first;
+		double avg_dist = average(kNeighborIDs.at(i));
+		for(int row=0; row<(int)DataTable->GetNumberOfRows(); ++row)
+		{
+			if(DataTable->GetValue(row,0).ToInt() == Id)
+			{
+				DataTable->SetValueByName(row, full_string.c_str(), vtkVariant(avg_dist));
+				break;
+			}
+		}
+	}*/
+	//////////////////////////////////////////////////
 	vtkSmartPointer<vtkTable> graphTable = KNObj->vectorsToGraphTable(kNeighborIDs);
 	this->graphVisualize->SetGraphTable(graphTable);
 	this->graphVisualize->ShowGraphWindow();
+}
+
+double CellTraceModel::average(std::vector< std::pair<unsigned int, double> > ID)
+{
+	double dist = 0;
+	for(int i=1; i<(int)ID.size(); ++i)
+	{
+		dist += ID.at(i).second;
+	}
+	double average = dist/(int)(ID.size()-1);
+	return average;
 }

@@ -79,6 +79,7 @@ public:
 	void WriteCellCoordsToFile(const char* fileName);
 	std::vector<CellTrace*> getCells(std::vector<long> IDs);
 	void createCellToCellGraph();
+	double average(std::vector< std::pair<unsigned int, double> > ID);
 signals:
 	void selectionChanged(void);
 private:

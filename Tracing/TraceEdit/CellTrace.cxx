@@ -31,6 +31,22 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 	unsigned int i = 0;
 	this->NumSegments = (int) this->segments.size();
 	this->stems = (int) this->segments[0]->GetBranchPointer()->size();
+	if (this->stems > 0)
+	{
+		for (unsigned int j = 0; j < this->stems; j++)
+		{
+			this->MaxMin(this->segments[0]->GetBranchPointer()->at(j)->GetDistToParent(), 
+				this->TotalStemDistance, this->MinStemDistiance, this->MaxStemDistasnce);
+		}
+		this->EstimatedSomaRadius = this->TotalStemDistance/(double)this->stems;
+	}
+	else
+	{
+		this->MinStemDistiance = -PI;
+		this->MaxStemDistasnce = -PI;
+		this->TotalStemDistance = -PI;
+		this->EstimatedSomaRadius = -PI;
+	}
 	TraceBit rootBit = this->segments[0]->GetTraceBitsPointer()->front();
 	//set the soma point as the intital bounds
 	this->somaX = rootBit.x;
@@ -273,6 +289,11 @@ void CellTrace::clearAll()
 	this->somaVolume= 0;
 	this->somaSurface = 0;
 	this->SomaRadii = 0;
+
+	this->MinStemDistiance = 1000;
+	this->TotalStemDistance = 0;
+	this->MaxStemDistasnce = 0; 
+	this->EstimatedSomaRadius = -PI;
 
 	this->daughterRatio = 0;
 	this->daughterRatioMin = 100;
@@ -528,6 +549,11 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->SomaRadii);
 	CellData->InsertNextValue(this->somaVolume);
 	CellData->InsertNextValue(this->somaSurface);
+
+	CellData->InsertNextValue(this->MinStemDistiance);
+	CellData->InsertNextValue(this->EstimatedSomaRadius);
+	CellData->InsertNextValue(this->MaxStemDistasnce);
+
 	CellData->InsertNextValue(this->GetFileName().c_str());
 	CellData->InsertNextValue(this->DeviceDistance);
 	//std::cout << this->FileName << std::endl;
