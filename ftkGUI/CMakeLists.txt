@@ -1,10 +1,11 @@
 SET( GUI_SRCS
     	PlotWindow.cpp
     	ScatterView.cpp
-    	TableWindow.cpp		
-   	HistoWindow.cpp
+    	TableWindow.cpp	
+    	HistoWindow.cpp
     	ImageBrowser5D.cpp
     	PatternAnalysisWizard.cpp
+    	GenericALDialog.cpp
     	ObjectSelection.cpp
     	LabelImageViewQT.cpp
     	TrainingDialog.cpp
@@ -22,6 +23,7 @@ SET( GUI_HDRS
     	HistoWindow.h
     	ImageBrowser5D.h
     	PatternAnalysisWizard.h
+    	GenericALDialog.h
     	ObjectSelection.h
     	LabelImageViewQT.h
     	TrainingDialog.h
