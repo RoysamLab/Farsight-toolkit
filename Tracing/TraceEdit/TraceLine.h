@@ -82,6 +82,20 @@ public:
 	void SetDistanceToROICoord_Y(double coord) {ROICoord_Y = coord;}
 	void SetDistanceToROICoord_Z(double coord) {ROICoord_Z = coord;}
 
+	void SetClassification(double newPrediction, double newConfidence)
+	{
+		prediction = newPrediction;
+		confidence = newConfidence;
+	}
+	double getPrediction()
+	{
+		return prediction;
+	}
+	double getConfidence()
+	{
+		return confidence;
+	}
+
 	void setRoot(int RootID, int traceLevel, double parentPath);
 	void AddBranch(TraceLine* b);
 	TraceLine *GetBranch1();
@@ -142,6 +156,7 @@ private:
 	double traceColor, radii, sectionArea, length, volume, surfaceArea, PathLength, EuclidianD, DistToParent;
 	double BitDensity, BurkTaper, HillmanTaper, HillmanThreshold;
 	double DistanceToROI, ROICoord_X, ROICoord_Y, ROICoord_Z;
+	double prediction, confidence;
 	char * FileName; 
 	int m_id, root, level, terminalDegree;
 	std::vector<unsigned int> m_markers;

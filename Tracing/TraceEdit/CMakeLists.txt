@@ -19,6 +19,7 @@ SET( Libraries
     ftkGUI
     ftkCommon
     ftkGraphs
+    MCLR
     ${QT_LIBRARIES} )
 
 QT4_WRAP_CPP( GUI_MOC_SRCS View3D.h MergeModel.h TraceModel.h CellTraceModel.h cellexport.h screenshot.h)
@@ -48,7 +49,7 @@ ENDIF(USE_GPUREN)
 TARGET_LINK_LIBRARIES(Trace ${Libraries})
 
 ADD_EXECUTABLE(${PROJECT_NAME} ${EXE_TYPE} vtkTraceViewerDriver.cxx )
-TARGET_LINK_LIBRARIES( ${PROJECT_NAME} Trace )
+TARGET_LINK_LIBRARIES( ${PROJECT_NAME} Trace)
 
 ADD_EXECUTABLE(merge merge_main.cxx)
 TARGET_LINK_LIBRARIES(merge Trace )

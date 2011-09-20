@@ -31,6 +31,8 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 	unsigned int i = 0;
 	this->NumSegments = (int) this->segments.size();
 	this->stems = (int) this->segments[0]->GetBranchPointer()->size();
+	this->prediction = this->segments[0]->getPrediction();
+	this->confidence = this->segments[0]->getConfidence();
 	if (this->stems > 0)
 	{
 		for (unsigned int j = 0; j < this->stems; j++)
@@ -195,6 +197,10 @@ void CellTrace::setDistanceToROI(double newDistance, double Coord_X , double Coo
 	this->segments[0]->SetDistanceToROICoord_Y(Coord_Y);
 	this->segments[0]->SetDistanceToROICoord_Z(Coord_Z);
 }
+void CellTrace::SetClassifcation(double prediction, double confidence)
+{
+	this->segments[0]->SetClassification(prediction, confidence);
+}
 void CellTrace::clearAll()
 {
 	this->segments.clear();
@@ -348,6 +354,8 @@ void CellTrace::clearAll()
 	this->ElevationMax = 0;
 
 	this->DeviceDistance = 0;
+	this->prediction = -PI;
+	this->confidence = -PI;
 }
 void CellTrace::MaxMin(double NewValue, double &total, double &Min, double &Max)
 {
@@ -555,6 +563,8 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->MaxStemDistasnce);
 
 	CellData->InsertNextValue(this->GetFileName().c_str());
+	CellData->InsertNextValue(this->prediction);
+	CellData->InsertNextValue(this->confidence);
 	CellData->InsertNextValue(this->DeviceDistance);
 	//std::cout << this->FileName << std::endl;
 	return CellData;

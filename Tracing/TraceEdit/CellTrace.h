@@ -41,6 +41,7 @@ public:
 	void getSomaCoord(double xyz[]);
 	void getCellBounds(double bounds[]);
 	void setDistanceToROI(double newDistance, double Coord_X , double Coord_Y, double Coord_Z);
+	void SetClassifcation(double prediction, double confidence);
 private:
 	void clearAll();
 	void MaxMin(double NewValue, double &total, double &Min, double &Max);
@@ -88,6 +89,7 @@ public:
 	double Elevation, ElevationMin, ElevationMax;
 
 	double DeviceDistance;
+	double prediction, confidence;
 	
 private:
 	//double daughterRatioAverage, parentDaughterRatioAverage, partitionAsymmetryAverage, rallPowerAverage, PkAverage, Pk_2Average, Pk_classicAverage;

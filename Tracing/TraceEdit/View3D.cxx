@@ -1360,6 +1360,10 @@ void View3D::CreateGUIObjects()
 	this->CellAnalysis = new QAction("Cell Analysis", this->CentralWidget);
 	connect (this->CellAnalysis, SIGNAL(triggered()), this, SLOT(ShowCellAnalysis()));
 	this->CellAnalysis->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_C));
+
+	this->StartActiveLearningAction = new QAction("Start Active Learning", this->CentralWidget);
+	connect (this->StartActiveLearningAction, SIGNAL(triggered()), this, SLOT(StartActiveLearning()));
+
 	// Lables for the status bar to show edit counts
 	this->SplitLabel = new QLabel(this);
 	this->SplitLabel->setText(QString::number(this->numSplit));
@@ -1619,6 +1623,8 @@ void View3D::CreateLayout()
 	this->analysisViews->addAction(this->showStatisticsAction);
 	// this->analysisViews->addAction(this->updateStatisticsAction);
 	this->analysisViews->addAction(this->CellAnalysis);
+	this->analysisViews->addAction(this->StartActiveLearningAction);
+
 	//this->ShowToolBars->addSeparator();
 	QMenu *renderer_sub_menu = this->DataViews->addMenu(tr("Renderer Mode"));
 	renderer_sub_menu->addAction(this->SetSlicer);
@@ -4753,6 +4759,232 @@ void View3D::HideCellAnalysis()
 		this->FL_MeasureTable->close();
 	}
 	this->TraceEditSettings.sync();
+}
+void View3D::StartActiveLearning()
+{
+	vtkSmartPointer<vtkTable> featureTable;
+	double confidence_thresh = 0.5;
+	int cellCount= this->CellModel->getCellCount();
+	if (cellCount < 1)
+	{
+		return;
+	}
+	vtkSmartPointer<vtkTable> myDataTable;
+	myDataTable = this->CellModel->getDataTable();
+	featureTable = this->CellModel->getDataTable();
+	featureTable->RemoveColumnByName("Trace File");
+	if(!featureTable) return;
+
+	TrainingDialog *d = new TrainingDialog(featureTable, "train","active",featureTable->GetNumberOfRows() ,this);
+	//connect(d, SIGNAL(changedTable()), this, SLOT(updateViews()));
+	d->exec();
+
+	//Clear the Gallery 
+	//gallery.clear();	
+
+	std::vector< std::pair<double,double> > id_time;	
+	// Remove the training examples from the list of ids.
+	//Get the list of ids
+	for(int i=0;i<featureTable->GetNumberOfRows(); ++i)
+	{
+		if(featureTable->GetValueByName(i,"train_default1").ToDouble()==-1) 
+		{
+			std::pair<double,double> temp_pair;
+			temp_pair.first = featureTable->GetValue(i,0).ToDouble();
+			temp_pair.second = 0;
+			id_time.push_back(temp_pair);
+		}
+	}
+
+	// If the user did not hit cancel 
+	if(d->result())
+	{
+		PatternAnalysisWizard *pWizard = new PatternAnalysisWizard( featureTable, PatternAnalysisWizard::_ACTIVE,"","", this);
+		pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
+		pWizard->exec();
+
+		//new_table does not have the id column 
+		vtkSmartPointer<vtkTable> new_table = pWizard->getExtractedTable();
+		// If the user did not hit cancel 	
+		if(pWizard->result())
+		{
+			//// Delete the prediction column if it exists
+			std::vector< std::string > prediction_names = ftk::GetColumsWithString( "prediction_active" , new_table);
+			if(prediction_names.size()>0)
+				new_table->RemoveColumnByName("prediction_active");
+
+			vnl_vector<double> class_list(new_table->GetNumberOfRows()); 
+
+			for(int row = 0; (int)row < new_table->GetNumberOfRows(); ++row)  
+			{
+				class_list.put(row,vtkVariant(featureTable->GetValueByName(row,"train_default1")).ToDouble());
+			}
+
+			MCLR *mclr = new MCLR();
+			double sparsity = 1;
+			int active_query = 1;
+			double max_info = -1e9;
+
+			vnl_matrix<double> Feats = mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(new_table, id_time));
+			mclr->Initialize(Feats,sparsity,class_list,"",new_table);
+			mclr->Get_Training_Model();
+
+			// Get the active query based on information gain
+			active_query = mclr->Active_Query();
+
+			bool user_stop_dialog_flag = false;
+			bool loop_termination_condition = true;
+
+			GenericALDialog *dialog;
+			while(loop_termination_condition)
+			{	
+				/////////////////////////////////
+				if (this->viewIn2D)
+				{
+					double test [6];
+					this->Renderer->ComputeVisiblePropBounds(test);
+					this->setRenderFocus(test, 6);
+				}// end of reset renderer when in 2d mode 
+				int zoomID = mclr->id_time_val.at(active_query).first;
+				for(int row=0; row<(int)myDataTable->GetNumberOfRows(); ++row)
+				{
+					if(myDataTable->GetValue(row,0) == zoomID)
+					{
+						zoomID = row;
+						break;
+					}
+				}
+				CellTrace* currCell = this->CellModel->GetCellAt(zoomID);
+				this->FocusOnCell(currCell);
+
+				/////////////////////////////////
+				dialog =  new GenericALDialog(mclr->test_table,mclr->no_of_classes,active_query,mclr->top_features);
+				dialog->setWindowTitle(QString("Active Learning Window: Specify Class for Cell %1").arg(mclr->id_time_val.at(active_query).first));
+				dialog->exec();	 
+
+				loop_termination_condition = dialog->finish && dialog->result();
+
+				while(dialog->class_selected == -1)
+				{	
+					QMessageBox::critical(this, tr("Oops"), tr("Please select a class"));
+					this->show();
+					dialog =  new GenericALDialog(mclr->test_table,mclr->no_of_classes,active_query,mclr->top_features);	
+					dialog->exec();
+				}
+
+				// Update the data & refresh the training model and refresh the Training Dialog 		
+				mclr->Update_Train_Data(active_query, dialog->class_selected);
+				
+				if(dialog->class_selected ==0)
+				{
+					mclr->Get_Training_Model();
+					active_query = mclr->Active_Query();
+					continue;
+				}
+
+				// Update the gallery
+				//gallery.push_back(dialog->temp_pair);
+
+				if(mclr->stop_training && dialog->class_selected!=0)
+				{
+					QMessageBox msgBox;
+					msgBox.setText("I understand the classification problem.");
+					msgBox.setInformativeText("Do you want to stop training and classify ? ");
+					msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+					msgBox.setDefaultButton(QMessageBox::Ok);
+					int ret = msgBox.exec();
+
+					switch (ret) 
+					{
+					case QMessageBox::Ok:
+						// Save was clicked
+						user_stop_dialog_flag = true;
+						break;
+					case QMessageBox::Cancel:
+						mclr->stop_training = false;
+						break;
+					default:
+						// should never be reached
+						break;
+					}
+				}
+
+				if(user_stop_dialog_flag)
+					break;
+
+				mclr->Get_Training_Model();
+				active_query = mclr->Active_Query();				
+			}
+
+
+			/////////////////////////////////////////
+			vtkSmartPointer<vtkTable> test_table  = vtkSmartPointer<vtkTable>::New();
+			test_table->Initialize();
+
+			test_table->SetNumberOfRows(myDataTable->GetNumberOfRows());
+			for(int col=0; col<new_table->GetNumberOfColumns(); ++col)
+			{
+				vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+				column->SetName(new_table->GetColumnName(col));
+				test_table->AddColumn(column);	
+			}
+			for(int row = 0; row < (int)myDataTable->GetNumberOfRows(); ++row)
+			{		
+				vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+				for(int c =0;c<(int)test_table->GetNumberOfColumns();++c)
+					model_data1->InsertNextValue(myDataTable->GetValueByName(row,test_table->GetColumnName(c)));
+				test_table->InsertNextRow(model_data1);
+			}	
+
+			////// Final Data  to classify after the active training
+			vnl_matrix<double> data_classify;
+			data_classify =  mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(test_table, mclr->id_time_val));
+			data_classify = data_classify.transpose();
+
+			vnl_matrix<double> currprob;
+			currprob = mclr->Test_Current_Model(data_classify);
+			
+			//std::string prediction_col_name;
+			//std::string confidence_col_name;
+			//prediction_col_name = "prediction_active";
+			//confidence_col_name = "confidence";
+			//
+
+			////// Add the Prediction Column 
+			//vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+			//column->SetName(prediction_col_name.c_str());
+			//column->SetNumberOfValues( myDataTable->GetNumberOfRows() );
+			//myDataTable->AddColumn(column);
+
+			//// Add the confidence column
+			//vtkSmartPointer<vtkDoubleArray> column_confidence = vtkSmartPointer<vtkDoubleArray>::New();
+			//column_confidence->SetName(confidence_col_name.c_str());
+			//column_confidence->SetNumberOfValues( myDataTable->GetNumberOfRows() );
+			//myDataTable->AddColumn(column_confidence);
+
+			for(unsigned int row = 0; (int)row < myDataTable->GetNumberOfRows(); ++row)  
+			{
+				vnl_vector<double> curr_col = currprob.get_column(row);
+				CellTrace* currCell = this->CellModel->GetCellAtNoSelection(row);
+				//myDataTable->SetValueByName(row, confidence_col_name.c_str(), vtkVariant(curr_col(curr_col.arg_max())));
+				if(curr_col(curr_col.arg_max()) > confidence_thresh) 
+				{
+					currCell->SetClassifcation(curr_col.arg_max()+1, curr_col.arg_max());
+				}
+				else
+				{
+					currCell->SetClassifcation(0, curr_col.arg_max());
+				}
+			}
+			this->ShowCellAnalysis();
+
+			///////////////////////////////////////////
+			
+			///////////////////////////////////////
+			// JON, Update the table view
+			////////////////////////////////////////
+		}
+	}
 }
 void View3D::updateSelectionHighlights()
 {

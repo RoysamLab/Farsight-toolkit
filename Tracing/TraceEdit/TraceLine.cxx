@@ -64,6 +64,10 @@ TraceLine::TraceLine()
 	this->ROICoord_X = 0;
 	this->ROICoord_Y = 0;
 	this->ROICoord_Z = 0;
+
+	// classification results
+	this->prediction = -1;
+	this->confidence = -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

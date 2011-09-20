@@ -180,6 +180,8 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Max Stem Distance");
 
 	this->headers.push_back("Trace File");
+	this->headers.push_back("Prediction");
+	this->headers.push_back("Confidence");
 	this->headers.push_back("Distance to Device");
 	
 	

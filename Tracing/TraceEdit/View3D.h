@@ -91,6 +91,11 @@ limitations under the License.
 #include "vtkCellLocator.h"
 #include "vtkLegendScaleActor.h"
 
+#include "PatternAnalysis/activeLearning/mclr.h"
+#include "ftkGUI/GenericALDialog.h"
+#include "ftkGUI/TrainingDialog.h"
+#include "ftkGUI/PatternAnalysisWizard.h"
+
 #include "TraceBit.h"
 #include "TraceGap.h"
 #include "TraceLine.h"
@@ -193,6 +198,8 @@ public slots:
 	void SetImgInt();
 	void SaveScreenShot();
 	void AutoCellExport();
+
+	void StartActiveLearning();
 
 	void chooseInteractorStyle(int iren);
 	void SetProjectionMethod(int style);
@@ -343,6 +350,7 @@ private:
 	QAction *AutoCellExportAction;
 	QAction *ShowPlots;
 	QAction *CellAnalysis;
+	QAction *StartActiveLearningAction;
 	QAction *showStatisticsAction;
 	QAction *updateStatisticsAction;
 
