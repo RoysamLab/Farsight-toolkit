@@ -10,6 +10,8 @@ SET(ftkVesselTracer_headers
 	ftkVesselTracer.h
 	)	
 
+SUBDIRS(Zernike)
+
 ADD_EXECUTABLE ( ftkVesselTracer ${ftkVesselTracer_sources} ${ftkVesselTracer_headers} Tracer_main.cxx)
 TARGET_LINK_LIBRARIES( ftkVesselTracer vtkRendering vtkIO 
 vtkCommon  vtksys vtkFiltering  vtkVolumeRendering vtkWidgets ItkVtkGlue ${ITK_LIBRARIES})
