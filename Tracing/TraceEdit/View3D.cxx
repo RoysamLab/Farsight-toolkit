@@ -2612,93 +2612,9 @@ void View3D::getPosPTin3D()
 
 void View3D::pointer3DLocation(double pos[])
 {
-	class MouseInteractorStyleDoubleClick : public vtkInteractorStyleTrackballCamera
-{
-	  public:
- 
-    static MouseInteractorStyleDoubleClick* New();
-    /*vtkTypeRevisionMacro(MouseInteractorStyleDoubleClick, vtkInteractorStyleTrackballCamera);*/
- 
-    MouseInteractorStyleDoubleClick() : NumberOfClicks(0), ResetPixelDistance(5) 
-    { 
-      this->PreviousPosition[0] = 0;
-      this->PreviousPosition[1] = 0;
-    }
- 
-    virtual void OnLeftButtonDown() 
-    {
-      //std::cout << "Pressed left mouse button." << std::endl;
-      this->NumberOfClicks++;
-      //std::cout << "NumberOfClicks = " << this->NumberOfClicks << std::endl;
-      int pickPosition[2];
-	  
-      
-	  //std::cout << "Picking pixel: " << this->Interactor->GetEventPosition()[0] << " " << this->Interactor->GetEventPosition()[1] << std::endl;
-      this->Interactor->GetPicker()->Pick(this->Interactor->GetEventPosition()[0], 
-                         this->Interactor->GetEventPosition()[1], 
-                         0,  // always zero.
-                         this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
-      double picked[3];
-      this->Interactor->GetPicker()->GetPickPosition(picked);
-      //std::cout << "Picked value: " << picked[0] << " " << picked[1] << " " << picked[2] << std::endl;
-	  
-	  this->GetInteractor()->GetEventPosition(pickPosition);
- 
-      int xdist = pickPosition[0] - this->PreviousPosition[0];
-      int ydist = pickPosition[1] - this->PreviousPosition[1];
-	 
- 
-      this->PreviousPosition[0] = pickPosition[0];
-      this->PreviousPosition[1] = pickPosition[1];
- 
-      int moveDistance = (int)sqrt((double)(xdist*xdist + ydist*ydist));
- 
-      // Reset numClicks - If mouse moved further than resetPixelDistance
-      if(moveDistance > this->ResetPixelDistance)
-        { 
-        this->NumberOfClicks = 1;
-        }  
-	  if(this->NumberOfClicks == 2)
-        {
-		std::cout << "Double clicked." << std::endl;
-		std::cout << "Position x = " << picked[0] << std::endl;
-        std::cout << "Position y = " << picked[1] << std::endl;
-		std::cout << "Position z = " << picked[2] << std::endl;
-		this->NumberOfClicks = 0;
-		//set values
-		}
-	// forward events
-      vtkInteractorStyleTrackballCamera::OnLeftButtonDown();  
-	}
-	
-	  
-  //get values
-
-  private:
-    unsigned int NumberOfClicks;
-    int PreviousPosition[2];
-    int ResetPixelDistance;
-	}doubleclick;
-
-	vtkSmartPointer<vtkActor> actor = 
-    vtkSmartPointer<vtkActor>::New();
-    actor->SetMapper(mapper);
-
-	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor = 
-    vtkSmartPointer<vtkRenderWindowInteractor>::New();
-  renderWindowInteractor->SetRenderWindow ( renderWindow );
-
-	this->Renderer->AddActor(actor);
-	this->Rerender();
-	
-	
-	
-	
-	
-	
 	if (this->ShowPointer3DDefault)
 	{
-		this->pointer3d->SetPosition(doubleclick.picked);
+		this->pointer3d->SetPosition(pos);
 		this->pointer3d->SetEnabled(1);
 	}
 	this->posX->blockSignals(1);

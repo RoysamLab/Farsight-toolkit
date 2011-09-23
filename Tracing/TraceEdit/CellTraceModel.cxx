@@ -24,6 +24,7 @@ CellTraceModel::CellTraceModel()
 	this->Selection = new ObjectSelection();
 	this->Cells.clear();
 	this->graphVisualize = new GraphWindow();
+	this->AdditionalHeaders.clear();
 }
 CellTraceModel::CellTraceModel(std::vector<CellTrace*> Cells)
 {	
@@ -180,10 +181,16 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Max Stem Distance");
 
 	this->headers.push_back("Trace File");
+
 	this->headers.push_back("Prediction");
 	this->headers.push_back("Confidence");
 	this->headers.push_back("Distance to Device");
-	
+
+	int size = this->AdditionalHeaders.size();
+	for (int k = 0; k < size; k++)
+	{	
+		this->headers.push_back(this->AdditionalHeaders[k]);
+	}
 	
 	int numHeaders = (int)this->headers.size();
 	std::cout<<numHeaders << "\t features computed\n";
@@ -442,4 +449,17 @@ double CellTraceModel::average(std::vector< std::pair<unsigned int, double> > ID
 	}
 	double average = dist/(int)(ID.size()-1);
 	return average;
+}
+int CellTraceModel::AddNewFeatureHeader(std::string NewHeader)
+{
+	QString QnewHeader = QString(NewHeader.c_str());
+	for (int k = 0; k < this->AdditionalHeaders.size(); k++)
+	{
+		if (QnewHeader == this->AdditionalHeaders[k])
+		{
+			return k;
+		}
+	}
+	this->AdditionalHeaders.push_back(QnewHeader);
+	return this->AdditionalHeaders.size();
 }

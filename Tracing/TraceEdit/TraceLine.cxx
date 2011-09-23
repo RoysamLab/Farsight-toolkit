@@ -59,6 +59,7 @@ TraceLine::TraceLine()
 	this->BifTiltLocal = -1;
 	this->BifTiltRemote = -1;
 
+	this->CellFeatures.clear();
 //for Dist to device calculations
 	this->DistanceToROI = 0;
 	this->ROICoord_X = 0;

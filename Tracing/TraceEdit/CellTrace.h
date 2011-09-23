@@ -94,7 +94,7 @@ public:
 private:
 	//double daughterRatioAverage, parentDaughterRatioAverage, partitionAsymmetryAverage, rallPowerAverage, PkAverage, Pk_2Average, Pk_classicAverage;
 	//double BifAmplLocalAverage, BifAmpRemoteAverage, BifTiltLocalAverage, BifTiltRemoteAverage;
-
+	vtkSmartPointer<vtkVariantArray> CellData;
 	std::string FileName;
 	std::set<long int> IDs;
 	//TraceBit rootBit;

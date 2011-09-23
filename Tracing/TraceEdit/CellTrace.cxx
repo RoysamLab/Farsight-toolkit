@@ -19,10 +19,12 @@ limitations under the License.
 CellTrace::CellTrace()
 {
 	this->clearAll();
+	CellData = vtkSmartPointer<vtkVariantArray>::New();
 }
 CellTrace::CellTrace(std::vector<TraceLine*> Segments)
 {
 	this->clearAll();
+	CellData = vtkSmartPointer<vtkVariantArray>::New();
 	this->setTraces(Segments);
 }
 void CellTrace::setTraces(std::vector<TraceLine*> Segments)
@@ -404,7 +406,7 @@ void CellTrace::MaxMin(int NewValue, int &total, int &Min, int &Max)
 }
 vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 {
-	vtkSmartPointer<vtkVariantArray> CellData = vtkSmartPointer<vtkVariantArray>::New();
+	CellData->Reset();
 	CellData->InsertNextValue(this->segments[0]->GetId());
 	CellData->InsertNextValue(this->NumSegments);
 	CellData->InsertNextValue(this->stems);

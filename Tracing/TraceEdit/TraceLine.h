@@ -23,6 +23,7 @@ limitations under the License.
 #include <set>
 #include <sstream>
 #include "vtkSmartPointer.h"
+#include "vtkVariant.h"
 #include "vtkImageData.h"
 
 class TraceBit;
@@ -125,7 +126,26 @@ public:
 
 	std::vector<unsigned int> * GetMarkers();
 	std::vector<TraceLine*> * GetBranchPointer();
-	std::vector<double> Features;
+
+	std::vector<double> Features; 
+	//this loads in with rpi.xml files
+
+	std::vector<vtkVariant> GetCellFeatures()
+	{
+		return CellFeatures;
+	}
+	void addCellFeature(vtkVariant Feature)
+	{
+		CellFeatures.push_back(Feature);
+	}
+	void editCellFeature(vtkVariant NewValue, int pos)
+	{
+		if (pos < CellFeatures.size())
+		{
+			CellFeatures[pos] = NewValue;
+		}
+	}
+
 	void setTraceColor(double newColor);
 	double getTraceColor();
 	void Getstats();
@@ -155,8 +175,10 @@ private:
 	double BifAmplLocal, BifAmpRemote, BifTiltLocal, BifTiltRemote;
 	double traceColor, radii, sectionArea, length, volume, surfaceArea, PathLength, EuclidianD, DistToParent;
 	double BitDensity, BurkTaper, HillmanTaper, HillmanThreshold;
+	//cell level features 
 	double DistanceToROI, ROICoord_X, ROICoord_Y, ROICoord_Z;
 	double prediction, confidence;
+
 	char * FileName; 
 	int m_id, root, level, terminalDegree;
 	std::vector<unsigned int> m_markers;
@@ -164,6 +186,8 @@ private:
 	TraceLine *m_parent;
 	std::vector<TraceLine* >m_branches;
 	TraceBitsType m_trace_bits;
+
+	std::vector<vtkVariant> CellFeatures;
 };
 
 #endif

@@ -80,11 +80,13 @@ public:
 	std::vector<CellTrace*> getCells(std::vector<long> IDs);
 	void createCellToCellGraph();
 	double average(std::vector< std::pair<unsigned int, double> > ID);
+	int AddNewFeatureHeader(std::string NewHeader);
 signals:
 	void selectionChanged(void);
 private:
 	std::vector<CellTrace*> Cells;
 	std::vector<QString> headers;
+	std::vector<QString> AdditionalHeaders;
 	void SetupHeaders();
 	void SyncModel();
 	vtkSmartPointer<vtkTable> DataTable;
