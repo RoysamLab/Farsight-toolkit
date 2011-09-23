@@ -44,7 +44,7 @@ class GenericALDialog : public QDialog
 {
 	Q_OBJECT
 public:
-	GenericALDialog::GenericALDialog(vtkSmartPointer<vtkTable> table,int num_classes,int active_query,std::vector<int>top_feats,QWidget *parent=0);
+	GenericALDialog(vtkSmartPointer<vtkTable> table,int num_classes,int active_query,std::vector<int>top_feats,QWidget *parent=0);
 	bool finish;
 	//QLineEdit *lineEdit;
 	int class_selected;

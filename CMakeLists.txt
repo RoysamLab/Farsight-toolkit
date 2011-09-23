@@ -30,6 +30,7 @@ OPTION( BUILD_UNMIXING "Build Unmixing module" OFF )
 OPTION( BUILD_OPENMP "Build with OpenMP support (Note that only VS2008 Pro and VS2008 Team System supports OpenMP)" OFF)
 OPTION( BUILD_IMAGE_MANAGER  "Manage Image File Conversions and Directories" OFF)
 OPTION( USE_TRACKING "Use Tracking module with nucleus editor" OFF)
+OPTION( BUILD_VESSEL_TRACING "Build Ball Tracing for Vessels" ON )
 
 OPTION( BUILD_MODEL_SEG "Build Statistical_Model_Segmentation (Note that it has dependency on glpk library)" OFF)
 OPTION( BUILD_ZERNIKE  " Build zernike_moments_calculation " OFF)
@@ -110,12 +111,8 @@ FIND_PACKAGE(GLUT)
 # FARSIGHT ALSO HAS A NUMBER OF COMMON LIBRARIES THAT ARE INTERNAL TO
 # THE PROJECT:
 ################################################################################
-INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Amit_tracer )
-SUBDIRS( Amit_tracer )
-
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/VesselTracer )
 SUBDIRS( VesselTracer )
-
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ItkVtkGlue )
 SUBDIRS( ItkVtkGlue )
@@ -213,9 +210,13 @@ IF(BUILD_NUCLEI)
   SET(CPACK_PACKAGE_EXECUTABLES "NucleusEditor" "Nucleus Editor" ${CPACK_PACKAGE_EXECUTABLES})
 ENDIF(BUILD_NUCLEI)
 
+IF(BUILD_VESSEL_TRACING)
+  INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/VesselTracer )
+  SET(CPACK_PACKAGE_EXECUTABLES "ftkVesselTracer" "Vessel Tracer" ${CPACK_PACKAGE_EXECUTABLES})
+ENDIF(BUILD_VESSEL_TRACING)
+
 IF(BUILD_VESSEL)
-  
-  INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Vessel )
+ INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Vessel )
   SUBDIRS( Vessel )
 ENDIF(BUILD_VESSEL)
 
