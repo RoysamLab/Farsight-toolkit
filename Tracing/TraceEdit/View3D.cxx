@@ -4826,7 +4826,7 @@ void View3D::StartActiveLearning()
 			double max_info = -1e9;
 
 			vnl_matrix<double> Feats = mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(new_table, id_time));
-			mclr->Initialize(Feats,sparsity,class_list,"",new_table);
+			mclr->Initialize(Feats,sparsity,class_list,"",new_table,false);
 			mclr->Get_Training_Model();
 
 			// Get the active query based on information gain
@@ -4873,7 +4873,7 @@ void View3D::StartActiveLearning()
 				}
 
 				// Update the data & refresh the training model and refresh the Training Dialog 		
-				mclr->Update_Train_Data(active_query, dialog->class_selected);
+				//mclr->Update_Train_Data(active_query, dialog->class_selected);
 				
 				if(dialog->class_selected ==0)
 				{
@@ -5659,7 +5659,7 @@ void View3D::CropBorderCells()
 	DeleteTraces();
 	CellModel->SelectByRootTrace(roots);
 	cells_list = CellModel->GetSelectedCells();
-}                                                                                                                                                                                                                                      
+}
 
 
 
