@@ -202,7 +202,7 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 				column = vtkSmartPointer<vtkDoubleArray>::New();
 				std::stringstream ss2;
 				ss2 << ((i%2)+(2*j));
-				column->SetName( ("Zern("+ss1.str()+","+ss2.str()+")").c_str() );
+				column->SetName( ("Zern "+ss1.str()+","+ss2.str()+" ").c_str() );
 				table->AddColumn(column);
 			}
 		}

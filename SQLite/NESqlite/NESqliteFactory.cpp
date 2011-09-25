@@ -227,6 +227,7 @@ void GenericSearch(sqlite3 *db,const char * sql)
     exeStatus = sqlite3_exec(dbConn, pSQL_cstr, 0, 0, &zErr);
     if( exeStatus != SQLITE_OK && exeStatus != SQLITE_DONE ){
 		std::cerr<<"SQL error: "<< zErr << std::endl;
+		std::cout<<"The statement is: "<< pSQL << std::endl;
 		sqlite3_free(zErr);
     }
  
@@ -511,7 +512,7 @@ sqlite3 * sqliteOpenConnection()
 	GetCurDir(cCurrentPath, sizeof(cCurrentPath));
 	cCurrentPath[sizeof(cCurrentPath) - 1] = '/0';
 
-	std::cout<<cCurrentPath<<"/NE.s3db"<<std::endl;
+	std::cout<<cCurrentPath<<"/bin/NE.s3db"<<std::endl;
 	exeStatus = sqlite3_open("./bin/NE.s3db",&dbConn);
 
  	// int sqlite3_open(
