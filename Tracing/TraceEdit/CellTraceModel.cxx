@@ -182,8 +182,8 @@ void CellTraceModel::SetupHeaders()
 
 	this->headers.push_back("Trace File");
 
-	this->headers.push_back("Prediction");
-	this->headers.push_back("Confidence");
+	/*this->headers.push_back("Prediction");
+	this->headers.push_back("Confidence");*/
 	this->headers.push_back("Distance to Device");
 
 	int size = this->AdditionalHeaders.size();
@@ -193,7 +193,7 @@ void CellTraceModel::SetupHeaders()
 	}
 	
 	int numHeaders = (int)this->headers.size();
-	std::cout<<numHeaders << "\t features computed\n";
+	//std::cout<<numHeaders << "\t features computed\n";
 	
 	vtkSmartPointer<vtkVariantArray> column = vtkSmartPointer<vtkVariantArray>::New();
 	for(int i=0; i < numHeaders; ++i)
@@ -205,12 +205,24 @@ void CellTraceModel::SetupHeaders()
 }
 void CellTraceModel::SyncModel()
 {	
+	int size = this->AdditionalHeaders.size();
 	this->DataTable->Initialize();	
 	this->Selection->clear();
 	this->SetupHeaders();
-	for (int i = 0; i < (int) this->Cells.size(); i ++)
+	if (size == 0)
 	{
-		this->DataTable->InsertNextRow(this->Cells[i]->DataRow());
+		for (int i = 0; i < (int) this->Cells.size(); i ++)
+		{
+			this->DataTable->InsertNextRow(this->Cells[i]->DataRow());
+		}
+	}
+	else
+	{
+		//std::cout << "Size of extended features " << size << std::endl;
+		for (int i = 0; i < (int) this->Cells.size(); i ++)
+		{
+			this->DataTable->InsertNextRow(this->Cells[i]->GetExtendedDataRow(size));
+		}
 	}
 }
 
@@ -461,5 +473,5 @@ int CellTraceModel::AddNewFeatureHeader(std::string NewHeader)
 		}
 	}
 	this->AdditionalHeaders.push_back(QnewHeader);
-	return this->AdditionalHeaders.size();
+	return -1;
 }

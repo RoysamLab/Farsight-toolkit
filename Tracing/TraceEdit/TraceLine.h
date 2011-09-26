@@ -83,7 +83,7 @@ public:
 	void SetDistanceToROICoord_Y(double coord) {ROICoord_Y = coord;}
 	void SetDistanceToROICoord_Z(double coord) {ROICoord_Z = coord;}
 
-	void SetClassification(double newPrediction, double newConfidence)
+	/*void SetClassification(double newPrediction, double newConfidence)
 	{
 		prediction = newPrediction;
 		confidence = newConfidence;
@@ -95,7 +95,7 @@ public:
 	double getConfidence()
 	{
 		return confidence;
-	}
+	}*/
 
 	void setRoot(int RootID, int traceLevel, double parentPath);
 	void AddBranch(TraceLine* b);
@@ -140,7 +140,11 @@ public:
 	}
 	void editCellFeature(vtkVariant NewValue, int pos)
 	{
-		if (pos < CellFeatures.size())
+		if (pos == -1)
+		{
+			CellFeatures.push_back(NewValue);
+		}
+		else if (pos < CellFeatures.size())
 		{
 			CellFeatures[pos] = NewValue;
 		}
@@ -177,7 +181,7 @@ private:
 	double BitDensity, BurkTaper, HillmanTaper, HillmanThreshold;
 	//cell level features 
 	double DistanceToROI, ROICoord_X, ROICoord_Y, ROICoord_Z;
-	double prediction, confidence;
+	/*double prediction, confidence;*/
 
 	char * FileName; 
 	int m_id, root, level, terminalDegree;

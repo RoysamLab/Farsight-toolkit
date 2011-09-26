@@ -31,6 +31,7 @@ public:
 	CellTrace(std::vector<TraceLine*> Segments);
 	void setTraces(std::vector<TraceLine*> Segments);
 	vtkSmartPointer<vtkVariantArray> DataRow();
+	vtkSmartPointer<vtkVariantArray> GetExtendedDataRow(int CheckAddFeatures);
 	vtkSmartPointer<vtkVariantArray> BoundsRow();
 	std::string BasicFeatureString();
 	std::set<long int> TraceIDsInCell();
@@ -41,7 +42,7 @@ public:
 	void getSomaCoord(double xyz[]);
 	void getCellBounds(double bounds[]);
 	void setDistanceToROI(double newDistance, double Coord_X , double Coord_Y, double Coord_Z);
-	void SetClassifcation(double prediction, double confidence);
+	void SetClassifcation(int predicCol, double prediction, int confCol,double confidence);
 private:
 	void clearAll();
 	void MaxMin(double NewValue, double &total, double &Min, double &Max);

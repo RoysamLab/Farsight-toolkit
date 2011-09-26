@@ -4826,7 +4826,7 @@ void View3D::StartActiveLearning()
 			double max_info = -1e9;
 
 			vnl_matrix<double> Feats = mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(new_table, id_time));
-			mclr->Initialize(Feats,sparsity,class_list,"",new_table,false);
+			mclr->Initialize(Feats,sparsity,class_list,"",new_table);
 			mclr->Get_Training_Model();
 
 			// Get the active query based on information gain
@@ -4873,7 +4873,7 @@ void View3D::StartActiveLearning()
 				}
 
 				// Update the data & refresh the training model and refresh the Training Dialog 		
-				//mclr->Update_Train_Data(active_query, dialog->class_selected);
+				mclr->Update_Train_Data(active_query, dialog->class_selected);
 				
 				if(dialog->class_selected ==0)
 				{
@@ -4961,7 +4961,9 @@ void View3D::StartActiveLearning()
 			//column_confidence->SetName(confidence_col_name.c_str());
 			//column_confidence->SetNumberOfValues( myDataTable->GetNumberOfRows() );
 			//myDataTable->AddColumn(column_confidence);
-
+			int predictionIndex = this->CellModel->AddNewFeatureHeader("Prediction");
+			int confIndex = this->CellModel->AddNewFeatureHeader("Confidence");
+			//std::cout << "debug prediction: "<< predictionIndex << "confidence" << confIndex << std::endl;
 			for(unsigned int row = 0; (int)row < myDataTable->GetNumberOfRows(); ++row)  
 			{
 				vnl_vector<double> curr_col = currprob.get_column(row);
@@ -4969,11 +4971,11 @@ void View3D::StartActiveLearning()
 				//myDataTable->SetValueByName(row, confidence_col_name.c_str(), vtkVariant(curr_col(curr_col.arg_max())));
 				if(curr_col(curr_col.arg_max()) > confidence_thresh) 
 				{
-					currCell->SetClassifcation(curr_col.arg_max()+1, curr_col.arg_max());
+					currCell->SetClassifcation(predictionIndex, curr_col.arg_max()+1, confIndex, curr_col.arg_max());
 				}
 				else
 				{
-					currCell->SetClassifcation(0, curr_col.arg_max());
+					currCell->SetClassifcation(predictionIndex, 0, confIndex, curr_col.arg_max());
 				}
 			}
 			this->ShowCellAnalysis();
@@ -5659,7 +5661,7 @@ void View3D::CropBorderCells()
 	DeleteTraces();
 	CellModel->SelectByRootTrace(roots);
 	cells_list = CellModel->GetSelectedCells();
-}
+}                                                                                                                                                                                                                                      
 
 
 
