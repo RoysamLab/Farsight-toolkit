@@ -142,7 +142,11 @@ vtkSmartPointer<vtkTable> LoadTable(std::string filename)
 	while (pch != NULL)
 	{
 		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-		column->SetName( pch );
+		std::string col_name = pch;
+		std::replace(col_name.begin(),col_name.end(),'(','_');
+		std::replace(col_name.begin(),col_name.end(),')','_');
+		std::replace(col_name.begin(),col_name.end(),',','_');
+		column->SetName( col_name.c_str() );
 		table->AddColumn(column);
 		pch = strtok (NULL, " \t");
 	}
