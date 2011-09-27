@@ -29,12 +29,13 @@ limitations under the License.
 #include "TracingView.h"
 #include "ParametersGroup.h"
 #include "SlidersGroup.h"
-#include "TracingCore/Montage/Register.h"
+#include "TracingCore\Montage\Register.h"
 #include "dialogs.h"
 #include "dialogs_montage.h"
+#include "dialogs_scatter.h"
 #include "time.h"
 #include <vnl/vnl_random.h> 
-#include "Rendering/ImageActors.h"
+#include "Rendering\ImageActors.h"
 #include "vtkWindowToImageFilter.h"
 #include "vtkPNGWriter.h"
 
@@ -53,16 +54,23 @@ public:
 	QtTracer(QWidget * parent = 0, Qt::WindowFlags flags = 0);
 
 public slots:
+
 	void exit();
 	void about();
 	void stackImage();
 	void loadImage();
+	void loadImage_DragNDrop();
 	void loadDisplayImage();
 	void reloadImage();
 
 	void autoProcessing();
 
 	void batchPreprocessing();
+
+	void mgTracing();
+	void mgPrune_n_Save();
+
+	void autoTracing();
 
 	void batchProcessingI();
 	void batchTracingI();
@@ -97,8 +105,11 @@ public slots:
     void Manual_Seed_Tracing(PointList3D seeds);
     void Manual_Seed_TracingI(PointList3D seeds);
     void SegmentationI();
-	void Radius_Estimation();
+	void SegmentationII();
 	void removeIsolated();
+
+    void detectSpines();
+
 	void enable_manual_seeding();
 
 	void Process();
@@ -106,17 +117,14 @@ public slots:
 	void backStep();
 	void changeDisplay(int in);
 	void changeSlice(int in);
+	void changeBrightness(int in);
 	void changeOpacity(int in);
 	void changeOpacityTh(int in);
+	void changeLineWidth(int in);
 
-    void SnakesChangedSlot();
+    void SnakesChangedSlot(bool new_come);
+	void SnakesChangedSlot();
 	void PointClickedSlot(Point3D pt);
-   
-	void output_swc_raw_slot();
-	void outputSWC();
-    void outputSWC_Raw();
-	void outputSWC_Raw_MT();
-    void outputVTK();
 
     void setRootPoint();
 	void convertSnakeTree();
@@ -124,11 +132,15 @@ public slots:
 	void findBranch(int snake_label, int root_label, Point3D root_point, vnl_vector<int>*snake_visit_label, int *point_id, SnakeTree *tree);
     void findBranch_Raw(int snake_label, int root_label, Point3D root_point, vnl_vector<int>*snake_visit_label, int *point_id, QTextStream *out_txt, PointList3D *wrote_pt, PointList3D *all_pt, std::vector<int> *bl);
 	void findBranch_Raw_MT(int snake_label, int root_label, Point3D root_point, vnl_vector<int>*snake_visit_label, int *point_id, QTextStream *out_txt, PointList3D *wrote_pt, PointList3D *all_pt, std::vector<int> *bl);
+    void findBranch_MG(int snake_label, int root_label, Point3D root_point, vnl_vector<int>*snake_visit_label, int *point_id, QTextStream *out_txt, PointList3D *wrote_pt);
 	void refineBranch();
 	void pickSomaSeeds();
+	void loadSomaSeeds();
+    void decimateSeeds();
 	void segmentSoma();
 	void clearSegmentation();
 	void saveSoma();
+	void saveSegmentation();
 	void removeSoma();
 	void saveImage();
 
@@ -139,13 +151,24 @@ public slots:
 	void batchI_mode_slot(bool in);
 	void batchII_mode_slot(bool in);
 
+	void drawClickedTraces();
+	void drawNew3DTrace();
 	void draw3DTraces();
+	void clearTraces();
 	void draw3DTraces_Global();
 	void drawVolume();
+	void drawVolume(int x, int y, int z);
 	void draw3DTracing(SnakeClass s);
 	void surfaceRendering(bool rand_color);
 	void surfaceRendering(bool rand_color, ImagePointer ID);
+	void writeRendering();
 	void writeRendering(vtkRenderWindow *rw, const char *filename);
+	void writeRenderingAnimation();
+
+	//settings
+	void showAllSetting();
+	void setEliteSetting();
+	void setFullSetting();
 
     //edits
     void deleteSnake();
@@ -160,12 +183,49 @@ public slots:
 	void vtk_left_pick(vtkObject * obj);
 	void vtk_removePoint();
 
+    //slot for table and scatter views
+	void setSelected_sels();
+    void setSelected(const QItemSelection &, const QItemSelection &);
+    void displayFeatures();
+
+	void showScatter();
+	void showTable();
+
+	//swc
+    void output_swc_raw_slot();
+	void outputSWC();
+	void outputSWC_MG(std::vector<int> stem_label); //out swc files for microglia trees
+	void outputSWC_F();
+    void outputSWC_Raw();
+	void outputSWC_Raw_MT();
+    void outputVTK();
+
+	void outputXLS();
+
+	void loadSWC();
+	void loadSWC_F();
+    void displaySWC(SnakeListClass Snakes, Point3D RootPt, float soma_radius, PointList3D BranchPt, double *color);
+    
+	void createTreeTables();
+   
+
 signals:
 	void selected(const QItemSelection &, QItemSelectionModel::SelectionFlags command);
 	void sendSelected(int * sr);
 
+	void init_the_tracing();
+	void batch_tracingII_continue();
+	void batch_tracingI_continue();
+
+	void start_continue_process();
+
+	void start_tracing();
+
 protected:
     void closeEvent();
+	void dropEvent(QDropEvent *event);
+	void mouseMoveEvent(QMouseEvent *event);
+	void dragEnterEvent(QDragEnterEvent *event);
 
 private:
     
@@ -197,6 +257,7 @@ private:
 	void createActions();
 	void createMainGUI();
 	void createToolBar();
+	void createViews();
 	void initializeRendering();
 
 	//Custom Widgets
@@ -212,7 +273,9 @@ private:
 	QMenu *SomaMenu;
 	QMenu *PostSegMenu;
 	QMenu *OutlierMenu;
+	QMenu *SettingMenu;
  	QMenu *viewMenu;
+	QMenu *outputMenu;
 	QMenu *aboutMenu;
     
 	QAction *zoomInAct;
@@ -229,6 +292,7 @@ private:
 	QAction *Pick_Seed;
 	QAction *Delete_Seed;
 	QAction *Invert_Selection;
+	QAction *Decimate_Seed;
     QAction *Delete_Snake;
 	QAction *Split_Snake;
 	QAction *Merge_Snake;
@@ -238,17 +302,38 @@ private:
     QAction *Refine_Branch;
 	QAction *Remove_Soma;
 	QAction *Pick_Soma_Seeds;
+	QAction *Load_Soma_Seeds;
 	QAction *Segment_Soma;
 	QAction *Save_Soma;
+	QAction *Save_Segmentation;
 	QAction *Clear_Segmentation;
 	QAction *SegmentI;
 	QAction *SegmentII;
 	QAction *Remove_Isolated;
-	QAction *Estimate_Radius;
 	QAction *Save_Image;
 	QAction *Save_Setting;
 	QAction *Load_Setting;
 	QAction *Break_Branches;
+
+	//Dendritic spine analysis
+	QAction *Detect_Spines;
+
+	QAction *Show_AllSetting;
+	QAction *Set_EliteSetting;
+	QAction *Set_FullSetting;
+
+    QAction *showScatterAction;
+	QAction *showTableAction;
+
+	QAction *loadSWCAction;
+
+	QAction *SaveRendering;
+	QAction *SaveRenderingAnimation;
+
+	QAction *outputSWCAction;
+    QAction *outputSWCRawAction;
+
+	QAction *Output_XLS;
 
 	ImageOperation *IM;
     OpenSnakeTracer *Tracer; 
@@ -270,10 +355,15 @@ private:
 	int tracing_time;
 
 	bool seeding;
-  
+
+	bool mg_process;
+	int current_mg_cell;
+
 	bool automated_process;
 	bool batch_processI;
 	bool batch_processII;
+	clock_t start_time_batch_processI;
+	clock_t start_time_batch_processII;
 	bool batch_preprocessing;
 
 	bool soma_tracing;
@@ -289,9 +379,11 @@ private:
 	PointList3D m_seed;
 
 	SnakeTree *snake_tree;
+	SnakeTree_SWC *snake_tree_swc;
 	SnakeListClass seed_snakes;
 
     QString file, file_raw, file_display;
+	QString image_folder;
 
 	setRootDialog *set_root_dialog;
 	setTransformDialog *set_transform_dialog;
@@ -309,7 +401,7 @@ private:
 	PointList3D coordinates;
 	bool montage_created;
 	bool bpII_finished;
-	SnakeListClass GSnakeList, GSnakeList_BP, temp_snake_list; //global snake list
+	SnakeListClass GSnakeList, GSnakeList_BP; //global snake list
 	int current_lvl; //current level in the tile graph
 	float min_x;
 	int Z_shift; //estimated shift in Z dimension
@@ -323,33 +415,64 @@ private:
     QLabel *opacity;
 	QSlider *opacity_th_slider;
 	QLabel *opacity_th;
+    QSlider *brightness_slider;
+	QLabel *brightness;
+	QSlider *line_width_slider;
+	QLabel *line_width;
 	//Rendering
 	QVTKWidget *QVTK;	
 	ImageRenderActors *ImageActors;
 	vtkSmartPointer<vtkRenderer> Renderer;
 	vtkSmartPointer<vtkCamera> Camera;
+	vtkSmartPointer<vtkOrientationMarkerWidget> AxesWidget;
+	vtkSmartPointer<vtkCornerAnnotation> cornerAnnotation;
 
 	//vtkSmartPointer<vtkActor> line_actor;
 	vtkSmartPointer<vtkActor> point_actor;
 	vtkSmartPointer<vtkActor> seed_actor;
 	vtkSmartPointer<vtkBoundingBox> BoundingBox;
 
-	std::vector< vtkSmartPointer<vtkActor> > line_actors;
-	std::vector< vtkSmartPointer<vtkActor> > tube_actors;
+	std::vector<vtkSmartPointer<vtkActor>> line_actors;
+	std::vector<vtkSmartPointer<vtkActor>> selected_line_actors;
+	std::vector<vtkSmartPointer<vtkActor>> tube_actors;
     vtkSmartPointer<vtkActor> tracing_line_actor;
 
-	std::vector< vtkSmartPointer<vtkActor> > branch_actors;
-	std::vector< vtkSmartPointer<vtkActor> > boundary_actors;
-	std::vector< vtkSmartPointer<vtkActor> > mesh_actors;
-	std::vector< vtkSmartPointer<vtkActor> > soma_mesh_actors;
+	std::vector<vtkSmartPointer<vtkActor>> branch_actors;
+	std::vector<vtkSmartPointer<vtkActor>> boundary_actors;
+	std::vector<vtkSmartPointer<vtkActor>> mesh_actors;
+	std::vector<vtkSmartPointer<vtkActor>> soma_mesh_actors;
 
 	vnl_matrix<double> soma_color;
 
+	//actors for trees
+    std::vector<vtkSmartPointer<vtkActor>> tree_line_actors;
+	std::vector<vtkSmartPointer<vtkActor>> tree_tube_actors;
+	std::vector<vtkSmartPointer<vtkActor>> tree_branch_actors;
+
+	int LineWidth;
 	//vtk event to Qt Slot
 	vtkEventQtSlotConnect *Connections;
-	std::vector< vtkSmartPointer<vtkActor> > pick_sphere_actors;
+	std::vector<vtkSmartPointer<vtkActor>> pick_sphere_actors;
 	PointList3D picked_pts;
 	bool soma_seeding;
+
+	//table and scatter views
+	QStandardItemModel *model;
+    QItemSelectionModel *selectionModel; //selection model for the standard item model
+	void setupModel();
+	void setupViews();
+	QTableView *table;
+    ScatterView * scatterPlot;
+    ObjectSelection * selections; //seleted items
+	bool show_table_scatter;
+
+	//summary tree features
+	std::vector<TreeFeature> tree_features;
+	vnl_matrix<double> tree_colors;
+	QTableView *table_sum;
+
+	vtkSmartPointer<vtkLegendBoxActor> legend;
+	int nth_frame;
 
 };
 

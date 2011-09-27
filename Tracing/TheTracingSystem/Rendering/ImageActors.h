@@ -45,8 +45,11 @@ limitations under the License.
 #include "vtkSphereSource.h"
 #include "vtkPointWidget.h"
 
+#include <vtkCornerAnnotation.h>
+
 #include "vtkBoundingBox.h"
 #include "vtkAxesActor.h"
+#include "vtkOrientationMarkerWidget.h"
 #include "vtkTransform.h"
 
 #include "vtkActor.h"
@@ -64,6 +67,8 @@ limitations under the License.
 #include <vtkGPUVolumeRayCastMapper.h>
 #endif
 #include "vtkPiecewiseFunction.h"
+#include "vtkPolyLine.h"
+#include "vtkPolygon.h"
 #include "vtkPolyData.h"
 #include "vtkPolyDataMapper.h"
 #include "vtkProperty.h"
@@ -74,6 +79,7 @@ limitations under the License.
 #include "itkImageFileReader.h"
 #include "itkImageToVTKImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
+
 
 #include <stdio.h>
 #include <string>
@@ -123,6 +129,10 @@ limitations under the License.
 #include <vtkLineSource.h>
 #include <vtkCylinderSource.h>
 
+#include <vtkTextProperty.h>
+#include <vtkCaptionActor2D.h>
+
+#include <vtkLegendBoxActor.h>
 
 #include <vtkSmartPointer.h>
 #include <vtkRendererCollection.h>
@@ -200,7 +210,7 @@ class MouseInteractorStyle : public vtkInteractorStyleTrackballCamera
  
 };
 
-std::vector< vtkSmartPointer<vtkPolyData> > getVTKPolyDataPrecise(labelImageType::Pointer label);
+std::vector<vtkSmartPointer<vtkPolyData>> getVTKPolyDataPrecise(labelImageType::Pointer label);
 inputImageType::Pointer getEmptyImage(int s1, int s2, int s3);
 
 

@@ -510,7 +510,7 @@ vtkSmartPointer<vtkImageActor> ImageRenderActors::GetProjectionImage(int i)
 }
 
 
-std::vector< vtkSmartPointer<vtkPolyData> > getVTKPolyDataPrecise(labelImageType::Pointer label)
+std::vector<vtkSmartPointer<vtkPolyData>> getVTKPolyDataPrecise(labelImageType::Pointer label)
 {
 	labelIteratorType liter = labelIteratorType(label,label->GetLargestPossibleRegion());
 	liter.GoToBegin();
@@ -593,7 +593,7 @@ std::vector< vtkSmartPointer<vtkPolyData> > getVTKPolyDataPrecise(labelImageType
 	vtkSmartPointer<vtkAppendPolyData> appendfilter = vtkSmartPointer<vtkAppendPolyData>::New();
 
 
-	std::vector< vtkSmartPointer<vtkPolyData> > ALL_POLY;
+	std::vector<vtkSmartPointer<vtkPolyData>> ALL_POLY;
 
 	//Generate empty image, and iterate through the cells, filling the image
 	inputImageType::Pointer t = getEmptyImage(wx,wy,wz);

@@ -48,6 +48,9 @@ public:
 	
 	//vnl_vector<float> Ru;
 	std::vector<float> Ru;
+	std::vector<float> Ru1;
+
+	//std::vector<float> Type;
 
 	//PointList3D Probe;
 	Point3D head_pt;
@@ -64,33 +67,27 @@ public:
 
 	void Branch_Adjustment();
 	void Nail_Branch();
+
 	void SetTracedSnakes(SnakeListClass *S);
 	void SetImage(ImageOperation *I_Input);
 	void Set_Seed_Point(PointList3D seeds);
     void Set_Seed_Point(Point3D seed);
 
-	void Skeleton_Expansion();
 	void Expand_Seed_Point(int expand_distance);
 
-    void Grow_Snake_Point();
-	void OpenSnakeDeform(float alpha, int ITER, int pt_distance, float beta, float kappa, float gamma, bool freeze_body);
-    
-    //void OpenSnakeStretch_4D(float alpha, int ITER, int pt_distance, float beta, float kappa, float gamma, 
-	//	    float stretchingRatio, int collision_dist, int N_Active, int minimum_length, bool automatic_merging, 
-	//		int max_angle, bool freeze_body, int s_force, int snake_id);
 	void OpenSnake_Init_4D(float alpha, int ITER, float beta, float kappa, float gamma, int pt_distance);
-	void OpenSnakeStretch(float alpha, int ITER, int pt_distance, float beta, float kappa, float gamma, 
+	void OpenSnakeStretch_4D(float alpha, int ITER, int pt_distance, float beta, float kappa, float gamma, 
                                 float stretchingRatio, int collision_dist, int minimum_length, 
 								bool automatic_merging, int max_angle, bool freeze_body, int s_force, 
-								int snake_id, int tracing_model, int coding_method, float sigma_ratio);
-
-	bool Check_Validity(float minimum_length, float repeat_ratio, int repeat_dist, int snake_id);
+								int snake_id, int tracing_model, int coding_method, float sigma_ratio, int border);
+	void OpenSnakeStretch_5D(float alpha, int ITER, int pt_distance, float beta, float kappa, float gamma, 
+                                float stretchingRatio, int collision_dist, int minimum_length, 
+								bool automatic_merging, int max_angle, bool freeze_body, int s_force, 
+								int snake_id, int tracing_model, int coding_method, float sigma_ratio, int border);
+	bool Check_Validity(float minimum_length, int snake_id, int automatic_merging);
 	bool Check_Head_Collision(ImageType::IndexType in, int collision_dist, int minimum_length, bool automatic_merging, int max_angle, int snake_id);
 	bool Check_Tail_Collision(ImageType::IndexType in, int collision_dist, int minimum_length, bool automatic_merging, int max_angle, int snake_id);
-	bool Check_Head_Leakage(ImageType::IndexType in);
-    bool Check_Tail_Leakage(ImageType::IndexType in);
 	bool Compute_Seed_Force(int head_tail, int distance);
-	void Estimate_Radius();
 
 	vnl_matrix<float> makeOpenA(float alpha, float beta, int N);
 };
@@ -132,6 +129,30 @@ struct SnakeTree
 	PointList3D points;
 	std::vector<float> Ru;
 	std::vector<int> snake_id;
+};
+
+struct SnakeTree_SWC //snake tree class for loaded swc
+{
+	SnakeListClass Snakes;
+	Point3D RootPt;
+	float soma_radius;
+	PointList3D BranchPt;
+};
+
+struct TreeFeature
+{
+	float SomaVolume;
+	int N_Stems;
+	float TotalLength;
+	int N_Branches;
+	int N_Bifs;
+	int N_Tips;
+	float A_Diameter;
+	float A_SectionArea;
+	float Volume;
+	float Surface;
+	float A_BranchOrder;
+	float A_BifAngle;
 };
 
 #endif

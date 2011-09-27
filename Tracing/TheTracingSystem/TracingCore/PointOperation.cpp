@@ -156,6 +156,34 @@ bool Point3D::check_out_of_range_3D(int IM, int IN, int IZ)
    return out_of_range;
 }
 
+bool Point3D::check_out_of_range_2D(int IM, int IN, int IZ)
+{
+   bool out_of_range = false;
+   if( ceil(x) <= 0 )
+   {
+       x = 0;
+	   out_of_range = true;
+   }
+   if( ceil(y) <= 0 )
+   {
+       y = 0;
+	   out_of_range = true;
+   }
+
+   if( ceil(x) >= IM )
+   {
+       x = float(IM-1);
+	   out_of_range = true;
+   }
+   if( ceil(y) >= IN )
+   {
+       y = float(IN-1);
+	   out_of_range = true;
+   }
+
+   return out_of_range;
+}
+
 float		Point3D::GetDistTo2D(Point3D P)
 {
 	return sqrt(pow(P.x - x,2) + pow(P.y - y,2));
@@ -552,6 +580,13 @@ float	PointList3D::GetPieceLength()
 {
     return GetLength()/(NP - 1);
 }
+
+void	PointList3D::RemoveFirstPt()
+{
+	Pt.erase(Pt.begin());
+	NP--;
+}
+
 
 void	PointList3D::RemovePt(void)
 {

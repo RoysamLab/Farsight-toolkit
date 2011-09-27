@@ -31,10 +31,12 @@
 	 RawImage = new QCheckBox("Raw", this);
 	 OriginalImage = new QCheckBox("Preprocessed",this);
 	 VesselImage = new QCheckBox("Vesselness",this);
+	 SkeletonImage = new QCheckBox("Label",this);
 
 	 layout->addWidget(RawImage);
 	 layout->addWidget(OriginalImage);
 	 layout->addWidget(VesselImage);
+	 layout->addWidget(SkeletonImage);
 
 	 QFrame *f = new QFrame( this );
      f->setFrameStyle( QFrame::VLine | QFrame::Sunken );
@@ -70,6 +72,7 @@
 	 connect(RawImage, SIGNAL(stateChanged(int)), this, SLOT(processChangeM1()));
 	 connect(OriginalImage, SIGNAL(stateChanged(int)), this, SLOT(processChange1()));
 	 connect(VesselImage, SIGNAL(stateChanged(int)), this, SLOT(processChange2()));
+     connect(SkeletonImage, SIGNAL(stateChanged(int)), this, SLOT(processChange3()));
 
      connect(displaySeeds, SIGNAL(stateChanged(int)), this, SLOT(displaySeedChange()));
 	 connect(displaySnakes, SIGNAL(stateChanged(int)), this, SLOT(displaySnakeChange()));
@@ -177,7 +180,7 @@
 	 {
 	   State = -1;
 	 }
-	 if( !RawImage->isChecked() && !OriginalImage->isChecked() && !VesselImage->isChecked() )
+	 if( !RawImage->isChecked() && !OriginalImage->isChecked() && !VesselImage->isChecked() && !SkeletonImage->isChecked() )
 	 {
 	   State = 0;
 	 }
@@ -196,6 +199,7 @@
 	   //BinaryImage->setCheckable(false);
 	   OriginalImage->setCheckState(Qt::Unchecked);
 	   VesselImage->setCheckState(Qt::Unchecked);
+	   SkeletonImage->setCheckState(Qt::Unchecked);
 	   //DepthImage->setCheckState(Qt::Unchecked);
 	   slider->setValue(-1);
 	   emit stateChanged(-1);
@@ -208,7 +212,7 @@
 	 {
 	   State = 1;
 	 }
-	 if( !RawImage->isChecked() && !OriginalImage->isChecked() && !VesselImage->isChecked())
+	 if( !RawImage->isChecked() && !OriginalImage->isChecked() && !VesselImage->isChecked() && !SkeletonImage->isChecked() )
 	 {
 	   State = 0;
 	 }
@@ -227,6 +231,8 @@
 	   //BinaryImage->setCheckable(false);
 	   RawImage->setCheckState(Qt::Unchecked);
 	   VesselImage->setCheckState(Qt::Unchecked);
+	   SkeletonImage->setCheckState(Qt::Unchecked);
+	   //DepthImage->setCheckState(Qt::Unchecked);
 	   slider->setValue(1);
 	   emit stateChanged(1);
 	 }
@@ -238,7 +244,7 @@
 	 {
 	   State = 2;
 	 }
-	 if( !RawImage->isChecked() && !OriginalImage->isChecked() && !VesselImage->isChecked() )
+	 if( !RawImage->isChecked() && !OriginalImage->isChecked() && !VesselImage->isChecked() && !SkeletonImage->isChecked() )
 	 {
 	   State = 0;
 	 }
@@ -256,9 +262,41 @@
 	   //BinaryImage->setCheckable(false);
 	   RawImage->setCheckState(Qt::Unchecked);
 	   OriginalImage->setCheckState(Qt::Unchecked);
+	   SkeletonImage->setCheckState(Qt::Unchecked);
 	   //DepthImage->setCheckState(Qt::Unchecked);
 	   slider->setValue(1);
 	   emit stateChanged(2);
+	 }
+ }
+
+ void SlidersGroup::processChange3()
+ {
+   	 if(SkeletonImage->isChecked())
+	 {
+	   State = 3;
+	 }
+     if( !RawImage->isChecked() && !OriginalImage->isChecked() && !VesselImage->isChecked() && !SkeletonImage->isChecked() )
+	 {
+	   State = 0;
+	 }
+
+	 if(State == 0)
+	 {
+	   State = 1;
+	   setImageState(1);
+	   slider->setValue(1);
+	   emit stateChanged(1);
+	 }
+	 else if(State == 3)
+	 {
+	   //VesselImage->setCheckable(false);
+	   //BinaryImage->setCheckable(false);
+	   RawImage->setCheckState(Qt::Unchecked);
+	   OriginalImage->setCheckState(Qt::Unchecked);
+	   VesselImage->setCheckState(Qt::Unchecked);
+	   //DepthImage->setCheckState(Qt::Unchecked);
+	   slider->setValue(1);
+	   emit stateChanged(3);
 	 }
  }
 
@@ -280,31 +318,29 @@
    {
        OriginalImage->setEnabled(false);
 	   VesselImage->setEnabled(false);
+	   SkeletonImage->setEnabled(false);
+	   //DepthImage->setEnabled(false);
    }
    else if(in == 1)
    {   
        OriginalImage->setEnabled(true);
 	   VesselImage->setEnabled(false);
+	   SkeletonImage->setEnabled(false);
+	   //DepthImage->setEnabled(false);
    }
    else if(in == 2)
    {
        OriginalImage->setEnabled(true);
 	   VesselImage->setEnabled(true);
+	   SkeletonImage->setEnabled(false);
+	   //DepthImage->setEnabled(false);
    }
    else if(in == 3)
    {
        OriginalImage->setEnabled(true);
 	   VesselImage->setEnabled(true);
-   }
-   else if(in == 4)
-   {
-       OriginalImage->setEnabled(true);
-	   VesselImage->setEnabled(true);
-   }
-   else if(in == 5)
-   {
-       OriginalImage->setEnabled(true);
-	   VesselImage->setEnabled(true);
+	   SkeletonImage->setEnabled(true);
+	   //DepthImage->setEnabled(false);
    }
  }
 
@@ -409,37 +445,34 @@ void SlidersGroup::setImageState(int in)
 	   RawImage->setCheckState(Qt::Checked);
 	   OriginalImage->setCheckState(Qt::Unchecked);
 	   VesselImage->setCheckState(Qt::Unchecked);
+	   SkeletonImage->setCheckState(Qt::Unchecked);
+	   //DepthImage->setCheckState(Qt::Unchecked);
    }
    else if(in == 1)
    {
 	   RawImage->setCheckState(Qt::Unchecked);
 	   OriginalImage->setCheckState(Qt::Checked);
 	   VesselImage->setCheckState(Qt::Unchecked);
+	   SkeletonImage->setCheckState(Qt::Unchecked);
+	   //DepthImage->setCheckState(Qt::Unchecked);
    }
    else if(in == 2)
    {
 	   RawImage->setCheckState(Qt::Unchecked);
 	   OriginalImage->setCheckState(Qt::Unchecked);
 	   VesselImage->setCheckState(Qt::Checked);
+	   SkeletonImage->setCheckState(Qt::Unchecked);
+	   //DepthImage->setCheckState(Qt::Unchecked);
    }
    else if(in == 3)
    {
 	   RawImage->setCheckState(Qt::Unchecked);
 	   OriginalImage->setCheckState(Qt::Unchecked);
 	   VesselImage->setCheckState(Qt::Unchecked);
+	   SkeletonImage->setCheckState(Qt::Checked);
+	   //DepthImage->setCheckState(Qt::Unchecked);
    }
-   else if(in == 4)
-   {
-	   RawImage->setCheckState(Qt::Unchecked);
-	   OriginalImage->setCheckState(Qt::Unchecked);
-	   VesselImage->setCheckState(Qt::Unchecked);
-   }
-   else if(in == 5)
-   {
-	   RawImage->setCheckState(Qt::Unchecked);
-	   OriginalImage->setCheckState(Qt::Unchecked);
-	   VesselImage->setCheckState(Qt::Unchecked);
-   }
+
 }
 
 

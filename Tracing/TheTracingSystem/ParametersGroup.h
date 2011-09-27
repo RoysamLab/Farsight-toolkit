@@ -27,7 +27,6 @@ limitations under the License.
 
 #include <QtGui>
 class General_Parameters1;
-class General_Parameters11;
 class General_Parameters12;
 class General_Parameters2;
 class General_Parameters21;
@@ -41,6 +40,10 @@ class General_Parameters : public QGroupBox
  public:
      General_Parameters(const QString &title,
                   QWidget *parent = 0);
+
+	 void setEliteSetting();
+	 void setFullSetting();
+
 	 int getRemoveSlice();
 	 void setRemoveSlice(int in);
 	 int getSf(); //scale factor
@@ -130,8 +133,6 @@ class General_Parameters11 : public QGroupBox
  public:
      General_Parameters11(const QString &title,
                   QWidget *parent = 0);
-	 
-     //QPushButton *computeVessel;
 	 QPushButton *detectSeeds;
 	 void disableSetting();
 	 void enableSetting();
@@ -148,7 +149,11 @@ class General_Parameters12 : public QGroupBox
  public:
      General_Parameters12(const QString &title,
                   QWidget *parent = 0);
-	 int getNoiseLevel();
+
+	 void setEliteSetting();
+	 void setFullSetting();
+
+	 double getNoiseLevel();
 	 void setNoiseLevel(double in);
 	 int getNumIteration();
 	 void setNumIteration(int in);
@@ -160,23 +165,13 @@ class General_Parameters12 : public QGroupBox
 	 void setSeedRadius(int in);
 	 int getSmoothingScale();
 	 void setSmoothingScale(int in);
-	 int getMinLength();
-	 void setMinLength(int in);
 
 	 int getCurrentSeedIndex();
 	 void setCurrentSeedIndex(int in);
 	 int getCurrentGPUIndex();
-	 int getCurrentSegIndex();
-	 void setCurrentSegIndex(int in);
 
 	 bool getMultiScale();
      void setMultiScale(int in);
-	 //bool getNoiseReduction();
-	 //void setNoiseReduction(int in);
-	 bool getHoleFilling();
-	 void setHoleFilling(int in);
-	 bool getCleanSkeleton();
-	 void setCleanSkeleton(int in);
 
 	 int getCurveletBatch();
 
@@ -193,21 +188,14 @@ class General_Parameters12 : public QGroupBox
 	 General_Parameters11 *general_para11;
 
  public slots:
-     void vessel_slot();
 	 void seed_slot();
-     void use_multi_scale_slot();
 	 void reprocessing_slot();
-	 void clean_skeleton_slot();
+	 void use_multi_scale_slot();
  signals:
 	 void reprocess(int in);
  private:
 
 	 QGroupBox *outside_preprocess, *inside_preprocess;
-
-	 QGroupBox *clean_skeleton_box;
-	 QLabel *min_length_label;
-	 QSpinBox *min_length_box;
-	 QCheckBox *clean_skeleton;
 
 	 QLabel *noise_level_label;
 	 QDoubleSpinBox *noise_level_box;
@@ -225,12 +213,9 @@ class General_Parameters12 : public QGroupBox
 	 QSpinBox *smoothing_scale_box;
 
 	 QCheckBox *use_multi_scale;
-	 //QCheckBox *noise_reduction;
-	 QCheckBox *hole_filling;
 
 	 QComboBox *gpu_acceleration;
 	 QComboBox *seed_detection_methods;
-	 QComboBox *segmentation_methods;
 
 	 QRadioButton *curvelet_before_batch;
 	 QRadioButton *curvelet_during_batch;
@@ -314,6 +299,10 @@ class General_Parameters2 : public QGroupBox
  public:
      General_Parameters2(const QString &title,
                   QWidget *parent = 0);
+
+	 void setEliteSetting();
+     void setFullSetting();
+
 	 int getStretchRatio();
 	 void setStretchRatio(int in);
 	 int getCollisionDist();
@@ -331,6 +320,9 @@ class General_Parameters2 : public QGroupBox
 
 	 float getSigmaRatio();
 	 void setSigmaRatio(float in);
+
+	 int getBorder();
+	 void setBorder(int in);
 
 	 int getDeformationITER();
 	 void setDeformationITER(int in);
@@ -404,6 +396,9 @@ class General_Parameters2 : public QGroupBox
 	 QLabel *k_sigma_label;
 	 QDoubleSpinBox *k_sigma_box;
 
+	 QLabel *border_label;
+	 QSpinBox *border_box;
+
 	 QLabel *deformation_iter_label;
 	 QSpinBox *deformation_iter_box;
 
@@ -430,6 +425,9 @@ class General_Parameters3 : public QGroupBox
      General_Parameters3(const QString &title,
                   QWidget *parent = 0);
 
+	 void setEliteSetting();
+     void setFullSetting();
+
      void setX(float in);
 	 void setY(float in);
 	 void setZ(float in);
@@ -442,8 +440,9 @@ class General_Parameters3 : public QGroupBox
 	 int getScale();
 	 int getMinLength();
 	 int getConnection();
+	
 
-	 QPushButton *output_vtk_button;
+	 QPushButton *load_swc_button;
 	 QPushButton *output_swc_raw_button;
 	 QPushButton *output_swc_button;
 	 

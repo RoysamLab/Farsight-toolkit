@@ -63,6 +63,7 @@
 	 void processChangeM1();
 	 void processChange1();
 	 void processChange2();
+	 void processChange3();
 
 	 void displaySeedChange();
 	 void displaySnakeChange();
@@ -78,6 +79,7 @@
 	 QCheckBox *RawImage;
 	 QCheckBox *OriginalImage;
 	 QCheckBox *VesselImage;
+	 QCheckBox *SkeletonImage;
 
 	 QCheckBox *displaySeeds;
 	 QCheckBox *displaySnakes;

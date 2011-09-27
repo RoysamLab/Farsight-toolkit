@@ -55,12 +55,11 @@ struct OptionsStruct
    int max_angle;
    bool freeze_body;
    int s_force;
-   float repeat_ratio;
-   int repeat_dist;
    int tracing_model;
    bool parallel_tracing;
    int coding_method;
    float sigma_ratio;
+   int border;
 };
 
 class TracingThread : public QThread
@@ -98,12 +97,12 @@ class TracingThread : public QThread
 	void suspend();
 	void stop();
     void resume();
-	void emit_traced_signal();
+	void emit_traced_signal(bool new_come);
 
  signals:
     void stretched(SnakeClass s);
 	void snakeTraced(SnakeListClass *s);
-	void snakeTraced();
+	void snakeTraced(bool new_come);
 	void snakeTraced_manual_seed(float fn);
 
  private:
@@ -120,12 +119,14 @@ public:
 	void Init();
 	void setParas(int pt_distance, float gamma, float stretchingRatio, float minimum_length, int collision_dist, 
 		          int remove_seed_range, int deform_iter, bool automatic_merging, int max_angle, bool freeze_body, 
-				  int s_force, float repeat_ratio, int repeat_dist, int tracing_model, bool parallel_tracing, 
-				  int coding_method, float sigma_ratio);
+				  int s_force, int tracing_model, bool parallel_tracing, 
+				  int coding_method, float sigma_ratio, int border);
 	void SetImage(ImageOperation *I_Input);
 	void Open_Curve_Snake_Tracing();
 	void Cast_Open_Snake_3D(PointList3D seeds, bool manual_seed);
 	void Cast_Open_Snake_3D(vnl_vector<int> seed_indices);
+	void RemoveSeeds_SN();
+	void RemoveSeeds();
 
 	void Refine_Branch_Point();
 	//Functions for GUI
@@ -144,11 +145,6 @@ public:
 
 	//thread for controlling snake stretching and dynamic displaying
 	TracingThread *tracing_thread;
-	TracingThread *tracing_thread1;
-	TracingThread *tracing_thread2;
-	TracingThread *tracing_thread3;
-    TracingThread *tracing_thread4;
-	TracingThread *tracing_thread5;
 };
 
 

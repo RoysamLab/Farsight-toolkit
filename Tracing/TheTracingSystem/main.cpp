@@ -21,12 +21,8 @@ limitations under the License.
   Date:      $Date:  $
   Version:   $Revision: 0.00 $
 =========================================================================*/
-
 #include <QApplication>
 #include "TracingGUI.h"
-
-vtkCxxRevisionMacro(MouseInteractorStyle, "$Revision: 1.1 $");
-vtkStandardNewMacro(MouseInteractorStyle);
 
 int main(int argc, char *argv[])
 {
@@ -34,6 +30,11 @@ int main(int argc, char *argv[])
 	QtTracer main_window;
 	
 	main_window.show();
+
+	QFile qss("stylesheet.qss");
+	qss.open(QFile::ReadOnly);
+	app.setStyleSheet(qss.readAll());
+	qss.close();
 
 	return app.exec();
 }

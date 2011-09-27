@@ -44,7 +44,7 @@ limitations under the License.
 #include "itkKdTree.h"
 #include "itkKdTreeGenerator.h"
 
-#include "itkBinaryThinningImageFilter3D.h"
+#include "Filters/itkBinaryThinningImageFilter3D.h"
 #include "itkMedianImageFilter.h"
 
 #include "itkImageSliceConstIteratorWithIndex.h"
@@ -61,9 +61,12 @@ limitations under the License.
 
 #include "itkLabelStatisticsImageFilter.h"
 
-//These two are used in background class
 #include "itkImageDuplicator.h"
 #include "itkShrinkImageFilter.h" 
+
+#include "Vesselness/itkMultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter.h"
+#include "itkHessian3DToVesselnessMeasureImageFilter.h"
+#include "Vesselness/itkMultiScaleHessianBasedMeasureImageFilter.h"
 
 #include "itkGradientVectorFlowImageFilter.h"
 #include "itkGradientImageFilter.h"
@@ -71,9 +74,6 @@ limitations under the License.
 #include "itkRecursiveGaussianImageFilter.h"
 #include "itkGradientRecursiveGaussianImageFilter.h"
 #include "itkGradientAnisotropicDiffusionImageFilter.h"
-//#include "itkCurvatureAnisotropicDiffusionImageFilter.h"
-//#include "itkCurvatureFlowImageFilter.h"
-//#include "itkGradientAnisotropicDiffusionImageFilter.h"
 #include "itkLaplacianRecursiveGaussianImageFilter.h"
 
 #include "itkExtractImageFilter.h"
@@ -81,7 +81,6 @@ limitations under the License.
 #include "itkInterpolateImageFunction.h"
 #include "itkNearestNeighborInterpolateImageFunction.h"
 #include "itkImageFunction.h"
-
 
 #include "itkPermuteAxesImageFilter.h"
 
@@ -108,6 +107,11 @@ limitations under the License.
 
 #include "itkVesselTubeSpatialObject.h"
 #include "itkVesselTubeSpatialObjectPoint.h"
+
+#include "itkRegionOfInterestImageFilter.h"
+#include "itkGrayscaleErodeImageFilter.h"
+
+#include "itkOtsuThresholdImageFilter.h"
 
 #include <vnl/vnl_matrix.h>
 #include <vnl/vnl_vector.h>
@@ -168,12 +172,14 @@ typedef itk::Vector< float, 3 > SeedType;
 typedef itk::Statistics::ListSample< SeedType > SampleType;
 typedef SampleType::Pointer SamplePointer;
 
+
 float norm_density(float x, float mu, float sigma);
 
 //functions for eig3volume
 static void tred2(double V[3][3], double d[3], double e[3]);
 static void tql2(double V[3][3], double d[3], double e[3]);
 void eigen_decomposition(double A[3][3], double V[3][3], double d[3]);
+void eigen_decomposition2D(double A[2][2], double V[2][2], double d[2]);
 double MAX(double a, double b);
 static double hypot2(double x, double y);
 double absd(double val);
@@ -182,9 +188,14 @@ double absd(double val);
 PGfloat ***pgDmatrix(int M, int N, int K);
 PGvoid pgFreeDmatrix(PGfloat ***Image, int M, int N, int K);
 
+void GVFC(int XN, int YN, int ZN, float *f, float *ou, float *ov, float *oo, 
+	  float mu, int ITER);
+
+
 ProbImagePointer extract_one_component(int index, GradientImagePointer IG);
 //PointList3D extract_local_maximum(ProbImagePointer V_saliency, int rad, double th, ImagePointer BW, bool local_maxima);
 class VectorPixelAccessor;
+
 
 class ImageOperation
 {
@@ -203,39 +214,49 @@ public:
 	int coding_method;
 
 	float u1,u2,sigma1,sigma2; //intensity models
+    float v_threshold; //automatically selected threshold value
+
 	std::vector<float> I_cu;
 
 	//IOImagePointer IIO;
 
 	ImagePointer I;
-	//RGBImagePointer2D IRGB;
+
+	RGBImagePointer IRGB;
 	ImagePointer IDisplay;
-	ImagePointer IMask;//Soma Mask;
+
+	//ImagePointer2D I2D;
+	//ImagePointer DBW;//Depth Image
+	ProbImagePointer IGMag;
+	//ProbImagePointer IDist;
 	ImagePointer ISeg;//Segmentation Image/Reconstruction
 	
 	LabelImagePointer IL;
     LabelImagePointer IL_Tracing;
 
+	//soma
+	ImagePointer IMask;//Soma Mask;
 	LabelImagePointer ISoma;
 	LabelImagePointer IVoronoi;
 	int num_soma;
     PointList3D Centroid;
+	std::vector<float> soma_size;
+	std::vector<float> soma_radii;
 
 	ProbImagePointer IVessel;
-	ProbImagePointer IGMag;
+
     GradientImagePointer IGVF;
-    GradientImagePointer V1;
 
     PointList3D SeedPt;
+	//PointList3D SeedPt_mg;
+	std::vector<PointList3D> SeedSets; //seed sets for different microglia cells
 
 	int current_seed_idx;
     vnl_vector<int> visit_label;
 
-	void ImMasking(int shrink_factor);
-
 	void SetCodingMethod(int in);  //set image coding method (centerline coding or vessel tube coding)
     //intensity models for 4-D region based open-curve snake
-	void ImComputeInitBackgroundModel();
+	void ImComputeInitBackgroundModel(double th);
 	void ImComputeInitForegroundModel();
 	void ImComputeForegroundModel(PointList3D Cu, std::vector<float> Ru);
 
@@ -243,24 +264,36 @@ public:
     void ConvertWriteImage();
 	//void ConvertWriteLabelImage();
 	void ImRemoveSlice(int in);
+
 	IOImagePointer ImBkSub(IOImagePointer In);
 	void ImSeriesReadWrite(std::vector< std::string > filenames, const char *save_name, int shrink_factor, bool sixteen_bit);
 	void ImRead(const char *filename);
 	void ImRead_NoSmooth(const char *filename, int in);
 	void ImDisplayRead(const char *filename, int shrink_factor);
+	void ImWrite(const char *filename, ImagePointer ROI);
+	void ImWrite(const char *filename, LabelImagePointer ROI);
     void ImWrite(const char *filename, int image_id);
 	void ImWrite_Soma(const char *filename);
+	void ImWrite_Segmentation(const char *filename);
 	ImagePointer ImCopy();
+	void ImMasking(const char *filename, int shrink_factor);
+	void ImMasking(int shrink_factor);
 	IOImagePointer ImInvert(IOImagePointer In);
 	void ImShrink(int shrink_factor);
 	IOImagePointer ImShrink(IOImagePointer In, int shrink_factor);
 
-	void ImGraphCut(double th, bool hole_filling, bool clean_skeleton, int min_length, int segmentation_method);
-	//void ImGraphCut1(double th, bool hole_filling, bool clean_skeleton, int min_length, int segmentation_method);
+	void ImThinning(bool clean_skeleton, int min_length);
+
 	void ImFastMarchingAnimation(int threshold);
 
+	PointList3D ImSomaCentroidExtraction();
+
 	void clear_IMask();
-    void ImLevelSet(int th, bool hole_filling, bool clean_skeleton, int min_length, int seed_radius);
+	void ImFastMarching_Spine(PointList3D spine_seeds); //segment the spines
+	void ImFastMarching_Soma(PointList3D seg_seeds);//segment single soma
+	std::vector<float> ImFastMarchingI(PointList3D seg_seeds);
+	void ImFastMarchingI_New(PointList3D seg_seeds); //automatic threshold selecting
+    void ImFastMarchingII(PointList3D seg_seeds, int idx);
 
     void ImCoding(PointList3D Cu, std::vector<float> Ru, int id, bool tracing);
     void ImRemove_RedSeeds(PointList3D Cu, std::vector<float> Ru);
@@ -270,6 +303,7 @@ public:
 
     ProbImagePointer ImGaussian(ProbImagePointer I_In, int sigma);
 	ImagePointer ImGaussian(ImagePointer I_In, int sigma);
+	ImagePointer ImGaussian_XY(ImagePointer I_In, int sigma);
 	IOImagePointer ImGaussian_XY(IOImagePointer I_In, int sigma);
 	void seed_centroid();
 
@@ -281,12 +315,17 @@ public:
 	ProbImagePointer2D ImMaxProjection(ProbImagePointer IInput);
     LabelImagePointer2D ImMaxProjection(LabelImagePointer IInput);
 	RGBImagePointer2D ImMaxProjection(RGBImagePointer IInput);
+	RGBImagePointer2D ImMinProjection(RGBImagePointer IInput);
 	RGBImagePointer2D ImMaxProjection1(ImagePointer IInput);
 
+	void ComputeMultiVesselness(double sigma_min, double sigma_max, int sigma_step);
 	void ComputeGVFVesselness();
-    void ComputeBranchiness();
+	void ComputeGVFVesselness2D();
+	//void ComputeGVFVesselness_CUDA();
+	//void ComputeGVFVesselness_CUDA_New(float *vesselness, float *vx1, float *vy1, float *vz1);
 
     void normalizeGVF();
+    //void computeGVF_C(int noise_level, int num_iteration, bool cuda, int smooth_scale);
 	void computeGVF(int mu, int ITER, int smoothing_scale);
 
 	void SeedDetection(float th, int detection_method, int radius);
@@ -301,9 +340,8 @@ public:
 
 	ImagePointer2D extract_one_slice(ImagePointer I_input, int index);
     ProbImagePointer2D extract_one_slice(ProbImagePointer I_input, int index);
-	 
-    //void find_head_tail();
-    //void find_center();
+
+	
 };
 
 //accessor for extracting one component of the vector image

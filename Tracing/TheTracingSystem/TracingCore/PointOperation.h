@@ -57,6 +57,7 @@ public:
     Point3D operator / (float Scalar);
 	Point3D operator-(Vector3D V);
 	bool check_out_of_range_3D(int IM, int IN, int IZ);
+	bool check_out_of_range_2D(int IM, int IN, int IZ);
 	int Inpolygon2D(PointList3D Contour);
 	Point3D  operator = (Point3D P);
 	float GetDistTo(Point3D P);
@@ -123,6 +124,7 @@ public:
 	void MergePtList(PointList3D P);
 	void RemovePt(void);
 	void RemovePt(int index);
+	void RemoveFirstPt();
 	void RemoveAllPts();
 	void Resize(int in);
 	void SetPt(int i, float x, float y, float z);

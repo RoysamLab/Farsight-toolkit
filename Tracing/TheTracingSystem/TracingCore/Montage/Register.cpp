@@ -208,26 +208,26 @@ void Register::set_coordinates(PointList3D in, int in1, int in2)
   SN = in2;
 }
 
-SnakeClass Register::convert_global_snake(SnakeClass sin, int tile_num, int scale)
+SnakeClass Register::convert_global_snake(SnakeClass snake_in, int tile_num, int scale)
 {
   bool affine = false;
 
-  for( int i = 0; i < sin.Cu.NP; i++ )
+  for( int i = 0; i < snake_in.Cu.NP; i++ )
   {
     
    if( affine )
    {
     //rotation
 	vnl_vector<float> pt(3);
-	pt(0) = sin.Cu.Pt[i].x * scale;
-	pt(1) = sin.Cu.Pt[i].y * scale;
-	pt(2) = sin.Cu.Pt[i].z;
+	pt(0) = snake_in.Cu.Pt[i].x * scale;
+	pt(1) = snake_in.Cu.Pt[i].y * scale;
+	pt(2) = snake_in.Cu.Pt[i].z;
 	pt = TT[tile_num].R * pt;
 
 	//translation
-	sin.Cu.Pt[i].x = pt(0) + TT[tile_num].T[0] + coordinates.Pt[root].x;
-	sin.Cu.Pt[i].y = pt(1) + TT[tile_num].T[1] + coordinates.Pt[root].y;
-	sin.Cu.Pt[i].z = pt(2) + TT[tile_num].T[2];
+	snake_in.Cu.Pt[i].x = pt(0) + TT[tile_num].T[0] + coordinates.Pt[root].x;
+	snake_in.Cu.Pt[i].y = pt(1) + TT[tile_num].T[1] + coordinates.Pt[root].y;
+	snake_in.Cu.Pt[i].z = pt(2) + TT[tile_num].T[2];
 	//sin.Cu.Pt[i].z = 0;
    }
    else
@@ -235,35 +235,35 @@ SnakeClass Register::convert_global_snake(SnakeClass sin, int tile_num, int scal
     //sin.Cu.Pt[i].x = sin.Cu.Pt[i].x * scale + TT[tile_num].T[0] + coordinates.Pt[root].x;
     //sin.Cu.Pt[i].y = sin.Cu.Pt[i].y * scale + TT[tile_num].T[1] + coordinates.Pt[root].y;
 	//sin.Cu.Pt[i].z = sin.Cu.Pt[i].z + TT[tile_num].T[2];
-	sin.Cu.Pt[i].x = sin.Cu.Pt[i].x * scale + coordinates.Pt[tile_num].x;
-    sin.Cu.Pt[i].y = sin.Cu.Pt[i].y * scale + coordinates.Pt[tile_num].y;
+	snake_in.Cu.Pt[i].x = snake_in.Cu.Pt[i].x * scale + coordinates.Pt[tile_num].x;
+    snake_in.Cu.Pt[i].y = snake_in.Cu.Pt[i].y * scale + coordinates.Pt[tile_num].y;
 	//sin.Cu.Pt[i].z = 0;
    }
   }
 
-  return sin;
+  return snake_in;
 }
 
-SnakeClass Register::convert_local_snake(SnakeClass sin, int tile_num, int scale)
+SnakeClass Register::convert_local_snake(SnakeClass snake_in, int tile_num, int scale)
 {
   bool affine = false;
 
-  for( int i = 0; i < sin.Cu.NP; i++ )
+  for( int i = 0; i < snake_in.Cu.NP; i++ )
   {
     
    if( affine )
    {
     //rotation
 	vnl_vector<float> pt(3);
-	pt(0) = sin.Cu.Pt[i].x * scale;
-	pt(1) = sin.Cu.Pt[i].y * scale;
-	pt(2) = sin.Cu.Pt[i].z;
+	pt(0) = snake_in.Cu.Pt[i].x * scale;
+	pt(1) = snake_in.Cu.Pt[i].y * scale;
+	pt(2) = snake_in.Cu.Pt[i].z;
 	pt = TT[tile_num].R * pt;
 
 	//translation
-	sin.Cu.Pt[i].x = pt(0) - TT[tile_num].T[0] - coordinates.Pt[root].x;
-	sin.Cu.Pt[i].y = pt(1) - TT[tile_num].T[1] - coordinates.Pt[root].y;
-	sin.Cu.Pt[i].z = pt(2) - TT[tile_num].T[2];
+	snake_in.Cu.Pt[i].x = pt(0) - TT[tile_num].T[0] - coordinates.Pt[root].x;
+	snake_in.Cu.Pt[i].y = pt(1) - TT[tile_num].T[1] - coordinates.Pt[root].y;
+	snake_in.Cu.Pt[i].z = pt(2) - TT[tile_num].T[2];
 	//sin.Cu.Pt[i].z = 0;
    }
    else
@@ -271,25 +271,30 @@ SnakeClass Register::convert_local_snake(SnakeClass sin, int tile_num, int scale
     //sin.Cu.Pt[i].x = sin.Cu.Pt[i].x * scale + TT[tile_num].T[0] + coordinates.Pt[root].x;
     //sin.Cu.Pt[i].y = sin.Cu.Pt[i].y * scale + TT[tile_num].T[1] + coordinates.Pt[root].y;
 	//sin.Cu.Pt[i].z = sin.Cu.Pt[i].z + TT[tile_num].T[2];
-	sin.Cu.Pt[i].x = (sin.Cu.Pt[i].x - coordinates.Pt[tile_num].x)/scale;
-    sin.Cu.Pt[i].y = (sin.Cu.Pt[i].y - coordinates.Pt[tile_num].y)/scale;
+	snake_in.Cu.Pt[i].x = (snake_in.Cu.Pt[i].x - coordinates.Pt[tile_num].x)/scale;
+    snake_in.Cu.Pt[i].y = (snake_in.Cu.Pt[i].y - coordinates.Pt[tile_num].y)/scale;
 	//sin.Cu.Pt[i].z = 0;
    }
   }
-  return sin;
+  return snake_in;
 }
 
 void Register::eliminate_repeating(SnakeListClass *SnakeList, int tile_num, int shift_pixel, int min_length)
 {
   //int shift_pixel = 0;
-  Seed_Snakes.NSnakes = 0;
+  Seed_Snakes.RemoveAllSnakes();
   seed_snake_label.clear();
   //shift_pixel = 1;
 
+  
+
   std::cout<<"coordinates.Pt[tile_num]:"<<coordinates.Pt[tile_num].x<<","<<coordinates.Pt[tile_num].y<<","<<coordinates.Pt[tile_num].z<<std::endl;
   std::cout<<"TT[tile_num].T + coordinates.Pt[root]:"<<TT[tile_num].T[0] + coordinates.Pt[root].x<<","<<TT[tile_num].T[1] + coordinates.Pt[root].y<<std::endl;
+  std::cout<<"SnakeList->NSnakes:"<<SnakeList->NSnakes<<std::endl;
   for( int i = 0; i < SnakeList->NSnakes; i++ )
   {
+
+	  SnakeClass temp_snake;
 
 	  if( SnakeList->valid_list[i] == 0 )
 		  continue;
@@ -318,19 +323,24 @@ void Register::eliminate_repeating(SnakeListClass *SnakeList, int tile_num, int 
 
 		 //add eliminated part to seed snake
 		 seed_snake_label.push_back(i);
-		 Seed_Snakes.NSnakes++;
-		 //Seed_Snakes.Snakes[Seed_Snakes.NSnakes-1].Cu.NP = 0;
-		 Seed_Snakes.Snakes[Seed_Snakes.NSnakes-1].Cu.RemoveAllPts();
+		 //Seed_Snakes.NSnakes++;
+		   //Seed_Snakes.Snakes[Seed_Snakes.NSnakes-1].Cu.NP = 0;
+		 //Seed_Snakes.Snakes[Seed_Snakes.NSnakes-1].Cu.RemoveAllPts();
 
 	     for( int k = 0; k < idx; k++ )
 		 {
-		   Seed_Snakes.Snakes[Seed_Snakes.NSnakes-1].Cu.AddPt(SnakeList->Snakes[i].Cu.Pt[k]);
+		   //Seed_Snakes.Snakes[Seed_Snakes.NSnakes-1].Cu.AddPt(SnakeList->Snakes[i].Cu.Pt[k]);
+			 temp_snake.Cu.AddPt(SnakeList->Snakes[i].Cu.Pt[k]);
+			 temp_snake.Ru.push_back(SnakeList->Snakes[i].Ru[k]);
 		 }
+
+		 Seed_Snakes.AddSnake(temp_snake);
 
 		 //remove the first idx points
 		 SnakeList->Snakes[i].Cu.Pt.erase(SnakeList->Snakes[i].Cu.Pt.begin(), SnakeList->Snakes[i].Cu.Pt.begin() + idx);
 		 SnakeList->Snakes[i].Cu.NP = SnakeList->Snakes[i].Cu.Pt.size();
-
+		 SnakeList->Snakes[i].Ru.erase(SnakeList->Snakes[i].Ru.begin(), SnakeList->Snakes[i].Ru.begin() + idx);
+		 
 		 //for( int k = idx; k < SnakeList->Snakes[i].Cu.NP; k++ )
 		 //{
 		 //  SnakeList->Snakes[i].Cu.Pt[k-idx] = SnakeList->Snakes[i].Cu.Pt[k];
@@ -363,17 +373,25 @@ void Register::eliminate_repeating(SnakeListClass *SnakeList, int tile_num, int 
 
 		 //add eliminated part to seed snake
 		 seed_snake_label.push_back(i);
-		 Seed_Snakes.NSnakes++;
-		 //Seed_Snakes.Snakes[Seed_Snakes.NSnakes-1].Cu.NP = 0;
-		 Seed_Snakes.Snakes[Seed_Snakes.NSnakes-1].Cu.RemoveAllPts();
+		 //Seed_Snakes.NSnakes++;
+		  //Seed_Snakes.Snakes[Seed_Snakes.NSnakes-1].Cu.NP = 0;
+		 //Seed_Snakes.Snakes[Seed_Snakes.NSnakes-1].Cu.RemoveAllPts();
 
+		 //std::cout<<"idx:"<<idx<<std::endl;
+		 //std::cout<<"SnakeList->Snakes[i].Cu.NP:"<<SnakeList->Snakes[i].Cu.NP<<std::endl;
+		 //std::cout<<"SnakeList->Snakes[i].Ru.size():"<<SnakeList->Snakes[i].Ru.size()<<std::endl;
 	     for( int k = idx; k < SnakeList->Snakes[i].Cu.NP; k++ )
 		 {
-		   Seed_Snakes.Snakes[Seed_Snakes.NSnakes-1].Cu.AddPt(SnakeList->Snakes[i].Cu.Pt[k]);
+		   //Seed_Snakes.Snakes[Seed_Snakes.NSnakes-1].Cu.AddPt(SnakeList->Snakes[i].Cu.Pt[k]);
+			 temp_snake.Cu.AddPt(SnakeList->Snakes[i].Cu.Pt[k]);
+			 temp_snake.Ru.push_back(SnakeList->Snakes[i].Ru[k]);
 		 }
+
+		 Seed_Snakes.AddSnake(temp_snake);
 
 		 //SnakeList->Snakes[i].Cu.NP -= minus_value;
 		 SnakeList->Snakes[i].Cu.Resize(SnakeList->Snakes[i].Cu.NP - minus_value);
+		 SnakeList->Snakes[i].Ru.resize(SnakeList->Snakes[i].Ru.size() - minus_value);
 
 	  }
 	  else
@@ -381,6 +399,8 @@ void Register::eliminate_repeating(SnakeListClass *SnakeList, int tile_num, int 
 		  continue;
 	  }
     
+	  //std::cout<<"SnakeList->Snakes[i].Cu.NP:"<<SnakeList->Snakes[i].Cu.NP<<std::endl;
+	  //std::cout<<"SnakeList->Snakes[i].Ru:"<<SnakeList->Snakes[i].Ru.size()<<std::endl;
 	  //remove invalid snakes
 	  if( SnakeList->Snakes[i].Cu.GetLength() <= min_length || SnakeList->Snakes[i].Cu.NP < 3 )
 		  SnakeList->valid_list[i] = 0;

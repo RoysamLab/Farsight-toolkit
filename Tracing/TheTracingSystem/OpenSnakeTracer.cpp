@@ -29,11 +29,6 @@ OpenSnakeTracer::OpenSnakeTracer()
    tracing = false;
    use_multi_threads = false;
    tracing_thread = new TracingThread;
-   tracing_thread1 = new TracingThread;
-   tracing_thread2 = new TracingThread;
-   tracing_thread3 = new TracingThread;
-   tracing_thread4 = new TracingThread;
-   tracing_thread5 = new TracingThread;
    Old_NSnakes = 0;
 }
 
@@ -48,14 +43,14 @@ void OpenSnakeTracer::Init()
 	SnakeList.branch_points.RemoveAllPts();
 
 	SnakeList.SetImage(IM);
+
+	Old_NSnakes = 0;
 }
 
-void OpenSnakeTracer::Open_Curve_Snake_Tracing()
+void OpenSnakeTracer::RemoveSeeds_SN() //in case of batch tracing II, remove the seed covered by snakes growing from seed snakes first
 {
-  if( !options.parallel_tracing )
-  {
-    //in case of batch tracing, remove the seed convered by snakes growing from seed snakes first
-	if( SnakeList.NSnakes != 0 && IM->visit_label.sum() == 0 )
+	//if( SnakeList.NSnakes != 0 && IM->visit_label.sum() == 0 )
+	if( SnakeList.NSnakes != 0 )
 	{
 	 for( unsigned int i = 0; i < IM->visit_label.size(); i++ )
      {
@@ -84,6 +79,12 @@ void OpenSnakeTracer::Open_Curve_Snake_Tracing()
 	 }
 	}
 
+	std::cout<<"#Growed Seed Snakes:"<< SnakeList.NSnakes  << std::endl;
+	std::cout<<"#Seeds Left:"<< IM->SeedPt.GetSize() - IM->visit_label.sum() << std::endl;
+}
+
+void OpenSnakeTracer::RemoveSeeds()
+{
     //eliminate seed points covered by traced snakes
    if( SnakeList.NSnakes != 0 && Old_NSnakes != SnakeList.NSnakes )
    {
@@ -109,11 +110,38 @@ void OpenSnakeTracer::Open_Curve_Snake_Tracing()
 	  }
 	}
 
+    /*for( int i = NS-1; i >= Old_NSnakes; i-- )
+	{
+	 //add newly found seeds
+	 IM->SeedPt.AddPtList(SnakeList.Snakes[i].Detect_Branches());
+	 vnl_vector<int> new_visit_label(IM->SeedPt.NP);
+	 new_visit_label.fill(0);
+	 for( int i = 0; i < IM->visit_label.size(); i++ )
+	 {
+	   new_visit_label(i) = IM->visit_label(i);
+	 }
+	 IM->visit_label = new_visit_label;
+	}*/
+    
+
 	Old_NSnakes = SnakeList.NSnakes;
    }
    
-   std::cout<<"#Seeds Left:"<< IM->SeedPt.GetSize() - IM->visit_label.sum() << std::endl;
+   //std::cout<<"#Seeds Left:"<< IM->SeedPt.GetSize() - IM->visit_label.sum() << std::endl;
+  if(IM->SeedPt.GetSize() - IM->visit_label.sum() < 10)
+   std::cout << "\r#Seeds Left:"<<"000"<<IM->SeedPt.GetSize() - IM->visit_label.sum();
+  else if(IM->SeedPt.GetSize() - IM->visit_label.sum() < 100)
+   std::cout << "\r#Seeds Left:"<<"00"<<IM->SeedPt.GetSize() - IM->visit_label.sum();
+  else if(IM->SeedPt.GetSize() - IM->visit_label.sum() < 1000)
+   std::cout << "\r#Seeds Left:"<<"0"<<IM->SeedPt.GetSize() - IM->visit_label.sum();
+  else if(IM->SeedPt.GetSize() - IM->visit_label.sum() < 10000)
+   std::cout << "\r#Seeds Left:"<<IM->SeedPt.GetSize() - IM->visit_label.sum();
+}
 
+void OpenSnakeTracer::Open_Curve_Snake_Tracing()
+{
+  if( !options.parallel_tracing )
+  {
    int visit_label_sum = IM->visit_label.sum();
 
    current_seeds.RemoveAllPts();
@@ -121,8 +149,7 @@ void OpenSnakeTracer::Open_Curve_Snake_Tracing()
    vnl_vector<int> seed_indices(6);
    seed_indices.fill(-1);
    //find the indices of seeds that are going to be fed to tracing threads
-   if( !use_multi_threads )
-   {
+
     for( unsigned int i = 0; i < IM->visit_label.size(); i++ )
     {
       if( IM->visit_label(i) == 0 )
@@ -134,52 +161,6 @@ void OpenSnakeTracer::Open_Curve_Snake_Tracing()
 		  break;
 	  }
     }
-   }
-   else
-   {
-    for( unsigned int i = 0; i < IM->visit_label.size(); i++ )
-    {
-      if( IM->visit_label(i) == 0 )
-	  {
-		  if( IM->SeedPt.Pt[i].x >= 0 && IM->SeedPt.Pt[i].x <= IM->SM/3 
-			  && IM->SeedPt.Pt[i].y >= 0 && IM->SeedPt.Pt[i].y <= IM->SN/2 ) 
-		  {
-			  seed_indices(0) = i;
-		  }
-		  else if( IM->SeedPt.Pt[i].x > IM->SM/3 && IM->SeedPt.Pt[i].x <= 2 * IM->SM/3 
-			  && IM->SeedPt.Pt[i].y >= 0 && IM->SeedPt.Pt[i].y <= IM->SN/2 )
-		  {
-			  seed_indices(1) = i;
-		  }
-		  else if( IM->SeedPt.Pt[i].x > 2 * IM->SM/3 && IM->SeedPt.Pt[i].x < IM->SM 
-			  && IM->SeedPt.Pt[i].y >= 0 && IM->SeedPt.Pt[i].y <= IM->SN/2 )
-		  {
-			  seed_indices(2) = i;
-		  }
-		  else if( IM->SeedPt.Pt[i].x >= 0 && IM->SeedPt.Pt[i].x <= IM->SM/3 
-			  && IM->SeedPt.Pt[i].y > IM->SN/2 && IM->SeedPt.Pt[i].y < IM->SN )
-		  {
-			  seed_indices(3) = i;
-		  }
-		  else if( IM->SeedPt.Pt[i].x > IM->SM/3 && IM->SeedPt.Pt[i].x <= 2 * IM->SM/3 
-			  && IM->SeedPt.Pt[i].y > IM->SN/2 && IM->SeedPt.Pt[i].y < IM->SN )
-		  {
-			  seed_indices(4) = i;
-		  }
-		  else
-		  {
-              seed_indices(5) = i;
-		  }
-          
-		  if( seed_indices.min_value() != -1 )
-			  break;
-		  //current_seeds.AddPt(IM->SeedPt.Pt[i]);
-		  //IM->current_seed_idx = i;
-		  //IM->visit_label(i) = 1;
-		  //break;
-	  }
-    }
-   }
 
    if( visit_label_sum != IM->SeedPt.GetSize() )
    {
@@ -189,14 +170,14 @@ void OpenSnakeTracer::Open_Curve_Snake_Tracing()
    }
    else
    {
-	   std::cout<<"--------------Processing Finished--------------"<<std::endl;
+	   //std::cout<<"--------------Processing Finished I--------------"<<std::endl;
       tracing_thread->stop();
    }
 
   }
   else
   {
-     
+  
     tracing_thread->setParas( &SnakeList, IM->SeedPt, IM, options);
 
     tracing = true;
@@ -220,70 +201,6 @@ void OpenSnakeTracer::Cast_Open_Snake_3D( vnl_vector<int> seed_indices )
    tracing = true;
    tracing_thread->start();
 
-  if( use_multi_threads )
-  {
-   if( seed_indices(1) != -1 )
-   {
-    tracing_thread1->manual_seed = false;
-    tracing_thread1->setParas( &SnakeList, seed_indices(1), IM, options);
-    tracing_thread1->start();
-   }
-   else
-   {
-    tracing_thread1->emit_traced_signal();
-   }
-
-   if( seed_indices(2) != -1 )
-   {
-    tracing_thread2->manual_seed = false;
-    tracing_thread2->setParas( &SnakeList, seed_indices(2), IM, options);
-    tracing_thread2->start();
-   }
-   else
-   {
-    tracing_thread2->emit_traced_signal();
-   }
-
-   if( seed_indices(3) != -1 )
-   {
-    tracing_thread3->manual_seed = false;
-    tracing_thread3->setParas( &SnakeList, seed_indices(3), IM, options);
-    tracing_thread3->start();
-   }
-   else
-   {
-    tracing_thread3->emit_traced_signal();
-   }
-
-   if( seed_indices(4) != -1 )
-   {
-    tracing_thread4->manual_seed = false;
-    tracing_thread4->setParas( &SnakeList, seed_indices(4), IM, options);
-    tracing_thread4->start();
-   }
-   else
-   {
-    tracing_thread4->emit_traced_signal();
-   }
-   if( seed_indices(5) != -1 )
-   {
-    tracing_thread5->manual_seed = false;
-    tracing_thread5->setParas( &SnakeList, seed_indices(5), IM, options);
-    tracing_thread5->start();
-   }
-   else
-   {
-    tracing_thread5->emit_traced_signal();
-   }
-  }
-
-  //int i = 0;
-  //while( i < iter_num )
-  //{
- //	 std::cout<<"iteration#"<<i<<std::endl;
- //  snake.OpenSnakeStretch( alpha, ITER, pt_distance, beta, kappa, gamma, stretchingRatio );
- //  i++;
- // }
 }
 
 void OpenSnakeTracer::Cast_Open_Snake_3D( PointList3D seeds, bool manual_seed )
@@ -385,15 +302,10 @@ void OpenSnakeTracer::Cast_Open_Snake_3D( PointList3D seeds, bool manual_seed )
 
    tracing = true;
 
+   std::cout<<"Start the tracing......"<<std::endl;
    tracing_thread->start();
 
-  //int i = 0;
-  //while( i < iter_num )
-  //{
- //	 std::cout<<"iteration#"<<i<<std::endl;
- //  snake.OpenSnakeStretch( alpha, ITER, pt_distance, beta, kappa, gamma, stretchingRatio );
- //  i++;
- // }
+
 }
 
 void OpenSnakeTracer::SetImage(ImageOperation *I_Input)
@@ -405,8 +317,7 @@ void OpenSnakeTracer::SetImage(ImageOperation *I_Input)
 
 void OpenSnakeTracer::setParas(int pt_distance, float gamma, float stretchingRatio, float minimum_length, 
 							   int collision_dist, int remove_seed_range, int deform_iter, bool automatic_merging, 
-							   int max_angle, bool freeze_body, int s_force, float repeat_ratio, 
-							   int repeat_dist, int tracing_model, bool parallel_tracing, int coding_method, float sigma_ratio)
+							   int max_angle, bool freeze_body, int s_force, int tracing_model, bool parallel_tracing, int coding_method, float sigma_ratio, int border)
 {
    options.alpha = 0.05;
    options.stretch_iter = 5;
@@ -417,7 +328,7 @@ void OpenSnakeTracer::setParas(int pt_distance, float gamma, float stretchingRat
    options.stretchingRatio = stretchingRatio;
    //options.struggle_dist = 2;
    options.struggle_dist = 0.01;
-   options.struggle_th = 15;
+   options.struggle_th = 3;
    options.minimum_length = minimum_length;
    options.iter_num = 100;
    options.remove_seed_range = remove_seed_range;
@@ -427,12 +338,11 @@ void OpenSnakeTracer::setParas(int pt_distance, float gamma, float stretchingRat
    options.max_angle = max_angle;
    options.freeze_body = freeze_body;
    options.s_force = s_force;
-   options.repeat_ratio = repeat_ratio;
-   options.repeat_dist = repeat_dist;
    options.tracing_model = tracing_model;
    options.parallel_tracing = parallel_tracing;
    options.coding_method = coding_method + 1;
    options.sigma_ratio = sigma_ratio;
+   options.border = border;
 }
    
 void OpenSnakeTracer::Refine_Branch_Point()
@@ -482,9 +392,10 @@ void TracingThread::run()
 
    if( stopped )
 	   return;
+
    if( seeds.NP == 0 )
    {
-       emit_traced_signal();
+       emit_traced_signal(true);
 	   return;
    }
 
@@ -501,19 +412,7 @@ if( !options.parallel_tracing )
    //seed expansion for initializing the tracing
  if( temp_snake.Cu.GetSize() < 3 )
  {
-   /*if( options.seed_expansion == 0 )
-   {
-	  temp_snake.Skeleton_Expansion();
-      if( temp_snake.Cu.GetSize() < 3 )
-      {
-      temp_snake.Set_Seed_Point(seeds);
-      temp_snake.Expand_Seed_Point(3);
-      }
-   } */
-   //if ( options.seed_expansion == 0 )
-   //{ 
      temp_snake.Expand_Seed_Point(3);
-   //}
  }
  else
  {
@@ -522,26 +421,14 @@ if( !options.parallel_tracing )
     temp_snake.Ru.clear();
     for( int j = 0; j < temp_snake.Cu.GetSize(); j++ )
     {
-     temp_snake.Ru.push_back(1);
+		temp_snake.Cu.Pt[j].Print();
+        temp_snake.Ru.push_back(1);
     }
-	//seed snake should be deformed first
-    temp_snake.OpenSnakeDeform( options.alpha, 20, options.pt_distance, options.beta, options.kappa, options.gamma, false );
  }
 
   int i = 0;
   int struggle_label = 0;
   bool invalid = false;
-
-  //Point3D old_head;
-  //Point3D old_tail;
-
-  //old_head = temp_snake.Cu.GetLastPt();
-  //old_tail = temp_snake.Cu.GetFirstPt();
-
-  //for( int j = 0; j < temp_snake.Cu.GetSize(); j++ )
-  //{
-  //	  temp_snake.Cu.Pt[j].Print();
-  //}
 
   ImageType::IndexType idx;
   idx[0] = temp_snake.Cu.GetMiddlePt().x;
@@ -550,28 +437,34 @@ if( !options.parallel_tracing )
 
   //initialize the radius
   temp_snake.Ru.clear();
+  temp_snake.Ru1.clear();
+
   for( int j = 0; j < temp_snake.Cu.GetSize(); j++ )
   {
-    temp_snake.Ru.push_back(0.1);
+    temp_snake.Ru.push_back(2);
+	//temp_snake.Ru1.push_back(2);
+  }
+
+  if( options.tracing_model == 3 )
+  {
+   for( int j = 0; j < temp_snake.Cu.GetSize(); j++ )
+   {
+	temp_snake.Ru1.push_back(2);
+   } 
   }
    
-  //if( options.tracing_model == 2 || options.tracing_model == 3 )
-  //{
-     //temp_snake.OpenSnake_Init_4D(options.alpha, options.stretch_iter, options.beta, options.kappa, options.gamma, options.pt_distance);
-     //IM->ImComputeBackgroundModel();
-	 //IM->ImComputeForegroundModel(Snakes->Snakes[Snakes->NSnakes].Cu, temp_snake.Ru);
-  //}
-
   while( i < options.iter_num && struggle_label <= options.struggle_th && !temp_snake.hit_boundary )
   {
 	  float old_dist = temp_snake.Cu.GetLength();
 
-	  temp_snake.OpenSnakeDeform( options.alpha, options.deform_iter, options.pt_distance, options.beta, options.kappa, options.gamma, options.freeze_body );
-
-	   temp_snake.OpenSnakeStretch( options.alpha, options.stretch_iter, options.pt_distance, options.beta, options.kappa, options.gamma,
+	  if( options.tracing_model == 3 )
+	   temp_snake.OpenSnakeStretch_5D( options.alpha, options.stretch_iter, options.pt_distance, options.beta, options.kappa, options.gamma,
 	  	  options.stretchingRatio, options.collision_dist, options.minimum_length, options.automatic_merging, options.max_angle, options.freeze_body, 
-		  options.s_force, 0, options.tracing_model, options.coding_method, options.sigma_ratio);
-
+		  options.s_force, 0, options.tracing_model, options.coding_method, options.sigma_ratio, options.border);
+	  else
+	   temp_snake.OpenSnakeStretch_4D( options.alpha, options.stretch_iter, options.pt_distance, options.beta, options.kappa, options.gamma,
+	  	  options.stretchingRatio, options.collision_dist, options.minimum_length, options.automatic_merging, options.max_angle, options.freeze_body, 
+		  options.s_force, 0, options.tracing_model, options.coding_method, options.sigma_ratio, options.border);
 
 	  if( temp_snake.Cu.NP < 3 )
 	  {
@@ -586,28 +479,14 @@ if( !options.parallel_tracing )
 	  else
 	     struggle_label = 0;
 
-	  //if( temp_snake.Cu.GetFirstPt().GetDistTo(old_tail) <= options.struggle_dist &&
-	  //	  temp_snake.Cu.GetLastPt().GetDistTo(old_head) <= options.struggle_dist)
-	  //	  struggle_label++;
-
-	  //if( i > options.struggle_th && (temp_snake.Cu.GetSize() == 3 || temp_snake.Cu.GetLength() <= options.minimum_length) ) 
-	  //{
-	  //   std::cout<<"invalid seed"<<std::endl;
-	  //   invalid = true;
-	  //   break;
-	  //}
-
 	  if( temp_snake.Cu.GetLength() > options.minimum_length )
 	  {
-		  IM->ImCoding( temp_snake.Cu, temp_snake.Ru, 1, true );
+		 IM->ImCoding( temp_snake.Cu, temp_snake.Ru, 1, true );
 	  }
 
 	  i++;
 	  
 	   emit stretched(temp_snake);
-
-      //wait for displaying image to complete
-      //suspend();
 
       if(ToSuspend) 
 	  {
@@ -615,64 +494,53 @@ if( !options.parallel_tracing )
 		condition.wait(&mutex);
 		mutex.unlock();
       }
-	  //msleep(5);
-	  //resume();
+
   }
+
 
   if( !invalid )
   {
     if( manual_seed )
-	//if( 0 )
 	{
-	   if( temp_snake.Cu.GetLength() >= options.minimum_length )
-	   {
-	    //Snakes->AddSnake(*snake);
-	    //IM->ImCoding( temp_snake.Cu, temp_snake.Ru, Snakes->NSnakes+1, false );
-		//adjust the branch point
-		//temp_snake.Branch_Adjustment();
-
-		//add branch point (if any) to the branch point list
-		if( temp_snake.BranchPt.NP != 0 )
-			Snakes->branch_points.AddPtList(temp_snake.BranchPt);
-
-		temp_snake.Nail_Branch();
-        Snakes->AddSnake_Coding(temp_snake);
-        //Snakes->NSnakes++;
-		IM->ImRefresh_TracingImage();
-		  //if snake accepted, update foreground model
-         //if( options.coding_method == 1 && (options.tracing_model == 2 || options.tracing_model == 3) )
-   	       IM->ImComputeForegroundModel(temp_snake.Cu, temp_snake.Ru);
-	   }
-	   else
-	   {
-		   std::cout<<"length than minimum length"<<std::endl;
-	   }
-	}
-	else
-	{
-	  if( temp_snake.Check_Validity( options.minimum_length, options.repeat_ratio, options.repeat_dist, 0) )
+	  if( temp_snake.Cu.GetLength() > options.minimum_length )
 	  {
-	   //Snakes->AddSnake(*snake);
-	   //IM->ImCoding( temp_snake.Cu, temp_snake.Ru, Snakes->NSnakes+1, false );
-	   //adjust the branch point
-	   //temp_snake.Branch_Adjustment();
-
-	    //add branch point (if any) to the branch point list
 		if( temp_snake.BranchPt.NP != 0 )
 			Snakes->branch_points.AddPtList(temp_snake.BranchPt);
 
 	   temp_snake.Nail_Branch();
 
-	   //std::cout<<"NSnakes:"<<Snakes->NSnakes<<std::endl;
 	   Snakes->AddSnake_Coding(temp_snake);
-	   //std::cout<<"NSnakes:"<<Snakes->NSnakes<<std::endl;
-       //Snakes->NSnakes++;
+
 	   IM->ImRefresh_TracingImage();
-	     //if snake accepted, update foreground model
-         //if( options.coding_method == 1 && (options.tracing_model == 2 || options.tracing_model == 3) )
-   	       IM->ImComputeForegroundModel(temp_snake.Cu, temp_snake.Ru);
+
+   	   IM->ImComputeForegroundModel(temp_snake.Cu, temp_snake.Ru);
+	  }
+	  else
+	  {
+	     invalid = true;
 	  }
 	}
+	else
+	{
+	  if( temp_snake.Check_Validity( options.minimum_length, 0, options.automatic_merging ) )
+	  {
+		if( temp_snake.BranchPt.NP != 0 )
+			Snakes->branch_points.AddPtList(temp_snake.BranchPt);
+
+	   temp_snake.Nail_Branch();
+
+	   Snakes->AddSnake_Coding(temp_snake);
+
+	   IM->ImRefresh_TracingImage();
+
+   	   IM->ImComputeForegroundModel(temp_snake.Cu, temp_snake.Ru);
+	  }
+	  else
+	  {
+	     invalid = true;
+	  }
+	}
+	
   }
 
    if( !manual_seed )
@@ -682,16 +550,20 @@ if( !options.parallel_tracing )
    }
 
     //emit snakeTraced(Snakes);
-	emit_traced_signal();
+   if( invalid )
+	emit_traced_signal(false);
+   else
+    emit_traced_signal(true);
+
+   
 }
 else //Parallel Tracing
 {
-  
 }
 
 }
 
-void TracingThread::emit_traced_signal()
+void TracingThread::emit_traced_signal(bool new_come)
 {
    if( manual_seed )
    {
@@ -716,7 +588,9 @@ void TracingThread::emit_traced_signal()
 	emit snakeTraced_manual_seed(fn);
    }
    else
-	emit snakeTraced();
+   {
+	emit snakeTraced(new_come);
+   }
 }
 
 void TracingThread::suspend()

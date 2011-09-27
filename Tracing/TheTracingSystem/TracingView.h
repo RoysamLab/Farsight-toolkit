@@ -26,7 +26,7 @@ limitations under the License.
 #define TRACINGVIEW_H
 
 #include <QtGui>
-#include "ObjectSelection.h"
+#include "ScatterView.h"
 #include "OpenSnakeTracer.h"
 
 struct EditValidation
@@ -56,6 +56,7 @@ public:
 	void drawDeletedSnakes(QPainter *painter);
 	void drawTracingSnakes(QPainter *painter);
     void drawSnakeTree(QPainter *painter);
+	void drawSnakeTree_SWC(QPainter *painter);
 	void drawInterestPoints(QPainter *painter);
 	void drawClickedPoint(QPainter *painter);
     void drawSeedSnake(QPainter *painter);
@@ -63,6 +64,8 @@ public:
     void drawSeeds(QPainter *painter);
     void drawSelection(QPainter *painter);
 	void drawPath(QPainter *painter);
+
+	void deselect();
 
 	vnl_vector<int> getSelectedSnakes();
 
@@ -87,6 +90,7 @@ public slots:
     void setSnakes(SnakeListClass *S);
 	void setSeedSnakes(SnakeListClass *s);
     void setSnakeTree(SnakeTree *s);
+	void setSnakeTree_SWC(SnakeTree_SWC *s);
 	void setInterestPoints(PointList3D pl);
 
 	void setMontageView(bool in);
@@ -97,6 +101,8 @@ public slots:
 	void SnakesChanged();
 	void SnakesChanged(int);
 	void removeSnakes();
+
+	void changeLineWidth(int);
 
 	bool rootSnakeSelected();
 	Point3D getClickedPoint();
@@ -119,6 +125,9 @@ public slots:
 	void selectRegion();
 
 	void vtk_mousePress(double *picked_point, bool ctrl_pressed);
+
+	void sync_selections_I(); //synchronize the selections of different views
+    void sync_selections_II(); //synchronize the selections of different views
 
 signals:
 	void selected(const QItemSelection &,  QItemSelectionModel::SelectionFlags);
@@ -149,16 +158,15 @@ private:
 	bool seed_display;
 	bool snake_display;
 	bool color_line_display;
-	//ContactListStruct *ContactList;
-	//WormListClass Worms;
+	
     QColor curColor;
     QImage image;
 	QImage display_image;
 	bool tracing_snake;
     double zoom;
-	//bool MultiTracking;
-    //bool drawPart;
+	
 	ObjectSelection *snake_sels;
+	ObjectSelection *snake_sels_table; //another selection for table and scatter plot
     ObjectSelection *seed_sels;
 
 	Point3D click_point;
@@ -177,10 +185,13 @@ private:
 	QVector<QPoint> selectionRegion;	//current boundary points for group selection
 
 	SnakeTree *snake_tree;
+	SnakeTree_SWC *snake_tree_swc;
 	bool tree_set;
+	bool tree_set_swc;
 
 	bool montage_view;
 	int radius_state;
+	int LineWidth;
 	//int iteration_num;
 };
 

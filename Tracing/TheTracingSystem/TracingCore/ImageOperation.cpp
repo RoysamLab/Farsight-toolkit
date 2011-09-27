@@ -38,32 +38,52 @@ ImageOperation::ImageOperation()
   coding_method = 1;
 }
 
-void ImageOperation::ImComputeInitBackgroundModel()
+void ImageOperation::ImComputeInitBackgroundModel(double th)
 {
-
+   
   typedef itk::ImageSliceIteratorWithIndex< ImageType > SliceIteratorType;
+  typedef itk::ImageSliceIteratorWithIndex< ProbImageType > SliceIteratorType1;
+
 
   SliceIteratorType it(I, I->GetRequestedRegion() );
   it.SetFirstDirection( 0 );
   it.SetSecondDirection( 1 );
   it.GoToBegin();
 
-  u2 = 0;
+  SliceIteratorType1 it1(IVessel, IVessel->GetRequestedRegion() );
+  it1.SetFirstDirection( 0 );
+  it1.SetSecondDirection( 1 );
+  it1.GoToBegin();
+
   std::vector<float> intensity;
+  I_cu.clear();
+
   while( !it.IsAtEnd() )
   {
    while ( !it.IsAtEndOfSlice() )
    {
      while ( !it.IsAtEndOfLine() )
      {
+	   //if( it1.Get() < th )
+	   //{
 		intensity.push_back(it.Get());
+	   //}
+	   //else
+	   //{
+	   // I_cu.push_back(it.Get());
+	   //}
 		++it;
+		++it1;
 	 }
 	 it.NextLine();
+	 it1.NextLine();
    }
    it.NextSlice();
+   it1.NextSlice();
   }
 
+  u2 = 0;
+  sigma2 = 0;
   for(std::vector<float>::iterator j=intensity.begin();j!=intensity.end();++j)     
   {
       u2 += *j;
@@ -76,10 +96,24 @@ void ImageOperation::ImComputeInitBackgroundModel()
   }
 
   sigma2 = sqrt(sigma2/intensity.size());
-
- 
   std::cout<<"background model:"<<u2<<","<<sigma2<<std::endl;
+ 
+  /*u1 = 0;
+  sigma1 = 0;
+  for(std::vector<float>::iterator j=I_cu.begin();j!=I_cu.end();++j)     
+  {
+      u1 += *j;
+  }
+  u1 /= I_cu.size();
+  for(std::vector<float>::iterator j=I_cu.begin();j!=I_cu.end();++j)     
+  {
+      sigma1 += pow(*j - u1, 2);
+  }
+  sigma1 = sqrt(sigma1/I_cu.size());
+  std::cout<<"foreground model:"<<u1<<","<<sigma1<<std::endl;*/
+  
 }
+
 void ImageOperation::ImComputeInitForegroundModel()
 {
    typedef itk::NearestNeighborInterpolateImageFunction< 
@@ -111,7 +145,7 @@ void ImageOperation::ImComputeInitForegroundModel()
 
   sigma1 = sqrt(sigma1/I_cu.size());
   std::cout<<"foreground model:"<<u1<<","<<sigma1<<std::endl;
-  //I_cu.clear();
+  //I_cu.clear(); 
 
 }
 void ImageOperation::ImComputeForegroundModel(PointList3D Cu, std::vector<float> Ru)
@@ -203,7 +237,7 @@ void ImageOperation::ImComputeForegroundModel(PointList3D Cu, std::vector<float>
 
   sigma1 = sqrt(sigma1/I_cu.size());
 
-  std::cout<<"foreground model:"<<u1<<","<<sigma1<<std::endl;
+  //std::cout<<"foreground model:"<<u1<<","<<sigma1<<std::endl;
    
 }
 
@@ -255,7 +289,7 @@ void ImageOperation::ImRemoveSlice(int in)
 
 void ImageOperation::ImDisplayRead(const char *filename, int shrink_factor)
 {
-	/*//IOImagePointer I; 
+	/* //IOImagePointer I; 
 	typedef itk::ImageFileReader<IORGBImageType> ReaderType;		
 	ReaderType::Pointer reader = ReaderType::New();	
 
@@ -270,22 +304,25 @@ void ImageOperation::ImDisplayRead(const char *filename, int shrink_factor)
 
 	caster->Update();
 
-	RGBImagePointer IRGB3D = RGBImageType::New();
-	IRGB3D = caster->GetOutput();
+	//RGBImagePointer IRGB3D = RGBImageType::New();
+	//IRGB3D = caster->GetOutput();
+
+	IRGB = caster->GetOutput();
 
 	typedef itk::ShrinkImageFilter< RGBImageType,RGBImageType > ShrinkFilterType;
     ShrinkFilterType::Pointer shrinkFilter = ShrinkFilterType::New(); 
 
-    shrinkFilter->SetInput( IRGB3D );
+    shrinkFilter->SetInput( IRGB );
     unsigned int dfactors[3] = { shrink_factor, shrink_factor, 1};
     shrinkFilter->SetShrinkFactors(dfactors);
     shrinkFilter->UpdateLargestPossibleRegion();
-    IRGB3D = shrinkFilter->GetOutput();
-    shrinkFilter->Update();
-	IRGB = ImMaxProjection(IRGB3D);*/
+    IRGB = shrinkFilter->GetOutput();
+    shrinkFilter->Update(); */
+
+	//IRGB = ImMinProjection(IRGB3D);
 
 
-	typedef itk::ImageFileReader<IOImageType> ReaderType1;		
+    typedef itk::ImageFileReader<IOImageType> ReaderType1;		
 	ReaderType1::Pointer reader1 = ReaderType1::New();	
 
 	reader1->SetFileName(filename);
@@ -309,7 +346,7 @@ void ImageOperation::ImDisplayRead(const char *filename, int shrink_factor)
     shrinkFilter1->SetShrinkFactors(dfactors1);
     shrinkFilter1->UpdateLargestPossibleRegion();
     IDisplay = shrinkFilter1->GetOutput();
-    shrinkFilter1->Update();
+    shrinkFilter1->Update(); 
 
 	display_set = true;
 }
@@ -660,16 +697,122 @@ LabelImagePointer2D ImageOperation::ImMaxProjection(LabelImagePointer IInput)
 
 ImagePointer2D ImageOperation::ImMaxProjection(ImagePointer IInput)
 {
-    int dim = 2;
-	typedef itk::MaximumProjectionImageFilter< ImageType, ImageType2D > MaxProjectionType;
-	MaxProjectionType::Pointer filter = MaxProjectionType::New();
+	int dim = 2;
+
+	typedef itk::MaximumProjectionImageFilter< ImageType, ImageType2D > FilterType;	
+	FilterType::Pointer filter = FilterType::New();
+
 	filter->SetProjectionDimension(dim);
 	filter->SetNumberOfThreads(16);
-	filter->SetInput(IInput);
-		
+	filter->SetInput( IInput );
+	
 	filter->Update();
-	ImagePointer2D I2D = filter->GetOutput();
+	ImageType2D::Pointer I2D = filter->GetOutput();
 	return I2D;
+
+
+   
+   /*filter->SetInput( IInput );
+   filter->SetProjectionDimension( dim );
+   // to be sure that the result is ok with several threads, even on a single
+   // proc computer
+   filter->SetNumberOfThreads( 2 );
+   filter->Update();
+   ImageType::SizeType inputSize = filter->GetOutput()->GetLargestPossibleRegion().GetSize();
+   typedef itk::ExtractImageFilter< ImageType, ImageType2D > ExtractType;
+   ExtractType::Pointer extract = ExtractType::New();
+   extract->SetInput( filter->GetOutput() );
+   ImageType::SizeType size;
+   for(int i=0; i<=3; i++) 
+   {
+    if(i == dim) 
+    {
+     size[i] = 0;
+    } 
+    else 
+    { 
+     size[i] = inputSize[i];
+    }
+   }
+   ImageType::IndexType idx;
+   idx.Fill(0);
+   ImageType::RegionType region;
+   region.SetSize( size );
+   region.SetIndex( idx );
+   extract->SetExtractionRegion( region );
+   extract->Update();
+   ImagePointer2D I2D = extract->GetOutput();
+
+   return I2D;*/
+
+  /* typedef itk::ImageLinearIteratorWithIndex< ImageType2D > LinearIteratorType;
+   typedef itk::ImageSliceConstIteratorWithIndex< ImageType > SliceIteratorType;
+   unsigned int projectionDirection = 2;
+   unsigned int i, j;
+   unsigned int direction[2];
+  for (i = 0, j = 0; i < 3; ++i )
+  {
+   if (i != projectionDirection)
+  {
+   direction[j] = i;
+   j++;
+   }
+  }
+
+  ImageType2D::RegionType region;
+  ImageType2D::RegionType::SizeType size;
+  ImageType2D::RegionType::IndexType index;
+  ImageType::RegionType requestedRegion = IInput->GetRequestedRegion();
+
+  index[ direction[0] ] = requestedRegion.GetIndex()[ direction[0] ];
+  index[ 1- direction[0] ] = requestedRegion.GetIndex()[ direction[1] ];
+  size[ direction[0] ] = requestedRegion.GetSize()[ direction[0] ];
+  size[ 1- direction[0] ] = requestedRegion.GetSize()[ direction[1] ];
+
+  region.SetSize( size );
+  region.SetIndex( index );
+  ImagePointer2D I2D = ImageType2D::New();
+  I2D->SetRegions( region );
+  I2D->Allocate();
+
+  SliceIteratorType inputIt( IInput, IInput->GetRequestedRegion() );
+  LinearIteratorType outputIt( I2D, I2D->GetRequestedRegion() );
+  inputIt.SetFirstDirection( direction[1] );
+  inputIt.SetSecondDirection( direction[0] );
+  outputIt.SetDirection( 1 - direction[0] );
+
+  outputIt.GoToBegin();
+  while ( ! outputIt.IsAtEnd() )
+  {
+   while ( ! outputIt.IsAtEndOfLine() )
+  {
+   outputIt.Set( itk::NumericTraits<unsigned short>::NonpositiveMin() );
+   ++outputIt;
+  }
+   outputIt.NextLine();
+ }
+
+  inputIt.GoToBegin();
+  outputIt.GoToBegin();
+  while( !inputIt.IsAtEnd() )
+  {
+   while ( !inputIt.IsAtEndOfSlice() )
+  {
+    while ( !inputIt.IsAtEndOfLine() )
+   {
+     outputIt.Set( vnl_math_max( outputIt.Get(), inputIt.Get() ));
+     ++inputIt;
+     ++outputIt;
+    }
+   outputIt.NextLine();
+   inputIt.NextLine();
+   }
+
+   outputIt.GoToBegin();
+   inputIt.NextSlice();
+  }
+  
+  return I2D; */
 }
 
 RGBImagePointer2D ImageOperation::ImMaxProjection1(ImagePointer IInput)
@@ -859,6 +1002,82 @@ ProbImagePointer2D ImageOperation::ImMaxProjection(ProbImagePointer IInput)
   
   return I2D;*/
 }
+RGBImagePointer2D ImageOperation::ImMinProjection(RGBImagePointer IInput)
+{
+   typedef itk::ImageLinearIteratorWithIndex< RGBImageType2D > LinearIteratorType;
+   typedef itk::ImageSliceConstIteratorWithIndex< RGBImageType > SliceIteratorType;
+   unsigned int projectionDirection = 2;
+   unsigned int i, j;
+   unsigned int direction[2];
+  for (i = 0, j = 0; i < 3; ++i )
+  {
+   if (i != projectionDirection)
+  {
+   direction[j] = i;
+   j++;
+   }
+  }
+
+  ImageType2D::RegionType region;
+  ImageType2D::RegionType::SizeType size;
+  ImageType2D::RegionType::IndexType index;
+  ImageType::RegionType requestedRegion = IInput->GetRequestedRegion();
+
+  index[ direction[0] ] = requestedRegion.GetIndex()[ direction[0] ];
+  index[ 1- direction[0] ] = requestedRegion.GetIndex()[ direction[1] ];
+  size[ direction[0] ] = requestedRegion.GetSize()[ direction[0] ];
+  size[ 1- direction[0] ] = requestedRegion.GetSize()[ direction[1] ];
+
+  region.SetSize( size );
+  region.SetIndex( index );
+  RGBImagePointer2D I2D = RGBImageType2D::New();
+  I2D->SetRegions( region );
+  I2D->Allocate();
+
+  SliceIteratorType inputIt( IInput, IInput->GetRequestedRegion() );
+  LinearIteratorType outputIt( I2D, I2D->GetRequestedRegion() );
+  inputIt.SetFirstDirection( direction[1] );
+  inputIt.SetSecondDirection( direction[0] );
+  outputIt.SetDirection( 1 - direction[0] );
+
+  outputIt.GoToBegin();
+  while ( ! outputIt.IsAtEnd() )
+  {
+   while ( ! outputIt.IsAtEndOfLine() )
+  {
+   outputIt.Set( 10000 );
+   ++outputIt;
+  }
+   outputIt.NextLine();
+ }
+
+  inputIt.GoToBegin();
+  outputIt.GoToBegin();
+  while( !inputIt.IsAtEnd() )
+  {
+   while ( !inputIt.IsAtEndOfSlice() )
+  {
+    while ( !inputIt.IsAtEndOfLine() )
+   {
+	 RGBImageType2D::PixelType temp;
+	 temp[0] = vnl_math_min( outputIt.Get()[0], inputIt.Get()[0] );
+	 temp[1] = vnl_math_min( outputIt.Get()[1], inputIt.Get()[1] );
+	 temp[2] = vnl_math_min( outputIt.Get()[2], inputIt.Get()[2] );
+     outputIt.Set( temp );
+     ++inputIt;
+     ++outputIt;
+    }
+   outputIt.NextLine();
+   inputIt.NextLine();
+   }
+
+   outputIt.GoToBegin();
+   inputIt.NextSlice();
+  }
+  
+  return I2D;
+
+}
 
 RGBImagePointer2D ImageOperation::ImMaxProjection(RGBImagePointer IInput)
 {
@@ -953,6 +1172,8 @@ void ImageOperation::ImWrite(const char *filename, int image_id)
 	typedef itk::ImageFileWriter<IOImageType1> WriterType;
     typedef itk::CastImageFilter<ProbImageType,IOImageType1> ProbCasterType;
 	ProbCasterType::Pointer prob_caster = ProbCasterType::New();
+	typedef itk::CastImageFilter<LabelImageType,IOImageType1> LabelCasterType;
+	LabelCasterType::Pointer label_caster = LabelCasterType::New();
 	typedef itk::CastImageFilter<ImageType, IOImageType1> CasterType;
 	CasterType::Pointer caster = CasterType::New(); 
 
@@ -968,8 +1189,53 @@ void ImageOperation::ImWrite(const char *filename, int image_id)
 	 IIO = prob_caster->GetOutput();
 	 prob_caster->Update();
 	}
+	else if( image_id == 3 )
+	{
+	 label_caster->SetInput(IL);
+	 IIO = label_caster->GetOutput();
+	 label_caster->Update();
+	}
 
-	typedef itk::ImageFileWriter<IOImageType1> WriterType;
+	WriterType::Pointer writer;	
+	writer = WriterType::New();	
+
+	writer->SetFileName(filename);
+	writer->SetInput(IIO);
+	writer->Update();
+}
+
+void ImageOperation::ImWrite(const char *filename, LabelImagePointer ROI)
+{
+	IOImagePointer IIO;
+	typedef itk::ImageFileWriter<IOImageType> WriterType;
+
+	typedef itk::CastImageFilter<LabelImageType, IOImageType> CasterType;
+	CasterType::Pointer caster = CasterType::New(); 
+
+    caster->SetInput(ROI);
+	IIO = caster->GetOutput();
+	caster->Update();
+
+	WriterType::Pointer writer;	
+	writer = WriterType::New();	
+
+	writer->SetFileName(filename);
+	writer->SetInput(IIO);
+	writer->Update();
+}
+
+
+void ImageOperation::ImWrite(const char *filename, ImagePointer ROI)
+{
+	IOImagePointer IIO;
+	typedef itk::ImageFileWriter<IOImageType> WriterType;
+
+	typedef itk::CastImageFilter<ImageType, IOImageType> CasterType;
+	CasterType::Pointer caster = CasterType::New(); 
+
+    caster->SetInput(ROI);
+	IIO = caster->GetOutput();
+	caster->Update();
 
 	WriterType::Pointer writer;	
 	writer = WriterType::New();	
@@ -981,16 +1247,16 @@ void ImageOperation::ImWrite(const char *filename, int image_id)
 
 void ImageOperation::ImWrite_Soma(const char *filename)
 {
-	IOImagePointer1 IIO;
-	typedef itk::ImageFileWriter<IOImageType1> WriterType;
-	typedef itk::CastImageFilter<ImageType, IOImageType1> CasterType;
+	IOImagePointer IIO;
+	typedef itk::ImageFileWriter<IOImageType> WriterType;
+	typedef itk::CastImageFilter<ImageType, IOImageType> CasterType;
 	CasterType::Pointer caster = CasterType::New(); 
 
 	caster->SetInput(IMask);
 	IIO = caster->GetOutput();
 	caster->Update();
 
-	typedef itk::ImageFileWriter<IOImageType1> WriterType;
+	typedef itk::ImageFileWriter<IOImageType> WriterType;
 
 	WriterType::Pointer writer;	
 	writer = WriterType::New();	
@@ -999,6 +1265,28 @@ void ImageOperation::ImWrite_Soma(const char *filename)
 	writer->SetInput(IIO);
 	writer->Update();
 }
+
+void ImageOperation::ImWrite_Segmentation(const char *filename)
+{
+	IOImagePointer IIO;
+	typedef itk::ImageFileWriter<IOImageType> WriterType;
+	typedef itk::CastImageFilter<ImageType, IOImageType> CasterType;
+	CasterType::Pointer caster = CasterType::New(); 
+
+	caster->SetInput(ISeg);
+	IIO = caster->GetOutput();
+	caster->Update();
+
+	typedef itk::ImageFileWriter<IOImageType> WriterType;
+
+	WriterType::Pointer writer;	
+	writer = WriterType::New();	
+
+	writer->SetFileName(filename);
+	writer->SetInput(IIO);
+	writer->Update();
+}
+
 
 void ImageOperation::ConvertWriteImage()	
 {
@@ -1014,6 +1302,337 @@ void ImageOperation::ConvertWriteImage()
 	//return IIO;*/
 }
 
+void ImageOperation::ImMasking(int shrink_factor)
+{	
+   typedef itk::ShrinkImageFilter< ImageType,ImageType > ShrinkFilterType;
+   ShrinkFilterType::Pointer shrinkFilter = ShrinkFilterType::New(); 
+
+   shrinkFilter->SetInput( IMask );
+   unsigned int dfactors[3] = { shrink_factor, shrink_factor, 1};
+   shrinkFilter->SetShrinkFactors(dfactors);
+   shrinkFilter->UpdateLargestPossibleRegion();
+   IMask = shrinkFilter->GetOutput();
+   shrinkFilter->Update();
+
+
+   typedef itk::ImageSliceIteratorWithIndex< ImageType > SliceIteratorType;
+   SliceIteratorType It( I, I->GetRequestedRegion() );
+   SliceIteratorType It1( IMask, IMask->GetRequestedRegion() );
+   It.SetFirstDirection( 0 );
+   It.SetSecondDirection( 1 );
+   It.GoToBegin();
+   It1.SetFirstDirection( 0 );
+   It1.SetSecondDirection( 1 );
+   It1.GoToBegin();
+
+
+   /* while( !It.IsAtEnd() )
+   {
+    while ( !It.IsAtEndOfSlice() )
+    {
+      while ( !It.IsAtEndOfLine() )
+      {
+	   if( It1.Get() != 0 )
+		   It.Set(0);
+       ++It;
+	   ++It1;
+	  }
+      It.NextLine();
+	  It1.NextLine();
+	}
+    It.NextSlice();
+	It1.NextSlice();
+   } */
+
+   mask_set = true;
+
+   //extract the centroids
+  typedef itk::ConnectedComponentImageFilter< ImageType, LabelImageType > ConnectedComponentType;
+  ConnectedComponentType::Pointer connectedComponentFilter = ConnectedComponentType::New();
+  connectedComponentFilter->SetInput( IMask );
+
+  // Relabel the components in order of size.
+  typedef itk::RelabelComponentImageFilter< LabelImageType, LabelImageType > RelabelType;
+  RelabelType::Pointer relabeler = RelabelType::New();
+  relabeler->SetInput( connectedComponentFilter->GetOutput() );
+  relabeler->SetMinimumObjectSize(300);
+
+  typedef itk::LabelGeometryImageFilter< LabelImageType > LabelGeometryType;
+  LabelGeometryType::Pointer labelGeometryFilter = LabelGeometryType::New();
+  labelGeometryFilter->SetInput( relabeler->GetOutput() );
+
+  labelGeometryFilter->Update();
+
+  ISoma = relabeler->GetOutput();
+
+  LabelGeometryType::LabelPointType index_temp;
+  int labelValue = labelGeometryFilter->GetNumberOfLabels()-1;
+
+  num_soma = labelValue;
+
+  //compute the centroids of soma
+  Point3D temp;
+  //PointList3D new_SeedPt(labelValue+1);
+  Centroid.RemoveAllPts();
+  for( int i = 1; i <= labelValue; i++)
+  {
+    index_temp = labelGeometryFilter->GetCentroid(i);
+	soma_size.push_back(labelGeometryFilter->GetVolume(i));
+	//float temp_radius = (labelGeometryFilter->GetMajorAxisLength(i) + labelGeometryFilter->GetMinorAxisLength(i))/4;
+	float temp_radius = labelGeometryFilter->GetMinorAxisLength(i)/2;
+	soma_radii.push_back(temp_radius);
+	temp.x = index_temp[0];
+	temp.y = index_temp[1];
+	temp.z = index_temp[2];
+	Centroid.AddPt(temp);
+  }
+
+  //compute the voronoi map
+  typedef itk::DanielssonDistanceMapImageFilter< LabelImageType, LabelImageType > DistanceMapFilterType;
+  DistanceMapFilterType::Pointer DMfilter = DistanceMapFilterType::New();
+  DMfilter->SetInput( ISoma );
+  DMfilter->Update();
+  IVoronoi = DMfilter->GetVoronoiMap();
+
+  /*//partition the space and convert to small images
+  LabelGeometryType::Pointer labelGeometryFilter1 = LabelGeometryType::New();
+  labelGeometryFilter1->SetInput( IVoronoi );
+  labelGeometryFilter1->Update();
+
+  int region_num = labelGeometryFilter1->GetNumberOfLabels();
+  ImageType::RegionType region;
+  ImageType::IndexType index;
+  ImageType::SizeType size;
+  for( int i = 1; i <= region_num; i++)
+  {
+	typedef  itk::FixedArray<float,6> FixedArrayType;
+	FixedArrayType BBox = labelGeometryFilter1->GetBoundingBox(i);
+	index[0] = BBox[0];
+	index[1] = BBox[2];
+	index[2] = BBox[4];
+    size[0] = BBox[1]-BBox[0];
+    size[1] = BBox[3]-BBox[2];
+	size[2] = BBox[5]-BBox[4];
+
+	region.SetSize(size);
+	region.SetIndex(index);
+
+    typedef itk::RegionOfInterestImageFilter< ImageType, 
+                                            ImageType > FilterType;
+
+    FilterType::Pointer filter = FilterType::New();
+	filter->SetInput(I);
+    filter->SetRegionOfInterest(region);
+	filter->Update();
+	std::stringstream sstr;
+	if( i < 10 )
+	{
+	  sstr<< 00;
+	  sstr<< i;
+	}
+	else if( i < 100 )
+	{
+	  sstr<< 0;
+	  sstr<< i;
+	}
+	else
+	{
+	  sstr<<i;
+	}
+
+	sstr <<".tif";
+
+	ImWrite(sstr.str().c_str(), filter->GetOutput());
+  }*/
+
+}
+
+PointList3D ImageOperation::ImSomaCentroidExtraction()
+{
+ typedef itk::BinaryBallStructuringElement< int, 3 > StructuringElementType;
+ StructuringElementType structuringElement;
+ structuringElement.SetRadius( 3 ); // 5x5 structuring element
+ structuringElement.CreateStructuringElement();
+
+ typedef itk::GrayscaleErodeImageFilter<ImageType,ImageType,StructuringElementType > ErodeFilterType;
+ ErodeFilterType::Pointer grayscaleErode = ErodeFilterType::New();
+ grayscaleErode->SetKernel( structuringElement );
+ grayscaleErode->SetInput( I );
+ grayscaleErode->Update();
+
+ //ImagePointer I_E_S = ImGaussian_XY(grayscaleErode->GetOutput(),5);
+
+ //ImWrite("eroded_image.tif", grayscaleErode->GetOutput());
+
+ typedef itk::OtsuThresholdImageFilter<
+ ImageType, ImageType > FilterType;
+ FilterType::Pointer thresholder = FilterType::New();
+ thresholder->SetInput( grayscaleErode->GetOutput() );
+ thresholder->SetOutsideValue( 1 );
+ thresholder->SetInsideValue( 0 );
+ thresholder->SetNumberOfHistogramBins( 256 );
+ thresholder->Update();
+
+ //ImWrite("binarized_image.tif", thresholder->GetOutput());
+
+ //std::cout << "Threshold = " << thresholder->GetThreshold() << std::endl;
+
+  /*typedef itk::BinaryThresholdImageFilter< ImageType, 
+                        ImageType>    ThresholdingFilterType;
+
+ ThresholdingFilterType::Pointer thresholder1 = ThresholdingFilterType::New();
+ 
+ thresholder1->SetLowerThreshold( thresholder->GetThreshold() );
+ thresholder1->SetOutsideValue(  0  );
+ thresholder1->SetInsideValue(  1 );
+ thresholder1->SetUpperThreshold( 255 );
+ thresholder1->SetInput( grayscaleErode->GetOutput() );
+ thresholder1->Update();*/
+
+
+  //extract the centroids
+  typedef itk::ConnectedComponentImageFilter< ImageType, LabelImageType > ConnectedComponentType;
+  ConnectedComponentType::Pointer connectedComponentFilter = ConnectedComponentType::New();
+  connectedComponentFilter->SetInput( thresholder->GetOutput() );
+
+  // Relabel the components in order of size.
+  typedef itk::RelabelComponentImageFilter< LabelImageType, LabelImageType > RelabelType;
+  RelabelType::Pointer relabeler = RelabelType::New();
+  relabeler->SetInput( connectedComponentFilter->GetOutput() );
+  relabeler->SetMinimumObjectSize(50);
+
+  typedef itk::LabelGeometryImageFilter< LabelImageType > LabelGeometryType;
+  LabelGeometryType::Pointer labelGeometryFilter = LabelGeometryType::New();
+  labelGeometryFilter->SetInput( relabeler->GetOutput() );
+
+  labelGeometryFilter->Update();
+
+
+  LabelGeometryType::LabelPointType index_temp;
+  int labelValue = labelGeometryFilter->GetNumberOfLabels()-1;
+
+  //compute the centroids of soma
+  PointList3D soma_seeds;
+  Point3D temp;
+  //PointList3D new_SeedPt(labelValue+1);
+  soma_seeds.RemoveAllPts();
+  for( int i = 1; i <= labelValue; i++)
+  {
+    index_temp = labelGeometryFilter->GetCentroid(i);
+	soma_size.push_back(labelGeometryFilter->GetVolume(i));
+	temp.x = index_temp[0];
+	temp.y = index_temp[1];
+	temp.z = index_temp[2];
+	soma_seeds.AddPt(temp);
+  }
+  return soma_seeds;
+}
+
+void ImageOperation::ImMasking(const char *filename, int shrink_factor)
+{
+   typedef itk::ImageFileReader<IOImageType> ReaderType;		
+   ReaderType::Pointer reader = ReaderType::New();	
+
+   reader->SetFileName(filename);
+   IOImagePointer IIO = reader->GetOutput();
+   reader->Update();
+
+   typedef itk::CastImageFilter<IOImageType, ImageType> CasterType;
+
+   CasterType::Pointer caster = CasterType::New();
+   caster->SetInput(IIO);
+
+   caster->Update();
+   IMask = caster->GetOutput();
+ 
+
+   typedef itk::ShrinkImageFilter< ImageType,ImageType > ShrinkFilterType;
+   ShrinkFilterType::Pointer shrinkFilter = ShrinkFilterType::New(); 
+
+   shrinkFilter->SetInput( IMask );
+   unsigned int dfactors[3] = { shrink_factor, shrink_factor, 1};
+   shrinkFilter->SetShrinkFactors(dfactors);
+   shrinkFilter->UpdateLargestPossibleRegion();
+   IMask = shrinkFilter->GetOutput();
+   shrinkFilter->Update();
+
+
+   typedef itk::ImageSliceIteratorWithIndex< ImageType > SliceIteratorType;
+   SliceIteratorType It( I, I->GetRequestedRegion() );
+   SliceIteratorType It1( IMask, IMask->GetRequestedRegion() );
+   It.SetFirstDirection( 0 );
+   It.SetSecondDirection( 1 );
+   It.GoToBegin();
+   It1.SetFirstDirection( 0 );
+   It1.SetSecondDirection( 1 );
+   It1.GoToBegin();
+
+   /* while( !It.IsAtEnd() )
+   {
+    while ( !It.IsAtEndOfSlice() )
+    {
+      while ( !It.IsAtEndOfLine() )
+      {
+	   if( It1.Get() != 0 )
+		   It.Set(0);
+       ++It;
+	   ++It1;
+	  }
+      It.NextLine();
+	  It1.NextLine();
+	}
+    It.NextSlice();
+	It1.NextSlice();
+   } */
+
+   mask_set = true;
+
+   //extract the centroids
+  typedef itk::ConnectedComponentImageFilter< ImageType, LabelImageType > ConnectedComponentType;
+  ConnectedComponentType::Pointer connectedComponentFilter = ConnectedComponentType::New();
+  connectedComponentFilter->SetInput( IMask );
+
+  // Relabel the components in order of size.
+  typedef itk::RelabelComponentImageFilter< LabelImageType, LabelImageType > RelabelType;
+  RelabelType::Pointer relabeler = RelabelType::New();
+  relabeler->SetInput( connectedComponentFilter->GetOutput() );
+
+
+  typedef itk::LabelGeometryImageFilter< LabelImageType > LabelGeometryType;
+  LabelGeometryType::Pointer labelGeometryFilter = LabelGeometryType::New();
+  labelGeometryFilter->SetInput( relabeler->GetOutput() );
+
+  labelGeometryFilter->Update();
+
+  ISoma = relabeler->GetOutput();
+
+  LabelGeometryType::LabelPointType index_temp;
+  int labelValue = labelGeometryFilter->GetNumberOfLabels()-1;
+
+  num_soma = labelValue;
+
+  //compute the centroids of soma
+  Point3D temp;
+  //PointList3D new_SeedPt(labelValue+1);
+  Centroid.RemoveAllPts();
+  for( int i = 1; i <= labelValue; i++)
+  {
+    index_temp = labelGeometryFilter->GetCentroid(i);
+	soma_size.push_back(labelGeometryFilter->GetVolume(i));
+	temp.x = index_temp[0];
+	temp.y = index_temp[1];
+	temp.z = index_temp[2];
+	Centroid.AddPt(temp);
+  }
+
+  //compute the voronoi map
+  typedef itk::DanielssonDistanceMapImageFilter< LabelImageType, LabelImageType > DistanceMapFilterType;
+  DistanceMapFilterType::Pointer DMfilter = DistanceMapFilterType::New();
+  DMfilter->SetInput( ISoma );
+  DMfilter->Update();
+  IVoronoi = DMfilter->GetVoronoiMap();
+  
+}
 
 IOImagePointer ImageOperation::ImInvert(IOImagePointer In)
 {
@@ -1040,6 +1659,7 @@ IOImagePointer ImageOperation::ImInvert(IOImagePointer In)
 
    return In;
 }
+
 
 void ImageOperation::ImShrink(int shrink_factor)
 {
@@ -1238,30 +1858,29 @@ void ImageOperation::computeGVF(int noise_level, int num_iteration, int smoothin
    }
 
    //IG = gradientFilter->GetOutput();
+   if( num_iteration == 0 )
+   {
+     IGVF = gradientFilter->GetOutput();
+   }
+   else
+   {
+    typedef itk::GradientVectorFlowImageFilter<GradientImageType, GradientImageType> GradientVectorFlowFilterType;
+    GradientVectorFlowFilterType::Pointer GVFFilter = GradientVectorFlowFilterType::New();
 
-   typedef itk::GradientVectorFlowImageFilter<GradientImageType, GradientImageType> GradientVectorFlowFilterType;
-   GradientVectorFlowFilterType::Pointer GVFFilter = GradientVectorFlowFilterType::New();
- 
-    //if( num_iteration == 0 )
-    //{
-    // IGVF = gradientFilter->GetOutput();
-    //}
-    //else
-    //{
-     GVFFilter->SetInput(gradientFilter->GetOutput());
-     GVFFilter->SetNoiseLevel(noise_level);
-     GVFFilter->SetIterationNum(num_iteration);
+    GVFFilter->SetInput(gradientFilter->GetOutput());
+    GVFFilter->SetNoiseLevel(noise_level);
+    GVFFilter->SetIterationNum(num_iteration);
 
-     try
-     {
-      GVFFilter->Update();
-     }
-     catch( itk::ExceptionObject & err )
-     {
-      std::cerr << "Exception caught: " << err << std::endl;
-     }
-     IGVF = GVFFilter->GetOutput();
-    //}
+    try
+    {
+     GVFFilter->Update();
+    }
+    catch( itk::ExceptionObject & err )
+    {
+     std::cerr << "Exception caught: " << err << std::endl;
+    }
+    IGVF = GVFFilter->GetOutput();
+   }
 
   }
   else
@@ -1515,15 +2134,17 @@ void ImageOperation::SeedAdjustment(int iter_num)
    } 
 
     SeedPt = New_SeedPt;
-
+    
 	visit_label.set_size(SeedPt.GetSize());
 	visit_label.fill(0);
 
+	//SeedPt_mg = SeedPt;
+	  std::cout<<"Detected Seed Points:"<<SeedPt.NP<<std::endl;
 } 
 
 void ImageOperation::SeedDetection(float th, int detection_method, int seed_radius)
 {
-   
+
    SM = I->GetLargestPossibleRegion().GetSize()[0];
    SN = I->GetLargestPossibleRegion().GetSize()[1];
    SZ = I->GetLargestPossibleRegion().GetSize()[2];
@@ -1559,12 +2180,28 @@ void ImageOperation::SeedDetection(float th, int detection_method, int seed_radi
   radius2.Fill(rad);
 
   NeighborhoodIteratorType it( radius, IVessel, IVessel->GetRequestedRegion());
+  //NeighborhoodIteratorType2 it21( radius2, IGVF, IGVF->GetRequestedRegion());
+  //NeighborhoodIteratorType2 it22( radius2, V1, V1->GetRequestedRegion());
+
   for (it.GoToBegin(); !it.IsAtEnd(); ++it)
   {
-   if( detection_method == 0 ) //Vesselness and Ridgeness
+   /*if( detection_method == 0 ) //skeleton seeds
    {
+      if(it1.GetCenterPixel() == 1)
+      {
+        //SeedPt.AddPt(it.GetIndex()[0],it.GetIndex()[1],it.GetIndex()[2]);
+		  seed[0] = it.GetIndex()[0];
+		  seed[1] = it.GetIndex()[1];
+		  seed[2] = it.GetIndex()[2];
+		  if( !SeedSparsify( seeds_candidate, seed, seed_radius ) )
+		   seeds_candidate->PushBack( seed );
+      }
+   }*/
+
      if(it.GetCenterPixel() >= th )
+     //if( it.GetCenterPixel() >= th )
 	 {
+	    //SeedPt.AddPt(it.GetIndex()[0],it.GetIndex()[1],it.GetIndex()[2]);
 		  seed[0] = it.GetIndex()[0];
 		  seed[1] = it.GetIndex()[1];
 		  seed[2] = it.GetIndex()[2];
@@ -1578,29 +2215,7 @@ void ImageOperation::SeedDetection(float th, int detection_method, int seed_radi
 		   seeds_candidate->PushBack( seed );
 		}
 	 } 
-   }
-   else if( detection_method == 1) //Local Maxima Seeds
-   {
    
-     ProbImageType::PixelType max = it.GetCenterPixel();
-     for(unsigned i = 0; i < it.Size(); i++)
-     {
-      if( it.GetPixel(i) > max )
-      {
-       max = it.GetPixel(i);
-      }
-	 }
-	 if(max == it.GetCenterPixel()) 
-	 {
-	    //SeedPt.AddPt(it.GetIndex()[0],it.GetIndex()[1],it.GetIndex()[2]);
-		  seed[0] = it.GetIndex()[0];
-		  seed[1] = it.GetIndex()[1];
-		  seed[2] = it.GetIndex()[2];
-	      if( !SeedSparsify( seeds_candidate, seed, seed_radius ) )
-		  seeds_candidate->PushBack( seed );
-	 }
-   }
-  
   }
 
     //SeedPt.SetN( seeds_candidate->Size() );
@@ -1612,7 +2227,10 @@ void ImageOperation::SeedDetection(float th, int detection_method, int seed_radi
 
 	visit_label.set_size(SeedPt.GetSize());
 	visit_label.fill(0);
-  
+
+	//SeedPt_mg = SeedPt;
+	  std::cout<<"Detected Seed Points:"<<SeedPt.NP<<std::endl;
+
 }
 
 bool ImageOperation::SeedSparsify(SamplePointer seeds_candidate, SeedType query_point, int radius)
@@ -1764,7 +2382,10 @@ void ImageOperation::ImCoding( PointList3D Cu, std::vector<float> Ru, int snake_
    VesselTubeType::PointListType list;
   
 
-   if( coding_method == 2 )
+   int min_x, min_y, min_z, max_x, max_y, max_z;
+   min_x = min_y = min_z = max_x = max_y = max_z = 0;
+
+  /* if( coding_method == 2 )
    {
      if( tracing )
 	 {
@@ -1787,18 +2408,33 @@ void ImageOperation::ImCoding( PointList3D Cu, std::vector<float> Ru, int snake_
         p.SetPosition(Cu.Pt[i].x, Cu.Pt[i].y, Cu.Pt[i].z);
         p.SetRadius(Ru[i]);
         list.push_back(p);
+
+		if( min_x > Cu.Pt[i].x)
+			 min_x = Cu.Pt[i].x;
+		if( min_y > Cu.Pt[i].y)
+			 min_y = Cu.Pt[i].y;
+		if( min_z > Cu.Pt[i].z)
+			 min_z = Cu.Pt[i].z;
+		if( max_x < Cu.Pt[i].x)
+			 max_x = Cu.Pt[i].x;
+		if( max_y < Cu.Pt[i].y)
+			 max_y = Cu.Pt[i].y;
+		if( max_z < Cu.Pt[i].z)
+			 max_z = Cu.Pt[i].z;
        }
        VesselTube->GetProperty()->SetName("VesselTube");
        VesselTube->SetId(1);
        VesselTube->SetPoints(list);
 	 }
-   }
+   } */
 
 
    if( tracing )
    {
 	 if( Cu.NP <= 5 )
+	 {
 		 return;
+	 }
 
     if( 1 )
     {
@@ -1894,11 +2530,51 @@ void ImageOperation::ImCoding( PointList3D Cu, std::vector<float> Ru, int snake_
 	}
 	else
 	{
+	  for( int i = 0; i < Cu.GetSize(); i++ )
+	  {
+		 LabelImageType::IndexType index;
+		 index[0] = Cu.Pt[i].x;
+		 index[1] = Cu.Pt[i].y;
+		 index[2] = Cu.Pt[i].z;
+		 //IL->SetPixel( index, 1 );
+		 for( int ix = -Ru[i]; ix <=Ru[i]; ix++ )
+		 {
+		   for( int iy = -Ru[i]; iy <=Ru[i]; iy++ )
+		   {
+		     for( int iz = -Ru[i]; iz <=Ru[i]; iz++ )
+			 { 
+               LabelImageType::IndexType new_index;
+			   Point3D temp_pt;
+			   temp_pt.x = Cu.Pt[i].x + ix;
+               temp_pt.y = Cu.Pt[i].y + iy;
+			   temp_pt.z = Cu.Pt[i].z + iz;
+			   temp_pt.check_out_of_range_3D(SM,SN,SZ);
+			   new_index[0] = temp_pt.x;
+		       new_index[1] = temp_pt.y;
+		       new_index[2] = temp_pt.z;
+			   IL->SetPixel( new_index, snake_id );
+			 }
+		   }
+		 }
+	   }    
+
+		    /*ImageType::IndexType start;
+		    ImageType::SizeType size;
+			start[0] = min_x;
+            start[1] = min_y;
+			start[2] = min_z;
+            size[0] = max_x - min_x;
+			size[1] = max_y - min_y;
+			size[2] = max_z - min_z;
+			ImageType::RegionType region;
+			region.SetSize(size);
+			region.SetIndex(start);
+
 		    typedef itk::Point< float, 3 > PointType;
 	        typedef itk::ImageSliceIteratorWithIndex< LabelImageType > SliceIteratorType;
 			typedef itk::ImageSliceIteratorWithIndex< ImageType > SliceIteratorType1;
-            SliceIteratorType It( IL, IL->GetRequestedRegion() );
-			SliceIteratorType1 It1( I, I->GetRequestedRegion() );
+            SliceIteratorType It( IL, region );
+			SliceIteratorType1 It1( I, region);
 			It.SetFirstDirection( 0 );
             It.SetSecondDirection( 1 );
             It.GoToBegin();
@@ -1939,8 +2615,9 @@ void ImageOperation::ImCoding( PointList3D Cu, std::vector<float> Ru, int snake_
 			  }
                It.NextSlice();
 			   It1.NextSlice();
-			}
-			//update the background and foreground models
+			} */
+
+			/*//update the background and foreground models
 			u1 = sigma1 = u2 = sigma2 = 0;
 			  for(std::vector<float>::iterator j=b_int.begin();j!=b_int.end();++j)     
               {
@@ -1963,7 +2640,7 @@ void ImageOperation::ImCoding( PointList3D Cu, std::vector<float> Ru, int snake_
              }
              sigma2 = sqrt(sigma2/b_int.size());
 			 sigma1 = sqrt(sigma1/f_int.size());
-			 std::cout<<"models:"<<u1<<","<<sigma1<<","<<u2<<","<<sigma2<<std::endl;
+			 std::cout<<"models:"<<u1<<","<<sigma1<<","<<u2<<","<<sigma2<<std::endl;*/
 	}
    }
 }
@@ -2167,6 +2844,100 @@ ProbImagePointer2D ImageOperation::extract_one_slice(ProbImagePointer I_input, i
    return I2D;
 }
 
+void ImageOperation::ImThinning(bool clean_skeleton, int min_length)
+{
+    if( !ISeg )
+		return;
+		
+    typedef itk::BinaryThinningImageFilter3D< ImageType, ImageType > ThinningFilterType;
+    ThinningFilterType::Pointer thinningFilter = ThinningFilterType::New();
+    thinningFilter->SetInput( ISeg );
+    thinningFilter->Update();
+    ISeg = thinningFilter->GetOutput();
+
+	ImagePointer SBW = ISeg;
+  if( clean_skeleton )
+  {
+	//remove barbs
+	typedef itk::CastImageFilter<ImageType,ImageType> CasterType;
+    CasterType::Pointer caster = CasterType::New();
+    caster->SetInput(SBW);
+    caster->Update();
+	ImagePointer BBW = caster->GetOutput();
+
+    typedef itk::NeighborhoodIterator< ImageType, itk::ConstantBoundaryCondition<ImageType> > IteratorType;
+	IteratorType::RadiusType radius;
+    radius.Fill(1);
+
+	IteratorType it( radius, SBW, SBW->GetRequestedRegion() );
+	IteratorType it1( radius, BBW, BBW->GetRequestedRegion() );
+    it.SetNeedToUseBoundaryCondition(true);
+	it1.SetNeedToUseBoundaryCondition(true);
+    for( it1.GoToBegin(); !it1.IsAtEnd(); ++it1 )
+	{
+       it1.SetCenterPixel(0);
+	}
+
+	for( it.GoToBegin(), it1.GoToBegin(); !it.IsAtEnd(), !it1.IsAtEnd(); ++it, ++it1 )
+	{
+	 if( it.GetCenterPixel() == 0 )
+		 continue;
+
+	 int neighbor = 0;
+ 	 for(unsigned int i = 0; i < it.Size(); i++)
+     {
+	  if( i == 13 )
+		continue;
+      if( it.GetPixel(i) == 1 )
+      {
+        neighbor++;
+      }
+	 }
+	 
+	 if( neighbor >= 3 )
+	 {
+		 it.SetCenterPixel(0);
+		 it1.SetCenterPixel(1);
+	   /*for( unsigned int i = 0; i < it.Size(); i++ )
+	   {
+	     if( it.GetPixel(i) == 1 )
+		 {
+		    it.SetPixel(i,0);
+			it1.SetPixel(i,1);
+		 }
+	   }*/
+	 }
+	}
+
+   //filter out small size skeletons
+   typedef itk::ConnectedComponentImageFilter< ImageType,ImageType > ConnectedFilterType;
+   typedef itk::RelabelComponentImageFilter< ImageType, ImageType > RelabelFilterType;
+   ConnectedFilterType::Pointer filter1 = ConnectedFilterType::New(); 
+   RelabelFilterType::Pointer filter2 = RelabelFilterType::New();    
+   filter1->SetFullyConnected(true);
+   filter1->SetInput(SBW);
+   filter1->Update();
+   filter2->SetInput(filter1->GetOutput());
+   filter2->SetMinimumObjectSize(min_length);
+   filter2->Update();
+   ImagePointer LBW = filter2->GetOutput();
+
+   IteratorType it2( radius, LBW, LBW->GetRequestedRegion() );
+   for( it.GoToBegin(), it1.GoToBegin(), it2.GoToBegin(); !it.IsAtEnd(), !it1.IsAtEnd(), !it2.IsAtEnd(); ++it, ++it1, ++it2 )
+   {
+	   if( it2.GetCenterPixel() == 0 )
+	   {
+		  it.SetCenterPixel(0);
+	   }
+	   if( it1.GetCenterPixel() == 1 )
+	   {
+		  it.SetCenterPixel(1);
+	   }
+   } 
+  }
+}
+
+
 void ImageOperation::ImFastMarchingAnimation(int threshold)
 {
 
@@ -2239,96 +3010,1158 @@ void ImageOperation::clear_IMask()
     } 
 }
 
-void ImageOperation::ImMasking(int shrink_factor)
-{	
-   typedef itk::ShrinkImageFilter< ImageType,ImageType > ShrinkFilterType;
-   ShrinkFilterType::Pointer shrinkFilter = ShrinkFilterType::New(); 
+void ImageOperation::ImFastMarching_Spine(PointList3D seg_seeds)
+{
+   typedef itk::NearestNeighborInterpolateImageFunction< 
+                       ImageType, float>  InterpolatorType;
+   InterpolatorType::Pointer I_Interpolator = InterpolatorType::New();
+   I_Interpolator->SetInputImage(I);
 
-   shrinkFilter->SetInput( IMask );
-   unsigned int dfactors[3] = { shrink_factor, shrink_factor, 1};
-   shrinkFilter->SetShrinkFactors(dfactors);
-   shrinkFilter->UpdateLargestPossibleRegion();
-   IMask = shrinkFilter->GetOutput();
-   shrinkFilter->Update();
-
-
-   typedef itk::ImageSliceIteratorWithIndex< ImageType > SliceIteratorType;
-   SliceIteratorType It( I, I->GetRequestedRegion() );
-   SliceIteratorType It1( IMask, IMask->GetRequestedRegion() );
-   It.SetFirstDirection( 0 );
-   It.SetSecondDirection( 1 );
-   It.GoToBegin();
-   It1.SetFirstDirection( 0 );
-   It1.SetSecondDirection( 1 );
-   It1.GoToBegin();
-
-   while( !It.IsAtEnd() )
-   {
-    while ( !It.IsAtEndOfSlice() )
-    {
-      while ( !It.IsAtEndOfLine() )
-      {
-	   if( It1.Get() != 0 )
-		   It.Set(0);
-       ++It;
-	   ++It1;
-	  }
-      It.NextLine();
-	  It1.NextLine();
+	//move the picked points along z axis
+    for( int i = 0; i < seg_seeds.NP; i++ )
+	{
+	   seg_seeds.Pt[i].check_out_of_range_3D(SM,SN,SZ);
+	   ImageType::IndexType index;
+	   ImageType::IndexType index1;
+	   index[0] = index1[0] = seg_seeds.Pt[i].x;
+	   index[1] = index1[1] = seg_seeds.Pt[i].y;
+	   index[2] = seg_seeds.Pt[i].z;
+	   for( int j = 0; j < SZ; j++ )
+	   {
+         index1[2] = j;
+		 if( I_Interpolator->EvaluateAtIndex(index1) > I_Interpolator->EvaluateAtIndex(index) )
+		 {
+		    seg_seeds.Pt[i].z = j;
+			index[2] = j;
+		 }
+	   }
 	}
-    It.NextSlice();
-	It1.NextSlice();
-   }
 
-   mask_set = true;
+	 bool auto_threshold = true;
 
-   //extract the centroids
-  typedef itk::ConnectedComponentImageFilter< ImageType, LabelImageType > ConnectedComponentType;
-  ConnectedComponentType::Pointer connectedComponentFilter = ConnectedComponentType::New();
-  connectedComponentFilter->SetInput( IMask );
+	 int  timeThreshold = 40;
+	 int intTh = 5;
+     int maxTh = 100;
+	 int stepTh = 5;
+	 std::vector<float> score;
 
-  // Relabel the components in order of size.
-  typedef itk::RelabelComponentImageFilter< LabelImageType, LabelImageType > RelabelType;
-  RelabelType::Pointer relabeler = RelabelType::New();
-  relabeler->SetInput( connectedComponentFilter->GetOutput() );
-  relabeler->SetMinimumObjectSize(100);
+     if( !ISeg )
+	 {
+	   ISeg = ImageType::New();
+	   ISeg->SetRegions(I->GetRequestedRegion());
+	   ISeg->Allocate();
+	 }
 
-  typedef itk::LabelGeometryImageFilter< LabelImageType > LabelGeometryType;
-  LabelGeometryType::Pointer labelGeometryFilter = LabelGeometryType::New();
-  labelGeometryFilter->SetInput( relabeler->GetOutput() );
+	 typedef itk::RescaleIntensityImageFilter< ImageType, ProbImageType> RescaleFilterType;
+     RescaleFilterType::Pointer rescale = RescaleFilterType::New();
 
-  labelGeometryFilter->Update();
+	/*if( display_set )
+     rescale->SetInput( IDisplay );
+	else
+	 rescale->SetInput( I ); */
 
-  ISoma = relabeler->GetOutput();
+	 ImagePointer ITemp = ImageType::New();
+	 ITemp->SetRegions(I->GetRequestedRegion());
+	 ITemp->Allocate();
+     typedef itk::ImageSliceIteratorWithIndex< ImageType > SliceIteratorType;
+	 typedef itk::ImageSliceIteratorWithIndex< LabelImageType > SliceIteratorType1;
+     SliceIteratorType iit1( I, I->GetRequestedRegion() );
+	 SliceIteratorType1 iit2( IL, IL->GetRequestedRegion() );
+	 SliceIteratorType iit3( ITemp, ITemp->GetRequestedRegion() );
 
-  LabelGeometryType::LabelPointType index_temp;
-  int labelValue = labelGeometryFilter->GetNumberOfLabels()-1;
+     iit1.SetFirstDirection( 0 );
+     iit1.SetSecondDirection( 1 );
+	 iit2.SetFirstDirection( 0 );
+     iit2.SetSecondDirection( 1 );
+	 iit3.SetFirstDirection( 0 );
+     iit3.SetSecondDirection( 1 );
 
-  num_soma = labelValue;
+	 iit1.GoToBegin();
+     iit2.GoToBegin();
+	 iit3.GoToBegin();
 
-  //compute the centroids of soma
-  Point3D temp;
-  //PointList3D new_SeedPt(labelValue+1);
-  Centroid.RemoveAllPts();
-  for( int i = 1; i <= labelValue; i++)
-  {
-    index_temp = labelGeometryFilter->GetCentroid(i);
-	temp.x = index_temp[0];
-	temp.y = index_temp[1];
-	temp.z = index_temp[2];
-	Centroid.AddPt(temp);
-  }
+	 std::cout<<"check point 1"<<std::endl;
 
-  //compute the voronoi map
-  typedef itk::DanielssonDistanceMapImageFilter< LabelImageType, LabelImageType > DistanceMapFilterType;
-  DistanceMapFilterType::Pointer DMfilter = DistanceMapFilterType::New();
-  DMfilter->SetInput( ISoma );
-  DMfilter->Update();
-  IVoronoi = DMfilter->GetVoronoiMap();
-  
+    while( !iit1.IsAtEnd() )
+    {
+	  while ( !iit1.IsAtEndOfSlice() )
+      {
+	 	while( !iit1.IsAtEndOfLine())
+	 	{
+	       if( iit2.Get() != 1 )
+	 		 iit3.Set(iit1.Get());
+ 
+   	      ++iit1;
+          ++iit2;
+		  ++iit3;
+ 		}
+		 iit1.NextLine();
+		 iit2.NextLine();
+		 iit3.NextLine();
+	  }
+	  iit1.NextSlice();
+	  iit2.NextSlice();
+	  iit3.NextSlice();
+    } 
+
+	 rescale->SetInput( ITemp );
+
+     rescale->SetOutputMinimum( 0 );
+     rescale->SetOutputMaximum( 1 );
+     rescale->Update();
+
+	 typedef itk::BinaryThresholdImageFilter< ProbImageType, 
+                        ImageType>    ThresholdingFilterType;
+     ThresholdingFilterType::Pointer thresholder = ThresholdingFilterType::New();
+     
+     thresholder->SetLowerThreshold( 0.0 );
+     //thresholder->SetUpperThreshold( timeThreshold  );
+     thresholder->SetOutsideValue(  0  );
+     thresholder->SetInsideValue(  1 );
+
+	 typedef  itk::FastMarchingImageFilter< ProbImageType, 
+                              ProbImageType >    FastMarchingFilterType;
+	 FastMarchingFilterType::Pointer  fastMarching = FastMarchingFilterType::New();
+
+	 typedef FastMarchingFilterType::NodeContainer           NodeContainer;
+     typedef FastMarchingFilterType::NodeType                NodeType;
+     NodeContainer::Pointer seeds = NodeContainer::New();
+     seeds->Initialize();
+
+	 for( int i = 0; i< seg_seeds.NP; i++ )
+	 {
+	   ProbImageType::IndexType  seedPosition;
+       seedPosition[0] = seg_seeds.Pt[i].x;
+       seedPosition[1] = seg_seeds.Pt[i].y;
+	   seedPosition[2] = seg_seeds.Pt[i].z;
+	   NodeType node;
+	   const double seedValue = 0.0;
+       node.SetValue( seedValue );
+       node.SetIndex( seedPosition );
+       seeds->InsertElement( i, node );
+	 }
+
+
+	 fastMarching->SetTrialPoints(  seeds  );
+     fastMarching->SetOutputSize( 
+             rescale->GetOutput()->GetBufferedRegion().GetSize() );
+	 const double stoppingTime = timeThreshold * 1.1;
+     fastMarching->SetStoppingValue(  stoppingTime  );
+
+     fastMarching->SetInput( rescale->GetOutput() );
+     thresholder->SetInput( fastMarching->GetOutput() );
+     //thresholder->Update();
+
+	  std::cout<<"check point 2"<<std::endl;
+
+     if( auto_threshold )
+	 {
+	   for( int i = intTh; i < maxTh; i = i + stepTh )
+	   {
+	    thresholder->SetUpperThreshold( i );
+		thresholder->Update();
+
+		float score_temp = 0;
+
+	    //estimate u1 and u2
+		float u1, u2;
+		int size_u1, size_u2;
+		size_u1 = size_u2 = 0;
+		u1 = u2 = 0;
+
+        SliceIteratorType it1( I, I->GetRequestedRegion() );
+	    SliceIteratorType it2( thresholder->GetOutput(), thresholder->GetOutput()->GetRequestedRegion() );
+
+		it1.SetFirstDirection( 0 );
+        it1.SetSecondDirection( 1 );
+	    it2.SetFirstDirection( 0 );
+        it2.SetSecondDirection( 1 );
+
+	    it1.GoToBegin();
+        it2.GoToBegin();
+
+        while( !it1.IsAtEnd() )
+        {
+	     while ( !it1.IsAtEndOfSlice() )
+         {
+	 	  while( !it1.IsAtEndOfLine())
+	 	  {
+	         if( it2.Get() == 1)
+			 {
+			   u1 += it1.Get();
+			   size_u1++;
+			 }
+			 else
+			 {
+			   u2 += (float)it1.Get();
+			   size_u2++;
+			 }
+   	         ++it1;
+             ++it2;
+ 		  }
+		   it1.NextLine();
+		   it2.NextLine();
+	     }
+	 	 it1.NextSlice();
+		 it2.NextSlice();
+		} 
+
+        u1 = (float)u1/(float)size_u1;
+		u2 = (float)u2/(float)size_u2;
+		//std::cout<<"u1,u2:"<<u1<<","<<u2<<std::endl;
+        //compute the score
+	    it1.GoToBegin();
+        it2.GoToBegin();
+
+        while( !it1.IsAtEnd() )
+        {
+	     while ( !it1.IsAtEndOfSlice() )
+         {
+	 	  while( !it1.IsAtEndOfLine())
+	 	  {
+	         if( it2.Get() == 1)
+			 {
+			   //score_temp += pow(it1.Get() - u1, 2);
+			   score_temp -=  log(MAX(norm_density(it1.Get(),u1,sigma1),std::numeric_limits<float>::epsilon()));
+			 }
+			 else
+			 {
+			   //score_temp += pow(it1.Get() - u2, 2);
+			   score_temp -=  log(MAX(norm_density(it1.Get(),u2,sigma2),std::numeric_limits<float>::epsilon()));
+			 }
+   	         ++it1;
+             ++it2;
+ 		  }
+		   it1.NextLine();
+		   it2.NextLine();
+	     }
+	 	 it1.NextSlice();
+		 it2.NextSlice();
+		}
+		score.push_back(score_temp);
+	   }
+
+	   vnl_vector<float> score_vnl(score.size());
+	   //pick the threshold with lowest score (cost)
+	   for( int j = 0; j < score.size(); j++ )
+	   {
+	     score_vnl(j) = score[j];
+		 //std::cout<<score_vnl(j)<<",";
+	   }
+	   //std::cout<<std::endl;
+
+	   int idx = score_vnl.arg_max();
+	   std::cout<<"Selected Threshold:"<<intTh + stepTh * idx<<std::endl;
+       thresholder->SetUpperThreshold( intTh + stepTh * idx );
+	   thresholder->Update();
+
+	 }
+	 else
+	 {
+	  thresholder->SetUpperThreshold( timeThreshold  );
+	  thresholder->Update();
+	 }
+
+
+
+	  std::cout<<"check point 3"<<std::endl;
+
+     ImagePointer BW_temp = thresholder->GetOutput();
+     
+     SliceIteratorType it1( BW_temp, BW_temp->GetRequestedRegion() );
+	 SliceIteratorType it2( ISeg, ISeg->GetRequestedRegion() );
+
+	 it1.SetFirstDirection( 0 );
+     it1.SetSecondDirection( 1 );
+	 it2.SetFirstDirection( 0 );
+     it2.SetSecondDirection( 1 );
+
+	 it1.GoToBegin();
+     it2.GoToBegin();
+
+    while( !it1.IsAtEnd() )
+    {
+	  while ( !it1.IsAtEndOfSlice() )
+      {
+	 	while( !it1.IsAtEndOfLine())
+	 	{
+	       if( it1.Get() == 1 && it2.Get() == 0 )
+	 		 it2.Set(1);
+ 
+   	      ++it1;
+          ++it2;
+ 		}
+		 it1.NextLine();
+		 it2.NextLine();
+	  }
+	 	 it1.NextSlice();
+		 it2.NextSlice();
+    } 
+
+	 std::cout<<"check point 4"<<std::endl;
 }
 
+void ImageOperation::ImFastMarching_Soma(PointList3D seg_seeds)
+{
 
+   typedef itk::NearestNeighborInterpolateImageFunction< 
+                       ImageType, float>  InterpolatorType;
+   InterpolatorType::Pointer I_Interpolator = InterpolatorType::New();
+   I_Interpolator->SetInputImage(I);
+
+	//move the picked points along z axis
+    for( int i = 0; i < seg_seeds.NP; i++ )
+	{
+	   seg_seeds.Pt[i].check_out_of_range_3D(SM,SN,SZ);
+	   ImageType::IndexType index;
+	   ImageType::IndexType index1;
+	   index[0] = index1[0] = seg_seeds.Pt[i].x;
+	   index[1] = index1[1] = seg_seeds.Pt[i].y;
+	   index[2] = seg_seeds.Pt[i].z;
+	   for( int j = 0; j < SZ; j++ )
+	   {
+         index1[2] = j;
+		 if( I_Interpolator->EvaluateAtIndex(index1) > I_Interpolator->EvaluateAtIndex(index) )
+		 {
+		    seg_seeds.Pt[i].z = j;
+			index[2] = j;
+		 }
+	   }
+	}
+
+	 bool auto_threshold = true;
+
+	 int  timeThreshold = 40;
+	 int intTh = 5;
+     int maxTh = 100;
+	 int stepTh = 5;
+	 std::vector<float> score;
+
+     if( !IMask )
+	 {
+	   IMask = ImageType::New();
+	   IMask->SetRegions(I->GetRequestedRegion());
+	   IMask->Allocate();
+	 }
+
+	 typedef itk::RescaleIntensityImageFilter< ImageType, ProbImageType> RescaleFilterType;
+     RescaleFilterType::Pointer rescale = RescaleFilterType::New();
+
+	if( display_set )
+     rescale->SetInput( IDisplay );
+	else
+	 rescale->SetInput( I ); 
+
+     rescale->SetOutputMinimum( 0 );
+     rescale->SetOutputMaximum( 1 );
+     rescale->Update();
+
+	 typedef itk::BinaryThresholdImageFilter< ProbImageType, 
+                        ImageType>    ThresholdingFilterType;
+     ThresholdingFilterType::Pointer thresholder = ThresholdingFilterType::New();
+     
+     thresholder->SetLowerThreshold( 0.0 );
+     //thresholder->SetUpperThreshold( timeThreshold  );
+     thresholder->SetOutsideValue(  0  );
+     thresholder->SetInsideValue(  1 );
+
+	 typedef  itk::FastMarchingImageFilter< ProbImageType, 
+                              ProbImageType >    FastMarchingFilterType;
+	 FastMarchingFilterType::Pointer  fastMarching = FastMarchingFilterType::New();
+
+	 typedef FastMarchingFilterType::NodeContainer           NodeContainer;
+     typedef FastMarchingFilterType::NodeType                NodeType;
+     NodeContainer::Pointer seeds = NodeContainer::New();
+     seeds->Initialize();
+
+	 for( int i = 0; i< seg_seeds.NP; i++ )
+	 {
+	   ProbImageType::IndexType  seedPosition;
+       seedPosition[0] = seg_seeds.Pt[i].x;
+       seedPosition[1] = seg_seeds.Pt[i].y;
+	   seedPosition[2] = seg_seeds.Pt[i].z;
+	   NodeType node;
+	   const double seedValue = 0.0;
+       node.SetValue( seedValue );
+       node.SetIndex( seedPosition );
+       seeds->InsertElement( i, node );
+	 }
+
+
+	 fastMarching->SetTrialPoints(  seeds  );
+     fastMarching->SetOutputSize( 
+             rescale->GetOutput()->GetBufferedRegion().GetSize() );
+	 const double stoppingTime = timeThreshold * 1.1;
+     fastMarching->SetStoppingValue(  stoppingTime  );
+
+     fastMarching->SetInput( rescale->GetOutput() );
+     thresholder->SetInput( fastMarching->GetOutput() );
+     //thresholder->Update();
+
+     if( auto_threshold )
+	 {
+	   for( int i = intTh; i < maxTh; i = i + stepTh )
+	   {
+	    thresholder->SetUpperThreshold( i );
+		thresholder->Update();
+
+		float score_temp = 0;
+
+	    //estimate u1 and u2
+		float u1, u2;
+		int size_u1, size_u2;
+		size_u1 = size_u2 = 0;
+		u1 = u2 = 0;
+        typedef itk::ImageSliceIteratorWithIndex< ImageType > SliceIteratorType;
+        SliceIteratorType it1( I, I->GetRequestedRegion() );
+	    SliceIteratorType it2( thresholder->GetOutput(), thresholder->GetOutput()->GetRequestedRegion() );
+
+		it1.SetFirstDirection( 0 );
+        it1.SetSecondDirection( 1 );
+	    it2.SetFirstDirection( 0 );
+        it2.SetSecondDirection( 1 );
+
+	    it1.GoToBegin();
+        it2.GoToBegin();
+
+        while( !it1.IsAtEnd() )
+        {
+	     while ( !it1.IsAtEndOfSlice() )
+         {
+	 	  while( !it1.IsAtEndOfLine())
+	 	  {
+	         if( it2.Get() == 1)
+			 {
+			   u1 += it1.Get();
+			   size_u1++;
+			 }
+			 else
+			 {
+			   u2 += (float)it1.Get();
+			   size_u2++;
+			 }
+   	         ++it1;
+             ++it2;
+ 		  }
+		   it1.NextLine();
+		   it2.NextLine();
+	     }
+	 	 it1.NextSlice();
+		 it2.NextSlice();
+		} 
+
+        u1 = (float)u1/(float)size_u1;
+		u2 = (float)u2/(float)size_u2;
+		//std::cout<<"u1,u2:"<<u1<<","<<u2<<std::endl;
+        //compute the score
+	    it1.GoToBegin();
+        it2.GoToBegin();
+
+        while( !it1.IsAtEnd() )
+        {
+	     while ( !it1.IsAtEndOfSlice() )
+         {
+	 	  while( !it1.IsAtEndOfLine())
+	 	  {
+	         if( it2.Get() == 1)
+			 {
+			   score_temp += pow(it1.Get() - u1, 2);
+			   //score_temp -=  log(MAX(norm_density(it1.Get(),u1,sigma1),std::numeric_limits<float>::epsilon()));
+			 }
+			 else
+			 {
+			   score_temp += pow(it1.Get() - u2, 2);
+			   //score_temp -=  log(MAX(norm_density(it1.Get(),u2,sigma2),std::numeric_limits<float>::epsilon()));
+			 }
+   	         ++it1;
+             ++it2;
+ 		  }
+		   it1.NextLine();
+		   it2.NextLine();
+	     }
+	 	 it1.NextSlice();
+		 it2.NextSlice();
+		}
+		score.push_back(score_temp);
+	   }
+
+	   vnl_vector<float> score_vnl(score.size());
+	   //pick the threshold with lowest score (cost)
+	   for( int j = 0; j < score.size(); j++ )
+	   {
+	     score_vnl(j) = score[j];
+		 //std::cout<<score_vnl(j)<<",";
+	   }
+	   //std::cout<<std::endl;
+
+	   int idx = score_vnl.arg_min();
+	   std::cout<<"Selected Threshold:"<<intTh + stepTh * idx<<std::endl;
+       thresholder->SetUpperThreshold( intTh + stepTh * idx );
+	   thresholder->Update();
+
+	 }
+	 else
+	 {
+	  thresholder->SetUpperThreshold( timeThreshold  );
+	  thresholder->Update();
+	 }
+
+  
+	 //IDist = fastMarching->GetOutput();
+
+	 /*typedef itk::CastImageFilter<ProbImageType,IOImageType1> ProbCasterType;
+     ProbCasterType::Pointer prob_caster = ProbCasterType::New();
+     prob_caster->SetInput(IDist);
+     IOImagePointer1 IIO = prob_caster->GetOutput();
+     prob_caster->Update();
+
+	 typedef itk::ImageFileWriter<IOImageType1> WriterType;
+
+	 WriterType::Pointer writer;	
+	 writer = WriterType::New();	
+
+	 writer->SetFileName("DistanceMap.tif");
+	 writer->SetInput(IIO);
+	 writer->Update(); */
+
+     ImagePointer BW_temp = thresholder->GetOutput();
+     
+	 /*//dilate
+	 typedef itk::BinaryBallStructuringElement<
+     ImageType::PixelType,
+     3 > StructuringElementType;
+     StructuringElementType structuringElement;
+     structuringElement.SetRadius( 3 );
+     structuringElement.CreateStructuringElement();
+
+     typedef itk::BinaryDilateImageFilter<
+     ImageType,
+     ImageType,
+     StructuringElementType > DilateFilterType;
+
+     DilateFilterType::Pointer binaryDilate = DilateFilterType::New();
+
+     binaryDilate->SetKernel( structuringElement );
+     binaryDilate->SetDilateValue( 1 );
+     binaryDilate->SetInput(BW_temp);
+	 binaryDilate->Update();
+
+
+	 BW_temp = binaryDilate->GetOutput();*/
+
+
+
+	 typedef itk::ImageSliceIteratorWithIndex< ImageType > SliceIteratorType;
+     SliceIteratorType it1( BW_temp, BW_temp->GetRequestedRegion() );
+	 SliceIteratorType it2( IMask, IMask->GetRequestedRegion() );
+
+	 it1.SetFirstDirection( 0 );
+     it1.SetSecondDirection( 1 );
+	 it2.SetFirstDirection( 0 );
+     it2.SetSecondDirection( 1 );
+
+	 it1.GoToBegin();
+     it2.GoToBegin();
+
+    while( !it1.IsAtEnd() )
+    {
+	  while ( !it1.IsAtEndOfSlice() )
+      {
+	 	while( !it1.IsAtEndOfLine())
+	 	{
+	       if( it1.Get() == 1 && it2.Get() == 0 )
+	 		 it2.Set(1);
+ 
+   	      ++it1;
+          ++it2;
+ 		}
+		 it1.NextLine();
+		 it2.NextLine();
+	  }
+	 	 it1.NextSlice();
+		 it2.NextSlice();
+    } 
+}
+
+std::vector<float> ImageOperation::ImFastMarchingI(PointList3D seg_seeds)
+{
+
+	 bool auto_threshold = true;
+
+	 int  timeThreshold = 40;
+	 int intTh = 5;
+     int maxTh = 100;
+	 int stepTh = 5;
+	 std::vector<float> score;
+
+	 ISeg = ImageType::New();
+	 ISeg->SetRegions(I->GetRequestedRegion());
+	 ISeg->Allocate();
+
+
+	 /*typedef   itk::GradientMagnitudeRecursiveGaussianImageFilter< 
+                               ImageType, 
+                               ProbImageType >  GradientFilterType;
+	 GradientFilterType::Pointer  gradientMagnitude = GradientFilterType::New();
+	 gradientMagnitude->SetInput( I );
+     gradientMagnitude->SetSigma(1);
+     gradientMagnitude->Update();
+	 IGMag = gradientMagnitude->GetOutput();*/
+
+	 typedef itk::RescaleIntensityImageFilter< ImageType, ProbImageType> RescaleFilterType;
+     RescaleFilterType::Pointer rescale = RescaleFilterType::New();
+
+	if( IDisplay )
+     rescale->SetInput( IDisplay );
+	else
+	 rescale->SetInput( I ); 
+
+     rescale->SetOutputMinimum( 0 );
+     rescale->SetOutputMaximum( 1 );
+     rescale->Update();
+
+	 typedef itk::BinaryThresholdImageFilter< ProbImageType, 
+                        ImageType>    ThresholdingFilterType;
+     ThresholdingFilterType::Pointer thresholder = ThresholdingFilterType::New();
+     
+     thresholder->SetLowerThreshold( 0.0 );
+     //thresholder->SetUpperThreshold( timeThreshold  );
+     thresholder->SetOutsideValue(  0  );
+     thresholder->SetInsideValue(  1 );
+
+	 typedef  itk::FastMarchingImageFilter< ProbImageType, 
+                              ProbImageType >    FastMarchingFilterType;
+	 FastMarchingFilterType::Pointer  fastMarching = FastMarchingFilterType::New();
+
+	 typedef FastMarchingFilterType::NodeContainer           NodeContainer;
+     typedef FastMarchingFilterType::NodeType                NodeType;
+     NodeContainer::Pointer seeds = NodeContainer::New();
+     seeds->Initialize();
+
+	 for( int i = 0; i< seg_seeds.NP; i++ )
+	 {
+	   ProbImageType::IndexType  seedPosition;
+       seedPosition[0] = seg_seeds.Pt[i].x;
+       seedPosition[1] = seg_seeds.Pt[i].y;
+	   seedPosition[2] = seg_seeds.Pt[i].z;
+	   NodeType node;
+	   const double seedValue = 0.0;
+       node.SetValue( seedValue );
+       node.SetIndex( seedPosition );
+       seeds->InsertElement( i, node );
+	 }
+
+
+	 fastMarching->SetTrialPoints(  seeds  );
+     fastMarching->SetOutputSize( 
+             rescale->GetOutput()->GetBufferedRegion().GetSize() );
+	 //const double stoppingTime = timeThreshold * 1.1;
+	 const double stoppingTime = maxTh;
+     fastMarching->SetStoppingValue(  stoppingTime  );
+
+     fastMarching->SetInput( rescale->GetOutput() );
+     thresholder->SetInput( fastMarching->GetOutput() );
+     //thresholder->Update();
+
+     if( auto_threshold )
+	 {
+	   for( int i = intTh; i < maxTh; i = i + stepTh )
+	   {
+	    thresholder->SetUpperThreshold( i );
+		thresholder->Update();
+
+		float score_temp = 0;
+
+	    //estimate u1 and u2
+		//float u1, u2;
+		u1 = u2 = sigma1 = sigma2 = 0;
+		std::vector<float> b_int, f_int;
+
+        typedef itk::ImageSliceIteratorWithIndex< ImageType > SliceIteratorType;
+        SliceIteratorType it1( I, I->GetRequestedRegion() );
+	    SliceIteratorType it2( thresholder->GetOutput(), thresholder->GetOutput()->GetRequestedRegion() );
+
+		it1.SetFirstDirection( 0 );
+        it1.SetSecondDirection( 1 );
+	    it2.SetFirstDirection( 0 );
+        it2.SetSecondDirection( 1 );
+
+	    it1.GoToBegin();
+        it2.GoToBegin();
+
+        while( !it1.IsAtEnd() )
+        {
+	     while ( !it1.IsAtEndOfSlice() )
+         {
+	 	  while( !it1.IsAtEndOfLine())
+	 	  {
+	         if( it2.Get() == 1)
+			 {
+			   //u1 += it1.Get();
+			   f_int.push_back(it1.Get());
+			 }
+			 else
+			 {
+			   b_int.push_back(it1.Get());
+			 }
+   	         ++it1;
+             ++it2;
+ 		  }
+		   it1.NextLine();
+		   it2.NextLine();
+	     }
+	 	 it1.NextSlice();
+		 it2.NextSlice();
+		} 
+
+        for(std::vector<float>::iterator j=b_int.begin();j!=b_int.end();++j)     
+        {
+            u2 += *j;
+        }
+		for(std::vector<float>::iterator k=f_int.begin();k!=f_int.end();++k)     
+        {
+			u1 += *k;
+        }
+        u2 /= b_int.size();
+		u1 /= f_int.size();
+
+        for(std::vector<float>::iterator j=b_int.begin();j!=b_int.end();++j)       
+        {
+            sigma2 += pow(*j - u2, 2);
+        }
+		for(std::vector<float>::iterator k=f_int.begin();k!=f_int.end();++k)       
+        {
+			sigma1 += pow(*k - u1, 2);
+        }
+        sigma2 = sqrt(sigma2/b_int.size());
+		sigma1 = sqrt(sigma1/f_int.size());
+
+		//std::cout<<"u1,u2:"<<u1<<","<<u2<<std::endl;
+        //compute the score
+	    it1.GoToBegin();
+        it2.GoToBegin();
+
+        while( !it1.IsAtEnd() )
+        {
+	     while ( !it1.IsAtEndOfSlice() )
+         {
+	 	  while( !it1.IsAtEndOfLine())
+	 	  {
+	         if( it2.Get() == 1)
+			 {
+			   score_temp += pow(it1.Get() - u1, 2);
+			   //score_temp -=  log(MAX(norm_density(it1.Get(),u1,sigma1),std::numeric_limits<float>::epsilon()));
+			 }
+			 else
+			 {
+			   score_temp += pow(it1.Get() - u2, 2);
+			   //score_temp -=  log(MAX(norm_density(it1.Get(),u2,sigma2),std::numeric_limits<float>::epsilon()));
+			 }
+   	         ++it1;
+             ++it2;
+ 		  }
+		   it1.NextLine();
+		   it2.NextLine();
+	     }
+	 	 it1.NextSlice();
+		 it2.NextSlice();
+		}
+		score.push_back(score_temp);
+	   }
+
+	   vnl_vector<float> score_vnl(score.size());
+	   //pick the threshold with lowest score (cost)
+	   for( int j = 0; j < score.size(); j++ )
+	   {
+	     score_vnl(j) = score[j];
+		 //std::cout<<score_vnl(j)<<",";
+	   }
+	   //std::cout<<std::endl;
+
+	   int idx = score_vnl.arg_min();
+	   std::cout<<"Selected Threshold:"<<intTh + stepTh * idx<<std::endl;
+       thresholder->SetUpperThreshold( intTh + stepTh * idx );
+	   thresholder->Update();
+	 }
+	 else
+	 {
+	  thresholder->SetUpperThreshold( timeThreshold  );
+	  thresholder->Update();
+	 }
+
+	 //IDist = fastMarching->GetOutput();
+
+	 /*typedef itk::CastImageFilter<ProbImageType,IOImageType1> ProbCasterType;
+     ProbCasterType::Pointer prob_caster = ProbCasterType::New();
+     prob_caster->SetInput(IDist);
+     IOImagePointer1 IIO = prob_caster->GetOutput();
+     prob_caster->Update();
+
+	 typedef itk::ImageFileWriter<IOImageType1> WriterType;
+
+	 WriterType::Pointer writer;	
+	 writer = WriterType::New();	
+
+	 writer->SetFileName("DistanceMap.tif");
+	 writer->SetInput(IIO);
+	 writer->Update(); */
+
+
+     ISeg = thresholder->GetOutput();
+
+	 //ImThinning(false, 2);
+
+     return score;
+	 /*typedef itk::ImageSliceIteratorWithIndex< ImageType > SliceIteratorType;
+     SliceIteratorType it1( BW_temp, BW_temp->GetRequestedRegion() );
+	 SliceIteratorType it2( ISeg, ISeg->GetRequestedRegion() );
+
+	 it1.SetFirstDirection( 0 );
+     it1.SetSecondDirection( 1 );
+	 it2.SetFirstDirection( 0 );
+     it2.SetSecondDirection( 1 );
+
+	 it1.GoToBegin();
+     it2.GoToBegin();
+
+    while( !it1.IsAtEnd() )
+    {
+	  while ( !it1.IsAtEndOfSlice() )
+      {
+	 	while( !it1.IsAtEndOfLine())
+	 	{
+	       if( it1.Get() == 1 && it2.Get() == 0 )
+	 		 it2.Set(1);
+ 
+   	      ++it1;
+          ++it2;
+ 		}
+		 it1.NextLine();
+		 it2.NextLine();
+	  }
+	 	 it1.NextSlice();
+		 it2.NextSlice();
+    } */
+
+   //VBW = ISeg;
+}
+
+void ImageOperation::ImFastMarchingI_New(PointList3D seg_seeds)
+{
+
+     int time_min = 10;
+	 int time_step = 2;
+	 int time_max = 100;
+
+	 typedef itk::ImageSliceIteratorWithIndex< ImageType > SliceIteratorType;
+
+	 ISeg = ImageType::New();
+	 ISeg->SetRegions(I->GetRequestedRegion());
+	 ISeg->Allocate();
+
+
+	 typedef itk::RescaleIntensityImageFilter< ImageType, ProbImageType> RescaleFilterType;
+     RescaleFilterType::Pointer rescale = RescaleFilterType::New();
+     rescale->SetInput( I );
+     rescale->SetOutputMinimum( 0.01 );
+     rescale->SetOutputMaximum( 1 );
+     rescale->Update();
+
+     //2-LabelFast Marching segmentation
+	 typedef  itk::FastMarchingImageFilter< ProbImageType, 
+                              ProbImageType >    FastMarchingFilterType;
+	 FastMarchingFilterType::Pointer  fastMarching = FastMarchingFilterType::New();
+
+	 typedef FastMarchingFilterType::NodeContainer           NodeContainer;
+     typedef FastMarchingFilterType::NodeType                NodeType;
+     NodeContainer::Pointer seeds = NodeContainer::New();
+     seeds->Initialize();
+
+	 for( int i = 0; i< seg_seeds.NP; i++ )
+	 {
+	   ProbImageType::IndexType  seedPosition;
+       seedPosition[0] = seg_seeds.Pt[i].x;
+       seedPosition[1] = seg_seeds.Pt[i].y;
+	   seedPosition[2] = seg_seeds.Pt[i].z;
+	   NodeType node;
+	   const double seedValue = 0.0;
+       node.SetValue( seedValue );
+       node.SetIndex( seedPosition );
+       seeds->InsertElement( i, node );
+	 }
+	 fastMarching->SetTrialPoints(  seeds  );
+     fastMarching->SetOutputSize( 
+             rescale->GetOutput()->GetBufferedRegion().GetSize() );
+	 //const double stoppingTime = time_max * 1.1;
+     //fastMarching->SetStoppingValue(  stoppingTime  );
+     fastMarching->SetInput( rescale->GetOutput() );
+     fastMarching->Update();
+
+     //selecting time threshold
+
+	 std::vector<double> energy_score;
+
+	 std::cout<<"Time Threshold:";
+	 for( int i = time_min; i < time_max; i+= time_step )
+	 {
+		 std::cout<<i<<":"<<std::endl;
+		 typedef itk::ImageSliceIteratorWithIndex< ProbImageType > IteratorType;
+		 IteratorType it( fastMarching->GetOutput(), fastMarching->GetOutput()->GetRequestedRegion());
+         SliceIteratorType it_I( I, I->GetRequestedRegion() );
+
+		 //compute u and v
+		 double u = 0;
+		 double v = 0;
+         it.SetFirstDirection(0);
+		 it.SetSecondDirection(1);
+		 it.GoToBegin();
+		 it_I.SetFirstDirection(0);
+		 it_I.SetSecondDirection(1);
+		 it_I.GoToBegin();
+		 int u_count = 0;
+		 while( !it.IsAtEnd() )
+		 {
+		    while( !it.IsAtEndOfSlice() )
+			{
+				while( !it.IsAtEndOfLine())
+				{
+				   if( it.Get() < i )
+				   {
+				     u += it_I.Get();
+					 u_count++;
+				   }
+				   else
+                     v += it_I.Get();
+				   ++it;
+				   ++it_I;
+				}
+				it.NextLine();
+				it_I.NextLine();
+			}
+			it.NextSlice();
+			it_I.NextLine();
+		 }
+
+		 u = u/u_count;
+		 v = v/(SM*SN*SZ - u_count);
+
+		 std::cout<<"u:"<<u<<","<<"v:"<<v<<std::endl;
+
+		 //compute the energy score
+		 double temp_score = 0;
+         it.SetFirstDirection(0);
+		 it.SetSecondDirection(1);
+		 it.GoToBegin();
+		 it_I.SetFirstDirection(0);
+		 it_I.SetSecondDirection(1);
+		 it_I.GoToBegin();
+		 while( !it.IsAtEnd() )
+		 {
+		    while( !it.IsAtEndOfSlice() )
+			{
+				while( !it.IsAtEndOfLine())
+				{
+				   if( it.Get() < i )
+				      temp_score += pow(it_I.Get() - u, 2);
+				   else
+                      temp_score += pow(it_I.Get() - v, 2);
+				   ++it;
+				   ++it_I;
+				}
+				it.NextLine();
+				it_I.NextLine();
+			}
+			it.NextSlice();
+			it_I.NextSlice();
+		 }
+
+		 temp_score = sqrt(temp_score);
+		 energy_score.push_back(temp_score);
+		 std::cout<<temp_score<<std::endl;
+	 }
+
+
+	 vnl_vector<double> score(energy_score.size());
+	 for( int k = 0; k < energy_score.size(); k++ )
+	 {
+	   score(k) = energy_score[k];
+	 }
+
+	 int idx = score.arg_min();
+
+	 int timeThreshold = time_min + idx * time_step;
+
+	 std::cout<<"optimal time threshold:"<<timeThreshold<<std::endl;
+	
+      typedef itk::BinaryThresholdImageFilter< ProbImageType, 
+                        ImageType>    ThresholdingFilterType;
+      ThresholdingFilterType::Pointer thresholder = ThresholdingFilterType::New();
+      thresholder->SetLowerThreshold( 0.0 );
+      thresholder->SetUpperThreshold( timeThreshold  );
+      thresholder->SetOutsideValue(  0  );
+      thresholder->SetInsideValue(  1 );
+	  thresholder->SetInput( fastMarching->GetOutput() );
+      thresholder->Update();
+
+     ImagePointer BW_temp = thresholder->GetOutput();
+
+     SliceIteratorType it1( BW_temp, BW_temp->GetRequestedRegion() );
+	 SliceIteratorType it2( ISeg, ISeg->GetRequestedRegion() );
+
+	 it1.SetFirstDirection( 0 );
+     it1.SetSecondDirection( 1 );
+	 it2.SetFirstDirection( 0 );
+     it2.SetSecondDirection( 1 );
+
+	 it1.GoToBegin();
+     it2.GoToBegin();
+
+    while( !it1.IsAtEnd() )
+    {
+	  while ( !it1.IsAtEndOfSlice() )
+      {
+	 	while( !it1.IsAtEndOfLine())
+	 	{
+	       if( it1.Get() == 1 && it2.Get() == 0 )
+	 		 it2.Set(1);
+ 
+   	      ++it1;
+          ++it2;
+ 		}
+		 it1.NextLine();
+		 it2.NextLine();
+	  }
+	 	 it1.NextSlice();
+		 it2.NextSlice();
+    }
+
+   //VBW = ISeg;
+
+
+}
+
+void ImageOperation::ImFastMarchingII(PointList3D seg_seeds, int idx)
+{
+
+    if( idx == 1 )
+	{
+	 ISeg = ImageType::New();
+	 ISeg->SetRegions(I->GetRequestedRegion());
+	 ISeg->Allocate();
+
+	 /*typedef   itk::GradientMagnitudeRecursiveGaussianImageFilter< 
+                               ImageType, 
+                               ProbImageType >  GradientFilterType;
+	 GradientFilterType::Pointer  gradientMagnitude = GradientFilterType::New();
+	 gradientMagnitude->SetInput( I );
+     gradientMagnitude->SetSigma(1);
+     gradientMagnitude->Update();
+	 IGMag = gradientMagnitude->GetOutput();*/
+
+	 typedef itk::RescaleIntensityImageFilter< ImageType, ProbImageType> RescaleFilterType;
+     RescaleFilterType::Pointer rescale = RescaleFilterType::New();
+
+	if( display_set )
+     rescale->SetInput( IDisplay );
+	else
+	 rescale->SetInput( I ); 
+
+     rescale->SetOutputMinimum( 0 );
+     rescale->SetOutputMaximum( 1 );
+     rescale->Update();
+	 IGMag = rescale->GetOutput();
+	}
+
+
+	 /*typedef itk::BinaryThresholdImageFilter< ProbImageType, 
+                        ImageType>    ThresholdingFilterType;
+     ThresholdingFilterType::Pointer thresholder = ThresholdingFilterType::New();
+     int  timeThreshold = 2;
+     thresholder->SetLowerThreshold( 0.0 );
+     thresholder->SetUpperThreshold( timeThreshold  );
+     thresholder->SetOutsideValue(  0  );
+     thresholder->SetInsideValue(  1 );*/
+
+
+
+
+	 typedef itk::BinaryThresholdImageFilter< ProbImageType, 
+                        ImageType>    ThresholdingFilterType;
+     ThresholdingFilterType::Pointer thresholder = ThresholdingFilterType::New();
+     int  timeThreshold = 50;
+     thresholder->SetLowerThreshold( 0.0 );
+     thresholder->SetUpperThreshold( timeThreshold  );
+     thresholder->SetOutsideValue(  0  );
+     thresholder->SetInsideValue(  1 );
+
+	 typedef  itk::FastMarchingImageFilter< ProbImageType, 
+                              ProbImageType >    FastMarchingFilterType;
+	 FastMarchingFilterType::Pointer  fastMarching = FastMarchingFilterType::New();
+
+	 typedef FastMarchingFilterType::NodeContainer           NodeContainer;
+     typedef FastMarchingFilterType::NodeType                NodeType;
+     NodeContainer::Pointer seeds = NodeContainer::New();
+     seeds->Initialize();
+
+	 for( int i = 0; i< seg_seeds.NP; i++ )
+	 {
+	   ProbImageType::IndexType  seedPosition;
+       seedPosition[0] = seg_seeds.Pt[i].x;
+       seedPosition[1] = seg_seeds.Pt[i].y;
+	   seedPosition[2] = seg_seeds.Pt[i].z;
+	   NodeType node;
+	   const double seedValue = 0.0;
+       node.SetValue( seedValue );
+       node.SetIndex( seedPosition );
+       seeds->InsertElement( i, node );
+	 }
+
+     fastMarching->SetTrialPoints(  seeds  );
+     fastMarching->SetOutputSize( 
+           IGMag->GetBufferedRegion().GetSize() );
+	 const double stoppingTime = timeThreshold * 1.1;
+     fastMarching->SetStoppingValue(  stoppingTime  );
+
+     fastMarching->SetInput( IGMag );
+     thresholder->SetInput( fastMarching->GetOutput() );
+     thresholder->Update();
+
+     ImagePointer BW_temp = thresholder->GetOutput();
+
+
+	 typedef itk::ImageSliceIteratorWithIndex< ImageType > SliceIteratorType;
+     SliceIteratorType it1( BW_temp, BW_temp->GetRequestedRegion() );
+	 SliceIteratorType it2( ISeg, ISeg->GetRequestedRegion() );
+
+	 it1.SetFirstDirection( 0 );
+     it1.SetSecondDirection( 1 );
+	 it2.SetFirstDirection( 0 );
+     it2.SetSecondDirection( 1 );
+
+	 it1.GoToBegin();
+     it2.GoToBegin();
+
+    while( !it1.IsAtEnd() )
+    {
+	  while ( !it1.IsAtEndOfSlice() )
+      {
+	 	while( !it1.IsAtEndOfLine())
+	 	{
+	       if( it1.Get() == 1 && it2.Get() == 0 )
+	 		 it2.Set(idx);
+ 
+   	      ++it1;
+          ++it2;
+ 		}
+		 it1.NextLine();
+		 it2.NextLine();
+	  }
+	 	 it1.NextSlice();
+		 it2.NextSlice();
+    }
+
+   //VBW = ISeg;
+}
 
 ImagePointer ImageOperation::ImGaussian(ImagePointer I_In, int sigma)
 {
@@ -2390,6 +4223,29 @@ ProbImagePointer ImageOperation::ImGaussian(ProbImagePointer I_In, int sigma)
     return Out;
 }
 
+ImagePointer ImageOperation::ImGaussian_XY(ImagePointer I_In, int sigma)
+{
+    typedef itk::RecursiveGaussianImageFilter <ImageType, ImageType> FilterType;
+
+    FilterType::Pointer filterX = FilterType::New();
+    FilterType::Pointer filterY = FilterType::New();
+    filterX->SetDirection(0); // x direction
+    filterY->SetDirection(1); // y direction
+    filterX->SetOrder(FilterType::ZeroOrder);
+    filterY->SetOrder(FilterType::ZeroOrder);
+    filterX->SetNormalizeAcrossScale(false);
+    filterY->SetNormalizeAcrossScale(false);
+    filterX->SetSigma(sigma);
+    filterY->SetSigma(sigma);
+
+    filterX->SetInput( I_In );
+    filterY->SetInput(filterX->GetOutput() );
+    filterY->Update();
+    ImagePointer Out = filterY->GetOutput();
+	Out->DisconnectPipeline();
+    return Out;
+}
+
 IOImagePointer ImageOperation::ImGaussian_XY(IOImagePointer I_In, int sigma)
 {
     typedef itk::RecursiveGaussianImageFilter <IOImageType, IOImageType> FilterType;
@@ -2413,9 +4269,277 @@ IOImagePointer ImageOperation::ImGaussian_XY(IOImagePointer I_In, int sigma)
     return Out;
 }
 
+void ImageOperation::ComputeMultiVesselness(double sigma_min, double sigma_max, int sigma_step)
+{
+
+  if( display_set == false )
+  {	
+	typedef itk::CastImageFilter<ImageType,ImageType> CasterType;
+	CasterType::Pointer caster = CasterType::New();
+	caster->SetInput(I);
+	IDisplay = caster->GetOutput();
+	caster->Update();
+
+	display_set = true;
+  }
+  else
+  {
+  	typedef itk::CastImageFilter<ImageType,ImageType> CasterType;
+	CasterType::Pointer caster = CasterType::New();
+	caster->SetInput(IDisplay);
+	I = caster->GetOutput();
+	caster->Update();
+  }
+
+    bool SatoVesselness = false;
+
+	if( SatoVesselness )
+	{
+	  // Declare the type of enhancement filter - use ITK's 3D vesselness (Sato)
+      typedef itk::Hessian3DToVesselnessMeasureImageFilter<float> VesselnessFilterType;
+  
+      // Declare the type of multiscale enhancement filter
+      typedef itk::MultiScaleHessianBasedMeasureImageFilter<ImageType,VesselnessFilterType> 
+  	  MultiScaleEnhancementFilterType;
+
+	  // Instantiate the multiscale filter and set the input image
+      MultiScaleEnhancementFilterType::Pointer multiScaleEnhancementFilter = 
+  	  MultiScaleEnhancementFilterType::New();
+      multiScaleEnhancementFilter->SetInput( I );
+      multiScaleEnhancementFilter->SetSigmaMin( sigma_min );
+      multiScaleEnhancementFilter->SetSigmaMax( sigma_max );
+      multiScaleEnhancementFilter->SetNumberOfSigmaSteps( sigma_step );
+    
+      // Get the vesselness filter and set the parameters
+      VesselnessFilterType* vesselnessFilter = 
+  	  multiScaleEnhancementFilter->GetHessianToMeasureFilter();
+      vesselnessFilter->SetAlpha1(0.5);
+      vesselnessFilter->SetAlpha2(2);
+
+     try
+     {
+      multiScaleEnhancementFilter->Update();
+     }
+      catch (itk::ExceptionObject & err)
+     {
+      std::cerr << "Exception caught: "<< err << std::endl;
+     }
+     I = ImRescale(multiScaleEnhancementFilter->GetOutput());
+	}
+	else
+	{
+	  typedef itk::MultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter<
+      ImageType,ProbImageType> MultiScaleVesselnessFilterType;
+      MultiScaleVesselnessFilterType::Pointer MultiScaleVesselnessFilter =
+      MultiScaleVesselnessFilterType::New();
+      MultiScaleVesselnessFilter->SetInput( I );
+      MultiScaleVesselnessFilter->SetSigmaMin( sigma_min );
+      MultiScaleVesselnessFilter->SetSigmaMax( sigma_max );
+      MultiScaleVesselnessFilter->SetNumberOfSigmaSteps( sigma_step );
+
+     try
+     {
+      MultiScaleVesselnessFilter->Update();
+     }
+     catch( itk::ExceptionObject & err )
+     {
+      std::cerr << "Exception caught: "<< err << std::endl;
+     }
+
+	 I = ImRescale(MultiScaleVesselnessFilter->GetOutput());
+	}
+}
+
+void ImageOperation::ComputeGVFVesselness2D()
+{
+  double FrangiAlpha = 0.5;
+  double FrangiBeta = 0.5;
+  double FrangiC = 10;
+  //double A = 2 * pow(FrangiAlpha,2);
+  double B = 2 * pow(FrangiBeta,2);
+  double C = 2 * pow(FrangiC,2);
+
+  typedef itk::CastImageFilter<ImageType,ProbImageType> CasterType;
+  CasterType::Pointer caster = CasterType::New();
+  caster->SetInput(I);
+  caster->Update();
+  IVessel = caster->GetOutput();
+
+  typedef itk::RecursiveGaussianImageFilter<
+  ProbImageType, ProbImageType > FilterType;
+  //typedef itk::GradientImageFilter<ProbImageType, float, float> FilterType;
+  ProbImagePointer Dx = extract_one_component(0,IGVF);
+  ProbImagePointer Dy = extract_one_component(1,IGVF);
+  
+
+  //Dxx
+  FilterType::Pointer filter1 = FilterType::New();
+  filter1->SetDirection(0);
+  filter1->SetOrder(FilterType::FirstOrder);
+  filter1->SetInput(Dx);
+  filter1->SetSigma(1);
+  filter1->Update();
+  ProbImagePointer Dxx = filter1->GetOutput();
+
+  //Dxy
+  FilterType::Pointer filter2 = FilterType::New();
+  filter2->SetDirection(1);
+  filter2->SetOrder(FilterType::FirstOrder);
+  filter2->SetInput(Dx);
+  filter2->SetSigma(1);
+  filter2->Update();
+  ProbImagePointer Dxy = filter2->GetOutput();
+
+  //Dyy
+  FilterType::Pointer filter4 = FilterType::New();
+  filter4->SetDirection(1);
+  filter4->SetOrder(FilterType::FirstOrder);
+  filter4->SetInput(Dy);
+  filter4->SetSigma(1);
+  filter4->Update();
+  ProbImagePointer Dyy = filter4->GetOutput();
+
+
+  typedef itk::ImageSliceIteratorWithIndex< ProbImageType > SliceIteratorType;
+  typedef itk::ImageSliceIteratorWithIndex< GradientImageType > GradientSliceIteratorType;
+  typedef itk::ImageSliceIteratorWithIndex< ImageType > ISliceIteratorType;
+
+  SliceIteratorType inputIt1( Dxx, Dxx->GetRequestedRegion() );
+  inputIt1.SetFirstDirection( 0 );
+  inputIt1.SetSecondDirection( 1 );
+  SliceIteratorType inputIt2( Dxy, Dxy->GetRequestedRegion() );
+  inputIt2.SetFirstDirection( 0 );
+  inputIt2.SetSecondDirection( 1 );
+  SliceIteratorType inputIt4( Dyy, Dyy->GetRequestedRegion() );
+  inputIt4.SetFirstDirection( 0 );
+  inputIt4.SetSecondDirection( 1 );
+
+  ISliceIteratorType inputIt7(I, I->GetRequestedRegion() );
+  inputIt7.SetFirstDirection( 0 );
+  inputIt7.SetSecondDirection( 1 );
+
+  /*SliceIteratorType outputIt1(Vx1, Vx1->GetRequestedRegion() );
+  outputIt1.SetFirstDirection( 2 );
+  outputIt1.SetSecondDirection( 1 );
+  SliceIteratorType outputIt2(Vy1, Vy1->GetRequestedRegion() );
+  outputIt2.SetFirstDirection( 2 );
+  outputIt2.SetSecondDirection( 1 );
+  SliceIteratorType outputIt3(Vz1, Vz1->GetRequestedRegion() );
+  outputIt3.SetFirstDirection( 2 );
+  outputIt3.SetSecondDirection( 1 );*/
+
+  GradientSliceIteratorType inputIt0( IGVF, IGVF->GetRequestedRegion() );
+  inputIt0.SetFirstDirection( 0 );
+  inputIt0.SetSecondDirection( 1 );
+
+  SliceIteratorType outputIt4( IVessel, IVessel->GetRequestedRegion() );
+  outputIt4.SetFirstDirection( 0 );
+  outputIt4.SetSecondDirection( 1 );
+
+  inputIt0.GoToBegin();
+  inputIt1.GoToBegin();
+  inputIt2.GoToBegin();
+  inputIt4.GoToBegin();
+  inputIt7.GoToBegin();
+
+  outputIt4.GoToBegin();
+  
+  double Ma[2][2];
+  double V[2][2];
+  double d[2];
+  
+  while( !inputIt1.IsAtEnd() )
+  {
+   while ( !inputIt1.IsAtEndOfSlice() )
+  {
+    while ( !inputIt1.IsAtEndOfLine() )
+   {
+     if( inputIt7.Get() == 0 )
+     //if( 0 )
+	 {
+	   outputIt4.Set(0);
+	 }
+	 else
+	 {
+	  Ma[0][0] = inputIt1.Get();
+	  Ma[0][1] = inputIt2.Get();
+	  Ma[1][0] = inputIt2.Get();
+	  Ma[1][1] = inputIt4.Get();
+     eigen_decomposition2D(Ma,V,d);
+
+     double Lambda1 = d[0];
+     double Lambda2 = d[1];
+	 if(Lambda2>=0.0)
+	 {
+	   outputIt4.Set(0);
+	 }
+	 else
+	 {
+      double Rb  = Lambda1 / Lambda2; 
+      double S  = vcl_sqrt( pow(Lambda1,2) + pow(Lambda2,2) );
+	  double vesMeasure_2  = 
+         vcl_exp ( -1.0 * ((vnl_math_sqr( Rb )) /  ( B )));
+	  double vesMeasure_3  = 
+         ( 1 - vcl_exp( -1.0 * (( vnl_math_sqr( S )) / ( C ))));
+	  
+	  float V_Saliency =  vesMeasure_2 * vesMeasure_3;
+	  outputIt4.Set(V_Saliency);
+	 }
+	 }
+	 ++inputIt0;
+     ++inputIt1;
+     ++inputIt2;
+	 ++inputIt4;
+	 ++inputIt7;
+	 ++outputIt4;
+    }
+   inputIt0.NextLine();
+   inputIt1.NextLine();
+   inputIt2.NextLine();
+   inputIt4.NextLine();
+   inputIt7.NextLine();
+   outputIt4.NextLine();
+   }
+   inputIt0.NextSlice();
+   inputIt1.NextSlice();
+   inputIt2.NextSlice();
+   inputIt4.NextSlice();
+   inputIt7.NextSlice();
+   outputIt4.NextSlice();
+  }
+
+  //rescale the vesselness to [0,255]
+  typedef itk::RescaleIntensityImageFilter< ProbImageType, ProbImageType> RescaleFilterType;
+  RescaleFilterType::Pointer rescale = RescaleFilterType::New();
+  rescale->SetInput( IVessel );
+  rescale->SetOutputMinimum( 0 );
+  rescale->SetOutputMaximum( 255 );
+  rescale->Update();
+  IVessel = rescale->GetOutput();
+
+  typedef itk::OtsuThresholdImageFilter<
+  ProbImageType, ProbImageType > TH_FilterType;
+  TH_FilterType::Pointer thresholder = TH_FilterType::New();
+  thresholder->SetInput( IVessel );
+  thresholder->SetOutsideValue( 1 );
+  thresholder->SetInsideValue( 0 );
+  thresholder->SetNumberOfHistogramBins( 256 );
+  thresholder->Update();
+
+  v_threshold = thresholder->GetThreshold();
+
+  std::cout<<" - Selected Otsu Threshold:"<<v_threshold<<std::endl;
+}
+
 
 void ImageOperation::ComputeGVFVesselness()
 {
+  if( this->SZ == 1 )
+  {
+    this->ComputeGVFVesselness2D();
+    return;
+  }
+
   double FrangiAlpha = 0.5;
   double FrangiBeta = 0.5;
   double FrangiC = 10;
@@ -2428,12 +4552,6 @@ void ImageOperation::ComputeGVFVesselness()
   caster->SetInput(I);
   caster->Update();
   IVessel = caster->GetOutput();
-
-  typedef itk::CastImageFilter<GradientImageType,GradientImageType> CasterType1;
-  CasterType1::Pointer caster2 = CasterType1::New();
-  caster2->SetInput(IGVF);
-  caster2->Update();
-  V1 = caster2->GetOutput();
 
   /*CasterType::Pointer caster1 = CasterType::New();
   caster1->SetInput(I);
@@ -2575,10 +4693,6 @@ void ImageOperation::ComputeGVFVesselness()
   inputIt0.SetFirstDirection( 0 );
   inputIt0.SetSecondDirection( 1 );
 
-  GradientSliceIteratorType outputIt( V1, V1->GetRequestedRegion() );
-  outputIt.SetFirstDirection( 0 );
-  outputIt.SetSecondDirection( 1 );
-
   SliceIteratorType outputIt4( IVessel, IVessel->GetRequestedRegion() );
   outputIt4.SetFirstDirection( 0 );
   outputIt4.SetSecondDirection( 1 );
@@ -2592,7 +4706,6 @@ void ImageOperation::ComputeGVFVesselness()
   inputIt6.GoToBegin();
   inputIt7.GoToBegin();
 
-  outputIt.GoToBegin();
   outputIt4.GoToBegin();
   
   double Ma[3][3];
@@ -2609,11 +4722,6 @@ void ImageOperation::ComputeGVFVesselness()
      //if( 0 )
 	 {
 	   outputIt4.Set(0);
-	   GradientPixelType temp;
-	   temp[0] = 0;
-	   temp[1] = 0;
-	   temp[2] = 0;
-	   outputIt.Set(temp);
 	 }
 	 else
 	 {
@@ -2653,15 +4761,6 @@ void ImageOperation::ComputeGVFVesselness()
 	  //std::cout<<V_Saliency<<std::endl;
 	  outputIt4.Set(V_Saliency);
 	 }
-
-	 //outputIt1.Set(V[0][0]);
-	 //outputIt2.Set(V[1][0]);
-	 //outputIt3.Set(V[2][0]);
-	 GradientPixelType temp;
-	 temp[0] = (float)V[0][0];
-	 temp[1] = (float)V[1][0];
-	 temp[2] = (float)V[2][0];
-	 outputIt.Set(temp);
 	 }
 	 ++inputIt0;
      ++inputIt1;
@@ -2671,9 +4770,7 @@ void ImageOperation::ComputeGVFVesselness()
      ++inputIt5;
 	 ++inputIt6;
 	 ++inputIt7;
-	 ++outputIt;
 	 ++outputIt4;
-
     }
    inputIt0.NextLine();
    inputIt1.NextLine();
@@ -2683,7 +4780,6 @@ void ImageOperation::ComputeGVFVesselness()
    inputIt5.NextLine();
    inputIt6.NextLine();
    inputIt7.NextLine();
-   outputIt.NextLine();
    outputIt4.NextLine();
    }
    inputIt0.NextSlice();
@@ -2694,7 +4790,6 @@ void ImageOperation::ComputeGVFVesselness()
    inputIt5.NextSlice();
    inputIt6.NextSlice();
    inputIt7.NextSlice();
-   outputIt.NextSlice();
    outputIt4.NextSlice();
   }
 
@@ -2707,6 +4802,18 @@ void ImageOperation::ComputeGVFVesselness()
   rescale->Update();
   IVessel = rescale->GetOutput();
 
+  typedef itk::OtsuThresholdImageFilter<
+  ProbImageType, ProbImageType > TH_FilterType;
+  TH_FilterType::Pointer thresholder = TH_FilterType::New();
+  thresholder->SetInput( IVessel );
+  thresholder->SetOutsideValue( 1 );
+  thresholder->SetInsideValue( 0 );
+  thresholder->SetNumberOfHistogramBins( 256 );
+  thresholder->Update();
+
+  v_threshold = thresholder->GetThreshold();
+
+  std::cout<<" - Selected Otsu Threshold:"<<v_threshold<<std::endl;
 }
 
 
@@ -2727,6 +4834,44 @@ ProbImagePointer extract_one_component(int index, GradientImagePointer G)
 
     return output;
 }
+
+void eigen_decomposition2D(double A[2][2], double V[2][2], double d[2])
+{
+   double tmp = sqrt(pow(A[0][0]-A[1][1],2) + 4 * pow(A[0][1],2));
+   double v1x = 2 * A[1][0];
+   double v1y = A[1][1] - A[0][0] + tmp;
+   double mag = sqrt(pow(v1x,2)+pow(v1y,2));
+   
+   v1x /= (mag + std::numeric_limits<float>::epsilon());
+   v1y /= (mag + std::numeric_limits<float>::epsilon());
+
+   double v2x = -1 * v1y;
+   double v2y = v1x;
+
+   double mu1 = 0.5 * (A[0][0] + A[1][1] + tmp);
+   double mu2 = 0.5 * (A[0][0] + A[1][1] - tmp);
+
+   if( fabs(mu1) > fabs(mu2) )
+   {
+     V[0][0] = v2x;
+	 V[1][0] = v2y;
+     V[0][1] = v1x;
+	 V[1][1] = v1y;
+	 d[0] = mu2;
+	 d[1] = mu1;
+   }
+   else
+   {
+     V[0][0] = v1x;
+	 V[1][0] = v1y;
+     V[0][1] = v2x;
+	 V[1][1] = v2y;
+	 d[0] = mu1;
+	 d[1] = mu2;
+   }
+
+}
+
 
 void eigen_decomposition(double A[3][3], double V[3][3], double d[3]) {
 	int n = 3;
