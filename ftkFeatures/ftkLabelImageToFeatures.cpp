@@ -175,6 +175,18 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 	column->SetName( "ID" );
 	table->AddColumn(column);
 	
+	column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName( "centroid_x" );
+	table->AddColumn(column);
+
+	column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName( "centroid_y" );
+	table->AddColumn(column);
+
+	column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName( "centroid_z" );
+	table->AddColumn(column);
+	
 	for (int i=0; i < IntrinsicFeatures::N; ++i)
 	{
 		if(doFeat[i])
@@ -221,6 +233,9 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 		ftk::IntrinsicFeatures * features = labFilter->GetFeatures(id);
 		vtkSmartPointer<vtkVariantArray> row = vtkSmartPointer<vtkVariantArray>::New();
 		row->InsertNextValue( vtkVariant(id) );
+		row->InsertNextValue( vtkVariant((int)features->Centroid[0]) );
+		row->InsertNextValue( vtkVariant((int)features->Centroid[1]) );
+		row->InsertNextValue( vtkVariant((int)features->Centroid[2]) );
 		for (int i=0; i<IntrinsicFeatures::N; ++i)
 		{
 			if(doFeat[i])
@@ -238,6 +253,74 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 	}
 	return table;
 }
+
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::GetObjectCentroids(int time)
+{
+	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
+
+	if(!intensityImage || !labelImage)
+	{
+		return table;
+	}
+
+	//Compute features:
+	typedef ftk::LabelImageToFeatures< IPixelT, LPixelT, 3 > FeatureCalcType;
+	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
+	if(useRegion)
+	{
+		labFilter->SetImageInputs( intensityImage->GetItkPtr<IPixelT>(time,intensityChannel), labelImage->GetItkPtr<LPixelT>(time,labelChannel), regionIndex, regionSize );
+	}
+	else
+	{
+		labFilter->SetImageInputs( intensityImage->GetItkPtr<IPixelT>(time,intensityChannel), labelImage->GetItkPtr<LPixelT>(time,labelChannel) );
+	}
+	labFilter->Update();
+
+	//Init the table (headers):
+	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName( "ID" );
+	table->AddColumn(column);
+
+	column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName( "centroid_x" );
+	table->AddColumn(column);
+
+	column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName( "centroid_y" );
+	table->AddColumn(column);
+
+	column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName( "centroid_z" );
+	table->AddColumn(column);
+	
+	std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
+
+	for (int i=0; i<(int)labels.size(); ++i)
+	{
+		FeatureCalcType::LabelPixelType id = labels.at(i);
+		if(id == 0) continue;
+		if(useIDs)
+			if(IDs.find(id) == IDs.end()) continue;	//Don't care about this id, so skip it
+
+		ftk::IntrinsicFeatures * features = labFilter->GetFeatures(id);
+		vtkSmartPointer<vtkVariantArray> row = vtkSmartPointer<vtkVariantArray>::New();
+		row->InsertNextValue( vtkVariant(id) );
+		row->InsertNextValue( vtkVariant((int)features->Centroid[0]) );
+		row->InsertNextValue( vtkVariant((int)features->Centroid[1]) );
+		row->InsertNextValue( vtkVariant((int)features->Centroid[2]) );
+
+		table->InsertNextRow(row);
+	}
+	return table;
+}
+
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
 
 //Update the features in this table whose names match (sets doFeat)
 //Will create new rows if necessary:
@@ -346,6 +429,9 @@ void IntrinsicFeatureCalculator::Update(vtkSmartPointer<vtkTable> table, std::ma
 			}
 
 			//Update table:
+			table->SetValueByName(row,"centroid_x", vtkVariant((int)features->Centroid[0]));
+			table->SetValueByName(row,"centroid_y", vtkVariant((int)features->Centroid[1]));
+			table->SetValueByName(row,"centroid_z", vtkVariant((int)features->Centroid[2]));
 			int col_count = 0;
 			for (int f=0; f<IntrinsicFeatures::N; ++f)
 			{

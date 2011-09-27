@@ -91,6 +91,7 @@ public:
 	vtkSmartPointer<vtkTable> Compute(void);			//Compute features that are ON and return table with values (for all objects)
 	//void Update(vtkSmartPointer<vtkTable> table);		//Update the features in this table whose names match (sets doFeat)
 //	void Update(vtkSmartPointer<vtkTable> table, std::map<int, ftk::Object::Point> * cc = NULL, std::map<int, ftk::Object::Box> * bbox = NULL, vtkSmartPointer<vtkTable> NucAdjTable = NULL);
+	vtkSmartPointer<vtkTable> GetObjectCentroids(int time);
 	void Update(vtkSmartPointer<vtkTable> table, std::map<int, ftk::Object::Point> * cc = NULL, std::map<int, ftk::Object::Box> * bbox = NULL, vtkSmartPointer<vtkTable> NucAdjTable = NULL, int currtime = 0);
 	void Append(vtkSmartPointer<vtkTable> table);		//Compute features that are ON and append them to the existing table (makes more columns)
 
