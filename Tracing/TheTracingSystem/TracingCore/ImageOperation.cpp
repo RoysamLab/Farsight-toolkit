@@ -2711,6 +2711,7 @@ ProbImagePointer2D ImageOperation::extract_one_slice_yz(ProbImagePointer I_input
    //std::cout<<"index:"<<index<<std::endl;
    filter->SetExtractionRegion(desiredRegion);
    filter->SetInput(I_temp);
+   filter->SetDirectionCollapseToSubmatrix(); // This is required.
 
    filter->Update();
    ProbImagePointer2D I2D = filter->GetOutput();
@@ -2751,6 +2752,7 @@ ImagePointer2D ImageOperation::extract_one_slice_xz(ImagePointer I_input, int in
 	
    filter->SetExtractionRegion(desiredRegion);
    filter->SetInput(I_temp);
+   filter->SetDirectionCollapseToSubmatrix(); // This is required.
 
    filter->Update();
    ImagePointer2D I2D = filter->GetOutput();
@@ -2780,6 +2782,7 @@ ProbImagePointer2D ImageOperation::extract_one_slice_xz(ProbImagePointer I_input
    //std::cout<<"index:"<<index<<std::endl;
    filter->SetExtractionRegion(desiredRegion);
    filter->SetInput(I_temp);
+   filter->SetDirectionCollapseToSubmatrix(); // This is required.
 
    filter->Update();
    ProbImagePointer2D I2D = filter->GetOutput();
@@ -2789,15 +2792,9 @@ ProbImagePointer2D ImageOperation::extract_one_slice_xz(ProbImagePointer I_input
 
 ImagePointer2D ImageOperation::extract_one_slice(ImagePointer I_input, int index)
 {
-   typedef itk::ImageDuplicator< ImageType > DuplicatorType;
-   DuplicatorType::Pointer Duplicator = DuplicatorType::New();
-   Duplicator->SetInputImage(I_input);
-   Duplicator->Update();
-   ImagePointer I_temp = Duplicator->GetOutput();
-
    typedef itk::ExtractImageFilter< ImageType, ImageType2D > FilterType;
    FilterType::Pointer filter = FilterType::New();
-   ImageType::RegionType inputRegion = I_temp->GetLargestPossibleRegion();
+   ImageType::RegionType inputRegion = I_input->GetLargestPossibleRegion();
    ImageType::SizeType size = inputRegion.GetSize();
    size[2] = 0;
    ImageType::IndexType start = inputRegion.GetIndex();
@@ -2808,7 +2805,8 @@ ImagePointer2D ImageOperation::extract_one_slice(ImagePointer I_input, int index
    desiredRegion.SetIndex( start );
 	
    filter->SetExtractionRegion(desiredRegion);
-   filter->SetInput(I_temp);
+   filter->SetInput(I_input);
+   filter->SetDirectionCollapseToSubmatrix(); // This is required.
 
    filter->Update();
    ImagePointer2D I2D = filter->GetOutput();
@@ -2838,6 +2836,7 @@ ProbImagePointer2D ImageOperation::extract_one_slice(ProbImagePointer I_input, i
    //std::cout<<"index:"<<index<<std::endl;
    filter->SetExtractionRegion(desiredRegion);
    filter->SetInput(I_temp);
+   filter->SetDirectionCollapseToSubmatrix(); // This is required.
 
    filter->Update();
    ProbImagePointer2D I2D = filter->GetOutput();
