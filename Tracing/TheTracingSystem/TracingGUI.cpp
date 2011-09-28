@@ -3482,12 +3482,12 @@ void QtTracer::removeSoma()
 		connectedComponentFilter->Update();
 
 
-		typedef itk::CastImageFilter<LabelImageType, itk::Image<short int, 3>> CasterType;
+		typedef itk::CastImageFilter<LabelImageType, itk::Image<short int, 3> > CasterType;
 		CasterType::Pointer caster = CasterType::New();
 		caster->SetInput(IM->ISoma);
 		caster->Update();
 
-		std::vector<vtkSmartPointer<vtkPolyData>> aa = getVTKPolyDataPrecise(caster->GetOutput());
+		std::vector<vtkSmartPointer<vtkPolyData> > aa = getVTKPolyDataPrecise(caster->GetOutput());
 		//std::cout<<"check point 2"<<std::endl;
 
 		vnl_matrix<double> temp_color(IM->num_soma,3);
@@ -10257,12 +10257,12 @@ void QtTracer::surfaceRendering(bool rand_color, ImagePointer ID)
 
 	bool decimation = false;
 
-	typedef itk::CastImageFilter<ImageType,itk::Image<short int, 3>> CasterType;
+	typedef itk::CastImageFilter<ImageType,itk::Image<short int, 3> > CasterType;
 	CasterType::Pointer caster = CasterType::New();
 	caster->SetInput(ID);
 	caster->Update();
 
-	std::vector<vtkSmartPointer<vtkPolyData>> aa = getVTKPolyDataPrecise(caster->GetOutput());
+	std::vector<vtkSmartPointer<vtkPolyData> > aa = getVTKPolyDataPrecise(caster->GetOutput());
 
 	for( int i = 0; i <aa.size(); i++ )
 	{
@@ -10337,12 +10337,12 @@ void QtTracer::surfaceRendering(bool rand_color)
 
 	bool decimation = false;
 
-	typedef itk::CastImageFilter<ImageType,itk::Image<short int, 3>> CasterType;
+	typedef itk::CastImageFilter< ImageType,itk::Image<short int, 3> > CasterType;
 	CasterType::Pointer caster = CasterType::New();
 	caster->SetInput(IM->ISeg);
 	caster->Update();
 
-	std::vector<vtkSmartPointer<vtkPolyData>> aa = getVTKPolyDataPrecise(caster->GetOutput());
+	std::vector<vtkSmartPointer<vtkPolyData> > aa = getVTKPolyDataPrecise(caster->GetOutput());
 
 	for( int i = 0; i <aa.size(); i++ )
 	{

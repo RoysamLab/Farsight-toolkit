@@ -210,7 +210,7 @@ class MouseInteractorStyle : public vtkInteractorStyleTrackballCamera
  
 };
 
-std::vector<vtkSmartPointer<vtkPolyData>> getVTKPolyDataPrecise(labelImageType::Pointer label);
+std::vector< vtkSmartPointer<vtkPolyData> > getVTKPolyDataPrecise(labelImageType::Pointer label);
 inputImageType::Pointer getEmptyImage(int s1, int s2, int s3);
 
 
