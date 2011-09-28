@@ -50,8 +50,10 @@ class ActiveLearningDialog : public QDialog
 	Q_OBJECT
 public:
 	ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmartPointer<vtkTable> table,int num_classes,std::vector<int> active_query,std::vector<int>top_feats,QWidget *parent=0);
-	ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmartPointer<vtkTable> table,int classval,std::vector<int> rowvals,std::string validate,QWidget *parent=0);
-	std::vector<QHBoxLayout *> Validation_Sample_Details(QImage snapshot, vtkSmartPointer<vtkTable> table,int classval,int PIA_query,int group);
+	//ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmartPointer<vtkTable> table,int classval,std::vector<int> rowvals,std::string validate,QWidget *parent=0);
+	ActiveLearningDialog(std::string validate,std::vector<QImage> snapshot, vtkSmartPointer<vtkTable> table,int classval,std::vector<int> rowvals,int num_classes,QWidget *parent=0);
+	//std::vector<QHBoxLayout *> Validation_Sample_Details(QImage snapshot, vtkSmartPointer<vtkTable> table,int classval,int PIA_query,int group);
+	std::vector<QHBoxLayout *> Validation_Sample_Details(QImage snapshot, vtkSmartPointer<vtkTable> table,int classval,int PIA_query,int group,int num_classes);
 	std::vector<QHBoxLayout *> Sample_Details(QImage snapshot, vtkSmartPointer<vtkTable> table,int num_classes,int active_query,std::vector<int>top_feats,int group);
 	bool finish;
 	//QLineEdit *lineEdit;
@@ -68,11 +70,14 @@ public:
 	//QHBoxLayout *botRow;
 	int num_of_classes;
 	std::vector<int> id_list;
+	bool rejectFlag;
 
 private slots:
 	void finished();
 	void Set_Class();
+	void Set_Class_Validate();
 	void User_Validation_Response();
+	void rejectAction();
 	
 	
 private:

@@ -19,6 +19,7 @@ limitations under the License.
 ActiveLearningDialog::ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmartPointer<vtkTable> table,int num_classes,std::vector<int> active_query,std::vector<int>top_feats,QWidget *parent)
 : QDialog(parent)
 {
+	rejectFlag = false;
 	queries = active_query;
 	num_of_classes = num_classes;
 	query_label.resize(snapshot.size());
@@ -56,10 +57,18 @@ ActiveLearningDialog::ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmar
 	nextButton->setDefault(false);
 	nextButton->setAutoDefault(true);
 
+
+	//Cancel Button
+	QPushButton *cancelButton = new QPushButton("Cancel");
+	connect(cancelButton, SIGNAL(clicked()), this, SLOT(rejectAction()));
+	cancelButton->setDefault(false);
+	cancelButton->setAutoDefault(false);
+
 	//Top-row of the window 
 	QHBoxLayout *finalRow = new QHBoxLayout;
 	finalRow->addWidget(nextButton,0,0);
 	finalRow->addWidget(doneButton,0,0);
+	finalRow->addWidget(cancelButton,0,0);
 
 	layout->addLayout(finalRow,2*snapshot.size()+2,0,0);
 	this->setLayout(layout);
@@ -76,14 +85,17 @@ ActiveLearningDialog::ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmar
 
 
 
-
 //Constructors:
-ActiveLearningDialog::ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmartPointer<vtkTable> table,int classval,std::vector<int> rowvals,std::string validate,QWidget *parent)
+ActiveLearningDialog::ActiveLearningDialog(std::string validate,std::vector<QImage> snapshot, vtkSmartPointer<vtkTable> table,int classval,std::vector<int> rowvals,int num_classes,QWidget *parent)
 : QDialog(parent)
 {
 	this->setWindowTitle(tr("Validation Window: Validate Classifier Performance"));
 	this->setModal(true);
 
+	rejectFlag = false;
+	
+	queries = rowvals;
+	num_of_classes = num_classes;
 
 	query_label.resize(rowvals.size());
 	buttongroup.resize(rowvals.size());
@@ -96,7 +108,7 @@ ActiveLearningDialog::ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmar
 	
 	//set font    
 	QFont font;
-	font.setPointSize(25);
+	font.setPointSize(15);
 	font.setBold(true);
 	
 	QString x = "All these samples have been classified as class  "+QString::number(classval);
@@ -105,11 +117,10 @@ ActiveLearningDialog::ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmar
 	layout->addWidget(ClassLabel,0,0);
 
 
-
 	//Shows 5 samples at a time
 	for(int i=0;i<snapshot.size();++i)
 	{
-		std::vector<QHBoxLayout *> rows  = Validation_Sample_Details(snapshot[i],table,classval,rowvals[i],i);
+		std::vector<QHBoxLayout *> rows  = Validation_Sample_Details(snapshot[i],table,classval,rowvals[i],i,num_classes);
 		layout->addLayout(rows[0],2*i+1,0,0);
 		layout->addLayout(rows[1],2*i+2,0,0);
 	}
@@ -120,6 +131,14 @@ ActiveLearningDialog::ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmar
 	doneButton->setDefault(false);
 	doneButton->setAutoDefault(false);
 
+
+	//Cancel Button
+	QPushButton *cancelButton = new QPushButton("Cancel");
+	connect(cancelButton, SIGNAL(clicked()), this, SLOT(rejectAction()));
+	cancelButton->setDefault(false);
+	cancelButton->setAutoDefault(false);
+
+
 	//QPushButton *nextButton = new QPushButton("Next");
 	//connect(nextButton, SIGNAL(clicked()), this, SLOT(accept()));
 	//nextButton->setDefault(false);
@@ -129,6 +148,7 @@ ActiveLearningDialog::ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmar
 	QHBoxLayout *finalRow = new QHBoxLayout;
 	//finalRow->addWidget(nextButton,0,0);
 	finalRow->addWidget(doneButton,0,0);
+	finalRow->addWidget(cancelButton,0,0);
 
 	layout->addLayout(finalRow,14,0,0);
 	this->setLayout(layout);
@@ -152,6 +172,7 @@ std::vector<QHBoxLayout *> ActiveLearningDialog::Sample_Details(QImage snapshot,
 	imageLabel->resize(imageLabel->pixmap()->size());
 	
 	finish = true;
+
 	
 	//Top-row of the window 
 	QHBoxLayout *topRow = new QHBoxLayout;
@@ -223,39 +244,42 @@ std::vector<QHBoxLayout *> ActiveLearningDialog::Sample_Details(QImage snapshot,
 }
 
 
-std::vector<QHBoxLayout *> ActiveLearningDialog::Validation_Sample_Details(QImage snapshot, vtkSmartPointer<vtkTable> table,int classval,int PIA_query,int group)
+std::vector<QHBoxLayout *> ActiveLearningDialog::Validation_Sample_Details(QImage snapshot, vtkSmartPointer<vtkTable> table,int classval,int PIA_query,int group,int num_classes)
 {	
-
 
 	QLabel *imageLabel = new QLabel(this);
 	imageLabel->setPixmap(QPixmap::fromImage(snapshot));
 	imageLabel->resize(imageLabel->pixmap()->size());
 	
 	finish = true;
-
+	
 	//Top-row of the window 
 	QHBoxLayout *topRow = new QHBoxLayout;
 	topRow->addWidget(imageLabel,0,0);
 	
-	QLabel *enterClassLabel = new QLabel("Please indicate if the classification is correct or incorrect :", this);
+	QLabel *enterClassLabel = new QLabel("Please indicate the correct class: ", this);
 	topRow->addWidget(enterClassLabel,0,0);
 	
 	buttongroup[group] = new QButtonGroup(this);
 	buttongroup[group]->setExclusive(true);
 
 	// radiobutons for each class
-	QRadioButton  *class_button = new QRadioButton("Correct", this);
-	topRow->addWidget(class_button,0,0);
-	button_vector.push_back(class_button);
-	buttongroup[group]->addButton(class_button);
-	connect(class_button, SIGNAL(clicked()),this,SLOT(User_Validation_Response()));
-		
-	class_button = new QRadioButton("Incorrect", this);
-	topRow->addWidget(class_button,0,0);
-	button_vector.push_back(class_button);
-	buttongroup[group]->addButton(class_button);
-	connect(class_button, SIGNAL(clicked()),this,SLOT(User_Validation_Response()));
-	
+	for(int i =0 ; i< num_classes ; ++i)
+	{
+		QRadioButton  *class_button = new QRadioButton(QString::number(i+1), this);
+		topRow->addWidget(class_button,0,0);
+		button_vector.push_back(class_button);
+		buttongroup[group]->addButton(class_button);
+		connect(class_button, SIGNAL(clicked()),this,SLOT(Set_Class_Validate()));
+	}
+			
+	//QRadioButton *class_button = new QRadioButton("I am not sure" , this);
+	//connect(class_button, SIGNAL(clicked()),this,SLOT(Set_Class()));
+	//button_vector.push_back(class_button);
+	//buttongroup[group]->addButton(class_button);
+	//topRow->addWidget(class_button,0,0);
+
+
 	QStringList sl;
 	for(int i=0;i<table->GetNumberOfColumns();++i)
 	{
@@ -294,6 +318,12 @@ void ActiveLearningDialog::finished()
 }
 
 
+void ActiveLearningDialog::rejectAction()
+{
+	this->rejectFlag = true;
+	this->reject();
+}
+
 
 
 void ActiveLearningDialog::Set_Class()
@@ -303,7 +333,6 @@ void ActiveLearningDialog::Set_Class()
 		QRadioButton * test_button = button_vector.at(i);
 		if(test_button->isChecked())
 		{
-			//std::cout<<test_button->text().toStdString() << " was selected" <<std::endl;
 			if(test_button->text().toStdString()=="I am not sure")
 			{
 				query_label.at(i/(num_of_classes+1)).first = queries[i/(num_of_classes+1)];
@@ -318,6 +347,18 @@ void ActiveLearningDialog::Set_Class()
 	}
 }
 
+void ActiveLearningDialog::Set_Class_Validate()
+{
+	for(int i =0; i< button_vector.size() ; ++i)
+	{
+		QRadioButton * test_button = button_vector.at(i);
+		if(test_button->isChecked())
+		{
+				query_label.at(i/(num_of_classes)).first = queries[i/(num_of_classes)];
+				query_label.at(i/(num_of_classes)).second = test_button->text().toInt();
+		}
+	}
+}
 
 
 
