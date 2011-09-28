@@ -1,26 +1,26 @@
 /*
- * Copyright 2009 Rensselaer Polytechnic Institute
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
+* Copyright 2009 Rensselaer Polytechnic Institute
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful, but
+* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+* or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+* for more details.
+*
+* You should have received a copy of the GNU General Public License along
+* with this program; if not, write to the Free Software Foundation, Inc.,
+* 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+*/
 
 /*=========================================================================
 
-  Program:   Farsight Biological Image Segmentation and Visualization Toolkit
-  Language:  C++
-  Date:      $Date:  $
-  Version:   $Revision: 0.00 $
+Program:   Farsight Biological Image Segmentation and Visualization Toolkit
+Language:  C++
+Date:      $Date:  $
+Version:   $Revision: 0.00 $
 
 =========================================================================*/
 
@@ -55,12 +55,12 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	setWindowTitle(tr("FARSIGHT: Nucleus Editing Tool"));
 
 	standardImageTypes = tr("Images (*.tif *.tiff *.pic *.png *.jpg *.lsm)\n"
-							"XML Image Definition (*.xml)\n"
-							"All Files (*.*)");
+		"XML Image Definition (*.xml)\n"
+		"All Files (*.*)");
 
 	tblWin.clear();
 	pltWin.clear();
-//	hisWin.clear();
+	//	hisWin.clear();
 	pWizard=NULL;
 
 	myImg = NULL;
@@ -73,10 +73,13 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	NucAdjTable = NULL;
 	CellAdjTable = NULL;
 	confidence_thresh = 0.5;
+	prediction_col_name = "prediction_active";
+	confidence_col_name = "confidence";
+
 #ifdef USE_TRACKING
 	mfcellTracker = NULL;
 #endif
-	
+
 	kplsRun = 0;	//This flag gets set after kpls has run to make sure we show the colored centroids!!
 	trainName = 0;
 	predictName = 0;
@@ -85,8 +88,8 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	this->resize(800,800);
 
 	this->readSettings();
-  raise();
-  activateWindow();
+	raise();
+	activateWindow();
 	//Crashes when this is enabled!
 	//setAttribute ( Qt::WA_DeleteOnClose );
 }
@@ -132,8 +135,8 @@ void NucleusEditor::writeSettings()
 //******************************************************************************
 void NucleusEditor::createStatusBar()
 {
-    statusLabel = new QLabel(tr(" Ready"));
-    statusBar()->addWidget(statusLabel, 1);
+	statusLabel = new QLabel(tr(" Ready"));
+	statusBar()->addWidget(statusLabel, 1);
 }
 
 //** ToolBar Setup
@@ -154,7 +157,7 @@ void NucleusEditor::createProcessToolBar()
 	connect(processContinue, SIGNAL(triggered()),this, SLOT(continueProcess()));
 	processToolbar->addAction(processContinue);
 
-    processProgress = new QProgressBar();
+	processProgress = new QProgressBar();
 	processProgress->setRange(0,0);
 	processProgress->setTextVisible(false);
 	processToolbar->addWidget(processProgress);
@@ -214,7 +217,7 @@ void NucleusEditor::createMenus()
 	connect(load5DImageAction, SIGNAL(triggered()), this, SLOT(askload5DImage()));
 	fileMenu->addAction(load5DImageAction);
 
-    load5DLabelImageAction = new QAction(tr("Load 5D Labels"), this);
+	load5DLabelImageAction = new QAction(tr("Load 5D Labels"), this);
 	connect(load5DLabelImageAction, SIGNAL(triggered()), this, SLOT(askload5DLabelImage()));
 	fileMenu->addAction(load5DLabelImageAction);
 
@@ -271,11 +274,11 @@ void NucleusEditor::createMenus()
 
 	fileMenu->addSeparator();
 
-    exitAction = new QAction(tr("Exit"), this);
-    exitAction->setShortcut(tr("Ctrl+Q"));
-    exitAction->setStatusTip(tr("Exit the application"));
-    connect(exitAction, SIGNAL(triggered()), this, SLOT(close()));
-    fileMenu->addAction(exitAction);
+	exitAction = new QAction(tr("Exit"), this);
+	exitAction->setShortcut(tr("Ctrl+Q"));
+	exitAction->setStatusTip(tr("Exit the application"));
+	connect(exitAction, SIGNAL(triggered()), this, SLOT(close()));
+	fileMenu->addAction(exitAction);
 
 	//VIEW MENU
 	viewMenu = menuBar()->addMenu(tr("&View"));
@@ -392,7 +395,7 @@ void NucleusEditor::createMenus()
 	drawROIAction = new QAction(tr("Draw ROI"), this);
 	connect(drawROIAction, SIGNAL(triggered()), this, SLOT(startROI()));
 	roiMenu->addAction(drawROIAction);
-	
+
 	clearROIAction = new QAction(tr("Clear ROI"), this);
 	connect(clearROIAction, SIGNAL(triggered()), this, SLOT(clearROI()));
 	roiMenu->addAction(clearROIAction);
@@ -431,7 +434,7 @@ void NucleusEditor::createMenus()
 
 
 	activeMenu   = toolMenu->addMenu(tr("Active Learning"));
-	
+
 	activeAction = new QAction(tr("Start Active Learning"), this);
 	connect(activeAction, SIGNAL(triggered()), this, SLOT(startActiveLearningwithFeat()));
 	activeMenu->addAction(activeAction);
@@ -440,11 +443,11 @@ void NucleusEditor::createMenus()
 	activeVAction = new QAction(tr("Start Active Validation"), this);
 	connect(activeVAction, SIGNAL(triggered()), this, SLOT(startActiveValidation()));
 	activeMenu->addAction(activeVAction);
-	
+
 	//showGalleryAction = new QAction(tr("Show Query Gallery"), this);
 	//connect(showGalleryAction, SIGNAL(triggered()), this, SLOT(BuildGallery()));
 	//activeMenu->addAction(showGalleryAction);
-	
+
 	saveActiveResultsAction = new QAction(tr("Save Active Learning Results (Only for Multiple Images)"), this);
 	connect(saveActiveResultsAction, SIGNAL(triggered()), this, SLOT(SaveActiveLearningResults()));
 	activeMenu->addAction(saveActiveResultsAction);
@@ -472,7 +475,7 @@ void NucleusEditor::createMenus()
 	connect(kplsAction, SIGNAL(triggered()), this, SLOT(startKPLS()));
 	classifyMenu->addAction(kplsAction);
 
-	
+
 	//EDITING MENU
 	editMenu = menuBar()->addMenu(tr("&Editing"));
 
@@ -545,30 +548,30 @@ void NucleusEditor::createMenus()
 
 	// MODELS MENU
 	modelsMenu = menuBar()->addMenu(tr("&Models"));
-    
-    createTrainingAction = new QAction(tr("Create Training Model..."), this);
-    connect(createTrainingAction, SIGNAL(triggered()), this, SLOT(createTrainer()));
-    modelsMenu->addAction(createTrainingAction);
-    
-    appendTrainingAction = new QAction(tr("Append Training Model..."), this);
-    connect(appendTrainingAction, SIGNAL(triggered()), this, SLOT(appendTrainer()));
-    modelsMenu->addAction(appendTrainingAction);
+
+	createTrainingAction = new QAction(tr("Create Training Model..."), this);
+	connect(createTrainingAction, SIGNAL(triggered()), this, SLOT(createTrainer()));
+	modelsMenu->addAction(createTrainingAction);
+
+	appendTrainingAction = new QAction(tr("Append Training Model..."), this);
+	connect(appendTrainingAction, SIGNAL(triggered()), this, SLOT(appendTrainer()));
+	modelsMenu->addAction(appendTrainingAction);
 
 	//QUERIES MENU
 	queriesMenu = menuBar()->addMenu(tr("Queries"));
 
 	kNearestNeighborsAction = new QAction(tr("Query K Nearest Neighbors..."), this);
-    connect(kNearestNeighborsAction, SIGNAL(triggered()), this, SLOT(queryKNearest()));
-    queriesMenu->addAction(kNearestNeighborsAction);
-    
-    inRadiusNeighborsAction = new QAction(tr("Query Neighbors Within Radius..."), this);
-    connect(inRadiusNeighborsAction, SIGNAL(triggered()), this, SLOT(queryInRadius()));
-    queriesMenu->addAction(inRadiusNeighborsAction);
+	connect(kNearestNeighborsAction, SIGNAL(triggered()), this, SLOT(queryKNearest()));
+	queriesMenu->addAction(kNearestNeighborsAction);
+
+	inRadiusNeighborsAction = new QAction(tr("Query Neighbors Within Radius..."), this);
+	connect(inRadiusNeighborsAction, SIGNAL(triggered()), this, SLOT(queryInRadius()));
+	queriesMenu->addAction(inRadiusNeighborsAction);
 
 	queryViewsOffAction = new QAction(tr("Set Query Views Off"), this);
 	queryViewsOffAction->setShortcut(tr("Shift+O"));
-    connect(queryViewsOffAction, SIGNAL(triggered()), this, SLOT(queryViewsOff()));
-    queriesMenu->addAction(queryViewsOffAction);
+	connect(queryViewsOffAction, SIGNAL(triggered()), this, SLOT(queryViewsOff()));
+	queriesMenu->addAction(queryViewsOffAction);
 
 #ifdef USE_TRACKING
 	//5-D MENU
@@ -655,14 +658,14 @@ void NucleusEditor::about()
 void NucleusEditor::setMouseStatus(int x, int y, int z, int t, list<int> v)
 {
 	QString statusMsg("X: " + QString::number(x) + ", Y: " + QString::number(y) + ", Z: " + QString::number(z) + ", T: " + QString::number(t));
-  
-  int i = 1;
-  for(list<int>::iterator it = v.begin(); it != v.end(); it++) {
-   statusMsg.append(", Value " + QString::number(i)  + ": " + QString::number(*it));
-   ++i;
-  }
 
-  (this->statusLabel)->setText(statusMsg);
+	int i = 1;
+	for(list<int>::iterator it = v.begin(); it != v.end(); it++) {
+		statusMsg.append(", Value " + QString::number(i)  + ": " + QString::number(*it));
+		++i;
+	}
+
+	(this->statusLabel)->setText(statusMsg);
 }
 
 //Pop up a message box that asks if you want to save changes 
@@ -709,7 +712,7 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 			if(widget->isVisible())
 				widget->close();
 		}
-    }
+	}
 	//Then close myself
 	this->writeSettings();
 	event->accept();
@@ -731,62 +734,62 @@ bool NucleusEditor::saveProject()
 	}
 
 	//Make up defaults if needed:
-		if(projectFiles.input.size() != 0)
-		{
-			QString fname = QString::fromStdString(projectFiles.input);
-			QString bname = QFileInfo(fname).baseName();
+	if(projectFiles.input.size() != 0)
+	{
+		QString fname = QString::fromStdString(projectFiles.input);
+		QString bname = QFileInfo(fname).baseName();
 
-			if(projectFiles.output == "")
-				projectFiles.output = bname.toStdString() + "_label.xml";
+		if(projectFiles.output == "")
+			projectFiles.output = bname.toStdString() + "_label.xml";
 
-			if(projectFiles.definition == "")
-				projectFiles.definition = bname.toStdString() + "_def.xml";
+		if(projectFiles.definition == "")
+			projectFiles.definition = bname.toStdString() + "_def.xml";
 
-			if(projectFiles.table == "")
-				projectFiles.table = bname.toStdString() + "_table.txt";
+		if(projectFiles.table == "")
+			projectFiles.table = bname.toStdString() + "_table.txt";
 
-			if(projectFiles.adjTables == "")
-				projectFiles.adjTables = bname.toStdString() + "_adjTables.txt";
+		if(projectFiles.adjTables == "")
+			projectFiles.adjTables = bname.toStdString() + "_adjTables.txt";
 
-			if(projectFiles.log == "")
-				createDefaultLogName();
-		}
+		if(projectFiles.log == "")
+			createDefaultLogName();
+	}
 
-		ProjectFilenamesDialog *dialog = new ProjectFilenamesDialog(&projectFiles, this);
-		if(dialog->exec() == QDialog::Rejected)
-			return false;
+	ProjectFilenamesDialog *dialog = new ProjectFilenamesDialog(&projectFiles, this);
+	if(dialog->exec() == QDialog::Rejected)
+		return false;
 
-		if(projectFiles.name != "")
-		{
-			projectFiles.Write();
-			lastPath = QString::fromStdString(projectFiles.path);
-		}
-		else
-			return false;
+	if(projectFiles.name != "")
+	{
+		projectFiles.Write();
+		lastPath = QString::fromStdString(projectFiles.path);
+	}
+	else
+		return false;
 
-		if(projectFiles.input != "" && !projectFiles.inputSaved)
-		{
-			this->saveImage();
-		}
-		if(projectFiles.output != "" && !projectFiles.outputSaved)
-		{
-			this->saveResult();
-		}
-		if(projectFiles.definition != "" && !projectFiles.definitionSaved)
-		{
-			if( projectDefinition.Write(projectFiles.GetFullDef()) )
-				projectFiles.definitionSaved = true;
-		}
-		//if(projectFiles.table != "" && !projectFiles.tableSaved && projectFiles.type!="multi")
-		if(projectFiles.table != "" && !projectFiles.tableSaved)
-		{
-			this->saveTable();
-		}
+	if(projectFiles.input != "" && !projectFiles.inputSaved)
+	{
+		this->saveImage();
+	}
+	if(projectFiles.output != "" && !projectFiles.outputSaved)
+	{
+		this->saveResult();
+	}
+	if(projectFiles.definition != "" && !projectFiles.definitionSaved)
+	{
+		if( projectDefinition.Write(projectFiles.GetFullDef()) )
+			projectFiles.definitionSaved = true;
+	}
+	//if(projectFiles.table != "" && !projectFiles.tableSaved && projectFiles.type!="multi")
+	if(projectFiles.table != "" && !projectFiles.tableSaved)
+	{
+		this->saveTable();
+	}
 
-		if(projectFiles.adjTables != "" && !projectFiles.adjTablesSaved)
-		{
-			this->saveAdjTables();
-		}
+	if(projectFiles.adjTables != "" && !projectFiles.adjTablesSaved)
+	{
+		this->saveAdjTables();
+	}
 
 	return true;
 }
@@ -945,13 +948,13 @@ bool NucleusEditor::saveAdjTables()
 	adjTables->Initialize();
 	for(int c=0; c<(int)NucAdjTable->GetNumberOfColumns(); ++c)
 	{
-	    vtkSmartPointer<vtkStringArray> column = vtkSmartPointer<vtkStringArray>::New();
+		vtkSmartPointer<vtkStringArray> column = vtkSmartPointer<vtkStringArray>::New();
 		column->SetName( NucAdjTable->GetColumnName(c) );
 		adjTables->AddColumn(column);
 	}
 	for(int row1=0; row1<(int)NucAdjTable->GetNumberOfRows(); ++row1)
 		adjTables->InsertNextRow(NucAdjTable->GetRow(row1));
-		
+
 	if(CellAdjTable)
 	{
 		vtkSmartPointer<vtkVariantArray> blankRow = vtkSmartPointer<vtkVariantArray>::New();
@@ -1005,7 +1008,7 @@ void NucleusEditor::loadProject()
 	ProjectFilenamesDialog *dialog = new ProjectFilenamesDialog(&projectFiles, this);
 	if(dialog->exec() == QDialog::Rejected)
 		return;
-	
+
 	//clock_t startTimer = clock();
 	//multi -> Multiple images 
 	if(projectFiles.input != "" && projectFiles.type!="multi")
@@ -1055,8 +1058,8 @@ void NucleusEditor::loadProject()
 	{
 		this->loadAdjTables( QString::fromStdString(projectFiles.GetFullAdjTables()) );
 	}
-	
-//	std::cout<<"Time elapsed is: "<<(((double)clock() - startTimer) / CLOCKS_PER_SEC)<<" seconds"<<std::endl;
+
+	//	std::cout<<"Time elapsed is: "<<(((double)clock() - startTimer) / CLOCKS_PER_SEC)<<" seconds"<<std::endl;
 	this->startEditing();
 }
 
@@ -1070,9 +1073,9 @@ void NucleusEditor::askLoadTable()
 	}
 
 	QString fileName  = QFileDialog::getOpenFileName(this, "Select table file to open", lastPath,
-								tr("TXT Files (*.txt)"));
+		tr("TXT Files (*.txt)"));
 
-    if(fileName == "")
+	if(fileName == "")
 		return;
 
 	this->loadTable(fileName);
@@ -1161,7 +1164,7 @@ void NucleusEditor::loadAdjTables(QString fileName)
 	NuclearTable->Initialize();
 	for(int c=0; c<(int)adjTables->GetNumberOfColumns(); ++c)
 	{
-	    vtkSmartPointer<vtkStringArray> column = vtkSmartPointer<vtkStringArray>::New();
+		vtkSmartPointer<vtkStringArray> column = vtkSmartPointer<vtkStringArray>::New();
 		column->SetName( adjTables->GetColumnName(c) );
 		NuclearTable->AddColumn(column);
 	}
@@ -1177,7 +1180,7 @@ void NucleusEditor::loadAdjTables(QString fileName)
 	}
 	NucAdjTable = NuclearTable;
 	segView->SetNucAdjTable(NucAdjTable);
-	
+
 	if(flag == 0)
 	{
 		adjTables->RemoveRow(row);
@@ -1186,7 +1189,7 @@ void NucleusEditor::loadAdjTables(QString fileName)
 		CellularTable->Initialize();
 		for(int c=0; c<(int)adjTables->GetNumberOfColumns(); ++c)
 		{
-		    vtkSmartPointer<vtkStringArray> column = vtkSmartPointer<vtkStringArray>::New();
+			vtkSmartPointer<vtkStringArray> column = vtkSmartPointer<vtkStringArray>::New();
 			column->SetName( adjTables->GetColumnName(c) );
 			CellularTable->AddColumn(column);
 		}
@@ -1247,7 +1250,7 @@ void NucleusEditor::askLoadImage()
 	//Get the filename of the new image
 	QString fileName = QFileDialog::getOpenFileName(this, "Open Image", lastPath, standardImageTypes);
 	//If no filename do nothing
-    if(fileName == "")
+	if(fileName == "")
 		return;
 
 	projectFiles.ClearAll();
@@ -1256,15 +1259,15 @@ void NucleusEditor::askLoadImage()
 
 void NucleusEditor::askload5DLabelImage()
 {
-	
+
 	if(!myImg) return;
-	
+
 	if(!projectFiles.inputSaved && askSaveChanges(tr("Save changes to the input image?")) )
 	{
 		askSaveImage();
 	}
-    QStringList filesTimeList = QFileDialog::getOpenFileNames(this, "Load one or more time points", lastPath, standardImageTypes);
- 
+	QStringList filesTimeList = QFileDialog::getOpenFileNames(this, "Load one or more time points", lastPath, standardImageTypes);
+
 	const ftk::Image::Info * imInfo = myImg->GetImageInfo();
 	if (imInfo->numTSlices != filesTimeList.size())	return;
 	if (filesTimeList.isEmpty()) return;
@@ -1280,7 +1283,7 @@ void NucleusEditor::askload5DImage()
 
 	bool ok;
 	int numChann =  QInputDialog::getInt(this, tr("Number of Channels"),
-                                  tr("Channels:"), 1, 1, 10, 1, &ok);
+		tr("Channels:"), 1, 1, 10, 1, &ok);
 
 	// if ok button was clicked 
 	if(ok)
@@ -1319,7 +1322,7 @@ void NucleusEditor::load5DImage(std::vector<QStringList> filesChannTimeList, int
 	std::vector<std::string>  filesChann;
 	std::vector<std::vector<std::string> >  filesChannTime;
 	int numTimes = filesChannTimeList[0].size();
-	
+
 	// Initialize variables:
 	for (int t = 0; t< numTimes; ++t)
 	{
@@ -1327,10 +1330,10 @@ void NucleusEditor::load5DImage(std::vector<QStringList> filesChannTimeList, int
 		{
 			filesChann.push_back(filesChannTimeList[ch][t].toStdString());
 		}
-	  filesChannTime.push_back(filesChann);
-	  filesChann.clear();
+		filesChannTime.push_back(filesChann);
+		filesChann.clear();
 	}
-		
+
 	getColorInfo(numChann,&channelNames,&channelColors); //Supports upto 10 channels
 
 	// Load Images:
@@ -1370,81 +1373,81 @@ void NucleusEditor::getColorInfo(int numChann,std::vector<std::string> *channelN
 //Eventually needs to move to ftkImage
 void NucleusEditor::getColor(int numChann,std::vector<unsigned char> *channelColors)
 {
-  
+
 	switch(numChann)
 	{
-	//Cyan
+		//Cyan
 	case 0:
-	    	(*channelColors).push_back(0);
-			(*channelColors).push_back(255);
-			(*channelColors).push_back(255);
-			
-					 break;
-	//Green
+		(*channelColors).push_back(0);
+		(*channelColors).push_back(255);
+		(*channelColors).push_back(255);
+
+		break;
+		//Green
 	case 1:
-	    	(*channelColors).push_back(0);
-			(*channelColors).push_back(255);
-			(*channelColors).push_back(0);
-			
-					 break;
-	//Red
+		(*channelColors).push_back(0);
+		(*channelColors).push_back(255);
+		(*channelColors).push_back(0);
+
+		break;
+		//Red
 	case 2:
-	    	(*channelColors).push_back(255);
-			(*channelColors).push_back(0);
-			(*channelColors).push_back(0);
-			
-					 break;
-	//Blue
+		(*channelColors).push_back(255);
+		(*channelColors).push_back(0);
+		(*channelColors).push_back(0);
+
+		break;
+		//Blue
 	case 3:
-	    	(*channelColors).push_back(0);
-			(*channelColors).push_back(0);
-			(*channelColors).push_back(255);
-			
-					 break;
-	
-	//Orange 	255-165-0
+		(*channelColors).push_back(0);
+		(*channelColors).push_back(0);
+		(*channelColors).push_back(255);
+
+		break;
+
+		//Orange 	255-165-0
 	case 4:
-	    	(*channelColors).push_back(255);
-			(*channelColors).push_back(165);
-			(*channelColors).push_back(0);
-			
-					 break;
-	//Violet 	238-130-238
+		(*channelColors).push_back(255);
+		(*channelColors).push_back(165);
+		(*channelColors).push_back(0);
+
+		break;
+		//Violet 	238-130-238
 	case 5:
-	    	(*channelColors).push_back(238);
-			(*channelColors).push_back(130);
-			(*channelColors).push_back(238);
-			 
-					 break;
-	//Yellow 	255-255-0
+		(*channelColors).push_back(238);
+		(*channelColors).push_back(130);
+		(*channelColors).push_back(238);
+
+		break;
+		//Yellow 	255-255-0
 	case 6:
-	    	(*channelColors).push_back(255);
-			(*channelColors).push_back(255);
-			(*channelColors).push_back(0);
-			
-					 break;
-	//Dark Green 	0-100-0
+		(*channelColors).push_back(255);
+		(*channelColors).push_back(255);
+		(*channelColors).push_back(0);
+
+		break;
+		//Dark Green 	0-100-0
 	case 7:
-	    	(*channelColors).push_back(0);
-			(*channelColors).push_back(100);
-			(*channelColors).push_back(0);
-			
-					 break;
-	//Royal Blue 	65-105-225
+		(*channelColors).push_back(0);
+		(*channelColors).push_back(100);
+		(*channelColors).push_back(0);
+
+		break;
+		//Royal Blue 	65-105-225
 	case 8:
-	    	(*channelColors).push_back(65);
-			(*channelColors).push_back(105);
-			(*channelColors).push_back(225);
-			
-					 break;
-	//Gray 	190-190-190
+		(*channelColors).push_back(65);
+		(*channelColors).push_back(105);
+		(*channelColors).push_back(225);
+
+		break;
+		//Gray 	190-190-190
 	case 9:
-	    	(*channelColors).push_back(190);
-			(*channelColors).push_back(190);
-			(*channelColors).push_back(190);
-			
-					 break;
-	  }
+		(*channelColors).push_back(190);
+		(*channelColors).push_back(190);
+		(*channelColors).push_back(190);
+
+		break;
+	}
 }
 
 
@@ -1462,7 +1465,7 @@ void NucleusEditor::load5DLabelImage(QStringList filesList)
 	// Initialize variables:
 	for (int t = 0; t< filesList.size(); ++t)
 	{
-	  filesTimeList.push_back(filesList[t].toStdString());
+		filesTimeList.push_back(filesList[t].toStdString());
 	}
 
 	if(!labImg->LoadFile(filesTimeList[0]))
@@ -1481,7 +1484,7 @@ void NucleusEditor::load5DLabelImage(QStringList filesList)
 	projectFiles.path = lastPath.toStdString();
 	projectFiles.outputSaved = true;
 
-					
+
 	//For storing edit information.. need to have a bBoxMap set 
 	nucSeg->SetCurrentbBox(nucSeg->bBoxMap4DImage.at(segView->GetCurrentTimeVal()));
 
@@ -1503,7 +1506,7 @@ void NucleusEditor::loadImage(QString fileName)
 		if(!myImg->LoadFile(fileName.toStdString()))
 			myImg = NULL;
 	}
-	
+
 	//this->updateNucSeg();
 	if(nucSeg)
 	{
@@ -1586,7 +1589,7 @@ void NucleusEditor::loadROI(void)
 	if(fileName == "") return;
 
 	lastPath = QFileInfo(fileName).absolutePath() + QDir::separator();
-	
+
 	segView->GetROIMaskImage()->load(fileName);
 	segView->SetROIVisible(true);
 
@@ -1612,29 +1615,29 @@ void NucleusEditor::saveROI(void)
 /*
 void NucleusEditor::startAssociations()
 {
-	QString fileName = QFileDialog::getOpenFileName(
-                             this, "Select file to open", lastPath,
-                             tr("XML Association Definition (*.xml)\n"
-							    "All Files (*.*)"));
-    if(fileName == "")
-		return;
+QString fileName = QFileDialog::getOpenFileName(
+this, "Select file to open", lastPath,
+tr("XML Association Definition (*.xml)\n"
+"All Files (*.*)"));
+if(fileName == "")
+return;
 
-	lastPath = QFileInfo(fileName).absolutePath();
+lastPath = QFileInfo(fileName).absolutePath();
 
-	ftk::AssociativeFeatureCalculator * assocCal = new ftk::AssociativeFeatureCalculator();
-	assocCal->SetInputFile(fileName.toStdString());
+ftk::AssociativeFeatureCalculator * assocCal = new ftk::AssociativeFeatureCalculator();
+assocCal->SetInputFile(fileName.toStdString());
 
-	if(!table)
-	{
-		table = assocCal->Compute();
-		CreateNewTableWindow();
-	}
-	else
-		assocCal->Append(table);
+if(!table)
+{
+table = assocCal->Compute();
+CreateNewTableWindow();
+}
+else
+assocCal->Append(table);
 
-	this->updateViews();
+this->updateViews();
 
-	delete assocCal;
+delete assocCal;
 }
 */
 
@@ -1688,7 +1691,7 @@ void NucleusEditor::updateROIinTable()
 void NucleusEditor::clearROI(void)
 {
 	const char * columnForROI = "roi";
-	
+
 	segView->GetROIMaskImage()->fill(Qt::white);
 	segView->SetROIVisible(false);
 
@@ -1712,16 +1715,16 @@ void NucleusEditor::roiStatistics(void)
 	//Change QImage into ITK IMAGE:
 	ImageType::Pointer roiImg = ImageType::New();
 	ImageType::PointType origin;
-   	origin[0] = 0; 
+	origin[0] = 0; 
 	origin[1] = 0;
 	origin[2] = 0;
-    roiImg->SetOrigin( origin );
+	roiImg->SetOrigin( origin );
 	ImageType::IndexType start = {{ 0,0,0 }};    
 	ImageType::SizeType size = {{ t_img->width(), t_img->height(), myImg->GetImageInfo()->numZSlices }};
-    ImageType::RegionType region;
-    region.SetSize( size );
-    region.SetIndex( start );
-    roiImg->SetRegions( region );
+	ImageType::RegionType region;
+	region.SetSize( size );
+	region.SetIndex( start );
+	roiImg->SetRegions( region );
 	roiImg->Allocate();
 	roiImg->FillBuffer(0);
 	for(int i=0; i<t_img->width(); ++i)
@@ -1753,7 +1756,7 @@ void NucleusEditor::roiStatistics(void)
 			std::cerr << "Exception in ITK Label Statistics Filter: " << e << std::endl;
 			continue;
 		}
-		
+
 		int label = 1;
 		//std::cout << "  sum: " << (float)labelStatisticsFilter->GetSum( label ) << std::endl;
 		std::cout << "  min: " << (float)labelStatisticsFilter->GetMinimum( label ) << std::endl;
@@ -1855,17 +1858,21 @@ void NucleusEditor::startActiveLearningwithFeat()
 		featureTable = nucSeg->megaTable;
 		segView->SetCurrentTimeVal(0);
 	}
-	
+
 	if(!featureTable) return;
-	
+
 
 	//Default confidence threshold is 50 % 
-	ConfidenceThresholdDialog *dialog = new ConfidenceThresholdDialog(this);
+	ClassName_Confidence_Dialog *dialog = new ClassName_Confidence_Dialog(this);
 	if( dialog->exec() )
 	{
-		this->confidence_thresh = dialog->getConfThresh();		
-    }
+		classification_name = dialog->getClassName();
+		confidence_thresh = dialog->getConfThresh();		
+	}
+	else
+		return;
 	delete dialog;
+
 
 
 	if(myImg->GetImageInfo()->numTSlices > 1)
@@ -1882,7 +1889,7 @@ void NucleusEditor::startActiveLearningwithFeat()
 	//Clear the Gallery 
 	//gallery.clear();	
 
-	std::vector< std::pair<double,double> > id_time;	
+	std::vector< std::pair<int,int> > id_time;	
 	// Remove the training examples from the list of ids.
 	//Get the list of ids
 	for(int i=0;i<featureTable->GetNumberOfRows(); ++i)
@@ -1902,7 +1909,7 @@ void NucleusEditor::startActiveLearningwithFeat()
 	if(myImg->GetImageInfo()->numTSlices > 1)
 		featureTable->RemoveColumnByName("time");
 
-		// If the user did not hit cancel 
+	// If the user did not hit cancel 
 	if(d->result())
 	{
 		pWizard = new PatternAnalysisWizard( featureTable, PatternAnalysisWizard::_ACTIVE,"","", this);
@@ -1949,27 +1956,31 @@ void NucleusEditor::startActiveLearningwithFeat()
 			ActiveLearningDialog *dialog;
 			std::vector<QImage> snapshots;
 			snapshots.resize(active_queries.size());
-			
+
 			while(loop_termination_condition)
 			{	
 				// Collect all the snapshots
 				for(int i=0;i<active_queries.size(); ++i)
-				//for(int i=0;i<1; ++i)
-				{
+					//for(int i=0;i<1; ++i)
+				{	
+					if(myImg->GetImageInfo()->numTSlices > 1)
+						segView->SetCurrentTimeVal(mclr->id_time_val.at(active_queries[i]).second);
 					snapshots[i] =(segView->getSnapshotforID(mclr->id_time_val.at(active_queries[i]).first));	
 				}
 
 				//mclr->test_table is the pawTable obtained above
 				dialog =  new ActiveLearningDialog(snapshots,mclr->test_table,mclr->no_of_classes,active_queries,mclr->top_features);
-				dialog->exec();	 
+				dialog->exec();
+
+				if(dialog->rejectFlag)
+					return;
 
 				loop_termination_condition = dialog->finish && dialog->result();
-				
+
 				int atleast_one_chosen = 0; // A check to see if the user selected Not sure for all the cells
-				
+
 				for(int i=0;i<active_queries.size();++i)
 				{
-					std::cout<< dialog->query_label[i].second <<std::endl;
 					atleast_one_chosen = atleast_one_chosen+dialog->query_label[i].second;
 					if(dialog->query_label[i].second == -1)
 					{	
@@ -1977,11 +1988,15 @@ void NucleusEditor::startActiveLearningwithFeat()
 						this->show();
 						dialog =  new ActiveLearningDialog(snapshots,mclr->test_table,mclr->no_of_classes,active_queries,mclr->top_features);	
 						dialog->exec();
+						i=0;
+						if(dialog->rejectFlag)
+							return;
 					}
 				}
 
+
 				// Update the data & refresh the training model and refresh the Training Dialog 		
-				mclr->Update_Train_Data(dialog->query_label,true);
+				mclr->Update_Train_Data(dialog->query_label);
 
 				if(atleast_one_chosen ==0)
 				{
@@ -2025,9 +2040,8 @@ void NucleusEditor::startActiveLearningwithFeat()
 				active_query = mclr->Active_Query();
 				active_queries = mclr->ALAMO(active_query);
 
-				if(myImg->GetImageInfo()->numTSlices > 1)
-					segView->SetCurrentTimeVal(mclr->id_time_val.at(active_query).second);
 			}
+
 
 			//Enable the Menu Items related to active Learning
 			//showGalleryAction->setEnabled(true);
@@ -2035,7 +2049,7 @@ void NucleusEditor::startActiveLearningwithFeat()
 				saveActiveResultsAction->setEnabled(true);
 
 			active_model = mclr->CreateActiveLearningModel(pawTable);
-			
+
 			std::vector< vtkSmartPointer<vtkTable> > VectorOfTables;
 			if(myImg->GetImageInfo()->numTSlices == 1)
 			{
@@ -2050,172 +2064,186 @@ void NucleusEditor::startActiveLearningwithFeat()
 			activeRun = 1;
 			projectFiles.tableSaved = false;
 			this->updateViews();
+
 		}
 	}
 }
 
 
-//void NucleusEditor::startActiveValidation()
-//{	
-//	MCLR *mclr = new MCLR();
-//	validation_samples.resize(mclr->GetNumberOfClasses(table));
-//
-//	std::vector< vtkSmartPointer<vtkTable> > tabVec;
-//
-//	for(int i =0; i<mclr->GetNumberOfClasses(table); ++i)
-//	{
-//		vtkSmartPointer<vtkTable> table_with_one_class  = vtkSmartPointer<vtkTable>::New();
-//		table_with_one_class->Initialize();
-//
-//		//No confidence and prediction columns
-//		for(int col=0; col<table->GetNumberOfColumns()-3; ++col)
-//		{
-//			vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-//			column->SetName(table->GetColumnName(col));
-//			table_with_one_class->AddColumn(column);	
-//		}
-//
-//		//Get prediction colums, if any, for center map coloring
-//		prediction_names.clear();
-//		prediction_names = ftk::GetColumsWithString( "prediction" , table );
-//
-//
-//		int counter = 0;
-//		for(int row = 0; row < (int)table->GetNumberOfRows(); ++row)
-//		{		
-//			if(table->GetValueByName(row,prediction_names[0].c_str())== i+1)
-//			{
-//				vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
-//				for(int c =0;c<(int)table_with_one_class->GetNumberOfColumns();++c)
-//					model_data1->InsertNextValue(table->GetValueByName(row,table_with_one_class->GetColumnName(c)));
-//				table_with_one_class->InsertNextRow(model_data1);
-//				counter++;
-//			}
-//		}	
-//		validation_samples[i] = mclr->Plan_In_Advance(table_with_one_class,5);// Choose 5 % of the samples for Permutation tests
-//		tabVec.push_back(table_with_one_class);
-//	}
-//
-//
-//
-//	for(int i =0; i<mclr->GetNumberOfClasses(table); ++i)
-//	{
-//
-//		//ActiveLearningDialog *dialog =  new ActiveLearningDialog(snapshots,/*Create a table with ids of one class */, /*classval*/, validation_samples[i] ,"validate");
-//		std::vector<QImage> snapshots;
-//		snapshots.resize(5);
-//
-//		// Collect all the snapshots
-//		for(int j=0;j<snapshots.size(); ++j)
-//		{
-//			snapshots[i] =segView->getSnapshotforID(validation_samples[i].at(j));	
-//		}
-//
-//
-//		std::vector<int> id_list;
-//		std::vector<int> curr_list;
-//
-//		id_list.resize(tabVec.at(i)->GetNumberOfRows());
-//		for(int j=0;j< tabVec.at(i)->GetNumberOfRows();++j)
-//		{
-//			id_list[j] = tabVec.at(i)->GetValue(j,0).ToInt();
-//		}
-//
-//		for(int j=0;j<5;++j)
-//		{
-//			std::vector<int>::iterator posn1 = std::find(id_list.begin(), id_list.end(),validation_samples[j]);
-//			curr_list.push_back(posn1-id_list.begin());
-//		}
-//
-//		ActiveLearningDialog *dialog =  new ActiveLearningDialog(snapshots,table,i+1,curr_list ,"validate");
-//		dialog->exec();	 
-//
-//	}
-//
-///*
-//		  ActiveLearningDialog *dialog =  new ActiveLearningDialog(snapshots,table,1, validation_samples[0] ,"validate");
-//		  dialog->exec();*/	 
-//}
-
-
 void NucleusEditor::startActiveValidation()
 {	
+
+	vtkSmartPointer<vtkTable> featureTable;
+	std::vector<int> active_queries;
+
+	//std::cout<<nucSeg->megaTable->GetNumberOfRows()<<std::endl;
+	//std::cout<<nucSeg->megaTable->GetNumberOfColumns()<<std::endl;
+
+	//We need to keep only the pertinent 
+	// features. If megatable is used, we remove 2 columns (prediction
+	// & confidence). In case of single image we remove 3 columns including training
+	// There is no training column in megatable. Default value is 3 ( single image)
+	int remove_columns = 3; // 
+
+	if(myImg->GetImageInfo()->numTSlices<=1)
+		featureTable = table;
+	else
+	{
+		nucSeg->createMegaTable();
+		featureTable = nucSeg->megaTable;
+		segView->SetCurrentTimeVal(0);
+	}
+
+	if(!featureTable) return;
+
+
+	if(myImg->GetImageInfo()->numTSlices > 1)
+	{
+		nucSeg->AddTimeToMegaTable();
+		featureTable = nucSeg->megaTable;
+		remove_columns =2;
+	}
+
+	std::vector< std::pair<int,int> > id_time;
+
+	// Remove the training examples from the list of ids.
+	//Get the list of ids
+	for(int i=0;i<featureTable->GetNumberOfRows(); ++i)
+	{
+		std::pair<double,double> temp_pair;
+		temp_pair.first = featureTable->GetValue(i,0).ToDouble();
+		if(myImg->GetImageInfo()->numTSlices == 1)
+			temp_pair.second = 0;
+		else
+			temp_pair.second = featureTable->GetValueByName(i,"time").ToDouble();
+		id_time.push_back(temp_pair);
+	}
+
+	if(myImg->GetImageInfo()->numTSlices > 1)
+		featureTable->RemoveColumnByName("time");
+
+
+	//vnl_vector<double> class_list(featureTable->GetNumberOfRows()); 
+
+	//for(int row = 0; (int)row < featureTable->GetNumberOfRows(); ++row)  
+	//{
+	//	class_list.put(row,vtkVariant(featureTable->GetValueByName(row,"train_default1")).ToDouble());
+	//}
+
+
+	MCLR *mclr = new MCLR();
+	double sparsity = 1;
+	int active_query = 1;
+	double max_info = -1e9;
+
+	// Normalize the feature matrix
+	vnl_matrix<double> Feats = mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(featureTable,id_time));
+
 	//Get prediction colums, if none- return
 	prediction_names.clear();
-	prediction_names = ftk::GetColumsWithString( "prediction" , table );
-	
+	prediction_names = ftk::GetColumsWithString( "prediction",featureTable);
+
 	std::vector< vtkSmartPointer<vtkTable> > tabVec;
 	std::vector< std::vector<int> > tabVecIds;
 
 	if(prediction_names.size()==0)
 		return;
 
-	MCLR *mclr = new MCLR();
+
+	SamplePercentDialog *dialog = new SamplePercentDialog(featureTable->GetNumberOfRows(),mclr->GetNumberOfClasses(featureTable), this);
+
+	if( dialog->exec() )
+	{
+		this->sample_number = dialog->vSpinNumber->value();		
+	}
+	else
+	{
+		return;
+	}
+	delete dialog;
+
 	//vector of vectors. Each vector contains samples of a class to be validated by the user 
-	validation_samples.resize(mclr->GetNumberOfClasses(table)); 
-	
-	for(int i=0;i<mclr->GetNumberOfClasses(table); ++i)
+	validation_samples.resize(mclr->GetNumberOfClasses(featureTable)); 
+
+	for(int i=0;i<mclr->GetNumberOfClasses(featureTable); ++i)
 	{
 		vtkSmartPointer<vtkTable> table_PIA  = vtkSmartPointer<vtkTable>::New();
 		table_PIA->Initialize();
 		std::vector<int> table_PIA_ids;
+		std::vector< std::pair<int,int> > id_time_PIA;
 
 		//No confidence,prediction and train columns
-		for(int col=0; col<table->GetNumberOfColumns()-3; ++col)
+		for(int col=0; col<featureTable->GetNumberOfColumns()-remove_columns; ++col)
 		{	
 			vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-			column->SetName(table->GetColumnName(col));
+			column->SetName(featureTable->GetColumnName(col));
 			table_PIA->AddColumn(column);	
 		}
 
 
-		for(int row = 0; row < (int)table->GetNumberOfRows(); ++row)
+		for(int row = 0; row < (int)featureTable->GetNumberOfRows(); ++row)
 		{	
-			if(table->GetValueByName(row,prediction_names[0].c_str())== i+1)
+			if(featureTable->GetValueByName(row,prediction_names[0].c_str())== i+1)
 			{
 				vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
 				for(int c =0;c<(int)table_PIA->GetNumberOfColumns();++c)
-					model_data1->InsertNextValue(table->GetValueByName(row,table_PIA->GetColumnName(c)));
+					model_data1->InsertNextValue(featureTable->GetValueByName(row,table_PIA->GetColumnName(c)));
 				table_PIA->InsertNextRow(model_data1);
 				table_PIA_ids.push_back(table_PIA->GetValue(table_PIA->GetNumberOfRows()-1,0).ToInt());
-			}
-		}	
 
+				std::pair<double,double> temp_pair;
+				temp_pair.first = featureTable->GetValue(row,0).ToDouble();
+				if(myImg->GetImageInfo()->numTSlices == 1)
+					temp_pair.second = 0;
+				else
+					temp_pair.second = featureTable->GetValueByName(i,"time").ToDouble();
+				id_time_PIA.push_back(temp_pair);
+			}
+		}		
 		// Plan in advance gives the vector of ids for the class "i+1"
-		validation_samples.at(i) = mclr->Plan_In_Advance(table_PIA,12/*has to be some x % of the cells*/);// Choose 5 % of the samples for Permutation tests
+		validation_samples.at(i) = mclr->Plan_In_Advance(table_PIA,(sample_number/mclr->GetNumberOfClasses(featureTable)),id_time_PIA);//*has to be some x % of the cells*/,id_time_PIA);// Choose x % of the samples for Permutation tests
 		tabVec.push_back(table_PIA);
 		tabVecIds.push_back(table_PIA_ids);
-	}
-		
-		
-	std::vector< std::pair<int,int> > id_user_response; // contains id and the user repsonse ( correct (0) or incoorect(1) ) 
+	} 
 
-	for(int i=0;i<mclr->GetNumberOfClasses(table); ++i)
+	int counter =0;
+	bool Rejected = false;
+
+	while(counter<mclr->GetNumberOfClasses(featureTable) && !Rejected)
+		//	for(int i=0;i<mclr->GetNumberOfClasses(featureTable); ++i)
 	{
-		vtkSmartPointer<vtkTable> table_PIA = tabVec.at(i);
-		std::vector<int> table_PIA_ids = tabVecIds.at(i);
+		vtkSmartPointer<vtkTable> table_PIA = tabVec.at(counter);
+		std::vector<int> table_PIA_ids = tabVecIds.at(counter);
 		// Display the samples 5 at a time	
-		for(int k =0; k< (validation_samples.at(i).size()/5)+MIN(1,validation_samples.at(i).size()%5);++k)
+		for(int k =0; k< (validation_samples.at(counter).size()/5)+MIN(1,validation_samples.at(counter).size()%5);++k)
 		{
-			int no_of_samples  = MIN(5,validation_samples.at(i).size() - 5*k);
+			int no_of_samples  = MIN(5,validation_samples.at(counter).size() - 5*k);
 			std::vector<QImage> snapshots;
 			snapshots.resize(no_of_samples);
 
 			// Collect all the snapshots
 			for(int ctr=0;ctr<snapshots.size(); ++ctr)
 			{
-				snapshots[ctr] =segView->getSnapshotforID(validation_samples.at(i).at(no_of_samples*k+ctr));	
+				if(myImg->GetImageInfo()->numTSlices > 1)
+					segView->SetCurrentTimeVal(validation_samples.at(counter).at(no_of_samples*k+ctr).second);
+				snapshots[ctr] =segView->getSnapshotforID(validation_samples.at(counter).at(5*k+ctr).first);	
 			}
 
 			std::vector<int> curr_list;
 			for(int ctr=0;ctr<snapshots.size();++ctr)
-			{
-				std::vector<int>::iterator posn1 = std::find(table_PIA_ids.begin(), table_PIA_ids.end(),validation_samples.at(i).at(no_of_samples*k+ctr));
+			{	
+				std::vector<int>::iterator posn1 = std::find(table_PIA_ids.begin(),table_PIA_ids.end(),validation_samples.at(counter).at(5*k+ctr).first);
 				curr_list.push_back(posn1-table_PIA_ids.begin());
 			}
 
-			ActiveLearningDialog *dialog =  new ActiveLearningDialog(snapshots,table_PIA,i+1,curr_list ,"validate");
-			dialog->exec();	
+
+			ActiveLearningDialog *dialog =  new ActiveLearningDialog("validate",snapshots,table_PIA,counter+1,curr_list,mclr->GetNumberOfClasses(featureTable));
+			dialog->exec();
+
+			Rejected = dialog->rejectFlag;
+			if(Rejected)
+				break;
+
 
 			for(int ctr=0;ctr<curr_list.size();++ctr)
 			{
@@ -2223,52 +2251,15 @@ void NucleusEditor::startActiveValidation()
 				{	
 					QMessageBox::critical(this, tr("Oops"), tr("Please select a response for every cell"));
 					this->show();
-					dialog =  new ActiveLearningDialog(snapshots,table_PIA,i+1,curr_list ,"validate");	
+					dialog =  new ActiveLearningDialog("validate",snapshots,table_PIA,counter+1,curr_list,mclr->GetNumberOfClasses(featureTable));	
 					dialog->exec();
+					ctr =0;
 				}
 			}
-			
- 			 std::pair<int, int> id_response_per_cell;
-			 for(int ctr=0;ctr<curr_list.size();++ctr)
-			{
-				id_response_per_cell.first = validation_samples.at(i).at(no_of_samples*k+ctr);
-				id_response_per_cell.second = dialog->query_label[ctr].second;
-				id_user_response.push_back(id_response_per_cell);
-			}
 		}
-		
+		counter++;	// increment class counter
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -2315,7 +2306,7 @@ void NucleusEditor::SaveActiveLearningModel()
 	if(filename == "")
 		return;
 	lastPath = QFileInfo(filename).absolutePath();	
-	
+
 	std::string Filename = filename.toStdString();;
 	ofstream outFile; 
 	outFile.open(Filename.c_str(), ios::out | ios::trunc );
@@ -2346,7 +2337,7 @@ void NucleusEditor::classifyFromActiveLearningModel()
 		featureTable = table;
 	else
 		featureTable = nucSeg->megaTable;
-	
+
 	if(!featureTable) return;
 
 	if(pWizard)
@@ -2355,7 +2346,7 @@ void NucleusEditor::classifyFromActiveLearningModel()
 	}
 
 	QString fileName  = QFileDialog::getOpenFileName(this, "Select training model to open", lastPath,
-									tr("TXT Files (*.txt)"));
+		tr("TXT Files (*.txt)"));
 	if(fileName == "")
 		return;
 	lastPath = QFileInfo(fileName).absolutePath();
@@ -2385,7 +2376,7 @@ void NucleusEditor::classifyFromActiveLearningModel()
 	alm_table->Initialize();
 	for(int c=1; c<(int)active_model_table->GetNumberOfColumns(); ++c)
 	{
-	    vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
 		column->SetName( active_model_table->GetColumnName(c));
 		alm_table->AddColumn(column);
 	}
@@ -2399,11 +2390,14 @@ void NucleusEditor::classifyFromActiveLearningModel()
 		alm_table->InsertNextRow(model_data1);
 	}
 
-	ConfidenceThresholdDialog *dialog = new ConfidenceThresholdDialog(this);
+	ClassName_Confidence_Dialog *dialog = new ClassName_Confidence_Dialog(this);
 	if( dialog->exec() )
 	{
-		this->confidence_thresh = dialog->getConfThresh();		
-    }
+		classification_name = dialog->getClassName();
+		confidence_thresh = dialog->getConfThresh();		
+	}
+	else
+		return;
 	delete dialog;
 
 	pWizard = new PatternAnalysisWizard( featureTable, alm_table, "", PatternAnalysisWizard::_ACTIVEMODEL,"","", this);
@@ -2482,37 +2476,51 @@ std::vector< vtkSmartPointer<vtkTable> > NucleusEditor::Perform_Classification(M
 			currprob = mclr_class->Test_Current_Model(data_classify);
 		}
 
+		if(classification_name != "")
+		{
+			prediction_col_name = "prediction_active_" + classification_name;
+			confidence_col_name = "confidence_" + classification_name;
+		}
+
 		//// Add the Prediction Column 
-		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-		column->SetName("prediction_active");
-		column->SetNumberOfValues( table_vector.at(i)->GetNumberOfRows() );
-		table_vector.at(i)->AddColumn(column);
+		std::vector< std::string > prediction_column_names = ftk::GetColumsWithString(prediction_col_name.c_str() , table_vector.at(i) );
+		if(prediction_column_names.size() == 0)
+		{
+			vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+			column->SetName(prediction_col_name.c_str());
+			column->SetNumberOfValues( table_vector.at(i)->GetNumberOfRows() );
+			table_vector.at(i)->AddColumn(column);
+		}
 
 		// Add the confidence column
-		vtkSmartPointer<vtkDoubleArray> column_confidence = vtkSmartPointer<vtkDoubleArray>::New();
-		column_confidence->SetName("confidence");
-		column_confidence->SetNumberOfValues( table_vector.at(i)->GetNumberOfRows() );
-		table_vector.at(i)->AddColumn(column_confidence);
+		std::vector< std::string > confidence_column_names = ftk::GetColumsWithString(confidence_col_name.c_str() , table_vector.at(i) );
+		if(confidence_column_names.size() == 0)
+		{
+			vtkSmartPointer<vtkDoubleArray> column_confidence = vtkSmartPointer<vtkDoubleArray>::New();
+			column_confidence->SetName(confidence_col_name.c_str());
+			column_confidence->SetNumberOfValues( table_vector.at(i)->GetNumberOfRows() );
+			table_vector.at(i)->AddColumn(column_confidence);
+		}
 
 		for(int row = 0; (int)row < table_vector.at(i)->GetNumberOfRows(); ++row)  
 		{
 			vnl_vector<double> curr_col = currprob.get_column(row);
-			table_vector.at(i)->SetValueByName(row,"confidence", vtkVariant(curr_col(curr_col.arg_max())));
+			table_vector.at(i)->SetValueByName(row,confidence_col_name.c_str(), vtkVariant(curr_col(curr_col.arg_max())));
 			if(curr_col(curr_col.arg_max()) > confidence_thresh) 
 			{
-				table_vector.at(i)->SetValueByName(row,"prediction_active", vtkVariant(curr_col.arg_max()+1));						
+				table_vector.at(i)->SetValueByName(row,prediction_col_name.c_str(), vtkVariant(curr_col.arg_max()+1));						
 			}
 			else
 			{
-				table_vector.at(i)->SetValueByName(row,"prediction_active", vtkVariant(0));
+				table_vector.at(i)->SetValueByName(row,prediction_col_name.c_str(), vtkVariant(0));
 			}
 		}
-		prediction_names = ftk::GetColumsWithString( "prediction_active" , table_vector.at(i) );
+		prediction_names = ftk::GetColumsWithString( prediction_col_name.c_str() , table_vector.at(i) );
 		selection->clear();			
 	}
 
 	// Total number of classes
-		//table_vector.at(0)->
+	//table_vector.at(0)->
 	return table_vector;
 }
 
@@ -2553,19 +2561,19 @@ vtkSmartPointer<vtkTable> NucleusEditor::loadActiveLearningModel(std::string fil
 			temp_1.push_back(vtkVariant(atof(pch)));
 			pch = strtok (NULL, " \t");
 		}	
-		
+
 		column->SetNumberOfValues(temp_1.size());
 		alm_table->AddColumn(column);
 		for(int row=0; row<(int)temp_1.size(); ++row)
 		{
 			alm_table->SetValue(row, alm_table->GetNumberOfColumns()-1, temp_1.at(row));
 		}
-		
+
 		inFile.getline(line, MAXLINESIZE);
-		
+
 	}
 	inFile.close();
-	
+
 	return alm_table;
 
 }
@@ -2636,7 +2644,7 @@ void NucleusEditor::displayKymoGraph()
 void NucleusEditor::startKPLS()
 {
 	if(!table) return;
-    
+
 	if(pWizard)
 	{
 		delete pWizard;
@@ -2681,7 +2689,7 @@ void NucleusEditor::startKPLS()
 	pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
 	pWizard->show();
 	kplsRun = 1;
-    
+
 }
 
 //**********************************************************************
@@ -2699,7 +2707,7 @@ void NucleusEditor::createTrainer()
 	pWizard = new PatternAnalysisWizard( table, PatternAnalysisWizard::_SEGMODEL,"","", this);
 	pWizard->setWindowTitle(tr("Select Training Features"));
 	pWizard->show();
-	
+
 }
 
 //**********************************************************************
@@ -2716,7 +2724,7 @@ void NucleusEditor::appendTrainer()
 	}
 
 	QString fileName  = QFileDialog::getOpenFileName(this, "Select training model to open", lastPath,
-									tr("TXT Files (*.txt)"));
+		tr("TXT Files (*.txt)"));
 	if(fileName == "")
 		return;
 	lastPath = QFileInfo(fileName).absolutePath();
@@ -2725,7 +2733,7 @@ void NucleusEditor::appendTrainer()
 
 	pWizard = new PatternAnalysisWizard( table, model_table, fileName, PatternAnalysisWizard::_APPENDMODEL,"","", this);
 	pWizard->show();
-	
+
 }
 
 void NucleusEditor::loadModelFromFile( std::string file_name ){
@@ -2744,12 +2752,12 @@ void NucleusEditor::queryKNearest()
 {
 	if(!table) return;
 	if(!segView) return;
-	
+
 	std::vector<unsigned int> IDs;
 	unsigned int k;
 	unsigned short Class_dest, Class_src = 0;
 	bool k_mutual;
-	
+
 	QVector<QString> classes;
 	int max_class = 0;
 	for(int col=0; col<(int)table->GetNumberOfColumns(); ++col)
@@ -2768,7 +2776,7 @@ void NucleusEditor::queryKNearest()
 
 	for(int i=0; i<max_class; ++i)
 		classes.push_back(QString::number(i+1));
-	
+
 
 	QueryDialog *dialog = new QueryDialog(1,classes,this);
 	if( dialog->exec() )
@@ -2779,7 +2787,7 @@ void NucleusEditor::queryKNearest()
 			Class_src = dialog->getSourceClass();
 		Class_dest = dialog->getDestClass();
 		k_mutual = dialog->getKMutual();
-    }
+	}
 	delete dialog;
 
 	std::map<int, ftk::Object::Point> *	centerMap;
@@ -2840,7 +2848,7 @@ void NucleusEditor::queryKNearest()
 		}
 	}
 	this->updateViews();
-	
+
 	vtkSmartPointer<vtkTable> kNeighborTable = KNObj->vectorsToGraphTable(kNeighborIDs);
 	segView->SetKNeighborTable(kNeighborTable);
 	segView->SetKNeighborsVisibleOn(k_mutual);		
@@ -2865,7 +2873,7 @@ void NucleusEditor::queryInRadius()
 {
 	if(!table) return;
 	if(!segView) return;
-	
+
 	std::vector<unsigned int> IDs;
 	double radius;
 	unsigned short Class_dest, Class_src = 0;
@@ -2897,7 +2905,7 @@ void NucleusEditor::queryInRadius()
 		if(IDs.at(0) == 0)
 			Class_src = dialog->getSourceClass();
 		Class_dest = dialog->getDestClass();
-    }
+	}
 	delete dialog;
 
 	std::map<int, ftk::Object::Point> *	centerMap;
@@ -2958,11 +2966,11 @@ void NucleusEditor::queryInRadius()
 		}
 	}
 	this->updateViews();
-	
+
 	vtkSmartPointer<vtkTable> radNeighborTable = KNObj->vectorsToGraphTable(radNeighborIDs);	
 	segView->SetRadNeighborTable(radNeighborTable);
 	segView->SetRadNeighborsVisibleOn();
-	
+
 }
 
 //**********************************************************************
@@ -3035,7 +3043,7 @@ void NucleusEditor::updateViews(void)
 		segView->SetCentroidsVisible(true);
 		kplsRun = 0;
 	}
-	
+
 	//Show colored seeds after Active Learning Classification has finished
 	//if( activeRun && prediction_names.size()>0 )
 	if( prediction_names.size()>0 )
@@ -3303,7 +3311,7 @@ void NucleusEditor::updateNucSeg(bool ask)
 void NucleusEditor::startEditing(void)
 {
 	if(!myImg || !labImg)
-	return;
+		return;
 
 	std::string log_entry = "NUCLEAR_SEGMENTATION , ";
 	log_entry += ftk::NumToString(nucSeg->GetNumberOfObjects()) + " , ";
@@ -3323,7 +3331,7 @@ void NucleusEditor::stopEditing(void)
 {
 	setEditsEnabled(false);
 	setCommonEnabled(true);
-	
+
 	if(splitAction->isChecked())
 	{
 		segView->ClearGets();
@@ -3353,8 +3361,8 @@ void NucleusEditor::changeClass(void)
 	//Change the class of these objects:
 	//if(ok)
 	//{
-		//nucSeg->SetClass(ids,newClass);
-		//this->updateViews();
+	//nucSeg->SetClass(ids,newClass);
+	//this->updateViews();
 	//}
 }
 
@@ -3400,15 +3408,18 @@ void NucleusEditor::deleteCells(void)
 
 	if(nucSeg->Delete(ids, table))
 	{
-		for(int j=0; j<(int)ids.size(); ++j)
+		if(NucAdjTable)
 		{
-			int ID = ids.at(j);
-			for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
+			for(int j=0; j<(int)ids.size(); ++j)
 			{
-				if((NucAdjTable->GetValue(row,0).ToInt() == ID) || (NucAdjTable->GetValue(row,1).ToInt() == ID))
+				int ID = ids.at(j);
+				for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
 				{
-					NucAdjTable->RemoveRow(row);
-					--row;
+					if((NucAdjTable->GetValue(row,0).ToInt() == ID) || (NucAdjTable->GetValue(row,1).ToInt() == ID))
+					{
+						NucAdjTable->RemoveRow(row);
+						--row;
+					}
 				}
 			}
 		}
@@ -3417,7 +3428,7 @@ void NucleusEditor::deleteCells(void)
 		projectFiles.adjTablesSaved = false;
 		selection->clear();
 		this->updateViews();
-		
+
 		segView->SetNucAdjTable(NucAdjTable);
 
 		std::string log_entry = "DELETE , ";
@@ -3439,10 +3450,10 @@ void NucleusEditor::update5DTable(void)
 
 	//Update the table and scatter plot views
 	if (tblWin.size()!=0)
-	  tblWin.back()->setModels(table,selection);
+		tblWin.back()->setModels(table,selection);
 	if (pltWin.size()!=0)
 		pltWin.back()->setModels(table,selection);
-	
+
 	this->clearSelections();
 	this->updateViews();
 
@@ -3607,7 +3618,7 @@ void NucleusEditor::applyExclusionMargin(void)
 		delete dialog;
 		return;
 	}
-	
+
 	l = dialog->getMargin(0);
 	r = dialog->getMargin(1);
 	t = dialog->getMargin(2);
@@ -3716,10 +3727,10 @@ void NucleusEditor::segmentNuclei()
 		projectDefinition.MakeDefaultNucleusSegmentation(nucChannel);
 		projectFiles.definitionSaved = false;
 		projectFiles.nucSegValidated = false;
-        
+
 		startProcess();
 		;
-		
+
 	}
 	delete dialog;
 
@@ -3748,9 +3759,9 @@ QVector<QString> NucleusEditor::getChannelStrings(void)
 void NucleusEditor::processProject(void)
 {
 	QString projectName = QFileDialog::getOpenFileName(
-                             this, "Select Definition File", lastPath,
-                             tr("XML Project Definition (*.xml)\n"
-							    "All Files (*.*)"));
+		this, "Select Definition File", lastPath,
+		tr("XML Project Definition (*.xml)\n"
+		"All Files (*.*)"));
 	if(projectName == "")  return;
 	lastPath = QFileInfo(projectName).absolutePath() + QDir::separator();
 
@@ -3964,7 +3975,7 @@ ParamsFileDialog::ParamsFileDialog(QString lastPth, QVector<QString> channels, Q
 : QDialog(parent)
 {
 	this->lastPath = lastPth;
-	
+
 	channelLabel = new QLabel("Choose Channel: ");
 	channelCombo = new QComboBox();
 	for(int v = 0; v<channels.size(); ++v)
@@ -4028,9 +4039,9 @@ void ParamsFileDialog::ParamBrowse(QString comboSelection)
 		return;
 
 	QString newfilename  = QFileDialog::getOpenFileName(this,"Choose a Parameters File",lastPath,
-			tr("INI Files (*.ini)\n"
-			   "TXT Files (*.txt)\n"
-			   "All Files (*.*)\n"));
+		tr("INI Files (*.ini)\n"
+		"TXT Files (*.txt)\n"
+		"All Files (*.*)\n"));
 
 	if (newfilename == "")
 	{
@@ -4048,12 +4059,21 @@ void ParamsFileDialog::ParamBrowse(QString comboSelection)
 //***************************************************************************
 //***********************************************************************************
 //***********************************************************************************
-// A dialog to get the paramaters file to use and specify the channel if image has
-// more than one:
+// A dialog to get the confidence threshold and classification name:
 //***********************************************************************************
-ConfidenceThresholdDialog::ConfidenceThresholdDialog(QWidget *parent)
+
+
+ClassName_Confidence_Dialog::ClassName_Confidence_Dialog(QWidget *parent)
 : QDialog(parent)
 {
+	classNameLabel = new QLabel("Enter Classification Name : ");
+	class_name = new QLineEdit();
+	class_name->setMinimumWidth(30);
+	class_name->setFocusPolicy(Qt::StrongFocus);
+	classNameLayout = new QHBoxLayout;
+	classNameLayout->addWidget(classNameLabel);
+	classNameLayout->addWidget(class_name);
+	
 	confidenceLabel = new QLabel("Specify Confidence Threshold %: ");
 	conf_thresh = new QLineEdit();
 	conf_thresh->setMinimumWidth(30);
@@ -4069,6 +4089,7 @@ ConfidenceThresholdDialog::ConfidenceThresholdDialog(QWidget *parent)
 	bLayout->addWidget(okButton);
 
 	layout = new QVBoxLayout;
+	layout->addLayout(classNameLayout);
 	layout->addLayout(confLayout);
 	layout->addLayout(bLayout);
 	this->setLayout(layout);
@@ -4079,12 +4100,110 @@ ConfidenceThresholdDialog::ConfidenceThresholdDialog(QWidget *parent)
 	this->setWindowFlags(flags);
 }
 
-double ConfidenceThresholdDialog::getConfThresh()
+std::string ClassName_Confidence_Dialog::getClassName()
 {
-	double CT;
+	std::string className;
+	QString input = class_name->displayText();
+	className = input.toStdString();
+	return className;
+}
+
+double ClassName_Confidence_Dialog::getConfThresh()
+{
+	double CT = 0.5;
 	QString input = conf_thresh->displayText();
-	CT = input.toDouble()/100;
+	if(input != "")
+	{
+		CT = input.toDouble()/100;
+	}
 	return CT;
+}
+
+//***************************************************************************
+//***********************************************************************************
+//***********************************************************************************
+// A dialog to get the number of samples the user is willing to validate.
+// Reusing the variables of the Confidence Dialog.
+//***********************************************************************************
+SamplePercentDialog::SamplePercentDialog(int no_of_samples,int no_of_classes,QWidget *parent)
+: QDialog(parent)
+{
+	sampleNumberLabel = new QLabel("The total number of cells present : "); 
+	numberLabel = new QLabel(QString::number(no_of_samples));
+
+	sampleLabel = new QLabel(" % of cells you are willing to validate : "); 
+	samples = no_of_samples;
+	class_number = no_of_classes;
+
+	QGridLayout * layout = new QGridLayout;
+
+	QHBoxLayout *sampleLayout1 = new QHBoxLayout;
+	sampleLayout1->addWidget(sampleNumberLabel);
+	sampleLayout1->addWidget(numberLabel);
+
+
+	QLabel *sampleLabel2 = new QLabel(" Number of cells you are willing to validate : "); 
+	vSpinNumber = new QSpinBox(this);
+	vSpinNumber->resize(vSpinNumber->minimumSizeHint());
+	vSpinNumber->setRange(1,no_of_samples);
+	vSpinNumber->setEnabled(true);
+
+
+	QHBoxLayout *sampleLayout2 = new QHBoxLayout;
+	sampleLayout2->addWidget(sampleLabel2);
+	sampleLayout2->addWidget(vSpinNumber);
+
+	vSpinPercent = new QDoubleSpinBox(this);
+	vSpinPercent->resize( vSpinPercent->minimumSizeHint() );
+	vSpinPercent->setRange(1,100);
+	vSpinPercent->setEnabled(true);
+
+	QHBoxLayout *sampleLayout = new QHBoxLayout;
+	sampleLayout->addWidget(sampleLabel);
+	sampleLayout->addWidget(vSpinPercent);
+
+	layout->addLayout(sampleLayout1,1,0,0);
+	layout->addLayout(sampleLayout,2,0,0);
+	layout->addLayout(sampleLayout2,3,0,0);
+
+
+	connect(vSpinPercent, SIGNAL(valueChanged(double)), this, SLOT(setNumber(double)));
+	connect(vSpinNumber, SIGNAL(valueChanged(int)),this, SLOT(setPercent(int)));
+
+	//Default values
+	vSpinPercent->setValue(5);
+	vSpinNumber->setValue(((samples/20)/class_number)*class_number);	
+
+
+	okButton = new QPushButton(tr("OK"),this);
+	connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
+	bLayout = new QHBoxLayout;
+	bLayout->addStretch(20);
+	bLayout->addWidget(okButton);
+
+	layout->addLayout(bLayout,4,0,0);
+	this->setLayout(layout);
+	this->setWindowTitle(tr("Validation Sample %"));
+
+	Qt::WindowFlags flags = this->windowFlags();
+	flags &= ~Qt::WindowContextHelpButtonHint;
+	this->setWindowFlags(flags);
+}
+
+
+void SamplePercentDialog::setNumber(double x)
+{
+	disconnect(vSpinNumber, SIGNAL(valueChanged(int)),this, SLOT(setPercent(int)));
+	//vSpinNumber->setValue((int)((x*samples/100)/class_number)*class_number);// Divide and multiply by class_number to ensure consistency
+	vSpinNumber->setValue((int)(x*samples/100));// Divide and multiply by class_number to ensure consistency
+	connect(vSpinNumber, SIGNAL(valueChanged(int)),this, SLOT(setPercent(int)));
+}
+
+void SamplePercentDialog::setPercent(int x)
+{
+	disconnect(vSpinPercent, SIGNAL(valueChanged(double)), this, SLOT(setNumber(double)));
+	vSpinPercent->setValue(((double)x*100/samples));
+	connect(vSpinPercent, SIGNAL(valueChanged(double)), this, SLOT(setNumber(double)));
 }
 
 
@@ -4284,9 +4403,9 @@ void NucleusEditor::preprocessImage(void)
 
 		if( bpChunk1 == bpChunk2 )	//Can't handle resizing in the GUI quite yet.
 		{
-		memcpy( myImg->GetDataPtr(0,nucChannel), dialog->GetImage()->GetBufferPointer(), bpChunk2 );
-		segView->update();
-		projectFiles.inputSaved = false;
+			memcpy( myImg->GetDataPtr(0,nucChannel), dialog->GetImage()->GetBufferPointer(), bpChunk2 );
+			segView->update();
+			projectFiles.inputSaved = false;
 		}
 	}
 
@@ -4347,12 +4466,12 @@ void NucleusEditor::preprocess(QString id)
 	if(!myImg)
 		return;
 
- 	ftkPreprocessDialog *dialog = new ftkPreprocessDialog(this->getChannelStrings(), id.toStdString(), this->myImg, this);
-  	if(dialog->exec())
- 	{
+	ftkPreprocessDialog *dialog = new ftkPreprocessDialog(this->getChannelStrings(), id.toStdString(), this->myImg, this);
+	if(dialog->exec())
+	{
 		segView->update();
 		projectFiles.inputSaved = false;
- 	}
+	}
 }
 
 
@@ -4370,11 +4489,11 @@ PredictionDialog::PredictionDialog(QVector<QString> training_fields, QWidget *pa
 : QDialog(parent){
 	channelLabel = new QLabel("Choose Training Set: ");
 	channelCombo = new QComboBox();
-	
+
 	for(int v = 0; v<training_fields.size(); ++v){
 		channelCombo->addItem(training_fields.at(v));
 	}
-	
+
 	QGridLayout *layout = new QGridLayout;
 	this->setLayout(layout);
 	this->setWindowTitle(tr("Select Classifier"));
