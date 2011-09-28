@@ -100,7 +100,7 @@ void PatternAnalysisWizard::initFeatureGroup(void)
 	{
 		const char * name = m_table->GetColumnName(c);
 		std::string current_name = name;
-		if( current_name.find("train")!=std::string::npos || current_name.find("prediction")!=std::string::npos )
+		if( current_name.find("train")!=std::string::npos || current_name.find("prediction")!=std::string::npos || current_name.find("confidence")!=std::string::npos )
 			continue;
 		if( current_name.find("Zern")!=std::string::npos)
 		{
