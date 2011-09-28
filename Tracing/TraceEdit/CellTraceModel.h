@@ -73,7 +73,7 @@ public:
 	void SelectByIDs(std::vector<int> IDs);
 	std::set<long int> GetSelectedIDs();
 	std::vector<CellTrace*> GetSelectedCells();
-	int getCellCount();
+	unsigned int getCellCount();
 	CellTrace * GetCellAt( int i);
 	CellTrace * GetCellAtNoSelection( int i);
 	void WriteCellCoordsToFile(const char* fileName);

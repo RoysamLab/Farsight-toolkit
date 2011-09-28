@@ -205,6 +205,10 @@ void CellTrace::SetClassifcation(int predicCol, double prediction, int confCol,d
 	this->segments[0]->editCellFeature(prediction, predicCol);
 	this->segments[0]->editCellFeature(confidence, confCol);
 }
+void CellTrace::addNewFeature(vtkVariant nextFeature)
+{
+	this->segments[0]->addCellFeature(nextFeature);
+}
 void CellTrace::clearAll()
 {
 	this->segments.clear();
@@ -592,7 +596,7 @@ vtkSmartPointer<vtkVariantArray> CellTrace::GetExtendedDataRow(int CheckAddFeatu
 			CellData->InsertNextValue(extendedFeatures[j]);
 		}
 	}
-	std::cout << "row size " << this->CellData->GetNumberOfValues()<< std::endl;
+	//std::cout << "row size " << this->CellData->GetNumberOfValues()<< std::endl;
 	return this->CellData;
 }
 vtkSmartPointer<vtkVariantArray> CellTrace::BoundsRow()

@@ -1159,6 +1159,7 @@ void View3D::CreateGUIObjects()
 
 	this->ArunVesselTracingButton = new QPushButton("Trace Centerlines", this->CentralWidget);
 	connect(this->ArunVesselTracingButton, SIGNAL(clicked()), this, SLOT(ArunCenterline()));
+	this->ArunVesselTracingButton->setDisabled(true);
 
 	this->updatePT3D = new QPushButton("Update Location", this->CentralWidget);
 	connect(this->updatePT3D, SIGNAL(clicked()), this, SLOT(getPosPTin3D()));
@@ -1182,6 +1183,13 @@ void View3D::CreateGUIObjects()
 
 	this->CalculateCellDistanceButton = new QPushButton("Calculate Cell to Cell Distance Graph", this->CentralWidget);
 	connect(this->CalculateCellDistanceButton, SIGNAL(clicked()), this, SLOT(CalculateCellToCellDistanceGraph()));
+
+	this->LoadNucleiTable = new QAction("Load Nuclei Table", this->CentralWidget);
+	connect(this->LoadNucleiTable, SIGNAL(triggered()), this, SLOT(readNucleiTable()));
+
+	this->AssociateCellToNucleiAction = new QAction("Associate Nuclei To Cells", this->CentralWidget);
+	connect(this->AssociateCellToNucleiAction, SIGNAL(triggered()), this, SLOT(AssociateNeuronToNuclei()));
+	this->AssociateCellToNucleiAction->setDisabled(true);
 
 	this->ShowPointer = new QCheckBox("Use 3D Cursor", this->CentralWidget);
 	this->ShowPointer->setStatusTip("Show Pointer Automatically?");
@@ -1411,6 +1419,7 @@ void View3D::CreateLayout()
 	this->fileMenu->addAction(this->loadTraceAction);
 	this->fileMenu->addAction(this->loadTraceImage);
 	this->fileMenu->addAction(this->loadSoma);
+	this->fileMenu->addAction(this->LoadNucleiTable);
 	this->fileMenu->addSeparator();
 	this->fileMenu->addAction(this->saveAction);
 	this->fileMenu->addAction(this->SaveComputedCellFeaturesTableAction);
@@ -1624,6 +1633,7 @@ void View3D::CreateLayout()
 	// this->analysisViews->addAction(this->updateStatisticsAction);
 	this->analysisViews->addAction(this->CellAnalysis);
 	this->analysisViews->addAction(this->StartActiveLearningAction);
+	this->analysisViews->addAction(this->AssociateCellToNucleiAction);
 
 	//this->ShowToolBars->addSeparator();
 	QMenu *renderer_sub_menu = this->DataViews->addMenu(tr("Renderer Mode"));
@@ -2812,10 +2822,10 @@ void View3D::CalculateDistanceToDevice()
 	cellLocator->SetDataSet(ROIExtrudedpolydata);
 	cellLocator->BuildLocator();
 	
-	int cellCount= this->CellModel->getCellCount();
+	unsigned int cellCount= this->CellModel->getCellCount();
 	if (cellCount >= 1)
 	{
-		for (int i = 0; i < cellCount; i++)
+		for (unsigned int i = 0; i < cellCount; i++)
 		{
 			//double testPoint[3] = {500, 600, 50};
 			double somaPoint[3];
@@ -2859,27 +2869,35 @@ void View3D::CalculateDistanceToDevice()
 			this, tr("Save Nuclei feature File"), "", tr(".txt(*.txt)"));
 		ftk::SaveTable(nucleifileName.toStdString(),this->nucleiTable);
 	} // end nuclei dist to device
+}
+void View3D::readNucleiTable()
+{
+	QString fileName = QFileDialog::getOpenFileName(this, "Open Nuclei Table", "",tr(".txt(*.txt)"));
+	if (!fileName.isEmpty())
+	{
+		this->nucleiTable = ftk::LoadTable(fileName.toStdString());
+	}
+	this->AssociateCellToNucleiAction->setDisabled(false);
+}
+void View3D::AssociateNeuronToNuclei()
+{
+	unsigned int cellCount= this->CellModel->getCellCount();
+	vtkIdType nucleiRowCount = this->nucleiTable->GetNumberOfRows();
 	if ((cellCount >= 1)&&(nucleiRowCount > 0))
 	{
-		vtkSmartPointer<vtkTable> OutputTable = this->CellModel->getDataTable();
 		vtkIdType nucleiColSize = this->nucleiTable->GetNumberOfColumns();
 		vtkIdType nucleiRowSize = this->nucleiTable->GetNumberOfRows();
 		for (vtkIdType nucleiColIter = 0; nucleiColIter< nucleiColSize; nucleiColIter++)
 		{
-			//
-			vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-			column->SetName(this->nucleiTable->GetColumnName(nucleiColIter));
-			column->SetNumberOfValues(OutputTable->GetNumberOfRows());
-			OutputTable->AddColumn(column);
+			this->CellModel->AddNewFeatureHeader(this->nucleiTable->GetColumnName(nucleiColIter));
 		}
-		for (vtkIdType somaRowIter = 0; somaRowIter < OutputTable->GetNumberOfRows(); somaRowIter++)
+		for (unsigned int i = 0; i < cellCount; i++)
 		{
 			// search for nucli thats within radii of soma 
 			double distance, somaRadii,  x1, y1, z1; 
-			somaRadii = OutputTable->GetValueByName(somaRowIter, "Soma Radii").ToDouble();
-			x1 = OutputTable->GetValueByName(somaRowIter, "Soma X").ToDouble();
-			y1 = OutputTable->GetValueByName(somaRowIter, "Soma Y").ToDouble();
-			z1 = OutputTable->GetValueByName(somaRowIter, "Soma Z").ToDouble();
+			double somaPoint[3];
+			CellTrace* currCell = this->CellModel->GetCellAtNoSelection( i);
+			currCell->getSomaCoord(somaPoint);
 			bool found = false;
 			vtkIdType nucleiRowIter = 0;
 			while (!found && (nucleiRowIter < nucleiRowSize))
@@ -2888,17 +2906,17 @@ void View3D::CalculateDistanceToDevice()
 				x2 = this->nucleiTable->GetValueByName(nucleiRowIter,"centroid_x").ToDouble();
 				y2 = this->nucleiTable->GetValueByName(nucleiRowIter,"centroid_y").ToDouble();
 				z2 = this->nucleiTable->GetValueByName(nucleiRowIter,"centroid_z").ToDouble();
-				x = pow((x1 - x2),2);
-				y = pow((y1 -y2),2);
-				z = pow((z1 -z2),2);
+				x = pow((somaPoint[0] - x2),2);
+				y = pow((somaPoint[1] - y2),2);
+				z = pow((somaPoint[2] - z2),2);
 				distance = sqrt(x +y +z);
 				if (distance < somaRadii)
 				{
 					for (vtkIdType nucleiColIter = 0; nucleiColIter< nucleiColSize; nucleiColIter++)
 					{
-						const char* colName = this->nucleiTable->GetColumnName(nucleiColIter);
 						vtkVariant colData = this->nucleiTable->GetValue(nucleiRowIter, nucleiColIter);
-						OutputTable->SetValueByName(somaRowIter, colName, colData);
+						currCell->addNewFeature(colData);
+						/*OutputTable->SetValueByName(somaRowIter, colName, colData);*/
 					}
 					found = true;
 				}
@@ -2908,14 +2926,13 @@ void View3D::CalculateDistanceToDevice()
 			{
 				for (vtkIdType nucleiColIter = 0; nucleiColIter< nucleiColSize; nucleiColIter++)
 				{
-					const char* colName = this->nucleiTable->GetColumnName(nucleiColIter);
-					OutputTable->SetValueByName(somaRowIter, colName, vtkVariant(-PI));
+					/*const char* colName = this->nucleiTable->GetColumnName(nucleiColIter);
+					OutputTable->SetValueByName(somaRowIter, colName, vtkVariant(-PI));*/
+					currCell->addNewFeature(vtkVariant(-PI));
 				}
 			}
-		}//end of soma row
-		QString nucleifileName = QFileDialog::getSaveFileName(
-			this, tr("Save Somas with Nuclei features File"), "", tr(".txt(*.txt)"));
-		ftk::SaveTable(nucleifileName.toStdString(),OutputTable);
+		}//end of soma row		
+		this->ShowCellAnalysis();
 	}// end of matching soma to nuclei
 }
 void View3D::CalculateCellToCellDistanceGraph()

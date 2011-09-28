@@ -43,6 +43,7 @@ public:
 	void getCellBounds(double bounds[]);
 	void setDistanceToROI(double newDistance, double Coord_X , double Coord_Y, double Coord_Z);
 	void SetClassifcation(int predicCol, double prediction, int confCol,double confidence);
+	void addNewFeature(vtkVariant nextFeature);
 private:
 	void clearAll();
 	void MaxMin(double NewValue, double &total, double &Min, double &Max);

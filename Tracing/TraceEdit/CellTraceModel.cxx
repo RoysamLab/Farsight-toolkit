@@ -360,9 +360,9 @@ std::vector<CellTrace*> CellTraceModel::GetSelectedCells()
 	}//end for selected
 	return selectedCell;
 }
-int CellTraceModel::getCellCount()
+unsigned int CellTraceModel::getCellCount()
 {
-	return (int) this->Cells.size();
+	return (unsigned int) this->Cells.size();
 }
 CellTrace * CellTraceModel::GetCellAt( int i)
 {

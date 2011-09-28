@@ -226,6 +226,8 @@ public slots:
 	void CalculateDistanceToDevice();
 
 	void CalculateCellToCellDistanceGraph();
+	void readNucleiTable();
+	void AssociateNeuronToNuclei();
 
 	void focusOn();
 	void setRenderFocus(double renderBounds[], int size);
@@ -340,15 +342,21 @@ private:
 	QAction *explodeTree;
 	QAction *root;
 	QAction *ImageIntensity;
+
 	QPushButton *MoveSphere;
 	QPushButton *updatePT3D;
 	QCheckBox *ShowPointer;
 	QPushButton *setSoma;
 	QPushButton *createNewBitButton;
+
 	QPushButton *createNewROIPointButton;
 	QPushButton *ExtrudeROIButton;
 	QPushButton *CalculateDistanceToDeviceButton;
 	QPushButton *CalculateCellDistanceButton;
+
+	QAction *LoadNucleiTable;
+	QAction *AssociateCellToNucleiAction;
+
 	QAction *FocusAction;
 	QAction *AutoCellExportAction;
 	QAction *ShowPlots;
