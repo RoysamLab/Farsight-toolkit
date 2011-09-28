@@ -123,6 +123,7 @@ protected slots:
 	void askload5DLabelImage(void);
 	void load5DLabelImage(QStringList labelfilesChannTimeList);
 	void update5DTable(void);
+	
 
 
 	void askLoadResult(void);
@@ -416,15 +417,25 @@ protected:
 	ftk::ProjectFiles projectFiles;				//files in the currently visible project
 	ftk::ProjectDefinition projectDefinition;	//the project definition currently being used.
 	unsigned int kplsRun;
+	
+	///////////////////////////////////////////////////////////////////////////////
+	// Active Learning Variables
+	///////////////////////////////////////////////////////////////////////////////
 	unsigned int activeRun;
 	vnl_matrix<double> act_learn_matrix;
 	double confidence_thresh;
+	std::string classification_name;
+	double sample_number;
 	vnl_vector<double> std_dev_vec;
 	vnl_vector<double> mean_vec; 
 	std::vector< std::pair< std::string, vnl_vector<double> > >active_model;
-	std::vector< std::vector<int> >  validation_samples; 
+	std::string prediction_col_name;
+	std::string confidence_col_name;
+	std::vector< std::vector< std::pair<int,int> > >  validation_samples; 
 	// Gallery contains both the image of the query nuclei and their class values
 	std::vector<std::pair<QImage,std::vector<int> > > gallery; 
+	////////////////////////////////////////////////////////////////////////////////
+
 	//This does not belong here, but is a temporary fix:
 	void CreateDefaultAssociationRules();
 
@@ -472,14 +483,18 @@ private:
 	QPushButton *okButton;
 };
 
-class ConfidenceThresholdDialog : public QDialog
+class ClassName_Confidence_Dialog : public QDialog
 {
 	Q_OBJECT
 public:
-	ConfidenceThresholdDialog(QWidget *parent = 0);
+	ClassName_Confidence_Dialog(QWidget *parent = 0);
+	std::string getClassName();
 	double getConfThresh();
 
 private:
+	QLabel *classNameLabel;
+	QLineEdit *class_name;
+	QHBoxLayout *classNameLayout;
 	QLabel *confidenceLabel;
 	QLineEdit *conf_thresh;
 	QHBoxLayout *confLayout;
@@ -487,6 +502,37 @@ private:
 	QHBoxLayout *bLayout;
 	QVBoxLayout *layout;
 };
+
+
+
+class SamplePercentDialog : public QDialog
+{
+	Q_OBJECT
+public:
+	SamplePercentDialog(int no_of_samples,int no_of_classes,QWidget *parent = 0);
+	int samples;
+	QSpinBox * vSpinNumber;
+	int class_number;
+	public slots:	
+	
+	void setNumber(double x);
+	void setPercent(int x);
+
+private:
+	QLabel *sampleNumberLabel;
+	QLabel *numberLabel;
+	QLabel *sampleLabel;
+	QLabel *dummyLabel;
+	QLineEdit *sample_percent;
+	QPushButton *okButton;
+	QHBoxLayout *bLayout;
+	QVBoxLayout *layout;
+	QDoubleSpinBox * vSpinPercent;
+	
+
+};
+
+
 
 class QueryDialog : public QDialog
 {
