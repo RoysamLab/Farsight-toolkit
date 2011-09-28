@@ -127,6 +127,7 @@ public:
 	std::vector<Seed> getSeeds();
 	void updatetable4DImage(std::vector< vtkSmartPointer<vtkTable> > tableOfFeatures);
 	void SetCurrentbBox(std::map<int, ftk::Object::Box> currentbBoxMap); // To set the current bBox to store edit information when time series is loaded
+	void createMegaTable();	
 	void AddTimeToMegaTable();
 
 	//Set Data:
@@ -172,7 +173,7 @@ protected:
 	ftk::Object::Box GrowBox(ftk::Object::Box b, int s);
 	std::vector<int> GetNeighbors(int id);
 	vtkSmartPointer<vtkTable> featureVectorTovtkTable(std::vector<ftk::IntrinsicFeatures> featurevector);
-	void createMegaTable();	
+	
 	
 	//FOR PRINTING SEEDS IMAGE:
 	void Cleandptr(unsigned short*x,vector<int> y );
