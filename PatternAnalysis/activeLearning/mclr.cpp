@@ -1093,7 +1093,6 @@ int MCLR::Active_Query()
 
 	max_info_vector.push_back(max_info);
 	
-	std::cout<< max_info << std::endl;
 
 	//	std::cout<<max_info_vector.size() << "--" << max_info <<std::endl;
 
