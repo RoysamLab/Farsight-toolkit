@@ -117,7 +117,7 @@ void MCLR::Initialize(vnl_matrix<double> data,double c,vnl_vector<double> classe
 
 
 //Converts vtkTable to Vnl_Matrix
-vnl_matrix <double> MCLR::tableToMatrix(vtkSmartPointer<vtkTable> table,std::vector< std::pair<double,double> > id_time)
+vnl_matrix <double> MCLR::tableToMatrix(vtkSmartPointer<vtkTable> table,std::vector< std::pair<int,int> > id_time)
 {
 	
 	vnl_matrix <double> FeatsMatrix(table->GetNumberOfRows(),table->GetNumberOfColumns());
@@ -961,10 +961,9 @@ FILE* MCLR::FDeclare2(char *root, char *extension, char key) {
 
 
 //Updates test_data, x and y,id_time_val,test_table
-void MCLR::Update_Train_Data(std::vector< std::pair<int,int> > query_label,bool PIA)
+void MCLR::Update_Train_Data(std::vector< std::pair<int,int> > query_label)
 {	
 	
-
 	std::sort(query_label.begin(), query_label.end(), sort_pred());
 
 	for(int i = 0; i<query_label.size();++i)
@@ -1005,8 +1004,7 @@ void MCLR::Update_Train_Data(std::vector< std::pair<int,int> > query_label,bool 
 		}
 		
 		//Update list of ids and the table
-		if(PIA)
-			id_time_val.erase(id_time_val.begin()+query);
+		id_time_val.erase(id_time_val.begin()+query);
 		
 		test_table->RemoveRow(query);
 	}
@@ -1210,7 +1208,7 @@ vnl_matrix<double> MCLR::Test_Current_Model_w(vnl_matrix<double> test_data, vnl_
 //    [dummy,idxL(end+1)] = max(sum((P*x(:,idxU)).^2,1));
 //end
 
-std::vector<int> MCLR::Plan_In_Advance(vtkSmartPointer<vtkTable> new_table, int num)
+std::vector<std::pair<int,int> > MCLR::Plan_In_Advance(vtkSmartPointer<vtkTable> new_table, int num,std::vector< std::pair<int,int> > id_time_PIA)
 {	
 	
 	vtkSmartPointer<vtkTable> table_PIA  = vtkSmartPointer<vtkTable>::New();
@@ -1230,16 +1228,6 @@ std::vector<int> MCLR::Plan_In_Advance(vtkSmartPointer<vtkTable> new_table, int 
 				model_data1->InsertNextValue(new_table->GetValueByName(row,table_PIA->GetColumnName(c)));
 			table_PIA->InsertNextRow(model_data1);
 		}
-
-	
-	std::vector<int> id_list;
-	id_list.resize(table_PIA->GetNumberOfRows());
-
-
-	for(int i=0;i<table_PIA->GetNumberOfRows();++i)
-	{
-		id_list[i] = table_PIA->GetValue(i,0).ToInt();
-	}
 	
 	table_PIA->RemoveColumnByName("ID");
 	
@@ -1248,9 +1236,6 @@ std::vector<int> MCLR::Plan_In_Advance(vtkSmartPointer<vtkTable> new_table, int 
 	// Since we are using the same functions as Active Learning
 	
 	vnl_vector<double> class_list(table_PIA->GetNumberOfRows(),-1); 			
-	std::vector< std::pair<double,double> > id_time;	
-	id_time.resize(0);
-
 	std::vector<std::pair<int,int> > query_label;
 	query_label.resize(1);
 
@@ -1258,8 +1243,7 @@ std::vector<int> MCLR::Plan_In_Advance(vtkSmartPointer<vtkTable> new_table, int 
 	// we want to deal with all the examples belonging to the class~classval(1,2,3.....) and pick by "Planning in Advance"
 	// Normalize the feature matrix
 
-
-	vnl_matrix<double> Feats = Normalize_Feature_Matrix(tableToMatrix(table_PIA,id_time));
+	vnl_matrix<double> Feats = Normalize_Feature_Matrix(tableToMatrix(table_PIA,id_time_PIA));
 	Initialize(Feats,1,class_list,"",table_PIA,false);
 	vnl_matrix<double> tempUnlabeledData = test_data.transpose();
 
@@ -1273,13 +1257,13 @@ std::vector<int> MCLR::Plan_In_Advance(vtkSmartPointer<vtkTable> new_table, int 
 	PMat.set_size(tempUnlabeledData.rows(),tempUnlabeledData.rows());// test_data.cols() = dim !	
 	vnl_diag_matrix<double> identity_matrix(test_data.cols(),1); // Identity Matrix;
 	
-	std::vector<int> PIA;
+	std::vector<std::pair<int,int> > PIA;
 	PIA.resize(num);
 
 	query_label[0].first = 0;
 	query_label[0].second = 0;//dummy again
 	zMat.set_column(0,tempUnlabeledData.get_column(0)); // first sample
-	PIA[0] = id_list[0];
+	PIA[0] = id_time_PIA[0];
 	
 	for(int i =0;i<num-1;++i)
 	{
@@ -1296,10 +1280,10 @@ std::vector<int> MCLR::Plan_In_Advance(vtkSmartPointer<vtkTable> new_table, int 
 			sub_test_matrix = tempUnlabeledData.get_n_columns(1,tempUnlabeledData.columns()-1);
 		
 		tempUnlabeledData = sub_test_matrix;
-		id_list.erase(id_list.begin()+query_label[0].first);
+		//id_list.erase(id_list.begin()+query_label[0].first);
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Always pick the first sample and then pick the rest
-		Update_Train_Data(query_label,false);		
+		Update_Train_Data(query_label);		
 		vnl_matrix<double> invTempZMat = vnl_matrix_inverse<double>(tempZMat.transpose()*tempZMat);
 		PMat = identity_matrix-(tempZMat*invTempZMat*tempZMat.transpose());
 		vnl_matrix<double> PxIdu = PMat*tempUnlabeledData;
@@ -1314,7 +1298,7 @@ std::vector<int> MCLR::Plan_In_Advance(vtkSmartPointer<vtkTable> new_table, int 
 		}
 		query_label[0].first = sum_vec.arg_max();
 		query_label[0].second = 0;// dummy value 
-		PIA[i+1] = id_list.at(sum_vec.arg_max()); // Will contain the ids
+		PIA[i+1] = id_time_val.at(sum_vec.arg_max()); // Will contain the ids
 		zMat.set_column(i+1,tempUnlabeledData.get_column(query_label[0].first)); // first sample
 	}
 
@@ -1345,6 +1329,8 @@ int MCLR::GetNumberOfClasses(vtkSmartPointer<vtkTable> table)
 
 std::vector< std::pair< std::string, vnl_vector<double> > > MCLR::CreateActiveLearningModel(vtkSmartPointer<vtkTable> pWizard_table)
 {
+	act_learn_model.clear();
+	
 	vnl_vector<double> std_dev_vec;
 	vnl_vector<double> mean_vec;
 	act_learn_matrix = GetActiveLearningMatrix();

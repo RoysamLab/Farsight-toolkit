@@ -30,10 +30,10 @@ using namespace std;
 #define MAX(a,b) (((a) > (b))?(a):(b))
 #define MIN(a,b) (((a) < (b))?(a):(b))
 
-class MCLR 
+class MCLR
 {
 public:
-	MCLR();	
+	MCLR();
 	~MCLR();
 
 	struct model{
@@ -53,13 +53,13 @@ public:
 	vnl_matrix<double> training_data;
 	vnl_matrix<double> test_data;
 	vnl_matrix<double> train_data;
-	vnl_vector<double> y; // labels (-1 for training)	
-	vnl_vector<double> y_ground_truth;	
-	std::vector< std::pair<double,double> > id_time_val;	
-	vnl_matrix<double> z; // used in gradient computation	
-	vnl_matrix<double> gradient_w; // used in gradient computation	 
+	vnl_vector<double> y; // labels (-1 for training)
+	vnl_vector<double> y_ground_truth;
+	std::vector< std::pair<int,int> > id_time_val;
+	vnl_matrix<double> z; // used in gradient computation
+	vnl_matrix<double> gradient_w; // used in gradient computation
 	vnl_matrix<double> hessian;
-	vnl_matrix<double> direction;  	
+	vnl_matrix<double> direction;
 	vnl_vector<int> class_vector;
 
 	std::vector<int> top_features;
@@ -72,10 +72,10 @@ public:
 	vnl_vector<double> mean_vec;
 
 
-	double g;	
+	double g;
 	bool stop_training;
-	vnl_vector<double> stop_cond;	
-	double delta; 	
+	vnl_vector<double> stop_cond;
+	double delta;
 	int no_of_features;
 	int no_of_classes;
 	int current_label;
@@ -87,7 +87,7 @@ public:
 
 public:
 
-	//void Initialize(vnl_matrix<double> data,double c);
+
 	void Initialize(vnl_matrix<double> data,double c,vnl_vector<double> classes, std::string str,vtkSmartPointer<vtkTable> table,bool PIA );
 	vnl_matrix<double> act_learn_matrix;
 	vnl_matrix<double> Add_Bias(vnl_matrix<double> data);
@@ -107,15 +107,15 @@ public:
 	vnl_matrix<double> Test_Current_Model(vnl_matrix<double> test_data);
 	vnl_matrix<double> Test_Current_Model_w(vnl_matrix<double> test_data, vnl_matrix<double> m_w_matrix);
 	vnl_matrix<double> GetActiveLearningMatrix(){ return m.w;};
-	//vnl_matrix <double> Normalize_Feature_Matrix(vnl_matrix<double> feats);
 	model Get_Training_Model();
 	MCLR::model Get_Temp_Training_Model(int query,int label);
-	//void Update_Train_Data(int query,int label);
+	void Update_Train_Data(std::vector< std::pair<int,int> > query_label);
+
 	void Update_Train_Data(std::vector< std::pair<int,int> > query_label,bool PIA);
 	vnl_matrix<double> Kron(vnl_vector<double> x,vnl_vector<double> y);
 	void Get_Label_Sample(int query);
 	FILE* FDeclare2(char *root, char *extension, char key);
-	vnl_matrix <double> tableToMatrix(vtkSmartPointer<vtkTable> table,std::vector< std::pair<double,double> > id_list);
+	vnl_matrix <double> tableToMatrix(vtkSmartPointer<vtkTable> table,std::vector< std::pair<int,int> > id_list);
 	vnl_matrix <double> tableToMatrix_w(vtkSmartPointer<vtkTable> table);
 	vnl_matrix <double> Normalize_Feature_Matrix(vnl_matrix<double> feats);
 	vnl_matrix <double> Normalize_Feature_Matrix_w(vnl_matrix<double> feats, vnl_vector<double> vector_1, vnl_vector<double> vector_2);
@@ -130,7 +130,7 @@ public:
 	bool MyDataSortPredicate(std::pair<int, int>& lhs, std::pair<int, int>& rhs) ;
 	std::vector< std::pair< std::string, vnl_vector<double> > >act_learn_model;
 	std::vector< std::pair< std::string, vnl_vector<double> > > CreateActiveLearningModel(vtkSmartPointer<vtkTable> pWizard_table);
-	std::vector<int> Plan_In_Advance(vtkSmartPointer<vtkTable> new_table, int num);
+	std::vector<std::pair<int,int> > Plan_In_Advance(vtkSmartPointer<vtkTable> new_table, int num,std::vector< std::pair<int,int> > id_time_PIA);
 	int GetNumberOfClasses(vtkSmartPointer<vtkTable> table);
 };
 #endif
