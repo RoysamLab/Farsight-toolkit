@@ -28,10 +28,12 @@ ENDIF(VTK_FOUND AND VXL_FOUND)
 
 SET( MCLR_SRCS
   mclr.cpp
+  mclr_SM.cpp
 )
 
 SET( MCLR_HDRS
   mclr.h
+  mclr_SM.h
 )
 
 
