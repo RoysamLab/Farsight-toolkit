@@ -261,7 +261,7 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
         }		
     }
 
-	#endif OPENCL
+#endif OPENCL
 	
 	/*for (int k = 0; k < r * c * z * 3; k+=3)
 		cout << k << " " << max_response[k] << " " << max_response[k+1] << " " << max_response[k+2] << endl;*/
