@@ -4842,8 +4842,8 @@ void View3D::StartActiveLearning()
 			int active_query = 1;
 			double max_info = -1e9;
 
-			vnl_matrix<double> Feats = mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(new_table, id_time));
-			mclr->Initialize(Feats,sparsity,class_list,"",new_table);
+			//vnl_matrix<double> Feats = mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(new_table, id_time));***************
+			//mclr->Initialize(Feats,sparsity,class_list,"",new_table);***************
 			mclr->Get_Training_Model();
 
 			// Get the active query based on information gain
@@ -4890,7 +4890,7 @@ void View3D::StartActiveLearning()
 				}
 
 				// Update the data & refresh the training model and refresh the Training Dialog 		
-				mclr->Update_Train_Data(active_query, dialog->class_selected);
+				//mclr->Update_Train_Data(active_query, dialog->class_selected);*************
 				
 				if(dialog->class_selected ==0)
 				{
