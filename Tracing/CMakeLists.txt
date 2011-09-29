@@ -63,5 +63,6 @@ ENDIF()
 OPTION( BUILD_TracingSystem "Build The Tracing System" OFF )
 IF(BUILD_TracingSystem)
   SUBDIRS( TheTracingSystem )
+  SET(CPACK_PACKAGE_EXECUTABLES "TheTracingSystem" "The Tracing System" ${CPACK_PACKAGE_EXECUTABLES})
 ENDIF()
 
