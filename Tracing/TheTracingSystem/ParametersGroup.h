@@ -153,6 +153,7 @@ class General_Parameters12 : public QGroupBox
 	 void setEliteSetting();
 	 void setFullSetting();
 
+	 bool getLaplacianOfGaussian();
 	 double getNoiseLevel();
 	 void setNoiseLevel(double in);
 	 int getNumIteration();
@@ -213,6 +214,7 @@ class General_Parameters12 : public QGroupBox
 	 QSpinBox *smoothing_scale_box;
 
 	 QCheckBox *use_multi_scale;
+	 QCheckBox *use_laplacian_of_gaussian;
 
 	 QComboBox *gpu_acceleration;
 	 QComboBox *seed_detection_methods;

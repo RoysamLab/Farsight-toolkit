@@ -113,6 +113,9 @@ limitations under the License.
 
 #include "itkOtsuThresholdImageFilter.h"
 
+#include <itkLaplacianRecursiveGaussianImageFilter.h>
+#include <itkInvertIntensityImageFilter.h>
+
 #include <vnl/vnl_matrix.h>
 #include <vnl/vnl_vector.h>
 
@@ -300,6 +303,7 @@ public:
 	void ImRefresh_TracingImage();
 	void ImRefresh_LabelImage();
     void ImSmoothing(int smoothing_scale);
+	void ImLaplacian_of_Gaussian();
 
     ProbImagePointer ImGaussian(ProbImagePointer I_In, int sigma);
 	ImagePointer ImGaussian(ImagePointer I_In, int sigma);

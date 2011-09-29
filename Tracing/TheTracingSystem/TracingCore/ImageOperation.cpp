@@ -4162,6 +4162,27 @@ void ImageOperation::ImFastMarchingII(PointList3D seg_seeds, int idx)
    //VBW = ISeg;
 }
 
+//this is an in-place filter which applies an LoG filter over the image before the rest of the preprocessing kicks in
+void ImageOperation::ImLaplacian_of_Gaussian()
+{
+	int sigma = 3;
+
+	typedef itk::LaplacianRecursiveGaussianImageFilter< ImageType > LoGFilterType;
+	LoGFilterType::Pointer LoG = LoGFilterType::New();
+	LoG->SetInput(I);
+	LoG->SetSigma(sigma);
+
+	//typedef itk::InvertIntensityImageFilter< ImageType, ImageType > InvertType;
+	//InvertType::Pointer invert = InvertType::New();
+	//invert->SetInput(LoG->GetOutput());
+
+	//invert->Update();
+	//I = invert->GetOutput();
+	LoG->Update();
+	I = LoG->GetOutput();
+
+}
+
 ImagePointer ImageOperation::ImGaussian(ImagePointer I_In, int sigma)
 {
 	//int sigma = 1;
@@ -4529,7 +4550,6 @@ void ImageOperation::ComputeGVFVesselness2D()
 
   std::cout<<" - Selected Otsu Threshold:"<<v_threshold<<std::endl;
 }
-
 
 void ImageOperation::ComputeGVFVesselness()
 {

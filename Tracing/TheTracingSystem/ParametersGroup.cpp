@@ -346,6 +346,7 @@ General_Parameters12::General_Parameters12(const QString &title,
    QBoxLayout *para_layout5 = new QHBoxLayout;
    QBoxLayout *para_layout6 = new QHBoxLayout;
    QBoxLayout *para_layout7 = new QHBoxLayout;
+   QBoxLayout *para_layout8 = new QHBoxLayout;
 
    noise_level_label = new QLabel("noise level");
    noise_level_box = new QDoubleSpinBox;
@@ -384,6 +385,9 @@ General_Parameters12::General_Parameters12(const QString &title,
    use_multi_scale = new QCheckBox("multi-scale preprocessing", this);
    use_multi_scale->setVisible(true);
 
+   use_laplacian_of_gaussian = new QCheckBox("laplacian of gaussian", this);
+   use_laplacian_of_gaussian->setVisible(true);
+
    threshold_box->setMaximum(255);
    threshold_box->setMinimum(0);
    threshold_box->setDecimals(4);
@@ -418,6 +422,8 @@ General_Parameters12::General_Parameters12(const QString &title,
    
    para_layout7->addWidget(smoothing_scale_label);
    para_layout7->addWidget(smoothing_scale_box);
+
+	para_layout8->addWidget(use_laplacian_of_gaussian);
 
    general_para1 = new General_Parameters1(tr("Multi-Scale Enhancement"));
    general_para1->setVisible(false);
@@ -461,6 +467,7 @@ General_Parameters12::General_Parameters12(const QString &title,
    layout1->addLayout(para_layout4);
    layout1->addLayout(para_layout5);
    layout1->addLayout(para_layout7);
+   layout1->addLayout(para_layout8);
    layout1->addWidget(use_multi_scale);
    layout1->addWidget(general_para1);
    layout1->addWidget(preprocessButton);
@@ -611,6 +618,11 @@ void General_Parameters12::setCurveletBatchEnabled(bool in)
      curvelet_during_batch->setVisible(false);
 	}
 
+}
+
+bool General_Parameters12::getLaplacianOfGaussian()
+{
+	return use_laplacian_of_gaussian->isChecked();
 }
 
 double General_Parameters12::getNoiseLevel()

@@ -3848,6 +3848,15 @@ void QtTracer::Preprocess()
 		}
 	case 2:
 		{
+			if (general_para12->getLaplacianOfGaussian()){
+				std::cout<<"Gaussing, and then Laplacing the gausses..."<<std::endl;
+				clock_t init_time1 = clock(); 
+				IM->ImLaplacian_of_Gaussian();
+				clock_t end_time1 = clock(); 
+				std::cout << end_time1-init_time1 << " CPU: "  
+					<< (float)(end_time1-init_time1)/CLOCKS_PER_SEC << " seconds." << std::endl; 
+			}
+
 			std::cout<<"Compute Vesselness (CPU)..."<<std::endl;
 			this->statusBar()->showMessage("Compute Vesselness (CPU)");
 			clock_t init_time1 = clock(); 
