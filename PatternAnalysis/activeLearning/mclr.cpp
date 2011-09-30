@@ -1263,6 +1263,7 @@ std::vector<std::pair<int,int> > MCLR::Plan_In_Advance(vtkSmartPointer<vtkTable>
 	query_label[0].second = 0;//dummy again
 	zMat.set_column(0,tempUnlabeledData.get_column(0)); // first sample
 	PIA[0] = id_time_PIA[0];
+		
 	
 	for(int i =0;i<num-1;++i)
 	{
@@ -1270,6 +1271,7 @@ std::vector<std::pair<int,int> > MCLR::Plan_In_Advance(vtkSmartPointer<vtkTable>
 // Update tempUnlabeledData		
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		vnl_matrix<double> sub_test_matrix(tempUnlabeledData.rows(),tempUnlabeledData.cols()-1);
+		
 		if(query_label[0].first !=0)
 		{
 			sub_test_matrix.update(tempUnlabeledData.get_n_columns(0,query_label[0].first),0,0);
@@ -1282,8 +1284,10 @@ std::vector<std::pair<int,int> > MCLR::Plan_In_Advance(vtkSmartPointer<vtkTable>
 		//id_list.erase(id_list.begin()+query_label[0].first);
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Always pick the first sample and then pick the rest
-		Update_Train_Data(query_label);		
-		vnl_matrix<double> invTempZMat = vnl_matrix_inverse<double>(tempZMat.transpose()*tempZMat);
+		Update_Train_Data(query_label);
+
+		clock_t RemoveIntraSomaNodes_start_time = clock();
+		vnl_matrix<double> invTempZMat = vnl_matrix_inverse<double>(tempZMat.transpose()*tempZMat);		
 		PMat = identity_matrix-(tempZMat*invTempZMat*tempZMat.transpose());
 		vnl_matrix<double> PxIdu = PMat*tempUnlabeledData;
 		vnl_vector<double> sum_vec(tempUnlabeledData.cols(),0);
@@ -1299,8 +1303,8 @@ std::vector<std::pair<int,int> > MCLR::Plan_In_Advance(vtkSmartPointer<vtkTable>
 		query_label[0].second = 0;// dummy value 
 		PIA[i+1] = id_time_val.at(sum_vec.arg_max()); // Will contain the ids
 		zMat.set_column(i+1,tempUnlabeledData.get_column(query_label[0].first)); // first sample
+		
 	}
-
 	return PIA;
 }
 

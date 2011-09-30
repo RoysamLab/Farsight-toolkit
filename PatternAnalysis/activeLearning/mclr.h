@@ -1,6 +1,4 @@
 
-
-
 #ifndef _MCLREGRESSION_H_
 #define _MCLREGRESSION_H_
 
@@ -86,7 +84,6 @@ public:
 	double confidence_threshold;
 
 public:
-
 
 	void Initialize(vnl_matrix<double> data,double c,vnl_vector<double> classes, std::string str,vtkSmartPointer<vtkTable> table,bool PIA );
 	vnl_matrix<double> act_learn_matrix;
