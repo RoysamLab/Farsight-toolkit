@@ -2042,7 +2042,6 @@ void NucleusEditor::startActiveLearningwithFeat()
 
 			}
 
-
 			//Enable the Menu Items related to active Learning
 			//showGalleryAction->setEnabled(true);
 			if(myImg->GetImageInfo()->numTSlices > 1)
@@ -2064,7 +2063,6 @@ void NucleusEditor::startActiveLearningwithFeat()
 			activeRun = 1;
 			projectFiles.tableSaved = false;
 			this->updateViews();
-
 		}
 	}
 }
@@ -2101,43 +2099,13 @@ void NucleusEditor::startActiveValidation()
 	{
 		nucSeg->AddTimeToMegaTable();
 		featureTable = nucSeg->megaTable;
-		remove_columns =2;
 	}
 
-	std::vector< std::pair<int,int> > id_time;
-
-	// Remove the training examples from the list of ids.
-	//Get the list of ids
-	for(int i=0;i<featureTable->GetNumberOfRows(); ++i)
-	{
-		std::pair<double,double> temp_pair;
-		temp_pair.first = featureTable->GetValue(i,0).ToDouble();
-		if(myImg->GetImageInfo()->numTSlices == 1)
-			temp_pair.second = 0;
-		else
-			temp_pair.second = featureTable->GetValueByName(i,"time").ToDouble();
-		id_time.push_back(temp_pair);
-	}
-
-	if(myImg->GetImageInfo()->numTSlices > 1)
-		featureTable->RemoveColumnByName("time");
-
-
-	//vnl_vector<double> class_list(featureTable->GetNumberOfRows()); 
-
-	//for(int row = 0; (int)row < featureTable->GetNumberOfRows(); ++row)  
-	//{
-	//	class_list.put(row,vtkVariant(featureTable->GetValueByName(row,"train_default1")).ToDouble());
-	//}
-
-
+	
 	MCLR *mclr = new MCLR();
 	double sparsity = 1;
 	int active_query = 1;
 	double max_info = -1e9;
-
-	// Normalize the feature matrix
-	vnl_matrix<double> Feats = mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(featureTable,id_time));
 
 	//Get prediction colums, if none- return
 	prediction_names.clear();
@@ -2162,6 +2130,9 @@ void NucleusEditor::startActiveValidation()
 	}
 	delete dialog;
 
+
+	std::vector< std::pair<int,int> > id_time_PIA;
+
 	//vector of vectors. Each vector contains samples of a class to be validated by the user 
 	validation_samples.resize(mclr->GetNumberOfClasses(featureTable)); 
 
@@ -2170,8 +2141,7 @@ void NucleusEditor::startActiveValidation()
 		vtkSmartPointer<vtkTable> table_PIA  = vtkSmartPointer<vtkTable>::New();
 		table_PIA->Initialize();
 		std::vector<int> table_PIA_ids;
-		std::vector< std::pair<int,int> > id_time_PIA;
-
+		
 		//No confidence,prediction and train columns
 		for(int col=0; col<featureTable->GetNumberOfColumns()-remove_columns; ++col)
 		{	
@@ -2196,21 +2166,22 @@ void NucleusEditor::startActiveValidation()
 				if(myImg->GetImageInfo()->numTSlices == 1)
 					temp_pair.second = 0;
 				else
-					temp_pair.second = featureTable->GetValueByName(i,"time").ToDouble();
+					temp_pair.second = featureTable->GetValueByName(row,"time").ToDouble();
 				id_time_PIA.push_back(temp_pair);
 			}
 		}		
+
+			
 		// Plan in advance gives the vector of ids for the class "i+1"
-		validation_samples.at(i) = mclr->Plan_In_Advance(table_PIA,(sample_number/mclr->GetNumberOfClasses(featureTable)),id_time_PIA);//*has to be some x % of the cells*/,id_time_PIA);// Choose x % of the samples for Permutation tests
+		validation_samples.at(i) = mclr->Plan_In_Advance(table_PIA,(sample_number/mclr->GetNumberOfClasses(featureTable)),id_time_PIA);//*has to be some x % of the cells*/,id_time_PIA);// Choose x % of the samples for Permutation tests	
 		tabVec.push_back(table_PIA);
 		tabVecIds.push_back(table_PIA_ids);
 	} 
 
 	int counter =0;
-	bool Rejected = false;
+	bool Rejected;
 
-	while(counter<mclr->GetNumberOfClasses(featureTable) && !Rejected)
-		//	for(int i=0;i<mclr->GetNumberOfClasses(featureTable); ++i)
+	while(counter<mclr->GetNumberOfClasses(featureTable))
 	{
 		vtkSmartPointer<vtkTable> table_PIA = tabVec.at(counter);
 		std::vector<int> table_PIA_ids = tabVecIds.at(counter);
@@ -2222,7 +2193,7 @@ void NucleusEditor::startActiveValidation()
 			snapshots.resize(no_of_samples);
 
 			// Collect all the snapshots
-			for(int ctr=0;ctr<snapshots.size(); ++ctr)
+			for(int ctr=0;ctr<snapshots.size();++ctr)
 			{
 				if(myImg->GetImageInfo()->numTSlices > 1)
 					segView->SetCurrentTimeVal(validation_samples.at(counter).at(no_of_samples*k+ctr).second);
@@ -2230,10 +2201,13 @@ void NucleusEditor::startActiveValidation()
 			}
 
 			std::vector<int> curr_list;
+
+
 			for(int ctr=0;ctr<snapshots.size();++ctr)
 			{	
-				std::vector<int>::iterator posn1 = std::find(table_PIA_ids.begin(),table_PIA_ids.end(),validation_samples.at(counter).at(5*k+ctr).first);
-				curr_list.push_back(posn1-table_PIA_ids.begin());
+				std::vector< std::pair<int,int> >::iterator iter;
+				iter =  std::find(id_time_PIA.begin(), id_time_PIA.end(), std::make_pair(validation_samples.at(counter).at(5*k+ctr).first,validation_samples.at(counter).at(5*k+ctr).second));
+				curr_list.push_back(iter-id_time_PIA.begin());
 			}
 
 
@@ -2242,7 +2216,7 @@ void NucleusEditor::startActiveValidation()
 
 			Rejected = dialog->rejectFlag;
 			if(Rejected)
-				break;
+				return;
 
 
 			for(int ctr=0;ctr<curr_list.size();++ctr)
@@ -2254,10 +2228,13 @@ void NucleusEditor::startActiveValidation()
 					dialog =  new ActiveLearningDialog("validate",snapshots,table_PIA,counter+1,curr_list,mclr->GetNumberOfClasses(featureTable));	
 					dialog->exec();
 					ctr =0;
+					Rejected = dialog->rejectFlag;
+					if(Rejected)
+						return;
 				}
 			}
 		}
-		counter++;	// increment class counter
+		counter++; //increment class counter
 	}
 }
 
