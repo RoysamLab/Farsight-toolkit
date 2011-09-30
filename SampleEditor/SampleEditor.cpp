@@ -14,7 +14,7 @@ limitations under the License.
 =========================================================================*/
 
 #include "SampleEditor.h"
-#include "Dendrogram.h"
+//#include "Dendrogram.h"
 
 
 
@@ -28,7 +28,7 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 	table = new TableWindow();
 	plot = new PlotWindow(this);
 	histo = new HistoWindow(this);
-	dendro = new Dendrogram(0,0);
+	//dendro = new Dendrogram(0,0);
 
 
 	data = NULL;
@@ -154,14 +154,14 @@ void SampleEditor::loadFile()
 	if(headername == "") return;
 	lastPath = QFileInfo(headername).absolutePath();
 
-	QString dataname = QFileDialog::getOpenFileName(this,"Choose a Data File", lastPath, tr("TXT Files (*.txt)") );
+	/*QString dataname = QFileDialog::getOpenFileName(this,"Choose a Data File", lastPath, tr("TXT Files (*.txt)") );
 	if(dataname == "") return;
 	lastPath = QFileInfo(dataname).absolutePath();
 	
 	selection->clear();
 
-	ReadFiles(headername.toStdString(), dataname.toStdString());
-
+	ReadFiles(headername.toStdString(), dataname.toStdString());*/
+	this->data = ftk::LoadTable(headername.toStdString());
 	table->setModels(data,selection);
 	table->show();
 
@@ -170,8 +170,8 @@ void SampleEditor::loadFile()
 	this->histo->setModels(data, selection);
 	this->histo->show();
 	std::cout << "I reached here inside the sample editor"<<std::endl;
-	this->dendro->setModels(data,selection);
-	this->dendro->show();
+	//this->dendro->setModels(data,selection);
+	//this->dendro->show();
 
 }
 

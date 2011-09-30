@@ -45,11 +45,12 @@ limitations under the License.
 #include "ftkGUI/HistoWindow.h"
 #include "ftkGUI/ObjectSelection.h"
 #include "ftkGUI/StatisticsToolbar.h"
+#include "ftkUtils.h"
 
 #include <vector>
 #include <string>
 
-class Dendrogram;
+//class Dendrogram;
 class SampleEditor : public QMainWindow
 {
     Q_OBJECT;
@@ -87,7 +88,7 @@ private:
 	TableWindow *table;
 	PlotWindow *plot;
 	HistoWindow *histo;
-	Dendrogram *dendro;
+	//Dendrogram *dendro;
 	int flag;
 
 	vtkSmartPointer<vtkTable> data;
