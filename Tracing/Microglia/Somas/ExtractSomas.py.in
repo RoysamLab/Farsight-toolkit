@@ -22,7 +22,7 @@ subprocess.call([
   "./${CMAKE_CFG_INTDIR}/MedianImageFilter${CMAKE_EXECUTABLE_SUFFIX}",
   input, outputDir + "/median.mhd"])
 subprocess.call([
-  "./${CMAKE_CFG_INTDIR}/RobustAutomaticThresholdImageFilterTest${CMAKE_EXECUTABLE_SUFFIX}",
+  "./${CMAKE_CFG_INTDIR}/RobustAutomaticThreshold${CMAKE_EXECUTABLE_SUFFIX}",
   outputDir + "/median.mhd", outputDir + "/robust.mhd", "2", "2.0"])
 subprocess.call([
   "./${CMAKE_CFG_INTDIR}/Open${CMAKE_EXECUTABLE_SUFFIX}",
