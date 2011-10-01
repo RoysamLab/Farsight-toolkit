@@ -59,6 +59,11 @@ IF( BUILD_MultipleNeuronTracer )
   SUBDIRS( MultipleNeuronTracer )
 ENDIF()
 
+OPTION( BUILD_Microglia "Build Microglia" OFF )
+IF( BUILD_Microglia )
+    SUBDIRS( Microglia )
+ENDIF()
+
 
 OPTION( BUILD_TracingSystem "Build The Tracing System" OFF )
 IF(BUILD_TracingSystem)
