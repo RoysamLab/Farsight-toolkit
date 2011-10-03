@@ -1231,6 +1231,7 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 	unsigned int originalSize = SWCNodeContainer.size();
 
 	//find the root nodes of each tree
+	std::cout << "Finding the root nodes of each tree" << std::endl;
 	std::map<long, SWCNode*> treeIDToRootMap;
 	std::vector<SWCNode*>::iterator sit;
 	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit)
@@ -1242,6 +1243,7 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 		}
 	}
 
+	//Removing nodes
 	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end();)
 	{
 		//don't check nodes that are outside the extent of the soma image
@@ -1284,7 +1286,7 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 		}
 	}
 
-	unsigned int newSize = SWCNodeContainer.size();
+	size_t newSize = SWCNodeContainer.size();
 	std::cout << "Just removed " << originalSize - newSize
 		<< " nodes (" << originalSize << " to " << newSize << ")"
 		<< std::endl;
