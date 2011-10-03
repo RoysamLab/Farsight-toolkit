@@ -1,4 +1,4 @@
-#include <cstdint>
+//#include <boost/cstdint.hpp>
 
 #include "itkImage.h"
 #include "itkImageFileReader.h"
@@ -11,7 +11,7 @@
 
 
 //Function prototypes
-double*** AllocateMemoryForImage(uint64_t x_size, uint64_t y_size, uint64_t z_size);
+double*** AllocateMemoryForImage(size_t x_size, size_t y_size, size_t z_size);
 
 int main(int argc, char *argv[])
 {
@@ -37,9 +37,9 @@ int main(int argc, char *argv[])
 
 	InputImageType::Pointer image = reader->GetOutput();
 
-	uint64_t image_x_size = image->GetLargestPossibleRegion().GetSize()[0];
-	uint64_t image_y_size = image->GetLargestPossibleRegion().GetSize()[1];
-	uint64_t image_z_size = image->GetLargestPossibleRegion().GetSize()[2];
+	size_t image_x_size = image->GetLargestPossibleRegion().GetSize()[0];
+	size_t image_y_size = image->GetLargestPossibleRegion().GetSize()[1];
+	size_t image_z_size = image->GetLargestPossibleRegion().GetSize()[2];
 
 	std::cout << "Image size: " << image_x_size << "x" << image_y_size << "x" << image_z_size << std::endl;
 
@@ -53,9 +53,9 @@ int main(int argc, char *argv[])
 	size_t index;
 	for (input_image_iterator.GoToBegin(), index = 0; !input_image_iterator.IsAtEnd(); input_image_iterator++, index++)
 	{
-		uint64_t k = index % image_x_size;
-		uint64_t l = (index % (image_x_size * image_y_size)) / image_x_size;
-		uint64_t m = index / (image_x_size * image_y_size);
+		size_t k = index % image_x_size;
+		size_t l = (index % (image_x_size * image_y_size)) / image_x_size;
+		size_t m = index / (image_x_size * image_y_size);
 
 		image_matrix[k][l][m] = input_image_iterator.Value();
 	}
@@ -106,9 +106,9 @@ int main(int argc, char *argv[])
 
 	for (log_image_iterator.GoToBegin(), index = 0; !log_image_iterator.IsAtEnd(); log_image_iterator++, index++)
 	{
-		uint64_t k = index % image_x_size;
-		uint64_t l = (index % (image_x_size * image_y_size)) / image_x_size;
-		uint64_t m = index / (image_x_size * image_y_size);
+		size_t k = index % image_x_size;
+		size_t l = (index % (image_x_size * image_y_size)) / image_x_size;
+		size_t m = index / (image_x_size * image_y_size);
 
 		log_image_iterator.Value() = LoGImage[k][l][m]; 
 	}
@@ -143,16 +143,16 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-double*** AllocateMemoryForImage(uint64_t x_size, uint64_t y_size, uint64_t z_size)
+double*** AllocateMemoryForImage(size_t x_size, size_t y_size, size_t z_size)
 {
 	double*** image = new double**[x_size];
-	for (uint64_t k = 0; k < x_size; k++)
+	for (size_t k = 0; k < x_size; k++)
 	{
 		image[k] = new double*[y_size];
-		for (uint64_t l = 0; l < y_size; l++)
+		for (size_t l = 0; l < y_size; l++)
 		{
 			image[k][l] = new double[z_size];
-			for (uint64_t m = 0; m < z_size; m++)
+			for (size_t m = 0; m < z_size; m++)
 				image[k][l][m] = 0;
 		}
 	}
