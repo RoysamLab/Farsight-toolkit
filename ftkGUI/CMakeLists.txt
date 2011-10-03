@@ -6,6 +6,7 @@ SET( GUI_SRCS
     	ImageBrowser5D.cpp
     	PatternAnalysisWizard.cpp
     	GenericALDialog.cpp
+    	Active_Learning_Dialog.cpp
     	ObjectSelection.cpp
     	LabelImageViewQT.cpp
     	TrainingDialog.cpp
@@ -24,6 +25,7 @@ SET( GUI_HDRS
     	ImageBrowser5D.h
     	PatternAnalysisWizard.h
     	GenericALDialog.h
+    	Active_Learning_Dialog.h
     	ObjectSelection.h
     	LabelImageViewQT.h
     	TrainingDialog.h
