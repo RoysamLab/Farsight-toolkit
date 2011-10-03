@@ -94,8 +94,8 @@ limitations under the License.
 #include "vtkCellLocator.h"
 #include "vtkLegendScaleActor.h"
 
-#include "PatternAnalysis/activeLearning/mclr_SM.h"
-#include "ftkGUI/GenericALDialog.h"
+#include "PatternAnalysis/activeLearning/mclr.h"
+#include "ftkGUI/Active_Learning_Dialog.h"
 #include "ftkGUI/TrainingDialog.h"
 #include "ftkGUI/PatternAnalysisWizard.h"
 
@@ -138,6 +138,8 @@ public:
 	static void HandleKeyPress(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
 	void pointer3DLocation(double pos[]);
 	void saveRenderWindow(const char *filename);
+	QImage Get_AL_Snapshot(CellTrace* currentCell);
+	QImage vtkImageDataToQImage(vtkImageData * imageData);
 
 	void HighlightSelected(TraceLine* tline, double SelectColor);
 	void DeleteTrace(TraceLine *tline);

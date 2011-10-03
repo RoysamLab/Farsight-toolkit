@@ -4819,9 +4819,12 @@ void View3D::HideCellAnalysis()
 	}
 	this->TraceEditSettings.sync();
 }
+
+
 void View3D::StartActiveLearning()
 {
 	vtkSmartPointer<vtkTable> featureTable;
+	std::vector<int> active_queries;
 	double confidence_thresh = 0.5;
 	int cellCount= this->CellModel->getCellCount();
 	if (cellCount < 1)
@@ -4841,15 +4844,15 @@ void View3D::StartActiveLearning()
 	//Clear the Gallery 
 	//gallery.clear();	
 
-	std::vector< std::pair<double,double> > id_time;	
+	std::vector< std::pair<int,int> > id_time;	
 	// Remove the training examples from the list of ids.
 	//Get the list of ids
 	for(int i=0;i<featureTable->GetNumberOfRows(); ++i)
 	{
 		if(featureTable->GetValueByName(i,"train_default1").ToDouble()==-1) 
 		{
-			std::pair<double,double> temp_pair;
-			temp_pair.first = featureTable->GetValue(i,0).ToDouble();
+			std::pair<int,int> temp_pair;
+			temp_pair.first = featureTable->GetValue(i,0).ToInt();
 			temp_pair.second = 0;
 			id_time.push_back(temp_pair);
 		}
@@ -4879,72 +4882,90 @@ void View3D::StartActiveLearning()
 				class_list.put(row,vtkVariant(featureTable->GetValueByName(row,"train_default1")).ToDouble());
 			}
 
-			MCLR_SM *mclr = new MCLR_SM();
+			MCLR *mclr = new MCLR();
 			double sparsity = 1;
 			int active_query = 1;
 			double max_info = -1e9;
 
 			vnl_matrix<double> Feats = mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(new_table, id_time));
-			mclr->Initialize(Feats,sparsity,class_list,"",new_table);
+			mclr->Initialize(Feats,sparsity,class_list,"",new_table,true);
 			mclr->Get_Training_Model();
 
 			// Get the active query based on information gain
 			active_query = mclr->Active_Query();
+			active_queries = mclr->ALAMO(active_query);	
 
 			bool user_stop_dialog_flag = false;
 			bool loop_termination_condition = true;
 
-			GenericALDialog *dialog;
+			Active_Learning_Dialog *dialog;
+			std::vector<QImage> snapshots;
+			snapshots.resize(active_queries.size());
+
 			while(loop_termination_condition)
 			{	
-				/////////////////////////////////
-				if (this->viewIn2D)
+				for(int i=0;i<active_queries.size(); ++i)
 				{
-					double test [6];
-					this->Renderer->ComputeVisiblePropBounds(test);
-					this->setRenderFocus(test, 6);
-				}// end of reset renderer when in 2d mode 
-				int zoomID = mclr->id_time_val.at(active_query).first;
-				for(int row=0; row<(int)myDataTable->GetNumberOfRows(); ++row)
-				{
-					if(myDataTable->GetValue(row,0) == zoomID)
+					if (this->viewIn2D)
 					{
-						zoomID = row;
-						break;
+						double test [6];
+						this->Renderer->ComputeVisiblePropBounds(test);
+						this->setRenderFocus(test, 6);
+					}// end of reset renderer when in 2d mode 
+					int zoomID = mclr->id_time_val.at(active_queries[i]).first;
+					for(int row=0; row<(int)myDataTable->GetNumberOfRows(); ++row)
+					{
+						if(myDataTable->GetValue(row,0) == zoomID)
+						{
+							zoomID = row;
+							break;
+						}
 					}
+					CellTrace* currCell = this->CellModel->GetCellAt(zoomID);
+					snapshots[i] = Get_AL_Snapshot(currCell);	
 				}
-				CellTrace* currCell = this->CellModel->GetCellAt(zoomID);
-				this->FocusOnCell(currCell);
-
-				/////////////////////////////////
-				dialog =  new GenericALDialog(mclr->test_table,mclr->no_of_classes,active_query,mclr->top_features);
-				dialog->setWindowTitle(QString("Active Learning Window: Specify Class for Cell %1").arg(mclr->id_time_val.at(active_query).first));
+				
+				dialog =  new Active_Learning_Dialog(snapshots, mclr->test_table, mclr->no_of_classes, active_queries, mclr->top_features);
+				//dialog->setWindowTitle(QString("Active Learning Window: Specify Class for Cell %1").arg(mclr->id_time_val.at(active_query).first));
 				dialog->exec();	 
+
+				if(dialog->rejectFlag)
+					return;
 
 				loop_termination_condition = dialog->finish && dialog->result();
 
-				while(dialog->class_selected == -1)
-				{	
-					QMessageBox::critical(this, tr("Oops"), tr("Please select a class"));
-					this->show();
-					dialog =  new GenericALDialog(mclr->test_table,mclr->no_of_classes,active_query,mclr->top_features);	
-					dialog->exec();
+				int atleast_one_chosen = 0; // A check to see if the user selected Not sure for all the cells
+
+				for(int i=0;i<active_queries.size();++i)
+				{
+					atleast_one_chosen = atleast_one_chosen+dialog->query_label[i].second;
+					while(dialog->query_label[i].second == -1)
+					{	
+						QMessageBox::critical(this, tr("Oops"), tr("Please select a class"));
+						this->show();
+						dialog =  new Active_Learning_Dialog(snapshots, mclr->test_table, mclr->no_of_classes, active_queries, mclr->top_features);	
+						dialog->exec();
+						i=0;
+						if(dialog->rejectFlag)
+							return;
+					}
 				}
 
 				// Update the data & refresh the training model and refresh the Training Dialog 		
-				mclr->Update_Train_Data(active_query, dialog->class_selected);
+				mclr->Update_Train_Data(dialog->query_label);
 				
-				if(dialog->class_selected ==0)
+				if(atleast_one_chosen ==0)
 				{
 					mclr->Get_Training_Model();
 					active_query = mclr->Active_Query();
+					active_queries = mclr->ALAMO(active_query);
 					continue;
 				}
 
 				// Update the gallery
 				//gallery.push_back(dialog->temp_pair);
 
-				if(mclr->stop_training && dialog->class_selected!=0)
+				if(mclr->stop_training && atleast_one_chosen!=0)
 				{
 					QMessageBox msgBox;
 					msgBox.setText("I understand the classification problem.");
@@ -4972,7 +4993,8 @@ void View3D::StartActiveLearning()
 					break;
 
 				mclr->Get_Training_Model();
-				active_query = mclr->Active_Query();				
+				active_query = mclr->Active_Query();
+				active_queries = mclr->ALAMO(active_query);
 			}
 
 
@@ -5047,6 +5069,121 @@ void View3D::StartActiveLearning()
 		}
 	}
 }
+
+QImage View3D::Get_AL_Snapshot(CellTrace* currentCell)
+{
+	double cellBounds[6];
+	currentCell->getCellBounds(cellBounds);
+	//this->FocusOnCell(currCell);
+	double test [6];
+	this->Renderer->ComputeVisiblePropBounds(test);
+	this->setRenderFocus(test, 6);
+	this->WindowToImage = vtkSmartPointer<vtkWindowToImageFilter>::New();
+	this->WindowToImage->SetInput(this->QVTK->GetRenderWindow());
+	this->WindowToImage->Update();
+
+	QImage qimage = vtkImageDataToQImage(this->WindowToImage->GetOutput());
+	qimage.save("traceEdit_screenshot.tif");
+
+	return qimage;
+
+}
+
+QImage View3D::vtkImageDataToQImage(vtkImageData * imageData)
+{
+    int dim[3];
+    imageData->GetDimensions(dim);
+    if(dim[0]*dim[1]*dim[2] == 0)
+        return QImage();
+
+	int x_min=dim[0], x_max=0, y_min=dim[1], y_max=0;
+	
+    vtkUnsignedCharArray* scalars 
+        = vtkUnsignedCharArray::SafeDownCast(imageData->GetPointData()->GetScalars());
+    if(!scalars)
+        return QImage();
+
+    QImage qImage(dim[0], dim[1], QImage::Format_ARGB32);
+    vtkIdType tupleIndex=0;
+   
+    for(int j=0; j<dim[1]; j++)
+    {
+        for(int i=0; i<dim[0]; i++)
+        {
+			unsigned char tuple[] = {0, 0, 0, 0};
+            int r=0, g=0, b=0, a=0;
+            scalars->GetTupleValue(tupleIndex+(j*dim[0])+i, tuple);
+
+            switch(scalars->GetNumberOfComponents())
+            {
+            case 1: 
+                r = g = b = tuple[0];
+                a = 255;
+                break;
+            case 2:
+                r = g = b = tuple[0];
+                a = tuple[1];
+                break;
+            case 3:
+                r = tuple[0];
+                g = tuple[1];
+                b = tuple[2];
+                a = 255;
+                break;
+            case 4:
+                r = tuple[0];
+                g = tuple[1];
+                b = tuple[2];
+                a = tuple[3];
+                break;
+            }
+
+			//to get the bounds of the orange traces
+			if(r>100 && g>80 && g<100 && b<10)
+			{
+				r = 0;
+                g = 255;
+                b = 255;
+				if(i < x_min)
+					x_min = i;
+				if(i > x_max)
+					x_max = i;
+				if(j < y_min)
+					y_min = j;
+				if(j > y_max)
+					y_max = j;
+
+			}
+			////////////////////////////////////////
+            QRgb color = qRgba(r, g, b, a);
+            qImage.setPixel(i, j, color);
+        }
+    }
+	if((x_max - x_min) > (y_max - y_min))
+	{
+		y_min = y_min - (((x_max - x_min)-(y_max - y_min))/2);
+		y_max = y_max + (((x_max - x_min)-(y_max - y_min))/2);
+	}
+	if((y_max - y_min) > (x_max - x_min))
+	{
+		x_min = x_min - (((y_max - y_min)-(x_max - x_min))/2);
+		x_max = x_max + (((y_max - y_min)-(x_max - x_min))/2);
+	}
+	QImage q_Image;
+	//if((x_max - x_min) > 256)
+		q_Image = qImage.copy(x_min - 20, y_min - 20, x_max - x_min + 40, y_max - y_min + 40).scaledToHeight(256);	
+	//else
+	//{
+	//	x_min = x_min - ((256 - (x_max - x_min))/2);
+	//	x_max = x_max + ((256 - (x_max - x_min))/2);
+	//	y_min = y_min - ((256 - (y_max - y_min))/2);
+	//	y_max = y_max + ((256 - (y_max - y_min))/2);
+	//	q_Image = qImage.copy(x_min - 10, y_min - 10, x_max - x_min + 20, y_max - y_min + 20);
+	//}
+ 
+	return q_Image;
+}
+
 void View3D::updateSelectionHighlights()
 {
 	bool selected = false;
