@@ -42,6 +42,7 @@ View3D::View3D(QWidget *parent)
 	this->TreePlot = NULL;
 	this->FTKTable = NULL;
 	this->FL_MeasurePlot = NULL;
+	this->FL_histo = NULL;
 	this->FL_MeasureTable = NULL;
 	this->GapsTableView = NULL;
 	this->TreeModel = NULL;
@@ -135,6 +136,7 @@ View3D::View3D(TraceObject *Traces)
 	this->TreePlot = NULL;
 	this->FTKTable = NULL;
 	this->FL_MeasurePlot = NULL;
+	this->FL_histo = NULL;
 	this->FL_MeasureTable = NULL;
 	this->GapsTableView = NULL;
 
@@ -950,6 +952,10 @@ View3D::~View3D()
 	if(this->FL_MeasurePlot)
 	{
 		delete this->FL_MeasurePlot;
+	}
+	if(this->FL_histo)
+	{
+		delete this->FL_histo;
 	}
 	if(this->FL_MeasureTable)
 	{
@@ -3035,6 +3041,11 @@ void View3D::Rerender()
 		this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
 		this->FL_MeasureTable->update();
 	}
+	if (this->FL_histo)
+	{
+		this->FL_histo->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+		this->FL_histo->update();
+	}
 	this->statusBar()->showMessage(tr("Finished Rerendering Image"));
 }
 
@@ -4744,23 +4755,50 @@ void View3D::ShowMergeStats()
 }
 void View3D::ShowCellAnalysis()
 {
-	this->HideCellAnalysis();
+	//this->HideCellAnalysis();
 	std::vector<CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
 	if (NewCells.size() > 0)
 	{
 		this->CellModel->setCells(NewCells);
-		this->FL_MeasurePlot = new PlotWindow();
-		this->FL_MeasurePlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
-		this->FL_MeasurePlot->setWindowTitle("Computed Features for Cells");
-		this->FL_MeasurePlot->move(this->TraceEditSettings.value("FLMeasurePlot/pos",QPoint(32, 561)).toPoint());
-		this->FL_MeasurePlot->show();
-		this->FL_MeasureTable = new TableWindow();
-		this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
-		this->FL_MeasureTable->setWindowTitle("Computed Features for Cells");
-		this->FL_MeasureTable->move(this->TraceEditSettings.value("FLMeasureTable/pos",QPoint(32, 561)).toPoint());
-		this->FL_MeasureTable->resize(this->TraceEditSettings.value("FLMeasureTable/size",QSize(600, 480)).toSize());
-		this->FL_MeasureTable->show();
-	}
+		if(this->FL_MeasurePlot)
+		{
+			this->FL_MeasurePlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+			this->FL_MeasurePlot->update();
+		}
+		else
+		{
+			this->FL_MeasurePlot = new PlotWindow();
+			this->FL_MeasurePlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+			this->FL_MeasurePlot->setWindowTitle("Computed Features for Cells");
+			this->FL_MeasurePlot->move(this->TraceEditSettings.value("FLMeasurePlot/pos",QPoint(32, 561)).toPoint());
+			this->FL_MeasurePlot->show();
+		}
+		if (this->FL_MeasureTable)
+		{
+			this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+			this->FL_MeasureTable->update();
+		}
+		else
+		{
+			this->FL_MeasureTable = new TableWindow();
+			this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+			this->FL_MeasureTable->setWindowTitle("Computed Features for Cells");
+			this->FL_MeasureTable->move(this->TraceEditSettings.value("FLMeasureTable/pos",QPoint(32, 561)).toPoint());
+			this->FL_MeasureTable->resize(this->TraceEditSettings.value("FLMeasureTable/size",QSize(600, 480)).toSize());
+			this->FL_MeasureTable->show();
+		}
+		/*if (this->FL_histo)
+		{
+			this->FL_histo->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+			this->FL_histo->update();
+		}
+		else
+		{
+			this->FL_histo = new HistoWindow();
+			this->FL_histo->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+			this->FL_histo->show();
+		}*/
+	}//end if new cells size > 0
 }
 void View3D::HideCellAnalysis()
 {
@@ -4774,6 +4812,10 @@ void View3D::HideCellAnalysis()
 		this->TraceEditSettings.setValue("FLMeasureTable/pos", this->FL_MeasureTable->pos());
 		this->TraceEditSettings.setValue("FLMeasureTable/size", this->FL_MeasureTable->size());
 		this->FL_MeasureTable->close();
+	}
+	if (this->FL_histo)
+	{
+		this->FL_histo->close();
 	}
 	this->TraceEditSettings.sync();
 }

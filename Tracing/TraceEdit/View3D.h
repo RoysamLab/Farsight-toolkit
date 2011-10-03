@@ -31,7 +31,7 @@ limitations under the License.
 #include <time.h>
 
 #include "ftkGUI/PlotWindow.h"
-//#include "ftkGUI/HistoWindow.h"
+#include "ftkGUI/HistoWindow.h"
 #include "ftkGUI/TableWindow.h"
 #include"ftkGUI/StatisticsToolbar.h"
 #include "itkImageFileReader.h"
@@ -381,6 +381,7 @@ private:
 	TableWindow *GapsTableView;
 	TableWindow * FL_MeasureTable;
 	PlotWindow *FL_MeasurePlot;
+	HistoWindow *FL_histo;
 	StatisticsToolbar * statisticsToolbar;
 
 	//Qt widgets for the settings window
