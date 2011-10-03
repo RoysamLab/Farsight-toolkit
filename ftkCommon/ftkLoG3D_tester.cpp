@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 
 	std::cout << "Iterating over itkImage to convert it to a 3D C array...";
 	size_t index;
-	for (input_image_iterator.GoToBegin(), index = 0; !input_image_iterator.IsAtEnd(); input_image_iterator++, index++)
+	for (input_image_iterator.GoToBegin(), index = 0; !input_image_iterator.IsAtEnd(); ++input_image_iterator, ++index)
 	{
 		size_t k = index % image_x_size;
 		size_t l = (index % (image_x_size * image_y_size)) / image_x_size;
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 	
 	std::cout << "Iterating over C array to convert it back to an ITK image...";
 
-	for (log_image_iterator.GoToBegin(), index = 0; !log_image_iterator.IsAtEnd(); log_image_iterator++, index++)
+	for (log_image_iterator.GoToBegin(), index = 0; !log_image_iterator.IsAtEnd(); ++log_image_iterator, ++index)
 	{
 		size_t k = index % image_x_size;
 		size_t l = (index % (image_x_size * image_y_size)) / image_x_size;
