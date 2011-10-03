@@ -11,7 +11,7 @@
 #include "omp.h"
 #endif
 
-#define LoGSmoothnessPadding 3
+#define LoGSmoothnessPadding 0
 
 const double PI = atan(1.0) * 4;
 
@@ -34,15 +34,15 @@ ftkLaplacianOfGaussian3D<TPixelType>::ftkLaplacianOfGaussian3D(TPixelType*** ima
 	std::cout << std::resetiosflags(std::ios::left);
 
 	//fixed-point output
-	std::cout << std::setprecision(10);
+	std::cout << std::setprecision(std::ios::fixed);
 
 	//10 decimal point precision
 	std::cout << std::setprecision(10);
 
 	//Generate the kernel dimensions and the actual kernels themselves
-	gaussian_kernel_size_x = 7 * 2 * scale_X;
-	gaussian_kernel_size_y = 7 * 2 * scale_Y;
-	gaussian_kernel_size_z = 7 * 2 * scale_Z;
+	gaussian_kernel_size_x = 3 * 2 * scale_X;
+	gaussian_kernel_size_y = 3 * 2 * scale_Y;
+	gaussian_kernel_size_z = 3 * 2 * scale_Z;
 
 	kernel_X = generateGaussianKernel(scale_X, gaussian_kernel_size_x);
 	kernel_Y = generateGaussianKernel(scale_Y, gaussian_kernel_size_y);
@@ -66,9 +66,9 @@ void ftkLaplacianOfGaussian3D<TPixelType>::RunFilter()
 	//pad image for Gaussian
 	TPixelType*** paddedImage = padImage(image, image_x_size, image_y_size, image_z_size, gaussian_kernel_size_x / 2 + LoGSmoothnessPadding, gaussian_kernel_size_y / 2 + LoGSmoothnessPadding, gaussian_kernel_size_z / 2 + LoGSmoothnessPadding);
 	
-	unsigned int paddedGaussianImage_x_size = image_x_size + 2 * gaussian_kernel_size_x / 2 + LoGSmoothnessPadding * 2;
-	unsigned int paddedGaussianImage_y_size = image_y_size + 2 * gaussian_kernel_size_y / 2 + LoGSmoothnessPadding * 2;
-	unsigned int paddedGaussianImage_z_size = image_z_size + 2 * gaussian_kernel_size_z / 2 + LoGSmoothnessPadding * 2;
+	unsigned int paddedGaussianImage_x_size = image_x_size + gaussian_kernel_size_x + LoGSmoothnessPadding * 2;
+	unsigned int paddedGaussianImage_y_size = image_y_size + gaussian_kernel_size_y + LoGSmoothnessPadding * 2;
+	unsigned int paddedGaussianImage_z_size = image_z_size + gaussian_kernel_size_z + LoGSmoothnessPadding * 2;
 
 	//run Gaussian over padded image
 	TPixelType*** paddedGaussianImage = convolveGaussian(kernel_X, kernel_Y, kernel_Z, paddedImage, paddedGaussianImage_x_size, paddedGaussianImage_y_size, paddedGaussianImage_z_size, gaussian_kernel_size_x, gaussian_kernel_size_y, gaussian_kernel_size_z);
@@ -97,6 +97,23 @@ void ftkLaplacianOfGaussian3D<TPixelType>::RunFilter()
 template <typename TPixelType>
 TPixelType*** ftkLaplacianOfGaussian3D<TPixelType>::GetOutput()
 {
+	/*std::cout << "Printing out output image" << std::endl;
+	for (int m = 0; m < image_z_size; m++)
+	{
+		for (int l = 0; l < image_y_size; l++)
+		{
+			for (int k = 0; k < image_x_size; k++)
+			{
+				std::cout << LoGImage[k][l][m] << " ";
+			}
+			std::cout << std::endl;
+		}
+		std::cout << std::endl;
+	}
+	std::cout << std::endl;
+
+	std::cout << std::endl;*/
+	
 	return LoGImage;
 }
 
@@ -184,22 +201,21 @@ TPixelType*** ftkLaplacianOfGaussian3D<TPixelType>::padImage(TPixelType*** image
 	std::cout << "Original image size: " << image_x_size << "x" << image_y_size << "x" << image_z_size << std::endl;
 	std::cout << "Padded image size: " << padded_image_x_size << "x" << padded_image_y_size << "x" << padded_image_z_size << std::endl;
 
-	/*cout << "Printing out image" << endl;
-	TPixelType sum = 0;
-	
-	for (int k = 0; k < image_z_size; k++)
-	{
-		for (int l = 0; l < image_y_size; l++)
-		{
-			for (int m = 0; m < image_x_size; m++)
-			{
-				cout << image[m][l][k] << " ";
-			}
-			cout << endl;
-		}
-		cout << endl;
-	}
-	cout << endl << endl;*/
+	//std::cout << "Printing out image" << std::endl;
+	//
+	//for (int k = 0; k < image_z_size; k++)
+	//{
+	//	for (int l = 0; l < image_y_size; l++)
+	//	{
+	//		for (int m = 0; m < image_x_size; m++)
+	//		{
+	//			std::cout << image[m][l][k] << " ";
+	//		}
+	//		std::cout << std::endl;
+	//	}
+	//	std::cout << std::endl;
+	//}
+	//std::cout << std::endl << std::endl;
 	
 	
 	//Allocate memory for padded image
@@ -258,29 +274,31 @@ TPixelType*** ftkLaplacianOfGaussian3D<TPixelType>::padImage(TPixelType*** image
 	}
 
 
-	/*cout << "Printing out padded image" << endl;
+	std::cout << "Printing out padded image" << std::endl;
 	for (int m = 0; m < padded_image_z_size; m++)
 	{
 		for (int l = 0; l < padded_image_y_size; l++)
 		{
 			for (int k = 0; k < padded_image_x_size; k++)
 			{
-				cout << paddedImage[k][l][m] << " ";
+				std::cout << paddedImage[k][l][m] << " ";
 			}
-			cout << endl;
+			std::cout << std::endl;
 		}
-		cout << endl;
+		std::cout << std::endl;
 	}
-	cout << endl;
+	std::cout << std::endl;
 
-	cout << endl;*/
+	std::cout << std::endl;
 	
 	return paddedImage;
 }
 
 //This function is where the convolution of the Gaussian takes place
 template <typename TPixelType>
-TPixelType*** ftkLaplacianOfGaussian3D<TPixelType>::convolveGaussian(double* kernel_X, double* kernel_Y, double* kernel_Z, TPixelType*** paddedImage, unsigned int padded_image_x_size, unsigned int padded_image_y_size, unsigned int padded_image_z_size, unsigned int kernel_size_X, unsigned int kernel_size_Y, unsigned int kernel_size_Z)
+TPixelType*** ftkLaplacianOfGaussian3D<TPixelType>::convolveGaussian(	double* kernel_X, double* kernel_Y, double* kernel_Z, TPixelType*** paddedImage, 
+																		unsigned int padded_image_x_size, unsigned int padded_image_y_size, unsigned int padded_image_z_size,  //padded_image_size should be the image size + padding for gaussian kernel + LoGSmoothenessPadding
+																		unsigned int kernel_size_X, unsigned int kernel_size_Y, unsigned int kernel_size_Z)
 {
 	std::cout << "Convolving Gaussian" << std::endl;
 
@@ -360,22 +378,22 @@ TPixelType*** ftkLaplacianOfGaussian3D<TPixelType>::convolveGaussian(double* ker
 		}
 	}*/
 
-	/*cout << "Printing out convolved image" << endl;
-	for (int m = 0; m < image_z_size; m++)
+	std::cout << "Printing out convolved image" << std::endl;
+	for (int m = 0; m < padded_image_z_size; m++)
 	{
-		for (int l = 0; l < image_y_size; l++)
+		for (int l = 0; l < padded_image_y_size; l++)
 		{
-			for (int k = 0; k < image_x_size; k++)
+			for (int k = 0; k < padded_image_x_size; k++)
 			{
-				cout << image[k][l][m] << " ";
+				std::cout << tempPaddedImage[k][l][m] << " ";
 			}
-			cout << endl;
+			std::cout << std::endl;
 		}
-		cout << endl;
+		std::cout << std::endl;
 	}
-	cout << endl;
+	std::cout << std::endl;
 
-	cout << endl;*/
+	std::cout << std::endl;
 
 	return tempPaddedImage;
 }
@@ -466,7 +484,7 @@ TPixelType*** ftkLaplacianOfGaussian3D<TPixelType>::convolveLaplacian(double*** 
 		center = (std::numeric_limits<TPixelType>::max() + std::numeric_limits<TPixelType>::min())/2;
 
 	std::cout << "Center of TPixelType range is: " << center << std::endl;
-	//cout << "Convolving Laplacian over: " << image_x_size << "x" << image_y_size << "x" << image_z_size << endl;
+	//std::cout << "Convolving Laplacian over: " << image_x_size << "x" << image_y_size << "x" << image_z_size << std::endl;
 	
 	#pragma omp parallel for
 	for(int k = 0; k < image_x_size; k++)
