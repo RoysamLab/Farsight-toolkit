@@ -68,6 +68,7 @@ std::string GetFilePath(std::string f);
 std::vector<std::string> GetColumsWithString( std::string colName, vtkSmartPointer<vtkTable> table );
 std::string GetStringInCaps( std::string in_srting );
 bool Load(std::string filename);
+vtkSmartPointer<vtkTable> CopyTable(vtkSmartPointer<vtkTable> featureTable );
 
 //std::vector<ftk::AssociationRule> ReadAssociationRules(TiXmlElement * inputElement);
 

@@ -642,4 +642,29 @@ std::string GetStringInCaps( std::string in_string ){
 	return out_string;
 }
 
+
+vtkSmartPointer<vtkTable> CopyTable(vtkSmartPointer<vtkTable> featureTable )
+{
+	vtkSmartPointer<vtkTable> table_validation  = vtkSmartPointer<vtkTable>::New();
+	table_validation->Initialize();
+
+	for(int col=0; col<featureTable->GetNumberOfColumns(); ++col)
+	{	
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName(featureTable->GetColumnName(col));
+		table_validation->AddColumn(column);	
+	}
+
+	for(int row = 0; row < (int)featureTable->GetNumberOfRows(); ++row)
+	{	
+		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+		for(int c =0;c<(int)table_validation->GetNumberOfColumns();++c)
+			model_data1->InsertNextValue(featureTable->GetValueByName(row,table_validation->GetColumnName(c)));
+		table_validation->InsertNextRow(model_data1);
+	}
+
+	return table_validation;
+}
+
+
 }  // end namespace ftk
