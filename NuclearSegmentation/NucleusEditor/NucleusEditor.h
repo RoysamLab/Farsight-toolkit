@@ -461,6 +461,8 @@ protected:
 	std::vector< vtkSmartPointer<vtkTable> > tableVector;
 	std::vector<std::string> imageNames;
 
+	std::vector<std::pair<int,int> > ground_truth;
+
 
 };
 

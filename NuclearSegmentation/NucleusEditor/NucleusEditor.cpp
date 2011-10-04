@@ -2070,18 +2070,11 @@ void NucleusEditor::startActiveLearningwithFeat()
 
 void NucleusEditor::startActiveValidation()
 {	
-
 	vtkSmartPointer<vtkTable> featureTable;
 	std::vector<int> active_queries;
 
-	//std::cout<<nucSeg->megaTable->GetNumberOfRows()<<std::endl;
-	//std::cout<<nucSeg->megaTable->GetNumberOfColumns()<<std::endl;
+	ground_truth.clear();
 
-	//We need to keep only the pertinent 
-	// features. If megatable is used, we remove 2 columns (prediction
-	// & confidence). In case of single image we remove 3 columns including training
-	// There is no training column in megatable. Default value is 3 ( single image)
-	int remove_columns = 3; // 
 
 	if(myImg->GetImageInfo()->numTSlices<=1)
 		featureTable = table;
@@ -2101,7 +2094,17 @@ void NucleusEditor::startActiveValidation()
 		featureTable = nucSeg->megaTable;
 	}
 
-	
+	pWizard = new PatternAnalysisWizard( featureTable, PatternAnalysisWizard::_ACTIVE,"","", this);
+	pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
+	pWizard->exec();
+	//pawTable does not have the id column  nor the train_default column
+	pawTable = pWizard->getExtractedTable();
+
+
+	if(!pWizard->result())
+		return;
+
+
 	MCLR *mclr = new MCLR();
 	double sparsity = 1;
 	int active_query = 1;
@@ -2119,7 +2122,7 @@ void NucleusEditor::startActiveValidation()
 
 
 	SamplePercentDialog *dialog = new SamplePercentDialog(featureTable->GetNumberOfRows(),mclr->GetNumberOfClasses(featureTable), this);
-
+	
 	if( dialog->exec() )
 	{
 		this->sample_number = dialog->vSpinNumber->value();		
@@ -2129,30 +2132,35 @@ void NucleusEditor::startActiveValidation()
 		return;
 	}
 	delete dialog;
-
-
-	std::vector< std::pair<int,int> > id_time_PIA;
+	
 
 	//vector of vectors. Each vector contains samples of a class to be validated by the user 
 	validation_samples.resize(mclr->GetNumberOfClasses(featureTable)); 
 
+	//Used in this line below
+	//-> iter =  std::find(id_time.begin(), id_time.end(), std::make_pair(validation_samples.at(counter).at(5*k+ctr).first,validation_samples.at(counter).at(5*k+ctr).second));
+	std::vector< std::pair<int,int> > id_time; 
+	id_time.resize(featureTable->GetNumberOfRows());
+
 	for(int i=0;i<mclr->GetNumberOfClasses(featureTable); ++i)
 	{
+		std::vector< std::pair<int,int> > id_time_PIA;	
 		vtkSmartPointer<vtkTable> table_PIA  = vtkSmartPointer<vtkTable>::New();
 		table_PIA->Initialize();
 		std::vector<int> table_PIA_ids;
-		
+
 		//No confidence,prediction and train columns
-		for(int col=0; col<featureTable->GetNumberOfColumns()-remove_columns; ++col)
+		for(int col=0; col<pawTable->GetNumberOfColumns(); ++col)
 		{	
 			vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-			column->SetName(featureTable->GetColumnName(col));
+			column->SetName(pawTable->GetColumnName(col));
 			table_PIA->AddColumn(column);	
 		}
 
 
 		for(int row = 0; row < (int)featureTable->GetNumberOfRows(); ++row)
 		{	
+			std::pair<double,double> temp_pair;
 			if(featureTable->GetValueByName(row,prediction_names[0].c_str())== i+1)
 			{
 				vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
@@ -2160,8 +2168,6 @@ void NucleusEditor::startActiveValidation()
 					model_data1->InsertNextValue(featureTable->GetValueByName(row,table_PIA->GetColumnName(c)));
 				table_PIA->InsertNextRow(model_data1);
 				table_PIA_ids.push_back(table_PIA->GetValue(table_PIA->GetNumberOfRows()-1,0).ToInt());
-
-				std::pair<double,double> temp_pair;
 				temp_pair.first = featureTable->GetValue(row,0).ToDouble();
 				if(myImg->GetImageInfo()->numTSlices == 1)
 					temp_pair.second = 0;
@@ -2169,22 +2175,24 @@ void NucleusEditor::startActiveValidation()
 					temp_pair.second = featureTable->GetValueByName(row,"time").ToDouble();
 				id_time_PIA.push_back(temp_pair);
 			}
+			temp_pair.first = featureTable->GetValue(row,0).ToDouble();
+			temp_pair.second = featureTable->GetValueByName(row,"time").ToDouble();
+			id_time[row] = temp_pair;
 		}		
 
-			
 		// Plan in advance gives the vector of ids for the class "i+1"
-		validation_samples.at(i) = mclr->Plan_In_Advance(table_PIA,(sample_number/mclr->GetNumberOfClasses(featureTable)),id_time_PIA);//*has to be some x % of the cells*/,id_time_PIA);// Choose x % of the samples for Permutation tests	
-		tabVec.push_back(table_PIA);
-		tabVecIds.push_back(table_PIA_ids);
+		validation_samples.at(i) = mclr->Plan_In_Advance(table_PIA,(sample_number/mclr->GetNumberOfClasses(featureTable)),id_time_PIA);// Choose x % of the samples for Permutation tests	
 	} 
 
 	int counter =0;
 	bool Rejected;
+	std::vector<int> errorVals;
+
+	if(myImg->GetImageInfo()->numTSlices > 1)
+		featureTable->RemoveColumnByName("time");
 
 	while(counter<mclr->GetNumberOfClasses(featureTable))
 	{
-		vtkSmartPointer<vtkTable> table_PIA = tabVec.at(counter);
-		std::vector<int> table_PIA_ids = tabVecIds.at(counter);
 		// Display the samples 5 at a time	
 		for(int k =0; k< (validation_samples.at(counter).size()/5)+MIN(1,validation_samples.at(counter).size()%5);++k)
 		{
@@ -2196,22 +2204,19 @@ void NucleusEditor::startActiveValidation()
 			for(int ctr=0;ctr<snapshots.size();++ctr)
 			{
 				if(myImg->GetImageInfo()->numTSlices > 1)
-					segView->SetCurrentTimeVal(validation_samples.at(counter).at(no_of_samples*k+ctr).second);
+					segView->SetCurrentTimeVal(validation_samples.at(counter).at(5*k+ctr).second);
 				snapshots[ctr] =segView->getSnapshotforID(validation_samples.at(counter).at(5*k+ctr).first);	
 			}
 
 			std::vector<int> curr_list;
-
-
 			for(int ctr=0;ctr<snapshots.size();++ctr)
 			{	
 				std::vector< std::pair<int,int> >::iterator iter;
-				iter =  std::find(id_time_PIA.begin(), id_time_PIA.end(), std::make_pair(validation_samples.at(counter).at(5*k+ctr).first,validation_samples.at(counter).at(5*k+ctr).second));
-				curr_list.push_back(iter-id_time_PIA.begin());
+				iter =  std::find(id_time.begin(), id_time.end(), std::make_pair(validation_samples.at(counter).at(5*k+ctr).first,validation_samples.at(counter).at(5*k+ctr).second));
+				curr_list.push_back(iter-id_time.begin());
 			}
 
-
-			ActiveLearningDialog *dialog =  new ActiveLearningDialog("validate",snapshots,table_PIA,counter+1,curr_list,mclr->GetNumberOfClasses(featureTable));
+			ActiveLearningDialog *dialog =  new ActiveLearningDialog("validate",snapshots,featureTable,counter+1,curr_list,mclr->GetNumberOfClasses(featureTable));
 			dialog->exec();
 
 			Rejected = dialog->rejectFlag;
@@ -2221,50 +2226,48 @@ void NucleusEditor::startActiveValidation()
 
 			for(int ctr=0;ctr<curr_list.size();++ctr)
 			{
-				if(dialog->query_label[ctr].second == -1)
-				{	
-					QMessageBox::critical(this, tr("Oops"), tr("Please select a response for every cell"));
-					this->show();
-					dialog =  new ActiveLearningDialog("validate",snapshots,table_PIA,counter+1,curr_list,mclr->GetNumberOfClasses(featureTable));	
-					dialog->exec();
-					ctr =0;
-					Rejected = dialog->rejectFlag;
-					if(Rejected)
-						return;
-				}
+				ground_truth.push_back(dialog->query_label[ctr]);
+				if(dialog->query_label[ctr].second != -1 && dialog->query_label[ctr].second != counter+1)
+					errorVals.push_back(1);
+				else
+					errorVals.push_back(0);
 			}
+		
 		}
 		counter++; //increment class counter
 	}
+
+	double error=0;
+	for(int i=0 ; i< (int)errorVals.size();++i)
+		error = errorVals[i]+error;
+
+
+	vtkSmartPointer<vtkTable> table_validation  = vtkSmartPointer<vtkTable>::New();
+	table_validation->Initialize();
+
+	for(int col=0; col<pawTable->GetNumberOfColumns(); ++col)
+	{	
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName(pawTable->GetColumnName(col));
+		table_validation->AddColumn(column);	
+	}
+
+	std::vector<int> classvals;	
+	for(int row = 0; row <(int)ground_truth.size();++row)
+	{	
+		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+		for(int c =0;c<(int)table_validation->GetNumberOfColumns();++c)
+			model_data1->InsertNextValue(featureTable->GetValueByName(ground_truth.at(row).first,table_validation->GetColumnName(c)));
+		table_validation->InsertNextRow(model_data1);
+		classvals.push_back(ground_truth.at(row).second);
+	}		
+	
+	double pValue = mclr->PerformPTest(table_validation,classvals,error/this->sample_number);
+	QString text = "The error rate of the classifier is " + QString::number(error/this->sample_number)+"\n";
+	text +=  "The pValue of the classifier is " + QString::number(pValue);
+	QMessageBox::about(this, tr("Validation Summary"), text);
+
 }
-
-
-
-
-//void NucleusEditor::performPTest()
-//{
-//	//// Delete the prediction column if it exists
-//	prediction_names = ftk::GetColumsWithString( "prediction_active" , pawTable);
-//	if(prediction_names.size()>0)
-//		pawTable->RemoveColumnByName("prediction_active");
-//
-//	vnl_vector<double> class_list(pawTable->GetNumberOfRows()); 
-//
-//	for(int row = 0; (int)row < pawTable->GetNumberOfRows(); ++row)  
-//	{
-//		class_list.put(row,vtkVariant(featureTable->GetValueByName(row,"train_default1")).ToDouble());
-//	}
-//
-//	MCLR *mclr = new MCLR();
-//	double sparsity = 1;
-//	int active_query = 1;
-//	double max_info = -1e9;
-//
-//	// Normalize the feature matrix
-//	vnl_matrix<double> Feats = mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(pawTable,id_time));
-//	mclr->Initialize(Feats,sparsity,class_list,"",pawTable);
-//	mclr->Get_Training_Model();
-//}
 
 
 //void NucleusEditor::BuildGallery()
@@ -2502,12 +2505,7 @@ std::vector< vtkSmartPointer<vtkTable> > NucleusEditor::Perform_Classification(M
 }
 
 
-//double NucleusEditor::performPTest(std::string filename)
-//{
-//	
-//
-//
-//}
+
 
 
 
@@ -4132,7 +4130,7 @@ SamplePercentDialog::SamplePercentDialog(int no_of_samples,int no_of_classes,QWi
 
 	vSpinPercent = new QDoubleSpinBox(this);
 	vSpinPercent->resize( vSpinPercent->minimumSizeHint() );
-	vSpinPercent->setRange(1,100);
+	vSpinPercent->setRange(0,100);
 	vSpinPercent->setEnabled(true);
 
 	QHBoxLayout *sampleLayout = new QHBoxLayout;
@@ -4148,8 +4146,7 @@ SamplePercentDialog::SamplePercentDialog(int no_of_samples,int no_of_classes,QWi
 	connect(vSpinNumber, SIGNAL(valueChanged(int)),this, SLOT(setPercent(int)));
 
 	//Default values
-	vSpinPercent->setValue(5);
-	vSpinNumber->setValue(((samples/20)/class_number)*class_number);	
+	vSpinNumber->setValue(30);	
 
 
 	okButton = new QPushButton(tr("OK"),this);
