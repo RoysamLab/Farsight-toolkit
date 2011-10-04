@@ -129,5 +129,8 @@ public:
 	std::vector< std::pair< std::string, vnl_vector<double> > > CreateActiveLearningModel(vtkSmartPointer<vtkTable> pWizard_table);
 	std::vector<std::pair<int,int> > Plan_In_Advance(vtkSmartPointer<vtkTable> new_table, int num,std::vector< std::pair<int,int> > id_time_PIA);
 	int GetNumberOfClasses(vtkSmartPointer<vtkTable> table);
+	double PerformPTest(vtkSmartPointer<vtkTable> featureTable,std::vector<int> ground_truth,double errorVal);
+	double LOOCV(vtkSmartPointer<vtkTable> featureTable,std::vector<int> ground_truth);
+
 };
 #endif
