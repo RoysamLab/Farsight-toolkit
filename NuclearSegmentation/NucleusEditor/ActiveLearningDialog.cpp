@@ -155,7 +155,7 @@ ActiveLearningDialog::ActiveLearningDialog(std::string validate,std::vector<QIma
 
 	for(int i =0 ; i<query_label.size() ; ++i)
 	{
-		query_label[i].second = -1;// Used to check if no radiobutton was selected for any sample
+		query_label[i].second = classval;// Used to check if no radiobutton was selected for any sample
 	}
 
 	//QLabel *channelLabel = new QLabel("Please ensure all the relevant channels which might affect classification are ON ", this);	
@@ -267,6 +267,8 @@ std::vector<QHBoxLayout *> ActiveLearningDialog::Validation_Sample_Details(QImag
 	for(int i =0 ; i< num_classes ; ++i)
 	{
 		QRadioButton  *class_button = new QRadioButton(QString::number(i+1), this);
+		if(i+1==classval)
+			class_button->setChecked(true);
 		topRow->addWidget(class_button,0,0);
 		button_vector.push_back(class_button);
 		buttongroup[group]->addButton(class_button);
