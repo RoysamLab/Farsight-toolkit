@@ -1417,7 +1417,7 @@ double MCLR::LOOCV(vtkSmartPointer<vtkTable> featureTable,std::vector<int> groun
 	double error = 0;
 	vnl_vector<double> class_list(featureTable->GetNumberOfRows()); 
 
-#pragma omp parallel for private(test_data)
+//#pragma omp parallel for private(test_data)
 	for(int i = 0; i < (int)featureTable->GetNumberOfRows(); ++i)
 	{	
 		vtkSmartPointer<vtkTable> table_validation = ftk::CopyTable(featureTable);
