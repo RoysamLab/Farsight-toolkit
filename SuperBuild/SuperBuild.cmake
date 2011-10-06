@@ -161,8 +161,8 @@ else()
 endif()
 
 ExternalProject_Add(ITK
-  URL http://farsight-toolkit.org/support/ITK-Source-Aug-27-2011.tar.gz
-  URL_MD5 6477dff9d18cc92718061a373951f8e0
+  URL http://farsight-toolkit.org/support/ITK-Source-Oct-5-2011.tar.gz
+  URL_MD5 222849f931ac88139dc26862401a138f
   DOWNLOAD_DIR ${ITK_DOWNLOAD_DIR}
   SOURCE_DIR ${ITK_SOURCE_DIR}
   BINARY_DIR ${ITK_BINARY_DIR}
