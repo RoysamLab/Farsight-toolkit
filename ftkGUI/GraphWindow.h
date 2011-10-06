@@ -75,7 +75,10 @@ public:
 	void setQtModels(QItemSelectionModel *mod);
 	void setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels = NULL);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table);
+	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2);
+	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel);
 	void ShowGraphWindow();
+
 private:
 	QVTKWidget mainQTRenderWidget;
 	vtkSmartPointer<vtkViewTheme> theme;
@@ -83,7 +86,6 @@ private:
 	vtkSmartPointer<vtkGraphLayoutView> view;
 	//SelectionAdapter * selAdapter;
 	ObjectSelection * selection;
-
 };
 
 #endif

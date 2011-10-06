@@ -38,6 +38,7 @@ OPTION( BUILD_HARALICK "Biild Haralick_features_calculation" OFF)
 OPTION( BUILD_DANIELA "color_segmentation base on satration" OFF)   
 OPTION( BUILD_QTIMAGECOMBINER "combines logical OR of two QImages" OFF) 
 OPTION( BUILD_DENDROGRAM "Dendrogram code" OFF)
+OPTION( BUILD_SPD "SPD" OFF)
 
 #Make sure OPENCL AND CUDA ARE NOT BOTH ENABLED
 OPTION( BUILD_OPENCL "Build with OpenCL support (VS 2008 only at the moment)" OFF) 
@@ -303,6 +304,10 @@ IF (BUILD_DENDROGRAM)
 ENDIF (BUILD_DENDROGRAM)
 
 
+IF (BUILD_SPD)
+	INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/SPD )
+	SUBDIRS( SPD)
+ENDIF (BUILD_SPD)
 
 #####################################################################################
 # Optionally find Farsight's data directory, used for testing and installers
