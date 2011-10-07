@@ -1,0 +1,11 @@
+PROJECT(FFTW)
+
+cmake_minimum_required(VERSION 2.0)
+#just call all subdirs
+
+SUBDIRS(fftw)
+SUBDIRS(rfftw)
+#SUBDIRS(mpi)
+SUBDIRS(threads)
+
+

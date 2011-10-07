@@ -1,0 +1,9 @@
+
+FILE(GLOB SourceFiles *.c)
+FILE(GLOB HeaderFiles ${CMAKE_SOURCE_DIR}/fftw/*.h)
+
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/fftw)
+ADD_LIBRARY(librfftw215 ${SourceFiles} ${HeaderFiles})
+INSTALL(TARGETS librfftw215 ARCHIVE DESTINATION lib)
+INSTALL(FILES rfftw.h DESTINATION include)
+#MESSAGE("Debug: ${HeaderFiles}")
