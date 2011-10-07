@@ -37,6 +37,15 @@ limitations under the License.
 #include "vtkSmartPointer.h"
 #include "vtkDataArray.h"
 
+//OpenSlide include
+#ifdef USE_OPENSLIDE
+extern "C"
+{
+#include <openslide.h>
+}
+#endif
+
+
 //Std includes:
 #include <string>
 
@@ -75,8 +84,8 @@ public:
 	bool SaveChannelAs( int channel, std::string baseName, std::string ext );
 
 	bool AppendChannelFromData3D(void *dptr, DataType dataType, int bpPix, int cs, int rs, int zs, std::string name, std::vector<unsigned char> color, bool copy);
-    bool AppendImage(ftk::Image::Pointer img, PtrMode mode);	//Will add the image data as a new time slice or slices if all other sizes match.
-    bool AppendImage(ftk::Image::Pointer img, PtrMode mode, bool isforOneTime);    // overloaded function	
+	bool AppendImage(ftk::Image::Pointer img, PtrMode mode);	//Will add the image data as a new time slice or slices if all other sizes match.
+	bool AppendImage(ftk::Image::Pointer img, PtrMode mode, bool isforOneTime);    // overloaded function	
 	void SetSpacing(float x, float y, float z);
 
 	std::vector< unsigned short > Size(void);
@@ -111,7 +120,7 @@ public:
 
 		std::vector<float> spacing;		//Holds the spacing of the image (defaults to 1,1,1 (x,y,z) )
 
-		int BytesPerChunk(void)
+		unsigned int BytesPerChunk(void)
 		{
 			return numZSlices*numRows*numColumns*bytesPerPix;
 		};
@@ -119,6 +128,12 @@ public:
 	} Info;
 
 	const Info * GetImageInfo(void) { return &(this->m_Info); };	//Returns a pointer to constant data (these values cannot be changed from outside
+
+#ifdef USE_OPENSLIDE
+	bool OpenSlideManaged;
+	int OpenSlideNumLevels;
+	int OpenSlideCurrentLevel;
+#endif
 
 protected:
 	Image();

@@ -55,6 +55,11 @@ Image::Image()
 	path.clear();
 	filenames.clear();
 	imageDataPtrs.clear();
+#ifdef USE_OPENSLIDE
+	OpenSlideManaged = false;
+	OpenSlideNumLevels = -1;
+	OpenSlideCurrentLevel = -1;
+#endif
 }
 
 //Destructor
@@ -209,12 +214,81 @@ bool Image::LoadStandardImage( std::string fileName, bool stacksAreForTime, bool
 {
 	// Find out the pixel type of the image in file
 	itk::ImageIOBase::Pointer imageIO = itk::ImageIOFactory::CreateImageIO( fileName.c_str(), itk::ImageIOFactory::ReadMode );
-	if( !imageIO )
-    {
+#ifdef USE_OPENSLIDE
+	// If it is a pathology slide that is only supported by Openslide and not ITK
+	openslide_t *openslide_reader = openslide_open(fileName.c_str());
+	if( !imageIO && openslide_reader==NULL ){
 		std::cerr << "NO IMAGEIO WAS FOUND" << std::endl;
 		return false;
-    }
+	}
+	// OpenSlide can handle this image
+	if( !imageIO ){
+		int OpenSlideNumLevels = openslide_get_layer_count(openslide_reader);
+		//If OpenSlideCurrentLevel is -1 the middle layer is automatically read 
+		OpenSlideManaged = true;
+		if( OpenSlideCurrentLevel < 0 )
+			OpenSlideCurrentLevel = OpenSlideNumLevels/2;
+		if( OpenSlideCurrentLevel >= OpenSlideNumLevels ){
+			std::cerr << "THE SLIDE LEVEL EXCEEDS THE NUMBER OF LAYERS" << std::endl;
+			return false;
+		}
+		//Allocate memory and read image
+		int64_t width,height;
+		openslide_get_layer_dimensions(openslide_reader, OpenSlideCurrentLevel, &width, &height);
+		unsigned int mem_needed = width*height*4;
+		unsigned int mem_needed_rgb = width*height;
+		uint32_t *buffer = (uint32_t *) malloc(mem_needed);
+		openslide_read_region(openslide_reader, buffer, 0, 0, OpenSlideCurrentLevel, width, height);
 
+		//Fill in info for the new image
+		//Don't bother with the colors defaults will be set
+		Info nInfo;
+		nInfo.numColumns = width;			//x-dim
+		nInfo.numRows = height;				//y-dim
+		nInfo.numZSlices = 1;				//z-dim 
+		nInfo.numTSlices = 1;				//T-slices 
+		nInfo.bytesPerPix = 1;				//Beacuse Image is RGB
+		nInfo.dataType = itk::ImageIOBase::UCHAR;	//8-bit RGB Datatype
+		nInfo.numChannels = 3;				//Till we figure out how to read more channels with openslide
+
+		m_Info = nInfo;					//Copy info into current image
+
+		unsigned int numBytesPerChunk = m_Info.BytesPerChunk();
+		//Create a pointer for each channel and allocate memory
+		imageDataPtrs.resize(1);			//Since there is only one time pt
+		ImageMemoryBlock block;
+		block.manager = FTK;
+		for(int c=0; c<m_Info.numChannels; ++c){
+			void * mem = malloc(numBytesPerChunk);
+			if(mem == NULL){
+				std::cerr << "Unable to allocate enough memory for the slide\n";
+				return false;
+			}
+			block.mem = mem;
+			imageDataPtrs[0].push_back(block);
+		}
+
+		unsigned int b = 0;
+		for( unsigned int i=0; i<mem_needed_rgb; ++i ){
+			unsigned short ch = 0; ++i; 		//Skip alpha
+			for(int c=0; c<m_Info.numChannels; ++c){
+				unsigned char *toLoc = ((unsigned char*)(imageDataPtrs[0][ch++].mem));
+				toLoc[b] = buffer[i++];
+			}
+			b++;
+		}
+		free( buffer );
+		return true;
+	}
+#else
+	if( !imageIO )
+	{
+		std::cerr << "NO IMAGEIO WAS FOUND" << std::endl;
+		return false;
+	}
+#endif
+	// Now that we found the appropriate ImageIO class, ask it to 
+	// read the meta data from the image file.
 	// Now that we found the appropriate ImageIO class, ask it to 
 	// read the meta data from the image file.
 	imageIO->SetFileName( fileName.c_str() );

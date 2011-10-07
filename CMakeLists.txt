@@ -23,7 +23,7 @@ OPTION( BUILD_SAMPLE_EDITOR "Build Sample Editor" OFF )
 OPTION( BUILD_TISSUENETS "Build TissueNets" OFF )
 OPTION( BUILD_TRACKER "Build Cell Tracker" OFF )
 OPTION( USE_KPLS "Use KPLS module for classification" ON )
-OPTION( USE_SQLITE_DATABASE "Use SQLite database libraries" ON )
+OPTION( USE_OPENSLIDE "Use openslide libraries for reading images" OFF )
 OPTION( WRAP_PYTHON "Wrap Farsight in Python" OFF )
 OPTION( BUILD_EMBREX "Build Mark Embrecht's KPLS module" OFF )
 OPTION( BUILD_UNMIXING "Build Unmixing module" OFF )
@@ -103,6 +103,21 @@ SET (GLUT_glut_LIBRARY ${CMAKE_SOURCE_DIR}/freeglut/lib/freeglut.lib)
 #SET (GLUT_LIBRARIES "freeglut/lib/freeglut")
 FIND_PACKAGE(GLUT)
 
+IF(USE_OPENSLIDE)
+        FIND_PACKAGE(OpenSlide)
+        IF(OPENSLIDE_FOUND)
+		ADD_DEFINITIONS(-DUSE_OPENSLIDE)
+                LINK_DIRECTORIES( ${OPENSLIDE_BINARY_DIR} )
+                INCLUDE_DIRECTORIES( ${OPENSLIDE_INCLUDE_DIR} )
+        ELSE(OPENSLIDE_FOUND)
+                MESSAGE(FATAL_ERROR "OpenSlide not found. Please set the 
+                directories to OPENSLIDE_LIBRARY and OPENSLIDE_INCLUDE_DIR or
+                turn off USE_OPENSLIDE")
+        ENDIF(OPENSLIDE_FOUND)
+ELSE(USE_OPENSLIDE)
+        SET(OPENSLIDE_LIBRARY )
+        SET(OPENSLIDE_INCLUDE_DIR )
+ENDIF(USE_OPENSLIDE)
 
 ################################################################################
 ################################################################################
@@ -126,7 +141,6 @@ SUBDIRS( ftkFeatures )
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkGUI )
 SUBDIRS( ftkGUI )
-
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Xml_Generator )
 SUBDIRS( Xml_Generator )
@@ -158,12 +172,6 @@ IF( NOT BUILD_EMBREX )
 ENDIF( NOT BUILD_EMBREX )
 ENDIF(USE_KPLS)
 
-IF( USE_SQLITE_DATABASE )
-  INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/SQLite )
-  SUBDIRS( SQLite )
-  INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/SQLite/NESqlite )
-  SUBDIRS( SQLite/NESqlite )
-ENDIF( USE_SQLITE_DATABASE )
 
 IF(BUILD_MODEL_SEG)
   IF(WIN32)
@@ -202,6 +210,10 @@ ENDIF(BUILD_TRACKER)
 IF(BUILD_NUCLEI)
   INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/NuclearSegmentation )
   SUBDIRS( NuclearSegmentation )
+  INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/SQLite )
+  SUBDIRS( SQLite )
+  INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/SQLite/NESqlite )
+  SUBDIRS( SQLite/NESqlite )
   SET(CPACK_PACKAGE_EXECUTABLES "NucleusEditor" "Nucleus Editor" ${CPACK_PACKAGE_EXECUTABLES})
 ENDIF(BUILD_NUCLEI)
 
@@ -431,3 +443,5 @@ add_subdirectory(InstallRules)
 if (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D GLUT_BUILDING_LIB")
 endif(MSVC)
+
+#message(STATUS "module path: ${CMAKE_MODULE_PATH} ${CMAKE_ROOT}")
