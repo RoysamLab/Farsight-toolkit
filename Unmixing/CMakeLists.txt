@@ -6,5 +6,5 @@ SET(SRCS unmix_clustering.cpp)
 
 ADD_EXECUTABLE(main ${SRCS})
 
-TARGET_LINK_LIBRARIES(main    itkvnl_inst            ${ITK_LIBRARIES} )
+TARGET_LINK_LIBRARIES(main ${ITK_LIBRARIES} )
 
