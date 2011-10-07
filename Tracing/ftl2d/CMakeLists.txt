@@ -45,8 +45,6 @@ SET ( ftl2d_SETracing_headers
 
 ADD_EXECUTABLE ( ftl2d_SETracing ${ftl2d_SETracing_sources} ${ftl2d_SETracing_headers} )
 TARGET_LINK_LIBRARIES( ftl2d_SETracing 
-  ITKCommon 
-  ITKIO 
-  ITKNumerics 
+  ${ITK_LIBRARIES} 
   ${LIBXML2_LIBRARIES}
 )
