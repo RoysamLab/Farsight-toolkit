@@ -613,7 +613,7 @@ void SPDAnalysisModel::GenerateMST()
 		//this->graphWindow->ShowGraphWindow();
 	}
 
-	std::vector<std::vector< boost::graph_traits<Graph>::vertex_descriptor>>::iterator iter = this->ModuleMST.begin();
+	std::vector<std::vector< boost::graph_traits<Graph>::vertex_descriptor> >::iterator iter = this->ModuleMST.begin();
 	int moduleIndex = 1;
 	while( iter != this->ModuleMST.end())
 	{

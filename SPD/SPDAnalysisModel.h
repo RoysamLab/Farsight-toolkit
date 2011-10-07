@@ -11,7 +11,7 @@
 #include "../ftkGUI/GraphWindow.h"
 
 typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::undirectedS, 
-	boost::property< boost::vertex_distance_t, unsigned int>, boost::property< boost::edge_weight_t, double>> Graph;
+	boost::property< boost::vertex_distance_t, unsigned int>, boost::property< boost::edge_weight_t, double> > Graph;
 typedef std::pair < unsigned int, unsigned int>Edge;
 
 class SPDAnalysisModel
@@ -66,9 +66,9 @@ private:
 	vnl_vector<int> ModuleSize;
 
 	//MST for each module
-	std::vector< std::vector< boost::graph_traits<Graph>::vertex_descriptor>> ModuleMST;
+	std::vector< std::vector< boost::graph_traits<Graph>::vertex_descriptor> > ModuleMST;
 	std::vector< double> MSTWeight;
-	std::vector< std::vector< boost::graph_traits<Graph>::vertex_descriptor>> ModuleGraph;
-	std::vector< vtkSmartPointer<vtkTable>> MSTTable;    // data to pass to the views
+	std::vector< std::vector< boost::graph_traits<Graph>::vertex_descriptor> > ModuleGraph;
+	std::vector< vtkSmartPointer<vtkTable> > MSTTable;    // data to pass to the views
 };
 #endif
