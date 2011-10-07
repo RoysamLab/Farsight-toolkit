@@ -28,7 +28,7 @@ ADD_EXECUTABLE(centerline
   ../Common/vertex.h
   ../Common/vertex_parent.h)
 
-TARGET_LINK_LIBRARIES(centerline ${OPENGL_LIBRARIES} ${GLUT_glut_LIBRARY} vtksys)
+TARGET_LINK_LIBRARIES(centerline ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} vtksys)
 
 ADD_EXECUTABLE(votestotiff votestotiff.cpp)
 TARGET_LINK_LIBRARIES(votestotiff       ${ITK_LIBRARIES} )

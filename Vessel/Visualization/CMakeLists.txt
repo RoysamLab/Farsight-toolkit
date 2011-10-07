@@ -28,6 +28,6 @@ ADD_EXECUTABLE(
   ../Common/vertex.h
   ../Common/vertex_parent.h
 )
-TARGET_LINK_LIBRARIES(visualize ${OPENGL_LIBRARIES} ${GLUT_glut_LIBRARY} vtksys)
+TARGET_LINK_LIBRARIES(visualize ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} vtksys)
 
 INSTALL( TARGETS visualize DESTINATION ${INSTALL_BIN_DIR} )
