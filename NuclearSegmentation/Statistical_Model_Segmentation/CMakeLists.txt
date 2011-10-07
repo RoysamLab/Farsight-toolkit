@@ -20,5 +20,5 @@ ADD_LIBRARY( ModelSeg
 
 
 
-TARGET_LINK_LIBRARIES( ModelSeg ftkGUI ftkImage ftkCommon ftkFeatures libSVM NuclearSegmentation Nuclear_Association    libagf GLPKLib CytoplasmSegmentation     ${ITK_LIBRARIES} )
+TARGET_LINK_LIBRARIES( ModelSeg ftkGUI ftkImage ftkCommon ftkFeatures libSVM NuclearSegmentation Nuclear_Association libagf ${LIB_GLPK} CytoplasmSegmentation ${ITK_LIBRARIES} )
 
