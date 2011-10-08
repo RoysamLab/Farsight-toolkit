@@ -70,7 +70,8 @@ protected:
 	void ComputeAdjacencies( std::vector< Node * > );
 	unsigned int ShapeAnalysis(const itk::FixedArray<float, 3> & );
 	bool RegisterIndex(const float, itk::Index<3> &, itk::Size<3> &, long);
-	float GetRadius(itk::Vector<float,3> & pos);
+	//float GetRadius(itk::Vector<float,3> & pos);
+  float GetRadius(itk::Index<3> pos);
   void BuildTrees();
   std::vector< Node * > ReadListOfPoints(std::string fname);
   std::pair< Node *, Node * > FindClosestOpenNode();

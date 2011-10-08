@@ -5,7 +5,6 @@ bool CompareNeighbors(std::pair< double, Node *> n1,
 {
   if(n1.first < n2.first)
     {
-    std::cout << n1.first << " is less than " << n2.first << std::endl;
     return true;
     }
   return false;
@@ -237,23 +236,13 @@ void MicrogliaProcessTracer::CalculateCriticalPoints(void)
   this->NDXImage->SetRegions(this->PaddedInputImage->GetBufferedRegion());
   this->NDXImage->Allocate();
   this->NDXImage->FillBuffer(0.0f);
-/*
-  ImageType3D::SpacingType spacing = this->InputImage->GetSpacing();
-
-  float base = spacing[0];
-  //float base = 2 * spacing[0];
-  int sign = 1;
-  if(base < 1)
-    {
-    sign = -1;
-    }
-*/
-  float power = -0.25;
+  
+  float power = 0.0;
+  //float power = -0.25;
 
   for (unsigned int i = 0; i < 6; ++i)
   {
     power = power + 0.25;
-    //std::cout << "Base: " << base << ", sign: " << sign << ", power: " << power << std::endl;
     float sigma = vcl_pow(2, power);
     std::cout << "Analysis at sigma " << sigma << std::endl;
     CalculateCriticalPointsAtScale( sigma );
@@ -375,6 +364,15 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
       {
         this->NDXImage->SetPixel(ndx,value);
         ctCnt++;
+
+      if( (ndx[0] == 114 && ndx[1] == 200 && ndx[2] == 28) ||
+      (ndx[0] == 157 && ndx[1] == 131 && ndx[2] == 5) ||
+      (ndx[0] == 132 && ndx[1] == 120 && ndx[2] == 2) ||
+      (ndx[0] == 61 && ndx[1] == 125 && ndx[2] == 23) ||
+      (ndx[0] == 100 && ndx[1] == 265 && ndx[2] == 17))
+        {
+        std::cout << "problem point " << ndx << " found at scale " << sigma << std::endl; 
+        }
       }
     }
     ++it;
@@ -467,11 +465,15 @@ bool MicrogliaProcessTracer::RegisterIndex(const float value, itk::Index<3> &ndx
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-float MicrogliaProcessTracer::GetRadius(itk::Vector<float,3>& pos) 
+float MicrogliaProcessTracer::GetRadius(itk::Index<3> idx) 
 {
   float r = 2.0f;
-  itk::Vector<float,3> m1, m2, m;
+  itk::Vector<float,3> m1, m2, m, pos;
   itk::Index<3> ndx;
+
+  pos[0] = idx[0];
+  pos[1] = idx[1];
+  pos[2] = idx[2];
       
   for (int iter = 0; iter < 20; ++iter) 
   {
@@ -602,8 +604,6 @@ std::pair< Node *, Node * > MicrogliaProcessTracer::FindClosestOpenNode()
   std::vector< Node * >::iterator nodeItr, nbrItr;
   //std::vector< Node * >::iterator nodeItr, nbrItr;
  
-  std::cout << this->Closed.size() << " nodes closed." << std::endl;
-  
   for(nodeItr = this->Closed.begin(); nodeItr != this->Closed.end(); ++nodeItr)
     {
     neighborList = &(this->AdjacencyMap[(*nodeItr)]);
@@ -629,7 +629,6 @@ std::pair< Node *, Node * > MicrogliaProcessTracer::FindClosestOpenNode()
       }
     }
 
-  std::cout << "min distance: " << minDistance << std::endl;
  //the child node is closed in the caller function
  return parentAndChild;
 
@@ -684,20 +683,32 @@ void MicrogliaProcessTracer::WriteSWC( std::string fname )
   std::ofstream output( fname.c_str() );
   
   std::vector< Node * >::iterator nodeItr;
+	
+  ImageType3D::PointType origin = this->InputImage->GetOrigin();
   for(nodeItr = this->Closed.begin(); nodeItr != this->Closed.end(); ++nodeItr)
     {
     itk::Index<3> idx = (*nodeItr)->index;
+    float x = idx[0] + origin[0];
+    float y = idx[1] + origin[1];
+    float z = idx[2] + origin[2];
     long parentID;
+    int cellType = 3;
+
+    //compute vessel radius at this point
+    float r = this->GetRadius( idx );
+  
     if ( (*nodeItr)->parent == NULL )
       {
       parentID = -1;
+      cellType = 1;
       }
     else
       {
       parentID = (*nodeItr)->parent->ID;
       }
     
-    output << (*nodeItr)->ID << " " << "3" << " " << idx[0] << " " << idx[1] << " " << idx[2] << " " << "1" << " " << parentID << std::endl; 
+    output << (*nodeItr)->ID << " " << cellType << " " << x << " " << y << " " << z << " " << "1" << " " << parentID << std::endl; 
+    //output << (*nodeItr)->ID << " " << cellType << " " << x << " " << y << " " << z << " " << r << " " << parentID << std::endl; 
     }
   output.close();
 }
