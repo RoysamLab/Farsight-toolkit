@@ -15,7 +15,7 @@ limitations under the License.
 
 #include "SampleEditor.h"
 //#include "Dendrogram.h"
-
+#include "..\SPD\SPDAnalysisModel.h"
 
 
 //*******************************************************************************
@@ -28,8 +28,9 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 	table = new TableWindow();
 	plot = new PlotWindow(this);
 	histo = new HistoWindow(this);
-	//dendro = new Dendrogram(0,0);
+	graph =  new GraphWindow(this);
 
+	//dendro = new Dendrogram(0,0);
 
 	data = NULL;
 	data = vtkSmartPointer<vtkTable>::New();		//Start with a new table
@@ -139,7 +140,10 @@ void SampleEditor::createMenus()
 	connect(changeRowDataAction, SIGNAL(triggered()), this, SLOT(changeRowData()));
 	editMenu->addAction(changeRowDataAction);
 
-	
+	SPDAction = new QAction(tr("SPD"), this);
+	SPDAction->setStatusTip(tr("SPD Analysis for the data"));
+	connect(SPDAction, SIGNAL(triggered()), this, SLOT(SPDAnalysis()));
+	editMenu->addAction(SPDAction);
 }
 
 //********************************************************************************
@@ -170,6 +174,7 @@ void SampleEditor::loadFile()
 	this->histo->setModels(data, selection);
 	this->histo->show();
 	std::cout << "I reached here inside the sample editor"<<std::endl;
+	this->graph->setModels(data, selection);
 	//this->dendro->setModels(data,selection);
 	//this->dendro->show();
 
@@ -331,4 +336,26 @@ void SampleEditor::updateStatistics(void)
 		showStatistics();
 	}
 		
+}
+
+void SampleEditor::SPDAnalysis()
+{
+	SPDAnalysisModel *SPDModel = SPDAnalysisModel::InitInstance();
+	SPDModel->ParseTraceFile( this->data);
+	std::cout<< "Normalizing" << std::endl;
+	SPDModel->NormalizeData();
+	std::cout<< "clustering" << std::endl;
+	SPDModel->ClusterAgglomerate( 0.7);
+	//std::cout<< "Merging" << std::endl;
+	//SPDModel->ClusterMerge( 0.9, 0.9);
+	std::cout<< "Generating MST" << std::endl;
+	SPDModel->GenerateMST();
+	vtkSmartPointer<vtkTable> table = SPDModel->GetMSTTable(0);
+	if( table != NULL)
+	{
+		std::vector<std::string> headers;
+		SPDModel->GetTableHeaders( headers);
+		this->graph->SetGraphTable( table, headers[0], headers[1], headers[2]);
+		this->graph->ShowGraphWindow();
+	}
 }

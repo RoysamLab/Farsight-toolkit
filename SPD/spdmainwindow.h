@@ -5,6 +5,7 @@
 #include <QLineEdit>
 #include <QLabel>
 #include <QPushButton>
+#include <QListWidget>
 #include "SPDAnalysisModel.h"
 
 class SPDMainWindow : public QWidget
@@ -19,9 +20,9 @@ private slots:
     void browse();
     void load();
     void clusterFunction();
-    void showResult();
 	void generateMST();
 	void showMST();
+	void AddClusterModuleToList();
 
 private:
 	SPDAnalysisModel *SPDModel;
@@ -43,10 +44,8 @@ private:
     QLabel *clusterMergeLabel;
     QLineEdit *clusterMergeBox;
     QPushButton *clusterButton;
-    QPushButton *clusterResultButton;
-
+	QListWidget *listWidget;
 	QPushButton *generateMSTButton;
-	QLabel *mstState;
 	QPushButton *showMSTButton;
 
     QString FileName;

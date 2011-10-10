@@ -1,4 +1,10 @@
 #include "GraphWindow.h"
+#include <vtkAnnotationLink.h>
+#include <vtkDataRepresentation.h>
+#include <vtkSelectionNode.h>
+#include <vtkIdTypeArray.h>
+#include <vtkSelection.h>
+
 GraphWindow::GraphWindow(QWidget *parent)
 : QMainWindow(parent)
 {
@@ -12,6 +18,17 @@ GraphWindow::~GraphWindow()
 void GraphWindow::setQtModels(QItemSelectionModel *mod)
 {
 }
+
+void GraphWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels)
+{
+	//this->table = table;
+
+	if(!sels)
+		this->selection = new ObjectSelection();
+	else
+		this->selection = sels;
+}
+	
 void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table)
 {
 	//graphTable->Dump(8);	//debug dump
@@ -89,6 +106,7 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 	this->view->VertexLabelVisibilityOn();
 	this->view->SetVertexLabelFontSize(20);
 }
+
 void GraphWindow::ShowGraphWindow()
 {
 	this->mainQTRenderWidget.SetRenderWindow(view->GetRenderWindow());
@@ -96,5 +114,78 @@ void GraphWindow::ShowGraphWindow()
 	this->mainQTRenderWidget.show();
 	view->ResetCamera();
 	view->Render();
+
+    this->selectionCallback = vtkSmartPointer<vtkCallbackCommand>::New();
+    this->selectionCallback->SetClientData(this);
+    this->selectionCallback->SetCallback ( SelectionCallbackFunction);
+    view->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback);
+	
+	//connect(this,SIGNAL(selection_Changed(),this,SLOT(SetSelectedIDs()));
+
 	view->GetInteractor()->Start();
 }
+
+void GraphWindow::SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
+{
+	vtkAnnotationLink* annotationLink = static_cast<vtkAnnotationLink*>(caller);
+	vtkSelection* selection = annotationLink->GetCurrentSelection();
+	GraphWindow* graphWin = (GraphWindow*)clientData;
+
+	vtkSelectionNode* vertices = NULL;
+	vtkSelectionNode* edges = NULL;
+
+	if( selection->GetNode(0))
+	{
+		if( selection->GetNode(0)->GetFieldType() == vtkSelectionNode::VERTEX)
+		{
+			vertices = selection->GetNode(0);
+		}
+		else if( selection->GetNode(0)->GetFieldType() == vtkSelectionNode::EDGE)
+		{
+			edges = selection->GetNode(0);
+		}
+	}
+
+	if( selection->GetNode(1))
+	{
+		if( selection->GetNode(1)->GetFieldType() == vtkSelectionNode::VERTEX)
+		{
+			vertices = selection->GetNode(1);
+		}
+		else if( selection->GetNode(1)->GetFieldType() == vtkSelectionNode::EDGE)
+		{
+			edges = selection->GetNode(1);
+		}
+	}
+
+	if( vertices != NULL)
+	{
+		vtkIdTypeArray* vertexList = vtkIdTypeArray::SafeDownCast(vertices->GetSelectionList());
+	
+		std::set<long int> IDs;
+		if(vertexList->GetNumberOfTuples() > 0)
+		{
+
+			for( vtkIdType i = 0; i < vertexList->GetNumberOfTuples(); i++)
+			{
+				long int value = vertexList->GetValue(i);
+				IDs.insert(value);
+			}
+		}
+
+		graphWin->SetSelectedIds( IDs);
+	}
+}
+
+void GraphWindow::SetSelectedIds(std::set<long int>& IDs)
+{
+	if( IDs.size() > 0)
+	{
+		this->selection->select(IDs);
+	}
+	else
+	{
+		this->selection->clear();
+	}
+}
+

@@ -8,7 +8,6 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <map>
-#include "../ftkGUI/GraphWindow.h"
 
 typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::undirectedS, 
 	boost::property< boost::vertex_distance_t, unsigned int>, boost::property< boost::edge_weight_t, double> > Graph;
@@ -20,7 +19,9 @@ public:
 	static SPDAnalysisModel* InitInstance();
 	static void DeInstance();
 
-	bool ReadCellTraceFile(const char* fileName);
+	bool ReadCellTraceFile(std::string fileName);
+	void ParseTraceFile(vtkSmartPointer<vtkTable> table);
+
 	unsigned int GetSampleNum();
 	unsigned int GetFeatureNum();
 
@@ -29,8 +30,9 @@ public:
 	void ClusterMerge( double cor, double mer);
 
 	void GenerateMST();
-	void ShowMST();
+	vtkSmartPointer<vtkTable> SPDAnalysisModel::GetMSTTable( int MSTIndex);
 
+	void GetTableHeaders(std::vector<std::string> &headers);
 
 protected:
 	SPDAnalysisModel();
@@ -47,6 +49,7 @@ protected:
 	void DeleteMatrixColumn( vnl_matrix<double>& mat, unsigned int col);
 	double CityBlockDist( vnl_matrix<double>& mat, unsigned int ind1, unsigned int ind2);
 	int GetSingleModuleSize(vnl_vector<unsigned int>& index, unsigned int ind);
+
 private:
 	static SPDAnalysisModel *s_pmodel;
 
@@ -55,10 +58,8 @@ private:
 	std::vector<std::string> FeatureNames;
 	std::vector<double> DistanceToDevice;
 	vnl_matrix<double> DataMatrix;			// normalized data feature for analysis
+	vtkSmartPointer<vtkTable> DataTable;
 	std::vector<std::string> headers;
-
-	// View
-	GraphWindow *graphWindow;
 
 	//data for agglormeration
 	vnl_vector<unsigned int> ClusterIndex;

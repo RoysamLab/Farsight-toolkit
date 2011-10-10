@@ -37,16 +37,14 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
     clusterMergeLabel = new QLabel(tr("Merge Coherence:"));
     clusterMergeBox = new QLineEdit;
     clusterButton = new QPushButton(tr("Agglomerate"));
-    clusterResultButton = new QPushButton(tr("Show Results"));
 
+	listWidget = new QListWidget( this);
 	generateMSTButton = new QPushButton(tr("MST"));
-	mstState = new QLabel();
 	showMSTButton = new QPushButton(tr("Show MST"));
 
     connect(browseButton, SIGNAL(clicked()), this, SLOT(browse()));
     connect(loadButton, SIGNAL(clicked()), this, SLOT(load()));
     connect(clusterButton, SIGNAL(clicked()), this, SLOT(clusterFunction()));
-    connect(clusterResultButton, SIGNAL(clicked()), this, SLOT(showResult()));
 	connect(generateMSTButton, SIGNAL(clicked()), this, SLOT(generateMST()));
 	connect(showMSTButton, SIGNAL(clicked()), this, SLOT(showMST()));
 
@@ -72,20 +70,22 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 
     mainLayout->addWidget(featureNumLabel, 2, 0);
     mainLayout->addWidget(featureNum, 2, 1);
-    mainLayout->addWidget(clusterCoherenceLabel, 4, 0);
-    mainLayout->addWidget(clusterCoherenceBox, 4, 1);
+
 
     mainLayout->addWidget(sampleNumLabel, 3, 0);
     mainLayout->addWidget(sampleNum, 3, 1);
+
+	mainLayout->addWidget(clusterCoherenceLabel, 4, 0);
+    mainLayout->addWidget(clusterCoherenceBox, 4, 1);
+	mainLayout->addWidget(clusterButton, 4, 2);
+
     mainLayout->addWidget(clusterMergeLabel, 5, 0);
     mainLayout->addWidget(clusterMergeBox, 5, 1);
 
-    mainLayout->addWidget(clusterButton, 6, 0);
-    mainLayout->addWidget(clusterResultButton, 6, 1);
+	mainLayout->addWidget(listWidget, 6, 0, 3, 2);
 
-    mainLayout->addWidget(generateMSTButton, 7, 0);
-    mainLayout->addWidget(mstState, 7, 2);
-	mainLayout->addWidget(showMSTButton, 7, 1);
+    mainLayout->addWidget(generateMSTButton, 6, 2);
+	mainLayout->addWidget(showMSTButton, 7, 2);
 
     setLayout(mainLayout);
 
@@ -140,6 +140,7 @@ void SPDMainWindow::clusterFunction()
 		{
 			this->SPDModel->ClusterAgglomerate( atof(clusterCor.c_str()));
 			this->SPDModel->ClusterMerge( atof(clusterCor.c_str()), atof(clusterMer.c_str()));
+			AddClusterModuleToList();
 		}
 		else
 		{
@@ -156,9 +157,9 @@ void SPDMainWindow::clusterFunction()
 	}
 }
 
-void SPDMainWindow::showResult()
+void SPDMainWindow::AddClusterModuleToList()
 {
-
+	
 }
 
 void SPDMainWindow::generateMST()
@@ -168,5 +169,6 @@ void SPDMainWindow::generateMST()
 
 void SPDMainWindow::showMST()
 {
-
+	GraphWindow *graphWindow = this->SPDModel->GetMSTGraphWindow( 0);
+	this->SPDModel->ShowMST(0);
 }

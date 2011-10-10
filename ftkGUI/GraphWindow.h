@@ -53,6 +53,7 @@
 #include "vtkDoubleArray.h"
 #include "vtkAbstractArray.h"
 #include "vtkVariantArray.h"
+#include <vtkCallbackCommand.h>
 
 #include "ObjectSelection.h"
 
@@ -78,6 +79,13 @@ public:
 	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel);
 	void ShowGraphWindow();
+	
+protected slots:
+	static void SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
+	void SetSelectedIds(std::set<long int>& IDs);
+
+signals:
+	void selection_Changed();
 
 private:
 	QVTKWidget mainQTRenderWidget;
@@ -86,6 +94,8 @@ private:
 	vtkSmartPointer<vtkGraphLayoutView> view;
 	//SelectionAdapter * selAdapter;
 	ObjectSelection * selection;
+	vtkSmartPointer<vtkCallbackCommand> selectionCallback;
+
 };
 
 #endif

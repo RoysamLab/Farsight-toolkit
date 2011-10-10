@@ -46,7 +46,7 @@ limitations under the License.
 #include "ftkGUI/ObjectSelection.h"
 #include "ftkGUI/StatisticsToolbar.h"
 #include "ftkUtils.h"
-
+#include "ftkGUI/GraphWindow.h"
 #include <vector>
 #include <string>
 
@@ -68,6 +68,7 @@ private slots:
 	void changeRowData(void);
 	void showStatistics(void);
 	void updateStatistics(void);
+	void SPDAnalysis();
 
 signals:
     void selectionChanged(void);
@@ -84,10 +85,12 @@ private:
 	QAction *changeRowDataAction;
 	QAction *showStatisticsAction;
 	QAction *updateStatisticsAction;
+	QAction *SPDAction;
 	StatisticsToolbar * statisticsToolbar;
 	TableWindow *table;
 	PlotWindow *plot;
 	HistoWindow *histo;
+	GraphWindow *graph;
 	//Dendrogram *dendro;
 	int flag;
 

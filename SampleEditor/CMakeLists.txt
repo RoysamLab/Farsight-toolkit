@@ -31,7 +31,7 @@ ADD_EXECUTABLE(SampleEditor main.cpp
              ${SampleEditor_RC_SRCS}
 )
 
-TARGET_LINK_LIBRARIES( SampleEditor ${QT_LIBRARIES} ftkGUI ftkCommon ftkGraphs)
+TARGET_LINK_LIBRARIES( SampleEditor ${QT_LIBRARIES} ftkGUI ftkCommon ftkGraphs SPD)
 
 #MAKE A GUI EXECUTABLE, NOT A CONSOLE APPLICATION
 #SET_TARGET_PROPERTIES( SampleEditor PROPERTIES WIN32_EXECUTABLE 1)

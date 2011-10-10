@@ -125,7 +125,7 @@ vtkSmartPointer<vtkTable> LoadTable(std::string filename)
 	if( !FileExists(filename.c_str()) )
 		return NULL;
 
-	const int MAXLINESIZE = 1024;	//Numbers could be in scientific notation in this file
+	const int MAXLINESIZE = 10024;	//Numbers could be in scientific notation in this file
 	char line[MAXLINESIZE];
 
 	//Open the file:

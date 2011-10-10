@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-PROJECT(SPD_CMAKE)
+PROJECT(SPD)
 
 INCLUDE_DIRECTORIES(${VXL_MUL_INCLUDE_DIR}) 
 
@@ -15,21 +15,16 @@ SET( Libraries
 
 QT4_WRAP_CPP( GUI_MOC_SRCS SPDMainWindow.h)
 
-SET( SPD_SRCS
-	spdmainwindow.cpp
-	SPDAnalysisModel.cpp
+ADD_LIBRARY( SPD
+			SPDAnalysisModel.cpp
+			SPDAnalysisModel.h
 )
-
-SET( SPD_HDRS
-	spdmainwindow.h
-	SPDAnalysisModel.h
-)
-
-ADD_EXECUTABLE(SPD main.cpp 
-                ${SPD_SRCS}
-				${SPD_HDRS}
-                ${GUI_MOC_SRCS})
+TARGET_LINK_LIBRARIES(SPD ${Libraries} ftkGUI ftkCommon)
+ADD_EXECUTABLE(SPDTEST main.cpp 
+                ${GUI_MOC_SRCS}
+                spdmainwindow.h
+                spdmainwindow.cpp)
                 
-TARGET_LINK_LIBRARIES(SPD ${Libraries} ftkGUI)
+TARGET_LINK_LIBRARIES(SPDTEST SPD)
 
 

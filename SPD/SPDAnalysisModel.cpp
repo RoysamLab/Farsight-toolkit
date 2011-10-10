@@ -5,6 +5,7 @@
 #include <math.h>
 #include <mbl/mbl_stats_nd.h>
 #include <boost/graph/prim_minimum_spanning_tree.hpp>
+#include "ftkUtils.h"
 
 SPDAnalysisModel* SPDAnalysisModel::s_pmodel = NULL;
 
@@ -28,7 +29,7 @@ void SPDAnalysisModel::DeInstance()
 
 SPDAnalysisModel::SPDAnalysisModel()
 {
-	graphWindow = new GraphWindow();
+	DataTable = vtkSmartPointer<vtkTable>::New();
 	headers.push_back("node1");
 	headers.push_back("node2");
 	headers.push_back("weight");
@@ -36,74 +37,105 @@ SPDAnalysisModel::SPDAnalysisModel()
 
 SPDAnalysisModel::~SPDAnalysisModel()
 {
-	if( graphWindow)
-	{
-		delete graphWindow;
-	}
+
 }
 
-bool SPDAnalysisModel::ReadCellTraceFile(const char* fileName)
+bool SPDAnalysisModel::ReadCellTraceFile(std::string fileName)
 {
-	int line = LineNum(fileName);
-
-	std::ifstream file(fileName, std::ifstream::in);
-	if( !file.is_open() || line == -1)
+	this->DataTable = ftk::LoadTable(fileName);
+	if( this->DataTable != NULL)
+	{
+		ParseTraceFile(this->DataTable);
+		return true;
+	}
+	else
 	{
 		return false;
 	}
+}
+	//int line = LineNum(fileName);
 
-	std::string feature;
+	//std::ifstream file(fileName, std::ifstream::in);
+	//if( !file.is_open() || line == -1)
+	//{
+	//	return false;
+	//}
 
-	bool bfirst = true;
-	int rowIndex = 0; 
-	std::vector<std::string> rowValue;
-	while( !file.eof())
+	//std::string feature;
+
+	//bool bfirst = true;
+	//int rowIndex = 0; 
+	//std::vector<std::string> rowValue;
+	//while( !file.eof())
+	//{
+	//	getline(file, feature);
+	//	if( feature.length() > 5)
+	//	{
+	//		split(feature, '\t', &rowValue);
+	//		if( bfirst)
+	//		{
+	//			this->FeatureNames = rowValue;
+	//			this->FeatureNames.erase(this->FeatureNames.begin());     // first trace index
+	//			(this->FeatureNames).pop_back();
+	//			(this->FeatureNames).pop_back();
+	//			(this->FeatureNames).pop_back();                            // distance to device && cell names
+	//			 bfirst = false;
+	//			(this->DataMatrix).set_size(line - 2, this->FeatureNames.size());
+	//		}
+	//		else
+	//		{
+	//			std::vector<std::string>::iterator iter = rowValue.begin();
+	//			for( int colIndex = 0, col = 0; col < rowValue.size() - 1; col++, iter++)
+	//			{
+	//				if ( col == 0)
+	//				{
+	//					this->CellTraceIndex.push_back( atoi((*iter).c_str()));    // trace index
+	//				}
+	//				else if( col == rowValue.size() - 3)		// strings to be eliminated
+	//				{
+	//					//break;
+	//				}
+	//				else if( col == rowValue.size() - 2)	
+	//				{
+	//					this->DistanceToDevice.push_back( atof((*iter).c_str()));  // save distance to device in the array
+	//				}
+	//				else if( col > 0 && col < rowValue.size() - 3)
+	//				{
+	//					(this->DataMatrix)(rowIndex, colIndex++) = atof( (*iter).c_str());   // save the feature data in the matrix for analysis
+	//				}
+	//			}
+	//			rowIndex++;
+	//		}
+	//		rowValue.clear();
+	//	}
+	//	feature.clear();
+	//}
+	////std::ofstream ofs("readdata.txt", std::ofstream::out);
+	////ofs<<this->DataMatrix<<endl;
+
+
+void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table)
+{
+	this->DataMatrix.set_size( table->GetNumberOfRows(), table->GetNumberOfColumns() - 2);
+	for( int i = 0, rowIndex = 0; i < table->GetNumberOfRows(); i++, rowIndex++)
 	{
-		getline(file, feature);
-		if( feature.length() > 5)
+		int colIndex = 0;
+		for( int j = 0; j < table->GetNumberOfColumns(); j++)
 		{
-			split(feature, '\t', &rowValue);
-			if( bfirst)
+			if( j == 0)
 			{
-				this->FeatureNames = rowValue;
-				this->FeatureNames.erase(this->FeatureNames.begin());     // first trace index
-				(this->FeatureNames).pop_back();
-				(this->FeatureNames).pop_back();
-				(this->FeatureNames).pop_back();                            // distance to device && cell names
-				 bfirst = false;
-				(this->DataMatrix).set_size(line - 2, this->FeatureNames.size());
+				this->CellTraceIndex.push_back( table->GetValue(i, j).ToInt());
+			}
+			else if( j == table->GetNumberOfColumns() - 1)
+			{
+				this->DistanceToDevice.push_back( table->GetValue(i, j).ToDouble());
 			}
 			else
 			{
-				std::vector<std::string>::iterator iter = rowValue.begin();
-				for( int colIndex = 0, col = 0; col < rowValue.size() - 1; col++, iter++)
-				{
-					if ( col == 0)
-					{
-						this->CellTraceIndex.push_back( atoi((*iter).c_str()));    // trace index
-					}
-					else if( col == rowValue.size() - 3)		// strings to be eliminated
-					{
-						//break;
-					}
-					else if( col == rowValue.size() - 2)	
-					{
-						this->DistanceToDevice.push_back( atof((*iter).c_str()));  // save distance to device in the array
-					}
-					else if( col > 0 && col < rowValue.size() - 3)
-					{
-						(this->DataMatrix)(rowIndex, colIndex++) = atof( (*iter).c_str());   // save the feature data in the matrix for analysis
-					}
-				}
-				rowIndex++;
+				(this->DataMatrix)(rowIndex, colIndex++) = table->GetValue(i, j).ToDouble();
 			}
-			rowValue.clear();
 		}
-		feature.clear();
 	}
-	//std::ofstream ofs("readdata.txt", std::ofstream::out);
-	//ofs<<this->DataMatrix<<endl;
-	return true;
 }
 
 int SPDAnalysisModel::LineNum(const char* fileName)
@@ -282,7 +314,8 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_vector<unsigned int>& index, vnl_ma
 			GetCombinedMatrix(index, moduleId, moduleToDeleteId, newModule);   
 			newModule.normalize_columns();
 
-			GetMatrixRowMeanStd(newModule.transpose(), newModuleMeans, newModuleStd);
+			vnl_matrix<double> mat = newModule.transpose();
+			GetMatrixRowMeanStd(mat, newModuleMeans, newModuleStd);
 
 			newModuleMeans.normalize();
 			newModuleCor = newModuleMeans * newModule;
@@ -464,7 +497,8 @@ void SPDAnalysisModel::ClusterMerge(double cor, double mer)
 			
 		vnl_vector<double> dataMean;
 		vnl_vector<double> dataSd;
-		GetMatrixRowMeanStd( dataTmp.transpose(), dataMean, dataSd);
+		vnl_matrix<double> mat = dataTmp.transpose();
+		GetMatrixRowMeanStd( mat, dataMean, dataSd);
 		dataMean.normalize();
 
 		double moduleCor = (dataMean * dataTmp).mean();
@@ -609,8 +643,6 @@ void SPDAnalysisModel::GenerateMST()
 		}
 		this->MSTTable.push_back(table);
 		this->MSTWeight.push_back( mapweight);
-		//this->graphWindow->SetGraphTable(table, this->headers[0], this->headers[1], this->headers[2]);
-		//this->graphWindow->ShowGraphWindow();
 	}
 
 	std::vector<std::vector< boost::graph_traits<Graph>::vertex_descriptor> >::iterator iter = this->ModuleMST.begin();
@@ -660,7 +692,20 @@ double SPDAnalysisModel::CityBlockDist( vnl_matrix<double>& mat, unsigned int in
 	return dis;
 }
 
-void SPDAnalysisModel::ShowMST()
+vtkSmartPointer<vtkTable> SPDAnalysisModel::GetMSTTable( int MSTIndex)
 {
+	if( MSTIndex >= 0 && MSTIndex < this->MSTTable.size())
+	{
+		vtkSmartPointer<vtkTable> table = this->MSTTable[MSTIndex];
+		return table;
+	}
+	else
+	{
+		return NULL;
+	}
+}
 
+void SPDAnalysisModel::GetTableHeaders(std::vector<std::string> &headers)
+{
+	headers = this->headers;
 }
