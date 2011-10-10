@@ -132,11 +132,12 @@ void TableWindow::exportTable()
 	for( int i=0; i < this->tableView->model()->columnCount(); ++i)
 	{	
 		QString QHeaders = this->tableView->model()->headerData(i,Qt::Horizontal).toString();
+		QHeaders.replace(" ", "_");
 		string SHeaders = QHeaders.toStdString();
 		TableOutputStream << SHeaders.c_str() << "\t";
 	}
 
-	TableOutputStream << "\n" << "\n";
+	TableOutputStream << "\n" ;
 	
 	for(vtkIdType row = 0; row < Pointer2Table->GetNumberOfRows(); row++ )
 	{
