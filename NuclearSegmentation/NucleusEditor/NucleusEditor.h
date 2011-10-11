@@ -164,6 +164,11 @@ protected slots:
 	void toggleCellAdjacency();
 	void toggleChannel(int chNum );
 	void DisplayChannelsMenu();
+#ifdef USE_OPENSLIDE
+	void DisplayLevelsMenu();
+	void toggleLevel(int levNum);
+	void toggleSaveSlide(int levNum);
+#endif
 	void CreateNewPlotWindow();
 	void CreateNewTableWindow();
 	void CreateNewHistoWindow();
@@ -248,7 +253,6 @@ protected slots:
 	void startTracking(void);
 	void displayKymoGraph(void);
 #endif
-
 	void about(void);
 	void menusEnabled(bool val);
 
@@ -300,28 +304,34 @@ protected:
 	QAction *showCentroidsAction;
 	QAction *showCrosshairsAction;
 	QMenu *adjacencyMenu;
-		QAction *showNucAdjAction;
-		QAction *showCellAdjAction;
+	QAction *showNucAdjAction;
+	QAction *showCellAdjAction;
 	QMenu *zoomMenu;
-		QAction *zoomInAction;
-		QAction *zoomOutAction;
+	QAction *zoomInAction;
+	QAction *zoomOutAction;
 	QMenu *displayChannelMenu;
-		QSignalMapper *chSignalMapper;
-		QVector<QAction *> displayChannelAction;
+#ifdef USE_OPENSLIDE
+	QMenu *displayLevelMenu;
+	QVector<QAction *> displayLevelAction;
+	QSignalMapper *levSignalMapper;
+	QSignalMapper *levSignalMapper1;
+#endif
+	QSignalMapper *chSignalMapper;
+	QVector<QAction *> displayChannelAction;
 	QAction *newTableAction;
 	QAction *newScatterAction;
 	QAction *newHistoAction;
 	QMenu *ragMenu;
-		QAction *nucRagAction;
-		QAction *cellRagAction;
+	QAction *nucRagAction;
+	QAction *cellRagAction;
 	QAction *imageIntensityAction;
 
 	QMenu *toolMenu;
 	QMenu *roiMenu;
-		QAction *drawROIAction;
-		QAction *loadROIAction;
-		QAction *saveROIAction;
-		QAction *clearROIAction;
+	QAction *drawROIAction;
+	QAction *loadROIAction;
+	QAction *saveROIAction;
+	QAction *clearROIAction;
 	QAction *roiStatsAction;
 	QAction *preprocessAction;
 	QAction *segmentNucleiAction;
@@ -329,15 +339,15 @@ protected:
 	QAction *svmAction;		//Start the One-Class SVM outlier detecter
 	QAction *databaseAction;
 	QMenu *activeMenu;
-		QAction *activeAction; // Active Learning 
-		QAction *activeVAction; // Active Learning 
-		QAction *showGalleryAction;
-		QAction *saveActiveResultsAction;
-		QAction *saveActiveLearningModelAction;
-		QAction *classifyFromActiveLearningModelAction;
+	QAction *activeAction; // Active Learning 
+	QAction *activeVAction; // Active Learning 
+	QAction *showGalleryAction;
+	QAction *saveActiveResultsAction;
+	QAction *saveActiveLearningModelAction;
+	QAction *classifyFromActiveLearningModelAction;
 	QMenu *classifyMenu;
-		QAction *trainAction;	//Train the KPLS Classifier
-		QAction *kplsAction;	//Start the KPLS Classifier
+	QAction *trainAction;	//Train the KPLS Classifier
+	QAction *kplsAction;	//Start the KPLS Classifier
 
 	//For Editing Menu
 	QMenu *editMenu;
@@ -357,15 +367,14 @@ protected:
 
     //For Models Menu
 	QMenu *modelsMenu;
-    QAction *createTrainingAction;
-    QAction *appendTrainingAction;
+	QAction *createTrainingAction;
+	QAction *appendTrainingAction;
 
 	//For Queries Menu
 	QMenu *queriesMenu;
-    QAction *kNearestNeighborsAction;
-    QAction *inRadiusNeighborsAction;
+	QAction *kNearestNeighborsAction;
+	QAction *inRadiusNeighborsAction;
 	QAction *queryViewsOffAction;
-
 #ifdef USE_TRACKING
 	//For 5D Image Menu
 	QMenu * fiveDMenu;
@@ -378,7 +387,7 @@ protected:
 	QAction *cropAction;
 	QAction *blankAction;
 	QAction *invertPixAction;
-    QAction *AnisotropicAction;
+	QAction *AnisotropicAction;
 	QAction *MedianAction;
 	QAction *SigmoidAction;
 	QAction *GSErodeAction;
