@@ -30,7 +30,7 @@ public:
 	void ClusterMerge( double cor, double mer);
 
 	void GenerateMST();
-	vtkSmartPointer<vtkTable> SPDAnalysisModel::GetMSTTable( int MSTIndex);
+	vtkSmartPointer<vtkTable> GetMSTTable( int MSTIndex);
 
 	void GetTableHeaders(std::vector<std::string> &headers);
 

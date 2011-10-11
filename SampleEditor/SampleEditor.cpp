@@ -15,7 +15,7 @@ limitations under the License.
 
 #include "SampleEditor.h"
 //#include "Dendrogram.h"
-#include "..\SPD\SPDAnalysisModel.h"
+#include "../SPD/SPDAnalysisModel.h"
 
 
 //*******************************************************************************

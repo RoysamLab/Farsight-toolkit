@@ -36,7 +36,7 @@ OPTION( BUILD_MODEL_SEG "Build Statistical_Model_Segmentation (Note that it has 
 OPTION( BUILD_ZERNIKE  " Build zernike_moments_calculation " OFF)
 OPTION( BUILD_HARALICK "Biild Haralick_features_calculation" OFF)
 OPTION( BUILD_DENDROGRAM "Dendrogram code" OFF)
-OPTION( BUILD_SPD "SPD" OFF)
+OPTION( BUILD_SPD "Build SPD" OFF)
 
 #Make sure OPENCL AND CUDA ARE NOT BOTH ENABLED
 OPTION( BUILD_OPENCL "Build with OpenCL support (VS 2008 only at the moment)" OFF) 
@@ -229,6 +229,7 @@ ENDIF(BUILD_REGISTRATION)
 IF(BUILD_SAMPLE_EDITOR)
   INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/SampleEditor )
   SUBDIRS( SampleEditor )
+  SET( BUILD_SPD ON CACHE BOOL "Build SPD" FORCE )
 ENDIF(BUILD_SAMPLE_EDITOR)
 
 IF(BUILD_TISSUENETS)
