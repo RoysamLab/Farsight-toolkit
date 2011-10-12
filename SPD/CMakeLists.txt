@@ -13,17 +13,19 @@ SET( Libraries
     mbl
     ${QT_LIBRARIES})
 
-QT4_WRAP_CPP( GUI_MOC_SRCS SPDMainWindow.h)
+QT4_WRAP_CPP( GUI_MOC_SRCS spdmainwindow.h )
 
-ADD_LIBRARY( SPD
-			SPDAnalysisModel.cpp
-			SPDAnalysisModel.h
-)
+SET(SPD_SRCS
+	SPDAnalysisModel.h
+	SPDAnalysisModel.cpp)
+
+SET(SPD_TEST_SRCS
+	spdmainwindow.h
+	spdmainwindow.cpp )
+
+ADD_LIBRARY( SPD ${SPD_SRCS} )
 TARGET_LINK_LIBRARIES(SPD ${Libraries} ftkGUI ftkCommon)
-ADD_EXECUTABLE(SPDTEST main.cpp 
-                ${GUI_MOC_SRCS}
-                spdmainwindow.h
-                spdmainwindow.cpp)
+ADD_EXECUTABLE(SPDTEST main.cpp ${GUI_MOC_SRCS} ${SPD_TEST_SRCS} )
                 
 TARGET_LINK_LIBRARIES(SPDTEST SPD)
 
