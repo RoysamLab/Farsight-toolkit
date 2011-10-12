@@ -8,6 +8,7 @@
 //define NDEBUG
 #include <assert.h>
 
+
 using std::ifstream;
 using std::endl;
 
@@ -92,6 +93,8 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 	SPDModel = SPDAnalysisModel::InitInstance();
 
 	assert(SPDModel!=NULL);
+
+	graph =  new GraphWindow(this);
 }
 
 SPDMainWindow::~SPDMainWindow()
@@ -169,6 +172,13 @@ void SPDMainWindow::generateMST()
 
 void SPDMainWindow::showMST()
 {
-	GraphWindow *graphWindow = this->SPDModel->GetMSTGraphWindow( 0);
-	this->SPDModel->ShowMST(0);
+	vtkSmartPointer<vtkTable> table = SPDModel->GetMSTTable(0);
+
+	if( table != NULL)
+	{
+		std::vector<std::string> headers;
+		SPDModel->GetTableHeaders( headers);
+		this->graph->SetGraphTable( table, headers[0], headers[1], headers[2]);
+		this->graph->ShowGraphWindow();
+	}
 }

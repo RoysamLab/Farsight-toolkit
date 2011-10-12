@@ -7,6 +7,7 @@
 #include <QPushButton>
 #include <QListWidget>
 #include "SPDAnalysisModel.h"
+#include "ftkGUI/GraphWindow.h"
 
 class SPDMainWindow : public QWidget
 {
@@ -49,6 +50,7 @@ private:
 	QPushButton *showMSTButton;
 
     QString FileName;
+	GraphWindow *graph;
 };
 
 #endif // SPDMAINWINDOW_H
