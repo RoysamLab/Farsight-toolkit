@@ -1,6 +1,0 @@
-ID, X,Y,Z, Class_Membership,Size
-2,1869,74,76,8,Neuron,1869
-3,127,132,23,Neuron,1534
-4,127,132,23,Neuron,1534
-5,127,132,23,Neuron,1534
-6,127,132,23,Neuron,1000
